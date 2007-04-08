@@ -1437,6 +1437,8 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 				default:
 					//contact leaving
 					message = tr("%1 has left the room").arg(nickJid);
+					if (!s.status().isEmpty())
+						message += QString(" (%1)").arg(s.status());
 			}
 			appendSysMsg(message, false, QDateTime::currentDateTime());
 		}
