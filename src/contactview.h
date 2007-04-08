@@ -204,6 +204,7 @@ public:
 	QSize sizeHint() const;
 
 protected:
+	void setShortcuts();
 	// reimplemented
 	void keyPressEvent(QKeyEvent *);
 	bool eventFilter( QObject *, QEvent * );

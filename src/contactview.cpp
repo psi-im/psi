@@ -1983,25 +1983,25 @@ ContactView::ContactView(QWidget *parent, const char *name)
 	connect(d->recalculateSizeTimer, SIGNAL(timeout()), d, SLOT(recalculateSize()));
 
 	// actions
-	qa_send = new IconAction("", "psi/sendMessage", tr("Send &message"), ShortcutManager::instance()->shortcut("contactlist.message"), this);
+	qa_send = new IconAction("", "psi/sendMessage", tr("Send &message"), 0, this);
 	connect(qa_send, SIGNAL(activated()), SLOT(doSendMessage()));
-	qa_ren = new IconAction("", /*"psi/edit/clear",*/ tr("Re&name"), ShortcutManager::instance()->shortcut("contactlist.rename")/* Qt::Key_F2 */, this);
+	qa_ren = new IconAction("", /*"psi/edit/clear",*/ tr("Re&name"), 0, this);
 	connect(qa_ren, SIGNAL(activated()), SLOT(doRename()));
-	qa_assignAvatar = new IconAction("", tr("&Assign Custom Picture"), ShortcutManager::instance()->shortcut("contactlist.assign-custom-avatar"), this);
+	qa_assignAvatar = new IconAction("", tr("&Assign Custom Picture"), 0, this);
 	connect(qa_assignAvatar, SIGNAL(activated()), SLOT(doAssignAvatar()));
-	qa_clearAvatar = new IconAction("", tr("&Clear Custom Picture"), ShortcutManager::instance()->shortcut("contactlist.clear-custom-avatar"), this);
+	qa_clearAvatar = new IconAction("", tr("&Clear Custom Picture"), 0, this);
 	connect(qa_clearAvatar, SIGNAL(activated()), SLOT(doClearAvatar()));
-	qa_chat = new IconAction("", "psi/start-chat", tr("Open &chat window"), ShortcutManager::instance()->shortcut("contactlist.chat"), this);
+	qa_chat = new IconAction("", "psi/start-chat", tr("Open &chat window"), 0, this);
 	connect(qa_chat, SIGNAL(activated()), SLOT(doOpenChat()));
-	qa_hist = new IconAction("", "psi/history", tr("&History"), ShortcutManager::instance()->shortcut("common.history"), this);
+	qa_hist = new IconAction("", "psi/history", tr("&History"), 0, this);
 	connect(qa_hist, SIGNAL(activated()), SLOT(doHistory()));
-	qa_logon = new IconAction("", tr("&Log on"), ShortcutManager::instance()->shortcut("contactlist.login-transport"), this);
+	qa_logon = new IconAction("", tr("&Log on"), 0, this);
 	connect(qa_logon, SIGNAL(activated()), SLOT(doLogon()));
-	qa_recv = new IconAction("", tr("&Receive incoming event"), ShortcutManager::instance()->shortcut("contactlist.event"), this);
+	qa_recv = new IconAction("", tr("&Receive incoming event"), 0, this);
 	connect(qa_recv, SIGNAL(activated()), SLOT(doRecvEvent()));
-	qa_rem = new IconAction("", "psi/remove", tr("Rem&ove"), ShortcutManager::instance()->shortcut("contactlist.delete"), this);
+	qa_rem = new IconAction("", "psi/remove", tr("Rem&ove"), 0, this);
 	connect(qa_rem, SIGNAL(activated()), SLOT(doRemove()));
-	qa_vcard = new IconAction("", "psi/vCard", tr("User &Info"), ShortcutManager::instance()->shortcut("common.user-info"), this);
+	qa_vcard = new IconAction("", "psi/vCard", tr("User &Info"), 0, this);
 	connect(qa_vcard, SIGNAL(activated()), SLOT(doVCard()));
 
 	if(option.lockdown.roster) {
@@ -2313,11 +2313,28 @@ void ContactView::optionsUpdate()
 		item->optionsUpdate();
 	}
 
+	// shortcuts
+	setShortcuts();
+
 	// resize if necessary
 	if (option.autoRosterSize)
 		recalculateSize();
 
 	update();
+}
+
+void ContactView::setShortcuts()
+{
+	qa_send->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.message"));
+	qa_ren->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.rename"));
+	qa_assignAvatar->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.assign-custom-avatar"));
+	qa_clearAvatar->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.clear-custom-avatar"));
+	qa_chat->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.chat"));
+	qa_hist->setShortcuts(ShortcutManager::instance()->shortcuts("common.history"));
+	qa_logon->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.login-transport"));
+	qa_recv->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.event"));
+	qa_rem->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.delete"));
+	qa_vcard->setShortcuts(ShortcutManager::instance()->shortcuts("common.user-info"));
 }
 
 void ContactView::resetAnim()
