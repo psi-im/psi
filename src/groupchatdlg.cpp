@@ -447,6 +447,9 @@ public:
 	QPushButton *pb_topic;
 	QToolBar *toolbar;
 	IconAction *act_find, *act_clear, *act_icon, *act_configure;
+#ifdef WHITEBOARDING
+	IconAction *act_whiteboard;
+#endif
 	QAction *act_send, *act_scrollup, *act_scrolldown, *act_close;
 	QLabel* lb_ident;
 	Q3PopupMenu *pm_settings;
@@ -896,6 +899,11 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	d->act_configure = new IconAction(tr("Configure Room"), "psi/configure-room", tr("&Configure Room"), 0, this);
 	connect(d->act_configure, SIGNAL(activated()), SLOT(configureRoom()));
 
+#ifdef WHITEBOARDING
+	d->act_whiteboard = new IconAction(tr("Open a whiteboard"), "psi/whiteboard", tr("Open a &whiteboard"), 0, this);
+	connect(d->act_whiteboard, SIGNAL(activated()), SLOT(openWhiteboard()));
+#endif
+
 	connect(pa->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
 	d->act_icon = new IconAction( tr( "Select icon" ), "psi/smile", tr( "Select icon" ), 0, this );
 	d->act_icon->setMenu( pa->psi()->iconSelectPopup() );
@@ -904,6 +912,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	d->toolbar->setIconSize(QSize(16,16));
 	d->toolbar->addAction(d->act_clear);
 	d->toolbar->addAction(d->act_configure);
+#ifdef WHITEBOARDING
+	d->toolbar->addAction(d->act_whiteboard);
+#endif
 	d->toolbar->addWidget(new StretchWidget(d->toolbar));
 	d->toolbar->addAction(d->act_icon);
 	d->toolbar->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
@@ -1089,6 +1100,13 @@ void GCMainDlg::updateIdentityVisibility()
 {
 	d->lb_ident->setVisible(d->pa->psi()->contactList()->enabledAccounts().count() > 1);
 }
+
+#ifdef WHITEBOARDING
+void GCMainDlg::openWhiteboard()
+{
+	d->pa->actionOpenWhiteboardSpecific(d->jid, d->jid.withResource(d->self), true);
+}
+#endif
 
 void GCMainDlg::unsetConnecting()
 {
@@ -1913,6 +1931,9 @@ void GCMainDlg::buildMenu()
 
 	d->act_clear->addTo( d->pm_settings );
 	d->act_configure->addTo( d->pm_settings );
+#ifdef WHITEBOARDING
+	d->act_whiteboard->addTo( d->pm_settings );
+#endif
 	d->pm_settings->insertSeparator();
 
 	d->act_icon->addTo( d->pm_settings );

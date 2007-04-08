@@ -1117,6 +1117,9 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		int at_sendto = 0;
 		ResourceMenu *s2m  = new ResourceMenu(&pm);
 		ResourceMenu *c2m  = new ResourceMenu(&pm);
+#ifdef WHITEBOARDING
+		ResourceMenu *wb2m = new ResourceMenu(&pm);
+#endif
 		ResourceMenu *rc2m = new ResourceMenu(&pm);
 
 		if(!rl.isEmpty()) {
@@ -1124,6 +1127,9 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 				const UserResource &r = *it;
 				s2m->addResource(r,  base_sendto+at_sendto++);
 				c2m->addResource(r,  base_sendto+at_sendto++);
+#ifdef WHITEBOARDING
+				wb2m->addResource(r,  base_sendto+at_sendto++);
+#endif
 				rc2m->addResource(r, base_sendto+at_sendto++);
 			}
 		}
@@ -1137,10 +1143,21 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		if(!isPrivate)
 			pm.insertItem(tr("Open chat to"), c2m, 18);
 
+#ifdef WHITEBOARDING
+		d->cv->qa_wb->setIconSet(IconsetFactory::iconPixmap("psi/whiteboard"));
+		d->cv->qa_wb->addTo(&pm);
+
+		if(!isPrivate)
+			pm.insertItem(tr("Open a whiteboard to"), wb2m, 19);
+#endif
+		
 		if(!isPrivate) {
 			if(rl.isEmpty()) {
 				pm.setItemEnabled(17, false);
 				pm.setItemEnabled(18, false);
+#ifdef WHITEBOARDING
+				pm.setItemEnabled(19, false);
+#endif
 			}
 		}
 		
@@ -1453,8 +1470,13 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		}
 		else if(x >= base_sendto && x < base_hidden) {
 			int n = x - base_sendto;
+#ifndef WHITEBOARDING
 			int res = n / 3;
 			int type = n % 3;
+#else
+			int res = n / 4;
+			int type = n % 4;
+#endif
 			QString rname = "";
 			//if(res > 0) {
 				const UserResource &r = rl[res];
@@ -1471,8 +1493,15 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 				actionSendMessage(j);
 			else if(type == 1)
 				actionOpenChatSpecific(j);
+#ifndef WHITEBOARDING
 			else if (type == 2)
 				actionExecuteCommandSpecific(j,"");
+#else
+			else if (type == 2)
+				actionWhiteboardSpecific(j,"");
+			else if (type == 3)
+				actionExecuteCommandSpecific(j,"");
+#endif
 		}
 		else if(x >= base_hidden && x < base_gc) {
 			int n = 0;
@@ -1586,6 +1615,14 @@ void ContactProfile::scOpenChat(ContactViewItem *i)
 	if(i->type() == ContactViewItem::Contact)
 		actionOpenChat(i->u()->jid());
 }
+
+#ifdef WHITEBOARDING
+void ContactProfile::scOpenWhiteboard(ContactViewItem *i)
+{
+	if(i->type() == ContactViewItem::Contact)
+		actionOpenWhiteboard(i->u()->jid());
+}
+#endif
 
 void ContactProfile::scAgentSetStatus(ContactViewItem *i, Status &s)
 {
@@ -1993,6 +2030,10 @@ ContactView::ContactView(QWidget *parent, const char *name)
 	connect(qa_clearAvatar, SIGNAL(activated()), SLOT(doClearAvatar()));
 	qa_chat = new IconAction("", "psi/start-chat", tr("Open &chat window"), 0, this);
 	connect(qa_chat, SIGNAL(activated()), SLOT(doOpenChat()));
+#ifdef WHITEBOARDING
+	qa_wb = new IconAction("", "psi/whiteboard", tr("Open a &whiteboard"), Qt::CTRL+Qt::Key_W, this);
+	connect(qa_wb, SIGNAL(activated()), SLOT(doOpenWhiteboard()));
+#endif
 	qa_hist = new IconAction("", "psi/history", tr("&History"), 0, this);
 	connect(qa_hist, SIGNAL(activated()), SLOT(doHistory()));
 	qa_logon = new IconAction("", tr("&Log on"), 0, this);
@@ -2414,6 +2455,16 @@ void ContactView::doOpenChat()
 		return;
 	i->contactProfile()->scOpenChat(i);
 }
+
+#ifdef WHITEBOARDING
+void ContactView::doOpenWhiteboard()
+{
+	ContactViewItem *i = (ContactViewItem *)selectedItem();
+	if(!i)
+		return;
+	i->contactProfile()->scOpenWhiteboard(i);
+}
+#endif
 
 void ContactView::doHistory()
 {

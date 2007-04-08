@@ -176,6 +176,9 @@ private slots:
 	void unsetConnecting();
 	void action_error(MUCManager::Action, int, const QString&);
 	void updateIdentityVisibility();
+#ifdef WHITEBOARDING
+	void openWhiteboard();
+#endif
 
 public:
 	class Private;

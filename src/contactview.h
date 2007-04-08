@@ -100,6 +100,10 @@ signals:
 	void actionHistory(const Jid &);
 	void actionOpenChat(const Jid &);
 	void actionOpenChatSpecific(const Jid &);
+#ifdef WHITEBOARDING
+	void actionOpenWhiteboard(const Jid &);
+	void actionOpenWhiteboardSpecific(const Jid &);
+#endif
 	void actionAgentSetStatus(const Jid &, Status &);
 	void actionInfo(const Jid &);
 	void actionAuth(const Jid &);
@@ -168,6 +172,9 @@ private:
 	void scVCard(ContactViewItem *);
 	void scHistory(ContactViewItem *);
 	void scOpenChat(ContactViewItem *);
+#ifdef WHITEBOARDING
+	void scOpenWhiteboard(ContactViewItem *);
+#endif
 	void scAgentSetStatus(ContactViewItem *, Status &);
 	void scRemove(ContactViewItem *);
 	void doItemRenamed(ContactViewItem *, const QString &);
@@ -199,6 +206,9 @@ public:
 
 	IconAction *qa_send, *qa_chat, *qa_ren, *qa_hist, *qa_logon, *qa_recv, *qa_rem, *qa_vcard;
 	IconAction *qa_assignAvatar, *qa_clearAvatar;
+#ifdef WHITEBOARDING
+	IconAction *qa_wb;
+#endif
 
 	QSize minimumSizeHint() const;
 	QSize sizeHint() const;
@@ -242,6 +252,9 @@ private slots:
 	void doContext();
 	void doSendMessage();
 	void doOpenChat();
+#ifdef WHITEBOARDING
+	void doOpenWhiteboard();
+#endif
 	void doHistory();
 	void doVCard();
 	void doLogon();
