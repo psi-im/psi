@@ -503,8 +503,9 @@ public:
 
 
 FileRequestDlg::FileRequestDlg(const Jid &j, PsiCon *psi, PsiAccount *pa) 
-:QDialog(0, psi_dialog_flags | Qt::WDestructiveClose)
+	: QDialog(0, psi_dialog_flags)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	setModal(false);
 	setupUi(this);
 	QStringList l;
@@ -513,8 +514,9 @@ FileRequestDlg::FileRequestDlg(const Jid &j, PsiCon *psi, PsiAccount *pa)
 
 
 FileRequestDlg::FileRequestDlg(const Jid &jid, PsiCon *psi, PsiAccount *pa, const QStringList& files, bool direct)
-:QDialog(0, psi_dialog_flags | Qt::WDestructiveClose)
+	: QDialog(0, psi_dialog_flags)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private;
 	setModal(false);
 	setupUi(this);
@@ -592,8 +594,9 @@ FileRequestDlg::FileRequestDlg(const Jid &jid, PsiCon *psi, PsiAccount *pa, cons
 }
 
 FileRequestDlg::FileRequestDlg(const QDateTime &ts, FileTransfer *ft, PsiAccount *pa)
-:QDialog(0, psi_dialog_flags | Qt::WDestructiveClose)
+	: QDialog(0, psi_dialog_flags)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private;
 	setModal(false);
 	setupUi(this);

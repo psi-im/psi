@@ -507,8 +507,9 @@ bool ChatDlg::readyToHide()
 	}
 
 	// destroy the dialog if delChats is dcClose
-	if(option.delChats == dcClose)
-		setWindowFlags(windowFlags() | Qt::WDestructiveClose);
+	if(option.delChats == dcClose) {
+		setAttribute(Qt::WA_DeleteOnClose);
+	}
 	else {
 		if(option.delChats == dcHour)
 			setSelfDestruct(60);

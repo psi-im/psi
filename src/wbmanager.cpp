@@ -164,7 +164,7 @@ void WbManager::removeSession(const QString &session) {
 			negotiations_.remove(session);
 		}
 		// FIXME: Delete the dialog
-		d->setWindowFlags(d->windowFlags() | Qt::WDestructiveClose);
+		setAttribute(Qt::WA_DeleteOnClose);
 		d->close();
 //		d->deleteLater();
 

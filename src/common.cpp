@@ -54,7 +54,7 @@
 #include <CoreServices/CoreServices.h>
 #endif
 
-Qt::WFlags psi_dialog_flags = (Qt::WStyle_SysMenu | Qt::WStyle_MinMax);
+Qt::WFlags psi_dialog_flags = (Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint);
 
 Options option;
 bool useSound;

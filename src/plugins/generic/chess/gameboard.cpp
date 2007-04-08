@@ -645,9 +645,9 @@ Figure::validPoint(GameBoard::GameType gt, GameBoard::FigureType *map,
 
 GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 	const char *name)
-	:QWidget(parent, name, Qt::WResizeNoErase |
-		Qt::WNoAutoErase | Qt::WDestructiveClose)
+	:QWidget(parent, name, Qt::WResizeNoErase | Qt::WNoAutoErase)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	QString	str;
 
 	protocol = new GameProtocol();

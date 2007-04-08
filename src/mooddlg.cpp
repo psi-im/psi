@@ -24,8 +24,10 @@
 #include "pepmanager.h"
 #include "im.h"
 
-MoodDlg::MoodDlg(PsiAccount* pa) : QDialog(0, Qt::WDestructiveClose), pa_(pa)
+MoodDlg::MoodDlg(PsiAccount* pa)
+	: QDialog(0), pa_(pa)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	ui_.setupUi(this);
 	setModal(false);
 	connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(close()));

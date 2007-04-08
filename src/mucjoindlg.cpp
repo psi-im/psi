@@ -47,8 +47,9 @@ public:
 };
 
 MUCJoinDlg::MUCJoinDlg(PsiCon *psi, PsiAccount *pa)
-:QDialog(0, Qt::WDestructiveClose)
+	: QDialog(0)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private;
 	setModal(false);
 	setupUi(this);

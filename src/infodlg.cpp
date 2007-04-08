@@ -66,8 +66,9 @@ public:
 };
 
 InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWidget *parent, bool cacheVCard)
-:QDialog(parent, Qt::WDestructiveClose)
+	: QDialog(parent)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
   	if ( option.brushedMetal )
 		setAttribute(Qt::WA_MacMetalStyle);
 	setupUi(this);

@@ -31,8 +31,10 @@
 
 using namespace XMPP;
 
-MUCConfigDlg::MUCConfigDlg(MUCManager* manager, QWidget* parent) : QDialog(parent, Qt::WDestructiveClose), manager_(manager)
+MUCConfigDlg::MUCConfigDlg(MUCManager* manager, QWidget* parent)
+	: QDialog(parent), manager_(manager)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	ui_.setupUi(this);
 	setModal(false);
 

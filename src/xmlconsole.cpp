@@ -154,8 +154,9 @@ void XmlConsole::xml_textReady(const QString &str)
 // XmlPrompt
 //----------------------------------------------------------------------------
 XmlPrompt::XmlPrompt(QWidget *parent, const char *name)
-:QDialog(parent, name, false, Qt::WDestructiveClose)
+	: QDialog(parent, name, false)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	setWindowTitle(tr("XML Input"));
 
 	QVBoxLayout *vb1 = new QVBoxLayout(this, 8);

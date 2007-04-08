@@ -116,8 +116,10 @@ bool JT_AHCGetList::take(const QDomElement& e)
 // JT_AHCommandDlg: Initial command dialog
 // -------------------------------------------------------------------------- 
 
-AHCommandDlg::AHCommandDlg(PsiAccount* pa, const Jid& receiver) : QDialog(0, Qt::WDestructiveClose), pa_(pa), receiver_(receiver)
+AHCommandDlg::AHCommandDlg(PsiAccount* pa, const Jid& receiver)
+	: QDialog(0), pa_(pa), receiver_(receiver)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	QVBoxLayout *vb = new QVBoxLayout(this, 11, 6);
 
 	// Command list + Buttons

@@ -313,7 +313,7 @@ void WbDlg::endSession() {
 		if(n != 0)
 			return;
 	}
-	setWindowFlags(windowFlags() | Qt::WDestructiveClose);
+	setAttribute(Qt::WA_DeleteOnClose);
 	emit sessionEnded(session());
 	close();
 }
@@ -337,7 +337,7 @@ void WbDlg::keyPressEvent(QKeyEvent *e) {
 
 void WbDlg::closeEvent(QCloseEvent *e) {
 	e->accept();
-	if(windowFlags() & Qt::WDestructiveClose)
+	if(testAttribute(Qt::WA_DeleteOnClose))
 		return;
 	if(keepOpen_) {
 		int n = QMessageBox::information(this, tr("Warning"), tr("A new whiteboard message was just received.\nDo you still want to close the window?"), tr("&Yes"), tr("&No"));

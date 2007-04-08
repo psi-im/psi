@@ -119,8 +119,10 @@ public:
 	XData xdata_form;
 };
 
-SearchDlg::SearchDlg(const Jid &jid, PsiAccount *pa) : QDialog(0, Qt::WDestructiveClose)
+SearchDlg::SearchDlg(const Jid &jid, PsiAccount *pa)
+	: QDialog(0)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private;
 	setupUi(this);
 	setModal(false);
