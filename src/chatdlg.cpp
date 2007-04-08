@@ -790,7 +790,7 @@ void ChatDlg::setLooks()
 	d->log->setPaper(brush);
 	d->log->setStaticBackground(true);*/
 
-	setWindowOpacity(double(PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt())/100);
+	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt()))/100);
 }
 
 void ChatDlg::optionsUpdate()

@@ -142,7 +142,7 @@ void TabDlg::setLooks()
 	if (option.putTabsAtBottom)
 		tabs->setTabPosition(QTabWidget::Bottom);
 
-	setWindowOpacity(double(PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt())/100);
+	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt()))/100);
 }
 
 QString TabDlg::getName()

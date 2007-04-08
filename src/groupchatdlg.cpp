@@ -1703,7 +1703,7 @@ void GCMainDlg::setLooks()
 		d->toolbar->show();
 	}
 
-	setWindowOpacity(double(PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt())/100);
+	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt()))/100);
 
 	// update the widget icon
 #ifndef Q_WS_MAC

@@ -456,7 +456,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	//	menuBar()->show();
 #endif
 	
-	setWindowOpacity(double(option.rosterOpacity)/100);
+	setWindowOpacity(double(qMax(MINIMUM_OPACITY,option.rosterOpacity))/100);
 
 	connect(qApp, SIGNAL(dockActivated()), SLOT(dockActivated()));
 }
@@ -1023,7 +1023,7 @@ void MainWin::optionsUpdate()
 	else 
 		menuBar()->show();
 	
-	setWindowOpacity(double(option.rosterOpacity)/100);
+	setWindowOpacity(double(qMax(MINIMUM_OPACITY,option.rosterOpacity))/100);
 	
 	updateTray();
 }

@@ -32,6 +32,8 @@
 #include "psiiconset.h"
 #include "statuspreset.h"
 
+#define MINIMUM_OPACITY 10
+
 #define PROXY_NONE       0
 #define PROXY_HTTPS      1
 #define PROXY_SOCKS4     2
