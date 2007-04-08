@@ -20,8 +20,8 @@
 
 #include "resourcemenu.h"
 #include "psiiconset.h"
-#include "common.h"
 #include "userlist.h"
+#include "xmpp_status.h"
 
 /**
  * \class ResourceMenu
@@ -40,7 +40,7 @@ ResourceMenu::ResourceMenu(QWidget *parent)
  */
 void ResourceMenu::addResource(const UserResource &r, int id)
 {
-	addResource(makeSTATUS(r.status()), r.name(), id);
+	addResource(r.status().type(), r.name(), id);
 }
 
 /**
