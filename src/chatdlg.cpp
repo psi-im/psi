@@ -30,7 +30,6 @@
 #include <QToolBar>
 #include <QTimer>
 #include <QDateTime>
-#include <QLCDNumber>
 #include <QPixmap>
 #include <QColor>
 #include <Qt>
@@ -97,7 +96,7 @@ public:
 	QLabel *lb_ident;
 	IconLabel *lb_status;
 	QLineEdit *le_jid;
-	QLCDNumber *lcd_count;
+	QLabel *lb_count;
 	QMenu *pm_settings;
 
 	QToolBar *toolbar;
@@ -158,7 +157,7 @@ public slots:
 	}
 
 	void updateCounter() {
-		lcd_count->display((int)mle->text().length());
+		lb_count->setNum(mle->text().length());
 	}
 
 	// Records that the user is composing
@@ -238,12 +237,15 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 	hb2->addWidget(d->lb_status);
 	d->le_jid = new QLineEdit(sp_top);
 	d->le_jid->setReadOnly(true);
-	d->lcd_count = new QLCDNumber(sp_top);
+	d->lb_count = new QLabel(sp_top);
 	d->le_jid->setFocusPolicy(Qt::NoFocus);
-	d->lcd_count->setToolTip(tr("Message length"));
-	d->lcd_count->setFixedWidth(50);
+	d->lb_count->setToolTip(tr("Message length"));
+	d->lb_count->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+	d->lb_count->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+	d->lb_count->setFixedWidth(40);
+	d->lb_count->setNum(0);
 	hb2->addWidget(d->le_jid);
-	hb2->addWidget(d->lcd_count);
+	hb2->addWidget(d->lb_count);
 	hb2->addWidget(d->lb_ident);
 
 	// mid area
@@ -520,9 +522,9 @@ void ChatDlg::activated()
 	doFlash(false);
 
 	if(option.showCounter && !d->smallChat)
-		d->lcd_count->show();
+		d->lb_count->show();
 	else
-		d->lcd_count->hide();
+		d->lb_count->hide();
 
 	d->mle->setFocus();
 }
@@ -745,9 +747,9 @@ void ChatDlg::setLooks()
 	updateIdentityVisibility();
 
 	if ( option.showCounter && !d->smallChat )
-		d->lcd_count->show();
+		d->lb_count->show();
 	else
-		d->lcd_count->hide();
+		d->lb_count->hide();
 
 	// update contact info
 	d->status = -2; // sick way of making it redraw the status

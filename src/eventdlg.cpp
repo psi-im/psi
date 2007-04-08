@@ -33,7 +33,6 @@
 #include <qdatetime.h>
 #include <qapplication.h>
 #include <qclipboard.h>
-#include <qlcdnumber.h>
 #include <QResizeEvent>
 #include <QShowEvent>
 #include <QFrame>
@@ -502,7 +501,7 @@ public:
 	IconLabel *lb_status;
 	ELineEdit *le_to;
 	QLineEdit *le_from, *le_subj;
-	QLCDNumber *lcd_count;
+	QLabel *lb_count;
 	IconToolButton *tb_url, *tb_info, *tb_history, *tb_pgp, *tb_icon;
 	IconLabel *lb_pgp;
 	bool enc;
@@ -563,7 +562,7 @@ public slots:
 	}
 
 	void updateCounter() {
-		lcd_count->display((int)mle->text().length());
+		lb_count->setNum(mle->text().length());
 	}
 };
 
@@ -759,9 +758,13 @@ void EventDlg::init()
 
 	// message length counter
 	d->le_subj = new QLineEdit(this);
-	d->lcd_count = new QLCDNumber(this);
-	d->lcd_count->setToolTip(tr("Message length"));
-	d->lcd_count->setFixedWidth(50);
+	d->lb_count = new QLabel(this);
+	d->lb_count->setToolTip(tr("Message length"));
+	d->lb_count->setFixedWidth(40);
+	d->lb_count->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+	d->lb_count->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+	d->lb_count->setNum(0);
+	 
 
 	if(d->composing) {
 		d->tb_pgp = new IconToolButton(this);
@@ -802,7 +805,7 @@ void EventDlg::init()
 		l = new QLabel(tr("Subject:"), this);
 		hb3->addWidget(l);
 		hb3->addWidget(d->le_subj);
-		hb3->addWidget(d->lcd_count);
+		hb3->addWidget(d->lb_count);
 		hb3->addWidget(d->tb_icon);
 		hb3->addWidget(d->tb_url);
 		hb3->addWidget(d->tb_info);
@@ -817,7 +820,7 @@ void EventDlg::init()
 
 	} else {
 		d->le_subj->hide();
-		hb2->addWidget(d->lcd_count);
+		hb2->addWidget(d->lb_count);
 		hb2->addWidget(d->tb_icon);
 		hb2->addWidget(d->tb_url);
 		hb2->addWidget(d->tb_info);
@@ -1265,9 +1268,9 @@ void EventDlg::optionsUpdate()
 	doWhois(true);
 
 	if ( option.showCounter && d->composing )
-		d->lcd_count->show();
+		d->lb_count->show();
 	else
-		d->lcd_count->hide();
+		d->lb_count->hide();
 
 	if ( option.useEmoticons )
 		d->tb_icon->show();
