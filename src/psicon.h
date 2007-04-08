@@ -37,7 +37,6 @@ class UserListItem;
 class EDB;
 class EDBItem;
 class ProxyManager;
-class MainWin;
 class FileTransDlg;
 class IconSelectPopup;
 class QThread;
@@ -116,7 +115,6 @@ public:
 	void buildToolbars();
 	bool getToolbarLocation(Q3DockWindow* dw, Qt::Dock& dock, int& index, bool& nl, int& extraOffset) const;
 
-	MainWin *mainWin() const;
 	IconSelectPopup *iconSelectPopup() const;
 	void processEvent(PsiEvent *);
 

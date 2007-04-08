@@ -1017,7 +1017,7 @@ void PsiCon::slotApplyOptions(const Options &opt)
 	if ( oldOpt.alertStyle != option.alertStyle )
 		alertIconUpdateAlertStyle();
 
-	mainWin()->buildToolbars();
+	d->mainwin->buildToolbars();
 
 	/*// change pgp engine
 	if(option.pgp != oldpgp) {
@@ -1226,11 +1226,6 @@ void PsiCon::accel_activated(int x)
 	}
 }
 
-MainWin *PsiCon::mainWin() const
-{
-	return d->mainwin;
-}
-
 IconSelectPopup *PsiCon::iconSelectPopup() const
 {
 	return d->iconSelect;
@@ -1407,27 +1402,27 @@ void PsiCon::doWakeup()
 
 QList<PsiToolBar*> PsiCon::toolbarList() const
 {
-	return mainWin()->toolbars;
+	return d->mainwin->toolbars;
 }
 
 PsiToolBar *PsiCon::findToolBar(QString group, int index)
 {
 	PsiToolBar *toolBar = 0;
 
-	if (( group == "mainWin" ) && (index < mainWin()->toolbars.size()))
-		toolBar = mainWin()->toolbars.at(index);
+	if (( group == "mainWin" ) && (index < d->mainwin->toolbars.size()))
+		toolBar = d->mainwin->toolbars.at(index);
 
 	return toolBar;
 }
 
 void PsiCon::buildToolbars()
 {
-	mainWin()->buildToolbars();
+	d->mainwin->buildToolbars();
 }
 
 bool PsiCon::getToolbarLocation(Q3DockWindow* dw, Qt::Dock& dock, int& index, bool& nl, int& extraOffset) const
 {
-	return mainWin()->getLocation(dw, dock, index, nl, extraOffset);
+	return d->mainwin->getLocation(dw, dock, index, nl, extraOffset);
 }
 
 PsiActionList *PsiCon::actionList() const
