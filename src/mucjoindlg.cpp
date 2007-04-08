@@ -169,7 +169,7 @@ void MUCJoinDlg::recent_activated(int x)
 
 void MUCJoinDlg::doJoin()
 {
-	if(!d->pa->checkConnected(this))
+	if(!d->pa || !d->pa->checkConnected(this))
 		return;
 
 	QString host = le_host->text();
