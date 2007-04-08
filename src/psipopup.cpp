@@ -27,6 +27,7 @@
 #include "psievent.h"
 #include "im.h"
 #include "psicon.h"
+#include "textutil.h"
 #include "psiaccount.h"
 #include "psiiconset.h"
 #include "iconlabel.h"
@@ -347,9 +348,9 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
 	else 
 		name = "<nobr>&lt;" + Qt::escape(jid) + "&gt;</nobr>";
 
-	QString statusString = plain2rich(status);
+	QString statusString = TextUtil::plain2rich(status);
 	if ( option.useEmoticons )
-		statusString = emoticonify(statusString);
+		statusString = TextUtil::emoticonify(statusString);
 
 	if ( !statusString.isEmpty() )
 		statusString = "<br>" + statusString;
@@ -380,7 +381,7 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
 		QString message;
 		if ( !jmessage->subject().isEmpty() )
 			message += "<font color=\"red\"><b>" + tr("Subject:") + " " + jmessage->subject() + "</b></font><br>";
-		message += plain2rich( jmessage->body() );
+		message += TextUtil::plain2rich( jmessage->body() );
 
 		QLabel *messageLabel = new QLabel(d->popup);
 		QFont font = messageLabel->font();
@@ -389,7 +390,7 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
 
 		messageLabel->setWordWrap(true);
 		messageLabel->setTextFormat(Qt::RichText);
-		messageLabel->setText( d->clipText(linkify( message )) );
+		messageLabel->setText( d->clipText(TextUtil::linkify( message )) );
 		messageLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 		vbox->addWidget(messageLabel);
 

@@ -27,6 +27,7 @@
 #include "userlist.h"
 #include "avatars.h"
 #include "im.h"
+#include "textutil.h"
 #include "common.h"
 #include "mucmanager.h"
 #include "psioptions.h"
@@ -576,13 +577,13 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 			if(!s.isEmpty()) {
 				QString head = QObject::tr("Status Message");
 				if(trim)
-					s = plain2rich(clipStatus(s, 200, 12));
+					s = TextUtil::plain2rich(clipStatus(s, 200, 12));
 				else
-					s = plain2rich(s);
+					s = TextUtil::plain2rich(s);
 				if ( doLinkify )
-					s = linkify(s);
+					s = TextUtil::linkify(s);
 				if( option.useEmoticons && !doLinkify )
-					s = emoticonify(s);
+					s = TextUtil::emoticonify(s);
 				str += QString("<br><nobr><u>%1</u></nobr><br>%2").arg(head).arg(s);
 			}
 		}
@@ -604,11 +605,11 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 		if(!s.isEmpty()) {
 			QString head = QObject::tr("Last Status Message");
 			if(trim)
-				s = plain2rich(clipStatus(s, 200, 12));
+				s = TextUtil::plain2rich(clipStatus(s, 200, 12));
 			else {
-				s = plain2rich(clipStatus(s, 200, 12));
+				s = TextUtil::plain2rich(clipStatus(s, 200, 12));
 				if ( doLinkify )
-					s = linkify(s);
+					s = TextUtil::linkify(s);
 			}
 			str += QString("<br><nobr><u>%1</u></nobr><br>%2").arg(head).arg(s);
 		}

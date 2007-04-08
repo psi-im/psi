@@ -49,6 +49,7 @@
 #include "psievent.h"
 #include "psicon.h"
 #include "psiaccount.h"
+#include "textutil.h"
 #include "psiiconset.h"
 #include "jidutil.h"
 #include "psioptions.h"
@@ -1464,7 +1465,7 @@ void EventDlg::doQuote()
 		return;
 	Jid j(list[0]);
 
-	QString body = rich2plain(d->mle->getHtml());
+	QString body = TextUtil::rich2plain(d->mle->getHtml());
 	aReply(j, body, d->le_subj->text(), d->thread);
 }
 
@@ -1630,16 +1631,16 @@ void EventDlg::updateEvent(PsiEvent *e)
 		d->pb_reply->show();
 		d->pb_quote->show();
 
-		QString txt = plain2rich(m.body());
+		QString txt = TextUtil::plain2rich(m.body());
 
 		// show subject line if the incoming message has one
 		if(m.subject() != "" && !option.showSubjects)
                 	txt = "<p><font color=\"red\"><b>" + tr("Subject:") + " " + m.subject() + "</b></font></p>" + txt;
 
 		if(option.useEmoticons)
-			txt = emoticonify(txt);
+			txt = TextUtil::emoticonify(txt);
 
-		setHtml("<qt>" + linkify(txt) + "</qt>");
+		setHtml("<qt>" + TextUtil::linkify(txt) + "</qt>");
 		
 		d->le_subj->setText(m.subject());
 		d->le_subj->setCursorPosition(0);

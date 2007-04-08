@@ -19,6 +19,7 @@
 ****************************************************************************/
 
 #include "rtparse.h"
+#include "textutil.h"
 #include "common.h"
 
 #include <QTextDocument> // for Qt::escape()
@@ -69,7 +70,7 @@ QString RTParse::next()
 	}
 	v_at += s.length();
 	//printf("chunk = '%s'\n", s.latin1());
-	s = resolveEntities(s);
+	s = TextUtil::resolveEntities(s);
 	//printf("resolved = '%s'\n", s.latin1());
 	return s;
 }

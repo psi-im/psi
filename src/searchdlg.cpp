@@ -32,6 +32,7 @@
 #include "xmpp_tasks.h"
 #include "xmpp_xdata.h"
 #include "xmpp_xmlcommon.h"
+#include "textutil.h"
 #include "searchdlg.h"
 
 using namespace XMPP;
@@ -286,7 +287,7 @@ void SearchDlg::jt_finished()
 						//if ( !form.title().isEmpty() )
 						//	setWindowTitle( form.title() );
 
-						QString str = plain2rich( form.instructions() );
+						QString str = TextUtil::plain2rich( form.instructions() );
 						lb_instructions->setText(str);
 
 						d->xdata = new XDataWidget( d->gr_form );
@@ -300,7 +301,7 @@ void SearchDlg::jt_finished()
 			}
 
 			if ( !useXData ) {
-				QString str = plain2rich(d->form.instructions());
+				QString str = TextUtil::plain2rich(d->form.instructions());
 				lb_instructions->setText(str);
 
 				for(Form::ConstIterator it = d->form.begin(); it != d->form.end(); ++it) {

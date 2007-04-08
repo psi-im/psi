@@ -52,6 +52,7 @@
 #include "filetransfer.h"
 #include "pgpkeydlg.h"
 #include "psioptions.h"
+#include "textutil.h"
 #include "pgputil.h"
 #include "applicationinfo.h"
 #include "pgptransaction.h"
@@ -3063,7 +3064,7 @@ void PsiAccount::dj_composeMessage(const Jid &jid, const QString &body, const QS
 {
 	EventDlg *w = d->psi->createEventDlg(jid.full(), this);
 	if(!body.isEmpty())
-		w->setHtml(plain2rich(qstrquote(body)));
+		w->setHtml(TextUtil::plain2rich(TextUtil::quote(body)));
 
 	if(!subject.isEmpty() && subject.left(3) != "Re:")
 		w->setSubject("Re: " + subject);

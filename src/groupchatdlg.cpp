@@ -56,6 +56,7 @@
 #include "capsmanager.h"
 #include "userlist.h"
 #include "mucconfigdlg.h"
+#include "textutil.h"
 #include "statusdlg.h"
 #include "psiiconset.h"
 #include "stretchwidget.h"
@@ -1603,14 +1604,14 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
 
 	QString txt;
 	if(emote)
-		txt = plain2rich(m.body().mid(4));
+		txt = TextUtil::plain2rich(m.body().mid(4));
 	else
-		txt = plain2rich(m.body());
+		txt = TextUtil::plain2rich(m.body());
 
-	txt = linkify(txt);
+	txt = TextUtil::linkify(txt);
 
 	if(option.useEmoticons)
-		txt = emoticonify(txt);
+		txt = TextUtil::emoticonify(txt);
 
 	if(emote) {
 		//d->te_log->append(QString("<font color=\"%1\">").arg(color) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(Qt::escape(who)) + txt + "</font>");

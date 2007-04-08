@@ -44,6 +44,7 @@
 #include "common.h"
 #include "eventdb.h"
 #include "psiiconset.h"
+#include "textutil.h"
 #include "jidutil.h"
 #include "userlist.h"
 
@@ -672,7 +673,7 @@ HistoryViewItem::HistoryViewItem(PsiEvent *_e, const QString &eid, int xid, Q3Li
 	if(e->type() == PsiEvent::Message) {
 		MessageEvent *me = (MessageEvent *)e;
 		const Message &m = me->message();
-		text = plain2rich(m.body());
+		text = TextUtil::plain2rich(m.body());
 
 		if(!m.urlList().isEmpty())
 			setPixmap(0, IconsetFactory::icon("psi/www"));

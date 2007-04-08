@@ -223,6 +223,7 @@ QString clipStatus(const QString &str, int width, int height);
 // Widget tools
 // -----------------------------------------------------------------------------
 
+void bringToFront(QWidget *w, bool grabFocus = true);
 void replaceWidget(QWidget *, QWidget *);
 void closeDialogs(QWidget *);
 #ifdef Q_WS_X11
@@ -232,18 +233,6 @@ void x11wmClass(Display *dsp, WId wid, QString resName);
 #else
 #define X11WM_CLASS(x)	/* dummy */
 #endif
-
-// -----------------------------------------------------------------------------
-// Rich text utilities
-// -----------------------------------------------------------------------------
-
-QString qstrquote(const QString &, int width=60, bool quoteEmpty=FALSE);
-QString plain2rich(const QString &);
-QString rich2plain(const QString &);
-QString resolveEntities(const QString &);
-QString linkify(const QString &);
-QString emoticonify(const QString &in);
-
 
 // -----------------------------------------------------------------------------
 // History utilities
@@ -261,8 +250,6 @@ QString CAP(const QString &str);
 
 QString encodePassword(const QString &, const QString &);
 QString decodePassword(const QString &, const QString &);
-
-void bringToFront(QWidget *w, bool grabFocus = true);
 
 bool operator!=(const QMap<QString, QString> &, const QMap<QString, QString> &);
 void openURL(const QString &);

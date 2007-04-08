@@ -36,6 +36,7 @@
 #include "xdata_widget.h"
 #include "xmpp.h"
 #include "xmpp_tasks.h"
+#include "textutil.h"
 #include "xmpp_xdata.h"
 #include "xmpp_xmlcommon.h"
 
@@ -278,7 +279,7 @@ void RegistrationDlg::jt_finished()
 							setWindowTitle( form.title() );
 
 						QString str = tr("<b>Registration for \"%1\":</b><br><br>").arg(d->jid.full());
-						str += plain2rich( form.instructions() );
+						str += TextUtil::plain2rich( form.instructions() );
 						d->lb_top->setText(str);
 
 						d->xdata = new XDataWidget( d->gr_form );
@@ -293,7 +294,7 @@ void RegistrationDlg::jt_finished()
 
 			if ( !useXData ) {
 				QString str = tr("<b>Registration for \"%1\":</b><br><br>").arg(d->jid.full());
-				str += plain2rich(d->form.instructions());
+				str += TextUtil::plain2rich(d->form.instructions());
 				d->lb_top->setText(str);
 				d->lb_top->setFixedWidth(300);
 

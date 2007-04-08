@@ -55,6 +55,7 @@
 #include "stretchwidget.h"
 #include "psiiconset.h"
 #include "iconwidget.h"
+#include "textutil.h"
 #include "fancylabel.h"
 #include "msgmle.h"
 #include "iconselect.h"
@@ -704,9 +705,9 @@ void ChatDlg::updateContact(const Jid &jid, bool fromPresence)
 			if(fromPresence && statusChanged) {
 				QString msg = tr("%1 is %2").arg(Qt::escape(d->dispNick)).arg(status2txt(d->status));
 				if(!statusString.isEmpty()) {
-					QString ss = linkify(plain2rich(statusString));
+					QString ss = TextUtil::linkify(TextUtil::plain2rich(statusString));
 					if(option.useEmoticons)
-						ss = emoticonify(ss);
+						ss = TextUtil::emoticonify(ss);
 
 					msg += QString(" [%1]").arg(ss);
 				}
@@ -1125,13 +1126,13 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 		if(emote)
 			txt = txt.mid(me_cmd.length());
 
-		txt = plain2rich(txt);
-		txt = linkify(txt);
+		txt = TextUtil::plain2rich(txt);
+		txt = TextUtil::linkify(txt);
 		// qWarning("regular body:\n%s\n",qPrintable(txt));
 	}
 
 	if(option.useEmoticons)
-		txt = emoticonify(txt);
+		txt = TextUtil::emoticonify(txt);
 
 	who = Qt::escape(who);
 
@@ -1152,7 +1153,7 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 		d->log->appendText(QString("<i>") + tr("-- Attached URL(s) --") + "</i>");
 		for(QList<Url>::ConstIterator it = urls.begin(); it != urls.end(); ++it) {
 			const Url &u = *it;
-			d->log->appendText(QString("<b>") + tr("URL:") + "</b> " + QString("%1").arg( linkify(Qt::escape(u.url())) ));
+			d->log->appendText(QString("<b>") + tr("URL:") + "</b> " + QString("%1").arg( TextUtil::linkify(Qt::escape(u.url())) ));
 			d->log->appendText(QString("<b>") + tr("Desc:") + "</b> " + QString("%1").arg(u.desc()));
 		}
 	}
