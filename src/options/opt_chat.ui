@@ -23,13 +23,6 @@
     <number>6</number>
    </property>
    <item>
-    <widget class="QCheckBox" name="ck_chatSays" >
-     <property name="text" >
-      <string>Contact &quot;says&quot; instead of IRC style</string>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QCheckBox" name="ck_chatSoftReturn" >
      <property name="text" >
       <string>Enter key sends chat messages</string>

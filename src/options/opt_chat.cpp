@@ -61,15 +61,6 @@ QWidget *OptionsTabChat::widget()
 		tr("Make the default action open a normal message window."));
 	QWhatsThis::add(d->rb_defActChat,
 		tr("Make the default action open a chat window."));
-	QWhatsThis::add(d->ck_chatSays,
-		tr("<P>Changes the normal chat style from:</P>"
-		"<P>[01:23:45] &lt;MyName&gt; Hi</P>"
-		"<P>[01:23:56] &lt;YourName&gt; How are you?</P>"
-		"<P>to:</P>"
-		"<P>[01:23:45] MyName says:</P>"
-		"<P>Hi</P>"
-		"<P>[01:23:56] YourName says:</P>"
-		"<P>How are you?</P>"));
 	QWhatsThis::add(d->ck_chatSoftReturn,
 		tr("<P>When checked, pressing Enter in a chat window will send your message."
 		   "  You must use Shift+Enter in order to create a newline in the chat message."
@@ -107,7 +98,6 @@ void OptionsTabChat::applyOptions(Options *opt)
 	OptChatUI *d = (OptChatUI *)w;
 
 	opt->defaultAction   = bg_defAct->buttons().indexOf(bg_defAct->checkedButton());
-	opt->chatSays        = d->ck_chatSays->isChecked();
 	opt->alertOpenChats  = d->ck_alertOpenChats->isChecked();
 	opt->raiseChatWindow = d->ck_raiseChatWindow->isChecked();
 	opt->oldSmallChats 	 = opt->smallChats;
@@ -140,7 +130,6 @@ void OptionsTabChat::restoreOptions(const Options *opt)
 	OptChatUI *d = (OptChatUI *)w;
 
 	bg_defAct->buttons()[opt->defaultAction]->setChecked(true);
-	d->ck_chatSays->setChecked( opt->chatSays );
 	d->ck_alertOpenChats->setChecked( opt->alertOpenChats );
 	d->ck_raiseChatWindow->setChecked( opt->raiseChatWindow );
 	d->ck_smallChats->setChecked( opt->smallChats );
