@@ -1208,8 +1208,16 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 		updateCaption();
 		if (PsiOptions::instance()->getOption("options.ui.flash-windows").toBool())
 			doFlash(true);
-		if(option.raiseChatWindow)
-			bringToFront(this, false);
+		if (option.raiseChatWindow) {
+			if (option.useTabs) {
+				TabDlg* tabSet = d->pa->psi()->getManagingTabs(this);
+				tabSet->selectTab(this);
+				bringToFront(tabSet, false);
+			}
+			else {
+				bringToFront(this, false);
+			}
+		}
 	}
 	//else {
 	//	messagesRead(d->jid);
