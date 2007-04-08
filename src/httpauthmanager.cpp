@@ -56,6 +56,9 @@ bool HttpAuthListener::take(const QDomElement &e)
 	if(s.isNull())
 		return false;
 
+	if (s.kind() == XMPP::Stanza::IQ && s.type() != "get")
+		return false;
+
 	// now really checking (with namespace)
 	c = s.element().elementsByTagNameNS("http://jabber.org/protocol/http-auth", "confirm").item(0).toElement();
 	if (c.isNull())
