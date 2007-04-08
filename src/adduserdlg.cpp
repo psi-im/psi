@@ -30,6 +30,7 @@
 #include <qcheckbox.h>
 #include "xmpp_tasks.h"
 #include "psiaccount.h"
+#include "psiiconset.h"
 #include "contactview.h"
 #include "busywidget.h"
 #include "common.h"
@@ -74,7 +75,7 @@ AddUserDlg::AddUserDlg(const QStringList &services, const QStringList &names, co
 	QStringList::ConstIterator it1 = services.begin();
 	QStringList::ConstIterator it2 = names.begin();
 	for(; it1 != services.end(); ++it1, ++it2)
-		cb_service->insertItem(is->status(*it1, STATUS_ONLINE), *it2);
+		cb_service->insertItem(PsiIconset::instance()->status(*it1, STATUS_ONLINE), *it2);
 	connect(cb_service, SIGNAL(activated(int)), SLOT(serviceActivated(int)));
 
 	connect(le_transPrompt, SIGNAL(textChanged(const QString &)), SLOT(le_transPromptChanged(const QString &)));

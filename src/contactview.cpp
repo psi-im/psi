@@ -50,6 +50,7 @@
 #include "pgputil.h"
 #include "alerticon.h"
 #include "avatars.h"
+#include "psiiconset.h"
 #include "serverinfomanager.h"
 #include "pepmanager.h"
 #include "psitooltip.h"
@@ -902,20 +903,20 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 
 		const int status_start = 16;
 		Q3PopupMenu *sm = new Q3PopupMenu(&pm);
-		sm->insertItem(is->status(STATUS_ONLINE),	status2txt(STATUS_ONLINE),	STATUS_ONLINE		+ status_start);
+		sm->insertItem(PsiIconset::instance()->status(STATUS_ONLINE),	status2txt(STATUS_ONLINE),	STATUS_ONLINE		+ status_start);
 		if (PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool())
-			sm->insertItem(is->status(STATUS_CHAT),		status2txt(STATUS_CHAT),	STATUS_CHAT		+ status_start);
+			sm->insertItem(PsiIconset::instance()->status(STATUS_CHAT),		status2txt(STATUS_CHAT),	STATUS_CHAT		+ status_start);
 		sm->insertSeparator();
-		sm->insertItem(is->status(STATUS_AWAY),		status2txt(STATUS_AWAY),	STATUS_AWAY		+ status_start);
+		sm->insertItem(PsiIconset::instance()->status(STATUS_AWAY),		status2txt(STATUS_AWAY),	STATUS_AWAY		+ status_start);
 		if (PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool())
-			sm->insertItem(is->status(STATUS_XA),		status2txt(STATUS_XA),		STATUS_XA		+ status_start);
-		sm->insertItem(is->status(STATUS_DND),		status2txt(STATUS_DND),		STATUS_DND		+ status_start);
+			sm->insertItem(PsiIconset::instance()->status(STATUS_XA),		status2txt(STATUS_XA),		STATUS_XA		+ status_start);
+		sm->insertItem(PsiIconset::instance()->status(STATUS_DND),		status2txt(STATUS_DND),		STATUS_DND		+ status_start);
 		if (PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool()) {
 			sm->insertSeparator();
-			sm->insertItem(is->status(STATUS_INVISIBLE),	status2txt(STATUS_INVISIBLE),	STATUS_INVISIBLE	+ status_start);
+			sm->insertItem(PsiIconset::instance()->status(STATUS_INVISIBLE),	status2txt(STATUS_INVISIBLE),	STATUS_INVISIBLE	+ status_start);
 		}
 		sm->insertSeparator();
-		sm->insertItem(is->status(STATUS_OFFLINE),	status2txt(STATUS_OFFLINE),	STATUS_OFFLINE		+ status_start);
+		sm->insertItem(PsiIconset::instance()->status(STATUS_OFFLINE),	status2txt(STATUS_OFFLINE),	STATUS_OFFLINE		+ status_start);
 		pm.insertItem(tr("&Status"), sm);
 		pm.insertItem(tr("Mood"), 11);
 		pm.setItemEnabled(11, d->pa->serverInfoManager()->hasPEP());
@@ -1108,7 +1109,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		if (PsiOptions::instance()->getOption("options.ui.message.enabled").toBool())
 			d->cv->qa_send->addTo(&pm);
 
-		//pm.insertItem(QIconSet(is->url), tr("Send &URL"), 2);
+		//pm.insertItem(QIconSet(PsiIconset::instance()->url), tr("Send &URL"), 2);
 
 		const UserResourceList &rl = u->userResourceList();
 
@@ -1271,10 +1272,10 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 
 				d->cv->qa_logon->setEnabled( !avail && online );
 
-				d->cv->qa_logon->setIconSet(is->status(e->u.jid(), STATUS_ONLINE));
+				d->cv->qa_logon->setIconSet(PsiIconset::instance()->status(e->u.jid(), STATUS_ONLINE));
 				d->cv->qa_logon->addTo(&pm);
 
-				pm.insertItem(is->status(e->u.jid(), STATUS_OFFLINE), tr("Log off"), 16);
+				pm.insertItem(PsiIconset::instance()->status(e->u.jid(), STATUS_OFFLINE), tr("Log off"), 16);
 				if(!avail || !online)
 					pm.setItemEnabled(16, false);
 				pm.insertSeparator();
@@ -3196,7 +3197,7 @@ void ContactViewItem::setProfileState(int status)
 		d->status = status;
 
 		clearAlert();
-		setIcon(is->statusPtr(status));
+		setIcon(PsiIconset::instance()->statusPtr(status));
 	}
 }
 
@@ -3223,7 +3224,7 @@ void ContactViewItem::setGroupInfo(const QString &info)
 void ContactViewItem::resetStatus()
 {
 	if ( !d->alerting && d->u ) {
-		setIcon(is->statusPtr(d->u));
+		setIcon(PsiIconset::instance()->statusPtr(d->u));
 	}
 
 	// If the status is shown, update the text of the item too

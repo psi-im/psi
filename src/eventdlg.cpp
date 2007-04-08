@@ -49,6 +49,7 @@
 #include "psievent.h"
 #include "psicon.h"
 #include "psiaccount.h"
+#include "psiiconset.h"
 #include "jidutil.h"
 #include "psioptions.h"
 #include "msgmle.h"
@@ -239,7 +240,7 @@ void ELineEdit::keyPressEvent(QKeyEvent *e)
 //			else
 //				name = r.name();
 //
-//			rm->insertItem(is->status(r.status()), name, n++);
+//			rm->insertItem(PsiIconset::instance()->status(r.status()), name, n++);
 //		}
 //	}
 //
@@ -1578,7 +1579,7 @@ void EventDlg::updateContact(const Jid &jid)
 		if(status == -1 || !u)
 			d->lb_status->setIcon(IconsetFactory::iconPtr("status/noauth"));
 		else
-			d->lb_status->setIcon(is->statusPtr(jid, status));
+			d->lb_status->setIcon(PsiIconset::instance()->statusPtr(jid, status));
 
 		if(u)
 			d->lb_status->setToolTip(u->makeTip(true, false));
@@ -1604,7 +1605,7 @@ void EventDlg::setTime(const QDateTime &t, bool late)
 void EventDlg::updateEvent(PsiEvent *e)
 {
 	Icon *oldanim = d->anim;
-	d->anim = is->event2icon(e);
+	d->anim = PsiIconset::instance()->event2icon(e);
 
 	if(d->anim != oldanim)
 		setWindowIcon(*d->anim);

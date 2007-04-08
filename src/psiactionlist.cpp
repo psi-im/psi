@@ -19,6 +19,7 @@
  */
 
 #include "psiactionlist.h"
+#include "iconset.h"
 
 #include <qobject.h>
 

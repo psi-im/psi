@@ -22,8 +22,11 @@
 #define COMMON_H
 
 #include <QString>
+#include <QMap>
+#include <QSize>
 #include <QStringList>
 #include <QList>
+#include <QColor>
 
 #include "im.h"
 #include "statuspreset.h"
@@ -211,10 +214,10 @@ Options option;
 #define STATUS_ERROR	 102
 
 QString status2txt(int status);
-QXMPP::Status makeStatus(int, const QString &);
+XMPP::Status makeStatus(int, const QString &);
 XMPP::Status makeStatus(int, const QString &, int);
 int makeSTATUS(const XMPP::Status &);
-String clipStatus(const QString &str, int width, int height);
+QString clipStatus(const QString &str, int width, int height);
 
 
 // -----------------------------------------------------------------------------

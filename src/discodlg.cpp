@@ -47,6 +47,7 @@
 #include "busywidget.h"
 #include "common.h"
 #include "iconaction.h"
+#include "psiiconset.h"
 #include "psitooltip.h"
 #include "stretchwidget.h"
 #include "psioptions.h"
@@ -76,7 +77,7 @@ Icon category2icon(const QString &category, const QString &type, int status=STAT
 		else
 			trans = "transport";
 
-		return is->transportStatus(trans, status);
+		return PsiIconset::instance()->transportStatus(trans, status);
 
 		// irc
 		// jud
@@ -106,7 +107,7 @@ Icon category2icon(const QString &category, const QString &type, int status=STAT
 		// inbox
 		// portable
 		// voice
-		return is->status(STATUS_ONLINE);
+		return PsiIconset::instance()->status(STATUS_ONLINE);
 	}
 	// application
 	   // bot
@@ -323,7 +324,7 @@ void DiscoListItem::copyItem(const DiscoItem &it)
 	}
 
 	if ( !pixmapOk )
-		setPixmap (0, is->status(di.jid(), STATUS_ONLINE));
+		setPixmap (0, PsiIconset::instance()->status(di.jid(), STATUS_ONLINE));
 
 	repaint();
 
@@ -673,7 +674,7 @@ void DiscoListItem::discoInfoFinished()
 				}
 			}
 			if ( !pixmapOk )
-				setPixmap (0, is->status(di.jid(), STATUS_ERROR));
+				setPixmap (0, PsiIconset::instance()->status(di.jid(), STATUS_ERROR));
 		} else {
 			repaint(); //for setExpandable() called earlier
 		}
@@ -1416,7 +1417,7 @@ DiscoDlg::DiscoDlg(PsiAccount *pa, const Jid &jid, const QString &node)
 	d->node = node;
 
 	setWindowTitle(CAP(caption()));
-	setWindowIcon(is->transportStatus("transport", STATUS_ONLINE));
+	setWindowIcon(PsiIconset::instance()->transportStatus("transport", STATUS_ONLINE));
 	X11WM_CLASS("disco");
 
 	connect (pb_browse, SIGNAL(clicked()), d, SLOT(doDisco()));

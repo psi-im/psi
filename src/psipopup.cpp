@@ -28,6 +28,7 @@
 #include "im.h"
 #include "psicon.h"
 #include "psiaccount.h"
+#include "psiiconset.h"
 #include "iconlabel.h"
 
 #include <qapplication.h>
@@ -312,7 +313,7 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
 	if ( event )
 		connect(event, SIGNAL(destroyed()), d, SLOT(eventDestroyed()));
 
-	Icon *icon = is->statusPtr(j, r.status());
+	Icon *icon = PsiIconset::instance()->statusPtr(j, r.status());
 	QString text;
 
 	QString jid = j.full();

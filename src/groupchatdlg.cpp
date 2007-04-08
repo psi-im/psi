@@ -57,6 +57,7 @@
 #include "userlist.h"
 #include "mucconfigdlg.h"
 #include "statusdlg.h"
+#include "psiiconset.h"
 #include "stretchwidget.h"
 #include "mucmanager.h"
 #include "busywidget.h"
@@ -191,7 +192,7 @@ void GCUserView::updateAll()
 {
 	for (Q3ListViewItem *j = firstChild(); j; j = j->nextSibling())
 		for(GCUserViewItem *i = (GCUserViewItem *)j->firstChild(); i; i = (GCUserViewItem *)i->nextSibling())
-			i->setPixmap(0, is->status(i->s));
+			i->setPixmap(0, PsiIconset::instance()->status(i->s));
 }
 
 QStringList GCUserView::nickList() const
@@ -230,7 +231,7 @@ void GCUserView::updateEntry(const QString &nick, const Status &s)
 	}
 
 	lvi->s = s;
-	lvi->setPixmap(0, is->status(lvi->s));
+	lvi->setPixmap(0, PsiIconset::instance()->status(lvi->s));
 }
 
 GCUserViewGroupItem* GCUserView::findGroup(MUCItem::Role a) const
@@ -1745,7 +1746,7 @@ void GCMainDlg::setLooks()
 void GCMainDlg::optionsUpdate()
 {
 	/*QMimeSourceFactory *m = d->te_log->mimeSourceFactory();
-	d->te_log->setMimeSourceFactory(is->emoticons.generateFactory());
+	d->te_log->setMimeSourceFactory(PsiIconset::instance()->emoticons.generateFactory());
 	delete m;*/
 
 	setLooks();

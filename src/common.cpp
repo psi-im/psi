@@ -22,6 +22,7 @@
 #include "profiles.h"
 #include "rtparse.h"
 #include "psievent.h"
+#include "psiiconset.h"
 #include "applicationinfo.h"
 
 #include <QUrl>
@@ -524,7 +525,7 @@ QString emoticonify(const QString &in)
 
 			int foundPos = -1, foundLen = -1;
 
-			Q3PtrListIterator<Iconset> iconsets(is->emoticons);
+			Q3PtrListIterator<Iconset> iconsets(PsiIconset::instance()->emoticons);
 			Iconset *iconset;
     			while ( (iconset = iconsets.current()) != 0 ) {
 				QListIterator<Icon*> it = iconset->iterator();

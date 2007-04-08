@@ -132,19 +132,19 @@ void PsiGrowlNotifier::popup(PsiAccount* account, PsiPopup::PopupType type, cons
 			name = QObject::tr("Contact becomes Available");
 			title = QString("%1 (%2)").arg(contact).arg(statusTxt);
 			desc = statusMsg;
-			//icon = is->statusPQString(jid, r.status());
+			//icon = PsiIconset::instance()->statusPQString(jid, r.status());
 			break;
 		case PsiPopup::AlertOffline:
 			name = QObject::tr("Contact becomes Unavailable");
 			title = QString("%1 (%2)").arg(contact).arg(statusTxt);
 			desc = statusMsg;
-			//icon = is->statusPQString(jid, r.status());
+			//icon = PsiIconset::instance()->statusPQString(jid, r.status());
 			break;
 		case PsiPopup::AlertStatusChange:
 			name = QObject::tr("Contact changes Status");
 			title = QString("%1 (%2)").arg(contact).arg(statusTxt);
 			desc = statusMsg;
-			//icon = is->statusPQString(jid, r.status());
+			//icon = PsiIconset::instance()->statusPQString(jid, r.status());
 			break;
 		case PsiPopup::AlertMessage: {
 			name = QObject::tr("Incoming Message");

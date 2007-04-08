@@ -2,6 +2,7 @@
 #include "common.h"
 #include "iconwidget.h"
 #include "applicationinfo.h"
+#include "psiiconset.h"
 #include "psicon.h"
 
 #include <q3buttongroup.h>
@@ -453,7 +454,7 @@ bool OptionsTabIconsetSystem::event(QEvent *e)
 
 		Iconset *i = le->iconset();
 		if ( i ) {
-			is->stripFirstAnimFrame(i);
+			PsiIconset::instance()->stripFirstAnimFrame(i);
 			d->iss_system->insert(*i);
 
 			QFileInfo fi( i->fileName() );
@@ -583,7 +584,7 @@ void OptionsTabIconsetEmoticons::restoreOptions(const Options *opt)
 	d->iss_emoticons->clear();
 
 	{
-		Q3PtrListIterator<Iconset> it ( is->emoticons );
+		Q3PtrListIterator<Iconset> it ( PsiIconset::instance()->emoticons );
 		Iconset *is;
 		for ( ; (is = it.current()); ++it) {
 			d->iss_emoticons->insert(*is);
@@ -595,7 +596,7 @@ void OptionsTabIconsetEmoticons::restoreOptions(const Options *opt)
 	{
 		QStringList loaded;
 		{
-			Q3PtrListIterator<Iconset> it( is->emoticons );
+			Q3PtrListIterator<Iconset> it( PsiIconset::instance()->emoticons );
 			Iconset *tmp;
 			for ( ; (tmp = it.current()); ++it) {
 				QFileInfo fi ( tmp->fileName() );
@@ -843,7 +844,7 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
 
 		Iconset *i = le->iconset();
 		if ( i ) {
-			is->stripFirstAnimFrame(i);
+			PsiIconset::instance()->stripFirstAnimFrame(i);
 			QFileInfo fi( i->fileName() );
 
 			// roster - default
@@ -870,7 +871,7 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
 			for ( ; it.current(); ++it) {
 				Q3ListViewItem *i = it.current();
 				if ( !i->text(2).isEmpty() ) {
-					Iconset *iss = is->roster[o->serviceRosterIconset[i->text(2)]];
+					Iconset *iss = PsiIconset::instance()->roster[o->serviceRosterIconset[i->text(2)]];
 					if ( iss ) {
 						i->setText(1, iss->name());
 
@@ -896,7 +897,7 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
 				item->setText(0, clipCustomText(it.key())); // RegExp
 				item->setText(2, it.key());
 
-				Iconset *iss = is->roster[it.data()];
+				Iconset *iss = PsiIconset::instance()->roster[it.data()];
 				if ( iss ) {
 					item->setText(1, iss->name());
 
@@ -1080,7 +1081,7 @@ void OptionsTabIconsetRoster::isCustom_add()
 
 	QString def;
 	const Iconset *iconset = d->iss_defRoster->iconset();
-	if ( is ) {
+	if ( iconset ) {
 		QFileInfo fi( iconset->fileName() );
 		def = fi.fileName();
 	}
@@ -1088,7 +1089,7 @@ void OptionsTabIconsetRoster::isCustom_add()
 		qWarning("OptionsTabIconsetRoster::isCustom_add(): 'def' is null!");
 
 	Q3ListViewItem *item = new Q3ListViewItem(d->lv_customRoster, d->lv_customRoster->lastItem());
-	const Iconset *i = is->roster[def];
+	const Iconset *i = PsiIconset::instance()->roster[def];
 	if ( i ) {
 		item->setText(1, i->name());
 

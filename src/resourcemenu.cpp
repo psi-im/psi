@@ -19,6 +19,7 @@
  */
 
 #include "resourcemenu.h"
+#include "psiiconset.h"
 #include "common.h"
 #include "userlist.h"
 
@@ -53,5 +54,5 @@ void ResourceMenu::addResource(int status, QString name, int id)
 
 	//rname += " (" + status2txt(status) + ")";
 
-	insertItem(is->status(status), rname, id);
+	insertItem(PsiIconset::instance()->status(status), rname, id);
 }

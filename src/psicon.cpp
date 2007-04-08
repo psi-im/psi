@@ -36,6 +36,7 @@
 #include "s5b.h"
 #include "psiaccount.h"
 #include "accountadddlg.h"
+#include "psiiconset.h"
 #include "contactview.h"
 #include "passphrasedlg.h"
 #include "common.h"
@@ -194,7 +195,7 @@ public:
 	void updateIconSelect()
 	{
 		Iconset iss;
-		Q3PtrListIterator<Iconset> iconsets(is->emoticons);
+		Q3PtrListIterator<Iconset> iconsets(PsiIconset::instance()->emoticons);
 		Iconset *iconset;
 		while ( (iconset = iconsets.current()) != 0 ) {
 			iss += *iconset;
@@ -331,8 +332,7 @@ bool PsiCon::init()
 	option = d->pro.prefs;
 
 	// first thing, try to load the iconset
-	is = new PsiIconset();
-	if( !is->loadAll() ) {
+	if( !PsiIconset::instance()->loadAll() ) {
 		//option.iconset = "stellar";
 		//if(!is.load(option.iconset)) {
 			QMessageBox::critical(0, tr("Error"), tr("Unable to load iconset!  Please make sure Psi is properly installed."));
@@ -509,9 +509,6 @@ void PsiCon::deinit()
 		d->pro.mwgeom = mwgeom;
 	}
 
-	// unload iconset
-	delete is;
-	
 	// TuneController
 	delete d->tuneController;
 
@@ -1113,7 +1110,7 @@ void PsiCon::slotApplyOptions(const Options &opt)
 	     operator!=(option.serviceRosterIconset,oldOpt.serviceRosterIconset)	||
 	     operator!=(option.customRosterIconset,oldOpt.customRosterIconset) )
 	{
-		if ( notifyRestart && is->optionsChanged(&oldOpt) )
+		if ( notifyRestart && PsiIconset::instance()->optionsChanged(&oldOpt) )
 			QMessageBox::information(0, tr("Information"), tr("The complete iconset update will happen on next Psi start."));
 
 		// update icon selector
@@ -1189,7 +1186,7 @@ void PsiCon::queueChanged()
 	int nextAmount = queueCount();
 	PsiAccount *pa = queueLowestEventId();
 	if(pa)
-		nextAnim = is->event2icon(pa->eventQueue()->peekNext());
+		nextAnim = PsiIconset::instance()->event2icon(pa->eventQueue()->peekNext());
 
 #ifdef Q_WS_MAC
 	{

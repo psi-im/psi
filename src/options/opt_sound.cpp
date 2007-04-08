@@ -1,6 +1,7 @@
 #include "opt_sound.h"
 #include "common.h"
 #include "iconwidget.h"
+#include "iconset.h"
 #include "applicationinfo.h"
 
 #include <qbuttongroup.h>

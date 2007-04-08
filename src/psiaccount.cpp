@@ -23,10 +23,7 @@
  *
  */
 
-#include "psiaccount.h"
-
 #include <QFileDialog>
-
 #include <qinputdialog.h>
 #include <qtimer.h>
 #include <qmessagebox.h>
@@ -44,6 +41,8 @@
 #include <QList>
 #include <QHostInfo>
 
+#include "psiaccount.h"
+#include "psiiconset.h"
 #include "psicon.h"
 #include "profiles.h"
 #include "im.h"
@@ -2467,7 +2466,7 @@ void PsiAccount::cpUpdate(const UserListItem &u, const QString &rname, bool from
 	d->cp->updateEntry(u);
 
 	if(e) {
-		d->cp->setAlert(u.jid(), is->event2icon(e));
+		d->cp->setAlert(u.jid(), PsiIconset::instance()->event2icon(e));
 	}
 	else
 		d->cp->clearAlert(u.jid());
@@ -3579,7 +3578,7 @@ void PsiAccount::updateReadNext(const Jid &j)
 		Icon *nextAnim = 0;
 		int nextAmount = d->eventQueue->count(j);
 		if(nextAmount > 0)
-			nextAnim = is->event2icon(d->eventQueue->peek(j));
+			nextAnim = PsiIconset::instance()->event2icon(d->eventQueue->peek(j));
 		w->updateReadNext(nextAnim, nextAmount);
 	}
 

@@ -3,6 +3,7 @@
 #include "common.h"
 #include "psicon.h"
 #include "fancylabel.h"
+#include "iconset.h"
 #include "iconwidget.h"
 
 #include <qlayout.h>
@@ -11,6 +12,7 @@
 #include <QStackedWidget>
 #include <qpen.h>
 #include <qpainter.h>
+#include <Q3Dict>
 #include <QPixmap>
 #include <Q3PtrList>
 #include <QVBoxLayout>

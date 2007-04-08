@@ -41,6 +41,7 @@
 #include "showtextdlg.h"
 #include "psicon.h"
 #include "contactview.h"
+#include "psiiconset.h"
 #include "applicationinfo.h"
 #include "psiaccount.h"
 #include "psitoolbar.h"
@@ -217,7 +218,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 		setAttribute(Qt::WA_MacMetalStyle);
 	d = new Private(psi, this);
 
-	setWindowIcon(is->status(STATUS_OFFLINE));
+	setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE));
 
 	d->onTop = _onTop;
 	d->asTool = _asTool;
@@ -510,7 +511,7 @@ void MainWin::setUseDock(bool use)
 	connect(d->trayMenu, SIGNAL(aboutToShow()), SLOT(buildTrayMenu()));
 
 	d->tray = new MTray("Psi", d->trayMenu);
-	d->tray->setIcon( is->statusPtr( STATUS_OFFLINE ));
+	d->tray->setIcon( PsiIconset::instance()->statusPtr( STATUS_OFFLINE ));
 	d->tray->setToolTip(ApplicationInfo::name());
 	connect(d->tray, SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
 	connect(d->tray, SIGNAL(doubleClicked(const QPoint &)), SLOT(trayDoubleClicked()));
@@ -793,22 +794,22 @@ void MainWin::decorateButton(int status)
 	d->lastStatus = status;
 
 	QIcon icon;
-	icon.setPixmap(is->status(status), QIcon::Small);
+	icon.setPixmap(PsiIconset::instance()->status(status), QIcon::Small);
 
 	if(status == -1) {
 		d->statusButton->setText(tr("Connecting"));
 		if (option.alertStyle != 0)
 			d->statusButton->setAlert(IconsetFactory::iconPtr("psi/connect"));
 		else
-			d->statusButton->setIcon(is->statusPtr(STATUS_OFFLINE));
+			d->statusButton->setIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
 
-		setWindowIcon(is->status(STATUS_OFFLINE));
+		setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE));
 	}
 	else {
 		d->statusButton->setText(status2txt(status));
-		d->statusButton->setIcon(is->statusPtr(status));
+		d->statusButton->setIcon(PsiIconset::instance()->statusPtr(status));
 
-		setWindowIcon(is->status(status));
+		setWindowIcon(PsiIconset::instance()->status(status));
 	}
 
 	updateTray();
@@ -1026,7 +1027,7 @@ void MainWin::updateTray()
 	else if ( d->lastStatus == -1 )
 		d->tray->setAlert(IconsetFactory::iconPtr("psi/connect"));
 	else
-		d->tray->setIcon(is->statusPtr(d->lastStatus));
+		d->tray->setIcon(PsiIconset::instance()->statusPtr(d->lastStatus));
 }
 
 void MainWin::doRecvNextEvent()

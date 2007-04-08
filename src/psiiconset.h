@@ -35,7 +35,7 @@ struct Options;
 class PsiIconset
 {
 public:
-	PsiIconset* instance();
+	static PsiIconset* instance();
 
 	bool loadSystem();
 	bool loadAll();
@@ -82,7 +82,7 @@ private:
 	class Private;
 	Private *d;
 
-	PsiIconset* instance_;
+	static PsiIconset* instance_;
 };
 
 #endif

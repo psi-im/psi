@@ -28,6 +28,7 @@
 #include <Q3PtrList>
 #include "psicon.h"
 #include "mainwin.h"
+#include "iconset.h"
 #include "psicon.h"
 #include "iconaction.h"
 #include "options/opt_toolbars.h"

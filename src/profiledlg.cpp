@@ -20,6 +20,7 @@
 
 #include "profiledlg.h"
 #include "applicationinfo.h"
+#include "iconset.h"
 
 #include <QLabel>
 #include <QComboBox>

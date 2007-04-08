@@ -53,6 +53,7 @@
 #include "common.h"
 #include "userlist.h"
 #include "stretchwidget.h"
+#include "psiiconset.h"
 #include "iconwidget.h"
 #include "fancylabel.h"
 #include "msgmle.h"
@@ -669,7 +670,7 @@ void ChatDlg::updateContact(const Jid &jid, bool fromPresence)
 			if(status == -1 || !u)
 				d->lb_status->setIcon(IconsetFactory::iconPtr("status/noauth"));
 			else
-				d->lb_status->setIcon(is->statusPtr(jid, status));
+				d->lb_status->setIcon(PsiIconset::instance()->statusPtr(jid, status));
 		}
 
 		if(u)

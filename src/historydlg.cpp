@@ -43,6 +43,7 @@
 #include "applicationinfo.h"
 #include "common.h"
 #include "eventdb.h"
+#include "psiiconset.h"
 #include "jidutil.h"
 #include "userlist.h"
 
@@ -667,7 +668,7 @@ HistoryViewItem::HistoryViewItem(PsiEvent *_e, const QString &eid, int xid, Q3Li
 		e = new AuthEvent(*ae);
 	}
 
-	Icon *a = is->event2icon(e);
+	Icon *a = PsiIconset::instance()->event2icon(e);
 	if(e->type() == PsiEvent::Message) {
 		MessageEvent *me = (MessageEvent *)e;
 		const Message &m = me->message();

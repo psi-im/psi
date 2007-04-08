@@ -39,6 +39,7 @@
 #include "xmpp.h"
 
 #include "eventdlg.h"
+#include "psiiconset.h"
 #include "applicationinfo.h"
 #include "chatdlg.h"
 #ifdef USE_CRASH
@@ -237,8 +238,7 @@ void PsiMain::chooseProfile()
 	QString str = "";
 
 	// dirty, dirty, dirty hack
-	is = new PsiIconset;
-	is->loadSystem();
+	PsiIconset::instance()->loadSystem();
 
 	while(1) {
 		ProfileOpenDlg *w = new ProfileOpenDlg(lastProfile, langs, curLang);
@@ -260,8 +260,6 @@ void PsiMain::chooseProfile()
 			break;
 		}
 	}
-
-	delete is;
 
 	if(str.isEmpty()) {
 		quit();
