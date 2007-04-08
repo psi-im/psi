@@ -2551,7 +2551,7 @@ void PsiAccount::changeStatus(int x)
 		}
 		else {
 			StatusSetDlg *w = new StatusSetDlg(this, makeStatus(x, ""));
-			connect(w, SIGNAL(set(const Status &, bool)), SLOT(setStatus(const Status &, bool)));
+			connect(w, SIGNAL(set(const XMPP::Status &, bool)), SLOT(setStatus(const XMPP::Status &, bool)));
 			w->show();
 		}
 	}

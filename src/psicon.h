@@ -146,7 +146,7 @@ public slots:
 	void slotApplyOptions(const Options &);
 	void queueChanged();
 	void recvNextEvent();
-	void setStatusFromDialog(const Status &, bool withPriority);
+	void setStatusFromDialog(const XMPP::Status &, bool withPriority);
 	void pgp_keysUpdated();
 	void proxy_settingsChanged();
 	void accel_activated(int);

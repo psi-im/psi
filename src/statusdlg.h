@@ -49,7 +49,7 @@ public:
 	~StatusSetDlg();
 
 signals:
-	void set(const Status &, bool withPriority);
+	void set(const XMPP::Status &, bool withPriority);
 	void cancelled();
 
 private slots:

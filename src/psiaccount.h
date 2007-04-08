@@ -178,7 +178,7 @@ signals:
 	void enabledChanged();
 
 public slots:
-	void setStatus(const Status &, bool withStatus = false);
+	void setStatus(const XMPP::Status &, bool withStatus = false);
 
 	void capsChanged(const Jid&);
 	void tuneStopped();

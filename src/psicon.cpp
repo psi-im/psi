@@ -827,7 +827,7 @@ void PsiCon::statusMenuChanged(int x)
 		else {
 			// Create a dialog with the last status message
 			StatusSetDlg *w = new StatusSetDlg(this, makeStatus(x, d->lastStatusString));
-			connect(w, SIGNAL(set(const Status &, bool)), SLOT(setStatusFromDialog(const Status &, bool)));
+			connect(w, SIGNAL(set(const XMPP::Status &, bool)), SLOT(setStatusFromDialog(const XMPP::Status &, bool)));
 			connect(w, SIGNAL(cancelled()), SLOT(updateMainwinStatus()));
 			if(option.useDock == true)
 				connect(w, SIGNAL(set(const XMPP::Status &, bool)), d->mainwin, SLOT(setTrayToolTip(const XMPP::Status &, bool)));
