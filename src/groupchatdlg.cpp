@@ -163,16 +163,16 @@ GCUserView::GCUserView(GCMainDlg* dlg, QWidget *parent, const char *name)
 	gcDlg_ = dlg;
 	setResizeMode(Q3ListView::AllColumns);
 	setTreeStepSize(0);
-	setSorting(0);
 	setShowToolTips(false);
 	header()->hide();
 	addColumn("");
+	setSortColumn(-1);
 	Q3ListViewItem* i;
-	i = new GCUserViewGroupItem(this, tr("Moderators"));
+	i = new GCUserViewGroupItem(this, tr("Visitors"));
 	i->setOpen(true);
 	i = new GCUserViewGroupItem(this, tr("Participants"));
 	i->setOpen(true);
-	i = new GCUserViewGroupItem(this, tr("Visitors"));
+	i = new GCUserViewGroupItem(this, tr("Moderators"));
 	i->setOpen(true);
 
 	connect(this, SIGNAL(doubleClicked(Q3ListViewItem *)), SLOT(qlv_doubleClicked(Q3ListViewItem *)));
