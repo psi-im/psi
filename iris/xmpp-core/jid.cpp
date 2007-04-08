@@ -193,6 +193,7 @@ StringPrepCache *StringPrepCache::instance = 0;
 Jid::Jid()
 {
 	valid = false;
+	null = true;
 }
 
 Jid::~Jid()
@@ -229,6 +230,7 @@ void Jid::reset()
 	n = QString();
 	r = QString();
 	valid = false;
+	null = true;
 }
 
 void Jid::update()
@@ -244,6 +246,7 @@ void Jid::update()
 		f = b + '/' + r;
 	if(f.isEmpty())
 		valid = false;
+	null = f.isEmpty() && r.isEmpty();
 }
 
 void Jid::set(const QString &s)
@@ -279,6 +282,7 @@ void Jid::set(const QString &s)
 	}
 
 	valid = true;
+	null = false;
 	d = norm_domain;
 	n = norm_node;
 	r = norm_resource;
@@ -293,6 +297,7 @@ void Jid::set(const QString &domain, const QString &node, const QString &resourc
 		return;
 	}
 	valid = true;
+	null = false;
 	d = norm_domain;
 	n = norm_node;
 	r = norm_resource;
@@ -364,6 +369,9 @@ bool Jid::isEmpty() const
 
 bool Jid::compare(const Jid &a, bool compareRes) const
 {
+	if(null && a.null)
+		return true;
+
 	// only compare valid jids
 	if(!valid || !a.valid)
 		return false;

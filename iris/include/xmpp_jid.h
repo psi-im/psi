@@ -43,6 +43,7 @@ namespace XMPP
 		void setNode(const QString &s);
 		void setResource(const QString &s);
 
+		bool isNull() const { return null; }
 		const QString & domain() const { return d; }
 		const QString & node() const { return n; }
 		const QString & resource() const { return r; }
@@ -70,7 +71,7 @@ namespace XMPP
 		void update();
 
 		QString f, b, d, n, r;
-		bool valid;
+		bool valid, null;
 	};
 }
 
