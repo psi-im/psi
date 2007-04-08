@@ -139,8 +139,12 @@ GoogleSessionListener::GoogleSessionListener(GoogleFTManager* manager) : manager
 void GoogleSessionListener::sendStanza(const buzz::XmlElement *stanza) 
 {
 	QString st(stanza->Str().c_str());
-	st.replace("cli:iq","iq");
+	st.replace("<sta:","<");
+	st.replace("</sta:","</");
+	st.replace("<cli:","<");
+	st.replace("</cli:","</");
 	st.replace(":cli=","=");
+	st.replace("xmlns:sta","xmlns");
 	manager_->sendStanza(st);
 }
 
