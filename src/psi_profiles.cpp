@@ -441,7 +441,6 @@ void UserProfile::reset()
 	prefs.dockDCstyle = win ? TRUE: FALSE;
 	prefs.dockHideMW = FALSE;
 	prefs.dockToolMW = FALSE;
-	prefs.isWMDock = false;
 #ifdef Q_WS_MAC
 	prefs.alertStyle = 0;
 #else
@@ -882,7 +881,6 @@ bool UserProfile::toFile(const QString &fname)
 			p_dock.appendChild(textTag(doc, "dockDCstyle", prefs.dockDCstyle));
 			p_dock.appendChild(textTag(doc, "dockHideMW", prefs.dockHideMW));
 			p_dock.appendChild(textTag(doc, "dockToolMW", prefs.dockToolMW));
-			p_dock.appendChild(textTag(doc, "isWMDock", prefs.isWMDock));
 		}
 		/*{
 			QDomElement p_sec = doc.createElement("security");
@@ -1436,7 +1434,6 @@ bool UserProfile::fromFile(const QString &fname)
 				readBoolEntry(tag, "dockDCstyle", &prefs.dockDCstyle);
 				readBoolEntry(tag, "dockHideMW", &prefs.dockHideMW);
 				readBoolEntry(tag, "dockToolMW", &prefs.dockToolMW);
-				readBoolEntry(tag, "isWMDock", &prefs.isWMDock);
 			}
 
 			/*tag = findSubTag(p_general, "security", &found);

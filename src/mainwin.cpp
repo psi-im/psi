@@ -511,7 +511,7 @@ void MainWin::setWindowOpts(bool _onTop, bool _asTool)
 
 void MainWin::setUseDock(bool use)
 {
-	if(use == false || (d->tray && option.isWMDock != d->tray->isWMDock())) {
+	if(use == false || d->tray) {
 		if(d->tray) {
 			delete d->tray;
 			d->tray = 0;

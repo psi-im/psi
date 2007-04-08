@@ -68,7 +68,7 @@ struct Options
 
 	bool useleft, singleclick, hideMenubar, askOnline, askOffline, popupMsgs, popupChats, popupHeadlines, popupFiles, raise;
 	bool alwaysOnTop, noAwaySound, noAwayPopup, noUnlistedPopup, rosterAnim, autoVCardOnLogin, xmlConsoleOnLogin;
-	bool useDock, dockDCstyle, dockHideMW, dockToolMW, isWMDock;
+	bool useDock, dockDCstyle, dockHideMW, dockToolMW;
 	bool smallChats, chatLineEdit, useTabs, putTabsAtBottom, usePerTabCloseButton, autoRosterSize, autoRosterSizeGrowTop, autoResolveNicksOnAdd, brushedMetal;
 
 	bool autoCopy; // although this setting is ignored under linux,
