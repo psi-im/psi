@@ -87,11 +87,13 @@ QWidget *OptionsTabShortcuts::widget()
 
 	d->add->setEnabled(false);
 	d->remove->setEnabled(false);
+	d->edit->setEnabled(false);
 
 	connect(d->treeShortcuts, SIGNAL(itemSelectionChanged()), this, SLOT(onItemSelectionChanged()));
 	connect(d->treeShortcuts, SIGNAL(itemDoubleClicked(QTreeWidgetItem *, int)), this, SLOT(onItemDoubleClicked(QTreeWidgetItem *, int)));
 	connect(d->add, SIGNAL(clicked()), this, SLOT(onAdd()));
 	connect(d->remove, SIGNAL(clicked()), this, SLOT(onRemove()));
+	connect(d->edit, SIGNAL(clicked()), this, SLOT(onEdit()));
 	return w;
 }
 
@@ -205,7 +207,7 @@ void OptionsTabShortcuts::restoreOptions(const Options *opt)
 				keyItemsCount = 1;
 				foreach(QKeySequence key, keys) {
 					keyItem = new QTreeWidgetItem(shortcutItem);
-					keyItem->setText(0, QString("Key %1").arg(keyItemsCount++));
+					keyItem->setText(0, QString(tr("Key %1")).arg(keyItemsCount++));
 					keyItem->setData(0, ITEMKIND, QVariant((int)OptionsTabShortcuts::KeyItem));
 					keyItem->setText(1, key.toString());
 					shortcutItem->addChild(keyItem);
@@ -216,13 +218,12 @@ void OptionsTabShortcuts::restoreOptions(const Options *opt)
 }
 
 /**
- * \brief	Button Add pressed, creates a new Key entry and calls onItemDoubleClicked
+ * \brief	Button Add pressed, creates a new Key entry
  */
 void OptionsTabShortcuts::onAdd() {
 	OptShortcutsUI *d = (OptShortcutsUI *)w;
 	
 	QTreeWidgetItem	*shortcutItem;
-	QTreeWidgetItem *newKeyItem;
 
 	QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
 	QString	optionsPath;
@@ -245,36 +246,39 @@ void OptionsTabShortcuts::onAdd() {
 			return;
 	}
 
-	/* so the user can see that we have create something there */
-	shortcutItem->setExpanded(true);
-	
-	newKeyItem = new QTreeWidgetItem(shortcutItem);
-	newKeyItem->setText(0, QString("Key %1").arg(shortcutItem->childCount()));
-	newKeyItem->setData(0, ITEMKIND, QVariant(OptionsTabShortcuts::KeyItem));
-	shortcutItem->addChild(newKeyItem);
-
-	/* unselect ANY selected item */
-	for(int selectedItemIndex=0; selectedItemIndex < selectedItems.count(); selectedItemIndex++)
-		selectedItems[selectedItemIndex]->setSelected(false);
-
-	/* select the new one, so the simulated Double click goes to this item */
-	newKeyItem->setSelected(true);
-	onItemDoubleClicked(newKeyItem, 0);
+	addTo(shortcutItem);
 }
 
 /**
- * \brief Button Remove pressed, removes the currently selected item, if it is a Keyitem and it's just one selected
+ * \brief Adds a new key to given shortcut item
+ * \param shortcutItem, new key parent, must be a ShortcutItem
+ */
+void OptionsTabShortcuts::addTo(QTreeWidgetItem *shortcutItem)
+{
+	OptShortcutsUI *d = (OptShortcutsUI *)w;
+	QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
+
+	QTreeWidgetItem *newKeyItem = new QTreeWidgetItem(shortcutItem);
+	newKeyItem->setText(0, QString(tr("Key %1")).arg(shortcutItem->childCount()));
+	newKeyItem->setData(0, ITEMKIND, QVariant(OptionsTabShortcuts::KeyItem));
+	shortcutItem->addChild(newKeyItem);
+	if (selectedItems.count())
+		selectedItems[0]->setSelected(false);
+	newKeyItem->setExpanded(true);
+	newKeyItem->setSelected(true);
+
+	grep();
+}
+
+/**
+ * \brief Button Remove pressed, removes the currently selected item, if it is a Keyitem
  */
 void OptionsTabShortcuts::onRemove() {
 	OptShortcutsUI *d = (OptShortcutsUI *)w;
 	QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
-	
-	/* zero or more then one selected Item(s), so we can't add or remove anything, disable the buttons */
-	if(selectedItems.count() == 0 || selectedItems.count() > 1) {
-		d->add->setEnabled(false);
-		d->remove->setEnabled(false);
+
+	if(selectedItems.count() == 0)
 		return;
-	}
 
 	QTreeWidgetItem	*shortcutItem;
 	QTreeWidgetItem	*keyItem;
@@ -291,11 +295,37 @@ void OptionsTabShortcuts::onRemove() {
 		/* rename the children which are left over */
 		keyItemsCount = shortcutItem->childCount();
 		for( int keyItemIndex = 0; keyItemIndex < keyItemsCount; keyItemIndex++)
-			shortcutItem->child(keyItemIndex)->setText(0, QString("Key %1").arg(keyItemIndex + 1));
+			shortcutItem->child(keyItemIndex)->setText(0, QString(tr("Key %1")).arg(keyItemIndex + 1));
 
 		/* notify the options dlg that data was changed */
 		emit dataChanged();	
 	}
+}
+
+/**
+ * \brief Button Edit pressed, edits the currently selected item if it is a key
+ */
+void OptionsTabShortcuts::onEdit() {
+	OptShortcutsUI *d = (OptShortcutsUI *)w;
+	QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
+
+	if(selectedItems.count() == 0)
+		return;
+
+	QTreeWidgetItem	*keyItem = selectedItems[0];
+
+	if((Kind)keyItem->data(0, ITEMKIND).toInt() == OptionsTabShortcuts::KeyItem)
+		grep();
+}
+
+/**
+ * \brief Opens grep dialog.
+ */
+void OptionsTabShortcuts::grep()
+{
+	grepShortcutKeyDlg *grepIt = new grepShortcutKeyDlg();
+	connect(grepIt, SIGNAL(newShortcutKey(QKeySequence)), this, SLOT(onNewShortcutKey(QKeySequence)));
+	grepIt->show();
 }
 
 /**
@@ -307,10 +337,11 @@ void OptionsTabShortcuts::onItemSelectionChanged() {
 	QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
 	Kind itemKind;
 
-	/* zero or more then one selected Item(s), so we can't add or remove anything, disable the buttons */
-	if(selectedItems.count() == 0 || selectedItems.count() > 1) {
+	/* zero selected Item(s), so we can't add or remove anything, disable the buttons */
+	if(selectedItems.count() == 0) {
 		d->add->setEnabled(false);
 		d->remove->setEnabled(false);
+		d->edit->setEnabled(false);
 		return;
 	}
 
@@ -320,16 +351,19 @@ void OptionsTabShortcuts::onItemSelectionChanged() {
 			/* for a topLevel Item, we can't do anything neither add a key, nor remove one */
 			d->add->setEnabled(false);
 			d->remove->setEnabled(false);
+			d->edit->setEnabled(false);
 			break;
 		case OptionsTabShortcuts::ShortcutItem:
 			/* at a shortcut Item, we can add a key, but not remove it */
 			d->add->setEnabled(true);
 			d->remove->setEnabled(false);
+			d->edit->setEnabled(false);
 			break;
 		case OptionsTabShortcuts::KeyItem:
 			/* at a key item, we can add a key to it's parent shortcut item, or remove it */
 			d->add->setEnabled(true);
 			d->remove->setEnabled(true);
+			d->edit->setEnabled(true);
 			break;
 	}
 }
@@ -337,17 +371,18 @@ void OptionsTabShortcuts::onItemSelectionChanged() {
 /**
  * \brief	an item of the treeview is double clicked, if it is a Keyitem, the grepShortcutKeyDlg is shown
  */
-void OptionsTabShortcuts::onItemDoubleClicked(QTreeWidgetItem *item, int column) {
+void OptionsTabShortcuts::onItemDoubleClicked(QTreeWidgetItem *item, int column)
+{
 	Q_UNUSED(column);
 
-	/* if we got not a valid or an item with childs, then it's not usable for us, because it is not a key item. */
-	if(!item || item->childCount() > 0)
+	if (!item)
 		return;
 
-	/* else show the grep Shortcut Key Dialog */
-	grepShortcutKeyDlg *grepIt = new grepShortcutKeyDlg();
-	connect(grepIt, SIGNAL(newShortcutKey(QKeySequence)), this, SLOT(onNewShortcutKey(QKeySequence)));
-	grepIt->show();
+ 	Kind itemKind = (Kind)item->data(0, ITEMKIND).toInt();
+	if (itemKind == KeyItem)
+		grep();
+	else if (itemKind == ShortcutItem && item->childCount() == 0)
+		addTo(item);
 }
 
 /**
@@ -362,8 +397,7 @@ void OptionsTabShortcuts::onNewShortcutKey(QKeySequence key) {
 	QString	optionsPath;
 	Kind itemKind;
 
-	/* we can set the new KeySequence to just one Key item */
-	if(selectedItems.count() == 0 || selectedItems.count() > 1)
+	if(selectedItems.count() == 0)
 		return;
 
 	keyItem = selectedItems[0];
