@@ -28,20 +28,23 @@
 class PsiAccount;
 class QString;
 class QStringList;
+
 namespace XMPP {
 	class Jid;
 }
+
+using namespace XMPP;
 
 class SearchDlg : public QDialog, public Ui::Search
 {
 	Q_OBJECT
 public:
-	SearchDlg(const XMPP::Jid &, PsiAccount *);
+	SearchDlg(const Jid &, PsiAccount *);
 	~SearchDlg();
 
 signals:
-	void aInfo(const XMPP::Jid &);
-	void add(const XMPP::Jid &, const QString &, const QStringList &, bool authReq);
+	void aInfo(const Jid &);
+	void add(const Jid &, const QString &, const QStringList &, bool authReq);
 
 private slots:
 	void doSearchGet();
