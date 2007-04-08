@@ -273,7 +273,7 @@ public slots:
 private slots:
 	void tls_handshaken();
 	void cs_connected();
-	void cs_securityLayerActivated();
+	void cs_securityLayerActivated(int);
 	void cs_needAuthParams(bool, bool, bool);
 	void cs_authenticated();
 	void cs_connectionClosed();
