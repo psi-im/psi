@@ -1058,7 +1058,8 @@ void PsiAccount::logout(bool fast, const Status &s)
 	v_isActive = false;
 	stateChanged();
 
-	QTimer::singleShot(0, this, SLOT(disconnect()));
+	// Using 100msecs; See note on disconnect() 
+	QTimer::singleShot(100, this, SLOT(disconnect()));
 }
 
 // skz note: I had to split logout() because server seem to need some time to store status
