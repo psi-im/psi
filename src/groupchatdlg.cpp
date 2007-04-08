@@ -1127,7 +1127,6 @@ void GCMainDlg::doTopic()
 		Message m(d->jid);
 		m.setType("groupchat");
 		m.setSubject(str);
-		m.setBody(QString("/me ") + tr("has set the topic to: %1").arg(str));
 		m.setTimeStamp(QDateTime::currentDateTime());
 		aSend(m);
 	}
