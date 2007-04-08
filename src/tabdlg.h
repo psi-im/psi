@@ -64,6 +64,8 @@ protected:
 	void keyPressEvent(QKeyEvent *);
 	void windowActivationChange(bool);
 	void resizeEvent(QResizeEvent *);
+	void dragEnterEvent(QDragEnterEvent *event);
+	void dropEvent(QDropEvent *event);
 protected slots:
 	void detachChat();
 	void detachChat(QWidget*);
@@ -87,10 +89,6 @@ private slots:
 	void previousTab();
 	void setTabState( XMPP::ChatState );
 	void setTabHasMessages(ChatDlg*, int);
-	void tabTestCanDecode(const QDragMoveEvent*, bool&);
-	void tabReceivedDropEvent(QDropEvent*);
-	void tabReceivedDropEvent(QWidget*, QDropEvent*);
-	void startDrag(QWidget*);
 	
 public:
 	ChatDlg* getChatPointer(QString fullJid);

@@ -21,23 +21,33 @@
 #define _PSITABBAR_H_
 
 #include <QTabBar>
+#include <QPoint>
 
+class PsiTabWidget;
 
 class PsiTabBar : public QTabBar
 {
 	Q_OBJECT
+
 public:
-	PsiTabBar(QWidget *parent = 0);
+	PsiTabBar(PsiTabWidget *parent);
 	~PsiTabBar();
+	PsiTabWidget* psiTabWidget();
 
 signals:
 	void mouseDoubleClickTab( int tab );
+	void tabDropped( int tab, PsiTabBar* source);
 
 protected:
 	void mouseDoubleClickEvent( QMouseEvent* event );
+	void mouseMoveEvent( QMouseEvent *event );
+	//void dragEnterEvent(QDragEnterEvent *event);
+	//void dropEvent(QDropEvent *event);
+	void mousePressEvent(QMouseEvent *event);
 
 private:
 	int findTabUnder(const QPoint& pos);
+	QPoint dragStartPosition_;
 	
 };
 

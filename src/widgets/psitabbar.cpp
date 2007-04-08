@@ -19,15 +19,17 @@
  */
 
 #include "psitabbar.h"
+#include "psitabwidget.h"
 #include <QMouseEvent>
+#include <QApplication>
 
 /**
  * Constructor
  */
-PsiTabBar::PsiTabBar(QWidget *parent)
+PsiTabBar::PsiTabBar(PsiTabWidget *parent)
 	: QTabBar(parent)
 {
-	
+	//acceptDrops();
 }
 
 /**
@@ -36,6 +38,14 @@ PsiTabBar::PsiTabBar(QWidget *parent)
 PsiTabBar::~PsiTabBar()
 {
 	
+}
+
+/**
+ * Returns the parent PsiTabWidget.
+ */
+PsiTabWidget* PsiTabBar::psiTabWidget()
+{
+	return dynamic_cast<PsiTabWidget*> (parent());
 }
 
 /**
@@ -61,3 +71,40 @@ int PsiTabBar::findTabUnder( const QPoint& pos )
 	}
 	return -1;
 } 
+
+void PsiTabBar::mousePressEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton) {
+        dragStartPosition_ = event->pos();
+		setCurrentIndex( findTabUnder( event->pos() ) );
+ 	}
+	event->accept();
+}
+
+/*
+ * Used for starting drags of tabs
+ */ 
+void PsiTabBar::mouseMoveEvent(QMouseEvent *event)
+ {
+	if (!(event->buttons() & Qt::LeftButton))
+		return;
+	if ( (event->pos() - dragStartPosition_).manhattanLength() 
+		< QApplication::startDragDistance() )
+		return;
+	QDrag *drag = new QDrag(this);
+	QMimeData *mimeData = new QMimeData;
+	QByteArray data;
+	QPixmap icon;
+
+	int tab=findTabUnder( event->pos() );
+	data.setNum(tab);
+
+	mimeData->setData("psiTabDrag",data);
+	drag->setMimeData(mimeData);
+	drag->setPixmap(icon);
+		
+	Qt::DropAction dropAction = drag->start(Qt::MoveAction);
+        
+	event->accept();
+ }
+

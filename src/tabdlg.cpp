@@ -70,12 +70,12 @@ TabDlg::TabDlg(PsiCon *psiCon)
 	}*/
 	
 	//tabs->setCloseIcon(IconsetFactory::icon("psi/closetab").iconSet());
-	connect (tabs, SIGNAL( mouseDoubleClickTab( QWidget* ) ), SLOT( detachChat( QWidget* ) ) ); 
-	connect (tabs, SIGNAL( testCanDecode(const QDragMoveEvent*, bool&) ), SLOT( tabTestCanDecode(const QDragMoveEvent*, bool&) ) );
-	connect (tabs, SIGNAL( receivedDropEvent( QDropEvent* ) ), SLOT( tabReceivedDropEvent( QDropEvent* ) ) );
-	connect (tabs, SIGNAL( receivedDropEvent( QWidget*, QDropEvent* ) ), SLOT( tabReceivedDropEvent( QWidget*, QDropEvent* ) ) );
-	connect (tabs, SIGNAL( initiateDrag( QWidget* ) ), SLOT( startDrag( QWidget* ) ) );
-	connect (tabs, SIGNAL( closeRequest( QWidget* ) ), SLOT( closeChat( QWidget* ) ) );
+	connect (tabs, SIGNAL( mouseDoubleClickTab( QWidget* ) ), SLOT( detachChat( QWidget* ) ) );
+	//connect (tabs, SIGNAL( testCanDecode(const QDragMoveEvent*, bool&) ), SLOT( tabTestCanDecode(const QDragMoveEvent*, bool&) ) );
+	//connect (tabs, SIGNAL( receivedDropEvent( QDropEvent* ) ), SLOT( tabReceivedDropEvent( QDropEvent* ) ) );
+	//connect (tabs, SIGNAL( receivedDropEvent( QWidget*, QDropEvent* ) ), SLOT( tabReceivedDropEvent( QWidget*, QDropEvent* ) ) );
+	//connect (tabs, SIGNAL( initiateDrag( QWidget* ) ), SLOT( startDrag( QWidget* ) ) );
+	//connect (tabs, SIGNAL( closeRequest( QWidget* ) ), SLOT( closeChat( QWidget* ) ) );
 	
 		
 	QVBoxLayout *vert1 = new QVBoxLayout( this, 1);
@@ -388,47 +388,6 @@ void TabDlg::previousTab()
 	tabs->setCurrentPage( page );
 }
 
-void TabDlg::tabTestCanDecode(const QDragMoveEvent* e, bool &b){
-	QString jid;
-	QString type;
-	if ( Q3TextDrag::canDecode(e) && Q3TextDrag::decode(e, jid, type) && type=="psichatwindow" )
-	{
-		b=true;
-	}
-	else
-	{
-		b=false;
-	}
-}
-
-void TabDlg::tabReceivedDropEvent(QDropEvent* e){
-    ChatDlg* chat;
-	QString  jid;
-	QString type;
-    if ( Q3TextDrag::decode(e, jid, type) && type=="psichatwindow" ) {
-			chat=psi->getChatInTabs(jid);
-			if (chat)
-			{
-				TabDlg *dlg=psi->getManagingTabs(chat);
-				dlg->sendChatTo(chat, this);
-			}
-    } 	
-}
-
-void TabDlg::tabReceivedDropEvent(QWidget* w, QDropEvent* e){
-	Q_UNUSED(w);
-	tabReceivedDropEvent(e);
-}
-
-
-void TabDlg::startDrag(QWidget* w)
-{
-    Q3DragObject *d = new Q3TextDrag( ((ChatDlg*)w)->jid().full(), this );
-		((Q3TextDrag*)d)->setSubtype("psichatwindow");
-    d->dragCopy();
-    // do NOT delete d.
-}
-
 void TabDlg::keyPressEvent(QKeyEvent *e)
 {
 	if (e->key() == Qt::Key_Escape)
@@ -452,3 +411,34 @@ void TabDlg::keyPressEvent(QKeyEvent *e)
 	
 }
 
+void TabDlg::dragEnterEvent(QDragEnterEvent *event)
+{
+	if ( event->mimeData()->hasFormat("psiTabDrag") ) {
+		event->acceptProposedAction();
+	}
+}
+
+void TabDlg::dropEvent(QDropEvent *event)
+{
+	QByteArray data;
+	if (event->mimeData()->hasFormat("psiTabDrag")) {
+		data = event->mimeData()->data("psiTabDrag");
+	} else {
+		return;
+	}
+	int remoteTab = data.toInt();
+	event->acceptProposedAction();
+	//the event's been and gone, now do something about it
+	PsiTabBar* source = dynamic_cast<PsiTabBar*> (event->source());
+	if (source)
+	{
+		PsiTabWidget* barParent = source->psiTabWidget();
+		QWidget* widget = barParent->widget(remoteTab);
+		ChatDlg* chat=dynamic_cast<ChatDlg*>(widget);
+		TabDlg *dlg=psi->getManagingTabs(chat);
+		if (!chat || !dlg)
+			return;
+		dlg->sendChatTo(chat, this);
+	} 
+	
+}

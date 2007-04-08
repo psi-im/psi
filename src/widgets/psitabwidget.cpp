@@ -59,3 +59,7 @@ void PsiTabWidget::mouseDoubleClickTab( int tab )
 {
 	emit mouseDoubleClickTab(widget(tab));
 }
+
+
+
+

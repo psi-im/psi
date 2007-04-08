@@ -23,6 +23,9 @@
 #define PSITABWIDGET_H
 
 #include <QTabWidget>
+#include <QDragEnterEvent>
+#include "psitabbar.h"
+
 
 /**
  * \class PsiTabWidget
@@ -40,8 +43,7 @@ public:
 signals:
 	void mouseDoubleClickTab( QWidget* tab );
 
-private:
-	
+
 private slots:
 	void mouseDoubleClickTab( int tab );
 }; 
