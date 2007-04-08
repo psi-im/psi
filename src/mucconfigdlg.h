@@ -30,6 +30,7 @@
 class QScrollArea;
 class XDataWidget;
 class MUCAffiliationsModel;
+class MUCAffiliationsProxyModel;
 namespace XMPP {
 	class XData;
 }
@@ -58,6 +59,7 @@ protected slots:
 	void apply();
 	void destroy();
 	void currentTabChanged(int);
+	void applyFilter(const QString&);
 
 	void getConfiguration_success( const XData&);
 	void getConfiguration_error(int, const QString&);
@@ -78,6 +80,7 @@ private:
 	QScrollArea* data_container_;
 	XDataWidget* data_;
 	MUCAffiliationsModel* affiliations_model_;
+	MUCAffiliationsProxyModel* affiliations_proxy_model_;
 	QList<MUCItem::Affiliation> pending_requests_;
 };
 
