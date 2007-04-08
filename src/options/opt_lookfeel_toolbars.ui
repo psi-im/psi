@@ -68,6 +68,7 @@
        </item>
       </layout>
      </item>
+	 
      <item>
       <layout class="QVBoxLayout" >
        <property name="margin" >
@@ -77,182 +78,40 @@
         <number>6</number>
        </property>
        <item>
-        <spacer>
-         <property name="orientation" >
-          <enum>Qt::Vertical</enum>
+        <widget class="IconToolButton" name="tb_right" >
+         <property name="sizePolicy" >
+          <sizepolicy>
+           <hsizetype>4</hsizetype>
+           <vsizetype>1</vsizetype>
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
          </property>
-         <property name="sizeType" >
-          <enum>QSizePolicy::Expanding</enum>
+         <property name="text" >
+          <string>...</string>
          </property>
-         <property name="sizeHint" >
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
+         <property name="psiIconName" stdset="0" >
+          <string>psi/arrowRight</string>
          </property>
-        </spacer>
+        </widget>
        </item>
        <item>
-        <layout class="QGridLayout" >
-         <property name="margin" >
-          <number>0</number>
+        <widget class="IconToolButton" name="tb_left" >
+         <property name="sizePolicy" >
+          <sizepolicy>
+           <hsizetype>4</hsizetype>
+           <vsizetype>1</vsizetype>
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
          </property>
-         <property name="spacing" >
-          <number>0</number>
+         <property name="text" >
+          <string>...</string>
          </property>
-         <item row="2" column="0" >
-          <spacer>
-           <property name="orientation" >
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeType" >
-            <enum>QSizePolicy::Maximum</enum>
-           </property>
-           <property name="sizeHint" >
-            <size>
-             <width>20</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item row="0" column="1" >
-          <widget class="IconToolButton" name="tb_up" >
-           <property name="sizePolicy" >
-            <sizepolicy>
-             <hsizetype>4</hsizetype>
-             <vsizetype>1</vsizetype>
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text" >
-            <string>...</string>
-           </property>
-           <property name="psiIconName" stdset="0" >
-            <string>psi/arrowUp</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1" >
-          <spacer>
-           <property name="orientation" >
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeType" >
-            <enum>QSizePolicy::Maximum</enum>
-           </property>
-           <property name="sizeHint" >
-            <size>
-             <width>20</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item row="1" column="0" >
-          <widget class="IconToolButton" name="tb_left" >
-           <property name="sizePolicy" >
-            <sizepolicy>
-             <hsizetype>4</hsizetype>
-             <vsizetype>1</vsizetype>
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text" >
-            <string>...</string>
-           </property>
-           <property name="psiIconName" stdset="0" >
-            <string>psi/arrowLeft</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="2" >
-          <spacer>
-           <property name="orientation" >
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeType" >
-            <enum>QSizePolicy::Maximum</enum>
-           </property>
-           <property name="sizeHint" >
-            <size>
-             <width>20</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item row="0" column="0" >
-          <spacer>
-           <property name="orientation" >
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeType" >
-            <enum>QSizePolicy::Maximum</enum>
-           </property>
-           <property name="sizeHint" >
-            <size>
-             <width>20</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item row="2" column="2" >
-          <spacer>
-           <property name="orientation" >
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeType" >
-            <enum>QSizePolicy::Maximum</enum>
-           </property>
-           <property name="sizeHint" >
-            <size>
-             <width>20</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item row="2" column="1" >
-          <widget class="IconToolButton" name="tb_down" >
-           <property name="sizePolicy" >
-            <sizepolicy>
-             <hsizetype>4</hsizetype>
-             <vsizetype>1</vsizetype>
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text" >
-            <string>...</string>
-           </property>
-           <property name="psiIconName" stdset="0" >
-            <string>psi/arrowDown</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="2" >
-          <widget class="IconToolButton" name="tb_right" >
-           <property name="sizePolicy" >
-            <sizepolicy>
-             <hsizetype>4</hsizetype>
-             <vsizetype>1</vsizetype>
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text" >
-            <string>...</string>
-           </property>
-           <property name="psiIconName" stdset="0" >
-            <string>psi/arrowRight</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
+         <property name="psiIconName" stdset="0" >
+          <string>psi/arrowLeft</string>
+         </property>
+        </widget>
        </item>
        <item>
         <spacer>
@@ -272,6 +131,7 @@
        </item>
       </layout>
      </item>
+
      <item>
       <layout class="QVBoxLayout" >
        <property name="margin" >
@@ -299,6 +159,69 @@
           <bool>false</bool>
          </property>
         </widget>
+       </item>
+      </layout>
+     </item>
+	 
+     <item>
+      <layout class="QVBoxLayout" >
+       <property name="margin" >
+        <number>0</number>
+       </property>
+       <property name="spacing" >
+        <number>6</number>
+       </property>
+       <item>
+        <widget class="IconToolButton" name="tb_up" >
+         <property name="sizePolicy" >
+          <sizepolicy>
+           <hsizetype>4</hsizetype>
+           <vsizetype>1</vsizetype>
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text" >
+          <string>...</string>
+         </property>
+         <property name="psiIconName" stdset="0" >
+          <string>psi/arrowUp</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="IconToolButton" name="tb_down" >
+         <property name="sizePolicy" >
+          <sizepolicy>
+           <hsizetype>4</hsizetype>
+           <vsizetype>1</vsizetype>
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text" >
+          <string>...</string>
+         </property>
+         <property name="psiIconName" stdset="0" >
+          <string>psi/arrowDown</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer>
+         <property name="orientation" >
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType" >
+          <enum>QSizePolicy::Expanding</enum>
+         </property>
+         <property name="sizeHint" >
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </item>
