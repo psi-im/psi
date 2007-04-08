@@ -430,10 +430,16 @@ void HistoryDlg::edb_finished()
 		}
 	}
 	else if (d->h->lastRequestType() == EDBHandle::Erase) {
-		if (d->h->writeSuccess())
+		if (d->h->writeSuccess()) {
 			d->lv->clear();
-		else
+			d->id_prev = "";
+			d->id_begin = "";
+			d->id_end = "";
+			d->id_next = "";
+		}
+		else {
 			QMessageBox::critical(this, tr("Error"), tr("Unable to delete history file."));
+		}
 	}
 	else {
 		//printf("EDB: error\n");
