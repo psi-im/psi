@@ -29,8 +29,9 @@
 #include <QLineEdit>
 #include <QObject>
 #include <QTextEdit>
-#include <QDesktopServices>
 #include <QGridLayout>
+
+#include "desktoputil.h"
 
 //----------------------------------------------------------------------------
 // XDataField
@@ -523,5 +524,5 @@ void XDataWidget::setFields(const XData::FieldList &f)
 
 void XDataWidget::linkActivated(const QString& link)
 {
-	QDesktopServices::openUrl(QUrl(link));
+	DesktopUtil::openUrl(link);
 }

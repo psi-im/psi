@@ -32,7 +32,6 @@
 #include <QPixmap>
 #include <QList>
 #include <QImageReader>
-#include <QDesktopServices>
 #include <QMessageBox>
 
 #include "s5b.h"
@@ -83,6 +82,7 @@
 #include "tipdlg.h"
 #include "shortcutmanager.h"
 #include "globalshortcutmanager.h"
+#include "desktoputil.h"
 
 
 #ifdef Q_WS_MAC
@@ -126,7 +126,7 @@ public slots:
 
 	void openURL(QString url)
 	{
-		QDesktopServices::openUrl(url);
+		DesktopUtil::openUrl(url);
 	}
 
 private:
