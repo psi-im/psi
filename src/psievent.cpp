@@ -175,12 +175,10 @@ bool PsiEvent::fromXml(PsiCon *psi, PsiAccount *account, const QDomElement *e)
 		v_account = account;
 	}
 	else if ( hasSubTag(*e, "account") ) {
-		PsiAccountList list = psi->accountList();
-		PsiAccountListIt it(list);
 		QString accName = subTagText(*e, "account");
-		for ( ; it.current(); ++it) {
-			if ( it.current()->name() == accName ) {
-				v_account = it.current();
+		foreach(PsiAccount* account, psi->accountList(false)) {
+			if ( account->name() == accName ) {
+				v_account = account;
 				break;
 			}
 		}

@@ -1,0 +1,19 @@
+<!DOCTYPE RCC><RCC version="1.0">
+	<qresource>
+		<file>icons/online.png</file>
+		<file>icons/away.png</file>
+		<file>icons/offline.png</file>
+		<file>pictures/peter.jpg</file>
+		<file>pictures/mike.jpg</file>
+		<file>pictures/samir.jpg</file>
+		<file>pictures/milton.jpg</file>
+		<file>pictures/bill.jpg</file>
+		<file>pictures/joanna.jpg</file>
+		<file>pictures/lawrence.jpg</file>
+		<file>pictures/brian.jpg</file>
+		<file>pictures/anne.jpg</file>
+		<file>pictures/unknown.png</file>
+
+		<file>close.png</file>
+	</qresource>
+</RCC>

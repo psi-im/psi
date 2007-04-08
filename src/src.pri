@@ -11,6 +11,7 @@ include($$PWD/tools/optionstree/optionstree.pri)
 include($$PWD/tools/globalaccel/globalaccel.pri)
 include($$PWD/tools/advwidget/advwidget.pri)
 include($$PWD/tools/spellchecker/spellchecker.pri)
+include($$PWD/tools/contactlist/contactlist.pri)
 
 # Growl
 mac {
@@ -185,7 +186,8 @@ HEADERS += \
 	$$PWD/voicecaller.h \
 	$$PWD/voicecalldlg.h \
 	$$PWD/resourcemenu.h \
-	$$PWD/shortcutmanager.h
+	$$PWD/shortcutmanager.h \
+	$$PWD/psicontactlist.h
 
 # Source files
 SOURCES += \
@@ -287,7 +289,8 @@ SOURCES += \
 	$$PWD/psioptions.cpp \
 	$$PWD/voicecalldlg.cpp \
 	$$PWD/resourcemenu.cpp \
-	$$PWD/shortcutmanager.cpp
+	$$PWD/shortcutmanager.cpp \
+	$$PWD/psicontactlist.cpp
 
 mac {
 	contains( DEFINES, HAVE_GROWL ) {

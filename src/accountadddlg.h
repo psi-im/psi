@@ -43,6 +43,7 @@ private slots:
 
 private:
 	PsiCon *psi;
+	QString createNewAccountName(QString def);
 };
 
 #endif

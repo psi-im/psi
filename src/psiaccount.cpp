@@ -109,6 +109,7 @@
 #include "tabdlg.h"
 #include "certutil.h"
 #include "proxy.h"
+#include "psicontactlist.h"
 
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
@@ -269,6 +270,7 @@ public:
 		account = parent;
 	}
 
+	PsiContactList* contactList;
 	PsiCon *psi;
 	PsiAccount *account;
 	PsiOptions *options;
@@ -367,11 +369,12 @@ public slots:
 	}
 };
 
-PsiAccount::PsiAccount(const UserAccount &acc, PsiCon *parent)
-:QObject(0)
+PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent)
+:QObject(parent)
 {
 	d = new Private( this );
-	d->psi = parent;
+	d->contactList = parent;
+	d->psi = parent->psi();
 	d->options = PsiOptions::instance();
 	d->client = 0;
 	d->cp = 0;
@@ -556,7 +559,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiCon *parent)
 
 	setUserAccount(acc);
 
-	d->psi->link(this);
+	d->contactList->link(this);
 	connect(d->psi, SIGNAL(emitOptionsUpdate()), SLOT(optionsUpdate()));
 	//connect(d->psi, SIGNAL(pgpToggled(bool)), SLOT(pgpToggled(bool)));
 	connect(d->psi, SIGNAL(pgpKeysUpdated()), SLOT(pgpKeysUpdated()));
@@ -638,7 +641,7 @@ PsiAccount::~PsiAccount()
 
 	delete d->blockTransportPopupList;
 
-	d->psi->unlink(this);
+	d->contactList->unlink(this);
 	delete d;
 
 	//printf("PsiAccount: [%s] unloaded\n", str.latin1());

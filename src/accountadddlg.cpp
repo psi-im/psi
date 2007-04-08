@@ -43,23 +43,7 @@ AccountAddDlg::AccountAddDlg(PsiCon *_psi, QWidget *parent)
 		"and you want to register one.  Note that this will only work "
 		"on servers that allow anonymous registration."));
 
-	QString def = tr("Default");
-	QString aname = def;
-	int n = 0;
-	while(1) {
-		bool taken = false;
-		PsiAccountListIt it(psi->accountList());
-		for(PsiAccount *pa; (pa = it.current()); ++it) {
-			if(aname == pa->name()) {
-				taken = true;
-				break;
-			}
-		}
-
-		if(!taken)
-			break;
-		aname = def + '_' + QString::number(++n);
-	}
+	QString aname = createNewAccountName(tr("Default"));
 
 	if (PsiOptions::instance()->getOption("options.ui.account.single").toBool()) {
 		le_name->setText("account");
@@ -77,15 +61,13 @@ AccountAddDlg::~AccountAddDlg()
 	psi->dialogUnregister(this);
 }
 
-void AccountAddDlg::add()
+QString AccountAddDlg::createNewAccountName(QString def)
 {
-	QString def = le_name->text();
 	QString aname = def;
 	int n = 0;
 	while(1) {
 		bool taken = false;
-		PsiAccountListIt it(psi->accountList());
-		for(PsiAccount *pa; (pa = it.current()); ++it) {
+		foreach(PsiAccount* pa, psi->accountList(false)) {
 			if(aname == pa->name()) {
 				taken = true;
 				break;
@@ -96,6 +78,13 @@ void AccountAddDlg::add()
 			break;
 		aname = def + '_' + QString::number(++n);
 	}
+
+	return aname;
+}
+
+void AccountAddDlg::add()
+{
+	QString aname = createNewAccountName(le_name->text());
 	le_name->setText( aname );
 
 	if(ck_reg->isChecked()) {

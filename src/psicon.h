@@ -58,9 +58,6 @@ namespace QCA
 	class Event;
 }
 
-typedef Q3PtrList<PsiAccount> PsiAccountList;
-typedef Q3PtrListIterator<PsiAccount> PsiAccountListIt;
-
 class PsiCon : public QObject
 {
 	Q_OBJECT
@@ -73,7 +70,7 @@ public:
 	void deinit();
 
 	ContactView *contactView() const;
-	const PsiAccountList & accountList(bool enabledOnly=FALSE) const;
+	QList<PsiAccount *> accountList(bool enabledOnly) const;
 	EDB *edb() const;
 	TuneController* tuneController() const;
 	ProxyManager *proxy() const;
@@ -93,10 +90,10 @@ public:
 
 	bool isValid(PsiAccount *);
 	void createAccount(const QString &name, const Jid &j="", const QString &pass="", bool opt_host=false, const QString &host="", int port=5222, bool ssl=false, int proxy=0);
+	PsiAccount *createAccount(const UserAccount &);
 	//void createAccount(const QString &, const QString &host="", int port=5222, bool ssl=false, const QString &user="", const QString &pass="");
-	void modifyAccount(PsiAccount *);
 	void removeAccount(PsiAccount *);
-	void enableAccount(PsiAccount *, bool e=TRUE);
+	void enableAccount(PsiAccount *, bool e=TRUE); // TODO: -> setAccountEnabled
 
 	void playSound(const QString &);
 	void raiseMainwin();
@@ -165,21 +162,17 @@ public slots:
 
 	void mainWinGeomChanged(int x, int y, int w, int h);
 
+private slots:
+	void saveAccounts();
+
 private:
 	class Private;
 	Private *d;
 
-	PsiAccount *loadAccount(const UserAccount &);
-	void loadAccounts(const UserAccountList &);
-	UserAccountList unloadAccounts();
 	void deleteAllDialogs();
-	void saveAccounts();
 	void s5b_init();
 	void updateS5BServerAddresses();
 
-	friend class PsiAccount;
-	void link(PsiAccount *);
-	void unlink(PsiAccount *);
 	void setToggles(bool tog_offline, bool tog_away, bool tog_agents, bool tog_hidden, bool tog_self);
 	void getToggles(bool *tog_offline, bool *tog_away, bool *tog_agents, bool *tog_hidden, bool *tog_self);
 

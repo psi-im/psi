@@ -46,6 +46,7 @@ namespace XMPP
 using namespace XMPP;
 
 class PsiCon;
+class PsiContactList;
 class PsiAccount;
 class PsiEvent;
 class Tune;
@@ -98,7 +99,7 @@ class PsiAccount : public QObject
 {
 	Q_OBJECT
 public:
-	PsiAccount(const UserAccount &acc, PsiCon *parent);
+	PsiAccount(const UserAccount &acc, PsiContactList *parent);
 	~PsiAccount();
 
 	bool enabled() const;

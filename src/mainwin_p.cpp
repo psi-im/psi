@@ -69,10 +69,8 @@ private:
 };
 
 PopupActionButton::PopupActionButton(QWidget *parent, const char *name)
-: QPushButton(parent, name)
+: QPushButton(parent, name), hasToolTip(false), icon(0), showText(true)
 {
-	hasToolTip = false;
-	icon = 0;
 }
 
 PopupActionButton::~PopupActionButton()
@@ -589,11 +587,10 @@ public:
 	{
 		QMenu *pm = new QMenu (p);
 		uint i = 0;
-		for ( PsiAccountListIt it(psi->accountList(TRUE)); it.current(); ++it, i++ )
-		{
-			PsiAccount *acc = it.current();
+		foreach(PsiAccount* acc, psi->accountList(true)) {
 			pm->insertItem( acc->name(), parent(), SLOT(itemActivated(int)), 0, id*1000 + i );
 			pm->setItemParameter ( id*1000 + i, i );
+			i++;
 		}
 		return pm;
 	}
@@ -664,9 +661,9 @@ void MAction::addingToolButton(IconToolButton *btn)
 
 void MAction::itemActivated(int n)
 {
-	PsiAccountList list = (PsiAccountList)d->psi->accountList(TRUE);
+	QList<PsiAccount*> list = d->psi->accountList(true);
 
-	if (n >= (int)list.count()) // just in case
+	if (n >= list.count()) // just in case
 		return;
 
 	emit activated((PsiAccount *)list.at(n), d->id);

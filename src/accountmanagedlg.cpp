@@ -279,10 +279,8 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi)
 	lv_accs->setAllColumnsShowFocus(true);
 	lv_accs->setResizeMode(Q3ListView::LastColumn);
 
-	PsiAccountListIt it(psi->accountList());
-	for(PsiAccount *pa; (pa = it.current()); ++it) {
+	foreach(PsiAccount* pa, psi->accountList(false))
 		new AccountManageItem(lv_accs, pa);
-	}
 
 	if(lv_accs->childCount() > 0)
 		lv_accs->setSelected(lv_accs->firstChild(), true);
@@ -321,7 +319,7 @@ void AccountManageDlg::modify(Q3ListViewItem *lvi)
 	if(!i)
 		return;
 
-	psi->modifyAccount(i->pa);
+	i->pa->modify();
 }
 
 void AccountManageDlg::remove()

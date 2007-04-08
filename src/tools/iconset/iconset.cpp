@@ -650,6 +650,9 @@ void Icon::activated(bool playSound)
 
 		emit iconSharedObject->playSound(d->sound);
 	}
+#else
+	Q_UNUSED(playSound);
+	Q_UNUSED(iconSharedObject);
 #endif
 
 	if ( d->anim ) {
@@ -1536,6 +1539,10 @@ void Iconset::setSoundPrefs(QString unpackPath, QObject *receiver, const char *s
 
 	iconSharedObject->unpackPath = unpackPath;
 	QObject::connect(iconSharedObject, SIGNAL(playSound(QString)), receiver, slot);
+#else
+	Q_UNUSED(unpackPath);
+	Q_UNUSED(receiver);
+	Q_UNUSED(slot);
 #endif
 }
 

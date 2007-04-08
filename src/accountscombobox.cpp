@@ -37,8 +37,8 @@ AccountsComboBox::AccountsComboBox(PsiCon *_psi, QWidget *parent, bool online_on
 	pa = 0;
 	setSizePolicy(QSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Fixed ));
 
-	if(!psi->accountList(TRUE).isEmpty())
-		setAccount(psi->accountList(TRUE).getFirst());
+	if(!psi->accountList(true).isEmpty())
+		setAccount(psi->accountList(true).first());
 }
 
 AccountsComboBox::~AccountsComboBox()
@@ -55,10 +55,9 @@ void AccountsComboBox::changeAccount()
 {
 	int i = currentItem();
 
-	PsiAccountListIt it(psi->accountList(TRUE));
 	int n = 0;
 	bool found = false;
-	for(PsiAccount *p; (p = it.current()); ++it) {
+	foreach(PsiAccount* p, psi->accountList(true)) {
 		if (!onlineOnly || p->loggedIn()) {
 			if(i == n) {
 				pa = p;
@@ -77,11 +76,10 @@ void AccountsComboBox::changeAccount()
 void AccountsComboBox::updateAccounts()
 {
 	clear();
-	PsiAccountListIt it(psi->accountList(TRUE));
 	int n = 0;
 	bool found = false;
 	PsiAccount *firstAccount = 0;
-	for(PsiAccount *p; (p = it.current()); ++it) {
+	foreach(PsiAccount* p, psi->accountList(true)) {
 		if (!onlineOnly || p->loggedIn()) {
 			insertItem(p->nameWithJid());
 			if(p == pa) {

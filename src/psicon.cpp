@@ -76,6 +76,7 @@
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
 #endif
+#include "psicontactlist.h"
 
 
 #ifdef Q_WS_MAC
@@ -165,13 +166,17 @@ struct item_dialog
 class PsiCon::Private
 {
 public:
-	Private() {
-		iconSelect = 0;
+	Private(PsiCon *parent)
+		: contactList(0), iconSelect(0)
+	{
+		psi = parent;
 		//the list 'owns' the tabs
 		tabs.setAutoDelete( true );
 		tabControlledChats.setAutoDelete( false );
 	}
-	~Private() {
+
+	~Private()
+	{
 		if ( iconSelect )
 			delete iconSelect;
 	}
@@ -206,35 +211,17 @@ public:
 		iconSelect->setIconset(iss);
 	}
 
-	PsiAccount *queueLowestEventId(bool includeDND)
+	/**
+	 * Prompts user to create new account, if none are currently present in system.
+	 */
+	void promptUserToCreateAccount()
 	{
-		PsiAccount *low = 0;
-		int low_id = 0;
-		int low_prior = option.EventPriorityDontCare;
-
-		PsiAccountListIt it(listEnabled);
-		for ( PsiAccount *pa; (pa = it.current()); ++it ) {
-			int n = pa->eventQueue()->nextId();
-			if ( n == -1 )
-				continue;
-
-			if ( !includeDND && pa->status().show() == "dnd" )
-				continue;
-
-			int p = pa->eventQueue()->peekNext()->priority();
-			if ( !low || (n < low_id && p == low_prior) || p > low_prior ) {
-				low = pa;
-				low_id = n;
-				low_prior = p;
-			}
-		}
-
-		return low;
+		AccountAddDlg *w = new AccountAddDlg(psi);
+		w->show();
 	}
 
-
-	PsiAccountList list;
-	PsiAccountList listEnabled;
+	PsiCon* psi;
+	PsiContactList* contactList;
 	UserProfile pro;
 	QString lastStatusString;
 	MainWin *mainwin;
@@ -265,7 +252,7 @@ PsiCon::PsiCon()
 {
 	//pdb(DEBUG_JABCON, QString("%1 v%2\n By Justin Karneges\n    infiniti@affinix.com\n\n").arg(PROG_NAME).arg(PROG_VERSION));
 
-	d = new Private;
+	d = new Private(this);
 
 	d->lastStatusString = "";
 	useSound = true;
@@ -294,6 +281,13 @@ PsiCon::~PsiCon()
 
 bool PsiCon::init()
 {
+	d->contactList = new PsiContactList(this);
+	connect(d->contactList, SIGNAL(accountAdded(PsiAccount*)), SIGNAL(accountAdded(PsiAccount*)));
+	connect(d->contactList, SIGNAL(accountRemoved(PsiAccount*)), SIGNAL(accountRemoved(PsiAccount*)));
+	connect(d->contactList, SIGNAL(accountCountChanged()), SIGNAL(accountCountChanged()));
+	connect(d->contactList, SIGNAL(accountActivityChanged()), SIGNAL(accountActivityChanged()));
+	connect(d->contactList, SIGNAL(saveAccounts()), SLOT(saveAccounts()));
+
 	// To allow us to upgrade from old hardcoded options gracefully, be careful about the order here
 	PsiOptions *options=PsiOptions::instance();
 	//load the system-wide defaults, if they exist
@@ -434,7 +428,10 @@ bool PsiCon::init()
 	}
 	
 	// load accounts
-	loadAccounts(d->pro.acc);
+	if (d->pro.acc.count() > 0)
+		d->contactList->loadAccounts(d->pro.acc);
+	else
+		d->promptUserToCreateAccount();
 	
 	// Connect to the system monitor
 	SystemWatch* sw = SystemWatch::instance();
@@ -483,7 +480,8 @@ void PsiCon::deinit()
 	d->idle.stop();
 
 	// shut down all accounts
-	UserAccountList acc = unloadAccounts();
+	UserAccountList acc = d->contactList->getUserAccountList();
+	delete d->contactList;
 
 	// delete s5b server
 	delete d->s5bServer;
@@ -516,52 +514,13 @@ void PsiCon::deinit()
 	d->saveProfile(acc);
 }
 
-PsiAccount *PsiCon::loadAccount(const UserAccount &acc)
+// FIXME: remove the argument.
+QList<PsiAccount *> PsiCon::accountList(bool enabledOnly) const
 {
-	PsiAccount *pa = new PsiAccount(acc, this);
-	connect(&d->idle, SIGNAL(secondsIdle(int)), pa, SLOT(secondsIdle(int)));
-	connect(pa, SIGNAL(updatedActivity()), SLOT(pa_updatedActivity()));
-	connect(pa, SIGNAL(updatedAccount()), SLOT(pa_updatedAccount()));
-	connect(pa, SIGNAL(queueChanged()), SLOT(queueChanged()));
-	connect(pa, SIGNAL(enabledChanged()), SIGNAL(accountCountChanged()));
-	accountAdded(pa);
-	if(d->s5bServer)
-		pa->client()->s5bManager()->setServer(d->s5bServer);
-	return pa;
-}
+	if (!enabledOnly)
+		return d->contactList->accountList();
 
-void PsiCon::loadAccounts(const UserAccountList &list)
-{
-	if(list.count() > 0) {
-		for(UserAccountList::ConstIterator it = list.begin(); it != list.end(); ++it)
-			loadAccount(*it);
-	}
-	else {
-		// if there are no accounts, then prompt the user to add one
-		AccountAddDlg *w = new AccountAddDlg(this, 0);
-		w->show();
-	}
-}
-
-UserAccountList PsiCon::unloadAccounts()
-{
-	UserAccountList acc;
-
-	Q3PtrListIterator<PsiAccount> it(d->list);
-	for(PsiAccount *pa; (pa = it.current());) {
-		acc += pa->userAccount();
-		delete pa;
-	}
-
-	return acc;
-}
-
-const PsiAccountList & PsiCon::accountList(bool enabledOnly) const
-{
-	if(enabledOnly)
-		return d->listEnabled;
-	else
-		return d->list;
+	return d->contactList->enabledAccounts();
 }
 
 ContactView *PsiCon::contactView() const
@@ -592,23 +551,6 @@ TuneController *PsiCon::tuneController() const
 	return d->tuneController;
 }
 
-void PsiCon::link(PsiAccount *pa)
-{
-	d->list.append(pa);
-	if(pa->enabled() && !d->listEnabled.containsRef(pa))
-		d->listEnabled.append(pa);
-	connect(pa, SIGNAL(updatedActivity()), this, SIGNAL(accountActivityChanged()));
-	accountCountChanged();
-}
-
-void PsiCon::unlink(PsiAccount *pa)
-{
-	disconnect(pa, SIGNAL(updatedActivity()), this, SIGNAL(accountActivityChanged()));
-	d->list.remove(pa);
-	d->listEnabled.remove(pa);
-	accountCountChanged();
-}
-
 void PsiCon::closeProgram()
 {
 	quit(QuitProgram);
@@ -616,16 +558,7 @@ void PsiCon::closeProgram()
 
 void PsiCon::changeProfile()
 {
-	bool ok = true;
-	PsiAccountListIt it(d->listEnabled);
-	for(PsiAccount *pa; (pa = it.current()); ++it) {
-		if(pa->isActive()) {
-			ok = false;
-			break;
-		}
-	}
-
-	if(!ok) {
+	if(d->contactList->haveActiveAccounts()) {
 		QMessageBox::information(0, CAP(tr("Error")), tr("Please disconnect before changing the profile."));
 		return;
 	}
@@ -664,37 +597,38 @@ void PsiCon::doManageAccounts()
 		}
 	}
 	else {
-		PsiAccount *pa = d->listEnabled.getFirst();
-		if(pa) {
-			pa->modify();
+		PsiAccount *account = d->contactList->defaultAccount();
+		if(account) {
+			account->modify();
 		}
 		else {
-			AccountAddDlg *w = new AccountAddDlg(this, 0);
-			w->show();
+			d->promptUserToCreateAccount();
 		}
 	}
 }
 
 void PsiCon::doGroupChat()
 {
-	PsiAccount *pa = d->listEnabled.getFirst();
-	if(!pa)
+	PsiAccount *account = d->contactList->defaultAccount();
+	if(!account)
 		return;
 
-	MUCJoinDlg *w = new MUCJoinDlg(this, pa);
+	MUCJoinDlg *w = new MUCJoinDlg(this, account);
 	w->show();
 }
 
 void PsiCon::doNewBlankMessage()
 {
-	PsiAccount *pa = d->listEnabled.getFirst();
-	if(!pa)
+	PsiAccount *account = d->contactList->defaultAccount();
+	if(!account)
 		return;
 
-	EventDlg *w = createEventDlg("", pa);
+	EventDlg *w = createEventDlg("", account);
 	w->show();
 }
 
+// FIXME: smells fishy. Refactor! Probably create a common class for all dialogs and 
+// call optionsUpdate() automatically.
 EventDlg *PsiCon::createEventDlg(const QString &to, PsiAccount *pa)
 {
 	EventDlg *w = new EventDlg(to, this, pa);
@@ -702,6 +636,7 @@ EventDlg *PsiCon::createEventDlg(const QString &to, PsiAccount *pa)
 	return w;
 }
 
+// FIXME: WTF? Refactor! Refactor!
 void PsiCon::updateContactGlobal(PsiAccount *pa, const Jid &j)
 {
 	foreach(item_dialog* i, d->dialogList) {
@@ -713,6 +648,7 @@ void PsiCon::updateContactGlobal(PsiAccount *pa, const Jid &j)
 	}
 }
 
+// FIXME: make it work like QObject::findChildren<ChildName>()
 QWidget *PsiCon::dialogFind(const char *className)
 {
 	foreach(item_dialog *i, d->dialogList) {
@@ -850,57 +786,34 @@ AccountsComboBox *PsiCon::accountsComboBox(QWidget *parent, bool online_only)
 
 bool PsiCon::isValid(PsiAccount *pa)
 {
-	if(d->list.findRef(pa) == -1)
-		return false;
-	else
-		return true;
+	return d->contactList->isValid(pa);
 }
 
 void PsiCon::createAccount(const QString &name, const Jid &j, const QString &pass, bool opt_host, const QString &host, int port, bool ssl, int proxy)
 {
-	UserAccount acc;
-	acc.name = name;
-
-	acc.jid = j.full();
-	if(!pass.isEmpty()) { 
-		acc.opt_pass = true;
-		acc.pass = pass;
-	}
-
-	acc.opt_host = opt_host;
-	acc.host = host;
-	acc.port = port;
-
-	acc.opt_ssl = ssl;
-	acc.proxy_index = proxy;
-
-	PsiAccount *pa = loadAccount(acc);
-	saveAccounts();
-
-	// pop up the modify dialog so the user can customize the new account
-	pa->modify();
+	d->contactList->createAccount(name, j, pass, opt_host, host, port, ssl, proxy);
 }
 
-void PsiCon::modifyAccount(PsiAccount *pa)
+PsiAccount *PsiCon::createAccount(const UserAccount& acc)
 {
-	pa->modify();
+	PsiAccount *pa = new PsiAccount(acc, d->contactList);
+	connect(&d->idle, SIGNAL(secondsIdle(int)), pa, SLOT(secondsIdle(int)));
+	connect(pa, SIGNAL(updatedActivity()), SLOT(pa_updatedActivity()));
+	connect(pa, SIGNAL(updatedAccount()), SLOT(pa_updatedAccount()));
+	connect(pa, SIGNAL(queueChanged()), SLOT(queueChanged()));
+	if(d->s5bServer)
+		pa->client()->s5bManager()->setServer(d->s5bServer);
+	return pa;
 }
 
 void PsiCon::removeAccount(PsiAccount *pa)
 {
-	accountRemoved(pa);
-	pa->deleteQueueFile();
-	delete pa;
-	saveAccounts();
+	d->contactList->removeAccount(pa);
 }
 
 void PsiCon::enableAccount(PsiAccount *pa, bool e)
 {
-	if(e){
-		if(!d->listEnabled.containsRef(pa))
-			d->listEnabled.append(pa);
-	}else
-		d->listEnabled.remove(pa);
+	d->contactList->setAccountEnabled(pa, e);
 }
 
 void PsiCon::statusMenuChanged(int x)
@@ -945,26 +858,23 @@ void PsiCon::setGlobalStatus(const Status &s,  bool withPriority)
 {
 	// Check whether all accounts are logged off
 	bool allOffline = true;
-	PsiAccountListIt i(d->listEnabled);
-	PsiAccount *pa;
-	for( ; (pa = i.current()); ++i) {
-		if ( pa->isActive() ) {
+	foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
+		if ( account->isActive() ) {
 			allOffline = false;
 			break;
 		}
 	}
 
 	// globally set each account which is logged in
-	PsiAccountListIt it(d->listEnabled);
-	for( ; (pa = it.current()); ++it)
-		if (allOffline || pa->isActive())
-			pa->setStatus(s, withPriority);
+	foreach(PsiAccount* account, d->contactList->enabledAccounts())
+		if (allOffline || account->isActive())
+			account->setStatus(s, withPriority);
 }
 
 void PsiCon::pa_updatedActivity()
 {
 	PsiAccount *pa = (PsiAccount *)sender();
-	accountUpdated(pa);
+	emit accountUpdated(pa);
 
 	// update s5b server
 	updateS5BServerAddresses();
@@ -975,17 +885,14 @@ void PsiCon::pa_updatedActivity()
 void PsiCon::pa_updatedAccount()
 {
 	PsiAccount *pa = (PsiAccount *)sender();
-	accountUpdated(pa);
+	emit accountUpdated(pa);
 
 	saveAccounts();
 }
 
 void PsiCon::saveAccounts()
 {
-	UserAccountList acc;
-	PsiAccountListIt it(d->list);
-	for(PsiAccount *pa; (pa = it.current()); ++it)
-		acc += pa->userAccount();
+	UserAccountList acc = d->contactList->getUserAccountList();
 
 	d->pro.proxyList = d->proxy->itemList();
 	//d->pro.acc = acc;
@@ -998,13 +905,12 @@ void PsiCon::updateMainwinStatus()
 	bool active = false;
 	bool loggedIn = false;
 	int state = STATUS_ONLINE;
-	PsiAccountListIt it(d->listEnabled);
-	for(PsiAccount *pa; (pa = it.current()); ++it) {
-		if(pa->isActive())
+	foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
+		if(account->isActive())
 			active = true;
-		if(pa->loggedIn()) {
+		if(account->loggedIn()) {
 			loggedIn = true;
-			state = makeSTATUS(pa->status());
+			state = makeSTATUS(account->status());
 		}
 	}
 	if(loggedIn)
@@ -1019,7 +925,7 @@ void PsiCon::updateMainwinStatus()
 
 void PsiCon::setToggles(bool tog_offline, bool tog_away, bool tog_agents, bool tog_hidden, bool tog_self)
 {
-	if(d->listEnabled.count() > 1)
+	if(d->contactList->enabledAccounts().count() > 1)
 		return;
 
 	d->mainwin->cvlist->setShowOffline(tog_offline);
@@ -1161,23 +1067,14 @@ int PsiCon::getId()
 int PsiCon::queueCount()
 {
 	int total = 0;
-	PsiAccountListIt it(d->listEnabled);
-	for(PsiAccount *pa; (pa = it.current()); ++it)
-		total += pa->eventQueue()->count();
+	foreach(PsiAccount* account, d->contactList->enabledAccounts())
+		total += account->eventQueue()->count();
 	return total;
 }
 
 PsiAccount *PsiCon::queueLowestEventId()
 {
-	PsiAccount *low = 0;
-
-	low = d->queueLowestEventId( false ); // first try to get event from non-dnd account
-
-	// if failed, then get the event from dnd account instead
-	if ( !low )
-		low = d->queueLowestEventId( true );
-
-	return low;
+	return d->contactList->queueLowestEventId();
 }
 
 void PsiCon::queueChanged()
@@ -1200,9 +1097,8 @@ void PsiCon::queueChanged()
 
 		// Check if bouncing is necessary
 		bool doBounce = false;
-		PsiAccountListIt it(d->listEnabled);
-		for(PsiAccount *pa; (pa = it.current()); ++it) {
-			if ( pa->eventQueue()->count() && pa->status().show() != "dnd" ) {
+		foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
+			if ( account->eventQueue()->count() && pa->status().show() != "dnd" ) { // FIXME: use enum instead of "dnd"
 				doBounce = true;
 				break;
 			}
@@ -1328,16 +1224,15 @@ void PsiCon::pgp_keysUpdated()
 void PsiCon::proxy_settingsChanged()
 {
 	// properly index accounts
-	PsiAccountListIt it(d->list);
-	for(PsiAccount *pa; (pa = it.current()); ++it) {
-		UserAccount acc = pa->userAccount();
+	foreach(PsiAccount* account, d->contactList->accountList()) {
+		UserAccount acc = account->userAccount();
 		if(acc.proxy_index > 0) {
 			int x = d->proxy->findOldIndex(acc.proxy_index-1);
 			if(x == -1)
 				acc.proxy_index = 0;
 			else
 				acc.proxy_index = x+1;
-			pa->setUserAccount(acc);
+			account->setUserAccount(acc);
 		}
 	}
 
@@ -1463,9 +1358,8 @@ void PsiCon::updateS5BServerAddresses()
 	QList<QHostAddress> list;
 
 	// grab all IP addresses
-	Q3PtrListIterator<PsiAccount> it(d->list);
-	for(PsiAccount *pa; (pa = it.current()); ++it) {
-		QHostAddress *a = pa->localAddress();
+	foreach(PsiAccount* account, d->contactList->accountList()) {
+		QHostAddress *a = account->localAddress();
 		if(!a)
 			continue;
 
@@ -1527,10 +1421,10 @@ void PsiCon::doWakeup()
 	// TODO: Restore the status from before the log out. Make it an (hidden) option for people with a bad wireless connection.
 	//setGlobalStatus(Status());
 
-	foreach(PsiAccount* acc, accountList(true)) {
-		if (acc->userAccount().opt_reconn) {
+	foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
+		if (account->userAccount().opt_reconn) {
 			// Should we do this when the network comes up ?
-			acc->setStatus(Status("", "", acc->userAccount().priority));
+			account->setStatus(Status("", "", account->userAccount().priority));
 		}
 	}
 }
