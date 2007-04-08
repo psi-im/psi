@@ -79,7 +79,8 @@ static QByteArray scaleAvatar(const QByteArray& b)
 //  Avatar: Base class for avatars.
 //------------------------------------------------------------------------------
 
-Avatar::Avatar()
+Avatar::Avatar(AvatarFactory* factory)
+	: QObject(factory), factory_(factory)
 {
 }
 
@@ -115,6 +116,11 @@ void Avatar::resetImage()
 	pixmap_ = QPixmap();
 }
 
+AvatarFactory* Avatar::factory() const
+{
+	return factory_;
+}
+
 //------------------------------------------------------------------------------
 // CachedAvatar: Base class for avatars which are requested and are to be cached
 //------------------------------------------------------------------------------
@@ -122,7 +128,9 @@ void Avatar::resetImage()
 class CachedAvatar : public Avatar
 {
 public:
-	CachedAvatar() { };
+	CachedAvatar(AvatarFactory* factory)
+		: Avatar(factory)
+	{ };
 	virtual void updateHash(const QString& h);
 
 protected:
@@ -196,12 +204,14 @@ void CachedAvatar::saveToCache(const QString& hash, const QByteArray& data)
 //  PEPAvatar: PEP Avatars
 //------------------------------------------------------------------------------
 
-class PEPAvatar : public QObject, public CachedAvatar
+class PEPAvatar : public CachedAvatar
 {
 	Q_OBJECT
 
 public:
-	PEPAvatar(AvatarFactory* factory, const Jid& jid) : jid_(jid), factory_(factory) { };
+	PEPAvatar(AvatarFactory* factory, const Jid& jid)
+		: CachedAvatar(factory), jid_(jid)
+	{ };
 	
 	void setData(const QString& h, const QString& data) {
 		if (h == hash()) {
@@ -224,7 +234,7 @@ signals:
 
 protected:
 	void requestAvatar() {
-		factory_->account()->pepManager()->get(jid_,"http://jabber.org/protocol/avatar#data",hash());
+		factory()->account()->pepManager()->get(jid_,"http://jabber.org/protocol/avatar#data",hash());
 	}
 
 	void avatarUpdated() 
@@ -232,7 +242,6 @@ protected:
 
 private:
 	Jid jid_;
-	AvatarFactory* factory_;
 };
 
 //------------------------------------------------------------------------------
@@ -241,7 +250,7 @@ private:
 // VCardAvatar: Avatars coming from VCards of contacts.
 //------------------------------------------------------------------------------
 
-class VCardAvatar : public QObject, public CachedAvatar
+class VCardAvatar : public CachedAvatar
 {
 	Q_OBJECT
 
@@ -261,17 +270,17 @@ protected:
 
 private:
 	Jid jid_;
-	AvatarFactory* factory_;
 };
 
 
-VCardAvatar::VCardAvatar(AvatarFactory* factory, const Jid& jid) : jid_(jid), factory_(factory)
+VCardAvatar::VCardAvatar(AvatarFactory* factory, const Jid& jid)
+	: CachedAvatar(factory), jid_(jid)
 {
 }
 
 void VCardAvatar::requestAvatar()
 {
-	VCardFactory::instance()->getVCard(jid_.bare(),factory_->account()->client()->rootTask(), this, SLOT(receivedVCard()));
+	VCardFactory::instance()->getVCard(jid_.bare(), factory()->account()->client()->rootTask(), this, SLOT(receivedVCard()));
 }
 
 void VCardAvatar::receivedVCard()
@@ -290,12 +299,12 @@ void VCardAvatar::receivedVCard()
 // VCardStaticAvatar: VCard static photo avatar (not published through presence)
 //------------------------------------------------------------------------------
 
-class VCardStaticAvatar : public QObject, public Avatar
+class VCardStaticAvatar : public Avatar
 {
 	Q_OBJECT
 
 public:
-	VCardStaticAvatar(const Jid& j);
+	VCardStaticAvatar(AvatarFactory* factory, const Jid& j);
 
 public slots:
 	void vcardChanged(const Jid&);
@@ -308,7 +317,8 @@ private:
 };
 
 
-VCardStaticAvatar::VCardStaticAvatar(const Jid& j) : jid_(j.bare()) 
+VCardStaticAvatar::VCardStaticAvatar(AvatarFactory* factory, const Jid& j)
+	: Avatar(factory), jid_(j.bare())
 { 
 	const VCard* vcard = VCardFactory::instance()->vcard(jid_);
 	if (vcard && !vcard->photo().isEmpty())
@@ -337,7 +347,7 @@ void VCardStaticAvatar::vcardChanged(const Jid& j)
 class FileAvatar : public Avatar
 {
 public:
-	FileAvatar(const Jid& jid);
+	FileAvatar(AvatarFactory* factory, const Jid& jid);
 	void import(const QString& file);
 	void removeFromDisk();
 	bool exists();
@@ -358,7 +368,8 @@ private:
 };
 
 
-FileAvatar::FileAvatar(const Jid& jid) : jid_(jid)
+FileAvatar::FileAvatar(AvatarFactory* factory, const Jid& jid)
+	: Avatar(factory), jid_(jid)
 {
 }
 
@@ -491,7 +502,7 @@ Avatar* AvatarFactory::retrieveAvatar(const Jid& jid)
 	//printf("File avatar\n");
 	if (!file_avatars_.contains(jid.bare())) {
 		//printf("File avatar not yet loaded\n");
-		file_avatars_[jid.bare()] = new FileAvatar(jid);
+		file_avatars_[jid.bare()] = new FileAvatar(this, jid);
 	}
 	//printf("Trying file avatar\n");
 	if (!file_avatars_[jid.bare()]->isEmpty())
@@ -512,7 +523,7 @@ Avatar* AvatarFactory::retrieveAvatar(const Jid& jid)
 	//printf("Static VCard avatar\n");
 	if (!vcard_static_avatars_.contains(jid.bare())) {
 		//printf("Static vcard avatar not yet loaded\n");
-		vcard_static_avatars_[jid.bare()] = new VCardStaticAvatar(jid);
+		vcard_static_avatars_[jid.bare()] = new VCardStaticAvatar(this, jid);
 		connect(vcard_static_avatars_[jid.bare()],SIGNAL(avatarChanged(const Jid&)),this,SLOT(updateAvatar(const Jid&)));
 	}
 	if (!vcard_static_avatars_[jid.bare()]->isEmpty()) {
@@ -561,13 +572,13 @@ void AvatarFactory::updateAvatar(const Jid& j)
 
 void AvatarFactory::importManualAvatar(const Jid& j, const QString& fileName)
 {
-	FileAvatar(j).import(fileName);
+	FileAvatar(this, j).import(fileName);
 	emit avatarChanged(j);
 }
 
 void AvatarFactory::removeManualAvatar(const Jid& j)
 {
-	FileAvatar(j).removeFromDisk();
+	FileAvatar(this, j).removeFromDisk();
 	// TODO: Remove from caches. Maybe create a clearManualAvatar() which
 	// removes the file but doesn't remove the avatar from caches (since it'll
 	// be created again whenever the FileAvatar is requested)
@@ -576,7 +587,7 @@ void AvatarFactory::removeManualAvatar(const Jid& j)
 
 bool AvatarFactory::hasManualAvatar(const Jid& j)
 {
-	return FileAvatar(j).exists();
+	return FileAvatar(this, j).exists();
 }
 
 void AvatarFactory::resourceAvailable(const Jid& jid, const Resource& r)
