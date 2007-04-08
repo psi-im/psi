@@ -32,6 +32,10 @@
 (^|/)Thumbs\.db$
 (^|/)\.gdb_history$
 
+# Mac OS X metadata
+\/\._(.*)
+^\._(.*)
+
 # Iris
 ^iris/example/xmpptest/xmpptest.app$
 ^iris/example/xmpptest/Makefile$
@@ -89,3 +93,6 @@
 ^src/tools/optionstree/Makefile
 ^src/tools/optionstree/optionstreeviewtest/Makefile
 ^src/tools/optionstree/optionstreeviewtest/moc_(.*)\.cpp
+^src/tools/contactlist/example/(.*)\.o
+^src/tools/contactlist/example/(moc_)?(.*)\.(cpp|o|moc)
+^src/tools/contactlist/example/(Makefile|contactlist)
