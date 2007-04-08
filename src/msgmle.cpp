@@ -32,6 +32,7 @@
 
 #include "common.h"
 #include "msgmle.h"
+#include "shortcutmanager.h"
 #include "spellchecker.h"
 #include "psioptions.h"
 
@@ -62,22 +63,35 @@ bool ChatView::focusNextPrevChild(bool next)
 
 void ChatView::keyPressEvent(QKeyEvent *e)
 {
-	if(e->key() == Qt::Key_Escape)
-		e->ignore();
+	if(dialog_) {
+		// Ignore registered key sequences (and pass them up)
+		QKeySequence k(e->key() + e->modifiers());
+		foreach(QAction* act, dialog_->actions()) {
+			QKeySequence keyseq = act->shortcut();
+			if(!keyseq.isEmpty() && keyseq.matches(k) == QKeySequence::ExactMatch) {
+				e->ignore();
+				//act->trigger();
+				return;
+			}
+		}
+	}
+/*	if(e->key() == Qt::Key_Escape)
+		e->ignore(); 
 #ifdef Q_WS_MAC
 	else if(e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier)
 		e->ignore();
+	else
 #endif
 	else if(e->key() == Qt::Key_Return && ((e->modifiers() & Qt::ControlModifier) || (e->modifiers() & Qt::AltModifier)) )
 		e->ignore();
 	else if(e->key() == Qt::Key_H && (e->modifiers() & Qt::ControlModifier))
 		e->ignore();
 	else if(e->key() == Qt::Key_I && (e->modifiers() & Qt::ControlModifier))
-		e->ignore();
-	else if(e->key() == Qt::Key_M && (e->modifiers() & Qt::ControlModifier) && !isReadOnly()) // newline
+		e->ignore(); */
+	/*else*/ if(e->key() == Qt::Key_M && (e->modifiers() & Qt::ControlModifier) && !isReadOnly()) // newline 
 		insert("\n");
-	else if(e->key() == Qt::Key_U && (e->modifiers() & Qt::ControlModifier) && !isReadOnly())
-		setText("");
+/*	else if(e->key() == Qt::Key_U && (e->modifiers() & Qt::ControlModifier) && !isReadOnly())
+		setText(""); */
 	else
 		PsiTextView::keyPressEvent(e);
 }
@@ -167,9 +181,10 @@ QString ChatView::formatTimeStamp(const QDateTime &time)
 //----------------------------------------------------------------------------
 // ChatEdit
 //----------------------------------------------------------------------------
-ChatEdit::ChatEdit(QWidget *parent) 
+ChatEdit::ChatEdit(QWidget *parent, QWidget *dlg /* = NULL*/) 
 : QTextEdit(parent)
 {
+	dialog_ = dlg;
 	setWordWrapMode(QTextOption::WordWrap);
 	setAcceptRichText(false);
 
@@ -196,7 +211,19 @@ bool ChatEdit::focusNextPrevChild(bool next)
 
 void ChatEdit::keyPressEvent(QKeyEvent *e)
 {
-	if(e->key() == Qt::Key_Escape || (e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier))
+	if(dialog_) {
+		// Ignore registered key sequences (and pass them up)
+		QKeySequence k(e->key() + e->modifiers());
+		foreach(QAction* act, dialog_->actions()) {
+			QKeySequence keyseq = act->shortcut();
+			if(!keyseq.isEmpty() && keyseq.matches(k) == QKeySequence::ExactMatch) {
+				e->ignore();
+				//act->trigger();
+				return;
+			}
+		}
+	}
+/*	if(e->key() == Qt::Key_Escape || (e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier))
 		e->ignore();
 	else if(e->key() == Qt::Key_Return && 
 	       ((e->modifiers() & Qt::ControlModifier) 
@@ -209,16 +236,16 @@ void ChatEdit::keyPressEvent(QKeyEvent *e)
 		insert("\n");
 	else if(e->key() == Qt::Key_H && (e->modifiers() & Qt::ControlModifier)) // history
 		e->ignore();
-	else if(e->key() == Qt::Key_S && (e->modifiers() & Qt::AltModifier))
+	else  if(e->key() == Qt::Key_S && (e->modifiers() & Qt::AltModifier))
 		e->ignore();
-	else if(e->key() == Qt::Key_U && (e->modifiers() & Qt::ControlModifier))
+	else*/ if(e->key() == Qt::Key_U && (e->modifiers() & Qt::ControlModifier))
 		setText("");
-	else if((e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter) && !((e->modifiers() & Qt::ShiftModifier) || (e->modifiers() & Qt::AltModifier)) && option.chatSoftReturn)
+/*	else if((e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter) && !((e->modifiers() & Qt::ShiftModifier) || (e->modifiers() & Qt::AltModifier)) && option.chatSoftReturn)
 		e->ignore();
 	else if((e->key() == Qt::Key_PageUp || e->key() == Qt::Key_PageDown) && (e->modifiers() & Qt::ShiftModifier))
 		e->ignore();
 	else if((e->key() == Qt::Key_PageUp || e->key() == Qt::Key_PageDown) && (e->modifiers() & Qt::ControlModifier))
-		e->ignore();
+		e->ignore(); */
 	else
 	{
 		QTextEdit::keyPressEvent(e);
@@ -421,8 +448,8 @@ void ChatEdit::markMisspelled(QTextCursor& tc, bool misspelled /* = true */)
 //----------------------------------------------------------------------------
 // LineEdit
 //----------------------------------------------------------------------------
-LineEdit::LineEdit( QWidget *parent) 
-: ChatEdit( parent)
+LineEdit::LineEdit( QWidget *parent, QWidget *dlg /*= NULL*/) 
+: ChatEdit( parent, dlg)
 {
 	lastSize = QSize( 0, 0 );
 	initialWindowGeometry = QRect( 0, 0, 0, 0 );

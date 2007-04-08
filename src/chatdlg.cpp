@@ -65,6 +65,7 @@
 #include "tabdlg.h"
 #include "psioptions.h"
 #include "psitooltip.h"
+#include "shortcutmanager.h"
 
 #ifdef Q_WS_WIN
 #include <windows.h>
@@ -279,10 +280,10 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 
 	d->act_pgp = new IconAction( tr( "Toggle encryption" ), "psi/cryptoNo", tr( "Toggle encryption" ), 0, this, 0, true );
 
-	d->act_info = new IconAction( tr( "User info" ), "psi/vCard", tr( "User info" ), Qt::CTRL+Qt::Key_I, this );
+	d->act_info = new IconAction( tr( "User info" ), "psi/vCard", tr( "User info" ), ShortcutManager::instance()->shortcut("misc.user-info"), this );
 	connect( d->act_info, SIGNAL( activated() ), SLOT( doInfo() ) );
 
-	d->act_history = new IconAction( tr( "Message history" ), "psi/history", tr( "Message history" ), Qt::CTRL+Qt::Key_H, this );
+	d->act_history = new IconAction( tr( "Message history" ), "psi/history", tr( "Message history" ), ShortcutManager::instance()->shortcut("misc.history"), this );
 	connect( d->act_history, SIGNAL( activated() ), SLOT( doHistory() ) );
 	
 	d->act_compact = new IconAction( tr( "Toggle Compact/Full size" ), "psi/compact", tr( "Toggle Compact/Full size" ), 0, this );
@@ -311,14 +312,14 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 	if ( !option.chatLineEdit ) {
 		QHBoxLayout *hb4 = new QHBoxLayout(vb3);
 
-		d->mle = new ChatEdit(sp_bottom);
+		d->mle = new ChatEdit(sp_bottom, this);
 		hb4->addWidget(d->mle);
 		hb4->addWidget(d->avatar);
 	}
 	else {
 		vb1->addWidget( sp_bottom );
 		QHBoxLayout *hb5 = new QHBoxLayout( vb3 );
-		d->mle = new LineEdit(sp_bottom);
+		d->mle = new LineEdit(sp_bottom, this);
 #ifdef Q_WS_MAC
 		hb5->addSpacing( 16 );
 #endif
@@ -381,6 +382,14 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 		d->act_pgp->setChecked(true);
 	
 	connect(d->pa->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
+
+	if(!option.useTabs) {
+		ShortcutManager::connect("misc.close", this, SLOT(close()));
+		ShortcutManager::connect("misc.scroll-up", this, SLOT(scrollUp()));
+		ShortcutManager::connect("misc.scroll-down", this, SLOT(scrollDown()));
+	}
+	ShortcutManager::connect("misc.send", this, SLOT(doSend()));
+	ShortcutManager::connect("misc.clear", this, SLOT(doClear()));
 }
 
 ChatDlg::~ChatDlg()
@@ -393,6 +402,16 @@ ChatDlg::~ChatDlg()
 void ChatDlg::contextMenuEvent(QContextMenuEvent *)
 {
 	d->pm_settings->exec(QCursor::pos());
+}
+
+void ChatDlg::scrollUp()
+{
+	d->log->verticalScrollBar()->setValue(d->log->verticalScrollBar()->value() - d->log->verticalScrollBar()->pageStep()/2);
+}
+
+void ChatDlg::scrollDown()
+{
+	d->log->verticalScrollBar()->setValue(d->log->verticalScrollBar()->value() + d->log->verticalScrollBar()->pageStep()/2);
 }
 
 void ChatDlg::keyPressEvent(QKeyEvent *e)

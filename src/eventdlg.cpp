@@ -65,6 +65,7 @@
 #include "psitooltip.h"
 #include "serverinfomanager.h"
 #include "alerticon.h"
+#include "shortcutmanager.h"
 
 static QString findJid(const QString &s, int x, int *p1, int *p2)
 {
@@ -923,6 +924,11 @@ void EventDlg::init()
 
 	resize(option.sizeEventDlg);
 	optionsUpdate();
+
+	ShortcutManager::connect("misc.close", this, SLOT(close()));
+	ShortcutManager::connect("misc.user-info", this, SLOT(doInfo()));
+	ShortcutManager::connect("misc.history", this, SLOT(doHistory()));
+	ShortcutManager::connect("misc.send", this, SLOT(doSend()));
 }
 
 void EventDlg::setAccount(PsiAccount *pa)

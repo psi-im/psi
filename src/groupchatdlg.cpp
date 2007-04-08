@@ -68,6 +68,7 @@
 #include "iconaction.h"
 #include "psitooltip.h"
 #include "psioptions.h"
+#include "shortcutmanager.h"
 
 #ifdef Q_WS_WIN
 #include <windows.h>
@@ -809,7 +810,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	PsiToolTip::install(d->le_topic);
 	hb_top->addWidget(d->le_topic);
 
-	d->act_find = new IconAction(tr("Find"), "psi/search", tr("&Find"), Qt::CTRL+Qt::Key_F, this);
+	d->act_find = new IconAction(tr("Find"), "psi/search", tr("&Find"), ShortcutManager::instance()->shortcut("chat.find"), this);
 	connect(d->act_find, SIGNAL(activated()), SLOT(openFind()));
 	d->act_find->addTo( sp_top_top );
 	
@@ -868,7 +869,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	}
 	else {
 		QHBoxLayout *hb5 = new QHBoxLayout( dlg_layout );
-		d->mle = new LineEdit( vsplit );
+		d->mle = new LineEdit( vsplit, this );
 #ifdef Q_WS_MAC
 		hb5->addSpacing( 16 );
 #endif
@@ -910,6 +911,11 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	setLooks();
 	updateCaption();
 	setConnecting();
+
+	ShortcutManager::connect("misc.send", this, SLOT(mle_returnPressed()));
+	ShortcutManager::connect("misc.clear", this, SLOT(doClear()));
+	ShortcutManager::connect("misc.scroll-up", this, SLOT(scrollUp()));
+	ShortcutManager::connect("misc.scroll-down", this, SLOT(scrollDown()));
 }
 
 GCMainDlg::~GCMainDlg()
@@ -926,8 +932,15 @@ GCMainDlg::~GCMainDlg()
 	delete d;
 }
 
-void GCMainDlg::keyPressEvent(QKeyEvent *e)
-{
+void GCMainDlg::scrollUp() {
+	d->te_log->verticalScrollBar()->setValue(d->te_log->verticalScrollBar()->value() - d->te_log->verticalScrollBar()->pageStep()/2);
+}
+
+void GCMainDlg::scrollDown() {
+	d->te_log->verticalScrollBar()->setValue(d->te_log->verticalScrollBar()->value() + d->te_log->verticalScrollBar()->pageStep()/2);
+}
+
+/*void GCMainDlg::keyPressEvent(QKeyEvent *e)
 	if(e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter || (e->key() == Qt::Key_S && (e->modifiers() & Qt::AltModifier)))
 		mle_returnPressed();
 	else if(e->key() == Qt::Key_PageUp && (e->modifiers() & Qt::ShiftModifier))
@@ -936,7 +949,7 @@ void GCMainDlg::keyPressEvent(QKeyEvent *e)
 		d->te_log->verticalScrollBar()->setValue(d->te_log->verticalScrollBar()->value() + d->te_log->verticalScrollBar()->pageStep()/2);
 	else
 		e->ignore();
-}
+}*/
 
 void GCMainDlg::closeEvent(QCloseEvent *e)
 {

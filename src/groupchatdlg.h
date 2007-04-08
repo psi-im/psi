@@ -129,7 +129,6 @@ public:
 protected:
 	void dragEnterEvent(QDragEnterEvent *);
 	void dropEvent(QDropEvent *);
-	void keyPressEvent(QKeyEvent *);
 	void closeEvent(QCloseEvent *);
 	void windowActivationChange(bool);
 	void mucInfoDialog(const QString& title, const QString& message, const Jid& actor, const QString& reason);
@@ -141,6 +140,8 @@ public slots:
 	void optionsUpdate();
 
 private slots:
+	void scrollUp();
+	void scrollDown();
 	void mle_returnPressed();
 	void doTopic();
 	void openFind();

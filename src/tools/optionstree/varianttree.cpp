@@ -20,6 +20,7 @@
 
 #include <QDomElement>
 #include <QDomDocument>
+#include <QKeySequence>
 
 #include "varianttree.h"
 
@@ -320,6 +321,11 @@ void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
 			item_element.appendChild(text);
 			e.appendChild(item_element);
 		}
+	}
+	else if (type == "QKeySequence") {
+		QKeySequence k = var.value<QKeySequence>();
+		QDomText text = e.ownerDocument().createTextNode(k.toString());
+		e.appendChild(text);
 	}
 	else {
 		QDomText text = e.ownerDocument().createTextNode(var.toString());

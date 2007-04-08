@@ -36,6 +36,7 @@
 #include <QCloseEvent>
 #include "psitabwidget.h"
 #include "psioptions.h"
+#include "shortcutmanager.h"
 
 #ifdef Q_WS_WIN
 #include <windows.h>
@@ -90,6 +91,10 @@ TabDlg::TabDlg(PsiCon *psiCon)
 	setLooks();
 
 	resize(option.sizeTabDlg);
+
+	ShortcutManager::connect("misc.close", this, SLOT(closeChat()));
+	ShortcutManager::connect("chat.previous-tab", this, SLOT(previousTab()));
+	ShortcutManager::connect("chat.next-tab", this, SLOT(nextTab()));
 }
 
 TabDlg::~TabDlg()

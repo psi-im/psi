@@ -85,6 +85,8 @@ public slots:
 	void updateAvatar(const Jid&);
 
 private slots:
+	void scrollUp();
+	void scrollDown();
 	void doInfo();
 	void doHistory();
 	void doClear();

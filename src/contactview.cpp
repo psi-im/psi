@@ -55,6 +55,7 @@
 #include "pepmanager.h"
 #include "psitooltip.h"
 #include "capsmanager.h"
+#include "shortcutmanager.h"
 
 //----------------------------------------------------------------------------
 // ContactProfile
@@ -2007,25 +2008,25 @@ ContactView::ContactView(QWidget *parent, const char *name)
 	connect(d->recalculateSizeTimer, SIGNAL(timeout()), d, SLOT(recalculateSize()));
 
 	// actions
-	qa_send = new IconAction("", "psi/sendMessage", tr("Send &message"), Qt::CTRL+Qt::Key_M, this);
+	qa_send = new IconAction("", "psi/sendMessage", tr("Send &message"), ShortcutManager::instance()->shortcut("contactlist.message"), this);
 	connect(qa_send, SIGNAL(activated()), SLOT(doSendMessage()));
-	qa_ren = new IconAction("", /*"psi/edit/clear",*/ tr("Re&name"), Qt::Key_F2, this);
+	qa_ren = new IconAction("", /*"psi/edit/clear",*/ tr("Re&name"), ShortcutManager::instance()->shortcut("contactlist.rename")/* Qt::Key_F2 */, this);
 	connect(qa_ren, SIGNAL(activated()), SLOT(doRename()));
-	qa_assignAvatar = new IconAction("", tr("&Assign Custom Picture"),QKeySequence(), this);
+	qa_assignAvatar = new IconAction("", tr("&Assign Custom Picture"), ShortcutManager::instance()->shortcut("contactlist.assign-custom-avatar"), this);
 	connect(qa_assignAvatar, SIGNAL(activated()), SLOT(doAssignAvatar()));
-	qa_clearAvatar = new IconAction("", tr("&Clear Custom Picture"), QKeySequence(), this);
+	qa_clearAvatar = new IconAction("", tr("&Clear Custom Picture"), ShortcutManager::instance()->shortcut("contactlist.clear-custom-avatar"), this);
 	connect(qa_clearAvatar, SIGNAL(activated()), SLOT(doClearAvatar()));
-	qa_chat = new IconAction("", "psi/start-chat", tr("Open &chat window"), Qt::CTRL+Qt::Key_C, this);
+	qa_chat = new IconAction("", "psi/start-chat", tr("Open &chat window"), ShortcutManager::instance()->shortcut("contactlist.chat"), this);
 	connect(qa_chat, SIGNAL(activated()), SLOT(doOpenChat()));
-	qa_hist = new IconAction("", "psi/history", tr("&History"), Qt::CTRL+Qt::Key_H, this);
+	qa_hist = new IconAction("", "psi/history", tr("&History"), ShortcutManager::instance()->shortcut("misc.history"), this);
 	connect(qa_hist, SIGNAL(activated()), SLOT(doHistory()));
-	qa_logon = new IconAction("", tr("&Log on"), Qt::CTRL+Qt::Key_L, this);
+	qa_logon = new IconAction("", tr("&Log on"), ShortcutManager::instance()->shortcut("contactlist.login-transport"), this);
 	connect(qa_logon, SIGNAL(activated()), SLOT(doLogon()));
-	qa_recv = new IconAction("", tr("&Receive incoming event"), Qt::CTRL+Qt::Key_R, this);
+	qa_recv = new IconAction("", tr("&Receive incoming event"), ShortcutManager::instance()->shortcut("contactlist.event"), this);
 	connect(qa_recv, SIGNAL(activated()), SLOT(doRecvEvent()));
-	qa_rem = new IconAction("", "psi/remove", tr("Rem&ove"), Qt::Key_Delete, this);
+	qa_rem = new IconAction("", "psi/remove", tr("Rem&ove"), ShortcutManager::instance()->shortcut("contactlist.delete"), this);
 	connect(qa_rem, SIGNAL(activated()), SLOT(doRemove()));
-	qa_vcard = new IconAction("", "psi/vCard", tr("User &Info"), Qt::CTRL+Qt::Key_I, this);
+	qa_vcard = new IconAction("", "psi/vCard", tr("User &Info"), ShortcutManager::instance()->shortcut("misc.user-info"), this);
 	connect(qa_vcard, SIGNAL(activated()), SLOT(doVCard()));
 
 	if(option.lockdown.roster) {

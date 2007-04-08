@@ -120,6 +120,40 @@
 				<enabled comment="Whether the spell checker is enabled" type="bool">true</enabled>
 			</spell-check>
 		</ui>
+		<shortcuts>
+			<chat comment="chatdialog shortcuts" >
+				<next-tab type="QKeySequence" comment="go to the previous tab (only tabbed chatting)" >Ctrl+PgUp</next-tab>
+				<previous-tab type="QKeySequence" comment="go to the next tab (only tabbed chatting)" >Ctrl+PgDown</previous-tab>
+				<find type="QKeySequence" comment="" >Ctrl+F</find>
+			</chat>
+			<contactlist comment="All shortcuts which belong to the contactview" >
+				<assign-custom-avatar type="QKeySequence" comment="assign a custom avatar to the current selected contact" />
+				<clear-custom-avatar type="QKeySequence" comment="remove the assigned custom avatar from the current selected contact" />
+				<delete type="QKeySequence" comment="delete the current selected contact" >Del</delete>
+				<chat type="QKeySequence" comment="open a chat window with the current selected contact" >Ctrl+C</chat>
+				<message type="QKeySequence" comment="send a message to the current selected contact" >Ctrl+M</message>
+				<event type="QKeySequence" comment="recieve incoming event" >Ctrl+R</event>
+				<rename type="QKeySequence" comment="rename the current selected contact" >F2</rename>
+				<login-transport type="QKeySequence" comment="log on with the current selected transport" >Ctrl+L</login-transport>
+			</contactlist>
+			<message/>
+			<misc comment="Standard actions" >
+				<scroll-up type="QKeySequence" comment="scroll Up" >Shift+PgUp</scroll-up>
+				<scroll-down type="QKeySequence" comment="scroll Down" >Shift+PgDown</scroll-down>
+				<close type="QVariantList" >
+					<item type="QKeySequence" >Esc</item>
+					<item type="QKeySequence" >Ctrl+W</item>
+				</close>
+				<history type="QKeySequence" comment="open the chat / message history of contact" >Ctrl+H</history>
+				<send type="QVariantList" comment="send the message" >
+					<item type="QKeySequence" >Ctrl+Return</item>
+					<item type="QKeySequence" >Ctrl+Enter</item>
+				</send>
+				<user-info type="QKeySequence" comment="show the userinfo of contact" >Ctrl+I</user-info>
+				<clear type="QKeySequence" comment="clear the text of groupchat or chatdlg">Ctrl+U</clear>
+			</misc>
+			<service-discovery/>
+		</shortcuts>
 	</options>
 	<accounts comment="Account definitions and options"></accounts>
 	<plugins comment="Plugin options"></plugins>

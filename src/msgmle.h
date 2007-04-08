@@ -52,6 +52,9 @@ protected:
 
 protected slots:
 	void autoCopy(bool copyAvailable);
+
+private:
+	QWidget* dialog_;
 };
 
 class ChatEdit : public QTextEdit
@@ -59,7 +62,7 @@ class ChatEdit : public QTextEdit
 	Q_OBJECT
 
 public:
-	ChatEdit(QWidget *parent);
+	ChatEdit(QWidget *parent, QWidget *dlg = NULL);
 	~ChatEdit();
 
 protected slots:
@@ -77,6 +80,7 @@ protected:
   	void markMisspelled(QTextCursor& tc, bool misspelled = true);
 
 private:
+	QWidget	*dialog_;
 	bool check_spelling_;
 	QPoint last_click_;
 	int previous_position_;
@@ -87,7 +91,7 @@ class LineEdit : public ChatEdit
 {
 	Q_OBJECT
 public:
-	LineEdit(QWidget *parent);
+	LineEdit(QWidget *parent, QWidget *dlg = NULL);
 	~LineEdit();
 
 	QSize minimumSizeHint() const;
