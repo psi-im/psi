@@ -59,9 +59,7 @@ windows {
 	LIBS += -lWSock32 -lUser32 -lShell32 -lGdi32 -lAdvAPI32
 	DEFINES += QT_STATICPLUGIN
 	INCLUDEPATH += . # otherwise MSVC will fail to find "common.h" when compiling options/* stuff
-	QTPLUGIN += \
-		qjpeg \
-		qgif
+	#QTPLUGIN += qjpeg qgif
 }
 
 # IPv6 ?

@@ -409,7 +409,7 @@ Q_IMPORT_PLUGIN(qca_sasl)
 //Q_IMPORT_PLUGIN(qca_gnupg)
 #endif
 
-#if defined(Q_WS_WIN) && defined(QT_STATICPLUGIN)
-Q_IMPORT_PLUGIN(qjpeg)
-Q_IMPORT_PLUGIN(qgif)
-#endif
+//#if defined(Q_WS_WIN) && defined(QT_STATICPLUGIN)
+//Q_IMPORT_PLUGIN(qjpeg)
+//Q_IMPORT_PLUGIN(qgif)
+//#endif
