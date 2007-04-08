@@ -1492,7 +1492,7 @@ Stanza Message::toStanza(Stream *stream) const
 	// timestamp
 	if(d->timeStampSend && !d->timeStamp.isNull()) {
 		QDomElement e = s.createElement("jabber:x:delay", "x");
-		e.setAttribute("stamp", TS2stamp(d->timeStamp));
+		e.setAttribute("stamp", TS2stamp(d->timeStamp.toUTC()));
 		s.appendChild(e);
 	}
 
