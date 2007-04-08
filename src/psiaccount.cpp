@@ -692,7 +692,7 @@ PsiAccount::~PsiAccount()
 	
 	delete d->ahcManager;
 	delete d->cp;
-	//delete d->privacyManager; FIXME: Why does this segfault ?
+	delete d->privacyManager;
 	delete d->capsManager;
 	delete d->pepManager;
 	delete d->serverInfoManager;
