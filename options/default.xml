@@ -62,7 +62,7 @@
 					<show comment="Show the proxy UI" type="bool">true</show>
 				</proxy>
 				<resource comment="Allow changing the resource" type="bool">true</resource>
-				<authzid comment="Allow changing the authorization identity" type="bool">true</authzid>
+				<custom-authid comment="Allow changing the authentication identity" type="bool">true</custom-authid>
 				<security comment="Options related to the seciruty UI">
 					<show comment="Show the security UI" type="bool">true</show>
 				</security>

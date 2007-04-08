@@ -86,7 +86,7 @@ void UserAccount::reset()
 	tog_hidden = TRUE;
 	tog_agents = TRUE;
 	tog_self = FALSE;
-	useAuthzid = FALSE;
+	customAuth = FALSE;
 	req_mutual_auth = FALSE;
 	legacy_ssl_probe = TRUE;
 	security_level = QCA::SL_None;
@@ -150,10 +150,14 @@ QDomElement UserAccount::toXml(QDomDocument &doc, const QString &tagName)
 	a.appendChild(textTag(doc, "name", name));
 	a.appendChild(textTag(doc, "jid", jid));
 	
-	QDomElement az = textTag(doc, "authzid", authzid);
-	setBoolAttribute(az, "use", useAuthzid);
-	a.appendChild(az);
-	
+	QDomElement customauth = doc.createElement("custom-auth");
+	setBoolAttribute(customauth, "use", customAuth);
+	QDomElement ac = textTag(doc, "authid", authid);
+	QDomElement re = textTag(doc, "realm", realm);
+	customauth.appendChild(ac);
+	customauth.appendChild(re);
+	a.appendChild(customauth);
+
 	if(opt_pass)
 		a.appendChild(textTag(doc, "password", encodePassword(pass, jid) ));
 	a.appendChild(textTag(doc, "useHost", opt_host));
@@ -313,12 +317,17 @@ void UserAccount::fromXml(const QDomElement &a)
 		pass = decodePassword(pass, jid);
 	}
 
-	QDomElement az = findSubTag(a, "authzid", &found);
+	QDomElement ca = findSubTag(a, "custom-auth", &found);
 	if(found) {
-		readBoolAttribute(az, "use", &useAuthzid);
-		authzid = tagContent(az);
+		readBoolAttribute(ca, "use", &customAuth);
+		QDomElement authid_el = findSubTag(ca, "authid", &found);
+		if (found)
+			authid = tagContent(authid_el);
+		QDomElement realm_el = findSubTag(ca, "realm", &found);
+		if (found)
+			realm = tagContent(realm_el);
 	}
-	
+
 	readEntry(a, "resource", &resource);
 	readNumEntry(a, "priority", &priority);
 	QString pgpSecretKeyID;

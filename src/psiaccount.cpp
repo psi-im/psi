@@ -1098,14 +1098,22 @@ void PsiAccount::cs_securityLayerActivated()
 
 void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
 {
-	if(user) 
-		d->stream->setUsername(d->jid.user());
+	if(user) {
+		if (d->acc.customAuth && !d->acc.authid.isEmpty())
+			d->stream->setUsername(d->acc.authid);
+		else
+			d->stream->setUsername(d->jid.user());
+    }
 	if(pass)
 		d->stream->setPassword(d->acc.pass);
-	if(realm)
-		d->stream->setRealm(d->jid.domain());
-	if(d->acc.useAuthzid)
-		d->stream->setAuthzid(d->acc.authzid);
+	if(realm) {
+		if (d->acc.customAuth && !d->acc.realm.isEmpty())
+			d->stream->setRealm(d->acc.realm);
+		else
+			d->stream->setRealm(d->jid.domain());
+	}
+	if(d->acc.customAuth) 
+		d->stream->setAuthzid(d->jid.bare());
 	d->stream->continueAfterParams();
 }
 
@@ -1117,9 +1125,6 @@ void PsiAccount::cs_authenticated()
 	// Update our jid (if necessary)
 	if (!d->stream->jid().isEmpty()) {
 		d->jid = d->stream->jid().bare();
-	}
-	else if (d->acc.useAuthzid) {
-		d->jid = Jid(d->acc.authzid);
 	}
 
 	QString resource = (d->stream->jid().resource().isEmpty() ? ( d->acc.opt_automatic_resource ? localHostName() : d->acc.resource) : d->stream->jid().resource());

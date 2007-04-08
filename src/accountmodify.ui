@@ -864,14 +864,14 @@
           <number>6</number>
          </property>
          <item>
-          <widget class="QCheckBox" name="ck_authzid" >
+          <widget class="QCheckBox" name="ck_custom_auth" >
            <property name="text" >
-            <string>Authorize as user:</string>
+            <string>Authenticate as user:</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="le_authzid" >
+          <widget class="QLineEdit" name="le_authid" >
            <property name="enabled" >
             <bool>false</bool>
            </property>

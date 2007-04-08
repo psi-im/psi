@@ -101,9 +101,13 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 	le_resource->setText(acc.resource);
 	le_priority->setText(QString::number(acc.priority));
 
-	connect(ck_authzid,SIGNAL(toggled(bool)), le_authzid, SLOT(setEnabled(bool)));
-	ck_authzid->setChecked(acc.useAuthzid);
-	le_authzid->setText(acc.authzid);
+	//connect(ck_custom_auth,SIGNAL(toggled(bool)), lb_authid, SLOT(setEnabled(bool)));
+	connect(ck_custom_auth,SIGNAL(toggled(bool)), le_authid, SLOT(setEnabled(bool)));
+	//connect(ck_custom_auth,SIGNAL(toggled(bool)), lb_realm, SLOT(setEnabled(bool)));
+	//connect(ck_custom_auth,SIGNAL(toggled(bool)), le_realm, SLOT(setEnabled(bool)));
+	ck_custom_auth->setChecked(acc.customAuth);
+	le_authid->setText(acc.authid);
+	//le_realm->setText(acc.realm);
 		
 	ck_plain->setChecked(acc.opt_plain);
 	ck_compress->setChecked(acc.opt_compress);
@@ -207,8 +211,8 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 		tr("You can have multiple clients connected to the Jabber server "
 		"with your single account.  Each login is distinguished by a \"resource\" "
 		"name, which you can specify in this field."));
-	ck_authzid->setWhatsThis(
-		tr("This option sets the Jabber ID of the user you want to "
+	ck_custom_auth->setWhatsThis(
+		tr("This option sets the user (and realm) you want to "
 			"authenticate as. This overrides the Jabber ID you are logging in "
 			"as."));
 	le_priority->setWhatsThis(
@@ -282,9 +286,12 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 		le_resource->hide();
 	}
 	
-	if (!PsiOptions::instance()->getOption("options.ui.account.authzid").toBool()) {
-		ck_authzid->hide();
-		le_authzid->hide();
+	if (!PsiOptions::instance()->getOption("options.ui.account.custom-authid").toBool()) {
+		ck_custom_auth->hide();
+		//lb_authid->hide();
+		le_authid->hide();
+		//lb_realm->hide();
+		//le_realm->hide();
 	}
 	
 	if (!PsiOptions::instance()->getOption("options.ui.account.priority").toBool()) {
@@ -475,10 +482,9 @@ void AccountModifyDlg::save()
 	acc.opt_automatic_resource = ck_automatic_resource->isChecked();
 	acc.resource = le_resource->text();
 	acc.priority = le_priority->text().toInt();
-	
-	acc.useAuthzid = ck_authzid->isChecked();
-	acc.authzid = le_authzid->text();
-
+	acc.customAuth = ck_custom_auth->isChecked();
+	acc.authid = le_authid->text();
+	//acc.realm = le_realm->text();
 	acc.ssl =  (UserAccount::SSLFlag) cb_ssl->itemData(cb_ssl->currentIndex()).toInt();
 	acc.opt_plain = ck_plain->isChecked();
 	acc.opt_compress = ck_compress->isChecked();
