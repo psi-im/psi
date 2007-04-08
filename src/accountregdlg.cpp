@@ -62,7 +62,6 @@ AccountRegDlg::AccountRegDlg(ProxyManager *pm, QWidget *parent) : QDialog(parent
 	// SSL
 	ui_.cb_ssl->addItem(tr("Automatic"),UserAccount::SSL_Auto);
 	ui_.cb_ssl->addItem(tr("Always"),UserAccount::SSL_Yes);
-	ui_.cb_ssl->addItem(tr("Never"), UserAccount::SSL_No);
 	ui_.cb_ssl->addItem(tr("Legacy SSL"), UserAccount::SSL_Legacy);
 	ui_.cb_ssl->setCurrentIndex(ui_.cb_ssl->findData(ssl_));
 	connect(ui_.cb_ssl, SIGNAL(activated(int)), SLOT(sslActivated(int)));
