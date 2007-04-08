@@ -53,6 +53,8 @@ private slots:
 	void resolveNickActivated();
 	void resolveNickFinished();
 
+	void jid_Changed();
+
 private:
 	class Private;
 	Private *d;
