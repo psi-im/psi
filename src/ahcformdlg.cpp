@@ -27,6 +27,7 @@
 #include "ahcexecutetask.h"
 #include "xdata_widget.h"
 #include "psiaccount.h"
+#include "busywidget.h"
 
 AHCFormDlg::AHCFormDlg(const AHCommand& r, const Jid& receiver, XMPP::Client* client, bool final) : QDialog(NULL, Qt::WDestructiveClose), receiver_(receiver), client_(client)
 {
@@ -47,11 +48,17 @@ AHCFormDlg::AHCFormDlg(const AHCommand& r, const Jid& receiver, XMPP::Client* cl
 	xdata_->setFields(r.data().fields());
 	vb->addWidget(xdata_);
 
+	vb->addStretch(1);
+
 	// Buttons
 	QHBoxLayout *hb = new QHBoxLayout(vb);
-	hb->addItem(new QSpacerItem(20,0,QSizePolicy::Expanding));
 	pb_complete = pb_cancel = pb_prev = pb_next = 0;
 	if (!final) {
+
+		busy_ = new BusyWidget(this);
+		hb->addWidget(busy_);
+		hb->addItem(new QSpacerItem(20,0,QSizePolicy::Expanding));
+
 		if (r.actions().empty()) {
 			// Single stage dialog
 			pb_complete = new QPushButton(tr("Finish"),this);
@@ -116,6 +123,8 @@ AHCFormDlg::AHCFormDlg(const AHCommand& r, const Jid& receiver, XMPP::Client* cl
 		hb->addWidget(pb_cancel);
 	}
 	else {
+		hb->addItem(new QSpacerItem(20,0,QSizePolicy::Expanding));
+		
 		pb_complete = new QPushButton(tr("Ok"),this);
 		connect(pb_complete,SIGNAL(clicked()),SLOT(close()));
 		hb->addWidget(pb_complete);
@@ -131,36 +140,47 @@ AHCFormDlg::AHCFormDlg(const AHCommand& r, const Jid& receiver, XMPP::Client* cl
 
 void AHCFormDlg::doPrev()
 {
+	busy_->start();
 	AHCExecuteTask* t = new AHCExecuteTask(receiver_,AHCommand(node_,data(),sessionId_,AHCommand::Prev), client_->rootTask());
+	connect(t,SIGNAL(finished()),SLOT(commandExecuted()));
 	t->go(true);
-	close();
 }
 
 void AHCFormDlg::doNext()
 {
+	busy_->start();
 	AHCExecuteTask* t = new AHCExecuteTask(receiver_,AHCommand(node_,data(),sessionId_,AHCommand::Next),client_->rootTask());
+	connect(t,SIGNAL(finished()),SLOT(commandExecuted()));
 	t->go(true);
-	close();
 }
 
 void AHCFormDlg::doExecute()
 {
+	busy_->start();
 	AHCExecuteTask* t = new AHCExecuteTask(receiver_,AHCommand(node_,data(),sessionId_),client_->rootTask());
+	connect(t,SIGNAL(finished()),SLOT(commandExecuted()));
 	t->go(true);
-	close();
 }
 
 void AHCFormDlg::doComplete()
 {
+	busy_->start();
 	AHCExecuteTask* t = new AHCExecuteTask(receiver_,AHCommand(node_,data(),sessionId_,AHCommand::Complete), client_->rootTask());
+	connect(t,SIGNAL(finished()),SLOT(commandExecuted()));
 	t->go(true);
-	close();
 }
 
 void AHCFormDlg::doCancel()
 {
+	busy_->start();
 	AHCExecuteTask* t = new AHCExecuteTask(receiver_,AHCommand(node_,sessionId_,AHCommand::Cancel), client_->rootTask());
+	connect(t,SIGNAL(finished()),SLOT(commandExecuted()));
 	t->go(true);
+}
+
+void AHCFormDlg::commandExecuted()
+{
+	busy_->stop();
 	close();
 }
 

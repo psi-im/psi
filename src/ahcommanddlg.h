@@ -50,6 +50,7 @@ protected slots:
 	void refreshCommands();
 	void listReceived();
 	void executeCommand();
+	void commandExecuted();
 
 private:
 	PsiAccount* pa_;

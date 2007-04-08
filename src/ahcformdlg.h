@@ -28,6 +28,7 @@
 #include "xmpp_xdata.h"
 
 class QPushButton;
+class BusyWidget;
 class AHCommand;
 class XDataWidget;
 namespace XMPP {
@@ -51,6 +52,7 @@ protected slots:
 	void doComplete();
 	void doExecute();
 	void doCancel();
+	void commandExecuted();
 
 private:
 	QPushButton *pb_prev, *pb_next, *pb_complete, *pb_cancel;
@@ -59,6 +61,7 @@ private:
 	QString node_;
 	XMPP::Client* client_;
 	QString sessionId_;
+	BusyWidget* busy_;
 };
 
 #endif

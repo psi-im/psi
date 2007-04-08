@@ -124,6 +124,8 @@ AHCommandDlg::AHCommandDlg(PsiAccount* pa, const Jid& receiver) : QDialog(0, Qt:
 	//hb2->addWidget(pb_refresh);
 	//connect(pb_refresh, SIGNAL(clicked()), SLOT(refreshCommands()));
 
+	vb->addStretch(1);
+
 	// Bottom row
 	QHBoxLayout *hb2 = new QHBoxLayout(vb);
 	busy_ = new BusyWidget(this);
@@ -171,11 +173,19 @@ void AHCommandDlg::listReceived()
 void AHCommandDlg::executeCommand()
 {
 	if (cb_commands->count() > 0) {
+		busy_->start();
 		Jid to(commands_[cb_commands->currentItem()].jid);
 		QString node = commands_[cb_commands->currentItem()].node;
-		executeCommand(pa_->client(),to,node);
-		close();
+		AHCExecuteTask* t = new AHCExecuteTask(to,AHCommand(node),pa_->client()->rootTask());
+		connect(t,SIGNAL(finished()),SLOT(commandExecuted()));
+		t->go(true);
 	}
+}
+
+void AHCommandDlg::commandExecuted()
+{
+	busy_->stop();
+	close();
 }
 
 void AHCommandDlg::executeCommand(XMPP::Client* c, const XMPP::Jid& to, const QString &node)
