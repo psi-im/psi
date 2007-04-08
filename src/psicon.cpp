@@ -23,6 +23,7 @@
 #include <q3ptrlist.h>
 #include <qapplication.h>
 #include <qdesktopwidget.h>
+#include <QMenuBar>
 #include <qpointer.h>
 #include <qicon.h>
 #include <qcolor.h>
@@ -242,6 +243,7 @@ public:
 	QCA::EventHandler *qcaEventHandler;
 	//GlobalAccelManager *globalAccelManager;
 	TuneController* tuneController;
+	QMenuBar* defaultMenuBar;
 };
 
 //----------------------------------------------------------------------------
@@ -269,6 +271,7 @@ PsiCon::PsiCon()
 	d->tuneController = 0;
 
 	d->actionList = 0;
+	d->defaultMenuBar = new QMenuBar(0);
 }
 
 PsiCon::~PsiCon()
@@ -656,6 +659,15 @@ QWidget *PsiCon::dialogFind(const char *className)
 		}
 	}
 	return 0;
+}
+
+QMenuBar* PsiCon::menuBar() const
+{
+#ifdef Q_WS_MAC
+	return d->defaultMenuBar;
+#else
+	return d->mainwin->menuBar();
+#endif
 }
 
 TabDlg* PsiCon::newTabs()

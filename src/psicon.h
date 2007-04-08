@@ -37,6 +37,7 @@ class UserListItem;
 class EDB;
 class EDBItem;
 class ProxyManager;
+class QMenuBar;
 class FileTransDlg;
 class IconSelectPopup;
 class QThread;
@@ -87,6 +88,8 @@ public:
 	QWidget *dialogFind(const char *className);
 	void dialogRegister(QWidget *w);
 	void dialogUnregister(QWidget *w);
+
+	QMenuBar* menuBar() const;
 
 	void createAccount(const QString &name, const Jid &j="", const QString &pass="", bool opt_host=false, const QString &host="", int port=5222, bool legacy_ssl_probe = true, UserAccount::SSLFlag ssl=UserAccount::SSL_Auto, int proxy=0);
 	PsiAccount *createAccount(const UserAccount &);
