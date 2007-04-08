@@ -2723,7 +2723,7 @@ public:
 
 	QString getGroupName() {
 		QString group;
-		if ( type == Profile )
+		if ( cvi->type() == Profile )
 			group = "/\\/" + profileName + "\\/\\";
 		else
 			group = groupName;
@@ -2749,7 +2749,6 @@ public:
 		return gd;
 	}
 
-	int type;
 	ContactProfile *cp;
 	int status;
 
@@ -2776,8 +2775,8 @@ public:
 ContactViewItem::ContactViewItem(const QString &profileName, ContactProfile *cp, ContactView *parent)
 :RichListViewItem(parent)
 {
+	type_ = Profile;
 	d = new Private(this, cp);
-	d->type = Profile;
 	d->profileName = profileName;
 	d->alerting = false;
 	d->ssl = false;
@@ -2793,8 +2792,8 @@ ContactViewItem::ContactViewItem(const QString &profileName, ContactProfile *cp,
 ContactViewItem::ContactViewItem(const QString &groupName, int groupType, ContactProfile *cp, ContactView *parent)
 :RichListViewItem(parent)
 {
+	type_ = Group;
 	d = new Private(this, cp);
-	d->type = Group;
 	d->groupName = groupName;
 	d->groupType = groupType;
 	d->alerting = false;
@@ -2810,8 +2809,8 @@ ContactViewItem::ContactViewItem(const QString &groupName, int groupType, Contac
 ContactViewItem::ContactViewItem(const QString &groupName, int groupType, ContactProfile *cp, ContactViewItem *parent)
 :RichListViewItem(parent)
 {
+	type_ = Group;
 	d = new Private(this, cp);
-	d->type = Group;
 	d->groupName = groupName;
 	d->groupType = groupType;
 	d->alerting = false;
@@ -2830,9 +2829,9 @@ ContactViewItem::ContactViewItem(const QString &groupName, int groupType, Contac
 ContactViewItem::ContactViewItem(UserListItem *u, ContactProfile *cp, ContactViewItem *parent)
 :RichListViewItem(parent)
 {
+	type_ = Contact;
 	d = new Private(this, cp);
 	d->cp = cp;
-	d->type = Contact;
 	d->u = u;
 	d->alerting = false;
 	d->animatingNick = false;
@@ -2876,7 +2875,7 @@ ContactProfile *ContactViewItem::contactProfile() const
 
 int ContactViewItem::type() const
 {
-	return d->type;
+	return type_;
 }
 
 const QString & ContactViewItem::groupName() const
@@ -2927,7 +2926,7 @@ int ContactViewItem::parentGroupType() const
 
 void ContactViewItem::drawGroupIcon()
 {
-	if ( d->type == Group ) {
+	if ( type_ == Group ) {
 		if ( childCount() == 0 )
 			setIcon(IconsetFactory::iconPtr("psi/groupEmpty"));
 		else if ( isOpen() )
@@ -2935,7 +2934,7 @@ void ContactViewItem::drawGroupIcon()
 		else
 			setIcon(IconsetFactory::iconPtr("psi/groupClosed"));
 	}
-	else if ( d->type == Profile ) {
+	else if ( type_ == Profile ) {
 		if ( !d->alerting )
 			setProfileState(d->status);
 	}
@@ -2954,7 +2953,7 @@ void ContactViewItem::paintBranches(QPainter *p, const QColorGroup &cg, int w, i
 
 void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column, int width, int alignment)
 {
-	if ( d->type == Contact ) {
+	if ( type_ == Contact ) {
 		QColorGroup xcg = cg;
 
 		if(d->status == STATUS_AWAY || d->status == STATUS_XA)
@@ -2992,10 +2991,10 @@ void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
 			}
 		}
 	}
-	else if ( d->type == Group || d->type == Profile ) {
+	else if ( type_ == Group || type_ == Profile ) {
 		QColorGroup xcg = cg;
 
-		if(d->type == Profile) {
+		if(type_ == Profile) {
  			xcg.setColor(QColorGroup::Text, option.color[cProfileFore]);
 			#if QT_VERSION >= 0x040103 
 				xcg.setColor(QColorGroup::Background, option.color[cProfileBack]);
@@ -3004,7 +3003,7 @@ void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
  			#endif
 			
 		}
-		else if(d->type == Group) {
+		else if(type_ == Group) {
 			QFont f = p->font();
 			f.setPointSize(option.smallFontSize);
 			p->setFont(f);
@@ -3024,7 +3023,7 @@ void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
 		const QPixmap *pix = pixmap(column);
 		int x = fm.width(text(column)) + (pix ? pix->width() : 0) + 8;
 
-		if(d->type == Profile) {
+		if(type_ == Profile) {
 			const QPixmap &pix = d->ssl ? IconsetFactory::iconPixmap("psi/cryptoYes") : IconsetFactory::iconPixmap("psi/cryptoNo");
 			int y = (height() - pix.height()) / 2;
 			p->drawPixmap(x, y, pix);
@@ -3045,7 +3044,7 @@ void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
 		int info_y = ((height() - fm_info.height()) / 2) + fm_info.ascent();
 		p->drawText((info_x > x ? info_x : x), info_y, d->groupInfo);
 
-		if(d->type == Group && option.clNewHeadings && !isSelected()) {
+		if(type_ == Group && option.clNewHeadings && !isSelected()) {
 			x += fm.width(d->groupInfo) + 8;
 			if(x < width - 8) {
 				int h = (height() / 2) - 1;
@@ -3149,7 +3148,7 @@ int ContactViewItem::compare(Q3ListViewItem *lvi, int, bool) const
 	ContactViewItem *i = (ContactViewItem *)lvi;
 	int ret = 0;
 
-	if(d->type == Group || d->type == Profile) {
+	if(type_ == Group || type_ == Profile) {
 		// contacts always go before groups
 		if(i->type() == Contact)
 			ret = 1;
@@ -3177,7 +3176,7 @@ int ContactViewItem::compare(Q3ListViewItem *lvi, int, bool) const
 				ret = text(0).lower().localeAwareCompare(i->text(0).lower());
 		}
 	}
-	else if(d->type == Contact) {
+	else if(type_ == Contact) {
 		// contacts always go before groups
 		if(i->type() == Group)
 			ret = -1;
@@ -3426,10 +3425,10 @@ void ContactViewItem::updatePosition()
 
 void ContactViewItem::optionsUpdate()
 {
-	if(d->type == Group || d->type == Profile) {
+	if(type_ == Group || type_ == Profile) {
 		drawGroupIcon();
 	}
-	else if(d->type == Contact) {
+	else if(type_ == Contact) {
 		if(!d->alerting)
 			resetStatus();
 		else
@@ -3467,13 +3466,13 @@ void ContactViewItem::setContact(UserListItem *u)
 
 bool ContactViewItem::acceptDrop(const QMimeSource *m) const
 {
-	if ( d->type == Profile )
+	if ( type_ == Profile )
 		return false;
-	else if ( d->type == Group ) {
+	else if ( type_ == Group ) {
 		if(d->groupType != gGeneral && d->groupType != gUser)
 			return false;
 	}
-	else if ( d->type == Contact ) {
+	else if ( type_ == Contact ) {
 		if ( d->u && d->u->isSelf() )
 			return false;
 		ContactViewItem *par = (ContactViewItem *)Q3ListViewItem::parent();
@@ -3482,7 +3481,7 @@ bool ContactViewItem::acceptDrop(const QMimeSource *m) const
 	}
 
 	// Files. Note that the QTextDrag test has to come after QUriDrag.
-	if (d->type == Contact && Q3UriDrag::canDecode(m)) {
+	if (type_ == Contact && Q3UriDrag::canDecode(m)) {
 		QStringList l;
 		if (Q3UriDrag::decodeLocalFiles(m,l) && !l.isEmpty())
 			return true;

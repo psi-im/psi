@@ -377,6 +377,7 @@ protected:
 	void cancelRename(int);
 
 private:
+	int type_;
 	class Private;
 	Private *d;
 
