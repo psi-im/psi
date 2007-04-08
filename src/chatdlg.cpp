@@ -242,6 +242,7 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 	connect( d->act_file, SIGNAL( activated() ), SLOT( doFile() ) );
 
 	d->act_pgp = new IconAction( tr( "Toggle encryption" ), "psi/cryptoNo", tr( "Toggle encryption" ), 0, this, 0, true );
+	ui_.tb_pgp->setDefaultAction(d->act_pgp);
 
 	d->act_info = new IconAction( tr( "User info" ), "psi/vCard", tr( "User info" ), 0, this );
 	connect( d->act_info, SIGNAL( activated() ), SLOT( doInfo() ) );
@@ -721,6 +722,7 @@ void ChatDlg::setLooks()
 		ui_.le_jid->hide();
 		ui_.tb_actions->hide();
 		ui_.tb_emoticons->hide();
+		ui_.tb_pgp->hide();
 		ui_.toolbar->hide();
 	}
 	else {
@@ -730,11 +732,13 @@ void ChatDlg::setLooks()
 			ui_.toolbar->show();
 			ui_.tb_actions->hide();
 			ui_.tb_emoticons->hide();
+			ui_.tb_pgp->hide();
 		}
 		else {
 			ui_.toolbar->hide();
 			ui_.tb_emoticons->show();
 			ui_.tb_actions->show();
+			ui_.tb_pgp->setVisible(d->pa->hasPGP());
 		}
 	}
 	updateIdentityVisibility();
