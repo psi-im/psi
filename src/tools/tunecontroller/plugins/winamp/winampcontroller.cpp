@@ -20,7 +20,17 @@
 
 #include <windows.h>
 
+#ifdef Q_CC_MSVC
+#pragma warning(disable: 4100)
+#endif
+
+// this file generates eight C4100 warnings, when compiled with MSVC2003
 #include "third-party/wa_ipc.h"
+
+#ifdef Q_CC_MSVC
+#pragma warning(enable: 4100)
+#endif
+
 #include "winampcontroller.h"
 
 

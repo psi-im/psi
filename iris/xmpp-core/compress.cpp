@@ -14,6 +14,7 @@ Compressor::Compressor(QIODevice* device, int compression) : device_(device)
 	zlib_stream_->opaque = Z_NULL;
 	int result = deflateInit(zlib_stream_, compression);
 	Q_ASSERT(result == Z_OK);
+	Q_UNUSED(result);
 	connect(device, SIGNAL(aboutToClose()), this, SLOT(flush()));
 	flushed_ = false;
 }
@@ -101,6 +102,7 @@ Decompressor::Decompressor(QIODevice* device) : device_(device)
 	zlib_stream_->opaque = Z_NULL;
 	int result = inflateInit(zlib_stream_);
 	Q_ASSERT(result == Z_OK);
+	Q_UNUSED(result);
 	connect(device, SIGNAL(aboutToClose()), this, SLOT(flush()));
 	flushed_ = false;
 }

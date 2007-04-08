@@ -18,7 +18,9 @@
  *
  */
 
+#ifndef QT_STATICPLUGIN
 #define QT_STATICPLUGIN
+#endif
 
 #include <QtCore>
 #include <QObject>
