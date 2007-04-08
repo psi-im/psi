@@ -239,6 +239,8 @@ void OptionsTabShortcuts::onAdd() {
 			/* it was a keyItem, so get it's parent */
 			shortcutItem = shortcutItem->parent();
 			break;	
+		case OptionsTabShortcuts::ShortcutItem:
+			break;
 		default:
 			return;
 	}
@@ -360,8 +362,8 @@ void OptionsTabShortcuts::onNewShortcutKey(QKeySequence key) {
 	QString	optionsPath;
 	Kind itemKind;
 
-	/* we can set the new KeySequence to just to one Key item */
-	if(selectedItems.count() == 0 || selectedItems.count() > 0)
+	/* we can set the new KeySequence to just one Key item */
+	if(selectedItems.count() == 0 || selectedItems.count() > 1)
 		return;
 
 	keyItem = selectedItems[0];
