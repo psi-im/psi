@@ -678,9 +678,9 @@ ContactProfile::Entry *ContactProfile::findEntry(ContactViewItem *i) const
 }
 
 // return a list of contacts from a CVI group
-JidList ContactProfile::contactListFromCVGroup(ContactViewItem *group) const
+QList<XMPP::Jid> ContactProfile::contactListFromCVGroup(ContactViewItem *group) const
 {
-	JidList list;
+	QList<XMPP::Jid> list;
 
 	for(ContactViewItem *item = (ContactViewItem *)group->firstChild(); item ; item = (ContactViewItem *)item->nextSibling()) {
 		if(item->type() != ContactViewItem::Contact)
@@ -721,9 +721,9 @@ int ContactProfile::contactsOnlineFromCVGroup(ContactViewItem *group) const
 }
 
 // return a list of contacts associated with "groupName"
-JidList ContactProfile::contactListFromGroup(const QString &groupName) const
+QList<XMPP::Jid> ContactProfile::contactListFromGroup(const QString &groupName) const
 {
-	JidList list;
+	QList<XMPP::Jid> list;
 
 	Q3PtrListIterator<Entry> it(d->roster);
 	for(Entry *e; (e = it.current()); ++it) {
@@ -1030,7 +1030,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 			return;
 
 		if(x == 0) {
-			JidList list = contactListFromCVGroup(i);
+			QList<XMPP::Jid> list = contactListFromCVGroup(i);
 
 			// send multi
 			actionSendMessage(list);
@@ -1042,7 +1042,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 			"Proceed?"), tr("&Yes"), tr("&No"));
 
 			if(n == 0) {
-				JidList list = contactListFromGroup(i->groupName());
+				QList<XMPP::Jid> list = contactListFromGroup(i->groupName());
 				for(QList<Jid>::Iterator it = list.begin(); it != list.end(); ++it)
 					actionGroupRemove(*it, gname);
 			}
@@ -1054,7 +1054,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 			"Proceed?"), tr("&Yes"), tr("&No"));
 
 			if(n == 0) {
-				JidList list = contactListFromGroup(i->groupName());
+				QList<XMPP::Jid> list = contactListFromGroup(i->groupName());
 				for(QList<Jid>::Iterator it = list.begin(); it != list.end(); ++it) {
 					removeEntry(*it);
 					actionRemove(*it);

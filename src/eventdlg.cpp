@@ -1048,7 +1048,7 @@ QString EventDlg::findJidInString(const QString &s) const
 		++a;
 		int b = s.find('>', a);
 		if(b != -1)
-			return dec822jid(s.mid(a, b-a));
+			return JIDUtil::decode822(s.mid(a, b-a));
 	}
 	return "";
 }
@@ -1080,9 +1080,9 @@ QString EventDlg::expandAddresses(const QString &in, bool enc) const
 
 		QString name;
 		if(!u->name().isEmpty())
-			name += u->name() + QString(" <%1>").arg(enc822jid(jid.full()));
+			name += u->name() + QString(" <%1>").arg(JIDUtil::encode822(jid.full()));
 		else
-			name = enc822jid(jid.full());
+			name = JIDUtil::encode822(jid.full());
 		str += name;
 	}
 
@@ -1194,12 +1194,12 @@ QString EventDlg::jidToString(const Jid &jid, const QString &r) const
 			j = u->jid().userHost() + '/' + r;
 
 		if(!u->name().isEmpty())
-			name = u->name() + QString(" <%1>").arg(enc822jid(j));
+			name = u->name() + QString(" <%1>").arg(JIDUtil::encode822(j));
 		else
-			name = enc822jid(j);
+			name = JIDUtil::encode822(j);
 	}
 	else
-		name = enc822jid(jid.full());
+		name = JIDUtil::encode822(jid.full());
 
 	return name;
 }

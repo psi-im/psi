@@ -239,8 +239,6 @@ QString decodePassword(const QString &, const QString &);
 Icon category2icon(const QString &category, const QString &type, int status=STATUS_ONLINE);
 
 void bringToFront(QWidget *w, bool grabFocus = true);
-int hexChar2int(char c);
-char int2hexChar(int x);
 
 QString logencode(QString);
 QString logdecode(const QString &);
@@ -249,11 +247,6 @@ bool operator!=(const QMap<QString, QString> &, const QMap<QString, QString> &);
 void openURL(const QString &);
 
 bool fileCopy(const QString &src, const QString &dest);
-
-#ifdef Q_WS_MAC
-void stopDockTileBounce();
-void bounceDockTile();
-#endif
 
 #ifdef Q_WS_X11
 void x11wmClass(Display *dsp, WId wid, QString resName);
@@ -271,9 +264,6 @@ int makeSTATUS(const XMPP::Status &);
 void replaceWidget(QWidget *, QWidget *);
 void closeDialogs(QWidget *);
 
-QString enc822jid(const QString &);
-QString dec822jid(const QString &);
-
 extern
 Options option;
 
@@ -282,9 +272,5 @@ PsiIconset *is;
 
 extern
 bool useSound;
-
-typedef QList<XMPP::Jid> JidList;
-typedef QListIterator<XMPP::Jid> JidListIt;
-
 
 #endif

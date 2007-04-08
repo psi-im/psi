@@ -31,7 +31,6 @@
 
 #include "xmpp.h"
 #include "urlbookmark.h"
-#include "common.h" // for JidList
 #include "conferencebookmark.h"
 
 namespace XMPP
@@ -226,7 +225,7 @@ public slots:
 	void actionRecvEvent(const Jid &);
 	void actionRecvRosterExchange(const Jid&, const RosterExchangeItems&);
 	void actionSendMessage(const Jid &);
-	void actionSendMessage(const JidList &);
+	void actionSendMessage(const QList<XMPP::Jid> &);
 	void actionSendUrl(const Jid &);
 	void actionRemove(const Jid &);
 	void actionRename(const Jid &, const QString &);

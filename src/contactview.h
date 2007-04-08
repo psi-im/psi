@@ -30,7 +30,7 @@
 #include <QDropEvent>
 
 #include "xmpp.h"
-#include "common.h" // JidList
+#include "im.h"
 
 class IconAction;
 class UserListItem;
@@ -92,7 +92,7 @@ signals:
 	void actionDefault(const Jid &);
 	void actionRecvEvent(const Jid &);
 	void actionSendMessage(const Jid &);
-	void actionSendMessage(const JidList &);
+	void actionSendMessage(const QList<XMPP::Jid>&);
 	void actionSendUrl(const Jid &);
 	void actionRemove(const Jid &);
 	void actionRename(const Jid &, const QString &);
@@ -149,10 +149,10 @@ private:
 	void ensureVisible(Entry *);
 
 	// useful functions to grab groups of users
-	JidList contactListFromCVGroup(ContactViewItem *) const;
+	QList<XMPP::Jid> contactListFromCVGroup(ContactViewItem *) const;
 	int contactSizeFromCVGroup(ContactViewItem *) const;
 	int contactsOnlineFromCVGroup(ContactViewItem *) const;
-	JidList contactListFromGroup(const QString &groupName) const;
+	QList<XMPP::Jid> contactListFromGroup(const QString &groupName) const;
 	int contactSizeFromGroup(const QString &groupName) const;
 
 	void updateGroupInfo(ContactViewItem *group);

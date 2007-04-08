@@ -710,7 +710,7 @@ PsiEvent *EDBFlatFile::File::lineToEvent(const QString &line)
 
 	// check for extra fields
 	if(sFlags[1] != '-') {
-		int subflags = hexChar2int(sFlags[1].latin1());
+		int subflags = QString(sFlags[1]).toInt(NULL,16);
 
 		// have subject?
 		if(subflags & 1) {
@@ -820,7 +820,7 @@ QString EDBFlatFile::File::eventToLine(PsiEvent *e)
 		sFlags = "N---";
 
 		if(subflags != 0)
-			sFlags[1] = int2hexChar(subflags);
+			sFlags[1] = QString::number(subflags,16)[0];
 
 		//  | date | type | To/from | flags | text
 		QString line = "|" + sTime + "|" + sType + "|" + sOrigin + "|" + sFlags + "|";

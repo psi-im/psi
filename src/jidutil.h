@@ -35,6 +35,9 @@ public:
 	static QString encode(const QString &jid);
 	static QString decode(const QString &jid);
 	static QString nickOrJid(const QString&, const QString&);
+
+	static QString encode822(const QString&);
+	static QString decode822(const QString&);
 };
 
 #endif

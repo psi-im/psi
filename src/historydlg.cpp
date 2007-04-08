@@ -41,6 +41,7 @@
 #include "psievent.h"
 #include "busywidget.h"
 #include "applicationinfo.h"
+#include "common.h"
 #include "eventdb.h"
 #include "jidutil.h"
 #include "userlist.h"

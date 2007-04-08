@@ -476,7 +476,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiCon *parent)
 	connect(d->cp, SIGNAL(actionDefault(const Jid &)),SLOT(actionDefault(const Jid &)));
 	connect(d->cp, SIGNAL(actionRecvEvent(const Jid &)),SLOT(actionRecvEvent(const Jid &)));
 	connect(d->cp, SIGNAL(actionSendMessage(const Jid &)),SLOT(actionSendMessage(const Jid &)));
-	connect(d->cp, SIGNAL(actionSendMessage(const JidList &)),SLOT(actionSendMessage(const JidList &)));
+	connect(d->cp, SIGNAL(actionSendMessage(const QList<XMPP::Jid> &)),SLOT(actionSendMessage(const QList<XMPP::Jid> &)));
 	connect(d->cp, SIGNAL(actionSendUrl(const Jid &)),SLOT(actionSendUrl(const Jid &)));
 	connect(d->cp, SIGNAL(actionRemove(const Jid &)),SLOT(actionRemove(const Jid &)));
 	connect(d->cp, SIGNAL(actionRename(const Jid &, const QString &)),SLOT(actionRename(const Jid &, const QString &)));
@@ -2725,7 +2725,7 @@ void PsiAccount::actionSendMessage(const Jid &j)
 	w->show();
 }
 
-void PsiAccount::actionSendMessage(const JidList &j)
+void PsiAccount::actionSendMessage(const QList<XMPP::Jid> &j)
 {
 	QString str;
 	bool first = true;

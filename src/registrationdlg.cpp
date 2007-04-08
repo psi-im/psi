@@ -32,6 +32,7 @@
 #include "psiaccount.h"
 #include "registrationdlg.h"
 #include "busywidget.h"
+#include "common.h"
 #include "xdata_widget.h"
 #include "xmpp.h"
 #include "xmpp_tasks.h"

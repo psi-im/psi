@@ -633,10 +633,10 @@ QString decodePassword(const QString &pass, const QString &key)
 		ushort x = 0;
 		if(n1 + 4 > pass.length())
 			break;
-		x += hexChar2int(pass.at(n1).toLatin1())*4096;
-		x += hexChar2int(pass.at(n1+1).toLatin1())*256;
-		x += hexChar2int(pass.at(n1+2).toLatin1())*16;
-		x += hexChar2int(pass.at(n1+3).toLatin1());
+		x += QString(pass.at(n1)).toInt(NULL,16)*4096;
+		x += QString(pass.at(n1+1)).toInt(NULL,16)*256;
+		x += QString(pass.at(n1+2)).toInt(NULL,16)*16;
+		x += QString(pass.at(n1+3)).toInt(NULL,16);
 		QChar c(x ^ key.at(n2++).unicode());
 		result += c;
 		if(n2 >= key.length())
@@ -739,26 +739,6 @@ Icon category2icon(const QString &category, const QString &type, int status)
 	   // ??2??
 	   // tts
 	return Icon();
-}
-
-int hexChar2int(char c)
-{
-	if(c >= 'A' && c <= 'F')
-		return c - 'A' + 10;
-	else if(c >= 'a' && c <= 'f')
-		return c - 'a' + 10;
-	else if(c >= '0' && c <= '9')
-		return c - '0';
-
-	return 0;
-}
-
-char int2hexChar(int x)
-{
-	if(x < 10)
-		return (char)x + '0';
-	else
-		return (char)x - 10 + 'a';
 }
 
 QString logencode(QString str)
@@ -1077,42 +1057,6 @@ void closeDialogs(QWidget *w)
 	for(QList<QDialog*>::Iterator w = dialogs.begin(); w != dialogs.end(); ++w) {
 		(*w)->close();
 	}
-}
-
-QString enc822jid(const QString &s)
-{
-	QString out;
-	for(int n = 0; n < (int)s.length(); ++n) {
-		if(s[n] == '\\' || s[n] == '<' || s[n] == '>') {
-			QString hex;
-			hex.sprintf("\\x%02X", (unsigned char )s[n].toLatin1());
-			out.append(hex);
-		}
-		else
-			out += s[n];
-	}
-	return out;
-}
-
-QString dec822jid(const QString &s)
-{
-	QString out;
-	for(int n = 0; n < (int)s.length(); ++n) {
-		if(s[n] == '\\' && n + 3 < (int)s.length()) {
-			int x = n + 1;
-			n += 3;
-			if(s[x] != 'x')
-				continue;
-			ushort val = 0;
-			val += hexChar2int(s[x+1].toLatin1())*16;
-			val += hexChar2int(s[x+2].toLatin1());
-			QChar c(val);
-			out += c;
-		}
-		else
-			out += s[n];
-	}
-	return out;
 }
 
 #ifdef Q_WS_X11

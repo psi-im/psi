@@ -121,3 +121,40 @@ Jid JIDUtil::fromString(const QString& s)
 {
 	return Jid(s);
 }
+
+QString JIDUtil::encode822(const QString &s)
+{
+	QString out;
+	for(int n = 0; n < (int)s.length(); ++n) {
+		if(s[n] == '\\' || s[n] == '<' || s[n] == '>') {
+			QString hex;
+			hex.sprintf("\\x%02X", (unsigned char )s[n].toLatin1());
+			out.append(hex);
+		}
+		else
+			out += s[n];
+	}
+	return out;
+}
+
+QString JIDUtil::decode822(const QString &s)
+{
+	QString out;
+	for(int n = 0; n < (int)s.length(); ++n) {
+		if(s[n] == '\\' && n + 3 < (int)s.length()) {
+			int x = n + 1;
+			n += 3;
+			if(s[x] != 'x')
+				continue;
+			ushort val = 0;
+			val += QString(s[x+1]).toInt(NULL,16);
+			val += QString(s[x+2]).toInt(NULL,16);
+			QChar c(val);
+			out += c;
+		}
+		else
+			out += s[n];
+	}
+	return out;
+}
+
