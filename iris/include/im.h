@@ -375,10 +375,13 @@ namespace XMPP
 	class Status
 	{
 	public:
+		enum Type { Online, Away, FFC, XA, DND, Offline };
+
 		Status(const QString &show="", const QString &status="", int priority=0, bool available=true);
 		~Status();
 
 		int priority() const;
+		Type type() const;
 		const QString & show() const;
 		const QString & status() const;
 		QDateTime timeStamp() const;
@@ -410,6 +413,7 @@ namespace XMPP
 		int mucHistorySeconds() const;
 
 		void setPriority(int);
+		void setType(Type);
 		void setShow(const QString &);
 		void setStatus(const QString &);
 		void setTimeStamp(const QDateTime &);
@@ -438,6 +442,7 @@ namespace XMPP
 
 	private:
 		int v_priority;
+		Type v_type;
 		QString v_show, v_status, v_key;
 		QDateTime v_timeStamp;
 		bool v_isAvailable;

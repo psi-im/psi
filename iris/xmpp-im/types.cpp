@@ -1837,10 +1837,30 @@ bool Subscription::fromString(const QString &s)
 //---------------------------------------------------------------------------
 // Status
 //---------------------------------------------------------------------------
+static Status::Type showToType(bool available, const QString& show)
+{
+	Status::Type type = Status::Online;
+	if (!available) {
+		type = Status::Offline;
+	}
+	else {
+		if      (show == "away")
+			type = Status::Away;
+		else if (show == "xa")
+		  	type = Status::XA;
+		else if (show == "dnd")
+		 	type = Status::DND;
+		else if (show == "chat")
+			type = Status::FFC;
+	}
+	return type;
+}
+
 Status::Status(const QString &show, const QString &status, int priority, bool available)
 {
 	v_isAvailable = available;
 	v_show = show;
+	v_type = showToType(v_isAvailable, v_show);
 	v_status = status;
 	v_priority = priority;
 	v_timeStamp = QDateTime::currentDateTime();
@@ -1874,6 +1894,7 @@ void Status::setError(int code, const QString &str)
 void Status::setIsAvailable(bool available)
 {
 	v_isAvailable = available;
+	setType(showToType(v_isAvailable, v_show));
 }
 
 void Status::setIsInvisible(bool invisible)
@@ -1886,9 +1907,15 @@ void Status::setPriority(int x)
 	v_priority = x;
 }
 
+void Status::setType(Status::Type _type)
+{
+	v_type = _type;
+}
+
 void Status::setShow(const QString & _show)
 {
 	v_show = _show;
+	setType(showToType(v_isAvailable, v_show));
 }
 
 void Status::setStatus(const QString & _status)
@@ -1993,6 +2020,11 @@ bool Status::isInvisible() const
 int Status::priority() const
 {
 	return v_priority;
+}
+
+Status::Type Status::type() const
+{
+	return v_type;
 }
 
 const QString & Status::show() const
