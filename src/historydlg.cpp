@@ -314,14 +314,8 @@ void HistoryDlg::doSave()
 void HistoryDlg::doErase()
 {
 	int x = QMessageBox::information(this, tr("Confirm erase all"), tr("This will erase all message history for this contact!\nAre you sure you want to do this?"), tr("&Yes"), tr("&No"), QString::null, 1);
-	if(x == 0) {
-		QString fname = ApplicationInfo::historyDir() + "/" + JIDUtil::encode(d->jid.userHost()).toLower() + ".history";
-		QFileInfo fi(fname);
-		if(fi.exists()) {
-			QDir dir = fi.dir();
-			dir.remove(fi.fileName());
-		}
-		d->lv->clear();
+	if (x == 0) {
+		d->h->erase(d->jid);
 	}
 }
 
@@ -390,7 +384,7 @@ printf("\n");*/
 void HistoryDlg::edb_finished()
 {
 	const EDBResult *r = d->h->result();
-	if(r) {
+	if(d->h->lastRequestType() == EDBHandle::Read && r) {
 		//printf("EDB: retrieved %d events:\n", r->count());
 		if(r->count() > 0) {
 			Q3PtrListIterator<EDBItem> it(*r);
@@ -434,6 +428,12 @@ void HistoryDlg::edb_finished()
 				return;
 			}
 		}
+	}
+	else if (d->h->lastRequestType() == EDBHandle::Erase) {
+		if (d->h->writeSuccess())
+			d->lv->clear();
+		else
+			QMessageBox::critical(this, tr("Error"), tr("Unable to delete history file."));
 	}
 	else {
 		//printf("EDB: error\n");

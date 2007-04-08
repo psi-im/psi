@@ -145,6 +145,13 @@ void EDBHandle::append(const Jid &j, PsiEvent *e)
 	d->listeningFor = d->edb->op_append(j, e);
 }
 
+void EDBHandle::erase(const Jid &j)
+{
+	d->busy = true;
+	d->lastRequestType = Erase;
+	d->listeningFor = d->edb->op_erase(j);
+}
+
 bool EDBHandle::busy() const
 {
 	return d->busy;
@@ -258,6 +265,11 @@ int EDB::op_append(const Jid &j, PsiEvent *e)
 	return append(j, e);
 }
 
+int EDB::op_erase(const Jid &j)
+{
+	return erase(j);
+}
+
 void EDB::resultReady(int req, EDBResult *r)
 {
 	// deliver
@@ -303,7 +315,8 @@ struct item_file_req
 		Type_getOldest,
 		Type_get,
 		Type_append,
-		Type_find
+		Type_find,
+		Type_erase
 	};
 };
 
@@ -406,6 +419,19 @@ int EDBFlatFile::append(const Jid &j, PsiEvent *e)
 	return r->id;
 }
 
+int EDBFlatFile::erase(const Jid &j)
+{
+	item_file_req *r = new item_file_req;
+	r->j = j;
+	r->type = item_file_req::Type_erase;
+	r->event = 0;
+	r->id = genUniqueId();
+	d->rlist.append(r);
+
+	QTimer::singleShot(FAKEDELAY, this, SLOT(performRequests()));
+	return r->id;
+}
+
 EDBFlatFile::File *EDBFlatFile::findFile(const Jid &j) const
 {
 	Q3PtrListIterator<File> it(d->flist);
@@ -425,6 +451,30 @@ EDBFlatFile::File *EDBFlatFile::ensureFile(const Jid &j)
 		d->flist.append(i);
 	}
 	return i;
+}
+
+bool EDBFlatFile::deleteFile(const Jid &j)
+{
+	File *i = findFile(j);
+
+	QString fname;
+
+	if (i) {
+		fname = i->fname;
+		d->flist.remove(i);
+		delete i;
+	}
+	else {
+		fname = File::jidToFileName(j);
+	}
+
+	QFileInfo fi(fname);
+	if(fi.exists()) {
+		QDir dir = fi.dir();
+		return dir.remove(fi.fileName());
+	}
+	else
+		return true;
 }
 
 void EDBFlatFile::performRequests()
@@ -528,6 +578,9 @@ void EDBFlatFile::performRequests()
 		}
 		resultReady(r->id, result);
 	}
+	else if(type == item_file_req::Type_erase) {
+		writeFinished(r->id, deleteFile(f->j));
+	}
 
 	delete r;
 }
@@ -563,8 +616,7 @@ EDBFlatFile::File::File(const Jid &_j)
 	connect(t, SIGNAL(timeout()), SLOT(timer_timeout()));
 
 	//printf("[EDB opening -- %s]\n", j.full().latin1());
-	QString s = j.userHost();
-	fname = ApplicationInfo::historyDir() + "/" + JIDUtil::encode(s).toLower() + ".history";
+	fname = jidToFileName(_j);
 	f.setName(fname);
 	valid = f.open(QIODevice::ReadWrite);
 
@@ -578,6 +630,11 @@ EDBFlatFile::File::~File()
 	//printf("[EDB closing -- %s]\n", j.full().latin1());
 
 	delete d;
+}
+
+QString EDBFlatFile::File::jidToFileName(const XMPP::Jid &j)
+{
+	return ApplicationInfo::historyDir() + "/" + JIDUtil::encode(j.userHost()).toLower() + ".history";
 }
 
 void EDBFlatFile::File::ensureIndex()
