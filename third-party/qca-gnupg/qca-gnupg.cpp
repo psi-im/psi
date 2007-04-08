@@ -617,7 +617,6 @@ public:
 	virtual void end()
 	{
 		GpgOp gpg(find_bin());
-		global_gpg = &gpg;
 
 		if(format == SecureMessage::Ascii)
 			gpg.setAsciiFormat(true);
@@ -677,6 +676,7 @@ public:
 				//emit keyStoreList->storeNeedPassphrase(0, 0, keyId);
 				asker.ask(Event::StylePassphrase, keyStoreList->storeId(0), keyId, 0);
 				asker.waitForResponse();
+				global_gpg = &gpg;
 				keyStoreList->submitPassphrase(0, 0, asker.password());
 			}
 			else if(e.type == GpgOp::Event::Finished)

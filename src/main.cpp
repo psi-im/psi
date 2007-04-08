@@ -425,5 +425,5 @@ Q_IMPORT_PLUGIN(qca_openssl)
 #ifdef HAVE_CYRUSSASL
 Q_IMPORT_PLUGIN(qca_sasl)
 #endif
-//Q_IMPORT_PLUGIN(qca_gnupg)
+Q_IMPORT_PLUGIN(qca_gnupg)
 #endif
