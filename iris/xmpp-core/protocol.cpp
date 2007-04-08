@@ -1063,6 +1063,11 @@ bool CoreProtocol::normalStep(const QDomElement &e)
 			return true;
 		}
 
+		// Should we go further ?
+		if (!doAuth)
+			return loginComplete();
+		
+		// Deal with compression
 		if (doCompress && !compress_started && features.compress_supported && features.compression_mechs.contains("zlib")) {
 			QDomElement e = doc.createElementNS(NS_COMPRESS_PROTOCOL, "compress");
 			QDomElement m = doc.createElementNS(NS_COMPRESS_PROTOCOL, "method");
@@ -1337,14 +1342,10 @@ bool CoreProtocol::normalStep(const QDomElement &e)
 #endif
 			}
 
-			if(doAuth) {
-				event = EFeatures;
-				features = f;
-				step = HandleFeatures;
-				return true;
-			}
-			else
-				return loginComplete();
+			event = EFeatures;
+			features = f;
+			step = HandleFeatures;
+			return true;
 		}
 		else {
 			// ignore
