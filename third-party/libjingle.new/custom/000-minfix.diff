@@ -1,0 +1,14 @@
+diff -u -r libjingle-0.4.0/talk/session/fileshare/fileshare.cc libjingle.new/talk/session/fileshare/fileshare.cc
+--- libjingle-0.4.0/talk/session/fileshare/fileshare.cc	2007-02-02 06:07:29.000000000 +0100
++++ libjingle.new/talk/session/fileshare/fileshare.cc	2007-02-03 15:08:41.000000000 +0100
+@@ -670,8 +671,8 @@
+         && !query.empty()
+         && (sscanf(query.c_str(), "width=%u&height=%u",
+                    &width, &height) == 2)) {
+-      width = talk_base::_max<unsigned int>(1, talk_base::_min(width, kMaxPreviewSize));
+-      height = talk_base::_max<unsigned int>(1, talk_base::_min(height, kMaxPreviewSize));
++      width = talk_base::_max<unsigned int>(1, talk_base::_min(width, (unsigned int) kMaxPreviewSize));
++      height = talk_base::_max<unsigned int>(1, talk_base::_min(height, (unsigned int) kMaxPreviewSize));
+       std::string pathname;
+       if (is_sender_) {
+         talk_base::Pathname local_path;

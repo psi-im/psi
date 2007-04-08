@@ -1,0 +1,2 @@
+To download and patch libjingle, execute the following command:
+	make -f Makefile.libjingle

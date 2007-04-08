@@ -1,0 +1,46 @@
+SF_MIRROR=kent
+LIBJINGLE_VERSION=0.4.0
+LIBJINGLE_FILENAME=libjingle-$(LIBJINGLE_VERSION).tar.gz
+LIBJINGLE_DIR=libjingle
+LIBJINGLE_URI=http://$(SF_MIRROR).dl.sourceforge.net/sourceforge/libjingle/$(LIBJINGLE_FILENAME)
+	
+CUSTOM_DIR=custom
+CUSTOM_FILENAMES=libjingle.pro talk/examples/call/call.pro talk/p2p/base/relayserver.pro talk/p2p/base/stunserver.pro \
+	talk/xmpp/xmpp.pro \
+	talk/examples/login/login.pri \
+	talk/examples/login/login.pro \
+	talk/examples/pcp/pcp.pro \
+	talk/session/phone/portaudiomediaengine.cc \
+	talk/session/phone/portaudiomediaengine.h \
+	talk/third_party/mediastreamer/portaudiocard.c \
+	talk/third_party/mediastreamer/portaudiocard.h 
+CUSTOM_FILES=$(addprefix $(LIBJINGLE_DIR)/,$(CUSTOM_FILENAMES))
+	
+
+.PHONY: all
+all: $(LIBJINGLE_DIR) custom patch
+
+.PHONY: custom
+custom:
+	for i in $(CUSTOM_FILES); do \
+		cp $(CUSTOM_DIR)/`basename $$i` $$i; \
+	done
+
+.PHONY: patch
+patch:
+	for i in $(CUSTOM_DIR)/*.diff; do \
+		patch -d $(LIBJINGLE_DIR) -p1 < $$i; \
+	done
+
+$(LIBJINGLE_FILENAME):
+	wget $(LIBJINGLE_URI)
+
+$(LIBJINGLE_DIR): $(LIBJINGLE_FILENAME) 
+	tar xzf $(LIBJINGLE_FILENAME)
+	mv $(LIBJINGLE_DIR)-$(LIBJINGLE_VERSION) $(LIBJINGLE_DIR)
+	touch $(LIBJINGLE_DIR)
+
+$(CUSTOM_FILES): $(LIBJINGLE_DIR)
+	
+clean:
+	-rm -rf $(LIBJINGLE_FILENAME) $(LIBJINGLE_DIR) Makefile

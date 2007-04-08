@@ -1,0 +1,15 @@
+diff -u -r libjingle-0.3.0/talk/third_party/mediastreamer/sndcard.c libjingle-0.3.0-patched/talk/third_party/mediastreamer/sndcard.c
+--- libjingle-0.3.0/talk/third_party/mediastreamer/sndcard.c	2006-03-16 22:43:30.000000000 +0100
++++ libjingle-0.3.0-patched/talk/third_party/mediastreamer/sndcard.c	2006-05-03 22:10:03.000000000 +0200
+@@ -165,6 +165,11 @@
+ 	index+=tmp;
+ 	if (index>=MAX_SND_CARDS) return;
+ 	#endif
++	#ifdef HAVE_PORTAUDIO
++	tmp=portaudio_card_manager_init(manager,index);
++	index+=tmp;
++	if (index>=MAX_SND_CARDS) return;
++	#endif
+ 	#ifdef HAVE_SYS_AUDIO_H
+ 	tmp=sys_audio_manager_init(manager,index);
+ 	index+=tmp;
