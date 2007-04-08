@@ -42,6 +42,7 @@
 //----------------------------------------------------------------------------
 ChatView::ChatView(QWidget *parent)
 	: PsiTextView(parent)
+	, dialog_(0)
 {
 	setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
 
@@ -198,6 +199,7 @@ QString ChatView::formatTimeStamp(const QDateTime &time)
 //----------------------------------------------------------------------------
 ChatEdit::ChatEdit(QWidget *parent)
 	: QTextEdit(parent)
+	, dialog_(0)
 {
 	setWordWrapMode(QTextOption::WordWrap);
 	setAcceptRichText(false);
