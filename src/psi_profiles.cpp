@@ -42,6 +42,12 @@
 using namespace XMPP;
 using namespace XMLHelper;
 
+#define PROXY_NONE       0
+#define PROXY_HTTPS      1
+#define PROXY_SOCKS4     2
+#define PROXY_SOCKS5     3
+
+
 void migrateIntEntry(const QDomElement& element, const QString& entry, const QString& option)
 {
 	bool found;

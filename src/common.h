@@ -26,16 +26,10 @@
 #include <QKeySequence>
 #include <QList>
 #include "im.h"
-#include "varlist.h"
 #include "psiiconset.h"
 #include "statuspreset.h"
 
 #define MINIMUM_OPACITY 10
-
-#define PROXY_NONE       0
-#define PROXY_HTTPS      1
-#define PROXY_SOCKS4     2
-#define PROXY_SOCKS5     3
 
 #define STATUS_OFFLINE   0
 #define STATUS_ONLINE    1
@@ -235,8 +229,6 @@ QString emoticonify(const QString &in);
 
 QString encodePassword(const QString &, const QString &);
 QString decodePassword(const QString &, const QString &);
-
-Icon category2icon(const QString &category, const QString &type, int status=STATUS_ONLINE);
 
 void bringToFront(QWidget *w, bool grabFocus = true);
 
