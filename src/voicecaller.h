@@ -21,9 +21,12 @@
 #ifndef VOICECALLER_H
 #define VOICECALLER_H
 
-#include "im.h"
+#include <QObject>
 
 class PsiAccount;
+namespace XMPP {
+	class Jid;
+}
 
 using namespace XMPP;
 

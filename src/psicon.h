@@ -23,9 +23,9 @@
 
 #include <Q3PtrList>
 #include <QList>
+
 #include "profiles.h"
 #include "psievent.h"
-#include "im.h"
 
 using namespace XMPP;
 
@@ -48,15 +48,14 @@ class AccountsComboBox;
 class ChatDlg;
 class TuneController;
 class PsiContactList;
-
-namespace OpenPGP
-{
+namespace OpenPGP {
 	class Engine;
 }
-
-namespace QCA
-{
+namespace QCA {
 	class Event;
+}
+namespace XMPP {
+	class Jid;
 }
 
 class PsiCon : public QObject

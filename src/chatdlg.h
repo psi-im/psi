@@ -21,9 +21,6 @@
 #ifndef CHATDLG_H
 #define CHATDLG_H
 
-#include "advwidget.h"
-#include "im.h"
-//Added by qt3to4:
 #include <QContextMenuEvent>
 #include <QDragEnterEvent>
 #include <QShowEvent>
@@ -32,6 +29,13 @@
 #include <QDropEvent>
 #include <QCloseEvent>
 
+#include "advwidget.h"
+#include "im.h" // ChatState
+
+namespace XMPP {
+	class Jid;
+	class Message;
+}
 using namespace XMPP;
 
 class PsiAccount;

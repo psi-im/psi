@@ -18,7 +18,7 @@
  *
  */
 
-#include "im.h"
+#include "im.h" // Client
 #include "xmpp_xmlcommon.h"
 #include "rosteritemexchangetask.h"
 

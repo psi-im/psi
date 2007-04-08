@@ -24,13 +24,14 @@
 #include <QMap>
 #include <QString>
 #include <QObject>
-#include <QTimer>
-#include <QPair>
-#include <QDateTime>
 
-#include "im.h"
 #include "capsspec.h"
+#include "xmpp_features.h"
 
+namespace XMPP {
+	class Jid;
+	class Client;
+}
 using namespace XMPP;
 
 class CapsManager : public QObject

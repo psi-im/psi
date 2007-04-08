@@ -25,8 +25,11 @@
 #include <q3cstring.h>
 #include <q3ptrlist.h>
 #include <QList>
-#include "im.h"
+#include <QHostAddress>
+
 #include "bytestream.h"
+#include "xmpp_jid.h"
+#include "xmpp_task.h"
 
 class SocksClient;
 class SocksUDP;
@@ -34,6 +37,7 @@ class SocksUDP;
 namespace XMPP
 {
 	class StreamHost;
+	class Client;
 	class S5BConnection;
 	class S5BManager;
 	class S5BServer;

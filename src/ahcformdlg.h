@@ -26,13 +26,13 @@
 #include <QString>
 
 #include "xmpp_xdata.h"
+#include "xmpp_jid.h"
 
 class QPushButton;
 class BusyWidget;
 class AHCommand;
 class XDataWidget;
 namespace XMPP {
-	class Jid;
 	class Client;
 }
 

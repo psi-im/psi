@@ -22,7 +22,8 @@
 #define AHCEXECUTETASK_H
 
 #include "ahcommand.h"
-#include "im.h"
+#include "xmpp_task.h"
+#include "xmpp_jid.h"
 
 class QDomElement;
 

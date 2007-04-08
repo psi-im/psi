@@ -24,7 +24,7 @@
 #include <QString>
 #include <QDomElement>
 
-#include "im.h"
+#include "xmpp_jid.h"
 
 class ConferenceBookmark
 {

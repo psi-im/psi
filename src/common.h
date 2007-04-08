@@ -28,7 +28,6 @@
 #include <QList>
 #include <QColor>
 
-#include "im.h"
 #include "statuspreset.h"
 
 // -----------------------------------------------------------------------------
@@ -195,6 +194,8 @@ Options option;
 // -----------------------------------------------------------------------------
 // Status
 // -----------------------------------------------------------------------------
+
+#include "xmpp_status.h"
 
 #define STATUS_OFFLINE   0
 #define STATUS_ONLINE    1

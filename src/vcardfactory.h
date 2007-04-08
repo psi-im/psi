@@ -25,10 +25,12 @@
 #include <QMap>
 #include <QStringList>
 
-#include "im.h"
-#include "xmpp_vcard.h"
-#include "xmpp_tasks.h"
-
+namespace XMPP {
+	class VCard;
+	class Jid;
+	class Task;
+	class JT_VCard;
+}
 using namespace XMPP;
 
 class VCardFactory : public QObject

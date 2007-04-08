@@ -23,13 +23,16 @@
 
 #include <QDialog>
 
-#include "im.h"
 #include "ui_mucconfig.h"
 #include "mucmanager.h"
+#include "xmpp_muc.h"
 
 class QScrollArea;
 class XDataWidget;
 class MUCAffiliationsModel;
+namespace XMPP {
+	class XData;
+}
 
 using namespace XMPP;
 

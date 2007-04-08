@@ -26,10 +26,11 @@
 #include <QList>
 #include <QtCrypto>
 
-#include "im.h"
 #include "varlist.h"
 #include "proxy.h"
 #include "common.h"
+#include "im.h" // Roster
+
 class UserAccount
 {
 public:

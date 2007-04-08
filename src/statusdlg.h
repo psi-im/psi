@@ -22,15 +22,16 @@
 #define STATUSDLG_H
 
 #include <qdialog.h>
-//Added by qt3to4:
 #include <QKeyEvent>
-#include "im.h"
-
-using namespace XMPP;
 
 class PsiCon;
 class PsiAccount;
 class UserListItem;
+namespace XMPP {
+	class Status;
+}
+
+using namespace XMPP;
 
 class StatusShowDlg : public QDialog
 {

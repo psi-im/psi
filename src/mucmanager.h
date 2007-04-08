@@ -24,11 +24,12 @@
 #include <QObject>
 #include <QString>
 
-#include "im.h"
+#include "xmpp_muc.h"
+#include "xmpp_jid.h"
 
 namespace XMPP {
 	class XData;
-	class Jid;
+	class Client;
 }
 
 using namespace XMPP;

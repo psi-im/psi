@@ -23,15 +23,18 @@
 
 #include <qobject.h>
 
-#include "im.h"
-using namespace XMPP;
-
 class PsiCon;
 class PsiAccount;
 class UserListItem;
 class FancyPopup;
 class Icon;
 class PsiEvent;
+namespace XMPP {
+	class Jid;
+	class Resource;
+}
+using namespace XMPP;
+
 
 class PsiPopup : public QObject
 {

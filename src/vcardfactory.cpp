@@ -29,6 +29,8 @@
 #include "applicationinfo.h"
 #include "vcardfactory.h"
 #include "jidutil.h"
+#include "xmpp_vcard.h"
+#include "xmpp_tasks.h"
 
 /**
  * \brief Factory for retrieving and changing VCards.

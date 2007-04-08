@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <qca.h>
 #include "xmpp_xmlcommon.h"
+#include "im.h"
 #include "socks.h"
 #include "safedelete.h"
 

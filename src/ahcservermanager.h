@@ -22,6 +22,7 @@
 #define AHCSERVERMANAGER_H
 
 #include "ahcommand.h"
+#include "xmpp_jid.h"
 
 using namespace XMPP;
 

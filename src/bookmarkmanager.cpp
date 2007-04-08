@@ -18,9 +18,10 @@
  *
  */
 
-#include "xmpp.h"
+#include "xmpp_task.h"
 #include "xmpp_xmlcommon.h"
 #include "bookmarkmanager.h"
+#include "im.h" // Client
 
 using namespace XMPP;
 

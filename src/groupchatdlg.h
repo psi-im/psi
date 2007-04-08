@@ -29,8 +29,11 @@
 #include <QCloseEvent>
 
 #include "advwidget.h"
-#include "im.h"
+#include "im.h" // Message
 #include "mucmanager.h"
+#include "xmpp_muc.h"
+#include "xmpp_status.h"
+#include "xmpp_jid.h"
 
 using namespace XMPP;
 

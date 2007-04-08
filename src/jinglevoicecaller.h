@@ -23,10 +23,7 @@
 
 #include <qmap.h>
 
-#include "im.h"
 #include "voicecaller.h"
-
-using namespace XMPP;
 
 class PsiAccount;
 
@@ -40,9 +37,13 @@ namespace cricket {
 	class Call;
 	class SocketAddress;
 }
-
+namespace XMPP {
+	class Jid;
+}
 class JingleClientSlots;
 class JingleCallSlots;
+
+using namespace XMPP;
 
 
 class JingleVoiceCaller : public VoiceCaller

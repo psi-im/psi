@@ -26,7 +26,6 @@
 #include <qtabwidget.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-//Added by qt3to4:
 #include <QContextMenuEvent>
 #include <QDragMoveEvent>
 #include <QKeyEvent>
@@ -34,19 +33,17 @@
 #include <Q3PopupMenu>
 #include <QDropEvent>
 #include <QCloseEvent>
-#include "im.h"
 #include <qmap.h>
+
 #include "psitabwidget.h"
+#include "im.h" // ChatState
 #include "advwidget.h"
-using namespace XMPP;
 
 class ChatDlg;
 class PsiCon;
 class ChatTabs;
-
 class Q3DragObject;
 class QContextMenuEvent;
-
 class PsiTabWidget;
 
 class TabDlg : public AdvancedWidget<QWidget>

@@ -22,6 +22,7 @@
 #define AHCOMMANDSERVER_H
  
 #include "ahcommand.h"
+#include "xmpp_jid.h"
 
 class AHCServerManager;
 

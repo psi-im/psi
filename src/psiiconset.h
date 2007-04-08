@@ -26,11 +26,14 @@
 #include <q3dict.h>
 
 #include "iconset.h"
-#include "im.h"
 
 class PsiEvent;
 class UserListItem;
 struct Options;
+namespace XMPP {
+	class Status;
+	class Jid;
+}
 
 class PsiIconset
 {

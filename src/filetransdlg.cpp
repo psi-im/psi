@@ -28,6 +28,7 @@
 #include "userlist.h"
 #include "common.h"
 #include "iconwidget.h"
+#include "s5b.h"
 #include "busywidget.h"
 #include "filetransfer.h"
 #include "accountscombobox.h"

@@ -20,8 +20,10 @@
 
 #include "psioptions.h"
 #include "applicationinfo.h"
-#include "im.h"
 #include "xmpp_xmlcommon.h"
+#include "xmpp_task.h"
+#include "xmpp_jid.h"
+#include "im.h" // Client
 
 using namespace XMPP;
 

@@ -1,11 +1,11 @@
 #ifndef FILETRANSDLG_H
 #define FILETRANSDLG_H
 
-#include "ui_filetrans.h"
-#include "im.h"
-#include "s5b.h"
-//Added by qt3to4:
 #include <QKeyEvent>
+
+#include "xmpp_jid.h"
+#include "ui_filetrans.h"
+#include "s5b.h"
 
 class PsiCon;
 class PsiAccount;

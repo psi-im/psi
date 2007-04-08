@@ -25,7 +25,7 @@
 #include <QList>
 #include <QMap>
 
-#include "im.h"
+#include "xmpp_muc.h"
 
 class QMimeData;
 

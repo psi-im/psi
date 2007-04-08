@@ -22,8 +22,9 @@
 #define VOICECALLDLG
 
 #include <QDialog>
+
 #include "ui_voicecall.h"
-#include "im.h"
+#include "xmpp_jid.h"
 
 using namespace XMPP;
 

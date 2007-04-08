@@ -23,7 +23,8 @@
 
 #include <QDomElement>
 
-#include "im.h"
+#include "xmpp_task.h"
+#include "xmpp_rosterx.h"
 
 using namespace XMPP;
 

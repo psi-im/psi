@@ -19,12 +19,12 @@
  */
 
 #include "xmpp_xdata.h"
+#include "xmpp_xmlcommon.h"
+#include "xmpp_jid.h"
 
 #include <QList>
 #include <QSharedDataPointer>
 
-#include "im.h" // for JID validation
-#include "xmpp_xmlcommon.h"
 
 using namespace XMPP;
 using namespace XMLHelper;

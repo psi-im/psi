@@ -21,10 +21,8 @@
 #ifndef EVENTDLG_H
 #define EVENTDLG_H
 
-#include "advwidget.h"
 #include <qlineedit.h>
 #include <q3listview.h>
-//Added by qt3to4:
 #include <QCloseEvent>
 #include <QKeyEvent>
 #include <QDropEvent>
@@ -33,11 +31,9 @@
 #include <Q3PopupMenu>
 #include <QDragEnterEvent>
 
-#include "im.h"
 #include "userlist.h"
 #include "ui_addurl.h"
-
-using namespace XMPP;
+#include "advwidget.h"
 
 class QDateTime;
 class QStringList;
@@ -45,8 +41,13 @@ class PsiEvent;
 class PsiCon;
 class PsiAccount;
 class Icon;
-
 class EventDlg;
+namespace XMPP {
+	class Jid;
+}
+
+using namespace XMPP;
+
 class ELineEdit : public QLineEdit
 {
 	Q_OBJECT

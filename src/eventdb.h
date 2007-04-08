@@ -26,7 +26,7 @@
 #include <qfile.h>
 #include <q3ptrlist.h>
 
-#include "im.h"
+#include "xmpp_jid.h"
 
 class PsiEvent;
 
