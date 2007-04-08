@@ -3937,14 +3937,15 @@ void PsiAccount::client_groupChatPresence(const Jid &j, const Status &s)
 
 	w->presence(j.resource(), s);
 
-	// pass through the core presence handling also
-	//Resource r;
-	//r.setName(j.resource());
-	//r.setStatus(s);
-	//if(s.isAvailable())
-	//	client_resourceAvailable(j, r);
-	//else
-	//	client_resourceUnavailable(j, j.resource());
+	// pass through the core presence handling also (so that roster items
+	// from groupchat contacts get a resource as well 
+	Resource r;
+	r.setName(j.resource());
+	r.setStatus(s);
+	if(s.isAvailable())
+		client_resourceAvailable(j, r);
+	else
+		client_resourceUnavailable(j, j.resource());
 }
 
 void PsiAccount::client_groupChatError(const Jid &j, int code, const QString &str)
