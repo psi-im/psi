@@ -137,7 +137,7 @@
          <item>
           <widget class="QToolButton" name="tb_emoticons" >
            <property name="text" >
-            <string>...</string>
+            <string/>
            </property>
            <property name="iconSize" >
             <size>
@@ -150,7 +150,7 @@
          <item>
           <widget class="QToolButton" name="tb_actions" >
            <property name="text" >
-            <string>...</string>
+            <string/>
            </property>
            <property name="iconSize" >
             <size>
