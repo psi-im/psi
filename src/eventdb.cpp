@@ -601,7 +601,7 @@ class EDBFlatFile::File::Private
 public:
 	Private() {}
 
-	QVector<int> index;
+	QVector<quint64> index;
 	bool indexed;
 };
 
@@ -640,24 +640,28 @@ QString EDBFlatFile::File::jidToFileName(const XMPP::Jid &j)
 void EDBFlatFile::File::ensureIndex()
 {
 	if ( valid && !d->indexed ) {
+		if (f.isSequential()) {
+			qWarning("EDBFlatFile::File::ensureIndex(): Can't index sequential files.");
+			return;
+		}
+
 		f.reset(); // go to beginning
 		d->index.clear();
 
 		//printf(" file: %s\n", fname.latin1());
 		// build index
 		while(1) {
-			int at = f.at();
+			quint64 at = f.pos();
 
 			// locate a newline
 			bool found = false;
-			int c;
-			do {
-				c = f.getch();
-				if(c == '\n') {
+			char c;
+			while (f.getChar(&c)) {
+				if (c == '\n') {
 					found = true;
 					break;
 				}
-			} while(c != -1);
+			}
 
 			if(!found)
 				break;
@@ -703,7 +707,7 @@ PsiEvent *EDBFlatFile::File::get(int id)
 	if(id < 0 || id > (int)d->index.size())
 		return 0;
 
-	f.at(d->index[id]);
+	f.seek(d->index[id]);
 
 	QTextStream t;
 	t.setDevice(&f);
@@ -724,8 +728,8 @@ bool EDBFlatFile::File::append(PsiEvent *e)
 	if(line.isEmpty())
 		return false;
 
-	f.at(f.size());
-	int at = f.at();
+	f.seek(f.size());
+	quint64 at = f.pos();
 
 	QTextStream t;
 	t.setDevice(&f);
