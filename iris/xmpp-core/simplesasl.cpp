@@ -326,7 +326,7 @@ public:
 			Q3CString cnonce = QCA::Base64().arrayToString(a).latin1();
 
 			// make other variables
-			realm = host;
+			realm = QString::fromUtf8(in.get("realm"));
 			Q3CString nonce = in.get("nonce");
 			Q3CString nc = "00000001";
 			Q3CString uri = service.utf8() + '/' + host.utf8();
@@ -354,7 +354,8 @@ public:
 			// build output
 			PropList out;
 			out.set("username", user.utf8());
-			out.set("realm", host.utf8());
+			if (!realm.isEmpty())
+				out.set("realm", realm.utf8());
 			out.set("nonce", nonce);
 			out.set("cnonce", cnonce);
 			out.set("nc", nc);
