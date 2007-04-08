@@ -19,8 +19,10 @@
  */
 
 #include <windows.h>
+#include <qglobal.h>
 
 #ifdef Q_CC_MSVC
+#pragma warning(push)
 #pragma warning(disable: 4100)
 #endif
 
@@ -28,7 +30,7 @@
 #include "third-party/wa_ipc.h"
 
 #ifdef Q_CC_MSVC
-#pragma warning(enable: 4100)
+#pragma warning(pop)
 #endif
 
 #include "winampcontroller.h"
