@@ -24,6 +24,12 @@
 
 #include "wbdlg.h"
 
+#include <QMessageBox>
+
+#include "accountlabel.h"
+#include "stretchwidget.h"
+#include "iconset.h"
+
 //----------------------------------------------------------------------------
 // WbDlg
 //----------------------------------------------------------------------------
@@ -46,7 +52,9 @@ WbDlg::WbDlg(const Jid &target, const QString &session, const Jid &ownJid, bool 
 	le_jid_->setReadOnly(true);
 	le_jid_->setFocusPolicy(Qt::NoFocus);
 	le_jid_->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum));
-	lb_ident_ = pa->accountLabel(this, true);
+	lb_ident_ = new AccountLabel(this);
+	lb_ident_->setAccount(pa);
+	lb_ident_->setShowJid(false);
 	lb_ident_->setSizePolicy(QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum));
 	QHBoxLayout *hb1 = new QHBoxLayout();
 	hb1->addWidget(le_jid_);
@@ -179,10 +187,10 @@ WbDlg::WbDlg(const Jid &target, const QString &session, const Jid &ownJid, bool 
 
 	// update the widget icon
 #ifndef Q_WS_MAC
-	setWindowIcon(IconsetFactory::icon("psi/whiteboard"));
+	setWindowIcon(IconsetFactory::icon("psi/whiteboard").icon());
 #endif
 	
-	setWindowOpacity(double(option.chatOpacity)/100);
+	setWindowOpacity(double(qMax(MINIMUM_OPACITY, PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt())) / 100);
 
 	resize(option.sizeChatDlg);
 }

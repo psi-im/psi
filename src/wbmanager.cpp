@@ -62,7 +62,7 @@ void WbManager::openWhiteboard(const Jid &target, const Jid &ownJid, bool groupC
 
 void WbManager::messageReceived(const Message &message) {
 	// only process messages that contain a <wb/> with a nonempty 'session' attribute and that are addressed to this particular account
-	if(!message.wb().attribute("session").isEmpty()) {
+	if(!message.whiteboard().attribute("session").isEmpty()) {
 		// skip messages from self
 		if(ownJids_.contains(message.from().full())) {
 			qDebug("from self");
@@ -71,10 +71,10 @@ void WbManager::messageReceived(const Message &message) {
 		bool recordSessionId = false;
 		// Don't process delayed messages (chat history) but remember the session id
 		if(!message.spooled()) {
-	// 		qDebug(QString("<wb/> to session %1 from %2").arg(message.wb().attribute("session")).arg(message.from().full()).toAscii());
+	// 		qDebug(QString("<wb/> to session %1 from %2").arg(message.whiteboard().attribute("session")).arg(message.from().full()).toAscii());
 			WbDlg* w = 0;
 			// Check if the <wb/> contains a <protocol/>
-			QDomNodeList children = message.wb().childNodes();
+			QDomNodeList children = message.whiteboard().childNodes();
 			for(uint i=0; i < children.length(); i++) {
 				if(children.item(i).nodeName() == "protocol") {
 					w = negotiateSession(message);
@@ -82,10 +82,10 @@ void WbManager::messageReceived(const Message &message) {
 			}
 			// try finding a matching dialog for the session if new one not negotiated
 			if(!w) {
-				w = findWbDlg(message.wb().attribute("session"));
+				w = findWbDlg(message.whiteboard().attribute("session"));
 				if(w) {
 					// only pass the message to existing sessions, not to newly negotiated ones.
-					w->incomingWbElement(message.wb(), message.from());
+					w->incomingWbElement(message.whiteboard(), message.from());
 				} else
 					recordSessionId = true;
 			}
@@ -121,7 +121,7 @@ void WbManager::messageReceived(const Message &message) {
 			// check if a record of the session exists
 			bool alreadyRecorded = false;
 			foreach(detectedSession d, detectedSessions_) {
-				if(d.session == message.wb().attribute("session")) {
+				if(d.session == message.whiteboard().attribute("session")) {
 					alreadyRecorded = true;
 					break;
 				}
@@ -129,7 +129,7 @@ void WbManager::messageReceived(const Message &message) {
 			if(!alreadyRecorded) {
 				// store a record of a detected session
 				detectedSession detected;
-				detected.session = message.wb().attribute("session");
+				detected.session = message.whiteboard().attribute("session");
 				if(message.type() == "groupchat")
 					detected.jid = message.from().bare();
 				else
@@ -164,7 +164,7 @@ void WbManager::removeSession(const QString &session) {
 			negotiations_.remove(session);
 		}
 		// FIXME: Delete the dialog
-		setAttribute(Qt::WA_DeleteOnClose);
+		d->setAttribute(Qt::WA_DeleteOnClose);
 		d->close();
 //		d->deleteLater();
 
@@ -172,7 +172,7 @@ void WbManager::removeSession(const QString &session) {
 }
 
 WbDlg* WbManager::negotiateSession(const Message &message) {
-	QString session = message.wb().attribute("session");
+	QString session = message.whiteboard().attribute("session");
 	if(session.isEmpty())
 		return 0;
 
@@ -199,10 +199,10 @@ qDebug("1");
 			qDebug("1.1");
 // 			if(negotiation->groupChat) {
 // 				// If it is a history offer, turn it down
-// 				for(uint i = 0; i < message.wb().childNodes().length(); i++) {
-// 					if(message.wb().childNodes().at(i).nodeName() == "protocol") {
-// 						for(uint j = 0; j < message.wb().childNodes().at(i).childNodes().length(); j++) {
-// 							if(message.wb().childNodes().at(i).childNodes().at(j).nodeName() == "history-offer") {
+// 				for(uint i = 0; i < message.whiteboard().childNodes().length(); i++) {
+// 					if(message.whiteboard().childNodes().at(i).nodeName() == "protocol") {
+// 						for(uint j = 0; j < message.whiteboard().childNodes().at(i).childNodes().length(); j++) {
+// 							if(message.whiteboard().childNodes().at(i).childNodes().at(j).nodeName() == "history-offer") {
 								sendAbortNegotiation(session, message.from(), true);
 // 							}
 // 						}
@@ -253,8 +253,8 @@ qDebug("1");
 
 	// Process the children of the <wb/>
 	QDomNode n, m;
-	for(int i = 0; i < message.wb().childNodes().count(); i++) {
-		n = message.wb().childNodes().at(i);
+	for(int i = 0; i < message.whiteboard().childNodes().count(); i++) {
+		n = message.whiteboard().childNodes().at(i);
 // qDebug("4.121");
 		if(!n.isElement())
 			continue;
@@ -620,7 +620,7 @@ void WbManager::sendMessage(QDomElement wb, const Jid & receiver, bool groupChat
 	// Add a unique hash to each sent wb element
 	wb.setAttribute("hash", wbHash_);
 	Message m(receiver);
-	m.setWb(wb);
+	m.setWhiteboard(wb);
 	if(groupChat && receiver.resource().isEmpty())
 		m.setType("groupchat");
 	if(client_->isActive())
