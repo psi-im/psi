@@ -930,10 +930,10 @@ void EventDlg::init()
 	resize(option.sizeEventDlg);
 	optionsUpdate();
 
-	ShortcutManager::connect("common.close", this, SLOT(close()));
+	//ShortcutManager::connect("common.close", this, SLOT(close()));
 	ShortcutManager::connect("common.user-info", this, SLOT(doInfo()));
 	ShortcutManager::connect("common.history", this, SLOT(doHistory()));
-	ShortcutManager::connect("message.send", this, SLOT(doSend()));
+	//ShortcutManager::connect("message.send", this, SLOT(doSend()));
 }
 
 void EventDlg::setAccount(PsiAccount *pa)
@@ -1340,18 +1340,11 @@ void EventDlg::resizeEvent(QResizeEvent *e)
 
 void EventDlg::keyPressEvent(QKeyEvent *e)
 {
-	if(e->key() == Qt::Key_Escape)
+	QKeySequence key = e->key() + ( e->modifiers() & ~Qt::KeypadModifier);
+	if(ShortcutManager::instance()->shortcuts("common.close").contains(key))
 		close();
-#ifdef Q_WS_MAC
-	else if(e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier)
-		close();
-#endif
-	else if(d->composing && e->key() == Qt::Key_Return && ((e->modifiers() & Qt::ControlModifier) || (e->modifiers() & Qt::AltModifier)) )
+	else if(ShortcutManager::instance()->shortcuts("message.send").contains(key))
 		doSend();
-	else if(e->key() == Qt::Key_H && (e->modifiers() & Qt::ControlModifier))
-		doHistory();
-	else if(e->key() == Qt::Key_I && (e->modifiers() & Qt::ControlModifier))
-		doInfo();
 	else
 		e->ignore();
 }

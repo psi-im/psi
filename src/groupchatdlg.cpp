@@ -955,8 +955,8 @@ void GCMainDlg::setShortcuts()
 {
 	d->act_clear->setShortcuts(ShortcutManager::instance()->shortcuts("chat.clear"));
 	d->act_find->setShortcuts(ShortcutManager::instance()->shortcuts("chat.find"));
-	d->act_send->setShortcuts(ShortcutManager::instance()->shortcuts("chat.send"));
-	d->act_close->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
+	//d->act_send->setShortcuts(ShortcutManager::instance()->shortcuts("chat.send"));
+	//d->act_close->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
 	d->act_scrollup->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-up"));
 	d->act_scrolldown->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-down"));
 }
@@ -973,7 +973,7 @@ void GCMainDlg::scrollDown() {
 // actions in the constructor. Somehow, Qt ignores this.
 void GCMainDlg::keyPressEvent(QKeyEvent *e)
 {
-	QKeySequence key = e->key() + e->modifiers();
+	QKeySequence key = e->key() + ( e->modifiers() & ~Qt::KeypadModifier);
 	if(!option.useTabs && ShortcutManager::instance()->shortcuts("common.close").contains(key))
 		close();
 	else if(ShortcutManager::instance()->shortcuts("chat.send").contains(key))

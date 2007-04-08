@@ -112,7 +112,7 @@ TabDlg::~TabDlg()
 
 void TabDlg::setShortcuts()
 {
-	act_close->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
+	//act_close->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
 	act_prev->setShortcuts(ShortcutManager::instance()->shortcuts("chat.previous-tab"));
 	act_next->setShortcuts(ShortcutManager::instance()->shortcuts("chat.next-tab"));
 }

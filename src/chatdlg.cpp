@@ -418,13 +418,13 @@ void ChatDlg::setShortcuts()
 	d->act_clear->setShortcuts(ShortcutManager::instance()->shortcuts("chat.clear"));
 	d->act_info->setShortcuts(ShortcutManager::instance()->shortcuts("common.user-info"));
 	d->act_history->setShortcuts(ShortcutManager::instance()->shortcuts("common.history"));
-	d->act_send->setShortcuts(ShortcutManager::instance()->shortcuts("chat.send"));
+	//d->act_send->setShortcuts(ShortcutManager::instance()->shortcuts("chat.send"));
 	d->act_scrollup->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-up"));
 	d->act_scrolldown->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-down"));
 
-	if(!option.useTabs) {
-		d->act_close->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
-	}
+	//if(!option.useTabs) {
+	//	d->act_close->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
+	//}
 }
 
 void ChatDlg::contextMenuEvent(QContextMenuEvent *)
@@ -447,7 +447,7 @@ void ChatDlg::scrollDown()
 // just for actions that have no modifier). 
 void ChatDlg::keyPressEvent(QKeyEvent *e)
 {
-	QKeySequence key = e->key() + e->modifiers();
+	QKeySequence key = e->key() + ( e->modifiers() & ~Qt::KeypadModifier );
 	if(!option.useTabs && ShortcutManager::instance()->shortcuts("common.close").contains(key))
 		close();
 	else if(ShortcutManager::instance()->shortcuts("chat.send").contains(key))

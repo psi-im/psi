@@ -227,8 +227,17 @@ bool ChatEdit::focusNextPrevChild(bool next)
 void ChatEdit::keyPressEvent(QKeyEvent *e)
 {
 	if(dialog_) {
-		// Ignore registered key sequences (and pass them up)
 		QKeySequence k(e->key() + (e->modifiers() & ~Qt::KeypadModifier));
+		
+		// Temporary workaround for what i think is a Qt bug
+		if(ShortcutManager::instance()->shortcuts("common.close").contains(k)
+			|| ShortcutManager::instance()->shortcuts("chat.send").contains(k)
+			|| ShortcutManager::instance()->shortcuts("message.send").contains(k)) {
+			e->ignore();
+			return;
+		}
+
+		// Ignore registered key sequences (and pass them up)
 		foreach(QAction* act, dialog_->actions()) {
 			foreach(QKeySequence keyseq, act->shortcuts()) {
 				if(!keyseq.isEmpty() && keyseq.matches(k) == QKeySequence::ExactMatch) {
