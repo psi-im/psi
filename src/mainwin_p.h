@@ -29,7 +29,6 @@
 #include <QAction>
 #include <QMouseEvent>
 
-#include "trayicon.h"
 #include "psicon.h"
 #include "iconaction.h"
 
@@ -129,37 +128,6 @@ protected:
 signals:
 	void clicked(int);
 	void doubleClicked();
-};
-
-class MTray : public QObject
-{
-	Q_OBJECT
-public:
-	MTray(const QString &tip, QMenu *popup, QObject *parent=0);
-	~MTray();
-
-	void setToolTip(const QString &);
-	void setIcon(const Icon *, bool alert = false);
-	void setAlert(const Icon *);
-	bool isAnimating() const;
-
-	bool isWMDock();
-
-signals:
-	void clicked(const QPoint &, int);
-	void doubleClicked(const QPoint &);
-	void closed();
-
-public slots:
-	void show();
-	void hide();
-
-private slots:
-	void animate();
-
-private:
-	class Private;
-	Private *d;
 };
 
 class MAction : public IconAction

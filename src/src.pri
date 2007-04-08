@@ -107,6 +107,7 @@ HEADERS += \
 	$$PWD/userlist.h \
 	$$PWD/mainwin.h \
 	$$PWD/mainwin_p.h \
+	$$PWD/psitrayicon.h \
 	$$PWD/rtparse.h \
 	$$PWD/systeminfo.h \
 	$$PWD/common.h \
@@ -214,6 +215,7 @@ SOURCES += \
 	$$PWD/userlist.cpp \
 	$$PWD/mainwin.cpp \
 	$$PWD/mainwin_p.cpp \
+	$$PWD/psitrayicon.cpp \
 	$$PWD/rtparse.cpp \
 	$$PWD/systeminfo.cpp \
 	$$PWD/common.cpp \

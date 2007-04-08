@@ -44,6 +44,7 @@
 #include "psiiconset.h"
 #include "applicationinfo.h"
 #include "psiaccount.h"
+#include "psitrayicon.h"
 #include "psitoolbar.h"
 #include "aboutdlg.h"
 #include "psitoolbar.h"
@@ -85,7 +86,7 @@ public:
 	QMenu *mainMenu, *statusMenu, *optionsMenu, *toolsMenu;
 	int sbState;
 	QString nickname;
-	MTray *tray;
+	PsiTrayIcon *tray;
 	QMenu *trayMenu;
 	QString statusTip;
 
@@ -511,7 +512,7 @@ void MainWin::setUseDock(bool use)
 	d->trayMenu = new QMenu;
 	connect(d->trayMenu, SIGNAL(aboutToShow()), SLOT(buildTrayMenu()));
 
-	d->tray = new MTray("Psi", d->trayMenu);
+	d->tray = new PsiTrayIcon("Psi", d->trayMenu);
 	d->tray->setIcon( PsiIconset::instance()->statusPtr( STATUS_OFFLINE ));
 	d->tray->setToolTip(ApplicationInfo::name());
 	connect(d->tray, SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
