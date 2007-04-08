@@ -684,7 +684,7 @@
             <item>
       <widget class="QLabel" name="lb_security_level" >
        <property name="text" >
-        <string>Security:</string>
+        <string>SASL Security Level:</string>
        </property>
       </widget>
      </item>
