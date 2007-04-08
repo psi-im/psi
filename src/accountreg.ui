@@ -37,14 +37,14 @@
          <property name="title" >
           <string>Server</string>
          </property>
-         <layout class="QVBoxLayout" >
+         <layout class="QGridLayout" >
           <property name="margin" >
            <number>9</number>
           </property>
           <property name="spacing" >
            <number>6</number>
           </property>
-          <item>
+          <item row="0" column="0" colspan="2">
            <widget class="QLabel" name="lb_jid" >
             <property name="text" >
              <string>Please enter the name of the server you wish to register with:</string>
@@ -54,17 +54,20 @@
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="QLineEdit" name="le_server" >
+          <item row="1" column="0" colspan="2">
+           <widget class="UpdatingComboBox" name="le_server" >
             <property name="minimumSize" >
              <size>
               <width>200</width>
               <height>0</height>
              </size>
             </property>
+			<property name="editable">
+			 <bool>true</bool>
+			</property>
            </widget>
           </item>
-          <item>
+          <item row="2" column="0" colspan="2">
            <widget class="QLabel" name="lb_example" >
             <property name="enabled" >
              <bool>false</bool>

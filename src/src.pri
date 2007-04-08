@@ -189,6 +189,7 @@ HEADERS += \
 	$$PWD/ahcformdlg.h \
 	$$PWD/ahcexecutetask.h \
 	$$PWD/ahcservermanager.h \
+	$$PWD/serverlistquerier.h \
 	$$PWD/psioptions.h \
 	$$PWD/voicecaller.h \
 	$$PWD/voicecalldlg.h \
@@ -299,6 +300,7 @@ SOURCES += \
 	$$PWD/ahcformdlg.cpp \
 	$$PWD/ahcexecutetask.cpp \
  	$$PWD/ahcservermanager.cpp \
+	$$PWD/serverlistquerier.cpp \
 	$$PWD/psioptions.cpp \
 	$$PWD/voicecalldlg.cpp \
 	$$PWD/resourcemenu.cpp \

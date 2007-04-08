@@ -24,6 +24,7 @@
 
 #include "accountregdlg.h"
 #include "proxy.h"
+#include "serverlistquerier.h"
 #include "miniclient.h"
 #include "xmpp_tasks.h"
 #include "psioptions.h"
@@ -31,7 +32,6 @@
 #include "xdata_widget.h"
 
 using namespace XMPP;
-
 
 AccountRegDlg::AccountRegDlg(ProxyManager *pm, QWidget *parent) : QDialog(parent)
 {
@@ -46,6 +46,12 @@ AccountRegDlg::AccountRegDlg(ProxyManager *pm, QWidget *parent) : QDialog(parent
 	legacy_ssl_probe_ = true;
 	port_ = 5222;
 	
+	// Server select button
+	connect(ui_.le_server,SIGNAL(popup()),SLOT(selectServer()));
+	serverlist_querier_ = new ServerListQuerier(this);
+	connect(serverlist_querier_,SIGNAL(listReceived(const QStringList&)),SLOT(serverListReceived(const QStringList&)));
+	connect(serverlist_querier_,SIGNAL(error(const QString&)),SLOT(serverListError(const QString&)));
+
 	// Manual Host/Port
 	ui_.le_host->setEnabled(false);
 	ui_.lb_host->setEnabled(false);
@@ -142,12 +148,41 @@ void AccountRegDlg::hostToggled(bool on)
 	}
 }
 
+void AccountRegDlg::selectServer()
+{
+	if (ui_.le_server->count() == 0) {
+		ui_.busy->start();
+		block();
+		serverlist_querier_->getList();
+	}
+}
+
+void AccountRegDlg::serverListReceived(const QStringList& list)
+{
+	ui_.busy->stop();
+	unblock();
+	ui_.le_server->clear();
+	ui_.le_server->addItems(list);
+	ui_.le_server->showPopup();
+}
+
+void AccountRegDlg::serverListError(const QString& e)
+{
+	ui_.busy->stop();
+	unblock();
+	QString error = tr("There was an error retrieving the server list");
+	if (!e.isEmpty()) {
+		error += ".\n" + tr("Reason: ") + e;
+	}
+	QMessageBox::critical(this, tr("Error"), error);
+}
+
 void AccountRegDlg::next()
 {
 	if (ui_.sw_register->currentWidget() == ui_.page_server) {
 
 		// Update settings
-		server_ = JIDUtil::accountFromString(ui_.le_server->text().trimmed());
+		server_ = JIDUtil::accountFromString(ui_.le_server->currentText().trimmed());
 		ssl_ =  (UserAccount::SSLFlag) ui_.cb_ssl->itemData(ui_.cb_ssl->currentIndex()).toInt();
 		legacy_ssl_probe_ = ui_.ck_legacy_ssl_probe->isChecked();
 		opt_host_ = ui_.ck_host->isChecked();

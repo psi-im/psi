@@ -30,6 +30,7 @@ HEADERS += \
 	$$PWD/fancypopup.h \
 	$$PWD/urllabel.h \
 	$$PWD/urlobject.h \
+	$$PWD/updatingcombobox.h \
 	$$PWD/iconlabel.h \
 	$$PWD/icontoolbutton.h \
 	$$PWD/fancypopuplist.h \

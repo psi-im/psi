@@ -23,6 +23,7 @@
 
 #include <QDialog>
 #include <QString>
+#include <QStringList>
 
 #include "profiles.h"
 #include "xmpp_jid.h"
@@ -35,6 +36,7 @@ class QWidget;
 class QScrollArea;
 class MiniClient;
 class XDataWidget;
+class ServerListQuerier;
 namespace XMPP {
 	class Form;
 }
@@ -70,6 +72,10 @@ protected slots:
 	void hostToggled(bool);
 	void sslActivated(int);
 	void next();
+	
+	void selectServer();
+	void serverListReceived(const QStringList&);
+	void serverListError(const QString&);
 
 	void client_handshaken();
 	void client_error();
@@ -83,6 +89,7 @@ private:
 	XDataWidget* fields_;
 	ProxyManager *proxy_manager_;
 	ProxyChooser *proxy_chooser_;
+	ServerListQuerier *serverlist_querier_;
 	MiniClient *client_;
 	bool isOld_;
 

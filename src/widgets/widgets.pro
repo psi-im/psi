@@ -34,6 +34,7 @@ HEADERS += \
 	iconsetdisplay.h \
 	iconsetselect.h \
 	iconaction.h \
+	updatingcombobox.h \
 	urlobject.h \
 	urllabel.h \
 	iconlabel.h \
