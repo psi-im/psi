@@ -1048,7 +1048,10 @@ DiscoDlg::Private::Private(DiscoDlg *parent, PsiAccount *pa)
 	}
 
 	toolBar->addWidget(new StretchWidget(toolBar));
-	toolBar->addWidget(new AccountLabel(pa, toolBar, true));
+	AccountLabel* lb_ident = new AccountLabel(toolBar);
+	lb_ident->setAccount(pa);
+	lb_ident->setShowJid(false);
+	toolBar->addWidget(lb_ident);
 
 	// misc stuff
 	disableButtons();

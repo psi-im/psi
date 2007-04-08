@@ -491,7 +491,8 @@ public:
 	PsiAccount *pa;
 	AccountsComboBox *cb_ident;
 	QLabel* lb_identity;
-	QLabel *lb_ident, *lb_time;
+	AccountLabel* lb_ident;
+	QLabel* lb_time;
 	ChatView *te;
 	Jid jid;
 	FileTransferHandler *ft;
@@ -613,7 +614,8 @@ FileRequestDlg::FileRequestDlg(const QDateTime &ts, FileTransfer *ft, PsiAccount
 	d->cb_ident = 0;
 	Q3HBox *hb = new Q3HBox(this);
 	d->lb_identity = new QLabel(tr("Identity: "), hb);
-	d->lb_ident = new AccountLabel(d->pa, hb);
+	d->lb_ident = new AccountLabel(hb);
+	d->lb_ident->setAccount(d->pa);
 	d->lb_ident->setSizePolicy(QSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Fixed ));
 	new QLabel(tr("Time:"), hb);
 	d->lb_time = new QLabel(ts.time().toString(Qt::LocalDate), hb);
