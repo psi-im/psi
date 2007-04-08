@@ -167,7 +167,7 @@ GCUserView::GCUserView(GCMainDlg* dlg, QWidget *parent, const char *name)
 	setShowToolTips(false);
 	header()->hide();
 	addColumn("");
-	setSortColumn(-1);
+	setSortColumn(0);
 	Q3ListViewItem* i;
 	i = new GCUserViewGroupItem(this, tr("Visitors"));
 	i->setOpen(true);
