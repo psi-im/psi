@@ -1884,7 +1884,7 @@ public slots:
 
 		if ( newSize.height() != oldSize.height() ) {
 			lastSize = newSize;
-			QWidget *topParent = cv->topLevelWidget();
+			QWidget *topParent = cv->window();
 
 			if ( cv->allowResize() ) {
 				topParent->layout()->setEnabled( false ); // try to reduce some flicker
@@ -1931,7 +1931,7 @@ public slots:
 		if ( autoRosterResizeInProgress )
 			return;
 
-		QWidget *topParent = cv->topLevelWidget();
+		QWidget *topParent = cv->window();
 		QRect desktop = qApp->desktop()->availableGeometry( (QWidget *)topParent );
 
 		int top_offs    = abs( desktop.top()    - topParent->frameGeometry().top() );
@@ -1987,7 +1987,7 @@ ContactView::ContactView(QWidget *parent, const char *name)
 	setTreeStepSize(4);
 	setSorting(0,true);
 
-	topLevelWidget()->installEventFilter( this );
+	window()->installEventFilter( this );
 
 	// create the column and hide the header
 	addColumn("");
@@ -2517,7 +2517,7 @@ bool ContactView::allowResize() const
 	if ( !option.autoRosterSize )
 		return false;
 
-	if ( topLevelWidget()->isMaximized() )
+	if ( window()->isMaximized() )
 		return false;
 
 	return true;
@@ -2560,7 +2560,7 @@ QSize ContactView::sizeHint() const
 		++it;
 	}
 
-	QWidget *topParent = topLevelWidget();
+	QWidget *topParent = window();
 	QRect desktop = qApp->desktop()->availableGeometry( (QWidget *)topParent );
 	int dh = h - d->lastSize.height();
 

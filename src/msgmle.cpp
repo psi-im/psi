@@ -382,7 +382,7 @@ LineEdit::LineEdit( QWidget *parent, QWidget *dlg /*= NULL*/)
 	lastSize = QSize( 0, 0 );
 	initialWindowGeometry = QRect( 0, 0, 0, 0 );
 
-	QWidget *topParent = topLevelWidget();
+	QWidget *topParent = window();
 	topParent->installEventFilter( this );
 	moveTo = QPoint(topParent->x(), topParent->y());
 
@@ -412,7 +412,7 @@ LineEdit::~LineEdit()
  */
 bool LineEdit::allowResize() const
 {
-	QWidget *topParent = topLevelWidget();
+	QWidget *topParent = window();
 
 	QRect desktop = qApp->desktop()->availableGeometry( (QWidget *)topParent );
 	float desktopArea = desktop.width() * desktop.height();
@@ -445,7 +445,7 @@ QSize LineEdit::sizeHint() const
 	lastSize.setWidth( QTextEdit::sizeHint().width() );
 	// TODO: figure out what to do, if layouting is incomplete.
 	qreal h = 4.0 + document()->documentLayout()->documentSize().height();
-	QWidget *topParent = topLevelWidget();
+	QWidget *topParent = window();
 	QRect desktop = qApp->desktop()->availableGeometry( (QWidget *)topParent );
 	qreal dh = h - height();
 
@@ -486,7 +486,7 @@ void LineEdit::recalculateSize()
 	QSize newSize = sizeHint();
 
 	if ( QABS(newSize.height() - oldSize.height()) > 1 ) {
-		QWidget *topParent = topLevelWidget();
+		QWidget *topParent = window();
 		
 		if ( allowResize() ) {
 			topParent->layout()->setEnabled( false ); // try to reduce some flicker
@@ -539,7 +539,7 @@ void LineEdit::resizeEvent( QResizeEvent *e )
 	// issue a re-layout, just in case
 	lastSize = QSize( 0, 0 ); // force sizeHint() to update
 	sizeHint(); // update the size hint, and cache the value
-	topLevelWidget()->layout()->activate();
+	window()->layout()->activate();
 
 	QTextEdit::resizeEvent( e );
 }
@@ -559,10 +559,10 @@ bool LineEdit::eventFilter(QObject *watched, QEvent *e)
 		// In case of tabbed chats, dialog could be reparented to a higher-level dialog
 		// we need to get move events from it too. And unnecessary event filters
 		// are automatically cleaned up by Qt.
-		topLevelWidget()->installEventFilter( this );
+		window()->installEventFilter( this );
 	}
 	else if ( e->type() == QEvent::Move ) {
-		QWidget *topParent = topLevelWidget();
+		QWidget *topParent = window();
 		if ( watched == topParent ) {
 			moveTimer->start( 100, true );
 		}
@@ -577,7 +577,7 @@ bool LineEdit::eventFilter(QObject *watched, QEvent *e)
  */
 void LineEdit::checkMoved()
 {
-	QWidget *topParent = topLevelWidget();
+	QWidget *topParent = window();
 	if ( QABS(moveTo.x() - topParent->x()) > 1 ||
 	     QABS(moveTo.y() - topParent->y()) > 1 ) {
 		moveTo = topParent->pos();

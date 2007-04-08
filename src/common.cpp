@@ -415,7 +415,7 @@ bool currentDesktop(long *desktop)
 void bringToFront(QWidget *widget, bool)
 {
 	Q_ASSERT(widget);
-	QWidget* w = widget->topLevelWidget();
+	QWidget* w = widget->window();
 
 #ifdef Q_WS_X11
 	// If we're not on the current desktop, do the hide/show trick

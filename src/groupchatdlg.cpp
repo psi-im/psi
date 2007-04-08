@@ -312,7 +312,7 @@ bool GCUserView::maybeTip(const QPoint &pos)
 	const Status &s = lvi->s;
 	UserListItem u;
 	// SICK SICK SICK SICK
-	GCMainDlg* dlg = (GCMainDlg*) topLevelWidget();
+	GCMainDlg* dlg = (GCMainDlg*) window();
 	u.setJid(dlg->jid().withResource(nick));
 	u.setName(nick);
 
