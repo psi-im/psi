@@ -238,8 +238,10 @@ void OptionsTabStatus::newStatusPreset()
 			break;
 	}
 
+	o->sp[text].setName(text);
 	d->cb_preset->insertItem(text);
 	d->cb_preset->setCurrentItem(d->cb_preset->count()-1);
+	selectStatusPreset(d->cb_preset->count()-1);
 	d->te_sp->setFocus();
 
 	emit dataChanged();
