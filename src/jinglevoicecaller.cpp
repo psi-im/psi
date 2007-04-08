@@ -120,10 +120,10 @@ void JingleClientSlots::callCreated(cricket::Call *call)
 
 void JingleClientSlots::callDestroyed(cricket::Call *call)
 {
-	qDebug("JingleClientSlots: Call destroyed");
+	qDebug() << "JingleClientSlots: Call destroyed";
 	Jid jid(call->sessions()[0]->remote_address().c_str());
 	if (voiceCaller_->calling(jid)) {
-		qDebug(QString("Removing unterminated call to %1").arg(jid.full()));
+		qDebug() << "Removing unterminated call to " << jid.full();
 		voiceCaller_->removeCall(jid);
 		emit voiceCaller_->terminated(jid);
 	}
@@ -149,7 +149,7 @@ void JingleClientSlots::requestSignaling()
 
 void JingleClientSlots::stateChanged(cricket::Call *call, cricket::Session *session, cricket::Session::State state) 
 {
-	qDebug(QString("jinglevoicecaller.cpp: State changed (%1)").arg(state));
+	qDebug() << QString("jinglevoicecaller.cpp: State changed (%1)").arg(state);
 	// Why is c_str() stuff needed to make it compile on OS X ?
 	Jid jid(session->remote_address().c_str());
 
@@ -206,7 +206,7 @@ void JingleVoiceCaller::initialize()
 		return;
 
 	QString jid = ((ClientStream&) account()->client()->stream()).jid().full();
-	qDebug(QString("jinglevoicecaller.cpp: Creating new caller for %1").arg(jid));
+	qDebug() << QString("jinglevoicecaller.cpp: Creating new caller for %1").arg(jid);
 	if (jid.isEmpty()) {
 		qWarning("jinglevoicecaller.cpp: Empty JID");
 		return;
@@ -282,7 +282,7 @@ bool JingleVoiceCaller::calling(const Jid& jid)
 
 void JingleVoiceCaller::call(const Jid& jid)
 {
-	qDebug(QString("jinglevoicecaller.cpp: Calling %1").arg(jid.full()));
+	qDebug() << "jinglevoicecaller.cpp: Calling " << jid.full();
 	cricket::Call *c = ((cricket::PhoneSessionClient*)(phone_client_))->CreateCall();
 	c->InitiateSession(buzz::Jid(jid.full().ascii()));
 	phone_client_->SetFocus(c);
@@ -310,7 +310,7 @@ void JingleVoiceCaller::reject(const Jid& j)
 
 void JingleVoiceCaller::terminate(const Jid& j)
 {
-	qDebug(QString("jinglevoicecaller.cpp: Terminating call to %1").arg(j.full()));
+	qDebug() << "jinglevoicecaller.cpp: Terminating call to " << j.full();
 	cricket::Call* call = calls_[j.full()];
 	if (call != NULL) {
 		call->Terminate();
@@ -337,7 +337,7 @@ void JingleVoiceCaller::registerCall(const Jid& jid, cricket::Call* call)
 
 void JingleVoiceCaller::removeCall(const Jid& j)
 {
-	qDebug(QString("JingleVoiceCaller: Removing call to %1").arg(j.full()));
+	qDebug() << "JingleVoiceCaller: Removing call to " << j.full();
 	calls_.remove(j.full());
 }
 
@@ -373,7 +373,7 @@ void JingleVoiceCaller::receiveStanza(const QString& stanza)
 	
 	// Spread the word
 	if (ok) {
-		//qDebug(QString("jinglevoicecaller.cpp: Handing down %1").arg(stanza));
+		//qDebug() << "jinglevoicecaller.cpp: Handing down " << stanza;
 		buzz::XmlElement *e = buzz::XmlElement::ForStr(stanza.ascii());
 		phone_client_->OnIncomingStanza(e);
 	}

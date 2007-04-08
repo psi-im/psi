@@ -396,7 +396,7 @@ void WbWidget::mouseMoveEvent(QMouseEvent * event) {
 			}
 			return;
 		} else if(!addVertex_ && -50 < difference.x() + difference.y() && difference.x() + difference.y() < 50) {
-// 			qDebug(QString("difference x + y: %1").arg(difference.x() + difference.y()).toAscii());
+// 			qDebug() << QString("difference x + y: %1").arg(difference.x() + difference.y());
 			return;
 		}
 		if(controlPoint_) {

@@ -332,7 +332,7 @@ public:
 				result_ = Error;
 				return;
 			}
-			//qDebug(QString("simplesasl.cpp: IN: %1").arg(QString(in.toString())));
+			//qDebug() << (QString("simplesasl.cpp: IN: %1").arg(QString(in.toString())));
 
 			// make a cnonce
 			QByteArray a(32);
@@ -354,7 +354,7 @@ public:
 			QByteArray tmp = ':' + nonce + ':' + cnonce;
 			if (!authz.isEmpty())
 				tmp += ':' + authz.utf8();
-			//qDebug(QString(tmp));
+			//qDebug() << (QString(tmp));
 
 			QByteArray A1(Y + tmp);
 			QByteArray A2 = QByteArray("AUTHENTICATE:") + uri;
@@ -363,9 +363,9 @@ public:
 			Q3CString KD = HA1 + ':' + nonce + ':' + nc + ':' + cnonce + ':' + qop + ':' + HA2;
 			Q3CString Z = QCA::Hash("md5").hashToString(KD).latin1();
 			
-			//qDebug(QString("simplesasl.cpp: A1 = %1").arg(QString(A1)).toAscii());
-			//qDebug(QString("simplesasl.cpp: A2 = %1").arg(QString(A2)).toAscii());
-			//qDebug(QString("simplesasl.cpp: KD = %1").arg(QString(KD)).toAscii());
+			//qDebug() << (QString("simplesasl.cpp: A1 = %1").arg(QString(A1)).toAscii());
+			//qDebug() << (QString("simplesasl.cpp: A2 = %1").arg(QString(A2)).toAscii());
+			//qDebug() << (QString("simplesasl.cpp: KD = %1").arg(QString(KD)).toAscii());
 
 			// build output
 			PropList out;
@@ -384,7 +384,7 @@ public:
 			if (!authz.isEmpty())
 				out.set("authzid", authz.utf8());
 			QByteArray s(out.toString());
-			//qDebug(QString("OUT: %1").arg(QString(out.toString())));
+			//qDebug() << (QString("OUT: %1").arg(QString(out.toString())));
 
 			// done
 			out_buf.resize(s.length());

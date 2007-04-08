@@ -72,7 +72,7 @@ void WbManager::messageReceived(const Message &message) {
 		bool recordSessionId = false;
 		// Don't process delayed messages (chat history) but remember the session id
 		if(!message.spooled()) {
-	// 		qDebug(QString("<wb/> to session %1 from %2").arg(message.whiteboard().attribute("session")).arg(message.from().full()).toAscii());
+	// 		qDebug() << (QString("<wb/> to session %1 from %2").arg(message.whiteboard().attribute("session")).arg(message.from().full()).toAscii());
 			WbDlg* w = 0;
 			// Check if the <wb/> contains a <protocol/>
 			QDomNodeList children = message.whiteboard().childNodes();
@@ -318,7 +318,7 @@ qDebug("1");
 					protocol.appendChild(doc.createElement("accept-history"));
 				} else if(m.nodeName() == "document-begin" && (negotiation->state == WbNegotiation::HistoryAccepted || negotiation->state == WbNegotiation::InvitationAccepted)) {
 					if(!negotiation->dialog) {
-// 						qDebug(QString("%1  %2  %3  %4").arg(negotiation->target.full()).arg(session).arg(negotiation->ownJid.full()).toAscii());
+// 						qDebug() << QString("%1  %2  %3  %4").arg(negotiation->target.full()).arg(session).arg(negotiation->ownJid.full());
 						negotiation->dialog = createWbDlg(negotiation->target, session, negotiation->ownJid, negotiation->groupChat);
 					}
 // 					negotiation->dialog->setAllowEdits(false);
@@ -603,7 +603,7 @@ void WbManager::sendMessage(QDomElement wb, const Jid & receiver, bool groupChat
 // 	QString debug;
 // 	QTextStream s(&debug);
 // 	wb.save(s, 1);
-// 	qDebug(debug.toAscii());
+// 	qDebug() << (debug.toAscii());
 
 // 	// Split large wb elements to smaller ones if possible
 // 	QString str;
