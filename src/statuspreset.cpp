@@ -22,7 +22,6 @@
 
 #include "maybe.h"
 #include "statuspreset.h"
-#include "xmpp_status.h"
 
 //-----------------------------------------------------------------------------
 // StatusPreset
@@ -32,12 +31,12 @@ StatusPreset::StatusPreset() :  name_(""), message_(""), status_(XMPP::Status::A
 {
 }
 
-StatusPreset::StatusPreset(QString name, QString message, int status) 
+StatusPreset::StatusPreset(QString name, QString message, XMPP::Status::Type status)
 :  name_(name), message_(message), status_(status)
 {
 }
 
-StatusPreset::StatusPreset(QString name, int priority, QString message, int status)
+StatusPreset::StatusPreset(QString name, int priority, QString message, XMPP::Status::Type status)
 :  name_(name), message_(message), status_(status)
 {
 	setPriority(priority);
@@ -69,12 +68,12 @@ void StatusPreset::setMessage(const QString& message)
 	message_ = message;
 }
 
-int StatusPreset::status() const
+XMPP::Status::Type StatusPreset::status() const
 {
 	return status_;
 }
 
-void StatusPreset::setStatus(int status)
+void StatusPreset::setStatus(XMPP::Status::Type status)
 {
 	status_ = status;
 }
@@ -99,22 +98,11 @@ QDomElement StatusPreset::toXml(QDomDocument& doc) const
 	QDomElement preset = doc.createElement("preset");
 	QDomText text = doc.createTextNode(message());
 	preset.appendChild(text);
-							
+
 	preset.setAttribute("name",name());
 	if (priority_.hasValue()) 
 		preset.setAttribute("priority", priority_.value());
-	QString stat;
-	switch(status()) {
-		case XMPP::Status::Offline: stat = "offline"; break;
-		case XMPP::Status::Online: stat = "online"; break;
-		case XMPP::Status::Away: stat = "away"; break;
-		case XMPP::Status::XA: stat = "xa"; break;
-		case XMPP::Status::DND: stat = "dnd"; break;
-		case XMPP::Status::Invisible: stat = "invisible"; break;
-		case XMPP::Status::FFC: stat = "chat"; break;
-		default: stat = "away";
-	}
-	preset.setAttribute("status", stat);
+	preset.setAttribute("status", XMPP::Status(status()).typeString());
 	return preset;
 }
 
@@ -135,21 +123,7 @@ void StatusPreset::fromXml(const QDomElement &el)
 	if (el.hasAttribute("priority")) 
 		setPriority(el.attribute("priority").toInt());
 	
-	QString stat = el.attribute("status","away");
-	if (stat == "offline")
-		setStatus(XMPP::Status::Offline);
-	else if (stat == "online")
-		setStatus(XMPP::Status::Online);
-	else if (stat == "away")
-		setStatus(XMPP::Status::Away);
-	else if (stat == "xa")
-		setStatus(XMPP::Status::XA);
-	else if (stat == "dnd")
-		setStatus(XMPP::Status::DND);
-	else if (stat == "invisible")
-		setStatus(XMPP::Status::Invisible);
-	else if (stat == "chat")
-		setStatus(XMPP::Status::FFC);
-	else 
-		setStatus(XMPP::Status::Away);
+	XMPP::Status status;
+	status.setType(el.attribute("status", "away"));
+	setStatus(status.type());
  }

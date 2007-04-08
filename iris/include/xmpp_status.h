@@ -39,6 +39,7 @@ namespace XMPP
 
 		int priority() const;
 		Type type() const;
+		QString typeString() const;
 		const QString & show() const;
 		const QString & status() const;
 		QDateTime timeStamp() const;
@@ -71,6 +72,7 @@ namespace XMPP
 
 		void setPriority(int);
 		void setType(Type);
+		void setType(QString);
 		void setShow(const QString &);
 		void setStatus(const QString &);
 		void setTimeStamp(const QDateTime &);

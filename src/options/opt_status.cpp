@@ -25,7 +25,7 @@ public:
 // OptionsTabStatus
 //----------------------------------------------------------------------------
 
-static int combomap[7] = { STATUS_CHAT, STATUS_ONLINE, STATUS_AWAY, STATUS_XA, STATUS_DND, STATUS_INVISIBLE, STATUS_OFFLINE };
+static XMPP::Status::Type combomap[7] = { STATUS_CHAT, STATUS_ONLINE, STATUS_AWAY, STATUS_XA, STATUS_DND, STATUS_INVISIBLE, STATUS_OFFLINE };
 
 OptionsTabStatus::OptionsTabStatus(QObject *parent)
 : OptionsTab(parent, "status", "", tr("Status"), tr("Status preferences"), "psi/status")

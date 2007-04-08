@@ -243,7 +243,7 @@ PsiAccount *PsiContactList::tryQueueLowestEventId(bool includeDND)
 		if ( n == -1 )
 			continue;
 
-		if ( !includeDND && account->status().show() == "dnd" ) // FIXME: change "dnd" to enum
+		if (!includeDND && account->status().type() == XMPP::Status::DND)
 			continue;
 
 		int p = account->eventQueue()->peekNext()->priority();

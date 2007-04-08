@@ -1078,7 +1078,7 @@ void PsiCon::queueChanged()
 		// Check if bouncing is necessary
 		bool doBounce = false;
 		foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
-			if ( account->eventQueue()->count() && pa->status().show() != "dnd" ) { // FIXME: use enum instead of "dnd"
+			if (account->eventQueue()->count() && pa->status().type() != XMPP::Status::DND) {
 				doBounce = true;
 				break;
 			}

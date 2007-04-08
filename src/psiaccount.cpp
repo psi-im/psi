@@ -2116,8 +2116,8 @@ void PsiAccount::secondsIdle(int x)
 				logout();
 			}
 			else if(option.use_asXa && option.asXa > 0 && minutes >= option.asXa) {
-				if(ls.show() != "xa" && lastStatus.show() != "xa") {
-					lastStatus = Status("xa", option.asMessage, d->acc.priority);
+				if(ls.type() != XMPP::Status::XA && lastStatus.type() != XMPP::Status::XA) {
+					lastStatus = Status(XMPP::Status::XA, option.asMessage, d->acc.priority);
 					if(!usingAutoStatus)
 						d->origStatus = d->loginStatus;
 					setStatusDirect(lastStatus);
@@ -2125,8 +2125,8 @@ void PsiAccount::secondsIdle(int x)
 				}
 			}
 			else if(option.use_asAway && option.asAway > 0 && minutes >= option.asAway) {
-				if(ls.show() != "away" && lastStatus.show() != "away") {
-					lastStatus = Status("away", option.asMessage, d->acc.priority);
+				if(ls.type() != XMPP::Status::Away && lastStatus.type() != XMPP::Status::Away) {
+					lastStatus = Status(XMPP::Status::Away, option.asMessage, d->acc.priority);
 					if(!usingAutoStatus)
 						d->origStatus = d->loginStatus;
 					setStatusDirect(lastStatus);
@@ -3554,10 +3554,9 @@ void PsiAccount::queueEvent(PsiEvent *e)
 
 	bool noPopup = false;
 	if(d->loginStatus.isAvailable()) {
-		QString show = d->loginStatus.show();
-		if(show == "dnd")
+		if(d->loginStatus.type() == XMPP::Status::DND)
 			noPopup = true;
-		else if((show == "away" || show == "xa") && option.noAwayPopup)
+		else if((d->loginStatus.type() == XMPP::Status::Away || d->loginStatus.type() == XMPP::Status::XA) && option.noAwayPopup)
 			noPopup = true;
 	}
 

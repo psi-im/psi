@@ -2112,6 +2112,26 @@ void Status::setType(Status::Type _type)
 	setIsInvisible(invisible);
 }
 
+void Status::setType(QString stat)
+{
+	if (stat == "offline")
+		setType(XMPP::Status::Offline);
+	else if (stat == "online")
+		setType(XMPP::Status::Online);
+	else if (stat == "away")
+		setType(XMPP::Status::Away);
+	else if (stat == "xa")
+		setType(XMPP::Status::XA);
+	else if (stat == "dnd")
+		setType(XMPP::Status::DND);
+	else if (stat == "invisible")
+		setType(XMPP::Status::Invisible);
+	else if (stat == "chat")
+		setType(XMPP::Status::FFC);
+	else
+		setType(XMPP::Status::Away);
+}
+
 void Status::setShow(const QString & _show)
 {
 	v_show = _show;
@@ -2242,6 +2262,22 @@ Status::Type Status::type() const
 			type = Status::FFC;
 	}
 	return type;
+}
+
+QString Status::typeString() const
+{
+	QString stat;
+	switch(type()) {
+		case XMPP::Status::Offline: stat = "offline"; break;
+		case XMPP::Status::Online: stat = "online"; break;
+		case XMPP::Status::Away: stat = "away"; break;
+		case XMPP::Status::XA: stat = "xa"; break;
+		case XMPP::Status::DND: stat = "dnd"; break;
+		case XMPP::Status::Invisible: stat = "invisible"; break;
+		case XMPP::Status::FFC: stat = "chat"; break;
+		default: stat = "away";
+	}
+	return stat;
 }
 
 const QString & Status::show() const

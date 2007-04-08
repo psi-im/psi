@@ -74,7 +74,7 @@ StatusShowDlg::StatusShowDlg(const UserListItem &u)
 //----------------------------------------------------------------------------
 // StatusSetDlg
 //----------------------------------------------------------------------------
-static int combomap[7] = { STATUS_CHAT, STATUS_ONLINE, STATUS_AWAY, STATUS_XA, STATUS_DND, STATUS_INVISIBLE, STATUS_OFFLINE };
+static XMPP::Status::Type combomap[7] = { STATUS_CHAT, STATUS_ONLINE, STATUS_AWAY, STATUS_XA, STATUS_DND, STATUS_INVISIBLE, STATUS_OFFLINE };
 
 class StatusSetDlg::Private
 {

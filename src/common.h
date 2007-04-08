@@ -197,13 +197,13 @@ Options option;
 
 #include "xmpp_status.h"
 
-#define STATUS_OFFLINE   0
-#define STATUS_ONLINE    1
-#define STATUS_AWAY      2
-#define STATUS_XA        3
-#define STATUS_DND       4
-#define STATUS_INVISIBLE 5
-#define STATUS_CHAT      6
+#define STATUS_OFFLINE   XMPP::Status::Offline
+#define STATUS_ONLINE    XMPP::Status::Online
+#define STATUS_AWAY      XMPP::Status::Away
+#define STATUS_XA        XMPP::Status::XA
+#define STATUS_DND       XMPP::Status::DND
+#define STATUS_INVISIBLE XMPP::Status::Invisible
+#define STATUS_CHAT      XMPP::Status::FFC
 
 #define STATUS_ASK	 100
 #define STATUS_NOAUTH	 101
@@ -212,7 +212,7 @@ Options option;
 QString status2txt(int status);
 XMPP::Status makeStatus(int, const QString &);
 XMPP::Status makeStatus(int, const QString &, int);
-int makeSTATUS(const XMPP::Status &);
+XMPP::Status::Type makeSTATUS(const XMPP::Status &);
 QString clipStatus(const QString &str, int width, int height);
 
 

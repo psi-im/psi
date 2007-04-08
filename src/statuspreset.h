@@ -25,21 +25,22 @@
 #include <QDomElement>
 
 #include "maybe.h"
+#include "xmpp_status.h"
 
 class StatusPreset 
 {
 public:
 	StatusPreset();
-	StatusPreset(QString name, QString message = QString::null, int status = 3);
-	StatusPreset(QString name, int priority, QString message = QString::null, int status = 3);
+	StatusPreset(QString name, QString message = QString::null, XMPP::Status::Type status = XMPP::Status::Away);
+	StatusPreset(QString name, int priority, QString message = QString::null, XMPP::Status::Type status = XMPP::Status::Away);
 	StatusPreset(const QDomElement&);
 
 	QString name() const;
 	void setName(const QString&);
 	QString message() const;
 	void setMessage(const QString&);
-	int status() const;
-	void setStatus(int);
+	XMPP::Status::Type status() const;
+	void setStatus(XMPP::Status::Type);
 	Maybe<int> priority() const;
 	void setPriority(int priority);
 	void clearPriority();
@@ -49,7 +50,7 @@ public:
 
 private:
 	QString name_, message_;
-	int status_;
+	XMPP::Status::Type status_;
 	Maybe<int> priority_;
 };
 

@@ -263,44 +263,12 @@ XMPP::Status makeStatus(int x, const QString &str, int priority)
 
 XMPP::Status makeStatus(int x, const QString &str)
 {
-	XMPP::Status s;
-	s.setStatus(str);
-	if(x == STATUS_OFFLINE)
-		s.setIsAvailable(false);
-	else if(x == STATUS_INVISIBLE)
-		s.setIsInvisible(true);
-	else {
-		if(x == STATUS_AWAY)
-			s.setShow("away");
-		else if(x == STATUS_XA)
-			s.setShow("xa");
-		else if(x == STATUS_DND)
-			s.setShow("dnd");
-		else if(x == STATUS_CHAT)
-			s.setShow("chat");
-	}
-
-	return s;
+	return XMPP::Status(static_cast<XMPP::Status::Type>(x), str);
 }
 
-int makeSTATUS(const XMPP::Status &s)
+XMPP::Status::Type makeSTATUS(const XMPP::Status &s)
 {
-	int type = STATUS_ONLINE;
-	if(!s.isAvailable())
-		type = STATUS_OFFLINE;
-	else if(s.isInvisible())
-		type= STATUS_INVISIBLE;
-	else {
-		if(s.show() == "away")
-			type = STATUS_AWAY;
-		else if(s.show() == "xa")
-			type = STATUS_XA;
-		else if(s.show() == "dnd")
-			type = STATUS_DND;
-		else if(s.show() == "chat")
-			type = STATUS_CHAT;
-	}
-	return type;
+	return s.type();
 }
 
 #include <qlayout.h>

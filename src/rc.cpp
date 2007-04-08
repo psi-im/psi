@@ -60,29 +60,7 @@ AHCommand RCSetStatusServer::execute(const AHCommand& c, const Jid&)
 		status_field.setVar("status");
 		status_field.setLabel(QObject::tr("Status"));
 		status_field.setRequired(true);
-		switch(makeSTATUS(manager()->account()->status())) {
-			case STATUS_OFFLINE:
-				status_field.setValue(QStringList("offline")); 
-				break;
-			case STATUS_AWAY:
-				status_field.setValue(QStringList("away")); 
-				break;
-			case STATUS_XA: 
-				status_field.setValue(QStringList("xa")); 
-				break;
-			case STATUS_DND:
-				status_field.setValue(QStringList("dnd")); 
-				break;
-			case STATUS_CHAT:
-				status_field.setValue(QStringList("chat"));
-				break;
-			case STATUS_INVISIBLE:  
-				status_field.setValue(QStringList("invisible"));
-				break;
-			case STATUS_ONLINE:
-			default: 
-				status_field.setValue(QStringList("online")); break;
-		}
+		status_field.setValue(QStringList(manager()->account()->status().typeString()));
 		XData::Field::OptionList status_options;
 		XData::Field::Option chat_option;
 		chat_option.label = QObject::tr("Chat");
@@ -143,13 +121,7 @@ AHCommand RCSetStatusServer::execute(const AHCommand& c, const Jid&)
 		for (int i=0; i < fl.count(); i++) {
 			if (fl[i].var() == "status" && !(fl[i].value().isEmpty())) {
 				foundStatus = true;
-				QString show = fl[i].value().first();
-				if (show == "away" || show == "dnd" || show == "xa" || show == "chat" ) 
-					s.setShow(show);
-				else if (show == "offline") 
-					s.setIsAvailable(false);
-				else if (show == "invisible") 
-					s.setIsInvisible(true);
+				s.setType(fl[i].value().first());
 			}
 			else if (fl[i].var() == "status-message" && !fl[i].value().isEmpty()) {
 				s.setStatus(fl[i].value().first());
