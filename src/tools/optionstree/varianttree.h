@@ -65,6 +65,11 @@ public:
 
 	static const QVariant missingValue;
 	static const QString missingComment;
+
+protected:
+	static QVariant elementToVariant(const QDomElement&);
+	static void variantToElement(const QVariant&, QDomElement&);
+
 private:
 	QMap<QString, VariantTree*> trees_;
 	QMap<QString, QVariant> values_;

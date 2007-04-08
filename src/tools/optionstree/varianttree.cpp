@@ -202,8 +202,8 @@ QStringList VariantTree::nodeChildren(const QString& node, bool direct, bool int
  */
 void VariantTree::toXml(QDomDocument &doc, QDomElement& ele) const
 {
-	foreach  (QString node, trees_.keys())
-	{
+	// Subtrees
+	foreach (QString node, trees_.keys()) {
 		QDomElement nodeEle = doc.createElement(node);
 		trees_[node]->toXml(doc, nodeEle);
 		if (comments_.contains(node))
@@ -211,94 +211,103 @@ void VariantTree::toXml(QDomDocument &doc, QDomElement& ele) const
 		ele.appendChild(nodeEle);
 	}
 	
-	foreach (QString child, values_.keys())
-	{
-		QVariant var=values_[child];
-		/*if (var.type()==QVariant::Bool)
-		{
-			ele.setAttribute(child,var.toBool());
-		} else */{
-			QDomElement valEle=doc.createElement(child);
-			QDomText text = doc.createTextNode(var.toString());
-			valEle.appendChild(text);
-			valEle.setAttribute("type",var.typeName());
-			if (comments_.contains(child))
-				valEle.setAttribute("comment",comments_[child]);
-			ele.appendChild(valEle);
-		}
+	// Values
+	foreach (QString child, values_.keys()) {
+		QVariant var = values_[child];
+		QDomElement valEle = doc.createElement(child);
+		variantToElement(var,valEle);
+		ele.appendChild(valEle);
+		if (comments_.contains(child))
+			valEle.setAttribute("comment",comments_[child]);
 	}
-	
 } 
 
-/**
- * TODO
- */
 void VariantTree::fromXml(const QDomElement &ele)
 {
-	QDomElement child=ele.firstChildElement();
-	while ( !child.isNull() )
-	{
-		QString name=child.nodeName();
-		if (!child.hasAttribute("type"))
-		{
-			//subnode
+	QDomElement child = ele.firstChildElement();
+	while (!child.isNull()) {
+		QString name = child.nodeName();
+		if (!child.hasAttribute("type")) {
+			// Subnode
 			if ( !trees_.contains(name) )
-				trees_[name]=new VariantTree(this);
+				trees_[name] = new VariantTree(this);
 			trees_[name]->fromXml(child);
 		} 
 		else {
-			//value
-			QVariant value;
-// 			qWarning(qPrintable(QString("value name=%1, contents=%2, comment=%3, type=%7, child name=%4, contents=%5, comment=%6, type=%8")
-// 			.arg(child.nodeName()).arg(child.toText().data()).arg(child.attribute("comment"))
-// 			.arg(child.firstChildElement().nodeName()).arg(child.firstChildElement().toText().data()).arg(child.firstChildElement().attribute("comment"))
-// 			.arg(child.attribute("type")).arg(child.firstChildElement().attribute("type"))));
-
-			QString type=child.attribute("type");
-			if (type=="QString" || type=="bool" || type=="int")
-			{
-// 				qWarning(qPrintable(QString("Found type %1").arg(type)));
-				for ( QDomNode node = child.firstChild(); !node.isNull(); node = node.nextSibling()) 
-				{
-					if ( node.isText() )
-						value=node.toText().data();
-				}
-				
-				if (!value.isValid())
-					value = QString("");
-
-				if (type=="QString")
-					value.convert(QVariant::String);
-				if (type=="bool")
-					value.convert(QVariant::Bool);
-				if (type=="int")
-					value.convert(QVariant::Int);
-// 				qWarning(qPrintable(QString("Value %1").arg(value.toString())));
-			}
-			
-			if (type=="tehlist")
-			{
-				// for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling()) {
-// 					QDomElement i = n.toElement();
-// 					if(i.isNull())
-// 						continue;
-// 					if(i.tagName() == name) {
-// 						if(found)
-// 							*found = true;
-// 						return i;
-// 					}
-// 				}
-			}
-			
-			values_[name]=value;
+			// Value
+			values_[name] = elementToVariant(child);
 		}
-		if (child.hasAttribute("comment"))
-		{
+
+		// Comments
+		if (child.hasAttribute("comment")) {
 			QString comment=child.attribute("comment");
 			comments_[name]=comment;
 		}
 		child=child.nextSiblingElement();
 	}
+}
+
+/**
+ * Extracts a variant from an element. 
+ * The attribute of the element is used to determine the type.
+ * The tagname of the element is ignored.
+ */
+QVariant VariantTree::elementToVariant(const QDomElement& e)
+{
+	QVariant value;
+	QString type = e.attribute("type");
+	if (type=="QString" || type=="bool" || type=="int") {
+		for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
+			if ( node.isText() )
+				value=node.toText().data();
+		}
+	
+		if (!value.isValid())
+			value = QString("");
+
+		if (type=="QString")
+			value.convert(QVariant::String);
+		else if (type=="bool")
+			value.convert(QVariant::Bool);
+		else if (type=="int")
+			value.convert(QVariant::Int);
+		else if (type == "QKeySequence")
+			value.convert(QVariant::KeySequence);
+	}
+	else if (type == "QVariantList") {
+		QVariantList list;
+		for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
+			QDomElement e = node.toElement();
+			if (!e.isNull() && e.tagName() == "item") {
+				QVariant v = elementToVariant(e);
+				if (v.isValid())
+					list.append(v);
+			}
+		}
+		value = list;
+	}
+	return value;
+}
+
+/**
+ * Modifies the element e to represent the variant var.
+ * This method adds an attribute 'type' and contents to the element.
+ */
+void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
+{
+	QString type = var.typeName();
+	if (type == "QVariantList") {
+		foreach(QVariant v, var.toList()) {
+			QDomElement item_element = e.ownerDocument().createElement("item");
+			variantToElement(v,item_element);
+			e.appendChild(item_element);
+		}
+	}
+	else {
+		QDomText text = e.ownerDocument().createTextNode(var.toString());
+		e.appendChild(text);
+	}
+	e.setAttribute("type",type);
 }
 
 const QVariant VariantTree::missingValue=QVariant(QVariant::Invalid);
