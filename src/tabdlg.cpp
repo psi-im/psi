@@ -425,7 +425,8 @@ void TabDlg::keyPressEvent(QKeyEvent *e)
 void TabDlg::dragEnterEvent(QDragEnterEvent *event)
 {
 	if ( event->mimeData()->hasFormat("psiTabDrag") ) {
-		event->acceptProposedAction();
+		event->setDropAction(Qt::MoveAction);
+		event->accept();
 	}
 }
 
