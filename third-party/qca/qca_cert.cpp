@@ -453,9 +453,10 @@ bool Certificate::matchesHostname(const QString &realHost) const
 	while(peerHost.endsWith("."))
 		peerHost.truncate(peerHost.length()-1);
 	peerHost = peerHost.toLower();
-
-	if(certnameMatchesAddress(commonName(), peerHost))
-		return true;
+	foreach( const QString &commonName, subjectInfo().values(CommonName) ) {
+		if (certnameMatchesAddress(commonName, peerHost))
+			return true;
+	}
 
 	foreach( const QString &dnsName, subjectInfo().values(DNS) ) {
 		if (certnameMatchesAddress(dnsName, peerHost))
