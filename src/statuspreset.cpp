@@ -22,22 +22,13 @@
 
 #include "maybe.h"
 #include "statuspreset.h"
-
-// From common.h
-#define STATUS_OFFLINE   0
-#define STATUS_ONLINE    1
-#define STATUS_AWAY      2
-#define STATUS_XA        3
-#define STATUS_DND       4
-#define STATUS_INVISIBLE 5
-#define STATUS_CHAT      6
-
+#include "xmpp_status.h"
 
 //-----------------------------------------------------------------------------
 // StatusPreset
 //-----------------------------------------------------------------------------
 
-StatusPreset::StatusPreset() :  name_(""), message_(""), status_(STATUS_AWAY)
+StatusPreset::StatusPreset() :  name_(""), message_(""), status_(XMPP::Status::Away)
 {
 }
 
@@ -53,7 +44,7 @@ StatusPreset::StatusPreset(QString name, int priority, QString message, int stat
 }
 
 StatusPreset::StatusPreset(const QDomElement& el)
-:  name_(""), message_(""), status_(STATUS_AWAY)
+:  name_(""), message_(""), status_(XMPP::Status::Away)
 {
 	fromXml(el);
 }
@@ -114,13 +105,13 @@ QDomElement StatusPreset::toXml(QDomDocument& doc) const
 		preset.setAttribute("priority", priority_.value());
 	QString stat;
 	switch(status()) {
-		case STATUS_OFFLINE: stat = "offline"; break;
-		case STATUS_ONLINE: stat = "online"; break;
-		case STATUS_AWAY: stat = "away"; break;
-		case STATUS_XA: stat = "xa"; break;
-		case STATUS_DND: stat = "dnd"; break;
-		case STATUS_INVISIBLE: stat = "invisible"; break;
-		case STATUS_CHAT: stat = "chat"; break;
+		case XMPP::Status::Offline: stat = "offline"; break;
+		case XMPP::Status::Online: stat = "online"; break;
+		case XMPP::Status::Away: stat = "away"; break;
+		case XMPP::Status::XA: stat = "xa"; break;
+		case XMPP::Status::DND: stat = "dnd"; break;
+		case XMPP::Status::Invisible: stat = "invisible"; break;
+		case XMPP::Status::FFC: stat = "chat"; break;
 		default: stat = "away";
 	}
 	preset.setAttribute("status", stat);
@@ -146,19 +137,19 @@ void StatusPreset::fromXml(const QDomElement &el)
 	
 	QString stat = el.attribute("status","away");
 	if (stat == "offline")
-		setStatus(STATUS_OFFLINE);
+		setStatus(XMPP::Status::Offline);
 	else if (stat == "online")
-		setStatus(STATUS_ONLINE);
+		setStatus(XMPP::Status::Online);
 	else if (stat == "away")
-		setStatus(STATUS_AWAY);
+		setStatus(XMPP::Status::Away);
 	else if (stat == "xa")
-		setStatus(STATUS_XA);
+		setStatus(XMPP::Status::XA);
 	else if (stat == "dnd")
-		setStatus(STATUS_DND);
+		setStatus(XMPP::Status::DND);
 	else if (stat == "invisible")
-		setStatus(STATUS_INVISIBLE);
+		setStatus(XMPP::Status::Invisible);
 	else if (stat == "chat")
-		setStatus(STATUS_CHAT);
+		setStatus(XMPP::Status::FFC);
 	else 
-		setStatus(STATUS_AWAY);
+		setStatus(XMPP::Status::Away);
  }
