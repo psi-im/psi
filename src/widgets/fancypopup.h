@@ -42,13 +42,11 @@ public:
 	void restartHideTimer();
 
 signals:
-	void clicked();
 	void clicked(int);
 
 protected:
 	void hideEvent(QHideEvent *);
 	void mouseReleaseEvent(QMouseEvent *);
-	bool eventFilter(QObject *, QEvent *);
 
 public:
 	class Private;

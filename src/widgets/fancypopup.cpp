@@ -31,6 +31,7 @@
 #include <QStyle>
 #include <QDesktopWidget>
 #include <QMouseEvent>
+#include <QList>
 
 #include "iconset.h"
 #include "fancylabel.h"
@@ -96,8 +97,9 @@ public:
 		}
 	};
 
+	bool eventFilter(QObject *o, QEvent *e);
+
 public slots:
-	void hide();
 	void popupDestroyed(QObject *);
 
 public:
@@ -128,16 +130,11 @@ FancyPopup::Private::Private(FancyPopup *p)
 	popup = p;
 
 	hideTimer = new QTimer(this);
-	connect(hideTimer, SIGNAL(timeout()), SLOT(hide()));
+	connect(hideTimer, SIGNAL(timeout()), popup, SLOT(hide()));
 }
 
 FancyPopup::Private::~Private()
 {
-}
-
-void FancyPopup::Private::hide()
-{
-	popup->hide();
 }
 
 void FancyPopup::Private::popupDestroyed(QObject *obj)
@@ -259,7 +256,7 @@ void FancyPopup::Private::initContents(QString title, const Icon *icon, bool cop
 	closeButton->setFocusPolicy( Qt::NoFocus );
 	closeButton->setIcon( popup->style()->standardPixmap(QStyle::SP_TitleBarCloseButton) );
 	closeButton->setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT);
-	connect(closeButton, SIGNAL(clicked()), SLOT(hide()));
+	connect(closeButton, SIGNAL(clicked()), popup, SLOT(hide()));
 
 	QLabel *top3 = new QLabel(popup);
 	top3->setAutoFillBackground(true);
@@ -314,6 +311,13 @@ void FancyPopup::Private::initContents(QString title, const Icon *icon, bool cop
 	bottomhbox->addWidget(bottom3);
 }
 
+bool FancyPopup::Private::eventFilter(QObject *o, QEvent *e)
+{
+	if (e->type() == QEvent::MouseButtonRelease)
+		popup->mouseReleaseEvent((QMouseEvent *)e);
+	return QObject::eventFilter(o, e);
+}
+
 //----------------------------------------------------------------------------
 // FancyPopup
 //----------------------------------------------------------------------------
@@ -353,17 +357,19 @@ void FancyPopup::addLayout(QLayout *layout, int stretch)
 
 void FancyPopup::show()
 {
-	foreach (QObject *obj, children())
-		obj->installEventFilter(this);
-
 	if ( size() != sizeHint() )
 		resize( sizeHint() ); // minimumSizeHint()
+
+	// QLabels with rich contents don't propagate mouse clicks
+	QList<QLabel *> labels = findChildren<QLabel *>();
+	foreach(QLabel *label, labels)
+		label->installEventFilter(d);
 
 	// position popup
 	move ( d->position() );
 
 	// display popup
-	d->hideTimer->start( d->hideTimeout );
+	restartHideTimer();
 	QFrame::show();
 }
 
@@ -377,29 +383,12 @@ void FancyPopup::hideEvent(QHideEvent *e)
 
 void FancyPopup::mouseReleaseEvent(QMouseEvent *e)
 {
-	QWidget *closeButton = (QWidget *)child("closeButton");
-	if ( closeButton ) {
-		QPoint p = closeButton->mapFromParent( e->pos() );
-		if ( p.x() >= 0 && p.y() >= 0 && p.x() < closeButton->width() && p.y() < closeButton->height() )
-			QFrame::mouseReleaseEvent(e);
-	}
-
-	emit clicked();
 	emit clicked((int)e->button());
-}
-
-bool FancyPopup::eventFilter(QObject *, QEvent *e)
-{
-	if (e->type() == QEvent::MouseButtonRelease) {
-		mouseReleaseEvent((QMouseEvent *)e);
-		return true;
-	}
-	return false;
+	hide();
 }
 
 void FancyPopup::restartHideTimer()
 {
-	d->hideTimer->stop();
 	d->hideTimer->start( d->hideTimeout );
 }
 

@@ -163,22 +163,11 @@ void PsiPopup::Private::popupClicked(int button)
 			account->actionDefault( j );
 		}
 	}
-
-	if ( popup )
-		popup->hide();
 }
 
 void PsiPopup::Private::eventDestroyed()
 {
-	if ( (popupType == AlertMessage || popupType == AlertHeadline) && !option.popupMsgs )
-		delete popup;
-	if ( popupType == AlertChat && !option.popupChats /*&& option.alertOpenChats*/ )
-		delete popup;
-	if ( popupType == AlertHeadline && !option.popupHeadlines)
-		delete popup;
-	if ( popupType == AlertFile && !option.popupFiles)
-		delete popup;
-
+	popup->deleteLater();
 	event = 0;
 }
 
@@ -215,7 +204,7 @@ QBoxLayout *PsiPopup::Private::createContactInfo(const Icon *icon, QString text)
 		dataBox->addSpacing(5);
 	}
 
-	IconLabel *textLabel = new IconLabel(popup);
+	QLabel *textLabel = new QLabel(popup);
 	QFont font;
 	font.fromString( option.font[fPopup] );
 	textLabel->setFont(font);
