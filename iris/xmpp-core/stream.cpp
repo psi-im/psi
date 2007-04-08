@@ -1731,7 +1731,7 @@ bool ClientStream::handleNeed()
 			else
 				ml = d->client.features.sasl_mechs;
 
-			d->sasl->startClient("xmpp", d->server, ml, QCA::SASL::AllowClientSendFirst);
+			d->sasl->startClient("xmpp", QUrl::toAce(d->server), ml, QCA::SASL::AllowClientSendFirst);
 			return false;
 		}
 		case CoreProtocol::NSASLNext: {
