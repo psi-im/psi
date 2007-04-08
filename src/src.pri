@@ -178,8 +178,7 @@ HEADERS += \
 	$$PWD/ahcservermanager.h \
 	$$PWD/psioptions.h \
 	$$PWD/voicecaller.h \
-	$$PWD/voicecalldlg.h \
-	$$PWD/shortcutmanager.h
+	$$PWD/voicecalldlg.h
 
 # Source files
 SOURCES += \
@@ -274,8 +273,7 @@ SOURCES += \
 	$$PWD/ahcexecutetask.cpp \
  	$$PWD/ahcservermanager.cpp \
 	$$PWD/psioptions.cpp \
-	$$PWD/voicecalldlg.cpp \
-	$$PWD/shortcutmanager.cpp
+	$$PWD/voicecalldlg.cpp
 
 mac {
 	contains( DEFINES, HAVE_GROWL ) {

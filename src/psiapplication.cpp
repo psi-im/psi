@@ -19,6 +19,7 @@
  */
 
 #include "psiapplication.h"
+#include "resourcemenu.h"
 
 #ifdef Q_WS_MAC
 #include <Carbon/Carbon.h>
@@ -156,7 +157,7 @@ private:
 	 */
 	bool disableIconsForMenu(const QWidget *menu) const
 	{
-		return !menu || !menu->inherits("ResourceMenu");
+		return !menu || !dynamic_cast<ResourceMenu>(menu);
 	}
 };
 #endif

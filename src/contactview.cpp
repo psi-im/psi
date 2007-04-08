@@ -55,7 +55,11 @@
 #include "pepmanager.h"
 #include "psitooltip.h"
 #include "capsmanager.h"
+v v v v v v v
+#include "resourcemenu.h"
+*************
 #include "shortcutmanager.h"
+^ ^ ^ ^ ^ ^ ^
 
 //----------------------------------------------------------------------------
 // ContactProfile
@@ -879,37 +883,6 @@ void ContactProfile::ensureVisible(Entry *e)
 		return;
 	d->cv->ensureItemVisible(i);
 }
-
-/**
- * Helper class that displays available resources using QMenu.
- * Please note that PsiMacStyle references name of ResourceMenu.
- */
-class ResourceMenu : public QMenu
-{
-	Q_OBJECT
-public:
-	ResourceMenu(QWidget *parent)
-		: QMenu(parent)
-	{
-		// nothing here
-	}
-
-	void addResource(const UserResource &r, int id)
-	{
-		addResource(makeSTATUS(r.status()), r.name(), id);
-	}
-
-	void addResource(int status, QString name, int id)
-	{
-		QString rname = name;
-		if(rname.isEmpty())
-			rname = tr("[blank]");
-
-		//rname += " (" + status2txt(status) + ")";
-
-		insertItem(is->status(status), rname, id);
-	}
-};
 
 void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 {
