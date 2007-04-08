@@ -1,4 +1,5 @@
 #include <QAction>
+#include <QCoreApplication>
 
 #include "psioptions.h"
 #include "shortcutmanager.h"
@@ -7,7 +8,7 @@
 /**
  * \brief The Construtor of the Shortcutmanager
  */
-ShortcutManager::ShortcutManager() 
+ShortcutManager::ShortcutManager() : QObject(QCoreApplication::instance())
 {
 	// Make sure that there is at least one shortcut for sending messages
 	if (shortcuts("chat.send").isEmpty()) {

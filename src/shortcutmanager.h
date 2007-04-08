@@ -1,11 +1,12 @@
 #ifndef SHORTCUTMANAGER_H
 #define SHORTCUTMANAGER_H
 
+#include <QObject>
 #include <QKeySequence>
 #include <QString>
 #include <QList>
 
-class ShortcutManager
+class ShortcutManager : public QObject
 {
 public:
 	static ShortcutManager* instance();
