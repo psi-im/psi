@@ -186,6 +186,9 @@ QVariant SyncThread::call(QObject *obj, const char *method, const QVariantList &
 	QMutexLocker locker(&m);
 	Q_ASSERT(QMetaObject::invokeMethod(agent, "call_do", Qt::QueuedConnection,
 		Q_ARG(QObject*, obj), Q_ARG(QByteArray, QByteArray(method)), Q_ARG(QVariantList, args)));
+	Q_UNUSED(args);
+	Q_UNUSED(method);
+	Q_UNUSED(obj);
 	w.wait(&m);
 	if(ok)
 		*ok = last_success;
