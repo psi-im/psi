@@ -1,0 +1,7 @@
+# This file contains a relative path to each unittest 
+# directory on separate line.
+../src/tools/iconset/unittest
+../src/widgets/unittest/iconaction
+../src/widgets/unittest/richtext
+../src/unittest/psiiconset
+../src/unittest/psipopup

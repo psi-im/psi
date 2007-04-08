@@ -1,0 +1,77 @@
+<ui version="4.0" stdsetdef="1" >
+  <author></author>
+  <comment></comment>
+  <exportmacro></exportmacro>
+  <class>VoiceCall</class>
+  <widget class="QDialog" name="VoiceCall" >
+    <property name="geometry" >
+      <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>290</width>
+        <height>79</height>
+      </rect>
+    </property>
+    <property name="windowTitle" >
+      <string>Voice Call</string>
+    </property>
+    <layout class="QVBoxLayout" >
+      <item>
+        <widget class="QLabel" name="lb_status" >
+          <property name="text" >
+            <string/>
+          </property>
+          <property name="alignment" >
+            <set>Qt::AlignCenter</set>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <layout class="QHBoxLayout" >
+          <property name="margin" >
+            <number>0</number>
+          </property>
+          <item>
+            <widget class="QPushButton" name="pb_accept" >
+              <property name="text" >
+                <string>Accept</string>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <widget class="QPushButton" name="pb_reject" >
+              <property name="text" >
+                <string>Reject</string>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <spacer name="spacer2" >
+              <property name="sizeHint" >
+                <size>
+                  <width>90</width>
+                  <height>32</height>
+                </size>
+              </property>
+              <property name="sizeType" >
+                <enum>Expanding</enum>
+              </property>
+              <property name="orientation" >
+                <enum>Horizontal</enum>
+              </property>
+            </spacer>
+          </item>
+          <item>
+            <widget class="QPushButton" name="pb_hangup" >
+              <property name="text" >
+                <string>Hang Up</string>
+              </property>
+            </widget>
+          </item>
+        </layout>
+      </item>
+    </layout>
+  </widget>
+  <layoutdefault spacing="6" margin="11" />
+  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+</ui>

@@ -1,0 +1,208 @@
+<ui version="4.0" stdsetdef="1" >
+  <author></author>
+  <comment></comment>
+  <exportmacro></exportmacro>
+  <class>ProfileNew</class>
+  <widget class="QDialog" name="ProfileNew" >
+    <property name="geometry" >
+      <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>459</width>
+        <height>311</height>
+      </rect>
+    </property>
+    <property name="windowTitle" >
+      <string>New Profile</string>
+    </property>
+    <layout class="QHBoxLayout" >
+      <property name="margin" >
+        <number>11</number>
+      </property>
+      <property name="spacing" >
+        <number>6</number>
+      </property>
+      <item>
+        <widget class="PsiTextView" name="te_desc" >
+          <property name="sizePolicy" >
+            <sizepolicy>
+              <hsizetype>0</hsizetype>
+              <vsizetype>7</vsizetype>
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+            </sizepolicy>
+          </property>
+          <property name="minimumSize" >
+            <size>
+              <width>200</width>
+              <height>0</height>
+            </size>
+          </property>
+          <property name="maximumSize" >
+            <size>
+              <width>200</width>
+              <height>32767</height>
+            </size>
+          </property>
+          <property name="text" >
+            <string>Keep your&lt;i> Profile Name&lt;/i> simple. It should be a single word comprised of only letters or numbers.&lt;br>
+&lt;br>
+The&lt;i> Default Action&lt;/i> is what happens when you double click a contact in your list. The choices are&lt;b> Message&lt;/b> (ICQ style) and&lt;b> Chat&lt;/b> (AIM style). You can change this later from the Options menu.&lt;br>
+&lt;br>
+Check the &lt;i>Enable Emoticons&lt;/i> checkbox if you'd like text such as &lt;b>:-)&lt;/b> to be turned into graphics like &lt;icon name=&quot;psi/smile&quot;>.</string>
+          </property>
+          <property name="readOnly" >
+            <bool>true</bool>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <layout class="QVBoxLayout" >
+          <property name="margin" >
+            <number>0</number>
+          </property>
+          <item>
+            <layout class="QHBoxLayout" >
+              <property name="margin" >
+                <number>0</number>
+              </property>
+              <property name="spacing" >
+                <number>6</number>
+              </property>
+              <item>
+                <widget class="QLabel" name="TextLabel1" >
+                  <property name="text" >
+                    <string>Profile Name:</string>
+                  </property>
+                </widget>
+              </item>
+              <item>
+                <widget class="QLineEdit" name="le_name" />
+              </item>
+            </layout>
+          </item>
+          <item>
+            <widget class="Q3ButtonGroup" name="bg_defAct" >
+              <property name="title" >
+                <string>Default Action</string>
+              </property>
+              <layout class="QHBoxLayout" >
+                <property name="margin" >
+                  <number>11</number>
+                </property>
+                <property name="spacing" >
+                  <number>6</number>
+                </property>
+                <item>
+                  <widget class="QRadioButton" name="rb_message" >
+                    <property name="text" >
+                      <string>Message</string>
+                    </property>
+                  </widget>
+                </item>
+                <item>
+                  <widget class="QRadioButton" name="rb_chat" >
+                    <property name="text" >
+                      <string>Chat</string>
+                    </property>
+                  </widget>
+                </item>
+              </layout>
+            </widget>
+          </item>
+          <item>
+            <widget class="QCheckBox" name="ck_useEmoticons" >
+              <property name="text" >
+                <string>Enable Emoticons</string>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <spacer name="Spacer1" >
+              <property name="sizeHint" >
+                <size>
+                  <width>20</width>
+                  <height>131</height>
+                </size>
+              </property>
+              <property name="sizeType" >
+                <enum>Expanding</enum>
+              </property>
+              <property name="orientation" >
+                <enum>Vertical</enum>
+              </property>
+            </spacer>
+          </item>
+          <item>
+            <widget class="Line" name="Line1" >
+              <property name="frameShape" >
+                <enum>QFrame::HLine</enum>
+              </property>
+              <property name="frameShadow" >
+                <enum>QFrame::Sunken</enum>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <layout class="QHBoxLayout" >
+              <property name="margin" >
+                <number>0</number>
+              </property>
+              <item>
+                <spacer name="Spacer2" >
+                  <property name="sizeHint" >
+                    <size>
+                      <width>95</width>
+                      <height>20</height>
+                    </size>
+                  </property>
+                  <property name="sizeType" >
+                    <enum>Expanding</enum>
+                  </property>
+                  <property name="orientation" >
+                    <enum>Horizontal</enum>
+                  </property>
+                </spacer>
+              </item>
+              <item>
+                <widget class="IconButton" name="pb_close" >
+                  <property name="text" >
+                    <string>&amp;Close</string>
+                  </property>
+                </widget>
+              </item>
+              <item>
+                <widget class="IconButton" name="pb_create" >
+                  <property name="text" >
+                    <string>&amp;Create</string>
+                  </property>
+                  <property name="shortcut" >
+                    <string>Alt+C</string>
+                  </property>
+                  <property name="autoDefault" >
+                    <bool>false</bool>
+                  </property>
+                  <property name="default" >
+                    <bool>true</bool>
+                  </property>
+                  <property name="iconName" stdset="0" >
+                    <string>psi/addContact</string>
+                  </property>
+                </widget>
+              </item>
+            </layout>
+          </item>
+        </layout>
+      </item>
+    </layout>
+  </widget>
+  <layoutdefault spacing="6" margin="11" />
+  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+  <tabstops>
+    <tabstop>le_name</tabstop>
+    <tabstop>rb_message</tabstop>
+    <tabstop>rb_chat</tabstop>
+    <tabstop>ck_useEmoticons</tabstop>
+    <tabstop>te_desc</tabstop>
+  </tabstops>
+</ui>

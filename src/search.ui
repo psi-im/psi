@@ -1,0 +1,288 @@
+<ui version="4.0" stdsetdef="1" >
+  <author></author>
+  <comment></comment>
+  <exportmacro></exportmacro>
+  <class>Search</class>
+  <widget class="QWidget" name="Search" >
+    <property name="geometry" >
+      <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>568</width>
+        <height>422</height>
+      </rect>
+    </property>
+    <property name="windowTitle" >
+      <string>Search: %1</string>
+    </property>
+    <layout class="QVBoxLayout" >
+      <property name="margin" >
+        <number>11</number>
+      </property>
+      <property name="spacing" >
+        <number>6</number>
+      </property>
+      <item>
+        <layout class="QHBoxLayout" >
+          <property name="margin" >
+            <number>0</number>
+          </property>
+          <item>
+            <widget class="QGroupBox" name="gb_search" >
+              <property name="maximumSize" >
+                <size>
+                  <width>256</width>
+                  <height>32767</height>
+                </size>
+              </property>
+              <property name="title" >
+                <string>Search Fields</string>
+              </property>
+              <layout class="QVBoxLayout" >
+                <property name="margin" >
+                  <number>11</number>
+                </property>
+                <property name="spacing" >
+                  <number>6</number>
+                </property>
+                <item>
+                  <layout class="QVBoxLayout" >
+                    <property name="margin" >
+                      <number>0</number>
+                    </property>
+                    <item>
+                      <widget class="QLabel" name="lb_instructions" >
+                        <property name="frameShape" >
+                          <enum>QFrame::Panel</enum>
+                        </property>
+                        <property name="frameShadow" >
+                          <enum>QFrame::Sunken</enum>
+                        </property>
+                        <property name="text" >
+                          <string>Instructions go here.</string>
+                        </property>
+						 <property name="wordWrap" >
+						   <bool>true</bool>
+						 </property>
+                      </widget>
+                    </item>
+                    <item>
+                      <widget class="QLabel" name="lb_form" >
+                        <property name="text" >
+                          <string>form</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item>
+                      <layout class="QHBoxLayout" >
+                        <property name="margin" >
+                          <number>0</number>
+                        </property>
+                        <item>
+                          <widget class="IconButton" name="pb_search" >
+                            <property name="text" >
+                              <string>&amp;Search</string>
+                            </property>
+                            <property name="iconName" stdset="0" >
+                              <string>psi/search</string>
+                            </property>
+                          </widget>
+                        </item>
+                        <item>
+                          <spacer name="Spacer1" >
+                            <property name="sizeHint" >
+                              <size>
+                                <width>30</width>
+                                <height>16</height>
+                              </size>
+                            </property>
+                            <property name="sizeType" >
+                              <enum>Expanding</enum>
+                            </property>
+                            <property name="orientation" >
+                              <enum>Horizontal</enum>
+                            </property>
+                          </spacer>
+                        </item>
+                        <item>
+                          <widget class="IconButton" name="pb_stop" >
+                            <property name="text" >
+                              <string>&amp;Stop</string>
+                            </property>
+                            <property name="iconName" stdset="0" >
+                              <string>psi/stop</string>
+                            </property>
+                          </widget>
+                        </item>
+                      </layout>
+                    </item>
+                  </layout>
+                </item>
+              </layout>
+            </widget>
+          </item>
+          <item>
+            <layout class="QVBoxLayout" >
+              <property name="margin" >
+                <number>0</number>
+              </property>
+              <item>
+                <widget class="Q3ListView" name="lv_results" >
+                  <property name="allColumnsShowFocus" >
+                    <bool>true</bool>
+                  </property>
+                  <property name="resizeMode" >
+                    <enum>Q3ListView::AllColumns</enum>
+                  </property>
+                  <column>
+                    <property name="text" >
+                      <string>Nickname</string>
+                    </property>
+                    <property name="clickable" >
+                      <bool>true</bool>
+                    </property>
+                    <property name="resizable" >
+                      <bool>true</bool>
+                    </property>
+                  </column>
+                  <column>
+                    <property name="text" >
+                      <string>First Name</string>
+                    </property>
+                    <property name="clickable" >
+                      <bool>true</bool>
+                    </property>
+                    <property name="resizable" >
+                      <bool>true</bool>
+                    </property>
+                  </column>
+                  <column>
+                    <property name="text" >
+                      <string>Last Name</string>
+                    </property>
+                    <property name="clickable" >
+                      <bool>true</bool>
+                    </property>
+                    <property name="resizable" >
+                      <bool>true</bool>
+                    </property>
+                  </column>
+                  <column>
+                    <property name="text" >
+                      <string>E-Mail Address</string>
+                    </property>
+                    <property name="clickable" >
+                      <bool>true</bool>
+                    </property>
+                    <property name="resizable" >
+                      <bool>true</bool>
+                    </property>
+                  </column>
+                  <column>
+                    <property name="text" >
+                      <string>Jabber ID</string>
+                    </property>
+                    <property name="clickable" >
+                      <bool>true</bool>
+                    </property>
+                    <property name="resizable" >
+                      <bool>true</bool>
+                    </property>
+                  </column>
+                </widget>
+              </item>
+              <item>
+                <layout class="QHBoxLayout" >
+                  <property name="margin" >
+                    <number>0</number>
+                  </property>
+                  <item>
+                    <spacer name="Spacer3" >
+                      <property name="sizeHint" >
+                        <size>
+                          <width>222</width>
+                          <height>16</height>
+                        </size>
+                      </property>
+                      <property name="sizeType" >
+                        <enum>Expanding</enum>
+                      </property>
+                      <property name="orientation" >
+                        <enum>Horizontal</enum>
+                      </property>
+                    </spacer>
+                  </item>
+                  <item>
+                    <widget class="IconButton" name="pb_add" >
+                      <property name="text" >
+                        <string>&amp;Add Contact</string>
+                      </property>
+                      <property name="iconName" stdset="0" >
+                        <string>psi/addContact</string>
+                      </property>
+                    </widget>
+                  </item>
+                  <item>
+                    <widget class="IconButton" name="pb_info" >
+                      <property name="text" >
+                        <string>User &amp;Info</string>
+                      </property>
+                      <property name="iconName" stdset="0" >
+                        <string>psi/vCard</string>
+                      </property>
+                    </widget>
+                  </item>
+                </layout>
+              </item>
+            </layout>
+          </item>
+        </layout>
+      </item>
+      <item>
+        <widget class="Line" name="line" >
+          <property name="frameShape" >
+            <enum>QFrame::HLine</enum>
+          </property>
+          <property name="frameShadow" >
+            <enum>QFrame::Sunken</enum>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <layout class="QHBoxLayout" >
+          <property name="margin" >
+            <number>0</number>
+          </property>
+          <item>
+            <widget class="BusyWidget" name="busy" />
+          </item>
+          <item>
+            <spacer name="Spacer2" >
+              <property name="sizeHint" >
+                <size>
+                  <width>485</width>
+                  <height>16</height>
+                </size>
+              </property>
+              <property name="sizeType" >
+                <enum>Expanding</enum>
+              </property>
+              <property name="orientation" >
+                <enum>Horizontal</enum>
+              </property>
+            </spacer>
+          </item>
+          <item>
+            <widget class="IconButton" name="pb_close" >
+              <property name="text" >
+                <string>&amp;Close</string>
+              </property>
+            </widget>
+          </item>
+        </layout>
+      </item>
+    </layout>
+  </widget>
+  <layoutdefault spacing="6" margin="11" />
+  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+</ui>

@@ -1,0 +1,2 @@
+This directory contains files that have SSL certificates in them. The files
+should be in PEM format, and should have the extension '.crt' or '.pem'.

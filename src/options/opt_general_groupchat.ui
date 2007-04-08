@@ -1,0 +1,288 @@
+<ui version="4.0" stdsetdef="1" >
+  <author></author>
+  <comment></comment>
+  <exportmacro></exportmacro>
+  <class>GeneralGroupchat</class>
+  <widget class="QWidget" name="GeneralGroupchat" >
+    <property name="geometry" >
+      <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>420</width>
+        <height>186</height>
+      </rect>
+    </property>
+    <property name="windowTitle" >
+      <string>GeneralGroupchatUI</string>
+    </property>
+    <layout class="QHBoxLayout" >
+      <property name="margin" >
+        <number>0</number>
+      </property>
+      <item>
+        <layout class="QVBoxLayout" >
+          <property name="margin" >
+            <number>0</number>
+          </property>
+          <item>
+            <widget class="QCheckBox" name="ck_gcHighlights" >
+              <property name="text" >
+                <string>Enable word highlighting</string>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <widget class="QGroupBox" name="alertGroupBox" >
+              <property name="title" >
+                <string>Word Highlighting</string>
+              </property>
+              <property name="toolTip" stdset="0" >
+                <string>Highlight lines and alert the user if this text is included in chat</string>
+              </property>
+              <layout class="QVBoxLayout" >
+                <item>
+                  <widget class="Q3ListBox" name="lb_highlightWords" >
+                    <property name="sizePolicy" >
+                      <sizepolicy>
+                        <hsizetype>7</hsizetype>
+                        <vsizetype>7</vsizetype>
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                      </sizepolicy>
+                    </property>
+                    <property name="toolTip" stdset="0" >
+                      <string>Words which will cause a notification in group chat.</string>
+                    </property>
+                    <property name="whatsThis" stdset="0" >
+                      <string>This is the list of words which when said in group chat will cause the user to be notified.</string>
+                    </property>
+                  </widget>
+                </item>
+                <item>
+                  <widget class="QLineEdit" name="le_newHighlightWord" >
+                    <property name="toolTip" stdset="0" >
+                      <string>Type a new word here and press &quot;Add Word&quot; for it to be added to the highlight list</string>
+                    </property>
+                    <property name="whatsThis" stdset="0" >
+                      <string>Type a new word here and press &quot;Add Word&quot; for it to be added to the highlight list</string>
+                    </property>
+                  </widget>
+                </item>
+                <item>
+                  <layout class="QHBoxLayout" >
+                    <property name="margin" >
+                      <number>0</number>
+                    </property>
+                    <item>
+                      <spacer name="spacer3" >
+                        <property name="sizeHint" >
+                          <size>
+                            <width>40</width>
+                            <height>20</height>
+                          </size>
+                        </property>
+                        <property name="sizeType" >
+                          <enum>Expanding</enum>
+                        </property>
+                        <property name="orientation" >
+                          <enum>Horizontal</enum>
+                        </property>
+                      </spacer>
+                    </item>
+                    <item>
+                      <widget class="QPushButton" name="pb_addHighlightWord" >
+                        <property name="text" >
+                          <string>Add</string>
+                        </property>
+                        <property name="toolTip" stdset="0" >
+                          <string>Adds the new word to the list</string>
+                        </property>
+                        <property name="whatsThis" stdset="0" >
+                          <string>Adds the new word to the list</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item>
+                      <widget class="QPushButton" name="pb_removeHighlightWord" >
+                        <property name="text" >
+                          <string>Remove</string>
+                        </property>
+                        <property name="toolTip" stdset="0" >
+                          <string>Removes the selected word from the highlight list</string>
+                        </property>
+                        <property name="whatsThis" stdset="0" >
+                          <string>Removes the selected word from the highlight list</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item>
+                      <spacer name="spacer4" >
+                        <property name="sizeHint" >
+                          <size>
+                            <width>40</width>
+                            <height>20</height>
+                          </size>
+                        </property>
+                        <property name="sizeType" >
+                          <enum>Expanding</enum>
+                        </property>
+                        <property name="orientation" >
+                          <enum>Horizontal</enum>
+                        </property>
+                      </spacer>
+                    </item>
+                  </layout>
+                </item>
+              </layout>
+            </widget>
+          </item>
+        </layout>
+      </item>
+      <item>
+        <layout class="QVBoxLayout" >
+          <property name="margin" >
+            <number>0</number>
+          </property>
+          <item>
+            <widget class="QCheckBox" name="ck_gcNickColoring" >
+              <property name="text" >
+                <string>Enable Nick Coloring</string>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <widget class="QGroupBox" name="ncGroupBox" >
+              <property name="title" >
+                <string>Nick Coloring</string>
+              </property>
+              <layout class="QVBoxLayout" >
+                <item>
+                  <widget class="Q3ListBox" name="lb_nickColors" >
+                    <property name="toolTip" stdset="0" >
+                      <string>Colors used for nicks in groupchat</string>
+                    </property>
+                    <property name="whatsThis" stdset="0" >
+                      <string>This is the list of colours with which nicks will be drawn in group chat.</string>
+                    </property>
+                  </widget>
+                </item>
+                <item>
+                  <layout class="QHBoxLayout" >
+                    <property name="margin" >
+                      <number>0</number>
+                    </property>
+                    <item>
+                      <widget class="QLineEdit" name="le_newNickColor" >
+                        <property name="toolTip" stdset="0" >
+                          <string>Type a colourcode here, or press the pallette to the right</string>
+                        </property>
+                        <property name="whatsThis" stdset="0" >
+                          <string>Type a colourcode here, or press the pallette to the right</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item>
+                      <widget class="QPushButton" name="pb_nickColor" >
+                        <property name="sizePolicy" >
+                          <sizepolicy>
+                            <hsizetype>4</hsizetype>
+                            <vsizetype>4</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                          </sizepolicy>
+                        </property>
+                        <property name="text" >
+                          <string/>
+                        </property>
+                      </widget>
+                    </item>
+                  </layout>
+                </item>
+                <item>
+                  <layout class="QHBoxLayout" >
+                    <property name="margin" >
+                      <number>0</number>
+                    </property>
+                    <item>
+                      <spacer name="spacer5" >
+                        <property name="sizeHint" >
+                          <size>
+                            <width>40</width>
+                            <height>20</height>
+                          </size>
+                        </property>
+                        <property name="sizeType" >
+                          <enum>Expanding</enum>
+                        </property>
+                        <property name="orientation" >
+                          <enum>Horizontal</enum>
+                        </property>
+                      </spacer>
+                    </item>
+                    <item>
+                      <widget class="QPushButton" name="pb_addNickColor" >
+                        <property name="text" >
+                          <string>Add</string>
+                        </property>
+                        <property name="toolTip" stdset="0" >
+                          <string>Adds the color to the list</string>
+                        </property>
+                        <property name="whatsThis" stdset="0" >
+                          <string>Adds the new color to the list</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item>
+                      <widget class="QPushButton" name="pb_removeNickColor" >
+                        <property name="text" >
+                          <string>Remove</string>
+                        </property>
+                        <property name="toolTip" stdset="0" >
+                          <string>Removes the selected color from the list</string>
+                        </property>
+                        <property name="whatsThis" stdset="0" >
+                          <string>Removes the selected color from the list</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item>
+                      <spacer name="spacer7" >
+                        <property name="sizeHint" >
+                          <size>
+                            <width>40</width>
+                            <height>20</height>
+                          </size>
+                        </property>
+                        <property name="sizeType" >
+                          <enum>Expanding</enum>
+                        </property>
+                        <property name="orientation" >
+                          <enum>Horizontal</enum>
+                        </property>
+                      </spacer>
+                    </item>
+                  </layout>
+                </item>
+              </layout>
+            </widget>
+          </item>
+        </layout>
+      </item>
+    </layout>
+  </widget>
+  <layoutdefault spacing="6" margin="11" />
+  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+  <tabstops>
+    <tabstop>ck_gcHighlights</tabstop>
+    <tabstop>lb_highlightWords</tabstop>
+    <tabstop>le_newHighlightWord</tabstop>
+    <tabstop>pb_removeHighlightWord</tabstop>
+    <tabstop>pb_addHighlightWord</tabstop>
+    <tabstop>ck_gcNickColoring</tabstop>
+    <tabstop>lb_nickColors</tabstop>
+    <tabstop>le_newNickColor</tabstop>
+    <tabstop>pb_nickColor</tabstop>
+    <tabstop>pb_removeNickColor</tabstop>
+    <tabstop>pb_addNickColor</tabstop>
+  </tabstops>
+</ui>

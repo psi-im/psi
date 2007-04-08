@@ -1,0 +1,272 @@
+<ui version="4.0" >
+ <author></author>
+ <comment></comment>
+ <exportmacro></exportmacro>
+ <class>OptEvents</class>
+ <widget class="QWidget" name="OptEvents" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>317</width>
+    <height>513</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>OptEventsUI</string>
+  </property>
+  <layout class="QVBoxLayout" >
+   <property name="margin" >
+    <number>0</number>
+   </property>
+   <property name="spacing" >
+    <number>6</number>
+   </property>
+   <item>
+    <widget class="QCheckBox" name="ck_popupMsgs" >
+     <property name="text" >
+      <string>Auto-open new messages</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="ck_popupHeadlines" >
+     <property name="text" >
+      <string>Auto-open new headlines</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="ck_popupFiles" >
+     <property name="text" >
+      <string>Auto-open new files</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="ck_allowAwayPopup" >
+     <property name="text" >
+      <string>Allow auto-open even when Away/XA</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="ck_allowUnlistedPopup" >
+     <property name="text" >
+      <string>Allow auto-open even from unlisted users</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="ck_raise" >
+     <property name="text" >
+      <string>Raise roster window on new event</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="ck_ignoreNonRoster" >
+     <property name="text" >
+      <string>Ignore events from contacts not already in your roster</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="ck_autoAuth" >
+     <property name="text" >
+      <string>Auto-authorize contacts</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="ck_notifyAuth" >
+     <property name="text" >
+      <string>Notify when authorization was received</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" >
+     <property name="margin" >
+      <number>0</number>
+     </property>
+     <property name="spacing" >
+      <number>6</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="lb_bounce" >
+       <property name="text" >
+        <string>&lt;html>&lt;head>&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; />&lt;/head>&lt;body style=&quot; white-space: pre-wrap; font-family:FreeSans; font-weight:400; font-style:normal; text-decoration:none;&quot;>&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;>Bounce dock:&lt;/p>&lt;/body>&lt;/html></string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="cb_bounce" >
+       <item>
+        <property name="text" >
+         <string>Never</string>
+        </property>
+       </item>
+       <item>
+        <property name="text" >
+         <string>Once</string>
+        </property>
+       </item>
+       <item>
+        <property name="text" >
+         <string>Forever</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="gb_alerts" >
+     <property name="title" >
+      <string>Alerts</string>
+     </property>
+     <layout class="QHBoxLayout" >
+      <property name="margin" >
+       <number>8</number>
+      </property>
+      <property name="spacing" >
+       <number>6</number>
+      </property>
+      <item>
+       <widget class="QRadioButton" name="rb_aSolid" >
+        <property name="text" >
+         <string>Solid</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rb_aBlink" >
+        <property name="text" >
+         <string>Blink</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rb_aAnimate" >
+        <property name="text" >
+         <string>Animate</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="ck_popupOn" >
+     <property name="text" >
+      <string>Enable popup notifications</string>
+     </property>
+     <property name="checked" >
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox1" >
+     <property name="title" >
+      <string>Popup notifications</string>
+     </property>
+     <layout class="QVBoxLayout" >
+      <property name="margin" >
+       <number>10</number>
+      </property>
+      <property name="spacing" >
+       <number>6</number>
+      </property>
+      <item>
+       <widget class="QCheckBox" name="ck_popupOnMessage" >
+        <property name="text" >
+         <string>On incoming message event</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="ck_popupOnHeadline" >
+        <property name="text" >
+         <string>On incoming headline event</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="ck_popupOnFile" >
+        <property name="text" >
+         <string>On incoming file event</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="ck_popupOnOnline" >
+        <property name="text" >
+         <string>When a contact becomes available</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="ck_popupOnOffline" >
+        <property name="text" >
+         <string>When a contact becomes unavailable</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="ck_popupOnStatus" >
+        <property name="text" >
+         <string>When a contact changes status</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11" />
+ <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+ <tabstops>
+  <tabstop>ck_popupMsgs</tabstop>
+  <tabstop>ck_popupHeadlines</tabstop>
+  <tabstop>ck_popupFiles</tabstop>
+  <tabstop>ck_allowAwayPopup</tabstop>
+  <tabstop>ck_allowUnlistedPopup</tabstop>
+  <tabstop>ck_raise</tabstop>
+  <tabstop>ck_ignoreNonRoster</tabstop>
+  <tabstop>ck_autoAuth</tabstop>
+  <tabstop>ck_notifyAuth</tabstop>
+  <tabstop>cb_bounce</tabstop>
+  <tabstop>rb_aSolid</tabstop>
+  <tabstop>rb_aBlink</tabstop>
+  <tabstop>rb_aAnimate</tabstop>
+  <tabstop>ck_popupOn</tabstop>
+  <tabstop>ck_popupOnMessage</tabstop>
+  <tabstop>ck_popupOnHeadline</tabstop>
+  <tabstop>ck_popupOnFile</tabstop>
+  <tabstop>ck_popupOnOnline</tabstop>
+  <tabstop>ck_popupOnOffline</tabstop>
+  <tabstop>ck_popupOnStatus</tabstop>
+ </tabstops>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>ck_popupOn</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>groupBox1</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>158</x>
+     <y>321</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>158</x>
+     <y>425</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

@@ -1,0 +1,525 @@
+<ui version="4.0" >
+ <author></author>
+ <comment></comment>
+ <exportmacro></exportmacro>
+ <class>Info</class>
+ <widget class="QDialog" name="Info" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>455</width>
+    <height>337</height>
+   </rect>
+  </property>
+  <property name="minimumSize" >
+   <size>
+    <width>129</width>
+    <height>129</height>
+   </size>
+  </property>
+  <property name="windowTitle" >
+   <string>User Info</string>
+  </property>
+  <property name="sizeGripEnabled" >
+   <bool>true</bool>
+  </property>
+  <layout class="QVBoxLayout" >
+   <property name="margin" >
+    <number>8</number>
+   </property>
+   <property name="spacing" >
+    <number>6</number>
+   </property>
+   <item>
+    <widget class="QTabWidget" name="tabwidget" >
+     <widget class="QWidget" name="tab_general" >
+      <attribute name="title" >
+       <string>General</string>
+      </attribute>
+      <layout class="QGridLayout" >
+       <property name="margin" >
+        <number>8</number>
+       </property>
+       <property name="spacing" >
+        <number>6</number>
+       </property>
+       <item row="1" column="1" >
+        <widget class="QLineEdit" name="le_nickname" />
+       </item>
+       <item row="7" column="1" >
+        <spacer>
+         <property name="orientation" >
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType" >
+          <enum>QSizePolicy::Expanding</enum>
+         </property>
+         <property name="sizeHint" >
+          <size>
+           <width>20</width>
+           <height>60</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="5" column="0" >
+        <widget class="QLabel" name="TextLabel1_2_2_2_2" >
+         <property name="text" >
+          <string>E-Mail</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1" colspan="2" >
+        <widget class="QLineEdit" name="le_fullname" />
+       </item>
+       <item row="2" column="0" >
+        <widget class="QLabel" name="TextLabel1_3_2_3_2" >
+         <property name="text" >
+          <string>Birthday</string>
+         </property>
+        </widget>
+       </item>
+       <item rowspan="5" row="1" column="2" >
+        <layout class="QVBoxLayout" >
+         <property name="margin" >
+          <number>0</number>
+         </property>
+         <property name="spacing" >
+          <number>6</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="label_photo" >
+           <property name="sizePolicy" >
+            <sizepolicy>
+             <hsizetype>1</hsizetype>
+             <vsizetype>4</vsizetype>
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize" >
+            <size>
+             <width>129</width>
+             <height>129</height>
+            </size>
+           </property>
+           <property name="maximumSize" >
+            <size>
+             <width>32767</width>
+             <height>129</height>
+            </size>
+           </property>
+           <property name="frameShadow" >
+            <enum>QFrame::Raised</enum>
+           </property>
+           <property name="lineWidth" >
+            <number>1</number>
+           </property>
+           <property name="scaledContents" >
+            <bool>false</bool>
+           </property>
+           <property name="alignment" >
+            <set>Qt::AlignCenter</set>
+           </property>
+           <property name="margin" >
+            <number>2</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" >
+           <property name="margin" >
+            <number>0</number>
+           </property>
+           <property name="spacing" >
+            <number>6</number>
+           </property>
+           <item>
+            <widget class="QPushButton" name="pb_open" >
+             <property name="sizePolicy" >
+              <sizepolicy>
+               <hsizetype>1</hsizetype>
+               <vsizetype>0</vsizetype>
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text" >
+              <string>&amp;Open...</string>
+             </property>
+             <property name="shortcut" >
+              <string>Alt+O</string>
+             </property>
+             <property name="autoDefault" >
+              <bool>false</bool>
+             </property>
+             <property name="flat" >
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="pb_clear" >
+             <property name="sizePolicy" >
+              <sizepolicy>
+               <hsizetype>1</hsizetype>
+               <vsizetype>0</vsizetype>
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text" >
+              <string>&amp;Clear</string>
+             </property>
+             <property name="shortcut" >
+              <string>Alt+C</string>
+             </property>
+             <property name="autoDefault" >
+              <bool>false</bool>
+             </property>
+             <property name="flat" >
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
+       <item row="0" column="0" >
+        <widget class="QLabel" name="TextLabel1_2_2" >
+         <property name="text" >
+          <string>Full Name</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0" >
+        <widget class="QLabel" name="TextLabel1_3_2_2_2_2" >
+         <property name="text" >
+          <string>Phone #</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0" >
+        <widget class="QLabel" name="TextLabel1_2_3_2" >
+         <property name="text" >
+          <string>Homepage</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0" >
+        <widget class="QLabel" name="TextLabel1_2" >
+         <property name="text" >
+          <string>Nickname</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1" >
+        <widget class="QLineEdit" name="le_phone" />
+       </item>
+       <item row="2" column="1" >
+        <widget class="QLineEdit" name="le_bday" />
+       </item>
+       <item row="4" column="1" >
+        <widget class="QLineEdit" name="le_homepage" />
+       </item>
+       <item row="5" column="1" >
+        <widget class="QLineEdit" name="le_email" />
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_work" >
+      <attribute name="title" >
+       <string>Work</string>
+      </attribute>
+      <layout class="QVBoxLayout" >
+       <property name="margin" >
+        <number>8</number>
+       </property>
+       <property name="spacing" >
+        <number>6</number>
+       </property>
+       <item>
+        <layout class="QGridLayout" >
+         <property name="margin" >
+          <number>0</number>
+         </property>
+         <property name="spacing" >
+          <number>6</number>
+         </property>
+         <item row="2" column="1" >
+          <widget class="QLineEdit" name="le_title" />
+         </item>
+         <item row="0" column="0" >
+          <widget class="QLabel" name="TextLabel1_2_2_2_3" >
+           <property name="text" >
+            <string>Company</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0" >
+          <widget class="QLabel" name="TextLabel1_3_2_2_2_3_2" >
+           <property name="text" >
+            <string>Position</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1" >
+          <widget class="QLineEdit" name="le_orgName" />
+         </item>
+         <item row="1" column="0" >
+          <widget class="QLabel" name="TextLabel1_2_3_3" >
+           <property name="text" >
+            <string>Department</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1" >
+          <widget class="QLineEdit" name="le_orgUnit" />
+         </item>
+         <item row="3" column="1" >
+          <widget class="QLineEdit" name="le_role" />
+         </item>
+         <item row="3" column="0" >
+          <widget class="QLabel" name="TextLabel1_3_2_2_2_4" >
+           <property name="text" >
+            <string>Role</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer>
+         <property name="orientation" >
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType" >
+          <enum>QSizePolicy::Expanding</enum>
+         </property>
+         <property name="sizeHint" >
+          <size>
+           <width>0</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_location" >
+      <attribute name="title" >
+       <string>Location</string>
+      </attribute>
+      <layout class="QVBoxLayout" >
+       <property name="margin" >
+        <number>8</number>
+       </property>
+       <property name="spacing" >
+        <number>6</number>
+       </property>
+       <item>
+        <layout class="QGridLayout" >
+         <property name="margin" >
+          <number>0</number>
+         </property>
+         <property name="spacing" >
+          <number>6</number>
+         </property>
+         <item row="5" column="0" >
+          <widget class="QLabel" name="TextLabel1_3_2_2_2" >
+           <property name="text" >
+            <string>Country</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0" >
+          <widget class="QLabel" name="TextLabel1_3_2_2_2_3" >
+           <property name="text" >
+            <string>Postal Code</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1" >
+          <widget class="QLineEdit" name="le_ext" />
+         </item>
+         <item row="5" column="1" >
+          <widget class="QLineEdit" name="le_country" />
+         </item>
+         <item row="4" column="1" >
+          <widget class="QLineEdit" name="le_pcode" />
+         </item>
+         <item row="3" column="0" >
+          <widget class="QLabel" name="TextLabel1_2_3" >
+           <property name="text" >
+            <string>State</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0" >
+          <widget class="QLabel" name="TextLabel1_2_2_2" >
+           <property name="text" >
+            <string>City</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1" >
+          <widget class="QLineEdit" name="le_street" />
+         </item>
+         <item row="0" column="0" >
+          <widget class="QLabel" name="TextLabel1_3_2_3" >
+           <property name="text" >
+            <string>Street</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1" >
+          <widget class="QLineEdit" name="le_state" />
+         </item>
+         <item row="2" column="1" >
+          <widget class="QLineEdit" name="le_city" />
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer>
+         <property name="orientation" >
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType" >
+          <enum>QSizePolicy::Expanding</enum>
+         </property>
+         <property name="sizeHint" >
+          <size>
+           <width>0</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_about" >
+      <attribute name="title" >
+       <string>About</string>
+      </attribute>
+      <layout class="QVBoxLayout" >
+       <property name="margin" >
+        <number>8</number>
+       </property>
+       <property name="spacing" >
+        <number>6</number>
+       </property>
+       <item>
+        <widget class="QTextEdit" name="te_desc" />
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_status" >
+      <attribute name="title" >
+       <string>Status</string>
+      </attribute>
+      <layout class="QVBoxLayout" >
+       <property name="margin" >
+        <number>8</number>
+       </property>
+       <property name="spacing" >
+        <number>6</number>
+       </property>
+       <item>
+        <widget class="PsiTextView" name="te_status" />
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" >
+     <property name="margin" >
+      <number>0</number>
+     </property>
+     <property name="spacing" >
+      <number>6</number>
+     </property>
+     <item>
+      <widget class="BusyWidget" name="busy" />
+     </item>
+     <item>
+      <spacer>
+       <property name="orientation" >
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType" >
+        <enum>QSizePolicy::Expanding</enum>
+       </property>
+       <property name="sizeHint" >
+        <size>
+         <width>190</width>
+         <height>16</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="IconButton" name="pb_submit" >
+       <property name="text" >
+        <string>&amp;Publish</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="IconButton" name="pb_refresh" >
+       <property name="text" >
+        <string>&amp;Retrieve</string>
+       </property>
+       <property name="iconName" stdset="0" >
+        <string>psi/reload</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="IconButton" name="pb_close" >
+       <property name="text" >
+        <string>&amp;Close</string>
+       </property>
+       <property name="iconName" stdset="0" >
+        <string>psi/close</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11" />
+ <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+ <tabstops>
+  <tabstop>tabwidget</tabstop>
+  <tabstop>le_fullname</tabstop>
+  <tabstop>le_nickname</tabstop>
+  <tabstop>le_bday</tabstop>
+  <tabstop>le_phone</tabstop>
+  <tabstop>le_homepage</tabstop>
+  <tabstop>le_email</tabstop>
+  <tabstop>pb_open</tabstop>
+  <tabstop>pb_clear</tabstop>
+  <tabstop>pb_submit</tabstop>
+  <tabstop>pb_refresh</tabstop>
+  <tabstop>pb_close</tabstop>
+  <tabstop>le_orgName</tabstop>
+  <tabstop>le_orgUnit</tabstop>
+  <tabstop>le_title</tabstop>
+  <tabstop>le_role</tabstop>
+  <tabstop>le_street</tabstop>
+  <tabstop>le_ext</tabstop>
+  <tabstop>le_city</tabstop>
+  <tabstop>le_state</tabstop>
+  <tabstop>le_pcode</tabstop>
+  <tabstop>le_country</tabstop>
+  <tabstop>te_desc</tabstop>
+ </tabstops>
+ <includes/>
+ <resources/>
+ <connections/>
+</ui>

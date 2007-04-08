@@ -1,0 +1,105 @@
+<ui version="4.0" >
+ <author></author>
+ <comment></comment>
+ <exportmacro></exportmacro>
+ <class>IconsetSystem</class>
+ <widget class="QWidget" name="IconsetSystem" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>178</width>
+    <height>203</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>IconsetSystemUI</string>
+  </property>
+  <layout class="QGridLayout" >
+   <property name="margin" >
+    <number>8</number>
+   </property>
+   <property name="spacing" >
+    <number>6</number>
+   </property>
+   <item row="1" column="0" colspan="2" >
+    <widget class="IconsetSelect" name="iss_system" >
+     <property name="font" >
+      <font>
+       <family></family>
+       <pointsize>12</pointsize>
+       <weight>50</weight>
+       <italic>false</italic>
+       <bold>false</bold>
+       <underline>false</underline>
+       <strikeout>false</strikeout>
+      </font>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="2" >
+    <widget class="QLabel" name="textLabel1_2_2" >
+     <property name="text" >
+      <string>System iconset:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="2" >
+    <widget class="QProgressBar" name="progress" />
+   </item>
+   <item row="2" column="1" >
+    <widget class="IconButton" name="pb_sysDetails" >
+     <property name="text" >
+      <string>&amp;Show Details</string>
+     </property>
+     <property name="shortcut" >
+      <string>Alt+S</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" >
+    <spacer>
+     <property name="orientation" >
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeType" >
+      <enum>QSizePolicy::Expanding</enum>
+     </property>
+     <property name="sizeHint" >
+      <size>
+       <width>305</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11" />
+ <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+ <customwidgets>
+  <customwidget>
+   <class>IconsetSelect</class>
+   <extends></extends>
+   <header>iconwidget.h</header>
+   <container>0</container>
+   <pixmap></pixmap>
+  </customwidget>
+  <customwidget>
+   <class>IconButton</class>
+   <extends></extends>
+   <header>iconwidget.h</header>
+   <container>0</container>
+   <pixmap></pixmap>
+  </customwidget>
+  <customwidget>
+   <class>QProgressBar</class>
+   <extends>QWidget</extends>
+   <header>q3progressbar.h</header>
+   <container>1</container>
+   <pixmap></pixmap>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

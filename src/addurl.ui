@@ -1,0 +1,122 @@
+<ui version="4.0" stdsetdef="1" >
+  <author></author>
+  <comment></comment>
+  <exportmacro></exportmacro>
+  <class>AddUrl</class>
+  <widget class="QDialog" name="AddUrl" >
+    <property name="geometry" >
+      <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>337</width>
+        <height>123</height>
+      </rect>
+    </property>
+    <property name="windowTitle" >
+      <string>Add URL</string>
+    </property>
+    <layout class="QVBoxLayout" >
+      <property name="margin" >
+        <number>11</number>
+      </property>
+      <property name="spacing" >
+        <number>6</number>
+      </property>
+      <item>
+        <layout class="QGridLayout" >
+          <property name="margin" >
+            <number>0</number>
+          </property>
+          <property name="spacing" >
+            <number>6</number>
+          </property>
+          <item row="1" column="1" >
+            <widget class="QLineEdit" name="le_desc" />
+          </item>
+          <item row="0" column="0" >
+            <widget class="QLabel" name="TextLabel1" >
+              <property name="text" >
+                <string>URL:</string>
+              </property>
+            </widget>
+          </item>
+          <item row="1" column="0" >
+            <widget class="QLabel" name="TextLabel2" >
+              <property name="text" >
+                <string>Description:</string>
+              </property>
+            </widget>
+          </item>
+          <item row="0" column="1" >
+            <widget class="QLineEdit" name="le_url" />
+          </item>
+        </layout>
+      </item>
+      <item>
+        <spacer name="Spacer2" >
+          <property name="sizeHint" >
+            <size>
+              <width>16</width>
+              <height>16</height>
+            </size>
+          </property>
+          <property name="sizeType" >
+            <enum>Expanding</enum>
+          </property>
+          <property name="orientation" >
+            <enum>Vertical</enum>
+          </property>
+        </spacer>
+      </item>
+      <item>
+        <layout class="QHBoxLayout" >
+          <property name="margin" >
+            <number>0</number>
+          </property>
+          <item>
+            <spacer name="Spacer1" >
+              <property name="sizeHint" >
+                <size>
+                  <width>203</width>
+                  <height>16</height>
+                </size>
+              </property>
+              <property name="sizeType" >
+                <enum>Expanding</enum>
+              </property>
+              <property name="orientation" >
+                <enum>Horizontal</enum>
+              </property>
+            </spacer>
+          </item>
+          <item>
+            <widget class="IconButton" name="pb_close" >
+              <property name="text" >
+                <string>&amp;Close</string>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <widget class="IconButton" name="pb_ok" >
+              <property name="text" >
+                <string>&amp;OK</string>
+              </property>
+              <property name="shortcut" >
+                <string>Alt+O</string>
+              </property>
+              <property name="default" >
+                <bool>true</bool>
+              </property>
+            </widget>
+          </item>
+        </layout>
+      </item>
+    </layout>
+  </widget>
+  <layoutdefault spacing="6" margin="11" />
+  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+  <tabstops>
+    <tabstop>le_url</tabstop>
+    <tabstop>le_desc</tabstop>
+  </tabstops>
+</ui>

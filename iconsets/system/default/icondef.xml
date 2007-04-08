@@ -1,0 +1,379 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<icondef>
+	<meta>
+		<name>Crystal - System (default)</name>
+		<version>1.0</version>
+		<description>Crystal System Iconset</description>
+		<creation>2005-11-23</creation>
+		<home>http://psi.affinix.com</home>
+		<author email='jmkim@uci.edu'>Jason Kim (Logo and misc. icons)</author>
+		<author www='http://www.everaldo.com'>Everaldo Coelho (Crystal icons)</author>
+	</meta>
+
+	<icon>
+		<x xmlns='name'>psi/appearance</x>
+		<object mime='image/png'>appearance.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/account</x>
+		<object mime='image/png'>account.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/statusmsg</x>
+		<object mime='image/png'>info.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/addContact</x>
+		<object mime='image/png'>add.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/arrowUp</x>
+		<object mime='image/png'>arrow_up.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/arrowDown</x>
+		<object mime='image/png'>arrow_down.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/arrowLeft</x>
+		<object mime='image/png'>arrow_left.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/arrowRight</x>
+		<object mime='image/png'>arrow_right.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/profile</x>
+		<object mime='image/png'>changeacc.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/clearChat</x>
+		<object mime='image/png'>chatclear.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/compact</x>
+		<object mime='image/png'>ok.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/disco</x>
+		<object mime='image/png'>disco.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/events</x>
+		<object mime='image/png'>events.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/groupChat</x>
+		<object mime='image/png'>groupchat.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/help</x>
+		<object mime='image/png'>help.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/history</x>
+		<object mime='image/png'>history.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/vCard</x>
+		<object mime='image/png'>vcard.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/jabber</x>
+		<object mime='image/png'>jabber.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/options</x>
+		<object mime='image/png'>options.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/toolbars</x>
+		<object mime='image/png'>configure_toolbars.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/configure-room</x>
+		<object mime='image/png'>configure-room.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/pgp</x>
+		<object mime='image/png'>pgp.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/gpg-yes</x>
+		<object mime='image/png'>key.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/gpg-no</x>
+		<object mime='image/png'>key.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/keyBad</x>
+		<object mime='image/png'>key_bad.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/keyUnknown</x>
+		<object mime='image/png'>key_unknown.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/playSounds</x>
+		<object mime='image/png'>play_sounds.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/voice</x>
+		<object mime='image/png'>play_sounds.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/main</x>
+		<object mime='image/png'>psimain.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/quit</x>
+		<object mime='image/png'>quit.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/register</x>
+		<object mime='image/png'>register.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/reload</x>
+		<object mime='image/png'>reload.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/stop</x>
+		<object mime='image/png'>stop.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/remove</x>
+		<object mime='image/png'>remove.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/search</x>
+		<object mime='image/png'>search.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/status</x>
+		<object mime='image/png'>status.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/sendMessage</x>
+		<object mime='image/png'>send.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/start-chat</x>
+		<object mime='image/png'>start-chat.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/cryptoYes</x>
+		<object mime='image/png'>ssl_yes.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/cryptoNo</x>
+		<object mime='image/png'>ssl_no.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/time</x>
+		<object mime='image/png'>time.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/www</x>
+		<object mime='image/png'>url.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/xml</x>
+		<object mime='image/png'>xml.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/logo_16</x>
+		<object mime='image/png'>logo_16.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/logo_32</x>
+		<object mime='image/png'>logo_32.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/logo_48</x>
+		<object mime='image/png'>logo_48.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/logo_64</x>
+		<object mime='image/png'>logo_64.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/logo_128</x>
+		<object mime='image/png'>logo_128.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/psiLogo</x>
+		<object mime='image/png'>psilogo.png</object>
+	</icon>	
+
+	<icon>
+		<x xmlns='name'>psi/smile</x>
+		<object mime='image/png'>smile.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/email</x>
+		<object mime='image/png'>send.png</object> <!-- TODO: grab small KMail icon -->
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/ok</x>
+		<object mime='image/png'>ok.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/done</x>
+		<object mime='image/png'>close.png</object> <!-- TODO: change icon -->
+	</icon>
+
+  <icon>
+		<x xmlns='name'>psi/closetab</x>
+		<object mime='image/png'>closetab.png</object> 
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/cancel</x>
+		<object mime='image/png'>cancel.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/close</x>
+		<object mime='image/png'>close.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/apply</x>
+		<object mime='image/png'>ok.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/info</x>
+		<object mime='image/png'>info.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/tip</x>
+		<object mime='image/png'>tip.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/browse</x>
+		<object mime='image/png'>browse.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/play</x>
+		<object mime='image/png'>play.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/eye</x>
+		<object mime='image/png'>eye_blue.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/upload</x>
+		<object mime='image/png'>upload.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/download</x>
+		<object mime='image/png'>download.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/filemanager</x>
+		<object mime='image/png'>filemanager.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/command</x>
+		<object mime='image/png'>command.png</object>
+	</icon>
+
+	
+	<!-- FIXME -->
+	<icon>
+		<x xmlns='name'>psi/roster</x>
+		<object mime='image/png'>url.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/advanced</x>
+		<object mime='image/png'>advanced.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/show_self</x>
+		<object mime='image/png'>self.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/show_offline</x>
+		<object mime='image/png'>show_offline.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/show_away</x>
+		<object mime='image/png'>show_away.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/show_hidden</x>
+		<object mime='image/png'>show_hidden.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/publishTune</x>
+		<object mime='image/png'>publish_tune.png</object>
+	</icon>
+</icondef>

@@ -1,0 +1,24 @@
+/*
+-----BEGIN QCMOD-----
+name: Use bundled QCA
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_qca_static
+//----------------------------------------------------------------------------
+class qc_qca_static : public ConfObj
+{
+public:
+	qc_qca_static(Conf *c) : ConfObj(c) {}
+	QString name() const { return "bundled QCA"; }
+	QString shortname() const { return "qca_static"; }
+	QString checkString() const { return QString(); }
+
+	bool exec()
+	{
+		if (conf->getenv("QC_ENABLE_qca").isEmpty())
+			conf->addExtra("CONFIG += qca-static");
+		return true;
+	}
+};

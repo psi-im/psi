@@ -1,0 +1,21 @@
+PsiWidgets README
+~~~~~~~~~~~~~~~~~
+
+  Introduction
+  ~~~~~~~~~~~~
+  This is a package of widgets, that are used in Psi Jabber client. You may be
+  interested in it, if you want to develop custom dialogs, or hack existing
+  ones. Read below for installation instructions.
+  
+  Installation
+  ~~~~~~~~~~~~
+  Requirements: Qt 3.1.x (http://www.trolltech.com)
+  
+  Type these commands in terminal:
+  
+  % qmake
+  % make
+  % su -c "make install"
+  
+  Now open Qt Designer and enjoy :-)
+  

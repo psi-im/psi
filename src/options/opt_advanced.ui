@@ -1,0 +1,148 @@
+<ui version="4.0" stdsetdef="1" >
+  <author></author>
+  <comment></comment>
+  <exportmacro></exportmacro>
+  <class>OptAdvanced</class>
+  <widget class="QWidget" name="OptAdvanced" >
+    <property name="geometry" >
+      <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>320</width>
+        <height>348</height>
+      </rect>
+    </property>
+    <property name="windowTitle" >
+      <string>OptAdvancedUI</string>
+    </property>
+    <layout class="QVBoxLayout" >
+      <property name="margin" >
+        <number>0</number>
+      </property>
+      <item>
+        <widget class="QCheckBox" name="ck_messageevents" >
+          <property name="text" >
+            <string>Enable 'Contact is typing ...' events</string>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <widget class="QCheckBox" name="ck_inactiveevents" >
+          <property name="text" >
+            <string>Enable 'inactivity' events (end/suspend conversation)</string>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <widget class="QCheckBox" name="ck_rc" >
+          <property name="text" >
+            <string>Enable remote controlling from other locations</string>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <widget class="QCheckBox" name="ck_singleclick" >
+          <property name="text" >
+            <string>Single-click triggers default action</string>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <widget class="QCheckBox" name="ck_autocopy" >
+          <property name="text" >
+            <string>Automatically copy selected text to clipboard</string>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <widget class="QCheckBox" name="ck_grabUrls" >
+          <property name="text" >
+            <string>Grab URLs from clipboard</string>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <widget class="QCheckBox" name="ck_jidComplete" >
+          <property name="text" >
+            <string>Jabber ID completion</string>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <widget class="QCheckBox" name="ck_showSubjects" >
+          <property name="text" >
+            <string>Show subject line in events</string>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <widget class="QCheckBox" name="ck_showCounter" >
+          <property name="text" >
+            <string>Show character counter</string>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <widget class="QCheckBox" name="ck_autoVCardOnLogin" >
+          <property name="text" >
+            <string>Automatically get vCard when becoming online</string>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <widget class="QCheckBox" name="ck_rosterAnim" >
+          <property name="text" >
+            <string>Animate the roster when a contact comes online</string>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <widget class="QCheckBox" name="ck_scrollTo" >
+          <property name="text" >
+            <string>Scroll roster to contact on event</string>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <widget class="QCheckBox" name="ck_ignoreHeadline" >
+          <property name="text" >
+            <string>Ignore &quot;Headline&quot; events (e.g. MSN alerts)</string>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <widget class="QLabel" name="TextLabel2" >
+          <property name="text" >
+            <string>Treat incoming messages and chats as:</string>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <widget class="QComboBox" name="cb_incomingAs" >
+          <item>
+            <property name="text" >
+              <string>Determined by sender</string>
+            </property>
+          </item>
+          <item>
+            <property name="text" >
+              <string>Messages</string>
+            </property>
+          </item>
+          <item>
+            <property name="text" >
+              <string>Chats</string>
+            </property>
+          </item>
+          <item>
+            <property name="text" >
+              <string>Messages (Chats if Chatting)</string>
+            </property>
+          </item>
+        </widget>
+      </item>
+    </layout>
+  </widget>
+  <layoutdefault spacing="6" margin="11" />
+  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+</ui>

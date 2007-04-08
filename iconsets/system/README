@@ -1,0 +1,79 @@
+System iconset README
+~~~~~~~~~~~~~~~~~~~~~
+
+For general information about creation of iconsets, see psi/libpsi/iconset/ICONSET-HOWTO.
+This file contains only required icon names and some details about them.
+
+System iconset, is a special iconset, that contains icons that are used in labels,
+buttons and other widgets in Psi.
+
+And a little note about animations: Icons could contain animations, and system Psi
+animations are a bit special. Their first frame is used only for creation of static
+images (such as in popup menus, or if Psi's alert style is set to 'blink'). This first
+frame is not used in animation (since it's stripped out of them).
+
+PS: If you would use Psi's .png-style animation don't forget to add <x xmlns='type'>animation</x>
+tag to the icon.
+
+psi/account	- Used in Modify accounts dialog
+psi/addContact	- Add contact
+psi/arrowUp	- Arrow up
+psi/arrowDown	- Arrow down
+psi/arrowLeft	- Arrow left
+psi/arrowRight	- Arrow right
+psi/profile	- Change account
+psi/clearChat	- Clear chat
+psi/groupChat	- GroupChat
+psi/help	- Help menu
+psi/history	- Chat history
+psi/vCard	- vCard/User info
+psi/info	- Info icon
+psi/jabber	- Jabber icon
+psi/options	- Options
+psi/toolbars	- Configure Toolbars
+psi/pgp		- PGP
+psi/keySingle	- Single (public) PGP key
+psi/keyBad	- Bad PGP key
+psi/keyDouble	- Double (public + private) PGP key
+psi/keyUnknown	- Unknown PGP key
+psi/playSounds	- Play sounds
+psi/psiMain	- Psi logo, used in roster and tray context menu
+psi/quit	- Quit
+psi/register	- Register service
+psi/reload	- Reload button
+psi/stop	- Stop button
+psi/remove	- Remove/Delete item
+psi/search	- Search service
+psi/sendMessage	- New plain message/Send message
+psi/cryptoYes	- Encryption enabled
+psi/cryptoNo	- Encryption disabled
+psi/time	- Time
+psi/www		- URL icon
+psi/email	- Email icon
+psi/xml		- XML icon
+psi/psi16	- 16x16 Psi icon
+psi/psi32	- 32x32 Psi icon
+psi/psi48	- 48x48 Psi icon
+psi/psiMac	- 128x128 Psi MacOS X icon
+psi/psiLogo	- Psi logo. Used in the first dialog. NOTE: the leftmost and the
+		  rightmost vertical lines of that icon are used for stretching
+psi/smile	- Used in the profile creation dialog
+psi/ok		- Check icon
+psi/cancel	- Cross icon
+psi/done	- Done icon -- TODO
+psi/close	- Close icon -- TODO: add to default iconset
+psi/apply	- Apply icon -- TODO: add
+psi/edit/clear	- Clear icon
+psi/edit/copy	- Copy icon
+psi/edit/cut	- Cut icon
+psi/edit/delete	- Delete icon
+psi/edit/paste	- Paste icon
+psi/edit	- Edit icon
+psi/edit/trash	- Trash icon
+psi/tip		- Tip of the Day
+psi/browse	- Browse file
+psi/play	- Play sound
+psi/eye		- Used to determine Hidden group visibility
+psi/upload	- Upload icon
+psi/download	- Download icon
+psi/filemanager - Transfer Manager

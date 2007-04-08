@@ -1,0 +1,36 @@
+Roster iconset README
+~~~~~~~~~~~~~~~~~~~~~
+
+For general information about creation of iconsets, see psi/libpsi/iconset/ICONSET-HOWTO.
+This file contains only required icon names and some details about them.
+
+Read a little note about animations in the README for the system iconsets.
+
+Note: how to add service iconsets: modify src/psiiconset.cpp and add new service RegExp,
+add the default iconset name to profiles.cpp, and add your iconset to common.cpp's
+category2icon() (and don't forget to add entry to lv_isServices in ui_options.ui).
+
+status/online	 - Online
+status/offline	 - Offline
+status/away	 - Away
+status/xa	 - eXtended Away
+status/dnd	 - Do Not Disturb
+status/invisible - Invisible
+status/chat	 - Free For Chat
+
+// special statuses
+status/ask	 - We are asking for authorization
+status/noauth	 - No authorization
+status/error	 - Error status (contact is unavailable due to some reason)
+
+// special roster icons
+psi/chat	 - Received a chat message
+psi/message	 - Received a message
+psi/headline	 - Received a headline message
+psi/system	 - Received a system event
+psi/connect      - Connection to server in progress...
+
+// these icons make sense, only when used in default roster iconset
+psi/groupClosed	 - Closed group in roster
+psi/groupEmpty	 - Empty group in roster
+psi/groupOpen	 - Open group in roster

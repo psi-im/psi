@@ -1,0 +1,32 @@
+/*
+-----BEGIN QCMOD-----
+name: Psi Configuration
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_conf
+//----------------------------------------------------------------------------
+class qc_conf : public ConfObj
+{
+public:
+	qc_conf(Conf *c) : ConfObj(c) {}
+	QString name() const { return "Psi Configuration"; }
+	QString shortname() const { return "conf"; }
+	QString checkString() const { return QString(); }
+	bool exec()
+	{
+		conf->addExtra(QString("PREFIX=%1").arg(conf->getenv("PREFIX")));
+		conf->addExtra(QString("DATADIR=%1/psi").arg(conf->getenv("DATADIR")));
+
+		QFile file("src/config.h");
+		if ( file.open(QIODevice::WriteOnly | QIODevice::Text) ) {
+			QTextStream stream( &file );
+			stream << "#define PSI_DATADIR \"" << conf->getenv("DATADIR") << "/psi\"" << endl;
+		}
+		
+		conf->addDefine("HAVE_CONFIG");
+		
+		return true;
+	}
+};

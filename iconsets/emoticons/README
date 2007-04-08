@@ -1,0 +1,10 @@
+Emoticons iconset README
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+For general information about creation of iconsets, see psi/libpsi/iconset/ICONSET-HOWTO.
+This file contains only required icon names and some details about them.
+
+In is not necessary to give emoticons unique names. The exception is a special 'default'
+iconset.
+
+emoticons/smile	- Used in the profile creation dialog

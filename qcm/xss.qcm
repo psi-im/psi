@@ -1,0 +1,45 @@
+/*
+-----BEGIN QCMOD-----
+name: the XScreenSaver extension
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_xss
+//----------------------------------------------------------------------------
+class qc_xss : public ConfObj
+{
+public:
+	qc_xss(Conf *c) : ConfObj(c) {}
+
+	QString name() const { return "the XScreenSaver extension"; }
+	QString shortname() const { return "xss"; }
+
+	bool exec()
+	{
+		QString str =
+			"#include<X11/Xlib.h>\n"
+			"#include<X11/Xutil.h>\n"
+			"#include<X11/extensions/scrnsaver.h>\n"
+			"\n"
+			"int main()\n"
+			"{\n"
+			"    if (0) { XScreenSaverQueryExtension(NULL, NULL, NULL); }\n"
+			"    return 0;\n"
+			"}\n";
+		QString proextra = "CONFIG += x11\n";
+
+		int ret;
+		if (!conf->doCompileAndLink(str, QStringList(), "-lXss", proextra, &ret) || ret != 0) {
+			if (!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret) || ret != 0) {
+				return false;
+			}
+		}
+		else {
+			conf->addLib("-lXss");
+		}
+		
+		conf->addDefine("HAVE_XSS");
+		return true;
+	}
+};

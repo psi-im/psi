@@ -1,0 +1,122 @@
+<!DOCTYPE psi>
+<!--
+	CONVENTIONS / RULES
+	===================
+	Three top-level entries should be observed:
+	options : This is the catch-all for client options. 
+	accounts : This is used for account data in Psi.
+	plugins : This is reserved for plugin options and so there's not a terribly good reason to be defining anything in the default option file; it may be interesting for the system defaults file, however.
+	
+	Naming: All tags should use lower case throughout, please use dashes ("-") to seperate words.
+	
+	Comments: please add a "comment" attribute to every option you add, describing its use and, if appropriate, possible values.
+	
+	-->
+<psi version="defaults" >
+	<options comment="Client options">
+		<account comment="Default account options">
+			<domain comment="Always use the same domain to register with. Leave this empty to allow the user to choose his server." type="QString" />
+		</account>
+		<enable-multicast comment="Enable multicasting messages to multiple recipients" type="bool">false</enable-multicast>
+		<html comment="Hypertext markup options">
+			<chat comment="HTML in chats">
+				<render comment="Display received HTML" type="bool">true</render>
+			</chat>
+		</html>
+		<extended-presence comment="Extended presence options">
+			<notify comment="Get notified of extended presence changes" type="bool">true</notify>
+			<tune comment="Tune options">
+				<publish comment="Publish user tune information" type="bool">false</publish>
+			</tune>
+		</extended-presence>
+		<muc comment="Multi-User Chat options">
+			<bookmarks comment="Options for bookmarked conference rooms">
+				<auto-join comment="Automatically join bookmarked conference rooms that are configured for auto-joining." type="bool">true</auto-join>
+			</bookmarks>
+			<show-joins comment="Display notices of users joining and leaving conferences" type="bool">true</show-joins>
+			<show-role-affiliation comment="Include role and affiliation changes in join messages, and display notices of changes" type="bool">true</show-role-affiliation>
+			<accept-defaults comment="Automatically accept the default room configuration when a new room is created." type="bool">true</accept-defaults>
+			<auto-configure comment="Automatically open the configuration dialog when a new room is created. This option only has effect if accept-defaults is false." type="bool">true</auto-configure>
+			<context comment="Options regarding the context being sent when joining a room">
+				<maxchars comment="The maximum number of characters of context that should be sent when entering a room. Use a negative number for an unlimited amount." type="int">-1</maxchars>
+				<maxstanzas comment="The maximum number of context items that should be sent when entering a room. Use a negative number for an unlimited amount." type="int">-1</maxstanzas>
+				<seconds comment="The maximum number of context seconds that should be sent when entering a room. Use a negative number for an unlimited amount." type="int">-1</seconds>
+			</context>
+		</muc> 
+		<pgp comment="PGP encryption options">
+			<enable comment="Enable PGP globally" type="bool">true</enable>
+		</pgp>
+		<ui comment="User interface options">
+			<account comment="Account options">
+				<data-proxy comment="Allow changing the data transfer proxy" type="bool">true</data-proxy>
+				<ignore-ssl-warnings comment="Show the ignore SSL warnings option" type="bool">true</ignore-ssl-warnings>
+				<keepalive comment="Show the keepalive option" type="bool">true</keepalive>
+				<legacy-ssl-probe comment="Show legacy SSL probe option" type="bool">true</legacy-ssl-probe>
+				<manual-host comment="Enable manual host configuration" type="bool">true</manual-host>
+				<priority comment="Allow changing the priority" type="bool">true</priority>
+				<privacy comment="Options related to the privacy UI">
+					<show comment="Show the privacy UI" type="bool">true</show>
+				</privacy>
+				<proxy comment="Options related to the proxy UI">
+					<show comment="Show the proxy UI" type="bool">true</show>
+				</proxy>
+				<resource comment="Allow changing the resource" type="bool">true</resource>
+				<security comment="Options related to the seciruty UI">
+					<show comment="Show the security UI" type="bool">true</show>
+				</security>
+				<single comment="Limit the client to a single account" type="bool">false</single>
+			</account>
+			<message comment="Message options">
+				<enabled comment="Enable message (i.e. non-chat) functionality" type="bool">true</enabled>
+			</message>
+			<chat comment="Chat dialog options">
+				<opacity comment="Opacity percentage of chat dialogs" type="int">100</opacity>
+				<avatars comment="Avatar options">
+					<size comment="Maximum size of the avatar" type="int">32</size>
+					<show comment="Show avatars in the chat dialog" type="bool">true</show>
+				</avatars>
+			</chat>
+			<contactlist comment="Contact list options">
+				<auto-delete-unlisted comment="Automatically remove an unlisted contact from the contact list if it does not have any pending messages anymore" type="bool">false</auto-delete-unlisted>
+				<status-messages comment="Status messages for contacts">
+					<single-line comment="Show status messages on the same line as the nickname" type="bool">true</single-line>
+					<show comment="Show status messages" type="bool">false</show>
+				</status-messages>
+				<tooltip comment="Display options for the contact list tooltips">
+					<avatar comment="Display avatar" type="bool">true</avatar>
+					<client-version comment="Display client version information" type="bool">true</client-version>
+					<last-status comment="Display the last status" type="bool">true</last-status>
+					<pgp comment="Display PGP information" type="bool">true</pgp>
+				</tooltip>
+			</contactlist>
+			<menu comment="Options for the menu">
+				<account comment="Options for the account-specific menu">
+					<admin comment="Show the 'admin' menu" type="bool">true</admin>
+				</account>
+				<contact comment="Options for the contact-specific menu">
+					<active-chats comment="Show the 'active chats' menu" type="bool">true</active-chats>
+					<custom-picture comment="Show the 'picture' menu" type="bool">true</custom-picture>
+					<custom-pgp-key comment="Show the 'assign pgp key' menu" type="bool">true</custom-pgp-key>
+				</contact>
+				<main comment="Options for the main menu">
+					<change-profile comment="Show the 'change profile' menu" type="bool">true</change-profile>
+				</main>
+				<status comment="Options for the status menu">
+					<chat comment="Enable free for chat" type="bool">true</chat>
+					<xa comment="Enable extended away/not available" type="bool">true</xa>
+					<invisible comment="Enable invisibility" type="bool">true</invisible>
+				</status>
+				<view comment="Options for the view menu">
+					<show-away comment="Show the 'show away/xa' toggle" type="bool">true</show-away>
+				</view>
+			</menu>
+			<show-deprecated comment="Deprecated functionality or protocols">
+				<service-discovery comment="Service discovery dialog">
+					<protocol-selector comment="Show the iq:browse and iq:agents service discovery protocol selector." type="bool">false</protocol-selector>
+				</service-discovery>
+			</show-deprecated>
+		</ui>
+	</options>
+	<accounts comment="Account definitions and options"></accounts>
+	<plugins comment="Plugin options"></plugins>
+</psi>

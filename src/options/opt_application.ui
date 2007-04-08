@@ -1,0 +1,287 @@
+<ui version="4.0" >
+ <author></author>
+ <comment></comment>
+ <exportmacro></exportmacro>
+ <class>OptApplication</class>
+ <widget class="QWidget" name="OptApplication" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>294</width>
+    <height>500</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>OptApplicationUI</string>
+  </property>
+  <layout class="QVBoxLayout" >
+   <property name="margin" >
+    <number>0</number>
+   </property>
+   <property name="spacing" >
+    <number>6</number>
+   </property>
+   <item>
+    <widget class="QCheckBox" name="ck_alwaysOnTop" >
+     <property name="text" >
+      <string>Roster window always on top</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="ck_autoRosterSize" >
+     <property name="text" >
+      <string>Auto-resize contact list</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="ck_keepSizes" >
+     <property name="text" >
+      <string>Remember window sizes</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="ck_useleft" >
+     <property name="enabled" >
+      <bool>true</bool>
+     </property>
+     <property name="text" >
+      <string>Use left-click for menu</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="ck_hideMenubar" >
+     <property name="text" >
+      <string>Hide menubar</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="gb_links" >
+     <property name="title" >
+      <string>Links</string>
+     </property>
+     <layout class="QVBoxLayout" >
+      <property name="margin" >
+       <number>11</number>
+      </property>
+      <property name="spacing" >
+       <number>6</number>
+      </property>
+      <item>
+       <layout class="QHBoxLayout" >
+        <property name="margin" >
+         <number>0</number>
+        </property>
+        <property name="spacing" >
+         <number>6</number>
+        </property>
+        <item>
+         <widget class="QLabel" name="TextLabel2_3" >
+          <property name="text" >
+           <string>Open with</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="cb_link" >
+          <property name="sizePolicy" >
+           <sizepolicy>
+            <hsizetype>7</hsizetype>
+            <vsizetype>0</vsizetype>
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="gb_linkCustom" >
+        <property name="title" >
+         <string>Custom</string>
+        </property>
+        <layout class="QGridLayout" >
+         <property name="margin" >
+          <number>11</number>
+         </property>
+         <property name="spacing" >
+          <number>6</number>
+         </property>
+         <item row="1" column="1" >
+          <widget class="QLineEdit" name="le_linkMailer" />
+         </item>
+         <item row="0" column="1" >
+          <widget class="QLineEdit" name="le_linkBrowser" />
+         </item>
+         <item row="1" column="0" >
+          <widget class="QLabel" name="TextLabel4" >
+           <property name="text" >
+            <string>Mailer</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0" >
+          <widget class="QLabel" name="TextLabel3_2" >
+           <property name="text" >
+            <string>Browser</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="ck_docklet" >
+     <property name="text" >
+      <string>Enable docklet</string>
+     </property>
+     <property name="checked" >
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="gb_docklet" >
+     <property name="title" >
+      <string>Docklet</string>
+     </property>
+     <layout class="QVBoxLayout" >
+      <property name="margin" >
+       <number>10</number>
+      </property>
+      <property name="spacing" >
+       <number>6</number>
+      </property>
+      <item>
+       <widget class="QCheckBox" name="ck_dockDCstyle" >
+        <property name="text" >
+         <string>Use &quot;double-click&quot; style (like Mirabilis ICQ)</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="ck_dockHideMW" >
+        <property name="text" >
+         <string>Hide roster window on startup</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="ck_dockToolMW" >
+        <property name="text" >
+         <string>Make roster window a &quot;tool-window&quot;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="ck_dockUseWM" >
+        <property name="text" >
+         <string>Use WindowMaker docklet</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" >
+     <property name="margin" >
+      <number>0</number>
+     </property>
+     <property name="spacing" >
+      <number>6</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="textLabel1" >
+       <property name="text" >
+        <string>Data transfer port:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="le_dtPort" >
+       <property name="minimumSize" >
+        <size>
+         <width>56</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize" >
+        <size>
+         <width>56</width>
+         <height>32767</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer>
+       <property name="orientation" >
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType" >
+        <enum>QSizePolicy::Expanding</enum>
+       </property>
+       <property name="sizeHint" >
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" >
+     <property name="margin" >
+      <number>0</number>
+     </property>
+     <property name="spacing" >
+      <number>6</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="textLabel2" >
+       <property name="text" >
+        <string>Data transfer external address:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="le_dtExternal" />
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11" />
+ <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+ <tabstops>
+  <tabstop>ck_alwaysOnTop</tabstop>
+  <tabstop>ck_autoRosterSize</tabstop>
+  <tabstop>ck_keepSizes</tabstop>
+  <tabstop>ck_useleft</tabstop>
+  <tabstop>ck_hideMenubar</tabstop>
+  <tabstop>cb_link</tabstop>
+  <tabstop>le_linkBrowser</tabstop>
+  <tabstop>le_linkMailer</tabstop>
+  <tabstop>ck_docklet</tabstop>
+  <tabstop>ck_dockDCstyle</tabstop>
+  <tabstop>ck_dockHideMW</tabstop>
+  <tabstop>ck_dockToolMW</tabstop>
+  <tabstop>ck_dockUseWM</tabstop>
+  <tabstop>le_dtPort</tabstop>
+  <tabstop>le_dtExternal</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

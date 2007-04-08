@@ -1,0 +1,57 @@
+Libjingle
+
+Libjingle is a set of components provided by Google to interoperate with Google
+Talk's peer-to-peer and voice capabilities. This package will create several
+static libraries you may link to your project as needed.
+
+-talk               - No source files in talk/, just these subdirectories
+|-base              - Contains basic low-level portable utility functions for 
+|                     things like threads and sockets
+|-p2p               - The P2P stack
+  |-base            - Base p2p functionality
+  |-client          - Hooks to tie it into XMPP
+|-session           - Signaling
+  |-phone           - Signaling code specific to making phone calls
+|-third_party       - Components that aren't ours
+  |-mediastreamer   - Media components for dealing with sound hardware and 
+  |                   voice codecs
+|-xmllite           - XML parser
+|-xmpp              - XMPP engine
+
+In addition, this package contains two examples in talk/examples which 
+illustrate the basic concepts of how the provided classes work.
+
+The xmllite component of libjingle depends on expat. You can download expat 
+from http://expat.sourceforge.net/.
+
+mediastreamer, the media components used by the example applications depend on
+the oRTP and iLBC components from linphone, which can be found at 
+http://www.linphone.org. Linphone, in turn depends on GLib, which can be found
+at http://www.gtk.org. This GLib dependency should be removed in future 
+releases.
+
+Building Libjingle
+
+Once the dependencies are installed, run ./configure. ./configure will return
+an error if it failed to locate the proper dependencies. If ./configure
+succeeds, run 'make' to build the components and examples.
+
+When the build is complete, you can run the call example from 
+talk/examples/call and the pcp example from talk/examples/pcp.
+
+Relay Server
+
+Libjingle will also build a relay server that may be used to relay traffic
+when a direct peer-to-peer connection could not be established. The relay
+server will build in talk/p2p/base/relayserver and will listen on UDP
+ports 5000 and 5001. See the Libjingle Developer Guide at 
+http://code.google.com/apis/talk/index.html for information about configuring
+a client to use this relay server.
+
+STUN Server
+
+Lastly, Libjingle builds a STUN server which implements the STUN protocol for
+Simple Traversal of UDP over NAT. The STUN server is built as
+talk/p2p/base/stunserver and listens on UDP port 7000. See the Libjingle
+Developer Guide at http://code.google.com/apis/talk/index.html for information
+about configuring a client to use this STUN server.

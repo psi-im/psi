@@ -1,0 +1,169 @@
+<ui version="4.0" stdsetdef="1" >
+  <author></author>
+  <comment></comment>
+  <exportmacro></exportmacro>
+  <class>AccountManage</class>
+  <widget class="QDialog" name="AccountManage" >
+    <property name="geometry" >
+      <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>481</width>
+        <height>282</height>
+      </rect>
+    </property>
+    <property name="windowTitle" >
+      <string>Jabber Accounts</string>
+    </property>
+    <layout class="QVBoxLayout" >
+      <property name="margin" >
+        <number>11</number>
+      </property>
+      <property name="spacing" >
+        <number>6</number>
+      </property>
+      <item>
+        <layout class="QHBoxLayout" >
+          <property name="margin" >
+            <number>0</number>
+          </property>
+          <item>
+            <widget class="Q3ListView" name="lv_accs" >
+              <column>
+                <property name="text" >
+                  <string>Name</string>
+                </property>
+                <property name="clickable" >
+                  <bool>true</bool>
+                </property>
+                <property name="resizable" >
+                  <bool>true</bool>
+                </property>
+              </column>
+              <column>
+                <property name="text" >
+                  <string>Server</string>
+                </property>
+                <property name="clickable" >
+                  <bool>true</bool>
+                </property>
+                <property name="resizable" >
+                  <bool>true</bool>
+                </property>
+              </column>
+              <column>
+                <property name="text" >
+                  <string>Status</string>
+                </property>
+                <property name="clickable" >
+                  <bool>true</bool>
+                </property>
+                <property name="resizable" >
+                  <bool>true</bool>
+                </property>
+              </column>
+            </widget>
+          </item>
+          <item>
+            <layout class="QVBoxLayout" >
+              <property name="margin" >
+                <number>0</number>
+              </property>
+              <item>
+                <widget class="IconButton" name="pb_add" >
+                  <property name="text" >
+                    <string>&amp;Add</string>
+                  </property>
+                  <property name="iconName" stdset="0" >
+                    <string>psi/addContact</string>
+                  </property>
+                </widget>
+              </item>
+              <item>
+                <widget class="IconButton" name="pb_modify" >
+                  <property name="text" >
+                    <string>&amp;Modify</string>
+                  </property>
+                </widget>
+              </item>
+              <item>
+                <widget class="IconButton" name="pb_remove" >
+                  <property name="text" >
+                    <string>Rem&amp;ove</string>
+                  </property>
+                  <property name="iconName" stdset="0" >
+                    <string>psi/remove</string>
+                  </property>
+                </widget>
+              </item>
+              <item>
+                <spacer name="Spacer12" >
+                  <property name="sizeHint" >
+                    <size>
+                      <width>20</width>
+                      <height>127</height>
+                    </size>
+                  </property>
+                  <property name="sizeType" >
+                    <enum>Expanding</enum>
+                  </property>
+                  <property name="orientation" >
+                    <enum>Vertical</enum>
+                  </property>
+                </spacer>
+              </item>
+            </layout>
+          </item>
+        </layout>
+      </item>
+      <item>
+        <widget class="Line" name="Line1" >
+          <property name="frameShape" >
+            <enum>QFrame::HLine</enum>
+          </property>
+          <property name="frameShadow" >
+            <enum>QFrame::Sunken</enum>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <layout class="QHBoxLayout" >
+          <property name="margin" >
+            <number>0</number>
+          </property>
+          <item>
+            <spacer name="Spacer11" >
+              <property name="sizeHint" >
+                <size>
+                  <width>395</width>
+                  <height>20</height>
+                </size>
+              </property>
+              <property name="sizeType" >
+                <enum>Expanding</enum>
+              </property>
+              <property name="orientation" >
+                <enum>Horizontal</enum>
+              </property>
+            </spacer>
+          </item>
+          <item>
+            <widget class="IconButton" name="pb_close" >
+              <property name="text" >
+                <string>&amp;Close</string>
+              </property>
+              <property name="shortcut" >
+                <string>Alt+C</string>
+              </property>
+              <property name="default" >
+                <bool>true</bool>
+              </property>
+            </widget>
+          </item>
+        </layout>
+      </item>
+    </layout>
+  </widget>
+  <layoutdefault spacing="6" margin="11" />
+  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+</ui>

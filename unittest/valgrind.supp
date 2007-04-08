@@ -1,0 +1,2591 @@
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN6QBrush4initERK6QColorN2Qt10BrushStyleE
+   fun:_ZN6QBrushC1EN2Qt11GlobalColorENS0_10BrushStyleE
+   fun:_ZN13QPainterState4initEP8QPainter
+   fun:_ZN8QPainter5beginEP12QPaintDevice
+   fun:_ZNK13QWindowsStyle18drawComplexControlEN6QStyle14ComplexControlEPK19QStyleOptionComplexP8QPainterPK7QWidget
+   fun:_ZNK15QPlastiqueStyle18drawComplexControlEN6QStyle14ComplexControlEPK19QStyleOptionComplexP8QPainterPK7QWidget
+   fun:_ZN14Q3ListViewItem13paintBranchesEP8QPainterRK11QColorGroupiii
+   fun:_ZN10Q3ListView18drawContentsOffsetEP8QPainteriiiiii
+   fun:_ZN12Q3ScrollView18viewportPaintEventEP11QPaintEvent
+   fun:_ZN12Q3ScrollView11eventFilterEP7QObjectP6QEvent
+   fun:_ZN10Q3ListView11eventFilterEP7QObjectP6QEvent
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:strdup
+   obj:*
+   obj:*
+   fun:gethostbyname_r
+   fun:gethostbyname
+   fun:_ZN10NDnsWorker3runEv
+   fun:_ZN14QThreadPrivate5startEPv
+   fun:pthread_start_thread
+   fun:clone
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libfreetype.so.6.3.8
+   fun:FT_Alloc
+   fun:FT_Realloc
+   obj:/usr/lib/libfreetype.so.6.3.8
+   obj:/usr/lib/libfreetype.so.6.3.8
+   obj:/usr/lib/libfreetype.so.6.3.8
+   obj:/usr/lib/libfreetype.so.6.3.8
+   obj:/usr/lib/libfreetype.so.6.3.8
+   obj:/usr/lib/libfreetype.so.6.3.8
+   fun:FT_Load_Glyph
+   fun:_ZNK13QFontEngineFT9loadGlyphEjNS_11GlyphFormatE
+   fun:_ZNK13QFontEngineFT14recalcAdvancesEiP12QGlyphLayout6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK13QFontEngineFT12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK16QFontEngineMulti12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_Z11basic_shapeP11QShaperItem
+   fun:_ZNK11QTextEngine9shapeTextEi
+   fun:_ZNK11QTextEngine5shapeEi
+   fun:_ZN9QTextLine13layout_helperEi
+   fun:_ZN9QTextLine12setLineWidthEd
+   fun:_ZN26QTextDocumentLayoutPrivate11layoutBlockERK10QTextBlockP13QLayoutStructiiS2_
+   fun:_ZN26QTextDocumentLayoutPrivate10layoutFlowEN10QTextFrame8iteratorEP13QLayoutStructii
+   fun:_ZN26QTextDocumentLayoutPrivate11layoutFrameEP10QTextFrameiidd
+   fun:_ZN26QTextDocumentLayoutPrivate11layoutFrameEP10QTextFrameii
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZNK13QFontEngineFT9loadGlyphEjNS_11GlyphFormatE
+   fun:_ZNK13QFontEngineFT14recalcAdvancesEiP12QGlyphLayout6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK13QFontEngineFT12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK16QFontEngineMulti12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_Z11basic_shapeP11QShaperItem
+   fun:_ZNK11QTextEngine9shapeTextEi
+   fun:_ZNK11QTextEngine5shapeEi
+   fun:_ZNK11QTextEngine5widthEii
+   fun:_ZNK12QFontMetrics5widthERK7QStringi
+   fun:_ZNK14Q3ListViewItem5widthERK12QFontMetricsPK10Q3ListViewi
+   fun:_ZN10Q3ListView12widthChangedEPK14Q3ListViewItemi
+   fun:_ZNK14Q3ListViewItem12widthChangedEi
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XimSetIMResourceList
+   fun:_XimLocalOpenIM
+   fun:_XimOpenIM
+   fun:XOpenIM
+   fun:_ZN16QXIMInputContext10create_ximEv
+   fun:xim_create_callback
+   fun:_XimRegisterIMInstantiateCallback
+   fun:XRegisterIMInstantiateCallback
+   fun:_ZN16QXIMInputContextC1Ev
+   fun:_ZN20QInputContextFactory6createERK7QStringP7QObject
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Param
+   write(buf)
+   fun:write
+   fun:_X11TransWrite
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XEventsQueued
+   fun:XEventsQueued
+   fun:_ZN19QEventDispatcherX1113processEventsE6QFlagsIN10QEventLoop17ProcessEventsFlagEE
+   fun:_ZN10QEventLoop13processEventsE6QFlagsINS_17ProcessEventsFlagEE
+   fun:_ZN10QEventLoop4execE6QFlagsINS_17ProcessEventsFlagEE
+   fun:_ZN5QMenu4execERK6QPointP7QAction
+   fun:_ZN11Q3PopupMenu4execERK6QPointi
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Param
+   write(buf)
+   fun:write
+   fun:_X11TransWrite
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XDrawPoint
+   fun:_ZN15QX11PaintEngine10drawPointsEPK7QPointFi
+   fun:_ZN12QPaintEngine10drawPointsEPK6QPointi
+   fun:_ZN15QX11PaintEngine10drawPointsEPK6QPointi
+   fun:_ZN8QPainter10drawPointsEPK6QPointi
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Param
+   write(buf)
+   fun:write
+   fun:_X11TransWrite
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XRenderChangePicture
+   fun:_Z18x11ClearClipRegionP9_XDisplayP4_XGCS2_m
+   fun:_ZN15QX11PaintEngine9updatePenERK4QPen
+   fun:_ZN15QX11PaintEngine11updateStateERK17QPaintEngineState
+   fun:_ZN15QPainterPrivate11updateStateEP13QPainterState
+   fun:_ZN8QPainter10drawPointsEPK6QPointi
+   fun:_ZN8QPainter9drawPointEii
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN4QPenC1ERK6QColor
+   fun:_ZN8QPainter5beginEP12QPaintDevice
+   fun:_ZNK13QWindowsStyle18drawComplexControlEN6QStyle14ComplexControlEPK19QStyleOptionComplexP8QPainterPK7QWidget
+   fun:_ZNK15QPlastiqueStyle18drawComplexControlEN6QStyle14ComplexControlEPK19QStyleOptionComplexP8QPainterPK7QWidget
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN6QBrush4initERK6QColorN2Qt10BrushStyleE
+   fun:_ZN6QBrushC1ERK6QColorN2Qt10BrushStyleE
+   fun:_ZN4QPenC1ERK6QColor
+   fun:_ZN8QPainter5beginEP12QPaintDevice
+   fun:_ZNK13QWindowsStyle18drawComplexControlEN6QStyle14ComplexControlEPK19QStyleOptionComplexP8QPainterPK7QWidget
+   fun:_ZNK15QPlastiqueStyle18drawComplexControlEN6QStyle14ComplexControlEPK19QStyleOptionComplexP8QPainterPK7QWidget
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_Z7qMallocj
+   fun:_ZN11QDataBufferI14qt_float_pointEC1Ei
+   fun:_ZN15QPolygonClipperI14qt_float_pointS0_fEC1Ev
+   fun:_ZN22QX11PaintEnginePrivateC1Ev
+   fun:_ZN15QX11PaintEngineC1Ev
+   fun:_ZNK7QPixmap11paintEngineEv
+   fun:_ZN8QPainter5beginEP12QPaintDevice
+   fun:_ZNK13QWindowsStyle18drawComplexControlEN6QStyle14ComplexControlEPK19QStyleOptionComplexP8QPainterPK7QWidget
+   fun:_ZNK15QPlastiqueStyle18drawComplexControlEN6QStyle14ComplexControlEPK19QStyleOptionComplexP8QPainterPK7QWidget
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_Z7qMallocj
+   fun:_ZN11QDataBufferI14qt_float_pointEC1Ei
+   fun:_ZN15QPolygonClipperI14qt_float_pointS0_fEC1Ev
+   fun:_ZN22QX11PaintEnginePrivateC1Ev
+   fun:_ZN15QX11PaintEngineC1Ev
+   fun:_ZNK7QPixmap11paintEngineEv
+   fun:_ZN8QPainter5beginEP12QPaintDevice
+   fun:_ZNK13QWindowsStyle18drawComplexControlEN6QStyle14ComplexControlEPK19QStyleOptionComplexP8QPainterPK7QWidget
+   fun:_ZNK15QPlastiqueStyle18drawComplexControlEN6QStyle14ComplexControlEPK19QStyleOptionComplexP8QPainterPK7QWidget
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZNK7QPixmap11paintEngineEv
+   fun:_ZN8QPainter5beginEP12QPaintDevice
+   fun:_ZNK13QWindowsStyle18drawComplexControlEN6QStyle14ComplexControlEPK19QStyleOptionComplexP8QPainterPK7QWidget
+   fun:_ZNK15QPlastiqueStyle18drawComplexControlEN6QStyle14ComplexControlEPK19QStyleOptionComplexP8QPainterPK7QWidget
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN7QPixmap4initEiiNS_4TypeE
+   fun:_ZN7QPixmapC1Ev
+   fun:_ZN22QX11PaintEnginePrivateC1Ev
+   fun:_ZN15QX11PaintEngineC1Ev
+   fun:_ZNK7QPixmap11paintEngineEv
+   fun:_ZN8QPainter5beginEP12QPaintDevice
+   fun:_ZNK13QWindowsStyle18drawComplexControlEN6QStyle14ComplexControlEPK19QStyleOptionComplexP8QPainterPK7QWidget
+   fun:_ZNK15QPlastiqueStyle18drawComplexControlEN6QStyle14ComplexControlEPK19QStyleOptionComplexP8QPainterPK7QWidget
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN15QX11PaintEngineC1Ev
+   fun:_ZNK7QPixmap11paintEngineEv
+   fun:_ZN8QPainter5beginEP12QPaintDevice
+   fun:_ZNK13QWindowsStyle18drawComplexControlEN6QStyle14ComplexControlEPK19QStyleOptionComplexP8QPainterPK7QWidget
+   fun:_ZNK15QPlastiqueStyle18drawComplexControlEN6QStyle14ComplexControlEPK19QStyleOptionComplexP8QPainterPK7QWidget
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znaj
+   fun:_ZN9QHashData6rehashEi
+   fun:_ZN9QHashData9mightGrowEv
+   fun:_ZN5QHashIiPN13QFontEngineFT5GlyphEEixERKi
+   fun:_ZNK13QFontEngineFT9loadGlyphEjNS_11GlyphFormatE
+   fun:_ZNK13QFontEngineFT14recalcAdvancesEiP12QGlyphLayout6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK13QFontEngineFT12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK16QFontEngineMulti12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_Z11basic_shapeP11QShaperItem
+   fun:_ZNK11QTextEngine9shapeTextEi
+   fun:_ZNK11QTextEngine5shapeEi
+   fun:_ZNK11QTextEngine5widthEii
+   fun:_ZNK12QFontMetrics5widthERK7QStringi
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XrmInternalStringToQuark
+   fun:XrmStringToQuark
+   fun:_XlcGetLocaleDataBase
+   fun:_XlcGetResource
+   fun:_XomGenericOpenOM
+   fun:XOpenOM
+   fun:XCreateFontSet
+   fun:_Z10getFontSetRK5QFont
+   fun:_ZN16QXIMInputContext12createICDataEP7QWidget
+   fun:_ZN16QXIMInputContext14setFocusWidgetEP7QWidget
+   fun:_ZN14QWidgetPrivate17focusInputContextEv
+   fun:_ZN7QWidget8setFocusEN2Qt11FocusReasonE
+   fun:_ZN12QApplication15setActiveWindowEP7QWidget
+   fun:_ZN12QApplication15x11ProcessEventEP7_XEvent
+   fun:_ZN19QEventDispatcherX1113processEventsE6QFlagsIN10QEventLoop17ProcessEventsFlagEE
+   fun:_ZN10QEventLoop13processEventsE6QFlagsINS_17ProcessEventsFlagEE
+   fun:_ZN10QEventLoop4execE6QFlagsINS_17ProcessEventsFlagEE
+   fun:_ZN16QCoreApplication4execEv
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Param
+   write(buf)
+   fun:write
+   fun:_X11TransWrite
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XCheckIfEvent
+   fun:_ZN9QETWidget19translatePaintEventEPK7_XEvent
+   fun:_ZN12QApplication15x11ProcessEventEP7_XEvent
+   fun:_ZN19QEventDispatcherX1113processEventsE6QFlagsIN10QEventLoop17ProcessEventsFlagEE
+   fun:_ZN10QEventLoop13processEventsE6QFlagsINS_17ProcessEventsFlagEE
+   fun:_ZN10QEventLoop4execE6QFlagsINS_17ProcessEventsFlagEE
+   fun:_ZN16QCoreApplication4execEv
+   fun:_ZN12QApplication4execEv
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Param
+   write(buf)
+   fun:write
+   fun:_X11TransWrite
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XSetClipRectangles
+   fun:XSetClipRectangles
+   fun:_Z16x11SetClipRegionP9_XDisplayP4_XGCS2_mRK7QRegion
+   fun:_ZN15QX11PaintEngine16updateClipRegionERK7QRegionN2Qt13ClipOperationE
+   fun:_ZN15QX11PaintEngine11updateStateERK17QPaintEngineState
+   fun:_ZN15QPainterPrivate11updateStateEP13QPainterState
+   fun:_ZN8QPainter11setClipPathERK12QPainterPathN2Qt13ClipOperationE
+   fun:_ZN8QPainter11setClipRectERK6QRectFN2Qt13ClipOperationE
+   fun:_ZN8QPainter11setClipRectERK5QRectN2Qt13ClipOperationE
+   fun:_ZN6QLabel10paintEventEP11QPaintEvent
+   fun:_ZN9QTipLabel10paintEventEP11QPaintEvent
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Param
+   write(buf)
+   fun:write
+   fun:_X11TransWrite
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XRenderCompositeText32
+   fun:_ZN15QX11PaintEngine12drawFreetypeERK7QPointFRK12QTextItemInt
+   fun:_ZN15QX11PaintEngine12drawTextItemERK7QPointFRK9QTextItem
+   fun:_ZN15QX11PaintEngine9drawMultiERK7QPointFRK12QTextItemInt
+   fun:_ZN15QX11PaintEngine12drawTextItemERK7QPointFRK9QTextItem
+   fun:_ZN8QPainter12drawTextItemERK7QPointFRK9QTextItem
+   fun:_ZNK9QTextLine4drawEP8QPainterRK7QPointFPKN11QTextLayout11FormatRangeE
+   fun:_ZNK11QTextLayout4drawEP8QPainterRK7QPointFRK7QVectorINS_11FormatRangeEERK6QRectF
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XimOpenIM
+   fun:XOpenIM
+   fun:_ZN16QXIMInputContext10create_ximEv
+   fun:xim_create_callback
+   fun:_XimRegisterIMInstantiateCallback
+   fun:XRegisterIMInstantiateCallback
+   fun:_ZN16QXIMInputContextC1Ev
+   fun:_ZN20QInputContextFactory6createERK7QStringP7QObject
+   fun:_ZNK12QApplication12inputContextEv
+   fun:_ZN7QWidget12inputContextEv
+   fun:_ZN7QWidget16updateMicroFocusEv
+   fun:_ZN16QLineEditPrivate12finishChangeEibb
+   fun:_ZN16QLineEditPrivate7setTextERK7QStringib
+   fun:_ZN9QLineEdit7setTextERK7QString
+   fun:_ZN9QComboBox15setCurrentIndexEi
+   fun:_ZN16QComboBoxPrivate12rowsInsertedERK11QModelIndexii
+   fun:_ZN9QComboBox11insertItemsEiRK11QStringList
+   fun:_ZN9QComboBox16insertStringListERK11QStringListi
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcDefaultMapModifiers
+   fun:XSetLocaleModifiers
+   fun:_ZN16QXIMInputContextC1Ev
+   fun:_ZN20QInputContextFactory6createERK7QStringP7QObject
+   fun:_ZNK12QApplication12inputContextEv
+   fun:_ZN7QWidget12inputContextEv
+   fun:_ZN7QWidget16updateMicroFocusEv
+   fun:_ZN16QLineEditPrivate12finishChangeEibb
+   fun:_ZN16QLineEditPrivate7setTextERK7QStringib
+   fun:_ZN9QLineEdit7setTextERK7QString
+   fun:_ZN9QComboBox15setCurrentIndexEi
+   fun:_ZN16QComboBoxPrivate12rowsInsertedERK11QModelIndexii
+   fun:_ZN9QComboBox11insertItemsEiRK11QStringList
+   fun:_ZN9QComboBox16insertStringListERK11QStringListi
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XimOpenIM
+   fun:_XimRegisterIMInstantiateCallback
+   fun:XRegisterIMInstantiateCallback
+   fun:_ZN16QXIMInputContextC1Ev
+   fun:_ZN20QInputContextFactory6createERK7QStringP7QObject
+   fun:_ZNK12QApplication12inputContextEv
+   fun:_ZN7QWidget12inputContextEv
+   fun:_ZN7QWidget16updateMicroFocusEv
+   fun:_ZN16QLineEditPrivate12finishChangeEibb
+   fun:_ZN16QLineEditPrivate7setTextERK7QStringib
+   fun:_ZN9QLineEdit7setTextERK7QString
+   fun:_ZN9QComboBox15setCurrentIndexEi
+   fun:_ZN16QComboBoxPrivate12rowsInsertedERK11QModelIndexii
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_Z7qMallocj
+   fun:_ZN7QString7reallocEi
+   fun:_ZN7QString6resizeEi
+   fun:_ZN7QString8fromUtf8EPKci
+   fun:_Z22qt_FcPatternToQFontDefP10_FcPatternRK8QFontDef
+   fun:_ZN18QFontEngineMultiFT10loadEngineEi
+   fun:_ZN18QFontEngineMultiFTC1EP10_FcFontSetiRK8QFontDef
+   fun:_Z6loadFcPK12QFontPrivateiRK8QFontDef
+   fun:_ZN13QFontDatabase4loadEPK12QFontPrivatei
+   fun:_ZNK12QFontPrivate15engineForScriptEi
+   fun:_ZNK12QFontMetrics6heightEv
+   fun:_ZN10Q3ListView4initEv
+   fun:_ZN10Q3ListViewC2EP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZN9QHashData12allocateNodeEv
+   fun:_ZN5QHashIiPN13QFontEngineFT5GlyphEE10createNodeEjRKiRKS2_PP9QHashNodeIiS2_E
+   fun:_ZN5QHashIiPN13QFontEngineFT5GlyphEEixERKi
+   fun:_ZNK13QFontEngineFT9loadGlyphEjNS_11GlyphFormatE
+   fun:_ZNK13QFontEngineFT14recalcAdvancesEiP12QGlyphLayout6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK13QFontEngineFT12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK16QFontEngineMulti12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_Z11basic_shapeP11QShaperItem
+   fun:_ZNK11QTextEngine9shapeTextEi
+   fun:_ZNK11QTextEngine5shapeEi
+   fun:_ZNK11QTextEngine5widthEii
+   fun:_ZNK12QFontMetrics5widthERK7QStringi
+   fun:_ZNK14Q3ListViewItem5widthERK12QFontMetricsPK10Q3ListViewi
+   fun:_ZN10Q3ListView12widthChangedEPK14Q3ListViewItemi
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libXcursor.so.1.0.2
+   obj:/usr/lib/libXcursor.so.1.0.2
+   fun:XcursorXcFileLoadImages
+   fun:XcursorFileLoadImages
+   fun:XcursorLibraryLoadImages
+   fun:XcursorLibraryLoadCursor
+   fun:_ZN11QCursorData6updateEv
+   fun:_ZNK7QCursor6handleEv
+   fun:_Z21qt_x11_enforce_cursorP7QWidget
+   fun:_ZN14QWidgetPrivate10create_sysEmbb
+   fun:_ZN7QWidget6createEmbb
+   fun:_ZN14QWidgetPrivate4initEP7QWidget6QFlagsIN2Qt10WindowTypeEE
+   fun:_ZN7QWidgetC2ER14QWidgetPrivatePS_6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XimSetICResourceList
+   fun:_XimLocalOpenIM
+   fun:_XimOpenIM
+   fun:XOpenIM
+   fun:_ZN16QXIMInputContext10create_ximEv
+   fun:xim_create_callback
+   fun:_XimRegisterIMInstantiateCallback
+   fun:XRegisterIMInstantiateCallback
+   fun:_ZN16QXIMInputContextC1Ev
+   fun:_ZN20QInputContextFactory6createERK7QStringP7QObject
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZNK13QFontEngineFT9loadGlyphEjNS_11GlyphFormatE
+   fun:_ZNK13QFontEngineFT14recalcAdvancesEiP12QGlyphLayout6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK13QFontEngineFT12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK16QFontEngineMulti12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_Z11basic_shapeP11QShaperItem
+   fun:_ZNK11QTextEngine9shapeTextEi
+   fun:_ZNK11QTextEngine5shapeEi
+   fun:_ZNK11QTextEngine5widthEii
+   fun:_ZNK12QFontMetrics5widthERK7QStringi
+   fun:_ZNK14Q3ListViewItem5widthERK12QFontMetricsPK10Q3ListViewi
+   fun:_ZN10Q3ListView12widthChangedEPK14Q3ListViewItemi
+   fun:_ZNK14Q3ListViewItem12widthChangedEi
+   fun:_ZN14Q3ListViewItem7setTextEiRK7QString
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZN9QHashData12allocateNodeEv
+   fun:_ZN5QHashIiPN13QFontEngineFT5GlyphEE10createNodeEjRKiRKS2_PP9QHashNodeIiS2_E
+   fun:_ZN5QHashIiPN13QFontEngineFT5GlyphEEixERKi
+   fun:_ZNK13QFontEngineFT9loadGlyphEjNS_11GlyphFormatE
+   fun:_ZNK13QFontEngineFT14recalcAdvancesEiP12QGlyphLayout6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK13QFontEngineFT12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK13QFontEngineFT15minRightBearingEv
+   fun:_ZNK13QFontEngineFT14minLeftBearingEv
+   fun:_ZNK16QFontEngineMulti14minLeftBearingEv
+   fun:_ZNK12QFontMetrics14minLeftBearingEv
+   fun:_ZN10Q3ListView4initEv
+   fun:_ZN10Q3ListViewC2EP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZNK13QFontEngineFT9loadGlyphEjNS_11GlyphFormatE
+   fun:_ZNK13QFontEngineFT14recalcAdvancesEiP12QGlyphLayout6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK13QFontEngineFT12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK16QFontEngineMulti12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_Z11basic_shapeP11QShaperItem
+   fun:_ZNK11QTextEngine9shapeTextEi
+   fun:_ZNK11QTextEngine5shapeEi
+   fun:_ZNK11QTextEngine5widthEii
+   fun:_ZNK12QFontMetrics5widthERK7QStringi
+   fun:_ZNK12QMenuPrivate15calcActionRectsER4QMapIP7QAction5QRectER5QListIS2_E
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZN9QHashData12allocateNodeEv
+   fun:_ZN5QHashIiPN13QFontEngineFT5GlyphEE10createNodeEjRKiRKS2_PP9QHashNodeIiS2_E
+   fun:_ZN5QHashIiPN13QFontEngineFT5GlyphEEixERKi
+   fun:_ZNK13QFontEngineFT9loadGlyphEjNS_11GlyphFormatE
+   fun:_ZNK13QFontEngineFT14recalcAdvancesEiP12QGlyphLayout6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK13QFontEngineFT12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK16QFontEngineMulti12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_Z11basic_shapeP11QShaperItem
+   fun:_ZNK11QTextEngine9shapeTextEi
+   fun:_ZNK11QTextEngine5shapeEi
+   fun:_ZNK11QTextEngine5widthEii
+   fun:_ZNK12QFontMetrics5widthERK7QStringi
+   fun:_ZNK12QMenuPrivate15calcActionRectsER4QMapIP7QAction5QRectER5QListIS2_E
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN18QFontEngineMultiFT10loadEngineEi
+   fun:_ZN18QFontEngineMultiFTC1EP10_FcFontSetiRK8QFontDef
+   fun:_Z6loadFcPK12QFontPrivateiRK8QFontDef
+   fun:_ZN13QFontDatabase4loadEPK12QFontPrivatei
+   fun:_ZNK12QFontPrivate15engineForScriptEi
+   fun:_ZNK12QFontMetrics6heightEv
+   fun:_ZN10Q3ListView4initEv
+   fun:_ZN10Q3ListViewC2EP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_Z7qMallocj
+   fun:_ZN11QVectorData6mallocEiiiPS_
+   fun:_ZN7QVectorIP11QFontEngineE7reallocEii
+   fun:_ZN7QVectorIP11QFontEngineE6resizeEi
+   fun:_ZN7QVectorIP11QFontEngineE4fillERKS1_i
+   fun:_ZN16QFontEngineMultiC2Ei
+   fun:_ZN18QFontEngineMultiFTC1EP10_FcFontSetiRK8QFontDef
+   fun:_Z6loadFcPK12QFontPrivateiRK8QFontDef
+   fun:_ZN13QFontDatabase4loadEPK12QFontPrivatei
+   fun:_ZNK12QFontPrivate15engineForScriptEi
+   fun:_ZNK12QFontMetrics6heightEv
+   fun:_ZN10Q3ListView4initEv
+   fun:_ZN10Q3ListViewC2EP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znaj
+   fun:_ZN9QHashData6rehashEi
+   fun:_ZN9QHashData9mightGrowEv
+   fun:_ZN5QHashImP7QWidgetE6insertERKmRKS1_
+   fun:_Z9qPRCreatePK7QWidgetm
+   fun:_ZN14QWidgetPrivate13setParent_sysEP7QWidget6QFlagsIN2Qt10WindowTypeEE
+   fun:_ZN7QWidget9setParentEPS_6QFlagsIN2Qt10WindowTypeEE
+   fun:_ZN7QWidget9setParentEPS_
+   fun:_ZN10Q3DockArea14moveDockWindowEP12Q3DockWindowi
+   fun:_ZN12Q3MainWindow14moveDockWindowEP12Q3DockWindowN2Qt4DockE
+   fun:_ZN12Q3MainWindow13addDockWindowEP12Q3DockWindowN2Qt4DockEb
+   fun:_ZN12Q3DockWindow4initEv
+   fun:_ZN12Q3DockWindowC2ENS_5PlaceEP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEEb
+   fun:_ZN9Q3ToolBarC2ERK7QStringP12Q3MainWindowP7QWidgetbPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_Z7qMallocj
+   fun:_ZN10QByteArray7reallocEi
+   fun:_ZN10QByteArrayaSEPKc
+   fun:_Z7face_idP10_FcPattern
+   fun:_ZN13QFontEngineFTC1EP10_FcPatternRK8QFontDefi
+   fun:_ZN18QFontEngineMultiFT10loadEngineEi
+   fun:_ZN18QFontEngineMultiFTC1EP10_FcFontSetiRK8QFontDef
+   fun:_Z6loadFcPK12QFontPrivateiRK8QFontDef
+   fun:_ZN13QFontDatabase4loadEPK12QFontPrivatei
+   fun:_ZNK12QFontPrivate15engineForScriptEi
+   fun:_ZNK12QFontMetrics6heightEv
+   fun:_ZN10Q3ListView4initEv
+   fun:_ZN10Q3ListViewC2EP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Param
+   write(buf)
+   fun:write
+   fun:_X11TransWrite
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XCopyArea
+   fun:_ZN19QWidgetBackingStore12copyToScreenERK7QRegionP7QWidgetRK6QPointb
+   fun:_ZN19QWidgetBackingStore12copyToScreenERK7QRegionP7QWidgetRK6QPointb
+   fun:_ZN19QWidgetBackingStore11cleanRegionERK7QRegionP7QWidgetb
+   fun:_Z19qt_syncBackingStoreP7QWidget
+   fun:_ZN7QWidget5eventEP6QEvent
+   fun:_ZN15QAbstractButton5eventEP6QEvent
+   fun:_ZN11QToolButton5eventEP6QEvent
+   fun:_ZN19QApplicationPrivate13notify_helperEP7QObjectP6QEvent
+   fun:_ZN12QApplication6notifyEP7QObjectP6QEvent
+   fun:_ZN14PsiApplication6notifyEP7QObjectP6QEvent
+   fun:_ZN16QCoreApplication9sendEventEP7QObjectP6QEvent
+   fun:_ZN16QCoreApplication16sendPostedEventsEP7QObjecti
+   fun:_ZN16QCoreApplication16sendPostedEventsEv
+   fun:_ZN19QEventDispatcherX1113processEventsE6QFlagsIN10QEventLoop17ProcessEventsFlagEE
+   fun:_ZN10QEventLoop13processEventsE6QFlagsINS_17ProcessEventsFlagEE
+   fun:_ZN10QEventLoop4execE6QFlagsINS_17ProcessEventsFlagEE
+   fun:_ZN16QCoreApplication4execEv
+   fun:_ZN12QApplication4execEv
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:realloc
+   obj:/usr/lib/libfreetype.so.6.3.8
+   fun:FT_Realloc
+   fun:FT_CMap_New
+   obj:/usr/lib/libfreetype.so.6.3.8
+   obj:/usr/lib/libfreetype.so.6.3.8
+   fun:FT_Open_Face
+   fun:FT_New_Face
+   fun:_ZN13QFontEngineFTC1EP10_FcPatternRK8QFontDefi
+   fun:_ZN18QFontEngineMultiFT10loadEngineEi
+   fun:_ZN18QFontEngineMultiFTC1EP10_FcFontSetiRK8QFontDef
+   fun:_Z6loadFcPK12QFontPrivateiRK8QFontDef
+   fun:_ZN13QFontDatabase4loadEPK12QFontPrivatei
+   fun:_ZNK12QFontPrivate15engineForScriptEi
+   fun:_ZNK12QFontMetrics6heightEv
+   fun:_ZN10Q3ListView4initEv
+   fun:_ZN10Q3ListViewC2EP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZNK13QFontEngineFT9loadGlyphEjNS_11GlyphFormatE
+   fun:_ZNK13QFontEngineFT14recalcAdvancesEiP12QGlyphLayout6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK13QFontEngineFT12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK13QFontEngineFT15minRightBearingEv
+   fun:_ZNK13QFontEngineFT14minLeftBearingEv
+   fun:_ZNK16QFontEngineMulti14minLeftBearingEv
+   fun:_ZNK12QFontMetrics14minLeftBearingEv
+   fun:_ZN10Q3ListView4initEv
+   fun:_ZN10Q3ListViewC2EP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XimSetIMResourceList
+   fun:_XimLocalOpenIM
+   fun:_XimOpenIM
+   fun:XOpenIM
+   fun:_ZN16QXIMInputContext10create_ximEv
+   fun:xim_create_callback
+   fun:_XimRegisterIMInstantiateCallback
+   fun:XRegisterIMInstantiateCallback
+   fun:_ZN16QXIMInputContextC1Ev
+   fun:_ZN20QInputContextFactory6createERK7QStringP7QObject
+   fun:_ZNK12QApplication12inputContextEv
+   fun:_ZN7QWidget12inputContextEv
+   fun:_ZN7QWidget7destroyEbb
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_Z13getEngineDataPK12QFontPrivateRKN10QFontCache3KeyE
+   fun:_ZN13QFontDatabase4loadEPK12QFontPrivatei
+   fun:_ZNK12QFontPrivate15engineForScriptEi
+   fun:_ZNK12QFontMetrics6heightEv
+   fun:_ZN10Q3ListView4initEv
+   fun:_ZN10Q3ListViewC2EP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_dl_map_object_deps
+   obj:/lib/libc-2.3.6.so
+   fun:_dl_catch_error
+   fun:_dl_open
+   obj:/lib/libdl-2.3.6.so
+   fun:_dl_catch_error
+   obj:/lib/libdl-2.3.6.so
+   fun:dlopen
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XNoticeCreateBitmap
+   fun:XCreatePixmap
+   fun:XCreateBitmapFromData
+   fun:_ZN7QBitmap9fromImageERK6QImage6QFlagsIN2Qt19ImageConversionFlagEE
+   fun:_ZNK7QPixmap4maskEv
+   fun:_ZN14QWidgetPrivate17setWindowIcon_sysEb
+   fun:_ZN7QWidget13setWindowIconERK5QIcon
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libfreetype.so.6.3.8
+   fun:FT_Alloc
+   fun:FT_Open_Face
+   fun:FT_New_Face
+   fun:_ZN13QFontEngineFTC1EP10_FcPatternRK8QFontDefi
+   fun:_ZN18QFontEngineMultiFT10loadEngineEi
+   fun:_ZN18QFontEngineMultiFTC1EP10_FcFontSetiRK8QFontDef
+   fun:_Z6loadFcPK12QFontPrivateiRK8QFontDef
+   fun:_ZN13QFontDatabase4loadEPK12QFontPrivatei
+   fun:_ZNK12QFontPrivate15engineForScriptEi
+   fun:_ZNK12QFontMetrics6heightEv
+   fun:_ZN10Q3ListView4initEv
+   fun:_ZN10Q3ListViewC2EP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZNK7QString13latin1_helperEv
+   fun:_ZNK7QString6latin1Ev
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:calloc
+   fun:pthread_setspecific
+   fun:_ZN14QThreadPrivate16setCurrentThreadEP7QThread
+   fun:_ZN23QCoreApplicationPrivateC2ERiPPc
+   fun:_ZN19QApplicationPrivateC1ERiPPcN12QApplication4TypeE
+   fun:_ZN12QApplicationC2ERiPPcb
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZN9QHashData12allocateNodeEv
+   fun:_ZN5QHashIiPN13QFontEngineFT5GlyphEE10createNodeEjRKiRKS2_PP9QHashNodeIiS2_E
+   fun:_ZN5QHashIiPN13QFontEngineFT5GlyphEEixERKi
+   fun:_ZNK13QFontEngineFT9loadGlyphEjNS_11GlyphFormatE
+   fun:_ZNK13QFontEngineFT14recalcAdvancesEiP12QGlyphLayout6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK13QFontEngineFT12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK16QFontEngineMulti12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_Z11basic_shapeP11QShaperItem
+   fun:_ZNK11QTextEngine9shapeTextEi
+   fun:_ZNK11QTextEngine5shapeEi
+   fun:_ZN9QTextLine13layout_helperEi
+   fun:_ZN9QTextLine12setLineWidthEd
+   fun:_Z14qt_format_textRK5QFontRK6QRectFiRK7QStringPS2_iPiiP8QPainter
+   fun:_ZNK12QFontMetrics12boundingRectERK5QRectiRK7QStringiPi
+   fun:_ZNK12QFontMetrics12boundingRectEiiiiiRK7QStringiPi
+   fun:_ZNK13QLabelPrivate12sizeForWidthEi
+   fun:_ZNK6QLabel15minimumSizeHintEv
+   fun:_ZNK6QLabel8sizeHintEv
+   fun:_ZN7QWidget10adjustSizeEv
+   fun:_ZNK11QMessageBox8sizeHintEv
+   fun:_ZN7QWidget10adjustSizeEv
+   fun:_ZN7QWidget10setVisibleEb
+   fun:_ZN7QDialog10setVisibleEb
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:strdup
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC2ERiPPcb
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN9QHashData13detach_helperEPFvPNS_4NodeEPvEi
+   fun:_ZN5QHashIiPN13QFontEngineFT5GlyphEE13detach_helperEv
+   fun:_ZN5QHashIiPN13QFontEngineFT5GlyphEE6detachEv
+   fun:_ZN5QHashIiPN13QFontEngineFT5GlyphEEixERKi
+   fun:_ZNK13QFontEngineFT9loadGlyphEjNS_11GlyphFormatE
+   fun:_ZNK13QFontEngineFT14recalcAdvancesEiP12QGlyphLayout6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK13QFontEngineFT12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK13QFontEngineFT15minRightBearingEv
+   fun:_ZNK13QFontEngineFT14minLeftBearingEv
+   fun:_ZNK16QFontEngineMulti14minLeftBearingEv
+   fun:_ZNK12QFontMetrics14minLeftBearingEv
+   fun:_ZN10Q3ListView4initEv
+   fun:_ZN10Q3ListViewC2EP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN9QHashData13detach_helperEPFvPNS_4NodeEPvEi
+   fun:_ZN5QHashI15QFreetypeFaceIdP13QFreetypeFaceE13detach_helperEv
+   fun:_ZN5QHashI15QFreetypeFaceIdP13QFreetypeFaceE6detachEv
+   fun:_ZN5QHashI15QFreetypeFaceIdP13QFreetypeFaceE6insertERKS0_RKS2_
+   fun:_ZN13QFontEngineFTC1EP10_FcPatternRK8QFontDefi
+   fun:_ZN18QFontEngineMultiFT10loadEngineEi
+   fun:_ZN18QFontEngineMultiFTC1EP10_FcFontSetiRK8QFontDef
+   fun:_Z6loadFcPK12QFontPrivateiRK8QFontDef
+   fun:_ZN13QFontDatabase4loadEPK12QFontPrivatei
+   fun:_ZNK12QFontPrivate15engineForScriptEi
+   fun:_ZNK12QFontMetrics6heightEv
+   fun:_ZN10Q3ListView4initEv
+   fun:_ZN10Q3ListViewC2EP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZN9QHashData12allocateNodeEv
+   fun:_ZN5QHashI15QFreetypeFaceIdP13QFreetypeFaceE10createNodeEjRKS0_RKS2_PP9QHashNodeIS0_S2_E
+   fun:_ZN5QHashI15QFreetypeFaceIdP13QFreetypeFaceE6insertERKS0_RKS2_
+   fun:_ZN13QFontEngineFTC1EP10_FcPatternRK8QFontDefi
+   fun:_ZN18QFontEngineMultiFT10loadEngineEi
+   fun:_ZN18QFontEngineMultiFTC1EP10_FcFontSetiRK8QFontDef
+   fun:_Z6loadFcPK12QFontPrivateiRK8QFontDef
+   fun:_ZN13QFontDatabase4loadEPK12QFontPrivatei
+   fun:_ZNK12QFontPrivate15engineForScriptEi
+   fun:_ZNK12QFontMetrics6heightEv
+   fun:_ZN10Q3ListView4initEv
+   fun:_ZN10Q3ListViewC2EP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLocaleDataBase
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC2ERiPPcb
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLocaleDataBase
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC2ERiPPcb
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libXcursor.so.1.0.2
+   obj:/usr/lib/libXcursor.so.1.0.2
+   fun:XcursorXcFileLoadImages
+   fun:XcursorFileLoadImages
+   fun:XcursorLibraryLoadImages
+   fun:XcursorLibraryLoadCursor
+   fun:XcursorTryShapeBitmapCursor
+   fun:_XTryShapeBitmapCursor
+   fun:XCreatePixmapCursor
+   fun:_ZN11QCursorData6updateEv
+   fun:_ZNK7QCursor6handleEv
+   fun:_Z21qt_x11_enforce_cursorP7QWidget
+   fun:_ZN7QWidget9setCursorERK7QCursor
+   fun:_ZN24Q3DockWindowResizeHandle14setOrientationEN2Qt11OrientationE
+   fun:_ZN24Q3DockWindowResizeHandleC1EN2Qt11OrientationEP7QWidgetP12Q3DockWindowPKc
+   fun:_ZN12Q3DockWindow4initEv
+   fun:_ZN12Q3DockWindowC2ENS_5PlaceEP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEEb
+   fun:_ZN9Q3ToolBarC2ERK7QStringP12Q3MainWindowP7QWidgetbPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZN9QHashData12allocateNodeEv
+   fun:_ZN5QHashIiPN13QFontEngineFT5GlyphEE10createNodeEjRKiRKS2_PP9QHashNodeIiS2_E
+   fun:_ZN5QHashIiPN13QFontEngineFT5GlyphEEixERKi
+   fun:_ZNK13QFontEngineFT9loadGlyphEjNS_11GlyphFormatE
+   fun:_ZNK13QFontEngineFT14recalcAdvancesEiP12QGlyphLayout6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK13QFontEngineFT12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK16QFontEngineMulti12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_Z11basic_shapeP11QShaperItem
+   fun:_ZNK11QTextEngine9shapeTextEi
+   fun:_ZNK11QTextEngine5shapeEi
+   fun:_ZN9QTextLine13layout_helperEi
+   fun:_ZN9QTextLine12setLineWidthEd
+   fun:_Z14qt_format_textRK5QFontRK6QRectFiRK7QStringPS2_iPiiP8QPainter
+   fun:_ZNK12QFontMetrics12boundingRectERK5QRectiRK7QStringiPi
+   fun:_ZNK12QFontMetrics12boundingRectEiiiiiRK7QStringiPi
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZNK13QFontEngineFT9loadGlyphEjNS_11GlyphFormatE
+   fun:_ZNK13QFontEngineFT14recalcAdvancesEiP12QGlyphLayout6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK13QFontEngineFT12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK16QFontEngineMulti12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_Z11basic_shapeP11QShaperItem
+   fun:_ZNK11QTextEngine9shapeTextEi
+   fun:_ZNK11QTextEngine5shapeEi
+   fun:_ZN9QTextLine13layout_helperEi
+   fun:_ZN9QTextLine12setLineWidthEd
+   fun:_Z14qt_format_textRK5QFontRK6QRectFiRK7QStringPS2_iPiiP8QPainter
+   fun:_ZNK12QFontMetrics12boundingRectERK5QRectiRK7QStringiPi
+   fun:_ZNK12QFontMetrics12boundingRectEiiiiiRK7QStringiPi
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znaj
+   fun:_ZN9QHashData6rehashEi
+   fun:_ZN9QHashData9mightGrowEv
+   fun:_ZN5QHashI15QFreetypeFaceIdP13QFreetypeFaceE6insertERKS0_RKS2_
+   fun:_ZN13QFontEngineFTC1EP10_FcPatternRK8QFontDefi
+   fun:_ZN18QFontEngineMultiFT10loadEngineEi
+   fun:_ZN18QFontEngineMultiFTC1EP10_FcFontSetiRK8QFontDef
+   fun:_Z6loadFcPK12QFontPrivateiRK8QFontDef
+   fun:_ZN13QFontDatabase4loadEPK12QFontPrivatei
+   fun:_ZNK12QFontPrivate15engineForScriptEi
+   fun:_ZNK12QFontMetrics6heightEv
+   fun:_ZN10Q3ListView4initEv
+   fun:_ZN10Q3ListViewC2EP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znaj
+   fun:_ZN9QHashData6rehashEi
+   fun:_ZN9QHashData9mightGrowEv
+   fun:_ZN5QHashIiPN13QFontEngineFT5GlyphEEixERKi
+   fun:_ZNK13QFontEngineFT9loadGlyphEjNS_11GlyphFormatE
+   fun:_ZNK13QFontEngineFT14recalcAdvancesEiP12QGlyphLayout6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK13QFontEngineFT12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK16QFontEngineMulti12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_Z11basic_shapeP11QShaperItem
+   fun:_ZNK11QTextEngine9shapeTextEi
+   fun:_ZNK11QTextEngine5shapeEi
+   fun:_ZN9QTextLine13layout_helperEi
+   fun:_ZN9QTextLine12setLineWidthEd
+   fun:_Z14qt_format_textRK5QFontRK6QRectFiRK7QStringPS2_iPiiP8QPainter
+   fun:_ZNK12QFontMetrics12boundingRectERK5QRectiRK7QStringiPi
+   fun:_ZNK12QFontMetrics12boundingRectEiiiiiRK7QStringiPi
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libfreetype.so.6.3.8
+   fun:FT_Alloc
+   fun:FT_New_GlyphSlot
+   fun:FT_Open_Face
+   fun:FT_New_Face
+   fun:_ZN13QFontEngineFTC1EP10_FcPatternRK8QFontDefi
+   fun:_ZN18QFontEngineMultiFT10loadEngineEi
+   fun:_ZN18QFontEngineMultiFTC1EP10_FcFontSetiRK8QFontDef
+   fun:_Z6loadFcPK12QFontPrivateiRK8QFontDef
+   fun:_ZN13QFontDatabase4loadEPK12QFontPrivatei
+   fun:_ZNK12QFontPrivate15engineForScriptEi
+   fun:_ZNK12QFontMetrics6heightEv
+   fun:_ZN10Q3ListView4initEv
+   fun:_ZN10Q3ListViewC2EP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Param
+   clone(child_tidptr)
+   fun:clone
+   fun:clone
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Param
+   write(buf)
+   fun:pthread_key_delete
+   fun:_Z41__static_initialization_and_destruction_0ii
+   obj:/usr/local/lib/libstdc++.so.6.0.7
+   obj:/usr/local/lib/libstdc++.so.6.0.7
+   fun:_dl_fini
+   fun:exit
+   fun:__libc_start_main
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcDefaultMapModifiers
+   fun:XSetLocaleModifiers
+   fun:_ZN16QXIMInputContextC1Ev
+   fun:_ZN20QInputContextFactory6createERK7QStringP7QObject
+   fun:_ZNK12QApplication12inputContextEv
+   fun:_ZN7QWidget12inputContextEv
+   fun:_ZN7QWidget7destroyEbb
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XimOpenIM
+   fun:XOpenIM
+   fun:_ZN16QXIMInputContext10create_ximEv
+   fun:xim_create_callback
+   fun:_XimRegisterIMInstantiateCallback
+   fun:XRegisterIMInstantiateCallback
+   fun:_ZN16QXIMInputContextC1Ev
+   fun:_ZN20QInputContextFactory6createERK7QStringP7QObject
+   fun:_ZNK12QApplication12inputContextEv
+   fun:_ZN7QWidget12inputContextEv
+   fun:_ZN7QWidget7destroyEbb
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN18QMessageBoxPrivate4initEiii
+   fun:_ZN11QMessageBoxC1ERK7QStringS2_NS_4IconEiiiP7QWidget6QFlagsIN2Qt10WindowTypeEE
+   fun:_Z7textBoxP7QWidgetN11QMessageBox4IconERK7QStringS5_S5_S5_S5_ii
+   fun:_ZN11QMessageBox11informationEP7QWidgetRK7QStringS4_S4_S4_S4_ii
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XimOpenIM
+   fun:_XimRegisterIMInstantiateCallback
+   fun:XRegisterIMInstantiateCallback
+   fun:_ZN16QXIMInputContextC1Ev
+   fun:_ZN20QInputContextFactory6createERK7QStringP7QObject
+   fun:_ZNK12QApplication12inputContextEv
+   fun:_ZN7QWidget12inputContextEv
+   fun:_ZN7QWidget7destroyEbb
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_Z9qPRCreatePK7QWidgetm
+   fun:_ZN14QWidgetPrivate13setParent_sysEP7QWidget6QFlagsIN2Qt10WindowTypeEE
+   fun:_ZN7QWidget9setParentEPS_6QFlagsIN2Qt10WindowTypeEE
+   fun:_ZN7QWidget9setParentEPS_
+   fun:_ZN10Q3DockArea14moveDockWindowEP12Q3DockWindowi
+   fun:_ZN12Q3MainWindow14moveDockWindowEP12Q3DockWindowN2Qt4DockE
+   fun:_ZN12Q3MainWindow13addDockWindowEP12Q3DockWindowN2Qt4DockEb
+   fun:_ZN12Q3DockWindow4initEv
+   fun:_ZN12Q3DockWindowC2ENS_5PlaceEP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEEb
+   fun:_ZN9Q3ToolBarC2ERK7QStringP12Q3MainWindowP7QWidgetbPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:XextCreateExtension
+   fun:XInput_find_display
+   fun:_XiGetExtensionVersion
+   fun:XGetExtensionVersion
+   fun:_Z17isXInputSupportedP9_XDisplay
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:realloc
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLocaleDataBase
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XmbTextListToTextProperty
+   fun:_Z14qstring_to_xtpRK7QString
+   fun:_ZN14QWidgetPrivate18setWindowTitle_sysERK7QString
+   fun:_ZN14QWidgetPrivate21setWindowTitle_helperERK7QString
+   fun:_ZN7QWidget14setWindowTitleERK7QString
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:FT_New_Memory
+   fun:FT_Init_FreeType
+   fun:_ZN13QFontEngineFTC1EP10_FcPatternRK8QFontDefi
+   fun:_ZN18QFontEngineMultiFT10loadEngineEi
+   fun:_ZN18QFontEngineMultiFTC1EP10_FcFontSetiRK8QFontDef
+   fun:_Z6loadFcPK12QFontPrivateiRK8QFontDef
+   fun:_ZN13QFontDatabase4loadEPK12QFontPrivatei
+   fun:_ZNK12QFontPrivate15engineForScriptEi
+   fun:_ZNK12QFontMetrics6heightEv
+   fun:_ZN10Q3ListView4initEv
+   fun:_ZN10Q3ListViewC2EP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XimSetLocalIMDefaults
+   fun:_XimLocalOpenIM
+   fun:_XimOpenIM
+   fun:XOpenIM
+   fun:_ZN16QXIMInputContext10create_ximEv
+   fun:xim_create_callback
+   fun:_XimRegisterIMInstantiateCallback
+   fun:XRegisterIMInstantiateCallback
+   fun:_ZN16QXIMInputContextC1Ev
+   fun:_ZN20QInputContextFactory6createERK7QStringP7QObject
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:realloc
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLocaleDataBase
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcOpenConverter
+   fun:_XimLocalOpenIM
+   fun:_XimOpenIM
+   fun:XOpenIM
+   fun:_ZN16QXIMInputContext10create_ximEv
+   fun:xim_create_callback
+   fun:_XimRegisterIMInstantiateCallback
+   fun:XRegisterIMInstantiateCallback
+   fun:_ZN16QXIMInputContextC1Ev
+   fun:_ZN20QInputContextFactory6createERK7QStringP7QObject
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:calloc
+   fun:_XlcOpenConverter
+   fun:_XimLocalOpenIM
+   fun:_XimOpenIM
+   fun:XOpenIM
+   fun:_ZN16QXIMInputContext10create_ximEv
+   fun:xim_create_callback
+   fun:_XimRegisterIMInstantiateCallback
+   fun:XRegisterIMInstantiateCallback
+   fun:_ZN16QXIMInputContextC1Ev
+   fun:_ZN20QInputContextFactory6createERK7QStringP7QObject
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcOpenConverter
+   fun:_XimLocalOpenIM
+   fun:_XimOpenIM
+   fun:XOpenIM
+   fun:_ZN16QXIMInputContext10create_ximEv
+   fun:xim_create_callback
+   fun:_XimRegisterIMInstantiateCallback
+   fun:XRegisterIMInstantiateCallback
+   fun:_ZN16QXIMInputContextC1Ev
+   fun:_ZN20QInputContextFactory6createERK7QStringP7QObject
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcOpenConverter
+   fun:_XimLocalOpenIM
+   fun:_XimOpenIM
+   fun:XOpenIM
+   fun:_ZN16QXIMInputContext10create_ximEv
+   fun:xim_create_callback
+   fun:_XimRegisterIMInstantiateCallback
+   fun:XRegisterIMInstantiateCallback
+   fun:_ZN16QXIMInputContextC1Ev
+   fun:_ZN20QInputContextFactory6createERK7QStringP7QObject
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:realloc
+   fun:_XlcResolveLocaleName
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XrmInternalStringToQuark
+   fun:XrmPermStringToQuark
+   fun:XrmInitialize
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcOpenConverter
+   fun:_XimLocalOpenIM
+   fun:_XimOpenIM
+   fun:XOpenIM
+   fun:_ZN16QXIMInputContext10create_ximEv
+   fun:xim_create_callback
+   fun:_XimRegisterIMInstantiateCallback
+   fun:XRegisterIMInstantiateCallback
+   fun:_ZN16QXIMInputContextC1Ev
+   fun:_ZN20QInputContextFactory6createERK7QStringP7QObject
+   fun:_ZNK12QApplication12inputContextEv
+   fun:_ZN7QWidget12inputContextEv
+   fun:_ZN7QWidget7destroyEbb
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XimSetLocalIMDefaults
+   fun:_XimLocalOpenIM
+   fun:_XimOpenIM
+   fun:XOpenIM
+   fun:_ZN16QXIMInputContext10create_ximEv
+   fun:xim_create_callback
+   fun:_XimRegisterIMInstantiateCallback
+   fun:XRegisterIMInstantiateCallback
+   fun:_ZN16QXIMInputContextC1Ev
+   fun:_ZN20QInputContextFactory6createERK7QStringP7QObject
+   fun:_ZNK12QApplication12inputContextEv
+   fun:_ZN7QWidget12inputContextEv
+   fun:_ZN7QWidget7destroyEbb
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_Z6loadFcPK12QFontPrivateiRK8QFontDef
+   fun:_ZN13QFontDatabase4loadEPK12QFontPrivatei
+   fun:_ZNK12QFontPrivate15engineForScriptEi
+   fun:_ZNK12QFontMetrics6heightEv
+   fun:_ZN10Q3ListView4initEv
+   fun:_ZN10Q3ListViewC2EP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:IceAuthFileName
+   fun:_IceGetPoValidAuthIndices
+   fun:IceOpenConnection
+   fun:SmcOpenConnection
+   fun:_ZN15QSessionManagerC1EP12QApplicationR7QStringS3_
+   fun:_ZN19QApplicationPrivate10initializeEv
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC2ERiPPcb
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN5QFontC1ERK7QStringiib
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC2ERiPPcb
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Param
+   write(buf)
+   fun:write
+   fun:_X11TransWrite
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XReply
+   fun:XGetWindowProperty
+   fun:_ZNK14QDesktopWidget17availableGeometryEi
+   fun:_ZNK14QDesktopWidget17availableGeometryEPK7QWidget
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Param
+   write(buf)
+   fun:write
+   fun:_X11TransWrite
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XFlush
+   fun:_ZN7QWidget9setCursorERK7QCursor
+   fun:_ZN24Q3DockWindowResizeHandle14setOrientationEN2Qt11OrientationE
+   fun:_ZN24Q3DockWindowResizeHandleC1EN2Qt11OrientationEP7QWidgetP12Q3DockWindowPKc
+   fun:_ZN12Q3DockWindow4initEv
+   fun:_ZN12Q3DockWindowC2ENS_5PlaceEP7QWidgetPKc6QFlagsIN2Qt10WindowTypeEEb
+   fun:_ZN9Q3ToolBarC2ERK7QStringP12Q3MainWindowP7QWidgetbPKc6QFlagsIN2Qt10WindowTypeEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Param
+   writev(vector[...])
+   obj:/lib/libc-2.3.6.so
+   fun:writev
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_X11TransWritev
+   fun:_XSend
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XPutImage
+   fun:_ZN7QPixmap9fromImageERK6QImage6QFlagsIN2Qt19ImageConversionFlagEE
+   fun:_ZN12QPaintEngine9drawImageERK6QRectFRK6QImageS2_6QFlagsIN2Qt19ImageConversionFlagEE
+   fun:_ZN15QPainterPrivate11draw_helperERK12QPainterPathNS_13DrawOperationE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Param
+   write(buf)
+   fun:write
+   fun:_X11TransWrite
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XEventsQueued
+   fun:XEventsQueued
+   fun:_ZN19QEventDispatcherX1113processEventsE6QFlagsIN10QEventLoop17ProcessEventsFlagEE
+   fun:_ZN10QEventLoop13processEventsE6QFlagsINS_17ProcessEventsFlagEE
+   fun:_ZN10QEventLoop4execE6QFlagsINS_17ProcessEventsFlagEE
+   fun:_ZN16QCoreApplication4execEv
+   fun:_ZN12QApplication4execEv
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLocaleDataBase
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLocaleDataBase
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:realloc
+   obj:/usr/lib/libfreetype.so.6.3.8
+   fun:FT_Realloc
+   fun:FT_GlyphLoader_CheckPoints
+   obj:/usr/lib/libfreetype.so.6.3.8
+   obj:/usr/lib/libfreetype.so.6.3.8
+   obj:/usr/lib/libfreetype.so.6.3.8
+   obj:/usr/lib/libfreetype.so.6.3.8
+   fun:FT_Load_Glyph
+   fun:_ZNK13QFontEngineFT9loadGlyphEjNS_11GlyphFormatE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcCreateLocaleDataBase
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN13QFontEngineFTC1EP10_FcPatternRK8QFontDefi
+   fun:_ZN18QFontEngineMultiFT10loadEngineEi
+   fun:_ZN18QFontEngineMultiFTC1EP10_FcFontSetiRK8QFontDef
+   fun:_Z6loadFcPK12QFontPrivateiRK8QFontDef
+   fun:_ZN13QFontDatabase4loadEPK12QFontPrivatei
+   fun:_ZNK12QFontPrivate15engineForScriptEi
+   fun:_ZNK12QFontMetrics6heightEv
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libfreetype.so.6.3.8
+   fun:FT_Alloc
+   fun:FT_Realloc
+   obj:/usr/lib/libfreetype.so.6.3.8
+   obj:/usr/lib/libfreetype.so.6.3.8
+   obj:/usr/lib/libfreetype.so.6.3.8
+   obj:/usr/lib/libfreetype.so.6.3.8
+   obj:/usr/lib/libfreetype.so.6.3.8
+   fun:FT_Load_Glyph
+   fun:_ZNK13QFontEngineFT9loadGlyphEjNS_11GlyphFormatE
+   fun:_ZNK13QFontEngineFT14recalcAdvancesEiP12QGlyphLayout6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK13QFontEngineFT12stringToCMapEPK5QChariP12QGlyphLayoutPi6QFlagsIN11QTextEngine10ShaperFlagEE
+   fun:_ZNK13QFontEngineFT15minRightBearingEv
+   fun:_ZNK13QFontEngineFT14minLeftBearingEv
+   fun:_ZNK16QFontEngineMulti14minLeftBearingEv
+   fun:_ZNK12QFontMetrics14minLeftBearingEv
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:calloc
+   obj:/lib/libdl-2.3.6.so
+   fun:dlopen
+   fun:_ZN15QLibraryPrivate8load_sysEv
+   fun:_ZN15QLibraryPrivate4loadEv
+   fun:_ZN15QLibraryPrivate10loadPluginEv
+   fun:_ZNK14QFactoryLoader8instanceERK7QString
+   fun:_Z17createReadHandlerP9QIODeviceRK10QByteArray
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:expand_dynamic_string_token
+   fun:_dl_map_object
+   obj:/lib/libc-2.3.6.so
+   fun:_dl_catch_error
+   fun:_dl_open
+   obj:/lib/libdl-2.3.6.so
+   fun:_dl_catch_error
+   obj:/lib/libdl-2.3.6.so
+   fun:dlopen
+   fun:_ZN15QLibraryPrivate8load_sysEv
+   fun:_ZN15QLibraryPrivate4loadEv
+   fun:_ZN15QLibraryPrivate10loadPluginEv
+   fun:_ZNK14QFactoryLoader8instanceERK7QString
+   fun:_Z17createReadHandlerP9QIODeviceRK10QByteArray
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:calloc
+   fun:_dl_check_map_versions
+   obj:/lib/libc-2.3.6.so
+   fun:_dl_catch_error
+   fun:_dl_open
+   obj:/lib/libdl-2.3.6.so
+   fun:_dl_catch_error
+   obj:/lib/libdl-2.3.6.so
+   fun:dlopen
+   fun:_ZN15QLibraryPrivate8load_sysEv
+   fun:_ZN15QLibraryPrivate4loadEv
+   fun:_ZN15QLibraryPrivate10loadPluginEv
+   fun:_ZNK14QFactoryLoader8instanceERK7QString
+   fun:_Z17createReadHandlerP9QIODeviceRK10QByteArray
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Param
+   write(buf)
+   fun:write
+   fun:_X11TransWrite
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XReply
+   fun:XSync
+   fun:XCloseDisplay
+   fun:_Z10qt_cleanupv
+   fun:_ZN12QApplicationD1Ev
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcAddCT
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:realloc
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcUtf8Loader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcAddCT
+   fun:_XlcInitCTInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcUtf8Loader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:realloc
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:realloc
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcAddCharSet
+   fun:_XlcAddCT
+   fun:_XlcInitCTInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcUtf8Loader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcCreateDefaultCharSet
+   fun:_XlcAddCT
+   fun:_XlcInitCTInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcUtf8Loader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcSetConverter
+   fun:_XlcInitCTInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcUtf8Loader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcCreateDefaultCharSet
+   fun:_XlcAddCT
+   fun:_XlcInitCTInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcUtf8Loader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcAddCT
+   fun:_XlcInitCTInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcUtf8Loader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcCreateLocaleDataBase
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcUtf8Loader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcCreateDefaultCharSet
+   fun:_XlcAddCT
+   fun:_XlcInitCTInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcUtf8Loader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XrmInternalStringToQuark
+   fun:XrmPermStringToQuark
+   fun:XrmInitialize
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Param
+   writev(vector[...])
+   obj:/lib/libc-2.3.6.so
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_X11TransWritev
+   fun:_XSend
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XPutImage
+   fun:XCreateBitmapFromData
+   fun:_ZN7QBitmap9fromImageERK6QImage6QFlagsIN2Qt19ImageConversionFlagEE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN7QObjectC2EPS_
+   fun:_ZN14QImageIOPluginC2EP7QObject
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:qt_plugin_instance
+   fun:_ZNK14QFactoryLoader8instanceERK7QString
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_dl_map_object_deps
+   obj:/lib/libc-2.3.6.so
+   fun:_dl_catch_error
+   fun:_dl_open
+   obj:/lib/libdl-2.3.6.so
+   fun:_dl_catch_error
+   obj:/lib/libdl-2.3.6.so
+   fun:dlopen
+   fun:_ZN15QLibraryPrivate8load_sysEv
+   fun:_ZN15QLibraryPrivate4loadEv
+   fun:_ZN15QLibraryPrivate10loadPluginEv
+   fun:_ZNK14QFactoryLoader8instanceERK7QString
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_dl_map_object
+   fun:openaux
+   fun:_dl_catch_error
+   fun:_dl_map_object_deps
+   obj:/lib/libc-2.3.6.so
+   fun:_dl_catch_error
+   fun:_dl_open
+   obj:/lib/libdl-2.3.6.so
+   fun:_dl_catch_error
+   obj:/lib/libdl-2.3.6.so
+   fun:dlopen
+   fun:_ZN15QLibraryPrivate8load_sysEv
+   fun:_ZN15QLibraryPrivate4loadEv
+   fun:_ZN15QLibraryPrivate10loadPluginEv
+   fun:_ZNK14QFactoryLoader8instanceERK7QString
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:decompose_rpath
+   fun:cache_rpath
+   fun:_dl_map_object
+   fun:openaux
+   fun:_dl_catch_error
+   fun:_dl_map_object_deps
+   obj:/lib/libc-2.3.6.so
+   fun:_dl_catch_error
+   fun:_dl_open
+   obj:/lib/libdl-2.3.6.so
+   fun:_dl_catch_error
+   obj:/lib/libdl-2.3.6.so
+   fun:dlopen
+   fun:_ZN15QLibraryPrivate8load_sysEv
+   fun:_ZN15QLibraryPrivate4loadEv
+   fun:_ZN15QLibraryPrivate10loadPluginEv
+   fun:_ZNK14QFactoryLoader8instanceERK7QString
+}
+
+{
+   FontConfig leaks
+   Memcheck:Leak
+   fun:*alloc
+   fun:Fc*
+}
+
+{
+   More FontConfig Leaks
+   Memcheck:Leak
+   fun:*alloc
+   obj:/usr/lib/libfontconfig.so.1.0.4
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:*alloc
+   fun:_dl_new_object
+   fun:_dl_map_object_from_fd
+   fun:_dl_map_object
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XrmInternalStringToQuark
+   fun:XrmPermStringToQuark
+   fun:XrmInitialize
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:IceRegisterForProtocolSetup
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:*alloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcCreateLC
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN26QAbstractFileEngineHandlerC2Ev
+   fun:_ZN26QResourceFileEngineHandlerC1Ev
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:FcBlanksCreate
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   obj:/usr/lib/libexpat.so.0.5.0
+   obj:/usr/lib/libexpat.so.0.5.0
+   fun:XML_ParseBuffer
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:calloc
+   obj:/lib/libdl-2.3.6.so
+   fun:dlopen
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:realloc
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   fun:FcNameParseCharSet
+   fun:FcNameParse
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   fun:FcGlobalCacheScanDir
+   fun:FcDirScanConfig
+   fun:FcConfigBuildFonts
+   fun:FcInitLoadConfigAndFonts
+   fun:FcInit
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XrmInternalStringToQuark
+   fun:XrmPermStringToQuark
+   fun:XrmInitialize
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:realloc
+   fun:_Z8qReallocPvj
+   fun:_ZN9QListData7reallocEi
+   fun:_ZN9QListData7prependEv
+   fun:_ZN5QListIP26QAbstractFileEngineHandlerE7prependERKS1_
+   fun:_ZN26QAbstractFileEngineHandlerC2Ev
+   fun:_ZN26QResourceFileEngineHandlerC1Ev
+   fun:_Z21resource_file_handlerv
+   fun:_Z22qt_force_resource_initv
+   fun:_Z41__static_initialization_and_destruction_0ii
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcAddCT
+   fun:_XlcInitCTInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:FcFontSetCreate
+   fun:FcConfigCreate
+   fun:FcInitLoadConfig
+   fun:FcInitLoadConfigAndFonts
+   fun:FcInit
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:FcConfigCreate
+   fun:FcInitLoadConfig
+   fun:FcInitLoadConfigAndFonts
+   fun:FcInit
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:FcStrCopyFilename
+   fun:FcConfigSetCache
+   fun:FcConfigCreate
+   fun:FcInitLoadConfig
+   fun:FcInitLoadConfigAndFonts
+   fun:FcInit
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:FcStrSetCreate
+   fun:FcConfigCreate
+   fun:FcInitLoadConfig
+   fun:FcInitLoadConfigAndFonts
+   fun:FcInit
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:realloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:realloc
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:strdup
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:realloc
+   fun:FcBlanksAdd
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   obj:/usr/lib/libexpat.so.0.5.0
+   obj:/usr/lib/libexpat.so.0.5.0
+   fun:XML_ParseBuffer
+   fun:FcConfigParseAndLoad
+   fun:FcInitLoadConfig
+   fun:FcInitLoadConfigAndFonts
+   fun:FcInit
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:XextCreateExtension
+   fun:XInput_find_display
+   fun:_XiGetExtensionVersion
+   fun:XGetExtensionVersion
+   fun:_Z17isXInputSupportedP9_XDisplay
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:strdup
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:IceAuthFileName
+   fun:_IceGetPoValidAuthIndices
+   fun:IceOpenConnection
+   fun:SmcOpenConnection
+   fun:_ZN15QSessionManagerC1EP12QApplicationR7QStringS3_
+   fun:_ZN19QApplicationPrivate10initializeEv
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   fun:FcStrSetAddFilename
+   fun:FcConfigAddConfigDir
+   fun:FcConfigAddDir
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   obj:/usr/lib/libexpat.so.0.5.0
+   obj:/usr/lib/libexpat.so.0.5.0
+   obj:/usr/lib/libexpat.so.0.5.0
+   obj:/usr/lib/libexpat.so.0.5.0
+   fun:XML_ParseBuffer
+   fun:FcConfigParseAndLoad
+   fun:FcInitLoadConfig
+   fun:FcInitLoadConfigAndFonts
+   fun:FcInit
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:expand_dynamic_string_token
+   fun:_dl_map_object
+   obj:/lib/libc-2.3.6.so
+   fun:_dl_catch_error
+   fun:_dl_open
+   obj:/lib/libdl-2.3.6.so
+   fun:_dl_catch_error
+   obj:/lib/libdl-2.3.6.so
+   fun:dlopen
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcAddCharSet
+   fun:_XlcAddCT
+   fun:_XlcInitCTInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:FcStrCopyFilename
+   fun:FcStrSetAddFilename
+   fun:FcConfigAddConfigDir
+   fun:FcConfigAddDir
+   obj:/usr/lib/libfontconfig.so.1.0.4
+   obj:/usr/lib/libexpat.so.0.5.0
+   obj:/usr/lib/libexpat.so.0.5.0
+   obj:/usr/lib/libexpat.so.0.5.0
+   obj:/usr/lib/libexpat.so.0.5.0
+   fun:XML_ParseBuffer
+   fun:FcConfigParseAndLoad
+   fun:FcInitLoadConfig
+   fun:FcInitLoadConfigAndFonts
+   fun:FcInit
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcCreateDefaultCharSet
+   fun:_XlcAddCT
+   fun:_XlcInitCTInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:calloc
+   fun:pthread_setspecific
+   fun:_ZN14QThreadPrivate16setCurrentThreadEP7QThread
+   fun:_ZN23QCoreApplicationPrivateC2ERiPPc
+   fun:_ZN19QApplicationPrivateC1ERiPPcN12QApplication4TypeE
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:calloc
+   fun:_dl_check_map_versions
+   obj:/lib/libc-2.3.6.so
+   fun:_dl_catch_error
+   fun:_dl_open
+   obj:/lib/libdl-2.3.6.so
+   fun:_dl_catch_error
+   obj:/lib/libdl-2.3.6.so
+   fun:dlopen
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_dl_map_object_deps
+   obj:/lib/libc-2.3.6.so
+   fun:_dl_catch_error
+   fun:_dl_open
+   obj:/lib/libdl-2.3.6.so
+   fun:_dl_catch_error
+   obj:/lib/libdl-2.3.6.so
+   fun:dlopen
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_XlcSetConverter
+   fun:_XlcInitCTInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:_XlcCreateLC
+   fun:_XlcDefaultLoader
+   fun:_XlcDynamicLoad
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/X11R6/lib/libX11.so.6.2
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+   fun:_ZN19QApplicationPrivate9constructEv
+   fun:_ZN12QApplicationC1ERiPPc
+}
+

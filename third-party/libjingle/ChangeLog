@@ -1,0 +1,17 @@
+Libjingle
+
+0.3.0 - Mar 16 2006
+	- New GipsLiteMediaEngine included to make calls using the GIPS
+	  VoiceEngine Lite media componentry on Windows
+
+0.2.0 - Jan 27 2006
+	- Windows build fixes with Visual Studio Express project files
+	- Pseudo-TCP support provides TCP-like reliability over a P2PSocket
+	- TunnelSessionClient establishes sessions for reliably sending data
+	  using Pseudo-TCP
+	- A new pcp example application transfers files from one user to
+	  another using TunnelSessionClient
+	- TLS login support for both example applications
+
+0.1.0 - Dec 15 2005
+        - Initial release

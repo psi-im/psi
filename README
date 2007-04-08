@@ -1,0 +1,285 @@
+Psi 0.11-beta3
+---------
+Date: October 11th, 2006
+
+Project Lead/Maintainer (2004-current):
+  Kevin Smith
+  kismith@psi-im.org
+  http://www.kismith.co.uk/
+
+Original Author (2001-2004):
+  Justin Karneges
+  justin@affinix.com
+  http://psi-im.org/
+
+
+  For installation or compiling instructions, see the INSTALL file.
+
+  This program is licensed under the GNU General Public License.  See
+  the COPYING file for more information.
+
+Known Issues
+------------
+This is a beta (preview) version of Psi and is not intended to be release 
+quality or used in production environments.  Particularly, the following 
+issues are known (those issues which are believed to have originated in 
+external libraries are marked with a *):
+  - GnuPG is temporarily not supported.
+  - Mouse actions on tabbed chat windows have been temporarily disabled.
+  - Proxy support is broken in some, if not all, circumstances.
+  - On Mac, the menubar is only populated when the roster is the current
+      selected window. *
+  - Roster tooltips are a little ugly currently, more whitespace will be 
+      added again later.
+  - When receiving multiline messages in a chat, sometimes some lines will
+      not be visible until another message is received or sent. 
+  - Clicking on Psi popups sometimes causes a crash.
+
+Notes
+-----
+  - This beta release includes a patched version of QCA2. Although it is 
+      possible to link against another self-patched QCA2, it is strongly 
+      recommended to use the provided tree, which is now default when
+      using ./configure on unices, or by default on Windows.
+
+  - Upgrading to 0.11 --
+    * The last used profile settings will not be transferred from 0.10 and
+      previous Qt3-based builds to the 0.11-beta1 and newer Qt4 based builds.
+      If Psi loads with a blank profile, cancel the account creation and use 
+     "Choose profile" to reset your default profile.	
+    * When you decide to switch to Psi 0.11 permanently, you can safely clear
+      the 'affinix.com' keys from your registry.
+    * The PEM format is now used for storing SSL certificates.
+    * You must use the QCA-OpenSSL plugin for QCA2 to utilize SSL.
+      The older 'QSSL' plugin and QCA1 plugin will not work.
+    * Psi 0.11-beta2 does not yet have the GnuPG features restored.
+      DO NOT install qca-gnupg ! This plugin is not finished yet, and will
+      make Psi crash if any PGP operation is performed.
+    * Users upgrading from pre-0.10 will not benefit from the new colour 
+      scheme. If they want the new colours, they should quit Psi and edit 
+      their config.xml file y hand. For details, please see the User Guide in 
+      the Help menu. 
+
+  - GnuPG tips --
+    * Always use the latest version of GnuPG.
+    * On Windows, use a native build instead of one based on cygwin, and make
+      sure it is properly installed in the registry.
+    * Ensure 'gpg' actually works, by testing it from the command-line.
+    * You must have a public and secret keyring.  Psi cannot operate
+      without them, and they must be there when you start it.
+    * If you experience fatal GnuPG incompatibilities, you can pass
+      the --no-gpg option to Psi and gpg will not be used.
+    * If you have gpg-agent set up, but you don't want Psi to use it, then
+      you can pass --no-gpg-agent to force the use of Psi's built-in prompt.
+
+
+Changes
+-------
+  New in 0.11
+  - Added new default Stellar3 iconset
+  - Added support for JEP-138 (Stream Compression)
+  - Added support for using JEP-33 (Extended Stanza Addressing) to multicast
+    messages to multiple users. Use option.enable-multicasting to enable it.
+  - Added 'Show status message' toggle. There is a hidden option to put 
+    status messages under the nickname (at the cost of 2 extra pixels
+	when no status message is shown)
+  - Support for Bookmark Storage (JEP-0048), where bookmarked conferences are
+    auto-joined. No UI is provided for creating bookmarks (yet).
+  - Better error messages, including error condition mappings (JEP-0086)
+  - Support dynamically changing priority
+  - Improved PGP error messages
+  - Hiding the deprecated protocol selector for service discovery by default.
+    Use option.ui.show-deprecated.service-discovery.protocol-selector to
+	re-enable it.
+  - New options system (see options.xml)
+  - Receiving support for vCard-Based Avatars (JEP-0153)
+  - Support for Multi-User-Chat (JEP-0045)
+  - Preliminary support for User Nickname (JEP-0172)
+  - Preliminary support for Roster Item Exchange (JEP-0144)
+  - Psi now uses the Qt4(>=4.2) and QCA2 libraries, replacing the Qt3 and QCA1 
+    requirements.
+  - "Privacy List" support in the account dialog.
+  - Support for JEP-0050 (Ad-hoc commands)
+  - Preliminary support for JEP-0163 (Personal Eventing Protocol)
+  - Preliminary support for JEP-0146 (Remote Controlling Clients)
+  - Large parts of the codebase have been restructured.
+  - Fixed a chat room bug where subject/topic changes were not shown.
+  - Mac OS X builds are now universal binaries, supporting the new Intel 
+    based Macs.
+  - Support for JEP-85 (Chat State Notifications).
+  - Support for JEP-0115 (Entity Capabilities).
+  - There is now a config.xml option to make some windows use the brushed
+    metal theme on Mac OS X.
+  - Window opacity support is now present for all three supported platforms.
+  - Fixed Unicode URL opening bug #510
+  - Auto-reconnect accounts on wakeup
+  - Copy-pasting with emoticons now works
+  - Fixed issue #263 where emoticons would disappear in a reply or quote
+  - History index is rebuilt faster
+  - Configure toolbars merged into main preferences dialog
+  - Moving tooltips
+  - MingW32 compiler support (Coupled with the open source Qt4 Windows library
+    this now allows completely free building of Psi on Windows)
+
+  New in 0.10
+  - Psi will now sign out before Windows or Mac OS X machines go to 'sleep'
+  - The default text input line in the chat dialogs starts at one line tall, and grows as necessary.
+  - The Roster can now be automatically resized to fit all contacts.
+  - The Roster now has a menu bar available on Windows and Linux
+  - Chat windows can be collected together using tabs
+  - On Windows and Mac OS X, selected text may be automatically copied to the clipboard.
+  - Mac OS X builds now enjoy Growl(.info) support
+  - Photos are now available in the VCard dialog
+  - New default colour scheme
+  - New default iconsets
+  - Roster and chat dialog opacity is now configurable on Windows and Mac OS X
+  - The colour scheme is now slightly more configurable
+  - Assorted minor feature additions and bug fixes
+
+  New in 0.9.3
+  - Notification when a user is typing
+  - Advanced Data Forms capability (x:data)
+  - Mac version uses the menu bar and also has a new color scheme
+  - Slightly improved new user dialog
+  - Drag and drop File Transfer
+  - Ability to specify a status messages when going offline
+  - The tray icon under X11 should now be more beautiful
+  - Show self-contact is now a toolbar button instead of a normal option
+  - There is now an option for all chat windows to be compact by default
+  - Bugfix: file transfer sometimes wouldn't send the whole file
+  - Fixed many other small bugs
+
+  New in 0.9.2
+  - File transfer
+  - Event queue is saved to disk at all times for fault protection
+  - Enable/disable accounts
+  - Groupchat nickname tab-completion
+  - Groupchat trackbar to mark last read text when unfocused
+  - *bold*, /italic/, _underline_
+  - Fixed bug where the roster window could get lost on Windows
+  - 'Compact' mode for chat window
+  - Tip of the day
+  - Hidden roster group
+  - Ability to export history as readable text
+  - Event queue sorting by type
+  - Type-ahead search in the roster
+  - External programs can now have parameters
+  - Toolbar configuration is now accessed from the right-click menu
+  - Show dates in local format
+  - Use the gnome-open utility for opening URLs with GNOME2
+  - Fixed "broken pipe" crash when receiving GnuPG errors
+
+  New in 0.9.1
+  - Service Discovery browser (JEP-0030)
+  - Popup notifications
+  - Redesigned Iconset & Emoticons system, based on JEP-0038
+  - Now possible to use service/transport icons for individual contacts
+  - Ability to use custom roster icons for contacts via RegExps
+  - Emoticon popup menu in chat window, for quick access
+  - Reorganized Options window
+  - Toolbar Editor
+  - GnuPG 1.2.3 compatibility
+  - New XMPP/Jabber engine (partially complete, XMPP 1.0 support deferred)
+  - SOCKS5 proxy support
+  - HTTP polling proxy support (JEP-0025)
+  - Roster groups open/closed state saved
+  - 'Free for Chat' status
+  - Character counter
+  - Selectable colors for roster 'blink' animation
+  - Copy Location in URL attachment context menu
+  - X11: WindowMaker docklet
+  - Windows: fixed idle detection on Windows 9x
+  - Mac: ability to hide/restore main window
+  - Option: ignore messages from addresses not in your roster
+  - Option: enter key sends chat messages
+  - Option: raise chat window on receiving new messages
+  - Option: auto-authorize contacts
+  - Option: 'small' group headings
+  - Option: treat incoming chats as messages unless chatting
+  - Option: show/hide subject line
+  - Option: enable/disable vCard check during login
+  - Account dialogs ensure the JID is a valid user-JID before accepting
+  - Bugfix: crash after using the Jabber browser
+  - Bugfix: crash when resolving DNS
+  - Bugfix: busy indicator sometimes stopped when it should still be running
+  - Fixed many other bugs
+
+
+Description
+-----------
+
+  Psi is a capable Jabber client aimed at experienced users.  Its design
+  goals are simplicity and stability.  Psi is highly portable and runs on
+  Windows, Unix/X11, and Mac OS X.
+
+  The interface is very ICQ-like.  Alerts appear in the contact list when
+  events are received, and things like subscriptions requests appear as
+  "system messages" (ICQ users know these well).  Even "Chats" are
+  queued in the contact list.  Also, chats are "remembered" by default,
+  so that you don't have to keep a bunch of windows open for each person.
+  Just close the chat window.  If you open it again it will all be there.
+
+  Psi is minimal but powerful.  There are keybindings for just about
+  everything, Unicode is supported throughout, and contacts are cached
+  offline.  Security is also a major consideration, and Psi provides it for
+  both client-to-server (SSL) and client-to-client (GnuPG).
+
+  Plans for v1.0:
+   - Multi-User Chat (JEP-0045)
+   - Plugin system
+   - Other misc stuff
+   - Bugfixes
+
+
+How you can help
+----------------
+
+  Comments
+  --------
+  We like comments, even (especially) if they are a simple thanks.
+
+  Bug reports
+  -----------
+  If you want to help us out, please file a bug report on our forum at 
+  http://forum.psi-im.org/forum/2 for release versions, or email us  a bug 
+  report to the development mailing list for development builds, details at:
+  http://lists.affinix.com/listinfo.cgi/psi-devel-affinix.com
+  Please be as descriptive as possible and tell us what exactly you were doing 
+  at the time something went wrong.  If possible, send us a stack backtrace.
+
+  Wishes
+  ------
+  We can't possibly know what everyone wants, so we appreciate all feature
+  requests. These can be submitted to http://forum.psi-im.org/forum/4
+
+  Porting
+  -------
+  Psi should be very portable.  Please e-mail us first if you want to
+  port Psi to another platform.
+
+  Graphics
+  --------
+  There are many ways to contribute to the Psi project, if you think you can 
+  do a better job with any of the Psi graphics, then go right ahead!
+
+  Sound
+  -----
+  Same goes for sound.  Start mixing!
+
+  Programming
+  -----------
+  Patches are welcome.  External tools would be useful as well, like Licq
+  conversion utilities (iconsets, message history, etc).  Get to work!
+
+  Packaging
+  ---------
+  Want to make an RPM or something?
+
+  Financial
+  ---------
+  You can send a paypal gift if you'd like, to justin@affinix.com
+
+
+Have fun,
+-The Psi team
+

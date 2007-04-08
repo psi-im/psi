@@ -1,0 +1,8 @@
+./libjingle/libjingle.pro
+./libjingle/talk/examples/call/call.pro
+./libjingle/talk/p2p/base/relayserver.pro
+./libjingle/talk/p2p/base/stunserver.pro
+./libjingle/talk/session/phone/portaudiomediaengine.cc
+./libjingle/talk/session/phone/portaudiomediaengine.h
+./libjingle/talk/third_party/mediastreamer/portaudiocard.c
+./libjingle/talk/third_party/mediastreamer/portaudiocard.h

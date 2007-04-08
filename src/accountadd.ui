@@ -1,0 +1,167 @@
+<ui version="4.0" stdsetdef="1" >
+  <author></author>
+  <comment></comment>
+  <exportmacro></exportmacro>
+  <class>AccountAdd</class>
+  <widget class="QDialog" name="AccountAdd" >
+    <property name="geometry" >
+      <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>465</width>
+        <height>252</height>
+      </rect>
+    </property>
+    <property name="windowTitle" >
+      <string>Add Account</string>
+    </property>
+    <layout class="QHBoxLayout" >
+      <property name="margin" >
+        <number>11</number>
+      </property>
+      <property name="spacing" >
+        <number>6</number>
+      </property>
+      <item>
+        <widget class="QTextEdit" name="TextEdit1" >
+          <property name="sizePolicy" >
+            <sizepolicy>
+              <hsizetype>0</hsizetype>
+              <vsizetype>7</vsizetype>
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+            </sizepolicy>
+          </property>
+          <property name="minimumSize" >
+            <size>
+              <width>200</width>
+              <height>0</height>
+            </size>
+          </property>
+          <property name="maximumSize" >
+            <size>
+              <width>200</width>
+              <height>32767</height>
+            </size>
+          </property>
+          <property name="text" >
+            <string>&lt;qt>Please choose a friendly &lt;b>Name&lt;/b> that Psi can use to refer to this account.&lt;br>
+&lt;br>
+Click the &lt;b>Register New Account&lt;/b> checkbox if you want Psi to try and create an account for you on a remote server.  If you are adding an existing Jabber account then leave this box unchecked.</string>
+          </property>
+          <property name="readOnly" >
+            <bool>true</bool>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <layout class="QVBoxLayout" >
+          <property name="margin" >
+            <number>0</number>
+          </property>
+          <item>
+            <layout class="QHBoxLayout" >
+              <property name="margin" >
+                <number>0</number>
+              </property>
+              <property name="spacing" >
+                <number>6</number>
+              </property>
+              <item>
+                <widget class="QLabel" name="lb_name" >
+                  <property name="text" >
+                    <string>Name:</string>
+                  </property>
+                </widget>
+              </item>
+              <item>
+                <widget class="QLineEdit" name="le_name" />
+              </item>
+            </layout>
+          </item>
+          <item>
+            <widget class="QCheckBox" name="ck_reg" >
+              <property name="text" >
+                <string>Register new account</string>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <spacer name="Spacer20" >
+              <property name="sizeHint" >
+                <size>
+                  <width>20</width>
+                  <height>130</height>
+                </size>
+              </property>
+              <property name="sizeType" >
+                <enum>Expanding</enum>
+              </property>
+              <property name="orientation" >
+                <enum>Vertical</enum>
+              </property>
+            </spacer>
+          </item>
+          <item>
+            <widget class="Line" name="Line3" >
+              <property name="frameShape" >
+                <enum>QFrame::HLine</enum>
+              </property>
+              <property name="frameShadow" >
+                <enum>QFrame::Sunken</enum>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <layout class="QHBoxLayout" >
+              <property name="margin" >
+                <number>0</number>
+              </property>
+              <item>
+                <spacer name="Spacer19" >
+                  <property name="sizeHint" >
+                    <size>
+                      <width>118</width>
+                      <height>20</height>
+                    </size>
+                  </property>
+                  <property name="sizeType" >
+                    <enum>Expanding</enum>
+                  </property>
+                  <property name="orientation" >
+                    <enum>Horizontal</enum>
+                  </property>
+                </spacer>
+              </item>
+              <item>
+                <widget class="IconButton" name="pb_close" >
+                  <property name="text" >
+                    <string>&amp;Close</string>
+                  </property>
+                </widget>
+              </item>
+              <item>
+                <widget class="IconButton" name="pb_add" >
+                  <property name="text" >
+                    <string>&amp;Add</string>
+                  </property>
+                  <property name="shortcut" >
+                    <string>Alt+A</string>
+                  </property>
+                  <property name="default" >
+                    <bool>true</bool>
+                  </property>
+                  <property name="iconName" stdset="0" >
+                    <string>psi/addContact</string>
+                  </property>
+                </widget>
+              </item>
+            </layout>
+          </item>
+        </layout>
+      </item>
+    </layout>
+  </widget>
+  <layoutdefault spacing="6" margin="11" />
+  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+</ui>

@@ -1,0 +1,25 @@
+/*
+-----BEGIN QCMOD-----
+name: KDE
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_kde
+//----------------------------------------------------------------------------
+class qc_kde : public ConfObj
+{
+public:
+	qc_kde(Conf *c) : ConfObj(c) {}
+	QString name() const { return "KDE"; }
+	QString shortname() const { return "kde"; }
+	bool exec()
+	{
+		char *p = getenv("KDEDIR");
+		if(!p)
+			return false;
+
+		conf->addExtra(QString("KDE = %1").arg(p));
+		return true;
+	}
+};

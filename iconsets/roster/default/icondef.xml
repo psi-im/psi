@@ -1,0 +1,117 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<icondef>
+	<meta>
+		<name>Stellar3</name>
+		<description>Stellar3 Iconset</description>
+	    <version>0.1</version>
+ 		<creation>2006-08-30</creation>
+		<author>Jason Kim (Base icon)</author>
+		<author www='http://www.everaldo.com'>Everaldo Coelho (Overlay icons)</author>
+		<author jid='remko@el-tramo.be' email='remko@el-tramo.be'
+			www='http://el-tramo.be'>Remko Troncon (Packaging)</author>
+	</meta>
+
+	<!-- Normal status icons -->
+	<icon>
+		<x xmlns='name'>status/online</x>
+		<object mime='image/png'>online.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>status/offline</x>
+		<object mime='image/png'>offline.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>status/away</x>
+		<object mime='image/png'>away.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>status/xa</x>
+		<object mime='image/png'>xa.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>status/dnd</x>
+		<object mime='image/png'>dnd.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>status/invisible</x>
+		<object mime='image/png'>invisible.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>status/chat</x>
+		<object mime='image/png'>chatty.png</object>
+	</icon>
+
+	<!-- Special statuses -->
+	<icon>
+		<x xmlns='name'>status/ask</x>
+		<object mime='image/png'>ask.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>status/noauth</x>
+		<object mime='image/png'>noauth.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>status/error</x>
+		<object mime='image/png'>perr.png</object>
+	</icon>
+
+	<!-- Special icons -->
+	<icon>
+		<x xmlns='name'>psi/chat</x>
+		<x xmlns='type'>animation</x>
+		<object mime='image/png'>chat.fading.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/message</x>
+		<x xmlns='type'>animation</x>
+		<object mime='image/png'>message.fading.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/headline</x>
+		<object mime='image/png'>headline.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/file</x>
+		<x xmlns='type'>animation</x>
+		<object mime='image/png'>file.fading.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/system</x>
+		<!--<x xmlns='type'>animation</x>-->
+		<object mime='image/png'>system.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/connect</x>
+		<x xmlns='type'>animation</x>
+		<object mime='image/png'>online.dimming.png</object>
+	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/groupClosed</x>
+		<object mime='image/png'>groupclose.png</object>
+	</icon>
+
+	<!-- FIXME -->
+	<icon>
+		<x xmlns='name'>psi/groupEmpty</x>
+		<object mime='image/png'>groupopen.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/groupOpen</x>
+		<object mime='image/png'>groupopen.png</object>
+	</icon>
+</icondef>

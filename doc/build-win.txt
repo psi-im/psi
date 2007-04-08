@@ -1,0 +1,75 @@
+Requirements
+------------
+
+* You need Qt 4.2 or higher to build Psi. Just download and install the MingW32 
+self-installer. All the instructions below are performed from within the Qt command 
+prompt (found in the Start menu)
+
+* You need QCA 2.0 and the QCA OpenSSL plugin, which you can get at
+		http://delta.affinix.com/qca/2.0/beta2
+Instructions on how to build these packages can be found below.
+
+* If you want to use the QCA OpenSSL plugin on Windows, you will need to
+download and install the OpenSSL package from
+		http://www.openssl.org/related/binaries.html
+
+
+
+Building QCA
+------------
+
+* Edit crypto_win.prf and change the QCA_PATH to the dir where you unpacked QCA. Then, 
+change -lqca to -lqca2. 
+
+* Copy crypto_win.prf to the mkspecs/features subdir of your Qt dir, and rename it to 
+crypto.prf.
+
+* In the src/ dir, run the following commands: 
+
+   qmake
+   mingw32-make
+
+* Copy lib/qca2.dll to your system dir (e.g. \Windows\System32) 
+
+
+
+Building the QCA OpenSSL plugin
+-------------------------------
+
+* Go to the dir where you unpacked OpenSSL. In the lib\MingW subdir of that dir, copy the 
+files ssleay32.a and libeay32.a to ssleay32.lib and libeay32.lib respectively.
+
+* Edit qca-openssl.pro, and change the OPENSSL_PREFIX in 
+the windows section to point to the dir where you installed OpenSSL (e.g. C:/OpenSSL). 
+Change -L$$OPENSSL_PREFIX/lib into -L$$OPENSSL_PREFIX/lib/MingW.
+
+* Run the following commands: 
+
+   qmake
+   mingw32-make
+
+
+
+Building Psi
+------------
+
+* Edit src/src.pro in the Psi tree, and remove the line CONFIG += DEBUG.
+
+* From the toplevel dir in your tree, run the following commands: 
+
+   qmake
+   mingw32-make
+
+* There should now be a binary psi.exe in src/release. 
+
+
+
+Packaging Psi
+-------------
+
+To package everything up into a self-containing dir, edit win32/Makefile to reflect your 
+local setup, and run
+
+   mingw32-make -C win32
+
+This should make a dir win32/psi with all the necessary files. 

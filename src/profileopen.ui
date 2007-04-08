@@ -1,0 +1,210 @@
+<ui version="4.0" stdsetdef="1" >
+  <author></author>
+  <comment></comment>
+  <exportmacro></exportmacro>
+  <class>ProfileOpen</class>
+  <widget class="QDialog" name="ProfileOpen" >
+    <property name="geometry" >
+      <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>305</width>
+        <height>197</height>
+      </rect>
+    </property>
+    <property name="windowTitle" >
+      <string>Open Profile</string>
+    </property>
+    <layout class="QVBoxLayout" >
+      <property name="margin" >
+        <number>0</number>
+      </property>
+      <property name="spacing" >
+        <number>0</number>
+      </property>
+      <item>
+        <layout class="QHBoxLayout" >
+          <property name="margin" >
+            <number>0</number>
+          </property>
+          <property name="spacing" >
+            <number>0</number>
+          </property>
+          <item>
+            <widget class="QLabel" name="lb_left" >
+              <property name="text" >
+                <string>left</string>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <widget class="QLabel" name="lb_logo" >
+              <property name="text" >
+                <string>Image goes here</string>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <widget class="QLabel" name="lb_right" >
+              <property name="text" >
+                <string>right</string>
+              </property>
+            </widget>
+          </item>
+        </layout>
+      </item>
+      <item>
+        <layout class="QVBoxLayout" >
+          <property name="margin" >
+            <number>11</number>
+          </property>
+          <item>
+            <widget class="QGroupBox" name="gb_open" >
+              <property name="title" >
+                <string>Open Profile</string>
+              </property>
+              <layout class="QVBoxLayout" >
+                <property name="margin" >
+                  <number>11</number>
+                </property>
+                <property name="spacing" >
+                  <number>6</number>
+                </property>
+                <item>
+                  <layout class="QHBoxLayout" >
+                    <property name="margin" >
+                      <number>0</number>
+                    </property>
+                    <property name="spacing" >
+                      <number>6</number>
+                    </property>
+                    <item>
+                      <widget class="QLabel" name="TextLabel4" >
+                        <property name="text" >
+                          <string>Profile:</string>
+                        </property>
+                      </widget>
+                    </item>
+                    <item>
+                      <widget class="QComboBox" name="cb_profile" >
+                        <property name="sizePolicy" >
+                          <sizepolicy>
+                            <hsizetype>7</hsizetype>
+                            <vsizetype>0</vsizetype>
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                          </sizepolicy>
+                        </property>
+                      </widget>
+                    </item>
+                  </layout>
+                </item>
+                <item>
+                  <widget class="QCheckBox" name="ck_auto" >
+                    <property name="text" >
+                      <string>&amp;Automatically open on startup</string>
+                    </property>
+                  </widget>
+                </item>
+              </layout>
+            </widget>
+          </item>
+          <item>
+            <layout class="QHBoxLayout" >
+              <property name="margin" >
+                <number>0</number>
+              </property>
+              <property name="spacing" >
+                <number>6</number>
+              </property>
+              <item>
+                <widget class="QLabel" name="lb_lang" >
+                  <property name="text" >
+                    <string>Language:</string>
+                  </property>
+                </widget>
+              </item>
+              <item>
+                <widget class="QComboBox" name="cb_lang" >
+                  <property name="sizePolicy" >
+                    <sizepolicy>
+                      <hsizetype>7</hsizetype>
+                      <vsizetype>0</vsizetype>
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                    </sizepolicy>
+                  </property>
+                </widget>
+              </item>
+            </layout>
+          </item>
+          <item>
+            <widget class="Line" name="Line1" >
+              <property name="frameShape" >
+                <enum>QFrame::HLine</enum>
+              </property>
+              <property name="frameShadow" >
+                <enum>QFrame::Sunken</enum>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <layout class="QHBoxLayout" >
+              <property name="margin" >
+                <number>0</number>
+              </property>
+              <item>
+                <widget class="IconButton" name="pb_close" >
+                  <property name="text" >
+                    <string>&amp;Quit</string>
+                  </property>
+                  <property name="iconName" stdset="0" >
+                    <string>psi/quit</string>
+                  </property>
+                </widget>
+              </item>
+              <item>
+                <spacer name="Spacer1" >
+                  <property name="sizeHint" >
+                    <size>
+                      <width>59</width>
+                      <height>20</height>
+                    </size>
+                  </property>
+                  <property name="sizeType" >
+                    <enum>Expanding</enum>
+                  </property>
+                  <property name="orientation" >
+                    <enum>Horizontal</enum>
+                  </property>
+                </spacer>
+              </item>
+              <item>
+                <widget class="IconButton" name="pb_profiles" >
+                  <property name="text" >
+                    <string>&amp;Profiles...</string>
+                  </property>
+                  <property name="iconName" stdset="0" >
+                    <string>psi/profile</string>
+                  </property>
+                </widget>
+              </item>
+              <item>
+                <widget class="IconButton" name="pb_open" >
+                  <property name="text" >
+                    <string>&amp;Open</string>
+                  </property>
+                  <property name="iconName" stdset="0" >
+                    <string>psi/logo_16</string>
+                  </property>
+                </widget>
+              </item>
+            </layout>
+          </item>
+        </layout>
+      </item>
+    </layout>
+  </widget>
+  <layoutdefault spacing="6" margin="11" />
+  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+</ui>

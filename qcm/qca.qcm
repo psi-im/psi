@@ -1,0 +1,44 @@
+/*
+-----BEGIN QCMOD-----
+name: external QCA 2.0
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_qca
+//----------------------------------------------------------------------------
+class qc_qca : public ConfObj
+{
+public:
+	qc_qca(Conf *c) : ConfObj(c) {}
+	QString name() const { return "QCA 2.0"; }
+	QString shortname() const { return "qca"; }
+	bool exec()
+	{
+		if (conf->getenv("QC_ENABLE_qca").isEmpty())
+			return false;
+
+		// test for "crypto" feature and check qca version number
+
+		QString proextra =
+		"CONFIG += qt crypto\n"
+		"QT -= gui\n";
+
+		QString str =
+		"#include <QtCrypto>\n"
+		"\n"
+		"int main()\n"
+		"{\n"
+		"	unsigned long x = QCA_VERSION;\n"
+		"	if(x >= 0x020000) return 0; else return 1;\n"
+		"}\n";
+
+		int ret;
+		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
+			return false;
+		if(ret != 0)
+			return false;
+
+		return true;
+	}
+};

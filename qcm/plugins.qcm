@@ -1,0 +1,41 @@
+/*
+-----BEGIN QCMOD-----
+name: Plugins
+arg: enable-plugins,Enable Psi Plugin support
+
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_plugins
+//----------------------------------------------------------------------------
+class qc_plugins : public ConfObj
+{
+public:
+	qc_plugins(Conf *c) : ConfObj(c) {}
+	QString name() const { return "Plugins"; }
+	QString shortname() const { return "Plugins"; }
+	bool exec()
+	{
+		QString s;
+		
+		// Check if Jingle was enabled explicitly
+		s = conf->getenv("QC_ENABLE_PLUGINS");
+		if(s.isEmpty())
+			return false;
+		
+		conf->addDefine("PSI_PLUGINS");
+		
+		// Finish
+		conf->addExtra("CONFIG += psi_plugins");                              
+
+		qWarning("");
+		qWarning("");
+		qWarning("        !!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!");
+		qWarning("        PLUGIN SUPPORT IS STILL UNFINISHED !!!");
+		qWarning("        THE PLUGIN INTERFACE /WILL/ CHANGE !!!");
+		qWarning("        USE AT YOUR OWN RISK !!!");
+
+		return true;
+	}
+};

@@ -1,0 +1,376 @@
+/*
+-----BEGIN QCMOD-----
+name: Jingle
+arg: enable-jingle,Enable Jingle support
+arg: with-expat-inc=[path],Path to Expat include files (for Jingle)
+arg: with-expat-lib=[path],Path to Expat library files (for Jingle)
+arg: with-speex-inc=[path],Path to Speex include files (for Jingle)
+arg: with-speex-lib=[path],Path to Speex library files (for Jingle)
+arg: with-ilbc-inc=[path],Path to iLBC include files (for Jingle)
+arg: with-ilbc-lib=[path],Path to iLBC library files (for Jingle)
+arg: with-ortp-inc=[path],Path to ORTP include files (for Jingle)
+arg: with-ortp-lib=[path],Path to ORTP library files (for Jingle)
+arg: with-alsa-inc=[path],Path to Alsa include files (for Jingle)
+arg: with-alsa-lib=[path],Path to Alsa library files (for Jingle)
+arg: with-portaudio-inc=[path],Path to PortAudio include files (for Jingle)
+arg: with-portaudio-lib=[path],Path to PortAudio library files (for Jingle)
+arg: with-glib-inc=[path],Path to GLib include files (for Jingle)
+arg: with-glib-lib=[path],Path to GLib library files (for Jingle)
+arg: with-glibconfig-inc=[path],Path to glibconfig include file (for Jingle)
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_jingle
+//----------------------------------------------------------------------------
+class qc_jingle : public ConfObj
+{
+public:
+	qc_jingle(Conf *c) : ConfObj(c) {}
+	QString name() const { return "Jingle"; }
+	QString shortname() const { return "Jingle"; }
+	bool exec()
+	{
+		QString s;
+		
+		// Check if Jingle was enabled explicitly
+		s = conf->getenv("QC_ENABLE_JINGLE");
+		if(s.isEmpty())
+			return false;
+		
+		// Expat
+		s = conf->getenv("QC_WITH_EXPAT_INC");
+		if(!s.isEmpty()) {
+			if(!conf->checkHeader(s, "expat.h")) {
+				qWarning("Expat includes not found!");
+				return false;
+			}
+			conf->addIncludePath(s);
+		}
+		else {
+			if(!conf->findHeader("expat.h", QStringList(), &s)) {
+				qWarning("Expat includes not found!");
+				return false;
+			}
+			conf->addIncludePath(s);
+		}
+
+		s = conf->getenv("QC_WITH_EXPAT_LIB");
+		if(!s.isEmpty()) {
+			if(!conf->checkLibrary(s, "expat")) {
+				qWarning("Expat library not found!");
+				return false;
+			}
+			conf->addLib(QString("-L") + s);
+		}
+		else {
+			if(!conf->findLibrary("expat", &s)) {
+				qWarning("Expat library not found!");
+				return false;
+			}
+			if (!s.isEmpty())
+				conf->addLib(QString("-L") + s);
+		}
+		
+		conf->addLib("-lexpat");
+
+
+		// Speex
+		s = conf->getenv("QC_WITH_SPEEX_INC");
+		if(!s.isEmpty()) {
+			if(!conf->checkHeader(s, "speex.h")) {
+				qWarning("Speex includes not found!");
+				return false;
+			}
+			conf->addIncludePath(s);
+		}
+		else {
+			QStringList sl;
+			sl += "/usr/include/speex";
+			sl += "/usr/local/include/speex";
+			if(!conf->findHeader("speex.h", sl, &s)) {
+				qWarning("Speex includes not found!");
+				return false;
+			}
+			conf->addIncludePath(s);
+		}
+
+		s = conf->getenv("QC_WITH_SPEEX_LIB");
+		if(!s.isEmpty()) {
+			if(!conf->checkLibrary(s, "speex")) {
+				qWarning("Speex libraries not found!");
+				return false;
+			}
+			conf->addLib(QString("-L") + s);
+		}
+		else {
+			if(!conf->findLibrary("speex", &s)) {
+				qWarning("Speex libraries not found!");
+				return false;
+			}
+			if (!s.isEmpty())
+				conf->addLib(QString("-L") + s);
+		}
+		
+		conf->addDefine("HAVE_SPEEX");
+		conf->addLib("-lspeex");
+
+
+		// ILBC (optional)
+		QString ilbc_include, ilbc_lib;
+		s = conf->getenv("QC_WITH_ILBC_INC");
+		if(!s.isEmpty()) {
+			if(conf->checkHeader(s, "iLBC_encode.h")) {
+				ilbc_include = s;
+			} 
+		}
+		else {
+			QStringList sl;
+			sl += "/usr/include/ilbc";
+			sl += "/usr/local/include/ilbc";
+			if(conf->findHeader("iLBC_encode.h", sl, &s)) {
+				ilbc_include = s;
+			}
+		}
+
+		s = conf->getenv("QC_WITH_ILBC_LIB");
+		if(!s.isEmpty()) {
+			if(conf->checkLibrary(s, "ilbc")) {
+				ilbc_lib = s;
+			}
+		}
+		else {
+			if(conf->findLibrary("ilbc", &s)) {
+				ilbc_lib = s;
+			}
+		}
+		
+		if (!ilbc_include.isEmpty() && !ilbc_lib.isEmpty()) {
+			conf->addIncludePath(ilbc_include);
+			conf->addLib(QString("-L") + ilbc_lib);
+			conf->addLib("-lilbc");
+			conf->addDefine("HAVE_ILBC");
+		}
+
+
+		// ORTP
+		s = conf->getenv("QC_WITH_ORTP_INC");
+		if(!s.isEmpty()) {
+			if(conf->checkHeader(s, "ortp/ortp.h")) {
+				conf->addIncludePath(s);
+			} 
+			else {
+				qWarning("ORTP includes not found!");
+				return false;
+			}
+		}
+		else {
+			QStringList sl;
+			sl += "/usr/include";
+			sl += "/usr/local/include";
+			if(conf->findHeader("ortp/ortp.h", sl, &s)) {
+				conf->addIncludePath(s);
+			}
+			else {
+				qWarning("ORTP includes not found!");
+				return false;
+			}
+		}
+
+		s = conf->getenv("QC_WITH_ORTP_LIB");
+		if(!s.isEmpty()) {
+			if(conf->checkLibrary(s, "ortp")) {
+				conf->addLib(QString("-L") + s);
+			}
+			else {
+				qWarning("ORTP libraries not found!");
+				return false;
+			}
+		}
+		else {
+			if(conf->findLibrary("ortp", &s)) {
+				if (!s.isEmpty())
+					conf->addLib(QString("-L") + s);
+			}
+			else {
+				qWarning("ORTP libraries not found!");
+				return false;
+			}
+		}
+		
+		conf->addLib("-lortp");
+		conf->addDefine("HAVE_ORTP");
+
+
+#if defined(Q_WS_X11)
+		s = conf->getenv("QC_WITH_ALSA_INC");
+		if(!s.isEmpty()) {
+			if(conf->checkHeader(s, "alsa/asoundlib.h")) {
+				conf->addIncludePath(s);
+			} 
+			else {
+				qWarning("Alsa includes not found!");
+				return false;
+			}
+		}
+		else {
+			QStringList sl;
+			sl += "/usr/include";
+			sl += "/usr/local/include";
+			if(conf->findHeader("alsa/asoundlib.h", sl, &s)) {
+				conf->addIncludePath(s);
+			}
+			else {
+				qWarning("Alsa includes not found!");
+				return false;
+			}
+		}
+
+		s = conf->getenv("QC_WITH_ALSA_LIB");
+		if(!s.isEmpty()) {
+			if(conf->checkLibrary(s, "asound")) {
+				conf->addLib(QString("-L") + s);
+			}
+			else {
+				qWarning("Alsa libraries not found!");
+				return false;
+			}
+		}
+		else {
+			if(conf->findLibrary("asound", &s)) {
+				if (!s.isEmpty())
+					conf->addLib(QString("-L") + s);
+			}
+			else {
+				qWarning("Alsa libraries not found!");
+				return false;
+			}
+		}
+		
+		conf->addLib("-lasound");
+		conf->addDefine("HAVE_ALSA_ASOUNDLIB_H");
+		conf->addDefine("__ALSA_ENABLED__");
+#elif defined(Q_WS_MAC)
+		// Check for PortAudio
+		s = conf->getenv("QC_WITH_PORTAUDIO_INC");
+		if(!s.isEmpty()) {
+			if(!conf->checkHeader(s, "portaudio.h")) {
+				qWarning("Portaudio includes not found!");
+				return false;
+			}
+			conf->addIncludePath(s);
+		}
+		else {
+			if(!conf->findHeader("portaudio.h", QStringList(), &s)) {
+				qWarning("Portaudio includes not found!");
+				return false;
+			}
+			conf->addIncludePath(s);
+		}
+
+		s = conf->getenv("QC_WITH_PORTAUDIO_LIB");
+		if(!s.isEmpty()) {
+			if(!conf->checkLibrary(s, "portaudio")) {
+				qWarning("PortAudio library not found!");
+				return false;
+			}
+			conf->addLib(QString("-L") + s);
+		}
+		else {
+			if(!conf->findLibrary("portaudio", &s)) {
+				qWarning("PortAudio library not found!");
+				return false;
+			}
+			if (!s.isEmpty())
+				conf->addLib(QString("-L") + s);
+		}
+		
+		conf->addLib("-lportaudio");
+		conf->addDefine("HAVE_PORTAUDIO");
+#endif
+		QFile file("third-party/libjingle/config.h");
+		if (file.open(QIODevice::WriteOnly))
+			file.close();
+
+		// GLib
+		s = conf->getenv("QC_WITH_GLIB_INC");
+		if(!s.isEmpty()) {
+			if(conf->checkHeader(s, "glib.h")) {
+				conf->addIncludePath(s);
+			} 
+			else {
+				qWarning("GLib includes not found!");
+				return false;
+			}
+		}
+		else {
+			QStringList sl;
+			sl += "/usr/include/glib";
+			sl += "/usr/local/include/glib";
+			sl += "/usr/include/glib-2.0";
+			if(conf->findHeader("glib.h", sl, &s)) {
+				conf->addIncludePath(s);
+			}
+			else {
+				qWarning("GLib includes not found!");
+				return false;
+			}
+		}
+
+		s = conf->getenv("QC_WITH_GLIB_LIB");
+		if(!s.isEmpty()) {
+			if(conf->checkLibrary(s, "glib-2.0")) {
+				conf->addLib(QString("-L") + s);
+			}
+			else {
+				qWarning("GLib 2.0 libraries not found!");
+				return false;
+			}
+		}
+		else {
+			if(conf->findLibrary("glib-2.0", &s)) {
+				if (!s.isEmpty())
+					conf->addLib(QString("-L") + s);
+			}
+			else {
+				qWarning("GLib 2.0 libraries not found!");
+				return false;
+			}
+		}
+		
+		conf->addLib("-lglib-2.0 -lgmodule-2.0 -lgthread-2.0");
+		conf->addDefine("HAVE_GLIB");
+		
+		// Glibconfig
+		s = conf->getenv("QC_WITH_GLIBCONFIG_INC");
+		if(!s.isEmpty()) {
+			if(conf->checkHeader(s, "glibconfig.h")) {
+				conf->addIncludePath(s);
+			} 
+			else {
+				qWarning("glibconfig.h includes not found!");
+				return false;
+			}
+		}
+		else {
+			if(conf->findHeader("glibconfig.h", QStringList("/usr/lib/glib-2.0/include"), &s)) {
+				conf->addIncludePath(s);
+			}
+			else {
+				qWarning("glibconfig.h not found!");
+				return false;
+			}
+		}
+
+		// Finish
+		conf->addExtra("CONFIG += jingle");                              
+
+		qWarning("");
+		qWarning("");
+		qWarning("        !!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!");
+		qWarning("        LIBJINGLE SUPPORT IS STILL EXPERIMENTAL !!!");
+		qWarning("        USE AT YOUR OWN RISK !!!");
+
+		return true;
+	}
+};

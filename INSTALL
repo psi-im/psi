@@ -1,0 +1,36 @@
+Installation
+------------
+
+-=[ Linux / Unix ]=-
+
+  For instructions on how to build and install Psi on Unix systems, see 
+  the 'Compiling' section below.
+
+-=[ Windows ]=-
+
+  No installation required for Windows.  You can simply just
+  run the Psi executable.  You might want to move everything into
+  C:\Program Files\Psi
+
+-=[ MacOS X ]=-
+
+  Just run the Psi "executable package" thing.  No installation required.
+
+
+Compiling
+---------
+
+Requirements:
+  - Qt 4.2.0
+  - QCA 2.0 or compatible (This is temporarily bundled, and an external install
+         is not necessary)
+
+You can obtain Qt at http://www.trolltech.com/
+
+You can obtain QCA at http://delta.affinix.com/qca/2.0/beta2
+Instructions on how to build QCA can be found in the build documentation of
+Psi. 
+
+For information about building Psi on Unix, see doc/build-unix.txt.
+For information about building Psi on Mac OS X, see doc/build-mac.txt.
+For information about building Psi on Windows, see doc/build-win.txt.

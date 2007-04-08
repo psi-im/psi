@@ -1,0 +1,12 @@
+#!/bin/bash
+# WARNING! All changes made in this file will be lost!
+basedir=`pwd`
+do_make() {
+  if test ! -e Makefile; then qmake; fi
+  make check
+}
+cd ../src/tools/iconset/unittest && do_make && cd $basedir && \
+cd ../src/widgets/unittest/iconaction && do_make && cd $basedir && \
+cd ../src/widgets/unittest/richtext && do_make && cd $basedir && \
+cd ../src/unittest/psiiconset && do_make && cd $basedir && \
+cd ../src/unittest/psipopup && do_make && cd $basedir

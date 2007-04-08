@@ -1,0 +1,94 @@
+/*
+-----BEGIN QCMOD-----
+name: OpenSSL (bundled QCA only)
+arg: with-openssl-inc=[path],Path to OpenSSL include files
+arg: with-openssl-lib=[path],Path to OpenSSL library files
+-----END QCMOD-----
+*/
+class qc_openssl : public ConfObj
+{
+public:
+	qc_openssl(Conf *c) : ConfObj(c) {}
+	QString name() const { return "OpenSSL"; }
+	QString shortname() const { return "openssl"; }
+
+	QString checkString() const 
+	{ 
+		if (conf->getenv("QC_ENABLE_qca").isEmpty())
+			return ConfObj::checkString();
+		else
+			return QString(); 
+	}
+
+	bool exec()
+	{
+		if (!conf->getenv("QC_ENABLE_qca").isEmpty())
+			return false;
+
+		QString inc, lib;
+		QString s;
+		bool kb = false;
+		QString kbdir = "/usr/kerberos/include";
+
+		// Redhat 9?
+		if(QFileInfo(kbdir).exists())
+			kb = true;
+
+		s = conf->getenv("QC_WITH_OPENSSL_INC");
+		if(!s.isEmpty()) {
+			if(!conf->checkHeader(s, "openssl/ssl.h"))
+				return false;
+			inc = s;
+		}
+		else {
+			if(!conf->findHeader("openssl/ssl.h", QStringList(), &s))
+				return false;
+			inc = s;
+		}
+
+		s = conf->getenv("QC_WITH_OPENSSL_LIB");
+		if(!s.isEmpty()) {
+			if(!conf->checkLibrary(s, "ssl"))
+				return false;
+			lib = s;
+		}
+		else {
+			if(!conf->findLibrary("ssl", &s))
+				return false;
+			lib = s;
+		}
+
+		// is it at least openssl 0.9.7?
+		QString str =
+			"#include<openssl/opensslv.h>\n"
+			"int main()\n"
+			"{\n"
+			"  unsigned long x = OPENSSL_VERSION_NUMBER;\n"
+			"  if(x >= 0x00907000) return 0; else return 1;\n"
+			"}\n";
+		QString ext;
+		if(!inc.isEmpty())
+			ext += QString("-I") + inc + ' ';
+		if(kb)
+			ext += QString("-I") + kbdir + ' ';
+		if(!lib.isEmpty())
+			ext += QString("-L") + lib + " -lssl -lcrypto ";
+		int ret;
+		if(!conf->doCompileAndLink(str, QStringList(), ext, QString(), &ret))
+			return false;
+		if(ret == 0)
+			conf->addDefine("OSSL_097");
+
+		if(!inc.isEmpty())
+			conf->addIncludePath(inc);
+		if(kb)
+			conf->addIncludePath(kbdir);
+		if(!lib.isEmpty())
+			conf->addLib(QString("-L") + s);
+		conf->addLib("-lssl -lcrypto");
+		
+		conf->addDefine("HAVE_OPENSSL");
+
+		return true;
+	}
+};

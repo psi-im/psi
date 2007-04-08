@@ -1,0 +1,44 @@
+/*
+-----BEGIN QCMOD-----
+name: Linux Directory Notification
+-----END QCMOD-----
+*/
+
+#include<unistd.h>
+#include<fcntl.h>
+#include<signal.h>
+#include<sys/utsname.h>
+
+//----------------------------------------------------------------------------
+// qc_dnotify
+//----------------------------------------------------------------------------
+class qc_dnotify : public ConfObj
+{
+public:
+	qc_dnotify(Conf *c) : ConfObj(c) { }
+
+	QString name() const { return "Linux Directory Notification"; }
+	QString shortname() const { return "dnotify"; }
+
+	bool exec()
+	{
+		QString str =
+			"#define _GNU_SOURCE\n"
+			"#include<unistd.h>\n"
+			"#include<fcntl.h>\n"
+			"#include<signal.h>\n"
+			"#include<sys/utsname.h>\n"
+			"\n"
+			"int main()\n"
+			"{\n"
+			"	 DN_DELETE|DN_CREATE|DN_RENAME|DN_MULTISHOT|DN_MODIFY|DN_ATTRIB;\n"
+			"	 return 0;\n"
+			"}\n";
+		int ret;
+		if (!conf->doCompileAndLink(str, QStringList(), QString(), QString(), &ret) || ret != 0)
+			return false;
+			
+		conf->addDefine("HAVE_DNOTIFY");
+		return true;
+	}
+};

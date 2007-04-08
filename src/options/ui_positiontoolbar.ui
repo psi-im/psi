@@ -1,0 +1,245 @@
+<ui version="4.0" stdsetdef="1" >
+  <author></author>
+  <comment></comment>
+  <exportmacro></exportmacro>
+  <class>PositionToolbarUI</class>
+  <widget class="QDialog" name="PositionToolbarUI" >
+    <property name="geometry" >
+      <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>334</width>
+        <height>278</height>
+      </rect>
+    </property>
+    <property name="windowTitle" >
+      <string>Position Toolbar</string>
+    </property>
+    <layout class="QVBoxLayout" >
+      <item>
+        <widget class="FancyLabel" name="fancyLabel41" >
+          <property name="text" >
+            <string>Change Toolbar Position</string>
+          </property>
+          <property name="help" >
+            <string>Here you can fine-tune the exact position of your toolbar</string>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <layout class="QHBoxLayout" >
+          <property name="margin" >
+            <number>0</number>
+          </property>
+          <item>
+            <widget class="QLabel" name="textLabel1" >
+              <property name="text" >
+                <string>Name:</string>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <widget class="QLineEdit" name="le_name" >
+              <property name="readOnly" >
+                <bool>true</bool>
+              </property>
+            </widget>
+          </item>
+        </layout>
+      </item>
+      <item>
+        <widget class="Line" name="line6" >
+          <property name="frameShape" >
+            <enum>QFrame::HLine</enum>
+          </property>
+          <property name="frameShadow" >
+            <enum>QFrame::Sunken</enum>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <layout class="QGridLayout" >
+          <property name="margin" >
+            <number>0</number>
+          </property>
+          <item row="2" column="0" >
+            <widget class="QLabel" name="textLabel5" >
+              <property name="text" >
+                <string>Extra offset:</string>
+              </property>
+            </widget>
+          </item>
+          <item row="1" column="1" >
+            <widget class="QSpinBox" name="sb_index" >
+              <property name="maximum" >
+                <number>100</number>
+              </property>
+              <property name="minimum" >
+                <number>-100</number>
+              </property>
+            </widget>
+          </item>
+          <item row="0" column="0" >
+            <widget class="QLabel" name="textLabel2" >
+              <property name="text" >
+                <string>Dock position:</string>
+              </property>
+            </widget>
+          </item>
+          <item row="2" column="1" >
+            <widget class="QSpinBox" name="sb_extraOffset" >
+              <property name="maximum" >
+                <number>32000</number>
+              </property>
+              <property name="minimum" >
+                <number>0</number>
+              </property>
+            </widget>
+          </item>
+          <item row="1" column="0" >
+            <widget class="QLabel" name="textLabel3" >
+              <property name="text" >
+                <string>Index:</string>
+              </property>
+            </widget>
+          </item>
+          <item row="0" column="1" >
+            <widget class="QComboBox" name="cb_dock" >
+              <property name="sizePolicy" >
+                <sizepolicy>
+                  <hsizetype>7</hsizetype>
+                  <vsizetype>0</vsizetype>
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                </sizepolicy>
+              </property>
+              <item>
+                <property name="text" >
+                  <string>Top</string>
+                </property>
+              </item>
+              <item>
+                <property name="text" >
+                  <string>Bottom</string>
+                </property>
+              </item>
+              <item>
+                <property name="text" >
+                  <string>Right</string>
+                </property>
+              </item>
+              <item>
+                <property name="text" >
+                  <string>Left</string>
+                </property>
+              </item>
+              <item>
+                <property name="text" >
+                  <string>Minimized</string>
+                </property>
+              </item>
+              <item>
+                <property name="text" >
+                  <string>Unmanaged (advanced)</string>
+                </property>
+              </item>
+              <item>
+                <property name="text" >
+                  <string>Torn off (advanced)</string>
+                </property>
+              </item>
+            </widget>
+          </item>
+        </layout>
+      </item>
+      <item>
+        <widget class="QCheckBox" name="ck_nl" >
+          <property name="text" >
+            <string>Starts from new line</string>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <spacer name="spacer56" >
+          <property name="sizeHint" >
+            <size>
+              <width>20</width>
+              <height>40</height>
+            </size>
+          </property>
+          <property name="sizeType" >
+            <enum>Expanding</enum>
+          </property>
+          <property name="orientation" >
+            <enum>Vertical</enum>
+          </property>
+        </spacer>
+      </item>
+      <item>
+        <widget class="Line" name="line5" >
+          <property name="frameShape" >
+            <enum>QFrame::HLine</enum>
+          </property>
+          <property name="frameShadow" >
+            <enum>QFrame::Sunken</enum>
+          </property>
+        </widget>
+      </item>
+      <item>
+        <layout class="QHBoxLayout" >
+          <property name="margin" >
+            <number>0</number>
+          </property>
+          <item>
+            <spacer name="spacer55" >
+              <property name="sizeHint" >
+                <size>
+                  <width>40</width>
+                  <height>20</height>
+                </size>
+              </property>
+              <property name="sizeType" >
+                <enum>Expanding</enum>
+              </property>
+              <property name="orientation" >
+                <enum>Horizontal</enum>
+              </property>
+            </spacer>
+          </item>
+          <item>
+            <widget class="IconButton" name="pb_ok" >
+              <property name="text" >
+                <string>&amp;OK</string>
+              </property>
+              <property name="shortcut" >
+                <string>Alt+O</string>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <widget class="IconButton" name="pb_apply" >
+              <property name="text" >
+                <string>&amp;Apply</string>
+              </property>
+              <property name="shortcut" >
+                <string>Alt+A</string>
+              </property>
+            </widget>
+          </item>
+          <item>
+            <widget class="IconButton" name="pb_cancel" >
+              <property name="text" >
+                <string>&amp;Cancel</string>
+              </property>
+              <property name="shortcut" >
+                <string>Alt+C</string>
+              </property>
+            </widget>
+          </item>
+        </layout>
+      </item>
+    </layout>
+  </widget>
+  <layoutdefault spacing="6" margin="11" />
+  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+</ui>

@@ -1,0 +1,24 @@
+1. Install Visual C++ Express 2005.  It is free from this link:
+   http://msdn.microsoft.com/vstudio/express/visualc/
+
+2. Install the platform SDK and integrate it into VC++ express
+   http://msdn.microsoft.com/vstudio/express/visualc/usingpsdk/
+
+3. Download and install binary package for expat:
+   http://sourceforge.net/project/showfiles.php?group_id=10127&package_id=11277
+
+4. Update the Visual C++ directories in the Projects and Solutions section in the Options dialog box
+   Library files: C:\expat-VERSION\StaticLibs
+   Include files: C:\expat-VERSION\Source\Lib
+   where VERSION is the version of expat you've downoaded
+
+5. Unzip the libjingle files and open the solution.
+
+6. If you wish to build the call example with GIPS Voice Engine Lite, download Voice Engine Lite from http://developer.globalipsound.com
+
+7. Extract the Interface and Library directories from the Voice Engine Lite zip file into talk\third_party\gips
+
+8. Open talk\third_party\gips\expiration.h and set the GIPS_EXPIRATION #defines to the expiration date provided by GIPS and remove the #error directive
+
+9. Build the solution
+

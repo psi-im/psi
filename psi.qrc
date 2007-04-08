@@ -1,0 +1,8 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+	<qresource>
+		<file>README</file>
+		<file>COPYING</file>
+		<file>options-default.xml</file>
+	</qresource>
+</RCC>
