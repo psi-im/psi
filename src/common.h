@@ -33,7 +33,6 @@
 
 // -----------------------------------------------------------------------------
 // Options
-// Will go away with the new options system
 // -----------------------------------------------------------------------------
 
 enum { 
@@ -227,18 +226,17 @@ QString clipStatus(const QString &str, int width, int height);
 void replaceWidget(QWidget *, QWidget *);
 void closeDialogs(QWidget *);
 #ifdef Q_WS_X11
+#include <X11/Xlib.h>
 void x11wmClass(Display *dsp, WId wid, QString resName);
 #define X11WM_CLASS(x)	x11wmClass(x11Display(), winId(), (x));
 #else
 #define X11WM_CLASS(x)	/* dummy */
 #endif
 
-
 // -----------------------------------------------------------------------------
-// Misc.
+// Rich text utilities
 // -----------------------------------------------------------------------------
 
-QString CAP(const QString &str);
 QString qstrquote(const QString &, int width=60, bool quoteEmpty=FALSE);
 QString plain2rich(const QString &);
 QString rich2plain(const QString &);
@@ -246,13 +244,25 @@ QString resolveEntities(const QString &);
 QString linkify(const QString &);
 QString emoticonify(const QString &in);
 
+
+// -----------------------------------------------------------------------------
+// History utilities
+// -----------------------------------------------------------------------------
+
+QString logencode(QString);
+QString logdecode(const QString &);
+
+
+// -----------------------------------------------------------------------------
+// Misc.
+// -----------------------------------------------------------------------------
+
+QString CAP(const QString &str);
+
 QString encodePassword(const QString &, const QString &);
 QString decodePassword(const QString &, const QString &);
 
 void bringToFront(QWidget *w, bool grabFocus = true);
-
-QString logencode(QString);
-QString logdecode(const QString &);
 
 bool operator!=(const QMap<QString, QString> &, const QMap<QString, QString> &);
 void openURL(const QString &);
