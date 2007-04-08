@@ -904,7 +904,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	}
 
 	d->mle->installEventFilter( d );
-	d->mle->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
 	d->pm_settings = new Q3PopupMenu(this);
 	connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));
