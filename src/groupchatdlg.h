@@ -44,6 +44,7 @@ class QRect;
 class GCMainDlg;
 class QPainter;
 class QColorGroup;
+class Q3DragObject;
 class GCUserView;
 class GCUserViewGroupItem;
 
@@ -76,6 +77,7 @@ public:
 	GCUserView(GCMainDlg*, QWidget *parent=0, const char *name=0);
 	~GCUserView();
 
+	Q3DragObject* dragObject();
 	void clear();
 	void updateAll();
 	Q3ListViewItem *findEntry(const QString &);

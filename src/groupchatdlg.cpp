@@ -39,6 +39,7 @@
 #include <qaction.h>
 #include <qobject.h>
 #include <q3popupmenu.h>
+#include <Q3TextDrag>
 #include <qcursor.h>
 #include <QCloseEvent>
 #include <QEvent>
@@ -91,6 +92,7 @@ GCUserViewItem::GCUserViewItem(GCUserViewGroupItem *par)
 	: QObject()
 	, Q3ListViewItem(par)
 {
+	setDragEnabled(true);
 }
 
 void GCUserViewItem::paintFocus(QPainter *, const QColorGroup &, const QRect &)
@@ -111,6 +113,7 @@ void GCUserViewItem::paintBranches(QPainter *p, const QColorGroup &cg, int w, in
 GCUserViewGroupItem::GCUserViewGroupItem(GCUserView *par, const QString& t, int k)
 :Q3ListViewItem(par,t), key_(k)
 {
+	setDragEnabled(false);
 }
 
 void GCUserViewGroupItem::paintCell(QPainter *p, const QColorGroup & cg, int column, int width, int alignment)
@@ -192,6 +195,18 @@ GCUserView::GCUserView(GCMainDlg* dlg, QWidget *parent, const char *name)
 
 GCUserView::~GCUserView()
 {
+}
+
+Q3DragObject* GCUserView::dragObject() 
+{
+	Q3ListViewItem* it = currentItem();
+	if (it) {
+		// WARNING: We are assuming that group items can never be dragged
+		GCUserViewItem* u = (GCUserViewItem*) it;
+		if (!u->s.mucItem().jid().isEmpty())
+			return new Q3TextDrag(u->s.mucItem().jid().bare(),this);
+	}
+	return NULL;
 }
 
 void GCUserView::clear()
