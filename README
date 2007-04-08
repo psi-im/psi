@@ -76,6 +76,7 @@ Notes
 Changes
 -------
   New in 0.11
+  - Customizable shortcuts (thanks to Ephraim)
   - Added spell checking (thanks to Ephraim).
     Currently only aspell is supported.
   - Added option to automatically set the resource (using the hostname)
