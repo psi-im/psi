@@ -132,6 +132,7 @@ QString ApplicationInfo::homeDir()
 		home.mkdir(".psi");
 		chmod(QFile::encodeName(proghome.path()), 0700);
 	}
+	return proghome.path();
 #elif defined(Q_WS_WIN)
 	QString base;
 
