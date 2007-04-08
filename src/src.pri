@@ -90,6 +90,7 @@ HEADERS += \
 	$$PWD/showtextdlg.h \ 
 	$$PWD/profiles.h \
 	$$PWD/profiledlg.h \
+	$$PWD/aboutdlg.h \
 	$$PWD/psiaccount.h \
 	$$PWD/psicon.h \
 	$$PWD/accountscombobox.h \
@@ -192,6 +193,7 @@ SOURCES += \
 	$$PWD/showtextdlg.cpp \
 	$$PWD/psi_profiles.cpp \
 	$$PWD/profiledlg.cpp \
+	$$PWD/aboutdlg.cpp \
 	$$PWD/psiaccount.cpp \
 	$$PWD/psicon.cpp \
 	$$PWD/accountscombobox.cpp \

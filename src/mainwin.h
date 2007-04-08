@@ -21,33 +21,29 @@
 #ifndef MAINWIN_H
 #define MAINWIN_H
 
-#include <q3mainwindow.h>
-#include <qmap.h>
-//Added by qt3to4:
-#include <Q3ActionGroup>
-#include <QPixmap>
-#include <QCloseEvent>
+#include <Q3MainWindow>
+#include <QMap>
 #include <QList>
-#include <QKeyEvent>
-#include <QLabel>
-#include <QVBoxLayout>
-#include <QMenu>
-#include "im.h"
-#include "contactview.h"
-#include "psitoolbar.h"
+#include <QString>
+#include <QStringList>
+
 #include "advwidget.h"
 
-class PsiCon;
-class PsiAccount;
-class QIcon;
-class IconLabel;
-
-class QAction;
-class Q3ActionGroup;
-class IconAction;
-class QLabel;
-class QVBoxLayout;
 class QMenuBar;
+class QAction;
+class QPixmap;
+class QPoint;
+class QMenu;
+
+class PsiCon;
+class PsiToolBar;
+class PsiAccount;
+class IconAction;
+class Icon;
+class ContactView;
+namespace XMPP {
+	class Status;
+}
 
 class MainWin : public AdvancedWidget<Q3MainWindow>
 //class MainWin : public Q3MainWindow
@@ -139,7 +135,7 @@ public slots:
 	void updateReadNext(Icon *nextAnim, int nextAmount);
 
 	void optionsUpdate();
-	void setTrayToolTip(const Status &, bool usePriority = false);
+	void setTrayToolTip(const XMPP::Status &, bool usePriority = false);
 
 	void toggleVisible();
 

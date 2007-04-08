@@ -22,16 +22,12 @@
 
 #include <qmessagebox.h>
 #include <qicon.h>
-#include <qstyle.h>
 #include <qapplication.h>
-#include <q3ptrlist.h>
 #include <qtimer.h>
 #include <qobject.h>
 #include <qpainter.h>
 #include <qsignalmapper.h>
-#include <qstatusbar.h>
 #include <qmenubar.h>
-//Added by qt3to4:
 #include <QPixmap>
 #include <QCloseEvent>
 #include <QKeyEvent>
@@ -39,15 +35,16 @@
 #include <QVBoxLayout>
 #include <QMenu>
 #include <QMenuItem>
+
 #include "im.h"
 #include "common.h"
 #include "showtextdlg.h"
 #include "psicon.h"
+#include "contactview.h"
 #include "applicationinfo.h"
 #include "psiaccount.h"
 #include "psitoolbar.h"
-#include "ui_about.h"
-#include "fancylabel.h"
+#include "aboutdlg.h"
 #include "psitoolbar.h"
 #include "psipopup.h"
 #include "psioptions.h"
@@ -70,124 +67,7 @@ using namespace XMPP;
 	}
 }*/
 
-//----------------------------------------------------------------------------
-// AboutDlg
-//----------------------------------------------------------------------------
-
-class AboutDlg : public QDialog, public Ui::AboutDlg
-{
-public:
-	AboutDlg(QWidget*);
-	QString loadText( const QString & fileName );
-	QString details( QString name, QString email, QString jabber, QString www, QString desc );
-};
 	
-AboutDlg::AboutDlg(QWidget* parent) : QDialog(parent,Qt::WDestructiveClose)
-{
-	setupUi(this);
-
-	setModal(false);
-
-	lb_name->setText ( lb_name->text().arg(ApplicationInfo::name()).arg(ApplicationInfo::version()) );
-
-	te_license->setText ( loadText(":/COPYING") );
-
-	QString lang_name = qApp->translate( "@default", "language_name" );
-	if ( lang_name == "language_name" ) // remove the translation tab, if no translation is used
-		tw_tabs->removePage ( tw_tabs->page(3) );
-
-	// fill in Authors tab...
-	QString authors;
-	authors += details(QString::fromUtf8("Justin Karneges"),
-			   "justin@affinix.com", "", "",
-			   tr("Founder and Original Author"));
-	authors += details(QString::fromUtf8("Kevin Smith"),
-			   "kismith@psi-im.org", "", "",
-			   tr("Project Lead/Maintainer"));
-	authors += details(QString::fromUtf8("Michail Pishchagin"),
-			   "mblsha@psi-im.org", "", "",
-			   tr("Lead Developer"));
-	authors += details(QString::fromUtf8("Remko Tronçon"),
-			   "remko@psi-im.org", "", "",
-			   tr("Developer"));
-	authors += details(QString::fromUtf8("Akito Nozaki"),
-			   "anpluto@usa.net", "", "",
-			   tr("Miscellaneous Developer"));
-	te_authors->setText( authors );
-
-	// fill in Thanks To tab...
-	QString thanks;
-	thanks += details(QString::fromUtf8("Jan Niehusmann"),
-			  "jan@gondor.com", "", "",
-			  tr("Build setup, miscellaneous assistance"));
-	thanks += details(QString::fromUtf8("Everaldo Coelho"),
-			  "", "", "http://www.everaldo.com",
-			  tr("Many icons are from his Crystal icon theme"));
-	thanks += details(QString::fromUtf8("Jason Kim"),
-			  "", "", "",
-			  tr("Graphics"));
-	thanks += details(QString::fromUtf8("Hideaki Omuro"),
-			  "", "", "",
-			  tr("Graphics"));
-	thanks += details(QString::fromUtf8("Bill Myers"),
-			  "", "", "",
-			  tr("Original Mac Port"));
-	thanks += details(QString::fromUtf8("Eric Smith (Tarkvara Design, Inc.)"),
-			 "eric@tarkvara.org", "", "",
-			 tr("Mac OS X Port"));
-	thanks += details(QString::fromUtf8("Tony Collins"),
-	 		 "", "", "",
-	 		 tr("Original End User Documentation"));
-	thanks += details(QString::fromUtf8("Hal Rottenberg"),
-			  "", "", "",
-			 tr("Webmaster, Marketing"));
-	thanks += details(QString::fromUtf8("Mircea Bardac"),
-			 "", "", "",
-			 tr("Bug Tracker Management"));
-	thanks += details(QString::fromUtf8("Jacek Tomasiak"),
-			 "", "", "",
-			 tr("Patches"));
-					  
-	//thanks += tr("Thanks to many others.\n"
-	//	     "The above list only reflects the contributors I managed to keep track of.\n"
-	//	     "If you're not included but you think that you must be in the list, contact the developers.");
-	te_thanks->setText( thanks );
-}
-
-QString AboutDlg::loadText( const QString & fileName )
-{
-	QString text;
-
-	QFile f(fileName);
-	if(f.open(IO_ReadOnly)) {
-		QTextStream t(&f);
-		while(!t.atEnd())
-			text += t.readLine() + '\n';
-		f.close();
-	}
-
-	return text;
-}
-
-
-QString AboutDlg::details( QString name, QString email, QString jabber, QString www, QString desc )
-{
-	QString ret;
-	const QString nbsp = "&nbsp;&nbsp;";
-	ret += name + "<br>\n";
-	if ( !email.isEmpty() )
-		ret += nbsp + "E-mail: " + "<a href=\"mailto:" + email + "\">" + email + "</a><br>\n";
-	if ( !jabber.isEmpty() )
-		ret += nbsp + "Jabber: " + "<a href=\"jabber:" + jabber + "\">" + jabber + "</a><br>\n";
-	if ( !www.isEmpty() )
-		ret += nbsp + "WWW: " + "<a href=\"" + www + "\">" + www + "</a><br>\n";
-	if ( !desc.isEmpty() )
-		ret += nbsp + desc + "<br>\n";
-	ret += "<br>\n";
-
-	return ret;
-}
-
 //----------------------------------------------------------------------------
 // MainWin::Private
 //----------------------------------------------------------------------------
