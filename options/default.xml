@@ -35,7 +35,7 @@
 			</bookmarks>
 			<show-joins comment="Display notices of users joining and leaving conferences" type="bool">true</show-joins>
 			<show-role-affiliation comment="Include role and affiliation changes in join messages, and display notices of changes" type="bool">true</show-role-affiliation>
-			<show-status-changes comment="Show status changes in groupchat window" type="bool">true</show-status-changes>
+			<show-status-changes comment="Show status changes in groupchat window" type="bool">false</show-status-changes>
 			<accept-defaults comment="Automatically accept the default room configuration when a new room is created." type="bool">true</accept-defaults>
 			<auto-configure comment="Automatically open the configuration dialog when a new room is created. This option only has effect if accept-defaults is false." type="bool">true</auto-configure>
 			<context comment="Options regarding the context being sent when joining a room">
