@@ -317,7 +317,7 @@ SOURCES += \
 	$$PWD/accountlabel.cpp
 
 whiteboarding {
-	// Whiteboarding support. Still experimental.
+	# Whiteboarding support. Still experimental.
 	DEFINES += WHITEBOARDING
 
 	HEADERS += \
