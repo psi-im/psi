@@ -62,12 +62,31 @@ private:
 	class Private : public QSharedData
 	{
 	public:
-		QPixmap pixmap;
-		QImage  image;
-	
+		QPixmap* pixmap;
+		QImage image;
+
+		Private()
+		{
+			pixmap = 0;
+		}
+
+		Private(const Private& from)
+			: QSharedData(from)
+		{
+			pixmap = from.pixmap ? new QPixmap(*from.pixmap) : 0;
+			image  = from.image;
+		}
+
+		~Private()
+		{
+			unload();
+		}
+
 		void unload()
 		{
-			pixmap = QPixmap();
+			if (pixmap)
+				delete pixmap;
+			pixmap = 0;
 			image  = QImage();
 		}
 	};
