@@ -247,8 +247,8 @@ void TabDlg::closeChat(ChatDlg* chat, bool doclose=true)
 	tabHasMessages.erase(chat);
 	chats.remove(chat);
 	chat->reparent(0,QPoint());
-	//if (doclose)
-	//	chat->close();
+	if (doclose && chat->testAttribute(Qt::WA_DeleteOnClose))
+		chat->close();
 	if (tabs->count()>0)
 		updateCaption();
 	checkHasChats();
