@@ -89,6 +89,11 @@
 		<x xmlns='name'>psi/history</x>
 		<object mime='image/png'>history.png</object>
 	</icon>
+	
+	<icon>
+		<x xmlns='name'>psi/shortcuts</x>
+		<object mime='image/png'>shortcuts.png</object>
+	</icon>
 
 	<icon>
 		<x xmlns='name'>psi/vCard</x>
