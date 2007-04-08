@@ -104,6 +104,7 @@ public:
 	QMap<QAction *, int> statusActions;
 
 	int lastStatus;
+	bool old_trayicon;
 
 	QString infoString;
 
@@ -238,6 +239,11 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	d->statusTip = "";
 	d->infoString = "";
 	d->nickname = "";
+#ifdef Q_WS_MAC
+	d->old_trayicon = false;
+#else
+	d->old_trayicon = PsiOptions::instance()->getOption("options.ui.systemtray.use-old").toBool();
+#endif
 
 	QWidget *center = new QWidget (this, "Central widget");
 	setCentralWidget ( center );
@@ -511,14 +517,8 @@ void MainWin::setUseDock(bool use)
 	if(d->tray)
 		return;
 
-// TODO: Check on other platforms, and remove ifdef
-#ifdef Q_WS_MAC
-	bool old = false;
-#else
-	bool old = true;
-#endif
-	d->tray = new PsiTrayIcon("Psi", d->trayMenu, old);
-	if (old) {
+	d->tray = new PsiTrayIcon("Psi", d->trayMenu, d->old_trayicon);
+	if (d->old_trayicon) {
 		connect(d->tray, SIGNAL(closed()), SLOT(dockActivated()));
 		connect(qApp, SIGNAL(trayOwnerDied()), SLOT(dockActivated()));
 	}
