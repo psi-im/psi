@@ -30,6 +30,7 @@
 #include "psitextview.h"
 
 class QTimer;
+class SpellHighlighter;
 class ChatEdit;
 
 class ChatView : public PsiTextView
@@ -68,8 +69,6 @@ public:
 protected slots:
  	void applySuggestion();
  	void addToDictionary();
-	void cursorChanged();
-	void contentsChanged(int,int,int);
 	void optionsChanged();
 
 protected:
@@ -77,11 +76,12 @@ protected:
 	bool focusNextPrevChild(bool next);
 	void keyPressEvent(QKeyEvent *);
 	void contextMenuEvent(QContextMenuEvent *e);
-  	void markMisspelled(QTextCursor& tc, bool misspelled = true);
+	void setCheckSpelling(bool);
 
 private:
 	QWidget	*dialog_;
 	bool check_spelling_;
+	SpellHighlighter* spellhighlighter_;
 	QPoint last_click_;
 	int previous_position_;
 };
