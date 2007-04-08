@@ -805,7 +805,8 @@ JT_Message::JT_Message(Task *parent, const Message &msg)
 :Task(parent)
 {
 	m = msg;
-	m.setId(id());
+	if (m.id().isEmpty())
+		m.setId(id());
 }
 
 JT_Message::~JT_Message()
