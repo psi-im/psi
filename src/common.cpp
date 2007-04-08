@@ -26,7 +26,7 @@
 #include "applicationinfo.h"
 
 #include <QUrl>
-#include <Q3Process>
+#include <QProcess>
 #include <QBoxLayout>
 #include <QRegExp>
 #include <QFile>
@@ -242,9 +242,8 @@ void soundPlay(const QString &str)
 		QStringList args;
 		args = QStringList::split(' ', option.player);
 		args += str;
-		Q3Process cmd(args);
-		if(!cmd.start())
-			wait3(NULL,WNOHANG,NULL);
+		QString prog = args.takeFirst();
+		QProcess::startDetached(prog, args);
 	}
 #endif
 }
