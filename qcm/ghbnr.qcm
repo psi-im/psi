@@ -22,7 +22,7 @@ public:
 			"    return 0;\n"
 			"}\n";
 		int ret;
-		if (!conf->doCompileAndLink(str, QStringList(), QString(), QString(), &ret) || ret != 0)
+		if (!conf->doCompileAndLink(str, QStringList(), QString(), QString(), NULL))
 			return false;
 			
 		conf->addDefine("HAVE_GETHOSTBYNAME_R");

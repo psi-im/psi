@@ -30,8 +30,8 @@ public:
 		QString proextra = "CONFIG += x11\n";
 
 		int ret;
-		if (!conf->doCompileAndLink(str, QStringList(), "-lXss", proextra, &ret) || ret != 0) {
-			if (!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret) || ret != 0) {
+		if (!conf->doCompileAndLink(str, QStringList(), "-lXss", proextra, NULL)) {
+			if (!conf->doCompileAndLink(str, QStringList(), QString(), proextra, NULL)) {
 				return false;
 			}
 		}

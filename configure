@@ -939,8 +939,8 @@ public:
 		QString proextra = "CONFIG += x11\n";
 
 		int ret;
-		if (!conf->doCompileAndLink(str, QStringList(), "-lXss", proextra, &ret) || ret != 0) {
-			if (!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret) || ret != 0) {
+		if (!conf->doCompileAndLink(str, QStringList(), "-lXss", proextra, NULL)) {
+			if (!conf->doCompileAndLink(str, QStringList(), QString(), proextra, NULL)) {
 				return false;
 			}
 		}
@@ -1022,7 +1022,7 @@ public:
 			"    return 0;\n"
 			"}\n";
 		int ret;
-		if (!conf->doCompileAndLink(str, QStringList(), QString(), QString(), &ret) || ret != 0)
+		if (!conf->doCompileAndLink(str, QStringList(), QString(), QString(), NULL))
 			return false;
 			
 		conf->addDefine("HAVE_GETHOSTBYNAME_R");
