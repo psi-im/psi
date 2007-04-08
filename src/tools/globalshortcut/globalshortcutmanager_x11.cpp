@@ -174,6 +174,7 @@ public:
 
 		Qt_XK_Keygroup kg;
 		kg.num = 0;
+		kg.sym[0] = 0;
 		code &= 0xffff;
 
 		bool found = false;
