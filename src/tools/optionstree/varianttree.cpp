@@ -256,25 +256,7 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
 {
 	QVariant value;
 	QString type = e.attribute("type");
-	if (type=="QString" || type=="bool" || type=="int") {
-		for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
-			if ( node.isText() )
-				value=node.toText().data();
-		}
-	
-		if (!value.isValid())
-			value = QString("");
-
-		if (type=="QString")
-			value.convert(QVariant::String);
-		else if (type=="bool")
-			value.convert(QVariant::Bool);
-		else if (type=="int")
-			value.convert(QVariant::Int);
-		else if (type == "QKeySequence")
-			value.convert(QVariant::KeySequence);
-	}
-	else if (type == "QStringList") {
+	if (type == "QStringList") {
 		QStringList list;
 		for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
 			QDomElement e = node.toElement();
@@ -295,6 +277,24 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
 			}
 		}
 		value = list;
+	}
+	else { // Standard values
+		for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
+			if ( node.isText() )
+				value=node.toText().data();
+		}
+	
+		if (!value.isValid())
+			value = QString("");
+
+		if (type=="QString")
+			value.convert(QVariant::String);
+		else if (type=="bool")
+			value.convert(QVariant::Bool);
+		else if (type=="int")
+			value.convert(QVariant::Int);
+		else if (type == "QKeySequence")
+			value.convert(QVariant::KeySequence);
 	}
 	return value;
 }
