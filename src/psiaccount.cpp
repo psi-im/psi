@@ -961,6 +961,9 @@ void PsiAccount::login()
 	if(d->acc.opt_host) {
 		useHost = true;
 		host = d->acc.host;
+		if (host.isEmpty()) {
+			host = d->jid.domain();
+		}
 		port = d->acc.port;
 	}
 
