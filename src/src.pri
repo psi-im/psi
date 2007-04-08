@@ -71,7 +71,7 @@ jingle {
 	DEFINES += HAVE_JINGLE POSIX
 
 	JINGLE_CPP = $$PWD/../third-party/libjingle
-	LIBS += $$JINGLE_CPP/liblibjingle.a
+	LIBS += -L$$JINGLE_CPP -ljingle_psi
 	INCLUDEPATH += $$JINGLE_CPP
 
 	contains(DEFINES, HAVE_PORTAUDIO) {

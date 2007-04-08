@@ -1,6 +1,7 @@
 TEMPLATE = lib
 CONFIG += staticlib
 CONFIG += debug
+TARGET = jingle_psi
 
 target.extra = true
 
