@@ -77,10 +77,16 @@ PsiMain::PsiMain(QObject *par)
 	pcon = 0;
 
 	// load simple registry settings
-	QSettings s(QSettings::UserScope, "psi-im.org", "Psi");
-	lastProfile = s.value("last_profile").toString();
-	lastLang = s.value("last_lang").toString();
-	autoOpen = s.value("auto_open", QVariant(false)).toBool();
+	QSettings sUser(QSettings::UserScope, "psi-im.org", "Psi");
+	lastProfile = sUser.value("last_profile").toString();
+	lastLang = sUser.value("last_lang").toString();
+	autoOpen = sUser.value("auto_open", QVariant(false)).toBool();
+
+	QSettings s(ApplicationInfo::homeDir() + "/psirc", QSettings::IniFormat);
+	lastProfile = s.value("last_profile", lastProfile).toString();
+	lastLang = s.value("last_lang", lastLang).toString();
+	autoOpen = s.value("auto_open", autoOpen).toBool();
+
 
 	if(lastLang.isEmpty()) {
 		lastLang = QTextCodec::locale();
@@ -145,7 +151,8 @@ PsiMain::~PsiMain()
 	delete rs;
 #endif
 */
-	QSettings s(QSettings::UserScope, "psi-im.org", "Psi");
+	//QSettings s(QSettings::UserScope, "psi-im.org", "Psi");
+	QSettings s(ApplicationInfo::homeDir() + "/psirc", QSettings::IniFormat);
 	s.setValue("last_profile", lastProfile);
 	s.setValue("last_lang", lastLang);
 	s.setValue("auto_open", autoOpen);
