@@ -344,7 +344,7 @@ void ChatEdit::addToDictionary()
 
 void ChatEdit::cursorChanged()
 {
-	if (!check_spelling_) 
+	if (!check_spelling_ || text().isEmpty()) 
 		return;
 
 	QTextCursor	tc = textCursor();
@@ -372,7 +372,7 @@ void ChatEdit::cursorChanged()
 
 void ChatEdit::contentsChanged(int position, int, int)
 {
-	if (!check_spelling_) 
+	if (!check_spelling_ || text().isEmpty()) 
 		return;
 	
 	QTextCursor tc = textCursor();
