@@ -106,6 +106,7 @@ void AccountRegDlg::done(int r)
 		if(n != 0)
 			return;
 	}
+	client_->close();
 	QDialog::done(r);
 }
 
