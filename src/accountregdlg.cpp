@@ -281,7 +281,7 @@ void AccountRegDlg::setFields_finished()
 	JT_Register *reg = (JT_Register *)sender();
 	ui_.busy->stop();
 	if (reg->success()) {
-		QMessageBox::information(this, tr("Success"), tr("The account was registered successfully."));
+		QMessageBox::information(this, tr("Success"), QString(tr("You have succesfully registered your account with Jabber ID '%1'")).arg(jid_.bare()));
 		client_->close();
 		accept();
 	}
