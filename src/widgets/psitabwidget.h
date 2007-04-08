@@ -1,67 +1,50 @@
-//Kevin Smith 2005
+/*
+ * psitabwidget.h - Customised QTabWidget for Psi
+ * Copyright (C) 2006  Kevin Smith
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
 
-/* This file is heavily based upon part of the KDE libraries
-    Copyright (C) 2003 Stephan Binner <binner@kde.org>
-    Copyright (C) 2003 Zack Rusin <zack@kde.org>
-*/
 
 #ifndef PSITABWIDGET_H
 #define PSITABWIDGET_H
 
 #include <QTabWidget>
-#include <QIconSet>
 
 /**
- * \brief A widget containing multiple tabs
- *
- * @since 0.10
+ * \class PsiTabWidget
+ * \brief 
  */
 class PsiTabWidget : public QTabWidget
 {
-    Q_OBJECT
-
+	Q_OBJECT
 public:
-	/**
-	 * Constructor
-	 */
-    PsiTabWidget( QWidget *parent = 0 );
-    /**
-     * Standard destructor.
-     */
-    virtual ~PsiTabWidget();
-    /**
-      Set the tab of the given widget to \a color.
-    */
-
-    void setTabColor( QWidget *, const QColor& color );
-    QColor tabColor( QWidget * ) const;
-#ifdef NO
-    /**
-      Returns true if the close button is shown on tabs
-      when mouse is hovering over them.
-    */
-    bool hoverCloseButton() const;
-
-	/**
-	 * Sets the close icon used on the tabbar
-	*/
-	void setCloseIcon(const QIconSet&);
-		
-public slots:
-    /**
-      If \a enable is true, a close button will be shown on mouse hover
-      over tab icons which will emit signal closeRequest( QWidget * )
-      when pressed.
-    */
-    void setHoverCloseButton( bool enable );
+	PsiTabWidget(QWidget *parent = 0);
+	~PsiTabWidget();
+	
+	void setTabTextColor( QWidget* tab, const QColor& color);
 
 signals:
-    /**
-	 * The close button of a widget has been pressed (dependent upon
-	 * hoverCloseButton()
-    */
-    void closeRequest( QWidget * );
-#endif
-};
+	void mouseDoubleClickTab( QWidget* tab );
+
+private:
+	
+private slots:
+	void mouseDoubleClickTab( int tab );
+}; 
+
 
 #endif

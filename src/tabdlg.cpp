@@ -70,7 +70,7 @@ TabDlg::TabDlg(PsiCon *psiCon)
 	}*/
 	
 	//tabs->setCloseIcon(IconsetFactory::icon("psi/closetab").iconSet());
-	connect (tabs, SIGNAL( mouseDoubleClick( QWidget* ) ), SLOT( detachChat( QWidget* ) ) ); 
+	connect (tabs, SIGNAL( mouseDoubleClickTab( QWidget* ) ), SLOT( detachChat( QWidget* ) ) ); 
 	connect (tabs, SIGNAL( testCanDecode(const QDragMoveEvent*, bool&) ), SLOT( tabTestCanDecode(const QDragMoveEvent*, bool&) ) );
 	connect (tabs, SIGNAL( receivedDropEvent( QDropEvent* ) ), SLOT( tabReceivedDropEvent( QDropEvent* ) ) );
 	connect (tabs, SIGNAL( receivedDropEvent( QWidget*, QDropEvent* ) ), SLOT( tabReceivedDropEvent( QWidget*, QDropEvent* ) ) );
@@ -345,14 +345,14 @@ void TabDlg::updateTab( ChatDlg* chat)
 	//now set text colour based upon whether there are new messages/composing etc
 
 	if (tabIsComposing[chat])
-		tabs->setTabColor( chat, Qt::darkGreen );
+		tabs->setTabTextColor( chat, Qt::darkGreen );
 	else if (tabHasMessages[chat])
 	{
-		tabs->setTabColor( chat, Qt::red );
+		tabs->setTabTextColor( chat, Qt::red );
 		doFlash(true);
 	}
 	else
-		tabs->setTabColor( chat, Qt::black );
+		tabs->setTabTextColor( chat, Qt::black );
 	updateCaption();
 }
 

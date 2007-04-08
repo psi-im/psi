@@ -13,7 +13,8 @@ SOURCES += \
 	$$PWD/fancypopup.cpp \
 	$$PWD/psirichtext.cpp \
 	$$PWD/psitooltip.cpp \
-	$$PWD/psitabwidget.cpp
+	$$PWD/psitabwidget.cpp \
+	$$PWD/psitabbar.cpp
 
 HEADERS += \
 	$$PWD/stretchwidget.h \
@@ -34,7 +35,8 @@ HEADERS += \
 	$$PWD/fancypopuplist.h \
 	$$PWD/psirichtext.h \
 	$$PWD/psitooltip.h \
-	$$PWD/psitabwidget.h 
+	$$PWD/psitabwidget.h \
+	$$PWD/psitabbar.h
 
 # to remove dependency on iconset and stuff
 #DEFINES += WIDGET_PLUGIN
