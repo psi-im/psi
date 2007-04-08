@@ -3286,11 +3286,6 @@ void PsiAccount::handleEvent(PsiEvent *e)
 			if(c)
 				c->setJid(e->from());
 
-			if ( !c || !c->isActiveWindow() || option.alertOpenChats ) {
-				doPopup = true;
-				popupType = PsiPopup::AlertChat;
-			}
-
 			//if the chat exists, and is either open in a tab,
 			//or in a window
 			if( c && ( d->psi->isChatTabbed(c) || !c->isHidden() ) ) {
@@ -3306,6 +3301,11 @@ void PsiAccount::handleEvent(PsiEvent *e)
 			else {
 				bool firstChat = !d->eventQueue->hasChats(e->from());
 				playSound(option.onevent[firstChat ? eChat1: eChat2]);
+			}
+
+			if (putToQueue) {
+				doPopup = true;
+				popupType = PsiPopup::AlertChat;
 			}
 		} // /chat
 		else if (m.type() == "headline") {
