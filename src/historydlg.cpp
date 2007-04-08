@@ -692,7 +692,8 @@ HistoryViewItem::HistoryViewItem(PsiEvent *_e, const QString &eid, int xid, Q3Li
 	else if(e->type() == PsiEvent::Auth) {
 		AuthEvent *ae = (AuthEvent *)e;
 		text = ae->authType();
-		setPixmap(0, a->impix());
+		if (a)
+			setPixmap(0, a->impix());
 	}
 
 	if(e->originLocal())
