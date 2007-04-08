@@ -1018,7 +1018,7 @@ void PsiAccount::login()
 	else
 		d->stream->setNoopTime(0);
 	connect(d->stream, SIGNAL(connected()), SLOT(cs_connected()));
-	connect(d->stream, SIGNAL(securityLayerActivated(int)), SLOT(cs_securityLayerActivated()));
+	connect(d->stream, SIGNAL(securityLayerActivated(int)), SLOT(cs_securityLayerActivated(int)));
 	connect(d->stream, SIGNAL(needAuthParams(bool, bool, bool)), SLOT(cs_needAuthParams(bool, bool, bool)));
 	connect(d->stream, SIGNAL(authenticated()), SLOT(cs_authenticated()));
 	connect(d->stream, SIGNAL(connectionClosed()), SLOT(cs_connectionClosed()), Qt::QueuedConnection);
@@ -1117,10 +1117,14 @@ void PsiAccount::cs_connected()
 	}
 }
 
-void PsiAccount::cs_securityLayerActivated()
+void PsiAccount::cs_securityLayerActivated(int layer)
 {
-	d->usingSSL = true;
-	stateChanged();
+	if ((layer == ClientStream::LayerSASL) && (d->stream->saslSSF() <= 1)) {
+		 // integrity protected only
+	} else {
+		d->usingSSL = true;
+		stateChanged();
+	}
 }
 
 void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
