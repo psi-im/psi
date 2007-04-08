@@ -2,6 +2,7 @@ TEMPLATE = lib
 QT      -= gui
 CONFIG += staticlib
 DEFINES += QCA_STATIC
+TARGET = qca_psi
 
 QCA_BASE = ..
 QCA_INCBASE = include
@@ -19,8 +20,6 @@ windows {
 	CONFIG -= debug_and_release
 
 	# Set explicit targets, to ensure a correct name for MSVC
-	TARGET = qca
-	TARGET_EXT = .a
 }
 
 # botantools
