@@ -750,6 +750,7 @@ private slots:
 
 	void provider_publish_extra_published(int id)
 	{
+		Q_UNUSED(id);
 		//ServiceLocalPublisher::Private *np = slp_instances.value(id);
 		//emit np->q->published();
 	}
@@ -900,6 +901,7 @@ void ServiceLocalPublisher::publish(const QString &instance, const QString &type
 
 void ServiceLocalPublisher::updateAttributes(const QMap<QString,QByteArray> &attributes)
 {
+	Q_UNUSED(attributes);
 }
 
 void ServiceLocalPublisher::addRecord(const NameRecord &rec)

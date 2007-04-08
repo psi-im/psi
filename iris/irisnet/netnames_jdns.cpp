@@ -19,7 +19,6 @@
 
 #include "irisnetplugin.h"
 
-#include <QtCrypto>
 #include "jdnsshared.h"
 #include "netinterface.h"
 
@@ -124,56 +123,40 @@ class JDnsGlobal : public QObject
 public:
 	JDnsSharedDebug db;
 	JDnsShared *uni_net, *uni_local, *mul;
-	QJDns::SystemInfo sysInfo;
-	QCA::Synchronizer sync;
+	QHostAddress mul_addr4, mul_addr6;
 
-	JDnsGlobal() : sync(this)
+	JDnsGlobal()
 	{
 		uni_net = 0;
 		uni_local = 0;
 		mul = 0;
 
-		connect(&db, SIGNAL(debug(const QStringList &)), SLOT(jdns_debug(const QStringList &)));
+		connect(&db, SIGNAL(readyRead()), SLOT(jdns_debugReady()));
 	}
 
 	~JDnsGlobal()
 	{
+		QList<JDnsShared*> list;
 		if(uni_net)
-		{
-			connect(uni_net, SIGNAL(shutdownFinished()), SLOT(jdns_shutdownFinished()));
-			uni_net->shutdown();
-			sync.waitForCondition();
-			delete uni_net;
-		}
+			list += uni_net;
 		if(uni_local)
-		{
-			connect(uni_local, SIGNAL(shutdownFinished()), SLOT(jdns_shutdownFinished()));
-			uni_local->shutdown();
-			sync.waitForCondition();
-			delete uni_local;
-		}
+			list += uni_local;
 		if(mul)
-		{
-			connect(mul, SIGNAL(shutdownFinished()), SLOT(jdns_shutdownFinished()));
-			mul->shutdown();
-			sync.waitForCondition();
-			delete mul;
-		}
-	}
+			list += mul;
 
-	void updateSysInfo()
-	{
-		sysInfo = QJDns::systemInfo();
+		// calls shutdown on the list, waits for shutdownFinished, deletes
+		JDnsShared::waitForShutdown(list);
 
-		// ensure we are using the latest nameservers
-		uni_net->setNameServers(sysInfo.nameServers);
+		// get final debug
+		jdns_debugReady();
 	}
 
 	JDnsShared *ensure_uni_net()
 	{
 		if(!uni_net)
 		{
-			uni_net = new JDnsShared(JDnsShared::UnicastInternet, &db, "U", this);
+			uni_net = new JDnsShared(JDnsShared::UnicastInternet, this);
+			uni_net->setDebug(&db, "U");
 			bool ok4 = uni_net->addInterface(QHostAddress::Any);
 			bool ok6 = uni_net->addInterface(QHostAddress::AnyIPv6);
 			if(!ok4 && !ok6)
@@ -189,8 +172,11 @@ public:
 	{
 		if(!uni_local)
 		{
-			uni_local = new JDnsShared(JDnsShared::UnicastLocal, &db, "L", this);
-			if(!uni_local->addInterface(QHostAddress::Any))
+			uni_local = new JDnsShared(JDnsShared::UnicastLocal, this);
+			uni_local->setDebug(&db, "L");
+			bool ok4 = uni_local->addInterface(QHostAddress::Any);
+			bool ok6 = uni_local->addInterface(QHostAddress::AnyIPv6);
+			if(!ok4 && !ok6)
 			{
 				delete uni_local;
 				uni_local = 0;
@@ -203,46 +189,10 @@ public:
 	{
 		if(!mul)
 		{
-			mul = new JDnsShared(JDnsShared::Multicast, &db, "M", this);
+			mul = new JDnsShared(JDnsShared::Multicast, this);
+			mul->setDebug(&db, "M");
 
-			bool at_least_one = false;
-			QHostAddress addr = QJDns::detectPrimaryMulticast(QHostAddress::Any);
-			if(!addr.isNull())
-			{
-				if(mul->addInterface(addr))
-					at_least_one = true;
-			}
-
-			// for now we only support one interface
-			/*QStringList list = NetInterfaceManager::instance()->interfaces();
-			for(int n = 0; n < list.count(); ++n)
-			{
-				NetInterface iface(list[n]);
-				QList<QHostAddress> addrlist = iface.addresses();
-
-				// prefer using just ipv4
-				QHostAddress addr;
-				for(int n = 0; n < addrlist.count(); ++n)
-				{
-					if(addrlist[n].protocol() == QAbstractSocket::IPv4Protocol)
-					{
-						addr = addrlist[n];
-						break;
-					}
-				}
-
-				if(addr.isNull())
-					continue;
-
-				if(mul->addInterface(addr))
-					at_least_one = true;
-			}*/
-
-			if(!at_least_one)
-			{
-				delete mul;
-				mul = 0;
-			}
+			updateMulticastInterfaces();
 		}
 		return mul;
 	}
@@ -250,17 +200,46 @@ public:
 signals:
 	void debug(const QStringList &lines);
 
-private slots:
-	void jdns_debug(const QStringList &lines)
+public slots:
+	// TODO: call this when the network changes
+	void updateMulticastInterfaces()
 	{
+		QHostAddress addr4 = QJDns::detectPrimaryMulticast(QHostAddress::Any);
+		QHostAddress addr6 = QJDns::detectPrimaryMulticast(QHostAddress::AnyIPv6);
+
+		if(!(addr4 == mul_addr4))
+		{
+			if(!mul_addr4.isNull())
+				mul->removeInterface(mul_addr4);
+			mul_addr4 = addr4;
+			if(!mul_addr4.isNull())
+			{
+				if(!mul->addInterface(mul_addr4))
+					mul_addr4 = QHostAddress();
+			}
+		}
+
+		if(!(addr6 == mul_addr6))
+		{
+			if(!mul_addr6.isNull())
+				mul->removeInterface(mul_addr6);
+			mul_addr6 = addr6;
+			if(!mul_addr6.isNull())
+			{
+				if(!mul->addInterface(mul_addr6))
+					mul_addr6 = QHostAddress();
+			}
+		}
+	}
+
+private slots:
+	void jdns_debugReady()
+	{
+		QStringList lines = db.readDebugLines();
+		Q_UNUSED(lines);
 		//for(int n = 0; n < lines.count(); ++n)
 		//	printf("jdns: %s\n", qPrintable(lines[n]));
 		//emit debug(lines);
-	}
-
-	void jdns_shutdownFinished()
-	{
-		sync.conditionMet();
 	}
 };
 
@@ -349,7 +328,6 @@ public:
 				return i->id;
 			}
 
-			global->updateSysInfo();
 			Item *i = new Item;
 			i->req = new JDnsSharedRequest(global->uni_net);
 			connect(i->req, SIGNAL(resultsReady()), SLOT(req_resultsReady()));
@@ -491,9 +469,9 @@ private slots:
 			delete i;
 
 			NameResolver::Error error = NameResolver::ErrorGeneric;
-			if(e == QJDns::ErrorNXDomain)
+			if(e == JDnsSharedRequest::ErrorNXDomain)
 				error = NameResolver::ErrorNoName;
-			else if(e == QJDns::ErrorTimeout)
+			else if(e == JDnsSharedRequest::ErrorTimeout)
 				error = NameResolver::ErrorTimeout;
 			else // ErrorGeneric or ErrorNoNet
 				error = NameResolver::ErrorGeneric;
@@ -879,6 +857,8 @@ public:
 
 	virtual void browse_stop(int id)
 	{
+		// TODO
+		Q_UNUSED(id);
 	}
 
 	virtual int resolve_start(const QByteArray &name)
@@ -897,6 +877,8 @@ public:
 
 	virtual void resolve_stop(int id)
 	{
+		// TODO
+		Q_UNUSED(id);
 	}
 
 	virtual int publish_start(const QString &instance, const QString &type, int port, const QMap<QString,QByteArray> &attributes)
@@ -920,6 +902,16 @@ public:
 		rec.address = QHostAddress(); // null address, will be filled in
 		req->publish(QJDns::Unique, rec);
 		pubitems += req;
+
+		/*JDnsSharedRequest *req = new JDnsSharedRequest(global->mul);
+		QJDns::Record rec;
+		rec.type = QJDns::Aaaa;
+		rec.owner = melocal;
+		rec.ttl = 120;
+		rec.haveKnown = true;
+		rec.address = QHostAddress(); // null address, will be filled in
+		req->publish(QJDns::Unique, rec);
+		pubitems += req;*/
 
 		req = new JDnsSharedRequest(global->mul);
 		rec = QJDns::Record();
@@ -970,15 +962,22 @@ public:
 
 	virtual int publish_update(const QMap<QString,QByteArray> &attributes)
 	{
+		// TODO
+		Q_UNUSED(attributes);
 		return 0;
 	}
 
 	virtual void publish_cancel(int id)
 	{
+		// TODO
+		Q_UNUSED(id);
 	}
 
 	virtual int publish_extra_start(int pub_id, const NameRecord &name)
 	{
+		// TODO
+		Q_UNUSED(pub_id);
+
 		JDnsSharedRequest *req = new JDnsSharedRequest(global->mul);
 		QJDns::Record rec;
 		rec.type = 10;
@@ -995,11 +994,16 @@ public:
 
 	virtual int publish_extra_update(int id, const NameRecord &name)
 	{
+		// TODO
+		Q_UNUSED(id);
+		Q_UNUSED(name);
 		return 0;
 	}
 
 	virtual void publish_extra_cancel(int id)
 	{
+		// TODO
+		Q_UNUSED(id);
 	}
 
 private slots:
