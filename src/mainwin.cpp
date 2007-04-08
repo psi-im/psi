@@ -805,16 +805,21 @@ void MainWin::decorateButton(int status)
 
 	if(status == -1) {
 		d->statusButton->setText(tr("Connecting"));
-		if (option.alertStyle != 0)
+		if (option.alertStyle != 0) {
 			d->statusButton->setAlert(IconsetFactory::iconPtr("psi/connect"));
-		else
+			d->statusGroup->setPsiIcon(IconsetFactory::iconPtr("psi/connect"));
+		}
+		else {
 			d->statusButton->setIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
+			d->statusGroup->setPsiIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
+		}
 
 		setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).impix());
 	}
 	else {
 		d->statusButton->setText(status2txt(status));
 		d->statusButton->setIcon(PsiIconset::instance()->statusPtr(status));
+		d->statusGroup->setPsiIcon(PsiIconset::instance()->statusPtr(status));
 
 		setWindowIcon(PsiIconset::instance()->status(status).impix());
 	}
