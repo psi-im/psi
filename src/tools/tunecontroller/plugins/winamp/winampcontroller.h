@@ -24,12 +24,17 @@
 #include "tunecontrollerinterface.h"
 #include "pollingtunecontroller.h"
 
+#include <windows.h>
+
 class WinAmpController : public PollingTuneController
 {
 public:
 	WinAmpController();
 	
 	virtual Tune currentTune();
+	
+protected:
+	QString getTrackTitle(HWND waWnd);
 };
 
 #endif

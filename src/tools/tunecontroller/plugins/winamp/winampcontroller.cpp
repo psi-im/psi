@@ -49,32 +49,110 @@ WinAmpController::WinAmpController() : PollingTuneController()
 {
 }
 
+template <typename char_type> const size_t length (const char_type * begin)
+{
+	const char_type * end = begin;
+	for (; *end; ++end);
+	return end - begin;
+}
+
+// Returns a title of a track currently being played by WinAmp with given HWND (passed in waWnd)
+QString WinAmpController::getTrackTitle(HWND waWnd)
+{
+	TCHAR waTitle[2048];
+	QString title;
+
+	// Get WinAmp window title. It always contains name of the track
+	do {
+		SendMessage (waWnd, WM_GETTEXT, static_cast<WPARAM> (sizeof (waTitle) / sizeof (waTitle[0])), reinterpret_cast<LPARAM> (waTitle));
+		// Now, waTitle contains WinAmp window title
+		title = QString ((const QChar *) waTitle, length<TCHAR> ((const TCHAR *) waTitle));
+	} while (title[0] == '*' || (title.length () && title[title.length() - 1] == '*'));
+
+	// Check whether there is a need to do the all stuff
+	if (!title.length()) {
+		return title;
+	}
+
+	QString winamp (" - Winamp ***");
+	int winampLength = winamp.length();
+
+	// Is title scrolling on the taskbar enabled?
+	title += title + title;
+	int waLast = title.indexOf (winamp, -1);
+	if (waLast != -1) {
+		if (title.length()) {
+			title.remove (waLast, title.length () - waLast);
+		}
+		int waFirst;
+		while ((waFirst = title.indexOf (winamp)) != -1) {
+			title.remove (0, waFirst + winampLength);
+		}
+	}
+	else {
+		title = QString ((const QChar *) waTitle, length<TCHAR> ((const TCHAR *) waTitle)); // Title is not scrolling
+	}
+
+	// Remove leading and trailing spaces
+	if (title.length ()) {
+		while (title.length () && title[0] == ' ') {
+			title.remove (0, 1);
+		}
+		while (title.length () && title[title.length () - 1] == ' ') {
+			title.remove(title.length () - 1, 1);
+		}
+	}
+
+	// Remove trailing " - Winamp" from title
+	if (title.length ()) {
+		winamp = " - Winamp";
+		winampLength = winamp.length ();
+		int waFirst = title.indexOf (winamp);
+		if (waFirst != -1)
+		{
+			title.remove (waFirst, waFirst + winampLength);
+		}
+	}
+
+	// Remove track number from title
+	if (title.length ()) {
+		QString dot(". ");
+		int dotFirst = title.indexOf (dot);
+		if (dotFirst != -1) {
+			// All symbols before the dot are digits?
+			bool allDigits = true;
+			for (int pos = dotFirst; pos;) {
+				allDigits = allDigits && title[--pos].isNumber();
+			}
+			if (allDigits) {
+				title.remove(0, dotFirst + dot.length ());
+			}
+		}
+	}
+
+	// Remove leading and trailing spaces
+	if (title.length ()) {
+		while (title.length () && title[0] == ' ') {
+			title.remove (0, 1);
+		}
+		while (title.length () && title[title.length () - 1] == ' ') {
+			title.remove (title.length () - 1, 1);
+		}
+	}
+
+	return title;
+}
 
 Tune WinAmpController::currentTune()
 {
 	Tune tune;
-	TCHAR app_title[2048];
 #ifdef UNICODE
 	HWND h = FindWindow(L"Winamp v1.x", NULL);
 #else
 	HWND h = FindWindow("Winamp v1.x", NULL);
 #endif
-	if (h && SendMessage(h,WM_WA_IPC,0,IPC_ISPLAYING) == 1 && GetWindowText(h, app_title, 2048)) {
-#ifdef UNICODE
-		QString title = QString::fromUtf16((const ushort*) app_title);
-#else
-		QString title(app_title);
-#endif
-
-		// Chop off WinAmp title
-		if (title.endsWith("- Winamp"))
-			title.chop(8);
-		title = title.trimmed();
-
-		// Chop off track number
-		if (title.contains(" "))
-			title = title.right(title.size() - title.indexOf(" ") - 1);
-		tune.setName(title);
+	if (h && SendMessage(h,WM_WA_IPC,0,IPC_ISPLAYING) == 1) {
+		tune.setName(getTrackTitle(h));
 		tune.setTime(SendMessage(h,WM_WA_IPC,1,IPC_GETOUTPUTTIME));
 	}
 	return tune;
