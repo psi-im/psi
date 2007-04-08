@@ -36,7 +36,7 @@ class ChatView : public PsiTextView
 {
 	Q_OBJECT
 public:
-	ChatView(QWidget *parent);
+	ChatView(QWidget *parent, QWidget* dlg = NULL);
 	~ChatView();
 	
 	void appendText(const QString &text);

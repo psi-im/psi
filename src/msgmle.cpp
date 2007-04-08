@@ -39,8 +39,9 @@
 //----------------------------------------------------------------------------
 // ChatView
 //----------------------------------------------------------------------------
-ChatView::ChatView(QWidget *parent) : PsiTextView(parent)
+ChatView::ChatView(QWidget *parent, QWidget* dialog) : PsiTextView(parent)
 {
+	dialog_ = dialog;
 	setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
 
 	setReadOnly(true);

@@ -60,7 +60,9 @@ QList<QKeySequence> ShortcutManager::shortcuts(const QString& name)
 		}
 	}
 	else {
-		list += variant.value<QKeySequence>();
+		QKeySequence k = variant.value<QKeySequence>();
+		if (!k.isEmpty())
+			list += k;
 	}
 	return list;
 }
@@ -80,9 +82,11 @@ void ShortcutManager::connect(const QString& path, QWidget *parent, const char* 
 		return;
 
 	foreach(QKeySequence sequence, ShortcutManager::instance()->shortcuts(path)) {
-		QAction* act = new QAction(parent);
-		act->setShortcut(sequence);
-		parent->addAction(act);
-		parent->connect(act, SIGNAL(activated()), slot);
+		if (!sequence.isEmpty()) {
+			QAction* act = new QAction(parent);
+			act->setShortcut(sequence);
+			parent->addAction(act);
+			parent->connect(act, SIGNAL(activated()), slot);
+		}
 	}
 }
