@@ -52,6 +52,8 @@ QString SSLCertDlg::makePropTable(const QString &heading, const QCA::Certificate
 	str += makePropEntry(QCA::State, tr("State:"), list);
 	str += makePropEntry(QCA::Country, tr("Country:"), list);
 	str += makePropEntry(QCA::CommonName, tr("Common name:"), list);
+	str += makePropEntry(QCA::DNS, tr("Domain name:"), list);
+	str += makePropEntry(QCA::XMPP, tr("XMPP name:"), list);
 	str += makePropEntry(QCA::Email, tr("Email:"), list);
 	str += "</table></td></tr>";
 	return str;

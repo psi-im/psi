@@ -207,6 +207,7 @@ public slots:
 	int forwardPendingEvents(const Jid &jid);
 	void autoLogin();
 
+	void showCert();
 
 	//dj_ originally referred to 'direct jabber', if you care
 	void dj_sendMessage(const Message &, bool log=true);
