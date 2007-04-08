@@ -1405,9 +1405,9 @@ void PsiCon::doWakeup()
 }
 
 
-QList<PsiToolBar*> *PsiCon::toolbarList() const
+QList<PsiToolBar*> PsiCon::toolbarList() const
 {
-	return new QList<PsiToolBar*>(mainWin()->toolbars);
+	return mainWin()->toolbars;
 }
 
 PsiToolBar *PsiCon::findToolBar(QString group, int index)
@@ -1418,6 +1418,16 @@ PsiToolBar *PsiCon::findToolBar(QString group, int index)
 		toolBar = mainWin()->toolbars.at(index);
 
 	return toolBar;
+}
+
+void PsiCon::buildToolbars()
+{
+	mainWin()->buildToolbars();
+}
+
+bool PsiCon::getToolbarLocation(Q3DockWindow* dw, Qt::Dock& dock, int& index, bool& nl, int& extraOffset) const
+{
+	return mainWin()->getLocation(dw, dock, index, nl, extraOffset);
 }
 
 PsiActionList *PsiCon::actionList() const

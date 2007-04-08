@@ -593,11 +593,10 @@ void MainWin::buildToolbars()
 		if ( tb )
 			delete tb;
 
-		tb = new PsiToolBar (tbPref.name, this, this);
+		tb = new PsiToolBar(tbPref.name, this, d->psi);
 		moveDockWindow ( tb, tbPref.dock, tbPref.nl, tbPref.index, tbPref. extraOffset );
 
 		tb->setGroup( "mainWin", i );
-		tb->setPsiCon( d->psi );
 		tb->setType( PsiActionList::Actions_MainWin );
 		//connect( tb, SIGNAL( registerAction( IconAction * ) ), SLOT( registerAction( IconAction * ) ) );
 		tb->initialize( tbPref, false );

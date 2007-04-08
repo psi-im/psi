@@ -48,6 +48,7 @@ class AccountsComboBox;
 class ChatDlg;
 class TuneController;
 class PsiContactList;
+class Q3DockWindow;
 namespace OpenPGP {
 	class Engine;
 }
@@ -108,9 +109,12 @@ public:
 	EventDlg *createEventDlg(const QString &, PsiAccount *);
 	void updateContactGlobal(PsiAccount *, const Jid &);
 
-	QList<PsiToolBar*> *toolbarList() const;
+	QList<PsiToolBar*> toolbarList() const;
 	PsiToolBar *findToolBar(QString group, int index);
 	PsiActionList *actionList() const;
+
+	void buildToolbars();
+	bool getToolbarLocation(Q3DockWindow* dw, Qt::Dock& dock, int& index, bool& nl, int& extraOffset) const;
 
 	MainWin *mainWin() const;
 	IconSelectPopup *iconSelectPopup() const;

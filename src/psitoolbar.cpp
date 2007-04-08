@@ -27,7 +27,6 @@
 #include <QContextMenuEvent>
 #include <Q3PtrList>
 #include "psicon.h"
-#include "mainwin.h"
 #include "iconset.h"
 #include "psicon.h"
 #include "iconaction.h"
@@ -62,16 +61,11 @@ PsiToolBar::Private::Private()
 // PsiToolBar
 //----------------------------------------------------------------------------
 
-PsiToolBar::PsiToolBar(const QString &label, Q3MainWindow *mainWindow, QWidget *parent, bool newLine, const char *name, Qt::WFlags f)
-: Q3ToolBar(label, mainWindow, parent, newLine, name, f)
+PsiToolBar::PsiToolBar(const QString& label, Q3MainWindow* mainWindow, PsiCon* psi)
+: Q3ToolBar(label, mainWindow, (QWidget*)mainWindow)
 {
 	d = new Private();
-}
-
-PsiToolBar::PsiToolBar(Q3MainWindow *parent, const char *name)
-: Q3ToolBar(parent, name)
-{
-	d = new Private();
+	d->psi = psi;
 }
 
 PsiToolBar::~PsiToolBar()
@@ -106,15 +100,13 @@ void PsiToolBar::contextMenuEvent(QContextMenuEvent *e)
 	if ( !d->customizeable )
 		return;
 
-	MainWin *mainWin = (MainWin *)mainWindow();
 	Q3PopupMenu pm;
-
 	pm.insertItem(IconsetFactory::icon("psi/toolbars").icon(), tr("Configure &Toolbar..."), 0);
 
 	int ret = pm.exec( e->globalPos() );
 
 	if ( ret == 0 ) {
-		mainWin->psiCon()->doToolbars();
+		d->psi->doToolbars();
 	}
 }
 
@@ -182,9 +174,3 @@ void PsiToolBar::initialize( Options::ToolbarPrefs &tbPref, bool createUniqueAct
 
 	tbPref.dirty = false;
 }
-
-void PsiToolBar::setPsiCon( PsiCon *psi )
-{
-	d->psi = psi;
-}
-

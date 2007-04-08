@@ -35,11 +35,8 @@ class PsiToolBar : public Q3ToolBar
 	Q_OBJECT
 
 public:
-	PsiToolBar(const QString &label, Q3MainWindow *mainWindow, QWidget *parent, bool newLine = FALSE, const char *name = 0, Qt::WFlags f = 0);
-	PsiToolBar(Q3MainWindow *parent = 0, const char *name = 0);
+	PsiToolBar(const QString& label, Q3MainWindow* mainWindow, PsiCon* psi);
 	~PsiToolBar();
-
-	void setPsiCon( PsiCon *psi );
 
 	PsiActionList::ActionsType type() const;
 	void setType( PsiActionList::ActionsType );

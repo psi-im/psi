@@ -16,7 +16,6 @@ HEADERS += \
 	$$PWD/opt_events.h \
 	$$PWD/opt_status.h \
 	$$PWD/opt_appearance.h \
-	$$PWD/opt_lookfeel.h \
 	$$PWD/opt_iconset.h \
 	$$PWD/opt_groupchat.h \
 	$$PWD/opt_sound.h \
@@ -30,7 +29,6 @@ SOURCES += \
 	$$PWD/opt_events.cpp \
 	$$PWD/opt_status.cpp \
 	$$PWD/opt_appearance.cpp \
-	$$PWD/opt_lookfeel.cpp \
 	$$PWD/opt_iconset.cpp \
 	$$PWD/opt_groupchat.cpp \
 	$$PWD/opt_sound.cpp \

@@ -20,7 +20,6 @@
 
 #include "common.h"
 #include "iconaction.h"
-#include "mainwin.h"
 #include "psiaccount.h"
 #include "psiactionlist.h"
 #include "psicon.h"

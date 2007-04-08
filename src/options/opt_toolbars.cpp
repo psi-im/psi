@@ -3,7 +3,6 @@
 #include "psicon.h"
 #include "common.h"
 #include "iconwidget.h"
-#include "mainwin.h"
 #include "psitoolbar.h"
 #include "iconaction.h"
 #include "psiactionlist.h"
@@ -302,13 +301,13 @@ void OptionsTabToolbars::applyOptions(Options *o)
 		opt->toolbars = o->toolbars;
 
 	// get current toolbars' positions
-	MainWin *mainWin = (MainWin *)psi->mainWin();
-	for (int i = 0; i < opt->toolbars["mainWin"].count() && i < mainWin->toolbars.count(); i++) {
+	QList<PsiToolBar*> toolbars = psi->toolbarList();
+	for (int i = 0; i < opt->toolbars["mainWin"].count() && i < toolbars.count(); i++) {
 		//if ( toolbarPositionInProgress && posTbDlg->n() == (int)i )
 		//	continue;
 
 		Options::ToolbarPrefs &tbPref = opt->toolbars["mainWin"][i];
-		mainWin->getLocation ( mainWin->toolbars.at(i), tbPref.dock, tbPref.index, tbPref.nl, tbPref.extraOffset );
+		psi->getToolbarLocation(toolbars.at(i), tbPref.dock, tbPref.index, tbPref.nl, tbPref.extraOffset);
 	}
 
 	// apply options
@@ -682,15 +681,13 @@ void OptionsTabToolbars::toolbarPositionApply()
 	emit dataChanged();
 
 	option.toolbars = opt->toolbars;
-	MainWin *mainWin = (MainWin *)psi->mainWin();
-	mainWin->buildToolbars();
+	psi->buildToolbars();
 }
 
 void OptionsTabToolbars::doApply()
 {
 	option.toolbars = opt->toolbars;
-	MainWin *mainWin = (MainWin *)psi->mainWin();
-	mainWin->buildToolbars();
+	psi->buildToolbars();
 }
 
 void OptionsTabToolbars::selAct_selectionChanged(Q3ListViewItem *)
