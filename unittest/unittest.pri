@@ -35,7 +35,7 @@ check.commands = ./$$EXEC_TARGET
 
 unix {
 	# valgrind target (only shows valgrind output)
-	VALGRIND_OPTIONS = -q --num-callers=40 --leak-check=full --show-reachable=yes --suppressions=$$TESTBASEDIR/valgrind.supp
+	VALGRIND_OPTIONS = -q --num-callers=40 --leak-check=full --show-reachable=yes --suppressions=$$PWD/valgrind.supp
 	QMAKE_EXTRA_TARGETS += valgrind
 	valgrind.depends = $$EXEC_TARGET
 	valgrind.commands = valgrind $$VALGRIND_OPTIONS ./$$EXEC_TARGET | grep -E '==\d+=='

@@ -16,8 +16,7 @@ DEFINES += QT_STATICPLUGIN
 # Import several very useful Makefile targets 
 # as well as set up default directories for 
 # generated files
-TESTBASEDIR = ../unittest
-include($$TESTBASEDIR/unittest.pri)
+include(../unittest/unittest.pri)
 
 # qconf
 

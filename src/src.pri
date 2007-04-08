@@ -40,7 +40,7 @@ use_crash {
 qca-static {
 	# QCA
 	DEFINES += QCA_STATIC
-	QCA_CPP = ../third-party/qca
+	QCA_CPP = $$PWD/../third-party/qca
 	INCLUDEPATH += $$QCA_CPP/include/QtCrypto
 	LIBS += -L$$QCA_CPP -lqca_psi
 	windows:LIBS += -lcrypt32
