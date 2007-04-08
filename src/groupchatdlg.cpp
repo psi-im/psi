@@ -1655,7 +1655,8 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
 void GCMainDlg::doAlert()
 {
 	if(!isActiveWindow())
-		doFlash(true);
+		if (PsiOptions::instance()->getOption("options.ui.flash-windows").toBool())
+			doFlash(true);
 }
 
 void GCMainDlg::updateCaption()

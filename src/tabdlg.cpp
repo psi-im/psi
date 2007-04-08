@@ -349,7 +349,8 @@ void TabDlg::updateTab( ChatDlg* chat)
 	else if (tabHasMessages[chat])
 	{
 		tabs->setTabTextColor( chat, Qt::red );
-		doFlash(true);
+		if (PsiOptions::instance()->getOption("options.ui.flash-windows").toBool())
+			doFlash(true);
 	}
 	else
 		tabs->setTabTextColor( chat, Qt::black );

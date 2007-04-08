@@ -127,6 +127,7 @@
 				<show comment="Show the tip of the day upon startup" type="bool">true</show>
 				<number comment="The next tip to show" type="int">0</number>
 			</tip>
+			<flash-windows comment="Allow windows to flash upon activity" type="bool">true</flash-windows>
 		</ui>
 		<shortcuts comment="Shortcuts">
 			<chat comment="Shortcuts in the chat dialog">

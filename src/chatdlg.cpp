@@ -1168,7 +1168,8 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 	if(!isActiveWindow() || isHidden()) { //isHidden==tab hack
 		++d->pending;
 		updateCaption();
-		doFlash(true);
+		if (PsiOptions::instance()->getOption("options.ui.flash-windows").toBool())
+			doFlash(true);
 		if(option.raiseChatWindow)
 			bringToFront(this, false);
 	}
