@@ -157,7 +157,7 @@ private:
 	 */
 	bool disableIconsForMenu(const QWidget *menu) const
 	{
-		return !menu || !dynamic_cast<ResourceMenu>(menu);
+		return !menu || !dynamic_cast<const ResourceMenu*>(menu);
 	}
 };
 #endif
