@@ -43,6 +43,7 @@
 #include "psicon.h"
 #include "contactview.h"
 #include "psiiconset.h"
+#include "serverinfomanager.h"
 #include "applicationinfo.h"
 #include "psiaccount.h"
 #include "psitrayicon.h"
@@ -295,6 +296,9 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 
 	d->registerActions();
 	buildToolbars();
+	
+	connect(d->psi->contactList(), SIGNAL(accountFeaturesChanged()), SLOT(accountFeaturesChanged()));
+	accountFeaturesChanged();
 
 	decorateButton(STATUS_OFFLINE);
 
@@ -1055,6 +1059,19 @@ void MainWin::statusClicked(int x)
 void MainWin::numAccountsChanged()
 {
 	d->statusButton->setEnabled(d->psi->contactList()->haveEnabledAccounts());
+}
+
+void MainWin::accountFeaturesChanged()
+{
+	bool have_pep = false;
+	foreach(PsiAccount* account, d->psi->contactList()->enabledAccounts()) {
+		if (account->serverInfoManager()->hasPEP()) {
+			have_pep = true;
+			break;
+		}
+	}
+
+	d->getAction("publish_tune")->setEnabled(have_pep);
 }
 
 void MainWin::dockActivated()

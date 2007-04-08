@@ -109,6 +109,7 @@ private slots:
 	void tryCloseProgram();
 
 	void numAccountsChanged();
+	void accountFeaturesChanged();
 	void activatedAccOption(PsiAccount *, int);
 
 	void actReadmeActivated ();

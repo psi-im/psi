@@ -82,6 +82,10 @@ signals:
 	 */
 	void accountActivityChanged();
 	/**
+	 * This signal is emitted when the features of one of the accounts change.
+	 */
+	void accountFeaturesChanged();
+	/**
 	 * This signal is emitted when either new account was added, or 
 	 * existing one was removed altogether.
 	 */

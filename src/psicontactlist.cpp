@@ -22,6 +22,7 @@
 #include "psiaccount.h"
 #include "psievent.h"
 #include "accountadddlg.h"
+#include "serverinfomanager.h"
 #include "psicon.h"
 
 /**
@@ -210,6 +211,7 @@ void PsiContactList::link(PsiAccount* account)
 {
 	Q_ASSERT(!accounts_.contains(account));
 	connect(account, SIGNAL(updatedActivity()), this, SIGNAL(accountActivityChanged()));
+	connect(account->serverInfoManager(),SIGNAL(featuresChanged()), this, SIGNAL(accountFeaturesChanged()));
 	accounts_.append(account);
 	if (account->enabled())
 		enabledAccounts_.append(account);
