@@ -72,19 +72,6 @@ QString TextUtil::plain2rich(const QString &plain)
 			rich += "<br>";
 			col = 0;
 		}
-		else if(plain[i] == '\t') {
-			rich += QChar::nbsp;
-			while(col % 4) {
-				rich += QChar::nbsp;
-				++col;
-			}
-		}
-		else if(plain[i].isSpace()) {
-			if(i > 0 && plain[i-1] == ' ')
-				rich += QChar::nbsp;
-			else
-				rich += ' ';
-		}
 		else if(plain[i] == '<')
 			rich += "&lt;";
 		else if(plain[i] == '>')
@@ -100,7 +87,7 @@ QString TextUtil::plain2rich(const QString &plain)
 		++col;
 	}
 
-	return rich;
+	return "<span style='white-space: pre-wrap'>" + rich + "</span>";
 }
 
 QString TextUtil::rich2plain(const QString &in)

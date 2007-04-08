@@ -1096,7 +1096,7 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 			ui_.log->appendText(QString("<span style=\"color: %1\">").arg(color) + QString("[%1] &lt;").arg(timestr) + who + QString("&gt;</span> ") + txt);
 	}
 	if(!m.subject().isEmpty()) {
-		ui_.log->appendText(QString("<b>") + tr("Subject:") + "</b> " + QString("%1").arg(Qt::escape(m.subject())));
+		ui_.log->appendText(QString("<b>") + tr("Subject:") + "</b> " + QString("%1").arg(TextUtil::plain2rich(m.subject())));
 	}
 	if(!m.urlList().isEmpty()) {
 		UrlList urls = m.urlList();

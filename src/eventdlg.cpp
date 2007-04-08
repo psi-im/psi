@@ -1864,7 +1864,7 @@ void EventDlg::updateEvent(PsiEvent *e)
 
 		// show subject line if the incoming message has one
 		if(m.subject() != "" && !option.showSubjects)
-			txt = "<p><font color=\"red\"><b>" + tr("Subject:") + " " + m.subject() + "</b></font></p>" + (xhtml? "" : "<br>") + txt;
+			txt = "<p><font color=\"red\"><b>" + tr("Subject:") + " " + TextUtil::plain2rich(m.subject()) + "</b></font></p>" + (xhtml? "" : "<br>") + txt;
 
 		if (!xhtml) {
 			if(option.useEmoticons)
