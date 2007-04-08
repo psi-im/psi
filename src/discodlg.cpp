@@ -714,7 +714,7 @@ protected:
 	bool maybeTip(const QPoint &);
 
 	// reimplemented
-	bool event(QEvent* e);
+	bool eventFilter(QObject* o, QEvent* e);
 	void resizeEvent(QResizeEvent*);
 };
 
@@ -740,11 +740,12 @@ void DiscoListView::resizeEvent(QResizeEvent* e)
 	header()->adjustHeaderSize();
 }
 
+/**
+ * \param pos should be in global coordinate system.
+ */
 bool DiscoListView::maybeTip(const QPoint &pos)
 {
-	// 'pos' is a position in the ListView, including the header.
-	int dy = (header() ? header()->height() : 0);
-	DiscoListItem *i = (DiscoListItem *)itemAt(QPoint(pos.x(),pos.y()-dy));
+	DiscoListItem* i = (DiscoListItem*)itemAt(viewport()->mapFromGlobal(pos));
 	if(!i)
 		return false;
 
@@ -818,18 +819,19 @@ bool DiscoListView::maybeTip(const QPoint &pos)
 
 	text += "</qt>";
 	QRect r( itemRect(i) );
-	PsiToolTip::showText(mapToGlobal(pos), text, this);
+	PsiToolTip::showText(pos, text, this);
 	return true;
 }
 
-bool DiscoListView::event(QEvent* e)
+bool DiscoListView::eventFilter(QObject* o, QEvent* e)
 {
-	if (e->type() == QEvent::ToolTip) {
-		QPoint pos = ((QHelpEvent*) e)->pos();
-		e->setAccepted(maybeTip(pos));
+	if (e->type() == QEvent::ToolTip && o->isWidgetType()) {
+		QWidget*    w  = static_cast<QWidget*>(o);
+		QHelpEvent* he = static_cast<QHelpEvent*>(e);
+		maybeTip(w->mapToGlobal(he->pos()));
 		return true;
 	}
-	return Q3ListView::event(e);
+	return Q3ListView::eventFilter(o, e);
 }
 
 //----------------------------------------------------------------------------
