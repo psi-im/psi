@@ -231,7 +231,7 @@ public:
 		if (code & Qt::ALT)
 			mod |= optionKey;
 
-		code &= 0xffff;
+		code &= ~Qt::KeyboardModifierMask;
 		quint32 key = 0;
 		for (int n = 0; qt_keymap[n].qt_key != Qt::Key_unknown; ++n) {
 			if (qt_keymap[n].qt_key == code) {
