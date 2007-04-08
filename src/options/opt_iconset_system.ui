@@ -1,7 +1,4 @@
 <ui version="4.0" >
- <author></author>
- <comment></comment>
- <exportmacro></exportmacro>
  <class>IconsetSystem</class>
  <widget class="QWidget" name="IconsetSystem" >
   <property name="geometry" >
@@ -26,7 +23,6 @@
     <widget class="IconsetSelect" name="iss_system" >
      <property name="font" >
       <font>
-       <family></family>
        <pointsize>12</pointsize>
        <weight>50</weight>
        <italic>false</italic>
@@ -45,7 +41,11 @@
     </widget>
    </item>
    <item row="3" column="0" colspan="2" >
-    <widget class="QProgressBar" name="progress" />
+    <widget class="QProgressBar" name="progress" >
+     <property name="orientation" >
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
    </item>
    <item row="2" column="1" >
     <widget class="IconButton" name="pb_sysDetails" >
@@ -79,25 +79,14 @@
  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
  <customwidgets>
   <customwidget>
-   <class>IconsetSelect</class>
-   <extends></extends>
-   <header>iconwidget.h</header>
-   <container>0</container>
-   <pixmap></pixmap>
-  </customwidget>
-  <customwidget>
    <class>IconButton</class>
-   <extends></extends>
-   <header>iconwidget.h</header>
-   <container>0</container>
-   <pixmap></pixmap>
+   <extends>QPushButton</extends>
+   <header>iconbutton.h</header>
   </customwidget>
   <customwidget>
-   <class>QProgressBar</class>
-   <extends>QWidget</extends>
-   <header>q3progressbar.h</header>
-   <container>1</container>
-   <pixmap></pixmap>
+   <class>IconsetSelect</class>
+   <extends>QListWidget</extends>
+   <header>iconsetselect.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

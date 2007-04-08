@@ -45,7 +45,7 @@ QWidget *OptionsTabGroupchat::widget()
 	GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
 
 	connect(d->pb_nickColor,	   SIGNAL(clicked()), SLOT(chooseGCNickColor()));
-	connect(d->lb_nickColors,	   SIGNAL(highlighted(int)), SLOT(selectedGCNickColor()));
+	connect(d->lw_nickColors,	   SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)), SLOT(selectedGCNickColor(QListWidgetItem *)));
 
 	connect(d->pb_addHighlightWord,	   SIGNAL(clicked()), SLOT(addGCHighlight()));
 	connect(d->pb_removeHighlightWord, SIGNAL(clicked()), SLOT(removeGCHighlight()));
@@ -69,13 +69,13 @@ void OptionsTabGroupchat::applyOptions(Options *opt)
 
 	QStringList highlight;
 	int i;
-	for (i = 0; i < (int)d->lb_highlightWords->count(); i++)
-		highlight << d->lb_highlightWords->item(i)->text();
+	for (i = 0; i < (int)d->lw_highlightWords->count(); i++)
+		highlight << d->lw_highlightWords->item(i)->text();
 	opt->gcHighlights = highlight;
 
 	QStringList colors;
-	for (i = 0; i < (int)d->lb_nickColors->count(); i++)
-		colors << d->lb_nickColors->item(i)->text();
+	for (i = 0; i < (int)d->lw_nickColors->count(); i++)
+		colors << d->lw_nickColors->item(i)->text();
 	opt->gcNickColors = colors;
 }
 
@@ -95,9 +95,9 @@ void OptionsTabGroupchat::restoreOptions(const Options *opt)
 	d->ck_gcHighlights->setChecked( opt->gcHighlighting );
 	d->ck_gcNickColoring->setChecked( true );
 	d->ck_gcNickColoring->setChecked( opt->gcNickColoring );
-	d->lb_highlightWords->clear();
-	d->lb_highlightWords->insertStringList( opt->gcHighlights );
-	d->lb_nickColors->clear();
+	d->lw_highlightWords->clear();
+	d->lw_highlightWords->addItems( opt->gcHighlights );
+	d->lw_nickColors->clear();
 
 	QStringList::ConstIterator it = opt->gcNickColors.begin();
 	for ( ; it != opt->gcNickColors.end(); ++it)
@@ -124,7 +124,7 @@ static QPixmap name2color(QString name)
 void OptionsTabGroupchat::addNickColor(QString name)
 {
 	GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
-	d->lb_nickColors->insertItem(name2color(name), name);
+	d->lw_nickColors->addItem(new QListWidgetItem(name2color(name), name));
 }
 
 void OptionsTabGroupchat::addGCHighlight()
@@ -133,7 +133,7 @@ void OptionsTabGroupchat::addGCHighlight()
 	if ( d->le_newHighlightWord->text().isEmpty() )
 		return;
 
-	d->lb_highlightWords->insertItem( d->le_newHighlightWord->text() );
+	d->lw_highlightWords->addItem( d->le_newHighlightWord->text() );
 	d->le_newHighlightWord->setFocus();
 	d->le_newHighlightWord->setText("");
 
@@ -143,11 +143,11 @@ void OptionsTabGroupchat::addGCHighlight()
 void OptionsTabGroupchat::removeGCHighlight()
 {
 	GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
-	int id = d->lb_highlightWords->currentItem();
+	int id = d->lw_highlightWords->currentRow();
 	if ( id == -1 )
 		return;
 
-	d->lb_highlightWords->removeItem(id);
+	d->lw_highlightWords->takeItem(id);
 
 	emit dataChanged();
 }
@@ -168,11 +168,11 @@ void OptionsTabGroupchat::addGCNickColor()
 void OptionsTabGroupchat::removeGCNickColor()
 {
 	GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
-	int id = d->lb_nickColors->currentItem();
+	int id = d->lw_nickColors->currentRow();
 	if ( id == -1 )
 		return;
 
-	d->lb_nickColors->removeItem(id);
+	d->lw_nickColors->takeItem(id);
 
 	emit dataChanged();
 }
@@ -187,14 +187,10 @@ void OptionsTabGroupchat::chooseGCNickColor()
 	}
 }
 
-void OptionsTabGroupchat::selectedGCNickColor()
+void OptionsTabGroupchat::selectedGCNickColor(QListWidgetItem * item)
 {
 	GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
-	int id = d->lb_nickColors->currentItem();
-	if ( id == -1 )
-		return;
-
-	d->le_newNickColor->setText( d->lb_nickColors->text(id) );
+	d->le_newNickColor->setText( item->text() );
 }
 
 void OptionsTabGroupchat::displayGCNickColor()

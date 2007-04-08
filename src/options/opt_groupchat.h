@@ -4,6 +4,7 @@
 #include "optionstab.h"
 
 class QWidget;
+class QListWidgetItem;
 struct Options;
 
 class OptionsTabGroupchat : public OptionsTab
@@ -27,7 +28,7 @@ private slots:
 	void removeGCNickColor();
 	void chooseGCNickColor();
 	void displayGCNickColor();
-	void selectedGCNickColor();
+	void selectedGCNickColor(QListWidgetItem *item);
 
 private:
 	QWidget *w, *dlg;

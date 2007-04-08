@@ -12,15 +12,13 @@
 
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
-#include <q3listview.h>
 #include <qcombobox.h>
 #include <qaction.h>
 #include <qlineedit.h>
 #include <qcheckbox.h>
 #include <qspinbox.h>
+#include <QHeaderView>
 //Added by qt3to4:
-#include <Q3PtrList>
 #include <QEvent>
 #include <QHBoxLayout>
 #include <QList>
@@ -203,8 +201,8 @@ QWidget *OptionsTabToolbars::widget()
 	connect(d->ck_toolbarOn, SIGNAL(toggled(bool)), SLOT(toolbarDataChanged()));
 	connect(d->ck_toolbarLocked, SIGNAL(toggled(bool)), SLOT(toolbarDataChanged()));
 	connect(d->ck_toolbarStretch, SIGNAL(toggled(bool)), SLOT(toolbarDataChanged()));
-	connect(d->lv_selectedActions, SIGNAL(selectionChanged(Q3ListViewItem *)), SLOT(selAct_selectionChanged(Q3ListViewItem *)));
-	connect(d->lv_availActions, SIGNAL(selectionChanged(Q3ListViewItem *)), SLOT(avaAct_selectionChanged(Q3ListViewItem *)));
+	connect(d->lw_selectedActions, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)), SLOT(selAct_selectionChanged(QListWidgetItem *)));
+	connect(d->tw_availActions, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)), SLOT(avaAct_selectionChanged(QTreeWidgetItem *)));
 
 	connect(d->pb_deleteToolbar, SIGNAL(clicked()), SIGNAL(dataChanged()));
 	connect(d->tb_up, SIGNAL(clicked()), SIGNAL(dataChanged()));
@@ -214,11 +212,7 @@ QWidget *OptionsTabToolbars::widget()
 	connect(d->pb_addToolbar, SIGNAL(clicked()), SIGNAL(dataChanged()));
 	connect(d->pb_deleteToolbar, SIGNAL(clicked()), SIGNAL(dataChanged()));
 
-	d->lv_selectedActions->header()->hide();
-	d->lv_availActions->header()->hide();
-
-	d->lv_selectedActions->setSorting(-1);
-	d->lv_availActions->setSorting(-1);
+	d->tw_availActions->header()->hide();
 
 	return w;
 	// TODO: add QWhatsThis to all widgets
@@ -408,26 +402,25 @@ void OptionsTabToolbars::toolbarDelete()
 	}
 }
 
-void OptionsTabToolbars::addToolbarAction(Q3ListView *parent, QString name, int toolbarId)
+void OptionsTabToolbars::addToolbarAction(QListWidget *parent, QString name, int toolbarId)
 {
 	ActionList actions = psi->actionList()->suitableActions( (PsiActionList::ActionsType)toolbarId );
 	const QAction *action = (QAction *)actions.action( name );
 	if ( !action )
 		return;
-
 	addToolbarAction(parent, action, name);
 }
 
-void OptionsTabToolbars::addToolbarAction(Q3ListView *parent, const QAction *action, QString name)
+void OptionsTabToolbars::addToolbarAction(QListWidget *parent, const QAction *action, QString name)
 {
-	Q3ListViewItem *item = new Q3ListViewItem(parent, parent->lastItem());
+	QListWidgetItem *item = new QListWidgetItem(parent);
 
 	QString n = actionName(action);
 	if ( !action->whatsThis().isEmpty() )
 		n += " - " + action->whatsThis();
-	item->setText(0, n);
-	item->setText(1, name);
-	item->setPixmap(0, action->iconSet().pixmap());
+	item->setText(n);
+	item->setData(Qt::UserRole, name);
+	item->setIcon(action->iconSet());
 }
 
 void OptionsTabToolbars::toolbarSelectionChanged(int item)
@@ -450,8 +443,8 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 	d->ck_toolbarOn->setEnabled( enable );
 	d->ck_toolbarLocked->setEnabled( enable && moveable );
 	d->ck_toolbarStretch->setEnabled( enable && moveable );
-	d->lv_selectedActions->setEnabled( enable && customizeable );
-	d->lv_availActions->setEnabled( enable && customizeable );
+	d->lw_selectedActions->setEnabled( enable && customizeable );
+	d->tw_availActions->setEnabled( enable && customizeable );
 	d->tb_up->setEnabled( enable && customizeable );
 	d->tb_down->setEnabled( enable && customizeable );
 	d->tb_left->setEnabled( enable && customizeable );
@@ -459,8 +452,8 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 	d->pb_deleteToolbar->setEnabled( enable && p->toolbars[n].group == "mainWin" );
 	d->cb_toolbars->setEnabled( enable );
 
-	d->lv_availActions->clear();
-	d->lv_selectedActions->clear();
+	d->tw_availActions->clear();
+	d->lw_selectedActions->clear();
 
 	if ( !enable ) {
 		d->le_toolbarName->setText( "" );
@@ -476,36 +469,39 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 	d->ck_toolbarStretch->setChecked( tb.stretchable );
 
 	{
-		// Fill the ListView with toolbar-specific actions
-		Q3ListView *lv = d->lv_availActions;
-		Q3ListViewItem *lastRoot = 0;
+		// Fill the TreeWidget with toolbar-specific actions
+		QTreeWidget *tw = d->tw_availActions;
+		QTreeWidgetItem *lastRoot = 0;
+
 		foreach(ActionList* actionList, psi->actionList()->actionLists( p->class2id( p->toolbars[n].group ) )) {
-			Q3ListViewItem *root = new Q3ListViewItem(lv, lastRoot);
+			QTreeWidgetItem *root = new QTreeWidgetItem(tw, lastRoot);
 			lastRoot = root;
 			root->setText( 0, actionList->name() );
-			root->setOpen( true );
+			root->setData( 0, Qt::UserRole, QString("") );
+			root->setExpanded( true );
 
-			Q3ListViewItem *last = 0;
+			QTreeWidgetItem *last = 0;
 			QStringList actionNames = actionList->actions();
 			QStringList::Iterator it2 = actionNames.begin();
 			for ( ; it2 != actionNames.end(); ++it2 ) {
 				IconAction *action = actionList->action( *it2 );
-		        	Q3ListViewItem *item = new Q3ListViewItem( root, last );
+		        	QTreeWidgetItem *item = new QTreeWidgetItem( root, last );
 				last = item;
 
 				QString n = actionName((QAction *)action);
 				if ( !action->whatsThis().isEmpty() )
 					n += " - " + action->whatsThis();
-				item->setText(0, n);
-				item->setText(1, action->name());
-				item->setPixmap(0, action->iconSet().pixmap());
+				item->setText( 0, n );
+				item->setIcon( 0, action->iconSet() );
+				item->setData( 0, Qt::UserRole, action->name() );
 			}
 		}
+		tw->resizeColumnToContents(0);
 	}
 
 	QStringList::Iterator it = tb.keys.begin();
 	for ( ; it != tb.keys.end(); ++it) {
-		addToolbarAction(d->lv_selectedActions, *it, p->class2id( p->toolbars[n].group ) );
+		addToolbarAction(d->lw_selectedActions, *it, p->class2id( p->toolbars[n].group ) );
 	}
 	updateArrows();
 
@@ -520,11 +516,10 @@ void OptionsTabToolbars::rebuildToolbarKeys()
 	int n = d->cb_toolbars->currentIndex();
 
 	QStringList keys;
-	Q3ListViewItemIterator it( d->lv_selectedActions );
-        for ( ; it.current(); ++it) {
-		Q3ListViewItem *item = it.current();
 
-		keys << item->text(1);
+	int count = d->lw_selectedActions->count();
+	for (int i = 0; i < count; i++) {
+		keys << d->lw_selectedActions->item(i)->data(Qt::UserRole).toString();
         }
 
 	opt->toolbars["mainWin"][n].keys  = keys;
@@ -537,21 +532,18 @@ void OptionsTabToolbars::updateArrows()
 	LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
 	bool up = false, down = false, left = false, right = false;
 
-	if(d->lv_availActions->selectedItem() && !d->lv_availActions->selectedItem()->text(1).isEmpty())
+	if(d->tw_availActions->currentItem() && !d->tw_availActions->currentItem()->data(0, Qt::UserRole).toString().isEmpty())
 		right = true;
-	Q3ListViewItem *i = d->lv_selectedActions->selectedItem();
+	QListWidgetItem *i = d->lw_selectedActions->currentItem();
 	if(i) {
 		left = true;
 
 		// get numeric index of item
-		int n = 0;
-		for(Q3ListViewItem *it = d->lv_selectedActions->firstChild(); it != i; it = it->nextSibling()) {
-			++n;
-		}
+		int n = d->lw_selectedActions->row(i);
 
 		if(n > 0)
 			up = true;
-		if(n < d->lv_selectedActions->childCount()-1)
+		if(n < d->lw_selectedActions->count() - 1)
 			down = true;
 	}
 
@@ -577,12 +569,17 @@ void OptionsTabToolbars::toolbarNameChanged()
 void OptionsTabToolbars::toolbarActionUp()
 {
 	LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
-	Q3ListViewItem *item = d->lv_selectedActions->selectedItem();
+	QListWidgetItem *item = d->lw_selectedActions->currentItem();
 	if ( !item )
 		return;
 
-	if ( item->itemAbove() )
-		item->itemAbove()->moveItem(item);
+	int row = d->lw_selectedActions->row(item);
+	if ( row > 0 ) {
+		d->lw_selectedActions->takeItem(row);
+		d->lw_selectedActions->insertItem(row - 1, item);
+		d->lw_selectedActions->setCurrentItem(item);
+	}
+
 	rebuildToolbarKeys();
 	updateArrows();
 }
@@ -590,12 +587,17 @@ void OptionsTabToolbars::toolbarActionUp()
 void OptionsTabToolbars::toolbarActionDown()
 {
 	LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
-	Q3ListViewItem *item = d->lv_selectedActions->selectedItem();
+	QListWidgetItem *item = d->lw_selectedActions->currentItem();
 	if ( !item )
 		return;
 
-	if ( item->itemBelow() )
-		item->moveItem( item->itemBelow() );
+	int row = d->lw_selectedActions->row(item);
+	if ( row < d->lw_selectedActions->count() ) {
+		d->lw_selectedActions->takeItem(row);
+		d->lw_selectedActions->insertItem(row + 1, item);
+		d->lw_selectedActions->setCurrentItem(item);
+	}
+
 	rebuildToolbarKeys();
 	updateArrows();
 }
@@ -603,11 +605,11 @@ void OptionsTabToolbars::toolbarActionDown()
 void OptionsTabToolbars::toolbarAddAction()
 {
 	LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
-	Q3ListViewItem *item = d->lv_availActions->selectedItem();
-	if ( !item || item->text(1).isEmpty() )
+	QTreeWidgetItem *item = d->tw_availActions->currentItem();
+	if ( !item || item->data(0, Qt::UserRole).toString().isEmpty() )
 		return;
 
-	addToolbarAction(d->lv_selectedActions, item->text(1), p->class2id( p->toolbars[d->cb_toolbars->currentIndex()].group ) );
+	addToolbarAction(d->lw_selectedActions, item->data(0, Qt::UserRole).toString(), p->class2id( p->toolbars[d->cb_toolbars->currentIndex()].group ) );
 	rebuildToolbarKeys();
 	updateArrows();
 }
@@ -615,14 +617,11 @@ void OptionsTabToolbars::toolbarAddAction()
 void OptionsTabToolbars::toolbarRemoveAction()
 {
 	LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
-	Q3ListViewItem *item = d->lv_selectedActions->selectedItem();
+	QListWidgetItem *item = d->lw_selectedActions->currentItem();
 	if ( !item )
 		return;
 
 	delete item;
-
-	if(d->lv_selectedActions->currentItem())
-		d->lv_selectedActions->setSelected(d->lv_selectedActions->currentItem(), true);
 
 	rebuildToolbarKeys();
 	updateArrows();
@@ -690,12 +689,12 @@ void OptionsTabToolbars::doApply()
 	psi->buildToolbars();
 }
 
-void OptionsTabToolbars::selAct_selectionChanged(Q3ListViewItem *)
+void OptionsTabToolbars::selAct_selectionChanged(QListWidgetItem *)
 {
 	updateArrows();
 }
 
-void OptionsTabToolbars::avaAct_selectionChanged(Q3ListViewItem *)
+void OptionsTabToolbars::avaAct_selectionChanged(QTreeWidgetItem *)
 {
 	updateArrows();
 }

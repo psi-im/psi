@@ -8,9 +8,9 @@ class PsiToolBar;
 struct Options;
 class QAction;
 class IconButton;
-class Q3ListView;
-class Q3ListViewItem;
-
+class QListWidget;
+class QTreeWidgetItem;
+class QListWidgetItem;
 class OptionsTabToolbars : public OptionsTab
 {
 	Q_OBJECT
@@ -27,8 +27,8 @@ private slots:
 	void setData(PsiCon*, QWidget*);
 	void toolbarAdd();
 	void toolbarDelete();
-	void addToolbarAction(Q3ListView *, QString name, int toolbarId);
-	void addToolbarAction(Q3ListView *, const QAction *action, QString name);
+	void addToolbarAction(QListWidget *, QString name, int toolbarId);
+	void addToolbarAction(QListWidget *, const QAction *action, QString name);
 	void toolbarSelectionChanged(int);
 	void rebuildToolbarKeys();
 	void toolbarNameChanged();
@@ -39,8 +39,8 @@ private slots:
 	void toolbarDataChanged();
 	QString actionName(const QAction *a);
 	void toolbarPosition();
-	void selAct_selectionChanged(Q3ListViewItem *);
-	void avaAct_selectionChanged(Q3ListViewItem *);
+	void selAct_selectionChanged(QListWidgetItem *);
+	void avaAct_selectionChanged(QTreeWidgetItem *);
 
 	void doApply();
 	void toolbarPositionApply();
