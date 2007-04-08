@@ -1314,7 +1314,7 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 		if(x == XMPP::ClientStream::GenericAuthError)
 			s = tr("Unable to login");
 		else if(x == XMPP::ClientStream::NoMech)
-			s = tr("No appropriate mechanism available for given security settings (e.g. SASL library too weak)");
+			s = tr("No appropriate mechanism available for given security settings (e.g. SASL library too weak, or plaintext authentication not enabled)");
 		else if(x == XMPP::ClientStream::BadProto)
 			s = tr("Bad server response");
 		else if(x == XMPP::ClientStream::BadServ)
