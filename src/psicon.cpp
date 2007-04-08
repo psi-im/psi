@@ -467,6 +467,7 @@ bool PsiCon::init()
 		connect(ks, SIGNAL(updated()), SLOT(pgp_keysUpdated()));
 		PGPUtil::keystores += ks;
 	}
+	PassphraseDlg::setEventHandler(d->qcaEventHandler);
 
 	return true;
 }
@@ -650,8 +651,7 @@ void PsiCon::qcaEvent(int id, const QCA::Event& event)
 					name = e.name();
 				}
 			}
-			PassphraseDlg w(name,event.keyStoreEntryId(),d->qcaEventHandler,id,0);
-			w.exec();
+			PassphraseDlg::promptPassphrase(name,event.keyStoreEntryId(),id);
 		}
 	}
 }

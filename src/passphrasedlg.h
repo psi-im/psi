@@ -22,6 +22,9 @@
 #define PASSPHRASEDLG_H
 
 #include <QtCrypto>
+#include <QMap>
+#include <QList>
+#include <QString>
 
 #include "ui_passphrase.h"
 
@@ -29,7 +32,12 @@ class PassphraseDlg : public QDialog, public Ui::Passphrase
 {
 	Q_OBJECT
 public:
-	PassphraseDlg(const QString& name, const QString& entryId, QCA::EventHandler*, int requestId, QWidget *parent=0);
+	PassphraseDlg(const QString& name, const QString& entryId, int requestId, QWidget *parent=0);
+
+	void addRequest(int);
+
+	static void promptPassphrase(const QString& name, const QString& entryId, int requestId);
+	static void setEventHandler(QCA::EventHandler*);
 
 public slots:
 	void reject();
@@ -37,8 +45,10 @@ public slots:
 
 private:
 	QString entryId_;
-	QCA::EventHandler* eventHandler_;
-	int requestId_;
+	QList<int> requestIds_;
+	
+	static QCA::EventHandler* eventHandler_;
+	static QMap<QString,PassphraseDlg*> dialogs_;
 };
 
 #endif
