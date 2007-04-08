@@ -38,8 +38,8 @@
 namespace QCA
 {
 	class KeyStoreTracker;
-	class KeyStoreThread;
 	class KeyStoreManagerPrivate;
+	class KeyStorePrivate;
 
 	/**
 	   \class KeyStoreEntry qca_keystore.h QtCrypto
@@ -69,11 +69,17 @@ namespace QCA
 		KeyStoreEntry();
 
 		/**
+		   Create a passive KeyStoreEntry based on known entry
+		*/
+		KeyStoreEntry(const QString &id);
+
+		/**
 		   Standard copy constructor
 
 		   \param from the source entry
 		*/
 		KeyStoreEntry(const KeyStoreEntry &from);
+
 		~KeyStoreEntry();
 
 		/**
@@ -88,6 +94,9 @@ namespace QCA
 		*/
 		bool isNull() const;
 
+		bool isAvailable() const;
+		bool isAccessible() const;
+
 		/**
 		   Determine the type of key stored in this object 
 		*/
@@ -99,9 +108,14 @@ namespace QCA
 		QString name() const;
 
 		/**
-		   The ID associated with the key stored in this object
+		   The ID associated with the key stored in this object.
+
+		   The ID is unique across all stores, and may be very long.
 		*/
 		QString id() const;
+
+		QString storeName() const;
+		QString storeId() const;
 
 		/**
 		   If a KeyBundle is stored in this object, return that
@@ -134,8 +148,46 @@ namespace QCA
 		*/
 		PGPKey pgpPublicKey() const;
 
+		/**
+		   Returns true if the entry is available, otherwise false.
+		   Available means that the retrieval functions (like
+		   keyBundle(), certificate(), pgpPublicKey(), etc) will
+		   return non-null objects.  Entries retrieved from a
+		   KeyStore are always available, and therefore it is not
+		   necessary to call this function.  Calling this function
+		   on an already available entry may cause the entry to
+		   be refreshed.
+
+		   \note This function is blocking.
+		*/
+		bool ensureAvailable();
+
+		// like ensureAvailable, but also login to the token if needed
+		bool ensureAccess();
+
 	private:
 		class Private;
+		Private *d;
+
+		friend class KeyStoreTracker;
+	};
+
+	class QCA_EXPORT KeyStoreEntryWatcher : public QObject
+	{
+		Q_OBJECT
+	public:
+		KeyStoreEntryWatcher(const KeyStoreEntry &e, QObject *parent = 0);
+		~KeyStoreEntryWatcher();
+
+		KeyStoreEntry entry() const;
+
+	signals:
+		void available();
+		void unavailable();
+
+	private:
+		class Private;
+		friend class Private;
 		Private *d;
 	};
 
@@ -158,7 +210,6 @@ namespace QCA
 	    becomes invalid (isValid() == false), and unavailable() is emitted.
 	    even if the device later reappears, the KeyStore remains invalid.
 	    a new KeyStore will have to be created to use the device again.
-
 	*/
 	class QCA_EXPORT KeyStore : public QObject, public Algorithm
 	{
@@ -180,9 +231,9 @@ namespace QCA
 		   Obtain a specific KeyStore
 
 		   \param id the identification for the key store
-		   \param parent the parent object for this keystore
+		   \param keyStoreManager the parent manager for this keystore
 		*/
-		KeyStore(const QString &id, QObject *parent = 0);
+		KeyStore(const QString &id, KeyStoreManager *keyStoreManager);
 
 		~KeyStore();
 
@@ -284,12 +335,10 @@ namespace QCA
 		void unavailable();
 
 	private:
-		class Private;
-		Private *d;
+		friend class KeyStorePrivate;
+		KeyStorePrivate *d;
 
-		friend class KeyStoreTracker;
-		friend class KeyStoreManager;
-		void invalidate();
+		friend class KeyStoreManagerPrivate;
 	};
 
 	/**
@@ -307,15 +356,18 @@ namespace QCA
 	{
 		Q_OBJECT
 	public:
+		KeyStoreManager(QObject *parent = 0);
+		~KeyStoreManager();
+
 		/**
 		   Initialize all key store providers
 		*/
-		void start();
+		static void start();
 
 		/**
 		   Initialize a specific key store provider
 		*/
-		void start(const QString &provider);
+		static void start(const QString &provider);
 
 		/**
 		   Indicates if the manager is busy looking for key stores
@@ -333,24 +385,30 @@ namespace QCA
 		QStringList keyStores() const;
 
 		/**
-		   The number of key stores that are currently available
-		*/
-		int count() const;
-
-		/**
 		   The diagnostic result of key store operations, such as
 		   warnings and errors
 		*/
-		QString diagnosticText() const;
+		static QString diagnosticText();
 
 		/**
 		   Clears the diagnostic result log
 		*/
-		void clearDiagnosticText();
+		static void clearDiagnosticText();
+
+		/**
+		   If you are not using the eventloop, call this to update
+		   the object state to the present
+		*/
+		void sync();
 
 	signals:
 		/**
-		   emitted when the manager is done looking for key stores
+		   emitted when the manager has started looking for key stores
+		*/
+		void busyStarted();
+
+		/**
+		   emitted when the manager has finished looking for key stores
 		*/
 		void busyFinished();
 
@@ -364,13 +422,15 @@ namespace QCA
 		KeyStoreManagerPrivate *d;
 
 		friend class Global;
-		friend class KeyStoreTracker;
-		friend class KeyStoreThread;
-		KeyStoreManager();
-		~KeyStoreManager();
+		friend class KeyStorePrivate;
 
-		void scan() const;
+		static void scan();
+		static void shutdown();
 	};
 }
+
+Q_DECLARE_METATYPE(QCA::KeyStoreEntry)
+Q_DECLARE_METATYPE(QList<QCA::KeyStoreEntry>)
+Q_DECLARE_METATYPE(QList<QCA::KeyStoreEntry::Type>)
 
 #endif

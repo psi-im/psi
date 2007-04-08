@@ -154,6 +154,7 @@ public slots:
 	void recvNextEvent();
 	void setStatusFromDialog(const XMPP::Status &, bool withPriority);
 	void pgp_keysUpdated();
+	void keyStoreAvailable(const QString&);
 	void proxy_settingsChanged();
 	void updateMainwinStatus();
 	void tabDying(TabDlg*);

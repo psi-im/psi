@@ -244,8 +244,10 @@ int main(int argc, char *argv[])
 	QApplication::setQuitOnLastWindowClosed(false);
 
 	// Initialize QCA
-	QCA::keyStoreManager()->start();
-	QCA::keyStoreManager()->waitForBusyFinished();
+	QCA::KeyStoreManager keystoremgr;
+	keystoremgr.start();
+	keystoremgr.waitForBusyFinished(); // FIXME get rid of this
+
 
 #ifdef Q_WS_MAC
 	CocoaUtil::initialize();
