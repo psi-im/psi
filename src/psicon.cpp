@@ -31,6 +31,7 @@
 #include <QPixmap>
 #include <QList>
 #include <QImageReader>
+#include <QDesktopServices>
 #include <QMessageBox>
 
 #include "s5b.h"
@@ -120,7 +121,7 @@ public slots:
 
 	void openURL(QString url)
 	{
-		::openURL(url);
+		QDesktopServices::openUrl(url);
 	}
 
 private:

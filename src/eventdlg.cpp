@@ -33,6 +33,7 @@
 #include <qdatetime.h>
 #include <qapplication.h>
 #include <qclipboard.h>
+#include <QDesktopServices>
 #include <QResizeEvent>
 #include <QShowEvent>
 #include <QFrame>
@@ -418,7 +419,7 @@ void AttachView::goURL(const QString &_url)
 	if(url.find("://") == -1)
 		url.insert(0, "http://");
 
-	openURL(url);
+	QDesktopServices::openUrl(url);
 }
 
 UrlList AttachView::urlList() const

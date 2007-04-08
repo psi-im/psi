@@ -408,8 +408,6 @@ void UserProfile::reset()
 	prefs.defaultAction = 1;
 	prefs.delChats = dcHour;
 	prefs.browser = 0;
-	prefs.customBrowser = "";
-	prefs.customMailer = "";
 	prefs.alwaysOnTop = FALSE;
 	prefs.keepSizes = TRUE;
 	prefs.ignoreHeadline = FALSE;
@@ -829,8 +827,6 @@ bool UserProfile::toFile(const QString &fname)
 			p_misc.appendChild(textTag(doc, "autoResolveNicksOnAdd", prefs.autoResolveNicksOnAdd));
 			p_misc.appendChild(textTag(doc, "delChats", prefs.delChats));
 			p_misc.appendChild(textTag(doc, "browser", prefs.browser));
-			p_misc.appendChild(textTag(doc, "customBrowser", prefs.customBrowser));
-			p_misc.appendChild(textTag(doc, "customMailer", prefs.customMailer));
 			p_misc.appendChild(textTag(doc, "alwaysOnTop", prefs.alwaysOnTop));
 			p_misc.appendChild(textTag(doc, "keepSizes", prefs.keepSizes));
 			p_misc.appendChild(textTag(doc, "ignoreHeadline", prefs.ignoreHeadline));
@@ -1363,8 +1359,6 @@ bool UserProfile::fromFile(const QString &fname)
 				readEntry(tag, "chatBgImage", &prefs.chatBgImage);
 				readNumEntry(tag, "delChats", &prefs.delChats);
 				readNumEntry(tag, "browser", &prefs.browser);
-				readEntry(tag, "customBrowser", &prefs.customBrowser);
-				readEntry(tag, "customMailer", &prefs.customMailer);
 				readBoolEntry(tag, "alwaysOnTop", &prefs.alwaysOnTop);
 				readBoolEntry(tag, "keepSizes", &prefs.keepSizes);
 				readBoolEntry(tag, "ignoreHeadline", &prefs.ignoreHeadline);

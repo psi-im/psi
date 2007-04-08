@@ -20,6 +20,7 @@
 
 #include "mainwin.h"
 
+#include <QDesktopServices>
 #include <qmessagebox.h>
 #include <qicon.h>
 #include <qapplication.h>
@@ -704,22 +705,22 @@ void MainWin::actReadmeActivated ()
 
 void MainWin::actOnlineHelpActivated ()
 {
-	openURL("http://psi-im.org/wiki/User_Guide");
+	QDesktopServices::openUrl(QUrl("http://psi-im.org/wiki/User_Guide"));
 }
 
 void MainWin::actOnlineWikiActivated ()
 {
-	openURL("http://psi-im.org/wiki");
+	QDesktopServices::openUrl(QUrl("http://psi-im.org/wiki"));
 }
 
 void MainWin::actOnlineHomeActivated ()
 {
-	openURL("http://psi-im.org");
+	QDesktopServices::openUrl(QUrl("http://psi-im.org"));
 }
 
 void MainWin::actBugReportActivated ()
 {
-	openURL("http://psi-im.org/forum/forum/2");
+	QDesktopServices::openUrl(QUrl("http://psi-im.org/forum/forum/2"));
 }
 
 void MainWin::actAboutActivated ()

@@ -18,9 +18,6 @@ public:
 	void applyOptions(Options *opt);
 	void restoreOptions(const Options *opt);
 
-private slots:
-	void selectBrowser(int);
-
 private:
 	QWidget *w;
 };

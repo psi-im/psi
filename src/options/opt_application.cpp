@@ -51,17 +51,6 @@ QWidget *OptionsTabApplication::widget()
 	d->ck_hideMenubar->setWhatsThis(
 		tr("Hides the menubar in the application window."));
 
-	// links
-	d->cb_link->setWhatsThis(
-		tr("Selects what applications to use for handling URLs and e-mail addresses."
-		"  You can choose between the system default and custom applications."));
-
-	QString s = tr("Enter the path to the application's executable and choose \"Custom\" in the list above.");
-	d->le_linkBrowser->setWhatsThis(
-		tr("Specify what custom browser application to use for handling URLs here.") + "  " + s);
-	d->le_linkMailer->setWhatsThis(
-		tr("Specify what custom mailer application to use for handling e-mail addresses here.") + "  " + s);
-
 	// docklet
 	d->ck_docklet->setWhatsThis(
 		tr("Makes Psi use a docklet icon, also known as system tray icon."));
@@ -79,7 +68,6 @@ QWidget *OptionsTabApplication::widget()
 #ifdef Q_WS_MAC
 	d->ck_alwaysOnTop->hide();
 	d->ck_hideMenubar->hide();
-	d->gb_links->hide();
 	d->gb_docklet->hide();
 #endif
 #ifndef Q_WS_X11
@@ -88,10 +76,6 @@ QWidget *OptionsTabApplication::widget()
 
 	return w;
 }
-
-#ifdef Q_WS_X11
-static int om_x11browse[] = { 0, 2, 1 };
-#endif
 
 void OptionsTabApplication::applyOptions(Options *opt)
 {
@@ -105,15 +89,6 @@ void OptionsTabApplication::applyOptions(Options *opt)
 	opt->keepSizes   = d->ck_keepSizes->isChecked();
 	opt->useleft = d->ck_useleft->isChecked();
 	opt->hideMenubar = d->ck_hideMenubar->isChecked();
-
-	// links
-#ifdef Q_WS_X11
-	opt->browser = om_x11browse[ d->cb_link->currentItem() ];
-#else
-	opt->browser = d->cb_link->currentItem();
-#endif
-	opt->customBrowser = d->le_linkBrowser->text();
-	opt->customMailer  = d->le_linkMailer->text();
 
 	// docklet
 	opt->useDock = d->ck_docklet->isChecked();
@@ -140,30 +115,6 @@ void OptionsTabApplication::restoreOptions(const Options *opt)
 	d->ck_hideMenubar->setChecked( opt->hideMenubar );
 	d->ck_useleft->setChecked( opt->useleft );
 
-	// links
-	connect(d->cb_link, SIGNAL(activated(int)), SLOT(selectBrowser(int)));
-#ifdef Q_WS_WIN
-	d->cb_link->insertItem(tr("Windows Default Browser/Mail"));
-	d->cb_link->insertItem(tr("Custom"));
-	d->cb_link->setCurrentItem( opt->browser );
-	selectBrowser( opt->browser );
-#endif
-#ifdef Q_WS_X11
-	d->cb_link->insertItem(tr("KDE Default Browser/Mail"));
-	d->cb_link->insertItem(tr("GNOME2 Default Browser/Mail"));
-	d->cb_link->insertItem(tr("Custom"));
-	int rbi = om_x11browse[ opt->browser ];
-	d->cb_link->setCurrentItem( rbi );
-	selectBrowser( rbi );
-#endif
-#ifdef Q_WS_MAC
-	d->cb_link->insertItem(tr("Mac OS Default Browser/Mail"));
-	d->cb_link->setCurrentItem( opt->browser );
-	selectBrowser( opt->browser );
-#endif
-	d->le_linkBrowser->setText( opt->customBrowser );
-	d->le_linkMailer->setText( opt->customMailer );
-
 	// docklet
 	d->ck_docklet->setChecked( opt->useDock );
 	d->ck_dockDCstyle->setChecked( opt->dockDCstyle );
@@ -174,28 +125,4 @@ void OptionsTabApplication::restoreOptions(const Options *opt)
 	// data transfer
 	d->le_dtPort->setText( QString::number(opt->dtPort) );
 	d->le_dtExternal->setText( opt->dtExternal );
-}
-
-void OptionsTabApplication::selectBrowser(int x)
-{
-	if ( !w )
-		return;
-
-	bool enableCustom = TRUE;
-
-#ifdef Q_WS_WIN
-	if(x == 0)
-		enableCustom = FALSE;
-#endif
-#ifdef Q_WS_X11
-	if(x == 0 || x == 1)
-		enableCustom = FALSE;
-#endif
-#ifdef Q_WS_MAC
-	if(x == 0)
-		enableCustom = FALSE;
-#endif
-
-	OptApplicationUI *d = (OptApplicationUI *)w;
-	d->gb_linkCustom->setEnabled(enableCustom);
 }

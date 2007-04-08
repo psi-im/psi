@@ -96,7 +96,6 @@ struct Options
 	QString trustCertStoreDir;
 
 	QString player;
-	QString customBrowser, customMailer;
 
 	bool ignoreHeadline, ignoreNonRoster, excludeGroupChatsFromIgnore, scrollTo, keepSizes, useEmoticons, alertOpenChats;
 	bool raiseChatWindow, showSubjects, showCounter, chatSays, showGroupCounts;
@@ -249,7 +248,6 @@ QString encodePassword(const QString &, const QString &);
 QString decodePassword(const QString &, const QString &);
 
 bool operator!=(const QMap<QString, QString> &, const QMap<QString, QString> &);
-void openURL(const QString &);
 
 bool fileCopy(const QString &src, const QString &dest);
 
