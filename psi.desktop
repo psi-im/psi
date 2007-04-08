@@ -1,28 +1,28 @@
 [Desktop Entry]
 Type=Application
-Version=0.9.4
-Encoding=UTF-8
+Version=1.0
 Name=Psi
 GenericName=Jabber Client
 Comment=Communicate over the Jabber network
 Icon=psi
 Exec=psi
 Terminal=false
-Categories=Qt;Network;InstantMessaging;
-StartupNotify=true
+Categories=Network;InstantMessaging;Qt;
 
 # Translations
-GenericName[nl]=Jabber Client
-Comment[nl]=Communiceer over het Jabber netwerk
-GenericName[sl]=Odjemalec za Jabber
-Comment[sl]=Komuniciranje prek omrežja Jabber
-GenericName[mk]=Клиент за Jabber
-Comment[mk]=Комуницирајте преку Jabber мрежата
 GenericName[ca]=Client Jabber
 Comment[ca]=Comuniqui's a través de la xarxa Jabber
 GenericName[eo]=Ĵabbera Klientilo
 Comment[eo]=Komunikiĝu per la ĵabbera reto
+GenericName[fr]=Client Jabber
+Comment[fr]=Communiquez sur le réseau Jabber
+GenericName[mk]=Клиент за Jabber
+Comment[mk]=Комуницирајте преку Jabber мрежата
+GenericName[nl]=Jabber Client
+Comment[nl]=Communiceer over het Jabber netwerk
 GenericName[pl]=Klient Jabber
 Comment[pl]=Komunikacja poprzez sieć Jabber
 GenericName[pt_BR]=Cliente Jabber
 Comment[pt_BR]=Comunique-se através da rede Jabber
+GenericName[sl]=Odjemalec za Jabber
+Comment[sl]=Komuniciranje prek omrežja Jabber
