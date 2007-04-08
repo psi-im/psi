@@ -137,7 +137,7 @@
 					<item type="QKeySequence">Return</item>
 					<item type="QKeySequence">Enter</item>
 				</send>
-				<clear type="QKeySequence" comment="Clear the text">Ctrl+U</clear>
+				<clear type="QKeySequence" comment="Clear the text" />
 			</chat>
 			<contactlist comment="Shortcuts in the contactlist" >
 				<assign-custom-avatar type="QKeySequence" comment="Assign a custom avatar to the selected contact" />
