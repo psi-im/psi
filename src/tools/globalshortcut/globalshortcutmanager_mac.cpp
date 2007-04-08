@@ -223,11 +223,11 @@ public:
 
 		quint32 mod = 0;
 		if (code & Qt::META)
-			mod |= cmdKey;
+			mod |= controlKey;
 		if (code & Qt::SHIFT)
 			mod |= shiftKey;
 		if (code & Qt::CTRL)
-			mod |= controlKey;
+			mod |= cmdKey;
 		if (code & Qt::ALT)
 			mod |= optionKey;
 

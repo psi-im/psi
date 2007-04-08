@@ -209,7 +209,7 @@ void OptionsTabShortcuts::restoreOptions(const Options *opt)
 					keyItem = new QTreeWidgetItem(shortcutItem);
 					keyItem->setText(0, QString(tr("Key %1")).arg(keyItemsCount++));
 					keyItem->setData(0, ITEMKIND, QVariant((int)OptionsTabShortcuts::KeyItem));
-					keyItem->setText(1, key.toString());
+					keyItem->setText(1, key.toString(QKeySequence::NativeText));
 					shortcutItem->addChild(keyItem);
 				}
 			}
@@ -405,7 +405,7 @@ void OptionsTabShortcuts::onNewShortcutKey(QKeySequence key) {
 
 	/* if we got a key item, set the new key sequence and notify the options dialog that data has changed */
 	if(itemKind == OptionsTabShortcuts::KeyItem) {
-		keyItem->setText(1, key.toString());
+		keyItem->setText(1, key.toString(QKeySequence::NativeText));
 		emit dataChanged();	
 	}
 }
