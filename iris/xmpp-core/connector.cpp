@@ -33,9 +33,10 @@
 
 #include <qpointer.h>
 #include <qca.h>
-//Added by qt3to4:
 #include <QList>
+#include <QUrl>
 #include "safedelete.h"
+#include <idna.h>
 
 #ifdef NO_NDNS
 #include <q3dns.h>
@@ -316,9 +317,19 @@ void AdvancedConnector::connectToServer(const QString &server)
 		return;
 
 	d->errorCode = 0;
-	d->server = server;
 	d->mode = Connecting;
 	d->aaaa = true;
+
+	// Encode the servername
+	d->server = QUrl::toAce(server);
+	//char* server_encoded;
+	//if (!idna_to_ascii_8z(server.utf8().data(), &server_encoded, 0)) {
+	//	d->server = QString(server_encoded);
+	//	free(server_encoded);
+	//}
+	//else {
+	//	d->server = server;
+	//}
 
 	if(d->proxy.type() == Proxy::HttpPoll) {
 		// need SHA1 here
