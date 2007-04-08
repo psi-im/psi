@@ -106,15 +106,13 @@ RESOURCES += ../psi.qrc ../iconsets.qrc
 unix:!mac {
 	QMAKE_POST_LINK = rm -f ../psi ; ln -s src/psi ../psi
 }
-win32: {
+win32 {
 	RC_FILE = ../win32/psi_win32.rc
 
 	# buggy MSVC workaround
-	contains(MAKEFILE_GENERATOR, MSVC):     QMAKE_LFLAGS += /FORCE:MULTIPLE
-	contains(MAKEFILE_GENERATOR, MSVC.NET): QMAKE_LFLAGS += /FORCE:MULTIPLE
-	contains(MAKEFILE_GENERATOR, MSVC2005): QMAKE_LFLAGS += /FORCE:MULTIPLE
+	win32-msvc|win32-msvc.net|win32-msvc2005: QMAKE_LFLAGS += /FORCE:MULTIPLE
 }
-mac: {
+mac {
 	# Universal binaries
 	qc_universal:contains(QT_CONFIG,x86):contains(QT_CONFIG,ppc) {
 		CONFIG += x86 ppc
