@@ -1283,9 +1283,9 @@ void PsiCon::processEvent(PsiEvent *e)
 		if ( option.alertOpenChats && sentToChatWindow ) {
 			// Message already displayed, need only to pop up chat dialog, so that
 			// it will be read (or marked as read)
-			ChatDlg *c = (ChatDlg *)e->account()->dialogFind("ChatDlg", e->from());
+			ChatDlg *c = e->account()->findDialog<ChatDlg*>(e->from());
 			if(!c)
-				c = (ChatDlg *)e->account()->dialogFind("ChatDlg", e->jid());
+				c = e->account()->findDialog<ChatDlg*>(e->jid());
 			if(!c)
 				return; // should never happen
 
@@ -1303,7 +1303,7 @@ void PsiCon::processEvent(PsiEvent *e)
 	}
 	else {
 		// search for an already opened eventdlg
-		EventDlg *w = (EventDlg *)e->account()->dialogFind("EventDlg", u->jid());
+		EventDlg *w = e->account()->findDialog<EventDlg*>(u->jid());
 
 		if ( !w ) {
 			// create the eventdlg

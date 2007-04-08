@@ -114,7 +114,7 @@ void ChangePasswordDlg::finished()
 		UserAccount acc = pa->userAccount();
 		acc.pass = le_pwnew->text();
 		pa->setUserAccount(acc);
-		AccountModifyDlg *amd = (AccountModifyDlg *)pa->dialogFind("AccountModifyDlg");
+		AccountModifyDlg *amd = pa->findDialog<AccountModifyDlg*>();
 		if(amd)
 			amd->setPassword(acc.pass);
 

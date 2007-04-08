@@ -117,9 +117,21 @@ public:
 	bool hasPGP() const;
 	QHostAddress *localAddress() const;
 
-	QWidget *dialogFind(const char *className, const Jid &jid="");
-	void dialogRegister(QWidget *w, const Jid &jid="");
-	void dialogUnregister(QWidget *w);
+	template<typename T>
+	inline T findDialog(const Jid& jid = Jid(), bool compareResource = true) const { 
+		return static_cast<T>(findDialog(((T)0)->staticMetaObject, jid, compareResource));
+	}
+	template<typename T>
+	inline QList<T> findDialogs(const Jid& jid = Jid(), bool compareResource = true) const {
+		QList<T> list;
+		findDialogs(((T)0)->staticMetaObject,
+		            jid, compareResource,
+		            reinterpret_cast<QList<void*>*>(&list));
+		return list;
+	}
+
+	void dialogRegister(QWidget* w, const Jid& jid = Jid());
+	void dialogUnregister(QWidget* w);
 
 	void modify();
 	void changeVCard();
@@ -349,6 +361,9 @@ private:
 
 	bool isDisconnecting, notifyOnlineOk, doReconnect, usingAutoStatus, rosterDone, presenceSent, v_isActive;
 	void cleanupStream();
+
+	QWidget* findDialog(const QMetaObject& mo, const Jid& jid, bool compareResource) const;
+	void findDialogs(const QMetaObject& mo, const Jid& jid, bool compareResource, QList<void*>* list) const;
 
 	friend class Private;
 };

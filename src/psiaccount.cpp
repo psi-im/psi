@@ -222,12 +222,6 @@ bool BlockTransportPopupList::find(const Jid &j, bool online)
 //----------------------------------------------------------------------------
 // PsiAccount
 //----------------------------------------------------------------------------
-struct item_dialog2
-{
-	QWidget *widget;
-	QString className;
-	Jid jid;
-};
 
 class PsiAccount::Private : public QObject
 {
@@ -247,7 +241,6 @@ public:
 	Jid jid, nextJid;
 	Status loginStatus;
 	bool loginWithPriority;
-	QList<item_dialog2*> dialogList;
 	EventQueue *eventQueue;
 	XmlConsole *xmlConsole;
 	UserList userList;
@@ -335,6 +328,66 @@ public slots:
 		// signals
 		account->enabledChanged();
 		account->updatedAccount();
+	}
+
+private:
+	struct item_dialog2
+	{
+		QWidget *widget;
+		Jid jid;
+	};
+
+	QList<item_dialog2*> dialogList;
+
+	bool compareJids(const Jid& j1, const Jid& j2, bool compareResource) const
+	{
+		return j1.compare(j2, compareResource);
+	}
+
+public:
+	QWidget* findDialog(const QMetaObject& mo, const Jid& jid, bool compareResource) const
+	{
+		foreach(item_dialog2* i, dialogList) {
+			if (mo.cast(i->widget) && compareJids(i->jid, jid, compareResource))
+				return i->widget;
+		}
+		return 0;
+	}
+
+	void findDialogs(const QMetaObject& mo, const Jid& jid, bool compareResource, QList<void*>* list) const
+	{
+		foreach(item_dialog2* i, dialogList) {
+			if (mo.cast(i->widget) && compareJids(i->jid, jid, compareResource))
+				list->append(i->widget);
+		}
+	}
+
+	void dialogRegister(QWidget* w, const Jid& jid)
+	{
+		item_dialog2 *i = new item_dialog2;
+		i->widget = w;
+		i->jid = jid;
+		dialogList.append(i);
+	}
+
+	void dialogUnregister(QWidget* w)
+	{
+		foreach(item_dialog2 *i, dialogList) {
+			if (i->widget == w) {
+				dialogList.removeAll(i);
+				delete i;
+				return;
+			}
+		}
+	}
+
+	void deleteDialogList()
+	{
+		while (!dialogList.isEmpty()) {
+			item_dialog2* i = dialogList.takeFirst();
+			delete i->widget;
+			delete i;
+		}
 	}
 };
 
@@ -1371,7 +1424,7 @@ void PsiAccount::getBookmarks_success(const QList<URLBookmark>&, const QList<Con
 	QObject::disconnect(d->bookmarkManager,SIGNAL(getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&)),this,SLOT(getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&)));
 
 	foreach(ConferenceBookmark c, conferences) {
-		if (!dialogFind("GCMainDlg", Jid(c.jid().userHost())) && c.autoJoin()) {
+		if (!findDialog<GCMainDlg*>(Jid(c.jid().userHost())) && c.autoJoin()) {
 			QString nick = c.nick();
 			if (nick.isEmpty())
 				nick = d->jid.node();
@@ -1684,7 +1737,7 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 		return;
 
 	if(_m.type() == "groupchat") {
-		GCMainDlg *w = (GCMainDlg *)dialogFind("GCMainDlg", Jid(_m.from().userHost()));
+		GCMainDlg *w = findDialog<GCMainDlg*>(Jid(_m.from().userHost()));
 		if(w)
 			w->message(_m);
 		return;
@@ -1713,7 +1766,7 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 	{
 		if (option.excludeGroupChatsFromIgnore)
 		{
-			GCMainDlg *w = (GCMainDlg *)dialogFind("GCMainDlg", Jid(_m.from().userHost()));
+			GCMainDlg *w = findDialog<GCMainDlg*>(Jid(_m.from().userHost()));
 			if(!w)
 			{
 				return;
@@ -1738,9 +1791,9 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 		return;
 	}
 
-	c = (ChatDlg *)dialogFind("ChatDlg", j);
+	c = findDialog<ChatDlg*>(j);
 	if(!c)
-		c = (ChatDlg *)dialogFind("ChatDlg", m.from().full());
+		c = findDialog<ChatDlg*>(m.from().full());
 
 	if(m.type() == "error")
 		m.setBody(m.error().text + "\n------\n" + m.body());
@@ -2114,46 +2167,31 @@ bool PsiAccount::validRosterExchangeItem(const RosterExchangeItem& item)
 	}
 	return false;
 }
-	
-QWidget *PsiAccount::dialogFind(const char *className, const Jid &j)
+
+QWidget* PsiAccount::findDialog(const QMetaObject& mo, const Jid& jid, bool compareResource) const
 {
-	foreach(item_dialog2 *i, d->dialogList) {
-		// does the classname and jid match?
-		if(i->className == className && i->jid.compare(j)) {
-			return i->widget;
-		}
-	}
-	return 0;
+	return d->findDialog(mo, jid, compareResource);
+}
+
+void PsiAccount::findDialogs(const QMetaObject& mo, const Jid& jid, bool compareResource, QList<void*>* list) const
+{
+	d->findDialogs(mo, jid, compareResource, list);
 }
 
 void PsiAccount::dialogRegister(QWidget *w, const Jid &j)
 {
-	item_dialog2 *i = new item_dialog2;
-	i->widget = w;
-	i->className = w->className();
-	i->jid = j;
-	d->dialogList.append(i);
+	d->dialogRegister(w, j);
 }
 
 void PsiAccount::dialogUnregister(QWidget *w)
 {
-	foreach(item_dialog2 *i, d->dialogList) {
-		if(i->widget == w) {
-			d->dialogList.removeAll(i);
-			delete i;
-			return;
-		}
-	}
+	d->dialogUnregister(w);
 }
 
 void PsiAccount::deleteAllDialogs()
 {
 	delete d->xmlConsole;
-	while(!d->dialogList.isEmpty()) {
-		item_dialog2* i = d->dialogList.takeFirst();
-		delete i->widget;
-		delete i;
-	}
+	d->deleteDialogList();
 }
 
 bool PsiAccount::checkConnected(QWidget *par)
@@ -2168,7 +2206,7 @@ bool PsiAccount::checkConnected(QWidget *par)
 
 void PsiAccount::modify()
 {
-	AccountModifyDlg *w = (AccountModifyDlg *)dialogFind("AccountModifyDlg");
+	AccountModifyDlg *w = findDialog<AccountModifyDlg*>();
 	if(w)
 		bringToFront(w);
 	else {
@@ -2187,7 +2225,7 @@ void PsiAccount::changePW()
 	if(!checkConnected())
 		return;
 
-	ChangePasswordDlg *w = (ChangePasswordDlg *)dialogFind("ChangePasswordDlg");
+	ChangePasswordDlg *w = findDialog<ChangePasswordDlg*>();
 	if(w)
 		bringToFront(w);
 	else {
@@ -2206,7 +2244,7 @@ void PsiAccount::openAddUserDlg()
 	if(!checkConnected())
 		return;
 
-	AddUserDlg *w = (AddUserDlg *)dialogFind("AddUserDlg");
+	AddUserDlg *w = findDialog<AddUserDlg*>();
 	if(w)
 		bringToFront(w);
 	else {
@@ -2468,7 +2506,7 @@ void PsiAccount::cpUpdate(const UserListItem &u, const QString &rname, bool from
 
 EventDlg *PsiAccount::ensureEventDlg(const Jid &j)
 {
-	EventDlg *w = (EventDlg *)dialogFind("EventDlg", j);
+	EventDlg *w = findDialog<EventDlg*>(j);
 	if(!w) {
 		w = new EventDlg(j, this, true);
 		connect(w, SIGNAL(aReadNext(const Jid &)), SLOT(processReadNext(const Jid &)));
@@ -2488,7 +2526,7 @@ EventDlg *PsiAccount::ensureEventDlg(const Jid &j)
 
 ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
 {
-	ChatDlg *c = (ChatDlg *)dialogFind("ChatDlg", j);
+	ChatDlg *c = findDialog<ChatDlg*>(j);
 	if(!c) {
 		// create the chatbox
 		c = new ChatDlg(j, this);
@@ -2765,7 +2803,7 @@ void PsiAccount::actionGroupRename(const QString &oldname, const QString &newnam
 
 void PsiAccount::actionHistory(const Jid &j)
 {
-	HistoryDlg *w = (HistoryDlg *)dialogFind("HistoryDlg", j);
+	HistoryDlg *w = findDialog<HistoryDlg*>(j);
 	if(w)
 		bringToFront(w);
 	else {
@@ -2803,14 +2841,14 @@ void PsiAccount::actionOpenChat(const Jid &j)
 		if(e) {
 			res = e->from().resource();
 			// if we have a bare chat, change to 'res'
-			ChatDlg *c = (ChatDlg *)dialogFind("ChatDlg", j);
+			ChatDlg *c = findDialog<ChatDlg*>(j);
 			if(c)
 				c->setJid(j.withResource(res));
 		}
 		// else, is there a priority chat window available?
 		else*/ if(u->isAvailable()) {
 			QString pr = (*u->userResourceList().priority()).name();
-			if(!pr.isEmpty() && dialogFind("ChatDlg", j.withResource(pr)))
+			if(!pr.isEmpty() && findDialog<ChatDlg*>(j.withResource(pr)))
 				res = pr;
 		}
 		else {
@@ -2853,7 +2891,7 @@ void PsiAccount::actionInfo(const Jid &_j, bool showStatusInfo)
 		j = _j.userHost();
 	}
 
-	InfoDlg *w = (InfoDlg *)dialogFind("InfoDlg", j);
+	InfoDlg *w = findDialog<InfoDlg*>(j);
 	if(w) {
 		w->updateStatus();
 		w->setStatusVisibility(showStatusInfo);
@@ -2931,7 +2969,7 @@ void PsiAccount::actionRegister(const Jid &j)
 	if(!checkConnected())
 		return;
 
-	RegistrationDlg *w = (RegistrationDlg *)dialogFind("RegistrationDlg", j);
+	RegistrationDlg *w = findDialog<RegistrationDlg*>(j);
 	if(w)
 		bringToFront(w);
 	else {
@@ -2945,7 +2983,7 @@ void PsiAccount::actionSearch(const Jid &j)
 	if(!checkConnected())
 		return;
 
-	SearchDlg *w = (SearchDlg *)dialogFind("SearchDlg", j);
+	SearchDlg *w = findDialog<SearchDlg*>(j);
 	if(w)
 		bringToFront(w);
 	else {
@@ -3034,7 +3072,7 @@ void PsiAccount::dj_sendMessage(const Message &m, bool log)
 	if(m.type() != "chat" && !m.body().isEmpty()) {
 		UserListItem *u = findFirstRelevant(m.to());
 		if(u) {
-			EventDlg *e = (EventDlg *)dialogFind("EventDlg", u->jid());
+			EventDlg *e = findDialog<EventDlg*>(u->jid());
 			if(e)
 				e->closeAfterReply();
 		}
@@ -3263,9 +3301,9 @@ void PsiAccount::handleEvent(PsiEvent *e)
 		// Pass message events to chat window
 		if ((m.containsEvents() || m.chatState() != StateNone) && m.body().isEmpty()) {
 			if (option.messageEvents) {
-				ChatDlg *c = (ChatDlg *)dialogFind("ChatDlg", e->from());
+				ChatDlg *c = findDialog<ChatDlg*>(e->from());
 				if(!c)
-					c = (ChatDlg *)dialogFind("ChatDlg", e->jid());
+					c = findDialog<ChatDlg*>(e->jid());
 				if (c)
 					c->incomingMessage(m);
 			}
@@ -3274,9 +3312,9 @@ void PsiAccount::handleEvent(PsiEvent *e)
 
 		// pass chat messages directly to a chat window if possible (and deal with sound)
 		if(m.type() == "chat") {
-			ChatDlg *c = (ChatDlg *)dialogFind("ChatDlg", e->from());
+			ChatDlg *c = findDialog<ChatDlg*>(e->from());
 			if(!c)
-				c = (ChatDlg *)dialogFind("ChatDlg", e->jid());
+				c = findDialog<ChatDlg*>(e->jid());
 
 			if(c)
 				c->setJid(e->from());
@@ -3568,7 +3606,7 @@ int PsiAccount::forwardPendingEvents(const Jid &jid)
 void PsiAccount::updateReadNext(const Jid &j)
 {
 	// update eventdlg's read-next
-	EventDlg *w = (EventDlg *)dialogFind("EventDlg", j);
+	EventDlg *w = findDialog<EventDlg*>(j);
 	if(w) {
 		Icon *nextAnim = 0;
 		int nextAmount = d->eventQueue->count(j);
@@ -3589,7 +3627,7 @@ void PsiAccount::processReadNext(const Jid &j)
 
 void PsiAccount::processReadNext(const UserListItem &u)
 {
-	EventDlg *w = (EventDlg *)dialogFind("EventDlg", u.jid());
+	EventDlg *w = findDialog<EventDlg*>(u.jid());
 	if(!w) {
 		// this should NEVER happen
 		return;
@@ -3632,7 +3670,7 @@ void PsiAccount::processReadNext(const UserListItem &u)
 void PsiAccount::processChats(const Jid &j)
 {
 	//printf("processing chats for [%s]\n", j.full().latin1());
-	ChatDlg *c = (ChatDlg *)dialogFind("ChatDlg", j);
+	ChatDlg *c = findDialog<ChatDlg*>(j);
 	if(!c)
 		return;
 
@@ -3761,13 +3799,13 @@ void PsiAccount::client_groupChatJoined(const Jid &j)
 {
 	//d->client->groupChatSetStatus(j.host(), j.user(), d->loginStatus);
 
-	GCMainDlg *m = (GCMainDlg *)dialogFind("GCMainDlg", Jid(j.userHost()));
+	GCMainDlg *m = findDialog<GCMainDlg*>(Jid(j.userHost()));
 	if(m) {
 		m->setPassword(d->client->groupChatPassword(j.user(),j.host()));
 		m->joined();
 		return;
 	}
-	MUCJoinDlg *w = (MUCJoinDlg *)dialogFind("MUCJoinDlg", j);
+	MUCJoinDlg *w = findDialog<MUCJoinDlg*>(j);
 	if(!w)
 		return;
 	w->joined();
@@ -3800,7 +3838,7 @@ void PsiAccount::client_groupChatLeft(const Jid &j)
 
 void PsiAccount::client_groupChatPresence(const Jid &j, const Status &s)
 {
-	GCMainDlg *w = (GCMainDlg *)dialogFind("GCMainDlg", Jid(j.userHost()));
+	GCMainDlg *w = findDialog<GCMainDlg*>(Jid(j.userHost()));
 	if(!w)
 		return;
 
@@ -3826,12 +3864,12 @@ void PsiAccount::client_groupChatPresence(const Jid &j, const Status &s)
 
 void PsiAccount::client_groupChatError(const Jid &j, int code, const QString &str)
 {
-	GCMainDlg *w = (GCMainDlg *)dialogFind("GCMainDlg", Jid(j.userHost()));
+	GCMainDlg *w = findDialog<GCMainDlg*>(Jid(j.userHost()));
 	if(w) {
 		w->error(code, str);
 	}
 	else {
-		MUCJoinDlg *w = (MUCJoinDlg *)dialogFind("MUCJoinDlg", j);
+		MUCJoinDlg *w = findDialog<MUCJoinDlg*>(j);
 		if(w) {
 			w->error(code, str);
 		}
@@ -3842,10 +3880,8 @@ QStringList PsiAccount::hiddenChats(const Jid &j) const
 {
 	QStringList list;
 
-	foreach(item_dialog2 *i, d->dialogList) {
-		if(i->className == "ChatDlg" && i->jid.compare(j, false))
-			list += i->jid.resource();
-	}
+	foreach(ChatDlg* chat, findDialogs<ChatDlg*>(j, false))
+		list += chat->jid().resource();
 
 	return list;
 }
