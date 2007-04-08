@@ -801,7 +801,6 @@ void FileRequestDlg::doStart()
 	}
 	else {
 		QString fname, savename;
-		bool overwrite = false;
 		if(option.lastSavePath.isEmpty())
 			option.lastSavePath = QDir::homeDirPath();
 		fname = QFileDialog::getSaveFileName(this, tr("Save As"), QDir(option.lastSavePath).filePath(d->fileName), tr("All files (*)"));
