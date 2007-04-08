@@ -20,6 +20,7 @@
  
 #include <qstring.h>
 #include <qdom.h>
+#include <QDebug>
 
 #include "talk/xmpp/constants.h"
 #include "talk/base/sigslot.h"

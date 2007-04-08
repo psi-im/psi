@@ -1,4 +1,5 @@
 #include <QTimer>
+#include <QDebug>
 
 #include "compressionhandler.h"
 #include "compress.h"

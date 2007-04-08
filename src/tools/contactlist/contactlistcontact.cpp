@@ -1,4 +1,5 @@
 #include <QPixmap>
+#include <QDebug>
 
 #include "contactlist.h"
 #include "contactlistgroupitem.h"
@@ -56,7 +57,7 @@ void ContactListContact::updateParent()
 		}
 	}
 	else if (status().type() == Status::Offline && !contactList()->showOffline()) {
-		//qDebug("contactlistcontact.cpp: Contact is invisible");
+		//qDebug() << "contactlistcontact.cpp: Contact is invisible";
 		newParent = contactList()->invisibleGroup();
 	}
 	else {

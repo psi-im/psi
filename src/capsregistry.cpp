@@ -19,6 +19,7 @@
  */
 
 #include <QApplication>
+#include <QDebug>
 
 #include "im.h"
 #include "psiaccount.h"

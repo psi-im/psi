@@ -28,6 +28,7 @@
 #include <Q3CString>
 #include <stdlib.h>
 #include <QtCrypto>
+#include <QDebug>
 
 #define SIMPLESASL_PLAIN
 

@@ -26,6 +26,7 @@
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QCloseEvent>
+#include <QDebug>
 #include <stdlib.h>
 
 #include "gameboard.h"

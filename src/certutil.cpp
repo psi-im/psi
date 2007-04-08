@@ -1,6 +1,7 @@
 #include <QtCrypto>
 #include <QStringList>
 #include <QDomDocument>
+#include <QDebug>
 
 #include "applicationinfo.h"
 #include "certutil.h"

@@ -20,6 +20,7 @@
 
 #include <QDomElement>
 #include <QDomDocument>
+#include <QDebug>
 
 #include "optionstree.h"
 
