@@ -1,5 +1,5 @@
 /*
- * searchdlg.h
+ * registrationdlg.h
  * Copyright (C) 2001, 2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
@@ -18,46 +18,35 @@
  *
  */
 
-#ifndef SEARCHDLG_H
-#define SEARCHDLG_H
+#ifndef REGISTRATIONDLG_H
+#define REGISTRATIONDLG_H
 
 #include <QDialog>
 
-#include "ui_search.h"
-
 class PsiAccount;
-class QString;
-class QStringList;
 namespace XMPP {
 	class Jid;
 }
 
-class SearchDlg : public QDialog, public Ui::Search
+class RegistrationDlg : public QDialog
 {
 	Q_OBJECT
-public:
-	SearchDlg(const XMPP::Jid &, PsiAccount *);
-	~SearchDlg();
 
-signals:
-	void aInfo(const XMPP::Jid &);
-	void add(const XMPP::Jid &, const QString &, const QStringList &, bool authReq);
+public:
+	RegistrationDlg(const XMPP::Jid &, PsiAccount *);
+	~RegistrationDlg();
+
+public slots:
+	void done(int);
 
 private slots:
-	void doSearchGet();
-	void doSearchSet();
-	void selectionChanged();
+	void doRegGet();
+	void doRegSet();
 	void jt_finished();
-	void doStop();
-	void doAdd();
-	void doInfo();
 
 private:
 	class Private;
 	Private *d;
-
-	void addEntry(const QString &jid, const QString &nick, const QString &first, const QString &last, const QString &email);
-	void clear();
 };
 
 #endif
