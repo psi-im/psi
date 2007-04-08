@@ -959,7 +959,6 @@ public:
 			"}\n";
 		QString proextra = "CONFIG += x11\n";
 
-		int ret;
 		if (!conf->doCompileAndLink(str, QStringList(), "-lXss", proextra, NULL)) {
 			if (!conf->doCompileAndLink(str, QStringList(), QString(), proextra, NULL)) {
 				return false;
@@ -1042,7 +1041,6 @@ public:
 			"    gethostbyname_r(\"\", 0, 0, 0, 0, 0);\n"
 			"    return 0;\n"
 			"}\n";
-		int ret;
 		if (!conf->doCompileAndLink(str, QStringList(), QString(), QString(), NULL))
 			return false;
 			
