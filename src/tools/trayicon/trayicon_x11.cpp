@@ -174,11 +174,13 @@ void TrayIcon::TrayIconPrivate::setPixmap(const QPixmap &pm)
 		                       (height() - pm.height()) / 2, pm.mask());
 		
 		QPixmap newPix(QWidget::size());
-		QPainter pixPainter( &newPix );
-		
-		// draw the old pixmap in the center
-		pixPainter.drawPixmap((width() - pm.width())/2, 
-					(height() - pm.height())/2, pm);
+		{
+			QPainter pixPainter( &newPix );
+
+			// draw the old pixmap in the center
+			pixPainter.drawPixmap((width()  - pm.width())/2,
+			                      (height() - pm.height())/2, pm);
+		}
 		newPix.setMask(mask);
 		pix = newPix;
 	}
