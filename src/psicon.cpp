@@ -1121,7 +1121,7 @@ void PsiCon::recentGCAdd(const QString &str)
 	d->recentGCList.prepend(str);
 
 	// trim the list if bigger than 10
-	while(d->recentGCList.count() > 10)
+	while(d->recentGCList.count() > PsiOptions::instance()->getOption("options.muc.recent-joins.maximum").toInt())
 		d->recentGCList.remove(d->recentGCList.fromLast());
 }
 
