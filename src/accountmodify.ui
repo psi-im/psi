@@ -574,7 +574,7 @@
        <item>
         <widget class="QCheckBox" name="ck_keepAlive" >
          <property name="text" >
-          <string>Send "Keep-alive" packets (for NAT timeouts)</string>
+          <string>Send "keep-alive" packets (to prevent timeouts)</string>
          </property>
         </widget>
        </item>
