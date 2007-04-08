@@ -126,13 +126,8 @@ namespace XMPP
 	{
 	public:
 		HttpAuthRequest(const QString &m, const QString &u, const QString &i);
-		HttpAuthRequest(const QString &m, const QString &u);
+		HttpAuthRequest(const QString &m = "", const QString &u = "");
 		HttpAuthRequest(const QDomElement &);
-		HttpAuthRequest(const HttpAuthRequest &);
-		HttpAuthRequest();
-		~HttpAuthRequest();
-
-		HttpAuthRequest & operator=(const HttpAuthRequest &other);
 
 		bool isEmpty() const;
 
@@ -149,8 +144,8 @@ namespace XMPP
 
 		static Stanza::Error denyError;
 	private:
-		class Private;
-		Private *d;
+		QString method_, url_, id_;
+		bool hasId_;
 	};
 
 	class Message

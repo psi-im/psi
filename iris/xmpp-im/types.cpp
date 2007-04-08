@@ -1819,24 +1819,6 @@ bool Message::fromStanza(const Stanza &s, int timeZoneOffset)
 	return true;
 }
 
-//---------------------------------------------------------------------------
-// HttpAuthRequest
-//---------------------------------------------------------------------------
-
-/*!
-	\class HttpAuthRequest
-	\brief Represents HTTP request confirmation request.
-*/
-
-class HttpAuthRequest::Private
-{
-public:
-	QString method;
-	QString url;
-	QString id;
-	bool hasId;
-};
-
 /*!
 	Error object used to deny a request.
 */
@@ -1845,24 +1827,15 @@ Stanza::Error HttpAuthRequest::denyError(Stanza::Error::Auth, Stanza::Error::Not
 /*!
 	Constructs request of resource URL \a u, made by method \a m, with transaction id \a i.
 */
-HttpAuthRequest::HttpAuthRequest(const QString &m, const QString &u, const QString &i)
+HttpAuthRequest::HttpAuthRequest(const QString &m, const QString &u, const QString &i) : method_(m), url_(u), id_(i), hasId_(true)
 {
-	d = new Private;
-	d->method = m;
-	d->url = u;
-	d->id = i;
-	d->hasId = true;
 }
 
 /*!
         Constructs request of resource URL \a u, made by method \a m, without transaction id.
 */
-HttpAuthRequest::HttpAuthRequest(const QString &m, const QString &u)
+HttpAuthRequest::HttpAuthRequest(const QString &m, const QString &u) : method_(m), url_(u), hasId_(false)
 {
-        d = new Private;
-        d->method = m;
-        d->url = u;
-        d->hasId = false;
 }
 
 /*!
@@ -1870,46 +1843,7 @@ HttpAuthRequest::HttpAuthRequest(const QString &m, const QString &u)
 */
 HttpAuthRequest::HttpAuthRequest(const QDomElement &e)
 {
-	d = new Private;
 	fromXml(e);
-}
-
-/*!
-	Constructs empty (not valid) object. Use isEmpty() to check if object is empty or not.
-
-	\sa isEmpty()
-*/
-HttpAuthRequest::HttpAuthRequest()
-{
-	d = new Private;
-}
-
-/*!
-	Constructs new request as a copy of \a other request.
-*/
-HttpAuthRequest::HttpAuthRequest(const HttpAuthRequest &other)
-{
-	d = new Private;
-	*d = *(other.d);
-}
-
-/*!
-	Assigns \a other request to this one.
-*/
-HttpAuthRequest & HttpAuthRequest::operator=(const HttpAuthRequest &other)
-{
-	if (!d) d = new Private;
-	*d = *(other.d);
-	return *this;
-}
-
-/*!
-	Destroys request object.
-*/
-HttpAuthRequest::~HttpAuthRequest()
-{
-	delete d;
-	d = 0;
 }
 
 /*!
@@ -1917,7 +1851,7 @@ HttpAuthRequest::~HttpAuthRequest()
 */
 bool HttpAuthRequest::isEmpty() const
 {
-	return d->method.isEmpty() && d->url.isEmpty();
+	return method_.isEmpty() && url_.isEmpty();
 }
 
 /*!
@@ -1925,7 +1859,7 @@ bool HttpAuthRequest::isEmpty() const
 */
 void HttpAuthRequest::setMethod(const QString& m)
 {
-	d->method = m;
+	method_ = m;
 }
 
 /*!
@@ -1933,7 +1867,7 @@ void HttpAuthRequest::setMethod(const QString& m)
 */
 void HttpAuthRequest::setUrl(const QString& u)
 {
-	d->url = u;
+	url_ = u;
 }
 
 /*!
@@ -1941,8 +1875,8 @@ void HttpAuthRequest::setUrl(const QString& u)
 */
 void HttpAuthRequest::setId(const QString& i)
 {
-	d->id = i;
-	d->hasId = true;
+	id_ = i;
+	hasId_ = true;
 }
 
 /*!
@@ -1950,7 +1884,7 @@ void HttpAuthRequest::setId(const QString& i)
 */
 QString HttpAuthRequest::method() const
 {
-	return d->method;
+	return method_;
 }
 
 /*!
@@ -1958,7 +1892,7 @@ QString HttpAuthRequest::method() const
 */
 QString HttpAuthRequest::url() const
 {
-	return d->url;
+	return url_;
 }
 
 /*!
@@ -1967,7 +1901,7 @@ QString HttpAuthRequest::url() const
 */
 QString HttpAuthRequest::id() const
 {
-	return d->id;
+	return id_;
 }
 
 /*!
@@ -1975,7 +1909,7 @@ QString HttpAuthRequest::id() const
 */
 bool HttpAuthRequest::hasId() const
 {
-	return d->hasId;
+	return hasId_;
 }
 
 /*!
@@ -1991,9 +1925,10 @@ QDomElement HttpAuthRequest::toXml(QDomDocument &doc) const
 	e = doc.createElementNS("http://jabber.org/protocol/http-auth", "confirm");
 	e.setAttribute("xmlns", "http://jabber.org/protocol/http-auth");
 
-	if(d->hasId) e.setAttribute("id", d->id);
-	e.setAttribute("method", d->method);
-	e.setAttribute("url", d->url);
+	if(hasId_) 
+		e.setAttribute("id", id_);
+	e.setAttribute("method", method_);
+	e.setAttribute("url", url_);
 
 	return e;
 }
@@ -2006,12 +1941,12 @@ bool HttpAuthRequest::fromXml(const QDomElement &e)
 	if(e.tagName() != "confirm")
 		return false;
 
-	d->hasId = e.hasAttribute("id");
-	if(d->hasId)
-		d->id = e.attribute("id");
+	hasId_ = e.hasAttribute("id");
+	if(hasId_)
+		id_ = e.attribute("id");
 
-	d->method = e.attribute("method");
-	d->url = e.attribute("url");
+	method_ = e.attribute("method");
+	url_ = e.attribute("url");
 
 	return true;
 }
