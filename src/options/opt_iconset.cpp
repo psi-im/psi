@@ -11,7 +11,6 @@
 #include <qcombobox.h>
 #include <qlineedit.h>
 #include <qfileinfo.h>
-#include <q3listview.h>
 #include <q3header.h>
 #include <qapplication.h>
 #include <qthread.h>
@@ -22,6 +21,7 @@
 #include <qpalette.h>
 #include <qtabwidget.h>
 #include <QFont>
+#include <QTreeWidget>
 
 #include "ui_opt_iconset_emo.h"
 #include "ui_opt_iconset_system.h"
@@ -723,22 +723,40 @@ QWidget *OptionsTabIconsetRoster::widget()
 	IconsetRosterUI *d = (IconsetRosterUI *)w;
 
 	// Initialize transport iconsets
-	new Q3ListViewItem(d->lv_isServices,"AIM","","aim");
-	new Q3ListViewItem(d->lv_isServices,"Gadu-Gadu","","gadugadu");
-	new Q3ListViewItem(d->lv_isServices,"ICQ","","icq");
-	new Q3ListViewItem(d->lv_isServices,"MSN","","msn");
-	new Q3ListViewItem(d->lv_isServices,"SMS","","sms");
-	new Q3ListViewItem(d->lv_isServices,"Yahoo!","","yahoo");
+	QList<QTreeWidgetItem *> items;
+	QTreeWidgetItem *ti = new QTreeWidgetItem(d->tw_isServices, QStringList(QString("AIM")));
+	ti->setData(0, Qt::UserRole, QVariant(QString("aim")));
+	items.append(ti);
+        ti = new QTreeWidgetItem(d->tw_isServices, QStringList(QString("Gadu-Gadu")));
+        ti->setData(0, Qt::UserRole, QVariant(QString("gadugadu")));
+        items.append(ti);
+        ti = new QTreeWidgetItem(d->tw_isServices, QStringList(QString("ICQ")));
+        ti->setData(0, Qt::UserRole, QVariant(QString("icq")));
+        items.append(ti);
+        ti = new QTreeWidgetItem(d->tw_isServices, QStringList(QString("MSN")));
+        ti->setData(0, Qt::UserRole, QVariant(QString("msn")));
+        items.append(ti);
+        ti = new QTreeWidgetItem(d->tw_isServices, QStringList(QString("SMS")));
+        ti->setData(0, Qt::UserRole, QVariant(QString("sms")));
+        items.append(ti);
+        ti = new QTreeWidgetItem(d->tw_isServices, QStringList(QString("Yahoo!")));
+        ti->setData(0, Qt::UserRole, QVariant(QString("yahoo")));
+        items.append(ti);
+	d->tw_isServices->insertTopLevelItems(0, items);
+	
+	d->tw_isServices->resizeColumnToContents(0);
 
 	connect(d->pb_defRosterDetails, SIGNAL(clicked()), SLOT(defaultDetails()));
 
 	connect(d->iss_servicesRoster, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)), SLOT(isServices_iconsetSelected(QListWidgetItem *, QListWidgetItem *)));
-	connect(d->lv_isServices, SIGNAL(selectionChanged(Q3ListViewItem *)), SLOT(isServices_selectionChanged(Q3ListViewItem *)));
+	connect(d->tw_isServices, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)), SLOT(isServices_selectionChanged(QTreeWidgetItem *)));
 	connect(d->pb_servicesDetails, SIGNAL(clicked()), SLOT(servicesDetails()));
 	isServices_selectionChanged(0);
 
 	connect(d->iss_customRoster, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)), SLOT(isCustom_iconsetSelected(QListWidgetItem *, QListWidgetItem *)));
-	connect(d->lv_customRoster, SIGNAL(selectionChanged(Q3ListViewItem *)), SLOT(isCustom_selectionChanged(Q3ListViewItem *)));
+	connect(d->tw_customRoster, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)), SLOT(isCustom_selectionChanged(QTreeWidgetItem *)));
+	connect(d->tw_customRoster, SIGNAL(itemClicked(QTreeWidgetItem *, int )), SLOT(isCustom_selectionChanged(QTreeWidgetItem *)));
+
 	connect(d->pb_customRosterDetails, SIGNAL(clicked()), SLOT(customDetails()));
 	connect(d->le_customRoster, SIGNAL(textChanged(const QString &)), SLOT(isCustom_textChanged()));
 	connect(d->pb_customRosterAdd, SIGNAL(clicked()), SLOT(isCustom_add()));
@@ -774,11 +792,10 @@ void OptionsTabIconsetRoster::applyOptions(Options *opt)
 	{
 		opt->serviceRosterIconset.clear();
 
-		Q3ListViewItemIterator it( d->lv_isServices );
-		for ( ; it.current(); ++it) {
-			Q3ListViewItem *item = it.current();
-
-			opt->serviceRosterIconset[item->text(2)] = item->text(3);
+		QTreeWidgetItemIterator it( d->tw_isServices );
+		while(*it) {
+			opt->serviceRosterIconset[(*it)->data(0, Qt::UserRole).toString()] = (*it)->data(1, Qt::UserRole).toString();
+			++it;
 		}
 	}
 
@@ -786,11 +803,10 @@ void OptionsTabIconsetRoster::applyOptions(Options *opt)
 	{
 		opt->customRosterIconset.clear();
 
-		Q3ListViewItemIterator it( d->lv_customRoster );
-		for ( ; it.current(); ++it) {
-			Q3ListViewItem *item = it.current();
-
-			opt->customRosterIconset[item->text(2)] = item->text(3);
+		QTreeWidgetItemIterator it( d->tw_customRoster );
+		while(*it) {
+			opt->customRosterIconset[(*it)->data(0, Qt::UserRole).toString()] = (*it)->data(1, Qt::UserRole).toString();
+			++it;
 		}
 	}
 }
@@ -866,45 +882,42 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
 	else if ( e->type() == QEvent::User + 1 ) { // finish event
 		// roster - service
 		{
-			// fill the QListView
-			Q3ListViewItemIterator it( d->lv_isServices );
-			for ( ; it.current(); ++it) {
-				Q3ListViewItem *i = it.current();
-				if ( !i->text(2).isEmpty() ) {
-					Iconset *iss = PsiIconset::instance()->roster[o->serviceRosterIconset[i->text(2)]];
+			// fill the QTreeWidget
+			QTreeWidgetItemIterator it( d->tw_isServices );
+			while(*it) {
+				QTreeWidgetItem *i = *it;
+				if ( !i->data(0, Qt::UserRole).toString().isEmpty() ) {
+					Iconset *iss = PsiIconset::instance()->roster[o->serviceRosterIconset[i->data(0, Qt::UserRole).toString()]];
 					if ( iss ) {
 						i->setText(1, iss->name());
-
 						QFileInfo fi ( iss->fileName() );
-						i->setText(3, fi.fileName());
+						i->setData(1, Qt::UserRole, fi.fileName());
 					}
 				}
+				++it;
 			}
-
-			Q3Header *head = d->lv_isServices->header();
-			head->removeLabel(2);
 		}
 
 		// roster - custom
 		{
 			// Then, fill the QListView
-			Q3ListViewItem *last = 0;
+			QTreeWidgetItem *last = 0;
 			QMap<QString, QString>::ConstIterator it = o->customRosterIconset.begin();
 			for ( ; it != o->customRosterIconset.end(); ++it) {
-				Q3ListViewItem *item = new Q3ListViewItem(d->lv_customRoster, last);
+				QTreeWidgetItem *item = new QTreeWidgetItem(d->tw_customRoster, last);
 				last = item;
 
 				item->setText(0, clipCustomText(it.key())); // RegExp
-				item->setText(2, it.key());
+				item->setData(0, Qt::UserRole, it.key());
 
 				Iconset *iss = PsiIconset::instance()->roster[it.data()];
 				if ( iss ) {
 					item->setText(1, iss->name());
-
 					QFileInfo fi ( iss->fileName() );
-					item->setText(3, fi.fileName());
+					item->setData(1, Qt::UserRole, fi.fileName());
 				}
 			}
+			d->tw_customRoster->resizeColumnToContents(0);
 		}
 
 		d->tabWidget3->setEnabled(true);
@@ -962,7 +975,7 @@ void OptionsTabIconsetRoster::isServices_iconsetSelected(QListWidgetItem *item, 
 		return;
 
 	IconsetRosterUI *d = (IconsetRosterUI *)w;
-	Q3ListViewItem *it = d->lv_isServices->selectedItem();
+	QTreeWidgetItem *it = d->tw_isServices->currentItem();
 	if ( !it )
 		return;
 
@@ -972,10 +985,10 @@ void OptionsTabIconsetRoster::isServices_iconsetSelected(QListWidgetItem *item, 
 
 	it->setText(1, is->name());
 	QFileInfo fi ( is->fileName() );
-	it->setText(3, fi.fileName());
+	it->setData(1, Qt::UserRole, fi.fileName());
 }
 
-void OptionsTabIconsetRoster::isServices_selectionChanged(Q3ListViewItem *it)
+void OptionsTabIconsetRoster::isServices_selectionChanged(QTreeWidgetItem *it)
 {
 	IconsetRosterUI *d = (IconsetRosterUI *)w;
 	d->iss_servicesRoster->setEnabled( it != 0 );
@@ -984,10 +997,10 @@ void OptionsTabIconsetRoster::isServices_selectionChanged(Q3ListViewItem *it)
 	if ( !it )
 		return;
 
-	if ( it->text(3).isEmpty() )
+	if ( it->data(1, Qt::UserRole).toString().isEmpty() )
 		return;
 
-	QString name = it->text(3);
+	QString name = it->data(1, Qt::UserRole).toString();
 
 	emit noDirty(true);
 	for (int row = 0; row < d->iss_servicesRoster->count(); row++) {
@@ -1016,7 +1029,7 @@ void OptionsTabIconsetRoster::isCustom_iconsetSelected(QListWidgetItem *item, QL
 		return;
 
 	IconsetRosterUI *d = (IconsetRosterUI *)w;
-	Q3ListViewItem *it = d->lv_customRoster->selectedItem();
+	QTreeWidgetItem *it = d->tw_customRoster->currentItem();
 	if ( !it )
 		return;
 
@@ -1026,10 +1039,10 @@ void OptionsTabIconsetRoster::isCustom_iconsetSelected(QListWidgetItem *item, QL
 
 	it->setText(1, is->name());
 	QFileInfo fi ( is->fileName() );
-	it->setText(3, fi.fileName());
+	it->setData(1, Qt::UserRole,  fi.fileName());
 }
 
-void OptionsTabIconsetRoster::isCustom_selectionChanged(Q3ListViewItem *it)
+void OptionsTabIconsetRoster::isCustom_selectionChanged(QTreeWidgetItem *it)
 {
 	IconsetRosterUI *d = (IconsetRosterUI *)w;
 	d->iss_customRoster->setEnabled( it != 0 );
@@ -1041,12 +1054,12 @@ void OptionsTabIconsetRoster::isCustom_selectionChanged(Q3ListViewItem *it)
 	if ( !it )
 		return;
 
-	if ( it->text(3).isEmpty() )
+	if ( it->data(1, Qt::UserRole).toString().isEmpty() )
 		return;
 
 	emit noDirty(true);
-	d->le_customRoster->setText(it->text(2));
-	QString name = it->text(3);
+	d->le_customRoster->setText(it->data(0, Qt::UserRole).toString());
+	QString name = it->data(1, Qt::UserRole).toString();
 
 	for (int row = 0; row < d->iss_customRoster->count(); row++) {
 		IconWidgetItem *item = (IconWidgetItem *)d->iss_customRoster->item(row);
@@ -1067,12 +1080,12 @@ void OptionsTabIconsetRoster::isCustom_selectionChanged(Q3ListViewItem *it)
 void OptionsTabIconsetRoster::isCustom_textChanged()
 {
 	IconsetRosterUI *d = (IconsetRosterUI *)w;
-	Q3ListViewItem *item = d->lv_customRoster->selectedItem();
+	QTreeWidgetItem *item = d->tw_customRoster->currentItem();
 	if ( !item )
 		return;
 
 	item->setText( 0, clipCustomText(d->le_customRoster->text()) );
-	item->setText( 2, d->le_customRoster->text() );
+	item->setData( 0, Qt::UserRole, d->le_customRoster->text() );
 }
 
 void OptionsTabIconsetRoster::isCustom_add()
@@ -1088,16 +1101,16 @@ void OptionsTabIconsetRoster::isCustom_add()
 	else
 		qWarning("OptionsTabIconsetRoster::isCustom_add(): 'def' is null!");
 
-	Q3ListViewItem *item = new Q3ListViewItem(d->lv_customRoster, d->lv_customRoster->lastItem());
+	QTreeWidgetItem *item = new QTreeWidgetItem(d->tw_customRoster);
 	const Iconset *i = PsiIconset::instance()->roster[def];
 	if ( i ) {
 		item->setText(1, i->name());
 
 		QFileInfo fi(i->fileName());
-		item->setText(3, fi.fileName());
+		item->setData(1, Qt::UserRole, fi.fileName());
 	}
 
-	d->lv_customRoster->setSelected(item, true);
+	d->tw_customRoster->setCurrentItem(item);
 	emit dataChanged();
 
 	d->le_customRoster->setFocus();
@@ -1106,12 +1119,13 @@ void OptionsTabIconsetRoster::isCustom_add()
 void OptionsTabIconsetRoster::isCustom_delete()
 {
 	IconsetRosterUI *d = (IconsetRosterUI *)w;
-	Q3ListViewItem *item = d->lv_customRoster->selectedItem();
+	QTreeWidgetItem *item = d->tw_customRoster->currentItem();
 	if ( !item )
 		return;
 
 	delete item;
 	isCustom_selectionChanged(0);
+	d->tw_customRoster->clearSelection();
 	emit dataChanged();
 }
 

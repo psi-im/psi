@@ -8,8 +8,8 @@
 class QWidget;
 struct Options;
 class QListWidgetItem;
-class Q3ListViewItem;
 class IconsetLoadThread;
+class QTreeWidgetItem;
 
 class OptionsTabIconsetSystem : public OptionsTab
 {
@@ -86,10 +86,10 @@ private slots:
 	void customDetails();
 
 	void isServices_iconsetSelected(QListWidgetItem *current, QListWidgetItem *previous);
-	void isServices_selectionChanged(Q3ListViewItem *);
+	void isServices_selectionChanged(QTreeWidgetItem *);
 
 	void isCustom_iconsetSelected(QListWidgetItem *current, QListWidgetItem *previous);
-	void isCustom_selectionChanged(Q3ListViewItem *);
+	void isCustom_selectionChanged(QTreeWidgetItem *);
 	void isCustom_textChanged();
 	void isCustom_add();
 	void isCustom_delete();
