@@ -152,7 +152,7 @@ void AccountModifyDlg::init()
 		gb_pgp->setEnabled(true);
 	}
 
-	pc = psi->proxy()->createProxyChooser(gb_proxy);
+	pc = psi->proxy()->createProxyChooser(tab_connection);
 	replaceWidget(lb_proxychooser, pc);
 	pc->setCurrentItem(acc.proxy_index);
 	
@@ -276,8 +276,10 @@ void AccountModifyDlg::init()
 	if (!PsiOptions::instance()->getOption("options.ui.account.privacy.show").toBool()) 
 		tab_main->removeTab(tab_main->indexOf(tab_privacy));
 	
-	if (!PsiOptions::instance()->getOption("options.ui.account.proxy.show").toBool()) 
-		gb_proxy->hide();
+	if (!PsiOptions::instance()->getOption("options.ui.account.proxy.show").toBool()) {
+		lb_proxy->hide();
+		lb_proxychooser->hide();
+	}
 
 	if (!PsiOptions::instance()->getOption("options.ui.account.manual-host").toBool()) {
 		ck_host->hide();
@@ -304,11 +306,8 @@ void AccountModifyDlg::init()
 		cb_security_level->hide();
 	}
 
-	if (!PsiOptions::instance()->getOption("options.ui.account.security.show").toBool() && !PsiOptions::instance()->getOption("options.ui.account.legacy-ssl-probe").toBool() && !PsiOptions::instance()->getOption("options.ui.account.keepalive").toBool() && !PsiOptions::instance()->getOption("options.ui.account.ignore-ssl-warnings").toBool() && !PsiOptions::instance()->getOption("options.ui.account.manual-host").toBool()) {
-		gb_advanced->hide();
-		if (!PsiOptions::instance()->getOption("options.ui.account.proxy.show").toBool()) {
-			tab_main->removeTab(tab_main->indexOf(tab_connection));
-		}
+	if (!PsiOptions::instance()->getOption("options.ui.account.security.show").toBool() && !PsiOptions::instance()->getOption("options.ui.account.legacy-ssl-probe").toBool() && !PsiOptions::instance()->getOption("options.ui.account.keepalive").toBool() && !PsiOptions::instance()->getOption("options.ui.account.ignore-ssl-warnings").toBool() && !PsiOptions::instance()->getOption("options.ui.account.manual-host").toBool() && !PsiOptions::instance()->getOption("options.ui.account.proxy.show").toBool()) {
+		tab_main->removeTab(tab_main->indexOf(tab_connection));
 	}
 	
 	if (!PsiOptions::instance()->getOption("options.ui.account.resource").toBool()) {

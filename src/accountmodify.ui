@@ -181,7 +181,7 @@
          <property name="sizeHint" >
           <size>
            <width>20</width>
-           <height>20</height>
+           <height>0</height>
           </size>
          </property>
         </spacer>
@@ -351,7 +351,7 @@
          <property name="sizeHint" >
           <size>
            <width>20</width>
-           <height>20</height>
+           <height>0</height>
           </size>
          </property>
         </spacer>
@@ -390,7 +390,7 @@
              <property name="sizeHint" >
               <size>
                <width>20</width>
-               <height>40</height>
+               <height>0</height>
               </size>
              </property>
             </spacer>
@@ -413,7 +413,7 @@
              <property name="sizeHint" >
               <size>
                <width>20</width>
-               <height>40</height>
+               <height>0</height>
               </size>
              </property>
             </spacer>
@@ -473,7 +473,7 @@
                   <property name="sizeHint" >
                    <size>
                     <width>20</width>
-                    <height>40</height>
+                    <height>0</height>
                    </size>
                   </property>
                  </spacer>
@@ -541,234 +541,221 @@
         <number>6</number>
        </property>
        <item>
-        <widget class="QGroupBox" name="gb_proxy" >
-         <property name="title" >
-          <string>Proxy</string>
+        <layout class="QHBoxLayout" >
+         <property name="margin" >
+          <number>0</number>
          </property>
-         <layout class="QVBoxLayout" >
-          <property name="margin" >
-           <number>10</number>
-          </property>
-          <property name="spacing" >
-           <number>6</number>
-          </property>
-          <item>
-           <widget class="QLabel" name="lb_proxychooser" >
-            <property name="text" >
-             <string>proxychooser</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
+         <property name="spacing" >
+          <number>6</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="lb_proxy" >
+           <property name="text" >
+            <string>Connection proxy:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="lb_proxychooser" >
+           <property name="text" >
+            <string>proxychooser</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="ck_compress" >
+         <property name="text" >
+          <string>Compress traffic (if possible)</string>
+         </property>
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="gb_advanced" >
-         <property name="title" >
-          <string>Advanced</string>
+        <widget class="QCheckBox" name="ck_keepAlive" >
+         <property name="text" >
+          <string>Send "Keep-alive" packets (for NAT timeouts)</string>
          </property>
-         <layout class="QVBoxLayout" >
-          <property name="margin" >
-           <number>10</number>
-          </property>
-          <property name="spacing" >
-           <number>6</number>
-          </property>
-          <item>
-           <widget class="QCheckBox" name="ck_compress" >
-            <property name="text" >
-             <string>Compress traffic (if possible)</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="ck_keepAlive" >
-            <property name="text" >
-             <string>Send "Keep-alive" packets (for NAT timeouts)</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="ck_host" >
-            <property name="text" >
-             <string>Manually Specify Server Host/Port:</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" >
-            <property name="margin" >
-             <number>0</number>
-            </property>
-            <property name="spacing" >
-             <number>6</number>
-            </property>
-            <item>
-             <widget class="QLabel" name="lb_host" >
-              <property name="text" >
-               <string>Host:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLineEdit" name="le_host" />
-            </item>
-            <item>
-             <widget class="QLabel" name="lb_port" >
-              <property name="text" >
-               <string>Port:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLineEdit" name="le_port" >
-              <property name="minimumSize" >
-               <size>
-                <width>56</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize" >
-               <size>
-                <width>56</width>
-                <height>32767</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" >
-            <property name="margin" >
-             <number>0</number>
-            </property>
-            <property name="spacing" >
-             <number>6</number>
-            </property>
-            <item>
-             <widget class="QLabel" name="lb_ssl" >
-              <property name="text" >
-               <string>Encrypt connection:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QComboBox" name="cb_ssl" />
-            </item>
-            <item>
-             <spacer>
-              <property name="orientation" >
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeType" >
-               <enum>QSizePolicy::Expanding</enum>
-              </property>
-              <property name="sizeHint" >
-               <size>
-                <width>251</width>
-                <height>16</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="ck_host" >
+         <property name="text" >
+          <string>Manually Specify Server Host/Port:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" >
+         <property name="margin" >
+          <number>0</number>
+         </property>
+         <property name="spacing" >
+          <number>6</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="lb_host" >
+           <property name="text" >
+            <string>Host:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="le_host" />
+         </item>
+         <item>
+          <widget class="QLabel" name="lb_port" >
+           <property name="text" >
+            <string>Port:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="le_port" >
+           <property name="minimumSize" >
+            <size>
+             <width>56</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize" >
+            <size>
+             <width>56</width>
+             <height>32767</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" >
+         <property name="margin" >
+          <number>0</number>
+         </property>
+         <property name="spacing" >
+          <number>6</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="lb_ssl" >
+           <property name="text" >
+            <string>Encrypt connection:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="cb_ssl" />
+         </item>
+         <item>
+          <spacer>
+           <property name="orientation" >
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType" >
+            <enum>QSizePolicy::Expanding</enum>
+           </property>
+           <property name="sizeHint" >
+            <size>
+             <width>251</width>
+             <height>16</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
  	 	  </item>
-          <item>
-           <widget class="QCheckBox" name="ck_ignoreSSLWarnings" >
-            <property name="text" >
-             <string>Ignore SSL warnings</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="ck_legacy_ssl_probe" >
-            <property name="text" >
-             <string>Probe legacy SSL port</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" >
-            <property name="margin" >
-             <number>0</number>
-            </property>
-            <property name="spacing" >
-             <number>6</number>
-            </property>
-            <item>
-             <widget class="QLabel" name="lb_plain" >
-              <property name="text" >
-               <string>Allow plaintext authentication:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QComboBox" name="cb_plain" />
-            </item>
-            <item>
-             <spacer>
-              <property name="orientation" >
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeType" >
-               <enum>QSizePolicy::Expanding</enum>
-              </property>
-              <property name="sizeHint" >
-               <size>
-                <width>251</width>
-                <height>16</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
+       <item>
+        <widget class="QCheckBox" name="ck_ignoreSSLWarnings" >
+         <property name="text" >
+          <string>Ignore SSL warnings</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="ck_legacy_ssl_probe" >
+         <property name="text" >
+          <string>Probe legacy SSL port</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" >
+         <property name="margin" >
+          <number>0</number>
+         </property>
+         <property name="spacing" >
+          <number>6</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="lb_plain" >
+           <property name="text" >
+            <string>Allow plaintext authentication:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="cb_plain" />
+         </item>
+         <item>
+          <spacer>
+           <property name="orientation" >
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType" >
+            <enum>QSizePolicy::Expanding</enum>
+           </property>
+           <property name="sizeHint" >
+            <size>
+             <width>251</width>
+             <height>16</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
  	 	  </item>
 		  <item>
-           <widget class="QCheckBox" name="ck_req_mutual" >
-            <property name="text" >
-             <string>Require mutual authentication</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" >
-            <property name="margin" >
-             <number>0</number>
-            </property>
-            <property name="spacing" >
-             <number>6</number>
-            </property>
-            <item>
-      <widget class="QLabel" name="lb_security_level" >
-       <property name="text" >
-        <string>SASL Security Level:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer>
-       <property name="orientation" >
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType" >
-        <enum>QSizePolicy::Expanding</enum>
-       </property>
-       <property name="sizeHint" >
-        <size>
-         <width>251</width>
-         <height>16</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QComboBox" name="cb_security_level" />
-            </item>
-           </layout>
-          </item>
-         </layout>
+        <widget class="QCheckBox" name="ck_req_mutual" >
+         <property name="text" >
+          <string>Require mutual authentication</string>
+         </property>
         </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" >
+         <property name="margin" >
+          <number>0</number>
+         </property>
+         <property name="spacing" >
+          <number>6</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="lb_security_level" >
+           <property name="text" >
+            <string>SASL Security Level:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer>
+           <property name="orientation" >
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType" >
+            <enum>QSizePolicy::Expanding</enum>
+           </property>
+           <property name="sizeHint" >
+            <size>
+             <width>251</width>
+             <height>16</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QComboBox" name="cb_security_level" />
+         </item>
+        </layout>
        </item>
        <item>
         <spacer>
@@ -781,7 +768,7 @@
          <property name="sizeHint" >
           <size>
            <width>20</width>
-           <height>40</height>
+           <height>0</height>
           </size>
          </property>
         </spacer>
@@ -963,7 +950,7 @@
          <property name="sizeHint" >
           <size>
            <width>20</width>
-           <height>70</height>
+           <height>0</height>
           </size>
          </property>
         </spacer>
@@ -983,7 +970,7 @@
      <property name="sizeHint" >
       <size>
        <width>20</width>
-       <height>16</height>
+       <height>0</height>
       </size>
      </property>
     </spacer>
