@@ -10,6 +10,7 @@
 
 #include "ui_opt_advanced.h"
 #include "psioptions.h"
+#include "spellchecker.h"
 
 class OptAdvancedUI : public QWidget, public Ui::OptAdvanced
 {
@@ -42,6 +43,8 @@ QWidget *OptionsTabAdvanced::widget()
 #ifdef Q_WS_X11	// auto-copy is a built-in feature on linux, we don't want user to use our own one
 	d->ck_autocopy->hide();
 #endif
+
+	d->ck_spell->setEnabled(SpellChecker::instance()->available());
 
 	QWhatsThis::add(d->ck_messageevents,
 		tr("Enables the sending and requesting of message events such as "
@@ -97,7 +100,8 @@ void OptionsTabAdvanced::applyOptions(Options *opt)
 	opt->messageEvents = d->ck_messageevents->isChecked();
 	opt->inactiveEvents = d->ck_inactiveevents->isChecked();
 	opt->useRC = d->ck_rc->isChecked();
-	PsiOptions::instance()->setOption("options.ui.spell-check.enabled",d->ck_spell->isChecked());
+	if ( SpellChecker::instance()->available() )
+		PsiOptions::instance()->setOption("options.ui.spell-check.enabled",d->ck_spell->isChecked());
 	opt->autoCopy = d->ck_autocopy->isChecked();
 	opt->singleclick = d->ck_singleclick->isChecked();
 	opt->jidComplete = d->ck_jidComplete->isChecked();
@@ -121,7 +125,10 @@ void OptionsTabAdvanced::restoreOptions(const Options *opt)
 	d->ck_messageevents->setChecked( opt->messageEvents );
 	d->ck_inactiveevents->setChecked( opt->inactiveEvents );
 	d->ck_rc->setChecked( opt->useRC );
-	d->ck_spell->setChecked(PsiOptions::instance()->getOption("options.ui.spell-check.enabled").toBool());
+	if ( !SpellChecker::instance()->available() )
+		d->ck_spell->setChecked(false);
+	else
+		d->ck_spell->setChecked(PsiOptions::instance()->getOption("options.ui.spell-check.enabled").toBool());
 	d->ck_autocopy->setChecked( opt->autoCopy );
 	d->ck_singleclick->setChecked( opt->singleclick );
 	d->ck_jidComplete->setChecked( opt->jidComplete );
