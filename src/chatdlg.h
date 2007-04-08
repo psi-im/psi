@@ -118,12 +118,14 @@ private slots:
 	void capsChanged(const Jid&);
 	void updateIdentityVisibility();
 	void chatEditCreated();
+	void initComposing();
 
 public:
 	class Private;
 private:
 	Private *d;
 	Ui::ChatDlg ui_;
+	bool highlightersInstalled_;
 
 	void contextMenuEvent(QContextMenuEvent *);
 
