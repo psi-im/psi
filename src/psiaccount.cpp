@@ -3907,7 +3907,6 @@ void PsiAccount::openChat(const Jid &j)
 {
 	ChatDlg *c = ensureChatDlg(j);
 	QWidget *w = c;
-	processChats(j);
 	if ( option.useTabs )
 	{
 		if ( !d->psi->isChatTabbed(c) )
@@ -3919,6 +3918,7 @@ void PsiAccount::openChat(const Jid &j)
 		tabSet->selectTab(c);
 		w = tabSet;
 	}
+	processChats(j);
 	bringToFront(w);
 }
 
