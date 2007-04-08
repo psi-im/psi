@@ -2097,7 +2097,11 @@ void PsiAccount::playSound(const QString &str)
 QString PsiAccount::localHostName()
 {
 	QString hostname = QHostInfo::localHostName();
-	return hostname.left(hostname.indexOf('.'));
+	int i = hostname.indexOf('.');
+	if (i != -1)
+		return hostname.left(hostname.indexOf('.'));
+	else
+		return hostname;
 }
 
 bool PsiAccount::validRosterExchangeItem(const RosterExchangeItem& item)
