@@ -582,8 +582,9 @@ public slots:
 };
 
 EventDlg::EventDlg(const QString &to, PsiCon *psi, PsiAccount *pa)
-:AdvancedWidget<QWidget>(0, Qt::WDestructiveClose | Qt::WGroupLeader)
+	: AdvancedWidget<QWidget>(0)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
   	if ( option.brushedMetal )
 		setAttribute(Qt::WA_MacMetalStyle);	
 	d = new Private(this);
@@ -642,8 +643,9 @@ EventDlg::EventDlg(const QString &to, PsiCon *psi, PsiAccount *pa)
 }
 
 EventDlg::EventDlg(const Jid &j, PsiAccount *pa, bool unique)
-:AdvancedWidget<QWidget>(0, Qt::WDestructiveClose | Qt::WGroupLeader)
+	: AdvancedWidget<QWidget>(0)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private(this);
 	d->composing = false;
 	d->psi = pa->psi();

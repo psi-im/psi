@@ -129,8 +129,9 @@ public:
 };
 
 RegistrationDlg::RegistrationDlg(const Jid &jid, PsiAccount *pa)
-:QDialog(0, 0, false, Qt::WDestructiveClose)
+	: QDialog(0, 0, false)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private;
 	d->jid = jid;
 	d->pa = pa;

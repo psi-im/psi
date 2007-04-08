@@ -24,8 +24,10 @@
 #include "applicationinfo.h"
 #include "aboutdlg.h"
 
-AboutDlg::AboutDlg(QWidget* parent) : QDialog(parent,Qt::WDestructiveClose)
+AboutDlg::AboutDlg(QWidget* parent)
+	: QDialog(parent)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	ui_.setupUi(this);
 
 	setModal(false);

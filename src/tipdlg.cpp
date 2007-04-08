@@ -31,8 +31,10 @@
  * \brief A 'Tip Of The Day' dialog
  */
 
-TipDlg::TipDlg(QWidget* parent) : QDialog(parent,Qt::WDestructiveClose)
+TipDlg::TipDlg(QWidget* parent)
+	: QDialog(parent)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	setupUi(this);
 	setModal(false);
 

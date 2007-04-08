@@ -46,8 +46,9 @@
 // FIXME: Will no longer be needed once it is out of the groupchat contactview
 //----------------------------------------------------------------------------
 StatusShowDlg::StatusShowDlg(const UserListItem &u)
-:QDialog(0, 0, false, Qt::WDestructiveClose)
+	: QDialog(0, 0, false)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	// build the dialog
 	QVBoxLayout *vb = new QVBoxLayout(this, 8);
 	PsiTextView *te = new PsiTextView(this);
@@ -91,8 +92,9 @@ public:
 };
 
 StatusSetDlg::StatusSetDlg(PsiCon *psi, const Status &s)
-:QDialog(0, 0, false, Qt::WDestructiveClose)
+	: QDialog(0, 0, false)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private;
 	d->psi = psi;
 	d->pa = 0;
@@ -104,8 +106,9 @@ StatusSetDlg::StatusSetDlg(PsiCon *psi, const Status &s)
 }
 
 StatusSetDlg::StatusSetDlg(PsiAccount *pa, const Status &s)
-:QDialog(0, 0, false, Qt::WDestructiveClose)
+	: QDialog(0, 0, false)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private;
 	d->psi = 0;
 	d->pa = pa;

@@ -1425,8 +1425,9 @@ void DiscoDlg::Private::setProtocol(int p)
 //----------------------------------------------------------------------------
 
 DiscoDlg::DiscoDlg(PsiAccount *pa, const Jid &jid, const QString &node)
-	: QDialog(0, Qt::WDestructiveClose)
+	: QDialog(0)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
   	setupUi(this);
 	// restore options
 	ck_autoItems->setChecked(option.discoItems);

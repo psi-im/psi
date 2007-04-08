@@ -798,8 +798,9 @@ public:
 };
 
 GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
-:AdvancedWidget<QWidget>(0, Qt::WDestructiveClose)
+	: AdvancedWidget<QWidget>(0)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
   	if ( option.brushedMetal )
 		setAttribute(Qt::WA_MacMetalStyle);
 	nicknumber=0;
@@ -1949,8 +1950,9 @@ void GCMainDlg::toggleSmallChat()
 // GCFindDlg
 //----------------------------------------------------------------------------
 GCFindDlg::GCFindDlg(const QString &str, QWidget *parent, const char *name)
-:QDialog(parent, name, false, Qt::WDestructiveClose)
+	: QDialog(parent, name, false)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	setWindowTitle(tr("Find"));
 	QVBoxLayout *vb = new QVBoxLayout(this, 4);
 	QHBoxLayout *hb = new QHBoxLayout(vb);

@@ -29,8 +29,10 @@
 #include "showtextdlg.h"
 
 
-ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent) : QDialog(parent, Qt::WDestructiveClose)
+ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent)
+	: QDialog(parent)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	QString text;
 
 	QFile f(fname);

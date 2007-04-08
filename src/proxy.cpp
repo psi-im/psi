@@ -304,8 +304,9 @@ public:
 };
 
 ProxyDlg::ProxyDlg(const ProxyItemList &list, const QStringList &methods, int def, QWidget *parent)
-:QDialog(parent, Qt::WDestructiveClose)
+	: QDialog(parent)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private;
 	setupUi(this);
 	setWindowTitle(CAP(caption()));

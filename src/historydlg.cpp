@@ -125,8 +125,9 @@ public:
 };
 
 HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
-:QWidget(0, 0, Qt::WDestructiveClose)
+	: QWidget(0, 0)
 {
+	setAttribute(Qt::WA_DeleteOnClose);
   	if ( option.brushedMetal )
 		setAttribute(Qt::WA_MacMetalStyle);
 	d = new Private;
