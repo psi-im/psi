@@ -918,11 +918,11 @@ void PsiAccount::login()
 			p.setSocks(pi.settings.host, pi.settings.port);
 		else if(pi.type == "poll") { // HTTP Poll
 			QUrl u = pi.settings.url;
-#ifdef __GNUC__
-#warning "This will break with XMPP1"
-#endif
 			if(u.queryItems().isEmpty()) {
-				u.addQueryItem("server",host + ':' + QString::number(port));
+				if (useHost)
+					u.addQueryItem("server",host + ':' + QString::number(port));
+				else
+					u.addQueryItem("server",jid.host());
 			}
 			p.setHttpPoll(pi.settings.host, pi.settings.port, u.toString());
 			p.setPollInterval(2);
