@@ -294,8 +294,6 @@ bool PsiCon::init()
 {
 	// To allow us to upgrade from old hardcoded options gracefully, be careful about the order here
 	PsiOptions *options=PsiOptions::instance();
-	//load the (new) defaults (stored in the binary)
-	options->loadDefaults();
 	//load the system-wide defaults, if they exist
 	QString systemDefaults=g.pathBase;
 	systemDefaults += "/options-default.xml";

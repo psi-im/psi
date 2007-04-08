@@ -34,7 +34,6 @@ class PsiOptions : public OptionsTree//, QObject
 public:
 	static PsiOptions* instance();
 	~PsiOptions();
-	bool loadDefaults();
 	bool load(QString file);
 	void load(XMPP::Client* client);
 	bool save(QString file);

@@ -103,16 +103,6 @@ PsiOptions* PsiOptions::instance()
 }
 
 /**
- * Loads the defaults shipped in the Psi binary
- * \return Success
- */
-bool PsiOptions::loadDefaults()
-{
-	return load(":/options-default.xml");
-	
-}
-
-/**
  * Loads the options present in the xml config file named.
  * \param file Name of the xml config file to load
  * \return Success
@@ -152,6 +142,8 @@ PsiOptions::PsiOptions()
 	: OptionsTree()
 {
 	autoSave(false);
+	if (!load(":/options-default.xml"))
+		qWarning("ERROR: Failed to load default options");
 }
 
 /**
