@@ -514,21 +514,17 @@ void PsiCon::deinit()
 	d->saveProfile(acc);
 }
 
-// FIXME: remove the argument.
-QList<PsiAccount *> PsiCon::accountList(bool enabledOnly) const
-{
-	if (!enabledOnly)
-		return d->contactList->accountList();
-
-	return d->contactList->enabledAccounts();
-}
-
 ContactView *PsiCon::contactView() const
 {
 	if(d->mainwin)
 		return d->mainwin->cvlist;
 	else
 		return 0;
+}
+
+PsiContactList* PsiCon::contactList() const
+{
+	return d->contactList;
 }
 
 EDB *PsiCon::edb() const
@@ -784,11 +780,6 @@ AccountsComboBox *PsiCon::accountsComboBox(QWidget *parent, bool online_only)
 	return acb;
 }
 
-bool PsiCon::isValid(PsiAccount *pa)
-{
-	return d->contactList->isValid(pa);
-}
-
 void PsiCon::createAccount(const QString &name, const Jid &j, const QString &pass, bool opt_host, const QString &host, int port, bool ssl, int proxy)
 {
 	d->contactList->createAccount(name, j, pass, opt_host, host, port, ssl, proxy);
@@ -809,11 +800,6 @@ PsiAccount *PsiCon::createAccount(const UserAccount& acc)
 void PsiCon::removeAccount(PsiAccount *pa)
 {
 	d->contactList->removeAccount(pa);
-}
-
-void PsiCon::enableAccount(PsiAccount *pa, bool e)
-{
-	d->contactList->setAccountEnabled(pa, e);
 }
 
 void PsiCon::statusMenuChanged(int x)
@@ -1064,24 +1050,11 @@ int PsiCon::getId()
 	return d->eventId++;
 }
 
-int PsiCon::queueCount()
-{
-	int total = 0;
-	foreach(PsiAccount* account, d->contactList->enabledAccounts())
-		total += account->eventQueue()->count();
-	return total;
-}
-
-PsiAccount *PsiCon::queueLowestEventId()
-{
-	return d->contactList->queueLowestEventId();
-}
-
 void PsiCon::queueChanged()
 {
 	Icon *nextAnim = 0;
-	int nextAmount = queueCount();
-	PsiAccount *pa = queueLowestEventId();
+	int nextAmount = d->contactList->queueCount();
+	PsiAccount *pa = d->contactList->queueLowestEventId();
 	if(pa)
 		nextAnim = PsiIconset::instance()->event2icon(pa->eventQueue()->peekNext());
 
@@ -1128,7 +1101,7 @@ void PsiCon::recvNextEvent()
 		printf(" Account: [%s]\n", pa->name().latin1());
 		pa->eventQueue()->printContent();
 	}*/
-	PsiAccount *pa = queueLowestEventId();
+	PsiAccount *pa = d->contactList->queueLowestEventId();
 	if(pa)
 		pa->openNextEvent();
 }
@@ -1224,7 +1197,7 @@ void PsiCon::pgp_keysUpdated()
 void PsiCon::proxy_settingsChanged()
 {
 	// properly index accounts
-	foreach(PsiAccount* account, d->contactList->accountList()) {
+	foreach(PsiAccount* account, d->contactList->accounts()) {
 		UserAccount acc = account->userAccount();
 		if(acc.proxy_index > 0) {
 			int x = d->proxy->findOldIndex(acc.proxy_index-1);
@@ -1358,7 +1331,7 @@ void PsiCon::updateS5BServerAddresses()
 	QList<QHostAddress> list;
 
 	// grab all IP addresses
-	foreach(PsiAccount* account, d->contactList->accountList()) {
+	foreach(PsiAccount* account, d->contactList->accounts()) {
 		QHostAddress *a = account->localAddress();
 		if(!a)
 			continue;

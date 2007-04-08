@@ -33,6 +33,7 @@
 #include "privacymanager.h"
 #include "privacydlg.h"
 #include "pgpkeydlg.h"
+#include "psicontactlist.h"
 
 AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 :QDialog(parent)
@@ -444,7 +445,7 @@ void AccountModifyDlg::save()
 	QString aname = def;
 	int n = 0;
 	{
-		foreach(PsiAccount* pa, pa->psi()->accountList(false))
+		foreach(PsiAccount* pa, pa->psi()->contactList()->accounts())
 			if(aname == pa->name())
 				n++;
 	}

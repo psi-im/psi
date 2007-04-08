@@ -30,7 +30,7 @@
 #include "psiaccount.h"
 #include "im.h"
 #include "psicon.h"
-
+#include "psicontactlist.h"
 
 //----------------------------------------------------------------------------
 // XmlConsole
@@ -81,7 +81,7 @@ void XmlConsole::clear()
 
 void XmlConsole::updateCaption()
 {
-	if (pa->psi()->accountList(true).count() > 1)
+	if (pa->psi()->contactList()->enabledAccounts().count() > 1)
 		setWindowTitle(pa->name() + ": " + tr("XML Console"));
 	else
 		setWindowTitle(tr("XML Console"));

@@ -37,6 +37,7 @@
 #include "accountadddlg.h"
 #include "accountmanagedlg.h"
 #include "ui_accountremove.h"
+#include "psicontactlist.h"
 
 using namespace XMPP;
 
@@ -279,7 +280,7 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi)
 	lv_accs->setAllColumnsShowFocus(true);
 	lv_accs->setResizeMode(Q3ListView::LastColumn);
 
-	foreach(PsiAccount* pa, psi->accountList(false))
+	foreach(PsiAccount* pa, psi->contactList()->accounts())
 		new AccountManageItem(lv_accs, pa);
 
 	if(lv_accs->childCount() > 0)

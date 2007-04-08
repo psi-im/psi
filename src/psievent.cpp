@@ -29,6 +29,7 @@
 #include "xmpp_xmlcommon.h"
 #include "filetransfer.h"
 #include "applicationinfo.h"
+#include "psicontactlist.h"
 
 using namespace XMPP;
 using namespace XMLHelper;
@@ -176,7 +177,7 @@ bool PsiEvent::fromXml(PsiCon *psi, PsiAccount *account, const QDomElement *e)
 	}
 	else if ( hasSubTag(*e, "account") ) {
 		QString accName = subTagText(*e, "account");
-		foreach(PsiAccount* account, psi->accountList(false)) {
+		foreach(PsiAccount* account, psi->contactList()->accounts()) {
 			if ( account->name() == accName ) {
 				v_account = account;
 				break;

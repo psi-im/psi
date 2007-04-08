@@ -70,6 +70,7 @@
 #include "psioptions.h"
 #include "psitooltip.h"
 #include "shortcutmanager.h"
+#include "psicontactlist.h"
 
 #ifdef Q_WS_WIN
 #include <windows.h>
@@ -846,7 +847,7 @@ void ChatDlg::optionsUpdate()
 void ChatDlg::updateIdentityVisibility()
 {
 	if (!d->smallChat) {
-		bool visible = d->pa->psi()->accountList(true).count() > 1;
+		bool visible = d->pa->psi()->contactList()->enabledAccounts().count() > 1;
 		d->lb_ident->setVisible(visible);
 	}
 	else 

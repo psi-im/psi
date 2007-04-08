@@ -40,6 +40,7 @@
 #include "iconwidget.h"
 #include "icontoolbutton.h"
 #include "alerticon.h"
+#include "psicontactlist.h"
 
 //----------------------------------------------------------------------------
 // PopupActionButton
@@ -587,7 +588,7 @@ public:
 	{
 		QMenu *pm = new QMenu (p);
 		uint i = 0;
-		foreach(PsiAccount* acc, psi->accountList(true)) {
+		foreach(PsiAccount* acc, psi->contactList()->enabledAccounts()) {
 			pm->insertItem( acc->name(), parent(), SLOT(itemActivated(int)), 0, id*1000 + i );
 			pm->setItemParameter ( id*1000 + i, i );
 			i++;
@@ -597,7 +598,7 @@ public:
 
 	void updateToolButton(QToolButton *btn)
 	{
-		if (psi->accountList(TRUE).count() >= 2) {
+		if (psi->contactList()->enabledAccounts().count() >= 2) {
 			btn->setMenu(subMenu(btn));
 			disconnect(btn, SIGNAL(clicked()), sm, SLOT(map()));
 		}
@@ -625,7 +626,7 @@ void MAction::init(Icon i, int id, PsiCon *psi)
 	d = new Private(id, psi, this);
 	setPsiIcon (&i);
 	connect(psi, SIGNAL(accountCountChanged()), SLOT(numAccountsChanged()));
-	setEnabled ( !d->psi->accountList(TRUE).isEmpty() );
+	setEnabled ( d->psi->contactList()->haveEnabledAccounts() );
 	connect (d->sm, SIGNAL(mapped(int)), SLOT(itemActivated(int)));
 }
 
@@ -638,7 +639,7 @@ bool MAction::addTo(QWidget *w)
 #ifndef Q_WS_MAC
 		iconset = iconSet();
 #endif
-		if ( d->psi->accountList(TRUE).count() < 2 ) {
+		if ( d->psi->contactList()->enabledAccounts().count() < 2 ) {
 			menu->insertItem ( iconset, menuText(), this, SLOT(itemActivated(int)), 0, d->id*1000 + 0 );
 			menu->setItemEnabled (d->id*1000 + 0, isEnabled());
 			menu->setItemParameter ( d->id*1000 + 0, 0 );
@@ -661,7 +662,7 @@ void MAction::addingToolButton(IconToolButton *btn)
 
 void MAction::itemActivated(int n)
 {
-	QList<PsiAccount*> list = d->psi->accountList(true);
+	QList<PsiAccount*> list = d->psi->contactList()->enabledAccounts();
 
 	if (n >= list.count()) // just in case
 		return;
@@ -671,7 +672,7 @@ void MAction::itemActivated(int n)
 
 void MAction::numAccountsChanged()
 {
-	setEnabled ( !d->psi->accountList(TRUE).isEmpty() );
+	setEnabled( d->psi->contactList()->haveEnabledAccounts() );
 
 	QList<IconToolButton*> btns = buttonList();
 	for ( QList<IconToolButton*>::Iterator it = btns.begin(); it != btns.end(); ++it ) {

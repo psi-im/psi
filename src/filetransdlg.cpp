@@ -36,6 +36,7 @@
 #include "msgmle.h"
 #include "jidutil.h"
 #include "psitooltip.h"
+#include "psicontactlist.h"
 
 typedef Q_UINT64 LARGE_TYPE;
 
@@ -703,7 +704,7 @@ void FileRequestDlg::updateIdentity(PsiAccount *pa)
 
 void FileRequestDlg::updateIdentityVisibility()
 {
-	bool visible = d->pa->psi()->accountList(true).count() > 1;
+	bool visible = d->pa->psi()->contactList()->enabledAccounts().count() > 1;
 	if (d->cb_ident) 
 		d->cb_ident->setVisible(visible);
 	if (d->lb_ident)

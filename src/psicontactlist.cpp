@@ -124,7 +124,7 @@ PsiContactList::PsiContactList(PsiCon* psi)
 PsiContactList::~PsiContactList()
 {
 	// PsiAccount calls some signals while being deleted prior to being unlinked,
-	// which in result could cause calls to PsiContactList::accountList()
+	// which in result could cause calls to PsiContactList::accounts()
 	QList<PsiAccount*> toDelete(d->accounts());
 	foreach(PsiAccount* account, toDelete)
 		delete account;
@@ -142,7 +142,7 @@ PsiCon* PsiContactList::psi() const
  * Returns list of all accounts if \param enabledOnly is false,
  * equivalent to enabledAccounts() otherwise.
  */
-const QList<PsiAccount*>& PsiContactList::accountList() const
+const QList<PsiAccount*>& PsiContactList::accounts() const
 {
 	return d->accounts();
 }
@@ -167,19 +167,19 @@ bool PsiContactList::haveActiveAccounts() const
 }
 
 /**
+ * Returns true if enabledAccounts() list is not empty.
+ */
+bool PsiContactList::haveEnabledAccounts() const
+{
+	return !d->enabledAccounts().isEmpty();
+}
+
+/**
  * At the moment, it returns first enabled account.
  */
 PsiAccount *PsiContactList::defaultAccount() const
 {
 	return enabledAccounts().first();
-}
-
-/**
- * Returns true if specified \param account is registered in the PsiContactList.
- */
-bool PsiContactList::isValid(PsiAccount *account)
-{
-	return d->accounts().contains(account);
 }
 
 /**
@@ -227,6 +227,17 @@ void PsiContactList::removeAccount(PsiAccount* account)
 void PsiContactList::setAccountEnabled(PsiAccount* account, bool enabled)
 {
 	account->setEnabled(enabled);
+}
+
+/**
+ * Counts total number of unread events for all accounts.
+ */
+int PsiContactList::queueCount() const
+{
+	int total = 0;
+	foreach(PsiAccount* account, d->enabledAccounts())
+		total += account->eventQueue()->count();
+	return total;
 }
 
 /**

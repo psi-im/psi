@@ -50,6 +50,7 @@
 #include "psipopup.h"
 #include "psioptions.h"
 #include "tipdlg.h"
+#include "psicontactlist.h"
 
 #include "mainwin_p.h"
 
@@ -1043,8 +1044,7 @@ void MainWin::statusClicked(int x)
 
 void MainWin::numAccountsChanged()
 {
-	bool enabled = d->psi->accountList(TRUE).isEmpty() ? false : true;
-	d->statusButton->setEnabled (enabled);
+	d->statusButton->setEnabled(d->psi->contactList()->haveEnabledAccounts());
 }
 
 void MainWin::dockActivated()

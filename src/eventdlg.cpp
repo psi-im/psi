@@ -68,6 +68,7 @@
 #include "serverinfomanager.h"
 #include "alerticon.h"
 #include "shortcutmanager.h"
+#include "psicontactlist.h"
 
 static QString findJid(const QString &s, int x, int *p1, int *p2)
 {
@@ -957,7 +958,7 @@ void EventDlg::updateIdentity(PsiAccount *pa)
 
 void EventDlg::updateIdentityVisibility()
 {
-	bool visible = d->psi->accountList(true).count() > 1;
+	bool visible = d->psi->contactList()->enabledAccounts().count() > 1;
 	if (d->cb_ident)
 		d->cb_ident->setVisible(visible);
 	if (d->lb_ident)

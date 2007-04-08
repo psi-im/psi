@@ -23,6 +23,7 @@
 #include "psioptions.h"
 #include "psiaccount.h"
 #include "accountregdlg.h"
+#include "psicontactlist.h"
 
 AccountAddDlg::AccountAddDlg(PsiCon *_psi, QWidget *parent)
 :QDialog(parent)
@@ -67,7 +68,7 @@ QString AccountAddDlg::createNewAccountName(QString def)
 	int n = 0;
 	while(1) {
 		bool taken = false;
-		foreach(PsiAccount* pa, psi->accountList(false)) {
+		foreach(PsiAccount* pa, psi->contactList()->accounts()) {
 			if(aname == pa->name()) {
 				taken = true;
 				break;

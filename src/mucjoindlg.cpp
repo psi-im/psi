@@ -28,6 +28,7 @@
 #include "accountscombobox.h"
 #include "psiaccount.h"
 #include "mucjoindlg.h"
+#include "psicontactlist.h"
 
 using namespace XMPP;
 
@@ -131,7 +132,7 @@ void MUCJoinDlg::updateIdentity(PsiAccount *pa)
 
 void MUCJoinDlg::updateIdentityVisibility()
 {
-	bool visible = d->psi->accountList(true).count() > 1;
+	bool visible = d->psi->contactList()->enabledAccounts().count() > 1;
 	d->cb_ident->setVisible(visible);
 	lb_identity->setVisible(visible);
 }

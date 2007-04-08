@@ -40,22 +40,23 @@ public:
 
 	PsiCon* psi() const;
 
-	const QList<PsiAccount*>& accountList() const;
+	const QList<PsiAccount*>& accounts() const;
 	const QList<PsiAccount*>& enabledAccounts() const;
 	bool haveActiveAccounts() const;
+	bool haveEnabledAccounts() const;
 
 	PsiAccount *defaultAccount() const;
 
 	UserAccountList getUserAccountList() const;
 
-	bool isValid(PsiAccount *);
 	void createAccount(const QString& name, const Jid& j = "", const QString& pass = "", bool opt_host = false, const QString& host = "", int port = 5222, bool ssl = false, int proxy = 0);
 	void removeAccount(PsiAccount*);
 	void setAccountEnabled(PsiAccount*, bool enabled = TRUE);
 
+	int queueCount() const;
 	PsiAccount *queueLowestEventId();
-	void loadAccounts(const UserAccountList &);
 
+	void loadAccounts(const UserAccountList &);
 	void link(PsiAccount*);
 	void unlink(PsiAccount*);
 

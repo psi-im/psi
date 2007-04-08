@@ -359,7 +359,6 @@ public slots:
 	void setEnabled( bool e )
 	{
 		acc.opt_enabled = e;
-		psi->enableAccount(account, e);
 		cp->setEnabled(e);
 		account->cpUpdate(self);
 
@@ -870,7 +869,7 @@ void PsiAccount::login()
 		return;
 
 	if(!QCA::isSupported("tls") && !(d->acc.opt_host && !d->acc.opt_ssl)) {
-		QMessageBox::information(0, (d->psi->accountList(true).count() > 1 ? QString("%1: ").arg(name()) : "") + tr("SSL Error"), tr("Cannot login: SSL is enabled but no SSL/TLS (plugin) support is available."));
+		QMessageBox::information(0, (d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("SSL Error"), tr("Cannot login: SSL is enabled but no SSL/TLS (plugin) support is available."));
 		return;
 	}
 
@@ -1014,7 +1013,7 @@ void PsiAccount::tls_handshaken()
 		QString str = CertUtil::resultToString(r,validity);
 		while(1) {
 			int n = QMessageBox::warning(0,
-				(d->psi->accountList(true).count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Authentication"),
+				(d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Authentication"),
 				tr("The %1 certificate failed the authenticity test.").arg(d->jid.host()) + '\n' + tr("Reason: %1.").arg(str),
 				tr("&Details..."),
 				tr("Co&ntinue"),
@@ -1298,10 +1297,9 @@ void PsiAccount::cs_error(int err)
 	stateChanged();
 	disconnected();
 
-	QMessageBox* m = new QMessageBox(QMessageBox::Critical, (d->psi->accountList(true).count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Error"), tr("There was an error communicating with the server.\nDetails: %1").arg(str), QMessageBox::Ok, 0, Qt::WDestructiveClose);
+	QMessageBox* m = new QMessageBox(QMessageBox::Critical, (d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Error"), tr("There was an error communicating with the server.\nDetails: %1").arg(str), QMessageBox::Ok, 0, Qt::WDestructiveClose);
 	m->setModal(true);
 	m->show();
-	//QMessageBox::critical(0, (d->psi->accountList(true).count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Error"), tr("There was an error communicating with the server.\nDetails: %1").arg(str));
 }
 
 void PsiAccount::client_rosterRequestFinished(bool success, int, const QString &)
@@ -1878,7 +1876,7 @@ void PsiAccount::setStatus(const Status &_s,  bool withPriority)
 				bool ok = false;
 				QString text = QInputDialog::getText(
 					tr("Need Password"),
-					( d->psi->accountList(true).count() > 1 ? 
+					( d->psi->contactList()->enabledAccounts().count() > 1 ? 
 					  tr("Please enter the password for %1:").arg(JIDUtil::toString(j,true))
 					  : tr("Please enter your password:") ),
 					QLineEdit::Password, QString::null, &ok, 0);

@@ -43,10 +43,11 @@ class IconSelectPopup;
 class QThread;
 class PsiActionList;
 class PsiToolBar;
-class	TabDlg;
+class TabDlg;
 class AccountsComboBox;
 class ChatDlg;
 class TuneController;
+class PsiContactList;
 
 namespace OpenPGP
 {
@@ -69,8 +70,8 @@ public:
 	bool init();
 	void deinit();
 
+	PsiContactList* contactList() const;
 	ContactView *contactView() const;
-	QList<PsiAccount *> accountList(bool enabledOnly) const;
 	EDB *edb() const;
 	TuneController* tuneController() const;
 	ProxyManager *proxy() const;
@@ -88,19 +89,13 @@ public:
 	void dialogRegister(QWidget *w);
 	void dialogUnregister(QWidget *w);
 
-	bool isValid(PsiAccount *);
 	void createAccount(const QString &name, const Jid &j="", const QString &pass="", bool opt_host=false, const QString &host="", int port=5222, bool ssl=false, int proxy=0);
 	PsiAccount *createAccount(const UserAccount &);
 	//void createAccount(const QString &, const QString &host="", int port=5222, bool ssl=false, const QString &user="", const QString &pass="");
 	void removeAccount(PsiAccount *);
-	void enableAccount(PsiAccount *, bool e=TRUE); // TODO: -> setAccountEnabled
 
 	void playSound(const QString &);
 	void raiseMainwin();
-
-	// global event handling
-	int queueCount();
-	PsiAccount *queueLowestEventId();
 
 	AccountsComboBox *accountsComboBox(QWidget *parent=0, bool online_only = false);
 
@@ -173,6 +168,7 @@ private:
 	void s5b_init();
 	void updateS5BServerAddresses();
 
+	friend class PsiAccount; // FIXME
 	void setToggles(bool tog_offline, bool tog_away, bool tog_agents, bool tog_hidden, bool tog_self);
 	void getToggles(bool *tog_offline, bool *tog_away, bool *tog_agents, bool *tog_hidden, bool *tog_self);
 

@@ -21,7 +21,7 @@
 #include "psicon.h"
 #include "accountscombobox.h"
 #include "psiaccount.h"
-
+#include "psicontactlist.h"
 
 AccountsComboBox::AccountsComboBox(PsiCon *_psi, QWidget *parent, bool online_only)
 :QComboBox(parent), onlineOnly(online_only)
@@ -37,8 +37,8 @@ AccountsComboBox::AccountsComboBox(PsiCon *_psi, QWidget *parent, bool online_on
 	pa = 0;
 	setSizePolicy(QSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Fixed ));
 
-	if(!psi->accountList(true).isEmpty())
-		setAccount(psi->accountList(true).first());
+	if(psi->contactList()->haveEnabledAccounts())
+		setAccount(psi->contactList()->enabledAccounts().first());
 }
 
 AccountsComboBox::~AccountsComboBox()
@@ -57,7 +57,7 @@ void AccountsComboBox::changeAccount()
 
 	int n = 0;
 	bool found = false;
-	foreach(PsiAccount* p, psi->accountList(true)) {
+	foreach(PsiAccount* p, psi->contactList()->enabledAccounts()) {
 		if (!onlineOnly || p->loggedIn()) {
 			if(i == n) {
 				pa = p;
@@ -79,7 +79,7 @@ void AccountsComboBox::updateAccounts()
 	int n = 0;
 	bool found = false;
 	PsiAccount *firstAccount = 0;
-	foreach(PsiAccount* p, psi->accountList(true)) {
+	foreach(PsiAccount* p, psi->contactList()->enabledAccounts()) {
 		if (!onlineOnly || p->loggedIn()) {
 			insertItem(p->nameWithJid());
 			if(p == pa) {
