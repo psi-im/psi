@@ -47,7 +47,7 @@ class QColorGroup;
 class GCUserView;
 class GCUserViewGroupItem;
 
-class GCUserViewItem : public Q3ListViewItem
+class GCUserViewItem : public QObject, public Q3ListViewItem
 {
 public:
 	GCUserViewItem(GCUserViewGroupItem *);

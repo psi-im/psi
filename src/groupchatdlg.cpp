@@ -88,7 +88,8 @@ static bool caseInsensitiveLessThan(const QString &s1, const QString &s2)
 //----------------------------------------------------------------------------
 
 GCUserViewItem::GCUserViewItem(GCUserViewGroupItem *par)
-:Q3ListViewItem(par)
+	: QObject()
+	, Q3ListViewItem(par)
 {
 }
 
@@ -322,7 +323,7 @@ void GCUserView::qlv_contextMenuRequested(Q3ListViewItem *i, const QPoint &pos, 
 	if(!i || !i->parent())
 		return;
 
-	GCUserViewItem *lvi = (GCUserViewItem *)i;
+	QPointer<GCUserViewItem> lvi = (GCUserViewItem *)i;
 	bool self = gcDlg_->nick() == i->text(0);
 	GCUserViewItem* c = (GCUserViewItem*) findEntry(gcDlg_->nick());
 	if (!c) {
@@ -373,7 +374,7 @@ void GCUserView::qlv_contextMenuRequested(Q3ListViewItem *i, const QPoint &pos, 
 	bool enabled = pm->isItemEnabled(x) || rm->isItemEnabled(x);
 	delete pm;
 
-	if(x == -1 || !enabled)
+	if(x == -1 || !enabled || lvi.isNull())
 		return;
 	action(lvi->text(0), lvi->s, x);
 }
