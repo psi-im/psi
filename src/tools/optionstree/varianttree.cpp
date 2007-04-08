@@ -274,6 +274,16 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
 		else if (type == "QKeySequence")
 			value.convert(QVariant::KeySequence);
 	}
+	else if (type == "QStringList") {
+		QStringList list;
+		for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
+			QDomElement e = node.toElement();
+			if (!e.isNull() && e.tagName() == "item") {
+				list += e.text();
+			}
+		}
+		value = list;
+	}
 	else if (type == "QVariantList") {
 		QVariantList list;
 		for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
@@ -300,6 +310,14 @@ void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
 		foreach(QVariant v, var.toList()) {
 			QDomElement item_element = e.ownerDocument().createElement("item");
 			variantToElement(v,item_element);
+			e.appendChild(item_element);
+		}
+	}
+	else if (type == "QStringList") {
+		foreach(QString s, var.toStringList()) {
+			QDomElement item_element = e.ownerDocument().createElement("item");
+			QDomText text = e.ownerDocument().createTextNode(s);
+			item_element.appendChild(text);
 			e.appendChild(item_element);
 		}
 	}
