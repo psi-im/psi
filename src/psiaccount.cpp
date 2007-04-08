@@ -206,10 +206,8 @@ bool BlockTransportPopupList::find(const Jid &j, bool online)
 	if ( j.user().isEmpty() ) // always show popups for transports
 		return false;
 
-	QObjectList list = queryList("BlockTransportPopup");
-	BlockTransportPopup *btp;
-	for (QObjectList::Iterator it = list.begin() ; it != list.end(); ++it) {
-		btp = (BlockTransportPopup*) (*it);
+	QList<BlockTransportPopup *> list = findChildren<BlockTransportPopup *>();
+	foreach(BlockTransportPopup* btp, list) {
 		if ( j.host() == btp->jid().host() ) {
 			if ( online )
 				btp->userCounter++;
