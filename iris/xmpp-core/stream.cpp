@@ -1396,7 +1396,7 @@ void ClientStream::srvProcessNext()
 					//d->sasl->setAllowAnonymous(false);
 					//d->sasl->setRequirePassCredentials(true);
 					//d->sasl->setExternalAuthID("localhost");
-					QCA::SASL::AuthFlags auth_flags = 0;
+					QCA::SASL::AuthFlags auth_flags = (QCA::SASL::AuthFlags) 0;
 					d->sasl->setConstraints(auth_flags,0,256);
 
 					QStringList list;
