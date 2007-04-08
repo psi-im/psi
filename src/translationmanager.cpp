@@ -81,7 +81,7 @@ QString TranslationManager::currentXMLLanguage() const
 void TranslationManager::loadTranslation(const QString& language)
 {
 #ifdef __GNUC__
-#warning "The translation needs to be reset in case 'english' is selected
+#warning "The translation needs to be reset in case 'english' is selected"
 #endif
 	//printf("changing lang: [%s]\n", lang.latin1());
 	//The Qt book suggests these are not necessary and they don't
