@@ -689,13 +689,42 @@
            </widget>
           </item>
           <item>
-           <widget class="QCheckBox" name="ck_plain" >
-            <property name="text" >
-             <string>Allow Plaintext Login</string>
+           <layout class="QHBoxLayout" >
+            <property name="margin" >
+             <number>0</number>
             </property>
-           </widget>
-          </item>
-          <item>
+            <property name="spacing" >
+             <number>6</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="lb_plain" >
+              <property name="text" >
+               <string>Allow plaintext authentication:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="cb_plain" />
+            </item>
+            <item>
+             <spacer>
+              <property name="orientation" >
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeType" >
+               <enum>QSizePolicy::Expanding</enum>
+              </property>
+              <property name="sizeHint" >
+               <size>
+                <width>251</width>
+                <height>16</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+ 	 	  </item>
+		  <item>
            <widget class="QCheckBox" name="ck_req_mutual" >
             <property name="text" >
              <string>Require mutual authentication</string>
@@ -1046,7 +1075,7 @@
   <tabstop>pb_key</tabstop>
   <tabstop>pb_keyclear</tabstop>
   <tabstop>ck_ignoreSSLWarnings</tabstop>
-  <tabstop>ck_plain</tabstop>
+  <tabstop>cb_plain</tabstop>
   <tabstop>ck_keepAlive</tabstop>
   <tabstop>ck_host</tabstop>
   <tabstop>le_host</tabstop>

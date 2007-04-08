@@ -418,6 +418,11 @@ namespace XMPP
 			BindNotAllowed,             // not allowed to bind a resource
 			BindConflict                // resource in-use
 		};
+		enum AllowPlainType {
+			NoAllowPlain,
+			AllowPlain,
+			AllowPlainOverTLS
+		};
 
 		ClientStream(Connector *conn, TLSHandler *tlsHandler=0, QObject *parent=0);
 		ClientStream(const QString &host, const QString &defRealm, ByteStream *bs, QCA::TLS *tls=0, QObject *parent=0); // server
@@ -447,7 +452,7 @@ namespace XMPP
 		void setLang(const QString&);
 
 		// security options (old protocol only uses the first !)
-		void setAllowPlain(bool);
+		void setAllowPlain(AllowPlainType);
 		void setRequireMutualAuth(bool);
 		void setSSFRange(int low, int high);
 		void setOldOnly(bool);

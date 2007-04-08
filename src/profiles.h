@@ -30,6 +30,7 @@
 #include "proxy.h"
 #include "common.h"
 #include "im.h" // Roster
+#include "xmpp.h" // ClientStream
 
 class UserAccount
 {
@@ -46,7 +47,8 @@ public:
 	QString jid, pass, host, resource, authid, realm;
 	bool customAuth;
 	int port, priority;
- 	bool opt_enabled, opt_pass, opt_host, opt_auto, opt_keepAlive, opt_plain, opt_log, opt_reconn, opt_ignoreSSLWarnings, opt_compress;
+ 	bool opt_enabled, opt_pass, opt_host, opt_auto, opt_keepAlive, opt_log, opt_reconn, opt_ignoreSSLWarnings, opt_compress;
+	XMPP::ClientStream::AllowPlainType allow_plain;
 	bool tog_offline, tog_away, tog_agents, tog_hidden, tog_self;
 	bool req_mutual_auth;
 	bool legacy_ssl_probe;

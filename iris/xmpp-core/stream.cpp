@@ -771,7 +771,7 @@ public:
 		in.setAutoDelete(true);
 
 		oldOnly = false;
-		allowPlain = false;
+		allowPlain = NoAllowPlain;
 		mutualAuth = false;
 		haveLocalAddr = false;
 		minimumSSF = 0;
@@ -797,7 +797,8 @@ public:
 	Jid jid;
 	QString server;
 	bool oldOnly;
-	bool allowPlain, mutualAuth;
+	bool mutualAuth;
+	AllowPlainType allowPlain;
 	bool haveLocalAddr;
 	QHostAddress localAddr;
 	Q_UINT16 localPort;
@@ -1126,9 +1127,9 @@ QString ClientStream::baseNS() const
 	return NS_CLIENT;
 }
 
-void ClientStream::setAllowPlain(bool b)
+void ClientStream::setAllowPlain(AllowPlainType a)
 {
-	d->allowPlain = b;
+	d->allowPlain = a;
 }
 
 void ClientStream::setRequireMutualAuth(bool b)
@@ -1193,7 +1194,7 @@ void ClientStream::cr_connected()
 	d->client.startClientOut(d->jid, d->oldOnly, d->conn->useSSL(), d->doAuth, d->doCompress);
 	d->client.setAllowTLS(d->tlsHandler ? true: false);
 	d->client.setAllowBind(d->doBinding);
-	d->client.setAllowPlain(d->allowPlain);
+	d->client.setAllowPlain(d->allowPlain == AllowPlain || (d->allowPlain == AllowPlainOverTLS && d->conn->useSSL()));
 	d->client.setLang(d->lang);
 
 	/*d->client.jid = d->jid;
@@ -1731,7 +1732,7 @@ bool ClientStream::handleNeed()
 			//d->sasl_mech = "EXTERNAL";
 
 			QCA::SASL::AuthFlags auth_flags = (QCA::SASL::AuthFlags) 0;
-			if (d->allowPlain)
+			if (d->allowPlain == AllowPlain || (d->allowPlain == AllowPlainOverTLS && d->using_tls))
 				auth_flags = (QCA::SASL::AuthFlags) (auth_flags | QCA::SASL::AllowPlain);
 			if (d->mutualAuth)
 				auth_flags = (QCA::SASL::AuthFlags) (auth_flags | QCA::SASL::RequireMutualAuth);
