@@ -5,21 +5,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>455</width>
+    <width>533</width>
     <height>374</height>
    </rect>
   </property>
   <property name="windowTitle" >
    <string>LookFeelToolbarsUI</string>
   </property>
-  <layout class="QGridLayout" >
+  <layout class="QVBoxLayout" >
    <property name="margin" >
     <number>9</number>
    </property>
    <property name="spacing" >
     <number>6</number>
    </property>
-   <item row="4" column="0" colspan="2" >
+   <item>
     <layout class="QHBoxLayout" >
      <property name="margin" >
       <number>0</number>
@@ -28,207 +28,64 @@
       <number>6</number>
      </property>
      <item>
-      <layout class="QVBoxLayout" >
-       <property name="margin" >
-        <number>0</number>
+      <widget class="QLabel" name="textLabel1" >
+       <property name="text" >
+        <string>Toolbar:</string>
        </property>
-       <property name="spacing" >
-        <number>6</number>
-       </property>
-       <item>
-        <widget class="QLabel" name="textLabel25" >
-         <property name="text" >
-          <string>A&amp;vailable Actions:</string>
-         </property>
-         <property name="buddy" >
-          <cstring>tw_availActions</cstring>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QTreeWidget" name="tw_availActions" >
-         <property name="editTriggers" >
-          <set>QAbstractItemView::NoEditTriggers</set>
-         </property>
-         <property name="rootIsDecorated" >
-          <bool>false</bool>
-         </property>
-         <property name="sortingEnabled" >
-          <bool>false</bool>
-         </property>
-         <property name="columnCount" >
-          <number>1</number>
-         </property>
-         <column>
-          <property name="text" >
-           <string/>
-          </property>
-         </column>
-        </widget>
-       </item>
-      </layout>
+      </widget>
      </item>
-	 
      <item>
-      <layout class="QVBoxLayout" >
-       <property name="margin" >
-        <number>0</number>
+      <widget class="QComboBox" name="cb_toolbars" >
+       <property name="sizePolicy" >
+        <sizepolicy>
+         <hsizetype>7</hsizetype>
+         <vsizetype>0</vsizetype>
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
        </property>
-       <property name="spacing" >
-        <number>6</number>
-       </property>
-       <item>
-        <widget class="IconToolButton" name="tb_right" >
-         <property name="sizePolicy" >
-          <sizepolicy>
-           <hsizetype>4</hsizetype>
-           <vsizetype>1</vsizetype>
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text" >
-          <string>...</string>
-         </property>
-         <property name="psiIconName" stdset="0" >
-          <string>psi/arrowRight</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="IconToolButton" name="tb_left" >
-         <property name="sizePolicy" >
-          <sizepolicy>
-           <hsizetype>4</hsizetype>
-           <vsizetype>1</vsizetype>
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text" >
-          <string>...</string>
-         </property>
-         <property name="psiIconName" stdset="0" >
-          <string>psi/arrowLeft</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer>
-         <property name="orientation" >
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeType" >
-          <enum>QSizePolicy::Expanding</enum>
-         </property>
-         <property name="sizeHint" >
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
+      </widget>
      </item>
-
      <item>
-      <layout class="QVBoxLayout" >
-       <property name="margin" >
-        <number>0</number>
+      <spacer>
+       <property name="orientation" >
+        <enum>Qt::Horizontal</enum>
        </property>
-       <property name="spacing" >
-        <number>6</number>
+       <property name="sizeType" >
+        <enum>QSizePolicy::Maximum</enum>
        </property>
-       <item>
-        <widget class="QLabel" name="textLabel24" >
-         <property name="text" >
-          <string>Curr&amp;ent Actions:</string>
-         </property>
-         <property name="buddy" >
-          <cstring>lw_selectedActions</cstring>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QListWidget" name="lw_selectedActions" >
-         <property name="editTriggers" >
-          <set>QAbstractItemView::NoEditTriggers</set>
-         </property>
-         <property name="sortingEnabled" >
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-      </layout>
+       <property name="sizeHint" >
+        <size>
+         <width>30</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
      </item>
-	 
      <item>
-      <layout class="QVBoxLayout" >
-       <property name="margin" >
-        <number>0</number>
+      <widget class="IconButton" name="pb_addToolbar" >
+       <property name="text" >
+        <string>&amp;Add</string>
        </property>
-       <property name="spacing" >
-        <number>6</number>
+       <property name="shortcut" >
+        <string>Alt+A</string>
        </property>
-       <item>
-        <widget class="IconToolButton" name="tb_up" >
-         <property name="sizePolicy" >
-          <sizepolicy>
-           <hsizetype>4</hsizetype>
-           <vsizetype>1</vsizetype>
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text" >
-          <string>...</string>
-         </property>
-         <property name="psiIconName" stdset="0" >
-          <string>psi/arrowUp</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="IconToolButton" name="tb_down" >
-         <property name="sizePolicy" >
-          <sizepolicy>
-           <hsizetype>4</hsizetype>
-           <vsizetype>1</vsizetype>
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text" >
-          <string>...</string>
-         </property>
-         <property name="psiIconName" stdset="0" >
-          <string>psi/arrowDown</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer>
-         <property name="orientation" >
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeType" >
-          <enum>QSizePolicy::Expanding</enum>
-         </property>
-         <property name="sizeHint" >
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="IconButton" name="pb_deleteToolbar" >
+       <property name="text" >
+        <string>&amp;Delete</string>
+       </property>
+       <property name="shortcut" >
+        <string>Alt+D</string>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
-   <item row="3" column="0" >
-    <widget class="Line" name="line3" >
+   <item>
+    <widget class="Line" name="line2" >
      <property name="frameShape" >
       <enum>QFrame::HLine</enum>
      </property>
@@ -240,7 +97,7 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="0" >
+   <item>
     <layout class="QVBoxLayout" >
      <property name="margin" >
       <number>0</number>
@@ -334,8 +191,8 @@ Note: it is impossible to dock stretchable toolbar. Uncheck that check box, clic
      </item>
     </layout>
    </item>
-   <item row="1" column="0" >
-    <widget class="Line" name="line2" >
+   <item>
+    <widget class="Line" name="line3" >
      <property name="frameShape" >
       <enum>QFrame::HLine</enum>
      </property>
@@ -347,67 +204,167 @@ Note: it is impossible to dock stretchable toolbar. Uncheck that check box, clic
      </property>
     </widget>
    </item>
-   <item row="0" column="0" >
-    <layout class="QHBoxLayout" >
+   <item>
+    <layout class="QGridLayout" >
      <property name="margin" >
       <number>0</number>
      </property>
      <property name="spacing" >
       <number>6</number>
      </property>
-     <item>
-      <widget class="QLabel" name="textLabel1" >
-       <property name="text" >
-        <string>Toolbar:</string>
+     <item rowspan="3" row="1" column="2" >
+      <widget class="QListWidget" name="lw_selectedActions" >
+       <property name="editTriggers" >
+        <set>QAbstractItemView::NoEditTriggers</set>
+       </property>
+       <property name="sortingEnabled" >
+        <bool>false</bool>
        </property>
       </widget>
      </item>
-     <item>
-      <widget class="QComboBox" name="cb_toolbars" >
-       <property name="sizePolicy" >
-        <sizepolicy>
-         <hsizetype>7</hsizetype>
-         <vsizetype>0</vsizetype>
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
+     <item rowspan="3" row="1" column="0" >
+      <widget class="QTreeWidget" name="tw_availActions" >
+       <property name="editTriggers" >
+        <set>QAbstractItemView::NoEditTriggers</set>
        </property>
+       <property name="rootIsDecorated" >
+        <bool>false</bool>
+       </property>
+       <property name="sortingEnabled" >
+        <bool>false</bool>
+       </property>
+       <property name="columnCount" >
+        <number>1</number>
+       </property>
+       <column>
+        <property name="text" >
+         <string/>
+        </property>
+       </column>
       </widget>
      </item>
-     <item>
+     <item row="3" column="1" >
       <spacer>
        <property name="orientation" >
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Vertical</enum>
        </property>
        <property name="sizeType" >
-        <enum>QSizePolicy::Maximum</enum>
+        <enum>QSizePolicy::Expanding</enum>
        </property>
        <property name="sizeHint" >
         <size>
-         <width>30</width>
-         <height>20</height>
+         <width>25</width>
+         <height>91</height>
         </size>
        </property>
       </spacer>
      </item>
-     <item>
-      <widget class="IconButton" name="pb_addToolbar" >
-       <property name="text" >
-        <string>&amp;Add</string>
+     <item row="1" column="1" >
+      <widget class="IconToolButton" name="tb_right" >
+       <property name="sizePolicy" >
+        <sizepolicy>
+         <hsizetype>4</hsizetype>
+         <vsizetype>1</vsizetype>
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
        </property>
-       <property name="shortcut" >
-        <string>Alt+A</string>
+       <property name="text" >
+        <string>...</string>
+       </property>
+       <property name="psiIconName" stdset="0" >
+	    <string>psi/arrowRight</string>
+	   </property>
+      </widget>
+     </item>
+     <item row="0" column="2" >
+      <widget class="QLabel" name="textLabel24" >
+       <property name="text" >
+        <string>Curr&amp;ent Actions:</string>
+       </property>
+       <property name="buddy" >
+        <cstring>lw_selectedActions</cstring>
        </property>
       </widget>
      </item>
-     <item>
-      <widget class="IconButton" name="pb_deleteToolbar" >
+     <item row="1" column="3" >
+      <widget class="IconToolButton" name="tb_up" >
+       <property name="sizePolicy" >
+        <sizepolicy>
+         <hsizetype>4</hsizetype>
+         <vsizetype>1</vsizetype>
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="text" >
-        <string>&amp;Delete</string>
+        <string>...</string>
        </property>
-       <property name="shortcut" >
-        <string>Alt+D</string>
+       <property name="psiIconName" stdset="0" >
+	    <string>psi/arrowUp</string>
+	   </property>
+      </widget>
+     </item>
+     <item row="3" column="3" >
+      <spacer>
+       <property name="orientation" >
+        <enum>Qt::Vertical</enum>
        </property>
+       <property name="sizeType" >
+        <enum>QSizePolicy::Expanding</enum>
+       </property>
+       <property name="sizeHint" >
+        <size>
+         <width>25</width>
+         <height>101</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="2" column="3" >
+      <widget class="IconToolButton" name="tb_down" >
+       <property name="sizePolicy" >
+        <sizepolicy>
+         <hsizetype>4</hsizetype>
+         <vsizetype>1</vsizetype>
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text" >
+        <string>...</string>
+       </property>
+       <property name="psiIconName" stdset="0" >
+	    <string>psi/arrowDown</string>
+	   </property>
+      </widget>
+     </item>
+     <item row="0" column="0" >
+      <widget class="QLabel" name="textLabel25" >
+       <property name="text" >
+        <string>A&amp;vailable Actions:</string>
+       </property>
+       <property name="buddy" >
+        <cstring>tw_availActions</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1" >
+      <widget class="IconToolButton" name="tb_left" >
+       <property name="sizePolicy" >
+        <sizepolicy>
+         <hsizetype>4</hsizetype>
+         <vsizetype>1</vsizetype>
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text" >
+        <string>...</string>
+       </property>
+       <property name="psiIconName" stdset="0" >
+	    <string>psi/arrowLeft</string>
+	   </property>
       </widget>
      </item>
     </layout>
@@ -418,14 +375,14 @@ Note: it is impossible to dock stretchable toolbar. Uncheck that check box, clic
  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
  <customwidgets>
   <customwidget>
-   <class>IconButton</class>
-   <extends>QPushButton</extends>
-   <header>iconbutton.h</header>
-  </customwidget>
-  <customwidget>
    <class>IconToolButton</class>
    <extends>QToolButton</extends>
    <header>icontoolbutton.h</header>
+  </customwidget>
+  <customwidget>
+   <class>IconButton</class>
+   <extends>QPushButton</extends>
+   <header>iconbutton.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>
