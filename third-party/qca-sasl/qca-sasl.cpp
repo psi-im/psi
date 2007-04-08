@@ -144,7 +144,7 @@ public:
 
 	bool missingAny() const
 	{
-		if((need.user && !have.user) || (need.authzid && !have.authzid) || (need.pass && !have.pass) || (need.realm && !have.realm))
+		if((need.user && !have.user) || /*(need.authzid && !have.authzid) || */ (need.pass && !have.pass) || (need.realm && !have.realm))
 			return true;
 		return false;
 	}

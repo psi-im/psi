@@ -1330,10 +1330,10 @@ void ClientStream::sasl_needParams(const QCA::SASL::Params& p)
 #ifdef XMPP_DEBUG
 	printf("need params: %d,%d,%d,%d\n", p.user, p.authzid, p.pass, p.realm);
 #endif
-	if(p.authzid && !p.user) {
+	/*if(p.authzid && !p.user) {
 		d->sasl->setAuthzid(d->jid.bare());
 		//d->sasl->setAuthzid("infiniti.homelesshackers.org");
-	}
+	}*/
 	if(p.user || p.pass || p.realm) {
 		d->state = NeedParams;
 		needAuthParams(p.user, p.pass, p.realm);
