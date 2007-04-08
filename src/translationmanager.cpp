@@ -71,7 +71,10 @@ const QString& TranslationManager::currentLanguage() const
 QString TranslationManager::currentXMLLanguage() const
 {
 	QString xmllang = currentLanguage_;
-	xmllang.replace("_","-");
+	xmllang.replace('_',"-");
+	int at_index = xmllang.find('@');
+	if (at_index > 0)
+		xmllang = xmllang.left(at_index);
 	return xmllang;
 }
 
