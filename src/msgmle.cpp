@@ -66,7 +66,7 @@ void ChatView::keyPressEvent(QKeyEvent *e)
 {
 	if(dialog_) {
 		// Ignore registered key sequences (and pass them up)
-		QKeySequence k(e->key() + e->modifiers());
+		QKeySequence k(e->key() + (e->modifiers() & ~Qt::KeypadModifier));
 		foreach(QAction* act, dialog_->actions()) {
 			foreach(QKeySequence keyseq, act->shortcuts()) {
 				if(!keyseq.isEmpty() && keyseq.matches(k) == QKeySequence::ExactMatch) {
@@ -216,7 +216,7 @@ void ChatEdit::keyPressEvent(QKeyEvent *e)
 {
 	if(dialog_) {
 		// Ignore registered key sequences (and pass them up)
-		QKeySequence k(e->key() + e->modifiers());
+		QKeySequence k(e->key() + (e->modifiers() & ~Qt::KeypadModifier));
 		foreach(QAction* act, dialog_->actions()) {
 			foreach(QKeySequence keyseq, act->shortcuts()) {
 				if(!keyseq.isEmpty() && keyseq.matches(k) == QKeySequence::ExactMatch) {
