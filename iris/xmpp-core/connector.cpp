@@ -351,6 +351,17 @@ void AdvancedConnector::connectToServer(const QString &server)
 		else
 			s->connectToHost(d->proxy.host(), d->proxy.port(), d->proxy.url());
 	}
+	else if (d->proxy.type() == Proxy::HttpConnect) {
+		if(!d->opt_host.isEmpty()) {
+			d->host = d->opt_host;
+			d->port = d->opt_port;
+		}
+		else {
+			d->host = server;
+			d->port = 5222;
+		}
+		do_connect();
+	}
 	else {
 		if(!d->opt_host.isEmpty()) {
 			d->host = d->opt_host;
