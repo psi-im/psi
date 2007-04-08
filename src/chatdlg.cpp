@@ -190,6 +190,7 @@ public slots:
 };
 
 ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
+	: highlightersInstalled_(false)
 {
   	if ( option.brushedMetal )
 		setAttribute(Qt::WA_MacMetalStyle);
@@ -306,6 +307,9 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 	d->sendComposingEvents = false;
 	d->isComposing = false;
 	d->composingTimer = 0;
+	// SyntaxHighlighters modify the QTextEdit in a QTimer::singleShot(0, ...) call
+	// so we need to install our hooks after it fired for the first time
+	QTimer::singleShot(10, this, SLOT(initComposing()));
 	connect(d, SIGNAL(composing(bool)), SLOT(updateIsComposing(bool)));
 
 	updateContact(d->jid, true);
@@ -332,6 +336,12 @@ ChatDlg::~ChatDlg()
 	d->pa->dialogUnregister(this);
 
 	delete d;
+}
+
+void ChatDlg::initComposing()
+{
+	highlightersInstalled_ = true;
+	chatEditCreated();
 }
 
 void ChatDlg::setShortcuts()
@@ -1277,7 +1287,8 @@ void ChatDlg::chatEditCreated()
 
 	connect(ui_.mle->chatEdit(), SIGNAL(textChanged()), d, SLOT(updateCounter()));
 	ui_.mle->chatEdit()->installEventFilter(this);
-	connect(ui_.mle->chatEdit(), SIGNAL(textChanged()), d, SLOT(setComposing()));
+	if (highlightersInstalled_)
+		connect(ui_.mle->chatEdit(), SIGNAL(textChanged()), d, SLOT(setComposing()));
 }
 
 #include "chatdlg.moc"
