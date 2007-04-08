@@ -55,11 +55,8 @@
 #include "pepmanager.h"
 #include "psitooltip.h"
 #include "capsmanager.h"
-v v v v v v v
 #include "resourcemenu.h"
-*************
 #include "shortcutmanager.h"
-^ ^ ^ ^ ^ ^ ^
 
 //----------------------------------------------------------------------------
 // ContactProfile
@@ -1991,7 +1988,7 @@ ContactView::ContactView(QWidget *parent, const char *name)
 	connect(qa_clearAvatar, SIGNAL(activated()), SLOT(doClearAvatar()));
 	qa_chat = new IconAction("", "psi/start-chat", tr("Open &chat window"), ShortcutManager::instance()->shortcut("contactlist.chat"), this);
 	connect(qa_chat, SIGNAL(activated()), SLOT(doOpenChat()));
-	qa_hist = new IconAction("", "psi/history", tr("&History"), ShortcutManager::instance()->shortcut("misc.history"), this);
+	qa_hist = new IconAction("", "psi/history", tr("&History"), ShortcutManager::instance()->shortcut("common.history"), this);
 	connect(qa_hist, SIGNAL(activated()), SLOT(doHistory()));
 	qa_logon = new IconAction("", tr("&Log on"), ShortcutManager::instance()->shortcut("contactlist.login-transport"), this);
 	connect(qa_logon, SIGNAL(activated()), SLOT(doLogon()));
@@ -1999,7 +1996,7 @@ ContactView::ContactView(QWidget *parent, const char *name)
 	connect(qa_recv, SIGNAL(activated()), SLOT(doRecvEvent()));
 	qa_rem = new IconAction("", "psi/remove", tr("Rem&ove"), ShortcutManager::instance()->shortcut("contactlist.delete"), this);
 	connect(qa_rem, SIGNAL(activated()), SLOT(doRemove()));
-	qa_vcard = new IconAction("", "psi/vCard", tr("User &Info"), ShortcutManager::instance()->shortcut("misc.user-info"), this);
+	qa_vcard = new IconAction("", "psi/vCard", tr("User &Info"), ShortcutManager::instance()->shortcut("common.user-info"), this);
 	connect(qa_vcard, SIGNAL(activated()), SLOT(doVCard()));
 
 	if(option.lockdown.roster) {

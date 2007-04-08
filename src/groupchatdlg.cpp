@@ -844,7 +844,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	QVBoxLayout *vb_bottom = new QVBoxLayout(sp_bottom, 0, 4);
 
 	// toolbar
-	d->act_clear = new IconAction (tr("Clear chat window"), "psi/clearChat", tr("Clear chat window"), 0, this);
+	d->act_clear = new IconAction (tr("Clear chat window"), "psi/clearChat", tr("Clear chat window"), ShortcutManager::instance()->shortcut("chat.clear"), this);
 	connect( d->act_clear, SIGNAL( activated() ), SLOT( doClearButton() ) );
 	
 	d->act_configure = new IconAction(tr("Configure Room"), "psi/configure-room", tr("&Configure Room"), 0, this);
@@ -912,10 +912,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	updateCaption();
 	setConnecting();
 
-	ShortcutManager::connect("misc.send", this, SLOT(mle_returnPressed()));
-	ShortcutManager::connect("misc.clear", this, SLOT(doClear()));
-	ShortcutManager::connect("misc.scroll-up", this, SLOT(scrollUp()));
-	ShortcutManager::connect("misc.scroll-down", this, SLOT(scrollDown()));
+	ShortcutManager::connect("chat.send", this, SLOT(mle_returnPressed()));
+	ShortcutManager::connect("common.scroll-up", this, SLOT(scrollUp()));
+	ShortcutManager::connect("common.scroll-down", this, SLOT(scrollDown()));
 }
 
 GCMainDlg::~GCMainDlg()

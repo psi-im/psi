@@ -121,43 +121,44 @@
 			</spell-check>
 		</ui>
 		<shortcuts comment="Shortcuts">
-			<chat comment="chatdialog shortcuts" >
-				<next-tab type="QKeySequence" comment="go to the previous tab (only tabbed chatting)" >Ctrl+PgUp</next-tab>
-				<previous-tab type="QKeySequence" comment="go to the next tab (only tabbed chatting)" >Ctrl+PgDown</previous-tab>
-				<find type="QKeySequence" comment="" >Ctrl+F</find>
-				<send type="QVariantList" comment="send the message" >
-					<item type="QKeySequence" >Return</item>
-					<item type="QKeySequence" >Enter</item>
+			<chat comment="Shortcuts in the chat dialog">
+				<next-tab type="QKeySequence" comment="Switch to the previous tab">Ctrl+PgUp</next-tab>
+				<previous-tab type="QKeySequence" comment="Switch to the next tab">Ctrl+PgDown</previous-tab>
+				<find type="QKeySequence" comment="Find text">Ctrl+F</find>
+				<send type="QVariantList" comment="Sends the message">
+					<item type="QKeySequence">Return</item>
+					<item type="QKeySequence">Enter</item>
 				</send>
+				<clear type="QKeySequence" comment="Clear the text">Ctrl+U</clear>
 			</chat>
-			<contactlist comment="All shortcuts which belong to the contactview" >
-				<assign-custom-avatar type="QKeySequence" comment="assign a custom avatar to the current selected contact" />
-				<clear-custom-avatar type="QKeySequence" comment="remove the assigned custom avatar from the current selected contact" />
-				<delete type="QKeySequence" comment="delete the current selected contact" >Del</delete>
-				<chat type="QKeySequence" comment="open a chat window with the current selected contact" >Ctrl+C</chat>
-				<message type="QKeySequence" comment="send a message to the current selected contact" >Ctrl+M</message>
-				<event type="QKeySequence" comment="recieve incoming event" >Ctrl+R</event>
-				<rename type="QKeySequence" comment="rename the current selected contact" >F2</rename>
-				<login-transport type="QKeySequence" comment="log on with the current selected transport" >Ctrl+L</login-transport>
+			<contactlist comment="Shortcuts in the contactlist" >
+				<assign-custom-avatar type="QKeySequence" comment="Assign a custom avatar to the selected contact" />
+				<clear-custom-avatar type="QKeySequence" comment="Remove custom avatar from the selected contact" />
+				<delete type="QKeySequence" comment="Delete the selected contact">Del</delete>
+				<chat type="QKeySequence" comment="Open a chat to the selected contact">Ctrl+C</chat>
+				<message type="QKeySequence" comment="Send a message to the selected contact">Ctrl+M</message>
+				<event type="QKeySequence" comment="Receive incoming event">Ctrl+R</event>
+				<rename type="QKeySequence" comment="Rename the selected contact">F2</rename>
+				<login-transport type="QKeySequence" comment="Log on to the selected transport">Ctrl+L</login-transport>
 			</contactlist>
 			<common comment="Common actions" >
-				<scroll-up type="QKeySequence" comment="scroll Up" >Shift+PgUp</scroll-up>
-				<scroll-down type="QKeySequence" comment="scroll Down" >Shift+PgDown</scroll-down>
-				<close type="QVariantList" >
-					<item type="QKeySequence" >Esc</item>
-					<item type="QKeySequence" >Ctrl+W</item>
+				<scroll-up type="QKeySequence" comment="Scroll up">Shift+PgUp</scroll-up>
+				<scroll-down type="QKeySequence" comment="Scroll down">Shift+PgDown</scroll-down>
+				<close type="QVariantList" comment="Close the current window/tab">
+					<item type="QKeySequence">Esc</item>
+					<item type="QKeySequence">Ctrl+W</item>
 				</close>
 				<history type="QKeySequence" comment="Open the message history">Ctrl+H</history>
-				<user-info type="QKeySequence" comment="show the userinfo of contact" >Ctrl+I</user-info>
-				<clear type="QKeySequence" comment="clear the text of groupchat or chatdlg">Ctrl+U</clear>
+				<user-info type="QKeySequence" comment="Show the user info of the contact">Ctrl+I</user-info>
 			</common>
-			<message comment="Shortcuts for the message dialog">
-				<send type="QVariantList" comment="send the message">
+			<message comment="Shortcuts in the message dialog">
+				<send type="QVariantList" comment="Send the message">
 					<item type="QKeySequence">Ctrl+Return</item>
 					<item type="QKeySequence">Ctrl+Enter</item>
 				</send>
 			</message>
-			<service-discovery/>
+			<status comment="Shortcuts in the status dialog"/>
+			<service-discovery comment="Shortcuts in the service discovery dialog"/>
 		</shortcuts>
 	</options>
 	<accounts comment="Account definitions and options"></accounts>

@@ -39,6 +39,7 @@ QKeySequence ShortcutManager::shortcut(const QString& name)
 	QString type = variant.typeName();
 	if (type == "QVariantList")
 		variant = variant.toList().first();
+	//qDebug() << "shortcut: " << name << variant.value<QKeySequence>().toString();
 	return variant.value<QKeySequence>();
 }
 

@@ -92,7 +92,7 @@ TabDlg::TabDlg(PsiCon *psiCon)
 
 	resize(option.sizeTabDlg);
 
-	ShortcutManager::connect("misc.close", this, SLOT(closeChat()));
+	ShortcutManager::connect("common.close", this, SLOT(closeChat()));
 	ShortcutManager::connect("chat.previous-tab", this, SLOT(previousTab()));
 	ShortcutManager::connect("chat.next-tab", this, SLOT(nextTab()));
 }

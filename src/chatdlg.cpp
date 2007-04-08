@@ -263,7 +263,7 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 
 	QHBoxLayout *hb3 = new QHBoxLayout(vb3);
 
-	d->act_clear = new IconAction (tr("Clear chat window"), "psi/clearChat", tr("Clear chat window"), 0, this);
+	d->act_clear = new IconAction (tr("Clear chat window"), "psi/clearChat", tr("Clear chat window"), ShortcutManager::instance()->shortcut("chat.clear"), this);
 	connect( d->act_clear, SIGNAL( activated() ), SLOT( doClearButton() ) );
 
 	connect(pa->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
@@ -280,10 +280,10 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 
 	d->act_pgp = new IconAction( tr( "Toggle encryption" ), "psi/cryptoNo", tr( "Toggle encryption" ), 0, this, 0, true );
 
-	d->act_info = new IconAction( tr( "User info" ), "psi/vCard", tr( "User info" ), ShortcutManager::instance()->shortcut("misc.user-info"), this );
+	d->act_info = new IconAction( tr( "User info" ), "psi/vCard", tr( "User info" ), ShortcutManager::instance()->shortcut("common.user-info"), this );
 	connect( d->act_info, SIGNAL( activated() ), SLOT( doInfo() ) );
 
-	d->act_history = new IconAction( tr( "Message history" ), "psi/history", tr( "Message history" ), ShortcutManager::instance()->shortcut("misc.history"), this );
+	d->act_history = new IconAction( tr( "Message history" ), "psi/history", tr( "Message history" ), ShortcutManager::instance()->shortcut("common.history"), this );
 	connect( d->act_history, SIGNAL( activated() ), SLOT( doHistory() ) );
 	
 	d->act_compact = new IconAction( tr( "Toggle Compact/Full size" ), "psi/compact", tr( "Toggle Compact/Full size" ), 0, this );
@@ -384,12 +384,11 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 	connect(d->pa->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
 
 	if(!option.useTabs) {
-		ShortcutManager::connect("misc.close", this, SLOT(close()));
-		ShortcutManager::connect("misc.scroll-up", this, SLOT(scrollUp()));
-		ShortcutManager::connect("misc.scroll-down", this, SLOT(scrollDown()));
+		ShortcutManager::connect("common.close", this, SLOT(close()));
+		ShortcutManager::connect("common.scroll-up", this, SLOT(scrollUp()));
+		ShortcutManager::connect("common.scroll-down", this, SLOT(scrollDown()));
 	}
-	ShortcutManager::connect("misc.send", this, SLOT(doSend()));
-	ShortcutManager::connect("misc.clear", this, SLOT(doClear()));
+	ShortcutManager::connect("chat.send", this, SLOT(doSend()));
 }
 
 ChatDlg::~ChatDlg()
