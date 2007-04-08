@@ -323,7 +323,7 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 	d->toolbar->addAction(d->act_history);
 	if (d->pa->voiceCaller())
 		d->toolbar->addAction(d->act_voice);
-	
+	d->toolbar->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
 	hb3->addWidget(d->toolbar);
 
 	// Bottom row
@@ -357,6 +357,7 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 
 	connect(d->mle, SIGNAL(textChanged()), d, SLOT(updateCounter()));
 	d->mle->installEventFilter(this);
+	d->mle->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
 	d->pm_settings = new QMenu(this);
 	connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));

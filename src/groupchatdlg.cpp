@@ -869,6 +869,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	d->toolbar->addAction(d->act_configure);
 	d->toolbar->addWidget(new StretchWidget(d->toolbar));
 	d->toolbar->addAction(d->act_icon);
+	d->toolbar->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
 	vb_bottom->addWidget( d->toolbar );
 
 	// Common actions
@@ -903,6 +904,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	}
 
 	d->mle->installEventFilter( d );
+	d->mle->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
 	d->pm_settings = new Q3PopupMenu(this);
 	connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));
