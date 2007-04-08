@@ -50,6 +50,8 @@
 # libjingle
 ^third-party/libjingle/Makefile
 ^third-party/libjingle/liblibjingle.a
+^third-party/qca/Makefile
+^third-party/qca/libqca.a
 
 # Binaries
 ^src/psi$
