@@ -144,6 +144,7 @@ HEADERS += \
 	$$PWD/capsregistry.h \
 	$$PWD/capsmanager.h \
 	$$PWD/alerticon.h \
+	$$PWD/alertable.h \
 	$$PWD/psipopup.h \
 	$$PWD/psiapplication.h \
 	$$PWD/filetransdlg.h \
@@ -254,6 +255,7 @@ SOURCES += \
 	$$PWD/capsregistry.cpp \
 	$$PWD/capsmanager.cpp \
 	$$PWD/alerticon.cpp \
+	$$PWD/alertable.cpp \
 	$$PWD/psipopup.cpp \
 	$$PWD/psiapplication.cpp \
 	$$PWD/filetransdlg.cpp \
