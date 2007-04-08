@@ -39,29 +39,36 @@ PrivacyList::PrivacyList(const QDomElement& e)
 
 void PrivacyList::updateItem(int index, const PrivacyListItem& item) 
 {
+	unsigned int order = items_[index].order();
 	items_[index] = item;
+	items_[index].setOrder(order);
 }
 
 void PrivacyList::insertItem(int index, const PrivacyListItem& item) 
 { 
 	items_.insert(index,item); 
 
-	// Set the order of the item
-	if (index > 0 && items_[index-1].order() >= items_[index].order())
-			items_[index].setOrder(items_[index-1].order() + ORDER_INCREMENT);
-	
-	// Set the order of the following items
-	if ((index < items_.count()-1) && items_[index].order() >= items_[index+1].order()) {
-		for (int i = index + 1; i < items_.count(); i++) {
-			items_[i].setOrder(items_[i].order() + ORDER_INCREMENT);
-		}
+	reNumber();
+}
+
+void PrivacyList::reNumber() 
+{
+	unsigned int order = 100;
+	for (int i = 0; i < items_.size(); ++i) {
+    	items_[i].setOrder(order);
+		order += ORDER_INCREMENT;
 	}
 }
+
 
 bool PrivacyList::moveItemUp(int index)
 {
 	if (index < items().count() && index > 0) {
 		int order =items_[index].order();
+		if (order == items_[index-1].order()) {
+			reNumber();
+			return true;
+		}
 		items_[index].setOrder(items_[index-1].order());
 		items_[index-1].setOrder(order);
 		items_.swap(index,index-1);
@@ -76,6 +83,10 @@ bool PrivacyList::moveItemDown(int index)
 {
 	if (index >= 0 && index < items().count()-1) {
 		int order =items_[index].order();
+		if (order == items_[index+1].order()) {
+			reNumber();
+			return true;
+		}
 		items_[index].setOrder(items_[index+1].order());
 		items_[index+1].setOrder(order);
 		items_.swap(index,index+1);
