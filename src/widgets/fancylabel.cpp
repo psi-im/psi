@@ -97,19 +97,19 @@ protected:
 	{
 #ifndef WIDGET_PLUGIN
 		if ( icon ) {
-			connect(icon, SIGNAL(pixmapChanged(const QPixmap &)), SLOT(iconUpdated(const QPixmap &)));
+			connect(icon, SIGNAL(pixmapChanged()), SLOT(iconUpdated()));
 			icon->activated(false); // TODO: should icon play sound when it's activated on icon?
-			iconUpdated( icon->pixmap() );
 		}
-		else
-			iconUpdated( QPixmap() );
+		iconUpdated();
 #endif
 	}
 
 private slots:
-	void iconUpdated(const QPixmap &pix)
+	void iconUpdated()
 	{
-		label->setPixmap(pix);
+#ifndef WIDGET_PLUGIN
+		label->setPixmap(icon ? icon->pixmap() : QPixmap());
+#endif
 	}
 };
 

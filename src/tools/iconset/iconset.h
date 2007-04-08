@@ -152,8 +152,8 @@ public:
 	void detach();
 
 signals:
-	void pixmapChanged(const QPixmap &);
-	void iconModified(const QPixmap &);
+	void pixmapChanged();
+	void iconModified();
 
 public slots:
 	virtual void activated(bool playSound = true);	// it just has been inserted in the text, or now it's being displayed by

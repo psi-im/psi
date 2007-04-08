@@ -115,7 +115,7 @@ public slots:
 	void stop();
 
 	void updateFrame(int frame);
-	void pixmapChanged(const QPixmap &);
+	void pixmapChanged();
 
 public:
 	AlertIcon *ai;
@@ -146,7 +146,7 @@ AlertIcon::Private::~Private()
 void AlertIcon::Private::init()
 {
 	connect(metaAlertIcon, SIGNAL(update()), SLOT(update()));
-	connect(real, SIGNAL(iconModified(const QPixmap &)), SLOT(pixmapChanged(const QPixmap &)));
+	connect(real, SIGNAL(iconModified()), SLOT(pixmapChanged()));
 
 	if ( option.alertStyle == 2 && real->isAnimated() )
 		impix = real->frameImpix();
@@ -164,7 +164,7 @@ void AlertIcon::Private::activated(bool playSound)
 {
 	if ( option.alertStyle == 2 && real->isAnimated() ) {
 		if ( !isActivated ) {
-			connect(real, SIGNAL(pixmapChanged(const QPixmap &)), SLOT(pixmapChanged(const QPixmap &)));
+			connect(real, SIGNAL(pixmapChanged()), SLOT(pixmapChanged()));
 			real->activated(playSound);
 			isActivated = true;
 		}
@@ -174,7 +174,7 @@ void AlertIcon::Private::activated(bool playSound)
 	}
 	else {
 		impix = real->impix();
-		emit ai->pixmapChanged(impix.pixmap());
+		emit ai->pixmapChanged();
 	}
 }
 
@@ -183,7 +183,7 @@ void AlertIcon::Private::stop()
 	disconnect(metaAlertIcon, SIGNAL(updateFrame(int)), this, SLOT(updateFrame(int)));
 
 	if ( isActivated ) {
-		disconnect(real, SIGNAL(pixmapChanged(const QPixmap &)), this, SLOT(pixmapChanged(const QPixmap &)));
+		disconnect(real, SIGNAL(pixmapChanged()), this, SLOT(pixmapChanged()));
 		real->stop();
 		isActivated = false;
 	}
@@ -199,14 +199,14 @@ void AlertIcon::Private::updateFrame(int frame)
 	else
 		impix = metaAlertIcon->blank16();
 
-	emit ai->pixmapChanged(impix.pixmap());
+	emit ai->pixmapChanged();
 }
 
-void AlertIcon::Private::pixmapChanged(const QPixmap &p)
+void AlertIcon::Private::pixmapChanged()
 {
 	impix = real->frameImpix();
 
-	emit ai->pixmapChanged(p);
+	emit ai->pixmapChanged();
 }
 
 //----------------------------------------------------------------------------

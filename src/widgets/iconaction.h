@@ -69,7 +69,7 @@ protected:
 
 private slots:
 	void objectDestroyed();
-	void iconUpdated(const QPixmap &);
+	void iconUpdated();
 	void toolButtonToggled(bool);
 
 public:

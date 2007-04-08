@@ -74,7 +74,7 @@ void PsiTrayIcon::setIcon(const PsiIcon *icon, bool alert)
 		else
 			icon_ = new AlertIcon(icon);
 
-		connect(icon_, SIGNAL(pixmapChanged(const QPixmap &)), SLOT(animate()));
+		connect(icon_, SIGNAL(pixmapChanged()), SLOT(animate()));
 		icon_->activated();
 	}
 	else
