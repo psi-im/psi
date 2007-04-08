@@ -63,6 +63,8 @@ tc_winamp {
 	SOURCES += \
 		$$WINAMP_PLUGIN_PATH/winampcontroller.cpp \
 		$$WINAMP_PLUGIN_PATH/winampplugin.cpp
+	
+	LIBS += -lUser32
 }
 
 # Psi File
