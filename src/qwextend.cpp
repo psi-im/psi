@@ -38,7 +38,7 @@ void reparent_good(QWidget *that, Qt::WFlags f, bool showIt)
     bool mouse_tracking = that->hasMouseTracking();
     that->clearWState(Qt::WState_MouseTracking);
 
-    QWidget* oldtlw = that->topLevelWidget();
+    QWidget* oldtlw = that->window();
     QWidget *oldparent = that->parentWidget();
     WId old_winid = that->winid;
     if ( that->windowFlags(Qt::WType_Desktop) )
