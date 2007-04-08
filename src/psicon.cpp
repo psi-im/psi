@@ -362,6 +362,7 @@ bool PsiCon::init()
 	connect(this, SIGNAL(emitOptionsUpdate()), d->mainwin, SLOT(optionsUpdate()));
 
 	connect(this, SIGNAL(emitOptionsUpdate()), d->mainwin->cvlist, SLOT(optionsUpdate()));
+	connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), d->mainwin, SLOT(optionsUpdate()));
 
 	// if the coordinates are out of the desktop bounds, reset to the top left
 	QRect mwgeom = d->pro.mwgeom;

@@ -267,7 +267,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 
 	buildStatusMenu();
 	buildOptionsMenu();
-	connect(d->statusMenu, SIGNAL(aboutToShow()), SLOT(buildStatusMenu()));
 	connect(d->optionsMenu, SIGNAL(aboutToShow()), SLOT(buildOptionsMenu()));
 
 	d->optionsButton->setMenu( d->optionsMenu );
@@ -512,13 +511,18 @@ void MainWin::setUseDock(bool use)
 	d->trayMenu = new QMenu;
 	connect(d->trayMenu, SIGNAL(aboutToShow()), SLOT(buildTrayMenu()));
 
+// TODO: Check on other platforms, and remove ifdef
+#ifndef Q_WS_MAC
 	d->tray = new PsiTrayIcon("Psi", d->trayMenu);
-	d->tray->setIcon( PsiIconset::instance()->statusPtr( STATUS_OFFLINE ));
-	d->tray->setToolTip(ApplicationInfo::name());
 	connect(d->tray, SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
 	connect(d->tray, SIGNAL(doubleClicked(const QPoint &)), SLOT(trayDoubleClicked()));
 	connect(d->tray, SIGNAL(closed()), SLOT(dockActivated()));
 	connect(qApp, SIGNAL(trayOwnerDied()), SLOT(dockActivated()));
+#else
+	d->tray = new PsiTrayIcon("Psi", d->statusMenu, false);
+#endif
+	d->tray->setIcon( PsiIconset::instance()->statusPtr( STATUS_OFFLINE ));
+	d->tray->setToolTip(ApplicationInfo::name());
 
 	updateReadNext(d->nextAnim, d->nextAmount);
 
@@ -908,6 +912,8 @@ void MainWin::optionsUpdate()
 		menuBar()->show();
 	
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt()))/100);
+
+	buildStatusMenu();
 	
 	updateTray();
 }

@@ -80,7 +80,6 @@ QWidget *OptionsTabApplication::widget()
 	d->ck_alwaysOnTop->hide();
 	d->ck_hideMenubar->hide();
 	d->gb_links->hide();
-	d->ck_docklet->hide();
 	d->gb_docklet->hide();
 #endif
 #ifndef Q_WS_X11

@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QRgb>
 #include <QPixmap>
+#include <QSystemTrayIcon>
 
 class Icon;
 class TrayIcon; // old
@@ -36,6 +37,7 @@ public slots:
 
 private slots:
 	void animate();
+	void trayicon_activated(QSystemTrayIcon::ActivationReason);
 
 protected:
 	QPixmap makeIcon();
