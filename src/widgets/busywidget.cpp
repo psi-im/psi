@@ -139,7 +139,7 @@ public:
 
 	void renderPixmap()
 	{
-		pix.resize(busy->width(), busy->height());
+		pix = QPixmap(busy->width(), busy->height());
 		pix.fill(QColor("#406080"));
 
 		QPainter p(&pix);
@@ -213,8 +213,7 @@ BusyWidget::BusyWidget(QWidget *parent)
 	d->pcountdown = 0;
 	d->ocountdown = 0;
 
-	setFixedWidth(82);
-	setFixedHeight(19);
+	setFixedSize(sizeHint());
 	setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
 
 	int i;
