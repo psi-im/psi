@@ -61,7 +61,7 @@ public:
 
 	enum Error
 	{
-		ErrorGeneric,  // query only
+		ErrorGeneric,
 		ErrorNXDomain, // query only
 		ErrorTimeout,  // query only
 		ErrorConflict  // publish only

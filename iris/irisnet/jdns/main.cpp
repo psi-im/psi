@@ -127,7 +127,10 @@ public slots:
 				QString str = nslist[n];
 				if(str == "mul")
 				{
-					host.address = QHostAddress("224.0.0.251");
+					if(opt_ipv6)
+						host.address = QHostAddress("FF02::FB");
+					else
+						host.address = QHostAddress("224.0.0.251");
 					host.port = 5353;
 				}
 				else

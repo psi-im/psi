@@ -26,13 +26,13 @@
 
 #include "irisnetplugin.h"
 
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <net/route.h>
 #include <netinet/in.h>
-#include <errno.h>
 
 // for solaris
 #ifndef SIOCGIFCONF

@@ -33,6 +33,9 @@
 #define JDNS_UDP_MUL_OUT_MAX  9000
 #define JDNS_UDP_MUL_IN_MAX   16384
 
+// cache no more than 7 days
+#define JDNS_TTL_MAX          (86400 * 7)
+
 //----------------------------------------------------------------------------
 // util
 //----------------------------------------------------------------------------
@@ -432,6 +435,11 @@ static void _print_records(jdns_session_t *s, const jdns_response_t *r, const un
 	_debug_line(s, "  Additional Records: %d", r->additionalCount);
 	for(n = 0; n < r->additionalCount; ++n)
 		_print_rr(s, r->additionalRecords[n], owner);
+}
+
+static int _min(int a, int b)
+{
+	return (a < b) ? a : b;
 }
 
 //----------------------------------------------------------------------------
@@ -913,7 +921,6 @@ struct jdns_session
 
 	// mdns
 	mdnsd mdns;
-	int next_pub_id;
 	list_t *published;
 	jdns_address_t *maddr;
 };
@@ -941,7 +948,6 @@ jdns_session_t *jdns_session_new(jdns_callbacks_t *callbacks)
 
 	s->mdns = 0;
 	s->published = list_new();
-	s->next_pub_id = 1;
 	s->maddr = 0;
 
 	return s;
@@ -1025,6 +1031,8 @@ static int get_next_req_id(jdns_session_t *s)
 	while(id == -1)
 	{
 		id = _int_wrap(&s->next_req_id, 1);
+
+		// no query using this?
 		for(n = 0; n < s->queries->count; ++n)
 		{
 			query_t *q = (query_t *)s->queries->item[n];
@@ -1038,6 +1046,16 @@ static int get_next_req_id(jdns_session_t *s)
 			}
 			if(id == -1)
 				break;
+		}
+
+		// no publish using this?
+		for(n = 0; n < s->published->count; ++n)
+		{
+			if(((published_item_t *)s->published->item[n])->id == id)
+			{
+				id = -1;
+				break;
+			}
 		}
 	}
 	return id;
@@ -1060,26 +1078,6 @@ static int get_next_name_server_id(jdns_session_t *s)
 		for(n = 0; n < s->name_servers->count; ++n)
 		{
 			if(((name_server_t *)s->name_servers->item[n])->id == id)
-			{
-				id = -1;
-				break;
-			}
-		}
-	}
-	return id;
-}
-
-// starts at 1
-static int get_next_pub_id(jdns_session_t *s)
-{
-	int n, id;
-	id = -1;
-	while(id == -1)
-	{
-		id = _int_wrap(&s->next_pub_id, 1);
-		for(n = 0; n < s->published->count; ++n)
-		{
-			if(((published_item_t *)s->published->item[n])->id == id)
 			{
 				id = -1;
 				break;
@@ -2146,7 +2144,7 @@ void _process_message(jdns_session_t *s, jdns_packet_t *packet, int now, query_t
 				for(n = 0; n < r->answerCount; ++n)
 				{
 					jdns_rr_t *record = r->answerRecords[n];
-					_cache_add(s, q->qname, record->type, now, record->ttl, record);
+					_cache_add(s, q->qname, record->type, now, _min(record->ttl, JDNS_TTL_MAX), record);
 				}
 			}
 
@@ -2155,7 +2153,7 @@ void _process_message(jdns_session_t *s, jdns_packet_t *packet, int now, query_t
 				for(n = 0; n < r->additionalCount; ++n)
 				{
 					jdns_rr_t *record = r->additionalRecords[n];
-					_cache_add(s, record->owner, record->type, now, record->ttl, record);
+					_cache_add(s, record->owner, record->type, now, _min(record->ttl, JDNS_TTL_MAX), record);
 				}
 			}
 		}
@@ -2888,7 +2886,7 @@ int _multicast_publish(jdns_session_t *s, int mode, const jdns_rr_t *rr)
 	int n;
 
 	r = 0;
-	next_id = get_next_pub_id(s);
+	next_id = get_next_req_id(s);
 
 	// see if we have an item with this name+type combination already
 	pub = 0;
