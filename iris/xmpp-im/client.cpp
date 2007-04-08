@@ -557,11 +557,7 @@ void Client::distribute(const QDomElement &x)
 		debug("Client: Unrecognized IQ.\n");
 
 		// Create reply element
-		QDomElement reply = doc()->createElement("iq");
-		reply.setAttribute("to",x.attribute("from"));
-		reply.setAttribute("type","error");
-		if (!x.attribute("id").isEmpty())
-			reply.setAttribute("id",x.attribute("id"));
+		QDomElement reply = createIQ(doc(), "error", x.attribute("from"), x.attribute("id"));
 
 		// Copy children
 		for (QDomNode n = x.firstChild(); !n.isNull(); n = n.nextSibling()) {
