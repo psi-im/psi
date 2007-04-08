@@ -30,7 +30,7 @@ TranslationManager::TranslationManager()
 {
 	// Initialize
 	currentLanguage_ = "en";
-	//currentLanguageName_ = QT_TR_NOOP("language_name");
+	QString currentLanguageName = QT_TR_NOOP("language_name");
 
 	// The application translator
 	translator_ = new QTranslator(0);
