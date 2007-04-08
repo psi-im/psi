@@ -38,14 +38,10 @@ AccountRegDlg::AccountRegDlg(ProxyManager *_proxyman, QWidget *parent)
 	setModal(false);
   	setWindowTitle(CAP(caption()));
 	
-#ifdef XMPP1
 	connect(ck_host, SIGNAL(toggled(bool)), ck_ssl, SLOT(setEnabled(bool)));
 	ck_legacy_ssl_probe->setEnabled(true);
 	ck_ssl->setEnabled(false);
 	ck_legacy_ssl_probe->setChecked(true);
-#else
-	ck_legacy_ssl_probe->hide();
-#endif
 
 	le_host->setEnabled(false);
 	lb_host->setEnabled(false);

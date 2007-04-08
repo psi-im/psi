@@ -1,9 +1,3 @@
-# XMPP 1.0 compliance
-CONFIG += xmpp1
-xmpp1 {
-	DEFINES += XMPP1
-}
-
 # cutestuff
 include($$PWD/../cutestuff/cutestuff.pri)
 

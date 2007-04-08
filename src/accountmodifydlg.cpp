@@ -54,7 +54,6 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 	le_port->setEnabled(false);
 	lb_port->setEnabled(false);
 
-#ifdef XMPP1
 	ck_ssl->setEnabled(false);
 #ifdef __GNUC__
 #warning "Temporarily removing security level settings"
@@ -62,12 +61,6 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 	ck_req_mutual->hide();
 	cb_security_level->hide();
 	lb_security_level->hide();
-#else
-	ck_req_mutual->hide();
-	ck_legacy_ssl_probe->hide();
-	cb_security_level->hide();
-	lb_security_level->hide();
-#endif
 
 	connect(pb_close, SIGNAL(clicked()), SLOT(reject()));
 	connect(ck_host, SIGNAL(toggled(bool)), SLOT(hostToggled(bool)));
@@ -382,10 +375,8 @@ void AccountModifyDlg::hostToggled(bool on)
 	lb_host->setEnabled(on);
 	le_port->setEnabled(on);
 	lb_port->setEnabled(on);
-#ifdef XMPP1
 	ck_ssl->setEnabled(on);
 	ck_legacy_ssl_probe->setEnabled(!on);
-#endif
 }
 
 void AccountModifyDlg::chooseKey()

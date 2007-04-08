@@ -68,26 +68,11 @@ void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool ssl
 	QString host;
 	int port = -1;
 	bool useHost = false;
-#ifdef XMPP1
 	if(!_host.isEmpty() && !legacy_ssl_probe) {
 		useHost = true;
 		host = _host;
 		port = _port;
 	}
-#else
-	useHost = true;
-	if(!_host.isEmpty()) {
-		host = _host;
-		port = _port;
-	}
-	else {
-		host = jid.host();
-		if(ssl)
-			port = 5223;
-		else
-			port = 5222;
-	}
-#endif
 
 	AdvancedConnector::Proxy p;
 	if(proxy > 0) {
@@ -124,14 +109,9 @@ void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool ssl
 		conn->setOptHostPort(host, port);
 		conn->setOptSSL(ssl);
 	}
-#ifdef XMPP1
 	conn->setOptProbe(legacy_ssl_probe);
-#endif
 
 	stream = new ClientStream(conn, tlsHandler);
-#ifndef XMPP1
-	stream->setOldOnly(true);
-#endif
 	connect(stream, SIGNAL(connected()), SLOT(cs_connected()));
 	connect(stream, SIGNAL(securityLayerActivated(int)), SLOT(cs_securityLayerActivated(int)));
 	connect(stream, SIGNAL(needAuthParams(bool, bool, bool)), SLOT(cs_needAuthParams(bool, bool, bool)));
@@ -218,7 +198,6 @@ void MiniClient::cs_authenticated()
 {
 	_client->start(j.host(), j.user(), "", "");
 
-#ifdef XMPP1
 	if (!stream->old() && auth) {
 		JT_Session *j = new JT_Session(_client->rootTask());
 		connect(j,SIGNAL(finished()),SLOT(sessionStart_finished()));
@@ -227,9 +206,6 @@ void MiniClient::cs_authenticated()
 	else {
 		handshaken();
 	}
-#else
-	handshaken();
-#endif
 }
 
 void MiniClient::sessionStart_finished()

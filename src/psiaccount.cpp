@@ -862,11 +862,7 @@ void PsiAccount::login()
 	if(isActive() && !doReconnect)
 		return;
 
-#ifdef XMPP1
 	if(!QCA::isSupported("tls") && !(d->acc.opt_host && !d->acc.opt_ssl)) {
-#else
-	if(d->acc.opt_ssl && !QCA::isSupported("tls")) {
-#endif
 		QMessageBox::information(0, (d->psi->accountList(true).count() > 1 ? QString("%1: ").arg(name()) : "") + tr("SSL Error"), tr("Cannot login: SSL is enabled but no SSL/TLS (plugin) support is available."));
 		return;
 	}
@@ -888,26 +884,11 @@ void PsiAccount::login()
 	bool useHost = false;
 	QString host;
 	int port = -1;
-#ifdef XMPP1
 	if(d->acc.opt_host) {
 		useHost = true;
 		host = d->acc.host;
 		port = d->acc.port;
 	}
-#else
-	useHost = true;
-	if(d->acc.opt_host) {
-		host = d->acc.host;
-		port = d->acc.port;
-	}
-	else {
-		host = d->jid.host();
-		if(d->acc.opt_ssl)
-			port = 5223;
-		else
-			port = 5222;
-	}
-#endif
 
 	AdvancedConnector::Proxy p;
 	if(d->acc.proxy_index > 0) {
@@ -934,11 +915,7 @@ void PsiAccount::login()
 
 	// stream
 	d->conn = new AdvancedConnector;
-#ifdef XMPP1
 	if(!(d->acc.opt_host && !d->acc.opt_ssl)) {
-#else
-	if(QCA::isSupported("tls") && !(d->acc.opt_host && !d->acc.opt_ssl)) {
-#endif
 		d->tls = new QCA::TLS;
 		d->tls->setTrustedCertificates(CertUtil::allCertificates());
 		d->tlsHandler = new QCATLSHandler(d->tls);
@@ -949,15 +926,10 @@ void PsiAccount::login()
 		d->conn->setOptHostPort(host, port);
 		d->conn->setOptSSL(d->acc.opt_ssl);
 	}
-#ifdef XMPP1
 	if (!useHost)
 		d->conn->setOptProbe(d->acc.legacy_ssl_probe);
-#endif
 
 	d->stream = new ClientStream(d->conn, d->tlsHandler);
-#ifndef XMPP1
-	d->stream->setOldOnly(true);
-#endif
 	d->stream->setRequireMutualAuth(d->acc.req_mutual_auth);
 	d->stream->setSSFRange(d->acc.security_level,256);
 	d->stream->setAllowPlain(d->acc.opt_plain);
@@ -1094,7 +1066,6 @@ void PsiAccount::cs_authenticated()
 	d->conn->changePollInterval(10); // for http poll, slow down after login
 
 	d->client->start(d->jid.host(), d->jid.user(), d->acc.pass, (d->stream->jid().resource().isEmpty() ? d->acc.resource : d->stream->jid().resource()));
-#ifdef XMPP1
 	if (!d->stream->old()) {
 		JT_Session *j = new JT_Session(d->client->rootTask());
 		connect(j,SIGNAL(finished()),SLOT(sessionStart_finished()));
@@ -1103,9 +1074,6 @@ void PsiAccount::cs_authenticated()
 	else {
 		sessionStarted();
 	}
-#else
-	sessionStarted();
-#endif
 }
 
 void PsiAccount::sessionStart_finished()
@@ -1891,11 +1859,7 @@ void PsiAccount::setStatus(const Status &_s,  bool withPriority)
 		if(!isActive()) {
 			Jid j = d->jid;
 
-#ifdef XMPP1
 			if(!j.isValid()) {
-#else
-			if(d->acc.resource.isEmpty() || !j.isValid()) {
-#endif
 				QMessageBox::information(0, CAP(tr("Error")), tr("Unable to login.  Ensure your account information is filled out."));
 				modify();
 				return;
