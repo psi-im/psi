@@ -37,6 +37,10 @@
 #include <QMenu>
 #include <QMenuItem>
 
+#ifdef Q_WS_WIN
+#include <windows.h>
+#endif
+
 #include "im.h"
 #include "common.h"
 #include "showtextdlg.h"
@@ -209,8 +213,14 @@ void MainWin::Private::updateMenu(QStringList actions, QMenu *menu)
 //#ifdef Q_WS_X11
 //#define TOOLW_FLAGS WStyle_Customize
 //#else
-#define TOOLW_FLAGS ((Qt::WFlags) 0)
+//#define TOOLW_FLAGS ((Qt::WFlags) 0)
 //#endif
+
+#ifdef Q_WS_WIN
+#define TOOLW_FLAGS (Qt::WindowMinimizeButtonHint)
+#else
+#define TOOLW_FLAGS ((Qt::WFlags) 0)
+#endif
 
 MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 :AdvancedWidget<Q3MainWindow>(0, (_onTop ? Qt::WStyle_StaysOnTop : Qt::Widget) | (_asTool ? (Qt::WStyle_Tool |TOOLW_FLAGS) : Qt::Widget))
@@ -883,6 +893,20 @@ void MainWin::keyPressEvent(QKeyEvent *e)
 
 	QWidget::keyPressEvent(e);
 }
+
+#ifdef Q_WS_WIN
+#include <windows.h>
+bool MainWin::winEvent(MSG *msg, long *result)
+{
+	if (d->asTool && msg->message == WM_SYSCOMMAND && msg->wParam == SC_MINIMIZE) {
+		hide();	// minimized toolwindows look bad on Windows, so let's just hide it instead
+			// plus we cannot do this in changeEvent(), because it's called too late
+		*result = 0;
+		return true;	// don't let Qt process this event
+	}
+	return false;
+}
+#endif
 
 void MainWin::updateCaption()
 {

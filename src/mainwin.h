@@ -71,6 +71,9 @@ protected:
 	void closeEvent(QCloseEvent *);
 	void keyPressEvent(QKeyEvent *);
 	QMenuBar* mainMenuBar() const;
+#ifdef Q_WS_WIN
+	bool winEvent(MSG *, long *);
+#endif
 
 signals:
 	void statusChanged(int);
