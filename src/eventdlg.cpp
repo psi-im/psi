@@ -1420,10 +1420,6 @@ void EventDlg::closeEvent(QCloseEvent *e)
 	if(!d->mle->isEnabled())
 		return;
 
-	// cancel the data form
-	if(d->pb_form_cancel->isEnabled())
-		doFormCancel();
-
 	e->accept();
 }
 
