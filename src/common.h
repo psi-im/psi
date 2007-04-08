@@ -97,7 +97,6 @@ struct Options
 	QString defaultRosterIconset;
 	QMap<QString, QString> serviceRosterIconset;
 	QMap<QString, QString> customRosterIconset;
-	int rosterOpacity;
 
 	bool useleft, singleclick, hideMenubar, askOnline, askOffline, popupMsgs, popupChats, popupHeadlines, popupFiles, raise;
 	bool alwaysOnTop, noAwaySound, noAwayPopup, noUnlistedPopup, rosterAnim, autoVCardOnLogin, xmlConsoleOnLogin;
