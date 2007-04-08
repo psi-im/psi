@@ -1001,6 +1001,7 @@ void PsiAccount::login()
 		d->tls = new QCA::TLS;
 		d->tls->setTrustedCertificates(CertUtil::allCertificates());
 		d->tlsHandler = new QCATLSHandler(d->tls);
+		d->tlsHandler->setXMPPCertCheck(true);
 		connect(d->tlsHandler, SIGNAL(tlsHandshaken()), SLOT(tls_handshaken()));
 	}
 	d->conn->setProxy(p);
@@ -1087,6 +1088,7 @@ void PsiAccount::tls_handshaken()
 {
 	QCA::Certificate cert = d->tls->peerCertificateChain().primary();
 	int r = d->tls->peerIdentityResult();
+	if (r == QCA::TLS::Valid && !d->tlsHandler->certMatchesHostname()) r = QCA::TLS::HostMismatch;
 	if(r != QCA::TLS::Valid && !d->acc.opt_ignoreSSLWarnings) {
 		QCA::Validity validity =  d->tls->peerCertificateValidity();
 		QString str = CertUtil::resultToString(r,validity);
