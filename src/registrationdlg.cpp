@@ -58,7 +58,6 @@ public:
 
 	bool take(const QDomElement &);
 	QDomElement iq() const;
-	QDomElement xdataElement() const;
 
 	void onGo();
 
@@ -105,21 +104,6 @@ void JT_XRegister::onGo()
 		JT_Register::onGo();
 }
 
-QDomElement JT_XRegister::xdataElement() const
-{
-	QDomNode n = queryTag(iq()).firstChild();
-	for (; !n.isNull(); n = n.nextSibling()) {
-		QDomElement i = n.toElement();
-		if (i.isNull())
-			continue;
-
-		if (i.attribute("xmlns") == "jabber:x:data")
-			return i;
-	}
-
-	return QDomElement();
-}
-
 //----------------------------------------------------------------------------
 // RegistrationDlg
 //----------------------------------------------------------------------------
@@ -145,9 +129,8 @@ public:
 };
 
 RegistrationDlg::RegistrationDlg(const Jid &jid, PsiAccount *pa)
-	: QDialog(0, 0, false)
+:QDialog(0, 0, false, Qt::WDestructiveClose)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private;
 	d->jid = jid;
 	d->pa = pa;
@@ -267,84 +250,6 @@ void RegistrationDlg::doRegSet()
 	d->jt->go(true);
 }
 
-void RegistrationDlg::setInstructions(const QString& jid, const QString& instructions)
-{
-	QString str = tr("<b>Registration for \"%1\":</b><br><br>").arg(jid);
-	str += TextUtil::plain2rich(instructions);
-	d->lb_top->setText(str);
-}
-
-/**
- * Returns true if the function was able to successfully process XData.
- */
-bool RegistrationDlg::processXData(const QDomElement& iq)
-{
-	if (!iq.isNull()) {
-		XData form;
-		form.fromXml(iq);
-
-		if (!form.title().isEmpty())
-			setWindowTitle(form.title());
-
-		setInstructions(d->jid.full(), form.instructions());
-
-		if (d->xdata)
-			delete d->xdata;
-
-		d->xdata = new XDataWidget(d->gr_form);
-		d->xdata->setFields(form.fields());
-
-		d->xdata->show();
-		return true;
-	}
-
-	return false;
-}
-
-/**
- * This is used as a fallback when processXData returns true.
- */
-void RegistrationDlg::processLegacyForm(const XMPP::Form& form)
-{
-	setInstructions(d->jid.full(), form.instructions());
-
-	for (Form::ConstIterator it = d->form.begin(); it != d->form.end(); ++it) {
-		const FormField &f = *it;
-
-		QLabel *lb = new QLabel(f.fieldName(), d->gr_form);
-		QLineEdit *le = new QLineEdit(d->gr_form);
-		if (f.isSecret())
-			le->setEchoMode(QLineEdit::Password);
-		le->setText(f.value());
-
-		d->lb_field.append(lb);
-		d->le_field.append(le);
-	}
-
-	if (!d->le_field.isEmpty())
-		d->le_field.first()->setFocus();
-}
-
-void RegistrationDlg::setData(JT_XRegister* jt)
-{
-	d->form = jt->form();
-
-	if (!processXData(jt->xdataElement()))
-		processLegacyForm(jt->form());
-}
-
-void RegistrationDlg::updateData(JT_XRegister* jt)
-{
-	if (d->xdata) {
-		QDomElement iq = jt->xdataElement();
-		if (!iq.isNull()) {
-			XData form;
-			form.fromXml(iq);
-			d->xdata->setFields(form.fields());
-		}
-	}
-}
-
 void RegistrationDlg::jt_finished()
 {
 	d->busy->stop();
@@ -355,7 +260,61 @@ void RegistrationDlg::jt_finished()
 
 	if(jt->success()) {
 		if(d->type == 0) {
-			setData(jt);
+			d->form = jt->form();
+
+			bool useXData = false;
+			{
+				QDomNode n = queryTag( jt->iq() ).firstChild();
+				for( ; !n.isNull(); n = n.nextSibling()) {
+					QDomElement i = n.toElement();
+					if(i.isNull())
+						continue;
+
+					if( i.attribute( "xmlns" ) == "jabber:x:data" ) {
+						useXData = true;
+
+						XData form;
+						form.fromXml( i );
+
+						if ( !form.title().isEmpty() )
+							setWindowTitle( form.title() );
+
+						QString str = tr("<b>Registration for \"%1\":</b><br><br>").arg(d->jid.full());
+						str += TextUtil::plain2rich( form.instructions() );
+						d->lb_top->setText(str);
+
+						d->xdata = new XDataWidget( d->gr_form );
+						d->xdata->setFields( form.fields() );
+
+						d->xdata->show();
+
+						break;
+					}
+				}
+			}
+
+			if ( !useXData ) {
+				QString str = tr("<b>Registration for \"%1\":</b><br><br>").arg(d->jid.full());
+				str += TextUtil::plain2rich(d->form.instructions());
+				d->lb_top->setText(str);
+				d->lb_top->setFixedWidth(300);
+
+				for(Form::ConstIterator it = d->form.begin(); it != d->form.end(); ++it) {
+					const FormField &f = *it;
+
+					QLabel *lb = new QLabel(f.fieldName(), d->gr_form);
+					QLineEdit *le = new QLineEdit(d->gr_form);
+					if(f.isSecret())
+						le->setEchoMode(QLineEdit::Password);
+					le->setText(f.value());
+
+					d->lb_field.append(lb);
+					d->le_field.append(le);
+				}
+
+				if (!d->le_field.isEmpty())
+					d->le_field.first()->setFocus();
+			}
 
 			d->gr_form->show();
 			d->pb_reg->show();
@@ -376,14 +335,9 @@ void RegistrationDlg::jt_finished()
 			close();
 		}
 		else {
+			closeDialogs(this);
 			QMessageBox::critical(this, tr("Error"), tr("Error submitting registration form.\nReason: %1").arg(jt->statusString()));
-			if (jt->statusCode() == 406) {
-				// updateData(jt);
-			}
-			else {
-				closeDialogs(this);
-				close();
-			}
+			close();
 		}
 	}
 }

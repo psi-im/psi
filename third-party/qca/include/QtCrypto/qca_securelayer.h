@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 
@@ -257,12 +257,9 @@ namespace QCA
 		*/
 		enum Error
 		{
-			ErrorSignerExpired, ///< local certificate is expired
-			ErrorSignerInvalid, ///< local certificate is invalid in some way
-			ErrorKeyMismatch,   ///< certificate and private key don't match
-			ErrorInit,          ///< problem starting up %TLS
-			ErrorHandshake,     ///< problem during the negotiation
-			ErrorCrypt          ///< problem at anytime after
+			ErrorInit,      ///< problem starting up %TLS
+			ErrorHandshake, ///< problem during the negotiation
+			ErrorCrypt      ///< problem at anytime after
 		};
 
 		/**
@@ -407,10 +404,6 @@ namespace QCA
 		   Start the TLS/SSL connection as a client.
 
 		   \param host the hostname that you want to connect to
-
-		   \note This hostname will be used for Server Name Indication extension (see 
-		   <a href="http://www.ietf.org/rfc/rfc3546.txt">RFC 3546</a> Section 3.1)
-		   if supported by the backend provider.
 		*/
 		void startClient(const QString &host = QString());
 
@@ -888,6 +881,9 @@ namespace QCA
 		virtual void writeIncoming(const QByteArray &a);
 		virtual QByteArray readOutgoing(int *plainBytes = 0);
 
+	private slots:
+		void tryAgain();
+
 	signals:
 		/**
 		   This signal is emitted when the client has been
@@ -914,7 +910,7 @@ namespace QCA
 		   This signal is emitted when the client needs
 		   additional parameters
 		*/
-		void needParams(const QCA::SASL::Params &params);
+		void needParams(const QCA::SASL::Params&);
 
 		/**
 		   This signal is emitted when the server needs to

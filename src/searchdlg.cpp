@@ -103,56 +103,8 @@ void JT_XSearch::onGo()
 class SearchDlg::Private
 {
 public:
-	Private(SearchDlg* _dlg)
-		: dlg(_dlg)
-	{}
+	Private() {}
 
-	struct NickAndJid {
-		QString nick;
-		XMPP::Jid jid;
-	};
-
-	QList<NickAndJid> selectedNicksAndJids() const
-	{
-		QList<NickAndJid> result;
-
-		int jid;
-		int nick;
-		if (!xdata) {
-			jid  = 4;
-			nick = 0;
-		}
-		else {
-			jid  = 0;
-			nick = 0;
-
-			int i = 0;
-			QList<XData::ReportField>::ConstIterator it = xdata_form.report().begin();
-			for (; it != xdata_form.report().end(); ++it, ++i) {
-				QString name = (*it).name;
-				if (name == "jid")
-					jid = i;
-
-				if (name == "nickname" || name == "nick" || name == "title")
-					nick = i;
-			}
-		}
-
-		Q3ListViewItem* i = dlg->lv_results->firstChild();
-		while (i) {
-			if (i->isSelected()) {
-				NickAndJid nickJid;
-				nickJid.jid  = XMPP::Jid(i->text(jid));
-				nickJid.nick = i->text(nick);
-				result << nickJid;
-			}
-			i = i->nextSibling();
-		}
-
-		return result;
-	}
-
-	SearchDlg* dlg;
 	PsiAccount *pa;
 	Jid jid;
 	Form form;
@@ -167,11 +119,9 @@ public:
 	XData xdata_form;
 };
 
-SearchDlg::SearchDlg(const Jid &jid, PsiAccount *pa)
-	: QDialog(0)
+SearchDlg::SearchDlg(const Jid &jid, PsiAccount *pa) : QDialog(0, Qt::WDestructiveClose)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
-	d = new Private(this);
+	d = new Private;
 	setupUi(this);
 	setModal(false);
 	d->pa = pa;
@@ -490,36 +440,95 @@ void SearchDlg::selectionChanged()
 
 void SearchDlg::doAdd()
 {
-	QList<Private::NickAndJid> nicksAndJids = d->selectedNicksAndJids();
-	if (nicksAndJids.isEmpty())
+	Q3ListViewItem *i = lv_results->firstChild();
+	QString name;
+
+	if(!i)
 		return;
 
-	foreach(Private::NickAndJid nickJid, nicksAndJids)
-		emit add(nickJid.jid, nickJid.nick, QStringList(), true);
-
-	if (nicksAndJids.count() > 1) {
-		QMessageBox::information(this,
-		                         tr("Add User: Success"),
-		                         tr("Added %n users to your roster.", "", nicksAndJids.count()));
+	int jid;
+	int nick;
+	if ( !d->xdata ) {
+		jid  = 4;
+		nick = 0;
 	}
 	else {
-		QMessageBox::information(this,
-		                         tr("Add User: Success"),
-		                         tr("Added %1 to your roster.").arg(
-		                             JIDUtil::nickOrJid(nicksAndJids.first().nick,
-		                                                nicksAndJids.first().jid.full()
-		                                               )));
+		jid = 0;
+		nick = 0;
+
+		int i = 0;
+		QList<XData::ReportField>::ConstIterator it = d->xdata_form.report().begin();
+		for ( ; it != d->xdata_form.report().end(); ++it, ++i ) {
+			QString name = ( *it ).name;
+			if ( name == "jid" )
+				jid = i;
+
+			if ( name == "nickname" || name == "nick" )
+				nick = i;
+		}
 	}
+
+	int d = 0;
+
+	if( i->isSelected() ) {
+		name = JIDUtil::nickOrJid(i->text(nick), i->text(jid));
+		add(Jid(i->text(jid)), i->text(nick), QStringList(), true);
+		d++;
+	}
+
+	if( i ) {
+		while( i->nextSibling() ) {
+			i = i->nextSibling();
+			if( i->isSelected() ) {
+				name = JIDUtil::nickOrJid(i->text(nick), i->text(jid));
+				add(Jid(i->text(jid)), i->text(nick), QStringList(), true);
+				d++;
+			}
+		}
+	}
+
+	if( d==1 )
+		QMessageBox::information(this, tr("Add User: Success"), tr("Added %1 to your roster.").arg(name));
+	else
+		QMessageBox::information(this, tr("Add User: Success"), tr("Added %1 users to your roster.").arg(d));
 }
 
 void SearchDlg::doInfo()
 {
-	QList<Private::NickAndJid> nicksAndJids = d->selectedNicksAndJids();
-	if (nicksAndJids.isEmpty())
+	Q3ListViewItem *i = lv_results->firstChild();
+	QString name;
+
+	if(!i)
 		return;
 
-	foreach(Private::NickAndJid nickJid, nicksAndJids)
-		emit aInfo(nickJid.jid);
+	int jid;
+	if ( !d->xdata ) {
+		jid  = 4;
+	}
+	else {
+		jid = 0;
+
+		int i = 0;
+		QList<XData::ReportField>::ConstIterator it = d->xdata_form.report().begin();
+		for ( ; it != d->xdata_form.report().end(); ++it, ++i ) {
+			QString name = ( *it ).name;
+			if ( name == "jid" )
+				jid = i;
+		}
+	}
+
+	if( i->isSelected() ) {
+		aInfo(Jid(i->text(jid)));
+	}
+
+	if( i ) {
+		while( i->nextSibling() ) {
+			i = i->nextSibling();
+			if( i->isSelected() ) {
+				aInfo(Jid(i->text(jid)));
+			}
+		}
+	}
 }
 
 #include "searchdlg.moc"

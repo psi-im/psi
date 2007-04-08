@@ -118,9 +118,6 @@ private:
 	static Qt_XK_Keymap qt_xk_table[];
 	static long alt_mask;
 	static long meta_mask;
-	static long super_mask;
-	static long hyper_mask;
-	static long numlock_mask;
 	static bool haveMods;
 
 	// adapted from qapplication_x11.cpp
@@ -143,31 +140,12 @@ private:
 						if (meta_mask == 0 && (sym == XK_Meta_L || sym == XK_Meta_R)) {
 							meta_mask = 1 << maskIndex;
 						}
-						if (super_mask == 0 && (sym == XK_Super_L || sym == XK_Super_R)) {
-							super_mask = 1 << maskIndex;
-						}
-						if (hyper_mask == 0 && (sym == XK_Hyper_L || sym == XK_Hyper_R)) {
-							hyper_mask = 1 << maskIndex;
-						}
-						if (numlock_mask == 0 && (sym == XK_Num_Lock)) {
-							numlock_mask = 1 << maskIndex;
-						}
 					}
 					mapIndex++;
 				}
 			}
 
 			XFreeModifiermap(map);
-
-			// logic from qt source see gui/kernel/qkeymapper_x11.cpp
-			if (meta_mask == 0 || meta_mask == alt_mask) {
-				// no meta keys... s,meta,super,
-				meta_mask = super_mask;
-				if (meta_mask == 0 || meta_mask == alt_mask) {
-					// no super keys either? guess we'll use hyper then
-					meta_mask = hyper_mask;
-				}
-			}
 		}
 		else {
 			// assume defaults
@@ -197,7 +175,7 @@ public:
 		Qt_XK_Keygroup kg;
 		kg.num = 0;
 		kg.sym[0] = 0;
-		code &= ~Qt::KeyboardModifierMask;
+		code &= 0xffff;
 
 		bool found = false;
 		for (int n = 0; qt_xk_table[n].key != Qt::Key_unknown; ++n) {
@@ -226,18 +204,6 @@ public:
 
 		return true;
 	}
-
-	static QList<long> ignModifiersList()
-	{
-		QList<long> ret;
-		if (numlock_mask) {
-			ret << 0 << LockMask << numlock_mask << (LockMask | numlock_mask);
-		}
-		else {
-			ret << 0 << LockMask;
-		}
-		return ret;
-	}
 };
 
 X11KeyTriggerManager* X11KeyTriggerManager::instance_ = NULL;
@@ -257,7 +223,6 @@ private:
 	static bool failed;
 	static int XGrabErrorHandler(Display *, XErrorEvent *)
 	{
-		qWarning("failed to grab key");
 		failed = true;
 		return 0;
 	}
@@ -272,16 +237,16 @@ private:
 
 		failed = false;
 		XErrorHandler savedErrorHandler = XSetErrorHandler(XGrabErrorHandler);
-		WId w = QX11Info::appRootWindow();
-		foreach(long mask_mod, X11KeyTriggerManager::ignModifiersList()) {
-			XGrabKey(QX11Info::display(), code, mod | mask_mod, w, False, GrabModeAsync, GrabModeAsync);
-			GrabbedKey grabbedKey;
-			grabbedKey.code = code;
-			grabbedKey.mod  = mod | mask_mod;
-			grabbedKeys_ << grabbedKey;
-		}
+		XGrabKey(QX11Info::display(), code, mod, QX11Info::appRootWindow(), False, GrabModeAsync, GrabModeAsync);
 		XSync(QX11Info::display(), False);
 		XSetErrorHandler(savedErrorHandler);
+		if (failed)
+			return;
+
+		GrabbedKey grabbedKey;
+		grabbedKey.code = code;
+		grabbedKey.mod  = mod;
+		grabbedKeys_ << grabbedKey;
 	}
 
 public:
@@ -326,9 +291,6 @@ public:
 bool GlobalShortcutManager::KeyTrigger::Impl::failed;
 long X11KeyTriggerManager::alt_mask  = 0;
 long X11KeyTriggerManager::meta_mask = 0;
-long X11KeyTriggerManager::super_mask  = 0;
-long X11KeyTriggerManager::hyper_mask  = 0;
-long X11KeyTriggerManager::numlock_mask  = 0;
 bool X11KeyTriggerManager::haveMods  = false;
 
 X11KeyTriggerManager::Qt_XK_Keymap

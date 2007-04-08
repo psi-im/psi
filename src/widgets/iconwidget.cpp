@@ -137,10 +137,7 @@ public:
 	virtual void paint(QPainter *painter) const = 0;
 	virtual int height() const = 0;
 	virtual int width() const = 0;
-	virtual QPoint textPosition(QPainter *painter) const = 0;
-
-	static const int TextPositionRole = Qt::UserRole + 1;
-
+	
 	QVariant data(int role) const
 	{
 		if (role == Qt::SizeHintRole)
@@ -155,13 +152,6 @@ public:
 			paint(&p);
 			p.end();
 			return QVariant(pix);
-		}
-		else if (role == TextPositionRole) {
-			QPixmap pix(width(), height());
-			QPainter p(&pix);
-			QPoint pos = textPosition(&p);
-			p.end();
-			return QVariant(pos);
 		}
 		return QListWidgetItem::data(role);
 	}
@@ -192,27 +182,20 @@ public:
 	{
 		const QAbstractItemModel *model = index.model();
 
-		QPalette::ColorGroup cg = option.state & QStyle::State_Enabled
-			? QPalette::Normal : QPalette::Disabled;
-
 		// draw the background color
 		if (option.showDecorationSelected && (option.state & QStyle::State_Selected)) {
+			QPalette::ColorGroup cg = option.state & QStyle::State_Enabled
+			                          ? QPalette::Normal : QPalette::Disabled;
 			painter->fillRect(option.rect, option.palette.brush(cg, QPalette::Highlight));
-			painter->setPen(option.palette.color(cg, QPalette::HighlightedText));
 		} 
 		else {
-			painter->setPen(option.palette.color(cg, QPalette::Text));
-			QVariant value = model->data(index, Qt::BackgroundRole);
+			QVariant value = model->data(index, Qt::BackgroundColorRole);
 			if (value.isValid() && qvariant_cast<QColor>(value).isValid())
 				painter->fillRect(option.rect, qvariant_cast<QColor>(value));
 		}
 		
 		painter->drawPixmap(option.rect.topLeft(), model->data(index, Qt::DecorationRole).value<QPixmap>());
-
-		QVariant textPosition = model->data(index, RealIconWidgetItem::TextPositionRole);
-		if (textPosition.isValid() && !qvariant_cast<QPoint>(textPosition).isNull())
-			painter->drawText(option.rect.topLeft() + qvariant_cast<QPoint>(textPosition), model->data(index, Qt::DisplayRole).value<QString>());
-
+		
 		if (option.state & QStyle::State_HasFocus) {
 			QStyleOptionFocusRect o;
 			o.QStyleOption::operator=(option);
@@ -220,6 +203,8 @@ public:
 			QPoint margin(1, 1);
 			o.rect = QRect(r.topLeft() + margin, r.bottomRight() - margin);
 			o.state |= QStyle::State_KeyboardFocusChange;
+			QPalette::ColorGroup cg = (option.state & QStyle::State_Enabled)
+				? QPalette::Normal : QPalette::Disabled;
 			o.backgroundColor = option.palette.color(cg, (option.state & QStyle::State_Selected)
 				? QPalette::Highlight : QPalette::Background);
 			QApplication::style()->drawPrimitive(QStyle::PE_FrameFocusRect, &o, painter);
@@ -271,7 +256,7 @@ public:
 			w += pix.width() + margin;
 			h = qMax( h, pix.height() + 2*margin );
 
-			connect(icon, SIGNAL(pixmapChanged()), SLOT(update()));
+			connect(icon, SIGNAL(pixmapChanged(const QPixmap &)), SLOT(update()));
 			icon->activated(false); // start animation
 		}
 
@@ -320,6 +305,7 @@ public:
 	{
 #ifndef WIDGET_PLUGIN
 		QFontMetrics fm = painter->fontMetrics();
+		painter->drawText( 3, fm.ascent() + (fm.leading()+1)/2 + 1, text() );
 
 		QMap<PsiIcon*, QRect>::ConstIterator it;
 		for (it = iconRects.begin(); it != iconRects.end(); it++) {
@@ -330,11 +316,6 @@ public:
 #else
 		Q_UNUSED(painter);
 #endif
-	}
-	QPoint textPosition(QPainter *painter) const
-	{
-		QFontMetrics fm = painter->fontMetrics();
-		return QPoint(3, fm.ascent() + (fm.leading()+1)/2 + 1);
 	}
 };
 const int IconsetSelectItem::margin = 3;
@@ -405,13 +386,6 @@ QListWidgetItem *IconsetSelect::lastItem() const
 	return item(count() - 1);
 }
 
-QStyleOptionViewItem IconsetSelect::viewOptions() const
-{
-	QStyleOptionViewItem o = QListWidget::viewOptions();
-	o.showDecorationSelected = true;
-	return o;
-}
-
 //----------------------------------------------------------------------------
 // IconsetDisplay
 //----------------------------------------------------------------------------
@@ -432,7 +406,7 @@ public:
 		icon = i;
 		w = iconW;
 
-		connect(icon, SIGNAL(pixmapChanged()), SLOT(update()));
+		connect(icon, SIGNAL(pixmapChanged(const QPixmap &)), SLOT(update()));
 		icon->activated(false);
 
 		h = icon->pixmap().height();
@@ -478,16 +452,12 @@ public:
 	{
 #ifndef WIDGET_PLUGIN
 		painter->drawPixmap(QPoint((2*margin+w - icon->pixmap().width())/2, margin), icon->pixmap());
+		QFontMetrics fm = painter->fontMetrics();
+		painter->drawText(w + 2*margin, fm.ascent() + (fm.leading()+1)/2 + 1, text());
 #else
 		Q_UNUSED(painter);
 #endif
 	}
-	QPoint textPosition(QPainter *painter) const
-	{
-		QFontMetrics fm = painter->fontMetrics();
-		return QPoint(w + 2*margin, fm.ascent() + (fm.leading()+1)/2 + 1);
-	}
-
 };
 const int IconsetDisplayItem::margin = 3;
 
@@ -565,7 +535,7 @@ public:
 	{
 #ifndef WIDGET_PLUGIN
 		if ( icon ) {
-			connect(icon, SIGNAL(pixmapChanged()), SLOT(iconUpdated()));
+			connect(icon, SIGNAL(pixmapChanged(const QPixmap &)), SLOT(iconUpdated(const QPixmap &)));
 			if ( activate )
 				icon->activated(true); // FIXME: should icon play sound when it's activated on button?
 		}
@@ -590,28 +560,30 @@ public:
 
 	void update()
 	{
-		iconUpdated();
+#ifndef WIDGET_PLUGIN
+		if ( icon )
+			iconUpdated( icon->pixmap() );
+#endif
 	}
 
 	void updateIcon()
 	{
-		iconUpdated();
+#ifndef WIDGET_PLUGIN
+		if ( icon )
+			iconUpdated( icon->pixmap() );
+		else
+			iconUpdated( QPixmap() );
+#endif
 	}
 
 public slots:
-	void iconUpdated()
+	void iconUpdated(const QPixmap &pix)
 	{
 		button->setUpdatesEnabled(FALSE);
-#ifndef WIDGET_PLUGIN
-		button->setIcon(icon ? icon->pixmap() : QPixmap());
-#else
-		QPixmap pix;
-		if (!iconName.isEmpty()) {
-			QPixmap pix((const char **)cancel_xpm);
-			pix = QPixmap(pix);
-		}
+// 		button->setToolButtonStyle(textVisible || button->text().isEmpty() ? 
+// 		                           Qt::ToolButtonTextBesideIcon :
+// 		                           Qt::ToolButtonIconOnly);
 		button->setIcon(pix);
-#endif
 		button->setUpdatesEnabled(TRUE);
 		button->update();
 	}
@@ -657,7 +629,13 @@ void IconButton::setPsiIcon(const QString &name)
 	setPsiIcon( IconsetFactory::iconPtr(name) );
 #else
 	d->iconName = name;
-	d->iconUpdated();
+
+	if ( !name.isEmpty() ) {
+		QPixmap pix((const char **)cancel_xpm);
+		d->iconUpdated(QPixmap( pix ));
+	}
+	else
+		d->iconUpdated(QPixmap());
 #endif
 }
 
@@ -737,11 +715,13 @@ public:
 	{
 #ifndef WIDGET_PLUGIN
 		if ( icon ) {
-			connect(icon, SIGNAL(pixmapChanged()), SLOT(iconUpdated()));
+			connect(icon, SIGNAL(pixmapChanged(const QPixmap &)), SLOT(iconUpdated(const QPixmap &)));
 			if ( activate )
 				icon->activated(true); // FIXME: should icon play sound when it's activated on button?
+			iconUpdated( icon->pixmap() );
 		}
-		iconUpdated();
+		else
+			iconUpdated( QPixmap() );
 #endif
 	}
 
@@ -761,23 +741,21 @@ public:
 
 	void update()
 	{
-		iconUpdated();
+#ifndef WIDGET_PLUGIN
+		if ( icon )
+			iconUpdated( icon->pixmap() );
+#endif
 	}
 
 private slots:
-	void iconUpdated()
+	void iconUpdated(const QPixmap &pix)
 	{
 		button->setUpdatesEnabled(FALSE);
-#ifndef WIDGET_PLUGIN
-		QPixmap pix = icon ? icon->pixmap() : QPixmap();
 		if (pix.isNull())
 			button->QToolButton::setIcon(QIcon());
 		else
 			button->QToolButton::setIcon(pix);
-		button->setIcon(icon ? icon->pixmap() : QPixmap());
-#else
-		button->setIcon(QPixmap());
-#endif
+		button->setIcon(pix);
 		button->setUpdatesEnabled(TRUE);
 		button->update();
 	}

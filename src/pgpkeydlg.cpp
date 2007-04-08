@@ -27,7 +27,6 @@
 #include <QString>
 #include <QMessageBox>
 
-#include <pgputil.h>
 #include "pgpkeydlg.h"
 
 class KeyViewItem : public Q3ListViewItem
@@ -52,10 +51,10 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString& defaultKeyID, QWidget *parent) : QDi
 	connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(reject()));
 
 	Q3ListViewItem *isel = 0;
-	
-	foreach(QCA::KeyStore *ks, PGPUtil::keystores) {
-		if (ks->type() == QCA::KeyStore::PGPKeyring && ks->holdsIdentities()) {
-			foreach(QCA::KeyStoreEntry ke, ks->entryList()) {
+	foreach(QString k, QCA::keyStoreManager()->keyStores()) {
+		QCA::KeyStore ks(k);
+		if (ks.type() == QCA::KeyStore::PGPKeyring && ks.holdsIdentities()) {
+			foreach(QCA::KeyStoreEntry ke, ks.entryList()) {
 				if (t == Public && ke.type() == QCA::KeyStoreEntry::TypePGPPublicKey || ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey) {
 					KeyViewItem *i = new KeyViewItem(ke, ui_.lv_keys);
 					i->setText(0, ke.id().right(8));

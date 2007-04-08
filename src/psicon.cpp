@@ -32,6 +32,7 @@
 #include <QPixmap>
 #include <QList>
 #include <QImageReader>
+#include <QDesktopServices>
 #include <QMessageBox>
 
 #include "s5b.h"
@@ -47,7 +48,6 @@
 #include "statusdlg.h"
 #include "options/optionsdlg.h"
 #include "options/opt_toolbars.h"
-#include "accountregdlg.h"
 #include "combinedtunecontroller.h"
 #include "mucjoindlg.h"
 #include "userlist.h"
@@ -63,7 +63,6 @@
 #include "psitoolbar.h"
 #include "filetransfer.h"
 #include "filetransdlg.h"
-#include "accountmodifydlg.h"
 #include "psiactionlist.h"
 #include "applicationinfo.h"
 #include "jidutil.h"
@@ -79,10 +78,7 @@
 #include "pluginmanager.h"
 #endif
 #include "psicontactlist.h"
-#include "tipdlg.h"
 #include "shortcutmanager.h"
-#include "globalshortcutmanager.h"
-#include "desktoputil.h"
 
 
 #ifdef Q_WS_MAC
@@ -126,7 +122,7 @@ public slots:
 
 	void openURL(QString url)
 	{
-		DesktopUtil::openUrl(url);
+		QDesktopServices::openUrl(url);
 	}
 
 private:
@@ -222,22 +218,8 @@ public:
 	 */
 	void promptUserToCreateAccount()
 	{
-		QMessageBox msgBox(QMessageBox::Question,tr("Account setup"),tr("You need to set up an account to start. Would you like to register a new account, or use an existing account?"));
-		QPushButton *registerButton = msgBox.addButton(tr("Register new account"), QMessageBox::AcceptRole);
-		QPushButton *existingButton = msgBox.addButton(tr("Use existing account"),QMessageBox::AcceptRole);
-		msgBox.addButton(QMessageBox::Cancel);
-		msgBox.exec();
-		if (msgBox.clickedButton() ==  existingButton) {
-			AccountModifyDlg w(psi);
-			w.exec();
-		}
-		else if (msgBox.clickedButton() ==  registerButton) {
-			AccountRegDlg w(psi->proxy());
-			int n = w.exec();
-			if (n == QDialog::Accepted) {
-				psi->contactList()->createAccount(w.jid().node(),w.jid(),w.pass(),w.useHost(),w.host(),w.port(),w.legacySSLProbe(),w.ssl(),w.proxy(),false);
-			}
-		}
+		AccountAddDlg *w = new AccountAddDlg(psi);
+		w->show();
 	}
 
 	PsiCon* psi;
@@ -259,7 +241,6 @@ public:
 	FileTransDlg *ftwin;
 	PsiActionList *actionList;
 	QCA::EventHandler *qcaEventHandler;
-	QCA::KeyStoreManager qcaKeyStoreManager;
 	//GlobalAccelManager *globalAccelManager;
 	TuneController* tuneController;
 	QMenuBar* defaultMenuBar;
@@ -305,22 +286,7 @@ PsiCon::~PsiCon()
 
 bool PsiCon::init()
 {
-	// QCA (needs to be before any gpg usage!)
-	d->qcaEventHandler = new QCA::EventHandler(this);
-	PassphraseDlg::setEventHandler(d->qcaEventHandler);
-	connect(d->qcaEventHandler,SIGNAL(eventReady(int,const QCA::Event&)),SLOT(qcaEvent(int,const QCA::Event&)));
-	d->qcaEventHandler->start();
-	d->qcaKeyStoreManager.waitForBusyFinished(); // FIXME get rid of this
-	connect(&d->qcaKeyStoreManager, SIGNAL(keyStoreAvailable(const QString&)), SLOT(keyStoreAvailable(const QString&)));
-	foreach(QString k, d->qcaKeyStoreManager.keyStores()) {
-		QCA::KeyStore* ks = new QCA::KeyStore(k, &d->qcaKeyStoreManager);
-		connect(ks, SIGNAL(updated()), SLOT(pgp_keysUpdated()));
-		PGPUtil::keystores += ks;
-	}
-
 	d->contactList = new PsiContactList(this);
-
-
 	connect(d->contactList, SIGNAL(accountAdded(PsiAccount*)), SIGNAL(accountAdded(PsiAccount*)));
 	connect(d->contactList, SIGNAL(accountRemoved(PsiAccount*)), SIGNAL(accountRemoved(PsiAccount*)));
 	connect(d->contactList, SIGNAL(accountCountChanged()), SIGNAL(accountCountChanged()));
@@ -353,7 +319,6 @@ bool PsiCon::init()
 	options->setOption("trigger-save",false);
 	options->setOption("trigger-save",true);
 	
-	connect(options, SIGNAL(optionChanged(const QString&)), SLOT(optionsUpdate()));
 
 	QDir profileDir( pathToProfile( activeProfile ) );
 	profileDir.rmdir( "info" ); // remove unused dir
@@ -445,6 +410,12 @@ bool PsiCon::init()
 		}
 	}
 	
+	// load accounts
+	if (d->pro.acc.count() > 0)
+		d->contactList->loadAccounts(d->pro.acc);
+	else
+		d->promptUserToCreateAccount();
+	
 	// Connect to the system monitor
 	SystemWatch* sw = SystemWatch::instance();
 	connect(sw, SIGNAL(sleep()), this, SLOT(doSleep()));
@@ -457,23 +428,24 @@ bool PsiCon::init()
 #endif
 
 	// Global shortcuts
-	setShortcuts();
+	ShortcutManager::connect("global.event", this, SLOT(recvNextEvent()));
+	ShortcutManager::connect("global.toggle-visibility", d->mainwin, SLOT(toggleVisible()));
+	ShortcutManager::connect("global.bring-to-front", d->mainwin, SLOT(trayShow()));
+	ShortcutManager::connect("global.new-blank-message", this, SLOT(doNewBlankMessage()));
 
 	// Entity capabilities
 	CapsRegistry::instance()->setFile(ApplicationInfo::homeDir() + "/caps.xml");
 
-
-	// load accounts
-	d->contactList->loadAccounts(d->pro.acc);
-	checkAccountsEmpty();
-	// try autologin if needed
-	foreach(PsiAccount* account, d->contactList->accounts()) {
-		account->autoLogin();
+	// QCA
+	d->qcaEventHandler = new QCA::EventHandler(this);
+	connect(d->qcaEventHandler,SIGNAL(eventReady(int,const QCA::Event&)),SLOT(qcaEvent(int,const QCA::Event&)));
+	d->qcaEventHandler->start();
+	foreach(QString k, QCA::keyStoreManager()->keyStores()) {
+		QCA::KeyStore* ks = new QCA::KeyStore(k);
+		connect(ks, SIGNAL(updated()), SLOT(pgp_keysUpdated()));
+		PGPUtil::keystores += ks;
 	}
-
-	// show tip of the day
-	if ( PsiOptions::instance()->getOption("options.ui.tip.show").toBool() )
-		TipDlg::show(this);
+	PassphraseDlg::setEventHandler(d->qcaEventHandler);
 
 	return true;
 }
@@ -484,10 +456,8 @@ void PsiCon::deinit()
 	deleteAllDialogs();
 
 	// QCA Keystores
-	foreach(QCA::KeyStore* ks,PGPUtil::keystores)  {
-		delete ks;
-	}
-	PGPUtil::keystores.clear();
+	while(!PGPUtil::keystores.isEmpty())
+		delete PGPUtil::keystores.takeFirst();
 
 	d->idle.stop();
 
@@ -520,24 +490,6 @@ void PsiCon::deinit()
 
 	// save profile
 	d->saveProfile(acc);
-}
-
-void PsiCon::optionsUpdate()
-{
-	// Global shortcuts
-	setShortcuts();
-}
-
-void PsiCon::setShortcuts()
-{
-	// FIX-ME: GlobalShortcutManager::clear() is one big hack,
-	// but people wanted to change global hotkeys without restarting in 0.11
-	GlobalShortcutManager::clear();
-	ShortcutManager::connect("global.event", this, SLOT(recvNextEvent()));
-	ShortcutManager::connect("global.toggle-visibility", d->mainwin, SLOT(toggleVisible()));
-	ShortcutManager::connect("global.bring-to-front", d->mainwin, SLOT(trayShow()));
-	ShortcutManager::connect("global.new-blank-message", this, SLOT(doNewBlankMessage()));
-
 }
 
 ContactView *PsiCon::contactView() const
@@ -595,8 +547,8 @@ void PsiCon::qcaEvent(int id, const QCA::Event& event)
 			d->qcaEventHandler->submitPassword(id,QSecureArray(PGPUtil::passphrases[event.keyStoreEntryId()].utf8()));
 		}
 		else {
+			QCA::KeyStore ks(event.keyStoreId());
 			QString name;
-			QCA::KeyStore ks(event.keyStoreId(), &d->qcaKeyStoreManager);
 			foreach(QCA::KeyStoreEntry e, ks.entryList()) {
 				if (e.id() == event.keyStoreEntryId()) {
 					name = e.name();
@@ -606,13 +558,6 @@ void PsiCon::qcaEvent(int id, const QCA::Event& event)
 		}
 	}
 }
-void PsiCon::keyStoreAvailable(const QString& k)
-{
-	QCA::KeyStore* ks = new QCA::KeyStore(k, &d->qcaKeyStoreManager);
-	connect(ks, SIGNAL(updated()), SLOT(pgp_keysUpdated()));
-	PGPUtil::keystores += ks;
-}
-
 
 void PsiCon::doManageAccounts()
 {
@@ -985,13 +930,6 @@ void PsiCon::doFileTransDlg()
 	bringToFront(d->ftwin);
 }
 
-void PsiCon::checkAccountsEmpty()
-{
-	if (d->pro.acc.count() == 0) {
-		d->promptUserToCreateAccount();
-	}
-}
-
 void PsiCon::doToolbars()
 {
 	OptionsDlg *w = (OptionsDlg *)dialogFind("OptionsDlg");
@@ -1035,7 +973,7 @@ void PsiCon::slotApplyOptions(const Options &opt)
 	}
 #endif
 
-	if ( option.useTabs != oldOpt.useTabs ) {
+	if ( option.useTabs != oldOpt.useTabs || opt.chatLineEdit != oldOpt.chatLineEdit ) {
 		QMessageBox::information(0, tr("Information"), tr("Some of the options you changed will only have full effect upon restart."));
 		notifyRestart = false;
 	}
@@ -1183,7 +1121,7 @@ void PsiCon::recentGCAdd(const QString &str)
 	d->recentGCList.prepend(str);
 
 	// trim the list if bigger than 10
-	while(d->recentGCList.count() > PsiOptions::instance()->getOption("options.muc.recent-joins.maximum").toInt())
+	while(d->recentGCList.count() > 10)
 		d->recentGCList.remove(d->recentGCList.fromLast());
 }
 

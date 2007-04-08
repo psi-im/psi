@@ -58,7 +58,7 @@ public:
 	QSize sizeHint() const;
 
 private slots:
-	void pixmapUpdated();
+	void pixmapUpdated(const QPixmap &);
 
 private:
 	void update();
@@ -101,9 +101,9 @@ void PopupActionButton::setIcon(PsiIcon *i, bool st)
 	showText = st;
 
 	if ( icon ) {
-		pixmapUpdated();
+		pixmapUpdated(icon->pixmap());
 
-		connect(icon, SIGNAL(pixmapChanged()), SLOT(pixmapUpdated()));
+		connect(icon, SIGNAL(pixmapChanged(const QPixmap &)), SLOT(pixmapUpdated(const QPixmap &)));
 		icon->activated();
 	}
 }
@@ -122,9 +122,8 @@ void PopupActionButton::update()
 		QPushButton::setText("");
 }
 
-void PopupActionButton::pixmapUpdated()
+void PopupActionButton::pixmapUpdated(const QPixmap &pix)
 {
-	QPixmap pix = icon ? icon->pixmap() : QPixmap();
 	QPushButton::setIcon(pix);
 	QPushButton::setIconSize(pix.size());
 	update();

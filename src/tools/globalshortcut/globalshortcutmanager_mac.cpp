@@ -223,15 +223,15 @@ public:
 
 		quint32 mod = 0;
 		if (code & Qt::META)
-			mod |= controlKey;
+			mod |= cmdKey;
 		if (code & Qt::SHIFT)
 			mod |= shiftKey;
 		if (code & Qt::CTRL)
-			mod |= cmdKey;
+			mod |= controlKey;
 		if (code & Qt::ALT)
 			mod |= optionKey;
 
-		code &= ~Qt::KeyboardModifierMask;
+		code &= 0xffff;
 		quint32 key = 0;
 		for (int n = 0; qt_keymap[n].qt_key != Qt::Key_unknown; ++n) {
 			if (qt_keymap[n].qt_key == code) {

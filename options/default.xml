@@ -43,9 +43,6 @@
 				<maxstanzas comment="The maximum number of context items that should be sent when entering a room. Use a negative number for an unlimited amount." type="int">-1</maxstanzas>
 				<seconds comment="The maximum number of context seconds that should be sent when entering a room. Use a negative number for an unlimited amount." type="int">-1</seconds>
 			</context>
-			<recent-joins>
-				<maximum comment="The maximum number of recently joined rooms that should be remembered" type="int">10</maximum>
-			</recent-joins>
 		</muc> 
 		<pgp comment="PGP encryption options">
 			<enable comment="Enable PGP globally" type="bool">true</enable>

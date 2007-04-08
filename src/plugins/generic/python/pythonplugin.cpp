@@ -26,7 +26,6 @@
 #include <Python.h>
 
 #include <QtCore>
-#include <QDebug>
 
 #include "psiplugin.h"
 
@@ -102,10 +101,10 @@ bool PythonPlugin::processEvent( const QString& account, QDomNode &event )
 {
 	foreach (QString script, scriptObjects_)
 	{
-		qDebug() << (qPrintable(QString("running it on script %1").arg(script)));
+		qDebug(qPrintable(QString("running it on script %1").arg(script)));
 		QString scriptCall=QString("%1.processEvent(\"\"\"%2\"\"\")").arg(script).arg(toString(event));
 		QString command=QString("%1").arg(scriptCall);
-		qDebug() << (qPrintable(QString("Running python command:\n%1").arg(command)));
+		qDebug(qPrintable(QString("Running python command:\n%1").arg(command)));
 		PyRun_SimpleString(qPrintable(command));
 	}
 	return true;
@@ -128,7 +127,7 @@ QString PythonPlugin::loadScript(const QString& fileName)
 	FILE *file;
 	if ((file = fopen(qPrintable(fileName),"r")) == NULL )
 		return "";
-	qDebug() << (qPrintable(QString("Found script file %1").arg(fileName)));
+	qDebug(qPrintable(QString("Found script file %1").arg(fileName)));
 	PyObject* pyName = PyRun_File(file, qPrintable(fileName), Py_file_input, main_dict_, main_dict_);
 	qDebug("well, we got this far");
 	fclose(file);
@@ -140,7 +139,7 @@ QString PythonPlugin::loadScript(const QString& fileName)
 	}
 	QString name( PyString_AsString( pyName ) );
 	scriptObjects_.append(name);
-	qDebug() << (qPrintable(QString("Found script %1 in the file").arg(name)));
+	qDebug(qPrintable(QString("Found script %1 in the file").arg(name)));
 	return name;
 }
 

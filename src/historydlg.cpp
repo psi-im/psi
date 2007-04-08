@@ -125,9 +125,8 @@ public:
 };
 
 HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
-	: QWidget(0, 0)
+:QWidget(0, 0, Qt::WDestructiveClose)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
   	if ( option.brushedMetal )
 		setAttribute(Qt::WA_MacMetalStyle);
 	d = new Private;
@@ -314,8 +313,14 @@ void HistoryDlg::doSave()
 void HistoryDlg::doErase()
 {
 	int x = QMessageBox::information(this, tr("Confirm erase all"), tr("This will erase all message history for this contact!\nAre you sure you want to do this?"), tr("&Yes"), tr("&No"), QString::null, 1);
-	if (x == 0) {
-		d->h->erase(d->jid);
+	if(x == 0) {
+		QString fname = ApplicationInfo::historyDir() + "/" + JIDUtil::encode(d->jid.userHost()).toLower() + ".history";
+		QFileInfo fi(fname);
+		if(fi.exists()) {
+			QDir dir = fi.dir();
+			dir.remove(fi.fileName());
+		}
+		d->lv->clear();
 	}
 }
 
@@ -384,7 +389,7 @@ printf("\n");*/
 void HistoryDlg::edb_finished()
 {
 	const EDBResult *r = d->h->result();
-	if(d->h->lastRequestType() == EDBHandle::Read && r) {
+	if(r) {
 		//printf("EDB: retrieved %d events:\n", r->count());
 		if(r->count() > 0) {
 			Q3PtrListIterator<EDBItem> it(*r);
@@ -427,18 +432,6 @@ void HistoryDlg::edb_finished()
 				QMessageBox::information(this, tr("Find"), tr("Search string '%1' not found.").arg(d->findStr));
 				return;
 			}
-		}
-	}
-	else if (d->h->lastRequestType() == EDBHandle::Erase) {
-		if (d->h->writeSuccess()) {
-			d->lv->clear();
-			d->id_prev = "";
-			d->id_begin = "";
-			d->id_end = "";
-			d->id_next = "";
-		}
-		else {
-			QMessageBox::critical(this, tr("Error"), tr("Unable to delete history file."));
 		}
 	}
 	else {
@@ -686,14 +679,13 @@ HistoryViewItem::HistoryViewItem(PsiEvent *_e, const QString &eid, int xid, Q3Li
 			setPixmap(0, IconsetFactory::icon("psi/www").impix());
 		else if(e->originLocal())
 			setPixmap(0, IconsetFactory::icon("psi/sendMessage").impix());
-		else if(a)
+		else
 			setPixmap(0, a->impix());
 	}
 	else if(e->type() == PsiEvent::Auth) {
 		AuthEvent *ae = (AuthEvent *)e;
 		text = ae->authType();
-		if (a)
-			setPixmap(0, a->impix());
+		setPixmap(0, a->impix());
 	}
 
 	if(e->originLocal())

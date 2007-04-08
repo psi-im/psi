@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 
@@ -26,521 +26,38 @@ namespace QCA {
 
 Provider::Context *getContext(const QString &type, Provider *p);
 
-/*
-  How this stuff works:
-
-  KeyStoreListContext is queried for a list of KeyStoreContexts.  A signal
-  is used to indicate when the list may have changed, so polling for changes
-  is not necessary.  Every context object created internally by the provider
-  will have a unique contextId, and this is used for detecting changes.  Even
-  if a user removes and inserts the same smart card device, which has the
-  same deviceId, the contextId will ALWAYS be different.  If a previously
-  known contextId is missing from a later queried list, then it means the
-  associated KeyStoreContext has been deleted by the provider (the manager
-  here does not delete them, it just throws away any references).  It is
-  recommended that the provider just use a counter for the contextId,
-  incrementing the value anytime a new context is made.
-*/
-
-/*
-- all keystorelistcontexts in a side thread
-- all keystores also exist in the same side thread
-- mutex protect the entire system, so that nothing happens simultaneously:
-  - every keystore / keystoreentry access method
-  - provider scanning
-  - keystore removal
-- call keystoremanager.start() to initiate system
-- waitfordiscovery counts for all providers found on first scan
-
-- maybe keystore should thread-safe protect all calls
-
-scenarios to handle:
-  - ksm.start shouldn't block
-  - keystore in available list, but gone by the time it is requested
-  - keystore is unavailable during a call to a keystoreentry method
-  - keystore/keystoreentry methods called simultaneously from different threads
-  - and of course, objects from keystores should work, despite being created
-    in the keystore thread
-*/
-
-//----------------------------------------------------------------------------
-// KeyStoreTracker
-//----------------------------------------------------------------------------
-
-static int tracker_id_at = 0;
-
-class KeyStoreTracker : public QObject
-{
-	Q_OBJECT
-public:
-	static KeyStoreTracker *self;
-
-	class Item
-	{
-	public:
-		// combine keystore owner and contextid into a single id
-		int trackerId;
-
-		// number of times the keystore has been updated
-		int updateCount;
-
-		// keystore context
-		KeyStoreListContext *owner;
-		int storeContextId;
-
-		// properties
-		QString storeId;
-		QString name;
-		KeyStore::Type type;
-		bool isReadOnly;
-
-		Item() : trackerId(-1), updateCount(0), owner(0), storeContextId(-1)
-		{
-		}
-	};
-
-	QSet<Provider*> providerSet;
-	QList<KeyStoreListContext*> sources;
-	QList<Item> items;
-	QHash<KeyStoreListContext*,bool> busyStatus;
-	QMutex m;
-	bool startedAll;
-	bool busy;
-
-	KeyStoreTracker()
-	{
-		self = this;
-
-		qRegisterMetaType<QCA::KeyStoreEntry>("QCA::KeyStoreEntry");
-		qRegisterMetaType< QList<QCA::KeyStoreEntry> >("QList<QCA::KeyStoreEntry>");
-		qRegisterMetaType< QList<QCA::KeyStoreEntry::Type> >("QList<QCA::KeyStoreEntry::Type>");
-
-		connect(this, SIGNAL(updated_p()), SIGNAL(updated()), Qt::QueuedConnection);
-
-		startedAll = false;
-		busy = true; // we start out busy
-	}
-
-	~KeyStoreTracker()
-	{
-		qDeleteAll(sources);
-		self = 0;
-	}
-
-	static KeyStoreTracker *instance()
-	{
-		return self;
-	}
-
-	// thread-safe
-	bool isBusy()
-	{
-		// TODO
-		QMutexLocker locker(&m);
-		return busy;
-	}
-
-	// thread-safe
-	QList<KeyStoreTracker::Item> getItems()
-	{
-		// TODO
-		QMutexLocker locker(&m);
-		return items;
-	}
-
-	// thread-safe
-	QString getDText()
-	{
-		// TODO
-		return QString();
-	}
-
-	// thread-safe
-	void clearDText()
-	{
-		// TODO
-	}
-
-public slots:
-	void start()
-	{
-		// grab providers (and default)
-		//scanForPlugins();
-		ProviderList list = providers();
-		list.append(defaultProvider());
-
-		for(int n = 0; n < list.count(); ++n)
-		{
-			Provider *p = list[n];
-			if(p->features().contains("keystorelist") && !providerSet.contains(p))
-				startProvider(p);
-		}
-
-		startedAll = true;
-	}
-
-	void start(const QString &provider)
-	{
-		// grab providers (and default)
-		ProviderList list = providers();
-		list.append(defaultProvider());
-
-		Provider *p = 0;
-		for(int n = 0; n < list.count(); ++n)
-		{
-			if(list[n]->name() == provider)
-			{
-				p = list[n];
-				break;
-			}
-		}
-
-		if(p)
-			startProvider(p);
-	}
-
-	void scan()
-	{
-		if(startedAll)
-			start();
-	}
-
-	QList<QCA::KeyStoreEntry> entryList(int trackerId)
-	{
-		// TODO
-		QList<KeyStoreEntry> out;
-		int contextId = -1;
-		KeyStoreListContext *c;
-		m.lock();
-		foreach(Item i, items)
-		{
-			if(i.trackerId == trackerId)
-			{
-				contextId = i.storeContextId;
-				c = i.owner;
-				break;
-			}
-		}
-		m.unlock();
-		if(contextId == -1)
-			return out;
-		QList<KeyStoreEntryContext*> list = c->entryList(contextId);
-		for(int n = 0; n < list.count(); ++n)
-		{
-			KeyStoreEntry entry;
-			entry.change(list[n]);
-			setEntryAvailable(&entry);
-			out.append(entry);
-		}
-		return out;
-	}
-
-	QList<QCA::KeyStoreEntry::Type> entryTypes(int trackerId)
-	{
-		// TODO
-		QList<KeyStoreEntry::Type> out;
-		int contextId = -1;
-		KeyStoreListContext *c;
-		m.lock();
-		foreach(Item i, items)
-		{
-			if(i.trackerId == trackerId)
-			{
-				contextId = i.storeContextId;
-				c = i.owner;
-				break;
-			}
-		}
-		m.unlock();
-		if(contextId == -1)
-			return out;
-		return c->entryTypes(contextId);
-	}
-
-	// hack with void *
-	void *entry(const QString &storeId, const QString &entryId)
-	{
-		KeyStoreListContext *c = 0;
-		int contextId;
-		m.lock();
-		foreach(Item i, items)
-		{
-			if(i.storeId == storeId)
-			{
-				c = i.owner;
-				contextId = i.storeContextId;
-				break;
-			}
-		}
-		m.unlock();
-		if(!c)
-			return 0;
-
-		return c->entry(contextId, entryId);
-	}
-
-	// hack with void *
-	void *entryPassive(const QString &entryId)
-	{
-		foreach(Item i, items)
-		{
-			// "is this yours?"
-			KeyStoreEntryContext *e = i.owner->entryPassive(i.storeId, entryId);
-			if(e)
-				return e;
-		}
-		return 0;
-	}
-
-signals:
-	// emit this when items or busy state changes
-	void updated();
-	void updated_p();
-
-private:
-	void startProvider(Provider *p)
-	{
-		KeyStoreListContext *c = static_cast<KeyStoreListContext *>(getContext("keystorelist", p));
-		if(!c)
-			return;
-		providerSet += p;
-		sources += c;
-		busyStatus[c] = true;
-		connect(c, SIGNAL(busyStart()), SLOT(ksl_busyStart()));
-		connect(c, SIGNAL(busyEnd()), SLOT(ksl_busyEnd()));
-		connect(c, SIGNAL(updated()), SLOT(ksl_updated()));
-		connect(c, SIGNAL(diagnosticText(const QString &)), SLOT(ksl_diagnosticText(const QString &)));
-		connect(c, SIGNAL(storeUpdated(int)), SLOT(ksl_storeUpdated(int)));
-		c->start();
-		c->setUpdatesEnabled(true);
-		//printf("started provider: %s\n", qPrintable(p->name()));
-	}
-
-	bool updateStores(KeyStoreListContext *c)
-	{
-		QList<int> keyStores = c->keyStores();
-		foreach(int id, keyStores)
-		{
-			QMutexLocker locker(&m);
-
-			// FIXME: this code is just enough to get qcatool
-			//   operational, but is mostly incomplete/wrong
-			//   in any other case
-
-			// don't add dups
-			bool found = false;
-			QString storeId = c->storeId(id);
-			foreach(Item i, items)
-			{
-				if(i.storeId == storeId)
-				{
-					found = true;
-					break;
-				}
-			}
-			if(found)
-				continue;
-
-			Item i;
-			i.trackerId = tracker_id_at++;
-			i.updateCount = 0;
-			i.owner = c;
-			i.storeContextId = id;
-			i.storeId = c->storeId(id);
-			i.name = c->name(id);
-			i.type = c->type(id);
-			i.isReadOnly = c->isReadOnly(id);
-			items += i;
-		}
-		return true;
-	}
-
-	// implemented below, after KeyStoreEntry
-	void setEntryAvailable(KeyStoreEntry *e);
-
-private slots:
-	void ksl_busyStart()
-	{
-		KeyStoreListContext *c = (KeyStoreListContext *)sender();
-		//printf("busyStart: [%s]\n", qPrintable(c->provider()->name()));
-		busyStatus[c] = true;
-	}
-
-	void ksl_busyEnd()
-	{
-		KeyStoreListContext *c = (KeyStoreListContext *)sender();
-		//printf("busyEnd: [%s]\n", qPrintable(c->provider()->name()));
-		bool changed = updateStores(c);
-		busyStatus[c] = false;
-		bool any_busy = false;
-		QHashIterator<KeyStoreListContext*,bool> it(busyStatus);
-		while(it.hasNext())
-		{
-			it.next();
-			if(it.value())
-			{
-				any_busy = true;
-				break;
-			}
-		}
-
-		if(!any_busy)
-		{
-			m.lock();
-			busy = false;
-			m.unlock();
-		}
-
-		if(!any_busy || changed)
-		{
-			//printf("emitting update\n");
-			emit updated_p();
-		}
-	}
-
-	void ksl_updated()
-	{
-		// TODO
-	}
-
-	void ksl_diagnosticText(const QString &str)
-	{
-		// TODO
-		Q_UNUSED(str);
-	}
-
-	void ksl_storeUpdated(int id)
-	{
-		// TODO
-		Q_UNUSED(id);
-	}
-};
-
-KeyStoreTracker *KeyStoreTracker::self = 0;
-
-//----------------------------------------------------------------------------
-// KeyStoreThread
-//----------------------------------------------------------------------------
-class KeyStoreThread : public SyncThread
-{
-	Q_OBJECT
-public:
-	KeyStoreTracker *tracker;
-
-	KeyStoreThread(QObject *parent = 0) : SyncThread(parent)
-	{
-	}
-
-	~KeyStoreThread()
-	{
-		stop();
-	}
-
-	void atStart()
-	{
-		tracker = new KeyStoreTracker;
-	}
-
-	void atEnd()
-	{
-		delete tracker;
-	}
-};
-
-//----------------------------------------------------------------------------
-// KeyStoreGlobal
-//----------------------------------------------------------------------------
-class KeyStoreManagerGlobal;
-
-Q_GLOBAL_STATIC(QMutex, ksm_mutex)
-static KeyStoreManagerGlobal *g_ksm = 0;
-
-class KeyStoreManagerGlobal
-{
-public:
-	KeyStoreThread *thread;
-
-	KeyStoreManagerGlobal()
-	{
-		thread = new KeyStoreThread;
-		thread->moveToThread(QCoreApplication::instance()->thread());
-		thread->start();
-	}
-
-	~KeyStoreManagerGlobal()
-	{
-		delete thread;
-	}
-};
-
-static QVariant trackercall(const char *method, const QVariantList &args = QVariantList())
-{
-	QVariant ret;
-	bool ok;
-	ret = g_ksm->thread->call(KeyStoreTracker::instance(), method, args, &ok);
-	Q_ASSERT(ok);
-	return ret;
-}
+static QMutex *keyStoreMutex = 0;
+static int tracker_register(KeyStore *ks, const QString &str); // returns trackerId
+static void tracker_unregister(KeyStore *ks, int trackerId);
+static KeyStoreListContext *tracker_get_owner(int trackerId);
+static int tracker_get_storeContextId(int trackerId);
+static QString tracker_get_storeId(int trackerId);
 
 //----------------------------------------------------------------------------
 // KeyStoreEntry
 //----------------------------------------------------------------------------
-class KeyStoreEntry::Private
-{
-public:
-	bool available;
-	bool accessible;
-
-	Private()
-	{
-		available = false;
-		accessible = false;
-	}
-};
-
 KeyStoreEntry::KeyStoreEntry()
-:d(new Private)
 {
-}
-
-KeyStoreEntry::KeyStoreEntry(const QString &id)
-:d(new Private)
-{
-	KeyStoreEntryContext *c = (KeyStoreEntryContext *)qVariantValue<void*>(trackercall("entryPassive", QVariantList() << id));
-	if(c)
-		change(c);
 }
 
 KeyStoreEntry::KeyStoreEntry(const KeyStoreEntry &from)
-:Algorithm(from), d(new Private(*from.d))
+:Algorithm(from)
 {
 }
 
 KeyStoreEntry::~KeyStoreEntry()
 {
-	delete d;
 }
 
 KeyStoreEntry & KeyStoreEntry::operator=(const KeyStoreEntry &from)
 {
 	Algorithm::operator=(from);
-	*d = *from.d;
 	return *this;
 }
 
 bool KeyStoreEntry::isNull() const
 {
 	return (!context() ? true : false);
-}
-
-bool KeyStoreEntry::isAvailable() const
-{
-	return d->available;
-}
-
-bool KeyStoreEntry::isAccessible() const
-{
-	return d->accessible;
 }
 
 KeyStoreEntry::Type KeyStoreEntry::type() const
@@ -556,16 +73,6 @@ QString KeyStoreEntry::name() const
 QString KeyStoreEntry::id() const
 {
 	return static_cast<const KeyStoreEntryContext *>(context())->id();
-}
-
-QString KeyStoreEntry::storeName() const
-{
-	return static_cast<const KeyStoreEntryContext *>(context())->storeName();
-}
-
-QString KeyStoreEntry::storeId() const
-{
-	return static_cast<const KeyStoreEntryContext *>(context())->storeId();
 }
 
 KeyBundle KeyStoreEntry::keyBundle() const
@@ -593,171 +100,113 @@ PGPKey KeyStoreEntry::pgpPublicKey() const
 	return static_cast<const KeyStoreEntryContext *>(context())->pgpPublicKey();
 }
 
-bool KeyStoreEntry::ensureAvailable()
-{
-	QString storeId = this->storeId();
-	QString entryId = id();
-	KeyStoreEntryContext *c = (KeyStoreEntryContext *)qVariantValue<void*>(trackercall("entry", QVariantList() << storeId << entryId));
-	if(c)
-	{
-		change(c);
-		d->available = true;
-		return true;
-	}
-	d->available = false;
-	return false;
-}
-
-bool KeyStoreEntry::ensureAccess()
-{
-	if(!ensureAvailable())
-	{
-		d->accessible = false;
-		return false;
-	}
-	bool ok = static_cast<KeyStoreEntryContext *>(context())->ensureAccess();
-	d->accessible = ok;
-	return d->accessible;
-}
-
-// from KeyStoreTracker
-void KeyStoreTracker::setEntryAvailable(KeyStoreEntry *e)
-{
-	e->d->available = true;
-}
-
-//----------------------------------------------------------------------------
-// KeyStoreEntryWatcher
-//----------------------------------------------------------------------------
-/*class KeyStoreEntryWatcher::Private : public QObject
-{
-	Q_OBJECT
-public:
-	KeyStoreEntryWatcher *q;
-	KeyStoreManager ksm;
-	KeyStoreEntry e;
-
-	Private(KeyStoreEntryWatcher *_q) : q(_q)
-	{
-	}
-};*/
-
-KeyStoreEntryWatcher::KeyStoreEntryWatcher(const KeyStoreEntry &e, QObject *parent)
-:QObject(parent)
-{
-	// TODO
-	Q_UNUSED(e);
-	//d = new Private(this);
-}
-
-KeyStoreEntryWatcher::~KeyStoreEntryWatcher()
-{
-	//delete d;
-}
-
-/*void KeyStoreEntryWatcher::start(const KeyStoreEntry &e)
-{
-	// TODO
-	Q_UNUSED(e);
-}
-
-void KeyStoreEntryWatcher::stop()
-{
-	// TODO
-}*/
-
-KeyStoreEntry KeyStoreEntryWatcher::entry() const
-{
-	// TODO
-	return KeyStoreEntry();
-}
-
 //----------------------------------------------------------------------------
 // KeyStore
 //----------------------------------------------------------------------------
-class KeyStorePrivate
+class KeyStore::Private
 {
 public:
-	KeyStore *q;
-	KeyStoreManager *ksm;
-	int trackerId;
-	KeyStoreTracker::Item item;
-
-	KeyStorePrivate(KeyStore *_q) : q(_q)
+	Private() : trackerId(-1), ksl(0), contextId(-1)
 	{
 	}
-
-	// implemented below, after KeyStorePrivate is declared
-	void reg();
-	void unreg();
-	KeyStoreTracker::Item *getItem(const QString &storeId);
-	KeyStoreTracker::Item *getItem(int trackerId);
 
 	void invalidate()
 	{
 		trackerId = -1;
+		ksl = 0;
+		contextId = -1;
+		id = QString();
 	}
+
+	int trackerId;
+	KeyStoreListContext *ksl;
+	int contextId; // store context id
+	QString id; // public store id
 };
 
-KeyStore::KeyStore(const QString &id, KeyStoreManager *keyStoreManager)
-:QObject(keyStoreManager)
+KeyStore::KeyStore(const QString &id, QObject *parent)
+:QObject(parent)
 {
-	d = new KeyStorePrivate(this);
-	d->ksm = keyStoreManager;
-
-	KeyStoreTracker::Item *i = d->getItem(id);
-	if(i)
+	QMutexLocker locker(keyStoreMutex);
+	d = new Private;
+	d->trackerId = tracker_register(this, id);
+	if(d->trackerId != -1)
 	{
-		d->trackerId = i->trackerId;
-		d->item = *i;
+		d->ksl = tracker_get_owner(d->trackerId);
+		d->contextId = tracker_get_storeContextId(d->trackerId);
+		d->id = tracker_get_storeId(d->trackerId);
 	}
-	else
-		d->trackerId = -1;
 }
 
 KeyStore::~KeyStore()
 {
+	QMutexLocker locker(keyStoreMutex);
+	if(d->trackerId != -1)
+		tracker_unregister(this, d->trackerId);
 	delete d;
 }
 
 bool KeyStore::isValid() const
 {
-	return (d->getItem(d->trackerId) ? true : false);
+	QMutexLocker locker(keyStoreMutex);
+	return (d->trackerId != -1);
 }
 
 KeyStore::Type KeyStore::type() const
 {
-	return d->item.type;
+	QMutexLocker locker(keyStoreMutex);
+	if(d->trackerId == -1)
+		return KeyStore::System;
+	return d->ksl->type(d->contextId);
 }
 
 QString KeyStore::name() const
 {
-	return d->item.name;
+	// FIXME: QMutexLocker locker(keyStoreMutex);
+	if(d->trackerId == -1)
+		return QString();
+	return d->ksl->name(d->contextId);
 }
 
 QString KeyStore::id() const
 {
-	return d->item.storeId;
+	QMutexLocker locker(keyStoreMutex);
+	if(d->trackerId == -1)
+		return QString();
+	return d->id;
 }
 
 bool KeyStore::isReadOnly() const
 {
-	return d->item.isReadOnly;
+	QMutexLocker locker(keyStoreMutex);
+	if(d->trackerId == -1)
+		return false;
+	return d->ksl->isReadOnly(d->contextId);
 }
 
 QList<KeyStoreEntry> KeyStore::entryList() const
 {
+	QMutexLocker locker(keyStoreMutex);
+	QList<KeyStoreEntry> out;
 	if(d->trackerId == -1)
-		return QList<KeyStoreEntry>();
-	return qVariantValue< QList<KeyStoreEntry> >(trackercall("entryList", QVariantList() << d->trackerId));
+		return out;
+	QList<KeyStoreEntryContext*> list = d->ksl->entryList(d->contextId);
+	for(int n = 0; n < list.count(); ++n)
+	{
+		KeyStoreEntry entry;
+		entry.change(list[n]);
+		out.append(entry);
+	}
+	//printf("KeyStore::entryList(): %d entries\n", out.count());
+	return out;
 }
 
 bool KeyStore::holdsTrustedCertificates() const
 {
-	QList<KeyStoreEntry::Type> list;
+	QMutexLocker locker(keyStoreMutex);
 	if(d->trackerId == -1)
 		return false;
-	list = qVariantValue< QList<KeyStoreEntry::Type> >(trackercall("entryTypes", QVariantList() << d->trackerId));
+	QList<KeyStoreEntry::Type> list = d->ksl->entryTypes(d->contextId);
 	if(list.contains(KeyStoreEntry::TypeCertificate) || list.contains(KeyStoreEntry::TypeCRL))
 		return true;
 	return false;
@@ -765,10 +214,10 @@ bool KeyStore::holdsTrustedCertificates() const
 
 bool KeyStore::holdsIdentities() const
 {
-	QList<KeyStoreEntry::Type> list;
+	QMutexLocker locker(keyStoreMutex);
 	if(d->trackerId == -1)
 		return false;
-	list = qVariantValue< QList<KeyStoreEntry::Type> >(trackercall("entryTypes", QVariantList() << d->trackerId));
+	QList<KeyStoreEntry::Type> list = d->ksl->entryTypes(d->contextId);
 	if(list.contains(KeyStoreEntry::TypeKeyBundle) || list.contains(KeyStoreEntry::TypePGPSecretKey))
 		return true;
 	return false;
@@ -776,10 +225,10 @@ bool KeyStore::holdsIdentities() const
 
 bool KeyStore::holdsPGPPublicKeys() const
 {
-	QList<KeyStoreEntry::Type> list;
+	QMutexLocker locker(keyStoreMutex);
 	if(d->trackerId == -1)
 		return false;
-	list = qVariantValue< QList<KeyStoreEntry::Type> >(trackercall("entryTypes", QVariantList() << d->trackerId));
+	QList<KeyStoreEntry::Type> list = d->ksl->entryTypes(d->contextId);
 	if(list.contains(KeyStoreEntry::TypePGPPublicKey))
 		return true;
 	return false;
@@ -820,278 +269,558 @@ bool KeyStore::removeEntry(const QString &id)
 	return false;
 }
 
+/*void KeyStore::submitPassphrase(int requestId, const QSecureArray &passphrase)
+{
+	// FIXME: QMutexLocker locker(keyStoreMutex);
+	if(d->trackerId == -1)
+		return;
+	d->ksl->submitPassphrase(d->contextId, requestId, passphrase);
+}
+
+void KeyStore::rejectPassphraseRequest(int requestId)
+{
+	// FIXME: QMutexLocker locker(keyStoreMutex);
+	if(d->trackerId == -1)
+		return;
+	d->ksl->rejectPassphraseRequest(d->contextId, requestId);
+}*/
+
+void KeyStore::invalidate()
+{
+	d->invalidate();
+}
+
 //----------------------------------------------------------------------------
-// KeyStoreManager
+// KeyStoreTracker
 //----------------------------------------------------------------------------
-static void ensure_init()
-{
-	QMutexLocker locker(ksm_mutex());
-	if(!g_ksm)
-		g_ksm = new KeyStoreManagerGlobal;
-}
 
-// static functions
-void KeyStoreManager::start()
-{
-	scanForPlugins();
-	ensure_init();
-	QMetaObject::invokeMethod(KeyStoreTracker::instance(), "start", Qt::QueuedConnection);
-}
+/*
+  How this stuff works:
 
-void KeyStoreManager::start(const QString &provider)
-{
-	ensure_init();
-	QMetaObject::invokeMethod(KeyStoreTracker::instance(), "start", Qt::QueuedConnection, Q_ARG(QString, provider));
-}
+  KeyStoreListContext is queried for a list of KeyStoreContexts.  A signal
+  is used to indicate when the list may have changed, so polling for changes
+  is not necessary.  Every context object created internally by the provider
+  will have a unique contextId, and this is used for detecting changes.  Even
+  if a user removes and inserts the same smart card device, which has the
+  same deviceId, the contextId will ALWAYS be different.  If a previously
+  known contextId is missing from a later queried list, then it means the
+  associated KeyStoreContext has been deleted by the provider (the manager
+  here does not delete them, it just throws away any references).  It is
+  recommended that the provider just use a counter for the contextId,
+  incrementing the value anytime a new context is made.
+*/
 
-QString KeyStoreManager::diagnosticText()
-{
-	ensure_init();
-	return KeyStoreTracker::instance()->getDText();
-}
+/*
+- all keystorelistcontexts in a side thread
+- all keystores also exist in the same side thread
+- mutex protect the entire system, so that nothing happens simultaneously:
+  - every keystore / keystoreentry access method
+  - provider scanning
+  - keystore removal
+- call keystoremanager.start() to initiate system
+- waitfordiscovery counts for all providers found on first scan
 
-void KeyStoreManager::clearDiagnosticText()
-{
-	ensure_init();
-	KeyStoreTracker::instance()->clearDText();
-}
+- maybe keystore should thread-safe protect all calls
 
-void KeyStoreManager::scan()
-{
-	ensure_init();
-	QMetaObject::invokeMethod(KeyStoreTracker::instance(), "scan", Qt::QueuedConnection);
-}
+scenarios to handle:
+  - ksm.start shouldn't block
+  - keystore in available list, but gone by the time it is requested
+  - keystore is unavailable during a call to a keystoreentry method
+  - keystore/keystoreentry methods called simultaneously from different threads
+  - and of course, objects from keystores should work, despite being created
+    in the keystore thread
+*/
 
-void KeyStoreManager::shutdown()
+class KeyStoreManagerPrivate
 {
-	QMutexLocker locker(ksm_mutex());
-	delete g_ksm;
-	g_ksm = 0;
-}
+public:
+	KeyStoreManager *q;
+	KeyStoreThread *thread;
+	QString dtext;
 
-// object
-class KeyStoreManagerPrivate : public QObject
+	KeyStoreManagerPrivate(KeyStoreManager *);
+	~KeyStoreManagerPrivate();
+};
+
+class KeyStoreTracker;
+static KeyStoreTracker *trackerInstance = 0;
+
+class KeyStoreTracker : public QObject
 {
 	Q_OBJECT
 public:
-	KeyStoreManager *q;
-
-	QMutex m;
-	QWaitCondition w;
-	bool busy;
-	QList<KeyStoreTracker::Item> items;
-	bool pending, waiting;
-
-	QMultiHash<int,KeyStore*> keyStoreForTrackerId;
-	QHash<KeyStore*,int> trackerIdForKeyStore;
-
-	KeyStoreManagerPrivate(KeyStoreManager *_q) : QObject(_q), q(_q)
+	// "public"
+	class Item
 	{
-		pending = false;
-		waiting = false;
+	public:
+		int trackerId;
+		KeyStoreListContext *owner;
+		int storeContextId;
+		QString storeId;
+
+		Item() : trackerId(-1), owner(0), storeContextId(-1) {}
+	};
+	QList<Item*> stores;
+	QHash<int, Item*> storesByTrackerId;
+	QHash<QString, Item*> storesByStoreId;
+
+	typedef QList<KeyStore*> PublicReferences;
+	QHash<int, PublicReferences> refHash;
+
+	// "private"
+	KeyStoreManager *ksm;
+	int trackerId_at;
+	QSet<Provider*> providerSet;
+	bool first_scan;
+	QList<KeyStoreListContext*> sources;
+	QSet<KeyStoreListContext*> initialDiscoverySet;
+	bool has_initdisco;
+
+	QList<Item> added;
+	QList<int> removed;
+
+	KeyStoreTracker(QObject *parent = 0) : QObject(parent)
+	{
+		trackerInstance = this;
+		trackerId_at = 0;
+		first_scan = true;
+		ksm = keyStoreManager(); // global qca function
+		keyStoreMutex = new QMutex;
+		has_initdisco = false;
 	}
 
-	// for keystore
-	void reg(KeyStore *ks, int trackerId)
+	~KeyStoreTracker()
 	{
-		keyStoreForTrackerId.insert(trackerId, ks);
-		trackerIdForKeyStore.insert(ks, trackerId);
+		qDeleteAll(stores);
+		qDeleteAll(sources);
+		delete keyStoreMutex;
+		keyStoreMutex = 0;
+		trackerInstance = 0;
 	}
 
-	void unreg(KeyStore *ks)
+	bool hasInitialDiscovery() const
 	{
-		int trackerId = trackerIdForKeyStore.take(ks);
-
-		// this is the only way I know to remove one item from a multihash
-		QList<KeyStore*> vals = keyStoreForTrackerId.values(trackerId);
-		keyStoreForTrackerId.remove(trackerId);
-		vals.removeAll(ks);
-		foreach(KeyStore *i, vals)
-			keyStoreForTrackerId.insert(trackerId, i);
-	}
-
-	KeyStoreTracker::Item *getItem(const QString &storeId)
-	{
-		for(int n = 0; n < items.count(); ++n)
-		{
-			KeyStoreTracker::Item *i = &items[n];
-			if(i->storeId == storeId)
-				return i;
-		}
-		return 0;
-	}
-
-	KeyStoreTracker::Item *getItem(int trackerId)
-	{
-		for(int n = 0; n < items.count(); ++n)
-		{
-			KeyStoreTracker::Item *i = &items[n];
-			if(i->trackerId == trackerId)
-				return i;
-		}
-		return 0;
-	}
-
-	void do_update()
-	{
-		QPointer<QObject> self(this); // for signal-safety
-
-		bool newbusy = KeyStoreTracker::instance()->isBusy();
-		QList<KeyStoreTracker::Item> newitems = KeyStoreTracker::instance()->getItems();
-
-		if(!busy && newbusy)
-		{
-			emit q->busyStarted();
-			if(!self)
-				return;
-		}
-		if(busy && !newbusy)
-		{
-			emit q->busyFinished();
-			if(!self)
-				return;
-		}
-
-		QStringList here;
-		QList<int> changed;
-		QList<int> gone;
-
-		// removed
-		for(int n = 0; n < items.count(); ++n)
-		{
-			KeyStoreTracker::Item &i = items[n];
-			bool found = false;
-			for(int k = 0; k < newitems.count(); ++k)
-			{
-				if(i.trackerId == newitems[k].trackerId)
-				{
-					found = true;
-					break;
-				}
-			}
-			if(!found)
-				gone += i.trackerId;
-		}
-
-		// changed
-		for(int n = 0; n < items.count(); ++n)
-		{
-			KeyStoreTracker::Item &i = items[n];
-			for(int k = 0; k < newitems.count(); ++k)
-			{
-				if(i.trackerId == newitems[k].trackerId)
-				{
-					if(i.updateCount < newitems[k].updateCount)
-						changed += i.trackerId;
-					break;
-				}
-			}
-		}
-
-		// added
-		for(int n = 0; n < newitems.count(); ++n)
-		{
-			KeyStoreTracker::Item &i = newitems[n];
-			bool found = false;
-			for(int k = 0; k < items.count(); ++k)
-			{
-				if(i.trackerId == items[k].trackerId)
-				{
-					found = true;
-					break;
-				}
-			}
-			if(!found)
-				here += i.storeId;
-		}
-
-		// signals
-		foreach(int trackerId, gone)
-		{
-			KeyStore *ks = keyStoreForTrackerId.value(trackerId);
-			if(ks)
-			{
-				ks->d->invalidate();
-				emit ks->unavailable();
-				if(!self)
-					return;
-			}
-		}
-
-		foreach(int trackerId, changed)
-		{
-			KeyStore *ks = keyStoreForTrackerId.value(trackerId);
-			if(ks)
-			{
-				emit ks->updated();
-				if(!self)
-					return;
-			}
-		}
-
-		foreach(QString storeId, here)
-		{
-			emit q->keyStoreAvailable(storeId);
-			if(!self)
-				return;
-		}
-
-		busy = newbusy;
-		items = newitems;
+		QMutexLocker locker(keyStoreMutex);
+		return has_initdisco;
 	}
 
 public slots:
-	void tracker_updated()
+	void scan()
 	{
-		QMutexLocker locker(&m);
-		if(!pending)
+		//QTimer::singleShot(3000, this, SIGNAL(initialDiscovery()));
+		//QTimer::singleShot(6000, this, SIGNAL(initialDiscovery()));
+
+		QMutexLocker locker(keyStoreMutex);
+
+		// grab providers (and default)
+		ProviderList list = providers();
+		list.append(defaultProvider());
+
+		for(int n = 0; n < list.count(); ++n)
 		{
-			QMetaObject::invokeMethod(this, "update", Qt::QueuedConnection);
-			pending = true;
+			Provider *p = list[n];
+			if(p->features().contains("keystorelist") && !providerSet.contains(p))
+			{
+				KeyStoreListContext *c = static_cast<KeyStoreListContext *>(getContext("keystorelist", p));
+				if(!c)
+					continue;
+				providerSet += p;
+				sources += c;
+				if(first_scan)
+				{
+					initialDiscoverySet += c;
+					connect(c, SIGNAL(busyEnd()), SLOT(ksl_busyEnd()));
+				}
+				connect(c, SIGNAL(updated()), SLOT(ksl_updated()));
+				connect(c, SIGNAL(diagnosticText(const QString &)), SLOT(ksl_diagnosticText(const QString &)));
+				connect(c, SIGNAL(storeUpdated(int)), SLOT(ksl_storeUpdated(int)));
+				//connect(c, SIGNAL(storeNeedPassphrase(int, int, const QString &)), SLOT(ksl_storeNeedPassphrase(int, int, const QString &)), Qt::DirectConnection);
+				c->start();
+				c->setUpdatesEnabled(true);
+				check(c);
+			}
 		}
-		if(waiting && !KeyStoreTracker::instance()->isBusy())
-			w.wakeOne();
+
+		flush();
+
+		// nothing found?
+		if(first_scan && initialDiscoverySet.isEmpty())
+			emit initialDiscovery();
+
+		first_scan = false;
 	}
 
-	void update()
-	{
-		m.lock();
-		pending = false;
-		m.unlock();
+signals:
+	void initialDiscovery();
 
-		do_update();
+private slots:
+	void ksl_busyEnd()
+	{
+		QMutexLocker locker(keyStoreMutex);
+
+		//printf("ksl_initialDiscovery [%p]\n", sender);
+
+		KeyStoreListContext *ksl = (KeyStoreListContext *)sender();
+		check(ksl);
+		flush();
+
+		if(!initialDiscoverySet.contains(ksl))
+			return;
+
+		//keyStoreMutex->lock();
+		initialDiscoverySet.remove(ksl);
+		if(initialDiscoverySet.isEmpty())
+		{
+		//	keyStoreMutex->unlock();
+			has_initdisco = true;
+			emit initialDiscovery();
+		}
+		//else
+		//	keyStoreMutex->unlock();
+	}
+
+	void ksl_updated()
+	{
+		QMutexLocker locker(keyStoreMutex);
+		KeyStoreListContext *ksl = (KeyStoreListContext *)sender();
+
+		check(ksl);
+		flush();
+	}
+
+	void ksl_diagnosticText(const QString &str)
+	{
+		KeyStoreListContext *ksl = (KeyStoreListContext *)sender();
+		QString name = ksl->provider()->name();
+		ksm->d->dtext += QString("%1: %2\n").arg(name).arg(str);
+	}
+
+	void ksl_storeUpdated(int contextId)
+	{
+		QMutexLocker locker(keyStoreMutex);
+		KeyStoreListContext *ksl = (KeyStoreListContext *)sender();
+
+		Item *item = findByOwnerAndContext(ksl, contextId);
+		if(!item)
+			return;
+
+		PublicReferences refs = refHash.value(item->trackerId);
+		for(int n = 0; n < refs.count(); ++n)
+		{
+			KeyStore *ks = refs[n];
+			emit ks->updated();
+		}
+	}
+
+	/*void ksl_storeNeedPassphrase(int contextId, int requestId, const QString &entryId)
+	{
+		KeyStoreListContext *ksl = (KeyStoreListContext *)sender();
+
+		PublicReferences refs;
+
+		{
+			// FIXME: QMutexLocker locker(keyStoreMutex);
+
+			//printf("ksl_storeNeedPassphrase [%p]\n", sender);
+
+			Item *item = findByOwnerAndContext(ksl, contextId);
+			if(!item)
+				return;
+
+			refs = refHash.value(item->trackerId);
+		}
+
+		for(int n = 0; n < refs.count(); ++n)
+		{
+			KeyStore *ks = refs[n];
+			emit ks->needPassphrase(requestId, entryId); // FIXME
+		}
+	}*/
+
+private:
+	Item *findByOwnerAndContext(KeyStoreListContext *owner, int contextId)
+	{
+		Item *item = 0;
+		for(int n = 0; n < stores.count(); ++n)
+		{
+			if(stores[n]->owner == owner && stores[n]->storeContextId == contextId)
+			{
+				item = stores[n];
+				break;
+			}
+		}
+		return item;
+	}
+
+	bool have_store_local(KeyStoreListContext *c, int id)
+	{
+		for(int n = 0; n < stores.count(); ++n)
+		{
+			if(stores[n]->owner == c && stores[n]->storeContextId == id)
+				return true;
+		}
+		return false;
+	}
+
+	bool have_store_incoming(const QList<int> &keyStores, int id)
+	{
+		for(int n = 0; n < keyStores.count(); ++n)
+		{
+			if(keyStores[n] == id)
+				return true;
+		}
+		return false;
+	}
+
+	void check(KeyStoreListContext *c)
+	{
+		QList<int> keyStores = c->keyStores();
+		for(int n = 0; n < keyStores.count(); ++n)
+		{
+			if(!have_store_local(c, keyStores[n]))
+			{
+				Item i;
+				i.owner = c;
+				i.storeContextId = keyStores[n];
+				added += i;
+			}
+		}
+		for(int n = 0; n < stores.count(); ++n)
+		{
+			if(stores[n]->owner == c && !have_store_incoming(keyStores, stores[n]->storeContextId))
+				removed += stores[n]->trackerId;
+		}
+	}
+
+	void flush()
+	{
+		// removed
+		for(int n = 0; n < removed.count(); ++n)
+		{
+			int trackerId = removed[n];
+			int index = -1;
+			for(int i = 0; i < stores.count(); ++i)
+			{
+				if(stores[i]->trackerId == trackerId)
+				{
+					index = i;
+					break;
+				}
+			}
+			if(index != -1)
+			{
+				Item *item = stores[index];
+				stores.removeAt(index);
+				storesByTrackerId.remove(item->trackerId);
+				storesByStoreId.remove(item->storeId);
+				delete item;
+				PublicReferences refs = refHash.value(trackerId);
+				refHash.remove(trackerId);
+				for(int refIdx = 0; refIdx < refs.count(); ++refIdx)
+				{
+					KeyStore *ks = refs[refIdx];
+					ks->invalidate();
+					emit ks->unavailable();
+				}
+			}
+		}
+		removed.clear();
+
+		// added
+		for(int n = 0; n < added.count(); ++n)
+		{
+			Item *i = new Item(added[n]);
+			i->storeId = i->owner->storeId(i->storeContextId);
+			if(i->storeId.isEmpty())
+			{
+				delete i;
+				continue;
+			}
+			i->trackerId = trackerId_at++;
+			stores += i;
+			storesByTrackerId[i->trackerId] = i;
+			storesByStoreId[i->storeId] = i;
+			emit ksm->keyStoreAvailable(i->storeId);
+		}
+		added.clear();
 	}
 };
 
-// from KeyStorePrivate
-void KeyStorePrivate::reg()
+int tracker_register(KeyStore *ks, const QString &str)
 {
-	ksm->d->reg(q, trackerId);
+	KeyStoreTracker::Item *item = trackerInstance->storesByStoreId.value(str);
+	if(!item)
+		return -1;
+	int trackerId = item->trackerId;
+	trackerInstance->refHash[trackerId] += ks;
+	return trackerId;
 }
 
-void KeyStorePrivate::unreg()
+void tracker_unregister(KeyStore *ks, int trackerId)
 {
-	ksm->d->unreg(q);
+	trackerInstance->refHash[trackerId].removeAll(ks);
 }
 
-KeyStoreTracker::Item *KeyStorePrivate::getItem(const QString &storeId)
+KeyStoreListContext *tracker_get_owner(int trackerId)
 {
-	return ksm->d->getItem(storeId);
+	KeyStoreTracker::Item *item = trackerInstance->storesByTrackerId.value(trackerId);
+	if(!item)
+		return 0;
+	return item->owner;
 }
 
-KeyStoreTracker::Item *KeyStorePrivate::getItem(int trackerId)
+int tracker_get_storeContextId(int trackerId)
 {
-	return ksm->d->getItem(trackerId);
+	KeyStoreTracker::Item *item = trackerInstance->storesByTrackerId.value(trackerId);
+	if(!item)
+		return -1;
+	return item->storeContextId;
 }
 
-KeyStoreManager::KeyStoreManager(QObject *parent)
-:QObject(parent)
+QString tracker_get_storeId(int trackerId)
 {
-	ensure_init();
+	KeyStoreTracker::Item *item = trackerInstance->storesByTrackerId.value(trackerId);
+	if(!item)
+		return QString();
+	return item->storeId;
+}
+
+/*class KeyStoreApp : public QObject
+{
+	Q_OBJECT
+public:
+	KeyStoreApp()
+	{
+	}
+
+	~KeyStoreApp()
+	{
+	}
+
+signals:
+	void foo();
+
+public slots:
+	void quit()
+	{
+	}
+};*/
+
+class KeyStoreThread : public QThread
+{
+	Q_OBJECT
+public:
+	QMutex control_mutex;
+	QWaitCondition control_wait;
+	QEventLoop *loop;
+	bool waiting;
+
+	KeyStoreThread(QObject *parent) : QThread(parent)
+	{
+		loop = 0;
+		waiting = false;
+	}
+
+	~KeyStoreThread()
+	{
+		stop();
+	}
+
+	void start()
+	{
+		control_mutex.lock();
+		QThread::start();
+		control_wait.wait(&control_mutex);
+		control_mutex.unlock();
+		//printf("thread: started\n");
+	}
+
+	void stop()
+	{
+		//printf("thread: stopping\n");
+		{
+			QMutexLocker locker(&control_mutex);
+			if(loop)
+				QMetaObject::invokeMethod(loop, "quit");
+		}
+		wait();
+		//printf("thread: stopped\n");
+	}
+
+	void scan()
+	{
+		//printf("scan\n");
+		QMetaObject::invokeMethod(trackerInstance, "scan", Qt::QueuedConnection);
+	}
+
+	void waitForInitialDiscovery()
+	{
+		if(trackerInstance->hasInitialDiscovery())
+			return;
+
+		//printf("thread: waiting for initial discovery\n");
+		control_mutex.lock();
+		waiting = true;
+		control_wait.wait(&control_mutex);
+		waiting = false;
+		control_mutex.unlock();
+		//printf("thread: wait finished\n");
+	}
+
+protected:
+	virtual void run()
+	{
+		control_mutex.lock();
+		KeyStoreTracker tracker;
+		connect(&tracker, SIGNAL(initialDiscovery()), SLOT(tracker_initialDiscovery()), Qt::DirectConnection);
+		//KeyStoreApp app;
+		//connect(&app, SIGNAL(foo()), SLOT(tracker_initialDiscovery()), Qt::DirectConnection);
+		//QTimer::singleShot(3000, &app, SIGNAL(foo()));
+		//QTimer::singleShot(6000, &app, SIGNAL(foo()));
+		loop = new QEventLoop; // TODO: delete this at some point
+		control_wait.wakeOne();
+		control_mutex.unlock();
+		loop->exec();
+		QMutexLocker locker(&control_mutex);
+		loop = 0;
+	}
+
+private slots:
+	void tracker_initialDiscovery()
+	{
+		//printf("tracker_initialDiscovery\n");
+		control_mutex.lock();
+		if(waiting)
+		{
+			control_wait.wakeOne();
+			control_mutex.unlock();
+		}
+		else
+		{
+			control_mutex.unlock();
+			KeyStoreManager *ksm = keyStoreManager();
+			emit ksm->busyFinished();
+		}
+	}
+};
+
+//----------------------------------------------------------------------------
+// KeyStoreManager
+//----------------------------------------------------------------------------
+KeyStoreManagerPrivate::KeyStoreManagerPrivate(KeyStoreManager *_q)
+:q(_q)
+{
+	thread = 0;
+}
+
+KeyStoreManagerPrivate::~KeyStoreManagerPrivate()
+{
+	delete thread;
+}
+
+KeyStoreManager::KeyStoreManager()
+{
 	d = new KeyStoreManagerPrivate(this);
-	d->connect(KeyStoreTracker::instance(), SIGNAL(updated()),
-		SLOT(tracker_updated()), Qt::DirectConnection);
-	sync();
 }
 
 KeyStoreManager::~KeyStoreManager()
@@ -1099,36 +828,75 @@ KeyStoreManager::~KeyStoreManager()
 	delete d;
 }
 
+void KeyStoreManager::start()
+{
+	if(d->thread)
+		return;
+
+	moveToThread(QCoreApplication::instance()->thread());
+	d->thread = new KeyStoreThread(this);
+	d->thread->start();
+	scan();
+}
+
+void KeyStoreManager::start(const QString &provider)
+{
+	Q_UNUSED(provider);
+	start();
+}
+
 bool KeyStoreManager::isBusy() const
 {
-	return d->busy;
+	return !(trackerInstance->hasInitialDiscovery());
 }
 
 void KeyStoreManager::waitForBusyFinished()
 {
-	d->m.lock();
-	d->busy = KeyStoreTracker::instance()->isBusy();
-	if(d->busy)
-	{
-		d->waiting = true;
-		d->w.wait(&d->m);
-		d->waiting = false;
-	}
-	d->m.unlock();
+	d->thread->waitForInitialDiscovery();
 }
 
 QStringList KeyStoreManager::keyStores() const
 {
-	QStringList out;
-	for(int n = 0; n < d->items.count(); ++n)
-		out += d->items[n].storeId;
-	return out;
+	if(trackerInstance)
+	{
+		QMutexLocker locker(keyStoreMutex);
+		QStringList out;
+		for(int n = 0; n < trackerInstance->stores.count(); ++n)
+		{
+			KeyStoreTracker::Item *i = trackerInstance->stores[n];
+			out += i->storeId;
+		}
+		return out;
+	}
+	else
+		return QStringList();
 }
 
-void KeyStoreManager::sync()
+int KeyStoreManager::count() const
 {
-	d->busy = KeyStoreTracker::instance()->isBusy();
-	d->items = KeyStoreTracker::instance()->getItems();
+	if(trackerInstance)
+	{
+		QMutexLocker locker(keyStoreMutex);
+		return trackerInstance->stores.count();
+	}
+	else
+		return 0;
+}
+
+QString KeyStoreManager::diagnosticText() const
+{
+	return d->dtext;
+}
+
+void KeyStoreManager::clearDiagnosticText()
+{
+	d->dtext = QString();
+}
+
+void KeyStoreManager::scan() const
+{
+	scanForPlugins();
+	d->thread->scan();
 }
 
 }

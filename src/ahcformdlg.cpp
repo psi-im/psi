@@ -29,11 +29,8 @@
 #include "psiaccount.h"
 #include "busywidget.h"
 
-AHCFormDlg::AHCFormDlg(const AHCommand& r, const Jid& receiver, XMPP::Client* client, bool final)
-	: QDialog(NULL), receiver_(receiver), client_(client)
+AHCFormDlg::AHCFormDlg(const AHCommand& r, const Jid& receiver, XMPP::Client* client, bool final) : QDialog(NULL, Qt::WDestructiveClose), receiver_(receiver), client_(client)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
-
 	// Save node
 	node_ = r.node();
 	sessionId_ = r.sessionId();

@@ -17,7 +17,7 @@
   </property>
   <layout class="QVBoxLayout" >
    <property name="margin" >
-    <number>9</number>
+    <number>8</number>
    </property>
    <property name="spacing" >
     <number>6</number>
@@ -95,6 +95,17 @@
       </item>
       <item row="0" column="0" colspan="4" >
        <widget class="IconsetSelect" name="iss_emoticons" >
+        <property name="font" >
+         <font>
+          <family></family>
+          <pointsize>12</pointsize>
+          <weight>50</weight>
+          <italic>false</italic>
+          <bold>false</bold>
+          <underline>false</underline>
+          <strikeout>false</strikeout>
+         </font>
+        </property>
         <property name="selectionMode" >
          <enum>QAbstractItemView::MultiSelection</enum>
         </property>

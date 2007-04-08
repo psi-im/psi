@@ -49,10 +49,7 @@ public:
 class IconsetDetailsDlg : public QDialog, public Ui::IconsetDetailsDlg
 {
 public:
-	IconsetDetailsDlg(QWidget* parent, const char* name, bool modal)
-		: QDialog(parent)
-	{
-		setAttribute(Qt::WA_DeleteOnClose);
+	IconsetDetailsDlg(QWidget* parent, const char* name, bool modal, Qt::WFlags f) : QDialog(parent,f) { 
 		setupUi(this); 
 		
 		QStringList bold_labels;
@@ -130,7 +127,7 @@ public:
 
 static void isDetails(const Iconset &is, QWidget *parent)
 {
-	IconsetDetailsDlg *isd = new IconsetDetailsDlg(parent, "IconsetDetailsDlg", false);
+	IconsetDetailsDlg *isd = new IconsetDetailsDlg(parent, "IconsetDetailsDlg", false, Qt::WDestructiveClose);
 	isd->setIconset(is);
 	isd->show();
 }

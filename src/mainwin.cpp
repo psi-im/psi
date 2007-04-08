@@ -37,10 +37,6 @@
 #include <QMenu>
 #include <QMenuItem>
 
-#ifdef Q_WS_WIN
-#include <windows.h>
-#endif
-
 #include "im.h"
 #include "common.h"
 #include "showtextdlg.h"
@@ -57,7 +53,6 @@
 #include "psipopup.h"
 #include "psioptions.h"
 #include "tipdlg.h"
-#include "mucjoindlg.h"
 #include "psicontactlist.h"
 
 #include "mainwin_p.h"
@@ -214,14 +209,8 @@ void MainWin::Private::updateMenu(QStringList actions, QMenu *menu)
 //#ifdef Q_WS_X11
 //#define TOOLW_FLAGS WStyle_Customize
 //#else
-//#define TOOLW_FLAGS ((Qt::WFlags) 0)
-//#endif
-
-#ifdef Q_WS_WIN
-#define TOOLW_FLAGS (Qt::WindowMinimizeButtonHint)
-#else
 #define TOOLW_FLAGS ((Qt::WFlags) 0)
-#endif
+//#endif
 
 MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 :AdvancedWidget<Q3MainWindow>(0, (_onTop ? Qt::WStyle_StaysOnTop : Qt::Widget) | (_asTool ? (Qt::WStyle_Tool |TOOLW_FLAGS) : Qt::Widget))
@@ -310,6 +299,10 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 
 	decorateButton(STATUS_OFFLINE);
 
+	// show tip of the day
+	if ( PsiOptions::instance()->getOption("options.ui.tip.show").toBool() )
+		actTipActivated();
+
 	// Mac-only menus
 #ifdef Q_WS_MAC
 	QMenu *mainMenu = new QMenu(this);
@@ -353,7 +346,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	d->getAction("help_online_help")->addTo (helpMenu);
 	d->getAction("help_online_wiki")->addTo (helpMenu);
 	d->getAction("help_online_home")->addTo (helpMenu);
-	d->getAction("help_psi_muc")->addTo (helpMenu);
 	d->getAction("help_report_bug")->addTo (helpMenu);
 #else
 	if (option.hideMenubar) 
@@ -431,7 +423,6 @@ void MainWin::registerAction( IconAction *action )
 		{ "help_online_help", activated, this, SLOT( actOnlineHelpActivated() ) },
 		{ "help_online_wiki", activated, this, SLOT( actOnlineWikiActivated() ) },
 		{ "help_online_home", activated, this, SLOT( actOnlineHomeActivated() ) },
-		{ "help_psi_muc",     activated, this, SLOT( actJoinPsiMUCActivated() ) },
 		{ "help_report_bug",  activated, this, SLOT( actBugReportActivated() ) },
 		{ "help_about",       activated, this, SLOT( actAboutActivated() ) },
 		{ "help_about_qt",    activated, this, SLOT( actAboutQtActivated() ) },
@@ -514,7 +505,7 @@ void MainWin::setWindowOpts(bool _onTop, bool _asTool)
 
 void MainWin::setUseDock(bool use)
 {
-	if(use == false || d->tray) {
+	if(use == false || (d->tray && option.isWMDock != d->tray->isWMDock())) {
 		if(d->tray) {
 			delete d->tray;
 			d->tray = 0;
@@ -643,7 +634,6 @@ void MainWin::buildOptionsMenu()
 	        << "help_online_help"
 	        << "help_online_wiki"
 	        << "help_online_home"
-	        << "help_psi_muc"
 	        << "help_report_bug"
 	        << "separator"
 	        << "help_about"
@@ -728,18 +718,6 @@ void MainWin::actOnlineHomeActivated ()
 	QDesktopServices::openUrl(QUrl("http://psi-im.org"));
 }
 
-void MainWin::actJoinPsiMUCActivated()
-{
-	PsiAccount *account = d->psi->contactList()->defaultAccount();
-	if(!account)
-		return;
-
-	MUCJoinDlg *w = new MUCJoinDlg(d->psi, account);
-	w->le_host->setText("conference.psi-im.org");
-	w->le_room->setText("psi");
-	w->show();
-}
-
 void MainWin::actBugReportActivated ()
 {
 	QDesktopServices::openUrl(QUrl("http://psi-im.org/forum/forum/2"));
@@ -753,7 +731,8 @@ void MainWin::actAboutActivated ()
 
 void MainWin::actTipActivated ()
 {
-	TipDlg::show(d->psi);
+	TipDlg *tip = new TipDlg (this);
+	tip->show();
 }
 
 void MainWin::actAboutQtActivated ()
@@ -826,21 +805,16 @@ void MainWin::decorateButton(int status)
 
 	if(status == -1) {
 		d->statusButton->setText(tr("Connecting"));
-		if (option.alertStyle != 0) {
+		if (option.alertStyle != 0)
 			d->statusButton->setAlert(IconsetFactory::iconPtr("psi/connect"));
-			d->statusGroup->setPsiIcon(IconsetFactory::iconPtr("psi/connect"));
-		}
-		else {
+		else
 			d->statusButton->setIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
-			d->statusGroup->setPsiIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
-		}
 
 		setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).impix());
 	}
 	else {
 		d->statusButton->setText(status2txt(status));
 		d->statusButton->setIcon(PsiIconset::instance()->statusPtr(status));
-		d->statusGroup->setPsiIcon(PsiIconset::instance()->statusPtr(status));
 
 		setWindowIcon(PsiIconset::instance()->status(status).impix());
 	}
@@ -908,20 +882,6 @@ void MainWin::keyPressEvent(QKeyEvent *e)
 
 	QWidget::keyPressEvent(e);
 }
-
-#ifdef Q_WS_WIN
-#include <windows.h>
-bool MainWin::winEvent(MSG *msg, long *result)
-{
-	if (d->asTool && msg->message == WM_SYSCOMMAND && msg->wParam == SC_MINIMIZE) {
-		hide();	// minimized toolwindows look bad on Windows, so let's just hide it instead
-			// plus we cannot do this in changeEvent(), because it's called too late
-		*result = 0;
-		return true;	// don't let Qt process this event
-	}
-	return false;
-}
-#endif
 
 void MainWin::updateCaption()
 {

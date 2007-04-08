@@ -972,7 +972,6 @@ public:
 	HttpAuthRequest httpAuthRequest;
 	XData xdata;
 	QMap<QString,HTMLElement> htmlElements;
- 	QDomElement wb;
 	
 	int mucStatus;
 	QList<MUCInvite> mucInvites;
@@ -1420,16 +1419,6 @@ const XData& Message::getForm() const
 	return d->xdata;
 }
 
-const QDomElement& Message::whiteboard() const
-{
-	return d->wb;
-}
-
-void Message::setWhiteboard(const QDomElement& e)
-{
-	d->wb = e;
-}
-
 bool Message::spooled() const
 {
 	return d->spooled;
@@ -1492,7 +1481,7 @@ Stanza Message::toStanza(Stream *stream) const
 	// timestamp
 	if(d->timeStampSend && !d->timeStamp.isNull()) {
 		QDomElement e = s.createElement("jabber:x:delay", "x");
-		e.setAttribute("stamp", TS2stamp(d->timeStamp.toUTC()));
+		e.setAttribute("stamp", TS2stamp(d->timeStamp));
 		s.appendChild(e);
 	}
 
@@ -1595,12 +1584,7 @@ Stanza Message::toStanza(Stream *stream) const
 	if(!d->nick.isEmpty()) {
 		s.appendChild(s.createTextElement("http://jabber.org/protocol/nick", "nick", d->nick));
 	}
-
-	// wb
-	if(!d->wb.isNull()) {
-		s.appendChild(d->wb);
-	}
-
+	
 	// muc
 	if(!d->mucInvites.isEmpty()) {
 		QDomElement e = s.createElement("http://jabber.org/protocol/muc#user","x");
@@ -1816,14 +1800,7 @@ bool Message::fromStanza(const Stanza &s, int timeZoneOffset)
 		d->nick = t.text();
 	else
 		d->nick = QString();
-
-	// wb
-	t = root.elementsByTagNameNS("http://jabber.org/protocol/svgwb", "wb").item(0).toElement();
-	if(!t.isNull())
-		d->wb = t;
-	else
-		d->wb = QDomElement();
-
+	
 	t = root.elementsByTagNameNS("http://jabber.org/protocol/muc#user", "x").item(0).toElement();
 	if(!t.isNull()) {
 		for(QDomNode muc_n = t.firstChild(); !muc_n.isNull(); muc_n = muc_n.nextSibling()) {

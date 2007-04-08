@@ -24,10 +24,8 @@
 #include "pepmanager.h"
 #include "im.h"
 
-MoodDlg::MoodDlg(PsiAccount* pa)
-	: QDialog(0), pa_(pa)
+MoodDlg::MoodDlg(PsiAccount* pa) : QDialog(0, Qt::WDestructiveClose), pa_(pa)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
 	ui_.setupUi(this);
 	setModal(false);
 	connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(close()));
@@ -42,6 +40,6 @@ MoodDlg::MoodDlg(PsiAccount* pa)
 void MoodDlg::setMood()
 {
 	Mood::Type type = MoodCatalog::instance()->findEntryByText(ui_.cb_type->currentText()).type();
-	pa_->pepManager()->publish("http://jabber.org/protocol/mood", PubSubItem("current",Mood(type,ui_.le_text->text()).toXml(*pa_->client()->rootTask()->doc())), PEPManager::PresenceAccess);
+	pa_->pepManager()->publish("http://jabber.org/protocol/mood", PubSubItem("current",Mood(type,ui_.le_text->text()).toXml(*pa_->client()->rootTask()->doc())));
 	close();
 }

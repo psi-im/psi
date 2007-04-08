@@ -1,6 +1,6 @@
 /*
  * accountlabel.h - simple label to display account name currently in use
- * Copyright (C) 2006-2007  Michail Pishchagin
+ * Copyright (C) 2006  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,29 +22,23 @@
 #define ACCOUNTLABEL_H
 
 #include <QLabel>
-#include <QPointer>
 
 class PsiAccount;
 
 class AccountLabel : public QLabel
 {
 	Q_OBJECT
-	Q_PROPERTY(bool showJid READ showJid WRITE setShowJid);
 public:
-	AccountLabel(QWidget* parent);
+	AccountLabel(PsiAccount*, QWidget* parent, bool simpleMode = false);
 	~AccountLabel();
-
-	PsiAccount* account() const;
-	bool showJid() const;
-	void setAccount(PsiAccount* account);
-	void setShowJid(bool showJid);
 
 private slots:
 	void updateName();
+	void deleteMe();
 
 private:
-	QPointer<PsiAccount> account_;
-	bool showJid_;
+	PsiAccount *pa;
+	bool simpleMode;
 };
 
 #endif

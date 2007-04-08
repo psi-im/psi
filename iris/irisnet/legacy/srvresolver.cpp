@@ -277,12 +277,12 @@ void SrvResolver::nndns_error(XMPP::NameResolver::Error)
 void SrvResolver::ndns_done()
 {
 #ifndef NO_NDNS
-	QHostAddress r = d->ndns.result();
+	uint r = d->ndns.result();
 	int port = d->servers.first().port;
 	d->servers.removeFirst();
 
-	if(!r.isNull()) {
-		d->resultAddress = d->ndns.result();
+	if(r) {
+		d->resultAddress = QHostAddress(d->ndns.result());
 		d->resultPort = port;
 		resultsReady();
 	}

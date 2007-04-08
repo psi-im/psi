@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006,2007  Justin Karneges
+ * Copyright (C) 2006  Justin Karneges
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,625 +18,146 @@
  *
  */
 
-// Note: JDnsShared supports multiple interfaces for multicast, but only one
-//   for IPv4 and one for IPv6.  Sharing multiple interfaces of the same IP
-//   version for multicast is unfortunately not possible without reworking
-//   the jdns subsystem.
-//
-//   The reason for this limitation is that in order to do multi-interface
-//   multicast, you have to do a single bind to Any, and then use special
-//   functions to determine which interface a packet came from and to
-//   specify which interface a packet should go out on.  Again this is just
-//   not possible with the current system and the assumptions made by jdns.
-
-// Note: When quering against multiple interfaces with multicast, it is
-//   possible that different answers for a unique record may be reported
-//   on each interface.  We don't do anything about this.
-
 #include "jdnsshared.h"
 
-namespace {
-
-class SystemInfoCache
-{
-public:
-	QJDns::SystemInfo info;
-	QTime time;
-};
-
-}
-
-Q_GLOBAL_STATIC(QMutex, jdnsshared_mutex)
-Q_GLOBAL_STATIC(SystemInfoCache, jdnsshared_infocache)
-
-static QJDns::SystemInfo get_sys_info()
-{
-	QMutexLocker locker(jdnsshared_mutex());
-	SystemInfoCache *c = jdnsshared_infocache();
-
-	// cache info for 1/2 second, enough to prevent re-reading of sys
-	//   info 20 times because of all the different resolves
-	if(c->time.isNull() || c->time.elapsed() >= 500)
-	{
-		c->info = QJDns::systemInfo();
-		c->time.start();
-	}
-
-	return c->info;
-}
-
-static bool domainCompare(const QByteArray &a, const QByteArray &b)
-{
-	return (qstricmp(a.data(), b.data()) == 0) ? true: false;
-}
-
-// adapted from jdns_mdnsd.c, _a_match()
-static bool matchRecordExceptTtl(const QJDns::Record &a, const QJDns::Record &b)
-{
-	if(a.type != b.type || !domainCompare(a.owner, b.owner))
-		return false;
-
-	if(a.type == QJDns::Srv)
-	{
-		if(domainCompare(a.name, b.name)
-			&& a.port == b.port
-			&& a.priority == b.priority
-			&& a.weight == b.weight)
-		{
-			return true;
-		}
-	}
-	else if(a.type == QJDns::Ptr || a.type == QJDns::Ns || a.type == QJDns::Cname)
-	{
-		if(domainCompare(a.name, b.name))
-			return true;
-	}
-	else if(a.rdata == b.rdata)
-		return true;
-
-	return false;
-}
-
-//----------------------------------------------------------------------------
-// Handle
-//----------------------------------------------------------------------------
-
-namespace {
-
-// QJDns uses integer handle ids, but they are only unique within
-//   the relevant QJDns instance.  Since we want our handles to be
-//   unique across all instances, we'll make an instance/id pair.
-class Handle
-{
-public:
-	QJDns *jdns;
-	int id;
-
-	Handle() : jdns(0), id(-1)
-	{
-	}
-
-	Handle(QJDns *_jdns, int _id) : jdns(_jdns), id(_id)
-	{
-	}
-
-	bool operator==(const Handle &a) const
-	{
-		if(a.jdns == jdns && a.id == id)
-			return true;
-		return false;
-	}
-
-	bool operator!=(const Handle &a) const
-	{
-		return !(operator==(a));
-	}
-};
-
-}
-
-inline uint qHash(const Handle &key)
-{
-	return ((uint)key.jdns) ^ key.id;
-}
-
-//----------------------------------------------------------------------------
-// JDnsShutdown
-//----------------------------------------------------------------------------
-namespace {
-
-class JDnsShutdownAgent : public QObject
-{
-	Q_OBJECT
-public:
-	void start()
-	{
-		QMetaObject::invokeMethod(this, "started", Qt::QueuedConnection);
-	}
-
-signals:
-	void started();
-};
-
-class JDnsShutdown : public QThread
-{
-	Q_OBJECT
-public:
-	QMutex m;
-	QWaitCondition w;
-	QList<JDnsShared*> list;
-	JDnsShutdownAgent *agent;
-	int phase;
-
-	void waitForShutdown(const QList<JDnsShared*> _list)
-	{
-		list = _list;
-		phase = 0;
-
-		m.lock();
-		start();
-		w.wait(&m);
-
-		foreach(JDnsShared *i, list)
-		{
-			i->setParent(0);
-			i->moveToThread(this);
-		}
-
-		phase = 1;
-		agent->start();
-		wait();
-	}
-
-protected:
-	virtual void run()
-	{
-		m.lock();
-		agent = new JDnsShutdownAgent;
-		connect(agent, SIGNAL(started()), SLOT(agent_started()), Qt::DirectConnection);
-		agent->start();
-		exec();
-		delete agent;
-	}
-
-private slots:
-	void agent_started()
-	{
-		if(phase == 0)
-		{
-			w.wakeOne();
-			m.unlock();
-		}
-		else
-		{
-			foreach(JDnsShared *i, list)
-			{
-				connect(i, SIGNAL(shutdownFinished()), SLOT(jdns_shutdownFinished()), Qt::DirectConnection);
-				i->shutdown();
-			}
-		}
-	}
-
-	void jdns_shutdownFinished()
-	{
-		JDnsShared *i = (JDnsShared *)sender();
-		delete i;
-		list.removeAll(i);
-		if(list.isEmpty())
-			quit();
-	}
-};
-
-}
+namespace XMPP {
 
 //----------------------------------------------------------------------------
 // JDnsSharedDebug
 //----------------------------------------------------------------------------
-class JDnsSharedDebugPrivate : public QObject
-{
-	Q_OBJECT
-public:
-	JDnsSharedDebug *q;
-	QMutex m;
-	QStringList lines;
-	bool dirty;
-
-	JDnsSharedDebugPrivate(JDnsSharedDebug *_q) : QObject(_q), q(_q)
-	{
-		dirty = false;
-	}
-
-	void addDebug(const QString &name, const QStringList &_lines)
-	{
-		if(!_lines.isEmpty())
-		{
-			QMutexLocker locker(&m);
-			for(int n = 0; n < _lines.count(); ++n)
-				lines += name + ": " + _lines[n];
-			if(!dirty)
-			{
-				dirty = true;
-				QMetaObject::invokeMethod(this, "doUpdate", Qt::QueuedConnection);
-			}
-		}
-	}
-
-private slots:
-	void doUpdate()
-	{
-		{
-			QMutexLocker locker(&m);
-			if(!dirty)
-				return;
-		}
-		emit q->readyRead();
-	}
-};
-
 JDnsSharedDebug::JDnsSharedDebug(QObject *parent)
 :QObject(parent)
 {
-	d = new JDnsSharedDebugPrivate(this);
 }
 
 JDnsSharedDebug::~JDnsSharedDebug()
 {
-	delete d;
 }
 
-QStringList JDnsSharedDebug::readDebugLines()
+void JDnsSharedDebug::addDebug(const QString &name, const QStringList &lines)
 {
-	QMutexLocker locker(&d->m);
-	QStringList tmplines = d->lines;
-	d->lines.clear();
-	d->dirty = false;
-	return tmplines;
+	QMutexLocker locker(&m);
+	for(int n = 0; n < lines.count(); ++n)
+		_lines += name + ": " + lines[n];
+	QMetaObject::invokeMethod(this, "doUpdate", Qt::QueuedConnection);
+}
+
+void JDnsSharedDebug::doUpdate()
+{
+	QMutexLocker locker(&m);
+	if(_lines.isEmpty())
+		return;
+	QStringList lines = _lines;
+	_lines.clear();
+	emit debug(lines);
 }
 
 //----------------------------------------------------------------------------
 // JDnsSharedRequest
 //----------------------------------------------------------------------------
-class JDnsSharedPrivate : public QObject
-{
-	Q_OBJECT
-public:
-	class Instance
-	{
-	public:
-		QJDns *jdns;
-		QHostAddress addr;
-		int index;
-
-		Instance() : jdns(0)
-		{
-		}
-	};
-
-	JDnsShared *q;
-	JDnsShared::Mode mode;
-	bool shutting_down;
-	JDnsSharedDebug *db;
-	QString dbname;
-
-	QList<Instance*> instances;
-	QHash<QJDns*,Instance*> instanceForQJDns;
-
-	QSet<JDnsSharedRequest*> requests;
-	QHash<Handle,JDnsSharedRequest*> requestForHandle;
-
-	JDnsSharedPrivate(JDnsShared *_q) : QObject(_q), q(_q)
-	{
-	}
-
-	JDnsSharedRequest *findRequest(QJDns *jdns, int id) const
-	{
-		Handle h(jdns, id);
-		return requestForHandle.value(h);
-	}
-
-	void jdns_link(QJDns *jdns)
-	{
-		connect(jdns, SIGNAL(resultsReady(int, const QJDns::Response &)), SLOT(jdns_resultsReady(int, const QJDns::Response &)));
-		connect(jdns, SIGNAL(published(int)), SLOT(jdns_published(int)));
-		connect(jdns, SIGNAL(error(int, QJDns::Error)), SLOT(jdns_error(int, QJDns::Error)));
-		connect(jdns, SIGNAL(shutdownFinished()), SLOT(jdns_shutdownFinished()));
-		connect(jdns, SIGNAL(debugLinesReady()), SLOT(jdns_debugLinesReady()));
-	}
-
-	int getNewIndex() const
-	{
-		// find lowest unused value
-		for(int n = 0;; ++n)
-		{
-			bool found = false;
-			foreach(Instance *i, instances)
-			{
-				if(i->index == n)
-				{
-					found = true;
-					break;
-				}
-			}
-			if(!found)
-				return n;
-		}
-	}
-
-	void addDebug(int index, const QString &line)
-	{
-		if(db)
-			db->d->addDebug(dbname + QString::number(index), QStringList() << line);
-	}
-
-	void doDebug(QJDns *jdns, int index)
-	{
-		QStringList lines = jdns->debugLines();
-		if(db)
-			db->d->addDebug(dbname + QString::number(index), lines);
-	}
-
-	QJDns::Record manipulateRecord(const QJDns::Record &in)
-	{
-		// Note: since our implementation only allows 1 ipv4 and 1 ipv6
-		//   interface to exist, it is safe to publish both kinds of
-		//   records on both interfaces, with the same values.  For
-		//   example, an A record can be published on both interfaces,
-		//   with the value set to the ipv4 interface.  If we supported
-		//   multiple ipv4 interfaces, then this wouldn't work, because
-		//   we wouldn't know which value to use for the A record when
-		//   publishing on the ipv6 interface.
-
-		// publishing our own IP address?  null address means the user
-		//   wants us to fill in the blank with our address.
-		if((in.type == QJDns::Aaaa || in.type == QJDns::A) && in.address.isNull())
-		{
-			QJDns::Record out = in;
-			if(in.type == QJDns::Aaaa)
-			{
-				// are we operating on ipv6?
-				foreach(Instance *i, instances)
-				{
-					if(i->addr.protocol() == QAbstractSocket::IPv6Protocol)
-					{
-						out.address = i->addr;
-						break;
-					}
-				}
-			}
-			else // A
-			{
-				// are we operating on ipv4?
-				foreach(Instance *i, instances)
-				{
-					if(i->addr.protocol() == QAbstractSocket::IPv4Protocol)
-					{
-						out.address = i->addr;
-						break;
-					}
-				}
-			}
-			return out;
-		}
-		return in;
-	}
-
-	bool addInterface(const QHostAddress &addr);
-	void removeInterface(const QHostAddress &addr);
-
-	void queryStart(JDnsSharedRequest *obj, const QByteArray &name, int qType);
-	void queryCancel(JDnsSharedRequest *obj);
-	void publishStart(JDnsSharedRequest *obj, QJDns::PublishMode m, const QJDns::Record &record);
-	void publishUpdate(JDnsSharedRequest *obj, const QJDns::Record &record);
-	void publishCancel(JDnsSharedRequest *obj);
-
-public slots:
-	void late_shutdown()
-	{
-		shutting_down = false;
-		emit q->shutdownFinished();
-	}
-
-private slots:
-	void jdns_resultsReady(int id, const QJDns::Response &results);
-	void jdns_published(int id);
-	void jdns_error(int id, QJDns::Error e);
-	void jdns_shutdownFinished();
-	void jdns_debugLinesReady();
-};
-
-class JDnsSharedRequestPrivate : public QObject
-{
-	Q_OBJECT
-public:
-	JDnsSharedRequest *q;
-	JDnsSharedPrivate *jsp;
-
-	// current action
-	JDnsSharedRequest::Type type;
-	QByteArray name;
-	int qType;
-	QJDns::PublishMode pubmode;
-	QJDns::Record pubrecord;
-
-	// a single request might have to perform multiple QJDns operations
-	QList<Handle> handles;
-
-	// keep a list of handles that successfully publish
-	QList<Handle> published;
-
-	// use to weed out dups for multicast
-	QList<QJDns::Record> queryCache;
-
-	bool success;
-	JDnsSharedRequest::Error error;
-	QList<QJDns::Record> results;
-	QTimer lateTimer;
-
-	JDnsSharedRequestPrivate(JDnsSharedRequest *_q) : QObject(_q), q(_q), lateTimer(this)
-	{
-		connect(&lateTimer, SIGNAL(timeout()), SLOT(lateTimer_timeout()));
-	}
-
-	void resetSession()
-	{
-		name = QByteArray();
-		pubrecord = QJDns::Record();
-		handles.clear();
-		published.clear();
-		queryCache.clear();
-	}
-
-private slots:
-	void lateTimer_timeout()
-	{
-		emit q->resultsReady();
-	}
-};
-
-JDnsSharedRequest::JDnsSharedRequest(JDnsShared *jdnsShared, QObject *parent)
+static int jsr_refs = 0;
+JDnsSharedRequest::JDnsSharedRequest(JDnsShared *owner, QObject *parent)
 :QObject(parent)
 {
-	d = new JDnsSharedRequestPrivate(this);
-	d->jsp = jdnsShared->d;
+	_owner = owner;
+	++jsr_refs;
+	//printf("create.  refs=%d\n", jsr_refs);
 }
 
 JDnsSharedRequest::~JDnsSharedRequest()
 {
+	--jsr_refs;
+	//printf("destroy.  refs=%d\n", jsr_refs);
 	cancel();
-	delete d;
 }
 
 JDnsSharedRequest::Type JDnsSharedRequest::type()
 {
-	return d->type;
+	return _type;
 }
 
 void JDnsSharedRequest::query(const QByteArray &name, int type)
 {
-	cancel();
-	d->jsp->queryStart(this, name, type);
+	if(!_handles.isEmpty())
+		return;
+	_owner->queryStart(this, name, type);
 }
 
 void JDnsSharedRequest::publish(QJDns::PublishMode m, const QJDns::Record &record)
 {
-	cancel();
-	d->jsp->publishStart(this, m, record);
+	if(!_handles.isEmpty())
+		return;
+	_owner->publishStart(this, m, record);
 }
 
 void JDnsSharedRequest::publishUpdate(const QJDns::Record &record)
 {
-	// only allowed to update if we have an active publish
-	if(!d->handles.isEmpty() && d->type == Publish)
-		d->jsp->publishUpdate(this, record);
+	if(_handles.isEmpty())
+		return;
+	_owner->publishUpdate(this, record);
 }
 
 void JDnsSharedRequest::cancel()
 {
-	d->lateTimer.stop();
-	if(!d->handles.isEmpty())
-	{
-		if(d->type == Query)
-			d->jsp->queryCancel(this);
-		else
-			d->jsp->publishCancel(this);
-	}
-	d->resetSession();
+	if(_handles.isEmpty())
+		return;
+	if(_type == Query)
+		_owner->queryCancel(this);
+	else
+		_owner->publishCancel(this);
 }
 
 bool JDnsSharedRequest::success() const
 {
-	return d->success;
+	return _success;
 }
 
 JDnsSharedRequest::Error JDnsSharedRequest::error() const
 {
-	return d->error;
+	return _error;
 }
 
 QList<QJDns::Record> JDnsSharedRequest::results() const
 {
-	return d->results;
+	return _results;
 }
 
 //----------------------------------------------------------------------------
 // JDnsShared
 //----------------------------------------------------------------------------
-JDnsShared::JDnsShared(Mode mode, QObject *parent)
+JDnsShared::JDnsShared(Mode _mode, JDnsSharedDebug *_db, const QString &_dbname, QObject *parent)
 :QObject(parent)
 {
-	d = new JDnsSharedPrivate(this);
-	d->mode = mode;
-	d->shutting_down = false;
-	d->db = 0;
+	mode = _mode;
+	shutting_down = false;
+	db = _db;
+	dbname = _dbname;
 }
 
 JDnsShared::~JDnsShared()
 {
-	foreach(JDnsSharedPrivate::Instance *i, d->instances)
+	for(int n = 0; n < instances.count(); ++n)
 	{
-		delete i->jdns;
-		delete i;
+		delete instances[n]->jdns;
+		delete instances[n];
 	}
-	delete d;
-}
-
-void JDnsShared::setDebug(JDnsSharedDebug *db, const QString &name)
-{
-	d->db = db;
-	d->dbname = name;
 }
 
 bool JDnsShared::addInterface(const QHostAddress &addr)
 {
-	return d->addInterface(addr);
-}
-
-void JDnsShared::removeInterface(const QHostAddress &addr)
-{
-	d->removeInterface(addr);
-}
-
-void JDnsShared::shutdown()
-{
-	d->shutting_down = true;
-	if(!d->instances.isEmpty())
-	{
-		foreach(JDnsSharedPrivate::Instance *i, d->instances)
-			i->jdns->shutdown();
-	}
-	else
-		QMetaObject::invokeMethod(d, "late_shutdown", Qt::QueuedConnection);
-}
-
-QList<QByteArray> JDnsShared::domains()
-{
-	return get_sys_info().domains;
-}
-
-void JDnsShared::waitForShutdown(const QList<JDnsShared*> instances)
-{
-	JDnsShutdown s;
-	s.waitForShutdown(instances);
-}
-
-bool JDnsSharedPrivate::addInterface(const QHostAddress &addr)
-{
 	if(shutting_down)
 		return false;
 
-	// make sure we don't have this one already
-	foreach(Instance *i, instances)
-	{
-		if(i->addr == addr)
-			return false;
-	}
+	QString str;
+	int index = instances.count();
 
-	int index = getNewIndex();
-	addDebug(index, QString("attempting to use interface %1").arg(addr.toString()));
+	str = QString("attempting to use interface %1").arg(addr.toString());
+	if(db)
+		db->addDebug(dbname + QString::number(index), QStringList() << str);
 
 	QJDns *jdns;
 
-	if(mode == JDnsShared::UnicastInternet || mode == JDnsShared::UnicastLocal)
+	if(mode == UnicastInternet || mode == UnicastLocal)
 	{
 		jdns = new QJDns(this);
 		jdns_link(jdns);
@@ -647,7 +168,7 @@ bool JDnsSharedPrivate::addInterface(const QHostAddress &addr)
 			return false;
 		}
 
-		if(mode == JDnsShared::UnicastLocal)
+		if(mode == UnicastLocal)
 		{
 			QJDns::NameServer host;
 			host.address = QHostAddress("224.0.0.251");
@@ -655,44 +176,23 @@ bool JDnsSharedPrivate::addInterface(const QHostAddress &addr)
 			jdns->setNameServers(QList<QJDns::NameServer>() << host);
 		}
 	}
-	else // Multicast
+	else
 	{
-		// only one multicast interface allowed per IP protocol version.
-		// this is because we bind to INADDR_ANY.
-
-		bool have_v6 = false;
-		bool have_v4 = false;
-		foreach(Instance *i, instances)
-		{
-			if(i->addr.protocol() == QAbstractSocket::IPv6Protocol)
-				have_v6 = true;
-			else
-				have_v4 = true;
-		}
-
-		bool is_v6 = (addr.protocol() == QAbstractSocket::IPv6Protocol) ? true : false;
-
-		if(is_v6 && have_v6)
-		{
-			addDebug(index, "already have an ipv6 interface");
+		// only one instance supported for now (see more in the
+		//   comment below)
+		if(!instances.isEmpty())
 			return false;
-		}
-
-		if(!is_v6 && have_v4)
-		{
-			addDebug(index, "already have an ipv4 interface");
-			return false;
-		}
-
-		QHostAddress actualBindAddress;
-		if(is_v6)
-			actualBindAddress = QHostAddress::AnyIPv6;
-		else
-			actualBindAddress = QHostAddress::Any;
 
 		jdns = new QJDns(this);
 		jdns_link(jdns);
-		if(!jdns->init(QJDns::Multicast, actualBindAddress))
+
+		// instead of binding to the requested address, we'll bind
+		//   to "Any".  this is because QJDns doesn't support
+		//   multiple interfaces.  however, if that ever changes,
+		//   we can update the code here and things should be mostly
+		//   transparent to the user of JDnsShared.
+		//if(!jdns->init(QJDns::Multicast, addr))
+		if(!jdns->init(QJDns::Multicast, QHostAddress::Any))
 		{
 			doDebug(jdns, index);
 			delete jdns;
@@ -703,499 +203,291 @@ bool JDnsSharedPrivate::addInterface(const QHostAddress &addr)
 	Instance *i = new Instance;
 	i->jdns = jdns;
 	i->addr = addr;
-	i->index = index;
 	instances += i;
-	instanceForQJDns.insert(i->jdns, i);
 
-	addDebug(index, "interface ready");
+	if(mode == UnicastInternet)
+		applyNameServers(i);
 
-	if(mode == JDnsShared::Multicast)
-	{
-		// extend active requests to this interface
-		foreach(JDnsSharedRequest *obj, requests)
-		{
-			if(obj->d->type == JDnsSharedRequest::Query)
-			{
-				Handle h(i->jdns, i->jdns->queryStart(obj->d->name, obj->d->qType));
-				obj->d->handles += h;
-				requestForHandle.insert(h, obj);
-			}
-			else // Publish
-			{
-				Handle h(i->jdns, i->jdns->publishStart(obj->d->pubmode, obj->d->pubrecord));
-				obj->d->handles += h;
-				requestForHandle.insert(h, obj);
-			}
-		}
-	}
+	str = QString("interface ready");
+	if(db)
+		db->addDebug(dbname + QString::number(index), QStringList() << str);
 
 	return true;
 }
 
-void JDnsSharedPrivate::removeInterface(const QHostAddress &addr)
+void JDnsShared::removeInterface(const QHostAddress &addr)
 {
 	Instance *i = 0;
+	int index;
 	for(int n = 0; n < instances.count(); ++n)
 	{
 		if(instances[n]->addr == addr)
 		{
 			i = instances[n];
+			index = n;
 			break;
 		}
 	}
 	if(!i)
 		return;
 
-	int index = i->index;
-
-	// we don't cancel operations or shutdown jdns, we simply
-	//   delete our references.  this is because if the interface
-	//   is gone, then we have nothing to send on anyway.
-
-	foreach(JDnsSharedRequest *obj, requests)
-	{
-		for(int n = 0; n < obj->d->handles.count(); ++n)
-		{
-			Handle h = obj->d->handles[n];
-			if(h.jdns == i->jdns)
-			{
-				// see above, no need to cancel the operation
-				obj->d->handles.removeAt(n);
-				requestForHandle.remove(h);
-				break;
-			}
-		}
-
-		// remove published reference
-		if(obj->d->type == JDnsSharedRequest::Publish)
-		{
-			for(int n = 0; n < obj->d->published.count(); ++n)
-			{
-				Handle h = obj->d->published[n];
-				if(h.jdns == i->jdns)
-				{
-					obj->d->published.removeAt(n);
-					break;
-				}
-			}
-		}
-	}
-
-	// see above, no need to shutdown jdns
-	instanceForQJDns.remove(i->jdns);
+	// no need to shutdown jdns when this happens, since there is no interface to send on.
 	instances.removeAll(i);
 	delete i->jdns;
 	delete i;
 
-	// if that was the last interface to be removed, then there should
-	//   be no more handles left.  let's take action with these
-	//   handleless requests.
-	foreach(JDnsSharedRequest *obj, requests)
-	{
-		if(obj->d->handles.isEmpty())
-		{
-			if(mode == JDnsShared::UnicastInternet || mode == JDnsShared::UnicastLocal)
-			{
-				// for unicast, we'll invalidate with ErrorNoNet
-				obj->d->success = false;
-				obj->d->error = JDnsSharedRequest::ErrorNoNet;
-				obj->d->lateTimer.start();
-			}
-			else // Multicast
-			{
-				// for multicast, we'll keep all requests alive.
-				//   activity will resume when an interface is
-				//   added.
-			}
-		}
-	}
-
-	addDebug(index, QString("removing from %1").arg(addr.toString()));
-}
-
-void JDnsSharedPrivate::queryStart(JDnsSharedRequest *obj, const QByteArray &name, int qType)
-{
-	obj->d->type = JDnsSharedRequest::Query;
-	obj->d->success = false;
-	obj->d->results.clear();
-	obj->d->name = name;
-	obj->d->qType = qType;
-
-	// is the input an IP address and the qType is an address record?
-	if(qType == QJDns::Aaaa || qType == QJDns::A)
-	{
-		QHostAddress addr;
-		if(addr.setAddress(QString::fromLocal8Bit(name)))
-		{
-			if(qType == QJDns::Aaaa && addr.protocol() == QAbstractSocket::IPv6Protocol)
-			{
-				QJDns::Record rec;
-				rec.owner = name;
-				rec.type = QJDns::Aaaa;
-				rec.ttl = 120;
-				rec.haveKnown = true;
-				rec.address = addr;
-				obj->d->success = true;
-				obj->d->results = QList<QJDns::Record>() << rec;
-				obj->d->lateTimer.start();
-				return;
-			}
-			else if(qType == QJDns::A && addr.protocol() == QAbstractSocket::IPv4Protocol)
-			{
-				QJDns::Record rec;
-				rec.owner = name;
-				rec.type = QJDns::A;
-				rec.ttl = 120;
-				rec.haveKnown = true;
-				rec.address = addr;
-				obj->d->success = true;
-				obj->d->results = QList<QJDns::Record>() << rec;
-				obj->d->lateTimer.start();
-				return;
-			}
-		}
-	}
-
-	QJDns::SystemInfo sysInfo = get_sys_info();
-
-	// is the input name a known host and the qType is an address record?
-	if(qType == QJDns::Aaaa || qType == QJDns::A)
-	{
-		QByteArray lname = name.toLower();
-		QList<QJDns::DnsHost> known = sysInfo.hosts;
-		foreach(QJDns::DnsHost host, known)
-		{
-			if(((qType == QJDns::Aaaa && host.address.protocol() == QAbstractSocket::IPv6Protocol)
-				|| (qType == QJDns::A && host.address.protocol() == QAbstractSocket::IPv4Protocol))
-				&& host.name.toLower() == lname)
-			{
-				QJDns::Record rec;
-				rec.owner = name;
-				rec.type = qType;
-				rec.ttl = 120;
-				rec.haveKnown = true;
-				rec.address = host.address;
-				obj->d->success = true;
-				obj->d->results = QList<QJDns::Record>() << rec;
-				obj->d->lateTimer.start();
-				return;
-			}
-		}
-	}
-
-	// if we have no QJDns instances to operate on, then error
 	if(instances.isEmpty())
 	{
-		obj->d->error = JDnsSharedRequest::ErrorNoNet;
-		obj->d->lateTimer.start();
+		// TODO: invalidate any active requests
+	}
+
+	QString str = QString("removing from %1").arg(addr.toString());
+	if(db)
+		db->addDebug(dbname + QString::number(index), QStringList() << str);
+}
+
+void JDnsShared::setNameServers(const QList<QJDns::NameServer> &_nameServers)
+{
+	nameServers = _nameServers;
+	for(int n = 0; n < instances.count(); ++n)
+		applyNameServers(instances[n]);
+}
+
+void JDnsShared::shutdown()
+{
+	shutting_down = true;
+	for(int n = 0; n < instances.count(); ++n)
+		instances[n]->jdns->shutdown();
+}
+
+void JDnsShared::jdns_link(QJDns *jdns)
+{
+	connect(jdns, SIGNAL(resultsReady(int, const QJDns::Response &)), SLOT(jdns_resultsReady(int, const QJDns::Response &)));
+	connect(jdns, SIGNAL(published(int)), SLOT(jdns_published(int)));
+	connect(jdns, SIGNAL(error(int, QJDns::Error)), SLOT(jdns_error(int, QJDns::Error)));
+	connect(jdns, SIGNAL(shutdownFinished()), SLOT(jdns_shutdownFinished()));
+	connect(jdns, SIGNAL(debugLinesReady()), SLOT(jdns_debugLinesReady()));
+}
+
+int JDnsShared::indexByJDns(const QJDns *jdns)
+{
+	for(int n = 0; n < instances.count(); ++n)
+	{
+		if(instances[n]->jdns == jdns)
+			return n;
+	}
+	return -1;
+}
+
+void JDnsShared::applyNameServers(Instance *i)
+{
+	QList<QJDns::NameServer> usable;
+	for(int n = 0; n < nameServers.count(); ++n)
+	{
+		if(nameServers[n].address.protocol() == i->addr.protocol())
+			usable += nameServers[n];
+	}
+	i->jdns->setNameServers(usable);
+}
+
+void JDnsShared::doDebug(QJDns *jdns, int index)
+{
+	QStringList lines = jdns->debugLines();
+	if(db)
+		db->addDebug(dbname + QString::number(index), lines);
+}
+
+JDnsSharedRequest *JDnsShared::findRequest(QJDns *jdns, int id)
+{
+	for(int n = 0; n < requests.count(); ++n)
+	{
+		JDnsSharedRequest *req = requests[n];
+		for(int k = 0; k < req->_handles.count(); ++k)
+		{
+			const JDnsSharedRequest::Handle &h = req->_handles[k];
+			if(h.jdns == jdns && h.id == id)
+				return req;
+		}
+	}
+	return 0;
+}
+
+void JDnsShared::queryStart(JDnsSharedRequest *obj, const QByteArray &name, int qType)
+{
+	obj->_type = JDnsSharedRequest::Query;
+	obj->_success = false;
+	if(instances.isEmpty())
+	{
+		obj->_error = JDnsSharedRequest::ErrorNoNet;
+		QMetaObject::invokeMethod(obj, "resultsReady", Qt::QueuedConnection);
 		return;
 	}
-
-	if(mode == JDnsShared::UnicastInternet)
-	{
-		// get latest nameservers, split into ipv6/v4, apply to jdns instances
-		QList<QJDns::NameServer> ns_v6;
-		QList<QJDns::NameServer> ns_v4;
-		{
-			QList<QJDns::NameServer> nameServers = sysInfo.nameServers;
-			foreach(QJDns::NameServer ns, nameServers)
-			{
-				if(ns.address.protocol() == QAbstractSocket::IPv6Protocol)
-					ns_v6 += ns;
-				else
-					ns_v4 += ns;
-			}
-		}
-		foreach(Instance *i, instances)
-		{
-			if(i->addr.protocol() == QAbstractSocket::IPv6Protocol)
-				i->jdns->setNameServers(ns_v6);
-			else
-				i->jdns->setNameServers(ns_v4);
-		}
-	}
-
-	// keep track of this request
-	requests += obj;
 
 	// query on all jdns instances
-	foreach(Instance *i, instances)
+	for(int n = 0; n < instances.count(); ++n)
 	{
-		Handle h(i->jdns, i->jdns->queryStart(name, qType));
-		obj->d->handles += h;
-
-		// keep track of this handle for this request
-		requestForHandle.insert(h, obj);
+		JDnsSharedRequest::Handle h;
+		h.jdns = instances[n]->jdns;
+		h.id = instances[n]->jdns->queryStart(name, qType);
+		obj->_handles += h;
 	}
+
+	requests += obj;
 }
 
-void JDnsSharedPrivate::queryCancel(JDnsSharedRequest *obj)
+void JDnsShared::queryCancel(JDnsSharedRequest *obj)
 {
 	if(!requests.contains(obj))
 		return;
 
-	foreach(Handle h, obj->d->handles)
+	for(int n = 0; n < obj->_handles.count(); ++n)
 	{
+		JDnsSharedRequest::Handle &h = obj->_handles[n];
 		h.jdns->queryCancel(h.id);
-		requestForHandle.remove(h);
 	}
-
-	obj->d->handles.clear();
-	requests.remove(obj);
+	obj->_handles.clear();
+	requests.removeAll(obj);
 }
 
-void JDnsSharedPrivate::publishStart(JDnsSharedRequest *obj, QJDns::PublishMode m, const QJDns::Record &record)
+void JDnsShared::publishStart(JDnsSharedRequest *obj, QJDns::PublishMode m, const QJDns::Record &record)
 {
-	obj->d->type = JDnsSharedRequest::Publish;
-	obj->d->success = false;
-	obj->d->results.clear();
-	obj->d->pubmode = m;
-	obj->d->pubrecord = manipulateRecord(record);
-
-	// if we have no QJDns instances to operate on, then error
+	obj->_type = JDnsSharedRequest::Publish;
+	obj->_success = false;
 	if(instances.isEmpty())
 	{
-		obj->d->error = JDnsSharedRequest::ErrorNoNet;
-		obj->d->lateTimer.start();
+		obj->_error = JDnsSharedRequest::ErrorNoNet;
+		QMetaObject::invokeMethod(obj, "resultsReady", Qt::QueuedConnection);
 		return;
 	}
 
-	// keep track of this request
+	// only one instance
+	JDnsSharedRequest::Handle h;
+	h.jdns = instances[0]->jdns;
+	h.id = instances[0]->jdns->publishStart(m, record);
+	obj->_handles += h;
+
 	requests += obj;
-
-	// attempt to publish on all jdns instances
-	foreach(JDnsSharedPrivate::Instance *i, instances)
-	{
-		Handle h(i->jdns, i->jdns->publishStart(m, obj->d->pubrecord));
-		obj->d->handles += h;
-
-		// keep track of this handle for this request
-		requestForHandle.insert(h, obj);
-	}
 }
 
-void JDnsSharedPrivate::publishUpdate(JDnsSharedRequest *obj, const QJDns::Record &record)
+void JDnsShared::publishUpdate(JDnsSharedRequest *obj, const QJDns::Record &record)
 {
 	if(!requests.contains(obj))
 		return;
 
-	obj->d->pubrecord = manipulateRecord(record);
+	// fill in the right A record
+	QJDns::Record rec_copy = record;
+	if(rec_copy.type == QJDns::A && rec_copy.address.isNull())
+		rec_copy.address = instances[0]->addr;
 
-	// publish update on all handles for this request
-	foreach(Handle h, obj->d->handles)
-		h.jdns->publishUpdate(h.id, obj->d->pubrecord);
+	// only one instance
+	obj->_handles[0].jdns->publishUpdate(obj->_handles[0].id, record);
 }
 
-void JDnsSharedPrivate::publishCancel(JDnsSharedRequest *obj)
+void JDnsShared::publishCancel(JDnsSharedRequest *obj)
 {
 	if(!requests.contains(obj))
 		return;
 
-	foreach(Handle h, obj->d->handles)
-	{
-		h.jdns->publishCancel(h.id);
-		requestForHandle.remove(h);
-	}
+	// only one instance
+	obj->_handles[0].jdns->publishCancel(obj->_handles[0].id);
 
-	obj->d->handles.clear();
-	obj->d->published.clear();
-	requests.remove(obj);
+	obj->_handles.clear();
+	requests.removeAll(obj);
 }
 
-void JDnsSharedPrivate::jdns_resultsReady(int id, const QJDns::Response &results)
+void JDnsShared::jdns_resultsReady(int id, const QJDns::Response &results)
 {
 	QJDns *jdns = (QJDns *)sender();
-	JDnsSharedRequest *obj = findRequest(jdns, id);
-
-	obj->d->success = true;
-	obj->d->results = results.answerRecords;
-
-	if(mode == JDnsShared::UnicastInternet || mode == JDnsShared::UnicastLocal)
+	JDnsSharedRequest *r = findRequest(jdns, id);
+	r->_success = true;
+	r->_results.clear();
+	for(int n = 0; n < results.answerRecords.count(); ++n)
+		r->_results += results.answerRecords[n];
+	if(mode == UnicastInternet || mode == UnicastLocal)
 	{
 		// only one response, so "cancel" it
-		for(int n = 0; n < obj->d->handles.count(); ++n)
+		for(int n = 0; n < r->_handles.count(); ++n)
 		{
-			Handle h = obj->d->handles[n];
+			JDnsSharedRequest::Handle &h = r->_handles[n];
 			if(h.jdns == jdns && h.id == id)
 			{
-				obj->d->handles.removeAt(n);
-				requestForHandle.remove(h);
+				r->_handles.removeAt(n);
+				if(r->_handles.isEmpty())
+					requests.removeAll(r);
 				break;
 			}
 		}
-
-		// cancel related handles
-		foreach(Handle h, obj->d->handles)
-		{
-			h.jdns->queryCancel(h.id);
-			requestForHandle.remove(h);
-		}
-
-		obj->d->handles.clear();
-		requests.remove(obj);
 	}
-	else // Multicast
-	{
-		// check our cache to see how we should report these results
-		for(int n = 0; n < obj->d->results.count(); ++n)
-		{
-			QJDns::Record &r = obj->d->results[n];
-
-			// do we have this answer already in our cache?
-			QJDns::Record *c = 0;
-			int c_at = -1;
-			for(int k = 0; k < obj->d->queryCache.count(); ++k)
-			{
-				QJDns::Record &tmp = obj->d->queryCache[k];
-				if(matchRecordExceptTtl(r, tmp))
-				{
-					c = &tmp;
-					c_at = k;
-					break;
-				}
-			}
-
-			// don't report duplicates or unknown removals
-			if((c && r.ttl != 0) || (!c && r.ttl == 0))
-			{
-				obj->d->results.removeAt(n);
-				--n; // adjust position
-				continue;
-			}
-
-			// if we have it, and it is removed, remove from cache
-			if(c && r.ttl == 0)
-			{
-				obj->d->queryCache.removeAt(c_at);
-			}
-			// otherwise, if we don't have it, add it to the cache
-			else if(!c)
-			{
-				obj->d->queryCache += r;
-			}
-		}
-
-		if(obj->d->results.isEmpty())
-			return;
-	}
-
-	emit obj->resultsReady();
+	emit r->resultsReady();
 }
 
-void JDnsSharedPrivate::jdns_published(int id)
+void JDnsShared::jdns_published(int id)
 {
 	QJDns *jdns = (QJDns *)sender();
-	JDnsSharedRequest *obj = findRequest(jdns, id);
+	JDnsSharedRequest *r = findRequest(jdns, id);
 
-	// find handle
-	Handle handle;
-	for(int n = 0; n < obj->d->handles.count(); ++n)
-	{
-		Handle h = obj->d->handles[n];
-		if(h.jdns == jdns && h.id == id)
-		{
-			handle = h;
-			break;
-		}
-	}
-
-	obj->d->published += handle;
-
-	// if this publish has already been considered successful, then
-	//   a publish has succeeded on a new interface and there's no
-	//   need to report success for this request again
-	if(obj->d->success)
-		return;
-
-	// all handles published?
-	if(obj->d->published.count() == obj->d->handles.count())
-	{
-		obj->d->success = true;
-		emit obj->resultsReady();
-	}
+	r->_success = true;
+	emit r->resultsReady();
 }
 
-void JDnsSharedPrivate::jdns_error(int id, QJDns::Error e)
+void JDnsShared::jdns_error(int id, QJDns::Error e)
 {
 	QJDns *jdns = (QJDns *)sender();
-	JDnsSharedRequest *obj = findRequest(jdns, id);
+	JDnsSharedRequest *r = findRequest(jdns, id);
 
 	// "cancel" it
-	for(int n = 0; n < obj->d->handles.count(); ++n)
+	for(int n = 0; n < r->_handles.count(); ++n)
 	{
-		Handle h = obj->d->handles[n];
+		JDnsSharedRequest::Handle &h = r->_handles[n];
 		if(h.jdns == jdns && h.id == id)
 		{
-			obj->d->handles.removeAt(n);
-			requestForHandle.remove(h);
+			r->_handles.removeAt(n);
+			if(r->_handles.isEmpty())
+				requests.removeAll(r);
 			break;
 		}
 	}
 
-	if(obj->d->type == JDnsSharedRequest::Query)
-	{
-		// ignore the error if it is not the last error
-		if(!obj->d->handles.isEmpty())
-			return;
+	// for queries, ignore the error if it is not the last error
+	if(r->_type == JDnsSharedRequest::Query && !r->_handles.isEmpty())
+		return;
 
-		requests.remove(obj);
-
-		obj->d->success = false;
-		JDnsSharedRequest::Error x = JDnsSharedRequest::ErrorGeneric;
-		if(e == QJDns::ErrorNXDomain)
-			x = JDnsSharedRequest::ErrorNXDomain;
-		else if(e == QJDns::ErrorTimeout)
-			x = JDnsSharedRequest::ErrorTimeout;
-		else // ErrorGeneric
-			x = JDnsSharedRequest::ErrorGeneric;
-		obj->d->error = x;
-		emit obj->resultsReady();
-	}
-	else // Publish
-	{
-		// cancel related handles
-		foreach(Handle h, obj->d->handles)
-		{
-			h.jdns->publishCancel(h.id);
-			requestForHandle.remove(h);
-		}
-
-		obj->d->handles.clear();
-		obj->d->published.clear();
-		requests.remove(obj);
-
-		obj->d->success = false;
-		JDnsSharedRequest::Error x = JDnsSharedRequest::ErrorGeneric;
-		if(e == QJDns::ErrorConflict)
-			x = JDnsSharedRequest::ErrorConflict;
-		else // ErrorGeneric
-			x = JDnsSharedRequest::ErrorGeneric;
-		obj->d->error = x;
-		emit obj->resultsReady();
-	}
+	r->_success = false;
+	JDnsSharedRequest::Error x = JDnsSharedRequest::ErrorGeneric;
+	if(e == QJDns::ErrorNXDomain)
+		x = JDnsSharedRequest::ErrorNXDomain;
+	else if(e == QJDns::ErrorTimeout)
+		x = JDnsSharedRequest::ErrorTimeout;
+	else // ErrorGeneric
+		x = JDnsSharedRequest::ErrorGeneric;
+	r->_error = x;
+	emit r->resultsReady();
 }
 
-void JDnsSharedPrivate::jdns_shutdownFinished()
+void JDnsShared::jdns_shutdownFinished()
 {
 	QJDns *jdns = (QJDns *)sender();
+	//printf("shutdownFinished: [%p]\n", jdns);
 
-	addDebug(instanceForQJDns.value(jdns)->index, "jdns_shutdownFinished, removing interface");
+	int x = indexByJDns(jdns);
+	instances[x]->shutdown_done = true;
 
-	Instance *instance = instanceForQJDns.value(jdns);
-	delete instance->jdns;
-	delete instance;
-	instanceForQJDns.remove(jdns);
-	instances.removeAll(instance);
-
-	if(instances.isEmpty())
-		late_shutdown();
+	bool alldone = true;
+	for(int n = 0; n < instances.count(); ++n)
+	{
+		if(!instances[n]->shutdown_done)
+			alldone = false;
+	}
+	if(alldone)
+		emit shutdownFinished();
 }
 
-void JDnsSharedPrivate::jdns_debugLinesReady()
+void JDnsShared::jdns_debugLinesReady()
 {
 	QJDns *jdns = (QJDns *)sender();
-
-	doDebug(jdns, instanceForQJDns.value(jdns)->index);
+	int x = indexByJDns(jdns);
+	if(x != -1)
+		doDebug(jdns, x);
 }
 
-#include "jdnsshared.moc"
+}

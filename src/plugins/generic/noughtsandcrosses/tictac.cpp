@@ -21,7 +21,6 @@
 #include <Q3GridLayout>
 #include <Q3Frame>
 #include <Q3VBoxLayout>
-#include <QDebug>
 #include <stdlib.h>                             // rand() function
 #include <qdatetime.h>                          // seed for rand()
 
@@ -161,12 +160,12 @@ void TicTacGameBoard::theirMove(int space)
 {
 	if (st != ComputersTurn)
 		return;
-	qDebug() << (qPrintable(QString("they moved to %1 of %2").arg(space).arg(nBoard*nBoard)));
+	qDebug(qPrintable(QString("they moved to %1 of %2").arg(space).arg(nBoard*nBoard)));
 	if (space>=nBoard*nBoard)
 		return;
-	qDebug() << (qPrintable(QString("Space %1 was %2").arg(space).arg((int)(btArray->at(space)))));
+	qDebug(qPrintable(QString("Space %1 was %2").arg(space).arg((int)(btArray->at(space)))));
 	(*btArray)[space] = TicTacButton::Cross;
-	qDebug() << (qPrintable(QString("Set %1 to %2 in btArray").arg(space).arg((int)(btArray->at(space)))));
+	qDebug(qPrintable(QString("Set %1 to %2 in btArray").arg(space).arg((int)(btArray->at(space)))));
 	updateButtons();
 	
 	qDebug("buttons updated");

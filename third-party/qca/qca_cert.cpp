@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 
@@ -35,125 +35,6 @@ bool arrayToFile(const QString &fileName, const QByteArray &content);
 bool arrayFromFile(const QString &fileName, QByteArray *a);
 bool ask_passphrase(const QString &fname, void *ptr, QSecureArray *answer);
 
-static CertificateInfo orderedToMap(const CertificateInfoOrdered &info)
-{
-	CertificateInfo out;
-	for(int n = 0; n < info.count(); ++n)
-	{
-		const CertificateInfoPair &i = info[n];
-		out.insert(i.type(), i.value());
-	}
-	return out;
-}
-
-static void moveMapValues(CertificateInfo *from, CertificateInfoOrdered *to, CertificateInfoType type)
-{
-	QList<QString> values = from->values(type);
-	from->remove(type);
-
-	// multimap values are stored in reverse.  we'll insert backwards in
-	//   order to right them.
-	for(int n = values.count() - 1; n >= 0; --n)
-		to->append(CertificateInfoPair(type, values[n]));
-}
-
-static CertificateInfoOrdered mapToOrdered(const CertificateInfo &info)
-{
-	CertificateInfo in = info;
-	CertificateInfoOrdered out;
-
-	// have a specific order for some types
-	moveMapValues(&in, &out, CommonName);
-	moveMapValues(&in, &out, Country);
-	moveMapValues(&in, &out, Locality);
-	moveMapValues(&in, &out, State);
-	moveMapValues(&in, &out, Organization);
-	moveMapValues(&in, &out, OrganizationalUnit);
-	moveMapValues(&in, &out, Email);
-	moveMapValues(&in, &out, URI);
-	moveMapValues(&in, &out, DNS);
-	moveMapValues(&in, &out, IPAddress);
-	moveMapValues(&in, &out, XMPP);
-
-	// get remaining types
-	QList<CertificateInfoType> typesLeft = in.keys();
-
-	// dedup
-	QList<CertificateInfoType> types;
-	for(int n = 0; n < typesLeft.count(); ++n)
-	{
-		if(!types.contains(typesLeft[n]))
-			types += typesLeft[n];
-	}
-
-	// insert the rest of the types in the order we got them (map order)
-	for(int n = 0; n < types.count(); ++n)
-		moveMapValues(&in, &out, types[n]);
-
-	Q_ASSERT(in.isEmpty());
-
-	return out;
-}
-
-//----------------------------------------------------------------------------
-// CertificateInfoPair
-//----------------------------------------------------------------------------
-class CertificateInfoPair::Private : public QSharedData
-{
-public:
-	CertificateInfoType type;
-	QString value;
-
-	Private()
-	{
-		type = (CertificateInfoType)-1;
-	}
-};
-
-CertificateInfoPair::CertificateInfoPair()
-:d(new Private)
-{
-}
-
-CertificateInfoPair::CertificateInfoPair(CertificateInfoType type, const QString &value)
-:d(new Private)
-{
-	d->type = type;
-	d->value = value;
-}
-
-CertificateInfoPair::CertificateInfoPair(const CertificateInfoPair &from)
-:d(from.d)
-{
-}
-
-CertificateInfoPair::~CertificateInfoPair()
-{
-}
-
-CertificateInfoPair & CertificateInfoPair::operator=(const CertificateInfoPair &from)
-{
-	d = from.d;
-	return *this;
-}
-
-CertificateInfoType CertificateInfoPair::type() const
-{
-	return d->type;
-}
-
-QString CertificateInfoPair::value() const
-{
-	return d->value;
-}
-
-bool CertificateInfoPair::operator==(const CertificateInfoPair &other) const
-{
-	if(d->type == other.d->type && d->value == other.d->value)
-		return true;
-	return false;
-}
-
 //----------------------------------------------------------------------------
 // CertificateOptions
 //----------------------------------------------------------------------------
@@ -163,8 +44,7 @@ public:
 	CertificateRequestFormat format;
 
 	QString challenge;
-	CertificateInfoOrdered info;
-	CertificateInfo infoMap;
+	CertificateInfo info;
 	Constraints constraints;
 	QStringList policies;
 	bool isCA;
@@ -212,9 +92,9 @@ void CertificateOptions::setFormat(CertificateRequestFormat f)
 bool CertificateOptions::isValid() const
 {
 	// logic from Botan
-	if(d->infoMap.value(CommonName).isEmpty() || d->infoMap.value(Country).isEmpty())
+	if(d->info.value(CommonName).isEmpty() || d->info.value(Country).isEmpty())
 		return false;
-	if(d->infoMap.value(Country).length() != 2)
+	if(d->info.value(Country).length() != 2)
 		return false;
 	if(d->start >= d->end)
 		return false;
@@ -227,11 +107,6 @@ QString CertificateOptions::challenge() const
 }
 
 CertificateInfo CertificateOptions::info() const
-{
-	return d->infoMap;
-}
-
-CertificateInfoOrdered CertificateOptions::infoOrdered() const
 {
 	return d->info;
 }
@@ -278,14 +153,7 @@ void CertificateOptions::setChallenge(const QString &s)
 
 void CertificateOptions::setInfo(const CertificateInfo &info)
 {
-	d->info = mapToOrdered(info);
-	d->infoMap = info;
-}
-
-void CertificateOptions::setInfoOrdered(const CertificateInfoOrdered &info)
-{
 	d->info = info;
-	d->infoMap = orderedToMap(info);
 }
 
 void CertificateOptions::setConstraints(const Constraints &constraints)
@@ -385,61 +253,22 @@ static bool certnameMatchesAddress(const QString &_cn, const QString &peerHost)
 	return false;
 }
 
-class Certificate::Private : public QSharedData
-{
-public:
-	CertificateInfo subjectInfoMap, issuerInfoMap;
-
-	void update(CertContext *c)
-	{
-		if(c)
-		{
-			subjectInfoMap = orderedToMap(c->props()->subject);
-			issuerInfoMap = orderedToMap(c->props()->issuer);
-		}
-		else
-		{
-			subjectInfoMap = CertificateInfo();
-			issuerInfoMap = CertificateInfo();
-		}
-	}
-};
-
 Certificate::Certificate()
-:d(new Private)
 {
 }
 
 Certificate::Certificate(const QString &fileName)
-:d(new Private)
 {
 	*this = fromPEMFile(fileName, 0, QString());
 }
 
 Certificate::Certificate(const CertificateOptions &opts, const PrivateKey &key, const QString &provider)
-:d(new Private)
 {
 	CertContext *c = static_cast<CertContext *>(getContext("cert", provider));
 	if(c->createSelfSigned(opts, *(static_cast<const PKeyContext *>(key.context()))))
 		change(c);
 	else
 		delete c;
-}
-
-Certificate::Certificate(const Certificate &from)
-:Algorithm(from), d(from.d)
-{
-}
-
-Certificate::~Certificate()
-{
-}
-
-Certificate & Certificate::operator=(const Certificate &from)
-{
-	Algorithm::operator=(from);
-	d = from.d;
-	return *this;
 }
 
 bool Certificate::isNull() const
@@ -459,20 +288,10 @@ QDateTime Certificate::notValidAfter() const
 
 CertificateInfo Certificate::subjectInfo() const
 {
-	return d->subjectInfoMap;
-}
-
-CertificateInfoOrdered Certificate::subjectInfoOrdered() const
-{
 	return static_cast<const CertContext *>(context())->props()->subject;
 }
 
 CertificateInfo Certificate::issuerInfo() const
-{
-	return d->issuerInfoMap;
-}
-
-CertificateInfoOrdered Certificate::issuerInfoOrdered() const
 {
 	return static_cast<const CertContext *>(context())->props()->issuer;
 }
@@ -489,7 +308,7 @@ QStringList Certificate::policies() const
 
 QString Certificate::commonName() const
 {
-	return d->subjectInfoMap.value(CommonName);
+	return static_cast<const CertContext *>(context())->props()->subject.value(CommonName);
 }
 
 QBigInteger Certificate::serialNumber() const
@@ -634,10 +453,9 @@ bool Certificate::matchesHostname(const QString &realHost) const
 	while(peerHost.endsWith("."))
 		peerHost.truncate(peerHost.length()-1);
 	peerHost = peerHost.toLower();
-	foreach( const QString &commonName, subjectInfo().values(CommonName) ) {
-		if (certnameMatchesAddress(commonName, peerHost))
-			return true;
-	}
+
+	if(certnameMatchesAddress(commonName(), peerHost))
+		return true;
 
 	foreach( const QString &dnsName, subjectInfo().values(DNS) ) {
 		if (certnameMatchesAddress(dnsName, peerHost))
@@ -648,6 +466,7 @@ bool Certificate::matchesHostname(const QString &realHost) const
 		if (certnameMatchesAddress(ipAddy, peerHost))
 			return true;
 	}
+
 
 	return false;
 }
@@ -668,7 +487,7 @@ bool Certificate::operator==(const Certificate &otherCert) const
 	const CertContextProps *b = static_cast<const CertContext *>(otherCert.context())->props();
 
 	// logic from Botan
-	if(a->sig != b->sig || a->sigalgo != b->sigalgo ||
+	if(a->sig != b->sig || a->sigalgo != b->sigalgo || 
 	   subjectPublicKey() != otherCert.subjectPublicKey())
 		return false;
 	if(a->issuer != b->issuer || a->subject != b->subject)
@@ -683,12 +502,6 @@ bool Certificate::operator==(const Certificate &otherCert) const
 bool Certificate::operator!=(const Certificate &a) const
 {
 	return !(*this == a);
-}
-
-void Certificate::change(CertContext *c)
-{
-	Algorithm::change(c);
-	d->update(static_cast<CertContext *>(context()));
 }
 
 Validity Certificate::chain_validate(const CertificateChain &chain, const CertificateCollection &trusted, const QList<CRL> &untrusted_crls, UsageMode u) const
@@ -759,55 +572,22 @@ CertificateChain Certificate::chain_complete(const CertificateChain &chain, cons
 //----------------------------------------------------------------------------
 // CertificateRequest
 //----------------------------------------------------------------------------
-class CertificateRequest::Private : public QSharedData
-{
-public:
-	CertificateInfo subjectInfoMap;
-
-	void update(CSRContext *c)
-	{
-		if(c)
-			subjectInfoMap = orderedToMap(c->props()->subject);
-		else
-			subjectInfoMap = CertificateInfo();
-	}
-};
-
 CertificateRequest::CertificateRequest()
-:d(new Private)
 {
 }
 
 CertificateRequest::CertificateRequest(const QString &fileName)
-:d(new Private)
 {
 	*this = fromPEMFile(fileName, 0, QString());
 }
 
 CertificateRequest::CertificateRequest(const CertificateOptions &opts, const PrivateKey &key, const QString &provider)
-:d(new Private)
 {
 	CSRContext *c = static_cast<CSRContext *>(getContext("csr", provider));
 	if(c->createRequest(opts, *(static_cast<const PKeyContext *>(key.context()))))
 		change(c);
 	else
 		delete c;
-}
-
-CertificateRequest::CertificateRequest(const CertificateRequest &from)
-:Algorithm(from), d(from.d)
-{
-}
-
-CertificateRequest::~CertificateRequest()
-{
-}
-
-CertificateRequest & CertificateRequest::operator=(const CertificateRequest &from)
-{
-	Algorithm::operator=(from);
-	d = from.d;
-	return *this;
 }
 
 bool CertificateRequest::isNull() const
@@ -831,11 +611,6 @@ CertificateRequestFormat CertificateRequest::format() const
 }
 
 CertificateInfo CertificateRequest::subjectInfo() const
-{
-	return d->subjectInfoMap;
-}
-
-CertificateInfoOrdered CertificateRequest::subjectInfoOrdered() const
 {
 	return static_cast<const CSRContext *>(context())->props()->subject;
 }
@@ -972,12 +747,6 @@ CertificateRequest CertificateRequest::fromString(const QString &s, ConvertResul
 	return c;
 }
 
-void CertificateRequest::change(CSRContext *c)
-{
-	Algorithm::change(c);
-	d->update(static_cast<CSRContext *>(context()));
-}
-
 //----------------------------------------------------------------------------
 // CRLEntry
 //----------------------------------------------------------------------------
@@ -1057,39 +826,8 @@ bool CRLEntry::operator<(const CRLEntry &otherEntry) const
 //----------------------------------------------------------------------------
 // CRL
 //----------------------------------------------------------------------------
-class CRL::Private : public QSharedData
-{
-public:
-	CertificateInfo issuerInfoMap;
-
-	void update(CRLContext *c)
-	{
-		if(c)
-			issuerInfoMap = orderedToMap(c->props()->issuer);
-		else
-			issuerInfoMap = CertificateInfo();
-	}
-};
-
 CRL::CRL()
-:d(new Private)
 {
-}
-
-CRL::CRL(const CRL &from)
-:Algorithm(from), d(from.d)
-{
-}
-
-CRL::~CRL()
-{
-}
-
-CRL & CRL::operator=(const CRL &from)
-{
-	Algorithm::operator=(from);
-	d = from.d;
-	return *this;
 }
 
 bool CRL::isNull() const
@@ -1098,11 +836,6 @@ bool CRL::isNull() const
 }
 
 CertificateInfo CRL::issuerInfo() const
-{
-	return d->issuerInfoMap;
-}
-
-CertificateInfoOrdered CRL::issuerInfoOrdered() const
 {
 	return static_cast<const CRLContext *>(context())->props()->issuer;
 }
@@ -1192,6 +925,7 @@ bool CRL::operator==(const CRL &otherCrl) const
 
 }
 
+
 CRL CRL::fromDER(const QSecureArray &a, ConvertResult *result, const QString &provider)
 {
 	CRL c;
@@ -1233,11 +967,6 @@ bool CRL::toPEMFile(const QString &fileName) const
 	return stringToFile(fileName, toPEM());
 }
 
-void CRL::change(CRLContext *c)
-{
-	Algorithm::change(c);
-	d->update(static_cast<CRLContext *>(context()));
-}
 
 //----------------------------------------------------------------------------
 // Store
@@ -1273,7 +1002,7 @@ static QString readNextPem(QTextStream *ts, bool *isCRL)
 		}
 	}
 	if(!done)
-                return QString();
+		return QString::null;
 	return pem;
 }
 
@@ -1580,7 +1309,7 @@ void KeyBundle::setCertificateChainAndKey(const CertificateChain &c, const Priva
 
 QByteArray KeyBundle::toArray(const QSecureArray &passphrase, const QString &provider) const
 {
-	PKCS12Context *pix = static_cast<PKCS12Context *>(getContext("pkcs12", provider));
+	PIXContext *pix = static_cast<PIXContext *>(getContext("pix", provider));
 
 	QList<const CertContext*> list;
 	for(int n = 0; n < d->chain.count(); ++n)
@@ -1603,7 +1332,7 @@ KeyBundle KeyBundle::fromArray(const QByteArray &a, const QSecureArray &passphra
 	PKeyContext *kc = 0;
 
 	KeyBundle bundle;
-	PKCS12Context *pix = static_cast<PKCS12Context *>(getContext("pkcs12", provider));
+	PIXContext *pix = static_cast<PIXContext *>(getContext("pix", provider));
 	ConvertResult r = pix->fromPKCS12(a, passphrase, &name, &list, &kc);
 
 	// error converting without passphrase?  maybe a passphrase is needed

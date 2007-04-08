@@ -134,7 +134,6 @@ signals:
 public slots:
 	void setGlobalStatus(const Status &, bool withPriority = false);
 	void doToolbars();
-	void checkAccountsEmpty();
 
 public slots:
 	void doSleep();
@@ -154,7 +153,6 @@ public slots:
 	void recvNextEvent();
 	void setStatusFromDialog(const XMPP::Status &, bool withPriority);
 	void pgp_keysUpdated();
-	void keyStoreAvailable(const QString&);
 	void proxy_settingsChanged();
 	void updateMainwinStatus();
 	void tabDying(TabDlg*);
@@ -164,7 +162,6 @@ public slots:
 
 private slots:
 	void saveAccounts();
-	void optionsUpdate();
 
 private:
 	class Private;
@@ -173,7 +170,6 @@ private:
 	void deleteAllDialogs();
 	void s5b_init();
 	void updateS5BServerAddresses();
-	void setShortcuts();
 
 	friend class PsiAccount; // FIXME
 	void setToggles(bool tog_offline, bool tog_away, bool tog_agents, bool tog_hidden, bool tog_self);

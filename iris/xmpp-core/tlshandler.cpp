@@ -46,8 +46,6 @@ class QCATLSHandler::Private
 public:
 	QCA::TLS *tls;
 	int state, err;
-	QString host;
-	bool internalHostMatch;
 };
 
 QCATLSHandler::QCATLSHandler(QCA::TLS *parent)
@@ -62,40 +60,12 @@ QCATLSHandler::QCATLSHandler(QCA::TLS *parent)
 	connect(d->tls, SIGNAL(error()), SLOT(tls_error()));
 	d->state = 0;
 	d->err = -1;
-	d->internalHostMatch = false;
 }
 
 QCATLSHandler::~QCATLSHandler()
 {
 	delete d;
 }
-
-void QCATLSHandler::setXMPPCertCheck(bool enable)
-{
-	d->internalHostMatch = enable;
-}
-bool QCATLSHandler::XMPPCertCheck()
-{
-	return d->internalHostMatch;
-}
-bool QCATLSHandler::certMatchesHostname()
-{
-	if (!d->internalHostMatch) return false;
-	QCA::CertificateChain peerCert = d->tls->peerCertificateChain();
-
-	if (peerCert.primary().matchesHostname(d->host))
-		return true;
-	
-	Jid host(d->host);
-
-	foreach( const QString &idOnXmppAddr, peerCert.primary().subjectInfo().values(QCA::XMPP) ) {
-		if (host.compare(Jid(idOnXmppAddr)))
-			return true;
-	}
-
-	return false;
-}
-
 
 QCA::TLS *QCATLSHandler::tls() const
 {
@@ -117,8 +87,7 @@ void QCATLSHandler::startClient(const QString &host)
 {
 	d->state = 0;
 	d->err = -1;
-	if (d->internalHostMatch) d->host = host;
-	d->tls->startClient(d->internalHostMatch ? QString() : host);
+	d->tls->startClient(host);
 }
 
 void QCATLSHandler::write(const QByteArray &a)

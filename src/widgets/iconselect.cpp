@@ -111,7 +111,7 @@ private:
 	void iconStart()
 	{
 		if ( ic ) {
-			connect(ic, SIGNAL(pixmapChanged()), SLOT(iconUpdated()));
+			connect(ic, SIGNAL(pixmapChanged(const QPixmap &)), SLOT(iconUpdated(const QPixmap &)));
 			if ( !animated ) {
 				ic->activated(false);
 				animated = true;
@@ -181,7 +181,7 @@ private:
 	void leaveEvent(QEvent *) { clearFocus(); update(); }
 
 private slots:
-	void iconUpdated()
+	void iconUpdated(const QPixmap &)
 	{
 		update();
 	}

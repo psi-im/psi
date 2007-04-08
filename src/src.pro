@@ -10,6 +10,7 @@ CONFIG  += qt thread x11
 QT += xml network qt3support
 
 #CONFIG += use_crash
+#DEFINES += GPG_DEBUG
 DEFINES += QT_STATICPLUGIN
 
 # Import several very useful Makefile targets 

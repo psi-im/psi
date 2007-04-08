@@ -24,7 +24,6 @@
  */
 
 #include <QtCore>
-#include <QDebug>
 
 #include "psiplugin.h"
 #include "tictac.h"
@@ -94,7 +93,7 @@ void NoughtsAndCrossesPlugin::message( const PsiAccount* account, const QString&
 	}
 	QString command = QString(message);
 	command.remove(0,18);
-	qDebug() << (qPrintable(QString("noughtsandcrosses command string %1").arg(command)));
+	qDebug(qPrintable(QString("noughtsandcrosses command string %1").arg(command)));
 	if (command == QString("start"))
 	{
 		if (game)
@@ -124,7 +123,7 @@ void NoughtsAndCrossesPlugin::message( const PsiAccount* account, const QString&
 		command.remove(0,5);
 		
 		int space=command.toInt();
-		qDebug() << (qPrintable(QString("noughtsandcrosses move to space %1").arg(space)));
+		qDebug(qPrintable(QString("noughtsandcrosses move to space %1").arg(space)));
 		theirTurn(space);
 	}
 }	
@@ -171,7 +170,7 @@ void NoughtsAndCrossesPlugin::gameOver(TicTacGameBoard::State state)
 
 void NoughtsAndCrossesPlugin::myTurn(int space)
 {
-	qDebug() << (qPrintable(QString("my turn: %1").arg(space)));
+	qDebug(qPrintable(QString("my turn: %1").arg(space)));
 	if (!game)
 		return;
 	QString reply;
@@ -181,7 +180,7 @@ void NoughtsAndCrossesPlugin::myTurn(int space)
 
 void NoughtsAndCrossesPlugin::theirTurn(int space)
 {
-	qDebug() << (qPrintable(QString("their turn: %1").arg(space)));
+	qDebug(qPrintable(QString("their turn: %1").arg(space)));
 	if (!game)
 		return;
 	game->theirMove(space);

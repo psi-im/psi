@@ -1,4 +1,5 @@
 /*
+ *
  * grepshortcutkeydlg.cpp - a dialog which greps a KeySequence and
  * emits a signal with this KeySequence as Parameter
  * Copyright (C) 2006 Cestonaro Thilo
@@ -18,95 +19,41 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-
 #include "grepshortcutkeydlg.h"
 
-GrepShortcutKeyDlg::GrepShortcutKeyDlg()
-	: QDialog()
-	, gotKey(false)
-{
-	ui_.setupUi(this);
-	displayPressedKeys(QKeySequence());
-}
-
 /**
- * Grabs the keyboard and proceeds with the default show() call.
+ * \brief	keyPressEvent, is called when a Key was pressed while the dialog has the focus
+ *			it ignores hopefully any Modifierkeys e.g. Ctrl and any unusally keys
+ *			if a correct KeySequence is reconned, it emits the Signal newShortcutKey with
+ *			with the KeySequence as param
+ * \param	The KeyEvent holds informations about the pressed keys
  */
-void GrepShortcutKeyDlg::show()
-{
-	grabKeyboard();
-	QDialog::show();
-}
-
-/**
- * Releases the grabbed keyboard and proceeds with the default close() call.
- */
-void GrepShortcutKeyDlg::close()
-{
-	QDialog::close();
-	releaseKeyboard();
-}
-
-void GrepShortcutKeyDlg::displayPressedKeys(QKeySequence keys)
-{
-	QString str = keys.toString(QKeySequence::NativeText);
-	if (str.isEmpty())
-		str = tr("Set Keys");
-	ui_.shortcutPreview->setText(str);
-}
-
-QKeySequence GrepShortcutKeyDlg::getKeySequence(QKeyEvent* event) const
-{
-	return QKeySequence((isValid(event->key()) ? event->key() : 0)
-	                    + (event->modifiers() & ~Qt::KeypadModifier));
-}
-
-void GrepShortcutKeyDlg::keyPressEvent(QKeyEvent* event)
-{
-	displayPressedKeys(getKeySequence(event));
-
-	if (!isValid(event->key()) || gotKey)
+void grepShortcutKeyDlg::keyPressEvent(QKeyEvent *event) {
+	if(event->key() == Qt::Key_unknown || event->key() == 0 || isModifier(event->key()) || gotKey == true)
 		return;
 
 	gotKey = true;
-	emit newShortcutKey(getKeySequence(event));
+	emit newShortcutKey(QKeySequence(event->key() + ( event->modifiers() & ~Qt::KeypadModifier)));
 	close();
 }
 
-void GrepShortcutKeyDlg::keyReleaseEvent(QKeyEvent* event)
-{
-	displayPressedKeys(getKeySequence(event));
-}
-
 /**
- * Returns true if \param key could be used in a shortcut.
+ * \brief	isModifier, checks if the given key is a modifier e.g. Ctrl and returns true respectivley false
+ * \param	iKey, is the integer of the key which should be checked
+ * \return	true, if iKey is a Modifier
+ *			false, if iKey is not a Modifier
  */
-bool GrepShortcutKeyDlg::isValid(int key) const
-{
-	switch (key) {
-	case 0:
-	case Qt::Key_unknown:
-		return false;
-	}
-
-	return !isModifier(key);
-}
-
-/**
- * Returns true if \param key is modifier.
- */
-bool GrepShortcutKeyDlg::isModifier(int key) const
-{
-	switch (key) {
-	case Qt::Key_Shift:
-	case Qt::Key_Control:
-	case Qt::Key_Meta:
-	case Qt::Key_Alt:
-	case Qt::Key_AltGr:
-	case Qt::Key_Super_L:
-	case Qt::Key_Super_R:
-	case Qt::Key_Menu:
-		return true;
+bool grepShortcutKeyDlg::isModifier(int key) {
+	switch(key) {
+		case Qt::Key_Shift:
+		case Qt::Key_Control:
+		case Qt::Key_Meta:
+		case Qt::Key_Alt:
+		case Qt::Key_AltGr:
+		case Qt::Key_Super_L:
+		case Qt::Key_Super_R:
+		case Qt::Key_Menu:
+			return true;
 	}
 	return false;
 }

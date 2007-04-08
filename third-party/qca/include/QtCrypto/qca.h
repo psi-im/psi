@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 
@@ -70,40 +70,39 @@
      - SSL/TLS (QCA::TLS)
      - X509 certificates (QCA::Certificate and QCA::CertificateCollection)
      - X509 certificate revocation lists (QCA::CRL)
-     - Built-in support for operating system certificate root storage (QCA::systemStore)
+     - Built-in support for operating system root storage (QCA::systemStore)
      - Simple Authentication and Security Layer (SASL) (QCA::SASL)
      - Cryptographic Message Syntax (e.g., for S/MIME) (QCA::CMS)
      - PGP messages (QCA::OpenPGP)
      - Unified PGP/CMS API (QCA::SecureMessage)
      - Subsystem for managing Smart Cards and PGP keyrings (QCA::KeyStore)
-     - Simple but flexible logging system (QCA::Logger)
      - RSA (QCA::RSAPrivateKey and QCA::RSAPublicKey)
      - DSA (QCA::DSAPrivateKey and QCA::DSAPublicKey)
      - Diffie-Hellman (QCA::DHPrivateKey and QCA::DHPublicKey)
-     - Hashing (QCA::Hash) with
-         - SHA-0
-         - SHA-1
-         - MD2
-         - MD4
+     - Hashing (QCA::Hash)
+         - QCA::SHA0
+         - QCA::SHA1
+         - QCA::MD2
+         - QCA::MD4
+         - QCA::MD5
+         - QCA::RIPEMD160
+         - QCA::SHA224
+         - QCA::SHA256
+         - QCA::SHA384
+         - QCA::SHA512
+     - Ciphers (QCA::Cipher)
+         - BlowFish  (QCA::BlowFish)
+         - Triple %DES (QCA::TripleDES)
+         - %DES (QCA::DES)
+         - AES (QCA::AES128, QCA::AES192, QCA::AES256)
+     - Keyed Hash Message Authentication Code (QCA::HMAC), using
+         - SHA1
          - MD5
          - RIPEMD160
-         - SHA-224
-         - SHA-256
-         - SHA-384
-         - SHA-512
-     - Ciphers (QCA::Cipher) using
-         - BlowFish
-         - Triple DES
-         - DES
-         - AES (128, 192 and 256 bit)
-     - Message Authentication Code (QCA::MAC), using
-         - HMAC with SHA-1
-         - HMAC with MD5
-         - HMAC with RIPEMD160
-	 - HMAC with SHA-224
-	 - HMAC with SHA-256
-	 - HMAC with SHA-384
-	 - HMAC with SHA-512
+	 - SHA224
+	 - SHA256
+	 - SHA384
+	 - SHA512
      - Encoding and decoding of hexadecimal (QCA::Hex) and 
      Base64 (QCA::Base64)
   
@@ -117,7 +116,7 @@
    And of course, you get a very simple crypto API for Qt, where you can
    do things like:
    \code
-   QString hash = QCA::Hash("sha1").hashToString(blockOfData);
+   QString hash = QCA::SHA1().hashToString(blockOfData);
    \endcode
 
    \section using Using QCA
@@ -180,10 +179,11 @@ for this example):
 class QCA_EXPORT Hash : public Algorithm, public BufferedComputation
 {
 public:
-    Hash(const QString &type, const QString &provider);
     virtual void clear();
     virtual void update(const QSecureArray &a);
     virtual QSecureArray final();
+protected:
+    Hash(const QString &type, const QString &provider);
 }
 \endcode
 

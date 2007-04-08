@@ -247,8 +247,8 @@ void TabDlg::closeChat(ChatDlg* chat, bool doclose=true)
 	tabHasMessages.erase(chat);
 	chats.remove(chat);
 	chat->reparent(0,QPoint());
-	if (doclose && chat->testAttribute(Qt::WA_DeleteOnClose))
-		chat->close();
+	//if (doclose)
+	//	chat->close();
 	if (tabs->count()>0)
 		updateCaption();
 	checkHasChats();
@@ -425,8 +425,7 @@ void TabDlg::keyPressEvent(QKeyEvent *e)
 void TabDlg::dragEnterEvent(QDragEnterEvent *event)
 {
 	if ( event->mimeData()->hasFormat("psiTabDrag") ) {
-		event->setDropAction(Qt::MoveAction);
-		event->accept();
+		event->acceptProposedAction();
 	}
 }
 
@@ -450,9 +449,7 @@ void TabDlg::dropEvent(QDropEvent *event)
 		TabDlg *dlg=psi->getManagingTabs(chat);
 		if (!chat || !dlg)
 			return;
-		qRegisterMetaType<TabDlg*>("TabDlg*");
-		QMetaObject::invokeMethod(dlg, "sendChatTo",  Qt::QueuedConnection, Q_ARG(QWidget*, chat), Q_ARG(TabDlg*, this));
-		//dlg->sendChatTo(chat, this);
+		dlg->sendChatTo(chat, this);
 	} 
 	
 }

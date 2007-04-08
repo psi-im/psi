@@ -286,7 +286,7 @@ void BSocket::srv_done()
 void BSocket::ndns_done()
 {
 #ifndef NO_NDNS
-	if(!d->ndns.result().isNull()) {
+	if(d->ndns.result()) {
 		d->host = d->ndns.resultString();
 		d->state = Connecting;
 		do_connect();

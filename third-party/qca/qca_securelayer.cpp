@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 
@@ -142,7 +142,7 @@ public:
 		else
 			c->setConstraints(con_cipherSuites);
 
-		c->setup(trusted, localCert, localKey, serverMode, host, tryCompress, false);
+		c->setup(trusted, localCert, localKey, serverMode, tryCompress, false);
 
 		bool ok;
 		c->start();
@@ -634,9 +634,8 @@ void TLS::setPacketMTU(int size) const
 */
 
 QString *saslappname = 0;
-class SASL::Private : public QObject
+class SASL::Private
 {
-	Q_OBJECT
 private:
 	SASL *sasl;
 public:
@@ -661,7 +660,7 @@ public:
 			QMetaObject::invokeMethod(sasl, "nextStep", Qt::QueuedConnection, Q_ARG(QByteArray, c->stepData())); // TODO: double-check this!
 		else if(c->result() == SASLContext::AuthCheck ||
 		        c->result() == SASLContext::NeedParams)
-			QMetaObject::invokeMethod(this, "tryAgain", Qt::QueuedConnection);
+			QMetaObject::invokeMethod(sasl, "tryAgain", Qt::QueuedConnection);
 		else
 			QMetaObject::invokeMethod(sasl, "error", Qt::QueuedConnection);
 	}
@@ -672,7 +671,7 @@ public:
 		int _readout = sasl->bytesOutgoingAvailable();
 
 	// 	bool force_read = false;
-	//
+	// 
 	// 	if(!handshaken)
 	// 	{
 	// 		QByteArray a;
@@ -683,7 +682,7 @@ public:
 	// 		a = c->to_net();
 	// 		r = c->result();
 	// 		from_net.clear();
-	//
+	// 
 	// 		if(r == TLSContext::Error)
 	// 		{
 	// 			reset(ResetSession);
@@ -691,9 +690,9 @@ public:
 	// 			errorCode = ErrorHandshake;
 	// 			return;
 	// 		}
-	//
+	// 
 	// 		to_net.append(a);
-	//
+	// 
 	// 		if(r == TLSContext::Success)
 	// 		{
 	// 			peerCert = c->peerCertificateChain();
@@ -708,13 +707,13 @@ public:
 	// 			force_read = true;
 	// 		}
 	// 	}
-	//
+	// 
 	// 	if(handshaken)
 	// 	{
 			bool eof        = false;
 			bool tryMore    = false;
 			bool force_read = false;
-
+	
 			if(!out.isEmpty() || tryMore)
 			{
 				tryMore = false;
@@ -745,7 +744,7 @@ public:
 					to_net.append(a);
 				}
 			}
-
+	
 			if(!from_net.isEmpty() || force_read)
 			{
 				QByteArray a;
@@ -767,7 +766,7 @@ public:
 				in.append(a);
 				to_net.append(b);
 			}
-
+	
 	// 		if(eof)
 	// 		{
 	// 			close();
@@ -775,7 +774,7 @@ public:
 	// 			return;
 	// 		}
 	// 	}
-
+	
 		if(sasl->bytesAvailable() > _read)
 		{
 			//emit sasl->readyRead();
@@ -806,9 +805,6 @@ public:
 	bool disableServerSendLast;
 	bool first, server;
 	Error errorCode;
-
-public slots:
-	void tryAgain();
 };
 
 SASL::SASL(QObject *parent, const QString &provider)
@@ -910,7 +906,7 @@ void SASL::startClient(const QString &service, const QString &host, const QStrin
 	d->first  = true;
 	d->server = false;
 	d->tried  = false;
-	QTimer::singleShot(0, d, SLOT(tryAgain()));
+	QTimer::singleShot(0, this, SLOT(tryAgain()));
 }
 
 void SASL::startServer(const QString &service, const QString &host, const QString &realm, ServerSendMode mode)
@@ -949,7 +945,7 @@ void SASL::putServerFirstStep(const QString &mech, const QByteArray &clientInit)
 void SASL::putStep(const QByteArray &stepData)
 {
 	d->stepData = stepData;
-	d->tryAgain();
+	tryAgain();
 }
 
 void SASL::setUsername(const QString &user)
@@ -974,12 +970,12 @@ void SASL::setRealm(const QString &realm)
 
 void SASL::continueAfterParams()
 {
-	d->tryAgain();
+	tryAgain();
 }
 
 void SASL::continueAfterAuthCheck()
 {
-	d->tryAgain();
+	tryAgain();
 }
 
 QString SASL::mechanism() const
@@ -1036,11 +1032,8 @@ QByteArray SASL::readOutgoing(int *plainBytes)
 	return a;
 }
 
-void SASL::Private::tryAgain()
+void SASL::tryAgain()
 {
-	Private *d = this;
-	SASL *q = sasl;
-
 	if(d->server) {
 		if(!d->tried) {
 			d->c->nextStep(d->stepData);
@@ -1052,16 +1045,16 @@ void SASL::Private::tryAgain()
 
 		if(d->c->result() == SASLContext::Error) {
 			d->errorCode = ErrorHandshake;
-			emit q->error();
+			emit error();
 			return;
 		}
 		else if(d->c->result() == SASLContext::Continue) {
 			d->tried = false;
-			emit q->nextStep(d->c->stepData());
+			nextStep(d->c->stepData());
 			return;
 		}
 		else if(d->c->result() == SASLContext::AuthCheck) {
-			emit q->authCheck(d->c->username(), d->c->authzid());
+			authCheck(d->c->username(), d->c->authzid());
 			return;
 		}
 	}
@@ -1069,7 +1062,7 @@ void SASL::Private::tryAgain()
 		if(d->first) {
 			if(d->c->result() == SASLContext::Error) {
 				d->errorCode = ErrorInit;
-				emit q->error();
+				emit error();
 				return;
 			}
 
@@ -1077,19 +1070,19 @@ void SASL::Private::tryAgain()
 
 			if(d->c->result() == SASLContext::Error) {
 				d->errorCode = ErrorHandshake;
-				emit q->error();
+				emit error();
 				return;
 			}
 			else if(d->c->result() == SASLContext::NeedParams) {
 				//d->tried = false;
 				Params np = d->c->clientParamsNeeded();
-				emit q->needParams(np);
+				needParams(np);
 				return;
 			}
-
+			
 			d->first = false;
 			d->tried = false;
-			emit q->clientStarted(d->c->haveClientInit(), d->c->stepData());
+			emit clientStarted(d->c->haveClientInit(), d->c->stepData());
 		}
 		else {
 			if(!d->tried) {
@@ -1101,28 +1094,28 @@ void SASL::Private::tryAgain()
 
 			if(d->c->result() == SASLContext::Error) {
 				d->errorCode = ErrorHandshake;
-				emit q->error();
+				emit error();
 				return;
 			}
 			else if(d->c->result() == SASLContext::NeedParams) {
 				//d->tried = false;
 				Params np = d->c->clientParamsNeeded();
-				emit q->needParams(np);
+				needParams(np);
 				return;
 			}
 			// else if(d->c->result() == SASLContext::Continue) {
 				d->tried = false;
-				emit q->nextStep(d->c->stepData());
+				nextStep(d->c->stepData());
 			// 	return;
 			// }
 		}
 	}
 
 	if(d->c->result() == SASLContext::Success)
-		emit q->authenticated();
+		authenticated();
 	else if(d->c->result() == SASLContext::Error) {
 		d->errorCode = ErrorHandshake;
-		emit q->error();
+		emit error();
 	}
 }
 

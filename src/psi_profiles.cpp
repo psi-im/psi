@@ -87,7 +87,7 @@ void UserAccount::reset()
 	opt_auto = FALSE;
 	tog_offline = TRUE;
 	tog_away = TRUE;
-	tog_hidden = FALSE;
+	tog_hidden = TRUE;
 	tog_agents = TRUE;
 	tog_self = FALSE;
 	customAuth = FALSE;
@@ -105,7 +105,7 @@ void UserAccount::reset()
 	resource = "Psi";
 	priority = 5;
 	opt_keepAlive = TRUE;
-	allow_plain = XMPP::ClientStream::AllowPlainOverTLS;
+	opt_plain = FALSE;
 	opt_compress = TRUE;
 	opt_log = TRUE;
 	opt_reconn = FALSE;
@@ -140,6 +140,7 @@ QDomElement UserAccount::toXml(QDomDocument &doc, const QString &tagName)
 	setBoolAttribute(a, "showAgents", tog_agents);
 	setBoolAttribute(a, "showSelf", tog_self);
 	setBoolAttribute(a, "keepAlive", opt_keepAlive);
+	setBoolAttribute(a, "plain", opt_plain);
 	setBoolAttribute(a, "compress", opt_compress);
 	setBoolAttribute(a, "require-mutual-auth", req_mutual_auth);
 	setBoolAttribute(a, "legacy-ssl-probe", legacy_ssl_probe);
@@ -173,7 +174,6 @@ QDomElement UserAccount::toXml(QDomDocument &doc, const QString &tagName)
 	if (!pgpSecretKey.isNull()) {
 		a.appendChild(textTag(doc, "pgpSecretKeyID", pgpSecretKey.keyId()));
 	}
-	a.appendChild(textTag(doc, "allow-plain", allow_plain));
 	
 	QDomElement r = doc.createElement("roster");
 	a.appendChild(r);
@@ -262,6 +262,7 @@ void UserAccount::fromXml(const QDomElement &a)
 	readBoolAttribute(a, "showAgents", &tog_agents);
 	readBoolAttribute(a, "showSelf", &tog_self);
 	readBoolAttribute(a, "keepAlive", &opt_keepAlive);
+	readBoolAttribute(a, "plain", &opt_plain);
 	readBoolAttribute(a, "compress", &opt_compress);
 	readBoolAttribute(a, "require-mutual-auth", &req_mutual_auth);
 	readBoolAttribute(a, "legacy-ssl-probe", &legacy_ssl_probe);
@@ -275,12 +276,6 @@ void UserAccount::fromXml(const QDomElement &a)
 	else {
 		opt_automatic_resource = false;
 	}
-	
-	// Will be overwritten if there is a new option
-	bool opt_plain = false;
-	readBoolAttribute(a, "plain", &opt_plain);
-	allow_plain = (opt_plain ? XMPP::ClientStream::AllowPlain : XMPP::ClientStream::NoAllowPlain);
-	readNumEntry(a, "allow-plain", (int*) &allow_plain);
 	
 	// Will be overwritten if there is a new option
 	bool opt_ssl = true;
@@ -441,6 +436,7 @@ void UserProfile::reset()
 	prefs.dockDCstyle = win ? TRUE: FALSE;
 	prefs.dockHideMW = FALSE;
 	prefs.dockToolMW = FALSE;
+	prefs.isWMDock = false;
 #ifdef Q_WS_MAC
 	prefs.alertStyle = 0;
 #else
@@ -881,6 +877,7 @@ bool UserProfile::toFile(const QString &fname)
 			p_dock.appendChild(textTag(doc, "dockDCstyle", prefs.dockDCstyle));
 			p_dock.appendChild(textTag(doc, "dockHideMW", prefs.dockHideMW));
 			p_dock.appendChild(textTag(doc, "dockToolMW", prefs.dockToolMW));
+			p_dock.appendChild(textTag(doc, "isWMDock", prefs.isWMDock));
 		}
 		/*{
 			QDomElement p_sec = doc.createElement("security");
@@ -1434,6 +1431,7 @@ bool UserProfile::fromFile(const QString &fname)
 				readBoolEntry(tag, "dockDCstyle", &prefs.dockDCstyle);
 				readBoolEntry(tag, "dockHideMW", &prefs.dockHideMW);
 				readBoolEntry(tag, "dockToolMW", &prefs.dockToolMW);
+				readBoolEntry(tag, "isWMDock", &prefs.isWMDock);
 			}
 
 			/*tag = findSubTag(p_general, "security", &found);

@@ -25,7 +25,6 @@
 #include <QtCore>
 #include <QPluginLoader>
 #include <QCoreApplication>
-#include <QDebug>
 
 #include "tunecontrollermanager.h"
 #include "tunecontrollerplugin.h"
@@ -80,7 +79,7 @@ bool TuneControllerManager::loadPlugin(QObject* plugin)
 	TuneControllerPlugin* tcplugin = qobject_cast<TuneControllerPlugin*>(plugin);
 	if (tcplugin) {
 		if(!plugins_.contains(tcplugin->name())) {
-			//qDebug() << "Registering plugin " << tcplugin->name();
+			//qDebug(qPrintable(QString("Registering plugin '%1'").arg(tcplugin->name())));
 			plugins_[tcplugin->name()] = tcplugin;
 		}
 		return true;

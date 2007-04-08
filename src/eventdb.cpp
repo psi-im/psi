@@ -145,13 +145,6 @@ void EDBHandle::append(const Jid &j, PsiEvent *e)
 	d->listeningFor = d->edb->op_append(j, e);
 }
 
-void EDBHandle::erase(const Jid &j)
-{
-	d->busy = true;
-	d->lastRequestType = Erase;
-	d->listeningFor = d->edb->op_erase(j);
-}
-
 bool EDBHandle::busy() const
 {
 	return d->busy;
@@ -265,11 +258,6 @@ int EDB::op_append(const Jid &j, PsiEvent *e)
 	return append(j, e);
 }
 
-int EDB::op_erase(const Jid &j)
-{
-	return erase(j);
-}
-
 void EDB::resultReady(int req, EDBResult *r)
 {
 	// deliver
@@ -315,8 +303,7 @@ struct item_file_req
 		Type_getOldest,
 		Type_get,
 		Type_append,
-		Type_find,
-		Type_erase
+		Type_find
 	};
 };
 
@@ -419,19 +406,6 @@ int EDBFlatFile::append(const Jid &j, PsiEvent *e)
 	return r->id;
 }
 
-int EDBFlatFile::erase(const Jid &j)
-{
-	item_file_req *r = new item_file_req;
-	r->j = j;
-	r->type = item_file_req::Type_erase;
-	r->event = 0;
-	r->id = genUniqueId();
-	d->rlist.append(r);
-
-	QTimer::singleShot(FAKEDELAY, this, SLOT(performRequests()));
-	return r->id;
-}
-
 EDBFlatFile::File *EDBFlatFile::findFile(const Jid &j) const
 {
 	Q3PtrListIterator<File> it(d->flist);
@@ -451,30 +425,6 @@ EDBFlatFile::File *EDBFlatFile::ensureFile(const Jid &j)
 		d->flist.append(i);
 	}
 	return i;
-}
-
-bool EDBFlatFile::deleteFile(const Jid &j)
-{
-	File *i = findFile(j);
-
-	QString fname;
-
-	if (i) {
-		fname = i->fname;
-		d->flist.remove(i);
-		delete i;
-	}
-	else {
-		fname = File::jidToFileName(j);
-	}
-
-	QFileInfo fi(fname);
-	if(fi.exists()) {
-		QDir dir = fi.dir();
-		return dir.remove(fi.fileName());
-	}
-	else
-		return true;
 }
 
 void EDBFlatFile::performRequests()
@@ -578,9 +528,6 @@ void EDBFlatFile::performRequests()
 		}
 		resultReady(r->id, result);
 	}
-	else if(type == item_file_req::Type_erase) {
-		writeFinished(r->id, deleteFile(f->j));
-	}
 
 	delete r;
 }
@@ -601,7 +548,7 @@ class EDBFlatFile::File::Private
 public:
 	Private() {}
 
-	QVector<quint64> index;
+	QVector<int> index;
 	bool indexed;
 };
 
@@ -616,7 +563,8 @@ EDBFlatFile::File::File(const Jid &_j)
 	connect(t, SIGNAL(timeout()), SLOT(timer_timeout()));
 
 	//printf("[EDB opening -- %s]\n", j.full().latin1());
-	fname = jidToFileName(_j);
+	QString s = j.userHost();
+	fname = ApplicationInfo::historyDir() + "/" + JIDUtil::encode(s).toLower() + ".history";
 	f.setName(fname);
 	valid = f.open(QIODevice::ReadWrite);
 
@@ -632,36 +580,27 @@ EDBFlatFile::File::~File()
 	delete d;
 }
 
-QString EDBFlatFile::File::jidToFileName(const XMPP::Jid &j)
-{
-	return ApplicationInfo::historyDir() + "/" + JIDUtil::encode(j.userHost()).toLower() + ".history";
-}
-
 void EDBFlatFile::File::ensureIndex()
 {
 	if ( valid && !d->indexed ) {
-		if (f.isSequential()) {
-			qWarning("EDBFlatFile::File::ensureIndex(): Can't index sequential files.");
-			return;
-		}
-
 		f.reset(); // go to beginning
 		d->index.clear();
 
 		//printf(" file: %s\n", fname.latin1());
 		// build index
 		while(1) {
-			quint64 at = f.pos();
+			int at = f.at();
 
 			// locate a newline
 			bool found = false;
-			char c;
-			while (f.getChar(&c)) {
-				if (c == '\n') {
+			int c;
+			do {
+				c = f.getch();
+				if(c == '\n') {
 					found = true;
 					break;
 				}
-			}
+			} while(c != -1);
 
 			if(!found)
 				break;
@@ -707,7 +646,7 @@ PsiEvent *EDBFlatFile::File::get(int id)
 	if(id < 0 || id > (int)d->index.size())
 		return 0;
 
-	f.seek(d->index[id]);
+	f.at(d->index[id]);
 
 	QTextStream t;
 	t.setDevice(&f);
@@ -728,8 +667,8 @@ bool EDBFlatFile::File::append(PsiEvent *e)
 	if(line.isEmpty())
 		return false;
 
-	f.seek(f.size());
-	quint64 at = f.pos();
+	f.at(f.size());
+	int at = f.at();
 
 	QTextStream t;
 	t.setDevice(&f);

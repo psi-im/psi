@@ -101,7 +101,6 @@ HEADERS += \
 	$$PWD/profiles.h \
 	$$PWD/profiledlg.h \
 	$$PWD/aboutdlg.h \
-	$$PWD/desktoputil.h \
 	$$PWD/textutil.h \
 	$$PWD/pixmaputil.h \
 	$$PWD/psiaccount.h \
@@ -134,8 +133,6 @@ HEADERS += \
 	$$PWD/certutil.h \
 	$$PWD/eventdlg.h \
 	$$PWD/chatdlg.h \
-	$$PWD/chatsplitter.h \
-	$$PWD/chateditproxy.h \
 	$$PWD/tabdlg.h \
 	$$PWD/adduserdlg.h \
 	$$PWD/groupchatdlg.h \
@@ -172,7 +169,6 @@ HEADERS += \
 	$$PWD/mucjoindlg.h \
 	$$PWD/mucconfigdlg.h \
 	$$PWD/mucaffiliationsmodel.h \
-	$$PWD/mucaffiliationsproxymodel.h \
 	$$PWD/mucaffiliationsview.h \
 	$$PWD/rosteritemexchangetask.h \
 	$$PWD/mood.h \
@@ -218,7 +214,6 @@ SOURCES += \
 	$$PWD/psi_profiles.cpp \
 	$$PWD/profiledlg.cpp \
 	$$PWD/aboutdlg.cpp \
-	$$PWD/desktoputil.cpp \
 	$$PWD/textutil.cpp \
 	$$PWD/pixmaputil.cpp \
 	$$PWD/psiaccount.cpp \
@@ -251,8 +246,6 @@ SOURCES += \
 	$$PWD/statusdlg.cpp \
 	$$PWD/eventdlg.cpp \
 	$$PWD/chatdlg.cpp \
-	$$PWD/chatsplitter.cpp \
-	$$PWD/chateditproxy.cpp \
 	$$PWD/tipdlg.cpp \
 	$$PWD/tabdlg.cpp \
 	$$PWD/adduserdlg.cpp \
@@ -288,7 +281,6 @@ SOURCES += \
 	$$PWD/mucjoindlg.cpp \
 	$$PWD/mucconfigdlg.cpp \
 	$$PWD/mucaffiliationsmodel.cpp \
-	$$PWD/mucaffiliationsproxymodel.cpp \
 	$$PWD/mucaffiliationsview.cpp \
 	$$PWD/rosteritemexchangetask.cpp \
 	$$PWD/mood.cpp \
@@ -323,25 +315,6 @@ SOURCES += \
 	$$PWD/shortcutmanager.cpp \
 	$$PWD/psicontactlist.cpp \
 	$$PWD/accountlabel.cpp
-
-whiteboarding {
-	# Whiteboarding support. Still experimental.
-	DEFINES += WHITEBOARDING
-
-	HEADERS += \
-		$$PWD/wbmanager.h \
-		$$PWD/wbdlg.h \
-		$$PWD/wbwidget.h \
-		$$PWD/wbscene.h \
-		$$PWD/wbitems.h
-	
-	SOURCES += \
-		$$PWD/wbmanager.cpp \
-		$$PWD/wbdlg.cpp \
-		$$PWD/wbwidget.cpp \
-		$$PWD/wbscene.cpp \
-		$$PWD/wbitems.cpp
-}
 
 mac {
 	contains( DEFINES, HAVE_GROWL ) {
@@ -382,8 +355,7 @@ INTERFACES += \
 	$$PWD/privacy.ui \
 	$$PWD/privacyrule.ui \
 	$$PWD/mood.ui \
-	$$PWD/voicecall.ui \
-	$$PWD/chatdlg.ui
+	$$PWD/voicecall.ui
 
 # options dialog
 include($$PWD/options/options.pri)

@@ -31,7 +31,6 @@
 #include <Q3MimeSourceFactory>
 #include <QDomDocument>
 #include <QThread>
-#include <QCoreApplication>
 
 #include "anim.h"
 
@@ -129,35 +128,30 @@ void Impix::unload()
 
 bool Impix::isNull() const
 {
-	return !d->image.isNull() || d->pixmap ? false: true;
+	return !d->image.isNull() || !d->pixmap.isNull() ? false: true;
 }
 
 const QPixmap & Impix::pixmap() const
 {
-	if (!d->pixmap) {
-		d->pixmap = new QPixmap();
-		if (!d->image.isNull())
-			d->pixmap->convertFromImage(d->image);
-	}
-	return *d->pixmap;
+	return d->pixmap;
 }
 
 const QImage & Impix::image() const
 {
-	if (d->image.isNull() && d->pixmap)
-		d->image = d->pixmap->convertToImage();
 	return d->image;
 }
 
 void Impix::setPixmap(const QPixmap &x)
 {
 	d->unload();
-	d->pixmap = new QPixmap(x);
+	d->pixmap = x;
+	d->image  = x.convertToImage();
 }
 
 void Impix::setImage(const QImage &x)
 {
 	d->unload();
+	d->pixmap.convertFromImage(x);
 	d->image = x;
 }
 
@@ -261,19 +255,19 @@ public:
 	
 	void connectInstance(PsiIcon *icon)
 	{
-		connect(this, SIGNAL(pixmapChanged()), icon, SIGNAL(pixmapChanged()));
-		connect(this, SIGNAL(iconModified()),  icon, SIGNAL(iconModified()));
+		connect(this, SIGNAL(pixmapChanged(const QPixmap &)), icon, SIGNAL(pixmapChanged(const QPixmap &)));
+		connect(this, SIGNAL(iconModified(const QPixmap &)),  icon, SIGNAL(iconModified(const QPixmap &)));
 	}
 	
 	void disconnectInstance(PsiIcon *icon)
 	{
-		disconnect(this, SIGNAL(pixmapChanged()), icon, SIGNAL(pixmapChanged()));
-		disconnect(this, SIGNAL(iconModified()),  icon, SIGNAL(iconModified()));
+		disconnect(this, SIGNAL(pixmapChanged(const QPixmap &)), icon, SIGNAL(pixmapChanged(const QPixmap &)));
+		disconnect(this, SIGNAL(iconModified(const QPixmap &)),  icon, SIGNAL(iconModified(const QPixmap &)));
 	}
 
 signals:
-	void pixmapChanged();
-	void iconModified();
+	void pixmapChanged(const QPixmap &);
+	void iconModified(const QPixmap &);
 
 public:
 	const QPixmap &pixmap() const
@@ -284,7 +278,7 @@ public:
 	}
 
 public slots:
-	void animUpdate() { emit pixmapChanged(); }
+	void animUpdate() { emit pixmapChanged( pixmap() ); }
 
 public:
 	QString name;
@@ -441,8 +435,8 @@ void PsiIcon::setImpix(const Impix &impix, bool doDetach)
 		detach();
 
 	d->impix = impix;
-	emit d->pixmapChanged();
-	emit d->iconModified();
+	emit d->pixmapChanged( pixmap() );
+	emit d->iconModified( d->impix.pixmap() );
 }
 
 /**
@@ -479,8 +473,8 @@ void PsiIcon::setAnim(const Anim &anim, bool doDetach)
 		activated(false); // restart the animation, but don't play the sound
 	}
 
-	emit d->pixmapChanged();
-	emit d->iconModified();
+	emit d->pixmapChanged( pixmap() );
+	emit d->iconModified( d->impix.pixmap() );
 }
 
 /**
@@ -501,8 +495,8 @@ void PsiIcon::removeAnim(bool doDetach)
 	delete d->anim;
 	d->anim = 0;
 
-	emit d->pixmapChanged();
-	//emit d->iconModified();
+	emit d->pixmapChanged( pixmap() );
+	//emit d->iconModified( d->impix.pixmap() );
 }
 
 /**
@@ -629,8 +623,8 @@ bool PsiIcon::loadFromData(const QByteArray &ba, bool isAnim)
 		ret = true;
 
 	if ( ret ) {
-		emit d->pixmapChanged();
-		emit d->iconModified();
+		emit d->pixmapChanged( pixmap() );
+		emit d->iconModified( d->impix.pixmap() );
 	}
 
 	return ret;
@@ -716,98 +710,63 @@ void PsiIcon::stripFirstAnimFrame()
  */
 
 //! \if _hide_doc_
-class IconsetFactoryPrivate : public QObject
+class IconsetFactoryPrivate
 {
 private:
-	IconsetFactoryPrivate()
-		: QObject(QCoreApplication::instance())
-		, iconsets_(0)
-		, emptyPixmap_(0)
-	{
-	}
-
-	~IconsetFactoryPrivate()
-	{
-		if (iconsets_) {
-			while (!iconsets_->empty())
-				delete iconsets_->takeFirst();
-			delete iconsets_;
-			iconsets_ = 0;
-		}
-
-		if (emptyPixmap_) {
-			delete emptyPixmap_;
-			emptyPixmap_ = 0;
-		}
-	}
-
-	static IconsetFactoryPrivate* instance_;
-	QList<Iconset*>* iconsets_;
-	mutable QPixmap* emptyPixmap_;
+	static QList<Iconset *> *iconsets;
+	static QPixmap *emptyPixmap;
 
 public:
-	const QPixmap& emptyPixmap() const
-	{
-		if (!emptyPixmap_)
-			emptyPixmap_ = new QPixmap();
-		return *emptyPixmap_;
-	}
-
-	const QStringList icons() const
-	{
-		QStringList list;
-
-		Iconset* iconset;
-		foreach(iconset, *iconsets_) {
-			QListIterator<PsiIcon*> it = iconset->iterator();
-			while (it.hasNext())
-				list << it.next()->name();
-		}
-
-		return list;
-	}
-
-	void registerIconset(const Iconset *);
-	void unregisterIconset(const Iconset *);
+	static void registerIconset(const Iconset *);
+	static void unregisterIconset(const Iconset *);
 
 public:
-	static IconsetFactoryPrivate* instance()
-	{
-		if (!instance_) {
-			instance_ = new IconsetFactoryPrivate();
-		}
-		return instance_;
-	}
+	static const PsiIcon *icon(const QString &name);
 
-	const PsiIcon *icon(const QString &name) const;
+	friend class IconsetFactory;
 };
 //! \endif
 
-IconsetFactoryPrivate* IconsetFactoryPrivate::instance_ = NULL;
+QList<Iconset *> *IconsetFactoryPrivate::iconsets = 0;
+QPixmap *IconsetFactoryPrivate::emptyPixmap = 0;
 
 void IconsetFactoryPrivate::registerIconset(const Iconset *i)
 {
-	if (!iconsets_)
-		iconsets_ = new QList<Iconset*>;
+	if ( !iconsets )
+		iconsets = new QList<Iconset *>;
 
-	if (!iconsets_->contains((Iconset*)i))
-		iconsets_->append((Iconset*)i);
+	if ( !iconsets->contains((Iconset *)i) ) {
+		iconsets->append ( (Iconset *)i );
+	}
 }
 
 void IconsetFactoryPrivate::unregisterIconset(const Iconset *i)
 {
-	if (iconsets_ && iconsets_->contains((Iconset*)i))
-		iconsets_->removeAll((Iconset*)i);
+	if ( iconsets && iconsets->contains((Iconset *)i) ) {
+		iconsets->remove ( (Iconset *)i );
+	}
+
+	if ( !iconsets || !iconsets->count() ) {
+		if ( iconsets ) {
+			delete iconsets;
+			iconsets = 0;
+		}
+
+		if ( emptyPixmap ) {
+			delete emptyPixmap;
+			emptyPixmap = 0;
+		}
+	}
 }
 
-const PsiIcon *IconsetFactoryPrivate::icon(const QString &name) const
+const PsiIcon *IconsetFactoryPrivate::icon(const QString &name)
 {
-	if (!iconsets_)
+	if ( !iconsets )
 		return 0;
 
 	const PsiIcon *i = 0;
 	Iconset *iconset;
-	foreach (iconset, *iconsets_) {
+	foreach (iconset, *iconsets) {
 		if ( iconset )
 			i = iconset->icon(name);
 
@@ -823,7 +782,7 @@ const PsiIcon *IconsetFactoryPrivate::icon(const QString &name) const
  */
 const PsiIcon *IconsetFactory::iconPtr(const QString &name)
 {
-	const PsiIcon *i = IconsetFactoryPrivate::instance()->icon(name);
+	const PsiIcon *i = IconsetFactoryPrivate::icon(name);
 	if ( !i ) {
 		qDebug("WARNING: IconsetFactory::icon(\"%s\"): icon not found", name.latin1());
 	}
@@ -854,7 +813,9 @@ const QPixmap &IconsetFactory::iconPixmap(const QString &name)
 	if ( i )
 		return i->impix().pixmap();
 
-	return IconsetFactoryPrivate::instance()->emptyPixmap();
+	if ( !IconsetFactoryPrivate::emptyPixmap )
+		IconsetFactoryPrivate::emptyPixmap = new QPixmap();
+	return *IconsetFactoryPrivate::emptyPixmap;
 }
 
 /**
@@ -862,7 +823,16 @@ const QPixmap &IconsetFactory::iconPixmap(const QString &name)
  */
 const QStringList IconsetFactory::icons()
 {
-	return IconsetFactoryPrivate::instance()->icons();
+	QStringList list;
+	
+	Iconset *iconset;
+	foreach (iconset, *IconsetFactoryPrivate::iconsets) {
+		QListIterator<PsiIcon *> it = iconset->iterator();
+		while ( it.hasNext() )
+			list << it.next()->name();
+	}
+
+	return list;
 }
 
 //----------------------------------------------------------------------------
@@ -1161,7 +1131,7 @@ public:
 							continue;
 
 						QFileInfo ext(sound[*it]);
-						path += "/" + QCA::Hash("sha1").hashToString(QString(fi.absFilePath() + "/" + *sound[*it]).utf8()) + "." + ext.extension();
+						path += "/" + QCA::SHA1().hashToString(QString(fi.absFilePath() + "/" + *sound[*it]).utf8()) + "." + ext.extension();
 
 						QFile file ( path );
 						file.open ( IO_WriteOnly );
@@ -1283,10 +1253,10 @@ Iconset::Iconset(const Iconset &from)
  */
 Iconset::~Iconset()
 {
-	IconsetFactoryPrivate::instance()->unregisterIconset(this);
-
 	if ( d->deref() )
 		delete d;
+
+	IconsetFactoryPrivate::unregisterIconset(this);
 }
 
 /**
@@ -1535,7 +1505,7 @@ Q3MimeSourceFactory *Iconset::createMimeSourceFactory() const
  */
 void Iconset::addToFactory() const
 {
-	IconsetFactoryPrivate::instance()->registerIconset(this);
+	IconsetFactoryPrivate::registerIconset(this);
 }
 
 /**
@@ -1543,7 +1513,7 @@ void Iconset::addToFactory() const
  */
 void Iconset::removeFromFactory() const
 {
-	IconsetFactoryPrivate::instance()->unregisterIconset(this);
+	IconsetFactoryPrivate::unregisterIconset(this);
 }
 
 /**

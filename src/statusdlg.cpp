@@ -46,9 +46,8 @@
 // FIXME: Will no longer be needed once it is out of the groupchat contactview
 //----------------------------------------------------------------------------
 StatusShowDlg::StatusShowDlg(const UserListItem &u)
-	: QDialog(0, 0, false)
+:QDialog(0, 0, false, Qt::WDestructiveClose)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
 	// build the dialog
 	QVBoxLayout *vb = new QVBoxLayout(this, 8);
 	PsiTextView *te = new PsiTextView(this);
@@ -92,9 +91,8 @@ public:
 };
 
 StatusSetDlg::StatusSetDlg(PsiCon *psi, const Status &s)
-	: QDialog(0, 0, false)
+:QDialog(0, 0, false, Qt::WDestructiveClose)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private;
 	d->psi = psi;
 	d->pa = 0;
@@ -106,9 +104,8 @@ StatusSetDlg::StatusSetDlg(PsiCon *psi, const Status &s)
 }
 
 StatusSetDlg::StatusSetDlg(PsiAccount *pa, const Status &s)
-	: QDialog(0, 0, false)
+:QDialog(0, 0, false, Qt::WDestructiveClose)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private;
 	d->psi = 0;
 	d->pa = pa;
@@ -164,11 +161,9 @@ void StatusSetDlg::init()
 	connect(d->cb_preset, SIGNAL(highlighted(int)), SLOT(chooseStatusPreset(int)));
 	hb1->addWidget(d->cb_preset,3);
 
-	d->te = new ChatView(this);
-	d->te->setDialog(this);
+	d->te = new ChatView(this,this);
 	d->te->setReadOnly(false);
 	d->te->setTextFormat(Qt::PlainText);
-	d->te->setAcceptRichText(false);
 	d->te->setMinimumHeight(50);
 	vb->addWidget(d->te);
 	QHBoxLayout *hb = new QHBoxLayout(vb);

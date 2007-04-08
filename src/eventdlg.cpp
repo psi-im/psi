@@ -33,6 +33,7 @@
 #include <qdatetime.h>
 #include <qapplication.h>
 #include <qclipboard.h>
+#include <QDesktopServices>
 #include <QResizeEvent>
 #include <QShowEvent>
 #include <QFrame>
@@ -72,7 +73,6 @@
 #include "psicontactlist.h"
 #include "accountlabel.h"
 #include "xdata_widget.h"
-#include "desktoputil.h"
 
 static QString findJid(const QString &s, int x, int *p1, int *p2)
 {
@@ -421,7 +421,7 @@ void AttachView::goURL(const QString &_url)
 	if(url.find("://") == -1)
 		url.insert(0, "http://");
 
-	DesktopUtil::openUrl(url);
+	QDesktopServices::openUrl(url);
 }
 
 UrlList AttachView::urlList() const
@@ -505,8 +505,7 @@ public:
 	QLabel *lb_identity;
 	AccountsComboBox *cb_ident;
 	QComboBox *cb_type;
-	AccountLabel *lb_ident;
-	QLabel *lb_time;
+	QLabel *lb_ident, *lb_time;
 	IconLabel *lb_status;
 	ELineEdit *le_to;
 	QLineEdit *le_from, *le_subj;
@@ -583,9 +582,8 @@ public slots:
 };
 
 EventDlg::EventDlg(const QString &to, PsiCon *psi, PsiAccount *pa)
-	: AdvancedWidget<QWidget>(0)
+:AdvancedWidget<QWidget>(0, Qt::WDestructiveClose | Qt::WGroupLeader)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
   	if ( option.brushedMetal )
 		setAttribute(Qt::WA_MacMetalStyle);	
 	d = new Private(this);
@@ -644,9 +642,8 @@ EventDlg::EventDlg(const QString &to, PsiCon *psi, PsiAccount *pa)
 }
 
 EventDlg::EventDlg(const Jid &j, PsiAccount *pa, bool unique)
-	: AdvancedWidget<QWidget>(0)
+:AdvancedWidget<QWidget>(0, Qt::WDestructiveClose | Qt::WGroupLeader)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private(this);
 	d->composing = false;
 	d->psi = pa->psi();
@@ -711,8 +708,7 @@ void EventDlg::init()
 	}
 	else {
 		d->cb_ident = 0;
-		d->lb_ident = new AccountLabel(this);
-		d->lb_ident->setAccount(d->pa);
+		d->lb_ident = new AccountLabel(d->pa, this);
 		d->lb_ident->setSizePolicy(QSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Fixed ));
 		hb1->addWidget(d->lb_ident);
 	}
@@ -851,8 +847,7 @@ void EventDlg::init()
 	}
 
 	// text area
-	d->mle = new ChatView(this);
-	d->mle->setDialog(this);
+	d->mle = new ChatView(this,this);
 	d->mle->setReadOnly(false);
 	d->mle->setUndoRedoEnabled(true);
 	d->mle->setMinimumHeight(50);
@@ -1425,6 +1420,10 @@ void EventDlg::closeEvent(QCloseEvent *e)
 	if(!d->mle->isEnabled())
 		return;
 
+	// cancel the data form
+	if(d->pb_form_cancel->isVisible())
+		doFormCancel();
+
 	e->accept();
 }
 
@@ -1864,7 +1863,7 @@ void EventDlg::updateEvent(PsiEvent *e)
 
 		// show subject line if the incoming message has one
 		if(m.subject() != "" && !option.showSubjects)
-			txt = "<p><font color=\"red\"><b>" + tr("Subject:") + " " + TextUtil::plain2rich(m.subject()) + "</b></font></p>" + (xhtml? "" : "<br>") + txt;
+			txt = "<p><font color=\"red\"><b>" + tr("Subject:") + " " + m.subject() + "</b></font></p>" + (xhtml? "" : "<br>") + txt;
 
 		if (!xhtml) {
 			if(option.useEmoticons)
@@ -2047,13 +2046,13 @@ void EventDlg::updateReadNext(PsiIcon *nextAnim, int nextAmount)
 		d->pb_next->setEnabled(false);
 		d->pb_next->setText(tr("&Next"));
 
-		if(d->pb_reply->isVisibleTo(this) && d->pb_reply->isEnabled())
+		if(d->pb_reply->isVisible() && d->pb_reply->isEnabled())
 			d->pb_reply->setFocus();
-		else if(d->pb_auth->isVisibleTo(this))
+		else if(d->pb_auth->isVisible())
 			d->pb_auth->setFocus();
-		else if(d->w_http_id->isVisibleTo(this))
+		else if(d->w_http_id->isVisible())
 			d->le_http_id->setFocus();
-		else if(d->pb_http_deny->isVisibleTo(this))
+		else if(d->pb_http_deny->isVisible())
 			d->pb_http_deny->setFocus();
 	}
 	else {

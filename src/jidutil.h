@@ -28,9 +28,6 @@
 class JIDUtil
 {
 public:
-	static QString defaultDomain();
-	static void setDefaultDomain(QString domain);
-
 	static QString accountToString(const XMPP::Jid&, bool withResource);
 	static XMPP::Jid accountFromString(const QString&);
 	static QString toString(const XMPP::Jid&, bool withResource);

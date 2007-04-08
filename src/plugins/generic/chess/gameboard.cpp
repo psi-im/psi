@@ -26,7 +26,6 @@
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QCloseEvent>
-#include <QDebug>
 #include <stdlib.h>
 
 #include "gameboard.h"
@@ -646,9 +645,9 @@ Figure::validPoint(GameBoard::GameType gt, GameBoard::FigureType *map,
 
 GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 	const char *name)
-	:QWidget(parent, name, Qt::WResizeNoErase | Qt::WNoAutoErase)
+	:QWidget(parent, name, Qt::WResizeNoErase |
+		Qt::WNoAutoErase | Qt::WDestructiveClose)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
 	QString	str;
 
 	protocol = new GameProtocol();
@@ -1931,7 +1930,7 @@ GameProtocol::send(Q3Socket *sock, const QString &dat)
 		sock->writeBlock(buf, s.length());
 		sock->flush();
 	}*/
-	qDebug() << (qPrintable(QString("GameProtocol::send(%1)").arg(dat)));
+	qDebug(qPrintable(QString("GameProtocol::send(%1)").arg(dat)));
 	emit sendData(dat);
 }
 

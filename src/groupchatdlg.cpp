@@ -312,7 +312,7 @@ bool GCUserView::maybeTip(const QPoint &pos)
 	const Status &s = lvi->s;
 	UserListItem u;
 	// SICK SICK SICK SICK
-	GCMainDlg* dlg = (GCMainDlg*) window();
+	GCMainDlg* dlg = (GCMainDlg*) topLevelWidget();
 	u.setJid(dlg->jid().withResource(nick));
 	u.setName(nick);
 
@@ -446,14 +446,11 @@ public:
 	GCUserView *lv_users;
 	QPushButton *pb_topic;
 	QToolBar *toolbar;
-	QToolButton *tb_actions, *tb_emoticons, *tb_find;
 	IconAction *act_find, *act_clear, *act_icon, *act_configure;
-#ifdef WHITEBOARDING
-	IconAction *act_whiteboard;
-#endif
 	QAction *act_send, *act_scrollup, *act_scrolldown, *act_close;
-	AccountLabel* lb_ident;
+	QLabel* lb_ident;
 	Q3PopupMenu *pm_settings;
+	bool smallChat;
 	int pending;
 	bool connecting;
 
@@ -798,9 +795,8 @@ public:
 };
 
 GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
-	: AdvancedWidget<QWidget>(0)
+:AdvancedWidget<QWidget>(0, Qt::WDestructiveClose)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
   	if ( option.brushedMetal )
 		setAttribute(Qt::WA_MacMetalStyle);
 	nicknumber=0;
@@ -860,34 +856,15 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	PsiToolTip::install(d->le_topic);
 	hb_top->addWidget(d->le_topic);
 
-	d->lb_ident = new AccountLabel(sp_top_top);
-	d->lb_ident->setAccount(d->pa);
-	d->lb_ident->setShowJid(false);
+	d->act_find = new IconAction(tr("Find"), "psi/search", tr("&Find"), 0, this);
+	connect(d->act_find, SIGNAL(activated()), SLOT(openFind()));
+	d->act_find->addTo( sp_top_top );
+	
+	d->lb_ident = new AccountLabel(d->pa, sp_top_top, true);
 	d->lb_ident->setSizePolicy(QSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum ));
 	hb_top->addWidget(d->lb_ident);
 	connect(d->pa->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
 	updateIdentityVisibility();
-
-	d->act_find = new IconAction(tr("Find"), "psi/search", tr("&Find"), 0, this);
-	connect(d->act_find, SIGNAL(activated()), SLOT(openFind()));
-	d->tb_find = new QToolButton(sp_top);
-	d->tb_find->setIconSize(QSize(16, 16));
-	d->tb_find->setDefaultAction(d->act_find);
-	hb_top->addWidget(d->tb_find);
-
-	d->tb_emoticons = new QToolButton(sp_top);
-	d->tb_emoticons->setToolTip(tr("Select icon"));
-	d->tb_emoticons->setIconSize(QSize(16, 16));
-	d->tb_emoticons->setPopupMode(QToolButton::InstantPopup);
-	d->tb_emoticons->setIcon(IconsetFactory::icon("psi/smile").icon());
-	hb_top->addWidget(d->tb_emoticons);
-
-	d->tb_actions = new QToolButton(sp_top);
-	d->tb_actions->setToolTip(tr("Actions"));
-	d->tb_actions->setIconSize(QSize(16, 16));
-	d->tb_actions->setPopupMode(QToolButton::InstantPopup);
-	d->tb_actions->setArrowType(Qt::DownArrow);
-	hb_top->addWidget(d->tb_actions);
 
 	// bottom row
 	QSplitter *hsp = new QSplitter(sp_top);
@@ -919,23 +896,14 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	d->act_configure = new IconAction(tr("Configure Room"), "psi/configure-room", tr("&Configure Room"), 0, this);
 	connect(d->act_configure, SIGNAL(activated()), SLOT(configureRoom()));
 
-#ifdef WHITEBOARDING
-	d->act_whiteboard = new IconAction(tr("Open a whiteboard"), "psi/whiteboard", tr("Open a &whiteboard"), 0, this);
-	connect(d->act_whiteboard, SIGNAL(activated()), SLOT(openWhiteboard()));
-#endif
-
 	connect(pa->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
 	d->act_icon = new IconAction( tr( "Select icon" ), "psi/smile", tr( "Select icon" ), 0, this );
 	d->act_icon->setMenu( pa->psi()->iconSelectPopup() );
-	d->tb_emoticons->setMenu(pa->psi()->iconSelectPopup());
 
 	d->toolbar = new QToolBar( tr("Groupchat toolbar"), 0);
 	d->toolbar->setIconSize(QSize(16,16));
 	d->toolbar->addAction(d->act_clear);
 	d->toolbar->addAction(d->act_configure);
-#ifdef WHITEBOARDING
-	d->toolbar->addAction(d->act_whiteboard);
-#endif
 	d->toolbar->addWidget(new StretchWidget(d->toolbar));
 	d->toolbar->addAction(d->act_icon);
 	d->toolbar->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
@@ -957,14 +925,12 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 
 	// chat edit
 	if ( !option.chatLineEdit ) {
-		d->mle = new ChatEdit(sp_bottom);
-		d->mle->setDialog(this);
+		d->mle = new ChatEdit(sp_bottom, this);
 		vb_bottom->addWidget(d->mle);
 	}
 	else {
 		QHBoxLayout *hb5 = new QHBoxLayout( dlg_layout );
-		d->mle = new LineEdit(vsplit);
-		d->mle->setDialog(this);
+		d->mle = new LineEdit( vsplit, this );
 #ifdef Q_WS_MAC
 		hb5->addSpacing( 16 );
 #endif
@@ -978,7 +944,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 
 	d->pm_settings = new Q3PopupMenu(this);
 	connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));
-	d->tb_actions->setMenu(d->pm_settings);
 
 	// resize the horizontal splitter
 	QList<int> list;
@@ -994,6 +959,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 
 	resize(PsiOptions::instance()->getOption("options.ui.muc.size").toSize());
 
+	d->smallChat = option.smallChats;
 	X11WM_CLASS("groupchat");
 
 	d->mle->setFocus();
@@ -1123,13 +1089,6 @@ void GCMainDlg::updateIdentityVisibility()
 {
 	d->lb_ident->setVisible(d->pa->psi()->contactList()->enabledAccounts().count() > 1);
 }
-
-#ifdef WHITEBOARDING
-void GCMainDlg::openWhiteboard()
-{
-	d->pa->actionOpenWhiteboardSpecific(d->jid, d->jid.withResource(d->self), true);
-}
-#endif
 
 void GCMainDlg::unsetConnecting()
 {
@@ -1479,7 +1438,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 					}
 
 					if (!s.mucItem().actor().isEmpty())
-						message = tr("%1 has been banned by %2").arg(nickJid, s.mucItem().actor().full());
+						message = tr("%1 has been banned by %1").arg(nickJid).arg(s.mucItem().actor().full());
 					else
 						message = tr("%1 has been banned").arg(nickJid);
 
@@ -1841,15 +1800,11 @@ void GCMainDlg::setLooks()
 	f.fromString(option.font[fRoster]);
 	d->lv_users->Q3ListView::setFont(f);
 
-	if (PsiOptions::instance()->getOption("options.ui.chat.central-toolbar").toBool()) {
-		d->toolbar->show();
-		d->tb_actions->hide();
-		d->tb_emoticons->hide();
+	if ( d->smallChat ) {
+		d->toolbar->hide();
 	}
 	else {
-		d->toolbar->hide();
-		d->tb_emoticons->setVisible(option.useEmoticons);
-		d->tb_actions->show();
+		d->toolbar->show();
 	}
 
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt()))/100);
@@ -1954,24 +1909,27 @@ void GCMainDlg::buildMenu()
 {
 	// Dialog menu
 	d->pm_settings->clear();
+	d->pm_settings->insertItem(tr("Toggle Compact/Full Size"), this, SLOT(toggleSmallChat()));
 
 	d->act_clear->addTo( d->pm_settings );
 	d->act_configure->addTo( d->pm_settings );
-#ifdef WHITEBOARDING
-	d->act_whiteboard->addTo( d->pm_settings );
-#endif
 	d->pm_settings->insertSeparator();
 
 	d->act_icon->addTo( d->pm_settings );
+}
+
+void GCMainDlg::toggleSmallChat()
+{
+	d->smallChat = !d->smallChat;
+	setLooks();
 }
 
 //----------------------------------------------------------------------------
 // GCFindDlg
 //----------------------------------------------------------------------------
 GCFindDlg::GCFindDlg(const QString &str, QWidget *parent, const char *name)
-	: QDialog(parent, name, false)
+:QDialog(parent, name, false, Qt::WDestructiveClose)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
 	setWindowTitle(tr("Find"));
 	QVBoxLayout *vb = new QVBoxLayout(this, 4);
 	QHBoxLayout *hb = new QHBoxLayout(vb);

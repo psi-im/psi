@@ -1,0 +1,680 @@
+This file has since been obsoleted by the darcs changelog
+
+
+2005-08-22, Kevin Smith <psi-changelog@kismith.co.uk>
+	Made the auto-expanding text input the default.
+
+2005-08-22, Remko Troncon <remko@psi-im.org>
+	Added a UI option for auto-resizing text input.
+	
+	Added a message dialog suggesting you should restart.
+
+	Fixed Mac OS X focus problem in GC dialog.
+	This is the same patch as the earlier one for the chat dialog.
+
+	Reverted Fran's checkboxes for every sound event. (due to bugs)
+
+	Agents now get other types of initial presence as well (FS#464).
+	Patch by IceRAM.
+
+	Fixed authorization ping-pong issue.
+	Upon automatically granting authorzation, Psi no longer requests auth
+	when the subscription is already To or Both.
+	
+2005-08-21, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Fixed single-line edit. Now it should behave ok when pasting large chunks
+	of text at a time. 
+	
+2005-06-24, Remko Troncon <remko@psi-im.org>
+	Added an option to set roster & chat dialog opacity (Win & Mac)
+
+	Moved Misc. Appearance options to a separate tab
+
+2005-06-23, Remko Troncon <remko@psi-im.org>
+	Added new appearance tweak options:
+	The group headings and account headings can now be assigned separate 
+	foreground and background colours.
+	The group headings can now be set in 'slim' mode from the options dialog.
+	The outline of the headings can be toggled.
+
+2005-06-21, Remko Troncon <remko@psi-im.org>
+	Hide unavailable platform-specific options from the UI
+
+	Added 'Dock Bounce' option to the options dialog
+
+	Changed 'MacOS X' into 'Mac OS X' here and there
+
+2005-06-19, Remko Troncon <remko@psi-im.org>
+	Clarified the JID field of the 'Register Account' dialog
+
+2005-06-14, Remko Troncon <remko@psi-im.org>
+	Mac OS X Dock icon changes: 
+	Added an option to bounce the dock once/never/forever. 
+	Added an overlayed event count to the dock icon.
+
+2005-06-08, Remko Troncon <remko@psi-im.org>
+	Separate checkboxes for every sound event + global checkbox in options
+	dialog. Patch by Fran.
+
+2005-05-24, Kevin Smith <psi-changelog@kismith.co.uk>
+	Finally fixed that tabs bug that could cause segfaults and strange behaviours
+
+2005-05-14, Remko Troncon <remko@psi-im.org>
+	Updates to the About Dialog
+
+	Fixed a memory leak in the Growl notification popups
+
+	Change Gadu-Gadu version string to the registered one (patch by
+	Maciek Niedzielski)
+
+	Fixed Mac OS X focus problems in the Chat Dialog
+
+	Flattened account context menu
+
+	Moved 'Check Status' dialog into the 'User Info' (VCard) dialog
+
+	Merged all iconset tabs into the appearance tab
+	Applied Kris Vandenbroek's fix for the iconset tabs
+	Misc. iconset details dialog improvements
+
+	Added 'Chat' button to the event dialog
+
+	Cleaning up the Account Dialog
+
+2005-05-04, Kevin Smith <psi-changelog@kismith.co.uk>
+	Changed the default from off to on for the previous patch
+
+2005-05-01, Remko Troncon <remko@psi-im.org>
+	Added an option to be notified of receiving authorization. Turned off by
+	default (as in about every IM client out there). In combination with
+	'auto-authorize', this makes a temporary solution for clean registration
+	with transports.
+
+2005-04-16, Remko Troncon <remko@psi-im.org>
+	Support clicking on Growl notifications. Fix some possible memory leaks
+	in GrowlNotifier.
+
+2005-04-14, Remko Troncon <remko@psi-im.org>
+	Translated all the Growl strings.
+	
+2005-04-14, Remko Troncon <remko@psi-im.org>
+	Modified the VCard dialog to enable displaying and setting of the photo
+	field (patch by Fran Rodríguez)
+
+2005-04-12, Kevin Smith <psi-changelog@kismith.co.uk>
+	Commiting Remko's growl patch. Strings aren't properly translated, he'll 
+	have to fix this sometime
+
+2005-04-07, Kevin Smith <psi-changelog@kismith.co.uk>
+	Committed a Linux From Scratch detection patch by Christopher Beppler
+
+2005-04-07, Kevin Smith <psi-changelog@kismith.co.uk>
+	Committed Remko's avatars patch to enable people to work on a central 
+	codebase.
+
+2005-03-29, Kevin Smith <psi-changelog@kismith.co.uk>
+	Machekku's selection Auto-copy patch.
+
+2005-03-22, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Updated roster auto-resize code. Now it should work for toggling self
+	contact too.
+	
+2005-03-12, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Fixed bug: when loading eventqueue. If account name for event is not 
+	specified or incorrect, it's unable to display that message.
+	
+2005-03-09, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Now, appending lines to the history files would not require index.
+	Thus, major speedup.
+	
+2005-03-05, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Ctrl-I shortcut will now trigger VCard dialog in MainWin, ChatDlg and
+	EventDlg.
+
+	Single-line edit should now work fine in tabbed chats too.
+	
+2005-02-28, Kevin Smith <psichangelog@kismith.co.uk>
+	Added icons and close buttons to each tab, getting rid of the unsightly one
+	in the corner.
+	
+2005-02-28, Kevin Smith <psichangelog@kismith.co.uk>
+	Added the option to have tabs at the bottom of windows instead, and
+	added drag and drop between tab windows.
+
+2005-02-28, Kevin Smith <psichangelog@kismith.co.uk>
+	Patch by PSZ to make Psi remember the last-used paths for file dialogs
+	on exit.
+
+2005-02-24, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Now Shift+Space and Ctrl+Shift+Space global shortcuts should work on 
+	Linux too. And the GlobalAccel feature should now be used by everyone ;)
+	
+2005-02-22, Kevin Smith <psichangelog@kismith.co.uk>
+	Remko's patch for the mac menu.
+
+2005-02-20, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Psi won't stick to hidden windows anymore.
+
+	Now, config.xml should not be saved when processing new events.
+
+	Slightly better auto-roster-resizing on account enabling/disabling.
+	
+2005-02-13, Michail Pishchagin <mblsha@users.sourceforge.net>	
+	New AdvancedWidget template class, which implements sticking to screen
+	edges, and to other top-level widgets of the same app. Also implements
+	taskbar flashing. Chat, GroupChat, MainWin, Message dialogs are now
+	AdvancedWidget-enabled.
+	
+2005-02-13, Kevin Smith <psi-changelog@kismith.co.uk>
+	Newer version of the tabs code. Hopefully now it'll compile on non-linux without problems
+
+2005-02-13, Kevin Smith <psi-changelog@kismith.co.uk>
+	Remko's menubar patch
+
+2005-01-23, Kevin Smith <psi-changelog@kismith.co.uk>
+	Remko's memory leak in eventdb patch
+
+2005-02-06, Michail Pishchagin <mblsha@users.sourceforge.net>	
+	New autoRosterSize option, which automatically resizes your roster window
+	to fit as many contacts as possible. Please test it well ;)
+
+	Automatically resolve names of newly added contacts, if they don't have
+	assigned name yet. Could be useful when ICQ Transport is configured to
+	automatically add ICQ users to your roster. Also it could save you some 
+	time, clicking the Resolve button if you want to keep default nickname.
+	
+2005-01-30, Michail Pishchagin <mblsha@users.sourceforge.net>	
+	Groupchat with single-line edit enabled would no longer be unneedlessly
+	resized during nick completion.
+	
+2005-01-29, Michail Pishchagin <mblsha@users.sourceforge.net>	
+	Small chats now have effect on groupchats too. As well as single-line edit.
+
+	Mac: In single-line enabled chats and groupchats, the lineedits would be
+	paned by empty space from left and right and also would be centered. 
+
+2005-01-27, Michail Pishchagin <mblsha@users.sourceforge.net>	
+	Now scrollbar in single-line chat edit should no longer flicker.
+	
+2005-01-26, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Reduced flickering in single-line edit. Removed horizontal scrollbar.
+	Does not resize the dialog when it takes more than 90% of desktop's
+	area.
+		
+2005-01-24, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Experimental single-line edit in chat dialog. Seems to be useable.
+	
+2005-01-17, Kevin Smith <psi-changelog@kismith.co.uk>
+	Basic tab support. DO NOT USE THIS YET.
+
+2005-01-09, Kevin Smith <psi-changelog@kismith.co.uk>
+	Added the SystemWatch stuff for power saving notification on windows and osx
+
+2005-01-09, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Now IconButton class would try to specify icon using QIconSet whenever
+	possible, what should improve the looks of disabled buttons.
+
+	Now Process Next Event would process events from a non-DND account prior 
+	to the DND one.
+
+	On MacOS, Psi dock icon would no longer bounce on messages from DND accounts.
+
+	Global Shortcuts patch by GreyCat. At the moment, if you want it, you
+	should configure the keys by editing the config.xml file.
+
+---- Psi 0.9.3 Release ----
+
+2005-01-08, Kevin Smith <psi-changelog@kismith.co.uk>
+	Minor compiler error fix, and Release 0.9.3
+
+2004-12-28, Kevin Smith <psi-changelog@kismith.co.uk>
+	Two patches, one various x:data fixes, and the other a fix for the accounts 
+	combobox, which now only includes available accounts. 
+	Thanks to Remko for both.
+
+2004-11-20, Kevin Smith <psi-changelog@kismith.co.uk>
+	Minor change of defaults (particularly colour scheme on OSX) and removal of 
+	ugly bar when there's no scrollbars on OSX (Thanks Remko).
+
+2004-11-19, Kevin Smith <psi-changelog@kismith.co.uk>
+	GUI option for smallChats (thanks Pintail). Various string consistencies and 
+	clarifications (thanks Remko). New Mac build scripts (thanks Remko)
+
+2004-11-19, Kevin Smith <psi-changelog@kismith.co.uk>
+	Previously enabling "Ignore events from non-roster contacts" ignored private
+	groupchat messages, now it doesn't (although there's an xml option to revert)
+
+2004-10-31, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Corrected the name of AlertIcon class (it messed up the caching of
+	MTray icons).
+
+	QPixmapTray will be cleared on iconset change.
+
+	IceRAM's patch for beauty tray icons on Linux.
+	
+2004-10-29, Kevin Smith <psi-changelog@kismith.co.uk>
+	Committed Misha's fix to the MTray segfaults.
+	Fixed the Segfault when a contact went offline during regrouping.
+
+2004-10-28, Kevin Smith <psi-changelog@kismith.co.uk>
+	Windows 2003 detection code added. (MichalJ)
+	QT Translations (Skazi)
+
+2004-10-20, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Message events patch by Remko Troncon.
+
+	No toolbars on Mac by default by Remko Troncon.
+	
+2004-10-11, Michail Pishchagin <mblsha@users.sourceforge.net>
+	http://ftp.xiaoka.com/friends/skazi/psi/patches/
+	psi-tooltip_version_noslash-mod.diff
+	
+2004-10-03, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Another set of patches by Remko:
+	
+	* Ability to disable online accounts, in which case a dialog will pop
+	  up.
+	* Ability to enter empty status messages.
+	* Removed badly-looking icons on Mac.
+	* Some changes in menu layout on Mac.
+	* Modifications to system iconset, so there will be different icons
+	  for Roster and Advanced tabs in options.
+	
+2004-09-24, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Corrected 'Use Sounds' setting loading. Thanks to Marcel Naziri for
+	writing a fix!
+	
+2004-09-06, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Dynamic 'avatars', 'vcard' and 'history' directory recreation, and 
+	removal of unused 'info' dir.
+	
+2004-08-18, Michail Pishchagin <mblsha@users.sourceforge.net>
+	TrayIcon correction by William Waghorn, so it should work correctly
+	on Gnome from now on. But there'll be dependency on PsiApplication :-/
+
+	Disabled the unfinished avatar support in preparations for 0.9.3
+	release. Patch by Remko.
+
+2004-08-16, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Small fix for default profile by Remko.
+
+	Created general-like menu on MacOS by Remko.
+
+2004-08-12, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Now tooltip of account will display number of online contacts and
+	total number of contacts in roster by Remko.
+
+	Fixes to the Mac menu by Remko.
+
+2004-08-09, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Now IconAction should correctly remove unnecessary cached QPopupMenu 
+	pointers, and shouldn't crash.
+	
+2004-08-08, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Major speedup when parsing disco#items results in Service Discovery
+	dialog.
+	
+2004-08-05, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Now MainWin uses new action customization framework. Test it, break it,
+	fix it :-)
+	
+2004-08-03, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Now ShowSelf action will be shown in the mac menu too
+	(thanks to Remko, as usual)
+
+2004-08-02, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Ability to initiate file transfers by dropping files in the ChatDlg 
+	by Remko:
+	http://www.cs.kuleuven.ac.be/~remko/psi/patches/filetrans-chatdlg_psi.diff
+
+	Fixed joining groupchat rooms by Remko:
+	http://www.cs.kuleuven.ac.be/~remko/psi/patches/accountscombobox-fix_psi.diff
+	http://www.cs.kuleuven.ac.be/~remko/psi/patches/eventdlg-onlineonly_psi.diff
+
+	Selfcontact action + account tip by Remko:
+	http://www.cs.kuleuven.ac.be/~remko/psi/patches/selfcontact+accounttip_psi.diff
+
+2004-07-25, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Changed the toolbars configuration format in config.xml. Do not use
+	older Psi's after upgrading to this one, or your toolbar configuation
+	will be lost!
+	
+2004-07-18, Michail Pishchagin <mblsha@users.sourceforge.net>
+	x:data support for iq:register dialog.
+	x:data support for iq:search dialog.
+
+	SkaZi's offline status message patch.
+
+	Default profile Remko's patch:
+	http://www.cs.kuleuven.ac.be/~remko/psi/patches/defaultprofile_psi.diff
+
+	Select only online accounts in Join Groupchat dialog by Remko:
+	http://www.cs.kuleuven.ac.be/~remko/psi/patches/groupchat-onlineonly_psi.diff
+	
+2004-07-14, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Avatar patch by Remko:
+	* Added new icons & updated others
+	* When a new VCard is retrieved, the corresponding avatar is updated
+	  automatically
+	* Added run-time options for avatars (enable switch + dimension)
+	* Added 'Clear  avatar' context menu. Grouped avatar-related context menu
+	  in 1 popup.
+	* When there is no avatar, show no avatar (instead of showing a default one)
+	* When a contact is removed, remove its associated avatar too.
+	* Comments are now Psi-style
+	
+2004-07-11, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Support for getting VCard image as avatar by Remko.
+	
+2004-07-10, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Improved the avatar in the tooltip appearance somewhat.
+	Thanks to IceRAM.
+
+	Now CVS builds will be timestamped.
+
+2004-07-09, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Fixed crash in groupchat's rosters' tooltips. Thanks, Remko!
+	
+2004-07-08, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Now status buttons should have effect on connecting accounts too.
+	
+2004-07-07, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Now ChatDlg uses toolbar to display it's toolbuttons. Later it should
+	become customizeable!!
+	
+2004-07-05, Kevin Smith <psi-changelog@kismith.co.uk>
+	Added Passive Popup for file transfers:
+	ftp://ftp.patryk.one.pl/pub/windows/siec/psi/selfmade/patches/psi-popup_file.diff
+
+2004-07-05, Kevin Smith <psi-changelog@kismith.co.uk>
+	Added Skazi, Remko, Hal and IceRam to the thanks page of the about dialog. 
+	Thanks Guys.
+
+	Added support for static (locally defined) avatars. Haven't added a toggle
+	yet, I'm waiting to see if anyone actually *doesn't* want it.
+
+2004-07-01, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Show 'Insert Emoticon' toolbutton in chat dialog when it's not in compact
+	mode:
+	http://www.cs.kuleuven.ac.be/~remko/psi/patches/chatdlg-emot_psi.diff
+
+	Smart change status button:
+	http://www.cs.kuleuven.ac.be/~remko/psi/patches/statuschange_psi.diff
+
+	Now dragging multiple files at once will result in many FT dialogs.
+	Thanks to Remko Troncon ;-)
+
+	Now Service Disovery dialog uses PsiToolBar.
+	
+2004-06-30, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Added 'Get vCard' and 'Resolve Nick' buttons to the Add new user dialog.	
+	Removed 'XML Console' from 'Psi' menu.
+
+	Fixed translations of compact chat mode:
+	http://www.cs.kuleuven.ac.be/~remko/psi/patches/chatdlg-menu_psi.diff
+
+	Drag-n-Drop support for File Transfer:
+	http://www.cs.kuleuven.ac.be/~remko/psi/patches/dragdropfile_psi.diff
+
+	Mac menu:
+	http://www.cs.kuleuven.ac.be/~remko/psi/patches/macmenu_psi.diff
+
+	Mac roster grip:
+	http://www.cs.kuleuven.ac.be/~remko/psi/patches/macstatusbottom_psi.diff
+	
+2004-06-14, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Now Psi wouldn't load successfully with the absent default icons.
+	
+---- Psi 0.9.2 Release ----
+
+2004-06-05, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Added 'Psi Handbook' entry to the Help menu.
+	
+2004-05-29, Michail Pishchagin <mblsha@users.sourceforge.net>
+        Fixed Tip of The Day's What's This string.
+
+2004-05-26, Michail Pishchagin <mblsha@users.sourceforge.net>
+        Fixed tab order in Sound tab in Options dialog.
+
+2004-05-04, Justin Karneges <justin@affinix.com>
+        Added file transfer manager.
+
+2004-05-04, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Fixed a bug, when you had some popups on the screen, and quitted psi,
+	it always segfaulted.
+	
+2004-05-01, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Added "Incoming File Transfer" and "File Transfer Complete" sounds to the
+	Sound tab in Options dialog and common.h. 
+	Now it's up to Justin to actually use them :)
+
+	Now sounds from iconsets shouldn't be played when sounds are disabled.
+
+	Hopefully fixed the 'next' button's icon on non-X11 platforms.
+
+	Fixed line endings in Export History dialog.
+	
+2004-04-30, Michail Pishchagin <mblsha@users.sourceforge.net>
+	ed2k:// patch by SkaZi.
+
+	Bug with IRC gateway icon and Service Discovery dialog.
+
+	Added selection of Popup Font.
+
+	New looks of Appearance tab in the Options dialog.
+	
+2004-04-18, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Added conference/irc type to the list of known disco identities.
+	Now the disco dialog should display IRC gate icon just ok.
+	
+2004-04-05, Michail Pishchagin <mblsha@users.sourceforge.net>
+	The bug-reporting patch by SkaZi.
+	(http://psi.affinix.com/flyspray/index.php?do=details&id=238)
+	
+2004-04-04, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Update the (C) year in About dialog to 2004.
+	
+2004-04-01, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Added the Transfer Manager action to the main window.
+	
+2004-03-30, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Now chat and event dialogs do not linkify the status tooltips of the 
+	contact.
+
+	Now service discovery dialog should be able to search JUD on jabber.org
+	(since it started to support Service Discovery) when protocol is set 
+	to A (Auto) or D (Disco).
+
+	Now Psi shouldn't crash on exit with the ~PsiTextView as the cause.
+	
+2004-03-25, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Fixed the slotScroll() slot in GroupChat dialog, and scrolling to bottom
+	should actually work now.
+	
+2004-03-18, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Now type ahead in contact view will reset after 3 seconds of inactivity.
+	
+2004-03-16, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Bug: Groupchat dialog was not always scrolled to bottom. Fixed now.
+	
+2004-03-15, Justin Karneges <justin@affinix.com>
+        New history features: erase all and export to friendly text.
+
+2004-03-15, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Delete old settings in HKLM on Windows systems.
+	
+2004-03-12, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Updated default icons (they're now made smaller in size, all thanks to
+	Piotr Iwo Skrodzewicz).
+
+	Added --nocrash command-line option.
+	
+2004-03-10, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Fixed silly bug when loading sort style for contacts in roster.
+
+	Added ArchLinux to the list of detectable Linux distrox (thanks to IceRAM).
+	
+2004-03-08, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Now 'crash' support will not be built-in by default.
+
+	Fixed bug in disco dialog, when doing Refresh Item on parent item, its
+	child loses all features and identities.
+	
+2004-03-03, Justin Karneges <justin@affinix.com>
+        ContactView shortcuts were broken, fixed.
+	'configure' updated to not bundle qxml unless necessary.
+
+2004-03-03, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Small code cleanup by SkaZi
+
+2004-03-02, Justin Karneges <justin@affinix.com>
+	Data transfer settings
+	
+2004-02-29, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Added vertical splitter to the groupchat dialog (thanks to IceRAM for the 
+	hint)
+
+	Now Psi should compile with Qt 3.1.x on Windows again
+	
+2004-02-28, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Now only one trackbar exists at a time in groupchat dialog (patch by
+	Bastian Hoyer)
+	
+2004-02-27, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Reverted the hide/show roster code to the old one, which was used in 0.8.7
+	
+2004-02-26, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Fixed replying to replied plain messages. In 0.9.1 subject became empty
+	in that case.
+	
+2004-02-25, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Real fix for now: Now in nick-completion the space is not added when 
+	completion is not at the start of the string (thanks to IceRAM for the 
+	hint)
+	
+2004-02-23, Kevin Smith <psi-changelog@kismith.co.uk>
+	Added an xml option to have the xml console visible and enabled at login.
+	Some people wanted this for debugging.
+
+2004-02-23, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Fixed the emoticonify function: now it will correctly handle this case:
+	";-)
+	:-P(blah-blah-blah)"
+
+	Now MainWin's position will not be saved, if the X or Y coordinate is 
+	fever than -30000 (I think that it should work, but it needs testing).
+
+	Now IconSelect can take up to 3/4 of the screen's 
+	MIN(screen.width, screen.height).
+	
+2004-02-21, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Now in nick-completion the space is not added when copletion is not at
+	the start of the string (thanks to IceRAM for the hint)
+
+	Now Psi should be able to load attachments from messages that it saved
+	to the event queue on the disk (thanks to SkaZi for the patch)
+
+2004-02-16, Kevin Smith <psi-changelog@kismith.co.uk>
+	Added a trackbar to the groupchat dialog
+
+2004-02-16, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Fix for nick completion bug in groupchat dialog, which showed only
+	when there were people with identical-starting nicks, but in other
+	cases (ex: IceRAM vs. infiniti)
+
+	"Crash" patch by Juan F. Codagnone.
+	
+2004-02-13, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Fix for type ahead by Juan F. Codagnone.
+	
+2004-02-11, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Fix for crash on startup if iconset could not be loaded. (thx to SkaZi)
+	
+	Fix for multiline descriptions in url attachments by SkaZi.
+
+	Fix for text color in groupchat dialog by SkaZi.
+	
+2004-01-27, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Event queue sorting patch by SkaZi.
+	
+2004-01-26, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Received messages are now queued to disk 
+	(to PsiDataDir/profiles/profilename/events-accountname.xml)
+	
+2004-01-25, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Hidden group patch by SkaZi.
+	
+2004-01-25, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Updated EventQueue saving/loading code (but it's still not perfect, 
+	though).
+	
+2004-01-23, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Fixed a bug in PsiIconset::Private::loadIconset(): If original icon have
+	Anim, and new icon doesn't have Anim, old Anim was not deleted, which
+	caused incorrect animations to appear (example: psi/chat icon in 
+	LightBulb iconset).
+	
+2004-01-21, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Small fix to the resource search path under Windows.
+	
+2004-01-21, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Patch by Juan F. Codagnone:
+	This patch was called originaly "miranda like type-ahead patch"  after the 
+	Mozilla's and Miranda IM's feature. It lets you go to any contact in your 
+	roster, typing his name. (at the moment, in psi, when you want to search for 
+	some one, you need to type the first character of the nickname you are 
+	searching for).
+	
+2004-01-19, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Moved Configure Toolbars out of main Psi menu, to the toolbars' own
+	context menus.
+	
+2004-01-17, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Tip of the Day is back! Please contribute your useful tips and tricks,
+	so they will be there in 0.9.2 ;)
+		
+2004-01-17, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Fixed grammar, spelling, and other errors/typos in translatable	
+	strings (in psi/src/options).
+
+2004-01-16, Michail Pishchagin <mblsha@users.sourceforge.net>
+	now Sound Player option is separated to tokens by the ' ' (space) char.
+	it is possible to use complex sound player commands now.
+	Patch by "wwp <subscript@free.fr>"
+	
+2004-01-11, Kevin Smith <psi-changelog@kismith.co.uk>
+	XML option to turn off the numbers in group headers.
+
+2004-01-10, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Added nick-completion in Groupchat dialog. Press Tab key to complete and
+	to iterate through the nicks
+	
+2004-01-06, Kevin Smith <psi-changelog@kismith.co.uk>
+	Accounts can now be enabled and disabled in account settings (Skazi's
+	patch)
+
+2004-01-05, Kevin Smith <psi-changelog@kismith.co.uk>
+	Emoticonified text now also shows *text* as bold, /text/ as italic,
+	and _text_ as underlined.
+
+2004-01-05, Kevin Smith <psi-changelog@kismith.co.uk>
+	Support for multiple contact adds from the services dialog (Mike
+	Fawcett (deviant))
+
+2004-01-04, Kevin Smith <psi-changelog@kismith.co.uk>
+	Started this ChangeLog.
+	
+	Presets in status dialog are now sorted alphabetically. (Skazi's patch)	
+	Status Dialog has a tickbox to save the status message as a preset (Remko's Patch)	
+	Seperated headlines from messages for sound and popups.
+
+2003-01-03, Kevin Smith <psi-changelog@kismith.co.uk>
+	Small chat support, there's a global default in the config (no option yet) and
+	right click per-dialog
+	
+2004-01-02, Michail Pishchagin <mblsha@users.sourceforge.net>
+	Service registration dialog corrections by SkaZi:
+	  - 'register' is the default button
+	  - first line in form is focused
+	
+---- Psi 0.9.1 Release ----

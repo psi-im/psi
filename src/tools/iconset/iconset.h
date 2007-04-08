@@ -62,36 +62,17 @@ private:
 	class Private : public QSharedData
 	{
 	public:
-		QPixmap* pixmap;
-		QImage image;
-
-		Private()
-		{
-			pixmap = 0;
-		}
-
-		Private(const Private& from)
-			: QSharedData(from)
-		{
-			pixmap = from.pixmap ? new QPixmap(*from.pixmap) : 0;
-			image  = from.image;
-		}
-
-		~Private()
-		{
-			unload();
-		}
-
+		QPixmap pixmap;
+		QImage  image;
+	
 		void unload()
 		{
-			if (pixmap)
-				delete pixmap;
-			pixmap = 0;
+			pixmap = QPixmap();
 			image  = QImage();
 		}
 	};
 
-	mutable QSharedDataPointer<Private> d;
+	QSharedDataPointer<Private> d;
 };
 
 class PsiIcon : public QObject
@@ -152,8 +133,8 @@ public:
 	void detach();
 
 signals:
-	void pixmapChanged();
-	void iconModified();
+	void pixmapChanged(const QPixmap &);
+	void iconModified(const QPixmap &);
 
 public slots:
 	virtual void activated(bool playSound = true);	// it just has been inserted in the text, or now it's being displayed by

@@ -169,15 +169,13 @@ private slots:
 	void lv_action(const QString &, const Status &, int);
 	void doClear();
 	void doClearButton();
+	void toggleSmallChat();
 	void buildMenu();
 	void logSelectionChanged();
 	void setConnecting();
 	void unsetConnecting();
 	void action_error(MUCManager::Action, int, const QString&);
 	void updateIdentityVisibility();
-#ifdef WHITEBOARDING
-	void openWhiteboard();
-#endif
 
 public:
 	class Private;

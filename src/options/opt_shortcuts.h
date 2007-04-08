@@ -18,15 +18,14 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
+#include <QWidget>
+#include <QKeySequence>
+#include <QTreeWidgetItem>
+
+#include "optionstab.h"
 
 #ifndef OPT_SHORTCUTS_H
 #define OPT_SHORTCUTS_H
-
-#include "optionstab.h"
-#include <QKeySequence>
-
-class QTreeWidgetItem;
-class QWidget;
 
 class OptionsTabShortcuts : public OptionsTab
 {
@@ -44,20 +43,15 @@ public:
 		ShortcutItem,
 		KeyItem
 	};
+private:
+	QWidget *w;
 
-private slots:
+public slots:
 	void onAdd();
 	void onRemove();
-	void onEdit();
 	void onItemDoubleClicked(QTreeWidgetItem *item, int column);
 	void onItemSelectionChanged();
 	void onNewShortcutKey(QKeySequence key);
-
-private:
-	void addTo(QTreeWidgetItem *shortcutItem);
-	void grep();
-
-	QWidget *w;
 };
 
 #endif

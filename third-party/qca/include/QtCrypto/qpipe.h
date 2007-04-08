@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2007  Justin Karneges <justin@affinix.com>
+ * Copyright (C) 2003-2006  Justin Karneges <justin@affinix.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -13,7 +13,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 
@@ -36,8 +36,6 @@
 
 #ifdef QPIPE_SECURE
 # include <QtCrypto>
-#else
-# define QCA_EXPORT
 #endif
 
 // defs adapted qprocess_p.h
@@ -50,10 +48,6 @@ typedef int Q_PIPE_ID;
 #define INVALID_Q_PIPE_ID -1
 #endif
 
-// Note: for Windows console, I/O must be in UTF-8.  Reads are guaranteed to
-//   to completely decode (no partial characters).  Likewise, writes must
-//   not contain partial characters.
-
 namespace QCA {
 
 // unbuffered direct pipe
@@ -61,12 +55,7 @@ class QCA_EXPORT QPipeDevice : public QObject
 {
 	Q_OBJECT
 public:
-	enum Type
-	{
-		Read,
-		Write
-	};
-
+	enum Type { Read, Write };
 	QPipeDevice(QObject *parent = 0);
 	~QPipeDevice();
 
@@ -86,7 +75,6 @@ public:
 	int bytesAvailable() const;            // bytes available to read
 	int read(char *data, int maxsize);     // return number read, 0 = EOF, -1 = error
 	int write(const char *data, int size); // return number taken, ptr must stay valid. -1 on error
-	int writeResult(int *written) const;   // 0 = success (wrote all), -1 = error (see written)
 
 signals:
 	void notify();                         // can read or can write, depending on type
@@ -102,12 +90,7 @@ class QCA_EXPORT QPipeEnd : public QObject
 {
 	Q_OBJECT
 public:
-	enum Error
-	{
-		ErrorEOF,
-		ErrorBroken
-	};
-
+	enum Error { ErrorEOF, ErrorBroken };
 	QPipeEnd(QObject *parent = 0);
 	~QPipeEnd();
 

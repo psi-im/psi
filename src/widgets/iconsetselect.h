@@ -38,8 +38,6 @@ public:
 	const Iconset *iconset() const;
 	
 	QListWidgetItem *lastItem() const;
-
-	QStyleOptionViewItem viewOptions() const;
 	
 public slots:
 	void moveItemUp();

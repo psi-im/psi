@@ -1048,10 +1048,7 @@ DiscoDlg::Private::Private(DiscoDlg *parent, PsiAccount *pa)
 	}
 
 	toolBar->addWidget(new StretchWidget(toolBar));
-	AccountLabel* lb_ident = new AccountLabel(toolBar);
-	lb_ident->setAccount(pa);
-	lb_ident->setShowJid(false);
-	toolBar->addWidget(lb_ident);
+	toolBar->addWidget(new AccountLabel(pa, toolBar, true));
 
 	// misc stuff
 	disableButtons();
@@ -1428,9 +1425,8 @@ void DiscoDlg::Private::setProtocol(int p)
 //----------------------------------------------------------------------------
 
 DiscoDlg::DiscoDlg(PsiAccount *pa, const Jid &jid, const QString &node)
-	: QDialog(0)
+	: QDialog(0, Qt::WDestructiveClose)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
   	setupUi(this);
 	// restore options
 	ck_autoItems->setChecked(option.discoItems);

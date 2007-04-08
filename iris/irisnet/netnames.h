@@ -350,7 +350,7 @@ void dns_error(XMPP::NameResolver::Error error)
 }
 \endcode
 
-   Yes, a domain name can have multiple IP addresses.  Many applications ignore this fact, and use only one of the answers.  A proper network application should try connecting to each IP address until one succeeds.
+   Yes, a domain name can have multiple IP addresses.  Many applications ignore this fact, and use only one of the answers.  A proper network application will try connecting to each IP address until one succeeds.
 
    To lookup other types, pass the desired type to start().  For example, suppose you want to look up the MX record of a domain name:
 

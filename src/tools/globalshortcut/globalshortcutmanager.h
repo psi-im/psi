@@ -21,20 +21,18 @@
 #ifndef GLOBALSHORTCUTMANAGER_H
 #define GLOBALSHORTCUTMANAGER_H
 
-#include <QObject>
 #include <QKeySequence>
 #include <QMap>
 
 class QObject;
 class KeyTrigger;
 
-class GlobalShortcutManager : public QObject
+class GlobalShortcutManager
 {
 public:
 	static GlobalShortcutManager* instance();
 	static void connect(const QKeySequence& key, QObject* receiver, const char* slot);
 	static void disconnect(const QKeySequence& key, QObject* receiver, const char* slot);
-	static void clear();
 
 private:
 	GlobalShortcutManager();

@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 
@@ -34,10 +34,6 @@
 
 /**
    The current version of %QCA
-
-   This provides you a compile time check of the %QCA version.
-
-   \sa qcaVersion for a runtime check.
 */
 #define QCA_VERSION 0x020000
 
@@ -50,14 +46,6 @@
 #include "qca_support.h"
 #include "qca_tools.h"
 
-/**
-   The current version of %QCA.
-
-   This is equivalent to QCA_VERSION, except it provides
-   a runtime check of the version of %QCA that is being used.
-*/
-QCA_EXPORT int qcaVersion();
-
 /** 
  * QCA - the Qt Cryptographic Architecture
  */
@@ -69,7 +57,6 @@ namespace QCA
 	class Global;
 	class KeyStore;
 	class KeyStoreManager;
-	class Logger;
 
 	/**
 	 * Convenience representation for the plugin providers
@@ -346,23 +333,6 @@ namespace QCA
 	QCA_EXPORT QVariant getProperty(const QString &name);
 
 	/**
-	 * Set provider configuration
-	 *
-	 * Allowed value types: QString, int, bool
-	 */
-	QCA_EXPORT void setProviderConfig(const QString &name, const QVariantMap &config);
-
-	/**
-	 * Retrieve provider configuration
-	 */
-	QCA_EXPORT QVariantMap getProviderConfig(const QString &name);
-
-	/**
-	 * Save provider configuration to persistent storage
-	 */
-	QCA_EXPORT void saveProviderConfig(const QString &name);
-
-	/**
 	 * Return the Random provider that is currently set to be the
 	 * global random number generator.
 	 *
@@ -385,22 +355,10 @@ namespace QCA
 	QCA_EXPORT void setGlobalRNG(const QString &provider);
 
 	/**
-	   Return a reference to the %QCA Logger, which is used for diagnostics
-	   and error recording.
-
-	   The system Logger is automatically created for you on start. 
+	   Return a reference to the KeyStoreManager, which is used to interface with
+	   system storage, PGP keyrings, and smart cards.
 	*/
-	QCA_EXPORT Logger *logger();
-
-	/**
-	   Log a text message. This is just a convenience function
-	   to avoid having to call Logger::logTextMessage() on the
-	   global Logger.
-
-	   \param message the text to log
-	   \param severity the type of information to log
-	*/
-	QCA_EXPORT void logText( const QString &message, Logger::Severity severity = Logger::Information );
+	QCA_EXPORT KeyStoreManager *keyStoreManager();
 
 	/**
 	   Test if QCA can access the root CA certificates
@@ -559,7 +517,7 @@ namespace QCA
 		/**
 		 * Return the number of bytes that the key must be a multiple of
 		 *
-		 * If this is one, then anything between minimum and maximum (inclusive)
+		 * If this is one, then anything between minumum and maximum (inclusive)
 		 * is acceptable.
 		 */
 		int multiple() const { return _multiple; }
@@ -586,7 +544,55 @@ namespace QCA
 	public:
 		virtual ~Provider();
 
-		class Context;
+		/**
+		   \class Context qca_core.h QtCrypto
+
+		   Internal context class used for the plugin
+
+		   \internal
+		*/
+		class QCA_EXPORT Context
+		{
+		public:
+			/**
+			   Standard constructor
+
+			   \param parent the parent provider for this 
+			   context
+			   \param type the name of the provider context type
+			*/
+			Context(Provider *parent, const QString &type);
+			virtual ~Context();
+
+			/**
+			   The Provider associated with this Context
+			*/
+			Provider *provider() const;
+
+			/**
+			   The type of context, as passed to the constructor
+			*/
+			QString type() const;
+
+			/**
+			   Create a duplicate of this Context
+			*/
+			virtual Context *clone() const = 0;
+
+			/**
+			   Test if two Contexts have the same Provider
+
+			   \param c pointer to the Context to compare to
+
+			   \return true if the argument and this COntext
+			   have the same provider.
+			*/
+			bool sameProvider(const Context *c) const;
+
+		private:
+			Provider *_provider;
+			QString _type;
+		};
 
 		/**
 		 * Initialisation routine.
@@ -598,19 +604,6 @@ namespace QCA
 		 * routine.
 		 */
 		virtual void init();
-
-		/**
-		 * Target QCA version for the provider.
-		 *
-		 * This is used to verify compatibility between the
-		 * provider and QCA.  For a provider to be used, it
-		 * must have major and minor version numbers that are
-		 * less-than or equal to the QCA version (the patch
-		 * version number is ignored).  This means an older
-		 * provider may be used with a newer QCA, but a newer
-		 * provider cannot be used with an older QCA.
-		 */
-		virtual int version() const = 0;
 
 		/**
 		 * The name of the provider.
@@ -684,70 +677,6 @@ namespace QCA
 		 * the specified Context subclasses as well.
 		 */
 		virtual Context *createContext(const QString &type) = 0;
-
-		virtual QVariantMap defaultConfig() const;
-		virtual void configChanged(const QVariantMap &config);
-	};
-
-	/**
-	   \class Context qca_core.h QtCrypto
-
-	   Internal context class used for the plugin
-
-	   \internal
-	*/
-	class QCA_EXPORT Provider::Context : public QObject
-	{
-		Q_OBJECT
-	public:
-		/**
-		   Standard constructor
-
-		   \param parent the parent provider for this 
-		   context
-		   \param type the name of the provider context type
-		*/
-		Context(Provider *parent, const QString &type);
-		Context(const Context &from);
-		virtual ~Context();
-
-		/**
-		   The Provider associated with this Context
-		*/
-		Provider *provider() const;
-
-		/**
-		   The type of context, as passed to the constructor
-		*/
-		QString type() const;
-
-		/**
-		   Create a duplicate of this Context
-		*/
-		virtual Context *clone() const = 0;
-
-		/**
-		   Test if two Contexts have the same Provider
-
-		   \param c pointer to the Context to compare to
-
-		   \return true if the argument and this Context
-		   have the same provider.
-		*/
-		bool sameProvider(const Context *c) const;
-
-	private:
-		Provider *_provider;
-		QString _type;
-	};
-
-	class BasicContext : public Provider::Context
-	{
-		Q_OBJECT
-	public:
-		BasicContext(Provider *parent, const QString &type);
-		BasicContext(const BasicContext &from);
-		~BasicContext();
 	};
 
 	/**
@@ -1039,56 +968,21 @@ namespace QCA
 		InitializationVector(const QByteArray &a);
 	};
 
-	/**
-	   An asynchronous event
-
-	   Events are produced in response to the library's need for some user
-	   intervention, such as entering a pin or password, or inserting a cryptographic
-	   token.
-
-	   Event is an abstraction, so you can handle this need in a way that makes sense
-	   for your application.
-	*/
 	class QCA_EXPORT Event
 	{
 	public:
-	        /** 
-		    %Type of event
-
-		    \sa type()
-		*/
 		enum Type
 		{
-			Password,   ///< Asking for a password, PIN or passphrase.
+			Password,   ///< Asking for a password
 			Token       ///< Asking for a token
 		};
 
-	        /** 
-		    %Source of the event
-
-		    Events are associated with access to a KeyStore, or access to 
-		    a file (or bytearray/stream or equivalent). This tells you the
-		    type of source that caused the Event.
-
-		    \sa source()
-		    \sa fileName() for the name, if source is Event::Data
-		    \sa keyStoreId() and keyStoreEntryId for the keystore and entry, if
-		    the source is Event::KeyStore
-		*/
 		enum Source
 		{
 			KeyStore,   ///< KeyStore generated the event
-			Data        ///< File or bytearray generated the event
+			Data        ///< File/bytearray generated the event
 		};
 
-	        /** 
-		    password variation
-
-		    If the Type of Event is Password, PasswordStyle tells you whether 
-		    it is a PIN, passphrase or password.
-
-		    \sa passwordStyle()
-		*/
 		enum PasswordStyle
 		{
 			StylePassword,   ///< User should be prompted for a "Password"
@@ -1096,112 +990,24 @@ namespace QCA
 			StylePIN         ///< User should be prompted for a "PIN"
 		};
 
-		/**
-		   Constructor
-		*/
 		Event();
-
-		/**
-		   Copy constructor
-
-		   \param from the Event to copy from
-		*/
 		Event(const Event &from);
-
-		/**
-		   Destructor
-		*/
 		~Event();
-
-		/**
-		   Assignment operator
-
-		   \param from the Event to copy from
-		*/
 		Event & operator=(const Event &from);
 
-		/**
-		   test if this event has been setup correctly
-		*/
 		bool isNull() const;
 
-		/**
-		   the Type of this event
-		*/
 		Type type() const;
 
-		/**
-		   the Source of this event
-		*/
 		Source source() const;
-
-		/**
-		   the style of password required.
-
-		   This is not meaningful unless the Type is Event::Password.
-
-		   \sa PasswordStyle 
-		*/
 		PasswordStyle passwordStyle() const;
-
-		/**
-		   The id of the KeyStore associated with this event
-
-		   This is not meaningful unless the Source is KeyStore.
-		*/
 		QString keyStoreId() const;
-
-		/**
-		   The id of the KeyStoreEntry associated with this event
-
-		   This is not meaningful unless the Source is KeyStore.
-		*/
 		QString keyStoreEntryId() const;
-
-		/**
-		   Name or other identifier for the file or byte array
-		   associated with this event.
-
-		   This is not meaningful unless the Source is Data.
-		*/
 		QString fileName() const;
-
-		/**
-		   opaque data
-		*/
 		void *ptr() const;
 
-		/**
-		   Set the values for this Event
-
-		   This creates a Password type event, for a keystore.
-
-		   \param pstyle the style of information required (e.g. PIN, password or passphrase)
-		   \param keyStoreId the keystore that the information is required for
-		   \param keyStoreEntryId the entry in the keystore that the information is required for
-		   \param ptr opaque data
-		*/
 		void setPasswordKeyStore(PasswordStyle pstyle, const QString &keyStoreId, const QString &keyStoreEntryId, void *ptr);
-
-		/**
-		   Set the values for this Event
-
-		   This creates a Password type event, for a file.
-
-		   \param pstyle the style of information required (e.g. PIN, password or passphrase)
-		   \param fileName the name of the file (or other identifier) that the information is required for
-		   \param ptr opaque data
-		*/
 		void setPasswordData(PasswordStyle pstyle, const QString &fileName, void *ptr);
-
-		/**
-		   Set the values for this Event
-
-		   This creates a Token type event.
-		   
-		   \param keyStoreEntryId the entry in the keystore that the token is required for
-		   \param ptr opaque data
-		*/
 		void setToken(const QString &keyStoreEntryId, void *ptr);
 
 	private:
@@ -1216,79 +1022,20 @@ namespace QCA
 	class TokenAskerPrivate;
 	class AskerItem;
 
-	/**
-	   Interface class for password / passphrase / PIN and token handlers
-
-	   This class is used on client side applications to handle
-	   the provision of passwords, passphrases and PINs by users, and
-	   to indicate that tokens have been correctly inserted.
-
-	   The concept behind this class is that the library can raise
-	   events (typically using PasswordAsker or TokenAsker), which
-	   may (or may not) be handled by the application using a
-	   handler object (that has-a EventHandler, or possibly is-a
-	   EventHandler) that is connected to the eventReady() signal.
-	*/
 	class QCA_EXPORT EventHandler : public QObject
 	{
 		Q_OBJECT
 	public:
-	        /**
-		   Constructor
-
-		   \param parent the parent object for this object
-		*/
 		EventHandler(QObject *parent = 0);
 		~EventHandler();
 
-		/**
-		   mandatory function to call after connecting the
-		   signal to a slot in your application specific password
-		   / passphrase / PIN or token handler
-		*/
 		void start();
 
-		/**
-		   function to call to return the user provided
-		   password, passphrase or PIN.
-
-		   \param id the id corresponding to the password request
-		   \param password the user-provided password, passphrase or PIN.
-
-		   \note the id parameter is the same as that provided in the
-		   eventReady() signal.
-		*/
 		void submitPassword(int id, const QSecureArray &password);
-
-		/**
-		   function to call to indicate that the token has been inserted
-		   by the user.
-
-		   \param id the id corresponding to the password request
-
-		   \note the id parameter is the same as that provided in the
-		   eventReady() signal.
-		*/
 		void tokenOkay(int id);
-
-		/**
-		   function to call to indicate that the user declined to 
-		   provide a password, passphrase, PIN or token.
-
-		   \param id the id corresponding to the password request
-
-		   \note the id parameter is the same as that provided in the
-		   eventReady() signal.
-		*/
 		void reject(int id);
 
 	signals:
-		/**
-		   signal emitted when an Event requires attention.
-
-		   You typically need to connect this signal to
-		   a compatible slot in your callback handler
-		*/
 		void eventReady(int id, const QCA::Event &context);
 
 	private:
@@ -1301,79 +1048,22 @@ namespace QCA
 		friend class AskerItem;
 	};
 
-	/** 
-	    User password / passphrase / PIN handler
-
-	    This class is used to obtain a password from a user.
-	*/
 	class QCA_EXPORT PasswordAsker : public QObject
 	{
 		Q_OBJECT
 	public:
-	       /**
-		  Construct a new asker
-
-		  \param parent the parent object for this QObject
-	       */
 		PasswordAsker(QObject *parent = 0);
 		~PasswordAsker();
 
-		/**
-		   queue a password / passphrase request associated with a key store
-		   
-		   \param pstyle the type of information required (e.g. PIN, passphrase or password)
-		   \param keyStoreId the key store that the information is required for
-		   \param keyStoreEntryId the item in the key store that the information is required for
-		   \param ptr opaque data
-		*/
 		void ask(Event::PasswordStyle pstyle, const QString &keyStoreId, const QString &keyStoreEntryId, void *ptr);
-
-		/**
-		   queue a password / passphrase request associated with a file
-		   
-		   \param pstyle the type of information required (e.g. PIN, passphrase or password)
-		   \param fileName the name of the file that the information is required for
-		   \param ptr opaque data
-		*/
 		void ask(Event::PasswordStyle pstyle, const QString &fileName, void *ptr);
-
-		/**
-		   Cancel the pending password / passphrase request
-		*/
 		void cancel();
-
-		/**
-		   Block until the password / passphrase request is
-		   completed
-
-		   You can use the responseReady signal instead of
-		   blocking, if appropriate.
-		*/
 		void waitForResponse();
 
-		/**
-		   Determine whether the password / passphrase was accepted or not
-
-		   In this context, returning true is indicative of the user clicking "Ok"
-		   or equivalent; and returning false indicates that either the user
-		   clicked "Cancel" or equivalent, or that the cancel() function was
-		   called, or that the request is still pending.
-		*/
 		bool accepted() const;
-
-		/**
-		   The password / passphrase / PIN provided by the user in response to
-		   the asker request. This may be empty.
-		*/
 		QSecureArray password() const;
 
 	signals:
-		/**
-		   Emitted when the asker process has been completed. 
-
-		   You should check whether the user accepted() the response
-		   prior to relying on the password().
-		*/
 		void responseReady();
 
 	private:
@@ -1383,58 +1073,20 @@ namespace QCA
 		friend class AskerItem;
 	};
 
-	/** 
-	    User token handler
-
-	    This class is used to request the user to insert a token.
-	*/
 	class QCA_EXPORT TokenAsker : public QObject
 	{
 		Q_OBJECT
 	public:
-	       /**
-		  Construct a new asker
-
-		  \param parent the parent object for this QObject
-	       */
 		TokenAsker(QObject *parent = 0);
 		~TokenAsker();
 
-		/**
-		   queue a token request associated with a key store
-		   
-		   \param keyStoreEntryId the item in the key store that the information is required for
-		   \param ptr opaque data
-		*/
 		void ask(const QString &keyStoreEntryId, void *ptr);
-
-		/**
-		   Cancel the pending password / passphrase request
-		*/
 		void cancel();
-
-		/**
-		   Block until the token request is completed
-
-		   You can use the responseReady signal instead of
-		   blocking, if appropriate.
-		*/
 		void waitForResponse();
 
-		/**
-		   Test if the token request was accepted or not.
-
-		   \return true if the token request was accepted
-		*/
 		bool accepted() const;
 
 	signals:
-		/**
-		   Emitted when the asker process has been completed. 
-
-		   You should check whether the user accepted() the response
-		   prior to relying on token being present.
-		*/
 		void responseReady();
 
 	private:

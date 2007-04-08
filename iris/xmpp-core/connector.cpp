@@ -458,7 +458,7 @@ void AdvancedConnector::dns_done()
 	else
 		addr = list.first();
 #else
-	if(d->dns.result().isNull ())
+	if(d->dns.result() == 0)
 		failed = true;
 	else
 		addr = QHostAddress(d->dns.result());

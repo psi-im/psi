@@ -21,7 +21,7 @@
 #ifndef CS_SERVSOCK_H
 #define CS_SERVSOCK_H
 
-#include <QTcpServer>
+#include <q3serversocket.h>
 
 // CS_NAMESPACE_BEGIN
 
@@ -33,7 +33,7 @@ public:
 	~ServSock();
 
 	bool isActive() const;
-	bool listen(quint16 port);
+	bool listen(Q_UINT16 port);
 	void stop();
 	int port() const;
 	QHostAddress address() const;
@@ -49,18 +49,18 @@ private:
 	Private *d;
 };
 
-class ServSockSignal : public QTcpServer
+class ServSockSignal : public Q3ServerSocket
 {
 	Q_OBJECT
 public:
-	ServSockSignal(QObject *parent = 0);
+	ServSockSignal(int port);
 
 signals:
 	void connectionReady(int);
 
 protected:
 	// reimplemented
-	void incomingConnection(int socketDescriptor);
+	void newConnection(int);
 };
 
 // CS_NAMESPACE_END

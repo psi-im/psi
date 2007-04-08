@@ -53,13 +53,10 @@ private slots:
 	void resolveNickActivated();
 	void resolveNickFinished();
 
-	void jid_Changed();
-
 private:
 	class Private;
 	Private *d;
 
-	Jid jid() const;
 	void errorGateway(const QString &str, const QString &err);
 };
 

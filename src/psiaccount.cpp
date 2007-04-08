@@ -90,9 +90,6 @@
 #endif
 #include "pepmanager.h"
 #include "serverinfomanager.h"
-#ifdef WHITEBOARDING
-#include "wbmanager.h"
-#endif
 #include "bookmarkmanager.h"
 #include "vcardfactory.h"
 //#include "qssl.h"
@@ -284,11 +281,6 @@ public:
 	GoogleFTManager* googleFTManager;
 #endif
 	
-#ifdef WHITEBOARDING
-	// Whiteboard
-	WbManager* wbManager;
-#endif
-
 	// PubSub
 	ServerInfoManager* serverInfoManager;
 	PEPManager* pepManager;
@@ -381,7 +373,6 @@ public:
 
 	void dialogRegister(QWidget* w, const Jid& jid)
 	{
-		connect(w, SIGNAL(destroyed(QObject*)), SLOT(forceDialogUnregister(QObject*)));
 		item_dialog2 *i = new item_dialog2;
 		i->widget = w;
 		i->jid = jid;
@@ -406,12 +397,6 @@ public:
 			delete i->widget;
 			delete i;
 		}
-	}
-
-private slots:
-	void forceDialogUnregister(QObject* obj)
-	{
-		dialogUnregister(static_cast<QWidget*>(obj));
 	}
 };
 
@@ -534,10 +519,6 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent)
 	connect(d->cp, SIGNAL(actionHistory(const Jid &)),SLOT(actionHistory(const Jid &)));
 	connect(d->cp, SIGNAL(actionOpenChat(const Jid &)),SLOT(actionOpenChat(const Jid &)));
 	connect(d->cp, SIGNAL(actionOpenChatSpecific(const Jid &)),SLOT(actionOpenChatSpecific(const Jid &)));
-#ifdef WHITEBOARDING
-	connect(d->cp, SIGNAL(actionOpenWhiteboard(const Jid &)),SLOT(actionOpenWhiteboard(const Jid &)));
-	connect(d->cp, SIGNAL(actionOpenWhiteboardSpecific(const Jid &)),SLOT(actionOpenWhiteboardSpecific(const Jid &)));
-#endif
 	connect(d->cp, SIGNAL(actionAgentSetStatus(const Jid &, Status &)),SLOT(actionAgentSetStatus(const Jid &, Status &)));
 	connect(d->cp, SIGNAL(actionInfo(const Jid &)),SLOT(actionInfo(const Jid &)));
 	connect(d->cp, SIGNAL(actionAuth(const Jid &)),SLOT(actionAuth(const Jid &)));
@@ -566,11 +547,6 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent)
 	d->pepManager = new PEPManager(d->client, d->serverInfoManager);
 	connect(d->pepManager,SIGNAL(itemPublished(const Jid&, const QString&, const PubSubItem&)),SLOT(itemPublished(const Jid&, const QString&, const PubSubItem&)));
 	d->pepAvailable = false;
-
-#ifdef WHITEBOARDING
-	 // Initialize Whiteboard manager
-	d->wbManager = new WbManager(d->client, this);
-#endif
 
 	// Avatars
 	d->avatarFactory = new AvatarFactory(this);
@@ -630,7 +606,11 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent)
 
 	// Listen to the capabilities manager
 	connect(capsManager(),SIGNAL(capsChanged(const Jid&)),SLOT(capsChanged(const Jid&)));
-	
+
+	// auto-login ?
+	if(d->acc.opt_auto && d->acc.opt_enabled)
+		setStatus(Status("", "", d->acc.priority));
+
 	//printf("PsiAccount: [%s] loaded\n", name().latin1());
 	d->xmlConsole = new XmlConsole(this);
 	if(option.xmlConsoleOnLogin && d->acc.opt_enabled) {
@@ -692,19 +672,15 @@ PsiAccount::~PsiAccount()
 	
 	delete d->ahcManager;
 	delete d->cp;
-	delete d->privacyManager;
+	//delete d->privacyManager; FIXME: Why does this segfault ?
 	delete d->capsManager;
 	delete d->pepManager;
 	delete d->serverInfoManager;
-#ifdef WHITEBOARDING
-	delete d->wbManager;
-#endif
 	delete d->bookmarkManager;
 	delete d->client;
 	delete d->httpAuthManager;
 	cleanupStream();
 	delete d->eventQueue;
-	delete d->avatarFactory;
 
 	delete d->blockTransportPopupList;
 
@@ -899,12 +875,11 @@ void PsiAccount::setUserAccount(const UserAccount &acc)
 	QString pgpSecretKeyID = (d->acc.pgpSecretKey.isNull() ? "" : d->acc.pgpSecretKey.keyId());
 	d->self.setPublicKeyID(pgpSecretKeyID);
 	if(PGPUtil::pgpAvailable()) {
-		bool updateStatus = !PGPUtil::equals(d->acc.pgpSecretKey, d->cur_pgpSecretKey) && loggedIn();
-		d->cur_pgpSecretKey = d->acc.pgpSecretKey;
-		pgpKeyChanged();
-		if (updateStatus) {
+		if(!PGPUtil::equals(d->acc.pgpSecretKey,d->cur_pgpSecretKey) && loggedIn()) {
+			d->cur_pgpSecretKey = d->acc.pgpSecretKey;
 			d->loginStatus.setXSigned("");
 			setStatusDirect(d->loginStatus);
+			pgpKeyChanged();
 		}
 	}
 
@@ -931,15 +906,6 @@ QString PsiAccount::nameWithJid() const
 	return (name() + " (" + JIDUtil::toString(jid(),true) + ')');
 }
 
-// Moved out of constructor to have all accounts loaded
-// when we ask for passwords.
-void PsiAccount::autoLogin()
-{
-	// auto-login ?
-	if(d->acc.opt_auto && d->acc.opt_enabled)
-		setStatus(Status("", "", d->acc.priority));
-}
-
 // logs on with the active account settings
 void PsiAccount::login()
 {
@@ -952,6 +918,10 @@ void PsiAccount::login()
 	}
 
 	d->jid = d->nextJid;
+	if(PGPUtil::pgpAvailable()) {
+		d->cur_pgpSecretKey = d->acc.pgpSecretKey;
+		pgpKeyChanged();
+	}
 
 	v_isActive = true;
 	isDisconnecting = false;
@@ -967,9 +937,6 @@ void PsiAccount::login()
 	if(d->acc.opt_host) {
 		useHost = true;
 		host = d->acc.host;
-		if (host.isEmpty()) {
-			host = d->jid.domain();
-		}
 		port = d->acc.port;
 	}
 
@@ -1002,7 +969,6 @@ void PsiAccount::login()
 		d->tls = new QCA::TLS;
 		d->tls->setTrustedCertificates(CertUtil::allCertificates());
 		d->tlsHandler = new QCATLSHandler(d->tls);
-		d->tlsHandler->setXMPPCertCheck(true);
 		connect(d->tlsHandler, SIGNAL(tlsHandshaken()), SLOT(tls_handshaken()));
 	}
 	d->conn->setProxy(p);
@@ -1017,7 +983,7 @@ void PsiAccount::login()
 	d->stream = new ClientStream(d->conn, d->tlsHandler);
 	d->stream->setRequireMutualAuth(d->acc.req_mutual_auth);
 	d->stream->setSSFRange(d->acc.security_level,256);
-	d->stream->setAllowPlain(d->acc.allow_plain);
+	d->stream->setAllowPlain(d->acc.opt_plain);
 	d->stream->setCompress(d->acc.opt_compress);
 	d->stream->setLang(TranslationManager::instance()->currentXMLLanguage());
 	if(d->acc.opt_keepAlive)
@@ -1025,7 +991,7 @@ void PsiAccount::login()
 	else
 		d->stream->setNoopTime(0);
 	connect(d->stream, SIGNAL(connected()), SLOT(cs_connected()));
-	connect(d->stream, SIGNAL(securityLayerActivated(int)), SLOT(cs_securityLayerActivated(int)));
+	connect(d->stream, SIGNAL(securityLayerActivated(int)), SLOT(cs_securityLayerActivated()));
 	connect(d->stream, SIGNAL(needAuthParams(bool, bool, bool)), SLOT(cs_needAuthParams(bool, bool, bool)));
 	connect(d->stream, SIGNAL(authenticated()), SLOT(cs_authenticated()));
 	connect(d->stream, SIGNAL(connectionClosed()), SLOT(cs_connectionClosed()), Qt::QueuedConnection);
@@ -1065,8 +1031,7 @@ void PsiAccount::logout(bool fast, const Status &s)
 	v_isActive = false;
 	stateChanged();
 
-	// Using 100msecs; See note on disconnect() 
-	QTimer::singleShot(100, this, SLOT(disconnect()));
+	QTimer::singleShot(0, this, SLOT(disconnect()));
 }
 
 // skz note: I had to split logout() because server seem to need some time to store status
@@ -1089,37 +1054,25 @@ void PsiAccount::tls_handshaken()
 {
 	QCA::Certificate cert = d->tls->peerCertificateChain().primary();
 	int r = d->tls->peerIdentityResult();
-	if (r == QCA::TLS::Valid && !d->tlsHandler->certMatchesHostname()) r = QCA::TLS::HostMismatch;
 	if(r != QCA::TLS::Valid && !d->acc.opt_ignoreSSLWarnings) {
 		QCA::Validity validity =  d->tls->peerCertificateValidity();
 		QString str = CertUtil::resultToString(r,validity);
-		QMessageBox msgBox(QMessageBox::Warning,
-			(d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Authentication"),
-			tr("The %1 certificate failed the authenticity test.").arg(d->jid.host()) + '\n' + tr("Reason: %1.").arg(str));
-		QPushButton *detailsButton = msgBox.addButton(tr("&Details..."), QMessageBox::ActionRole);
-		QPushButton *continueButton = msgBox.addButton(tr("Co&ntinue"), QMessageBox::AcceptRole);
-		QPushButton *cancelButton = msgBox.addButton(QMessageBox::Cancel);
-		msgBox.setDefaultButton(detailsButton);
-		msgBox.setResult(QDialog::Accepted);
-
-		connect(this, SIGNAL(disconnected()), &msgBox, SLOT(reject()));
-		connect(this, SIGNAL(reconnecting()), &msgBox, SLOT(reject()));
-
-		while (msgBox.result() != QDialog::Rejected) {
-			msgBox.exec();
-			if (msgBox.clickedButton() == detailsButton) {
-				msgBox.setResult(QDialog::Accepted);
+		while(1) {
+			int n = QMessageBox::warning(0,
+				(d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Authentication"),
+				tr("The %1 certificate failed the authenticity test.").arg(d->jid.host()) + '\n' + tr("Reason: %1.").arg(str),
+				tr("&Details..."),
+				tr("Co&ntinue"),
+				tr("&Cancel"), 0, 2);
+			if(n == 0) {
 				SSLCertDlg::showCert(cert, r, validity);
 			}
-			else if (msgBox.clickedButton() == continueButton) {
+			else if(n == 1) {
 				d->tlsHandler->continueAfterHandshake();
 				break;
 			}
-			else if (msgBox.clickedButton() == cancelButton) {
+			else if(n == 2) {
 				logout();
-				break;
-			}
-			else {	// msgBox was hidden because connection was closed
 				break;
 			}
 		}
@@ -1127,17 +1080,6 @@ void PsiAccount::tls_handshaken()
 	else
 		d->tlsHandler->continueAfterHandshake();
 }
-
-void PsiAccount::showCert()
-{
-	if (!d->tls || !d->tls->isHandshaken()) return;
-	QCA::Certificate cert = d->tls->peerCertificateChain().primary();
-	int r = d->tls->peerIdentityResult();
-	if (r == QCA::TLS::Valid && !d->tlsHandler->certMatchesHostname()) r = QCA::TLS::HostMismatch;
-	QCA::Validity validity =  d->tls->peerCertificateValidity();
-	SSLCertDlg::showCert(cert, r, validity);
-}
-
 
 void PsiAccount::cs_connected()
 {
@@ -1148,14 +1090,10 @@ void PsiAccount::cs_connected()
 	}
 }
 
-void PsiAccount::cs_securityLayerActivated(int layer)
+void PsiAccount::cs_securityLayerActivated()
 {
-	if ((layer == ClientStream::LayerSASL) && (d->stream->saslSSF() <= 1)) {
-		 // integrity protected only
-	} else {
-		d->usingSSL = true;
-		stateChanged();
-	}
+	d->usingSSL = true;
+	stateChanged();
 }
 
 void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
@@ -1376,7 +1314,7 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 		if(x == XMPP::ClientStream::GenericAuthError)
 			s = tr("Unable to login");
 		else if(x == XMPP::ClientStream::NoMech)
-			s = tr("No appropriate mechanism available for given security settings (e.g. SASL library too weak, or plaintext authentication not enabled)");
+			s = tr("No appropriate mechanism available for given security settings (e.g. SASL library too weak)");
 		else if(x == XMPP::ClientStream::BadProto)
 			s = tr("Bad server response");
 		else if(x == XMPP::ClientStream::BadServ)
@@ -1471,18 +1409,18 @@ void PsiAccount::client_rosterRequestFinished(bool success, int, const QString &
 
 	rosterDone = true;
 
+	// Get the bookmarks
+	if (PsiOptions::instance()->getOption("options.muc.bookmarks.auto-join").toBool()) {
+		connect(d->bookmarkManager,SIGNAL(getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&)),SLOT(getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&)));
+		d->bookmarkManager->getBookmarks();
+	}
+
 	// Get stored options
 	// FIXME: Should be an account-specific option
 	//if (PsiOptions::instance()->getOption("options.options-storage.load").toBool())
 	//	PsiOptions::instance()->load(d->client);
 
 	setStatusDirect(d->loginStatus, d->loginWithPriority);
-
-	// Get the bookmarks
-	if (PsiOptions::instance()->getOption("options.muc.bookmarks.auto-join").toBool()) {
-		connect(d->bookmarkManager,SIGNAL(getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&)),SLOT(getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&)));
-		d->bookmarkManager->getBookmarks();
-	}
 }
 
 void PsiAccount::resolveContactName()
@@ -1830,7 +1768,7 @@ void PsiAccount::client_messageReceived(const Message &m)
 	}
 	
 	// encrypted message?
-	if(PGPUtil::pgpAvailable() && !_m.xencrypted().isEmpty()) {
+	if(hasPGP() && !_m.xencrypted().isEmpty()) {
 		Message *m = new Message(_m);
 		d->messageQueue.append(m);
 		processMessageQueue();
@@ -1996,7 +1934,6 @@ void PsiAccount::reconnect()
 {
 	if(doReconnect) {
 		//printf("PsiAccount: [%s] reconnecting...\n", name().latin1());
-		emit reconnecting();
 		v_isActive = false;
 		doReconnect = false;
 		login();
@@ -2591,10 +2528,6 @@ QList<UserListItem*> PsiAccount::findRelevant(const Jid &j) const
 			if(!u->jid().resource().isEmpty()) {
 				if(u->jid().resource() != j.resource())
 					continue;
-			} else {
-				// skip status changes from muc participants 
-				// if the MUC somehow got into userList.
-				if (!j.resource().isEmpty() && d->groupchats.contains(j.bare())) continue;
 			}
 			list.append(u);
 		}
@@ -3010,45 +2943,6 @@ void PsiAccount::actionOpenChatSpecific(const Jid &j)
 {
 	openChat(j);
 }
-
-#ifdef WHITEBOARDING
-void PsiAccount::actionOpenWhiteboard(const Jid &j)
-{
-	UserListItem *u = find(j);
-	if(!u)
-		return;
-
-	// if 'j' is bare, we might want to switch to a specific resource
-	QString res;
-	if(j.resource().isEmpty()) {
-		if(u->isAvailable()) {
-			QString pr = (*u->userResourceList().priority()).name();
-			if(!pr.isEmpty())
-				res = pr;
-		}
-	}
-
-	if(!res.isEmpty())
-	{
-		actionOpenWhiteboardSpecific(j.withResource(res));
-	}
-	else
-	{
-		actionOpenWhiteboardSpecific(j);
-	}
-}
-
-/*! \brief Opens a whiteboard to \a target.
- *  \a ownJid and \a groupChat should be specified in the case of a group chat session.
- */
-
-void PsiAccount::actionOpenWhiteboardSpecific(const Jid &target, Jid ownJid, bool groupChat)
-{
-	if(ownJid.isEmpty())
-		ownJid = jid();
-	d->wbManager->openWhiteboard(target, ownJid, groupChat);
-}
-#endif
 
 void PsiAccount::actionAgentSetStatus(const Jid &j, Status &s)
 {
@@ -3906,7 +3800,7 @@ void PsiAccount::processChats(const Jid &j)
 void PsiAccount::openChat(const Jid &j)
 {
 	ChatDlg *c = ensureChatDlg(j);
-	QWidget *w = c;
+	processChats(j);
 	if ( option.useTabs )
 	{
 		if ( !d->psi->isChatTabbed(c) )
@@ -3916,10 +3810,8 @@ void PsiAccount::openChat(const Jid &j)
 		}
 		TabDlg* tabSet = d->psi->getManagingTabs(c);
 		tabSet->selectTab(c);
-		w = tabSet;
 	}
-	processChats(j);
-	bringToFront(w);
+	bringToFront(c);
 }
 
 void PsiAccount::chatMessagesRead(const Jid &j)
@@ -4222,17 +4114,13 @@ void PsiAccount::pgp_verifyFinished()
 			continue;
 		UserResource &ur = *rit;
 
-		QCA::SecureMessageSignature signer;
-		if(t->success())
-			signer = t->signer();
-
-		if (signer.identityResult() != QCA::SecureMessageSignature::NoKey) {
-			ur.setPublicKeyID(signer.key().pgpPublicKey().keyId());
-			ur.setPGPVerifyStatus(signer.identityResult());
-			ur.setSigTimestamp(signer.timestamp());
+		if(t->success()) {
+			ur.setPublicKeyID(t->signer().key().pgpPublicKey().keyId());
+			ur.setPGPVerifyStatus(t->signer().identityResult());
+			ur.setSigTimestamp(t->signer().timestamp());
 
 			// if the key doesn't match the assigned key, unassign it
-			if(signer.key().pgpPublicKey().keyId() != u->publicKeyID())
+			if(t->signer().key().pgpPublicKey().keyId() != u->publicKeyID())
 				u->setPublicKeyID("");
 		}
 		else {
@@ -4499,8 +4387,7 @@ void PsiAccount::invokeGCChat(const Jid &j)
 
 	d->userList.append(u);
 	actionOpenChat(j);
-	cpUpdate(*u);
-	//d->userList.remove(u);
+	d->userList.remove(u);
 }
 
 void PsiAccount::invokeGCInfo(const Jid &j)

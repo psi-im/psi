@@ -537,10 +537,9 @@ void OptionsDlg::Private::doApply()
 //----------------------------------------------------------------------------
 
 OptionsDlg::OptionsDlg(PsiCon *psi, const Options &opt, QWidget *parent)
-	: QDialog(parent)
+: QDialog(parent, Qt::WDestructiveClose)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
-	setupUi(this);
+  	setupUi(this);
 	d = new Private(this, psi, opt);
 	setModal(false);
 	d->psi->dialogRegister(this);

@@ -20,7 +20,6 @@
 
 #include <QDomElement>
 #include <QDomDocument>
-#include <QDebug>
 
 #include "optionstree.h"
 
@@ -52,7 +51,7 @@ QVariant OptionsTree::getOption(const QString& name)
 	QVariant value=tree_.getValue(name);
 	if (value==VariantTree::missingValue) {
 		value=QVariant(QVariant::Invalid);
-		qDebug() << "Accessing missing option " << name;
+		qDebug(qPrintable(QString("Accessing missing option %1").arg(name)));
 	}
 	return value;
 }

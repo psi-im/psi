@@ -19,16 +19,12 @@
  */
 
 #include "globalshortcutmanager.h"
-
-#include <QCoreApplication>
-
 #include "globalshortcuttrigger.h"
 
 /**
  * \brief Constructs new GlobalShortcutManager.
  */
 GlobalShortcutManager::GlobalShortcutManager()
-	: QObject(QCoreApplication::instance())
 {
 }
 
@@ -79,11 +75,4 @@ void GlobalShortcutManager::disconnect(const QKeySequence& key, QObject* receive
 	if (!t->isUsed()) {
 		delete instance()->triggers_.take(key);
 	}
-}
-
-void GlobalShortcutManager::clear()
-{
-	foreach (KeyTrigger* t, instance()->triggers_)
-		delete t;
-	instance()->triggers_.clear();
 }

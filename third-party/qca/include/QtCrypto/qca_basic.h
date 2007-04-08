@@ -1,7 +1,7 @@
 /*
  * qca_basic.h - Qt Cryptographic Architecture
  * Copyright (C) 2003-2005  Justin Karneges <justin@affinix.com>
- * Copyright (C) 2004-2006  Brad Hards <bradh@frogmouth.net>
+ * Copyright (C) 2004,2005  Brad Hards <bradh@frogmouth.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 
@@ -46,12 +46,31 @@ namespace QCA
 	   an alternative random number source, by implementing
 	   another provider.
 	 
+	   You can select the "quality" of the random numbers. For 
+	   best results, you should use Nonce or PublicValue for values
+	   that are likely to become public, and SessionKey or LongTermKey
+	   for those values that are more critical. All that said, please
+	   note that this is only a hint to the provider - it may make
+	   no difference at all.
+	 
 	   The normal use of this class is expected to be through the
 	   static members - randomChar(), randomInt() and randomArray().
 	 */
 	class QCA_EXPORT Random : public Algorithm
 	{
 	public:
+		/**
+		 * How much entropy to use for the random numbers that
+		 * are required.
+		 */
+		enum Quality
+		{
+			Nonce,      ///< Low quality, will become public
+			PublicValue,///< Will become public
+			SessionKey, ///< Intended to remain private
+			LongTermKey ///< Best available quality
+		};
+
 		/**
 		 * Standard Constructor
 		 *
@@ -65,10 +84,12 @@ namespace QCA
 		 *
 		 * This method isn't normally required - you should use
 		 * the static randomChar() method instead.
+		 * 
+		 * \param q the quality of the random byte that is required
 		 *
 		 * \sa randomChar
 		 */
-		uchar nextByte();
+		uchar nextByte(Quality q = SessionKey);
 
 		/**
 		 * Provide a specified number of random bytes
@@ -77,10 +98,11 @@ namespace QCA
 		 * the static randomArray() method instead.
 		 *
 		 * \param size the number of bytes to provide
+		 * \param q the quality of the random bytes that are required
 		 *
 		 * \sa randomArray
 		 */
-		QSecureArray nextBytes(int size);
+		QSecureArray nextBytes(int size, Quality q = SessionKey);
 
 		/**
 		 * Provide a random character (byte)
@@ -90,10 +112,12 @@ namespace QCA
 		 * \code
 		 * myRandomChar = QCA::Random::randomChar();
 		 * \endcode
+		 * 
+		 * \param q the quality of the random character that is required
 		 *
 		 * If you need a number of bytes, perhaps randomArray() may be of use
 		 */
-		static uchar randomChar();
+		static uchar randomChar(Quality q = SessionKey);
 
 		/**
 		 * Provide a random integer
@@ -101,10 +125,15 @@ namespace QCA
 		 * This is the normal way of obtaining a single random integer,
 		 * as shown below:
 		 * \code
+		 * // default quality
 		 * myRandomInt = QCA::Random::randomInt();
+		 * // cheap integer
+		 * myCheapInt = QCA::Random::randomInt( QCA::Random::Nonce );
 		 * \endcode
+		 *
+		 * \param q the quality of the random integer that is required
 		 */
-		static uint randomInt();
+		static uint randomInt(Quality q = SessionKey);
 
 		/**
 		 * Provide a specified number of random bytes
@@ -112,30 +141,34 @@ namespace QCA
 		 * \code
 		 * // build a 30 byte secure array.
 		 * QSecureArray arry = QCA::Random::randomArray(30);
+		 * // take 20 bytes, as high a quality as we can get
+		 * QSecureArray newKey = QCA::Random::randomArray(20, QCA::Random::LongTermKey);
 		 * \endcode
 		 *
 		 * \param size the number of bytes to provide
+		 * \param q the quality of the random bytes that are required
 		 */
-		static QSecureArray randomArray(int size);
+		static QSecureArray randomArray(int size, Quality q = SessionKey);
 	};
 
 	/**
 	   \class Hash qca_basic.h QtCrypto
 
-	   General class for hashing algorithms.
+	   General superclass for hashing algorithms.
 
-	   Hash is the class for the various hashing algorithms
-	   within %QCA. SHA256, SHA1 or RIPEMD160 are recommended for
+	   Hash is a superclass for the various hashing algorithms
+	   within %QCA. You should not need to use it directly unless you are
+	   adding another hashing capability to %QCA - you should be
+	   using a sub-class. SHA1 or RIPEMD160 are recommended for
 	   new applications, although MD2, MD4, MD5 or SHA0 may be
 	   applicable (for interoperability reasons) for some
 	   applications. 
 
-	   To perform a hash, you create a Hash object, call update()
-	   with the data that needs to be hashed, and then call
-	   final(), which returns a QByteArray of the hash result. An
-	   example (using the SHA1 hash, with 1000 updates of a 1000
-	   byte string) is shown below:
-
+	   To perform a hash, you create an object (of one of the
+	   sub-classes of %Hash), call update() with the data that
+	   needs to be hashed, and then call final(), which returns
+	   a QByteArray of the hash result. An example (using the SHA1
+	   hash, with 1000 updates of a 1000 byte string) is shown below:
 	   \code
 	   if(!QCA::isSupported("sha1"))
 	       printf("SHA1 not supported!\n");
@@ -143,7 +176,7 @@ namespace QCA
 	       QByteArray fillerString;
 	       fillerString.fill('a', 1000);
 
-	       QCA::Hash shaHash("sha1");
+	       QCA::SHA1 shaHash;
 	       for (int i=0; i<1000; i++)
 	           shaHash.update(fillerString);
 	       QByteArray hashResult = shaHash.final();
@@ -156,27 +189,17 @@ namespace QCA
 	   \endcode
 
 	   If you only have a simple hash requirement - a single
-	   string that is fully available in memory at one time - then
-	   you may be better off with one of the convenience
-	   methods. So, for example, instead of creating a QCA::Hash
-	   object, then doing a single update() and the final() call;
-	   you could simply call QCA::Hash("algoName").hash() with the
-	   data that you would otherwise have provided to the update()
-	   call.
+	   string that is fully available in memory at one time - 
+	   then you may be better off with one of the convenience
+	   methods. So, for example, instead of creating a QCA::SHA1
+	   or QCA::MD5 object, then doing a single update() and the final()
+	   call; you simply call QCA::SHA1().hash() or
+	   QCA::MD5().hash() with the data that you would otherwise
+	   have provided to the update() call.
 	 */
 	class QCA_EXPORT Hash : public Algorithm, public BufferedComputation
 	{
 	public:
-		/**
-		 *  Constructor
-		 *
-		 * \param type label for the type of hash to be
-		 * created (eg "sha1" or "md2")
-		 * \param provider the name of the provider plugin
-		 * for the subclass (eg "qca-openssl")
-		 */
-		Hash(const QString &type, const QString &provider = QString());
-
 		/**
 		 * Reset a hash, dumping all previous parts of the
 		 * message.
@@ -240,7 +263,7 @@ namespace QCA
 		 * \code
 		 * QFile f( "file.dat" );
 		 * if ( f1.open( IO_ReadOnly ) ) {
-		 *     QCA::Hash hashObj("sha1");
+		 *     QCA::SHA1 hashObj;
 		 *     hashObj.update( f1 );
 		 *     QString output = hashObj.final() ) ),
 		 * }
@@ -273,14 +296,14 @@ namespace QCA
 		 * \code
 		 * QSecureArray sampleArray(3);
 		 * sampleArray.fill('a');
-		 * QSecureArray outputArray = QCA::Hash("md2")::hash(sampleArray);
+		 * QSecureArray outputArray = QCA::MD2::hash(sampleArray);
 		 * \endcode
 		 * 
 		 * \param array the QByteArray to hash
 		 *
 		 * If you need more flexibility (e.g. you are constructing
 		 * a large byte array object just to pass it to hash(), then
-		 * consider creating an Hash object, and then calling
+		 * consider creating an Hash sub-class object, and calling
 		 * update() and final().
 		 */
 		QSecureArray hash(const QSecureArray &array);
@@ -296,130 +319,25 @@ namespace QCA
 		 * \param array the QByteArray to hash
 		 *
 		 * If you need more flexibility, you can create a Hash
-		 * object, call Hash::update() as required, then call 
-		 * Hash::final(), before using the static arrayToHex() method.
+		 * sub-class object, call Hash::update() as
+		 * required, then call Hash::final(), before using
+		 * the static arrayToHex() method.
 		 */
 		QString hashToString(const QSecureArray &array);
+
+	protected:
+		/**
+		 *  Constructor to override in sub-classes.
+		 *
+		 * \param type label for the type of hash to be
+		 * implemented (eg "sha1" or "md2")
+		 * \param provider the name of the provider plugin
+		 * for the subclass (eg "qca-openssl")
+		 */
+		Hash(const QString &type, const QString &provider);
 	};
 
-	/** \page hashing Hashing Algorithms
-
-	There are a range of hashing algorithms available in
-	%QCA. Hashing algorithms are used with the Hash and
-	MessageAuthenticationCode classes.
-
-	The MD2 algorithm takes an arbitrary data stream, known as the
-	message and outputs a condensed 128 bit (16 byte)
-	representation of that data stream, known as the message
-	digest. This algorithm is considered slightly more secure than MD5,
-	but is more expensive to compute. Unless backward
-	compatibility or interoperability are considerations, you
-	are better off using the SHA1 or RIPEMD160 hashing algorithms.
-	For more information on %MD2, see B. Kalinski RFC1319 "The %MD2
-	Message-Digest Algorithm". The label for MD2 is "md2".
-
-	The MD4 algorithm takes an arbitrary data stream, known as the
-	message and outputs a condensed 128 bit (16 byte)
-	representation of that data stream, known as the message
-	digest. MD4 is not considered to be secure, based on
-	known attacks. It should only be used for applications where
-	collision attacks are not a consideration (for example, as
-	used in the rsync algorithm for fingerprinting blocks of
-	data). If a secure hash is required, you are better off using
-	the SHA1 or RIPEMD160 hashing algorithms. MD2 and MD5 are both
-	stronger 128 bit hashes.  For more information on MD4, see
-	R. Rivest RFC1320 "The %MD4 Message-Digest Algorithm". The
-	label for MD4 is "md4".
-
-	The MD5 takes an arbitrary data stream, known as the message
-	and outputs a condensed 128 bit (16 byte) representation of
-	that data stream, known as the message digest. MD5 is not
-	considered to be secure, based on known attacks. It should
-	only be used for applications where collision attacks are not
-	a consideration. If a secure hash is required, you are better
-	off using the SHA1 or RIPEMD160 hashing algorithms.  For more
-	information on MD5, see R. Rivest RFC1321 "The %MD5
-	Message-Digest Algorithm". The label for MD5 is "md5".
-
-	The RIPEMD160 algorithm takes an arbitrary data stream, known
-	as the message (up to \f$2^{64}\f$ bits in length) and outputs
-	a condensed 160 bit (20 byte) representation of that data
-	stream, known as the message digest. The RIPEMD160 algorithm
-	is considered secure in that it is considered computationally
-	infeasible to find the message that produced the message
-	digest. The label for RIPEMD160 is "ripemd160".
-
-	The SHA-0 algorithm is a 160 bit hashing function, no longer
-	recommended for new applications because of known (partial)
-	attacks against it. The label for SHA-0 is "sha0".
-
-	The SHA-1 algorithm takes an arbitrary data stream, known as
-	the message (up to \f$2^{64}\f$ bits in length) and outputs a
-	condensed 160 bit (20 byte) representation of that data
-	stream, known as the message digest. SHA-1 is considered
-	secure in that it is considered computationally infeasible to
-	find the message that produced the message digest. For more
-	information on the SHA-1 algorithm,, see Federal Information
-	Processing Standard Publication 180-2 "Specifications for the
-	Secure %Hash Standard", available from
-	http://csrc.nist.gov/publications/. The label for SHA-1 is
-	"sha1".  
-
-	The SHA-224 algorithm takes an arbitrary data stream, known as
-	the message (up to \f$2^{64}\f$ bits in length) and outputs a
-	condensed 224 bit (28 byte) representation of that data
-	stream, known as the message digest. SHA-224 is a "cut down"
-	version of SHA-256, and you may be better off using SHA-256 in
-	new designs. The SHA-224 algorithm is considered secure in
-	that it is considered computationally infeasible to find the
-	message that produced the message digest. For more information
-	on SHA-224, see Federal Information Processing Standard
-	Publication 180-2 "Specifications for the Secure %Hash
-	Standard", with change notice 1, available from
-	http://csrc.nist.gov/publications/. The label for SHA-224 is
-	"sha224".  
-
-	The SHA-256 algorithm takes an arbitrary data stream, known as
-	the message (up to \f$2^{64}\f$ bits in length) and outputs a
-	condensed 256 bit (32 byte) representation of that data
-	stream, known as the message digest. The SHA-256 algorithm is
-	considered secure in that it is considered computationally
-	infeasible to find the message that produced the message
-	digest. For more information on SHA-256, see Federal
-	Information Processing Standard Publication 180-2
-	"Specifications for the Secure %Hash Standard", available from
-	http://csrc.nist.gov/publications/. The label for SHA-256 is
-	"sha256".  
-
-	The SHA-384 algorithm takes an arbitrary data stream, known as
-	the message (up to \f$2^{128}\f$ bits in length) and outputs a
-	condensed 384 bit (48 byte) representation of that data
-	stream, known as the message digest. The SHA-384 algorithm is
-	a "cut down" version of SHA-512, and you may be better off
-	using SHA-512 in new designs. The SHA-384 algorithm is
-	considered secure in that it is considered computationally
-	infeasible to find the message that produced the message
-	digest. For more information on SHA-384, see Federal
-	Information Processing Standard Publication 180-2
-	"Specifications for the Secure %Hash Standard", available from
-	http://csrc.nist.gov/publications/. The label for SHA-384 is
-	"sha384".   
-
-	The SHA-512 algorithm takes an arbitrary data stream, known as
-	the message (up to \f$2^{128}\f$ bits in length) and outputs a
-	condensed 512 bit (64 byte) representation of that data
-	stream, known as the message digest. The SHA-512 algorithm is
-	considered secure in that it is considered computationally
-	infeasible to find the message that produced the message
-	digest. For more information on SHA-512, see Federal
-	Information Processing Standard Publication 180-2
-	"Specifications for the Secure %Hash Standard", available from
-	http://csrc.nist.gov/publications/. The label for SHA-512 is
-	"sha512".   
-
-	*/
-
-        /** \Page padding Padding
+        /** \page padding Padding
 
 	For those Cipher sub-classes that are block based, there are modes
 	that require a full block on encryption and decryption - %Cipher Block
@@ -457,21 +375,14 @@ namespace QCA
 	/**
 	   \class Cipher qca_basic.h QtCrypto
 
-	   General class for cipher (encryption / decryption) algorithms.
+	   General superclass for cipher (encryption / decryption) algorithms.
 
-	   Cipher is the class for the various algorithms that perform
-	   low level encryption and decryption within %QCA.
-
-	   AES128, AES192 and AES256 are recommended for new applications.
-
-	   Standard names for ciphers are:
-	   - Blowfish - "blowfish"
-	   - TripleDES - "tripledes"
-	   - DES - "des"
-	   - AES128 - "aes128"
-	   - AES192 - "aes192"
-	   - AES256 - "aes256"
-
+	   Cipher is a superclass for the various algorithms that perform
+	   low level encryption and decryption within %QCA. You should
+	   not need to use it directly unless you are
+	   adding another capability to %QCA - you should be
+	   using a sub-class. AES128, AES192 and AES256 are recommended for
+	   new applications.
 	 */
 	class QCA_EXPORT Cipher : public Algorithm, public Filter
 	{
@@ -496,26 +407,6 @@ namespace QCA
 			NoPadding,      ///< Do not use padding
 			PKCS7           ///< Pad using the scheme in PKCS#7
 		};
-
-
-		/**
-		   Standard constructor
-
-		   \param type the name of the cipher specialisation to use (e.g. "aes128")
-		   \param mode the operating Mode to use (e.g. QCA::Cipher::CBC)
-		   \param pad the type of Padding to use
-		   \param dir the Direction that this Cipher should use (Encode for encryption, Decode for decryption)
-		   \param key the SymmetricKey array that is the key
-		   \param iv the InitializationVector to use (not used for ECB mode)
-		   \param provider the name of the Provider to use
-
-		   \note Padding only applies to CBC and ECB modes.  CFB and OFB ciphertext is always
-		   the length of the plaintext.
-		*/
-		Cipher( const QString &type, Mode mode, Padding pad = DefaultPadding,
-			Direction dir = Encode, const SymmetricKey &key = SymmetricKey(), 
-			const InitializationVector &iv = InitializationVector(),
-			const QString &provider = QString() );
 
 		/** 
 		 * Standard copy constructor
@@ -587,7 +478,6 @@ namespace QCA
 		   \param iv the InitializationVector to use
 		*/
 		void setup(Direction dir, const SymmetricKey &key, const InitializationVector &iv = InitializationVector());
-
 		/**
 		   Construct a Cipher type string
 
@@ -597,6 +487,21 @@ namespace QCA
 		*/
 		static QString withAlgorithms(const QString &cipherType, Mode modeType, Padding paddingType);
 
+	protected:
+		/**
+		   Standard constructor
+
+		   \param type the name of the cipher specialisation to use
+		   \param dir the Direction that this Cipher should use (Encode for encryption, Decode for decryption)
+		   \param key the SymmetricKey array that is the key
+		   \param iv the InitializationVector to use
+		   \param provider the name of the Provider to use
+
+		   \note Padding only applies to CBC and ECB modes.  CFB and OFB ciphertext is always
+		   the length of the plaintext.
+		*/
+		Cipher(const QString &type, Direction dir, const SymmetricKey &key, const InitializationVector &iv, const QString &provider);
+
 	private:
 		class Private;
 		Private *d;
@@ -605,35 +510,17 @@ namespace QCA
 	/**
 	   \class MessageAuthenticationCode  qca_basic.h QtCrypto
 
-	   General class for message authentication code (MAC) algorithms.
+	   General superclass for message authentication code (MAC) algorithms.
 
-	   MessageAuthenticationCode is a class for accessing the various 
-	   message authentication code algorithms within %QCA.
-	   HMAC using SHA1 ("hmac(sha1)") or HMAC using SHA256 ("hmac(sha256)") 
-	   is recommended for new applications.
-
-	   Note that if your application is potentially susceptable to "replay attacks"
-	   where the message is sent more than once, you should include a counter in
-	   the message that is covered by the MAC, and check that the counter is always
-	   incremented every time you receive a message and MAC.
-	   
-	   For more information on HMAC, see H. Krawczyk et al. RFC2104 
-	   "HMAC: Keyed-Hashing for Message Authentication"
+	   MessageAuthenticationCode is a superclass for the various 
+	   message authentication code algorithms within %QCA. You should
+	   not need to use it directly unless you are
+	   adding another message authentication code capability to %QCA - you should be
+	   using a sub-class. HMAC using SHA1 is recommended for new applications.
 	 */
 	class QCA_EXPORT MessageAuthenticationCode : public Algorithm, public BufferedComputation
 	{
 	public:
-		/**
-		   Standard constructor
-
-		   \param type the name of the MAC (and algorithm, if applicable) to use
-		   \param key the shared key
-		   \param provider the provider to use, if a particular provider is required
-		 */
-		MessageAuthenticationCode(const QString &type,
-					  const SymmetricKey &key,
-					  const QString &provider = QString());
-
 		/**
 		 * Standard copy constructor
 		 */
@@ -705,11 +592,675 @@ namespace QCA
 		 */
 		void setup(const SymmetricKey &key);
 
+		/**
+		 * Construct the name of the algorithm
+		 *
+		 * You can use this to build a standard name string.
+		 * You probably only need this method if you are 
+		 * creating a new subclass.
+		 */
+		static QString withAlgorithm(const QString &macType, const QString &algType);
+
+	protected:
+		/**
+		 * Special constructor for subclass initialisation
+		 *
+		 * To create HMAC with a default algorithm of "sha1", you would use something like:
+		 * \code
+		 * HMAC(const QString &hash = "sha1", const SymmetricKey &key = SymmetricKey(), const QString &provider = QString())
+		 * : MessageAuthenticationCode(withAlgorithm("hmac", hash), key, provider)
+		 * {
+		 * }
+		 * \endcode
+		 *
+		 * \note The HMAC subclass is already provided in QCA - you don't need to create
+		 * your own.
+		 */
+		MessageAuthenticationCode(const QString &type, const SymmetricKey &key, const QString &provider);
+
 	private:
 		class Private;
 		Private *d;
 	};
 
+
+	/**
+	 * \class SHA0  qca_basic.h QtCrypto
+	 *
+	 * SHA-0 cryptographic message digest hash algorithm.
+	 *
+	 * %SHA0 is a 160 bit hashing function, no longer recommended
+	 * for new applications because of known (partial) attacks
+	 * against it.
+	 *
+	 * You can use this class in two basic ways - standard member
+	 * methods, and convenience methods. Both are shown in
+	 * the example below.
+	 *
+	 * \code
+	 *        if(!QCA::isSupported("sha0"))
+	 *                printf("SHA0 not supported!\n");
+	 *        else {
+	 *                QCString actualResult;
+	 *                actualResult = QCA::SHA0().hashToString(message);
+	 *
+	 *                // normal methods - update() and final()
+	 *                QByteArray fillerString;
+	 *                fillerString.fill('a', 1000);
+	 *                QCA::SHA0 shaHash;
+	 *                for (int i=0; i<1000; i++)
+	 *                        shaHash.update(fillerString);
+	 *                QByteArray hashResult = shaHash.final();
+	 *        }
+	 * \endcode
+	 *
+	 */
+	class QCA_EXPORT SHA0 : public Hash
+	{
+	public:
+		/**
+		 * Standard constructor
+		 *
+		 * This is the normal way of creating a SHA-0 hash,
+		 * although if you have the whole message in memory at
+		 * one time, you may be better off using QCA::SHA0().hash()
+		 *
+		 * \param provider specify a particular provider 
+		 * to use. For example if you wanted the SHA0 implementation
+		 * from qca-openssl, you would use SHA0("qca-openssl")
+		 */
+		SHA0(const QString &provider = QString()) : Hash("sha0", provider) {}
+	};
+
+	/**
+	 * \class SHA1  qca_basic.h QtCrypto
+	 *
+	 * SHA-1 cryptographic message digest hash algorithm.
+	 *
+	 * This algorithm takes an arbitrary data stream, known as the
+	 * message (up to \f$2^{64}\f$ bits in length) and outputs a
+	 * condensed 160 bit (20 byte) representation of that data
+	 * stream, known as the message digest.
+	 *
+	 * This algorithm is considered secure in that it is considered
+	 * computationally infeasible to find the message that
+	 * produced the message digest.
+	 *
+	 * You can use this class in two basic ways - standard member
+	 * methods, and convenience methods. Both are shown in
+	 * the example below.
+	 *
+	 * \code
+	 *        if(!QCA::isSupported("sha1"))
+	 *                printf("SHA1 not supported!\n");
+	 *        else {
+	 *                QCString actualResult;
+	 *                actualResult = QCA::SHA1().hashToString(message);
+	 *
+	 *                // normal methods - update() and final()
+	 *                QByteArray fillerString;
+	 *                fillerString.fill('a', 1000);
+	 *                QCA::SHA1 shaHash;
+	 *                for (int i=0; i<1000; i++)
+	 *                        shaHash.update(fillerString);
+	 *                QByteArray hashResult = shaHash.final();
+	 *        }
+	 * \endcode
+	 *
+	 * For more information, see Federal Information Processing
+	 * Standard Publication 180-2 "Specifications for the Secure
+	 * %Hash Standard", available from http://csrc.nist.gov/publications/
+	 */
+	class QCA_EXPORT SHA1 : public Hash
+	{
+	public:
+		/**
+		 * Standard constructor
+		 *
+		 * This is the normal way of creating a SHA-1 hash,
+		 * although if you have the whole message in memory at
+		 * one time, you may be better off using QCA::SHA1().hash()
+		 *
+		 * \param provider specify a particular provider 
+		 * to use. For example if you wanted the SHA1 implementation
+		 * from qca-openssl, you would use SHA1("qca-openssl")
+		 */
+		SHA1(const QString &provider = QString()) : Hash("sha1", provider) {}
+	};
+
+	/**
+	   \class SHA224  qca_basic.h QtCrypto
+	   
+	   SHA-224 cryptographic message digest hash algorithm.
+
+	   This algorithm takes an arbitrary data stream, known as the
+	   message (up to \f$2^{64}\f$ bits in length) and outputs a
+	   condensed 224 bit (28 byte) representation of that data
+	   stream, known as the message digest.
+	   
+	   This algorithm is considered secure in that it is considered
+	   computationally infeasible to find the message that
+	   produced the message digest.
+
+	   For more information, see Federal Information Processing
+	   Standard Publication 180-2 "Specifications for the Secure
+	   %Hash Standard", with change notice 1
+	   available from http://csrc.nist.gov/publications/
+	 */
+	class QCA_EXPORT SHA224 : public Hash
+	{
+	public:
+		/**
+		   Standard constructor
+
+		   This is the normal way of creating a SHA224 hash,
+		   although if you have the whole message in memory at
+		   one time, you may be better off using
+		   QCA::SHA224().hash()
+
+		   \param provider specify a particular provider 
+		   to use. For example if you wanted the SHA224 implementation
+		   from qca-gcrypt, you would use SHA224("qca-gcrypt")
+		 */
+		SHA224(const QString &provider = QString()) : Hash("sha224", provider) {}
+	};
+
+	/**
+	 * \class SHA256  qca_basic.h QtCrypto
+	 *
+	 * SHA-256 cryptographic message digest hash algorithm.
+	 *
+	 * This algorithm takes an arbitrary data stream, known as the
+	 * message (up to \f$2^{64}\f$ bits in length) and outputs a
+	 * condensed 256 bit (32 byte) representation of that data
+	 * stream, known as the message digest.
+	 *
+	 * This algorithm is considered secure in that it is considered
+	 * computationally infeasible to find the message that
+	 * produced the message digest.
+	 *
+	 * For more information, see Federal Information Processing
+	 * Standard Publication 180-2 "Specifications for the Secure
+	 * %Hash Standard", available from http://csrc.nist.gov/publications/
+	 */
+	class QCA_EXPORT SHA256 : public Hash
+	{
+	public:
+		/**
+		 * Standard constructor
+		 *
+		 * This is the normal way of creating a SHA256 hash,
+		 * although if you have the whole message in memory at
+		 * one time, you may be better off using
+		 * QCA::SHA256().hash()
+		 *
+		 * \param provider specify a particular provider 
+		 * to use. For example if you wanted the SHA256 implementation
+		 * from qca-gcrypt, you would use SHA256("qca-gcrypt")
+		 */
+		SHA256(const QString &provider = QString()) : Hash("sha256", provider) {}
+	};
+
+	/**
+	 * \class SHA384  qca_basic.h QtCrypto
+	 *
+	 * SHA-384 cryptographic message digest hash algorithm.
+	 *
+	 * This algorithm takes an arbitrary data stream, known as the
+	 * message (up to \f$2^{128}\f$ bits in length) and outputs a
+	 * condensed 384 bit (48 byte) representation of that data
+	 * stream, known as the message digest.
+	 *
+	 * This algorithm is considered secure in that it is considered
+	 * computationally infeasible to find the message that
+	 * produced the message digest.
+	 *
+	 * For more information, see Federal Information Processing
+	 * Standard Publication 180-2 "Specifications for the Secure
+	 * %Hash Standard", available from http://csrc.nist.gov/publications/
+	 */
+	class QCA_EXPORT SHA384 : public Hash
+	{
+	public:
+		/**
+		 * Standard constructor
+		 *
+		 * This is the normal way of creating a SHA384 hash,
+		 * although if you have the whole message in memory at
+		 * one time, you may be better off using
+		 * QCA::SHA384().hash()
+		 *
+		 * \param provider specify a particular provider 
+		 * to use. For example if you wanted the SHA384 implementation
+		 * from qca-gcrypt, you would use SHA384("qca-gcrypt")
+		 */
+		SHA384(const QString &provider = QString()) : Hash("sha384", provider) {}
+	};
+
+	/**
+	 * \class SHA512  qca_basic.h QtCrypto
+	 *
+	 * SHA-512 cryptographic message digest hash algorithm.
+	 *
+	 * This algorithm takes an arbitrary data stream, known as the
+	 * message (up to \f$2^{128}\f$ bits in length) and outputs a
+	 * condensed 512 bit (64 byte) representation of that data
+	 * stream, known as the message digest.
+	 *
+	 * This algorithm is considered secure in that it is considered
+	 * computationally infeasible to find the message that
+	 * produced the message digest.
+	 *
+	 * For more information, see Federal Information Processing
+	 * Standard Publication 180-2 "Specifications for the Secure
+	 * %Hash Standard", available from http://csrc.nist.gov/publications/
+	 */
+	class QCA_EXPORT SHA512 : public Hash
+	{
+	public:
+		/**
+		 * Standard constructor
+		 *
+		 * This is the normal way of creating a SHA512 hash,
+		 * although if you have the whole message in memory at
+		 * one time, you may be better off using
+		 * QCA::SHA512().hash()
+		 *
+		 * \param provider specify a particular provider 
+		 * to use. For example if you wanted the SHA512 implementation
+		 * from qca-gcrypt, you would use SHA512("qca-gcrypt")
+		 */
+		SHA512(const QString &provider = QString()) : Hash("sha512", provider) {}
+	};
+
+	/**
+	 * \class MD2  qca_basic.h QtCrypto
+	 *
+	 * %MD2 cryptographic message digest hash algorithm.
+	 *
+	 * This algorithm takes an arbitrary data stream, known as the
+	 * message and outputs a
+	 * condensed 128 bit (16 byte) representation of that data
+	 * stream, known as the message digest.
+	 *
+	 * This algorithm is considered slightly more secure than MD5,
+	 * but is more expensive to compute. Unless backward
+	 * compatibility or interoperability are considerations, you
+	 * are better off using the SHA1 or RIPEMD160 hashing algorithms.
+	 *
+	 * For more information, see B. Kalinski RFC1319 "The %MD2
+	 * Message-Digest Algorithm".
+	 */
+	class QCA_EXPORT MD2 : public Hash
+	{
+	public:
+		/**
+		 * Standard constructor
+		 *
+		 * This is the normal way of creating an MD-2 hash,
+		 * although if you have the whole message in memory at
+		 * one time, you may be better off using QCA::MD2().hash()
+		 *
+		 * \param provider specify a particular provider 
+		 * to use. For example if you wanted the MD2 implementation
+		 * from qca-openssl, you would use MD2("qca-openssl")
+		 */
+		MD2(const QString &provider = QString()) : Hash("md2", provider) {}
+	};
+
+	/**
+	 * \class MD4  qca_basic.h QtCrypto
+	 *
+	 * %MD4 cryptographic message digest hash algorithm.
+	 *
+	 * This algorithm takes an arbitrary data stream, known as the
+	 * message and outputs a
+	 * condensed 128 bit (16 byte) representation of that data
+	 * stream, known as the message digest.
+	 *
+	 * This algorithm is not considered to be secure, based on
+	 * known attacks. It should only be used for
+	 * applications where collision attacks are not a
+	 * consideration (for example, as used in the rsync algorithm
+	 * for fingerprinting blocks of data). If a secure hash is
+	 * required, you are better off using the SHA1 or RIPEMD160
+	 * hashing algorithms. MD2 and MD5 are both stronger 128 bit
+	 * hashes.
+	 *
+	 * For more information, see R. Rivest RFC1320 "The %MD4
+	 * Message-Digest Algorithm".
+	 */
+	class QCA_EXPORT MD4 : public Hash
+	{
+	public:
+		/**
+		 * Standard constructor
+		 *
+		 * This is the normal way of creating an MD-4 hash,
+		 * although if you have the whole message in memory at
+		 * one time, you may be better off using QCA::MD4().hash()
+		 *
+		 * \param provider specify a particular provider 
+		 * to use. For example if you wanted the MD4 implementation
+		 * from qca-openssl, you would use MD4("qca-openssl")
+		 */
+		MD4(const QString &provider = QString()) : Hash("md4", provider) {}
+	};
+
+	/**
+	 * \class MD5  qca_basic.h QtCrypto
+	 *
+	 * %MD5 cryptographic message digest hash algorithm.
+	 *
+	 * This algorithm takes an arbitrary data stream, known as the
+	 * message and outputs a
+	 * condensed 128 bit (16 byte) representation of that data
+	 * stream, known as the message digest.
+	 *
+	 * This algorithm is not considered to be secure, based on
+	 * known attacks. It should only be used for
+	 * applications where collision attacks are not a
+	 * consideration. If a secure hash is
+	 * required, you are better off using the SHA1 or RIPEMD160
+	 * hashing algorithms.
+	 *
+	 * For more information, see R. Rivest RFC1321 "The %MD5
+	 * Message-Digest Algorithm".
+	 */
+	class QCA_EXPORT MD5 : public Hash
+	{
+	public:
+		/**
+		 * Standard constructor
+		 *
+		 * This is the normal way of creating an MD-5 hash,
+		 * although if you have the whole message in memory at
+		 * one time, you may be better off using QCA::MD5().hash()
+		 *
+		 * \param provider specify a particular provider 
+		 * to use. For example if you wanted the MD5 implementation
+		 * from qca-openssl, you would use MD5("qca-openssl")
+		 */
+		MD5(const QString &provider = QString()) : Hash("md5", provider) {}
+	};
+
+	/**
+	 * \class RIPEMD160  qca_basic.h QtCrypto
+	 *
+	 * %RIPEMD160 cryptographic message digest hash algorithm.
+	 *
+	 * This algorithm takes an arbitrary data stream, known as the
+	 * message (up to \f$2^{64}\f$ bits in length) and outputs a
+	 * condensed 160 bit (20 byte) representation of that data
+	 * stream, known as the message digest.
+	 *
+	 * This algorithm is considered secure in that it is considered
+	 * computationally infeasible to find the message that
+	 * produced the message digest.
+	 *
+	 * You can use this class in two basic ways - standard member
+	 * methods, and convenience methods. Both are shown in
+	 * the example below.
+	 *
+	 * \code
+	 *        if(!QCA::isSupported("ripemd160")
+	 *                printf("RIPEMD-160 not supported!\n");
+	 *        else {
+	 *                QCString actualResult;
+	 *                actualResult = QCA::RIPEMD160().hashToString(message);
+	 *
+	 *                // normal methods - update() and final()
+	 *                QByteArray fillerString;
+	 *                fillerString.fill('a', 1000);
+	 *                QCA::RIPEMD160 ripemdHash;
+	 *                for (int i=0; i<1000; i++)
+	 *                        ripemdHash.update(fillerString);
+	 *                QByteArray hashResult = ripemdHash.final();
+	 *        }
+	 * \endcode
+	 *
+	 */
+	class QCA_EXPORT RIPEMD160 : public Hash
+	{
+	public:
+		/**
+		 * Standard constructor
+		 *
+		 * This is the normal way of creating a RIPEMD160 hash,
+		 * although if you have the whole message in memory at
+		 * one time, you may be better off using
+		 * QCA::RIPEMD160().hash()
+		 *
+		 * \param provider specify a particular provider 
+		 * to use. For example if you wanted the RIPEMD160
+		 * implementation from qca-openssl, you would use 
+		 * RIPEMD160("qca-openssl")
+		 */
+		RIPEMD160(const QString &provider = QString()) : Hash("ripemd160", provider) {}
+	};
+
+	/**
+	 * \class BlowFish qca_basic.h QtCrypto
+	 *
+	 * Bruce Schneier's %BlowFish %Cipher
+	 *
+	 */
+	class QCA_EXPORT BlowFish : public Cipher
+	{
+	public:
+		/**
+		 * Standard constructor
+		 *
+		 * This is the normal way of creating a %BlowFish encryption or decryption object.
+		 *
+		 * \param m the Mode to operate in
+		 * \param dir whether this object should encrypt (QCA::Encode) or decypt (QCA::Decode)
+		 * \param key the key to use. 
+		 * \param iv the initialisation vector to use. Ignored for ECB mode.
+		 * \param pad the type of padding to apply (or remove, for decryption). Ignored if the 
+		 *        Mode does not require padding
+		 * \param provider the provider to use (eg "qca-gcrypt" )
+		 *
+		 */
+		BlowFish(Mode m, Padding pad = DefaultPadding, Direction dir = Encode, const SymmetricKey &key = SymmetricKey(), const InitializationVector &iv = InitializationVector(), const QString &provider = QString())
+		:Cipher(withAlgorithms("blowfish", m, pad), dir, key, iv, provider) {}
+	};
+
+	/**
+	 * \class TripleDES qca_basic.h QtCrypto
+	 *
+	 * Triple %DES %Cipher
+	 *
+	 */
+	class QCA_EXPORT TripleDES : public Cipher
+	{
+		/**
+		 * Standard constructor
+		 *
+		 * This is the normal way of creating a triple %DES encryption or decryption object.
+		 *
+		 * \param m the Mode to operate in
+		 * \param dir whether this object should encrypt (QCA::Encode) or decypt (QCA::Decode)
+		 * \param key the key to use. Note that triple %DES requires a 24 byte (192 bit) key,
+		 * even though the effective key length is 168 bits.
+		 * \param iv the initialisation vector to use. Ignored for ECB mode.
+		 * \param pad the type of padding to apply (or remove, for decryption). Ignored if the 
+		 *        Mode does not require padding
+		 * \param provider the provider to use (eg "qca-gcrypt" )
+		 *
+		 */
+	public:
+		TripleDES(Mode m, Padding pad = DefaultPadding, Direction dir = Encode, const SymmetricKey &key = SymmetricKey(), const InitializationVector &iv = InitializationVector(), const QString &provider = QString())
+		:Cipher(withAlgorithms("tripledes", m, pad), dir, key, iv, provider) {}
+	};
+
+	/**
+	 * \class DES  qca_basic.h QtCrypto
+	 *
+	 * %DES %Cipher
+	 *
+	 */
+	class QCA_EXPORT DES : public Cipher
+	{
+		/**
+		 * Standard constructor
+		 *
+		 * This is the normal way of creating a %DES encryption or decryption object.
+		 *
+		 * \param m the Mode to operate in
+		 * \param dir whether this object should encrypt (QCA::Encode) or decypt (QCA::Decode)
+		 * \param key the key to use. Note that %DES requires a 8 byte (64 bit) key,
+		 * even though the effective key length is 56 bits.
+		 * \param iv the initialisation vector to use. Ignored for ECB mode.
+		 * \param pad the type of padding to apply (or remove, for decryption). Ignored if the 
+		 *        Mode does not require padding
+		 * \param provider the provider to use (eg "qca-gcrypt" )
+		 *
+		 */
+	public:
+		DES(Mode m, Padding pad = DefaultPadding, Direction dir = Encode, const SymmetricKey &key = SymmetricKey(), const InitializationVector &iv = InitializationVector(), const QString &provider = QString())
+		:Cipher(withAlgorithms("des", m, pad), dir, key, iv, provider) {}
+	};
+
+	/**
+	 * \class AES128 qca_basic.h QtCrypto
+	 *
+	 * Advanced Encryption Standard %Cipher - 128 bits
+	 *
+	 */
+	class QCA_EXPORT AES128 : public Cipher
+	{
+	public:
+		/**
+		 * Standard constructor
+		 *
+		 * This is the normal way of creating a 128 bit 
+		 * AES encryption or decryption object.
+		 *
+		 * \param m the Mode to operate in
+		 * \param dir whether this object should encrypt (QCA::Encode) or decypt (QCA::Decode)
+		 * \param key the key to use. Note that AES128 requires a 16 byte (128 bit) key.
+		 * \param iv the initialisation vector to use. Ignored for ECB mode.
+		 * \param pad the type of padding to apply (or remove, for decryption). Ignored if the 
+		 *        Mode does not require padding
+		 * \param provider the provider to use (eg "qca-gcrypt" )
+		 *
+		 */
+		AES128(Mode m, Padding pad = DefaultPadding, Direction dir = Encode, const SymmetricKey &key = SymmetricKey(), const InitializationVector &iv = InitializationVector(), const QString &provider = QString())
+		:Cipher(withAlgorithms("aes128", m, pad), dir, key, iv, provider) {}
+	};
+
+	/**
+	 * \class AES192 qca_basic.h QtCrypto
+	 *
+	 * Advanced Encryption Standard %Cipher - 192 bits
+	 *
+	 */
+	class QCA_EXPORT AES192 : public Cipher
+	{
+	public:
+		/**
+		 * Standard constructor
+		 *
+		 * This is the normal way of creating a 192 bit 
+		 * AES encryption or decryption object.
+		 *
+		 * \param m the Mode to operate in
+		 * \param dir whether this object should encrypt (QCA::Encode) or decypt (QCA::Decode)
+		 * \param key the key to use. Note that AES192 requires a 24 byte (192 bit) key.
+		 * \param iv the initialisation vector to use. Ignored for ECB mode.
+		 * \param pad the type of padding to apply (or remove, for decryption). Ignored if the 
+		 *        Mode does not require padding
+		 * \param provider the provider to use (eg "qca-gcrypt" )
+		 *
+		 */
+		AES192(Mode m, Padding pad = DefaultPadding, Direction dir = Encode, const SymmetricKey &key = SymmetricKey(), const InitializationVector &iv = InitializationVector(), const QString &provider = QString())
+		:Cipher(withAlgorithms("aes192", m, pad), dir, key, iv, provider) {}
+	};
+
+	/**
+	 * \class AES256 qca_basic.h QtCrypto
+	 *
+	 * Advanced Encryption Standard %Cipher - 256 bits
+	 *
+	 */
+	class QCA_EXPORT AES256 : public Cipher
+	{
+	public:
+		/**
+		 * Standard constructor
+		 *
+		 * This is the normal way of creating a 256 bit 
+		 * AES encryption or decryption object.
+		 *
+		 * \param m the Mode to operate in
+		 * \param dir whether this object should encrypt (QCA::Encode) or decypt (QCA::Decode)
+		 * \param key the key to use. Note that AES256 requires a 32 byte (256 bit) key.
+		 * \param iv the initialisation vector to use. Ignored for ECB mode.
+		 * \param pad the type of padding to apply (or remove, for decryption). Ignored if the 
+		 *        Mode does not require padding
+		 * \param provider the provider to use (eg "qca-gcrypt" )
+		 *
+		 */
+		AES256(Mode m, Padding pad = DefaultPadding, Direction dir = Encode, const SymmetricKey &key = SymmetricKey(), const InitializationVector &iv = InitializationVector(), const QString &provider = QString())
+		:Cipher(withAlgorithms("aes256", m, pad), dir, key, iv, provider) {}
+	};
+
+	/**
+	 * \class HMAC  qca_basic.h QtCrypto
+	 *
+	 * Keyed %Hash message authentication codes
+	 *
+	 * This algorithm takes an arbitrary data stream, known as the
+	 * message and outputs an authentication code for that message.
+	 * The authentication code is generated using a secret key in
+	 * such a way that the authentication code shows that the 
+	 * message has not be altered.
+	 *
+	 * As an example, to create a MAC using HMAC with SHA1, you
+	 * could do the following:
+	 * \code
+	 * if( QCA::isSupported( "hmac(sha1)" ) ) {
+	 *      QCA::HMAC hmacObj; // don't need to specify, "sha1" is default
+	 *	hmacObj.setup( key ); // key is a QCA::SymmetricKey, set elsewhere
+	 *                            // could also be done in constructor
+	 *    	hmacObj.update( dataArray ); // dataArray is a QSecureArray, set elsewhere
+	 *	output = hmacObj.final();
+	 * }
+	 * \endcode
+	 *
+	 * Note that if your application is potentially susceptable to "replay attacks"
+	 * where the message is sent more than once, you should include a counter in
+	 * the message that is covered by the MAC, and check that the counter is always
+	 * incremented every time you recieve a message and MAC.
+	 *
+	 * For more information, see H. Krawczyk et al. RFC2104 
+	 * "HMAC: Keyed-Hashing for Message Authentication"
+	 */
+	class QCA_EXPORT HMAC : public MessageAuthenticationCode
+	{
+	public:
+		/**
+		 * %HMAC constructor
+		 *
+		 * To create a simple HMAC object
+		 * \param hash the type of the hash (eg "sha1", "md5" or "ripemd160" )
+		 * \param key the key to use for the HMAC algorithm.
+		 * \param provider the name of the provider to use (eg "qca-openssl")
+		 *
+		 * To construct a keyed-hash message authentication code object, you
+		 * can do one of the following variations.
+		 * \code
+		 * QCA::HMAC sha1HMAC; // defaults to SHA1
+		 * QCA::HMAC sha1HMAC( "sha1" ); // explicitly SHA1, but same as above
+		 * QCA::HMAC md5HMAC( "md5" );  // MD5 algorithm
+		 * QCA::HMAC sha1HMAC( "sha1", key ); // key is a QCA::SymmetricKey
+		 * // next line uses RIPEMD160, empty key, implementation from qca-openssl provider
+		 * QCA::HMAC ripemd160HMAC( "ripemd160", QCA::SymmetricKey(), "qca-openssl" );
+		 * \endcode
+		 */
+		HMAC(const QString &hash = "sha1", const SymmetricKey &key = SymmetricKey(), const QString &provider = QString()) : MessageAuthenticationCode(withAlgorithm("hmac", hash), key, provider) {}
+	};
 
 	/**
 	 * \class KeyDerivationFunction  qca_basic.h QtCrypto

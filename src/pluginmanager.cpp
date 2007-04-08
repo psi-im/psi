@@ -1,6 +1,5 @@
 #include <QtCore>
 #include <QPluginLoader>
-#include <QDebug>
 
 #include "pluginmanager.h"
 #include "psiplugin.h"
@@ -103,14 +102,14 @@ void PluginManager::loadAllPlugins()
  */ 
 bool PluginManager::loadPlugin( const QString& file )
 {
-  	qDebug() << "Loading Plugin " << file;
+  	qDebug(qPrintable(QString("Loading Plugin %1").arg(file)));
 	//we can safely take the first key, as we won't have the same
 	// file belonging to multiple plugins
 	QList<QString> names = files_.keys(file);
 	if (! names.isEmpty() ) {
 		QString name = names.first();
 		if ( plugins_.contains(name) ) {
-			qWarning() << QString("Plugin %1 is already active, but this should never be.").arg(file);
+			qWarning( qPrintable( QString("Plugin %1 is already active, but this should never be.").arg(file) ) );
 			return false;
 		}
 	}
@@ -160,10 +159,10 @@ bool PluginManager::loadPlugin( QObject* pluginObject )
 	if ( !plugin ) {
 		return false;
 	}
-	qDebug() << "loading plugin " << plugin->name();
+	qDebug( qPrintable( QString("loading plugin %1").arg(plugin->name() )));
 	plugins_.insert( plugin->name(), plugin );
 	
-	qDebug() << "connecting to plugin " << plugin->name();
+	qDebug(qPrintable(QString("connecting to plugin %1").arg(plugin->name())));
 	connect( plugin, SIGNAL(sendStanza(const PsiAccount*, const QDomElement&)), this, SLOT(sendStanza(const PsiAccount*, const QDomElement&)));
 	connect( plugin, SIGNAL(sendStanza(const PsiAccount*, const QString&)), this, SLOT(sendStanza(const PsiAccount*, const QString&)));
 	connect( plugin, SIGNAL(setPluginOption( const QString&, const QVariant& )), this, SLOT( setPluginOption( const QString&, const QVariant& )));
@@ -203,7 +202,7 @@ bool PluginManager::unloadPlugin(const QString& plugin)
 	  	qWarning( qPrintable( QString("Plugin %1 wasn't found when trying to unload").arg(plugin) ) );
 		return false;
 	}
-	qDebug() << "attempting to disconnect " << plugins_[plugin]->name();
+	qDebug(qPrintable(QString("attempting to disconnect %1").arg(plugins_[plugin]->name())));
 	plugins_[plugin]->disconnect();
 	QString file=files_[plugin];
 	if ( !loaders_.contains(file) ) {
@@ -377,7 +376,7 @@ void PluginManager::getGlobalOption( const QString& option, QVariant& value)
 void PluginManager::message(PsiAccount* account, const XMPP::Jid& from, const UserListItem* ul, const QString& message)
 {
 	QString fromString=QString("%1").arg(from.full());
-	qDebug() << "message from %1" << fromString;
+	qDebug(qPrintable(QString("message from %1").arg(fromString)));
 	foreach(PsiPlugin* plugin, plugins_.values() ) {
 		plugin->message( account, message , fromString , from.full() );
 	}
@@ -423,7 +422,7 @@ void PluginManager::sendStanza( const PsiAccount* account, const QDomElement& st
  */ 
 void PluginManager::sendStanza( const PsiAccount* account, const QString& stanza)
 {
-	qDebug() << "Want to send stanza to account " << (void*)account;
+	qDebug(qPrintable(QString("Want to send stanza  to account %2").arg((int)account)));
 	if (!clients_.contains(account) || !verifyStanza(stanza))
 		return;
 	clients_[account]->send(stanza);

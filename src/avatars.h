@@ -92,11 +92,10 @@ private:
 
 //------------------------------------------------------------------------------
 
-class Avatar : public QObject
+class Avatar
 {
-	Q_OBJECT
 public:
-	Avatar(AvatarFactory* factory);
+	Avatar();
 	virtual ~Avatar();
 	virtual QPixmap getPixmap()
 		{ return pixmap(); }
@@ -104,7 +103,6 @@ public:
 		{ return getPixmap().isNull(); }
 
 protected:
-	AvatarFactory* factory() const;
 	virtual const QPixmap& pixmap() const 
 		{ return pixmap_; }
 
@@ -115,7 +113,6 @@ protected:
 
 private:
 	QPixmap pixmap_;
-	AvatarFactory* factory_;
 };
 
 

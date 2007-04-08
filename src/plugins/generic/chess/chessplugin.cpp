@@ -24,7 +24,6 @@
  */
 
 #include <QtCore>
-#include <QDebug>
 
 #include "psiplugin.h"
 #include "gameboard.h"
@@ -103,7 +102,7 @@ void ChessPlugin::message( const PsiAccount* account, const QString& message, co
 	}
 	QString command = QString(message);
 	command.remove(0,6);
-	qDebug() << (qPrintable(QString("chess command string %1").arg(command)));
+	qDebug(qPrintable(QString("chess command string %1").arg(command)));
 	if (command == QString("start"))
 	{
 		if (game_)
@@ -132,7 +131,7 @@ void ChessPlugin::message( const PsiAccount* account, const QString& message, co
 	{
 		command.remove(0,8);
 		
-		qDebug() << (qPrintable(QString("chess command %1").arg(command)));
+		qDebug(qPrintable(QString("chess command %1").arg(command)));
 		receiveData(command);
 	}
 }
@@ -196,19 +195,19 @@ void ChessPlugin::stopGame()
 
 void ChessPlugin::sendData(const QString& data)
 {
-	qDebug() << (qPrintable(QString("sendingData turn: %1").arg(data)));
+	qDebug(qPrintable(QString("sendingData turn: %1").arg(data)));
 	if (!game_)
 		return;
 	QString reply;
 	QString stanzaId="aaaa";
 	reply=QString("<message to=\"%1\" type=\"chat\" id=\"%2\"><body>chess command %3</body></message>").arg(playingWith_).arg(stanzaId).arg(data);
-	qDebug() << (qPrintable(QString("sendingData stanza: %1").arg(reply)));
+	qDebug(qPrintable(QString("sendingData stanza: %1").arg(reply)));
 	emit sendStanza(account_, reply);
 }
 
 void ChessPlugin::receiveData(const QString& data)
 {
-	qDebug() << (qPrintable(QString("received data: %1").arg(data)));
+	qDebug(qPrintable(QString("received data: %1").arg(data)));
 	if (!game_)
 		return;
 	//game->theirMove(space);

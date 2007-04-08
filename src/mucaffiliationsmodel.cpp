@@ -43,15 +43,15 @@ MUCAffiliationsModel::MUCAffiliationsModel() : QStandardItemModel(Unknown,1)
 
 Qt::ItemFlags MUCAffiliationsModel::flags(const QModelIndex &index) const
 {
-	Qt::ItemFlags a;
+	Qt::ItemFlags a = Qt::ItemIsDropEnabled;
 	if (!index.parent().isValid()) {
 		// List headers
 		if (enabled_[(AffiliationListIndex) index.row()]) {
-			a |= Qt::ItemIsDropEnabled | Qt::ItemIsSelectable | Qt::ItemIsEnabled;
+			a |= Qt::ItemIsSelectable | Qt::ItemIsEnabled;
 		}
 	}
 	else {
-		a |= Qt::ItemIsDropEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled | Qt::ItemIsEnabled;
+		a |= Qt::ItemIsSelectable | Qt::ItemIsDragEnabled | Qt::ItemIsEnabled;
 	}
 	return a;
 }
@@ -161,7 +161,6 @@ void MUCAffiliationsModel::setAffiliationListEnabled(MUCItem::Affiliation a, boo
 {
 	QModelIndex index = affiliationListIndex(a);
 	enabled_[(AffiliationListIndex) index.row()] = b;
-	emit layoutChanged();
 }
 
 QString MUCAffiliationsModel::affiliationlistindexToString(AffiliationListIndex list)
@@ -204,7 +203,6 @@ MUCAffiliationsModel::AffiliationListIndex MUCAffiliationsModel::affiliationToIn
 
 void MUCAffiliationsModel::addItems(const QList<MUCItem>& items)
 {
-	bool dirty = false;
 	foreach(MUCItem item, items) {
 		QModelIndex list = affiliationListIndex(item.affiliation());
 		if (list.isValid() && !item.jid().isEmpty()) {
@@ -217,14 +215,11 @@ void MUCAffiliationsModel::addItems(const QList<MUCItem>& items)
 			MUCItem i(MUCItem::UnknownRole,item.affiliation());
 			i.setJid(item.jid());
 			items_ += i;
-			dirty = true;
 		}
 		else {
 			qDebug("Unexpected item");
 		}
 	}
-	if (dirty)
-		emit layoutChanged();
 }
 
 QList<MUCItem> MUCAffiliationsModel::changes() const

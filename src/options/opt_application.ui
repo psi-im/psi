@@ -17,7 +17,7 @@
   </property>
   <layout class="QVBoxLayout" >
    <property name="margin" >
-    <number>9</number>
+    <number>0</number>
    </property>
    <property name="spacing" >
     <number>6</number>
@@ -100,6 +100,13 @@
        <widget class="QCheckBox" name="ck_dockToolMW" >
         <property name="text" >
          <string>Make roster window a &quot;tool-window&quot;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="ck_dockUseWM" >
+        <property name="text" >
+         <string>Use WindowMaker docklet</string>
         </property>
        </widget>
       </item>
@@ -189,6 +196,7 @@
   <tabstop>ck_dockDCstyle</tabstop>
   <tabstop>ck_dockHideMW</tabstop>
   <tabstop>ck_dockToolMW</tabstop>
+  <tabstop>ck_dockUseWM</tabstop>
   <tabstop>le_dtPort</tabstop>
   <tabstop>le_dtExternal</tabstop>
  </tabstops>

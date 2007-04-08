@@ -19,7 +19,6 @@
  */
  
 #include <QObject>
-#include <QDebug>
 
 #include "xmpp_xmlcommon.h"
 #include "im.h"
@@ -183,7 +182,7 @@ public:
 	}
 	
 	void setList(const PrivacyList& list) {
-		//qDebug() << "setList: " << list.toString();
+		//qDebug(QString("setList: %1").arg(list.toString()));
 		list_ = list;
 		changeDefault_ = false;
 		changeActive_ = false;
@@ -227,7 +226,7 @@ public:
 	}
 
 	void onGo() {
-		//qDebug() << "privacy.cpp: Requesting privacy list %1." << name_;
+		//qDebug(QString("privacy.cpp: Requesting privacy list %1.").arg(name_));
 		send(iq_);
 	}
 	
@@ -235,7 +234,7 @@ public:
 		if(!iqVerify(x, "", id()))
 			return false;
 
-		//qDebug() << QString("privacy.cpp: Got privacy list %1 reply.").arg(name_);
+		//qDebug(QString("privacy.cpp: Got privacy list %1 reply.").arg(name_));
 		if (x.attribute("type") == "result") {
 			QDomElement q = queryTag(x);
 			bool found;

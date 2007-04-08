@@ -41,7 +41,7 @@
 //! // The class will emit the resultsReady() signal when the resolution
 //! // is finished. You may then retrieve the results:
 //!
-//! QHostAddress ip_address = dns.result();
+//! uint ip_address = dns.result();
 //!
 //! // or if you want to get the IP address as a string:
 //!
@@ -104,11 +104,11 @@ void NDns::stop()
 }
 
 //!
-//! Returns the IP address as QHostAddress.  This will be a Null QHostAddress if the lookup failed.
+//! Returns the IP address as a 32-bit integer in host-byte-order.  This will be 0 if the lookup failed.
 //! \sa resultsReady()
-QHostAddress NDns::result() const
+uint NDns::result() const
 {
-	return addr;
+	return addr.toIPv4Address();
 }
 
 //!
@@ -116,10 +116,7 @@ QHostAddress NDns::result() const
 //! \sa resultsReady()
 QString NDns::resultString() const
 {
-	if (addr.isNull()) 
-		return QString();
-	else
-		return addr.toString();
+	return addr.toString();
 }
 
 //!

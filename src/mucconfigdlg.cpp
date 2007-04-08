@@ -26,16 +26,13 @@
 
 #include "mucmanager.h"
 #include "mucaffiliationsmodel.h"
-#include "mucaffiliationsproxymodel.h"
 #include "mucconfigdlg.h"
 #include "xdata_widget.h"
 
 using namespace XMPP;
 
-MUCConfigDlg::MUCConfigDlg(MUCManager* manager, QWidget* parent)
-	: QDialog(parent), manager_(manager)
+MUCConfigDlg::MUCConfigDlg(MUCManager* manager, QWidget* parent) : QDialog(parent, Qt::WDestructiveClose), manager_(manager)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
 	ui_.setupUi(this);
 	setModal(false);
 
@@ -71,15 +68,11 @@ MUCConfigDlg::MUCConfigDlg(MUCManager* manager, QWidget* parent)
 	connect(ui_.tv_affiliations,SIGNAL(removeEnabled(bool)),ui_.pb_remove,SLOT(setEnabled(bool)));
 	connect(ui_.pb_add,SIGNAL(clicked()),SLOT(add()));
 	connect(ui_.pb_remove,SIGNAL(clicked()),ui_.tv_affiliations,SLOT(removeCurrent()));
-	connect(ui_.le_filter, SIGNAL(textChanged(const QString&)), SLOT(applyFilter(const QString&)));
-
 	affiliations_model_ = new MUCAffiliationsModel();
-	affiliations_proxy_model_ = new MUCAffiliationsProxyModel(affiliations_model_);
-	affiliations_proxy_model_->setSourceModel(affiliations_model_);
-	ui_.tv_affiliations->setModel(affiliations_proxy_model_);
-
-	for (int i = 0; i < affiliations_proxy_model_->rowCount(); i++)
-		ui_.tv_affiliations->setExpanded(affiliations_proxy_model_->index(i, 0), true);
+	ui_.tv_affiliations->setModel(affiliations_model_);
+	for (int i = 0; i < affiliations_model_->rowCount(); i++) {
+		ui_.tv_affiliations->setExpanded(affiliations_model_->index(i,0),true);
+	}
 
 	// Roles & affiliations
 	setRole(MUCItem::NoRole);
@@ -198,11 +191,6 @@ void MUCConfigDlg::currentTabChanged(int)
 		refreshAffiliations();
 	else 
 		refreshGeneral();
-}
-
-void MUCConfigDlg::applyFilter(const QString& s)
-{
-	affiliations_proxy_model_->setFilterFixedString(s);
 }
 
 void MUCConfigDlg::getConfiguration_success(const XData& d)

@@ -319,9 +319,6 @@ void PsiActionList::Private::createMainWin()
 		IconAction *actOnlineHome = new IconAction (tr("Home Page (Online)"), tr("&Home Page (Online)"), 0, this);
 		actOnlineHome->setWhatsThis (tr("Home Page (Online)"));
 
-		IconAction *actPsiMUC = new IconAction (tr("Join Psi Discussion Room (Online)"), tr("&Join Psi Discussion Room (Online)"), 0, this);
-		actOnlineHome->setWhatsThis (tr("Join Psi Discussion Room (Online)"));
-
 		IconAction *actBugReport = new IconAction (tr("Report a Bug (Online)"), tr("Report a &Bug (Online)"), 0, this);
 		actBugReport->setWhatsThis (tr("Report a Bug (Online)"));
 
@@ -335,7 +332,6 @@ void PsiActionList::Private::createMainWin()
 			{ "help_online_help", actOnlineHelp },
 			{ "help_online_wiki", actOnlineWiki },
 			{ "help_online_home", actOnlineHome },
-			{ "help_psi_muc",     actPsiMUC     },
 			{ "help_report_bug",  actBugReport  },
 			{ "help_about",       actAbout      },
 			{ "help_about_qt",    actAboutQt    },

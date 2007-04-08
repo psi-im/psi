@@ -43,7 +43,7 @@ public:
 	bool iq() const { return iq_; }
 	bool all() const { return iq_ && presenceIn_ && presenceOut_ && message_; }
 	const QString& value() const { return value_; }
-	unsigned int order() const { return order_; }
+	int order() const { return order_; }
 
 	void setType(Type type) { type_ = type; }
 	void setAction(Action action) { action_ = action; }

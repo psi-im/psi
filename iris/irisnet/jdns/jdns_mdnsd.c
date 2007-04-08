@@ -231,12 +231,12 @@ int _a_match(const jdns_rr_t *r, mdnsda a)
         )
             return 1;
     }
-    else if(r->type == JDNS_RTYPE_PTR || r->type == JDNS_RTYPE_NS || r->type == JDNS_RTYPE_CNAME)
+    if(r->type == JDNS_RTYPE_PTR || r->type == JDNS_RTYPE_NS || r->type == JDNS_RTYPE_CNAME)
     {
         if(jdns_domain_cmp(r->data.name, a->rdname))
             return 1;
     }
-    else if(r->rdlength == a->rdlen && !memcmp(r->rdata, a->rdata, r->rdlength))
+    if(r->rdlength == a->rdlen && !memcmp(r->rdata, a->rdata, r->rdlength))
         return 1;
 
     return 0;
@@ -740,14 +740,7 @@ void mdnsd_in(mdnsd d, const jdns_packet_t *m, const jdns_response_t *resp, cons
                     { // check all to-be answers against our own
                         jdns_rr_t *ns = resp->authorityRecords[j];
                         if(pq->qtype != ns->type || !jdns_domain_cmp(pq->qname->data, ns->owner)) continue;
-                        if(!_a_match(ns,&r->rr))
-                        {
-                            _conflict(d,r); // answer isn't ours, conflict!
-
-                            // r is invalid after conflict, start all over
-                            r = 0;
-                            break;
-                        }
+                        if(!_a_match(ns,&r->rr)) _conflict(d,r); // this answer isn't ours, conflict!
                     }
                     continue;
                 }

@@ -19,7 +19,6 @@
  */
 
 #include <QApplication>
-#include <QDebug>
 
 #include "im.h"
 #include "psiaccount.h"
@@ -149,7 +148,7 @@ CapsRegistry::~CapsRegistry()
  */
 void CapsRegistry::save()
 {
-	//qDebug() << QString("Saving caps to '%1'").arg(fileName_);
+	//qDebug(QString("Saving caps to '%1'").arg(fileName_).toAscii());
 	
 	if (fileName_.isEmpty())
 		return;
@@ -188,7 +187,7 @@ void CapsRegistry::setFile(const QString& fileName)
 	fileName_ = fileName;
 	
 	// Load settings
-	//qDebug() << "Loading " << fileName;
+	//qDebug(QString("Loading %1").arg(fileName));
 	QDomDocument doc;
 	QFile f(fileName_);
 	if (!f.open(IO_ReadOnly))
@@ -215,7 +214,7 @@ void CapsRegistry::setFile(const QString& fileName)
 			info.fromXml(i);
 			CapsSpec spec(i.attribute("node"),i.attribute("ver"),i.attribute("ext"));
 			capsInfo_[spec] = info;
-			//qDebug() << QString("Read %1 %2 %3").arg(spec.node()).arg(spec.version()).arg(spec.extensions());
+			//qDebug(QString("Read %1 %2 %3").arg(spec.node()).arg(spec.version()).arg(spec.extensions()));
 		}
 		else {
 			qWarning("capsregistry.cpp: Unknown element");

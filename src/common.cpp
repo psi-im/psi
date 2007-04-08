@@ -26,7 +26,7 @@
 #include "applicationinfo.h"
 
 #include <QUrl>
-#include <QProcess>
+#include <Q3Process>
 #include <QBoxLayout>
 #include <QRegExp>
 #include <QFile>
@@ -54,7 +54,7 @@
 #include <CoreServices/CoreServices.h>
 #endif
 
-Qt::WFlags psi_dialog_flags = (Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint);
+Qt::WFlags psi_dialog_flags = (Qt::WStyle_SysMenu | Qt::WStyle_MinMax);
 
 Options option;
 bool useSound;
@@ -242,8 +242,9 @@ void soundPlay(const QString &str)
 		QStringList args;
 		args = QStringList::split(' ', option.player);
 		args += str;
-		QString prog = args.takeFirst();
-		QProcess::startDetached(prog, args);
+		Q3Process cmd(args);
+		if(!cmd.start())
+			wait3(NULL,WNOHANG,NULL);
 	}
 #endif
 }
@@ -411,11 +412,8 @@ bool currentDesktop(long *desktop)
 }
 #endif
 
-void bringToFront(QWidget *widget, bool)
+void bringToFront(QWidget *w, bool)
 {
-	Q_ASSERT(widget);
-	QWidget* w = widget->window();
-
 #ifdef Q_WS_X11
 	// If we're not on the current desktop, do the hide/show trick
 	long dsk, curr_dsk;
@@ -423,17 +421,21 @@ void bringToFront(QWidget *widget, bool)
 	if(desktopOfWindow(&win, &dsk) && currentDesktop(&curr_dsk)) {
 		if(dsk != curr_dsk) {
 			w->hide();
+			//qApp->processEvents();
 		}
 	}
 
 	// FIXME: multi-desktop hacks for Win and Mac required
 #endif
 
-	if(w->isMaximized())
-		w->showMaximized();
-	else
-		w->showNormal();
-
+	w->show();
+	if(w->isMinimized()) {
+		//w->hide();
+		if(w->isMaximized())
+			w->showMaximized();
+		else
+			w->showNormal();
+	}
 	//if(grabFocus)
 	//	w->setActiveWindow();
 	w->raise();

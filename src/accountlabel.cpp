@@ -1,6 +1,6 @@
 /*
  * accountlabel.cpp - simple label to display account name currently in use
- * Copyright (C) 2006-2007  Michail Pishchagin
+ * Copyright (C) 2006  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,51 +21,28 @@
 #include "accountlabel.h"
 #include "psiaccount.h"
 
-AccountLabel::AccountLabel(QWidget* parent)
-	: QLabel(parent)
-	, showJid_(true)
+AccountLabel::AccountLabel(PsiAccount* _pa, QWidget* par, bool smode)
+	: QLabel(par)
 {
-	setFrameStyle(QFrame::Panel | QFrame::Sunken);
+	pa = _pa;
+	simpleMode = smode;
+	setFrameStyle( QFrame::Panel | QFrame::Sunken );
+
+	updateName();
+	connect(pa, SIGNAL(updatedAccount()), this, SLOT(updateName()));
+	connect(pa, SIGNAL(destroyed()), this, SLOT(deleteMe()));
 }
 
 AccountLabel::~AccountLabel()
 {
 }
 
-PsiAccount* AccountLabel::account() const
-{
-	return account_;
-}
-
-bool AccountLabel::showJid() const
-{
-	return showJid_;
-}
-
-void AccountLabel::setAccount(PsiAccount* account)
-{
-	account_ = account;
-	if (account) {
-		connect(account, SIGNAL(updatedAccount()), SLOT(updateName()));
-		connect(account, SIGNAL(destroyed()), SLOT(deleteLater()));
-	}
-	updateName();
-}
-
-void AccountLabel::setShowJid(bool showJid)
-{
-	showJid_ = showJid;
-	updateName();
-}
-
 void AccountLabel::updateName()
 {
-	QString text = "...";
-	if (!account_.isNull()) {
-		if (showJid_)
-			text = account_->nameWithJid();
-		else
-			text = account_->name();
-	}
-	setText(text);
+	setText(simpleMode ? pa->name() : pa->nameWithJid());
+}
+
+void AccountLabel::deleteMe()
+{
+	delete this;
 }

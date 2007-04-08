@@ -13,7 +13,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 
@@ -654,7 +654,7 @@ public:
 			case GpgOp::Verify:
 			{
 				args += "--verify";
-				args += "-"; //krazy:exclude=doublequote_chars
+				args += "-";
 				extra = true;
 				allowInput = true;
 				if(input.opt_ascii)
@@ -664,7 +664,7 @@ public:
 			case GpgOp::VerifyDetached:
 			{
 				args += "--verify";
-				args += "-"; //krazy:exclude=doublequote_chars
+				args += "-";
 				args += "-&?";
 				extra = true;
 				allowInput = true;
@@ -756,17 +756,11 @@ public slots:
 			a = readConv.update(a);
 		if(!proc.isActive())
 			a += readConv.final();
-#ifdef GPG_DEBUG
-		printf("GpgAction::read(): [%s]\n", a.data());
-#endif
 		return a;
 	}
 
 	void write(const QByteArray &in)
 	{
-#ifdef GPG_DEBUG
-		printf("GpgAction::write(): [%s]\n", in.data());
-#endif
 		if(!allowInput)
 			return;
 
@@ -904,10 +898,6 @@ private:
 		else if(s == "DECRYPTION_OKAY")
 		{
 			decryptGood = true;
-
-			// message could be encrypted with several keys
-			if(curError == GpgOp::ErrorDecryptNoKey)
-				curError = GpgOp::ErrorUnknown;
 		}
 		else if(s == "SIG_CREATED")
 		{
@@ -992,14 +982,9 @@ private:
 		QString outstr = QString::fromLatin1(buf_stdout);
 		QString errstr = QString::fromLatin1(buf_stderr);
 
-#ifdef GPG_DEBUG
-		QString stdText;
 		if(collectOutput)
-			stdText += QString("stdout: [%1]\n").arg(outstr);
-		stdText += QString("stderr: [%1]\n").arg(errstr);
-		printf("process result: %d [%s]\n", code, qPrintable(stdText));
-		//printf("code = %d, input.op = %d, badPassphrase = %d, curError = %d", code, input.op, badPassphrase, curError);
-#endif
+			diagnosticText += QString("stdout: [%1]\n").arg(outstr);
+		diagnosticText += QString("stderr: [%1]\n").arg(errstr);
 		ensureDTextEmit();
 
 		if(badPassphrase)
@@ -1303,9 +1288,7 @@ public slots:
 	void act_readyReadDiagnosticText()
 	{
 		QString s = act->readDiagnosticText();
-#ifdef GPG_DEBUG
-		printf("dtext ready: [%s]\n", qPrintable(s));
-#endif
+		//printf("dtext ready: [%s]\n", qPrintable(s));
 		diagnosticText += s;
 
 		if(waiting)

@@ -201,7 +201,7 @@ QWidget *OptionsTabAppearanceGeneral::widget()
 	QWhatsThis::add(le_font[3],
 		tr("Specifies the font style for popup windows."));
 	QWhatsThis::add(d->pb_fRoster,
-		tr("Selects a font for the roster window using the font selection dialog."));
+		tr("Selects a font for the a roster window using the font selection dialog."));
 	QWhatsThis::add(d->pb_fMessage,
 		tr("Selects a font for message windows using the font selection dialog."));
 	QWhatsThis::add(d->pb_fChat,

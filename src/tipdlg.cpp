@@ -24,34 +24,17 @@
  */  
 
 #include "tipdlg.h"
-
 #include "psioptions.h"
-#include "psicon.h"
-#include "common.h"
-
-void TipDlg::show(PsiCon* psi)
-{
-	QWidget* dlg = psi->dialogFind(TipDlg::staticMetaObject.className());
-	if (!dlg)
-		dlg = new TipDlg(psi);
-
-	Q_ASSERT(dlg);
-	bringToFront(dlg);
-}
 
 /**
  * \class TipDlg
  * \brief A 'Tip Of The Day' dialog
  */
-TipDlg::TipDlg(PsiCon* psi)
-	: QDialog(0)
-	, psi_(psi)
+
+TipDlg::TipDlg(QWidget* parent) : QDialog(parent,Qt::WDestructiveClose)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
 	setupUi(this);
 	setModal(false);
-
-	psi_->dialogRegister(this);
 
 	//ck_showTips->hide();
 
@@ -114,10 +97,6 @@ TipDlg::TipDlg(PsiCon* psi)
 	ck_showTips->setChecked( PsiOptions::instance()->getOption("options.ui.tip.show").toBool());
 }
 
-TipDlg::~TipDlg()
-{
-	psi_->dialogUnregister(this);
-}
 
 void TipDlg::updateTip()
 {

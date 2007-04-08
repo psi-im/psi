@@ -170,9 +170,6 @@ To add a contact from a &lt;b>non-Jabber&lt;/b> service, make sure you are regis
                   </item>
                   <item>
                     <widget class="IconToolButton" name="tb_vCard" >
-                      <property name="enabled" >
-                        <bool>false</bool>
-                      </property>
                       <property name="text" >
                         <string/>
                       </property>
@@ -200,9 +197,6 @@ To add a contact from a &lt;b>non-Jabber&lt;/b> service, make sure you are regis
                   </item>
                   <item>
                     <widget class="QToolButton" name="tb_resolveNick" >
-                      <property name="enabled" >
-                        <bool>false</bool>
-                      </property>
                       <property name="text" >
                         <string>Resolve</string>
                       </property>

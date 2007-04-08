@@ -52,8 +52,6 @@ QString SSLCertDlg::makePropTable(const QString &heading, const QCA::Certificate
 	str += makePropEntry(QCA::State, tr("State:"), list);
 	str += makePropEntry(QCA::Country, tr("Country:"), list);
 	str += makePropEntry(QCA::CommonName, tr("Common name:"), list);
-	str += makePropEntry(QCA::DNS, tr("Domain name:"), list);
-	str += makePropEntry(QCA::XMPP, tr("XMPP name:"), list);
 	str += makePropEntry(QCA::Email, tr("Email:"), list);
 	str += "</table></td></tr>";
 	return str;
@@ -88,11 +86,6 @@ void SSLCertDlg::setCert(const QCA::Certificate &cert, int result, QCA::Validity
 	str += makePropTable(tr("Subject Details:"), cert.subjectInfo());
 	str += makePropTable(tr("Issuer Details:"), cert.issuerInfo());
 	str += "</table>";
-	for (int i=0; i < 2; i++) {
-		QString hashstr = QCA::Hash(i == 0 ? "md5" : "sha1").hashToString(cert.toDER())
-					.toUpper().replace(QRegExp("(..)"), ":\\1").mid(1);
-		str += QString("Fingerprint(%1): %2<br>").arg(i == 0 ? "MD5" : "SHA-1").arg(hashstr);
-	}
 	ui_.tb_cert->setText(str);
 }
 

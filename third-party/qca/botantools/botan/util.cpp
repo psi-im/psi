@@ -260,7 +260,7 @@ std::string to_string(u64bit n, u32bit min_len)
       lenstr = "0";
 
    while(lenstr.size() < min_len)
-      lenstr = "0" + lenstr; //krazy:exclude=doublequote_chars
+      lenstr = "0" + lenstr;
 
    return lenstr;
    }

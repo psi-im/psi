@@ -23,12 +23,9 @@
 
 #include <QDialog>
 
-class QDomElement;
-class JT_XRegister;
 class PsiAccount;
 namespace XMPP {
 	class Jid;
-	class Form;
 }
 
 class RegistrationDlg : public QDialog
@@ -50,12 +47,6 @@ private slots:
 private:
 	class Private;
 	Private *d;
-
-	void setData(JT_XRegister* jt);
-	void updateData(JT_XRegister* jt);
-	void setInstructions(const QString& jid, const QString& instructions);
-	bool processXData(const QDomElement& iq);
-	void processLegacyForm(const XMPP::Form& form);
 };
 
 #endif

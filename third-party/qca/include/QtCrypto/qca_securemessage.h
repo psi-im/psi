@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 
@@ -335,7 +335,6 @@ else
 			ErrorEncryptUntrusted, ///< encrypting key is untrusted
 			ErrorEncryptInvalid,   ///< encrypting key is invalid in some way
 			ErrorNeedCard,         ///< pgp card is missing
-			ErrorKeyMismatch,      ///< certificate and private key don't match
 			ErrorUnknown           ///< other error
 		};
 

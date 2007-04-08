@@ -1227,7 +1227,7 @@ bool CoreProtocol::normalStep(const QDomElement &e)
 
 			p = doc.createElement("digest");
 			Q3CString cs = id.utf8() + password.utf8();
-			p.appendChild(doc.createTextNode(QCA::Hash("sha1").hashToString(cs)));
+			p.appendChild(doc.createTextNode(QCA::SHA1().hashToString(cs)));
 		}
 		else {
 			p = doc.createElement("password");

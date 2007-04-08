@@ -1,7 +1,6 @@
 [Desktop Entry]
-# This is the spec version, *not* the application version
-Version=1.0
 Type=Application
+Version=0.11-beta5
 Name=Psi
 GenericName=Jabber Client
 Comment=Communicate over the Jabber network

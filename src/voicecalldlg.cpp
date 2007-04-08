@@ -24,10 +24,8 @@
 #include "voicecalldlg.h"
 #include "voicecaller.h"
 
-VoiceCallDlg::VoiceCallDlg(const Jid& jid, VoiceCaller* voiceCaller)
-	: QDialog(0), jid_(jid), voiceCaller_(voiceCaller)
+VoiceCallDlg::VoiceCallDlg(const Jid& jid, VoiceCaller* voiceCaller) : QDialog(0, Qt::WDestructiveClose), jid_(jid), voiceCaller_(voiceCaller)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
 	ui_.setupUi(this);
 	setModal(false);
 	

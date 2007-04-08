@@ -130,7 +130,7 @@ void IconAction::setPsiIcon(const PsiIcon *i)
 	QIcon is;
 	if ( i ) {
 		d->icon = new PsiIcon(*i);
-		connect(d->icon, SIGNAL(iconModified()), SLOT(iconUpdated()));
+		connect(d->icon, SIGNAL(iconModified(const QPixmap &)), SLOT(iconUpdated(const QPixmap &)));
 		d->icon->activated(true);
 
 		is = d->icon->icon();
@@ -246,10 +246,11 @@ QList<IconToolButton *> IconAction::buttonList()
 	return d->buttons;
 }
 
-void IconAction::iconUpdated()
+void IconAction::iconUpdated(const QPixmap &pix)
 {
+	Q_UNUSED( pix );
 #ifndef WIDGET_PLUGIN
-	QAction::setIcon(d->icon ? d->icon->icon() : QIcon());
+	QAction::setIcon( d->icon->icon() );
 #endif
 }
 

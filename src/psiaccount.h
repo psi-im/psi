@@ -181,7 +181,6 @@ public:
 
 signals:
 	void disconnected();
-	void reconnecting();
 	void updatedActivity();
 	void updatedAccount();
 	void queueChanged();
@@ -205,9 +204,6 @@ public slots:
 	void secondsIdle(int);
 	void openNextEvent();
 	int forwardPendingEvents(const Jid &jid);
-	void autoLogin();
-
-	void showCert();
 
 	//dj_ originally referred to 'direct jabber', if you care
 	void dj_sendMessage(const Message &, bool log=true);
@@ -239,10 +235,6 @@ public slots:
 	void actionHistory(const Jid &);
 	void actionOpenChat(const Jid &);
 	void actionOpenChatSpecific(const Jid &);
-#ifdef WHITEBOARDING
-	void actionOpenWhiteboard(const Jid &);
-	void actionOpenWhiteboardSpecific(const Jid &, Jid = Jid(), bool = false);
-#endif
 	void actionAgentSetStatus(const Jid &, Status &s);
 	void actionInfo(const Jid &, bool showStatusInfo=true);
 	void actionAuth(const Jid &);
@@ -277,7 +269,7 @@ public slots:
 private slots:
 	void tls_handshaken();
 	void cs_connected();
-	void cs_securityLayerActivated(int);
+	void cs_securityLayerActivated();
 	void cs_needAuthParams(bool, bool, bool);
 	void cs_authenticated();
 	void cs_connectionClosed();

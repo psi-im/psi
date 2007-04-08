@@ -90,7 +90,7 @@ private:
 			mod |= MOD_ALT;
 
 		UINT key = 0;
-		code &= ~Qt::KeyboardModifierMask;
+		code &= 0xffff;
 		if (code >= 0x20 && code <= 0x7f)
 			key = code;
 		else {

@@ -43,8 +43,6 @@ class UserListItem;
 class QDropEvent;
 class QDragEnterEvent;
 
-#include "ui_chatdlg.h"
-
 class ChatDlg : public AdvancedWidget<QWidget>
 {
 	Q_OBJECT
@@ -117,15 +115,11 @@ private slots:
 	void logSelectionChanged();
 	void capsChanged(const Jid&);
 	void updateIdentityVisibility();
-	void chatEditCreated();
-	void initComposing();
 
 public:
 	class Private;
 private:
 	Private *d;
-	Ui::ChatDlg ui_;
-	bool highlightersInstalled_;
 
 	void contextMenuEvent(QContextMenuEvent *);
 

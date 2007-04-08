@@ -22,7 +22,7 @@ public:
 	static bool equals(QCA::PGPKey, QCA::PGPKey);
 
 	static QMap<QString,QString> passphrases;
-	static QSet<QCA::KeyStore*> keystores;
+	static QList<QCA::KeyStore*> keystores;
 };
 
 #endif

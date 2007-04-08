@@ -36,8 +36,7 @@ Notes
   - This beta release includes a patched version of QCA2. Although it is 
       possible to link against another self-patched QCA2, it is strongly 
       recommended to use the provided tree, which is now default when
-      using ./configure on unices, or by default on Windows. Please ignore
-      all notes regarding QCA2 plugins below.
+      using ./configure on unices, or by default on Windows.
 
   - Upgrading to 0.11 --
     * The last used profile settings will not be transferred from 0.10 and
@@ -49,15 +48,13 @@ Notes
     * The PEM format is now used for storing SSL certificates.
     * You must use the QCA-OpenSSL plugin for QCA2 to utilize SSL.
       The older 'QSSL' plugin and QCA1 plugin will not work.
+    * Psi 0.11-beta2 does not yet have the GnuPG features restored.
+      DO NOT install qca-gnupg ! This plugin is not finished yet, and will
+      make Psi crash if any PGP operation is performed.
     * Users upgrading from pre-0.10 will not benefit from the new colour 
       scheme. If they want the new colours, they should quit Psi and edit 
-      their config.xml file by hand. For details, please see the User Guide in 
+      their config.xml file y hand. For details, please see the User Guide in 
       the Help menu. 
-    * The WindowMaker docklet has been discontinued. We have been suffering
-      problems with it since the previous release(s), it is non-standard,
-      it lacks documentation, and so we decided to only support the 
-      FreeDesktop.org tray. People using WindowMaker can use tools such as 
-      Docker as a replacement.
 
   - GnuPG tips --
     * Always use the latest version of GnuPG.

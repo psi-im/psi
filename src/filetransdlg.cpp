@@ -491,8 +491,7 @@ public:
 	PsiAccount *pa;
 	AccountsComboBox *cb_ident;
 	QLabel* lb_identity;
-	AccountLabel* lb_ident;
-	QLabel* lb_time;
+	QLabel *lb_ident, *lb_time;
 	ChatView *te;
 	Jid jid;
 	FileTransferHandler *ft;
@@ -504,9 +503,8 @@ public:
 
 
 FileRequestDlg::FileRequestDlg(const Jid &j, PsiCon *psi, PsiAccount *pa) 
-	: QDialog(0, psi_dialog_flags)
+:QDialog(0, psi_dialog_flags | Qt::WDestructiveClose)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
 	setModal(false);
 	setupUi(this);
 	QStringList l;
@@ -515,9 +513,8 @@ FileRequestDlg::FileRequestDlg(const Jid &j, PsiCon *psi, PsiAccount *pa)
 
 
 FileRequestDlg::FileRequestDlg(const Jid &jid, PsiCon *psi, PsiAccount *pa, const QStringList& files, bool direct)
-	: QDialog(0, psi_dialog_flags)
+:QDialog(0, psi_dialog_flags | Qt::WDestructiveClose)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private;
 	setModal(false);
 	setupUi(this);
@@ -595,9 +592,8 @@ FileRequestDlg::FileRequestDlg(const Jid &jid, PsiCon *psi, PsiAccount *pa, cons
 }
 
 FileRequestDlg::FileRequestDlg(const QDateTime &ts, FileTransfer *ft, PsiAccount *pa)
-	: QDialog(0, psi_dialog_flags)
+:QDialog(0, psi_dialog_flags | Qt::WDestructiveClose)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private;
 	setModal(false);
 	setupUi(this);
@@ -614,8 +610,7 @@ FileRequestDlg::FileRequestDlg(const QDateTime &ts, FileTransfer *ft, PsiAccount
 	d->cb_ident = 0;
 	Q3HBox *hb = new Q3HBox(this);
 	d->lb_identity = new QLabel(tr("Identity: "), hb);
-	d->lb_ident = new AccountLabel(hb);
-	d->lb_ident->setAccount(d->pa);
+	d->lb_ident = new AccountLabel(d->pa, hb);
 	d->lb_ident->setSizePolicy(QSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Fixed ));
 	new QLabel(tr("Time:"), hb);
 	d->lb_time = new QLabel(ts.time().toString(Qt::LocalDate), hb);

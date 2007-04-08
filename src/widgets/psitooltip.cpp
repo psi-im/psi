@@ -31,10 +31,9 @@
 #include <QStyleOption>
 #include <QStylePainter>
 #include <QTimer>
-#include <QToolTip>
+#include <QToolButton> // to rip off its font()
 #include <QAbstractTextDocumentLayout>
 #include <QTextFrame>
-#include <QTextEdit>
 #include "private/qeffects_p.h"
 
 #include "psirichtext.h"
@@ -65,8 +64,8 @@ protected:
 	void enterEvent(QEvent*){ hideTip(); }
 	void timerEvent(QTimerEvent *e);
 	void paintEvent(QPaintEvent *e);
-	// QSize sizeForWidth(int w) const;
-
+	QSize sizeForWidth(int w) const;
+	
 private:
 	QTextDocument *doc;
 	QString theText_;
@@ -86,16 +85,7 @@ PsiTipLabel::PsiTipLabel(const QString& text, QWidget* parent)
 	margin = 1 + style()->pixelMetric(QStyle::PM_ToolTipLabelFrameWidth, 0, this);
 	setFrameStyle(QFrame::NoFrame);
 
-	// doc = new QTextDocument(this);
-	// QTextDocumentLayout is private in Qt4
-	// and it's impossible to set wrapping mode directly.
-	// So we create this QTextEdit instance and use its QTextDocument,
-	// just because QTextEdit can set the wrapping mode.
-	// Yes, this is crazy...
-	QTextEdit *edit = new QTextEdit(this);
-	edit->hide();
-	edit->setWordWrapMode(QTextOption::WordWrap);
-	doc = edit->document();
+	doc = new QTextDocument(this);
 	doc->setUndoRedoEnabled(false);
 	doc->setDefaultFont(font());
 
@@ -117,10 +107,10 @@ PsiTipLabel::PsiTipLabel(const QString& text, QWidget* parent)
 	hideTimer.start(10000, this);
 	setWindowOpacity(style()->styleHint(QStyle::SH_ToolTipLabel_Opacity, 0, this) / 255.0);
 	// No resources for this yet (unlike on Windows).
-	//QPalette pal(Qt::black, QColor(255,255,220),
-	//             QColor(96,96,96), Qt::black, Qt::black,
-	//             Qt::black, QColor(255,255,220));
-	setPalette(QToolTip::palette());
+	QPalette pal(Qt::black, QColor(255,255,220),
+	             QColor(96,96,96), Qt::black, Qt::black,
+	             Qt::black, QColor(255,255,220));
+	setPalette(pal);
 }
 
 QString PsiTipLabel::theText() const
@@ -128,7 +118,6 @@ QString PsiTipLabel::theText() const
 	return theText_;
 }
 
-/*
 QSize PsiTipLabel::sizeForWidth(int w) const
 {
 	QRect br;
@@ -158,26 +147,35 @@ QSize PsiTipLabel::sizeForWidth(int w) const
 	const QSize contentsSize(br.width() + hextra, br.height() + vextra);
 	return contentsSize;
 }
-*/
+
 QSize PsiTipLabel::sizeHint() const
 {
+	QRect br;
+
+	int hextra = 2 * margin;
+	int vextra = hextra;
+
+	if (isRichText) {
+		hextra = 1;
+		vextra = 1;
+	}
+
 	QTextFrameFormat fmt = doc->rootFrame()->frameFormat();
 	fmt.setMargin(0);
 	doc->rootFrame()->setFrameFormat(fmt);
 	// PsiRichText::ensureTextLayouted(doc, -1);
 
 	doc->adjustSize();
-	// br = QRect(QPoint(0, 0), doc->size().toSize());
-	// this way helps to fight empty space on the right:
-	QSize docSize = QSize(doc->idealWidth(), doc->size().toSize().height());
+	br = QRect(QPoint(0, 0), doc->size().toSize());
 
 	QFontMetrics fm(font());
-	QSize extra(2*margin + 2, 2*margin + 1);	// "+" for tip's frame
+	QSize extra(hextra + 1, vextra);
 	// Make it look good with the default ToolTip font on Mac, which has a small descent.
 	if (fm.descent() == 2 && fm.ascent() >= 11)
-		++extra.rheight();
+		vextra++;
 
-	return docSize + extra;
+	const QSize contentsSize(br.width() + hextra, br.height() + vextra);
+	return contentsSize;
 }
 
 QSize PsiTipLabel::minimumSizeHint() const
@@ -210,10 +208,9 @@ void PsiTipLabel::paintEvent(QPaintEvent *)
 	QRect cr = contentsRect();
 	cr.adjust(margin, margin, -margin, -margin);
 
-	PsiRichText::ensureTextLayouted(doc, width() - 2*margin);
+	PsiRichText::ensureTextLayouted(doc, width());
 	QAbstractTextDocumentLayout *layout = doc->documentLayout();
-	// QRect lr = rect();
-	QRect lr = cr;
+	QRect lr = rect();
 
 	QAbstractTextDocumentLayout::PaintContext context;
 
@@ -270,7 +267,6 @@ bool PsiTipLabel::eventFilter(QObject *, QEvent *e)
 		case QEvent::MouseButtonDblClick:
 		case QEvent::FocusIn:
 		case QEvent::FocusOut:
-		case QEvent::Wheel:
 			hideTip();
 		default:
 			;
@@ -394,9 +390,11 @@ static void installPsiToolTipFont()
 	static bool toolTipFontInstalled = false;
 	if (toolTipFontInstalled)
 		return;
-
-	qApp->setFont(QToolTip::font(), "PsiTipLabel");
-
+	
+	QToolButton *button = new QToolButton();
+	qApp->setFont(qApp->font(button), "PsiTipLabel");
+	delete button;
+	
 	toolTipFontInstalled = true;
 }
 
@@ -407,19 +405,16 @@ static void installPsiToolTipFont()
  */
 void PsiToolTip::showText(const QPoint &pos, const QString &text, QWidget *w)
 {
-	if (text.isEmpty()) {
-		if (PsiTipLabel::instance)
-			PsiTipLabel::instance->hideTip();
-		return;
-	}
-
-	if (!w->underMouse())
-		return;
-
 	ToolTipPosition calc(pos, w);
 	if (PsiTipLabel::instance && PsiTipLabel::instance->theText() == text) {
 		// fancy moving tooltip effect
 		PsiTipLabel::instance->move(calc.calculateTipPosition(PsiTipLabel::instance));
+		return;
+	}
+
+	if (text.isEmpty()) {
+		if (PsiTipLabel::instance)
+			PsiTipLabel::instance->hideTip();
 		return;
 	}
 

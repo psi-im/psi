@@ -35,7 +35,7 @@ namespace XMPP {
 	class Jid;
 }
 
-class PsiIconset : public QObject
+class PsiIconset
 {
 public:
 	static PsiIconset* instance();

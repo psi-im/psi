@@ -104,7 +104,6 @@ void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool leg
 	tls = new QCA::TLS;
 	tls->setTrustedCertificates(CertUtil::allCertificates());
 	tlsHandler = new QCATLSHandler(tls);
-	tlsHandler->setXMPPCertCheck(true);
 	connect(tlsHandler, SIGNAL(tlsHandshaken()), SLOT(tls_handshaken()));
 	conn->setProxy(p);
 	if (useHost) {
@@ -156,7 +155,6 @@ void MiniClient::tls_handshaken()
 {
 	QCA::Certificate cert = tls->peerCertificateChain().primary();
 	int r = tls->peerIdentityResult();
-	if (r == QCA::TLS::Valid && !tlsHandler->certMatchesHostname()) r = QCA::TLS::HostMismatch;
 	if(r != QCA::TLS::Valid) {
 		QCA::Validity validity =  tls->peerCertificateValidity();
 		QString str = CertUtil::resultToString(r,validity);

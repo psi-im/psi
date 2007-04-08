@@ -38,7 +38,7 @@ public:
 	void stop();
 	bool isBusy() const;
 
-	QHostAddress result() const;
+	uint result() const;
 	QString resultString() const;
 
 signals:

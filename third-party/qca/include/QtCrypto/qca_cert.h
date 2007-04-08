@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 
@@ -39,9 +39,6 @@
 
 namespace QCA
 {
-	class CertContext;
-	class CSRContext;
-	class CRLContext;
 	class CRL;
 	class CertificateCollection;
 	class CertificateChain;
@@ -60,89 +57,24 @@ namespace QCA
 
 	   This enumeration provides the values that may appear in a
 	   CertificateInfo key field.  These are from RFC3280
-	   (http://www.ietf.org/rfc/rfc3280.txt) except where shown.
-	   
-	   The entries for IncorporationLocality, IncorporationState
-	   and IncorporationCountry are the same as Locality, State
-	   and Country respectively, except that the Extended
-	   Validation (EV) certificate guidelines (published by the
-	   %Certificate Authority / Browser Forum, see
-	   http://www.cabforum.org) distinguish between the place of
-	   where the company does business (which is the Locality /
-	   State / Country combination) and the jurisdiction where the
-	   company is legally incorporated (the IncorporationLocality
-	   / IncorporationState / IncorporationCountry combination).
+	   (http://www.ietf.org/rfc/rfc3280.text) except where shown.
 
 	   \sa Certificate::subjectInfo() and Certificate::issuerInfo()
 	   \sa CRL::issuerInfo()
 	*/
 	enum CertificateInfoType
 	{
-		CommonName,             ///< The common name (eg person)
-		Email,                  ///< Email address
-		Organization,           ///< An organisation (eg company)
-		OrganizationalUnit,     ///< An part of an organisation (eg a division or branch)
-		Locality,               ///< The locality (eg city, a shire, or part of a state) 
-		IncorporationLocality,  ///< The locality of incorporation (EV certificates)
-		State,                  ///< The state within the country
-		IncorporationState,     ///< The state of incorporation (EV certificates)
-		Country,                ///< The country
-		IncorporationCountry,   ///< The country of incorporation (EV certificates)
-		URI,                    ///< Uniform Resource Identifier
-		DNS,                    ///< DNS name
-		IPAddress,              ///< IP address
-		XMPP                    ///< XMPP address (see http://www.ietf.org/rfc/rfc3920.txt)
-	};
-
-	/**
-	   One entry in a certificate information list
-	*/
-	class QCA_EXPORT CertificateInfoPair
-	{
-	public:
-	        /**
-		   Standard constructor
-		*/
-		CertificateInfoPair();
-
-		/**
-		   Construct a new pair
-
-		   \param type the type of information stored in this pair
-		   \param value the value of the information to be stored
-		*/
-		CertificateInfoPair(CertificateInfoType type, const QString &value);
-
-		/**
-		   Standard copy constructor
-		*/
-		CertificateInfoPair(const CertificateInfoPair &from);
-
-		~CertificateInfoPair();
-
-		/**
-		   Standard assignment operator
-		*/
-		CertificateInfoPair & operator=(const CertificateInfoPair &from);
-
-		/**
-		   The type of information stored in the pair
-		*/
-		CertificateInfoType type() const;
-
-		/**
-		   The value of the information stored in the pair
-		*/
-		QString value() const;
-
-		/**
-		   Comparison operator
-		*/
-		bool operator==(const CertificateInfoPair &other) const;
-
-	private:
-		class Private;
-		QSharedDataPointer<Private> d;
+		CommonName,     ///< The common name (eg person)
+		Email,          ///< Email address
+		Organization,   ///< An organisation (eg company)
+		OrganizationalUnit,  ///< An part of an organisation (eg a division or branch)
+		Locality,       ///< The locality (eg a shire, or part of a state) 
+		State,          ///< The state within the country
+		Country,        ///< The country
+		URI,            ///< Uniform Resource Identifier
+		DNS,            ///< DNS name
+		IPAddress,      ///< IP address
+		XMPP            ///< XMPP address (see http://www.ietf.org/rfc/rfc3920.txt)
 	};
 
 	/**
@@ -210,11 +142,6 @@ namespace QCA
 	   Certificate properties type
 	*/
 	typedef QMultiMap<CertificateInfoType, QString> CertificateInfo;
-
-	/**
-	   Ordered certificate properties type
-	*/
-	typedef QList<CertificateInfoPair> CertificateInfoOrdered;
 
 	/**
 	   %Certificate constraints type
@@ -287,14 +214,6 @@ namespace QCA
 		CertificateInfo info() const;     // request or create
 
 		/**
-		   Information on the subject of the certificate, in the
-		   exact order the items will be written
-
-		   \sa setInfoOrdered
-		*/
-		CertificateInfoOrdered infoOrdered() const;
-
-		/**
 		   list the constraints on this certificate
 		*/
 		Constraints constraints() const;  // request or create
@@ -345,22 +264,12 @@ namespace QCA
 		/**
 		   Specify information for the the subject associated with the
 		   certificate
-
+		   
 		   \param info the information for the subject
-
+		   
 		   \sa info()
 		*/
 		void setInfo(const CertificateInfo &info);
-
-		/**
-		   Specify information for the the subject associated with the
-		   certificate
-
-		   \param info the information for the subject
-
-		   \sa info()
-		*/
-		void setInfoOrdered(const CertificateInfoOrdered &info);
 
 		/**
 		   set the constraints on the certificate
@@ -441,18 +350,6 @@ namespace QCA
 		Certificate(const CertificateOptions &opts, const PrivateKey &key, const QString &provider = QString());
 
 		/**
-		   Standard copy constructor
-		*/
-		Certificate(const Certificate &from);
-
-		~Certificate();
-
-		/**
-		   Standard assignment operator
-		*/
-		Certificate & operator=(const Certificate &from);
-
-		/**
 		   Test if the certificate is empty (null)
 		   \return true if the certificate is null
 		*/
@@ -487,46 +384,11 @@ namespace QCA
 		CertificateInfo subjectInfo() const;
 
 		/**
-		   Properties of the subject of the certificate, as 
-		   an ordered list (QList of CertificateInfoPair).
-
-		   This allows access to the certificate information 
-		   in the same order as they appear in a certificate.
-		   Each pair in the list has a type and a value.
-		   
-		   For example:
-		   \code
-		   CertificateInfoOrdered info = cert.subjectInfoOrdered();
-		   // info[0].type == CommonName
-		   // info[0].value == "andbit.net"
-		   \endcode
-
-		   \sa subjectInfo for an unordered version
-		   \sa issuerInfoOrdered for the ordered information on the issuer
-		   \sa CertificateInfoPair for the elements in the list
-		*/
-		CertificateInfoOrdered subjectInfoOrdered() const;
-
-		/**
 		   Properties of the issuer of the certificate
 
 		   \sa subjectInfo for how the return value works.
 		*/
 		CertificateInfo issuerInfo() const;
-
-		/**
-		   Properties of the issuer of the certificate, as 
-		   an ordered list (QList of CertificateInfoPair).
-
-		   This allows access to the certificate information 
-		   in the same order as they appear in a certificate.
-		   Each pair in the list has a type and a value.
-		   
-		   \sa issuerInfo for an unordered version
-		   \sa subjectInfoOrdered for the ordered information on the subject
-		   \sa CertificateInfoPair for the elements in the list
-		*/
-		CertificateInfoOrdered issuerInfoOrdered() const;
 
 		/**
 		   The constraints that apply to this certificate
@@ -684,16 +546,7 @@ namespace QCA
 		*/
 		bool operator!=(const Certificate &a) const;
 
-		/**
-		   \internal
-		*/
-		void change(CertContext *c);
-
 	private:
-		class Private;
-		friend class Private;
-		QSharedDataPointer<Private> d;
-
 		friend class CertificateChain;
 		Validity chain_validate(const CertificateChain &chain, const CertificateCollection &trusted, const QList<CRL> &untrusted_crls, UsageMode u) const;
 		CertificateChain chain_complete(const CertificateChain &chain, const QList<Certificate> &issuers) const;
@@ -814,19 +667,6 @@ namespace QCA
 		   \param provider the provider to use, if a specific provider is required
 		*/
 		CertificateRequest(const CertificateOptions &opts, const PrivateKey &key, const QString &provider = QString());
-
-		/**
-		   Standard copy constructor
-		*/
-		CertificateRequest(const CertificateRequest &from);
-
-		~CertificateRequest();
-
-		/**
-		   Standard assignment operator
-		*/
-		CertificateRequest & operator=(const CertificateRequest &from);
-
 		/**
 		   test if the certificate request is empty
 		   
@@ -853,23 +693,8 @@ namespace QCA
 		   Information on the subject of the certificate being requested
 
 		   \note this only applies to PKCS#10 format certificate requests
-
-		   \sa subjectInfoOrdered for a version that maintains order
-		   in the subject information.
 		*/
 		CertificateInfo subjectInfo() const; // PKCS#10 only
-
-		/**
-		   Information on the subject of the certificate being requested, as 
-		   an ordered list (QList of CertificateInfoPair).
-
-		   \note this only applies to PKCS#10 format certificate requests
-
-		   \sa subjectInfo for a version that does not maintain order, but
-		   allows access based on a multimap.
-		   \sa CertificateInfoPair for the elements in the list
-		*/
-		CertificateInfoOrdered subjectInfoOrdered() const; // PKCS#10 only
 
 		/**
 		   The constraints that apply to this certificate request
@@ -1004,16 +829,6 @@ namespace QCA
 		   \note this only applies to SPKAC format certificate requests
 		*/
 		static CertificateRequest fromString(const QString &s, ConvertResult *result = 0, const QString &provider = QString());
-
-		/**
-		   \internal
-		*/
-		void change(CSRContext *c);
-
-	private:
-		class Private;
-		friend class Private;
-		QSharedDataPointer<Private> d;
 	};
 
 	/**
@@ -1131,18 +946,6 @@ namespace QCA
 		CRL();
 
 		/**
-		   Standard copy constructor
-		*/
-		CRL(const CRL &from);
-
-		~CRL();
-
-		/**
-		   Standard assignment operator
-		*/
-		CRL & operator=(const CRL &from);
-
-		/**
 		   Test if the CRL is empty
 
 		   \return true if the CRL is entry, otherwise return false
@@ -1150,22 +953,9 @@ namespace QCA
 		bool isNull() const;
 
 		/**
-		   Information on the issuer of the CRL as a QMultiMap.
-
-		   \sa issuerInfoOrdered for a version that maintains the order
-		   of information fields as per the underlying CRL.
+		   Information on the issuer of the CRL
 		*/
 		CertificateInfo issuerInfo() const;
-
-		/**
-		   Information on the issuer of the CRL as an ordered list
-		   (QList of CertificateInfoPair).
-
-		   \sa issuerInfo for a version that allows lookup based on
-		   a multimap.
-		   \sa CertificateInfoPair for the elements in the list
-		*/
-		CertificateInfoOrdered issuerInfoOrdered() const;
 
 		/**
 		   The CRL serial number. Note that serial numbers are a
@@ -1267,16 +1057,6 @@ namespace QCA
 		   \return the CRL in the file
 		*/
 		static CRL fromPEMFile(const QString &fileName, ConvertResult *result = 0, const QString &provider = QString());
-
-		/**
-		   \internal
-		*/
-		void change(CRLContext *c);
-
-	private:
-		class Private;
-		friend class Private;
-		QSharedDataPointer<Private> d;
 	};
 
 	/**
@@ -1481,19 +1261,9 @@ namespace QCA
 	/**
 	   \class KeyBundle qca_cert.h QtCrypto
 
-	   Certificate chain and private key pair
+	   Public/private key pair
 
-	   KeyBundle is essentially a convience class that holds a
-	   certificate chain and an associated private key. This class
-	   has a number of methods that make it particularly suitable
-	   for accessing a PKCS12 (.p12) format file, however it can
-	   be used as just a container for a Certificate, its
-	   associated PrivateKey and optionally additional
-	   X.509 Certificate that form a chain.
-	   
-	   For more information on PKCS12 "Personal Information
-	   Exchange Syntax Standard", see <a
-	   href="ftp://ftp.rsasecurity.com/pub/pkcs/pkcs-12/pkcs-12v1.pdf">ftp://ftp.rsasecurity.com/pub/pkcs/pkcs-12/pkcs-12v1.pdf</a>. 
+	   This holds a certificate chain and an associated private key.
 	*/
 	class QCA_EXPORT KeyBundle
 	{
@@ -1504,25 +1274,19 @@ namespace QCA
 		KeyBundle();
 
 		/**
-		   Create a KeyBundle from a PKCS12 (.p12) encoded
-		   file
-
-		   This constructor requires appropriate plugin (provider)
-		   support. You must check for the "pkcs12" feature
-		   before using this constructor.
+		   Create a KeyBundle from an encoded file
 
 		   \param fileName the name of the file to read from
 		   \param passphrase the passphrase that is applicable to the file
 
-		   \sa fromFile for a more flexible version of the
-		   same capability.
+		   \sa fromFile
 		*/
 		KeyBundle(const QString &fileName, const QSecureArray &passphrase);
 
 		/**
 		   Standard copy constructor
 
-		   \param from the KeyBundle to use as source
+		   \param from KeyBundle to use as source
 		*/
 		KeyBundle(const KeyBundle &from);
 
@@ -1531,7 +1295,7 @@ namespace QCA
 		/**
 		   Standard assignment operator
 
-		   \param from the KeyBundle to use as source
+		   \param from KeyBundle to use as source
 		*/
 		KeyBundle & operator=(const KeyBundle &from);
 
@@ -1541,27 +1305,17 @@ namespace QCA
 		bool isNull() const;
 
 		/**
-		   The name associated with this key.
-
-		   This is also known as the "friendly name", and if
-		   present, is typically suitable to be displayed to
-		   the user.
-
-		   \sa setName
+		   The name associated with this key
 		*/
 		QString name() const;
 
 		/**
 		   The public certificate part of this bundle
-
-		   \sa setCertificateChainAndKey
 		*/
 		CertificateChain certificateChain() const;
 
 		/**
 		   The private key part of this bundle
-
-		   \sa setCertificateChainAndKey
 		*/
 		PrivateKey privateKey() const;
 
@@ -1577,27 +1331,12 @@ namespace QCA
 
 		   \param c the CertificateChain containing the public part of the Bundle
 		   \param key the private key part of the Bundle
-
-		   \sa privateKey, certificateChain for getters
 		*/
 		void setCertificateChainAndKey(const CertificateChain &c, const PrivateKey &key);
 
 		// import / export
 		/**
-		   Export the key bundle to an array in PKCS12 format.
-
-		   This method requires appropriate plugin (provider)
-		   support - you must check for the "pkcs12" feature,
-		   as shown below.
-
-		   \code
-		   if (QCA::isSupported( "pkcs12") {
-		       // can use I/O
-		       byteArray = bundle.toArray( "pass phrase" );
-		   } else {
-		       // not possible to use I/O
-		   }
-		   \endcode
+		   Export the key bundle to an array
 
 		   \param passphrase the passphrase to use to protect the bundle
 		   \param provider the provider to use, if a specific provider is required
@@ -1605,20 +1344,7 @@ namespace QCA
 		QByteArray toArray(const QSecureArray &passphrase, const QString &provider = QString()) const;
 
 		/**
-		   Export the key bundle to a file in PKCS12 (.p12) format
-
-		   This method requires appropriate plugin (provider)
-		   support - you must check for the "pkcs12" feature,
-		   as shown below.
-
-		   \code
-		   if (QCA::isSupported( "pkcs12") {
-		       // can use I/O
-		       bool result = bundle.toFile( filename, "pass phrase" );
-		   } else {
-		       // not possible to use I/O
-		   }
-		   \endcode
+		   Export the key bundle to a file
 
 		   \param fileName the name of the file to save to
 		   \param passphrase the passphrase to use to protect the bundle
@@ -1627,20 +1353,7 @@ namespace QCA
 		bool toFile(const QString &fileName, const QSecureArray &passphrase, const QString &provider = QString()) const;
 
 		/**
-		   Import the key bundle from an array in PKCS12 format
-
-		   This method requires appropriate plugin (provider)
-		   support - you must check for the "pkcs12" feature,
-		   as shown below.
-
-		   \code
-		   if (QCA::isSupported( "pkcs12") {
-		       // can use I/O
-		       bundle = QCA::KeyBundle::fromArray( array, "pass phrase" );
-		   } else {
-		       // not possible to use I/O
-		   }
-		   \endcode
+		   Import the key bundle from an array
 
 		   \param a the array to import from
 		   \param passphrase the passphrase for the encoded bundle
@@ -1650,20 +1363,7 @@ namespace QCA
 		static KeyBundle fromArray(const QByteArray &a, const QSecureArray &passphrase, ConvertResult *result = 0, const QString &provider = QString());
 
 		/**
-		   Import the key bundle from a file in PKCS12 (.p12) format
-
-		   This method requires appropriate plugin (provider)
-		   support - you must check for the "pkcs12" feature,
-		   as shown below.
-
-		   \code
-		   if (QCA::isSupported( "pkcs12") {
-		       // can use I/O
-		       bundle = QCA::KeyBundle::fromFile( filename, "pass phrase" );
-		   } else {
-		       // not possible to use I/O
-		   }
-		   \endcode
+		   Import the key bundle from a file
 
 		   \param fileName the name of the file to read from
 		   \param passphrase the passphrase for the encoded bundle

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2007  Justin Karneges <justin@affinix.com>
+ * Copyright (C) 2003-2006  Justin Karneges <justin@affinix.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -13,22 +13,14 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 
-// Note: if we ever enable the threaded backend, we need to protect:
-//   QPipeDevice read and bytesAvailable
-//   QPipeEnd finalize
-
-// Note: we never use the return value for QPipeWriter::stop, but I don't
-//   think this matters much
-
 #include "qpipe.h"
 
-#include <stdlib.h>
-
 #ifdef Q_OS_UNIX
+# include <stdlib.h>
 # include <unistd.h>
 # include <fcntl.h>
 # include <errno.h>
@@ -36,11 +28,6 @@
 # include <signal.h>
 #endif
 
-#define USE_POLL
-
-#define CONSOLE_CHAREXPAND  5
-#define PIPEWRITER_POLL     1000
-#define PIPEREADER_POLL     100
 #define PIPEWRITER_BLOCK    8192
 #define PIPEEND_BLOCK       8192
 #define PIPEEND_READBUF     16384
@@ -64,7 +51,8 @@ static void ignore_sigpipe()
 }
 #endif
 
-static bool pipe_set_blocking(Q_PIPE_ID pipe, bool b)
+#ifdef Q_OS_UNIX
+static bool setBlocking(Q_PIPE_ID pipe, bool b)
 {
 #ifdef Q_OS_WIN
 	DWORD flags = 0;
@@ -85,6 +73,7 @@ static bool pipe_set_blocking(Q_PIPE_ID pipe, bool b)
 	return true;
 #endif
 }
+#endif
 
 // returns number of bytes available
 static int pipe_read_avail(Q_PIPE_ID pipe)
@@ -92,8 +81,8 @@ static int pipe_read_avail(Q_PIPE_ID pipe)
 	int bytesAvail = 0;
 #ifdef Q_OS_WIN
 	DWORD i = 0;
-	if(PeekNamedPipe(pipe, 0, 0, 0, &i, 0))
-		bytesAvail = (int)i;
+	PeekNamedPipe(pipe, 0, 0, 0, &i, 0);
+	bytesAvail = (int)i;
 #endif
 #ifdef Q_OS_UNIX
 	size_t nbytes = 0;
@@ -155,6 +144,8 @@ static int pipe_read(Q_PIPE_ID pipe, char *data, int max, bool *eof)
 	return bytesRead;
 }
 
+// this function only works with blocking pipes on windows.
+// for unix, both blocking and non-blocking should work.
 // returns number of bytes actually written.
 // for blocking pipes, this should always be 'size'.
 // -1 on error.
@@ -164,7 +155,7 @@ static int pipe_write(Q_PIPE_ID pipe, const char *data, int size)
 	DWORD written;
 	if(!WriteFile(pipe, data, size, &written, 0))
 		return -1;
-	return (int)written;
+	return written;
 #endif
 #ifdef Q_OS_UNIX
 	ignore_sigpipe();
@@ -181,259 +172,11 @@ static int pipe_write(Q_PIPE_ID pipe, const char *data, int size)
 #endif
 }
 
-// Windows Console functions
-
 #ifdef Q_OS_WIN
-
-static bool pipe_is_a_console(Q_PIPE_ID pipe)
-{
-	DWORD mode;
-	if(GetConsoleMode(pipe, &mode))
-		return true;
-	return false;
-}
-
-// returns the number of keypress events in the console input queue,
-//   or -1 if there is an error (don't forget this!!)
-static int pipe_read_avail_console(Q_PIPE_ID pipe)
-{
-	DWORD count, i;
-	INPUT_RECORD *rec;
-	int n, total;
-
-	// how many events are there?
-	if(!GetNumberOfConsoleInputEvents(pipe, &count))
-		return -1;
-
-	// peek them all
-	rec = (INPUT_RECORD *)malloc(count * sizeof(INPUT_RECORD));
-	BOOL ret;
-	QT_WA(
-		ret = PeekConsoleInputW(pipe, rec, count, &i);
-	,
-		ret = PeekConsoleInputA(pipe, rec, count, &i);
-	)
-	if(!ret)
-	{
-		free(rec);
-		return -1;
-	}
-	count = i; // use only the amount returned
-
-	// see which ones are normal keypress events
-	total = 0;
-	for(n = 0; n < (int)count; ++n)
-	{
-		if(rec[n].EventType == KEY_EVENT)
-		{
-			KEY_EVENT_RECORD *ke = &rec[n].Event.KeyEvent;
-			if(ke->bKeyDown && ke->uChar.AsciiChar != 0)
-				total += ke->wRepeatCount;
-		}
-	}
-
-	free(rec);
-	return total;
-}
-
-// pass dec to keep a long-running decoder, else 0
-static int pipe_read_console(Q_PIPE_ID pipe, ushort *data, int max, bool *eof, QTextDecoder *dec = 0)
-{
-	int n, size, count;
-	bool own_decoder;
-
-	if(eof)
-		*eof = false;
-	if(max < 1)
-		return 0;
-
-	count = pipe_read_avail_console(pipe);
-	if(count == -1)
-		return -1;
-	if(count == 0)
-		return 0;
-
-	if(dec)
-	{
-		own_decoder = false;
-	}
-	else
-	{
-		QT_WA(
-			dec = 0;
-		,
-			dec = QTextCodec::codecForLocale()->makeDecoder();
-		)
-		own_decoder = true;
-	}
-
-	size = 0;
-	for(n = 0; n < count && size < max; ++n)
-	{
-		bool use_uni = true;
-		quint16 uni = 0;
-		quint8 ansi = 0;
-
-		BOOL ret;
-		DWORD i;
-		QT_WA(
-			ret = ReadConsoleW(pipe, &uni, 1, &i, NULL);
-		,
-			ret = ReadConsoleA(pipe, &ansi, 1, &i, NULL);
-			use_uni = false;
-		)
-		if(!ret)
-		{
-			// if the first read is an error, then report error
-			if(n == 0)
-			{
-				delete dec;
-				return -1;
-			}
-			// if we have some data, don't count this as an error.
-			//   we'll probably get it again next time around...
-			else
-				break;
-		}
-
-		QString substr;
-		if(use_uni)
-			substr = QChar(uni);
-		else
-			substr = dec->toUnicode((const char *)&ansi, 1);
-
-		for(int k = 0; k < substr.length() && size < max; ++k)
-		{
-			QChar c = substr[k];
-			if(c == QChar(0x1A)) // EOF?
-			{
-				if(eof)
-					*eof = true;
-				break;
-			}
-			data[size++] = substr[k].unicode();
-		}
-	}
-	if(own_decoder)
-		delete dec;
-
-	return size;
-}
-
-static int pipe_write_console(Q_PIPE_ID pipe, const ushort *data, int size)
-{
-	DWORD i;
-	BOOL ret;
-	QT_WA(
-		ret = WriteConsoleW(pipe, data, size, &i, NULL);
-	,
-		// Note: we lose security by converting to QString here, but
-		//   who really cares if we're writing to a *display* ? :)
-		QByteArray out = QString::fromUtf16(data, size).toLocal8Bit();
-		ret = WriteConsoleA(pipe, out.data(), out.size(), &i, NULL);
-		if(ret)
-		{
-			// convert number of bytes to number of unicode chars
-			i = (DWORD)QString::fromLocal8Bit(out.mid(0, i)).length();
-		}
-	)
-	if(!ret)
-		return -1;
-	return (int)i;
-}
-#endif
-
-#ifdef Q_OS_WIN
-
-// Here is the multi-backend stuff for windows.  QPipeWriter and QPipeReader
-//   define a common interface, and then subclasses (like QPipeWriterThread)
-//   are used by QPipeDevice.  The base classes inherit from QThread, even
-//   if threads aren't used, so that I can define signals without dealing
-//   with multiple QObject inheritance in the thread subclasses (it is also
-//   possible that I'm missing something obvious and don't need to do this).
-
-// Note:
-//   QPipeWriterThread and QPipeReaderThread require the pipes to be in
-//     blocking mode.  QPipeWriterPoll and QPipeReaderPoll require the pipes
-//     to be in non-blocking mode.
-
 //----------------------------------------------------------------------------
 // QPipeWriter
 //----------------------------------------------------------------------------
 class QPipeWriter : public QThread
-{
-	Q_OBJECT
-public:
-	QPipeWriter(QObject *parent = 0) : QThread(parent)
-	{
-	}
-
-	virtual ~QPipeWriter()
-	{
-	}
-
-	// start
-	virtual void start() = 0;
-
-	// stop, and return number of bytes written so far
-	virtual int stop() = 0;
-
-	// data pointer needs to remain until canWrite is emitted
-	virtual int write(const char *data, int size) = 0;
-
-signals:
-	// result values:
-	//   =   0 : success
-	//   =  -1 : error
-	void canWrite(int result, int bytesWritten);
-
-protected:
-	virtual void run()
-	{
-		// implement a default to satisfy the polling subclass
-	}
-};
-
-//----------------------------------------------------------------------------
-// QPipeReader
-//----------------------------------------------------------------------------
-class QPipeReader : public QThread
-{
-	Q_OBJECT
-public:
-	QPipeReader(QObject *parent = 0) : QThread(parent)
-	{
-	}
-
-	virtual ~QPipeReader()
-	{
-	}
-
-	// start
-	virtual void start() = 0;
-
-	// to be called after every read
-	virtual void resume() = 0;
-
-signals:
-	// result values:
-	//  >=  0 : readAhead
-	//   = -1 : atEnd
-	//   = -2 : atError
-	//   = -3 : data available, but no readAhead
-	void canRead(int result);
-
-protected:
-	virtual void run()
-	{
-		// implement a default to satisfy the polling subclass
-	}
-};
-
-//----------------------------------------------------------------------------
-// QPipeWriterThread
-//----------------------------------------------------------------------------
-class QPipeWriterThread : public QPipeWriter
 {
 	Q_OBJECT
 public:
@@ -444,27 +187,14 @@ public:
 	const char *data;
 	int size;
 
-	QPipeWriterThread(Q_PIPE_ID id, QObject *parent = 0) : QPipeWriter(parent)
+	QPipeWriter(Q_PIPE_ID id, QObject *parent = 0) : QThread(parent)
 	{
 		do_quit = false;
 		data = 0;
-		connect(this, SIGNAL(canWrite_p(int, int)), SIGNAL(canWrite(int, int)));
-		DuplicateHandle(GetCurrentProcess(), id, GetCurrentProcess(), &pipe, 0, false, DUPLICATE_SAME_ACCESS);
+		DuplicateHandle(GetCurrentProcess(), id, GetCurrentProcess(), &pipe, 0, FALSE, DUPLICATE_SAME_ACCESS);
 	}
 
-	virtual ~QPipeWriterThread()
-	{
-		stop();
-		CloseHandle(pipe);
-	}
-
-	virtual void start()
-	{
-		pipe_set_blocking(pipe, true);
-		QThread::start();
-	}
-
-	virtual int stop()
+	~QPipeWriter()
 	{
 		if(isRunning())
 		{
@@ -474,13 +204,12 @@ public:
 			m.unlock();
 			if(!wait(100))
 				terminate();
-			do_quit = false;
-			data = 0;
 		}
-		return size;
+		CloseHandle(pipe);
 	}
 
-	virtual int write(const char *_data, int _size)
+	// data pointer needs to remain until canWrite is emitted
+	int write(const char *_data, int _size)
 	{
 		if(!isRunning())
 			return -1;
@@ -488,7 +217,6 @@ public:
 		QMutexLocker locker(&m);
 		if(data)
 			return 0;
-
 		data = _data;
 		size = _size;
 		w.wakeOne();
@@ -516,20 +244,21 @@ protected:
 
 			m.unlock();
 
-			int ret = internalWrite(p, len);
+			if(internalWrite(p, len) != 1)
+				break;
 
 			m.lock();
 			data = 0;
-			size = ret;
 			m.unlock();
 
-			emit canWrite_p(ret < len ? -1 : 0, ret);
+			emit canWrite();
 		}
 	}
 
+signals:
+	void canWrite();
+
 private:
-	// attempts to write len bytes.  value returned is number of bytes written.
-	//   any return value less than len means a write error was encountered
 	int internalWrite(const char *p, int len)
 	{
 		int total = 0;
@@ -546,8 +275,8 @@ private:
 			int ret = pipe_write(pipe, p + total, qMin(PIPEWRITER_BLOCK, len - total));
 			if(ret == -1)
 			{
-				// from qt, don't know why
-				if(GetLastError() == 0xE8) // NT_STATUS_INVALID_USER_BUFFER
+				// from qt
+				if(GetLastError() == 0xE8 /*NT_STATUS_INVALID_USER_BUFFER*/)
 				{
 					// give the os a rest
 					msleep(100);
@@ -555,96 +284,18 @@ private:
 				}
 
 				// on any other error, end thread
-				return total;
+				return -1;
 			}
 			total += ret;
 		}
-		return total;
-	}
-
-signals:
-	void canWrite_p(int result, int bytesWritten);
-};
-
-//----------------------------------------------------------------------------
-// QPipeWriterPoll
-//----------------------------------------------------------------------------
-class QPipeWriterPoll : public QPipeWriter
-{
-	Q_OBJECT
-public:
-	Q_PIPE_ID pipe;
-	const char *data;
-	int size;
-	QTimer timer;
-	int total;
-
-	QPipeWriterPoll(Q_PIPE_ID id, QObject *parent = 0) : QPipeWriter(parent), timer(this)
-	{
-		pipe = id;
-		data = 0;
-		connect(&timer, SIGNAL(timeout()), SLOT(tryNextWrite()));
-	}
-
-	virtual ~QPipeWriterPoll()
-	{
-	}
-
-	virtual void start()
-	{
-		pipe_set_blocking(pipe, false);
-	}
-
-	// return number of bytes written
-	virtual int stop()
-	{
-		timer.stop();
-		data = 0;
-		return total;
-	}
-
-	// data pointer needs to remain until canWrite is emitted
-	virtual int write(const char *_data, int _size)
-	{
-		total = 0;
-		data = _data;
-		size = _size;
-		timer.start(0); // write at next event loop
-		return _size;
-	}
-
-private slots:
-	void tryNextWrite()
-	{
-		int written = pipe_write(pipe, data + total, size - total);
-		bool error = false;
-		if(written == -1)
-		{
-			error = true;
-			written = 0; // no bytes written on error
-
-			// from qt, they don't count it as fatal
-			if(GetLastError() == 0xE8) // NT_STATUS_INVALID_USER_BUFFER
-				error = false;
-		}
-
-		total += written;
-		if(error || total == size)
-		{
-			timer.stop();
-			data = 0;
-			emit canWrite(error ? -1 : 0, total);
-			return;
-		}
-
-		timer.setInterval(PIPEWRITER_POLL);
+		return 1;
 	}
 };
 
 //----------------------------------------------------------------------------
-// QPipeReaderThread
+// QPipeReader
 //----------------------------------------------------------------------------
-class QPipeReaderThread : public QPipeReader
+class QPipeReader : public QThread
 {
 	Q_OBJECT
 public:
@@ -653,15 +304,14 @@ public:
 	QWaitCondition w;
 	bool do_quit, active;
 
-	QPipeReaderThread(Q_PIPE_ID id, QObject *parent = 0) : QPipeReader(parent)
+	QPipeReader(Q_PIPE_ID id, QObject *parent = 0) : QThread(parent)
 	{
 		do_quit = false;
 		active = true;
-		connect(this, SIGNAL(canRead_p(int)), SIGNAL(canRead(int)));
-		DuplicateHandle(GetCurrentProcess(), id, GetCurrentProcess(), &pipe, 0, false, DUPLICATE_SAME_ACCESS);
+		DuplicateHandle(GetCurrentProcess(), id, GetCurrentProcess(), &pipe, 0, FALSE, DUPLICATE_SAME_ACCESS);
 	}
 
-	virtual ~QPipeReaderThread()
+	~QPipeReader()
 	{
 		if(isRunning())
 		{
@@ -675,16 +325,9 @@ public:
 		CloseHandle(pipe);
 	}
 
-	virtual void start()
-	{
-		pipe_set_blocking(pipe, true);
-		QThread::start();
-	}
-
-	virtual void resume()
+	void resume()
 	{
 		QMutexLocker locker(&m);
-		pipe_set_blocking(pipe, true);
 		active = true;
 		w.wakeOne();
 	}
@@ -722,13 +365,14 @@ protected:
 						result = -2;
 					else if(ret >= 1) // we got some data??  queue it
 						result = c;
+					else // no data?  not sure if this can happen
+						continue;
 
 					m.lock();
 					active = false;
-					pipe_set_blocking(pipe, false);
 					m.unlock();
 
-					emit canRead_p(result);
+					emit canRead(result);
 					break;
 				}
 			}
@@ -736,103 +380,12 @@ protected:
 	}
 
 signals:
-	void canRead_p(int result);
+	// result values:
+	//  >=  0 : readAhead
+	//   = -1 : atEnd
+	//   = -2 : atError
+	void canRead(int result);
 };
-
-//----------------------------------------------------------------------------
-// QPipeReaderPoll
-//----------------------------------------------------------------------------
-class QPipeReaderPoll : public QPipeReader
-{
-	Q_OBJECT
-public:
-	Q_PIPE_ID pipe;
-	QTimer timer;
-	bool consoleMode;
-
-	QPipeReaderPoll(Q_PIPE_ID id, QObject *parent = 0) : QPipeReader(parent), timer(this)
-	{
-		pipe = id;
-		connect(&timer, SIGNAL(timeout()), SLOT(tryRead()));
-	}
-
-	virtual ~QPipeReaderPoll()
-	{
-	}
-
-	virtual void start()
-	{
-		pipe_set_blocking(pipe, false);
-		consoleMode = pipe_is_a_console(pipe);
-		resume();
-	}
-
-	virtual void resume()
-	{
-		timer.start(0);
-	}
-
-private slots:
-	void tryRead()
-	{
-		if(consoleMode)
-			tryReadConsole();
-		else
-			tryReadPipe();
-	}
-
-private:
-	void tryReadPipe()
-	{
-		// is there data available for reading?  if so, signal.
-		int bytes = pipe_read_avail(pipe);
-		if(bytes > 0)
-		{
-			timer.stop();
-			emit canRead(-3); // no readAhead
-			return;
-		}
-
-		// no data available?  probe for EOF/error
-		unsigned char c;
-		bool done;
-		int ret = pipe_read(pipe, (char *)&c, 1, &done);
-		if(done || ret != 0) // eof, error, or data?
-		{
-			int result;
-
-			if(done) // we got EOF?
-				result = -1;
-			else if(ret == -1) // we got an error?
-				result = -2;
-			else if(ret >= 1) // we got some data??  queue it
-				result = c;
-
-			timer.stop();
-			emit canRead(result);
-			return;
-		}
-
-		timer.setInterval(PIPEREADER_POLL);
-	}
-
-	void tryReadConsole()
-	{
-		// is there data available for reading?  if so, signal.
-		int count = pipe_read_avail_console(pipe);
-		if(count > 0)
-		{
-			timer.stop();
-			emit canRead(-3); // no readAhead
-			return;
-		}
-
-		timer.setInterval(PIPEREADER_POLL);
-	}
-};
-
-// end of windows pipe writer/reader implementations
-
 #endif
 
 //----------------------------------------------------------------------------
@@ -848,15 +401,11 @@ public:
 	bool enabled;
 	bool blockReadNotify;
 	bool canWrite;
-	int writeResult;
-	int lastTaken, lastWritten;
 
 #ifdef Q_OS_WIN
 	bool atEnd, atError, forceNotify;
 	int readAhead;
 	QTimer *readTimer;
-	QTextDecoder *dec;
-	bool consoleMode;
 	QPipeWriter *pipeWriter;
 	QPipeReader *pipeReader;
 #endif
@@ -870,7 +419,6 @@ public:
 		readTimer = 0;
 		pipeWriter = 0;
 		pipeReader = 0;
-		dec = 0;
 #endif
 #ifdef Q_OS_UNIX
 		sn_read = 0;
@@ -896,9 +444,6 @@ public:
 		pipeWriter = 0;
 		delete pipeReader;
 		pipeReader = 0;
-		delete dec;
-		dec = 0;
-		consoleMode = false;
 #endif
 #ifdef Q_OS_UNIX
 		delete sn_read;
@@ -920,7 +465,6 @@ public:
 		enabled = false;
 		blockReadNotify = false;
 		canWrite = true;
-		writeResult = -1;
 	}
 
 	void setup(Q_PIPE_ID id, QPipeDevice::Type _type)
@@ -939,28 +483,8 @@ public:
 		if(type == QPipeDevice::Read)
 		{
 #ifdef Q_OS_WIN
-			// for windows, the blocking mode is chosen by the QPipeReader
-
-			// console might need a decoder
-			if(consoleMode)
-			{
-				QT_WA(
-					dec = 0;
-				,
-					dec = QTextCodec::codecForLocale()->makeDecoder();
-				)
-			}
-
 			// pipe reader
-#ifdef USE_POLL
-			pipeReader = new QPipeReaderPoll(pipe, this);
-#else
-			// console always polls, no matter what
-			if(consoleMode)
-				pipeReader = new QPipeReaderPoll(pipe, this);
-			else
-				pipeReader = new QPipeReaderThread(pipe, this);
-#endif
+			pipeReader = new QPipeReader(pipe, this);
 			connect(pipeReader, SIGNAL(canRead(int)), this, SLOT(pr_canRead(int)));
 			pipeReader->start();
 
@@ -968,13 +492,14 @@ public:
 			readTimer = new QTimer(this);
 			connect(readTimer, SIGNAL(timeout()), SLOT(t_timeout()));
 
-			// updated: now that we have pipeReader, this no longer
-			//   polls for data.  it only does delayed singleshot
-			//   notifications.
+			// NOTE: now that we have pipeReader, this no longer
+			//   polls for data.  it only does delayed
+			//   singleshot notifications.
 			readTimer->setSingleShot(true);
+			//readTimer->start(100);
 #endif
 #ifdef Q_OS_UNIX
-			pipe_set_blocking(pipe, false);
+			setBlocking(pipe, false);
 
 			// socket notifier
 			sn_read = new QSocketNotifier(pipe, QSocketNotifier::Read, this);
@@ -983,9 +508,8 @@ public:
 		}
 		else
 		{
-			// for windows, the blocking mode is chosen by the QPipeWriter
 #ifdef Q_OS_UNIX
-			pipe_set_blocking(pipe, false);
+			setBlocking(pipe, false);
 
 			// socket notifier
 			sn_write = new QSocketNotifier(pipe, QSocketNotifier::Write, this);
@@ -1013,28 +537,42 @@ public slots:
 			emit q->notify();
 			return;
 		}
+
+		// NOTE: disabling this since we now have pipeReader
+		// is there data available for reading?  if so, signal.
+		/*int bytes = pipe_read_avail(pipe);
+		if(bytes > 0)
+		{
+			blockReadNotify = true;
+			emit q->notify();
+			return;
+		}
+
+		// no data available?  probe for EOF/error
+		unsigned char c;
+		bool done;
+		int ret = pipe_read(pipe, (char *)&c, 1, &done);
+		if(done || ret != 0) // eof, error, or data?
+		{
+			if(done) // we got EOF?
+				atEnd = true;
+			else if(ret == -1) // we got an error?
+				atError = true;
+			else if(ret >= 1) // we got some data??  queue it
+				readAhead = c;
+
+			blockReadNotify = true;
+			emit q->notify();
+			return;
+		}*/
 #endif
 	}
 
-	void pw_canWrite(int result, int bytesWritten)
+	void pw_canWrite()
 	{
 #ifdef Q_OS_WIN
-		if(result == 0)
-		{
-			writeResult = 0;
-			lastWritten = lastTaken; // success means all bytes
-		}
-		else
-		{
-			writeResult = -1;
-			lastWritten = bytesWritten;
-		}
-
 		canWrite = true;
 		emit q->notify();
-#else
-		Q_UNUSED(result);
-		Q_UNUSED(bytesWritten);
 #endif
 	}
 
@@ -1046,7 +584,7 @@ public slots:
 			atEnd = true;
 		else if(result == -2)
 			atError = true;
-		else if(result != -3)
+		else
 			readAhead = result;
 		emit q->notify();
 #else
@@ -1068,9 +606,6 @@ public slots:
 	void sn_write_activated(int)
 	{
 #ifdef Q_OS_UNIX
-		writeResult = 0;
-		lastWritten = lastTaken;
-
 		canWrite = true;
 		sn_write->setEnabled(false);
 		emit q->notify();
@@ -1124,9 +659,6 @@ void QPipeDevice::take(Q_PIPE_ID id, Type t)
 
 void QPipeDevice::enable()
 {
-#ifdef Q_OS_WIN
-	d->consoleMode = pipe_is_a_console(d->pipe);
-#endif
 	d->enable();
 }
 
@@ -1145,7 +677,7 @@ void QPipeDevice::release()
 bool QPipeDevice::winDupHandle()
 {
 	HANDLE h;
-	if(!DuplicateHandle(GetCurrentProcess(), d->pipe, GetCurrentProcess(), &h, 0, false, DUPLICATE_SAME_ACCESS))
+	if(!DuplicateHandle(GetCurrentProcess(), d->pipe, GetCurrentProcess(), &h, 0, FALSE, DUPLICATE_SAME_ACCESS))
 		return false;
 
 	Type t = d->type;
@@ -1157,16 +689,10 @@ bool QPipeDevice::winDupHandle()
 
 int QPipeDevice::bytesAvailable() const
 {
-	int n;
+	int n = pipe_read_avail(d->pipe);
 #ifdef Q_OS_WIN
-	if(d->consoleMode)
-		n = pipe_read_avail_console(d->pipe);
-	else
-		n = pipe_read_avail(d->pipe);
 	if(d->readAhead != -1)
 		++n;
-#else
-	n = pipe_read_avail(d->pipe);
 #endif
 	return n;
 }
@@ -1181,16 +707,7 @@ int QPipeDevice::read(char *data, int maxsize)
 		return -1;
 
 #ifdef Q_OS_WIN
-	// for windows console:
-	// the number of bytes in utf8 can exceed the number of actual
-	//   characters it represents.  to be safe, we'll assume that
-	//   utf8 could outnumber characters X:1.  this does mean that
-	//   the maxsize parameter needs to be at least X to do
-	//   anything.  (X = CONSOLE_CHAREXPAND)
-	if(d->consoleMode && maxsize < CONSOLE_CHAREXPAND)
-		return -1;
-
-	// for resuming the pipeReader
+	// for resuming the pipeReader thread
 	bool wasBlocked = d->blockReadNotify;
 #endif
 
@@ -1232,40 +749,7 @@ int QPipeDevice::read(char *data, int maxsize)
 
 	// read from the pipe now
 	bool done;
-	int ret;
-	if(d->consoleMode)
-	{
-		// read a fraction of the number of characters as requested,
-		//   to guarantee the result fits
-		int num = size / CONSOLE_CHAREXPAND;
-
-#ifdef QPIPE_SECURE
-		QSecureArray destbuf(num * sizeof(ushort), 0);
-#else
-		QByteArray destbuf(num * sizeof(ushort), 0);
-#endif
-		ushort *dest = (ushort *)destbuf.data();
-
-		ret = pipe_read_console(d->pipe, dest, num, &done, d->dec);
-		if(ret != -1)
-		{
-			// for security, encode one character at a time without
-			//   performing a QString conversion of the whole thing
-			QTextCodec *codec = QTextCodec::codecForMib(106);
-			QTextCodec::ConverterState cstate(QTextCodec::IgnoreHeader);
-			int at = 0;
-			for(int n = 0; n < ret; ++n)
-			{
-				QChar c(dest[n]);
-				QByteArray out = codec->fromUnicode(&c, 1, &cstate);
-				memcpy(data + offset + at, out.data(), out.size());
-				at += out.size();
-			}
-			ret = at; // change ret to actual bytes
-		}
-	}
-	else
-		ret = pipe_read(d->pipe, data + offset, size, &done);
+	int ret = pipe_read(d->pipe, data + offset, size, &done);
 	if(done || ret == -1) // eof or error
 	{
 		// did we already have some data?  if so, defer the eof/error
@@ -1277,8 +761,8 @@ int QPipeDevice::read(char *data, int maxsize)
 			else
 				d->atError = true;
 
-			// readTimer is a singleshot, so we have to start it
-			//   for forceNotify to work
+			// NOTE: now that readTimer is a singleshot, we have
+			//   to start it for forceNotify to work
 			d->readTimer->start();
 		}
 		// otherwise, bail
@@ -1343,45 +827,12 @@ int QPipeDevice::write(const char *data, int size)
 #ifdef Q_OS_WIN
 	if(!d->pipeWriter)
 	{
-#ifdef USE_POLL
-		d->pipeWriter = new QPipeWriterPoll(d->pipe, d);
-#else
-		// console always polls, no matter what
-		if(d->consoleMode)
-			d->pipeWriter = new QPipeReaderPoll(d->pipe, d);
-		else
-			d->pipeWriter = new QPipeWriterThread(d->pipe, d);
-#endif
-		connect(d->pipeWriter, SIGNAL(canWrite(int, int)), d, SLOT(pw_canWrite(int, int)));
+		d->pipeWriter = new QPipeWriter(d->pipe, d);
+		connect(d->pipeWriter, SIGNAL(canWrite()), d, SLOT(pw_canWrite()));
 		d->pipeWriter->start();
 	}
-
-	if(d->consoleMode)
-	{
-		// Note: we convert to QString here, but it should not be a
-		//   security issue (see pipe_write_console comment above)
-
-		// for console, just write direct.  we won't use pipewriter
-		QString out = QString::fromUtf8(QByteArray(data, size));
-		r = pipe_write_console(d->pipe, out.utf16(), out.length());
-		if(r == -1)
-			return -1;
-
-		// convert characters to bytes
-		r = out.mid(0, r).toUtf8().size();
-
-		// simulate.  we invoke the signal of pipewriter rather than our
-		//   own slot, so that the invoke can be cancelled.
-		d->canWrite = false;
-		QMetaObject::invokeMethod(d->pipeWriter, "canWrite", Qt::QueuedConnection, Q_ARG(int, 0), Q_ARG(int, r));
-	}
-	else
-	{
-		d->canWrite = false;
-		r = d->pipeWriter->write(data, size);
-	}
-
-	d->lastTaken = r;
+	d->canWrite = false;
+	r = d->pipeWriter->write(data, size);
 	if(r == -1)
 	{
 		close();
@@ -1390,7 +841,6 @@ int QPipeDevice::write(const char *data, int size)
 #endif
 #ifdef Q_OS_UNIX
 	r = pipe_write(d->pipe, data, size);
-	d->lastTaken = r;
 	if(r == -1)
 	{
 		close();
@@ -1401,13 +851,6 @@ int QPipeDevice::write(const char *data, int size)
 	d->sn_write->setEnabled(true);
 #endif
 	return r;
-}
-
-int QPipeDevice::writeResult(int *written) const
-{
-	if(written)
-		*written = d->lastWritten;
-	return d->writeResult;
 }
 
 //----------------------------------------------------------------------------
@@ -1429,33 +872,26 @@ public:
 	QPipeDevice::Type type;
 	QByteArray buf;
 	QByteArray curWrite;
-
-#ifdef Q_OS_WIN
-	bool consoleMode;
-#endif
-
 #ifdef QPIPE_SECURE
 	bool secure;
 	QSecureArray sec_buf;
 	QSecureArray sec_curWrite;
 #endif
-	QTimer readTrigger, writeTrigger, closeTrigger, writeErrorTrigger;
+	QTimer readTrigger, writeTrigger, closeTrigger;
 	bool canRead, activeWrite;
 	int lastWrite;
 	bool closeLater;
 	bool closing;
 
-	Private(QPipeEnd *_q) : QObject(_q), q(_q), pipe(this), readTrigger(this), writeTrigger(this), closeTrigger(this), writeErrorTrigger(this)
+	Private(QPipeEnd *_q) : QObject(_q), q(_q), pipe(this), readTrigger(this), writeTrigger(this), closeTrigger(this)
 	{
 		readTrigger.setSingleShot(true);
 		writeTrigger.setSingleShot(true);
 		closeTrigger.setSingleShot(true);
-		writeErrorTrigger.setSingleShot(true);
 		connect(&pipe, SIGNAL(notify()), SLOT(pipe_notify()));
 		connect(&readTrigger, SIGNAL(timeout()), SLOT(doRead()));
 		connect(&writeTrigger, SIGNAL(timeout()), SLOT(doWrite()));
 		connect(&closeTrigger, SIGNAL(timeout()), SLOT(doClose()));
-		connect(&writeErrorTrigger, SIGNAL(timeout()), SLOT(doWriteError()));
 		reset(ResetSessionAndData);
 	}
 
@@ -1465,7 +901,6 @@ public:
 		readTrigger.stop();
 		writeTrigger.stop();
 		closeTrigger.stop();
-		writeErrorTrigger.stop();
 		canRead = false;
 		activeWrite = false;
 		lastWrite = 0;
@@ -1489,9 +924,6 @@ public:
 	void setup(Q_PIPE_ID id, QPipeDevice::Type _type)
 	{
 		type = _type;
-#ifdef Q_OS_WIN
-		consoleMode = pipe_is_a_console(id);
-#endif
 		pipe.take(id, type);
 	}
 
@@ -1622,11 +1054,6 @@ public slots:
 		}
 		else
 		{
-			int x;
-			int writeResult = pipe.writeResult(&x);
-			if(writeResult == -1)
-				lastWrite = x; // if error, we may have written less bytes
-
 			// remove what we just wrote
 			bool moreData = false;
 #ifdef QPIPE_SECURE
@@ -1647,32 +1074,26 @@ public slots:
 #endif
 			curWrite.clear();
 
-			x = lastWrite;
+			int x = lastWrite;
 			lastWrite = 0;
 
-			if(writeResult == 0)
+			// more to write?  do it
+			if(moreData)
 			{
-				// more to write?  do it
-				if(moreData)
+				writeTrigger.start(0);
+			}
+			// done with all writing
+			else
+			{
+				activeWrite = false;
+				if(closeLater)
 				{
-					writeTrigger.start(0);
-				}
-				// done with all writing
-				else
-				{
-					activeWrite = false;
-					if(closeLater)
-					{
-						closeLater = false;
-						closeTrigger.start(0);
-					}
+					closeLater = false;
+					closeTrigger.start(0);
 				}
 			}
-			else
-				writeErrorTrigger.start();
 
-			if(x > 0)
-				emit q->bytesWritten(x);
+			emit q->bytesWritten(x);
 		}
 	}
 
@@ -1690,33 +1111,11 @@ public slots:
 			return;
 		}
 
-		int max;
-#ifdef Q_OS_WIN
-		if(consoleMode)
-		{
-			// need a minimum amount for console
-			if(left < CONSOLE_CHAREXPAND)
-			{
-				canRead = true;
-				return;
-			}
-
-			// don't use pipe.bytesAvailable() for console mode,
-			//   as it is somewhat bogus.  fortunately, there is
-			//   no problem with overreading from the console.
-			max = qMin(left, 32);
-		}
-		else
-#endif
-		{
-			max = qMin(left, pipe.bytesAvailable());
-		}
-
 		int ret;
 #ifdef QPIPE_SECURE
 		if(secure)
 		{
-			QSecureArray a(max);
+			QSecureArray a(qMin(left, pipe.bytesAvailable()));
 			ret = pipe.read(a.data(), a.size());
 			if(ret >= 1)
 			{
@@ -1727,7 +1126,7 @@ public slots:
 		else
 #endif
 		{
-			QByteArray a(max, 0);
+			QByteArray a(qMin(left, pipe.bytesAvailable()), 0);
 			ret = pipe.read(a.data(), a.size());
 			if(ret >= 1)
 			{
@@ -1787,12 +1186,6 @@ public slots:
 	{
 		reset(ResetSession);
 		emit q->closed();
-	}
-
-	void doWriteError()
-	{
-		reset(ResetSession);
-		emit q->error(QPipeEnd::ErrorBroken);
 	}
 };
 
@@ -2021,7 +1414,7 @@ bool QPipe::create()
 	SECURITY_ATTRIBUTES secAttr;
 	memset(&secAttr, 0, sizeof secAttr);
 	secAttr.nLength = sizeof secAttr;
-	secAttr.bInheritHandle = true;
+	secAttr.bInheritHandle = TRUE;
 
 	HANDLE r, w;
 	if(!CreatePipe(&r, &w, &secAttr, 0))

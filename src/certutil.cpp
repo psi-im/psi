@@ -1,7 +1,6 @@
 #include <QtCrypto>
 #include <QStringList>
 #include <QDomDocument>
-#include <QDebug>
 
 #include "applicationinfo.h"
 #include "certutil.h"
@@ -40,7 +39,7 @@ CertificateCollection CertUtil::allCertificates()
 		store.setNameFilters(QStringList("*.crt") + QStringList("*.pem"));
 		QStringList cert_files = store.entryList();
 		for (QStringList::ConstIterator c = cert_files.begin(); c != cert_files.end(); ++c) {
-			//qDebug() << "certutil.cpp: Reading " << store.filePath(*c);
+			//qDebug(QString("certutil.cpp: Reading %1").arg(store.filePath(*c)));
 			ConvertResult result;
 			Certificate cert = Certificate::fromPEMFile(store.filePath(*c),&result);
 			if (result == ConvertGood) {

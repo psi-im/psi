@@ -13,7 +13,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 
@@ -32,14 +32,6 @@ static void logDebug(const QString &str)
 {
 	if(g_pluginman)
 		g_pluginman->appendDiagnosticText(str + '\n');
-}
-
-static bool validVersion(int ver)
-{
-	// make sure the provider isn't newer than qca
-	if((ver & 0xffff00) <= (QCA_VERSION & 0xffff00))
-		return true;
-	return false;
 }
 
 class PluginInstance
@@ -218,11 +210,6 @@ public:
 			return;
 		init_done = true;
 		p->init();
-
-		// load configuration
-		//QVariantMap conf = getProviderConfig(p->name());
-		//if(!conf.isEmpty())
-		//	p->configChanged(conf);
 	}
 
 private:
@@ -272,14 +259,6 @@ void ProviderManager::scan()
 			if(i->p && haveAlready(i->p->name()))
 			{
 				logDebug("skipping, we already have it");
-				delete i;
-				continue;
-			}
-
-			int ver = i->p->version();
-			if(!validVersion(ver))
-			{
-				logDebug(QString().sprintf("plugin version 0x%06x is in the future", ver));
 				delete i;
 				continue;
 			}
@@ -343,14 +322,6 @@ void ProviderManager::scan()
 				continue;
 			}
 
-			int ver = i->p->version();
-			if(!validVersion(ver))
-			{
-				logDebug(QString().sprintf("plugin version 0x%06x is in the future", ver));
-				delete i;
-				continue;
-			}
-
 			addItem(i, -1);
 		}
 	}
@@ -362,13 +333,6 @@ bool ProviderManager::add(Provider *p, int priority)
 	if(haveAlready(p->name()))
 	{
 		logDebug("skipping, we already have it");
-		return false;
-	}
-
-	int ver = p->version();
-	if(!validVersion(ver))
-	{
-		logDebug(QString().sprintf("plugin version 0x%06x is in the future", ver));
 		return false;
 	}
 

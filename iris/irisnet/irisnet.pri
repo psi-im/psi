@@ -1,10 +1,12 @@
 QT *= network
-INCLUDEPATH += $$PWD
+CONFIG *= crypto
 
 # libidn
 #LIBS += -lidn
 
 include(jdns/jdns.pri)
+
+INCLUDEPATH += $$PWD
 
 HEADERS += \
 	$$PWD/jdnsshared.h \
@@ -24,9 +26,11 @@ SOURCES += \
 	$$PWD/netinterface.cpp \
 	$$PWD/netnames.cpp
 
-SOURCES += \
-	$$PWD/netinterface_unix.cpp \
-	$$PWD/netnames_jdns.cpp
+SOURCES += $$PWD/netnames_jdns.cpp
+
+unix {
+	SOURCES += $$PWD/netinterface_unix.cpp
+}
 
 include(legacy/legacy.pri)
 
