@@ -10,6 +10,10 @@
 #include <sys/utsname.h>
 #endif
 
+#ifdef Q_WS_WIN
+#include <windows.h>
+#endif
+
 #include "systeminfo.h"
 
 SystemInfo::SystemInfo()
@@ -126,7 +130,15 @@ SystemInfo::SystemInfo()
 		}
 	}
 #elif defined(Q_WS_MAC)
-	os_str_ = "Mac OS X";
+	QSysInfo::MacVersion v = QSysInfo::MacintoshVersion;
+	if(v == QSysInfo::MV_10_3)
+		os_str_ = "Mac OS X 10.3";
+	else if(v == QSysInfo::MV_10_4)
+		os_str_ = "Mac OS X 10.4";
+	else if(v == QSysInfo::MV_10_5)
+		os_str_ = "Mac OS X 10.5";
+	else
+		os_str_ = "Mac OS X";
 #endif
 
 #if defined(Q_WS_WIN)
