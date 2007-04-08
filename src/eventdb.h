@@ -57,7 +57,7 @@ class EDBHandle : public QObject
 {
 	Q_OBJECT
 public:
-	enum { Read, Write };
+	enum { Read, Write, Erase };
 	EDBHandle(EDB *);
 	~EDBHandle();
 
@@ -67,6 +67,7 @@ public:
 	void get(const XMPP::Jid &jid, const QString &id, int direction, int len);
 	void find(const QString &, const XMPP::Jid &, const QString &id, int direction);
 	void append(const XMPP::Jid &, PsiEvent *);
+	void erase(const XMPP::Jid &);
 
 	bool busy() const;
 	const EDBResult *result() const;
@@ -101,6 +102,7 @@ protected:
 	virtual int get(const XMPP::Jid &jid, const QString &id, int direction, int len)=0;
 	virtual int append(const XMPP::Jid &, PsiEvent *)=0;
 	virtual int find(const QString &, const XMPP::Jid &, const QString &id, int direction)=0;
+	virtual int erase(const XMPP::Jid &)=0;
 	void resultReady(int, EDBResult *);
 	void writeFinished(int, bool);
 
@@ -117,6 +119,7 @@ private:
 	int op_get(const XMPP::Jid &, const QString &id, int direction, int len);
 	int op_find(const QString &, const XMPP::Jid &, const QString &id, int direction);
 	int op_append(const XMPP::Jid &, PsiEvent *);
+	int op_erase(const XMPP::Jid &);
 };
 
 class EDBFlatFile : public EDB
@@ -131,6 +134,7 @@ public:
 	int get(const XMPP::Jid &jid, const QString &id, int direction, int len);
 	int find(const QString &, const XMPP::Jid &, const QString &id, int direction);
 	int append(const XMPP::Jid &, PsiEvent *);
+	int erase(const XMPP::Jid &);
 
 	class File;
 
@@ -144,6 +148,7 @@ private:
 
 	File *findFile(const XMPP::Jid &) const;
 	File *ensureFile(const XMPP::Jid &);
+	bool deleteFile(const XMPP::Jid &);
 };
 
 class EDBFlatFile::File : public QObject
@@ -157,6 +162,8 @@ public:
 	void touch();
 	PsiEvent *get(int);
 	bool append(PsiEvent *);
+
+	static QString jidToFileName(const XMPP::Jid &);
 
 signals:
 	void timeout();
