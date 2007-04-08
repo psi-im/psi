@@ -256,7 +256,7 @@ public:
 			w += pix.width() + margin;
 			h = qMax( h, pix.height() + 2*margin );
 
-			connect(icon, SIGNAL(pixmapChanged(const QPixmap &)), SLOT(update()));
+			connect(icon, SIGNAL(pixmapChanged()), SLOT(update()));
 			icon->activated(false); // start animation
 		}
 
@@ -406,7 +406,7 @@ public:
 		icon = i;
 		w = iconW;
 
-		connect(icon, SIGNAL(pixmapChanged(const QPixmap &)), SLOT(update()));
+		connect(icon, SIGNAL(pixmapChanged()), SLOT(update()));
 		icon->activated(false);
 
 		h = icon->pixmap().height();
@@ -535,7 +535,7 @@ public:
 	{
 #ifndef WIDGET_PLUGIN
 		if ( icon ) {
-			connect(icon, SIGNAL(pixmapChanged(const QPixmap &)), SLOT(iconUpdated(const QPixmap &)));
+			connect(icon, SIGNAL(pixmapChanged()), SLOT(iconUpdated()));
 			if ( activate )
 				icon->activated(true); // FIXME: should icon play sound when it's activated on button?
 		}
@@ -560,30 +560,28 @@ public:
 
 	void update()
 	{
-#ifndef WIDGET_PLUGIN
-		if ( icon )
-			iconUpdated( icon->pixmap() );
-#endif
+		iconUpdated();
 	}
 
 	void updateIcon()
 	{
-#ifndef WIDGET_PLUGIN
-		if ( icon )
-			iconUpdated( icon->pixmap() );
-		else
-			iconUpdated( QPixmap() );
-#endif
+		iconUpdated();
 	}
 
 public slots:
-	void iconUpdated(const QPixmap &pix)
+	void iconUpdated()
 	{
 		button->setUpdatesEnabled(FALSE);
-// 		button->setToolButtonStyle(textVisible || button->text().isEmpty() ? 
-// 		                           Qt::ToolButtonTextBesideIcon :
-// 		                           Qt::ToolButtonIconOnly);
+#ifndef WIDGET_PLUGIN
+		button->setIcon(icon ? icon->pixmap() : QPixmap());
+#else
+		QPixmap pix;
+		if (!iconName.isEmpty()) {
+			QPixmap pix((const char **)cancel_xpm);
+			pix = QPixmap(pix);
+		}
 		button->setIcon(pix);
+#endif
 		button->setUpdatesEnabled(TRUE);
 		button->update();
 	}
@@ -629,13 +627,7 @@ void IconButton::setPsiIcon(const QString &name)
 	setPsiIcon( IconsetFactory::iconPtr(name) );
 #else
 	d->iconName = name;
-
-	if ( !name.isEmpty() ) {
-		QPixmap pix((const char **)cancel_xpm);
-		d->iconUpdated(QPixmap( pix ));
-	}
-	else
-		d->iconUpdated(QPixmap());
+	d->iconUpdated();
 #endif
 }
 
@@ -715,13 +707,11 @@ public:
 	{
 #ifndef WIDGET_PLUGIN
 		if ( icon ) {
-			connect(icon, SIGNAL(pixmapChanged(const QPixmap &)), SLOT(iconUpdated(const QPixmap &)));
+			connect(icon, SIGNAL(pixmapChanged()), SLOT(iconUpdated()));
 			if ( activate )
 				icon->activated(true); // FIXME: should icon play sound when it's activated on button?
-			iconUpdated( icon->pixmap() );
 		}
-		else
-			iconUpdated( QPixmap() );
+		iconUpdated();
 #endif
 	}
 
@@ -741,21 +731,23 @@ public:
 
 	void update()
 	{
-#ifndef WIDGET_PLUGIN
-		if ( icon )
-			iconUpdated( icon->pixmap() );
-#endif
+		iconUpdated();
 	}
 
 private slots:
-	void iconUpdated(const QPixmap &pix)
+	void iconUpdated()
 	{
 		button->setUpdatesEnabled(FALSE);
+#ifndef WIDGET_PLUGIN
+		QPixmap pix = icon ? icon->pixmap() : QPixmap();
 		if (pix.isNull())
 			button->QToolButton::setIcon(QIcon());
 		else
 			button->QToolButton::setIcon(pix);
-		button->setIcon(pix);
+		button->setIcon(icon ? icon->pixmap() : QPixmap());
+#else
+		button->setIcon(QPixmap());
+#endif
 		button->setUpdatesEnabled(TRUE);
 		button->update();
 	}

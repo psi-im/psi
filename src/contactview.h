@@ -379,7 +379,7 @@ public:
 
 public slots:
 	void resetAnim();
-	void iconUpdated(const QPixmap &);
+	void iconUpdated();
 	void animateNick();
 	void stopAnimateNick();
 

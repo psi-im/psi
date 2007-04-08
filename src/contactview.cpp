@@ -3399,7 +3399,7 @@ void ContactViewItem::setIcon(const PsiIcon *icon, bool alert)
 			d->icon = new AlertIcon(icon);
 
 		if (!PsiOptions::instance()->getOption("options.ui.contactlist.temp-no-roster-animation").toBool()) {
-			connect(d->icon, SIGNAL(pixmapChanged(const QPixmap &)), SLOT(iconUpdated(const QPixmap &)));
+			connect(d->icon, SIGNAL(pixmapChanged()), SLOT(iconUpdated()));
 		}
 		d->icon->activated();
 
@@ -3409,9 +3409,9 @@ void ContactViewItem::setIcon(const PsiIcon *icon, bool alert)
 	setPixmap(0, pix);
 }
 
-void ContactViewItem::iconUpdated(const QPixmap &pix)
+void ContactViewItem::iconUpdated()
 {
-	setPixmap(0, pix);
+	setPixmap(0, d->icon ? d->icon->pixmap() : QPixmap());
 }
 
 void ContactViewItem::animateNick()

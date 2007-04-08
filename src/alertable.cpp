@@ -78,7 +78,7 @@ void Alertable::setAlert(const PsiIcon* icon)
 		alert_ = new AlertIcon(icon);
 		alert_->activated(false);
 
-		connect(alert_, SIGNAL(pixmapChanged(const QPixmap &)), SLOT(alertFrameUpdated()));
+		connect(alert_, SIGNAL(pixmapChanged()), SLOT(alertFrameUpdated()));
 		alertFrameUpdated();
 	}
 }

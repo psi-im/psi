@@ -260,19 +260,19 @@ public:
 	
 	void connectInstance(PsiIcon *icon)
 	{
-		connect(this, SIGNAL(pixmapChanged(const QPixmap &)), icon, SIGNAL(pixmapChanged(const QPixmap &)));
-		connect(this, SIGNAL(iconModified(const QPixmap &)),  icon, SIGNAL(iconModified(const QPixmap &)));
+		connect(this, SIGNAL(pixmapChanged()), icon, SIGNAL(pixmapChanged()));
+		connect(this, SIGNAL(iconModified()),  icon, SIGNAL(iconModified()));
 	}
 	
 	void disconnectInstance(PsiIcon *icon)
 	{
-		disconnect(this, SIGNAL(pixmapChanged(const QPixmap &)), icon, SIGNAL(pixmapChanged(const QPixmap &)));
-		disconnect(this, SIGNAL(iconModified(const QPixmap &)),  icon, SIGNAL(iconModified(const QPixmap &)));
+		disconnect(this, SIGNAL(pixmapChanged()), icon, SIGNAL(pixmapChanged()));
+		disconnect(this, SIGNAL(iconModified()),  icon, SIGNAL(iconModified()));
 	}
 
 signals:
-	void pixmapChanged(const QPixmap &);
-	void iconModified(const QPixmap &);
+	void pixmapChanged();
+	void iconModified();
 
 public:
 	const QPixmap &pixmap() const
@@ -283,7 +283,7 @@ public:
 	}
 
 public slots:
-	void animUpdate() { emit pixmapChanged( pixmap() ); }
+	void animUpdate() { emit pixmapChanged(); }
 
 public:
 	QString name;
@@ -440,8 +440,8 @@ void PsiIcon::setImpix(const Impix &impix, bool doDetach)
 		detach();
 
 	d->impix = impix;
-	emit d->pixmapChanged( pixmap() );
-	emit d->iconModified( d->impix.pixmap() );
+	emit d->pixmapChanged();
+	emit d->iconModified();
 }
 
 /**
@@ -478,8 +478,8 @@ void PsiIcon::setAnim(const Anim &anim, bool doDetach)
 		activated(false); // restart the animation, but don't play the sound
 	}
 
-	emit d->pixmapChanged( pixmap() );
-	emit d->iconModified( d->impix.pixmap() );
+	emit d->pixmapChanged();
+	emit d->iconModified();
 }
 
 /**
@@ -500,8 +500,8 @@ void PsiIcon::removeAnim(bool doDetach)
 	delete d->anim;
 	d->anim = 0;
 
-	emit d->pixmapChanged( pixmap() );
-	//emit d->iconModified( d->impix.pixmap() );
+	emit d->pixmapChanged();
+	//emit d->iconModified();
 }
 
 /**
@@ -628,8 +628,8 @@ bool PsiIcon::loadFromData(const QByteArray &ba, bool isAnim)
 		ret = true;
 
 	if ( ret ) {
-		emit d->pixmapChanged( pixmap() );
-		emit d->iconModified( d->impix.pixmap() );
+		emit d->pixmapChanged();
+		emit d->iconModified();
 	}
 
 	return ret;
