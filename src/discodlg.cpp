@@ -32,6 +32,7 @@
 #include <QPushButton>
 #include <QToolButton>
 #include <QToolBar>
+#include <QScrollBar>
 
 #include <QActionGroup>
 #include <QEvent>
@@ -336,11 +337,11 @@ void DiscoListItem::copyItem(const DiscoItem &it)
 QString DiscoListItem::text (int c) const
 {
 	if (c == 0)
-		return di.name();
+		return di.name().simplified();
 	else if (c == 1)
 		return di.jid().full();
 	else if (c == 2)
-		return di.node();
+		return di.node().simplified();
 	return "";
 }
 
@@ -710,8 +711,11 @@ public:
 	DiscoListView(QWidget *parent);
 
 protected:
-	bool event(QEvent* e);
 	bool maybeTip(const QPoint &);
+
+	// reimplemented
+	bool event(QEvent* e);
+	void resizeEvent(QResizeEvent*);
 };
 
 DiscoListView::DiscoListView(QWidget *parent)
@@ -720,6 +724,20 @@ DiscoListView::DiscoListView(QWidget *parent)
 	addColumn( tr( "Name" ) );
 	addColumn( tr( "JID" ) );
 	addColumn( tr( "Node" ) );
+	for (int i = 0; i < 3; i++)
+		setColumnWidthMode(i, Q3ListView::Manual);
+	header()->setStretchEnabled(true, 0);
+}
+
+void DiscoListView::resizeEvent(QResizeEvent* e)
+{
+	Q3ListView::resizeEvent(e);
+
+	setColumnWidth(2, header()->fontMetrics().width(columnText(2)) * 2);
+	float remainingWidth = visibleWidth() - columnWidth(2);
+	setColumnWidth(1, int(remainingWidth * 0.3));
+
+	header()->adjustHeaderSize();
 }
 
 bool DiscoListView::maybeTip(const QPoint &pos)
