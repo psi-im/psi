@@ -26,9 +26,10 @@
 #include "im.h"
 #include "applicationinfo.h"
 
-#include <qfileinfo.h>
-#include <q3dict.h>
-#include <q3ptrlist.h>
+#include <QFileInfo>
+#include <Q3Dict>
+#include <Q3PtrList>
+#include <QCoreApplication>
 
 using namespace XMPP;
 
@@ -232,6 +233,7 @@ public:
 };
 
 PsiIconset::PsiIconset()
+	: QObject(QCoreApplication::instance())
 {
 	d = new Private(this);
 }
