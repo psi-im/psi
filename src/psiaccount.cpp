@@ -90,6 +90,9 @@
 #endif
 #include "pepmanager.h"
 #include "serverinfomanager.h"
+#ifdef WHITEBOARDING
+#include "wbmanager.h"
+#endif
 #include "bookmarkmanager.h"
 #include "vcardfactory.h"
 //#include "qssl.h"
@@ -281,6 +284,11 @@ public:
 	GoogleFTManager* googleFTManager;
 #endif
 	
+#ifdef WHITEBOARDING
+	// Whiteboard
+	WbManager* wbManager;
+#endif
+
 	// PubSub
 	ServerInfoManager* serverInfoManager;
 	PEPManager* pepManager;
@@ -519,6 +527,10 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent)
 	connect(d->cp, SIGNAL(actionHistory(const Jid &)),SLOT(actionHistory(const Jid &)));
 	connect(d->cp, SIGNAL(actionOpenChat(const Jid &)),SLOT(actionOpenChat(const Jid &)));
 	connect(d->cp, SIGNAL(actionOpenChatSpecific(const Jid &)),SLOT(actionOpenChatSpecific(const Jid &)));
+#ifdef WHITEBOARDING
+	connect(d->cp, SIGNAL(actionOpenWhiteboard(const Jid &)),SLOT(actionOpenWhiteboard(const Jid &)));
+	connect(d->cp, SIGNAL(actionOpenWhiteboardSpecific(const Jid &)),SLOT(actionOpenWhiteboardSpecific(const Jid &)));
+#endif
 	connect(d->cp, SIGNAL(actionAgentSetStatus(const Jid &, Status &)),SLOT(actionAgentSetStatus(const Jid &, Status &)));
 	connect(d->cp, SIGNAL(actionInfo(const Jid &)),SLOT(actionInfo(const Jid &)));
 	connect(d->cp, SIGNAL(actionAuth(const Jid &)),SLOT(actionAuth(const Jid &)));
@@ -547,6 +559,11 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent)
 	d->pepManager = new PEPManager(d->client, d->serverInfoManager);
 	connect(d->pepManager,SIGNAL(itemPublished(const Jid&, const QString&, const PubSubItem&)),SLOT(itemPublished(const Jid&, const QString&, const PubSubItem&)));
 	d->pepAvailable = false;
+
+#ifdef WHITEBOARDING
+	 // Initialize Whiteboard manager
+	d->wbManager = new WbManager(d->client, this);
+#endif
 
 	// Avatars
 	d->avatarFactory = new AvatarFactory(this);
@@ -676,6 +693,9 @@ PsiAccount::~PsiAccount()
 	delete d->capsManager;
 	delete d->pepManager;
 	delete d->serverInfoManager;
+#ifdef WHITEBOARDING
+	delete d->wbManager;
+#endif
 	delete d->bookmarkManager;
 	delete d->client;
 	delete d->httpAuthManager;
@@ -2943,6 +2963,45 @@ void PsiAccount::actionOpenChatSpecific(const Jid &j)
 {
 	openChat(j);
 }
+
+#ifdef WHITEBOARDING
+void PsiAccount::actionOpenWhiteboard(const Jid &j)
+{
+	UserListItem *u = find(j);
+	if(!u)
+		return;
+
+	// if 'j' is bare, we might want to switch to a specific resource
+	QString res;
+	if(j.resource().isEmpty()) {
+		if(u->isAvailable()) {
+			QString pr = (*u->userResourceList().priority()).name();
+			if(!pr.isEmpty())
+				res = pr;
+		}
+	}
+
+	if(!res.isEmpty())
+	{
+		actionOpenWhiteboardSpecific(j.withResource(res));
+	}
+	else
+	{
+		actionOpenWhiteboardSpecific(j);
+	}
+}
+
+/*! \brief Opens a whiteboard to \a target.
+ *  \a ownJid and \a groupChat should be specified in the case of a group chat session.
+ */
+
+void PsiAccount::actionOpenWhiteboardSpecific(const Jid &target, Jid ownJid, bool groupChat)
+{
+	if(ownJid.isEmpty())
+		ownJid = jid();
+	d->wbManager->openWhiteboard(target, ownJid, groupChat);
+}
+#endif
 
 void PsiAccount::actionAgentSetStatus(const Jid &j, Status &s)
 {
