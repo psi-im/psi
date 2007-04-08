@@ -40,6 +40,7 @@ MiniClient::MiniClient(QObject *parent)
 	tlsHandler = 0;
 	stream = 0;
 	auth = false;
+	force_ssl = false;
 }
 
 MiniClient::~MiniClient()
@@ -61,14 +62,15 @@ void MiniClient::reset()
 	conn = 0;
 }
 
-void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool ssl, const QString &_host, int _port, ProxyManager *pm, int proxy, QString *_pass)
+void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool legacy_ssl, bool forcessl, const QString &_host, int _port, ProxyManager *pm, int proxy, QString *_pass)
 {
 	j = jid;
 
 	QString host;
 	int port = -1;
 	bool useHost = false;
-	if(!_host.isEmpty() && !legacy_ssl_probe) {
+	force_ssl = forcessl;
+	if(!_host.isEmpty()) {
 		useHost = true;
 		host = _host;
 		port = _port;
@@ -98,18 +100,18 @@ void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool ssl
 	}
 
 	conn = new AdvancedConnector;
-	if(ssl || legacy_ssl_probe) {
-		tls = new QCA::TLS;
-		tls->setTrustedCertificates(CertUtil::allCertificates());
-		tlsHandler = new QCATLSHandler(tls);
-		connect(tlsHandler, SIGNAL(tlsHandshaken()), SLOT(tls_handshaken()));
-	}
+	tls = new QCA::TLS;
+	tls->setTrustedCertificates(CertUtil::allCertificates());
+	tlsHandler = new QCATLSHandler(tls);
+	connect(tlsHandler, SIGNAL(tlsHandshaken()), SLOT(tls_handshaken()));
 	conn->setProxy(p);
 	if (useHost) {
 		conn->setOptHostPort(host, port);
-		conn->setOptSSL(ssl);
+		conn->setOptSSL(legacy_ssl);
 	}
-	conn->setOptProbe(legacy_ssl_probe);
+	else {
+		conn->setOptProbe(legacy_ssl_probe);
+	}
 
 	stream = new ClientStream(conn, tlsHandler);
 	connect(stream, SIGNAL(connected()), SLOT(cs_connected()));
@@ -228,9 +230,15 @@ void MiniClient::cs_delayedCloseFinished()
 {
 }
 
-void MiniClient::cs_warning(int)
+void MiniClient::cs_warning(int err)
 {
-	stream->continueAfterWarning();
+	if (err == ClientStream::WarnNoTLS && force_ssl) {
+		close();
+		QMessageBox::critical(0, tr("Server Error"), tr("The server does not support TLS encryption."));
+	}
+	else {
+		stream->continueAfterWarning();
+	}
 }
 
 void MiniClient::cs_error(int err)

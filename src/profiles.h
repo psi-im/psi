@@ -46,12 +46,13 @@ public:
 	QString jid, pass, host, resource, authzid;
 	bool useAuthzid;
 	int port, priority;
- 	bool opt_enabled, opt_ssl, opt_pass, opt_host, opt_auto, opt_keepAlive, opt_plain, opt_log, opt_reconn, opt_ignoreSSLWarnings, opt_compress;
+ 	bool opt_enabled, opt_pass, opt_host, opt_auto, opt_keepAlive, opt_plain, opt_log, opt_reconn, opt_ignoreSSLWarnings, opt_compress;
 	bool tog_offline, tog_away, tog_agents, tog_hidden, tog_self;
 	bool req_mutual_auth;
 	bool legacy_ssl_probe;
 	bool opt_automatic_resource;
 	int security_level;
+	enum SSLFlag { SSL_No = 0, SSL_Yes = 1, SSL_Auto = 2, SSL_Legacy = 3 } ssl;
 
 	int proxy_index;
 	int proxy_type, proxy_port;

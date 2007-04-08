@@ -896,7 +896,7 @@ void PsiAccount::login()
 	if(isActive() && !doReconnect)
 		return;
 
-	if(!QCA::isSupported("tls") && !(d->acc.opt_host && !d->acc.opt_ssl)) {
+	if((d->acc.ssl == UserAccount::SSL_Yes || d->acc.ssl == UserAccount::SSL_Legacy) && !QCA::isSupported("tls")) {
 		QMessageBox::information(0, (d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("SSL Error"), tr("Cannot login: SSL is enabled but no SSL/TLS (plugin) support is available."));
 		return;
 	}
@@ -949,7 +949,7 @@ void PsiAccount::login()
 
 	// stream
 	d->conn = new AdvancedConnector;
-	if(!(d->acc.opt_host && !d->acc.opt_ssl)) {
+	if(d->acc.ssl != UserAccount::SSL_No) {
 		d->tls = new QCA::TLS;
 		d->tls->setTrustedCertificates(CertUtil::allCertificates());
 		d->tlsHandler = new QCATLSHandler(d->tls);
@@ -958,10 +958,11 @@ void PsiAccount::login()
 	d->conn->setProxy(p);
 	if (useHost) {
 		d->conn->setOptHostPort(host, port);
-		d->conn->setOptSSL(d->acc.opt_ssl);
+		d->conn->setOptSSL(d->acc.ssl == UserAccount::SSL_Legacy);
 	}
-	if (!useHost)
-		d->conn->setOptProbe(d->acc.legacy_ssl_probe);
+	else {
+		d->conn->setOptProbe(d->acc.legacy_ssl_probe && d->acc.ssl != UserAccount::SSL_No);
+	}
 
 	d->stream = new ClientStream(d->conn, d->tlsHandler);
 	d->stream->setRequireMutualAuth(d->acc.req_mutual_auth);
@@ -1148,9 +1149,22 @@ void PsiAccount::cs_delayedCloseFinished()
 	//printf("PsiAccount: [%s] connection closed\n", name().latin1());
 }
 
-void PsiAccount::cs_warning(int)
+void PsiAccount::cs_warning(int w)
 {
-	d->stream->continueAfterWarning();
+	if (w == ClientStream::WarnNoTLS && d->acc.ssl == UserAccount::SSL_Yes) {
+		d->client->close();
+		cleanupStream();
+		v_isActive = false;
+		stateChanged();
+		disconnected();
+
+		QMessageBox* m = new QMessageBox(QMessageBox::Critical, (d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Error"), tr("The server does not support TLS encryption."), QMessageBox::Ok, 0, Qt::WDestructiveClose);
+		m->setModal(true);
+		m->show();
+	}
+	else {
+		d->stream->continueAfterWarning();
+	}
 }
 
 void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, QCATLSHandler *tlsHandler, QString *_str, bool *_reconn)

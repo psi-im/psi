@@ -44,7 +44,7 @@ public:
 	~MiniClient();
 
 	void reset();
-	void connectToServer(const XMPP::Jid &j, bool legacy_ssl_probe, bool ssl, const QString &host, int port, ProxyManager *pm, int proxy, QString *pass);
+	void connectToServer(const XMPP::Jid &j, bool legacy_ssl_probe, bool legacy_ssl, bool force_ssl, const QString &host, int port, ProxyManager *pm, int proxy, QString *pass);
 	void close();
 	XMPP::Client *client();
 
@@ -73,6 +73,7 @@ private:
 	XMPP::Jid j;
 	QString pass;
 	bool auth;
+	bool force_ssl;
 };
 
 

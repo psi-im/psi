@@ -185,7 +185,7 @@ PsiAccount *PsiContactList::defaultAccount() const
 /**
  * Creates new PsiAccount based on some initial settings. This is used by AccountAddDlg.
  */
-void PsiContactList::createAccount(const QString& name, const Jid& j, const QString& pass, bool opt_host, const QString& host, int port, bool ssl, int proxy)
+void PsiContactList::createAccount(const QString& name, const Jid& j, const QString& pass, bool opt_host, const QString& host, int port, bool legacy_ssl_probe, UserAccount::SSLFlag ssl, int proxy)
 {
 	UserAccount acc;
 	acc.name = name;
@@ -199,9 +199,9 @@ void PsiContactList::createAccount(const QString& name, const Jid& j, const QStr
 	acc.opt_host = opt_host;
 	acc.host = host;
 	acc.port = port;
-
-	acc.opt_ssl = ssl;
+	acc.ssl = ssl;
 	acc.proxy_index = proxy;
+	acc.legacy_ssl_probe = legacy_ssl_probe;
 
 	PsiAccount *pa = loadAccount(acc);
 	emit saveAccounts();

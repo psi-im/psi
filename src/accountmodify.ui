@@ -589,13 +589,6 @@
            </widget>
           </item>
           <item>
-           <widget class="QCheckBox" name="ck_ignoreSSLWarnings" >
-            <property name="text" >
-             <string>Ignore SSL warnings</string>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="QCheckBox" name="ck_host" >
             <property name="text" >
              <string>Manually Specify Server Host/Port:</string>
@@ -643,14 +636,50 @@
               </property>
              </widget>
             </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" >
+            <property name="margin" >
+             <number>0</number>
+            </property>
+            <property name="spacing" >
+             <number>6</number>
+            </property>
             <item>
-             <widget class="QCheckBox" name="ck_ssl" >
+             <widget class="QLabel" name="lb_ssl" >
               <property name="text" >
-               <string>SSL</string>
+               <string>Encrypt connection:</string>
               </property>
              </widget>
             </item>
+            <item>
+             <widget class="QComboBox" name="cb_ssl" />
+            </item>
+            <item>
+             <spacer>
+              <property name="orientation" >
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeType" >
+               <enum>QSizePolicy::Expanding</enum>
+              </property>
+              <property name="sizeHint" >
+               <size>
+                <width>251</width>
+                <height>16</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
            </layout>
+ 	 	  </item>
+          <item>
+           <widget class="QCheckBox" name="ck_ignoreSSLWarnings" >
+            <property name="text" >
+             <string>Ignore SSL warnings</string>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QCheckBox" name="ck_legacy_ssl_probe" >

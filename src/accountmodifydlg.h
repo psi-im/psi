@@ -43,7 +43,7 @@ public:
 
 private slots:
 	void hostToggled(bool);
-	void sslToggled(bool);
+	void sslActivated(int);
 
 	void detailsVCard();
 	void detailsChangePW();

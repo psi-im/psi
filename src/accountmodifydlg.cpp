@@ -57,7 +57,6 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 	le_port->setEnabled(false);
 	lb_port->setEnabled(false);
 
-	ck_ssl->setEnabled(false);
 #ifdef __GNUC__
 #warning "Temporarily removing security level settings"
 #endif
@@ -82,8 +81,12 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 	le_name->setText(acc.name);
 	le_jid->setText(JIDUtil::accountToString(acc.jid,false));
 
-	ck_ssl->setChecked(acc.opt_ssl);
-	connect(ck_ssl, SIGNAL(toggled(bool)), SLOT(sslToggled(bool)));
+	cb_ssl->addItem(tr("Automatic"),UserAccount::SSL_Auto);
+	cb_ssl->addItem(tr("Always"),UserAccount::SSL_Yes);
+	cb_ssl->addItem(tr("Never"), UserAccount::SSL_No);
+	cb_ssl->addItem(tr("Legacy SSL"), UserAccount::SSL_Legacy);
+	cb_ssl->setCurrentIndex(cb_ssl->findData(acc.ssl));
+	connect(cb_ssl, SIGNAL(activated(int)), SLOT(sslActivated(int)));
 	
 	if (acc.opt_pass)
 		le_pass->setText(acc.pass);
@@ -190,7 +193,7 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 		"incorrect certificates.  Useful if your server doesn't "
 		"use a validated SSL certificate and you are "
 		"annoyed with warnings."));
-	ck_ssl->setWhatsThis(
+	cb_ssl->setWhatsThis(
 		tr("Check this option to use an encrypted SSL connection to "
 		"the Jabber server.  You may use this option if your "
 		"server supports it and if you have the necessary QCA-OpenSSL "
@@ -253,7 +256,6 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 		le_host->hide();
 		lb_port->hide();
 		le_port->hide();
-		ck_ssl->hide();
 	}
 	
 	if (!PsiOptions::instance()->getOption("options.ui.account.ignore-ssl-warnings").toBool()) 
@@ -357,20 +359,21 @@ void AccountModifyDlg::setPassword(const QString &pw)
 		le_pass->setText(pw);
 }
 
-void AccountModifyDlg::sslToggled(bool on)
+void AccountModifyDlg::sslActivated(int i)
 {
-	if (on && !checkSSL()) {
-		ck_ssl->setChecked(false);
-		return;
+	if ((cb_ssl->itemData(i) == UserAccount::SSL_Yes || cb_ssl->itemData(i) == UserAccount::SSL_Legacy) && !checkSSL()) {
+		cb_ssl->setCurrentIndex(cb_ssl->findData(UserAccount::SSL_Auto));
 	}
-
-	le_port->setText(on ? "5223": "5222");
+	else if (cb_ssl->itemData(i) == UserAccount::SSL_Legacy && !ck_host->isChecked()) {
+		QMessageBox::critical(this, tr("Error"), tr("Legacy SSL is only available in combination with manual host/port."));
+		cb_ssl->setCurrentIndex(cb_ssl->findData(UserAccount::SSL_Auto));
+	}
 }
 
 bool AccountModifyDlg::checkSSL()
 {
 	if(!QCA::isSupported("tls")) {
-		QMessageBox::information(this, tr("SSL error"), tr("Cannot enable SSL/TLS.  Plugin not found."));
+		QMessageBox::critical(this, tr("SSL error"), tr("Cannot enable SSL/TLS.  Plugin not found."));
 		return false;
 	}
 	return true;
@@ -382,8 +385,10 @@ void AccountModifyDlg::hostToggled(bool on)
 	lb_host->setEnabled(on);
 	le_port->setEnabled(on);
 	lb_port->setEnabled(on);
-	ck_ssl->setEnabled(on);
 	ck_legacy_ssl_probe->setEnabled(!on);
+	if (!on && cb_ssl->currentIndex() == cb_ssl->findData(UserAccount::SSL_Legacy)) {
+		cb_ssl->setCurrentIndex(cb_ssl->findData(UserAccount::SSL_Auto));
+	}
 }
 
 void AccountModifyDlg::chooseKey()
@@ -477,7 +482,7 @@ void AccountModifyDlg::save()
 	acc.useAuthzid = ck_authzid->isChecked();
 	acc.authzid = le_authzid->text();
 
-	acc.opt_ssl = ck_ssl->isChecked();
+	acc.ssl =  (UserAccount::SSLFlag) cb_ssl->itemData(cb_ssl->currentIndex()).toInt();
 	acc.opt_plain = ck_plain->isChecked();
 	acc.opt_compress = ck_compress->isChecked();
 	acc.opt_auto = ck_auto->isChecked();

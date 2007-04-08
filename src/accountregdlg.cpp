@@ -160,7 +160,7 @@ void AccountRegDlg::reg()
 	sp_port = le_port->text().toInt();
 	legacy_ssl_probe = (opt_host ? false : ck_legacy_ssl_probe->isChecked());
 
-	client->connectToServer(jid, legacy_ssl_probe, ssl, opt_host ? sp_host : QString(), sp_port, proxyman, pc->currentItem(), 0);
+	client->connectToServer(jid, legacy_ssl_probe, ssl, false, opt_host ? sp_host : QString(), sp_port, proxyman, pc->currentItem(), 0);
 }
 
 void AccountRegDlg::client_handshaken()

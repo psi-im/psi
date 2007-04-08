@@ -782,9 +782,9 @@ AccountsComboBox *PsiCon::accountsComboBox(QWidget *parent, bool online_only)
 	return acb;
 }
 
-void PsiCon::createAccount(const QString &name, const Jid &j, const QString &pass, bool opt_host, const QString &host, int port, bool ssl, int proxy)
+void PsiCon::createAccount(const QString &name, const Jid &j, const QString &pass, bool opt_host, const QString &host, int port, bool legacy_ssl_probe, UserAccount::SSLFlag ssl, int proxy)
 {
-	d->contactList->createAccount(name, j, pass, opt_host, host, port, ssl, proxy);
+	d->contactList->createAccount(name, j, pass, opt_host, host, port, legacy_ssl_probe, ssl, proxy);
 }
 
 PsiAccount *PsiCon::createAccount(const UserAccount& acc)

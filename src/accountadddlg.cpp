@@ -101,12 +101,13 @@ void AccountAddDlg::add()
 		bool opt_host = w->opt_host;
 		QString host = w->sp_host;
 		int port = w->sp_port;
-		bool ssl = w->ssl;
+		bool legacy_ssl_probe = w->legacy_ssl_probe;
+		UserAccount::SSLFlag ssl = ( w->ssl ? UserAccount::SSL_Legacy : UserAccount::SSL_Auto);
 		int proxy = w->proxy;
 
 		delete w;
 
-		psi->createAccount(le_name->text(), jid, pass, opt_host, host, port, ssl, proxy);
+		psi->createAccount(le_name->text(), jid, pass, opt_host, host, port, legacy_ssl_probe, ssl, proxy);
 	}
 	else {
 		psi->createAccount(le_name->text());

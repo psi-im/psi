@@ -174,14 +174,14 @@
           </property>
          </widget>
         </item>
-        <item>
-         <widget class="QCheckBox" name="ck_ssl" >
-          <property name="text" >
-           <string>SSL</string>
-          </property>
-         </widget>
-        </item>
        </layout>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="ck_ssl" >
+        <property name="text" >
+         <string>Use legacy SSL</string>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QCheckBox" name="ck_legacy_ssl_probe" >

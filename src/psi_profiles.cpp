@@ -81,7 +81,6 @@ void UserAccount::reset()
 	name = "Default";
 	opt_enabled = TRUE;
 	opt_auto = FALSE;
-	opt_ssl = FALSE;
 	tog_offline = TRUE;
 	tog_away = TRUE;
 	tog_hidden = TRUE;
@@ -91,6 +90,7 @@ void UserAccount::reset()
 	req_mutual_auth = FALSE;
 	legacy_ssl_probe = TRUE;
 	security_level = QCA::SL_None;
+	ssl = SSL_Auto;
 	jid = "";
 	pass = "";
 	opt_pass = FALSE;
@@ -130,7 +130,6 @@ QDomElement UserAccount::toXml(QDomDocument &doc, const QString &tagName)
 
 	setBoolAttribute(a, "enabled", opt_enabled);
 	setBoolAttribute(a, "auto", opt_auto);
-	setBoolAttribute(a, "ssl", opt_ssl);
 	setBoolAttribute(a, "showOffline", tog_offline);
 	setBoolAttribute(a, "showAway", tog_away);
 	setBoolAttribute(a, "showHidden", tog_hidden);
@@ -159,6 +158,7 @@ QDomElement UserAccount::toXml(QDomDocument &doc, const QString &tagName)
 		a.appendChild(textTag(doc, "password", encodePassword(pass, jid) ));
 	a.appendChild(textTag(doc, "useHost", opt_host));
 	a.appendChild(textTag(doc, "security-level", security_level));
+	a.appendChild(textTag(doc, "ssl", ssl));
 	a.appendChild(textTag(doc, "host", host));
 	a.appendChild(textTag(doc, "port", QString::number(port)));
 	a.appendChild(textTag(doc, "resource", resource));
@@ -248,7 +248,6 @@ void UserAccount::fromXml(const QDomElement &a)
 	readEntry(a, "name", &name);
 	readBoolAttribute(a, "enabled", &opt_enabled);
 	readBoolAttribute(a, "auto", &opt_auto);
-	readBoolAttribute(a, "ssl", &opt_ssl);
 	readBoolAttribute(a, "showOffline", &tog_offline);
 	readBoolAttribute(a, "showAway", &tog_away);
 	readBoolAttribute(a, "showHidden", &tog_hidden);
@@ -269,8 +268,15 @@ void UserAccount::fromXml(const QDomElement &a)
 	else {
 		opt_automatic_resource = false;
 	}
+	
+	// Will be overwritten if there is a new option
+	bool opt_ssl = true;
+	readBoolAttribute(a, "ssl", &opt_ssl);
+	if (opt_ssl)
+		ssl = UserAccount::SSL_Legacy;
 
 	readNumEntry(a, "security-level", &security_level);
+	readNumEntry(a, "ssl", (int*) &ssl);
 	readEntry(a, "host", &host);
 	readNumEntry(a, "port", &port);
 
