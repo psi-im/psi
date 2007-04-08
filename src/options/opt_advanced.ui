@@ -41,6 +41,13 @@
         </widget>
       </item>
       <item>
+        <widget class="QCheckBox" name="ck_spell" >
+          <property name="text" >
+            <string>Check spelling</string>
+          </property>
+        </widget>
+      </item>
+      <item>
         <widget class="QCheckBox" name="ck_singleclick" >
           <property name="text" >
             <string>Single-click triggers default action</string>

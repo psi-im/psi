@@ -17,3 +17,12 @@ qca-static {
 #	INCLUDEPATH += $$CYRUSSASL_PREFIX/include
 #	LIBS += $$CYRUSSASL_PREFIX/lib/libsasl.lib
 #}
+
+# ASpell
+#DEFINES += HAVE_ASPELL
+contains(DEFINES, HAVE_ASPELL) {
+	ASPELL_PREFIX = ../../../aspell
+	INCLUDEPATH += "$$ASPELL_PREFIX/include"
+	LIBS += -L"$$ASPELL_PREFIX/lib"
+	LIBS += -laspell-15
+}

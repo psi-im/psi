@@ -35,6 +35,9 @@ Dependency options:
   --disable-growl                 Disable use of Growl
   --with-growl=[path]             Path to the Growl framework
   --disable-xss                   Disable use of the XScreenSaver extension
+  --disable-aspell                Disable use of ASPELL
+  --with-aspell-inc=[path]        Path to Aspell include files
+  --with-aspell-lib=[path]        Path to Aspell library files
   --disable-dnotify               Disable use of Linux Directory Notification
   --disable-ghbnr                 Disable use of gethostbyname_r()
   --disable-jingle                Disable use of Jingle
@@ -242,6 +245,21 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
+		--disable-aspell)
+			QC_DISABLE_aspell="Y"
+			shift
+			;;
+
+		--with-aspell-inc=*)
+			QC_WITH_ASPELL_INC="${1#--with-aspell-inc=}"
+			shift
+			;;
+
+		--with-aspell-lib=*)
+			QC_WITH_ASPELL_LIB="${1#--with-aspell-lib=}"
+			shift
+			;;
+
 		--disable-dnotify)
 			QC_DISABLE_dnotify="Y"
 			shift
@@ -387,6 +405,9 @@ echo QC_ENABLE_universal=$QC_ENABLE_universal
 echo QC_DISABLE_growl=$QC_DISABLE_growl
 echo QC_WITH_GROWL=$QC_WITH_GROWL
 echo QC_DISABLE_xss=$QC_DISABLE_xss
+echo QC_DISABLE_aspell=$QC_DISABLE_aspell
+echo QC_WITH_ASPELL_INC=$QC_WITH_ASPELL_INC
+echo QC_WITH_ASPELL_LIB=$QC_WITH_ASPELL_LIB
 echo QC_DISABLE_dnotify=$QC_DISABLE_dnotify
 echo QC_DISABLE_ghbnr=$QC_DISABLE_ghbnr
 echo QC_DISABLE_jingle=$QC_DISABLE_jingle
@@ -1029,6 +1050,71 @@ public:
 		return true;
 	}
 };
+#line 1 "aspell.qcm"
+/*
+-----BEGIN QCMOD-----
+name: ASPELL
+arg: with-aspell-inc=[path],Path to Aspell include files
+arg: with-aspell-lib=[path],Path to Aspell library files
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_spell
+//----------------------------------------------------------------------------
+class qc_aspell : public ConfObj
+{
+public:
+	qc_aspell(Conf *c) : ConfObj(c) {}
+	QString name() const { return "Aspell support"; }
+	QString shortname() const { return "aspell"; }
+	bool exec()
+	{
+		QString s;
+
+		s = conf->getenv("QC_WITH_ASPELL_INC");
+		if(!s.isEmpty()) {
+			if(!conf->checkHeader(s, "aspell.h")) {
+				qWarning("Aspell includes not found!");
+				return false;
+			}
+			conf->addIncludePath(s);
+		}
+		else {
+			QStringList sl;
+			sl += "/usr/include";
+			sl += "/usr/local/include";
+			sl += "/sw/include";
+			if(!conf->findHeader("aspell.h", sl, &s)) {
+				qWarning("Aspell includes not found!");
+				return false;
+			}
+			conf->addIncludePath(s);
+		}
+
+		s = conf->getenv("QC_WITH_ASPELL_LIB");
+		if(!s.isEmpty()) {
+			if(!conf->checkLibrary(s, "aspell")) {
+				qWarning("Aspell libraries not found!");
+				return false;
+			}
+			conf->addLib(QString("-L") + s);
+		}
+		else {
+			if(!conf->findLibrary("aspell", &s)) {
+				qWarning("Aspell libraries not found!");
+				return false;
+			}
+			if (!s.isEmpty())
+				conf->addLib(QString("-L") + s);
+		}
+
+		conf->addLib("-laspell");
+		conf->addDefine("HAVE_ASPELL");
+
+		return true;
+	}
+};
 #line 1 "dnotify.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -1617,6 +1703,9 @@ cat >$1/modules_new.cpp <<EOT
     o->required = false;
     o->disabled = false;
     o = new qc_xss(conf);
+    o->required = false;
+    o->disabled = false;
+    o = new qc_aspell(conf);
     o->required = false;
     o->disabled = false;
     o = new qc_dnotify(conf);
@@ -2544,6 +2633,9 @@ export QC_ENABLE_universal
 export QC_DISABLE_growl
 export QC_WITH_GROWL
 export QC_DISABLE_xss
+export QC_DISABLE_aspell
+export QC_WITH_ASPELL_INC
+export QC_WITH_ASPELL_LIB
 export QC_DISABLE_dnotify
 export QC_DISABLE_ghbnr
 export QC_DISABLE_jingle

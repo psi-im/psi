@@ -10,6 +10,7 @@ include($$PWD/tools/zip/zip.pri)
 include($$PWD/tools/optionstree/optionstree.pri)
 include($$PWD/tools/globalaccel/globalaccel.pri)
 include($$PWD/tools/advwidget/advwidget.pri)
+include($$PWD/tools/spellchecker/spellchecker.pri)
 
 # Growl
 mac {

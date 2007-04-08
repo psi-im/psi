@@ -116,6 +116,9 @@
 					<protocol-selector comment="Show the iq:browse and iq:agents service discovery protocol selector." type="bool">false</protocol-selector>
 				</service-discovery>
 			</show-deprecated>
+			<spell-check comment="Options related to the spell checker">
+				<enabled comment="Whether the spell checker is enabled" type="bool">true</enabled>
+			</spell-check>
 		</ui>
 	</options>
 	<accounts comment="Account definitions and options"></accounts>

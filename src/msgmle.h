@@ -21,12 +21,13 @@
 #ifndef MSGMLE_H
 #define MSGMLE_H
 
-#include "psitextview.h"
-//Added by qt3to4:
 #include <QKeyEvent>
 #include <QResizeEvent>
 #include <QTextEdit>
 #include <QEvent>
+#include <QMenu>
+
+#include "psitextview.h"
 
 class QTimer;
 class ChatEdit;
@@ -55,15 +56,30 @@ protected slots:
 
 class ChatEdit : public QTextEdit
 {
+	Q_OBJECT
+
 public:
 	ChatEdit(QWidget *parent);
 	~ChatEdit();
+
+protected slots:
+ 	void applySuggestion();
+ 	void addToDictionary();
+	void cursorChanged();
+	void contentsChanged(int,int,int);
+	void optionsChanged();
 
 protected:
 	// override the tab/esc behavior
 	bool focusNextPrevChild(bool next);
 	void keyPressEvent(QKeyEvent *);
 	void contextMenuEvent(QContextMenuEvent *e);
+  	void markMisspelled(QTextCursor& tc, bool misspelled = true);
+
+private:
+	bool check_spelling_;
+	QPoint last_click_;
+	int previous_position_;
 };
 
 

@@ -28,9 +28,12 @@
 #include <QTextDocument>
 #include <QAbstractTextDocumentLayout>
 #include <QScrollBar>
+#include <QTextCharFormat>
 
 #include "common.h"
 #include "msgmle.h"
+#include "spellchecker.h"
+#include "psioptions.h"
 
 //----------------------------------------------------------------------------
 // ChatView
@@ -174,6 +177,12 @@ ChatEdit::ChatEdit(QWidget *parent)
 	setUndoRedoEnabled(true);
 
 	setMinimumHeight(48);
+
+	previous_position_ = 0;
+	check_spelling_ = PsiOptions::instance()->getOption("options.ui.spell-check.enabled").toBool();
+	connect(PsiOptions::instance(),SIGNAL(optionChanged(const QString&)),SLOT(optionsChanged()));
+	connect(this,SIGNAL(cursorPositionChanged()),SLOT(cursorChanged()));
+	connect(document(),SIGNAL(contentsChange(int,int,int)), SLOT(contentsChanged(int,int,int)));
 }
 
 ChatEdit::~ChatEdit()
@@ -211,7 +220,9 @@ void ChatEdit::keyPressEvent(QKeyEvent *e)
 	else if((e->key() == Qt::Key_PageUp || e->key() == Qt::Key_PageDown) && (e->modifiers() & Qt::ControlModifier))
 		e->ignore();
 	else
+	{
 		QTextEdit::keyPressEvent(e);
+	}
 }
 
 /**
@@ -221,9 +232,191 @@ void ChatEdit::keyPressEvent(QKeyEvent *e)
  */
 void ChatEdit::contextMenuEvent(QContextMenuEvent *e) 
 {
+	last_click_ = e->pos();
+	if (check_spelling_ && textCursor().selectedText().isEmpty() && SpellChecker::instance()->available()) {
+		// Check if the word under the cursor is misspelled
+		QTextCursor tc = cursorForPosition(last_click_);
+		tc.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
+		tc.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
+		QString selected_word = tc.selectedText();
+		if (!selected_word.isEmpty() && !SpellChecker::instance()->isCorrect(selected_word)) {
+			QMenu spell_menu;
+			QList<QString> suggestions = SpellChecker::instance()->suggestions(selected_word);
+			if (!suggestions.isEmpty()) {
+				foreach(QString suggestion, suggestions) {
+					QAction* act_suggestion = spell_menu.addAction(suggestion);
+					connect(act_suggestion,SIGNAL(triggered()),SLOT(applySuggestion()));
+				}
+				spell_menu.addSeparator();
+			}
+			QAction* act_add = spell_menu.addAction(tr("Add to dictionary"));
+			connect(act_add,SIGNAL(triggered()),SLOT(addToDictionary()));
+			spell_menu.exec(QCursor::pos());
+			e->accept();
+			return;
+		}
+	}
+
+	// Do normal menu
 	QTextEdit::contextMenuEvent(e);
 	e->accept();
 }
+
+/*!
+ * \brief handles a click on a suggestion
+ * \param the action is just the container which holds the suggestion.
+ * 
+ * This method is called by the framework whenever a user clicked on the child popupmenu
+ * to select a suggestion for a missspelled word. It exchanges the missspelled word with the
+ * suggestion which is the text of the QAction parameter.
+ */
+void ChatEdit::applySuggestion()
+{
+	QAction* act_suggestion = (QAction*) sender();
+	int current_position = textCursor().position();
+	
+	// Replace the word
+	QTextCursor	tc = cursorForPosition(last_click_);
+	tc.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
+	tc.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
+	int old_length = tc.position() - tc.anchor();
+	markMisspelled(tc, false);
+	tc.insertText(act_suggestion->text());
+	tc.clearSelection();
+
+	// Put the cursor where it belongs
+	int new_length = act_suggestion->text().length();
+	tc.setPosition(current_position - old_length + new_length);
+	setTextCursor(tc);
+}
+
+/*!
+ * \brief handles a click on the add2dict action of the parent popupmenu
+ * \param Never used bool parameter
+ * 
+ * The method sets the cursor to the last mouseclick position and looks for the word which is placed there.
+ * This word is than added to the dictionary of aspell.
+ */
+void ChatEdit::addToDictionary()
+{
+	QTextCursor	tc = cursorForPosition(last_click_);
+	int current_position = textCursor().position();
+
+	// Get the selected word
+	tc.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
+	tc.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
+	if (SpellChecker::instance()->add(tc.selectedText())) {
+		markMisspelled(tc, false);
+	}
+	
+	// Put the cursor where it belongs
+	tc.clearSelection();
+	tc.setPosition(current_position);
+	setTextCursor(tc);
+}
+
+void ChatEdit::cursorChanged()
+{
+	if (!check_spelling_) 
+		return;
+
+	QTextCursor	tc = textCursor();
+	tc.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
+	int current_position = tc.position();
+	if (current_position != previous_position_) {
+		// Unmark the current word
+		tc.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
+		markMisspelled(tc, false);
+		
+		// Spell check the previous word
+		tc.movePosition(QTextCursor::End, QTextCursor::MoveAnchor);
+		if (tc.position() > previous_position_) {
+			tc.setPosition(previous_position_);
+			tc.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
+			QString word = tc.selectedText();
+			if (!word.isEmpty()) {
+				markMisspelled(tc, !SpellChecker::instance()->isCorrect(word));
+			}
+		}
+
+		previous_position_ = current_position;
+	}
+}
+
+void ChatEdit::contentsChanged(int position, int, int)
+{
+	if (!check_spelling_) 
+		return;
+	
+	QTextCursor tc = textCursor();
+	tc.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
+	int end_position = tc.position();
+	tc.movePosition(QTextCursor::EndOfWord, QTextCursor::MoveAnchor);
+	if (tc.position() <= position) {
+		end_position = position;
+	}
+
+	tc.setPosition(position);
+	tc.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
+	while (tc.position() < end_position) {
+		tc.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
+		QString word = tc.selectedText();
+		if (!word.isEmpty()) {
+			markMisspelled(tc, !SpellChecker::instance()->isCorrect(word));
+		}
+		tc.movePosition(QTextCursor::NextWord, QTextCursor::MoveAnchor);
+	}
+}
+
+void ChatEdit::optionsChanged()
+{
+	bool check_spelling = PsiOptions::instance()->getOption("options.ui.spell-check.enabled").toBool();
+	if (check_spelling_ != check_spelling) {
+		check_spelling_ = check_spelling;
+		QTextCursor tc = textCursor();
+		tc.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
+		if (!check_spelling_) {
+			// Clear the whole document
+			tc.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
+			markMisspelled(tc, false);
+		}
+		else {
+			// Spell check the whole document
+			while(!tc.atEnd()) {
+				tc.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
+				QString word = tc.selectedText();
+				if (!word.isEmpty()) {
+					markMisspelled(tc, !SpellChecker::instance()->isCorrect(word));
+				}
+				tc.movePosition(QTextCursor::NextWord, QTextCursor::MoveAnchor);
+			}
+		}
+	}
+}
+
+/*!
+ * \brief Marks the selected word as missspelled or unmarks it.
+ * \param tc is the TextCursor which holds the selection of the to be marked word.
+ * \param bMissSpelled if true the selected word is marked as missspelled (default), if false marks it standard black with no underline
+ * 
+ * This method is used for marking or unmarking a missspelled or corrected word.
+ * Depending on the second Parameter (bMissSpelled) the word is marked as missspelled or not.
+ * The first parameter holds the TextCursor which itself holds the selection of the to be marked word.
+ */
+void ChatEdit::markMisspelled(QTextCursor& tc, bool misspelled /* = true */)
+{
+	QTextCharFormat	tcf;
+	if(misspelled) {
+		tcf.setUnderlineColor(QBrush(QColor(255,0,0)));
+		tcf.setUnderlineStyle(QTextCharFormat::SpellCheckUnderline);
+	}
+	else {
+		tcf.setUnderlineColor(QBrush(QColor(0,0,0)));
+		tcf.setUnderlineStyle(QTextCharFormat::NoUnderline);
+	}
+	tc.mergeCharFormat(tcf);
+}
+
 
 //----------------------------------------------------------------------------
 // LineEdit

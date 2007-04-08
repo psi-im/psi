@@ -9,6 +9,7 @@
 #include <qradiobutton.h>
 
 #include "ui_opt_advanced.h"
+#include "psioptions.h"
 
 class OptAdvancedUI : public QWidget, public Ui::OptAdvanced
 {
@@ -50,6 +51,8 @@ QWidget *OptionsTabAdvanced::widget()
 		"conversation"));
 	QWhatsThis::add(d->ck_rc,
 		tr("Enables remote controlling your client from other locations"));
+	QWhatsThis::add(d->ck_spell,
+		tr("Check this option if you want your spelling to be checked"));
 	QWhatsThis::add(d->ck_autocopy,
 		tr("Check this option if you want the selected text in incoming messages and chat log to be automatically copied to clipboard"));
 	QWhatsThis::add(d->ck_singleclick,
@@ -94,6 +97,7 @@ void OptionsTabAdvanced::applyOptions(Options *opt)
 	opt->messageEvents = d->ck_messageevents->isChecked();
 	opt->inactiveEvents = d->ck_inactiveevents->isChecked();
 	opt->useRC = d->ck_rc->isChecked();
+	PsiOptions::instance()->setOption("options.ui.spell-check.enabled",d->ck_spell->isChecked());
 	opt->autoCopy = d->ck_autocopy->isChecked();
 	opt->singleclick = d->ck_singleclick->isChecked();
 	opt->jidComplete = d->ck_jidComplete->isChecked();
@@ -117,6 +121,7 @@ void OptionsTabAdvanced::restoreOptions(const Options *opt)
 	d->ck_messageevents->setChecked( opt->messageEvents );
 	d->ck_inactiveevents->setChecked( opt->inactiveEvents );
 	d->ck_rc->setChecked( opt->useRC );
+	d->ck_spell->setChecked(PsiOptions::instance()->getOption("options.ui.spell-check.enabled").toBool());
 	d->ck_autocopy->setChecked( opt->autoCopy );
 	d->ck_singleclick->setChecked( opt->singleclick );
 	d->ck_jidComplete->setChecked( opt->jidComplete );
