@@ -413,22 +413,19 @@ void ChatDlg::scrollDown()
 	d->log->verticalScrollBar()->setValue(d->log->verticalScrollBar()->value() + d->log->verticalScrollBar()->pageStep()/2);
 }
 
+// FIXME: This should be unnecessary, since these keys are all registered as
+// actions in the constructor. Somehow, Qt ignores this.
 void ChatDlg::keyPressEvent(QKeyEvent *e)
 {
-	// FIXME: Shift+PageUp/Down should be refactored for ChatDlg
-	// and GCMainDlg into one common method
-	if(e->key() == Qt::Key_Escape && !option.useTabs)
+	QKeySequence key = e->key() + e->modifiers();
+	if(!option.useTabs && ShortcutManager::instance()->shortcuts("common.close").contains(key))
 		close();
-//#ifdef Q_WS_MAC //this is a standard on other platforms too
-	else if(e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier && !option.useTabs)
-		close();
-//#endif
-	else if(e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter || (e->key() == Qt::Key_S && (e->modifiers() & Qt::AltModifier)))
+	else if(ShortcutManager::instance()->shortcuts("chat.send").contains(key))
 		doSend();
-	else if(e->key() == Qt::Key_PageUp && (e->modifiers() & Qt::ShiftModifier))
-		d->log->verticalScrollBar()->setValue(d->log->verticalScrollBar()->value() - d->log->verticalScrollBar()->pageStep()/2);
-	else if(e->key() == Qt::Key_PageDown && (e->modifiers() & Qt::ShiftModifier))
-		d->log->verticalScrollBar()->setValue(d->log->verticalScrollBar()->value() + d->log->verticalScrollBar()->pageStep()/2);
+	else if(ShortcutManager::instance()->shortcuts("common.scroll-up").contains(key))
+		scrollUp();
+	else if(ShortcutManager::instance()->shortcuts("common.scroll-down").contains(key))
+		scrollDown();
 	else
 		e->ignore();
 }

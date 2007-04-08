@@ -939,14 +939,19 @@ void GCMainDlg::scrollDown() {
 	d->te_log->verticalScrollBar()->setValue(d->te_log->verticalScrollBar()->value() + d->te_log->verticalScrollBar()->pageStep()/2);
 }
 
+// FIXME: This should be unnecessary, since these keys are all registered as
+// actions in the constructor. Somehow, Qt ignores this.
 void GCMainDlg::keyPressEvent(QKeyEvent *e)
 {
-	if(e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter || (e->key() == Qt::Key_S && (e->modifiers() & Qt::AltModifier)))
+	QKeySequence key = e->key() + e->modifiers();
+	if(!option.useTabs && ShortcutManager::instance()->shortcuts("common.close").contains(key))
+		close();
+	else if(ShortcutManager::instance()->shortcuts("chat.send").contains(key))
 		mle_returnPressed();
-	else if(e->key() == Qt::Key_PageUp && (e->modifiers() & Qt::ShiftModifier))
-		d->te_log->verticalScrollBar()->setValue(d->te_log->verticalScrollBar()->value() - d->te_log->verticalScrollBar()->pageStep()/2);
-	else if(e->key() == Qt::Key_PageDown && (e->modifiers() & Qt::ShiftModifier))
-		d->te_log->verticalScrollBar()->setValue(d->te_log->verticalScrollBar()->value() + d->te_log->verticalScrollBar()->pageStep()/2);
+	else if(ShortcutManager::instance()->shortcuts("common.scroll-up").contains(key))
+		scrollUp();
+	else if(ShortcutManager::instance()->shortcuts("common.scroll-down").contains(key))
+		scrollDown();
 	else
 		e->ignore();
 }
