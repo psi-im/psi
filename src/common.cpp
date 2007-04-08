@@ -65,7 +65,6 @@ Qt::WFlags psi_dialog_flags = (Qt::WStyle_SysMenu | Qt::WStyle_MinMax);
 //uint psi_dialog_flags = (Qt::WStyle_Customize | Qt::WStyle_DialogBorder | Qt::WStyle_Title | Qt::WStyle_SysMenu | Qt::WStyle_MinMax);
 
 Options option;
-PsiIconset *is;
 bool useSound;
 
 

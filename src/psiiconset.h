@@ -35,8 +35,7 @@ struct Options;
 class PsiIconset
 {
 public:
-	PsiIconset();
-	~PsiIconset();
+	PsiIconset* instance();
 
 	bool loadSystem();
 	bool loadAll();
@@ -77,8 +76,13 @@ public:
 	Icon status(UserListItem *);
 
 private:
+	PsiIconset();
+	~PsiIconset();
+
 	class Private;
 	Private *d;
+
+	PsiIconset* instance_;
 };
 
 #endif

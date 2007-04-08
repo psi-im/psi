@@ -24,33 +24,15 @@
 #include <QString>
 #include <QStringList>
 #include <QList>
+
 #include "im.h"
-#include "psiiconset.h"
 #include "statuspreset.h"
 
-#define MINIMUM_OPACITY 10
+// -----------------------------------------------------------------------------
+// Options
+// Will go away with the new options system
+// -----------------------------------------------------------------------------
 
-#define STATUS_OFFLINE   0
-#define STATUS_ONLINE    1
-#define STATUS_AWAY      2
-#define STATUS_XA        3
-#define STATUS_DND       4
-#define STATUS_INVISIBLE 5
-#define STATUS_CHAT      6
-
-#define STATUS_ASK	 100
-#define STATUS_NOAUTH	 101
-#define STATUS_ERROR	 102
-
-extern QString activeProfile;
-
-//extern QStringList dtcp_hostList;
-//extern int dtcp_port;
-//extern QString dtcp_proxy;
-//extern bool link_test;
-extern Qt::WFlags psi_dialog_flags;
-
-// options stuff
 enum { 
 	cOnline, 
 	cOffline, 
@@ -209,16 +191,47 @@ struct Options
 	QString chatBgImage, rosterBgImage;
 };
 
-// functions
+extern
+Options option;
 
-QString CAP(const QString &str);
+// -----------------------------------------------------------------------------
+// Status
+// -----------------------------------------------------------------------------
+
+#define STATUS_OFFLINE   0
+#define STATUS_ONLINE    1
+#define STATUS_AWAY      2
+#define STATUS_XA        3
+#define STATUS_DND       4
+#define STATUS_INVISIBLE 5
+#define STATUS_CHAT      6
+
+#define STATUS_ASK	 100
+#define STATUS_NOAUTH	 101
+#define STATUS_ERROR	 102
 
 QString status2txt(int status);
+QXMPP::Status makeStatus(int, const QString &);
+XMPP::Status makeStatus(int, const QString &, int);
+int makeSTATUS(const XMPP::Status &);
+String clipStatus(const QString &str, int width, int height);
 
+
+// -----------------------------------------------------------------------------
+// Widget tools
+// -----------------------------------------------------------------------------
+
+void replaceWidget(QWidget *, QWidget *);
+void closeDialogs(QWidget *);
+
+// -----------------------------------------------------------------------------
+// Misc.
+// -----------------------------------------------------------------------------
+
+QString CAP(const QString &str);
 QString qstrquote(const QString &, int width=60, bool quoteEmpty=FALSE);
 QString plain2rich(const QString &);
 QString rich2plain(const QString &);
-QString clipStatus(const QString &str, int width, int height);
 QString resolveEntities(const QString &);
 QString linkify(const QString &);
 QString emoticonify(const QString &in);
@@ -245,20 +258,10 @@ void x11wmClass(Display *dsp, WId wid, QString resName);
 
 void soundPlay(const QString &);
 
-XMPP::Status makeStatus(int, const QString &);
-XMPP::Status makeStatus(int, const QString &, int);
-int makeSTATUS(const XMPP::Status &);
+#define MINIMUM_OPACITY 10
 
-void replaceWidget(QWidget *, QWidget *);
-void closeDialogs(QWidget *);
-
-extern
-Options option;
-
-extern
-PsiIconset *is;
-
-extern
-bool useSound;
+extern QString activeProfile;
+extern Qt::WFlags psi_dialog_flags;
+extern bool useSound;
 
 #endif

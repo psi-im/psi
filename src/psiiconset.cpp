@@ -601,3 +601,12 @@ void PsiIconset::removeAnimation(Iconset *is)
 		}
 	}
 }
+
+PsiIconset* PsiIconset::instance()
+{
+	if (!instance_) 
+		instance_ = new PsiIconset();
+	return instance_;
+}
+
+PsiIconset* PsiIconset::instance_ = NULL;
