@@ -42,6 +42,6 @@ MoodDlg::MoodDlg(PsiAccount* pa)
 void MoodDlg::setMood()
 {
 	Mood::Type type = MoodCatalog::instance()->findEntryByText(ui_.cb_type->currentText()).type();
-	pa_->pepManager()->publish("http://jabber.org/protocol/mood", PubSubItem("current",Mood(type,ui_.le_text->text()).toXml(*pa_->client()->rootTask()->doc())));
+	pa_->pepManager()->publish("http://jabber.org/protocol/mood", PubSubItem("current",Mood(type,ui_.le_text->text()).toXml(*pa_->client()->rootTask()->doc())), PEPManager::PresenceAccess);
 	close();
 }
