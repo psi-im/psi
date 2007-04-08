@@ -52,7 +52,7 @@ QVariant OptionsTree::getOption(const QString& name)
 	QVariant value=tree_.getValue(name);
 	if (value==VariantTree::missingValue) {
 		value=QVariant(QVariant::Invalid);
-		qDebug(qPrintable(QString("Accessing missing option %1").arg(name)));
+		qDebug() << "Accessing missing option " << name;
 	}
 	return value;
 }

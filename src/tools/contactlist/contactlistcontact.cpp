@@ -61,7 +61,7 @@ void ContactListContact::updateParent()
 		newParent = contactList()->invisibleGroup();
 	}
 	else {
-		//qDebug("contactlistcontact.cpp: Falling back on default parent");
+		//qDebug() << "contactlistcontact.cpp: Falling back on default parent";
 		newParent = defaultParent();
 	}
 

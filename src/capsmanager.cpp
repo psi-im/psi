@@ -92,7 +92,7 @@ void CapsManager::updateCaps(const Jid& jid, const QString& node, const QString&
 	CapsSpec c(node,ver,ext);
 	CapsSpecs caps = c.flatten();
 	if (capsSpecs_[jid.full()] != c) {
-		//qDebug(QString("caps.cpp: Updating caps for %1 (node=%2,ver=%3,ext=%4)").arg(QString(jid.full()).replace('%',"%%")).arg(node).arg(ver).arg(ext));
+		//qDebug() << QString("caps.cpp: Updating caps for %1 (node=%2,ver=%3,ext=%4)").arg(QString(jid.full()).replace('%',"%%")).arg(node).arg(ver).arg(ext);
 		
 		// Unregister from all old caps nodes
 		CapsSpecs old_caps = capsSpecs_[jid.full()].flatten();
@@ -117,7 +117,7 @@ void CapsManager::updateCaps(const Jid& jid, const QString& node, const QString&
 			if (isEnabled()) {
 				foreach(CapsSpec s, caps) {
 					if (!CapsRegistry::instance()->isRegistered(s) && capsJids_[s].count() == 1) {
-						//qDebug(QString("caps.cpp: Sending disco request to %1, node=%2").arg(QString(jid.full()).replace('%',"%%")).arg(node + "#" + s.extensions()));
+						//qDebug() << QString("caps.cpp: Sending disco request to %1, node=%2").arg(QString(jid.full()).replace('%',"%%")).arg(node + "#" + s.extensions());
 						requestDiscoInfo(jid,node + "#" + s.extensions());
 					}
 				}
@@ -144,7 +144,7 @@ void CapsManager::updateCaps(const Jid& jid, const QString& node, const QString&
  */
 void CapsManager::disableCaps(const Jid& jid)
 {
-	//qDebug(QString("caps.cpp: Disabling caps for %1.").arg(QString(jid.full()).replace('%',"%%")));
+	//qDebug() << QString("caps.cpp: Disabling caps for %1.").arg(QString(jid.full()).replace('%',"%%"));
 	if (capsEnabled(jid)) {
 		CapsSpecs cs = capsSpecs_[jid.full()].flatten();
 		foreach(CapsSpec s, cs) {
@@ -187,7 +187,7 @@ void CapsManager::discoFinished()
 
 	DiscoItem item = disco->item();
 	Jid jid = disco->jid();
-	//qDebug(QString("caps.cpp: Disco response from %1, node=%2, success=%3").arg(QString(jid.full()).replace('%',"%%")).arg(disco->node()).arg(disco->success()));
+	//qDebug() << QString("caps.cpp: Disco response from %1, node=%2, success=%3").arg(QString(jid.full()).replace('%',"%%")).arg(disco->node()).arg(disco->success());
 	QStringList tokens = QStringList::split("#",disco->node());
 
 	// Update features
@@ -220,7 +220,7 @@ void CapsManager::capsRegistered(const CapsSpec& cs)
 {
 	// Notify affected jids.
 	foreach(QString s, capsJids_[cs]) {
-		//qDebug(QString("caps.cpp: Notifying %1.").arg(s.replace('%',"%%")));
+		//qDebug() << QString("caps.cpp: Notifying %1.").arg(s.replace('%',"%%"));
 		emit capsChanged(s);
 	}
 }
@@ -239,12 +239,12 @@ bool CapsManager::capsEnabled(const Jid& jid) const
  */
 XMPP::Features CapsManager::features(const Jid& jid) const
 {
-	//qDebug(QString("caps.cpp: Retrieving features of %1").arg(jid.full()));
+	//qDebug() << "caps.cpp: Retrieving features of " << jid.full();
 	QStringList f;
 	if (capsEnabled(jid)) {
 		CapsSpecs cs = capsSpecs_[jid.full()].flatten();
 		foreach(CapsSpec s, cs) {
-			//qDebug(QString("    %1").arg(CapsRegistry::instance()->features(s).list().join("\n")));
+			//qDebug() << QString("    %1").arg(CapsRegistry::instance()->features(s).list().join("\n"));
 			f += CapsRegistry::instance()->features(s).list();
 		}
 	}

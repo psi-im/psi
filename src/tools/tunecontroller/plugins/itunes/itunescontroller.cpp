@@ -70,15 +70,15 @@ void ITunesController::iTunesCallback(CFNotificationCenterRef,void* observer,CFS
 	
 	CFStringRef cf_state = (CFStringRef) CFDictionaryGetValue(info, CFSTR("Player State"));
 	if (CFStringCompare(cf_state,CFSTR("Paused"),0) == kCFCompareEqualTo) {
-		//qDebug("itunesplayer.cpp: Paused");
+		//qDebug() << "itunesplayer.cpp: Paused";
 		emit controller->stopped();
 	}
 	else if (CFStringCompare(cf_state,CFSTR("Stopped"),0) == kCFCompareEqualTo) {
-		//qDebug("itunesplayer.cpp: Stopped");
+		//qDebug() << "itunesplayer.cpp: Stopped";
 		emit controller->stopped();
 	}
 	else if (CFStringCompare(cf_state,CFSTR("Playing"),0) == kCFCompareEqualTo) {
-		//qDebug("itunesplayer.cpp: Playing");
+		//qDebug() << "itunesplayer.cpp: Playing";
 		tune.setArtist(CFStringToQString((CFStringRef) CFDictionaryGetValue(info, CFSTR("Artist"))));
 		tune.setName(CFStringToQString((CFStringRef) CFDictionaryGetValue(info, CFSTR("Name"))));
 		tune.setAlbum(CFStringToQString((CFStringRef) CFDictionaryGetValue(info, CFSTR("Album"))));

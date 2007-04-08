@@ -481,7 +481,7 @@ bool WbScene::processNew(const QDomElement &New) {
 			index = id.left(id.indexOf("/")).toDouble();
 		// Check that element with 'id' doesn't exist yet.
 		if(!findWbItem(id)) {
-// 			qDebug(QString("Adding - id: %1, index: %2").arg(id).arg(index).toAscii());
+// 			qDebug() << QString("Adding - id: %1, index: %2").arg(id).arg(index).toAscii();
 			if(setElement(element, parent, id, index)) {
 				// save the highest index and id if appropriate
 				if(index > highestIndex_)
@@ -505,7 +505,7 @@ bool WbScene::processConfigure(const QDomElement &configure) {
 		else
  			wbitem->version++;
 		if(configure.attribute("version").toInt() == wbitem->version) {
-// 			qDebug(QString("Applying <configure/> - configure version: %1, current version: %2 target: %3 attribute: %4 value: %5").arg(configure.attribute("version")).arg(wbitem->version-1).arg(configure.attribute("target")).arg(configure.attribute("attribute")).arg(configure.attribute("value")).toAscii());
+// 			qDebug) << (QString("Applying <configure/> - configure version: %1, current version: %2 target: %3 attribute: %4 value: %5").arg(configure.attribute("version")).arg(wbitem->version-1).arg(configure.attribute("target")).arg(configure.attribute("attribute")).arg(configure.attribute("value")).toAscii());
 			QDomNodeList configureChildren = configure.childNodes();
 			QString newParent = wbitem->parentWbItem();
 			for(uint i = 0; i < configureChildren.length(); i++) {
@@ -556,13 +556,13 @@ bool WbScene::processConfigure(const QDomElement &configure) {
 				return false;
 			}
 		} else if (configure.attribute("version").toInt() < wbitem->version) {
-// 			qDebug(QString("Reverting <configure/>'s - configure version: %1, current version: %2 target: %3 attribute: %4 value: %5").arg(configure.attribute("version")).arg(wbitem->version-1).arg(configure.attribute("target")).arg(configure.attribute("attribute")).arg(configure.attribute("value")).toAscii());
+// 			qDebug() << (QString("Reverting <configure/>'s - configure version: %1, current version: %2 target: %3 attribute: %4 value: %5").arg(configure.attribute("version")).arg(wbitem->version-1).arg(configure.attribute("target")).arg(configure.attribute("attribute")).arg(configure.attribute("value")).toAscii());
 			// Revert the changes down to version of the configure - 1.
 			if(!wbitem->undos.isEmpty()) {
 				QString oldParent = wbitem->parentWbItem();
 				while(configure.attribute("version").toInt() <= wbitem->undos.last().version) {
 					EditUndo u = wbitem->undos.takeLast();
-// 					qDebug(QString("setting %1 to %2").arg(u.attribute).arg(u.oldValue).toAscii());
+// 					qDebug() << (QString("setting %1 to %2").arg(u.attribute).arg(u.oldValue).toAscii());
 					if(u.type == Edit::AttributeEdit) {
 						if(u.oldValue.isNull())
 							_svg.removeAttribute(u.attribute);
@@ -605,7 +605,7 @@ bool WbScene::processConfigure(const QDomElement &configure) {
 bool WbScene::processMove(const QDomElement &move) {
 	WbItem* wbitem = findWbItem(move.attribute("target"));
 	if(wbitem) {
-// 		qDebug(QString("Moving - target: %1 index: %2").arg(move.attribute("target")).arg(move.attribute("di")).toAscii());
+// 		qDebug() << (QString("Moving - target: %1 index: %2").arg(move.attribute("target")).arg(move.attribute("di")).toAscii());
 		wbitem->setIndex(wbitem->index() + move.attribute("di").toDouble());
 		if(wbitem->index() > highestIndex_)
 			highestIndex_ = static_cast<int>(wbitem->index());
@@ -616,7 +616,7 @@ bool WbScene::processMove(const QDomElement &move) {
 
 bool WbScene::processRemove(const QDomElement &remove) {
 	if(findWbItem(remove.attribute("target"))) {
-// 		qDebug(QString("Removing - target: %1").arg(remove.attribute("target")).toAscii());
+// 		qDebug() << (QString("Removing - target: %1").arg(remove.attribute("target")).toAscii());
 		if(removeElement(remove.attribute("target"))) {
 			return true;
 		}

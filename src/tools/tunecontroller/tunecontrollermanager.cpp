@@ -80,7 +80,7 @@ bool TuneControllerManager::loadPlugin(QObject* plugin)
 	TuneControllerPlugin* tcplugin = qobject_cast<TuneControllerPlugin*>(plugin);
 	if (tcplugin) {
 		if(!plugins_.contains(tcplugin->name())) {
-			//qDebug(qPrintable(QString("Registering plugin '%1'").arg(tcplugin->name())));
+			//qDebug() << "Registering plugin " << tcplugin->name();
 			plugins_[tcplugin->name()] = tcplugin;
 		}
 		return true;
