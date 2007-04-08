@@ -4099,7 +4099,6 @@ void PsiAccount::verifyStatus(const Jid &j, const Status &s)
 	t->end();
 #ifndef QCA_FINAL
 	t->waitForFinished(-1);
-	QMetaObject::invokeMethod(t, "finished", Qt::QueuedConnection);
 #endif
 }
 
@@ -4137,9 +4136,14 @@ int PsiAccount::sendMessageEncrypted(const Message &_m)
 {
 	if(!ensureKey(_m.to()))
 		return -1;
+
 	QString keyID = findFirstRelevant(_m.to())->publicKeyID();
+	QCA::KeyStoreEntry keyEntry = PGPUtil::getPublicKeyStoreEntry(keyID);
+	if (keyEntry.isNull())
+		return -1;
+
 	QCA::SecureMessageKey key;
-	key.setPGPPublicKey(PGPUtil::getPublicKeyStoreEntry(keyID).pgpPublicKey());
+	key.setPGPPublicKey(keyEntry.pgpPublicKey());
 
 	PGPTransaction *t = new PGPTransaction(new QCA::OpenPGP());
 	t->setMessage(_m);
@@ -4151,7 +4155,6 @@ int PsiAccount::sendMessageEncrypted(const Message &_m)
 	t->end();
 #ifndef QCA_FINAL
 	t->waitForFinished(-1);
-	QMetaObject::invokeMethod(t, "finished", Qt::QueuedConnection);
 #endif
 
 	return t->id();
@@ -4204,7 +4207,6 @@ void PsiAccount::processEncryptedMessage(const Message &m)
 	t->end();
 #ifndef QCA_FINAL
 	t->waitForFinished(-1);
-	QMetaObject::invokeMethod(t, "finished", Qt::QueuedConnection);
 #endif
 }
 
@@ -4213,7 +4215,7 @@ void PsiAccount::pgp_decryptFinished()
 {
 	PGPTransaction *pt = (PGPTransaction*) sender();
 	bool tryAgain = false;
-	if(pt->success()) {
+	if (pt->success()) {
 		Message m = pt->message();
 		m.setBody(QString::fromUtf8(pt->read()));
 		m.setXEncrypted("");
@@ -4221,22 +4223,23 @@ void PsiAccount::pgp_decryptFinished()
 		processIncomingMessage(m);
 	}
 	else {
-		if(loggedIn()) {
+		if (loggedIn()) {
 			Message m;
 			m.setTo(pt->message().from());
 			m.setType("error");
+			if (!pt->message().id().isEmpty())
+				m.setId(pt->message().id());
 			m.setBody(pt->message().body());
-			Stanza::Error err;
-			err.condition = 500;
-			err.text = "Unable to decrypt";
-			m.setError(err);
+			m.setError(Stanza::Error(Stanza::Error::Wait,
+			                         Stanza::Error::NotAcceptable,
+			                         "Unable to decrypt"));
 			d->client->sendMessage(m);
 		}
 	}
 
 	pt->deleteLater();
 
-	if(tryAgain) {
+	if (tryAgain) {
 		processEncryptedMessageNext();
 	}
 	else {
@@ -4271,7 +4274,8 @@ void PsiAccount::processEncryptedMessageNext()
 void PsiAccount::processEncryptedMessageDone()
 {
 	// 'pop' the message
-	delete d->messageQueue.takeFirst();
+	if (!d->messageQueue.isEmpty())
+		delete d->messageQueue.takeFirst();
 
 	// do the rest of the queue
 	processMessageQueue();

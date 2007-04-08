@@ -72,7 +72,8 @@ QCA::KeyStoreEntry PGPUtil::getSecretKeyStoreEntry(const QString& keyID)
 		QCA::KeyStore ks(k);
 		if (ks.type() == QCA::KeyStore::PGPKeyring && ks.holdsIdentities()) {
 			foreach(QCA::KeyStoreEntry ke, ks.entryList()) {
-				if (ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey && ke.pgpSecretKey().keyId() == keyID) {
+				if (ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey
+				    && ke.pgpSecretKey().keyId() == keyID) {
 					return ke;
 				}
 			}
@@ -87,7 +88,9 @@ QCA::KeyStoreEntry PGPUtil::getPublicKeyStoreEntry(const QString& keyID)
 		QCA::KeyStore ks(k);
 		if (ks.type() == QCA::KeyStore::PGPKeyring && ks.holdsIdentities()) {
 			foreach(QCA::KeyStoreEntry ke, ks.entryList()) {
-				if (ke.type() == QCA::KeyStoreEntry::TypePGPPublicKey && ke.pgpPublicKey().keyId() == keyID) {
+				if ((ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey
+				     || ke.type() == QCA::KeyStoreEntry::TypePGPPublicKey)
+				    && ke.pgpPublicKey().keyId() == keyID) {
 					return ke;
 				}
 			}
