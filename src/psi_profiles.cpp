@@ -1765,8 +1765,8 @@ bool UserProfile::fromFile(const QString &fname)
 
 		QDomElement p_tip = findSubTag(p, "tipOfTheDay", &found);
 		if (found) {
-			migrateIntEntry(p_tip, "num", "options.tip.number");
-			migrateBoolEntry(p_tip, "show", "options.tip.show");
+			migrateIntEntry(p_tip, "num", "options.ui.tip.number");
+			migrateBoolEntry(p_tip, "show", "options.ui.tip.show");
 		}
 
 		QDomElement p_disco = findSubTag(p, "disco", &found);
