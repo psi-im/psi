@@ -51,12 +51,12 @@ bool ServSock::isActive() const
 	return (d->serv ? true: false);
 }
 
-bool ServSock::listen(Q_UINT16 port)
+bool ServSock::listen(quint16 port)
 {
 	stop();
 
-	d->serv = new ServSockSignal(port);
-	if(!d->serv->ok()) {
+	d->serv = new ServSockSignal(this);
+	if(!d->serv->listen(QHostAddress::Any, port)) {
 		delete d->serv;
 		d->serv = 0;
 		return false;
@@ -75,7 +75,7 @@ void ServSock::stop()
 int ServSock::port() const
 {
 	if(d->serv)
-		return d->serv->port();
+		return d->serv->serverPort();
 	else
 		return -1;
 }
@@ -83,7 +83,7 @@ int ServSock::port() const
 QHostAddress ServSock::address() const
 {
 	if(d->serv)
-		return d->serv->address();
+		return d->serv->serverAddress();
 	else
 		return QHostAddress();
 }
@@ -97,14 +97,15 @@ void ServSock::sss_connectionReady(int s)
 //----------------------------------------------------------------------------
 // ServSockSignal
 //----------------------------------------------------------------------------
-ServSockSignal::ServSockSignal(int port)
-:Q3ServerSocket(port, 16)
+ServSockSignal::ServSockSignal(QObject *parent)
+:QTcpServer(parent)
 {
+	setMaxPendingConnections(16);
 }
 
-void ServSockSignal::newConnection(int x)
+void ServSockSignal::incomingConnection(int socketDescriptor)
 {
-	connectionReady(x);
+	connectionReady(socketDescriptor);
 }
 
 // CS_NAMESPACE_END
