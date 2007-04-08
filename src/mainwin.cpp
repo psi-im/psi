@@ -309,23 +309,23 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	// Mac-only menus
 #ifdef Q_WS_MAC
 	QMenu *mainMenu = new QMenu(this);
-	psiCon()->menuBar()->insertItem(tr("Menu"), mainMenu);
+	mainMenuBar()->insertItem(tr("Menu"), mainMenu);
 	mainMenu->insertItem(tr("Preferences"), this, SIGNAL(doOptions()));
 	mainMenu->insertItem(tr("Quit"), this, SLOT(try2tryCloseProgram()));
 	d->getAction("help_about")->addTo(mainMenu);
 	d->getAction("help_about_qt")->addTo(mainMenu);
 
 	d->mainMenu = new QMenu(this);
-	psiCon()->menuBar()->insertItem(tr("General"), d->mainMenu);
+	mainMenuBar()->insertItem(tr("General"), d->mainMenu);
 	connect(d->mainMenu, SIGNAL(aboutToShow()), SLOT(buildMainMenu()));
 #else
-	psiCon()->menuBar()->insertItem(tr("General"), d->optionsMenu);
+	mainMenuBar()->insertItem(tr("General"), d->optionsMenu);
 #endif
 
-	psiCon()->menuBar()->insertItem(tr("Status"), d->statusMenu);
+	mainMenuBar()->insertItem(tr("Status"), d->statusMenu);
 
 	QMenu *viewMenu = new QMenu(this);
-	psiCon()->menuBar()->insertItem(tr("View"), viewMenu);
+	mainMenuBar()->insertItem(tr("View"), viewMenu);
 	d->getAction("show_offline")->addTo(viewMenu);
 	if (PsiOptions::instance()->getOption("options.ui.menu.view.show-away").toBool())
 		d->getAction("show_away")->addTo(viewMenu);
@@ -338,11 +338,11 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	// Mac-only menus
 #ifdef Q_WS_MAC
 	d->toolsMenu = new QMenu(this);
-	psiCon()->menuBar()->insertItem(tr("Tools"), d->toolsMenu);
+	mainMenuBar()->insertItem(tr("Tools"), d->toolsMenu);
 	connect(d->toolsMenu, SIGNAL(aboutToShow()), SLOT(buildToolsMenu()));
 
 	QMenu *helpMenu = new QMenu(this);
-	psiCon()->menuBar()->insertItem(tr("Help"), helpMenu);
+	mainMenuBar()->insertItem(tr("Help"), helpMenu);
 	d->getAction("help_readme")->addTo (helpMenu);
 	d->getAction("help_tip")->addTo (helpMenu);
 	helpMenu->insertSeparator();
@@ -352,9 +352,9 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	d->getAction("help_report_bug")->addTo (helpMenu);
 #else
 	if (option.hideMenubar) 
-		psiCon()->menuBar()->hide();
+		mainMenuBar()->hide();
 	//else 
-	//	psiCon()->menuBar()->show();
+	//	mainMenuBar()->show();
 #endif
 	
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt()))/100);
@@ -367,8 +367,8 @@ MainWin::~MainWin()
 {
 	PsiPopup::deleteAll();
 
-	if (psiCon()->menuBar())
-		delete psiCon()->menuBar();
+	if (mainMenuBar())
+		delete mainMenuBar();
 
 	if(d->tray) {
 		delete d->tray;
@@ -575,6 +575,15 @@ void MainWin::activatedStatusAction(int id)
 	}
 
 	statusChanged(id);
+}
+
+QMenuBar* MainWin::mainMenuBar() const
+{
+#ifdef Q_WS_MAC
+	return psiCon()->defaultMenuBar();
+#else
+	return menuBar();
+#endif
 }
 
 void MainWin::buildToolbars()
@@ -911,9 +920,9 @@ void MainWin::optionsUpdate()
 	decorateButton(status);
 
 	if (option.hideMenubar) 
-		psiCon()->menuBar()->hide();
+		mainMenuBar()->hide();
 	else 
-		psiCon()->menuBar()->show();
+		mainMenuBar()->show();
 	
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt()))/100);
 

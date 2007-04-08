@@ -89,7 +89,7 @@ public:
 	void dialogRegister(QWidget *w);
 	void dialogUnregister(QWidget *w);
 
-	QMenuBar* menuBar() const;
+	QMenuBar* defaultMenuBar() const;
 
 	void createAccount(const QString &name, const Jid &j="", const QString &pass="", bool opt_host=false, const QString &host="", int port=5222, bool legacy_ssl_probe = true, UserAccount::SSLFlag ssl=UserAccount::SSL_Auto, int proxy=0);
 	PsiAccount *createAccount(const UserAccount &);

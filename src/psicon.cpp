@@ -661,13 +661,9 @@ QWidget *PsiCon::dialogFind(const char *className)
 	return 0;
 }
 
-QMenuBar* PsiCon::menuBar() const
+QMenuBar* PsiCon::defaultMenuBar() const
 {
-#ifdef Q_WS_MAC
 	return d->defaultMenuBar;
-#else
-	return d->mainwin->menuBar();
-#endif
 }
 
 TabDlg* PsiCon::newTabs()

@@ -71,6 +71,7 @@ public:
 protected:
 	void closeEvent(QCloseEvent *);
 	void keyPressEvent(QKeyEvent *);
+	QMenuBar* mainMenuBar() const;
 
 signals:
 	void statusChanged(int);
