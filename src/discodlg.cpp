@@ -48,6 +48,7 @@
 #include "common.h"
 #include "iconaction.h"
 #include "psitooltip.h"
+#include "stretchwidget.h"
 #include "psioptions.h"
 
 //----------------------------------------------------------------------------
@@ -737,17 +738,6 @@ class DiscoDlg::Private : public QObject
 	Q_OBJECT
 
 private:
-	// helper class for use in toolbar
-	class StretchWidget : public QWidget
-	{
-	public:
-		StretchWidget(QWidget *parent)
-		: QWidget(parent)
-		{
-			setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-		}
-	};
-		
 	class ProtocolAction : public QAction
 	{
 	public:

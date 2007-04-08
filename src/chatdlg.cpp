@@ -51,6 +51,7 @@
 #include "psiaccount.h"
 #include "common.h"
 #include "userlist.h"
+#include "stretchwidget.h"
 #include "iconwidget.h"
 #include "fancylabel.h"
 #include "msgmle.h"

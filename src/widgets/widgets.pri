@@ -16,6 +16,7 @@ SOURCES += \
 	$$PWD/psitabwidget.cpp
 
 HEADERS += \
+	$$PWD/stretchwidget.h \
 	$$PWD/busywidget.h \
 	$$PWD/fancylabel.h \
 	$$PWD/iconselect.h \

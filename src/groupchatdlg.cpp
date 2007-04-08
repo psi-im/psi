@@ -57,6 +57,7 @@
 #include "userlist.h"
 #include "mucconfigdlg.h"
 #include "statusdlg.h"
+#include "stretchwidget.h"
 #include "mucmanager.h"
 #include "busywidget.h"
 #include "common.h"

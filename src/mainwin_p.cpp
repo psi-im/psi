@@ -36,6 +36,7 @@
 #include <QMenu>
 #include <QMouseEvent>
 #include "psiaccount.h"
+#include "stretchwidget.h"
 #include "iconwidget.h"
 #include "icontoolbutton.h"
 #include "alerticon.h"

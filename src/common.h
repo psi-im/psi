@@ -313,17 +313,6 @@ PsiIconset *is;
 extern
 bool useSound;
 
-// helper class for toolbars
-class StretchWidget: public QWidget
-{
-public:
-	StretchWidget(QWidget *parent)
-	: QWidget( parent )
-	{
-		setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-	}
-};
-
 typedef QList<XMPP::Jid> JidList;
 typedef QListIterator<XMPP::Jid> JidListIt;
 
