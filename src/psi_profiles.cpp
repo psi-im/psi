@@ -67,6 +67,7 @@ void UserAccount::reset()
 	port = 5222;
 	opt_host = FALSE;
 	host = "";
+	opt_automatic_resource = TRUE;
 	resource = "Psi";
 	priority = 5;
 	opt_keepAlive = TRUE;
@@ -110,6 +111,7 @@ QDomElement UserAccount::toXml(QDomDocument &doc, const QString &tagName)
 	setBoolAttribute(a, "compress", opt_compress);
 	setBoolAttribute(a, "require-mutual-auth", req_mutual_auth);
 	setBoolAttribute(a, "legacy-ssl-probe", legacy_ssl_probe);
+	setBoolAttribute(a, "automatic-resource", opt_automatic_resource);
 	setBoolAttribute(a, "log", opt_log);
 	setBoolAttribute(a, "reconn", opt_reconn);
 	setBoolAttribute(a, "ignoreSSLWarnings", opt_ignoreSSLWarnings);
@@ -231,6 +233,12 @@ void UserAccount::fromXml(const QDomElement &a)
 	readBoolAttribute(a, "reconn", &opt_reconn);
 	readBoolAttribute(a, "ignoreSSLWarnings", &opt_ignoreSSLWarnings);
 	//readBoolAttribute(a, "gpg", &opt_gpg);
+	if (a.hasAttribute("automatic-resource")) {
+		readBoolAttribute(a, "automatic-resource", &opt_automatic_resource);
+	}
+	else {
+		opt_automatic_resource = false;
+	}
 
 	readNumEntry(a, "security-level", &security_level);
 	readEntry(a, "host", &host);

@@ -67,6 +67,8 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 	connect(pb_key, SIGNAL(clicked()), SLOT(chooseKey()));
 	connect(pb_keyclear, SIGNAL(clicked()), SLOT(clearKey()));
 	connect(pb_save, SIGNAL(clicked()), SLOT(save()));
+	connect(ck_automatic_resource, SIGNAL(toggled(bool)), le_resource, SLOT(setDisabled(bool)));
+	connect(ck_automatic_resource, SIGNAL(toggled(bool)), lb_resource, SLOT(setDisabled(bool)));
 
 	gb_pgp->setEnabled(false);
 
@@ -89,6 +91,7 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 	ck_req_mutual->setChecked(acc.req_mutual_auth);
 	ck_legacy_ssl_probe->setChecked(acc.legacy_ssl_probe);
 
+	ck_automatic_resource->setChecked(acc.opt_automatic_resource);
 	le_resource->setText(acc.resource);
 	le_priority->setText(QString::number(acc.priority));
 
@@ -274,6 +277,7 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 	}
 	
 	if (!PsiOptions::instance()->getOption("options.ui.account.resource").toBool()) {
+		ck_automatic_resource->hide();
 		lb_resource->hide();
 		le_resource->hide();
 	}
@@ -464,6 +468,7 @@ void AccountModifyDlg::save()
 	acc.legacy_ssl_probe = ck_legacy_ssl_probe->isChecked();
 	acc.security_level = cb_security_level->itemData(cb_security_level->currentIndex()).toInt();
 
+	acc.opt_automatic_resource = ck_automatic_resource->isChecked();
 	acc.resource = le_resource->text();
 	acc.priority = le_priority->text().toInt();
 	

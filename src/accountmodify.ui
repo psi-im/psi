@@ -742,6 +742,13 @@
         <number>6</number>
        </property>
        <item>
+        <widget class="QCheckBox" name="ck_automatic_resource" >
+         <property name="text" >
+          <string>Use hostname as resource</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <layout class="QHBoxLayout" >
          <property name="margin" >
           <number>0</number>

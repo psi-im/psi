@@ -42,6 +42,7 @@
 #include <QFrame>
 #include <QLabel>
 #include <QList>
+#include <QHostInfo>
 
 #include "psicon.h"
 #include "profiles.h"
@@ -947,7 +948,7 @@ void PsiAccount::login()
 	connect(d->stream, SIGNAL(warning(int)), SLOT(cs_warning(int)));
 	connect(d->stream, SIGNAL(error(int)), SLOT(cs_error(int)), Qt::QueuedConnection);
 
-	Jid j = d->jid.withResource(d->acc.resource);
+	Jid j = d->jid.withResource((d->acc.opt_automatic_resource ? localHostName() : d->acc.resource ));
 	d->client->connectToServer(d->stream, j);
 }
 
@@ -1065,7 +1066,7 @@ void PsiAccount::cs_authenticated()
 	//printf("PsiAccount: [%s] authenticated\n", name().latin1());
 	d->conn->changePollInterval(10); // for http poll, slow down after login
 
-	d->client->start(d->jid.host(), d->jid.user(), d->acc.pass, (d->stream->jid().resource().isEmpty() ? d->acc.resource : d->stream->jid().resource()));
+	d->client->start(d->jid.host(), d->jid.user(), d->acc.pass, (d->stream->jid().resource().isEmpty() ? ( d->acc.opt_automatic_resource ? localHostName() : d->acc.resource) : d->stream->jid().resource()));
 	if (!d->stream->old()) {
 		JT_Session *j = new JT_Session(d->client->rootTask());
 		connect(j,SIGNAL(finished()),SLOT(sessionStart_finished()));
@@ -2091,6 +2092,12 @@ void PsiAccount::playSound(const QString &str)
 		return;
 
 	d->psi->playSound(str);
+}
+
+QString PsiAccount::localHostName()
+{
+	QString hostname = QHostInfo::localHostName();
+	return hostname.left(hostname.indexOf('.'));
 }
 
 bool PsiAccount::validRosterExchangeItem(const RosterExchangeItem& item)

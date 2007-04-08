@@ -323,6 +323,7 @@ private slots:
 
 protected:
 	bool validRosterExchangeItem(const RosterExchangeItem&);
+	QString localHostName();
 
 	void publishTune(const Tune&);
 	void setSendChatState(bool);

@@ -76,6 +76,7 @@ Notes
 Changes
 -------
   New in 0.11
+  - Added option to automatically set the resource (using the hostname)
   - Added new default Stellar3 iconset
   - Added support for JEP-138 (Stream Compression)
   - Added support for using JEP-33 (Extended Stanza Addressing) to multicast

@@ -49,6 +49,7 @@ public:
 	bool tog_offline, tog_away, tog_agents, tog_hidden, tog_self;
 	bool req_mutual_auth;
 	bool legacy_ssl_probe;
+	bool opt_automatic_resource;
 	int security_level;
 
 	int proxy_index;
