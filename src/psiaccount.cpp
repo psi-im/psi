@@ -935,9 +935,9 @@ void PsiAccount::login()
 	// stream
 	d->conn = new AdvancedConnector;
 #ifdef XMPP1
-	if(QCA::isSupported("tls") && !(d->acc.opt_host && !d->acc.opt_ssl)) {
+	if(d->acc.legacy_ssl_probe || !d->acc.opt_host || d->acc.opt_ssl) {
 #else
-	if(d->acc.legacy_ssl_probe || d->acc.opt_ssl) {
+	if(QCA::isSupported("tls") && !(d->acc.opt_host && !d->acc.opt_ssl)) {
 #endif
 		d->tls = new QCA::TLS;
 		d->tls->setTrustedCertificates(CertUtil::allCertificates());
