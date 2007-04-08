@@ -52,7 +52,7 @@ protected:
 	void resizeEvent(QResizeEvent *);
 
 protected slots:
-	void autoCopy(bool copyAvailable);
+	void autoCopy();
 
 private:
 	QWidget* dialog_;
