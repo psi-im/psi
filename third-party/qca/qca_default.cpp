@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  *
  */
 
@@ -23,6 +23,7 @@
 #include <QtCore>
 #include <stdlib.h>
 #include "qcaprovider.h"
+#include <time.h>
 
 #ifndef QCA_NO_SYSTEMSTORE
 # include "qca_systemstore.h"
@@ -43,7 +44,7 @@ public:
 		return new DefaultRandomContext(provider());
 	}
 
-	virtual QSecureArray nextBytes(int size, Random::Quality)
+	virtual QSecureArray nextBytes(int size)
 	{
 		QSecureArray buf(size);
 		for(int n = 0; n < (int)buf.size(); ++n)
@@ -81,7 +82,7 @@ public:
   ghost@aladdin.com
 
  */
-/* $Id: qca_default.cpp 535284 2006-04-29 06:40:31Z bhards $ */
+/* $Id: qca_default.cpp 620048 2007-01-05 05:22:34Z bhards $ */
 /*
   Independent implementation of MD5 (RFC 1321).
 
@@ -527,19 +528,19 @@ struct SHA1_CONTEXT
 		sbuf.resize((7 * sizeof(quint32)) + 64);
 		setup();
 	}
-	
+
 	SHA1_CONTEXT(const SHA1_CONTEXT &from)
 	{
 		*this = from;
 	}
-	
+
 	SHA1_CONTEXT & operator=(const SHA1_CONTEXT &from)
 	{
 		sbuf = from.sbuf;
 		setup();
 		return *this;
 	}
-	
+
 	inline void setup()
 	{
 		char *p = sbuf.data();
@@ -898,6 +899,11 @@ public:
 			now = QDateTime::currentDateTime();
 		time_t t = now.toTime_t() / now.time().msec();
 		srand(t);
+	}
+
+	int version() const
+	{
+		return QCA_VERSION;
 	}
 
 	QString name() const

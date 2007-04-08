@@ -54,7 +54,7 @@ static QString hpk(int n, const QString &s)
 	if(n == 0)
 		return s;
 	else
-		return QCA::Base64().arrayToString( QCA::SHA1().hash( Q3CString(hpk(n - 1, s).latin1()) ).toByteArray() );
+		return QCA::Base64().arrayToString( QCA::Hash("algoName").hash( Q3CString(hpk(n - 1, s).latin1()) ).toByteArray() );
 }
 
 class HttpPoll::Private

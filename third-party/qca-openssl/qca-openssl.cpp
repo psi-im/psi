@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  *
  */
 
@@ -264,13 +264,30 @@ static void try_get_name_item(X509_NAME *name, int nid, CertificateInfoType t, C
 	}
 }
 
+static void try_get_name_item_by_oid(X509_NAME *name, const QString &oidText, CertificateInfoType t, CertificateInfo *info)
+{
+        ASN1_OBJECT *oid = OBJ_txt2obj( oidText.toLatin1().data(), 1); // 1 = only accept dotted input
+	int loc;
+	loc = -1;
+	while ((loc = X509_NAME_get_index_by_OBJ(name, oid, loc)) != -1) {
+		X509_NAME_ENTRY *ne = X509_NAME_get_entry(name, loc);
+		ASN1_STRING *data = X509_NAME_ENTRY_get_data(ne);
+		QByteArray cs((const char *)data->data, data->length);
+		info->insert(t, QString::fromLatin1(cs));
+		qDebug() << "oid: " << oidText << ",  result: " << cs;
+	}
+}
+
 static CertificateInfo get_cert_name(X509_NAME *name)
 {
 	CertificateInfo info;
 	try_get_name_item(name, NID_commonName, CommonName, &info);
 	try_get_name_item(name, NID_countryName, Country, &info);
+	try_get_name_item_by_oid(name, QString("1.3.6.1.4.1.311.60.2.1.3"), IncorporationCountry, &info);
 	try_get_name_item(name, NID_localityName, Locality, &info);
+	try_get_name_item_by_oid(name, QString("1.3.6.1.4.1.311.60.2.1.1"), IncorporationLocality, &info);
 	try_get_name_item(name, NID_stateOrProvinceName, State, &info);
+	try_get_name_item_by_oid(name, QString("1.3.6.1.4.1.311.60.2.1.2"), IncorporationState, &info);
 	try_get_name_item(name, NID_organizationName, Organization, &info);
 	try_get_name_item(name, NID_organizationalUnitName, OrganizationalUnit, &info);
 	return info;
@@ -407,6 +424,9 @@ static GENERAL_NAME *new_general_name(CertificateInfoType t, const QString &val)
 		case Locality:
 		case State:
 		case Country:
+	        case IncorporationLocality:
+	        case IncorporationState:
+	        case IncorporationCountry:
 			break;
 	}
 	return name;
@@ -442,120 +462,143 @@ static X509_EXTENSION *new_cert_subject_alt_name(const CertificateInfo &info)
 	return ex;
 }
 
-static QList<GENERAL_NAME*> find_general_name(GENERAL_NAMES *names, int type)
+static GENERAL_NAME *find_next_general_name(GENERAL_NAMES *names, int type, int *pos)
 {
-	//GENERAL_NAME *gn = 0;
-	QList<GENERAL_NAME*> gns;
-	for(int n = 0; n < sk_GENERAL_NAME_num(names); ++n)
-	{
-		GENERAL_NAME *i = sk_GENERAL_NAME_value(names, n);
-		if(i->type == type)
-		{
-			gns += i;
-		}
-	}
-	return gns;
+        int temp = *pos;
+        GENERAL_NAME *gn = 0;
+        *pos = -1;
+        for(int n = temp; n < sk_GENERAL_NAME_num(names); ++n)
+        {
+                GENERAL_NAME *i = sk_GENERAL_NAME_value(names, n);
+                if(i->type == type)
+                {
+                        gn = i;
+                        *pos = n;
+                        break;
+                }
+        }
+        return gn;
 }
 
 static void try_get_general_name(GENERAL_NAMES *names, CertificateInfoType t, CertificateInfo *info)
 {
-	switch(t)
-	{
-		case Email:
-		{
-			QList<GENERAL_NAME*> gns = find_general_name(names, GEN_EMAIL);
-			if(gns.isEmpty())
-				break;
-			foreach(GENERAL_NAME* gn, gns) {
-				QByteArray cs((const char *)ASN1_STRING_data(gn->d.rfc822Name), ASN1_STRING_length(gn->d.rfc822Name));
-				info->insert(t, QString::fromLatin1(cs));
-			}
-			break;
-		}
-		case URI:
-		{
-			QList<GENERAL_NAME*> gns = find_general_name(names, GEN_URI);
-			if(gns.isEmpty())
-				break;
-			foreach(GENERAL_NAME* gn, gns) {
-				QByteArray cs((const char *)ASN1_STRING_data(gn->d.uniformResourceIdentifier), ASN1_STRING_length(gn->d.uniformResourceIdentifier));
-				info->insert(t, QString::fromLatin1(cs));
-			}
-			break;
-		}
-		case DNS:
-		{
-			QList<GENERAL_NAME*> gns = find_general_name(names, GEN_DNS);
-			if(gns.isEmpty())
-				break;
-			foreach(GENERAL_NAME* gn, gns) {
-				QByteArray cs((const char *)ASN1_STRING_data(gn->d.dNSName), ASN1_STRING_length(gn->d.dNSName));
-				info->insert(t, QString::fromLatin1(cs));
-			}
-			break;
-		}
-		case IPAddress:
-		{
-			QList<GENERAL_NAME*> gns = find_general_name(names, GEN_IPADD);
-			if(gns.isEmpty())
-				break;
-			foreach(GENERAL_NAME* gn, gns) {
+        switch(t)
+        {
+                case Email:
+                {
+                        int pos = 0;
+                        while (pos != -1)
+                        {
+                                GENERAL_NAME *gn = find_next_general_name(names, GEN_EMAIL, &pos);
+                                if (pos != -1)
+                                {
+                                        QByteArray cs((const char *)ASN1_STRING_data(gn->d.rfc822Name), ASN1_STRING_length(gn->d.rfc822Name));
+                                        info->insert(t, QString::fromLatin1(cs));
+                                        ++pos;
+                                }
+                        }
+                        break;
+                }
+                case URI:
+                {
+                        int pos = 0;
+                        while (pos != -1)
+                        {
+                                GENERAL_NAME *gn = find_next_general_name(names, GEN_URI, &pos);
+                                if (pos != -1)
+                                {
+                                        QByteArray cs((const char *)ASN1_STRING_data(gn->d.uniformResourceIdentifier), ASN1_STRING_length(gn->d.uniformResourceIdentifier));
+                                        info->insert(t, QString::fromLatin1(cs));
+                                        ++pos;
+                                }
+                        }
+                        break;
+                }
+                case DNS:
+                {
+                        int pos = 0;
+                        while (pos != -1)
+                        {
+                                GENERAL_NAME *gn = find_next_general_name(names, GEN_DNS, &pos);
+                                if (pos != -1)
+                                {
+                                        QByteArray cs((const char *)ASN1_STRING_data(gn->d.dNSName), ASN1_STRING_length(gn->d.dNSName));
+                                        info->insert(t, QString::fromLatin1(cs));
+                                        ++pos;
+                                }
+                        }
+                        break;
+                }
+                case IPAddress:
+                {
+                        int pos = 0;
+                        while (pos != -1)
+                        {
+                                GENERAL_NAME *gn = find_next_general_name(names, GEN_IPADD, &pos);
+                                if (pos != -1)
+                                {
+                                        ASN1_OCTET_STRING *str = gn->d.iPAddress;
+                                        QByteArray buf((const char *)ASN1_STRING_data(str), ASN1_STRING_length(str));
 
-				ASN1_OCTET_STRING *str = gn->d.iPAddress;
-				QByteArray buf((const char *)ASN1_STRING_data(str), ASN1_STRING_length(str));
-	
-				QString out;
-				// IPv4 (TODO: handle IPv6)
-				if(buf.size() == 4)
-				{
-					out = "0.0.0.0";
-				}
-				else
-					continue;
-	
-				info->insert(t, out);
-			}
-			break;
-		}
-		case XMPP:
-		{
-			QList<GENERAL_NAME*> gns = find_general_name(names, GEN_OTHERNAME);
-			if(gns.isEmpty())
-				break;
-			foreach(GENERAL_NAME* gn, gns) {
+                                        QString out;
+                                        // IPv4 (TODO: handle IPv6)
+                                        if(buf.size() == 4)
+                                        {
+                                                out = "0.0.0.0";
+                                        }
+                                        else
+                                                break;
+                                        info->insert(t, out);
+                                        ++pos;
+                                }
+                        }
+                        break;
+                }
+                case XMPP:
+                {
+                        int pos = 0;
+                        while( pos != -1)
+                        {
+                                GENERAL_NAME *gn = find_next_general_name(names, GEN_OTHERNAME, &pos);
+                                if (pos != -1)
+                                {
+                                        OTHERNAME *other = gn->d.otherName;
+                                        if(!other)
+                                                break;
 
-				OTHERNAME *other = gn->d.otherName;
-				if(!other)
-					continue;
-	
-				ASN1_OBJECT *obj = OBJ_txt2obj("1.3.6.1.5.5.7.8.5", 1); // 1 = only accept dotted input
-				if(OBJ_cmp(other->type_id, obj) != 0)
-					continue;
-				ASN1_OBJECT_free(obj);
-	
-				ASN1_TYPE *at = other->value;
-				if(at->type != V_ASN1_UTF8STRING)
-					continue;
-	
-				ASN1_UTF8STRING *str = at->value.utf8string;
-				QByteArray buf((const char *)ASN1_STRING_data(str), ASN1_STRING_length(str));
-				info->insert(t, QString::fromUtf8(buf));
-			}
-			break;
-		}
+                                        ASN1_OBJECT *obj = OBJ_txt2obj("1.3.6.1.5.5.7.8.5", 1); // 1 = only accept dotted input
+                                        if(OBJ_cmp(other->type_id, obj) != 0)
+                                                break;
+                                        ASN1_OBJECT_free(obj);
 
-		// the following are not alt_names
-		case CommonName:
-		case Organization:
-		case OrganizationalUnit:
-		case Locality:
-		case State:
-		case Country:
-			break;
-	}
+                                        ASN1_TYPE *at = other->value;
+                                        if(at->type != V_ASN1_UTF8STRING)
+                                                break;
+
+                                        ASN1_UTF8STRING *str = at->value.utf8string;
+                                        QByteArray buf((const char *)ASN1_STRING_data(str), ASN1_STRING_length(str));
+                                        info->insert(t, QString::fromUtf8(buf));
+                                        ++pos;
+                                }
+                        }
+                        break;
+                }
+
+                // the following are not alt_names
+                case CommonName:
+                case Organization:
+                case OrganizationalUnit:
+                case Locality:
+	        case IncorporationLocality:
+                case State:
+	        case IncorporationState:
+                case Country:
+	        case IncorporationCountry:
+                        break;
+        }
 }
 
-static CertificateInfo get_cert_subject_alt_name(X509_EXTENSION *ex)
+static CertificateInfo get_cert_alt_name(X509_EXTENSION *ex)
 {
 	CertificateInfo info;
 	GENERAL_NAMES *gn = (GENERAL_NAMES *)X509V3_EXT_d2i(ex);
@@ -655,7 +698,7 @@ static Constraints get_cert_key_usage(X509_EXTENSION *ex)
 	}
 	ASN1_BIT_STRING_free(keyusage);
 	return constraints;
-};
+}
 
 static X509_EXTENSION *new_cert_ext_key_usage(const Constraints &constraints)
 {
@@ -772,7 +815,7 @@ static Constraints get_cert_ext_key_usage(X509_EXTENSION *ex)
 	}
 	sk_ASN1_OBJECT_pop_free(extkeyusage, ASN1_OBJECT_free);
 	return constraints;
-};
+}
 
 static X509_EXTENSION *new_cert_policies(const QStringList &policies)
 {
@@ -954,7 +997,7 @@ public:
 	m_algorithm = algorithm;
 	EVP_DigestInit( &m_context, m_algorithm );
     };
-    
+
     ~opensslHashContext()
     {
 	EVP_MD_CTX_cleanup(&m_context);
@@ -965,12 +1008,12 @@ public:
 	EVP_MD_CTX_cleanup(&m_context);
 	EVP_DigestInit( &m_context, m_algorithm );
     }
-    
+
     void update(const QSecureArray &a)
     {
 	EVP_DigestUpdate( &m_context, (unsigned char*)a.data(), a.size() );
     }
-    
+
     QSecureArray final()
     {
 	QSecureArray a( EVP_MD_size( m_algorithm ) );
@@ -982,11 +1025,11 @@ public:
     {
 	return new opensslHashContext(*this);
     }
-    
+
 protected:
     const EVP_MD *m_algorithm;
     EVP_MD_CTX m_context;
-};	
+};
 
 
 class opensslPbkdf1Context : public KDFContext
@@ -1002,13 +1045,13 @@ public:
     {
 	return new opensslPbkdf1Context( *this );
     }
-    
+
     SymmetricKey makeKey(const QSecureArray &secret, const InitializationVector &salt,
 			      unsigned int keyLength, unsigned int iterationCount)
     {
 	/* from RFC2898:
 	   Steps:
-	   
+
 	   1. If dkLen > 16 for MD2 and MD5, or dkLen > 20 for SHA-1, output
 	   "derived key too long" and stop.
 	*/
@@ -1021,7 +1064,7 @@ public:
 	   2. Apply the underlying hash function Hash for c iterations to the
 	   concatenation of the password P and the salt S, then extract
 	   the first dkLen octets to produce a derived key DK:
-	   
+
 	   T_1 = Hash (P || S) ,
 	   T_2 = Hash (T_1) ,
 	   ...
@@ -1068,7 +1111,7 @@ public:
     {
 	HMAC_Init_ex( &m_context, key.data(), key.size(), m_algorithm, 0 );
     }
-    
+
     KeyLength keyLength() const
     {
 	return anyKeyLength();
@@ -1078,7 +1121,7 @@ public:
     {
 	HMAC_Update( &m_context, (unsigned char *)a.data(), a.size() );
     }
-    
+
     void final( QSecureArray *out)
     {
 	out->resize( EVP_MD_size( m_algorithm ) );
@@ -1090,7 +1133,7 @@ public:
     {
 	return new opensslHMACContext(*this);
     }
-    
+
 protected:
     HMAC_CTX m_context;
     const EVP_MD *m_algorithm;
@@ -1237,7 +1280,7 @@ const char* IETF_2048_PRIME =
 	"E39E772C 180E8603 9B2783A2 EC07A28F B5C55DF0 6F4C52C9"
 	"DE2BCBF6 95581718 3995497C EA956AE5 15D22618 98FA0510"
 	"15728E5A 8AACAA68 FFFFFFFF FFFFFFFF";
-	
+
 const char* IETF_4096_PRIME =
 	"FFFFFFFF FFFFFFFF C90FDAA2 2168C234 C4C6628B 80DC1CD1"
 	"29024E08 8A67CC74 020BBEA6 3B139B22 514A0879 8E3404DD"
@@ -3000,7 +3043,7 @@ public:
 		X509_set_subject_name(x, name);
 
 		// issuer == subject
-		X509_set_issuer_name(x, name); 
+		X509_set_issuer_name(x, name);
 
 		// subject key id
 		ex = new_subject_key_id(x);
@@ -3139,8 +3182,10 @@ public:
 		p.start = ASN1_UTCTIME_QDateTime(X509_get_notBefore(x), NULL);
 		p.end = ASN1_UTCTIME_QDateTime(X509_get_notAfter(x), NULL);
 
-		p.subject = get_cert_name(X509_get_subject_name(x));
-		p.issuer = get_cert_name(X509_get_issuer_name(x));
+		CertificateInfo subject, issuer;
+
+		subject = get_cert_name(X509_get_subject_name(x));
+		issuer = get_cert_name(X509_get_issuer_name(x));
 
 		p.isSelfSigned = ( X509_V_OK == X509_check_issued( x, x ) );
 
@@ -3159,7 +3204,15 @@ public:
 		{
 			X509_EXTENSION *ex = X509_get_ext(x, pos);
 			if(ex)
-				p.subject.unite(get_cert_subject_alt_name(ex));
+				subject.unite(get_cert_alt_name(ex));
+		}
+
+		pos = X509_get_ext_by_NID(x, NID_issuer_alt_name, -1);
+		if(pos != -1)
+		{
+			X509_EXTENSION *ex = X509_get_ext(x, pos);
+			if(ex)
+				issuer.unite(get_cert_alt_name(ex));
 		}
 
 		pos = X509_get_ext_by_NID(x, NID_key_usage, -1);
@@ -3213,7 +3266,7 @@ public:
 		default:
 		    qDebug() << "Unknown signature value: " << OBJ_obj2nid(x->cert_info->signature->algorithm);
 		    p.sigalgo = QCA::SignatureUnknown;
-		}    
+		}
 
 		pos = X509_get_ext_by_NID(x, NID_subject_key_identifier, -1);
 		if(pos != -1)
@@ -3230,6 +3283,13 @@ public:
 			if(ex)
 				p.issuerId += get_cert_issuer_key_id(ex);
 		}
+
+		// FIXME: super hack
+		CertificateOptions opts;
+		opts.setInfo(subject);
+		p.subject = opts.infoOrdered();
+		opts.setInfo(issuer);
+		p.issuer = opts.infoOrdered();
 
 		_props = p;
 		//printf("[%p] made props: [%s]\n", this, _props.subject[CommonName].toLatin1().data());
@@ -3425,7 +3485,9 @@ public:
 
 		p.format = PKCS10;
 
-		p.subject = get_cert_name(X509_REQ_get_subject_name(x));
+		CertificateInfo subject;
+
+		subject = get_cert_name(X509_REQ_get_subject_name(x));
 
 		STACK_OF(X509_EXTENSION) *exts = X509_REQ_get_extensions(x);
 
@@ -3444,7 +3506,7 @@ public:
 		{
 			X509_EXTENSION *ex = X509v3_get_ext(exts, pos);
 			if(ex)
-				p.subject.unite(get_cert_subject_alt_name(ex));
+				subject.unite(get_cert_alt_name(ex));
 		}
 
 		pos = X509v3_get_ext_by_NID(exts, NID_key_usage, -1);
@@ -3500,7 +3562,13 @@ public:
 		default:
 		    qDebug() << "Unknown signature value: " << OBJ_obj2nid(x->sig_alg->algorithm);
 		    p.sigalgo = QCA::SignatureUnknown;
-		}    
+		}
+
+		// FIXME: super hack
+		CertificateOptions opts;
+		opts.setInfo(subject);
+		p.subject = opts.infoOrdered();
+
 		_props = p;
 	}
 };
@@ -3564,7 +3632,9 @@ public:
 
 		CRLContextProps p;
 
-		p.issuer = get_cert_name(X509_CRL_get_issuer(x));
+		CertificateInfo issuer;
+
+		issuer = get_cert_name(X509_CRL_get_issuer(x));
 
 		p.thisUpdate = ASN1_UTCTIME_QDateTime(X509_CRL_get_lastUpdate(x), NULL);
 		p.nextUpdate = ASN1_UTCTIME_QDateTime(X509_CRL_get_nextUpdate(x), NULL);
@@ -3649,7 +3719,7 @@ public:
 		default:
 		    qWarning() << "Unknown signature value: " << OBJ_obj2nid(x->sig_alg->algorithm);
 		    p.sigalgo = QCA::SignatureUnknown;
-		}    
+		}
 
 		int pos = X509_CRL_get_ext_by_NID(x, NID_authority_key_identifier, -1);
 		if(pos != -1)
@@ -3670,6 +3740,12 @@ public:
 				ASN1_INTEGER_free((ASN1_INTEGER*)result);
 			}
 		}
+
+		// FIXME: super hack
+		CertificateOptions opts;
+		opts.setInfo(issuer);
+		p.issuer = opts.infoOrdered();
+
 		_props = p;
 	}
 };
@@ -3865,14 +3941,14 @@ Validity MyCertContext::validate_chain(const QList<CertContext*> &chain, const Q
 	return ValidityGood;
 }
 
-class MyPIXContext : public PIXContext
+class MyPKCS12Context : public PKCS12Context
 {
 public:
-	MyPIXContext(Provider *p) : PIXContext(p)
+	MyPKCS12Context(Provider *p) : PKCS12Context(p)
 	{
 	}
 
-	~MyPIXContext()
+	~MyPKCS12Context()
 	{
 	}
 
@@ -3887,7 +3963,7 @@ public:
 			return QByteArray();
 
 		X509 *cert = static_cast<const MyCertContext *>(chain[0])->item.cert;
-		STACK_OF(X509) *ca = NULL;
+		STACK_OF(X509) *ca = sk_X509_new_null();
 		if(chain.count() > 1)
 		{
 			for(int n = 1; n < chain.count(); ++n)
@@ -3938,7 +4014,9 @@ public:
 			return ErrorDecode;
 		}
 
-		*name = QString(); // TODO: read the name out of the file?
+		int aliasLength;
+		char *aliasData = (char*)X509_alias_get0(cert, &aliasLength);
+		*name = QString::fromAscii(aliasData, aliasLength);
 
 		MyPKeyContext *pk = new MyPKeyContext(provider());
 		PKeyBase *k = pk->pkeyToBase(pkey, true); // does an EVP_PKEY_free()
@@ -3999,7 +4077,7 @@ static QString cipherIDtoString( const TLS::Version &version, const unsigned lon
 		case 0x0005:
 			// RFC 2246 A.5
 			return QString("TLS_RSA_WITH_RC4_128_SHA");
-			break;			
+			break;
 		case 0x0006:
 			// RFC 2246 A.5
 			return QString("TLS_RSA_EXPORT_WITH_RC2_CBC_40_MD5");
@@ -4236,7 +4314,7 @@ static QString cipherIDtoString( const TLS::Version &version, const unsigned lon
 		default:
 			return QString("TLS algo to be added: %1").arg(cipherID & 0xffff, 0, 16);
 			break;
-		} 
+		}
 	} else if (TLS::SSL_v3 == version) {
 		switch( cipherID & 0xFFFF ) {
 		case 0x0000:
@@ -4518,7 +4596,7 @@ public:
 	enum { Good, TryAgain, Bad };
 	enum { Idle, Connect, Accept, Handshake, Active, Closing };
 
-	bool serv;
+        bool serv; // true if we are acting as a server
 	int mode;
 	QByteArray sendQueue;
 	QByteArray recvQueue;
@@ -4526,6 +4604,7 @@ public:
 	CertificateCollection trusted;
 	Certificate cert, peercert; // TODO: support cert chains
 	PrivateKey key;
+        QString targetHostName;
 
 	Result result_result;
 	QByteArray result_to_net;
@@ -4533,7 +4612,11 @@ public:
 	QByteArray result_plain;
 
 	SSL *ssl;
-	SSL_METHOD *method;
+#if OPENSSL_VERSION_NUMBER >= 0x00909000L
+        const SSL_METHOD *method;
+#else
+    SSL_METHOD *method;
+#endif
 	SSL_CTX *context;
 	BIO *rbio, *wbio;
 	Validity vr;
@@ -4545,11 +4628,6 @@ public:
 		{
 			SSL_library_init();
 			SSL_load_error_strings();
-			
-			 //if (COMP_zlib()) {
- 			//	 qDebug("Adding compression method");
-			//	 SSL_COMP_add_compression_method(0,COMP_zlib());
-			 //}
 			ssl_init = true;
 		}
 
@@ -4612,7 +4690,7 @@ public:
 			qWarning("Unexpected enum in cipherSuites");
 			ctx = 0;
 		}
-		if (NULL == ctx) 
+		if (NULL == ctx)
 			return QStringList();
 
 		SSL *ssl = SSL_new(ctx);
@@ -4627,7 +4705,7 @@ public:
 			SSL_CIPHER *thisCipher = sk_SSL_CIPHER_value(sk, i);
 			cipherList += cipherIDtoString(version, thisCipher->id);
 		}
-			
+
 		SSL_free(ssl);
 		SSL_CTX_free(ctx);
 
@@ -4659,13 +4737,18 @@ public:
 		Q_UNUSED(cipherSuiteList);
 	}
 
-	virtual void setup(const CertificateCollection &_trusted, const CertificateChain &_cert, const PrivateKey &_key, bool serverMode, bool compress, bool)
+	virtual void setup(const CertificateCollection &_trusted, const CertificateChain &_cert, const PrivateKey &_key, bool serverMode,
+                           const QString &hostName, bool compress, bool)
 	{
 		trusted = _trusted;
 		if(!_cert.isEmpty())
 			cert = _cert.primary(); // TODO: take the whole chain
 		key = _key;
 		serv = serverMode;
+                if ( false == serverMode ) {
+                    // client
+                    targetHostName = hostName;
+                }
 		Q_UNUSED(compress); // TODO
 	}
 
@@ -5035,6 +5118,15 @@ public:
 		}
 		SSL_set_ssl_method(ssl, method); // can this return error?
 
+#ifdef SSL_CTRL_SET_TLSEXT_HOSTNAME
+                if ( targetHostName.isEmpty() == false ) {
+                        // we have a target
+                        // this might fail, but we ignore that for now
+                        char *hostname = targetHostName.toAscii().data();
+                        SSL_set_tlsext_host_name( ssl, hostname );
+                }
+#endif
+
 		// setup the memory bio
 		rbio = BIO_new(BIO_s_mem());
 		wbio = BIO_new(BIO_s_mem());
@@ -5391,8 +5483,11 @@ public:
 
 			flags = 0;
 			flags |= PKCS7_BINARY;
-			flags |= PKCS7_DETACHED; // FIXME: signmode
-			//flags |= PKCS7_NOCERTS; // FIXME: bundleSigner
+			if (SecureMessage::Detached == signMode) {
+				flags |= PKCS7_DETACHED;
+			}
+			if (false == bundleSigner)
+				flags |= PKCS7_NOCERTS;
 			p7 = PKCS7_sign(cx, kx, other_certs, bi, flags);
 
 			BIO_free(bi);
@@ -5412,7 +5507,10 @@ public:
 				// FIXME: format
 				bo = BIO_new(BIO_s_mem());
 				i2d_PKCS7_bio(bo, p7);
-				sig = bio2ba(bo);
+				if (SecureMessage::Detached == signMode)
+					sig = bio2ba(bo);
+				else
+					out = bio2ba(bo);
 			}
 			else
 			{
@@ -5465,8 +5563,14 @@ public:
 		{
 			// TODO: support non-detached sigs
 
+			BIO *out = BIO_new(BIO_s_mem());
 			BIO *bi = BIO_new(BIO_s_mem());
-			BIO_write(bi, sig.data(), sig.size());
+			if (false == sig.isEmpty()) {
+				// We have detached signature
+				BIO_write(bi, sig.data(), sig.size());
+			} else {
+				BIO_write(bi, in.data(), in.size());
+			}
 			PKCS7 *p7 = d2i_PKCS7_bio(bi, NULL);
 			BIO_free(bi);
 
@@ -5528,10 +5632,17 @@ public:
 				X509_STORE_add_crl(store, x);
 			}
 
-			bi = BIO_new(BIO_s_mem());
-			BIO_write(bi, in.data(), in.size());
-			int ret = PKCS7_verify(p7, xs, store, bi, NULL, 0);
-			BIO_free(bi);
+			int ret;
+			if (false == sig.isEmpty()) {
+				// Detached signMode
+				bi = BIO_new(BIO_s_mem());
+				BIO_write(bi, in.data(), in.size());
+				ret = PKCS7_verify(p7, xs, store, bi, NULL, 0);
+				BIO_free(bi);
+			} else {
+				ret = PKCS7_verify(p7, xs, store, NULL, out, 0);
+				// qDebug() << "Verify: " << ret;
+			}
 			X509_STORE_free(store);
 			PKCS7_free(p7);
 
@@ -5688,12 +5799,12 @@ public:
 	{
 		return new opensslCipherContext( *this );
 	}
-	
+
 	unsigned int blockSize() const
 	{
 		return EVP_CIPHER_CTX_block_size(&m_context);
 	}
-    
+
 	bool update(const QSecureArray &in, QSecureArray *out)
 	{
 		// This works around a problem in OpenSSL, where it asserts if
@@ -5723,7 +5834,7 @@ public:
 		out->resize(resultLength);
 		return true;
 	}
-	
+
 	bool final(QSecureArray *out)
 	{
 		out->resize(blockSize());
@@ -5733,18 +5844,18 @@ public:
 						     (unsigned char*)out->data(),
 						     &resultLength)) {
 				return false;
-			} 
+			}
 		} else {
 			if (0 == EVP_DecryptFinal_ex(&m_context,
 						     (unsigned char*)out->data(),
 						     &resultLength)) {
 				return false;
-			} 
+			}
 		}
 		out->resize(resultLength);
 		return true;
 	}
-	
+
 	// Change cipher names
 	KeyLength keyLength() const
 	{
@@ -5797,6 +5908,11 @@ public:
 	~opensslProvider()
 	{
 		// todo: any shutdown?
+	}
+
+	int version() const
+	{
+		return QCA_VERSION;
 	}
 
 	QString name() const
@@ -5882,7 +5998,7 @@ public:
 		list += "cert";
 		list += "csr";
 		list += "crl";
-		list += "pix";
+		list += "pkcs12";
 		list += "tls";
 		list += "cms";
 
@@ -6012,8 +6128,8 @@ public:
 			return new MyCSRContext( this );
 		else if ( type == "crl" )
 			return new MyCRLContext( this );
-		else if ( type == "pix" )
-			return new MyPIXContext( this );
+		else if ( type == "pkcs12" )
+			return new MyPKCS12Context( this );
 		else if ( type == "tls" )
 			return new MyTLSContext( this );
 		else if ( type == "cms" )
@@ -6032,5 +6148,5 @@ public:
 
 #include "qca-openssl.moc"
 
-Q_EXPORT_PLUGIN2(qca_openssl, opensslPlugin);
+Q_EXPORT_PLUGIN2(qca_openssl, opensslPlugin)
 

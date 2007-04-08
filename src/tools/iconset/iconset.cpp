@@ -1136,7 +1136,7 @@ public:
 							continue;
 
 						QFileInfo ext(sound[*it]);
-						path += "/" + QCA::SHA1().hashToString(QString(fi.absFilePath() + "/" + *sound[*it]).utf8()) + "." + ext.extension();
+						path += "/" + QCA::Hash("sha1").hashToString(QString(fi.absFilePath() + "/" + *sound[*it]).utf8()) + "." + ext.extension();
 
 						QFile file ( path );
 						file.open ( IO_WriteOnly );

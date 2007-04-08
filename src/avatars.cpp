@@ -534,7 +534,7 @@ void AvatarFactory::setSelfAvatar(const QString& fileName)
 		if(!avatar_image.isNull()) {
 			// Publish data
 			QDomDocument* doc = account()->client()->doc();
-			QString hash = SHA1().hashToString(avatar_data);
+			QString hash = Hash("sha1").hashToString(avatar_data);
 			QDomElement el = doc->createElement("data");
 			el.setAttribute("xmlns","http://jabber.org/protocol/avatar#data");
 			el.appendChild(doc->createTextNode(Base64().arrayToString(avatar_data)));
