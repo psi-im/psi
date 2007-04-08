@@ -57,6 +57,7 @@
 #include "psipopup.h"
 #include "psioptions.h"
 #include "tipdlg.h"
+#include "mucjoindlg.h"
 #include "psicontactlist.h"
 
 #include "mainwin_p.h"
@@ -352,6 +353,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	d->getAction("help_online_help")->addTo (helpMenu);
 	d->getAction("help_online_wiki")->addTo (helpMenu);
 	d->getAction("help_online_home")->addTo (helpMenu);
+	d->getAction("help_psi_muc")->addTo (helpMenu);
 	d->getAction("help_report_bug")->addTo (helpMenu);
 #else
 	if (option.hideMenubar) 
@@ -429,6 +431,7 @@ void MainWin::registerAction( IconAction *action )
 		{ "help_online_help", activated, this, SLOT( actOnlineHelpActivated() ) },
 		{ "help_online_wiki", activated, this, SLOT( actOnlineWikiActivated() ) },
 		{ "help_online_home", activated, this, SLOT( actOnlineHomeActivated() ) },
+		{ "help_psi_muc",     activated, this, SLOT( actJoinPsiMUCActivated() ) },
 		{ "help_report_bug",  activated, this, SLOT( actBugReportActivated() ) },
 		{ "help_about",       activated, this, SLOT( actAboutActivated() ) },
 		{ "help_about_qt",    activated, this, SLOT( actAboutQtActivated() ) },
@@ -640,6 +643,7 @@ void MainWin::buildOptionsMenu()
 	        << "help_online_help"
 	        << "help_online_wiki"
 	        << "help_online_home"
+	        << "help_psi_muc"
 	        << "help_report_bug"
 	        << "separator"
 	        << "help_about"
@@ -722,6 +726,18 @@ void MainWin::actOnlineWikiActivated ()
 void MainWin::actOnlineHomeActivated ()
 {
 	QDesktopServices::openUrl(QUrl("http://psi-im.org"));
+}
+
+void MainWin::actJoinPsiMUCActivated()
+{
+	PsiAccount *account = d->psi->contactList()->defaultAccount();
+	if(!account)
+		return;
+
+	MUCJoinDlg *w = new MUCJoinDlg(d->psi, account);
+	w->le_host->setText("conference.psi-im.org");
+	w->le_room->setText("psi");
+	w->show();
 }
 
 void MainWin::actBugReportActivated ()
