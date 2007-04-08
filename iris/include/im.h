@@ -125,7 +125,8 @@ namespace XMPP
 	class HttpAuthRequest
 	{
 	public:
-		HttpAuthRequest(const QString &m, const QString &u, const QString &i = QString::null);
+		HttpAuthRequest(const QString &m, const QString &u, const QString &i);
+		HttpAuthRequest(const QString &m, const QString &u);
 		HttpAuthRequest(const QDomElement &);
 		HttpAuthRequest(const HttpAuthRequest &);
 		HttpAuthRequest();
@@ -141,6 +142,7 @@ namespace XMPP
 		QString method() const;
 		QString url() const;
 		QString id() const;
+		bool hasId() const;
 
 		QDomElement toXml(QDomDocument &) const;
 		bool fromXml(const QDomElement &);

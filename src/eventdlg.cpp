@@ -1542,7 +1542,7 @@ void EventDlg::doHttpConfirm()
 	if(!d->pa->checkConnected(this))
 		return;
 
-	if(d->httpAuthRequest.id().isEmpty()) {
+	if(!d->httpAuthRequest.hasId()) {
 		const QString id = d->le_http_id->text();
 		if(id.isEmpty()) {
 			QMessageBox::information(this, tr("Warning"), tr("Please type in a transaction identifier first."));
@@ -1706,7 +1706,7 @@ void EventDlg::updateEvent(PsiEvent *e)
 				"URL: %1\n"
 				"Method: %2\n").arg(confirm.url()).arg(confirm.method()));
 
-		if (confirm.id().isEmpty()) {
+		if (!confirm.hasId()) {
 			body += tr("\n"
 				"If you wish to confirm this request, please provide transaction identifier and press Confirm button. Otherwise press Deny button.");
 

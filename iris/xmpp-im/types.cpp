@@ -1834,6 +1834,7 @@ public:
 	QString method;
 	QString url;
 	QString id;
+	bool hasId;
 };
 
 /*!
@@ -1850,6 +1851,18 @@ HttpAuthRequest::HttpAuthRequest(const QString &m, const QString &u, const QStri
 	d->method = m;
 	d->url = u;
 	d->id = i;
+	d->hasId = true;
+}
+
+/*!
+        Constructs request of resource URL \a u, made by method \a m, without transaction id.
+*/
+HttpAuthRequest::HttpAuthRequest(const QString &m, const QString &u)
+{
+        d = new Private;
+        d->method = m;
+        d->url = u;
+        d->hasId = false;
 }
 
 /*!
@@ -1929,6 +1942,7 @@ void HttpAuthRequest::setUrl(const QString& u)
 void HttpAuthRequest::setId(const QString& i)
 {
 	d->id = i;
+	d->hasId = true;
 }
 
 /*!
@@ -1949,10 +1963,19 @@ QString HttpAuthRequest::url() const
 
 /*!
 	Returns transaction identifier.
+	Empty QString may mean both empty id or no id. Use hasId() to tell the difference.
 */
 QString HttpAuthRequest::id() const
 {
 	return d->id;
+}
+
+/*!
+	Returns true if the request contains transaction id.
+*/
+bool HttpAuthRequest::hasId() const
+{
+	return d->hasId;
 }
 
 /*!
@@ -1968,7 +1991,7 @@ QDomElement HttpAuthRequest::toXml(QDomDocument &doc) const
 	e = doc.createElementNS("http://jabber.org/protocol/http-auth", "confirm");
 	e.setAttribute("xmlns", "http://jabber.org/protocol/http-auth");
 
-	if(!d->id.isEmpty()) e.setAttribute("id", d->id);
+	if(d->hasId) e.setAttribute("id", d->id);
 	e.setAttribute("method", d->method);
 	e.setAttribute("url", d->url);
 
@@ -1983,7 +2006,10 @@ bool HttpAuthRequest::fromXml(const QDomElement &e)
 	if(e.tagName() != "confirm")
 		return false;
 
-	d->id = e.attribute("id");
+	d->hasId = e.hasAttribute("id");
+	if(d->hasId)
+		d->id = e.attribute("id");
+
 	d->method = e.attribute("method");
 	d->url = e.attribute("url");
 
