@@ -1097,25 +1097,26 @@ void PsiAccount::tls_handshaken()
 		QPushButton *continueButton = msgBox.addButton(tr("Co&ntinue"), QMessageBox::AcceptRole);
 		QPushButton *cancelButton = msgBox.addButton(QMessageBox::Cancel);
 		msgBox.setDefaultButton(detailsButton);
+		msgBox.setResult(QDialog::Accepted);
 
 		connect(this, SIGNAL(disconnected()), &msgBox, SLOT(reject()));
 		connect(this, SIGNAL(reconnecting()), &msgBox, SLOT(reject()));
 
-		while (1) {
+		while (msgBox.result() != QDialog::Rejected) {
 			msgBox.exec();
 			if (msgBox.clickedButton() == detailsButton) {
+				msgBox.setResult(QDialog::Accepted);
 				SSLCertDlg::showCert(cert, r, validity);
 			}
 			else if (msgBox.clickedButton() == continueButton) {
 				d->tlsHandler->continueAfterHandshake();
 				break;
 			}
-			else if (msgBox.clickedButton() != cancelButton) {
-				// message box was hidden, because connection was dropped
+			else if (msgBox.clickedButton() == cancelButton) {
+				logout();
 				break;
 			}
-			else { // msgBox.clickedButton() == cancelButton
-				logout();
+			else {	// msgBox was hidden because connection was closed
 				break;
 			}
 		}
