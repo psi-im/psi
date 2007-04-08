@@ -31,6 +31,7 @@
 #include <QPixmap>
 #include <QList>
 #include <QImageReader>
+#include <QMessageBox>
 
 #include "s5b.h"
 #include "psiaccount.h"

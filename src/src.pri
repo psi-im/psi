@@ -104,6 +104,7 @@ HEADERS += \
 	$$PWD/mainwin.h \
 	$$PWD/mainwin_p.h \
 	$$PWD/rtparse.h \
+	$$PWD/systeminfo.h \
 	$$PWD/common.h \
 	$$PWD/proxy.h \
 	$$PWD/miniclient.h \
@@ -205,6 +206,7 @@ SOURCES += \
 	$$PWD/mainwin.cpp \
 	$$PWD/mainwin_p.cpp \
 	$$PWD/rtparse.cpp \
+	$$PWD/systeminfo.cpp \
 	$$PWD/common.cpp \
 	$$PWD/proxy.cpp \
 	$$PWD/miniclient.cpp \

@@ -19,6 +19,7 @@
  */
 
 #include <QtCrypto>
+#include <QMessageBox>
 
 #include "accountregdlg.h"
 #include "proxy.h"

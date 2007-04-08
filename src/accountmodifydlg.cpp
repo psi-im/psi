@@ -19,6 +19,7 @@
  */
 
 #include <QInputDialog>
+#include <QMessageBox>
 
 #include "accountmodifydlg.h"
 #include "pgputil.h"

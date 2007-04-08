@@ -3,6 +3,7 @@
 #include "iconwidget.h"
 
 #include <qbuttongroup.h>
+#include <QMessageBox>
 #include <qwhatsthis.h>
 #include <qcheckbox.h>
 #include <qradiobutton.h>

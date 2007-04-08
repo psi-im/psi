@@ -20,6 +20,7 @@
 
 #include <QtCrypto>
 #include <QInputDialog>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QLineEdit>
 #include <QLabel>

@@ -23,8 +23,6 @@
 
 #include <QString>
 #include <QStringList>
-#include <QWidget>
-#include <QMessageBox>
 #include <QKeySequence>
 #include <QList>
 #include "im.h"
@@ -261,10 +259,6 @@ QString logdecode(const QString &);
 
 bool operator!=(const QMap<QString, QString> &, const QMap<QString, QString> &);
 void openURL(const QString &);
-
-QString getOSName();
-int getTZOffset();
-QString getTZString();
 
 bool fileCopy(const QString &src, const QString &dest);
 

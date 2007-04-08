@@ -39,6 +39,7 @@
 #include <QHBoxLayout>
 #include <QDropEvent>
 #include <QList>
+#include <QMessageBox>
 #include <QShowEvent>
 #include <QVBoxLayout>
 #include <QContextMenuEvent>

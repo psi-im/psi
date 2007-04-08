@@ -99,6 +99,7 @@
 #include "pgputil.h"
 #include "iconwidget.h"
 #include "filetransdlg.h"
+#include "systeminfo.h"
 #include "avatars.h"
 #include "ahcommanddlg.h"
 #include "mucjoindlg.h"
@@ -412,8 +413,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiCon *parent)
 
 	// create Jabber::Client
 	d->client = new Client;
-	d->client->setOSName(getOSName());
-	d->client->setTimeZone(getTZString(), getTZOffset());
+	d->client->setOSName(SystemInfo::instance()->os());
+	d->client->setTimeZone(SystemInfo::instance()->timezoneString(), SystemInfo::instance()->timezoneOffset());
 	d->client->setClientName(PROG_NAME);
 	d->client->setClientVersion(PROG_VERSION);
 	d->client->setCapsNode(PROG_CAPS_NODE);
@@ -1498,7 +1499,7 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
 			UserResource ur(r);
 			//ur.setSecurityEnabled(true);
 			if(local)
-				ur.setClient(PROG_NAME,PROG_VERSION,getOSName());
+				ur.setClient(PROG_NAME,PROG_VERSION,SystemInfo::instance()->os());
 
 			u->userResourceList().append(ur);
 			rp = &u->userResourceList().last();

@@ -23,6 +23,7 @@
 
 #include <QLabel>
 #include <QComboBox>
+#include <QMessageBox>
 #include <QCheckBox>
 #include <QPushButton>
 #include <Q3Button>

@@ -3,6 +3,7 @@
 #include <QFileDialog>
 #include <qlabel.h>
 #include <qlineedit.h>
+#include <QMessageBox>
 #include <qpushbutton.h>
 #include <qtimer.h>
 #include <qfile.h>

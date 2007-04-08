@@ -20,6 +20,7 @@
 
 #include <QString>
 #include <QStringList>
+#include <QMessageBox>
 
 #include "jidutil.h"
 #include "im.h"

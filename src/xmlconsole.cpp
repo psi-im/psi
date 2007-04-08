@@ -24,6 +24,7 @@
 #include <QVBoxLayout>
 #include <QTextEdit>
 #include <QHBoxLayout>
+#include <QMessageBox>
 
 #include "xmlconsole.h"
 #include "psiaccount.h"

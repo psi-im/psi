@@ -21,6 +21,7 @@
 #include "statusdlg.h"
 
 #include <qpushbutton.h>
+#include <QMessageBox>
 #include <qlayout.h>
 #include <qlabel.h>
 #include <qcombobox.h>
