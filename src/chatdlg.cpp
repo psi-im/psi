@@ -107,6 +107,7 @@ public:
 	QMenu *pm_settings;
 
 	QToolBar *toolbar;
+	QToolButton *tb_actions, *tb_emoticons;
 	IconAction *act_clear, *act_history, *act_info, *act_pgp, *act_icon, *act_file, *act_compact, *act_voice;
 	QAction *act_send, *act_scrollup, *act_scrolldown, *act_close;
 
@@ -252,9 +253,17 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 	d->lb_count->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 	d->lb_count->setFixedWidth(40);
 	d->lb_count->setNum(0);
+	d->tb_actions = new QToolButton(sp_top);
+	d->tb_actions->setPopupMode(QToolButton::InstantPopup);
+	d->tb_actions->setArrowType(Qt::DownArrow);
+	d->tb_emoticons = new QToolButton(sp_top);
+	d->tb_emoticons->setPopupMode(QToolButton::InstantPopup);
+	d->tb_emoticons->setIcon(IconsetFactory::icon("psi/smile").icon());
 	hb2->addWidget(d->le_jid);
 	hb2->addWidget(d->lb_count);
 	hb2->addWidget(d->lb_ident);
+	hb2->addWidget(d->tb_emoticons);
+	hb2->addWidget(d->tb_actions);
 
 	// mid area
 	d->log = new ChatView(sp_top);
@@ -276,6 +285,7 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 	connect(pa->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
 	d->act_icon = new IconAction( tr( "Select icon" ), "psi/smile", tr( "Select icon" ), 0, this );
 	d->act_icon->setMenu( pa->psi()->iconSelectPopup() );
+	d->tb_emoticons->setMenu( pa->psi()->iconSelectPopup());
 
 	d->act_voice = new IconAction( tr( "Voice Call" ), "psi/voice", tr( "Voice Call" ), 0, this );
 	connect(d->act_voice, SIGNAL(activated()), SLOT(doVoice()));
@@ -361,6 +371,7 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 
 	d->pm_settings = new QMenu(this);
 	connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));
+	d->tb_actions->setMenu(d->pm_settings);
 
 	connect(d->pa->capsManager(),SIGNAL(capsChanged(const Jid&)),SLOT(capsChanged(const Jid&)));
 	
@@ -796,12 +807,23 @@ void ChatDlg::setLooks()
 	if (d->smallChat) {
 		d->lb_status->hide();
 		d->le_jid->hide();
+		d->tb_actions->hide();
+		d->tb_emoticons->hide();
 		d->toolbar->hide();
 	}
 	else {
 		d->lb_status->show();
 		d->le_jid->show();
-		d->toolbar->show();
+		if (PsiOptions::instance()->getOption("options.ui.chat.central-toolbar").toBool()) {
+			d->toolbar->show();
+			d->tb_actions->hide();
+			d->tb_emoticons->hide();
+		}
+		else {
+			d->toolbar->hide();
+			d->tb_emoticons->show();
+			d->tb_actions->show();
+		}
 	}
 	updateIdentityVisibility();
 

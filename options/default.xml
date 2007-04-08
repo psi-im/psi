@@ -72,6 +72,7 @@
 				<enabled comment="Enable message (i.e. non-chat) functionality" type="bool">true</enabled>
 			</message>
 			<chat comment="Chat dialog options">
+				<central-toolbar comment="Have a central toolbar" type="bool">false</central-toolbar>
 				<size comment="Remembered window size" type="QSize">
 					<width>100</width>
 					<height>100</height>
