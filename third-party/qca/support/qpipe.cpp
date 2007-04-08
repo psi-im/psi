@@ -912,11 +912,6 @@ public:
 			CloseHandle(pipe);
 #endif
 #ifdef Q_OS_UNIX
-			if(!qgetenv("PSI_GPG_DEBUG").isEmpty()) {
-				int flags = fcntl(pipe, F_GETFL);
-				qDebug() << "closing fd " << pipe << (flags & O_NONBLOCK ? " O_NONBLOCK " : " BLOCKING ") << flags;
-			}
-
 			::close(pipe);
 #endif
 			pipe = INVALID_Q_PIPE_ID;
