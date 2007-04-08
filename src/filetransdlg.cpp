@@ -1,10 +1,10 @@
 #include "filetransdlg.h"
 
+#include <QFileDialog>
 #include <qlabel.h>
 #include <qlineedit.h>
 #include <qpushbutton.h>
 #include <qtimer.h>
-#include <q3filedialog.h>
 #include <qfile.h>
 #include <q3progressbar.h>
 #include <qdir.h>
@@ -745,7 +745,7 @@ void FileRequestDlg::chooseFile()
 	while(1) {
 		if(option.lastPath.isEmpty())
 			option.lastPath = QDir::homeDirPath();
-		QString str = Q3FileDialog::getOpenFileName(option.lastPath, tr("All files (*)"), this, 0, tr("Choose a file"));
+		QString str = QFileDialog::getOpenFileName(this, tr("Choose a file"), option.lastPath, tr("All files (*)"));
 		if(!str.isEmpty()) {
 			QFileInfo fi(str);
 			if(!fi.exists()) {
@@ -801,7 +801,7 @@ void FileRequestDlg::doStart()
 		while(1) {
 			if(option.lastSavePath.isEmpty())
 				option.lastSavePath = QDir::homeDirPath();
-			fname = Q3FileDialog::getSaveFileName(QDir(option.lastSavePath).filePath(d->fileName), tr("All files (*)"), this, 0, tr("Save As"));
+			fname = QFileDialog::getSaveFileName(this, tr("Save As"), QDir(option.lastSavePath).filePath(d->fileName), tr("All files (*)"));
 			if(!fname.isEmpty()) {
 				QFileInfo fi(fname);
 				if(fi.exists()) {

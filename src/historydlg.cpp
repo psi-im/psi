@@ -26,7 +26,7 @@
 #include <qlabel.h>
 #include <qlineedit.h>
 #include <qpushbutton.h>
-#include <q3filedialog.h>
+#include <QFileDialog>
 #include <qmessagebox.h>
 #include <QFrame>
 #include <qapplication.h>
@@ -290,7 +290,7 @@ void HistoryDlg::doSave()
 
 	QString str = option.lastSavePath + "/" + s + ".txt";
 	while(1) {
-		str = Q3FileDialog::getSaveFileName(str, tr("Text files (*.txt);;All files (*.*)"), this, 0, tr("Export message history"));
+		str = QFileDialog::getSaveFileName(this, tr("Export message history"), str, tr("Text files (*.txt);;All files (*.*)"));
 		if(str.isEmpty())
 			break;
 

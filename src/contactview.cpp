@@ -20,6 +20,7 @@
 
 #include "contactview.h"
 
+#include <QFileDialog>
 #include <qapplication.h>
 #include <q3ptrlist.h>
 #include <q3header.h>
@@ -30,9 +31,7 @@
 #include <qinputdialog.h>
 #include <qicon.h>
 #include <q3dragobject.h>
-#include <q3filedialog.h>
 #include <qlayout.h>
-//Added by qt3to4:
 #include <QKeyEvent>
 #include <QEvent>
 #include <QList>
@@ -2343,7 +2342,7 @@ void ContactView::doRename()
 void ContactView::doAssignAvatar()
 {
 	// FIXME: Should check the supported filetypes dynamically
-	QString file = Q3FileDialog::getOpenFileName("", tr("All files (*.png *.jpg *.gif)"), this, 0, tr("Choose an image"));
+	QString file = QFileDialog::getOpenFileName(this, tr("Choose an image"), "", tr("All files (*.png *.jpg *.gif)"));
 	if (!file.isNull()) {
 		ContactViewItem *i = (ContactViewItem *)selectedItem();
 		i->contactProfile()->psiAccount()->avatarFactory()->importManualAvatar(i->u()->jid(),file);

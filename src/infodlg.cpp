@@ -18,6 +18,8 @@
  *
  */
 
+#include <QFileDialog>
+
 #include "infodlg.h"
 
 #include <qlayout.h>
@@ -27,9 +29,7 @@
 #include <qlineedit.h>
 #include <qmessagebox.h>
 #include <q3textedit.h>
-#include <q3filedialog.h> 
 #include <qbuffer.h>
-//Added by qt3to4:
 #include <QPixmap>
 #include "xmpp.h"
 #include "msgmle.h"
@@ -494,7 +494,7 @@ void InfoDlg::selectPhoto()
 	while(1) {
 		if(option.lastPath.isEmpty())
 			option.lastPath = QDir::homeDirPath();
-		QString str = Q3FileDialog::getOpenFileName(option.lastPath, tr("Images (*.png *.xpm *.jpg *.PNG *.XPM *.JPG)"), this, 0, tr("Choose a file"));
+		QString str = QFileDialog::getOpenFileName(this, tr("Choose a file"), option.lastPath, tr("Images (*.png *.xpm *.jpg *.PNG *.XPM *.JPG)"));
 		if(!str.isEmpty()) {
 			QFileInfo fi(str);
 			if(!fi.exists()) {
