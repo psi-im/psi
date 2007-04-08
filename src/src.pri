@@ -169,6 +169,7 @@ HEADERS += \
 	$$PWD/mucjoindlg.h \
 	$$PWD/mucconfigdlg.h \
 	$$PWD/mucaffiliationsmodel.h \
+	$$PWD/mucaffiliationsproxymodel.h \
 	$$PWD/mucaffiliationsview.h \
 	$$PWD/rosteritemexchangetask.h \
 	$$PWD/mood.h \
@@ -281,6 +282,7 @@ SOURCES += \
 	$$PWD/mucjoindlg.cpp \
 	$$PWD/mucconfigdlg.cpp \
 	$$PWD/mucaffiliationsmodel.cpp \
+	$$PWD/mucaffiliationsproxymodel.cpp \
 	$$PWD/mucaffiliationsview.cpp \
 	$$PWD/rosteritemexchangetask.cpp \
 	$$PWD/mood.cpp \

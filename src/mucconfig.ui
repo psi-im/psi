@@ -25,7 +25,7 @@
    <item>
     <widget class="QTabWidget" name="tabs" >
      <property name="currentIndex" >
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab_affiliations" >
       <attribute name="title" >
@@ -38,10 +38,7 @@
        <property name="spacing" >
         <number>6</number>
        </property>
-       <item rowspan="3" row="0" column="0" >
-        <widget class="MUCAffiliationsView" name="tv_affiliations" />
-       </item>
-       <item row="2" column="1" >
+       <item rowspan="2" row="2" column="3" >
         <spacer>
          <property name="orientation" >
           <enum>Qt::Vertical</enum>
@@ -54,17 +51,61 @@
          </property>
         </spacer>
        </item>
-       <item row="1" column="1" >
-        <widget class="QPushButton" name="pb_remove" >
+       <item row="3" column="0" >
+        <widget class="QLabel" name="label" >
          <property name="text" >
-          <string>Remove</string>
+          <string>Filter:</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="1" >
+       <item row="3" column="1" >
+        <widget class="QLineEdit" name="le_filter" >
+         <property name="sizePolicy" >
+          <sizepolicy>
+           <hsizetype>5</hsizetype>
+           <vsizetype>0</vsizetype>
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="2" >
+        <spacer>
+         <property name="orientation" >
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" >
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item rowspan="3" row="0" column="0" colspan="3" >
+        <widget class="MUCAffiliationsView" native="1" name="tv_affiliations" >
+         <property name="sizePolicy" >
+          <sizepolicy>
+           <hsizetype>7</hsizetype>
+           <vsizetype>13</vsizetype>
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="3" >
         <widget class="QPushButton" name="pb_add" >
          <property name="text" >
           <string>Add</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="3" >
+        <widget class="QPushButton" name="pb_remove" >
+         <property name="text" >
+          <string>Remove</string>
          </property>
         </widget>
        </item>
@@ -194,7 +235,7 @@
       <number>6</number>
      </property>
      <item>
-      <widget class="BusyWidget" name="busy" />
+      <widget class="BusyWidget" native="1" name="busy" />
      </item>
      <item>
       <spacer>
