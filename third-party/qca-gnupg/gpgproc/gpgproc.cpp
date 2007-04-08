@@ -331,6 +331,9 @@ public slots:
 	void proc_started()
 	{
 		emit q->debug("Process started");
+		if(!qgetenv("PSI_GPG_DEBUG").isEmpty())
+			qDebug() << "Process started";
+
 
 		// close these, we don't need them
 		pipeAux.readEnd().close();
@@ -416,6 +419,18 @@ public slots:
 		errmap[QProcess::UnknownError]  = "UnknownError";
 
 		emit q->debug(QString("Process error: %1").arg(errmap[x]));
+		bool debug = false;
+		if(!qgetenv("PSI_GPG_DEBUG").isEmpty()) {
+			debug = true;
+			qDebug() << QString("Process error: %1").arg(errmap[x]);
+		}
+
+		if(qgetenv("PSI_GPG_DEBUG").contains("A")) {   
+			qDebug() << "early forign end close";
+			pipeAux.readEnd().reset();
+			pipeCommand.readEnd().reset();
+			pipeStatus.writeEnd().reset();
+		}
 
 		if(x == QProcess::FailedToStart)
 			error = GPGProc::FailedToStart;
@@ -429,7 +444,9 @@ public slots:
 
 		if(need_status && !fin_status)
 		{
+			if (debug) qDebug() << "about to close";
 			pipeStatus.readEnd().finalize();
+			if (debug) qDebug() << "closed";
 			fin_status = true;
 			if(readAndProcessStatusData())
 			{

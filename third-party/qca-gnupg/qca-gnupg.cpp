@@ -615,6 +615,9 @@ public:
 
 	virtual void end()
 	{
+		bool debug_this = false;
+		static int calls = 0;
+
 		GpgOp gpg(find_bin());
 
 		if(format == SecureMessage::Ascii)
@@ -647,6 +650,11 @@ public:
 		}
 		else if(op == Verify)
 		{
+			if(!qgetenv("PSI_GPG_DEBUG").isEmpty()) {
+				debug_this = true;
+				++calls;
+				qDebug() << "Start Verifying " << calls;
+			}
 			if(!sig.isEmpty())
 				gpg.doVerifyDetached(sig);
 			else
@@ -680,6 +688,9 @@ public:
 			}
 			else if(e.type == GpgOp::Event::Finished)
 				break;
+		}
+		if (debug_this) {
+			qDebug() << "End Verifying " << calls;
 		}
 
 		ok = gpg.success();
