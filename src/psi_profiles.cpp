@@ -678,7 +678,7 @@ void UserProfile::reset()
 	prefs.rosterAccountSortStyle = Options::AccountSortStyle_Alpha;
 
 	// disco dialog
-	prefs.discoItems = true;
+	prefs.discoItems = false;
 	prefs.discoInfo  = true;
 
 	// auto-auth
