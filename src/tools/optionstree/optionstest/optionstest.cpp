@@ -40,6 +40,7 @@ int main (int argc, char const* argv[])
 	tree.setOption("capulet.Juliet.dead",QVariant(true));
 	tree.setOption("verona.city",QVariant(true));
 	tree.setOption("verona.lovers",QVariant(2));
+	tree.setOption("verona.size",QVariant(QSize(210,295)));
 	tree.setOption("verona.stuff",l);
 	tree.setOption("verona.stringstuff",sl);
 	tree.setComment("verona","Fair city");

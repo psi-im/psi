@@ -279,6 +279,21 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
 		}
 		value = list;
 	}
+	else if (type == "QSize") {
+		int width = 0, height = 0;
+		for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
+			QDomElement e = node.toElement();
+			if (!e.isNull()) {
+				if (e.tagName() == "width") {
+					width = e.text().toInt();
+				}
+				else if (e.tagName() == "height") {
+					height = e.text().toInt();
+				}
+			}
+		}
+		value = QVariant(QSize(width,height));
+	}
 	else { // Standard values
 		for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
 			if ( node.isText() )
@@ -321,6 +336,15 @@ void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
 			item_element.appendChild(text);
 			e.appendChild(item_element);
 		}
+	}
+	else if (type == "QSize") {
+		QSize size = var.toSize();
+		QDomElement width_element = e.ownerDocument().createElement("width");
+		width_element.appendChild(e.ownerDocument().createTextNode(QString::number(size.width())));
+		e.appendChild(width_element);
+		QDomElement height_element = e.ownerDocument().createElement("height");
+		height_element.appendChild(e.ownerDocument().createTextNode(QString::number(size.height())));
+		e.appendChild(height_element);
 	}
 	else if (type == "QKeySequence") {
 		QKeySequence k = var.value<QKeySequence>();
