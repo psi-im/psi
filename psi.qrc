@@ -4,5 +4,7 @@
 		<file>README</file>
 		<file>COPYING</file>
 		<file>options/default.xml</file>
+		<file>options/windows.xml</file>
+		<file>options/macosx.xml</file>
 	</qresource>
 </RCC>

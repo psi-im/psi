@@ -1,0 +1,10 @@
+<!DOCTYPE psi>
+<psi version="defaults" >
+	<options comment="Client options">
+		<shortcuts comment="Shortcuts">
+			<common comment="Common actions" >
+				<history type="QKeySequence" comment="Open the message history">Ctrl+Shift+H</history>
+			</common>
+		</shortcuts>
+	</options>
+</psi>
