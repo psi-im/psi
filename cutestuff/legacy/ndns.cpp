@@ -294,9 +294,9 @@ void NDns::stop()
 //!
 //! Returns the IP address as a 32-bit integer in host-byte-order.  This will be 0 if the lookup failed.
 //! \sa resultsReady()
-uint NDns::result() const
+QHostAddress NDns::result() const
 {
-	return addr.ip4Addr();
+	return addr;
 }
 
 //!
@@ -363,7 +363,8 @@ void NDnsWorker::run()
 		h = gethostbyname(host.data());
 #endif
 
-	if(!h) {
+	// FIXME: not ipv6 clean, currently.
+	if(!h || h->h_addrtype != AF_INET) {
 		success = false;
 		QApplication::postEvent(par, new NDnsWorkerEvent(this));
 		return;
