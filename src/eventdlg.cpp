@@ -838,7 +838,7 @@ void EventDlg::init()
 	}
 
 	// text area
-	d->mle = new ChatView(this);
+	d->mle = new ChatView(this,this);
 	d->mle->setReadOnly(false);
 	d->mle->setUndoRedoEnabled(true);
 	d->mle->setMinimumHeight(50);
