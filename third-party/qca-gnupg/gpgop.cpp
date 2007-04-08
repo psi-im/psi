@@ -756,11 +756,17 @@ public slots:
 			a = readConv.update(a);
 		if(!proc.isActive())
 			a += readConv.final();
+#ifdef GPG_DEBUG
+		printf("GpgAction::read(): [%s]\n", a.data());
+#endif
 		return a;
 	}
 
 	void write(const QByteArray &in)
 	{
+#ifdef GPG_DEBUG
+		printf("GpgAction::write(): [%s]\n", in.data());
+#endif
 		if(!allowInput)
 			return;
 
@@ -898,6 +904,10 @@ private:
 		else if(s == "DECRYPTION_OKAY")
 		{
 			decryptGood = true;
+
+			// message could be encrypted with several keys
+			if(curError == GpgOp::ErrorDecryptNoKey)
+				curError = GpgOp::ErrorUnknown;
 		}
 		else if(s == "SIG_CREATED")
 		{
@@ -985,6 +995,10 @@ private:
 		if(collectOutput)
 			diagnosticText += QString("stdout: [%1]\n").arg(outstr);
 		diagnosticText += QString("stderr: [%1]\n").arg(errstr);
+#ifdef GPG_DEBUG
+		printf("process result: [%s]\n", qPrintable(diagnosticText));
+		//printf("code = %d, input.op = %d, badPassphrase = %d, curError = %d", code, input.op, badPassphrase, curError);
+#endif
 		ensureDTextEmit();
 
 		if(badPassphrase)
@@ -1288,7 +1302,9 @@ public slots:
 	void act_readyReadDiagnosticText()
 	{
 		QString s = act->readDiagnosticText();
-		//printf("dtext ready: [%s]\n", qPrintable(s));
+#ifdef GPG_DEBUG
+		printf("dtext ready: [%s]\n", qPrintable(s));
+#endif
 		diagnosticText += s;
 
 		if(waiting)
