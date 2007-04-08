@@ -103,13 +103,6 @@
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QCheckBox" name="ck_dockUseWM" >
-        <property name="text" >
-         <string>Use WindowMaker docklet</string>
-        </property>
-       </widget>
-      </item>
      </layout>
     </widget>
    </item>

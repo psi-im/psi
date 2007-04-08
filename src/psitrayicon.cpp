@@ -19,7 +19,6 @@ PsiTrayIcon::PsiTrayIcon(const QString &tip, QMenu *popup, bool old, QObject *pa
 	old_trayicon_ = NULL;
 	if (old_) {
 		old_trayicon_ = new TrayIcon(makeIcon(), tip, popup);
-		old_trayicon_->setWMDock(option.isWMDock);
 		connect(old_trayicon_, SIGNAL(clicked(const QPoint &, int)), SIGNAL(clicked(const QPoint &, int)));
 		connect(old_trayicon_, SIGNAL(doubleClicked(const QPoint &)), SIGNAL(doubleClicked(const QPoint &)));
 		connect(old_trayicon_, SIGNAL(closed()), SIGNAL(closed()));

@@ -62,16 +62,11 @@ QWidget *OptionsTabApplication::widget()
 	d->ck_dockToolMW->setWhatsThis(
 		tr("Prevents Psi from taking up a slot on the taskbar and makes the main "
 		"window use a small titlebar."));
-	d->ck_dockUseWM->setWhatsThis(
-		tr("If checked, Psi will use the Window Maker docklet instead of FreeDesktop one."));
 
 #ifdef Q_WS_MAC
 	d->ck_alwaysOnTop->hide();
 	d->ck_hideMenubar->hide();
 	d->gb_docklet->hide();
-#endif
-#ifndef Q_WS_X11
-	d->ck_dockUseWM->hide();
 #endif
 
 	return w;
@@ -95,7 +90,6 @@ void OptionsTabApplication::applyOptions(Options *opt)
 	opt->dockDCstyle = d->ck_dockDCstyle->isChecked();
 	opt->dockHideMW = d->ck_dockHideMW->isChecked();
 	opt->dockToolMW = d->ck_dockToolMW->isChecked();
-	opt->isWMDock  = d->ck_dockUseWM->isChecked();
 
 	// data transfer
 	opt->dtPort = d->le_dtPort->text().toInt();
@@ -120,7 +114,6 @@ void OptionsTabApplication::restoreOptions(const Options *opt)
 	d->ck_dockDCstyle->setChecked( opt->dockDCstyle );
 	d->ck_dockHideMW->setChecked( opt->dockHideMW );
 	d->ck_dockToolMW->setChecked( opt->dockToolMW );
-	d->ck_dockUseWM->setChecked( opt->isWMDock );
 
 	// data transfer
 	d->le_dtPort->setText( QString::number(opt->dtPort) );
