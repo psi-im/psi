@@ -52,6 +52,7 @@ public:
 	QString toString() const;
 
 private:
+	void reNumber();
 	QString name_;
 	QList<PrivacyListItem> items_;
 };
