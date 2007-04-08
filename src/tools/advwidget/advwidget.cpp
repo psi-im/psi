@@ -232,11 +232,7 @@ void GAdvancedWidget::Private::flashAnimate()
 
 bool GAdvancedWidget::Private::flashing()
 {
-	bool on = false;
-	if ( flashTimer )
-		on = flashCount & 1;
-
-	return on;
+	return flashTimer && flashCount & 1;
 }
 
 void GAdvancedWidget::Private::moveEvent(QMoveEvent *)
