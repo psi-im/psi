@@ -25,8 +25,12 @@
 
 #include "varlist.h"
 
+class QTranslator;
+
 class TranslationManager : public QObject
 {
+	Q_OBJECT
+
 public:
 	static TranslationManager* instance();
 
@@ -37,9 +41,6 @@ public:
 	
 protected:
 	QStringList translationDirs() const;
-
-protected slots:
-	void destroy();
 
 private:
 	TranslationManager();
