@@ -2369,8 +2369,9 @@ void PsiAccount::simulateContactOffline(UserListItem *u)
 			client_resourceUnavailable(j, r);
 		}
 	}
-	else
-		cpUpdate(*u);
+	u->setLastUnavailableStatus(makeStatus(STATUS_OFFLINE,""));
+	u->setLastAvailable(QDateTime());
+	cpUpdate(*u);
 }
 
 void PsiAccount::simulateRosterOffline()
