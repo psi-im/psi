@@ -368,6 +368,7 @@ OptionsTabIconsetSystem::OptionsTabIconsetSystem(QObject *parent)
 	thread = 0;
 
 	if ( dirs.isEmpty() ) {
+		dirs << ":";
 		dirs << ".";
 		dirs << ApplicationInfo::homeDir();
 		dirs << ApplicationInfo::resourcesDir();

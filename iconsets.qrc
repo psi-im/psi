@@ -88,5 +88,43 @@
 		<file>iconsets/system/default/vcard.png</file>
 		<file>iconsets/system/default/xml.png</file>
 		<file>iconsets/system/default/publish_tune.png</file>
+		<file>iconsets/emoticons/default/angry.png</file>
+		<file>iconsets/emoticons/default/bat.png</file>
+		<file>iconsets/emoticons/default/beer.png</file>
+		<file>iconsets/emoticons/default/biggrin.png</file>
+		<file>iconsets/emoticons/default/blush.png</file>
+		<file>iconsets/emoticons/default/boy.png</file>
+		<file>iconsets/emoticons/default/brflower.png</file>
+		<file>iconsets/emoticons/default/brheart.png</file>
+		<file>iconsets/emoticons/default/coffee.png</file>
+		<file>iconsets/emoticons/default/coolglasses.png</file>
+		<file>iconsets/emoticons/default/cry.png</file>
+		<file>iconsets/emoticons/default/cuffs.png</file>
+		<file>iconsets/emoticons/default/devil.png</file>
+		<file>iconsets/emoticons/default/drink.png</file>
+		<file>iconsets/emoticons/default/flower.png</file>
+		<file>iconsets/emoticons/default/frowning.png</file>
+		<file>iconsets/emoticons/default/girl.png</file>
+		<file>iconsets/emoticons/default/heart.png</file>
+		<file>iconsets/emoticons/default/hugleft.png</file>
+		<file>iconsets/emoticons/default/hugright.png</file>
+		<file>iconsets/emoticons/default/icondef.xml</file>
+		<file>iconsets/emoticons/default/kiss.png</file>
+		<file>iconsets/emoticons/default/lamp.png</file>
+		<file>iconsets/emoticons/default/mail.png</file>
+		<file>iconsets/emoticons/default/music.png</file>
+		<file>iconsets/emoticons/default/no.png</file>
+		<file>iconsets/emoticons/default/oh.png</file>
+		<file>iconsets/emoticons/default/phone.png</file>
+		<file>iconsets/emoticons/default/photo.png</file>
+		<file>iconsets/emoticons/default/pussy.png</file>
+		<file>iconsets/emoticons/default/rainbow.png</file>
+		<file>iconsets/emoticons/default/smile.png</file>
+		<file>iconsets/emoticons/default/star.png</file>
+		<file>iconsets/emoticons/default/stare.png</file>
+		<file>iconsets/emoticons/default/tongue.png</file>
+		<file>iconsets/emoticons/default/unhappy.png</file>
+		<file>iconsets/emoticons/default/wink.png</file>
+		<file>iconsets/emoticons/default/yes.png</file>
 	</qresource>
 </RCC>

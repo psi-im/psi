@@ -51,6 +51,7 @@ public:
 
 	QString iconsetPath(QString name) {
 		QStringList dirs;
+		dirs << ":";
 		dirs << ".";
 		dirs << ApplicationInfo::homeDir();
 		dirs << ApplicationInfo::resourcesDir();
