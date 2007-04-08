@@ -704,6 +704,7 @@ PsiAccount::~PsiAccount()
 	delete d->httpAuthManager;
 	cleanupStream();
 	delete d->eventQueue;
+	delete d->avatarFactory;
 
 	delete d->blockTransportPopupList;
 
