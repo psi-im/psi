@@ -27,19 +27,26 @@
 #include "privacylistmodel.h"
 #include "privacylistblockedmodel.h"
 #include "ui_accountmodify.h"
+#include "profiles.h"
 
 class PsiAccount;
 class QWidget;
+class PsiCon;
 class ProxyChooser;
 
 class AccountModifyDlg : public QDialog, public Ui::AccountModify
 {
 	Q_OBJECT
 public:
+	AccountModifyDlg(PsiCon *,QWidget *parent=0);
 	AccountModifyDlg(PsiAccount *, QWidget *parent=0);
 	~AccountModifyDlg();
 
 	void setPassword(const QString &);
+	const UserAccount& account() const { return acc; }
+
+protected:
+	void init();
 
 private slots:
 	void hostToggled(bool);
@@ -66,9 +73,11 @@ private slots:
  	void changeList_error();
 
 private:
+	PsiCon *psi;
 	PsiAccount *pa;
 	ProxyChooser *pc;
 	QCA::PGPKey key;
+	UserAccount acc;
 	
 	// Privacy
  	PrivacyListModel privacyModel;

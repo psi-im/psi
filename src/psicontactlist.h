@@ -49,7 +49,8 @@ public:
 
 	UserAccountList getUserAccountList() const;
 
-	void createAccount(const QString& name, const Jid& j = "", const QString& pass = "", bool opt_host = false, const QString& host = "", int port = 5222, bool legacy_ssl_probe = true, UserAccount::SSLFlag ssl = UserAccount::SSL_Auto, int proxy = 0);
+	void createAccount(const QString& name, const Jid& j = "", const QString& pass = "", bool opt_host = false, const QString& host = "", int port = 5222, bool legacy_ssl_probe = true, UserAccount::SSLFlag ssl = UserAccount::SSL_Auto, int proxy = 0, bool modify = true);
+	void createAccount(const UserAccount&);
 	void removeAccount(PsiAccount*);
 	void setAccountEnabled(PsiAccount*, bool enabled = TRUE);
 
