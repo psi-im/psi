@@ -23,6 +23,16 @@
 
 using namespace XMPP;
 
+QString JIDUtil::defaultDomain()
+{
+	return PsiOptions::instance()->getOption("options.account.domain").toString();
+}
+
+void JIDUtil::setDefaultDomain(QString domain)
+{
+	PsiOptions::instance()->setOption("options.account.domain", domain);
+}
+
 QString JIDUtil::encode(const QString &jid)
 {
 	QString jid2;
@@ -92,7 +102,7 @@ QString JIDUtil::nickOrJid(const QString &nick, const QString &jid)
 QString JIDUtil::accountToString(const Jid& j, bool withResource)
 {
 	QString s = j.user();
-	if (!PsiOptions::instance()->getOption("options.account.domain").toString().isEmpty()) {
+	if (!defaultDomain().isEmpty()) {
 		return (withResource && !j.resource().isEmpty() ? j.user() + "/" + j.resource() : j.user());
 	}
 	else {
@@ -102,9 +112,9 @@ QString JIDUtil::accountToString(const Jid& j, bool withResource)
 
 Jid JIDUtil::accountFromString(const QString& s)
 {
-	if (!PsiOptions::instance()->getOption("options.account.domain").toString().isEmpty()) {
+	if (!defaultDomain().isEmpty()) {
 		Jid j;
-		j.set(PsiOptions::instance()->getOption("options.account.domain").toString(),s,"");
+		j.set(defaultDomain(), s, "");
 		return j;
 	}
 	else {
