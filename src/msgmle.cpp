@@ -238,6 +238,7 @@ void ChatEdit::setCheckSpelling(bool b)
 	}
 	else {
 		delete spellhighlighter_;
+		spellhighlighter_ = 0;
 	}
 }
 
