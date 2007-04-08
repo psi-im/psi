@@ -133,8 +133,8 @@
 		</ui>
 		<shortcuts comment="Shortcuts">
 			<chat comment="Shortcuts in the chat dialog">
-				<next-tab type="QKeySequence" comment="Switch to the previous tab">Ctrl+PgUp</next-tab>
-				<previous-tab type="QKeySequence" comment="Switch to the next tab">Ctrl+PgDown</previous-tab>
+				<next-tab type="QKeySequence" comment="Switch to the next tab">Ctrl+PgUp</next-tab>
+				<previous-tab type="QKeySequence" comment="Switch to the previous tab">Ctrl+PgDown</previous-tab>
 				<find type="QKeySequence" comment="Find text">Ctrl+F</find>
 				<send type="QVariantList" comment="Sends the message">
 					<item type="QKeySequence">Return</item>
