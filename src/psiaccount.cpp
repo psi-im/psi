@@ -85,6 +85,9 @@
 #ifdef HAVE_JINGLE
 #include "jinglevoicecaller.h"
 #endif
+#ifdef GOOGLE_FT
+#include "googleftmanager.h"
+#endif
 #include "pepmanager.h"
 #include "serverinfomanager.h"
 #include "bookmarkmanager.h"
@@ -272,6 +275,11 @@ public:
 
 	// Voice Call
 	VoiceCaller* voiceCaller;
+
+#ifdef GOOGLE_FT
+	// Google file transfer manager
+	GoogleFTManager* googleFTManager;
+#endif
 	
 	// PubSub
 	ServerInfoManager* serverInfoManager;
@@ -618,6 +626,12 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent)
 		d->client->addExtension("voice-v1", Features(QString("http://www.google.com/xmpp/protocol/voice/v1")));
 		connect(d->voiceCaller,SIGNAL(incoming(const Jid&)),SLOT(incomingVoiceCall(const Jid&)));
 	}
+
+#ifdef GOOGLE_FT
+	d->googleFTManager = new GoogleFTManager(client());
+	d->client->addExtension("share-v1", Features(QString("http://www.google.com/xmpp/protocol/share/v1")));
+	connect(d->googleFTManager,SIGNAL(incomingFileTransfer(GoogleFileTransfer*)),SLOT(incomingGoogleFileTransfer(GoogleFileTransfer*)));
+#endif
 
 	// Extended presence
 	if (d->options->getOption("options.extended-presence.notify").toBool()) {
@@ -1872,6 +1886,17 @@ void PsiAccount::client_debugText(const QString &)
 	//printf("%s", str.latin1());
 	//fflush(stdout);
 }
+
+#ifdef GOOGLE_FT
+void PsiAccount::incomingGoogleFileTransfer(GoogleFileTransfer* ft)
+{
+	if (QMessageBox::information(0, tr("Incoming file"), QString(tr("Do you want to accept %1 (%2 kb) from %3?")).arg(ft->fileName()).arg((float) ft->fileSize() / 1000).arg(ft->peer().full()), QMessageBox::Yes,QMessageBox::No | QMessageBox::Default | QMessageBox::Escape, QMessageBox::NoButton) == QMessageBox::Yes) {
+		ft->accept();
+	}
+	/*else 
+		ft->close();*/
+}
+#endif
 
 void PsiAccount::client_incomingFileTransfer()
 {

@@ -28,7 +28,19 @@ namespace XMPP
 	class S5BConnection;
 	struct FTRequest;
 
-	class FileTransfer : public QObject
+	/*class AbstractFileTransfer 
+	{
+		public:
+			// Receive
+			virtual Jid peer() const = 0;
+			virtual QString fileName() const = 0;
+			virtual qlonglong fileSize() const = 0;
+			virtual QString description() const { return ""; }
+			virtual bool rangeSupported() const { return false; }
+			virtual void accept(qlonglong offset=0, qlonglong length=0) = 0;
+	};*/
+
+	class FileTransfer : public QObject /*, public AbstractFileTransfer */
 	{
 		Q_OBJECT
 	public:

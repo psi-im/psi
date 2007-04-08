@@ -69,6 +69,9 @@ class QHostAddress;
 class AvatarFactory;
 class PEPManager;
 class ServerInfoManager;
+#ifdef GOOGLE_FT
+class GoogleFileTransfer;
+#endif
 
 // sick sick remove this someday please!
 #include "im.h"
@@ -288,6 +291,9 @@ private slots:
 	void client_groupChatLeft(const Jid &);
 	void client_groupChatPresence(const Jid &, const Status &);
 	void client_groupChatError(const Jid &, int, const QString &);
+#ifdef GOOGLE_FT
+	void incomingGoogleFileTransfer(GoogleFileTransfer* ft);
+#endif
 	void client_incomingFileTransfer();
 	void sessionStart_finished();
 

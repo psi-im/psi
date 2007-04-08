@@ -66,6 +66,14 @@ else {
 # Widgets
 include($$PWD/widgets/widgets.pri)
 
+# Google FT
+google_ft {
+	DEFINES += GOOGLE_FT
+	HEADERS += $$PWD/googleftmanager.h
+	SOURCES += $$PWD/googleftmanager.cpp
+	include(../third-party/libjingle.new/libjingle.pri)
+}
+
 # Jingle
 jingle {
 	HEADERS += $$PWD/jinglevoicecaller.h
