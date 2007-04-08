@@ -323,9 +323,9 @@ void OptionsTabShortcuts::onEdit() {
  */
 void OptionsTabShortcuts::grep()
 {
-	grepShortcutKeyDlg *grepIt = new grepShortcutKeyDlg();
-	connect(grepIt, SIGNAL(newShortcutKey(QKeySequence)), this, SLOT(onNewShortcutKey(QKeySequence)));
-	grepIt->show();
+	GrepShortcutKeyDlg* grep = new GrepShortcutKeyDlg();
+	connect(grep, SIGNAL(newShortcutKey(QKeySequence)), this, SLOT(onNewShortcutKey(QKeySequence)));
+	grep->show();
 }
 
 /**
@@ -369,7 +369,7 @@ void OptionsTabShortcuts::onItemSelectionChanged() {
 }
 
 /**
- * \brief	an item of the treeview is double clicked, if it is a Keyitem, the grepShortcutKeyDlg is shown
+ * \brief	an item of the treeview is double clicked, if it is a Keyitem, the GrepShortcutKeyDlg is shown
  */
 void OptionsTabShortcuts::onItemDoubleClicked(QTreeWidgetItem *item, int column)
 {

@@ -1,5 +1,4 @@
 /*
- *
  * grepshortcutkeydlg.h - a dialog which greps a KeySequence and
  * emits a signal with this KeySequence as Parameter
  * Copyright (C) 2006 Cestonaro Thilo
@@ -19,6 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
+
 #include <QDialog>
 #include <QKeyEvent>
 #include <QKeySequence>
@@ -28,23 +28,32 @@
 #ifndef GREPSHORTCUTKEYDLG_H
 #define GREPSHORTCUTKEYDLG_H
 
-class grepShortcutKeyDlg : public QDialog, public Ui::grepShortcutKey
+class GrepShortcutKeyDlg : public QDialog
 {
 	Q_OBJECT
 public:
-	grepShortcutKeyDlg() { setupUi(this); gotKey = false; }
-	void show() { grabKeyboard(); QDialog::show(); }
-	void close() { QDialog::close(); releaseKeyboard(); }
-	void keyPressEvent(QKeyEvent *event);
+	GrepShortcutKeyDlg();
 
-private:
-	bool gotKey;
+	// reimplemented
+	void show();
+	void close();
 
 protected:
-	bool isModifier(int key);
+	// reimplemented
+	void keyPressEvent(QKeyEvent* event);
+	void keyReleaseEvent(QKeyEvent* event);
 
 signals:
 	void newShortcutKey(QKeySequence key);
+
+private:
+	Ui::GrepShortcutKeyDlg ui_;
+	bool gotKey;
+
+	void displayPressedKeys(QKeySequence keys);
+	QKeySequence getKeySequence(QKeyEvent* event) const;
+	bool isValid(int key) const;
+	bool isModifier(int key) const;
 };
 
 #endif
