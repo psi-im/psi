@@ -1,6 +1,6 @@
 /*
- * accountlabel.h - simple label to display account name currently in use
- * Copyright (C) 2006-2007  Michail Pishchagin
+ * chatsplitter.h - QSplitter replacement that masquerades it
+ * Copyright (C) 2007  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,33 +18,41 @@
  *
  */
 
-#ifndef ACCOUNTLABEL_H
-#define ACCOUNTLABEL_H
+#ifndef CHATSPLITTER_H
+#define CHATSPLITTER_H
 
-#include <QLabel>
-#include <QPointer>
+#include <QWidget>
+#include <QList>
 
-class PsiAccount;
+class QSplitter;
 
-class AccountLabel : public QLabel
+class ChatSplitter : public QWidget
 {
 	Q_OBJECT
-	Q_PROPERTY(bool showJid READ showJid WRITE setShowJid);
 public:
-	AccountLabel(QWidget* parent);
-	~AccountLabel();
+	ChatSplitter(QWidget* parent);
 
-	PsiAccount* account() const;
-	bool showJid() const;
-	void setAccount(PsiAccount* account);
-	void setShowJid(bool showJid);
+	void setOrientation(Qt::Orientation orientation);
+	void addWidget(QWidget* widget);
+	void setSizes(const QList<int>& list);
+
+	/**
+	 * Returns true if all child widgets are managed by QLayout.
+	 */
+	bool splitterEnabled() const { return splitterEnabled_; }
+	void setSplitterEnabled(bool enable);
 
 private slots:
-	void updateName();
+	void childDestroyed(QObject* obj);
 
 private:
-	QPointer<PsiAccount> account_;
-	bool showJid_;
+	void updateChildLayout(QWidget* child);
+	void updateLayout();
+
+	bool splitterEnabled_;
+	QList<QWidget*> children_;
+	QSplitter* splitter_;
+	QLayout* layout_;
 };
 
 #endif

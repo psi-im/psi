@@ -133,6 +133,8 @@ HEADERS += \
 	$$PWD/certutil.h \
 	$$PWD/eventdlg.h \
 	$$PWD/chatdlg.h \
+	$$PWD/chatsplitter.h \
+	$$PWD/chateditproxy.h \
 	$$PWD/tabdlg.h \
 	$$PWD/adduserdlg.h \
 	$$PWD/groupchatdlg.h \
@@ -247,6 +249,8 @@ SOURCES += \
 	$$PWD/statusdlg.cpp \
 	$$PWD/eventdlg.cpp \
 	$$PWD/chatdlg.cpp \
+	$$PWD/chatsplitter.cpp \
+	$$PWD/chateditproxy.cpp \
 	$$PWD/tipdlg.cpp \
 	$$PWD/tabdlg.cpp \
 	$$PWD/adduserdlg.cpp \
@@ -377,7 +381,8 @@ INTERFACES += \
 	$$PWD/privacy.ui \
 	$$PWD/privacyrule.ui \
 	$$PWD/mood.ui \
-	$$PWD/voicecall.ui
+	$$PWD/voicecall.ui \
+	$$PWD/chatdlg.ui
 
 # options dialog
 include($$PWD/options/options.pri)

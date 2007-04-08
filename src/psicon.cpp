@@ -1000,7 +1000,7 @@ void PsiCon::slotApplyOptions(const Options &opt)
 	}
 #endif
 
-	if ( option.useTabs != oldOpt.useTabs || opt.chatLineEdit != oldOpt.chatLineEdit ) {
+	if ( option.useTabs != oldOpt.useTabs ) {
 		QMessageBox::information(0, tr("Information"), tr("Some of the options you changed will only have full effect upon restart."));
 		notifyRestart = false;
 	}

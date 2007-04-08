@@ -40,9 +40,9 @@
 //----------------------------------------------------------------------------
 // ChatView
 //----------------------------------------------------------------------------
-ChatView::ChatView(QWidget *parent, QWidget* dialog) : PsiTextView(parent)
+ChatView::ChatView(QWidget *parent)
+	: PsiTextView(parent)
 {
-	dialog_ = dialog;
 	setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
 
 	setReadOnly(true);
@@ -57,6 +57,16 @@ ChatView::ChatView(QWidget *parent, QWidget* dialog) : PsiTextView(parent)
 
 ChatView::~ChatView()
 {
+}
+
+void ChatView::setDialog(QWidget* dialog)
+{
+	dialog_ = dialog;
+}
+
+QSize ChatView::sizeHint() const
+{
+	return minimumSizeHint();
 }
 
 bool ChatView::focusNextPrevChild(bool next)
@@ -186,10 +196,9 @@ QString ChatView::formatTimeStamp(const QDateTime &time)
 //----------------------------------------------------------------------------
 // ChatEdit
 //----------------------------------------------------------------------------
-ChatEdit::ChatEdit(QWidget *parent, QWidget *dlg /* = NULL*/) 
-: QTextEdit(parent)
+ChatEdit::ChatEdit(QWidget *parent)
+	: QTextEdit(parent)
 {
-	dialog_ = dlg;
 	setWordWrapMode(QTextOption::WordWrap);
 	setAcceptRichText(false);
 
@@ -206,6 +215,16 @@ ChatEdit::ChatEdit(QWidget *parent, QWidget *dlg /* = NULL*/)
 
 ChatEdit::~ChatEdit()
 {
+}
+
+void ChatEdit::setDialog(QWidget* dialog)
+{
+	dialog_ = dialog;
+}
+
+QSize ChatEdit::sizeHint() const
+{
+	return minimumSizeHint();
 }
 
 void ChatEdit::setCheckSpelling(bool b)
@@ -376,220 +395,53 @@ void ChatEdit::optionsChanged()
 //----------------------------------------------------------------------------
 // LineEdit
 //----------------------------------------------------------------------------
-LineEdit::LineEdit( QWidget *parent, QWidget *dlg /*= NULL*/) 
-: ChatEdit( parent, dlg)
+LineEdit::LineEdit( QWidget *parent)
+	: ChatEdit(parent)
 {
-	lastSize = QSize( 0, 0 );
-	initialWindowGeometry = QRect( 0, 0, 0, 0 );
-
-	QWidget *topParent = window();
-	topParent->installEventFilter( this );
-	moveTo = QPoint(topParent->x(), topParent->y());
-
-	moveTimer = new QTimer( this );
-	connect( moveTimer, SIGNAL(timeout()), SLOT(checkMoved()) );
-
-	// LineEdit's size hint is to be vertically as small as possible
-	setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Maximum );
-
 	setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere); // no need for horizontal scrollbar with this
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-	setMinimumHeight(-1);
+	setMinimumHeight(0);
 
-	connect( this, SIGNAL( textChanged() ), SLOT( recalculateSize() ) );
-
-	// ensure that initial document size calculations are correct
-	document()->setPageSize(QSize(100, INT_MAX));
+	connect(this, SIGNAL(textChanged()), SLOT(recalculateSize()));
 }
 
 LineEdit::~LineEdit()
 {
 }
 
-/**
- * Returns true if the dialog could be automatically resized by LineEdit.
- */
-bool LineEdit::allowResize() const
-{
-	QWidget *topParent = window();
-
-	QRect desktop = qApp->desktop()->availableGeometry( (QWidget *)topParent );
-	float desktopArea = desktop.width() * desktop.height();
-	float dialogArea  = topParent->frameGeometry().width() * topParent->frameGeometry().height();
-
-	// maximized and large chat windows shoulnd't resize the dialog
-	if ( (dialogArea / desktopArea) > 0.9 )
-		return false;
-
-	return true;
-}
-
-/**
- * In this implementation, it is quivalent to sizeHint().
- */
 QSize LineEdit::minimumSizeHint() const
 {
-	return sizeHint();
+	QSize sh = QTextEdit::minimumSizeHint();
+	sh.setHeight(fontMetrics().height() + 1);
+	sh += QSize(0, QFrame::lineWidth() * 2);
+	return sh;
 }
 
-/**
- * All magic is contained within this function. It determines the possible maximum
- * height, and controls the appearance of vertical scrollbar.
- */
 QSize LineEdit::sizeHint() const
 {
-	if ( lastSize.width() != 0 && lastSize.height() != 0 )
-		return lastSize;
-
-	lastSize.setWidth( QTextEdit::sizeHint().width() );
-	// TODO: figure out what to do, if layouting is incomplete.
-	qreal h = 4.0 + document()->documentLayout()->documentSize().height();
-	QWidget *topParent = window();
-	QRect desktop = qApp->desktop()->availableGeometry( (QWidget *)topParent );
-	qreal dh = h - height();
-
-	Qt::ScrollBarPolicy showScrollBar = Qt::ScrollBarAlwaysOff;
-
-	// check that our dialog's height doesn't exceed the desktop's
-	if ( allowResize() && (topParent->frameGeometry().height() + dh) >= desktop.height() ) {
-		// handles the case when the dialog could be resized,
-		// but lineedit wants to occupy too much space, so we should limit it
-		h = desktop.height() - ( topParent->frameGeometry().height() - height() );
-		showScrollBar = Qt::ScrollBarAlwaysOn;
-	}
-	else if ( !allowResize() && (h > topParent->geometry().height()/2) ) {
-		// handles the case when the dialog could not be resized(i.e. it's maximized).
-		// in this case we limit maximum height of lineedit to the half of dialog's
-		// full height
-		h = topParent->geometry().height() / 2;
-		showScrollBar = Qt::ScrollBarAlwaysOn;
-	}
-
-	// enable vertical scrollbar only when we're surely in need for it
-	((QTextEdit *)this)->setVerticalScrollBarPolicy(showScrollBar);
-
-	lastSize.setHeight( h );
-	return lastSize;
+	QSize sh = QTextEdit::sizeHint();
+	sh.setHeight(int(document()->documentLayout()->documentSize().height()));
+	sh += QSize(0, QFrame::lineWidth() * 2);
+	((QTextEdit*)this)->setMaximumHeight(sh.height());
+	return sh;
 }
 
-/**
- * Handles automatic dialog resize.
- */
+void LineEdit::resizeEvent(QResizeEvent* e)
+{
+	ChatEdit::resizeEvent(e);
+	QTimer::singleShot(0, this, SLOT(updateScrollBar()));
+}
+
 void LineEdit::recalculateSize()
 {
-	if ( !isUpdatesEnabled() )
-		return;
-
-	QSize oldSize = lastSize;
-	lastSize = QSize( 0, 0 ); // force sizeHint() to update
-	QSize newSize = sizeHint();
-
-	if ( QABS(newSize.height() - oldSize.height()) > 1 ) {
-		QWidget *topParent = window();
-		
-		if ( allowResize() ) {
-			topParent->layout()->setEnabled( false ); // try to reduce some flicker
-
-			int dh = newSize.height() - oldSize.height();
-
-			// if we're going to shrink dialog considerably, minimum
-			// size will prevent us from doing it. Activating main
-			// layout after resize will reset minimum sizes to sensible values
-			topParent->setMinimumSize( 10, 10 );
-
-			topParent->resize( topParent->width(),
-					   topParent->height() + dh );
-
-			bool canMove = dh > 0;
-			int  newy    = topParent->y();
-
-			// try to move window to its old position
-			if ( movedWindow() && dh < 0 ) {
-				newy = initialWindowGeometry.y();
-				canMove = true;
-			}
-
-			// check, if we need to move dialog upper
-			QRect desktop = qApp->desktop()->availableGeometry( (QWidget *)topParent );
-			if ( canMove && ( newy + topParent->frameGeometry().height() >= desktop.bottom() ) ) {
-				// initialize default window position
-				if ( !movedWindow() ) {
-					initialWindowGeometry = topParent->frameGeometry();
-				}
-
-				newy = QMAX(0, desktop.bottom() - topParent->frameGeometry().height());
-			}
-
-			if ( canMove && newy != topParent->y() ) {
-				topParent->move( topParent->x(), newy );
-				moveTo = topParent->pos();
-			}
-
-			topParent->layout()->setEnabled( true );
-		}
-
-		// issue a layout update
-		parentWidget()->layout()->update();
-	}
+	updateGeometry();
+	QTimer::singleShot(0, this, SLOT(updateScrollBar()));
 }
 
-void LineEdit::resizeEvent( QResizeEvent *e )
+void LineEdit::updateScrollBar()
 {
-	// issue a re-layout, just in case
-	lastSize = QSize( 0, 0 ); // force sizeHint() to update
-	sizeHint(); // update the size hint, and cache the value
-	window()->layout()->activate();
-
-	QTextEdit::resizeEvent( e );
+	setVerticalScrollBarPolicy(sizeHint().height() > height() ? Qt::ScrollBarAlwaysOn : Qt::ScrollBarAlwaysOff);
+	ensureCursorVisible();
 }
-
-void LineEdit::setUpdatesEnabled( bool enable )
-{
-	bool ue = isUpdatesEnabled();
-	ChatEdit::setUpdatesEnabled( enable );
-
-	if ( !ue && enable )
-		recalculateSize();
-}
-
-bool LineEdit::eventFilter(QObject *watched, QEvent *e)
-{
-	if ( e->type() == QEvent::Reparent ) {
-		// In case of tabbed chats, dialog could be reparented to a higher-level dialog
-		// we need to get move events from it too. And unnecessary event filters
-		// are automatically cleaned up by Qt.
-		window()->installEventFilter( this );
-	}
-	else if ( e->type() == QEvent::Move ) {
-		QWidget *topParent = window();
-		if ( watched == topParent ) {
-			moveTimer->start( 100, true );
-		}
-	}
-
-	return ChatEdit::eventFilter( watched, e );
-}
-
-/**
- * This function serves as a workaround for multiple move events, some of which
- * have incorrect coordinates (at least on KDE)
- */
-void LineEdit::checkMoved()
-{
-	QWidget *topParent = window();
-	if ( QABS(moveTo.x() - topParent->x()) > 1 ||
-	     QABS(moveTo.y() - topParent->y()) > 1 ) {
-		moveTo = topParent->pos();
-		initialWindowGeometry = QRect( 0, 0, 0, 0 );
-	}
-}
-
-bool LineEdit::movedWindow() const
-{
-	return initialWindowGeometry.left()  ||
-	       initialWindowGeometry.top()   ||
-	       initialWindowGeometry.width() ||
-	       initialWindowGeometry.height();
-}
-

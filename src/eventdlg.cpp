@@ -505,7 +505,8 @@ public:
 	QLabel *lb_identity;
 	AccountsComboBox *cb_ident;
 	QComboBox *cb_type;
-	QLabel *lb_ident, *lb_time;
+	AccountLabel *lb_ident;
+	QLabel *lb_time;
 	IconLabel *lb_status;
 	ELineEdit *le_to;
 	QLineEdit *le_from, *le_subj;
@@ -710,7 +711,8 @@ void EventDlg::init()
 	}
 	else {
 		d->cb_ident = 0;
-		d->lb_ident = new AccountLabel(d->pa, this);
+		d->lb_ident = new AccountLabel(this);
+		d->lb_ident->setAccount(d->pa);
 		d->lb_ident->setSizePolicy(QSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Fixed ));
 		hb1->addWidget(d->lb_ident);
 	}
@@ -849,7 +851,8 @@ void EventDlg::init()
 	}
 
 	// text area
-	d->mle = new ChatView(this,this);
+	d->mle = new ChatView(this);
+	d->mle->setDialog(this);
 	d->mle->setReadOnly(false);
 	d->mle->setUndoRedoEnabled(true);
 	d->mle->setMinimumHeight(50);

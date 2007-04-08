@@ -451,7 +451,7 @@ public:
 	IconAction *act_whiteboard;
 #endif
 	QAction *act_send, *act_scrollup, *act_scrolldown, *act_close;
-	QLabel* lb_ident;
+	AccountLabel* lb_ident;
 	Q3PopupMenu *pm_settings;
 	bool smallChat;
 	int pending;
@@ -864,7 +864,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	connect(d->act_find, SIGNAL(activated()), SLOT(openFind()));
 	d->act_find->addTo( sp_top_top );
 	
-	d->lb_ident = new AccountLabel(d->pa, sp_top_top, true);
+	d->lb_ident = new AccountLabel(sp_top_top);
+	d->lb_ident->setAccount(d->pa);
+	d->lb_ident->setShowJid(false);
 	d->lb_ident->setSizePolicy(QSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum ));
 	hb_top->addWidget(d->lb_ident);
 	connect(d->pa->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
@@ -937,12 +939,14 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 
 	// chat edit
 	if ( !option.chatLineEdit ) {
-		d->mle = new ChatEdit(sp_bottom, this);
+		d->mle = new ChatEdit(sp_bottom);
+		d->mle->setDialog(this);
 		vb_bottom->addWidget(d->mle);
 	}
 	else {
 		QHBoxLayout *hb5 = new QHBoxLayout( dlg_layout );
-		d->mle = new LineEdit( vsplit, this );
+		d->mle = new LineEdit(vsplit);
+		d->mle->setDialog(this);
 #ifdef Q_WS_MAC
 		hb5->addSpacing( 16 );
 #endif

@@ -164,7 +164,8 @@ void StatusSetDlg::init()
 	connect(d->cb_preset, SIGNAL(highlighted(int)), SLOT(chooseStatusPreset(int)));
 	hb1->addWidget(d->cb_preset,3);
 
-	d->te = new ChatView(this,this);
+	d->te = new ChatView(this);
+	d->te->setDialog(this);
 	d->te->setReadOnly(false);
 	d->te->setTextFormat(Qt::PlainText);
 	d->te->setMinimumHeight(50);
