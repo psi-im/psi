@@ -1331,6 +1331,20 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 				if (!message.isEmpty())
 					appendSysMsg(message, false, QDateTime::currentDateTime());
 			}
+			if ( !d->connecting && options_->getOption("options.muc.show-status-changes").toBool() ) {
+				if (s.status() != contact->s.status() || s.show() != contact->s.show())	{
+					QString message;
+					QString st;
+					if (s.show().isEmpty()) 
+						st=tr("online");
+					else
+						st=s.show();
+					message = tr("%1 is now %2").arg(nick).arg(st);
+					if (!s.status().isEmpty())
+						message+=QString(" (%1)").arg(s.status());
+					appendSysMsg(message, false, QDateTime::currentDateTime());
+				}
+			}
 		}
 		d->lv_users->updateEntry(nick, s);
 	} 
