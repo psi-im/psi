@@ -430,6 +430,8 @@ bool PsiCon::init()
 	// Global shortcuts
 	ShortcutManager::connect("global.event", this, SLOT(recvNextEvent()));
 	ShortcutManager::connect("global.toggle-visibility", d->mainwin, SLOT(toggleVisible()));
+	ShortcutManager::connect("global.bring-to-front", d->mainwin, SLOT(trayShow()));
+	ShortcutManager::connect("global.new-blank-message", this, SLOT(doNewBlankMessage()));
 
 	// Entity capabilities
 	CapsRegistry::instance()->setFile(ApplicationInfo::homeDir() + "/caps.xml");
