@@ -383,6 +383,9 @@ void FancyPopup::hideEvent(QHideEvent *e)
 
 void FancyPopup::mouseReleaseEvent(QMouseEvent *e)
 {
+	if (!isVisible())
+		return;
+
 	emit clicked((int)e->button());
 	hide();
 }
