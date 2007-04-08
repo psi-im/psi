@@ -526,6 +526,7 @@ bool JT_PushRoster::take(const QDomElement &e)
 		return false;
 
 	roster(xmlReadRoster(queryTag(e), true));
+	send(createIQ(doc(), "result", e.attribute("from"), e.attribute("id")));
 
 	return true;
 }
