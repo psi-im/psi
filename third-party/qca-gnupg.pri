@@ -1,3 +1,4 @@
+# DEFINES += GPG_DEBUG
 windows:LIBS += -ladvapi32
 GPG_BASE = $$PWD/qca-gnupg
 GPGPROC_BASE = $$GPG_BASE/gpgproc
