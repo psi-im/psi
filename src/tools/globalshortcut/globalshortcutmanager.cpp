@@ -19,12 +19,16 @@
  */
 
 #include "globalshortcutmanager.h"
+
+#include <QCoreApplication>
+
 #include "globalshortcuttrigger.h"
 
 /**
  * \brief Constructs new GlobalShortcutManager.
  */
 GlobalShortcutManager::GlobalShortcutManager()
+	: QObject(QCoreApplication::instance())
 {
 }
 
