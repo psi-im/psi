@@ -169,7 +169,6 @@ private slots:
 	void lv_action(const QString &, const Status &, int);
 	void doClear();
 	void doClearButton();
-	void toggleSmallChat();
 	void buildMenu();
 	void logSelectionChanged();
 	void setConnecting();
