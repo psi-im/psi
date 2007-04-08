@@ -42,7 +42,8 @@ namespace XMPP {
 	class Jid;
 	class Client;
 }
-
+class GoogleSessionListener;
+class GoogleFileTransferListener;
 class GoogleFTManager;
 
 class GoogleFileTransfer /*: public XMPP::AbstractFileTransfer*/

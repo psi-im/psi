@@ -203,6 +203,7 @@ void GoogleFileTransferListener::stateChanged(cricket::FileShareState state)
 
 void GoogleFileTransferListener::progressChanged(cricket::FileShareSession* sess)
 {
+	/*
 	size_t totalsize, progress;
 	std::string itemname;
 	if (sess->GetTotalSize(totalsize) && sess->GetProgress(progress) && sess->GetCurrentItemName(&itemname)) {
@@ -212,9 +213,8 @@ void GoogleFileTransferListener::progressChanged(cricket::FileShareSession* sess
 		if (percent == 100)
 			printf("\n");
 		fflush(NULL);
-
-		//qDebug(QString("Transferring ['%1' (%2%%)]").arg(itemname.c_str()).arg(percent).toAscii());
 	}
+	*/
 }
 
 void GoogleFileTransferListener::resampleImage(std::string, int, int, talk_base::HttpTransaction* trans)
