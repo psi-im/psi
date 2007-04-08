@@ -21,8 +21,7 @@
 #ifndef CS_SERVSOCK_H
 #define CS_SERVSOCK_H
 
-#include <QtCore>
-#include <QtNetwork>
+#include <QTcpServer>
 
 // CS_NAMESPACE_BEGIN
 
