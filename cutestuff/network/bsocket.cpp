@@ -20,7 +20,6 @@
 
 #include "bsocket.h"
 
-#include <q3cstring.h>
 #include <q3socket.h>
 #include <q3dns.h>
 #include <qpointer.h>
@@ -191,11 +190,8 @@ void BSocket::write(const QByteArray &a)
 	if(d->state != Connected)
 		return;
 #ifdef BS_DEBUG
-	Q3CString cs;
-	cs.resize(a.size()+1);
-	memcpy(cs.data(), a.data(), a.size());
 	QString s = QString::fromUtf8(cs);
-	fprintf(stderr, "BSocket: writing [%d]: {%s}\n", a.size(), cs.data());
+	fprintf(stderr, "BSocket: writing [%d]: {%s}\n", a.size(), a.data());
 #endif
 	d->qsock->writeBlock(a.data(), a.size());
 }
@@ -214,11 +210,8 @@ QByteArray BSocket::read(int bytes)
 		block = ByteStream::read(bytes);
 
 #ifdef BS_DEBUG
-	Q3CString cs;
-	cs.resize(block.size()+1);
-	memcpy(cs.data(), block.data(), block.size());
 	QString s = QString::fromUtf8(cs);
-	fprintf(stderr, "BSocket: read [%d]: {%s}\n", block.size(), s.latin1());
+	fprintf(stderr, "BSocket: read [%d]: {%s}\n", block.size(), block.data());
 #endif
 	return block;
 }
