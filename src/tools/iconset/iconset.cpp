@@ -31,6 +31,7 @@
 #include <Q3MimeSourceFactory>
 #include <QDomDocument>
 #include <QThread>
+#include <QCoreApplication>
 
 #include "anim.h"
 
@@ -715,63 +716,98 @@ void PsiIcon::stripFirstAnimFrame()
  */
 
 //! \if _hide_doc_
-class IconsetFactoryPrivate
+class IconsetFactoryPrivate : public QObject
 {
 private:
-	static QList<Iconset *> *iconsets;
-	static QPixmap *emptyPixmap;
+	IconsetFactoryPrivate()
+		: QObject(QCoreApplication::instance())
+		, iconsets_(0)
+		, emptyPixmap_(0)
+	{
+	}
+
+	~IconsetFactoryPrivate()
+	{
+		if (iconsets_) {
+			while (!iconsets_->empty())
+				delete iconsets_->takeFirst();
+			delete iconsets_;
+			iconsets_ = 0;
+		}
+
+		if (emptyPixmap_) {
+			delete emptyPixmap_;
+			emptyPixmap_ = 0;
+		}
+	}
+
+	static IconsetFactoryPrivate* instance_;
+	QList<Iconset*>* iconsets_;
+	mutable QPixmap* emptyPixmap_;
 
 public:
-	static void registerIconset(const Iconset *);
-	static void unregisterIconset(const Iconset *);
+	const QPixmap& emptyPixmap() const
+	{
+		if (!emptyPixmap_)
+			emptyPixmap_ = new QPixmap();
+		return *emptyPixmap_;
+	}
+
+	const QStringList icons() const
+	{
+		QStringList list;
+
+		Iconset* iconset;
+		foreach(iconset, *iconsets_) {
+			QListIterator<PsiIcon*> it = iconset->iterator();
+			while (it.hasNext())
+				list << it.next()->name();
+		}
+
+		return list;
+	}
+
+	void registerIconset(const Iconset *);
+	void unregisterIconset(const Iconset *);
 
 public:
-	static const PsiIcon *icon(const QString &name);
+	static IconsetFactoryPrivate* instance()
+	{
+		if (!instance_) {
+			instance_ = new IconsetFactoryPrivate();
+		}
+		return instance_;
+	}
 
-	friend class IconsetFactory;
+	const PsiIcon *icon(const QString &name) const;
 };
 //! \endif
 
-QList<Iconset *> *IconsetFactoryPrivate::iconsets = 0;
-QPixmap *IconsetFactoryPrivate::emptyPixmap = 0;
+IconsetFactoryPrivate* IconsetFactoryPrivate::instance_ = NULL;
 
 void IconsetFactoryPrivate::registerIconset(const Iconset *i)
 {
-	if ( !iconsets )
-		iconsets = new QList<Iconset *>;
+	if (!iconsets_)
+		iconsets_ = new QList<Iconset*>;
 
-	if ( !iconsets->contains((Iconset *)i) ) {
-		iconsets->append ( (Iconset *)i );
-	}
+	if (!iconsets_->contains((Iconset*)i))
+		iconsets_->append((Iconset*)i);
 }
 
 void IconsetFactoryPrivate::unregisterIconset(const Iconset *i)
 {
-	if ( iconsets && iconsets->contains((Iconset *)i) ) {
-		iconsets->remove ( (Iconset *)i );
-	}
-
-	if ( !iconsets || !iconsets->count() ) {
-		if ( iconsets ) {
-			delete iconsets;
-			iconsets = 0;
-		}
-
-		if ( emptyPixmap ) {
-			delete emptyPixmap;
-			emptyPixmap = 0;
-		}
-	}
+	if (iconsets_ && iconsets_->contains((Iconset*)i))
+		iconsets_->removeAll((Iconset*)i);
 }
 
-const PsiIcon *IconsetFactoryPrivate::icon(const QString &name)
+const PsiIcon *IconsetFactoryPrivate::icon(const QString &name) const
 {
-	if ( !iconsets )
+	if (!iconsets_)
 		return 0;
 
 	const PsiIcon *i = 0;
 	Iconset *iconset;
-	foreach (iconset, *iconsets) {
+	foreach (iconset, *iconsets_) {
 		if ( iconset )
 			i = iconset->icon(name);
 
@@ -787,7 +823,7 @@ const PsiIcon *IconsetFactoryPrivate::icon(const QString &name)
  */
 const PsiIcon *IconsetFactory::iconPtr(const QString &name)
 {
-	const PsiIcon *i = IconsetFactoryPrivate::icon(name);
+	const PsiIcon *i = IconsetFactoryPrivate::instance()->icon(name);
 	if ( !i ) {
 		qDebug("WARNING: IconsetFactory::icon(\"%s\"): icon not found", name.latin1());
 	}
@@ -818,9 +854,7 @@ const QPixmap &IconsetFactory::iconPixmap(const QString &name)
 	if ( i )
 		return i->impix().pixmap();
 
-	if ( !IconsetFactoryPrivate::emptyPixmap )
-		IconsetFactoryPrivate::emptyPixmap = new QPixmap();
-	return *IconsetFactoryPrivate::emptyPixmap;
+	return IconsetFactoryPrivate::instance()->emptyPixmap();
 }
 
 /**
@@ -828,16 +862,7 @@ const QPixmap &IconsetFactory::iconPixmap(const QString &name)
  */
 const QStringList IconsetFactory::icons()
 {
-	QStringList list;
-	
-	Iconset *iconset;
-	foreach (iconset, *IconsetFactoryPrivate::iconsets) {
-		QListIterator<PsiIcon *> it = iconset->iterator();
-		while ( it.hasNext() )
-			list << it.next()->name();
-	}
-
-	return list;
+	return IconsetFactoryPrivate::instance()->icons();
 }
 
 //----------------------------------------------------------------------------
@@ -1258,10 +1283,10 @@ Iconset::Iconset(const Iconset &from)
  */
 Iconset::~Iconset()
 {
+	IconsetFactoryPrivate::instance()->unregisterIconset(this);
+
 	if ( d->deref() )
 		delete d;
-
-	IconsetFactoryPrivate::unregisterIconset(this);
 }
 
 /**
@@ -1510,7 +1535,7 @@ Q3MimeSourceFactory *Iconset::createMimeSourceFactory() const
  */
 void Iconset::addToFactory() const
 {
-	IconsetFactoryPrivate::registerIconset(this);
+	IconsetFactoryPrivate::instance()->registerIconset(this);
 }
 
 /**
@@ -1518,7 +1543,7 @@ void Iconset::addToFactory() const
  */
 void Iconset::removeFromFactory() const
 {
-	IconsetFactoryPrivate::unregisterIconset(this);
+	IconsetFactoryPrivate::instance()->unregisterIconset(this);
 }
 
 /**
