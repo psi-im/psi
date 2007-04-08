@@ -412,8 +412,11 @@ bool currentDesktop(long *desktop)
 }
 #endif
 
-void bringToFront(QWidget *w, bool)
+void bringToFront(QWidget *widget, bool)
 {
+	Q_ASSERT(widget);
+	QWidget* w = widget->topLevelWidget();
+
 #ifdef Q_WS_X11
 	// If we're not on the current desktop, do the hide/show trick
 	long dsk, curr_dsk;
@@ -421,21 +424,17 @@ void bringToFront(QWidget *w, bool)
 	if(desktopOfWindow(&win, &dsk) && currentDesktop(&curr_dsk)) {
 		if(dsk != curr_dsk) {
 			w->hide();
-			//qApp->processEvents();
 		}
 	}
 
 	// FIXME: multi-desktop hacks for Win and Mac required
 #endif
 
-	w->show();
-	if(w->isMinimized()) {
-		//w->hide();
-		if(w->isMaximized())
-			w->showMaximized();
-		else
-			w->showNormal();
-	}
+	if(w->isMaximized())
+		w->showMaximized();
+	else
+		w->showNormal();
+
 	//if(grabFocus)
 	//	w->setActiveWindow();
 	w->raise();
