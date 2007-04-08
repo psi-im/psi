@@ -24,98 +24,11 @@
 #include "accountadddlg.h"
 #include "psicon.h"
 
-class PsiContactList::Private : public QObject
-{
-	Q_OBJECT
-public:
-	Private(QObject *parent)
-		: QObject(parent), contactList(dynamic_cast<PsiContactList*>(parent))
-	{
-	}
-
-	~Private()
-	{
-	}
-
-	PsiAccount *queueLowestEventId(bool includeDND)
-	{
-		PsiAccount *low = 0;
-		int low_id = 0;
-		int low_prior = option.EventPriorityDontCare;
-
-		foreach(PsiAccount *account, contactList->enabledAccounts()) {
-			int n = account->eventQueue()->nextId();
-			if ( n == -1 )
-				continue;
-
-			if ( !includeDND && account->status().show() == "dnd" ) // FIXME: change "dnd" to enum
-				continue;
-
-			int p = account->eventQueue()->peekNext()->priority();
-			if ( !low || (n < low_id && p == low_prior) || p > low_prior ) {
-				low = account;
-				low_id = n;
-				low_prior = p;
-			}
-		}
-
-		return low;
-	}
-
-	const QList<PsiAccount*>& accounts() const
-	{
-		return accounts_;
-	}
-
-	const QList<PsiAccount*>& enabledAccounts() const
-	{
-		return enabledAccounts_;
-	}
-
-	// called by PsiAccount::PsiAccount() only
-	void link(PsiAccount* account)
-	{
-		Q_ASSERT(!accounts_.contains(account));
-		accounts_.append(account);
-		if (account->enabled())
-			enabledAccounts_.append(account);
-		connect(account, SIGNAL(enabledChanged()), SLOT(accountEnabledChanged()));
-	}
-
-	// called by PsiAccount::~PsiAccount() only, so we don't have to disconnnect
-	// all the signals
-	void unlink(PsiAccount* account)
-	{
-		Q_ASSERT(accounts_.contains(account));
-		accounts_.removeAll(account);
-		enabledAccounts_.removeAll(account);
-	}
-
-private slots:
-	void accountEnabledChanged()
-	{
-		PsiAccount* account = (PsiAccount*)sender();
-		enabledAccounts_.removeAll(account);
-		if (account->enabled())
-			enabledAccounts_.append(account);
-	}
-
-public:
-	PsiCon *psi;
-
-private:
-	PsiContactList *contactList;
-	QList<PsiAccount *> accounts_, enabledAccounts_;
-};
-
 /**
  * Constructs new PsiContactList. \param psi will not be PsiContactList's parent though.
  */
-PsiContactList::PsiContactList(PsiCon* psi)
-	: ContactList()
+PsiContactList::PsiContactList(PsiCon* psi) : ContactList(), psi_(psi)
 {
-	d = new Private(this);
-	d->psi = psi;
 }
 
 /**
@@ -125,7 +38,7 @@ PsiContactList::~PsiContactList()
 {
 	// PsiAccount calls some signals while being deleted prior to being unlinked,
 	// which in result could cause calls to PsiContactList::accounts()
-	QList<PsiAccount*> toDelete(d->accounts());
+	QList<PsiAccount*> toDelete(accounts_);
 	foreach(PsiAccount* account, toDelete)
 		delete account;
 }
@@ -135,7 +48,7 @@ PsiContactList::~PsiContactList()
  */
 PsiCon* PsiContactList::psi() const
 {
-	return d->psi;
+	return psi_;
 }
 
 /**
@@ -144,7 +57,7 @@ PsiCon* PsiContactList::psi() const
  */
 const QList<PsiAccount*>& PsiContactList::accounts() const
 {
-	return d->accounts();
+	return accounts_;
 }
 
 /**
@@ -152,7 +65,7 @@ const QList<PsiAccount*>& PsiContactList::accounts() const
  */
 const QList<PsiAccount*>& PsiContactList::enabledAccounts() const
 {
-	return d->enabledAccounts();
+	return enabledAccounts_;
 }
 
 /**
@@ -160,7 +73,7 @@ const QList<PsiAccount*>& PsiContactList::enabledAccounts() const
  */
 bool PsiContactList::haveActiveAccounts() const
 {
-	foreach(PsiAccount* account, enabledAccounts())
+	foreach(PsiAccount* account, enabledAccounts_)
 		if (account->isActive())
 			return true;
 	return false;
@@ -171,7 +84,7 @@ bool PsiContactList::haveActiveAccounts() const
  */
 bool PsiContactList::haveEnabledAccounts() const
 {
-	return !d->enabledAccounts().isEmpty();
+	return !enabledAccounts_.isEmpty();
 }
 
 /**
@@ -179,7 +92,7 @@ bool PsiContactList::haveEnabledAccounts() const
  */
 PsiAccount *PsiContactList::defaultAccount() const
 {
-	return enabledAccounts().first();
+	return enabledAccounts_.first();
 }
 
 /**
@@ -235,7 +148,7 @@ void PsiContactList::setAccountEnabled(PsiAccount* account, bool enabled)
 int PsiContactList::queueCount() const
 {
 	int total = 0;
-	foreach(PsiAccount* account, d->enabledAccounts())
+	foreach(PsiAccount* account, enabledAccounts_)
 		total += account->eventQueue()->count();
 	return total;
 }
@@ -249,11 +162,11 @@ PsiAccount* PsiContactList::queueLowestEventId()
 	PsiAccount *low = 0;
 
 	// first try to get event from non-dnd account
-	low = d->queueLowestEventId(false);
+	low = tryQueueLowestEventId(false);
 
 	// if failed, then get the event from dnd account instead
 	if (!low)
-		low = d->queueLowestEventId(true);
+		low = tryQueueLowestEventId(true);
 
 	return low;
 }
@@ -263,7 +176,7 @@ PsiAccount* PsiContactList::queueLowestEventId()
  */
 PsiAccount *PsiContactList::loadAccount(const UserAccount& acc)
 {
-	PsiAccount *pa = d->psi->createAccount(acc);
+	PsiAccount *pa = psi_->createAccount(acc);
 	connect(pa, SIGNAL(enabledChanged()), SIGNAL(accountCountChanged()));
 	emit accountAdded(pa);
 	return pa;
@@ -284,7 +197,7 @@ void PsiContactList::loadAccounts(const UserAccountList &list)
 UserAccountList PsiContactList::getUserAccountList() const
 {
 	UserAccountList acc;
-	foreach(PsiAccount* account, d->accounts())
+	foreach(PsiAccount* account, accounts_)
 		acc += account->userAccount();
 
 	return acc;
@@ -295,8 +208,12 @@ UserAccountList PsiContactList::getUserAccountList() const
  */
 void PsiContactList::link(PsiAccount* account)
 {
+	Q_ASSERT(!accounts_.contains(account));
 	connect(account, SIGNAL(updatedActivity()), this, SIGNAL(accountActivityChanged()));
-	d->link(account);
+	accounts_.append(account);
+	if (account->enabled())
+		enabledAccounts_.append(account);
+	connect(account, SIGNAL(enabledChanged()), SLOT(accountEnabledChanged()));
 	emit accountCountChanged();
 }
 
@@ -305,9 +222,44 @@ void PsiContactList::link(PsiAccount* account)
  */
 void PsiContactList::unlink(PsiAccount* account)
 {
+	Q_ASSERT(accounts_.contains(account));
 	disconnect(account, SIGNAL(updatedActivity()), this, SIGNAL(accountActivityChanged()));
-	d->unlink(account);
+	accounts_.removeAll(account);
+	enabledAccounts_.removeAll(account);
 	emit accountCountChanged();
 }
 
-#include "psicontactlist.moc"
+
+PsiAccount *PsiContactList::tryQueueLowestEventId(bool includeDND)
+{
+	PsiAccount *low = 0;
+	int low_id = 0;
+	int low_prior = option.EventPriorityDontCare;
+
+	foreach(PsiAccount *account, enabledAccounts_) {
+		int n = account->eventQueue()->nextId();
+		if ( n == -1 )
+			continue;
+
+		if ( !includeDND && account->status().show() == "dnd" ) // FIXME: change "dnd" to enum
+			continue;
+
+		int p = account->eventQueue()->peekNext()->priority();
+		if ( !low || (n < low_id && p == low_prior) || p > low_prior ) {
+			low = account;
+			low_id = n;
+			low_prior = p;
+		}
+	}
+
+	return low;
+}
+
+void PsiContactList::accountEnabledChanged()
+{
+	PsiAccount* account = (PsiAccount*)sender();
+	enabledAccounts_.removeAll(account);
+	if (account->enabled())
+		enabledAccounts_.append(account);
+}
+

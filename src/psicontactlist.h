@@ -87,11 +87,16 @@ signals:
 	 */
 	void saveAccounts();
 
-private:
-	class Private;
-	Private* d;
+private slots:
+	void accountEnabledChanged();
 
+private:
 	PsiAccount *loadAccount(const UserAccount &);
+	PsiAccount *tryQueueLowestEventId(bool includeDND);
+
+	PsiCon *psi_;
+	PsiContactList *contactList_;
+	QList<PsiAccount *> accounts_, enabledAccounts_;
 };
 
 #endif
