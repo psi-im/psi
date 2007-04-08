@@ -86,6 +86,9 @@
                             <property name="psiIconName" stdset="0" >
                               <string>psi/search</string>
                             </property>
+                            <property name="default" >
+                              <bool>true</bool>
+                            </property>
                           </widget>
                         </item>
                         <item>
