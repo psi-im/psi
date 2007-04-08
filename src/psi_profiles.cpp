@@ -1956,3 +1956,5 @@ bool profileDelete(const QString &path)
 
 	return folderRemove(QDir(path));
 }
+
+QString activeProfile;

@@ -104,4 +104,6 @@ bool profileNew(const QString &);
 bool profileRename(const QString &, const QString &);
 bool profileDelete(const QString &);
 
+extern QString activeProfile;
+
 #endif

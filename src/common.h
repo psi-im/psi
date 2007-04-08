@@ -226,6 +226,13 @@ QString clipStatus(const QString &str, int width, int height);
 
 void replaceWidget(QWidget *, QWidget *);
 void closeDialogs(QWidget *);
+#ifdef Q_WS_X11
+void x11wmClass(Display *dsp, WId wid, QString resName);
+#define X11WM_CLASS(x)	x11wmClass(x11Display(), winId(), (x));
+#else
+#define X11WM_CLASS(x)	/* dummy */
+#endif
+
 
 // -----------------------------------------------------------------------------
 // Misc.
@@ -252,18 +259,8 @@ void openURL(const QString &);
 
 bool fileCopy(const QString &src, const QString &dest);
 
-#ifdef Q_WS_X11
-void x11wmClass(Display *dsp, WId wid, QString resName);
-#define X11WM_CLASS(x)	x11wmClass(x11Display(), winId(), (x));
-#else
-#define X11WM_CLASS(x)	/* dummy */
-#endif
-
 void soundPlay(const QString &);
 
-#define MINIMUM_OPACITY 10
-
-extern QString activeProfile;
 extern Qt::WFlags psi_dialog_flags;
 extern bool useSound;
 

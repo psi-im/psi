@@ -56,8 +56,6 @@
 #include <CoreServices/CoreServices.h>
 #endif
 
-QString activeProfile;
-
 //QStringList dtcp_hostList;
 //int dtcp_port;
 //QString dtcp_proxy;

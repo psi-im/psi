@@ -24,6 +24,9 @@
 #include <QtCore>
 #include "optionstree.h"
 
+// Some hard coded options
+#define MINIMUM_OPACITY 10
+
 namespace XMPP {
 	class Client;
 }
