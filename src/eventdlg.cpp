@@ -855,7 +855,10 @@ void EventDlg::init()
 
 	connect(d->mle, SIGNAL(textChanged()), d, SLOT(updateCounter()));
 
-	if(!d->composing) {
+	if (d->composing) {
+		d->mle->setAcceptRichText(false);
+	}
+	else {
 		d->mle->setReadOnly(true);
 		d->mle->setUndoRedoEnabled(false);
 	}
