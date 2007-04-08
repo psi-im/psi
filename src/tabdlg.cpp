@@ -449,7 +449,9 @@ void TabDlg::dropEvent(QDropEvent *event)
 		TabDlg *dlg=psi->getManagingTabs(chat);
 		if (!chat || !dlg)
 			return;
-		dlg->sendChatTo(chat, this);
+		qRegisterMetaType<TabDlg*>("TabDlg*");
+		QMetaObject::invokeMethod(dlg, "sendChatTo",  Qt::QueuedConnection, Q_ARG(QWidget*, chat), Q_ARG(TabDlg*, this));
+		//dlg->sendChatTo(chat, this);
 	} 
 	
 }
