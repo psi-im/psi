@@ -21,13 +21,14 @@
 #ifndef TUNECONTROLLERMANAGER_H
 #define TUNECONTROLLERMANAGER_H
 
+#include <QObject>
 #include <QMap>
 #include <QList>
 
 class TuneControllerPlugin;
 class TuneController;
 
-class TuneControllerManager
+class TuneControllerManager : public QObject
 {
 public:
 	static TuneControllerManager* instance();

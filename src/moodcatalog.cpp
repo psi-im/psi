@@ -20,6 +20,7 @@
 
 #include <QString>
 #include <QObject>
+#include <QCoreApplication>
 
 #include "mood.h"
 #include "moodcatalog.h"
@@ -52,7 +53,7 @@ bool MoodCatalog::Entry::isNull() const
 	return type_ == Mood::Unknown && text_.isNull() && value_.isNull();
 }
 
-MoodCatalog::MoodCatalog()
+MoodCatalog::MoodCatalog() : QObject(QCoreApplication::instance())
 {
 	entries_ += Entry(Mood::Afraid, "afraid", QObject::tr("Afraid"));
 	entries_ += Entry(Mood::Amazed, "amazed", QObject::tr("Amazed"));

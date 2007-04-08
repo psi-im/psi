@@ -26,6 +26,8 @@
 #ifndef PSIGROWLNOTIFIER_H
 #define PSIGROWLNOTIFIER_H
 
+#include <QObject>
+
 #include "psipopup.h"
 
 class GrowlNotifier;

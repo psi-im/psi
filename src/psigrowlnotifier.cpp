@@ -25,6 +25,7 @@
 
 #include <QPixmap>
 #include <QStringList>
+#include <QCoreApplication>
 
 #include "common.h"
 #include "psiaccount.h"
@@ -56,7 +57,7 @@ private:
  * (Private) constructor of the PsiGrowlNotifier.
  * Initializes notifications and registers with Growl through GrowlNotifier.
  */
-PsiGrowlNotifier::PsiGrowlNotifier()
+PsiGrowlNotifier::PsiGrowlNotifier() : QObject(QCoreApplication::instance())
 {
 	// Initialize all notifications
 	QStringList nots;

@@ -22,12 +22,13 @@
 #define MOODCATALOG_H
 
 #include <QList>
+#include <QObject>
 
 #include "mood.h"
 
 class QString;
 
-class MoodCatalog
+class MoodCatalog : public QObject
 {
 public:
 	class Entry {

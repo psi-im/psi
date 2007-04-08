@@ -1,6 +1,7 @@
 #include <QString>
 #include <QFile>
 #include <QFileInfo>
+#include <QCoreApplication>
 #include <QSysInfo>
 
 #if defined(Q_WS_X11) || defined(Q_WS_MAC)
@@ -16,7 +17,7 @@
 
 #include "systeminfo.h"
 
-SystemInfo::SystemInfo()
+SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 {
 	// Initialize
 	timezone_offset_ = 0;

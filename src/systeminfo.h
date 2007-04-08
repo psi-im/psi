@@ -1,9 +1,10 @@
 #ifndef SYSTEMINFO_H
 #define SYSTEMINFO_H
 
+#include <QObject>
 #include <QString>
 
-class SystemInfo
+class SystemInfo : public QObject
 {
 public:
 	static SystemInfo* instance();

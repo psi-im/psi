@@ -18,6 +18,8 @@
  *
  */
 
+#include <QCoreApplication>
+
 #include "psioptions.h"
 #include "applicationinfo.h"
 #include "xmpp_xmlcommon.h"
@@ -143,6 +145,7 @@ bool PsiOptions::save(QString file)
 PsiOptions::PsiOptions()
 	: OptionsTree()
 {
+	setParent(QCoreApplication::instance());
 	autoSave(false);
 	if (!load(":/options/default.xml"))
 		qWarning("ERROR: Failed to load default options");

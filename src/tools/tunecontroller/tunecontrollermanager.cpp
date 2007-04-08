@@ -24,6 +24,7 @@
 
 #include <QtCore>
 #include <QPluginLoader>
+#include <QCoreApplication>
 
 #include "tunecontrollermanager.h"
 #include "tunecontrollerplugin.h"
@@ -34,7 +35,7 @@
  */
 
 
-TuneControllerManager::TuneControllerManager()
+TuneControllerManager::TuneControllerManager() : QObject(QCoreApplication::instance())
 {
 	foreach(QObject* plugin,QPluginLoader::staticInstances()) {
 		loadPlugin(plugin);        
