@@ -1007,7 +1007,7 @@ void PsiAccount::login()
 	d->stream = new ClientStream(d->conn, d->tlsHandler);
 	d->stream->setRequireMutualAuth(d->acc.req_mutual_auth);
 	d->stream->setSSFRange(d->acc.security_level,256);
-	d->stream->setAllowPlain(d->acc.opt_plain);
+	d->stream->setAllowPlain(d->acc.allow_plain);
 	d->stream->setCompress(d->acc.opt_compress);
 	d->stream->setLang(TranslationManager::instance()->currentXMLLanguage());
 	if(d->acc.opt_keepAlive)

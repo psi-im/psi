@@ -112,6 +112,11 @@ void AccountModifyDlg::init()
 	cb_ssl->setCurrentIndex(cb_ssl->findData(acc.ssl));
 	connect(cb_ssl, SIGNAL(activated(int)), SLOT(sslActivated(int)));
 	
+	cb_plain->addItem(tr("Always"),ClientStream::AllowPlain);
+	cb_plain->addItem(tr("Over encrypted connection"), ClientStream::AllowPlainOverTLS);
+	cb_plain->addItem(tr("Never"), ClientStream::NoAllowPlain);
+	cb_plain->setCurrentIndex(cb_plain->findData(acc.allow_plain));
+	
 	if (acc.opt_pass)
 		le_pass->setText(acc.pass);
 
@@ -133,7 +138,6 @@ void AccountModifyDlg::init()
 	le_authid->setText(acc.authid);
 	le_realm->setText(acc.realm);
 		
-	ck_plain->setChecked(acc.opt_plain);
 	ck_compress->setChecked(acc.opt_compress);
 	ck_auto->setChecked(acc.opt_auto);
 	ck_reconn->setChecked(acc.opt_reconn);
@@ -188,7 +192,7 @@ void AccountModifyDlg::init()
 	pb_addBlock->hide();
 
 	// QWhatsThis helpers
-	ck_plain->setWhatsThis(
+	cb_plain->setWhatsThis(
 		tr("Normally, Psi logs in using the <i>digest</i> authentication "
 		"method.  Check this box to force a plain text login "
 		"to the Jabber server. Use this option only if you have "
@@ -293,7 +297,8 @@ void AccountModifyDlg::init()
 		ck_legacy_ssl_probe->hide();
 
 	if (!PsiOptions::instance()->getOption("options.ui.account.security.show").toBool()) {
-		ck_plain->hide();
+		lb_plain->hide();
+		cb_plain->hide();
 		ck_req_mutual->hide();
 		lb_security_level->hide();
 		cb_security_level->hide();
@@ -515,7 +520,7 @@ void AccountModifyDlg::save()
 	acc.authid = le_authid->text();
 	acc.realm = le_realm->text();
 	acc.ssl =  (UserAccount::SSLFlag) cb_ssl->itemData(cb_ssl->currentIndex()).toInt();
-	acc.opt_plain = ck_plain->isChecked();
+	acc.allow_plain =  (ClientStream::AllowPlainType) cb_plain->itemData(cb_plain->currentIndex()).toInt();
 	acc.opt_compress = ck_compress->isChecked();
 	acc.opt_auto = ck_auto->isChecked();
 	acc.opt_reconn = ck_reconn->isChecked();

@@ -105,7 +105,7 @@ void UserAccount::reset()
 	resource = "Psi";
 	priority = 5;
 	opt_keepAlive = TRUE;
-	opt_plain = FALSE;
+	allow_plain = XMPP::ClientStream::AllowPlainOverTLS;
 	opt_compress = TRUE;
 	opt_log = TRUE;
 	opt_reconn = FALSE;
@@ -140,7 +140,6 @@ QDomElement UserAccount::toXml(QDomDocument &doc, const QString &tagName)
 	setBoolAttribute(a, "showAgents", tog_agents);
 	setBoolAttribute(a, "showSelf", tog_self);
 	setBoolAttribute(a, "keepAlive", opt_keepAlive);
-	setBoolAttribute(a, "plain", opt_plain);
 	setBoolAttribute(a, "compress", opt_compress);
 	setBoolAttribute(a, "require-mutual-auth", req_mutual_auth);
 	setBoolAttribute(a, "legacy-ssl-probe", legacy_ssl_probe);
@@ -174,6 +173,7 @@ QDomElement UserAccount::toXml(QDomDocument &doc, const QString &tagName)
 	if (!pgpSecretKey.isNull()) {
 		a.appendChild(textTag(doc, "pgpSecretKeyID", pgpSecretKey.keyId()));
 	}
+	a.appendChild(textTag(doc, "allow-plain", allow_plain));
 	
 	QDomElement r = doc.createElement("roster");
 	a.appendChild(r);
@@ -262,7 +262,6 @@ void UserAccount::fromXml(const QDomElement &a)
 	readBoolAttribute(a, "showAgents", &tog_agents);
 	readBoolAttribute(a, "showSelf", &tog_self);
 	readBoolAttribute(a, "keepAlive", &opt_keepAlive);
-	readBoolAttribute(a, "plain", &opt_plain);
 	readBoolAttribute(a, "compress", &opt_compress);
 	readBoolAttribute(a, "require-mutual-auth", &req_mutual_auth);
 	readBoolAttribute(a, "legacy-ssl-probe", &legacy_ssl_probe);
@@ -276,6 +275,12 @@ void UserAccount::fromXml(const QDomElement &a)
 	else {
 		opt_automatic_resource = false;
 	}
+	
+	// Will be overwritten if there is a new option
+	bool opt_plain = false;
+	readBoolAttribute(a, "plain", &opt_plain);
+	allow_plain = (opt_plain ? XMPP::ClientStream::AllowPlain : XMPP::ClientStream::NoAllowPlain);
+	readNumEntry(a, "allow-plain", (int*) &allow_plain);
 	
 	// Will be overwritten if there is a new option
 	bool opt_ssl = true;
