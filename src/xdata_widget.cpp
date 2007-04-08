@@ -464,14 +464,19 @@ void XDataWidget::setFields(const XData::FieldList &f)
 		delete objlist.takeFirst();
 	}
 
+
+	QVBoxLayout* vert = new QVBoxLayout(this);
+	if (!instructions_.isEmpty()) {
+		QLabel* l = new QLabel(instructions_, this);
+		l->setWordWrap(true);
+		vert->addWidget(l);
+	}
+	QWidget *fields = new QWidget(this);
+	vert->addWidget(fields);
 	if ( f.count() ) {
-		QGridLayout *grid = new QGridLayout(this, 3, f.count(), 0, 3);
+		QGridLayout *grid = new QGridLayout(fields, 3, f.count(), 0, 3);
 
-		if (!instructions_.isEmpty()) {
-			grid->addWidget(new QLabel(instructions_,this),0,0,1,-1,Qt::AlignLeft);
-		}
-
-		int row = 1;
+		int row = 0;
 		XData::FieldList::ConstIterator it = f.begin();
 		for ( ; it != f.end(); ++it, ++row) {
 			XDataField *f;
