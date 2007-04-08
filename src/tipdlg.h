@@ -39,7 +39,7 @@ class TipDlg : public QDialog, public Ui::Tip
 	Q_OBJECT
 
 public:
-	TipDlg(QWidget* parent);
+	TipDlg(QWidget* parent = 0);
 	
 public slots:
 	void showTipsChanged(bool);

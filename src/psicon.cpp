@@ -48,6 +48,7 @@
 #include "statusdlg.h"
 #include "options/optionsdlg.h"
 #include "options/opt_toolbars.h"
+#include "accountregdlg.h"
 #include "combinedtunecontroller.h"
 #include "mucjoindlg.h"
 #include "userlist.h"
@@ -63,6 +64,7 @@
 #include "psitoolbar.h"
 #include "filetransfer.h"
 #include "filetransdlg.h"
+#include "accountmodifydlg.h"
 #include "psiactionlist.h"
 #include "applicationinfo.h"
 #include "jidutil.h"
@@ -78,6 +80,7 @@
 #include "pluginmanager.h"
 #endif
 #include "psicontactlist.h"
+#include "tipdlg.h"
 #include "shortcutmanager.h"
 
 
@@ -218,8 +221,21 @@ public:
 	 */
 	void promptUserToCreateAccount()
 	{
-		AccountAddDlg *w = new AccountAddDlg(psi);
-		w->show();
+		QMessageBox msgBox(QMessageBox::Question,tr("Account setup"),tr("You need to set up an account to start. Would you like to register a new account, or use an existing account?"));
+		QPushButton *registerButton = msgBox.addButton(tr("Register new account"), QMessageBox::ActionRole);
+		QPushButton *existingButton = msgBox.addButton(tr("Use existing account"),QMessageBox::ActionRole);
+		msgBox.exec();
+		if (msgBox.clickedButton() ==  existingButton) {
+			AccountModifyDlg w(psi);
+			w.exec();
+		}
+		else if (msgBox.clickedButton() ==  registerButton) {
+			AccountRegDlg w(psi->proxy());
+			int n = w.exec();
+			if (n == QDialog::Accepted) {
+				psi->contactList()->createAccount(w.jid().node(),w.jid(),w.pass(),w.useHost(),w.host(),w.port(),w.legacySSLProbe(),w.ssl(),w.proxy(),false);
+			}
+		}
 	}
 
 	PsiCon* psi;
@@ -409,7 +425,7 @@ bool PsiCon::init()
 			}
 		}
 	}
-
+	
 	// Connect to the system monitor
 	SystemWatch* sw = SystemWatch::instance();
 	connect(sw, SIGNAL(sleep()), this, SLOT(doSleep()));
@@ -442,10 +458,14 @@ bool PsiCon::init()
 	PassphraseDlg::setEventHandler(d->qcaEventHandler);
 
 	// load accounts
-	if (d->pro.acc.count() > 0)
-		d->contactList->loadAccounts(d->pro.acc);
-	else
-		d->promptUserToCreateAccount();
+	d->contactList->loadAccounts(d->pro.acc);
+	checkAccountsEmpty();
+	
+	// show tip of the day
+	if ( PsiOptions::instance()->getOption("options.ui.tip.show").toBool() ) {
+		TipDlg *tip = new TipDlg();
+		tip->show();
+	}
 
 	return true;
 }
@@ -928,6 +948,13 @@ void PsiCon::doOptions()
 void PsiCon::doFileTransDlg()
 {
 	bringToFront(d->ftwin);
+}
+
+void PsiCon::checkAccountsEmpty()
+{
+	while (d->pro.acc.count() == 0) {
+		d->promptUserToCreateAccount();
+	}
 }
 
 void PsiCon::doToolbars()

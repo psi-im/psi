@@ -299,10 +299,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 
 	decorateButton(STATUS_OFFLINE);
 
-	// show tip of the day
-	if ( PsiOptions::instance()->getOption("options.ui.tip.show").toBool() )
-		actTipActivated();
-
 	// Mac-only menus
 #ifdef Q_WS_MAC
 	QMenu *mainMenu = new QMenu(this);
@@ -731,7 +727,7 @@ void MainWin::actAboutActivated ()
 
 void MainWin::actTipActivated ()
 {
-	TipDlg *tip = new TipDlg (this);
+	TipDlg *tip = new TipDlg();
 	tip->show();
 }
 

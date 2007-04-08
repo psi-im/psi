@@ -35,6 +35,17 @@
 #include "pgpkeydlg.h"
 #include "psicontactlist.h"
 
+AccountModifyDlg::AccountModifyDlg(PsiCon *_psi, QWidget *parent)
+:QDialog(parent)
+{
+	acc.name = "";
+  	setupUi(this);
+	setModal(true);
+	pa = NULL;
+	psi = _psi;
+	init();
+}
+
 AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 :QDialog(parent)
 {
@@ -42,16 +53,22 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 	setModal(false);
 	setAttribute(Qt::WA_DeleteOnClose);
 	pa = _pa;
+	psi = pa->psi();
+	acc = pa->userAccount();
+	init();
+}
+
+void AccountModifyDlg::init() 
+{
 	//connect(pa->psi(), SIGNAL(pgpToggled(bool)), SLOT(pgpToggled(bool)));
-	pa->dialogRegister(this);
+	if (pa)
+		pa->dialogRegister(this);
 
 	setWindowTitle(CAP(caption()));
 #ifndef Q_WS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/account").icon());
 #endif
 
-	const UserAccount &acc = pa->userAccount();
-	
 	le_pass->setEnabled(true);
 	le_host->setEnabled(false);
 	lb_host->setEnabled(false);
@@ -75,8 +92,14 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 
 	gb_pgp->setEnabled(false);
 
-	connect(pb_vcard, SIGNAL(clicked()), SLOT(detailsVCard()));
-	connect(pb_changepw, SIGNAL(clicked()), SLOT(detailsChangePW()));
+	if (pa) {
+		connect(pb_vcard, SIGNAL(clicked()), SLOT(detailsVCard()));
+		connect(pb_changepw, SIGNAL(clicked()), SLOT(detailsChangePW()));
+	}
+	else {
+		pb_vcard->setEnabled(false);
+		pb_changepw->setEnabled(false);
+	}
 
 	// Hide the name if necessary
 	le_name->setText(acc.name);
@@ -125,7 +148,7 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 		gb_pgp->setEnabled(true);
 	}
 
-	pc = pa->psi()->proxy()->createProxyChooser(gb_proxy);
+	pc = psi->proxy()->createProxyChooser(gb_proxy);
 	replaceWidget(lb_proxychooser, pc);
 	pc->setCurrentItem(acc.proxy_index);
 	
@@ -150,10 +173,12 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 	lb_customPrivacy->hide();
 	privacyBlockedModel.setSourceModel(&privacyModel);
 	lv_blocked->setModel(&privacyBlockedModel);
-	connect(pa->privacyManager(),SIGNAL(defaultListAvailable(const PrivacyList&)),SLOT(updateBlockedContacts(const PrivacyList&)));
-	connect(pa->privacyManager(),SIGNAL(defaultListError()),SLOT(getDefaultList_error()));
-	connect(pa->privacyManager(),SIGNAL(changeList_error()),SLOT(changeList_error()));
-	connect(pa,SIGNAL(updatedActivity()),SLOT(updatePrivacyTab()));
+	if (pa) {
+		connect(pa->privacyManager(),SIGNAL(defaultListAvailable(const PrivacyList&)),SLOT(updateBlockedContacts(const PrivacyList&)));
+		connect(pa->privacyManager(),SIGNAL(defaultListError()),SLOT(getDefaultList_error()));
+		connect(pa->privacyManager(),SIGNAL(changeList_error()),SLOT(changeList_error()));
+		connect(pa,SIGNAL(updatedActivity()),SLOT(updatePrivacyTab()));
+	}
 	connect(tab_main,SIGNAL(currentChanged(int)),SLOT(tabChanged(int)));
 	connect(pb_privacy, SIGNAL(clicked()), SLOT(privacyClicked()));
 	connect(pb_removeBlock, SIGNAL(clicked()), SLOT(removeBlockClicked()));
@@ -230,7 +255,7 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 		"temporary \"disable\" the lower priority client at work.</p>"));
 
 	// Hiding of UI components
-	if (PsiOptions::instance()->getOption("options.ui.account.single").toBool()) {
+	if ((!pa && acc.name.isEmpty()) || PsiOptions::instance()->getOption("options.ui.account.single").toBool()) {
 		le_name->hide();
 		lb_name->hide();
 	}
@@ -315,7 +340,8 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 
 AccountModifyDlg::~AccountModifyDlg()
 {
-	pa->dialogUnregister(this);
+	if (pa)
+		pa->dialogUnregister(this);
 }
 
 void AccountModifyDlg::updateUserID()
@@ -389,7 +415,7 @@ void AccountModifyDlg::hostToggled(bool on)
 	le_port->setEnabled(on);
 	lb_port->setEnabled(on);
 	ck_legacy_ssl_probe->setEnabled(!on);
-	ck_legacy_ssl_probe->setChecked(on ? false : pa->userAccount().legacy_ssl_probe);
+	ck_legacy_ssl_probe->setChecked(on ? false : acc.legacy_ssl_probe);
 	if (!on && cb_ssl->currentIndex() == cb_ssl->findData(UserAccount::SSL_Legacy)) {
 		cb_ssl->setCurrentIndex(cb_ssl->findData(UserAccount::SSL_Auto));
 	}
@@ -421,22 +447,22 @@ void AccountModifyDlg::clearKey()
 
 void AccountModifyDlg::detailsVCard()
 {
-	pa->changeVCard();
+	if (pa)
+		pa->changeVCard();
 }
 
 void AccountModifyDlg::detailsChangePW()
 {
-	pa->changePW();
+	if (pa)
+		pa->changePW();
 }
 
 void AccountModifyDlg::save()
 {
-	UserAccount acc = pa->userAccount();
-
-	if(le_name->text().isEmpty()) {
+	/*if(pa && le_name->text().isEmpty()) {
 		QMessageBox::information(this, tr("Error"), tr("You must specify a name for the account before you may save it."));
 		return;
-	}
+	}*/
 
 	Jid newJid( JIDUtil::accountFromString(le_jid->text().trimmed()) );
 	if ( newJid.user().isEmpty() || newJid.host().isEmpty() ) {
@@ -450,11 +476,13 @@ void AccountModifyDlg::save()
 	}
 
 	// do not allow duplicate account names
+	if (!pa && le_name->text().isEmpty())
+		le_name->setText(newJid.domain());
 	QString def = le_name->text();
 	QString aname = def;
 	int n = 0;
 	{
-		foreach(PsiAccount* pa, pa->psi()->contactList()->accounts())
+		foreach(PsiAccount* pa, psi->contactList()->accounts())
 			if(aname == pa->name())
 				n++;
 	}
@@ -500,11 +528,14 @@ void AccountModifyDlg::save()
 
 	acc.proxy_index = pc->currentItem();
 
-	if(pa->isActive()) {
+	if(pa && pa->isActive()) {
 		QMessageBox::information(this, tr("Warning"), tr("This account is currently active, so certain changes may not take effect until the next login."));
 	}
 
-	pa->setUserAccount(acc);
+	if (pa)
+		pa->setUserAccount(acc);
+	else 
+		psi->contactList()->createAccount(acc);
 
 	accept();
 }
@@ -516,6 +547,9 @@ void AccountModifyDlg::tabChanged(int)
 
 void AccountModifyDlg::addBlockClicked()
 {
+	if (!pa)
+		return;
+
 	bool ok;
 	QString input = QInputDialog::getText(NULL, tr("Block contact"), tr("Enter the Jabber ID of the contact to block:"), QLineEdit::Normal, "", &ok);
 	Jid jid(input);
@@ -528,6 +562,9 @@ void AccountModifyDlg::addBlockClicked()
 
 void AccountModifyDlg::removeBlockClicked()
 {
+	if (!pa)
+		return;
+
 	if (lv_blocked->currentIndex().isValid()) {
 		QModelIndex idx = privacyBlockedModel.mapToSource(lv_blocked->currentIndex());
 		privacyModel.removeRow(idx.row(),idx.parent());
@@ -544,7 +581,7 @@ void AccountModifyDlg::privacyClicked()
 void AccountModifyDlg::updatePrivacyTab()
 {
 	if (tab_main->currentWidget() == tab_privacy) {
-		if (pa->loggedIn()) {
+		if (pa && pa->loggedIn()) {
 			if (!privacyInitialized) {
 				lb_privacyStatus->setText(tr("Retrieving blocked contact list ..."));
 				setPrivacyTabEnabled(false);
