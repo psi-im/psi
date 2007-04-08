@@ -118,6 +118,11 @@ QString ApplicationInfo::resourcesDir()
 #endif
 }
 
+
+/** \brief return psi's private read write data directory
+  * unix+mac: $HOME/.psi
+  * environment variable "PSIDATADIR" overrides
+  */
 QString ApplicationInfo::homeDir()
 {
 	// Try the environment override first

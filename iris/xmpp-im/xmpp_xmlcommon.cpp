@@ -96,6 +96,14 @@ QString tagContent(const QDomElement &e)
 	return "";
 }
 
+
+/**
+ * \brief find an direct child element by name
+ * \param e parent element
+ * \param name name of element to find
+ * \param found (optional/out) found?
+ * \return the element (or a null QDomElemnt if not found)
+ */
 QDomElement findSubTag(const QDomElement &e, const QString &name, bool *found)
 {
 	if(found)
@@ -129,6 +137,9 @@ QDomElement createIQ(QDomDocument *doc, const QString &type, const QString &to, 
 	return iq;
 }
 
+/** \brief returns direct child element named "query"
+ * \return the element (or a null QDomElemnt if not found)
+*/
 QDomElement queryTag(const QDomElement &e)
 {
 	bool found;
