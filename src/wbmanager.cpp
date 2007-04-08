@@ -43,7 +43,7 @@ WbManager::WbManager(Client* client, PsiAccount* pa) : client_(client) {
 	pa_ = pa;
 	connect(client_, SIGNAL(messageReceived(const Message &)), SLOT(messageReceived(const Message &)));
 	connect(client_, SIGNAL(groupChatLeft(const Jid &)), SLOT(groupChatLeft(const Jid &)));
-	connect(client_, SIGNAL(groupChatJoined(const Jid &, const Jid &)), SLOT(groupChatJoined(const Jid &, const Jid &)));
+	connect(client_, SIGNAL(groupChatJoined(const Jid &)), SLOT(groupChatJoined(const Jid &)));
 
 	negotiationTimer_.setSingleShot(true);
 	negotiationTimer_.setInterval(120000);
@@ -697,7 +697,7 @@ void WbManager::groupChatLeft(const Jid &jid) {
 		w->endSession();
 }
 
-void WbManager::groupChatJoined(const Jid &, const Jid &ownJid) {
+void WbManager::groupChatJoined(const Jid &ownJid) {
 	if(!ownJids_.contains(ownJid.full()))
 		ownJids_.append(ownJid.full());
 }
