@@ -9,6 +9,13 @@
  */
 ShortcutManager::ShortcutManager() 
 {
+	// Make sure that there is at least one shortcut for sending messages
+	if (shortcuts("options.shortcuts.chat.send").isEmpty()) {
+		qWarning("Restoring chat.send shortcut");
+		QVariantList vl;
+		vl << qVariantFromValue(QKeySequence(Qt::Key_Enter)) << qVariantFromValue(QKeySequence(Qt::Key_Return));
+		PsiOptions::instance()->setOption("options.shortcuts.chat.send",vl);
+	}
 }
 
 /**
