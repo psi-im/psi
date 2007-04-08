@@ -802,27 +802,15 @@ void FileRequestDlg::doStart()
 	else {
 		QString fname, savename;
 		bool overwrite = false;
-		while(1) {
-			if(option.lastSavePath.isEmpty())
-				option.lastSavePath = QDir::homeDirPath();
-			fname = QFileDialog::getSaveFileName(this, tr("Save As"), QDir(option.lastSavePath).filePath(d->fileName), tr("All files (*)"));
-			if(!fname.isEmpty()) {
-				QFileInfo fi(fname);
-				if(fi.exists()) {
-					int x = QMessageBox::information(this, tr("Error"), tr("File already exists.  Overwrite?"), tr("&Yes"), tr("&No"));
-					if(x != 0)
-						continue;
-					overwrite = true;
-				}
-				option.lastSavePath = fi.dirPath();
-				savename = fname + ".part";
-				fname = fi.fileName();
-			}
-			else
-				return;
-
-			break;
-		}
+		if(option.lastSavePath.isEmpty())
+			option.lastSavePath = QDir::homeDirPath();
+		fname = QFileDialog::getSaveFileName(this, tr("Save As"), QDir(option.lastSavePath).filePath(d->fileName), tr("All files (*)"));
+		if(fname.isEmpty())
+			return;
+		QFileInfo fi(fname);
+		option.lastSavePath = fi.dirPath();
+		savename = fname + ".part";
+		fname = fi.fileName();
 
 		if(active_file_check(savename)) {
 			QMessageBox::information(this, tr("Error"), tr("This file is being transferred already!"));
@@ -830,7 +818,7 @@ void FileRequestDlg::doStart()
 		}
 
 		qlonglong resume_offset = 0;
-		if(!overwrite) {
+		if(!fi.exists()) {
 			// supports resume?  check for a .part
 			if(d->ft->resumeSupported()) {
 				QFileInfo fi(savename);
