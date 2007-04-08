@@ -47,10 +47,12 @@ public:
 	void connectToServer(const XMPP::Jid &j, bool legacy_ssl_probe, bool legacy_ssl, bool force_ssl, const QString &host, int port, ProxyManager *pm, int proxy, QString *pass = NULL);
 	void close();
 	XMPP::Client *client();
+	void setErrorOnDisconnect(bool);
 
 signals:
 	void handshaken();
 	void error();
+	void disconnected();
 
 private slots:
 	void tls_handshaken();
@@ -72,8 +74,7 @@ private:
 	XMPP::Client *_client;
 	XMPP::Jid j;
 	QString pass;
-	bool auth;
-	bool force_ssl;
+	bool auth, force_ssl, error_disconnect;
 };
 
 

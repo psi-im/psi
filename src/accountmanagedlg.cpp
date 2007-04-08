@@ -66,6 +66,7 @@ private slots:
 
 	void client_handshaken();
 	void client_error();
+	void client_disconnected();
 	void unreg_finished();
 
 private:
@@ -111,6 +112,7 @@ AccountRemoveDlg::AccountRemoveDlg(ProxyManager *proxyman, const UserAccount &ac
 	client = new MiniClient;
 	connect(client, SIGNAL(handshaken()), SLOT(client_handshaken()));
 	connect(client, SIGNAL(error()), SLOT(client_error()));
+	connect(client, SIGNAL(disconnected()), SLOT(client_disconnected()));
 }
 
 AccountRemoveDlg::~AccountRemoveDlg()
@@ -183,6 +185,9 @@ void AccountRemoveDlg::remove()
 
 void AccountRemoveDlg::client_handshaken()
 {
+	// Workaround for servers that do not send a response to the remove request
+	client->setErrorOnDisconnect(false);
+
 	// try to unregister an account
 	JT_Register *reg = new JT_Register(client->client()->rootTask());
 	connect(reg, SIGNAL(finished()), SLOT(unreg_finished()));
@@ -214,6 +219,14 @@ void AccountRemoveDlg::unreg_finished()
 		pb_remove->setEnabled(true);
 		QMessageBox::critical(this, tr("Error"), QString(tr("There was an error unregistering the account.\nReason: %1")).arg(reg->statusString()));
 	}
+}
+
+void AccountRemoveDlg::client_disconnected()
+{
+	// Workaround for servers that do not send a response to the remove request
+	busy->stop();
+	QMessageBox::information(this, tr("Success"), tr("The account was unregistered successfully."));
+	accept();
 }
 
 //----------------------------------------------------------------------------

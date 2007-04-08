@@ -41,6 +41,7 @@ MiniClient::MiniClient(QObject *parent)
 	stream = 0;
 	auth = false;
 	force_ssl = false;
+	error_disconnect = true;
 }
 
 MiniClient::~MiniClient()
@@ -145,6 +146,11 @@ Client *MiniClient::client()
 	return _client;
 }
 
+void MiniClient::setErrorOnDisconnect(bool b)
+{
+	error_disconnect = b;
+}
+
 void MiniClient::tls_handshaken()
 {
 	QCA::Certificate cert = tls->peerCertificateChain().primary();
@@ -223,7 +229,10 @@ void MiniClient::sessionStart_finished()
 
 void MiniClient::cs_connectionClosed()
 {
-	cs_error(-1);
+	if (error_disconnect)
+		cs_error(-1);
+	else
+		emit disconnected();
 }
 
 void MiniClient::cs_delayedCloseFinished()
