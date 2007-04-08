@@ -446,6 +446,7 @@ public:
 	GCUserView *lv_users;
 	QPushButton *pb_topic;
 	QToolBar *toolbar;
+	QToolButton *tb_actions, *tb_emoticons, *tb_find;
 	IconAction *act_find, *act_clear, *act_icon, *act_configure;
 #ifdef WHITEBOARDING
 	IconAction *act_whiteboard;
@@ -860,10 +861,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	PsiToolTip::install(d->le_topic);
 	hb_top->addWidget(d->le_topic);
 
-	d->act_find = new IconAction(tr("Find"), "psi/search", tr("&Find"), 0, this);
-	connect(d->act_find, SIGNAL(activated()), SLOT(openFind()));
-	d->act_find->addTo( sp_top_top );
-	
 	d->lb_ident = new AccountLabel(sp_top_top);
 	d->lb_ident->setAccount(d->pa);
 	d->lb_ident->setShowJid(false);
@@ -871,6 +868,25 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	hb_top->addWidget(d->lb_ident);
 	connect(d->pa->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
 	updateIdentityVisibility();
+
+	d->act_find = new IconAction(tr("Find"), "psi/search", tr("&Find"), 0, this);
+	connect(d->act_find, SIGNAL(activated()), SLOT(openFind()));
+	d->tb_find = new QToolButton(sp_top);
+	d->tb_find->setIconSize(QSize(16, 16));
+	d->tb_find->setDefaultAction(d->act_find);
+	hb_top->addWidget(d->tb_find);
+
+	d->tb_emoticons = new QToolButton(sp_top);
+	d->tb_emoticons->setIconSize(QSize(16, 16));
+	d->tb_emoticons->setPopupMode(QToolButton::InstantPopup);
+	d->tb_emoticons->setIcon(IconsetFactory::icon("psi/smile").icon());
+	hb_top->addWidget(d->tb_emoticons);
+
+	d->tb_actions = new QToolButton(sp_top);
+	d->tb_actions->setIconSize(QSize(16, 16));
+	d->tb_actions->setPopupMode(QToolButton::InstantPopup);
+	d->tb_actions->setArrowType(Qt::DownArrow);
+	hb_top->addWidget(d->tb_actions);
 
 	// bottom row
 	QSplitter *hsp = new QSplitter(sp_top);
@@ -910,6 +926,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	connect(pa->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
 	d->act_icon = new IconAction( tr( "Select icon" ), "psi/smile", tr( "Select icon" ), 0, this );
 	d->act_icon->setMenu( pa->psi()->iconSelectPopup() );
+	d->tb_emoticons->setMenu(pa->psi()->iconSelectPopup());
 
 	d->toolbar = new QToolBar( tr("Groupchat toolbar"), 0);
 	d->toolbar->setIconSize(QSize(16,16));
@@ -960,6 +977,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 
 	d->pm_settings = new Q3PopupMenu(this);
 	connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));
+	d->tb_actions->setMenu(d->pm_settings);
 
 	// resize the horizontal splitter
 	QList<int> list;
@@ -1824,10 +1842,21 @@ void GCMainDlg::setLooks()
 	d->lv_users->Q3ListView::setFont(f);
 
 	if ( d->smallChat ) {
+		d->tb_actions->hide();
+		d->tb_emoticons->hide();
 		d->toolbar->hide();
 	}
 	else {
-		d->toolbar->show();
+		if (PsiOptions::instance()->getOption("options.ui.chat.central-toolbar").toBool()) {
+			d->toolbar->show();
+			d->tb_actions->hide();
+			d->tb_emoticons->hide();
+		}
+		else {
+			d->toolbar->hide();
+			d->tb_emoticons->show();
+			d->tb_actions->show();
+		}
 	}
 
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt()))/100);
