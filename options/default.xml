@@ -79,6 +79,7 @@
 			</chat>
 			<contactlist comment="Contact list options">
 				<auto-delete-unlisted comment="Automatically remove an unlisted contact from the contact list if it does not have any pending messages anymore" type="bool">false</auto-delete-unlisted>
+				<opacity comment="Opacity percentage of the contact list" type="int">100</opacity>
 				<status-messages comment="Status messages for contacts">
 					<single-line comment="Show status messages on the same line as the nickname" type="bool">true</single-line>
 					<show comment="Show status messages" type="bool">false</show>
