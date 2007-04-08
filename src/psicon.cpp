@@ -82,6 +82,7 @@
 #include "psicontactlist.h"
 #include "tipdlg.h"
 #include "shortcutmanager.h"
+#include "globalshortcutmanager.h"
 
 
 #ifdef Q_WS_MAC
@@ -336,6 +337,7 @@ bool PsiCon::init()
 	options->setOption("trigger-save",false);
 	options->setOption("trigger-save",true);
 	
+	connect(options, SIGNAL(optionChanged(const QString&)), SLOT(optionsUpdate()));
 
 	QDir profileDir( pathToProfile( activeProfile ) );
 	profileDir.rmdir( "info" ); // remove unused dir
@@ -439,10 +441,7 @@ bool PsiCon::init()
 #endif
 
 	// Global shortcuts
-	ShortcutManager::connect("global.event", this, SLOT(recvNextEvent()));
-	ShortcutManager::connect("global.toggle-visibility", d->mainwin, SLOT(toggleVisible()));
-	ShortcutManager::connect("global.bring-to-front", d->mainwin, SLOT(trayShow()));
-	ShortcutManager::connect("global.new-blank-message", this, SLOT(doNewBlankMessage()));
+	setShortcuts();
 
 	// Entity capabilities
 	CapsRegistry::instance()->setFile(ApplicationInfo::homeDir() + "/caps.xml");
@@ -511,6 +510,24 @@ void PsiCon::deinit()
 
 	// save profile
 	d->saveProfile(acc);
+}
+
+void PsiCon::optionsUpdate()
+{
+	// Global shortcuts
+	setShortcuts();
+}
+
+void PsiCon::setShortcuts()
+{
+	// FIX-ME: GlobalShortcutManager::clear() is one big hack,
+	// but people wanted to change global hotkeys without restarting in 0.11
+	GlobalShortcutManager::clear();
+	ShortcutManager::connect("global.event", this, SLOT(recvNextEvent()));
+	ShortcutManager::connect("global.toggle-visibility", d->mainwin, SLOT(toggleVisible()));
+	ShortcutManager::connect("global.bring-to-front", d->mainwin, SLOT(trayShow()));
+	ShortcutManager::connect("global.new-blank-message", this, SLOT(doNewBlankMessage()));
+
 }
 
 ContactView *PsiCon::contactView() const
