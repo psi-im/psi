@@ -34,6 +34,13 @@ using namespace XMPP;
 #define AHC_NS "http://jabber.org/protocol/commands"
 
 // -------------------------------------------------------------------------- 
+
+static bool operator<(const AHCommandItem &ci1, const AHCommandItem &ci2)
+{
+	return ci1.name < ci2.name;
+}
+
+// -------------------------------------------------------------------------- 
 // JT_AHCGetList: A Task to retreive the available commands of a client
 // -------------------------------------------------------------------------- 
 
@@ -92,6 +99,7 @@ bool JT_AHCGetList::take(const QDomElement& e)
 					commands_ += ci;
 				}
 			}
+			qSort(commands_);
 		}
 		setSuccess();
 		return true;
