@@ -34,28 +34,23 @@
 
 static QString extractLine(QByteArray *buf, bool *found)
 {
-	// scan for newline
-	int n;
-	for(n = 0; n < (int)buf->size()-1; ++n) {
-		if(buf->at(n) == '\r' && buf->at(n+1) == '\n') {
-			Q3CString cstr;
-			cstr.resize(n+1);
-			memcpy(cstr.data(), buf->data(), n);
-			n += 2; // hack off CR/LF
-
-			memmove(buf->data(), buf->data() + n, buf->size() - n);
-			buf->resize(buf->size() - n);
-			QString s = QString::fromUtf8(cstr);
-
-			if(found)
-				*found = true;
-			return s;
-		}
+	// Scan for newline
+	int index = buf->indexOf ("\r\n");
+	if (index == -1) {
+		// Newline not found
+		if (found)
+			*found = false;
+		return "";
 	}
+	else {
+		// Found newline
+		QString s = QString::fromAscii(buf->left(index));
+		buf->remove(0, index + 2);
 
-	if(found)
-		*found = false;
-	return "";
+		if (found)
+			*found = true;
+		return s;
+	}
 }
 
 static bool extractMainHeader(const QString &line, QString *proto, int *code, QString *msg)
