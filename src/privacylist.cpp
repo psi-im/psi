@@ -129,7 +129,8 @@ void PrivacyList::fromXml(const QDomElement& el)
 	setName(el.attribute("name"));
 	for(QDomNode n = el.firstChild(); !n.isNull(); n = n.nextSibling()) {
 		QDomElement e = n.toElement();
-		items_.append(PrivacyListItem(e));
+		if (!e.isNull())
+			items_.append(PrivacyListItem(e));
 	}
 
 	qSort(items_);
