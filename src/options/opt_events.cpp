@@ -52,12 +52,14 @@ QWidget *OptionsTabEvents::widget()
 	QWhatsThis::add(d->ck_ignoreNonRoster,
 		tr("Makes Psi ignore all incoming events from contacts"
 		" not already in your list of contacts."));
-	QWhatsThis::add(d->rb_aSolid,
+	QWhatsThis::add(d->cb_animation,
+		tr("What kind of animation should psi use for incoming event icons on the main window?"));
+/*	QWhatsThis::add(d->rb_aSolid,
 		tr("Does not animate or blink incoming event icons on the main window as they are received."));
 	QWhatsThis::add(d->rb_aBlink,
 		tr("Makes all incoming event icons blink on the main window as events are received."));
 	QWhatsThis::add(d->rb_aAnimate,
-		tr("Animates incoming event icons on the main window as events are recieved."));
+		tr("Animates incoming event icons on the main window as events are recieved."));*/
 	QWhatsThis::add(d->ck_autoAuth,
 		tr("Makes Psi automatically accept all authorization requests from <b>anyone</b>."));
 	QWhatsThis::add(d->ck_notifyAuth,
@@ -67,10 +69,11 @@ QWidget *OptionsTabEvents::widget()
 	d->cb_bounce->hide();
 	d->lb_bounce->hide();
 #endif
+/*
 	list_alerts.insert(0,d->rb_aSolid);
 	list_alerts.insert(1,d->rb_aBlink);
 	list_alerts.insert(2,d->rb_aAnimate);
-
+*/
 	return w;
 }
 
@@ -88,10 +91,7 @@ void OptionsTabEvents::applyOptions(Options *opt)
 	opt->noUnlistedPopup = !d->ck_allowUnlistedPopup->isChecked();
 	opt->raise = d->ck_raise->isChecked();
 	opt->ignoreNonRoster = d->ck_ignoreNonRoster->isChecked();
-	int i=0;
-	while(i<list_alerts.size() && !list_alerts[i]->isChecked())
-		i++;
-	opt->alertStyle = i;
+	opt->alertStyle = d->cb_animation->currentIndex();
 	opt->autoAuth = d->ck_autoAuth->isChecked();
 	opt->notifyAuth = d->ck_notifyAuth->isChecked();
 	opt->bounceDock = (Options::BounceDockSetting) d->cb_bounce->currentItem();
@@ -119,12 +119,11 @@ void OptionsTabEvents::restoreOptions(const Options *opt)
 	d->ck_allowUnlistedPopup->setChecked( !opt->noUnlistedPopup );
 	d->ck_raise->setChecked( opt->raise );
 	d->ck_ignoreNonRoster->setChecked( opt->ignoreNonRoster );
-	list_alerts[opt->alertStyle]->setChecked ( true );
+	d->cb_animation->setCurrentItem(opt->alertStyle);
 	d->ck_autoAuth->setChecked( opt->autoAuth );
 	d->ck_notifyAuth->setChecked( opt->notifyAuth );
 	d->cb_bounce->setCurrentItem( opt->bounceDock );
 
-	d->ck_popupOn->setChecked( true );
 	d->ck_popupOn->setChecked( opt->ppIsOn );
 	d->ck_popupOnMessage->setChecked( opt->ppMessage || opt->ppChat );
 	d->ck_popupOnHeadline->setChecked( opt->ppHeadline );
