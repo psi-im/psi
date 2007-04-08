@@ -2548,6 +2548,10 @@ QList<UserListItem*> PsiAccount::findRelevant(const Jid &j) const
 			if(!u->jid().resource().isEmpty()) {
 				if(u->jid().resource() != j.resource())
 					continue;
+			} else {
+				// skip status changes from muc participants 
+				// if the MUC somehow got into userList.
+				if (!j.resource().isEmpty() && d->groupchats.contains(j.bare())) continue;
 			}
 			list.append(u);
 		}
