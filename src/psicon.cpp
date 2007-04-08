@@ -259,6 +259,7 @@ public:
 	FileTransDlg *ftwin;
 	PsiActionList *actionList;
 	QCA::EventHandler *qcaEventHandler;
+	QCA::KeyStoreManager qcaKeyStoreManager;
 	//GlobalAccelManager *globalAccelManager;
 	TuneController* tuneController;
 	QMenuBar* defaultMenuBar;
@@ -448,14 +449,16 @@ bool PsiCon::init()
 
 	// QCA
 	d->qcaEventHandler = new QCA::EventHandler(this);
+	PassphraseDlg::setEventHandler(d->qcaEventHandler);
 	connect(d->qcaEventHandler,SIGNAL(eventReady(int,const QCA::Event&)),SLOT(qcaEvent(int,const QCA::Event&)));
 	d->qcaEventHandler->start();
-	foreach(QString k, QCA::keyStoreManager()->keyStores()) {
-		QCA::KeyStore* ks = new QCA::KeyStore(k);
+	d->qcaKeyStoreManager.waitForBusyFinished(); // FIXME get rid of this
+	connect(&d->qcaKeyStoreManager, SIGNAL(keyStoreAvailable(const QString&)), SLOT(keyStoreAvailable(const QString&)));
+	foreach(QString k, d->qcaKeyStoreManager.keyStores()) {
+		QCA::KeyStore* ks = new QCA::KeyStore(k, &d->qcaKeyStoreManager);
 		connect(ks, SIGNAL(updated()), SLOT(pgp_keysUpdated()));
 		PGPUtil::keystores += ks;
 	}
-	PassphraseDlg::setEventHandler(d->qcaEventHandler);
 
 	// load accounts
 	d->contactList->loadAccounts(d->pro.acc);
@@ -478,8 +481,10 @@ void PsiCon::deinit()
 	deleteAllDialogs();
 
 	// QCA Keystores
-	while(!PGPUtil::keystores.isEmpty())
-		delete PGPUtil::keystores.takeFirst();
+	foreach(QCA::KeyStore* ks,PGPUtil::keystores)  {
+		delete ks;
+	}
+	PGPUtil::keystores.clear();
 
 	d->idle.stop();
 
@@ -587,8 +592,8 @@ void PsiCon::qcaEvent(int id, const QCA::Event& event)
 			d->qcaEventHandler->submitPassword(id,QSecureArray(PGPUtil::passphrases[event.keyStoreEntryId()].utf8()));
 		}
 		else {
-			QCA::KeyStore ks(event.keyStoreId());
 			QString name;
+			QCA::KeyStore ks(event.keyStoreId(), &d->qcaKeyStoreManager);
 			foreach(QCA::KeyStoreEntry e, ks.entryList()) {
 				if (e.id() == event.keyStoreEntryId()) {
 					name = e.name();
@@ -598,6 +603,13 @@ void PsiCon::qcaEvent(int id, const QCA::Event& event)
 		}
 	}
 }
+void PsiCon::keyStoreAvailable(const QString& k)
+{
+	QCA::KeyStore* ks = new QCA::KeyStore(k, &d->qcaKeyStoreManager);
+	connect(ks, SIGNAL(updated()), SLOT(pgp_keysUpdated()));
+	PGPUtil::keystores += ks;
+}
+
 
 void PsiCon::doManageAccounts()
 {

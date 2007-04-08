@@ -56,24 +56,27 @@ public:
 	QMutex manager_mutex;
 	ProviderManager manager;
 	Random *rng;
-	KeyStoreManager *ksm;
-        Logger *logger;
+	Logger *logger;
 	QVariantMap properties;
 	QMap<QString,QVariantMap> config;
 
 	Global()
 	{
 		rng = 0;
-		ksm = new KeyStoreManager;
-                logger = new Logger;
+		logger = new Logger;
 		secmem = false;
 	}
 
 	~Global()
 	{
-		delete ksm;
-                delete logger;
+		KeyStoreManager::shutdown();
+		delete logger;
 		delete rng;
+	}
+
+	void ksm_scan()
+	{
+		KeyStoreManager::scan();
 	}
 };
 
@@ -274,9 +277,12 @@ Provider *defaultProvider()
 
 void scanForPlugins()
 {
-	QMutexLocker lock(&global->manager_mutex);
+	{
+		QMutexLocker lock(&global->manager_mutex);
 
-	global->manager.scan();
+		global->manager.scan();
+	}
+	global->ksm_scan();
 }
 
 void unloadAllPlugins()
@@ -448,11 +454,6 @@ void setGlobalRNG(const QString &provider)
 	global->rng = new Random(provider);
 }
 
-KeyStoreManager *keyStoreManager()
-{
-	return global->ksm;
-}
-
 Logger *logger()
 {
 	return global->logger;
@@ -466,13 +467,14 @@ void logText( const QString &message, Logger::Severity severity )
 bool haveSystemStore()
 {
 	// ensure the system store is loaded
-	global->ksm->start("default");
-	global->ksm->waitForBusyFinished();
+	KeyStoreManager::start("default");
+	KeyStoreManager ksm;
+	ksm.waitForBusyFinished();
 
-	QStringList list = global->ksm->keyStores();
+	QStringList list = ksm.keyStores();
 	for(int n = 0; n < list.count(); ++n)
 	{
-		KeyStore ks(list[n]);
+		KeyStore ks(list[n], &ksm);
 		if(ks.type() == KeyStore::System && ks.holdsTrustedCertificates())
 			return true;
 	}
@@ -482,14 +484,15 @@ bool haveSystemStore()
 CertificateCollection systemStore()
 {
 	// ensure the system store is loaded
-	global->ksm->start("default");
-	global->ksm->waitForBusyFinished();
+	KeyStoreManager::start("default");
+	KeyStoreManager ksm;
+	ksm.waitForBusyFinished();
 
 	CertificateCollection col;
-	QStringList list = global->ksm->keyStores();
+	QStringList list = ksm.keyStores();
 	for(int n = 0; n < list.count(); ++n)
 	{
-		KeyStore ks(list[n]);
+		KeyStore ks(list[n], &ksm);
 
 		// system store
 		if(ks.type() == KeyStore::System && ks.holdsTrustedCertificates())

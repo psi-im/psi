@@ -68,10 +68,9 @@ QString PGPUtil::addHeaderFooter(const QString &str, int type)
 
 QCA::KeyStoreEntry PGPUtil::getSecretKeyStoreEntry(const QString& keyID)
 {
-	foreach(QString k, QCA::keyStoreManager()->keyStores()) {
-		QCA::KeyStore ks(k);
-		if (ks.type() == QCA::KeyStore::PGPKeyring && ks.holdsIdentities()) {
-			foreach(QCA::KeyStoreEntry ke, ks.entryList()) {
+	foreach(QCA::KeyStore *ks, PGPUtil::keystores) {
+		if (ks->type() == QCA::KeyStore::PGPKeyring && ks->holdsIdentities()) {
+			foreach(QCA::KeyStoreEntry ke, ks->entryList()) {
 				if (ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey
 				    && ke.pgpSecretKey().keyId() == keyID) {
 					return ke;
@@ -84,10 +83,9 @@ QCA::KeyStoreEntry PGPUtil::getSecretKeyStoreEntry(const QString& keyID)
 
 QCA::KeyStoreEntry PGPUtil::getPublicKeyStoreEntry(const QString& keyID)
 {
-	foreach(QString k, QCA::keyStoreManager()->keyStores()) {
-		QCA::KeyStore ks(k);
-		if (ks.type() == QCA::KeyStore::PGPKeyring && ks.holdsIdentities()) {
-			foreach(QCA::KeyStoreEntry ke, ks.entryList()) {
+	foreach(QCA::KeyStore *ks, PGPUtil::keystores) {
+		if (ks->type() == QCA::KeyStore::PGPKeyring && ks->holdsIdentities()) {
+			foreach(QCA::KeyStoreEntry ke, ks->entryList()) {
 				if ((ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey
 				     || ke.type() == QCA::KeyStoreEntry::TypePGPPublicKey)
 				    && ke.pgpPublicKey().keyId() == keyID) {
@@ -146,6 +144,6 @@ bool PGPUtil::equals(QCA::PGPKey k1, QCA::PGPKey k2)
 	}
 }
 
-QList<QCA::KeyStore*> PGPUtil::keystores;
+QSet<QCA::KeyStore*> PGPUtil::keystores;
 
 QMap<QString,QString> PGPUtil::passphrases;

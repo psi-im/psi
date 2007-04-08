@@ -82,7 +82,7 @@ public:
   ghost@aladdin.com
 
  */
-/* $Id: qca_default.cpp 620048 2007-01-05 05:22:34Z bhards $ */
+/* $Id: qca_default.cpp 646458 2007-03-25 19:36:00Z infiniti $ */
 /*
   Independent implementation of MD5 (RFC 1321).
 
@@ -709,6 +709,65 @@ public:
 //----------------------------------------------------------------------------
 // DefaultKeyStoreEntry
 //----------------------------------------------------------------------------
+static QString escape_string(const QString &in)
+{
+	QString out;
+	for(int n = 0; n < in.length(); ++n)
+	{
+		if(in[n] == '\\')
+			out += "\\\\";
+		else if(in[n] == ':')
+			out += "\\c";
+		else
+			out += in[n];
+	}
+	return out;
+}
+
+static QString unescape_string(const QString &in)
+{
+	QString out;
+	for(int n = 0; n < in.length(); ++n)
+	{
+		if(in[n] == '\\')
+		{
+			if(n + 1 < in.length())
+			{
+				if(in[n + 1] == '\\')
+					out += '\\';
+				else if(in[n + 1] == 'c')
+					out += ':';
+			}
+		}
+		else
+			out += in[n];
+	}
+	return out;
+}
+
+static QString makeId(const QString &storeId, const QString &storeName, const QString &entryId, const QString &entryName)
+{
+	QStringList out;
+	out += escape_string("qca_def");
+	out += escape_string(storeId);
+	out += escape_string(storeName);
+	out += escape_string(entryId);
+	out += escape_string(entryName);
+	return out.join(":");
+}
+
+static bool parseId(const QString &in, QString *storeId, QString *storeName, QString *entryId, QString *entryName)
+{
+	QStringList list = in.split(':');
+	if(list.count() != 5)
+		return false;
+	*storeId   = unescape_string(list[1]);
+	*storeName = unescape_string(list[2]);
+	*entryId   = unescape_string(list[3]);
+	*entryName = unescape_string(list[4]);
+	return true;
+}
+
 class DefaultKeyStoreEntry : public KeyStoreEntryContext
 {
 public:
@@ -716,6 +775,8 @@ public:
 	QString item_id, _storeId, _storeName;
 	Certificate _cert;
 	CRL _crl;
+
+	QString item_name;
 
 	DefaultKeyStoreEntry(const Certificate &cert, const QString &storeId, const QString &storeName, Provider *p) : KeyStoreEntryContext(p)
 	{
@@ -757,6 +818,11 @@ public:
 	}
 
 	virtual QString name() const
+	{
+		return item_name;
+	}
+
+	QString makeName() const
 	{
 		// use the common name, else orgname
 		if(item_type == KeyStoreEntry::TypeCertificate)
@@ -872,16 +938,37 @@ public:
 		for(n = 0; n < certs.count(); ++n)
 		{
 			DefaultKeyStoreEntry *c = new DefaultKeyStoreEntry(certs[n], storeId(0), name(0), provider());
-			c->item_id = QString::number(n);
+			//c->item_id = QString::number(n);
+			QString ename = c->makeName();
+			QString eid = QString::number(qHash(certs[n].toDER().toByteArray()));
+			c->item_name = ename;
+			c->item_id = makeId(storeId(0), name(0), eid, ename);
 			out.append(c);
 		}
 		for(n = 0; n < crls.count(); ++n)
 		{
 			DefaultKeyStoreEntry *c = new DefaultKeyStoreEntry(crls[n], storeId(0), name(0), provider());
+			c->item_name = c->makeName();
+			c->item_id = QString::number(n); // FIXME
 			out.append(c);
 		}
 
 		return out;
+	}
+
+	// TODO
+	KeyStoreEntryContext *entryPassive(const QString &_storeId, const QString &entryId)
+	{
+		Q_UNUSED(_storeId);
+		QString storeId, storeName, eid, ename;
+		if(parseId(entryId, &storeId, &storeName, &eid, &ename))
+		{
+			DefaultKeyStoreEntry *c = new DefaultKeyStoreEntry(Certificate(), storeId, storeName, provider());
+			c->item_name = ename;
+			c->item_id = eid;
+			return c;
+		}
+		return 0;
 	}
 };
 

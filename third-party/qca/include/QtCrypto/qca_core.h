@@ -385,12 +385,6 @@ namespace QCA
 	QCA_EXPORT void setGlobalRNG(const QString &provider);
 
 	/**
-	   Return a reference to the KeyStoreManager, which is used to interface with
-	   system storage, PGP keyrings, and smart cards.
-	*/
-	QCA_EXPORT KeyStoreManager *keyStoreManager();
-
-	/**
 	   Return a reference to the %QCA Logger, which is used for diagnostics
 	   and error recording.
 
