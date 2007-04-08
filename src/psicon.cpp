@@ -1341,7 +1341,7 @@ void PsiCon::s5b_init()
 
 	if (option.dtPort) {
 		if(!d->s5bServer->start(option.dtPort)) {
-			QMessageBox::information(0, tr("Error"), tr("Unable to bind to port %1 for Data Transfer").arg(option.dtPort));
+			QMessageBox::warning(0, tr("Warning"), tr("Unable to bind to port %1 for Data Transfer.\nThis may mean you are already running another instance of Psi. You may experience problems sending and/or receiving files.").arg(option.dtPort));
 		}
 	}
 }
