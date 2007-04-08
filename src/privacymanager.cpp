@@ -31,7 +31,7 @@ using namespace XMPP;
 
 // -----------------------------------------------------------------------------
 
-class JT_GetPrivacyLists : public Task
+class GetPrivacyListsTask : public Task
 {
 	Q_OBJECT
 
@@ -41,7 +41,7 @@ private:
 	QString default_, active_;
 
 public:
-	JT_GetPrivacyLists(Task* parent) : Task(parent) { 
+	GetPrivacyListsTask(Task* parent) : Task(parent) { 
 		iq_ = createIQ(doc(), "get", "", id());
 		QDomElement query = doc()->createElement("query");
 		query.setAttribute("xmlns",PRIVACY_NS);
@@ -94,7 +94,7 @@ public:
 };
 
 
-class JT_SetPrivacyLists : public Task
+class SetPrivacyListsTask : public Task
 {
 	Q_OBJECT
 
@@ -104,7 +104,7 @@ private:
 	QString value_;
 
 public:
-	JT_SetPrivacyLists(Task* parent) : Task(parent), changeDefault_(false), changeActive_(false), changeList_(false), list_("") { 
+	SetPrivacyListsTask(Task* parent) : Task(parent), changeDefault_(false), changeActive_(false), changeList_(false), list_("") { 
 	}
 
 	void onGo() {
@@ -177,7 +177,7 @@ public:
 	}
 };
 
-class JT_GetPrivacyList : public Task
+class GetPrivacyListTask : public Task
 {
 	Q_OBJECT
 
@@ -187,7 +187,7 @@ private:
 	PrivacyList list_;
 
 public:
-	JT_GetPrivacyList(Task* parent, const QString& name) : Task(parent), name_(name), list_(PrivacyList("")) { 
+	GetPrivacyListTask(Task* parent, const QString& name) : Task(parent), name_(name), list_(PrivacyList("")) { 
 		iq_ = createIQ(doc(), "get", "", id());
 		QDomElement query = doc()->createElement("query");
 		query.setAttribute("xmlns",PRIVACY_NS);
@@ -238,14 +238,14 @@ PrivacyManager::PrivacyManager(XMPP::Task* rootTask) : rootTask_(rootTask), getD
 
 void PrivacyManager::requestListNames()
 {
-	JT_GetPrivacyLists* t = new JT_GetPrivacyLists(rootTask_);
+	GetPrivacyListsTask* t = new GetPrivacyListsTask(rootTask_);
 	connect(t,SIGNAL(finished()),SLOT(receiveLists()));
 	t->go(true);
 }
 
 void PrivacyManager::requestList(const QString& name)
 {
-	JT_GetPrivacyList* t = new JT_GetPrivacyList(rootTask_, name);
+	GetPrivacyListTask* t = new GetPrivacyListTask(rootTask_, name);
 	connect(t,SIGNAL(finished()),SLOT(receiveList()));
 	t->go(true);
 }
@@ -328,7 +328,7 @@ void PrivacyManager::getDefault_listError()
 
 void PrivacyManager::changeDefaultList(const QString& name)
 {
-	JT_SetPrivacyLists* t = new JT_SetPrivacyLists(rootTask_);
+	SetPrivacyListsTask* t = new SetPrivacyListsTask(rootTask_);
 	t->setDefault(name);
 	connect(t,SIGNAL(finished()),SLOT(changeDefaultList_finished()));
 	t->go(true);
@@ -336,7 +336,7 @@ void PrivacyManager::changeDefaultList(const QString& name)
 
 void PrivacyManager::changeDefaultList_finished()
 {
-	JT_SetPrivacyLists *t = (JT_SetPrivacyLists*)sender();
+	SetPrivacyListsTask *t = (SetPrivacyListsTask*)sender();
 	if (!t) {
 		qWarning("privacy.cpp:changeDefault_finished(): Unexpected sender.");
 		return;
@@ -352,7 +352,7 @@ void PrivacyManager::changeDefaultList_finished()
 
 void PrivacyManager::changeActiveList(const QString& name)
 {
-	JT_SetPrivacyLists* t = new JT_SetPrivacyLists(rootTask_);
+	SetPrivacyListsTask* t = new SetPrivacyListsTask(rootTask_);
 	t->setActive(name);
 	connect(t,SIGNAL(finished()),SLOT(changeActiveList_finished()));
 	t->go(true);
@@ -360,7 +360,7 @@ void PrivacyManager::changeActiveList(const QString& name)
 
 void PrivacyManager::changeActiveList_finished()
 {
-	JT_SetPrivacyLists *t = (JT_SetPrivacyLists*)sender();
+	SetPrivacyListsTask *t = (SetPrivacyListsTask*)sender();
 	if (!t) {
 		qWarning("privacy.cpp:changeActive_finished(): Unexpected sender.");
 		return;
@@ -376,7 +376,7 @@ void PrivacyManager::changeActiveList_finished()
 
 void PrivacyManager::changeList(const PrivacyList& list)
 {
-	JT_SetPrivacyLists* t = new JT_SetPrivacyLists(rootTask_);
+	SetPrivacyListsTask* t = new SetPrivacyListsTask(rootTask_);
 	t->setList(list);
 	connect(t,SIGNAL(finished()),SLOT(changeList_finished()));
 	t->go(true);
@@ -384,7 +384,7 @@ void PrivacyManager::changeList(const PrivacyList& list)
 
 void PrivacyManager::changeList_finished()
 {
-	JT_SetPrivacyLists *t = (JT_SetPrivacyLists*)sender();
+	SetPrivacyListsTask *t = (SetPrivacyListsTask*)sender();
 	if (!t) {
 		qWarning("privacy.cpp:changeList_finished(): Unexpected sender.");
 		return;
@@ -400,7 +400,7 @@ void PrivacyManager::changeList_finished()
 
 void PrivacyManager::receiveLists() 
 {
-	JT_GetPrivacyLists *t = (JT_GetPrivacyLists*)sender();
+	GetPrivacyListsTask *t = (GetPrivacyListsTask*)sender();
 	if (!t) {
 		qWarning("privacy.cpp:receiveLists(): Unexpected sender.");
 		return;
@@ -417,7 +417,7 @@ void PrivacyManager::receiveLists()
 
 void PrivacyManager::receiveList() 
 {
-	JT_GetPrivacyList *t = (JT_GetPrivacyList*)sender();
+	GetPrivacyListTask *t = (GetPrivacyListTask*)sender();
 	if (!t) {
 		qWarning("privacy.cpp:receiveList(): Unexpected sender.");
 		return;
