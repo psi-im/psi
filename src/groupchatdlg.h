@@ -127,6 +127,7 @@ public:
 	const QString& nick() const;
 
 protected:
+	void keyPressEvent(QKeyEvent *);
 	void dragEnterEvent(QDragEnterEvent *);
 	void dropEvent(QDropEvent *);
 	void closeEvent(QCloseEvent *);

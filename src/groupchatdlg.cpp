@@ -864,7 +864,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 
 	// chat edit
 	if ( !option.chatLineEdit ) {
-		d->mle = new ChatEdit(sp_bottom);
+		d->mle = new ChatEdit(sp_bottom, this);
 		vb_bottom->addWidget(d->mle);
 	}
 	else {
@@ -939,7 +939,8 @@ void GCMainDlg::scrollDown() {
 	d->te_log->verticalScrollBar()->setValue(d->te_log->verticalScrollBar()->value() + d->te_log->verticalScrollBar()->pageStep()/2);
 }
 
-/*void GCMainDlg::keyPressEvent(QKeyEvent *e)
+void GCMainDlg::keyPressEvent(QKeyEvent *e)
+{
 	if(e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter || (e->key() == Qt::Key_S && (e->modifiers() & Qt::AltModifier)))
 		mle_returnPressed();
 	else if(e->key() == Qt::Key_PageUp && (e->modifiers() & Qt::ShiftModifier))
@@ -948,7 +949,7 @@ void GCMainDlg::scrollDown() {
 		d->te_log->verticalScrollBar()->setValue(d->te_log->verticalScrollBar()->value() + d->te_log->verticalScrollBar()->pageStep()/2);
 	else
 		e->ignore();
-}*/
+}
 
 void GCMainDlg::closeEvent(QCloseEvent *e)
 {
