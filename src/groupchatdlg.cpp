@@ -401,7 +401,7 @@ public:
 	PsiAccount *pa;
 	MUCManager *mucManager;
 	Jid jid;
-	QString self;
+	QString self, prev_self;
 	QString password;
 	ChatView *te_log;
 	ChatEdit *mle;
@@ -766,7 +766,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	d = new Private(this);
 	d->pa = pa;
 	d->jid = j.userHost();
-	d->self = j.resource();
+	d->self = d->prev_self = j.resource();
 	d->pa->dialogRegister(this, d->jid);
 	connect(d->pa, SIGNAL(updatedActivity()), SLOT(pa_updatedActivity()));
 	d->mucManager = new MUCManager(d->pa->client(),d->jid);
@@ -1075,6 +1075,7 @@ void GCMainDlg::mle_returnPressed()
 	if(str.lower().startsWith("/nick ")) {
 		QString nick = str.mid(6).stripWhiteSpace();
 		if ( !nick.isEmpty() ) {
+			d->prev_self = d->self;
 			d->self = nick;
 			d->pa->groupChatChangeNick(d->jid.host(), d->jid.user(), d->self, d->pa->status());
 		}
@@ -1262,11 +1263,14 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 {
 	if(s.hasError()) {
 		QString message;
-		if (s.errorCode() == 409)
+		if (s.errorCode() == 409) {
 			message = tr("Please choose a different nickname");
+			d->self = d->prev_self;
+		}
 		else
 			message = tr("An error occurred");
 		appendSysMsg(message, false, QDateTime::currentDateTime());
+		return;
 	}
 
 	if (nick == d->self) {
