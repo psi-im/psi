@@ -398,7 +398,7 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 	d->log->setFocusPolicy(Qt::NoFocus);
 #endif
 	d->mle->setFocus();
-	resize(option.sizeChatDlg);
+	resize(PsiOptions::instance()->getOption("options.ui.chat.size").toSize());
 
 	UserListItem *u = d->pa->findFirstRelevant(d->jid);
 	if(u && u->isSecure(d->jid.resource()))
@@ -463,8 +463,8 @@ void ChatDlg::keyPressEvent(QKeyEvent *e)
 
 void ChatDlg::resizeEvent(QResizeEvent *e)
 {
-	if(option.keepSizes)
-		option.sizeChatDlg = e->size();
+	if (option.keepSizes)
+		PsiOptions::instance()->setOption("options.ui.chat.size", e->size());
 }
 
 void ChatDlg::closeEvent(QCloseEvent *e)

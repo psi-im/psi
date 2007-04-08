@@ -138,10 +138,13 @@ public:
 protected:
 	void setShortcuts();
 
+	// reimplemented
 	void keyPressEvent(QKeyEvent *);
 	void dragEnterEvent(QDragEnterEvent *);
 	void dropEvent(QDropEvent *);
 	void closeEvent(QCloseEvent *);
+	void resizeEvent(QResizeEvent*);
+
 	void windowActivationChange(bool);
 	void mucInfoDialog(const QString& title, const QString& message, const Jid& actor, const QString& reason);
 

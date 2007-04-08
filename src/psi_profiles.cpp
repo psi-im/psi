@@ -48,27 +48,31 @@ using namespace XMLHelper;
 #define PROXY_SOCKS4     2
 #define PROXY_SOCKS5     3
 
-
-void migrateIntEntry(const QDomElement& element, const QString& entry, const QString& option)
+template<typename T, typename F>
+void migrateEntry(const QDomElement& element, const QString& entry, const QString& option, F f)
 {
 	bool found;
 	findSubTag(element, entry, &found);
 	if (found) {
-		int value;
-		readNumEntry(element, entry, &value);
-		PsiOptions::instance()->setOption(option,value);
+		T value;
+		f(element, entry, &value);
+		PsiOptions::instance()->setOption(option, value);
 	}
+}
+
+void migrateIntEntry(const QDomElement& element, const QString& entry, const QString& option)
+{
+	migrateEntry<int>(element, entry, option, readNumEntry);
 }
 
 void migrateBoolEntry(const QDomElement& element, const QString& entry, const QString& option)
 {
-	bool found;
-	findSubTag(element, entry, &found);
-	if (found) {
-		bool value;
-		readBoolEntry(element, entry, &value);
-		PsiOptions::instance()->setOption(option,value);
-	}
+	migrateEntry<bool>(element, entry, option, readBoolEntry);
+}
+
+void migrateSizeEntry(const QDomElement& element, const QString& entry, const QString& option)
+{
+	migrateEntry<QSize>(element, entry, option, readSizeEntry);
 }
 
 UserAccount::UserAccount()
@@ -1591,7 +1595,7 @@ bool UserProfile::fromFile(const QString &fname)
 		QDomElement p_sizes = findSubTag(p, "sizes", &found);
 		if(found) {
 			readSizeEntry(p_sizes, "eventdlg", &prefs.sizeEventDlg);
-			readSizeEntry(p_sizes, "chatdlg", &prefs.sizeChatDlg);
+			migrateSizeEntry(p_sizes, "chatdlg", "options.ui.chat.size");
 			readSizeEntry(p_sizes, "tabdlg", &prefs.sizeTabDlg);
 		}
 

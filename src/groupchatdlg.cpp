@@ -44,6 +44,7 @@
 #include <QCloseEvent>
 #include <QEvent>
 #include <QKeyEvent>
+#include <QResizeEvent>
 #include <QHBoxLayout>
 #include <QFrame>
 #include <QList>
@@ -956,7 +957,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	if ( !option.chatLineEdit )
 		(( QSplitter *)vsplit)->setSizes(list);
 
-	resize(580,420);
+	resize(PsiOptions::instance()->getOption("options.ui.muc.size").toSize());
 
 	d->smallChat = option.smallChats;
 	X11WM_CLASS("groupchat");
@@ -1026,6 +1027,12 @@ void GCMainDlg::keyPressEvent(QKeyEvent *e)
 void GCMainDlg::closeEvent(QCloseEvent *e)
 {
 	e->accept();
+}
+
+void GCMainDlg::resizeEvent(QResizeEvent* e)
+{
+	if (option.keepSizes)
+		PsiOptions::instance()->setOption("options.ui.muc.size", e->size());
 }
 
 void GCMainDlg::windowActivationChange(bool oldstate)

@@ -72,6 +72,10 @@
 				<enabled comment="Enable message (i.e. non-chat) functionality" type="bool">true</enabled>
 			</message>
 			<chat comment="Chat dialog options">
+				<size comment="Remembered window size" type="QSize">
+					<width>100</width>
+					<height>100</height>
+				</size>
 				<opacity comment="Opacity percentage of chat dialogs" type="int">100</opacity>
 				<legacy-formatting comment="This enables legacy usenet-style formatting (// ** __)" type="bool">true</legacy-formatting>
 				<avatars comment="Avatar options">
@@ -115,6 +119,12 @@
 					<show-away comment="Show the 'show away/xa' toggle" type="bool">false</show-away>
 				</view>
 			</menu>
+			<muc comment="Multi-User Chat options">
+				<size comment="Remembered window size" type="QSize">
+					<width>580</width>
+					<height>420</height>
+				</size>
+			</muc>
 			<show-deprecated comment="Deprecated functionality or protocols">
 				<service-discovery comment="Service discovery dialog">
 					<protocol-selector comment="Show the iq:browse and iq:agents service discovery protocol selector." type="bool">false</protocol-selector>
