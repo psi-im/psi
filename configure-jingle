@@ -40,6 +40,10 @@ Dependency options:
   --with-aspell-lib=[path]        Path to Aspell library files
   --disable-dnotify               Disable use of Linux Directory Notification
   --disable-ghbnr                 Disable use of gethostbyname_r()
+  --disable-google_ft             Disable use of Google File Transfer
+  --enable-google-ft              Enable Google File Transfer support
+  --with-expat-inc=[path]         Path to Expat include files (for Google)
+  --with-expat-lib=[path]         Path to Expat library files (for Google)
   --disable-jingle                Disable use of Jingle
   --enable-jingle                 Enable Jingle support
   --with-expat-inc=[path]         Path to Expat include files (for Jingle)
@@ -270,6 +274,26 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
+		--disable-google_ft)
+			QC_DISABLE_google_ft="Y"
+			shift
+			;;
+
+		--enable-google-ft)
+			QC_ENABLE_GOOGLE_FT="Y"
+			shift
+			;;
+
+		--with-expat-inc=*)
+			QC_WITH_EXPAT_INC="${1#--with-expat-inc=}"
+			shift
+			;;
+
+		--with-expat-lib=*)
+			QC_WITH_EXPAT_LIB="${1#--with-expat-lib=}"
+			shift
+			;;
+
 		--disable-jingle)
 			QC_DISABLE_jingle="Y"
 			shift
@@ -410,6 +434,10 @@ echo QC_WITH_ASPELL_INC=$QC_WITH_ASPELL_INC
 echo QC_WITH_ASPELL_LIB=$QC_WITH_ASPELL_LIB
 echo QC_DISABLE_dnotify=$QC_DISABLE_dnotify
 echo QC_DISABLE_ghbnr=$QC_DISABLE_ghbnr
+echo QC_DISABLE_google_ft=$QC_DISABLE_google_ft
+echo QC_ENABLE_GOOGLE_FT=$QC_ENABLE_GOOGLE_FT
+echo QC_WITH_EXPAT_INC=$QC_WITH_EXPAT_INC
+echo QC_WITH_EXPAT_LIB=$QC_WITH_EXPAT_LIB
 echo QC_DISABLE_jingle=$QC_DISABLE_jingle
 echo QC_ENABLE_JINGLE=$QC_ENABLE_JINGLE
 echo QC_WITH_EXPAT_INC=$QC_WITH_EXPAT_INC
@@ -1190,6 +1218,73 @@ public:
 		return true;
 	}
 };
+#line 1 "google_ft.qcm"
+/*
+-----BEGIN QCMOD-----
+name: Google File Transfer
+arg: enable-google-ft,Enable Google File Transfer support
+arg: with-expat-inc=[path],Path to Expat include files (for Google)
+arg: with-expat-lib=[path],Path to Expat library files (for Google)
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_google_ft
+//----------------------------------------------------------------------------
+class qc_google_ft : public ConfObj
+{
+public:
+	qc_google_ft(Conf *c) : ConfObj(c) {}
+	QString name() const { return "Google File Transfer"; }
+	QString shortname() const { return "GoogleFT"; }
+	bool exec()
+	{
+		QString s = conf->getenv("QC_ENABLE_GOOGLE_FT");
+		if(s.isEmpty())
+			return false;
+		
+		// Expat
+		s = conf->getenv("QC_WITH_EXPAT_INC");
+		if(!s.isEmpty()) {
+			if(!conf->checkHeader(s, "expat.h")) {
+				qWarning("Expat includes not found!");
+				return false;
+			}
+			conf->addIncludePath(s);
+		}
+		else {
+			if(!conf->findHeader("expat.h", QStringList(), &s)) {
+				qWarning("Expat includes not found!");
+				return false;
+			}
+			conf->addIncludePath(s);
+		}
+
+		s = conf->getenv("QC_WITH_EXPAT_LIB");
+		if(!s.isEmpty()) {
+			if(!conf->checkLibrary(s, "expat")) {
+				qWarning("Expat library not found!");
+				return false;
+			}
+			conf->addLib(QString("-L") + s);
+		}
+		else {
+			if(!conf->findLibrary("expat", &s)) {
+				qWarning("Expat library not found!");
+				return false;
+			}
+			if (!s.isEmpty())
+				conf->addLib(QString("-L") + s);
+		}
+		
+		conf->addLib("-lexpat");
+
+		// Finish
+		conf->addExtra("CONFIG += google_ft");                              
+
+		return true;
+	}
+};
 #line 1 "jingle.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -1710,6 +1805,9 @@ cat >$1/modules_new.cpp <<EOT
     o->required = false;
     o->disabled = false;
     o = new qc_ghbnr(conf);
+    o->required = false;
+    o->disabled = false;
+    o = new qc_google_ft(conf);
     o->required = false;
     o->disabled = false;
     o = new qc_jingle(conf);
@@ -2636,6 +2734,10 @@ export QC_WITH_ASPELL_INC
 export QC_WITH_ASPELL_LIB
 export QC_DISABLE_dnotify
 export QC_DISABLE_ghbnr
+export QC_DISABLE_google_ft
+export QC_ENABLE_GOOGLE_FT
+export QC_WITH_EXPAT_INC
+export QC_WITH_EXPAT_LIB
 export QC_DISABLE_jingle
 export QC_ENABLE_JINGLE
 export QC_WITH_EXPAT_INC
