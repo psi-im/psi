@@ -25,7 +25,6 @@
 #include <QList>
 #include <QSharedDataPointer>
 
-
 using namespace XMPP;
 using namespace XMLHelper;
 
@@ -117,6 +116,9 @@ bool XData::Field::isValid() const
 	if ( _required && _value.isEmpty() )
 		return false;
 
+	if ( _type == Field_Hidden || _type == Field_Fixed) {
+		return true;
+	}
 	if ( _type == Field_Boolean ) {
 		if ( _value.count() != 1 )
 			return false;
@@ -128,6 +130,14 @@ bool XData::Field::isValid() const
 	if ( _type == Field_TextSingle || _type == Field_TextPrivate ) {
 		if ( _value.count() == 1 )
 			return true;
+	}
+	if ( _type == Field_TextMulti ) {
+		//no particular test. empty/required case already caught (see above)
+		return true;
+	}
+	if ( _type == Field_ListSingle || _type == Field_ListMulti ) {
+		//no particular test. empty/required case already caught (see above)
+		return true;
 	}
 	if ( _type == Field_JidSingle ) {
 		if ( _value.count() != 1 )
@@ -324,7 +334,7 @@ void XData::setFields(const FieldList &f)
 
 void XData::fromXml(const QDomElement &e)
 {
-	if ( e.attribute("xmlns") != "jabber:x:data" )
+	if ( (e.attribute("xmlns") != "jabber:x:data") && (e.namespaceURI() != "jabber:x:data") )
 		return;
 
 	QString type = e.attribute("type");
@@ -397,7 +407,7 @@ void XData::fromXml(const QDomElement &e)
 
 QDomElement XData::toXml(QDomDocument *doc, bool submitForm) const
 {
-	QDomElement x = doc->createElement("x");
+	QDomElement x = doc->createElementNS("jabber:x:data", "x");
 	x.setAttribute("xmlns", "jabber:x:data");
 
 	QString type = "form";
@@ -435,4 +445,13 @@ const QList<XData::ReportField> &XData::report() const
 const QList<XData::ReportItem> &XData::reportItems() const
 {
 	return d->reportItems;
+}
+
+bool XData::isValid() const
+{
+	foreach(Field f, d->fields) {
+		if (!f.isValid())
+			return false;
+	}
+	return true;
 }

@@ -1277,7 +1277,8 @@ void PsiCon::processEvent(PsiEvent *e)
 	if ( e->type() == PsiEvent::Message ) {
 		MessageEvent *me = (MessageEvent *)e;
 		const Message &m = me->message();
-		if ( m.type() == "chat" ) {
+		bool emptyForm = m.getForm().fields().empty();
+		if ( m.type() == "chat" && emptyForm ) {
 			isChat = true;
 			sentToChatWindow = me->sentToChatWindow();
 		}

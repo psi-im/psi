@@ -72,6 +72,7 @@
 #include "httpauthmanager.h"
 #include "psicontactlist.h"
 #include "accountlabel.h"
+#include "xdata_widget.h"
 
 static QString findJid(const QString &s, int x, int *p1, int *p2)
 {
@@ -515,6 +516,7 @@ public:
 	int transid;
 	IconButton *pb_next;
 	IconButton *pb_close, *pb_quote, *pb_deny, *pb_send, *pb_reply, *pb_chat, *pb_auth, *pb_http_confirm, *pb_http_deny;
+	IconButton *pb_form_submit, *pb_form_cancel;
 	ChatView *mle;
 	AttachView *attachView;
 	QTimer *whois;
@@ -527,6 +529,9 @@ public:
 	QWidget *w_http_id;
 	QLineEdit *le_http_id;
 	PsiHttpAuthRequest httpAuthRequest;
+	QWidget *xdata_form;
+	XDataWidget* xdata;
+	QLabel* xdata_instruction;
 	RosterExchangeItems rosterExchangeItems;
 
 	bool urlOnShow;
@@ -881,6 +886,16 @@ void EventDlg::init()
 	vb1->addWidget(d->w_http_id);
 	d->w_http_id->hide();
 
+	// data form
+	d->xdata = new XDataWidget(this);
+	d->xdata_form = new QWidget(this);
+	QVBoxLayout *vb_xdata = new QVBoxLayout(d->xdata_form);
+	d->xdata_instruction = new QLabel(d->xdata_form);
+	vb_xdata->addWidget(d->xdata_instruction);
+	vb_xdata->addWidget(d->xdata);
+	vb1->addWidget(d->xdata_form);
+	d->xdata_form->hide();
+
 	// bottom row
 	QHBoxLayout *hb4 = new QHBoxLayout(vb1);
 	d->pb_close = new IconButton(this);
@@ -947,6 +962,22 @@ void EventDlg::init()
 	d->pb_http_deny->hide();
 	d->pb_http_deny->setMinimumWidth(96);
 	hb4->addWidget(d->pb_http_deny);
+	
+	// data form submit button
+	d->pb_form_submit = new IconButton(this);
+	d->pb_form_submit->setText(tr("&Submit"));
+	connect(d->pb_form_submit, SIGNAL(clicked()), SLOT(doFormSubmit()));
+	d->pb_form_submit->hide();
+	d->pb_form_submit->setMinimumWidth(96);
+	hb4->addWidget(d->pb_form_submit);
+
+	// data form cancel button
+	d->pb_form_cancel = new IconButton(this);
+	d->pb_form_cancel->setText(tr("&Cancel"));
+	connect(d->pb_form_cancel, SIGNAL(clicked()), SLOT(doFormCancel()));
+	d->pb_form_cancel->hide();
+	d->pb_form_cancel->setMinimumWidth(96);
+	hb4->addWidget(d->pb_form_cancel);
 
 	if (d->composing)
 		setTabOrder(d->le_to, d->le_subj);
@@ -1386,6 +1417,10 @@ void EventDlg::closeEvent(QCloseEvent *e)
 	if(!d->mle->isEnabled())
 		return;
 
+	// cancel the data form
+	if(d->pb_form_cancel->isVisible())
+		doFormCancel();
+
 	e->accept();
 }
 
@@ -1583,6 +1618,58 @@ void EventDlg::doHttpDeny()
 	closeAfterReply();
 }
 
+/*!
+	Executed when user wants to submit a completed form
+*/
+void EventDlg::doFormSubmit()
+{
+	//get original sender
+	QStringList list = stringToList(d->le_from->text());
+	if(list.isEmpty())
+		return;
+	Jid j(list[0]);
+	
+	//populate the data fields
+	XData data;
+	data.setFields(d->xdata->fields());
+
+	//ensure that the user completed all required fields
+	if(!data.isValid()) {
+		QMessageBox::information(this, tr("Warning"), tr("Please complete all required fields (marked with a '*')."));
+		d->xdata_form->setFocus();
+		return;
+	}
+
+	data.setType(XData::Data_Submit);
+	aFormSubmit(data, d->thread, j);
+
+	d->pb_form_submit->setEnabled(false);
+	d->pb_form_cancel->setEnabled(false);
+
+	closeAfterReply();
+}
+
+/*!
+	Executed when user wants to cancel a form
+*/
+void EventDlg::doFormCancel()
+{
+	//get original sender
+	QStringList list = stringToList(d->le_from->text());
+	if(list.isEmpty())
+		return;
+	Jid j(list[0]);
+
+	XData data;
+	data.setType(XData::Data_Cancel);
+	aFormCancel(data, d->thread, j);
+
+	d->pb_form_submit->setEnabled(false);
+	d->pb_form_cancel->setEnabled(false);
+
+	closeAfterReply();
+}
+
 void EventDlg::doHistory()
 {
 	d->pa->actionHistory(d->jid.withResource(""));
@@ -1681,6 +1768,21 @@ void EventDlg::setTime(const QDateTime &t, bool late)
 
 void EventDlg::updateEvent(PsiEvent *e)
 {
+	// Default buttons setup
+	d->pb_next->show();
+	d->pb_chat->show();
+	d->pb_reply->show();
+	d->pb_quote->show();
+	d->pb_close->show();
+	d->mle->show();
+	d->pb_auth->hide();
+	d->pb_deny->hide();
+	d->pb_form_submit->hide();
+	d->pb_form_cancel->hide();
+	d->pb_http_confirm->hide();
+	d->pb_http_deny->hide();
+	d->xdata_form->hide();
+
 	PsiIcon *oldanim = d->anim;
 	d->anim = PsiIconset::instance()->event2icon(e);
 
@@ -1734,25 +1836,15 @@ void EventDlg::updateEvent(PsiEvent *e)
 	else {
 		d->w_http_id->hide();
 	}
-
+	
 	if(e->type() == PsiEvent::Message || e->type() == PsiEvent::HttpAuth) {
 		MessageEvent *me = (MessageEvent *)e;
 		const Message &m = me->message();
 
 		d->enc = m.wasEncrypted();
 
-		d->pb_auth->hide();
-		d->pb_deny->hide();
-
-		if ( e->type() != PsiEvent::HttpAuth ) {
-			d->pb_chat->show();
-			d->pb_reply->show();
-			d->pb_quote->show();
-
-			d->pb_http_confirm->hide();
-			d->pb_http_deny->hide();
-		}
-		else {
+		// HTTP auth request buttons
+		if ( e->type() == PsiEvent::HttpAuth ) {
 			d->pb_chat->hide();
 			d->pb_reply->hide();
 			d->pb_quote->hide();
@@ -1767,7 +1859,7 @@ void EventDlg::updateEvent(PsiEvent *e)
 
 		// show subject line if the incoming message has one
 		if(m.subject() != "" && !option.showSubjects)
-                	txt = "<p><font color=\"red\"><b>" + tr("Subject:") + " " + m.subject() + "</b></font></p>" + txt;
+			txt = "<p><font color=\"red\"><b>" + tr("Subject:") + " " + m.subject() + "</b></font></p>" + txt;
 
 		if(option.useEmoticons)
 			txt = TextUtil::emoticonify(txt);
@@ -1781,6 +1873,32 @@ void EventDlg::updateEvent(PsiEvent *e)
 		d->le_subj->setCursorPosition(0);
 
 		d->thread = m.thread();
+
+		// Form buttons
+		if (!m.getForm().fields().empty()) {
+			d->pb_chat->hide();
+			d->pb_reply->hide();
+			d->pb_quote->hide();
+			d->pb_close->hide();
+			d->mle->hide();
+
+			//show/enable controls we want
+			d->pb_form_submit->show();
+			d->pb_form_cancel->show();
+
+			//set title if specified
+			const XData& form = m.getForm();
+			if ( !form.title().isEmpty() )
+				setWindowTitle( form.title() );
+			
+			//show data form
+			d->xdata->setFields( form.fields() );
+			d->xdata_form->show();
+			
+			//set instructions
+			QString str = TextUtil::plain2rich( form.instructions() );
+			d->xdata_instruction->setText(str);
+		}
 
 		d->attachView->clear();
 		d->attachView->addUrlList(m.urlList());

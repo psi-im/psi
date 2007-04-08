@@ -457,6 +457,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent)
 	features << "http://jabber.org/protocol/commands";
 	features << "http://jabber.org/protocol/rosterx";
 	features << "http://jabber.org/protocol/muc";
+	features << "jabber:x:data";
 	d->client->setFeatures(Features(features));
 
 	d->client->setFileTransferEnabled(true);
@@ -1751,8 +1752,8 @@ void PsiAccount::client_messageReceived(const Message &m)
 
 void PsiAccount::processIncomingMessage(const Message &_m)
 {
-	// skip empty messages
-	if(_m.body().isEmpty() && _m.urlList().isEmpty() && _m.invite().isEmpty() && !_m.containsEvents() && _m.chatState() == StateNone && _m.subject().isEmpty() && _m.rosterExchangeItems().isEmpty() && _m.mucInvites().isEmpty())
+	// skip empty messages, but not if the message contains a data form
+	if(_m.body().isEmpty() && _m.urlList().isEmpty() && _m.invite().isEmpty() && !_m.containsEvents() && _m.chatState() == StateNone && _m.subject().isEmpty() && _m.rosterExchangeItems().isEmpty() && _m.mucInvites().isEmpty() &&  _m.getForm().fields().empty())
 		return;
 
 	// skip headlines?
@@ -2543,6 +2544,8 @@ EventDlg *PsiAccount::ensureEventDlg(const Jid &j)
 		connect(w, SIGNAL(aRosterExchange(const RosterExchangeItems &)), SLOT(dj_rosterExchange(const RosterExchangeItems &)));
 		connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));
 		connect(this, SIGNAL(updateContact(const Jid &)), w, SLOT(updateContact(const Jid &)));
+		connect(w, SIGNAL(aFormSubmit(const XData&, const QString&, const Jid&)), SLOT(dj_formSubmit(const XData&, const QString&, const Jid&)));
+		connect(w, SIGNAL(aFormCancel(const XData&, const QString&, const Jid&)), SLOT(dj_formCancel(const XData&, const QString&, const Jid&)));
 	}
 
 	return w;
@@ -3158,6 +3161,28 @@ void PsiAccount::dj_denyHttpAuth(const PsiHttpAuthRequest &req)
 	d->httpAuthManager->deny(req);
 }
 
+void PsiAccount::dj_formSubmit(const XData& data, const QString& thread, const Jid& jid)
+{
+	Message m;
+
+	m.setTo(jid);
+	m.setThread(thread, true);
+	m.setForm(data);
+	
+	d->client->sendMessage(m);
+}
+
+void PsiAccount::dj_formCancel(const XData& data, const QString& thread, const Jid& jid)
+{
+	Message m;
+
+	m.setTo(jid);
+	m.setThread(thread, true);
+	m.setForm(data);
+  
+	d->client->sendMessage(m);
+}
+
 void PsiAccount::dj_add(const Jid &j, const QString &name, const QStringList &groups, bool authReq)
 {
 	JT_Roster *r = new JT_Roster(d->client->rootTask());
@@ -3666,7 +3691,7 @@ void PsiAccount::processReadNext(const UserListItem &u)
 	if(e->type() == PsiEvent::Message) {
 		MessageEvent *me = (MessageEvent *)e;
 		const Message &m = me->message();
-		if(m.type() == "chat")
+		if(m.type() == "chat" && m.getForm().fields().empty())
 			isChat = true;
 	}
 

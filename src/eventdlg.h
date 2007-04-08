@@ -138,6 +138,8 @@ signals:
 	void aHttpConfirm(const PsiHttpAuthRequest &);
 	void aHttpDeny(const PsiHttpAuthRequest &);
 	void aRosterExchange(const RosterExchangeItems &);
+	void aFormSubmit(const XData&, const QString&, const Jid&);
+	void aFormCancel(const XData&, const QString&, const Jid&);
 
 protected:
 	// reimplemented
@@ -175,6 +177,8 @@ private slots:
 	void doHistory();
 	void showHideAttachView();
 	void addUrl();
+	void doFormSubmit();
+	void doFormCancel();
 
 	void updatePGP();
 	void encryptedMessageSent(int, bool, int);

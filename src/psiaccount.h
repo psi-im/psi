@@ -217,6 +217,8 @@ public slots:
 	void dj_confirmHttpAuth(const PsiHttpAuthRequest &);
 	void dj_denyHttpAuth(const PsiHttpAuthRequest &);
 	void dj_rosterExchange(const RosterExchangeItems&);
+	void dj_formSubmit(const XData&, const QString&, const Jid&);
+	void dj_formCancel(const XData&, const QString&, const Jid&);
 
 	void actionDefault(const Jid &);
 	void actionRecvEvent(const Jid &);

@@ -64,6 +64,7 @@ namespace XMPP {
 
 		void fromXml(const QDomElement &);
 		QDomElement toXml(QDomDocument *, bool submitForm = true) const;
+		bool isValid() const;
 
 	public:
 		class Field {

@@ -970,6 +970,7 @@ public:
 	ChatState chatState;
 	QString nick;
 	HttpAuthRequest httpAuthRequest;
+	XData xdata;
 	QMap<QString,HTMLElement> htmlElements;
 	
 	int mucStatus;
@@ -1408,6 +1409,16 @@ HttpAuthRequest Message::httpAuthRequest() const
 	return d->httpAuthRequest;
 }
 
+void Message::setForm(const XData &form)
+{
+	d->xdata = form;
+}
+
+const XData& Message::getForm() const
+{
+	return d->xdata;
+}
+
 bool Message::spooled() const
 {
 	return d->spooled;
@@ -1594,6 +1605,12 @@ Stanza Message::toStanza(Stream *stream) const
 	// http auth
 	if(!d->httpAuthRequest.isEmpty()) {
 		s.appendChild(d->httpAuthRequest.toXml(s.doc()));
+	}
+
+	// data form
+	if(!d->xdata.fields().empty() || (d->xdata.type() == XData::Data_Cancel)) {
+		bool submit = (d->xdata.type() == XData::Data_Submit) || (d->xdata.type() == XData::Data_Cancel);
+		s.appendChild(d->xdata.toXml(&s.doc(), submit));
 	}
 
 	return s;
@@ -1814,6 +1831,12 @@ bool Message::fromStanza(const Stanza &s, int timeZoneOffset)
 	}
 	else {
 		d->httpAuthRequest = HttpAuthRequest();
+	}
+
+	// data form
+	t = root.elementsByTagNameNS("jabber:x:data", "x").item(0).toElement();
+	if(!t.isNull()){
+		d->xdata.fromXml(t);
 	}
 
 	return true;

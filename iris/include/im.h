@@ -32,6 +32,7 @@
 #include "xmpp_features.h"
 #include "xmpp_task.h"
 #include "xmpp_rosterx.h"
+#include "xmpp_xdata.h"
 
 namespace XMPP
 {
@@ -228,6 +229,10 @@ namespace XMPP
 		// JEP-0070
 		void setHttpAuthRequest(const HttpAuthRequest&);
 		HttpAuthRequest httpAuthRequest() const;
+
+		// JEP-0004
+		void setForm(const XData&);
+		const XData& getForm() const;
 
 		// MUC
 		void setMUCStatus(int);
