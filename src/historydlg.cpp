@@ -686,7 +686,7 @@ HistoryViewItem::HistoryViewItem(PsiEvent *_e, const QString &eid, int xid, Q3Li
 			setPixmap(0, IconsetFactory::icon("psi/www").impix());
 		else if(e->originLocal())
 			setPixmap(0, IconsetFactory::icon("psi/sendMessage").impix());
-		else
+		else if(a)
 			setPixmap(0, a->impix());
 	}
 	else if(e->type() == PsiEvent::Auth) {
