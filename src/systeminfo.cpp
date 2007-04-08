@@ -176,6 +176,8 @@ SystemInfo::SystemInfo()
 		os_str_ = "Windows XP";
 	else if(v == QSysInfo::WV_2003)
 		os_str_ = "Windows Server 2003";
+	else if(v == QSysInfo::WV_VISTA)
+		os_str_ = "Windows Vista";
 	else if(v == QSysInfo::WV_NT_based)
 		os_str_ = "Windows NT";
 #endif
