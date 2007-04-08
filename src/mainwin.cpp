@@ -988,7 +988,7 @@ void MainWin::trayShow()
 
 void MainWin::trayHide()
 {
-	emit geomChanged(x(), y(), width(), height());
+	emit geomChanged(saveableGeometry());
 	hide();
 }
 

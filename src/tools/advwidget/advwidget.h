@@ -38,6 +38,7 @@ public:
 	static bool stickToWindows();
 	static void setStickToWindows(bool val);
 
+	void restoreSavedGeometry(QRect savedGeometry);
 	void doFlash(bool on);
 
 #ifdef Q_OS_WIN
@@ -79,6 +80,16 @@ public:
 
 	static bool stickToWindows() { return GAdvancedWidget::stickToWindows(); }
 	static void setStickToWindows( bool val ) { GAdvancedWidget::setStickToWindows( val ); }
+
+	QRect saveableGeometry() const
+	{
+		return QRect(BaseClass::pos(), BaseClass::size());
+	}
+
+	virtual void restoreSavedGeometry(QRect savedGeometry)
+	{
+		gAdvWidget->restoreSavedGeometry(savedGeometry);
+	}
 
 	void doFlash( bool on )
 	{

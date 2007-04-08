@@ -313,6 +313,32 @@ void GAdvancedWidget::postSetCaption()
 #endif
 }
 
+void GAdvancedWidget::restoreSavedGeometry(QRect savedGeometry)
+{
+	QRect geom = savedGeometry;
+	QDesktopWidget *pdesktop = QApplication::desktop();
+	int nscreen = pdesktop->screenNumber(geom.topLeft());
+	QRect r = pdesktop->screenGeometry(nscreen);
+
+	// if the coordinates are out of the desktop bounds, reset to the top left
+	int pad = 10;
+	if((geom.width() + pad * 2) > r.width())
+		geom.setWidth(r.width() - pad * 2);
+	if((geom.height() + pad * 2) > r.height())
+		geom.setHeight(r.height() - pad * 2);
+	if(geom.left() < r.left())
+		geom.moveLeft(r.left());
+	if(geom.right() >= r.right())
+		geom.moveRight(r.right() - 1);
+	if(geom.top() < r.top())
+		geom.moveTop(r.top());
+	if(geom.bottom() >= r.bottom())
+		geom.moveBottom(r.bottom() - 1);
+
+	d->parentWidget->move(geom.topLeft());
+	d->parentWidget->resize(geom.size());
+}
+
 void GAdvancedWidget::doFlash(bool on)
 {
 	d->doFlash( on );

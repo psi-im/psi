@@ -85,7 +85,7 @@ signals:
 	void accountInfo();
 	void recvNextEvent();
 
-	void geomChanged(int x, int y, int w, int h);
+	void geomChanged(QRect saveableGeometry);
 
 private slots:
 	void buildStatusMenu();

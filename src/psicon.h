@@ -158,7 +158,7 @@ public slots:
 	void tabDying(TabDlg*);
 	void qcaEvent(int, const QCA::Event&);
 
-	void mainWinGeomChanged(int x, int y, int w, int h);
+	void mainWinGeomChanged(QRect saveableGeometry);
 
 private slots:
 	void saveAccounts();

@@ -363,34 +363,12 @@ bool PsiCon::init()
 	connect(d->mainwin, SIGNAL(doToolbars()), SLOT(doToolbars()));
 	connect(d->mainwin, SIGNAL(doFileTransDlg()), SLOT(doFileTransDlg()));
 	connect(d->mainwin, SIGNAL(recvNextEvent()), SLOT(recvNextEvent()));
-	connect(d->mainwin, SIGNAL(geomChanged(int, int, int, int)), SLOT(mainWinGeomChanged(int, int, int, int)));
+	connect(d->mainwin, SIGNAL(geomChanged(QRect)), SLOT(mainWinGeomChanged(QRect)));
 	connect(this, SIGNAL(emitOptionsUpdate()), d->mainwin, SLOT(optionsUpdate()));
 
 	connect(this, SIGNAL(emitOptionsUpdate()), d->mainwin->cvlist, SLOT(optionsUpdate()));
 
-	// if the coordinates are out of the desktop bounds, reset to the top left
-	QRect mwgeom = d->pro.mwgeom;
-	QDesktopWidget *pdesktop = QApplication::desktop();
-	int nscreen = pdesktop->screenNumber(mwgeom.topLeft());
-	QRect r = pdesktop->screenGeometry(nscreen);
-
-	int pad = 10;
-	if((mwgeom.width() + pad * 2) > r.width())
-		mwgeom.setWidth(r.width() - pad * 2);
-	if((mwgeom.height() + pad * 2) > r.height())
-		mwgeom.setHeight(r.height() - pad * 2);
-	if(mwgeom.left() < r.left())
-		mwgeom.moveLeft(r.left());
-	if(mwgeom.right() >= r.right())
-		mwgeom.moveRight(r.right() - 1);
-	if(mwgeom.top() < r.top())
-		mwgeom.moveTop(r.top());
-	if(mwgeom.bottom() >= r.bottom())
-		mwgeom.moveBottom(r.bottom() - 1);
-
-	d->mwgeom = mwgeom;
-	d->mainwin->move(mwgeom.x(), mwgeom.y());
-	d->mainwin->resize(mwgeom.width(), mwgeom.height());
+	d->mainwin->restoreSavedGeometry(d->pro.mwgeom);
 	
 	if(!(option.useDock && option.dockHideMW))
 		d->mainwin->show();
@@ -494,12 +472,8 @@ void PsiCon::deinit()
 	if(d->mainwin) {
 		// shut down mainwin
 		QRect mwgeom;
-		if ( !d->mainwin->isHidden() && !d->mainwin->isMinimized() ) {
-			mwgeom.setX(d->mainwin->x());
-			mwgeom.setY(d->mainwin->y());
-			mwgeom.setWidth(d->mainwin->width());
-			mwgeom.setHeight(d->mainwin->height());
-		}
+		if ( !d->mainwin->isHidden() && !d->mainwin->isMinimized() )
+			mwgeom = d->mainwin->saveableGeometry();
 		else
 			mwgeom = d->mwgeom;
 
@@ -1306,12 +1280,9 @@ void PsiCon::processEvent(PsiEvent *e)
 	}
 }
 
-void PsiCon::mainWinGeomChanged(int x, int y, int w, int h)
+void PsiCon::mainWinGeomChanged(QRect saveableGeometry)
 {
-	d->mwgeom.setX(x);
-	d->mwgeom.setY(y);
-	d->mwgeom.setWidth(w);
-	d->mwgeom.setHeight(h);
+	d->mwgeom = saveableGeometry;
 }
 
 void PsiCon::updateS5BServerAddresses()
