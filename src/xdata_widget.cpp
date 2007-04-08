@@ -24,10 +24,12 @@
 #include <QLabel>
 #include <QCheckBox>
 #include <QComboBox>
+#include <QUrl>
 #include <QListWidget>
 #include <QLineEdit>
 #include <QObject>
 #include <QTextEdit>
+#include <QDesktopServices>
 #include <QGridLayout>
 
 //----------------------------------------------------------------------------
@@ -469,6 +471,8 @@ void XDataWidget::setFields(const XData::FieldList &f)
 	if (!instructions_.isEmpty()) {
 		QLabel* l = new QLabel(instructions_, this);
 		l->setWordWrap(true);
+		l->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::LinksAccessibleByMouse);
+		connect(l,SIGNAL(linkActivated(const QString&)),SLOT(linkActivated(const QString&)));
 		vert->addWidget(l);
 	}
 	QWidget *fields = new QWidget(this);
@@ -515,4 +519,9 @@ void XDataWidget::setFields(const XData::FieldList &f)
 			fields_.append(f);
 		}
 	}
+}
+
+void XDataWidget::linkActivated(const QString& link)
+{
+	QDesktopServices::openUrl(QUrl(link));
 }

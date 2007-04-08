@@ -33,6 +33,8 @@ using namespace XMPP;
 
 class XDataWidget : public QWidget
 {
+	Q_OBJECT
+
 public:
 	XDataWidget(QWidget *parent = 0, const char *name = 0);
 	~XDataWidget();
@@ -43,6 +45,9 @@ public:
 	void setFields(const XData::FieldList &);
 
 	void setInstructions(const QString&);
+
+protected slots:
+	void linkActivated(const QString&);
 
 private:
 	typedef QList<XDataField*> XDataFieldList;

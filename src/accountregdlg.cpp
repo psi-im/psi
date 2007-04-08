@@ -29,6 +29,7 @@
 #include "xmpp_tasks.h"
 #include "psioptions.h"
 #include "jidutil.h"
+#include "textutil.h"
 #include "xdata_widget.h"
 
 using namespace XMPP;
@@ -271,6 +272,7 @@ void AccountRegDlg::getFields_finished()
 		}
 		if (xdata.instructions().isEmpty()) 
 			xdata.setInstructions(tr("Please provide the following information:"));
+		xdata.setInstructions(TextUtil::linkify(xdata.instructions()));
 		fields_->setForm(xdata);
 		fields_container_->setWidget(fields_);
 		fields_container_->updateGeometry();
