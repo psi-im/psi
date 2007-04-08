@@ -5,7 +5,10 @@
 
 QPixmap PixmapUtil::createTransparentPixmap(int width, int height)
 {
-#if 1 // the first algorithm appears to be faster, but used to produce tons of X11 errors
+	// Now there's third alternative:
+	// QPainter p(&pixmap);
+	// p.fillRect(pixmap.rect(), Qt::transparent);
+#if 1
 	QPixmap pix(width, height);
 	QBitmap mask(width, height);
 	pix.fill();
