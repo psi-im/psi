@@ -31,6 +31,7 @@
 #include <QDateTime>
 #include <QFile>
 #include <QBuffer>
+#include <QPainter>
 
 #include "xmpp.h"
 #include "xmpp_xmlcommon.h"
@@ -41,6 +42,7 @@
 #include "profiles.h"
 #include "vcardfactory.h"
 #include "pepmanager.h"
+#include "pixmaputil.h"
 
 #define MAX_AVATAR_SIZE 96
 #define MAX_AVATAR_DISPLAY_SIZE 64
@@ -444,6 +446,20 @@ PsiAccount* AvatarFactory::account() const
 	return pa_;
 }
 
+inline static QPixmap ensureSquareAvatar(const QPixmap& original)
+{
+	if (original.isNull() || original.width() == original.height())
+		return original;
+
+	int size = qMax(original.width(), original.height());
+	QPixmap square = PixmapUtil::createTransparentPixmap(size, size);
+
+	QPainter p(&square);
+	p.drawPixmap((size - original.width()) / 2, (size - original.height()) / 2, original);
+
+	return square;
+}
+
 QPixmap AvatarFactory::getAvatar(const Jid& jid)
 {
 	// Compute the avatar of the user
@@ -457,7 +473,8 @@ QPixmap AvatarFactory::getAvatar(const Jid& jid)
 	}
 
 	QPixmap pm = (av ? av->getPixmap() : QPixmap());
-	
+	pm = ensureSquareAvatar(pm);
+
 	// Update iconset
 	Icon icon;
 	icon.setImpix(pm);
