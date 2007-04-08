@@ -20,14 +20,13 @@
 
 #include "bsocket.h"
 
-#include <q3socket.h>
-#include <q3dns.h>
-#include <qpointer.h>
 #include "safedelete.h"
 #ifndef NO_NDNS
 #include "ndns.h"
 #endif
 #include "srvresolver.h"
+
+//#define BS_DEBUG
 
 #ifdef BS_DEBUG
 #include <stdio.h>
@@ -45,7 +44,7 @@ public:
 		qsock = 0;
 	}
 
-	Q3Socket *qsock;
+	QTcpSocket *qsock;
 	int state;
 
 #ifndef NO_NDNS
@@ -82,8 +81,8 @@ void BSocket::reset(bool clear)
 
 		if(!clear && d->qsock->isOpen()) {
 			// move remaining into the local queue
-			QByteArray block(d->qsock->bytesAvailable());
-			d->qsock->readBlock(block.data(), block.size());
+			QByteArray block(d->qsock->bytesAvailable(), 0);
+			d->qsock->read(block.data(), block.size());
 			appendRead(block);
 		}
 
@@ -107,19 +106,20 @@ void BSocket::reset(bool clear)
 void BSocket::ensureSocket()
 {
 	if(!d->qsock) {
-		d->qsock = new Q3Socket;
+		d->qsock = new QTcpSocket;
+#if QT_VERSION >= 0x030200
 		d->qsock->setReadBufferSize(READBUFSIZE);
+#endif
 		connect(d->qsock, SIGNAL(hostFound()), SLOT(qs_hostFound()));
 		connect(d->qsock, SIGNAL(connected()), SLOT(qs_connected()));
-		connect(d->qsock, SIGNAL(connectionClosed()), SLOT(qs_connectionClosed()));
-		connect(d->qsock, SIGNAL(delayedCloseFinished()), SLOT(qs_delayedCloseFinished()));
+		connect(d->qsock, SIGNAL(disconnected()), SLOT(qs_closed()));
 		connect(d->qsock, SIGNAL(readyRead()), SLOT(qs_readyRead()));
-		connect(d->qsock, SIGNAL(bytesWritten(int)), SLOT(qs_bytesWritten(int)));
-		connect(d->qsock, SIGNAL(error(int)), SLOT(qs_error(int)));
+		connect(d->qsock, SIGNAL(bytesWritten(qint64)), SLOT(qs_bytesWritten(qint64)));
+		connect(d->qsock, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(qs_error(QAbstractSocket::SocketError)));
 	}
 }
 
-void BSocket::connectToHost(const QString &host, Q_UINT16 port)
+void BSocket::connectToHost(const QString &host, quint16 port)
 {
 	reset(true);
 	d->host = host;
@@ -143,7 +143,7 @@ void BSocket::connectToServer(const QString &srv, const QString &type)
 int BSocket::socket() const
 {
 	if(d->qsock)
-		return d->qsock->socket();
+		return d->qsock->socketDescriptor();
 	else
 		return -1;
 }
@@ -153,7 +153,7 @@ void BSocket::setSocket(int s)
 	reset(true);
 	ensureSocket();
 	d->state = Connected;
-	d->qsock->setSocket(s);
+	d->qsock->setSocketDescriptor(s);
 }
 
 int BSocket::state() const
@@ -190,10 +190,10 @@ void BSocket::write(const QByteArray &a)
 	if(d->state != Connected)
 		return;
 #ifdef BS_DEBUG
-	QString s = QString::fromUtf8(cs);
-	fprintf(stderr, "BSocket: writing [%d]: {%s}\n", a.size(), a.data());
+	QString s = QString::fromUtf8(a);
+	fprintf(stderr, "BSocket: writing [%d]: {%s}\n", a.size(), s.latin1());
 #endif
-	d->qsock->writeBlock(a.data(), a.size());
+	d->qsock->write(a.data(), a.size());
 }
 
 QByteArray BSocket::read(int bytes)
@@ -204,14 +204,14 @@ QByteArray BSocket::read(int bytes)
 		if(bytes <= 0 || bytes > max)
 			bytes = max;
 		block.resize(bytes);
-		d->qsock->readBlock(block.data(), block.size());
+		d->qsock->read(block.data(), block.size());
 	}
 	else
 		block = ByteStream::read(bytes);
 
 #ifdef BS_DEBUG
-	QString s = QString::fromUtf8(cs);
-	fprintf(stderr, "BSocket: read [%d]: {%s}\n", block.size(), block.data());
+	QString s = QString::fromUtf8(block);
+	fprintf(stderr, "BSocket: read [%d]: {%s}\n", block.size(), s.latin1());
 #endif
 	return block;
 }
@@ -234,15 +234,15 @@ int BSocket::bytesToWrite() const
 QHostAddress BSocket::address() const
 {
 	if(d->qsock)
-		return d->qsock->address();
+		return d->qsock->localAddress();
 	else
 		return QHostAddress();
 }
 
-Q_UINT16 BSocket::port() const
+quint16 BSocket::port() const
 {
 	if(d->qsock)
-		return d->qsock->port();
+		return d->qsock->localPort();
 	else
 		return 0;
 }
@@ -255,10 +255,10 @@ QHostAddress BSocket::peerAddress() const
 		return QHostAddress();
 }
 
-Q_UINT16 BSocket::peerPort() const
+quint16 BSocket::peerPort() const
 {
 	if(d->qsock)
-		return d->qsock->port();
+		return d->qsock->peerPort();
 	else
 		return 0;
 }
@@ -323,24 +323,17 @@ void BSocket::qs_connected()
 	connected();
 }
 
-void BSocket::qs_connectionClosed()
+void BSocket::qs_closed()
 {
+	if(d->state == Closing)
+	{
 #ifdef BS_DEBUG
-	fprintf(stderr, "BSocket: Connection Closed.\n");
+		fprintf(stderr, "BSocket: Delayed Close Finished.\n");
 #endif
-	SafeDeleteLock s(&d->sd);
-	reset();
-	connectionClosed();
-}
-
-void BSocket::qs_delayedCloseFinished()
-{
-#ifdef BS_DEBUG
-	fprintf(stderr, "BSocket: Delayed Close Finished.\n");
-#endif
-	SafeDeleteLock s(&d->sd);
-	reset();
-	delayedCloseFinished();
+		SafeDeleteLock s(&d->sd);
+		reset();
+		delayedCloseFinished();
+	}
 }
 
 void BSocket::qs_readyRead()
@@ -349,8 +342,9 @@ void BSocket::qs_readyRead()
 	readyRead();
 }
 
-void BSocket::qs_bytesWritten(int x)
+void BSocket::qs_bytesWritten(qint64 x64)
 {
+	int x = x64;
 #ifdef BS_DEBUG
 	fprintf(stderr, "BSocket: BytesWritten [%d].\n", x);
 #endif
@@ -358,25 +352,35 @@ void BSocket::qs_bytesWritten(int x)
 	bytesWritten(x);
 }
 
-void BSocket::qs_error(int x)
+void BSocket::qs_error(QAbstractSocket::SocketError x)
 {
+	if(x == QTcpSocket::RemoteHostClosedError) {
+#ifdef BS_DEBUG
+		fprintf(stderr, "BSocket: Connection Closed.\n");
+#endif
+		SafeDeleteLock s(&d->sd);
+		reset();
+		connectionClosed();
+		return;
+	}
+
 #ifdef BS_DEBUG
 	fprintf(stderr, "BSocket: Error.\n");
 #endif
 	SafeDeleteLock s(&d->sd);
 
 	// connection error during SRV host connect?  try next
-	if(d->state == HostLookup && (x == Q3Socket::ErrConnectionRefused || x == Q3Socket::ErrHostNotFound)) {
+	if(d->state == HostLookup && (x == QTcpSocket::ConnectionRefusedError || x == QTcpSocket::HostNotFoundError)) {
 		d->srv.next();
 		return;
 	}
 
 	reset();
-	if(x == Q3Socket::ErrConnectionRefused)
+	if(x == QTcpSocket::ConnectionRefusedError)
 		error(ErrConnectionRefused);
-	else if(x == Q3Socket::ErrHostNotFound)
+	else if(x == QTcpSocket::HostNotFoundError)
 		error(ErrHostNotFound);
-	else if(x == Q3Socket::ErrSocketRead)
+	else
 		error(ErrRead);
 }
 

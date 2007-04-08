@@ -21,8 +21,8 @@
 #ifndef CS_BSOCKET_H
 #define CS_BSOCKET_H
 
-#include <qobject.h>
-#include <qhostaddress.h>
+#include <QtCore>
+#include <QtNetwork>
 #include "bytestream.h"
 
 // CS_NAMESPACE_BEGIN
@@ -36,7 +36,7 @@ public:
 	BSocket(QObject *parent=0);
 	~BSocket();
 
-	void connectToHost(const QString &host, Q_UINT16 port);
+	void connectToHost(const QString &host, quint16 port);
 	void connectToServer(const QString &srv, const QString &type);
 	int socket() const;
 	void setSocket(int);
@@ -52,11 +52,11 @@ public:
 
 	// local
 	QHostAddress address() const;
-	Q_UINT16 port() const;
+	quint16 port() const;
 
 	// remote
 	QHostAddress peerAddress() const;
-	Q_UINT16 peerPort() const;
+	quint16 peerPort() const;
 
 signals:
 	void hostFound();
@@ -65,11 +65,10 @@ signals:
 private slots:
 	void qs_hostFound();
 	void qs_connected();
-	void qs_connectionClosed();
-	void qs_delayedCloseFinished();
+	void qs_closed();
 	void qs_readyRead();
-	void qs_bytesWritten(int);
-	void qs_error(int);
+	void qs_bytesWritten(qint64);
+	void qs_error(QAbstractSocket::SocketError);
 	void srv_done();
 	void ndns_done();
 	void do_connect();
