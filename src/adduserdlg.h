@@ -59,6 +59,7 @@ private:
 	class Private;
 	Private *d;
 
+	Jid jid() const;
 	void errorGateway(const QString &str, const QString &err);
 };
 
