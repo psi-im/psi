@@ -46,7 +46,7 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 
 	setWindowTitle(CAP(caption()));
 #ifndef Q_WS_MAC
-	setWindowIcon(IconsetFactory::icon("psi/account"));
+	setWindowIcon(IconsetFactory::icon("psi/account").icon());
 #endif
 
 	const UserAccount &acc = pa->userAccount();

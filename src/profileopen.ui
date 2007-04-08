@@ -158,7 +158,7 @@
                   <property name="text" >
                     <string>&amp;Quit</string>
                   </property>
-                  <property name="iconName" stdset="0" >
+                  <property name="psiIconName" stdset="0" >
                     <string>psi/quit</string>
                   </property>
                 </widget>
@@ -184,7 +184,7 @@
                   <property name="text" >
                     <string>&amp;Profiles...</string>
                   </property>
-                  <property name="iconName" stdset="0" >
+                  <property name="psiIconName" stdset="0" >
                     <string>psi/profile</string>
                   </property>
                 </widget>
@@ -194,7 +194,7 @@
                   <property name="text" >
                     <string>&amp;Open</string>
                   </property>
-                  <property name="iconName" stdset="0" >
+                  <property name="psiIconName" stdset="0" >
                     <string>psi/logo_16</string>
                   </property>
                 </widget>

@@ -188,17 +188,17 @@ signals:
 	void playSound(QString);
 
 private:
-	friend class Icon;
+	friend class PsiIcon;
 };
 
 static IconSharedObject *iconSharedObject = 0;
 
 //----------------------------------------------------------------------------
-// Icon
+// PsiIcon
 //----------------------------------------------------------------------------
 
 /**
- * \class Icon
+ * \class PsiIcon
  * \brief Can contain Anim and stuff
  *
  * This class can be used for storing application icons as well as emoticons
@@ -206,12 +206,12 @@ static IconSharedObject *iconSharedObject = 0;
  *
  * Icons can contain animation, associated sound files, its own names.
  *
- * For implementing emoticon functionality, Icon can have associated text
+ * For implementing emoticon functionality, PsiIcon can have associated text
  * values and QRegExp for easy searching.
  */
 
 //! \if _hide_doc_
-class Icon::Private : public QObject, public Q3Shared
+class PsiIcon::Private : public QObject, public Q3Shared
 {
 	Q_OBJECT
 public:
@@ -220,15 +220,15 @@ public:
 		moveToMainThread(this);
 
 		anim = 0;
-		iconSet = 0;
+		icon = 0;
 		activatedCount = 0;
 	}
 
 	~Private()
 	{
 		unloadAnim();
-		if ( iconSet )
-			delete iconSet;
+		if ( icon )
+			delete icon;
 	}
 
 	// copy all stuff, this constructor is called when detaching
@@ -243,7 +243,7 @@ public:
 		sound = from.sound;
 		impix = from.impix;
 		anim = from.anim ? new Anim ( *from.anim ) : 0;
-		iconSet = 0;
+		icon = 0;
 	}
 	
 	void unloadAnim()
@@ -253,13 +253,13 @@ public:
 		anim = 0;
 	}
 	
-	void connectInstance(Icon *icon)
+	void connectInstance(PsiIcon *icon)
 	{
 		connect(this, SIGNAL(pixmapChanged(const QPixmap &)), icon, SIGNAL(pixmapChanged(const QPixmap &)));
 		connect(this, SIGNAL(iconModified(const QPixmap &)),  icon, SIGNAL(iconModified(const QPixmap &)));
 	}
 	
-	void disconnectInstance(Icon *icon)
+	void disconnectInstance(PsiIcon *icon)
 	{
 		disconnect(this, SIGNAL(pixmapChanged(const QPixmap &)), icon, SIGNAL(pixmapChanged(const QPixmap &)));
 		disconnect(this, SIGNAL(iconModified(const QPixmap &)),  icon, SIGNAL(iconModified(const QPixmap &)));
@@ -288,17 +288,17 @@ public:
 
 	Impix impix;
 	Anim *anim;
-	QIconSet *iconSet;
+	QIconSet *icon;
 
 	int activatedCount;
-	friend class Icon;
+	friend class PsiIcon;
 };
 //! \endif
 
 /**
- * Constructs empty Icon.
+ * Constructs empty PsiIcon.
  */
-Icon::Icon()
+PsiIcon::PsiIcon()
 : QObject(0)
 {
 	moveToMainThread(this);
@@ -308,9 +308,9 @@ Icon::Icon()
 }
 
 /**
- * Destroys Icon.
+ * Destroys PsiIcon.
  */
-Icon::~Icon()
+PsiIcon::~PsiIcon()
 {
 	if ( d->deref() )
 		delete d;
@@ -320,7 +320,7 @@ Icon::~Icon()
  * Creates new icon, that is a copy of \a from. Note, that if one icon will be changed,
  * other will be changed as well. (that's because image data is shared)
  */
-Icon::Icon(const Icon &from)
+PsiIcon::PsiIcon(const PsiIcon &from)
 : QObject(0, 0)
 {
 	moveToMainThread(this);
@@ -334,7 +334,7 @@ Icon::Icon(const Icon &from)
  * Creates new icon, that is a copy of \a from. Note, that if one icon will be changed,
  * other will be changed as well. (that's because image data is shared)
  */
-Icon & Icon::operator= (const Icon &from)
+PsiIcon & PsiIcon::operator= (const PsiIcon &from)
 {
 	d->disconnectInstance(this);
 	if ( d->deref() )
@@ -347,9 +347,9 @@ Icon & Icon::operator= (const Icon &from)
 	return *this;
 }
 
-Icon *Icon::copy() const
+PsiIcon *PsiIcon::copy() const
 {
-	Icon *icon = new Icon;
+	PsiIcon *icon = new PsiIcon;
 	delete icon->d;
 	icon->d = new Private( *this->d );
 	icon->d->connectInstance(icon);
@@ -357,10 +357,10 @@ Icon *Icon::copy() const
 	return icon;
 }
 
-void Icon::detach()
+void PsiIcon::detach()
 {
 	if ( d->count != 1 ) { // only if >1 reference
-		Icon *i = copy();
+		PsiIcon *i = copy();
 		*this = *i;
 		delete i;
 	}
@@ -369,7 +369,7 @@ void Icon::detach()
 /**
  * Returns \c true when icon contains animation.
  */
-bool Icon::isAnimated() const
+bool PsiIcon::isAnimated() const
 {
 	return d->anim != 0;
 }
@@ -377,7 +377,7 @@ bool Icon::isAnimated() const
 /**
  * Returns QPixmap of current frame.
  */
-const QPixmap &Icon::pixmap() const
+const QPixmap &PsiIcon::pixmap() const
 {
 	return d->pixmap();
 }
@@ -385,7 +385,7 @@ const QPixmap &Icon::pixmap() const
 /**
  * Returns QImage of current frame.
  */
-const QImage &Icon::image() const
+const QImage &PsiIcon::image() const
 {
 	if ( d->anim )
 		return d->anim->frameImage();
@@ -396,7 +396,7 @@ const QImage &Icon::image() const
  * Returns Impix of first animation frame.
  * \sa setImpix()
  */
-const Impix &Icon::impix() const
+const Impix &PsiIcon::impix() const
 {
 	return d->impix;
 }
@@ -405,7 +405,7 @@ const Impix &Icon::impix() const
  * Returns Impix of current animation frame.
  * \sa impix()
  */
-const Impix &Icon::frameImpix() const
+const Impix &PsiIcon::frameImpix() const
 {
 	if ( d->anim )
 		return d->anim->frameImpix();
@@ -416,20 +416,20 @@ const Impix &Icon::frameImpix() const
  * Returns QIconSet of first animation frame.
  * TODO: Add automatic greyscale icon generation.
  */
-const QIconSet &Icon::iconSet() const
+const QIcon &PsiIcon::icon() const
 {
-	if ( d->iconSet )
-		return *d->iconSet;
+	if ( d->icon )
+		return *d->icon;
 
-	d->iconSet = new QIconSet( d->impix.pixmap() );
-	return *d->iconSet;
+	d->icon = new QIcon( d->impix.pixmap() );
+	return *d->icon;
 }
 
 /**
- * Sets the Icon impix to \a impix.
+ * Sets the PsiIcon impix to \a impix.
  * \sa impix()
  */
-void Icon::setImpix(const Impix &impix, bool doDetach)
+void PsiIcon::setImpix(const Impix &impix, bool doDetach)
 {
 	if ( doDetach )
 		detach();
@@ -440,9 +440,9 @@ void Icon::setImpix(const Impix &impix, bool doDetach)
 }
 
 /**
- * Returns pointer to Anim object, or \a 0 if Icon doesn't contain an animation.
+ * Returns pointer to Anim object, or \a 0 if PsiIcon doesn't contain an animation.
  */
-const Anim *Icon::anim() const
+const Anim *PsiIcon::anim() const
 {
 	return d->anim;
 }
@@ -452,7 +452,7 @@ const Anim *Icon::anim() const
  * If animation have less than two frames, it is deleted.
  * \sa anim()
  */
-void Icon::setAnim(const Anim &anim, bool doDetach)
+void PsiIcon::setAnim(const Anim &anim, bool doDetach)
 {
 	if ( doDetach )
 		detach();
@@ -481,7 +481,7 @@ void Icon::setAnim(const Anim &anim, bool doDetach)
  * Removes animation from icon.
  * \sa setAnim()
  */
-void Icon::removeAnim(bool doDetach)
+void PsiIcon::removeAnim(bool doDetach)
 {
 	if ( doDetach )
 		detach();
@@ -503,7 +503,7 @@ void Icon::removeAnim(bool doDetach)
  * Returns the number of current animation frame.
  * \sa setAnim()
  */
-int Icon::frameNumber() const
+int PsiIcon::frameNumber() const
 {
 	if ( d->anim )
 		return d->anim->frameNumber();
@@ -512,19 +512,19 @@ int Icon::frameNumber() const
 }
 
 /**
- * Returns name of the Icon.
+ * Returns name of the PsiIcon.
  * \sa setName()
  */
-const QString &Icon::name() const
+const QString &PsiIcon::name() const
 {
 	return d->name;
 }
 
 /**
- * Sets the Icon name to \a name
+ * Sets the PsiIcon name to \a name
  * \sa name()
  */
-void Icon::setName(const QString &name)
+void PsiIcon::setName(const QString &name)
 {
 	detach();
 
@@ -532,20 +532,20 @@ void Icon::setName(const QString &name)
 }
 
 /**
- * Returns Icon's QRegExp. It is used to store information for emoticons.
+ * Returns PsiIcon's QRegExp. It is used to store information for emoticons.
  * \sa setRegExp()
  */
-const QRegExp &Icon::regExp() const
+const QRegExp &PsiIcon::regExp() const
 {
 	return d->regExp;
 }
 
 /**
- * Sets the Icon QRegExp to \a regExp.
+ * Sets the PsiIcon QRegExp to \a regExp.
  * \sa regExp()
  * \sa text()
  */
-void Icon::setRegExp(const QRegExp &regExp)
+void PsiIcon::setRegExp(const QRegExp &regExp)
 {
 	detach();
 
@@ -553,20 +553,20 @@ void Icon::setRegExp(const QRegExp &regExp)
 }
 
 /**
- * Returns Icon's text. It is used to store information for emoticons.
+ * Returns PsiIcon's text. It is used to store information for emoticons.
  * \sa setText()
  * \sa regExp()
  */
-const QHash<QString, QString> &Icon::text() const
+const QHash<QString, QString> &PsiIcon::text() const
 {
 	return d->text;
 }
 
 /**
- * Sets the Icon text to \a t.
+ * Sets the PsiIcon text to \a t.
  * \sa text()
  */
-void Icon::setText(const QHash<QString, QString> &t)
+void PsiIcon::setText(const QHash<QString, QString> &t)
 {
 	detach();
 
@@ -578,17 +578,17 @@ void Icon::setText(const QHash<QString, QString> &t)
  * \sa setSound()
  * \sa activated()
  */
-const QString &Icon::sound() const
+const QString &PsiIcon::sound() const
 {
 	return d->sound;
 }
 
 /**
- * Sets the sound file name to be associated with this Icon.
+ * Sets the sound file name to be associated with this PsiIcon.
  * \sa sound()
  * \sa activated()
  */
-void Icon::setSound(const QString &sound)
+void PsiIcon::setSound(const QString &sound)
 {
 	detach();
 
@@ -598,16 +598,16 @@ void Icon::setSound(const QString &sound)
 /**
  * Blocks the signals. See the Qt documentation for details.
  */
-bool Icon::blockSignals(bool b)
+bool PsiIcon::blockSignals(bool b)
 {
 	return d->blockSignals(b);
 }
 
 /**
- * Initializes Icon's Impix (or Anim, if \a isAnim equals \c true).
+ * Initializes PsiIcon's Impix (or Anim, if \a isAnim equals \c true).
  * Iconset::load uses this function.
  */
-bool Icon::loadFromData(const QByteArray &ba, bool isAnim)
+bool PsiIcon::loadFromData(const QByteArray &ba, bool isAnim)
 {
 	detach();
 
@@ -631,15 +631,15 @@ bool Icon::loadFromData(const QByteArray &ba, bool isAnim)
 }
 
 /**
- * You need to call this function, when Icon is \e triggered, i.e. it is shown on screen
+ * You need to call this function, when PsiIcon is \e triggered, i.e. it is shown on screen
  * and it must start animation (if it has not animation, this function will do nothing).
  * When icon is no longer shown on screen you MUST call stop().
  * NOTE: For EACH activated() function call there must be associated stop() call, or the
  * animation will go crazy. You've been warned.
- * If \a playSound equals \c true, Icon will play associated sound file.
+ * If \a playSound equals \c true, PsiIcon will play associated sound file.
  * \sa stop()
  */
-void Icon::activated(bool playSound)
+void PsiIcon::activated(bool playSound)
 {
 	d->activatedCount++;
 
@@ -664,13 +664,13 @@ void Icon::activated(bool playSound)
 }
 
 /**
- * You need to call this function when Icon is no more shown on screen. It would save
- * processor time, if Icon has animation.
+ * You need to call this function when PsiIcon is no more shown on screen. It would save
+ * processor time, if PsiIcon has animation.
  * NOTE: For EACH activated() function call there must be associated stop() call, or the
  * animation will go crazy. You've been warned.
  * \sa activated()
  */
-void Icon::stop()
+void PsiIcon::stop()
 {
 	d->activatedCount--;
 
@@ -687,7 +687,7 @@ void Icon::stop()
  * As the name says, this function removes the first animation frame. This is used to
  * create system Psi iconsets, where first frame is used separately for menus.
  */
-void Icon::stripFirstAnimFrame()
+void PsiIcon::stripFirstAnimFrame()
 {
 	detach();
 	
@@ -701,7 +701,7 @@ void Icon::stripFirstAnimFrame()
 
 /**
  * \class IconsetFactory
- * \brief Class for easy application-wide Icon searching
+ * \brief Class for easy application-wide PsiIcon searching
  *
  * You can add several Iconsets to IconsetFactory to use multiple Icons
  * application-wide with ease.
@@ -721,7 +721,7 @@ public:
 	static void unregisterIconset(const Iconset *);
 
 public:
-	static const Icon *icon(const QString &name);
+	static const PsiIcon *icon(const QString &name);
 
 	friend class IconsetFactory;
 };
@@ -759,12 +759,12 @@ void IconsetFactoryPrivate::unregisterIconset(const Iconset *i)
 	}
 }
 
-const Icon *IconsetFactoryPrivate::icon(const QString &name)
+const PsiIcon *IconsetFactoryPrivate::icon(const QString &name)
 {
 	if ( !iconsets )
 		return 0;
 
-	const Icon *i = 0;
+	const PsiIcon *i = 0;
 	Iconset *iconset;
 	foreach (iconset, *iconsets) {
 		if ( iconset )
@@ -777,12 +777,12 @@ const Icon *IconsetFactoryPrivate::icon(const QString &name)
 }
 
 /**
- * Returns pointer to Icon with name \a name, or \a 0 if Icon with that name wasn't
+ * Returns pointer to PsiIcon with name \a name, or \a 0 if PsiIcon with that name wasn't
  * found in IconsetFactory.
  */
-const Icon *IconsetFactory::iconPtr(const QString &name)
+const PsiIcon *IconsetFactory::iconPtr(const QString &name)
 {
-	const Icon *i = IconsetFactoryPrivate::icon(name);
+	const PsiIcon *i = IconsetFactoryPrivate::icon(name);
 	if ( !i ) {
 		qDebug("WARNING: IconsetFactory::icon(\"%s\"): icon not found", name.latin1());
 	}
@@ -790,26 +790,26 @@ const Icon *IconsetFactory::iconPtr(const QString &name)
 }
 
 /**
- * Returns Icon with name \a name, or empty Icon if Icon with that name wasn't
+ * Returns PsiIcon with name \a name, or empty PsiIcon if PsiIcon with that name wasn't
  * found in IconsetFactory.
  */
-Icon IconsetFactory::icon(const QString &name)
+PsiIcon IconsetFactory::icon(const QString &name)
 {
-	const Icon *i = iconPtr(name);
+	const PsiIcon *i = iconPtr(name);
 	if ( i )
 		return *i;
-	return Icon();
+	return PsiIcon();
 }
 
 /**
- * Returns QPixmap of first animation frame of the specified Icon, or the empty
- * QPixmap, if that Icon wasn't found in IconsetFactory.
+ * Returns QPixmap of first animation frame of the specified PsiIcon, or the empty
+ * QPixmap, if that PsiIcon wasn't found in IconsetFactory.
  * This function is faster than the call to IconsetFactory::icon() and cast to QPixmap,
- * because the intermediate Icon object is not created and destroyed.
+ * because the intermediate PsiIcon object is not created and destroyed.
  */
 const QPixmap &IconsetFactory::iconPixmap(const QString &name)
 {
-	const Icon *i = iconPtr(name);
+	const PsiIcon *i = iconPtr(name);
 	if ( i )
 		return i->impix().pixmap();
 
@@ -819,7 +819,7 @@ const QPixmap &IconsetFactory::iconPixmap(const QString &name)
 }
 
 /**
- * Returns list of all Icon names that are in IconsetFactory.
+ * Returns list of all PsiIcon names that are in IconsetFactory.
  */
 const QStringList IconsetFactory::icons()
 {
@@ -827,7 +827,7 @@ const QStringList IconsetFactory::icons()
 	
 	Iconset *iconset;
 	foreach (iconset, *IconsetFactoryPrivate::iconsets) {
-		QListIterator<Icon *> it = iconset->iterator();
+		QListIterator<PsiIcon *> it = iconset->iterator();
 		while ( it.hasNext() )
 			list << it.next()->name();
 	}
@@ -841,7 +841,7 @@ const QStringList IconsetFactory::icons()
 
 /**
  * \class Iconset
- * \brief Class for easy Icon grouping
+ * \brief Class for easy PsiIcon grouping
  *
  * This class supports loading Icons from .zip arhives. It also provides additional
  * information: name(), authors(), version(), description() and creation() date.
@@ -868,8 +868,8 @@ private:
 public:
 	QString name, version, description, creation, homeUrl, filename;
 	QStringList authors;
-	QHash<QString, Icon *> dict; // unsorted hash for fast search
-	QList<Icon *> list;          // sorted list
+	QHash<QString, PsiIcon *> dict; // unsorted hash for fast search
+	QList<PsiIcon *> list;          // sorted list
 	QHash<QString, QString> info;
 
 public:
@@ -885,9 +885,9 @@ public:
 
 		setInformation(from);
 
-		QListIterator<Icon *> it( from.list );
+		QListIterator<PsiIcon *> it( from.list );
 		while ( it.hasNext() ) {
-			Icon *icon = new Icon(*it.next());
+			PsiIcon *icon = new PsiIcon(*it.next());
 			append(icon->name(), icon);
 		}
 	}
@@ -897,9 +897,9 @@ public:
 		clear();
 	}
 
-	void append(QString n, Icon *icon)
+	void append(QString n, PsiIcon *icon)
 	{
-		// all Icon names in Iconset must be unique
+		// all PsiIcon names in Iconset must be unique
 		if ( dict.contains(n) )
 			remove(n);
 			
@@ -917,7 +917,7 @@ public:
 	void remove(QString name)
 	{
 		if ( dict.contains(name) ) {
-			Icon *i = dict[name];
+			PsiIcon *i = dict[name];
 			dict.erase( dict.find(name) );
 			list.removeAll(i);
 			delete i;
@@ -1000,7 +1000,7 @@ public:
 	// will return 'true' when icon is loaded ok
 	bool loadIcon(const QDomElement &i, const QString &dir)
 	{
-		Icon icon;
+		PsiIcon icon;
 		icon.blockSignals(true);
 
 		QHash<QString, QString> text, graphic, sound, object;
@@ -1174,7 +1174,7 @@ public:
 		icon.blockSignals(false);
 
 		if ( loadSuccess )
-			append( name, new Icon(icon) );
+			append( name, new PsiIcon(icon) );
 
 		return loadSuccess;
 	}
@@ -1295,9 +1295,9 @@ Iconset &Iconset::operator+=(const Iconset &i)
 {
 	detach();
 
-	QListIterator<Icon *> it( i.d->list );
+	QListIterator<PsiIcon *> it( i.d->list );
 	while ( it.hasNext() ) {
-		Icon *icon = new Icon(*it.next());
+		PsiIcon *icon = new PsiIcon(*it.next());
 		d->append( icon->name(), icon );
 	}
 
@@ -1356,10 +1356,10 @@ bool Iconset::load(const QString &dir)
 }
 
 /**
- * Returns pointer to Icon, if Icon with name \a name was found in Iconset, or \a 0 otherwise.
+ * Returns pointer to PsiIcon, if PsiIcon with name \a name was found in Iconset, or \a 0 otherwise.
  * \sa setIcon()
  */
-const Icon *Iconset::icon(const QString &name) const
+const PsiIcon *Iconset::icon(const QString &name) const
 {
 	if ( !d || d->dict.isEmpty() )
 		return 0;
@@ -1368,20 +1368,20 @@ const Icon *Iconset::icon(const QString &name) const
 }
 
 /**
- * Appends Icon to Iconset. If the Icon with that name already exists, it is removed.
+ * Appends PsiIcon to Iconset. If the PsiIcon with that name already exists, it is removed.
  */
-void Iconset::setIcon(const QString &name, const Icon &icon)
+void Iconset::setIcon(const QString &name, const PsiIcon &icon)
 {
 	detach();
 
-	Icon *newIcon = new Icon(icon);
+	PsiIcon *newIcon = new PsiIcon(icon);
 	
 	d->remove(name);
 	d->append( name, newIcon );
 }
 
 /**
- * Removes Icon with the name \a name from Iconset.
+ * Removes PsiIcon with the name \a name from Iconset.
  */
 void Iconset::removeIcon(const QString &name)
 {
@@ -1438,9 +1438,9 @@ const QString &Iconset::homeUrl() const
 	return d->homeUrl;
 }
 
-QListIterator<Icon *> Iconset::iterator() const
+QListIterator<PsiIcon *> Iconset::iterator() const
 {
-	QListIterator<Icon *> it( d->list );
+	QListIterator<PsiIcon *> it( d->list );
 	return it;
 }
 
@@ -1493,7 +1493,7 @@ Q3MimeSourceFactory *Iconset::createMimeSourceFactory() const
 {
 	Q3MimeSourceFactory *m = new Q3MimeSourceFactory;
 
-	Icon *icon;
+	PsiIcon *icon;
 	foreach (icon, d->list)
 		m->setImage(icon->name(), icon->image());
 

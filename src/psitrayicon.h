@@ -6,7 +6,7 @@
 #include <QPixmap>
 #include <QSystemTrayIcon>
 
-class Icon;
+class PsiIcon;
 class TrayIcon; // old
 class QMenu;
 class QSystemTrayIcon;
@@ -21,8 +21,8 @@ public:
 
 	void setContextMenu(QMenu*);
 	void setToolTip(const QString &);
-	void setIcon(const Icon *, bool alert = false);
-	void setAlert(const Icon *);
+	void setIcon(const PsiIcon *, bool alert = false);
+	void setAlert(const PsiIcon *);
 	bool isAnimating() const;
 
 	bool isWMDock();
@@ -46,7 +46,7 @@ protected:
 
 private:
 	bool old_;
-	Icon* icon_;
+	PsiIcon* icon_;
 	TrayIcon* old_trayicon_; // old
 	QSystemTrayIcon* trayicon_;
 };

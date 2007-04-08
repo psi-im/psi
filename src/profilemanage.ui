@@ -40,7 +40,7 @@
                   <property name="text" >
                     <string>&amp;New</string>
                   </property>
-                  <property name="iconName" stdset="0" >
+                  <property name="psiIconName" stdset="0" >
                     <string>psi/addContact</string>
                   </property>
                 </widget>
@@ -73,7 +73,7 @@
                   <property name="text" >
                     <string>&amp;Delete</string>
                   </property>
-                  <property name="iconName" stdset="0" >
+                  <property name="psiIconName" stdset="0" >
                     <string>psi/remove</string>
                   </property>
                 </widget>

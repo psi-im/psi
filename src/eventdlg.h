@@ -40,7 +40,7 @@ class QStringList;
 class PsiEvent;
 class PsiCon;
 class PsiAccount;
-class Icon;
+class PsiIcon;
 class EventDlg;
 namespace XMPP {
 	class Jid;
@@ -151,7 +151,7 @@ public slots:
 	void closeAfterReply();
 	void updateContact(const Jid &);
 	void updateEvent(PsiEvent *);
-	void updateReadNext(Icon *, int);
+	void updateReadNext(PsiIcon *, int);
 	void actionGCJoin(const QString &, const QString&);
 
 private slots:

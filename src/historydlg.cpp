@@ -137,7 +137,7 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 
 	setWindowTitle(d->jid.full());
 #ifndef Q_WS_MAC
-	setWindowIcon(IconsetFactory::icon("psi/history"));
+	setWindowIcon(IconsetFactory::icon("psi/history").icon());
 #endif
 
 	d->h = new EDBHandle(d->pa->edb());
@@ -669,16 +669,16 @@ HistoryViewItem::HistoryViewItem(PsiEvent *_e, const QString &eid, int xid, Q3Li
 		e = new AuthEvent(*ae);
 	}
 
-	Icon *a = PsiIconset::instance()->event2icon(e);
+	PsiIcon *a = PsiIconset::instance()->event2icon(e);
 	if(e->type() == PsiEvent::Message) {
 		MessageEvent *me = (MessageEvent *)e;
 		const Message &m = me->message();
 		text = TextUtil::plain2rich(m.body());
 
 		if(!m.urlList().isEmpty())
-			setPixmap(0, IconsetFactory::icon("psi/www"));
+			setPixmap(0, IconsetFactory::icon("psi/www").impix());
 		else if(e->originLocal())
-			setPixmap(0, IconsetFactory::icon("psi/sendMessage"));
+			setPixmap(0, IconsetFactory::icon("psi/sendMessage").impix());
 		else
 			setPixmap(0, a->impix());
 	}

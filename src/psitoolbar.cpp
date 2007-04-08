@@ -109,7 +109,7 @@ void PsiToolBar::contextMenuEvent(QContextMenuEvent *e)
 	MainWin *mainWin = (MainWin *)mainWindow();
 	Q3PopupMenu pm;
 
-	pm.insertItem(IconsetFactory::icon("psi/toolbars"), tr("Configure &Toolbar..."), 0);
+	pm.insertItem(IconsetFactory::icon("psi/toolbars").icon(), tr("Configure &Toolbar..."), 0);
 
 	int ret = pm.exec( e->globalPos() );
 

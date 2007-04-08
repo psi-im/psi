@@ -68,14 +68,14 @@ AddUserDlg::AddUserDlg(const QStringList &services, const QStringList &names, co
 	connect(d->tasks, SIGNAL(finished()), busy, SLOT(stop()));
 
 	setWindowTitle(CAP(caption()));
-	setWindowIcon(IconsetFactory::icon("psi/addContact"));
+	setWindowIcon(IconsetFactory::icon("psi/addContact").icon());
 
 	d->busy = busy;
 
 	QStringList::ConstIterator it1 = services.begin();
 	QStringList::ConstIterator it2 = names.begin();
 	for(; it1 != services.end(); ++it1, ++it2)
-		cb_service->insertItem(PsiIconset::instance()->status(*it1, STATUS_ONLINE), *it2);
+		cb_service->insertItem(PsiIconset::instance()->status(*it1, STATUS_ONLINE).impix(), *it2);
 	connect(cb_service, SIGNAL(activated(int)), SLOT(serviceActivated(int)));
 
 	connect(le_transPrompt, SIGNAL(textChanged(const QString &)), SLOT(le_transPromptChanged(const QString &)));

@@ -26,7 +26,7 @@
 
 class QPixmap;
 class QColor;
-class Icon;
+class PsiIcon;
 
 class FancyLabel : public QWidget
 {
@@ -37,7 +37,7 @@ class FancyLabel : public QWidget
 	Q_PROPERTY( QColor colorFrom READ colorFrom WRITE setColorFrom )
 	Q_PROPERTY( QColor colorTo READ colorTo WRITE setColorTo )
 	Q_PROPERTY( QColor colorFont READ colorFont WRITE setColorFont )
-	Q_PROPERTY( QString iconName READ iconName WRITE setIcon )
+	Q_PROPERTY( QString psiIconName READ psiIconName WRITE setPsiIcon )
 
 	Q_ENUMS( Shape Shadow )
 	Q_PROPERTY( Shape frameShape READ frameShape WRITE setFrameShape )
@@ -55,16 +55,16 @@ public:
 	const QColor &colorFrom () const;
 	const QColor &colorTo () const;
 	const QColor &colorFont () const;
-	const Icon *icon () const;
-	QString iconName () const;
+	const PsiIcon *psiIcon () const;
+	QString psiIconName () const;
 	void setText (const QString &);
 	void setHelp (const QString &);
 	void setPixmap (const QPixmap &);
 	void setColorFrom (const QColor &);
 	void setColorTo (const QColor &);
 	void setColorFont (const QColor &);
-	void setIcon (const Icon *);
-	void setIcon (const QString &);
+	void setPsiIcon (const PsiIcon *);
+	void setPsiIcon (const QString &);
 
 	enum Shape { NoFrame  = 0,                  // no frame
 		     Box      = 0x0001,             // rectangular box

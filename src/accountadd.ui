@@ -151,7 +151,7 @@ Click the &lt;b>Register New Account&lt;/b> checkbox if you want Psi to try and 
                   <property name="default" >
                     <bool>true</bool>
                   </property>
-                  <property name="iconName" stdset="0" >
+                  <property name="psiIconName" stdset="0" >
                     <string>psi/addContact</string>
                   </property>
                 </widget>

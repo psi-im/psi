@@ -139,7 +139,7 @@ public slots:
 		avatar->setToolTip(text);
 	}
 
-	void addEmoticon(const Icon *icon) {
+	void addEmoticon(const PsiIcon *icon) {
 		if ( !dlg->isActiveWindow() )
 		     return;
 		
@@ -241,7 +241,7 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 	QHBoxLayout *hb2 = new QHBoxLayout(vb2);
 	d->lb_status = new IconLabel(sp_top);
 	PsiToolTip::install(d->lb_status);
-	d->lb_status->setIcon(IconsetFactory::iconPtr("status/noauth"));
+	d->lb_status->setPsiIcon(IconsetFactory::iconPtr("status/noauth"));
 	hb2->addWidget(d->lb_status);
 	d->le_jid = new QLineEdit(sp_top);
 	d->le_jid->setReadOnly(true);
@@ -672,9 +672,9 @@ void ChatDlg::updateContact(const Jid &jid, bool fromPresence)
 
 		if(statusChanged) {
 			if(status == -1 || !u)
-				d->lb_status->setIcon(IconsetFactory::iconPtr("status/noauth"));
+				d->lb_status->setPsiIcon(IconsetFactory::iconPtr("status/noauth"));
 			else
-				d->lb_status->setIcon(PsiIconset::instance()->statusPtr(jid, status));
+				d->lb_status->setPsiIcon(PsiIconset::instance()->statusPtr(jid, status));
 		}
 
 		if(u)
@@ -803,14 +803,14 @@ void ChatDlg::setLooks()
 
 	// toolbuttons
 	QIcon i;
-	i.setPixmap(IconsetFactory::icon("psi/cryptoNo"),  QIcon::Automatic, QIcon::Normal, QIcon::Off);
-	i.setPixmap(IconsetFactory::icon("psi/cryptoYes"), QIcon::Automatic, QIcon::Normal, QIcon::On);
+	i.setPixmap(IconsetFactory::icon("psi/cryptoNo").impix(),  QIcon::Automatic, QIcon::Normal, QIcon::Off);
+	i.setPixmap(IconsetFactory::icon("psi/cryptoYes").impix(), QIcon::Automatic, QIcon::Normal, QIcon::On);
 	d->act_pgp->setPsiIcon( 0 );
-	d->act_pgp->setIconSet( i );
+	d->act_pgp->setIcon( i );
 
 	// update the widget icon
 #ifndef Q_WS_MAC
-	setWindowIcon(IconsetFactory::icon("psi/start-chat"));
+	setWindowIcon(IconsetFactory::icon("psi/start-chat").icon());
 #endif
 
 	/*QBrush brush;

@@ -102,9 +102,9 @@ QWidget *OptionsTabSound::widget()
 	int n;
 	for (n = 0; n < 10; n++) {
 		IconToolButton *tb = (IconToolButton *)bg_se->buttons()[n];
-		tb->setIcon( IconsetFactory::iconPtr("psi/browse") );
+		tb->setPsiIcon( IconsetFactory::iconPtr("psi/browse") );
 		tb = (IconToolButton *)bg_sePlay->buttons()[n];
-		tb->setIcon( IconsetFactory::iconPtr("psi/play") );
+		tb->setPsiIcon( IconsetFactory::iconPtr("psi/play") );
 	}
 
 	// TODO: add QWhatsThis for all widgets

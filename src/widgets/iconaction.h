@@ -27,7 +27,7 @@
 class QToolButton;
 class QPixmap;
 class QIcon;
-class Icon;
+class PsiIcon;
 class IconToolButton;
 class QChildEvent;
 
@@ -42,8 +42,8 @@ public:
 
 	virtual bool addTo(QWidget *);
 
-	const Icon *psiIcon() const;
-	void setPsiIcon(const Icon *);
+	const PsiIcon *psiIcon() const;
+	void setPsiIcon(const PsiIcon *);
 	void setPsiIcon(const QString &);
 	QString psiIconName() const;
 

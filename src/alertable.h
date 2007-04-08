@@ -24,7 +24,7 @@
 #include <QObject>
 
 class AlertIcon;
-class Icon;
+class PsiIcon;
 class QIcon;
 
 class Alertable : public QObject
@@ -37,7 +37,7 @@ public:
 	bool alerting() const;
 	QIcon currentAlertFrame() const;
 
-	void setAlert(const Icon* icon);
+	void setAlert(const PsiIcon* icon);
 
 private slots:
 	virtual void alertFrameUpdated() = 0;

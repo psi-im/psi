@@ -457,7 +457,7 @@ void OptionsDlg::Private::openTab(QString id)
 			if ( opttab->id() == id.latin1() ) {
 				dlg->lb_pageTitle->setText( opttab->name() );
 				dlg->lb_pageTitle->setHelp( opttab->desc() );
-				dlg->lb_pageTitle->setIcon( opttab->icon() );
+				dlg->lb_pageTitle->setPsiIcon( opttab->psiIcon() );
 
 				break;
 			}

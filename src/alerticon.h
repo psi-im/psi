@@ -29,22 +29,23 @@ class QString;
 class QIcon;
 class QImage;
 
-class AlertIcon : public Icon
+class AlertIcon : public PsiIcon
 {
 	Q_OBJECT
 public:
-	AlertIcon(const Icon *icon);
+	AlertIcon(const PsiIcon *icon);
 	~AlertIcon();
 
-	bool isAnimated() const;
-	const QPixmap &pixmap() const;
-	const QImage &image() const;
-	const QIcon & iconSet() const;
-	const Impix &impix() const;
-	int frameNumber() const;
-	const QString &name() const;
+	// reimplemented
+	virtual bool isAnimated() const;
+	virtual const QPixmap &pixmap() const;
+	virtual const QImage &image() const;
+	virtual const QIcon & icon() const;
+	virtual const Impix &impix() const;
+	virtual int frameNumber() const;
+	virtual const QString &name() const;
 
-	virtual Icon *copy() const;
+	virtual PsiIcon *copy() const;
 
 public slots:
 	void activated(bool playSound = true);

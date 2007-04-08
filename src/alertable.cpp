@@ -66,7 +66,7 @@ QIcon Alertable::currentAlertFrame() const
  * Creates new AlertIcon based on provided \param icon. If 0 is passed,
  * alert is cleared.
  */
-void Alertable::setAlert(const Icon* icon)
+void Alertable::setAlert(const PsiIcon* icon)
 {
 	if (alert_) {
 		alert_->stop();

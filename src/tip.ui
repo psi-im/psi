@@ -55,7 +55,7 @@
           </property>
           <item>
            <widget class="IconLabel" name="lb_icon" >
-            <property name="iconName" stdset="0" >
+            <property name="psiIconName" stdset="0" >
              <string>psi/logo_128</string>
             </property>
            </widget>
@@ -217,7 +217,7 @@
        <property name="shortcut" >
         <string>Alt+P</string>
        </property>
-       <property name="iconName" stdset="0" >
+       <property name="psiIconName" stdset="0" >
         <string>psi/arrowLeft</string>
        </property>
       </widget>
@@ -230,7 +230,7 @@
        <property name="shortcut" >
         <string>Alt+N</string>
        </property>
-       <property name="iconName" stdset="0" >
+       <property name="psiIconName" stdset="0" >
         <string>psi/arrowRight</string>
        </property>
       </widget>

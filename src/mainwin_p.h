@@ -105,8 +105,8 @@ public slots:
 public:
 	PopupAction (const QString &label, QMenu *_menu, QObject *parent, const char *name);
 	void setSizePolicy (const QSizePolicy &p);
-	void setAlert (const Icon *);
-	void setIcon (const Icon *, bool showText = true, bool alert = false);
+	void setAlert (const PsiIcon *);
+	void setIcon (const PsiIcon *, bool showText = true, bool alert = false);
 	void setText (const QString &text);
 	bool addTo (QWidget *w);
 
@@ -135,7 +135,7 @@ class MAction : public IconAction
 	Q_OBJECT
 
 public:
-	MAction(Icon, const QString &, int id, PsiCon *, QObject *parent);
+	MAction(PsiIcon, const QString &, int id, PsiCon *, QObject *parent);
 	MAction(const QString &, int id, PsiCon *, QObject *parent);
 
 	bool addTo(QWidget *w);
@@ -157,7 +157,7 @@ private:
 	class Private;
 	Private *d;
 
-	void init (Icon, int id, PsiCon *psi);
+	void init (PsiIcon, int id, PsiCon *psi);
 };
 
 #endif

@@ -49,7 +49,7 @@
         <property name="text" >
          <string/>
         </property>
-        <property name="iconName" stdset="0" >
+        <property name="psiIconName" stdset="0" >
          <string>psi/arrowDown</string>
         </property>
         <property name="textVisible" >
@@ -62,7 +62,7 @@
         <property name="text" >
          <string/>
         </property>
-        <property name="iconName" stdset="0" >
+        <property name="psiIconName" stdset="0" >
          <string>psi/arrowUp</string>
         </property>
         <property name="textVisible" >

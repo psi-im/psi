@@ -67,7 +67,7 @@
               <property name="text" >
                 <string/>
               </property>
-              <property name="iconName" stdset="0" >
+              <property name="psiIconName" stdset="0" >
                 <string>psi/browse</string>
               </property>
             </widget>

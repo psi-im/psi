@@ -295,7 +295,7 @@ Note: it is impossible to dock stretchable toolbar. Uncheck that check box, clic
                       <property name="text" >
                         <string>...</string>
                       </property>
-                      <property name="iconName" stdset="0" >
+                      <property name="psiIconName" stdset="0" >
                         <string>psi/arrowUp</string>
                       </property>
                     </widget>
@@ -329,7 +329,7 @@ Note: it is impossible to dock stretchable toolbar. Uncheck that check box, clic
                       <property name="text" >
                         <string>...</string>
                       </property>
-                      <property name="iconName" stdset="0" >
+                      <property name="psiIconName" stdset="0" >
                         <string>psi/arrowLeft</string>
                       </property>
                     </widget>
@@ -395,7 +395,7 @@ Note: it is impossible to dock stretchable toolbar. Uncheck that check box, clic
                       <property name="text" >
                         <string>...</string>
                       </property>
-                      <property name="iconName" stdset="0" >
+                      <property name="psiIconName" stdset="0" >
                         <string>psi/arrowDown</string>
                       </property>
                     </widget>
@@ -413,7 +413,7 @@ Note: it is impossible to dock stretchable toolbar. Uncheck that check box, clic
                       <property name="text" >
                         <string>...</string>
                       </property>
-                      <property name="iconName" stdset="0" >
+                      <property name="psiIconName" stdset="0" >
                         <string>psi/arrowRight</string>
                       </property>
                     </widget>

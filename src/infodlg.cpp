@@ -86,7 +86,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 
 	setWindowTitle(d->jid.full());
 #ifndef Q_WS_MAC
-	setWindowIcon(IconsetFactory::icon("psi/vCard"));
+	setWindowIcon(IconsetFactory::icon("psi/vCard").icon());
 #endif
 
 	connect(pb_refresh, SIGNAL(clicked()), this, SLOT(doRefresh()));

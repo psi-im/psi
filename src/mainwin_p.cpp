@@ -53,7 +53,7 @@ public:
 	PopupActionButton(QWidget *parent = 0, const char *name = 0);
 	~PopupActionButton();
 
-	void setIcon(Icon *, bool showText);
+	void setIcon(PsiIcon *, bool showText);
 	void setLabel(QString);
 	QSize sizeHint() const;
 
@@ -64,7 +64,7 @@ private:
 	void update();
 	void paintEvent(QPaintEvent *);
 	bool hasToolTip;
-	Icon *icon;
+	PsiIcon *icon;
 	bool showText;
 	QString label;
 };
@@ -89,7 +89,7 @@ QSize PopupActionButton::sizeHint() const
 	return QPushButton::sizeHint();
 }
 
-void PopupActionButton::setIcon(Icon *i, bool st)
+void PopupActionButton::setIcon(PsiIcon *i, bool st)
 {
 	if ( icon ) {
 		icon->stop();
@@ -211,7 +211,7 @@ class PopupAction::Private : public QObject
 public:
 	QSizePolicy size;
 	Q3PtrList<PopupActionButton> buttons;
-	Icon *icon;
+	PsiIcon *icon;
 	bool showText;
 
 	Private (QObject *parent)
@@ -241,14 +241,14 @@ void PopupAction::setSizePolicy (const QSizePolicy &p)
 	d->size = p;
 }
 
-void PopupAction::setAlert (const Icon *icon)
+void PopupAction::setAlert (const PsiIcon *icon)
 {
 	setIcon(icon, d->showText, true);
 }
 
-void PopupAction::setIcon (const Icon *icon, bool showText, bool alert)
+void PopupAction::setIcon (const PsiIcon *icon, bool showText, bool alert)
 {
-	Icon *oldIcon = 0;
+	PsiIcon *oldIcon = 0;
 	if ( d->icon ) {
 		oldIcon = d->icon;
 		d->icon = 0;
@@ -258,15 +258,15 @@ void PopupAction::setIcon (const Icon *icon, bool showText, bool alert)
 
 	if ( icon ) {
 		if ( !alert )
-			d->icon = new Icon(*icon);
+			d->icon = new PsiIcon(*icon);
 		else
 			d->icon = new AlertIcon(icon);
 
-		IconAction::setIconSet(*icon);
+		IconAction::setIcon(icon->icon());
 	}
 	else {
 		d->icon = 0;
-		IconAction::setIconSet(QIcon());
+		IconAction::setIcon(QIcon());
 	}
 
 	for ( Q3PtrListIterator<PopupActionButton> it(d->buttons); it.current(); ++it ) {
@@ -414,7 +414,7 @@ public:
 	}
 };
 
-MAction::MAction(Icon i, const QString &s, int id, PsiCon *psi, QObject *parent)
+MAction::MAction(PsiIcon i, const QString &s, int id, PsiCon *psi, QObject *parent)
 : IconAction(s, s, 0, parent)
 {
 	init (i, id, psi);
@@ -423,10 +423,10 @@ MAction::MAction(Icon i, const QString &s, int id, PsiCon *psi, QObject *parent)
 MAction::MAction(const QString &s, int id, PsiCon *psi, QObject *parent)
 : IconAction(s, s, 0, parent)
 {
-	init (Icon(), id, psi);
+	init (PsiIcon(), id, psi);
 }
 
-void MAction::init(Icon i, int id, PsiCon *psi)
+void MAction::init(PsiIcon i, int id, PsiCon *psi)
 {
 	d = new Private(id, psi, this);
 	setPsiIcon (&i);

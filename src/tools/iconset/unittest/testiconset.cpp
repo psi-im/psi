@@ -43,9 +43,9 @@ private slots:
 	void testIterator() 
 	{
 		QStringList iconNames;
-		QListIterator<Icon *> it = iconset->iterator();
+		QListIterator<PsiIcon *> it = iconset->iterator();
 		while ( it.hasNext() ) {
-			Icon *icon = it.next();
+			PsiIcon *icon = it.next();
 			iconNames << icon->name();
 		}
 		QCOMPARE(iconNames.count(), iconset->count());
@@ -53,7 +53,7 @@ private slots:
 	
 	void testHeadlineIcon() 
 	{
-		const Icon *messageHeadline = IconsetFactory::iconPtr("psi/headline");
+		const PsiIcon *messageHeadline = IconsetFactory::iconPtr("psi/headline");
 		QVERIFY(messageHeadline != 0);
 		QCOMPARE(messageHeadline->name(),        QString("psi/headline"));
 		QCOMPARE(messageHeadline->isAnimated(),  false);
@@ -65,7 +65,7 @@ private slots:
 	
 	void testAnim()
 	{
-		const Icon *chat = IconsetFactory::iconPtr("psi/chat");
+		const PsiIcon *chat = IconsetFactory::iconPtr("psi/chat");
 		QVERIFY(chat->anim() != 0);
 
 		const Anim *anim = chat->anim();
@@ -104,13 +104,13 @@ private slots:
 		
 	void testIconStripping()
 	{
-		const Icon *chat = IconsetFactory::iconPtr("psi/chat");
+		const PsiIcon *chat = IconsetFactory::iconPtr("psi/chat");
 		QVERIFY(chat != 0);
 
 		QVERIFY(chat->isAnimated() == true);
 		QCOMPARE(chat->anim()->numFrames(), 15);
 		
-		Icon *stripping = new Icon(*chat);
+		PsiIcon *stripping = new PsiIcon(*chat);
 		QCOMPARE(chat->name(),      QString("psi/chat"));
 		QCOMPARE(stripping->name(), QString("psi/chat"));
 
@@ -142,9 +142,9 @@ private slots:
 		*combined += *is;
 		QCOMPARE(combined->count(), is->count());
 		
-		QListIterator<Icon*> it = is->iterator();
+		QListIterator<PsiIcon*> it = is->iterator();
 		while (it.hasNext()) {
-			Icon *icon = new Icon(*it.next());
+			PsiIcon *icon = new PsiIcon(*it.next());
 			icon->setName(icon->name() + "2");
 			combined->setIcon(icon->name(), *icon);
 			delete icon;
@@ -175,7 +175,7 @@ private slots:
 		QVERIFY(is->load("iconsets/emoticons/puz.jisp"));
 		QVERIFY(is->count() > 0);
 		
-		QListIterator<Icon*> it = is->iterator();
+		QListIterator<PsiIcon*> it = is->iterator();
 		while (it.hasNext()) {
 			const QHash<QString, QString> text = it.next()->text();
 			QVERIFY(text.count() > 1);
@@ -186,7 +186,7 @@ private slots:
 		
 	void testCreateQIcon()
 	{
-		const Icon *chat = IconsetFactory::iconPtr("psi/chat");
+		const PsiIcon *chat = IconsetFactory::iconPtr("psi/chat");
 		QVERIFY(chat != 0);
 		
 		QIcon icon = chat->iconSet();

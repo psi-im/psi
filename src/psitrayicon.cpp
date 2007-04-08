@@ -58,7 +58,7 @@ void PsiTrayIcon::setToolTip(const QString &str)
 		trayicon_->setToolTip(str);
 }
 
-void PsiTrayIcon::setIcon(const Icon *icon, bool alert)
+void PsiTrayIcon::setIcon(const PsiIcon *icon, bool alert)
 {
 	if ( icon_ ) {
 		disconnect(icon_, 0, this, 0 );
@@ -70,7 +70,7 @@ void PsiTrayIcon::setIcon(const Icon *icon, bool alert)
 
 	if ( icon ) {
 		if ( !alert )
-			icon_ = new Icon(*icon);
+			icon_ = new PsiIcon(*icon);
 		else
 			icon_ = new AlertIcon(icon);
 
@@ -78,12 +78,12 @@ void PsiTrayIcon::setIcon(const Icon *icon, bool alert)
 		icon_->activated();
 	}
 	else
-		icon_ = new Icon();
+		icon_ = new PsiIcon();
 
 	animate();
 }
 
-void PsiTrayIcon::setAlert(const Icon *icon)
+void PsiTrayIcon::setAlert(const PsiIcon *icon)
 {
 	setIcon(icon, true);
 }

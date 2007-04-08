@@ -68,7 +68,7 @@ public:
 	}
 
 	void stripFirstAnimFrame(Iconset &is) {
-		QListIterator<Icon*> it = is.iterator();
+		QListIterator<PsiIcon*> it = is.iterator();
 		while (it.hasNext()) {
 			it.next()->stripFirstAnimFrame();
 		}
@@ -88,12 +88,12 @@ public:
 			return;
 		}
 
-		QListIterator<Icon*> it = from->iterator();
+		QListIterator<PsiIcon*> it = from->iterator();
 		while( it.hasNext()) {
-			Icon *icon = it.next();
+			PsiIcon *icon = it.next();
 
 			if ( icon && !icon->name().isEmpty() ) {
-				Icon *toIcon = (Icon *)to->icon(icon->name());
+				PsiIcon *toIcon = (PsiIcon *)to->icon(icon->name());
 				if ( toIcon ) {
 					if ( icon->anim() ) {
 						toIcon->setAnim  ( *icon->anim(), false );
@@ -112,10 +112,10 @@ public:
 		to->setInformation(*from);
 	}
 
-	Icon *jid2icon(const Jid &jid, const QString &iconName)
+	PsiIcon *jid2icon(const Jid &jid, const QString &iconName)
 	{
 		// first level -- global default icon
-		Icon *icon = (Icon *)IconsetFactory::iconPtr(iconName);
+		PsiIcon *icon = (PsiIcon *)IconsetFactory::iconPtr(iconName);
 
 		// second level -- transport icon
 		if ( jid.user().isEmpty() || option.useTransportIconsForContacts ) {
@@ -138,7 +138,7 @@ public:
 					if ( it2 != option.serviceRosterIconset.end() ) {
 						Iconset *is = psi->roster.find(it2.data());
 						if ( is ) {
-							Icon *i = (Icon *)is->icon(iconName);
+							PsiIcon *i = (PsiIcon *)is->icon(iconName);
 							if ( i ) {
 								icon = i;
 								found = true;
@@ -153,7 +153,7 @@ public:
 			if ( !found && jid.user().isEmpty() ) {
 				Iconset *is = psi->roster.find(option.serviceRosterIconset["transport"]);
 				if ( is ) {
-					Icon *i = (Icon *)is->icon(iconName);
+					PsiIcon *i = (PsiIcon *)is->icon(iconName);
 					if ( i )
 						icon = i;
 				}
@@ -167,9 +167,9 @@ public:
 			if ( rx.search(jid.userHost()) != -1 ) {
 				Iconset *is = psi->roster.find(it.data());
 				if ( is ) {
-					Icon *i = (Icon *)is->icon(iconName);
+					PsiIcon *i = (PsiIcon *)is->icon(iconName);
 					if ( i )
-						icon = (Icon *)is->icon(iconName);
+						icon = (PsiIcon *)is->icon(iconName);
 				}
 			}
 		}
@@ -385,7 +385,7 @@ bool PsiIconset::optionsChanged(const Options *old)
 	return old->defaultRosterIconset != option.defaultRosterIconset;
 }
 
-Icon *PsiIconset::event2icon(PsiEvent *e)
+PsiIcon *PsiIconset::event2icon(PsiEvent *e)
 {
 	QString icon;
 	if(e->type() == PsiEvent::Message) {
@@ -455,39 +455,39 @@ static QString status2name(int s)
 	return name;
 }
 
-Icon *PsiIconset::statusPtr(int s)
+PsiIcon *PsiIconset::statusPtr(int s)
 {
-	return (Icon *)IconsetFactory::iconPtr(status2name(s));
+	return (PsiIcon *)IconsetFactory::iconPtr(status2name(s));
 }
 
-Icon PsiIconset::status(int s)
+PsiIcon PsiIconset::status(int s)
 {
-	Icon *icon = statusPtr(s);
+	PsiIcon *icon = statusPtr(s);
 	if ( icon )
 		return *icon;
-	return Icon();
+	return PsiIcon();
 }
 
-Icon *PsiIconset::statusPtr(const XMPP::Status &s)
+PsiIcon *PsiIconset::statusPtr(const XMPP::Status &s)
 {
 	return statusPtr(makeSTATUS(s));
 }
 
-Icon PsiIconset::status(const XMPP::Status &s)
+PsiIcon PsiIconset::status(const XMPP::Status &s)
 {
 	return status(makeSTATUS(s));
 }
 
-Icon *PsiIconset::transportStatusPtr(QString name, int s)
+PsiIcon *PsiIconset::transportStatusPtr(QString name, int s)
 {
-	Icon *icon = 0;
+	PsiIcon *icon = 0;
 
 	QMap<QString, QString>::Iterator it = option.serviceRosterIconset.begin();
 	for ( ; it != option.serviceRosterIconset.end(); ++it) {
 		if (name == it.key()) {
 			Iconset *is = roster.find(it.data());
 			if ( is ) {
-				icon = (Icon *)is->icon(status2name(s));
+				icon = (PsiIcon *)is->icon(status2name(s));
 				if ( icon )
 					break;
 			}
@@ -500,54 +500,54 @@ Icon *PsiIconset::transportStatusPtr(QString name, int s)
 	return icon;
 }
 
-Icon *PsiIconset::transportStatusPtr(QString name, const XMPP::Status &s)
+PsiIcon *PsiIconset::transportStatusPtr(QString name, const XMPP::Status &s)
 {
 	return transportStatusPtr(name, makeSTATUS(s));
 }
 
-Icon PsiIconset::transportStatus(QString name, int s)
+PsiIcon PsiIconset::transportStatus(QString name, int s)
 {
-	Icon *icon = transportStatusPtr(name, s);
+	PsiIcon *icon = transportStatusPtr(name, s);
 	if ( icon )
 		return *icon;
-	return Icon();
+	return PsiIcon();
 }
 
-Icon PsiIconset::transportStatus(QString name, const XMPP::Status &s)
+PsiIcon PsiIconset::transportStatus(QString name, const XMPP::Status &s)
 {
-	Icon *icon = transportStatusPtr(name, s);
+	PsiIcon *icon = transportStatusPtr(name, s);
 	if ( icon )
 		return *icon;
-	return Icon();
+	return PsiIcon();
 }
 
-Icon *PsiIconset::statusPtr(const XMPP::Jid &jid, int s)
+PsiIcon *PsiIconset::statusPtr(const XMPP::Jid &jid, int s)
 {
 	return d->jid2icon(jid, status2name(s));
 }
 
-Icon *PsiIconset::statusPtr(const XMPP::Jid &jid, const XMPP::Status &s)
+PsiIcon *PsiIconset::statusPtr(const XMPP::Jid &jid, const XMPP::Status &s)
 {
 	return statusPtr(jid, makeSTATUS(s));
 }
 
-Icon PsiIconset::status(const XMPP::Jid &jid, int s)
+PsiIcon PsiIconset::status(const XMPP::Jid &jid, int s)
 {
-	Icon *icon = statusPtr(jid, s);
+	PsiIcon *icon = statusPtr(jid, s);
 	if ( icon )
 		return *icon;
-	return Icon();
+	return PsiIcon();
 }
 
-Icon PsiIconset::status(const XMPP::Jid &jid, const XMPP::Status &s)
+PsiIcon PsiIconset::status(const XMPP::Jid &jid, const XMPP::Status &s)
 {
-	Icon *icon = statusPtr(jid, s);
+	PsiIcon *icon = statusPtr(jid, s);
 	if ( icon )
 		return *icon;
-	return Icon();
+	return PsiIcon();
 }
 
-Icon *PsiIconset::statusPtr(UserListItem *u)
+PsiIcon *PsiIconset::statusPtr(UserListItem *u)
 {
 	if ( !u )
 		return 0;
@@ -573,12 +573,12 @@ Icon *PsiIconset::statusPtr(UserListItem *u)
 	return statusPtr(u->jid(), s);
 }
 
-Icon PsiIconset::status(UserListItem *u)
+PsiIcon PsiIconset::status(UserListItem *u)
 {
-	Icon *icon = statusPtr(u);
+	PsiIcon *icon = statusPtr(u);
 	if ( icon )
 		return *icon;
-	return Icon();
+	return PsiIcon();
 }
 
 const Iconset &PsiIconset::system() const
@@ -595,7 +595,7 @@ void PsiIconset::stripFirstAnimFrame(Iconset *is)
 void PsiIconset::removeAnimation(Iconset *is)
 {
 	if ( is ) {
-		QListIterator<Icon*> it = is->iterator();
+		QListIterator<PsiIcon*> it = is->iterator();
 		while (it.hasNext()) {
 			it.next()->removeAnim(false);
 		}

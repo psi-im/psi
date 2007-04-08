@@ -37,7 +37,7 @@ class UserListItem;
 class ContactView;
 class ContactViewItem;
 class PsiAccount;
-class Icon;
+class PsiIcon;
 class QTimer;
 class QPixmap;
 
@@ -69,7 +69,7 @@ public:
 	void updateSelf();
 	void addSelf();
 	void removeSelf();
-	void setAlert(const Jid &, const Icon *);
+	void setAlert(const Jid &, const PsiIcon *);
 	void clearAlert(const Jid &);
 	void animateNick(const Jid &);
 
@@ -341,9 +341,9 @@ public:
 	void setGroupName(const QString &);
 	void setGroupInfo(const QString &);
 	void setAnimateNick();
-	void setAlert(const Icon *);
+	void setAlert(const PsiIcon *);
 	void clearAlert();
-	void setIcon(const Icon *, bool alert = false);
+	void setIcon(const PsiIcon *, bool alert = false);
 
 	void resetStatus();
 	void resetName(bool forceNoStatusMsg = false); // use this to cancel a rename

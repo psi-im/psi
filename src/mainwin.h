@@ -39,7 +39,7 @@ class PsiCon;
 class PsiToolBar;
 class PsiAccount;
 class IconAction;
-class Icon;
+class PsiIcon;
 class ContactView;
 namespace XMPP {
 	class Status;
@@ -132,7 +132,7 @@ public slots:
 	void showNoFocus();
 
 	void decorateButton(int);
-	void updateReadNext(Icon *nextAnim, int nextAmount);
+	void updateReadNext(PsiIcon *nextAnim, int nextAmount);
 
 	void optionsUpdate();
 	void setTrayToolTip(const XMPP::Status &, bool usePriority = false);

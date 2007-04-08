@@ -51,32 +51,32 @@ public:
 	void stripFirstAnimFrame(Iconset *);
 	static void removeAnimation(Iconset *);
 
-	Icon *event2icon(PsiEvent *);
+	PsiIcon *event2icon(PsiEvent *);
 
 	// these two can possibly fail (and return 0)
-	Icon *statusPtr(int);
-	Icon *statusPtr(const XMPP::Status &);
+	PsiIcon *statusPtr(int);
+	PsiIcon *statusPtr(const XMPP::Status &);
 
-	// these two return empty Icon on failure and are safe
-	Icon status(int);
-	Icon status(const XMPP::Status &);
+	// these two return empty PsiIcon on failure and are safe
+	PsiIcon status(int);
+	PsiIcon status(const XMPP::Status &);
 
 	// JID-enabled status functions
-	Icon *statusPtr(const XMPP::Jid &, int);
-	Icon *statusPtr(const XMPP::Jid &, const XMPP::Status &);
+	PsiIcon *statusPtr(const XMPP::Jid &, int);
+	PsiIcon *statusPtr(const XMPP::Jid &, const XMPP::Status &);
 
-	Icon status(const XMPP::Jid &, int);
-	Icon status(const XMPP::Jid &, const XMPP::Status &);
+	PsiIcon status(const XMPP::Jid &, int);
+	PsiIcon status(const XMPP::Jid &, const XMPP::Status &);
 
 	// functions to get status icon by transport name
-	Icon *transportStatusPtr(QString name, int);
-	Icon *transportStatusPtr(QString name, const XMPP::Status &);
+	PsiIcon *transportStatusPtr(QString name, int);
+	PsiIcon *transportStatusPtr(QString name, const XMPP::Status &);
 
-	Icon transportStatus(QString name, int);
-	Icon transportStatus(QString name, const XMPP::Status &);
+	PsiIcon transportStatus(QString name, int);
+	PsiIcon transportStatus(QString name, const XMPP::Status &);
 
-	Icon *statusPtr(UserListItem *);
-	Icon status(UserListItem *);
+	PsiIcon *statusPtr(UserListItem *);
+	PsiIcon status(UserListItem *);
 
 private:
 	PsiIconset();

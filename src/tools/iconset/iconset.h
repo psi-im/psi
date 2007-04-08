@@ -75,32 +75,32 @@ private:
 	QSharedDataPointer<Private> d;
 };
 
-class Icon : public QObject
+class PsiIcon : public QObject
 {
 	Q_OBJECT
 public:
-	Icon();
-	Icon(const Icon &);
-	~Icon();
+	PsiIcon();
+	PsiIcon(const PsiIcon &);
+	~PsiIcon();
 
-	Icon & operator= (const Icon &);
+	PsiIcon & operator= (const PsiIcon &);
 
 	//!
 	//! Returns impix().pixmap().
-	operator const QPixmap &() const { return impix().pixmap(); }
+	// operator const QPixmap &() const { return impix().pixmap(); }
 
 	//!
 	//! Returns impix().image().
-	operator const QImage &() const { return impix().image(); }
+	// operator const QImage &() const { return impix().image(); }
 
 	//!
 	//! see iconSet().
-	operator const QIcon &() const { return iconSet(); }
+	// operator const QIcon &() const { return iconSet(); }
 
 	virtual bool isAnimated() const;
 	virtual const QPixmap &pixmap() const;
 	virtual const QImage &image() const;
-	virtual const QIcon & iconSet() const;
+	virtual const QIcon & icon() const;
 
 	virtual const Impix &impix() const;
 	virtual const Impix &frameImpix() const;
@@ -129,7 +129,7 @@ public:
 
 	void stripFirstAnimFrame();
 
-	virtual Icon *copy() const;
+	virtual PsiIcon *copy() const;
 	void detach();
 
 signals:
@@ -163,8 +163,8 @@ public:
 
 	bool load(const QString &dir);
 
-	const Icon *icon(const QString &) const;
-	void setIcon(const QString &, const Icon &);
+	const PsiIcon *icon(const QString &) const;
+	void setIcon(const QString &, const PsiIcon &);
 	void removeIcon(const QString &);
 
 	const QString &name() const;
@@ -182,7 +182,7 @@ public:
 	const QHash<QString, QString> info() const;
 	void setInfo(const QHash<QString, QString> &);
 
-	QListIterator<Icon *> iterator() const;
+	QListIterator<PsiIcon *> iterator() const;
 
 	Q3MimeSourceFactory *createMimeSourceFactory() const;
 
@@ -202,10 +202,10 @@ private:
 class IconsetFactory
 {
 public:
-	static Icon icon(const QString &name);
+	static PsiIcon icon(const QString &name);
 	static const QPixmap &iconPixmap(const QString &name);
 
-	static const Icon *iconPtr(const QString &name);
+	static const PsiIcon *iconPtr(const QString &name);
 	static const QStringList icons();
 };
 

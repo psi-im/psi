@@ -545,7 +545,7 @@ FileRequestDlg::FileRequestDlg(const Jid &jid, PsiCon *psi, PsiAccount *pa, cons
 
 	setWindowTitle(tr("Send File"));
 #ifndef Q_WS_MAC
-	setWindowIcon(IconsetFactory::icon("psi/upload"));
+	setWindowIcon(IconsetFactory::icon("psi/upload").icon());
 #endif
 
 	le_to->setText(d->jid.full());
@@ -629,7 +629,7 @@ FileRequestDlg::FileRequestDlg(const QDateTime &ts, FileTransfer *ft, PsiAccount
 	lb_to->setText(tr("From:"));
 	setWindowTitle(tr("Receive File"));
 #ifndef Q_WS_MAC
-	setWindowIcon(IconsetFactory::icon("psi/download"));
+	setWindowIcon(IconsetFactory::icon("psi/download").icon());
 #endif
 
 	le_to->setText(d->jid.full());
@@ -1553,7 +1553,7 @@ FileTransDlg::FileTransDlg(PsiCon *psi)
 
 	setWindowTitle(tr("Transfer Manager"));
 #ifndef Q_WS_MAC
-	setWindowIcon(IconsetFactory::icon("psi/filemanager"));
+	setWindowIcon(IconsetFactory::icon("psi/filemanager").icon());
 #endif
 
 	QVBoxLayout *vb = new QVBoxLayout(this, 11, 6);

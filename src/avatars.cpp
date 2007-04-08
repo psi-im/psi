@@ -476,7 +476,7 @@ QPixmap AvatarFactory::getAvatar(const Jid& jid)
 	pm = ensureSquareAvatar(pm);
 
 	// Update iconset
-	Icon icon;
+	PsiIcon icon;
 	icon.setImpix(pm);
 	iconset_.setIcon(QString("avatars/%1").arg(jid.bare()),icon);
 

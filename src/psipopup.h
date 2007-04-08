@@ -27,7 +27,7 @@ class PsiCon;
 class PsiAccount;
 class UserListItem;
 class FancyPopup;
-class Icon;
+class PsiIcon;
 class PsiEvent;
 namespace XMPP {
 	class Jid;
@@ -40,7 +40,7 @@ class PsiPopup : public QObject
 {
 	Q_OBJECT
 public:
-	PsiPopup(const Icon *titleIcon, QString titleText, PsiAccount *acc);
+	PsiPopup(const PsiIcon *titleIcon, QString titleText, PsiAccount *acc);
 	~PsiPopup();
 
 	enum PopupType {
@@ -57,7 +57,7 @@ public:
 	};
 	PsiPopup(PopupType type, PsiAccount *acc);
 
-	void setData(const Icon *icon, QString text);
+	void setData(const PsiIcon *icon, QString text);
 	void setData(const Jid &, const Resource &, const UserListItem * = 0, const PsiEvent * = 0);
 
 	void show();

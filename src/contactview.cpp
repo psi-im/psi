@@ -82,7 +82,7 @@ public:
 	UserListItem u;
 	Q3PtrList<ContactViewItem> cvi;
 	bool alerting;
-	Icon anim;
+	PsiIcon anim;
 };
 
 class ContactProfile::Private : public QObject
@@ -606,7 +606,7 @@ void ContactProfile::removeEntry(Entry *e)
 	d->roster.remove(e);
 }
 
-void ContactProfile::setAlert(const Jid &j, const Icon *anim)
+void ContactProfile::setAlert(const Jid &j, const PsiIcon *anim)
 {
 	if(d->su.jid().compare(j)) {
 		if(d->self)
@@ -894,29 +894,29 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		Q3PopupMenu pm;
 
 		Q3PopupMenu *am = new Q3PopupMenu(&pm);
-		am->insertItem(IconsetFactory::icon("psi/disco"), tr("Online Users"), 5);
-		am->insertItem(IconsetFactory::icon("psi/sendMessage"), tr("Send server message"), 1);
+		am->insertItem(IconsetFactory::icon("psi/disco").icon(), tr("Online Users"), 5);
+		am->insertItem(IconsetFactory::icon("psi/sendMessage").icon(), tr("Send server message"), 1);
 		am->insertSeparator();
 		am->insertItem(/*IconsetFactory::iconPixmap("psi/edit"),*/ tr("Set MOTD"), 2);
 		am->insertItem(/*IconsetFactory::iconPixmap("psi/edit/clear"),*/ tr("Update MOTD"), 3);
-		am->insertItem(IconsetFactory::icon("psi/remove"), tr("Delete MOTD"), 4);
+		am->insertItem(IconsetFactory::icon("psi/remove").icon(), tr("Delete MOTD"), 4);
 
 		const int status_start = 16;
 		Q3PopupMenu *sm = new Q3PopupMenu(&pm);
-		sm->insertItem(PsiIconset::instance()->status(STATUS_ONLINE),	status2txt(STATUS_ONLINE),	STATUS_ONLINE		+ status_start);
+		sm->insertItem(PsiIconset::instance()->status(STATUS_ONLINE).icon(),	status2txt(STATUS_ONLINE),	STATUS_ONLINE		+ status_start);
 		if (PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool())
-			sm->insertItem(PsiIconset::instance()->status(STATUS_CHAT),		status2txt(STATUS_CHAT),	STATUS_CHAT		+ status_start);
+			sm->insertItem(PsiIconset::instance()->status(STATUS_CHAT).icon(),		status2txt(STATUS_CHAT),	STATUS_CHAT		+ status_start);
 		sm->insertSeparator();
-		sm->insertItem(PsiIconset::instance()->status(STATUS_AWAY),		status2txt(STATUS_AWAY),	STATUS_AWAY		+ status_start);
+		sm->insertItem(PsiIconset::instance()->status(STATUS_AWAY).icon(),		status2txt(STATUS_AWAY),	STATUS_AWAY		+ status_start);
 		if (PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool())
-			sm->insertItem(PsiIconset::instance()->status(STATUS_XA),		status2txt(STATUS_XA),		STATUS_XA		+ status_start);
-		sm->insertItem(PsiIconset::instance()->status(STATUS_DND),		status2txt(STATUS_DND),		STATUS_DND		+ status_start);
+			sm->insertItem(PsiIconset::instance()->status(STATUS_XA).icon(),		status2txt(STATUS_XA),		STATUS_XA		+ status_start);
+		sm->insertItem(PsiIconset::instance()->status(STATUS_DND).icon(),		status2txt(STATUS_DND),		STATUS_DND		+ status_start);
 		if (PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool()) {
 			sm->insertSeparator();
-			sm->insertItem(PsiIconset::instance()->status(STATUS_INVISIBLE),	status2txt(STATUS_INVISIBLE),	STATUS_INVISIBLE	+ status_start);
+			sm->insertItem(PsiIconset::instance()->status(STATUS_INVISIBLE).icon(),	status2txt(STATUS_INVISIBLE),	STATUS_INVISIBLE	+ status_start);
 		}
 		sm->insertSeparator();
-		sm->insertItem(PsiIconset::instance()->status(STATUS_OFFLINE),	status2txt(STATUS_OFFLINE),	STATUS_OFFLINE		+ status_start);
+		sm->insertItem(PsiIconset::instance()->status(STATUS_OFFLINE).icon(),	status2txt(STATUS_OFFLINE),	STATUS_OFFLINE		+ status_start);
 		pm.insertItem(tr("&Status"), sm);
 		pm.insertItem(tr("Mood"), 11);
 		pm.setItemEnabled(11, d->pa->serverInfoManager()->hasPEP());
@@ -924,14 +924,14 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		pm.setItemEnabled(12, d->pa->serverInfoManager()->hasPEP());
 
 		pm.insertSeparator();
-		pm.insertItem(IconsetFactory::icon("psi/addContact"), tr("&Add a contact"), 7);
-		pm.insertItem(IconsetFactory::icon("psi/disco"), tr("Service &Discovery"), 9);
+		pm.insertItem(IconsetFactory::icon("psi/addContact").icon(), tr("&Add a contact"), 7);
+		pm.insertItem(IconsetFactory::icon("psi/disco").icon(), tr("Service &Discovery"), 9);
 		if (PsiOptions::instance()->getOption("options.ui.message.enabled").toBool())
-			pm.insertItem(IconsetFactory::icon("psi/sendMessage"), tr("New &blank message"), 6);
+			pm.insertItem(IconsetFactory::icon("psi/sendMessage").icon(), tr("New &blank message"), 6);
 		pm.insertSeparator();
-		pm.insertItem(IconsetFactory::icon("psi/xml"), tr("&XML Console"), 10);
+		pm.insertItem(IconsetFactory::icon("psi/xml").icon(), tr("&XML Console"), 10);
 		pm.insertSeparator();
-		pm.insertItem(IconsetFactory::icon("psi/account"), tr("&Modify Account..."), 0);
+		pm.insertItem(IconsetFactory::icon("psi/account").icon(), tr("&Modify Account..."), 0);
 
 		if (PsiOptions::instance()->getOption("options.ui.menu.account.admin").toBool()) {
 			pm.insertSeparator();
@@ -997,7 +997,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		Q3PopupMenu pm;
 
 		if (PsiOptions::instance()->getOption("options.ui.message.enabled").toBool())
-			pm.insertItem(IconsetFactory::icon("psi/sendMessage"), tr("Send message to group"), 0);
+			pm.insertItem(IconsetFactory::icon("psi/sendMessage").icon(), tr("Send message to group"), 0);
 		if(!option.lockdown.roster) {
 			// disable if it's not a user group
 			if(!online || i->groupType() != ContactViewItem::gUser || gname == ContactView::tr("Hidden")) {
@@ -1010,8 +1010,8 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 
 			d->cv->qa_ren->addTo(&pm);
 			pm.insertSeparator();
-			pm.insertItem(IconsetFactory::icon("psi/remove"), tr("Remove group"), 2);
-			pm.insertItem(IconsetFactory::icon("psi/remove"), tr("Remove group and contacts"), 3);
+			pm.insertItem(IconsetFactory::icon("psi/remove").icon(), tr("Remove group"), 2);
+			pm.insertItem(IconsetFactory::icon("psi/remove").icon(), tr("Remove group and contacts"), 3);
 		}
 
 		if(i->groupType() == ContactViewItem::gAgents) {
@@ -1094,7 +1094,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		Q3PopupMenu pm;
 
 		if(!self && !inList && !isPrivate && !option.lockdown.roster) {
-			pm.insertItem(IconsetFactory::icon("psi/addContact"), tr("Add/Authorize to contact list"), 10);
+			pm.insertItem(IconsetFactory::icon("psi/addContact").icon(), tr("Add/Authorize to contact list"), 10);
 			if(!online)
 				pm.setItemEnabled(10, false);
 			pm.insertSeparator();
@@ -1174,7 +1174,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 
 		// Voice call
 		if(d->pa->voiceCaller() && !isAgent) {
-			pm.insertItem(IconsetFactory::icon("psi/voice"), tr("Voice Call"), 24);
+			pm.insertItem(IconsetFactory::icon("psi/voice").icon(), tr("Voice Call"), 24);
 			if(!online) {
 				pm.setItemEnabled(24, false);
 			}
@@ -1190,7 +1190,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		
 		if(!isAgent) {
 			pm.insertSeparator();
-			pm.insertItem(IconsetFactory::icon("psi/upload"), tr("Send &file"), 23);
+			pm.insertItem(IconsetFactory::icon("psi/upload").icon(), tr("Send &file"), 23);
 			if(!online)
 				pm.setItemEnabled(23, false);
 		}
@@ -1272,10 +1272,10 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 
 				d->cv->qa_logon->setEnabled( !avail && online );
 
-				d->cv->qa_logon->setIconSet(PsiIconset::instance()->status(e->u.jid(), STATUS_ONLINE));
+				d->cv->qa_logon->setIcon(PsiIconset::instance()->status(e->u.jid(), STATUS_ONLINE).icon());
 				d->cv->qa_logon->addTo(&pm);
 
-				pm.insertItem(PsiIconset::instance()->status(e->u.jid(), STATUS_OFFLINE), tr("Log off"), 16);
+				pm.insertItem(PsiIconset::instance()->status(e->u.jid(), STATUS_OFFLINE).icon(), tr("Log off"), 16);
 				if(!avail || !online)
 					pm.setItemEnabled(16, false);
 				pm.insertSeparator();
@@ -1317,9 +1317,9 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 
 		if(PGPUtil::pgpAvailable() && PsiOptions::instance()->getOption("options.ui.menu.contact.custom-pgp-key").toBool()) {
 			if(u->publicKeyID().isEmpty())
-				pm.insertItem(IconsetFactory::icon("psi/gpg-yes"), tr("Assign Open&PGP key"), 21);
+				pm.insertItem(IconsetFactory::icon("psi/gpg-yes").icon(), tr("Assign Open&PGP key"), 21);
 			else
-				pm.insertItem(IconsetFactory::icon("psi/gpg-no"), tr("Unassign Open&PGP key"), 22);
+				pm.insertItem(IconsetFactory::icon("psi/gpg-no").icon(), tr("Unassign Open&PGP key"), 22);
 		}
 
 		d->cv->qa_vcard->addTo( &pm );
@@ -2752,7 +2752,7 @@ public:
 	bool animatingNick;
 	bool status_single;
 
-	Icon *icon, *lastIcon;
+	PsiIcon *icon, *lastIcon;
 	int animateNickX, animateNickColor; // nick animation
 };
 
@@ -3282,7 +3282,7 @@ void ContactViewItem::resetAnim()
 	}
 }
 
-void ContactViewItem::setAlert(const Icon *icon)
+void ContactViewItem::setAlert(const PsiIcon *icon)
 {
 	bool reset = false;
 
@@ -3308,13 +3308,13 @@ void ContactViewItem::clearAlert()
 	}
 }
 
-void ContactViewItem::setIcon(const Icon *icon, bool alert)
+void ContactViewItem::setIcon(const PsiIcon *icon, bool alert)
 {
 	if ( d->lastIcon == icon ) {
 		return; // cause less flicker. but still have to run calltree valgring skin on psi while online (mblsha).
 	}
 	else
-		d->lastIcon = (Icon *)icon;
+		d->lastIcon = (PsiIcon *)icon;
 
 	if ( d->icon ) {
 		disconnect(d->icon, 0, this, 0 );
@@ -3327,7 +3327,7 @@ void ContactViewItem::setIcon(const Icon *icon, bool alert)
 	QPixmap pix;
 	if ( icon ) {
 		if ( !alert )
-			d->icon = new Icon(*icon);
+			d->icon = new PsiIcon(*icon);
 		else
 			d->icon = new AlertIcon(icon);
 

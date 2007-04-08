@@ -473,7 +473,7 @@
        <property name="text" >
         <string>&amp;Retrieve</string>
        </property>
-       <property name="iconName" stdset="0" >
+       <property name="psiIconName" stdset="0" >
         <string>psi/reload</string>
        </property>
       </widget>
@@ -483,7 +483,7 @@
        <property name="text" >
         <string>&amp;Close</string>
        </property>
-       <property name="iconName" stdset="0" >
+       <property name="psiIconName" stdset="0" >
         <string>psi/close</string>
        </property>
       </widget>

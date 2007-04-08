@@ -35,7 +35,7 @@
 #ifndef WIDGET_PLUGIN
 #include "iconset.h"
 #else
-class Icon;
+class PsiIcon;
 class Iconset;
 #endif
 
@@ -171,7 +171,7 @@ static QString unescape(const QString& escaped)
 }
 
 /**
- * Inserts an Icon into document.
+ * Inserts an PsiIcon into document.
  * \param cursor this cursor is used to insert icon
  * \param iconName icon's name, by which it could be found in IconsetFactory
  * \param iconText icon's text, used when copy operation is performed

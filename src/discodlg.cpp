@@ -55,7 +55,7 @@
 
 //----------------------------------------------------------------------------
 
-Icon category2icon(const QString &category, const QString &type, int status=STATUS_ONLINE)
+PsiIcon category2icon(const QString &category, const QString &type, int status=STATUS_ONLINE)
 {
 	// TODO: update this to http://www.jabber.org/registrar/disco-categories.html#gateway
 
@@ -133,7 +133,7 @@ Icon category2icon(const QString &category, const QString &type, int status=STAT
 	   // en2ru
 	   // ??2??
 	   // tts
-	return Icon();
+	return PsiIcon();
 }
 
 //----------------------------------------------------------------------------
@@ -315,17 +315,17 @@ void DiscoListItem::copyItem(const DiscoItem &it)
 		DiscoItem::Identity id = di.identities().first();
 
 		if ( !id.category.isEmpty() ) {
-			Icon ic = category2icon(id.category, id.type);
+			PsiIcon ic = category2icon(id.category, id.type);
 
 			if ( !ic.impix().isNull() ) {
-				setPixmap (0, ic.impix().pixmap());
+				setPixmap (0, ic.impix());
 				pixmapOk = true;
 			}
 		}
 	}
 
 	if ( !pixmapOk )
-		setPixmap (0, PsiIconset::instance()->status(di.jid(), STATUS_ONLINE));
+		setPixmap(0, PsiIconset::instance()->status(di.jid(), STATUS_ONLINE).impix());
 
 	repaint();
 
@@ -666,16 +666,16 @@ void DiscoListItem::discoInfoFinished()
 			if ( !di.identities().isEmpty() ) {
 				DiscoItem::Identity id = di.identities().first();
 				if ( !id.category.isEmpty() ) {
-					Icon ic = category2icon(id.category, id.type, STATUS_ERROR);
+					PsiIcon ic = category2icon(id.category, id.type, STATUS_ERROR);
 
 					if ( !ic.impix().isNull() ) {
-						setPixmap (0, ic.impix().pixmap());
+						setPixmap (0, ic.impix());
 						pixmapOk = true;
 					}
 				}
 			}
 			if ( !pixmapOk )
-				setPixmap (0, PsiIconset::instance()->status(di.jid(), STATUS_ERROR));
+				setPixmap(0, PsiIconset::instance()->status(di.jid(), STATUS_ERROR).impix());
 		} else {
 			repaint(); //for setExpandable() called earlier
 		}
@@ -764,7 +764,7 @@ bool DiscoListView::maybeTip(const QPoint &pos)
 		DiscoItem::Identities::ConstIterator it = item.identities().begin();
 		for ( ; it != item.identities().end(); ++it) {
 			text += "<br>";
-			Icon icon( category2icon((*it).category, (*it).type) );
+			PsiIcon icon( category2icon((*it).category, (*it).type) );
 			if ( !icon.name().isEmpty() )
 				text += "<icon name=\"" + icon.name() + "\"> ";
 			text += (*it).name;
@@ -1418,7 +1418,7 @@ DiscoDlg::DiscoDlg(PsiAccount *pa, const Jid &jid, const QString &node)
 	d->node = node;
 
 	setWindowTitle(CAP(caption()));
-	setWindowIcon(PsiIconset::instance()->transportStatus("transport", STATUS_ONLINE));
+	setWindowIcon(PsiIconset::instance()->transportStatus("transport", STATUS_ONLINE).icon());
 	X11WM_CLASS("disco");
 
 	connect (pb_browse, SIGNAL(clicked()), d, SLOT(doDisco()));

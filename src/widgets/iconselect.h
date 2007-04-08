@@ -1,5 +1,5 @@
 /*
- * iconselect.h - class that allows user to select an Icon from an Iconset
+ * iconselect.h - class that allows user to select an PsiIcon from an Iconset
  * Copyright (C) 2003  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
 
 #include <QMenu>
 
-class Icon;
+class PsiIcon;
 class Iconset;
 
 class IconSelectPopup : public QMenu
@@ -41,7 +41,7 @@ public:
 	void mousePressEvent(QMouseEvent *e);
 
 signals:
-	void iconSelected(const Icon *);
+	void iconSelected(const PsiIcon *);
 	void textSelected(QString);
 
 private:

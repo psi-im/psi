@@ -1054,7 +1054,7 @@ int PsiCon::getId()
 
 void PsiCon::queueChanged()
 {
-	Icon *nextAnim = 0;
+	PsiIcon *nextAnim = 0;
 	int nextAmount = d->contactList->queueCount();
 	PsiAccount *pa = d->contactList->queueLowestEventId();
 	if(pa)

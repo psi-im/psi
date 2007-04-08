@@ -7,7 +7,7 @@
 #include <QByteArray>
 
 struct Options;
-class Icon;
+class PsiIcon;
 class QWidget;
 class PsiCon;
 
@@ -23,11 +23,11 @@ public:
 	virtual QByteArray parentId() const;	// Identifier of parent tab, i.e. "general"
 
 	virtual QString tabName() const;	// "General"
-	virtual Icon *tabIcon() const;		// default implementation returns 0
+	virtual PsiIcon *tabIcon() const;		// default implementation returns 0
 
 	virtual QString name() const;		// "Roster"
 	virtual QString desc() const;		// "You can configure your roster here"
-	virtual Icon *icon() const;		// default implementation returns 0
+	virtual PsiIcon *psiIcon() const;		// default implementation returns 0
 
 	virtual QWidget *widget() = 0;		// Actual widget that contains checkboxes, pushbuttons, etc.
 						// the widget is reparented after this call

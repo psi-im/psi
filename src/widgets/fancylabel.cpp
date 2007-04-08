@@ -45,7 +45,7 @@ class IconLabel::Private : public QObject
 public:
 
 	IconLabel *label;
-	Icon *icon;
+	PsiIcon *icon;
 	bool copyIcon;
 #ifdef WIDGET_PLUGIN
 	QString iconName;
@@ -66,16 +66,16 @@ public:
 #endif
 	}
 
-	void setIcon(const Icon *i, bool _copyIcon)
+	void setIcon(const PsiIcon *i, bool _copyIcon)
 	{
 		copyIcon = _copyIcon;
 
 		stopIcon();
 #ifndef WIDGET_PLUGIN
 		if ( i && copyIcon )
-			icon = new Icon(*i);
+			icon = new PsiIcon(*i);
 		else
-			icon = (Icon *)i;
+			icon = (PsiIcon *)i;
 #else
     Q_UNUSED(i);
 #endif
@@ -124,12 +124,12 @@ IconLabel::~IconLabel()
 	delete d;
 }
 
-const Icon *IconLabel::icon () const
+const PsiIcon *IconLabel::psiIcon () const
 {
 	return d->icon;
 }
 
-QString IconLabel::iconName () const
+QString IconLabel::psiIconName () const
 {
 #ifndef WIDGET_PLUGIN
 	if ( d->icon )
@@ -140,15 +140,15 @@ QString IconLabel::iconName () const
 #endif
 }
 
-void IconLabel::setIcon (const Icon *i, bool copyIcon)
+void IconLabel::setPsiIcon(const PsiIcon *i, bool copyIcon)
 {
 	d->setIcon(i, copyIcon);
 }
 
-void IconLabel::setIcon (const QString &name)
+void IconLabel::setPsiIcon(const QString &name)
 {
 #ifndef WIDGET_PLUGIN
-	setIcon( IconsetFactory::iconPtr(name) );
+	setPsiIcon( IconsetFactory::iconPtr(name) );
 #else
 	d->iconName = name;
 	setText("<qt>icon:<br><small>" + name + "</small></qt>");
@@ -365,24 +365,24 @@ const QColor &FancyLabel::colorFont () const
 	return d->font;
 }
 
-const Icon *FancyLabel::icon () const
+const PsiIcon *FancyLabel::psiIcon () const
 {
-	return d->pix->icon();
+	return d->pix->psiIcon();
 }
 
-void FancyLabel::setIcon (const Icon *i)
+void FancyLabel::setPsiIcon (const PsiIcon *i)
 {
-	d->pix->setIcon (i);
+	d->pix->setPsiIcon(i);
 }
 
-void FancyLabel::setIcon (const QString &name)
+void FancyLabel::setPsiIcon (const QString &name)
 {
-	d->pix->setIcon(name);
+	d->pix->setPsiIcon(name);
 }
 
-QString FancyLabel::iconName () const
+QString FancyLabel::psiIconName () const
 {
-	return d->pix->iconName();
+	return d->pix->psiIconName();
 }
 
 FancyLabel::Shape FancyLabel::frameShape () const

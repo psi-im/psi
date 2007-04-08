@@ -1,5 +1,5 @@
 /*
- * iconselect.cpp - class that allows user to select an Icon from an Iconset
+ * iconselect.cpp - class that allows user to select an PsiIcon from an Iconset
  * Copyright (C) 2003-2005  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
@@ -45,14 +45,14 @@
 //! \if _hide_doc_
 /**
 	\class IconSelectButton
-	\brief This button is used by IconSelect and displays one Icon 
+	\brief This button is used by IconSelect and displays one PsiIcon 
 */
 class IconSelectButton : public QAbstractButton
 {
 	Q_OBJECT
 
 private:
-	Icon *ic;
+	PsiIcon *ic;
 	QString text;
 	QSize s;
 	bool animated;
@@ -76,7 +76,7 @@ public:
 		}
 	}
 
-	void setIcon(const Icon *i)
+	void setIcon(const PsiIcon *i)
 	{
 		iconStop();
 
@@ -86,12 +86,12 @@ public:
 		}
 
 		if ( i )
-			ic = new Icon(*((Icon *)i));
+			ic = new PsiIcon(*((PsiIcon *)i));
 		else
 			ic = 0;
 	}
 
-	const Icon *icon() const
+	const PsiIcon *icon() const
 	{
 		return ic;
 	}
@@ -100,7 +100,7 @@ public:
 	void setSizeHint(QSize sh) { s = sh; }
 
 signals:
-	void iconSelected(const Icon *);
+	void iconSelected(const PsiIcon *);
 	void textSelected(QString);
 
 public slots:
@@ -304,9 +304,9 @@ void IconSelect::setIconset(const Iconset &iconset)
 	float w = 0, h = 0;
 
 	double count; // the 'double' type is somewhat important for MSVC.NET here
-	QListIterator<Icon *> it = is.iterator();
+	QListIterator<PsiIcon *> it = is.iterator();
 	for (count = 0; it.hasNext(); count++) {
-		Icon *icon = it.next();
+		PsiIcon *icon = it.next();
 		w += icon->pixmap().width();
 		h += icon->pixmap().height();
 	}
@@ -342,7 +342,7 @@ void IconSelect::setIconset(const Iconset &iconset)
 		grid->addWidget(b);
 		b->setIcon( it.next() );
 		b->setSizeHint( QSize(tileSize, tileSize) );
-		connect (b, SIGNAL(iconSelected(const Icon *)), menu, SIGNAL(iconSelected(const Icon *)));
+		connect (b, SIGNAL(iconSelected(const PsiIcon *)), menu, SIGNAL(iconSelected(const PsiIcon *)));
 		connect (b, SIGNAL(textSelected(QString)), menu, SIGNAL(textSelected(QString)));
 
 		connect (menu, SIGNAL(aboutToShow()), b, SLOT(aboutToShow()));

@@ -210,7 +210,7 @@ public:
 
 	QString whatsThis() const
 	{
-		return "Label that can contain animated Icon.";
+		return "Label that can contain animated PsiIcon.";
 	}
 
 	QString includeFile() const
@@ -382,7 +382,7 @@ public:
 
 	QString whatsThis() const
 	{
-		return "PushButton that can contain animated Icon.";
+		return "PushButton that can contain animated PsiIcon.";
 	}
 
 	QString includeFile() const
@@ -423,7 +423,7 @@ public:
 
 	QString whatsThis() const
 	{
-		return "ToolButton that can contain animated Icon.";
+		return "ToolButton that can contain animated PsiIcon.";
 	}
 
 	QString includeFile() const

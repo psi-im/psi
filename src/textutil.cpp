@@ -414,16 +414,16 @@ QString TextUtil::emoticonify(const QString &in)
 		while ( i >= 0 ) {
 			// find closest emoticon
 			int ePos = -1;
-			Icon *closest = 0;
+			PsiIcon *closest = 0;
 
 			int foundPos = -1, foundLen = -1;
 
 			Q3PtrListIterator<Iconset> iconsets(PsiIconset::instance()->emoticons);
 			Iconset *iconset;
     			while ( (iconset = iconsets.current()) != 0 ) {
-				QListIterator<Icon*> it = iconset->iterator();
+				QListIterator<PsiIcon*> it = iconset->iterator();
 				while ( it.hasNext()) {
-					Icon *icon = it.next();
+					PsiIcon *icon = it.next();
 					if ( icon->regExp().isEmpty() )
 						continue;
 

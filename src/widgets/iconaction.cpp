@@ -26,7 +26,7 @@
 #ifndef WIDGET_PLUGIN
 #include "iconset.h"
 #else
-class Icon;
+class PsiIcon;
 class Iconset;
 #endif
 
@@ -44,7 +44,7 @@ class IconAction::Private : public QObject
 	Q_OBJECT
 public:
 	QList<IconToolButton *> buttons;
-	Icon *icon;
+	PsiIcon *icon;
 #ifdef WIDGET_PLUGIN
 	QString iconName;
 #endif
@@ -110,12 +110,12 @@ IconAction::~IconAction()
 	delete d;
 }
 
-const Icon *IconAction::psiIcon() const
+const PsiIcon *IconAction::psiIcon() const
 {
 	return d->icon;
 }
 
-void IconAction::setPsiIcon(const Icon *i)
+void IconAction::setPsiIcon(const PsiIcon *i)
 {
 #ifdef WIDGET_PLUGIN
 	Q_UNUSED(i);
@@ -129,18 +129,18 @@ void IconAction::setPsiIcon(const Icon *i)
 
 	QIcon is;
 	if ( i ) {
-		d->icon = new Icon(*i);
+		d->icon = new PsiIcon(*i);
 		connect(d->icon, SIGNAL(iconModified(const QPixmap &)), SLOT(iconUpdated(const QPixmap &)));
 		d->icon->activated(true);
 
-		is = d->icon->iconSet();
+		is = d->icon->icon();
 	}
 
 	QAction::setIcon( is );
 
 	IconToolButton *btn;
 	foreach ( btn, d->buttons )
-		btn->setIcon ( d->icon );
+		btn->setPsiIcon ( d->icon );
 #endif
 }
 
@@ -178,7 +178,7 @@ bool IconAction::addTo(QWidget *w)
 		btn->setDefaultAction(this);
 		
 		btn->setText( text() );
-		btn->setIcon( d->icon, false );
+		btn->setPsiIcon( d->icon, false );
 
 		btn->setDefaultAction(this);
 
@@ -250,7 +250,7 @@ void IconAction::iconUpdated(const QPixmap &pix)
 {
 	Q_UNUSED( pix );
 #ifndef WIDGET_PLUGIN
-	QAction::setIcon( d->icon->iconSet() );
+	QAction::setIcon( d->icon->icon() );
 #endif
 }
 

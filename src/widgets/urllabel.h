@@ -1,5 +1,5 @@
 /*
- * psitextview.h - Icon-aware QTextView subclass widget
+ * psitextview.h - PsiIcon-aware QTextView subclass widget
  * Copyright (C) 2003  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or

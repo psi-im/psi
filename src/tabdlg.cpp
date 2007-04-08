@@ -58,7 +58,7 @@ TabDlg::TabDlg(PsiCon *psiCon)
 
 	closeCross = new QPushButton(this);
 	//closeCross->setText("x");
-	closeCross->setIconSet(IconsetFactory::icon("psi/closetab").iconSet());
+	closeCross->setIcon(IconsetFactory::icon("psi/closetab").icon());
 	closeCross->hide();
 	/*if (option.usePerTabCloseButton)
 	  tabs->setHoverCloseButton(true);
@@ -156,7 +156,7 @@ void TabDlg::setLooks()
 {
 	//set the widget icon
 #ifndef Q_WS_MAC
-	setIcon(IconsetFactory::icon("psi/start-chat"));
+	setWindowIcon(IconsetFactory::icon("psi/start-chat").icon());
 #endif
 	tabs->setTabPosition(QTabWidget::Top);
 	if (option.putTabsAtBottom)
@@ -194,7 +194,7 @@ void TabDlg::addChat(ChatDlg* chat)
 {
 	chats.append(chat);
 	tabs->addTab(chat, chat->getDisplayNick());
-	tabs->setTabIconSet(chat, IconsetFactory::icon("psi/start-chat"));
+	tabs->setTabIconSet(chat, IconsetFactory::icon("psi/start-chat").icon());
 
 	tabs->showPage(chat);
 	connect ( chat, SIGNAL( captionChanged( ChatDlg*) ), SLOT( updateTab( ChatDlg* ) ) );

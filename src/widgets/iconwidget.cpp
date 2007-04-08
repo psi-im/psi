@@ -1,5 +1,5 @@
 /*
- * iconwidget.cpp - misc. Iconset- and Icon-aware widgets
+ * iconwidget.cpp - misc. Iconset- and PsiIcon-aware widgets
  * Copyright (C) 2003-2006  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
@@ -224,7 +224,7 @@ private:
 	static const int displayNumIcons;
 #ifndef WIDGET_PLUGIN
 	Iconset iss;
-	QMap<Icon*, QRect> iconRects;
+	QMap<PsiIcon*, QRect> iconRects;
 #endif
 	int w, h;
 	mutable int fullW, fullH;
@@ -242,13 +242,13 @@ public:
 
 		int count;
 
-		QListIterator<Icon *> it = iss.iterator();
+		QListIterator<PsiIcon *> it = iss.iterator();
 		count = 0;
 		while ( it.hasNext() ) {
 			if ( count++ >= displayNumIcons )
 				break; // display only first displayNumIcons icons
 
-			Icon *icon = it.next();
+			PsiIcon *icon = it.next();
 			QPixmap pix = icon->pixmap();
 
 			iconRects[icon] = QRect( w, margin, pix.width(), pix.height() );
@@ -260,7 +260,7 @@ public:
 			icon->activated(false); // start animation
 		}
 
-		QMap<Icon*, QRect>::Iterator it2;
+		QMap<PsiIcon*, QRect>::Iterator it2;
 		for (it2 = iconRects.begin(); it2 != iconRects.end(); it2++) {
 			QRect r = it2.data();
 			it2.data() = QRect( r.x(), (h - r.height())/2, r.width(), r.height() );
@@ -273,7 +273,7 @@ public:
 	~IconsetSelectItem()
 	{
 #ifndef WIDGET_PLUGIN
-		QMap<Icon*, QRect>::Iterator it;
+		QMap<PsiIcon*, QRect>::Iterator it;
 		for (it = iconRects.begin(); it != iconRects.end(); it++)
 			it.key()->stop();
 #endif
@@ -307,9 +307,9 @@ public:
 		QFontMetrics fm = painter->fontMetrics();
 		painter->drawText( 3, fm.ascent() + (fm.leading()+1)/2 + 1, text() );
 
-		QMap<Icon*, QRect>::ConstIterator it;
+		QMap<PsiIcon*, QRect>::ConstIterator it;
 		for (it = iconRects.begin(); it != iconRects.end(); it++) {
-			Icon *icon = it.key();
+			PsiIcon *icon = it.key();
 			QRect r = it.data();
 			painter->drawPixmap(QPoint(10 + r.left(), fm.lineSpacing() + 2 + r.top()), icon->pixmap());
 		}
@@ -395,11 +395,11 @@ class IconsetDisplayItem : public RealIconWidgetItem
 	Q_OBJECT
 private:
 	static const int margin;
-	Icon *icon;
+	PsiIcon *icon;
 	int w, h;
 
 public:
-	IconsetDisplayItem(QListWidget *parent, Icon *i, int iconW)
+	IconsetDisplayItem(QListWidget *parent, PsiIcon *i, int iconW)
 	: RealIconWidgetItem(parent)
 	{
 #ifndef WIDGET_PLUGIN
@@ -475,7 +475,7 @@ void IconsetDisplay::setIconset(const Iconset &iconset)
 {
 #ifndef WIDGET_PLUGIN
 	int w = 0;
-	QListIterator<Icon *> it = iconset.iterator();
+	QListIterator<PsiIcon *> it = iconset.iterator();
 	while ( it.hasNext() ) {
 		w = qMax(w, it.next()->pixmap().width());
 	}
@@ -497,7 +497,7 @@ class IconButton::Private : public QObject
 {
 	Q_OBJECT
 public:
-	Icon *icon;
+	PsiIcon *icon;
 	IconButton *button;
 	bool textVisible;
 	bool activate, forced;
@@ -519,7 +519,7 @@ public:
 		iconStop();
 	}
 
-	void setIcon(Icon *i)
+	void setIcon(PsiIcon *i)
 	{
 #ifndef WIDGET_PLUGIN
 		iconStop();
@@ -605,28 +605,28 @@ void IconButton::setIcon(const QPixmap &p)
 	QPushButton::setIcon(p);
 }
 
-void IconButton::forceSetIcon(const Icon *i, bool activate)
+void IconButton::forceSetPsiIcon(const PsiIcon *i, bool activate)
 {
 	d->activate = activate;
-	d->setIcon ((Icon *)i);
+	d->setIcon((PsiIcon *)i);
 	d->forced = true;
 }
 
-void IconButton::setIcon(const Icon *i, bool activate)
+void IconButton::setPsiIcon(const PsiIcon *i, bool activate)
 {
 #ifndef Q_WS_X11
 	if ( !text().isEmpty() )
 		return;
 #endif
 
-	forceSetIcon(i, activate);
+	forceSetPsiIcon(i, activate);
 	d->forced = false;
 }
 
-void IconButton::setIcon(const QString &name)
+void IconButton::setPsiIcon(const QString &name)
 {
 #ifndef WIDGET_PLUGIN
-	setIcon( IconsetFactory::iconPtr(name) );
+	setPsiIcon( IconsetFactory::iconPtr(name) );
 #else
 	d->iconName = name;
 
@@ -639,7 +639,7 @@ void IconButton::setIcon(const QString &name)
 #endif
 }
 
-QString IconButton::iconName() const
+QString IconButton::psiIconName() const
 {
 #ifndef WIDGET_PLUGIN
 	if ( d->icon )
@@ -654,7 +654,7 @@ void IconButton::setText(const QString &text)
 {
 #ifndef Q_WS_X11
 	if ( !d->forced )
-		setIcon(0);
+		setPsiIcon(0);
 #endif
 
 	QPushButton::setText( text );
@@ -680,7 +680,7 @@ class IconToolButton::Private : public QObject
 {
 	Q_OBJECT
 public:
-	Icon *icon;
+	PsiIcon *icon;
 	IconToolButton *button;
 	bool activate;
 #ifdef WIDGET_PLUGIN
@@ -699,12 +699,12 @@ public:
 		iconStop();
 	}
 
-	void setIcon(const Icon *i)
+	void setIcon(const PsiIcon *i)
 	{
 #ifndef WIDGET_PLUGIN
 		iconStop();
 		if ( i )
-			icon = new Icon(*i);
+			icon = new PsiIcon(*i);
 		iconStart();
 #else
 		Q_UNUSED(i);
@@ -773,22 +773,22 @@ void IconToolButton::setIcon(const QIcon &p)
 	QToolButton::setIcon(p);
 }
 
-void IconToolButton::setIcon(const Icon *i, bool activate)
+void IconToolButton::setPsiIcon(const PsiIcon *i, bool activate)
 {
 	d->activate = activate;
-	d->setIcon ((Icon *)i);
+	d->setIcon ((PsiIcon *)i);
 }
 
-void IconToolButton::setIcon(const QString &name)
+void IconToolButton::setPsiIcon(const QString &name)
 {
 #ifndef WIDGET_PLUGIN
-	setIcon( IconsetFactory::iconPtr(name) );
+	setPsiIcon( IconsetFactory::iconPtr(name) );
 #else
 	d->iconName = name;
 #endif
 }
 
-QString IconToolButton::iconName() const
+QString IconToolButton::psiIconName() const
 {
 #ifndef WIDGET_PLUGIN
 	if ( d->icon )

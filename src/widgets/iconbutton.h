@@ -1,5 +1,5 @@
 /*
- * iconwidget.h - misc. Iconset- and Icon-aware widgets
+ * iconwidget.h - misc. Iconset- and PsiIcon-aware widgets
  * Copyright (C) 2003  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
@@ -28,16 +28,16 @@
 #include <QIconSet>
 
 
-class Icon;
+class PsiIcon;
 
 class IconButton : public QPushButton
 {
 	Q_OBJECT
-	Q_PROPERTY( QString iconName READ iconName WRITE setIcon )
+	Q_PROPERTY( QString psiIconName READ psiIconName WRITE setPsiIcon )
 	Q_PROPERTY( bool textVisible READ textVisible WRITE setTextVisible )
 
 	Q_OVERRIDE( QPixmap pixmap DESIGNABLE false SCRIPTABLE false )
-	Q_OVERRIDE( QIconSet iconSet DESIGNABLE false SCRIPTABLE false )
+	Q_OVERRIDE( QIcon icon DESIGNABLE false SCRIPTABLE false )
 
 public:
 	IconButton(QWidget *parent = 0);
@@ -46,10 +46,10 @@ public:
 	void setIcon(const QPixmap &);
 
 public slots:
-	void setIcon(const Icon *, bool activate = true);
-	void forceSetIcon(const Icon *, bool activate = true);
-	void setIcon(const QString &);
-	QString iconName() const;
+	void setPsiIcon(const PsiIcon *, bool activate = true);
+	void forceSetPsiIcon(const PsiIcon *, bool activate = true);
+	void setPsiIcon(const QString &);
+	QString psiIconName() const;
 
 	void setText(const QString &);
 

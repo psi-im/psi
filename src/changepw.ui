@@ -136,7 +136,7 @@
               <property name="text" >
                 <string>&amp;Apply</string>
               </property>
-              <property name="iconName" stdset="0" >
+              <property name="psiIconName" stdset="0" >
                 <string>psi/register</string>
               </property>
             </widget>

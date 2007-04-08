@@ -24,21 +24,21 @@
 #include <qwidget.h>
 #include <qlabel.h>
 
-class Icon;
+class PsiIcon;
 
 class IconLabel : public QLabel
 {
 	Q_OBJECT
-	Q_PROPERTY( QString iconName READ iconName WRITE setIcon )
+	Q_PROPERTY( QString psiIconName READ psiIconName WRITE setPsiIcon )
 
 public:
 	IconLabel(QWidget *parent = 0);
 	~IconLabel();
 
-	const Icon *icon () const;
-	QString iconName () const;
-	void setIcon (const Icon *, bool copyIcon = true);
-	void setIcon (const QString &);
+	const PsiIcon *psiIcon () const;
+	QString psiIconName () const;
+	void setPsiIcon (const PsiIcon *, bool copyIcon = true);
+	void setPsiIcon (const QString &);
 
 	void setScaledContents(int width, int height);
 

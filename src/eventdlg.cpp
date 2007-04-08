@@ -292,7 +292,7 @@ public:
 		url = _url;
 		desc = _desc;
 
-		setPixmap(0, IconsetFactory::icon("psi/www"));
+		setPixmap(0, IconsetFactory::icon("psi/www").impix());
 		setText(0, url + " (" + desc + ')');
 		setMultiLinesEnabled(true);
 	}
@@ -304,7 +304,7 @@ public:
 		gc = _gc;
 		password = _password;
 
-		setPixmap(0, IconsetFactory::icon("psi/groupChat"));
+		setPixmap(0, IconsetFactory::icon("psi/groupChat").impix());
 		QString text;
 		if (!from.isEmpty())
 			text = QObject::tr("Invitation to %1 from %2").arg(gc).arg(from);
@@ -452,7 +452,7 @@ AddUrlDlg::AddUrlDlg(QWidget *parent)
 		setAttribute(Qt::WA_MacMetalStyle);
 	setupUi(this);
 #ifndef Q_WS_MAC
-	setIcon(IconsetFactory::icon("psi/www"));
+	setWindowIcon(IconsetFactory::icon("psi/www").icon());
 #endif
 	setModal(true);
 
@@ -481,7 +481,7 @@ public:
 		setNextAnim(0);
 	}
 
-	void setNextAnim(Icon *anim) {
+	void setNextAnim(PsiIcon *anim) {
 		if (nextAnim_) {
 			delete nextAnim_;
 			nextAnim_ = 0;
@@ -491,7 +491,7 @@ public:
 			nextAnim_ = new AlertIcon(anim);
 	}
 
-	Icon *nextAnim() const {
+	PsiIcon *nextAnim() const {
 		return nextAnim_;
 	}
 
@@ -522,7 +522,7 @@ public:
 	Jid jid, realJid;
 	QString thread;
 	QStringList completionList;
-	Icon *anim;
+	PsiIcon *anim;
 	int nextAmount;
 	QWidget *w_http_id;
 	QLineEdit *le_http_id;
@@ -535,7 +535,7 @@ public:
 	QStringList sendLeft;
 
 private:
-	Icon *nextAnim_;
+	PsiIcon *nextAnim_;
 
 private slots:
 	void ensureEditPosition() {
@@ -546,7 +546,7 @@ private slots:
 	}
 
 public slots:
-	void addEmoticon(const Icon *icon) {
+	void addEmoticon(const PsiIcon *icon) {
 		if ( !dlg->isActiveWindow() )
 		     return;
 
@@ -715,7 +715,7 @@ void EventDlg::init()
 
 	d->lb_status = new IconLabel(this);
 	PsiToolTip::install(d->lb_status);
-	d->lb_status->setIcon(IconsetFactory::iconPtr("status/noauth"));
+	d->lb_status->setPsiIcon(IconsetFactory::iconPtr("status/noauth"));
 
 	QLabel *l;
 	if(d->composing) {
@@ -754,11 +754,11 @@ void EventDlg::init()
 	}
 
 	// icon select
-	//connect(d->psi->iconSelectPopup(), SIGNAL(iconSelected(const Icon *)), d, SLOT(addEmoticon(const Icon *)));
+	//connect(d->psi->iconSelectPopup(), SIGNAL(iconSelected(const PsiIcon *)), d, SLOT(addEmoticon(const PsiIcon *)));
 	connect(d->psi->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
 
 	d->tb_icon = new IconToolButton(this);
-	d->tb_icon->setIcon(IconsetFactory::iconPtr("psi/smile"));
+	d->tb_icon->setPsiIcon(IconsetFactory::iconPtr("psi/smile"));
 	d->tb_icon->setMenu(d->psi->iconSelectPopup());
 	d->tb_icon->setPopupMode(QToolButton::InstantPopup);
 	d->tb_icon->setPopupDelay(1);
@@ -784,7 +784,7 @@ void EventDlg::init()
 	}
 	else {
 		d->lb_pgp = new IconLabel(this);
-		d->lb_pgp->setIcon(IconsetFactory::iconPtr("psi/cryptoNo"));
+		d->lb_pgp->setPsiIcon(IconsetFactory::iconPtr("psi/cryptoNo"));
 		d->tb_pgp = 0;
 	}
 
@@ -911,7 +911,7 @@ void EventDlg::init()
 	d->pb_auth = new IconButton(this);
 	d->pb_auth->setText(tr("&Add/Auth"));
 	connect(d->pb_auth, SIGNAL(clicked()), SLOT(doAuth()));
-	d->pb_auth->setIcon(IconsetFactory::iconPtr("psi/addContact"));
+	d->pb_auth->setPsiIcon(IconsetFactory::iconPtr("psi/addContact"));
 	d->pb_auth->hide();
 	d->pb_auth->setMinimumWidth(96);
 	hb4->addWidget(d->pb_auth);
@@ -1270,7 +1270,7 @@ void EventDlg::doWhois(bool force)
 	if(!found) {
 		d->jid = "";
 
-		d->lb_status->setIcon(IconsetFactory::iconPtr("status/noauth"));
+		d->lb_status->setPsiIcon(IconsetFactory::iconPtr("status/noauth"));
 		d->tb_info->setEnabled(false);
 		d->tb_history->setEnabled(false);
 		setWindowTitle(tr("Send Message"));
@@ -1320,30 +1320,30 @@ void EventDlg::optionsUpdate()
 		d->tb_icon->hide();
 
 	// tool buttons: not required
-	d->tb_url->setIcon(IconsetFactory::iconPtr("psi/www"));
-	d->tb_info->setIcon(IconsetFactory::iconPtr("psi/vCard"));
-	d->tb_history->setIcon(IconsetFactory::iconPtr("psi/history"));
+	d->tb_url->setPsiIcon(IconsetFactory::iconPtr("psi/www"));
+	d->tb_info->setPsiIcon(IconsetFactory::iconPtr("psi/vCard"));
+	d->tb_history->setPsiIcon(IconsetFactory::iconPtr("psi/history"));
 	if(d->tb_pgp) {
 		QIcon i;
-		i.setPixmap(IconsetFactory::icon("psi/cryptoNo"),  QIcon::Automatic, QIcon::Normal, QIcon::Off);
-		i.setPixmap(IconsetFactory::icon("psi/cryptoYes"), QIcon::Automatic, QIcon::Normal, QIcon::On);
-		d->tb_pgp->setIconSet(i);
+		i.setPixmap(IconsetFactory::icon("psi/cryptoNo").impix(),  QIcon::Automatic, QIcon::Normal, QIcon::Off);
+		i.setPixmap(IconsetFactory::icon("psi/cryptoYes").impix(), QIcon::Automatic, QIcon::Normal, QIcon::On);
+		d->tb_pgp->setIcon(i);
 	}
 	if(d->lb_pgp)
-		d->lb_pgp->setIcon(IconsetFactory::iconPtr(d->enc ? "psi/cryptoYes" : "psi/cryptoNo"));
+		d->lb_pgp->setPsiIcon(IconsetFactory::iconPtr(d->enc ? "psi/cryptoYes" : "psi/cryptoNo"));
 
 	// update the readnext icon
 	if(d->nextAmount > 0)
-		d->pb_next->forceSetIcon(d->nextAnim());
+		d->pb_next->forceSetPsiIcon(d->nextAnim());
 
 	// update the widget icon
 #ifndef Q_WS_MAC
 	if(d->composing) {
-		setWindowIcon(IconsetFactory::icon("psi/sendMessage"));
+		setWindowIcon(IconsetFactory::icon("psi/sendMessage").icon());
 	}
 	else {
 		if(d->anim)
-			setWindowIcon(*d->anim);
+			setWindowIcon(d->anim->icon());
 	}
 #endif
 }
@@ -1654,9 +1654,9 @@ void EventDlg::updateContact(const Jid &jid)
 		}
 
 		if(status == -1 || !u)
-			d->lb_status->setIcon(IconsetFactory::iconPtr("status/noauth"));
+			d->lb_status->setPsiIcon(IconsetFactory::iconPtr("status/noauth"));
 		else
-			d->lb_status->setIcon(PsiIconset::instance()->statusPtr(jid, status));
+			d->lb_status->setPsiIcon(PsiIconset::instance()->statusPtr(jid, status));
 
 		if(u)
 			d->lb_status->setToolTip(u->makeTip(true, false));
@@ -1681,11 +1681,11 @@ void EventDlg::setTime(const QDateTime &t, bool late)
 
 void EventDlg::updateEvent(PsiEvent *e)
 {
-	Icon *oldanim = d->anim;
+	PsiIcon *oldanim = d->anim;
 	d->anim = PsiIconset::instance()->event2icon(e);
 
 	if(d->anim != oldanim)
-		setWindowIcon(*d->anim);
+		setWindowIcon(d->anim->icon());
 
 	d->le_from->setText(expandAddresses(e->from().full(), false));
 	d->le_from->setCursorPosition(0);
@@ -1896,7 +1896,7 @@ void EventDlg::updateEvent(PsiEvent *e)
 	d->mle->scrollToTop();
 
 	if(d->lb_pgp)
-		d->lb_pgp->setIcon( IconsetFactory::iconPtr(d->enc ? "psi/cryptoYes" : "psi/cryptoNo") );
+		d->lb_pgp->setPsiIcon( IconsetFactory::iconPtr(d->enc ? "psi/cryptoYes" : "psi/cryptoNo") );
 
 	if(!d->le_subj->text().isEmpty())
 		d->le_subj->setToolTip(d->le_subj->text());
@@ -1906,7 +1906,7 @@ void EventDlg::updateEvent(PsiEvent *e)
 	doWhois();
 }
 
-void EventDlg::updateReadNext(Icon *nextAnim, int nextAmount)
+void EventDlg::updateReadNext(PsiIcon *nextAnim, int nextAmount)
 {
 	int oldAmount = d->nextAmount;
 
@@ -1915,7 +1915,7 @@ void EventDlg::updateReadNext(Icon *nextAnim, int nextAmount)
 
 	if(nextAmount == 0) {
 		d->setNextAnim(0);
-		d->pb_next->forceSetIcon(0);
+		d->pb_next->forceSetPsiIcon(0);
 		d->pb_next->setEnabled(false);
 		d->pb_next->setText(tr("&Next"));
 
@@ -1934,7 +1934,7 @@ void EventDlg::updateReadNext(Icon *nextAnim, int nextAmount)
 		str += QString(" - %1").arg(nextAmount);
 		d->pb_next->setText(str);
 
-		d->pb_next->forceSetIcon(d->nextAnim());
+		d->pb_next->forceSetPsiIcon(d->nextAnim());
 
 		if(d->nextAmount > oldAmount)
 			d->pb_next->setFocus();

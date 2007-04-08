@@ -195,7 +195,7 @@ void GCUserView::updateAll()
 {
 	for (Q3ListViewItem *j = firstChild(); j; j = j->nextSibling())
 		for(GCUserViewItem *i = (GCUserViewItem *)j->firstChild(); i; i = (GCUserViewItem *)i->nextSibling())
-			i->setPixmap(0, PsiIconset::instance()->status(i->s));
+			i->setPixmap(0, PsiIconset::instance()->status(i->s).impix());
 }
 
 QStringList GCUserView::nickList() const
@@ -234,7 +234,7 @@ void GCUserView::updateEntry(const QString &nick, const Status &s)
 	}
 
 	lvi->s = s;
-	lvi->setPixmap(0, PsiIconset::instance()->status(lvi->s));
+	lvi->setPixmap(0, PsiIconset::instance()->status(lvi->s).impix());
 }
 
 GCUserViewGroupItem* GCUserView::findGroup(MUCItem::Role a) const
@@ -330,8 +330,8 @@ void GCUserView::qlv_contextMenuRequested(Q3ListViewItem *i, const QPoint &pos, 
 		return;
 	}
 	Q3PopupMenu *pm = new Q3PopupMenu;
-	pm->insertItem(IconsetFactory::icon("psi/sendMessage"), tr("Send &message"), 0);
-	pm->insertItem(IconsetFactory::icon("psi/start-chat"), tr("Open &chat window"), 1);
+	pm->insertItem(IconsetFactory::icon("psi/sendMessage").icon(), tr("Send &message"), 0);
+	pm->insertItem(IconsetFactory::icon("psi/start-chat").icon(), tr("Open &chat window"), 1);
 	pm->insertSeparator();
 	pm->insertItem(tr("&Kick"),10);
 	pm->setItemEnabled(10, MUCManager::canKick(c->s.mucItem(),lvi->s.mucItem()));
@@ -368,7 +368,7 @@ void GCUserView::qlv_contextMenuRequested(Q3ListViewItem *i, const QPoint &pos, 
 	//pm->insertItem(tr("Send &file"), 4);
 	//pm->insertSeparator();
 	pm->insertItem(tr("Check &Status"), 2);
-	pm->insertItem(IconsetFactory::icon("psi/vCard"), tr("User &Info"), 3);
+	pm->insertItem(IconsetFactory::icon("psi/vCard").icon(), tr("User &Info"), 3);
 	int x = pm->exec(pos);
 	bool enabled = pm->isItemEnabled(x) || rm->isItemEnabled(x);
 	delete pm;
@@ -434,7 +434,7 @@ protected:
 	int  oldTrackBarPosition;
 
 public slots:
-	void addEmoticon(const Icon *icon) {
+	void addEmoticon(const PsiIcon *icon) {
 		if ( !dlg->isActiveWindow() )
 		     return;
 
@@ -784,7 +784,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	d->state = Private::Connected;
 
 #ifndef Q_WS_MAC
-	setWindowIcon(IconsetFactory::icon("psi/groupChat"));
+	setWindowIcon(IconsetFactory::icon("psi/groupChat").icon());
 #endif
 
 	QVBoxLayout *dlg_layout = new QVBoxLayout(this, 4);
@@ -1743,7 +1743,7 @@ void GCMainDlg::setLooks()
 
 	// update the widget icon
 #ifndef Q_WS_MAC
-	setWindowIcon(IconsetFactory::icon("psi/groupChat"));
+	setWindowIcon(IconsetFactory::icon("psi/groupChat").icon());
 #endif
 }
 

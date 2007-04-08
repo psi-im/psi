@@ -99,7 +99,7 @@ public:
 
 	QSignalMapper *statusMapper;
 
-	Icon *nextAnim;
+	PsiIcon *nextAnim;
 	int nextAmount;
 
 	QMap<QAction *, int> statusActions;
@@ -222,7 +222,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 		setAttribute(Qt::WA_MacMetalStyle);
 	d = new Private(psi, this);
 
-	setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE));
+	setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).impix());
 
 	d->onTop = _onTop;
 	d->asTool = _asTool;
@@ -644,7 +644,7 @@ void MainWin::buildOptionsMenu()
 	buildGeneralMenu( d->optionsMenu );
 
 	d->optionsMenu->insertSeparator();
-	d->optionsMenu->insertItem(IconsetFactory::icon("psi/help"), tr("&Help"), helpMenu);
+	d->optionsMenu->insertItem(IconsetFactory::icon("psi/help").icon(), tr("&Help"), helpMenu);
 	d->getAction("menu_quit")->addTo( d->optionsMenu );
 
 }
@@ -803,9 +803,6 @@ void MainWin::decorateButton(int status)
 		return;
 	d->lastStatus = status;
 
-	QIcon icon;
-	icon.setPixmap(PsiIconset::instance()->status(status), QIcon::Small);
-
 	if(status == -1) {
 		d->statusButton->setText(tr("Connecting"));
 		if (option.alertStyle != 0)
@@ -813,13 +810,13 @@ void MainWin::decorateButton(int status)
 		else
 			d->statusButton->setIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
 
-		setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE));
+		setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).impix());
 	}
 	else {
 		d->statusButton->setText(status2txt(status));
 		d->statusButton->setIcon(PsiIconset::instance()->statusPtr(status));
 
-		setWindowIcon(PsiIconset::instance()->status(status));
+		setWindowIcon(PsiIconset::instance()->status(status).impix());
 	}
 
 	updateTray();
@@ -993,7 +990,7 @@ void MainWin::trayHide()
 	hide();
 }
 
-void MainWin::updateReadNext(Icon *anim, int amount)
+void MainWin::updateReadNext(PsiIcon *anim, int amount)
 {
 	d->nextAnim = anim;
 	if(anim == 0)

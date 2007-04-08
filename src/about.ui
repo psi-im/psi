@@ -38,7 +38,7 @@
        <property name="frameShadow" >
         <enum>QFrame::Plain</enum>
        </property>
-       <property name="iconName" stdset="0" >
+       <property name="psiIconName" stdset="0" >
         <string>psi/logo_48</string>
        </property>
       </widget>

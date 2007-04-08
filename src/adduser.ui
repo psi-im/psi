@@ -173,7 +173,7 @@ To add a contact from a &lt;b>non-Jabber&lt;/b> service, make sure you are regis
                       <property name="text" >
                         <string/>
                       </property>
-                      <property name="iconName" stdset="0" >
+                      <property name="psiIconName" stdset="0" >
                         <string>psi/vCard</string>
                       </property>
                     </widget>
@@ -309,7 +309,7 @@ To add a contact from a &lt;b>non-Jabber&lt;/b> service, make sure you are regis
                   <property name="default" >
                     <bool>true</bool>
                   </property>
-                  <property name="iconName" stdset="0" >
+                  <property name="psiIconName" stdset="0" >
                     <string>psi/addContact</string>
                   </property>
                 </widget>
@@ -409,7 +409,7 @@ To add a contact from a &lt;b>non-Jabber&lt;/b> service, make sure you are regis
         <property type="Bool" >on</property>
         <property type="Bool" >flat</property>
         <property type="Bool" >autoMask</property>
-        <property type="String" >iconName</property>
+        <property type="String" >psiIconName</property>
         <property type="Bool" >textVisible</property>
       </properties>
     </customwidget>

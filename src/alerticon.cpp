@@ -119,7 +119,7 @@ public slots:
 
 public:
 	AlertIcon *ai;
-	Icon *real;
+	PsiIcon *real;
 	bool isActivated;
 	Impix impix;
 };
@@ -213,13 +213,13 @@ void AlertIcon::Private::pixmapChanged(const QPixmap &p)
 // AlertIcon
 //----------------------------------------------------------------------------
 
-AlertIcon::AlertIcon(const Icon *icon)
+AlertIcon::AlertIcon(const PsiIcon *icon)
 {
 	d = new Private(this);
 	if ( icon )
-		d->real = new Icon(*icon);
+		d->real = new PsiIcon(*icon);
 	else
-		d->real = new Icon();
+		d->real = new PsiIcon();
 
 	d->init();
 }
@@ -254,9 +254,9 @@ void AlertIcon::stop()
 	d->stop();
 }
 
-const QIcon &AlertIcon::iconSet() const
+const QIcon &AlertIcon::icon() const
 {
-	return d->real->iconSet();
+	return d->real->icon();
 }
 
 const Impix &AlertIcon::impix() const
@@ -281,7 +281,7 @@ const QString &AlertIcon::name() const
 	return d->real->name();
 }
 
-Icon *AlertIcon::copy() const
+PsiIcon *AlertIcon::copy() const
 {
 	return new AlertIcon(d->real);
 }

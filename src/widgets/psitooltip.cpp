@@ -1,5 +1,5 @@
 /*
- * psitooltip.cpp - Icon-aware QToolTip clone
+ * psitooltip.cpp - PsiIcon-aware QToolTip clone
  * Copyright (C) 2006  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or

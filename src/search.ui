@@ -83,7 +83,7 @@
                             <property name="text" >
                               <string>&amp;Search</string>
                             </property>
-                            <property name="iconName" stdset="0" >
+                            <property name="psiIconName" stdset="0" >
                               <string>psi/search</string>
                             </property>
                           </widget>
@@ -109,7 +109,7 @@
                             <property name="text" >
                               <string>&amp;Stop</string>
                             </property>
-                            <property name="iconName" stdset="0" >
+                            <property name="psiIconName" stdset="0" >
                               <string>psi/stop</string>
                             </property>
                           </widget>
@@ -217,7 +217,7 @@
                       <property name="text" >
                         <string>&amp;Add Contact</string>
                       </property>
-                      <property name="iconName" stdset="0" >
+                      <property name="psiIconName" stdset="0" >
                         <string>psi/addContact</string>
                       </property>
                     </widget>
@@ -227,7 +227,7 @@
                       <property name="text" >
                         <string>User &amp;Info</string>
                       </property>
-                      <property name="iconName" stdset="0" >
+                      <property name="psiIconName" stdset="0" >
                         <string>psi/vCard</string>
                       </property>
                     </widget>

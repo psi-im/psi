@@ -45,12 +45,12 @@ QString OptionsTab::tabName() const
 	return v_name;
 }
 
-Icon *OptionsTab::tabIcon() const
+PsiIcon *OptionsTab::tabIcon() const
 {
 	if ( v_tabIconName.isEmpty() )
 		return 0;
 
-	return (Icon *)IconsetFactory::iconPtr( v_tabIconName );
+	return (PsiIcon *)IconsetFactory::iconPtr( v_tabIconName );
 }
 
 QString OptionsTab::name() const
@@ -63,16 +63,16 @@ QString OptionsTab::desc() const
 	return v_desc;
 }
 
-Icon *OptionsTab::icon() const
+PsiIcon *OptionsTab::psiIcon() const
 {
 	if ( v_iconName.isEmpty() ) {
 		//if ( tabIcon() )
 		//	return tabIcon();
 
-		return (Icon *)IconsetFactory::iconPtr("psi/logo_32");
+		return (PsiIcon *)IconsetFactory::iconPtr("psi/logo_32");
 	}
 
-	return (Icon *)IconsetFactory::iconPtr( v_iconName );
+	return (PsiIcon *)IconsetFactory::iconPtr( v_iconName );
 }
 
 void OptionsTab::applyOptions(Options *)
@@ -143,7 +143,7 @@ void OptionsTabWidget::addTab(OptionsTab *tab)
 	QWidget *w = new QWidget(NULL, tab->name().latin1());
 
 	if ( tab->tabIcon() )
-		QTabWidget::addTab(w, tab->tabIcon()->iconSet(), tab->tabName());
+		QTabWidget::addTab(w, tab->tabIcon()->icon(), tab->tabName());
 	else
 		QTabWidget::addTab(w, tab->tabName());
 

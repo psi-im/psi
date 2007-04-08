@@ -66,9 +66,9 @@ public:
 	Private(PsiPopup *p);
 	~Private();
 
-	void init(const Icon *titleIcon, QString titleText, PsiAccount *_acc, PopupType type);
+	void init(const PsiIcon *titleIcon, QString titleText, PsiAccount *_acc, PopupType type);
 	QString clipText(QString);
-	QBoxLayout *createContactInfo(const Icon *icon, QString text);
+	QBoxLayout *createContactInfo(const PsiIcon *icon, QString text);
 
 private slots:
 	void popupDestroyed();
@@ -85,7 +85,7 @@ public:
 	Jid jid;
 	Status status;
 	PsiEvent *event;
-	Icon *titleIcon;
+	PsiIcon *titleIcon;
 	bool display;
 };
 
@@ -110,7 +110,7 @@ PsiPopup::Private::~Private()
 	popup = 0;
 }
 
-void PsiPopup::Private::init(const Icon *_titleIcon, QString titleText, PsiAccount *acc, PopupType type)
+void PsiPopup::Private::init(const PsiIcon *_titleIcon, QString titleText, PsiAccount *acc, PopupType type)
 {
 	psi = acc->psi();
 	account = acc;
@@ -132,7 +132,7 @@ void PsiPopup::Private::init(const Icon *_titleIcon, QString titleText, PsiAccou
 	if ( type != AlertNone )
 		titleIcon = new AlertIcon(_titleIcon);
 	else
-		titleIcon = new Icon(*_titleIcon);
+		titleIcon = new PsiIcon(*_titleIcon);
 
 	FancyPopup::setHideTimeout( option.ppHideTime );
 	FancyPopup::setBorderColor( option.ppBorderColor );
@@ -193,14 +193,14 @@ QString PsiPopup::Private::clipText(QString text)
 	return text;
 }
 
-QBoxLayout *PsiPopup::Private::createContactInfo(const Icon *icon, QString text)
+QBoxLayout *PsiPopup::Private::createContactInfo(const PsiIcon *icon, QString text)
 {
 	QHBoxLayout *dataBox = new QHBoxLayout();
 
 	if ( icon ) {
 		IconLabel *iconLabel = new IconLabel(popup);
 		iconLabel->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
-		iconLabel->setIcon(icon);
+		iconLabel->setPsiIcon(icon);
 		dataBox->addWidget(iconLabel);
 
 		dataBox->addSpacing(5);
@@ -223,7 +223,7 @@ QBoxLayout *PsiPopup::Private::createContactInfo(const Icon *icon, QString text)
 // PsiPopup
 //----------------------------------------------------------------------------
 
-PsiPopup::PsiPopup(const Icon *titleIcon, QString titleText, PsiAccount *acc)
+PsiPopup::PsiPopup(const PsiIcon *titleIcon, QString titleText, PsiAccount *acc)
 {
 	d = new Private(this);
 	d->init(titleIcon, titleText, acc, AlertNone);
@@ -239,41 +239,41 @@ PsiPopup::PsiPopup(PopupType type, PsiAccount *acc)
 	d = new Private(this);
 
 	d->popupType = type;
-	Icon *icon = 0;
+	PsiIcon *icon = 0;
 	QString text = "Psi: ";
 	bool doAlertIcon = false;
 
 	switch(type) {
 	case AlertOnline:
 		text += PsiPopup::tr("Contact online");
-		icon = (Icon *)IconsetFactory::iconPtr("status/online");
+		icon = (PsiIcon *)IconsetFactory::iconPtr("status/online");
 		break;
 	case AlertOffline:
 		text += PsiPopup::tr("Contact offline");
-		icon = (Icon *)IconsetFactory::iconPtr("status/offline");
+		icon = (PsiIcon *)IconsetFactory::iconPtr("status/offline");
 		break;
 	case AlertStatusChange:
 		text += PsiPopup::tr("Status change");
-		icon = (Icon *)IconsetFactory::iconPtr("status/online");
+		icon = (PsiIcon *)IconsetFactory::iconPtr("status/online");
 		break;
 	case AlertMessage:
 		text += PsiPopup::tr("Incoming message");
-		icon = (Icon *)IconsetFactory::iconPtr("psi/message");
+		icon = (PsiIcon *)IconsetFactory::iconPtr("psi/message");
 		doAlertIcon = true;
 		break;
 	case AlertChat:
 		text += PsiPopup::tr("Incoming chat message");
-		icon= (Icon *)IconsetFactory::iconPtr("psi/chat");
+		icon= (PsiIcon *)IconsetFactory::iconPtr("psi/chat");
 		doAlertIcon = true;
 		break;
 	case AlertHeadline:
 		text += PsiPopup::tr("Headline");
-		icon= (Icon *)IconsetFactory::iconPtr("psi/headline");
+		icon= (PsiIcon *)IconsetFactory::iconPtr("psi/headline");
 		doAlertIcon = true;
 		break;
 	case AlertFile:
 		text += PsiPopup::tr("Incoming file");
-		icon= (Icon *)IconsetFactory::iconPtr("psi/file");
+		icon= (PsiIcon *)IconsetFactory::iconPtr("psi/file");
 		doAlertIcon = true;
 		break;
 	default:
@@ -283,7 +283,7 @@ PsiPopup::PsiPopup(PopupType type, PsiAccount *acc)
 	d->init(icon, text, acc, doAlertIcon ? type : AlertNone);
 }
 
-void PsiPopup::setData(const Icon *icon, QString text)
+void PsiPopup::setData(const PsiIcon *icon, QString text)
 {
 	if ( !d->popup ) {
 		deleteLater();
@@ -314,7 +314,7 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
 	if ( event )
 		connect(event, SIGNAL(destroyed()), d, SLOT(eventDestroyed()));
 
-	Icon *icon = PsiIconset::instance()->statusPtr(j, r.status());
+	PsiIcon *icon = PsiIconset::instance()->statusPtr(j, r.status());
 	QString text;
 
 	QString jid = j.full();
