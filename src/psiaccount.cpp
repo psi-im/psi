@@ -4450,7 +4450,8 @@ void PsiAccount::invokeGCChat(const Jid &j)
 
 	d->userList.append(u);
 	actionOpenChat(j);
-	d->userList.remove(u);
+	cpUpdate(*u);
+	//d->userList.remove(u);
 }
 
 void PsiAccount::invokeGCInfo(const Jid &j)
