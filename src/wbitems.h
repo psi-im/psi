@@ -39,8 +39,6 @@
 #include "iconaction.h"
 #include <cmath>
 
-Q_DECLARE_METATYPE(QGraphicsItem*);
-
 /*! \brief A class used for storing an edit while it's being queued.*/
 class Edit {
 public:
