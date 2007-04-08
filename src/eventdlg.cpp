@@ -1865,11 +1865,8 @@ void EventDlg::updateEvent(PsiEvent *e)
 		if(m.subject() != "" && !option.showSubjects)
 			txt = "<p><font color=\"red\"><b>" + tr("Subject:") + " " + m.subject() + "</b></font></p>" + (xhtml? "" : "<br>") + txt;
 
-		if (!xhtml) {
-			if (option.useEmoticons)
-				txt = TextUtil::emoticonify(txt);
-			txt = TextUtil::linkify(txt);
-		}
+		if(option.useEmoticons)
+			txt = TextUtil::emoticonify(txt);
 
 		if ( e->type() == PsiEvent::HttpAuth )
 			txt = "<big>[HTTP Request Confirmation]</big><br>" + txt;

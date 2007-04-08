@@ -723,7 +723,8 @@ void ChatDlg::updateContact(const Jid &jid, bool fromPresence)
 					QString ss = TextUtil::linkify(TextUtil::plain2rich(statusString));
 					if(option.useEmoticons)
 						ss = TextUtil::emoticonify(ss);
-
+					if( PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool() )
+						ss = TextUtil::legacyFormat(ss);
 					msg += QString(" [%1]").arg(ss);
 				}
 				appendSysMsg(msg);
@@ -1148,6 +1149,8 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 
 	if(option.useEmoticons)
 		txt = TextUtil::emoticonify(txt);
+	if( PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool() )
+		txt = TextUtil::legacyFormat(txt);
 
 	who = Qt::escape(who);
 

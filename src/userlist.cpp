@@ -584,6 +584,8 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 					s = TextUtil::linkify(s);
 				if( option.useEmoticons && !doLinkify )
 					s = TextUtil::emoticonify(s);
+				if( !doLinkify && PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool() )
+					s = TextUtil::legacyFormat(s);
 				str += QString("<br><nobr><u>%1</u></nobr><br>%2").arg(head).arg(s);
 			}
 		}

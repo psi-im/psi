@@ -31,6 +31,7 @@
 #include "psiaccount.h"
 #include "psiiconset.h"
 #include "iconlabel.h"
+#include "psioptions.h"
 
 #include <qapplication.h>
 #include <qlayout.h>
@@ -351,6 +352,8 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
 	QString statusString = TextUtil::plain2rich(status);
 	if ( option.useEmoticons )
 		statusString = TextUtil::emoticonify(statusString);
+	if( PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool() )
+		statusString = TextUtil::legacyFormat(statusString);
 
 	if ( !statusString.isEmpty() )
 		statusString = "<br>" + statusString;

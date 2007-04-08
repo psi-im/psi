@@ -481,6 +481,12 @@ QString TextUtil::emoticonify(const QString &in)
 	}
 
 	QString out = p.output();
+	return out;
+}
+
+QString TextUtil::legacyFormat(const QString& in)
+{
+
 
 	//enable *bold* stuff
 	// //old code
@@ -488,6 +494,7 @@ QString TextUtil::emoticonify(const QString &in)
 	//out=out.replace(QRegExp("(^[^<>\\s\\/]*|\\s[^<>\\s\\/]*)\\/([^\\/\\s]+)\\/([^<>\\s\\/]*\\s|[^<>\\s\\/]*$)"),"\\1<i>/\\2/</i>\\3");
 	//out=out.replace(QRegExp("(^[^<>\\s]*|\\s[^<>\\s]*)_(\\S+)_([^<>\\s]*\\s|[^<>\\s]*$)"),"\\1<u>_\\2_</u>\\3");
 
+	QString out=in;
 	out=out.replace(QRegExp("(^_|\\s_)(\\S+)(_\\s|_$)"),"\\1<u>\\2</u>\\3");
 	out=out.replace(QRegExp("(^\\*|\\s\\*)(\\S+)(\\*\\s|\\*$)"),"\\1<b>\\2</b>\\3");
 	out=out.replace(QRegExp("(^\\/|\\s\\/)(\\S+)(\\/\\s|\\/$)"),"\\1<i>\\2</i>\\3");
