@@ -76,3 +76,10 @@ void GlobalShortcutManager::disconnect(const QKeySequence& key, QObject* receive
 		delete instance()->triggers_.take(key);
 	}
 }
+
+void GlobalShortcutManager::clear()
+{
+	foreach (KeyTrigger* t, instance()->triggers_)
+		delete t;
+	instance()->triggers_.clear();
+}
