@@ -460,7 +460,10 @@ bool PsiCon::init()
 	// load accounts
 	d->contactList->loadAccounts(d->pro.acc);
 	checkAccountsEmpty();
-	
+	// try autologin if needed
+	foreach(PsiAccount* account, d->contactList->accounts()) {
+		account->autoLogin();
+	}
 	// show tip of the day
 	if ( PsiOptions::instance()->getOption("options.ui.tip.show").toBool() ) {
 		TipDlg *tip = new TipDlg();

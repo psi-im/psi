@@ -630,11 +630,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent)
 
 	// Listen to the capabilities manager
 	connect(capsManager(),SIGNAL(capsChanged(const Jid&)),SLOT(capsChanged(const Jid&)));
-
-	// auto-login ?
-	if(d->acc.opt_auto && d->acc.opt_enabled)
-		setStatus(Status("", "", d->acc.priority));
-
+	
 	//printf("PsiAccount: [%s] loaded\n", name().latin1());
 	d->xmlConsole = new XmlConsole(this);
 	if(option.xmlConsoleOnLogin && d->acc.opt_enabled) {
@@ -932,6 +928,15 @@ const Jid & PsiAccount::jid() const
 QString PsiAccount::nameWithJid() const
 {
 	return (name() + " (" + JIDUtil::toString(jid(),true) + ')');
+}
+
+// Moved out of constructor to have all accounts loaded
+// when we ask for passwords.
+void PsiAccount::autoLogin()
+{
+	// auto-login ?
+	if(d->acc.opt_auto && d->acc.opt_enabled)
+		setStatus(Status("", "", d->acc.priority));
 }
 
 // logs on with the active account settings
