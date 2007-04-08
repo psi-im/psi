@@ -43,6 +43,7 @@
 #include "vcardfactory.h"
 #include "iconwidget.h"
 #include "contactview.h"
+#include "psirichtext.h"
 
 
 using namespace XMPP;
@@ -115,6 +116,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	connect(d->pa,SIGNAL(updateContact(const Jid&)),SLOT(contactUpdated(const Jid&)));
 	te_status->setReadOnly(true);
 	te_status->setTextFormat(Qt::RichText);
+	PsiRichText::install(te_status->document());
 	updateStatus();
 	foreach(UserListItem* u, d->pa->findRelevant(j)) {
 		foreach(UserResource r, u->userResourceList()) {
@@ -556,7 +558,7 @@ void InfoDlg::updateStatus()
 {
 	UserListItem *u = d->pa->find(d->jid);
 	if(u) {
-		te_status->setText(u->makeDesc());
+		PsiRichText::setText(te_status->document(), u->makeDesc());
 	}
 	else {
 		te_status->clear();
