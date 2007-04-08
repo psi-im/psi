@@ -168,6 +168,7 @@ void StatusSetDlg::init()
 	d->te->setDialog(this);
 	d->te->setReadOnly(false);
 	d->te->setTextFormat(Qt::PlainText);
+	d->te->setAcceptRichText(false);
 	d->te->setMinimumHeight(50);
 	vb->addWidget(d->te);
 	QHBoxLayout *hb = new QHBoxLayout(vb);
