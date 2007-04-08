@@ -9,6 +9,9 @@
 #include "common.h" // options
 #include "alerticon.h"
 
+// TODO: remove the QPoint parameter from the signals when we finally move
+// to the new system.
+
 PsiTrayIcon::PsiTrayIcon(const QString &tip, QMenu *popup, bool old, QObject *parent) : QObject(parent), old_(old)
 {
 	icon_ = NULL;
@@ -189,8 +192,18 @@ QPixmap PsiTrayIcon::makeIcon()
 #endif
 }
 
-void PsiTrayIcon::trayicon_activated(QSystemTrayIcon::ActivationReason)
+void PsiTrayIcon::trayicon_activated(QSystemTrayIcon::ActivationReason reason)
 {
+#ifdef Q_WS_MAC
+	Q_UNUSED(reason)
+#else
+	if (reason == QSystemTrayIcon::Trigger)
+		emit clicked(QPoint(),Qt::LeftButton);
+	else if (reason == QSystemTrayIcon::MiddleClick)
+		emit clicked(QPoint(),Qt::MidButton);
+	else if (reason == QSystemTrayIcon::DoubleClick)
+		emit doubleClicked(QPoint());
+#endif
 }
 
 void PsiTrayIcon::animate()

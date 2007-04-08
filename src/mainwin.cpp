@@ -519,11 +519,11 @@ void MainWin::setUseDock(bool use)
 #endif
 	d->tray = new PsiTrayIcon("Psi", d->trayMenu, old);
 	if (old) {
-		connect(d->tray, SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
-		connect(d->tray, SIGNAL(doubleClicked(const QPoint &)), SLOT(trayDoubleClicked()));
 		connect(d->tray, SIGNAL(closed()), SLOT(dockActivated()));
 		connect(qApp, SIGNAL(trayOwnerDied()), SLOT(dockActivated()));
 	}
+	connect(d->tray, SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
+	connect(d->tray, SIGNAL(doubleClicked(const QPoint &)), SLOT(trayDoubleClicked()));
 	d->tray->setIcon( PsiIconset::instance()->statusPtr( STATUS_OFFLINE ));
 	d->tray->setToolTip(ApplicationInfo::name());
 
