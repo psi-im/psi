@@ -41,6 +41,17 @@
 using namespace XMPP;
 using namespace XMLHelper;
 
+void migrateIntEntry(const QDomElement& element, const QString& entry, const QString& option)
+{
+	bool found;
+	findSubTag(element, entry, &found);
+	if (found) {
+		int value;
+		readNumEntry(element, entry, &value);
+		PsiOptions::instance()->setOption(option,value);
+	}
+}
+
 UserAccount::UserAccount()
 {
 	reset();
@@ -1525,9 +1536,7 @@ bool UserProfile::fromFile(const QString &fname)
 
 			readBoolEntry(p_lnf, "newHeadings", &prefs.clNewHeadings);
 			readBoolEntry(p_lnf, "outline-headings", &prefs.outlineHeadings);
-			int chatOpacity;
-			readNumEntry(p_lnf, "chat-opacity", &chatOpacity);
-			PsiOptions::instance()->setOption("options.ui.chat.opacity",chatOpacity);
+			migrateIntEntry(p_lnf, "chat-opacity", "options.ui.chat.opacity");
 			readNumEntry(p_lnf, "roster-opacity", &prefs.rosterOpacity);
 
 			QDomElement tag = findSubTag(p_lnf, "colors", &found);
