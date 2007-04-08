@@ -717,12 +717,12 @@ void ChatDlg::setLooks()
 	ui_.splitter->setSplitterEnabled(!option.chatLineEdit);
 	ui_.mle->setLineEditEnabled(option.chatLineEdit);
 
+	ui_.tb_pgp->hide();
 	if (d->smallChat) {
 		ui_.lb_status->hide();
 		ui_.le_jid->hide();
 		ui_.tb_actions->hide();
 		ui_.tb_emoticons->hide();
-		ui_.tb_pgp->hide();
 		ui_.toolbar->hide();
 	}
 	else {
@@ -732,13 +732,11 @@ void ChatDlg::setLooks()
 			ui_.toolbar->show();
 			ui_.tb_actions->hide();
 			ui_.tb_emoticons->hide();
-			ui_.tb_pgp->hide();
 		}
 		else {
 			ui_.toolbar->hide();
 			ui_.tb_emoticons->setVisible(option.useEmoticons);
 			ui_.tb_actions->show();
-			ui_.tb_pgp->setVisible(d->pa->hasPGP());
 		}
 	}
 	updateIdentityVisibility();
@@ -811,6 +809,7 @@ void ChatDlg::updatePGP()
 		d->act_pgp->setChecked(false);
 		d->act_pgp->setEnabled(false);
 	}
+	ui_.tb_pgp->setVisible(d->pa->hasPGP() && !d->smallChat && !PsiOptions::instance()->getOption("options.ui.chat.central-toolbar").toBool());
 }
 
 void ChatDlg::doInfo()
