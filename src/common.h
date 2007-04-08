@@ -162,9 +162,6 @@ struct Options
 	};
 	Roster_AccountSortStyle rosterAccountSortStyle;
 
-	bool showTips;
-	int tipNum;
-
 	bool discoItems, discoInfo;
 
 	bool autoAuth, notifyAuth;

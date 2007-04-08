@@ -120,6 +120,10 @@
 			<spell-check comment="Options related to the spell checker">
 				<enabled comment="Whether the spell checker is enabled" type="bool">true</enabled>
 			</spell-check>
+			<tip comment="Tip of the day options">
+				<show comment="Show the tip of the day upon startup" type="bool">true</show>
+				<number comment="The next tip to show" type="int">0</number>
+			</tip>
 		</ui>
 		<shortcuts comment="Shortcuts">
 			<chat comment="Shortcuts in the chat dialog">

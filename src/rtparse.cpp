@@ -20,7 +20,6 @@
 
 #include "rtparse.h"
 #include "textutil.h"
-#include "common.h"
 
 #include <QTextDocument> // for Qt::escape()
 

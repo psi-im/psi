@@ -24,7 +24,7 @@
  */  
 
 #include "tipdlg.h"
-#include "common.h"
+#include "psioptions.h"
 
 /**
  * \class TipDlg
@@ -36,7 +36,6 @@ TipDlg::TipDlg(QWidget* parent) : QDialog(parent,Qt::WDestructiveClose)
 	setupUi(this);
 	setModal(false);
 
-	setWindowTitle( CAP(caption()) );
 	//ck_showTips->hide();
 
 	connect(pb_close,SIGNAL(clicked()),SLOT(accept()));
@@ -95,20 +94,21 @@ TipDlg::TipDlg(QWidget* parent) : QDialog(parent,Qt::WDestructiveClose)
 	addTip( tr("This is the last tip.\n<br><br>If you want to contribute your own \"tip of the day\", please publish it on the <a href=\"http://forum.psi-im.org\">Psi Forums</a> (or mail it to the one of the developers), and we'll be happy to integrate it for the next release."), "" );
 
 	updateTip();
-	ck_showTips->setChecked( option.showTips );
+	ck_showTips->setChecked( PsiOptions::instance()->getOption("options.tip.show").toBool());
 }
 
 
 void TipDlg::updateTip()
 {
-	if ( option.tipNum < 0 )
-		option.tipNum = tips.count() - 1;
-	if ( option.tipNum >= (int)tips.count() )
-		option.tipNum = 0;
-
-	tv_psi->setText( tips[option.tipNum] );
-
-	option.tipNum++;
+	int num = PsiOptions::instance()->getOption("options.tip.number").toInt();
+	if ( num < 0 )
+		num = tips.count() - 1;
+	else if ( num >= (int)tips.count() )
+		num = 0;
+	
+	tv_psi->setText( tips[num] );
+	
+	PsiOptions::instance()->setOption("options.tip.number", num+1);
 }
 
 
@@ -120,14 +120,15 @@ void TipDlg::next()
 
 void TipDlg::previous()
 {
-	option.tipNum -= 2;
+	int num = PsiOptions::instance()->getOption("options.tip.number").toInt();
+	PsiOptions::instance()->setOption("options.tip.number", num-2);
 	updateTip();
 }
 
 
 void TipDlg::showTipsChanged( bool e )
 {
-	option.showTips = e;
+	PsiOptions::instance()->setOption("options.tip.show", e);
 }
 
 

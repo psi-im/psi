@@ -60,6 +60,17 @@ void migrateIntEntry(const QDomElement& element, const QString& entry, const QSt
 	}
 }
 
+void migrateBoolEntry(const QDomElement& element, const QString& entry, const QString& option)
+{
+	bool found;
+	findSubTag(element, entry, &found);
+	if (found) {
+		bool value;
+		readBoolEntry(element, entry, &value);
+		PsiOptions::instance()->setOption(option,value);
+	}
+}
+
 UserAccount::UserAccount()
 {
 	reset();
@@ -653,10 +664,6 @@ void UserProfile::reset()
 	prefs.rosterGroupSortStyle   = Options::GroupSortStyle_Alpha;
 	prefs.rosterAccountSortStyle = Options::AccountSortStyle_Alpha;
 
-	// tip of the day
-	prefs.showTips = true;
-	prefs.tipNum   = 0;
-
 	// disco dialog
 	prefs.discoItems = true;
 	prefs.discoInfo  = true;
@@ -1185,15 +1192,6 @@ bool UserProfile::toFile(const QString &fname)
 			for ( ; it != prefs.emoticons.end(); ++it)
 				is_emoticons.appendChild(textTag(doc, "item", *it));
 		}
-	}
-
-	{
-		// tip of the day
-		QDomElement p_tip = doc.createElement("tipOfTheDay");
-		p.appendChild(p_tip);
-
-		p_tip.appendChild( textTag(doc, "show", prefs.showTips ) );
-		p_tip.appendChild( textTag(doc, "num",  prefs.tipNum ) );
 	}
 
 	{
@@ -1773,8 +1771,8 @@ bool UserProfile::fromFile(const QString &fname)
 
 		QDomElement p_tip = findSubTag(p, "tipOfTheDay", &found);
 		if (found) {
-			readBoolEntry(p_tip, "show", &prefs.showTips);
-			readNumEntry(p_tip, "num", &prefs.tipNum);
+			migrateIntEntry(p_tip, "num", "options.tip.number");
+			migrateBoolEntry(p_tip, "show", "options.tip.show");
 		}
 
 		QDomElement p_disco = findSubTag(p, "disco", &found);

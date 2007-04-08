@@ -284,7 +284,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	decorateButton(STATUS_OFFLINE);
 
 	// show tip of the day
-	if ( option.showTips )
+	if ( PsiOptions::instance()->getOption("options.tip.show").toBool() )
 		actTipActivated();
 
 	// Mac-only menus
