@@ -18,7 +18,7 @@
  *
  */
 
-#include "xmpp.h"
+#include "xmpp_jid.h"
 
 #include <q3dict.h>
 //Added by qt3to4:
