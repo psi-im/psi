@@ -207,6 +207,11 @@ void GoogleFileTransferListener::stateChanged(cricket::FileShareState state)
 
 void GoogleFileTransferListener::progressChanged(cricket::FileShareSession* sess)
 {
+	size_t progress;
+	std::string itemname;
+	if (sess->GetProgress(progress) && sess->GetCurrentItemName(&itemname)) {
+		emit session_->progressChanged(progress,QString(itemname.c_str()));
+	}
 	/*
 	size_t totalsize, progress;
 	std::string itemname;
@@ -286,6 +291,16 @@ qlonglong GoogleFileTransfer::fileSize() const
 void GoogleFileTransfer::accept(qlonglong, qlonglong)
 {
 	session_->Accept();
+}
+
+void GoogleFileTransfer::reject()
+{
+	session_->Decline();
+}
+
+void GoogleFileTransfer::cancel()
+{
+	session_->Cancel();
 }
 
 // ----------------------------------------------------------------------------

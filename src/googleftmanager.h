@@ -46,8 +46,10 @@ class GoogleSessionListener;
 class GoogleFileTransferListener;
 class GoogleFTManager;
 
-class GoogleFileTransfer /*: public XMPP::AbstractFileTransfer*/
+class GoogleFileTransfer : public QObject/*: public XMPP::AbstractFileTransfer*/
 {
+	Q_OBJECT
+	
 	friend class GoogleFileTransferListener;
 
 public: 
@@ -58,7 +60,13 @@ public:
 	virtual QString fileName() const;
 	virtual qlonglong fileSize() const;
 	virtual QString description() const;
+	
 	virtual void accept(qlonglong offset=0, qlonglong length=0);
+	virtual void reject();
+	virtual void cancel();
+
+signals:
+	void progressChanged(qlonglong, const QString&);
 
 private:
 	cricket::FileShareSession* session_;
@@ -99,6 +107,37 @@ private:
  	static talk_base::scoped_ptr<cricket::HttpPortAllocator> port_allocator_;
  	talk_base::scoped_ptr<cricket::SessionManager> session_manager_;
  	talk_base::scoped_ptr<cricket::FileShareSessionClient> file_share_session_client_;
+};
+
+
+#include <QProgressDialog>
+
+class GoogleFileTransferProgressDialog : public QProgressDialog
+{
+	Q_OBJECT
+
+public: 
+	GoogleFileTransferProgressDialog(GoogleFileTransfer* ft) : QProgressDialog(NULL,Qt::WDestructiveClose), ft_(ft) {
+		connect(ft,SIGNAL(progressChanged(qlonglong, const QString&)),SLOT(update(qlonglong, const QString&)));
+		connect(this,SIGNAL(canceled()),SLOT(cancel()));
+		setLabelText("Initializing");
+		setRange(0,(int) ft->fileSize());
+	}
+
+public slots:
+	void cancel() {
+		ft_->cancel();
+		QProgressDialog::cancel();
+	}
+
+protected slots:
+	void update(qlonglong progress, const QString& name) {
+		setLabelText(QString(tr("Transferring %1")).arg(name));
+		setValue(progress);
+	}
+
+private:
+	GoogleFileTransfer* ft_;
 };
 
 #endif

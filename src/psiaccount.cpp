@@ -1891,10 +1891,12 @@ void PsiAccount::client_debugText(const QString &)
 void PsiAccount::incomingGoogleFileTransfer(GoogleFileTransfer* ft)
 {
 	if (QMessageBox::information(0, tr("Incoming file"), QString(tr("Do you want to accept %1 (%2 kb) from %3?")).arg(ft->fileName()).arg((float) ft->fileSize() / 1000).arg(ft->peer().full()), QMessageBox::Yes,QMessageBox::No | QMessageBox::Default | QMessageBox::Escape, QMessageBox::NoButton) == QMessageBox::Yes) {
+		GoogleFileTransferProgressDialog* d = new GoogleFileTransferProgressDialog(ft);
+		d->show();
 		ft->accept();
 	}
-	/*else 
-		ft->close();*/
+	else 
+		ft->reject();
 }
 #endif
 
