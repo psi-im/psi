@@ -13,7 +13,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  *
  */
 
@@ -191,7 +191,8 @@ public:
 	{
 		do_quit = false;
 		data = 0;
-		DuplicateHandle(GetCurrentProcess(), id, GetCurrentProcess(), &pipe, 0, FALSE, DUPLICATE_SAME_ACCESS);
+		connect(this, SIGNAL(canWrite_p()), SIGNAL(canWrite()));
+		DuplicateHandle(GetCurrentProcess(), id, GetCurrentProcess(), &pipe, 0, false, DUPLICATE_SAME_ACCESS);
 	}
 
 	~QPipeWriter()
@@ -251,12 +252,13 @@ protected:
 			data = 0;
 			m.unlock();
 
-			emit canWrite();
+			emit canWrite_p();
 		}
 	}
 
 signals:
 	void canWrite();
+	void canWrite_p();
 
 private:
 	int internalWrite(const char *p, int len)
@@ -308,7 +310,8 @@ public:
 	{
 		do_quit = false;
 		active = true;
-		DuplicateHandle(GetCurrentProcess(), id, GetCurrentProcess(), &pipe, 0, FALSE, DUPLICATE_SAME_ACCESS);
+		connect(this, SIGNAL(canRead_p(int)), SIGNAL(canRead(int)));
+		DuplicateHandle(GetCurrentProcess(), id, GetCurrentProcess(), &pipe, 0, false, DUPLICATE_SAME_ACCESS);
 	}
 
 	~QPipeReader()
@@ -372,7 +375,7 @@ protected:
 					active = false;
 					m.unlock();
 
-					emit canRead(result);
+					emit canRead_p(result);
 					break;
 				}
 			}
@@ -385,6 +388,7 @@ signals:
 	//   = -1 : atEnd
 	//   = -2 : atError
 	void canRead(int result);
+	void canRead_p(int result);
 };
 #endif
 
@@ -677,7 +681,7 @@ void QPipeDevice::release()
 bool QPipeDevice::winDupHandle()
 {
 	HANDLE h;
-	if(!DuplicateHandle(GetCurrentProcess(), d->pipe, GetCurrentProcess(), &h, 0, FALSE, DUPLICATE_SAME_ACCESS))
+	if(!DuplicateHandle(GetCurrentProcess(), d->pipe, GetCurrentProcess(), &h, 0, false, DUPLICATE_SAME_ACCESS))
 		return false;
 
 	Type t = d->type;
@@ -1414,7 +1418,7 @@ bool QPipe::create()
 	SECURITY_ATTRIBUTES secAttr;
 	memset(&secAttr, 0, sizeof secAttr);
 	secAttr.nLength = sizeof secAttr;
-	secAttr.bInheritHandle = TRUE;
+	secAttr.bInheritHandle = true;
 
 	HANDLE r, w;
 	if(!CreatePipe(&r, &w, &secAttr, 0))
