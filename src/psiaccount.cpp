@@ -1090,21 +1090,31 @@ void PsiAccount::tls_handshaken()
 	if(r != QCA::TLS::Valid && !d->acc.opt_ignoreSSLWarnings) {
 		QCA::Validity validity =  d->tls->peerCertificateValidity();
 		QString str = CertUtil::resultToString(r,validity);
-		while(1) {
-			int n = QMessageBox::warning(0,
-				(d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Authentication"),
-				tr("The %1 certificate failed the authenticity test.").arg(d->jid.host()) + '\n' + tr("Reason: %1.").arg(str),
-				tr("&Details..."),
-				tr("Co&ntinue"),
-				tr("&Cancel"), 0, 2);
-			if(n == 0) {
+		QMessageBox msgBox(QMessageBox::Warning,
+			(d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Authentication"),
+			tr("The %1 certificate failed the authenticity test.").arg(d->jid.host()) + '\n' + tr("Reason: %1.").arg(str));
+		QPushButton *detailsButton = msgBox.addButton(tr("&Details..."), QMessageBox::ActionRole);
+		QPushButton *continueButton = msgBox.addButton(tr("Co&ntinue"), QMessageBox::AcceptRole);
+		QPushButton *cancelButton = msgBox.addButton(QMessageBox::Cancel);
+		msgBox.setDefaultButton(detailsButton);
+
+		connect(this, SIGNAL(disconnected()), &msgBox, SLOT(reject()));
+		connect(this, SIGNAL(reconnecting()), &msgBox, SLOT(reject()));
+
+		while (1) {
+			msgBox.exec();
+			if (msgBox.clickedButton() == detailsButton) {
 				SSLCertDlg::showCert(cert, r, validity);
 			}
-			else if(n == 1) {
+			else if (msgBox.clickedButton() == continueButton) {
 				d->tlsHandler->continueAfterHandshake();
 				break;
 			}
-			else if(n == 2) {
+			else if (msgBox.clickedButton() != cancelButton) {
+				// message box was hidden, because connection was dropped
+				break;
+			}
+			else { // msgBox.clickedButton() == cancelButton
 				logout();
 				break;
 			}
@@ -1971,6 +1981,7 @@ void PsiAccount::reconnect()
 {
 	if(doReconnect) {
 		//printf("PsiAccount: [%s] reconnecting...\n", name().latin1());
+		emit reconnecting();
 		v_isActive = false;
 		doReconnect = false;
 		login();
