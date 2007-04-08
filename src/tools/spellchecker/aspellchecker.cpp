@@ -26,11 +26,10 @@
  */
 
 #include <QDir>
+#include <QCoreApplication>
 
 #include "aspell.h"
 #include "aspellchecker.h"
-#include "applicationinfo.h"
-#include "common.h"
 
 ASpellChecker::ASpellChecker()
 {
@@ -39,15 +38,15 @@ ASpellChecker::ASpellChecker()
 	config_ = new_aspell_config();
 #ifdef Q_WS_WIN
 	aspell_config_replace(config_, "conf-dir", QDir::homeDirPath());
-	aspell_config_replace(config_, "data-dir", QString("%1/aspell/data").arg(ApplicationInfo::homeDir()));
-	aspell_config_replace(config_, "dict-dir", QString("%1/aspell/dict").arg(ApplicationInfo::homeDir()));
+	aspell_config_replace(config_, "data-dir", QString("%1/aspell/data").arg(QCoreApplication::applicationDirPath()));
+	aspell_config_replace(config_, "dict-dir", QString("%1/aspell/dict").arg(QCoreApplication::applicationDirPath()));
 #endif
 	AspellCanHaveError* ret = new_aspell_speller(config_);
 	if (aspell_error_number(ret) == 0) {
 		speller_ = to_aspell_speller(ret);
 	}
 	else {
-		qWarning() << "Aspell error:" << aspell_error_message(ret);
+		qWarning(QString("Aspell error: %1").arg(aspell_error_message(ret)).toAscii());
 	}
 }
 
