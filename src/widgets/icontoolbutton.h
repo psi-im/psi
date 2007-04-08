@@ -46,6 +46,10 @@ public slots:
 	void setPsiIcon(const QString &);
 	QString psiIconName() const;
 
+protected:
+	// reimplemented
+	void paintEvent(QPaintEvent* event);
+
 public:
 	class Private;
 private:

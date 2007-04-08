@@ -751,6 +751,10 @@ private slots:
 	void iconUpdated(const QPixmap &pix)
 	{
 		button->setUpdatesEnabled(FALSE);
+		if (pix.isNull())
+			button->QToolButton::setIcon(QIcon());
+		else
+			button->QToolButton::setIcon(pix);
 		button->setIcon(pix);
 		button->setUpdatesEnabled(TRUE);
 		button->update();
@@ -797,6 +801,14 @@ QString IconToolButton::psiIconName() const
 #else
 	return d->iconName;
 #endif
+}
+
+void IconToolButton::paintEvent(QPaintEvent* event)
+{
+	setToolButtonStyle(icon().isNull() ?
+	                   Qt::ToolButtonTextOnly :
+	                   Qt::ToolButtonIconOnly);
+	QToolButton::paintEvent(event);
 }
 
 #include "iconwidget.moc"
