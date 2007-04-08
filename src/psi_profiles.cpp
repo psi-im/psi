@@ -676,7 +676,7 @@ void UserProfile::reset()
 	prefs.autoAuth = false;
 
 	// Notify authorization
-	prefs.notifyAuth = true;
+	prefs.notifyAuth = false;
 
 	// message events
 	prefs.messageEvents = true;
