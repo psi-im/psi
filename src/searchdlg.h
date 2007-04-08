@@ -1,5 +1,5 @@
 /*
- * servicesdlg.h - a dialog for browsing Jabber services
+ * servicesdlg.h
  * Copyright (C) 2001, 2002  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
@@ -18,51 +18,30 @@
  *
  */
 
-#ifndef SERVICESDLG_H
-#define SERVICESDLG_H
+#ifndef SEARCHDLG_H
+#define SEARCHDLG_H
+
+#include <QDialog>
 
 #include "ui_search.h"
-#include "xmpp.h"
-
-#include <qdialog.h>
-
-using namespace XMPP;
 
 class PsiAccount;
-
-class RegistrationDlg : public QDialog
-{
-	Q_OBJECT
-public:
-	RegistrationDlg(const Jid &, PsiAccount *);
-	~RegistrationDlg();
-
-//protected:
-//	void closeEvent(QCloseEvent *);
-
-public slots:
-	void done(int);
-
-private slots:
-	void doRegGet();
-	void doRegSet();
-	void jt_finished();
-
-private:
-	class Private;
-	Private *d;
-};
+class QString;
+class QStringList;
+namespace XMPP {
+	class Jid;
+}
 
 class SearchDlg : public QDialog, public Ui::Search
 {
 	Q_OBJECT
 public:
-	SearchDlg(const Jid &, PsiAccount *);
+	SearchDlg(const XMPP::Jid &, PsiAccount *);
 	~SearchDlg();
 
 signals:
-	void aInfo(const Jid &);
-	void add(const Jid &, const QString &, const QStringList &, bool authReq);
+	void aInfo(const XMPP::Jid &);
+	void add(const XMPP::Jid &, const QString &, const QStringList &, bool authReq);
 
 private slots:
 	void doSearchGet();

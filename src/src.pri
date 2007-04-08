@@ -124,7 +124,8 @@ HEADERS += \
 	$$PWD/eventdb.h \
 	$$PWD/historydlg.h \
 	$$PWD/tipdlg.h \
-	$$PWD/servicesdlg.h \
+	$$PWD/searchdlg.h \
+	$$PWD/registrationdlg.h \
 	$$PWD/psitoolbar.h \
 	$$PWD/passphrasedlg.h \
 	$$PWD/vcardfactory.h \
@@ -224,7 +225,8 @@ SOURCES += \
 	$$PWD/certutil.cpp \
 	$$PWD/eventdb.cpp \
 	$$PWD/historydlg.cpp \
-	$$PWD/servicesdlg.cpp \
+	$$PWD/searchdlg.cpp \
+	$$PWD/registrationdlg.cpp \
 	$$PWD/psitoolbar.cpp \
 	$$PWD/passphrasedlg.cpp \
 	$$PWD/vcardfactory.cpp \
