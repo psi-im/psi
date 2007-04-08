@@ -4183,13 +4183,17 @@ void PsiAccount::pgp_verifyFinished()
 			continue;
 		UserResource &ur = *rit;
 
-		if(t->success()) {
-			ur.setPublicKeyID(t->signer().key().pgpPublicKey().keyId());
-			ur.setPGPVerifyStatus(t->signer().identityResult());
-			ur.setSigTimestamp(t->signer().timestamp());
+		QCA::SecureMessageSignature signer;
+		if(t->success())
+			signer = t->signer();
+
+		if (signer.identityResult() != QCA::SecureMessageSignature::NoKey) {
+			ur.setPublicKeyID(signer.key().pgpPublicKey().keyId());
+			ur.setPGPVerifyStatus(signer.identityResult());
+			ur.setSigTimestamp(signer.timestamp());
 
 			// if the key doesn't match the assigned key, unassign it
-			if(t->signer().key().pgpPublicKey().keyId() != u->publicKeyID())
+			if(signer.key().pgpPublicKey().keyId() != u->publicKeyID())
 				u->setPublicKeyID("");
 		}
 		else {
