@@ -36,6 +36,7 @@ ASpellChecker::ASpellChecker()
 	config_ = NULL;
 	speller_ = NULL;
 	config_ = new_aspell_config();
+	aspell_config_replace(config_, "encoding", "utf-8");
 #ifdef Q_WS_WIN
 	aspell_config_replace(config_, "conf-dir", QDir::homeDirPath());
 	aspell_config_replace(config_, "data-dir", QString("%1/aspell/data").arg(QCoreApplication::applicationDirPath()));
@@ -66,7 +67,7 @@ ASpellChecker::~ASpellChecker()
 bool ASpellChecker::isCorrect(const QString& word)
 {
 	if(speller_) {
-		int correct = aspell_speller_check(speller_, word, -1);
+		int correct = aspell_speller_check(speller_, word.toUtf8(), -1);
 		return (correct != 0);
 	}
 	return true;
@@ -76,7 +77,7 @@ QList<QString> ASpellChecker::suggestions(const QString& word)
 {
 	QList<QString> words;
 	if (speller_) {
-		const AspellWordList* list = aspell_speller_suggest(speller_, word, -1); 
+		const AspellWordList* list = aspell_speller_suggest(speller_, word.toUtf8(), -1); 
 		AspellStringEnumeration* elements = aspell_word_list_elements(list);
 		const char *c_word;
 		while ((c_word = aspell_string_enumeration_next(elements)) != NULL) {
@@ -93,7 +94,7 @@ bool ASpellChecker::add(const QString& word)
 	if (config_) {
 		QString trimmed_word = word.trimmed();
 		if(!word.isEmpty()) {
-			aspell_speller_add_to_personal(speller_, trimmed_word, trimmed_word.length());
+			aspell_speller_add_to_personal(speller_, trimmed_word.toUtf8(), trimmed_word.toUtf8().length());
 			aspell_speller_save_all_word_lists(speller_);
 			result = true;
 		}
