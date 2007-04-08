@@ -23,7 +23,6 @@
 
 #include <QString>
 #include <QStringList>
-#include <QKeySequence>
 #include <QList>
 #include "im.h"
 #include "psiiconset.h"
@@ -208,9 +207,6 @@ struct Options
 
 	//background images
 	QString chatBgImage, rosterBgImage;
-
-	// Global accelerators
-	QList<QKeySequence> globalAccels;
 };
 
 // functions

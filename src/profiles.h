@@ -27,6 +27,7 @@
 #include <QtCrypto>
 
 #include "im.h"
+#include "varlist.h"
 #include "proxy.h"
 #include "common.h"
 class UserAccount

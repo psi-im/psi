@@ -38,6 +38,7 @@
 #include "fancylabel.h"
 #include "advwidget.h"
 #include "psioptions.h"
+#include "varlist.h"
 
 using namespace XMPP;
 using namespace XMLHelper;
@@ -686,11 +687,6 @@ void UserProfile::reset()
 	prefs.dtPort = 8010;
 	prefs.dtExternal = "";
 
-	// global accelerators
-	prefs.globalAccels.clear();
-	prefs.globalAccels.append(QKeySequence()); // process next event
-	prefs.globalAccels.append(QKeySequence()); // show/hide roster
-
 	// advanced widget
 	GAdvancedWidget::setStickEnabled( false ); //until this is bugless
 	GAdvancedWidget::setStickToWindows( false ); //again
@@ -1215,26 +1211,6 @@ bool UserProfile::toFile(const QString &fname)
 		p.appendChild(p_dt);
 		p_dt.appendChild( textTag(doc, "port", prefs.dtPort ) );
 		p_dt.appendChild( textTag(doc, "external", prefs.dtExternal ) );
-	}
-
-	{
-		// global accelerators
-		QDomElement p_globalAccel = doc.createElement("globalAccel");
-		p.appendChild(p_globalAccel);
-
-		QStringList accelNames;
-		accelNames << "processNextEvent";
-		accelNames << "showHideRoster";
-
-		QStringList::Iterator it1 = accelNames.begin();
-		QList<QKeySequence>::iterator it2 = prefs.globalAccels.begin();
-
-		for ( ; it2 != prefs.globalAccels.end(); ++it1, ++it2 ) {
-			QDomElement item = doc.createElement("command");
-			p_globalAccel.appendChild(item);
-			item.setAttribute("type", *it1);
-			item.appendChild( doc.createTextNode(*it2) );
-		}
 	}
 
 	{
@@ -1815,18 +1791,19 @@ bool UserProfile::fromFile(const QString &fname)
 
 		QDomElement p_globalAccel = findSubTag(p, "globalAccel", &found);
 		if (found) {
-			QMap<QString, int> accelNames;
-			accelNames["processNextEvent"] = 0;
-			accelNames["showHideRoster"] = 1;
-
 			for (QDomNode n = p_globalAccel.firstChild(); !n.isNull(); n = n.nextSibling()) {
 				QDomElement i = n.toElement();
 				if ( i.isNull() )
 					continue;
 
 				if ( i.tagName() == "command" && i.hasAttribute("type") ) {
-					int n = accelNames[i.attribute("type")];
-					prefs.globalAccels[n] = QKeySequence(i.text());
+					QVariant k = qVariantFromValue(QKeySequence(i.text()));
+					QString shortcut;
+					if (i.attribute("type") == "processNextEvent")
+						shortcut = "event";
+					else
+						shortcut = "toggle-visibility";
+					PsiOptions::instance()->setOption(QString("options.shortcuts.global.") + shortcut, k);
 				}
 			}
 		}

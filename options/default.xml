@@ -152,6 +152,10 @@
 				<history type="QKeySequence" comment="Open the message history">Ctrl+H</history>
 				<user-info type="QKeySequence" comment="Show the user info of the contact">Ctrl+I</user-info>
 			</common>
+			<global comment="Shortcuts available from outside of the application">
+				<event type="QKeySequence" comment="Receive incoming event" />
+				<toggle-visibility type="QKeySequence" comment="Show/hide the application" />
+			</global>
 			<message comment="Shortcuts in the message dialog">
 				<send type="QVariantList" comment="Send the message">
 					<item type="QKeySequence">Ctrl+Return</item>
