@@ -1449,13 +1449,11 @@ DiscoDlg::DiscoDlg(PsiAccount *pa, const Jid &jid, const QString &node)
 	pb_close->setDefault(false);
 	pb_close->setAutoDefault(false);
 
-	cb_address->setInsertionPolicy(QComboBox::NoInsert);
 	cb_address->insertStringList(pa->psi()->recentBrowseList()); // FIXME
 	cb_address->setFocus();
 	connect(cb_address, SIGNAL(activated(const QString &)), d, SLOT(doDisco()));
 	cb_address->setCurrentText(d->jid.full());
 
-	cb_node->setInsertionPolicy(QComboBox::NoInsert);
 	cb_node->insertStringList(pa->psi()->recentNodeList());
 	connect(cb_node, SIGNAL(activated(const QString &)), d, SLOT(doDisco()));
 	cb_node->setCurrentText(node);
