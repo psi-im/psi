@@ -992,11 +992,12 @@ private:
 		QString outstr = QString::fromLatin1(buf_stdout);
 		QString errstr = QString::fromLatin1(buf_stderr);
 
-		if(collectOutput)
-			diagnosticText += QString("stdout: [%1]\n").arg(outstr);
-		diagnosticText += QString("stderr: [%1]\n").arg(errstr);
 #ifdef GPG_DEBUG
-		printf("process result: [%s]\n", qPrintable(diagnosticText));
+		QString stdText;
+		if(collectOutput)
+			stdText += QString("stdout: [%1]\n").arg(outstr);
+		stdText += QString("stderr: [%1]\n").arg(errstr);
+		printf("process result: %d [%s]\n", code, qPrintable(stdText));
 		//printf("code = %d, input.op = %d, badPassphrase = %d, curError = %d", code, input.op, badPassphrase, curError);
 #endif
 		ensureDTextEmit();
