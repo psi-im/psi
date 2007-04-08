@@ -1788,7 +1788,7 @@ void PsiAccount::client_messageReceived(const Message &m)
 	}
 	
 	// encrypted message?
-	if(hasPGP() && !_m.xencrypted().isEmpty()) {
+	if(PGPUtil::pgpAvailable() && !_m.xencrypted().isEmpty()) {
 		Message *m = new Message(_m);
 		d->messageQueue.append(m);
 		processMessageQueue();
