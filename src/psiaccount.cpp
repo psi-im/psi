@@ -895,11 +895,12 @@ void PsiAccount::setUserAccount(const UserAccount &acc)
 	QString pgpSecretKeyID = (d->acc.pgpSecretKey.isNull() ? "" : d->acc.pgpSecretKey.keyId());
 	d->self.setPublicKeyID(pgpSecretKeyID);
 	if(PGPUtil::pgpAvailable()) {
-		if(!PGPUtil::equals(d->acc.pgpSecretKey,d->cur_pgpSecretKey) && loggedIn()) {
-			d->cur_pgpSecretKey = d->acc.pgpSecretKey;
+		bool updateStatus = !PGPUtil::equals(d->acc.pgpSecretKey, d->cur_pgpSecretKey) && loggedIn();
+		d->cur_pgpSecretKey = d->acc.pgpSecretKey;
+		pgpKeyChanged();
+		if (updateStatus) {
 			d->loginStatus.setXSigned("");
 			setStatusDirect(d->loginStatus);
-			pgpKeyChanged();
 		}
 	}
 
@@ -938,10 +939,6 @@ void PsiAccount::login()
 	}
 
 	d->jid = d->nextJid;
-	if(PGPUtil::pgpAvailable()) {
-		d->cur_pgpSecretKey = d->acc.pgpSecretKey;
-		pgpKeyChanged();
-	}
 
 	v_isActive = true;
 	isDisconnecting = false;
