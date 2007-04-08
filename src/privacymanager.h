@@ -26,6 +26,7 @@
 
 class QString;
 class PrivacyList;
+class PrivacyListListener;
 namespace XMPP {
 	class Task;
 }
@@ -37,7 +38,7 @@ class PrivacyManager : public QObject
 
 public:
 	PrivacyManager(XMPP::Task* rootTask);
-	virtual ~PrivacyManager() { }
+	virtual ~PrivacyManager();
 
 	void requestListNames();
 
@@ -86,6 +87,7 @@ signals:
 
 private:
 	XMPP::Task* rootTask_;
+	PrivacyListListener* listener_;
 
 	bool getDefault_waiting_;
 	QString getDefault_default_;

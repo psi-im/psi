@@ -30,6 +30,34 @@
 using namespace XMPP;
 
 // -----------------------------------------------------------------------------
+// 
+class PrivacyListListener : public Task
+{
+	Q_OBJECT
+
+public:
+	PrivacyListListener(Task* parent) : Task(parent) {
+	}
+	
+	bool take(const QDomElement &e) {
+		if(e.tagName() != "iq" || e.attribute("type") != "set")
+			return false;
+		
+		QString ns = queryNS(e);
+		if(ns == "jabber:iq:privacy") {
+			// TODO: Do something with update
+			
+			// Confirm receipt
+			QDomElement iq = createIQ(doc(), "result", e.attribute("from"), e.attribute("id"));
+			send(iq);
+			return true;
+		}
+
+		return false;
+	}
+};
+
+// -----------------------------------------------------------------------------
 
 class GetPrivacyListsTask : public Task
 {
@@ -115,19 +143,19 @@ public:
 
 		QDomElement e;
 		if (changeDefault_) {
-			qDebug("privacy.cpp: Changing default privacy list.");
+			//qDebug("privacy.cpp: Changing default privacy list.");
 			e = doc()->createElement("default");
 			if (!value_.isEmpty())
 				e.setAttribute("name",value_);
 		}
 		else if (changeActive_) {
-			qDebug("privacy.cpp: Changing active privacy list.");
+			//qDebug("privacy.cpp: Changing active privacy list.");
 			e = doc()->createElement("active");
 			if (!value_.isEmpty()) 
 				e.setAttribute("name",value_);
 		}
 		else if (changeList_) {
-			qDebug("privacy.cpp: Changing privacy list.");
+			//qDebug("privacy.cpp: Changing privacy list.");
 			e = list_.toXml(*doc());
 		}
 		else {
@@ -166,7 +194,7 @@ public:
 			return false;
 
 		if (x.attribute("type") == "result") {
-			qDebug("privacy.cpp: Got succesful reply for list change.");
+			//qDebug("privacy.cpp: Got succesful reply for list change.");
 			setSuccess();
 		}
 		else {
@@ -233,7 +261,13 @@ public:
 // -----------------------------------------------------------------------------
 
 PrivacyManager::PrivacyManager(XMPP::Task* rootTask) : rootTask_(rootTask), getDefault_waiting_(false), block_waiting_(false)
-{ 
+{
+   listener_ = new PrivacyListListener(rootTask_);	
+}
+
+PrivacyManager::~PrivacyManager()
+{
+	delete listener_;
 }
 
 void PrivacyManager::requestListNames()
