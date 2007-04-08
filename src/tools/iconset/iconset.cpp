@@ -133,11 +133,15 @@ bool Impix::isNull() const
 
 const QPixmap & Impix::pixmap() const
 {
+	if (d->pixmap.isNull() && !d->image.isNull())
+		d->pixmap.convertFromImage(d->image);
 	return d->pixmap;
 }
 
 const QImage & Impix::image() const
 {
+	if (d->image.isNull() && !d->pixmap.isNull())
+		d->image = d->pixmap.convertToImage();
 	return d->image;
 }
 
@@ -145,13 +149,11 @@ void Impix::setPixmap(const QPixmap &x)
 {
 	d->unload();
 	d->pixmap = x;
-	d->image  = x.convertToImage();
 }
 
 void Impix::setImage(const QImage &x)
 {
 	d->unload();
-	d->pixmap.convertFromImage(x);
 	d->image = x;
 }
 

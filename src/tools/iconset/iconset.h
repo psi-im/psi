@@ -72,7 +72,7 @@ private:
 		}
 	};
 
-	QSharedDataPointer<Private> d;
+	mutable QSharedDataPointer<Private> d;
 };
 
 class PsiIcon : public QObject
