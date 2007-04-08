@@ -856,6 +856,14 @@
         </layout>
        </item>
        <item>
+        <widget class="QCheckBox" name="ck_custom_auth" >
+         <property name="text" >
+          <string>Authenticate as:</string>
+         </property>
+        </widget>
+       </item>
+	   
+       <item>
         <layout class="QHBoxLayout" >
          <property name="margin" >
           <number>0</number>
@@ -864,9 +872,12 @@
           <number>6</number>
          </property>
          <item>
-          <widget class="QCheckBox" name="ck_custom_auth" >
+          <widget class="QLabel" name="lb_authid" >
            <property name="text" >
-            <string>Authenticate as user:</string>
+            <string>User:</string>
+           </property>
+           <property name="enabled" >
+            <bool>false</bool>
            </property>
           </widget>
          </item>
@@ -875,8 +886,41 @@
            <property name="enabled" >
             <bool>false</bool>
            </property>
+           <property name="sizePolicy" >
+            <sizepolicy>
+             <hsizetype>7</hsizetype>
+             <vsizetype>0</vsizetype>
+             <horstretch>2</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
           </widget>
          </item>
+		 <item>
+		  <widget class="QLabel" name="lb_realm" >
+		   <property name="text" >
+		    <string>Realm:</string>
+		   </property>
+           <property name="enabled" >
+            <bool>false</bool>
+           </property>
+		  </widget>
+		 </item>
+         <item>
+		  <widget class="QLineEdit" name="le_realm" >
+		   <property name="enabled" >
+		    <bool>false</bool>
+		   </property>
+		   <property name="sizePolicy" >
+		    <sizepolicy>
+             <hsizetype>7</hsizetype>
+             <vsizetype>0</vsizetype>
+             <horstretch>3</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+		 </item>
         </layout>
        </item>
        <item>

@@ -101,13 +101,13 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 	le_resource->setText(acc.resource);
 	le_priority->setText(QString::number(acc.priority));
 
-	//connect(ck_custom_auth,SIGNAL(toggled(bool)), lb_authid, SLOT(setEnabled(bool)));
+	connect(ck_custom_auth,SIGNAL(toggled(bool)), lb_authid, SLOT(setEnabled(bool)));
 	connect(ck_custom_auth,SIGNAL(toggled(bool)), le_authid, SLOT(setEnabled(bool)));
-	//connect(ck_custom_auth,SIGNAL(toggled(bool)), lb_realm, SLOT(setEnabled(bool)));
-	//connect(ck_custom_auth,SIGNAL(toggled(bool)), le_realm, SLOT(setEnabled(bool)));
+	connect(ck_custom_auth,SIGNAL(toggled(bool)), lb_realm, SLOT(setEnabled(bool)));
+	connect(ck_custom_auth,SIGNAL(toggled(bool)), le_realm, SLOT(setEnabled(bool)));
 	ck_custom_auth->setChecked(acc.customAuth);
 	le_authid->setText(acc.authid);
-	//le_realm->setText(acc.realm);
+	le_realm->setText(acc.realm);
 		
 	ck_plain->setChecked(acc.opt_plain);
 	ck_compress->setChecked(acc.opt_compress);
@@ -288,10 +288,10 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 	
 	if (!PsiOptions::instance()->getOption("options.ui.account.custom-authid").toBool()) {
 		ck_custom_auth->hide();
-		//lb_authid->hide();
+		lb_authid->hide();
 		le_authid->hide();
-		//lb_realm->hide();
-		//le_realm->hide();
+		lb_realm->hide();
+		le_realm->hide();
 	}
 	
 	if (!PsiOptions::instance()->getOption("options.ui.account.priority").toBool()) {
@@ -484,7 +484,7 @@ void AccountModifyDlg::save()
 	acc.priority = le_priority->text().toInt();
 	acc.customAuth = ck_custom_auth->isChecked();
 	acc.authid = le_authid->text();
-	//acc.realm = le_realm->text();
+	acc.realm = le_realm->text();
 	acc.ssl =  (UserAccount::SSLFlag) cb_ssl->itemData(cb_ssl->currentIndex()).toInt();
 	acc.opt_plain = ck_plain->isChecked();
 	acc.opt_compress = ck_compress->isChecked();

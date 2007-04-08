@@ -1104,14 +1104,23 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
 		else
 			d->stream->setUsername(d->jid.user());
     }
+	else if (d->acc.customAuth && !d->acc.authid.isEmpty())
+		qWarning("Custom authentication user not used");
+
 	if(pass)
 		d->stream->setPassword(d->acc.pass);
-	if(realm) {
-		if (d->acc.customAuth && !d->acc.realm.isEmpty())
+
+	if (realm) {
+		if (d->acc.customAuth && !d->acc.realm.isEmpty()) {
 			d->stream->setRealm(d->acc.realm);
-		else
+		}
+		else {
 			d->stream->setRealm(d->jid.domain());
+		}
 	}
+	else if (d->acc.customAuth && !d->acc.realm.isEmpty()) 
+		qWarning("Custom authentication realm not used");
+	
 	if(d->acc.customAuth) 
 		d->stream->setAuthzid(d->jid.bare());
 	d->stream->continueAfterParams();

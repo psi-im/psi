@@ -340,7 +340,8 @@ public:
 			Q3CString cnonce = QCA::Base64().arrayToString(a).latin1();
 
 			// make other variables
-			realm = QString::fromUtf8(in.get("realm"));
+			if (realm.isEmpty())
+				realm = QString::fromUtf8(in.get("realm"));
 			Q3CString nonce = in.get("nonce");
 			Q3CString nc = "00000001";
 			Q3CString uri = service.utf8() + '/' + host.utf8();
