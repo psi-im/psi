@@ -1125,6 +1125,17 @@ void PsiAccount::tls_handshaken()
 		d->tlsHandler->continueAfterHandshake();
 }
 
+void PsiAccount::showCert()
+{
+	if (!d->tls || !d->tls->isHandshaken()) return;
+	QCA::Certificate cert = d->tls->peerCertificateChain().primary();
+	int r = d->tls->peerIdentityResult();
+	if (r == QCA::TLS::Valid && !d->tlsHandler->certMatchesHostname()) r = QCA::TLS::HostMismatch;
+	QCA::Validity validity =  d->tls->peerCertificateValidity();
+	SSLCertDlg::showCert(cert, r, validity);
+}
+
+
 void PsiAccount::cs_connected()
 {
 	// get IP address
