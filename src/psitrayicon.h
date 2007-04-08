@@ -19,6 +19,7 @@ public:
 	PsiTrayIcon(const QString &tip, QMenu *popup, bool old = true, QObject *parent=0);
 	~PsiTrayIcon();
 
+	void setContextMenu(QMenu*);
 	void setToolTip(const QString &);
 	void setIcon(const Icon *, bool alert = false);
 	void setAlert(const Icon *);

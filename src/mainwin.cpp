@@ -264,8 +264,15 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 
 	d->statusMenu = new QMenu(this);
 	d->optionsMenu = new QMenu(this);
+#ifdef Q_WS_MAC
+	d->trayMenu = d->statusMenu;
+#else
+	d->trayMenu = new QMenu(this);
+#endif
+
 
 	buildStatusMenu();
+	buildTrayMenu();
 	buildOptionsMenu();
 	connect(d->optionsMenu, SIGNAL(aboutToShow()), SLOT(buildOptionsMenu()));
 
@@ -355,8 +362,6 @@ MainWin::~MainWin()
 	if(d->tray) {
 		delete d->tray;
 		d->tray = 0;
-		delete d->trayMenu;
-		d->trayMenu = 0;
 	}
 
 	//saveToolbarsPositions();
@@ -497,8 +502,6 @@ void MainWin::setUseDock(bool use)
 		if(d->tray) {
 			delete d->tray;
 			d->tray = 0;
-			delete d->trayMenu;
-			d->trayMenu = 0;
 		}
 
 		if (use == false)
@@ -508,19 +511,19 @@ void MainWin::setUseDock(bool use)
 	if(d->tray)
 		return;
 
-	d->trayMenu = new QMenu;
-	connect(d->trayMenu, SIGNAL(aboutToShow()), SLOT(buildTrayMenu()));
-
 // TODO: Check on other platforms, and remove ifdef
-#ifndef Q_WS_MAC
-	d->tray = new PsiTrayIcon("Psi", d->trayMenu);
-	connect(d->tray, SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
-	connect(d->tray, SIGNAL(doubleClicked(const QPoint &)), SLOT(trayDoubleClicked()));
-	connect(d->tray, SIGNAL(closed()), SLOT(dockActivated()));
-	connect(qApp, SIGNAL(trayOwnerDied()), SLOT(dockActivated()));
+#ifdef Q_WS_MAC
+	bool old = false;
 #else
-	d->tray = new PsiTrayIcon("Psi", d->statusMenu, false);
+	bool old = true;
 #endif
+	d->tray = new PsiTrayIcon("Psi", d->trayMenu, old);
+	if (old) {
+		connect(d->tray, SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
+		connect(d->tray, SIGNAL(doubleClicked(const QPoint &)), SLOT(trayDoubleClicked()));
+		connect(d->tray, SIGNAL(closed()), SLOT(dockActivated()));
+		connect(qApp, SIGNAL(trayOwnerDied()), SLOT(dockActivated()));
+	}
 	d->tray->setIcon( PsiIconset::instance()->statusPtr( STATUS_OFFLINE ));
 	d->tray->setToolTip(ApplicationInfo::name());
 
@@ -758,8 +761,7 @@ void MainWin::activatedAccOption(PsiAccount *pa, int x)
 
 void MainWin::buildTrayMenu()
 {
-	if(!d->trayMenu)
-		return;
+#ifndef Q_WS_MAC
 	d->trayMenu->clear();
 
 	if(d->nextAmount > 0) {
@@ -777,6 +779,7 @@ void MainWin::buildTrayMenu()
 	d->trayMenu->insertSeparator();
 	// TODO!
 	d->getAction("menu_quit")->addTo(d->trayMenu);
+#endif
 }
 
 void MainWin::setTrayToolTip(int status)
@@ -1036,6 +1039,9 @@ void MainWin::updateTray()
 		d->tray->setAlert(IconsetFactory::iconPtr("psi/connect"));
 	else
 		d->tray->setIcon(PsiIconset::instance()->statusPtr(d->lastStatus));
+	
+	buildTrayMenu();
+	d->tray->setContextMenu(d->trayMenu);
 }
 
 void MainWin::doRecvNextEvent()

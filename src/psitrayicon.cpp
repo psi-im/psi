@@ -39,6 +39,14 @@ PsiTrayIcon::~PsiTrayIcon()
 	delete icon_;
 }
 
+void PsiTrayIcon::setContextMenu(QMenu* menu)
+{
+	if (old_)
+		old_trayicon_->setPopup(menu);
+	else
+		trayicon_->setContextMenu(menu);
+}
+
 void PsiTrayIcon::setToolTip(const QString &str)
 {
 	if (old_)
