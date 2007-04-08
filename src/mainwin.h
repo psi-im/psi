@@ -55,7 +55,6 @@ public:
 
 	void setWindowOpts(bool onTop, bool asTool);
 	void setUseDock(bool);
-	void setInfo(const QString &);
 
 	// evil stuff! remove ASAP!!
 	QStringList actionList;

@@ -108,8 +108,6 @@ public:
 	int lastStatus;
 	bool old_trayicon;
 
-	QString infoString;
-
 	void registerActions();
 	IconAction *getAction( QString name );
 	void updateMenu(QStringList actions, QMenu *menu);
@@ -239,7 +237,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	d->tray = 0;
 	d->trayMenu = 0;
 	d->statusTip = "";
-	d->infoString = "";
 	d->nickname = "";
 #ifdef Q_WS_MAC
 	d->old_trayicon = false;
@@ -535,14 +532,6 @@ void MainWin::setUseDock(bool use)
 	updateReadNext(d->nextAnim, d->nextAmount);
 
 	d->tray->show();
-}
-
-void MainWin::setInfo(const QString &str)
-{
-	d->infoString = str;
-
-	if(d->nextAmount == 0)
-		d->eventNotifier->setText(d->infoString);
 }
 
 void MainWin::buildStatusMenu()
