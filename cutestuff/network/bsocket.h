@@ -24,7 +24,6 @@
 #include <qobject.h>
 #include <qhostaddress.h>
 #include "bytestream.h"
-#include <QAbstractSocket>
 
 // CS_NAMESPACE_BEGIN
 
@@ -69,8 +68,8 @@ private slots:
 	void qs_connectionClosed();
 	void qs_delayedCloseFinished();
 	void qs_readyRead();
-	void qs_bytesWritten(qint64);
-	void qs_error(QAbstractSocket::SocketError);
+	void qs_bytesWritten(int);
+	void qs_error(int);
 	void srv_done();
 	void ndns_done();
 	void do_connect();

@@ -18,10 +18,11 @@
  *
  */
 
-#include <QTcpSocket>
-
 #include "bsocket.h"
 
+#include <q3cstring.h>
+#include <q3socket.h>
+#include <q3dns.h>
 #include <qpointer.h>
 #include "safedelete.h"
 #ifndef NO_NDNS
@@ -45,7 +46,7 @@ public:
 		qsock = 0;
 	}
 
-	QTcpSocket *qsock;
+	Q3Socket *qsock;
 	int state;
 
 #ifndef NO_NDNS
@@ -83,7 +84,7 @@ void BSocket::reset(bool clear)
 		if(!clear && d->qsock->isOpen()) {
 			// move remaining into the local queue
 			QByteArray block(d->qsock->bytesAvailable());
-			d->qsock->read(block.data(), block.size());
+			d->qsock->readBlock(block.data(), block.size());
 			appendRead(block);
 		}
 
@@ -107,15 +108,15 @@ void BSocket::reset(bool clear)
 void BSocket::ensureSocket()
 {
 	if(!d->qsock) {
-		d->qsock = new QTcpSocket;
+		d->qsock = new Q3Socket;
 		d->qsock->setReadBufferSize(READBUFSIZE);
 		connect(d->qsock, SIGNAL(hostFound()), SLOT(qs_hostFound()));
 		connect(d->qsock, SIGNAL(connected()), SLOT(qs_connected()));
 		connect(d->qsock, SIGNAL(connectionClosed()), SLOT(qs_connectionClosed()));
 		connect(d->qsock, SIGNAL(delayedCloseFinished()), SLOT(qs_delayedCloseFinished()));
 		connect(d->qsock, SIGNAL(readyRead()), SLOT(qs_readyRead()));
-		connect(d->qsock, SIGNAL(bytesWritten(qint64)), SLOT(qs_bytesWritten(qint64)));
-		connect(d->qsock, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(qs_error(QAbstractSocket::SocketError)));
+		connect(d->qsock, SIGNAL(bytesWritten(int)), SLOT(qs_bytesWritten(int)));
+		connect(d->qsock, SIGNAL(error(int)), SLOT(qs_error(int)));
 	}
 }
 
@@ -190,8 +191,11 @@ void BSocket::write(const QByteArray &a)
 	if(d->state != Connected)
 		return;
 #ifdef BS_DEBUG
-	QString s = QString::fromUtf8(a);
-	fprintf(stderr, "BSocket: writing [%d]: {%s}\n", a.size(), s.data());
+	Q3CString cs;
+	cs.resize(a.size()+1);
+	memcpy(cs.data(), a.data(), a.size());
+	QString s = QString::fromUtf8(cs);
+	fprintf(stderr, "BSocket: writing [%d]: {%s}\n", a.size(), cs.data());
 #endif
 	d->qsock->writeBlock(a.data(), a.size());
 }
@@ -210,7 +214,10 @@ QByteArray BSocket::read(int bytes)
 		block = ByteStream::read(bytes);
 
 #ifdef BS_DEBUG
-	QString s = QString::fromUtf8(block);
+	Q3CString cs;
+	cs.resize(block.size()+1);
+	memcpy(cs.data(), block.data(), block.size());
+	QString s = QString::fromUtf8(cs);
 	fprintf(stderr, "BSocket: read [%d]: {%s}\n", block.size(), s.latin1());
 #endif
 	return block;
@@ -234,7 +241,7 @@ int BSocket::bytesToWrite() const
 QHostAddress BSocket::address() const
 {
 	if(d->qsock)
-		return d->qsock->localAddress();
+		return d->qsock->address();
 	else
 		return QHostAddress();
 }
@@ -242,7 +249,7 @@ QHostAddress BSocket::address() const
 Q_UINT16 BSocket::port() const
 {
 	if(d->qsock)
-		return d->qsock->localPort();
+		return d->qsock->port();
 	else
 		return 0;
 }
@@ -258,7 +265,7 @@ QHostAddress BSocket::peerAddress() const
 Q_UINT16 BSocket::peerPort() const
 {
 	if(d->qsock)
-		return d->qsock->peerPort();
+		return d->qsock->port();
 	else
 		return 0;
 }
@@ -349,7 +356,7 @@ void BSocket::qs_readyRead()
 	readyRead();
 }
 
-void BSocket::qs_bytesWritten(qint64 x)
+void BSocket::qs_bytesWritten(int x)
 {
 #ifdef BS_DEBUG
 	fprintf(stderr, "BSocket: BytesWritten [%d].\n", x);
@@ -358,7 +365,7 @@ void BSocket::qs_bytesWritten(qint64 x)
 	bytesWritten(x);
 }
 
-void BSocket::qs_error(QAbstractSocket::SocketError x)
+void BSocket::qs_error(int x)
 {
 #ifdef BS_DEBUG
 	fprintf(stderr, "BSocket: Error.\n");
@@ -366,17 +373,17 @@ void BSocket::qs_error(QAbstractSocket::SocketError x)
 	SafeDeleteLock s(&d->sd);
 
 	// connection error during SRV host connect?  try next
-	if(d->state == HostLookup && (x == QAbstractSocket::ConnectionRefusedError || x == QAbstractSocket::HostNotFoundError)) {
+	if(d->state == HostLookup && (x == Q3Socket::ErrConnectionRefused || x == Q3Socket::ErrHostNotFound)) {
 		d->srv.next();
 		return;
 	}
 
 	reset();
-	if(x == QAbstractSocket::ConnectionRefusedError)
+	if(x == Q3Socket::ErrConnectionRefused)
 		error(ErrConnectionRefused);
-	else if(x == QAbstractSocket::HostNotFoundError)
+	else if(x == Q3Socket::ErrHostNotFound)
 		error(ErrHostNotFound);
-	else //if(x == QAbstractSocket::SocketRead)
+	else if(x == Q3Socket::ErrSocketRead)
 		error(ErrRead);
 }
 
