@@ -38,8 +38,8 @@
 #include "psitabwidget.h"
 #include "im.h" // ChatState
 #include "advwidget.h"
+#include "chatdlg.h"
 
-class ChatDlg;
 class PsiCon;
 class ChatTabs;
 class Q3DragObject;

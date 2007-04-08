@@ -19,7 +19,7 @@
  */
 
 #include "tabdlg.h"
-#include "chatdlg.h"
+
 #include "iconwidget.h"
 #include "iconset.h"
 #include "common.h"
