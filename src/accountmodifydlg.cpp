@@ -105,8 +105,8 @@ void AccountModifyDlg::init()
 	le_name->setText(acc.name);
 	le_jid->setText(JIDUtil::accountToString(acc.jid,false));
 
-	cb_ssl->addItem(tr("Automatic"),UserAccount::SSL_Auto);
 	cb_ssl->addItem(tr("Always"),UserAccount::SSL_Yes);
+	cb_ssl->addItem(tr("When available"),UserAccount::SSL_Auto);
 	cb_ssl->addItem(tr("Never"), UserAccount::SSL_No);
 	cb_ssl->addItem(tr("Legacy SSL"), UserAccount::SSL_Legacy);
 	cb_ssl->setCurrentIndex(cb_ssl->findData(acc.ssl));
