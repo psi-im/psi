@@ -4,7 +4,7 @@
 #include "pluginmanager.h"
 #include "psiplugin.h"
 #include "userlist.h"
-#include "common.h"
+#include "applicationinfo.h"
 #include "psioptions.h"
 #include <QtCrypto>
 
@@ -16,8 +16,8 @@
 static QStringList pluginDirs()
 {
 	QStringList l;
-	l += g.pathBase + "/plugins";
-	l += g.pathHome + "/plugins";
+	l += ApplicationInfo::resourcesDir() + "/plugins";
+	l += ApplicationInfo::homeDir() + "/plugins";
 	return l;
 }
 

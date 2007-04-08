@@ -19,7 +19,7 @@
  */
 
 #include "profiledlg.h"
-#include "common.h"
+#include "applicationinfo.h"
 
 #include <QLabel>
 #include <QComboBox>
@@ -247,7 +247,7 @@ void ProfileManageDlg::slotProfileDelete()
 	if(x == -1)
 		return;
 	QString name = lbx_profiles->text(x);
-	QString path = g.pathProfiles + "/" + name;
+	QString path = ApplicationInfo::profilesDir() + "/" + name;
 
 	// prompt first
 	int r = QMessageBox::warning(this,

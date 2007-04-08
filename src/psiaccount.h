@@ -30,8 +30,8 @@
 #include <QList>
 
 #include "xmpp.h"
-#include "common.h"
 #include "urlbookmark.h"
+#include "common.h" // for JidList
 #include "conferencebookmark.h"
 
 namespace XMPP

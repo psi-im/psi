@@ -39,8 +39,8 @@
 #include <QResizeEvent>
 #include "psiaccount.h"
 #include "psievent.h"
-#include "common.h"
 #include "busywidget.h"
+#include "applicationinfo.h"
 #include "eventdb.h"
 #include "jidutil.h"
 #include "userlist.h"
@@ -311,7 +311,7 @@ void HistoryDlg::doErase()
 {
 	int x = QMessageBox::information(this, tr("Confirm erase all"), tr("This will erase all message history for this contact!\nAre you sure you want to do this?"), tr("&Yes"), tr("&No"), QString::null, 1);
 	if(x == 0) {
-		QString fname = getHistoryDir() + "/" + JIDUtil::encode(d->jid.userHost()).toLower() + ".history";
+		QString fname = ApplicationInfo::historyDir() + "/" + JIDUtil::encode(d->jid.userHost()).toLower() + ".history";
 		QFileInfo fi(fname);
 		if(fi.exists()) {
 			QDir dir = fi.dir();

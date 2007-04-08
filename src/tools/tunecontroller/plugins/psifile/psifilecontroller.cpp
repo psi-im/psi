@@ -18,9 +18,8 @@
  *
  */
 
-#include "common.h"
-
 #include "psifilecontroller.h"
+#include "applicationinfo.h"
 
 
 /**
@@ -32,7 +31,7 @@
 /**
  * \brief Constructs the controller.
  */
-PsiFileController::PsiFileController() : FileTuneController(g.pathHome  + "/tune")
+PsiFileController::PsiFileController() : FileTuneController(ApplicationInfo::homeDir()  + "/tune")
 {
 	setInterval(10000);
 }

@@ -26,6 +26,7 @@
 #include <QTextStream>
 
 #include "profiles.h"
+#include "applicationinfo.h"
 #include "vcardfactory.h"
 #include "jidutil.h"
 
@@ -95,7 +96,7 @@ void VCardFactory::taskFinished()
 		if(!v.exists())
 			p.mkdir("vcard");
 
-		QFile file ( getVCardDir() + "/" + JIDUtil::encode(j.userHost()).lower() + ".xml" );
+		QFile file ( ApplicationInfo::vCardDir() + "/" + JIDUtil::encode(j.userHost()).lower() + ".xml" );
 		file.open ( QIODevice::WriteOnly );
 		QTextStream out ( &file );
 		out.setEncoding ( QTextStream::UnicodeUTF8 );
@@ -119,7 +120,7 @@ const VCard* VCardFactory::vcard(const Jid &j)
 	}
 	
 	// then try to load from cache on disk
-	QFile file ( getVCardDir() + "/" + JIDUtil::encode(j.userHost()).lower() + ".xml" );
+	QFile file ( ApplicationInfo::vCardDir() + "/" + JIDUtil::encode(j.userHost()).lower() + ".xml" );
 	file.open (QIODevice::ReadOnly);
 	QDomDocument doc;
 	VCard *vcard = new VCard;

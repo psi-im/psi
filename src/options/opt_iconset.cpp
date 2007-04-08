@@ -1,6 +1,7 @@
 #include "opt_iconset.h"
 #include "common.h"
 #include "iconwidget.h"
+#include "applicationinfo.h"
 #include "psicon.h"
 
 #include <q3buttongroup.h>
@@ -367,8 +368,8 @@ OptionsTabIconsetSystem::OptionsTabIconsetSystem(QObject *parent)
 
 	if ( dirs.isEmpty() ) {
 		dirs << ".";
-		dirs << g.pathHome;
-		dirs << g.pathBase;
+		dirs << ApplicationInfo::homeDir();
+		dirs << ApplicationInfo::resourcesDir();
 	}
 }
 

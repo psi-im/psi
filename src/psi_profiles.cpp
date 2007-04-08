@@ -20,6 +20,7 @@
 
 #include "profiles.h"
 #include "common.h"
+#include "applicationinfo.h"
 #include <qdir.h>
 #include <qfileinfo.h>
 #include <qdom.h>
@@ -375,8 +376,6 @@ void UserProfile::reset()
 	mac = TRUE;
 #endif
 
-	progver = PROG_VERSION;
-
 	// global
 	mwgeom.setRect(64, 64, 150, 360);
 	lastStatusString = "";
@@ -511,19 +510,19 @@ void UserProfile::reset()
 	prefs.player = "play";
 	prefs.noAwaySound = FALSE;
 
-	prefs.onevent[eMessage]    = g.pathBase + "/sound/chat2.wav";
-	prefs.onevent[eChat1]      = g.pathBase + "/sound/chat1.wav";
-	prefs.onevent[eChat2]      = g.pathBase + "/sound/chat2.wav";
-	prefs.onevent[eSystem]     = g.pathBase + "/sound/chat2.wav";
-	prefs.onevent[eHeadline]   = g.pathBase + "/sound/chat2.wav";
-	prefs.onevent[eOnline]     = g.pathBase + "/sound/online.wav";
-	prefs.onevent[eOffline]    = g.pathBase + "/sound/offline.wav";
-	prefs.onevent[eSend]       = g.pathBase + "/sound/send.wav";
-	prefs.onevent[eIncomingFT] = g.pathBase + "/sound/ft_incoming.wav";
-	prefs.onevent[eFTComplete] = g.pathBase + "/sound/ft_complete.wav";
+	prefs.onevent[eMessage]    = ApplicationInfo::resourcesDir() + "/sound/chat2.wav";
+	prefs.onevent[eChat1]      = ApplicationInfo::resourcesDir() + "/sound/chat1.wav";
+	prefs.onevent[eChat2]      = ApplicationInfo::resourcesDir() + "/sound/chat2.wav";
+	prefs.onevent[eSystem]     = ApplicationInfo::resourcesDir() + "/sound/chat2.wav";
+	prefs.onevent[eHeadline]   = ApplicationInfo::resourcesDir() + "/sound/chat2.wav";
+	prefs.onevent[eOnline]     = ApplicationInfo::resourcesDir() + "/sound/online.wav";
+	prefs.onevent[eOffline]    = ApplicationInfo::resourcesDir() + "/sound/offline.wav";
+	prefs.onevent[eSend]       = ApplicationInfo::resourcesDir() + "/sound/send.wav";
+	prefs.onevent[eIncomingFT] = ApplicationInfo::resourcesDir() + "/sound/ft_incoming.wav";
+	prefs.onevent[eFTComplete] = ApplicationInfo::resourcesDir() + "/sound/ft_complete.wav";
 
 	// Added by Kiko 020621: sets up the default certificate store
-	prefs.trustCertStoreDir = g.pathBase + "/certs";
+	prefs.trustCertStoreDir = ApplicationInfo::resourcesDir() + "/certs";
 
 	prefs.sizeEventDlg = EventDlg::defaultSize();
 	prefs.sizeChatDlg = ChatDlg::defaultSize();
@@ -743,7 +742,7 @@ bool UserProfile::toFile(const QString &fname)
 	base.setAttribute("version", "1.0");
 	doc.appendChild(base);
 
-	base.appendChild(textTag(doc, "progver", PROG_VERSION));
+	base.appendChild(textTag(doc, "progver", ApplicationInfo::version()));
 	base.appendChild(textTag(doc, "geom", mwgeom));
 	base.appendChild(stringListToXml(doc, "recentGCList", recentGCList));
 	base.appendChild(stringListToXml(doc, "recentBrowseList", recentBrowseList));
@@ -1261,6 +1260,7 @@ bool UserProfile::fromFile(const QString &fname)
 {
 	QString confver;
 	QDomDocument doc;
+	QString progver;
 
 	QFile f(fname);
 	if(!f.open(QIODevice::ReadOnly))
@@ -1849,7 +1849,7 @@ bool UserProfile::fromFile(const QString &fname)
 
 QString pathToProfile(const QString &name)
 {
-	return g.pathProfiles + "/" + name;
+	return ApplicationInfo::profilesDir() + "/" + name;
 }
 
 QString pathToProfileConfig(const QString &name)
@@ -1861,7 +1861,7 @@ QStringList getProfilesList()
 {
 	QStringList list;
 
-	QDir d(g.pathProfiles);
+	QDir d(ApplicationInfo::profilesDir());
 	if(!d.exists())
 		return list;
 
@@ -1905,10 +1905,10 @@ bool profileNew(const QString &name)
 	}
 
 	// make it
-	QDir d(g.pathProfiles);
+	QDir d(ApplicationInfo::profilesDir());
 	if(!d.exists())
 		return FALSE;
-	QDir p(g.pathProfiles + "/" + name);
+	QDir p(ApplicationInfo::profilesDir() + "/" + name);
 	if(!p.exists()) {
 	        if (!d.mkdir(name))
 			return FALSE;
@@ -1929,7 +1929,7 @@ bool profileRename(const QString &oldname, const QString &name)
 	}
 
 	// locate the folder
-	QDir d(g.pathProfiles);
+	QDir d(ApplicationInfo::profilesDir());
 	if(!d.exists())
 		return FALSE;
 	if(!d.rename(oldname, name))

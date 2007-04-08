@@ -1,7 +1,8 @@
 #include <QtCrypto>
 #include <QStringList>
+#include <QDomDocument>
 
-#include "common.h"
+#include "applicationinfo.h"
 #include "certutil.h"
 
 using namespace QCA;
@@ -17,8 +18,8 @@ using namespace QCA;
 static QStringList certificateStores()
 {
 	QStringList l;
-	l += g.pathBase + "/certs";
-	l += g.pathHome + "/certs";
+	l += ApplicationInfo::resourcesDir() + "/certs";
+	l += ApplicationInfo::homeDir() + "/certs";
 	return l;
 }
 

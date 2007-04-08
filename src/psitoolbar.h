@@ -25,8 +25,8 @@
 //Added by qt3to4:
 #include <QContextMenuEvent>
 
-#include "common.h"
 #include "psiactionlist.h"
+#include "common.h" // Options + ToolbarPrefs
 
 class PsiCon;
 

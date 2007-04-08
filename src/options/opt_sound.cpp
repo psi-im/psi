@@ -1,6 +1,7 @@
 #include "opt_sound.h"
 #include "common.h"
 #include "iconwidget.h"
+#include "applicationinfo.h"
 
 #include <qbuttongroup.h>
 #include <qwhatsthis.h>
@@ -192,16 +193,16 @@ void OptionsTabSound::previewSoundEvent(QAbstractButton* b)
 void OptionsTabSound::soundReset()
 {
 	Options opt;
-	opt.onevent[eMessage]    = g.pathBase + "/sound/chat2.wav";
-	opt.onevent[eChat1]      = g.pathBase + "/sound/chat1.wav";
-	opt.onevent[eChat2]      = g.pathBase + "/sound/chat2.wav";
-	opt.onevent[eHeadline]   = g.pathBase + "/sound/chat2.wav";
-	opt.onevent[eSystem]     = g.pathBase + "/sound/chat2.wav";
-	opt.onevent[eOnline]     = g.pathBase + "/sound/online.wav";
-	opt.onevent[eOffline]    = g.pathBase + "/sound/offline.wav";
-	opt.onevent[eSend]       = g.pathBase + "/sound/send.wav";
-	opt.onevent[eIncomingFT] = g.pathBase + "/sound/ft_incoming.wav";
-	opt.onevent[eFTComplete] = g.pathBase + "/sound/ft_complete.wav";
+	opt.onevent[eMessage]    = ApplicationInfo::resourcesDir() + "/sound/chat2.wav";
+	opt.onevent[eChat1]      = ApplicationInfo::resourcesDir() + "/sound/chat1.wav";
+	opt.onevent[eChat2]      = ApplicationInfo::resourcesDir() + "/sound/chat2.wav";
+	opt.onevent[eHeadline]   = ApplicationInfo::resourcesDir() + "/sound/chat2.wav";
+	opt.onevent[eSystem]     = ApplicationInfo::resourcesDir() + "/sound/chat2.wav";
+	opt.onevent[eOnline]     = ApplicationInfo::resourcesDir() + "/sound/online.wav";
+	opt.onevent[eOffline]    = ApplicationInfo::resourcesDir() + "/sound/offline.wav";
+	opt.onevent[eSend]       = ApplicationInfo::resourcesDir() + "/sound/send.wav";
+	opt.onevent[eIncomingFT] = ApplicationInfo::resourcesDir() + "/sound/ft_incoming.wav";
+	opt.onevent[eFTComplete] = ApplicationInfo::resourcesDir() + "/sound/ft_complete.wav";
 
 	int n = 0;
 	foreach(QLineEdit* le, sounds_) {

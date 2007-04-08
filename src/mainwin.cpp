@@ -43,6 +43,7 @@
 #include "common.h"
 #include "showtextdlg.h"
 #include "psicon.h"
+#include "applicationinfo.h"
 #include "psiaccount.h"
 #include "psitoolbar.h"
 #include "ui_about.h"
@@ -87,7 +88,7 @@ AboutDlg::AboutDlg(QWidget* parent) : QDialog(parent,Qt::WDestructiveClose)
 
 	setModal(false);
 
-	lb_name->setText ( lb_name->text().arg(PROG_NAME).arg(PROG_VERSION) );
+	lb_name->setText ( lb_name->text().arg(ApplicationInfo::name()).arg(ApplicationInfo::version()) );
 
 	te_license->setText ( loadText(":/COPYING") );
 
@@ -630,7 +631,7 @@ void MainWin::setUseDock(bool use)
 
 	d->tray = new MTray("Psi", d->trayMenu);
 	d->tray->setIcon( is->statusPtr( STATUS_OFFLINE ));
-	d->tray->setToolTip(PROG_NAME);
+	d->tray->setToolTip(ApplicationInfo::name());
 	connect(d->tray, SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
 	connect(d->tray, SIGNAL(doubleClicked(const QPoint &)), SLOT(trayDoubleClicked()));
 	connect(d->tray, SIGNAL(closed()), SLOT(dockActivated()));
@@ -1002,7 +1003,7 @@ void MainWin::updateCaption()
 		str += "* ";
 
 	if(d->nickname.isEmpty())
-		str += PROG_NAME;
+		str += ApplicationInfo::name();
 	else
 		str += d->nickname;
 

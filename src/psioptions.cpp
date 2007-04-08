@@ -19,7 +19,7 @@
  */
 
 #include "psioptions.h"
-#include "common.h"
+#include "applicationinfo.h"
 #include "im.h"
 #include "xmpp_xmlcommon.h"
 
@@ -52,7 +52,7 @@ public:
 		iq_.appendChild(prvt);
 
 		QDomElement options = doc()->createElement("options");
-		options.setAttribute("xmlns", PROG_STORAGE_NS);
+		options.setAttribute("xmlns", ApplicationInfo::storageNS());
 		prvt.appendChild(options);
 	}
 
@@ -68,7 +68,7 @@ public:
 			QDomElement q = queryTag(x);
 			for (QDomNode n = q.firstChild(); !n.isNull(); n = n.nextSibling()) {
 				QDomElement e = n.toElement();
-				if (!e.isNull() && e.tagName() == "options" && e.attribute("xmlns") == PROG_STORAGE_NS) {
+				if (!e.isNull() && e.tagName() == "options" && e.attribute("xmlns") == ApplicationInfo::storageNS()) {
 					options_ = e;
 				}
 			}
@@ -109,7 +109,7 @@ PsiOptions* PsiOptions::instance()
  */
 bool PsiOptions::load(QString file)
 {
-	return loadOptions(file, "options", PROG_OPTIONS_NS);
+	return loadOptions(file, "options", ApplicationInfo::optionsNS());
 }
 
 /**
@@ -132,7 +132,7 @@ void PsiOptions::load(XMPP::Client* client)
  */
 bool PsiOptions::save(QString file)
 {
-	return saveOptions(file, "options", PROG_OPTIONS_NS, PROG_VERSION);
+	return saveOptions(file, "options", ApplicationInfo::optionsNS(), ApplicationInfo::version());
 }
 
 /**
@@ -199,8 +199,8 @@ void PsiOptions::getOptionsStorage_finished()
 	OptionsStorageTask* t = (OptionsStorageTask*) sender();
 	if (t->success()) {
 		QDomElement e = t->options();
-		e.setAttribute("xmlns",PROG_OPTIONS_NS);
-		loadOptions(e, "options", PROG_OPTIONS_NS);
+		e.setAttribute("xmlns",ApplicationInfo::optionsNS());
+		loadOptions(e, "options", ApplicationInfo::optionsNS());
 	}
 }
 

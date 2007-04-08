@@ -54,6 +54,7 @@
 #include "pgpkeydlg.h"
 #include "psioptions.h"
 #include "pgputil.h"
+#include "applicationinfo.h"
 #include "pgptransaction.h"
 #include "accountmanagedlg.h"
 #include "changepwdlg.h"
@@ -415,15 +416,15 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiCon *parent)
 	d->client = new Client;
 	d->client->setOSName(SystemInfo::instance()->os());
 	d->client->setTimeZone(SystemInfo::instance()->timezoneString(), SystemInfo::instance()->timezoneOffset());
-	d->client->setClientName(PROG_NAME);
-	d->client->setClientVersion(PROG_VERSION);
-	d->client->setCapsNode(PROG_CAPS_NODE);
-	d->client->setCapsVersion(PROG_CAPS_VERSION);
+	d->client->setClientName(ApplicationInfo::name());
+	d->client->setClientVersion(ApplicationInfo::version());
+	d->client->setCapsNode(ApplicationInfo::capsNode());
+	d->client->setCapsVersion(ApplicationInfo::capsVersion());
 	
 	DiscoItem::Identity identity;
 	identity.category = "client";
 	identity.type = "pc";
-	identity.name = PROG_NAME;
+	identity.name = ApplicationInfo::name();
 	d->client->setIdentity(identity);
 
 	QStringList features;
@@ -1499,7 +1500,7 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
 			UserResource ur(r);
 			//ur.setSecurityEnabled(true);
 			if(local)
-				ur.setClient(PROG_NAME,PROG_VERSION,SystemInfo::instance()->os());
+				ur.setClient(ApplicationInfo::name(),ApplicationInfo::version(),SystemInfo::instance()->os());
 
 			u->userResourceList().append(ur);
 			rp = &u->userResourceList().last();

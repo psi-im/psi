@@ -36,7 +36,7 @@
 #include "xmpp_xmlcommon.h"
 #include "xmpp_vcard.h"
 #include "avatars.h"
-#include "common.h"
+#include "applicationinfo.h"
 #include "psiaccount.h"
 #include "profiles.h"
 #include "vcardfactory.h"
@@ -586,9 +586,9 @@ QString AvatarFactory::getManualDir()
 
 QString AvatarFactory::getCacheDir()
 {
-	QDir avatars(getHomeDir() + "/avatars");
+	QDir avatars(ApplicationInfo::homeDir() + "/avatars");
 	if (!avatars.exists()) {
-		QDir home(getHomeDir());
+		QDir home(ApplicationInfo::homeDir());
 		home.mkdir("avatars");
 	}
 	return avatars.path();

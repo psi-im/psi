@@ -30,7 +30,6 @@
 #include <QMouseEvent>
 
 #include "trayicon.h"
-#include "common.h"
 #include "psicon.h"
 #include "iconaction.h"
 

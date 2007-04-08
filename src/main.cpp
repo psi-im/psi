@@ -34,12 +34,12 @@
 #include <QTranslator>
 #include <stdlib.h>
 #include <time.h>
-#include "common.h"
 #include "profiles.h"
 #include "profiledlg.h"
 #include "xmpp.h"
 
 #include "eventdlg.h"
+#include "applicationinfo.h"
 #include "chatdlg.h"
 #ifdef USE_CRASH
 #	include"crash.h"
@@ -86,8 +86,8 @@ void setLang(const QString &lang)
 	QStringList dirs;
 	QString subdir = "";
 	dirs += "." + subdir;
-	dirs += g.pathHome + subdir;
-	dirs += g.pathBase + subdir;
+	dirs += ApplicationInfo::homeDir() + subdir;
+	dirs += ApplicationInfo::resourcesDir() + subdir;
 	for(QStringList::Iterator it = dirs.begin(); it != dirs.end(); ++it) {
 		if(!QFile::exists(*it))
 			continue;
@@ -111,8 +111,8 @@ PsiMain::PsiMain(QObject *par)
 	QStringList dirs;
 	QString subdir = "";
 	dirs += "." + subdir;
-	dirs += g.pathHome + subdir;
-	dirs += g.pathBase + subdir;
+	dirs += ApplicationInfo::homeDir() + subdir;
+	dirs += ApplicationInfo::resourcesDir() + subdir;
 
 	for(QStringList::Iterator it = dirs.begin(); it != dirs.end(); ++it) {
 		if(!QFile::exists(*it))
@@ -227,24 +227,6 @@ PsiMain::~PsiMain()
 	s.setValue("auto_open", autoOpen);
 }
 
-static void initPaths()
-{
-	// set the paths
-	g.pathBase = getResourcesDir();
-	char *p = getenv("PSIDATADIR");
-	if(p)
-		g.pathHome = p;
-	else
-		g.pathHome = getHomeDir();
-	g.pathProfiles = g.pathHome + "/profiles";
-
-	QDir d(g.pathProfiles);
-	if(!d.exists()) {
-		QDir d(g.pathHome);
-		d.mkdir("profiles");
-	}
-}
-
 void PsiMain::chooseProfile()
 {
 	if(pcon) {
@@ -327,12 +309,11 @@ void PsiMain::bail()
 
 int main(int argc, char *argv[])
 {
-	// it must be initialized first in order for getResourcesDir() to work
+	// it must be initialized first in order for ApplicationInfo::resourcesDir() to work
 	QCA::Initializer init;
 	PsiApplication app(argc, argv);
-	initPaths();
-	QApplication::addLibraryPath(g.pathHome);
-	QApplication::addLibraryPath(getResourcesDir());
+	QApplication::addLibraryPath(ApplicationInfo::homeDir());
+	QApplication::addLibraryPath(ApplicationInfo::resourcesDir());
 	QApplication::setQuitOnLastWindowClosed(false);
 
 	// Initialize QCA

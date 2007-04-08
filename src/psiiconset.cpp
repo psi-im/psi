@@ -24,6 +24,7 @@
 #include "userlist.h"
 #include "anim.h"
 #include "im.h"
+#include "applicationinfo.h"
 
 #include <qfileinfo.h>
 #include <q3dict.h>
@@ -51,8 +52,8 @@ public:
 	QString iconsetPath(QString name) {
 		QStringList dirs;
 		dirs << ".";
-		dirs << g.pathHome;
-		dirs << g.pathBase;
+		dirs << ApplicationInfo::homeDir();
+		dirs << ApplicationInfo::resourcesDir();
 
 		QStringList::Iterator it = dirs.begin();
 		for ( ; it != dirs.end(); ++it) {

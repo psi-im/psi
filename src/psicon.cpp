@@ -61,6 +61,7 @@
 #include "filetransfer.h"
 #include "filetransdlg.h"
 #include "psiactionlist.h"
+#include "applicationinfo.h"
 #include "jidutil.h"
 #include "systemwatch.h"
 #include "accountscombobox.h"
@@ -90,8 +91,8 @@ public:
 	PsiConObject(QObject *parent)
 	: QObject(parent, "PsiConObject")
 	{
-		QDir p(g.pathHome);
-		QDir v(g.pathHome + "/tmp-sounds");
+		QDir p(ApplicationInfo::homeDir());
+		QDir v(ApplicationInfo::homeDir() + "/tmp-sounds");
 		if(!v.exists())
 			p.mkdir("tmp-sounds");
 		Iconset::setSoundPrefs(v.absPath(), this, SLOT(playSound(QString)));
@@ -101,8 +102,8 @@ public:
 	~PsiConObject()
 	{
 		// removing temp dirs
-		QDir p(g.pathHome);
-		QDir v(g.pathHome + "/tmp-sounds");
+		QDir p(ApplicationInfo::homeDir());
+		QDir v(ApplicationInfo::homeDir() + "/tmp-sounds");
 		folderRemove(v);
 	}
 
@@ -295,7 +296,7 @@ bool PsiCon::init()
 	// To allow us to upgrade from old hardcoded options gracefully, be careful about the order here
 	PsiOptions *options=PsiOptions::instance();
 	//load the system-wide defaults, if they exist
-	QString systemDefaults=g.pathBase;
+	QString systemDefaults=ApplicationInfo::resourcesDir();
 	systemDefaults += "/options-default.xml";
 	//qWarning(qPrintable(QString("Loading system defaults from %1").arg(systemDefaults)));
 	options->load(systemDefaults);
@@ -454,7 +455,7 @@ bool PsiCon::init()
 	//connect(d->globalAccelManager, SIGNAL(activated(int)), SLOT(accel_activated(int)));
 
 	// Entity capabilities
-	CapsRegistry::instance()->setFile(g.pathHome + "/caps.xml");
+	CapsRegistry::instance()->setFile(ApplicationInfo::homeDir() + "/caps.xml");
 
 	// QCA
 	d->qcaEventHandler = new QCA::EventHandler(this);

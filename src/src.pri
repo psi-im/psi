@@ -97,6 +97,7 @@ HEADERS += \
 	$$PWD/xmlconsole.h \
 	$$PWD/contactview.h \
 	$$PWD/psiiconset.h \
+	$$PWD/applicationinfo.h \
 	$$PWD/pgpkeydlg.h \
 	$$PWD/pgputil.h \
 	$$PWD/pgptransaction.h \
@@ -198,6 +199,7 @@ SOURCES += \
 	$$PWD/xmlconsole.cpp \
 	$$PWD/contactview.cpp \
 	$$PWD/psiiconset.cpp \
+	$$PWD/applicationinfo.cpp \
 	$$PWD/pgpkeydlg.cpp \
 	$$PWD/pgputil.cpp \
 	$$PWD/pgptransaction.cpp \

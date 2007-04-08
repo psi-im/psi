@@ -49,12 +49,6 @@
 #define STATUS_NOAUTH	 101
 #define STATUS_ERROR	 102
 
-// global
-struct PsiGlobal
-{
-	QString pathBase, pathHome, pathProfiles;
-};
-
 extern QString activeProfile;
 
 //extern QStringList dtcp_hostList;
@@ -227,12 +221,6 @@ struct Options
 
 // functions
 
-QString getResourcesDir();
-QString getHomeDir();
-
-QString getHistoryDir();
-QString getVCardDir();
-
 QString CAP(const QString &str);
 
 QString status2txt(int status);
@@ -287,13 +275,7 @@ QString enc822jid(const QString &);
 QString dec822jid(const QString &);
 
 extern
-QString PROG_NAME, PROG_VERSION, PROG_CAPS_NODE, PROG_CAPS_VERSION, PROG_OPTIONS_NS, PROG_STORAGE_NS;
-
-extern
 Options option;
-
-extern
-PsiGlobal g;
 
 extern
 PsiIconset *is;

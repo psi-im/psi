@@ -28,6 +28,7 @@
 #include "psiaccount.h"
 #include "xmpp_xmlcommon.h"
 #include "filetransfer.h"
+#include "applicationinfo.h"
 
 using namespace XMPP;
 using namespace XMLHelper;
@@ -828,7 +829,7 @@ QDomElement EventQueue::toXml(QDomDocument *doc) const
 {
 	QDomElement e = doc->createElement("eventQueue");
 	e.setAttribute("version", "1.0");
-	e.appendChild(textTag(doc, "progver", PROG_VERSION));
+	e.appendChild(textTag(doc, "progver", ApplicationInfo::version()));
 
 	foreach(EventItem *i, d->list) {
 		QDomElement event = i->event()->toXml(doc);

@@ -19,46 +19,24 @@
  */
 
 #include "common.h"
-
 #include "profiles.h"
 #include "rtparse.h"
-
 #include "psievent.h"
+#include "applicationinfo.h"
 
 #include <QUrl>
 #include <Q3PtrList>
 #include <Q3Process>
 #include <QBoxLayout>
-
-QString PROG_NAME = "Psi";
-QString PROG_VERSION = "0.11-dev" " (" __DATE__ ")"; //CVS Builds are dated
-//QString PROG_VERSION = "0.11-beta3";
-QString PROG_CAPS_NODE = "http://psi-im.org/caps";
-QString PROG_CAPS_VERSION = "0.11-dev-rev7";
-QString PROG_OPTIONS_NS = "http://psi-im.org/options";
-QString PROG_STORAGE_NS = "http://psi-im.org/storage";
-
-#ifdef HAVE_CONFIG
-#include "config.h"
-#endif
-
-#ifndef PSI_DATADIR
-#define PSI_DATADIR "/usr/local/share/psi"
-#endif
-
 #include <QRegExp>
-#include <QDir>
 #include <QFile>
 #include <QApplication>
 #include <QSound>
 #include <QObject>
-#include <QLibrary>
 #include <QTextDocument> // for Qt::escape()
 #include <QMessageBox>
 
-
 #include <stdio.h>
-
 #ifdef Q_WS_X11
 #include <QX11Info>
 #include <sys/types.h>
@@ -87,14 +65,13 @@ Qt::WFlags psi_dialog_flags = (Qt::WStyle_SysMenu | Qt::WStyle_MinMax);
 //uint psi_dialog_flags = (Qt::WStyle_Customize | Qt::WStyle_DialogBorder | Qt::WStyle_Title | Qt::WStyle_SysMenu | Qt::WStyle_MinMax);
 
 Options option;
-PsiGlobal g;
 PsiIconset *is;
 bool useSound;
 
 
 QString CAP(const QString &str)
 {
-	return QString("%1: %2").arg(PROG_NAME).arg(str);
+	return QString("%1: %2").arg(ApplicationInfo::name()).arg(str);
 }
 
 QString qstrquote(const QString &toquote, int width, bool quoteEmpty)
@@ -938,138 +915,6 @@ void openURL(const QString &url)
 	}
 }
 
-#ifdef Q_WS_X11
-QString getResourcesDir()
-{
-	return PSI_DATADIR;
-}
-
-QString getHomeDir()
-{
-	QDir proghome(QDir::homeDirPath() + "/.psi");
-	if(!proghome.exists()) {
-		QDir home = QDir::home();
-		home.mkdir(".psi");
-		chmod(QFile::encodeName(proghome.path()), 0700);
-	}
-
-	return proghome.path();
-}
-#endif
-
-#ifdef Q_WS_WIN
-QString getResourcesDir()
-{
-	return qApp->applicationDirPath();
-}
-
-QString getHomeDir()
-{
-	QString base;
-
-	// Windows 9x
-	if(QDir::homeDirPath() == QDir::rootDirPath())
-		base = ".";
-	// Windows NT/2K/XP variant
-	else
-		base = QDir::homeDirPath();
-
-	// no trailing slash
-	if(base.at(base.length()-1) == '/')
-		base.truncate(base.length()-1);
-
-	QDir proghome(base + "/PsiData");
-	if(!proghome.exists()) {
-		QDir home(base);
-		home.mkdir("PsiData");
-	}
-
-	return proghome.path();
-}
-#endif
-
-#ifdef Q_WS_MAC
-/******************************************************************************/
-/* Get path to Resources directory as a string.                               */
-/* Return an empty string if can't find it.                                   */
-/******************************************************************************/
-QString getResourcesDir()
-{
-  // System routine locates resource files. We "know" that Psi.icns is
-  // in the Resources directory.
-  QString resourcePath;
-  CFBundleRef mainBundle = CFBundleGetMainBundle();
-  CFStringRef resourceCFStringRef
-      = CFStringCreateWithCString( NULL, "application.icns",
-                                   kCFStringEncodingASCII );
-  CFURLRef resourceURLRef = CFBundleCopyResourceURL( mainBundle,
-                                                     resourceCFStringRef,
-                                                     NULL,
-                                                     NULL );
-  if ( resourceURLRef ) {
-    CFStringRef resourcePathStringRef =
-    CFURLCopyFileSystemPath( resourceURLRef, kCFURLPOSIXPathStyle );
-    const char* resourcePathCString =
-      CFStringGetCStringPtr( resourcePathStringRef, kCFStringEncodingASCII );
-    if ( resourcePathCString ) {
-      resourcePath.setLatin1( resourcePathCString );
-    } else { // CFStringGetCStringPtr failed; use fallback conversion
-      CFIndex bufferLength = CFStringGetLength( resourcePathStringRef ) + 1;
-      char* resourcePathCString = new char[ bufferLength ];
-      Boolean conversionSuccess =
-        CFStringGetCString( resourcePathStringRef,
-                            resourcePathCString, bufferLength,
-                            kCFStringEncodingASCII );
-      if ( conversionSuccess ) {
-        resourcePath = resourcePathCString;
-      }
-      delete [] resourcePathCString;  // I own this
-    }
-    CFRelease( resourcePathStringRef ); // I own this
-  }
-  // Remove the tail component of the path
-  if ( ! resourcePath.isNull() ) {
-    QFileInfo fileInfo( resourcePath );
-    resourcePath = fileInfo.dirPath( true );
-  }
-  return resourcePath;
-}
-
-QString getHomeDir()
-{
-	QDir proghome(QDir::homeDirPath() + "/.psi");
-	if(!proghome.exists()) {
-		QDir home = QDir::home();
-		home.mkdir(".psi");
-		chmod(QFile::encodeName(proghome.path()), 0700);
-	}
-
-	return proghome.path();
-}
-#endif
-
-
-QString getHistoryDir()
-{
-	QDir history(pathToProfile(activeProfile) + "/history");
-	if (!history.exists()) {
-		QDir profile(pathToProfile(activeProfile));
-		profile.mkdir("history");
-	}
-
-	return history.path();
-}
-
-QString getVCardDir()
-{
-	QDir vcard(pathToProfile(activeProfile) + "/vcard");
-	if (!vcard.exists()) {
-		QDir profile(pathToProfile(activeProfile));
-		profile.mkdir("vcard");
-	}
-
-	return vcard.path();
-}
 
 bool fileCopy(const QString &src, const QString &dest)
 {

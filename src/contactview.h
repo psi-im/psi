@@ -30,7 +30,7 @@
 #include <QDropEvent>
 
 #include "xmpp.h"
-#include "common.h"
+#include "common.h" // JidList
 
 class IconAction;
 class UserListItem;

@@ -29,7 +29,6 @@
 #include "im.h"
 #include "proxy.h"
 #include "common.h"
-
 class UserAccount
 {
 public:

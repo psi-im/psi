@@ -28,8 +28,8 @@
 #include <qtimer.h>
 #include <qtextstream.h>
 
-#include "common.h"
 #include "profiles.h"
+#include "applicationinfo.h"
 #include "psievent.h"
 #include "jidutil.h"
 
@@ -564,7 +564,7 @@ EDBFlatFile::File::File(const Jid &_j)
 
 	//printf("[EDB opening -- %s]\n", j.full().latin1());
 	QString s = j.userHost();
-	fname = getHistoryDir() + "/" + JIDUtil::encode(s).toLower() + ".history";
+	fname = ApplicationInfo::historyDir() + "/" + JIDUtil::encode(s).toLower() + ".history";
 	f.setName(fname);
 	valid = f.open(QIODevice::ReadWrite);
 
