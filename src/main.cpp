@@ -331,11 +331,8 @@ void PsiMain::bail()
 int main(int argc, char *argv[])
 {
 	// it must be initialized first in order for getResourcesDir() to work
-	PsiApplication app(argc, argv);
-#ifdef __GNUC__
-#warning "QCA Initialization should go before PsiApplication"
-#endif
 	QCA::Initializer init;
+	PsiApplication app(argc, argv);
 	initPaths();
 	QApplication::addLibraryPath(g.pathHome);
 	QApplication::addLibraryPath(getResourcesDir());
