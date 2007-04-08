@@ -1,7 +1,9 @@
 TEMPLATE = app
 CONFIG += thread 
+CONFIG -= app_bundle
 TARGET  = xmpptest
 QT += xml network qt3support                                                   
+DEFINES += QT_STATICPLUGIN
 
 MOC_DIR        = .moc
 OBJECTS_DIR    = .obj
@@ -22,7 +24,7 @@ qca-static {
 	DEFINES += QCA_STATIC
 	QCA_CPP = ../../../third-party/qca
 	INCLUDEPATH += $$QCA_CPP/include/QtCrypto
-	LIBS += $$QCA_CPP/libqca.a
+	LIBS += -L$$QCA_CPP -lqca_psi
 	windows:LIBS += -lcrypt32
 	mac:LIBS += -framework Security
 
