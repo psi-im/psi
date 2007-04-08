@@ -374,7 +374,7 @@ const Iconset *IconsetSelect::iconset() const
 	IconsetSelectItem *i = (IconsetSelectItem *)currentItem();
 	if ( !i ) {
 		QList<QListWidgetItem *> items = selectedItems();
-		i = (IconsetSelectItem *)items.first();
+		i = !items.isEmpty() ? (IconsetSelectItem *)items.first() : 0;
 	}
 	if ( i )
 		return i->iconset();
