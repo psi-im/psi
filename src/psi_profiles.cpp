@@ -87,7 +87,7 @@ void UserAccount::reset()
 	opt_auto = FALSE;
 	tog_offline = TRUE;
 	tog_away = TRUE;
-	tog_hidden = TRUE;
+	tog_hidden = FALSE;
 	tog_agents = TRUE;
 	tog_self = FALSE;
 	customAuth = FALSE;
