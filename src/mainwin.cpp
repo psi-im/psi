@@ -357,6 +357,8 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt()))/100);
 
 	connect(qApp, SIGNAL(dockActivated()), SLOT(dockActivated()));
+
+	connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionsUpdate()));
 }
 	
 
@@ -905,10 +907,12 @@ void MainWin::optionsUpdate()
 	d->lastStatus = -2;
 	decorateButton(status);
 
+#ifndef Q_WS_MAC
 	if (option.hideMenubar) 
 		mainMenuBar()->hide();
 	else 
 		mainMenuBar()->show();
+#endif
 	
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt()))/100);
 
