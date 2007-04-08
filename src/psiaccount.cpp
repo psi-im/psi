@@ -1433,18 +1433,18 @@ void PsiAccount::client_rosterRequestFinished(bool success, int, const QString &
 
 	rosterDone = true;
 
-	// Get the bookmarks
-	if (PsiOptions::instance()->getOption("options.muc.bookmarks.auto-join").toBool()) {
-		connect(d->bookmarkManager,SIGNAL(getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&)),SLOT(getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&)));
-		d->bookmarkManager->getBookmarks();
-	}
-
 	// Get stored options
 	// FIXME: Should be an account-specific option
 	//if (PsiOptions::instance()->getOption("options.options-storage.load").toBool())
 	//	PsiOptions::instance()->load(d->client);
 
 	setStatusDirect(d->loginStatus, d->loginWithPriority);
+
+	// Get the bookmarks
+	if (PsiOptions::instance()->getOption("options.muc.bookmarks.auto-join").toBool()) {
+		connect(d->bookmarkManager,SIGNAL(getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&)),SLOT(getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&)));
+		d->bookmarkManager->getBookmarks();
+	}
 }
 
 void PsiAccount::resolveContactName()
