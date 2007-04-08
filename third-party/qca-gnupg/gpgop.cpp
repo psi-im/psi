@@ -280,7 +280,7 @@ static bool stringToKeyList(const QString &outstr, GpgOp::KeyList *_keylist, QSt
 	// if the second line isn't a divider, we are dealing
 	// with a new version of gnupg that doesn't give us
 	// the keyring file on gpg --list-keys --with-colons
-	if(it == lines.end() || (*it).at(0) != '-')
+	if(it == lines.end() || !(*it).length() || (*it).at(0) != '-')
 	{
 		// first line wasn't the keyring name...
 		keyring = "";
