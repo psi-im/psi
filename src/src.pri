@@ -93,6 +93,7 @@ HEADERS += \
 	$$PWD/profiledlg.h \
 	$$PWD/aboutdlg.h \
 	$$PWD/textutil.h \
+	$$PWD/pixmaputil.h \
 	$$PWD/psiaccount.h \
 	$$PWD/psicon.h \
 	$$PWD/accountscombobox.h \
@@ -202,6 +203,7 @@ SOURCES += \
 	$$PWD/profiledlg.cpp \
 	$$PWD/aboutdlg.cpp \
 	$$PWD/textutil.cpp \
+	$$PWD/pixmaputil.cpp \
 	$$PWD/psiaccount.cpp \
 	$$PWD/psicon.cpp \
 	$$PWD/accountscombobox.cpp \

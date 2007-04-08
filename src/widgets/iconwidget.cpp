@@ -33,6 +33,7 @@
 #	include <QStyle>
 #	include <QBitmap>
 #	include <QMap>
+#       include "pixmaputil.h"
 #else
 #	include <QImage>
 
@@ -142,16 +143,10 @@ public:
 		if (role == Qt::SizeHintRole)
 			return QVariant(QSize(width(), height()));
 		else if (role == Qt::DecorationRole) {
-#if 0 // the first algorithm appears to be faster, but produces tons of X11 errors
-			QPixmap pix(width(), height());
-			QBitmap mask(pix.width(), pix.height());
-			pix.fill();
-			mask.clear();
-			pix.setMask(mask);
+#ifndef WIDGET_PLUGIN
+			QPixmap pix = PixmapUtil::createTransparentPixmap(width(), height());
 #else
-			QImage img(width(), height(), QImage::Format_ARGB32);
-			img.fill(0x00000000);
-			QPixmap pix = QPixmap::fromImage(img);
+			QPixmap pix(width(), height()); // junk inside
 #endif
 			QPainter p(&pix);
 			paint(&p);
