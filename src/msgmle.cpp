@@ -50,10 +50,8 @@ ChatView::ChatView(QWidget *parent, QWidget* dialog) : PsiTextView(parent)
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
 #ifndef Q_WS_X11	// linux has this feature built-in
+	connect(this, SIGNAL(selectionChanged()), SLOT(autoCopy()));
 	connect(this, SIGNAL(cursorPositionChanged()), SLOT(autoCopy()));
-	// Qt4's selectionChanged() is not suitable for this, because
-	// it activates immediately after you start selecting,
-	// so usually just one or two characters get copied
 #endif
 }
 
@@ -122,15 +120,9 @@ void ChatView::resizeEvent(QResizeEvent *e)
 }
 
 /**
-	Copies any selected text to the clipboard
-	if autoCopy is enabled and ChatView is in read-only mode.
-
-	This slot is connected with cursorPositionChanged() signal
-	in ChatView's constructor.
-
-	\sa copyAvailable()
-*/
-
+ * Copies any selected text to the clipboard
+ * if autoCopy is enabled and ChatView is in read-only mode.
+ */
 void ChatView::autoCopy()
 {
 	if (isReadOnly() && option.autoCopy) {
