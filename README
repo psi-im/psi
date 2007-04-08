@@ -1,6 +1,6 @@
-Psi 0.11-beta3
+Psi 0.11-beta5
 ---------
-Date: October 11th, 2006
+Date: February 9th, 2007
 
 Project Lead/Maintainer (2004-current):
   Kevin Smith
@@ -26,14 +26,10 @@ issues are known (those issues which are believed to have originated in
 external libraries are marked with a *):
   - GnuPG is temporarily not supported.
   - Mouse actions on tabbed chat windows have been temporarily disabled.
-  - Proxy support is broken in some, if not all, circumstances.
-  - On Mac, the menubar is only populated when the roster is the current
-      selected window. *
   - Roster tooltips are a little ugly currently, more whitespace will be 
       added again later.
   - When receiving multiline messages in a chat, sometimes some lines will
       not be visible until another message is received or sent. 
-  - Clicking on Psi popups sometimes causes a crash.
 
 Notes
 -----
