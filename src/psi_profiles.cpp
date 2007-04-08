@@ -57,6 +57,7 @@ void UserAccount::reset()
 	tog_hidden = TRUE;
 	tog_agents = TRUE;
 	tog_self = FALSE;
+	useAuthzid = FALSE;
 	req_mutual_auth = FALSE;
 	legacy_ssl_probe = TRUE;
 	security_level = QCA::SL_None;
@@ -117,6 +118,11 @@ QDomElement UserAccount::toXml(QDomDocument &doc, const QString &tagName)
 	//QString jid = user + '@' + vhost;
 	a.appendChild(textTag(doc, "name", name));
 	a.appendChild(textTag(doc, "jid", jid));
+	
+	QDomElement az = textTag(doc, "authzid", authzid);
+	setBoolAttribute(az, "use", useAuthzid);
+	a.appendChild(az);
+	
 	if(opt_pass)
 		a.appendChild(textTag(doc, "password", encodePassword(pass, jid) ));
 	a.appendChild(textTag(doc, "useHost", opt_host));
@@ -263,6 +269,12 @@ void UserAccount::fromXml(const QDomElement &a)
 		pass = decodePassword(pass, jid);
 	}
 
+	QDomElement az = findSubTag(a, "authzid", &found);
+	if(found) {
+		readBoolAttribute(az, "use", &useAuthzid);
+		authzid = tagContent(az);
+	}
+	
 	readEntry(a, "resource", &resource);
 	readNumEntry(a, "priority", &priority);
 	QString pgpSecretKeyID;

@@ -42,7 +42,8 @@ public:
 	void fromXml(const QDomElement &);
 
 	QString name;
-	QString jid, pass, host, resource;
+	QString jid, pass, host, resource, authzid;
+	bool useAuthzid;
 	int port, priority;
  	bool opt_enabled, opt_ssl, opt_pass, opt_host, opt_auto, opt_keepAlive, opt_plain, opt_log, opt_reconn, opt_ignoreSSLWarnings, opt_compress;
 	bool tog_offline, tog_away, tog_agents, tog_hidden, tog_self;

@@ -479,6 +479,7 @@ namespace XMPP
 		void setUsername(const QString &s);
 		void setPassword(const QString &s);
 		void setRealm(const QString &s);
+		void setAuthzid(const QString &s);
 		void continueAfterParams();
 
 		// SASL information

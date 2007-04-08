@@ -1080,6 +1080,11 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
 		d->stream->setPassword(d->acc.pass);
 	if(realm)
 		d->stream->setRealm(d->jid.domain());
+#ifdef __GNUC__
+#warning "Authzid not fully implemented yet"
+#endif
+	//if(d->acc.useAuthzid)
+	//	d->stream->setAuthzid(d->acc.authzid);
 	d->stream->continueAfterParams();
 }
 

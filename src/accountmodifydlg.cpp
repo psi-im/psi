@@ -99,6 +99,15 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 	le_resource->setText(acc.resource);
 	le_priority->setText(QString::number(acc.priority));
 
+	connect(ck_authzid,SIGNAL(toggled(bool)), le_authzid, SLOT(setEnabled(bool)));
+	ck_authzid->setChecked(acc.useAuthzid);
+	le_authzid->setText(acc.authzid);
+#ifdef __GNUC__
+#warning "Temporarily removing authzid (not fully implemented yet)"
+#endif
+	ck_authzid->hide();
+	le_authzid->hide();
+		
 	ck_plain->setChecked(acc.opt_plain);
 	ck_compress->setChecked(acc.opt_compress);
 	ck_auto->setChecked(acc.opt_auto);
@@ -201,6 +210,10 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 		tr("You can have multiple clients connected to the Jabber server "
 		"with your single account.  Each login is distinguished by a \"resource\" "
 		"name, which you can specify in this field."));
+	ck_authzid->setWhatsThis(
+		tr("This option sets the Jabber ID of the user you want to "
+			"authenticate as. This overrides the Jabber ID you are logging in "
+			"as."));
 	le_priority->setWhatsThis(
 		tr("<p>You can have multiple clients connected to the Jabber "
 		"server with your single account.  In such a situation, "
@@ -270,6 +283,11 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 	if (!PsiOptions::instance()->getOption("options.ui.account.resource").toBool()) {
 		lb_resource->hide();
 		le_resource->hide();
+	}
+	
+	if (!PsiOptions::instance()->getOption("options.ui.account.authzid").toBool()) {
+		ck_authzid->hide();
+		le_authzid->hide();
 	}
 	
 	if (!PsiOptions::instance()->getOption("options.ui.account.priority").toBool()) {
@@ -457,6 +475,9 @@ void AccountModifyDlg::save()
 
 	acc.resource = le_resource->text();
 	acc.priority = le_priority->text().toInt();
+	
+	acc.useAuthzid = ck_authzid->isChecked();
+	acc.authzid = le_authzid->text();
 
 	acc.opt_ssl = ck_ssl->isChecked();
 	acc.opt_plain = ck_plain->isChecked();

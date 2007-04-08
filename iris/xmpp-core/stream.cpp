@@ -1008,6 +1008,12 @@ void ClientStream::setRealm(const QString &s)
 		d->sasl->setRealm(s);
 }
 
+void ClientStream::setAuthzid(const QString &s)
+{
+	if(d->sasl)
+		d->sasl->setAuthzid(s);
+}
+
 void ClientStream::continueAfterParams()
 {
 	if(d->state == NeedParams) {
