@@ -99,7 +99,7 @@ void OptionsTabApplication::applyOptions(Options *opt)
 
 	// data transfer
 	opt->dtPort = d->le_dtPort->text().toInt();
-	opt->dtExternal = d->le_dtExternal->text();
+	opt->dtExternal = d->le_dtExternal->text().trimmed();
 }
 
 void OptionsTabApplication::restoreOptions(const Options *opt)

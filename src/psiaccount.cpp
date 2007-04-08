@@ -827,7 +827,7 @@ bool PsiAccount::hasPGP() const
 QHostAddress *PsiAccount::localAddress() const
 {
 	QString s = d->localAddress.toString();
-	if(s == "0.0.0.0")
+	if (s.isEmpty() || s == "0.0.0.0")
 		return 0;
 	return &d->localAddress;
 }
