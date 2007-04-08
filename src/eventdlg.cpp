@@ -1855,20 +1855,24 @@ void EventDlg::updateEvent(PsiEvent *e)
 			d->pb_http_deny->show();
 		}
 
-		QString txt = TextUtil::plain2rich(m.body());
+		bool xhtml = m.containsHTML() && PsiOptions::instance()->getOption("options.html.chat.render").toBool() && !m.html().text().isEmpty();
+		QString txt = xhtml ? m.html().toString("div") : TextUtil::plain2rich(m.body());
 
 		// show subject line if the incoming message has one
 		if(m.subject() != "" && !option.showSubjects)
 			txt = "<p><font color=\"red\"><b>" + tr("Subject:") + " " + m.subject() + "</b></font></p>" + txt;
 
-		if(option.useEmoticons)
-			txt = TextUtil::emoticonify(txt);
+		if (!xhtml) {
+			if (option.useEmoticons)
+				txt = TextUtil::emoticonify(txt);
+			txt = TextUtil::linkify(txt);
+		}
 
 		if ( e->type() == PsiEvent::HttpAuth )
 			txt = "<big>[HTTP Request Confirmation]</big><br>" + txt;
 
-		setHtml("<qt>" + TextUtil::linkify(txt) + "</qt>");
-		
+		setHtml("<qt>" + txt + "</qt>");
+
 		d->le_subj->setText(m.subject());
 		d->le_subj->setCursorPosition(0);
 
