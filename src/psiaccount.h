@@ -181,6 +181,7 @@ public:
 
 signals:
 	void disconnected();
+	void reconnecting();
 	void updatedActivity();
 	void updatedAccount();
 	void queueChanged();
