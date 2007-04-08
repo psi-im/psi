@@ -30,6 +30,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="ck_chatSoftReturn" >
+     <property name="text" >
+      <string>Enter key sends chat messages</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QCheckBox" name="ck_alertOpenChats" >
      <property name="text" >
       <string>Alert chat messages even if chat window is open</string>

@@ -68,6 +68,10 @@ QWidget *OptionsTabChat::widget()
 		"<P>Hi</P>"
 		"<P>[01:23:56] YourName says:</P>"
 		"<P>How are you?</P>"));
+	QWhatsThis::add(d->ck_chatSoftReturn,
+		tr("<P>When checked, pressing Enter in a chat window will send your message."
+		   "  You must use Shift+Enter in order to create a newline in the chat message."
+		   "  If unchecked, messages are sent by pressing Alt-S or Control-Enter, just as they are with regular messages.</P>"));
 	QWhatsThis::add(d->ck_alertOpenChats,
 		tr("Normally, Psi will not alert you when a new chat message"
 		" is received in a chat window that is already open."
@@ -102,6 +106,7 @@ void OptionsTabChat::applyOptions(Options *opt)
 
 	opt->defaultAction   = bg_defAct->buttons().indexOf(bg_defAct->checkedButton());
 	opt->chatSays        = d->ck_chatSays->isChecked();
+	opt->chatSoftReturn  = d->ck_chatSoftReturn->isChecked();
 	opt->alertOpenChats  = d->ck_alertOpenChats->isChecked();
 	opt->raiseChatWindow = d->ck_raiseChatWindow->isChecked();
 	opt->oldSmallChats 	 = opt->smallChats;
@@ -120,6 +125,7 @@ void OptionsTabChat::restoreOptions(const Options *opt)
 
 	bg_defAct->buttons()[opt->defaultAction]->setChecked(true);
 	d->ck_chatSays->setChecked( opt->chatSays );
+	d->ck_chatSoftReturn->setChecked( opt->chatSoftReturn );
 	d->ck_alertOpenChats->setChecked( opt->alertOpenChats );
 	d->ck_raiseChatWindow->setChecked( opt->raiseChatWindow );
 	d->ck_smallChats->setChecked( opt->smallChats );
