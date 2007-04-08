@@ -431,6 +431,18 @@ XDataWidget::~XDataWidget()
 {
 }
 
+void XDataWidget::setInstructions(const QString& instructions)
+{
+	instructions_ = instructions;
+}
+
+void XDataWidget::setForm(const XMPP::XData& d) 
+{
+	setInstructions(d.instructions());
+	setFields(d.fields());
+}
+
+
 XData::FieldList XDataWidget::fields() const
 {
 	XData::FieldList f;
@@ -455,7 +467,11 @@ void XDataWidget::setFields(const XData::FieldList &f)
 	if ( f.count() ) {
 		QGridLayout *grid = new QGridLayout(this, 3, f.count(), 0, 3);
 
-		int row = 0;
+		if (!instructions_.isEmpty()) {
+			grid->addWidget(new QLabel(instructions_,this),0,0,1,-1,Qt::AlignLeft);
+		}
+
+		int row = 1;
 		XData::FieldList::ConstIterator it = f.begin();
 		for ( ; it != f.end(); ++it, ++row) {
 			XDataField *f;

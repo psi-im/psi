@@ -23,6 +23,7 @@
 
 #include <qwidget.h>
 #include <QList>
+#include <QString>
 
 #include "xmpp_xdata.h"
 
@@ -36,12 +37,17 @@ public:
 	XDataWidget(QWidget *parent = 0, const char *name = 0);
 	~XDataWidget();
 
+	void setForm(const XMPP::XData&);
+
 	XData::FieldList fields() const;
 	void setFields(const XData::FieldList &);
+
+	void setInstructions(const QString&);
 
 private:
 	typedef QList<XDataField*> XDataFieldList;
 	XDataFieldList fields_;
+	QString instructions_;
 };
 
 #endif
