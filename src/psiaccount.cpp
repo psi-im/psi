@@ -1105,11 +1105,6 @@ void PsiAccount::cs_authenticated()
 		d->jid = Jid(d->acc.authzid);
 	}
 
-	// Determine the resource (if necessary)
-	if (d->jid.resource().isEmpty()) {
-		d->jid = d->jid.withResource(d->acc.opt_automatic_resource ? localHostName() : d->acc.resource);
-	}
-	
 	QString resource = (d->stream->jid().resource().isEmpty() ? ( d->acc.opt_automatic_resource ? localHostName() : d->acc.resource) : d->stream->jid().resource());
 
 	d->client->start(d->jid.host(), d->jid.user(), d->acc.pass, resource);
