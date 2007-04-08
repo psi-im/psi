@@ -20,12 +20,11 @@
 
 #include "xmpp_jid.h"
 
+#include <QApplication>
+#include <QByteArray>
 #include <q3dict.h>
-//Added by qt3to4:
-#include <Q3CString>
 #include <stringprep.h>
 
-#include <QApplication>
 
 using namespace XMPP;
 
@@ -56,7 +55,7 @@ public:
 			return true;
 		}
 
-		Q3CString cs = in.utf8();
+		QByteArray cs = in.utf8();
 		cs.resize(maxbytes);
 		if(stringprep(cs.data(), maxbytes, (Stringprep_profile_flags)0, stringprep_nameprep) != 0)
 		{
@@ -92,7 +91,7 @@ public:
 			return true;
 		}
 
-		Q3CString cs = in.utf8();
+		QByteArray cs = in.utf8();
 		cs.resize(maxbytes);
 		if(stringprep(cs.data(), maxbytes, (Stringprep_profile_flags)0, stringprep_xmpp_nodeprep) != 0)
 		{
@@ -128,7 +127,7 @@ public:
 			return true;
 		}
 
-		Q3CString cs = in.utf8();
+		QByteArray cs = in.utf8();
 		cs.resize(maxbytes);
 		if(stringprep(cs.data(), maxbytes, (Stringprep_profile_flags)0, stringprep_xmpp_resourceprep) != 0)
 		{
