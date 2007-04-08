@@ -40,6 +40,7 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 {
   	setupUi(this);
 	setModal(false);
+	setAttribute(Qt::WA_DeleteOnClose);
 	pa = _pa;
 	//connect(pa->psi(), SIGNAL(pgpToggled(bool)), SLOT(pgpToggled(bool)));
 	pa->dialogRegister(this);
