@@ -39,11 +39,15 @@ public:
 		QDomElement prvt = doc()->createElement("query");
 		prvt.setAttribute("xmlns", "jabber:iq:private");
 		iq_.appendChild(prvt);
+
+		QDomElement storage = doc()->createElement("storage");
+		storage.setAttribute("xmlns", "storage:bookmarks");
+		prvt.appendChild(storage);
 		
 		foreach(URLBookmark u, urls)
-			prvt.appendChild(u.toXml(*doc()));
+			storage.appendChild(u.toXml(*doc()));
 		foreach(ConferenceBookmark c, conferences)
-			prvt.appendChild(c.toXml(*doc()));
+			storage.appendChild(c.toXml(*doc()));
 	}
 	
 	void get() {
