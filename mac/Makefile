@@ -23,8 +23,8 @@ GROWLDIR=/Library/Frameworks
 PSI_DIR=..
 
 NAME=Psi
-#VERSION=0.11-devel_$(shell date +"%Y%m%d")
-VERSION=0.11-beta5
+VERSION=0.11-devel_$(shell date +"%Y%m%d")
+#VERSION=0.11-beta5
 FILES=Psi.app 
 DISK_DIR=disk
 ifneq ($(BUILD),no)
