@@ -1498,7 +1498,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 				actionExecuteCommandSpecific(j,"");
 #else
 			else if (type == 2)
-				actionWhiteboardSpecific(j,"");
+				actionOpenWhiteboardSpecific(j);
 			else if (type == 3)
 				actionExecuteCommandSpecific(j,"");
 #endif
