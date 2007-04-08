@@ -28,7 +28,6 @@
 #include <qpushbutton.h>
 #include <qlineedit.h>
 #include <qmessagebox.h>
-#include <q3textedit.h>
 #include <qbuffer.h>
 #include <QPixmap>
 #include "xmpp.h"

@@ -27,7 +27,6 @@
 #include <qicon.h>
 #include <qcolor.h>
 #include <qimage.h>
-#include <q3stylesheet.h>
 #include <qpixmapcache.h>
 #include <QPixmap>
 #include <QList>

@@ -18,13 +18,12 @@
  *
  */
 
-#include "zip.h"
-
-#include <q3cstring.h>
-#include <qstringlist.h>
-#include <qfile.h>
+#include <QString>
+#include <QStringList>
+#include <QFile>
 
 #include "minizip/unzip.h"
+#include "zip.h"
 
 class UnZipPrivate
 {

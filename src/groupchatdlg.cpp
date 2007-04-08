@@ -26,7 +26,6 @@
 #include <qlabel.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3groupbox.h>
 #include <QToolBar>
 #include <qmessagebox.h>
 #include <QPainter>

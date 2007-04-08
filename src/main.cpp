@@ -23,17 +23,14 @@
 #include "psiapplication.h"
 #include <qtimer.h>
 
-#include <q3process.h>
 #include <qimage.h>
 #include <qbitmap.h>
 #include <qtextcodec.h>
 #include <qsettings.h>
-#include <q3socketdevice.h>
 #include <qcombobox.h>
 #include <qcheckbox.h>
 #include <qmessagebox.h>
 #include <QtCrypto>
-//Added by qt3to4:
 #include <QTranslator>
 #include <stdlib.h>
 #include <time.h>

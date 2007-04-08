@@ -22,11 +22,11 @@
 
 #define FAKEDELAY 0
 
+#include <QVector>
 #include <qfile.h>
 #include <q3ptrlist.h>
 #include <qtimer.h>
 #include <qtextstream.h>
-#include <q3valuevector.h>
 
 #include "common.h"
 #include "profiles.h"
@@ -548,7 +548,7 @@ class EDBFlatFile::File::Private
 public:
 	Private() {}
 
-	Q3ValueVector<int> index;
+	QVector<int> index;
 	bool indexed;
 };
 
