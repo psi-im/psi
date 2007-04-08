@@ -19,7 +19,7 @@ windows {
 	CONFIG -= debug_and_release
 
 	# Set explicit targets, to ensure a correct name for MSVC
-	TARGET = libqca
+	TARGET = qca
 	TARGET_EXT = .a
 }
 
