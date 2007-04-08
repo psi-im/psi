@@ -1857,6 +1857,23 @@ Status::Status(const QString &show, const QString &status, int priority, bool av
 	ecode = -1;
 }
 
+Status::Status(Type type, const QString& status, int priority)
+{
+	v_status = status;
+	v_priority = priority;
+	v_timeStamp = QDateTime::currentDateTime();
+	v_hasPhotoHash = false;
+	v_isMUC = false;
+	v_hasMUCItem = false;
+	v_hasMUCDestroy = false;
+	v_mucStatus = -1;
+	v_mucHistoryMaxChars = -1;
+	v_mucHistoryMaxStanzas = -1;
+	v_mucHistorySeconds = -1;
+	ecode = -1;
+	setType(type);
+}
+
 Status::~Status()
 {
 }
