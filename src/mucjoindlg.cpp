@@ -107,9 +107,9 @@ MUCJoinDlg::~MUCJoinDlg()
 void MUCJoinDlg::done(int r)
 {
 	if(d->busy->isActive()) {
-		int n = QMessageBox::information(this, tr("Warning"), tr("Are you sure you want to cancel joining groupchat?"), tr("&Yes"), tr("&No"));
-		if(n != 0)
-			return;
+		//int n = QMessageBox::information(0, tr("Warning"), tr("Are you sure you want to cancel joining groupchat?"), tr("&Yes"), tr("&No"));
+		//if(n != 0)
+		//	return;
 		d->pa->groupChatLeave(d->jid.host(), d->jid.user());
 	}
 	QDialog::done(r);
