@@ -375,7 +375,7 @@ namespace XMPP
 	class Status
 	{
 	public:
-		enum Type { Online, Away, FFC, XA, DND, Offline };
+		enum Type { Offline, Online, Away, XA, DND, Invisible, FFC };
 
 		Status(const QString &show="", const QString &status="", int priority=0, bool available=true);
 		~Status();
@@ -442,7 +442,6 @@ namespace XMPP
 
 	private:
 		int v_priority;
-		Type v_type;
 		QString v_show, v_status, v_key;
 		QDateTime v_timeStamp;
 		bool v_isAvailable;

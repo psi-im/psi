@@ -1837,30 +1837,11 @@ bool Subscription::fromString(const QString &s)
 //---------------------------------------------------------------------------
 // Status
 //---------------------------------------------------------------------------
-static Status::Type showToType(bool available, const QString& show)
-{
-	Status::Type type = Status::Online;
-	if (!available) {
-		type = Status::Offline;
-	}
-	else {
-		if      (show == "away")
-			type = Status::Away;
-		else if (show == "xa")
-		  	type = Status::XA;
-		else if (show == "dnd")
-		 	type = Status::DND;
-		else if (show == "chat")
-			type = Status::FFC;
-	}
-	return type;
-}
 
 Status::Status(const QString &show, const QString &status, int priority, bool available)
 {
 	v_isAvailable = available;
 	v_show = show;
-	v_type = showToType(v_isAvailable, v_show);
 	v_status = status;
 	v_priority = priority;
 	v_timeStamp = QDateTime::currentDateTime();
@@ -1894,7 +1875,6 @@ void Status::setError(int code, const QString &str)
 void Status::setIsAvailable(bool available)
 {
 	v_isAvailable = available;
-	setType(showToType(v_isAvailable, v_show));
 }
 
 void Status::setIsInvisible(bool invisible)
@@ -1909,13 +1889,26 @@ void Status::setPriority(int x)
 
 void Status::setType(Status::Type _type)
 {
-	v_type = _type;
+	bool available = true;
+	bool invisible = false;
+	QString show;
+	switch(_type) {
+		case Away:    show = "away"; break;
+		case FFC:     show = "chat"; break;
+		case XA:      show = "xa"; break;
+		case DND:     show = "dnd"; break;
+		case Offline: available = false; break;
+		case Invisible: invisible = true; break;
+		default: break;
+	}
+	setShow(show);
+	setIsAvailable(available);
+	setIsInvisible(invisible);
 }
 
 void Status::setShow(const QString & _show)
 {
 	v_show = _show;
-	setType(showToType(v_isAvailable, v_show));
 }
 
 void Status::setStatus(const QString & _status)
@@ -2024,7 +2017,25 @@ int Status::priority() const
 
 Status::Type Status::type() const
 {
-	return v_type;
+	Status::Type type = Status::Online;
+	if (!isAvailable()) {
+		type = Status::Offline;
+	}
+	else if (isInvisible()) {
+		type = Status::Invisible;
+	}
+	else {
+		QString s = show();
+		if (s == "away")
+			type = Status::Away;
+		else if (s == "xa")
+		  	type = Status::XA;
+		else if (s == "dnd")
+		 	type = Status::DND;
+		else if (s == "chat")
+			type = Status::FFC;
+	}
+	return type;
 }
 
 const QString & Status::show() const
