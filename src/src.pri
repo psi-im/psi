@@ -40,9 +40,6 @@ use_crash {
 }
 
 # qca
-!qca-static {
-	CONFIG += crypto	
-}
 qca-static {
 	# QCA
 	DEFINES += QCA_STATIC
@@ -64,6 +61,9 @@ qca-static {
 
 	# QCA-GnuPG
 	include($$PWD/../third-party/qca-gnupg.pri)
+}
+else {
+	CONFIG += crypto	
 }
 
 # Widgets
