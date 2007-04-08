@@ -1232,8 +1232,11 @@ void GCMainDlg::pa_updatedActivity()
 	else {
 		if(d->state == Private::Idle)
 			goConn();
-		else if(d->state == Private::Connected)
-			d->pa->groupChatSetStatus(d->jid.host(), d->jid.user(), d->pa->status());
+		else if(d->state == Private::Connected) {
+			Status s = d->pa->status();
+			s.setXSigned("");
+			d->pa->groupChatSetStatus(d->jid.host(), d->jid.user(), s);
+		}
 	}
 }
 
