@@ -111,7 +111,7 @@
 					<invisible comment="Enable invisibility" type="bool">true</invisible>
 				</status>
 				<view comment="Options for the view menu">
-					<show-away comment="Show the 'show away/xa' toggle" type="bool">true</show-away>
+					<show-away comment="Show the 'show away/xa' toggle" type="bool">false</show-away>
 				</view>
 			</menu>
 			<show-deprecated comment="Deprecated functionality or protocols">
