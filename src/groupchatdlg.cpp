@@ -72,6 +72,7 @@
 #include "psioptions.h"
 #include "shortcutmanager.h"
 #include "psicontactlist.h"
+#include "accountlabel.h"
 
 #ifdef Q_WS_WIN
 #include <windows.h>
@@ -822,7 +823,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	connect(d->act_find, SIGNAL(activated()), SLOT(openFind()));
 	d->act_find->addTo( sp_top_top );
 	
-	d->lb_ident = d->pa->accountLabel(sp_top_top, true);
+	d->lb_ident = new AccountLabel(d->pa, sp_top_top, true);
 	d->lb_ident->setSizePolicy(QSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum ));
 	hb_top->addWidget(d->lb_ident);
 	connect(d->pa->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));

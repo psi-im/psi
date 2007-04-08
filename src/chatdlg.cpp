@@ -71,6 +71,7 @@
 #include "psitooltip.h"
 #include "shortcutmanager.h"
 #include "psicontactlist.h"
+#include "accountlabel.h"
 
 #ifdef Q_WS_WIN
 #include <windows.h>
@@ -233,7 +234,7 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 		vb1->addWidget( sp_top );
 	// first row
 	QVBoxLayout *vb2 = new QVBoxLayout(sp_top, 0, 4);
-	d->lb_ident = d->pa->accountLabel(sp_top, true);
+	d->lb_ident = new AccountLabel(d->pa, sp_top, true);
 	d->lb_ident->setSizePolicy(QSizePolicy( QSizePolicy::Minimum, QSizePolicy::Minimum ));
 
 	// second row

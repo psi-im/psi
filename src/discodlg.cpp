@@ -51,6 +51,7 @@
 #include "psitooltip.h"
 #include "stretchwidget.h"
 #include "psioptions.h"
+#include "accountlabel.h"
 
 //----------------------------------------------------------------------------
 
@@ -1027,7 +1028,7 @@ DiscoDlg::Private::Private(DiscoDlg *parent, PsiAccount *pa)
 	}
 
 	toolBar->addWidget(new StretchWidget(toolBar));
-	toolBar->addWidget(pa->accountLabel(toolBar, true));
+	toolBar->addWidget(new AccountLabel(pa, toolBar, true));
 
 	// misc stuff
 	disableButtons();

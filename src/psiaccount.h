@@ -26,7 +26,6 @@
 #ifndef PSIACCOUNT_H
 #define PSIACCOUNT_H
 
-#include <qlabel.h>
 #include <QList>
 
 #include "xmpp.h"
@@ -69,23 +68,6 @@ class QHostAddress;
 class AvatarFactory;
 class PEPManager;
 class ServerInfoManager;
-
-class AccountLabel : public QLabel
-{
-	Q_OBJECT
-public:
-	AccountLabel(PsiAccount *, QWidget *parent=0, bool simpleMode=false);
-	~AccountLabel();
-
-private slots:
-	void updateName();
-	void deleteMe();
-
-private:
-	PsiAccount *pa;
-	bool simpleMode;
-};
-
 
 // sick sick remove this someday please!
 #include "im.h"
@@ -160,7 +142,6 @@ public:
 	bool checkConnected(QWidget *parent=0);
 	void playSound(const QString &);
 
-	QLabel *accountLabel(QWidget *parent=0, bool simpleMode=false);
 	QStringList hiddenChats(const Jid &) const;
 
 	int sendMessageEncrypted(const Message &);

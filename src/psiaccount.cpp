@@ -37,7 +37,6 @@
 #include <qfileinfo.h>
 #include <QPixmap>
 #include <QFrame>
-#include <QLabel>
 #include <QList>
 #include <QHostInfo>
 
@@ -96,7 +95,6 @@
 #include "geolocation.h"
 #include "physicallocation.h"
 #include "psipopup.h"
-#include "fancylabel.h"
 #include "pgputil.h"
 #include "iconwidget.h"
 #include "filetransdlg.h"
@@ -131,36 +129,6 @@ typedef int socklen_t;
 #endif*/
 
 using namespace XMPP;
-
-//----------------------------------------------------------------------------
-// AccountLabel
-//----------------------------------------------------------------------------
-AccountLabel::AccountLabel(PsiAccount *_pa, QWidget *par, bool smode)
-:QLabel(par)
-{
-	pa = _pa;
-	simpleMode = smode;
-	setFrameStyle( QFrame::Panel | QFrame::Sunken );
-
-	updateName();
-	connect(pa, SIGNAL(updatedAccount()), this, SLOT(updateName()));
-	connect(pa, SIGNAL(destroyed()), this, SLOT(deleteMe()));
-}
-
-AccountLabel::~AccountLabel()
-{
-}
-
-void AccountLabel::updateName()
-{
-	setText(simpleMode ? pa->name() : pa->nameWithJid());
-}
-
-void AccountLabel::deleteMe()
-{
-	delete this;
-}
-
 
 //----------------------------------------------------------------------------
 // BlockTransportPopup -- blocks popups on transport status changes
@@ -2483,12 +2451,6 @@ void PsiAccount::cpUpdate(const UserListItem &u, const QString &rname, bool from
 	updateContact(j);
 	updateContact(j, fromPresence);
 	d->psi->updateContactGlobal(this, j);
-}
-
-QLabel *PsiAccount::accountLabel(QWidget *par, bool simpleMode)
-{
-	AccountLabel *al = new AccountLabel(this, par, simpleMode);
-	return al;
 }
 
 EventDlg *PsiAccount::ensureEventDlg(const Jid &j)

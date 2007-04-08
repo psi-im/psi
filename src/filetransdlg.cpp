@@ -37,6 +37,7 @@
 #include "jidutil.h"
 #include "psitooltip.h"
 #include "psicontactlist.h"
+#include "accountlabel.h"
 
 typedef Q_UINT64 LARGE_TYPE;
 
@@ -608,7 +609,7 @@ FileRequestDlg::FileRequestDlg(const QDateTime &ts, FileTransfer *ft, PsiAccount
 	d->cb_ident = 0;
 	Q3HBox *hb = new Q3HBox(this);
 	d->lb_identity = new QLabel(tr("Identity: "), hb);
-	d->lb_ident = d->pa->accountLabel(hb);
+	d->lb_ident = new AccountLabel(d->pa, hb);
 	d->lb_ident->setSizePolicy(QSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Fixed ));
 	new QLabel(tr("Time:"), hb);
 	d->lb_time = new QLabel(ts.time().toString(Qt::LocalDate), hb);

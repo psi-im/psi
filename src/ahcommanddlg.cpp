@@ -22,6 +22,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QLayout>
+#include <QLabel>
 
 #include "ahcexecutetask.h" 
 #include "ahcommanddlg.h"

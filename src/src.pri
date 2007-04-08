@@ -187,7 +187,8 @@ HEADERS += \
 	$$PWD/voicecalldlg.h \
 	$$PWD/resourcemenu.h \
 	$$PWD/shortcutmanager.h \
-	$$PWD/psicontactlist.h
+	$$PWD/psicontactlist.h \
+	$$PWD/accountlabel.h
 
 # Source files
 SOURCES += \
@@ -290,7 +291,8 @@ SOURCES += \
 	$$PWD/voicecalldlg.cpp \
 	$$PWD/resourcemenu.cpp \
 	$$PWD/shortcutmanager.cpp \
-	$$PWD/psicontactlist.cpp
+	$$PWD/psicontactlist.cpp \
+	$$PWD/accountlabel.cpp
 
 mac {
 	contains( DEFINES, HAVE_GROWL ) {

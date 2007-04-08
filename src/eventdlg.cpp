@@ -69,6 +69,7 @@
 #include "alerticon.h"
 #include "shortcutmanager.h"
 #include "psicontactlist.h"
+#include "accountlabel.h"
 
 static QString findJid(const QString &s, int x, int *p1, int *p2)
 {
@@ -697,7 +698,7 @@ void EventDlg::init()
 	}
 	else {
 		d->cb_ident = 0;
-		d->lb_ident = d->pa->accountLabel(this);
+		d->lb_ident = new AccountLabel(d->pa, this);
 		d->lb_ident->setSizePolicy(QSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Fixed ));
 		hb1->addWidget(d->lb_ident);
 	}

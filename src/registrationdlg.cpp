@@ -27,6 +27,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QApplication>
+#include <QLabel>
 
 #include "jidutil.h"
 #include "psiaccount.h"
