@@ -129,6 +129,7 @@ HEADERS += \
 	$$PWD/adduserdlg.h \
 	$$PWD/groupchatdlg.h \
 	$$PWD/infodlg.h \
+	$$PWD/translationmanager.h \
 	$$PWD/eventdb.h \
 	$$PWD/historydlg.h \
 	$$PWD/tipdlg.h \
@@ -241,6 +242,7 @@ SOURCES += \
 	$$PWD/adduserdlg.cpp \
 	$$PWD/groupchatdlg.cpp \
 	$$PWD/infodlg.cpp \
+	$$PWD/translationmanager.cpp \
 	$$PWD/certutil.cpp \
 	$$PWD/eventdb.cpp \
 	$$PWD/historydlg.cpp \

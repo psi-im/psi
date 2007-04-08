@@ -1,6 +1,6 @@
 /*
- * main.h - initialization and profile/settings handling
- * Copyright (C) 2001-2003  Justin Karneges
+ * translationmanager.h
+ * Copyright (C) 2006  Remko Troncon, Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,36 +18,38 @@
  *
  */
 
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef TRANSLATIONMANAGER_H
+#define TRANSLATIONMANAGER_H
 
-#include <qobject.h>
-#include <qstring.h>
+#include <QObject>
+
 #include "varlist.h"
-#include "psicon.h"
 
-
-class PsiMain : public QObject
+class TranslationManager : public QObject
 {
-	Q_OBJECT
 public:
-	PsiMain(QObject *parent=0);
-	~PsiMain();
+	static TranslationManager* instance();
 
-signals:
-	void quit();
+	VarList availableTranslations();
+	const QString& currentLanguage() const;
+	void loadTranslation(const QString& language);
+	
+protected:
+	QStringList translationDirs() const;
 
-private slots:
-	void chooseProfile();
-	void sessionStart();
-	void sessionQuit(int);
-	void bail();
+protected slots:
+	void destroy();
 
 private:
-	QString lastProfile, lastLang;
-	bool autoOpen;
+	TranslationManager();
+	~TranslationManager();
 
-	PsiCon *pcon;
+	QString currentLanguage_;
+	//QString currentLanguageName_;
+	QTranslator* translator_;
+	QTranslator* qt_translator_;
+
+	static TranslationManager* instance_;
 };
 
 #endif

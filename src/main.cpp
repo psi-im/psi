@@ -40,6 +40,7 @@
 
 #include "eventdlg.h"
 #include "psiiconset.h"
+#include "translationmanager.h"
 #include "applicationinfo.h"
 #include "chatdlg.h"
 #ifdef USE_CRASH
@@ -70,92 +71,10 @@
 
 using namespace XMPP;
 
-QTranslator *trans;
-QTranslator *qttrans;
-QString curLang = "en";
-QString curLangName = QT_TR_NOOP("language_name");
-
-void setLang(const QString &lang)
-{
-	//printf("changing lang: [%s]\n", lang.latin1());
-	//The Qt book suggests these are not necessary and they don't
-  	//exist in Qt4
-  	/*trans->clear();
-	qttrans->clear();*/
-	if(lang == "en") {
-		curLang = lang;
-		curLangName = "English";
-		return;
-	}
-
-	QStringList dirs;
-	QString subdir = "";
-	dirs += "." + subdir;
-	dirs += ApplicationInfo::homeDir() + subdir;
-	dirs += ApplicationInfo::resourcesDir() + subdir;
-	for(QStringList::Iterator it = dirs.begin(); it != dirs.end(); ++it) {
-		if(!QFile::exists(*it))
-			continue;
-		if(trans->load("psi_" + lang, *it)) {
-			// try to load qt library translation
-			qttrans->load("qt_" + lang, *it);
-			curLang = lang;
-			return;
-		}
-	}
-}
-
 PsiMain::PsiMain(QObject *par)
 :QObject(par)
 {
 	pcon = 0;
-
-	// detect available language packs
-	langs.set("en", "English");
-
-	QStringList dirs;
-	QString subdir = "";
-	dirs += "." + subdir;
-	dirs += ApplicationInfo::homeDir() + subdir;
-	dirs += ApplicationInfo::resourcesDir() + subdir;
-
-	for(QStringList::Iterator it = dirs.begin(); it != dirs.end(); ++it) {
-		if(!QFile::exists(*it))
-			continue;
-		QDir d(*it);
-		QStringList entries = d.entryList();
-		for(QStringList::Iterator it2 = entries.begin(); it2 != entries.end(); ++it2) {
-			if(*it2 == "." || *it2 == "..")
-				continue;
-
-			QString str = *it2;
-			// verify that it is a language file
-			if(str.left(4) != "psi_")
-				continue;
-			int n = str.find('.', 4);
-			if(n == -1)
-				continue;
-			if(str.mid(n) != ".qm")
-				continue;
-			QString lang = str.mid(4, n-4);
-
-			//printf("found [%s], lang=[%s]\n", str.latin1(), lang.latin1());
-
-			// get the language_name
-			QString name = QString("[") + str + "]";
-			QTranslator t(0);
-			if(!t.load(str, *it))
-				continue;
-
-			//Is translate equivalent to the old findMessage? I hope so
-			//Qt4 conversion
-			QString s = t.translate("@default", "language_name");
-			if(!s.isEmpty())
-				name = s;
-
-			langs.set(lang, name);
-		}
-	}
 
 	// load simple registry settings
 	QSettings s(QSettings::UserScope, "psi-im.org", "Psi");
@@ -168,7 +87,7 @@ PsiMain::PsiMain(QObject *par)
 		//printf("guessing locale: [%s]\n", lastLang.latin1());
 	}
 
-	setLang(lastLang);
+	TranslationManager::instance()->loadTranslation(lastLang);
 
 	if(autoOpen && !lastProfile.isEmpty() && profileExists(lastProfile)) {
 		// Auto-open the last profile
@@ -245,15 +164,14 @@ void PsiMain::chooseProfile()
 	PsiIconset::instance()->loadSystem();
 
 	while(1) {
-		ProfileOpenDlg *w = new ProfileOpenDlg(lastProfile, langs, curLang);
+		ProfileOpenDlg *w = new ProfileOpenDlg(lastProfile, TranslationManager::instance()->availableTranslations(), TranslationManager::instance()->currentLanguage());
 		w->ck_auto->setChecked(autoOpen);
 		int r = w->exec();
 		// lang change
 		if(r == 10) {
-			QString newLang = w->newLang;
+			TranslationManager::instance()->loadTranslation(w->newLang);
+			lastLang = TranslationManager::instance()->currentLanguage();
 			delete w;
-			setLang(newLang);
-			lastLang = curLang;
 			continue;
 		}
 		else {
@@ -371,12 +289,8 @@ int main(int argc, char *argv[])
 	//QSocketDevice *d = new QSocketDevice;
 	//delete d;
 
-	// japanese
-	trans = new QTranslator(0);
-	app.installTranslator(trans);
-
-	qttrans = new QTranslator(0);
-	app.installTranslator(qttrans);
+	// Initialize translations
+	TranslationManager::instance();
 
 	// need SHA1 for Iconset sound
 	//if(!QCA::isSupported(QCA::CAP_SHA1))
@@ -387,12 +301,6 @@ int main(int argc, char *argv[])
 	int returnValue = app.exec();
 	delete psi;
 
-	app.removeTranslator(trans);
-	delete trans;
-	trans = 0;
-	app.removeTranslator(qttrans);
-	delete qttrans;
-	qttrans = 0;
 	QCA::unloadAllPlugins();
 
 	return returnValue;
