@@ -409,13 +409,7 @@ bool PsiCon::init()
 			}
 		}
 	}
-	
-	// load accounts
-	if (d->pro.acc.count() > 0)
-		d->contactList->loadAccounts(d->pro.acc);
-	else
-		d->promptUserToCreateAccount();
-	
+
 	// Connect to the system monitor
 	SystemWatch* sw = SystemWatch::instance();
 	connect(sw, SIGNAL(sleep()), this, SLOT(doSleep()));
@@ -446,6 +440,12 @@ bool PsiCon::init()
 		PGPUtil::keystores += ks;
 	}
 	PassphraseDlg::setEventHandler(d->qcaEventHandler);
+
+	// load accounts
+	if (d->pro.acc.count() > 0)
+		d->contactList->loadAccounts(d->pro.acc);
+	else
+		d->promptUserToCreateAccount();
 
 	return true;
 }
