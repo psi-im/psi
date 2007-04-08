@@ -34,7 +34,7 @@ using namespace XMPP;
 
 class PsiAccount;
 
-class InfoDlg : public QDialog, public Ui::Info
+class InfoDlg : public QDialog
 {
 	Q_OBJECT
 public:
@@ -68,6 +68,7 @@ private slots:
 private:
 	class Private;
 	Private *d;
+	Ui::Info ui_;
 
 	void setData(const XMPP::VCard &);
 	XMPP::VCard makeVCard();
