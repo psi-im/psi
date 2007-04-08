@@ -773,6 +773,7 @@ public:
 		minimumSSF = 0;
 		maximumSSF = 0;
 		doBinding = true;
+		lang = "";
 
 		in_rrsig = false;
 
@@ -810,6 +811,7 @@ public:
 	SecureStream *ss;
 	CoreProtocol client;
 	CoreProtocol srv;
+	QString lang;
 
 	QString defRealm;
 
@@ -1032,6 +1034,11 @@ void ClientStream::setResourceBinding(bool b)
 	d->doBinding = b;
 }
 
+void ClientStream::setLang(const QString& lang)
+{
+	d->lang = lang;
+}
+
 void ClientStream::setNoopTime(int mills)
 {
 	d->noop_time = mills;
@@ -1183,6 +1190,7 @@ void ClientStream::cr_connected()
 	d->client.setAllowTLS(d->tlsHandler ? true: false);
 	d->client.setAllowBind(d->doBinding);
 	d->client.setAllowPlain(d->allowPlain);
+	d->client.setLang(d->lang);
 
 	/*d->client.jid = d->jid;
 	d->client.server = d->server;

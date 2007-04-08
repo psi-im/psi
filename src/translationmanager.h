@@ -32,6 +32,7 @@ public:
 
 	VarList availableTranslations();
 	const QString& currentLanguage() const;
+	QString currentXMLLanguage() const;
 	void loadTranslation(const QString& language);
 	
 protected:

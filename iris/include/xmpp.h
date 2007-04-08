@@ -443,6 +443,9 @@ namespace XMPP
 		// binding
 		void setResourceBinding(bool);
 
+		// Language
+		void setLang(const QString&);
+
 		// security options (old protocol only uses the first !)
 		void setAllowPlain(bool);
 		void setRequireMutualAuth(bool);

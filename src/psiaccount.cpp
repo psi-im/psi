@@ -97,6 +97,7 @@
 #include "physicallocation.h"
 #include "psipopup.h"
 #include "pgputil.h"
+#include "translationmanager.h"
 #include "iconwidget.h"
 #include "filetransdlg.h"
 #include "systeminfo.h"
@@ -969,6 +970,7 @@ void PsiAccount::login()
 	d->stream->setSSFRange(d->acc.security_level,256);
 	d->stream->setAllowPlain(d->acc.opt_plain);
 	d->stream->setCompress(d->acc.opt_compress);
+	d->stream->setLang(TranslationManager::instance()->currentXMLLanguage());
 	if(d->acc.opt_keepAlive)
 		d->stream->setNoopTime(55000);  // prevent NAT timeouts every minute
 	else

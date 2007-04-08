@@ -68,6 +68,13 @@ const QString& TranslationManager::currentLanguage() const
 	return currentLanguage_;
 }
 
+QString TranslationManager::currentXMLLanguage() const
+{
+	QString xmllang = currentLanguage_;
+	xmllang.replace("_","-");
+	return xmllang;
+}
+
 void TranslationManager::loadTranslation(const QString& language)
 {
 #ifdef __GNUC__
