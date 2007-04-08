@@ -876,12 +876,14 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	hb_top->addWidget(d->tb_find);
 
 	d->tb_emoticons = new QToolButton(sp_top);
+	d->tb_emoticons->setToolTip(tr("Select icon"));
 	d->tb_emoticons->setIconSize(QSize(16, 16));
 	d->tb_emoticons->setPopupMode(QToolButton::InstantPopup);
 	d->tb_emoticons->setIcon(IconsetFactory::icon("psi/smile").icon());
 	hb_top->addWidget(d->tb_emoticons);
 
 	d->tb_actions = new QToolButton(sp_top);
+	d->tb_actions->setToolTip(tr("Actions"));
 	d->tb_actions->setIconSize(QSize(16, 16));
 	d->tb_actions->setPopupMode(QToolButton::InstantPopup);
 	d->tb_actions->setArrowType(Qt::DownArrow);

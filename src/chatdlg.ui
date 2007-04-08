@@ -145,6 +145,9 @@
              <height>16</height>
             </size>
            </property>
+           <property name="toolTip" >
+            <string>Select icon</string>
+           </property>
           </widget>
          </item>
          <item>
@@ -157,6 +160,9 @@
              <width>16</width>
              <height>16</height>
             </size>
+           </property>
+           <property name="toolTip" >
+            <string>Actions</string>
            </property>
            <property name="arrowType" >
             <enum>Qt::DownArrow</enum>
