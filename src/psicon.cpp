@@ -68,7 +68,6 @@
 #include "jidutil.h"
 #include "systemwatch.h"
 #include "accountscombobox.h"
-#include "globalaccelman.h"
 #include "tabdlg.h"
 #include "chatdlg.h"
 #include "capsregistry.h"
