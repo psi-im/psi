@@ -96,14 +96,14 @@ void AccountAddDlg::add()
 			return;
 		}
 
-		Jid jid = w->jid;
-		QString pass = w->pass;
-		bool opt_host = w->opt_host;
-		QString host = w->sp_host;
-		int port = w->sp_port;
-		bool legacy_ssl_probe = w->legacy_ssl_probe;
-		UserAccount::SSLFlag ssl = ( w->ssl ? UserAccount::SSL_Legacy : UserAccount::SSL_Auto);
-		int proxy = w->proxy;
+		Jid jid = w->jid();
+		QString pass = w->pass();
+		bool opt_host = w->useHost();
+		QString host = w->host();
+		int port = w->port();
+		bool legacy_ssl_probe = w->legacySSLProbe();
+		UserAccount::SSLFlag ssl = w->ssl();
+		int proxy = w->proxy();
 
 		delete w;
 

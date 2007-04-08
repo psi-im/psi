@@ -41,13 +41,18 @@ namespace XMPP
 		JT_Register(Task *parent);
 		~JT_Register();
 
+		// OLd style registration
 		void reg(const QString &user, const QString &pass);
+
 		void changepw(const QString &pass);
 		void unreg(const Jid &j="");
 
 		const Form & form() const;
+		bool hasXData() const;
+		const XData& xdata() const;
 		void getForm(const Jid &);
 		void setForm(const Form &);
+		void setForm(const Jid&, const XData &);
 
 		void onGo();
 		bool take(const QDomElement &);

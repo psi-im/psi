@@ -131,6 +131,8 @@ public:
 	Private() {}
 
 	Form form;
+	XData xdata;
+	bool hasXData;
 	Jid jid;
 	int type;
 };
@@ -140,6 +142,7 @@ JT_Register::JT_Register(Task *parent)
 {
 	d = new Private;
 	d->type = -1;
+	d->hasXData = false;
 }
 
 JT_Register::~JT_Register()
@@ -217,9 +220,29 @@ void JT_Register::setForm(const Form &form)
 	}
 }
 
+void JT_Register::setForm(const Jid& to, const XData& xdata)
+{
+	d->type = 4;
+	iq = createIQ(doc(), "set", to.full(), id());
+	QDomElement query = doc()->createElement("query");
+	query.setAttribute("xmlns", "jabber:iq:register");
+	iq.appendChild(query);
+	query.appendChild(xdata.toXml(doc(), true));
+}
+
 const Form & JT_Register::form() const
 {
 	return d->form;
+}
+
+bool JT_Register::hasXData() const
+{
+	return d->hasXData;
+}
+
+const XData& JT_Register::xdata() const
+{
+	return d->xdata;
 }
 
 void JT_Register::onGo()
@@ -248,6 +271,10 @@ bool JT_Register::take(const QDomElement &x)
 					d->form.setInstructions(tagContent(i));
 				else if(i.tagName() == "key")
 					d->form.setKey(tagContent(i));
+				else if(i.tagName() == "x" && i.attribute("xmlns") == "jabber:x:data") {
+					d->xdata.fromXml(i);
+					d->hasXData = true;
+				}
 				else {
 					FormField f;
 					if(f.setType(i.tagName())) {

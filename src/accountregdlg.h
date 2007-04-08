@@ -1,6 +1,6 @@
 /*
- * accountregdlg.h - dialogs for manipulating PsiAccounts
- * Copyright (C) 2001, 2002  Justin Karneges
+ * accountregdlg.h
+ * Copyright (C) 2001, 2002, 2006  Justin Karneges, Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,52 +24,76 @@
 #include <QDialog>
 #include <QString>
 
-#include "xmpp.h"
+#include "profiles.h"
+#include "xmpp_jid.h"
+#include "xmpp_xdata.h"
 #include "ui_accountreg.h"
 
 class ProxyManager;
 class ProxyChooser;
 class QWidget;
+class QScrollArea;
 class MiniClient;
+class XDataWidget;
+namespace XMPP {
+	class Form;
+}
 
-class AccountRegDlg : public QDialog, public Ui::AccountReg
+class AccountRegDlg : public QDialog
 {
 	Q_OBJECT
 public:
-	AccountRegDlg(ProxyManager *, QWidget *parent=0);
+	AccountRegDlg(ProxyManager*, QWidget *parent=0);
 	~AccountRegDlg();
 
-	XMPP::Jid jid;
-	QString sp_host, pass;
-	int sp_port;
-	bool ssl, opt_host, legacy_ssl_probe;
-	int proxy;
-
-protected:
-	bool checkSSL();
-	// reimplemented
-	//void closeEvent(QCloseEvent *);
+	const XMPP::Jid& jid() const { return jid_; }
+	const QString& pass() const { return pass_; }
+	bool useHost() const { return opt_host_; }
+	const QString& host() const { return host_; }
+	int port() const { return port_; }
+	bool legacySSLProbe() { return legacy_ssl_probe_; }
+	UserAccount::SSLFlag ssl() const { return ssl_; }
+	int proxy() const { return proxy_; }
 
 public slots:
 	void done(int);
 
-private slots:
-	void sslToggled(bool);
+protected:
+	static XMPP::XData convertToXData(const XMPP::Form&);
+	static XMPP::Form convertFromXData(const XMPP::XData&);
+
+	bool checkSSL();
+	void block();
+	void unblock();
+
+protected slots:
 	void hostToggled(bool);
-	void reg();
+	void sslActivated(int);
+	void next();
 
 	void client_handshaken();
 	void client_error();
 
-	void reg_finished();
-
-	void block();
-	void unblock();
+	void getFields_finished();
+	void setFields_finished();
 
 private:
-	ProxyManager *proxyman;
-	ProxyChooser *pc;
-	MiniClient *client;
+	Ui::AccountReg ui_;
+	QScrollArea* fields_container_;
+	XDataWidget* fields_;
+	ProxyManager *proxy_manager_;
+	ProxyChooser *proxy_chooser_;
+	MiniClient *client_;
+	bool isOld_;
+
+	// Account settings
+	XMPP::Jid jid_, server_;
+	UserAccount::SSLFlag ssl_;
+	bool opt_host_, legacy_ssl_probe_;
+	QString host_;
+	int port_;
+	QString pass_;
+	int proxy_;
 };
 
 #endif

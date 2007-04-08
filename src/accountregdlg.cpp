@@ -1,6 +1,6 @@
 /*
  * accountregdlg.cpp - dialogs for manipulating PsiAccounts
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001, 2002, 2006  Justin Karneges, Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,73 +20,88 @@
 
 #include <QtCrypto>
 #include <QMessageBox>
+#include <QScrollArea>
 
 #include "accountregdlg.h"
 #include "proxy.h"
 #include "miniclient.h"
-#include "common.h" // CAP()
 #include "xmpp_tasks.h"
 #include "psioptions.h"
 #include "jidutil.h"
+#include "xdata_widget.h"
 
 using namespace XMPP;
 
 
-AccountRegDlg::AccountRegDlg(ProxyManager *_proxyman, QWidget *parent)
-:QDialog(parent)
+AccountRegDlg::AccountRegDlg(ProxyManager *pm, QWidget *parent) : QDialog(parent)
 {
-	setupUi(this);
+	ui_.setupUi(this);
 	setModal(false);
-  	setWindowTitle(CAP(caption()));
+
+	// TODO: If the domain is fixed, and the connection settings are fixed, skip first
+	// step
 	
-	connect(ck_host, SIGNAL(toggled(bool)), ck_ssl, SLOT(setEnabled(bool)));
-	ck_legacy_ssl_probe->setEnabled(true);
-	ck_ssl->setEnabled(false);
-	ck_legacy_ssl_probe->setChecked(true);
+	// Initialize settings
+	ssl_ = UserAccount::SSL_Auto;
+	legacy_ssl_probe_ = true;
+	port_ = 5222;
+	
+	// Manual Host/Port
+	ui_.le_host->setEnabled(false);
+	ui_.lb_host->setEnabled(false);
+	ui_.le_port->setEnabled(false);
+	ui_.lb_port->setEnabled(false);
+	connect(ui_.ck_host, SIGNAL(toggled(bool)), SLOT(hostToggled(bool)));
 
-	le_host->setEnabled(false);
-	lb_host->setEnabled(false);
-	le_port->setEnabled(false);
-	lb_port->setEnabled(false);
+	// SSL
+	ui_.cb_ssl->addItem(tr("Automatic"),UserAccount::SSL_Auto);
+	ui_.cb_ssl->addItem(tr("Always"),UserAccount::SSL_Yes);
+	ui_.cb_ssl->addItem(tr("Never"), UserAccount::SSL_No);
+	ui_.cb_ssl->addItem(tr("Legacy SSL"), UserAccount::SSL_Legacy);
+	ui_.cb_ssl->setCurrentIndex(ui_.cb_ssl->findData(ssl_));
+	connect(ui_.cb_ssl, SIGNAL(activated(int)), SLOT(sslActivated(int)));
+	ui_.ck_legacy_ssl_probe->setChecked(legacy_ssl_probe_);
 
-	connect(pb_close, SIGNAL(clicked()), SLOT(close()));
-	connect(pb_reg, SIGNAL(clicked()), SLOT(reg()));
-	connect(ck_ssl, SIGNAL(toggled(bool)), SLOT(sslToggled(bool)));
-	connect(ck_host, SIGNAL(toggled(bool)), SLOT(hostToggled(bool)));
+	// Cancel and next buttons
+	connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(close()));
+	connect(ui_.pb_next, SIGNAL(clicked()), SLOT(next()));
 
-	proxyman = _proxyman;
-	pc = proxyman->createProxyChooser(gb_proxy);
-	replaceWidget(lb_proxychooser, pc);
-	pc->fixTabbing(le_confirm, ck_ssl);
-	pc->setCurrentItem(0);
+	// Proxy
+	proxy_manager_ = pm;
+	proxy_chooser_ = proxy_manager_->createProxyChooser(ui_.gb_connection);
+	replaceWidget(ui_.lb_proxychooser, proxy_chooser_);
+	//proxy_chooser->fixTabbing(le_confirm, ck_ssl);
+	proxy_chooser_->setCurrentItem(0);
 
-	le_port->setText("5222");
-	le_host->setFocus();
+	// Fields pane
+	QVBoxLayout *fields_layout = new QVBoxLayout(ui_.page_fields);
+	fields_layout->setMargin(0);
+	fields_container_ = new QScrollArea(ui_.page_fields);
+	fields_layout->addWidget(fields_container_);
+	fields_container_->setWidgetResizable(true);
+	fields_layout->addStretch(20);
+	fields_ = NULL;
 
-	client = new MiniClient;
-	connect(client, SIGNAL(handshaken()), SLOT(client_handshaken()));
-	connect(client, SIGNAL(error()), SLOT(client_error()));
+	ui_.le_port->setText(QString::number(port_));
+	ui_.le_host->setFocus();
+
+	client_ = new MiniClient;
+	connect(client_, SIGNAL(handshaken()), SLOT(client_handshaken()));
+	connect(client_, SIGNAL(error()), SLOT(client_error()));
 	
 	if (!PsiOptions::instance()->getOption("options.account.domain").toString().isEmpty()) {
-		lb_example->hide();
-		lb_jid->setText(tr("Username:"));
+		ui_.gb_server->hide();
 	}
 }
 
 AccountRegDlg::~AccountRegDlg()
 {
-	delete client;
+	delete client_;
 }
-
-/*void AccountRegDlg::closeEvent(QCloseEvent *e)
-{
-	e->ignore();
-	reject();
-}*/
 
 void AccountRegDlg::done(int r)
 {
-	if(busy->isActive()) {
+	if(ui_.busy->isActive()) {
 		int n = QMessageBox::information(this, tr("Warning"), tr("Are you sure you want to cancel the registration?"), tr("&Yes"), tr("&No"));
 		if(n != 0)
 			return;
@@ -94,15 +109,17 @@ void AccountRegDlg::done(int r)
 	QDialog::done(r);
 }
 
-void AccountRegDlg::sslToggled(bool on)
+void AccountRegDlg::sslActivated(int i)
 {
-	if (on && !checkSSL()) {
-		ck_ssl->setChecked(false);
-		return;
+	if ((ui_.cb_ssl->itemData(i) == UserAccount::SSL_Yes || ui_.cb_ssl->itemData(i) == UserAccount::SSL_Legacy) && !checkSSL()) {
+		ui_.cb_ssl->setCurrentIndex(ui_.cb_ssl->findData(UserAccount::SSL_Auto));
 	}
-
-	le_port->setText(on ? "5223": "5222");
+	else if (ui_.cb_ssl->itemData(i) == UserAccount::SSL_Legacy && !ui_.ck_host->isChecked()) {
+		QMessageBox::critical(this, tr("Error"), tr("Legacy SSL is only available in combination with manual host/port."));
+		ui_.cb_ssl->setCurrentIndex(ui_.cb_ssl->findData(UserAccount::SSL_Auto));
+	}
 }
+
 
 bool AccountRegDlg::checkSSL()
 {
@@ -115,103 +132,194 @@ bool AccountRegDlg::checkSSL()
 
 void AccountRegDlg::hostToggled(bool on)
 {
-	le_host->setEnabled(on);
-	le_port->setEnabled(on);
-	lb_host->setEnabled(on);
-	lb_port->setEnabled(on);
-	ck_legacy_ssl_probe->setEnabled(!on);
+	ui_.le_host->setEnabled(on);
+	ui_.le_port->setEnabled(on);
+	ui_.lb_host->setEnabled(on);
+	ui_.lb_port->setEnabled(on);
+	if (!on && ui_.cb_ssl->currentIndex() == ui_.cb_ssl->findData(UserAccount::SSL_Legacy)) {
+		ui_.cb_ssl->setCurrentIndex(ui_.cb_ssl->findData(UserAccount::SSL_Auto));
+	}
 }
 
-void AccountRegDlg::reg()
+void AccountRegDlg::next()
 {
-	// sanity check
-	Jid j(JIDUtil::accountFromString(le_jid->text().trimmed()));
-	if ( j.user().isEmpty() || j.host().isEmpty() ) {
-		if (!PsiOptions::instance()->getOption("options.account.domain").toString().isEmpty()) {
-			QMessageBox::information(this, tr("Error"), tr("<i>Username</i> is invalid."));
+	if (ui_.sw_register->currentWidget() == ui_.page_server) {
+
+		// Update settings
+		server_ = JIDUtil::accountFromString(ui_.le_server->text().trimmed());
+		ssl_ =  (UserAccount::SSLFlag) ui_.cb_ssl->itemData(ui_.cb_ssl->currentIndex()).toInt();
+		legacy_ssl_probe_ = ui_.ck_legacy_ssl_probe->isChecked();
+		opt_host_ = ui_.ck_host->isChecked();
+		host_ = ui_.le_host->text();
+		port_ = ui_.le_port->text().toInt();
+		proxy_ = proxy_chooser_->currentItem();
+		
+		// Sanity check
+		if (server_.isNull() || !server_.node().isEmpty() || !server_.resource().isEmpty()) {
+			QMessageBox::critical(this, tr("Error"), tr("You have entered an invalid server name"));
+			return;
+		}
+		
+		// Connect to the server
+		ui_.busy->start();
+		block();
+		client_->connectToServer(server_, legacy_ssl_probe_, ssl_ == UserAccount::SSL_Legacy, ssl_ == UserAccount::SSL_Yes, opt_host_ ? host_ : QString(), port_, proxy_manager_, proxy_);
+	}
+	else if (ui_.sw_register->currentWidget() == ui_.page_fields) {
+		// Initialize the form
+		XMPP::XData fields;
+		fields.setFields(fields_->fields());
+		
+		// Determine the username and password
+		foreach(XMPP::XData::Field field, fields.fields()) {
+			if (field.var() == "username" && !field.value().isEmpty()) {
+				jid_.set(server_.bare(), field.value().at(0), "");
+			}
+			else if (field.var() == "password" && !field.value().isEmpty()) {
+				pass_ = field.value().at(0);
+			}
+		}
+
+		// Register
+		ui_.busy->start();
+		block();
+		JT_Register *reg = new JT_Register(client_->client()->rootTask());
+		connect(reg, SIGNAL(finished()), SLOT(setFields_finished()));
+		if (isOld_) {
+			Form form = convertFromXData(fields);
+			form.setJid(server_);
+			reg->setForm(form);
 		}
 		else {
-			QMessageBox::information(this, tr("Error"), tr("<i>Jabber ID</i> must be specified in the format <i>user@host</i>."));
+			reg->setForm(server_,fields);
 		}
-		return;
+		reg->go(true);
 	}
-
-	if(le_pass->text().isEmpty()) {
-		QMessageBox::information(this, tr("Error"), tr("You must fill out the fields properly before you can register."));
-		return;
-	}
-
-	if(le_pass->text() != le_confirm->text()) {
-		QMessageBox::information(this, tr("Error"), tr("Password and confirmation do not match.  Please enter them again."));
-		le_pass->setText("");
-		le_confirm->setText("");
-		le_pass->setFocus();
-		return;
-	}
-
-	busy->start();
-	block();
-
-	jid = JIDUtil::accountFromString(le_jid->text().trimmed()).bare();
-	ssl = ck_ssl->isChecked();
-	pass = le_pass->text();
-	opt_host = ck_host->isChecked();
-	sp_host = le_host->text();
-	sp_port = le_port->text().toInt();
-	legacy_ssl_probe = (opt_host ? false : ck_legacy_ssl_probe->isChecked());
-
-	client->connectToServer(jid, legacy_ssl_probe, ssl, false, opt_host ? sp_host : QString(), sp_port, proxyman, pc->currentItem(), 0);
 }
 
 void AccountRegDlg::client_handshaken()
 {
 	// try to register an account
-	JT_Register *reg = new JT_Register(client->client()->rootTask());
-	connect(reg, SIGNAL(finished()), SLOT(reg_finished()));
-	reg->reg(jid.user(), pass);
+	JT_Register *reg = new JT_Register(client_->client()->rootTask());
+	connect(reg, SIGNAL(finished()), SLOT(getFields_finished()));
+	reg->getForm(server_);
 	reg->go(true);
 }
 
 void AccountRegDlg::client_error()
 {
-	busy->stop();
+	ui_.busy->stop();
 	unblock();
 }
 
-void AccountRegDlg::reg_finished()
+void AccountRegDlg::getFields_finished()
 {
 	JT_Register *reg = (JT_Register *)sender();
-
-	client->close();
-	busy->stop();
-
-	if(reg->success()) {
-		QMessageBox::information(this, tr("Success"), tr("The account was registered successfully."));
-		proxy = pc->currentItem();
-		accept();
-		return;
+	ui_.busy->stop();
+	if (reg->success()) {
+		unblock();
+		fields_ =  new XDataWidget(ui_.page_fields);
+		XData xdata;
+		if (reg->hasXData()) {
+			isOld_ = false;
+			xdata = reg->xdata(); 
+		}
+		else {
+			isOld_ = true;
+			xdata = convertToXData(reg->form());
+		}
+		if (xdata.instructions().isEmpty()) 
+			xdata.setInstructions(tr("Please provide the following information:"));
+		fields_->setForm(xdata);
+		fields_container_->setWidget(fields_);
+		fields_container_->updateGeometry();
+		ui_.sw_register->setCurrentWidget(ui_.page_fields);
 	}
-	else if(reg->statusCode() != Task::ErrDisc) {
+	else {
+		QMessageBox::critical(this, tr("Error"), tr("This server does not support registration"));
+		unblock();
+	}
+}
+
+void AccountRegDlg::setFields_finished()
+{
+	JT_Register *reg = (JT_Register *)sender();
+	ui_.busy->stop();
+	if (reg->success()) {
+		QMessageBox::information(this, tr("Success"), tr("The account was registered successfully."));
+		client_->close();
+		accept();
+	}
+	else {
 		unblock();
 		QMessageBox::critical(this, tr("Error"), QString(tr("There was an error registering the account.\nReason: %1")).arg(reg->statusString()));
 	}
 }
 
+XMPP::XData AccountRegDlg::convertToXData(const XMPP::Form& form)
+{
+	// Convert the fields
+	XData::FieldList fields;
+	foreach(FormField f, form) {
+		XData::Field field;
+		field.setLabel(f.fieldName());
+		field.setVar(f.realName());
+		field.setRequired(true);
+		if (f.isSecret()) {
+			field.setType(XData::Field::Field_TextPrivate);
+		}
+		else {
+			field.setType(XData::Field::Field_TextSingle);
+		}
+		fields.push_back(field);
+	}
+
+	// Create the form
+	XData xdata;
+	xdata.setInstructions(form.instructions());
+	xdata.setFields(fields);
+	return xdata;
+}
+
+XMPP::Form AccountRegDlg::convertFromXData(const XMPP::XData& xdata)
+{
+	Form form;
+	foreach(XMPP::XData::Field field, xdata.fields()) {
+		if (!field.value().isEmpty()) {
+			FormField f;
+			f.setType(field.var());
+			f.setValue(field.value().at(0));
+			form.push_back(f);
+		}
+	}
+	return form;
+}
+
 void AccountRegDlg::block()
 {
-	gb_account->setEnabled(false);
-	gb_proxy->setEnabled(false);
-	gb_advanced->setEnabled(false);
-	pb_reg->setEnabled(false);
+	if (ui_.sw_register->currentWidget() == ui_.page_server) {
+		ui_.gb_server->setEnabled(false);
+		ui_.gb_connection->setEnabled(false);
+		ui_.pb_next->setEnabled(false);
+	}
+	else if (ui_.sw_register->currentWidget() == ui_.page_fields) {
+		if (fields_)
+			fields_->setEnabled(false);
+	}
 }
 
 void AccountRegDlg::unblock()
 {
-	gb_account->setEnabled(true);
-	gb_proxy->setEnabled(true);
-	gb_advanced->setEnabled(true);
-	pb_reg->setEnabled(true);
-	le_jid->setFocus();
+	if (ui_.sw_register->currentWidget() == ui_.page_server) {
+		ui_.gb_server->setEnabled(true);
+		ui_.gb_connection->setEnabled(true);
+		ui_.pb_next->setEnabled(true);
+	}
+	else if (ui_.sw_register->currentWidget() == ui_.page_fields) {
+		ui_.pb_next->setEnabled(true);
+		if (fields_)
+			fields_->setEnabled(true);
+	}
 }
 
 
