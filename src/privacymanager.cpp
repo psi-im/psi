@@ -19,6 +19,7 @@
  */
  
 #include <QObject>
+#include <QDebug>
 
 #include "xmpp_xmlcommon.h"
 #include "im.h"

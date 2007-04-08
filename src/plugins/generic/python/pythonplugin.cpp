@@ -26,6 +26,7 @@
 #include <Python.h>
 
 #include <QtCore>
+#include <QDebug>
 
 #include "psiplugin.h"
 

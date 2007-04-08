@@ -21,6 +21,7 @@
 #include <QtGlobal>
 #include <QString>
 #include <QTime>
+#include <QDebug>
 
 #include <CoreFoundation/CoreFoundation.h>
 

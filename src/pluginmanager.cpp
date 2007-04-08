@@ -1,5 +1,6 @@
 #include <QtCore>
 #include <QPluginLoader>
+#include <QDebug>
 
 #include "pluginmanager.h"
 #include "psiplugin.h"

@@ -21,6 +21,7 @@
 #include <Q3GridLayout>
 #include <Q3Frame>
 #include <Q3VBoxLayout>
+#include <QDebug>
 #include <stdlib.h>                             // rand() function
 #include <qdatetime.h>                          // seed for rand()
 

@@ -25,6 +25,7 @@
 #include <QtCore>
 #include <QPluginLoader>
 #include <QCoreApplication>
+#include <QDebug>
 
 #include "tunecontrollermanager.h"
 #include "tunecontrollerplugin.h"

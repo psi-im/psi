@@ -24,6 +24,7 @@
  */
 
 #include <QtCore>
+#include <QDebug>
 
 #include "psiplugin.h"
 #include "gameboard.h"

@@ -24,6 +24,7 @@
  
 #include "wbmanager.h"
 #include "psipopup.h"
+#include <QDebug>
 
 using namespace XMPP;
 

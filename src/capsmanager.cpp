@@ -30,6 +30,7 @@
 #include <QTimer>
 #include <QPair>
 #include <QApplication>
+#include <QDebug>
 
 #include "capsregistry.h"
 #include "capsmanager.h"
