@@ -887,7 +887,7 @@ void PsiAccount::login()
 
 	bool useHost = false;
 	QString host;
-	int port;
+	int port = -1;
 #ifdef XMPP1
 	if(d->acc.opt_host && !d->acc.legacy_ssl_probe) {
 		useHost = true;
@@ -922,7 +922,7 @@ void PsiAccount::login()
 				if (useHost)
 					u.addQueryItem("server",host + ':' + QString::number(port));
 				else
-					u.addQueryItem("server",jid.host());
+					u.addQueryItem("server",d->jid.host());
 			}
 			p.setHttpPoll(pi.settings.host, pi.settings.port, u.toString());
 			p.setPollInterval(2);

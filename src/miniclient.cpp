@@ -66,7 +66,7 @@ void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool ssl
 	j = jid;
 
 	QString host;
-	int port;
+	int port = -1;
 	bool useHost = false;
 #ifdef XMPP1
 	if(!_host.isEmpty() && !legacy_ssl_probe) {
