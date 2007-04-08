@@ -222,8 +222,9 @@ public:
 	void promptUserToCreateAccount()
 	{
 		QMessageBox msgBox(QMessageBox::Question,tr("Account setup"),tr("You need to set up an account to start. Would you like to register a new account, or use an existing account?"));
-		QPushButton *registerButton = msgBox.addButton(tr("Register new account"), QMessageBox::ActionRole);
-		QPushButton *existingButton = msgBox.addButton(tr("Use existing account"),QMessageBox::ActionRole);
+		QPushButton *registerButton = msgBox.addButton(tr("Register new account"), QMessageBox::AcceptRole);
+		QPushButton *existingButton = msgBox.addButton(tr("Use existing account"),QMessageBox::AcceptRole);
+		msgBox.addButton(QMessageBox::Cancel);
 		msgBox.exec();
 		if (msgBox.clickedButton() ==  existingButton) {
 			AccountModifyDlg w(psi);
@@ -952,7 +953,7 @@ void PsiCon::doFileTransDlg()
 
 void PsiCon::checkAccountsEmpty()
 {
-	while (d->pro.acc.count() == 0) {
+	if (d->pro.acc.count() == 0) {
 		d->promptUserToCreateAccount();
 	}
 }
