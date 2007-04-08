@@ -2047,13 +2047,13 @@ void EventDlg::updateReadNext(PsiIcon *nextAnim, int nextAmount)
 		d->pb_next->setEnabled(false);
 		d->pb_next->setText(tr("&Next"));
 
-		if(d->pb_reply->isVisible() && d->pb_reply->isEnabled())
+		if(d->pb_reply->isVisibleTo(this) && d->pb_reply->isEnabled())
 			d->pb_reply->setFocus();
-		else if(d->pb_auth->isVisible())
+		else if(d->pb_auth->isVisibleTo(this))
 			d->pb_auth->setFocus();
-		else if(d->w_http_id->isVisible())
+		else if(d->w_http_id->isVisibleTo(this))
 			d->le_http_id->setFocus();
-		else if(d->pb_http_deny->isVisible())
+		else if(d->pb_http_deny->isVisibleTo(this))
 			d->pb_http_deny->setFocus();
 	}
 	else {
