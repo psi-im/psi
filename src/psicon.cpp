@@ -79,6 +79,7 @@
 #include "pluginmanager.h"
 #endif
 #include "psicontactlist.h"
+#include "shortcutmanager.h"
 
 
 #ifdef Q_WS_MAC
@@ -449,12 +450,9 @@ bool PsiCon::init()
 	PluginManager::instance();
 #endif
 
-	// global accelerator manager
-	// TODO "Temporary disabled globalacces to get as less unexpected resulst"
-	//d->globalAccelManager = new GlobalAccelManager;
-	//d->globalAccelManager->setAccel(option.globalAccels[0]);
-	//d->globalAccelManager->setAccel(option.globalAccels[1]);
-	//connect(d->globalAccelManager, SIGNAL(activated(int)), SLOT(accel_activated(int)));
+	// Global shortcuts
+	ShortcutManager::connect("global.event", this, SLOT(recvNextEvent()));
+	ShortcutManager::connect("global.toggle-visibility", d->mainwin, SLOT(toggleVisible()));
 
 	// Entity capabilities
 	CapsRegistry::instance()->setFile(ApplicationInfo::homeDir() + "/caps.xml");
@@ -1220,18 +1218,6 @@ void PsiCon::proxy_settingsChanged()
 	}
 
 	saveAccounts();
-}
-
-void PsiCon::accel_activated(int x)
-{
-	switch (x) {
-	case 1:
-		recvNextEvent();
-		break;
-	case 2:
-		d->mainwin->toggleVisible();
-		break;
-	}
 }
 
 IconSelectPopup *PsiCon::iconSelectPopup() const

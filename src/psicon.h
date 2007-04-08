@@ -154,7 +154,6 @@ public slots:
 	void setStatusFromDialog(const XMPP::Status &, bool withPriority);
 	void pgp_keysUpdated();
 	void proxy_settingsChanged();
-	void accel_activated(int);
 	void updateMainwinStatus();
 	void tabDying(TabDlg*);
 	void qcaEvent(int, const QCA::Event&);

@@ -10,7 +10,7 @@ class ShortcutManager : public QObject
 {
 public:
 	static ShortcutManager* instance();
-	static void connect(const QString& path, QWidget *parent, const char* slot);
+	static void connect(const QString& path, QObject *parent, const char* slot);
 	QKeySequence shortcut(const QString& name);
 	QList<QKeySequence> shortcuts(const QString& name);
 

@@ -3,6 +3,7 @@
 
 #include "psioptions.h"
 #include "shortcutmanager.h"
+#include "globalshortcutmanager.h"
 
 
 /**
@@ -76,7 +77,7 @@ QList<QKeySequence> ShortcutManager::shortcuts(const QString& name)
 }
 
 
-/*
+/**
  * \brief this function connects the Key or Keys associated with the keyname "path" with the slot "slot"
  *        of the Widget "parent"
  * \param path, the shortcut name e.g. "misc.sendmessage" which is in the options xml then
@@ -84,17 +85,27 @@ QList<QKeySequence> ShortcutManager::shortcuts(const QString& name)
  * \param parent, the widget to which the new QAction should be connected to
  * \param slot, the SLOT() of the parent which should be triggerd if the KeySequence is activated
  */
-void ShortcutManager::connect(const QString& path, QWidget *parent, const char* slot) 
+void ShortcutManager::connect(const QString& path, QObject* parent, const char* slot)
 {
-	if(parent == NULL || slot == NULL)
+	if (parent == NULL || slot == NULL)
 		return;
 
-	foreach(QKeySequence sequence, ShortcutManager::instance()->shortcuts(path)) {
-		if (!sequence.isEmpty()) {
-			QAction* act = new QAction(parent);
-			act->setShortcut(sequence);
-			parent->addAction(act);
-			parent->connect(act, SIGNAL(activated()), slot);
+	if (!path.startsWith("global.")) {
+		foreach(QKeySequence sequence, ShortcutManager::instance()->shortcuts(path)) {
+			if (!sequence.isEmpty()) {
+				QAction* act = new QAction(parent);
+				act->setShortcut(sequence);
+				if (QWidget* w = dynamic_cast<QWidget*>(parent))
+					w->addAction(act);
+				parent->connect(act, SIGNAL(activated()), slot);
+			}
+		}
+	}
+	else {
+		foreach(QKeySequence sequence, ShortcutManager::instance()->shortcuts(path)) {
+			if (!sequence.isEmpty()) {
+				GlobalShortcutManager::instance()->connect(sequence, parent, slot);
+			}
 		}
 	}
 }
