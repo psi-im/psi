@@ -87,7 +87,7 @@ static QString genId()
 	//if(!QCA::isSupported(QCA::CAP_SHA1))
 	//	QCA::insertProvider(createProviderHash());
 
-	return QCA::SHA1().hashToString(randomArray(128));
+	return QCA::Hash("sha1").hashToString(randomArray(128));
 }
 
 //----------------------------------------------------------------------------
@@ -1471,9 +1471,9 @@ void ClientStream::srvProcessNext()
 				printf("Break (RecvOpen)\n");
 
 				// calculate key
-				Q3CString str = QCA::SHA1().hashToString("secret").utf8();
-				str = QCA::SHA1().hashToString(str + "im.pyxa.org").utf8();
-				str = QCA::SHA1().hashToString(str + d->srv.id.utf8()).utf8();
+				Q3CString str = QCA::Hash("sha1").hashToString("secret").utf8();
+				str = QCA::Hash("sha1").hashToString(str + "im.pyxa.org").utf8();
+				str = QCA::Hash("sha1").hashToString(str + d->srv.id.utf8()).utf8();
 				d->srv.setDialbackKey(str);
 
 				//d->srv.setDialbackKey("3c5d721ea2fcc45b163a11420e4e358f87e3142a");

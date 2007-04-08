@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  *
  */
 
@@ -43,6 +43,7 @@ class saslProvider : public Provider
 public:
 	void init();
 	~saslProvider();
+        int version() const;
 	QString name() const;
 	QString credit() const;
 	QStringList features() const;
@@ -358,7 +359,7 @@ private:
 	void clientTryAgain()
 	{
 		result_haveClientInit = false;
-		
+
 		if(step == 0) {
 			const char *clientout, *m;
 			unsigned int clientoutlen;
@@ -854,9 +855,14 @@ saslProvider::~saslProvider()
 		sasl_done();
 }
 
+int saslProvider::version() const
+{
+        return QCA_VERSION;
+}
+
 QString saslProvider::name() const
 {
-	return "qca-sasl";
+	return "qca-cyrus-sasl";
 }
 
 QString saslProvider::credit() const
@@ -898,5 +904,5 @@ public:
 
 #include "qca-sasl.moc"
 
-Q_EXPORT_PLUGIN2(qca_sasl, saslPlugin);
+Q_EXPORT_PLUGIN2(qca-sasl, saslPlugin)
 

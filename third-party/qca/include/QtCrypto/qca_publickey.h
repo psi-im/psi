@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  *
  */
 
@@ -938,7 +938,7 @@ namespace QCA
 		   almost certainly want to extract the public key part out - see PKey::toPublicKey
 		   for an easy way.
 
-		   Key length is a tricky judgement - using less than 2048 is probably being
+		   Key length is a tricky judgment - using less than 2048 is probably being
 		   too liberal for long term use. Don't use less than 1024 without serious
 		   analysis.
 		   

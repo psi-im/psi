@@ -46,7 +46,7 @@ namespace XMPP {
 static QString makeKey(const QString &sid, const Jid &initiator, const Jid &target)
 {
 	QString str = sid + initiator.full() + target.full();
-	return QCA::SHA1().hashToString(str.utf8());
+	return QCA::Hash("sha1").hashToString(str.utf8());
 }
 
 static bool haveHost(const StreamHostList &list, const Jid &j)

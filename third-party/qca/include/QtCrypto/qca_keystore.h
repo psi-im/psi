@@ -15,7 +15,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  *
  */
 
@@ -223,7 +223,7 @@ namespace QCA
 		/**
 		   test if the KeyStore holds trusted certificates (and CRLs)
 		*/
-		bool holdsTrustedCertificates() const; // Certificate and CRL
+		bool holdsTrustedCertificates() const;
 
 		/**
 		   test if the KeyStore holds identities (eg KeyBundle or PGPSecretKey)
@@ -295,7 +295,13 @@ namespace QCA
 	/**
 	   \class KeyStoreManager qca_keystore.h QtCrypto
 
-	   Access keystores, and monitor keystores for changes
+	   Access keystores, and monitor keystores for changes.
+
+	   If you are looking to use this class, you probably want to
+	   take a reference to the global KeyStoreManager, using the
+	   QCA::keyStoreManager() function. You then need to start()
+	   the KeyStoreManager, and either wait for the busyFinished()
+	   signal, or block using waitForBusyFinished().
 	*/
 	class QCA_EXPORT KeyStoreManager : public QObject
 	{

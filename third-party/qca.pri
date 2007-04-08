@@ -61,6 +61,8 @@ SOURCES += \
 	$$QCA_CPP/qca_keystore.cpp \
 	$$QCA_CPP/qca_securelayer.cpp \
 	$$QCA_CPP/qca_securemessage.cpp \
+	$$QCA_CPP/support/logger.cpp \
+	$$QCA_CPP/support/syncthread.cpp \
 	$$QCA_CPP/qca_default.cpp \
 	$$QCA_CPP/support/qpipe.cpp \
 	$$QCA_CPP/support/console.cpp

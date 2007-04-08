@@ -1,0 +1,8 @@
+GPGProc launches a single instance of GPG and provides a friendly API to
+work with all six possible pipe channels.  Theoretically, it should be
+possible to build any GPG front end with it, even though qca-gnupg uses it
+for only a handful of operations.  If you are writing a Qt-based GPG front
+end, please use this class.
+
+GPGProc works on both Windows and Unix platforms.
+

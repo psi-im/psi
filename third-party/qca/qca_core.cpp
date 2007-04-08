@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  *
  */
 
@@ -30,6 +30,11 @@
 #ifdef Q_OS_UNIX
 # include <unistd.h>
 #endif
+
+int qcaVersion()
+{
+	return QCA_VERSION;
+}
 
 namespace QCA {
 
@@ -52,18 +57,22 @@ public:
 	ProviderManager manager;
 	Random *rng;
 	KeyStoreManager *ksm;
+        Logger *logger;
 	QVariantMap properties;
+	QMap<QString,QVariantMap> config;
 
 	Global()
 	{
 		rng = 0;
 		ksm = new KeyStoreManager;
+                logger = new Logger;
 		secmem = false;
 	}
 
 	~Global()
 	{
 		delete ksm;
+                delete logger;
 		delete rng;
 	}
 };
@@ -313,6 +322,119 @@ QVariant getProperty(const QString &name)
 	return global->properties.value(name);
 }
 
+static bool configIsValid(const QVariantMap &config)
+{
+	if(!config.contains("formtype"))
+		return false;
+	QMapIterator<QString,QVariant> it(config);
+	while(it.hasNext())
+	{
+		it.next();
+		const QVariant &v = it.value();
+		if(v.type() != QVariant::String && v.type() != QVariant::Int && v.type() != QVariant::Bool)
+			return false;
+	}
+	return true;
+}
+
+static QVariantMap readConfig(const QString &name)
+{
+	QSettings settings("Affinix", "QCA");
+	settings.beginGroup("ProviderConfig");
+	QStringList providerNames = settings.value("providerNames").toStringList();
+	if(!providerNames.contains(name))
+		return QVariantMap();
+
+	settings.beginGroup(name);
+	QStringList keys = settings.childKeys();
+	QVariantMap map;
+	foreach(QString key, keys)
+		map[key] = settings.value(key);
+	settings.endGroup();
+
+	if(!configIsValid(map))
+		return QVariantMap();
+	return map;
+}
+
+static bool writeConfig(const QString &name, const QVariantMap &config, bool systemWide = false)
+{
+	QSettings settings(QSettings::NativeFormat, systemWide ? QSettings::SystemScope : QSettings::UserScope, "Affinix", "QCA");
+	settings.beginGroup("ProviderConfig");
+
+	// add the entry if needed
+	QStringList providerNames = settings.value("providerNames").toStringList();
+	if(!providerNames.contains(name))
+		providerNames += name;
+	settings.setValue("providerNames", providerNames);
+
+	settings.beginGroup(name);
+	QMapIterator<QString,QVariant> it(config);
+	while(it.hasNext())
+	{
+		it.next();
+		settings.setValue(it.key(), it.value());
+	}
+	settings.endGroup();
+
+	if(settings.status() == QSettings::NoError)
+		return true;
+	return false;
+}
+
+void setProviderConfig(const QString &name, const QVariantMap &config)
+{
+	if(!configIsValid(config))
+		return;
+
+	global->config[name] = config;
+	Provider *p = findProvider(name);
+	if(p)
+		p->configChanged(config);
+}
+
+QVariantMap getProviderConfig(const QString &name)
+{
+	QVariantMap conf;
+
+	// try loading from persistent storage
+	conf = readConfig(name);
+
+	// if not, load the one from memory
+	if(conf.isEmpty())
+		conf = global->config.value(name);
+
+	// if provider doesn't exist or doesn't have a valid config form,
+	//   use the config we loaded
+	Provider *p = findProvider(name);
+	if(!p)
+		return conf;
+	QVariantMap pconf = p->defaultConfig();
+	if(!configIsValid(pconf))
+		return conf;
+
+	// if the config loaded was empty, use the provider's config
+	if(conf.isEmpty())
+		return pconf;
+
+	// if the config formtype doesn't match the provider's formtype,
+	//   then use the provider's
+	if(pconf["formtype"] != conf["formtype"])
+		return pconf;
+
+	// otherwise, use the config loaded
+	return conf;
+}
+
+void saveProviderConfig(const QString &name)
+{
+	QVariantMap conf = global->config.value(name);
+	if(conf.isEmpty())
+		return;
+
+	writeConfig(name, conf);
+}
+
 Random & globalRNG()
 {
 	if(!global->rng)
@@ -329,6 +451,16 @@ void setGlobalRNG(const QString &provider)
 KeyStoreManager *keyStoreManager()
 {
 	return global->ksm;
+}
+
+Logger *logger()
+{
+	return global->logger;
+}
+
+void logText( const QString &message, Logger::Severity severity )
+{
+        global->logger->logTextMessage( message, severity );
 }
 
 bool haveSystemStore()
@@ -487,10 +619,27 @@ QString Provider::credit() const
 	return QString();
 }
 
+QVariantMap Provider::defaultConfig() const
+{
+	return QVariantMap();
+}
+
+void Provider::configChanged(const QVariantMap &)
+{
+}
+
 Provider::Context::Context(Provider *parent, const QString &type)
+:QObject()
 {
 	_provider = parent;
 	_type = type;
+}
+
+Provider::Context::Context(const Context &from)
+:QObject()
+{
+	_provider = from._provider;
+	_type = from._type;
 }
 
 Provider::Context::~Context()
@@ -513,12 +662,30 @@ bool Provider::Context::sameProvider(const Context *c) const
 }
 
 //----------------------------------------------------------------------------
+// BasicContext
+//----------------------------------------------------------------------------
+BasicContext::BasicContext(Provider *parent, const QString &type)
+:Context(parent, type)
+{
+	moveToThread(0); // no thread association
+}
+
+BasicContext::BasicContext(const BasicContext &from)
+:Context(from)
+{
+	moveToThread(0); // no thread association
+}
+
+BasicContext::~BasicContext()
+{
+}
+
+//----------------------------------------------------------------------------
 // PKeyBase
 //----------------------------------------------------------------------------
 PKeyBase::PKeyBase(Provider *p, const QString &type)
-:Provider::Context(p, type)
+:BasicContext(p, type)
 {
-	moveToThread(0); // no thread association
 }
 
 int PKeyBase::maximumEncryptSize(EncryptionAlgorithm) const
@@ -561,6 +728,49 @@ bool PKeyBase::endVerify(const QSecureArray &)
 SymmetricKey PKeyBase::deriveKey(const PKeyBase &)
 {
 	return SymmetricKey();
+}
+
+//----------------------------------------------------------------------------
+// PKeyContext
+//----------------------------------------------------------------------------
+QSecureArray PKeyContext::publicToDER() const
+{
+	return QSecureArray();
+}
+
+QString PKeyContext::publicToPEM() const
+{
+	return QString();
+}
+
+ConvertResult PKeyContext::publicFromDER(const QSecureArray &)
+{
+	return ErrorDecode;
+}
+
+ConvertResult PKeyContext::publicFromPEM(const QString &)
+{
+	return ErrorDecode;
+}
+
+QSecureArray PKeyContext::privateToDER(const QSecureArray &, PBEAlgorithm) const
+{
+	return QSecureArray();
+}
+
+QString PKeyContext::privateToPEM(const QSecureArray &, PBEAlgorithm) const
+{
+	return QString();
+}
+
+ConvertResult PKeyContext::privateFromDER(const QSecureArray &, const QSecureArray &)
+{
+	return ErrorDecode;
+}
+
+ConvertResult PKeyContext::privateFromPEM(const QString &, const QSecureArray &)
+{
+	return ErrorDecode;
 }
 
 //----------------------------------------------------------------------------
@@ -845,7 +1055,7 @@ SymmetricKey::SymmetricKey()
 
 SymmetricKey::SymmetricKey(int size)
 {
-	set(globalRNG().nextBytes(size, Random::SessionKey));
+	set(globalRNG().nextBytes(size));
 }
 
 SymmetricKey::SymmetricKey(const QSecureArray &a)
@@ -935,7 +1145,7 @@ bool SymmetricKey::isWeakDESKey()
 	// clear parity bits
 	for(uint i = 0; i < 8; i++)
 		workingCopy[i] = (data()[i]) & 0xfe;
-	
+
 	for(int n = 0; n < 64; n++)
 	{
 		if(memcmp(workingCopy.data(), desWeakKeyTable[n], 8) == 0)
@@ -953,7 +1163,7 @@ InitializationVector::InitializationVector()
 
 InitializationVector::InitializationVector(int size)
 {
-	set(globalRNG().nextBytes(size, Random::Nonce));
+	set(globalRNG().nextBytes(size));
 }
 
 InitializationVector::InitializationVector(const QSecureArray &a)

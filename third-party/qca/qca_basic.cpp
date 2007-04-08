@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2003-2005  Justin Karneges <justin@affinix.com>
- * Copyright (C) 2004,2005  Brad Hards <bradh@frogmouth.net>
+ * Copyright (C) 2004,2005,2007  Brad Hards <bradh@frogmouth.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,7 +14,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  *
  */
 
@@ -33,32 +33,32 @@ Random::Random(const QString &provider)
 {
 }
 
-uchar Random::nextByte(Quality q)
+uchar Random::nextByte()
 {
-	return (uchar)(nextBytes(1, q)[0]);
+	return (uchar)(nextBytes(1)[0]);
 }
 
-QSecureArray Random::nextBytes(int size, Quality q)
+QSecureArray Random::nextBytes(int size)
 {
-	return static_cast<RandomContext *>(context())->nextBytes(size, q);
+	return static_cast<RandomContext *>(context())->nextBytes(size);
 }
 
-uchar Random::randomChar(Quality q)
+uchar Random::randomChar()
 {
-	return globalRNG().nextByte(q);
+	return globalRNG().nextByte();
 }
 
-uint Random::randomInt(Quality q)
+uint Random::randomInt()
 {
-	QSecureArray a = globalRNG().nextBytes(sizeof(int), q);
+	QSecureArray a = globalRNG().nextBytes(sizeof(int));
 	uint x;
 	memcpy(&x, a.data(), a.size());
 	return x;
 }
 
-QSecureArray Random::randomArray(int size, Quality q)
+QSecureArray Random::randomArray(int size)
 {
-	return globalRNG().nextBytes(size, q);
+	return globalRNG().nextBytes(size);
 }
 
 //----------------------------------------------------------------------------
@@ -132,8 +132,11 @@ public:
 	bool ok, done;
 };
 
-Cipher::Cipher(const QString &type, Direction dir, const SymmetricKey &key, const InitializationVector &iv, const QString &provider)
-:Algorithm(type, provider)
+Cipher::Cipher( const QString &type, Mode m, Padding pad,
+	Direction dir, const SymmetricKey &key,
+	const InitializationVector &iv,
+	const QString &provider )
+:Algorithm(withAlgorithms( type, m, pad ), provider)
 {
 	d = new Private;
 	if(!key.isEmpty())
@@ -267,8 +270,11 @@ public:
 	QSecureArray buf;
 };
 
-MessageAuthenticationCode::MessageAuthenticationCode(const QString &type, const SymmetricKey &key, const QString &provider)
-:Algorithm(type, provider)
+
+MessageAuthenticationCode::MessageAuthenticationCode(const QString &type,
+						     const SymmetricKey &key,
+						     const QString &provider)
+  :Algorithm(type, provider)
 {
 	d = new Private;
 	setup(key);
@@ -330,11 +336,6 @@ void MessageAuthenticationCode::setup(const SymmetricKey &key)
 {
 	d->key = key;
 	clear();
-}
-
-QString MessageAuthenticationCode::withAlgorithm(const QString &macType, const QString &algType)
-{
-	return (macType + '(' + algType + ')');
 }
 
 //----------------------------------------------------------------------------
