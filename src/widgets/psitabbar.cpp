@@ -104,7 +104,8 @@ void PsiTabBar::mouseMoveEvent(QMouseEvent *event)
 	drag->setPixmap(icon);
 		
 	Qt::DropAction dropAction = drag->start(Qt::MoveAction);
-        
+	Q_UNUSED(dropAction);
+
 	event->accept();
  }
 

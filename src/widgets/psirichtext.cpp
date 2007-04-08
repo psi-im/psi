@@ -138,6 +138,9 @@ void PsiRichText::ensureTextLayouted(QTextDocument *doc, int documentWidth, Qt::
 {
 	// from QLabelPrivate::ensureTextLayouted
 
+	Q_UNUSED(textWordWrap);
+	Q_UNUSED(layoutDirection);
+	Q_UNUSED(align);
 	// bah, QTextDocumentLayout is private :-/
 	// QTextDocumentLayout *lout = qobject_cast<QTextDocumentLayout *>(doc->documentLayout());
 	// Q_ASSERT(lout);
