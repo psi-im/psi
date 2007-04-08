@@ -142,7 +142,7 @@ PsiOptions::PsiOptions()
 	: OptionsTree()
 {
 	autoSave(false);
-	if (!load(":/options-default.xml"))
+	if (!load(":/options/default.xml"))
 		qWarning("ERROR: Failed to load default options");
 }
 
