@@ -104,11 +104,6 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 	connect(ck_authzid,SIGNAL(toggled(bool)), le_authzid, SLOT(setEnabled(bool)));
 	ck_authzid->setChecked(acc.useAuthzid);
 	le_authzid->setText(acc.authzid);
-#ifdef __GNUC__
-#warning "Temporarily removing authzid (not fully implemented yet)"
-#endif
-	ck_authzid->hide();
-	le_authzid->hide();
 		
 	ck_plain->setChecked(acc.opt_plain);
 	ck_compress->setChecked(acc.opt_compress);
