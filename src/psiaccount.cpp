@@ -381,6 +381,7 @@ public:
 
 	void dialogRegister(QWidget* w, const Jid& jid)
 	{
+		connect(w, SIGNAL(destroyed(QObject*)), SLOT(forceDialogUnregister(QObject*)));
 		item_dialog2 *i = new item_dialog2;
 		i->widget = w;
 		i->jid = jid;
@@ -405,6 +406,12 @@ public:
 			delete i->widget;
 			delete i;
 		}
+	}
+
+private slots:
+	void forceDialogUnregister(QObject* obj)
+	{
+		dialogUnregister(static_cast<QWidget*>(obj));
 	}
 };
 
