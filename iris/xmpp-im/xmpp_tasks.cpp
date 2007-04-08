@@ -1321,6 +1321,7 @@ bool JT_ServInfo::take(const QDomElement &e)
 	//}
 	else if(ns == "http://jabber.org/protocol/disco#info") {
 		// Find out the node
+		bool invalid_node = false;
 		QString node;
 		bool found;
 		QDomElement q = findSubTag(e, "query", &found);
@@ -1402,14 +1403,34 @@ bool JT_ServInfo::take(const QDomElement &e)
 				}
 			}
 			else {
-				// TODO: ERROR
+				invalid_node = true;
 			}
 		}
 		else {
-			return false;
+			invalid_node = true;
 		}
-
-		send(iq);
+		
+		if (!invalid_node) {
+			send(iq);
+		}
+		else {
+			// Create error reply
+			QDomElement error_reply = createIQ(doc(), "result", e.attribute("from"), e.attribute("id"));
+			
+			// Copy children
+			for (QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling()) {
+				error_reply.appendChild(n.cloneNode());
+			}
+			
+			// Add error
+			QDomElement error = doc()->createElement("error");
+			error.setAttribute("type","cancel");
+			error_reply.appendChild(error);
+			QDomElement error_type = doc()->createElement("item-not-found");
+			error_type.setAttribute("xmlns","urn:ietf:params:xml:ns:xmpp-stanzas");
+			error.appendChild(error_type);
+			send(error_reply);
+		}
 		return true;
 	}
 
