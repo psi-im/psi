@@ -52,6 +52,7 @@
 #include "pgpkeydlg.h"
 #include "psioptions.h"
 #include "textutil.h"
+#include "httpauthmanager.h"
 #include "pgputil.h"
 #include "applicationinfo.h"
 #include "pgptransaction.h"
@@ -285,6 +286,9 @@ public:
 	// Bookmarks
 	BookmarkManager* bookmarkManager;
 
+	// HttpAuth
+	HttpAuthManager* httpAuthManager;
+
 	QList<GCContact*> gcbank;
 	QStringList groupchats;
 
@@ -492,6 +496,10 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent)
 	connect(d->psi->tuneController(), SIGNAL(stopped()), SLOT(tuneStopped()));
 	connect(d->psi->tuneController(), SIGNAL(playing(const Tune&)),SLOT(tunePlaying(const Tune&)));
 
+	// HttpAuth
+	d->httpAuthManager = new HttpAuthManager(d->client->rootTask());
+	connect(d->httpAuthManager, SIGNAL(confirmationRequest(const PsiHttpAuthRequest &)), SLOT(incomingHttpAuthRequest(const PsiHttpAuthRequest &)));
+
 	// Initialize Adhoc Commands server
 	d->ahcManager = new AHCServerManager(this);
 	d->rcSetStatusServer = 0;
@@ -601,6 +609,7 @@ PsiAccount::~PsiAccount()
 	delete d->serverInfoManager;
 	delete d->bookmarkManager;
 	delete d->client;
+	delete d->httpAuthManager;
 	cleanupStream();
 	delete d->eventQueue;
 
@@ -1376,6 +1385,12 @@ void PsiAccount::getBookmarks_success(const QList<URLBookmark>&, const QList<Con
 			w->doJoin();
 		}
 	}
+}
+
+void PsiAccount::incomingHttpAuthRequest(const PsiHttpAuthRequest &req)
+{
+	HttpAuthEvent *e = new HttpAuthEvent(req, this);
+	handleEvent(e);
 }
 
 void PsiAccount::client_rosterItemAdded(const RosterItem &r)
@@ -2461,6 +2476,8 @@ EventDlg *PsiAccount::ensureEventDlg(const Jid &j)
 		connect(w, SIGNAL(aReply(const Jid &, const QString &, const QString &, const QString &)), SLOT(dj_composeMessage(const Jid &, const QString &, const QString &, const QString &)));
 		connect(w, SIGNAL(aAuth(const Jid &)), SLOT(dj_addAuth(const Jid &)));
 		connect(w, SIGNAL(aDeny(const Jid &)), SLOT(dj_deny(const Jid &)));
+		connect(w, SIGNAL(aHttpConfirm(const PsiHttpAuthRequest &)), SLOT(dj_confirmHttpAuth(const PsiHttpAuthRequest &)));
+		connect(w, SIGNAL(aHttpDeny(const PsiHttpAuthRequest &)), SLOT(dj_denyHttpAuth(const PsiHttpAuthRequest &)));
 		connect(w, SIGNAL(aRosterExchange(const RosterExchangeItems &)), SLOT(dj_rosterExchange(const RosterExchangeItems &)));
 		connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));
 		connect(this, SIGNAL(updateContact(const Jid &)), w, SLOT(updateContact(const Jid &)));
@@ -3069,6 +3086,16 @@ void PsiAccount::dj_addAuth(const Jid &j, const QString& nick)
 	dj_auth(j);
 }
 
+void PsiAccount::dj_confirmHttpAuth(const PsiHttpAuthRequest &req)
+{
+	d->httpAuthManager->confirm(req);
+}
+
+void PsiAccount::dj_denyHttpAuth(const PsiHttpAuthRequest &req)
+{
+	d->httpAuthManager->deny(req);
+}
+
 void PsiAccount::dj_add(const Jid &j, const QString &name, const QStringList &groups, bool authReq)
 {
 	JT_Roster *r = new JT_Roster(d->client->rootTask());
@@ -3301,6 +3328,9 @@ void PsiAccount::handleEvent(PsiEvent *e)
 			ulItem=ul.first();
 		PluginManager::instance()->message(this,e->from(),ulItem,((MessageEvent*)e)->message().body());
 #endif
+	}
+	else if(e->type() == PsiEvent::HttpAuth) {
+		playSound(option.onevent[eSystem]);
 	}
 	else if(e->type() == PsiEvent::File) {
 		playSound(option.onevent[eIncomingFT]);

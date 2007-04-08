@@ -122,6 +122,35 @@ namespace XMPP
 		QDomElement body_;
 	};
 
+	class HttpAuthRequest
+	{
+	public:
+		HttpAuthRequest(const QString &m, const QString &u, const QString &i = QString::null);
+		HttpAuthRequest(const QDomElement &);
+		HttpAuthRequest(const HttpAuthRequest &);
+		HttpAuthRequest();
+		~HttpAuthRequest();
+
+		HttpAuthRequest & operator=(const HttpAuthRequest &other);
+
+		bool isEmpty() const;
+
+		void setMethod(const QString&);
+		void setUrl(const QString&);
+		void setId(const QString&);
+		QString method() const;
+		QString url() const;
+		QString id() const;
+
+		QDomElement toXml(QDomDocument &) const;
+		bool fromXml(const QDomElement &);
+
+		static Stanza::Error denyError;
+	private:
+		class Private;
+		Private *d;
+	};
+
 	class Message
 	{
 	public:
@@ -147,7 +176,7 @@ namespace XMPP
 		void setLang(const QString &s);
 		void setSubject(const QString &s, const QString &lang="");
 		void setBody(const QString &s, const QString &lang="");
-		void setThread(const QString &s);
+		void setThread(const QString &s, bool send = false);
 		void setError(const Stanza::Error &err);
 
 		// JEP-0060
@@ -198,6 +227,10 @@ namespace XMPP
 		// JEP-172
 		void setNick(const QString&);
 		const QString& nick() const;
+
+		// JEP-0070
+		void setHttpAuthRequest(const HttpAuthRequest&);
+		HttpAuthRequest httpAuthRequest() const;
 
 		// MUC
 		void setMUCStatus(int);

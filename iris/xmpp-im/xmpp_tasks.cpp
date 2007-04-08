@@ -796,51 +796,6 @@ void JT_Message::onGo()
 //----------------------------------------------------------------------------
 // JT_PushMessage
 //----------------------------------------------------------------------------
-static QDomElement addCorrectNS(const QDomElement &e)
-{
-	int x;
-
-	// grab child nodes
-	/*QDomDocumentFragment frag = e.ownerDocument().createDocumentFragment();
-	QDomNodeList nl = e.childNodes();
-	for(x = 0; x < nl.count(); ++x)
-		frag.appendChild(nl.item(x).cloneNode());*/
-
-	// find closest xmlns
-	QDomNode n = e;
-	while(!n.isNull() && !n.toElement().hasAttribute("xmlns"))
-		n = n.parentNode();
-	QString ns;
-	if(n.isNull() || !n.toElement().hasAttribute("xmlns"))
-		ns = "jabber:client";
-	else
-		ns = n.toElement().attribute("xmlns");
-
-	// make a new node
-	QDomElement i = e.ownerDocument().createElementNS(ns, e.tagName());
-
-	// copy attributes
-	QDomNamedNodeMap al = e.attributes();
-	for(x = 0; x < al.count(); ++x) {
-		QDomAttr a = al.item(x).toAttr();
-		if(a.name() != "xmlns")
-			i.setAttributeNodeNS(al.item(x).cloneNode().toAttr());
-	}
-
-	// copy children
-	QDomNodeList nl = e.childNodes();
-	for(x = 0; x < nl.count(); ++x) {
-		QDomNode n = nl.item(x);
-		if(n.isElement())
-			i.appendChild(addCorrectNS(n.toElement()));
-		else
-			i.appendChild(n.cloneNode());
-	}
-
-	//i.appendChild(frag);
-	return i;
-}
-
 JT_PushMessage::JT_PushMessage(Task *parent)
 :Task(parent)
 {

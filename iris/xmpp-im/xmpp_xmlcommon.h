@@ -38,6 +38,7 @@ QDomElement createIQ(QDomDocument *doc, const QString &type, const QString &to, 
 QDomElement queryTag(const QDomElement &e);
 QString queryNS(const QDomElement &e);
 void getErrorFromElement(const QDomElement &e, const QString &baseNS, int *code, QString *str);
+QDomElement addCorrectNS(const QDomElement &e);
 
 namespace XMLHelper {
 	//QDomElement findSubTag(const QDomElement &e, const QString &name, bool *found);

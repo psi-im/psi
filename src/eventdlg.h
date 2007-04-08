@@ -45,6 +45,7 @@ class EventDlg;
 namespace XMPP {
 	class Jid;
 }
+class PsiHttpAuthRequest;
 
 using namespace XMPP;
 
@@ -134,6 +135,8 @@ signals:
 	void aReadNext(const Jid &);
 	void aDeny(const Jid &);
 	void aAuth(const Jid &);
+	void aHttpConfirm(const PsiHttpAuthRequest &);
+	void aHttpDeny(const PsiHttpAuthRequest &);
 	void aRosterExchange(const RosterExchangeItems &);
 
 protected:
@@ -166,6 +169,8 @@ private slots:
 	void doQuote();
 	void doDeny();
 	void doAuth();
+	void doHttpConfirm();
+	void doHttpDeny();
 	void doInfo();
 	void doHistory();
 	void showHideAttachView();

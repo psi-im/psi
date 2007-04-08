@@ -170,6 +170,8 @@ HEADERS += \
 	$$PWD/pepmanager.h \
 	$$PWD/pubsubsubscription.h \
 	$$PWD/rc.h \
+	$$PWD/psihttpauthrequest.h \
+	$$PWD/httpauthmanager.h \
  	$$PWD/privacylistitem.h \
  	$$PWD/privacylist.h \
  	$$PWD/privacylistmodel.h \
@@ -276,6 +278,7 @@ SOURCES += \
 	$$PWD/pepmanager.cpp \
 	$$PWD/pubsubsubscription.cpp \
 	$$PWD/rc.cpp \
+	$$PWD/httpauthmanager.cpp \
  	$$PWD/privacylistitem.cpp \
  	$$PWD/privacylist.cpp \
  	$$PWD/privacylistmodel.cpp \

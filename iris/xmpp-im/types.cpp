@@ -953,6 +953,7 @@ public:
 
 	StringMap subject, body;
 	QString thread;
+	bool threadSend;
 	Stanza::Error error;
 
 	// extensions
@@ -968,6 +969,7 @@ public:
 	QString xencrypted, invite;
 	ChatState chatState;
 	QString nick;
+	HttpAuthRequest httpAuthRequest;
 	QMap<QString,HTMLElement> htmlElements;
 	
 	int mucStatus;
@@ -988,6 +990,7 @@ Message::Message(const Jid &to)
 	d = new Private;
 	d->to = to;
 	d->spooled = false;
+	d->threadSend = false;
 	d->timeStampSend = false;
 	d->wasEncrypted = false;
 	/*d->flag = false;
@@ -1173,8 +1176,9 @@ void Message::setHTML(const HTMLElement &e, const QString &lang)
 	d->htmlElements[lang] = e;
 }
 
-void Message::setThread(const QString &s)
+void Message::setThread(const QString &s, bool send)
 {
+	d->threadSend = send;
 	d->thread = s;
 }
 
@@ -1394,6 +1398,16 @@ void Message::setNick(const QString& n)
 	d->nick = n;
 }
 
+void Message::setHttpAuthRequest(const HttpAuthRequest &req)
+{
+	d->httpAuthRequest = req;
+}
+
+HttpAuthRequest Message::httpAuthRequest() const
+{
+	return d->httpAuthRequest;
+}
+
 bool Message::spooled() const
 {
 	return d->spooled;
@@ -1446,6 +1460,12 @@ Stanza Message::toStanza(Stream *stream) const
 
 	if(d->type == "error")
 		s.setError(d->error);
+
+	// thread
+	if(d->threadSend && !d->thread.isEmpty()) {
+		QDomElement e = s.createTextElement(s.baseNS(), "thread", d->thread);
+		s.appendChild(e);
+	}
 
 	// timestamp
 	if(d->timeStampSend && !d->timeStamp.isNull()) {
@@ -1569,6 +1589,11 @@ Stanza Message::toStanza(Stream *stream) const
 		QDomElement e = s.createElement("http://jabber.org/protocol/muc#user","x");
 		e.appendChild(d->mucDecline.toXml(s.doc()));
 		s.appendChild(e);
+	}
+
+	// http auth
+	if(!d->httpAuthRequest.isEmpty()) {
+		s.appendChild(d->httpAuthRequest.toXml(s.doc()));
 	}
 
 	return s;
@@ -1781,6 +1806,186 @@ bool Message::fromStanza(const Stanza &s, int timeZoneOffset)
 			}
 		}
 	}
+
+	// http auth
+	t = root.elementsByTagNameNS("http://jabber.org/protocol/http-auth", "confirm").item(0).toElement();
+	if(!t.isNull()){
+		d->httpAuthRequest = HttpAuthRequest(t);
+	}
+	else {
+		d->httpAuthRequest = HttpAuthRequest();
+	}
+
+	return true;
+}
+
+//---------------------------------------------------------------------------
+// HttpAuthRequest
+//---------------------------------------------------------------------------
+
+/*!
+	\class HttpAuthRequest
+	\brief Represents HTTP request confirmation request.
+*/
+
+class HttpAuthRequest::Private
+{
+public:
+	QString method;
+	QString url;
+	QString id;
+};
+
+/*!
+	Error object used to deny a request.
+*/
+Stanza::Error HttpAuthRequest::denyError(Stanza::Error::Auth, Stanza::Error::NotAuthorized);
+
+/*!
+	Constructs request of resource URL \a u, made by method \a m, with transaction id \a i.
+*/
+HttpAuthRequest::HttpAuthRequest(const QString &m, const QString &u, const QString &i)
+{
+	d = new Private;
+	d->method = m;
+	d->url = u;
+	d->id = i;
+}
+
+/*!
+	Constructs request object by reading XML <confirm/> element \a e.
+*/
+HttpAuthRequest::HttpAuthRequest(const QDomElement &e)
+{
+	d = new Private;
+	fromXml(e);
+}
+
+/*!
+	Constructs empty (not valid) object. Use isEmpty() to check if object is empty or not.
+
+	\sa isEmpty()
+*/
+HttpAuthRequest::HttpAuthRequest()
+{
+	d = new Private;
+}
+
+/*!
+	Constructs new request as a copy of \a other request.
+*/
+HttpAuthRequest::HttpAuthRequest(const HttpAuthRequest &other)
+{
+	d = new Private;
+	*d = *(other.d);
+}
+
+/*!
+	Assigns \a other request to this one.
+*/
+HttpAuthRequest & HttpAuthRequest::operator=(const HttpAuthRequest &other)
+{
+	if (!d) d = new Private;
+	*d = *(other.d);
+	return *this;
+}
+
+/*!
+	Destroys request object.
+*/
+HttpAuthRequest::~HttpAuthRequest()
+{
+	delete d;
+	d = 0;
+}
+
+/*!
+	Returns true is object is empty (not valid).
+*/
+bool HttpAuthRequest::isEmpty() const
+{
+	return d->method.isEmpty() && d->url.isEmpty();
+}
+
+/*!
+	Sets request method.
+*/
+void HttpAuthRequest::setMethod(const QString& m)
+{
+	d->method = m;
+}
+
+/*!
+	Sets requested URL.
+*/
+void HttpAuthRequest::setUrl(const QString& u)
+{
+	d->url = u;
+}
+
+/*!
+	Sets transaction identifier.
+*/
+void HttpAuthRequest::setId(const QString& i)
+{
+	d->id = i;
+}
+
+/*!
+	Returns request method.
+*/
+QString HttpAuthRequest::method() const
+{
+	return d->method;
+}
+
+/*!
+	Returns requested URL.
+*/
+QString HttpAuthRequest::url() const
+{
+	return d->url;
+}
+
+/*!
+	Returns transaction identifier.
+*/
+QString HttpAuthRequest::id() const
+{
+	return d->id;
+}
+
+/*!
+	Returns XML element representing the request.
+	If object is empty, this function returns empty element.
+*/
+QDomElement HttpAuthRequest::toXml(QDomDocument &doc) const
+{
+	QDomElement e;
+	if(isEmpty())
+		return e;
+
+	e = doc.createElementNS("http://jabber.org/protocol/http-auth", "confirm");
+	e.setAttribute("xmlns", "http://jabber.org/protocol/http-auth");
+
+	if(!d->id.isEmpty()) e.setAttribute("id", d->id);
+	e.setAttribute("method", d->method);
+	e.setAttribute("url", d->url);
+
+	return e;
+}
+
+/*!
+	Reads request data from XML element \a e.
+*/
+bool HttpAuthRequest::fromXml(const QDomElement &e)
+{
+	if(e.tagName() != "confirm")
+		return false;
+
+	d->id = e.attribute("id");
+	d->method = e.attribute("method");
+	d->url = e.attribute("url");
 
 	return true;
 }

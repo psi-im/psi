@@ -30,6 +30,7 @@
 
 #include "xmpp.h"
 #include "im.h"
+#include "psihttpauthrequest.h"
 
 namespace XMPP
 {
@@ -53,8 +54,9 @@ public:
 		Auth,
 		PGP,
 		File,
-		RosterExchange
+		RosterExchange,
 		//Status
+		HttpAuth
 	};
 	virtual int type() const = 0;
 
@@ -229,6 +231,23 @@ private:
 	XMPP::Jid v_from;
 	XMPP::Status v_status;
 };*/
+
+// http auth
+class HttpAuthEvent : public MessageEvent
+{
+	Q_OBJECT
+public:
+	HttpAuthEvent(const PsiHttpAuthRequest &req, PsiAccount *acc);
+	~HttpAuthEvent();
+
+	int type() const { return HttpAuth; }
+
+	const PsiHttpAuthRequest & request() { return v_req; }
+
+private:
+	PsiHttpAuthRequest v_req;
+
+};
 
 // event queue
 class EventQueue : public QObject

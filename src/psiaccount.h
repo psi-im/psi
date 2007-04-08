@@ -48,6 +48,7 @@ class PsiCon;
 class PsiContactList;
 class PsiAccount;
 class PsiEvent;
+class PsiHttpAuthRequest;
 class Tune;
 class BookmarkManager;
 class VoiceCaller;
@@ -201,6 +202,8 @@ public slots:
 	void dj_deny(const Jid &);
 	void dj_rename(const Jid &, const QString &);
 	void dj_remove(const Jid &);
+	void dj_confirmHttpAuth(const PsiHttpAuthRequest &);
+	void dj_denyHttpAuth(const PsiHttpAuthRequest &);
 	void dj_rosterExchange(const RosterExchangeItems&);
 
 	void actionDefault(const Jid &);
@@ -278,6 +281,8 @@ private slots:
 	void setPEPAvailable(bool);
 
 	void getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&);
+
+	void incomingHttpAuthRequest(const PsiHttpAuthRequest &);
 
 	void reconnect();
 	void disconnect();

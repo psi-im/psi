@@ -69,6 +69,7 @@
 #include "serverinfomanager.h"
 #include "alerticon.h"
 #include "shortcutmanager.h"
+#include "httpauthmanager.h"
 #include "psicontactlist.h"
 #include "accountlabel.h"
 
@@ -513,7 +514,7 @@ public:
 	bool enc;
 	int transid;
 	IconButton *pb_next;
-	IconButton *pb_close, *pb_quote, *pb_deny, *pb_send, *pb_reply, *pb_chat, *pb_auth;
+	IconButton *pb_close, *pb_quote, *pb_deny, *pb_send, *pb_reply, *pb_chat, *pb_auth, *pb_http_confirm, *pb_http_deny;
 	ChatView *mle;
 	AttachView *attachView;
 	QTimer *whois;
@@ -523,6 +524,9 @@ public:
 	QStringList completionList;
 	Icon *anim;
 	int nextAmount;
+	QWidget *w_http_id;
+	QLineEdit *le_http_id;
+	PsiHttpAuthRequest httpAuthRequest;
 	RosterExchangeItems rosterExchangeItems;
 
 	bool urlOnShow;
@@ -864,6 +868,19 @@ void EventDlg::init()
 	else
 		QTimer::singleShot(0, d, SLOT(ensureEditPosition()));
 
+	// http auth transaction id
+	d->w_http_id = new QWidget(this);
+	QHBoxLayout *hb_http_id = new QHBoxLayout(d->w_http_id);
+	hb_http_id->setMargin(0);
+	d->le_http_id = new QLineEdit(d->w_http_id);
+	l = new QLabel(tr("Transaction &identifier:"), d->w_http_id);
+	l->setBuddy(d->le_http_id);
+	hb_http_id->addWidget(l);
+	hb_http_id->addWidget(d->le_http_id);
+
+	vb1->addWidget(d->w_http_id);
+	d->w_http_id->hide();
+
 	// bottom row
 	QHBoxLayout *hb4 = new QHBoxLayout(vb1);
 	d->pb_close = new IconButton(this);
@@ -916,6 +933,20 @@ void EventDlg::init()
 	d->pb_reply->hide();
 	d->pb_reply->setMinimumWidth(96);
 	hb4->addWidget(d->pb_reply);
+
+	d->pb_http_confirm = new IconButton(this);
+	d->pb_http_confirm->setText(tr("C&onfirm"));
+	connect(d->pb_http_confirm, SIGNAL(clicked()), SLOT(doHttpConfirm()));
+	d->pb_http_confirm->hide();
+	d->pb_http_confirm->setMinimumWidth(96);
+	hb4->addWidget(d->pb_http_confirm);
+
+	d->pb_http_deny = new IconButton(this);
+	d->pb_http_deny->setText(tr("&Deny"));
+	connect(d->pb_http_deny, SIGNAL(clicked()), SLOT(doHttpDeny()));
+	d->pb_http_deny->hide();
+	d->pb_http_deny->setMinimumWidth(96);
+	hb4->addWidget(d->pb_http_deny);
 
 	if (d->composing)
 		setTabOrder(d->le_to, d->le_subj);
@@ -1503,6 +1534,55 @@ void EventDlg::doAuth()
 	closeAfterReply();
 }
 
+/*!
+	Executed when user wants to confirm a HTTP request.
+*/
+void EventDlg::doHttpConfirm()
+{
+	if(!d->pa->checkConnected(this))
+		return;
+
+	if(d->httpAuthRequest.id().isEmpty()) {
+		const QString id = d->le_http_id->text();
+		if(id.isEmpty()) {
+			QMessageBox::information(this, tr("Warning"), tr("Please type in a transaction identifier first."));
+			d->le_http_id->setFocus();
+			return;
+		}
+		else {
+			d->httpAuthRequest.setId(id);
+		}
+	}
+
+	aHttpConfirm(d->httpAuthRequest);
+
+	d->le_http_id->setEnabled(false);
+	d->pb_http_confirm->setEnabled(false);
+	d->pb_http_deny->setEnabled(false);
+	closeAfterReply();
+}
+
+/*!
+	Executed when user wants to deny a HTTP request.
+*/
+void EventDlg::doHttpDeny()
+{
+	if(!d->pa->checkConnected(this))
+		return;
+
+	QStringList list = stringToList(d->le_from->text());
+	if(list.isEmpty())
+		return;
+	Jid j(list[0]);
+
+	aHttpDeny(d->httpAuthRequest);
+
+	d->le_http_id->setEnabled(false);
+	d->pb_http_confirm->setEnabled(false);
+	d->pb_http_deny->setEnabled(false);
+	closeAfterReply();
+}
+
 void EventDlg::doHistory()
 {
 	d->pa->actionHistory(d->jid.withResource(""));
@@ -1614,7 +1694,48 @@ void EventDlg::updateEvent(PsiEvent *e)
 
 	d->enc = false;
 
-	if(e->type() == PsiEvent::Message) {
+	bool showHttpId = false;
+
+	if (e->type() == PsiEvent::HttpAuth) {
+
+		HttpAuthEvent *hae = (HttpAuthEvent *)e;
+		const HttpAuthRequest &confirm = hae->request();
+
+		QString body(tr(
+				"Someone (maybe you) has requested access to the following resource:\n"
+				"URL: %1\n"
+				"Method: %2\n").arg(confirm.url()).arg(confirm.method()));
+
+		if (confirm.id().isEmpty()) {
+			body += tr("\n"
+				"If you wish to confirm this request, please provide transaction identifier and press Confirm button. Otherwise press Deny button.");
+
+			showHttpId = true;
+		}
+		else {
+			body += tr("Transaction identifier: %1\n"
+				"\n"
+				"If you wish to confirm this request, please press Confirm button. "
+				"Otherwise press Deny button.").arg(confirm.id());
+		}
+		Message m(hae->message());
+		m.setBody(body);
+		hae->setMessage(m);
+
+		d->httpAuthRequest = hae->request();
+	}
+
+	if (showHttpId) {
+		d->le_http_id->clear();
+		d->le_http_id->setEnabled(true);
+		d->w_http_id->show();
+		d->le_http_id->setFocus();
+	}
+	else {
+		d->w_http_id->hide();
+	}
+
+	if(e->type() == PsiEvent::Message || e->type() == PsiEvent::HttpAuth) {
 		MessageEvent *me = (MessageEvent *)e;
 		const Message &m = me->message();
 
@@ -1623,9 +1744,24 @@ void EventDlg::updateEvent(PsiEvent *e)
 		d->pb_auth->hide();
 		d->pb_deny->hide();
 
-		d->pb_chat->show();
-		d->pb_reply->show();
-		d->pb_quote->show();
+		if ( e->type() != PsiEvent::HttpAuth ) {
+			d->pb_chat->show();
+			d->pb_reply->show();
+			d->pb_quote->show();
+
+			d->pb_http_confirm->hide();
+			d->pb_http_deny->hide();
+		}
+		else {
+			d->pb_chat->hide();
+			d->pb_reply->hide();
+			d->pb_quote->hide();
+
+			d->pb_http_confirm->setEnabled(true);
+			d->pb_http_confirm->show();
+			d->pb_http_deny->setEnabled(true);
+			d->pb_http_deny->show();
+		}
 
 		QString txt = TextUtil::plain2rich(m.body());
 
@@ -1635,6 +1771,9 @@ void EventDlg::updateEvent(PsiEvent *e)
 
 		if(option.useEmoticons)
 			txt = TextUtil::emoticonify(txt);
+
+		if ( e->type() == PsiEvent::HttpAuth )
+			txt = "<big>[HTTP Request Confirmation]</big><br>" + txt;
 
 		setHtml("<qt>" + TextUtil::linkify(txt) + "</qt>");
 		
@@ -1670,6 +1809,10 @@ void EventDlg::updateEvent(PsiEvent *e)
 			d->pb_auth->setEnabled(true);
 			d->pb_auth->show();
 			d->pb_deny->show();
+
+			d->pb_http_confirm->hide();
+			d->pb_http_deny->hide();
+
 		}
 		else if(type == "subscribed") {
 			QString body(tr("<big>[System Message]</big><br>You are now authorized."));
@@ -1680,6 +1823,8 @@ void EventDlg::updateEvent(PsiEvent *e)
 			d->pb_chat->show();
 			d->pb_reply->show();
 			d->pb_quote->show();
+			d->pb_http_confirm->hide();
+			d->pb_http_deny->hide();
 		}
 		else if(type == "unsubscribed") {
 			QString body(tr("<big>[System Message]</big><br>Your authorization has been removed!"));
@@ -1690,6 +1835,8 @@ void EventDlg::updateEvent(PsiEvent *e)
 			d->pb_chat->show();
 			d->pb_reply->show();
 			d->pb_quote->show();
+			d->pb_http_confirm->hide();
+			d->pb_http_deny->hide();
 		}
 	}
 	else if (e->type() == PsiEvent::RosterExchange) {
@@ -1772,10 +1919,14 @@ void EventDlg::updateReadNext(Icon *nextAnim, int nextAmount)
 		d->pb_next->setEnabled(false);
 		d->pb_next->setText(tr("&Next"));
 
-		if(d->pb_reply->isEnabled())
+		if(d->pb_reply->isVisible() && d->pb_reply->isEnabled())
 			d->pb_reply->setFocus();
 		else if(d->pb_auth->isVisible())
 			d->pb_auth->setFocus();
+		else if(d->w_http_id->isVisible())
+			d->le_http_id->setFocus();
+		else if(d->pb_http_deny->isVisible())
+			d->pb_http_deny->setFocus();
 	}
 	else {
 		d->pb_next->setEnabled(true);

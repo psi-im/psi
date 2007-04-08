@@ -435,6 +435,32 @@ FileTransfer *FileEvent::takeFileTransfer()
 }
 
 //----------------------------------------------------------------------------
+// HttpAuthEvent
+//----------------------------------------------------------------------------
+
+HttpAuthEvent::HttpAuthEvent(const PsiHttpAuthRequest &req, PsiAccount *acc)
+:MessageEvent(acc), v_req(req)
+{
+	const XMPP::Stanza &s = req.stanza();
+
+	XMPP::Message m;
+
+	if ( s.kind() == XMPP::Stanza::Message ) {
+		m.fromStanza(s, acc->client()->timeZoneOffset());
+	}
+	else {
+		m.setFrom(s.from());
+		m.setTimeStamp(QDateTime::currentDateTime());
+		m.setHttpAuthRequest(HttpAuthRequest(s.element().elementsByTagNameNS("http://jabber.org/protocol/http-auth", "confirm").item(0).toElement()));
+	}
+
+	setMessage(m);
+}
+
+HttpAuthEvent::~HttpAuthEvent()
+{
+}
+//----------------------------------------------------------------------------
 // RosterExchangeEvent
 //----------------------------------------------------------------------------
 RosterExchangeEvent::RosterExchangeEvent(const Jid &j, const RosterExchangeItems& i, const QString& text, PsiAccount *acc)
