@@ -144,6 +144,7 @@ void MUCConfigDlg::refreshAffiliations()
 		pending_requests_ += MUCItem::Owner;
 		manager_->getItemsByAffiliation(MUCItem::Owner);
 	}
+	ui_.tv_affiliations->clearSelection();
 }
 
 void MUCConfigDlg::add()
