@@ -174,7 +174,9 @@ void AccountRegDlg::serverListError(const QString& e)
 	if (!e.isEmpty()) {
 		error += ".\n" + tr("Reason: ") + e;
 	}
-	QMessageBox::critical(this, tr("Error"), error);
+	qWarning(error);
+	//QMessageBox::critical(this, tr("Error"), error);
+	ui_.le_server->setFocus();
 }
 
 void AccountRegDlg::next()
