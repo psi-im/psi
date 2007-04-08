@@ -407,16 +407,19 @@ static void installPsiToolTipFont()
  */
 void PsiToolTip::showText(const QPoint &pos, const QString &text, QWidget *w)
 {
+	if (text.isEmpty()) {
+		if (PsiTipLabel::instance)
+			PsiTipLabel::instance->hideTip();
+		return;
+	}
+
+	if (!w->underMouse())
+		return;
+
 	ToolTipPosition calc(pos, w);
 	if (PsiTipLabel::instance && PsiTipLabel::instance->theText() == text) {
 		// fancy moving tooltip effect
 		PsiTipLabel::instance->move(calc.calculateTipPosition(PsiTipLabel::instance));
-		return;
-	}
-
-	if (text.isEmpty()) {
-		if (PsiTipLabel::instance)
-			PsiTipLabel::instance->hideTip();
 		return;
 	}
 
