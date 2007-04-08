@@ -241,7 +241,7 @@ private:
 class PEPPublishTask : public Task
 {
 public:
-	PEPPublishTask(Task* parent, const QString& node, const PubSubItem& it) : Task(parent), node_(node), item_(it) {
+	PEPPublishTask(Task* parent, const QString& node, const PubSubItem& it, PEPManager::Access access) : Task(parent), node_(node), item_(it) {
 		iq_ = createIQ(doc(), "set", "", id());
 		
 		QDomElement pubsub = doc()->createElement("pubsub");
@@ -255,6 +255,37 @@ public:
 		QDomElement item = doc()->createElement("item");
 		item.setAttribute("id", it.id());
 		publish.appendChild(item);
+
+		if (access != PEPManager::DefaultAccess) {
+			QDomElement conf = doc()->createElement("configure");
+			QDomElement conf_x = doc()->createElementNS("jabber:x:data","x");
+
+			// Form type
+			QDomElement conf_x_field_type = doc()->createElement("field");
+			conf_x_field_type.setAttribute("var","FORM_TYPE");
+			conf_x_field_type.setAttribute("type","hidden");
+			QDomElement conf_x_field_type_value = doc()->createElement("value");
+			conf_x_field_type_value.appendChild(doc()->createTextNode("http://jabber.org/protocol/pubsub#node_config"));
+			conf_x_field_type.appendChild(conf_x_field_type_value);
+			conf_x.appendChild(conf_x_field_type);
+			
+			// Access model
+			QDomElement access_model = doc()->createElement("field");
+			access_model.setAttribute("var","pubsub#access_model");
+			QDomElement access_model_value = doc()->createElement("value");
+			access_model.appendChild(access_model_value);
+			if (access == PEPManager::PublicAccess) {
+				access_model_value.appendChild(doc()->createTextNode("open"));
+			}
+			else if (access == PEPManager::PresenceAccess) {
+				access_model_value.appendChild(doc()->createTextNode("presence"));
+			}
+			conf_x.appendChild(access_model);
+			
+			
+			conf.appendChild(conf_x);
+			pubsub.appendChild(conf);
+		}
 		
 		item.appendChild(it.payload());
 	}
@@ -468,14 +499,14 @@ void PEPManager::unsubscribeFinished()
 	saveSubscriptions();
 }*/
 
-void PEPManager::publish(const QString& node, const PubSubItem& it)
+void PEPManager::publish(const QString& node, const PubSubItem& it, Access access)
 {
 	//if (!canPublish(node))
 	//	return;
 	if (!serverInfo_->hasPEP())
 		return;
 	
-	PEPPublishTask* tp = new PEPPublishTask(client_->rootTask(),node,it);
+	PEPPublishTask* tp = new PEPPublishTask(client_->rootTask(),node,it,access);
 	connect(tp, SIGNAL(finished()), SLOT(publishFinished()));
 	tp->go(true);
 }

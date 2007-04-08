@@ -42,8 +42,14 @@ using namespace XMPP;
 class PEPManager : public QObject
 {
 	Q_OBJECT
-
+	
 public:
+	enum Access {
+		DefaultAccess,
+		PresenceAccess,
+		PublicAccess
+	};
+
 	PEPManager(XMPP::Client* client, ServerInfoManager* serverInfo);
 
 	//void registerNode(const QString&);
@@ -53,7 +59,7 @@ public:
 	//void subscribe(const QString&, const QString&);
 	//void unsubscribe(const QString&, const QString&);
 
-	void publish(const QString& node, const PubSubItem&);
+	void publish(const QString& node, const PubSubItem&, Access = DefaultAccess);
 	void get(const Jid& jid, const QString& node, const QString& id);
 
 	//void getSubscriptions(const Jid& jid);
