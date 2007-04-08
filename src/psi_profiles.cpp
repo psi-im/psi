@@ -507,7 +507,6 @@ void UserProfile::reset()
 	FancyLabel::setSmallFontSize( prefs.smallFontSize );
 
 	prefs.clNewHeadings = false;
-	prefs.rosterOpacity = 95;
 	prefs.outlineHeadings = false;
 
 	prefs.player = "play";
@@ -963,7 +962,6 @@ bool UserProfile::toFile(const QString &fname)
 		p.appendChild(p_lnf);
 
 		p_lnf.appendChild(textTag(doc, "newHeadings", prefs.clNewHeadings));
-		p_lnf.appendChild(textTag(doc, "roster-opacity", prefs.rosterOpacity));
 		p_lnf.appendChild(textTag(doc, "outline-headings", prefs.outlineHeadings));
 
 		{

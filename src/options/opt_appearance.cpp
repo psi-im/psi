@@ -113,7 +113,7 @@ void OptionsTabAppearanceMisc::applyOptions(Options *opt)
 
 	opt->clNewHeadings = d->ck_newHeadings->isChecked();	
 	opt->outlineHeadings = d->ck_outlineHeadings->isChecked();	
-	opt->rosterOpacity = d->sl_rosterop->value();
+	PsiOptions::instance()->setOption("options.ui.contactlist.opacity", d->sl_rosterop->value());
 	PsiOptions::instance()->setOption("options.ui.chat.opacity", d->sl_chatdlgop->value());
 }
 
@@ -127,7 +127,7 @@ void OptionsTabAppearanceMisc::restoreOptions(const Options *opt)
 	d->ck_newHeadings->setChecked( opt->clNewHeadings );
 	d->ck_outlineHeadings->setChecked( opt->outlineHeadings );
 	
-	d->sl_rosterop->setValue( opt->rosterOpacity );
+	d->sl_rosterop->setValue( PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt() );
 	d->sl_chatdlgop->setValue( PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt() );
 }
 
