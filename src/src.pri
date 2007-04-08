@@ -156,6 +156,7 @@ HEADERS += \
 	$$PWD/xdata_widget.h \
 	$$PWD/xmpp_xdata.h \
 	$$PWD/statuspreset.h \
+	$$PWD/lastactivitytask.h \
 	$$PWD/mucmanager.h \
 	$$PWD/mucjoindlg.h \
 	$$PWD/mucconfigdlg.h \
@@ -265,6 +266,7 @@ SOURCES += \
 	$$PWD/psiactionlist.cpp \
 	$$PWD/xdata_widget.cpp \
 	$$PWD/xmpp_xdata.cpp \
+	$$PWD/lastactivitytask.cpp \
 	$$PWD/statuspreset.cpp \
 	$$PWD/mucmanager.cpp \
 	$$PWD/mucjoindlg.cpp \

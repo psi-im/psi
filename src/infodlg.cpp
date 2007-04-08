@@ -39,6 +39,7 @@
 #include "busywidget.h"
 #include "iconset.h"
 #include "common.h"
+#include "lastactivitytask.h"
 #include "vcardfactory.h"
 #include "iconwidget.h"
 #include "contactview.h"
@@ -117,6 +118,9 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	foreach(UserListItem* u, d->pa->findRelevant(j)) {
 		foreach(UserResource r, u->userResourceList()) {
 			requestClientVersion(d->jid.withResource(r.name()));
+		}
+		if (u->userResourceList().isEmpty() && u->lastAvailable().isNull()) {
+			requestLastActivity();
 		}
 	}
 
@@ -599,6 +603,27 @@ void InfoDlg::clientVersionFinished()
 		}
 	}
 }
+
+void InfoDlg::requestLastActivity()
+{
+	LastActivityTask *jla = new LastActivityTask(d->jid.bare(),d->pa->client()->rootTask());
+	connect(jla, SIGNAL(finished()), SLOT(requestLastActivityFinished()));
+	jla->go(true);
+}
+
+void InfoDlg::requestLastActivityFinished()
+{
+	LastActivityTask *j = (LastActivityTask *)sender();
+	if(j->success()) {
+		foreach(UserListItem* u, d->pa->findRelevant(d->jid)) {
+			u->setLastUnavailableStatus(makeStatus(STATUS_OFFLINE,j->status()));
+			u->setLastAvailable(j->time());
+			d->pa->contactProfile()->updateEntry(*u);
+			updateStatus();
+		}
+	}
+}
+
 
 void InfoDlg::contactAvailable(const Jid &j, const Resource &r)
 {
