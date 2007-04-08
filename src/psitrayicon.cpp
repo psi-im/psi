@@ -234,7 +234,7 @@ void PsiTrayIcon::animate()
 
 		QPixmap p;
 		if ( !QPixmapCache::find(cachedName, p) ) {
-			p = icon_->pixmap();
+			p = makeIcon();
 			QPixmapCache::insert( cachedName, p );
 		}
 		trayicon_->setIcon(p);
