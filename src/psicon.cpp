@@ -305,7 +305,22 @@ PsiCon::~PsiCon()
 
 bool PsiCon::init()
 {
+	// QCA (needs to be before any gpg usage!)
+	d->qcaEventHandler = new QCA::EventHandler(this);
+	PassphraseDlg::setEventHandler(d->qcaEventHandler);
+	connect(d->qcaEventHandler,SIGNAL(eventReady(int,const QCA::Event&)),SLOT(qcaEvent(int,const QCA::Event&)));
+	d->qcaEventHandler->start();
+	d->qcaKeyStoreManager.waitForBusyFinished(); // FIXME get rid of this
+	connect(&d->qcaKeyStoreManager, SIGNAL(keyStoreAvailable(const QString&)), SLOT(keyStoreAvailable(const QString&)));
+	foreach(QString k, d->qcaKeyStoreManager.keyStores()) {
+		QCA::KeyStore* ks = new QCA::KeyStore(k, &d->qcaKeyStoreManager);
+		connect(ks, SIGNAL(updated()), SLOT(pgp_keysUpdated()));
+		PGPUtil::keystores += ks;
+	}
+
 	d->contactList = new PsiContactList(this);
+
+
 	connect(d->contactList, SIGNAL(accountAdded(PsiAccount*)), SIGNAL(accountAdded(PsiAccount*)));
 	connect(d->contactList, SIGNAL(accountRemoved(PsiAccount*)), SIGNAL(accountRemoved(PsiAccount*)));
 	connect(d->contactList, SIGNAL(accountCountChanged()), SIGNAL(accountCountChanged()));
@@ -447,18 +462,6 @@ bool PsiCon::init()
 	// Entity capabilities
 	CapsRegistry::instance()->setFile(ApplicationInfo::homeDir() + "/caps.xml");
 
-	// QCA
-	d->qcaEventHandler = new QCA::EventHandler(this);
-	PassphraseDlg::setEventHandler(d->qcaEventHandler);
-	connect(d->qcaEventHandler,SIGNAL(eventReady(int,const QCA::Event&)),SLOT(qcaEvent(int,const QCA::Event&)));
-	d->qcaEventHandler->start();
-	d->qcaKeyStoreManager.waitForBusyFinished(); // FIXME get rid of this
-	connect(&d->qcaKeyStoreManager, SIGNAL(keyStoreAvailable(const QString&)), SLOT(keyStoreAvailable(const QString&)));
-	foreach(QString k, d->qcaKeyStoreManager.keyStores()) {
-		QCA::KeyStore* ks = new QCA::KeyStore(k, &d->qcaKeyStoreManager);
-		connect(ks, SIGNAL(updated()), SLOT(pgp_keysUpdated()));
-		PGPUtil::keystores += ks;
-	}
 
 	// load accounts
 	d->contactList->loadAccounts(d->pro.acc);
