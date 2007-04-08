@@ -381,6 +381,7 @@ void AccountModifyDlg::hostToggled(bool on)
 	le_port->setEnabled(on);
 	lb_port->setEnabled(on);
 	ck_legacy_ssl_probe->setEnabled(!on);
+	ck_legacy_ssl_probe->setChecked(on ? false : pa->userAccount().legacy_ssl_probe);
 	if (!on && cb_ssl->currentIndex() == cb_ssl->findData(UserAccount::SSL_Legacy)) {
 		cb_ssl->setCurrentIndex(cb_ssl->findData(UserAccount::SSL_Auto));
 	}
@@ -467,7 +468,8 @@ void AccountModifyDlg::save()
 	acc.port = le_port->text().toInt();
 
 	acc.req_mutual_auth = ck_req_mutual->isChecked();
-	acc.legacy_ssl_probe = ck_legacy_ssl_probe->isChecked();
+	if (!ck_host->isChecked())
+		acc.legacy_ssl_probe = ck_legacy_ssl_probe->isChecked();
 	acc.security_level = cb_security_level->itemData(cb_security_level->currentIndex()).toInt();
 
 	acc.opt_automatic_resource = ck_automatic_resource->isChecked();
