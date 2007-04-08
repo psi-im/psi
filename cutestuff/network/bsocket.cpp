@@ -18,6 +18,9 @@
  *
  */
 
+#include <QTcpSocket>
+#include <QHostAddress>
+
 #include "bsocket.h"
 
 #include "safedelete.h"

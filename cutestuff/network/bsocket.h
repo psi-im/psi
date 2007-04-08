@@ -21,9 +21,13 @@
 #ifndef CS_BSOCKET_H
 #define CS_BSOCKET_H
 
-#include <QtCore>
-#include <QtNetwork>
+#include <QAbstractSocket>
+
 #include "bytestream.h"
+
+class QString;
+class QObject;
+class QByteArray;
 
 // CS_NAMESPACE_BEGIN
 
