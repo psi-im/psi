@@ -67,7 +67,8 @@ void MUCAffiliationsView::removeCurrent()
 
 void MUCAffiliationsView::currentChanged(const QModelIndex& current, const QModelIndex& previous)
 {
-	// Uncommenting these optimizations, since they cause too much trouble
+	Q_UNUSED(previous);
+	// Commenting these optimizations, since they cause too much trouble
 	//bool add_before = previous.isValid() && (model()->flags(previous) & Qt::ItemIsEnabled);
 	//bool remove_before = previous.isValid() && previous.parent().isValid();
 	bool add_after = current.isValid() && (model()->flags(current) & Qt::ItemIsEnabled);
@@ -78,3 +79,4 @@ void MUCAffiliationsView::currentChanged(const QModelIndex& current, const QMode
 	//if (remove_before != remove_after)
 		emit removeEnabled(remove_after);
 }
+
