@@ -192,9 +192,6 @@
   <tabstop>ck_keepSizes</tabstop>
   <tabstop>ck_useleft</tabstop>
   <tabstop>ck_hideMenubar</tabstop>
-  <tabstop>cb_link</tabstop>
-  <tabstop>le_linkBrowser</tabstop>
-  <tabstop>le_linkMailer</tabstop>
   <tabstop>ck_docklet</tabstop>
   <tabstop>ck_dockDCstyle</tabstop>
   <tabstop>ck_dockHideMW</tabstop>

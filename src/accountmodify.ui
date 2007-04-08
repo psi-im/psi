@@ -1001,7 +1001,6 @@
   <tabstop>pb_vcard</tabstop>
   <tabstop>pb_key</tabstop>
   <tabstop>pb_keyclear</tabstop>
-  <tabstop>ck_ssl</tabstop>
   <tabstop>ck_ignoreSSLWarnings</tabstop>
   <tabstop>ck_plain</tabstop>
   <tabstop>ck_keepAlive</tabstop>
