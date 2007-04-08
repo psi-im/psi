@@ -33,7 +33,6 @@
 #include <qdatetime.h>
 #include <qapplication.h>
 #include <qclipboard.h>
-#include <QDesktopServices>
 #include <QResizeEvent>
 #include <QShowEvent>
 #include <QFrame>
@@ -73,6 +72,7 @@
 #include "psicontactlist.h"
 #include "accountlabel.h"
 #include "xdata_widget.h"
+#include "desktoputil.h"
 
 static QString findJid(const QString &s, int x, int *p1, int *p2)
 {
@@ -421,7 +421,7 @@ void AttachView::goURL(const QString &_url)
 	if(url.find("://") == -1)
 		url.insert(0, "http://");
 
-	QDesktopServices::openUrl(url);
+	DesktopUtil::openUrl(url);
 }
 
 UrlList AttachView::urlList() const
