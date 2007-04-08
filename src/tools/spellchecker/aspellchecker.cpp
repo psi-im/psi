@@ -67,7 +67,7 @@ ASpellChecker::~ASpellChecker()
 bool ASpellChecker::isCorrect(const QString& word)
 {
 	if(speller_) {
-		int correct = aspell_speller_check(speller_, word.toUtf8(), -1);
+		int correct = aspell_speller_check(speller_, word.toUtf8().constData(), -1);
 		return (correct != 0);
 	}
 	return true;
@@ -81,7 +81,7 @@ QList<QString> ASpellChecker::suggestions(const QString& word)
 		AspellStringEnumeration* elements = aspell_word_list_elements(list);
 		const char *c_word;
 		while ((c_word = aspell_string_enumeration_next(elements)) != NULL) {
-			words += QString(c_word);
+			words += QString::fromUtf8(c_word);
 		}
 		delete_aspell_string_enumeration(elements);
 	}
