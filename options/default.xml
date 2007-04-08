@@ -90,6 +90,7 @@
 					<last-status comment="Display the last status" type="bool">true</last-status>
 					<pgp comment="Display PGP information" type="bool">true</pgp>
 				</tooltip>
+				<temp-no-roster-animation comment="Disable animated icons. This option will be removed as soon as the contactlist code is optimized enough" type="bool">false</temp-no-roster-animation>
 			</contactlist>
 			<menu comment="Options for the menu">
 				<account comment="Options for the account-specific menu">

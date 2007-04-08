@@ -3331,7 +3331,9 @@ void ContactViewItem::setIcon(const PsiIcon *icon, bool alert)
 		else
 			d->icon = new AlertIcon(icon);
 
-		connect(d->icon, SIGNAL(pixmapChanged(const QPixmap &)), SLOT(iconUpdated(const QPixmap &)));
+		if (!PsiOptions::instance()->getOption("options.ui.contactlist.temp-no-roster-animation").toBool()) {
+			connect(d->icon, SIGNAL(pixmapChanged(const QPixmap &)), SLOT(iconUpdated(const QPixmap &)));
+		}
 		d->icon->activated();
 
 		pix = d->icon->pixmap();
