@@ -196,6 +196,7 @@ public:
 		if(QCA::isSupported("tls")) {
 			tls = new QCA::TLS;
 			tlsHandler = new XMPP::QCATLSHandler(tls);
+			tlsHandler->setXMPPCertCheck(true);
 			connect(tlsHandler, SIGNAL(tlsHandshaken()), SLOT(tls_handshaken()));
 		}
 		else {
@@ -554,6 +555,7 @@ private slots:
 	{
 		//QCA::Certificate cert = tls->peerCertificate();
 		int vr = tls->peerIdentityResult();
+		if (vr == QCA::TLS::Valid && !tlsHandler->certMatchesHostname()) vr = QCA::TLS::HostMismatch;
 
 		appendSysMsg("Successful TLS handshake.");
 		if(vr == QCA::TLS::Valid)
