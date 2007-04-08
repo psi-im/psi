@@ -753,8 +753,7 @@ void MainWin::actAboutActivated ()
 
 void MainWin::actTipActivated ()
 {
-	TipDlg *tip = new TipDlg();
-	tip->show();
+	TipDlg::show(d->psi);
 }
 
 void MainWin::actAboutQtActivated ()

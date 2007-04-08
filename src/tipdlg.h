@@ -33,13 +33,17 @@
 #include "ui_tip.h"
 
 class QString;
+class PsiCon;
 
 class TipDlg : public QDialog, public Ui::Tip
 {
 	Q_OBJECT
-
 public:
-	TipDlg(QWidget* parent = 0);
+	static void show(PsiCon* psi);
+
+private:
+	TipDlg(PsiCon* psi);
+	~TipDlg();
 	
 public slots:
 	void showTipsChanged(bool);
@@ -51,6 +55,7 @@ protected:
 	void addTip(const QString& tip, const QString& author);
 
 private:
+	PsiCon* psi_;
 	QStringList tips;
 };
 
