@@ -54,7 +54,6 @@ public slots:
 	void done(int);
 
 private slots:
-	void legacySSLToggled(bool);
 	void sslToggled(bool);
 	void hostToggled(bool);
 	void reg();

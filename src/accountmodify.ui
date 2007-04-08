@@ -596,13 +596,6 @@
            </widget>
           </item>
           <item>
-           <widget class="QCheckBox" name="ck_legacy_ssl_probe" >
-            <property name="text" >
-             <string>Probe legacy SSL port</string>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="QCheckBox" name="ck_host" >
             <property name="text" >
              <string>Manually Specify Server Host/Port:</string>
@@ -658,6 +651,13 @@
              </widget>
             </item>
            </layout>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="ck_legacy_ssl_probe" >
+            <property name="text" >
+             <string>Probe legacy SSL port</string>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QCheckBox" name="ck_plain" >

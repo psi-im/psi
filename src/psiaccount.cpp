@@ -863,7 +863,7 @@ void PsiAccount::login()
 		return;
 
 #ifdef XMPP1
-	if((d->acc.legacy_ssl_probe ||(d->acc.opt_host && d->acc.opt_ssl)) && !QCA::isSupported("tls")) {
+	if(!QCA::isSupported("tls") && !(d->acc.opt_host && !d->acc.opt_ssl)) {
 #else
 	if(d->acc.opt_ssl && !QCA::isSupported("tls")) {
 #endif
@@ -889,7 +889,7 @@ void PsiAccount::login()
 	QString host;
 	int port = -1;
 #ifdef XMPP1
-	if(d->acc.opt_host && !d->acc.legacy_ssl_probe) {
+	if(d->acc.opt_host) {
 		useHost = true;
 		host = d->acc.host;
 		port = d->acc.port;
@@ -935,7 +935,7 @@ void PsiAccount::login()
 	// stream
 	d->conn = new AdvancedConnector;
 #ifdef XMPP1
-	if(d->acc.legacy_ssl_probe || !d->acc.opt_host || d->acc.opt_ssl) {
+	if(!(d->acc.opt_host && !d->acc.opt_ssl)) {
 #else
 	if(QCA::isSupported("tls") && !(d->acc.opt_host && !d->acc.opt_ssl)) {
 #endif
@@ -950,7 +950,8 @@ void PsiAccount::login()
 		d->conn->setOptSSL(d->acc.opt_ssl);
 	}
 #ifdef XMPP1
-	d->conn->setOptProbe(d->acc.legacy_ssl_probe);
+	if (!useHost)
+		d->conn->setOptProbe(d->acc.legacy_ssl_probe);
 #endif
 
 	d->stream = new ClientStream(d->conn, d->tlsHandler);

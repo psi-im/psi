@@ -55,11 +55,7 @@ AccountModifyDlg::AccountModifyDlg(PsiAccount *_pa, QWidget *parent)
 	lb_port->setEnabled(false);
 
 #ifdef XMPP1
-	ck_legacy_ssl_probe->setChecked(true);
-	ck_host->setEnabled(false);
 	ck_ssl->setEnabled(false);
-	connect(ck_legacy_ssl_probe,SIGNAL(toggled(bool)), SLOT(legacySSLToggled(bool)));
-
 #ifdef __GNUC__
 #warning "Temporarily removing security level settings"
 #endif
@@ -362,28 +358,15 @@ bool AccountModifyDlg::checkSSL()
 	return true;
 }
 
-void AccountModifyDlg::legacySSLToggled(bool on)
-{
-	if (on && !checkSSL()) {
-		ck_legacy_ssl_probe->setChecked(false);
-		return;
-	}
-	ck_host->setDisabled(on);
-	le_host->setEnabled(!on && ck_host->isChecked());
-	lb_host->setEnabled(!on && ck_host->isChecked());
-	le_port->setEnabled(!on && ck_host->isChecked());
-	lb_port->setEnabled(!on && ck_host->isChecked());
-	ck_ssl->setEnabled(!on && ck_host->isChecked());
-}
-
 void AccountModifyDlg::hostToggled(bool on)
 {
-	le_host->setEnabled(on && !ck_legacy_ssl_probe->isChecked());
-	lb_host->setEnabled(on && !ck_legacy_ssl_probe->isChecked());
-	le_port->setEnabled(on && !ck_legacy_ssl_probe->isChecked());
-	lb_port->setEnabled(on && !ck_legacy_ssl_probe->isChecked());
+	le_host->setEnabled(on);
+	lb_host->setEnabled(on);
+	le_port->setEnabled(on);
+	lb_port->setEnabled(on);
 #ifdef XMPP1
-	ck_ssl->setEnabled(on && !ck_legacy_ssl_probe->isChecked());
+	ck_ssl->setEnabled(on);
+	ck_legacy_ssl_probe->setEnabled(!on);
 #endif
 }
 

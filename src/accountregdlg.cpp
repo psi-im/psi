@@ -39,10 +39,8 @@ AccountRegDlg::AccountRegDlg(ProxyManager *_proxyman, QWidget *parent)
   	setWindowTitle(CAP(caption()));
 	
 #ifdef XMPP1
-	connect(ck_legacy_ssl_probe,SIGNAL(toggled(bool)), SLOT(legacySSLToggled(bool)));
 	connect(ck_host, SIGNAL(toggled(bool)), ck_ssl, SLOT(setEnabled(bool)));
 	ck_legacy_ssl_probe->setEnabled(true);
-	ck_host->setEnabled(false);
 	ck_ssl->setEnabled(false);
 	ck_legacy_ssl_probe->setChecked(true);
 #else
@@ -118,26 +116,13 @@ bool AccountRegDlg::checkSSL()
 	return true;
 }
 
-void AccountRegDlg::legacySSLToggled(bool on)
-{
-	if (on && !checkSSL()) {
-		ck_legacy_ssl_probe->setChecked(false);
-		return;
-	}
-	ck_host->setDisabled(on);
-	le_host->setEnabled(!on && ck_host->isChecked());
-	lb_host->setEnabled(!on && ck_host->isChecked());
-	le_port->setEnabled(!on && ck_host->isChecked());
-	lb_port->setEnabled(!on && ck_host->isChecked());
-	ck_ssl->setEnabled(!on && ck_host->isChecked());
-}
-
 void AccountRegDlg::hostToggled(bool on)
 {
 	le_host->setEnabled(on);
 	le_port->setEnabled(on);
 	lb_host->setEnabled(on);
 	lb_port->setEnabled(on);
+	ck_legacy_ssl_probe->setEnabled(!on);
 }
 
 void AccountRegDlg::reg()
@@ -172,11 +157,11 @@ void AccountRegDlg::reg()
 
 	jid = JIDUtil::accountFromString(le_jid->text().trimmed()).bare();
 	ssl = ck_ssl->isChecked();
-	legacy_ssl_probe = ck_legacy_ssl_probe->isChecked();
 	pass = le_pass->text();
 	opt_host = ck_host->isChecked();
 	sp_host = le_host->text();
 	sp_port = le_port->text().toInt();
+	legacy_ssl_probe = (opt_host ? false : ck_legacy_ssl_probe->isChecked());
 
 	client->connectToServer(jid, legacy_ssl_probe, ssl, opt_host ? sp_host : QString(), sp_port, proxyman, pc->currentItem(), 0);
 }

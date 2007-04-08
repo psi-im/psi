@@ -44,7 +44,6 @@ public:
 private slots:
 	void hostToggled(bool);
 	void sslToggled(bool);
-	void legacySSLToggled(bool);
 
 	void detailsVCard();
 	void detailsChangePW();
