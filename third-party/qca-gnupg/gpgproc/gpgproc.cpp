@@ -35,94 +35,6 @@ enum ResetMode
 	ResetAll            = 2
 };
 
-
-//----------------------------------------------------------------------------
-// ThreadedDelete
-//----------------------------------------------------------------------------
-// there is a known problem in qt 4.2.2 where gpg process destruction isn't
-//   reported properly, so based on other factors we may choose to consider
-//   the process as finished and we destroy the QProcess object.  but in those
-//   cases, the QProcess object may block during destruction for a long time,
-//   such as 30 seconds.  we'll put QProcess objects into a special thread
-//   and destruct them there.
-
-
-Q_GLOBAL_STATIC(QMutex, td_mutex)
-
-class ThreadedDelete : public QThread
-{
-public:
-	static void take(QObject *o, bool later=true)
-	{
-		QMutexLocker locker(td_mutex());
-		if (!postReg) {
-			postReg = true;
-			qAddPostRoutine(cleanup);
-		}
-		ThreadedDelete* td = new ThreadedDelete;
-		pending += td;
-		td->deleteThreaded(o, later);
-	}
-
-protected:
-
-	static QList<ThreadedDelete*> pending;
-	static bool postReg;
-
-	static void cleanup() 
-	{
-		bool wait = false;
-		td_mutex()->lock();
-		if (pending.count()) wait = true;
-		td_mutex()->unlock();
-		if (wait) {
-			//printf("waiting...\n");
-			QThread::sleep(1);
-			td_mutex()->lock();
-			foreach (ThreadedDelete* thread, pending) {
-				//printf("slaying...\n");
-				thread->terminate();
-				//delete thread; this might not safe, valgrinders beware...
-			}
-			td_mutex()->unlock();
-		}
-	}
-
-	ThreadedDelete() : QThread() {};
-	~ThreadedDelete()
-	{
-		QMutexLocker locker(td_mutex());
-		pending.removeAll(this);
-	}
-
-	void deleteThreaded(QObject *o, bool later)
-	{
-		obj = o;
-		connect(this, SIGNAL(finished ()), SLOT(deleteLater ()));
-		obj->setParent(0); // unparent the target or the move will fail
-		obj->moveToThread(this);
-		// move us to the main thread, because the current thread might
-		// be around long enough, or might not have an eventloop
-		setParent(0);
-		moveToThread(QCoreApplication::instance()->thread());
-		if (later) {
-			QMetaObject::invokeMethod(this, "start", Qt::QueuedConnection);
-		} else {
-			start();
-		}
-	}
-
-	virtual void run()
-	{
-		delete obj;
-	}
-protected:
-	QObject *obj;
-};
-
-bool ThreadedDelete::postReg = false;
-QList<ThreadedDelete*> ThreadedDelete::pending;
-
 class GPGProc::Private : public QObject
 {
 	Q_OBJECT
@@ -192,7 +104,7 @@ public:
 			if(proc->state() != QProcess::NotRunning)
 				proc->terminate();
 			proc->setParent(0);
-			ThreadedDelete::take(proc);
+			proc->deleteLater();
 			proc = 0;
 		}
 
@@ -312,19 +224,12 @@ public slots:
 
 	void status_error(QCA::QPipeEnd::Error e)
 	{
-		fin_status = true;
 		if(e == QPipeEnd::ErrorEOF)
 			emit q->debug("Status: Closed (EOF)");
-		else {
-			// Broken Pipe. gpg never closes this fd,
-			// so it means gpg died/terminated
-			// quit soon. i don't know why finished
-			// never get's emitted
+		else
 			emit q->debug("Status: Closed (gone)");
-			proc_finished(99);
-			return;
-		}
 
+		fin_status = true;
 		doTryDone();
 	}
 
