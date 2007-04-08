@@ -97,6 +97,8 @@ AddUserDlg::AddUserDlg(const QStringList &services, const QStringList &names, co
 	connect(tb_vCard, SIGNAL(clicked()), SLOT(getVCardActivated()));
 	connect(tb_resolveNick, SIGNAL(clicked()), SLOT(resolveNickActivated()));
 
+	connect(le_jid, SIGNAL(textChanged(QString)), SLOT(jid_Changed()));
+
 	ck_authreq->setChecked(true);
 	ck_close->setChecked(true);
 
@@ -279,4 +281,13 @@ void AddUserDlg::resolveNickFinished()
 		if ( !jt->vcard().nickName().isEmpty() )
 			le_nick->setText( jt->vcard().nickName() );
 	}
+}
+
+/**
+ * Called when the Jid changes to enable the vcard and nick resolution buttons.
+ */
+void AddUserDlg::jid_Changed()
+{
+	tb_vCard->setEnabled( le_jid->text() != "" );
+	tb_resolveNick->setEnabled( le_jid->text() != "");
 }
