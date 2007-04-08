@@ -408,3 +408,8 @@ Q_IMPORT_PLUGIN(qca_sasl)
 #endif
 //Q_IMPORT_PLUGIN(qca_gnupg)
 #endif
+
+#ifdef Q_WS_WIN
+Q_IMPORT_PLUGIN(qjpeg)
+Q_IMPORT_PLUGIN(qgif)
+#endif
