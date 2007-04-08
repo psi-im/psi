@@ -24,12 +24,6 @@
 
 #include "wbdlg.h"
 
-#include <QMessageBox>
-
-#include "accountlabel.h"
-#include "stretchwidget.h"
-#include "iconset.h"
-
 //----------------------------------------------------------------------------
 // WbDlg
 //----------------------------------------------------------------------------
@@ -52,9 +46,7 @@ WbDlg::WbDlg(const Jid &target, const QString &session, const Jid &ownJid, bool 
 	le_jid_->setReadOnly(true);
 	le_jid_->setFocusPolicy(Qt::NoFocus);
 	le_jid_->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum));
-	lb_ident_ = new AccountLabel(this);
-	lb_ident_->setAccount(pa);
-	lb_ident_->setShowJid(false);
+	lb_ident_ = pa->accountLabel(this, true);
 	lb_ident_->setSizePolicy(QSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum));
 	QHBoxLayout *hb1 = new QHBoxLayout();
 	hb1->addWidget(le_jid_);
@@ -187,10 +179,10 @@ WbDlg::WbDlg(const Jid &target, const QString &session, const Jid &ownJid, bool 
 
 	// update the widget icon
 #ifndef Q_WS_MAC
-	setWindowIcon(IconsetFactory::icon("psi/whiteboard").icon());
+	setWindowIcon(IconsetFactory::icon("psi/whiteboard"));
 #endif
 	
-	setWindowOpacity(double(qMax(MINIMUM_OPACITY, PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt())) / 100);
+	setWindowOpacity(double(option.chatOpacity)/100);
 
 	resize(option.sizeChatDlg);
 }
@@ -321,7 +313,7 @@ void WbDlg::endSession() {
 		if(n != 0)
 			return;
 	}
-	setAttribute(Qt::WA_DeleteOnClose);
+	setWindowFlags(windowFlags() | Qt::WDestructiveClose);
 	emit sessionEnded(session());
 	close();
 }
@@ -345,7 +337,7 @@ void WbDlg::keyPressEvent(QKeyEvent *e) {
 
 void WbDlg::closeEvent(QCloseEvent *e) {
 	e->accept();
-	if(testAttribute(Qt::WA_DeleteOnClose))
+	if(windowFlags() & Qt::WDestructiveClose)
 		return;
 	if(keepOpen_) {
 		int n = QMessageBox::information(this, tr("Warning"), tr("A new whiteboard message was just received.\nDo you still want to close the window?"), tr("&Yes"), tr("&No"));

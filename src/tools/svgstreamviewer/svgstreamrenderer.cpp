@@ -19,7 +19,6 @@
  */
 
 #include "svgstreamrenderer.h"
-#include <QDebug>
 #define EMPTYSVG "<?xml version=\"1.0\" standalone=\"no\"?><svg viewBox=\"0 0 1000 1000\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.2\" baseProfile=\"tiny\"></svg>"
 
 /*!
@@ -83,8 +82,8 @@ bool SvgStreamRenderer::setElement(const QString &element, bool forcenew)
 //	QString * err = new QString(); // DEBUG
 //	in.setContent(element, err);
 	in.setContent(element);
-//	qDebug() << err; // DEBUG
-//	qDebug() << in.toString().; // DEBUG
+//	qDebug(err->toAscii()); // DEBUG
+//	qDebug(in.toString().toAscii()); // DEBUG
 	return setElement(in.documentElement(), forcenew);
 }
 
@@ -194,7 +193,7 @@ bool SvgStreamRenderer::removeElement(const QString &id)
 	Returns a clone of the element with \a id.
 */
 QDomElement SvgStreamRenderer::element(QString id) const {
-	qDebug() << id;
+	qDebug(id.toAscii());
 	QDomNodeList children = doc.documentElement().childNodes();
 	// Traverse index top to bottom. More likely to be faster assuming recent element are modified more often than old ones.
 	for(int i=children.length()-1; i >= 0; i--) {

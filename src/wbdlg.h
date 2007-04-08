@@ -44,8 +44,6 @@
 #include "psiaccount.h"
 #include "psioptions.h"
 
-class AccountLabel;
-
 using namespace XMPP;
 
 /*! \brief The dialog for a whiteboard session.
@@ -174,7 +172,7 @@ private:
 	WbWidget *wbWidget_;
 
 	/*! \brief The label showing own identity.*/
-	AccountLabel *lb_ident_;
+	QLabel *lb_ident_;
 	/*! \brief The line edit showing target JID.*/
 	QLineEdit *le_jid_;
 	/*! \brief The context menu.*/

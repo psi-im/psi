@@ -20,7 +20,6 @@
 
 #include "wbitems.h"
 #include "wbscene.h"
-#include <QDebug>
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -178,7 +177,7 @@ void WbItem::setIndex(qreal index, bool emitChanges) {
 				//TODO: what should be the minumum width? at least 3 but can a jid contain characters that have a value beyond 999
 				z.append(QString("%1").arg(QString("%1").arg(c), 4, QLatin1Char('0')));
 			}
-	// 		qDebug() << "z: " << z;
+	// 		qDebug(QString("z: %1").arg(z).toAscii());
 			graphicsItem()->setZValue(z.toDouble());
 		}
 	}
@@ -429,7 +428,7 @@ QPointF WbItem::center() {
 		// Determine the center of the item in item coordinates before transformation
 		QRectF r = graphicsItem()->boundingRect();
 		QPointF c(r.x() + r.width()/2, r.y() + r.height()/2);
-// 		qDebug() << QString("center: %1 + %2    %3 + %4").arg(r.x()).arg(r.width()/2).arg(r.y()).arg(r.height()/2);
+// 		qDebug(QString("center: %1 + %2    %3 + %4").arg(r.x()).arg(r.width()/2).arg(r.y()).arg(r.height()/2).toAscii());
 		// return the center with transformation applied
 		return graphicsItem()->matrix().map(c);
 	}
@@ -463,7 +462,7 @@ void WbItem::handleMouseMoveEvent(QGraphicsSceneMouseEvent * event) {
 			// Rotate. Determine the direction relative to the center
 			// Divide the sum by two to reduce the "speed" of rotation
 			QPointF difference = event->scenePos() - event->lastScenePos();
-	// 		qDebug() << QString("d: %1 %2 = %3 %4 + %5 %6").arg(difference.x()).arg(difference.y()).arg(event->scenePos().x()).arg(event->scenePos().y()).arg(event->lastScenePos().x()).arg(event->lastScenePos().y());
+	// 		qDebug(QString("d: %1 %2 = %3 %4 + %5 %6").arg(difference.x()).arg(difference.y()).arg(event->scenePos().x()).arg(event->scenePos().y()).arg(event->lastScenePos().x()).arg(event->lastScenePos().y()).toAscii());
 			QPointF p = event->scenePos();
 			QPointF sceneCenter = graphicsItem()->mapToScene(c);
 			if(p.x() >= sceneCenter.x() && p.y() >= sceneCenter.y()) {
@@ -1177,7 +1176,7 @@ QList<QString> WbImage::parseSvg(QDomElement &_svg, bool emitChanges) {
 			if(header.left(12).contains("image/")) {
 				if(header.left(15).contains("png") || header.left(15).contains("jpg") || header.left(16).contains("jpeg") || header.left(15).contains("bmp") || header.left(15).contains("gif") || header.left(15).contains("pbm") || header.left(15).contains("pgm") || header.left(15).contains("ppm") || header.left(15).contains("xbm") || header.left(15).contains("xpm")) {
 					if(header.contains("base64,")) {
-// 						qDebug() << "data: " << attributes["xlink:href"].mid(header.indexOf("base64,") + 7);
+// 						qDebug(QString("data: %1").arg(attributes["xlink:href"].mid(header.indexOf("base64,") + 7)).toAscii());
 						QCA::Base64 decoder(QCA::Decode);
 						decoder.setLineBreaksEnabled(true);
 						QImage image = QImage::fromData(decoder.stringToArray(attributes["xlink:href"].mid(header.indexOf("base64,") + 7)).toByteArray());
@@ -2038,7 +2037,7 @@ bool WbPath::parsePathDataFast(const QString &data, QPainterPath &path)
 			}
 				break;
 			default:
-				qDebug() << QString("path data is ") << pathElem;
+				qDebug(QString("path data is %1").arg(pathElem).toAscii());
 				Q_ASSERT(!"invalid path data");
 				break;
 			}

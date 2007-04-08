@@ -145,7 +145,7 @@ private slots:
 	/*! \brief Removes and deletes the possible dialogs for the groupchat.*/
 	void groupChatLeft(const Jid &);
 	/*! \brief Keeps a record of groupchats.*/
-	void groupChatJoined(const Jid &);
+	void groupChatJoined(const Jid &, const Jid &ownJid);
 	/*! \brief Removes inactive and unfinished session negotiations.*/
 	void negotiationTimeout();
 };

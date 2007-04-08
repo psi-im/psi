@@ -316,6 +316,26 @@ SOURCES += \
 	$$PWD/psicontactlist.cpp \
 	$$PWD/accountlabel.cpp
 
+whiteboarding {
+	// Whiteboarding support. Still experimental.
+	DEFINES += WHITEBOARDING
+
+	HEADERS += \
+		$$PWD/wbmanager.h \
+		$$PWD/wbdlg.h \
+		$$PWD/wbwidget.h \
+		$$PWD/wbscene.h \
+		$$PWD/wbitems.h
+	
+	SOURCES += \
+		$$PWD/voicecalldlg.cpp \
+		$$PWD/wbmanager.cpp \
+		$$PWD/wbdlg.cpp \
+		$$PWD/wbwidget.cpp \
+		$$PWD/wbscene.cpp \
+		$$PWD/wbitems.cpp
+}
+
 mac {
 	contains( DEFINES, HAVE_GROWL ) {
 		HEADERS += $$PWD/psigrowlnotifier.h 
