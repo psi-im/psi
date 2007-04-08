@@ -60,10 +60,13 @@ public:
 class GCUserViewGroupItem : public Q3ListViewItem
 {
 public:
-	GCUserViewGroupItem(GCUserView *, const QString&);
+	GCUserViewGroupItem(GCUserView *, const QString&, int);
 	void paintFocus(QPainter *, const QColorGroup &, const QRect &);
 	void paintBranches(QPainter *p, const QColorGroup &cg, int w, int, int h);
 	void paintCell(QPainter *p, const QColorGroup & cg, int column, int width, int alignment);
+	int compare(Q3ListViewItem *i, int col, bool ascending ) const;
+private:
+	int key_;
 };
 
 class GCUserView : public Q3ListView

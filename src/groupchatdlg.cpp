@@ -108,8 +108,8 @@ void GCUserViewItem::paintBranches(QPainter *p, const QColorGroup &cg, int w, in
 // GCUserViewGroupItem
 //----------------------------------------------------------------------------
 
-GCUserViewGroupItem::GCUserViewGroupItem(GCUserView *par, const QString& t)
-:Q3ListViewItem(par,t)
+GCUserViewGroupItem::GCUserViewGroupItem(GCUserView *par, const QString& t, int k)
+:Q3ListViewItem(par,t), key_(k)
 {
 }
 
@@ -153,6 +153,16 @@ void GCUserViewGroupItem::paintBranches(QPainter *p, const QColorGroup &cg, int 
 	p->fillRect(0, 0, w, h, cg.base());
 }
 
+int GCUserViewGroupItem::compare(Q3ListViewItem *i, int col, bool ascending) const
+{
+	Q_UNUSED(ascending);	// Qt docs say: "your code can safely ignore it"
+
+	if (col == 0)
+		// groups are never compared to users, so static_cast is safe
+		return this->key_ - static_cast<GCUserViewGroupItem*>(i)->key_;
+	else
+		return Q3ListViewItem::compare(i, col, ascending);
+}
 
 //----------------------------------------------------------------------------
 // GCUserView
@@ -169,11 +179,11 @@ GCUserView::GCUserView(GCMainDlg* dlg, QWidget *parent, const char *name)
 	addColumn("");
 	setSortColumn(0);
 	Q3ListViewItem* i;
-	i = new GCUserViewGroupItem(this, tr("Visitors"));
+	i = new GCUserViewGroupItem(this, tr("Visitors"), 3);
 	i->setOpen(true);
-	i = new GCUserViewGroupItem(this, tr("Participants"));
+	i = new GCUserViewGroupItem(this, tr("Participants"), 2);
 	i->setOpen(true);
-	i = new GCUserViewGroupItem(this, tr("Moderators"));
+	i = new GCUserViewGroupItem(this, tr("Moderators"), 1);
 	i->setOpen(true);
 
 	connect(this, SIGNAL(doubleClicked(Q3ListViewItem *)), SLOT(qlv_doubleClicked(Q3ListViewItem *)));
