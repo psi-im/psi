@@ -298,20 +298,24 @@ void ChatEdit::contextMenuEvent(QContextMenuEvent *e)
 		tc.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
 		QString selected_word = tc.selectedText();
 		if (!selected_word.isEmpty() && !SpellChecker::instance()->isCorrect(selected_word)) {
-			QMenu spell_menu;
 			QList<QString> suggestions = SpellChecker::instance()->suggestions(selected_word);
-			if (!suggestions.isEmpty()) {
-				foreach(QString suggestion, suggestions) {
-					QAction* act_suggestion = spell_menu.addAction(suggestion);
-					connect(act_suggestion,SIGNAL(triggered()),SLOT(applySuggestion()));
+			if (!suggestions.isEmpty() || SpellChecker::instance()->writable()) {
+				QMenu spell_menu;
+				if (!suggestions.isEmpty()) {
+					foreach(QString suggestion, suggestions) {
+						QAction* act_suggestion = spell_menu.addAction(suggestion);
+						connect(act_suggestion,SIGNAL(triggered()),SLOT(applySuggestion()));
+					}
+					spell_menu.addSeparator();
 				}
-				spell_menu.addSeparator();
+				if (SpellChecker::instance()->writable()) {
+					QAction* act_add = spell_menu.addAction(tr("Add to dictionary"));
+					connect(act_add,SIGNAL(triggered()),SLOT(addToDictionary()));
+				}
+				spell_menu.exec(QCursor::pos());
+				e->accept();
+				return;
 			}
-			QAction* act_add = spell_menu.addAction(tr("Add to dictionary"));
-			connect(act_add,SIGNAL(triggered()),SLOT(addToDictionary()));
-			spell_menu.exec(QCursor::pos());
-			e->accept();
-			return;
 		}
 	}
 

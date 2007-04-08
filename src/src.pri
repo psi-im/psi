@@ -304,6 +304,9 @@ mac {
 		HEADERS += $$PWD/psigrowlnotifier.h 
 		SOURCES += $$PWD/psigrowlnotifier.cpp 
 	}
+
+	HEADERS += $$PWD/cocoautil.h
+	OBJECTIVE_SOURCES += $$PWD/cocoautil.mm
 }
 
 # Qt Designer interfaces

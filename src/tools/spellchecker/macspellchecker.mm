@@ -1,5 +1,5 @@
 /*
- * spellchecker.cpp
+ * macspellchecker.cpp
  *
  * Copyright (C) 2006  Remko Troncon
  *
@@ -24,58 +24,54 @@
  *
  */
 
-#include "spellchecker.h"
-#if defined(Q_WS_MAC)
+#include <Cocoa/Cocoa.h>
+
 #include "macspellchecker.h"
-#elif defined(HAVE_ASPELL)
-#include "aspellchecker.h"
-#endif
 
-SpellChecker* SpellChecker::instance() 
+MacSpellChecker::MacSpellChecker()
 {
-	if (!instance_) {
-#ifdef Q_WS_MAC
-		instance_ = new MacSpellChecker();
-#elif defined(HAVE_ASPELL)
-		instance_ = new ASpellChecker();
-#else
-		instance_ = new SpellChecker();
-#endif
+}
+
+MacSpellChecker::~MacSpellChecker()
+{
+}
+
+bool MacSpellChecker::isCorrect(const QString& word)
+{
+	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+	NSString* ns_word = [NSString stringWithUTF8String: word.toUtf8().data()];
+	NSRange range = {0,0};
+	range = [[NSSpellChecker sharedSpellChecker] checkSpellingOfString:ns_word startingAt:0];
+	[pool release];
+	return (range.length == 0);
+}
+
+QList<QString> MacSpellChecker::suggestions(const QString& word)
+{
+	QList<QString> s;
+
+	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+	NSString* ns_word = [NSString stringWithUTF8String: word.toUtf8().data()];
+	NSArray* ns_suggestions = [[NSSpellChecker sharedSpellChecker] guessesForWord:ns_word];
+	for(unsigned int i = 0; i < [ns_suggestions count]; i++) {
+		s += QString::fromUtf8([[ns_suggestions objectAtIndex:i] UTF8String]);
 	}
-	return instance_;
+	[pool release];
+
+	return s;
 }
 
-SpellChecker::SpellChecker()
-{
-}
-
-SpellChecker::~SpellChecker()
-{
-}
-
-bool SpellChecker::available() const
+bool MacSpellChecker::add(const QString& word)
 {
 	return false;
 }
 
-bool SpellChecker::writable() const
-{
-	return false;
-}
-
-bool SpellChecker::isCorrect(const QString&)
+bool MacSpellChecker::available() const
 {
 	return true;
 }
 
-QList<QString> SpellChecker::suggestions(const QString&)
-{
-	return QList<QString>();
-}
-
-bool SpellChecker::add(const QString&)
+bool MacSpellChecker::writable() const
 {
 	return false;
 }
-
-SpellChecker* SpellChecker::instance_ = NULL;

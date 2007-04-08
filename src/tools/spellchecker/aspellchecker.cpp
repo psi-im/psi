@@ -102,7 +102,12 @@ bool ASpellChecker::add(const QString& word)
 	return result;
 }
 
-bool ASpellChecker::available()
+bool ASpellChecker::available() const
 {
 	return (speller_ != NULL);
+}
+
+bool ASpellChecker::writable() const
+{
+	return false;
 }

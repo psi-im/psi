@@ -1,5 +1,5 @@
 /*
- * aspellchecker.h
+ * macspellchecker.h
  *
  * Copyright (C) 2006  Remko Troncon
  *
@@ -24,31 +24,24 @@
  *
  */
 
-#ifndef ASPELLCHECKER_H
-#define ASPELLCHECKER_H
+#ifndef MACSPELLCHECKER_H
+#define MACSPELLCHECKER_H
 
 #include <QList>
 #include <QString>
 
 #include "spellchecker.h"
 
-struct AspellConfig;
-struct AspellSpeller;
-
-class ASpellChecker : public SpellChecker
+class MacSpellChecker : public SpellChecker
 {
 public:
-	ASpellChecker();
-	~ASpellChecker();
+	MacSpellChecker();
+	~MacSpellChecker();
 	virtual QList<QString> suggestions(const QString&);
 	virtual bool isCorrect(const QString&);
 	virtual bool add(const QString&);
 	virtual bool available() const;
 	virtual bool writable() const;
-
-private:
-	AspellConfig* config_;
-	AspellSpeller* speller_;
 };
 
 #endif

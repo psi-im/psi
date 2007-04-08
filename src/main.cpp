@@ -46,6 +46,10 @@
 #	include"crash.h"
 #endif
 
+#ifdef Q_WS_MAC
+#include "cocoautil.h"
+#endif
+
 #ifdef Q_OS_WIN
 #	include <qt_windows.h> // for RegDeleteKey
 #endif
@@ -317,6 +321,10 @@ int main(int argc, char *argv[])
 	// Initialize QCA
 	QCA::keyStoreManager()->start();
 	QCA::keyStoreManager()->waitForBusyFinished();
+
+#ifdef Q_WS_MAC
+	CocoaUtil::initialize();
+#endif
 
 #ifdef USE_CRASH
 	int useCrash = true;
