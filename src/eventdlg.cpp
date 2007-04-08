@@ -1865,8 +1865,13 @@ void EventDlg::updateEvent(PsiEvent *e)
 		if(m.subject() != "" && !option.showSubjects)
 			txt = "<p><font color=\"red\"><b>" + tr("Subject:") + " " + m.subject() + "</b></font></p>" + (xhtml? "" : "<br>") + txt;
 
-		if(option.useEmoticons)
-			txt = TextUtil::emoticonify(txt);
+		if (!xhtml) {
+			if(option.useEmoticons)
+				txt = TextUtil::emoticonify(txt);
+			if( PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool() )
+				txt = TextUtil::legacyFormat(txt);
+			txt = TextUtil::linkify(txt);
+		}
 
 		if ( e->type() == PsiEvent::HttpAuth )
 			txt = "<big>[HTTP Request Confirmation]</big><br>" + txt;
