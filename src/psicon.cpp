@@ -464,11 +464,10 @@ bool PsiCon::init()
 	foreach(PsiAccount* account, d->contactList->accounts()) {
 		account->autoLogin();
 	}
+
 	// show tip of the day
-	if ( PsiOptions::instance()->getOption("options.ui.tip.show").toBool() ) {
-		TipDlg *tip = new TipDlg();
-		tip->show();
-	}
+	if ( PsiOptions::instance()->getOption("options.ui.tip.show").toBool() )
+		TipDlg::show(this);
 
 	return true;
 }
