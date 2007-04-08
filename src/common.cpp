@@ -31,8 +31,8 @@
 #include <QBoxLayout>
 
 QString PROG_NAME = "Psi";
-//QString PROG_VERSION = "0.11-dev" " (" __DATE__ ")"; //CVS Builds are dated
-QString PROG_VERSION = "0.11-beta3";
+QString PROG_VERSION = "0.11-dev" " (" __DATE__ ")"; //CVS Builds are dated
+//QString PROG_VERSION = "0.11-beta3";
 QString PROG_CAPS_NODE = "http://psi-im.org/caps";
 QString PROG_CAPS_VERSION = "0.11-dev-rev7";
 QString PROG_OPTIONS_NS = "http://psi-im.org/options";

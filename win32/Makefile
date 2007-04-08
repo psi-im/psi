@@ -34,6 +34,6 @@ all:
 	copy $(WINDOWSDIR)\system32\libeay32.dll $(TARGET_DIR)
 	copy $(WINDOWSDIR)\system32\ssleay32.dll $(TARGET_DIR)
 	-mkdir $(TARGET_DIR)\aspell
-	copy $(ASPELLDIR)\bin\aspell-15.dll $(TARGET_DIR)\aspell
+	copy $(ASPELLDIR)\bin\aspell-15.dll $(TARGET_DIR)
 	xcopy /i /e /q /y $(ASPELLDIR)\dict $(TARGET_DIR)\aspell\dict
 	xcopy /i /e /q /y $(ASPELLDIR)\data $(TARGET_DIR)\aspell\data
