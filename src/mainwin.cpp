@@ -725,7 +725,7 @@ void MainWin::actBugReportActivated ()
 
 void MainWin::actAboutActivated ()
 {
-	AboutDlg *about = new AboutDlg (this);
+	AboutDlg *about = new AboutDlg();
 	about->show();
 }
 

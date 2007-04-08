@@ -30,7 +30,7 @@ class AboutDlg : public QDialog
 	Q_OBJECT
 
 public:
-	AboutDlg(QWidget*);
+	AboutDlg(QWidget* parent = NULL);
 
 protected:
 	QString loadText( const QString & fileName );
