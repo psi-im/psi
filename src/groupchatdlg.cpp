@@ -1479,7 +1479,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 					}
 
 					if (!s.mucItem().actor().isEmpty())
-						message = tr("%1 has been banned by %1").arg(nickJid).arg(s.mucItem().actor().full());
+						message = tr("%1 has been banned by %2").arg(nickJid, s.mucItem().actor().full());
 					else
 						message = tr("%1 has been banned").arg(nickJid);
 
