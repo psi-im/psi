@@ -245,6 +245,12 @@ void AccountRegDlg::client_error()
 {
 	ui_.busy->stop();
 	unblock();
+	if (ui_.sw_register->currentWidget() == ui_.page_fields) {
+		// Start over
+		delete fields_;
+		fields_ = NULL;
+		ui_.sw_register->setCurrentWidget(ui_.page_server);
+	}
 }
 
 void AccountRegDlg::getFields_finished()
