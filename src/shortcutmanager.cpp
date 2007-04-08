@@ -95,8 +95,8 @@ void ShortcutManager::connect(const QString& path, QObject* parent, const char* 
 			if (!sequence.isEmpty()) {
 				QAction* act = new QAction(parent);
 				act->setShortcut(sequence);
-				if (QWidget* w = dynamic_cast<QWidget*>(parent))
-					w->addAction(act);
+				if (parent->isWidgetType())
+					((QWidget*) parent)->addAction(act);
 				parent->connect(act, SIGNAL(activated()), slot);
 			}
 		}
