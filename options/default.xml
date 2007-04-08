@@ -155,9 +155,18 @@
 				<send type="QVariantList" comment="Send the message">
 					<item type="QKeySequence">Ctrl+Return</item>
 					<item type="QKeySequence">Ctrl+Enter</item>
+					<item type="QKeySequence">Alt+Return</item>
+					<item type="QKeySequence">Alt+Enter</item>
 				</send>
 			</message>
-			<status comment="Shortcuts in the status dialog"/>
+			<status comment="Shortcuts in the status dialog">
+				<set type="QVariantList" comment="Set the status message">
+					<item type="QKeySequence">Ctrl+Return</item>
+					<item type="QKeySequence">Ctrl+Enter</item>
+					<item type="QKeySequence">Alt+Return</item>
+					<item type="QKeySequence">Alt+Enter</item>
+				</set>	
+			</status>
 			<service-discovery comment="Shortcuts in the service discovery dialog"/>
 		</shortcuts>
 	</options>

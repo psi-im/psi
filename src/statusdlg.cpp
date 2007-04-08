@@ -37,6 +37,7 @@
 #include "common.h"
 #include "msgmle.h"
 #include "statuspreset.h"
+#include "shortcutmanager.h"
 
 
 //----------------------------------------------------------------------------
@@ -159,7 +160,7 @@ void StatusSetDlg::init()
 	connect(d->cb_preset, SIGNAL(highlighted(int)), SLOT(chooseStatusPreset(int)));
 	hb1->addWidget(d->cb_preset,3);
 
-	d->te = new ChatView(this);
+	d->te = new ChatView(this,this);
 	d->te->setReadOnly(false);
 	d->te->setTextFormat(Qt::PlainText);
 	d->te->setMinimumHeight(50);
@@ -183,6 +184,9 @@ void StatusSetDlg::init()
 	connect(pb1, SIGNAL(clicked()), SLOT(doButton()));
 	connect(pb2, SIGNAL(clicked()), SLOT(cancel()));
 	d->te->setFocus();
+	
+	ShortcutManager::connect("common.close", this, SLOT(close()));
+	ShortcutManager::connect("status.set", this, SLOT(doButton()));
 
 	resize(400,240);
 }
@@ -194,16 +198,6 @@ StatusSetDlg::~StatusSetDlg()
 	else if(d->pa)
 		d->pa->dialogUnregister(this);
 	delete d;
-}
-
-void StatusSetDlg::keyPressEvent(QKeyEvent *e)
-{
-	if(e->key() == Qt::Key_Escape)
-		close();
-	else if(e->key() == Qt::Key_Return && ((e->modifiers() & Qt::ControlModifier) || (e->modifiers() & Qt::AltModifier)) )
-		doButton();
-	else
-		e->ignore();
 }
 
 void StatusSetDlg::doButton()

@@ -47,9 +47,6 @@ public:
 	StatusSetDlg(PsiAccount *, const Status &);
 	~StatusSetDlg();
 
-protected:
-	void keyPressEvent(QKeyEvent *);
-
 signals:
 	void set(const Status &, bool withPriority);
 	void cancelled();
