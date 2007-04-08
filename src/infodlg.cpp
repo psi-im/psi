@@ -37,6 +37,7 @@
 #include "xmpp_tasks.h"
 #include "psiaccount.h"
 #include "busywidget.h"
+#include "iconset.h"
 #include "common.h"
 #include "vcardfactory.h"
 #include "iconwidget.h"

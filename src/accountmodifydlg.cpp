@@ -24,6 +24,7 @@
 #include "accountmodifydlg.h"
 #include "pgputil.h"
 #include "psiaccount.h"
+#include "iconset.h"
 #include "psioptions.h"
 #include "jidutil.h"
 #include "profiles.h"
