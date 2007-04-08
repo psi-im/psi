@@ -417,6 +417,10 @@ public slots:
 
 		emit q->debug(QString("Process error: %1").arg(errmap[x]));
 
+		pipeAux.readEnd().reset();
+		pipeCommand.readEnd().reset();
+		pipeStatus.writeEnd().reset();
+
 		if(x == QProcess::FailedToStart)
 			error = GPGProc::FailedToStart;
 		else if(x == QProcess::WriteError)
