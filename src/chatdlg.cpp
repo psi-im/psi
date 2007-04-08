@@ -469,17 +469,29 @@ void ChatDlg::resizeEvent(QResizeEvent *e)
 
 void ChatDlg::closeEvent(QCloseEvent *e)
 {
+	if (readyToHide()) {
+		e->accept();
+	} else {
+		e->ignore();
+	}
+}
+
+/**
+ * Runs all the gumph necessary before hiding a chat.
+ * (checking new messages, setting the autodelete, cancelling composing etc)
+ * \return ChatDlg is ready to be hidden.
+ */
+bool ChatDlg::readyToHide()
+{
 	// really lame way of checking if we are encrypting
 	if(!d->mle->isEnabled()) {
-		e->ignore();
-		return;
+		return false;
 	}
 
 	if(d->keepOpen) {
 		int n = QMessageBox::information(this, tr("Warning"), tr("A new chat message was just received.\nDo you still want to close the window?"), tr("&Yes"), tr("&No"));
 		if(n != 0) {
-			e->ignore();
-			return;
+			return false;
 		}
 	}
 
@@ -507,7 +519,7 @@ void ChatDlg::closeEvent(QCloseEvent *e)
 	doFlash(false);
 
 	d->mle->setFocus();
-	e->accept();
+	return true;
 }
 
 void ChatDlg::capsChanged(const Jid& j)

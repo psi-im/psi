@@ -55,6 +55,7 @@ public:
 	const QString & getDisplayNick();
 
 	static QSize defaultSize();
+	bool readyToHide();
 
 signals:
 	void aInfo(const Jid &);

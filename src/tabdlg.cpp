@@ -226,8 +226,18 @@ void TabDlg::closeChat()
 	closeChat(chat);
 }
 
+/**
+ * Removes the chat from the tabset, 'closing' it if specified.
+ * The method is used without closing tabs when transferring from one
+ * tabset to another.
+ * \param chat Chat to remove.
+ * \param doclose Whether the chat is 'closed' while removing it.
+ */ 
 void TabDlg::closeChat(ChatDlg* chat, bool doclose=true)
 {
+	if (doclose && !chat->readyToHide()) {
+		return;
+	}
 	chat->hide();
 	disconnect ( chat, SIGNAL( captionChanged( ChatDlg*) ), this, SLOT( updateTab( ChatDlg* ) ) );
 	disconnect ( chat, SIGNAL( contactStateChanged( XMPP::ChatState ) ), this, SLOT( setTabState( XMPP::ChatState ) ) );
@@ -237,8 +247,8 @@ void TabDlg::closeChat(ChatDlg* chat, bool doclose=true)
 	tabHasMessages.erase(chat);
 	chats.remove(chat);
 	chat->reparent(0,QPoint());
-	if (doclose)
-		chat->close();
+	//if (doclose)
+	//	chat->close();
 	if (tabs->count()>0)
 		updateCaption();
 	checkHasChats();
