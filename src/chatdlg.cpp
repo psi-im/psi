@@ -335,6 +335,7 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 		QHBoxLayout *hb4 = new QHBoxLayout(vb3);
 
 		d->mle = new ChatEdit(sp_bottom, this);
+		d->mle->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 		hb4->addWidget(d->mle);
 		hb4->addWidget(d->avatar);
 	}
@@ -357,7 +358,6 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 
 	connect(d->mle, SIGNAL(textChanged()), d, SLOT(updateCounter()));
 	d->mle->installEventFilter(this);
-	d->mle->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
 	d->pm_settings = new QMenu(this);
 	connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));
