@@ -384,8 +384,7 @@ bool Stanza::Error::fromXml(const QDomElement &e, const QString &baseNS)
 		QDomNode i = nl.item(n);
 		t = i.toElement();
 		if(!t.isNull()) {
-			QString d= t.namespaceURI();
-			                                     // FIX-ME: this shouldn't be needed
+			// FIX-ME: this shouldn't be needed
 			if(t.namespaceURI() == NS_STANZAS || t.attribute("xmlns") == NS_STANZAS) {
 				condition = Private::stringToErrorCond(t.tagName());
 				if (condition != -1)
@@ -410,9 +409,9 @@ bool Stanza::Error::fromXml(const QDomElement &e, const QString &baseNS)
 	// text
 	t = e.elementsByTagNameNS(NS_STANZAS, "text").item(0).toElement();
 	if(!t.isNull())
-		text = t.text();
+		text = t.text().trimmed();
 	else
-		text = e.text();
+		text = e.text().trimmed();
 
 	// appspec: find first non-standard namespaced element
 	appSpec = QDomElement();
