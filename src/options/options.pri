@@ -21,7 +21,8 @@ HEADERS += \
 	$$PWD/opt_groupchat.h \
 	$$PWD/opt_sound.h \
 	$$PWD/opt_toolbars.h \
-	$$PWD/opt_advanced.h
+	$$PWD/opt_advanced.h \
+	$$PWD/opt_shortcuts.h
 
 SOURCES += \
 	$$PWD/opt_application.cpp \
@@ -34,7 +35,9 @@ SOURCES += \
 	$$PWD/opt_groupchat.cpp \
 	$$PWD/opt_sound.cpp \
 	$$PWD/opt_toolbars.cpp \
-	$$PWD/opt_advanced.cpp
+	$$PWD/opt_advanced.cpp \
+	$$PWD/opt_shortcuts.cpp
+
 
 INTERFACES += \
 	$$PWD/opt_application.ui \
@@ -51,7 +54,8 @@ INTERFACES += \
 	$$PWD/opt_iconset_emo.ui \
 	$$PWD/opt_iconset_system.ui \
 	$$PWD/opt_iconset_roster.ui \
-	$$PWD/opt_general_groupchat.ui
+	$$PWD/opt_general_groupchat.ui \
+	$$PWD/opt_shortcuts.ui
 
 psi_plugins {
 	INTERFACES += $$PWD/opt_plugins.ui

@@ -28,6 +28,7 @@
 #include "opt_groupchat.h"
 #include "opt_sound.h"
 #include "opt_advanced.h"
+#include "opt_shortcuts.h"
 
 #ifdef PSI_PLUGINS
 #include "opt_plugins.h"
@@ -324,6 +325,7 @@ void OptionsDlg::Private::createTabs()
 #ifdef PSI_PLUGINS
 	tabs.append( new OptionsTabPlugins(this) );
 #endif
+	tabs.append( new OptionsTabShortcuts(this) );
 	tabs.append( new OptionsTabAdvanced(this) );
 
 	// tabs - general

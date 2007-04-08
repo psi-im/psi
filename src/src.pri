@@ -12,6 +12,7 @@ include($$PWD/tools/globalaccel/globalaccel.pri)
 include($$PWD/tools/advwidget/advwidget.pri)
 include($$PWD/tools/spellchecker/spellchecker.pri)
 include($$PWD/tools/contactlist/contactlist.pri)
+include($$PWD/tools/grepshortcutkeydlg/grepshortcutkeydlg.pri)
 
 # Growl
 mac {
@@ -314,7 +315,7 @@ mac {
 }
 
 # Qt Designer interfaces
-INTERFACES = \
+INTERFACES += \
 	$$PWD/profileopen.ui \
 	$$PWD/profilemanage.ui \
 	$$PWD/profilenew.ui \

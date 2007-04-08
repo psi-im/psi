@@ -1,0 +1,54 @@
+<ui version="4.0" >
+ <class>grepShortcutKey</class>
+ <widget class="QWidget" name="grepShortcutKeyDlg" >
+  <property name="windowModality" >
+   <enum>Qt::ApplicationModal</enum>
+  </property>
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>200</width>
+    <height>79</height>
+   </rect>
+  </property>
+  <property name="minimumSize" >
+   <size>
+    <width>200</width>
+    <height>79</height>
+   </size>
+  </property>
+  <property name="maximumSize" >
+   <size>
+    <width>200</width>
+    <height>79</height>
+   </size>
+  </property>
+  <property name="contextMenuPolicy" >
+   <enum>Qt::NoContextMenu</enum>
+  </property>
+  <property name="windowTitle" >
+   <string>grep Shortcutkey</string>
+  </property>
+  <widget class="QLabel" name="label" >
+   <property name="geometry" >
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>181</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <property name="contextMenuPolicy" >
+    <enum>Qt::NoContextMenu</enum>
+   </property>
+   <property name="text" >
+    <string>Press the key combination you want.
+First the modifier then the key.
+(modifier are e.g Ctrl or Shift or so)</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
