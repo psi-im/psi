@@ -34,12 +34,10 @@ TranslationManager::TranslationManager()
 
 	// The application translator
 	translator_ = new QTranslator(0);
-	QCoreApplication::instance()->installTranslator(translator_);
 
 	// The qt translator
 	qt_translator_ = new QTranslator(0);
-	QCoreApplication::instance()->installTranslator(qt_translator_);
-	
+
 	// Self-destruct
 	connect(QCoreApplication::instance(),SIGNAL(aboutToQuit()),SLOT(deleteLater()));
 }
@@ -80,19 +78,12 @@ QString TranslationManager::currentXMLLanguage() const
 
 void TranslationManager::loadTranslation(const QString& language)
 {
-#ifdef __GNUC__
-#warning "The translation needs to be reset in case 'english' is selected"
-#endif
-	//printf("changing lang: [%s]\n", lang.latin1());
-	//The Qt book suggests these are not necessary and they don't
-  	//exist in Qt4
-  	/*trans->clear();
-	qttrans->clear();*/
-
 	// The default translation
 	if(language == "en") {
 		currentLanguage_ = language;
 		//currentLanguageName_ = "English";
+		QCoreApplication::instance()->removeTranslator(translator_);
+		QCoreApplication::instance()->removeTranslator(qt_translator_);
 		return;
 	}
 	
@@ -104,6 +95,10 @@ void TranslationManager::loadTranslation(const QString& language)
 		if (translator_->load("psi_" + language, *it)) {
 			// try to load qt library translation
 			qt_translator_->load("qt_" + language, *it);
+			if (currentLanguage_ == "en") {
+				QCoreApplication::instance()->installTranslator(translator_);
+				QCoreApplication::instance()->installTranslator(qt_translator_);
+			}
 			currentLanguage_ = language;
 		}
 	}
