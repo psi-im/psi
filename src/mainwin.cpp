@@ -364,9 +364,6 @@ MainWin::~MainWin()
 {
 	PsiPopup::deleteAll();
 
-	if (mainMenuBar())
-		delete mainMenuBar();
-
 	if(d->tray) {
 		delete d->tray;
 		d->tray = 0;
