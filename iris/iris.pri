@@ -28,6 +28,12 @@ HEADERS += \
 	$$PWD/jabber/xmpp_ibb.h \
 	$$PWD/jabber/filetransfer.h \
 	$$PWD/include/xmpp.h \
+	$$PWD/include/xmpp_jid.h \
+	$$PWD/include/xmpp_muc.h \
+	$$PWD/include/xmpp_rosterx.h \
+	$$PWD/include/xmpp_task.h \
+	$$PWD/include/xmpp_status.h \
+	$$PWD/include/xmpp_features.h \
 	$$PWD/include/im.h
 
 SOURCES += \
