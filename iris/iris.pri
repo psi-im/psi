@@ -31,6 +31,7 @@ HEADERS += \
 	$$PWD/include/xmpp_jid.h \
 	$$PWD/include/xmpp_muc.h \
 	$$PWD/include/xmpp_rosterx.h \
+	$$PWD/include/xmpp_xdata.h \
 	$$PWD/include/xmpp_task.h \
 	$$PWD/include/xmpp_status.h \
 	$$PWD/include/xmpp_features.h \
@@ -50,6 +51,7 @@ SOURCES += \
 	$$PWD/xmpp-core/simplesasl.cpp \
 	$$PWD/xmpp-im/types.cpp \
 	$$PWD/xmpp-im/client.cpp \
+	$$PWD/xmpp-im/xmpp_xdata.cpp \
 	$$PWD/xmpp-im/xmpp_tasks.cpp \
 	$$PWD/xmpp-im/xmpp_xmlcommon.cpp \
 	$$PWD/xmpp-im/xmpp_vcard.cpp \
