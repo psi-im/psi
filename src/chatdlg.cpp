@@ -736,7 +736,7 @@ void ChatDlg::setLooks()
 		}
 		else {
 			ui_.toolbar->hide();
-			ui_.tb_emoticons->show();
+			ui_.tb_emoticons->setVisible(option.useEmoticons);
 			ui_.tb_actions->show();
 			ui_.tb_pgp->setVisible(d->pa->hasPGP());
 		}

@@ -1848,7 +1848,7 @@ void GCMainDlg::setLooks()
 	}
 	else {
 		d->toolbar->hide();
-		d->tb_emoticons->show();
+		d->tb_emoticons->setVisible(option.useEmoticons);
 		d->tb_actions->show();
 	}
 
