@@ -242,6 +242,7 @@ static void try_add_name_item(X509_NAME **name, int nid, const QString &val)
 static X509_NAME *new_cert_name(const CertificateInfo &info)
 {
 	X509_NAME *name = 0;
+	// FIXME support multiple items of each type
 	try_add_name_item(&name, NID_commonName, info.value(CommonName));
 	try_add_name_item(&name, NID_countryName, info.value(Country));
 	try_add_name_item(&name, NID_localityName, info.value(Locality));
@@ -253,13 +254,14 @@ static X509_NAME *new_cert_name(const CertificateInfo &info)
 
 static void try_get_name_item(X509_NAME *name, int nid, CertificateInfoType t, CertificateInfo *info)
 {
-	int loc = X509_NAME_get_index_by_NID(name, nid, -1);
-	if(loc == -1)
-		return;
-	X509_NAME_ENTRY *ne = X509_NAME_get_entry(name, loc);
-	ASN1_STRING *data = X509_NAME_ENTRY_get_data(ne);
-	QByteArray cs((const char *)data->data, data->length);
-	info->insert(t, QString::fromLatin1(cs));
+	int loc;
+	loc = -1;
+	while ((loc = X509_NAME_get_index_by_NID(name, nid, loc)) != -1) {
+		X509_NAME_ENTRY *ne = X509_NAME_get_entry(name, loc);
+		ASN1_STRING *data = X509_NAME_ENTRY_get_data(ne);
+		QByteArray cs((const char *)data->data, data->length);
+		info->insert(t, QString::fromLatin1(cs));
+	}
 }
 
 static CertificateInfo get_cert_name(X509_NAME *name)
@@ -426,6 +428,7 @@ static void try_add_general_name(GENERAL_NAMES **gn, CertificateInfoType t, cons
 static X509_EXTENSION *new_cert_subject_alt_name(const CertificateInfo &info)
 {
 	GENERAL_NAMES *gn = 0;
+	// FIXME support multiple items of each type
 	try_add_general_name(&gn, Email, info.value(Email));
 	try_add_general_name(&gn, URI, info.value(URI));
 	try_add_general_name(&gn, DNS, info.value(DNS));
@@ -439,19 +442,19 @@ static X509_EXTENSION *new_cert_subject_alt_name(const CertificateInfo &info)
 	return ex;
 }
 
-static GENERAL_NAME *find_general_name(GENERAL_NAMES *names, int type)
+static QList<GENERAL_NAME*> find_general_name(GENERAL_NAMES *names, int type)
 {
-	GENERAL_NAME *gn = 0;
+	//GENERAL_NAME *gn = 0;
+	QList<GENERAL_NAME*> gns;
 	for(int n = 0; n < sk_GENERAL_NAME_num(names); ++n)
 	{
 		GENERAL_NAME *i = sk_GENERAL_NAME_value(names, n);
 		if(i->type == type)
 		{
-			gn = i;
-			break;
+			gns += i;
 		}
 	}
-	return gn;
+	return gns;
 }
 
 static void try_get_general_name(GENERAL_NAMES *names, CertificateInfoType t, CertificateInfo *info)
@@ -460,74 +463,84 @@ static void try_get_general_name(GENERAL_NAMES *names, CertificateInfoType t, Ce
 	{
 		case Email:
 		{
-			GENERAL_NAME *gn = find_general_name(names, GEN_EMAIL);
-			if(!gn)
+			QList<GENERAL_NAME*> gns = find_general_name(names, GEN_EMAIL);
+			if(gns.isEmpty())
 				break;
-			QByteArray cs((const char *)ASN1_STRING_data(gn->d.rfc822Name), ASN1_STRING_length(gn->d.rfc822Name));
-			info->insert(t, QString::fromLatin1(cs));
+			foreach(GENERAL_NAME* gn, gns) {
+				QByteArray cs((const char *)ASN1_STRING_data(gn->d.rfc822Name), ASN1_STRING_length(gn->d.rfc822Name));
+				info->insert(t, QString::fromLatin1(cs));
+			}
 			break;
 		}
 		case URI:
 		{
-			GENERAL_NAME *gn = find_general_name(names, GEN_URI);
-			if(!gn)
+			QList<GENERAL_NAME*> gns = find_general_name(names, GEN_URI);
+			if(gns.isEmpty())
 				break;
-			QByteArray cs((const char *)ASN1_STRING_data(gn->d.uniformResourceIdentifier), ASN1_STRING_length(gn->d.uniformResourceIdentifier));
-			info->insert(t, QString::fromLatin1(cs));
+			foreach(GENERAL_NAME* gn, gns) {
+				QByteArray cs((const char *)ASN1_STRING_data(gn->d.uniformResourceIdentifier), ASN1_STRING_length(gn->d.uniformResourceIdentifier));
+				info->insert(t, QString::fromLatin1(cs));
+			}
 			break;
 		}
 		case DNS:
 		{
-			GENERAL_NAME *gn = find_general_name(names, GEN_DNS);
-			if(!gn)
+			QList<GENERAL_NAME*> gns = find_general_name(names, GEN_DNS);
+			if(gns.isEmpty())
 				break;
-			QByteArray cs((const char *)ASN1_STRING_data(gn->d.dNSName), ASN1_STRING_length(gn->d.dNSName));
-			info->insert(t, QString::fromLatin1(cs));
+			foreach(GENERAL_NAME* gn, gns) {
+				QByteArray cs((const char *)ASN1_STRING_data(gn->d.dNSName), ASN1_STRING_length(gn->d.dNSName));
+				info->insert(t, QString::fromLatin1(cs));
+			}
 			break;
 		}
 		case IPAddress:
 		{
-			GENERAL_NAME *gn = find_general_name(names, GEN_IPADD);
-			if(!gn)
+			QList<GENERAL_NAME*> gns = find_general_name(names, GEN_IPADD);
+			if(gns.isEmpty())
 				break;
+			foreach(GENERAL_NAME* gn, gns) {
 
-			ASN1_OCTET_STRING *str = gn->d.iPAddress;
-			QByteArray buf((const char *)ASN1_STRING_data(str), ASN1_STRING_length(str));
-
-			QString out;
-			// IPv4 (TODO: handle IPv6)
-			if(buf.size() == 4)
-			{
-				out = "0.0.0.0";
+				ASN1_OCTET_STRING *str = gn->d.iPAddress;
+				QByteArray buf((const char *)ASN1_STRING_data(str), ASN1_STRING_length(str));
+	
+				QString out;
+				// IPv4 (TODO: handle IPv6)
+				if(buf.size() == 4)
+				{
+					out = "0.0.0.0";
+				}
+				else
+					continue;
+	
+				info->insert(t, out);
 			}
-			else
-				break;
-
-			info->insert(t, out);
 			break;
 		}
 		case XMPP:
 		{
-			GENERAL_NAME *gn = find_general_name(names, GEN_OTHERNAME);
-			if(!gn)
+			QList<GENERAL_NAME*> gns = find_general_name(names, GEN_OTHERNAME);
+			if(gns.isEmpty())
 				break;
+			foreach(GENERAL_NAME* gn, gns) {
 
-			OTHERNAME *other = gn->d.otherName;
-			if(!other)
-				break;
-
-			ASN1_OBJECT *obj = OBJ_txt2obj("1.3.6.1.5.5.7.8.5", 1); // 1 = only accept dotted input
-			if(OBJ_cmp(other->type_id, obj) != 0)
-				break;
-			ASN1_OBJECT_free(obj);
-
-			ASN1_TYPE *at = other->value;
-			if(at->type != V_ASN1_UTF8STRING)
-				break;
-
-			ASN1_UTF8STRING *str = at->value.utf8string;
-			QByteArray buf((const char *)ASN1_STRING_data(str), ASN1_STRING_length(str));
-			info->insert(t, QString::fromUtf8(buf));
+				OTHERNAME *other = gn->d.otherName;
+				if(!other)
+					continue;
+	
+				ASN1_OBJECT *obj = OBJ_txt2obj("1.3.6.1.5.5.7.8.5", 1); // 1 = only accept dotted input
+				if(OBJ_cmp(other->type_id, obj) != 0)
+					continue;
+				ASN1_OBJECT_free(obj);
+	
+				ASN1_TYPE *at = other->value;
+				if(at->type != V_ASN1_UTF8STRING)
+					continue;
+	
+				ASN1_UTF8STRING *str = at->value.utf8string;
+				QByteArray buf((const char *)ASN1_STRING_data(str), ASN1_STRING_length(str));
+				info->insert(t, QString::fromUtf8(buf));
+			}
 			break;
 		}
 
