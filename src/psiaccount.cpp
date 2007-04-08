@@ -1295,7 +1295,10 @@ void PsiAccount::cs_error(int err)
 	stateChanged();
 	disconnected();
 
-	QMessageBox::critical(0, (d->psi->accountList(true).count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Error"), tr("There was an error communicating with the server.\nDetails: %1").arg(str));
+	QMessageBox* m = new QMessageBox(QMessageBox::Critical, (d->psi->accountList(true).count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Error"), tr("There was an error communicating with the server.\nDetails: %1").arg(str), QMessageBox::Ok, 0, Qt::WDestructiveClose);
+	m->setModal(true);
+	m->show();
+	//QMessageBox::critical(0, (d->psi->accountList(true).count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Error"), tr("There was an error communicating with the server.\nDetails: %1").arg(str));
 }
 
 void PsiAccount::client_rosterRequestFinished(bool success, int, const QString &)
