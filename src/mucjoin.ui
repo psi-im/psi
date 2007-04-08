@@ -1,7 +1,4 @@
 <ui version="4.0" >
- <author></author>
- <comment></comment>
- <exportmacro></exportmacro>
  <class>MUCJoin</class>
  <widget class="QDialog" name="MUCJoin" >
   <property name="geometry" >
@@ -9,7 +6,7 @@
     <x>0</x>
     <y>0</y>
     <width>406</width>
-    <height>265</height>
+    <height>312</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -179,7 +176,7 @@
       <number>6</number>
      </property>
      <item>
-      <widget class="BusyWidget" name="busy" />
+      <widget class="BusyWidget" native="1" name="busy" />
      </item>
      <item>
       <spacer>
@@ -223,13 +220,17 @@
    <extends>QWidget</extends>
    <header>busywidget.h</header>
    <container>1</container>
-   <pixmap></pixmap>
   </customwidget>
  </customwidgets>
  <tabstops>
+  <tabstop>cb_recent</tabstop>
   <tabstop>le_host</tabstop>
   <tabstop>le_room</tabstop>
   <tabstop>le_nick</tabstop>
+  <tabstop>le_pass</tabstop>
+  <tabstop>ck_history</tabstop>
+  <tabstop>pb_close</tabstop>
+  <tabstop>pb_join</tabstop>
  </tabstops>
  <resources/>
  <connections/>
