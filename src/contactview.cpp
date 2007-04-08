@@ -57,6 +57,12 @@
 #include "resourcemenu.h"
 #include "shortcutmanager.h"
 
+
+static bool caseInsensitiveLessThan(const QString &s1, const QString &s2)
+{
+	return s1.toLower() < s2.toLower();
+}
+
 //----------------------------------------------------------------------------
 // ContactProfile
 //----------------------------------------------------------------------------
@@ -802,10 +808,9 @@ QStringList ContactProfile::groupList() const
 
 	Q3PtrListIterator<Entry> it(d->roster);
 	for(Entry *e; (e = it.current()); ++it) {
-		const QStringList &groups = e->u.groups();
-		for(QStringList::ConstIterator git = groups.begin(); git != groups.end(); ++git) {
-			if(qstringlistmatch(groupList, *git) == -1)
-				groupList.append(*git);
+		foreach(QString group, e->u.groups()) {
+			if (!groupList.contains(group))
+				groupList.append(group);
 		}
 	}
 
@@ -1077,7 +1082,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		}
 
 		QStringList gl = groupList();
-		qstringlistisort(gl); // caseless sort
+		qSort(gl.begin(), gl.end(), caseInsensitiveLessThan);
 
 		bool inList = e ? e->u.inList() : false;
 		bool isPrivate = e ? e->u.isPrivate(): false;

@@ -564,7 +564,7 @@ EDBFlatFile::File::File(const Jid &_j)
 
 	//printf("[EDB opening -- %s]\n", j.full().latin1());
 	QString s = j.userHost();
-	fname = getHistoryDir() + "/" + qstrlower(JIDUtil::encode(s)) + ".history";
+	fname = getHistoryDir() + "/" + JIDUtil::encode(s).toLower() + ".history";
 	f.setName(fname);
 	valid = f.open(QIODevice::ReadWrite);
 

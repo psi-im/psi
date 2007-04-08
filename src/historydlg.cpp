@@ -286,7 +286,7 @@ void HistoryDlg::doSave()
 
 	UserListItem *u = d->pa->findFirstRelevant(d->jid);
 	QString them = JIDUtil::nickOrJid(u->name(), u->jid().full());
-	QString s = qstrlower(JIDUtil::encode(them));
+	QString s = JIDUtil::encode(them).toLower();
 
 	QString str = option.lastSavePath + "/" + s + ".txt";
 	while(1) {

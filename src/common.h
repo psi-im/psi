@@ -235,10 +235,6 @@ QString getHomeDir();
 QString getHistoryDir();
 QString getVCardDir();
 
-QString qstrlower(QString);
-int qstrcasecmp(const QString &str1, const QString &str2);
-int qstringlistmatch(QStringList &list, const QString &str);
-QString qstringlistlookup(QStringList &list, int x);
 QString CAP(const QString &str);
 
 QString status2txt(int status);
@@ -264,8 +260,6 @@ QString logencode(QString);
 QString logdecode(const QString &);
 
 bool operator!=(const QMap<QString, QString> &, const QMap<QString, QString> &);
-void qstringlistisort(QStringList &c);
-
 void openURL(const QString &);
 
 QString getOSName();

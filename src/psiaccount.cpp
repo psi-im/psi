@@ -2230,12 +2230,9 @@ void PsiAccount::openAddUserDlg()
 				services += u->jid().full();
 				names += JIDUtil::nickOrJid(u->name(), u->jid().full());
 			}
-			const QStringList &groups = u->groups();
-			if(groups.isEmpty())
-				continue;
-			for(QStringList::ConstIterator git = groups.begin(); git != groups.end(); ++git) {
-				if(qstringlistmatch(gl, *git) == -1)
-					gl.append(*git);
+			foreach(QString group, u->groups()) {
+				if(!gl.contains(group)) 
+					gl.append(group);
 			}
 		}
 

@@ -74,6 +74,10 @@
 #include <windows.h>
 #endif
 
+static bool caseInsensitiveLessThan(const QString &s1, const QString &s2)
+{
+	return s1.toLower() < s2.toLower();
+}
 
 //----------------------------------------------------------------------------
 // GCUserViewItem
@@ -198,7 +202,7 @@ QStringList GCUserView::nickList() const
 		for(Q3ListViewItem *lvi = j->firstChild(); lvi; lvi = lvi->nextSibling())
 			list << lvi->text(0);
 
-	qstringlistisort(list); // caseless sorting
+	qSort(list.begin(), list.end(), caseInsensitiveLessThan);
 	return list;
 }
 

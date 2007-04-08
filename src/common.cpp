@@ -92,51 +92,6 @@ PsiIconset *is;
 bool useSound;
 
 
-QString qstrlower(QString str)
-{
-	for(int n = 0; n < str.length(); ++n) {
-		str[n] = str[n].lower();
-	}
-
-	return str;
-}
-
-int qstrcasecmp(const QString &str1, const QString &str2)
-{
-        if(str1.length() != str2.length())
-                return 1;
-
-        for(int n = 0; n < str1.length(); ++n) {
-                if(str1.at(n).lower() != str2.at(n).lower())
-                        return 1;
-        }
-
-        return 0;
-}
-
-int qstringlistmatch(QStringList &list, const QString &str)
-{
-	int n = 0;
-
-        for(QStringList::Iterator i = list.begin(); i != list.end(); ++i, ++n) {
-                if(*i == str)
-                        return n;
-        }
-
-        return -1;
-}
-
-QString qstringlistlookup(QStringList &list, int x)
-{
-	int n = 0;
-	QStringList::Iterator i = list.begin();
-	for(;i != list.end() && n < x; ++i, ++n);
-	if(n != x)
-		return "";
-
-	return *i;
-}
-
 QString CAP(const QString &str)
 {
 	return QString("%1: %2").arg(PROG_NAME).arg(str);
@@ -860,49 +815,6 @@ QString logdecode(const QString &str)
         }
 
         return ret;
-}
-
-void qstringlistisort(QStringList &c)
-{
-	if ( c.count() <= 1 )
-		return;
-
-	QStringList::Iterator it;
-	int size = c.count();
-
-	// first, make array that is easy (and quick) to manipulate
-	QString *heap = new QString[ size ];
-
-	int i = 0;
-	for (it = c.begin(); it != c.end(); ++it)
-		heap[i++] = *it;
-
-	// Insertion sort
-	for (int tmp = 0; tmp < c.count(); tmp++) {
-		heap[tmp] = c[tmp];
-		size = tmp + 1;
-
-		for (int j = 1; j < size; j++) {
-			QString k = heap[j].lower();
-			QString r = heap[j];
-
-			for (i = j - 1; i >= 0; i--) {
-				if ( QString::compare(k, heap[i].lower()) > 0 )
-					break;
-
-				heap[i+1] = heap[i];
-			}
-
-			heap[i+1] = r;
-		}
-	}
-
-	// now, copy sorted data back to QStringList
-	it = c.begin();
-	for (i = 0; i < (int)size; i++)
-		*it++ = heap[i];
-
-	delete[] heap;
 }
 
 void openURL(const QString &url)
