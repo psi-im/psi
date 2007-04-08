@@ -24,7 +24,7 @@ public:
 			"\n"
 			"int main()\n"
 			"{\n"
-			"    if (0) { XScreenSaverQueryExtension(NULL, NULL, NULL); }\n"
+			"    XScreenSaverQueryExtension(NULL, NULL, NULL);\n"
 			"    return 0;\n"
 			"}\n";
 		QString proextra = "CONFIG += x11\n";

@@ -18,7 +18,7 @@ public:
 			"\n"
 			"int main()\n"
 			"{\n"
-			"    if (0) { gethostbyname_r(\"\", 0, 0, 0, 0, 0); }\n"
+			"    gethostbyname_r(\"\", 0, 0, 0, 0, 0);\n"
 			"    return 0;\n"
 			"}\n";
 		int ret;
