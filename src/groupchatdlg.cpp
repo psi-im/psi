@@ -236,6 +236,16 @@ QStringList GCUserView::nickList() const
 	return list;
 }
 
+bool GCUserView::hasJid(const Jid& jid) 
+{
+	for (Q3ListViewItem *j = firstChild(); j; j = j->nextSibling())
+		for(GCUserViewItem *lvi = (GCUserViewItem*) j->firstChild(); lvi; lvi = (GCUserViewItem*) lvi->nextSibling()) {
+			if(!lvi->s.mucItem().jid().isEmpty() && lvi->s.mucItem().jid().compare(jid,false))
+				return true;
+		}
+	return false;
+}
+
 Q3ListViewItem *GCUserView::findEntry(const QString &nick)
 {
 	for (Q3ListViewItem *j = firstChild(); j; j = j->nextSibling())
@@ -1239,7 +1249,7 @@ void GCMainDlg::dragEnterEvent(QDragEnterEvent *e)
 void GCMainDlg::dropEvent(QDropEvent *e)
 {
 	Jid jid(e->mimeData()->text());
-	if (jid.isValid()) {
+	if (jid.isValid() && !d->lv_users->hasJid(jid)) {
 		Message m;
 		m.setTo(d->jid);
 		m.addMUCInvite(MUCInvite(jid));

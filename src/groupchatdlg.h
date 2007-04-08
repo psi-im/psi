@@ -80,6 +80,7 @@ public:
 	Q3DragObject* dragObject();
 	void clear();
 	void updateAll();
+	bool hasJid(const Jid&);
 	Q3ListViewItem *findEntry(const QString &);
 	void updateEntry(const QString &, const Status &);
 	void removeEntry(const QString &);
