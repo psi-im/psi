@@ -829,7 +829,7 @@ void PsiCon::statusMenuChanged(int x)
 			connect(w, SIGNAL(set(const Status &, bool)), SLOT(setStatusFromDialog(const Status &, bool)));
 			connect(w, SIGNAL(cancelled()), SLOT(updateMainwinStatus()));
 			if(option.useDock == true)
-				connect(w, SIGNAL(set(const Status &, bool)), d->mainwin, SLOT(setTrayToolTip(const Status &, bool)));
+				connect(w, SIGNAL(set(const XMPP::Status &, bool)), d->mainwin, SLOT(setTrayToolTip(const XMPP::Status &, bool)));
 			w->show();
 		}
 	}
