@@ -82,6 +82,8 @@ public:
 		PropList list;
 		int at = 0;
 		while(1) {
+			while (at < str.length() && (str[at] == ',' || str[at] == ' ' || str[at] == '\t'))
+				  ++at;
 			int n = str.find('=', at);
 			if(n == -1)
 				break;
@@ -97,24 +99,36 @@ public:
 				at = n + 1;
 			}
 			else {
-				n = str.find(',', at);
-				if(n != -1) {
-					val = str.mid(at, n-at);
-					at = n;
-				}
-				else {
-					val = str.mid(at);
-					at = str.length()-1;
-				}
+				n = at;
+				while (n < str.length() && str[n] != ',' && str[n] != ' ' && str[n] != '\t')
+					++n;
+				val = str.mid(at, n-at);
+				at = n;
 			}
 			Prop prop;
 			prop.var = var;
-			prop.val = val;
-			list.append(prop);
+			if (var == "qop" || var == "cipher") {
+				int a = 0;
+				while (a < val.length()) {
+					while (a < val.length() && (val[a] == ',' || val[a] == ' ' || val[a] == '\t'))
+						++a;
+					if (a == val.length())
+						break;
+					n = a+1;
+					while (n < val.length() && val[n] != ',' && val[n] != ' ' && val[n] != '\t')
+						++n;
+					prop.val = val.mid(a, n-a);
+					list.append(prop);
+					a = n+1;
+				}
+			}
+			else {
+				prop.val = val;
+				list.append(prop);
+			}
 
-			if(at >= str.size() - 1 || str[at] != ',')
+			if(at >= str.size() - 1 || (str[at] != ',' && str[at] != ' ' && str[at] != '\t'))
 				break;
-			++at;
 		}
 
 		// integrity check
