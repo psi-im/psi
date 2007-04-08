@@ -1819,8 +1819,15 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 	if(!c)
 		c = findDialog<ChatDlg*>(m.from().full());
 
-	if(m.type() == "error")
-		m.setBody(m.error().text + "\n------\n" + m.body());
+	if(m.type() == "error") {
+		Stanza::Error err = m.error();
+		QPair<QString, QString> desc = err.description();
+		QString msg = desc.first + ".\n" + desc.second;
+		if (!err.text.isEmpty())
+			msg += "\n" + err.text;
+
+		m.setBody(msg + "\n------\n" + m.body());
+	}
 
 	// change the type?
 	if(m.type() != "headline" && m.invite().isEmpty() && m.mucInvites().isEmpty()) {

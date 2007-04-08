@@ -397,13 +397,15 @@ bool Stanza::Error::fromXml(const QDomElement &e, const QString &baseNS)
 	originalCode = e.attribute("code").toInt();
 
 	// try to guess type/condition
-	if(type == -1 && condition == -1) {
-		QPair<int, int> guess;
+	if(type == -1 || condition == -1) {
+		QPair<int, int> guess(-1, -1);
 		if (originalCode)
 			guess = Private::errorCodeToTypeCond(originalCode);
 
-		type = guess.first != -1 ? guess.first: Cancel;
-		condition = guess.second != -1 ? guess.second: UndefinedCondition;
+		if (type == -1)
+			type = guess.first != -1 ? guess.first : Cancel;
+		if (condition == -1)
+			condition = guess.second != -1 ? guess.second : UndefinedCondition;
 	}
 
 	// text
@@ -474,8 +476,7 @@ QDomElement Stanza::Error::toXml(QDomDocument &doc, const QString &baseNS) const
 /**
 	\brief Returns the error name and description
 
-	Returns the error name (e.g. "Not Allowed")	and error text.
-	Text comes either from XML, or - if not present - from RFC.
+	Returns the error name (e.g. "Not Allowed") and generic description.
 */
 QPair<QString,QString> Stanza::Error::description() const
 {

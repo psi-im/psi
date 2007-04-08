@@ -191,16 +191,11 @@ void getErrorFromElement(const QDomElement &e, const QString &baseNS, int *code,
 	if(code)
 		*code = err.code();
 	if(str) {
-		if(!err.text.isEmpty()) {
-			*str = err.text;
-		}
-		else {
-			QPair<QString, QString> desc = err.description();
-			if(!desc.first.isEmpty())
-				*str = desc.first + ".\n" + desc.second;
-			else
-				*str = "";
-		}
+		QPair<QString, QString> desc = err.description();
+		if (err.text.isEmpty())
+			*str = desc.first + ".\n" + desc.second;
+		else
+			*str = desc.first + ".\n" + desc.second + "\n" + err.text;
 	}
 
 }
