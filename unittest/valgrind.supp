@@ -2589,3 +2589,490 @@
    fun:_ZN12QApplicationC1ERiPPc
 }
 
+{
+   <insert a suppression name here>
+   Memcheck:Addr4
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:__libc_dlopen_mode
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   fun:iconv_open
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Cond
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:__libc_dlopen_mode
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   fun:iconv_open
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Cond
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:__libc_dlopen_mode
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   fun:iconv_open
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Cond
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   fun:dlopen
+   fun:_ZN15QLibraryPrivate8load_sysEv
+   fun:_ZN15QLibraryPrivate4loadEv
+   fun:_ZN15QLibraryPrivate10loadPluginEv
+   fun:_ZNK14QFactoryLoader8instanceERK7QString
+   fun:_Z17createReadHandlerP9QIODeviceRK10QByteArray
+   fun:_ZN19QImageReaderPrivate11initHandlerEv
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Cond
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   fun:dlopen
+   fun:_ZN15QLibraryPrivate8load_sysEv
+   fun:_ZN15QLibraryPrivate4loadEv
+   fun:_ZN15QLibraryPrivate10loadPluginEv
+   fun:_ZNK14QFactoryLoader8instanceERK7QString
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Cond
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   fun:dlopen
+   fun:_ZN15QLibraryPrivate8load_sysEv
+   fun:_ZN15QLibraryPrivate4loadEv
+   fun:_ZN15QLibraryPrivate10loadPluginEv
+   fun:_ZNK14QFactoryLoader8instanceERK7QString
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_Z12systemLocalev
+   fun:_Z13systemPrivatev
+   fun:_Z14defaultPrivatev
+   fun:_ZN7QLocaleC1Ev
+   fun:_ZN19QResourceFileEngineC1ERK7QString
+   fun:_ZNK26QResourceFileEngineHandler6createERK7QString
+   fun:_ZN19QAbstractFileEngine6createERK7QString
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN11QThreadData7currentEv
+   fun:_ZN7QThread13currentThreadEv
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:XextCreateExtension
+   fun:XInput_find_display
+   fun:_XiGetExtensionVersion
+   fun:XGetExtensionVersion
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:calloc
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   fun:dlopen
+   fun:_ZN15QLibraryPrivate8load_sysEv
+   fun:_ZN15QLibraryPrivate4loadEv
+   fun:_ZN15QLibraryPrivate10loadPluginEv
+   fun:_ZNK14QFactoryLoader8instanceERK7QString
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   fun:dlopen
+   fun:_ZN15QLibraryPrivate8load_sysEv
+   fun:_ZN15QLibraryPrivate4loadEv
+   fun:_ZN15QLibraryPrivate10loadPluginEv
+   fun:_ZNK14QFactoryLoader8instanceERK7QString
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:strdup
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   fun:dlopen
+   fun:_ZN15QLibraryPrivate8load_sysEv
+   fun:_ZN15QLibraryPrivate4loadEv
+   fun:_ZN15QLibraryPrivate10loadPluginEv
+   fun:_ZNK14QFactoryLoader8instanceERK7QString
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:XauFileName
+   fun:XauGetBestAuthByAddr
+   fun:_X11TransConnectDisplay
+   fun:XOpenDisplay
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   fun:IceAuthFileName
+   fun:_IceGetPoValidAuthIndices
+   fun:IceOpenConnection
+   fun:SmcOpenConnection
+   fun:_ZN15QSessionManagerC1EP12QApplicationR7QStringS3_
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:realloc
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcUtf8Loader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+   fun:_Z7qt_initP19QApplicationPrivateiP9_XDisplaymm
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN11QThreadData7currentEv
+   fun:_ZN7QThread13currentThreadEv
+   fun:_ZN23QCoreApplicationPrivateC2ERiPPc
+   fun:_ZN19QApplicationPrivateC1ERiPPcN12QApplication4TypeE
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   fun:dlopen
+   fun:_ZN15QLibraryPrivate8load_sysEv
+   fun:_ZN15QLibraryPrivate4loadEv
+   fun:_ZN15QLibraryPrivate10loadPluginEv
+   fun:_ZNK14QFactoryLoader8instanceERK7QString
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN14QLocalePrivate19updateSystemPrivateEv
+   fun:_Z13systemPrivatev
+   fun:_Z14defaultPrivatev
+   fun:_ZN7QLocaleC1Ev
+   fun:_ZN19QResourceFileEngineC1ERK7QString
+   fun:_ZNK26QResourceFileEngineHandler6createERK7QString
+   fun:_ZN19QAbstractFileEngine6createERK7QString
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN14QWaitConditionC1Ev
+   fun:_ZN14QThreadPrivateC1EP11QThreadData
+   fun:_ZN14QAdoptedThreadC1EP11QThreadData
+   fun:_ZN11QThreadData7currentEv
+   fun:_ZN7QThread13currentThreadEv
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN14QAdoptedThreadC1EP11QThreadData
+   fun:_ZN11QThreadData7currentEv
+   fun:_ZN7QThread13currentThreadEv
+   fun:_ZN23QCoreApplicationPrivateC2ERiPPc
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:_Znwj
+   fun:_ZN6QMutexC1ENS_13RecursionModeE
+   fun:_ZN11QThreadDataC1Ev
+   fun:_ZN11QThreadData7currentEv
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   fun:dlopen
+   fun:_ZN15QLibraryPrivate8load_sysEv
+   fun:_ZN15QLibraryPrivate4loadEv
+   fun:_ZN15QLibraryPrivate10loadPluginEv
+   fun:_ZNK14QFactoryLoader8instanceERK7QString
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   fun:dlopen
+   fun:_ZN15QLibraryPrivate8load_sysEv
+   fun:_ZN15QLibraryPrivate4loadEv
+   fun:_ZN15QLibraryPrivate10loadPluginEv
+   fun:_ZNK14QFactoryLoader8instanceERK7QString
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcUtf8Loader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   fun:dlopen
+   fun:_ZN15QLibraryPrivate8load_sysEv
+   fun:_ZN15QLibraryPrivate4loadEv
+   fun:_ZN15QLibraryPrivate10loadPluginEv
+   fun:_ZNK14QFactoryLoader8instanceERK7QString
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:realloc
+   obj:/usr/lib/libX11.so.6.2.0
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:_XlcCreateLC
+   fun:_XlcUtf8Loader
+   fun:_XOpenLC
+   fun:_XrmInitParseInfo
+   obj:/usr/lib/libX11.so.6.2.0
+   fun:XrmGetStringDatabase
+   fun:XGetDefault
+   fun:_Z11getXDefaultPKcS0_Pi
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:calloc
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   fun:dlopen
+   fun:_ZN15QLibraryPrivate8load_sysEv
+   fun:_ZN15QLibraryPrivate4loadEv
+   fun:_ZN15QLibraryPrivate10loadPluginEv
+   fun:_ZNK14QFactoryLoader8instanceERK7QString
+   fun:_Z17createReadHandlerP9QIODeviceRK10QByteArray
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:malloc
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   fun:dlopen
+   fun:_ZN15QLibraryPrivate8load_sysEv
+   fun:_ZN15QLibraryPrivate4loadEv
+   fun:_ZN15QLibraryPrivate10loadPluginEv
+   fun:_ZNK14QFactoryLoader8instanceERK7QString
+   fun:_Z17createReadHandlerP9QIODeviceRK10QByteArray
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:memalign
+   fun:posix_memalign
+   obj:/usr/lib/libglib-2.0.so.0.1000.3
+   fun:g_slice_alloc
+   fun:g_ptr_array_sized_new
+   fun:g_ptr_array_new
+   fun:g_main_context_new
+   fun:g_main_context_default
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:calloc
+   fun:g_malloc0
+   fun:g_main_context_new
+   fun:g_main_context_default
+}
+
+{
+   <insert a suppression name here>
+   Memcheck:Leak
+   fun:calloc
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libc-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   fun:_dl_open
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   obj:/lib/ld-2.3.6.so
+   obj:/lib/tls/i686/cmov/libdl-2.3.6.so
+   fun:dlopen
+   fun:_ZN15QLibraryPrivate8load_sysEv
+   fun:_ZN15QLibraryPrivate4loadEv
+   fun:_ZN15QLibraryPrivate10loadPluginEv
+}
