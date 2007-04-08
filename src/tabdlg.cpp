@@ -92,14 +92,29 @@ TabDlg::TabDlg(PsiCon *psiCon)
 
 	resize(option.sizeTabDlg);
 
-	ShortcutManager::connect("common.close", this, SLOT(closeChat()));
-	ShortcutManager::connect("chat.previous-tab", this, SLOT(previousTab()));
-	ShortcutManager::connect("chat.next-tab", this, SLOT(nextTab()));
+	act_close = new QAction(this);
+	addAction(act_close);
+	connect(act_close,SIGNAL(activated()), SLOT(closeChat()));
+	act_prev = new QAction(this);
+	addAction(act_prev);
+	connect(act_prev,SIGNAL(activated()), SLOT(previousTab()));
+	act_next = new QAction(this);
+	addAction(act_next);
+	connect(act_next,SIGNAL(activated()), SLOT(nextTab()));
+
+	setShortcuts();
 }
 
 TabDlg::~TabDlg()
 {
 
+}
+
+void TabDlg::setShortcuts()
+{
+	act_close->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
+	act_prev->setShortcuts(ShortcutManager::instance()->shortcuts("chat.previous-tab"));
+	act_next->setShortcuts(ShortcutManager::instance()->shortcuts("chat.next-tab"));
 }
 
 void TabDlg::resizeEvent(QResizeEvent *e)
@@ -130,6 +145,11 @@ void TabDlg::sendChatTo(QWidget* chatw, TabDlg* otherTabs)
 	ChatDlg* chat = (ChatDlg*)chatw;
 	closeChat(chat, false);
 	otherTabs->addChat(chat);
+}
+
+void TabDlg::optionsUpdate()
+{
+	setShortcuts();
 }
 
 void TabDlg::setLooks()

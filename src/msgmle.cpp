@@ -68,14 +68,16 @@ void ChatView::keyPressEvent(QKeyEvent *e)
 		// Ignore registered key sequences (and pass them up)
 		QKeySequence k(e->key() + e->modifiers());
 		foreach(QAction* act, dialog_->actions()) {
-			QKeySequence keyseq = act->shortcut();
-			if(!keyseq.isEmpty() && keyseq.matches(k) == QKeySequence::ExactMatch) {
-				e->ignore();
-				//act->trigger();
-				return;
+			foreach(QKeySequence keyseq, act->shortcuts()) {
+				if(!keyseq.isEmpty() && keyseq.matches(k) == QKeySequence::ExactMatch) {
+					e->ignore();
+					//act->trigger();
+					return;
+				}
 			}
 		}
 	}
+
 /*	if(e->key() == Qt::Key_Escape)
 		e->ignore(); 
 #ifdef Q_WS_MAC
@@ -216,11 +218,12 @@ void ChatEdit::keyPressEvent(QKeyEvent *e)
 		// Ignore registered key sequences (and pass them up)
 		QKeySequence k(e->key() + e->modifiers());
 		foreach(QAction* act, dialog_->actions()) {
-			QKeySequence keyseq = act->shortcut();
-			if(!keyseq.isEmpty() && keyseq.matches(k) == QKeySequence::ExactMatch) {
-				e->ignore();
-				//act->trigger();
-				return;
+			foreach(QKeySequence keyseq, act->shortcuts()) {
+				if(!keyseq.isEmpty() && keyseq.matches(k) == QKeySequence::ExactMatch) {
+					e->ignore();
+					//act->trigger();
+					return;
+				}
 			}
 		}
 	}

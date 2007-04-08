@@ -9,6 +9,8 @@
 #include <qradiobutton.h>
 
 #include "ui_opt_chat.h"
+#include "shortcutmanager.h"
+#include "psioptions.h"
 
 class OptChatUI : public QWidget, public Ui::OptChat
 {
@@ -106,7 +108,6 @@ void OptionsTabChat::applyOptions(Options *opt)
 
 	opt->defaultAction   = bg_defAct->buttons().indexOf(bg_defAct->checkedButton());
 	opt->chatSays        = d->ck_chatSays->isChecked();
-	opt->chatSoftReturn  = d->ck_chatSoftReturn->isChecked();
 	opt->alertOpenChats  = d->ck_alertOpenChats->isChecked();
 	opt->raiseChatWindow = d->ck_raiseChatWindow->isChecked();
 	opt->oldSmallChats 	 = opt->smallChats;
@@ -114,6 +115,21 @@ void OptionsTabChat::applyOptions(Options *opt)
 	opt->delChats        = bg_delChats->buttons().indexOf( bg_delChats->checkedButton() );
 	opt->useTabs		 = d->ck_tabChats->isChecked();
 	opt->chatLineEdit    = d->ck_autoResize->isChecked();
+	
+	// Soft return.
+	// Only update this if the value actually changed, or else custom presets
+	// might go lost.
+	bool soft = ShortcutManager::instance()->shortcuts("chat.send").contains(QKeySequence(Qt::Key_Return));
+	if (soft != d->ck_chatSoftReturn->isChecked()) {
+		QVariantList vl;
+		if (d->ck_chatSoftReturn->isChecked()) {
+			vl << qVariantFromValue(QKeySequence(Qt::Key_Enter)) << qVariantFromValue(QKeySequence(Qt::Key_Return));
+		}
+		else  {
+			vl << qVariantFromValue(QKeySequence(Qt::Key_Enter+Qt::CTRL)) << qVariantFromValue(QKeySequence(Qt::CTRL+Qt::Key_Return));
+		}
+		PsiOptions::instance()->setOption("options.shortcuts.chat.send",vl);
+	}
 }
 
 void OptionsTabChat::restoreOptions(const Options *opt)
@@ -125,11 +141,12 @@ void OptionsTabChat::restoreOptions(const Options *opt)
 
 	bg_defAct->buttons()[opt->defaultAction]->setChecked(true);
 	d->ck_chatSays->setChecked( opt->chatSays );
-	d->ck_chatSoftReturn->setChecked( opt->chatSoftReturn );
 	d->ck_alertOpenChats->setChecked( opt->alertOpenChats );
 	d->ck_raiseChatWindow->setChecked( opt->raiseChatWindow );
 	d->ck_smallChats->setChecked( opt->smallChats );
 	d->ck_tabChats->setChecked( opt->useTabs );
 	d->ck_autoResize->setChecked( opt->chatLineEdit );
 	bg_delChats->buttons()[opt->delChats]->setChecked(true);
+	d->ck_chatSoftReturn->setChecked(ShortcutManager::instance()->shortcuts("chat.send").contains(QKeySequence(Qt::Key_Return)));
+	
 }

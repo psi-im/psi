@@ -127,6 +127,8 @@ public:
 	const QString& nick() const;
 
 protected:
+	void setShortcuts();
+
 	void keyPressEvent(QKeyEvent *);
 	void dragEnterEvent(QDragEnterEvent *);
 	void dropEvent(QDropEvent *);

@@ -64,6 +64,8 @@ signals:
 	void unreadMessageUpdate(ChatDlg*, int);
 
 protected:
+	void setShortcuts();
+
 	// reimplemented
 	void keyPressEvent(QKeyEvent *);
 	void closeEvent(QCloseEvent *);

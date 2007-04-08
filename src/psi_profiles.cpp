@@ -435,7 +435,6 @@ void UserProfile::reset()
 	prefs.showSubjects = true;
 	prefs.showCounter = false;
 	prefs.chatSays = false;
-	prefs.chatSoftReturn = true;
 	prefs.showGroupCounts = true;
 	prefs.smallChats = false;
 	prefs.brushedMetal = false;
@@ -836,7 +835,6 @@ bool UserProfile::toFile(const QString &fname)
 			p_misc.appendChild(textTag(doc, "showSubjects", prefs.showSubjects));
 			p_misc.appendChild(textTag(doc, "showCounter", prefs.showCounter));
 			p_misc.appendChild(textTag(doc, "chatSays", prefs.chatSays));
-			p_misc.appendChild(textTag(doc, "chatSoftReturn", prefs.chatSoftReturn));
 			p_misc.appendChild(textTag(doc, "showGroupCounts", prefs.showGroupCounts));
 			p_misc.appendChild(textTag(doc, "jidComplete", prefs.jidComplete));
 			p_misc.appendChild(textTag(doc, "grabUrls", prefs.grabUrls));
@@ -1397,7 +1395,6 @@ bool UserProfile::fromFile(const QString &fname)
 				readBoolEntry(tag, "alertOpenChats", &prefs.alertOpenChats);
 				readBoolEntry(tag, "raiseChatWindow", &prefs.raiseChatWindow);
 				readBoolEntry(tag, "showSubjects", &prefs.showSubjects);
-				readBoolEntry(tag, "chatSoftReturn", &prefs.chatSoftReturn);
 				readBoolEntry(tag, "showGroupCounts", &prefs.showGroupCounts);
 				readBoolEntry(tag, "showCounter", &prefs.showCounter);
 				readBoolEntry(tag, "chatSays", &prefs.chatSays);
@@ -1419,6 +1416,20 @@ bool UserProfile::fromFile(const QString &fname)
 				readBoolEntry(tag, "autoCopy", &prefs.autoCopy);
 				readBoolEntry(tag, "useCaps", &prefs.useCaps);
 				readBoolEntry(tag, "rc", &prefs.useRC);
+				
+				// Migrating for soft return option
+				bool found;
+				findSubTag(tag, "chatSoftReturn", &found);
+				if (found) {
+					bool soft;
+					readBoolEntry(tag, "chatSoftReturn", &soft);
+					QVariantList vl;
+					if (soft) 
+						vl << qVariantFromValue(QKeySequence(Qt::Key_Enter)) << qVariantFromValue(QKeySequence(Qt::Key_Return));
+					else 
+						vl << qVariantFromValue(QKeySequence(Qt::Key_Enter+Qt::CTRL)) << qVariantFromValue(QKeySequence(Qt::CTRL+Qt::Key_Return));
+					PsiOptions::instance()->setOption("options.shortcuts.chat.send",vl);
+				}
 			}
 
 			tag = findSubTag(p_general, "dock", &found);

@@ -101,7 +101,8 @@ public:
 	QMenu *pm_settings;
 
 	QToolBar *toolbar;
-	IconAction *act_send, *act_clear, *act_history, *act_info, *act_pgp, *act_icon, *act_file, *act_compact, *act_voice;
+	IconAction *act_clear, *act_history, *act_info, *act_pgp, *act_icon, *act_file, *act_compact, *act_voice;
+	QAction *act_send, *act_scrollup, *act_scrolldown, *act_close;
 
 	int pending;
 	bool keepOpen, warnSend;
@@ -263,7 +264,7 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 
 	QHBoxLayout *hb3 = new QHBoxLayout(vb3);
 
-	d->act_clear = new IconAction (tr("Clear chat window"), "psi/clearChat", tr("Clear chat window"), ShortcutManager::instance()->shortcut("chat.clear"), this);
+	d->act_clear = new IconAction (tr("Clear chat window"), "psi/clearChat", tr("Clear chat window"), 0, this);
 	connect( d->act_clear, SIGNAL( activated() ), SLOT( doClearButton() ) );
 
 	connect(pa->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
@@ -280,14 +281,29 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 
 	d->act_pgp = new IconAction( tr( "Toggle encryption" ), "psi/cryptoNo", tr( "Toggle encryption" ), 0, this, 0, true );
 
-	d->act_info = new IconAction( tr( "User info" ), "psi/vCard", tr( "User info" ), ShortcutManager::instance()->shortcut("common.user-info"), this );
+	d->act_info = new IconAction( tr( "User info" ), "psi/vCard", tr( "User info" ), 0, this );
 	connect( d->act_info, SIGNAL( activated() ), SLOT( doInfo() ) );
 
-	d->act_history = new IconAction( tr( "Message history" ), "psi/history", tr( "Message history" ), ShortcutManager::instance()->shortcut("common.history"), this );
+	d->act_history = new IconAction( tr( "Message history" ), "psi/history", tr( "Message history" ), 0, this );
 	connect( d->act_history, SIGNAL( activated() ), SLOT( doHistory() ) );
 	
 	d->act_compact = new IconAction( tr( "Toggle Compact/Full size" ), "psi/compact", tr( "Toggle Compact/Full size" ), 0, this );
 	connect( d->act_compact, SIGNAL( activated() ), SLOT( toggleSmallChat() ) );
+
+	d->act_send = new QAction(this);
+	addAction(d->act_send);
+	connect(d->act_send,SIGNAL(activated()), SLOT(doSend()));
+	d->act_close = new QAction(this);
+	addAction(d->act_close);
+	connect(d->act_close,SIGNAL(activated()), SLOT(close()));
+	d->act_scrollup = new QAction(this);
+	addAction(d->act_scrollup);
+	connect(d->act_scrollup,SIGNAL(activated()), SLOT(scrollUp()));
+	d->act_scrolldown = new QAction(this);
+	addAction(d->act_scrolldown);
+	connect(d->act_scrolldown,SIGNAL(activated()), SLOT(scrollDown()));
+
+	setShortcuts();
 
 	d->toolbar = new QToolBar(tr("Chat toolbar"), sp_bottom);
 	d->toolbar->setIconSize(QSize(16,16));
@@ -382,13 +398,6 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 		d->act_pgp->setChecked(true);
 	
 	connect(d->pa->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
-
-	if(!option.useTabs) {
-		ShortcutManager::connect("common.close", this, SLOT(close()));
-		ShortcutManager::connect("common.scroll-up", this, SLOT(scrollUp()));
-		ShortcutManager::connect("common.scroll-down", this, SLOT(scrollDown()));
-	}
-	ShortcutManager::connect("chat.send", this, SLOT(doSend()));
 }
 
 ChatDlg::~ChatDlg()
@@ -396,6 +405,20 @@ ChatDlg::~ChatDlg()
 	d->pa->dialogUnregister(this);
 
 	delete d;
+}
+
+void ChatDlg::setShortcuts()
+{
+	d->act_clear->setShortcuts(ShortcutManager::instance()->shortcuts("chat.clear"));
+	d->act_info->setShortcuts(ShortcutManager::instance()->shortcuts("common.user-info"));
+	d->act_history->setShortcuts(ShortcutManager::instance()->shortcuts("common.history"));
+	d->act_send->setShortcuts(ShortcutManager::instance()->shortcuts("chat.send"));
+	d->act_scrollup->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-up"));
+	d->act_scrolldown->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-down"));
+
+	if(!option.useTabs) {
+		d->act_close->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
+	}
 }
 
 void ChatDlg::contextMenuEvent(QContextMenuEvent *)
@@ -414,7 +437,8 @@ void ChatDlg::scrollDown()
 }
 
 // FIXME: This should be unnecessary, since these keys are all registered as
-// actions in the constructor. Somehow, Qt ignores this.
+// actions in the constructor. Somehow, Qt ignores this sometimes (i think
+// just for actions that have no modifier). 
 void ChatDlg::keyPressEvent(QKeyEvent *e)
 {
 	QKeySequence key = e->key() + e->modifiers();
@@ -792,12 +816,12 @@ void ChatDlg::setLooks()
 
 void ChatDlg::optionsUpdate()
 {
-	if (option.oldSmallChats!=option.smallChats)
-	{
+	if (option.oldSmallChats!=option.smallChats) {
 		d->smallChat=option.smallChats;
 	}
 
 	setLooks();
+	setShortcuts();
 
 	if(isHidden()) {
 		if(option.delChats == dcClose) {

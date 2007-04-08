@@ -62,6 +62,7 @@ public:
 signals:
 	void isDying(TabDlg*);
 protected:
+	void setShortcuts();
 	void closeEvent( QCloseEvent* );
 	void keyPressEvent(QKeyEvent *);
 	void windowActivationChange(bool);
@@ -79,6 +80,7 @@ public slots:
 	void closeChat(ChatDlg*,bool);
 	void selectTab(ChatDlg*);
 	void activated();
+	void optionsUpdate();
 private slots:
 	void tabSelected(QWidget* chat);
 	void checkHasChats();
@@ -104,6 +106,7 @@ private:
 	Q3PopupMenu *tabMenu;
 	QMap<ChatDlg*, bool> tabIsComposing;
 	QMap<ChatDlg*, bool> tabHasMessages;
+	QAction *act_close, *act_next, *act_prev;
 
 	QSize chatSize;
 };

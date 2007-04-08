@@ -130,7 +130,7 @@ struct Options
 	QString customBrowser, customMailer;
 
 	bool ignoreHeadline, ignoreNonRoster, excludeGroupChatsFromIgnore, scrollTo, keepSizes, useEmoticons, alertOpenChats;
-	bool raiseChatWindow, showSubjects, showCounter, chatSays, chatSoftReturn, showGroupCounts;
+	bool raiseChatWindow, showSubjects, showCounter, chatSays, showGroupCounts;
 
 	QSize sizeEventDlg, sizeChatDlg, sizeTabDlg;
 	bool jidComplete, grabUrls, noGCSound;

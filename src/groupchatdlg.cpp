@@ -402,6 +402,7 @@ public:
 	QPushButton *pb_topic;
 	QToolBar *toolbar;
 	IconAction *act_find, *act_clear, *act_icon, *act_configure;
+	QAction *act_send, *act_scrollup, *act_scrolldown, *act_close;
 	QLabel* lb_ident;
 	Q3PopupMenu *pm_settings;
 	bool smallChat;
@@ -810,7 +811,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	PsiToolTip::install(d->le_topic);
 	hb_top->addWidget(d->le_topic);
 
-	d->act_find = new IconAction(tr("Find"), "psi/search", tr("&Find"), ShortcutManager::instance()->shortcut("chat.find"), this);
+	d->act_find = new IconAction(tr("Find"), "psi/search", tr("&Find"), 0, this);
 	connect(d->act_find, SIGNAL(activated()), SLOT(openFind()));
 	d->act_find->addTo( sp_top_top );
 	
@@ -844,7 +845,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	QVBoxLayout *vb_bottom = new QVBoxLayout(sp_bottom, 0, 4);
 
 	// toolbar
-	d->act_clear = new IconAction (tr("Clear chat window"), "psi/clearChat", tr("Clear chat window"), ShortcutManager::instance()->shortcut("chat.clear"), this);
+	d->act_clear = new IconAction (tr("Clear chat window"), "psi/clearChat", tr("Clear chat window"), 0, this);
 	connect( d->act_clear, SIGNAL( activated() ), SLOT( doClearButton() ) );
 	
 	d->act_configure = new IconAction(tr("Configure Room"), "psi/configure-room", tr("&Configure Room"), 0, this);
@@ -861,6 +862,20 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	d->toolbar->addWidget(new StretchWidget(d->toolbar));
 	d->toolbar->addAction(d->act_icon);
 	vb_bottom->addWidget( d->toolbar );
+
+	// Common actions
+	d->act_send = new QAction(this);
+	addAction(d->act_send);
+	connect(d->act_send,SIGNAL(activated()), SLOT(mle_returnPressed()));
+	d->act_close = new QAction(this);
+	addAction(d->act_close);
+	connect(d->act_close,SIGNAL(activated()), SLOT(close()));
+	d->act_scrollup = new QAction(this);
+	addAction(d->act_scrollup);
+	connect(d->act_scrollup,SIGNAL(activated()), SLOT(scrollUp()));
+	d->act_scrolldown = new QAction(this);
+	addAction(d->act_scrolldown);
+	connect(d->act_scrolldown,SIGNAL(activated()), SLOT(scrollDown()));
 
 	// chat edit
 	if ( !option.chatLineEdit ) {
@@ -909,12 +924,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
 	connect(d->mucManager,SIGNAL(action_error(MUCManager::Action, int, const QString&)), SLOT(action_error(MUCManager::Action, int, const QString&)));
 
 	setLooks();
+	setShortcuts();
 	updateCaption();
 	setConnecting();
-
-	ShortcutManager::connect("chat.send", this, SLOT(mle_returnPressed()));
-	ShortcutManager::connect("common.scroll-up", this, SLOT(scrollUp()));
-	ShortcutManager::connect("common.scroll-down", this, SLOT(scrollDown()));
 }
 
 GCMainDlg::~GCMainDlg()
@@ -929,6 +941,16 @@ GCMainDlg::~GCMainDlg()
 	d->pa->dialogUnregister(this);
 	delete d->mucManager;
 	delete d;
+}
+
+void GCMainDlg::setShortcuts()
+{
+	d->act_clear->setShortcuts(ShortcutManager::instance()->shortcuts("chat.clear"));
+	d->act_find->setShortcuts(ShortcutManager::instance()->shortcuts("chat.find"));
+	d->act_send->setShortcuts(ShortcutManager::instance()->shortcuts("chat.send"));
+	d->act_close->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
+	d->act_scrollup->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-up"));
+	d->act_scrolldown->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-down"));
 }
 
 void GCMainDlg::scrollUp() {
@@ -1723,6 +1745,7 @@ void GCMainDlg::optionsUpdate()
 	delete m;*/
 
 	setLooks();
+	setShortcuts();
 
 	// update status icons
 	d->lv_users->updateAll();

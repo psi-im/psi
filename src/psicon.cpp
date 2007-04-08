@@ -732,6 +732,7 @@ TabDlg* PsiCon::newTabs()
 	tab=new TabDlg(this);
 	d->tabs.append(tab);
 	connect (tab, SIGNAL ( isDying(TabDlg*) ), SLOT ( tabDying(TabDlg*) ) );
+	connect(this, SIGNAL(emitOptionsUpdate()), tab, SLOT(optionsUpdate()));
 	return tab;
 }
 
