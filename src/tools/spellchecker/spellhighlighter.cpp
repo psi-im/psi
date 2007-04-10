@@ -13,9 +13,8 @@ void SpellHighlighter::highlightBlock(const QString& text)
 	tcf.setUnderlineStyle(QTextCharFormat::SpellCheckUnderline);
 
 	// Match words (minimally)
-	QRegExp expression("\\b.+\\b");
-	expression.setMinimal(true);
-	
+	QRegExp expression("\\b\\w+\\b");
+
 	// Iterate through all words
 	int index = text.indexOf(expression);
 	while (index >= 0) {
