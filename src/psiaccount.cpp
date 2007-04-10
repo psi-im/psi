@@ -4223,10 +4223,9 @@ void PsiAccount::pgp_verifyFinished()
 		UserResource &ur = *rit;
 
 		QCA::SecureMessageSignature signer;
-		if(t->success())
+		if(t->success()) {
 			signer = t->signer();
 
-		if (signer.identityResult() != QCA::SecureMessageSignature::NoKey) {
 			ur.setPublicKeyID(signer.key().pgpPublicKey().keyId());
 			ur.setPGPVerifyStatus(signer.identityResult());
 			ur.setSigTimestamp(signer.timestamp());
