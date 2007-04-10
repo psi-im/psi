@@ -72,6 +72,15 @@ public:
 		gAdvWidget = new GAdvancedWidget( this );
 	}
 
+	void setWindowIcon(const QIcon& icon)
+	{
+#ifdef Q_WS_MAC
+		Q_UNUSED(icon);
+#else
+		BaseClass::setWindowIcon(icon);
+#endif
+	}
+
 	static bool stickEnabled() { return GAdvancedWidget::stickEnabled(); }
 	static void setStickEnabled( bool val ) { GAdvancedWidget::setStickEnabled( val ); }
 
