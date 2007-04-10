@@ -149,7 +149,7 @@ void PsiActionList::Private::createMainWin()
 	{
 		PopupAction *optionsButton = new PopupAction (tr("&Psi"), 0, this, "optionsButton");
 		optionsButton->setWhatsThis (tr("The main Psi button, that provides access to many actions"));
-		optionsButton->setSizePolicy ( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Maximum ) );
+		optionsButton->setSizePolicy ( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Preferred ) );
 		optionsButton->setIcon ( IconsetFactory::iconPtr("psi/main"), false );
 
 		PopupAction *statusButton = new PopupAction (tr("&Status"), 0, this, "statusButton");
