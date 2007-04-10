@@ -21,7 +21,6 @@
 #ifndef GROUPCHATDLG_H
 #define GROUPCHATDLG_H
 
-#include <Q3ListView>
 #include <QLineEdit>
 #include <QContextMenuEvent>
 #include <QDialog>
@@ -45,64 +44,6 @@ class GCMainDlg;
 class QPainter;
 class QColorGroup;
 class Q3DragObject;
-class GCUserView;
-class GCUserViewGroupItem;
-
-class GCUserViewItem : public QObject, public Q3ListViewItem
-{
-public:
-	GCUserViewItem(GCUserViewGroupItem *);
-	void paintFocus(QPainter *, const QColorGroup &, const QRect &);
-	void paintBranches(QPainter *p, const QColorGroup &cg, int w, int, int h);
-
-	Status s;
-};
-
-class GCUserViewGroupItem : public Q3ListViewItem
-{
-public:
-	GCUserViewGroupItem(GCUserView *, const QString&, int);
-	void paintFocus(QPainter *, const QColorGroup &, const QRect &);
-	void paintBranches(QPainter *p, const QColorGroup &cg, int w, int, int h);
-	void paintCell(QPainter *p, const QColorGroup & cg, int column, int width, int alignment);
-	int compare(Q3ListViewItem *i, int col, bool ascending ) const;
-private:
-	int key_;
-};
-
-class GCUserView : public Q3ListView
-{
-	Q_OBJECT
-public:
-	GCUserView(GCMainDlg*, QWidget *parent=0, const char *name=0);
-	~GCUserView();
-
-	Q3DragObject* dragObject();
-	void clear();
-	void updateAll();
-	bool hasJid(const Jid&);
-	Q3ListViewItem *findEntry(const QString &);
-	void updateEntry(const QString &, const Status &);
-	void removeEntry(const QString &);
-	QStringList nickList() const;
-	
-protected:
-	enum Role { Moderator = 0, Participant = 1, Visitor = 2 };
-	
-	GCUserViewGroupItem* findGroup(XMPP::MUCItem::Role a) const;
-	bool maybeTip(const QPoint &);
-	bool event(QEvent* e);
-
-signals:
-	void action(const QString &, const Status &, int);
-
-private slots:
-	void qlv_doubleClicked(Q3ListViewItem *);
-	void qlv_contextMenuRequested(Q3ListViewItem *, const QPoint &, int);
-
-private:
-	GCMainDlg* gcDlg_;
-};
 
 /*class GCLineEdit : public QLineEdit
 {

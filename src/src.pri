@@ -139,6 +139,7 @@ HEADERS += \
 	$$PWD/tabdlg.h \
 	$$PWD/adduserdlg.h \
 	$$PWD/groupchatdlg.h \
+	$$PWD/gcuserview.h \
 	$$PWD/infodlg.h \
 	$$PWD/translationmanager.h \
 	$$PWD/eventdb.h \
@@ -257,6 +258,7 @@ SOURCES += \
 	$$PWD/tabdlg.cpp \
 	$$PWD/adduserdlg.cpp \
 	$$PWD/groupchatdlg.cpp \
+	$$PWD/gcuserview.cpp \
 	$$PWD/infodlg.cpp \
 	$$PWD/translationmanager.cpp \
 	$$PWD/certutil.cpp \
