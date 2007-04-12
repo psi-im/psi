@@ -125,10 +125,10 @@ int GCUserViewGroupItem::compare(Q3ListViewItem *i, int col, bool ascending) con
 // GCUserView
 //----------------------------------------------------------------------------
 
-GCUserView::GCUserView(GCMainDlg* dlg, QWidget *parent, const char *name)
-:Q3ListView(parent, name)
+GCUserView::GCUserView(QWidget* parent)
+	: Q3ListView(parent)
+	, gcDlg_(0)
 {
-	gcDlg_ = dlg;
 	setResizeMode(Q3ListView::AllColumns);
 	setTreeStepSize(0);
 	setShowToolTips(false);
@@ -149,6 +149,11 @@ GCUserView::GCUserView(GCMainDlg* dlg, QWidget *parent, const char *name)
 
 GCUserView::~GCUserView()
 {
+}
+
+void GCUserView::setMainDlg(GCMainDlg* mainDlg)
+{
+	gcDlg_ = mainDlg;
 }
 
 Q3DragObject* GCUserView::dragObject()
@@ -309,7 +314,7 @@ void GCUserView::qlv_doubleClicked(Q3ListViewItem *i)
 
 void GCUserView::qlv_contextMenuRequested(Q3ListViewItem *i, const QPoint &pos, int)
 {
-	if(!i || !i->parent())
+	if(!i || !i->parent() || !gcDlg_)
 		return;
 
 	QPointer<GCUserViewItem> lvi = (GCUserViewItem *)i;

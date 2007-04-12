@@ -215,9 +215,6 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 	PsiToolTip::install(ui_.lb_status);
 	ui_.lb_status->setPsiIcon(IconsetFactory::iconPtr("status/noauth"));
 
-	ui_.tb_actions->setPopupMode(QToolButton::InstantPopup);
-
-	ui_.tb_emoticons->setPopupMode(QToolButton::InstantPopup);
 	ui_.tb_emoticons->setIcon(IconsetFactory::icon("psi/smile").icon());
 
 	connect(ui_.mle, SIGNAL(textEditCreated(QTextEdit*)), SLOT(chatEditCreated()));

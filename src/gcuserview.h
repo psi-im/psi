@@ -60,9 +60,10 @@ class GCUserView : public Q3ListView
 {
 	Q_OBJECT
 public:
-	GCUserView(GCMainDlg*, QWidget *parent=0, const char *name=0);
+	GCUserView(QWidget* parent);
 	~GCUserView();
 
+	void setMainDlg(GCMainDlg* mainDlg);
 	Q3DragObject* dragObject();
 	void clear();
 	void updateAll();

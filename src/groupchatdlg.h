@@ -33,6 +33,7 @@
 #include "xmpp_muc.h"
 #include "xmpp_status.h"
 #include "xmpp_jid.h"
+#include "ui_groupchatdlg.h"
 
 using namespace XMPP;
 
@@ -119,11 +120,14 @@ private slots:
 #ifdef WHITEBOARDING
 	void openWhiteboard();
 #endif
+	void chatEditCreated();
 
 public:
 	class Private;
+	friend class Private;
 private:
 	Private *d;
+	Ui::GroupChatDlg ui_;
 
 	void doFlash(bool);
 	void doAlert();
