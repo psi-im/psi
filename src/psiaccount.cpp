@@ -998,7 +998,7 @@ void PsiAccount::login()
 
 	// stream
 	d->conn = new AdvancedConnector;
-	if(d->acc.ssl != UserAccount::SSL_No) {
+	if(d->acc.ssl != UserAccount::SSL_No && QCA::isSupported("tls")) {
 		d->tls = new QCA::TLS;
 		d->tls->setTrustedCertificates(CertUtil::allCertificates());
 		d->tlsHandler = new QCATLSHandler(d->tls);
@@ -1010,7 +1010,7 @@ void PsiAccount::login()
 		d->conn->setOptHostPort(host, port);
 		d->conn->setOptSSL(d->acc.ssl == UserAccount::SSL_Legacy);
 	}
-	else {
+	else if (QCA::isSupported("tls")) {
 		d->conn->setOptProbe(d->acc.legacy_ssl_probe && d->acc.ssl != UserAccount::SSL_No);
 	}
 
