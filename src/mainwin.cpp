@@ -421,7 +421,9 @@ void MainWin::registerAction( IconAction *action )
 		{ "menu_change_profile", activated, this, SIGNAL( changeProfile() ) },
 		{ "menu_quit",           activated, this, SLOT( try2tryCloseProgram() ) },
 		{ "menu_play_sounds",    toggled,   this, SLOT( actPlaySoundsActivated(bool) ) },
+#ifdef USE_PEP
 		{ "publish_tune",        toggled,   this, SLOT( actPublishTuneActivated(bool) ) },
+#endif
 
 		{ "event_notifier", SIGNAL( clicked(int) ), this, SLOT( statusClicked(int) ) },
 		{ "event_notifier", activated, this, SLOT( doRecvNextEvent() ) },
@@ -443,9 +445,11 @@ void MainWin::registerAction( IconAction *action )
 	QString aName;
 	for ( i = 0; !(aName = QString(actionlist[i].name)).isEmpty(); i++ ) {
 		if ( aName == action->name() ) {
+#ifdef USE_PEP
 			// Check before connecting, otherwise we get a loop
 			if ( aName == "publish_tune")
 				action->setChecked( PsiOptions::instance()->getOption("options.extended-presence.tune.publish").toBool() );
+#endif
 
 			disconnect( action, actionlist[i].signal, actionlist[i].receiver, actionlist[i].slot ); // for safety
 			connect( action, actionlist[i].signal, actionlist[i].receiver, actionlist[i].slot );

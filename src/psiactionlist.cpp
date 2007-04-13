@@ -238,6 +238,7 @@ void PsiActionList::Private::createMainWin()
 		createActionList( tr( "Menu Items" ), Actions_MainWin, actions );
 	}
 
+#ifdef USE_PEP
 	{
 		IconAction *actPublishTune = new IconAction (tr("Publish tune"), "psi/publishTune", tr("Publish &tune"), 0, this, 0, true);
 		actPublishTune->setWhatsThis (tr("Toggles whether the currently playing tune should be published or not."));
@@ -249,6 +250,7 @@ void PsiActionList::Private::createMainWin()
 
 		createActionList( tr( "Publish" ), Actions_MainWin, actions );
 	}
+#endif
 
 	{
 		// status actions

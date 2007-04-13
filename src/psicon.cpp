@@ -335,8 +335,10 @@ bool PsiCon::init()
 	//qWarning(qPrintable(QString("Loading system defaults from %1").arg(systemDefaults)));
 	options->load(systemDefaults);
 
+#ifdef USE_PEP
 	// Create the tune controller
 	d->tuneController = new CombinedTuneController();
+#endif
 
 	// load the old profile
 	d->pro.reset();

@@ -67,7 +67,10 @@
 #include "chatdlg.h"
 #include "contactview.h"
 #include "mood.h"
+#include "tune.h"
+#ifdef USE_PEP
 #include "tunecontroller.h"
+#endif
 #include "groupchatdlg.h"
 #include "statusdlg.h"
 #include "infodlg.h"
@@ -578,10 +581,12 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent)
 	
 	// Bookmarks
 	d->bookmarkManager = new BookmarkManager(d->client);
-	
+
+#ifdef USE_PEP
 	// Tune Controller
 	connect(d->psi->tuneController(), SIGNAL(stopped()), SLOT(tuneStopped()));
 	connect(d->psi->tuneController(), SIGNAL(playing(const Tune&)),SLOT(tunePlaying(const Tune&)));
+#endif
 
 	// HttpAuth
 	d->httpAuthManager = new HttpAuthManager(d->client->rootTask());
@@ -1508,6 +1513,7 @@ void PsiAccount::setPEPAvailable(bool b)
 
 	d->pepAvailable = b;
 
+#ifdef PEP
 	// Publish support
 	if (b && !d->client->extensions().contains("ep")) {
 		QStringList pepNodes;
@@ -1531,6 +1537,7 @@ void PsiAccount::setPEPAvailable(bool b)
 		if (!current.isNull())
 			publishTune(current);
 	}
+#endif
 }
 
 void PsiAccount::getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>& conferences)
@@ -4397,6 +4404,7 @@ void PsiAccount::optionsUpdate()
 	d->cp->updateEntry(d->self);
 
 	// Tune
+#ifdef USE_PEP
 	bool publish = d->options->getOption("options.extended-presence.tune.publish").toBool();
 	if (!d->lastTune.isNull() && !publish) {
 		publishTune(Tune());
@@ -4406,6 +4414,7 @@ void PsiAccount::optionsUpdate()
 		if (!current.isNull())
 			publishTune(current);
 	}
+#endif
 
 	// Chat states
 	setSendChatState(option.messageEvents);

@@ -918,10 +918,12 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		sm->insertSeparator();
 		sm->insertItem(PsiIconset::instance()->status(STATUS_OFFLINE).icon(),	status2txt(STATUS_OFFLINE),	STATUS_OFFLINE		+ status_start);
 		pm.insertItem(tr("&Status"), sm);
+#ifdef USE_PEP
 		pm.insertItem(tr("Mood"), 11);
 		pm.setItemEnabled(11, d->pa->serverInfoManager()->hasPEP());
 		pm.insertItem(tr("Avatar"), 12);
 		pm.setItemEnabled(12, d->pa->serverInfoManager()->hasPEP());
+#endif
 
 		pm.insertSeparator();
 		pm.insertItem(IconsetFactory::icon("psi/addContact").icon(), tr("&Add a contact"), 7);
