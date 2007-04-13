@@ -11,8 +11,19 @@ public:
 	qc_cyrussasl(Conf *c) : ConfObj(c) {}
 	QString name() const { return "Cyrus SASL2"; }
 	QString shortname() const { return "cyrussasl"; }
+
+	QString checkString() const {
+		if (!QFile::exists("third-party/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
+			return "";
+		else
+			return ConfObj::checkString();
+	}
+
 	bool exec()
 	{
+		if (!QFile::exists("third-party/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty() || !QFile::exists("third-party/qca-sasl"))
+			return false;
+
 		QString inc, lib;
 		QString s;
 

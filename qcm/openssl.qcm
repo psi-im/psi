@@ -12,17 +12,16 @@ public:
 	QString name() const { return "OpenSSL"; }
 	QString shortname() const { return "openssl"; }
 
-	QString checkString() const 
-	{ 
-		if (conf->getenv("QC_ENABLE_qca").isEmpty())
-			return ConfObj::checkString();
+	QString checkString() const {
+		if (!QFile::exists("third-party/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
+			return "";
 		else
-			return QString(); 
+			return ConfObj::checkString();
 	}
 
 	bool exec()
 	{
-		if (!conf->getenv("QC_ENABLE_qca").isEmpty())
+		if (!QFile::exists("third-party/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty() || !QFile::exists("third-party/qca-openssl"))
 			return false;
 
 		QString inc, lib;

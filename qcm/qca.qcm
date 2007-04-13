@@ -13,10 +13,19 @@ public:
 	qc_qca(Conf *c) : ConfObj(c) {}
 	QString name() const { return "QCA 2.0"; }
 	QString shortname() const { return "qca"; }
+
+	QString checkString() const {
+		if (QFile::exists("third-party/qca") && conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
+			return "";
+		else
+			return ConfObj::checkString();
+	}
+
 	bool exec()
 	{
-		if (conf->getenv("QC_ENABLE_qca").isEmpty())
-			return false;
+		// Check if we have a bundnled version
+		if (QFile::exists("third-party/qca") && conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
+			return true;
 
 		// test for "crypto" feature and check qca version number
 

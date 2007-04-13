@@ -7,11 +7,9 @@
   <dep type='qt4'>
     <required/>
   </dep>
+  <dep type='bundled-qca' />
   <dep type='qca'>
-    <disabled/>
-  </dep>
-  <dep type='qca_static'>
-	<required/>
+    <required/>
   </dep>
   <dep type='openssl' />
   <dep type='cyrussasl' />

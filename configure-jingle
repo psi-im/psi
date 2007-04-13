@@ -22,13 +22,15 @@ Project options:
                              QCA only)
 
 Dependency options:
-  --enable-qca                    Enable use of external QCA 2.0
+  --disable-bundled-qca           Disable use of Use bundled QCA
   --disable-openssl               Disable use of OpenSSL (bundled QCA only)
-  --with-openssl-inc=[path]       Path to OpenSSL include files
-  --with-openssl-lib=[path]       Path to OpenSSL library files
-  --disable-cyrussasl             Disable use of Cyrus SASL2
-  --with-sasl-inc=[path]          Path to Cyrus SASL2 include files
-  --with-sasl-lib=[path]          Path to Cyrus SASL2 library files
+  --with-openssl-inc=[path]       Path to OpenSSL include files (bundled QCA only)
+  --with-openssl-lib=[path]       Path to OpenSSL library files (bundled QCA only)
+  --disable-cyrussasl             Disable use of Cyrus SASL2 (bundled QCA only)
+  --with-sasl-inc=[path]          Path to Cyrus SASL2 include files (bundled QCA
+                                  only)
+  --with-sasl-lib=[path]          Path to Cyrus SASL2 library files (bundled QCA
+                                  only)
   --with-zlib-inc=[path]          Path to zlib include files
   --with-zlib-lib=[path]          Path to zlib library files
   --enable-universal              Enable use of Mac OS X universal binary support
@@ -184,8 +186,8 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
-		--enable-qca)
-			QC_ENABLE_qca="Y"
+		--disable-bundled-qca)
+			QC_DISABLE_bundled_qca="Y"
 			shift
 			;;
 
@@ -416,7 +418,7 @@ echo BINDIR=$BINDIR
 echo DATADIR=$DATADIR
 echo EX_QTDIR=$EX_QTDIR
 echo QC_CERTSTORE_PATH=$QC_CERTSTORE_PATH
-echo QC_ENABLE_qca=$QC_ENABLE_qca
+echo QC_DISABLE_bundled_qca=$QC_DISABLE_bundled_qca
 echo QC_DISABLE_openssl=$QC_DISABLE_openssl
 echo QC_WITH_OPENSSL_INC=$QC_WITH_OPENSSL_INC
 echo QC_WITH_OPENSSL_LIB=$QC_WITH_OPENSSL_LIB
@@ -551,6 +553,35 @@ public:
 		return(QT_VERSION >= 0x040200);
 	}
 };
+#line 1 "bundled-qca.qcm"
+/*
+-----BEGIN QCMOD-----
+name: Use bundled QCA
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_bundled_qca
+//----------------------------------------------------------------------------
+class qc_bundled_qca : public ConfObj
+{
+public:
+	qc_bundled_qca(Conf *c) : ConfObj(c) {}
+	QString name() const { return "bundled QCA 2.0"; }
+	QString shortname() const { return "bundled_qca"; }
+
+	bool exec()
+	{
+		// FIXME: Check QCA version number
+		if (QFile::exists("third-party/qca")) {
+			conf->addExtra("CONFIG += qca-static");
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+};
 #line 1 "qca.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -567,10 +598,19 @@ public:
 	qc_qca(Conf *c) : ConfObj(c) {}
 	QString name() const { return "QCA 2.0"; }
 	QString shortname() const { return "qca"; }
+
+	QString checkString() const {
+		if (QFile::exists("third-party/qca") && conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
+			return "";
+		else
+			return ConfObj::checkString();
+	}
+
 	bool exec()
 	{
-		if (conf->getenv("QC_ENABLE_qca").isEmpty())
-			return false;
+		// Check if we have a bundnled version
+		if (QFile::exists("third-party/qca") && conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
+			return true;
 
 		// test for "crypto" feature and check qca version number
 
@@ -596,37 +636,12 @@ public:
 		return true;
 	}
 };
-#line 1 "qca_static.qcm"
-/*
------BEGIN QCMOD-----
-name: Use bundled QCA
------END QCMOD-----
-*/
-
-//----------------------------------------------------------------------------
-// qc_qca_static
-//----------------------------------------------------------------------------
-class qc_qca_static : public ConfObj
-{
-public:
-	qc_qca_static(Conf *c) : ConfObj(c) {}
-	QString name() const { return "bundled QCA"; }
-	QString shortname() const { return "qca_static"; }
-	QString checkString() const { return QString(); }
-
-	bool exec()
-	{
-		if (conf->getenv("QC_ENABLE_qca").isEmpty())
-			conf->addExtra("CONFIG += qca-static");
-		return true;
-	}
-};
 #line 1 "openssl.qcm"
 /*
 -----BEGIN QCMOD-----
 name: OpenSSL (bundled QCA only)
-arg: with-openssl-inc=[path],Path to OpenSSL include files
-arg: with-openssl-lib=[path],Path to OpenSSL library files
+arg: with-openssl-inc=[path],Path to OpenSSL include files (bundled QCA only)
+arg: with-openssl-lib=[path],Path to OpenSSL library files (bundled QCA only)
 -----END QCMOD-----
 */
 class qc_openssl : public ConfObj
@@ -636,17 +651,16 @@ public:
 	QString name() const { return "OpenSSL"; }
 	QString shortname() const { return "openssl"; }
 
-	QString checkString() const 
-	{ 
-		if (conf->getenv("QC_ENABLE_qca").isEmpty())
-			return ConfObj::checkString();
+	QString checkString() const {
+		if (!QFile::exists("third-party/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
+			return "";
 		else
-			return QString(); 
+			return ConfObj::checkString();
 	}
 
 	bool exec()
 	{
-		if (!conf->getenv("QC_ENABLE_qca").isEmpty())
+		if (!QFile::exists("third-party/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty() || !QFile::exists("third-party/qca-openssl"))
 			return false;
 
 		QString inc, lib;
@@ -719,9 +733,9 @@ public:
 #line 1 "cyrussasl.qcm"
 /*
 -----BEGIN QCMOD-----
-name: Cyrus SASL2
-arg: with-sasl-inc=[path],Path to Cyrus SASL2 include files
-arg: with-sasl-lib=[path],Path to Cyrus SASL2 library files
+name: Cyrus SASL2 (bundled QCA only)
+arg: with-sasl-inc=[path],Path to Cyrus SASL2 include files (bundled QCA only)
+arg: with-sasl-lib=[path],Path to Cyrus SASL2 library files (bundled QCA only)
 -----END QCMOD-----
 */
 class qc_cyrussasl : public ConfObj
@@ -730,8 +744,19 @@ public:
 	qc_cyrussasl(Conf *c) : ConfObj(c) {}
 	QString name() const { return "Cyrus SASL2"; }
 	QString shortname() const { return "cyrussasl"; }
+
+	QString checkString() const {
+		if (!QFile::exists("third-party/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
+			return "";
+		else
+			return ConfObj::checkString();
+	}
+
 	bool exec()
 	{
+		if (!QFile::exists("third-party/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty() || !QFile::exists("third-party/qca-sasl"))
+			return false;
+
 		QString inc, lib;
 		QString s;
 
@@ -866,18 +891,17 @@ public:
 	QString name() const { return "certstore"; }
 	QString shortname() const { return "certstore"; }
 
-	QString checkString() const 
-	{ 
-		if (conf->getenv("QC_ENABLE_qca").isEmpty())
-			return ConfObj::checkString();
+	QString checkString() const {
+		if (!QFile::exists("third-party/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
+			return "";
 		else
-			return QString(); 
+			return ConfObj::checkString();
 	}
-	
+
 	bool exec()
 	{
-		if (!conf->getenv("QC_ENABLE_qca").isEmpty())
-			return true;
+		if (!QFile::exists("third-party/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty() || !QFile::exists("third-party/qca-openssl"))
+			return false;
 			
 		bundled = false;
 
@@ -1771,10 +1795,10 @@ cat >$1/modules_new.cpp <<EOT
     o = new qc_qt4(conf);
     o->required = true;
     o->disabled = false;
-    o = new qc_qca(conf);
+    o = new qc_bundled_qca(conf);
     o->required = false;
-    o->disabled = true;
-    o = new qc_qca_static(conf);
+    o->disabled = false;
+    o = new qc_qca(conf);
     o->required = true;
     o->disabled = false;
     o = new qc_openssl(conf);
@@ -2716,7 +2740,7 @@ export BINDIR
 export DATADIR
 export EX_QTDIR
 export QC_CERTSTORE_PATH
-export QC_ENABLE_qca
+export QC_DISABLE_bundled_qca
 export QC_DISABLE_openssl
 export QC_WITH_OPENSSL_INC
 export QC_WITH_OPENSSL_LIB
