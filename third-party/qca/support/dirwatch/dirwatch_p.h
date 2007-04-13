@@ -37,7 +37,7 @@ namespace QCA
 		int addDir(const QString &);
 		void removeDir(int);
 
-	signals:
+	Q_SIGNALS:
 		void dirChanged(int);
 
 	private:

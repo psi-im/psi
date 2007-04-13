@@ -114,7 +114,7 @@ public:
 	virtual void fetchGroup(DLGroupSet set, bool block) = 0;
 	virtual void getResult(QBigInteger *p, QBigInteger *q, QBigInteger *g) const = 0;
 
-signals:
+Q_SIGNALS:
 	void finished();
 };
 
@@ -145,7 +145,7 @@ public:
 	// key agreement
 	virtual SymmetricKey deriveKey(const PKeyBase &theirs);
 
-signals:
+Q_SIGNALS:
 	void finished();
 };
 
@@ -432,7 +432,7 @@ public:
 	virtual void submitPassphrase(int id, int requestId, const QSecureArray &passphrase);
 	virtual void rejectPassphraseRequest(int id, int requestId);
 
-signals:
+Q_SIGNALS:
 	// note: busyStart is assumed after calling start(), no need to emit
 	void busyStart();
 	void busyEnd();
@@ -518,7 +518,7 @@ public:
 	// call after shutdown
 	virtual QByteArray unprocessed() = 0;
 
-signals:
+Q_SIGNALS:
 	void resultsReady();
 	void dtlsTimeout(); // call update, even with empty args
 };
@@ -610,7 +610,7 @@ public:
 	virtual QString username() const = 0;
 	virtual QString authzid() const = 0;
 
-signals:
+Q_SIGNALS:
 	void resultsReady();
 };
 
@@ -652,7 +652,7 @@ public:
 	virtual QString hashName() const = 0;
 	virtual SecureMessageSignatureList signers() const = 0;
 
-signals:
+Q_SIGNALS:
 	void updated();
 };
 

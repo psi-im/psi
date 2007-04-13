@@ -34,7 +34,7 @@ static QString find_reg_gpgProgram()
 	if(RegOpenKeyExA(HKEY_CURRENT_USER, path, 0, KEY_QUERY_VALUE, &hkey) != ERROR_SUCCESS)
 	{
 		if(RegOpenKeyExA(HKEY_LOCAL_MACHINE, path, 0, KEY_QUERY_VALUE, &hkey) != ERROR_SUCCESS)
-			return QString::null;
+			return QString();
 	}
 
 	char szValue[256];
@@ -42,7 +42,7 @@ static QString find_reg_gpgProgram()
 	if(RegQueryValueExA(hkey, "gpgProgram", NULL, NULL, (LPBYTE)szValue, &dwLen) != ERROR_SUCCESS)
 	{
 		RegCloseKey(hkey);
-		return QString::null;
+		return QString();
 	}
 
 	RegCloseKey(hkey);
@@ -61,6 +61,43 @@ static QString find_bin()
 	return bin;
 }
 
+static QString escape_string(const QString &in)
+{
+	QString out;
+	for(int n = 0; n < in.length(); ++n)
+	{
+		if(in[n] == '\\')
+			out += "\\\\";
+		else if(in[n] == ':')
+			out += "\\c";
+		else
+			out += in[n];
+	}
+	return out;
+}
+
+static QString unescape_string(const QString &in)
+{
+	QString out;
+	for(int n = 0; n < in.length(); ++n)
+	{
+		if(in[n] == '\\')
+		{
+			if(n + 1 < in.length())
+			{
+				if(in[n + 1] == '\\')
+					out += '\\';
+				else if(in[n + 1] == 'c')
+					out += ':';
+				++n;
+			}
+		}
+		else
+			out += in[n];
+	}
+	return out;
+}
+
 using namespace QCA;
 
 namespace gpgQCAPlugin {
@@ -72,6 +109,10 @@ public:
 
 	MyPGPKeyContext(Provider *p) : PGPKeyContext(p)
 	{
+		// FIXME
+		_props.inKeyring = true;
+		_props.isSecret = false;
+		_props.isTrusted = false;
 	}
 
 	virtual Provider::Context *clone() const
@@ -92,8 +133,19 @@ public:
 
 	virtual QString toAscii() const
 	{
-		// TODO
-		return QString();
+		GpgOp gpg(find_bin());
+		gpg.setAsciiFormat(true);
+		gpg.doExport(_props.keyId);
+		while(1)
+		{
+			GpgOp::Event e = gpg.waitForEvent(-1);
+			if(e.type == GpgOp::Event::Finished)
+				break;
+		}
+		if(!gpg.success())
+			return QString();
+		QString str = QString::fromLocal8Bit(gpg.read());
+		return str;
 	}
 
 	virtual ConvertResult fromBinary(const QSecureArray &a)
@@ -116,6 +168,8 @@ class MyKeyStoreEntry : public KeyStoreEntryContext
 public:
 	KeyStoreEntry::Type item_type;
 	PGPKey pub, sec;
+	QString _id;
+	QString _storeId, _storeName;
 
 	MyKeyStoreEntry(const PGPKey &_pub, const PGPKey &_sec, Provider *p) : KeyStoreEntryContext(p)
 	{
@@ -152,17 +206,17 @@ public:
 
 	virtual QString id() const
 	{
-		return pub.keyId();
+		return _id;
 	}
 
 	virtual QString storeId() const
 	{
-		return QString();
+		return _storeId;
 	}
 
 	virtual QString storeName() const
 	{
-		return QString();
+		return _storeName;
 	}
 
 	virtual PGPKey pgpSecretKey() const
@@ -173,6 +227,14 @@ public:
 	virtual PGPKey pgpPublicKey() const
 	{
 		return pub;
+	}
+
+	void makeId()
+	{
+		QStringList out;
+		out += escape_string("qca-gnupg-1");
+		out += escape_string(pub.keyId());
+		_id = out.join(":");
 	}
 };
 
@@ -407,15 +469,98 @@ public:
 					MyPGPKeyContext *kc = new MyPGPKeyContext(provider());
 					kc->_props.keyId = id;
 					kc->_props.userIds = QStringList() << pubkeys[n].userIds.first();
+					kc->_props.isSecret = true;
 					sec.change(kc);
 				}
 			}
 
 			MyKeyStoreEntry *c = new MyKeyStoreEntry(pub, sec, provider());
+			c->_storeId = storeId(0);
+			c->_storeName = name(0);
+			c->makeId();
 			out.append(c);
 		}
 
 		return out;
+	}
+
+	virtual KeyStoreEntryContext *entryPassive(const QString &_storeId, const QString &entryId)
+	{
+		Q_UNUSED(_storeId);
+
+		QStringList parts = entryId.split(':');
+		if(parts.count() < 2)
+			return 0;
+		if(unescape_string(parts[0]) != "qca-gnupg-1")
+			return 0;
+
+		QString keyId = unescape_string(parts[1]);
+
+		GpgOp::KeyList seckeys;
+		{
+			GpgOp gpg(find_bin());
+			gpg.doSecretKeys();
+			while(1)
+			{
+				GpgOp::Event e = gpg.waitForEvent(-1);
+				if(e.type == GpgOp::Event::Finished)
+					break;
+			}
+			if(!gpg.success())
+				return 0;
+			seckeys = gpg.keys();
+		}
+
+		GpgOp::KeyList pubkeys;
+		{
+			GpgOp gpg(find_bin());
+			gpg.doPublicKeys();
+			while(1)
+			{
+				GpgOp::Event e = gpg.waitForEvent(-1);
+				if(e.type == GpgOp::Event::Finished)
+					break;
+			}
+			if(!gpg.success())
+				return 0;
+			pubkeys = gpg.keys();
+		}
+
+		int at = -1;
+		for(int n = 0; n < pubkeys.count(); ++n)
+		{
+			QString id = pubkeys[n].keyItems.first().id;
+			if(id == keyId)
+			{
+				at = n;
+				break;
+			}
+		}
+		if(at == -1)
+			return 0;
+
+		MyPGPKeyContext *kc = new MyPGPKeyContext(provider());
+		kc->_props.keyId = keyId;
+		kc->_props.userIds = QStringList() << pubkeys[at].userIds.first();
+		PGPKey pub, sec;
+		pub.change(kc);
+		for(int i = 0; i < seckeys.count(); ++i)
+		{
+			if(seckeys[i].keyItems.first().id == keyId)
+			{
+				MyPGPKeyContext *kc = new MyPGPKeyContext(provider());
+				kc->_props.keyId = keyId;
+				kc->_props.userIds = QStringList() << pubkeys[at].userIds.first();
+				kc->_props.isSecret = true;
+				sec.change(kc);
+			}
+		}
+
+		MyKeyStoreEntry *c = new MyKeyStoreEntry(pub, sec, provider());
+		c->_storeId = storeId(0);
+		c->_storeName = name(0);
+		c->_id = entryId;
+		return c;
 	}
 
 	virtual void submitPassphrase(int, int, const QSecureArray &a)
@@ -709,7 +854,7 @@ public:
 				else if(vr == GpgOp::VerifyBad)
 				{
 					ir = SecureMessageSignature::InvalidSignature;
-					v = ValidityGood;
+					v = ValidityGood; // good key, bad sig
 				}
 				else // GpgOp::VerifyNoKey
 				{
@@ -719,12 +864,14 @@ public:
 
 				SecureMessageKey key;
 				PGPKey pub = publicKeyFromId(signerId, provider());
-				if(pub.isNull()) {
+				if(pub.isNull())
+				{
 					MyPGPKeyContext *kc = new MyPGPKeyContext(provider());
 					kc->_props.keyId = signerId;
 					pub.change(kc);
 				}
 				key.setPGPPublicKey(pub);
+
 				signer = SecureMessageSignature(ir, v, key, ts);
 				wasSigned = true;
 			}

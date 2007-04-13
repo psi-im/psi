@@ -48,10 +48,10 @@ uchar Random::randomChar()
 	return globalRNG().nextByte();
 }
 
-uint Random::randomInt()
+int Random::randomInt()
 {
 	QSecureArray a = globalRNG().nextBytes(sizeof(int));
-	uint x;
+	int x;
 	memcpy(&x, a.data(), a.size());
 	return x;
 }

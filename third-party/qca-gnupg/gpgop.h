@@ -188,7 +188,7 @@ public:
 	QDateTime timestamp() const;       // Verify
 	VerifyResult verifyResult() const; // Verify
 
-signals:
+Q_SIGNALS:
 	void readyRead();
 	void bytesWritten(int bytes);
 	void finished();

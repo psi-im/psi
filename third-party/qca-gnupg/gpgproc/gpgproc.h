@@ -57,7 +57,7 @@ public:
 	void closeAux();
 	void closeCommand();
 
-signals:
+Q_SIGNALS:
 	void error(gpgQCAPlugin::GPGProc::Error error);
 	void finished(int exitCode);
 	void readyReadStdout();

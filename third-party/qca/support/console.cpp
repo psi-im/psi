@@ -201,8 +201,6 @@ class ConsoleThread : public SyncThread
 	Q_OBJECT
 public:
 	ConsoleWorker *worker;
-	QMutex m;
-	QWaitCondition w;
 	Q_PIPE_ID _in_id, _out_id;
 	QByteArray in_left, out_left;
 

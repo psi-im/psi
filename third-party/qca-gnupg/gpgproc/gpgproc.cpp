@@ -322,10 +322,6 @@ public slots:
 
 		emit q->debug(QString("Process error: %1").arg(errmap[x]));
 
-		pipeAux.readEnd().reset();
-		pipeCommand.readEnd().reset();
-		pipeStatus.writeEnd().reset();
-
 		if(x == QProcess::FailedToStart)
 			error = GPGProc::FailedToStart;
 		else if(x == QProcess::WriteError)
@@ -335,6 +331,19 @@ public slots:
 
 		fin_process = true;
 		fin_process_success = false;
+
+#ifdef Q_OS_MAC
+		// If the process fails to start, then the ends of the pipes
+		// intended for the child process are still open.  Some Mac
+		// users experience a lockup if we close our ends of the pipes
+		// when the child's ends are still open.  If we ensure the
+		// child's ends are closed, we prevent this lockup.  I have no
+		// idea why the problem even happens or why this fix should
+		// work.
+		pipeAux.readEnd().reset();
+		pipeCommand.readEnd().reset();
+		pipeStatus.writeEnd().reset();
+#endif
 
 		if(need_status && !fin_status)
 		{

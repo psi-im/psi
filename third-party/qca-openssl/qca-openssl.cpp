@@ -290,6 +290,7 @@ static CertificateInfo get_cert_name(X509_NAME *name)
 	try_get_name_item_by_oid(name, QString("1.3.6.1.4.1.311.60.2.1.2"), IncorporationState, &info);
 	try_get_name_item(name, NID_organizationName, Organization, &info);
 	try_get_name_item(name, NID_organizationalUnitName, OrganizationalUnit, &info);
+	try_get_name_item(name, NID_pkcs9_emailAddress, Email, &info);
 	return info;
 }
 
@@ -2366,7 +2367,8 @@ public:
 
 		unsigned char *p, *tmps = NULL;
 		const unsigned char *s = NULL;
-		int i,j;//,ret=1;
+		int i,j;
+		j = 0;
 
 		if(type == NID_md5_sha1)
 		{
@@ -4044,6 +4046,23 @@ public:
 			sk_X509_pop_free(ca, X509_free);
 		}
 
+		// reorder, throw out
+		QCA::CertificateChain ch;
+		for(int n = 0; n < certs.count(); ++n)
+		{
+			QCA::Certificate cert;
+			cert.change(certs[n]);
+			ch += cert;
+		}
+		certs.clear();
+		ch = ch.complete(QList<QCA::Certificate>());
+		for(int n = 0; n < ch.count(); ++n)
+		{
+			MyCertContext *cc = (MyCertContext *)ch[n].context();
+			certs += (new MyCertContext(*cc));
+		}
+		ch.clear();
+
 		*chain = certs;
 		return ConvertGood;
 	}
@@ -5581,37 +5600,50 @@ public:
 				return;
 			}
 
-			CertificateChain chain;
-			//STACK_OF(X509) *xs = PKCS7_get0_signers(p7, NULL, 0);
-			STACK_OF(X509) *xs = get_pk7_certs(p7);
+			// get the possible message signers
+			QList<Certificate> signers;
+			STACK_OF(X509) *xs = PKCS7_get0_signers(p7, NULL, 0);
 			if(xs)
 			{
-				// TODO: reorder in chain-order?
-				// TODO: throw out certs that don't fit the chain?
 				for(int n = 0; n < sk_X509_num(xs); ++n)
 				{
 					MyCertContext *cc = new MyCertContext(provider());
 					cc->fromX509(sk_X509_value(xs, n));
 					Certificate cert;
 					cert.change(cc);
-					chain.append(cert);
+					signers.append(cert);
 				}
-				//sk_X509_pop_free(xs, X509_free);
+				sk_X509_free(xs);
 			}
 
-			if(!chain.isEmpty())
+			// get the rest of the certificates lying around
+			QList<Certificate> others;
+			xs = get_pk7_certs(p7); // don't free
+			if(xs)
 			{
-				//for(int n = 0; n < chain.count(); ++n)
-				//	printf("%d %s\n", n, qPrintable(chain[n].commonName()));
+				for(int n = 0; n < sk_X509_num(xs); ++n)
+				{
+					MyCertContext *cc = new MyCertContext(provider());
+					cc->fromX509(sk_X509_value(xs, n));
+					Certificate cert;
+					cert.change(cc);
+					others.append(cert);
+				}
 			}
-			else
-				printf("no chain\n");
+
+			// TODO: what happens if the signer cert isn't here?
+			// TODO: support using a signer not stored in the signature
+			if(signers.isEmpty())
+				return;
+
+			// FIXME: handle more than one signer
+			CertificateChain chain;
+			chain += signers[0];
+
+			// build chain
+			chain = chain.complete(others);
 
 			signerChain = chain;
-
-			// TODO: support using a signer not stored in the signature
-			if(chain.isEmpty())
-				return;
 
 			X509_STORE *store = X509_STORE_new();
 			QList<Certificate> cert_list = cms->trustedCerts.certificates();
@@ -5633,16 +5665,18 @@ public:
 			}
 
 			int ret;
-			if (false == sig.isEmpty()) {
+			if(!sig.isEmpty()) {
 				// Detached signMode
 				bi = BIO_new(BIO_s_mem());
 				BIO_write(bi, in.data(), in.size());
-				ret = PKCS7_verify(p7, xs, store, bi, NULL, 0);
+				ret = PKCS7_verify(p7, NULL, store, bi, NULL, 0);
 				BIO_free(bi);
 			} else {
-				ret = PKCS7_verify(p7, xs, store, NULL, out, 0);
+				ret = PKCS7_verify(p7, NULL, store, NULL, out, 0);
 				// qDebug() << "Verify: " << ret;
 			}
+			//if(!ret)
+			//	ERR_print_errors_fp(stdout);
 			X509_STORE_free(store);
 			PKCS7_free(p7);
 
@@ -5732,10 +5766,17 @@ public:
 
 	virtual SecureMessageSignatureList signers() const
 	{
+		// only report signers for verify
+		if(op != Verify)
+			return SecureMessageSignatureList();
+
 		SecureMessageKey key;
 		if(!signerChain.isEmpty())
 			key.setX509CertificateChain(signerChain);
 
+		// TODO/FIXME !!! InvalidSignature might be used here even
+		//   if the signature is just fine, and the key is invalid
+		//   (we need to use InvalidKey instead).
 		SecureMessageSignature s(
 			ver_ret ? SecureMessageSignature::Valid : SecureMessageSignature::InvalidSignature,
 			ver_ret ? ValidityGood : ErrorValidityUnknown,

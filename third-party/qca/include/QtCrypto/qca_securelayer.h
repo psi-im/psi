@@ -178,7 +178,7 @@ namespace QCA
 		*/
 		virtual QByteArray readUnprocessed();
 
-	signals:
+	Q_SIGNALS:
 		/**
 		   This signal is emitted when SecureLayer has
 		   decrypted (application side) data ready to be
@@ -257,12 +257,12 @@ namespace QCA
 		*/
 		enum Error
 		{
-			ErrorSignerExpired, ///< local certificate is expired
-			ErrorSignerInvalid, ///< local certificate is invalid in some way
-			ErrorKeyMismatch,   ///< certificate and private key don't match
-			ErrorInit,          ///< problem starting up %TLS
-			ErrorHandshake,     ///< problem during the negotiation
-			ErrorCrypt          ///< problem at anytime after
+			ErrorSignerExpired,   ///< local certificate is expired
+			ErrorSignerInvalid,   ///< local certificate is invalid in some way
+			ErrorCertKeyMismatch, ///< certificate and private key don't match
+			ErrorInit,            ///< problem starting up %TLS
+			ErrorHandshake,       ///< problem during the negotiation
+			ErrorCrypt            ///< problem at anytime after
 		};
 
 		/**
@@ -551,7 +551,7 @@ namespace QCA
 		*/
 		void setPacketMTU(int size) const;
 
-	signals:
+	Q_SIGNALS:
 		/**
 		   Emitted when the protocol handshake is complete
 
@@ -888,7 +888,7 @@ namespace QCA
 		virtual void writeIncoming(const QByteArray &a);
 		virtual QByteArray readOutgoing(int *plainBytes = 0);
 
-	signals:
+	Q_SIGNALS:
 		/**
 		   This signal is emitted when the client has been
 		   successfully started

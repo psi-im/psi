@@ -82,7 +82,7 @@ public:
   ghost@aladdin.com
 
  */
-/* $Id: qca_default.cpp 646458 2007-03-25 19:36:00Z infiniti $ */
+/* $Id: qca_default.cpp 648692 2007-04-01 01:36:36Z infiniti $ */
 /*
   Independent implementation of MD5 (RFC 1321).
 
@@ -737,6 +737,7 @@ static QString unescape_string(const QString &in)
 					out += '\\';
 				else if(in[n + 1] == 'c')
 					out += ':';
+				++n;
 			}
 		}
 		else
@@ -745,7 +746,7 @@ static QString unescape_string(const QString &in)
 	return out;
 }
 
-static QString makeId(const QString &storeId, const QString &storeName, const QString &entryId, const QString &entryName)
+static QString makeId(const QString &storeId, const QString &storeName, const QString &entryId, const QString &entryName, const QString &entryType, const QString &pem)
 {
 	QStringList out;
 	out += escape_string("qca_def");
@@ -753,18 +754,25 @@ static QString makeId(const QString &storeId, const QString &storeName, const QS
 	out += escape_string(storeName);
 	out += escape_string(entryId);
 	out += escape_string(entryName);
+	out += escape_string(entryType);
+	out += escape_string(pem);
 	return out.join(":");
 }
 
-static bool parseId(const QString &in, QString *storeId, QString *storeName, QString *entryId, QString *entryName)
+static bool parseId(const QString &in, QString *storeId, QString *storeName, QString *entryId, QString *entryName, QString *entryType, QString *pem)
 {
 	QStringList list = in.split(':');
-	if(list.count() != 5)
+	if(list.count() != 7)
+		return false;
+	QString header = unescape_string(list[0]);
+	if(header != "qca_def")
 		return false;
 	*storeId   = unescape_string(list[1]);
 	*storeName = unescape_string(list[2]);
 	*entryId   = unescape_string(list[3]);
 	*entryName = unescape_string(list[4]);
+	*entryType = unescape_string(list[5]);
+	*pem       = unescape_string(list[6]);
 	return true;
 }
 
@@ -942,14 +950,16 @@ public:
 			QString ename = c->makeName();
 			QString eid = QString::number(qHash(certs[n].toDER().toByteArray()));
 			c->item_name = ename;
-			c->item_id = makeId(storeId(0), name(0), eid, ename);
+			c->item_id = makeId(storeId(0), name(0), eid, ename, "cert", certs[n].toPEM());
 			out.append(c);
 		}
 		for(n = 0; n < crls.count(); ++n)
 		{
 			DefaultKeyStoreEntry *c = new DefaultKeyStoreEntry(crls[n], storeId(0), name(0), provider());
-			c->item_name = c->makeName();
-			c->item_id = QString::number(n); // FIXME
+			QString ename = c->makeName();
+			QString eid = QString::number(qHash(certs[n].toDER().toByteArray()));
+			c->item_name = ename;
+			c->item_id = makeId(storeId(0), name(0), eid, ename, "crl", crls[n].toPEM());
 			out.append(c);
 		}
 
@@ -957,16 +967,32 @@ public:
 	}
 
 	// TODO
-	KeyStoreEntryContext *entryPassive(const QString &_storeId, const QString &entryId)
+	virtual KeyStoreEntryContext *entryPassive(const QString &_storeId, const QString &entryId)
 	{
 		Q_UNUSED(_storeId);
-		QString storeId, storeName, eid, ename;
-		if(parseId(entryId, &storeId, &storeName, &eid, &ename))
+		QString storeId, storeName, eid, ename, etype, pem;
+		if(parseId(entryId, &storeId, &storeName, &eid, &ename, &etype, &pem))
 		{
-			DefaultKeyStoreEntry *c = new DefaultKeyStoreEntry(Certificate(), storeId, storeName, provider());
-			c->item_name = ename;
-			c->item_id = eid;
-			return c;
+			if(etype == "cert")
+			{
+				Certificate cert = Certificate::fromPEM(pem);
+				if(cert.isNull())
+					return 0;
+				DefaultKeyStoreEntry *c = new DefaultKeyStoreEntry(cert, storeId, storeName, provider());
+				c->item_name = ename;
+				c->item_id = eid;
+				return c;
+			}
+			else if(etype == "crl")
+			{
+				CRL crl = CRL::fromPEM(pem);
+				if(crl.isNull())
+					return 0;
+				DefaultKeyStoreEntry *c = new DefaultKeyStoreEntry(crl, storeId, storeName, provider());
+				c->item_name = ename;
+				c->item_id = eid;
+				return c;
+			}
 		}
 		return 0;
 	}

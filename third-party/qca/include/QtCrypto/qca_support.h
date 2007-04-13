@@ -105,7 +105,7 @@ namespace QCA
 		// but it will be inefficient
 		static bool platformSupported();
 
-	signals:
+	Q_SIGNALS:
 		void changed();
 
 	private:
@@ -146,7 +146,7 @@ namespace QCA
 		*/
 		void setFileName(const QString &file);
 
-	signals:
+	Q_SIGNALS:
 		/**
 		   The changed signal is emitted when the file is
 		   changed (e.g. modified, deleted)
@@ -280,7 +280,7 @@ namespace QCA
 		int bytesAvailable() const;
 		int bytesToWrite() const;
 
-	signals:
+	Q_SIGNALS:
 		void readyRead();
 		void bytesWritten(int bytes);
 		void inputClosed();

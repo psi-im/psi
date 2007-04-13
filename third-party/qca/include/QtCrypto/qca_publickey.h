@@ -997,7 +997,7 @@ namespace QCA
 		*/
 		DLGroup dlGroup() const;
 
-	signals:
+	Q_SIGNALS:
 		/**
 		   Emitted when the key generation is complete.
 

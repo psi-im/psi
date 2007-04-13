@@ -39,7 +39,7 @@
 
    \sa qcaVersion for a runtime check.
 */
-#define QCA_VERSION 0x020000
+#define QCA_VERSION 0x016363
 
 #include <QString>
 #include <QStringList>
@@ -1282,7 +1282,7 @@ namespace QCA
 		*/
 		void reject(int id);
 
-	signals:
+	Q_SIGNALS:
 		/**
 		   signal emitted when an Event requires attention.
 
@@ -1367,7 +1367,7 @@ namespace QCA
 		*/
 		QSecureArray password() const;
 
-	signals:
+	Q_SIGNALS:
 		/**
 		   Emitted when the asker process has been completed. 
 
@@ -1428,7 +1428,7 @@ namespace QCA
 		*/
 		bool accepted() const;
 
-	signals:
+	Q_SIGNALS:
 		/**
 		   Emitted when the asker process has been completed. 
 

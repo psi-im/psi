@@ -181,7 +181,7 @@ public:
 						bytes += prebytes;
 						prebytes = 0;
 					}
-			
+
 					break;
 				}
 			}
@@ -280,10 +280,10 @@ static bool stringToKeyList(const QString &outstr, GpgOp::KeyList *_keylist, QSt
 	// if the second line isn't a divider, we are dealing
 	// with a new version of gnupg that doesn't give us
 	// the keyring file on gpg --list-keys --with-colons
-	if(it == lines.end() || !(*it).length() || (*it).at(0) != '-')
+	if(it == lines.end() || (*it).isEmpty() || (*it).at(0) != '-')
 	{
 		// first line wasn't the keyring name...
-		keyring = "";
+		keyring.clear();
 		// ...so read the first line again
 		it--;
 	}
@@ -683,6 +683,7 @@ public:
 			{
 				args += "--export";
 				args += QString("0x") + input.export_key_id;
+				collectOutput = false;
 				if(input.opt_ascii)
 					readText = true;
 				break;

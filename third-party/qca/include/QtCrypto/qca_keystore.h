@@ -47,6 +47,90 @@ namespace QCA
 	   Single entry in a KeyStore
 
 	   This is a container for any kind of object in a KeyStore
+	   (such as PGP keys, or X.509 certificates / private keys).
+
+	   KeyStoreEntry entities are normally accessed through the KeyStore,
+	   however it is possible to access KeyStoreEntry objects directly,
+	   using a persistent id().
+
+	   \code
+	   QString entry_id = someKeyStoreEntry.id();
+	   [ app saves entry_id to disk ]
+	   [ app quits ]
+	   ...
+	   [ app launches ]
+	   [ app reads entry_id from disk ]
+	   KeyStoreEntry entry(entry_id);
+	   printf("Entry name: [%s]\n", qPrintable(entry.name()));
+	   \endcode
+
+	   Keep in mind that retrieving a passive entry's content
+	   (e.g. with entry.certificate()) may return a null object.
+	   To ensure the entry is available, do:
+
+	   \code
+	   if(entry.ensureAvailable())
+	   {
+	   Certificate cert = entry.certificate();
+	   ...
+	   }
+	   \endcode
+
+	   ensureAvailable() blocks and may cause hardware access, but
+	   if it completes successfully then you may use the entry's
+	   content.  It also means, in the case of a Smart Card token,
+	   that it is probably inserted.
+
+	   To watch this id asynchronously, you would do:
+
+	   \code
+	   KeyStoreEntryWatcher *watcher = new KeyStoreEntryWatcher(entry);
+	   connect(watcher, SIGNAL(available()), SLOT(entry_available()));
+	   ...
+	   void entry_available()
+	   {
+	   // entry now available
+	   Certificate cert = watcher->entry().certificate();
+	   }
+	   \endcode
+
+	   Note that a provider can supply valid content objects even
+	   for unavailable entries, if they have enough metadata to
+	   provide that (qca-pkcs11 for example, puts the entire cert
+	   in the id).
+
+	   Now, even though an entry may be available, it does not
+	   mean you have access to use it for operations.  For
+	   example, a KeyBundle offered by a Smart Card that is
+	   available is guaranteed to give you valid objects, however
+	   as soon as you try to use the PrivateKey object for a
+	   signing operation, a PIN might be asked for.  You can call
+	   ensureAccess() if you want to synchronously provide the PIN
+	   early on:
+
+	   \code
+	   if(entry.ensureAccess())
+	   {
+	   // do private key stuff
+	   ...
+	   }
+	   \endcode
+
+	   Note that you don't have to call ensureAvailable() before
+	   ensureAccess().  Calling the latter is enough to imply
+	   both.
+
+	   After an application is configured to use a particular key,
+	   it is expected that its usual running procedure will be:
+
+	   - Construct KeyStoreEntry from the known id.
+	   - If the content object is not available, wait for it
+	   (with either ensureAvailable() or KeyStoreEntryWatcher).
+	   - Pass the content object(s) to a high level operation like TLS.
+
+	   In this case, any PIN prompting and private key operations
+	   would be caused/handled from the TLS object.
+
 	*/
 	class QCA_EXPORT KeyStoreEntry : public Algorithm
 	{
@@ -94,7 +178,32 @@ namespace QCA
 		*/
 		bool isNull() const;
 
+		/**
+		   Test if the key is available for use.
+
+		   A key is considered available if the KeyStore
+		   that it is part of is present.
+
+		   \sa ensureAvailable
+		   \sa isAccessible
+		*/
 		bool isAvailable() const;
+
+		/**
+		   Test if the key is currently accessible.
+
+		   This means that the private key part can be used
+		   at this time. For a smartcard, this means that all
+		   required operations (e.g. login / PIN entry) are
+		   completed.
+
+		   If isAccessible() is true, then the key
+		   is necessarily available (i.e. isAvailable() is
+		   also true).
+
+		   \sa ensureAccessible
+		   \sa isAvailable
+		*/
 		bool isAccessible() const;
 
 		/**
@@ -114,7 +223,16 @@ namespace QCA
 		*/
 		QString id() const;
 
+		/**
+		   The name of the KeyStore for this key object
+		*/
 		QString storeName() const;
+
+		/**
+		   The id of the KeyStore for this key object
+
+		   \sa KeyStore::id()
+		*/
 		QString storeId() const;
 
 		/**
@@ -150,6 +268,7 @@ namespace QCA
 
 		/**
 		   Returns true if the entry is available, otherwise false.
+
 		   Available means that the retrieval functions (like
 		   keyBundle(), certificate(), pgpPublicKey(), etc) will
 		   return non-null objects.  Entries retrieved from a
@@ -158,11 +277,21 @@ namespace QCA
 		   on an already available entry may cause the entry to
 		   be refreshed.
 
+		   \sa isAvailable
+		   \sa ensureAccess
+
 		   \note This function is blocking.
 		*/
 		bool ensureAvailable();
 
-		// like ensureAvailable, but also login to the token if needed
+		/**
+		   Like ensureAvailable, but will also ensure
+		   that the token is inserted / PIN is provided 
+		   if needed.
+
+		   \sa isAccessible
+		   \sa ensureAvailable
+		*/
 		bool ensureAccess();
 
 	private:
@@ -181,7 +310,7 @@ namespace QCA
 
 		KeyStoreEntry entry() const;
 
-	signals:
+	Q_SIGNALS:
 		void available();
 		void unavailable();
 
@@ -267,6 +396,21 @@ namespace QCA
 		bool isReadOnly() const;
 
 		/**
+		   Turns on asynchronous mode for this KeyStore instance.
+
+		   Normally, entryList() and writeEntry() are blocking
+		   calls.  However, if startAsynchronousMode() is called,
+		   then these functions will return immediately.  entryList()
+		   will return with the latest known entries, or an empty
+		   list if none are known yet (in this mode, updated() will
+		   be emitted once the initial entries are known, even if the
+		   store has not actually been altered).  writeEntry() will
+		   always return true, and the entryWritten() signal
+		   indicates the result of a write.
+		*/
+		void startAsynchronousMode();
+
+		/**
 		   A list of the KeyStoreEntry objects in this store
 		*/
 		QList<KeyStoreEntry> entryList() const;
@@ -323,7 +467,7 @@ namespace QCA
 		*/
 		bool removeEntry(const QString &id);
 
-	signals:
+	Q_SIGNALS:
 		/**
 		   Emitted when the KeyStore is changed
 		*/
@@ -333,6 +477,13 @@ namespace QCA
 		   Emitted when the KeyStore becomes unavailable
 		*/
 		void unavailable();
+
+		/**
+		   Emitted when an entry has been written, in asynchronous
+		   mode.  entryId is the newly written entry id on success,
+		   or an empty string if the write failed.
+		*/
+		void entryWritten(const QString &entryId);
 
 	private:
 		friend class KeyStorePrivate;
@@ -346,16 +497,25 @@ namespace QCA
 
 	   Access keystores, and monitor keystores for changes.
 
-	   If you are looking to use this class, you probably want to
-	   take a reference to the global KeyStoreManager, using the
-	   QCA::keyStoreManager() function. You then need to start()
+	   Before you can access a KeyStore, you must create a 
+	   KeyStoreManager. You then need to start()
 	   the KeyStoreManager, and either wait for the busyFinished()
 	   signal, or block using waitForBusyFinished().
+
+	   If you know the KeyStoreEntry that you need, you can
+	   use KeyStore passively, as described in the KeyStoreEntry
+	   documentation.
 	*/
 	class QCA_EXPORT KeyStoreManager : public QObject
 	{
 		Q_OBJECT
 	public:
+
+	        /**
+		   Create a new KeyStoreManager
+
+		   \param parent the parent for this object
+		*/
 		KeyStoreManager(QObject *parent = 0);
 		~KeyStoreManager();
 
@@ -401,7 +561,7 @@ namespace QCA
 		*/
 		void sync();
 
-	signals:
+	Q_SIGNALS:
 		/**
 		   emitted when the manager has started looking for key stores
 		*/

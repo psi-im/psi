@@ -335,7 +335,7 @@ else
 			ErrorEncryptUntrusted, ///< encrypting key is untrusted
 			ErrorEncryptInvalid,   ///< encrypting key is invalid in some way
 			ErrorNeedCard,         ///< pgp card is missing
-			ErrorKeyMismatch,      ///< certificate and private key don't match
+			ErrorCertKeyMismatch,  ///< certificate and private key don't match
 			ErrorUnknown           ///< other error
 		};
 
@@ -683,7 +683,7 @@ else
 		*/
 		QString diagnosticText() const;
 
-	signals:
+	Q_SIGNALS:
 		/**
 		   This signal is emitted when there is some data to
 		   read. Typically you connect this signal to a slot

@@ -104,7 +104,7 @@ namespace QCA
 		 * myRandomInt = QCA::Random::randomInt();
 		 * \endcode
 		 */
-		static uint randomInt();
+		static int randomInt();
 
 		/**
 		 * Provide a specified number of random bytes

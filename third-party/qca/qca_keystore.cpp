@@ -141,7 +141,7 @@ public:
 	}
 
 	// thread-safe
-	QList<KeyStoreTracker::Item> getItems()
+	QList<Item> getItems()
 	{
 		// TODO
 		QMutexLocker locker(&m);
@@ -165,7 +165,6 @@ public slots:
 	void start()
 	{
 		// grab providers (and default)
-		//scanForPlugins();
 		ProviderList list = providers();
 		list.append(defaultProvider());
 
@@ -210,7 +209,7 @@ public slots:
 		// TODO
 		QList<KeyStoreEntry> out;
 		int contextId = -1;
-		KeyStoreListContext *c;
+		KeyStoreListContext *c = 0;
 		m.lock();
 		foreach(Item i, items)
 		{
@@ -240,7 +239,7 @@ public slots:
 		// TODO
 		QList<KeyStoreEntry::Type> out;
 		int contextId = -1;
-		KeyStoreListContext *c;
+		KeyStoreListContext *c = 0;
 		m.lock();
 		foreach(Item i, items)
 		{
@@ -261,7 +260,7 @@ public slots:
 	void *entry(const QString &storeId, const QString &entryId)
 	{
 		KeyStoreListContext *c = 0;
-		int contextId;
+		int contextId = -1;
 		m.lock();
 		foreach(Item i, items)
 		{
@@ -745,6 +744,11 @@ bool KeyStore::isReadOnly() const
 	return d->item.isReadOnly;
 }
 
+void KeyStore::startAsynchronousMode()
+{
+	// TODO
+}
+
 QList<KeyStoreEntry> KeyStore::entryList() const
 {
 	if(d->trackerId == -1)
@@ -833,7 +837,6 @@ static void ensure_init()
 // static functions
 void KeyStoreManager::start()
 {
-	scanForPlugins();
 	ensure_init();
 	QMetaObject::invokeMethod(KeyStoreTracker::instance(), "start", Qt::QueuedConnection);
 }
@@ -1050,7 +1053,11 @@ public slots:
 			pending = true;
 		}
 		if(waiting && !KeyStoreTracker::instance()->isBusy())
+		{
+			busy = false;
+			items = KeyStoreTracker::instance()->getItems();
 			w.wakeOne();
+		}
 	}
 
 	void update()

@@ -218,11 +218,6 @@ public:
 			return;
 		init_done = true;
 		p->init();
-
-		// load configuration
-		//QVariantMap conf = getProviderConfig(p->name());
-		//if(!conf.isEmpty())
-		//	p->configChanged(conf);
 	}
 
 private:
@@ -288,6 +283,9 @@ void ProviderManager::scan()
 		}
 		scanned_static = true;
 	}
+
+	if(qgetenv("QCA_NO_PLUGINS") == "1")
+		return;
 
 	// check plugin files
 	QStringList dirs = QCoreApplication::libraryPaths();
