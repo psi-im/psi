@@ -20,6 +20,19 @@ public:
 	QString shortname() const { return "xmms"; }
 	bool exec()
 	{
+                QString str =
+                        "extern \"C\" void g_source_set_callback();"
+                        "\n"
+                        "int main()\n"
+                        "{\n"
+                        "        g_source_set_callback();\n"
+                        "        return 0;\n"
+                        "}\n";
+                int ret;
+                if (conf->doCompileAndLink(str, QStringList(), QString(), "CONFIG += qt", 0)) {
+			qWarning("XMMS is not compatible with a QT linked with glib 2.x");
+                        return false;
+		}
 		QString s;
 		
 		// XMMS
