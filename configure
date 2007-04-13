@@ -24,11 +24,13 @@ Project options:
 Dependency options:
   --enable-qca                 Enable use of external QCA 2.0
   --disable-openssl            Disable use of OpenSSL (bundled QCA only)
-  --with-openssl-inc=[path]    Path to OpenSSL include files
-  --with-openssl-lib=[path]    Path to OpenSSL library files
-  --disable-cyrussasl          Disable use of Cyrus SASL2
-  --with-sasl-inc=[path]       Path to Cyrus SASL2 include files
-  --with-sasl-lib=[path]       Path to Cyrus SASL2 library files
+  --with-openssl-inc=[path]    Path to OpenSSL include files (bundled QCA only)
+  --with-openssl-lib=[path]    Path to OpenSSL library files (bundled QCA only)
+  --disable-cyrussasl          Disable use of Cyrus SASL2 (bundled QCA only)
+  --with-sasl-inc=[path]       Path to Cyrus SASL2 include files (bundled QCA
+                               only)
+  --with-sasl-lib=[path]       Path to Cyrus SASL2 library files (bundled QCA
+                               only)
   --with-zlib-inc=[path]       Path to zlib include files
   --with-zlib-lib=[path]       Path to zlib library files
   --enable-universal           Enable use of Mac OS X universal binary support
@@ -464,8 +466,8 @@ public:
 /*
 -----BEGIN QCMOD-----
 name: OpenSSL (bundled QCA only)
-arg: with-openssl-inc=[path],Path to OpenSSL include files
-arg: with-openssl-lib=[path],Path to OpenSSL library files
+arg: with-openssl-inc=[path],Path to OpenSSL include files (bundled QCA only)
+arg: with-openssl-lib=[path],Path to OpenSSL library files (bundled QCA only)
 -----END QCMOD-----
 */
 class qc_openssl : public ConfObj
@@ -558,9 +560,9 @@ public:
 #line 1 "cyrussasl.qcm"
 /*
 -----BEGIN QCMOD-----
-name: Cyrus SASL2
-arg: with-sasl-inc=[path],Path to Cyrus SASL2 include files
-arg: with-sasl-lib=[path],Path to Cyrus SASL2 library files
+name: Cyrus SASL2 (bundled QCA only)
+arg: with-sasl-inc=[path],Path to Cyrus SASL2 include files (bundled QCA only)
+arg: with-sasl-lib=[path],Path to Cyrus SASL2 library files (bundled QCA only)
 -----END QCMOD-----
 */
 class qc_cyrussasl : public ConfObj

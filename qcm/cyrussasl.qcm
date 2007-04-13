@@ -1,8 +1,8 @@
 /*
 -----BEGIN QCMOD-----
-name: Cyrus SASL2
-arg: with-sasl-inc=[path],Path to Cyrus SASL2 include files
-arg: with-sasl-lib=[path],Path to Cyrus SASL2 library files
+name: Cyrus SASL2 (bundled QCA only)
+arg: with-sasl-inc=[path],Path to Cyrus SASL2 include files (bundled QCA only)
+arg: with-sasl-lib=[path],Path to Cyrus SASL2 library files (bundled QCA only)
 -----END QCMOD-----
 */
 class qc_cyrussasl : public ConfObj

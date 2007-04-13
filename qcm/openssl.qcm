@@ -1,8 +1,8 @@
 /*
 -----BEGIN QCMOD-----
 name: OpenSSL (bundled QCA only)
-arg: with-openssl-inc=[path],Path to OpenSSL include files
-arg: with-openssl-lib=[path],Path to OpenSSL library files
+arg: with-openssl-inc=[path],Path to OpenSSL include files (bundled QCA only)
+arg: with-openssl-lib=[path],Path to OpenSSL library files (bundled QCA only)
 -----END QCMOD-----
 */
 class qc_openssl : public ConfObj
