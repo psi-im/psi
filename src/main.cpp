@@ -245,7 +245,7 @@ int main(int argc, char *argv[])
 
 	// Initialize QCA
 	QCA::KeyStoreManager keystoremgr;
-	keystoremgr.start();
+	QCA::KeyStoreManager::start();
 	keystoremgr.waitForBusyFinished(); // FIXME get rid of this
 
 
@@ -309,8 +309,6 @@ int main(int argc, char *argv[])
 	QObject::connect(psi, SIGNAL(quit()), &app, SLOT(quit()));
 	int returnValue = app.exec();
 	delete psi;
-
-	QCA::unloadAllPlugins();
 
 	return returnValue;
 }
