@@ -563,8 +563,10 @@ void MainWin::buildStatusMenu()
 	}
 	d->statusMenu->insertSeparator();
 	d->getAction("status_offline")->addTo(d->statusMenu);
+#ifdef USE_PEP
 	d->statusMenu->insertSeparator();
 	d->getAction("publish_tune")->addTo(d->statusMenu);
+#endif
 }
 
 void MainWin::activatedStatusAction(int id)
@@ -1114,7 +1116,9 @@ void MainWin::accountFeaturesChanged()
 		}
 	}
 
+#ifdef USE_PEP
 	d->getAction("publish_tune")->setEnabled(have_pep);
+#endif
 }
 
 void MainWin::dockActivated()
