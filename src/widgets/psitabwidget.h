@@ -23,15 +23,21 @@
 #define PSITABWIDGET_H
 
 #include <QTabWidget>
+#include <QTabBar>
 #include <QDragEnterEvent>
 #include "psitabbar.h"
 
+class QVBoxLayout;
+class QHBoxLayout;
+class QToolButton;
+class QStackedLayout;
+class QMenu;
 
 /**
  * \class PsiTabWidget
  * \brief 
  */
-class PsiTabWidget : public QTabWidget
+class PsiTabWidget : public QWidget //: public QTabWidget
 {
 	Q_OBJECT
 public:
@@ -39,13 +45,50 @@ public:
 	~PsiTabWidget();
 	
 	void setTabTextColor( QWidget* tab, const QColor& color);
+	int count();
+	QWidget* currentPage();
+	int currentPageIndex();
+	QWidget* widget(int index);
+	void addTab(QWidget*, QString);
+	void showPage(QWidget*);
+	void showPageDirectly(QWidget*);
+	
+	void removePage(QWidget*);
+	QWidget* page(int index);
+	int getIndex(QWidget*);
+	void setTabLabel(QWidget*, const QString&);
+	void setTabPosition(QTabWidget::TabPosition pos);
+	void setCloseIcon(const QIcon&);
+
+public slots:
+	void setCurrentPage(int);
+	void removeCurrentPage();
 
 signals:
 	void mouseDoubleClickTab( QWidget* tab );
+	void currentChanged(QWidget*);
+	void closeButtonClicked();
+	void aboutToShowMenu(QMenu *);
+	void tabContextMenu( int tab, QPoint pos, QContextMenuEvent * event);
 
 
 private slots:
 	void mouseDoubleClickTab( int tab );
+	void tab_currentChanged( int tab );
+	void tab_contextMenu( QContextMenuEvent * event, int tab);
+	void menu_aboutToShow();
+	void menu_triggered(QAction *act);
+	
+private:
+	QVector<QWidget*> widgets_;
+	QTabBar* tabBar_;
+	QVBoxLayout* layout_;
+	QHBoxLayout *barLayout_;
+	QStackedLayout *stacked_;
+	QToolButton *closeButton_;
+	QToolButton *downButton_;
+	QTabWidget::TabPosition tabsPosition_;
+	QMenu *menu_;
 }; 
 
 

@@ -55,6 +55,7 @@ public:
 	bool managesChat(ChatDlg*);
 	bool chatOnTop(ChatDlg*);
 	QString getName();
+	ChatDlg *getTab(int i);
 	
 signals:
 	void isDying(TabDlg*);
@@ -71,7 +72,6 @@ protected slots:
 	void detachChat(QWidget*);
 	void closeChat();
 	void closeChat(QWidget*);
-	void buildTabMenu();
 	void sendChatTo(QWidget*, TabDlg *);
 public slots:
 	void addChat(ChatDlg *chat);
@@ -89,6 +89,10 @@ private slots:
 	void previousTab();
 	void setTabState( XMPP::ChatState );
 	void setTabHasMessages(ChatDlg*, int);
+	void tab_aboutToShowMenu(QMenu *menu);
+	void menu_sendChatTo(QAction *act);
+	void showTabMenu(int tab, QPoint pos, QContextMenuEvent * event);
+
 	
 public:
 	ChatDlg* getChatPointer(QString fullJid);
@@ -98,7 +102,7 @@ private:
 	Q3PtrList<ChatDlg> chats;
 	PsiTabWidget *tabs;
 	QPushButton *detachButton, *closeButton, *closeCross;
-	Q3PopupMenu *tabMenu;
+	QMenu *tabMenu;
 	QMap<ChatDlg*, bool> tabIsComposing;
 	QMap<ChatDlg*, bool> tabHasMessages;
 	QAction *act_close, *act_next, *act_prev;

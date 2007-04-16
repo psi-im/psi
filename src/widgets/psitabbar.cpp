@@ -109,3 +109,26 @@ void PsiTabBar::mouseMoveEvent(QMouseEvent *event)
 	event->accept();
  }
 
+
+void PsiTabBar::contextMenuEvent ( QContextMenuEvent * event )
+{
+	event->accept();
+	emit contextMenu(event, findTabUnder(event->pos()));
+}
+
+void PsiTabBar::wheelEvent(QWheelEvent *event)
+{
+	int numDegrees = event->delta() / 8;
+	int numSteps = numDegrees / 15;
+	
+	int newIndex = currentIndex() - numSteps;
+
+	while (newIndex < 0) newIndex += count();
+	newIndex = newIndex % count();
+
+	setCurrentIndex(newIndex);
+
+	event->accept();	
+}
+
+
