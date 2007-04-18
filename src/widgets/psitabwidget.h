@@ -69,6 +69,7 @@ signals:
 	void currentChanged(QWidget*);
 	void closeButtonClicked();
 	void aboutToShowMenu(QMenu *);
+	// context menu on the blank space will have tab==-1
 	void tabContextMenu( int tab, QPoint pos, QContextMenuEvent * event);
 
 

@@ -120,30 +120,32 @@ void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent * event)
 {
 	tabMenu->clear();
 
-	QAction *d = tabMenu->addAction(tr("Detach Tab"));
-	QAction *c = tabMenu->addAction(tr("Close Tab"));
+	if (tab!=-1) {
+		QAction *d = tabMenu->addAction(tr("Detach Tab"));
+		QAction *c = tabMenu->addAction(tr("Close Tab"));
 
-	QMenu* sendTo = new QMenu(tabMenu);
-	sendTo->setTitle(tr("Sent Tab to"));
-	QMap<QAction*, TabDlg*> sentTos;
-	for (uint i = 0; i < psi->getTabSets()->count(); ++i)
-	{
-		TabDlg* tabSet= psi->getTabSets()->at(i);
-		QAction *act = sendTo->addAction( tabSet->getName());
-		if (tabSet == this) act->setEnabled(false);
-		sentTos[act] = tabSet;
-	}
-	tabMenu->addMenu(sendTo);
+		QMenu* sendTo = new QMenu(tabMenu);
+		sendTo->setTitle(tr("Sent Tab to"));
+		QMap<QAction*, TabDlg*> sentTos;
+		for (uint i = 0; i < psi->getTabSets()->count(); ++i)
+		{
+			TabDlg* tabSet= psi->getTabSets()->at(i);
+			QAction *act = sendTo->addAction( tabSet->getName());
+			if (tabSet == this) act->setEnabled(false);
+			sentTos[act] = tabSet;
+		}
+		tabMenu->addMenu(sendTo);
 
-	QAction *act = tabMenu->exec(pos);
-	if (!act) return;
-	if (act == c) {
-		closeChat(getTab(tab));
-	} else if (act == d) {
-		detachChat(getTab(tab));
-	} else {
-		TabDlg* target = sentTos[act];
-		if (target) sendChatTo(getTab(tab), target);
+		QAction *act = tabMenu->exec(pos);
+		if (!act) return;
+		if (act == c) {
+			closeChat(getTab(tab));
+		} else if (act == d) {
+			detachChat(getTab(tab));
+		} else {
+			TabDlg* target = sentTos[act];
+			if (target) sendChatTo(getTab(tab), target);
+		}
 	}
 }
 
