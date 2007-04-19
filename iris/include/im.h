@@ -33,6 +33,8 @@
 #include "xmpp_task.h"
 #include "xmpp_rosterx.h"
 #include "xmpp_xdata.h"
+#include "xmpp_discoitem.h"
+#include "xmpp_agentitem.h"
 
 namespace XMPP
 {
@@ -362,85 +364,7 @@ namespace XMPP
 		class RosterPrivate *d;
 	};
 
-	class AgentItem
-	{
-	public:
-		AgentItem() { }
-
-		const Jid & jid() const { return v_jid; }
-		const QString & name() const { return v_name; }
-		const QString & category() const { return v_category; }
-		const QString & type() const { return v_type; }
-		const Features & features() const { return v_features; }
-
-		void setJid(const Jid &j) { v_jid = j; }
-		void setName(const QString &n) { v_name = n; }
-		void setCategory(const QString &c) { v_category = c; }
-		void setType(const QString &t) { v_type = t; }
-		void setFeatures(const Features &f) { v_features = f; }
-
-	private:
-		Jid v_jid;
-		QString v_name, v_category, v_type;
-		Features v_features;
-	};
-
 	typedef QList<AgentItem> AgentList;
-
-	class DiscoItem
-	{
-	public:
-		DiscoItem();
-		~DiscoItem();
-
-		const Jid &jid() const;
-		const QString &node() const;
-		const QString &name() const;
-
-		void setJid(const Jid &);
-		void setName(const QString &);
-		void setNode(const QString &);
-
-		enum Action {
-			None = 0,
-			Remove,
-			Update
-		};
-
-		Action action() const;
-		void setAction(Action);
-
-		const Features &features() const;
-		void setFeatures(const Features &);
-
-		struct Identity
-		{
-			QString category;
-			QString name;
-			QString type;
-		};
-
-		typedef QList<Identity> Identities;
-
-		const Identities &identities() const;
-		void setIdentities(const Identities &);
-
-		// some useful helper functions
-		static Action string2action(QString s);
-		static QString action2string(Action a);
-
-		DiscoItem & operator= (const DiscoItem &);
-		DiscoItem(const DiscoItem &);
-
-		operator AgentItem() const { return toAgentItem(); }
-		AgentItem toAgentItem() const;
-		void fromAgentItem(const AgentItem &);
-
-	private:
-		class Private;
-		Private *d;
-	};
-
 	typedef QList<DiscoItem> DiscoList;
 
 	class FormField

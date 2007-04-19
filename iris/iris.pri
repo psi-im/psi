@@ -35,6 +35,8 @@ HEADERS += \
 	$$PWD/include/xmpp_task.h \
 	$$PWD/include/xmpp_status.h \
 	$$PWD/include/xmpp_features.h \
+	$$PWD/include/xmpp_agentitem.h \
+	$$PWD/include/xmpp_discoitem.h \
 	$$PWD/include/im.h
 
 SOURCES += \
@@ -49,9 +51,10 @@ SOURCES += \
 	$$PWD/xmpp-core/compressionhandler.cpp \
 	$$PWD/xmpp-core/stream.cpp \
 	$$PWD/xmpp-core/simplesasl.cpp \
-	$$PWD/xmpp-im/features.cpp \
 	$$PWD/xmpp-im/types.cpp \
 	$$PWD/xmpp-im/client.cpp \
+	$$PWD/xmpp-im/xmpp_features.cpp \
+	$$PWD/xmpp-im/xmpp_discoitem.cpp \
 	$$PWD/xmpp-im/xmpp_xdata.cpp \
 	$$PWD/xmpp-im/xmpp_tasks.cpp \
 	$$PWD/xmpp-im/xmpp_xmlcommon.cpp \
