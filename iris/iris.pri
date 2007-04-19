@@ -49,6 +49,7 @@ SOURCES += \
 	$$PWD/xmpp-core/compressionhandler.cpp \
 	$$PWD/xmpp-core/stream.cpp \
 	$$PWD/xmpp-core/simplesasl.cpp \
+	$$PWD/xmpp-im/features.cpp \
 	$$PWD/xmpp-im/types.cpp \
 	$$PWD/xmpp-im/client.cpp \
 	$$PWD/xmpp-im/xmpp_xdata.cpp \
