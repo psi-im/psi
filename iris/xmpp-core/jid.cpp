@@ -22,7 +22,7 @@
 
 #include <QApplication>
 #include <QByteArray>
-#include <q3dict.h>
+#include <QHash>
 #include <stringprep.h>
 
 
@@ -45,7 +45,7 @@ public:
 
 		StringPrepCache *that = get_instance();
 
-		Result *r = that->nameprep_table.find(in);
+		Result *r = that->nameprep_table[in];
 		if(r)
 		{
 			if(!r->norm)
@@ -55,7 +55,7 @@ public:
 			return true;
 		}
 
-		QByteArray cs = in.utf8();
+		QByteArray cs = in.toUtf8();
 		cs.resize(maxbytes);
 		if(stringprep(cs.data(), maxbytes, (Stringprep_profile_flags)0, stringprep_nameprep) != 0)
 		{
@@ -81,7 +81,7 @@ public:
 
 		StringPrepCache *that = get_instance();
 
-		Result *r = that->nodeprep_table.find(in);
+		Result *r = that->nodeprep_table[in];
 		if(r)
 		{
 			if(!r->norm)
@@ -91,7 +91,7 @@ public:
 			return true;
 		}
 
-		QByteArray cs = in.utf8();
+		QByteArray cs = in.toUtf8();
 		cs.resize(maxbytes);
 		if(stringprep(cs.data(), maxbytes, (Stringprep_profile_flags)0, stringprep_xmpp_nodeprep) != 0)
 		{
@@ -117,7 +117,7 @@ public:
 
 		StringPrepCache *that = get_instance();
 
-		Result *r = that->resourceprep_table.find(in);
+		Result *r = that->resourceprep_table[in];
 		if(r)
 		{
 			if(!r->norm)
@@ -127,7 +127,7 @@ public:
 			return true;
 		}
 
-		QByteArray cs = in.utf8();
+		QByteArray cs = in.toUtf8();
 		cs.resize(maxbytes);
 		if(stringprep(cs.data(), maxbytes, (Stringprep_profile_flags)0, stringprep_xmpp_resourceprep) != 0)
 		{
@@ -162,9 +162,9 @@ private:
 		}
 	};
 
-	Q3Dict<Result> nameprep_table;
-	Q3Dict<Result> nodeprep_table;
-	Q3Dict<Result> resourceprep_table;
+	QHash<QString,Result*> nameprep_table;
+	QHash<QString,Result*> nodeprep_table;
+	QHash<QString,Result*> resourceprep_table;
 
 	static StringPrepCache *instance;
 
@@ -178,9 +178,22 @@ private:
 	StringPrepCache()
 		: QObject(qApp)
 	{
-		nameprep_table.setAutoDelete(true);
-		nodeprep_table.setAutoDelete(true);
-		resourceprep_table.setAutoDelete(true);
+	}
+
+	~StringPrepCache()
+	{
+		foreach(Result* r, nameprep_table) {
+			delete r;
+		}
+		nameprep_table.clear();
+		foreach(Result* r, nodeprep_table) {
+			delete r;
+		}
+		nodeprep_table.clear();
+		foreach(Result* r, resourceprep_table) {
+			delete r;
+		}
+		resourceprep_table.clear();
 	}
 };
 
@@ -252,7 +265,7 @@ void Jid::set(const QString &s)
 {
 	QString rest, domain, node, resource;
 	QString norm_domain, norm_node, norm_resource;
-	int x = s.find('/');
+	int x = s.indexOf('/');
 	if(x != -1) {
 		rest = s.mid(0, x);
 		resource = s.mid(x+1);
@@ -266,7 +279,7 @@ void Jid::set(const QString &s)
 		return;
 	}
 
-	x = rest.find('@');
+	x = rest.indexOf('@');
 	if(x != -1) {
 		node = rest.mid(0, x);
 		domain = rest.mid(x+1);
