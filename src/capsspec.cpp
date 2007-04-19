@@ -92,7 +92,7 @@ CapsSpecs CapsSpec::flatten() const
 {
 	CapsSpecs l;
 	l.append(CapsSpec(node(),version(),version()));
-	QStringList exts = QStringList::split(" ",extensions());
+	QStringList exts(extensions().split(" ",QString::SkipEmptyParts));
 	for (QStringList::ConstIterator i = exts.begin(); i != exts.end(); ++i) {
 		l.append(CapsSpec(node(),version(),*i));
 	}
