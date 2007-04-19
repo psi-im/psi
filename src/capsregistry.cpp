@@ -20,9 +20,11 @@
 
 #include <QApplication>
 #include <QDebug>
+#include <QTextCodec>
+#include <QFile>
+#include <QDomElement>
 
-#include "im.h"
-#include "psiaccount.h"
+#include "xmpp_features.h"
 #include "capsregistry.h"
 
 using namespace XMPP;
@@ -160,7 +162,7 @@ void CapsRegistry::save()
 	doc.appendChild(capabilities);
 	QMap<CapsSpec,CapsInfo>::ConstIterator i = capsInfo_.begin();
 	for( ; i != capsInfo_.end(); i++) {
-		QDomElement info = i.data().toXml(&doc);
+		QDomElement info = i.value().toXml(&doc);
 		info.setAttribute("node",i.key().node());
 		info.setAttribute("ver",i.key().version());
 		info.setAttribute("ext",i.key().extensions());
@@ -169,13 +171,13 @@ void CapsRegistry::save()
 
 	// Save
 	QFile f(fileName_);
-	if(!f.open(IO_WriteOnly)) {
+	if(!f.open(QIODevice::WriteOnly)) {
 		qWarning("caps.cpp: Unable to open caps file");
 		return;
 	}
 	QTextStream t;
 	t.setDevice(&f);
-	t.setEncoding(QTextStream::UnicodeUTF8);
+	t.setCodec(QTextCodec::codecForName("UTF-8"));
 	t << doc.toString();
 	f.close();
 }
@@ -191,7 +193,7 @@ void CapsRegistry::setFile(const QString& fileName)
 	//qDebug() << "Loading " << fileName;
 	QDomDocument doc;
 	QFile f(fileName_);
-	if (!f.open(IO_ReadOnly))
+	if (!f.open(QIODevice::ReadOnly))
 		return;
 	if (!doc.setContent(&f))
 		return;

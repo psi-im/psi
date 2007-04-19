@@ -34,6 +34,7 @@
 #include "capsspec.h"
 
 class PsiAccount;
+class QDomDocument;
 class QDomElement;
 
 class CapsRegistry : public QObject
