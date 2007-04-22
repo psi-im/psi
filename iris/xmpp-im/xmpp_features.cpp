@@ -172,7 +172,6 @@ bool Features::haveVCard() const
 
 class Features::FeatureName : public QObject
 {
-	Q_OBJECT
 public:
 	FeatureName()
 	: QObject(qApp)
@@ -270,5 +269,3 @@ QString Features::name(const QString &feature)
 	Features f(feature);
 	return f.name(f.id());
 }
-
-#include "xmpp_features.moc"

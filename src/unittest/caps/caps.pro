@@ -29,7 +29,9 @@ SOURCES += \
 	$$IRIS_PATH/xmpp-im/xmpp_discoitem.cpp \
 	$$IRIS_PATH/xmpp-im/xmpp_discoinfotask.cpp \
 	$$IRIS_PATH/xmpp-im/xmpp_task.cpp \
+	$$IRIS_PATH/xmpp-im/xmpp_xmlcommon.cpp \
 	$$IRIS_PATH/xmpp-core/jid.cpp \
+	$$IRIS_PATH/xmpp-core/xmpp_stanza.cpp \
 	$$PSI_PATH/capsspec.cpp \
 	$$PSI_PATH/capsregistry.cpp \
 	$$PSI_PATH/capsmanager.cpp

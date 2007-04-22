@@ -19,6 +19,7 @@
  */
 
 #include "xmpp_xmlcommon.h"
+#include "xmpp_stanza.h"
 
 #include <qstring.h>
 #include <qdom.h>
@@ -27,8 +28,6 @@
 #include <qrect.h>
 #include <qstringlist.h>
 #include <qcolor.h>
-
-#include "im.h"
 
 bool stamp2TS(const QString &ts, QDateTime *d)
 {
@@ -400,7 +399,7 @@ void readSizeEntry(const QDomElement &e, const QString &name, QSize *v)
 	QDomElement tag = findSubTag(e, name, &found);
 	if(!found)
 		return;
-	QStringList list = QStringList::split(',', tagContent(tag));
+	QStringList list = tagContent(tag).split(',');
 	if(list.count() != 2)
 		return;
 	QSize s;
@@ -415,7 +414,7 @@ void readRectEntry(const QDomElement &e, const QString &name, QRect *v)
 	QDomElement tag = findSubTag(e, name, &found);
 	if(!found)
 		return;
-	QStringList list = QStringList::split(',', tagContent(tag));
+	QStringList list = tagContent(tag).split(',');
 	if(list.count() != 4)
 		return;
 	QRect r;
