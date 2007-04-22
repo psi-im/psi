@@ -45,13 +45,18 @@ unix {
 	valgrind_supp.depends = $$EXEC_TARGET
 	valgrind_supp.commands = valgrind $$VALGRIND_OPTIONS --gen-suppressions=all ./$$EXEC_TARGET
 
+	# callgrind profiling
+	QMAKE_EXTRA_TARGETS += callgrind
+	callgrind.depends = $$EXEC_TARGET
+	callgrind.commands = valgrind --tool=callgrind --dump-instr=yes --collect-jumps=yes ./$$EXEC_TARGET
+
 	# gdb target
 	QMAKE_EXTRA_TARGETS += gdb
 	gdb.depends = $$EXEC_TARGET
 	mac {
-		QT_FRAMEWORK_VERSION = 4.0
+		QT_FRAMEWORK_VERSION = 4
 		QT_FRAMEWORKS = QtCore QtXml QtNetwork QtGui QtSql Qt3Support
-		FRAMEWORK = $(QTDIR)/lib/\$\$f.framework/Versions/$$QT_FRAMEWORK_VERSION/\$\$f
+		FRAMEWORK = \$(QTDIR)/lib/\$\${f}.framework/Versions/$$QT_FRAMEWORK_VERSION/\$\${f}
 		gdb.commands += \
 			for f in $$QT_FRAMEWORKS; do \
 				install_name_tool -id "$$FRAMEWORK" "$$FRAMEWORK""_debug"; \
