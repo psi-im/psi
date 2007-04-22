@@ -1,18 +1,10 @@
 Required
-  File Transfer
   XML Encryption
-  add status message presets from the statussetdlg
-  Ability to prompt for status message when choosing "Offline" (signoff status)
-  ability to flag accounts as enabled/disabled.  disabled means they are not usable and won't show in roster.
   groupchat should log presence changes
   gcuserview: proper sorting of contacts based on status / alphabetical (like ContactView)
-  message events (composing, delivery, etc)
-  misha: JEP-0038: emoticon sets
   server info:
     show server version in tooltip
     ssl information dialog (show cert and maybe connection info)
-  separate message history / info for each account
-  eventQueue: toXml, fromXml (for saving unread messages)
   local contact settings:
     checkboxes for accepting various things: messages; files; URLs; chats \
       [each has a checkbox option: only from my contact list, or... only from this GROUP on my contact list]
@@ -39,19 +31,14 @@ Required
   plugin system
 
 Important
-  clicking on a chatdlg when bringing focus should always set focus to the input widget (eat the click)
   'find' feature for chatdlg
   checkbox to keep eventdlg open (both send and recv).  for send, it should reset the content after sending.
   statussetdlg should automatically click ok in 10 seconds (unless you press a key)
   ability to flag which accounts are affected by the mass status change button (should be in account context menu)
-  cv: remember the open/closed state of groups
   cv: group headings should have a better design than just a rectangle (gradient?)
   add "Go to Website" and x:oob in presence
-  use arts for sound on unix (or custom, for things like "play")
   ability to do various iq requests to arbitrary jids:  version, time, info
   multi-monitor support: windows should pop up on the same display as the main window?
-  "last seen" time for contacts
-  emoticon menu button
   merge all contacts into one column, rather than dividing by account
   consolidated contacts
   send contacts
@@ -70,7 +57,6 @@ Important
     maybe a menubar with some features like "save to file" ?
     show/hide times
     show/hide/rename other person (for privacy)
-  WM dock
   floating contacts (controlled by cvlist?)
   full message archive dialog (tree/explorer view for choosing contacts on left, display area on the right).
   Update all (mass user info check)
@@ -87,13 +73,8 @@ Important
   have separate status presets depending on the status type
 
 Extra
-  there should be a way to copy a url to clipboard from the eventdlg attachment
   ability to flag a contact or group to always be shown even if they would not be (due to visibility toggles)
-  how about adding "Add Contact", "New Blank Message", "Manage services" and "Join Groupchat" to the cv \
-    rightclick menu for each of the servers?
   allow eventdlg and chatdlg inputs to drag / drop URLs (in both directions)
-  chatdlg separator:  "snap" to font height?
-  transport iconsets (misha?)
   translation packs for the Qt library itself??
   check to see if app is already running when launched.  if it is, then:
     ask if they really want to open it again
@@ -104,7 +85,6 @@ Extra
     auto hide: after a certain period of inactivity, "slide" the window off the screen
     auto hide delay: time to wait before sliding off
   right-click in chat/eventdlg should have options to paste your current URL or IP address
-  Avatars (Buddy Icons)
   KDE-enhanced mode
   "previous" button in the eventdlg?
   Autoresponses?  (with general and customized texts)
@@ -140,8 +120,6 @@ Extra
   option to show status message in parenthesis to the right of the contact (like yahoo)
   ability to "auto-reconnect" to a transport?
   cv: let the user choose how the list is sorted
-  Spell check
-  pictures for users
   group ideas:
     option: sort or not
     choose order of groups and contacts with drag and drop
@@ -150,13 +128,6 @@ Extra
   Have a way of marking some people as 'important' contacts, so they will always trigger sound
   psuedo-chat support like Mirabilis ICQ / Licq (ie, split window, but still used like normal messages)
   friendlier infodlg.  get rid of those lame tabs
-  maybe an XML-based skins support (not only colors, sounds, images, key \
-    bindings, but also window positions, shapes, etc) \
-    Microsoft Windows Media Player supports XML-based skinning.  Basically \
-    this consists of a file which has a bunch of JavaScript glueing the \
-    entire skin together with code, and several images for hilite graphics, \
-    background graphics, alpha-map graphics, etc.  Very flexible. \
-    Justin's opinion:  if you want to fork Psi to do this, be my guest..
   cvlist sorting options
     sort by group, online/offline split
     sort by group, online/offline together
@@ -166,7 +137,6 @@ Extra
     sort alphanumerically without groups
       sort by online/offline
       straight alphanumerical sort
-  chatdlg: optionally tabbed like GAIM?
   cvlist select multiple?
   right-clicking on status button should bring up a list of accounts, each with submenus that would set \
     the status of the chosen account.
@@ -180,20 +150,15 @@ Bugs
   slowdown when receiving a chat message?  or a problem with QTextEdit debug messages?
 
 Miscellaneous
-  change PsiIconSet::type2anim() to be const (and return const)
   properly sort cvlist accounts if one of them gets renamed
   class Options: cpp'ify (reset, toXml, fromXml)
   convert some of the preferences into their own classes (or lists), like fonts, colors, sounds, etc
-  field for author/license information in lang packs (display in About box)
   'find' function in historydlg should show the found result in the center of 50 results, rather than the top
   Check for libqssl without needing a restart?
-  finish jidlink and formalize the linktest process (<linktest xmlns="adsfasd"/>)
   replies should only close a window that it is associated with (use QGuardedPtr?)
-  custombrowser, mailer, and sound player should be called as a shell command, not arg0
   don't allow send/recv of blank messages (all content is whitespace or empty)
   allow blank password entry
   don't prompt for password until actually connected.  reprompt if wrong??
-  iconset: universal anim support (so eventdlg / mainwin / contactview can share) (misha?)
   proper dialog button order depending on platform
   when entering a text string into "Server to browse", any whitespace before or after is not trimmed.  lots of \
     fields like this should have some sort of auto-trim.
