@@ -1,6 +1,7 @@
 #include <QtTest/QtTest>
 
 #include "xmpp_jid.h"
+#include "capsregistry.h"
 #include "capsmanager.h"
 
 class TestCaps : public QObject

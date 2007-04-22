@@ -32,10 +32,10 @@
 #include <QApplication>
 #include <QDebug>
 
+#include "xmpp_client.h"
+#include "xmpp_discoinfotask.h"
 #include "capsregistry.h"
 #include "capsmanager.h"
-#include "xmpp_tasks.h"
-#include "im.h"
 
 
 //#define REQUEST_TIMEOUT 3000
@@ -125,7 +125,7 @@ void CapsManager::updateCaps(const Jid& jid, const QString& node, const QString&
 		}
 		else {
 			// Remove all caps specifications
-			qWarning(QString("caps.cpp: Illegal caps info from %1: node=%2, ver=%3").arg(QString(jid.full()).replace('%',"%%")).arg(node).arg(ver));
+			qWarning(QString("caps.cpp: Illegal caps info from %1: node=%2, ver=%3").arg(QString(jid.full()).replace('%',"%%")).arg(node).arg(ver).toAscii());
 			capsSpecs_.remove(jid.full());
 		}
 	}
@@ -188,7 +188,7 @@ void CapsManager::discoFinished()
 	DiscoItem item = disco->item();
 	Jid jid = disco->jid();
 	//qDebug() << QString("caps.cpp: Disco response from %1, node=%2, success=%3").arg(QString(jid.full()).replace('%',"%%")).arg(disco->node()).arg(disco->success());
-	QStringList tokens = QStringList::split("#",disco->node());
+	QStringList tokens = disco->node().split("#",QString::SkipEmptyParts);
 
 	// Update features
 	Q_ASSERT(tokens.count() == 2);
@@ -204,11 +204,11 @@ void CapsManager::discoFinished()
 		}
 		else {
 			// TODO: Fall back on another jid
-			qWarning(QString("capsmanager.cpp: Disco to '%1' at node '%2' failed.").arg(jid.full()).arg(node));
+			qWarning(QString("capsmanager.cpp: Disco to '%1' at node '%2' failed.").arg(jid.full()).arg(node).toAscii());
 		}
 	}
 	else 
-		qWarning(QString("caps.cpp: Current client node '%1' does not match response '%2'").arg(jid_cs.node()).arg(node));
+		qWarning(QString("caps.cpp: Current client node '%1' does not match response '%2'").arg(jid_cs.node()).arg(node).toAscii());
 }
 
 
@@ -274,7 +274,7 @@ QString CapsManager::clientName(const Jid& jid) const
 			if (name.startsWith("www."))
 				name = name.right(name.length() - 4);
 			
-			int cut_pos = name.find("/");
+			int cut_pos = name.indexOf("/");
 			if (cut_pos != -1)
 				name = name.left(cut_pos);
 		}

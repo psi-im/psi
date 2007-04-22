@@ -28,6 +28,7 @@
 
 #include "im.h"
 #include "xmpp_vcard.h"
+#include "xmpp_discoinfotask.h"
 
 namespace XMPP
 {
@@ -384,28 +385,6 @@ namespace XMPP
 		void get(const DiscoItem &);
 	
 		const DiscoList &items() const;
-	
-		void onGo();
-		bool take(const QDomElement &);
-	
-	private:
-		class Private;
-		Private *d;
-	};
-
-	class JT_DiscoInfo : public Task
-	{
-		Q_OBJECT
-	public:
-		JT_DiscoInfo(Task *);
-		~JT_DiscoInfo();
-	
-		void get(const Jid &, const QString &node = QString::null, const DiscoItem::Identity = DiscoItem::Identity());
-		void get(const DiscoItem &);
-	
-		const DiscoItem &item() const;
-		const Jid& jid() const;
-		const QString& node() const;
 	
 		void onGo();
 		bool take(const QDomElement &);

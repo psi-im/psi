@@ -22,6 +22,7 @@ HEADERS += \
 	$$PWD/xmpp-core/compress.h \
 	$$PWD/xmpp-core/td.h \
 	$$PWD/xmpp-im/xmpp_tasks.h \
+	$$PWD/xmpp-im/xmpp_discoinfotask.h \
 	$$PWD/xmpp-im/xmpp_xmlcommon.h \
 	$$PWD/xmpp-im/xmpp_vcard.h \
 	$$PWD/jabber/s5b.h \
@@ -29,6 +30,7 @@ HEADERS += \
 	$$PWD/jabber/filetransfer.h \
 	$$PWD/include/xmpp.h \
 	$$PWD/include/xmpp_jid.h \
+	$$PWD/include/xmpp_client.h \
 	$$PWD/include/xmpp_muc.h \
 	$$PWD/include/xmpp_rosterx.h \
 	$$PWD/include/xmpp_xdata.h \
@@ -56,6 +58,7 @@ SOURCES += \
 	$$PWD/xmpp-im/xmpp_features.cpp \
 	$$PWD/xmpp-im/xmpp_discoitem.cpp \
 	$$PWD/xmpp-im/xmpp_xdata.cpp \
+	$$PWD/xmpp-im/xmpp_task.cpp \
 	$$PWD/xmpp-im/xmpp_tasks.cpp \
 	$$PWD/xmpp-im/xmpp_xmlcommon.cpp \
 	$$PWD/xmpp-im/xmpp_vcard.cpp \
