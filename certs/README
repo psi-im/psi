@@ -1,2 +1,11 @@
-This directory contains files that have SSL certificates in them. The files
-should be in PEM format, and should have the extension '.crt' or '.pem'.
+This directory contains the SSL certificates shipped with psi. The files should be in PEM format, and should have the extension '.crt' or '.pem'.
+
+Please use PSIDATADIR/certs for local additions.
+
+Default value of PSIDATADIR:
+  Linux, MacOS X and other Unices
+     ~/.psi/ 
+  Windows NT, 2000, XP and Server 2003
+     %UserProfile%\PsiData\ (usually C:\Documents and Settings\username\PsiData )
+  Windows 95, 98 and Me
+     %ProgramFiles%\Psi\PsiData\ (usually C:\Program Files\Psi\PsiData )
