@@ -68,6 +68,10 @@ QString TextUtil::plain2rich(const QString &plain)
 	int col = 0;
 
 	for(int i = 0; i < (int)plain.length(); ++i) {
+#ifdef Q_OS_WIN
+		if(plain[i] == '\r' && i+1 < (int)plain.length() && plain[i+1] == '\n')
+			++i;	// Qt/Win sees \r\n as two new line chars
+#endif
 		if(plain[i] == '\n') {
 			rich += "<br>";
 			col = 0;
