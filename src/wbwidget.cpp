@@ -376,7 +376,7 @@ void WbWidget::mouseMoveEvent(QMouseEvent * event) {
 		eraseRect = 0;
 		return;
 	} else if(mode_ == DrawPath && newWbItem_) {
-		WbPath* newWbPath = qobject_cast<WbPath*>(newWbItem_);
+		WbPath* newWbPath = dynamic_cast<WbPath*>(newWbItem_);
 		if(!newWbPath)
 			return;
 		QPointF newPoint = QPointF(mapToScene(mapFromGlobal(event->globalPos())));
@@ -412,7 +412,7 @@ void WbWidget::mouseMoveEvent(QMouseEvent * event) {
 		// I think Qt should take care of this. However, at least in TP1 this is necessary for "small changes"
 		scene->update(newWbPath->boundingRect());
 		return;
-	} else if (mode_ == DrawRectangle && qobject_cast<WbRectangle*>(newWbItem_)) {
+	} else if (mode_ == DrawRectangle && dynamic_cast<WbRectangle*>(newWbItem_)) {
 		QPointF newPoint = QPointF(mapToScene(mapFromGlobal(event->globalPos())));
 		QDomElement _svg = newWbItem_->svg();
 		QPointF difference = QPointF(newPoint.x() - _svg.attribute("x").toDouble(), newPoint.y() - _svg.attribute("y").toDouble());
@@ -424,7 +424,7 @@ void WbWidget::mouseMoveEvent(QMouseEvent * event) {
 		_svg.setAttribute("height", difference.y());
 		newWbItem_->parseSvg(_svg);
 		return;
-	} else if (mode_ == DrawEllipse && qobject_cast<WbEllipse*>(newWbItem_)) {
+	} else if (mode_ == DrawEllipse && dynamic_cast<WbEllipse*>(newWbItem_)) {
 		QPointF newPoint = QPointF(mapToScene(mapFromGlobal(event->globalPos())));
 		QDomElement _svg = newWbItem_->svg();
 		QPointF difference = QPointF(newPoint.x() - _svg.attribute("cx").toDouble(), newPoint.y() - _svg.attribute("cy").toDouble());
@@ -436,7 +436,7 @@ void WbWidget::mouseMoveEvent(QMouseEvent * event) {
 		_svg.setAttribute("ry", difference.y());
 		newWbItem_->parseSvg(_svg);
 		return;
-	} else if (mode_ == DrawCircle && qobject_cast<WbCircle*>(newWbItem_)) {
+	} else if (mode_ == DrawCircle && dynamic_cast<WbCircle*>(newWbItem_)) {
 		QPointF newPoint = QPointF(mapToScene(mapFromGlobal(event->globalPos())));
 		QDomElement _svg = newWbItem_->svg();
 		QPointF difference = QPointF(newPoint.x() - _svg.attribute("cx").toDouble(), newPoint.y() - _svg.attribute("cy").toDouble());
@@ -447,7 +447,7 @@ void WbWidget::mouseMoveEvent(QMouseEvent * event) {
 		_svg.setAttribute("r", std::pow(difference.x()*difference.x() + difference.y()*difference.y(), 0.5));
 		newWbItem_->parseSvg(_svg);
 		return;
-	} else if (mode_ == DrawLine && qobject_cast<WbLine*>(newWbItem_)) {
+	} else if (mode_ == DrawLine && dynamic_cast<WbLine*>(newWbItem_)) {
 		QPointF newPoint = QPointF(mapToScene(mapFromGlobal(event->globalPos())));
 		QDomElement _svg = newWbItem_->svg();
 		_svg.setAttribute("x2", newPoint.x());
@@ -486,7 +486,7 @@ void WbWidget::mouseReleaseEvent(QMouseEvent * event) {
 			adding_ = 0;
 		}
 		if (newWbItem_) {	
-			WbPath* newWbPath = qobject_cast<WbPath*>(newWbItem_);
+			WbPath* newWbPath = dynamic_cast<WbPath*>(newWbItem_);
 			if(!newWbPath)
 				return;
 			// Finish the path
