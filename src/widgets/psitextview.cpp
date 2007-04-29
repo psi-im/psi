@@ -253,5 +253,27 @@ QMimeData *PsiTextView::createMimeDataFromSelection() const
 	return data;
 }
 
-#include "psitextview.moc"
+/**
+ * Ensures that if PsiTextView was scrolled to bottom when resize
+ * operation happened, it will still be scrolled to bottom after the fact.
+ */
+void PsiTextView::resizeEvent(QResizeEvent *e)
+{
+	bool atEnd = verticalScrollBar()->value() ==
+	             verticalScrollBar()->maximum();
+	bool atStart = verticalScrollBar()->value() ==
+	               verticalScrollBar()->minimum();
+	double value = 0;
+	if (!atEnd && !atStart)
+		value = (double)verticalScrollBar()->maximum() /
+		        (double)verticalScrollBar()->value();
 
+	QTextEdit::resizeEvent(e);
+
+	if (atEnd)
+		verticalScrollBar()->setValue(verticalScrollBar()->maximum());
+	else if (value != 0)
+		verticalScrollBar()->setValue((double)verticalScrollBar()->maximum() / value);
+}
+
+#include "psitextview.moc"

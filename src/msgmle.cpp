@@ -18,17 +18,19 @@
  *
  */
 
-#include <QApplication>
-#include <QLayout>
-#include <QTimer>
-#include <QKeyEvent>
-#include <QResizeEvent>
-#include <QEvent>
-#include <QDesktopWidget>
-#include <QTextDocument>
 #include <QAbstractTextDocumentLayout>
+#include <QAction>
+#include <QApplication>
+#include <QDesktopWidget>
+#include <QEvent>
+#include <QKeyEvent>
+#include <QLayout>
+#include <QMenu>
+#include <QResizeEvent>
 #include <QScrollBar>
 #include <QTextCharFormat>
+#include <QTextDocument>
+#include <QTimer>
 
 #include "common.h"
 #include "msgmle.h"
@@ -118,16 +120,6 @@ void ChatView::keyPressEvent(QKeyEvent *e)
 		setText(""); */
 	else
 		PsiTextView::keyPressEvent(e);
-}
-
-void ChatView::resizeEvent(QResizeEvent *e)
-{
-	// This fixes flyspray #45
-	QScrollBar *vsb = verticalScrollBar();
-	if ((vsb->maximum() - vsb->value()) <= vsb->pageStep())
-		scrollToBottom();
-
-	PsiTextView::resizeEvent(e);
 }
 
 /**

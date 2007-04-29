@@ -59,13 +59,15 @@ protected:
 	void insertPlainText(const QString &) { }
 	void setHtml(const QString &) { }
 	void setPlainText(const QString &) { }
-	
+
+	// reimplemented
 	void contextMenuEvent(QContextMenuEvent *e);
 	void mouseMoveEvent(QMouseEvent *e);
 	void mousePressEvent(QMouseEvent *e);
 	void mouseReleaseEvent(QMouseEvent *e);
 	QMimeData *createMimeDataFromSelection() const;
-	
+	void resizeEvent(QResizeEvent *);
+
 	class Private;
 private:
 	Private *d;
