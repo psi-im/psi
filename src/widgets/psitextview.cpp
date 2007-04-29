@@ -248,8 +248,8 @@ QMimeData *PsiTextView::createMimeDataFromSelection() const
 	delete doc;
 	
 	QMimeData *data = new QMimeData;
-	data->setHtml(Qt::convertFromPlainText(text));
 	data->setText(text);
+	data->setHtml(Qt::convertFromPlainText(text));
 	return data;
 }
 
