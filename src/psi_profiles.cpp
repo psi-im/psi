@@ -468,7 +468,7 @@ void UserProfile::reset()
 	prefs.asMessage = QObject::tr("Auto Status (idle)");
 	prefs.scrollTo = TRUE;
 	prefs.useEmoticons = false;
-	prefs.alertOpenChats = false;
+	prefs.alertOpenChats = true;
 	prefs.raiseChatWindow = false;
 	prefs.showSubjects = true;
 	prefs.showCounter = false;
