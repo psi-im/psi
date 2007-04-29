@@ -1,3 +1,4 @@
+#include <QtCore> // for qWarning()
 #include <QObject>
 #include <QIODevice>
 #include <zlib.h>
@@ -152,7 +153,11 @@ int Decompressor::write(const QByteArray& input, bool flush)
 		output_position += CHUNK_SIZE;
 	}
 	while (zlib_stream_->avail_out == 0);
-	Q_ASSERT(zlib_stream_->avail_in == 0);
+	//Q_ASSERT(zlib_stream_->avail_in == 0);
+	if (zlib_stream_->avail_in != 0) {
+		qWarning() << "Decompressor: Unexpected state: avail_in=" << zlib_stream_->avail_in << ",avail_out=" << zlib_stream_->avail_out << ",result=" << result;
+		return Z_STREAM_ERROR; // FIXME: Should probably return 'result'
+	}
 	output_position -= zlib_stream_->avail_out;
 
 	// Flush the data
