@@ -437,7 +437,7 @@ void UserProfile::reset()
 	prefs.ignoreHeadline = FALSE;
 	prefs.ignoreNonRoster = FALSE;
 	prefs.excludeGroupChatsFromIgnore = TRUE;
-	prefs.useDock = win ? TRUE: FALSE;
+	prefs.useDock = true;
 	prefs.dockDCstyle = win ? TRUE: FALSE;
 	prefs.dockHideMW = FALSE;
 	prefs.dockToolMW = FALSE;
