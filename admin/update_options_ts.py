@@ -2,7 +2,7 @@
 
 from xml.dom.minidom import parse, parseString
 import xml.dom
-
+import sys
 
 def rec_parse(node): # node : xml.dom.Node
 	for i in node.childNodes:
@@ -12,7 +12,11 @@ def rec_parse(node): # node : xml.dom.Node
 			rec_parse(i)
 
 
-dom = parse('options/default.xml') # parse an XML file by name
+if len(sys.argv) != 2:
+	print "usage: %s options.xml > output.cpp" % sys.argv[0]
+	sys.exit(1)
+
+dom = parse(sys.argv[1]) # parse an XML file by name
 
 toplevel = dom.getElementsByTagName("psi")[0]
 options = toplevel.getElementsByTagName("options")[0]
