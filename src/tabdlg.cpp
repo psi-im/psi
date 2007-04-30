@@ -125,7 +125,7 @@ void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent * event)
 		QAction *c = tabMenu->addAction(tr("Close Tab"));
 
 		QMenu* sendTo = new QMenu(tabMenu);
-		sendTo->setTitle(tr("Sent Tab to"));
+		sendTo->setTitle(tr("Send Tab to"));
 		QMap<QAction*, TabDlg*> sentTos;
 		for (uint i = 0; i < psi->getTabSets()->count(); ++i)
 		{
@@ -156,7 +156,7 @@ void TabDlg::tab_aboutToShowMenu(QMenu *menu)
 	menu->addAction( tr("Close Current Tab"), this, SLOT( closeChat() ) );
 
 	QMenu* sendTo = new QMenu(menu);
-	sendTo->setTitle(tr("Sent Current Tab to"));
+	sendTo->setTitle(tr("Send Current Tab to"));
 	int tabdlgmetatype = qRegisterMetaType<TabDlg*>("TabDlg*");
 	for (uint i = 0; i < psi->getTabSets()->count(); ++i)
 	{
