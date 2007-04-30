@@ -117,7 +117,7 @@
 				<status comment="Options for the status menu">
 					<chat comment="Enable free for chat" type="bool">true</chat>
 					<xa comment="Enable extended away/not available" type="bool">true</xa>
-					<invisible comment="Enable invisibility" type="bool">true</invisible>
+					<invisible comment="Enable invisibility" type="bool">false</invisible>
 				</status>
 				<view comment="Options for the view menu">
 					<show-away comment="Show the 'show away/xa' toggle" type="bool">false</show-away>
