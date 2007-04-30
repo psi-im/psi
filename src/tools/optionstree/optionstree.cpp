@@ -175,13 +175,11 @@ bool OptionsTree::loadOptions(const QString& fileName, const QString& configName
  */
 bool OptionsTree::loadOptions(const QDomElement& base, const QString& configName, const QString& configNS, const QString& configVersion)
 {
-#ifdef __GNUC__
-#warning "Temporarily commenting out options.xml version checks"
-#endif
 	Q_UNUSED(configName);
 	Q_UNUSED(configNS);
 	Q_UNUSED(configVersion);
 	
+	// Version check
 	//if(base.tagName() != configName)
 	//	return false;
 	//if(configVersion!="" && base.attribute("version") != configVersion)
