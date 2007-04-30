@@ -428,7 +428,7 @@ void UserProfile::reset()
 	// prefs
 	prefs.useleft = FALSE;
 	prefs.singleclick = FALSE;
- 	prefs.hideMenubar = TRUE;
+ 	prefs.hideMenubar = FALSE;
 	prefs.defaultAction = 1;
 	prefs.delChats = dcHour;
 	prefs.browser = 0;
@@ -611,7 +611,7 @@ void UserProfile::reset()
 		tb[0].dock = Qt::DockBottom;
 
 		tb[1].name = QObject::tr("Show contacts");
-		tb[1].on = defaultEnableToolbars;
+		tb[1].on = false;
 		tb[1].locked = true;
 		tb[1].keys << "show_offline" << "show_hidden" << "show_agents" << "show_self" << "show_statusmsg"; 
 
