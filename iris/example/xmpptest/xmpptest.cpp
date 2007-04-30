@@ -367,7 +367,7 @@ private slots:
 		}
 
 		stream->setNoopTime(55000); // every 55 seconds
-		stream->setAllowPlain(ck_plain->isChecked());
+		stream->setAllowPlain(ck_plain->isChecked() ? XMPP::ClientStream::AllowPlain : XMPP::ClientStream::NoAllowPlain);
 		stream->setRequireMutualAuth(ck_mutual->isChecked());
 		stream->setSSFRange(sb_ssfmin->value(), sb_ssfmax->value());
 		//stream->setOldOnly(true);
