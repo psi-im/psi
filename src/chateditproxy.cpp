@@ -62,6 +62,9 @@ ChatEdit* ChatEditProxy::createTextEdit()
 /**
  * Moves the QTextDocument and QTextCursor data from \a oldTextEdit
  * to \a newTextEdit.
+ *
+ * NB: Make sure that all QSyntaxHighlighters are detached prior to calling
+ * this function.
  */
 void ChatEditProxy::moveData(QTextEdit* newTextEdit, QTextEdit* oldTextEdit) const
 {
@@ -83,8 +86,16 @@ void ChatEditProxy::updateLayout()
 {
 	ChatEdit* newEdit = createTextEdit();
 
-	if (textEdit_)
+	if (textEdit_) {
+		// all syntaxhighlighters should be removed while we move
+		// the documents around, and should be reattached afterwards
+		textEdit_->setCheckSpelling(false);
+		newEdit->setCheckSpelling(false);
+
 		moveData(newEdit, textEdit_);
+
+		newEdit->setCheckSpelling(ChatEdit::checkSpellingGloballyEnabled());
+	}
 
 	delete textEdit_;
 	textEdit_ = newEdit;

@@ -192,6 +192,8 @@ QString ChatView::formatTimeStamp(const QDateTime &time)
 ChatEdit::ChatEdit(QWidget *parent)
 	: QTextEdit(parent)
 	, dialog_(0)
+	, check_spelling_(false)
+	, spellhighlighter_(0)
 {
 	setWordWrapMode(QTextOption::WordWrap);
 	setAcceptRichText(false);
@@ -202,13 +204,13 @@ ChatEdit::ChatEdit(QWidget *parent)
 	setMinimumHeight(48);
 
 	previous_position_ = 0;
-	spellhighlighter_ = NULL;
-	setCheckSpelling(PsiOptions::instance()->getOption("options.ui.spell-check.enabled").toBool());
+	setCheckSpelling(checkSpellingGloballyEnabled());
 	connect(PsiOptions::instance(),SIGNAL(optionChanged(const QString&)),SLOT(optionsChanged()));
 }
 
 ChatEdit::~ChatEdit()
 {
+	delete spellhighlighter_;
 }
 
 void ChatEdit::setDialog(QWidget* dialog)
@@ -219,6 +221,11 @@ void ChatEdit::setDialog(QWidget* dialog)
 QSize ChatEdit::sizeHint() const
 {
 	return minimumSizeHint();
+}
+
+bool ChatEdit::checkSpellingGloballyEnabled()
+{
+	return PsiOptions::instance()->getOption("options.ui.spell-check.enabled").toBool();
 }
 
 void ChatEdit::setCheckSpelling(bool b)
@@ -383,9 +390,8 @@ void ChatEdit::addToDictionary()
 
 void ChatEdit::optionsChanged()
 {
-	setCheckSpelling(PsiOptions::instance()->getOption("options.ui.spell-check.enabled").toBool());
+	setCheckSpelling(checkSpellingGloballyEnabled());
 }
-
 
 //----------------------------------------------------------------------------
 // LineEdit
