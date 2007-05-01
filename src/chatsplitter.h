@@ -36,11 +36,15 @@ public:
 	void addWidget(QWidget* widget);
 	void setSizes(const QList<int>& list);
 
+protected:
 	/**
 	 * Returns true if all child widgets are managed by QLayout.
 	 */
 	bool splitterEnabled() const { return splitterEnabled_; }
 	void setSplitterEnabled(bool enable);
+
+public slots:
+	void optionsChanged();
 
 private slots:
 	void childDestroyed(QObject* obj);

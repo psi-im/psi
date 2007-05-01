@@ -24,6 +24,9 @@
 #include <QVBoxLayout>
 #include <QChildEvent>
 
+#include "psioptions.h"
+#include "common.h"
+
 /**
  * Handy widget that masquerades itself as QSplitter, and could work
  * in both QSplitter mode, and QSplitter-less mode.
@@ -34,7 +37,11 @@ ChatSplitter::ChatSplitter(QWidget* parent)
 	, splitter_(0)
 	, layout_(0)
 {
-	updateLayout();
+	connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionsChanged()));
+	optionsChanged();
+
+	if (!layout_)
+		updateLayout();
 }
 
 /**
@@ -124,4 +131,14 @@ void ChatSplitter::updateLayout()
 
 	foreach(QWidget* child, children_)
 		updateChildLayout(child);
+}
+
+/**
+ * Updates layout according to current options.
+ * FIXME: When option.chatLineEdit finally makes it to PsiOptions, make this slot
+ *        private.
+ */
+void ChatSplitter::optionsChanged()
+{
+	setSplitterEnabled(!option.chatLineEdit);
 }

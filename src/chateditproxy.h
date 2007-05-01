@@ -38,18 +38,22 @@ public:
 	 */
 	ChatEdit* chatEdit() const { return textEdit_; }
 
-	/**
-	 * Returns true if line edit mode is enabled.
-	 */
-	bool lineEditEnabled() const { return lineEditEnabled_; }
-	void setLineEditEnabled(bool enable);
-
 signals:
 	/**
 	 * Emitted when internal QTextEdit gets replaced with
 	 * another one.
 	 */
 	void textEditCreated(QTextEdit* textEdit);
+
+protected:
+	/**
+	 * Returns true if line edit mode is enabled.
+	 */
+	bool lineEditEnabled() const { return lineEditEnabled_; }
+	void setLineEditEnabled(bool enable);
+
+public slots:
+	void optionsChanged();
 
 private:
 	virtual ChatEdit* createTextEdit();

@@ -1409,8 +1409,8 @@ void GCMainDlg::flashAnimate()
 
 void GCMainDlg::setLooks()
 {
-	ui_.vsplitter->setSplitterEnabled(!option.chatLineEdit);
-	ui_.mle->setLineEditEnabled(option.chatLineEdit);
+	ui_.vsplitter->optionsChanged();
+	ui_.mle->optionsChanged();
 
 	// update the fonts
 	QFont f;

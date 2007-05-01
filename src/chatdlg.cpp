@@ -721,8 +721,8 @@ void ChatDlg::setLooks()
 	ui_.log->setFont(f);
 	ui_.mle->chatEdit()->setFont(f);
 
-	ui_.splitter->setSplitterEnabled(!option.chatLineEdit);
-	ui_.mle->setLineEditEnabled(option.chatLineEdit);
+	ui_.splitter->optionsChanged();
+	ui_.mle->optionsChanged();
 
 	ui_.tb_pgp->hide();
 	if (d->smallChat) {

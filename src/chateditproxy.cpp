@@ -23,6 +23,8 @@
 #include <QVBoxLayout>
 
 #include "msgmle.h"
+#include "psioptions.h"
+#include "common.h"
 
 ChatEditProxy::ChatEditProxy(QWidget* parent)
 	: QWidget(parent)
@@ -33,7 +35,12 @@ ChatEditProxy::ChatEditProxy(QWidget* parent)
 	layout_ = new QVBoxLayout(this);
 	layout_->setMargin(0);
 	layout_->setSpacing(0);
-	updateLayout();
+
+	connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionsChanged()));
+	optionsChanged();
+
+	if (!textEdit_)
+		updateLayout();
 }
 
 /**
@@ -101,4 +108,14 @@ void ChatEditProxy::updateLayout()
 	textEdit_ = newEdit;
 	layout_->addWidget(textEdit_);
 	emit textEditCreated(textEdit_);
+}
+
+/**
+ * Update ChatEdit widget according to current options.
+ * FIXME: When option.chatLineEdit finally makes it to PsiOptions, make this slot
+ *        private.
+ */
+void ChatEditProxy::optionsChanged()
+{
+	setLineEditEnabled(option.chatLineEdit);
 }
