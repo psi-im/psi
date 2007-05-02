@@ -72,9 +72,12 @@ include(src.pri)
 SOURCES += main.cpp
 HEADERS += main.h
 
+################################################################################
+# Translation
+################################################################################
+
 LANG_PATH = ../lang
 
-# Translations
 TRANSLATIONS = \
 	$$LANG_PATH/psi_ar.ts \
 	$$LANG_PATH/psi_ca.ts \
@@ -98,6 +101,23 @@ TRANSLATIONS = \
 	$$LANG_PATH/psi_sk.ts \
 	$$LANG_PATH/psi_sr.ts \
 	$$LANG_PATH/psi_zh.ts
+
+OPTIONS_TRANSLATIONS_FILE=$$PWD/option_translations.cpp
+
+QMAKE_EXTRA_TARGETS += translate_options
+translate_options.commands = $$PWD/../admin/update_options_ts.py $$PWD/../options/default.xml > $$OPTIONS_TRANSLATIONS_FILE
+
+# In case lupdate doesn't work
+QMAKE_EXTRA_TARGETS += translate
+translate.commands = lupdate . options widgets tools/grepshortcutkeydlg ../cutestuff/network ../iris/xmpp-im -ts $$TRANSLATIONS
+
+
+exists($$OPTIONS_TRANSLATIONS_FILE) {
+	SOURCES += $$OPTIONS_TRANSLATIONS_FILE
+}
+QMAKE_CLEAN += $$OPTIONS_TRANSLATIONS_FILE
+
+################################################################################
 
 # Resources
 RESOURCES += ../psi.qrc ../iconsets.qrc
