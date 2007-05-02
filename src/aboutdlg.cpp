@@ -32,7 +32,7 @@ AboutDlg::AboutDlg(QWidget* parent)
 
 	setModal(false);
 
-	ui_.lb_name->setText ( ui_.lb_name->text().arg(ApplicationInfo::name()).arg(ApplicationInfo::version()) );
+	ui_.lb_name->setText ( QString("<h3><b>%1 v%2</b></h3>").arg(ApplicationInfo::name()).arg(ApplicationInfo::version()) );
 
 	ui_.te_license->setText ( loadText(":/COPYING") );
 
