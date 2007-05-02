@@ -23,6 +23,7 @@
 #include "psiaccount.h"
 #include "psiactionlist.h"
 #include "psicon.h"
+#include "psioptions.h"
 #include "rc.h"
 #include "xmpp_xdata.h"
 #include "ahcservermanager.h"
@@ -83,11 +84,12 @@ AHCommand RCSetStatusServer::execute(const AHCommand& c, const Jid&)
 		dnd_option.value = "dnd";
 		status_options += dnd_option;
 		if (PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool()) {
+			XData::Field::Option invisible_option;
 			invisible_option.label = QObject::tr("Invisible");
 			invisible_option.value = "invisible";
 			status_options += invisible_option;
-			XData::Field::Option offline_option;
 		}
+		XData::Field::Option offline_option;
 		offline_option.label = QObject::tr("Offline");
 		offline_option.value = "offline";
 		status_options += offline_option;
