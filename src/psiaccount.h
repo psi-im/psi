@@ -326,6 +326,7 @@ private slots:
 	void pgpKeysUpdated();
 
 	void trySignPresence();
+	void pgp_signFinished();
 	void pgp_verifyFinished();
 	void pgp_encryptFinished();
 	void pgp_decryptFinished();

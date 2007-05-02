@@ -4175,32 +4175,38 @@ void PsiAccount::trySignPresence()
 	QCA::SecureMessageKey skey;
 	skey.setPGPSecretKey(d->cur_pgpSecretKey);
 	QByteArray plain = d->loginStatus.status().utf8();
-	QCA::OpenPGP pgp;
-	QCA::SecureMessage msg(&pgp);
-	msg.setFormat(QCA::SecureMessage::Ascii);
-	msg.setSigner(skey);
-	msg.startSign(QCA::SecureMessage::Detached);
-	msg.update(plain);
-	msg.end();
-	msg.waitForFinished(-1);
-	if (msg.success()) {
+
+	PGPTransaction *t = new PGPTransaction(new QCA::OpenPGP());
+	connect(t, SIGNAL(finished()), SLOT(pgp_signFinished()));
+	t->setFormat(QCA::SecureMessage::Ascii);
+	t->setSigner(skey);
+	t->startSign(QCA::SecureMessage::Detached);
+	t->update(plain);
+	t->end();
+}
+
+void PsiAccount::pgp_signFinished()
+{
+	PGPTransaction *t = (PGPTransaction*) sender();
+	if (t->success()) {
 		Status s = d->loginStatus;
-		s.setXSigned(PGPUtil::stripHeaderFooter(QString(msg.signature())));
+		s.setXSigned(PGPUtil::stripHeaderFooter(QString(t->signature())));
 		setStatusActual(s);
 	}
 	else {
 		// Clear passphrase from cache
-		if (msg.errorCode() == QCA::SecureMessage::ErrorPassphrase) {
+		if (t->errorCode() == QCA::SecureMessage::ErrorPassphrase) {
 			QCA::KeyStoreEntry ke = PGPUtil::getSecretKeyStoreEntry(d->cur_pgpSecretKey.keyId());
 			if (!ke.isNull())
 				PGPUtil::passphrases.remove(ke.id());
 		}
 
-		QMessageBox::critical(0, tr("Error"), tr("There was an error trying to sign your status.\nReason: %1.").arg(PGPUtil::messageErrorString(msg.errorCode())));
+		QMessageBox::critical(0, tr("Error"), tr("There was an error trying to sign your status.\nReason: %1.").arg(PGPUtil::messageErrorString(t->errorCode())));
 
 		logout();
 		return;
 	}
+	t->deleteLater();
 }
 
 
@@ -4212,9 +4218,6 @@ void PsiAccount::verifyStatus(const Jid &j, const Status &s)
 	t->startVerify(PGPUtil::addHeaderFooter(s.xsigned(),1).utf8());
 	t->update(s.status().utf8());
 	t->end();
-#ifndef QCA_FINAL
-	t->waitForFinished(-1);
-#endif
 }
 
 
@@ -4271,9 +4274,6 @@ int PsiAccount::sendMessageEncrypted(const Message &_m)
 	t->startEncrypt();
 	t->update(_m.body().utf8());
 	t->end();
-#ifndef QCA_FINAL
-	t->waitForFinished(-1);
-#endif
 
 	return t->id();
 }
@@ -4323,9 +4323,6 @@ void PsiAccount::processEncryptedMessage(const Message &m)
 	t->startDecrypt();
 	t->update(PGPUtil::addHeaderFooter(m.xencrypted(),0).utf8());
 	t->end();
-#ifndef QCA_FINAL
-	t->waitForFinished(-1);
-#endif
 }
 
 
