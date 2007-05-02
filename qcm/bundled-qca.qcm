@@ -17,7 +17,7 @@ public:
 	bool exec()
 	{
 		// FIXME: Check QCA version number
-		if (QFile::exists("third-party/qca")) {
+		if (QFile::exists("third-party/qca/qca")) {
 			conf->addExtra("CONFIG += qca-static");
 			return true;
 		}

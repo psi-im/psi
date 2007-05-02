@@ -22,15 +22,11 @@ windows:include(../../../conf_windows.pri)
 qca-static {
 	# QCA
 	DEFINES += QCA_STATIC
-	QCA_CPP = ../../../third-party/qca
-	INCLUDEPATH += $$QCA_CPP/include/QtCrypto
-	LIBS += -L$$QCA_CPP -lqca_psi
-	windows:LIBS += -lcrypt32
-	mac:LIBS += -framework Security
+	include(../../../third-party/qca/qca.pri)
 
 	# QCA-OpenSSL
 	contains(DEFINES, HAVE_OPENSSL) {
-		include(../../../third-party/qca-openssl.pri)
+		include(../../../third-party/qca/qca-openssl.pri)
 	}
 }
 

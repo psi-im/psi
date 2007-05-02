@@ -4,9 +4,9 @@ CONFIG += staticlib
 DEFINES += QCA_STATIC
 TARGET = qca_psi
 
-QCA_BASE = ..
-QCA_INCBASE = include
-QCA_SRCBASE = .
+QCA_BASE = qca
+QCA_INCBASE = $$QCA_BASE/include
+QCA_SRCBASE = $$QCA_BASE
 
 MOC_DIR        = .moc
 OBJECTS_DIR    = .obj

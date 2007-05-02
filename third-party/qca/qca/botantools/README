@@ -1,0 +1,73 @@
+Botantools 1.4.1
+----------------
+
+Botan is written by Jack Lloyd and available at http://botan.randombit.net/
+
+Description (from the website) :
+  Botan is a library, written in C++. It's main purpose it to provide an easy
+  to use, high level interface to various cryptographic primitives, such as
+  block ciphers, hash functions, and public key algorithms. In addition, the
+  intent is that Botan is as general purpose as possible, and for this reason,
+  it supports many standards and de-facto standards.
+
+"Botantools" is a subset of Botan, tailored for use with QCA.  It includes
+only the memory allocation, memory locking, and big integer capabilities.  To
+use it, just include botantools.pri in your qmake profile, and botantools.h in
+your code.
+
+The 'botan' subfolder consists of files just from Botan.  Inside are source
+files (originally from Botan's 'src' folder) as well as some modules (from
+'modules').  The further 'botan' subfolder contains headers (from 'include'
+and modules).
+
+Some files had to be modified, and botantools.diff contains the differences.
+Also, license headers and namespace declarations were added to all source
+files, but I don't count these as real modifications, and they are not
+included in the diff.  The addlicenseheaders.sh script can be used to apply
+the license headers.  To apply the namespace declarations, build wrapns.c and
+use the addnamespace.sh script.
+
+Files used:
+
+  '*' indicates modification
+
+   doc/license.txt
+   include/allocate.h
+ * include/bigint.h
+   include/defalloc.h
+   include/exceptn.h
+   include/mem_ops.h
+   include/mp_core.h
+   include/mp_madd.h
+ * include/mp_types.h
+   include/mutex.h
+ * include/numthry.h
+   include/secalloc.h
+ * include/secmem.h
+ * include/types.h
+ * include/util.h
+   modules/alloc_mmap
+   modules/ml_unix
+   modules/ml_win32
+   modules/mux_qt
+ * src/allocate.cpp
+ * src/big_base.cpp
+ * src/big_code.cpp
+ * src/big_io.cpp
+   src/big_ops2.cpp
+   src/big_ops3.cpp
+   src/defalloc.cpp
+   src/divide.cpp
+   src/exceptn.cpp
+   src/mp_comba.cpp
+   src/mp_core.cpp
+ * src/mp_fkmul.cpp
+   src/mp_misc.cpp
+   src/mp_mul.cpp
+   src/mp_shift.cpp
+   src/mp_smul.cpp
+ * src/mutex.cpp
+ * src/numthry.cpp
+ * src/secalloc.cpp
+ * src/util.cpp
+
