@@ -106,7 +106,7 @@ void UserAccount::reset()
 	priority = 5;
 	opt_keepAlive = TRUE;
 	allow_plain = XMPP::ClientStream::AllowPlainOverTLS;
-	opt_compress = TRUE;
+	opt_compress = FALSE;
 	opt_log = TRUE;
 	opt_reconn = FALSE;
 	opt_ignoreSSLWarnings = false;
