@@ -1144,8 +1144,6 @@ void GCMainDlg::message(const Message &_m)
 		ui_.le_topic->setText(m.subject());
 		ui_.le_topic->setCursorPosition(0);
 		ui_.le_topic->setToolTip(QString("<qt><p>%1</p></qt>").arg(m.subject()));
-		if (d->connecting)
-			return;
 		if(m.body().isEmpty()) {
 			if (!from.isEmpty())
 				m.setBody(QString("/me ") + tr("has set the topic to: %1").arg(m.subject()));
