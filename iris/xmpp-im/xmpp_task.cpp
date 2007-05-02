@@ -18,6 +18,7 @@
  */
 
 #include <QTimer>
+#include <qplatformdefs.h>
 
 #include "safedelete.h"
 #include "xmpp_task.h"
@@ -228,7 +229,7 @@ void Task::debug(const char *fmt, ...)
 		buf = new char[size];
 		va_list ap;
 		va_start(ap, fmt);
-		r = vsnprintf(buf, size, fmt, ap);
+		r = QT_VSNPRINTF(buf, size, fmt, ap);
 		va_end(ap);
 
 		if(r != -1)
