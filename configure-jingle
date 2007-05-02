@@ -26,11 +26,6 @@ Dependency options:
   --disable-openssl               Disable use of OpenSSL (bundled QCA only)
   --with-openssl-inc=[path]       Path to OpenSSL include files (bundled QCA only)
   --with-openssl-lib=[path]       Path to OpenSSL library files (bundled QCA only)
-  --disable-cyrussasl             Disable use of Cyrus SASL2 (bundled QCA only)
-  --with-sasl-inc=[path]          Path to Cyrus SASL2 include files (bundled QCA
-                                  only)
-  --with-sasl-lib=[path]          Path to Cyrus SASL2 library files (bundled QCA
-                                  only)
   --with-zlib-inc=[path]          Path to zlib include files
   --with-zlib-lib=[path]          Path to zlib library files
   --enable-universal              Enable use of Mac OS X universal binary support
@@ -203,21 +198,6 @@ while [ $# -gt 0 ]; do
 
 		--with-openssl-lib=*)
 			QC_WITH_OPENSSL_LIB="${1#--with-openssl-lib=}"
-			shift
-			;;
-
-		--disable-cyrussasl)
-			QC_DISABLE_cyrussasl="Y"
-			shift
-			;;
-
-		--with-sasl-inc=*)
-			QC_WITH_SASL_INC="${1#--with-sasl-inc=}"
-			shift
-			;;
-
-		--with-sasl-lib=*)
-			QC_WITH_SASL_LIB="${1#--with-sasl-lib=}"
 			shift
 			;;
 
@@ -422,9 +402,6 @@ echo QC_DISABLE_bundled_qca=$QC_DISABLE_bundled_qca
 echo QC_DISABLE_openssl=$QC_DISABLE_openssl
 echo QC_WITH_OPENSSL_INC=$QC_WITH_OPENSSL_INC
 echo QC_WITH_OPENSSL_LIB=$QC_WITH_OPENSSL_LIB
-echo QC_DISABLE_cyrussasl=$QC_DISABLE_cyrussasl
-echo QC_WITH_SASL_INC=$QC_WITH_SASL_INC
-echo QC_WITH_SASL_LIB=$QC_WITH_SASL_LIB
 echo QC_WITH_ZLIB_INC=$QC_WITH_ZLIB_INC
 echo QC_WITH_ZLIB_LIB=$QC_WITH_ZLIB_LIB
 echo QC_ENABLE_universal=$QC_ENABLE_universal
@@ -727,69 +704,6 @@ public:
 		
 		conf->addDefine("HAVE_OPENSSL");
 
-		return true;
-	}
-};
-#line 1 "cyrussasl.qcm"
-/*
------BEGIN QCMOD-----
-name: Cyrus SASL2 (bundled QCA only)
-arg: with-sasl-inc=[path],Path to Cyrus SASL2 include files (bundled QCA only)
-arg: with-sasl-lib=[path],Path to Cyrus SASL2 library files (bundled QCA only)
------END QCMOD-----
-*/
-class qc_cyrussasl : public ConfObj
-{
-public:
-	qc_cyrussasl(Conf *c) : ConfObj(c) {}
-	QString name() const { return "Cyrus SASL2"; }
-	QString shortname() const { return "cyrussasl"; }
-
-	QString checkString() const {
-		if (!QFile::exists("third-party/qca/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
-			return "";
-		else
-			return ConfObj::checkString();
-	}
-
-	bool exec()
-	{
-		if (!QFile::exists("third-party/qca/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty() || !QFile::exists("third-party/qca/qca-sasl"))
-			return false;
-
-		QString inc, lib;
-		QString s;
-
-		s = conf->getenv("QC_WITH_SASL_INC");
-		if(!s.isEmpty()) {
-			if(!conf->checkHeader(s, "sasl/sasl.h"))
-				return false;
-			inc = s;
-		}
-		else {
-			if(!conf->findHeader("sasl/sasl.h", QStringList(), &s))
-				return false;
-			inc = s;
-		}
-
-		s = conf->getenv("QC_WITH_SASL_LIB");
-		if(!s.isEmpty()) {
-			if(!conf->checkLibrary(s, "sasl2"))
-				return false;
-			lib = s;
-		}
-		else {
-			if(!conf->findLibrary("sasl2", &s))
-				return false;
-			lib = s;
-		}
-
-		if(!inc.isEmpty())
-			conf->addIncludePath(inc);
-		if(!lib.isEmpty())
-			conf->addLib(QString("-L") + s);
-		conf->addLib("-lsasl2");
-		conf->addDefine("HAVE_CYRUSSASL");
 		return true;
 	}
 };
@@ -1804,9 +1718,6 @@ cat >$1/modules_new.cpp <<EOT
     o = new qc_openssl(conf);
     o->required = false;
     o->disabled = false;
-    o = new qc_cyrussasl(conf);
-    o->required = false;
-    o->disabled = false;
     o = new qc_zlib(conf);
     o->required = true;
     o->disabled = false;
@@ -2744,9 +2655,6 @@ export QC_DISABLE_bundled_qca
 export QC_DISABLE_openssl
 export QC_WITH_OPENSSL_INC
 export QC_WITH_OPENSSL_LIB
-export QC_DISABLE_cyrussasl
-export QC_WITH_SASL_INC
-export QC_WITH_SASL_LIB
 export QC_WITH_ZLIB_INC
 export QC_WITH_ZLIB_LIB
 export QC_ENABLE_universal
