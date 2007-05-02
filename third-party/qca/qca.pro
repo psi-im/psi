@@ -77,7 +77,7 @@ mac: {
 	SOURCES += $$QCA_CPP/qca_systemstore_mac.cpp
 }
 
-include(../conf.pri)
+include(../../conf.pri)
 
 qc_universal:contains(QT_CONFIG,x86):contains(QT_CONFIG,ppc) {
 	CONFIG += x86 ppc
