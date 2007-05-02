@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2005  Justin Karneges <justin@affinix.com>
+ * Copyright (C) 2003-2007  Justin Karneges <justin@affinix.com>
  * Copyright (C) 2004,2005  Brad Hards <bradh@frogmouth.net>
  *
  * This library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 
 #include "qca_tools.h"
 
-#include <QtCore>
+#include "qdebug.h"
 
 #ifdef Q_OS_UNIX
 # include <stdlib.h>
@@ -47,17 +47,9 @@ static bool can_lock()
 #endif
 }
 
-static void add_mmap()
-{
-#ifdef Q_OS_UNIX
-	Botan::add_allocator_type("mmap", new Botan::MemoryMapping_Allocator);
-	Botan::set_default_allocator("mmap");
-#endif
-}
-
 // Botan shouldn't throw any exceptions in our init/deinit.
 
-static const Botan::SecureAllocator *alloc = 0;
+static Botan::Allocator *alloc = 0;
 
 bool botan_init(int prealloc, bool mmap)
 {
@@ -65,26 +57,26 @@ bool botan_init(int prealloc, bool mmap)
 	if(prealloc < 64)
 		prealloc = 64;
 
-	Botan::botan_memory_chunk = 64 * 1024;
-	Botan::botan_prealloc = prealloc / 64;
-	if(prealloc % 64 != 0)
-		++Botan::botan_prealloc;
-
-	Botan::Init::set_mutex_type(new Botan::Qt_Mutex);
-	Botan::Init::startup_memory_subsystem();
+	{
+		Botan::Builtin_Modules modules;
+		Botan::Library_State *libstate = new Botan::Library_State(modules.mutex_factory());
+		libstate->prealloc_size = prealloc * 1024;
+		Botan::set_global_state(libstate);
+		Botan::global_state().load(modules);
+	}
 
 	bool secmem = false;
 	if(can_lock())
 	{
-		Botan::set_default_allocator("locking");
+		Botan::global_state().set_default_allocator("locking");
 		secmem = true;
 	}
 	else if(mmap)
 	{
-		add_mmap();
+		Botan::global_state().set_default_allocator("mmap");
 		secmem = true;
 	}
-	alloc = Botan::get_allocator("default");
+	alloc = Botan::Allocator::get(true);
 
 	return secmem;
 }
@@ -92,8 +84,7 @@ bool botan_init(int prealloc, bool mmap)
 void botan_deinit()
 {
 	alloc = 0;
-	Botan::Init::shutdown_memory_subsystem();
-	Botan::Init::set_mutex_type(0);
+	Botan::set_global_state(0);
 }
 
 void *botan_secure_alloc(int bytes)
@@ -151,12 +142,12 @@ void *qca_secure_realloc(void *p, int bytes)
 	return new_p;
 }
 
-using namespace QCA;
+namespace QCA {
 
 //----------------------------------------------------------------------------
-// QSecureArray
+// SecureArray
 //----------------------------------------------------------------------------
-class QSecureArray::Private : public QSharedData
+class SecureArray::Private : public QSharedData
 {
 public:
 	Botan::SecureVector<Botan::byte> *buf;
@@ -203,12 +194,12 @@ public:
 	}
 };
 
-QSecureArray::QSecureArray()
+SecureArray::SecureArray()
 {
 	d = 0;
 }
 
-QSecureArray::QSecureArray(int size, char ch)
+SecureArray::SecureArray(int size, char ch)
 {
 	if(size > 0)
 	{
@@ -222,7 +213,7 @@ QSecureArray::QSecureArray(int size, char ch)
 		d = 0;
 }
 
-QSecureArray::QSecureArray(const char *str)
+SecureArray::SecureArray(const char *str)
 {
 	QByteArray a = QByteArray::fromRawData(str, strlen(str));
 	if(a.size() > 0)
@@ -231,29 +222,29 @@ QSecureArray::QSecureArray(const char *str)
 		d = 0;
 }
 
-QSecureArray::QSecureArray(const QByteArray &a)
+SecureArray::SecureArray(const QByteArray &a)
 {
 	d = 0;
 	*this = a;
 }
 
-QSecureArray::QSecureArray(const QSecureArray &from)
+SecureArray::SecureArray(const SecureArray &from)
 {
 	d = 0;
 	*this = from;
 }
 
-QSecureArray::~QSecureArray()
+SecureArray::~SecureArray()
 {
 }
 
-QSecureArray & QSecureArray::operator=(const QSecureArray &from)
+SecureArray & SecureArray::operator=(const SecureArray &from)
 {
 	d = from.d;
 	return *this;
 }
 
-QSecureArray & QSecureArray::operator=(const QByteArray &from)
+SecureArray & SecureArray::operator=(const QByteArray &from)
 {
 	d = 0;
 	if(!from.isEmpty())
@@ -262,12 +253,12 @@ QSecureArray & QSecureArray::operator=(const QByteArray &from)
 	return *this;
 }
 
-void QSecureArray::clear()
+void SecureArray::clear()
 {
 	d = 0;
 }
 
-bool QSecureArray::resize(int size)
+bool SecureArray::resize(int size)
 {
 	int cur_size = (d ? d->size : 0);
 	if(cur_size == size)
@@ -290,31 +281,31 @@ bool QSecureArray::resize(int size)
 	return true;
 }
 
-char & QSecureArray::operator[](int index)
+char & SecureArray::operator[](int index)
 {
 	return at(index);
 }
 
-const char & QSecureArray::operator[](int index) const
+const char & SecureArray::operator[](int index) const
 {
 	return at(index);
 }
 
-char & QSecureArray::at(int index)
+char & SecureArray::at(int index)
 {
 	Botan::byte *bp = (Botan::byte *)(*d->buf) + index;
 	char *cp = (char *)bp;
 	return *cp;
 }
 
-const char & QSecureArray::at(int index) const
+const char & SecureArray::at(int index) const
 {
 	const Botan::byte *bp = (const Botan::byte *)(*d->buf) + index;
 	const char *cp = (const char *)bp;
 	return *cp;
 }
 
-char *QSecureArray::data()
+char *SecureArray::data()
 {
 	if(!d)
 		return 0;
@@ -322,7 +313,7 @@ char *QSecureArray::data()
 	return ((char *)p);
 }
 
-const char *QSecureArray::data() const
+const char *SecureArray::data() const
 {
 	if(!d)
 		return 0;
@@ -330,22 +321,22 @@ const char *QSecureArray::data() const
 	return ((const char *)p);
 }
 
-const char *QSecureArray::constData() const
+const char *SecureArray::constData() const
 {
 	return data();
 }
 
-int QSecureArray::size() const
+int SecureArray::size() const
 {
 	return (d ? d->size : 0);
 }
 
-bool QSecureArray::isEmpty() const
+bool SecureArray::isEmpty() const
 {
 	return (size() == 0);
 }
 
-QByteArray QSecureArray::toByteArray() const
+QByteArray SecureArray::toByteArray() const
 {
 	if(isEmpty())
 		return QByteArray();
@@ -355,7 +346,7 @@ QByteArray QSecureArray::toByteArray() const
 	return buf;
 }
 
-QSecureArray & QSecureArray::append(const QSecureArray &a)
+SecureArray & SecureArray::append(const SecureArray &a)
 {
 	int oldsize = size();
 	resize(oldsize + a.size());
@@ -363,29 +354,29 @@ QSecureArray & QSecureArray::append(const QSecureArray &a)
 	return *this;
 }
 
-QSecureArray & QSecureArray::operator+=(const QSecureArray &a)
+SecureArray & SecureArray::operator+=(const SecureArray &a)
 {
 	return append(a);
 }
 
-void QSecureArray::fill(char fillChar, int fillToPosition)
+void SecureArray::fill(char fillChar, int fillToPosition)
 {
 	int len = (fillToPosition == -1) ? size() : qMin(fillToPosition, size());
 	if(len > 0)
 		memset(data(), (int)fillChar, len);
 }
 
-void QSecureArray::set(const QSecureArray &from)
+void SecureArray::set(const SecureArray &from)
 {
 	*this = from;
 }
 
-void QSecureArray::set(const QByteArray &from)
+void SecureArray::set(const QByteArray &from)
 {
 	*this = from;
 }
 
-bool operator==(const QSecureArray &a, const QSecureArray &b)
+bool operator==(const SecureArray &a, const SecureArray &b)
 {
 	if(&a == &b)
 		return true;
@@ -394,19 +385,19 @@ bool operator==(const QSecureArray &a, const QSecureArray &b)
 	return false;
 }
 
-bool operator!=(const QSecureArray &a, const QSecureArray &b)
+bool operator!=(const SecureArray &a, const SecureArray &b)
 {
 	return !(a == b);
 }
 
-const QSecureArray operator+(const QSecureArray &a, const QSecureArray &b)
+const SecureArray operator+(const SecureArray &a, const SecureArray &b)
 {
-	QSecureArray c = a;
+	SecureArray c = a;
 	return c.append(b);
 }
 
 //----------------------------------------------------------------------------
-// QBigInteger
+// BigInteger
 //----------------------------------------------------------------------------
 static void negate_binary(char *a, int size)
 {
@@ -428,18 +419,18 @@ static void negate_binary(char *a, int size)
 	}
 }
 
-class QBigInteger::Private : public QSharedData
+class BigInteger::Private : public QSharedData
 {
 public:
 	Botan::BigInt n;
 };
 
-QBigInteger::QBigInteger()
+BigInteger::BigInteger()
 {
 	d = new Private;
 }
 
-QBigInteger::QBigInteger(int i)
+BigInteger::BigInteger(int i)
 {
 	d = new Private;
 	if(i < 0)
@@ -454,82 +445,82 @@ QBigInteger::QBigInteger(int i)
 	}
 }
 
-QBigInteger::QBigInteger(const char *c)
+BigInteger::BigInteger(const char *c)
 {
 	d = new Private;
 	fromString(QString(c));
 }
 
-QBigInteger::QBigInteger(const QString &s)
+BigInteger::BigInteger(const QString &s)
 {
 	d = new Private;
 	fromString(s);
 }
 
-QBigInteger::QBigInteger(const QSecureArray &a)
+BigInteger::BigInteger(const SecureArray &a)
 {
 	d = new Private;
 	fromArray(a);
 }
 
-QBigInteger::QBigInteger(const QBigInteger &from)
+BigInteger::BigInteger(const BigInteger &from)
 {
 	*this = from;
 }
 
-QBigInteger::~QBigInteger()
+BigInteger::~BigInteger()
 {
 }
 
-QBigInteger & QBigInteger::operator=(const QBigInteger &from)
+BigInteger & BigInteger::operator=(const BigInteger &from)
 {
 	d = from.d;
 	return *this;
 }
 
-QBigInteger & QBigInteger::operator+=(const QBigInteger &i)
+BigInteger & BigInteger::operator+=(const BigInteger &i)
 {
 	d->n += i.d->n;
 	return *this;
 }
 
-QBigInteger & QBigInteger::operator-=(const QBigInteger &i)
+BigInteger & BigInteger::operator-=(const BigInteger &i)
 {
 	d->n -= i.d->n;
 	return *this;
 }
 
-QBigInteger & QBigInteger::operator=(const QString &s)
+BigInteger & BigInteger::operator=(const QString &s)
 {
 	fromString(s);
 	return *this;
 }
 
-int QBigInteger::compare(const QBigInteger &n) const
+int BigInteger::compare(const BigInteger &n) const
 {
 	return ( (d->n).cmp( n.d->n, true) );
 }
 
-QTextStream &operator<<(QTextStream &stream, const QBigInteger& b)
+QTextStream &operator<<(QTextStream &stream, const BigInteger& b)
 {
 	stream << b.toString();
 	return stream;
 }
 
-QSecureArray QBigInteger::toArray() const
+SecureArray BigInteger::toArray() const
 {
 	int size = d->n.encoded_size(Botan::BigInt::Binary);
 
 	// return at least 8 bits
 	if(size == 0)
 	{
-		QSecureArray a(1);
+		SecureArray a(1);
 		a[0] = 0;
 		return a;
 	}
 
 	int offset = 0;
-	QSecureArray a;
+	SecureArray a;
 
 	// make room for a sign bit if needed
 	if(d->n.get_bit((size * 8) - 1))
@@ -550,14 +541,14 @@ QSecureArray QBigInteger::toArray() const
 	return a;
 }
 
-void QBigInteger::fromArray(const QSecureArray &_a)
+void BigInteger::fromArray(const SecureArray &_a)
 {
 	if(_a.isEmpty())
 	{
 		d->n = Botan::BigInt(0);
 		return;
 	}
-	QSecureArray a = _a;
+	SecureArray a = _a;
 
 	Botan::BigInt::Sign sign = Botan::BigInt::Positive;
 	if(a[0] & 0x80)
@@ -570,7 +561,7 @@ void QBigInteger::fromArray(const QSecureArray &_a)
 	d->n.set_sign(sign);
 }
 
-QString QBigInteger::toString() const
+QString BigInteger::toString() const
 {
 	QByteArray cs;
 	try
@@ -590,7 +581,7 @@ QString QBigInteger::toString() const
 	return str;
 }
 
-bool QBigInteger::fromString(const QString &s)
+bool BigInteger::fromString(const QString &s)
 {
 	if(s.isEmpty())
 		return false;
@@ -614,4 +605,6 @@ bool QBigInteger::fromString(const QString &s)
 	else
 		d->n.set_sign(Botan::BigInt::Positive);
 	return true;
+}
+
 }

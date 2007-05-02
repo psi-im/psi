@@ -20,8 +20,9 @@
 
 #include "qca_securelayer.h"
 
-#include <QtCore>
 #include "qcaprovider.h"
+
+#include <QTimer>
 
 namespace QCA {
 
@@ -142,7 +143,8 @@ public:
 		else
 			c->setConstraints(con_cipherSuites);
 
-		c->setup(trusted, localCert, localKey, serverMode, host, tryCompress, false);
+		c->setup(trusted, serverMode, QList<CertificateInfoOrdered>(), host, tryCompress);
+		c->setCertificate(localCert, localKey);
 
 		bool ok;
 		c->start();
@@ -367,15 +369,18 @@ void TLS::reset()
 	d->reset(ResetAll);
 }
 
-QStringList TLS::supportedCipherSuites(const Version &version, const QString &provider)
+QStringList TLS::supportedCipherSuites(const Version &version) const
 {
-	QStringList list;
+	// TODO
+	Q_UNUSED(version);
+	/*QStringList list;
 	const TLSContext *c = static_cast<const TLSContext *>(getContext(version == DTLS_v1 ? "dtls" : "tls", provider));
 	if(!c)
 		return list;
 	list = c->supportedCipherSuites(version);
 	delete c;
-	return list;
+	return list;*/
+	return QStringList();
 }
 
 void TLS::setCertificate(const CertificateChain &cert, const PrivateKey &key)
@@ -431,15 +436,35 @@ void TLS::setConstraints(const QStringList &cipherSuiteList)
 	d->con_cipherSuites = cipherSuiteList;
 }
 
-bool TLS::canCompress(Mode mode, const QString &provider)
+QList<CertificateInfoOrdered> TLS::issuerList() const
 {
-	bool ok = false;
+	// TODO
+	return QList<CertificateInfoOrdered>();
+}
+
+void TLS::setIssuerList(const QList<CertificateInfoOrdered> &issuers)
+{
+	// TODO
+	Q_UNUSED(issuers);
+}
+
+bool TLS::canCompress() const
+{
+	// TODO
+	/*bool ok = false;
 	const TLSContext *c = static_cast<const TLSContext *>(getContext(mode == Stream ? "tls" : "dtls", provider));
 	if(!c)
 		return ok;
 	ok = c->canCompress();
 	delete c;
-	return ok;
+	return ok;*/
+	return false;
+}
+
+bool TLS::canSetHostName() const
+{
+	// TODO
+	return false;
 }
 
 void TLS::setCompressionEnabled(bool b)
@@ -474,6 +499,11 @@ void TLS::startServer()
 		QMetaObject::invokeMethod(this, "error", Qt::QueuedConnection);
 	}
 	//layerUpdateEnd();
+}
+
+void TLS::continueAfterStep()
+{
+	// TODO
 }
 
 bool TLS::isHandshaken() const
@@ -962,7 +992,7 @@ void SASL::setAuthzid(const QString &authzid)
 	d->c->setClientParams(0, &authzid, 0, 0);
 }
 
-void SASL::setPassword(const QSecureArray &pass)
+void SASL::setPassword(const SecureArray &pass)
 {
 	d->c->setClientParams(0, 0, &pass, 0);
 }

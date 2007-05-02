@@ -1,6 +1,6 @@
 /*
  * qca_tools.h - Qt Cryptographic Architecture
- * Copyright (C) 2003-2005  Justin Karneges <justin@affinix.com>
+ * Copyright (C) 2003-2007  Justin Karneges <justin@affinix.com>
  * Copyright (C) 2004,2005  Brad Hards <bradh@frogmouth.net>
  *
  * This library is free software; you can redistribute it and/or
@@ -72,12 +72,14 @@ QCA_EXPORT void qca_secure_free(void *p);
 */
 QCA_EXPORT void *qca_secure_realloc(void *p, int bytes);
 
+namespace QCA {
+
 /**
- \class QSecureArray qca_tools.h QtCrypto
+ \class SecureArray qca_tools.h QtCrypto
 
  Secure array of bytes
 
- The %QSecureArray provides an array of memory from a pool that is,
+ The %SecureArray provides an array of memory from a pool that is,
  at least partly, secure. In this sense, secure means that the contents
  of the memory should not be made available to other applications. By
  comparison, a QMemArray (or subclass such as QCString or QByteArray) may
@@ -86,13 +88,13 @@ QCA_EXPORT void *qca_secure_realloc(void *p, int bytes);
  
  Note that this class is implicitly shared (that is, copy on write).
  **/
-class QCA_EXPORT QSecureArray
+class QCA_EXPORT SecureArray
 {
 public:
 	/**
 	 * Construct a secure byte array, zero length
 	 */
-	QSecureArray();
+	SecureArray();
 
 	/**
 	 * Construct a secure byte array of the specified length
@@ -100,14 +102,14 @@ public:
 	 * \param size the number of bytes in the array
 	 * \param ch the value every byte should be set to
 	 */
-	QSecureArray(int size, char ch = 0);
+	explicit SecureArray(int size, char ch = 0);
 
 	/**
 	 * Construct a secure byte array from a string
 	 *
 	 * Note that this copies, rather than references the source array
 	 */
-	QSecureArray(const char *str);
+	SecureArray(const char *str);
 
 	/**
 	 * Construct a secure byte array from a QByteArray
@@ -116,30 +118,30 @@ public:
 	 *
 	 * \sa operator=()
 	 */
-	QSecureArray(const QByteArray &a);
+	SecureArray(const QByteArray &a);
 
 	/**
 	 * Construct a (shallow) copy of another secure byte array
 	 *
 	 * \param from the source of the data and length.
 	 */
-	QSecureArray(const QSecureArray &from);
+	SecureArray(const SecureArray &from);
 
-	~QSecureArray();
+	~SecureArray();
 
 	/** 
 	 * Creates a reference, rather than a deep copy.
 	 * if you want a deep copy then you should use copy()
 	 * instead, or use operator=(), then call detach() when required.
 	 */
-	QSecureArray & operator=(const QSecureArray &from);
+	SecureArray & operator=(const SecureArray &from);
 
 	/**
 	 * Creates a copy, rather than references
 	 *
 	 * \param a the array to copy from
 	 */
-	QSecureArray & operator=(const QByteArray &a);
+	SecureArray & operator=(const QByteArray &a);
 
 	/**
 	 * Clears the contents of the array and makes it empty
@@ -257,12 +259,12 @@ public:
 	/**
 	 * Append a secure byte array to the end of this array
 	 */
-	QSecureArray & append(const QSecureArray &a);
+	SecureArray & append(const SecureArray &a);
 
 	/**
 	 * Append a secure byte array to the end of this array
 	 */
-	QSecureArray & operator+=(const QSecureArray &a);
+	SecureArray & operator+=(const SecureArray &a);
 
 protected:
 	/**
@@ -271,7 +273,7 @@ protected:
 	 *
 	 * \param from the byte array to copy
 	 */
-	void set(const QSecureArray &from);
+	void set(const SecureArray &from);
 
 	/**
 	 * Assign the contents of a provided byte array to this
@@ -286,60 +288,58 @@ private:
 	QSharedDataPointer<Private> d;
 };
 
-Q_DECLARE_METATYPE(QSecureArray)
-
 /**
- * Equality operator. Returns true if the two QSecureArray
+ * Equality operator. Returns true if the two SecureArray
  * arguments have the same data (and the same length, of course).
  *
- * \relates QSecureArray
+ * \relates SecureArray
  **/
-QCA_EXPORT bool operator==(const QSecureArray &a, const QSecureArray &b);
+QCA_EXPORT bool operator==(const SecureArray &a, const SecureArray &b);
 
 /**
- * Inequality operator. Returns true if the two QSecureArray
+ * Inequality operator. Returns true if the two SecureArray
  * arguments have different length, or the same length but
  * different data
  *
- * \relates QSecureArray
+ * \relates SecureArray
  **/
-QCA_EXPORT bool operator!=(const QSecureArray &a, const QSecureArray &b);
+QCA_EXPORT bool operator!=(const SecureArray &a, const SecureArray &b);
 
 /**
  * Returns an array that is the result of concatenating a and b
  *
- * \relates QSecureArray
+ * \relates SecureArray
  **/
-QCA_EXPORT const QSecureArray operator+(const QSecureArray &a, const QSecureArray &b);
+QCA_EXPORT const SecureArray operator+(const SecureArray &a, const SecureArray &b);
 
 /**
-   \class QBigInteger qca_tools.h QtCrypto
+   \class BigInteger qca_tools.h QtCrypto
 
    Arbitrary precision integer
 
-   QBigInteger provides arbitrary precision integers.
+   BigInteger provides arbitrary precision integers.
    \code
-   if ( QBigInteger("3499543804349") == 
-       QBigInteger("38493290803248") + QBigInteger( 343 ) )
+   if ( BigInteger("3499543804349") == 
+       BigInteger("38493290803248") + BigInteger( 343 ) )
    {
        // do something
    }
    \endcode
  **/
-class QCA_EXPORT QBigInteger
+class QCA_EXPORT BigInteger
 {
 public:
 	/**
-	 * Constructor. Creates a new QBigInteger, initialised to zero.
+	 * Constructor. Creates a new BigInteger, initialised to zero.
 	 */
-	QBigInteger();
+	BigInteger();
 
 	/**
 	 * \overload
 	 *
 	 * \param n an alternative integer initialisation value.
 	 */
-	QBigInteger(int n);
+	BigInteger(int n);
 
 	/**
 	 * \overload
@@ -347,46 +347,46 @@ public:
 	 * \param c an alternative initialisation value, encoded as a character array
 	 *
 	 * \code
-	 * QBigInteger b ( "9890343" );
+	 * BigInteger b ( "9890343" );
 	 * \endcode
 	 */
-	QBigInteger(const char *c);
+	BigInteger(const char *c);
 
 	/**
 	 * \overload
 	 *
 	 * \param s an alternative initialisation value, encoded as a string
 	 */
-	QBigInteger(const QString &s);
+	BigInteger(const QString &s);
 
 	/**
 	 * \overload
 	 *
-	 * \param a an alternative initialisation value, encoded as QSecureArray
+	 * \param a an alternative initialisation value, encoded as SecureArray
 	 */
-	QBigInteger(const QSecureArray &a);
+	BigInteger(const QCA::SecureArray &a);
 
 	/**
 	 * \overload
 	 *
-	 * \param from an alternative initialisation value, encoded as a %QBigInteger
+	 * \param from an alternative initialisation value, encoded as a %BigInteger
 	 */
-	QBigInteger(const QBigInteger &from);
+	BigInteger(const BigInteger &from);
 
-	~QBigInteger();
+	~BigInteger();
 
 	/**
 	 * Assignment operator
 	 * 
-	 * \param from the QBigInteger to copy from
+	 * \param from the BigInteger to copy from
 	 *
 	 * \code
-	 * QBigInteger a; // a is zero
-	 * QBigInteger b( 500 );
+	 * BigInteger a; // a is zero
+	 * BigInteger b( 500 );
 	 * a = b; // a is now 500
 	 * \endcode
 	 */
-	QBigInteger & operator=(const QBigInteger &from);
+	BigInteger & operator=(const BigInteger &from);
 
 	/**
 	 * \overload
@@ -400,7 +400,7 @@ public:
 	 * contains numbers and an optional minus sign at the start)
 	 * 
 	 **/
-	QBigInteger & operator=(const QString &s);
+	BigInteger & operator=(const QString &s);
 
 	/**
 	 * Increment in place operator
@@ -408,13 +408,13 @@ public:
 	 * \param b the amount to increment by
 	 *
 	 * \code
-	 * QBigInteger a; // a is zero
-	 * QBigInteger b( 500 );
+	 * BigInteger a; // a is zero
+	 * BigInteger b( 500 );
 	 * a += b; // a is now 500
 	 * a += b; // a is now 1000
 	 * \endcode
 	 **/
-	QBigInteger & operator+=(const QBigInteger &b);
+	BigInteger & operator+=(const BigInteger &b);
 
 	/**
 	 * Decrement in place operator
@@ -422,40 +422,40 @@ public:
 	 * \param b the amount to decrement by
 	 *
 	 * \code
-	 * QBigInteger a; // a is zero
-	 * QBigInteger b( 500 );
+	 * BigInteger a; // a is zero
+	 * BigInteger b( 500 );
 	 * a -= b; // a is now -500
 	 * a -= b; // a is now -1000
 	 * \endcode
 	 **/
-	QBigInteger & operator-=(const QBigInteger &b);
+	BigInteger & operator-=(const BigInteger &b);
 
 	/** 
-	 * Output %QBigInteger as a byte array, useful for storage or
+	 * Output %BigInteger as a byte array, useful for storage or
 	 * transmission.  The format is a binary integer in sign-extended
 	 * network-byte-order.
 	 *
-	 * \sa void fromArray(const QSecureArray &a);
+	 * \sa void fromArray(const SecureArray &a);
 	 */
-	QSecureArray toArray() const;
+	QCA::SecureArray toArray() const;
 
 	/**
 	 * Assign from an array.  The input is expected to be a binary integer
 	 * in sign-extended network-byte-order.
 	 *
-	 * \param a a QSecureArray that represents an integer
+	 * \param a a SecureArray that represents an integer
 	 *
-	 * \sa QBigInteger(const QSecureArray &a);
-	 * \sa QSecureArray toArray() const;
+	 * \sa BigInteger(const SecureArray &a);
+	 * \sa SecureArray toArray() const;
 	 */
-	void fromArray(const QSecureArray &a);
+	void fromArray(const QCA::SecureArray &a);
 
 	/** 
-	 * Convert %QBigInteger to a QString
+	 * Convert %BigInteger to a QString
 	 *
 	 * \code
 	 * QString aString;
-	 * QBigInteger aBiggishInteger( 5878990 );
+	 * BigInteger aBiggishInteger( 5878990 );
 	 * aString = aBiggishInteger.toString(); // aString is now "5878990"
 	 * \endcode
 	 */
@@ -470,108 +470,106 @@ public:
 	 * that the QString represents a valid integer (ie it only
 	 * contains numbers and an optional minus sign at the start)
 	 * 
-	 * \sa QBigInteger(const QString &s)
-	 * \sa QBigInteger & operator=(const QString &s)
+	 * \sa BigInteger(const QString &s)
+	 * \sa BigInteger & operator=(const QString &s)
 	 */
 	bool fromString(const QString &s);
 
 	/** 
-	 * Compare this value with another %QBigInteger
+	 * Compare this value with another %BigInteger
 	 *
 	 * Normally it is more readable to use one of the operator overloads,
 	 * so you don't need to use this method directly.
 	 *
-	 * \param n the QBigInteger to compare with
+	 * \param n the BigInteger to compare with
 	 *
 	 * \return zero if the values are the same, negative if the argument
-	 * is less than the value of this QBigInteger, and positive if the argument
-	 * value is greater than this QBigInteger
+	 * is less than the value of this BigInteger, and positive if the argument
+	 * value is greater than this BigInteger
 	 *
 	 * \code
-	 * QBigInteger a( "400" );
-	 * QBigInteger b( "-400" );
-	 * QBigInteger c( " 200 " );
+	 * BigInteger a( "400" );
+	 * BigInteger b( "-400" );
+	 * BigInteger c( " 200 " );
 	 * int result;
 	 * result = a.compare( b );        // return positive 400 > -400
 	 * result = a.compare( c );        // return positive,  400 > 200
 	 * result = b.compare( c );        // return negative, -400 < 200
 	 * \endcode
 	 **/
-	int compare(const QBigInteger &n) const;
+	int compare(const BigInteger &n) const;
 
 private:
 	class Private;
 	QSharedDataPointer<Private> d;
 };
 
-Q_DECLARE_METATYPE(QBigInteger)
-
 /**
- * Equality operator. Returns true if the two QBigInteger values
+ * Equality operator. Returns true if the two BigInteger values
  * are the same, including having the same sign. 
  *
- * \relates QBigInteger
+ * \relates BigInteger
  **/
-inline bool operator==(const QBigInteger &a, const QBigInteger &b)
+inline bool operator==(const BigInteger &a, const BigInteger &b)
 {
 	return (0 == a.compare( b ) );
 }
 
 /**
- * Inequality operator. Returns true if the two QBigInteger values
+ * Inequality operator. Returns true if the two BigInteger values
  * are different in magnitude, sign or both  
  *
- * \relates QBigInteger
+ * \relates BigInteger
  **/
-inline bool operator!=(const QBigInteger &a, const QBigInteger &b)
+inline bool operator!=(const BigInteger &a, const BigInteger &b)
 {
 	return (0 != a.compare( b ) );
 }
 
 /**
- * Less than or equal operator. Returns true if the QBigInteger value
- * on the left hand side is equal to or less than the QBigInteger value
+ * Less than or equal operator. Returns true if the BigInteger value
+ * on the left hand side is equal to or less than the BigInteger value
  * on the right hand side.
  *
- * \relates QBigInteger
+ * \relates BigInteger
  **/
-inline bool operator<=(const QBigInteger &a, const QBigInteger &b)
+inline bool operator<=(const BigInteger &a, const BigInteger &b)
 {
 	return (a.compare( b ) <= 0 );
 }
 
 /**
- * Greater than or equal operator. Returns true if the QBigInteger value
- * on the left hand side is equal to or greater than the QBigInteger value
+ * Greater than or equal operator. Returns true if the BigInteger value
+ * on the left hand side is equal to or greater than the BigInteger value
  * on the right hand side.
  *
- * \relates QBigInteger
+ * \relates BigInteger
  **/
-inline bool operator>=(const QBigInteger &a, const QBigInteger &b)
+inline bool operator>=(const BigInteger &a, const BigInteger &b)
 {
 	return (a.compare( b ) >= 0 );
 }
 
 /**
- * Less than operator. Returns true if the QBigInteger value
- * on the left hand side is less than the QBigInteger value
+ * Less than operator. Returns true if the BigInteger value
+ * on the left hand side is less than the BigInteger value
  * on the right hand side.
  *
- * \relates QBigInteger
+ * \relates BigInteger
  **/
-inline bool operator<(const QBigInteger &a, const QBigInteger &b)
+inline bool operator<(const BigInteger &a, const BigInteger &b)
 {
 	return (a.compare( b ) < 0 );
 }
 
 /**
- * Greater than operator. Returns true if the QBigInteger value
- * on the left hand side is greater than the QBigInteger value
+ * Greater than operator. Returns true if the BigInteger value
+ * on the left hand side is greater than the BigInteger value
  * on the right hand side.
  *
- * \relates QBigInteger
+ * \relates BigInteger
  **/
-inline bool operator>(const QBigInteger &a, const QBigInteger &b)
+inline bool operator>(const BigInteger &a, const BigInteger &b)
 {
 	return (a.compare( b ) > 0 );
 }
@@ -579,8 +577,10 @@ inline bool operator>(const QBigInteger &a, const QBigInteger &b)
 /**
  * Stream operator.
  *
- * \relates QBigInteger
+ * \relates BigInteger
  **/
-QCA_EXPORT QTextStream &operator<<(QTextStream &stream, const QBigInteger &b);
+QCA_EXPORT QTextStream &operator<<(QTextStream &stream, const BigInteger &b);
+
+}
 
 #endif

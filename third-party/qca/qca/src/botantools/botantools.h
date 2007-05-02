@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2005  Justin Karneges <justin@affinix.com>
+ * Copyright (C) 2004-2007  Justin Karneges <justin@affinix.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,29 +21,10 @@
 #define BOTANTOOLS_H
 
 #include <QtGlobal>
-#include <botan/mutex.h>
-#include <botan/mux_qt.h>
 #include <botan/allocate.h>
 #include <botan/secmem.h>
+#include <botan/modules.h>
+#include <botan/libstate.h>
 #include <botan/bigint.h>
-#ifdef Q_OS_UNIX
-# include <botan/mmap_mem.h>
-#endif
-
-namespace QCA
-{
-	namespace Botan
-	{
-		namespace Init
-		{
-			void set_mutex_type(Mutex*);
-			void startup_memory_subsystem();
-			void shutdown_memory_subsystem();
-		}
-
-		extern int botan_memory_chunk;
-		extern int botan_prealloc;
-	}
-}
 
 #endif

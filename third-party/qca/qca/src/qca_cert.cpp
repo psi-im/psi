@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2005  Justin Karneges <justin@affinix.com>
+ * Copyright (C) 2003-2007  Justin Karneges <justin@affinix.com>
  * Copyright (C) 2004-2006  Brad Hards <bradh@frogmouth.net>
  *
  * This library is free software; you can redistribute it and/or
@@ -20,29 +20,52 @@
 
 #include "qca_cert.h"
 
-#include <QtCore>
 #include "qca_publickey.h"
 #include "qcaprovider.h"
+
+#include <QTextStream>
+#include <QFile>
 
 namespace QCA {
 
 Provider::Context *getContext(const QString &type, const QString &provider);
+Provider::Context *getContext(const QString &type, Provider *p);
 
 // from qca_publickey.cpp
 bool stringToFile(const QString &fileName, const QString &content);
 bool stringFromFile(const QString &fileName, QString *s);
 bool arrayToFile(const QString &fileName, const QByteArray &content);
 bool arrayFromFile(const QString &fileName, QByteArray *a);
-bool ask_passphrase(const QString &fname, void *ptr, QSecureArray *answer);
+bool ask_passphrase(const QString &fname, void *ptr, SecureArray *answer);
+ProviderList allProviders();
+Provider *providerForName(const QString &name);
+bool use_asker_fallback(ConvertResult r);
 
 static CertificateInfo orderedToMap(const CertificateInfoOrdered &info)
 {
 	CertificateInfo out;
+
+	// first, do all but EmailLegacy
 	for(int n = 0; n < info.count(); ++n)
 	{
 		const CertificateInfoPair &i = info[n];
-		out.insert(i.type(), i.value());
+		if(i.type() != OtherInfoType && i.type() != EmailLegacy)
+			out.insert(i.type(), i.value());
 	}
+
+	// lastly, apply EmailLegacy
+	for(int n = 0; n < info.count(); ++n)
+	{
+		const CertificateInfoPair &i = info[n];
+		if(i.type() == EmailLegacy)
+		{
+			// de-dup
+			QList<QString> emails = out.values(Email);
+			if(!emails.contains(i.value()))
+				out.insert(Email, i.value());
+		}
+	}
+
 	return out;
 }
 
@@ -77,6 +100,7 @@ static CertificateInfoOrdered mapToOrdered(const CertificateInfo &info)
 
 	// get remaining types
 	QList<CertificateInfoType> typesLeft = in.keys();
+	typesLeft.removeAll(OtherInfoType);
 
 	// dedup
 	QList<CertificateInfoType> types;
@@ -96,16 +120,384 @@ static CertificateInfoOrdered mapToOrdered(const CertificateInfo &info)
 }
 
 //----------------------------------------------------------------------------
+// Global
+//----------------------------------------------------------------------------
+static const char *shortNameByType(CertificateInfoType type)
+{
+	switch(type)
+	{
+		case CommonName:         return "CN";
+		case Locality:           return "L";
+		case State:              return "ST";
+		case Organization:       return "O";
+		case OrganizationalUnit: return "OU";
+		case Country:            return "C";
+		case EmailLegacy:        return "emailAddress";
+		default:                 break;
+	}
+	return 0;
+}
+
+static const char *oidByDNType(CertificateInfoType type)
+{
+	switch(type)
+	{
+		case CommonName:            break;
+		case EmailLegacy:           return "1.2.840.113549.1.9.1";
+		case Organization:          break;
+		case OrganizationalUnit:    break;
+		case Locality:              break;
+		case IncorporationLocality: return "1.3.6.1.4.1.311.60.2.1.1";
+		case State:                 break;
+		case IncorporationState:    return "1.3.6.1.4.1.311.60.2.1.2";
+		case Country:               break;
+		case IncorporationCountry:  return "1.3.6.1.4.1.311.60.2.1.3";
+		default:                    break;
+	}
+	return 0;
+}
+
+static QString knownDNLabel(CertificateInfoType type)
+{
+	const char *str = shortNameByType(type);
+	if(str)
+		return str;
+
+	str = oidByDNType(type);
+	if(str)
+		return QString("OID.") + str;
+
+	return QString();
+}
+
+QString orderedToDNString(const CertificateInfoOrdered &in)
+{
+	QStringList parts;
+	foreach(const CertificateInfoPair &i, in)
+	{
+		if(i.section() != CertificateInfoPair::DN)
+			continue;
+
+		QString name = knownDNLabel(i.type());
+		if(name.isEmpty())
+			name = QString("OID.") + i.oid();
+
+		parts += name + '=' + i.value();
+	}
+	return parts.join(", ");
+}
+
+CertificateInfoOrdered orderedDNOnly(const CertificateInfoOrdered &in)
+{
+	CertificateInfoOrdered out;
+	for(int n = 0; n < in.count(); ++n)
+	{
+		if(in[n].section() == CertificateInfoPair::DN)
+			out += in[n];
+	}
+	return out;
+}
+
+static QString baseCertName(const CertificateInfo &info)
+{
+	QString str = info.value(CommonName);
+	if(str.isEmpty())
+	{
+		str = info.value(Organization);
+		if(str.isEmpty())
+			str = "Unnamed";
+	}
+	return str;
+}
+
+static QList<int> findSameName(const QString &name, const QStringList &list)
+{
+	QList<int> out;
+	for(int n = 0; n < list.count(); ++n)
+	{
+		if(list[n] == name)
+			out += n;
+	}
+	return out;
+}
+
+static QString uniqueSubjectValue(CertificateInfoType type, const QList<int> items, const QList<Certificate> &certs, int i)
+{
+	QStringList vals = certs[items[i]].subjectInfo().values(type);
+	if(!vals.isEmpty())
+	{
+		foreach(int n, items)
+		{
+			if(n == items[i])
+				continue;
+
+			QStringList other_vals = certs[n].subjectInfo().values(type);
+			for(int k = 0; k < vals.count(); ++k)
+			{
+				if(other_vals.contains(vals[k]))
+				{
+					vals.removeAt(k);
+					break;
+				}
+			}
+
+			if(vals.isEmpty())
+				break;
+		}
+
+		if(!vals.isEmpty())
+			return vals[0];
+	}
+
+	return QString();
+}
+
+static QString uniqueIssuerName(const QList<int> items, const QList<Certificate> &certs, int i)
+{
+	QString val = baseCertName(certs[items[i]].issuerInfo());
+
+	bool found = false;
+	foreach(int n, items)
+	{
+		if(n == items[i])
+			continue;
+
+		QString other_val = baseCertName(certs[n].issuerInfo());
+		if(other_val == val)
+		{
+			found = true;
+			break;
+		}
+	}
+
+	if(!found)
+		return val;
+
+	return QString();
+}
+
+static const char *constraintToString(ConstraintType type)
+{
+	switch(type)
+	{
+		case DigitalSignature:   return "DigitalSignature";
+		case NonRepudiation:     return "NonRepudiation";
+		case KeyEncipherment:    return "KeyEncipherment";
+		case DataEncipherment:   return "DataEncipherment";
+		case KeyAgreement:       return "KeyAgreement";
+		case KeyCertificateSign: return "KeyCertificateSign";
+		case CRLSign:            return "CRLSign";
+		case EncipherOnly:       return "EncipherOnly";
+		case DecipherOnly:       return "DecipherOnly";
+		case ServerAuth:         return "ServerAuth";
+		case ClientAuth:         return "ClientAuth";
+		case CodeSigning:        return "CodeSigning";
+		case EmailProtection:    return "EmailProtection";
+		case IPSecEndSystem:     return "IPSecEndSystem";
+		case IPSecTunnel:        return "IPSecTunnel";
+		case IPSecUser:          return "IPSecUser";
+		case TimeStamping:       return "TimeStamping";
+		case OCSPSigning:        return "OCSPSigning";
+	}
+	return 0;
+}
+
+static QString uniqueConstraintValue(ConstraintType type, const QList<int> items, const QList<Certificate> &certs, int i)
+{
+	ConstraintType val = type;
+	if(certs[items[i]].constraints().contains(type))
+	{
+		bool found = false;
+		foreach(int n, items)
+		{
+			if(n == items[i])
+				continue;
+
+			Constraints other_vals = certs[n].constraints();
+			if(other_vals.contains(val))
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if(!found)
+			return QString(constraintToString(val));
+	}
+
+	return QString();
+}
+
+static QString makeUniqueName(const QList<int> &items, const QStringList &list, const QList<Certificate> &certs, int i)
+{
+	QString str, name;
+
+	// different organization?
+	str = uniqueSubjectValue(Organization, items, certs, i);
+	if(!str.isEmpty())
+	{
+		name = list[items[i]] + QString(" of ") + str;
+		goto end;
+	}
+
+	// different organizational unit?
+	str = uniqueSubjectValue(OrganizationalUnit, items, certs, i);
+	if(!str.isEmpty())
+	{
+		name = list[items[i]] + QString(" of ") + str;
+		goto end;
+	}
+
+	// different email address?
+	str = uniqueSubjectValue(Email, items, certs, i);
+	if(!str.isEmpty())
+	{
+		name = list[items[i]] + QString(" <") + str + '>';
+		goto end;
+	}
+
+	// different xmpp addresses?
+	str = uniqueSubjectValue(XMPP, items, certs, i);
+	if(!str.isEmpty())
+	{
+		name = list[items[i]] + QString(" <xmpp:") + str + '>';
+		goto end;
+	}
+
+	// different issuers?
+	str = uniqueIssuerName(items, certs, i);
+	if(!str.isEmpty())
+	{
+		name = list[items[i]] + QString(" by ") + str;
+		goto end;
+	}
+
+	// different usages?
+
+	// DigitalSignature
+	str = uniqueConstraintValue(DigitalSignature, items, certs, i);
+	if(!str.isEmpty())
+	{
+		name = list[items[i]] + QString(" for ") + str;
+		goto end;
+	}
+
+	// ClientAuth
+	str = uniqueConstraintValue(ClientAuth, items, certs, i);
+	if(!str.isEmpty())
+	{
+		name = list[items[i]] + QString(" for ") + str;
+		goto end;
+	}
+
+	// EmailProtection
+	str = uniqueConstraintValue(EmailProtection, items, certs, i);
+	if(!str.isEmpty())
+	{
+		name = list[items[i]] + QString(" for ") + str;
+		goto end;
+	}
+
+	// DataEncipherment
+	str = uniqueConstraintValue(DataEncipherment, items, certs, i);
+	if(!str.isEmpty())
+	{
+		name = list[items[i]] + QString(" for ") + str;
+		goto end;
+	}
+
+	// EncipherOnly
+	str = uniqueConstraintValue(EncipherOnly, items, certs, i);
+	if(!str.isEmpty())
+	{
+		name = list[items[i]] + QString(" for ") + str;
+		goto end;
+	}
+
+	// DecipherOnly
+	str = uniqueConstraintValue(DecipherOnly, items, certs, i);
+	if(!str.isEmpty())
+	{
+		name = list[items[i]] + QString(" for ") + str;
+		goto end;
+	}
+
+	// if there's nothing easily unique, then do a DN string
+	name = certs[items[i]].subjectInfoOrdered().toString();
+
+end:
+	return name;
+}
+
+QStringList makeFriendlyNames(const QList<Certificate> &list)
+{
+	QStringList names;
+
+	// give a base name to all certs first
+	foreach(const Certificate &cert, list)
+		names += baseCertName(cert.subjectInfo());
+
+	// come up with a collision list
+	QList< QList<int> > itemCollisions;
+	foreach(const QString &name, names)
+	{
+		// anyone else using this name?
+		QList<int> items = findSameName(name, names);
+		if(items.count() > 1)
+		{
+			// don't save duplicate collisions
+			bool haveAlready = false;
+			foreach(const QList<int> &other, itemCollisions)
+			{
+				foreach(int n, items)
+				{
+					if(other.contains(n))
+					{
+						haveAlready = true;
+						break;
+					}
+				}
+
+				if(haveAlready)
+					break;
+			}
+
+			if(haveAlready)
+				continue;
+
+			itemCollisions += items;
+		}
+	}
+
+	// resolve collisions by providing extra details
+	foreach(const QList<int> &items, itemCollisions)
+	{
+		//printf("%d items are using [%s]\n", items.count(), qPrintable(names[items[0]]));
+
+		for(int n = 0; n < items.count(); ++n)
+		{
+			names[items[n]] = makeUniqueName(items, names, list, n);
+			//printf("  %d: reassigning: [%s]\n", items[n], qPrintable(names[items[n]]));
+		}
+	}
+
+	return names;
+}
+
+//----------------------------------------------------------------------------
 // CertificateInfoPair
 //----------------------------------------------------------------------------
 class CertificateInfoPair::Private : public QSharedData
 {
 public:
+	bool use_altname;
 	CertificateInfoType type;
+	QString oid;
 	QString value;
 
 	Private()
 	{
+		use_altname = false;
 		type = (CertificateInfoType)-1;
 	}
 };
@@ -118,7 +510,39 @@ CertificateInfoPair::CertificateInfoPair()
 CertificateInfoPair::CertificateInfoPair(CertificateInfoType type, const QString &value)
 :d(new Private)
 {
+	switch(type)
+	{
+		case CommonName:
+		case EmailLegacy:
+		case Organization:
+		case OrganizationalUnit:
+		case Locality:
+		case IncorporationLocality:
+		case State:
+		case IncorporationState:
+		case Country:
+		case IncorporationCountry:
+			d->use_altname = false;
+			break;
+		default:
+			d->use_altname = true;
+			break;
+	}
+
 	d->type = type;
+	d->value = value;
+}
+
+CertificateInfoPair::CertificateInfoPair(const QString &oid, const QString &value, Section section)
+:d(new Private)
+{
+	if(section == AltName)
+		d->use_altname = true;
+	else
+		d->use_altname = false;
+
+	d->type = OtherInfoType;
+	d->oid = oid;
 	d->value = value;
 }
 
@@ -137,9 +561,22 @@ CertificateInfoPair & CertificateInfoPair::operator=(const CertificateInfoPair &
 	return *this;
 }
 
+CertificateInfoPair::Section CertificateInfoPair::section() const
+{
+	if(d->use_altname)
+		return AltName;
+	else
+		return DN;
+}
+
 CertificateInfoType CertificateInfoPair::type() const
 {
 	return d->type;
+}
+
+QString CertificateInfoPair::oid() const
+{
+	return d->oid;
 }
 
 QString CertificateInfoPair::value() const
@@ -149,7 +586,7 @@ QString CertificateInfoPair::value() const
 
 bool CertificateInfoPair::operator==(const CertificateInfoPair &other) const
 {
-	if(d->type == other.d->type && d->value == other.d->value)
+	if((d->type == other.d->type || (d->use_altname == other.d->use_altname && d->oid == other.d->oid)) && d->value == other.d->value)
 		return true;
 	return false;
 }
@@ -167,9 +604,10 @@ public:
 	CertificateInfo infoMap;
 	Constraints constraints;
 	QStringList policies;
+	QStringList crlLocations;
 	bool isCA;
 	int pathLimit;
-	QBigInteger serial;
+	BigInteger serial;
 	QDateTime start, end;
 
 	Private() : isCA(false), pathLimit(0)
@@ -246,6 +684,11 @@ QStringList CertificateOptions::policies() const
 	return d->policies;
 }
 
+QStringList CertificateOptions::crlLocations() const
+{
+	return d->crlLocations;
+}
+
 bool CertificateOptions::isCA() const
 {
 	return d->isCA;
@@ -256,7 +699,7 @@ int CertificateOptions::pathLimit() const
 	return d->pathLimit;
 }
 
-QBigInteger CertificateOptions::serialNumber() const
+BigInteger CertificateOptions::serialNumber() const
 {
 	return d->serial;
 }
@@ -298,6 +741,11 @@ void CertificateOptions::setPolicies(const QStringList &policies)
 	d->policies = policies;
 }
 
+void CertificateOptions::setCRLLocations(const QStringList &locations)
+{
+	d->crlLocations = locations;
+}
+
 void CertificateOptions::setAsCA(int pathLimit)
 {
 	d->isCA = true;
@@ -310,7 +758,7 @@ void CertificateOptions::setAsUser()
 	d->pathLimit = 0;
 }
 
-void CertificateOptions::setSerialNumber(const QBigInteger &i)
+void CertificateOptions::setSerialNumber(const BigInteger &i)
 {
 	d->serial = i;
 }
@@ -487,12 +935,17 @@ QStringList Certificate::policies() const
 	return static_cast<const CertContext *>(context())->props()->policies;
 }
 
+QStringList Certificate::crlLocations() const
+{
+	return static_cast<const CertContext *>(context())->props()->crlLocations;
+}
+
 QString Certificate::commonName() const
 {
 	return d->subjectInfoMap.value(CommonName);
 }
 
-QBigInteger Certificate::serialNumber() const
+BigInteger Certificate::serialNumber() const
 {
 	return static_cast<const CertContext *>(context())->props()->serial;
 }
@@ -577,7 +1030,7 @@ Validity Certificate::validate(const CertificateCollection &trusted, const Certi
 	return static_cast<const CertContext *>(context())->validate(trusted_list, untrusted_list, crl_list, u);*/
 }
 
-QSecureArray Certificate::toDER() const
+SecureArray Certificate::toDER() const
 {
 	return static_cast<const CertContext *>(context())->toDER();
 }
@@ -592,7 +1045,7 @@ bool Certificate::toPEMFile(const QString &fileName) const
 	return stringToFile(fileName, toPEM());
 }
 
-Certificate Certificate::fromDER(const QSecureArray &a, ConvertResult *result, const QString &provider)
+Certificate Certificate::fromDER(const SecureArray &a, ConvertResult *result, const QString &provider)
 {
 	Certificate c;
 	CertContext *cc = static_cast<CertContext *>(getContext("cert", provider));
@@ -601,6 +1054,8 @@ Certificate Certificate::fromDER(const QSecureArray &a, ConvertResult *result, c
 		*result = r;
 	if(r == ConvertGood)
 		c.change(cc);
+	else
+		delete cc;
 	return c;
 }
 
@@ -613,6 +1068,8 @@ Certificate Certificate::fromPEM(const QString &s, ConvertResult *result, const 
 		*result = r;
 	if(r == ConvertGood)
 		c.change(cc);
+	else
+		delete cc;
 	return c;
 }
 
@@ -904,7 +1361,7 @@ bool CertificateRequest::operator==(const CertificateRequest &otherCsr) const
 	return true;
 }
 
-QSecureArray CertificateRequest::toDER() const
+SecureArray CertificateRequest::toDER() const
 {
 	return static_cast<const CSRContext *>(context())->toDER();
 }
@@ -919,7 +1376,7 @@ bool CertificateRequest::toPEMFile(const QString &fileName) const
 	return stringToFile(fileName, toPEM());
 }
 
-CertificateRequest CertificateRequest::fromDER(const QSecureArray &a, ConvertResult *result, const QString &provider)
+CertificateRequest CertificateRequest::fromDER(const SecureArray &a, ConvertResult *result, const QString &provider)
 {
 	CertificateRequest c;
 	CSRContext *csr = static_cast<CSRContext *>(getContext("csr", provider));
@@ -928,6 +1385,8 @@ CertificateRequest CertificateRequest::fromDER(const QSecureArray &a, ConvertRes
 		*result = r;
 	if(r == ConvertGood)
 		c.change(csr);
+	else
+		delete csr;
 	return c;
 }
 
@@ -940,6 +1399,8 @@ CertificateRequest CertificateRequest::fromPEM(const QString &s, ConvertResult *
 		*result = r;
 	if(r == ConvertGood)
 		c.change(csr);
+	else
+		delete csr;
 	return c;
 }
 
@@ -969,6 +1430,8 @@ CertificateRequest CertificateRequest::fromString(const QString &s, ConvertResul
 		*result = r;
 	if(r == ConvertGood)
 		c.change(csr);
+	else
+		delete csr;
 	return c;
 }
 
@@ -998,14 +1461,14 @@ CRLEntry::CRLEntry(const Certificate &c, Reason r)
 	_reason = r;
 }
 
-CRLEntry::CRLEntry(const QBigInteger serial, const QDateTime time, Reason r)
+CRLEntry::CRLEntry(const BigInteger serial, const QDateTime time, Reason r)
 {
 	_serial = serial;
 	_time = time;
 	_reason = r;
 }
 
-QBigInteger CRLEntry::serialNumber() const
+BigInteger CRLEntry::serialNumber() const
 {
 	return _serial;
 }
@@ -1127,7 +1590,7 @@ QList<CRLEntry> CRL::revoked() const
 	return static_cast<const CRLContext *>(context())->props()->revoked;
 }
 
-QSecureArray CRL::signature() const
+SecureArray CRL::signature() const
 {
 	return static_cast<const CRLContext *>(context())->props()->sig;
 }
@@ -1142,7 +1605,7 @@ QByteArray CRL::issuerKeyId() const
 	return static_cast<const CRLContext *>(context())->props()->issuerId;
 }
 
-QSecureArray CRL::toDER() const
+SecureArray CRL::toDER() const
 {
 	return static_cast<const CRLContext *>(context())->toDER();
 }
@@ -1192,7 +1655,7 @@ bool CRL::operator==(const CRL &otherCrl) const
 
 }
 
-CRL CRL::fromDER(const QSecureArray &a, ConvertResult *result, const QString &provider)
+CRL CRL::fromDER(const SecureArray &a, ConvertResult *result, const QString &provider)
 {
 	CRL c;
 	CRLContext *cc = static_cast<CRLContext *>(getContext("crl", provider));
@@ -1201,6 +1664,8 @@ CRL CRL::fromDER(const QSecureArray &a, ConvertResult *result, const QString &pr
 		*result = r;
 	if(r == ConvertGood)
 		c.change(cc);
+	else
+		delete cc;
 	return c;
 }
 
@@ -1213,6 +1678,8 @@ CRL CRL::fromPEM(const QString &s, ConvertResult *result, const QString &provide
 		*result = r;
 	if(r == ConvertGood)
 		c.change(cc);
+	else
+		delete cc;
 	return c;
 }
 
@@ -1242,30 +1709,39 @@ void CRL::change(CRLContext *c)
 //----------------------------------------------------------------------------
 // Store
 //----------------------------------------------------------------------------
-// TODO: support CRLs
 // CRL / X509 CRL
 // CERTIFICATE / X509 CERTIFICATE
 static QString readNextPem(QTextStream *ts, bool *isCRL)
 {
 	QString pem;
+	bool crl = false;
 	bool found = false;
 	bool done = false;
-	*isCRL = false;
 	while(!ts->atEnd())
 	{
 		QString line = ts->readLine();
 		if(!found)
 		{
-			if(line == "-----BEGIN CERTIFICATE-----")
+			if(line.startsWith("-----BEGIN "))
 			{
-				found = true;
-				pem += line + '\n';
+				if(line.contains("CERTIFICATE"))
+				{
+					found = true;
+					pem += line + '\n';
+					crl = false;
+				}
+				else if(line.contains("CRL"))
+				{
+					found = true;
+					pem += line + '\n';
+					crl = true;
+				}
 			}
 		}
 		else
 		{
 			pem += line + '\n';
-			if(line == "-----END CERTIFICATE-----")
+			if(line.startsWith("-----END "))
 			{
 				done = true;
 				break;
@@ -1274,6 +1750,8 @@ static QString readNextPem(QTextStream *ts, bool *isCRL)
 	}
 	if(!done)
                 return QString();
+	if(isCRL)
+		*isCRL = crl;
 	return pem;
 }
 
@@ -1345,10 +1823,7 @@ CertificateCollection & CertificateCollection::operator+=(const CertificateColle
 
 bool CertificateCollection::canUsePKCS7(const QString &provider)
 {
-	CertCollectionContext *c = static_cast<CertCollectionContext *>(getContext("certcollection", provider));
-	bool ok = c ? true : false;
-	delete c;
-	return ok;
+	return isSupported("certcollection", provider);
 }
 
 bool CertificateCollection::toFlatTextFile(const QString &fileName)
@@ -1404,7 +1879,7 @@ CertificateCollection CertificateCollection::fromFlatTextFile(const QString &fil
 	QTextStream ts(&f);
 	while(1)
 	{
-		bool isCRL;
+		bool isCRL = false;
 		QString pem = readNextPem(&ts, &isCRL);
 		if(pem.isNull())
 			break;
@@ -1526,7 +2001,7 @@ KeyBundle::KeyBundle()
 {
 }
 
-KeyBundle::KeyBundle(const QString &fileName, const QSecureArray &passphrase)
+KeyBundle::KeyBundle(const QString &fileName, const SecureArray &passphrase)
 :d(new Private)
 {
 	*this = fromFile(fileName, passphrase, 0, QString());
@@ -1578,7 +2053,7 @@ void KeyBundle::setCertificateChainAndKey(const CertificateChain &c, const Priva
 	d->key = key;
 }
 
-QByteArray KeyBundle::toArray(const QSecureArray &passphrase, const QString &provider) const
+QByteArray KeyBundle::toArray(const SecureArray &passphrase, const QString &provider) const
 {
 	PKCS12Context *pix = static_cast<PKCS12Context *>(getContext("pkcs12", provider));
 
@@ -1591,15 +2066,15 @@ QByteArray KeyBundle::toArray(const QSecureArray &passphrase, const QString &pro
 	return buf;
 }
 
-bool KeyBundle::toFile(const QString &fileName, const QSecureArray &passphrase, const QString &provider) const
+bool KeyBundle::toFile(const QString &fileName, const SecureArray &passphrase, const QString &provider) const
 {
 	return arrayToFile(fileName, toArray(passphrase, provider));
 }
 
-KeyBundle KeyBundle::fromArray(const QByteArray &a, const QSecureArray &passphrase, ConvertResult *result, const QString &provider)
+KeyBundle KeyBundle::fromArray(const QByteArray &a, const SecureArray &passphrase, ConvertResult *result, const QString &provider)
 {
 	QString name;
-	QList<CertContext *> list;
+	QList<CertContext*> list;
 	PKeyContext *kc = 0;
 
 	KeyBundle bundle;
@@ -1607,13 +2082,13 @@ KeyBundle KeyBundle::fromArray(const QByteArray &a, const QSecureArray &passphra
 	ConvertResult r = pix->fromPKCS12(a, passphrase, &name, &list, &kc);
 
 	// error converting without passphrase?  maybe a passphrase is needed
-	// FIXME: we should only do this if we get ErrorPassphrase?
-	if(r != ConvertGood && passphrase.isEmpty())
+	if(use_asker_fallback(r) && passphrase.isEmpty())
 	{
-		QSecureArray pass;
+		SecureArray pass;
 		if(ask_passphrase(QString(), 0, &pass))
 			r = pix->fromPKCS12(a, pass, &name, &list, &kc);
 	}
+	delete pix;
 
 	if(result)
 		*result = r;
@@ -1632,7 +2107,7 @@ KeyBundle KeyBundle::fromArray(const QByteArray &a, const QSecureArray &passphra
 	return bundle;
 }
 
-KeyBundle KeyBundle::fromFile(const QString &fileName, const QSecureArray &passphrase, ConvertResult *result, const QString &provider)
+KeyBundle KeyBundle::fromFile(const QString &fileName, const SecureArray &passphrase, ConvertResult *result, const QString &provider)
 {
 	QByteArray der;
 	if(!arrayFromFile(fileName, &der))
@@ -1721,7 +2196,7 @@ bool PGPKey::isTrusted() const
 	return static_cast<const PGPKeyContext *>(context())->props()->isTrusted;
 }
 
-QSecureArray PGPKey::toArray() const
+SecureArray PGPKey::toArray() const
 {
 	return static_cast<const PGPKeyContext *>(context())->toBinary();
 }
@@ -1736,7 +2211,7 @@ bool PGPKey::toFile(const QString &fileName) const
 	return stringToFile(fileName, toString());
 }
 
-PGPKey PGPKey::fromArray(const QSecureArray &a, ConvertResult *result, const QString &provider)
+PGPKey PGPKey::fromArray(const SecureArray &a, ConvertResult *result, const QString &provider)
 {
 	PGPKey k;
 	PGPKeyContext *kc = static_cast<PGPKeyContext *>(getContext("pgpkey", provider));
@@ -1745,6 +2220,8 @@ PGPKey PGPKey::fromArray(const QSecureArray &a, ConvertResult *result, const QSt
 		*result = r;
 	if(r == ConvertGood)
 		k.change(kc);
+	else
+		delete kc;
 	return k;
 }
 
@@ -1757,6 +2234,8 @@ PGPKey PGPKey::fromString(const QString &s, ConvertResult *result, const QString
 		*result = r;
 	if(r == ConvertGood)
 		k.change(kc);
+	else
+		delete kc;
 	return k;
 }
 
@@ -1772,4 +2251,185 @@ PGPKey PGPKey::fromFile(const QString &fileName, ConvertResult *result, const QS
 	return fromString(str, result, provider);
 }
 
+//----------------------------------------------------------------------------
+// KeyLoader
+//----------------------------------------------------------------------------
+class KeyLoaderThread : public QThread
+{
+	Q_OBJECT
+public:
+	enum Type { PKPEMFile, PKPEM, PKDER, KBDERFile, KBDER };
+
+	class In
+	{
+	public:
+		Type type;
+		QString fileName, pem;
+		SecureArray der;
+		QByteArray kbder;
+	};
+
+	class Out
+	{
+	public:
+		ConvertResult convertResult;
+		PrivateKey privateKey;
+		KeyBundle keyBundle;
+	};
+
+	In in;
+	Out out;
+
+	KeyLoaderThread(QObject *parent = 0) : QThread(parent)
+	{
+	}
+
+protected:
+	virtual void run()
+	{
+		if(in.type == PKPEMFile)
+			out.privateKey = PrivateKey::fromPEMFile(in.fileName, SecureArray(), &out.convertResult);
+		else if(in.type == PKPEM)
+			out.privateKey = PrivateKey::fromPEM(in.pem, SecureArray(), &out.convertResult);
+		else if(in.type == PKDER)
+			out.privateKey = PrivateKey::fromDER(in.der, SecureArray(), &out.convertResult);
+		else if(in.type == KBDERFile)
+			out.keyBundle = KeyBundle::fromFile(in.fileName, SecureArray(), &out.convertResult);
+		else if(in.type == KBDER)
+			out.keyBundle = KeyBundle::fromArray(in.kbder, SecureArray(), &out.convertResult);
+	}
+};
+
+class KeyLoader::Private : public QObject
+{
+	Q_OBJECT
+public:
+	KeyLoader *q;
+
+	bool active;
+	KeyLoaderThread *thread;
+	KeyLoaderThread::In in;
+	KeyLoaderThread::Out out;
+
+	Private(KeyLoader *_q) : QObject(_q), q(_q)
+	{
+		active = false;
+	}
+
+	void reset()
+	{
+		in = KeyLoaderThread::In();
+		out = KeyLoaderThread::Out();
+	}
+
+	void start()
+	{
+		active = true;
+		thread = new KeyLoaderThread(this);
+		// used queued for signal-safety
+		connect(thread, SIGNAL(finished()), SLOT(thread_finished()), Qt::QueuedConnection);
+		thread->in = in;
+		thread->start();
+	}
+
+private slots:
+	void thread_finished()
+	{
+		out = thread->out;
+		delete thread;
+		thread = 0;
+		active = false;
+
+		emit q->finished();
+	}
+};
+
+KeyLoader::KeyLoader(QObject *parent)
+:QObject(parent)
+{
+	d = new Private(this);
 }
+
+KeyLoader::~KeyLoader()
+{
+	delete d;
+}
+
+void KeyLoader::loadPrivateKeyFromPEMFile(const QString &fileName)
+{
+	Q_ASSERT(!d->active);
+	if(d->active)
+		return;
+
+	d->reset();
+	d->in.type = KeyLoaderThread::PKPEMFile;
+	d->in.fileName = fileName;
+	d->start();
+}
+
+void KeyLoader::loadPrivateKeyFromPEM(const QString &s)
+{
+	Q_ASSERT(!d->active);
+	if(d->active)
+		return;
+
+	d->reset();
+	d->in.type = KeyLoaderThread::PKPEM;
+	d->in.pem = s;
+	d->start();
+}
+
+void KeyLoader::loadPrivateKeyFromDER(const SecureArray &a)
+{
+	Q_ASSERT(!d->active);
+	if(d->active)
+		return;
+
+	d->reset();
+	d->in.type = KeyLoaderThread::PKDER;
+	d->in.der = a;
+	d->start();
+}
+
+void KeyLoader::loadKeyBundleFromFile(const QString &fileName)
+{
+	Q_ASSERT(!d->active);
+	if(d->active)
+		return;
+
+	d->reset();
+	d->in.type = KeyLoaderThread::KBDERFile;
+	d->in.fileName = fileName;
+	d->start();
+}
+
+void KeyLoader::loadKeyBundleFromArray(const QByteArray &a)
+{
+	Q_ASSERT(!d->active);
+	if(d->active)
+		return;
+
+	d->reset();
+	d->in.type = KeyLoaderThread::KBDERFile;
+	d->in.kbder = a;
+	d->start();
+}
+
+ConvertResult KeyLoader::convertResult() const
+{
+	return d->out.convertResult;
+}
+
+PrivateKey KeyLoader::privateKey() const
+{
+	return d->out.privateKey;
+}
+
+KeyBundle KeyLoader::keyBundle() const
+{
+	return d->out.keyBundle;
+}
+
+}
+
+#include "qca_cert.moc"

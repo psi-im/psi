@@ -1,6 +1,5 @@
-namespace QCA {
 /*
-Copyright (C) 1999-2004 The Botan Project. All rights reserved.
+Copyright (C) 1999-2007 The Botan Project. All rights reserved.
 
 Redistribution and use in source and binary forms, for any use, with or without
 modification, is permitted provided that the following conditions are met:
@@ -24,10 +23,19 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+// LICENSEHEADER_END
+namespace QCA { // WRAPNS_LINE
 /*************************************************
 * Memory Mapping Allocator Source File           *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
+
+} // WRAPNS_LINE
+#include <botan/mmap_mem.h>
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
+#include <cstring>
+namespace QCA { // WRAPNS_LINE
 
 #ifndef _XOPEN_SOURCE
   #define _XOPEN_SOURCE 500
@@ -37,30 +45,24 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   #define _XOPEN_SOURCE_EXTENDED 1
 #endif
 
-}
-#include <botan/mmap_mem.h>
-namespace QCA {
-}
-#include <cstring>
-namespace QCA {
-}
+} // WRAPNS_LINE
 #include <sys/types.h>
-namespace QCA {
-}
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
 #include <sys/mman.h>
-namespace QCA {
-}
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
 #include <sys/stat.h>
-namespace QCA {
-}
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
 #include <unistd.h>
-namespace QCA {
-}
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
 #include <stdlib.h>
-namespace QCA {
-}
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
 #include <fcntl.h>
-namespace QCA {
+namespace QCA { // WRAPNS_LINE
 
 #ifndef MAP_FAILED
    #define MAP_FAILED -1
@@ -68,35 +70,71 @@ namespace QCA {
 
 namespace Botan {
 
+namespace {
+
+/*************************************************
+* MemoryMapping_Allocator Exception              *
+*************************************************/
+class MemoryMapping_Failed : public Exception
+   {
+   public:
+      MemoryMapping_Failed(const std::string& msg) :
+         Exception("MemoryMapping_Allocator: " + msg) {}
+   };
+
+}
+
 /*************************************************
 * Memory Map a File into Memory                  *
 *************************************************/
-void* MemoryMapping_Allocator::alloc_block(u32bit n) const
+void* MemoryMapping_Allocator::alloc_block(u32bit n)
    {
-   const std::string path = "/tmp/botan_XXXXXX";
+   class TemporaryFile
+      {
+      public:
+         int get_fd() const { return fd; }
+         const std::string path() const { return filepath; }
 
-   char* filepath = new char[path.length() + 1];
-   std::strcpy(filepath, path.c_str());
+         TemporaryFile(const std::string& base)
+            {
+            const std::string path = base + "XXXXXX";
 
-   mode_t old_umask = umask(077);
-   int fd = mkstemp(filepath);
-   umask(old_umask);
+            filepath = new char[path.length() + 1];
+            std::strcpy(filepath, path.c_str());
 
-   if(fd == -1)
-      throw Exception("MemoryMapping_Allocator: Could not create file");
-   if(unlink(filepath))
-      throw Exception("MemoryMapping_Allocator: Could not unlink file " +
-                      std::string(filepath));
-   delete[] filepath;
+            mode_t old_umask = umask(077);
+            fd = mkstemp(filepath);
+            umask(old_umask);
+            }
 
-   lseek(fd, n-1, SEEK_SET);
-   if(write(fd, "\0", 1) != 1)
-      throw Exception("MemoryMapping_Allocator: Could not write to file");
-   void* ptr = mmap(0, n, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+         ~TemporaryFile()
+            {
+            delete[] filepath;
+            if(fd != -1 && close(fd) == -1)
+               throw MemoryMapping_Failed("Could not close file");
+            }
+      private:
+         int fd;
+         char* filepath;
+      };
+
+   TemporaryFile file("/tmp/botan_");
+
+   if(file.get_fd() == -1)
+      throw MemoryMapping_Failed("Could not create file");
+
+   if(unlink(file.path().c_str()))
+      throw MemoryMapping_Failed("Could not unlink file " + file.path());
+
+   lseek(file.get_fd(), n-1, SEEK_SET);
+   if(write(file.get_fd(), "\0", 1) != 1)
+      throw MemoryMapping_Failed("Could not write to file");
+
+   void* ptr = mmap(0, n, PROT_READ | PROT_WRITE, MAP_SHARED,
+                    file.get_fd(), 0);
+
    if(ptr == (void*)MAP_FAILED)
-      throw Exception("MemoryMapping_Allocator: Could not map file");
-   if(close(fd))
-      throw Exception("MemoryMapping_Allocator: Could not close file");
+      throw MemoryMapping_Failed("Could not map file");
 
    return ptr;
    }
@@ -104,7 +142,7 @@ void* MemoryMapping_Allocator::alloc_block(u32bit n) const
 /*************************************************
 * Remove a Memory Mapping                        *
 *************************************************/
-void MemoryMapping_Allocator::dealloc_block(void* ptr, u32bit n) const
+void MemoryMapping_Allocator::dealloc_block(void* ptr, u32bit n)
    {
    if(ptr == 0) return;
 
@@ -116,15 +154,15 @@ void MemoryMapping_Allocator::dealloc_block(void* ptr, u32bit n) const
       {
       std::memset(ptr, PATTERNS[j % sizeof(PATTERNS)], n);
       if(msync(ptr, n, MS_SYNC))
-         throw Exception("MemoryMapping_Allocator: Sync operation failed");
+         throw MemoryMapping_Failed("Sync operation failed");
       }
    std::memset(ptr, 0, n);
    if(msync(ptr, n, MS_SYNC))
-      throw Exception("MemoryMapping_Allocator: Sync operation failed");
+      throw MemoryMapping_Failed("Sync operation failed");
 
    if(munmap(ptr, n))
-      throw Exception("MemoryMapping_Allocator: Could not unmap file");
+      throw MemoryMapping_Failed("Could not unmap file");
    }
 
 }
-}
+} // WRAPNS_LINE

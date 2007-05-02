@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004,2005  Justin Karneges
+ * Copyright (C) 2004,2005  Justin Karneges <justin@affinix.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,7 +19,7 @@
 
 #include "qca_systemstore.h"
 
-#include <QtCore>
+#include <QFile>
 
 namespace QCA {
 

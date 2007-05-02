@@ -1,6 +1,6 @@
 /*
  * qca_plugin.h - Qt Cryptographic Architecture
- * Copyright (C) 2003-2005  Justin Karneges <justin@affinix.com>
+ * Copyright (C) 2003-2007  Justin Karneges <justin@affinix.com>
  * Copyright (C) 2004,2005  Brad Hards <bradh@frogmouth.net>
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 // NOTE: this API is private to QCA
 
 #include "qca_core.h"
+#include <QMutex>
 
 namespace QCA
 {
@@ -47,7 +48,7 @@ namespace QCA
 		void changePriority(const QString &name, int priority);
 		int getPriority(const QString &name);
 		QStringList allFeatures() const;
-		const ProviderList & providers() const;
+		ProviderList providers() const;
 
 		static void mergeFeatures(QStringList *a, const QStringList &b);
 
@@ -56,6 +57,7 @@ namespace QCA
 		void clearDiagnosticText();
 
 	private:
+		mutable QMutex logMutex, providerMutex;
 		QString dtext;
 		QList<ProviderItem*> providerItemList;
 		ProviderList providerList;

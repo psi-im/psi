@@ -75,7 +75,7 @@ namespace QCA
 
 		 \param a the array to encode
 		*/
-		QSecureArray encode(const QSecureArray &a);
+		SecureArray encode(const SecureArray &a);
 
 		/**
 		 Process an array in the "reverse" direction,
@@ -88,7 +88,7 @@ namespace QCA
 
 		 \param a the array to decode
 		*/
-		QSecureArray decode(const QSecureArray &a);
+		SecureArray decode(const SecureArray &a);
 
 		/**
 		 Process an array in the "forward" direction,
@@ -100,7 +100,7 @@ namespace QCA
 
 		 \param a the array to encode
 		*/
-		QString arrayToString(const QSecureArray &a);
+		QString arrayToString(const SecureArray &a);
 
 		/**
 		 Process an string in the "reverse" direction,
@@ -112,7 +112,7 @@ namespace QCA
 
 		 \param s the array to decode
 		*/
-		QSecureArray stringToArray(const QString &s);
+		SecureArray stringToArray(const QString &s);
 
 		/**
 		 Process a string in the "forward" direction,
@@ -185,7 +185,7 @@ namespace QCA
 
 		   \param a the array containing data to process
 		*/
-		virtual QSecureArray update(const QSecureArray &a);
+		virtual SecureArray update(const SecureArray &a);
 
 		/**
 		   Complete the algorithm
@@ -195,7 +195,7 @@ namespace QCA
 		   zero length array - any output will have been returned
 		   from the update() call.
 		*/
-		virtual QSecureArray final();
+		virtual SecureArray final();
 
 		/**
 		 Test if an update() or final() call succeeded.
@@ -262,7 +262,7 @@ namespace QCA
 
 		   \param a the array containing data to process
 		*/
-		virtual QSecureArray update(const QSecureArray &a);
+		virtual SecureArray update(const SecureArray &a);
 
 		/**
 		   Complete the algorithm
@@ -272,7 +272,7 @@ namespace QCA
 		   empty array, or an array containing one or two
 		   "=" (equals, 0x3D) characters.
 		*/
-		virtual QSecureArray final();
+		virtual SecureArray final();
 
 		/**
 		 Test if an update() or final() call succeeded.
@@ -282,7 +282,7 @@ namespace QCA
 		virtual bool ok() const;
 
 	private:
-		QSecureArray partial;
+		SecureArray partial;
 		bool _ok;
 		int col;
 		bool _lb_enabled;

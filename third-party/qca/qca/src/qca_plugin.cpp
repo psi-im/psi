@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004  Justin Karneges
+ * Copyright (C) 2004-2007  Justin Karneges  <justin@affinix.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,14 +17,32 @@
  *
  */
 
+// Note: The basic thread-safety approach with the plugin manager is that
+//   it is safe to add/get providers, however it is unsafe to remove them.
+//   The expectation is that providers will almost always be unloaded on
+//   application shutdown.  For safe provider unload, ensure no threads are
+//   using the manager, the provider in question, nor any sub-objects from
+//   the provider.
+
 #include "qca_plugin.h"
 
-#include <QtCore>
 #include "qcaprovider.h"
+
+#include <QCoreApplication>
+#include <QDir>
+#include <QFileInfo>
+#include <QLibrary>
+#include <QPluginLoader>
 
 #define PLUGIN_SUBDIR "crypto"
 
 namespace QCA {
+
+// from qca_core.cpp
+QVariantMap getProviderConfig_internal(Provider *p);
+
+// from qca_default.cpp
+QStringList skip_plugins(Provider *defaultProvider);
 
 static ProviderManager *g_pluginman = 0;
 
@@ -131,17 +149,6 @@ public:
 	{
 		return _instance;
 	}
-
-	bool sameType(const PluginInstance *other)
-	{
-		if(!_instance || !other->_instance)
-			return false;
-
-		if(qstrcmp(_instance->metaObject()->className(), other->_instance->metaObject()->className()) != 0)
-			return false;
-
-		return true;
-	}
 };
 
 class ProviderItem
@@ -150,6 +157,7 @@ public:
 	QString fname;
 	Provider *p;
 	int priority;
+	QMutex m;
 
 	static ProviderItem *load(const QString &fname)
 	{
@@ -214,10 +222,17 @@ public:
 
 	void ensureInit()
 	{
+		QMutexLocker locker(&m);
 		if(init_done)
 			return;
 		init_done = true;
+
 		p->init();
+
+		// load config
+		QVariantMap conf = getProviderConfig_internal(p);
+		if(!conf.isEmpty())
+			p->configChanged(conf);
 	}
 
 private:
@@ -253,6 +268,8 @@ ProviderManager::~ProviderManager()
 
 void ProviderManager::scan()
 {
+	QMutexLocker locker(&providerMutex);
+
 	// check static first, but only once
 	if(!scanned_static)
 	{
@@ -264,7 +281,7 @@ void ProviderManager::scan()
 			if(!i)
 				continue;
 
-			if(i->p && haveAlready(i->p->name()))
+			if(haveAlready(i->p->name()))
 			{
 				logDebug("skipping, we already have it");
 				delete i;
@@ -334,7 +351,7 @@ void ProviderManager::scan()
 			if(!i)
 				continue;
 
-			if(i->p && haveAlready(i->p->name()))
+			if(haveAlready(i->p->name()))
 			{
 				logDebug("skipping, we already have it");
 				delete i;
@@ -349,6 +366,13 @@ void ProviderManager::scan()
 				continue;
 			}
 
+			if(skip_plugins(def).contains(i->p->name()))
+			{
+				logDebug("skipping, explicitly disabled");
+				delete i;
+				continue;
+			}
+
 			addItem(i, -1);
 		}
 	}
@@ -356,6 +380,8 @@ void ProviderManager::scan()
 
 bool ProviderManager::add(Provider *p, int priority)
 {
+	QMutexLocker locker(&providerMutex);
+
 	logDebug(QString("adding pre-made provider: [%1]").arg(p->name()));
 	if(haveAlready(p->name()))
 	{
@@ -399,63 +425,103 @@ void ProviderManager::unloadAll()
 
 void ProviderManager::setDefault(Provider *p)
 {
+	QMutexLocker locker(&providerMutex);
+
 	if(def)
 		delete def;
 	def = p;
 	if(def)
+	{
 		def->init();
+		QVariantMap conf = getProviderConfig_internal(def);
+		if(!conf.isEmpty())
+			def->configChanged(conf);
+	}
 }
 
-Provider *ProviderManager::find(Provider *p) const
+Provider *ProviderManager::find(Provider *_p) const
 {
-	if(p == def)
-		return def;
+	ProviderItem *i = 0;
+	Provider *p = 0;
 
-	for(int n = 0; n < providerItemList.count(); ++n)
+	providerMutex.lock();
+	if(_p == def)
 	{
-		ProviderItem *i = providerItemList[n];
-		if(i->p && i->p == p)
+		p = def;
+	}
+	else
+	{
+		for(int n = 0; n < providerItemList.count(); ++n)
 		{
-			i->ensureInit();
-			return i->p;
+			ProviderItem *pi = providerItemList[n];
+			if(pi->p && pi->p == _p)
+			{
+				i = pi;
+				p = pi->p;
+				break;
+			}
 		}
 	}
-	return 0;
+	providerMutex.unlock();
+
+	if(i)
+		i->ensureInit();
+	return p;
 }
 
 Provider *ProviderManager::find(const QString &name) const
 {
-	if(def && name == def->name())
-		return def;
+	ProviderItem *i = 0;
+	Provider *p = 0;
 
-	for(int n = 0; n < providerItemList.count(); ++n)
+	providerMutex.lock();
+	if(def && name == def->name())
 	{
-		ProviderItem *i = providerItemList[n];
-		if(i->p && i->p->name() == name)
+		p = def;
+	}
+	else
+	{
+		for(int n = 0; n < providerItemList.count(); ++n)
 		{
-			i->ensureInit();
-			return i->p;
+			ProviderItem *pi = providerItemList[n];
+			if(pi->p && pi->p->name() == name)
+			{
+				i = pi;
+				p = pi->p;
+				break;
+			}
 		}
 	}
-	return 0;
+	providerMutex.unlock();
+
+	if(i)
+		i->ensureInit();
+	return p;
 }
 
 Provider *ProviderManager::findFor(const QString &name, const QString &type) const
 {
 	if(name.isEmpty())
 	{
+		providerMutex.lock();
+		QList<ProviderItem*> list = providerItemList;
+		providerMutex.unlock();
+
 		// find the first one that can do it
-		for(int n = 0; n < providerItemList.count(); ++n)
+		for(int n = 0; n < list.count(); ++n)
 		{
-			ProviderItem *i = providerItemList[n];
-			i->ensureInit();
-			if(i->p && i->p->features().contains(type))
-				return i->p;
+			ProviderItem *pi = list[n];
+			pi->ensureInit();
+			if(pi->p && pi->p->features().contains(type))
+				return pi->p;
 		}
 
 		// try the default provider as a last resort
-		if(def && def->features().contains(type))
-			return def;
+		providerMutex.lock();
+		Provider *p = def;
+		providerMutex.unlock();
+		if(p && p->features().contains(type))
+			return p;
 
 		return 0;
 	}
@@ -470,6 +536,8 @@ Provider *ProviderManager::findFor(const QString &name, const QString &type) con
 
 void ProviderManager::changePriority(const QString &name, int priority)
 {
+	QMutexLocker locker(&providerMutex);
+
 	ProviderItem *i = 0;
 	int n = 0;
 	for(; n < providerItemList.count(); ++n)
@@ -492,6 +560,8 @@ void ProviderManager::changePriority(const QString &name, int priority)
 
 int ProviderManager::getPriority(const QString &name)
 {
+	QMutexLocker locker(&providerMutex);
+
 	ProviderItem *i = 0;
 	for(int n = 0; n < providerItemList.count(); ++n)
 	{
@@ -510,38 +580,52 @@ int ProviderManager::getPriority(const QString &name)
 
 QStringList ProviderManager::allFeatures() const
 {
-	QStringList list;
+	QStringList featureList;
 
-	if(def)
-		list = def->features();
+	providerMutex.lock();
+	Provider *p = def;
+	providerMutex.unlock();
+	if(p)
+		featureList = p->features();
 
-	for(int n = 0; n < providerItemList.count(); ++n)
+	providerMutex.lock();
+	QList<ProviderItem*> list = providerItemList;
+	providerMutex.unlock();
+	for(int n = 0; n < list.count(); ++n)
 	{
-		ProviderItem *i = providerItemList[n];
+		ProviderItem *i = list[n];
 		if(i->p)
-			mergeFeatures(&list, i->p->features());
+			mergeFeatures(&featureList, i->p->features());
 	}
 
-	return list;
+	return featureList;
 }
 
-const ProviderList & ProviderManager::providers() const
+ProviderList ProviderManager::providers() const
 {
+	QMutexLocker locker(&providerMutex);
+
 	return providerList;
 }
 
 QString ProviderManager::diagnosticText() const
 {
+	QMutexLocker locker(&logMutex);
+
 	return dtext;
 }
 
 void ProviderManager::appendDiagnosticText(const QString &str)
 {
+	QMutexLocker locker(&logMutex);
+
 	dtext += str;
 }
 
 void ProviderManager::clearDiagnosticText()
 {
+	QMutexLocker locker(&logMutex);
+
 	dtext = QString();
 }
 
@@ -582,7 +666,17 @@ void ProviderManager::addItem(ProviderItem *item, int priority)
 
 bool ProviderManager::haveAlready(const QString &name) const
 {
-	return ((def && name == def->name()) || find(name));
+	if(def && name == def->name())
+		return true;
+
+	for(int n = 0; n < providerItemList.count(); ++n)
+	{
+		ProviderItem *pi = providerItemList[n];
+		if(pi->p && pi->p->name() == name)
+			return true;
+	}
+
+	return false;
 }
 
 void ProviderManager::mergeFeatures(QStringList *a, const QStringList &b)

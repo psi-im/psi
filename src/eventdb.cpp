@@ -23,7 +23,8 @@
 #define FAKEDELAY 0
 
 #include <QVector>
-#include <qfile.h>
+#include <QFileInfo>
+#include <QDir>
 #include <q3ptrlist.h>
 #include <qtimer.h>
 #include <qtextstream.h>

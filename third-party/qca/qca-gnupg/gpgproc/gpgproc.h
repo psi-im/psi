@@ -20,7 +20,6 @@
 #ifndef GPGPROC_H
 #define GPGPROC_H
 
-#include <QtCore>
 #include "qpipe.h"
 
 namespace gpgQCAPlugin {
@@ -49,7 +48,7 @@ public:
 	void writeStdin(const QByteArray &a);
 	void writeAux(const QByteArray &a);
 #ifdef QPIPE_SECURE
-	void writeCommand(const QSecureArray &a);
+	void writeCommand(const QCA::SecureArray &a);
 #else
 	void writeCommand(const QByteArray &a);
 #endif

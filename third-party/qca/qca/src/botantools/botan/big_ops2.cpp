@@ -1,6 +1,5 @@
-namespace QCA {
 /*
-Copyright (C) 1999-2004 The Botan Project. All rights reserved.
+Copyright (C) 1999-2007 The Botan Project. All rights reserved.
 
 Redistribution and use in source and binary forms, for any use, with or without
 modification, is permitted provided that the following conditions are met:
@@ -24,120 +23,170 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+// LICENSEHEADER_END
+namespace QCA { // WRAPNS_LINE
 /*************************************************
 * BigInt Assignment Operators Source File        *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
-}
+} // WRAPNS_LINE
 #include <botan/bigint.h>
-namespace QCA {
-}
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
 #include <botan/numthry.h>
-namespace QCA {
-}
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
 #include <botan/mp_core.h>
-namespace QCA {
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
+#include <botan/bit_ops.h>
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
+#include <botan/util.h>
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
+#include <algorithm>
+namespace QCA { // WRAPNS_LINE
 
 namespace Botan {
 
 /*************************************************
 * Addition Operator                              *
 *************************************************/
-BigInt& BigInt::operator+=(const BigInt& n)
+BigInt& BigInt::operator+=(const BigInt& y)
    {
-   if((sign() == n.sign()))
-      {
-      const u32bit reg_size = qMax(sig_words(), n.sig_words()) + 1;
-      grow_to(reg_size);
-      bigint_add2(get_reg(), reg_size-1, n.data(), n.sig_words());
-      }
+   const u32bit x_sw = sig_words(), y_sw = y.sig_words();
+
+#ifdef BOTAN_TYPES_QT
+   const u32bit reg_size = qMax(x_sw, y_sw) + 1;
+#else
+   const u32bit reg_size = std::max(x_sw, y_sw) + 1;
+#endif
+   grow_to(reg_size);
+
+   if((sign() == y.sign()))
+      bigint_add2(get_reg(), reg_size - 1, y.data(), y_sw);
    else
-      (*this) = (*this) + n;
+      {
+      s32bit relative_size = bigint_cmp(data(), x_sw, y.data(), y_sw);
+
+      if(relative_size < 0)
+         {
+         SecureVector<word> z(reg_size - 1);
+         bigint_sub3(z, y.data(), reg_size - 1, data(), x_sw);
+         copy_mem(reg.begin(), z.begin(), z.size());
+         set_sign(y.sign());
+         }
+      else if(relative_size == 0)
+         {
+         reg.clear();
+         set_sign(Positive);
+         }
+      else if(relative_size > 0)
+         bigint_sub2(get_reg(), x_sw, y.data(), y_sw);
+      }
+
    return (*this);
    }
 
 /*************************************************
 * Subtraction Operator                           *
 *************************************************/
-BigInt& BigInt::operator-=(const BigInt& n)
+BigInt& BigInt::operator-=(const BigInt& y)
    {
-   s32bit relative_size = bigint_cmp(data(), sig_words(),
-                                     n.data(), n.sig_words());
+   const u32bit x_sw = sig_words(), y_sw = y.sig_words();
 
-   if(relative_size == 0)
-      {
-      if(sign() == n.sign())
-         (*this) = 0;
-      else
-         (*this) <<= 1;
-      return (*this);
-      }
+   s32bit relative_size = bigint_cmp(data(), x_sw, y.data(), y_sw);
 
-   const u32bit reg_size = qMax(sig_words(), n.sig_words()) + 1;
+#ifdef BOTAN_TYPES_QT
+   const u32bit reg_size = qMax(x_sw, y_sw) + 1;
+#else
+   const u32bit reg_size = std::max(x_sw, y_sw) + 1;
+#endif
    grow_to(reg_size);
 
-   if(relative_size == -1)
+   if(relative_size < 0)
       {
-      if(sign() == n.sign())
-         (*this) = (*this) - n;
+      if(sign() == y.sign())
+         {
+         SecureVector<word> z(reg_size - 1);
+         bigint_sub3(z, y.data(), reg_size - 1, data(), x_sw);
+         copy_mem(reg.begin(), z.begin(), z.size());
+         }
       else
-         bigint_add2(get_reg(), reg_size-1, n.data(), n.sig_words());
-      set_sign(n.reverse_sign());
+         bigint_add2(get_reg(), reg_size - 1, y.data(), y_sw);
+
+      set_sign(y.reverse_sign());
       }
-   if(relative_size == 1)
+   else if(relative_size == 0)
       {
-      if(sign() == n.sign())
-         bigint_sub2(get_reg(), sig_words(), n.data(), n.sig_words());
+      if(sign() == y.sign())
+         {
+         reg.clear();
+         set_sign(Positive);
+         }
       else
-         bigint_add2(get_reg(), reg_size-1, n.data(), n.sig_words());
+         bigint_shl1(get_reg(), x_sw, 0, 1);
       }
+   else if(relative_size > 0)
+      {
+      if(sign() == y.sign())
+         bigint_sub2(get_reg(), x_sw, y.data(), y_sw);
+      else
+         bigint_add2(get_reg(), reg_size - 1, y.data(), y_sw);
+      }
+
    return (*this);
    }
 
 /*************************************************
 * Multiplication Operator                        *
 *************************************************/
-BigInt& BigInt::operator*=(const BigInt& n)
+BigInt& BigInt::operator*=(const BigInt& y)
    {
-   if(is_zero()) return (*this);
-   if(n.is_zero()) { (*this) = 0; return (*this); }
+   const u32bit x_sw = sig_words(), y_sw = y.sig_words();
+   set_sign((sign() == y.sign()) ? Positive : Negative);
 
-   if(sign() != n.sign())
-      set_sign(Negative);
-   else
-      set_sign(Positive);
-
-   const u32bit words = sig_words();
-   const u32bit n_words = n.sig_words();
-
-   if(words == 1 || n_words == 1)
+   if(x_sw == 0 || y_sw == 0)
       {
-      grow_to(words + n_words);
-      if(n_words == 1)
-         bigint_linmul2(get_reg(), words, n.word_at(0));
-      else
-         bigint_linmul3(get_reg(), n.data(), n_words, word_at(0));
-      return (*this);
+      reg.clear();
+      set_sign(Positive);
+      }
+   else if(x_sw == 1 && y_sw)
+      {
+      grow_to(y_sw + 2);
+      bigint_linmul3(get_reg(), y.data(), y_sw, word_at(0));
+      }
+   else if(y_sw == 1 && x_sw)
+      {
+      grow_to(x_sw + 2);
+      bigint_linmul2(get_reg(), x_sw, y.word_at(0));
+      }
+   else
+      {
+      grow_to(size() + y.size());
+
+      SecureVector<word> z(data(), x_sw);
+      SecureVector<word> workspace(size());
+
+      bigint_mul(get_reg(), size(), workspace,
+                 z, z.size(), x_sw,
+                 y.data(), y.size(), y_sw);
       }
 
-   BigInt z(sign(), size() + n.size());
-   bigint_mul3(z.get_reg(), z.size(),
-               data(),   size(),   words,
-               n.data(), n.size(), n_words);
-   (*this) = z;
    return (*this);
    }
 
 /*************************************************
 * Division Operator                              *
 *************************************************/
-BigInt& BigInt::operator/=(const BigInt& n)
+BigInt& BigInt::operator/=(const BigInt& y)
    {
-   if(n.sig_words() == 1 && power_of_2(n.word_at(0)))
-      (*this) >>= (n.bits() - 1);
+   if(y.sig_words() == 1 && power_of_2(y.word_at(0)))
+      (*this) >>= (y.bits() - 1);
    else
-      (*this) = (*this) / n;
+      (*this) = (*this) / y;
    return (*this);
    }
 
@@ -156,24 +205,29 @@ word BigInt::operator%=(word mod)
    {
    if(mod == 0)
       throw BigInt::DivideByZero();
-
    if(power_of_2(mod))
-      {
-      word result = (word_at(0) & (mod - 1));
-      clear();
-      reg.grow_to(2);
-      reg[0] = result;
-      return result;
-      }
+       {
+       word result = (word_at(0) & (mod - 1));
+       clear();
+       grow_to(2);
+       reg[0] = result;
+       return result;
+       }
 
    word remainder = 0;
-   u32bit size = sig_words();
 
-   for(u32bit j = size; j > 0; j--)
+   for(u32bit j = sig_words(); j > 0; --j)
       remainder = bigint_modop(remainder, word_at(j-1), mod);
    clear();
-   reg.grow_to(2);
-   reg[0] = remainder;
+   grow_to(2);
+
+   if(remainder && sign() == BigInt::Negative)
+      reg[0] = mod - remainder;
+   else
+      reg[0] = remainder;
+
+   set_sign(BigInt::Positive);
+
    return word_at(0);
    }
 
@@ -182,12 +236,16 @@ word BigInt::operator%=(word mod)
 *************************************************/
 BigInt& BigInt::operator<<=(u32bit shift)
    {
-   if(shift == 0) return (*this);
-   const u32bit shift_words = shift / MP_WORD_BITS,
-                shift_bits  = shift % MP_WORD_BITS;
+   if(shift)
+      {
+      const u32bit shift_words = shift / MP_WORD_BITS,
+                   shift_bits  = shift % MP_WORD_BITS,
+                   words = sig_words();
 
-   grow_to(sig_words() + shift_words + (shift_bits ? 1 : 0));
-   bigint_shl1(get_reg(), sig_words(), shift_words, shift_bits);
+      grow_to(words + shift_words + (shift_bits ? 1 : 0));
+      bigint_shl1(get_reg(), words, shift_words, shift_bits);
+      }
+
    return (*this);
    }
 
@@ -196,19 +254,19 @@ BigInt& BigInt::operator<<=(u32bit shift)
 *************************************************/
 BigInt& BigInt::operator>>=(u32bit shift)
    {
-   if(shift == 0) return (*this);
-
-   if(bits() <= shift)
+   if(shift)
       {
-      (*this) = 0;
-      return (*this);
+      const u32bit shift_words = shift / MP_WORD_BITS,
+                   shift_bits  = shift % MP_WORD_BITS;
+
+      bigint_shr1(get_reg(), sig_words(), shift_words, shift_bits);
+
+      if(is_zero())
+         set_sign(Positive);
       }
 
-   const u32bit shift_words = shift / MP_WORD_BITS,
-                shift_bits  = shift % MP_WORD_BITS;
-   bigint_shr1(get_reg(), sig_words(), shift_words, shift_bits);
    return (*this);
    }
 
 }
-}
+} // WRAPNS_LINE

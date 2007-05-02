@@ -1,29 +1,32 @@
 diff -ur a/include/bigint.h b/include/bigint.h
---- a/include/bigint.h	2004-10-10 12:33:54.000000000 -0700
-+++ b/include/bigint.h	2004-10-28 23:58:45.000000000 -0700
-@@ -6,7 +6,10 @@
+--- a/include/bigint.h	2007-03-24 11:51:37.000000000 -0700
++++ b/include/bigint.h	2007-04-19 14:21:54.000000000 -0700
+@@ -6,7 +6,13 @@
  #ifndef BOTAN_BIGINT_H__
  #define BOTAN_BIGINT_H__
  
 -#include <botan/base.h>
-+#ifndef BOTAN_MINIMAL_BIGINT
++#ifdef BOTAN_MINIMAL_BIGINT
++# include <botan/secmem.h>
++# include <botan/exceptn.h>
++#else
 +# include <botan/base.h>
 +#endif
-+#include <botan/secmem.h>
++
  #include <botan/mp_types.h>
  #include <iosfwd>
  
-@@ -84,7 +87,9 @@
+@@ -82,7 +88,9 @@
        word operator[](u32bit index) const { return reg[index]; }
        void clear() { reg.clear(); }
  
 +#ifndef BOTAN_MINIMAL_BIGINT
-       void randomize(u32bit = 0, RNG_Quality = SessionKey);
+       void randomize(u32bit = 0);
 +#endif
  
        void binary_encode(byte[]) const;
        void binary_decode(const byte[], u32bit);
-@@ -103,7 +108,9 @@
+@@ -102,7 +110,9 @@
        BigInt(const std::string&);
        BigInt(const byte[], u32bit, Base = Binary);
        BigInt(Sign, u32bit);
@@ -31,9 +34,9 @@ diff -ur a/include/bigint.h b/include/bigint.h
        BigInt(NumberType, u32bit);
 +#endif
     private:
-       friend void modifying_divide(BigInt&, BigInt&, BigInt&);
-       void grow_to(u32bit n) const { reg.grow_to(n); }
-@@ -142,15 +149,19 @@
+       void grow_to(u32bit) const;
+       SecureVector<word> reg;
+@@ -140,15 +150,19 @@
  /*************************************************
  * I/O Operators                                  *
  *************************************************/
@@ -53,111 +56,329 @@ diff -ur a/include/bigint.h b/include/bigint.h
 +#endif
  
  #endif
-Only in b/include: mmap_mem.h
-diff -ur a/include/mp_types.h b/include/mp_types.h
---- a/include/mp_types.h	2004-10-10 12:33:54.000000000 -0700
-+++ b/include/mp_types.h	2004-10-17 14:17:36.000000000 -0700
-@@ -6,7 +6,9 @@
- #ifndef BOTAN_MPI_TYPES_H__
- #define BOTAN_MPI_TYPES_H__
+diff -ur a/include/charset.h b/include/charset.h
+--- a/include/charset.h	2007-03-24 11:51:37.000000000 -0700
++++ b/include/charset.h	2007-04-19 14:21:54.000000000 -0700
+@@ -7,7 +7,9 @@
+ #define BOTAN_CHARSET_H__
  
--#include <botan/config.h>
-+#ifndef BOTAN_NO_CONF_H
-+# include <botan/config.h>
-+#endif
  #include <botan/types.h>
++#ifndef BOTAN_TOOLS_ONLY
+ #include <botan/enums.h>
++#endif
+ #include <string>
  
  namespace Botan {
-Only in b/include: mux_qt.h
+@@ -15,6 +17,7 @@
+ /*************************************************
+ * Character Set Transcoder Interface             *
+ *************************************************/
++#ifndef BOTAN_TOOLS_ONLY
+ class Charset_Transcoder
+    {
+    public:
+@@ -23,13 +26,16 @@
+ 
+       virtual ~Charset_Transcoder() {}
+    };
++#endif
+ 
+ namespace Charset {
+ 
+ /*************************************************
+ * Character Set Handling                         *
+ *************************************************/
++#ifndef BOTAN_TOOLS_ONLY
+ std::string transcode(const std::string&, Character_Set, Character_Set);
++#endif
+ 
+ bool is_digit(char);
+ bool is_space(char);
+diff -ur a/include/libstate.h b/include/libstate.h
+--- a/include/libstate.h	2007-03-24 11:51:37.000000000 -0700
++++ b/include/libstate.h	2007-04-19 14:21:54.000000000 -0700
+@@ -6,9 +6,13 @@
+ #ifndef BOTAN_LIB_STATE_H__
+ #define BOTAN_LIB_STATE_H__
+ 
++#ifdef BOTAN_TOOLS_ONLY
++#include <botan/allocate.h>
++#else
+ #include <botan/base.h>
+ #include <botan/enums.h>
+ #include <botan/ui.h>
++#endif
+ #include <string>
+ #include <vector>
+ #include <map>
+@@ -21,6 +25,7 @@
+ class Library_State
+    {
+    public:
++#ifndef BOTAN_TOOLS_ONLY
+       class Engine_Iterator
+          {
+          public:
+@@ -38,11 +43,18 @@
+             virtual void pulse(Pulse_Type) {}
+             virtual ~UI() {}
+          };
++#endif
+ 
++      int prealloc_size;
+       Allocator* get_allocator(const std::string& = "") const;
+       void add_allocator(Allocator*);
++#ifdef BOTAN_TOOLS_ONLY
++      void set_default_allocator(const std::string&);
++#else
+       void set_default_allocator(const std::string&) const;
++#endif
+ 
++#ifndef BOTAN_TOOLS_ONLY
+       bool rng_is_seeded() const { return rng->is_seeded(); }
+       void randomize(byte[], u32bit);
+ 
+@@ -51,19 +63,23 @@
+       void add_entropy(const byte[], u32bit);
+       void add_entropy(EntropySource&, bool);
+       u32bit seed_prng(bool, u32bit);
++#endif
+ 
+       void load(class Modules&);
+ 
++#ifndef BOTAN_TOOLS_ONLY
+       void set_timer(class Timer*);
+       u64bit system_clock() const;
+ 
+       class Config& config() const;
+ 
+       void add_engine(class Engine*);
++#endif
+ 
+       class Mutex* get_mutex() const;
+       class Mutex* get_named_mutex(const std::string&);
+ 
++#ifndef BOTAN_TOOLS_ONLY
+       void set_x509_state(class X509_GlobalState*);
+       class X509_GlobalState& x509_state();
+ 
+@@ -73,6 +89,7 @@
+       void set_transcoder(class Charset_Transcoder*);
+       std::string transcode(const std::string,
+                             Character_Set, Character_Set) const;
++#endif
+ 
+       Library_State(class Mutex_Factory*);
+       ~Library_State();
+@@ -80,23 +97,34 @@
+       Library_State(const Library_State&) {}
+       Library_State& operator=(const Library_State&) { return (*this); }
+ 
++#ifndef BOTAN_TOOLS_ONLY
+       class Engine* get_engine_n(u32bit) const;
++#endif
+ 
+       class Mutex_Factory* mutex_factory;
++#ifndef BOTAN_TOOLS_ONLY
+       class Timer* timer;
+       class Config* config_obj;
+       class X509_GlobalState* x509_state_obj;
++#endif
+ 
+       std::map<std::string, class Mutex*> locks;
+       std::map<std::string, Allocator*> alloc_factory;
+       mutable Allocator* cached_default_allocator;
++#ifdef BOTAN_TOOLS_ONLY
++      std::string default_allocator_type;
++#endif
+ 
++#ifndef BOTAN_TOOLS_ONLY
+       UI* ui;
+       class Charset_Transcoder* transcoder;
+       RandomNumberGenerator* rng;
++#endif
+       std::vector<Allocator*> allocators;
++#ifndef BOTAN_TOOLS_ONLY
+       std::vector<EntropySource*> entropy_sources;
+       std::vector<class Engine*> engines;
++#endif
+    };
+ 
+ /*************************************************
+diff -ur a/include/modules.h b/include/modules.h
+--- a/include/modules.h	2007-03-24 11:51:37.000000000 -0700
++++ b/include/modules.h	2007-04-19 14:21:54.000000000 -0700
+@@ -6,7 +6,9 @@
+ #ifndef BOTAN_MODULE_FACTORIES_H__
+ #define BOTAN_MODULE_FACTORIES_H__
+ 
++#ifndef BOTAN_TOOLS_ONLY
+ #include <botan/init.h>
++#endif
+ #include <string>
+ #include <vector>
+ 
+@@ -19,14 +21,18 @@
+    {
+    public:
+       virtual class Mutex_Factory* mutex_factory() const = 0;
++#ifndef BOTAN_TOOLS_ONLY
+       virtual class Timer* timer() const = 0;
+       virtual class Charset_Transcoder* transcoder() const = 0;
++#endif
+ 
+       virtual std::string default_allocator() const = 0;
+ 
+       virtual std::vector<class Allocator*> allocators() const = 0;
++#ifndef BOTAN_TOOLS_ONLY
+       virtual std::vector<class EntropySource*> entropy_sources() const = 0;
+       virtual std::vector<class Engine*> engines() const = 0;
++#endif
+ 
+       virtual ~Modules() {}
+    };
+@@ -38,18 +44,30 @@
+    {
+    public:
+       class Mutex_Factory* mutex_factory() const;
++#ifndef BOTAN_TOOLS_ONLY
+       class Timer* timer() const;
+       class Charset_Transcoder* transcoder() const;
++#endif
+ 
+       std::string default_allocator() const;
+ 
+       std::vector<class Allocator*> allocators() const;
++#ifndef BOTAN_TOOLS_ONLY
+       std::vector<class EntropySource*> entropy_sources() const;
+       std::vector<class Engine*> engines() const;
++#endif
+ 
++#ifdef BOTAN_TOOLS_ONLY
++      Builtin_Modules();
++#else
+       Builtin_Modules(const InitializerOptions&);
++#endif
+    private:
++#ifdef BOTAN_TOOLS_ONLY
++      const bool should_lock;
++#else
+       const bool should_lock, use_engines;
++#endif
+    };
+ 
+ }
+diff -ur a/include/mutex.h b/include/mutex.h
+--- a/include/mutex.h	2007-03-24 11:51:37.000000000 -0700
++++ b/include/mutex.h	2007-04-19 14:21:54.000000000 -0700
+@@ -55,6 +55,7 @@
+ /*************************************************
+ * Named Mutex Holder                             *
+ *************************************************/
++#ifndef BOTAN_NO_LIBSTATE
+ class Named_Mutex_Holder
+    {
+    public:
+@@ -63,6 +64,7 @@
+    private:
+       const std::string mutex_name;
+    };
++#endif
+ 
+ }
+ 
 diff -ur a/include/numthry.h b/include/numthry.h
---- a/include/numthry.h	2004-10-10 12:33:54.000000000 -0700
-+++ b/include/numthry.h	2004-10-17 14:17:36.000000000 -0700
-@@ -7,7 +7,9 @@
+--- a/include/numthry.h	2007-03-24 11:51:37.000000000 -0700
++++ b/include/numthry.h	2007-04-19 14:21:54.000000000 -0700
+@@ -7,11 +7,14 @@
  #define BOTAN_NUMBTHRY_H__
  
  #include <botan/bigint.h>
--#include <botan/reducer.h>
 +#ifndef BOTAN_MINIMAL_BIGINT
-+# include <botan/reducer.h>
+ #include <botan/reducer.h>
+ #include <botan/pow_mod.h>
 +#endif
  
  namespace Botan {
  
-@@ -35,18 +37,24 @@
- s32bit jacobi(const BigInt&, const BigInt&);
- BigInt power(const BigInt&, u32bit);
++#ifndef BOTAN_MINIMAL_BIGINT
+ /*************************************************
+ * Fused Arithmetic Operations                    *
+ *************************************************/
+@@ -22,9 +25,11 @@
+ * Number Theory Functions                        *
+ *************************************************/
+ inline BigInt abs(const BigInt& n) { return n.abs(); }
++#endif
+ 
+ void divide(const BigInt&, const BigInt&, BigInt&, BigInt&);
  
 +#ifndef BOTAN_MINIMAL_BIGINT
-+
- /*************************************************
- * Modular Exponentiation                         *
- *************************************************/
- BigInt power_mod(const BigInt&, const BigInt&, ModularReducer*);
- BigInt power_mod(const BigInt&, const BigInt&, const BigInt&);
+ BigInt gcd(const BigInt&, const BigInt&);
+ BigInt lcm(const BigInt&, const BigInt&);
  
-+#endif // BOTAN_MINIMAL_BIGINT
-+
- /*************************************************
- * Utility Functions                              *
- *************************************************/
- u32bit low_zero_bits(const BigInt&);
- u32bit power_of_2(const BigInt&);
- 
-+#ifndef BOTAN_MINIMAL_BIGINT
-+
- /*************************************************
- * Primality Testing                              *
- *************************************************/
-@@ -98,6 +106,8 @@
-       ModularReducer* reducer;
+@@ -85,6 +90,7 @@
+       Fixed_Exponent_Power_Mod pow_mod;
+       Modular_Reducer reducer;
     };
++#endif
  
-+#endif // BOTAN_MINIMAL_BIGINT
-+
  }
  
- #endif
-diff -ur a/include/secmem.h b/include/secmem.h
---- a/include/secmem.h	2004-10-10 12:33:54.000000000 -0700
-+++ b/include/secmem.h	2004-10-17 14:17:36.000000000 -0700
-@@ -7,7 +7,9 @@
- #define BOTAN_SECURE_MEMORY_BUFFERS_H__
- 
- #include <botan/allocate.h>
--#include <botan/config.h>
-+#ifndef BOTAN_NO_CONF_H
-+# include <botan/config.h>
+diff -ur a/include/parsing.h b/include/parsing.h
+--- a/include/parsing.h	2007-03-24 11:51:37.000000000 -0700
++++ b/include/parsing.h	2007-04-19 14:21:54.000000000 -0700
+@@ -15,17 +15,21 @@
+ /*************************************************
+ * String Parsing Functions                       *
+ *************************************************/
++#ifndef BOTAN_TOOLS_ONLY
+ std::vector<std::string> parse_algorithm_name(const std::string&);
+ std::vector<std::string> split_on(const std::string&, char);
+ std::vector<u32bit> parse_asn1_oid(const std::string&);
+ bool x500_name_cmp(const std::string&, const std::string&);
+ u32bit parse_expr(const std::string&);
 +#endif
- #include <botan/mem_ops.h>
- #include <algorithm>
+ 
+ /*************************************************
+ * String/Integer Conversions                     *
+ *************************************************/
+ std::string to_string(u64bit, u32bit = 0);
++#ifndef BOTAN_TOOLS_ONLY
+ u32bit to_u32bit(const std::string&);
++#endif
+ 
+ }
  
 diff -ur a/include/types.h b/include/types.h
---- a/include/types.h	2004-10-10 12:33:54.000000000 -0700
-+++ b/include/types.h	2004-10-17 14:17:36.000000000 -0700
-@@ -6,8 +6,22 @@
+--- a/include/types.h	2007-03-24 11:51:37.000000000 -0700
++++ b/include/types.h	2007-04-19 14:21:54.000000000 -0700
+@@ -6,10 +6,24 @@
  #ifndef BOTAN_TYPES_H__
  #define BOTAN_TYPES_H__
  
 +#ifdef BOTAN_TYPES_QT
-+#include<qglobal.h>
++#include <QtGlobal>
++#else
+ #include <botan/build.h>
 +#endif
-+
+ 
  namespace Botan {
  
 +#ifdef BOTAN_TYPES_QT
 +
-+typedef uchar byte;
-+typedef ushort u16bit;
-+typedef Q_UINT32 u32bit;
-+typedef Q_INT32 s32bit;
-+typedef Q_UINT64 u64bit;
++typedef quint8 byte;
++typedef quint16 u16bit;
++typedef quint32 u32bit;
++typedef qint32 s32bit;
++typedef quint64 u64bit;
 +
 +#else
 +
  typedef unsigned char byte;
  typedef unsigned short u16bit;
  typedef unsigned int u32bit;
-@@ -24,6 +38,8 @@
+@@ -26,6 +40,8 @@
     typedef unsigned long long u64bit;
  #endif
  
@@ -167,189 +388,63 @@ diff -ur a/include/types.h b/include/types.h
  
  namespace Botan_types {
 diff -ur a/include/util.h b/include/util.h
---- a/include/util.h	2004-10-10 12:33:54.000000000 -0700
-+++ b/include/util.h	2004-10-17 14:17:36.000000000 -0700
-@@ -6,11 +6,16 @@
- #ifndef BOTAN_UTIL_H__
- #define BOTAN_UTIL_H__
- 
--#include <botan/secmem.h>
--#include <botan/enums.h>
- #include <cstring>
- #include <string>
--#include <vector>
-+
-+#ifdef BOTAN_TOOLS_ONLY
-+# include <botan/types.h>
-+#else
-+# include <botan/secmem.h>
-+# include <botan/enums.h>
-+# include <vector>
-+#endif
- 
- namespace Botan {
- 
-@@ -48,6 +53,8 @@
-                    ((u64bit)input6 <<  8) | input7);
-    }
- 
-+#ifndef BOTAN_TOOLS_ONLY
-+
+--- a/include/util.h	2007-03-24 11:51:37.000000000 -0700
++++ b/include/util.h	2007-04-19 14:21:54.000000000 -0700
+@@ -13,8 +13,10 @@
  /*************************************************
- * XOR Functions                                  *
+ * Timer Access Functions                         *
  *************************************************/
-@@ -75,12 +82,16 @@
++#ifndef BOTAN_TOOLS_ONLY
  u64bit system_time();
  u64bit system_clock();
++#endif
  
-+#endif // BOTAN_TOOLS_ONLY
-+
  /*************************************************
  * Memory Locking Functions                       *
+@@ -27,13 +29,17 @@
  *************************************************/
- void lock_mem(void*, u32bit);
- void unlock_mem(void*, u32bit);
- 
-+#ifndef BOTAN_TOOLS_ONLY
-+
- /*************************************************
- * Parsing functions                              *
- *************************************************/
-@@ -97,8 +108,10 @@
- u32bit low_bit(u64bit);
- u32bit significant_bytes(u64bit);
- u32bit hamming_weight(u64bit);
-+#endif // BOTAN_TOOLS_ONLY
  u32bit round_up(u32bit, u32bit);
  u32bit round_down(u32bit, u32bit);
 +#ifndef BOTAN_TOOLS_ONLY
  u64bit combine_timers(u32bit, u32bit, u32bit);
++#endif
  
  /*************************************************
-@@ -107,6 +120,8 @@
+ * Work Factor Estimates                          *
+ *************************************************/
++#ifndef BOTAN_TOOLS_ONLY
  u32bit entropy_estimate(const byte[], u32bit);
  u32bit dl_work_factor(u32bit);
++#endif
  
-+#endif // BOTAN_TOOLS_ONLY
-+
- /*************************************************
- * String/Integer Conversions                     *
- *************************************************/
-@@ -123,6 +138,8 @@
- byte char2digit(char);
- char digit2char(byte);
- 
-+#ifndef BOTAN_TOOLS_ONLY
-+
- std::string local2iso(const std::string&);
- std::string iso2local(const std::string&);
- 
-@@ -135,6 +152,8 @@
- MemoryVector<byte> pkcs_hash_id(const std::string&);
- byte ieee1363_hash_id(const std::string&);
- 
-+#endif // BOTAN_TOOLS_ONLY
-+
  }
  
+diff -ur a/modules/mux_qt/mux_qt.cpp b/modules/mux_qt/mux_qt.cpp
+--- a/modules/mux_qt/mux_qt.cpp	2007-03-24 11:51:37.000000000 -0700
++++ b/modules/mux_qt/mux_qt.cpp	2007-04-19 14:23:06.000000000 -0700
+@@ -6,7 +6,7 @@
+ #include <botan/mux_qt.h>
+ #include <qmutex.h>
+ 
+-#if !defined(QT_THREAD_SUPPORT)
++#if QT_VERSION <= 0x040000 && !defined(QT_THREAD_SUPPORT)
+    #error Your version of Qt does not support threads or mutexes
  #endif
-diff -ur a/src/allocate.cpp b/src/allocate.cpp
---- a/src/allocate.cpp	2004-10-10 12:33:53.000000000 -0700
-+++ b/src/allocate.cpp	2004-10-17 14:17:19.000000000 -0700
-@@ -7,7 +7,9 @@
- #include <botan/secalloc.h>
- #include <botan/defalloc.h>
- #include <botan/mutex.h>
--#include <botan/init.h>
-+#ifndef BOTAN_NO_INIT_H
-+# include <botan/init.h>
-+#endif
- #include <map>
  
- namespace Botan {
-diff -ur a/src/big_base.cpp b/src/big_base.cpp
---- a/src/big_base.cpp	2004-10-10 12:33:53.000000000 -0700
-+++ b/src/big_base.cpp	2004-10-17 14:17:19.000000000 -0700
-@@ -6,7 +6,10 @@
- #include <botan/bigint.h>
- #include <botan/numthry.h>
- #include <botan/mp_core.h>
--#include <botan/rng.h>
-+#include <botan/util.h>
-+#ifndef BOTAN_MINIMAL_BIGINT
-+# include <botan/rng.h>
-+#endif
- 
- namespace Botan {
- 
-@@ -88,6 +91,8 @@
- /*************************************************
- * Construct a Random BigInt                      *
- *************************************************/
-+#ifndef BOTAN_MINIMAL_BIGINT
-+
- BigInt::BigInt(NumberType type, u32bit bits)
-    {
-    set_sign(Positive);
-@@ -97,6 +102,8 @@
-       set_bit(bits);
-    }
- 
-+#endif // BOTAN_MINIMAL_BIGINT
-+
- /*************************************************
- * Swap this BigInt with another                  *
- *************************************************/
-@@ -398,6 +405,8 @@
- /*************************************************
- * Randomize this number                          *
- *************************************************/
-+#ifndef BOTAN_MINIMAL_BIGINT
-+
- void BigInt::randomize(u32bit bitsize, RNG_Quality level)
-    {
-    set_sign(Positive);
-@@ -415,6 +424,8 @@
-       }
-    }
- 
-+#endif // BOTAN_MINIMAL_BIGINT
-+
- /*************************************************
- * Encode this number into bytes                  *
- *************************************************/
-@@ -443,6 +454,8 @@
-       reg[length / WORD_BYTES] = (reg[length / WORD_BYTES] << 8) | buf[j];
-    }
- 
-+#ifndef BOTAN_MINIMAL_BIGINT
-+
- /*************************************************
- * Generate a random integer                      *
- *************************************************/
-@@ -482,4 +495,6 @@
-    return p;
-    }
- 
-+#endif // BOTAN_MINIMAL_BIGINT
-+
- }
 diff -ur a/src/big_code.cpp b/src/big_code.cpp
---- a/src/big_code.cpp	2004-10-10 12:33:53.000000000 -0700
-+++ b/src/big_code.cpp	2004-10-29 00:02:38.000000000 -0700
-@@ -5,7 +5,10 @@
- 
+--- a/src/big_code.cpp	2007-03-24 11:51:37.000000000 -0700
++++ b/src/big_code.cpp	2007-04-19 14:22:32.000000000 -0700
+@@ -6,7 +6,9 @@
  #include <botan/bigint.h>
  #include <botan/numthry.h>
--#include <botan/hex.h>
-+#include <botan/util.h>
+ #include <botan/charset.h>
 +#ifndef BOTAN_MINIMAL_BIGINT
-+# include <botan/hex.h>
+ #include <botan/hex.h>
 +#endif
  
  namespace Botan {
  
-@@ -16,6 +19,7 @@
+@@ -17,6 +19,7 @@
     {
     if(base == Binary)
        n.binary_encode(output);
@@ -357,17 +452,17 @@ diff -ur a/src/big_code.cpp b/src/big_code.cpp
     else if(base == Hexadecimal)
        {
        SecureVector<byte> binary(n.encoded_size(Binary));
-@@ -23,6 +27,7 @@
-       for(u32bit j = 0; j != binary.size(); j++)
+@@ -24,6 +27,7 @@
+       for(u32bit j = 0; j != binary.size(); ++j)
           Hex_Encoder::encode(binary[j], output + 2*j);
        }
 +#endif
     else if(base == Octal)
        {
        BigInt copy = n;
-@@ -44,7 +49,15 @@
-          divide(copy, 10, copy, remainder);
-          output[output_size - 1 - j] = digit2char(remainder.word_at(0));
+@@ -46,7 +50,15 @@
+          output[output_size - 1 - j] =
+             Charset::digit2char(remainder.word_at(0));
           if(copy.is_zero())
 +            {
 +            if(j < output_size - 1)
@@ -381,7 +476,7 @@ diff -ur a/src/big_code.cpp b/src/big_code.cpp
           }
        }
     else
-@@ -97,6 +110,7 @@
+@@ -99,6 +111,7 @@
     BigInt r;
     if(base == Binary)
        r.binary_decode(buf, length);
@@ -389,7 +484,7 @@ diff -ur a/src/big_code.cpp b/src/big_code.cpp
     else if(base == Hexadecimal)
        {
        SecureVector<byte> hex;
-@@ -117,6 +131,7 @@
+@@ -119,6 +132,7 @@
           binary[j] = Hex_Decoder::decode(hex+2*j-offset);
        r.binary_decode(binary, binary.size());
        }
@@ -398,8 +493,8 @@ diff -ur a/src/big_code.cpp b/src/big_code.cpp
        {
        const u32bit RADIX = ((base == Decimal) ? 10 : 8);
 diff -ur a/src/big_io.cpp b/src/big_io.cpp
---- a/src/big_io.cpp	2004-10-10 12:33:53.000000000 -0700
-+++ b/src/big_io.cpp	2004-10-17 14:17:19.000000000 -0700
+--- a/src/big_io.cpp	2007-03-24 11:51:37.000000000 -0700
++++ b/src/big_io.cpp	2007-04-19 14:22:32.000000000 -0700
 @@ -8,6 +8,8 @@
  
  namespace Botan {
@@ -413,163 +508,515 @@ diff -ur a/src/big_io.cpp b/src/big_io.cpp
     return stream;
     }
  
-+#endif // BOTAN_MINIMAL_BIGINT
++#endif
 +
  }
-diff -ur a/src/mp_fkmul.cpp b/src/mp_fkmul.cpp
---- a/src/mp_fkmul.cpp	2004-10-10 12:33:53.000000000 -0700
-+++ b/src/mp_fkmul.cpp	2004-10-17 14:21:19.000000000 -0700
-@@ -6,6 +6,7 @@
- #include <botan/mp_core.h>
- #include <botan/util.h>
- #include <botan/exceptn.h>
-+#include <botan/mem_ops.h>
- 
- namespace Botan {
- 
-diff -ur a/src/mutex.cpp b/src/mutex.cpp
---- a/src/mutex.cpp	2004-10-10 12:33:53.000000000 -0700
-+++ b/src/mutex.cpp	2004-10-17 14:17:19.000000000 -0700
-@@ -5,7 +5,10 @@
- 
- #include <botan/mutex.h>
- #include <botan/exceptn.h>
--#include <botan/init.h>
-+
-+#ifndef BOTAN_NO_INIT_H
-+# include <botan/init.h>
-+#endif
- 
- namespace Botan {
- 
-diff -ur a/src/numthry.cpp b/src/numthry.cpp
---- a/src/numthry.cpp	2004-10-10 12:33:53.000000000 -0700
-+++ b/src/numthry.cpp	2004-10-17 14:17:19.000000000 -0700
-@@ -4,7 +4,9 @@
+diff -ur a/src/charset.cpp b/src/charset.cpp
+--- a/src/charset.cpp	2007-03-24 11:51:37.000000000 -0700
++++ b/src/charset.cpp	2007-04-19 14:22:32.000000000 -0700
+@@ -4,8 +4,12 @@
  *************************************************/
  
- #include <botan/numthry.h>
--#include <botan/ui.h>
-+#ifndef BOTAN_MINIMAL_BIGINT
-+# include <botan/ui.h>
+ #include <botan/charset.h>
++#ifdef BOTAN_TOOLS_ONLY
++#include <botan/exceptn.h>
++#else
+ #include <botan/hex.h>
+ #include <botan/base64.h>
 +#endif
+ #include <botan/libstate.h>
+ #include <cctype>
  
- namespace Botan {
- 
-@@ -247,6 +249,8 @@
-    return x;
-    }
- 
-+#ifndef BOTAN_MINIMAL_BIGINT
-+
+@@ -16,11 +20,13 @@
  /*************************************************
- * Do simple tests of primality                   *
+ * Perform character set transcoding              *
  *************************************************/
-@@ -389,4 +393,6 @@
-    reducer = get_reducer(n);
++#ifndef BOTAN_TOOLS_ONLY
+ std::string transcode(const std::string& str,
+                       Character_Set to, Character_Set from)
+    {
+    return global_state().transcode(str, to, from);
     }
++#endif
  
-+#endif // BOTAN_MINIMAL_BIGINT
-+
+ /*************************************************
+ * Check if a character represents a digit        *
+@@ -97,6 +103,8 @@
+ 
  }
-diff -ur a/src/secalloc.cpp b/src/secalloc.cpp
---- a/src/secalloc.cpp	2004-10-10 12:33:53.000000000 -0700
-+++ b/src/secalloc.cpp	2004-10-29 00:10:38.000000000 -0700
-@@ -4,7 +4,14 @@
- *************************************************/
- 
- #include <botan/secalloc.h>
--#include <botan/conf.h>
-+#ifndef BOTAN_NO_CONF_H
-+# include <botan/conf.h>
-+#else
-+namespace Botan {
-+int botan_memory_chunk = 65536;
-+int botan_prealloc = 2;
-+}
-+#endif
- #include <botan/util.h>
- 
- namespace Botan {
-@@ -27,7 +34,13 @@
- * SecureAllocator Constructor                    *
- *************************************************/
- SecureAllocator::SecureAllocator() :
--   PREF_SIZE(Config::get_u32bit("base/memory_chunk")), ALIGN_TO(8)
-+   PREF_SIZE(
-+#ifndef BOTAN_NO_CONF_H
-+	Config::get_u32bit("base/memory_chunk")
-+#else
-+	botan_memory_chunk
-+#endif
-+	), ALIGN_TO(8)
-    {
-    if(!PREF_SIZE)
-       throw Internal_Error("The base/memory_chunk option is unset");
-@@ -53,7 +66,11 @@
- *************************************************/
- void SecureAllocator::init()
-    {
-+#ifndef BOTAN_NO_CONF_H
-    for(u32bit j = 0; j != 2; j++)
-+#else
-+   for(u32bit j = 0; j != (u32bit)botan_prealloc; j++)
-+#endif
-       {
-       void* ptr = 0;
-       try {
-diff -ur a/src/util.cpp b/src/util.cpp
---- a/src/util.cpp	2004-10-10 12:33:54.000000000 -0700
-+++ b/src/util.cpp	2004-10-17 14:17:19.000000000 -0700
-@@ -9,6 +9,8 @@
- 
- namespace Botan {
  
 +#ifndef BOTAN_TOOLS_ONLY
 +
  /*************************************************
- * XOR arrays together                            *
+ * Hex Encoder Lookup Tables                      *
  *************************************************/
-@@ -167,6 +169,8 @@
-    return weight;
+@@ -168,4 +176,6 @@
+ 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+ 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80 };
+ 
++#endif
++
+ }
+diff -ur a/src/libstate.cpp b/src/libstate.cpp
+--- a/src/libstate.cpp	2007-03-24 11:51:37.000000000 -0700
++++ b/src/libstate.cpp	2007-04-19 14:22:32.000000000 -0700
+@@ -4,14 +4,20 @@
+ *************************************************/
+ 
+ #include <botan/libstate.h>
++#ifndef BOTAN_TOOLS_ONLY
+ #include <botan/config.h>
++#endif
+ #include <botan/modules.h>
++#ifndef BOTAN_TOOLS_ONLY
+ #include <botan/engine.h>
+ #include <botan/x509stat.h>
++#endif
+ #include <botan/stl_util.h>
+ #include <botan/mutex.h>
++#ifndef BOTAN_TOOLS_ONLY
+ #include <botan/timers.h>
+ #include <botan/charset.h>
++#endif
+ #include <algorithm>
+ 
+ namespace Botan {
+@@ -56,10 +62,12 @@
+ /*************************************************
+ * Increment the Engine iterator                  *
+ *************************************************/
++#ifndef BOTAN_TOOLS_ONLY
+ Engine* Library_State::Engine_Iterator::next()
+    {
+    return lib.get_engine_n(n++);
+    }
++#endif
+ 
+ /*************************************************
+ * Get a new mutex object                         *
+@@ -92,8 +100,11 @@
+ 
+    if(!cached_default_allocator)
+       {
++#ifdef BOTAN_TOOLS_ONLY
++      std::string chosen = default_allocator_type;
++#else
+       std::string chosen = config().option("base/default_allocator");
+-
++#endif
+       if(chosen == "")
+          chosen = "malloc";
+ 
+@@ -120,17 +131,26 @@
+ /*************************************************
+ * Set the default allocator type                 *
+ *************************************************/
++#ifdef BOTAN_TOOLS_ONLY
++void Library_State::set_default_allocator(const std::string& type)
++#else
+ void Library_State::set_default_allocator(const std::string& type) const
++#endif
+    {
+    Named_Mutex_Holder lock("allocator");
+ 
+    if(type == "")
+       return;
+ 
++#ifdef BOTAN_TOOLS_ONLY
++   default_allocator_type = type;
++#else
+    config().set("conf", "base/default_allocator", type);
++#endif
+    cached_default_allocator = 0;
     }
  
-+#endif // BOTAN_TOOLS_ONLY
++#ifndef BOTAN_TOOLS_ONLY
+ /*************************************************
+ * Set the high resolution clock implementation   *
+ *************************************************/
+@@ -317,13 +337,17 @@
+    return (*config_obj);
+    }
+ 
++#endif
 +
  /*************************************************
- * Round up n to multiple of align_to             *
+ * Load modules                                   *
  *************************************************/
-@@ -185,6 +189,8 @@
+ void Library_State::load(Modules& modules)
+    {
++#ifndef BOTAN_TOOLS_ONLY
+    set_timer(modules.timer());
+    set_transcoder(modules.transcoder());
++#endif
+ 
+    std::vector<Allocator*> mod_allocs = modules.allocators();
+    for(u32bit j = 0; j != mod_allocs.size(); j++)
+@@ -331,6 +355,7 @@
+ 
+    set_default_allocator(modules.default_allocator());
+ 
++#ifndef BOTAN_TOOLS_ONLY
+    std::vector<Engine*> mod_engines = modules.engines();
+    for(u32bit j = 0; j != mod_engines.size(); ++j)
+       {
+@@ -341,6 +366,7 @@
+    std::vector<EntropySource*> sources = modules.entropy_sources();
+    for(u32bit j = 0; j != sources.size(); ++j)
+       add_entropy_source(sources[j]);
++#endif
+    }
+ 
+ /*************************************************
+@@ -352,18 +378,26 @@
+       throw Exception("Library_State: no mutex found");
+ 
+    this->mutex_factory = mutex_factory;
++#ifndef BOTAN_TOOLS_ONLY
+    this->timer = new Timer();
+    this->transcoder = 0;
+    this->config_obj = new Config();
++#endif
+ 
++#ifndef BOTAN_TOOLS_ONLY
+    locks["settings"] = get_mutex();
++#endif
+    locks["allocator"] = get_mutex();
++#ifndef BOTAN_TOOLS_ONLY
+    locks["rng"] = get_mutex();
+    locks["engine"] = get_mutex();
+    rng = 0;
++#endif
+    cached_default_allocator = 0;
++#ifndef BOTAN_TOOLS_ONLY
+    x509_state_obj = 0;
+    ui = 0;
++#endif
+    }
+ 
+ /*************************************************
+@@ -371,6 +405,7 @@
+ *************************************************/
+ Library_State::~Library_State()
+    {
++#ifndef BOTAN_TOOLS_ONLY
+    delete x509_state_obj;
+    delete transcoder;
+    delete rng;
+@@ -381,6 +416,7 @@
+    std::for_each(entropy_sources.begin(), entropy_sources.end(),
+                  del_fun<EntropySource>());
+    std::for_each(engines.begin(), engines.end(), del_fun<Engine>());
++#endif
+ 
+    cached_default_allocator = 0;
+ 
+diff -ur a/src/mem_pool.cpp b/src/mem_pool.cpp
+--- a/src/mem_pool.cpp	2007-03-24 11:51:37.000000000 -0700
++++ b/src/mem_pool.cpp	2007-04-19 14:22:32.000000000 -0700
+@@ -5,8 +5,12 @@
+ 
+ #include <botan/mem_pool.h>
+ #include <botan/libstate.h>
++#ifdef BOTAN_TOOLS_ONLY
++#include <botan/mem_ops.h>
++#else
+ #include <botan/config.h>
+ #include <botan/bit_ops.h>
++#endif
+ #include <botan/util.h>
+ #include <algorithm>
+ 
+@@ -22,7 +26,11 @@
+    if(provided)
+       return provided;
+ 
++#ifdef BOTAN_TOOLS_ONLY
++   u32bit result = (u32bit)global_state().prealloc_size;
++#else
+    u32bit result = global_config().option_as_u32bit("base/memory_chunk");
++#endif
+    if(result)
+       return result;
+ 
+diff -ur a/src/modules.cpp b/src/modules.cpp
+--- a/src/modules.cpp	2007-03-24 11:51:37.000000000 -0700
++++ b/src/modules.cpp	2007-04-19 14:22:32.000000000 -0700
+@@ -5,71 +5,77 @@
+ 
+ #include <botan/modules.h>
+ #include <botan/defalloc.h>
++#ifndef BOTAN_TOOLS_ONLY
+ #include <botan/def_char.h>
+ #include <botan/eng_def.h>
+ #include <botan/es_file.h>
+ #include <botan/timers.h>
++#endif
+ 
+ #if defined(BOTAN_EXT_MUTEX_PTHREAD)
+-  #include <botan/mux_pthr.h>
++#  include <botan/mux_pthr.h>
+ #elif defined(BOTAN_EXT_MUTEX_WIN32)
+-  #include <botan/mux_win32.h>
++#  include <botan/mux_win32.h>
+ #elif defined(BOTAN_EXT_MUTEX_QT)
+-  #include <botan/mux_qt.h>
++#  include <botan/mux_qt.h>
+ #endif
+ 
+ #if defined(BOTAN_EXT_ALLOC_MMAP)
+-  #include <botan/mmap_mem.h>
++#  include <botan/mmap_mem.h>
+ #endif
+ 
++#ifndef BOTAN_TOOLS_ONLY
++
+ #if defined(BOTAN_EXT_TIMER_HARDWARE)
+-  #include <botan/tm_hard.h>
++#  include <botan/tm_hard.h>
+ #elif defined(BOTAN_EXT_TIMER_POSIX)
+-  #include <botan/tm_posix.h>
++#  include <botan/tm_posix.h>
+ #elif defined(BOTAN_EXT_TIMER_UNIX)
+-  #include <botan/tm_unix.h>
++#  include <botan/tm_unix.h>
+ #elif defined(BOTAN_EXT_TIMER_WIN32)
+-  #include <botan/tm_win32.h>
++#  include <botan/tm_win32.h>
+ #endif
+ 
+ #if defined(BOTAN_EXT_ENGINE_AEP)
+-  #include <botan/eng_aep.h>
++#  include <botan/eng_aep.h>
+ #endif
+ 
+ #if defined(BOTAN_EXT_ENGINE_GNU_MP)
+-  #include <botan/eng_gmp.h>
++#  include <botan/eng_gmp.h>
+ #endif
+ 
+ #if defined(BOTAN_EXT_ENGINE_OPENSSL)
+-  #include <botan/eng_ossl.h>
++#  include <botan/eng_ossl.h>
+ #endif
+ 
+ #if defined(BOTAN_EXT_ENTROPY_SRC_AEP)
+-  #include <botan/es_aep.h>
++#  include <botan/es_aep.h>
+ #endif
+ 
+ #if defined(BOTAN_EXT_ENTROPY_SRC_EGD)
+-  #include <botan/es_egd.h>
++#  include <botan/es_egd.h>
+ #endif
+ 
+ #if defined(BOTAN_EXT_ENTROPY_SRC_UNIX)
+-  #include <botan/es_unix.h>
++#  include <botan/es_unix.h>
+ #endif
+ 
+ #if defined(BOTAN_EXT_ENTROPY_SRC_BEOS)
+-  #include <botan/es_beos.h>
++#  include <botan/es_beos.h>
+ #endif
+ 
+ #if defined(BOTAN_EXT_ENTROPY_SRC_CAPI)
+-  #include <botan/es_capi.h>
++#  include <botan/es_capi.h>
+ #endif
+ 
+ #if defined(BOTAN_EXT_ENTROPY_SRC_WIN32)
+-  #include <botan/es_win32.h>
++#  include <botan/es_win32.h>
+ #endif
+ 
+ #if defined(BOTAN_EXT_ENTROPY_SRC_FTW)
+-  #include <botan/es_ftw.h>
++#  include <botan/es_ftw.h>
++#endif
++
+ #endif
+ 
+ namespace Botan {
+@@ -93,6 +99,7 @@
+ /*************************************************
+ * Find a high resolution timer, if possible      *
+ *************************************************/
++#ifndef BOTAN_TOOLS_ONLY
+ Timer* Builtin_Modules::timer() const
+    {
+ #if defined(BOTAN_EXT_TIMER_HARDWARE)
+@@ -107,6 +114,7 @@
+    return new Timer;
+ #endif
+    }
++#endif
+ 
+ /*************************************************
+ * Find any usable allocators                     *
+@@ -142,6 +150,8 @@
+       return "malloc";
+    }
+ 
++#ifndef BOTAN_TOOLS_ONLY
++
+ /*************************************************
+ * Register any usable entropy sources            *
+ *************************************************/
+@@ -217,13 +227,22 @@
+    return new Default_Charset_Transcoder;
+    }
+ 
++#endif
++
+ /*************************************************
+ * Builtin_Modules Constructor                    *
+ *************************************************/
++#ifdef BOTAN_TOOLS_ONLY
++Builtin_Modules::Builtin_Modules() :
++   should_lock(true)
++   {
++   }
++#else
+ Builtin_Modules::Builtin_Modules(const InitializerOptions& args) :
+    should_lock(args.secure_memory()),
+    use_engines(args.use_engines())
+    {
+    }
++#endif
+ 
+ }
+diff -ur a/src/mp_asm.cpp b/src/mp_asm.cpp
+--- a/src/mp_asm.cpp	2007-03-24 11:51:37.000000000 -0700
++++ b/src/mp_asm.cpp	2007-04-19 14:22:32.000000000 -0700
+@@ -174,6 +174,7 @@
+ /*************************************************
+ * Montgomery Reduction Algorithm                 *
+ *************************************************/
++#ifndef BOTAN_MINIMAL_BIGINT
+ void bigint_monty_redc(word z[], u32bit z_size,
+                        const word x[], u32bit x_size, word u)
+    {
+@@ -199,6 +200,7 @@
+    if(bigint_cmp(z + x_size, x_size + 1, x, x_size) >= 0)
+       bigint_sub2(z + x_size, x_size + 1, x, x_size);
+    }
++#endif
+ 
+ }
+ 
+diff -ur a/src/mutex.cpp b/src/mutex.cpp
+--- a/src/mutex.cpp	2007-03-24 11:51:37.000000000 -0700
++++ b/src/mutex.cpp	2007-04-19 14:22:32.000000000 -0700
+@@ -4,7 +4,9 @@
+ *************************************************/
+ 
+ #include <botan/mutex.h>
++#ifndef BOTAN_NO_LIBSTATE
+ #include <botan/libstate.h>
++#endif
+ 
+ namespace Botan {
+ 
+@@ -26,6 +28,7 @@
+    mux->unlock();
+    }
+ 
++#ifndef BOTAN_NO_LIBSTATE
+ /*************************************************
+ * Named_Mutex_Holder Constructor                 *
+ *************************************************/
+@@ -42,12 +45,17 @@
+    {
+    global_state().get_named_mutex(mutex_name)->unlock();
+    }
++#endif
+ 
+ /*************************************************
+ * Default Mutex Factory                          *
+ *************************************************/
++#ifdef BOTAN_FIX_GDB
++namespace {
++#else
+ Mutex* Default_Mutex_Factory::make()
+    {
++#endif
+    class Default_Mutex : public Mutex
+       {
+       public:
+@@ -78,6 +86,12 @@
+          bool locked;
+       };
+ 
++#ifdef BOTAN_FIX_GDB
++   } // end unnamed namespace
++Mutex* Default_Mutex_Factory::make()
++   {
++#endif
++
+    return new Default_Mutex;
+    }
+ 
+diff -ur a/src/parsing.cpp b/src/parsing.cpp
+--- a/src/parsing.cpp	2007-03-24 11:51:37.000000000 -0700
++++ b/src/parsing.cpp	2007-04-19 14:22:32.000000000 -0700
+@@ -12,6 +12,7 @@
+ /*************************************************
+ * Convert a string into an integer               *
+ *************************************************/
++#ifndef BOTAN_TOOLS_ONLY
+ u32bit to_u32bit(const std::string& number)
+    {
+    u32bit n = 0;
+@@ -29,7 +30,7 @@
+       }
+    return n;
+    }
+-
++#endif
+ 
+ /*************************************************
+ * Convert an integer into a string               *
+@@ -54,6 +55,7 @@
+    return lenstr;
+    }
+ 
++#ifndef BOTAN_TOOLS_ONLY
+ /*************************************************
+ * Parse a SCAN-style algorithm name              *
+ *************************************************/
+@@ -237,5 +239,6 @@
+    else
+       return to_u32bit(expr);
+    }
++#endif
+ 
+ }
+diff -ur a/src/util.cpp b/src/util.cpp
+--- a/src/util.cpp	2007-03-24 11:51:37.000000000 -0700
++++ b/src/util.cpp	2007-04-19 14:22:32.000000000 -0700
+@@ -4,7 +4,9 @@
+ *************************************************/
+ 
+ #include <botan/util.h>
++#ifndef BOTAN_TOOLS_ONLY
+ #include <botan/bit_ops.h>
++#endif
+ #include <algorithm>
+ #include <cmath>
+ 
+@@ -28,6 +30,7 @@
     return (n - (n % align_to));
     }
  
 +#ifndef BOTAN_TOOLS_ONLY
-+
  /*************************************************
  * Return the work required for solving DL        *
  *************************************************/
-@@ -203,6 +209,8 @@
-    return std::max(estimate, MIN_ESTIMATE);
-    }
+@@ -77,5 +80,6 @@
  
-+#endif // BOTAN_TOOLS_ONLY
-+
- /*************************************************
- * Convert an integer into a string               *
- *************************************************/
-@@ -304,6 +312,8 @@
-    throw Invalid_Argument("digit2char: Input is not a digit");
-    }
- 
-+#ifndef BOTAN_TOOLS_ONLY
-+
- /*************************************************
- * Estimate the entropy of the buffer             *
- *************************************************/
-@@ -336,4 +346,6 @@
     return (estimate / 2);
     }
++#endif
  
-+#endif // BOTAN_TOOLS_ONLY
-+
  }

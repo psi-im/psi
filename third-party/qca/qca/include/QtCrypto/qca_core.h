@@ -68,6 +68,8 @@ namespace QCA
 	class CertificateCollection;
 	class Global;
 	class KeyStore;
+	class KeyStoreEntry;
+	class KeyStoreInfo;
 	class KeyStoreManager;
 	class Logger;
 
@@ -146,6 +148,16 @@ namespace QCA
 	 * \return true if secure storage memory is available
 	 */ 
 	QCA_EXPORT bool haveSecureMemory();
+
+	/**
+	 * Test if secure random is available
+	 *
+	 * Secure random is considered available if the global random
+	 * provider is not the default provider.
+	 *
+	 * \return true if secure random is available
+	 */ 
+	QCA_EXPORT bool haveSecureRandom();
 
 	/**
 	 * Test if a capability (algorithm) is available.
@@ -363,26 +375,18 @@ namespace QCA
 	QCA_EXPORT void saveProviderConfig(const QString &name);
 
 	/**
-	 * Return the Random provider that is currently set to be the
-	 * global random number generator.
-	 *
-	 * For example, to get the name of the provider that is currently
-	 * providing the Random capability, you could use:
-	 * \code
-	 * QCA::Random rng = QCA::globalRNG();
-         * std::cout << "Provider name: " << rng.provider()->name() << std::endl;
-	 * \endcode
+	 * Return the name of the global random number provider
 	 */
-	QCA_EXPORT Random & globalRNG();
+	QCA_EXPORT QString globalRandomProvider();
 
 	/**
-	 * Change the global random generation provider
+	 * Change the global random number provider
 	 *
 	 * The Random capabilities of %QCA are provided as part of the
 	 * built in capabilities, however the generator can be changed
 	 * if required.
 	 */
-	QCA_EXPORT void setGlobalRNG(const QString &provider);
+	QCA_EXPORT void setGlobalRandomProvider(const QString &provider);
 
 	/**
 	   Return a reference to the %QCA Logger, which is used for diagnostics
@@ -393,14 +397,42 @@ namespace QCA
 	QCA_EXPORT Logger *logger();
 
 	/**
-	   Log a text message. This is just a convenience function
-	   to avoid having to call Logger::logTextMessage() on the
-	   global Logger.
+	   Log a text message. This is an efficient function
+	   to avoid overhead of argument executions when log level
+	   blocks the message.
 
 	   \param message the text to log
 	   \param severity the type of information to log
+
+	   \note This is a macro, so arguments may or may not be evaluated.
 	*/
-	QCA_EXPORT void logText( const QString &message, Logger::Severity severity = Logger::Information );
+#	define QCA_logTextMessage(message, severity) \
+		do { \
+			register QCA::Logger::Severity s = severity; \
+			register QCA::Logger *l = QCA::logger (); \
+			if (s <= l->level ()) { \
+				l->logTextMessage (message, s); \
+			} \
+		} while (false)
+
+	/**
+	   Log a binary message. This is an efficient function
+	   to avoid overhead of argument executions when log level
+	   blocks the message.
+
+	   \param blob the blob to log
+	   \param severity the type of information to log
+
+	   \note This is a macro, so arguments may or may not be evaluated.
+	*/
+#	define QCA_logBinaryMessage(blob, severity) \
+		do { \
+			register QCA::Logger::Severity s = severity; \
+			register QCA::Logger *l = QCA::logger (); \
+			if (s <= l->level ()) { \
+				l->logBinaryMessage (blob, s); \
+			} \
+		} while (false)
 
 	/**
 	   Test if QCA can access the root CA certificates
@@ -444,10 +476,10 @@ namespace QCA
 	 * representation.
 	 *
 	 * This is a convenience function to convert an arbitrary
-	 * QSecureArray to a printable representation.
+	 * SecureArray to a printable representation.
 	 *
 	 * \code
-	 * 	QSecureArray test(10);
+	 * 	SecureArray test(10);
 	 *	test.fill('a');
 	 * 	// 0x61 is 'a' in ASCII
 	 *	if (QString("61616161616161616161") == QCA::arrayToHex(test) ) {
@@ -458,7 +490,7 @@ namespace QCA
 	 * \param array the array to be converted
 	 * \return a printable representation
 	 */
-	QCA_EXPORT QString arrayToHex(const QSecureArray &array);
+	QCA_EXPORT QString arrayToHex(const SecureArray &array);
 
 	/**
 	 * Convert a QString containing a hexadecimal representation
@@ -506,7 +538,7 @@ namespace QCA
 		 * \param prealloc the amount of secure memory to pre-allocate,
 		 *        in units of 1024 bytes (1K).
 		 */
-		Initializer(MemoryMode m = Practical, int prealloc = 64);
+		explicit Initializer(MemoryMode m = Practical, int prealloc = 64);
 		~Initializer();
 	};
 
@@ -741,7 +773,7 @@ namespace QCA
 		QString _type;
 	};
 
-	class BasicContext : public Provider::Context
+	class QCA_EXPORT BasicContext : public Provider::Context
 	{
 		Q_OBJECT
 	public:
@@ -778,12 +810,12 @@ namespace QCA
 		   \param a the byte array of data that is to 
 		   be used to update the internal state.
 		*/
-		virtual void update(const QSecureArray &a) = 0;
+		virtual void update(const SecureArray &a) = 0;
 
 		/**
 		   Complete the algorithm and return the internal state
 		*/
-		virtual QSecureArray final() = 0;
+		virtual SecureArray final() = 0;
 
 		/**
 		   Perform an "all in one" update, returning
@@ -795,7 +827,7 @@ namespace QCA
 		   \note This will invalidate any previous
 		   computation using this object.
 		*/
-		QSecureArray process(const QSecureArray &a);
+		SecureArray process(const SecureArray &a);
 	};
 
 	/**
@@ -830,13 +862,13 @@ namespace QCA
 
 		   \param a the array containing data to process
 		*/
-		virtual QSecureArray update(const QSecureArray &a) = 0;
+		virtual SecureArray update(const SecureArray &a) = 0;
 
 		/**
 		   Complete the algorithm, returning any 
 		   additional results.
 		*/
-		virtual QSecureArray final() = 0;
+		virtual SecureArray final() = 0;
 
 		/**
 		 Test if an update() or final() call succeeded.
@@ -855,7 +887,7 @@ namespace QCA
 		   \note This will invalidate any previous
 		   computation using this object.
 		*/
-		QSecureArray process(const QSecureArray &a);
+		SecureArray process(const SecureArray &a);
 	};
 
 	/**
@@ -964,7 +996,7 @@ namespace QCA
 
 	   Container for keys for symmetric encryption algorithms.
 	 */
-	class QCA_EXPORT SymmetricKey : public QSecureArray
+	class QCA_EXPORT SymmetricKey : public SecureArray
 	{
 	public:
 		/**
@@ -987,7 +1019,7 @@ namespace QCA
 		 *
 		 * \param a the byte array to copy
 		 */
-		SymmetricKey(const QSecureArray &a);
+		SymmetricKey(const SecureArray &a);
 
 		/**
 		 * Construct a key from a provided byte array
@@ -1009,7 +1041,7 @@ namespace QCA
 
 	   Container for initialisation vectors and nonces
 	 */
-	class QCA_EXPORT InitializationVector : public QSecureArray
+	class QCA_EXPORT InitializationVector : public SecureArray
 	{
 	public:
 		/** 
@@ -1029,7 +1061,7 @@ namespace QCA
 
 		   \param a the byte array to copy
 		 */
-		InitializationVector(const QSecureArray &a);
+		InitializationVector(const SecureArray &a);
 
 		/**
 		   Construct an initialisation vector from a provided byte array
@@ -1072,7 +1104,7 @@ namespace QCA
 
 		    \sa source()
 		    \sa fileName() for the name, if source is Event::Data
-		    \sa keyStoreId() and keyStoreEntryId for the keystore and entry, if
+		    \sa keyStoreInfo() and keyStoreEntry() for the keystore and entry, if
 		    the source is Event::KeyStore
 		*/
 		enum Source
@@ -1145,18 +1177,18 @@ namespace QCA
 		PasswordStyle passwordStyle() const;
 
 		/**
-		   The id of the KeyStore associated with this event
+		   The info of the KeyStore associated with this event
 
 		   This is not meaningful unless the Source is KeyStore.
 		*/
-		QString keyStoreId() const;
+		KeyStoreInfo keyStoreInfo() const;
 
 		/**
-		   The id of the KeyStoreEntry associated with this event
+		   The KeyStoreEntry associated with this event
 
 		   This is not meaningful unless the Source is KeyStore.
 		*/
-		QString keyStoreEntryId() const;
+		KeyStoreEntry keyStoreEntry() const;
 
 		/**
 		   Name or other identifier for the file or byte array
@@ -1177,11 +1209,11 @@ namespace QCA
 		   This creates a Password type event, for a keystore.
 
 		   \param pstyle the style of information required (e.g. PIN, password or passphrase)
-		   \param keyStoreId the keystore that the information is required for
-		   \param keyStoreEntryId the entry in the keystore that the information is required for
+		   \param keyStoreInfo info about the keystore that the information is required for
+		   \param keyStoreEntry the entry in the keystore that the information is required for
 		   \param ptr opaque data
 		*/
-		void setPasswordKeyStore(PasswordStyle pstyle, const QString &keyStoreId, const QString &keyStoreEntryId, void *ptr);
+		void setPasswordKeyStore(PasswordStyle pstyle, const KeyStoreInfo &keyStoreInfo, const KeyStoreEntry &keyStoreEntry, void *ptr);
 
 		/**
 		   Set the values for this Event
@@ -1199,22 +1231,16 @@ namespace QCA
 
 		   This creates a Token type event.
 		   
-		   \param keyStoreEntryId the entry in the keystore that the token is required for
+		   \param keyStoreInfo info about the keystore that the token is required for
+		   \param keyStoreEntry the entry in the keystore that the token is required for
 		   \param ptr opaque data
 		*/
-		void setToken(const QString &keyStoreEntryId, void *ptr);
+		void setToken(const KeyStoreInfo &keyStoreInfo, const KeyStoreEntry &keyStoreEntry, void *ptr);
 
 	private:
 		class Private;
 		QSharedDataPointer<Private> d;
 	};
-
-	class EventHandlerPrivate;
-	class PasswordAsker;
-	class PasswordAskerPrivate;
-	class TokenAsker;
-	class TokenAskerPrivate;
-	class AskerItem;
 
 	/**
 	   Interface class for password / passphrase / PIN and token handlers
@@ -1258,7 +1284,7 @@ namespace QCA
 		   \note the id parameter is the same as that provided in the
 		   eventReady() signal.
 		*/
-		void submitPassword(int id, const QSecureArray &password);
+		void submitPassword(int id, const SecureArray &password);
 
 		/**
 		   function to call to indicate that the token has been inserted
@@ -1292,13 +1318,9 @@ namespace QCA
 		void eventReady(int id, const QCA::Event &context);
 
 	private:
-		friend class EventHandlerPrivate;
-		EventHandlerPrivate *d;
-
-		friend class PasswordAsker;
-		friend class PasswordAskerPrivate;
-		friend class TokenAsker;
-		friend class AskerItem;
+		class Private;
+		friend class Private;
+		Private *d;
 	};
 
 	/** 
@@ -1322,11 +1344,11 @@ namespace QCA
 		   queue a password / passphrase request associated with a key store
 		   
 		   \param pstyle the type of information required (e.g. PIN, passphrase or password)
-		   \param keyStoreId the key store that the information is required for
-		   \param keyStoreEntryId the item in the key store that the information is required for
+		   \param keyStoreInfo info of the key store that the information is required for
+		   \param keyStoreEntry the item in the key store that the information is required for (if applicable)
 		   \param ptr opaque data
 		*/
-		void ask(Event::PasswordStyle pstyle, const QString &keyStoreId, const QString &keyStoreEntryId, void *ptr);
+		void ask(Event::PasswordStyle pstyle, const KeyStoreInfo &keyStoreInfo, const KeyStoreEntry &keyStoreEntry, void *ptr);
 
 		/**
 		   queue a password / passphrase request associated with a file
@@ -1365,7 +1387,7 @@ namespace QCA
 		   The password / passphrase / PIN provided by the user in response to
 		   the asker request. This may be empty.
 		*/
-		QSecureArray password() const;
+		SecureArray password() const;
 
 	Q_SIGNALS:
 		/**
@@ -1377,10 +1399,9 @@ namespace QCA
 		void responseReady();
 
 	private:
-		friend class PasswordAskerPrivate;
-		PasswordAskerPrivate *d;
-
-		friend class AskerItem;
+		class Private;
+		friend class Private;
+		Private *d;
 	};
 
 	/** 
@@ -1403,10 +1424,11 @@ namespace QCA
 		/**
 		   queue a token request associated with a key store
 		   
-		   \param keyStoreEntryId the item in the key store that the information is required for
+		   \param keyStoreInfo info of the key store that the information is required for
+		   \param keyStoreEntry the item in the key store that the information is required for (if applicable)
 		   \param ptr opaque data
 		*/
-		void ask(const QString &keyStoreEntryId, void *ptr);
+		void ask(const KeyStoreInfo &keyStoreInfo, const KeyStoreEntry &keyStoreEntry, void *ptr);
 
 		/**
 		   Cancel the pending password / passphrase request
@@ -1438,10 +1460,9 @@ namespace QCA
 		void responseReady();
 
 	private:
-		friend class TokenAskerPrivate;
-		TokenAskerPrivate *d;
-
-		friend class AskerItem;
+		class Private;
+		friend class Private;
+		Private *d;
 	};
 }
 

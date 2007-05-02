@@ -1,6 +1,5 @@
-namespace QCA {
 /*
-Copyright (C) 1999-2004 The Botan Project. All rights reserved.
+Copyright (C) 1999-2007 The Botan Project. All rights reserved.
 
 Redistribution and use in source and binary forms, for any use, with or without
 modification, is permitted provided that the following conditions are met:
@@ -24,28 +23,28 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+// LICENSEHEADER_END
+namespace QCA { // WRAPNS_LINE
 /*************************************************
 * BigInt Base Source File                        *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
-}
+} // WRAPNS_LINE
 #include <botan/bigint.h>
-namespace QCA {
-}
-#include <botan/numthry.h>
-namespace QCA {
-}
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
 #include <botan/mp_core.h>
-namespace QCA {
-}
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
+#include <botan/bit_ops.h>
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
+#include <botan/parsing.h>
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
 #include <botan/util.h>
-namespace QCA {
-#ifndef BOTAN_MINIMAL_BIGINT
-}
-# include <botan/rng.h>
-namespace QCA {
-#endif
+namespace QCA { // WRAPNS_LINE
 
 namespace Botan {
 
@@ -61,8 +60,8 @@ BigInt::BigInt(u64bit n)
 
    const u32bit limbs_needed = sizeof(u64bit) / sizeof(word);
 
-   reg.create(2*limbs_needed + 2);
-   for(u32bit j = 0; j != limbs_needed; j++)
+   reg.create(4*limbs_needed);
+   for(u32bit j = 0; j != limbs_needed; ++j)
       reg[j] = (word)((n >> (j*MP_WORD_BITS)) & MP_WORD_MASK);
    }
 
@@ -71,7 +70,7 @@ BigInt::BigInt(u64bit n)
 *************************************************/
 BigInt::BigInt(Sign s, u32bit size)
    {
-   reg.create(size);
+   reg.create(round_up(size, 8));
    signedness = s;
    }
 
@@ -80,9 +79,12 @@ BigInt::BigInt(Sign s, u32bit size)
 *************************************************/
 BigInt::BigInt(const BigInt& b)
    {
-   if(b.sig_words())
+   const u32bit b_words = b.sig_words();
+
+   if(b_words)
       {
-      reg.set(b.data(), b.sig_words());
+      reg.create(round_up(b_words, 8));
+      reg.copy(b.data(), b_words);
       set_sign(b.sign());
       }
    else
@@ -125,28 +127,29 @@ BigInt::BigInt(const byte input[], u32bit length, Base base)
    }
 
 /*************************************************
-* Construct a Random BigInt                      *
-*************************************************/
-#ifndef BOTAN_MINIMAL_BIGINT
-
-BigInt::BigInt(NumberType type, u32bit bits)
-   {
-   set_sign(Positive);
-   if(type == Random && bits)
-      randomize(bits);
-   else if(type == Power2)
-      set_bit(bits);
-   }
-
-#endif // BOTAN_MINIMAL_BIGINT
-
-/*************************************************
 * Swap this BigInt with another                  *
 *************************************************/
 void BigInt::swap(BigInt& other)
    {
    std::swap(reg, other.reg);
    std::swap(signedness, other.signedness);
+   }
+
+/*************************************************
+* Grow the internal storage                      *
+*************************************************/
+void BigInt::grow_reg(u32bit n) const
+   {
+   reg.grow_to(round_up(size() + n, 8));
+   }
+
+/*************************************************
+* Grow the internal storage                      *
+*************************************************/
+void BigInt::grow_to(u32bit n) const
+   {
+   if(n > size())
+      reg.grow_to(round_up(n, 8));
    }
 
 /*************************************************
@@ -165,68 +168,6 @@ s32bit BigInt::cmp(const BigInt& n, bool check_signs) const
    }
 
 /*************************************************
-* Add n to this number                           *
-*************************************************/
-void BigInt::add(word n)
-   {
-   if(!n) return;
-   word temp = reg[0];
-   reg[0] += n;
-   if(reg[0] > temp)
-      return;
-   for(u32bit j = 1; j != size(); j++)
-      if(++reg[j]) return;
-   grow_to(2*size());
-   reg[size() / 2] = 1;
-   }
-
-/*************************************************
-* Subtract n from this number                    *
-*************************************************/
-void BigInt::sub(word n)
-   {
-   if(!n) return;
-   word temp = reg[0];
-   reg[0] -= n;
-   if(reg[0] < temp)
-      return;
-   for(u32bit j = 1; j != size(); j++)
-      if(reg[j]--) return;
-   reg.create(2);
-   flip_sign();
-   reg[0] = n - temp;
-   }
-
-/*************************************************
-* Prefix Increment Operator                      *
-*************************************************/
-BigInt& BigInt::operator++()
-   {
-   if(is_negative()) sub(1);
-   else              add(1);
-   return (*this);
-   }
-
-/*************************************************
-* Prefix Decrement Operator                      *
-*************************************************/
-BigInt& BigInt::operator--()
-   {
-   if(is_negative()) add(1);
-   else              sub(1);
-   return (*this);
-   }
-
-/*************************************************
-* Return word n of this number                   *
-*************************************************/
-word BigInt::word_at(u32bit n) const
-   {
-   if(n >= size()) return 0;
-   else            return reg[n];
-   }
-
-/*************************************************
 * Convert this number to a u32bit, if possible   *
 *************************************************/
 u32bit BigInt::to_u32bit() const
@@ -237,7 +178,7 @@ u32bit BigInt::to_u32bit() const
       throw Encoding_Error("BigInt::to_u32bit: Number is too big to convert");
 
    u32bit out = 0;
-   for(u32bit j = 0; j != 4; j++)
+   for(u32bit j = 0; j != 4; ++j)
       out = (out << 8) | byte_at(3-j);
    return out;
    }
@@ -264,21 +205,21 @@ bool BigInt::get_bit(u32bit n) const
    }
 
 /*************************************************
-* Return nibble n of this number                 *
+* Return bits {offset...offset+length}           *
 *************************************************/
-u32bit BigInt::get_nibble(u32bit n, u32bit nibble_size) const
+u32bit BigInt::get_substring(u32bit offset, u32bit length) const
    {
-   if(nibble_size > 32)
-      throw Invalid_Argument("BigInt::get_nibble: Nibble size too large");
+   if(length > 32)
+      throw Invalid_Argument("BigInt::get_substring: Substring size too big");
 
-   u32bit nibble = 0;
-   for(s32bit j = (s32bit)nibble_size-1; j >= 0; j--)
-      {
-      nibble <<= 1;
-      if(get_bit(n * nibble_size + j))
-         nibble |= 1;
-      }
-   return nibble;
+   u64bit piece = 0;
+   for(u32bit j = 0; j != 8; ++j)
+      piece = (piece << 8) | byte_at((offset / 8) + (7-j));
+
+   u64bit mask = (1 << length) - 1;
+   u32bit shift = (offset % 8);
+
+   return static_cast<u32bit>((piece >> shift) & mask);
    }
 
 /*************************************************
@@ -315,7 +256,7 @@ void BigInt::mask_bits(u32bit n)
    const word mask = ((word)1 << (n % MP_WORD_BITS)) - 1;
 
    if(top_word < size())
-      for(u32bit j = top_word + 1; j != size(); j++)
+      for(u32bit j = top_word + 1; j != size(); ++j)
          reg[j] = 0;
 
    reg[top_word] &= mask;
@@ -353,11 +294,15 @@ u32bit BigInt::bytes() const
 *************************************************/
 u32bit BigInt::bits() const
    {
-   if(sig_words() == 0) return 0;
+   if(sig_words() == 0)
+      return 0;
+
    u32bit full_words = sig_words() - 1, top_bits = MP_WORD_BITS;
    word top_word = word_at(full_words), mask = MP_WORD_TOP_BIT;
+
    while(top_bits && ((top_word & mask) == 0))
       { mask >>= 1; top_bits--; }
+
    return (full_words * MP_WORD_BITS + top_bits);
    }
 
@@ -367,6 +312,7 @@ u32bit BigInt::bits() const
 u32bit BigInt::encoded_size(Base base) const
    {
    static const double LOG_2_BASE_10 = 0.30102999566;
+
    if(base == Binary)
       return bytes();
    else if(base == Hexadecimal)
@@ -384,7 +330,7 @@ u32bit BigInt::encoded_size(Base base) const
 *************************************************/
 bool BigInt::is_zero() const
    {
-   for(u32bit j = 0; j != size(); j++)
+   for(u32bit j = 0; j != size(); ++j)
       if(reg[j]) return false;
    return true;
    }
@@ -439,36 +385,12 @@ BigInt BigInt::abs() const
    }
 
 /*************************************************
-* Randomize this number                          *
-*************************************************/
-#ifndef BOTAN_MINIMAL_BIGINT
-
-void BigInt::randomize(u32bit bitsize, RNG_Quality level)
-   {
-   set_sign(Positive);
-
-   if(bitsize == 0)
-      clear();
-   else
-      {
-      SecureVector<byte> array((bitsize + 7) / 8);
-      Global_RNG::randomize(array, array.size(), level);
-      if(bitsize % 8)
-         array[0] &= 0xFF >> (8 - (bitsize % 8));
-      array[0] |= 0x80 >> ((bitsize % 8) ? (8 - bitsize % 8) : 0);
-      binary_decode(array, array.size());
-      }
-   }
-
-#endif // BOTAN_MINIMAL_BIGINT
-
-/*************************************************
 * Encode this number into bytes                  *
 *************************************************/
 void BigInt::binary_encode(byte output[]) const
    {
    const u32bit sig_bytes = bytes();
-   for(u32bit j = 0; j != sig_bytes; j++)
+   for(u32bit j = 0; j != sig_bytes; ++j)
       output[sig_bytes-j-1] = byte_at(j);
    }
 
@@ -478,60 +400,17 @@ void BigInt::binary_encode(byte output[]) const
 void BigInt::binary_decode(const byte buf[], u32bit length)
    {
    const u32bit WORD_BYTES = sizeof(word);
-   reg.create(length / WORD_BYTES + 1);
+   reg.create(round_up((length / WORD_BYTES) + 1, 8));
 
-   for(u32bit j = 0; j != length / WORD_BYTES; j++)
+   for(u32bit j = 0; j != length / WORD_BYTES; ++j)
       {
       u32bit top = length - WORD_BYTES*j;
-      for(u32bit k = WORD_BYTES; k > 0; k--)
+      for(u32bit k = WORD_BYTES; k > 0; --k)
          reg[j] = (reg[j] << 8) | buf[top - k];
       }
-   for(u32bit j = 0; j != length % WORD_BYTES; j++)
+   for(u32bit j = 0; j != length % WORD_BYTES; ++j)
       reg[length / WORD_BYTES] = (reg[length / WORD_BYTES] << 8) | buf[j];
    }
 
-#ifndef BOTAN_MINIMAL_BIGINT
-
-/*************************************************
-* Generate a random integer                      *
-*************************************************/
-BigInt random_integer(u32bit bits, RNG_Quality level)
-   {
-   BigInt x;
-   x.randomize(bits, level);
-   return x;
-   }
-
-/*************************************************
-* Generate a random integer within given range   *
-*************************************************/
-BigInt random_integer(const BigInt& min, const BigInt& max, RNG_Quality level)
-   {
-   BigInt range = max - min;
-
-   if(range <= 0)
-      throw Invalid_Argument("random_integer: invalid min/max values");
-
-   return (min + (random_integer(range.bits() + 2, level) % range));
-   }
-
-/*************************************************
-* Generate a random safe prime                   *
-*************************************************/
-BigInt random_safe_prime(u32bit bits, RNG_Quality level)
-   {
-   if(bits <= 64)
-      throw Invalid_Argument("random_safe_prime: Can't make a prime of " +
-                             to_string(bits) + " bits");
-
-   BigInt p;
-   do
-      p = (random_prime(bits - 1, level) << 1) + 1;
-   while(!is_prime(p));
-   return p;
-   }
-
-#endif // BOTAN_MINIMAL_BIGINT
-
 }
-}
+} // WRAPNS_LINE

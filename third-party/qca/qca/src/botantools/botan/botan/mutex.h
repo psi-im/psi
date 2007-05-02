@@ -1,6 +1,5 @@
-namespace QCA {
 /*
-Copyright (C) 1999-2004 The Botan Project. All rights reserved.
+Copyright (C) 1999-2007 The Botan Project. All rights reserved.
 
 Redistribution and use in source and binary forms, for any use, with or without
 modification, is permitted provided that the following conditions are met:
@@ -24,13 +23,19 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+// LICENSEHEADER_END
+namespace QCA { // WRAPNS_LINE
 /*************************************************
 * Mutex Header File                              *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_MUTEX_H__
 #define BOTAN_MUTEX_H__
+
+} // WRAPNS_LINE
+#include <botan/exceptn.h>
+namespace QCA { // WRAPNS_LINE
 
 namespace Botan {
 
@@ -42,8 +47,26 @@ class Mutex
    public:
       virtual void lock() = 0;
       virtual void unlock() = 0;
-      virtual Mutex* clone() const = 0;
       virtual ~Mutex() {}
+   };
+
+/*************************************************
+* Mutex Factory                                  *
+*************************************************/
+class Mutex_Factory
+   {
+   public:
+      virtual Mutex* make() = 0;
+      virtual ~Mutex_Factory() {}
+   };
+
+/*************************************************
+* Default Mutex Factory                          *
+*************************************************/
+class Default_Mutex_Factory : public Mutex_Factory
+   {
+   public:
+      Mutex* make();
    };
 
 /*************************************************
@@ -52,19 +75,27 @@ class Mutex
 class Mutex_Holder
    {
    public:
-      Mutex_Holder(Mutex* m) : mux(m) { mux->lock(); }
-      ~Mutex_Holder() { mux->unlock(); }
+      Mutex_Holder(Mutex*);
+      ~Mutex_Holder();
    private:
       Mutex* mux;
    };
 
 /*************************************************
-* Get/set a mutex                                *
+* Named Mutex Holder                             *
 *************************************************/
-Mutex* get_mutex();
-void initialize_mutex(Mutex*&);
+#ifndef BOTAN_NO_LIBSTATE
+class Named_Mutex_Holder
+   {
+   public:
+      Named_Mutex_Holder(const std::string&);
+      ~Named_Mutex_Holder();
+   private:
+      const std::string mutex_name;
+   };
+#endif
 
 }
 
 #endif
-}
+} // WRAPNS_LINE

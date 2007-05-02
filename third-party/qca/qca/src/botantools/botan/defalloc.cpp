@@ -1,6 +1,5 @@
-namespace QCA {
 /*
-Copyright (C) 1999-2004 The Botan Project. All rights reserved.
+Copyright (C) 1999-2007 The Botan Project. All rights reserved.
 
 Redistribution and use in source and binary forms, for any use, with or without
 modification, is permitted provided that the following conditions are met:
@@ -24,23 +23,34 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+// LICENSEHEADER_END
+namespace QCA { // WRAPNS_LINE
 /*************************************************
 * Basic Allocators Source File                   *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
-}
+} // WRAPNS_LINE
 #include <botan/defalloc.h>
-namespace QCA {
-}
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
+#include <botan/libstate.h>
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
 #include <botan/util.h>
-namespace QCA {
-}
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
 #include <cstdlib>
-namespace QCA {
-}
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
 #include <cstring>
-namespace QCA {
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
+#include <stdlib.h>
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
+#include <string.h>
+namespace QCA { // WRAPNS_LINE
 
 namespace Botan {
 
@@ -52,8 +62,13 @@ namespace {
 void* do_malloc(u32bit n, bool do_lock)
    {
    void* ptr = malloc(n);
-   if(!ptr)    return 0;
-   if(do_lock) lock_mem(ptr, n);
+
+   if(!ptr)
+      return 0;
+
+   if(do_lock)
+      lock_mem(ptr, n);
+
    memset(ptr, 0, n);
    return ptr;
    }
@@ -63,9 +78,13 @@ void* do_malloc(u32bit n, bool do_lock)
 *************************************************/
 void do_free(void* ptr, u32bit n, bool do_lock)
    {
-   if(!ptr) return;
+   if(!ptr)
+      return;
+
    memset(ptr, 0, n);
-   if(do_lock) unlock_mem(ptr, n);
+   if(do_lock)
+      unlock_mem(ptr, n);
+
    free(ptr);
    }
 
@@ -74,7 +93,7 @@ void do_free(void* ptr, u32bit n, bool do_lock)
 /*************************************************
 * Malloc_Allocator's Allocation                  *
 *************************************************/
-void* Malloc_Allocator::alloc_block(u32bit n) const
+void* Malloc_Allocator::alloc_block(u32bit n)
    {
    return do_malloc(n, false);
    }
@@ -82,7 +101,7 @@ void* Malloc_Allocator::alloc_block(u32bit n) const
 /*************************************************
 * Malloc_Allocator's Deallocation                *
 *************************************************/
-void Malloc_Allocator::dealloc_block(void* ptr, u32bit n) const
+void Malloc_Allocator::dealloc_block(void* ptr, u32bit n)
    {
    do_free(ptr, n, false);
    }
@@ -90,7 +109,7 @@ void Malloc_Allocator::dealloc_block(void* ptr, u32bit n) const
 /*************************************************
 * Locking_Allocator's Allocation                 *
 *************************************************/
-void* Locking_Allocator::alloc_block(u32bit n) const
+void* Locking_Allocator::alloc_block(u32bit n)
    {
    return do_malloc(n, true);
    }
@@ -98,10 +117,26 @@ void* Locking_Allocator::alloc_block(u32bit n) const
 /*************************************************
 * Locking_Allocator's Deallocation               *
 *************************************************/
-void Locking_Allocator::dealloc_block(void* ptr, u32bit n) const
+void Locking_Allocator::dealloc_block(void* ptr, u32bit n)
    {
    do_free(ptr, n, true);
    }
 
+/*************************************************
+* Get an allocator                               *
+*************************************************/
+Allocator* Allocator::get(bool locking)
+   {
+   std::string type = "";
+   if(!locking)
+      type = "malloc";
+
+   Allocator* alloc = global_state().get_allocator(type);
+   if(alloc)
+      return alloc;
+
+   throw Exception("Couldn't find an allocator to use in get_allocator");
+   }
+
 }
-}
+} // WRAPNS_LINE

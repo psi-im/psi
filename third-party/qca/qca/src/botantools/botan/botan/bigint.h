@@ -1,6 +1,5 @@
-namespace QCA {
 /*
-Copyright (C) 1999-2004 The Botan Project. All rights reserved.
+Copyright (C) 1999-2007 The Botan Project. All rights reserved.
 
 Redistribution and use in source and binary forms, for any use, with or without
 modification, is permitted provided that the following conditions are met:
@@ -24,28 +23,35 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+// LICENSEHEADER_END
+namespace QCA { // WRAPNS_LINE
 /*************************************************
 * BigInt Header File                             *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_BIGINT_H__
 #define BOTAN_BIGINT_H__
 
-#ifndef BOTAN_MINIMAL_BIGINT
-}
+#ifdef BOTAN_MINIMAL_BIGINT
+} // WRAPNS_LINE
+# include <botan/secmem.h>
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
+# include <botan/exceptn.h>
+namespace QCA { // WRAPNS_LINE
+#else
+} // WRAPNS_LINE
 # include <botan/base.h>
-namespace QCA {
+namespace QCA { // WRAPNS_LINE
 #endif
-}
-#include <botan/secmem.h>
-namespace QCA {
-}
+
+} // WRAPNS_LINE
 #include <botan/mp_types.h>
-namespace QCA {
-}
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
 #include <iosfwd>
-namespace QCA {
+namespace QCA { // WRAPNS_LINE
 
 namespace Botan {
 
@@ -72,16 +78,13 @@ class BigInt
       BigInt& operator<<=(u32bit);
       BigInt& operator>>=(u32bit);
 
-      BigInt& operator++();
-      BigInt& operator--();
-      BigInt  operator++(int) { BigInt tmp = (*this); ++(*this); return tmp; }
-      BigInt  operator--(int) { BigInt tmp = (*this); --(*this); return tmp; }
+      BigInt& operator++() { return (*this += 1); }
+      BigInt& operator--() { return (*this -= 1); }
+      BigInt  operator++(int) { BigInt x = (*this); ++(*this); return x; }
+      BigInt  operator--(int) { BigInt x = (*this); --(*this); return x; }
 
       BigInt operator-() const;
       bool operator !() const { return (!is_nonzero()); }
-
-      void add(word);
-      void sub(word);
 
       s32bit cmp(const BigInt&, bool = true) const;
       bool is_even() const { return (get_bit(0) == 0); }
@@ -94,9 +97,10 @@ class BigInt
       void mask_bits(u32bit);
 
       bool get_bit(u32bit) const;
-      u32bit get_nibble(u32bit, u32bit) const;
+      u32bit get_substring(u32bit, u32bit) const;
       byte byte_at(u32bit) const;
-      word word_at(u32bit) const;
+      word word_at(u32bit n) const
+         { return ((n < size()) ? reg[n] : 0); }
 
       u32bit to_u32bit() const;
 
@@ -115,14 +119,14 @@ class BigInt
 
       const word* data() const { return reg.begin(); }
       SecureVector<word>& get_reg() { return reg; }
-      void grow_reg(u32bit n) const { reg.grow_by(n); }
+      void grow_reg(u32bit) const;
 
       word& operator[](u32bit index) { return reg[index]; }
       word operator[](u32bit index) const { return reg[index]; }
       void clear() { reg.clear(); }
 
 #ifndef BOTAN_MINIMAL_BIGINT
-      void randomize(u32bit = 0, RNG_Quality = SessionKey);
+      void randomize(u32bit = 0);
 #endif
 
       void binary_encode(byte[]) const;
@@ -137,7 +141,8 @@ class BigInt
 
       void swap(BigInt&);
 
-      BigInt(u64bit = 0);
+      BigInt() { signedness = Positive; }
+      BigInt(u64bit);
       BigInt(const BigInt&);
       BigInt(const std::string&);
       BigInt(const byte[], u32bit, Base = Binary);
@@ -146,10 +151,9 @@ class BigInt
       BigInt(NumberType, u32bit);
 #endif
    private:
-      friend void modifying_divide(BigInt&, BigInt&, BigInt&);
-      void grow_to(u32bit n) const { reg.grow_to(n); }
-      Sign signedness;
+      void grow_to(u32bit) const;
       SecureVector<word> reg;
+      Sign signedness;
    };
 
 /*************************************************
@@ -191,14 +195,14 @@ std::istream& operator>>(std::istream&, BigInt&);
 }
 
 #ifndef BOTAN_MINIMAL_BIGINT
-}
+} // WRAPNS_LINE
 namespace std {
 
 inline void swap(Botan::BigInt& a, Botan::BigInt& b) { a.swap(b); }
 
 }
-namespace QCA {
+namespace QCA { // WRAPNS_LINE
 #endif
 
 #endif
-}
+} // WRAPNS_LINE

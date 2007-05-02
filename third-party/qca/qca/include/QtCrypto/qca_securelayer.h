@@ -285,7 +285,7 @@ namespace QCA
 		    \param parent the parent object for this object
 		    \param provider the name of the provider, if a specific provider is required
 		*/
-		TLS(QObject *parent = 0, const QString &provider = QString());
+		explicit TLS(QObject *parent = 0, const QString &provider = QString());
 
 		/**
 		   Constructor for Transport Layer Security connection
@@ -294,7 +294,8 @@ namespace QCA
 		   \param parent the parent object for this object
 		   \param provider the name of the provider, if a specific provider is required
 		*/
-		TLS(Mode mode, QObject *parent = 0, const QString &provider = QString());
+		explicit TLS(Mode mode, QObject *parent = 0, const QString &provider = QString());
+
 		/**
 		   Destructor
 		*/
@@ -306,7 +307,7 @@ namespace QCA
 		void reset();
 
 		/**
-		   Get the list of cipher suites that a provider can use.
+		   Get the list of cipher suites that are available for use.
 
 		   A cipher suite is a combination of key exchange,
 		   encryption and hashing algorithms that are agreed
@@ -315,20 +316,11 @@ namespace QCA
 
 		   \param version the protocol Version that the cipher
 		   suites are required for
-		   \param provider the
-		   provider to check, if a particular provider is
-		   required.
-
-		   \note If you don't specify a provider, one will be
-		   picked based on the provider priority system. You
-		   will not get the list of cipher suites supported by
-		   all providers unless you call this function on all
-		   providers.
 
 		   \return list of the the names of the cipher suites
 		   supported.
 		*/
-		static QStringList supportedCipherSuites(const Version &version = TLS_v1, const QString &provider = QString());
+		QStringList supportedCipherSuites(const Version &version = TLS_v1) const;
 
 		/**
 		   The local certificate to use. This is the
@@ -387,14 +379,49 @@ namespace QCA
 		void setConstraints(const QStringList &cipherSuiteList);
 
 		/**
-		   Test if the link can use compression.
+		   Retrieve the list of allowed issuers by the server,
+		   if the server has provided them.  Only DN types will
+		   be present.
 
-		   \param mode the Mode to use
-		   \param provider the provider to use, if a specific provider is required
+		   \code
+		   Certificate someCert = ...
+		   PrivateKey someKey = ...
+
+		   // see if the server will take our cert
+		   CertificateInfoOrdered issuerInfo = someCert.issuerInfoOrdered().dnOnly();
+		   foreach(const CertificateInfoOrdered &info, tls->issuerList())
+		   {
+		       if(info == issuerInfo)
+		       {
+		           // server will accept someCert, let's present it
+		           tls->setCertificate(someCert, someKey);
+			   break;
+		       }
+		   }
+		   \endcode
+		*/
+		QList<CertificateInfoOrdered> issuerList() const;
+
+		/**
+		   Sets the issuer list to present to the client.  For
+		   use with servers only.  Only DN types are allowed.
+		*/
+		void setIssuerList(const QList<CertificateInfoOrdered> &issuers);
+
+		/**
+		   Test if the link can use compression
 
 		   \return true if the link can use compression
 		*/
-		static bool canCompress(Mode mode = Stream, const QString &provider = QString());
+		bool canCompress() const;
+
+		/**
+		   Test if the link can specify a hostname (Server Name
+		   Indication)
+
+		   \return true if the link can specify a hostname
+		*/
+		bool canSetHostName() const;
 
 		/**
 		   set the link to use compression
@@ -418,6 +445,16 @@ namespace QCA
 		   Start the TLS/SSL connection as a server.
 		*/
 		void startServer();
+
+		/**
+		   Resumes TLS processing.
+
+		   Call this function after firstStepDone() or handshaken() is
+		   emitted.  By requiring this function to be called in order
+		   to proceed, applications are given a chance to perform user
+		   interaction between steps in the TLS process.
+		*/
+		void continueAfterStep();
 
 		/**
 		   test if the handshake is complete
@@ -553,8 +590,27 @@ namespace QCA
 
 	Q_SIGNALS:
 		/**
-		   Emitted when the protocol handshake is complete
+		   Emitted when the server has completed the first part
+		   of the TLS negotiation.  At this time, the client can
+		   inspect the version(), peerCertificateChain()
+		   and issuerList().
 
+		   You must call continueAfterStep() in order for TLS
+		   processing to resume after this signal is emitted.
+
+		   \sa continueAfterStep
+		*/
+		void firstStepDone();
+
+		/**
+		   Emitted when the protocol handshake is complete.  At
+		   this time, all available information about the TLS
+		   session can be inspected.
+
+		   You must call continueAfterStep() in order for TLS
+		   processing to resume after this signal is emitted.
+
+		   \sa continueAfterStep
 		   \sa isHandshaken
 		*/
 		void handshaken();
@@ -859,7 +915,7 @@ namespace QCA
 
 		   \param pass the password to use
 		*/
-		void setPassword(const QSecureArray &pass);
+		void setPassword(const SecureArray &pass);
 
 		/**
 		   Specify the realm to use in authentication

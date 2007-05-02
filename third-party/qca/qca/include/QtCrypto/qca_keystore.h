@@ -153,9 +153,12 @@ namespace QCA
 		KeyStoreEntry();
 
 		/**
-		   Create a passive KeyStoreEntry based on known entry
+		   Create a passive KeyStoreEntry based on a serialized
+		   string
+
+		   \sa fromString
 		*/
-		KeyStoreEntry(const QString &id);
+		KeyStoreEntry(const QString &serialized);
 
 		/**
 		   Standard copy constructor
@@ -218,8 +221,6 @@ namespace QCA
 
 		/**
 		   The ID associated with the key stored in this object.
-
-		   The ID is unique across all stores, and may be very long.
 		*/
 		QString id() const;
 
@@ -234,6 +235,19 @@ namespace QCA
 		   \sa KeyStore::id()
 		*/
 		QString storeId() const;
+
+		/**
+		   Serialize into a string for use as a passive entry
+		*/
+		QString toString() const;
+
+		/**
+		   Load a passive entry by using a serialized string
+		   as input
+
+		   \return the newly created KeyStoreEntry
+		*/
+		static KeyStoreEntry fromString(const QString &serialized);
 
 		/**
 		   If a KeyBundle is stored in this object, return that
@@ -305,7 +319,7 @@ namespace QCA
 	{
 		Q_OBJECT
 	public:
-		KeyStoreEntryWatcher(const KeyStoreEntry &e, QObject *parent = 0);
+		explicit KeyStoreEntryWatcher(const KeyStoreEntry &e, QObject *parent = 0);
 		~KeyStoreEntryWatcher();
 
 		KeyStoreEntry entry() const;
@@ -405,8 +419,8 @@ namespace QCA
 		   list if none are known yet (in this mode, updated() will
 		   be emitted once the initial entries are known, even if the
 		   store has not actually been altered).  writeEntry() will
-		   always return true, and the entryWritten() signal
-		   indicates the result of a write.
+		   always return an empty string, and the entryWritten()
+		   signal indicates the result of a write.
 		*/
 		void startAsynchronousMode();
 
@@ -433,23 +447,26 @@ namespace QCA
 		/**
 		   Add a entry to the KeyStore
 
+		   Returns the entryId of the written entry or an empty
+		   string on failure.
+
 		   \param kb the KeyBundle to add to the KeyStore
 		*/
-		bool writeEntry(const KeyBundle &kb);
+		QString writeEntry(const KeyBundle &kb);
 
 		/**
 		   \overload
 
 		   \param cert the Certificate to add to the KeyStore
 		*/
-		bool writeEntry(const Certificate &cert);
+		QString writeEntry(const Certificate &cert);
 
 		/**
 		   \overload
 
 		   \param crl the CRL to add to the KeyStore
 		*/
-		bool writeEntry(const CRL &crl);
+		QString writeEntry(const CRL &crl);
 
 		/**
 		   \overload
@@ -458,7 +475,7 @@ namespace QCA
 
 		   \return a ref to the key in the keyring
 		*/
-		PGPKey writeEntry(const PGPKey &key);
+		QString writeEntry(const PGPKey &key);
 
 		/**
 		   Delete the a specified KeyStoreEntry from this KeyStore
@@ -490,6 +507,27 @@ namespace QCA
 		KeyStorePrivate *d;
 
 		friend class KeyStoreManagerPrivate;
+	};
+
+	// holds key store information outside of a keystore object
+	class QCA_EXPORT KeyStoreInfo
+	{
+	public:
+		KeyStoreInfo();
+		KeyStoreInfo(KeyStore::Type type, const QString &id, const QString &name);
+		KeyStoreInfo(const KeyStoreInfo &from);
+		~KeyStoreInfo();
+		KeyStoreInfo & operator=(const KeyStoreInfo &from);
+
+		bool isNull() const;
+
+		KeyStore::Type type() const;
+		QString id() const;
+		QString name() const;
+
+	private:
+		class Private;
+		QSharedDataPointer<Private> d;
 	};
 
 	/**
@@ -588,9 +626,5 @@ namespace QCA
 		static void shutdown();
 	};
 }
-
-Q_DECLARE_METATYPE(QCA::KeyStoreEntry)
-Q_DECLARE_METATYPE(QList<QCA::KeyStoreEntry>)
-Q_DECLARE_METATYPE(QList<QCA::KeyStoreEntry::Type>)
 
 #endif

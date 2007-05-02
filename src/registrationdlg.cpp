@@ -25,6 +25,7 @@
 #include <Q3PtrList>
 #include <QPushButton>
 #include <QVBoxLayout>
+#include <QPointer>
 #include <QHBoxLayout>
 #include <QApplication>
 #include <QLabel>

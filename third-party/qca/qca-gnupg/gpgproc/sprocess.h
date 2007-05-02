@@ -20,7 +20,8 @@
 #ifndef SPROCESS_H
 #define SPROCESS_H
 
-#include <QtCore>
+#include <QProcess>
+#include <QTimer>
 
 namespace gpgQCAPlugin {
 

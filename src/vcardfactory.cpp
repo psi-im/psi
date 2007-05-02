@@ -24,6 +24,7 @@
 #include <QDomDocument>
 #include <QFile>
 #include <QTextStream>
+#include <QDir>
 
 #include "profiles.h"
 #include "applicationinfo.h"

@@ -95,7 +95,7 @@ namespace QCA
 	{
 		Q_OBJECT
 	public:
-		DirWatch(const QString &dir = QString(), QObject *parent = 0);
+		explicit DirWatch(const QString &dir = QString(), QObject *parent = 0);
 		~DirWatch();
 
 		QString dirName() const;
@@ -131,7 +131,7 @@ namespace QCA
 		   in this object, you can set it using setFileName()
 		   \param parent the parent object for this object
 		*/
-		FileWatch(const QString &file = QString(), QObject *parent = 0);
+		explicit FileWatch(const QString &file = QString(), QObject *parent = 0);
 		~FileWatch();
 
 		/**
@@ -271,8 +271,8 @@ namespace QCA
 		void write(const QByteArray &a);
 
 		// secure i/o
-		QSecureArray readSecure(int bytes = -1);
-		void writeSecure(const QSecureArray &a);
+		SecureArray readSecure(int bytes = -1);
+		void writeSecure(const SecureArray &a);
 
 		// close write channel (only if writing enabled)
 		void closeOutput();
@@ -297,15 +297,21 @@ namespace QCA
 	{
 		Q_OBJECT
 	public:
-		static QSecureArray getHidden(const QString &promptStr);
-		static void waitForEnter();
+		ConsolePrompt(QObject *parent = 0);
+		~ConsolePrompt();
+
+		void getHidden(const QString &promptStr);
+		void getEnter();
+		void waitForFinished();
+
+		SecureArray result() const;
+
+	signals:
+		void finished();
 
 	private:
 		class Private;
 		Private *d;
-
-		ConsolePrompt(QObject *parent = 0);
-		~ConsolePrompt();
 	};
 
         class AbstractLogDevice;
@@ -338,15 +344,34 @@ namespace QCA
             */
             enum Severity
             {
-                Emergency = 0,   ///< Emergency: system is unusable
-                Alert = 1,       ///< Alert: action must be taken immediately
-                Critical = 2,    ///< Critical: critical conditions
-                Error = 3,       ///< Error: error conditions
-                Warning = 4,     ///< Warning: warning conditions
-                Notice = 5,      ///< Notice: normal but significant condition
-                Information = 6, ///< Informational: informational messages
-                Debug = 7        ///< Debug: debug-level messages
+                Quiet = 0,       ///< Quiet: turn of logging
+                Emergency = 1,   ///< Emergency: system is unusable
+                Alert = 2,       ///< Alert: action must be taken immediately
+                Critical = 3,    ///< Critical: critical conditions
+                Error = 4,       ///< Error: error conditions
+                Warning = 5,     ///< Warning: warning conditions
+                Notice = 6,      ///< Notice: normal but significant condition
+                Information = 7, ///< Informational: informational messages
+                Debug = 8        ///< Debug: debug-level messages
             };
+
+	    /**
+		Get the current logging level
+
+		\return Current level
+	    */
+	    inline Logger::Severity level () const {
+	    	return m_logLevel;
+	    }
+
+	    /**
+		Set the current logging level
+
+		\param level new logging level
+
+		Only severities less or equal than the log level one will be logged
+	    */
+	    void setLevel (Logger::Severity level);
 
 	    /**
 		Log a message to all available log devices
@@ -399,6 +424,7 @@ namespace QCA
 
 	    QStringList m_loggerNames;
 	    QList<AbstractLogDevice*> m_loggers;
+	    Severity m_logLevel;
 	};
 
         /**

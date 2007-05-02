@@ -19,6 +19,7 @@
  */
 
 #include <QDomElement>
+#include <QPointer>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <Q3Grid>

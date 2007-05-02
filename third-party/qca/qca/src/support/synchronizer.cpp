@@ -19,7 +19,13 @@
 
 #include "qca_support.h"
 
-#include <QtCore>
+#include <QAbstractEventDispatcher>
+#include <QCoreApplication>
+#include <QEvent>
+#include <QMutex>
+#include <QPair>
+#include <QTime>
+#include <QWaitCondition>
 
 //#define TIMERFIXER_DEBUG
 

@@ -1,6 +1,5 @@
-namespace QCA {
 /*
-Copyright (C) 1999-2004 The Botan Project. All rights reserved.
+Copyright (C) 1999-2007 The Botan Project. All rights reserved.
 
 Redistribution and use in source and binary forms, for any use, with or without
 modification, is permitted provided that the following conditions are met:
@@ -24,39 +23,28 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+// LICENSEHEADER_END
+namespace QCA { // WRAPNS_LINE
 /*************************************************
-* Comba Multiplication Source File               *
-* (C) 1999-2004 The Botan Project                *
+* Comba Multiplication and Squaring Source File  *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
-}
+} // WRAPNS_LINE
 #include <botan/mp_core.h>
-namespace QCA {
-}
-#include <botan/mp_madd.h>
-namespace QCA {
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
+#include <botan/mp_asmi.h>
+namespace QCA { // WRAPNS_LINE
 
 namespace Botan {
 
-namespace {
-
-/*************************************************
-* Multiply-Add Accumulator                       *
-*************************************************/
-void word3_muladd(word* w2, word* w1, word* w0, word x, word y)
-   {
-   word temp = 0;
-   bigint_madd(x, y, *w0, 0, w0, &temp);
-   *w1 += temp;
-   *w2 += (*w1 < temp) ? 1 : 0;
-   }
-
-}
+extern "C" {
 
 /*************************************************
 * Comba 4x4 Multiplication                       *
 *************************************************/
-void bigint_comba4(word z[8], const word x[4], const word y[4])
+void bigint_comba_mul4(word z[8], const word x[4], const word y[4])
    {
    word w2 = 0, w1 = 0, w0 = 0;
 
@@ -95,7 +83,7 @@ void bigint_comba4(word z[8], const word x[4], const word y[4])
 /*************************************************
 * Comba 6x6 Multiplication                       *
 *************************************************/
-void bigint_comba6(word z[12], const word x[6], const word y[6])
+void bigint_comba_mul6(word z[12], const word x[6], const word y[6])
    {
    word w2 = 0, w1 = 0, w0 = 0;
 
@@ -162,7 +150,7 @@ void bigint_comba6(word z[12], const word x[6], const word y[6])
 /*************************************************
 * Comba 8x8 Multiplication                       *
 *************************************************/
-void bigint_comba8(word z[16], const word x[8], const word y[8])
+void bigint_comba_mul8(word z[16], const word x[8], const word y[8])
    {
    word w2 = 0, w1 = 0, w0 = 0;
 
@@ -262,5 +250,167 @@ void bigint_comba8(word z[16], const word x[8], const word y[8])
    z[15] = w1;
    }
 
+/*************************************************
+* Comba 4x4 Squaring                             *
+*************************************************/
+void bigint_comba_sqr4(word z[8], const word x[4])
+   {
+   word w2 = 0, w1 = 0, w0 = 0;
+
+   word3_muladd(&w2, &w1, &w0, x[0], x[0]);
+   z[0] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[0], x[1]);
+   z[1] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[0], x[2]);
+   word3_muladd(&w2, &w1, &w0, x[1], x[1]);
+   z[2] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[0], x[3]);
+   word3_muladd_2(&w2, &w1, &w0, x[1], x[2]);
+   z[3] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[1], x[3]);
+   word3_muladd(&w2, &w1, &w0, x[2], x[2]);
+   z[4] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[2], x[3]);
+   z[5] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd(&w2, &w1, &w0, x[3], x[3]);
+   z[6] = w0;
+   z[7] = w1;
+   }
+
+/*************************************************
+* Comba 6x6 Squaring                             *
+*************************************************/
+void bigint_comba_sqr6(word z[12], const word x[6])
+   {
+   word w2 = 0, w1 = 0, w0 = 0;
+
+   word3_muladd(&w2, &w1, &w0, x[0], x[0]);
+   z[0] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[0], x[1]);
+   z[1] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[0], x[2]);
+   word3_muladd(&w2, &w1, &w0, x[1], x[1]);
+   z[2] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[0], x[3]);
+   word3_muladd_2(&w2, &w1, &w0, x[1], x[2]);
+   z[3] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[0], x[4]);
+   word3_muladd_2(&w2, &w1, &w0, x[1], x[3]);
+   word3_muladd(&w2, &w1, &w0, x[2], x[2]);
+   z[4] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[0], x[5]);
+   word3_muladd_2(&w2, &w1, &w0, x[1], x[4]);
+   word3_muladd_2(&w2, &w1, &w0, x[2], x[3]);
+   z[5] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[1], x[5]);
+   word3_muladd_2(&w2, &w1, &w0, x[2], x[4]);
+   word3_muladd(&w2, &w1, &w0, x[3], x[3]);
+   z[6] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[2], x[5]);
+   word3_muladd_2(&w2, &w1, &w0, x[3], x[4]);
+   z[7] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[3], x[5]);
+   word3_muladd(&w2, &w1, &w0, x[4], x[4]);
+   z[8] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[4], x[5]);
+   z[9] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd(&w2, &w1, &w0, x[5], x[5]);
+   z[10] = w0;
+   z[11] = w1;
+   }
+
+/*************************************************
+* Comba 8x8 Squaring                             *
+*************************************************/
+void bigint_comba_sqr8(word z[16], const word x[8])
+   {
+   word w2 = 0, w1 = 0, w0 = 0;
+
+   word3_muladd(&w2, &w1, &w0, x[0], x[0]);
+   z[0] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[0], x[1]);
+   z[1] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[0], x[2]);
+   word3_muladd(&w2, &w1, &w0, x[1], x[1]);
+   z[2] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[0], x[3]);
+   word3_muladd_2(&w2, &w1, &w0, x[1], x[2]);
+   z[3] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[0], x[4]);
+   word3_muladd_2(&w2, &w1, &w0, x[1], x[3]);
+   word3_muladd(&w2, &w1, &w0, x[2], x[2]);
+   z[4] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[0], x[5]);
+   word3_muladd_2(&w2, &w1, &w0, x[1], x[4]);
+   word3_muladd_2(&w2, &w1, &w0, x[2], x[3]);
+   z[5] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[0], x[6]);
+   word3_muladd_2(&w2, &w1, &w0, x[1], x[5]);
+   word3_muladd_2(&w2, &w1, &w0, x[2], x[4]);
+   word3_muladd(&w2, &w1, &w0, x[3], x[3]);
+   z[6] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[0], x[7]);
+   word3_muladd_2(&w2, &w1, &w0, x[1], x[6]);
+   word3_muladd_2(&w2, &w1, &w0, x[2], x[5]);
+   word3_muladd_2(&w2, &w1, &w0, x[3], x[4]);
+   z[7] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[1], x[7]);
+   word3_muladd_2(&w2, &w1, &w0, x[2], x[6]);
+   word3_muladd_2(&w2, &w1, &w0, x[3], x[5]);
+   word3_muladd(&w2, &w1, &w0, x[4], x[4]);
+   z[8] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[2], x[7]);
+   word3_muladd_2(&w2, &w1, &w0, x[3], x[6]);
+   word3_muladd_2(&w2, &w1, &w0, x[4], x[5]);
+   z[9] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[3], x[7]);
+   word3_muladd_2(&w2, &w1, &w0, x[4], x[6]);
+   word3_muladd(&w2, &w1, &w0, x[5], x[5]);
+   z[10] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[4], x[7]);
+   word3_muladd_2(&w2, &w1, &w0, x[5], x[6]);
+   z[11] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[5], x[7]);
+   word3_muladd(&w2, &w1, &w0, x[6], x[6]);
+   z[12] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd_2(&w2, &w1, &w0, x[6], x[7]);
+   z[13] = w0; w0 = w1; w1 = w2; w2 = 0;
+
+   word3_muladd(&w2, &w1, &w0, x[7], x[7]);
+   z[14] = w0;
+   z[15] = w1;
+   }
+
 }
+
 }
+} // WRAPNS_LINE

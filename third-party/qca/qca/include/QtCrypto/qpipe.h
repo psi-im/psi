@@ -30,8 +30,6 @@
 #ifndef QPIPE_H
 #define QPIPE_H
 
-#include <QtCore>
-
 #ifndef QPIPE_NO_SECURE
 # define QPIPE_SECURE
 #endif
@@ -143,14 +141,14 @@ public:
 
 #ifdef QPIPE_SECURE
 	// secure i/o
-	QSecureArray readSecure(int bytes = -1);
-	void writeSecure(const QSecureArray &a);
+	SecureArray readSecure(int bytes = -1);
+	void writeSecure(const SecureArray &a);
 #endif
 
 	QByteArray takeBytesToWrite();
 
 #ifdef QPIPE_SECURE
-	QSecureArray takeBytesToWriteSecure();
+	SecureArray takeBytesToWriteSecure();
 #endif
 
 Q_SIGNALS:

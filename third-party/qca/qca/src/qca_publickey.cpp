@@ -20,8 +20,10 @@
 
 #include "qca_publickey.h"
 
-#include <QtCore>
 #include "qcaprovider.h"
+
+#include <QFile>
+#include <QTextStream>
 
 namespace QCA {
 
@@ -66,7 +68,7 @@ bool arrayFromFile(const QString &fileName, QByteArray *a)
 	return true;
 }
 
-bool ask_passphrase(const QString &fname, void *ptr, QSecureArray *answer)
+bool ask_passphrase(const QString &fname, void *ptr, SecureArray *answer)
 {
 	PasswordAsker asker;
 	asker.ask(Event::StylePassphrase, fname, ptr);
@@ -93,6 +95,15 @@ Provider *providerForName(const QString &name)
 			return pl[n];
 	}
 	return 0;
+}
+
+bool use_asker_fallback(ConvertResult r)
+{
+	// FIXME: we should only do this if we get ErrorPassphrase?
+	//if(r == ErrorPassphrase)
+	if(r != ConvertGood)
+		return true;
+	return false;
 }
 
 class Getter_GroupSet
@@ -160,7 +171,7 @@ class Getter_PublicKey
 {
 public:
 	// DER
-	static ConvertResult fromData(PKeyContext *c, const QSecureArray &in)
+	static ConvertResult fromData(PKeyContext *c, const SecureArray &in)
 	{
 		return c->publicFromDER(in);
 	}
@@ -171,7 +182,7 @@ public:
 		return c->publicFromPEM(in);
 	}
 
-	static PublicKey getKey(Provider *p, const I &in, const QSecureArray &, ConvertResult *result)
+	static PublicKey getKey(Provider *p, const I &in, const SecureArray &, ConvertResult *result)
 	{
 		PublicKey k;
 		PKeyContext *c = static_cast<PKeyContext *>(getContext("pkey", p));
@@ -186,6 +197,8 @@ public:
 			*result = r;
 		if(r == ConvertGood)
 			k.change(c);
+		else
+			delete c;
 		return k;
 	}
 };
@@ -195,18 +208,18 @@ class Getter_PrivateKey
 {
 public:
 	// DER
-	static ConvertResult fromData(PKeyContext *c, const QSecureArray &in, const QSecureArray &passphrase)
+	static ConvertResult fromData(PKeyContext *c, const SecureArray &in, const SecureArray &passphrase)
 	{
 		return c->privateFromDER(in, passphrase);
 	}
 
 	// PEM
-	static ConvertResult fromData(PKeyContext *c, const QString &in, const QSecureArray &passphrase)
+	static ConvertResult fromData(PKeyContext *c, const QString &in, const SecureArray &passphrase)
 	{
 		return c->privateFromPEM(in, passphrase);
 	}
 
-	static PrivateKey getKey(Provider *p, const I &in, const QSecureArray &passphrase, ConvertResult *result)
+	static PrivateKey getKey(Provider *p, const I &in, const SecureArray &passphrase, ConvertResult *result)
 	{
 		PrivateKey k;
 		PKeyContext *c = static_cast<PKeyContext *>(getContext("pkey", p));
@@ -221,16 +234,40 @@ public:
 			*result = r;
 		if(r == ConvertGood)
 			k.change(c);
+		else
+			delete c;
 		return k;
 	}
 };
 
-Provider *providerForPBE(PBEAlgorithm alg)
+Provider *providerForGroupSet(DLGroupSet set)
 {
 	ProviderList pl = allProviders();
 	for(int n = 0; n < pl.count(); ++n)
 	{
-		if(Getter_PBE::getList(pl[n]).contains(alg))
+		if(Getter_GroupSet::getList(pl[n]).contains(set))
+			return pl[n];
+	}
+	return 0;
+}
+
+Provider *providerForPBE(PBEAlgorithm alg, PKey::Type ioType)
+{
+	ProviderList pl = allProviders();
+	for(int n = 0; n < pl.count(); ++n)
+	{
+		if(Getter_PBE::getList(pl[n]).contains(alg) && Getter_IOType::getList(pl[n]).contains(ioType))
+			return pl[n];
+	}
+	return 0;
+}
+
+Provider *providerForIOType(PKey::Type type)
+{
+	ProviderList pl = allProviders();
+	for(int n = 0; n < pl.count(); ++n)
+	{
+		if(Getter_IOType::getList(pl[n]).contains(type))
 			return pl[n];
 	}
 	return 0;
@@ -253,14 +290,22 @@ QList<T> getList(const QString &provider)
 	{
 		ProviderList pl = allProviders();
 		for(int n = 0; n < pl.count(); ++n)
-			list += G::getList(pl[n]);
+		{
+			QList<T> other = G::getList(pl[n]);
+			for(int k = 0; k < other.count(); ++k)
+			{
+				// only add what we don't have in the list
+				if(!list.contains(other[k]))
+					list += other[k];
+			}
+		}
 	}
 
 	return list;
 }
 
 template <typename T, typename G, typename I>
-T getKey(const QString &provider, const I &in, const QSecureArray &passphrase, ConvertResult *result)
+T getKey(const QString &provider, const I &in, const SecureArray &passphrase, ConvertResult *result)
 {
 	T k;
 
@@ -298,14 +343,81 @@ PBEAlgorithm get_pbe_default()
 }
 
 //----------------------------------------------------------------------------
+// Global
+//----------------------------------------------------------------------------
+
+// adapted from Botan
+static const unsigned char pkcs_sha1[] =
+{
+	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2B, 0x0E, 0x03, 0x02,
+	0x1A, 0x05, 0x00, 0x04, 0x14
+};
+
+static const unsigned char pkcs_md5[] =
+{
+	0x30, 0x20, 0x30, 0x0C, 0x06, 0x08, 0x2A, 0x86, 0x48, 0x86,
+	0xF7, 0x0D, 0x02, 0x05, 0x05, 0x00, 0x04, 0x10
+};
+
+static const unsigned char pkcs_md2[] =
+{
+	0x30, 0x20, 0x30, 0x0C, 0x06, 0x08, 0x2A, 0x86, 0x48, 0x86,
+	0xF7, 0x0D, 0x02, 0x02, 0x05, 0x00, 0x04, 0x10
+};
+
+static const unsigned char pkcs_ripemd160[] =
+{
+	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2B, 0x24, 0x03, 0x02,
+	0x01, 0x05, 0x00, 0x04, 0x14
+};
+
+QByteArray get_hash_id(const QString &name)
+{
+	if(name == "sha1")
+		return QByteArray::fromRawData((const char *)pkcs_sha1, sizeof(pkcs_sha1));
+	else if(name == "md5")
+		return QByteArray::fromRawData((const char *)pkcs_md5, sizeof(pkcs_md5));
+	else if(name == "md2")
+		return QByteArray::fromRawData((const char *)pkcs_md2, sizeof(pkcs_md2));
+	else if(name == "ripemd160")
+		return QByteArray::fromRawData((const char *)pkcs_ripemd160, sizeof(pkcs_ripemd160));
+	else
+		return QByteArray();
+}
+
+SecureArray emsa3Encode(const QString &hashName, const SecureArray &digest, int size)
+{
+	QByteArray hash_id = get_hash_id(hashName);
+	if(hash_id.isEmpty())
+		return SecureArray();
+
+	// logic adapted from Botan
+	int basesize = hash_id.size() + digest.size() + 2;
+	if(size == -1)
+		size = basesize + 1; // default to 1-byte pad
+	int padlen = size - basesize;
+	if(padlen < 1)
+		return SecureArray();
+
+	SecureArray out(size, (char)0xff); // pad with 0xff
+	out[0] = 0x01;
+	out[padlen + 1] = 0x00;
+	int at = padlen + 2;
+	memcpy(out.data() + at, hash_id.data(), hash_id.size());
+	at += hash_id.size();
+	memcpy(out.data() + at, digest.data(), digest.size());
+	return out;
+}
+
+//----------------------------------------------------------------------------
 // DLGroup
 //----------------------------------------------------------------------------
 class DLGroup::Private
 {
 public:
-	QBigInteger p, q, g;
+	BigInteger p, q, g;
 
-	Private(const QBigInteger &p1, const QBigInteger &q1, const QBigInteger &g1)
+	Private(const BigInteger &p1, const BigInteger &q1, const BigInteger &g1)
 	:p(p1), q(q1), g(g1)
 	{
 	}
@@ -316,12 +428,12 @@ DLGroup::DLGroup()
 	d = 0;
 }
 
-DLGroup::DLGroup(const QBigInteger &p, const QBigInteger &q, const QBigInteger &g)
+DLGroup::DLGroup(const BigInteger &p, const BigInteger &q, const BigInteger &g)
 {
 	d = new Private(p, q, g);
 }
 
-DLGroup::DLGroup(const QBigInteger &p, const QBigInteger &g)
+DLGroup::DLGroup(const BigInteger &p, const BigInteger &g)
 {
 	d = new Private(p, 0, g);
 }
@@ -351,10 +463,6 @@ DLGroup & DLGroup::operator=(const DLGroup &from)
 QList<DLGroupSet> DLGroup::supportedGroupSets(const QString &provider)
 {
 	return getList<DLGroupSet, Getter_GroupSet>(provider);
-	//DLGroupContext *c = static_cast<DLGroupContext *>(getContext("dlgroup", provider));
-	//QList<DLGroupSet> list = c->supportedGroupSets();
-	//delete c;
-	//return list;
 }
 
 bool DLGroup::isNull() const
@@ -362,17 +470,17 @@ bool DLGroup::isNull() const
 	return (d ? false: true);
 }
 
-QBigInteger DLGroup::p() const
+BigInteger DLGroup::p() const
 {
 	return d->p;
 }
 
-QBigInteger DLGroup::q() const
+BigInteger DLGroup::q() const
 {
 	return d->q;
 }
 
-QBigInteger DLGroup::g() const
+BigInteger DLGroup::g() const
 {
 	return d->g;
 }
@@ -437,19 +545,11 @@ void PKey::assignToPrivate(PKey *dest) const
 QList<PKey::Type> PKey::supportedTypes(const QString &provider)
 {
 	return getList<Type, Getter_Type>(provider);
-	//const PKeyContext *c = static_cast<const PKeyContext *>(getContext("pkey", provider));
-	//QList<Type> list = c->supportedTypes();
-	//delete c;
-	//return list;
 }
 
 QList<PKey::Type> PKey::supportedIOTypes(const QString &provider)
 {
 	return getList<Type, Getter_IOType>(provider);
-	//const PKeyContext *c = static_cast<const PKeyContext *>(getContext("pkey", provider));
-	//QList<Type> list = c->supportedIOTypes();
-	//delete c;
-	//return list;
 }
 
 bool PKey::isNull() const
@@ -640,7 +740,7 @@ int PublicKey::maximumEncryptSize(EncryptionAlgorithm alg) const
 	return static_cast<const PKeyContext *>(context())->key()->maximumEncryptSize(alg);
 }
 
-QSecureArray PublicKey::encrypt(const QSecureArray &a, EncryptionAlgorithm alg)
+SecureArray PublicKey::encrypt(const SecureArray &a, EncryptionAlgorithm alg)
 {
 	return static_cast<PKeyContext *>(context())->key()->encrypt(a, alg);
 }
@@ -652,31 +752,63 @@ void PublicKey::startVerify(SignatureAlgorithm alg, SignatureFormat format)
 	static_cast<PKeyContext *>(context())->key()->startVerify(alg, format);
 }
 
-void PublicKey::update(const QSecureArray &a)
+void PublicKey::update(const SecureArray &a)
 {
 	static_cast<PKeyContext *>(context())->key()->update(a);
 }
 
-bool PublicKey::validSignature(const QSecureArray &sig)
+bool PublicKey::validSignature(const SecureArray &sig)
 {
 	return static_cast<PKeyContext *>(context())->key()->endVerify(sig);
 }
 
-bool PublicKey::verifyMessage(const QSecureArray &a, const QSecureArray &sig, SignatureAlgorithm alg, SignatureFormat format)
+bool PublicKey::verifyMessage(const SecureArray &a, const SecureArray &sig, SignatureAlgorithm alg, SignatureFormat format)
 {
 	startVerify(alg, format);
 	update(a);
 	return validSignature(sig);
 }
 
-QSecureArray PublicKey::toDER() const
+SecureArray PublicKey::toDER() const
 {
-	return static_cast<const PKeyContext *>(context())->publicToDER();
+	SecureArray out;
+	Provider *p = providerForIOType(type());
+	if(!p)
+		return out;
+	const PKeyContext *cur = static_cast<const PKeyContext *>(context());
+	if(cur->provider() == p)
+	{
+		out = cur->publicToDER();
+	}
+	else
+	{
+		PKeyContext *pk = static_cast<PKeyContext *>(getContext("pkey", p));
+		if(pk->importKey(cur->key()))
+			out = pk->publicToDER();
+		delete pk;
+	}
+	return out;
 }
 
 QString PublicKey::toPEM() const
 {
-	return static_cast<const PKeyContext *>(context())->publicToPEM();
+	QString out;
+	Provider *p = providerForIOType(type());
+	if(!p)
+		return out;
+	const PKeyContext *cur = static_cast<const PKeyContext *>(context());
+	if(cur->provider() == p)
+	{
+		out = cur->publicToPEM();
+	}
+	else
+	{
+		PKeyContext *pk = static_cast<PKeyContext *>(getContext("pkey", p));
+		if(pk->importKey(cur->key()))
+			out = pk->publicToPEM();
+		delete pk;
+	}
+	return out;
 }
 
 bool PublicKey::toPEMFile(const QString &fileName) const
@@ -684,32 +816,14 @@ bool PublicKey::toPEMFile(const QString &fileName) const
 	return stringToFile(fileName, toPEM());
 }
 
-PublicKey PublicKey::fromDER(const QSecureArray &a, ConvertResult *result, const QString &provider)
+PublicKey PublicKey::fromDER(const SecureArray &a, ConvertResult *result, const QString &provider)
 {
-	return getKey<PublicKey, Getter_PublicKey<QSecureArray>, QSecureArray>(provider, a, QSecureArray(), result);
-
-	/*PublicKey k;
-	PKeyContext *c = static_cast<PKeyContext *>(getContext("pkey", provider));
-	ConvertResult r = c->publicFromDER(a);
-	if(result)
-		*result = r;
-	if(r == ConvertGood)
-		k.change(c);
-	return k;*/
+	return getKey<PublicKey, Getter_PublicKey<SecureArray>, SecureArray>(provider, a, SecureArray(), result);
 }
 
 PublicKey PublicKey::fromPEM(const QString &s, ConvertResult *result, const QString &provider)
 {
-	return getKey<PublicKey, Getter_PublicKey<QString>, QString>(provider, s, QSecureArray(), result);
-
-	/*PublicKey k;
-	PKeyContext *c = static_cast<PKeyContext *>(getContext("pkey", provider));
-	ConvertResult r = c->publicFromPEM(s);
-	if(result)
-		*result = r;
-	if(r == ConvertGood)
-		k.change(c);
-	return k;*/
+	return getKey<PublicKey, Getter_PublicKey<QString>, QString>(provider, s, SecureArray(), result);
 }
 
 PublicKey PublicKey::fromPEMFile(const QString &fileName, ConvertResult *result, const QString &provider)
@@ -736,7 +850,7 @@ PrivateKey::PrivateKey(const QString &type, const QString &provider)
 {
 }
 
-PrivateKey::PrivateKey(const QString &fileName, const QSecureArray &passphrase)
+PrivateKey::PrivateKey(const QString &fileName, const SecureArray &passphrase)
 {
 	*this = fromPEMFile(fileName, passphrase, 0, QString());
 }
@@ -766,7 +880,7 @@ bool PrivateKey::canSign() const
 	return (isRSA() || isDSA());
 }
 
-bool PrivateKey::decrypt(const QSecureArray &in, QSecureArray *out, EncryptionAlgorithm alg)
+bool PrivateKey::decrypt(const SecureArray &in, SecureArray *out, EncryptionAlgorithm alg)
 {
 	return static_cast<PKeyContext *>(context())->key()->decrypt(in, out, alg);
 }
@@ -778,17 +892,17 @@ void PrivateKey::startSign(SignatureAlgorithm alg, SignatureFormat format)
 	static_cast<PKeyContext *>(context())->key()->startSign(alg, format);
 }
 
-void PrivateKey::update(const QSecureArray &a)
+void PrivateKey::update(const SecureArray &a)
 {
 	static_cast<PKeyContext *>(context())->key()->update(a);
 }
 
-QSecureArray PrivateKey::signature()
+SecureArray PrivateKey::signature()
 {
 	return static_cast<PKeyContext *>(context())->key()->endSign();
 }
 
-QSecureArray PrivateKey::signMessage(const QSecureArray &a, SignatureAlgorithm alg, SignatureFormat format)
+SecureArray PrivateKey::signMessage(const SecureArray &a, SignatureAlgorithm alg, SignatureFormat format)
 {
 	startSign(alg, format);
 	update(a);
@@ -804,33 +918,14 @@ SymmetricKey PrivateKey::deriveKey(const PublicKey &theirs)
 QList<PBEAlgorithm> PrivateKey::supportedPBEAlgorithms(const QString &provider)
 {
 	return getList<PBEAlgorithm, Getter_PBE>(provider);
-
-	//QList<PBEAlgorithm> list = getList<PBEAlgorithm, Getter_PBE>(provider);
-
-	// single
-	/*if(!provider.isEmpty())
-	{
-		Provider *p = providerForName(provider);
-		if(p)
-			list = getPBEList(p);
-	}
-	// all
-	else
-	{
-		ProviderList pl = allProviders();
-		for(int n = 0; n < pl.count(); ++n)
-			list += getPBEList(pl[n]);
-	}*/
-
-	//return list;
 }
 
-QSecureArray PrivateKey::toDER(const QSecureArray &passphrase, PBEAlgorithm pbe) const
+SecureArray PrivateKey::toDER(const SecureArray &passphrase, PBEAlgorithm pbe) const
 {
-	QSecureArray out;
+	SecureArray out;
 	if(pbe == PBEDefault)
 		pbe = get_pbe_default();
-	Provider *p = providerForPBE(pbe);
+	Provider *p = providerForPBE(pbe, type());
 	if(!p)
 		return out;
 	const PKeyContext *cur = static_cast<const PKeyContext *>(context());
@@ -848,14 +943,12 @@ QSecureArray PrivateKey::toDER(const QSecureArray &passphrase, PBEAlgorithm pbe)
 	return out;
 }
 
-QString PrivateKey::toPEM(const QSecureArray &passphrase, PBEAlgorithm pbe) const
+QString PrivateKey::toPEM(const SecureArray &passphrase, PBEAlgorithm pbe) const
 {
-	//return static_cast<const PKeyContext *>(context())->privateToPEM(passphrase, pbe);
-
 	QString out;
 	if(pbe == PBEDefault)
 		pbe = get_pbe_default();
-	Provider *p = providerForPBE(pbe);
+	Provider *p = providerForPBE(pbe, type());
 	if(!p)
 		return out;
 	const PKeyContext *cur = static_cast<const PKeyContext *>(context());
@@ -873,96 +966,48 @@ QString PrivateKey::toPEM(const QSecureArray &passphrase, PBEAlgorithm pbe) cons
 	return out;
 }
 
-bool PrivateKey::toPEMFile(const QString &fileName, const QSecureArray &passphrase, PBEAlgorithm pbe) const
+bool PrivateKey::toPEMFile(const QString &fileName, const SecureArray &passphrase, PBEAlgorithm pbe) const
 {
 	return stringToFile(fileName, toPEM(passphrase, pbe));
 }
 
-PrivateKey PrivateKey::fromDER(const QSecureArray &a, const QSecureArray &passphrase, ConvertResult *result, const QString &provider)
+PrivateKey PrivateKey::fromDER(const SecureArray &a, const SecureArray &passphrase, ConvertResult *result, const QString &provider)
 {
 	PrivateKey out;
 	ConvertResult r;
-	out = getKey<PrivateKey, Getter_PrivateKey<QSecureArray>, QSecureArray>(provider, a, passphrase, &r);
+	out = getKey<PrivateKey, Getter_PrivateKey<SecureArray>, SecureArray>(provider, a, passphrase, &r);
 
 	// error converting without passphrase?  maybe a passphrase is needed
-	// FIXME: we should only do this if we get ErrorPassphrase?
-	if(r != ConvertGood && passphrase.isEmpty())
+	if(use_asker_fallback(r) && passphrase.isEmpty())
 	{
-		QSecureArray pass;
+		SecureArray pass;
 		if(ask_passphrase(QString(), 0, &pass))
-			out = getKey<PrivateKey, Getter_PrivateKey<QSecureArray>, QSecureArray>(provider, a, pass, &r);
+			out = getKey<PrivateKey, Getter_PrivateKey<SecureArray>, SecureArray>(provider, a, pass, &r);
 	}
 	if(result)
 		*result = r;
 	return out;
-
-	/*PrivateKey k;
-
-	// single
-	if(!provider.isEmpty())
-	{
-		Provider *p = providerForName(provider);
-		if(!p)
-			return k;
-		PKeyContext *c = static_cast<PKeyContext *>(p->createContext("pkey"));
-		if(!c)
-			return k;
-		ConvertResult r = c->privateFromDER(a, passphrase);
-		if(result)
-			*result = r;
-		if(r == ConvertGood)
-			k.change(c);
-	}
-	// all
-	else
-	{
-		ProviderList pl = allProviders();
-		for(int n = 0; n < pl.count(); ++n)
-		{
-			PKeyContext *c = static_cast<PKeyContext *>(pl[n]->createContext("pkey"));
-			if(!c)
-				continue;
-			ConvertResult r = c->privateFromDER(a, passphrase);
-			if(result)
-				*result = r;
-			if(r == ConvertGood)
-				k.change(c);
-			if(!k.isNull())
-				break;
-		}
-	}
-	return k;*/
 }
 
-PrivateKey PrivateKey::fromPEM(const QString &s, const QSecureArray &passphrase, ConvertResult *result, const QString &provider)
+PrivateKey PrivateKey::fromPEM(const QString &s, const SecureArray &passphrase, ConvertResult *result, const QString &provider)
 {
 	PrivateKey out;
 	ConvertResult r;
 	out = getKey<PrivateKey, Getter_PrivateKey<QString>, QString>(provider, s, passphrase, &r);
 
 	// error converting without passphrase?  maybe a passphrase is needed
-	// FIXME: we should only do this if we get ErrorPassphrase?
-	if(r != ConvertGood && passphrase.isEmpty())
+	if(use_asker_fallback(r) && passphrase.isEmpty())
 	{
-		QSecureArray pass;
+		SecureArray pass;
 		if(ask_passphrase(QString(), 0, &pass))
 			out = getKey<PrivateKey, Getter_PrivateKey<QString>, QString>(provider, s, pass, &r);
 	}
 	if(result)
 		*result = r;
 	return out;
-
-	/*PrivateKey k;
-	PKeyContext *c = static_cast<PKeyContext *>(getContext("pkey", provider));
-	ConvertResult r = c->privateFromPEM(s, passphrase);
-	if(result)
-		*result = r;
-	if(r == ConvertGood)
-		k.change(c);
-	return k;*/
 }
 
-PrivateKey PrivateKey::fromPEMFile(const QString &fileName, const QSecureArray &passphrase, ConvertResult *result, const QString &provider)
+PrivateKey PrivateKey::fromPEMFile(const QString &fileName, const SecureArray &passphrase, ConvertResult *result, const QString &provider)
 {
 	QString pem;
 	if(!stringFromFile(fileName, &pem))
@@ -1036,7 +1081,7 @@ public slots:
 	{
 		if(!dc->isNull())
 		{
-			QBigInteger p, q, g;
+			BigInteger p, q, g;
 			dc->getResult(&p, &q, &g);
 			group = DLGroup(p, q, g);
 		}
@@ -1163,9 +1208,15 @@ DLGroup KeyGenerator::createDLGroup(QCA::DLGroupSet set, const QString &provider
 	if(isBusy())
 		return DLGroup();
 
+	Provider *p;
+	if(!provider.isEmpty())
+		p = providerForName(provider);
+	else
+		p = providerForGroupSet(set);
+
 	d->group = DLGroup();
 	d->wasBlocking = d->blocking;
-	d->dc = static_cast<DLGroupContext *>(getContext("dlgroup", provider));
+	d->dc = static_cast<DLGroupContext *>(getContext("dlgroup", p));
 
 	if(!d->blocking)
 	{
@@ -1193,7 +1244,7 @@ RSAPublicKey::RSAPublicKey()
 {
 }
 
-RSAPublicKey::RSAPublicKey(const QBigInteger &n, const QBigInteger &e, const QString &provider)
+RSAPublicKey::RSAPublicKey(const BigInteger &n, const BigInteger &e, const QString &provider)
 {
 	RSAContext *k = static_cast<RSAContext *>(getContext("rsa", provider));
 	k->createPublic(n, e);
@@ -1207,12 +1258,12 @@ RSAPublicKey::RSAPublicKey(const RSAPrivateKey &k)
 {
 }
 
-QBigInteger RSAPublicKey::n() const
+BigInteger RSAPublicKey::n() const
 {
 	return static_cast<const RSAContext *>(static_cast<const PKeyContext *>(context())->key())->n();
 }
 
-QBigInteger RSAPublicKey::e() const
+BigInteger RSAPublicKey::e() const
 {
 	return static_cast<const RSAContext *>(static_cast<const PKeyContext *>(context())->key())->e();
 }
@@ -1224,7 +1275,7 @@ RSAPrivateKey::RSAPrivateKey()
 {
 }
 
-RSAPrivateKey::RSAPrivateKey(const QBigInteger &n, const QBigInteger &e, const QBigInteger &p, const QBigInteger &q, const QBigInteger &d, const QString &provider)
+RSAPrivateKey::RSAPrivateKey(const BigInteger &n, const BigInteger &e, const BigInteger &p, const BigInteger &q, const BigInteger &d, const QString &provider)
 {
 	RSAContext *k = static_cast<RSAContext *>(getContext("rsa", provider));
 	k->createPrivate(n, e, p, q, d);
@@ -1233,27 +1284,27 @@ RSAPrivateKey::RSAPrivateKey(const QBigInteger &n, const QBigInteger &e, const Q
 	change(c);
 }
 
-QBigInteger RSAPrivateKey::n() const
+BigInteger RSAPrivateKey::n() const
 {
 	return static_cast<const RSAContext *>(static_cast<const PKeyContext *>(context())->key())->n();
 }
 
-QBigInteger RSAPrivateKey::e() const
+BigInteger RSAPrivateKey::e() const
 {
 	return static_cast<const RSAContext *>(static_cast<const PKeyContext *>(context())->key())->e();
 }
 
-QBigInteger RSAPrivateKey::p() const
+BigInteger RSAPrivateKey::p() const
 {
 	return static_cast<const RSAContext *>(static_cast<const PKeyContext *>(context())->key())->p();
 }
 
-QBigInteger RSAPrivateKey::q() const
+BigInteger RSAPrivateKey::q() const
 {
 	return static_cast<const RSAContext *>(static_cast<const PKeyContext *>(context())->key())->q();
 }
 
-QBigInteger RSAPrivateKey::d() const
+BigInteger RSAPrivateKey::d() const
 {
 	return static_cast<const RSAContext *>(static_cast<const PKeyContext *>(context())->key())->d();
 }
@@ -1265,7 +1316,7 @@ DSAPublicKey::DSAPublicKey()
 {
 }
 
-DSAPublicKey::DSAPublicKey(const DLGroup &domain, const QBigInteger &y, const QString &provider)
+DSAPublicKey::DSAPublicKey(const DLGroup &domain, const BigInteger &y, const QString &provider)
 {
 	DSAContext *k = static_cast<DSAContext *>(getContext("dsa", provider));
 	k->createPublic(domain, y);
@@ -1284,7 +1335,7 @@ DLGroup DSAPublicKey::domain() const
 	return static_cast<const DSAContext *>(static_cast<const PKeyContext *>(context())->key())->domain();
 }
 
-QBigInteger DSAPublicKey::y() const
+BigInteger DSAPublicKey::y() const
 {
 	return static_cast<const DSAContext *>(static_cast<const PKeyContext *>(context())->key())->y();
 }
@@ -1296,7 +1347,7 @@ DSAPrivateKey::DSAPrivateKey()
 {
 }
 
-DSAPrivateKey::DSAPrivateKey(const DLGroup &domain, const QBigInteger &y, const QBigInteger &x, const QString &provider)
+DSAPrivateKey::DSAPrivateKey(const DLGroup &domain, const BigInteger &y, const BigInteger &x, const QString &provider)
 {
 	DSAContext *k = static_cast<DSAContext *>(getContext("dsa", provider));
 	k->createPrivate(domain, y, x);
@@ -1310,12 +1361,12 @@ DLGroup DSAPrivateKey::domain() const
 	return static_cast<const DSAContext *>(static_cast<const PKeyContext *>(context())->key())->domain();
 }
 
-QBigInteger DSAPrivateKey::y() const
+BigInteger DSAPrivateKey::y() const
 {
 	return static_cast<const DSAContext *>(static_cast<const PKeyContext *>(context())->key())->y();
 }
 
-QBigInteger DSAPrivateKey::x() const
+BigInteger DSAPrivateKey::x() const
 {
 	return static_cast<const DSAContext *>(static_cast<const PKeyContext *>(context())->key())->x();
 }
@@ -1327,7 +1378,7 @@ DHPublicKey::DHPublicKey()
 {
 }
 
-DHPublicKey::DHPublicKey(const DLGroup &domain, const QBigInteger &y, const QString &provider)
+DHPublicKey::DHPublicKey(const DLGroup &domain, const BigInteger &y, const QString &provider)
 {
 	DHContext *k = static_cast<DHContext *>(getContext("dh", provider));
 	k->createPublic(domain, y);
@@ -1346,7 +1397,7 @@ DLGroup DHPublicKey::domain() const
 	return static_cast<const DHContext *>(static_cast<const PKeyContext *>(context())->key())->domain();
 }
 
-QBigInteger DHPublicKey::y() const
+BigInteger DHPublicKey::y() const
 {
 	return static_cast<const DHContext *>(static_cast<const PKeyContext *>(context())->key())->y();
 }
@@ -1358,7 +1409,7 @@ DHPrivateKey::DHPrivateKey()
 {
 }
 
-DHPrivateKey::DHPrivateKey(const DLGroup &domain, const QBigInteger &y, const QBigInteger &x, const QString &provider)
+DHPrivateKey::DHPrivateKey(const DLGroup &domain, const BigInteger &y, const BigInteger &x, const QString &provider)
 {
 	DHContext *k = static_cast<DHContext *>(getContext("dh", provider));
 	k->createPrivate(domain, y, x);
@@ -1372,12 +1423,12 @@ DLGroup DHPrivateKey::domain() const
 	return static_cast<const DHContext *>(static_cast<const PKeyContext *>(context())->key())->domain();
 }
 
-QBigInteger DHPrivateKey::y() const
+BigInteger DHPrivateKey::y() const
 {
 	return static_cast<const DHContext *>(static_cast<const PKeyContext *>(context())->key())->y();
 }
 
-QBigInteger DHPrivateKey::x() const
+BigInteger DHPrivateKey::x() const
 {
 	return static_cast<const DHContext *>(static_cast<const PKeyContext *>(context())->key())->x();
 }

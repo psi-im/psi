@@ -3,6 +3,7 @@
 
 #include <QString>
 #include <QList>
+#include <QSet>
 #include <QMap>
 #include <QtCrypto>
 

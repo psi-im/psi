@@ -1,6 +1,5 @@
-namespace QCA {
 /*
-Copyright (C) 1999-2004 The Botan Project. All rights reserved.
+Copyright (C) 1999-2007 The Botan Project. All rights reserved.
 
 Redistribution and use in source and binary forms, for any use, with or without
 modification, is permitted provided that the following conditions are met:
@@ -24,21 +23,27 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+// LICENSEHEADER_END
+namespace QCA { // WRAPNS_LINE
 /*************************************************
 * Memory Locking Functions Source File           *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
-#define _POSIX_C_SOURCE 199309
-}
+} // WRAPNS_LINE
 #include <botan/util.h>
-namespace QCA {
-}
+namespace QCA { // WRAPNS_LINE
+
+#ifndef _POSIX_C_SOURCE
+  #define _POSIX_C_SOURCE 199309
+#endif
+
+} // WRAPNS_LINE
 #include <sys/types.h>
-namespace QCA {
-}
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
 #include <sys/mman.h>
-namespace QCA {
+namespace QCA { // WRAPNS_LINE
 
 namespace Botan {
 
@@ -59,4 +64,4 @@ void unlock_mem(void* ptr, u32bit bytes)
    }
 
 }
-}
+} // WRAPNS_LINE

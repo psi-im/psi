@@ -1,6 +1,5 @@
-namespace QCA {
 /*
-Copyright (C) 1999-2004 The Botan Project. All rights reserved.
+Copyright (C) 1999-2007 The Botan Project. All rights reserved.
 
 Redistribution and use in source and binary forms, for any use, with or without
 modification, is permitted provided that the following conditions are met:
@@ -24,24 +23,26 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+// LICENSEHEADER_END
+namespace QCA { // WRAPNS_LINE
 /*************************************************
 * BigInt Encoding/Decoding Source File           *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
-}
+} // WRAPNS_LINE
 #include <botan/bigint.h>
-namespace QCA {
-}
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
 #include <botan/numthry.h>
-namespace QCA {
-}
-#include <botan/util.h>
-namespace QCA {
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
+#include <botan/charset.h>
+namespace QCA { // WRAPNS_LINE
 #ifndef BOTAN_MINIMAL_BIGINT
-}
-# include <botan/hex.h>
-namespace QCA {
+} // WRAPNS_LINE
+#include <botan/hex.h>
+namespace QCA { // WRAPNS_LINE
 #endif
 
 namespace Botan {
@@ -58,7 +59,7 @@ void BigInt::encode(byte output[], const BigInt& n, Base base)
       {
       SecureVector<byte> binary(n.encoded_size(Binary));
       n.binary_encode(binary);
-      for(u32bit j = 0; j != binary.size(); j++)
+      for(u32bit j = 0; j != binary.size(); ++j)
          Hex_Encoder::encode(binary[j], output + 2*j);
       }
 #endif
@@ -66,9 +67,9 @@ void BigInt::encode(byte output[], const BigInt& n, Base base)
       {
       BigInt copy = n;
       const u32bit output_size = n.encoded_size(Octal);
-      for(u32bit j = 0; j != output_size; j++)
+      for(u32bit j = 0; j != output_size; ++j)
          {
-         output[output_size - 1 - j] = digit2char(copy % 8);
+         output[output_size - 1 - j] = Charset::digit2char(copy % 8);
          copy /= 8;
          }
       }
@@ -78,10 +79,11 @@ void BigInt::encode(byte output[], const BigInt& n, Base base)
       BigInt remainder;
       copy.set_sign(Positive);
       const u32bit output_size = n.encoded_size(Decimal);
-      for(u32bit j = 0; j != output_size; j++)
+      for(u32bit j = 0; j != output_size; ++j)
          {
          divide(copy, 10, copy, remainder);
-         output[output_size - 1 - j] = digit2char(remainder.word_at(0));
+         output[output_size - 1 - j] =
+            Charset::digit2char(remainder.word_at(0));
          if(copy.is_zero())
             {
             if(j < output_size - 1)
@@ -106,7 +108,7 @@ SecureVector<byte> BigInt::encode(const BigInt& n, Base base)
    SecureVector<byte> output(n.encoded_size(base));
    encode(output, n, base);
    if(base != Binary)
-      for(u32bit j = 0; j != output.size(); j++)
+      for(u32bit j = 0; j != output.size(); ++j)
          if(output[j] == 0)
             output[j] = '0';
    return output;
@@ -148,7 +150,7 @@ BigInt BigInt::decode(const byte buf[], u32bit length, Base base)
    else if(base == Hexadecimal)
       {
       SecureVector<byte> hex;
-      for(u32bit j = 0; j != length; j++)
+      for(u32bit j = 0; j != length; ++j)
          if(Hex_Decoder::is_valid(buf[j]))
             hex.append(buf[j]);
 
@@ -161,7 +163,7 @@ BigInt BigInt::decode(const byte buf[], u32bit length, Base base)
          binary[0] = Hex_Decoder::decode(temp);
          }
 
-      for(u32bit j = offset; j != binary.size(); j++)
+      for(u32bit j = offset; j != binary.size(); ++j)
          binary[j] = Hex_Decoder::decode(hex+2*j-offset);
       r.binary_decode(binary, binary.size());
       }
@@ -169,9 +171,9 @@ BigInt BigInt::decode(const byte buf[], u32bit length, Base base)
    else if(base == Decimal || base == Octal)
       {
       const u32bit RADIX = ((base == Decimal) ? 10 : 8);
-      for(u32bit j = 0; j != length; j++)
+      for(u32bit j = 0; j != length; ++j)
          {
-         byte x = char2digit(buf[j]);
+         byte x = Charset::char2digit(buf[j]);
          if(x >= RADIX)
             {
             if(RADIX == 10)
@@ -179,7 +181,9 @@ BigInt BigInt::decode(const byte buf[], u32bit length, Base base)
             else
                throw Invalid_Argument("BigInt: Invalid octal string");
             }
-         r = RADIX * r + x;
+
+         r *= RADIX;
+         r += x;
          }
       }
    else
@@ -188,4 +192,4 @@ BigInt BigInt::decode(const byte buf[], u32bit length, Base base)
    }
 
 }
-}
+} // WRAPNS_LINE

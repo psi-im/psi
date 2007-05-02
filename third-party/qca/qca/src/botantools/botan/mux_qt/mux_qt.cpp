@@ -1,6 +1,5 @@
-namespace QCA {
 /*
-Copyright (C) 1999-2004 The Botan Project. All rights reserved.
+Copyright (C) 1999-2007 The Botan Project. All rights reserved.
 
 Redistribution and use in source and binary forms, for any use, with or without
 modification, is permitted provided that the following conditions are met:
@@ -24,62 +23,42 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+// LICENSEHEADER_END
+namespace QCA { // WRAPNS_LINE
 /*************************************************
 * Qt Thread Mutex Source File                    *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
-}
+} // WRAPNS_LINE
 #include <botan/mux_qt.h>
-namespace QCA {
-}
-#include <botan/exceptn.h>
-namespace QCA {
-}
-#include <QMutex>
-namespace QCA {
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
+#include <qmutex.h>
+namespace QCA { // WRAPNS_LINE
+
+#if QT_VERSION <= 0x040000 && !defined(QT_THREAD_SUPPORT)
+   #error Your version of Qt does not support threads or mutexes
+#endif
 
 namespace Botan {
 
 /*************************************************
-* Wrapper Type for Qt Thread Mutex               *
+* Qt Mutex Factory                               *
 *************************************************/
-struct mutex_wrapper
+Mutex* Qt_Mutex_Factory::make()
    {
-   QMutex m;
-   };
+   class Qt_Mutex : public Mutex
+      {
+      public:
+         void lock() { mutex.lock(); }
+         void unlock() { mutex.unlock(); }
+      private:
+         QMutex mutex;
+      };
 
-/*************************************************
-* Constructor                                    *
-*************************************************/
-Qt_Mutex::Qt_Mutex()
-   {
-   mutex = new mutex_wrapper;
-   }
-
-/*************************************************
-* Destructor                                     *
-*************************************************/
-Qt_Mutex::~Qt_Mutex()
-   {
-   delete mutex;
-   }
-
-/*************************************************
-* Lock the Mutex                                 *
-*************************************************/
-void Qt_Mutex::lock()
-   {
-   mutex->m.lock();
-   }
-
-/*************************************************
-* Unlock the Mutex                               *
-*************************************************/
-void Qt_Mutex::unlock()
-   {
-   mutex->m.unlock();
+   return new Qt_Mutex();
    }
 
 }
-}
+} // WRAPNS_LINE

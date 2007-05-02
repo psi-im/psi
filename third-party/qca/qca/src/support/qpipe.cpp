@@ -28,6 +28,19 @@
 
 #include <stdlib.h>
 
+#ifdef Q_OS_WIN
+# include <QThread>
+# include <QTimer>
+# include <QMutex>
+# include <QWaitCondition>
+# include <QTextCodec>
+# include <QTextEncoder>
+# include <QTextDecoder>
+#else
+# include <QSocketNotifier>
+# include <QTimer>
+#endif
+
 #ifdef Q_OS_UNIX
 # include <unistd.h>
 # include <fcntl.h>
@@ -1240,7 +1253,7 @@ int QPipeDevice::read(char *data, int maxsize)
 		int num = size / CONSOLE_CHAREXPAND;
 
 #ifdef QPIPE_SECURE
-		QSecureArray destbuf(num * sizeof(ushort), 0);
+		SecureArray destbuf(num * sizeof(ushort), 0);
 #else
 		QByteArray destbuf(num * sizeof(ushort), 0);
 #endif
@@ -1436,8 +1449,8 @@ public:
 
 #ifdef QPIPE_SECURE
 	bool secure;
-	QSecureArray sec_buf;
-	QSecureArray sec_curWrite;
+	SecureArray sec_buf;
+	SecureArray sec_curWrite;
 #endif
 	QTimer readTrigger, writeTrigger, closeTrigger, writeErrorTrigger;
 	bool canRead, activeWrite;
@@ -1521,7 +1534,7 @@ public:
 	}
 
 #ifdef QPIPE_SECURE
-	void appendArray(QSecureArray *a, const QSecureArray &b)
+	void appendArray(SecureArray *a, const SecureArray &b)
 	{
 		a->append(b);
 	}
@@ -1536,7 +1549,7 @@ public:
 	}
 
 #ifdef QPIPE_SECURE
-	void takeArray(QSecureArray *a, int len)
+	void takeArray(SecureArray *a, int len)
 	{
 		char *p = a->data();
 		int newsize = a->size() - len;
@@ -1588,9 +1601,9 @@ public:
 	}
 
 #ifdef QPIPE_SECURE
-	QSecureArray readSecure(QSecureArray *buf, int bytes)
+	SecureArray readSecure(SecureArray *buf, int bytes)
 	{
-		QSecureArray a;
+		SecureArray a;
 		if(bytes == -1 || bytes > buf->size())
 		{
 			a = *buf;
@@ -1606,7 +1619,7 @@ public:
 		return a;
 	}
 
-	void writeSecure(QSecureArray *buf, const QSecureArray &a)
+	void writeSecure(SecureArray *buf, const SecureArray &a)
 	{
 		appendArray(buf, a);
 		setupNextWrite();
@@ -1716,7 +1729,7 @@ public slots:
 #ifdef QPIPE_SECURE
 		if(secure)
 		{
-			QSecureArray a(max);
+			SecureArray a(max);
 			ret = pipe.read(a.data(), a.size());
 			if(ret >= 1)
 			{
@@ -1947,12 +1960,12 @@ void QPipeEnd::write(const QByteArray &buf)
 }
 
 #ifdef QPIPE_SECURE
-QSecureArray QPipeEnd::readSecure(int bytes)
+SecureArray QPipeEnd::readSecure(int bytes)
 {
 	return d->readSecure(&d->sec_buf, bytes);
 }
 
-void QPipeEnd::writeSecure(const QSecureArray &buf)
+void QPipeEnd::writeSecure(const SecureArray &buf)
 {
 	if(!isValid() || d->closing)
 		return;
@@ -1979,13 +1992,13 @@ QByteArray QPipeEnd::takeBytesToWrite()
 }
 
 #ifdef QPIPE_SECURE
-QSecureArray QPipeEnd::takeBytesToWriteSecure()
+SecureArray QPipeEnd::takeBytesToWriteSecure()
 {
 	// only call this on inactive sessions
 	if(isValid())
-		return QSecureArray();
+		return SecureArray();
 
-	QSecureArray a = d->sec_buf;
+	SecureArray a = d->sec_buf;
 	d->sec_buf.clear();
 	return a;
 }

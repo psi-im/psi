@@ -20,9 +20,10 @@
 
 #include "qca_core.h"
 
-#include <QtCore>
-#include <stdlib.h>
+#include <QMutex>
+#include <QHash>
 #include "qcaprovider.h"
+#include <stdlib.h>
 #include <time.h>
 
 #ifndef QCA_NO_SYSTEMSTORE
@@ -30,6 +31,46 @@
 #endif
 
 namespace QCA {
+
+class DefaultShared
+{
+private:
+	mutable QMutex m;
+	bool _use_system;
+	QString _roots_file;
+	QStringList _skip_plugins;
+
+public:
+	DefaultShared() : _use_system(true)
+	{
+	}
+
+	bool use_system() const
+	{
+		QMutexLocker locker(&m);
+		return _use_system;
+	}
+
+	QString roots_file() const
+	{
+		QMutexLocker locker(&m);
+		return _roots_file;
+	}
+
+	QStringList skip_plugins() const
+	{
+		QMutexLocker locker(&m);
+		return _skip_plugins;
+	}
+
+	void set(bool use_system, const QString &roots_file, const QStringList &skip_plugins)
+	{
+		QMutexLocker locker(&m);
+		_use_system = use_system;
+		_roots_file = roots_file;
+		_skip_plugins = skip_plugins;
+	}
+};
 
 //----------------------------------------------------------------------------
 // DefaultRandomContext
@@ -44,9 +85,9 @@ public:
 		return new DefaultRandomContext(provider());
 	}
 
-	virtual QSecureArray nextBytes(int size)
+	virtual SecureArray nextBytes(int size)
 	{
-		QSecureArray buf(size);
+		SecureArray buf(size);
 		for(int n = 0; n < (int)buf.size(); ++n)
 			buf[n] = (char)rand();
 		return buf;
@@ -82,7 +123,7 @@ public:
   ghost@aladdin.com
 
  */
-/* $Id: qca_default.cpp 648692 2007-04-01 01:36:36Z infiniti $ */
+/* $Id: qca_default.cpp 657399 2007-04-23 22:58:40Z infiniti $ */
 /*
   Independent implementation of MD5 (RFC 1321).
 
@@ -127,7 +168,7 @@ typedef quint32 md5_word_t; /* 32-bit word */
 
 /* Define the state of the MD5 Algorithm. */
 struct md5_state_t {
-    QSecureArray sbuf;
+    SecureArray sbuf;
     md5_word_t *count; // 2   /* message length in bits, lsw first */
     md5_word_t *abcd;  // 4   /* digest buffer */
     md5_byte_t *buf;   // 64  /* accumulate block */
@@ -245,7 +286,7 @@ md5_process(md5_state_t *pms, const md5_byte_t *data /*[64]*/)
 
 	/* Define storage for little-endian or both types of CPUs. */
 	// possible FIXME: does xbuf really need to be secured?
-	QSecureArray sxbuf(16 * sizeof(md5_word_t));
+	SecureArray sxbuf(16 * sizeof(md5_word_t));
 	md5_word_t *xbuf = (md5_word_t *)sxbuf.data();
 	const md5_word_t *X;
 
@@ -485,14 +526,14 @@ public:
 		md5_init(&md5);
 	}
 
-	virtual void update(const QSecureArray &in)
+	virtual void update(const SecureArray &in)
 	{
 		md5_append(&md5, (const md5_byte_t *)in.data(), in.size());
 	}
 
-	virtual QSecureArray final()
+	virtual SecureArray final()
 	{
-		QSecureArray b(16);
+		SecureArray b(16);
 		md5_finish(&md5, (md5_byte_t *)b.data());
 		return b;
 	}
@@ -518,7 +559,7 @@ public:
 
 struct SHA1_CONTEXT
 {
-	QSecureArray sbuf;
+	SecureArray sbuf;
 	quint32 *state; // 5
 	quint32 *count; // 2
 	unsigned char *buffer; // 64
@@ -576,14 +617,14 @@ public:
 		sha1_init(&_context);
 	}
 
-	virtual void update(const QSecureArray &in)
+	virtual void update(const SecureArray &in)
 	{
 		sha1_update(&_context, (unsigned char *)in.data(), (unsigned int)in.size());
 	}
 
-	virtual QSecureArray final()
+	virtual SecureArray final()
 	{
-		QSecureArray b(20);
+		SecureArray b(20);
 		sha1_final((unsigned char *)b.data(), &_context);
 		return b;
 	}
@@ -718,6 +759,8 @@ static QString escape_string(const QString &in)
 			out += "\\\\";
 		else if(in[n] == ':')
 			out += "\\c";
+		else if(in[n] == ',')
+			out += "\\o";
 		else
 			out += in[n];
 	}
@@ -737,6 +780,8 @@ static QString unescape_string(const QString &in)
 					out += '\\';
 				else if(in[n + 1] == 'c')
 					out += ':';
+				else if(in[n + 1] == 'o')
+					out += ',';
 				++n;
 			}
 		}
@@ -783,6 +828,7 @@ public:
 	QString item_id, _storeId, _storeName;
 	Certificate _cert;
 	CRL _crl;
+	QString item_save;
 
 	QString item_name;
 
@@ -863,6 +909,11 @@ public:
 	{
 		return _crl;
 	}
+
+	virtual QString serialize() const
+	{
+		return item_save;
+	}
 };
 
 //----------------------------------------------------------------------------
@@ -873,8 +924,9 @@ class DefaultKeyStoreList : public KeyStoreListContext
 	Q_OBJECT
 public:
 	bool ready;
+	DefaultShared *shared;
 
-	DefaultKeyStoreList(Provider *p) : KeyStoreListContext(p)
+	DefaultKeyStoreList(Provider *p, DefaultShared *_shared) : KeyStoreListContext(p), shared(_shared)
 	{
 	}
 
@@ -904,7 +956,7 @@ public:
 	virtual QList<int> keyStores()
 	{
 		QList<int> list;
-		if(ready)
+		if(ready || !shared->roots_file().isEmpty())
 			list += 0;
 		return list;
 	}
@@ -936,21 +988,39 @@ public:
 	{
 		QList<KeyStoreEntryContext*> out;
 
-		CertificateCollection col;
+		QList<Certificate> certs;
+		QList<CRL> crls;
+
+		if(ready && shared->use_system())
+		{
+			CertificateCollection col;
 #ifndef QCA_NO_SYSTEMSTORE
-		col = qca_get_systemstore(QString());
+			col = qca_get_systemstore(QString());
 #endif
-		QList<Certificate> certs = col.certificates();
-		QList<CRL> crls = col.crls();
+			certs += col.certificates();
+			crls += col.crls();
+		}
+
+		QString roots = shared->roots_file();
+		if(!roots.isEmpty())
+		{
+			CertificateCollection col = CertificateCollection::fromFlatTextFile(roots);
+			certs += col.certificates();
+			crls += col.crls();
+		}
+
+		//QStringList names = makeFriendlyNames(certs);
 		int n;
 		for(n = 0; n < certs.count(); ++n)
 		{
 			DefaultKeyStoreEntry *c = new DefaultKeyStoreEntry(certs[n], storeId(0), name(0), provider());
 			//c->item_id = QString::number(n);
 			QString ename = c->makeName();
+			//QString ename = names[n];
 			QString eid = QString::number(qHash(certs[n].toDER().toByteArray()));
 			c->item_name = ename;
-			c->item_id = makeId(storeId(0), name(0), eid, ename, "cert", certs[n].toPEM());
+			c->item_id = eid;
+			c->item_save = makeId(storeId(0), name(0), eid, ename, "cert", certs[n].toPEM());
 			out.append(c);
 		}
 		for(n = 0; n < crls.count(); ++n)
@@ -959,7 +1029,8 @@ public:
 			QString ename = c->makeName();
 			QString eid = QString::number(qHash(certs[n].toDER().toByteArray()));
 			c->item_name = ename;
-			c->item_id = makeId(storeId(0), name(0), eid, ename, "crl", crls[n].toPEM());
+			c->item_id = eid;
+			c->item_save = makeId(storeId(0), name(0), eid, ename, "crl", crls[n].toPEM());
 			out.append(c);
 		}
 
@@ -967,11 +1038,10 @@ public:
 	}
 
 	// TODO
-	virtual KeyStoreEntryContext *entryPassive(const QString &_storeId, const QString &entryId)
+	virtual KeyStoreEntryContext *entryPassive(const QString &serialized)
 	{
-		Q_UNUSED(_storeId);
 		QString storeId, storeName, eid, ename, etype, pem;
-		if(parseId(entryId, &storeId, &storeName, &eid, &ename, &etype, &pem))
+		if(parseId(serialized, &storeId, &storeName, &eid, &ename, &etype, &pem))
 		{
 			if(etype == "cert")
 			{
@@ -981,6 +1051,7 @@ public:
 				DefaultKeyStoreEntry *c = new DefaultKeyStoreEntry(cert, storeId, storeName, provider());
 				c->item_name = ename;
 				c->item_id = eid;
+				c->item_save = serialized;
 				return c;
 			}
 			else if(etype == "crl")
@@ -991,6 +1062,7 @@ public:
 				DefaultKeyStoreEntry *c = new DefaultKeyStoreEntry(crl, storeId, storeName, provider());
 				c->item_name = ename;
 				c->item_id = eid;
+				c->item_save = serialized;
 				return c;
 			}
 		}
@@ -1004,7 +1076,9 @@ public:
 class DefaultProvider : public Provider
 {
 public:
-	void init()
+	DefaultShared shared;
+
+	virtual void init()
 	{
 		QDateTime now = QDateTime::currentDateTime();
 		// avoid divide-by-zero
@@ -1014,17 +1088,17 @@ public:
 		srand(t);
 	}
 
-	int version() const
+	virtual int version() const
 	{
 		return QCA_VERSION;
 	}
 
-	QString name() const
+	virtual QString name() const
 	{
 		return "default";
 	}
 
-	QStringList features() const
+	virtual QStringList features() const
 	{
 		QStringList list;
 		list += "random";
@@ -1034,7 +1108,7 @@ public:
 		return list;
 	}
 
-	Provider::Context *createContext(const QString &type)
+	virtual Provider::Context *createContext(const QString &type)
 	{
 		if(type == "random")
 			return new DefaultRandomContext(this);
@@ -1043,15 +1117,45 @@ public:
 		else if(type == "sha1")
 			return new DefaultSHA1Context(this);
 		else if(type == "keystorelist")
-			return new DefaultKeyStoreList(this);
+			return new DefaultKeyStoreList(this, &shared);
 		else
 			return 0;
+	}
+
+	virtual QVariantMap defaultConfig() const
+	{
+		QVariantMap config;
+		config["formtype"] = "http://affinix.com/qca/forms/default#1.0";
+		config["use_system"] = true;
+		config["roots_file"] = QString();
+		config["skip_plugins"] = QString();
+		return config;
+	}
+
+	virtual void configChanged(const QVariantMap &config)
+	{
+		bool use_system = config["use_system"].toBool();
+		QString roots_file = config["roots_file"].toString();
+		QString skip_plugins_str = config["skip_plugins"].toString();
+		QStringList skip_plugins = skip_plugins_str.split(",");
+		for(int n = 0; n < skip_plugins.count(); ++n)
+		{
+			QString &s = skip_plugins[n];
+			s = unescape_string(s).trimmed();
+		}
+		shared.set(use_system, roots_file, skip_plugins);
 	}
 };
 
 Provider *create_default_provider()
 {
 	return new DefaultProvider;
+}
+
+QStringList skip_plugins(Provider *defaultProvider)
+{
+	DefaultProvider *that = (DefaultProvider *)defaultProvider;
+	return that->shared.skip_plugins();
 }
 
 #include "qca_default.moc"

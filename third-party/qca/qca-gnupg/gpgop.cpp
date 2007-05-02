@@ -21,6 +21,8 @@
 
 #include "gpgproc.h"
 
+#include <QTimer>
+
 namespace gpgQCAPlugin {
 
 //----------------------------------------------------------------------------
@@ -726,7 +728,7 @@ public:
 	}
 
 #ifdef QPIPE_SECURE
-	void submitPassphrase(const QSecureArray &a)
+	void submitPassphrase(const QCA::SecureArray &a)
 #else
 	void submitPassphrase(const QByteArray &a)
 #endif
@@ -737,10 +739,22 @@ public:
 		need_submitPassphrase = false;
 
 #ifdef QPIPE_SECURE
-		QSecureArray b = a;
+		QCA::SecureArray b;
 #else
-		QByteArray b = a;
+		QByteArray b;
 #endif
+		// filter out newlines, since that's the delimiter used
+		// to indicate a submitted passphrase
+		b.resize(a.size());
+		int at = 0;
+		for(int n = 0; n < a.size(); ++n)
+		{
+			if(a[n] != '\n')
+				b[at++] = a[n];
+		}
+		b.resize(at);
+
+		// append newline
 		b.resize(b.size() + 1);
 		b[b.size() - 1] = '\n';
 		proc.writeCommand(b);
@@ -757,17 +771,11 @@ public slots:
 			a = readConv.update(a);
 		if(!proc.isActive())
 			a += readConv.final();
-#ifdef GPG_DEBUG
-		printf("GpgAction::read(): [%s]\n", a.data());
-#endif
 		return a;
 	}
 
 	void write(const QByteArray &in)
 	{
-#ifdef GPG_DEBUG
-		printf("GpgAction::write(): [%s]\n", in.data());
-#endif
 		if(!allowInput)
 			return;
 
@@ -993,14 +1001,9 @@ private:
 		QString outstr = QString::fromLatin1(buf_stdout);
 		QString errstr = QString::fromLatin1(buf_stderr);
 
-#ifdef GPG_DEBUG
-		QString stdText;
 		if(collectOutput)
-			stdText += QString("stdout: [%1]\n").arg(outstr);
-		stdText += QString("stderr: [%1]\n").arg(errstr);
-		printf("process result: %d [%s]\n", code, qPrintable(stdText));
-		//printf("code = %d, input.op = %d, badPassphrase = %d, curError = %d", code, input.op, badPassphrase, curError);
-#endif
+			diagnosticText += QString("stdout: [%1]\n").arg(outstr);
+		diagnosticText += QString("stderr: [%1]\n").arg(errstr);
 		ensureDTextEmit();
 
 		if(badPassphrase)
@@ -1304,9 +1307,7 @@ public slots:
 	void act_readyReadDiagnosticText()
 	{
 		QString s = act->readDiagnosticText();
-#ifdef GPG_DEBUG
-		printf("dtext ready: [%s]\n", qPrintable(s));
-#endif
+		//printf("dtext ready: [%s]\n", qPrintable(s));
 		diagnosticText += s;
 
 		if(waiting)
@@ -1517,7 +1518,7 @@ void GpgOp::doExport(const QString &key_id)
 }
 
 #ifdef QPIPE_SECURE
-void GpgOp::submitPassphrase(const QSecureArray &a)
+void GpgOp::submitPassphrase(const QCA::SecureArray &a)
 #else
 void GpgOp::submitPassphrase(const QByteArray &a)
 #endif

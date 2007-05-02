@@ -1,6 +1,5 @@
-namespace QCA {
 /*
-Copyright (C) 1999-2004 The Botan Project. All rights reserved.
+Copyright (C) 1999-2007 The Botan Project. All rights reserved.
 
 Redistribution and use in source and binary forms, for any use, with or without
 modification, is permitted provided that the following conditions are met:
@@ -24,66 +23,59 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+// LICENSEHEADER_END
+namespace QCA { // WRAPNS_LINE
 /*************************************************
 * Number Theory Header File                      *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_NUMBTHRY_H__
 #define BOTAN_NUMBTHRY_H__
 
-}
+} // WRAPNS_LINE
 #include <botan/bigint.h>
-namespace QCA {
+namespace QCA { // WRAPNS_LINE
 #ifndef BOTAN_MINIMAL_BIGINT
-}
-# include <botan/reducer.h>
-namespace QCA {
+} // WRAPNS_LINE
+#include <botan/reducer.h>
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
+#include <botan/pow_mod.h>
+namespace QCA { // WRAPNS_LINE
 #endif
 
 namespace Botan {
 
+#ifndef BOTAN_MINIMAL_BIGINT
 /*************************************************
 * Fused Arithmetic Operations                    *
 *************************************************/
 BigInt mul_add(const BigInt&, const BigInt&, const BigInt&);
 BigInt sub_mul(const BigInt&, const BigInt&, const BigInt&);
-BigInt mul_mod(const BigInt&, const BigInt&, const BigInt&);
 
 /*************************************************
 * Number Theory Functions                        *
 *************************************************/
 inline BigInt abs(const BigInt& n) { return n.abs(); }
+#endif
 
 void divide(const BigInt&, const BigInt&, BigInt&, BigInt&);
-void positive_divide(const BigInt&, const BigInt&, BigInt&, BigInt&);
-void modifying_divide(BigInt&, BigInt&, BigInt&);
 
+#ifndef BOTAN_MINIMAL_BIGINT
 BigInt gcd(const BigInt&, const BigInt&);
 BigInt lcm(const BigInt&, const BigInt&);
 
 BigInt square(const BigInt&);
 BigInt inverse_mod(const BigInt&, const BigInt&);
 s32bit jacobi(const BigInt&, const BigInt&);
-BigInt power(const BigInt&, u32bit);
 
-#ifndef BOTAN_MINIMAL_BIGINT
-
-/*************************************************
-* Modular Exponentiation                         *
-*************************************************/
-BigInt power_mod(const BigInt&, const BigInt&, ModularReducer*);
 BigInt power_mod(const BigInt&, const BigInt&, const BigInt&);
-
-#endif // BOTAN_MINIMAL_BIGINT
 
 /*************************************************
 * Utility Functions                              *
 *************************************************/
 u32bit low_zero_bits(const BigInt&);
-u32bit power_of_2(const BigInt&);
-
-#ifndef BOTAN_MINIMAL_BIGINT
 
 /*************************************************
 * Primality Testing                              *
@@ -99,11 +91,10 @@ bool run_primality_tests(const BigInt&, u32bit = 1);
 /*************************************************
 * Random Number Generation                       *
 *************************************************/
-BigInt random_integer(u32bit, RNG_Quality = SessionKey);
-BigInt random_integer(const BigInt&, const BigInt&, RNG_Quality = SessionKey);
-BigInt random_prime(u32bit, RNG_Quality = SessionKey, const BigInt& = 1,
-                    u32bit = 1, u32bit = 2);
-BigInt random_safe_prime(u32bit, RNG_Quality = SessionKey);
+BigInt random_integer(u32bit);
+BigInt random_integer(const BigInt&, const BigInt&);
+BigInt random_prime(u32bit, const BigInt& = 1, u32bit = 1, u32bit = 2);
+BigInt random_safe_prime(u32bit);
 
 SecureVector<byte> generate_dsa_primes(BigInt&, BigInt&, u32bit);
 bool generate_dsa_primes(BigInt&, BigInt&, const byte[], u32bit, u32bit,
@@ -125,20 +116,16 @@ class MillerRabin_Test
    {
    public:
       bool passes_test(const BigInt&);
-
       MillerRabin_Test(const BigInt&);
-      ~MillerRabin_Test() { delete reducer; }
    private:
-      MillerRabin_Test(const MillerRabin_Test&) {}
-      MillerRabin_Test& operator=(const MillerRabin_Test&) { return (*this); }
       BigInt n, r, n_minus_1;
       u32bit s;
-      ModularReducer* reducer;
+      Fixed_Exponent_Power_Mod pow_mod;
+      Modular_Reducer reducer;
    };
-
-#endif // BOTAN_MINIMAL_BIGINT
+#endif
 
 }
 
 #endif
-}
+} // WRAPNS_LINE

@@ -1,6 +1,5 @@
-namespace QCA {
 /*
-Copyright (C) 1999-2004 The Botan Project. All rights reserved.
+Copyright (C) 1999-2007 The Botan Project. All rights reserved.
 
 Redistribution and use in source and binary forms, for any use, with or without
 modification, is permitted provided that the following conditions are met:
@@ -24,37 +23,32 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+// LICENSEHEADER_END
+namespace QCA { // WRAPNS_LINE
 /*************************************************
-* Qt Thread Mutex Header File                    *
-* (C) 1999-2004 The Botan Project                *
+* Qt Mutex Header File                           *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
-
-}
-#include <botan/mutex.h>
-namespace QCA {
 
 #ifndef BOTAN_EXT_MUTEX_QT_H__
 #define BOTAN_EXT_MUTEX_QT_H__
+
+} // WRAPNS_LINE
+#include <botan/mutex.h>
+namespace QCA { // WRAPNS_LINE
 
 namespace Botan {
 
 /*************************************************
 * Qt Mutex                                       *
 *************************************************/
-class Qt_Mutex : public Mutex
+class Qt_Mutex_Factory : public Mutex_Factory
    {
    public:
-      void lock();
-      void unlock();
-      Mutex* clone() const { return new Qt_Mutex; }
-
-      Qt_Mutex();
-      ~Qt_Mutex();
-   private:
-      struct mutex_wrapper* mutex;
+      Mutex* make();
    };
 
 }
 
 #endif
-}
+} // WRAPNS_LINE

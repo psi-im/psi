@@ -52,7 +52,7 @@ public:
 
 	QByteArray pre_stdin, pre_aux;
 #ifdef QPIPE_SECURE
-	QSecureArray pre_command;
+	SecureArray pre_command;
 #else
 	QByteArray pre_command;
 #endif
@@ -598,7 +598,7 @@ void GPGProc::writeAux(const QByteArray &a)
 }
 
 #ifdef QPIPE_SECURE
-void GPGProc::writeCommand(const QSecureArray &a)
+void GPGProc::writeCommand(const SecureArray &a)
 #else
 void GPGProc::writeCommand(const QByteArray &a)
 #endif

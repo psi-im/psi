@@ -29,6 +29,8 @@
 #include <QtCrypto>
 #include <QPixmap>
 #include <QDateTime>
+#include <QDir>
+#include <QFileInfo>
 #include <QFile>
 #include <QBuffer>
 #include <QPainter>

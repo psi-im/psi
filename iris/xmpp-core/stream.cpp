@@ -47,14 +47,13 @@
 #include <qtextstream.h>
 #include <qpointer.h>
 #include <qtimer.h>
-#include <qca.h>
-//Added by qt3to4:
 #include <QList>
 #include <Q3CString>
 #include <Q3PtrList>
 #include <stdlib.h>
 #include "bytestream.h"
 #include <QtCrypto>
+#include <QUrl>
 #include "simplesasl.h"
 #include "securestream.h"
 #include "protocol.h"
@@ -385,7 +384,7 @@ void ClientStream::setPassword(const QString &s)
 	}
 	else {
 		if(d->sasl)
-			d->sasl->setPassword(QSecureArray(s.utf8()));
+			d->sasl->setPassword(QCA::SecureArray(s.utf8()));
 	}
 }
 

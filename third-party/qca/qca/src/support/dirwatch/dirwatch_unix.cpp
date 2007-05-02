@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2005  Justin Karneges
+ * Copyright (C) 2003-2005  Justin Karneges <justin@affinix.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,6 +32,8 @@
 # include <sys/utsname.h>
 # define DNOTIFY_SIGNAL (SIGRTMIN + 8)
 #endif
+
+#include <QTimer>
 
 namespace QCA {
 

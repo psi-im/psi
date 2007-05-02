@@ -19,8 +19,11 @@
 
 #include "qca_support.h"
 
-#include <QtCore>
 #include "qpipe.h"
+
+#include <QPointer>
+#include <QTextCodec>
+#include <QTimer>
 
 #ifdef Q_OS_WIN
 # include <windows.h>
@@ -31,6 +34,8 @@
 #endif
 
 #define CONSOLEPROMPT_INPUT_MAX 56
+
+Q_DECLARE_METATYPE(QCA::SecureArray)
 
 namespace QCA {
 
@@ -120,12 +125,12 @@ public slots:
 		out.write(a);
 	}
 
-	QSecureArray readSecure(int bytes = -1)
+	QCA::SecureArray readSecure(int bytes = -1)
 	{
 		return in.readSecure(bytes);
 	}
 
-	void writeSecure(const QSecureArray &a)
+	void writeSecure(const QCA::SecureArray &a)
 	{
 		out.writeSecure(a);
 	}
@@ -206,7 +211,7 @@ public:
 
 	ConsoleThread(QObject *parent = 0) : SyncThread(parent)
 	{
-		qRegisterMetaType<QSecureArray>("QSecureArray");
+		qRegisterMetaType<SecureArray>("QCA::SecureArray");
 	}
 
 	~ConsoleThread()
@@ -255,14 +260,14 @@ public:
 		mycall(worker, "write", QVariantList() << a);
 	}
 
-	QSecureArray readSecure(int bytes = -1)
+	SecureArray readSecure(int bytes = -1)
 	{
-		return qVariantValue<QSecureArray>(mycall(worker, "readSecure", QVariantList() << bytes));
+		return qVariantValue<SecureArray>(mycall(worker, "readSecure", QVariantList() << bytes));
 	}
 
-	void writeSecure(const QSecureArray &a)
+	void writeSecure(const SecureArray &a)
 	{
-		mycall(worker, "writeSecure", QVariantList() << qVariantFromValue<QSecureArray>(a));
+		mycall(worker, "writeSecure", QVariantList() << qVariantFromValue<SecureArray>(a));
 	}
 
 	void closeOutput()
@@ -659,12 +664,12 @@ void ConsoleReference::write(const QByteArray &a)
 	d->thread->write(a);
 }
 
-QSecureArray ConsoleReference::readSecure(int bytes)
+SecureArray ConsoleReference::readSecure(int bytes)
 {
 	return d->thread->readSecure(bytes);
 }
 
-void ConsoleReference::writeSecure(const QSecureArray &a)
+void ConsoleReference::writeSecure(const SecureArray &a)
 {
 	d->thread->writeSecure(a);
 }
@@ -691,76 +696,87 @@ class ConsolePrompt::Private : public QObject
 {
 	Q_OBJECT
 public:
+	ConsolePrompt *q;
+
 	Synchronizer sync;
+	Console *con;
+	bool own_con;
 	ConsoleReference console;
 	QString promptStr;
-	QSecureArray result;
+	SecureArray result;
+	bool waiting;
 	int at;
 	bool done;
 	bool enterMode;
 	QTextCodec *codec;
 	QTextCodec::ConverterState *encstate, *decstate;
 
-	Private() : sync(this), console(this)
+	Private(ConsolePrompt *_q) : QObject(_q), q(_q), sync(_q), console(this)
 	{
 		connect(&console, SIGNAL(readyRead()), SLOT(con_readyRead()));
 		connect(&console, SIGNAL(inputClosed()), SLOT(con_inputClosed()));
+
+		con = 0;
+		own_con = false;
+		waiting = false;
 
 #ifdef Q_OS_WIN
 		codec = QTextCodec::codecForMib(106); // UTF-8
 #else
 		codec = QTextCodec::codecForLocale();
 #endif
-		encstate = new QTextCodec::ConverterState(QTextCodec::IgnoreHeader);
-		decstate = new QTextCodec::ConverterState(QTextCodec::IgnoreHeader);
+		encstate = 0;
+		decstate = 0;
 	}
 
 	~Private()
 	{
+		reset();
+	}
+
+	void reset()
+	{
 		delete encstate;
+		encstate = 0;
 		delete decstate;
+		decstate = 0;
+
+		console.stop();
+		if(own_con)
+		{
+			delete con;
+			con = 0;
+			own_con = false;
+		}
 	}
 
 	bool start(bool _enterMode)
 	{
-		bool tmp_console = false;
-		Console *tty = Console::ttyInstance();
-		if(!tty)
+		own_con = false;
+		con = Console::ttyInstance();
+		if(!con)
 		{
-			tty = new Console(Console::Tty, Console::ReadWrite, Console::Interactive);
-			tmp_console = true;
+			con = new Console(Console::Tty, Console::ReadWrite, Console::Interactive);
+			own_con = true;
 		}
 
 		result.clear();
 		at = 0;
 		done = false;
 		enterMode = _enterMode;
-		if(!console.start(tty, ConsoleReference::SecurityEnabled))
+
+		encstate = new QTextCodec::ConverterState(QTextCodec::IgnoreHeader);
+		decstate = new QTextCodec::ConverterState(QTextCodec::IgnoreHeader);
+
+		if(!console.start(con, ConsoleReference::SecurityEnabled))
 		{
-			// cleanup
-			if(tmp_console)
-				delete tty;
+			reset();
 			fprintf(stderr, "Console input not available or closed\n");
 			return false;
 		}
 
 		if(!enterMode)
 			writeString(promptStr + ": ");
-
-		// reparent the Console under us (for Synchronizer)
-		QObject *orig_parent = tty->parent();
-		tty->setParent(this);
-
-		// block while prompting
-		sync.waitForCondition();
-
-		// restore parent
-		tty->setParent(orig_parent);
-
-		// cleanup
-		console.stop();
-		if(tmp_console)
-			delete tty;
 
 		return true;
 	}
@@ -777,11 +793,7 @@ public:
 		if(c == '\r' || c == '\n')
 		{
 			writeString("\n");
-			if(!done)
-			{
-				sync.conditionMet();
-				done = true;
-			}
+			done = true;
 			return false;
 		}
 
@@ -813,12 +825,28 @@ public:
 		return true;
 	}
 
+	void convertToUtf8()
+	{
+		// convert result from utf16 to utf8, securely
+		QTextCodec *codec = QTextCodec::codecForMib(106);
+		QTextCodec::ConverterState cstate(QTextCodec::IgnoreHeader);
+		SecureArray out;
+		ushort *ustr = (ushort *)result.data();
+		int len = result.size() / sizeof(ushort);
+		for(int n = 0; n < len; ++n)
+		{
+			QChar c(ustr[n]);
+			out += codec->fromUnicode(&c, 1, &cstate);
+		}
+		result = out;
+	}
+
 private slots:
 	void con_readyRead()
 	{
 		while(console.bytesAvailable() > 0)
 		{
-			QSecureArray buf = console.readSecure(1);
+			SecureArray buf = console.readSecure(1);
 			if(buf.isEmpty())
 				break;
 
@@ -836,6 +864,18 @@ private slots:
 			if(quit)
 				break;
 		}
+
+		if(done)
+		{
+			if(!enterMode)
+				convertToUtf8();
+
+			reset();
+			if(waiting)
+				sync.conditionMet();
+			else
+				emit q->finished();
+		}
 	}
 
 	void con_inputClosed()
@@ -845,7 +885,12 @@ private slots:
 		{
 			done = true;
 			result.clear();
-			sync.conditionMet();
+
+			reset();
+			if(waiting)
+				sync.conditionMet();
+			else
+				emit q->finished();
 		}
 	}
 };
@@ -853,7 +898,7 @@ private slots:
 ConsolePrompt::ConsolePrompt(QObject *parent)
 :QObject(parent)
 {
-	d = new Private;
+	d = new Private(this);
 }
 
 ConsolePrompt::~ConsolePrompt()
@@ -861,32 +906,48 @@ ConsolePrompt::~ConsolePrompt()
 	delete d;
 }
 
-QSecureArray ConsolePrompt::getHidden(const QString &promptStr)
+void ConsolePrompt::getHidden(const QString &promptStr)
 {
-	ConsolePrompt p;
-	p.d->promptStr = promptStr;
-	if(!p.d->start(false))
-		return QSecureArray();
+	d->reset();
 
-	// convert result from utf16 to utf8, securely
-	QTextCodec *codec = QTextCodec::codecForMib(106);
-	QTextCodec::ConverterState cstate(QTextCodec::IgnoreHeader);
-	QSecureArray out;
-	ushort *ustr = (ushort *)p.d->result.data();
-	int len = p.d->result.size() / sizeof(ushort);
-	for(int n = 0; n < len; ++n)
+	d->promptStr = promptStr;
+	if(!d->start(false))
 	{
-		QChar c(ustr[n]);
-		out += codec->fromUnicode(&c, 1, &cstate);
+		QMetaObject::invokeMethod(this, "finished", Qt::QueuedConnection);
+		return;
 	}
-
-	return out;
 }
 
-void ConsolePrompt::waitForEnter()
+void ConsolePrompt::getEnter()
 {
-	ConsolePrompt p;
-	p.d->start(true);
+	d->reset();
+
+	if(!d->start(true))
+	{
+		QMetaObject::invokeMethod(this, "finished", Qt::QueuedConnection);
+		return;
+	}
+}
+
+void ConsolePrompt::waitForFinished()
+{
+	// reparent the Console under us (for Synchronizer)
+	QObject *orig_parent = d->con->parent();
+	d->con->setParent(this);
+
+	// block while prompting
+	d->waiting = true;
+	d->sync.waitForCondition();
+	d->waiting = false;
+
+	// restore parent (if con still exists)
+	if(d->con)
+		d->con->setParent(orig_parent);
+}
+
+SecureArray ConsolePrompt::result() const
+{
+	return d->result;
 }
 
 }

@@ -49,6 +49,7 @@ void AbstractLogDevice::logBinaryMessage( const QByteArray &blob, Logger::Severi
 Logger::Logger()
 {
         // d pointer?
+	m_logLevel = Logger::Notice;
 }
 
 Logger::~Logger()
@@ -87,20 +88,29 @@ void Logger::unregisterLogDevice(const QString &loggerName)
         }
 }
 
+void Logger::setLevel (Logger::Severity level)
+{
+	m_logLevel = level;
+}
+
 void Logger::logTextMessage(const QString &message, Logger::Severity severity )
 {
-        for ( int i = 0; i < m_loggers.size(); ++i )
-        {
-                m_loggers[i]->logTextMessage( message, severity );
-        }
+	if (severity <= level ()) {
+		for ( int i = 0; i < m_loggers.size(); ++i )
+		{
+			m_loggers[i]->logTextMessage( message, severity );
+		}
+	}
 }
 
 void Logger::logBinaryMessage(const QByteArray &blob, Logger::Severity severity )
 {
-        for ( int i = 0; i < m_loggers.size(); ++i )
-        {
-                m_loggers[i]->logBinaryMessage( blob, severity );
-        }
+	if (severity <= level ()) {
+		for ( int i = 0; i < m_loggers.size(); ++i )
+		{
+			m_loggers[i]->logBinaryMessage( blob, severity );
+		}
+	}
 }
 
 }

@@ -179,7 +179,7 @@ public:
 	QCA::SASL::Params need;
 	QCA::SASL::Params have;
 	QString user, authz, realm;
-	QSecureArray pass;
+	QCA::SecureArray pass;
 	Result result_;
 	QCA::SASL::AuthCondition authCondition_;
 	QByteArray result_to_net_, result_to_app_;
@@ -211,7 +211,7 @@ public:
 		have.realm = false;
 		user = QString();
 		authz = QString();
-		pass = QSecureArray();
+		pass = QCA::SecureArray();
 		realm = QString();
 	}
 
@@ -461,7 +461,7 @@ public:
 		return need;
 	}
 	
-	virtual void setClientParams(const QString *_user, const QString *_authzid, const QSecureArray *_pass, const QString *_realm) {
+	virtual void setClientParams(const QString *_user, const QString *_authzid, const QCA::SecureArray *_pass, const QString *_realm) {
 		if(_user) {
 			user = *_user;
 			need.user = false;

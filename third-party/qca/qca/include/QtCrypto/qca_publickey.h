@@ -124,6 +124,16 @@ namespace QCA
 	};
 
 	/**
+	   Encode a hash result in EMSA3 (PKCS#1) format
+
+	   This is a convenience function for providers that only have access
+	   to raw RSA signing (mainly smartcard providers).  This is a built-in
+	   function of QCA and does not utilize a provider.  SHA1, MD5, MD2,
+	   and RIPEMD160 are supported.
+	*/
+	QCA_EXPORT SecureArray emsa3Encode(const QString &hashName, const SecureArray &digest, int size = -1);
+
+	/**
 	   \class DLGroup qca_publickey.h QtCrypto
 
 	   A discrete logarithm group
@@ -140,7 +150,7 @@ namespace QCA
 		   \param q
 		   \param g
 		*/
-		DLGroup(const QBigInteger &p, const QBigInteger &q, const QBigInteger &g);
+		DLGroup(const BigInteger &p, const BigInteger &q, const BigInteger &g);
 
 		/**
 		   Construct a discrete logarithm group from raw parameters
@@ -148,7 +158,7 @@ namespace QCA
 		   \param p
 		   \param g
 		*/
-		DLGroup(const QBigInteger &p, const QBigInteger &g);
+		DLGroup(const BigInteger &p, const BigInteger &g);
 
 		/**
 		   Standard copy constructor
@@ -179,17 +189,17 @@ namespace QCA
 		/**
 		   Provide the p component of the group
 		*/
-		QBigInteger p() const;
+		BigInteger p() const;
 
 		/**
 		   Provide the q component of the group
 		*/
-		QBigInteger q() const;
+		BigInteger q() const;
 
 		/**
 		   Provide the g component of the group
 		*/
-		QBigInteger g() const;
+		BigInteger g() const;
 
 	private:
 		class Private;
@@ -527,7 +537,7 @@ namespace QCA
 		   \param a the message to encrypt
 		   \param alg the algorithm to use
 		*/
-		QSecureArray encrypt(const QSecureArray &a, EncryptionAlgorithm alg);
+		SecureArray encrypt(const SecureArray &a, EncryptionAlgorithm alg);
 
 		/**
 		   Initialise the signature verification process
@@ -542,7 +552,7 @@ namespace QCA
 
 		   \param a the array containing the data that should be added to the signature
 		*/
-		void update(const QSecureArray &a);
+		void update(const SecureArray &a);
 
 		/**
 		   Check the signature is valid for the message
@@ -565,7 +575,7 @@ namespace QCA
 
 		   \return true if the signature is correct
 		*/
-		bool validSignature(const QSecureArray &sig);
+		bool validSignature(const SecureArray &sig);
 
 		/**
 		   Single step message verification
@@ -580,13 +590,13 @@ namespace QCA
 		   
 		   \return true if the signature is valid for the message
 		*/
-		bool verifyMessage(const QSecureArray &a, const QSecureArray &sig, SignatureAlgorithm alg, SignatureFormat format = DefaultFormat);
+		bool verifyMessage(const SecureArray &a, const SecureArray &sig, SignatureAlgorithm alg, SignatureFormat format = DefaultFormat);
 
 
 		/**
 		   Export the key in Distinguished Encoding Rules (DER) format
 		*/
-		QSecureArray toDER() const;
+		SecureArray toDER() const;
 
 		/**
 		   Export the key in Privacy Enhanced Mail (PEM) format
@@ -627,7 +637,7 @@ namespace QCA
 		   \param result pointer to a variable, which returns whether the conversion succeeded (ConvertGood) or not
 		   \param provider the name of the provider to use for the import.
 		*/
-		static PublicKey fromDER(const QSecureArray &a, ConvertResult *result = 0, const QString &provider = QString());
+		static PublicKey fromDER(const SecureArray &a, ConvertResult *result = 0, const QString &provider = QString());
 
 		/**
 		   Import a key in Privacy Enhanced Mail (PEM) format
@@ -710,7 +720,7 @@ namespace QCA
 
 		   \sa fromPEMFile for an alternative method
 		*/
-		PrivateKey(const QString &fileName, const QSecureArray &passphrase = QSecureArray());
+		explicit PrivateKey(const QString &fileName, const SecureArray &passphrase = SecureArray());
 
 		/**
 		   Interpret / convert the key to an RSA key
@@ -749,7 +759,7 @@ namespace QCA
 		   \param out the plain text data
 		   \param alg the algorithm to use
 		*/
-		bool decrypt(const QSecureArray &in, QSecureArray *out, EncryptionAlgorithm alg);
+		bool decrypt(const SecureArray &in, SecureArray *out, EncryptionAlgorithm alg);
 
 		/**
 		   Initialise the message signature process
@@ -764,12 +774,12 @@ namespace QCA
 
 		   \param a the message to use to update the signature
 		*/
-		void update(const QSecureArray &a);
+		void update(const SecureArray &a);
 
 		/**
 		   The resulting signature
 		*/
-		QSecureArray signature();
+		SecureArray signature();
 
 		/**
 		   One step signature process
@@ -780,7 +790,7 @@ namespace QCA
 
 		   \return the signature
 		*/
-		QSecureArray signMessage(const QSecureArray &a, SignatureAlgorithm alg, SignatureFormat format = DefaultFormat);
+		SecureArray signMessage(const SecureArray &a, SignatureAlgorithm alg, SignatureFormat format = DefaultFormat);
 
 		/**
 		   Derive a shared secret key from a public key
@@ -806,7 +816,7 @@ namespace QCA
 
 		   \sa fromDER provides an inverse of toDER, converting the DER encoded key back to a PrivateKey
 		*/
-		QSecureArray toDER(const QSecureArray &passphrase = QSecureArray(), PBEAlgorithm pbe = PBEDefault) const;
+		SecureArray toDER(const SecureArray &passphrase = SecureArray(), PBEAlgorithm pbe = PBEDefault) const;
 
 		/**
 		   Export the key in Privacy Enhanced Mail (PEM) format
@@ -817,7 +827,7 @@ namespace QCA
 		   \sa toPEMFile provides a convenient way to save the PEM encoded key to a file
 		   \sa fromPEM provides an inverse of toPEM, converting the PEM encoded key back to a PrivateKey
 		*/
-		QString toPEM(const QSecureArray &passphrase = QSecureArray(), PBEAlgorithm pbe = PBEDefault) const;
+		QString toPEM(const SecureArray &passphrase = SecureArray(), PBEAlgorithm pbe = PBEDefault) const;
 
 		/**
 		   Export the key in Privacy Enhanced Mail (PEM) format to a file
@@ -831,7 +841,7 @@ namespace QCA
 		   \sa toPEM provides a convenient way to save the PEM encoded key to a file
 		   \sa fromPEM provides an inverse of toPEM, converting the PEM encoded key back to a PrivateKey
 		*/
-		bool toPEMFile(const QString &fileName, const QSecureArray &passphrase = QSecureArray(), PBEAlgorithm pbe = PBEDefault) const;
+		bool toPEMFile(const QString &fileName, const SecureArray &passphrase = SecureArray(), PBEAlgorithm pbe = PBEDefault) const;
 
 		/**
 		   Import the key from Distinguished Encoding Rules (DER) format
@@ -844,7 +854,7 @@ namespace QCA
 
 		   \sa toDER provides an inverse of fromDER, exporting the key to an array
 		*/ 
-		static PrivateKey fromDER(const QSecureArray &a, const QSecureArray &passphrase = QSecureArray(), ConvertResult *result = 0, const QString &provider = QString());
+		static PrivateKey fromDER(const SecureArray &a, const SecureArray &passphrase = SecureArray(), ConvertResult *result = 0, const QString &provider = QString());
 
 		/**
 		   Import the key from Privacy Enhanced Mail (PEM) format
@@ -857,7 +867,7 @@ namespace QCA
 
 		   \sa toPEM provides an inverse of fromPEM, exporting the key to a string in PEM encoding.
 		*/ 
-		static PrivateKey fromPEM(const QString &s, const QSecureArray &passphrase = QSecureArray(), ConvertResult *result = 0, const QString &provider = QString());
+		static PrivateKey fromPEM(const QString &s, const SecureArray &passphrase = SecureArray(), ConvertResult *result = 0, const QString &provider = QString());
 
 		/**
 		   Import the key in Privacy Enhanced Mail (PEM) format from a file
@@ -873,7 +883,7 @@ namespace QCA
 
 		   \note there is also a constructor form, that allows you to create the key directly
 		*/ 
-		static PrivateKey fromPEMFile(const QString &fileName, const QSecureArray &passphrase = QSecureArray(), ConvertResult *result = 0, const QString &provider = QString());
+		static PrivateKey fromPEMFile(const QString &fileName, const SecureArray &passphrase = SecureArray(), ConvertResult *result = 0, const QString &provider = QString());
 
 	protected:
 		/**
@@ -1031,7 +1041,7 @@ namespace QCA
 		   \param e the public key exponent
 		   \param provider the provider to use, if a particular provider is required
 		*/
-		RSAPublicKey(const QBigInteger &n, const QBigInteger &e, const QString &provider = QString());
+		RSAPublicKey(const BigInteger &n, const BigInteger &e, const QString &provider = QString());
 
 		/**
 		   Extract the public key components from an RSA private key
@@ -1046,14 +1056,14 @@ namespace QCA
 		   This value is the actual public key value (the product of p and q, the random prime numbers
 		   used to generate the RSA key), also known as the public modulus.
 		*/
-		QBigInteger n() const;
+		BigInteger n() const;
 
 		/**
 		   The public key exponent
 
 		   This value is the exponent chosen in the original key generator step
 		*/
-		QBigInteger e() const;
+		BigInteger e() const;
 	};
 
 	/**
@@ -1079,7 +1089,7 @@ namespace QCA
 		   \param d inverse of the exponent, modulo (p-1)(q-1)
 		   \param provider the provider to use, if a particular provider is required
 		*/
-		RSAPrivateKey(const QBigInteger &n, const QBigInteger &e, const QBigInteger &p, const QBigInteger &q, const QBigInteger &d, const QString &provider = QString());
+		RSAPrivateKey(const BigInteger &n, const BigInteger &e, const BigInteger &p, const BigInteger &q, const BigInteger &d, const QString &provider = QString());
 
 		/**
 		   The public key value
@@ -1087,29 +1097,29 @@ namespace QCA
 		   This value is the actual public key value (the product of p and q, the random prime numbers
 		   used to generate the RSA key), also known as the public modulus.
 		*/
-		QBigInteger n() const;
+		BigInteger n() const;
 
 		/**
 		   The public key exponent
 
 		   This value is the exponent chosen in the original key generator step
 		*/
-		QBigInteger e() const;
+		BigInteger e() const;
 
 		/**
 		   One of the two random primes used to generate the private key
 		*/
-		QBigInteger p() const;
+		BigInteger p() const;
 
 		/**
 		   The second of the two random primes used to generate the private key
 		*/
-		QBigInteger q() const;
+		BigInteger q() const;
 
 		/**
 		   The inverse of the exponent, module (p-1)(q-1)
 		*/
-		QBigInteger d() const;
+		BigInteger d() const;
 	};
 
 	/**
@@ -1132,7 +1142,7 @@ namespace QCA
 		   \param y the public random value
 		   \param provider the provider to use, if a specific provider is required
 		*/
-		DSAPublicKey(const DLGroup &domain, const QBigInteger &y, const QString &provider = QString());
+		DSAPublicKey(const DLGroup &domain, const BigInteger &y, const QString &provider = QString());
 
 		/**
 		   Create a DSA public key from a specified private key
@@ -1149,7 +1159,7 @@ namespace QCA
 		/**
 		   The public random value associated with this key
 		*/
-		QBigInteger y() const;
+		BigInteger y() const;
 	};
 
 	/**
@@ -1173,7 +1183,7 @@ namespace QCA
 		   \param x the private random value
 		   \param provider the provider to use, if a specific provider is required
 		*/
-		DSAPrivateKey(const DLGroup &domain, const QBigInteger &y, const QBigInteger &x, const QString &provider = QString());
+		DSAPrivateKey(const DLGroup &domain, const BigInteger &y, const BigInteger &x, const QString &provider = QString());
 
 		/**
 		   The discrete logarithm group that is being used
@@ -1183,12 +1193,12 @@ namespace QCA
 		/**
 		   the public random value
 		*/
-		QBigInteger y() const;
+		BigInteger y() const;
 
 		/**
 		   the private random value
 		*/
-		QBigInteger x() const;
+		BigInteger x() const;
 	};
 
 	/**
@@ -1211,7 +1221,7 @@ namespace QCA
 		   \param y the public random value
 		   \param provider the provider to use, if a specific provider is required
 		*/
-		DHPublicKey(const DLGroup &domain, const QBigInteger &y, const QString &provider = QString());
+		DHPublicKey(const DLGroup &domain, const BigInteger &y, const QString &provider = QString());
 
 		/**
 		   Create a Diffie-Hellman public key from a specified private key
@@ -1228,7 +1238,7 @@ namespace QCA
 		/**
 		   The public random value associated with this key
 		*/
-		QBigInteger y() const;
+		BigInteger y() const;
 	};
 
 	/**
@@ -1252,7 +1262,7 @@ namespace QCA
 		   \param x the private random value
 		   \param provider the provider to use, if a particular provider is required
 		*/
-		DHPrivateKey(const DLGroup &domain, const QBigInteger &y, const QBigInteger &x, const QString &provider = QString());
+		DHPrivateKey(const DLGroup &domain, const BigInteger &y, const BigInteger &x, const QString &provider = QString());
 
 		/**
 		   The discrete logarithm group that is being used
@@ -1262,12 +1272,12 @@ namespace QCA
 		/**
 		   The public random value associated with this key
 		*/
-		QBigInteger y() const;
+		BigInteger y() const;
 
 		/**
 		   The private random value associated with this key
 		*/
-		QBigInteger x() const;
+		BigInteger x() const;
 	};
 }
 

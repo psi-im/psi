@@ -19,7 +19,10 @@
 
 #include "qca_support.h"
 
-#include <QtCore>
+#include <QEventLoop>
+#include <QMetaMethod>
+#include <QMutexLocker>
+#include <QWaitCondition>
 
 namespace QCA {
 

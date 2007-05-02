@@ -16,8 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <QtCore>
 #include <QtCrypto>
+#include <QtPlugin>
+
 #ifdef Q_OS_WIN
 # include<windows.h>
 #endif
@@ -125,10 +126,10 @@ public:
 		return &_props;
 	}
 
-	virtual QSecureArray toBinary() const
+	virtual SecureArray toBinary() const
 	{
 		// TODO
-		return QSecureArray();
+		return SecureArray();
 	}
 
 	virtual QString toAscii() const
@@ -148,7 +149,7 @@ public:
 		return str;
 	}
 
-	virtual ConvertResult fromBinary(const QSecureArray &a)
+	virtual ConvertResult fromBinary(const SecureArray &a)
 	{
 		// TODO
 		Q_UNUSED(a);
@@ -168,7 +169,6 @@ class MyKeyStoreEntry : public KeyStoreEntryContext
 public:
 	KeyStoreEntry::Type item_type;
 	PGPKey pub, sec;
-	QString _id;
 	QString _storeId, _storeName;
 
 	MyKeyStoreEntry(const PGPKey &_pub, const PGPKey &_sec, Provider *p) : KeyStoreEntryContext(p)
@@ -206,7 +206,7 @@ public:
 
 	virtual QString id() const
 	{
-		return _id;
+		return pub.keyId();
 	}
 
 	virtual QString storeId() const
@@ -229,12 +229,12 @@ public:
 		return pub;
 	}
 
-	void makeId()
+	virtual QString serialize() const
 	{
 		QStringList out;
 		out += escape_string("qca-gnupg-1");
 		out += escape_string(pub.keyId());
-		_id = out.join(":");
+		return out.join(":");
 	}
 };
 
@@ -345,7 +345,7 @@ public:
 		return list;
 	}
 
-	virtual void submitPassphrase(const QSecureArray &a)
+	virtual void submitPassphrase(const SecureArray &a)
 	{
 		global_gpg->submitPassphrase(a.toByteArray());
 	}
@@ -477,18 +477,15 @@ public:
 			MyKeyStoreEntry *c = new MyKeyStoreEntry(pub, sec, provider());
 			c->_storeId = storeId(0);
 			c->_storeName = name(0);
-			c->makeId();
 			out.append(c);
 		}
 
 		return out;
 	}
 
-	virtual KeyStoreEntryContext *entryPassive(const QString &_storeId, const QString &entryId)
+	virtual KeyStoreEntryContext *entryPassive(const QString &serialized)
 	{
-		Q_UNUSED(_storeId);
-
-		QStringList parts = entryId.split(':');
+		QStringList parts = serialized.split(':');
 		if(parts.count() < 2)
 			return 0;
 		if(unescape_string(parts[0]) != "qca-gnupg-1")
@@ -559,11 +556,10 @@ public:
 		MyKeyStoreEntry *c = new MyKeyStoreEntry(pub, sec, provider());
 		c->_storeId = storeId(0);
 		c->_storeName = name(0);
-		c->_id = entryId;
 		return c;
 	}
 
-	virtual void submitPassphrase(int, int, const QSecureArray &a)
+	virtual void submitPassphrase(int, int, const SecureArray &a)
 	{
 		global_gpg->submitPassphrase(a.toByteArray());
 	}
@@ -690,15 +686,27 @@ public:
 	bool ok, wasSigned;
 	GpgOp::Error op_err;
 	SecureMessageSignature signer;
+	GpgOp gpg;
+	bool _finished;
 
 	PasswordAsker asker;
+	TokenAsker tokenAsker;
 
-	MyMessageContext(MyOpenPGPContext *_sms, Provider *p) : MessageContext(p, "pgpmsg")
+	MyMessageContext(MyOpenPGPContext *_sms, Provider *p) : MessageContext(p, "pgpmsg"), gpg(find_bin())
 	{
 		sms = _sms;
 		ok = false;
 		wasSigned = false;
-		//connect(&asker, SIGNAL(responseReady()), SLOT(asker_responseReady()));
+
+		connect(&gpg, SIGNAL(readyRead()), SLOT(gpg_readyRead()));
+		connect(&gpg, SIGNAL(bytesWritten(int)), SLOT(gpg_bytesWritten(int)));
+		connect(&gpg, SIGNAL(finished()), SLOT(gpg_finished()));
+		connect(&gpg, SIGNAL(needPassphrase(const QString &)), SLOT(gpg_needPassphrase(const QString &)));
+		connect(&gpg, SIGNAL(needCard()), SLOT(gpg_needCard()));
+		connect(&gpg, SIGNAL(readyReadDiagnosticText()), SLOT(gpg_readyReadDiagnosticText()));
+
+		connect(&asker, SIGNAL(responseReady()), SLOT(asker_responseReady()));
+		connect(&tokenAsker, SIGNAL(responseReady()), SLOT(tokenAsker_responseReady()));
 	}
 
 	virtual Provider::Context *clone() const
@@ -742,25 +750,9 @@ public:
 
 	virtual void start(SecureMessage::Format f, Operation op)
 	{
+		_finished = false;
 		format = f;
 		this->op = op;
-	}
-
-	virtual void update(const QByteArray &in)
-	{
-		this->in.append(in);
-	}
-
-	virtual QByteArray read()
-	{
-		QByteArray a = out;
-		out.clear();
-		return a;
-	}
-
-	virtual void end()
-	{
-		GpgOp gpg(find_bin());
 
 		if(format == SecureMessage::Ascii)
 			gpg.setAsciiFormat(true);
@@ -801,31 +793,37 @@ public:
 		{
 			gpg.doSignAndEncrypt(signerId, recipIds);
 		}
+	}
 
+	virtual void update(const QByteArray &in)
+	{
 		gpg.write(in);
-		gpg.endWrite();
-		while(1)
-		{
-			GpgOp::Event e = gpg.waitForEvent(-1);
-			if(e.type == GpgOp::Event::NeedPassphrase)
-			{
-				// TODO
+		//this->in.append(in);
+	}
 
-				QString keyId;
-				PGPKey sec = secretKeyFromId(e.keyId, provider());
-				if(!sec.isNull())
-					keyId = sec.keyId();
-				else
-					keyId = e.keyId;
-				//emit keyStoreList->storeNeedPassphrase(0, 0, keyId);
-				asker.ask(Event::StylePassphrase, keyStoreList->storeId(0), keyId, 0);
-				asker.waitForResponse();
-				global_gpg = &gpg;
-				keyStoreList->submitPassphrase(0, 0, asker.password());
-			}
-			else if(e.type == GpgOp::Event::Finished)
-				break;
-		}
+	virtual QByteArray read()
+	{
+		QByteArray a = out;
+		out.clear();
+		return a;
+	}
+
+	virtual void end()
+	{
+		gpg.endWrite();
+	}
+
+	void seterror()
+	{
+		gpg.reset();
+		_finished = true;
+		ok = false;
+		op_err = GpgOp::ErrorUnknown;
+	}
+
+	void complete()
+	{
+		_finished = true;
 
 		ok = gpg.success();
 		if(ok)
@@ -884,13 +882,68 @@ public:
 
 	virtual bool finished() const
 	{
-		// TODO
-		return true;
+		return _finished;
 	}
 
 	virtual void waitForFinished(int msecs)
 	{
+		// FIXME
 		Q_UNUSED(msecs);
+
+		while(1)
+		{
+			// TODO: handle token prompt events
+
+			GpgOp::Event e = gpg.waitForEvent(-1);
+			if(e.type == GpgOp::Event::NeedPassphrase)
+			{
+				// TODO
+
+				QString keyId;
+				PGPKey sec = secretKeyFromId(e.keyId, provider());
+				if(!sec.isNull())
+					keyId = sec.keyId();
+				else
+					keyId = e.keyId;
+				//emit keyStoreList->storeNeedPassphrase(0, 0, keyId);
+				QStringList out;
+				out += escape_string("qca-gnupg-1");
+				out += escape_string(keyId);
+				QString serialized = out.join(":");
+
+				KeyStoreEntry kse;
+				KeyStoreEntryContext *c = keyStoreList->entryPassive(serialized);
+				if(c)
+					kse.change(c);
+
+				asker.ask(Event::StylePassphrase, KeyStoreInfo(KeyStore::PGPKeyring, keyStoreList->storeId(0), keyStoreList->name(0)), kse, 0);
+				asker.waitForResponse();
+
+				if(!asker.accepted())
+				{
+					seterror();
+					return;
+				}
+
+				gpg.submitPassphrase(asker.password());
+			}
+			else if(e.type == GpgOp::Event::NeedCard)
+			{
+				tokenAsker.ask(KeyStoreInfo(KeyStore::PGPKeyring, keyStoreList->storeId(0), keyStoreList->name(0)), KeyStoreEntry(), 0);
+
+				if(!tokenAsker.accepted())
+				{
+					seterror();
+					return;
+				}
+
+				gpg.cardOkay();
+			}
+			else if(e.type == GpgOp::Event::Finished)
+				break;
+		}
+
+		complete();
 	}
 
 	virtual bool success() const
@@ -941,12 +994,83 @@ public:
 		return list;
 	}
 
-/*private slots:
+private slots:
+	void gpg_readyRead()
+	{
+		emit updated();
+	}
+
+	void gpg_bytesWritten(int bytes)
+	{
+		Q_UNUSED(bytes);
+
+		// do nothing
+	}
+
+	void gpg_finished()
+	{
+		complete();
+		emit updated();
+	}
+
+	void gpg_needPassphrase(const QString &in_keyId)
+	{
+		// FIXME: copied from above, clean up later
+
+		QString keyId;
+		PGPKey sec = secretKeyFromId(in_keyId, provider());
+		if(!sec.isNull())
+			keyId = sec.keyId();
+		else
+			keyId = in_keyId;
+		//emit keyStoreList->storeNeedPassphrase(0, 0, keyId);
+		QStringList out;
+		out += escape_string("qca-gnupg-1");
+		out += escape_string(keyId);
+		QString serialized = out.join(":");
+
+		KeyStoreEntry kse;
+		KeyStoreEntryContext *c = keyStoreList->entryPassive(serialized);
+		if(c)
+			kse.change(c);
+
+		asker.ask(Event::StylePassphrase, KeyStoreInfo(KeyStore::PGPKeyring, keyStoreList->storeId(0), keyStoreList->name(0)), kse, 0);
+	}
+
+	void gpg_needCard()
+	{
+		tokenAsker.ask(KeyStoreInfo(KeyStore::PGPKeyring, keyStoreList->storeId(0), keyStoreList->name(0)), KeyStoreEntry(), 0);
+	}
+
+	void gpg_readyReadDiagnosticText()
+	{
+		// TODO ?
+	}
+
 	void asker_responseReady()
 	{
-		QSecureArray a = asker.password();
-		global_gpg->submitPassphrase(a.toByteArray());
-	}*/
+		if(!asker.accepted())
+		{
+			seterror();
+			emit finished();
+			return;
+		}
+
+		SecureArray a = asker.password();
+		gpg.submitPassphrase(a);
+	}
+
+	void tokenAsker_responseReady()
+	{
+		if(!tokenAsker.accepted())
+		{
+			seterror();
+			emit finished();
+			return;
+		}
+
+		gpg.cardOkay();
+	}
 };
 
 MessageContext *MyOpenPGPContext::createMessage()
@@ -997,7 +1121,7 @@ public:
 	}
 };
 
-class gnupgPlugin : public QCAPlugin
+class gnupgPlugin : public QObject, public QCAPlugin
 {
 	Q_OBJECT
 	Q_INTERFACES(QCAPlugin)

@@ -1,6 +1,5 @@
-namespace QCA {
 /*
-Copyright (C) 1999-2004 The Botan Project. All rights reserved.
+Copyright (C) 1999-2007 The Botan Project. All rights reserved.
 
 Redistribution and use in source and binary forms, for any use, with or without
 modification, is permitted provided that the following conditions are met:
@@ -24,31 +23,36 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+// LICENSEHEADER_END
+namespace QCA { // WRAPNS_LINE
 /*************************************************
 * Memory Mapping Allocator Header File           *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
-
-}
-#include <botan/secalloc.h>
-namespace QCA {
 
 #ifndef BOTAN_EXT_MMAP_ALLOCATOR_H__
 #define BOTAN_EXT_MMAP_ALLOCATOR_H__
+
+} // WRAPNS_LINE
+#include <botan/mem_pool.h>
+namespace QCA { // WRAPNS_LINE
 
 namespace Botan {
 
 /*************************************************
 * Memory Mapping Allocator                       *
 *************************************************/
-class MemoryMapping_Allocator : public SecureAllocator
+class MemoryMapping_Allocator : public Pooling_Allocator
    {
+   public:
+      MemoryMapping_Allocator() : Pooling_Allocator(64*1024, false) {}
+      std::string type() const { return "mmap"; }
    private:
-      void* alloc_block(u32bit) const;
-      void dealloc_block(void*, u32bit) const;
+      void* alloc_block(u32bit);
+      void dealloc_block(void*, u32bit);
    };
 
 }
 
 #endif
-}
+} // WRAPNS_LINE

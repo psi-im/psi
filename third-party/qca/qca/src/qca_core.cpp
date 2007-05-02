@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2005  Justin Karneges <justin@affinix.com>
+ * Copyright (C) 2003-2007  Justin Karneges <justin@affinix.com>
  * Copyright (C) 2004,2005  Brad Hards <bradh@frogmouth.net>
  *
  * This library is free software; you can redistribute it and/or
@@ -20,12 +20,19 @@
 
 #include "qca_core.h"
 
-#include <QtCore>
 #include "qca_plugin.h"
 #include "qca_textfilter.h"
 #include "qca_cert.h"
 #include "qca_keystore.h"
 #include "qcaprovider.h"
+
+// for qAddPostRoutine
+#include <QCoreApplication>
+
+#include <QMutex>
+#include <QSettings>
+#include <QVariantMap>
+#include <QWaitCondition>
 
 #ifdef Q_OS_UNIX
 # include <unistd.h>
@@ -55,11 +62,16 @@ public:
 	bool secmem;
 	bool first_scan;
 	QString app_name;
-	ProviderManager manager;
+	QMutex name_mutex;
+	ProviderManager *manager;
+	QMutex scan_mutex;
 	Random *rng;
+	QMutex rng_mutex;
 	Logger *logger;
 	QVariantMap properties;
+	QMutex prop_mutex;
 	QMap<QString,QVariantMap> config;
+	QMutex config_mutex;
 
 	Global()
 	{
@@ -68,25 +80,39 @@ public:
 		first_scan = false;
 		rng = 0;
 		logger = new Logger;
+		manager = new ProviderManager;
 	}
 
 	~Global()
 	{
 		KeyStoreManager::shutdown();
-		delete logger;
 		delete rng;
+		rng = 0;
+		delete manager;
+		manager = 0;
+		delete logger;
+		logger = 0;
 	}
 
 	void ensure_first_scan()
 	{
+		scan_mutex.lock();
 		if(!first_scan)
-			scan();
+		{
+			first_scan = true;
+			manager->scan();
+			scan_mutex.unlock();
+			return;
+		}
+		scan_mutex.unlock();
 	}
 
 	void scan()
 	{
+		scan_mutex.lock();
 		first_scan = true;
-		manager.scan();
+		manager->scan();
+		scan_mutex.unlock();
 	}
 
 	void ksm_scan()
@@ -100,9 +126,9 @@ static Global *global = 0;
 
 static bool features_have(const QStringList &have, const QStringList &want)
 {
-	for(QStringList::ConstIterator it = want.begin(); it != want.end(); ++it)
+	foreach(const QString &i, want)
 	{
-		if(!have.contains(*it))
+		if(!have.contains(i))
 			return false;
 	}
 	return true;
@@ -138,7 +164,6 @@ void init(MemoryMode mode, int prealloc)
 
 	global = new Global;
 	global->secmem = secmem;
-	global->manager.setDefault(create_default_provider()); // manager owns it
 	++(global->refs);
 
 	// for maximum setuid safety, qca should be initialized before qapp:
@@ -155,6 +180,8 @@ void init(MemoryMode mode, int prealloc)
 	// plugins that have active objects (notably KeyStore).  we'll use a
 	// post routine to force qca to deinit first.
 	qAddPostRoutine(deinit);
+
+	global->manager->setDefault(create_default_provider()); // manager owns it
 }
 
 void init()
@@ -176,32 +203,60 @@ void deinit()
 	}
 }
 
-bool haveSecureMemory()
+static bool global_check()
 {
-	QMutexLocker locker(global_mutex());
 	Q_ASSERT(global);
 	if(!global)
+		return false;
+	return true;
+}
+
+QMutex *global_random_mutex()
+{
+	return &global->rng_mutex;
+}
+
+Random *global_random()
+{
+	if(!global->rng)
+		global->rng = new Random;
+	return global->rng;
+}
+
+bool haveSecureMemory()
+{
+	if(!global_check())
 		return false;
 
 	return global->secmem;
 }
 
+bool haveSecureRandom()
+{
+	if(!global_check())
+		return false;
+
+	QMutexLocker locker(global_random_mutex());
+	if(global_random()->provider()->name() != "default")
+		return true;
+
+	return false;
+}
+
 bool isSupported(const QStringList &features, const QString &provider)
 {
-	QMutexLocker locker(global_mutex());
-	Q_ASSERT(global);
-	if(!global)
+	if(!global_check())
 		return false;
 
 	// single
 	if(!provider.isEmpty())
 	{
-		Provider *p = global->manager.find(provider);
+		Provider *p = global->manager->find(provider);
 		if(!p)
 		{
 			// ok, try scanning for new stuff
 			global->scan();
-			p = global->manager.find(provider);
+			p = global->manager->find(provider);
 		}
 
 		if(p && features_have(p->features(), features))
@@ -210,13 +265,13 @@ bool isSupported(const QStringList &features, const QString &provider)
 	// all
 	else
 	{
-		if(features_have(global->manager.allFeatures(), features))
+		if(features_have(global->manager->allFeatures(), features))
 			return true;
 
 		// ok, try scanning for new stuff
 		global->scan();
 
-		if(features_have(global->manager.allFeatures(), features))
+		if(features_have(global->manager->allFeatures(), features))
 			return true;
 	}
 	return false;
@@ -229,162 +284,138 @@ bool isSupported(const char *features, const QString &provider)
 
 QStringList supportedFeatures()
 {
-	QMutexLocker locker(global_mutex());
-	Q_ASSERT(global);
-	if(!global)
+	if(!global_check())
 		return QStringList();
 
 	// query all features
 	global->scan();
-	return global->manager.allFeatures();
+	return global->manager->allFeatures();
 }
 
 QStringList defaultFeatures()
 {
-	QMutexLocker locker(global_mutex());
-	Q_ASSERT(global);
-	if(!global)
+	if(!global_check())
 		return QStringList();
 
-	return global->manager.find("default")->features();
+	return global->manager->find("default")->features();
 }
 
 ProviderList providers()
 {
-	QMutexLocker locker(global_mutex());
-	Q_ASSERT(global);
-	if(!global)
+	if(!global_check())
 		return ProviderList();
 
 	global->ensure_first_scan();
 
-	return global->manager.providers();
+	return global->manager->providers();
 }
 
 bool insertProvider(Provider *p, int priority)
 {
-	QMutexLocker locker(global_mutex());
-	Q_ASSERT(global);
-	if(!global)
+	if(!global_check())
 		return false;
 
 	global->ensure_first_scan();
 
-	return global->manager.add(p, priority);
+	return global->manager->add(p, priority);
 }
 
 void setProviderPriority(const QString &name, int priority)
 {
-	QMutexLocker locker(global_mutex());
-	Q_ASSERT(global);
-	if(!global)
+	if(!global_check())
 		return;
 
 	global->ensure_first_scan();
 
-	global->manager.changePriority(name, priority);
+	global->manager->changePriority(name, priority);
 }
 
 int providerPriority(const QString &name)
 {
-	QMutexLocker locker(global_mutex());
-	Q_ASSERT(global);
-	if(!global)
+	if(!global_check())
 		return -1;
 
 	global->ensure_first_scan();
 
-	return global->manager.getPriority(name);
+	return global->manager->getPriority(name);
 }
 
 Provider *findProvider(const QString &name)
 {
-	QMutexLocker locker(global_mutex());
-	Q_ASSERT(global);
-	if(!global)
+	if(!global_check())
 		return 0;
 
 	global->ensure_first_scan();
 
-	return global->manager.find(name);
+	return global->manager->find(name);
 }
 
 Provider *defaultProvider()
 {
-	QMutexLocker locker(global_mutex());
-	Q_ASSERT(global);
-	if(!global)
+	if(!global_check())
 		return 0;
 
-	return global->manager.find("default");
+	return global->manager->find("default");
 }
 
 void scanForPlugins()
 {
-	{
-		QMutexLocker locker(global_mutex());
-		Q_ASSERT(global);
-		if(!global)
-			return;
+	if(!global_check())
+		return;
 
-		global->scan();
-	}
+	global->scan();
 	global->ksm_scan();
 }
 
 void unloadAllPlugins()
 {
-	QMutexLocker locker(global_mutex());
-	Q_ASSERT(global);
-	if(!global)
+	if(!global_check())
 		return;
 
 	// if the global_rng was owned by a plugin, then delete it
-	if(global->rng && (global->rng->provider() != global->manager.find("default")))
+	global->rng_mutex.lock();
+	if(global->rng && (global->rng->provider() != global->manager->find("default")))
 	{
 		delete global->rng;
 		global->rng = 0;
 	}
+	global->rng_mutex.unlock();
 
-	global->manager.unloadAll();
+	global->manager->unloadAll();
 }
 
 QString pluginDiagnosticText()
 {
-	QMutexLocker locker(global_mutex());
-	Q_ASSERT(global);
-	if(!global)
+	if(!global_check())
 		return QString();
 
-	return global->manager.diagnosticText();
+	return global->manager->diagnosticText();
 }
 
 void clearPluginDiagnosticText()
 {
-	QMutexLocker locker(global_mutex());
-	Q_ASSERT(global);
-	if(!global)
+	if(!global_check())
 		return;
 
-	global->manager.clearDiagnosticText();
+	global->manager->clearDiagnosticText();
 }
 
 void setProperty(const QString &name, const QVariant &value)
 {
-	QMutexLocker locker(global_mutex());
-	Q_ASSERT(global);
-	if(!global)
+	if(!global_check())
 		return;
+
+	QMutexLocker locker(&global->prop_mutex);
 
 	global->properties[name] = value;
 }
 
 QVariant getProperty(const QString &name)
 {
-	QMutexLocker locker(global_mutex());
-	Q_ASSERT(global);
-	if(!global)
+	if(!global_check())
 		return QVariant();
+
+	QMutexLocker locker(&global->prop_mutex);
 
 	return global->properties.value(name);
 }
@@ -406,7 +437,7 @@ static bool configIsValid(const QVariantMap &config)
 
 static QVariantMap readConfig(const QString &name)
 {
-	QSettings settings("Affinix", "QCA");
+	QSettings settings("Affinix", "QCA2");
 	settings.beginGroup("ProviderConfig");
 	QStringList providerNames = settings.value("providerNames").toStringList();
 	if(!providerNames.contains(name))
@@ -426,7 +457,7 @@ static QVariantMap readConfig(const QString &name)
 
 static bool writeConfig(const QString &name, const QVariantMap &config, bool systemWide = false)
 {
-	QSettings settings(QSettings::NativeFormat, systemWide ? QSettings::SystemScope : QSettings::UserScope, "Affinix", "QCA");
+	QSettings settings(QSettings::NativeFormat, systemWide ? QSettings::SystemScope : QSettings::UserScope, "Affinix", "QCA2");
 	settings.beginGroup("ProviderConfig");
 
 	// version
@@ -454,17 +485,15 @@ static bool writeConfig(const QString &name, const QVariantMap &config, bool sys
 
 void setProviderConfig(const QString &name, const QVariantMap &config)
 {
+	if(!global_check())
+		return;
+
 	if(!configIsValid(config))
 		return;
 
-	{
-		QMutexLocker locker(global_mutex());
-		Q_ASSERT(global);
-		if(!global)
-			return;
-
-		global->config[name] = config;
-	}
+	global->config_mutex.lock();
+	global->config[name] = config;
+	global->config_mutex.unlock();
 
 	Provider *p = findProvider(name);
 	if(p)
@@ -473,21 +502,21 @@ void setProviderConfig(const QString &name, const QVariantMap &config)
 
 QVariantMap getProviderConfig(const QString &name)
 {
+	if(!global_check())
+		return QVariantMap();
+
 	QVariantMap conf;
 
-	{
-		QMutexLocker locker(global_mutex());
-		Q_ASSERT(global);
-		if(!global)
-			return QVariantMap();
+	global->config_mutex.lock();
 
-		// try loading from persistent storage
-		conf = readConfig(name);
+	// try loading from persistent storage
+	conf = readConfig(name);
 
-		// if not, load the one from memory
-		if(conf.isEmpty())
-			conf = global->config.value(name);
-	}
+	// if not, load the one from memory
+	if(conf.isEmpty())
+		conf = global->config.value(name);
+
+	global->config_mutex.unlock();
 
 	// if provider doesn't exist or doesn't have a valid config form,
 	//   use the config we loaded
@@ -513,10 +542,10 @@ QVariantMap getProviderConfig(const QString &name)
 
 void saveProviderConfig(const QString &name)
 {
-	QMutexLocker locker(global_mutex());
-	Q_ASSERT(global);
-	if(!global)
+	if(!global_check())
 		return;
+
+	QMutexLocker locker(&global->config_mutex);
 
 	QVariantMap conf = global->config.value(name);
 	if(conf.isEmpty())
@@ -525,43 +554,57 @@ void saveProviderConfig(const QString &name)
 	writeConfig(name, conf);
 }
 
-Random & globalRNG()
+QVariantMap getProviderConfig_internal(Provider *p)
 {
-	{
-		QMutexLocker locker(global_mutex());
-		Q_ASSERT(global);
-	}
+	QVariantMap conf;
+	QString name = p->name();
 
-	if(!global->rng)
-		global->rng = new Random;
-	return *global->rng;
+	global->config_mutex.lock();
+
+	// try loading from persistent storage
+	conf = readConfig(name);
+
+	// if not, load the one from memory
+	if(conf.isEmpty())
+		conf = global->config.value(name);
+
+	global->config_mutex.unlock();
+
+	// if provider doesn't exist or doesn't have a valid config form,
+	//   use the config we loaded
+	QVariantMap pconf = p->defaultConfig();
+	if(!configIsValid(pconf))
+		return conf;
+
+	// if the config loaded was empty, use the provider's config
+	if(conf.isEmpty())
+		return pconf;
+
+	// if the config formtype doesn't match the provider's formtype,
+	//   then use the provider's
+	if(pconf["formtype"] != conf["formtype"])
+		return pconf;
+
+	// otherwise, use the config loaded
+	return conf;
 }
 
-void setGlobalRNG(const QString &provider)
+QString globalRandomProvider()
 {
-	{
-		QMutexLocker locker(global_mutex());
-		Q_ASSERT(global);
-	}
+	QMutexLocker locker(global_random_mutex());
+	return global_random()->provider()->name();
+}
 
+void setGlobalRandomProvider(const QString &provider)
+{
+	QMutexLocker locker(global_random_mutex());
 	delete global->rng;
 	global->rng = new Random(provider);
 }
 
 Logger *logger()
 {
-	QMutexLocker locker(global_mutex());
-	Q_ASSERT(global);
-
 	return global->logger;
-}
-
-void logText( const QString &message, Logger::Severity severity )
-{
-	QMutexLocker locker(global_mutex());
-	Q_ASSERT(global);
-
-        global->logger->logTextMessage( message, severity );
 }
 
 bool haveSystemStore()
@@ -614,25 +657,25 @@ CertificateCollection systemStore()
 
 QString appName()
 {
-	QMutexLocker locker(global_mutex());
-	Q_ASSERT(global);
-	if(!global)
+	if(!global_check())
 		return QString();
+
+	QMutexLocker locker(&global->name_mutex);
 
 	return global->app_name;
 }
 
 void setAppName(const QString &s)
 {
-	QMutexLocker locker(global_mutex());
-	Q_ASSERT(global);
-	if(!global)
+	if(!global_check())
 		return;
+
+	QMutexLocker locker(&global->name_mutex);
 
 	global->app_name = s;
 }
 
-QString arrayToHex(const QSecureArray &a)
+QString arrayToHex(const SecureArray &a)
 {
 	return Hex().arrayToString(a);
 }
@@ -649,53 +692,44 @@ static Provider *getProviderForType(const QString &type, const QString &provider
 	if(!provider.isEmpty())
 	{
 		// try using specific provider
-		p = global->manager.findFor(provider, type);
+		p = global->manager->findFor(provider, type);
 		if(!p)
 		{
 			// maybe this provider is new, so scan and try again
 			global->scan();
 			scanned = true;
-			p = global->manager.findFor(provider, type);
+			p = global->manager->findFor(provider, type);
 		}
 	}
 	if(!p)
 	{
 		// try using some other provider
-		p = global->manager.findFor(QString(), type);
+		p = global->manager->findFor(QString(), type);
 		if((!p || p->name() == "default") && !scanned)
 		{
 			// maybe there are new providers, so scan and try again
 			//   before giving up or using default
 			global->scan();
 			scanned = true;
-			p = global->manager.findFor(QString(), type);
+			p = global->manager->findFor(QString(), type);
 		}
 	}
 
 	return p;
 }
 
-Provider::Context *doCreateContext(Provider *p, const QString &type)
+static inline Provider::Context *doCreateContext(Provider *p, const QString &type)
 {
-	// load config at the first context create.  this is mainly
-	//   to work around locking issues present during actual
-	//   plugin loading
-	QVariantMap conf = getProviderConfig(p->name());
-	if(!conf.isEmpty())
-		p->configChanged(conf);
-
 	return p->createContext(type);
 }
 
 Provider::Context *getContext(const QString &type, const QString &provider)
 {
+	if(!global_check())
+		return 0;
+
 	Provider *p;
 	{
-		QMutexLocker locker(global_mutex());
-		Q_ASSERT(global);
-		if(!global)
-			return 0;
-
 		p = getProviderForType(type, provider);
 		if(!p)
 			return 0;
@@ -706,14 +740,12 @@ Provider::Context *getContext(const QString &type, const QString &provider)
 
 Provider::Context *getContext(const QString &type, Provider *_p)
 {
+	if(!global_check())
+		return 0;
+
 	Provider *p;
 	{
-		QMutexLocker locker(global_mutex());
-		Q_ASSERT(global);
-		if(!global)
-			return 0;
-
-		p = global->manager.find(_p);
+		p = global->manager->find(_p);
 		if(!p)
 			return 0;
 	}
@@ -824,12 +856,12 @@ int PKeyBase::maximumEncryptSize(EncryptionAlgorithm) const
 	return 0;
 }
 
-QSecureArray PKeyBase::encrypt(const QSecureArray &, EncryptionAlgorithm)
+SecureArray PKeyBase::encrypt(const SecureArray &, EncryptionAlgorithm)
 {
-	return QSecureArray();
+	return SecureArray();
 }
 
-bool PKeyBase::decrypt(const QSecureArray &, QSecureArray *, EncryptionAlgorithm)
+bool PKeyBase::decrypt(const SecureArray &, SecureArray *, EncryptionAlgorithm)
 {
 	return false;
 }
@@ -842,16 +874,16 @@ void PKeyBase::startVerify(SignatureAlgorithm, SignatureFormat)
 {
 }
 
-void PKeyBase::update(const QSecureArray &)
+void PKeyBase::update(const SecureArray &)
 {
 }
 
-QSecureArray PKeyBase::endSign()
+SecureArray PKeyBase::endSign()
 {
-	return QSecureArray();
+	return SecureArray();
 }
 
-bool PKeyBase::endVerify(const QSecureArray &)
+bool PKeyBase::endVerify(const SecureArray &)
 {
 	return false;
 }
@@ -864,9 +896,9 @@ SymmetricKey PKeyBase::deriveKey(const PKeyBase &)
 //----------------------------------------------------------------------------
 // PKeyContext
 //----------------------------------------------------------------------------
-QSecureArray PKeyContext::publicToDER() const
+SecureArray PKeyContext::publicToDER() const
 {
-	return QSecureArray();
+	return SecureArray();
 }
 
 QString PKeyContext::publicToPEM() const
@@ -874,7 +906,7 @@ QString PKeyContext::publicToPEM() const
 	return QString();
 }
 
-ConvertResult PKeyContext::publicFromDER(const QSecureArray &)
+ConvertResult PKeyContext::publicFromDER(const SecureArray &)
 {
 	return ErrorDecode;
 }
@@ -884,22 +916,22 @@ ConvertResult PKeyContext::publicFromPEM(const QString &)
 	return ErrorDecode;
 }
 
-QSecureArray PKeyContext::privateToDER(const QSecureArray &, PBEAlgorithm) const
+SecureArray PKeyContext::privateToDER(const SecureArray &, PBEAlgorithm) const
 {
-	return QSecureArray();
+	return SecureArray();
 }
 
-QString PKeyContext::privateToPEM(const QSecureArray &, PBEAlgorithm) const
+QString PKeyContext::privateToPEM(const SecureArray &, PBEAlgorithm) const
 {
 	return QString();
 }
 
-ConvertResult PKeyContext::privateFromDER(const QSecureArray &, const QSecureArray &)
+ConvertResult PKeyContext::privateFromDER(const SecureArray &, const SecureArray &)
 {
 	return ErrorDecode;
 }
 
-ConvertResult PKeyContext::privateFromPEM(const QString &, const QSecureArray &)
+ConvertResult PKeyContext::privateFromPEM(const QString &, const SecureArray &)
 {
 	return ErrorDecode;
 }
@@ -971,44 +1003,35 @@ KeyStoreEntryContext *KeyStoreListContext::entry(int id, const QString &entryId)
 	return out;
 }
 
-KeyStoreEntryContext *KeyStoreListContext::entryPassive(const QString &storeId, const QString &entryId)
+KeyStoreEntryContext *KeyStoreListContext::entryPassive(const QString &serialized)
 {
-	Q_UNUSED(storeId);
-	Q_UNUSED(entryId);
+	Q_UNUSED(serialized);
 	return 0;
 }
 
-bool KeyStoreListContext::writeEntry(int, const KeyBundle &)
+QString KeyStoreListContext::writeEntry(int, const KeyBundle &)
 {
-	return false;
+	return QString();
 }
 
-bool KeyStoreListContext::writeEntry(int, const Certificate &)
+QString KeyStoreListContext::writeEntry(int, const Certificate &)
 {
-	return false;
+	return QString();
 }
 
-bool KeyStoreListContext::writeEntry(int, const CRL &)
+QString KeyStoreListContext::writeEntry(int, const CRL &)
 {
-	return false;
+	return QString();
 }
 
-PGPKey KeyStoreListContext::writeEntry(int, const PGPKey &)
+QString KeyStoreListContext::writeEntry(int, const PGPKey &)
 {
-	return PGPKey();
+	return QString();
 }
 
 bool KeyStoreListContext::removeEntry(int, const QString &)
 {
 	return false;
-}
-
-void KeyStoreListContext::submitPassphrase(int, int, const QSecureArray &)
-{
-}
-
-void KeyStoreListContext::rejectPassphraseRequest(int, int)
-{
 }
 
 //----------------------------------------------------------------------------
@@ -1036,7 +1059,7 @@ BufferedComputation::~BufferedComputation()
 {
 }
 
-QSecureArray BufferedComputation::process(const QSecureArray &a)
+SecureArray BufferedComputation::process(const SecureArray &a)
 {
 	clear();
 	update(a);
@@ -1050,15 +1073,15 @@ Filter::~Filter()
 {
 }
 
-QSecureArray Filter::process(const QSecureArray &a)
+SecureArray Filter::process(const SecureArray &a)
 {
 	clear();
-	QSecureArray buf = update(a);
+	SecureArray buf = update(a);
 	if(!ok())
-		return QSecureArray();
-	QSecureArray fin = final();
+		return SecureArray();
+	SecureArray fin = final();
 	if(!ok())
-		return QSecureArray();
+		return SecureArray();
 	int oldsize = buf.size();
 	buf.resize(oldsize + fin.size());
 	memcpy(buf.data() + oldsize, fin.data(), fin.size());
@@ -1186,17 +1209,17 @@ SymmetricKey::SymmetricKey()
 
 SymmetricKey::SymmetricKey(int size)
 {
-	set(globalRNG().nextBytes(size));
+	set(Random::randomArray(size));
 }
 
-SymmetricKey::SymmetricKey(const QSecureArray &a)
+SymmetricKey::SymmetricKey(const SecureArray &a)
 {
 	set(a);
 }
 
 SymmetricKey::SymmetricKey(const QByteArray &a)
 {
-	set(QSecureArray(a));
+	set(SecureArray(a));
 }
 
 /* from libgcrypt-1.2.0 */
@@ -1272,7 +1295,7 @@ bool SymmetricKey::isWeakDESKey()
 {
 	if(size() != 8)
 		return false; // dubious
-	QSecureArray workingCopy(8);
+	SecureArray workingCopy(8);
 	// clear parity bits
 	for(uint i = 0; i < 8; i++)
 		workingCopy[i] = (data()[i]) & 0xfe;
@@ -1294,17 +1317,17 @@ InitializationVector::InitializationVector()
 
 InitializationVector::InitializationVector(int size)
 {
-	set(globalRNG().nextBytes(size));
+	set(Random::randomArray(size));
 }
 
-InitializationVector::InitializationVector(const QSecureArray &a)
+InitializationVector::InitializationVector(const SecureArray &a)
 {
 	set(a);
 }
 
 InitializationVector::InitializationVector(const QByteArray &a)
 {
-	set(QSecureArray(a));
+	set(SecureArray(a));
 }
 
 //----------------------------------------------------------------------------
@@ -1316,7 +1339,8 @@ public:
 	Type type;
 	Source source;
 	PasswordStyle style;
-	QString ks, kse;
+	KeyStoreInfo ksi;
+	KeyStoreEntry kse;
 	QString fname;
 	void *ptr;
 };
@@ -1360,12 +1384,12 @@ Event::PasswordStyle Event::passwordStyle() const
 	return d->style;
 }
 
-QString Event::keyStoreId() const
+KeyStoreInfo Event::keyStoreInfo() const
 {
-	return d->ks;
+	return d->ksi;
 }
 
-QString Event::keyStoreEntryId() const
+KeyStoreEntry Event::keyStoreEntry() const
 {
 	return d->kse;
 }
@@ -1380,15 +1404,15 @@ void *Event::ptr() const
 	return d->ptr;
 }
 
-void Event::setPasswordKeyStore(PasswordStyle pstyle, const QString &keyStoreId, const QString &keyStoreEntryId, void *ptr)
+void Event::setPasswordKeyStore(PasswordStyle pstyle, const KeyStoreInfo &keyStoreInfo, const KeyStoreEntry &keyStoreEntry, void *ptr)
 {
 	if(!d)
 		d = new Private;
 	d->type = Password;
 	d->source = KeyStore;
 	d->style = pstyle;
-	d->ks = keyStoreId;
-	d->kse = keyStoreEntryId;
+	d->ksi = keyStoreInfo;
+	d->kse = keyStoreEntry;
 	d->fname = QString();
 	d->ptr = ptr;
 }
@@ -1400,68 +1424,58 @@ void Event::setPasswordData(PasswordStyle pstyle, const QString &fileName, void 
 	d->type = Password;
 	d->source = Data;
 	d->style = pstyle;
-	d->ks = QString();
-	d->kse = QString();
+	d->ksi = KeyStoreInfo();
+	d->kse = KeyStoreEntry();
 	d->fname = fileName;
 	d->ptr = ptr;
 }
 
-void Event::setToken(const QString &keyStoreEntryId, void *ptr)
+void Event::setToken(const KeyStoreInfo &keyStoreInfo, const KeyStoreEntry &keyStoreEntry, void *ptr)
 {
 	if(!d)
 		d = new Private;
 	d->type = Token;
 	d->source = KeyStore;
 	d->style = StylePassword;
-	d->ks = QString();
-	d->kse = keyStoreEntryId;
+	d->ksi = keyStoreInfo;
+	d->kse = keyStoreEntry;
 	d->fname = QString();
 	d->ptr = ptr;
 }
 
 //----------------------------------------------------------------------------
-// EventHandler
+// EventGlobal
 //----------------------------------------------------------------------------
-class AskerItem : public QObject
+class HandlerBase : public QObject
 {
 	Q_OBJECT
 public:
-	enum Type { Password, Token };
+	HandlerBase(QObject *parent = 0) : QObject(parent)
+	{
+	}
 
-	Type type;
-	PasswordAsker *passwordAsker;
-	TokenAsker *tokenAsker;
-
-	bool accepted;
-	QSecureArray password;
-	int id;
-	bool waiting;
-	bool done;
-	QTimer readyTrigger;
-
-	QMutex m;
-	QWaitCondition w;
-
-	QThread *emitFrom;
-	QList<EventHandler*> handlers;
-
-	AskerItem(QObject *parent = 0);
-	~AskerItem();
-
-	void ask(const Event &e);
-	void handlerGone(EventHandler *h);
-	void unreg();
-	void waitForFinished();
-	void finish();
-
-	// handler calls this
-	void accept_password(const QSecureArray &_password);
-	void accept_token();
-	void reject();
-
-private slots:
-	void ready_timeout();
+protected slots:
+	virtual void ask(int id, const QCA::Event &e) = 0;
 };
+
+class AskerBase : public QObject
+{
+	Q_OBJECT
+public:
+	AskerBase(QObject *parent = 0) : QObject(parent)
+	{
+	}
+
+	virtual void set_accepted(const SecureArray &password) = 0;
+	virtual void set_rejected() = 0;
+};
+
+static void handler_add(HandlerBase *h, int pos = -1);
+static void handler_remove(HandlerBase *h);
+static void handler_accept(HandlerBase *h, int id, const SecureArray &password);
+static void handler_reject(HandlerBase *h, int id);
+static bool asker_ask(AskerBase *a, const Event &e);
+static void asker_cancel(AskerBase *a);
 
 Q_GLOBAL_STATIC(QMutex, g_event_mutex)
 
@@ -1471,78 +1485,295 @@ static EventGlobal *g_event = 0;
 class EventGlobal
 {
 public:
-	QList<EventHandler*> handlers;
+	class HandlerItem
+	{
+	public:
+		HandlerBase *h;
+		QList<int> ids;
+	};
+
+	class AskerItem
+	{
+	public:
+		AskerBase *a;
+		int id;
+		Event event;
+		int handler_pos;
+	};
+
+	QList<HandlerItem> handlers;
+	QList<AskerItem> askers;
+
 	int next_id;
 
 	EventGlobal()
 	{
+		qRegisterMetaType<Event>("QCA::Event");
+		qRegisterMetaType<SecureArray>("QCA::SecureArray");
 		next_id = 0;
 	}
 
-	static void ensureInit()
+	int findHandlerItem(HandlerBase *h)
 	{
-		if(g_event)
-			return;
-
-		g_event = new EventGlobal;
+		for(int n = 0; n < handlers.count(); ++n)
+		{
+			if(handlers[n].h == h)
+				return n;
+		}
+		return -1;
 	}
 
-	static void tryCleanup()
+	int findAskerItem(AskerBase *a)
 	{
-		if(!g_event)
-			return;
-
-		if(g_event->handlers.isEmpty() /*&& g_event->askers.isEmpty()*/)
+		for(int n = 0; n < askers.count(); ++n)
 		{
-			delete g_event;
-			g_event = 0;
+			if(askers[n].a == a)
+				return n;
+		}
+		return -1;
+	}
+
+	int findAskerItemById(int id)
+	{
+		for(int n = 0; n < askers.count(); ++n)
+		{
+			if(askers[n].id == id)
+				return n;
+		}
+		return -1;
+	}
+
+	void ask(int asker_at)
+	{
+		AskerItem &i = askers[asker_at];
+
+		g_event->handlers[i.handler_pos].ids += i.id;
+		QMetaObject::invokeMethod(handlers[i.handler_pos].h, "ask",
+			Qt::QueuedConnection, Q_ARG(int, i.id),
+			Q_ARG(QCA::Event, i.event));
+	}
+
+	void reject(int asker_at)
+	{
+		AskerItem &i = askers[asker_at];
+
+		// look for the next usable handler
+		int pos = -1;
+		for(int n = i.handler_pos + 1; n < g_event->handlers.count(); ++n)
+		{
+			// handler and asker can't be in the same thread
+			//Q_ASSERT(g_event->handlers[n].h->thread() != i.a->thread());
+			//if(g_event->handlers[n].h->thread() != i.a->thread())
+			//{
+				pos = n;
+				break;
+			//}
+		}
+
+		// if there is one, try it
+		if(pos != -1)
+		{
+			i.handler_pos = pos;
+			ask(asker_at);
+		}
+		// if not, send official reject
+		else
+		{
+			AskerBase *asker = i.a;
+			askers.removeAt(asker_at);
+
+			asker->set_rejected();
 		}
 	}
 };
 
-class EventHandlerPrivate
+void handler_add(HandlerBase *h, int pos)
 {
-public:
-	bool started;
-	QHash<int,AskerItem*> askers;
-	QMutex m;
+	QMutexLocker locker(g_event_mutex());
+	if(!g_event)
+		g_event = new EventGlobal;
 
-	EventHandlerPrivate()
+	EventGlobal::HandlerItem i;
+	i.h = h;
+
+	if(pos != -1)
+	{
+		g_event->handlers.insert(pos, i);
+
+		// adjust handler positions
+		for(int n = 0; n < g_event->askers.count(); ++n)
+		{
+			if(g_event->askers[n].handler_pos >= pos)
+				g_event->askers[n].handler_pos++;
+		}
+	}
+	else
+		g_event->handlers += i;
+}
+
+void handler_remove(HandlerBase *h)
+{
+	QMutexLocker locker(g_event_mutex());
+	Q_ASSERT(g_event);
+	if(!g_event)
+		return;
+	int at = g_event->findHandlerItem(h);
+	Q_ASSERT(at != -1);
+	if(at == -1)
+		return;
+
+	QList<int> ids = g_event->handlers[at].ids;
+	g_event->handlers.removeAt(at);
+
+	// adjust handler positions within askers
+	for(int n = 0; n < g_event->askers.count(); ++n)
+	{
+		if(g_event->askers[n].handler_pos >= at)
+			g_event->askers[n].handler_pos--;
+	}
+
+	// reject all askers
+	foreach(int id, ids)
+	{
+		int asker_at = g_event->findAskerItemById(id);
+		Q_ASSERT(asker_at != -1);
+
+		g_event->reject(asker_at);
+	}
+
+	if(g_event->handlers.isEmpty())
+	{
+		delete g_event;
+		g_event = 0;
+	}
+}
+
+void handler_accept(HandlerBase *h, int id, const SecureArray &password)
+{
+	QMutexLocker locker(g_event_mutex());
+	Q_ASSERT(g_event);
+	if(!g_event)
+		return;
+	int at = g_event->findHandlerItem(h);
+	Q_ASSERT(at != -1);
+	if(at == -1)
+		return;
+	int asker_at = g_event->findAskerItemById(id);
+	Q_ASSERT(asker_at != -1);
+	if(asker_at == -1)
+		return;
+
+	g_event->handlers[at].ids.removeAll(g_event->askers[asker_at].id);
+
+	AskerBase *asker = g_event->askers[asker_at].a;
+	asker->set_accepted(password);
+}
+
+void handler_reject(HandlerBase *h, int id)
+{
+	QMutexLocker locker(g_event_mutex());
+	Q_ASSERT(g_event);
+	if(!g_event)
+		return;
+	int at = g_event->findHandlerItem(h);
+	Q_ASSERT(at != -1);
+	if(at == -1)
+		return;
+	int asker_at = g_event->findAskerItemById(id);
+	Q_ASSERT(asker_at != -1);
+	if(asker_at == -1)
+		return;
+
+	g_event->handlers[at].ids.removeAll(g_event->askers[asker_at].id);
+
+	g_event->reject(asker_at);
+}
+
+bool asker_ask(AskerBase *a, const Event &e)
+{
+	QMutexLocker locker(g_event_mutex());
+	if(!g_event)
+		return false;
+
+	int pos = -1;
+	for(int n = 0; n < g_event->handlers.count(); ++n)
+	{
+		// handler and asker can't be in the same thread
+		//Q_ASSERT(g_event->handlers[n].h->thread() != a->thread());
+		//if(g_event->handlers[n].h->thread() != a->thread())
+		//{
+			pos = n;
+			break;
+		//}
+	}
+	if(pos == -1)
+		return false;
+
+	EventGlobal::AskerItem i;
+	i.a = a;
+	i.id = g_event->next_id++;
+	i.event = e;
+	i.handler_pos = pos;
+	g_event->askers += i;
+	int asker_at = g_event->askers.count() - 1;
+
+	g_event->ask(asker_at);
+	return true;
+}
+
+void asker_cancel(AskerBase *a)
+{
+	QMutexLocker locker(g_event_mutex());
+	if(!g_event)
+		return;
+	int at = g_event->findAskerItem(a);
+	if(at == -1)
+		return;
+
+	for(int n = 0; n < g_event->handlers.count(); ++n)
+		g_event->handlers[n].ids.removeAll(g_event->askers[at].id);
+
+	g_event->askers.removeAt(at);
+}
+
+//----------------------------------------------------------------------------
+// EventHandler
+//----------------------------------------------------------------------------
+class EventHandler::Private : public HandlerBase
+{
+	Q_OBJECT
+public:
+	EventHandler *q;
+	bool started;
+	QList<int> activeIds;
+
+	Private(EventHandler *_q) : HandlerBase(_q), q(_q)
 	{
 		started = false;
+	}
+
+public slots:
+	virtual void ask(int id, const QCA::Event &e)
+	{
+		activeIds += id;
+		emit q->eventReady(id, e);
 	}
 };
 
 EventHandler::EventHandler(QObject *parent)
 :QObject(parent)
 {
-	d = new EventHandlerPrivate;
+	d = new Private(this);
 }
 
 EventHandler::~EventHandler()
 {
-	//MX QMutexLocker locker(&d->m);
-
 	if(d->started)
 	{
-		for(int n = 0; n < d->askers.count(); ++n)
-		{
-			d->askers[n]->handlerGone(this);
-		}
+		foreach(int id, d->activeIds)
+			handler_reject(d, id);
 
-		/*if(d->askers.isEmpty())
-		{
-			// if this flag is set, then AskerItem::ask() will do
-			//   the global cleanup instead of us.
-
-			//g_event->deleteLaterList += this;
-		}
-		else
-		{*/
-			QMutexLocker locker(g_event_mutex());
-			g_event->handlers.removeAll(this);
-			EventGlobal::tryCleanup();
-		//}
+		handler_remove(d);
 	}
 
 	delete d;
@@ -1550,65 +1781,151 @@ EventHandler::~EventHandler()
 
 void EventHandler::start()
 {
-	QMutexLocker locker(g_event_mutex());
-	EventGlobal::ensureInit();
 	d->started = true;
-	g_event->handlers += this;
+	handler_add(d);
 }
 
-void EventHandler::submitPassword(int id, const QSecureArray &password)
+void EventHandler::submitPassword(int id, const SecureArray &password)
 {
-	//MX QMutexLocker locker(&d->m);
-	AskerItem *ai = d->askers.value(id);
-	if(!ai || ai->type != AskerItem::Password)
+	if(!d->activeIds.contains(id))
 		return;
 
-	ai->accept_password(password);
+	d->activeIds.removeAll(id);
+	handler_accept(d, id, password);
 }
 
 void EventHandler::tokenOkay(int id)
 {
-	//MX QMutexLocker locker(&d->m);
-	AskerItem *ai = d->askers.value(id);
-	if(!ai || ai->type != AskerItem::Token)
+	if(!d->activeIds.contains(id))
 		return;
 
-	ai->accept_token();
+	d->activeIds.removeAll(id);
+	handler_accept(d, id, SecureArray());
 }
 
 void EventHandler::reject(int id)
 {
-	//MX QMutexLocker locker(&d->m);
-	AskerItem *ai = d->askers.value(id);
-	if(!ai)
+	if(!d->activeIds.contains(id))
 		return;
 
-	ai->reject();
+	d->activeIds.removeAll(id);
+	handler_reject(d, id);
 }
 
 //----------------------------------------------------------------------------
 // PasswordAsker
 //----------------------------------------------------------------------------
-class PasswordAskerPrivate
+class AskerPrivate : public AskerBase
 {
+	Q_OBJECT
 public:
-	AskerItem *ai;
+	enum Type { Password, Token };
 
-	PasswordAskerPrivate()
+	Type type;
+	PasswordAsker *passwordAsker;
+	TokenAsker *tokenAsker;
+
+	QMutex m;
+	QWaitCondition w;
+
+	bool accepted;
+	SecureArray password;
+	bool waiting;
+	bool done;
+
+	AskerPrivate(PasswordAsker *parent) : AskerBase(parent)
 	{
-		ai = 0;
+		passwordAsker = parent;
+		tokenAsker = 0;
+		type = Password;
+		accepted = false;
+		waiting = false;
+		done = true;
 	}
 
-	~PasswordAskerPrivate()
+	AskerPrivate(TokenAsker *parent) : AskerBase(parent)
 	{
-		delete ai;
+		passwordAsker = 0;
+		tokenAsker = parent;
+		type = Token;
+		accepted = false;
+		waiting = false;
+		done = true;
+	}
+
+	void ask(const Event &e)
+	{
+		accepted = false;
+		waiting = false;
+		done = false;
+		password.clear();
+
+		if(!asker_ask(this, e))
+		{
+			done = true;
+			QMetaObject::invokeMethod(this, "emitResponseReady", Qt::QueuedConnection);
+		}
+	}
+
+	void cancel()
+	{
+		if(!done)
+			asker_cancel(this);
+	}
+
+	virtual void set_accepted(const SecureArray &_password)
+	{
+		QMutexLocker locker(&m);
+		accepted = true;
+		password = _password;
+		done = true;
+		if(waiting)
+			w.wakeOne();
+		else
+			QMetaObject::invokeMethod(this, "emitResponseReady", Qt::QueuedConnection);
+	}
+
+	virtual void set_rejected()
+	{
+		QMutexLocker locker(&m);
+		done = true;
+		if(waiting)
+			w.wakeOne();
+		else
+			QMetaObject::invokeMethod(this, "emitResponseReady", Qt::QueuedConnection);
+	}
+
+	void waitForResponse()
+	{
+		QMutexLocker locker(&m);
+		if(done)
+			return;
+		waiting = true;
+		w.wait(&m);
+		waiting = false;
+	}
+
+public slots:
+	virtual void emitResponseReady() = 0;
+};
+
+class PasswordAsker::Private : public AskerPrivate
+{
+public:
+	Private(PasswordAsker *_q) : AskerPrivate(_q)
+	{
+	}
+
+	virtual void emitResponseReady()
+	{
+		emit passwordAsker->responseReady();
 	}
 };
 
 PasswordAsker::PasswordAsker(QObject *parent)
 :QObject(parent)
 {
-	d = new PasswordAskerPrivate;
+	d = new Private(this);
 }
 
 PasswordAsker::~PasswordAsker()
@@ -1616,72 +1933,60 @@ PasswordAsker::~PasswordAsker()
 	delete d;
 }
 
-void PasswordAsker::ask(Event::PasswordStyle pstyle, const QString &keyStoreId, const QString &keyStoreEntryId, void *ptr)
+void PasswordAsker::ask(Event::PasswordStyle pstyle, const KeyStoreInfo &keyStoreInfo, const KeyStoreEntry &keyStoreEntry, void *ptr)
 {
 	Event e;
-	e.setPasswordKeyStore(pstyle, keyStoreId, keyStoreEntryId, ptr);
-	delete d->ai;
-	d->ai = new AskerItem(this);
-	d->ai->type = AskerItem::Password;
-	d->ai->passwordAsker = this;
-	d->ai->ask(e);
+	e.setPasswordKeyStore(pstyle, keyStoreInfo, keyStoreEntry, ptr);
+	d->ask(e);
 }
 
 void PasswordAsker::ask(Event::PasswordStyle pstyle, const QString &fileName, void *ptr)
 {
 	Event e;
 	e.setPasswordData(pstyle, fileName, ptr);
-	delete d->ai;
-	d->ai = new AskerItem(this);
-	d->ai->type = AskerItem::Password;
-	d->ai->passwordAsker = this;
-	d->ai->ask(e);
+	d->ask(e);
 }
 
 void PasswordAsker::cancel()
 {
-	delete d->ai;
-	d->ai = 0;
+	d->cancel();
 }
 
 void PasswordAsker::waitForResponse()
 {
-	d->ai->waitForFinished();
+	d->waitForResponse();
 }
 
 bool PasswordAsker::accepted() const
 {
-	return d->ai->accepted;
+	return d->accepted;
 }
 
-QSecureArray PasswordAsker::password() const
+SecureArray PasswordAsker::password() const
 {
-	return d->ai->password;
+	return d->password;
 }
 
 //----------------------------------------------------------------------------
 // TokenAsker
 //----------------------------------------------------------------------------
-class TokenAskerPrivate
+class TokenAsker::Private : public AskerPrivate
 {
 public:
-	AskerItem *ai;
-
-	TokenAskerPrivate()
+	Private(TokenAsker *_q) : AskerPrivate(_q)
 	{
-		ai = 0;
 	}
 
-	~TokenAskerPrivate()
+	virtual void emitResponseReady()
 	{
-		delete ai;
+		emit tokenAsker->responseReady();
 	}
 };
 
 TokenAsker::TokenAsker(QObject *parent)
 :QObject(parent)
 {
-	d = new TokenAskerPrivate;
+	d = new Private(this);
 }
 
 TokenAsker::~TokenAsker()
@@ -1689,228 +1994,26 @@ TokenAsker::~TokenAsker()
 	delete d;
 }
 
-void TokenAsker::ask(const QString &keyStoreEntryId, void *ptr)
+void TokenAsker::ask(const KeyStoreInfo &keyStoreInfo, const KeyStoreEntry &keyStoreEntry, void *ptr)
 {
 	Event e;
-	e.setToken(keyStoreEntryId, ptr);
-	delete d->ai;
-	d->ai = new AskerItem(this);
-	d->ai->type = AskerItem::Token;
-	d->ai->tokenAsker = this;
-	d->ai->ask(e);
+	e.setToken(keyStoreInfo, keyStoreEntry, ptr);
+	d->ask(e);
 }
 
 void TokenAsker::cancel()
 {
-	delete d->ai;
-	d->ai = 0;
+	d->cancel();
 }
 
 void TokenAsker::waitForResponse()
 {
-	d->ai->waitForFinished();
+	d->waitForResponse();
 }
 
 bool TokenAsker::accepted() const
 {
-	return d->ai->accepted;
-}
-
-//----------------------------------------------------------------------------
-// AskerItem
-//----------------------------------------------------------------------------
-AskerItem::AskerItem(QObject *parent)
-:QObject(parent), readyTrigger(this)
-{
-	readyTrigger.setSingleShot(true);
-	connect(&readyTrigger, SIGNAL(timeout()), SLOT(ready_timeout()));
-	done = true;
-	emitFrom = 0;
-}
-
-AskerItem::~AskerItem()
-{
-	if(!done)
-		unreg();
-}
-
-void AskerItem::ask(const Event &e)
-{
-	accepted = false;
-	password = QSecureArray();
-	waiting = false;
-	done = false;
-
-	{
-		//MX QMutexLocker locker(g_event_mutex());
-
-		// no handlers?  reject the request then
-		if(!g_event || g_event->handlers.isEmpty())
-		{
-			done = true;
-			readyTrigger.start();
-			return;
-		}
-
-		id = g_event->next_id++;
-		handlers = g_event->handlers;
-
-		//g_event->askers.insert(id, this);
-	}
-
-	/*{
-		QMutexLocker locker(g_event_mutex());
-		++g_event->emitrefs;
-	}*/
-
-	{
-		//MX QMutexLocker locker(&m);
-		for(int n = 0; n < handlers.count(); ++n)
-		{
-			//MX QMutexLocker locker(&handlers[n]->d->m);
-			handlers[n]->d->askers.insert(id, this);
-		}
-
-		emitFrom = QThread::currentThread();
-
-		for(int n = 0; n < handlers.count(); ++n)
-		{
-			EventHandler *h = handlers[n];
-			if(!h)
-				continue;
-
-			emit h->eventReady(id, e);
-
-			/*{
-				QMutexLocker locker(g_event->deleteLaterMutex);
-				if(g_event->deleteLaterList.contains(h))
-				{
-					g_event->deleteLaterList.removeAll(this);
-					g_event->handlers.removeAll(this);
-					--n; // adjust iterator
-				}
-				else
-					h->d->sync_emit = false;
-			}*/
-
-			if(done)
-				break;
-		}
-
-		emitFrom = 0;
-	}
-
-	/*{
-		QMutexLocker locker(g_event_mutex());
-		--g_event->emitrefs;
-		if(g_event->emitrefs == 0)
-		{*/
-			// clean up null handlers
-			for(int n = 0; n < handlers.count(); ++n)
-			{
-				if(handlers[n] == 0)
-				{
-					handlers.removeAt(n);
-					--n; // adjust position
-				}
-			}
-		/*}
-	}*/
-
-	if(done)
-	{
-		//MX QMutexLocker locker(&m);
-		unreg();
-		readyTrigger.start();
-		return;
-	}
-}
-
-void AskerItem::handlerGone(EventHandler *h)
-{
-	if(QThread::currentThread() == emitFrom)
-	{
-		int n = handlers.indexOf(h);
-		if(n != -1)
-			handlers[n] = 0;
-	}
-	else
-	{
-		//MX QMutexLocker locker(&m);
-		handlers.removeAll(h);
-	}
-}
-
-void AskerItem::unreg()
-{
-	//if(!done)
-	//{
-		//QMutexLocker locker(&m);
-		for(int n = 0; n < handlers.count(); ++n)
-		{
-			//MX QMutexLocker locker(&handlers[n]->d->m);
-			handlers[n]->d->askers.remove(id);
-		}
-	//}
-}
-
-void AskerItem::waitForFinished()
-{
-	//MX QMutexLocker locker(&m);
-
-	if(done)
-	{
-		readyTrigger.stop();
-		return;
-	}
-
-	waiting = true;
-	w.wait(&m);
-
-	unreg();
-}
-
-void AskerItem::finish()
-{
-	done = true;
-	if(waiting)
-		w.wakeOne();
-	else
-	{
-		if(type == Password)
-			emit passwordAsker->responseReady();
-		else // Token
-			emit tokenAsker->responseReady();
-	}
-}
-
-void AskerItem::accept_password(const QSecureArray &_password)
-{
-	//MX QMutexLocker locker(&m);
-	accepted = true;
-	password = _password;
-	finish();
-}
-
-void AskerItem::accept_token()
-{
-	//MX QMutexLocker locker(&m);
-	accepted = true;
-	finish();
-}
-
-void AskerItem::reject()
-{
-	//MX QMutexLocker locker(&m);
-	finish();
-}
-
-void AskerItem::ready_timeout()
-{
-	if(type == Password)
-		emit passwordAsker->responseReady();
-	else // Token
-		emit tokenAsker->responseReady();
+	return d->accepted;
 }
 
 }

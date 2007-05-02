@@ -1,6 +1,5 @@
-namespace QCA {
 /*
-Copyright (C) 1999-2004 The Botan Project. All rights reserved.
+Copyright (C) 1999-2007 The Botan Project. All rights reserved.
 
 Redistribution and use in source and binary forms, for any use, with or without
 modification, is permitted provided that the following conditions are met:
@@ -24,22 +23,19 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+// LICENSEHEADER_END
+namespace QCA { // WRAPNS_LINE
 /*************************************************
 * Low Level MPI Types Header File                *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_MPI_TYPES_H__
 #define BOTAN_MPI_TYPES_H__
 
-#ifndef BOTAN_NO_CONF_H
-}
-# include <botan/config.h>
-namespace QCA {
-#endif
-}
+} // WRAPNS_LINE
 #include <botan/types.h>
-namespace QCA {
+namespace QCA { // WRAPNS_LINE
 
 namespace Botan {
 
@@ -62,4 +58,4 @@ const word MP_WORD_MAX = MP_WORD_MASK;
 }
 
 #endif
-}
+} // WRAPNS_LINE

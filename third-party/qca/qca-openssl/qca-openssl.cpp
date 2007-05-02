@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004  Justin Karneges
+ * Copyright (C) 2004  Justin Karneges  <justin@affinix.com>
  * Copyright (C) 2004-2006  Brad Hards <bradh@frogmouth.net>
  *
  * This library is free software; you can redistribute it and/or
@@ -18,8 +18,10 @@
  *
  */
 
-#include <QtCore>
 #include <QtCrypto>
+
+#include <QDebug>
+#include <QtCore/qplugin.h>
 
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
@@ -29,7 +31,6 @@
 #include <iostream>
 
 #include <openssl/rand.h>
-#include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
@@ -48,11 +49,11 @@ namespace opensslQCAPlugin {
 //----------------------------------------------------------------------------
 // Util
 //----------------------------------------------------------------------------
-static QSecureArray bio2buf(BIO *b)
+static SecureArray bio2buf(BIO *b)
 {
-	QSecureArray buf;
+	SecureArray buf;
 	while(1) {
-		QSecureArray block(1024);
+		SecureArray block(1024);
 		int ret = BIO_read(b, block.data(), block.size());
 		if(ret <= 0)
 			break;
@@ -82,35 +83,35 @@ static QByteArray bio2ba(BIO *b)
 	return buf;
 }
 
-static QBigInteger bn2bi(BIGNUM *n)
+static BigInteger bn2bi(BIGNUM *n)
 {
-	QSecureArray buf(BN_num_bytes(n) + 1);
+	SecureArray buf(BN_num_bytes(n) + 1);
 	buf[0] = 0; // positive
 	BN_bn2bin(n, (unsigned char *)buf.data() + 1);
-	return QBigInteger(buf);
+	return BigInteger(buf);
 }
 
-static BIGNUM *bi2bn(const QBigInteger &n)
+static BIGNUM *bi2bn(const BigInteger &n)
 {
-	QSecureArray buf = n.toArray();
+	SecureArray buf = n.toArray();
 	return BN_bin2bn((const unsigned char *)buf.data(), buf.size(), NULL);
 }
 
-static QSecureArray dsasig_der_to_raw(const QSecureArray &in)
+static SecureArray dsasig_der_to_raw(const SecureArray &in)
 {
 	DSA_SIG *sig = DSA_SIG_new();
 	const unsigned char *inp = (const unsigned char *)in.data();
 	d2i_DSA_SIG(&sig, &inp, in.size());
 
-	QSecureArray part_r(20);
-	QSecureArray part_s(20);
+	SecureArray part_r(20);
+	SecureArray part_s(20);
 	memset(part_r.data(), 0, 20);
 	memset(part_s.data(), 0, 20);
 	unsigned char *p = (unsigned char *)part_r.data();
 	BN_bn2bin(sig->r, p);
 	p = (unsigned char *)part_s.data();
 	BN_bn2bin(sig->s, p);
-	QSecureArray result;
+	SecureArray result;
 	result.append(part_r);
 	result.append(part_s);
 
@@ -118,21 +119,21 @@ static QSecureArray dsasig_der_to_raw(const QSecureArray &in)
 	return result;
 }
 
-static QSecureArray dsasig_raw_to_der(const QSecureArray &in)
+static SecureArray dsasig_raw_to_der(const SecureArray &in)
 {
 	if(in.size() != 40)
-		return QSecureArray();
+		return SecureArray();
 
 	DSA_SIG *sig = DSA_SIG_new();
-	QSecureArray part_r(20);
-	QSecureArray part_s(20);
+	SecureArray part_r(20);
+	SecureArray part_s(20);
 	memcpy(part_r.data(), in.data(), 20);
 	memcpy(part_s.data(), in.data() + 20, 20);
 	sig->r = BN_bin2bn((const unsigned char *)part_r.data(), part_r.size(), NULL);
 	sig->s = BN_bin2bn((const unsigned char *)part_s.data(), part_s.size(), NULL);
 
 	int len = i2d_DSA_SIG(sig, NULL);
-	QSecureArray result(len);
+	SecureArray result(len);
 	unsigned char *p = (unsigned char *)result.data();
 	i2d_DSA_SIG(sig, &p);
 
@@ -140,7 +141,7 @@ static QSecureArray dsasig_raw_to_der(const QSecureArray &in)
 	return result;
 }
 
-static bool is_basic_constraint(ConstraintType t)
+/*static bool is_basic_constraint(ConstraintType t)
 {
 	bool basic = false;
 	switch(t)
@@ -191,10 +192,10 @@ static Constraints ext_only(const Constraints &list)
 			out += list[n];
 	}
 	return out;
-}
+}*/
 
 // logic from Botan
-static Constraints find_constraints(const PKeyContext &key, const Constraints &orig)
+/*static Constraints find_constraints(const PKeyContext &key, const Constraints &orig)
 {
 	Constraints constraints;
 
@@ -227,7 +228,7 @@ static Constraints find_constraints(const PKeyContext &key, const Constraints &o
 	constraints += the_rest;
 
 	return constraints;
-}
+}*/
 
 static void try_add_name_item(X509_NAME **name, int nid, const QString &val)
 {
@@ -267,6 +268,9 @@ static void try_get_name_item(X509_NAME *name, int nid, CertificateInfoType t, C
 static void try_get_name_item_by_oid(X509_NAME *name, const QString &oidText, CertificateInfoType t, CertificateInfo *info)
 {
         ASN1_OBJECT *oid = OBJ_txt2obj( oidText.toLatin1().data(), 1); // 1 = only accept dotted input
+	if(!oid)
+		return;
+
 	int loc;
 	loc = -1;
 	while ((loc = X509_NAME_get_index_by_OBJ(name, oid, loc)) != -1) {
@@ -276,6 +280,7 @@ static void try_get_name_item_by_oid(X509_NAME *name, const QString &oidText, Ce
 		info->insert(t, QString::fromLatin1(cs));
 		qDebug() << "oid: " << oidText << ",  result: " << cs;
 	}
+	ASN1_OBJECT_free(oid);
 }
 
 static CertificateInfo get_cert_name(X509_NAME *name)
@@ -290,7 +295,21 @@ static CertificateInfo get_cert_name(X509_NAME *name)
 	try_get_name_item_by_oid(name, QString("1.3.6.1.4.1.311.60.2.1.2"), IncorporationState, &info);
 	try_get_name_item(name, NID_organizationName, Organization, &info);
 	try_get_name_item(name, NID_organizationalUnitName, OrganizationalUnit, &info);
-	try_get_name_item(name, NID_pkcs9_emailAddress, Email, &info);
+
+	// legacy email
+	{
+		CertificateInfo p9_info;
+		try_get_name_item(name, NID_pkcs9_emailAddress, EmailLegacy, &p9_info);
+		QList<QString> emails = info.values(Email);
+		QMapIterator<CertificateInfoType,QString> it(p9_info);
+		while(it.hasNext())
+		{
+			it.next();
+			if(!emails.contains(it.value()))
+				info.insert(Email, it.value());
+		}
+	}
+
 	return info;
 }
 
@@ -419,7 +438,9 @@ static GENERAL_NAME *new_general_name(CertificateInfoType t, const QString &val)
 		}
 
 		// the following are not alt_names
+		case OtherInfoType:
 		case CommonName:
+		case EmailLegacy:
 		case Organization:
 		case OrganizationalUnit:
 		case Locality:
@@ -586,7 +607,9 @@ static void try_get_general_name(GENERAL_NAMES *names, CertificateInfoType t, Ce
                 }
 
                 // the following are not alt_names
+		case OtherInfoType:
                 case CommonName:
+		case EmailLegacy:
                 case Organization:
                 case OrganizationalUnit:
                 case Locality:
@@ -935,7 +958,7 @@ static Validity convert_verify_error(int err)
 	return rc;
 }
 
-EVP_PKEY *qca_d2i_PKCS8PrivateKey(const QSecureArray &in, EVP_PKEY **x, pem_password_cb *cb, void *u)
+EVP_PKEY *qca_d2i_PKCS8PrivateKey(const SecureArray &in, EVP_PKEY **x, pem_password_cb *cb, void *u)
 {
 	PKCS8_PRIV_KEY_INFO *p8inf;
 
@@ -997,7 +1020,7 @@ public:
     {
 	m_algorithm = algorithm;
 	EVP_DigestInit( &m_context, m_algorithm );
-    };
+    }
 
     ~opensslHashContext()
     {
@@ -1010,14 +1033,14 @@ public:
 	EVP_DigestInit( &m_context, m_algorithm );
     }
 
-    void update(const QSecureArray &a)
+    void update(const SecureArray &a)
     {
 	EVP_DigestUpdate( &m_context, (unsigned char*)a.data(), a.size() );
     }
 
-    QSecureArray final()
+    SecureArray final()
     {
-	QSecureArray a( EVP_MD_size( m_algorithm ) );
+	SecureArray a( EVP_MD_size( m_algorithm ) );
 	EVP_DigestFinal( &m_context, (unsigned char*)a.data(), 0 );
 	return a;
     }
@@ -1047,7 +1070,7 @@ public:
 	return new opensslPbkdf1Context( *this );
     }
 
-    SymmetricKey makeKey(const QSecureArray &secret, const InitializationVector &salt,
+    SymmetricKey makeKey(const SecureArray &secret, const InitializationVector &salt,
 			      unsigned int keyLength, unsigned int iterationCount)
     {
 	/* from RFC2898:
@@ -1075,7 +1098,7 @@ public:
 	// calculate T_1
 	EVP_DigestUpdate( &m_context, (unsigned char*)secret.data(), secret.size() );
 	EVP_DigestUpdate( &m_context, (unsigned char*)salt.data(), salt.size() );
-	QSecureArray a( EVP_MD_size( m_algorithm ) );
+	SecureArray a( EVP_MD_size( m_algorithm ) );
 	EVP_DigestFinal( &m_context, (unsigned char*)a.data(), 0 );
 
 	// calculate T_2 up to T_c
@@ -1106,7 +1129,7 @@ public:
     {
 	m_algorithm = algorithm;
 	HMAC_CTX_init( &m_context );
-    };
+    }
 
     void setup(const SymmetricKey &key)
     {
@@ -1118,12 +1141,12 @@ public:
 	return anyKeyLength();
     }
 
-    void update(const QSecureArray &a)
+    void update(const SecureArray &a)
     {
 	HMAC_Update( &m_context, (unsigned char *)a.data(), a.size() );
     }
 
-    void final( QSecureArray *out)
+    void final( SecureArray *out)
     {
 	out->resize( EVP_MD_size( m_algorithm ) );
 	HMAC_Final(&m_context, (unsigned char *)out->data(), 0 );
@@ -1206,7 +1229,7 @@ public:
 			state = VerifyError;
 	}
 
-	void update(const QSecureArray &in)
+	void update(const SecureArray &in)
 	{
 		if(state == SignActive)
 		{
@@ -1220,26 +1243,26 @@ public:
 		}
 	}
 
-	QSecureArray endSign()
+	SecureArray endSign()
 	{
 		if(state == SignActive)
 		{
-			QSecureArray out(EVP_PKEY_size(pkey));
+			SecureArray out(EVP_PKEY_size(pkey));
 			unsigned int len = out.size();
 			if(!EVP_SignFinal(&mdctx, (unsigned char *)out.data(), &len, pkey))
 			{
 				state = SignError;
-				return QSecureArray();
+				return SecureArray();
 			}
 			out.resize(len);
 			state = Idle;
 			return out;
 		}
 		else
-			return QSecureArray();
+			return SecureArray();
 	}
 
-	bool endVerify(const QSecureArray &sig)
+	bool endVerify(const SecureArray &sig)
 	{
 		if(state == VerifyActive)
 		{
@@ -1327,11 +1350,11 @@ static QByteArray dehex(const QString &hex)
 	return hexToArray(str);
 }
 
-static QBigInteger decode(const QString &prime)
+static BigInteger decode(const QString &prime)
 {
 	QByteArray a(1, 0); // 1 byte of zero padding
 	a.append(dehex(prime));
-	return QBigInteger(QSecureArray(a));
+	return BigInteger(SecureArray(a));
 }
 
 static QByteArray decode_seed(const QString &hex_seed)
@@ -1342,7 +1365,7 @@ static QByteArray decode_seed(const QString &hex_seed)
 class DLParams
 {
 public:
-	QBigInteger p, q, g;
+	BigInteger p, q, g;
 };
 
 static bool make_dlgroup(const QByteArray &seed, int bits, int counter, DLParams *params)
@@ -1360,10 +1383,10 @@ static bool make_dlgroup(const QByteArray &seed, int bits, int counter, DLParams
 	return true;
 }
 
-static bool get_dlgroup(const QBigInteger &p, const QBigInteger &g, DLParams *params)
+static bool get_dlgroup(const BigInteger &p, const BigInteger &g, DLParams *params)
 {
 	params->p = p;
-	params->q = QBigInteger(0);
+	params->q = BigInteger(0);
 	params->g = g;
 	return true;
 }
@@ -1472,7 +1495,7 @@ public:
 		}
 	}
 
-	virtual void getResult(QBigInteger *p, QBigInteger *q, QBigInteger *g) const
+	virtual void getResult(BigInteger *p, BigInteger *q, BigInteger *g) const
 	{
 		*p = params.p;
 		*q = params.q;
@@ -1595,7 +1618,7 @@ public:
 
 		// extract the public key into DER format
 		int len = i2d_RSAPublicKey(evp.pkey->pkey.rsa, NULL);
-		QSecureArray result(len);
+		SecureArray result(len);
 		unsigned char *p = (unsigned char *)result.data();
 		i2d_RSAPublicKey(evp.pkey->pkey.rsa, &p);
 		p = (unsigned char *)result.data();
@@ -1627,15 +1650,15 @@ public:
 			return RSA_size(rsa) - 41 - 1;
 	}
 
-	virtual QSecureArray encrypt(const QSecureArray &in, EncryptionAlgorithm alg)
+	virtual SecureArray encrypt(const SecureArray &in, EncryptionAlgorithm alg)
 	{
 		RSA *rsa = evp.pkey->pkey.rsa;
 
-		QSecureArray buf = in;
+		SecureArray buf = in;
 		int max = maximumEncryptSize(alg);
 		if(buf.size() > max)
 			buf.resize(max);
-		QSecureArray result(RSA_size(rsa));
+		SecureArray result(RSA_size(rsa));
 
 		int pad;
 		if(alg == EME_PKCS1v15)
@@ -1645,17 +1668,17 @@ public:
 
 		int ret = RSA_public_encrypt(buf.size(), (unsigned char *)buf.data(), (unsigned char *)result.data(), rsa, pad);
 		if(ret < 0)
-			return QSecureArray();
+			return SecureArray();
 		result.resize(ret);
 
 		return result;
 	}
 
-	virtual bool decrypt(const QSecureArray &in, QSecureArray *out, EncryptionAlgorithm alg)
+	virtual bool decrypt(const SecureArray &in, SecureArray *out, EncryptionAlgorithm alg)
 	{
 		RSA *rsa = evp.pkey->pkey.rsa;
 
-		QSecureArray result(RSA_size(rsa));
+		SecureArray result(RSA_size(rsa));
 
 		int pad;
 		if(alg == EME_PKCS1v15)
@@ -1708,17 +1731,17 @@ public:
 		evp.startVerify(md);
 	}
 
-	virtual void update(const QSecureArray &in)
+	virtual void update(const SecureArray &in)
 	{
 		evp.update(in);
 	}
 
-	virtual QSecureArray endSign()
+	virtual SecureArray endSign()
 	{
 		return evp.endSign();
 	}
 
-	virtual bool endVerify(const QSecureArray &sig)
+	virtual bool endVerify(const SecureArray &sig)
 	{
 		return evp.endVerify(sig);
 	}
@@ -1741,7 +1764,7 @@ public:
 		}
 	}
 
-	virtual void createPrivate(const QBigInteger &n, const QBigInteger &e, const QBigInteger &p, const QBigInteger &q, const QBigInteger &d)
+	virtual void createPrivate(const BigInteger &n, const BigInteger &e, const BigInteger &p, const BigInteger &q, const BigInteger &d)
 	{
 		evp.reset();
 
@@ -1763,7 +1786,7 @@ public:
 		sec = true;
 	}
 
-	virtual void createPublic(const QBigInteger &n, const QBigInteger &e)
+	virtual void createPublic(const BigInteger &n, const BigInteger &e)
 	{
 		evp.reset();
 
@@ -1782,27 +1805,27 @@ public:
 		sec = false;
 	}
 
-	virtual QBigInteger n() const
+	virtual BigInteger n() const
 	{
 		return bn2bi(evp.pkey->pkey.rsa->n);
 	}
 
-	virtual QBigInteger e() const
+	virtual BigInteger e() const
 	{
 		return bn2bi(evp.pkey->pkey.rsa->e);
 	}
 
-	virtual QBigInteger p() const
+	virtual BigInteger p() const
 	{
 		return bn2bi(evp.pkey->pkey.rsa->p);
 	}
 
-	virtual QBigInteger q() const
+	virtual BigInteger q() const
 	{
 		return bn2bi(evp.pkey->pkey.rsa->q);
 	}
 
-	virtual QBigInteger d() const
+	virtual BigInteger d() const
 	{
 		return bn2bi(evp.pkey->pkey.rsa->d);
 	}
@@ -1932,7 +1955,7 @@ public:
 
 		// extract the public key into DER format
 		int len = i2d_DSAPublicKey(evp.pkey->pkey.dsa, NULL);
-		QSecureArray result(len);
+		SecureArray result(len);
 		unsigned char *p = (unsigned char *)result.data();
 		i2d_DSAPublicKey(evp.pkey->pkey.dsa, &p);
 		p = (unsigned char *)result.data();
@@ -1977,23 +2000,23 @@ public:
 		evp.startVerify(EVP_dss1());
 	}
 
-	virtual void update(const QSecureArray &in)
+	virtual void update(const SecureArray &in)
 	{
 		evp.update(in);
 	}
 
-	virtual QSecureArray endSign()
+	virtual SecureArray endSign()
 	{
-		QSecureArray out = evp.endSign();
+		SecureArray out = evp.endSign();
 		if(transformsig)
 			return dsasig_der_to_raw(out);
 		else
 			return out;
 	}
 
-	virtual bool endVerify(const QSecureArray &sig)
+	virtual bool endVerify(const SecureArray &sig)
 	{
-		QSecureArray in;
+		SecureArray in;
 		if(transformsig)
 			in = dsasig_raw_to_der(sig);
 		else
@@ -2019,7 +2042,7 @@ public:
 		}
 	}
 
-	virtual void createPrivate(const DLGroup &domain, const QBigInteger &y, const QBigInteger &x)
+	virtual void createPrivate(const DLGroup &domain, const BigInteger &y, const BigInteger &x)
 	{
 		evp.reset();
 
@@ -2041,7 +2064,7 @@ public:
 		sec = true;
 	}
 
-	virtual void createPublic(const DLGroup &domain, const QBigInteger &y)
+	virtual void createPublic(const DLGroup &domain, const BigInteger &y)
 	{
 		evp.reset();
 
@@ -2067,12 +2090,12 @@ public:
 		return DLGroup(bn2bi(evp.pkey->pkey.dsa->p), bn2bi(evp.pkey->pkey.dsa->q), bn2bi(evp.pkey->pkey.dsa->g));
 	}
 
-	virtual QBigInteger y() const
+	virtual BigInteger y() const
 	{
 		return bn2bi(evp.pkey->pkey.dsa->pub_key);
 	}
 
-	virtual QBigInteger x() const
+	virtual BigInteger x() const
 	{
 		return bn2bi(evp.pkey->pkey.dsa->priv_key);
 	}
@@ -2219,7 +2242,7 @@ public:
 	{
 		DH *dh = evp.pkey->pkey.dh;
 		DH *them = static_cast<const DHKey *>(&theirs)->evp.pkey->pkey.dh;
-		QSecureArray result(DH_size(dh));
+		SecureArray result(DH_size(dh));
 		int ret = DH_compute_key((unsigned char *)result.data(), them->pub_key, dh);
 		if(ret <= 0)
 			return SymmetricKey();
@@ -2245,7 +2268,7 @@ public:
 		}
 	}
 
-	virtual void createPrivate(const DLGroup &domain, const QBigInteger &y, const QBigInteger &x)
+	virtual void createPrivate(const DLGroup &domain, const BigInteger &y, const BigInteger &x)
 	{
 		evp.reset();
 
@@ -2266,7 +2289,7 @@ public:
 		sec = true;
 	}
 
-	virtual void createPublic(const DLGroup &domain, const QBigInteger &y)
+	virtual void createPublic(const DLGroup &domain, const BigInteger &y)
 	{
 		evp.reset();
 
@@ -2291,12 +2314,12 @@ public:
 		return DLGroup(bn2bi(evp.pkey->pkey.dh->p), bn2bi(evp.pkey->pkey.dh->g));
 	}
 
-	virtual QBigInteger y() const
+	virtual BigInteger y() const
 	{
 		return bn2bi(evp.pkey->pkey.dh->pub_key);
 	}
 
-	virtual QBigInteger x() const
+	virtual BigInteger x() const
 	{
 		return bn2bi(evp.pkey->pkey.dh->priv_key);
 	}
@@ -2428,10 +2451,10 @@ public:
 		m_len = i;
 		}
 
-		QSecureArray input;
+		SecureArray input;
 		input.resize(m_len);
 		memcpy(input.data(), m, input.size());
-		QSecureArray result = self->key.signMessage(input, EMSA3_Raw);
+		SecureArray result = self->key.signMessage(input, EMSA3_Raw);
 
 		if(tmps)
 		{
@@ -2582,17 +2605,17 @@ public:
 		return 0;
 	}
 
-	virtual QSecureArray publicToDER() const
+	virtual SecureArray publicToDER() const
 	{
 		EVP_PKEY *pkey = get_pkey();
 
 		// OpenSSL does not have DH import/export support
 		if(pkey->type == EVP_PKEY_DH)
-			return QSecureArray();
+			return SecureArray();
 
 		BIO *bo = BIO_new(BIO_s_mem());
 		i2d_PUBKEY_bio(bo, pkey);
-		QSecureArray buf = bio2buf(bo);
+		SecureArray buf = bio2buf(bo);
 		return buf;
 	}
 
@@ -2606,11 +2629,11 @@ public:
 
 		BIO *bo = BIO_new(BIO_s_mem());
 		PEM_write_bio_PUBKEY(bo, pkey);
-		QSecureArray buf = bio2buf(bo);
+		SecureArray buf = bio2buf(bo);
 		return QString::fromLatin1(buf.toByteArray());
 	}
 
-	virtual ConvertResult publicFromDER(const QSecureArray &in)
+	virtual ConvertResult publicFromDER(const SecureArray &in)
 	{
 		delete k;
 		k = 0;
@@ -2651,7 +2674,7 @@ public:
 			return ErrorDecode;
 	}
 
-	virtual QSecureArray privateToDER(const QSecureArray &passphrase, PBEAlgorithm pbe) const
+	virtual SecureArray privateToDER(const SecureArray &passphrase, PBEAlgorithm pbe) const
 	{
 		//if(pbe == PBEDefault)
 		//	pbe = PBES2_TripleDES_SHA1;
@@ -2663,24 +2686,24 @@ public:
 			cipher = EVP_des_cbc();
 
 		if(!cipher)
-			return QSecureArray();
+			return SecureArray();
 
 		EVP_PKEY *pkey = get_pkey();
 
 		// OpenSSL does not have DH import/export support
 		if(pkey->type == EVP_PKEY_DH)
-			return QSecureArray();
+			return SecureArray();
 
 		BIO *bo = BIO_new(BIO_s_mem());
 		if(!passphrase.isEmpty())
 			i2d_PKCS8PrivateKey_bio(bo, pkey, cipher, NULL, 0, NULL, (void *)passphrase.data());
 		else
 			i2d_PKCS8PrivateKey_bio(bo, pkey, NULL, NULL, 0, NULL, NULL);
-		QSecureArray buf = bio2buf(bo);
+		SecureArray buf = bio2buf(bo);
 		return buf;
 	}
 
-	virtual QString privateToPEM(const QSecureArray &passphrase, PBEAlgorithm pbe) const
+	virtual QString privateToPEM(const SecureArray &passphrase, PBEAlgorithm pbe) const
 	{
 		//if(pbe == PBEDefault)
 		//	pbe = PBES2_TripleDES_SHA1;
@@ -2705,11 +2728,11 @@ public:
 			PEM_write_bio_PKCS8PrivateKey(bo, pkey, cipher, NULL, 0, NULL, (void *)passphrase.data());
 		else
 			PEM_write_bio_PKCS8PrivateKey(bo, pkey, NULL, NULL, 0, NULL, NULL);
-		QSecureArray buf = bio2buf(bo);
+		SecureArray buf = bio2buf(bo);
 		return QString::fromLatin1(buf.toByteArray());
 	}
 
-	virtual ConvertResult privateFromDER(const QSecureArray &in, const QSecureArray &passphrase)
+	virtual ConvertResult privateFromDER(const SecureArray &in, const SecureArray &passphrase)
 	{
 		delete k;
 		k = 0;
@@ -2730,7 +2753,7 @@ public:
 			return ErrorDecode;
 	}
 
-	virtual ConvertResult privateFromPEM(const QString &s, const QSecureArray &passphrase)
+	virtual ConvertResult privateFromPEM(const QString &s, const SecureArray &passphrase)
 	{
 		delete k;
 		k = 0;
@@ -2818,7 +2841,7 @@ public:
 		return (!cert && !req && !crl);
 	}
 
-	QSecureArray toDER() const
+	SecureArray toDER() const
 	{
 		BIO *bo = BIO_new(BIO_s_mem());
 		if(cert)
@@ -2827,7 +2850,7 @@ public:
 			i2d_X509_REQ_bio(bo, req);
 		else if(crl)
 			i2d_X509_CRL_bio(bo, crl);
-		QSecureArray buf = bio2buf(bo);
+		SecureArray buf = bio2buf(bo);
 		return buf;
 	}
 
@@ -2840,11 +2863,11 @@ public:
 			PEM_write_bio_X509_REQ(bo, req);
 		else if(crl)
 			PEM_write_bio_X509_CRL(bo, crl);
-		QSecureArray buf = bio2buf(bo);
+		SecureArray buf = bio2buf(bo);
 		return QString::fromLatin1(buf.toByteArray());
 	}
 
-	ConvertResult fromDER(const QSecureArray &in, Type t)
+	ConvertResult fromDER(const SecureArray &in, Type t)
 	{
 		reset();
 
@@ -2961,7 +2984,7 @@ public:
 		return new MyCertContext(*this);
 	}
 
-	virtual QSecureArray toDER() const
+	virtual SecureArray toDER() const
 	{
 		return item.toDER();
 	}
@@ -2971,7 +2994,7 @@ public:
 		return item.toPEM();
 	}
 
-	virtual ConvertResult fromDER(const QSecureArray &a)
+	virtual ConvertResult fromDER(const SecureArray &a)
 	{
 		_props = CertContextProps();
 		ConvertResult r = item.fromDER(a, X509Item::TypeCert);
@@ -3003,15 +3026,17 @@ public:
 
 		CertificateInfo info = opts.info();
 
+		// Note: removing default constraints, let the app choose these if it wants
+		Constraints constraints = opts.constraints();
 		// constraints - logic from Botan
-		Constraints constraints;
+		/*Constraints constraints;
 		if(opts.isCA())
 		{
 			constraints += KeyCertificateSign;
 			constraints += CRLSign;
 		}
 		else
-			constraints = find_constraints(priv, opts.constraints());
+			constraints = find_constraints(priv, opts.constraints());*/
 
 		EVP_PKEY *pk = static_cast<const MyPKeyContext *>(&priv)->get_pkey();
 		X509_EXTENSION *ex;
@@ -3243,7 +3268,7 @@ public:
 
 		if (x->signature)
 		{
-			p.sig = QSecureArray(x->signature->length);
+			p.sig = SecureArray(x->signature->length);
 			for (int i=0; i< x->signature->length; i++)
 				p.sig[i] = x->signature->data[i];
 		}
@@ -3336,7 +3361,7 @@ public:
 		return new MyCSRContext(*this);
 	}
 
-	virtual QSecureArray toDER() const
+	virtual SecureArray toDER() const
 	{
 		return item.toDER();
 	}
@@ -3346,7 +3371,7 @@ public:
 		return item.toPEM();
 	}
 
-	virtual ConvertResult fromDER(const QSecureArray &a)
+	virtual ConvertResult fromDER(const SecureArray &a)
 	{
 		_props = CertContextProps();
 		ConvertResult r = item.fromDER(a, X509Item::TypeReq);
@@ -3378,15 +3403,17 @@ public:
 
 		CertificateInfo info = opts.info();
 
+		// Note: removing default constraints, let the app choose these if it wants
+		Constraints constraints = opts.constraints();
 		// constraints - logic from Botan
-		Constraints constraints;
+		/*Constraints constraints;
 		if(opts.isCA())
 		{
 			constraints += KeyCertificateSign;
 			constraints += CRLSign;
 		}
 		else
-			constraints = find_constraints(priv, opts.constraints());
+			constraints = find_constraints(priv, opts.constraints());*/
 
 		EVP_PKEY *pk = static_cast<const MyPKeyContext *>(&priv)->get_pkey();
 		X509_EXTENSION *ex;
@@ -3539,7 +3566,7 @@ public:
 
 		if (x->signature)
 		{
-			p.sig = QSecureArray(x->signature->length);
+			p.sig = SecureArray(x->signature->length);
 			for (int i=0; i< x->signature->length; i++)
 				p.sig[i] = x->signature->data[i];
 		}
@@ -3597,7 +3624,7 @@ public:
 		return new MyCRLContext(*this);
 	}
 
-	virtual QSecureArray toDER() const
+	virtual SecureArray toDER() const
 	{
 		return item.toDER();
 	}
@@ -3607,7 +3634,7 @@ public:
 		return item.toPEM();
 	}
 
-	virtual ConvertResult fromDER(const QSecureArray &a)
+	virtual ConvertResult fromDER(const SecureArray &a)
 	{
 		ConvertResult r = item.fromDER(a, X509Item::TypeCRL);
 		if(r == ConvertGood)
@@ -3645,7 +3672,7 @@ public:
 
 		for (int i = 0; i < sk_X509_REVOKED_num(revokeStack); ++i) {
 			X509_REVOKED *rev = sk_X509_REVOKED_value(revokeStack, i);
-			QBigInteger serial = bn2bi(ASN1_INTEGER_to_BN(rev->serialNumber, NULL));
+			BigInteger serial = bn2bi(ASN1_INTEGER_to_BN(rev->serialNumber, NULL));
 			QDateTime time = ASN1_UTCTIME_QDateTime( rev->revocationDate, NULL);
 			QCA::CRLEntry::Reason reason = QCA::CRLEntry::Unspecified;
 			int pos = X509_REVOKED_get_ext_by_NID(rev, NID_crl_reason, -1);
@@ -3697,7 +3724,7 @@ public:
 
 		if (x->signature)
 		{
-			p.sig = QSecureArray(x->signature->length);
+			p.sig = SecureArray(x->signature->length);
 			for (int i=0; i< x->signature->length; i++)
 				p.sig[i] = x->signature->data[i];
 		}
@@ -3959,7 +3986,7 @@ public:
 		return 0;
 	}
 
-	virtual QByteArray toPKCS12(const QString &name, const QList<const CertContext*> &chain, const PKeyContext &priv, const QSecureArray &passphrase) const
+	virtual QByteArray toPKCS12(const QString &name, const QList<const CertContext*> &chain, const PKeyContext &priv, const SecureArray &passphrase) const
 	{
 		if(chain.count() < 1)
 			return QByteArray();
@@ -3988,7 +4015,7 @@ public:
 		return out;
 	}
 
-	virtual ConvertResult fromPKCS12(const QByteArray &in, const QSecureArray &passphrase, QString *name, QList<CertContext*> *chain, PKeyContext **priv) const
+	virtual ConvertResult fromPKCS12(const QByteArray &in, const SecureArray &passphrase, QString *name, QList<CertContext*> *chain, PKeyContext **priv) const
 	{
 		BIO *bi = BIO_new(BIO_s_mem());
 		BIO_write(bi, in.data(), in.size());
@@ -4737,6 +4764,12 @@ public:
 		return false;
 	}
 
+	virtual bool canSetHostName() const
+	{
+		// TODO
+		return false;
+	}
+
 	virtual int maxSSF() const
 	{
 		// TODO
@@ -4756,19 +4789,26 @@ public:
 		Q_UNUSED(cipherSuiteList);
 	}
 
-	virtual void setup(const CertificateCollection &_trusted, const CertificateChain &_cert, const PrivateKey &_key, bool serverMode,
-                           const QString &hostName, bool compress, bool)
+	virtual void setup(const CertificateCollection &_trusted,
+		bool serverMode,
+		const QList<CertificateInfoOrdered> &issuerList,
+		const QString &hostName, bool compress)
 	{
 		trusted = _trusted;
-		if(!_cert.isEmpty())
-			cert = _cert.primary(); // TODO: take the whole chain
-		key = _key;
 		serv = serverMode;
                 if ( false == serverMode ) {
                     // client
                     targetHostName = hostName;
                 }
 		Q_UNUSED(compress); // TODO
+		Q_UNUSED(issuerList); // TODO
+	}
+
+	virtual void setCertificate(const CertificateChain &_cert, const PrivateKey &_key)
+	{
+		if(!_cert.isEmpty())
+			cert = _cert.primary(); // TODO: take the whole chain
+		key = _key;
 	}
 
 	virtual void shutdown()
@@ -5038,6 +5078,18 @@ public:
 		return v_eof;
 	}
 
+	virtual bool serverHelloReceived() const
+	{
+		// TODO
+		return false;
+	}
+
+	virtual QList<CertificateInfoOrdered> issuerList() const
+	{
+		// TODO
+		return QList<CertificateInfoOrdered>();
+	}
+
 	virtual SessionInfo sessionInfo() const
 	{
 		SessionInfo sessInfo;
@@ -5153,6 +5205,7 @@ public:
 		// this passes control of the bios to ssl.  we don't need to free them.
 		SSL_set_bio(ssl, rbio, wbio);
 
+		// FIXME: move this to after server hello
 		// setup the cert to send
 		if(!cert.isNull() && !key.isNull())
 		{
@@ -5520,7 +5573,7 @@ public:
 				//BIO *bo = BIO_new(BIO_s_mem());
 				//i2d_PKCS7_bio(bo, p7);
 				//PEM_write_bio_PKCS7(bo, p7);
-				//QSecureArray buf = bio2buf(bo);
+				//SecureArray buf = bio2buf(bo);
 				//printf("[%s]\n", buf.data());
 
 				// FIXME: format
@@ -5846,7 +5899,7 @@ public:
 		return EVP_CIPHER_CTX_block_size(&m_context);
 	}
 
-	bool update(const QSecureArray &in, QSecureArray *out)
+	bool update(const SecureArray &in, SecureArray *out)
 	{
 		// This works around a problem in OpenSSL, where it asserts if
 		// there is nothing to encrypt.
@@ -5876,7 +5929,7 @@ public:
 		return true;
 	}
 
-	bool final(QSecureArray *out)
+	bool final(SecureArray *out)
 	{
 		out->resize(blockSize());
 		int resultLength;
@@ -5948,7 +6001,12 @@ public:
 
 	~opensslProvider()
 	{
-		// todo: any shutdown?
+		// todo: any other shutdown?
+		EVP_cleanup();
+		//ENGINE_cleanup();
+		CRYPTO_cleanup_all_ex_data();
+		ERR_remove_state(0);
+		ERR_free_strings();
 	}
 
 	int version() const
@@ -6179,7 +6237,7 @@ public:
 	}
 };
 
-class opensslPlugin : public QCAPlugin
+class opensslPlugin : public QObject, public QCAPlugin
 {
 	Q_OBJECT
 	Q_INTERFACES(QCAPlugin)

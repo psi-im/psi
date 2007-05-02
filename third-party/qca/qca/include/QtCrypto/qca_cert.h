@@ -42,6 +42,7 @@ namespace QCA
 	class CertContext;
 	class CSRContext;
 	class CRLContext;
+	class Certificate;
 	class CRL;
 	class CertificateCollection;
 	class CertificateChain;
@@ -78,8 +79,10 @@ namespace QCA
 	*/
 	enum CertificateInfoType
 	{
+		OtherInfoType,          ///< Type is not listed in this enumerator (CertificateInfoPair only)
 		CommonName,             ///< The common name (eg person)
 		Email,                  ///< Email address
+		EmailLegacy,            ///< PKCS#9 Email field (CertificateInfoPair only)
 		Organization,           ///< An organisation (eg company)
 		OrganizationalUnit,     ///< An part of an organisation (eg a division or branch)
 		Locality,               ///< The locality (eg city, a shire, or part of a state) 
@@ -100,6 +103,12 @@ namespace QCA
 	class QCA_EXPORT CertificateInfoPair
 	{
 	public:
+		enum Section
+		{
+			DN,
+			AltName
+		};
+
 	        /**
 		   Standard constructor
 		*/
@@ -114,6 +123,15 @@ namespace QCA
 		CertificateInfoPair(CertificateInfoType type, const QString &value);
 
 		/**
+		   Construct a new pair
+
+		   \param oid the type of information stored in this pair as an OID
+		   \param value the value of the information to be stored
+		   \param section the section the information belongs in
+		*/
+		CertificateInfoPair(const QString &oid, const QString &value, Section section);
+
+		/**
 		   Standard copy constructor
 		*/
 		CertificateInfoPair(const CertificateInfoPair &from);
@@ -126,9 +144,22 @@ namespace QCA
 		CertificateInfoPair & operator=(const CertificateInfoPair &from);
 
 		/**
+		   The section the information is part of
+		*/
+		Section section() const;
+
+		/**
 		   The type of information stored in the pair
 		*/
 		CertificateInfoType type() const;
+
+		/**
+		   The type of information stored in the pair as an OID
+
+		   For use with types not listed in the CertificateInfoType
+		   enumerator.
+		*/
+		QString oid() const;
 
 		/**
 		   The value of the information stored in the pair
@@ -214,12 +245,47 @@ namespace QCA
 	/**
 	   Ordered certificate properties type
 	*/
-	typedef QList<CertificateInfoPair> CertificateInfoOrdered;
+	class CertificateInfoOrdered : public QList<CertificateInfoPair>
+	{
+	public:
+		/**
+		   Convert to RFC 1779 string format
+		*/
+		inline QString toString() const;
+
+		/**
+		   Return a new CertificateInfoOrdered that only contains
+		   the Distinguished Name (DN) types found in this object.
+		*/
+		inline CertificateInfoOrdered dnOnly() const;
+	};
+
+	/**
+	   Convert to RFC 1779 string format
+	*/
+	QCA_EXPORT QString orderedToDNString(const CertificateInfoOrdered &in);
+
+	QCA_EXPORT CertificateInfoOrdered orderedDNOnly(const CertificateInfoOrdered &in);
+
+	inline QString CertificateInfoOrdered::toString() const
+	{
+		return orderedToDNString(*this);
+	}
+
+	inline CertificateInfoOrdered CertificateInfoOrdered::dnOnly() const
+	{
+		return orderedDNOnly(*this);
+	}
 
 	/**
 	   %Certificate constraints type
 	*/
 	typedef QList<ConstraintType> Constraints;
+
+	/**
+	   Create a list of unique friendly names among a list of certificates
+	*/
+	QCA_EXPORT QStringList makeFriendlyNames(const QList<Certificate> &list);
 
 	/**
 	   \class CertificateOptions qca_cert.h QtCrypto
@@ -305,6 +371,13 @@ namespace QCA
 		QStringList policies() const;     // request or create
 
 		/**
+		   list of URI locations for CRL files
+
+		   each URI refers to the same CRL file
+		*/
+		QStringList crlLocations() const;     // create
+
+		/**
 		   test if the certificate is a CA cert
 		  
 		   \sa setAsCA
@@ -320,7 +393,7 @@ namespace QCA
 		/**
 		   The serial number for the certificate
 		*/
-		QBigInteger serialNumber() const; // create
+		BigInteger serialNumber() const; // create
 
 		/**
 		   the first time the certificate will be valid
@@ -377,6 +450,15 @@ namespace QCA
 		void setPolicies(const QStringList &policies);
 
 		/**
+		   set the CRL locations of the certificate
+
+		   each location refers to the same CRL.
+
+		   \param locations a list of URIs to CRL files
+		*/
+		void setCRLLocations(const QStringList &locations);
+
+		/**
 		   set the certificate to be a CA cert
 
 		   \param pathLimit the number of intermediate certificates allowable
@@ -393,7 +475,7 @@ namespace QCA
 
 		   \param i the serial number to use
 		*/
-		void setSerialNumber(const QBigInteger &i);
+		void setSerialNumber(const BigInteger &i);
 
 		/**
 		   Set the validity period for the certificate
@@ -541,6 +623,13 @@ namespace QCA
 		QStringList policies() const;
 
 		/**
+		   list of URI locations for CRL files
+
+		   each URI refers to the same CRL file
+		*/
+		QStringList crlLocations() const;
+
+		/**
 		   The common name of the subject of the certificate
 
 		   Common names are normally the name of a person, company or organisation
@@ -550,7 +639,7 @@ namespace QCA
 		/**
 		   The serial number of the certificate
 		*/
-		QBigInteger serialNumber() const;
+		BigInteger serialNumber() const;
 
 		/**
 		   The public key associated with the subject of the certificate
@@ -612,7 +701,7 @@ namespace QCA
 		/**
 		   Export the Certificate into a DER format
 		*/
-		QSecureArray toDER() const;
+		SecureArray toDER() const;
 
 		/**
 		   Export the Certificate into a PEM format
@@ -635,7 +724,7 @@ namespace QCA
 
 		   \return the Certificate corresponding to the certificate in the provided array
 		*/
-		static Certificate fromDER(const QSecureArray &a, ConvertResult *result = 0, const QString &provider = QString());
+		static Certificate fromDER(const SecureArray &a, ConvertResult *result = 0, const QString &provider = QString());
 
 		/**
 		   Import the certificate from PEM format
@@ -926,7 +1015,7 @@ namespace QCA
 
 		   \note this only applies to PKCS#10 format certificate requests
 		*/
-		QSecureArray toDER() const;
+		SecureArray toDER() const;
 
 		/**
 		   Export the Certificate Request into a PEM format
@@ -955,7 +1044,7 @@ namespace QCA
 
 		   \note this only applies to PKCS#10 format certificate requests
 		*/
-		static CertificateRequest fromDER(const QSecureArray &a, ConvertResult *result = 0, const QString &provider = QString());
+		static CertificateRequest fromDER(const SecureArray &a, ConvertResult *result = 0, const QString &provider = QString());
 
 		/**
 		   Import the certificate request from PEM format
@@ -1052,7 +1141,7 @@ namespace QCA
 		   \param c the certificate to revoke
 		   \param r the reason that the certificate is being revoked
 		*/
-		CRLEntry(const Certificate &c, Reason r = Unspecified);
+		explicit CRLEntry(const Certificate &c, Reason r = Unspecified);
 
 		/**
 		   create a CRL entry
@@ -1061,12 +1150,12 @@ namespace QCA
 		   \param time the time the Certificate was revoked (or will be revoked)
 		   \param r the reason that the certificate is being revoked
 		*/
-		CRLEntry(const QBigInteger serial, const QDateTime time, Reason r = Unspecified);
+		CRLEntry(const BigInteger serial, const QDateTime time, Reason r = Unspecified);
 
 		/**
 		   The serial number of the certificate that is the subject of this CRL entry
 		*/
-		QBigInteger serialNumber() const;
+		BigInteger serialNumber() const;
 
 		/**
 		   The time this CRL entry was created
@@ -1102,7 +1191,7 @@ namespace QCA
 		bool operator==(const CRLEntry &a) const;
 
 	private:
-		QBigInteger _serial;
+		BigInteger _serial;
 		QDateTime _time;
 		Reason _reason;
 	};
@@ -1195,7 +1284,7 @@ namespace QCA
 		/**
 		   The signature on this CRL
 		*/
-		QSecureArray signature() const;
+		SecureArray signature() const;
 
 		/**
 		   The signature algorithm used for the signature on this CRL
@@ -1219,7 +1308,7 @@ namespace QCA
 
 		   \return an array containing the CRL in DER format
 		*/
-		QSecureArray toDER() const;
+		SecureArray toDER() const;
 
 		/**
 		   Export the %Certificate Revocation List (CRL) in PEM format
@@ -1244,7 +1333,7 @@ namespace QCA
 
 		   \return the CRL corresponding to the contents of the array
 		*/
-		static CRL fromDER(const QSecureArray &a, ConvertResult *result = 0, const QString &provider = QString());
+		static CRL fromDER(const SecureArray &a, ConvertResult *result = 0, const QString &provider = QString());
 
 		/**
 		   Import a PEM encoded %Certificate Revocation List (CRL)
@@ -1517,7 +1606,7 @@ namespace QCA
 		   \sa fromFile for a more flexible version of the
 		   same capability.
 		*/
-		KeyBundle(const QString &fileName, const QSecureArray &passphrase = QSecureArray());
+		explicit KeyBundle(const QString &fileName, const SecureArray &passphrase = SecureArray());
 
 		/**
 		   Standard copy constructor
@@ -1602,7 +1691,7 @@ namespace QCA
 		   \param passphrase the passphrase to use to protect the bundle
 		   \param provider the provider to use, if a specific provider is required
 		*/
-		QByteArray toArray(const QSecureArray &passphrase, const QString &provider = QString()) const;
+		QByteArray toArray(const SecureArray &passphrase, const QString &provider = QString()) const;
 
 		/**
 		   Export the key bundle to a file in PKCS12 (.p12) format
@@ -1624,7 +1713,7 @@ namespace QCA
 		   \param passphrase the passphrase to use to protect the bundle
 		   \param provider the provider to use, if a specific provider is required
 		*/
-		bool toFile(const QString &fileName, const QSecureArray &passphrase, const QString &provider = QString()) const;
+		bool toFile(const QString &fileName, const SecureArray &passphrase, const QString &provider = QString()) const;
 
 		/**
 		   Import the key bundle from an array in PKCS12 format
@@ -1647,7 +1736,7 @@ namespace QCA
 		   \param result pointer to the result of the import process
 		   \param provider the provider to use, if a specific provider is required
 		*/
-		static KeyBundle fromArray(const QByteArray &a, const QSecureArray &passphrase = QSecureArray(), ConvertResult *result = 0, const QString &provider = QString());
+		static KeyBundle fromArray(const QByteArray &a, const SecureArray &passphrase = SecureArray(), ConvertResult *result = 0, const QString &provider = QString());
 
 		/**
 		   Import the key bundle from a file in PKCS12 (.p12) format
@@ -1670,7 +1759,7 @@ namespace QCA
 		   \param result pointer to the result of the import process
 		   \param provider the provider to use, if a specific provider is required
 		*/
-		static KeyBundle fromFile(const QString &fileName, const QSecureArray &passphrase = QSecureArray(), ConvertResult *result = 0, const QString &provider = QString());
+		static KeyBundle fromFile(const QString &fileName, const SecureArray &passphrase = SecureArray(), ConvertResult *result = 0, const QString &provider = QString());
 
 	private:
 		class Private;
@@ -1797,7 +1886,7 @@ namespace QCA
                    \sa fromArray for a static import method.
                    \sa toString for an "ascii armoured" export method.
 		*/
-		QSecureArray toArray() const;
+		SecureArray toArray() const;
 
 		/**
 		   Export the key to a string
@@ -1824,7 +1913,7 @@ namespace QCA
 		   \param provider the provider to use, if a particular provider is required
 		*/
 		   
-		static PGPKey fromArray(const QSecureArray &a, ConvertResult *result = 0, const QString &provider = QString());
+		static PGPKey fromArray(const SecureArray &a, ConvertResult *result = 0, const QString &provider = QString());
 
 		/**
 		   Import the key from a string
@@ -1843,6 +1932,35 @@ namespace QCA
 		   \param provider the provider to use, if a particular provider is required
 		*/
 		static PGPKey fromFile(const QString &fileName, ConvertResult *result = 0, const QString &provider = QString());
+	};
+
+	/**
+	   Asynchronous private key loader
+	*/
+	class QCA_EXPORT KeyLoader : public QObject
+	{
+		Q_OBJECT
+	public:
+		KeyLoader(QObject *parent = 0);
+		~KeyLoader();
+
+		void loadPrivateKeyFromPEMFile(const QString &fileName);
+		void loadPrivateKeyFromPEM(const QString &s);
+		void loadPrivateKeyFromDER(const SecureArray &a);
+		void loadKeyBundleFromFile(const QString &fileName);
+		void loadKeyBundleFromArray(const QByteArray &a);
+
+		ConvertResult convertResult() const;
+		PrivateKey privateKey() const;
+		KeyBundle keyBundle() const;
+
+	Q_SIGNALS:
+		void finished();
+
+	private:
+		class Private;
+		friend class Private;
+		Private *d;
 	};
 }
 

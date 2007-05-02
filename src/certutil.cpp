@@ -2,6 +2,8 @@
 #include <QStringList>
 #include <QDomDocument>
 #include <QDebug>
+#include <QDir>
+#include <QFile>
 
 #include "applicationinfo.h"
 #include "certutil.h"

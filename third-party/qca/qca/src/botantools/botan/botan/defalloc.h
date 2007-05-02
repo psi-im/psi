@@ -1,6 +1,5 @@
-namespace QCA {
 /*
-Copyright (C) 1999-2004 The Botan Project. All rights reserved.
+Copyright (C) 1999-2007 The Botan Project. All rights reserved.
 
 Redistribution and use in source and binary forms, for any use, with or without
 modification, is permitted provided that the following conditions are met:
@@ -24,42 +23,49 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+// LICENSEHEADER_END
+namespace QCA { // WRAPNS_LINE
 /*************************************************
 * Basic Allocators Header File                   *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_BASIC_ALLOC_H__
 #define BOTAN_BASIC_ALLOC_H__
 
-}
-#include <botan/secalloc.h>
-namespace QCA {
+} // WRAPNS_LINE
+#include <botan/mem_pool.h>
+namespace QCA { // WRAPNS_LINE
 
 namespace Botan {
 
 /*************************************************
 * Malloc Allocator                              *
 *************************************************/
-class Malloc_Allocator : public SecureAllocator
+class Malloc_Allocator : public Pooling_Allocator
    {
+   public:
+      Malloc_Allocator() : Pooling_Allocator(64*1024, false) {}
+      std::string type() const { return "malloc"; }
    private:
-      void* alloc_block(u32bit) const;
-      void dealloc_block(void*, u32bit) const;
+      void* alloc_block(u32bit);
+      void dealloc_block(void*, u32bit);
    };
 
 /*************************************************
 * Locking Allocator                              *
 *************************************************/
-class Locking_Allocator : public SecureAllocator
+class Locking_Allocator : public Pooling_Allocator
    {
+   public:
+      Locking_Allocator() : Pooling_Allocator(64*1024, true) {}
+      std::string type() const { return "locking"; }
    private:
-      void* alloc_block(u32bit) const;
-      void dealloc_block(void*, u32bit) const;
-      bool should_prealloc() const { return true; }
+      void* alloc_block(u32bit);
+      void dealloc_block(void*, u32bit);
    };
 
 }
 
 #endif
-}
+} // WRAPNS_LINE

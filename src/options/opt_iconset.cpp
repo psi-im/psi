@@ -5,18 +5,16 @@
 #include "psiiconset.h"
 #include "psicon.h"
 
-#include <q3buttongroup.h>
+#include <QDir>
 #include <qcheckbox.h>
 #include <qradiobutton.h>
 #include <qcombobox.h>
 #include <qlineedit.h>
 #include <qfileinfo.h>
-#include <q3header.h>
 #include <qapplication.h>
 #include <qthread.h>
 #include <qmutex.h>
 #include <qevent.h>
-#include <q3progressbar.h>
 #include <qcursor.h>
 #include <qpalette.h>
 #include <qtabwidget.h>

@@ -1,6 +1,5 @@
-namespace QCA {
 /*
-Copyright (C) 1999-2004 The Botan Project. All rights reserved.
+Copyright (C) 1999-2007 The Botan Project. All rights reserved.
 
 Redistribution and use in source and binary forms, for any use, with or without
 modification, is permitted provided that the following conditions are met:
@@ -24,17 +23,19 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+// LICENSEHEADER_END
+namespace QCA { // WRAPNS_LINE
 /*************************************************
 * BigInt Input/Output Source File                *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
-}
+} // WRAPNS_LINE
 #include <botan/bigint.h>
-namespace QCA {
-}
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
 #include <iostream>
-namespace QCA {
+namespace QCA { // WRAPNS_LINE
 
 namespace Botan {
 
@@ -60,7 +61,7 @@ std::ostream& operator<<(std::ostream& stream, const BigInt& n)
       SecureVector<byte> buffer = BigInt::encode(n, base);
       u32bit skip = 0;
       while(buffer[skip] == '0' && skip < buffer.size())
-         skip++;
+         ++skip;
       stream.write((const char*)buffer.begin() + skip, buffer.size() - skip);
       }
    if(!stream.good())
@@ -81,7 +82,7 @@ std::istream& operator>>(std::istream& stream, BigInt& n)
    return stream;
    }
 
-#endif // BOTAN_MINIMAL_BIGINT
+#endif
 
 }
-}
+} // WRAPNS_LINE

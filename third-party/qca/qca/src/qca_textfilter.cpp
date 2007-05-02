@@ -20,8 +20,6 @@
 
 #include "qca_textfilter.h"
 
-#include <QtCore>
-
 namespace QCA {
 
 //----------------------------------------------------------------------------
@@ -37,27 +35,27 @@ void TextFilter::setup(Direction dir)
 	_dir = dir;
 }
 
-QSecureArray TextFilter::encode(const QSecureArray &a)
+SecureArray TextFilter::encode(const SecureArray &a)
 {
 	setup(Encode);
 	return process(a);
 }
 
-QSecureArray TextFilter::decode(const QSecureArray &a)
+SecureArray TextFilter::decode(const SecureArray &a)
 {
 	setup(Decode);
 	return process(a);
 }
 
-QString TextFilter::arrayToString(const QSecureArray &a)
+QString TextFilter::arrayToString(const SecureArray &a)
 {
 	return QString::fromLatin1(encode(a).toByteArray());
 }
 
-QSecureArray TextFilter::stringToArray(const QString &s)
+SecureArray TextFilter::stringToArray(const QString &s)
 {
 	if(s.isEmpty())
-		return QSecureArray();
+		return SecureArray();
 	return decode(s.toLatin1());
 }
 
@@ -108,11 +106,11 @@ void Hex::clear()
 	_ok = true;
 }
 
-QSecureArray Hex::update(const QSecureArray &a)
+SecureArray Hex::update(const SecureArray &a)
 {
 	if(_dir == Encode)
 	{
-		QSecureArray out(a.size() * 2);
+		SecureArray out(a.size() * 2);
 		int at = 0;
 		int c;
 		for(int n = 0; n < (int)a.size(); ++n)
@@ -135,7 +133,7 @@ QSecureArray Hex::update(const QSecureArray &a)
 			out[at++] = (char)c;
 		}
 		if(!_ok)
-			return QSecureArray();
+			return SecureArray();
 
 		return out;
 	}
@@ -150,7 +148,7 @@ QSecureArray Hex::update(const QSecureArray &a)
 			flag = true;
 		}
 
-		QSecureArray out(a.size() / 2);
+		SecureArray out(a.size() / 2);
 		int at = 0;
 		int c;
 		for(int n = 0; n < (int)a.size(); ++n)
@@ -175,7 +173,7 @@ QSecureArray Hex::update(const QSecureArray &a)
 			}
 		}
 		if(!_ok)
-			return QSecureArray();
+			return SecureArray();
 
 		if(flag)
 		{
@@ -186,11 +184,11 @@ QSecureArray Hex::update(const QSecureArray &a)
 	}
 }
 
-QSecureArray Hex::final()
+SecureArray Hex::final()
 {
 	if(partial)
 		_ok = false;
-	return QSecureArray();
+	return SecureArray();
 }
 
 bool Hex::ok() const
@@ -228,7 +226,7 @@ void Base64::setLineBreaksColumn(int column)
 		_lb_column = 76;
 }
 
-static QSecureArray b64encode(const QSecureArray &s)
+static SecureArray b64encode(const SecureArray &s)
 {
 	int i;
 	int len = s.size();
@@ -244,7 +242,7 @@ static QSecureArray b64encode(const QSecureArray &s)
 		"=";
 	int a, b, c;
 
-	QSecureArray p((len + 2) / 3 * 4);
+	SecureArray p((len + 2) / 3 * 4);
 	int at = 0;
 	for(i = 0; i < len; i += 3)
 	{
@@ -272,7 +270,7 @@ static QSecureArray b64encode(const QSecureArray &s)
 	return p;
 }
 
-static QSecureArray b64decode(const QSecureArray &s, bool *ok)
+static SecureArray b64decode(const SecureArray &s, bool *ok)
 {
 	// -1 specifies invalid
 	// 64 specifies eof
@@ -299,7 +297,7 @@ static QSecureArray b64decode(const QSecureArray &s, bool *ok)
 	};
 
 	// return value
-	QSecureArray p;
+	SecureArray p;
 	*ok = true;
 
 	// this should be a multiple of 4
@@ -343,7 +341,7 @@ static QSecureArray b64decode(const QSecureArray &s, bool *ok)
 	return p;
 }
 
-static int findLF(const QSecureArray &in, int offset)
+static int findLF(const SecureArray &in, int offset)
 {
 	for(int n = offset; n < in.size(); ++n)
 	{
@@ -353,9 +351,9 @@ static int findLF(const QSecureArray &in, int offset)
 	return -1;
 }
 
-static QSecureArray insert_linebreaks(const QSecureArray &s, int *col, int lfAt)
+static SecureArray insert_linebreaks(const SecureArray &s, int *col, int lfAt)
 {
-	QSecureArray out = s;
+	SecureArray out = s;
 
 	int needed = (out.size() + *col) / lfAt;   // how many newlines needed?
 	if(needed > 0)
@@ -391,9 +389,9 @@ static QSecureArray insert_linebreaks(const QSecureArray &s, int *col, int lfAt)
 	return out;
 }
 
-static QSecureArray remove_linebreaks(const QSecureArray &s)
+static SecureArray remove_linebreaks(const SecureArray &s)
 {
-	QSecureArray out = s;
+	SecureArray out = s;
 
 	int removed = 0;
 	int at = findLF(out, 0);
@@ -419,23 +417,23 @@ static QSecureArray remove_linebreaks(const QSecureArray &s)
 	return out;
 }
 
-static void appendArray(QSecureArray *a, const QSecureArray &b)
+static void appendArray(SecureArray *a, const SecureArray &b)
 {
 	int oldsize = a->size();
 	a->resize(oldsize + b.size());
 	memcpy(a->data() + oldsize, b.data(), b.size());
 }
 
-QSecureArray Base64::update(const QSecureArray &a)
+SecureArray Base64::update(const SecureArray &a)
 {
-	QSecureArray in;
+	SecureArray in;
 	if(_dir == Decode && _lb_enabled)
 		in = remove_linebreaks(a);
 	else
 		in = a;
 
 	if(in.isEmpty())
-		return QSecureArray();
+		return SecureArray();
 
 	int chunk;
 	if(_dir == Encode)
@@ -447,13 +445,13 @@ QSecureArray Base64::update(const QSecureArray &a)
 	if(size < chunk)
 	{
 		appendArray(&partial, in);
-		return QSecureArray();
+		return SecureArray();
 	}
 
 	int eat = size % chunk;
 
 	// s = partial + a - eat
-	QSecureArray s(partial.size() + in.size() - eat);
+	SecureArray s(partial.size() + in.size() - eat);
 	memcpy(s.data(), partial.data(), partial.size());
 	memcpy(s.data() + partial.size(), in.data(), in.size() - eat);
 
@@ -470,14 +468,14 @@ QSecureArray Base64::update(const QSecureArray &a)
 	else
 	{
 		bool ok;
-		QSecureArray out = b64decode(s, &ok);
+		SecureArray out = b64decode(s, &ok);
 		if(!ok)
 			_ok = false;
 		return out;
 	}
 }
 
-QSecureArray Base64::final()
+SecureArray Base64::final()
 {
 	if(_dir == Encode)
 	{
@@ -489,7 +487,7 @@ QSecureArray Base64::final()
 	else
 	{
 		bool ok;
-		QSecureArray out = b64decode(partial, &ok);
+		SecureArray out = b64decode(partial, &ok);
 		if(!ok)
 			_ok = false;
 		return out;

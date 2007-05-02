@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2005  Justin Karneges
+ * Copyright (C) 2003-2005  Justin Karneges <justin@affinix.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,6 @@
 #ifndef DIRWATCH_P_H
 #define DIRWATCH_P_H
 
-#include <QtCore>
 #include "qca_support.h"
 
 namespace QCA

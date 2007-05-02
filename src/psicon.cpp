@@ -570,18 +570,18 @@ void PsiCon::changeProfile()
 void PsiCon::qcaEvent(int id, const QCA::Event& event)
 {
 	if (event.type() == QCA::Event::Password) {
-		if(PGPUtil::passphrases.contains(event.keyStoreEntryId())) {
-			d->qcaEventHandler->submitPassword(id,QSecureArray(PGPUtil::passphrases[event.keyStoreEntryId()].utf8()));
+		if(PGPUtil::passphrases.contains(event.keyStoreEntry().id())) {
+			d->qcaEventHandler->submitPassword(id,QCA::SecureArray(PGPUtil::passphrases[event.keyStoreEntry().id()].utf8()));
 		}
 		else {
 			QString name;
-			QCA::KeyStore ks(event.keyStoreId(), &d->qcaKeyStoreManager);
+			QCA::KeyStore ks(event.keyStoreInfo().id(), &d->qcaKeyStoreManager);
 			foreach(QCA::KeyStoreEntry e, ks.entryList()) {
-				if (e.id() == event.keyStoreEntryId()) {
+				if (e.id() == event.keyStoreEntry().id()) {
 					name = e.name();
 				}
 			}
-			PassphraseDlg::promptPassphrase(name,event.keyStoreEntryId(),id);
+			PassphraseDlg::promptPassphrase(name,event.keyStoreEntry().id(),id);
 		}
 	}
 }

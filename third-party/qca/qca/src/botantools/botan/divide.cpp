@@ -1,6 +1,5 @@
-namespace QCA {
 /*
-Copyright (C) 1999-2004 The Botan Project. All rights reserved.
+Copyright (C) 1999-2007 The Botan Project. All rights reserved.
 
 Redistribution and use in source and binary forms, for any use, with or without
 modification, is permitted provided that the following conditions are met:
@@ -24,108 +23,114 @@ LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+// LICENSEHEADER_END
+namespace QCA { // WRAPNS_LINE
 /*************************************************
 * Division Algorithm Source File                 *
-* (C) 1999-2004 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
-}
+} // WRAPNS_LINE
 #include <botan/numthry.h>
-namespace QCA {
-}
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
 #include <botan/mp_core.h>
-namespace QCA {
+namespace QCA { // WRAPNS_LINE
 
 namespace Botan {
+
+namespace {
+
+/*************************************************
+* Handle signed operands, if necessary           *
+*************************************************/
+void sign_fixup(const BigInt& x, const BigInt& y, BigInt& q, BigInt& r)
+   {
+   if(x.sign() == BigInt::Negative)
+      {
+      q.flip_sign();
+      if(r.is_nonzero()) { --q; r = y.abs() - r; }
+      }
+   if(y.sign() == BigInt::Negative)
+      q.flip_sign();
+   }
+
+}
 
 /*************************************************
 * Solve x = q * y + r                            *
 *************************************************/
 void divide(const BigInt& x, const BigInt& y_arg, BigInt& q, BigInt& r)
    {
+   if(y_arg.is_zero())
+      throw BigInt::DivideByZero();
+
    BigInt y = y_arg;
+   const u32bit y_words = y.sig_words();
    r = x;
 
    r.set_sign(BigInt::Positive);
    y.set_sign(BigInt::Positive);
 
-   modifying_divide(r, y, q);
+   s32bit compare = r.cmp(y);
 
-   if(x.sign() == BigInt::Negative)
+   if(compare < 0)
+      q = 0;
+   else if(compare ==  0)
       {
-      q.flip_sign();
-      if(r.is_nonzero()) { --q; r = y_arg.abs() - r; }
+      q = 1;
+      r = 0;
       }
-   if(y_arg.sign() == BigInt::Negative)
-      q.flip_sign();
-   }
-
-/*************************************************
-* Solve x = q * y + r                            *
-*************************************************/
-void positive_divide(const BigInt& x, const BigInt& y_arg,
-                     BigInt& q, BigInt& r)
-   {
-   BigInt y = y_arg;
-   r = x;
-   modifying_divide(r, y, q);
-   }
-
-/*************************************************
-* Solve x = q * y + r                            *
-*************************************************/
-void modifying_divide(BigInt& x, BigInt& y, BigInt& q)
-   {
-   if(y.is_zero())
-      throw BigInt::DivideByZero();
-   if(x.is_negative() || y.is_negative())
-      throw Invalid_Argument("Arguments to modifying_divide must be positive");
-
-   s32bit compare = x.cmp(y);
-   if(compare == -1) { q = 0; return; }
-   if(compare ==  0) { q = 1; x = 0; return; }
-
-   u32bit shifts = 0;
-   while(y[y.sig_words()-1] < MP_WORD_TOP_BIT)
-      { x <<= 1; y <<= 1; shifts++; }
-
-   u32bit n = x.sig_words() - 1, t = y.sig_words() - 1;
-   q.reg.create(n - t + 1);
-   if(n <= t)
+   else
       {
-      while(x > y) { x -= y; q.add(1); }
-      x >>= shifts;
-      return;
-      }
+      u32bit shifts = 0;
+      word y_top = y[y.sig_words()-1];
+      while(y_top < MP_WORD_TOP_BIT) { y_top <<= 1; ++shifts; }
+      y <<= shifts;
+      r <<= shifts;
 
-   BigInt temp = y << (MP_WORD_BITS * (n-t));
+      const u32bit n = r.sig_words() - 1, t = y_words - 1;
 
-   while(x >= temp) { x -= temp; q[n-t]++; }
-
-   for(u32bit j = n; j != t; j--)
-      {
-      const word x_j0  = x.word_at(j);
-      const word x_j1 = x.word_at(j-1);
-      const word y_t  = y.word_at(t);
-
-      if(x_j0 == y_t)
-         q[j-t-1] = MP_WORD_MAX;
-      else
-         q[j-t-1] = bigint_divop(x_j0, x_j1, y_t);
-
-      while(bigint_divcore(q[j-t-1], y_t, y.word_at(t-1),
-                           x_j0, x_j1, x.word_at(j-2)))
-         q[j-t-1]--;
-
-      x -= (q[j-t-1] * y) << (MP_WORD_BITS * (j-t-1));
-      if(x.is_negative())
+      q.get_reg().create(n - t + 1);
+      if(n <= t)
          {
-         x += y << (MP_WORD_BITS * (j-t-1));
-         q[j-t-1]--;
+         while(r > y) { r -= y; q++; }
+         r >>= shifts;
+         sign_fixup(x, y_arg, q, r);
+         return;
          }
+
+      BigInt temp = y << (MP_WORD_BITS * (n-t));
+
+      while(r >= temp) { r -= temp; ++q[n-t]; }
+
+      for(u32bit j = n; j != t; --j)
+         {
+         const word x_j0  = r.word_at(j);
+         const word x_j1 = r.word_at(j-1);
+         const word y_t  = y.word_at(t);
+
+         if(x_j0 == y_t)
+            q[j-t-1] = MP_WORD_MAX;
+         else
+            q[j-t-1] = bigint_divop(x_j0, x_j1, y_t);
+
+         while(bigint_divcore(q[j-t-1], y_t, y.word_at(t-1),
+                              x_j0, x_j1, r.word_at(j-2)))
+            --q[j-t-1];
+
+         r -= (q[j-t-1] * y) << (MP_WORD_BITS * (j-t-1));
+         if(r.is_negative())
+            {
+            r += y << (MP_WORD_BITS * (j-t-1));
+            --q[j-t-1];
+            }
+         }
+      r >>= shifts;
       }
-   x >>= shifts;
+
+   sign_fixup(x, y_arg, q, r);
    }
 
 }
-}
+} // WRAPNS_LINE

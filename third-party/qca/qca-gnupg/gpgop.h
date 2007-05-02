@@ -20,7 +20,6 @@
 #ifndef GPGOP_H
 #define GPGOP_H
 
-#include <QtCore>
 #include <QtCrypto>
 #include "qpipe.h"
 
@@ -161,7 +160,7 @@ public:
 	void doExport(const QString &key_id);
 
 #ifdef QPIPE_SECURE
-	void submitPassphrase(const QSecureArray &a);
+	void submitPassphrase(const QCA::SecureArray &a);
 #else
 	void submitPassphrase(const QByteArray &a);
 #endif

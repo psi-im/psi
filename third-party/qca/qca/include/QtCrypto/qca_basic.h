@@ -80,13 +80,13 @@ namespace QCA
 		 *
 		 * \sa randomArray
 		 */
-		QSecureArray nextBytes(int size);
+		SecureArray nextBytes(int size);
 
 		/**
 		 * Provide a random character (byte)
 		 *
 		 * This is the normal way of obtaining a single random char
-		 * (ie. 8 bit byte), of the default quality, as shown below:
+		 * (ie. 8 bit byte), as shown below:
 		 * \code
 		 * myRandomChar = QCA::Random::randomChar();
 		 * \endcode
@@ -111,12 +111,12 @@ namespace QCA
 		 * 
 		 * \code
 		 * // build a 30 byte secure array.
-		 * QSecureArray arry = QCA::Random::randomArray(30);
+		 * SecureArray arry = QCA::Random::randomArray(30);
 		 * \endcode
 		 *
 		 * \param size the number of bytes to provide
 		 */
-		static QSecureArray randomArray(int size);
+		static SecureArray randomArray(int size);
 	};
 
 	/**
@@ -175,7 +175,7 @@ namespace QCA
 		 * \param provider the name of the provider plugin
 		 * for the subclass (eg "qca-openssl")
 		 */
-		Hash(const QString &type, const QString &provider = QString());
+		explicit Hash(const QString &type, const QString &provider = QString());
 
 		/**
 		 * Reset a hash, dumping all previous parts of the
@@ -200,7 +200,7 @@ namespace QCA
 		 *
  		 * \param a the byte array to add to the hash 
 		 */
-		virtual void update(const QSecureArray &a);
+		virtual void update(const SecureArray &a);
 
 		/**
 		 * \overload
@@ -214,7 +214,7 @@ namespace QCA
 		 *
 		 * This method is provided to assist with code that
 		 * already exists, and is being ported to %QCA. You are
-		 * better off passing a QSecureArray (as shown above)
+		 * better off passing a SecureArray (as shown above)
 		 * if you are writing new code.
 		 *
 		 * \param data pointer to a char array
@@ -261,19 +261,19 @@ namespace QCA
 		 * reuse the Hash object, you should call clear() and
 		 * start to update() again.
 		 */
-		virtual QSecureArray final();
+		virtual SecureArray final();
 
 		/**
 		 * %Hash a byte array, returning it as another
 		 * byte array.
 		 * 
 		 * This is a convenience method that returns the
-		 * hash of a QSecureArray.
+		 * hash of a SecureArray.
 		 * 
 		 * \code
-		 * QSecureArray sampleArray(3);
+		 * SecureArray sampleArray(3);
 		 * sampleArray.fill('a');
-		 * QSecureArray outputArray = QCA::Hash("md2")::hash(sampleArray);
+		 * SecureArray outputArray = QCA::Hash("md2")::hash(sampleArray);
 		 * \endcode
 		 * 
 		 * \param array the QByteArray to hash
@@ -283,7 +283,7 @@ namespace QCA
 		 * consider creating an Hash object, and then calling
 		 * update() and final().
 		 */
-		QSecureArray hash(const QSecureArray &array);
+		SecureArray hash(const SecureArray &array);
 
 		/**
 		 * %Hash a byte array, returning it as a printable
@@ -299,7 +299,7 @@ namespace QCA
 		 * object, call Hash::update() as required, then call 
 		 * Hash::final(), before using the static arrayToHex() method.
 		 */
-		QString hashToString(const QSecureArray &array);
+		QString hashToString(const SecureArray &array);
 	};
 
 	/** \page hashing Hashing Algorithms
@@ -560,13 +560,13 @@ namespace QCA
 		 *
 		 * \param a the array of data to encrypt / decrypt
 		 */
-		virtual QSecureArray update(const QSecureArray &a);
+		virtual SecureArray update(const SecureArray &a);
 
 		/**
 		 * complete the block of data, padding as required, and returning
 		 * the completed block
 		 */
-		virtual QSecureArray final();
+		virtual SecureArray final();
 
 		/**
 
@@ -683,7 +683,7 @@ namespace QCA
 		 *
 		 * \param array the message contents
 		 */
-		virtual void update(const QSecureArray &array);
+		virtual void update(const SecureArray &array);
 
 		/**
 		 * Finalises input and returns the MAC result
@@ -696,7 +696,7 @@ namespace QCA
 		 * reuse the %MessageAuthenticationCode object, you
 		 * should call clear() and start to update() again.
 		 */
-		virtual QSecureArray final();
+		virtual SecureArray final();
 
 		/**
 		 * Initialise the MAC algorithm.
@@ -751,7 +751,7 @@ namespace QCA
 		 *
 		 * \return the derived key
 		 */
-		SymmetricKey makeKey(const QSecureArray &secret, const InitializationVector &salt, unsigned int keyLength, unsigned int iterationCount);
+		SymmetricKey makeKey(const SecureArray &secret, const InitializationVector &salt, unsigned int keyLength, unsigned int iterationCount);
 
 		/**
 		 * Construct the name of the algorithm
@@ -790,7 +790,7 @@ namespace QCA
 		   \param algorithm the name of the hashing algorithm to use
 		   \param provider the name of the provider to use, if available
 		*/
-		PBKDF1(const QString &algorithm = "sha1", const QString &provider = QString()) : KeyDerivationFunction(withAlgorithm("pbkdf1", algorithm), provider) {}
+		explicit PBKDF1(const QString &algorithm = "sha1", const QString &provider = QString()) : KeyDerivationFunction(withAlgorithm("pbkdf1", algorithm), provider) {}
 	};
 
 	/**
@@ -810,7 +810,7 @@ namespace QCA
 		   \param algorithm the name of the hashing algorithm to use
 		   \param provider the name of the provider to use, if available
 		*/
-		PBKDF2(const QString &algorithm = "sha1", const QString &provider = QString()) : KeyDerivationFunction(withAlgorithm("pbkdf2", algorithm), provider) {}
+		explicit PBKDF2(const QString &algorithm = "sha1", const QString &provider = QString()) : KeyDerivationFunction(withAlgorithm("pbkdf2", algorithm), provider) {}
 	};
 }
 

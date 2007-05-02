@@ -1,8 +1,7 @@
-TEMPLATE = app
-CONFIG  += qt thread debug
-TARGET   = btest
+CONFIG += console
+CONFIG -= app_bundle
+QT -= gui
 
 include(botantools.pri)
 
 SOURCES += btest.cpp
-
