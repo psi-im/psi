@@ -53,9 +53,6 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <property name="text" >
-        <string>&lt;h3>&lt;b>%1 v%2&lt;/b>&lt;/h3></string>
-       </property>
        <property name="textFormat" >
         <enum>Qt::RichText</enum>
        </property>
