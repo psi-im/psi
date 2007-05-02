@@ -33,6 +33,7 @@
 
 #include "jidutil.h"
 #include "psicon.h"
+#include "psioptions.h"
 #include "psiaccount.h"
 #include "userlist.h"
 #include "common.h"
@@ -75,7 +76,6 @@ StatusShowDlg::StatusShowDlg(const UserListItem &u)
 //----------------------------------------------------------------------------
 // StatusSetDlg
 //----------------------------------------------------------------------------
-static XMPP::Status::Type combomap[7] = { STATUS_CHAT, STATUS_ONLINE, STATUS_AWAY, STATUS_XA, STATUS_DND, STATUS_INVISIBLE, STATUS_OFFLINE };
 
 class StatusSetDlg::Private
 {
@@ -132,12 +132,20 @@ void StatusSetDlg::init()
 	l = new QLabel(tr("Status:"), this);
 	hb1->addWidget(l);
 	d->cb_type = new QComboBox(this);
-	int n;
-	for(n = 0; n < 7; ++n)
-		d->cb_type->insertItem(status2txt(combomap[n]));
-	for(n = 0; n < 7; ++n) {
-		if(type == combomap[n]) {
-			d->cb_type->setCurrentItem(n);
+
+	QList<XMPP::Status::Type> statuses;
+	statuses << STATUS_CHAT << STATUS_ONLINE << STATUS_AWAY << STATUS_XA << STATUS_DND;
+	if (PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool()) {
+		statuses << STATUS_INVISIBLE;
+	}
+	statuses << STATUS_OFFLINE;
+	
+	foreach(XMPP::Status::Type status, statuses) {
+		d->cb_type->addItem(status2txt(status), status);
+	}
+	for(int i = 0; i < d->cb_type->count(); i++) {
+		if (d->cb_type->itemData(i).toInt() == type) {
+			d->cb_type->setCurrentItem(i);
 			break;
 		}
 	}
@@ -237,11 +245,11 @@ void StatusSetDlg::doButton()
  		option.sp[text] = StatusPreset(text,d->te->text());
  		if (!d->le_priority->text().isEmpty()) 
  			option.sp[text].setPriority(d->le_priority->text().toInt());
- 		option.sp[text].setStatus(combomap[d->cb_type->currentItem()]);
+ 		option.sp[text].setStatus((XMPP::Status::Type) d->cb_type->itemData(d->cb_type->currentIndex()).toInt());
 	} 
 
 	// Set status
-	int type = combomap[d->cb_type->currentItem()];
+	int type = d->cb_type->itemData(d->cb_type->currentIndex()).toInt();
 	QString str = d->te->text();
 
  	if (d->le_priority->text().isEmpty())
@@ -265,8 +273,8 @@ void StatusSetDlg::chooseStatusPreset(int x)
 		d->le_priority->clear();
 
 	int n;
-	for(n = 0; n < 7; ++n) {
-		if(preset.status() == combomap[n]) {
+	for(n = 0; n < d->cb_type->count(); ++n) {
+		if(preset.status() == d->cb_type->itemData(n).toInt()) {
 			d->cb_type->setCurrentItem(n);
 			break;
 		}
