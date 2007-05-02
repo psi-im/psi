@@ -178,6 +178,7 @@ private:
 	friend class PsiAccount; // FIXME
 	void setToggles(bool tog_offline, bool tog_away, bool tog_agents, bool tog_hidden, bool tog_self);
 	void getToggles(bool *tog_offline, bool *tog_away, bool *tog_agents, bool *tog_hidden, bool *tog_self);
+	void promptUserToCreateAccount();
 
 	friend class EventQueue;
 	int getId();

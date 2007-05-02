@@ -217,29 +217,6 @@ public:
 		iconSelect->setIconset(iss);
 	}
 
-	/**
-	 * Prompts user to create new account, if none are currently present in system.
-	 */
-	void promptUserToCreateAccount()
-	{
-		QMessageBox msgBox(QMessageBox::Question,tr("Account setup"),tr("You need to set up an account to start. Would you like to register a new account, or use an existing account?"));
-		QPushButton *registerButton = msgBox.addButton(tr("Register new account"), QMessageBox::AcceptRole);
-		QPushButton *existingButton = msgBox.addButton(tr("Use existing account"),QMessageBox::AcceptRole);
-		msgBox.addButton(QMessageBox::Cancel);
-		msgBox.exec();
-		if (msgBox.clickedButton() ==  existingButton) {
-			AccountModifyDlg w(psi);
-			w.exec();
-		}
-		else if (msgBox.clickedButton() ==  registerButton) {
-			AccountRegDlg w(psi->proxy());
-			int n = w.exec();
-			if (n == QDialog::Accepted) {
-				psi->contactList()->createAccount(w.jid().node(),w.jid(),w.pass(),w.useHost(),w.host(),w.port(),w.legacySSLProbe(),w.ssl(),w.proxy(),false);
-			}
-		}
-	}
-
 	PsiCon* psi;
 	PsiContactList* contactList;
 	UserProfile pro;
@@ -633,7 +610,7 @@ void PsiCon::doManageAccounts()
 			account->modify();
 		}
 		else {
-			d->promptUserToCreateAccount();
+			promptUserToCreateAccount();
 		}
 	}
 }
@@ -990,7 +967,7 @@ void PsiCon::doFileTransDlg()
 void PsiCon::checkAccountsEmpty()
 {
 	if (d->pro.acc.count() == 0) {
-		d->promptUserToCreateAccount();
+		promptUserToCreateAccount();
 	}
 }
 
@@ -1460,5 +1437,29 @@ PsiActionList *PsiCon::actionList() const
 {
 	return d->actionList;
 }
+
+/**
+ * Prompts user to create new account, if none are currently present in system.
+ */
+void PsiCon::promptUserToCreateAccount()
+{
+	QMessageBox msgBox(QMessageBox::Question,tr("Account setup"),tr("You need to set up an account to start. Would you like to register a new account, or use an existing account?"));
+	QPushButton *registerButton = msgBox.addButton(tr("Register new account"), QMessageBox::AcceptRole);
+	QPushButton *existingButton = msgBox.addButton(tr("Use existing account"),QMessageBox::AcceptRole);
+	msgBox.addButton(QMessageBox::Cancel);
+	msgBox.exec();
+	if (msgBox.clickedButton() ==  existingButton) {
+		AccountModifyDlg w(this);
+		w.exec();
+	}
+	else if (msgBox.clickedButton() ==  registerButton) {
+		AccountRegDlg w(proxy());
+		int n = w.exec();
+		if (n == QDialog::Accepted) {
+			contactList()->createAccount(w.jid().node(),w.jid(),w.pass(),w.useHost(),w.host(),w.port(),w.legacySSLProbe(),w.ssl(),w.proxy(),false);
+		}
+	}
+}
+
 
 #include "psicon.moc"
