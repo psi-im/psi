@@ -91,16 +91,6 @@ Pooling_Allocator::Memory_Block::Memory_Block(void* buf)
    }
 
 /*************************************************
-* Compare a Memory_Block with a void pointer     *
-*************************************************/
-inline bool Pooling_Allocator::Memory_Block::operator<(const void* other) const
-   {
-   if(buffer <= other && other < buffer_end)
-      return false;
-   return (buffer < other);
-   }
-
-/*************************************************
 * See if ptr is contained by this block          *
 *************************************************/
 bool Pooling_Allocator::Memory_Block::contains(void* ptr,
@@ -256,7 +246,7 @@ void Pooling_Allocator::deallocate(void* ptr, u32bit n)
       const u32bit block_no = round_up(n, BLOCK_SIZE) / BLOCK_SIZE;
 
       std::vector<Memory_Block>::iterator i =
-         std::lower_bound(blocks.begin(), blocks.end(), ptr);
+         std::lower_bound(blocks.begin(), blocks.end(), Memory_Block(ptr));
 
       if(i == blocks.end() || !i->contains(ptr, block_no))
          throw Invalid_State("Pointer released to the wrong allocator");
@@ -319,7 +309,7 @@ void Pooling_Allocator::get_more_core(u32bit in_bytes)
       }
 
    std::sort(blocks.begin(), blocks.end());
-   last_used = std::lower_bound(blocks.begin(), blocks.end(), ptr);
+   last_used = std::lower_bound(blocks.begin(), blocks.end(), Memory_Block(ptr));
    }
 
 const u32bit Pooling_Allocator::Memory_Block::BITMAP_SIZE = 8 * sizeof(Pooling_Allocator::Memory_Block::bitmap_type);
