@@ -64,7 +64,7 @@ void PrivacyList::reNumber()
 bool PrivacyList::moveItemUp(int index)
 {
 	if (index < items().count() && index > 0) {
-		int order =items_[index].order();
+		unsigned int order =items_[index].order();
 		if (order == items_[index-1].order()) {
 			reNumber();
 			return true;
@@ -82,7 +82,7 @@ bool PrivacyList::moveItemUp(int index)
 bool PrivacyList::moveItemDown(int index)
 {
 	if (index >= 0 && index < items().count()-1) {
-		int order =items_[index].order();
+		unsigned int order =items_[index].order();
 		if (order == items_[index+1].order()) {
 			reNumber();
 			return true;
