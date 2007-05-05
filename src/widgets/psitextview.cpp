@@ -273,7 +273,7 @@ void PsiTextView::resizeEvent(QResizeEvent *e)
 	if (atEnd)
 		verticalScrollBar()->setValue(verticalScrollBar()->maximum());
 	else if (value != 0)
-		verticalScrollBar()->setValue((double)verticalScrollBar()->maximum() / value);
+		verticalScrollBar()->setValue((int) ((double)verticalScrollBar()->maximum() / value));
 }
 
 #include "psitextview.moc"
