@@ -1416,6 +1416,8 @@ void PsiAccount::cs_error(int err)
 	QString str;
 	bool reconn;
 
+	if (!isActive()) return; // all cleaned up already
+
 	getErrorInfo(err, d->conn, d->stream, d->tlsHandler, &str, &reconn);
 
 	d->client->close();
