@@ -161,7 +161,9 @@ void TabDlg::tab_aboutToShowMenu(QMenu *menu)
 	for (uint i = 0; i < psi->getTabSets()->count(); ++i)
 	{
 		TabDlg* tabSet= psi->getTabSets()->at(i);
-		sendTo->addAction( tabSet->getName())->setData(QVariant(tabdlgmetatype, &tabSet));
+		QAction *act = sendTo->addAction( tabSet->getName());
+		act->setData(QVariant(tabdlgmetatype, &tabSet));
+		if (tabSet == this) act->setEnabled(false);
 	}
 	connect(sendTo, SIGNAL(triggered(QAction*)), SLOT(menu_sendChatTo(QAction*)));
 	menu->addMenu(sendTo);
