@@ -1482,12 +1482,6 @@ void PsiAccount::client_rosterRequestFinished(bool success, int, const QString &
 	//	PsiOptions::instance()->load(d->client);
 
 	setStatusDirect(d->loginStatus, d->loginWithPriority);
-
-	// Get the bookmarks
-	if (PsiOptions::instance()->getOption("options.muc.bookmarks.auto-join").toBool()) {
-		connect(d->bookmarkManager,SIGNAL(getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&)),SLOT(getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&)));
-		d->bookmarkManager->getBookmarks();
-	}
 }
 
 void PsiAccount::resolveContactName()
@@ -2135,6 +2129,13 @@ void PsiAccount::setStatusActual(const Status &_s)
 		stateChanged();
 		QTimer::singleShot(15000, this, SLOT(enableNotifyOnline()));
 
+		// Get the bookmarks
+		if (PsiOptions::instance()->getOption("options.muc.bookmarks.auto-join").toBool()) {
+			connect(d->bookmarkManager,SIGNAL(getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&)),SLOT(getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&)));
+			d->bookmarkManager->getBookmarks();
+		}
+		
+		// Get the vcard
 		const VCard *vcard = VCardFactory::instance()->vcard(d->jid);
 		if ( option.autoVCardOnLogin || !vcard || vcard->isEmpty() || vcard->nickName().isEmpty() )
 			VCardFactory::instance()->getVCard(d->jid, d->client->rootTask(), this, SLOT(slotCheckVCard()));
