@@ -18,6 +18,9 @@
  *
  */
 
+#include <QDomDocument>
+#include <QDomElement>
+
 #include "conferencebookmark.h"
 #include "xmpp_xmlcommon.h"
 

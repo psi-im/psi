@@ -26,12 +26,16 @@
 #include <QList>
 #include <QPixmap>
 #include <Q3PtrList>
-#include "im.h"
+#include "xmpp_resource.h"
+#include "xmpp_liverosteritem.h"
 #include "mood.h"
 #include "geolocation.h"
 #include "physicallocation.h"
 
 class AvatarFactory;
+namespace XMPP {
+	class Jid;
+}
 
 class UserResource : public XMPP::Resource
 {

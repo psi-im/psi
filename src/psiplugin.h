@@ -26,13 +26,13 @@
 #ifndef PSIPLUGIN_H
 #define PSIPLUGIN_H
 
+#include <QObject>
 #include <QtCore>
-#include <QDomElement>
-#include <QString>
-#include <QPluginLoader>
 
 class PsiAccount;
+class QDomElement;
 class QString;
+class QPluginLoader;
 
 namespace XMPP {
 	  class Jid;

@@ -19,6 +19,9 @@
 ****************************************************************************/
 
 #include <QList>
+#include <QStringList>
+#include <QDomElement>
+#include <QDomDocument>
 
 #include "varlist.h"
 

@@ -21,13 +21,12 @@
 #ifndef PSIAPPLICATION_H
 #define PSIAPPLICATION_H
 
-#include <qapplication.h>
-//Added by qt3to4:
-#include <QEvent>
-
+#include <QApplication>
 #ifdef Q_WS_MAC
 #include <Carbon/Carbon.h>
 #endif
+
+class QEvent;
 
 class PsiApplication : public QApplication
 {

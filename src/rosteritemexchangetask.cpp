@@ -18,8 +18,9 @@
  *
  */
 
-#include "im.h" // Client
 #include "xmpp_xmlcommon.h"
+#include "xmpp_client.h"
+#include "xmpp_liveroster.h"
 #include "rosteritemexchangetask.h"
 
 RosterItemExchangeTask::RosterItemExchangeTask(Task* parent) : Task(parent), ignoreNonRoster_(false)

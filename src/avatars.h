@@ -86,8 +86,8 @@ private:
 	QMap<QString,FileAvatar*> file_avatars_;
 	QMap<QString,VCardAvatar*> vcard_avatars_;
 	QMap<QString,VCardStaticAvatar*> vcard_static_avatars_;
-	Iconset iconset_;
 	PsiAccount* pa_;
+	Iconset iconset_;
 };
 
 //------------------------------------------------------------------------------

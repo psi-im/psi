@@ -24,15 +24,16 @@
 #include <Q3ListView>
 
 #include "xmpp_status.h"
-#include "xmpp_jid.h"
 
 using namespace XMPP;
 
 class QPainter;
-
 class GCMainDlg;
 class GCUserView;
 class GCUserViewGroupItem;
+namespace XMPP {
+	class Jid;
+}
 
 class GCUserViewItem : public QObject, public Q3ListViewItem
 {

@@ -28,8 +28,6 @@
 class QDomElement;
 class QDomDocument;
 
-using namespace XMPP;
-
 class AHCError 
 {
 public:
@@ -64,13 +62,13 @@ public:
 
 	// Constructors
 	AHCommand(const QString& node, const QString& sessionId = "", Action action = Execute);
-	AHCommand(const QString& node, XData data, const QString& sessionId = "", Action action = Execute);
+	AHCommand(const QString& node, XMPP::XData data, const QString& sessionId = "", Action action = Execute);
 	AHCommand(const QDomElement &e);
 
 	// Inspectors
 	const QString& node() const { return node_; }
 	bool hasData() const { return hasData_; }
-	const XData& data() const { return data_; }
+	const XMPP::XData& data() const { return data_; }
 	const ActionList& actions() const { return actions_; }
 	Action defaultAction() const { return defaultAction_; }
 	Status status() const { return status_; }
@@ -82,11 +80,11 @@ public:
 	QDomElement toXml(QDomDocument* doc, bool submit) const;
 
 	// Helper constructors
-	static AHCommand formReply(const AHCommand&, const XData&);
-	static AHCommand formReply(const AHCommand&, const XData&, const QString& sessionId);
+	static AHCommand formReply(const AHCommand&, const XMPP::XData&);
+	static AHCommand formReply(const AHCommand&, const XMPP::XData&, const QString& sessionId);
 	static AHCommand canceledReply(const AHCommand&);
 	static AHCommand completedReply(const AHCommand&);
-	static AHCommand completedReply(const AHCommand&, const XData&);
+	static AHCommand completedReply(const AHCommand&, const XMPP::XData&);
 	//static AHCommand errorReply(const AHCommand&, const AHCError&);
 	
 protected:
@@ -102,7 +100,7 @@ protected:
 private: 
 	QString node_;
 	bool hasData_;
-	XData data_;
+	XMPP::XData data_;
 	Status status_;
 	Action defaultAction_;
 	ActionList actions_;

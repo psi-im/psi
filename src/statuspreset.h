@@ -22,10 +22,11 @@
 #define STATUSPRESET_H
 
 #include <QString>
-#include <QDomElement>
 
 #include "maybe.h"
 #include "xmpp_status.h"
+
+class QDomElement;
 
 class StatusPreset 
 {

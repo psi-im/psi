@@ -23,22 +23,22 @@
 
 #include <QDialog>
 #include <QString>
-#include <QStringList>
 
 #include "profiles.h"
 #include "xmpp_jid.h"
-#include "xmpp_xdata.h"
 #include "ui_accountreg.h"
 
 class ProxyManager;
 class ProxyChooser;
 class QWidget;
 class QScrollArea;
+class QStringList;
 class MiniClient;
 class XDataWidget;
 class ServerListQuerier;
 namespace XMPP {
 	class Form;
+	class XData;
 }
 
 class AccountRegDlg : public QDialog

@@ -21,13 +21,13 @@
 #ifndef AHCEXECUTETASK_H
 #define AHCEXECUTETASK_H
 
-#include "ahcommand.h"
 #include "xmpp_task.h"
 #include "xmpp_jid.h"
+#include "ahcommand.h"
 
 class QDomElement;
 
-class AHCExecuteTask : public Task
+class AHCExecuteTask : public XMPP::Task
 {
 public:
 	AHCExecuteTask(const XMPP::Jid& j, const AHCommand&, XMPP::Task* t);

@@ -19,7 +19,6 @@
  */
  
 #include "pepmanager.h"
-#include "im.h"
 #include "xmpp_xmlcommon.h"
 #include "xmpp_tasks.h"
 #include "serverinfomanager.h"

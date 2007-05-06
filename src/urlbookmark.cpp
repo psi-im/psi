@@ -18,6 +18,9 @@
  *
  */
 
+#include <QDomDocument>
+#include <QDomElement>
+
 #include "urlbookmark.h"
 
 URLBookmark::URLBookmark(const QString& name, const QString& url) : name_(name), url_(url) 

@@ -29,8 +29,9 @@
 #include "varlist.h"
 #include "proxy.h"
 #include "common.h"
-#include "im.h" // Roster
-#include "xmpp.h" // ClientStream
+#include "xmpp_clientstream.h"
+#include "xmpp_roster.h"
+#include "xmpp_jid.h"
 
 class UserAccount
 {

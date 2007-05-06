@@ -21,8 +21,9 @@
 #ifndef PSICONTACTLIST_H
 #define PSICONTACTLIST_H
 
-#include "contactlist.h"
+#include <QList>
 
+#include "contactlist.h"
 #include "profiles.h"
 
 using namespace XMPP;

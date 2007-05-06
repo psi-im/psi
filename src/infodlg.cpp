@@ -30,7 +30,6 @@
 #include <qmessagebox.h>
 #include <qbuffer.h>
 #include <QPixmap>
-#include "xmpp.h"
 #include "msgmle.h"
 #include "userlist.h"
 #include "xmpp_vcard.h"

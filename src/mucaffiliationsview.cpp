@@ -20,7 +20,7 @@
 
 #include <QHeaderView>
 
-#include "im.h"
+#include "xmpp_jid.h"
 #include "mucaffiliationsview.h"
 
 MUCAffiliationsView::MUCAffiliationsView(QWidget* parent) : QTreeView(parent)

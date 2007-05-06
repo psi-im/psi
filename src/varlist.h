@@ -21,12 +21,12 @@
 #ifndef VARLIST_H
 #define VARLIST_H
 
-#include <QDomDocument>
-#include <QDomElement>
 #include <QString>
-#include <QStringList>
 #include <QList>
 
+class QDomDocument;
+class QDomElement;
+class QStringList;
 
 class VarListItem
 {

@@ -57,6 +57,7 @@
 #include "accountscombobox.h"
 #include "common.h"
 #include "pgputil.h"
+#include "xmpp_htmlelement.h"
 #include "userlist.h"
 #include "iconwidget.h"
 #include "fancylabel.h"

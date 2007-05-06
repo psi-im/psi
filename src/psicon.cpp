@@ -39,6 +39,7 @@
 #include "accountadddlg.h"
 #include "psiiconset.h"
 #include "contactview.h"
+#include "psievent.h"
 #include "passphrasedlg.h"
 #include "common.h"
 #include "mainwin.h"

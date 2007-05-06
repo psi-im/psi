@@ -29,7 +29,6 @@
 #include "psicon.h"
 #include "psiaccount.h"
 #include "common.h"
-#include "im.h"
 #include "xmpp_tasks.h"
 #include "pgputil.h"
 #include "proxy.h"

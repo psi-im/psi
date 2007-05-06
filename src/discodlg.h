@@ -22,11 +22,13 @@
 #define DISCODLG_H
 
 #include <QDialog>
+
 #include "ui_disco.h"
+#include "xmpp_jid.h"
 
 class PsiAccount;
+class QString;
 
-#include "xmpp.h"
 using namespace XMPP;
 
 class DiscoDlg : public QDialog, public Ui::Disco

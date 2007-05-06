@@ -3,14 +3,13 @@
 
 #include <QObject>
 #include <QRgb>
-#include <QPixmap>
 #include <QSystemTrayIcon>
 
 class PsiIcon;
 class TrayIcon; // old
 class QMenu;
-class QSystemTrayIcon;
 class QPoint;
+class QPixmap;
 
 class PsiTrayIcon : public QObject
 {

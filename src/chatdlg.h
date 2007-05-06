@@ -30,7 +30,7 @@
 #include <QCloseEvent>
 
 #include "advwidget.h"
-#include "im.h" // ChatState
+#include "xmpp_chatstate.h" 
 
 namespace XMPP {
 	class Jid;

@@ -18,6 +18,7 @@
  *
  */
 
+#include "xmpp_jid.h"
 #include "jidutil.h"
 #include "psioptions.h"
 

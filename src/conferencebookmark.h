@@ -22,9 +22,11 @@
 #define CONFERENCEBOOKMARK_H
 
 #include <QString>
-#include <QDomElement>
 
 #include "xmpp_jid.h"
+
+class QDomElement;
+class QDomDocument;
 
 class ConferenceBookmark
 {

@@ -1,8 +1,10 @@
 #ifndef CERTUTIL_H
 #define CERTUTIL_H
 
-#include <QtCrypto>
-#include <QString>
+class QString;
+namespace QCA {
+	class CertificateCollection;
+}
 
 class CertUtil 
 {

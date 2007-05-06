@@ -2,9 +2,10 @@
 #define SHORTCUTMANAGER_H
 
 #include <QObject>
-#include <QKeySequence>
-#include <QString>
 #include <QList>
+
+class QKeySequence;
+class QString;
 
 class ShortcutManager : public QObject
 {

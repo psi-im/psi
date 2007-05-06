@@ -29,8 +29,7 @@
 #include <QEvent>
 #include <QDropEvent>
 
-#include "xmpp.h"
-#include "im.h"
+#include "xmpp_clientstream.h"
 
 class IconAction;
 class UserListItem;
@@ -40,6 +39,9 @@ class PsiAccount;
 class PsiIcon;
 class QTimer;
 class QPixmap;
+namespace XMPP {
+	class Status;
+}
 
 using namespace XMPP;
 

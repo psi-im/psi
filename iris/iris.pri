@@ -30,13 +30,27 @@ HEADERS += \
 	$$PWD/jabber/filetransfer.h \
 	$$PWD/include/xmpp.h \
 	$$PWD/include/xmpp_jid.h \
+	$$PWD/include/xmpp_url.h \
+	$$PWD/include/xmpp_chatstate.h \
 	$$PWD/include/xmpp_client.h \
+	$$PWD/include/xmpp_clientstream.h \
 	$$PWD/include/xmpp_stanza.h \
 	$$PWD/include/xmpp_stream.h \
+	$$PWD/include/xmpp_address.h \
+	$$PWD/include/xmpp_htmlelement.h \
 	$$PWD/include/xmpp_muc.h \
+	$$PWD/include/xmpp_message.h \
+	$$PWD/include/xmpp_pubsubitem.h \
+	$$PWD/include/xmpp_resource.h \
+	$$PWD/include/xmpp_roster.h \
 	$$PWD/include/xmpp_rosterx.h \
 	$$PWD/include/xmpp_xdata.h \
+	$$PWD/include/xmpp_rosteritem.h \
+	$$PWD/include/xmpp_liveroster.h \
+	$$PWD/include/xmpp_liverosteritem.h \
+	$$PWD/include/xmpp_resourcelist.h \
 	$$PWD/include/xmpp_task.h \
+	$$PWD/include/xmpp_httpauthrequest.h \
 	$$PWD/include/xmpp_status.h \
 	$$PWD/include/xmpp_features.h \
 	$$PWD/include/xmpp_agentitem.h \

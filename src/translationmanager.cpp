@@ -25,6 +25,7 @@
 
 #include "translationmanager.h"
 #include "applicationinfo.h"
+#include "varlist.h"
 
 TranslationManager::TranslationManager()
 {

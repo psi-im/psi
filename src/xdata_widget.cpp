@@ -32,6 +32,9 @@
 #include <QGridLayout>
 
 #include "desktoputil.h"
+#include "xmpp_xdata.h"
+
+using namespace XMPP;
 
 //----------------------------------------------------------------------------
 // XDataField

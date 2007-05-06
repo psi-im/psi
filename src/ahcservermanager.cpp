@@ -31,6 +31,7 @@
 #include "xmpp_tasks.h"
 #include "xmpp_xdata.h"
 #include "xdata_widget.h"
+#include "ahcommand.h"
 
 using namespace XMPP;
 

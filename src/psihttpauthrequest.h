@@ -1,7 +1,8 @@
 #ifndef PSIHTTPAUTHREQUEST_H
 #define PSIHTTPAUTHREQUEST_H
 
-#include "im.h"
+#include "xmpp_stanza.h"
+#include "xmpp_httpauthrequest.h"
 
 class PsiHttpAuthRequest : public XMPP::HttpAuthRequest
 {

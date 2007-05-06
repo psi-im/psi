@@ -27,6 +27,7 @@
 #include "rc.h"
 #include "xmpp_xdata.h"
 #include "ahcservermanager.h"
+#include "ahcommand.h"
 
 using namespace XMPP;
 

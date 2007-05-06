@@ -21,12 +21,14 @@
 #ifndef XMPPXDATA_H
 #define XMPPXDATA_H
 
-#include <QDomElement>
 #include <QString>
 #include <QMap>
 #include <QList>
 #include <QSharedDataPointer>
 #include <QStringList>
+
+class QDomElement;
+class QDomDocument;
 
 namespace XMPP {
 

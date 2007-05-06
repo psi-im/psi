@@ -21,19 +21,12 @@
 #ifndef GROUPCHATDLG_H
 #define GROUPCHATDLG_H
 
-#include <QLineEdit>
-#include <QContextMenuEvent>
+#include <QWidget>
 #include <QDialog>
-#include <QKeyEvent>
-#include <QCloseEvent>
 
-#include "advwidget.h"
-#include "im.h" // Message
-#include "mucmanager.h"
-#include "xmpp_muc.h"
-#include "xmpp_status.h"
-#include "xmpp_jid.h"
 #include "ui_groupchatdlg.h"
+#include "mucmanager.h"
+#include "advwidget.h"
 
 using namespace XMPP;
 
@@ -45,6 +38,9 @@ class GCMainDlg;
 class QPainter;
 class QColorGroup;
 class Q3DragObject;
+namespace XMPP {
+	class Message;
+}
 
 /*class GCLineEdit : public QLineEdit
 {

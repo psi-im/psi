@@ -23,7 +23,6 @@
 #include "common.h"
 #include "userlist.h"
 #include "anim.h"
-#include "im.h"
 #include "applicationinfo.h"
 
 #include <QFileInfo>

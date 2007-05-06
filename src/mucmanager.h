@@ -22,11 +22,11 @@
 #define MUCMANAGER_H
 
 #include <QObject>
-#include <QString>
 
 #include "xmpp_muc.h"
 #include "xmpp_jid.h"
 
+class QString;
 namespace XMPP {
 	class XData;
 	class Client;

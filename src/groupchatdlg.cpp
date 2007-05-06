@@ -60,6 +60,7 @@
 #include "mucconfigdlg.h"
 #include "textutil.h"
 #include "statusdlg.h"
+#include "xmpp_message.h"
 #include "psiiconset.h"
 #include "stretchwidget.h"
 #include "mucmanager.h"

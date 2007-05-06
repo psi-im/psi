@@ -21,15 +21,13 @@
 #ifndef XDATAWIDGET_H
 #define XDATAWIDGET_H
 
-#include <qwidget.h>
+#include <QWidget>
 #include <QList>
 #include <QString>
 
 #include "xmpp_xdata.h"
 
 class XDataField;
-
-using namespace XMPP;
 
 class XDataWidget : public QWidget
 {
@@ -41,8 +39,8 @@ public:
 
 	void setForm(const XMPP::XData&);
 
-	XData::FieldList fields() const;
-	void setFields(const XData::FieldList &);
+	XMPP::XData::FieldList fields() const;
+	void setFields(const XMPP::XData::FieldList &);
 
 	void setInstructions(const QString&);
 

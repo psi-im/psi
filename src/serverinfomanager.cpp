@@ -18,7 +18,6 @@
  *
  */
 
-#include "im.h"
 #include "serverinfomanager.h"
 #include "xmpp_tasks.h"
 

@@ -44,7 +44,6 @@
 #include "psiiconset.h"
 #include "psicon.h"
 #include "profiles.h"
-#include "im.h"
 #include "xmpp_tasks.h"
 #include "xmpp_xmlcommon.h"
 #include "s5b.h"
@@ -60,6 +59,7 @@
 #include "changepwdlg.h"
 #include "xmlconsole.h"
 #include "userlist.h"
+#include "psievent.h"
 #include "jidutil.h"
 #include "eventdlg.h"
 #include "privacymanager.h"
@@ -140,6 +140,12 @@ typedef int socklen_t;
 #endif*/
 
 using namespace XMPP;
+
+struct GCContact
+{
+	Jid jid;
+	Status status;
+};
 
 //----------------------------------------------------------------------------
 // BlockTransportPopup -- blocks popups on transport status changes

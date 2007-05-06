@@ -27,6 +27,7 @@
 #include <qlineedit.h>
 #include <qpushbutton.h>
 #include <QFileDialog>
+#include <Q3SimpleRichText>
 #include <qmessagebox.h>
 #include <QFrame>
 #include <qapplication.h>

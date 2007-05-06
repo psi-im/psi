@@ -19,10 +19,11 @@
  */
  
 #include <QDomElement>
+#include <QObject>
 
 #include "privacylistitem.h"
-#include "xmpp.h"
 #include "xmpp_xmlcommon.h"
+#include "xmpp_jid.h"
 
 
 PrivacyListItem::PrivacyListItem() : message_(true), presenceIn_(true), presenceOut_(true), iq_(true)

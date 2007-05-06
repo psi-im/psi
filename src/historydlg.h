@@ -22,19 +22,15 @@
 #define HISTORYDLG_H
 
 #include <q3listview.h>
-#include <q3simplerichtext.h>
-//Added by qt3to4:
-#include <QKeyEvent>
-#include <QResizeEvent>
-#include <QCloseEvent>
-#include "xmpp.h"
-
-using namespace XMPP;
 
 class PsiEvent;
 class PsiAccount;
 class EDBItem;
 class EDBResult;
+class Q3SimpleRichText;
+namespace XMPP {
+	class Jid;
+}
 
 class HistoryViewItem : public Q3ListViewItem
 {
@@ -85,7 +81,7 @@ class HistoryDlg : public QWidget
 {
 	Q_OBJECT
 public:
-	HistoryDlg(const Jid &, PsiAccount *);
+	HistoryDlg(const XMPP::Jid &, PsiAccount *);
 	~HistoryDlg();
 
 	// reimplemented

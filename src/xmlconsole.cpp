@@ -26,9 +26,9 @@
 #include <QHBoxLayout>
 #include <QMessageBox>
 
+#include "xmpp_client.h"
 #include "xmlconsole.h"
 #include "psiaccount.h"
-#include "im.h"
 #include "psicon.h"
 #include "psicontactlist.h"
 

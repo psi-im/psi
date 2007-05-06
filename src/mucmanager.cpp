@@ -29,10 +29,11 @@
 
 #include <QObject>
 
-#include "im.h"
 #include "mucmanager.h"
 #include "xmpp_xdata.h"
 #include "xmpp_xmlcommon.h"
+#include "xmpp_task.h"
+#include "xmpp_client.h"
 
 using namespace XMPP;
 

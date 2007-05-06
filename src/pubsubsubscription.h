@@ -21,7 +21,8 @@
 #ifndef PUBSUBSUBSCRIPTION_H
 #define PUBSUBSUBSCRIPTION_H
 
-class QString;
+#include <QString>
+
 class QDomElement;
 class QDomDocument;
 

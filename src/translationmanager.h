@@ -23,8 +23,7 @@
 
 #include <QObject>
 
-#include "varlist.h"
-
+class VarList;
 class QTranslator;
 
 class TranslationManager : public QObject

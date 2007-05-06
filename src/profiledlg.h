@@ -21,13 +21,12 @@
 #ifndef PROFILEDLG_H
 #define PROFILEDLG_H
 
-#include <qdialog.h>
-#include <qstringlist.h>
+#include <QDialog>
+
 #include "ui_profileopen.h"
 #include "ui_profilemanage.h"
 #include "ui_profilenew.h"
 #include "varlist.h"
-
 
 class ProfileOpenDlg : public QDialog, public Ui::ProfileOpen
 {

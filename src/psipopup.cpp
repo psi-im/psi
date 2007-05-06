@@ -25,7 +25,6 @@
 #include "userlist.h"
 #include "alerticon.h"
 #include "psievent.h"
-#include "im.h"
 #include "psicon.h"
 #include "textutil.h"
 #include "psiaccount.h"

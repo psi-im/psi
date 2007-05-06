@@ -21,11 +21,10 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#include <qobject.h>
-#include <qstring.h>
-#include "varlist.h"
-#include "psicon.h"
+#include <QString>
+#include <QObject>
 
+class PsiCon;
 
 class PsiMain : public QObject
 {

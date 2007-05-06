@@ -21,9 +21,10 @@
 #ifndef JIDUTIL
 #define JIDUTIL
 
-#include <QString>
-
-#include "xmpp.h"
+class QString;
+namespace XMPP {
+	class Jid;
+}
 
 class JIDUtil
 {

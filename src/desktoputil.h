@@ -1,7 +1,7 @@
 #ifndef DESKTOPUTIL_H
 #define DESKTOPUTIL_H
 
-#include <QString>
+class QString;
 
 namespace DesktopUtil
 {

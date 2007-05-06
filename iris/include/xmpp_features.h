@@ -22,7 +22,8 @@
 #define XMPP_FEATURES_H
 
 #include <QStringList>
-#include <QString>
+
+class QString;
 
 namespace XMPP
 {

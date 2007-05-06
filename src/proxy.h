@@ -23,8 +23,11 @@
 
 #include <QList>
 #include <q3groupbox.h>
-#include <qdom.h>
+
 #include "ui_proxy.h"
+
+class QDomElement;
+class QDomDocument;
 
 class HostPortEdit : public QWidget
 {

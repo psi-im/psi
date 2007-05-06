@@ -22,8 +22,9 @@
 #define ACTIONLIST_H
 
 #include <QList>
-#include <QStringList>
 
+class QString;
+class QStringList;
 class IconAction;
 
 class ActionList

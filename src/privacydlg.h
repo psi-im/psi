@@ -24,7 +24,6 @@
 #include <QDialog>
 
 #include "ui_privacy.h"
-#include "privacylist.h"
 #include "privacylistmodel.h"
 
 class PsiAccount;

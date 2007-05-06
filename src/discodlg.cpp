@@ -39,7 +39,6 @@
 #include <QList>
 #include <QContextMenuEvent>
 
-#include "im.h"
 #include "xmpp_tasks.h"
 
 #include "tasklist.h"

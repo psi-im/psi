@@ -18,10 +18,16 @@
  *
  */
 
+#include <QDomDocument>
+#include <QDomElement>
+
 #include "ahcommand.h"
+#include "xmpp_xdata.h"
 
 #define AHC_NS "http://jabber.org/protocol/commands"
 #define XMPPSTANZA_NS "urn:ietf:params:xml:ns:xmpp-stanzas"
+
+using namespace XMPP;
 
 // -------------------------------------------------------------------------- 
 // AHCommand: The class representing an Ad-Hoc command request or reply.

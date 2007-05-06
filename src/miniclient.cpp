@@ -22,7 +22,6 @@
 #include <QMessageBox>
 
 #include "miniclient.h"
-#include "im.h"
 #include "proxy.h"
 #include "certutil.h"
 #include "psiaccount.h"

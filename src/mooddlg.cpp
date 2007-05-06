@@ -18,11 +18,13 @@
  *
  */
 
+#include "xmpp_pubsubitem.h"
+#include "xmpp_client.h"
+#include "xmpp_task.h"
 #include "mooddlg.h"
 #include "moodcatalog.h"
 #include "psiaccount.h"
 #include "pepmanager.h"
-#include "im.h"
 
 MoodDlg::MoodDlg(PsiAccount* pa)
 	: QDialog(0), pa_(pa)

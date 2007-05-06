@@ -21,12 +21,15 @@
 #ifndef PASSPHRASEDLG_H
 #define PASSPHRASEDLG_H
 
-#include <QtCrypto>
 #include <QMap>
 #include <QList>
 #include <QString>
 
 #include "ui_passphrase.h"
+
+namespace QCA {
+	class EventHandler;
+}
 
 class PassphraseDlg : public QDialog, public Ui::Passphrase
 {

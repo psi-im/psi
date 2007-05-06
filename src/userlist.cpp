@@ -26,7 +26,6 @@
 
 #include "userlist.h"
 #include "avatars.h"
-#include "im.h"
 #include "textutil.h"
 #include "common.h"
 #include "mucmanager.h"

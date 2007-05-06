@@ -22,13 +22,13 @@
 #define ADDUSERDLG_H
 
 #include "ui_adduser.h"
-#include "xmpp.h"
-
-using namespace XMPP;
 
 class QString;
 class QStringList;
 class PsiAccount;
+namespace XMPP {
+	class Jid;
+}
 
 class AddUserDlg : public QDialog, public Ui::AddUser
 {
@@ -38,7 +38,7 @@ public:
 	~AddUserDlg();
 
 signals:
-	void add(const Jid &, const QString &, const QStringList &, bool authReq);
+	void add(const XMPP::Jid &, const QString &, const QStringList &, bool authReq);
 
 private slots:
 	void ok();
@@ -59,7 +59,7 @@ private:
 	class Private;
 	Private *d;
 
-	Jid jid() const;
+	XMPP::Jid jid() const;
 	void errorGateway(const QString &str, const QString &err);
 };
 

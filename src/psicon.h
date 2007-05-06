@@ -25,12 +25,12 @@
 #include <QList>
 
 #include "profiles.h"
-#include "psievent.h"
 
 using namespace XMPP;
 
 class PsiCon;
 class PsiAccount;
+class PsiEvent;
 class ContactView;
 class EventDlg;
 class UserListItem;

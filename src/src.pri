@@ -221,8 +221,6 @@ SOURCES += \
 	$$PWD/desktoputil.cpp \
 	$$PWD/textutil.cpp \
 	$$PWD/pixmaputil.cpp \
-	$$PWD/psiaccount.cpp \
-	$$PWD/psicon.cpp \
 	$$PWD/accountscombobox.cpp \
 	$$PWD/psievent.cpp \
 	$$PWD/xmlconsole.cpp \
@@ -323,6 +321,8 @@ SOURCES += \
 	$$PWD/resourcemenu.cpp \
 	$$PWD/shortcutmanager.cpp \
 	$$PWD/psicontactlist.cpp \
+	$$PWD/psicon.cpp \
+	$$PWD/psiaccount.cpp \
 	$$PWD/accountlabel.cpp
 
 whiteboarding {

@@ -39,7 +39,6 @@
 #include <QPixmap>
 #include <QDesktopWidget>
 #include <stdlib.h>
-#include "im.h"
 #include "common.h"
 #include "userlist.h"
 #include "psiaccount.h"
@@ -57,6 +56,7 @@
 #include "capsmanager.h"
 #include "resourcemenu.h"
 #include "shortcutmanager.h"
+#include "xmpp_message.h"
 
 
 static bool caseInsensitiveLessThan(const QString &s1, const QString &s2)

@@ -24,7 +24,7 @@
 #include <QDialog>
 #include <QList>
 
-#include "xmpp.h"
+#include "xmpp_jid.h"
 
 namespace XMPP {
 	class Client;

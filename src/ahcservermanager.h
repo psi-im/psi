@@ -21,22 +21,16 @@
 #ifndef AHCSERVERMANAGER_H
 #define AHCSERVERMANAGER_H
 
-#include "ahcommand.h"
-#include "xmpp_jid.h"
+#include <QList>
 
-using namespace XMPP;
-
-class PsiAccount;
-class QObject;
-
-
-// -------------------------------------------------------------------------- 
-// Ad-Hoc Commands Server classes
-// -------------------------------------------------------------------------- 
-
-class JT_AHCServer;
-class XDataWidget;
 class AHCommandServer;
+class AHCommand;
+class JT_AHCServer;
+class PsiAccount;
+class QString;
+namespace XMPP {
+	class Jid;
+}
 
 class AHCServerManager 
 {
@@ -46,10 +40,10 @@ public:
 	void removeServer(AHCommandServer*);
 	
 	typedef QList<AHCommandServer*> ServerList;
-	ServerList commands(const Jid&) const;
-	void execute(const AHCommand& command, const Jid& requester, QString id);
+	ServerList commands(const XMPP::Jid&) const;
+	void execute(const AHCommand& command, const XMPP::Jid& requester, QString id);
 	PsiAccount* account() const { return pa_; }
-	bool hasServer(const QString& node, const Jid&) const;
+	bool hasServer(const QString& node, const XMPP::Jid&) const;
 
 protected:
 	AHCommandServer* findServer(const QString& node) const;

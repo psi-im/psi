@@ -29,6 +29,7 @@
 #include "busywidget.h"
 #include "psiaccount.h"
 #include "xmpp_xmlcommon.h"
+#include "xmpp_client.h"
 
 using namespace XMPP;
 

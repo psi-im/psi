@@ -28,13 +28,17 @@
 
 #include <QList>
 
-#include "xmpp.h"
-#include "urlbookmark.h"
-#include "conferencebookmark.h"
+#include "xmpp_rosterx.h"
+#include "xmpp_status.h"
 
 namespace XMPP
 {
-	class Status;
+	class Jid;
+	class XData;
+	class AdvancedConnector;
+	class Stream;
+	class QCATLSHandler;
+	class PubSubItem;
 	class RosterItem;
 	class Client;
 	//class StreamError;
@@ -51,10 +55,13 @@ class PsiEvent;
 class PsiHttpAuthRequest;
 class Tune;
 class BookmarkManager;
+class URLBookmark;
+class ConferenceBookmark;
 class VoiceCaller;
 class UserAccount;
 class ContactProfile;
 class QWidget;
+class QString;
 class EventQueue;
 class UserResource;
 class UserListItem;
@@ -74,12 +81,7 @@ class GoogleFileTransfer;
 #endif
 
 // sick sick remove this someday please!
-#include "im.h"
-struct GCContact
-{
-	Jid jid;
-	Status status;
-};
+struct GCContact;
 
 class PsiAccount : public QObject
 {

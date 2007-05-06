@@ -22,7 +22,8 @@
 #include <QDebug>
 
 #include "xmpp_xmlcommon.h"
-#include "im.h"
+#include "xmpp_task.h"
+#include "xmpp_jid.h"
 #include "privacymanager.h"
 #include "privacylist.h"
 

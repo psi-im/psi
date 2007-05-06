@@ -25,7 +25,7 @@
 #include "xmpp_xmlcommon.h"
 #include "xmpp_task.h"
 #include "xmpp_jid.h"
-#include "im.h" // Client
+#include "xmpp_client.h"
 
 using namespace XMPP;
 

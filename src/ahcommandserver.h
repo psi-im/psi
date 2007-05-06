@@ -21,10 +21,12 @@
 #ifndef AHCOMMANDSERVER_H
 #define AHCOMMANDSERVER_H
  
-#include "ahcommand.h"
-#include "xmpp_jid.h"
-
 class AHCServerManager;
+class QString;
+class AHCommand;
+namespace XMPP {
+	class Jid;
+}
 
 class AHCommandServer
 {
@@ -34,8 +36,8 @@ public:
 
 	virtual QString name() const = 0; 
 	virtual QString node() const = 0; 
-	virtual bool isAllowed(const Jid&) const { return true; }
-	virtual AHCommand execute(const AHCommand&, const Jid& requester) = 0;
+	virtual bool isAllowed(const XMPP::Jid&) const { return true; }
+	virtual AHCommand execute(const AHCommand&, const XMPP::Jid& requester) = 0;
 	virtual void cancel(const AHCommand&) { }
 
 protected:

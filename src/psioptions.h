@@ -21,7 +21,6 @@
 #ifndef _PSIOPTIONS_H_
 #define _PSIOPTIONS_H_
 
-#include <QtCore>
 #include "optionstree.h"
 
 // Some hard coded options
@@ -30,6 +29,7 @@
 namespace XMPP {
 	class Client;
 }
+class QString;
 
 class PsiOptions : public OptionsTree//, QObject
 {

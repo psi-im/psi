@@ -1,11 +1,15 @@
 #ifndef PGPUTIL_H
 #define PGPUTIL_H
 
-#include <QString>
-#include <QList>
 #include <QSet>
 #include <QMap>
 #include <QtCrypto>
+
+class QString;
+namespace QCA {
+	class KeyStore;
+	class PGPKey;
+}
 
 class PGPUtil
 {

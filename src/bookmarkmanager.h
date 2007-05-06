@@ -21,9 +21,9 @@
 #ifndef BOOKMARKMANAGER_H
 #define BOOKMARKMANAGER_H
 
+#include <QObject>
 #include <QList>
 
-#include "xmpp.h"
 #include "conferencebookmark.h"
 #include "urlbookmark.h"
 

@@ -1,6 +1,8 @@
 #ifndef APPLICATIONINFO_H
 #define APPLICATIONINFO_H
 
+class QString;
+
 class ApplicationInfo
 {
 public:

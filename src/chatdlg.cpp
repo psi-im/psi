@@ -56,6 +56,8 @@
 #include "psiiconset.h"
 #include "iconwidget.h"
 #include "textutil.h"
+#include "xmpp_message.h"
+#include "xmpp_htmlelement.h"
 #include "fancylabel.h"
 #include "msgmle.h"
 #include "iconselect.h"

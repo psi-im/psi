@@ -36,9 +36,9 @@
 #include <time.h>
 #include "profiles.h"
 #include "profiledlg.h"
-#include "xmpp.h"
 
 #include "eventdlg.h"
+#include "psicon.h"
 #include "psiiconset.h"
 #include "translationmanager.h"
 #include "applicationinfo.h"

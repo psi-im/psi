@@ -22,6 +22,7 @@
 #define CAPSMANAGER_H
 
 #include <QMap>
+#include <QList>
 #include <QString>
 #include <QObject>
 

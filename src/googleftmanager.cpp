@@ -42,8 +42,6 @@
 #include <qdom.h>
 #include <QDir>
 
-#include "im.h"
-#include "xmpp.h"
 #include "xmpp_xmlcommon.h"
 #include "googleftmanager.h"
 

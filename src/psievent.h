@@ -28,17 +28,18 @@
 #include <QDomElement>
 #include <QPointer>
 
-#include "xmpp.h"
-#include "im.h"
+#include "xmpp_jid.h"
+#include "xmpp_rosterx.h"
+#include "xmpp_message.h"
 #include "psihttpauthrequest.h"
 
-namespace XMPP
-{
+namespace XMPP {
 	class FileTransfer;
 };
 
 class PsiCon;
 class PsiAccount;
+class QDomElement;
 
 
 class PsiEvent : public QObject

@@ -22,13 +22,12 @@
 #define PSITOOLBAR_H
 
 #include <q3toolbar.h>
-//Added by qt3to4:
-#include <QContextMenuEvent>
 
 #include "psiactionlist.h"
 #include "common.h" // Options + ToolbarPrefs
 
 class PsiCon;
+class QContextMenuEvent;
 
 class PsiToolBar : public Q3ToolBar
 {

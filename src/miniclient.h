@@ -22,13 +22,15 @@
 #define MINICLIENT_H
 
 #include <QObject>
+#include <QString>
 
-#include "xmpp.h"
+#include "xmpp_jid.h"
 
 namespace XMPP {
 	class Client;
 	class ClientStream;
 	class AdvancedConnector;
+	class QCATLSHandler;
 }
 namespace QCA {
 	class TLS;

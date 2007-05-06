@@ -24,11 +24,11 @@
 #include <QDialog>
 
 #include "ui_mucconfig.h"
-#include "mucmanager.h"
 #include "xmpp_muc.h"
 
 class QScrollArea;
 class XDataWidget;
+class MUCManager;
 class MUCAffiliationsModel;
 class MUCAffiliationsProxyModel;
 namespace XMPP {

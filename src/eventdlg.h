@@ -21,22 +21,18 @@
 #ifndef EVENTDLG_H
 #define EVENTDLG_H
 
-#include <qlineedit.h>
+#include <QLineEdit>
 #include <q3listview.h>
-#include <QCloseEvent>
-#include <QKeyEvent>
-#include <QDropEvent>
-#include <QShowEvent>
-#include <QResizeEvent>
-#include <Q3PopupMenu>
-#include <QDragEnterEvent>
 
-#include "userlist.h"
+#include "xmpp_url.h"
+#include "xmpp_rosterx.h"
 #include "ui_addurl.h"
 #include "advwidget.h"
+#include "userlist.h"
 
 class QDateTime;
 class QStringList;
+class Q3PopupMenu;
 class PsiEvent;
 class PsiCon;
 class PsiAccount;
@@ -44,6 +40,7 @@ class PsiIcon;
 class EventDlg;
 namespace XMPP {
 	class Jid;
+	class XData;
 }
 class PsiHttpAuthRequest;
 

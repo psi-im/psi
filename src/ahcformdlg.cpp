@@ -26,6 +26,7 @@
 #include "ahcommand.h"
 #include "ahcexecutetask.h"
 #include "xdata_widget.h"
+#include "xmpp_client.h"
 #include "psiaccount.h"
 #include "busywidget.h"
 

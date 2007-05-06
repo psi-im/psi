@@ -22,10 +22,6 @@
 #define PEPMANAGER_H
 
 #include <QObject>
-#include <QStringList>
-#include <QList>
-
-#include "pubsubsubscription.h"
 
 namespace XMPP {
 	class Client;
@@ -33,6 +29,7 @@ namespace XMPP {
 	class Message;
 	class PubSubItem;
 }
+class PubSubSubscription;
 class QString;
 class ServerInfoManager;
 

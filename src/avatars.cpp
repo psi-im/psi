@@ -35,9 +35,11 @@
 #include <QBuffer>
 #include <QPainter>
 
-#include "xmpp.h"
 #include "xmpp_xmlcommon.h"
 #include "xmpp_vcard.h"
+#include "xmpp_client.h"
+#include "xmpp_resource.h"
+#include "xmpp_pubsubitem.h"
 #include "avatars.h"
 #include "applicationinfo.h"
 #include "psiaccount.h"
@@ -50,6 +52,7 @@
 #define MAX_AVATAR_DISPLAY_SIZE 64
 
 using namespace QCA;
+
 
 //------------------------------------------------------------------------------
 

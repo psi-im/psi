@@ -21,7 +21,7 @@
 #ifndef PSIPOPUP_H
 #define PSIPOPUP_H
 
-#include <qobject.h>
+#include <QObject>
 
 class PsiCon;
 class PsiAccount;

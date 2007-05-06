@@ -17,6 +17,7 @@
  *
  */
 
+#include "xmpp_jid.h"
 #include "xmpp_stanza.h"
 #include "xmpp_stream.h"
 

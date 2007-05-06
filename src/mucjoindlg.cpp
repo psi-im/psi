@@ -23,7 +23,6 @@
 #include <QMessageBox>
 
 #include "jidutil.h"
-#include "im.h"
 #include "psicon.h"
 #include "accountscombobox.h"
 #include "psiaccount.h"

@@ -22,7 +22,9 @@
 #define URLBOOKMARK_H
 
 #include <QString>
-#include <QDomElement>
+
+class QDomElement;
+class QDomDocument;
 
 class URLBookmark
 {

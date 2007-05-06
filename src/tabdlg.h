@@ -21,27 +21,20 @@
 #ifndef TABDLG_H
 #define TABDLG_H
 
-#include <qwidget.h>
-#include <q3ptrlist.h>
-#include <qtabwidget.h>
-#include <qlayout.h>
-#include <qpushbutton.h>
-#include <QContextMenuEvent>
-#include <QDragMoveEvent>
-#include <QKeyEvent>
-#include <QResizeEvent>
-#include <Q3PopupMenu>
-#include <QDropEvent>
-#include <QCloseEvent>
-#include <qmap.h>
+#include <QWidget>
+#include <QSize>
+#include <QMap>
+#include <Q3PtrList>
 
-#include "psitabwidget.h"
-#include "im.h" // ChatState
+#include "xmpp_chatstate.h"
 #include "advwidget.h"
-#include "chatdlg.h"
 
 class PsiCon;
 class ChatTabs;
+class ChatDlg;
+class QPushButton;
+class QMenu;
+class QString;
 class Q3DragObject;
 class QContextMenuEvent;
 class PsiTabWidget;

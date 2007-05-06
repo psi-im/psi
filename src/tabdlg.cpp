@@ -37,6 +37,7 @@
 #include "psitabwidget.h"
 #include "psioptions.h"
 #include "shortcutmanager.h"
+#include "chatdlg.h"
 
 #ifdef Q_WS_WIN
 #include <windows.h>

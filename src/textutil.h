@@ -1,7 +1,7 @@
 #ifndef TEXTUTIL_H
 #define TEXTUTIL_H
 
-#include <QString>
+class QString;
 
 namespace TextUtil 
 {

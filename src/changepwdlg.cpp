@@ -28,7 +28,6 @@
 #include "profiles.h"
 #include "psiaccount.h"
 #include "busywidget.h"
-#include "im.h"
 #include "xmpp_tasks.h"
 #include "accountmodifydlg.h"
 #include "iconwidget.h"

@@ -29,11 +29,14 @@
 #include <QDomElement>
 #include <QtCrypto>
 
-#include "im.h"
+#include "xmpp_jid.h"
+#include "xmpp_message.h"
+
 
 class PGPTransaction : public QCA::SecureMessage
 {
 	Q_OBJECT
+
 public:
 	PGPTransaction(QCA::SecureMessageSystem*);
 	~PGPTransaction();
