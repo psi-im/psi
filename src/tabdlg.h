@@ -73,6 +73,7 @@ protected slots:
 	void closeChat();
 	void closeChat(QWidget*);
 	void sendChatTo(QWidget*, TabDlg *);
+	void queuedSendChatTo(QWidget*, TabDlg *);
 public slots:
 	void addChat(ChatDlg *chat);
 	void setLooks();

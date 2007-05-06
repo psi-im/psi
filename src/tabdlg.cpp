@@ -144,7 +144,7 @@ void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent * event)
 			detachChat(getTab(tab));
 		} else {
 			TabDlg* target = sentTos[act];
-			if (target) sendChatTo(getTab(tab), target);
+			if (target) queuedSendChatTo(getTab(tab), target);
 		}
 	}
 }
@@ -169,7 +169,7 @@ void TabDlg::tab_aboutToShowMenu(QMenu *menu)
 
 void TabDlg::menu_sendChatTo(QAction *act)
 {
-	sendChatTo(tabs->currentPage(), act->data().value<TabDlg*>());
+	queuedSendChatTo(tabs->currentPage(), act->data().value<TabDlg*>());
 }
 
 void TabDlg::sendChatTo(QWidget* chatw, TabDlg* otherTabs)
@@ -179,6 +179,12 @@ void TabDlg::sendChatTo(QWidget* chatw, TabDlg* otherTabs)
 	ChatDlg* chat = (ChatDlg*)chatw;
 	closeChat(chat, false);
 	otherTabs->addChat(chat);
+}
+
+void TabDlg::queuedSendChatTo(QWidget* chat, TabDlg *dest)
+{
+	qRegisterMetaType<TabDlg*>("TabDlg*");
+	QMetaObject::invokeMethod(this, "sendChatTo",  Qt::QueuedConnection, Q_ARG(QWidget*, chat), Q_ARG(TabDlg*, dest));
 }
 
 void TabDlg::optionsUpdate()
@@ -494,9 +500,7 @@ void TabDlg::dropEvent(QDropEvent *event)
 		TabDlg *dlg=psi->getManagingTabs(chat);
 		if (!chat || !dlg)
 			return;
-		qRegisterMetaType<TabDlg*>("TabDlg*");
-		QMetaObject::invokeMethod(dlg, "sendChatTo",  Qt::QueuedConnection, Q_ARG(QWidget*, chat), Q_ARG(TabDlg*, this));
-		//dlg->sendChatTo(chat, this);
+		dlg->queuedSendChatTo(chat, this);
 	} 
 	
 }
