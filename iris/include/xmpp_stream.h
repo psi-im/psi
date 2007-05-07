@@ -25,11 +25,9 @@
 #include <QObject>
 
 #include "xmpp_stanza.h"
+#include "xmpp_jid.h"
 
 class QDomDocument;
-namespace XMPP {
-	class Jid;
-}
 
 namespace XMPP 
 {
