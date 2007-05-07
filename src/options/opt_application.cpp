@@ -48,8 +48,8 @@ QWidget *OptionsTabApplication::widget()
 	d->ck_useleft->setWhatsThis(
 		tr("Normally, right-clicking with the mouse on a contact will activate the context-menu."
 		"  Check this option if you'd rather use a left-click."));
-	d->ck_hideMenubar->setWhatsThis(
-		tr("Hides the menubar in the application window."));
+	d->ck_showMenubar->setWhatsThis(
+		tr("Shows the menubar in the application window."));
 
 	// docklet
 	d->ck_docklet->setWhatsThis(
@@ -65,7 +65,7 @@ QWidget *OptionsTabApplication::widget()
 
 #ifdef Q_WS_MAC
 	d->ck_alwaysOnTop->hide();
-	d->ck_hideMenubar->hide();
+	d->ck_showMenubar->hide();
 	d->gb_docklet->hide();
 #endif
 
@@ -83,7 +83,7 @@ void OptionsTabApplication::applyOptions(Options *opt)
 	opt->autoRosterSize = d->ck_autoRosterSize->isChecked();
 	opt->keepSizes   = d->ck_keepSizes->isChecked();
 	opt->useleft = d->ck_useleft->isChecked();
-	opt->hideMenubar = d->ck_hideMenubar->isChecked();
+	opt->hideMenubar = !d->ck_showMenubar->isChecked();
 
 	// docklet
 	opt->useDock = d->ck_docklet->isChecked();
@@ -106,7 +106,7 @@ void OptionsTabApplication::restoreOptions(const Options *opt)
 	d->ck_alwaysOnTop->setChecked( opt->alwaysOnTop );
 	d->ck_autoRosterSize->setChecked( opt->autoRosterSize );
 	d->ck_keepSizes->setChecked( opt->keepSizes );
-	d->ck_hideMenubar->setChecked( opt->hideMenubar );
+	d->ck_showMenubar->setChecked( !opt->hideMenubar );
 	d->ck_useleft->setChecked( opt->useleft );
 
 	// docklet

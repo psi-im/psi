@@ -54,9 +54,9 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_hideMenubar" >
+    <widget class="QCheckBox" name="ck_showMenubar" >
      <property name="text" >
-      <string>Hide menubar</string>
+      <string>Show menubar</string>
      </property>
     </widget>
    </item>
@@ -184,7 +184,7 @@
   <tabstop>ck_autoRosterSize</tabstop>
   <tabstop>ck_keepSizes</tabstop>
   <tabstop>ck_useleft</tabstop>
-  <tabstop>ck_hideMenubar</tabstop>
+  <tabstop>ck_showMenubar</tabstop>
   <tabstop>ck_docklet</tabstop>
   <tabstop>ck_dockDCstyle</tabstop>
   <tabstop>ck_dockHideMW</tabstop>
