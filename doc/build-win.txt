@@ -13,6 +13,10 @@ Instructions on how to build these packages can be found below.
 download and install the OpenSSL package from
 		http://www.openssl.org/related/binaries.html
 
+The 'Building QCA' and 'Building QCA the OpenSSL plugin' sections can be 
+skipped by downloading the sources of these packages, and unpackaging them
+in third-party/qca (see the INSTALL file for the exact location of each
+package). Then, uncomment the 'CONFIG += qca-static' in conf_windows.pri.
 
 
 Building QCA

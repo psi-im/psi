@@ -18,30 +18,12 @@ Original Author (2001-2004):
   This program is licensed under the GNU General Public License.  See
   the COPYING file for more information.
 
-Known Issues
-------------
-This is a beta (preview) version of Psi and is not intended to be release 
-quality or used in production environments.  Particularly, the following 
-issues are known (those issues which are believed to have originated in 
-external libraries are marked with a *):
-  - GnuPG is temporarily not supported.
-  - Mouse actions on tabbed chat windows have been temporarily disabled.
-  - Roster tooltips are a little ugly currently, more whitespace will be 
-      added again later.
-  - When receiving multiline messages in a chat, sometimes some lines will
-      not be visible until another message is received or sent. 
-
 Notes
 -----
-  - This beta release includes a patched version of QCA2. Although it is 
-      possible to link against another self-patched QCA2, it is strongly 
-      recommended to use the provided tree, which is now default when
-      using ./configure on unices, or by default on Windows. Please ignore
-      all notes regarding QCA2 plugins below.
-
   - Upgrading to 0.11 --
-    * The last used profile settings will not be transferred from 0.10 and
-      previous Qt3-based builds to the 0.11-beta1 and newer Qt4 based builds.
+    * Unless you use the 'default' profile, the last used profile settings 
+	  will not be transferred from 0.10 and previous Qt3-based builds to the 
+	  0.11-beta1 and newer Qt4 based builds.
       If Psi loads with a blank profile, cancel the account creation and use 
      "Choose profile" to reset your default profile.	
     * When you decide to switch to Psi 0.11 permanently, you can safely clear
@@ -66,10 +48,6 @@ Notes
     * Ensure 'gpg' actually works, by testing it from the command-line.
     * You must have a public and secret keyring.  Psi cannot operate
       without them, and they must be there when you start it.
-    * If you experience fatal GnuPG incompatibilities, you can pass
-      the --no-gpg option to Psi and gpg will not be used.
-    * If you have gpg-agent set up, but you don't want Psi to use it, then
-      you can pass --no-gpg-agent to force the use of Psi's built-in prompt.
 
 
 Changes
@@ -232,12 +210,6 @@ Description
   everything, Unicode is supported throughout, and contacts are cached
   offline.  Security is also a major consideration, and Psi provides it for
   both client-to-server (SSL) and client-to-client (GnuPG).
-
-  Plans for v1.0:
-   - Multi-User Chat (JEP-0045)
-   - Plugin system
-   - Other misc stuff
-   - Bugfixes
 
 
 How you can help
