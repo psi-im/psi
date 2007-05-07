@@ -23,12 +23,12 @@ Compiling
 Requirements:
   - Qt 4.2.0
   - QCA 2.0 beta 4 or higher. This can either be installed system-wide,
-    or you can download the tarball and put it in third-party/qca dir
-	of the Psi source tree, and Psi will auto-detect it at configure time. 
-	The different QCA packages should be unpacked in the following locations:
-		- QCA 2.0: third-party/qca/qca
-		- QCA OpenSSL (optional): third-party/qca/qca-openssl
-		- QCA GnuPG (optional): third-party/qca/qca-gnupg
+    or you can download the tarball and unpack it in third-party/qca dir
+    of the Psi source tree, and Psi will auto-detect it at configure time. 
+    The different QCA packages should be unpacked in the following locations:
+        - QCA 2.0: third-party/qca/qca
+        - QCA OpenSSL (optional): third-party/qca/qca-openssl
+        - QCA GnuPG (optional): third-party/qca/qca-gnupg
 
 You can obtain Qt at http://www.trolltech.com/
 
