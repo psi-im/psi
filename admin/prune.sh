@@ -1,6 +1,6 @@
 #!/bin/sh
 
-rm -rf _darcs
+rm -rf _darcs .darcs_boring .darcs_binaries
 rm -rf TODO
 rm -rf configure-jingle psi-jingle.qc
 rm -rf third-party/qca/qca third-party/qca/qca-openssl third-party/qca/qca-sasl third-party/qca/qca-gnupg
