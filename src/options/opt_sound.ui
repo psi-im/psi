@@ -401,15 +401,35 @@
   <tabstop>ck_awaySound</tabstop>
   <tabstop>ck_gcSound</tabstop>
   <tabstop>le_oeMessage</tabstop>
+  <tabstop>tb_seMessage</tabstop>
+  <tabstop>tb_seMessagePlay</tabstop>
   <tabstop>le_oeChat1</tabstop>
+  <tabstop>tb_seChat1</tabstop>
+  <tabstop>tb_seChat1Play</tabstop>
   <tabstop>le_oeChat2</tabstop>
+  <tabstop>tb_seChat2</tabstop>
+  <tabstop>tb_seChat2Play</tabstop>
   <tabstop>le_oeHeadline</tabstop>
+  <tabstop>tb_seHeadline</tabstop>
+  <tabstop>tb_seHeadlinePlay</tabstop>
   <tabstop>le_oeSystem</tabstop>
+  <tabstop>tb_seSystem</tabstop>
+  <tabstop>tb_seSystemPlay</tabstop>
   <tabstop>le_oeOnline</tabstop>
+  <tabstop>tb_seOnline</tabstop>
+  <tabstop>tb_seOnlinePlay</tabstop>
   <tabstop>le_oeOffline</tabstop>
+  <tabstop>tb_seOffline</tabstop>
+  <tabstop>tb_seOfflinePlay</tabstop>
   <tabstop>le_oeSend</tabstop>
+  <tabstop>tb_seSend</tabstop>
+  <tabstop>tb_seSendPlay</tabstop>
   <tabstop>le_oeIncomingFT</tabstop>
+  <tabstop>tb_seIncomingFT</tabstop>
+  <tabstop>tb_seIncomingFTPlay</tabstop>
   <tabstop>le_oeFTComplete</tabstop>
+  <tabstop>tb_seFTComplete</tabstop>
+  <tabstop>tb_seFTCompletePlay</tabstop>
   <tabstop>pb_soundReset</tabstop>
  </tabstops>
  <resources/>

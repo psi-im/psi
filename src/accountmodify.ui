@@ -1070,20 +1070,33 @@
   <tabstop>ck_auto</tabstop>
   <tabstop>ck_reconn</tabstop>
   <tabstop>ck_log</tabstop>
-  <tabstop>pb_close</tabstop>
-  <tabstop>pb_save</tabstop>
   <tabstop>pb_vcard</tabstop>
   <tabstop>pb_key</tabstop>
   <tabstop>pb_keyclear</tabstop>
-  <tabstop>ck_ignoreSSLWarnings</tabstop>
-  <tabstop>cb_plain</tabstop>
+  <tabstop>lv_blocked</tabstop>
+  <tabstop>pb_addBlock</tabstop>
+  <tabstop>pb_removeBlock</tabstop>
+  <tabstop>pb_privacy</tabstop>
+  <tabstop>ck_compress</tabstop>
   <tabstop>ck_keepAlive</tabstop>
   <tabstop>ck_host</tabstop>
   <tabstop>le_host</tabstop>
   <tabstop>le_port</tabstop>
+  <tabstop>cb_ssl</tabstop>
+  <tabstop>ck_ignoreSSLWarnings</tabstop>
+  <tabstop>ck_legacy_ssl_probe</tabstop>
+  <tabstop>cb_plain</tabstop>
+  <tabstop>ck_req_mutual</tabstop>
+  <tabstop>cb_security_level</tabstop>
+  <tabstop>ck_automatic_resource</tabstop>
   <tabstop>le_resource</tabstop>
   <tabstop>le_priority</tabstop>
   <tabstop>le_dtProxy</tabstop>
+  <tabstop>ck_custom_auth</tabstop>
+  <tabstop>le_authid</tabstop>
+  <tabstop>le_realm</tabstop>
+  <tabstop>pb_close</tabstop>
+  <tabstop>pb_save</tabstop>
  </tabstops>
  <resources/>
  <connections/>

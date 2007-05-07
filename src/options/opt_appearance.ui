@@ -492,20 +492,25 @@
   </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>pb_cOnline</tabstop>
-  <tabstop>pb_cOffline</tabstop>
-  <tabstop>pb_cAway</tabstop>
-  <tabstop>pb_cDND</tabstop>
   <tabstop>pb_cProfileFore</tabstop>
   <tabstop>pb_cProfileBack</tabstop>
   <tabstop>pb_cGroupFore</tabstop>
   <tabstop>pb_cGroupBack</tabstop>
-  <tabstop>pb_cListBack</tabstop>
   <tabstop>pb_cAnimFront</tabstop>
   <tabstop>pb_cAnimBack</tabstop>
+  <tabstop>pb_cOnline</tabstop>
+  <tabstop>pb_cAway</tabstop>
+  <tabstop>pb_cDND</tabstop>
+  <tabstop>pb_cOffline</tabstop>
+  <tabstop>pb_cListBack</tabstop>
+  <tabstop>pb_cStatus</tabstop>
+  <tabstop>le_fRoster</tabstop>
   <tabstop>pb_fRoster</tabstop>
+  <tabstop>le_fMessage</tabstop>
   <tabstop>pb_fMessage</tabstop>
+  <tabstop>le_fChat</tabstop>
   <tabstop>pb_fChat</tabstop>
+  <tabstop>le_fPopup</tabstop>
   <tabstop>pb_fPopup</tabstop>
  </tabstops>
  <resources/>
