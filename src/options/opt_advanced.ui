@@ -48,6 +48,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="ck_contactsMessageFormatting" >
+     <property name="text" >
+      <string>Use contacts' message formatting</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QCheckBox" name="ck_singleclick" >
      <property name="text" >
       <string>Single-click triggers default action</string>

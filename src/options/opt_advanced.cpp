@@ -56,6 +56,8 @@ QWidget *OptionsTabAdvanced::widget()
 		tr("Enables remote controlling your client from other locations"));
 	QWhatsThis::add(d->ck_spell,
 		tr("Check this option if you want your spelling to be checked"));
+	QWhatsThis::add(d->ck_contactsMessageFormatting,
+		tr("If enabled, Psi will display incoming messages formatted in the style specified by the contact"));
 	QWhatsThis::add(d->ck_autocopy,
 		tr("Check this option if you want the selected text in incoming messages and chat log to be automatically copied to clipboard"));
 	QWhatsThis::add(d->ck_singleclick,
@@ -102,6 +104,7 @@ void OptionsTabAdvanced::applyOptions(Options *opt)
 	opt->useRC = d->ck_rc->isChecked();
 	if ( SpellChecker::instance()->available() )
 		PsiOptions::instance()->setOption("options.ui.spell-check.enabled",d->ck_spell->isChecked());
+	PsiOptions::instance()->setOption("options.html.chat.render", d->ck_contactsMessageFormatting->isChecked());
 	opt->autoCopy = d->ck_autocopy->isChecked();
 	opt->singleclick = d->ck_singleclick->isChecked();
 	opt->jidComplete = d->ck_jidComplete->isChecked();
@@ -129,6 +132,7 @@ void OptionsTabAdvanced::restoreOptions(const Options *opt)
 		d->ck_spell->setChecked(false);
 	else
 		d->ck_spell->setChecked(PsiOptions::instance()->getOption("options.ui.spell-check.enabled").toBool());
+	d->ck_contactsMessageFormatting->setChecked(PsiOptions::instance()->getOption("options.html.chat.render").toBool());
 	d->ck_autocopy->setChecked( opt->autoCopy );
 	d->ck_singleclick->setChecked( opt->singleclick );
 	d->ck_jidComplete->setChecked( opt->jidComplete );
