@@ -22,8 +22,9 @@ public:
 
 	bool exec()
 	{
-		if (!QFile::exists("third-party/qca/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty() || !QFile::exists("third-party/qca/qca-openssl"))
-			return false;
+		if (!QFile::exists("third-party/qca/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty() || !QFile::exists("third-party/qca/qca-openssl")) {
+			return true;
+		}
 			
 		bundled = false;
 

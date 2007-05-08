@@ -22,7 +22,7 @@ public:
 		s = conf->getenv("QC_WITH_ASPELL_INC");
 		if(!s.isEmpty()) {
 			if(!conf->checkHeader(s, "aspell.h")) {
-				qWarning("Aspell includes not found!");
+				conf->debug("Aspell includes not found!");
 				return false;
 			}
 			conf->addIncludePath(s);
@@ -33,7 +33,7 @@ public:
 			sl += "/usr/local/include";
 			sl += "/sw/include";
 			if(!conf->findHeader("aspell.h", sl, &s)) {
-				qWarning("Aspell includes not found!");
+				conf->debug("Aspell includes not found!");
 				return false;
 			}
 			conf->addIncludePath(s);
@@ -42,14 +42,14 @@ public:
 		s = conf->getenv("QC_WITH_ASPELL_LIB");
 		if(!s.isEmpty()) {
 			if(!conf->checkLibrary(s, "aspell")) {
-				qWarning("Aspell libraries not found!");
+				conf->debug("Aspell libraries not found!");
 				return false;
 			}
 			conf->addLib(QString("-L") + s);
 		}
 		else {
 			if(!conf->findLibrary("aspell", &s)) {
-				qWarning("Aspell libraries not found!");
+				conf->debug("Aspell libraries not found!");
 				return false;
 			}
 			if (!s.isEmpty())
