@@ -374,7 +374,7 @@
          <widget class="QWidget" name="pg_privacyStatus" >
           <layout class="QVBoxLayout" >
            <property name="margin" >
-            <number>9</number>
+            <number>0</number>
            </property>
            <property name="spacing" >
             <number>6</number>
@@ -420,7 +420,7 @@
          <widget class="QWidget" name="pg_privacy" >
           <layout class="QVBoxLayout" >
            <property name="margin" >
-            <number>9</number>
+            <number>0</number>
            </property>
            <property name="spacing" >
             <number>6</number>
@@ -642,9 +642,12 @@
          </item>
          <item>
           <widget class="QComboBox" name="cb_ssl" >
+           <property name="sizeAdjustPolicy" >
+            <enum>QComboBox::AdjustToContents</enum>
+           </property>
            <property name="sizePolicy" >
             <sizepolicy>
-             <hsizetype>3</hsizetype>
+             <hsizetype>1</hsizetype>
              <vsizetype>0</vsizetype>
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
@@ -662,7 +665,7 @@
            </property>
            <property name="sizeHint" >
             <size>
-             <width>251</width>
+             <width>0</width>
              <height>16</height>
             </size>
            </property>
@@ -701,9 +704,12 @@
          </item>
          <item>
           <widget class="QComboBox" name="cb_plain" >
+           <property name="sizeAdjustPolicy" >
+            <enum>QComboBox::AdjustToContents</enum>
+           </property>
            <property name="sizePolicy" >
             <sizepolicy>
-             <hsizetype>3</hsizetype>
+             <hsizetype>1</hsizetype>
              <vsizetype>0</vsizetype>
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
@@ -721,7 +727,7 @@
            </property>
            <property name="sizeHint" >
             <size>
-             <width>251</width>
+             <width>0</width>
              <height>16</height>
             </size>
            </property>
@@ -752,6 +758,21 @@
           </widget>
          </item>
          <item>
+          <widget class="QComboBox" name="cb_security_level" >
+           <property name="sizeAdjustPolicy" >
+            <enum>QComboBox::AdjustToContents</enum>
+           </property>
+           <property name="sizePolicy" >
+            <sizepolicy>
+             <hsizetype>1</hsizetype>
+             <vsizetype>0</vsizetype>
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item>
           <spacer>
            <property name="orientation" >
             <enum>Qt::Horizontal</enum>
@@ -761,14 +782,11 @@
            </property>
            <property name="sizeHint" >
             <size>
-             <width>251</width>
+             <width>0</width>
              <height>16</height>
             </size>
            </property>
           </spacer>
-         </item>
-         <item>
-          <widget class="QComboBox" name="cb_security_level" />
          </item>
         </layout>
        </item>

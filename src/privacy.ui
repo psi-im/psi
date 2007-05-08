@@ -61,7 +61,11 @@
        </spacer>
       </item>
       <item row="1" column="1" >
-       <widget class="QComboBox" name="cb_default" />
+       <widget class="QComboBox" name="cb_default" >
+        <property name="sizeAdjustPolicy" >
+         <enum>QComboBox::AdjustToContents</enum>
+        </property>
+       </widget>
       </item>
       <item row="1" column="0" >
        <widget class="QLabel" name="label_2" >
@@ -78,7 +82,11 @@
        </widget>
       </item>
       <item row="0" column="1" >
-       <widget class="QComboBox" name="cb_active" />
+       <widget class="QComboBox" name="cb_active" >
+        <property name="sizeAdjustPolicy" >
+         <enum>QComboBox::AdjustToContents</enum>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -111,7 +119,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="cb_lists" />
+         <widget class="QComboBox" name="cb_lists" >
+          <property name="sizeAdjustPolicy" >
+           <enum>QComboBox::AdjustToContents</enum>
+          </property>
+         </widget>
         </item>
         <item>
          <spacer>
@@ -267,6 +279,22 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>cb_active</tabstop>
+  <tabstop>cb_default</tabstop>
+  <tabstop>cb_lists</tabstop>
+  <tabstop>pb_newList</tabstop>
+  <tabstop>pb_deleteList</tabstop>
+  <tabstop>ck_autoActivate</tabstop>
+  <tabstop>lv_rules</tabstop>
+  <tabstop>pb_add</tabstop>
+  <tabstop>pb_remove</tabstop>
+  <tabstop>pb_up</tabstop>
+  <tabstop>pb_down</tabstop>
+  <tabstop>pb_edit</tabstop>
+  <tabstop>pb_apply</tabstop>
+  <tabstop>pb_close</tabstop>
+ </tabstops>
  <pixmapfunction></pixmapfunction>
  <resources/>
  <connections/>
