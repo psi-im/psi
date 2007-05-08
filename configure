@@ -1046,8 +1046,7 @@ public:
 	QString checkString() const { return QString(); }
 	bool exec()
 	{
-		conf->addExtra(QString("PREFIX=%1").arg(conf->getenv("PREFIX")));
-		conf->addExtra(QString("DATADIR=%1/psi").arg(conf->getenv("DATADIR")));
+		conf->addExtra(QString("PSI_DATADIR=%1/psi").arg(conf->getenv("DATADIR")));
 
 		QFile file("src/config.h");
 		if ( file.open(QIODevice::WriteOnly | QIODevice::Text) ) {

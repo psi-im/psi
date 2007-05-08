@@ -28,12 +28,12 @@ exists(../conf.pri) {
 	INSTALLS += target
 
 	# Shared files
-	sharedfiles.path  = $$DATADIR
+	sharedfiles.path  = $$PSI_DATADIR
 	sharedfiles.files = ../README ../COPYING ../iconsets ../sound ../certs
 	INSTALLS += sharedfiles
 
 	# Widgets
-	#widgets.path = $$DATADIR/designer
+	#widgets.path = $$PSI_DATADIR/designer
 	#widgets.files = ../libpsi/psiwidgets/libpsiwidgets.so
 	#INSTALLS += widgets
 
