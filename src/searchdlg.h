@@ -39,12 +39,12 @@ class SearchDlg : public QDialog, public Ui::Search
 {
 	Q_OBJECT
 public:
-	SearchDlg(const Jid &, PsiAccount *);
+	SearchDlg(const XMPP::Jid &, PsiAccount *);
 	~SearchDlg();
 
 signals:
 	void aInfo(const Jid &);
-	void add(const Jid &, const QString &, const QStringList &, bool authReq);
+	void add(const XMPP::Jid &, const QString &, const QStringList &, bool authReq);
 
 private slots:
 	void doSearchGet();

@@ -2413,7 +2413,7 @@ void PsiAccount::openAddUserDlg()
 		}
 
 		w = new AddUserDlg(services, names, gl, this);
-		connect(w, SIGNAL(add(const Jid &, const QString &, const QStringList &, bool)), SLOT(dj_add(const Jid &, const QString &, const QStringList &, bool)));
+		connect(w, SIGNAL(add(const XMPP::Jid &, const QString &, const QStringList &, bool)), SLOT(dj_add(const XMPP::Jid &, const QString &, const QStringList &, bool)));
 		w->show();
 	}
 }
@@ -3185,7 +3185,7 @@ void PsiAccount::actionSearch(const Jid &j)
 		bringToFront(w);
 	else {
 		w = new SearchDlg(j, this);
-		connect(w, SIGNAL(add(const Jid &, const QString &, const QStringList &, bool)), SLOT(dj_add(const Jid &, const QString &, const QStringList &, bool)));
+		connect(w, SIGNAL(add(const XMPP::Jid &, const QString &, const QStringList &, bool)), SLOT(dj_add(const XMPP::Jid &, const QString &, const QStringList &, bool)));
 		connect(w, SIGNAL(aInfo(const Jid &)), SLOT(actionInfo(const Jid &)));
 		w->show();
 	}
@@ -3353,7 +3353,7 @@ void PsiAccount::dj_formCancel(const XData& data, const QString& thread, const J
 	d->client->sendMessage(m);
 }
 
-void PsiAccount::dj_add(const Jid &j, const QString &name, const QStringList &groups, bool authReq)
+void PsiAccount::dj_add(const XMPP::Jid &j, const QString &name, const QStringList &groups, bool authReq)
 {
 	JT_Roster *r = new JT_Roster(d->client->rootTask());
 	r->set(j, name, groups);

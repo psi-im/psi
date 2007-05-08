@@ -217,7 +217,7 @@ public slots:
 	void dj_composeMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread);
 	void dj_addAuth(const Jid &);
 	void dj_addAuth(const Jid &, const QString&);
-	void dj_add(const Jid &, const QString &, const QStringList &, bool authReq);
+	void dj_add(const XMPP::Jid &, const QString &, const QStringList &, bool authReq);
 	void dj_authReq(const Jid &);
 	void dj_auth(const Jid &);
 	void dj_deny(const Jid &);
