@@ -1334,7 +1334,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 			pm.insertItem(tr("&Picture"), avpm);
 		}
 
-		if(PGPUtil::pgpAvailable() && PsiOptions::instance()->getOption("options.ui.menu.contact.custom-pgp-key").toBool()) {
+		if(PGPUtil::instance().pgpAvailable() && PsiOptions::instance()->getOption("options.ui.menu.contact.custom-pgp-key").toBool()) {
 			if(u->publicKeyID().isEmpty())
 				pm.insertItem(IconsetFactory::icon("psi/gpg-yes").icon(), tr("Assign Open&PGP key"), 21);
 			else

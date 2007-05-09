@@ -285,7 +285,7 @@ bool PsiCon::init()
 {
 	// QCA (needs to be before any gpg usage!)
 	d->qcaEventHandler = new QCA::EventHandler(this);
-	PassphraseDlg::setEventHandler(d->qcaEventHandler);
+	PGPUtil::instance().setEventHandler(d->qcaEventHandler);
 	connect(d->qcaEventHandler,SIGNAL(eventReady(int,const QCA::Event&)),SLOT(qcaEvent(int,const QCA::Event&)));
 	d->qcaEventHandler->start();
 	d->qcaKeyStoreManager.waitForBusyFinished(); // FIXME get rid of this
@@ -293,7 +293,7 @@ bool PsiCon::init()
 	foreach(QString k, d->qcaKeyStoreManager.keyStores()) {
 		QCA::KeyStore* ks = new QCA::KeyStore(k, &d->qcaKeyStoreManager);
 		connect(ks, SIGNAL(updated()), SLOT(pgp_keysUpdated()));
-		PGPUtil::keystores += ks;
+		PGPUtil::instance().keystores += ks;
 	}
 
 	d->contactList = new PsiContactList(this);
@@ -464,10 +464,10 @@ void PsiCon::deinit()
 	deleteAllDialogs();
 
 	// QCA Keystores
-	foreach(QCA::KeyStore* ks,PGPUtil::keystores)  {
+	foreach(QCA::KeyStore* ks,PGPUtil::instance().keystores)  {
 		delete ks;
 	}
-	PGPUtil::keystores.clear();
+	PGPUtil::instance().keystores.clear();
 
 	d->idle.stop();
 
@@ -570,27 +570,15 @@ void PsiCon::changeProfile()
 
 void PsiCon::qcaEvent(int id, const QCA::Event& event)
 {
-	if (event.type() == QCA::Event::Password) {
-		if(PGPUtil::passphrases.contains(event.keyStoreEntry().id())) {
-			d->qcaEventHandler->submitPassword(id,QCA::SecureArray(PGPUtil::passphrases[event.keyStoreEntry().id()].utf8()));
-		}
-		else {
-			QString name;
-			QCA::KeyStore ks(event.keyStoreInfo().id(), &d->qcaKeyStoreManager);
-			foreach(QCA::KeyStoreEntry e, ks.entryList()) {
-				if (e.id() == event.keyStoreEntry().id()) {
-					name = e.name();
-				}
-			}
-			PassphraseDlg::promptPassphrase(name,event.keyStoreEntry().id(),id);
-		}
-	}
+	PGPUtil::instance().handleEvent(id,event);
 }
+
+
 void PsiCon::keyStoreAvailable(const QString& k)
 {
 	QCA::KeyStore* ks = new QCA::KeyStore(k, &d->qcaKeyStoreManager);
 	connect(ks, SIGNAL(updated()), SLOT(pgp_keysUpdated()));
-	PGPUtil::keystores += ks;
+	PGPUtil::instance().keystores += ks;
 }
 
 

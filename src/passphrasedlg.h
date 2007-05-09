@@ -21,37 +21,20 @@
 #ifndef PASSPHRASEDLG_H
 #define PASSPHRASEDLG_H
 
-#include <QMap>
-#include <QList>
-#include <QString>
-
 #include "ui_passphrase.h"
 
-namespace QCA {
-	class EventHandler;
-}
-
-class PassphraseDlg : public QDialog, public Ui::Passphrase
+class PassphraseDlg : public QDialog
 {
 	Q_OBJECT
 public:
-	PassphraseDlg(const QString& name, const QString& entryId, int requestId, QWidget *parent=0);
+	PassphraseDlg(QWidget* parent = 0);
 
-	void addRequest(int);
+	void promptPassphrase(const QString& name);
 
-	static void promptPassphrase(const QString& name, const QString& entryId, int requestId);
-	static void setEventHandler(QCA::EventHandler*);
-
-public slots:
-	void reject();
-	void accept();
+	QString getPassphrase() const;
 
 private:
-	QString entryId_;
-	QList<int> requestIds_;
-	
-	static QCA::EventHandler* eventHandler_;
-	static QMap<QString,PassphraseDlg*> dialogs_;
+	Ui::Passphrase ui_;
 };
 
 #endif

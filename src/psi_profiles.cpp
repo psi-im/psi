@@ -342,7 +342,7 @@ void UserAccount::fromXml(const QDomElement &a)
 	QString pgpSecretKeyID;
 	readEntry(a, "pgpSecretKeyID", &pgpSecretKeyID);
 	if (!pgpSecretKeyID.isEmpty()) {
-		QCA::KeyStoreEntry e = PGPUtil::getSecretKeyStoreEntry(pgpSecretKeyID);
+		QCA::KeyStoreEntry e = PGPUtil::instance().getSecretKeyStoreEntry(pgpSecretKeyID);
 		if (!e.isNull())
 			pgpSecretKey = e.pgpSecretKey();
 	}

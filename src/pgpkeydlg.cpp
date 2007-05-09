@@ -53,7 +53,7 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString& defaultKeyID, QWidget *parent) : QDi
 
 	Q3ListViewItem *isel = 0;
 	
-	foreach(QCA::KeyStore *ks, PGPUtil::keystores) {
+	foreach(QCA::KeyStore *ks, PGPUtil::instance().keystores) {
 		if (ks->type() == QCA::KeyStore::PGPKeyring && ks->holdsIdentities()) {
 			foreach(QCA::KeyStoreEntry ke, ks->entryList()) {
 				if (t == Public && ke.type() == QCA::KeyStoreEntry::TypePGPPublicKey || ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey) {

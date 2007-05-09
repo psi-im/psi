@@ -1052,7 +1052,7 @@ private slots:
 		if(!asker.accepted())
 		{
 			seterror();
-			emit finished();
+			emit updated();
 			return;
 		}
 
@@ -1065,7 +1065,7 @@ private slots:
 		if(!tokenAsker.accepted())
 		{
 			seterror();
-			emit finished();
+			emit updated();
 			return;
 		}
 
