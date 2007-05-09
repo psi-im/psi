@@ -52,9 +52,6 @@ class Q3DockWindow;
 namespace OpenPGP {
 	class Engine;
 }
-namespace QCA {
-	class Event;
-}
 namespace XMPP {
 	class Jid;
 }
@@ -129,7 +126,6 @@ signals:
 	void accountCountChanged();
 	void accountActivityChanged();
 	void emitOptionsUpdate();
-	void pgpKeysUpdated();
 
 public slots:
 	void setGlobalStatus(const Status &, bool withPriority = false);
@@ -153,12 +149,9 @@ public slots:
 	void queueChanged();
 	void recvNextEvent();
 	void setStatusFromDialog(const XMPP::Status &, bool withPriority);
-	void pgp_keysUpdated();
-	void keyStoreAvailable(const QString&);
 	void proxy_settingsChanged();
 	void updateMainwinStatus();
 	void tabDying(TabDlg*);
-	void qcaEvent(int, const QCA::Event&);
 
 	void mainWinGeomChanged(QRect saveableGeometry);
 

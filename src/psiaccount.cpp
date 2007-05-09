@@ -633,7 +633,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent)
 	d->contactList->link(this);
 	connect(d->psi, SIGNAL(emitOptionsUpdate()), SLOT(optionsUpdate()));
 	//connect(d->psi, SIGNAL(pgpToggled(bool)), SLOT(pgpToggled(bool)));
-	connect(d->psi, SIGNAL(pgpKeysUpdated()), SLOT(pgpKeysUpdated()));
+	connect(&PGPUtil::instance(), SIGNAL(pgpKeysUpdated()), SLOT(pgpKeysUpdated()));
 
 	d->psi->setToggles(d->acc.tog_offline, d->acc.tog_away, d->acc.tog_agents, d->acc.tog_hidden,d->acc.tog_self);
 

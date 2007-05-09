@@ -236,8 +236,6 @@ public:
 	QRect mwgeom;
 	FileTransDlg *ftwin;
 	PsiActionList *actionList;
-	QCA::EventHandler *qcaEventHandler;
-	QCA::KeyStoreManager qcaKeyStoreManager;
 	//GlobalAccelManager *globalAccelManager;
 	TuneController* tuneController;
 	QMenuBar* defaultMenuBar;
@@ -258,7 +256,6 @@ PsiCon::PsiCon()
 	useSound = true;
 	d->mainwin = 0;
 	d->ftwin = 0;
-	d->qcaEventHandler = 0;
 
 	d->eventId = 0;
 	d->edb = new EDBFlatFile;
@@ -283,21 +280,10 @@ PsiCon::~PsiCon()
 
 bool PsiCon::init()
 {
-	// QCA (needs to be before any gpg usage!)
-	d->qcaEventHandler = new QCA::EventHandler(this);
-	PGPUtil::instance().setEventHandler(d->qcaEventHandler);
-	connect(d->qcaEventHandler,SIGNAL(eventReady(int,const QCA::Event&)),SLOT(qcaEvent(int,const QCA::Event&)));
-	d->qcaEventHandler->start();
-	d->qcaKeyStoreManager.waitForBusyFinished(); // FIXME get rid of this
-	connect(&d->qcaKeyStoreManager, SIGNAL(keyStoreAvailable(const QString&)), SLOT(keyStoreAvailable(const QString&)));
-	foreach(QString k, d->qcaKeyStoreManager.keyStores()) {
-		QCA::KeyStore* ks = new QCA::KeyStore(k, &d->qcaKeyStoreManager);
-		connect(ks, SIGNAL(updated()), SLOT(pgp_keysUpdated()));
-		PGPUtil::instance().keystores += ks;
-	}
+	// PGP initialization (needs to be before any gpg usage!)
+	PGPUtil::instance();
 
 	d->contactList = new PsiContactList(this);
-
 
 	connect(d->contactList, SIGNAL(accountAdded(PsiAccount*)), SIGNAL(accountAdded(PsiAccount*)));
 	connect(d->contactList, SIGNAL(accountRemoved(PsiAccount*)), SIGNAL(accountRemoved(PsiAccount*)));
@@ -463,12 +449,6 @@ void PsiCon::deinit()
 	// this deletes all dialogs except for mainwin
 	deleteAllDialogs();
 
-	// QCA Keystores
-	foreach(QCA::KeyStore* ks,PGPUtil::instance().keystores)  {
-		delete ks;
-	}
-	PGPUtil::instance().keystores.clear();
-
 	d->idle.stop();
 
 	// shut down all accounts
@@ -479,7 +459,6 @@ void PsiCon::deinit()
 	delete d->s5bServer;
 
 	delete d->ftwin;
-	delete d->qcaEventHandler;
 
 	if(d->mainwin) {
 		// shut down mainwin
@@ -567,20 +546,6 @@ void PsiCon::changeProfile()
 
 	quit(QuitProfile);
 }
-
-void PsiCon::qcaEvent(int id, const QCA::Event& event)
-{
-	PGPUtil::instance().handleEvent(id,event);
-}
-
-
-void PsiCon::keyStoreAvailable(const QString& k)
-{
-	QCA::KeyStore* ks = new QCA::KeyStore(k, &d->qcaKeyStoreManager);
-	connect(ks, SIGNAL(updated()), SLOT(pgp_keysUpdated()));
-	PGPUtil::instance().keystores += ks;
-}
-
 
 void PsiCon::doManageAccounts()
 {
@@ -1199,12 +1164,6 @@ void PsiCon::recentNodeAdd(const QString &str)
 	// trim the list if bigger than 10
 	while(d->recentNodeList.count() > 10)
 		d->recentNodeList.remove(d->recentNodeList.fromLast());
-}
-
-void PsiCon::pgp_keysUpdated()
-{
-	emit pgpKeysUpdated();
-	//QMessageBox::information(0, CAP(tr("OpenPGP")), tr("Psi has detected that you have modified your keyring.  That is all."));
 }
 
 void PsiCon::proxy_settingsChanged()

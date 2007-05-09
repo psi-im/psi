@@ -5,9 +5,31 @@
 #include "pgputil.h"
 #include "passphrasedlg.h"
 
+
 PGPUtil::PGPUtil() : qcaEventHandler_(NULL), passphraseDlg_(NULL)
 {
+	qcaEventHandler_ = new QCA::EventHandler(this);
+	connect(qcaEventHandler_,SIGNAL(eventReady(int,const QCA::Event&)),SLOT(handleEvent(int,const QCA::Event&)));
+	qcaEventHandler_->start();
+	qcaKeyStoreManager_.waitForBusyFinished(); // FIXME get rid of this
+	connect(&qcaKeyStoreManager_, SIGNAL(keyStoreAvailable(const QString&)), SLOT(keyStoreAvailable(const QString&)));
+	foreach(QString k, qcaKeyStoreManager_.keyStores()) {
+		QCA::KeyStore* ks = new QCA::KeyStore(k, &qcaKeyStoreManager_);
+		connect(ks, SIGNAL(updated()), SIGNAL(pgpKeysUpdated()));
+		keystores_ += ks;
+	}
+
+	connect(QCoreApplication::instance(),SIGNAL(aboutToQuit()),SLOT(deleteLater()));
 }
+
+PGPUtil::~PGPUtil()
+{
+	foreach(QCA::KeyStore* ks,keystores_)  {
+		delete ks;
+	}
+	keystores_.clear();
+}
+
 
 PGPUtil& PGPUtil::instance()
 {
@@ -15,11 +37,6 @@ PGPUtil& PGPUtil::instance()
 		instance_ = new PGPUtil();
 	}
 	return *instance_;
-}
-
-void PGPUtil::setEventHandler(QCA::EventHandler* e) 
-{
-	qcaEventHandler_ = e;
 }
 
 void PGPUtil::handleEvent(int id, const QCA::Event& event)
@@ -106,7 +123,7 @@ void PGPUtil::passphraseDone(int result)
 
 bool PGPUtil::pgpAvailable()
 {
-	return (QCA::isSupported("openpgp") && keystores.count() > 0);
+	return (QCA::isSupported("openpgp") && keystores_.count() > 0);
 }
 
 QString PGPUtil::stripHeaderFooter(const QString &str)
@@ -170,7 +187,7 @@ QString PGPUtil::addHeaderFooter(const QString &str, int type)
 
 QCA::KeyStoreEntry PGPUtil::getSecretKeyStoreEntry(const QString& keyID)
 {
-	foreach(QCA::KeyStore *ks, PGPUtil::keystores) {
+	foreach(QCA::KeyStore *ks, keystores_) {
 		if (ks->type() == QCA::KeyStore::PGPKeyring && ks->holdsIdentities()) {
 			foreach(QCA::KeyStoreEntry ke, ks->entryList()) {
 				if (ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey
@@ -185,7 +202,7 @@ QCA::KeyStoreEntry PGPUtil::getSecretKeyStoreEntry(const QString& keyID)
 
 QCA::KeyStoreEntry PGPUtil::getPublicKeyStoreEntry(const QString& keyID)
 {
-	foreach(QCA::KeyStore *ks, PGPUtil::keystores) {
+	foreach(QCA::KeyStore *ks, keystores_) {
 		if (ks->type() == QCA::KeyStore::PGPKeyring && ks->holdsIdentities()) {
 			foreach(QCA::KeyStoreEntry ke, ks->entryList()) {
 				if ((ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey
@@ -250,6 +267,15 @@ void PGPUtil::removePassphrase(const QString& id)
 {
 	passphrases_.remove(id);
 }
+
+void PGPUtil::keyStoreAvailable(const QString& k)
+{
+	QCA::KeyStore* ks = new QCA::KeyStore(k, &qcaKeyStoreManager_);
+	connect(ks, SIGNAL(updated()), SIGNAL(pgpKeysUpdated()));
+	keystores_ += ks;
+}
+
+
 
 
 PGPUtil* PGPUtil::instance_ = NULL;
