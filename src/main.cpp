@@ -244,6 +244,7 @@ int main(int argc, char *argv[])
 	QApplication::setQuitOnLastWindowClosed(false);
 
 	// Initialize QCA
+	QCA::setProperty("pgp-always-trust", true);
 	QCA::KeyStoreManager keystoremgr;
 	QCA::KeyStoreManager::start();
 	keystoremgr.waitForBusyFinished(); // FIXME get rid of this

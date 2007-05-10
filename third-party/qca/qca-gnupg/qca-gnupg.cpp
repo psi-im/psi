@@ -754,6 +754,9 @@ public:
 		format = f;
 		this->op = op;
 
+		if(getProperty("pgp-always-trust").toBool())
+			gpg.setAlwaysTrust(true);
+
 		if(format == SecureMessage::Ascii)
 			gpg.setAsciiFormat(true);
 		else
