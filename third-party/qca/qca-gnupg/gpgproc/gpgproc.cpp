@@ -21,9 +21,70 @@
 
 #include "sprocess.h"
 
+#define QT_PIPE_HACK
+
 using namespace QCA;
 
 namespace gpgQCAPlugin {
+
+#ifdef QT_PIPE_HACK
+class QProcessSignalRelay : public QObject
+{
+	Q_OBJECT
+public:
+	QProcessSignalRelay(QProcess *proc, QObject *parent = 0)
+	:QObject(parent)
+	{
+		qRegisterMetaType<QProcess::ProcessError>("QProcess::ProcessError");
+		connect(proc, SIGNAL(started()), SLOT(proc_started()), Qt::QueuedConnection);
+		connect(proc, SIGNAL(readyReadStandardOutput()), SLOT(proc_readyReadStandardOutput()), Qt::QueuedConnection);
+		connect(proc, SIGNAL(readyReadStandardError()), SLOT(proc_readyReadStandardError()), Qt::QueuedConnection);
+		connect(proc, SIGNAL(bytesWritten(qint64)), SLOT(proc_bytesWritten(qint64)), Qt::QueuedConnection);
+		connect(proc, SIGNAL(finished(int)), SLOT(proc_finished(int)), Qt::QueuedConnection);
+		connect(proc, SIGNAL(error(QProcess::ProcessError)), SLOT(proc_error(QProcess::ProcessError)), Qt::QueuedConnection);
+	}
+
+signals:
+	void started();
+	void readyReadStandardOutput();
+	void readyReadStandardError();
+	void bytesWritten(qint64);
+	void finished(int);
+	void error(QProcess::ProcessError);
+
+public slots:
+	void proc_started()
+	{
+		emit started();
+	}
+
+	void proc_readyReadStandardOutput()
+	{
+		emit readyReadStandardOutput();
+	}
+
+	void proc_readyReadStandardError()
+	{
+		emit readyReadStandardError();
+	}
+
+	void proc_bytesWritten(qint64 x)
+	{
+		emit bytesWritten(x);
+	}
+
+	void proc_finished(int x)
+	{
+		emit finished(x);
+	}
+
+	void proc_error(QProcess::ProcessError x)
+	{
+		emit error(x);
+	}
+};
+#endif
+
 
 //----------------------------------------------------------------------------
 // GPGProc
@@ -43,6 +104,9 @@ public:
 	QString bin;
 	QStringList args;
 	SProcess *proc;
+#ifdef QT_PIPE_HACK
+	QProcessSignalRelay *proc_relay;
+#endif
 	QPipe pipeAux, pipeCommand, pipeStatus;
 	QByteArray statusBuf;
 	QStringList statusLines;
@@ -67,6 +131,9 @@ public:
 		qRegisterMetaType<gpgQCAPlugin::GPGProc::Error>("gpgQCAPlugin::GPGProc::Error");
 
 		proc = 0;
+#ifdef QT_PIPE_HACK
+		proc_relay = 0;
+#endif
 		startTrigger.setSingleShot(true);
 		doneTrigger.setSingleShot(true);
 
@@ -89,6 +156,12 @@ public:
 
 	void closePipes()
 	{
+#ifdef QT_PIPE_HACK
+		pipeAux.readEnd().reset();
+		pipeCommand.readEnd().reset();
+		pipeStatus.writeEnd().reset();
+#endif
+
 		pipeAux.reset();
 		pipeCommand.reset();
 		pipeStatus.reset();
@@ -96,7 +169,9 @@ public:
 
 	void reset(ResetMode mode)
 	{
+#ifndef QT_PIPE_HACK
 		closePipes();
+#endif
 
 		if(proc)
 		{
@@ -104,9 +179,19 @@ public:
 			if(proc->state() != QProcess::NotRunning)
 				proc->terminate();
 			proc->setParent(0);
+#ifdef QT_PIPE_HACK
+			delete proc_relay;
+			proc_relay = 0;
+			delete proc; // should be safe to do thanks to relay
+#else
 			proc->deleteLater();
+#endif
 			proc = 0;
 		}
+
+#ifdef QT_PIPE_HACK
+		closePipes();
+#endif
 
 		startTrigger.stop();
 		doneTrigger.stop();
@@ -332,7 +417,7 @@ public slots:
 		fin_process = true;
 		fin_process_success = false;
 
-#ifdef Q_OS_MAC
+#ifdef QT_PIPE_HACK
 		// If the process fails to start, then the ends of the pipes
 		// intended for the child process are still open.  Some Mac
 		// users experience a lockup if we close our ends of the pipes
@@ -526,12 +611,22 @@ void GPGProc::start(const QString &bin, const QStringList &args, Mode mode)
 	if(d->pipeStatus.readEnd().isValid())
 		d->pipeStatus.readEnd().enable();
 
+#ifdef QT_PIPE_HACK
+	d->proc_relay = new QProcessSignalRelay(d->proc, d);
+	connect(d->proc_relay, SIGNAL(started()), d, SLOT(proc_started()));
+	connect(d->proc_relay, SIGNAL(readyReadStandardOutput()), d, SLOT(proc_readyReadStandardOutput()));
+	connect(d->proc_relay, SIGNAL(readyReadStandardError()), d, SLOT(proc_readyReadStandardError()));
+	connect(d->proc_relay, SIGNAL(bytesWritten(qint64)), d, SLOT(proc_bytesWritten(qint64)));
+	connect(d->proc_relay, SIGNAL(finished(int)), d, SLOT(proc_finished(int)));
+	connect(d->proc_relay, SIGNAL(error(QProcess::ProcessError)), d, SLOT(proc_error(QProcess::ProcessError)));
+#else
 	connect(d->proc, SIGNAL(started()), d, SLOT(proc_started()));
 	connect(d->proc, SIGNAL(readyReadStandardOutput()), d, SLOT(proc_readyReadStandardOutput()));
 	connect(d->proc, SIGNAL(readyReadStandardError()), d, SLOT(proc_readyReadStandardError()));
 	connect(d->proc, SIGNAL(bytesWritten(qint64)), d, SLOT(proc_bytesWritten(qint64)));
 	connect(d->proc, SIGNAL(finished(int)), d, SLOT(proc_finished(int)));
 	connect(d->proc, SIGNAL(error(QProcess::ProcessError)), d, SLOT(proc_error(QProcess::ProcessError)));
+#endif
 
 	d->bin = bin;
 	d->args = fullargs;
