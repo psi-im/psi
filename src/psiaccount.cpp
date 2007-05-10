@@ -4316,6 +4316,8 @@ void PsiAccount::pgp_encryptFinished()
 		if (m.containsEvent(DisplayedEvent)) mwrap.addEvent(DisplayedEvent);
 		if (m.containsEvent(ComposingEvent)) mwrap.addEvent(ComposingEvent);
 		if (m.containsEvent(CancelEvent)) mwrap.addEvent(CancelEvent);
+		mwrap.setChatState(m.chatState());
+		mwrap.setNick(m.nick());
 		dj_sendMessage(mwrap);
 	}
 	emit encryptedMessageSent(x, pt->success(), pt->errorCode());
