@@ -128,7 +128,7 @@ AHCommand RCSetStatusServer::execute(const AHCommand& c, const Jid&)
 				s.setType(fl[i].value().first());
 			}
 			else if (fl[i].var() == "status-message" && !fl[i].value().isEmpty()) {
-				s.setStatus(fl[i].value().first());
+				s.setStatus(fl[i].value().join("\n"));
 			}
 			else if (fl[i].var() == "status-priority" && !fl[i].value().isEmpty()) {
 				s.setPriority(fl[i].value().first().toInt());
