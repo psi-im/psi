@@ -17,14 +17,14 @@
 #
 
 # Change these according to your own setup
-QTDIR=/usr/local/Trolltech/Qt-4.2.2
+QTDIR=/usr/local/Trolltech/Qt-4.2.3
 QCADIR=/usr/local
 GROWLDIR=/Library/Frameworks
 PSI_DIR=..
 
 NAME=Psi
-VERSION=0.11-devel_$(shell date +"%Y%m%d")
-#VERSION=0.11-beta5
+#VERSION=0.11-devel_$(shell date +"%Y%m%d")_debug
+VERSION=0.11-RC1
 FILES=Psi.app 
 DISK_DIR=disk
 ifneq ($(BUILD),no)
@@ -81,7 +81,7 @@ $(DISK_DIR)/Psi.app: $(PSI_DIR)/src/psi.app
 	ditto -rsrc "$<" "$@"
 	mkdir -p "$@/Contents/Frameworks"
 	-ditto -rsrc "$(GROWLDIR)/Growl.framework" "$@/Contents/Frameworks/Growl.framework"
-	strip "$@/Contents/MacOS/psi"
+	#strip "$@/Contents/MacOS/psi"
 	#
 	#@echo
 	#@echo Installing QCA ...

@@ -48,11 +48,17 @@ AboutDlg::AboutDlg(QWidget* parent)
 	authors += details(QString::fromUtf8("Kevin Smith"),
 			   "kismith@psi-im.org", "", "",
 			   tr("Project Lead/Maintainer"));
-	authors += details(QString::fromUtf8("Michail Pishchagin"),
-			   "mblsha@psi-im.org", "", "",
-			   tr("Lead Developer"));
 	authors += details(QString::fromUtf8("Remko Tronçon"),
 			   "remko@psi-im.org", "", "",
+			   tr("Lead Developer"));
+	authors += details(QString::fromUtf8("Michail Pishchagin"),
+			   "mblsha@psi-im.org", "", "",
+			   tr("Lead Widget Developer"));
+	authors += details(QString::fromUtf8("Maciej Niedzielski"),
+			   "machekku@psi-im.org", "", "",
+			   tr("Developer"));
+	authors += details(QString::fromUtf8("Martin Hostettler"),
+			   "martin@psi-im.org", "", "",
 			   tr("Developer"));
 	authors += details(QString::fromUtf8("Akito Nozaki"),
 			   "anpluto@usa.net", "", "",
