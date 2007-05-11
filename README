@@ -20,31 +20,25 @@ Original Author (2001-2004):
 
 Known Issues
 ------------
-This is a beta (preview) version of Psi and is not intended to be release 
-quality or used in production environments.  Particularly, the following 
-issues are known (those issues which are believed to have originated in 
-external libraries are marked with a *):
-  - GnuPG is temporarily not supported.
-  - Mouse actions on tabbed chat windows have been temporarily disabled.
-  - Roster tooltips are a little ugly currently, more whitespace will be 
-      added again later.
-  - When receiving multiline messages in a chat, sometimes some lines will
-      not be visible until another message is received or sent. 
+This is a release candidate version of Psi. This release cycle is used as a 
+test of a version which the developers believe is ready for a final release. 
+As such we do not know of any critical issues is this version, but it is 
+still advisable to maintain backups and to not deploy on critical production 
+systems.
 
 Notes
 -----
-  - This beta release includes a patched version of QCA2. Although it is 
-      possible to link against another self-patched QCA2, it is strongly 
-      recommended to use the provided tree, which is now default when
-      using ./configure on unices, or by default on Windows. Please ignore
-      all notes regarding QCA2 plugins below.
+  - QCA --
+    * The latest version of QCA2 is required to build Psi.
+    * The qca-openssl and qca-gnupg plugins are desirable for full 
+      functionality of Psi.
 
   - Upgrading to 0.11 --
     * Unless you use the 'default' profile, the last used profile settings 
-	  will not be transferred from 0.10 and previous Qt3-based builds to the 
-	  0.11-beta1 and newer Qt4 based builds.
+	    will not be transferred from 0.10 and previous Qt3-based builds to the 
+	    0.11-beta1 and newer Qt4 based builds.
       If Psi loads with a blank profile, cancel the account creation and use 
-     "Choose profile" to reset your default profile.	
+      "Choose profile" to reset your default profile.	
     * When you decide to switch to Psi 0.11 permanently, you can safely clear
       the 'affinix.com' keys from your registry.
     * The PEM format is now used for storing SSL certificates.
@@ -88,7 +82,7 @@ Changes
     messages to multiple users. Use option.enable-multicasting to enable it.
   - Added 'Show status message' toggle. There is a hidden option to put 
     status messages under the nickname (at the cost of 2 extra pixels
-	when no status message is shown)
+	  when no status message is shown)
   - Support for Bookmark Storage (JEP-0048), where bookmarked conferences are
     auto-joined. No UI is provided for creating bookmarks (yet).
   - Better error messages, including error condition mappings (JEP-0086)
@@ -96,7 +90,7 @@ Changes
   - Improved PGP error messages
   - Hiding the deprecated protocol selector for service discovery by default.
     Use option.ui.show-deprecated.service-discovery.protocol-selector to
-	re-enable it.
+	  re-enable it.
   - New options system (see options.xml)
   - Receiving support for vCard-Based Avatars (JEP-0153)
   - Support for Multi-User-Chat (JEP-0045)
