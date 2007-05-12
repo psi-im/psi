@@ -91,7 +91,7 @@ QList<QString> ASpellChecker::suggestions(const QString& word)
 bool ASpellChecker::add(const QString& word)
 {
 	bool result = false;
-	if (config_) {
+	if (config_ && speller_) {
 		QString trimmed_word = word.trimmed();
 		if(!word.isEmpty()) {
 			aspell_speller_add_to_personal(speller_, trimmed_word.toUtf8(), trimmed_word.toUtf8().length());

@@ -70,44 +70,44 @@ Changes
     XEP-0077 (In-band registration))
   - Finished support for XEP-0004 (Data Forms) by supporting forms in
     messages. (thanks to Roelof Naude)
-  - Added support for JEP-0070 (Verifying HTTP Requests via XMPP).
+  - Added support for XEP-0070 (Verifying HTTP Requests via XMPP).
     Thanks to Maciej Niedzielski.
   - Customizable shortcuts (thanks to Ephraim)
   - Added spell checking (thanks to Ephraim).
     Currently only aspell is supported.
   - Added option to automatically set the resource (using the hostname)
   - Added new default Stellar3 iconset
-  - Added support for JEP-138 (Stream Compression)
-  - Added support for using JEP-33 (Extended Stanza Addressing) to multicast
+  - Added support for XEP-138 (Stream Compression)
+  - Added support for using XEP-33 (Extended Stanza Addressing) to multicast
     messages to multiple users. Use option.enable-multicasting to enable it.
   - Added 'Show status message' toggle. There is a hidden option to put 
     status messages under the nickname (at the cost of 2 extra pixels
 	  when no status message is shown)
-  - Support for Bookmark Storage (JEP-0048), where bookmarked conferences are
+  - Support for Bookmark Storage (XEP-0048), where bookmarked conferences are
     auto-joined. No UI is provided for creating bookmarks (yet).
-  - Better error messages, including error condition mappings (JEP-0086)
+  - Better error messages, including error condition mappings (XEP-0086)
   - Support dynamically changing priority
   - Improved PGP error messages
   - Hiding the deprecated protocol selector for service discovery by default.
     Use option.ui.show-deprecated.service-discovery.protocol-selector to
 	  re-enable it.
   - New options system (see options.xml)
-  - Receiving support for vCard-Based Avatars (JEP-0153)
-  - Support for Multi-User-Chat (JEP-0045)
-  - Preliminary support for User Nickname (JEP-0172)
-  - Preliminary support for Roster Item Exchange (JEP-0144)
-  - Psi now uses the Qt4(>=4.2) and QCA2 libraries, replacing the Qt3 and QCA1 
+  - Receiving support for vCard-Based Avatars (XEP-0153)
+  - Support for Multi-User-Chat (XEP-0045)
+  - Preliminary support for User Nickname (XEP-0172)
+  - Preliminary support for Roster Item Exchange (XEP-0144)
+  - Psi now uses the Qt4(>=4.3) and QCA2 libraries, replacing the Qt3 and QCA1 
     requirements.
   - "Privacy List" support in the account dialog.
-  - Support for JEP-0050 (Ad-hoc commands)
-  - Preliminary support for JEP-0163 (Personal Eventing Protocol)
-  - Preliminary support for JEP-0146 (Remote Controlling Clients)
+  - Support for XEP-0050 (Ad-hoc commands)
+  - Preliminary support for XEP-0163 (Personal Eventing Protocol)
+  - Preliminary support for XEP-0146 (Remote Controlling Clients)
   - Large parts of the codebase have been restructured.
   - Fixed a chat room bug where subject/topic changes were not shown.
   - Mac OS X builds are now universal binaries, supporting the new Intel 
     based Macs.
-  - Support for JEP-85 (Chat State Notifications).
-  - Support for JEP-0115 (Entity Capabilities).
+  - Support for XEP-85 (Chat State Notifications).
+  - Support for XEP-0115 (Entity Capabilities).
   - There is now a config.xml option to make some windows use the brushed
     metal theme on Mac OS X.
   - Window opacity support is now present for all three supported platforms.
@@ -170,9 +170,9 @@ Changes
   - Fixed "broken pipe" crash when receiving GnuPG errors
 
   New in 0.9.1
-  - Service Discovery browser (JEP-0030)
+  - Service Discovery browser (XEP-0030)
   - Popup notifications
-  - Redesigned Iconset & Emoticons system, based on JEP-0038
+  - Redesigned Iconset & Emoticons system, based on XEP-0038
   - Now possible to use service/transport icons for individual contacts
   - Ability to use custom roster icons for contacts via RegExps
   - Emoticon popup menu in chat window, for quick access
@@ -181,7 +181,7 @@ Changes
   - GnuPG 1.2.3 compatibility
   - New XMPP/Jabber engine (partially complete, XMPP 1.0 support deferred)
   - SOCKS5 proxy support
-  - HTTP polling proxy support (JEP-0025)
+  - HTTP polling proxy support (XEP-0025)
   - Roster groups open/closed state saved
   - 'Free for Chat' status
   - Character counter
