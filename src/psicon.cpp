@@ -427,6 +427,42 @@ bool PsiCon::init()
 
 	// Entity capabilities
 	CapsRegistry::instance()->setFile(ApplicationInfo::homeDir() + "/caps.xml");
+	
+	// FIXME
+#ifdef __GNUC__
+#warning "Temporary hard-coding caps registration of own version"
+#endif
+	// client()->identity()
+	DiscoItem::Identity identity = { "client",  ApplicationInfo::name(), "pc" };
+	DiscoItem::Identities identities;
+	identities += identity;
+	QStringList features;
+	features << "http://jabber.org/protocol/bytestreams"
+		<< "http://jabber.org/protocol/si" 
+		<< "http://jabber.org/protocol/si/profile/file-transfer" 
+		<< "http://jabber.org/protocol/disco#info" 
+		<< "http://jabber.org/protocol/commands" 
+		<< "http://jabber.org/protocol/rosterx" 
+		<< "http://jabber.org/protocol/muc" 
+		<< "jabber:x:data";
+	CapsRegistry::instance()->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),ApplicationInfo::capsVersion()),identities,Features(features));
+	CapsRegistry::instance()->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),"cs"),identities,Features("http://jabber.org/protocol/chatstates"));
+	features.clear();
+	features << "http://jabber.org/protocol/mood"
+		<< "http://jabber.org/protocol/tune" 
+		<< "http://jabber.org/protocol/physloc" 
+		<< "http://jabber.org/protocol/geoloc" 
+		<< "http://jabber.org/protocol/avatar#data" 
+		<< "http://jabber.org/protocol/avatar#metadata";
+	CapsRegistry::instance()->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),"ep"),identities,features);
+	features.clear();
+	features << "http://jabber.org/protocol/mood+notify"
+		<< "http://jabber.org/protocol/tune+notify" 
+		<< "http://jabber.org/protocol/physloc+notify" 
+		<< "http://jabber.org/protocol/geoloc+notify" 
+		<< "http://jabber.org/protocol/avatar#metadata+notify";
+	CapsRegistry::instance()->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),"ep-notify"),identities,features);
+	CapsRegistry::instance()->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),"html"),identities,Features("http://jabber.org/protocol/xhtml-im"));
 
 
 	// load accounts
