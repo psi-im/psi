@@ -73,6 +73,7 @@ Changes
   - Added support for XEP-0070 (Verifying HTTP Requests via XMPP).
     Thanks to Maciej Niedzielski.
   - Customizable shortcuts (thanks to Ephraim)
+  - System-wide shortcuts
   - Added spell checking (thanks to Ephraim).
     Currently only aspell is supported.
   - Added option to automatically set the resource (using the hostname)
