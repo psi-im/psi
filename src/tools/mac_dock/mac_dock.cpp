@@ -36,6 +36,11 @@ void MacDock::startBounce()
 	if (!isBouncing) {
 		bounceRec.qType = nmType;
 		bounceRec.nmMark = 1;
+		bounceRec.nmIcon = NULL;
+		bounceRec.nmSound = NULL;
+		bounceRec.nmStr = NULL;
+		bounceRec.nmResp = NULL;
+		bounceRec.nmRefCon = 0;
 		NMInstall(&bounceRec);
 		isBouncing = true;
 	}
