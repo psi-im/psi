@@ -39,6 +39,11 @@
 #include <windows.h>
 #endif
 
+#ifdef Q_OS_UNIX
+#include <unistd.h>
+#include <fcntl.h>
+#endif
+
 #include "servsock.h"
 #include "bsocket.h"
 
@@ -1133,6 +1138,9 @@ bool SocksServer::listen(Q_UINT16 port, bool udp)
 		return false;
 	if(udp) {
 		d->sd = new Q3SocketDevice(Q3SocketDevice::Datagram);
+#ifdef Q_OS_UNIX
+		::fcntl(d->sd->socket(), F_SETFD, FD_CLOEXEC);
+#endif
 		d->sd->setBlocking(false);
 		if(!d->sd->bind(QHostAddress(), port)) {
 			delete d->sd;
