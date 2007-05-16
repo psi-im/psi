@@ -26,6 +26,7 @@
 #include "maybe.h"
 #include "xmpp_status.h"
 
+class QDomDocument;
 class QDomElement;
 
 class StatusPreset 
