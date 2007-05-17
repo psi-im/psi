@@ -82,7 +82,7 @@ void BSocket::reset(bool clear)
 	if(d->qsock) {
 		d->qsock->disconnect(this);
 
-		if(!clear && d->qsock->isOpen()) {
+		if(!clear && d->qsock->isOpen() && d->qsock->isValid()) {
 			// move remaining into the local queue
 			QByteArray block(d->qsock->bytesAvailable(), 0);
 			d->qsock->read(block.data(), block.size());
