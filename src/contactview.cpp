@@ -3483,9 +3483,9 @@ void ContactViewItem::optionsUpdate()
 
 void ContactViewItem::setContact(UserListItem *u)
 {
-	//int oldStatus = d->status;
+	int oldStatus = d->status;
 	QString oldName = text(0);
-	//bool wasAgent = d->isAgent;
+	bool wasAgent = d->isAgent;
 
 	QString newName = JIDUtil::nickOrJid(u->name(),u->jid().full());
 
@@ -3493,10 +3493,10 @@ void ContactViewItem::setContact(UserListItem *u)
 	cacheValues();
 
 	bool needUpdate = false;
-	//if(d->status != oldStatus || d->isAgent != wasAgent || !u->presenceError().isEmpty()) {
+	if(d->status != oldStatus || d->isAgent != wasAgent || !u->presenceError().isEmpty()) {
 		resetStatus();
 		needUpdate = true;
-	//}
+	}
 	if(newName != oldName) {
 		resetName();
 		needUpdate = true;
