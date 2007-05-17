@@ -291,6 +291,11 @@ void ChatEdit::keyPressEvent(QKeyEvent *e)
 		e->ignore();
 	else if((e->key() == Qt::Key_PageUp || e->key() == Qt::Key_PageDown) && (e->modifiers() & Qt::ControlModifier))
 		e->ignore(); */
+#ifdef Q_WS_MAC
+	else if (e->key() == Qt::Key_QuoteLeft && e->modifiers() == Qt::ControlModifier) {
+		e->ignore();
+	}
+#endif
 	else
 	{
 		QTextEdit::keyPressEvent(e);
