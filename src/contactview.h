@@ -398,7 +398,6 @@ private:
 
 	void cacheValues();
 	int rankGroup(int groupType) const;
-	int rankStatus(int status) const;
 	void drawGroupIcon();
 };
 
