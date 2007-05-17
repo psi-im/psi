@@ -76,12 +76,10 @@ AHCFormDlg::AHCFormDlg(const AHCommand& r, const Jid& receiver, XMPP::Client* cl
 			pb_prev = new QPushButton(tr("Previous"),this);
 			if (r.actions().contains(AHCommand::Prev)) {
 				if (r.defaultAction() == AHCommand::Prev) {
-					connect(pb_prev,SIGNAL(clicked()),SLOT(doExecute()));
 					pb_prev->setDefault(true);
 					pb_prev->setFocus();
 				}
-				else
-					connect(pb_prev,SIGNAL(clicked()),SLOT(doPrev()));
+				connect(pb_prev,SIGNAL(clicked()),SLOT(doPrev()));
 				pb_prev->setEnabled(true);
 			}
 			else 
