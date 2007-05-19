@@ -412,6 +412,12 @@ public:
 	{
 		while (!dialogList.isEmpty()) {
 			item_dialog2* i = dialogList.takeFirst();
+			ChatDlg* chat = qobject_cast<ChatDlg*>(i->widget);
+			if (chat) {
+				if (psi->isChatTabbed(chat)) {
+					psi->getManagingTabs(chat)->close(chat);
+				}
+			}
 			delete i->widget;
 			delete i;
 		}
