@@ -936,8 +936,12 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 #ifdef USE_PEP
 		pm.insertItem(tr("Mood"), 11);
 		pm.setItemEnabled(11, d->pa->serverInfoManager()->hasPEP());
-		pm.insertItem(tr("Avatar"), 12);
-		pm.setItemEnabled(12, d->pa->serverInfoManager()->hasPEP());
+
+		Q3PopupMenu *avatarm = new Q3PopupMenu (&pm);
+		avatarm->insertItem(tr("Set Avatar"), 12);
+		avatarm->insertItem(tr("Unset Avatar"), 13);
+		pm.insertItem(tr("Avatar"), avatarm, 14);
+		pm.setItemEnabled(14, d->pa->serverInfoManager()->hasPEP());
 #endif
 
 		pm.insertSeparator();
@@ -1001,8 +1005,11 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		else if(x == 11 && pm.isItemEnabled(11)) {
 			emit actionSetMood();
 		}
-		else if(x == 12 && pm.isItemEnabled(12)) {
+		else if(x == 12  && pm.isItemEnabled(14)) {
 			emit actionSetAvatar();
+		}
+		else if(x == 13  && pm.isItemEnabled(14)) {
+			emit actionUnsetAvatar();
 		}
 		else if(x >= status_start) {
 			int status = x - status_start;

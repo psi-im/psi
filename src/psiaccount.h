@@ -266,6 +266,7 @@ public slots:
 	void actionExecuteCommandSpecific(const Jid&, const QString& = QString());
 	void actionSetMood();
 	void actionSetAvatar();
+	void actionUnsetAvatar();
 	void featureActivated(QString feature, Jid jid, QString node);
 
 	void actionAssignKey(const Jid &);

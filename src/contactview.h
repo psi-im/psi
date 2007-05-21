@@ -125,6 +125,7 @@ signals:
 	void actionUnassignKey(const Jid &);
 	void actionSetMood();
 	void actionSetAvatar();
+	void actionUnsetAvatar();
 
 private slots:
 	void updateGroups();

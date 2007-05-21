@@ -568,6 +568,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent)
 	connect(d->cp, SIGNAL(actionExecuteCommandSpecific(const Jid &, const QString&)),SLOT(actionExecuteCommandSpecific(const Jid &, const QString&)));
 	connect(d->cp, SIGNAL(actionSetMood()),SLOT(actionSetMood()));
 	connect(d->cp, SIGNAL(actionSetAvatar()),SLOT(actionSetAvatar()));
+	connect(d->cp, SIGNAL(actionUnsetAvatar()),SLOT(actionUnsetAvatar()));
 	connect(d->cp, SIGNAL(actionDisco(const Jid &, const QString &)),SLOT(actionDisco(const Jid &, const QString &)));
 	connect(d->cp, SIGNAL(actionInvite(const Jid &, const QString &)),SLOT(actionInvite(const Jid &, const QString &)));
 	connect(d->cp, SIGNAL(actionAssignKey(const Jid &)),SLOT(actionAssignKey(const Jid &)));
@@ -2870,6 +2871,11 @@ void PsiAccount::actionSetAvatar()
 		}
 		break;
 	}
+}
+
+void PsiAccount::actionUnsetAvatar()
+{
+	avatarFactory()->setSelfAvatar("");
 }
 
 void PsiAccount::actionDefault(const Jid &j)
