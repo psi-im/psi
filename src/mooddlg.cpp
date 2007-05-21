@@ -35,6 +35,7 @@ MoodDlg::MoodDlg(PsiAccount* pa)
 	connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(close()));
 	connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(setMood()));	
 
+	ui_.cb_type->addItem(tr("<unset>"));
 	foreach(MoodCatalog::Entry e, MoodCatalog::instance()->entries()) {
 		ui_.cb_type->addItem(e.text());
 	}
@@ -43,7 +44,12 @@ MoodDlg::MoodDlg(PsiAccount* pa)
 
 void MoodDlg::setMood()
 {
-	Mood::Type type = MoodCatalog::instance()->findEntryByText(ui_.cb_type->currentText()).type();
-	pa_->pepManager()->publish("http://jabber.org/protocol/mood", PubSubItem("current",Mood(type,ui_.le_text->text()).toXml(*pa_->client()->rootTask()->doc())), PEPManager::PresenceAccess);
+	QString moodstr = ui_.cb_type->currentText();
+	if (moodstr == tr("<unset>")) {
+		pa_->pepManager()->retract("http://jabber.org/protocol/mood", "current");
+	} else {
+		Mood::Type type = MoodCatalog::instance()->findEntryByText(moodstr).type();
+		pa_->pepManager()->publish("http://jabber.org/protocol/mood", PubSubItem("current",Mood(type,ui_.le_text->text()).toXml(*pa_->client()->rootTask()->doc())), PEPManager::PresenceAccess);
+	}
 	close();
 }
