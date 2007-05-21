@@ -320,6 +320,57 @@ private:
 	PubSubItem item_;
 };
 
+
+// -----------------------------------------------------------------------------
+
+class PEPRetractTask : public Task
+{
+public:
+	PEPRetractTask(Task* parent, const QString& node, const QString& itemId) : Task(parent), node_(node), itemId_(itemId) {
+		iq_ = createIQ(doc(), "set", "", id());
+		
+		QDomElement pubsub = doc()->createElement("pubsub");
+		pubsub.setAttribute("xmlns", "http://jabber.org/protocol/pubsub");
+		iq_.appendChild(pubsub);
+		
+		QDomElement retract = doc()->createElement("retract");
+		retract.setAttribute("node", node);
+		retract.setAttribute("notify", "1");
+		pubsub.appendChild(retract);
+		
+		QDomElement item = doc()->createElement("item");
+		item.setAttribute("id", itemId);
+		retract.appendChild(item);
+	}
+	
+	bool take(const QDomElement& x) {
+		if(!iqVerify(x, "", id()))
+			return false;
+
+		if(x.attribute("type") == "result") {
+			setSuccess();
+		}
+		else {
+			setError(x);
+		}
+		return true;
+	}
+	
+	void onGo() {
+		send(iq_);
+	}
+
+	const QString& node() const {
+		return node_;
+	}
+
+private:
+	QDomElement iq_;
+	QString node_;
+	QString itemId_;
+};
+
+
 // -----------------------------------------------------------------------------
 
 /*
@@ -509,6 +560,18 @@ void PEPManager::publish(const QString& node, const PubSubItem& it, Access acces
 	connect(tp, SIGNAL(finished()), SLOT(publishFinished()));
 	tp->go(true);
 }
+
+
+void PEPManager::retract(const QString& node, const QString& id)
+{
+	if (!serverInfo_->hasPEP())
+		return;
+	
+	PEPRetractTask* tp = new PEPRetractTask(client_->rootTask(),node,id);
+	// FIXME: add notification of success/failure
+	tp->go(true);
+}
+
 
 void PEPManager::publishFinished()
 {

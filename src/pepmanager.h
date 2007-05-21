@@ -57,6 +57,7 @@ public:
 	//void unsubscribe(const QString&, const QString&);
 
 	void publish(const QString& node, const PubSubItem&, Access = DefaultAccess);
+	void retract(const QString& node, const QString& id);
 	void get(const Jid& jid, const QString& node, const QString& id);
 
 	//void getSubscriptions(const Jid& jid);
