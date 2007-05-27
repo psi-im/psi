@@ -247,7 +247,7 @@ public:
 		setText(0, pa->name());
 		//setPixmap(0, IconsetFactory::icon("psi/account"));
 		Jid j = acc.jid;
-		setText(1, acc.opt_host ? acc.host : j.host());
+		setText(1, acc.opt_host && acc.host.length() ? acc.host : j.host());
 		setText(2, pa->isActive() ? AccountManageDlg::tr("Active") : AccountManageDlg::tr("Not active"));
 		setOn(pa->enabled());
 	}
