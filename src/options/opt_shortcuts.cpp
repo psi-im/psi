@@ -78,7 +78,7 @@ QWidget *OptionsTabShortcuts::widget()
 	/* step through the shortcut groups e.g. chatdlg */
 	foreach(QString shortcutGroup, shortcutGroups) {
 		topLevelItem = new QTreeWidgetItem(d->treeShortcuts);
-		topLevelItem->setText(0, options->getComment(shortcutGroup));
+		topLevelItem->setText(0, translateShortcut(options->getComment(shortcutGroup)));
 		topLevelItem->setData(0, OPTIONSTREEPATH, QVariant(shortcutGroup));
 		topLevelItem->setData(0, ITEMKIND, QVariant((int)OptionsTabShortcuts::TopLevelItem));
 		topLevelItem->setExpanded(true);
@@ -198,7 +198,7 @@ void OptionsTabShortcuts::restoreOptions(const Options *opt)
 				
 				/* create the TreeWidgetItem and set the Data the Kind and it's Optionspath and append it */
 				shortcutItem = new QTreeWidgetItem(topLevelItem);
-				shortcutItem->setText(0, comment);
+				shortcutItem->setText(0, translateShortcut(comment));
 				shortcutItem->setData(0, ITEMKIND, QVariant((int)OptionsTabShortcuts::ShortcutItem));
 				shortcutItem->setData(0, OPTIONSTREEPATH, QVariant(shortcut));
 				topLevelItem->addChild(shortcutItem);
@@ -408,4 +408,13 @@ void OptionsTabShortcuts::onNewShortcutKey(QKeySequence key) {
 		keyItem->setText(1, key.toString(QKeySequence::NativeText));
 		emit dataChanged();	
 	}
+}
+
+/**
+ * \brief	Translate the \param comment in the "Shortcuts" translation Context
+ * \param	comment the text to be translated
+ */
+QString OptionsTabShortcuts::translateShortcut(QString comment)
+{
+	return QCoreApplication::translate("Shortcuts", comment.toUtf8(), 0, QCoreApplication::UnicodeUTF8, 0);
 }

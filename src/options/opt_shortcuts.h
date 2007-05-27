@@ -56,6 +56,7 @@ private slots:
 private:
 	void addTo(QTreeWidgetItem *shortcutItem);
 	void grep();
+	QString translateShortcut(QString comment);
 
 	QWidget *w;
 };
