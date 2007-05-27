@@ -25,16 +25,24 @@
 #include "pollingtunecontroller.h"
 
 #include <windows.h>
+#include <QPair>
 
-class WinAmpController : public PollingTuneController
+class WinAmpController : public TuneController
 {
 public:
 	WinAmpController();
-	
 	virtual Tune currentTune();
-	
+
 protected:
-	QString getTrackTitle(HWND waWnd);
+	QPair<bool, QString> getTrackTitle(HWND waWnd);
+protected slots:
+	void check();
+
+private:
+	Tune prev_tune_;
+	QTimer timer_;
+	int norminterval_, antiscrollinterval_;
+	int antiscrollcounter_;
 };
 
 #endif

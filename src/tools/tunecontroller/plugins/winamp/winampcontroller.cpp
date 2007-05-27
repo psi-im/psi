@@ -20,6 +20,7 @@
 
 #include <windows.h>
 #include <qglobal.h>
+#include <QTimer>
 
 #ifdef Q_CC_MSVC
 #pragma warning(push)
@@ -45,8 +46,13 @@
 /**
  * \brief Constructs the controller.
  */
-WinAmpController::WinAmpController() : PollingTuneController()
+WinAmpController::WinAmpController() : TuneController()
 {
+	connect(&timer_, SIGNAL(timeout()), SLOT(check()));
+	norminterval_ = 3000;
+	antiscrollinterval_ = 100;
+	antiscrollcounter_ = 0;
+	timer_.start(norminterval_);
 }
 
 template <typename char_type> const size_t length (const char_type * begin)
@@ -57,21 +63,23 @@ template <typename char_type> const size_t length (const char_type * begin)
 }
 
 // Returns a title of a track currently being played by WinAmp with given HWND (passed in waWnd)
-QString WinAmpController::getTrackTitle(HWND waWnd)
+QPair<bool, QString> WinAmpController::getTrackTitle(HWND waWnd)
 {
 	TCHAR waTitle[2048];
 	QString title;
 
 	// Get WinAmp window title. It always contains name of the track
-	do {
-		SendMessage (waWnd, WM_GETTEXT, static_cast<WPARAM> (sizeof (waTitle) / sizeof (waTitle[0])), reinterpret_cast<LPARAM> (waTitle));
-		// Now, waTitle contains WinAmp window title
-		title = QString ((const QChar *) waTitle, length<TCHAR> ((const TCHAR *) waTitle));
-	} while (title[0] == '*' || (title.length () && title[title.length() - 1] == '*'));
+	SendMessage (waWnd, WM_GETTEXT, static_cast<WPARAM> (sizeof (waTitle) / sizeof (waTitle[0])), reinterpret_cast<LPARAM> (waTitle));
+	// Now, waTitle contains WinAmp window title
+	title = QString ((const QChar *) waTitle, length<TCHAR> ((const TCHAR *) waTitle));
+	if (title[0] == '*' || (title.length () && title[title.length() - 1] == '*')) {
+		// request to be called again soon.
+		return QPair<bool, QString>(false, QString());
+	}
 
 	// Check whether there is a need to do the all stuff
 	if (!title.length()) {
-		return title;
+		return QPair<bool, QString>(true,title);
 	}
 
 	QString winamp (" - Winamp ***");
@@ -94,14 +102,7 @@ QString WinAmpController::getTrackTitle(HWND waWnd)
 	}
 
 	// Remove leading and trailing spaces
-	if (title.length ()) {
-		while (title.length () && title[0] == ' ') {
-			title.remove (0, 1);
-		}
-		while (title.length () && title[title.length () - 1] == ' ') {
-			title.remove(title.length () - 1, 1);
-		}
-	}
+	title  = title.trimmed();
 
 	// Remove trailing " - Winamp" from title
 	if (title.length ()) {
@@ -140,20 +141,56 @@ QString WinAmpController::getTrackTitle(HWND waWnd)
 		}
 	}
 
-	return title;
+	return QPair<bool, QString>(true,title);
 }
 
-Tune WinAmpController::currentTune()
+
+/**
+ * Polls for new song info.
+ */
+void WinAmpController::check()
 {
+
 	Tune tune;
 #ifdef UNICODE
 	HWND h = FindWindow(L"Winamp v1.x", NULL);
 #else
 	HWND h = FindWindow("Winamp v1.x", NULL);
 #endif
+
 	if (h && SendMessage(h,WM_WA_IPC,0,IPC_ISPLAYING) == 1) {
-		tune.setName(getTrackTitle(h));
+		QPair<bool, QString> trackpair(getTrackTitle(h));
+		if (!trackpair.first) {
+			// getTrackTitle wants us to retry in a few ms...
+			int interval = antiscrollinterval_;
+			if (++antiscrollcounter_ > 10) {
+				antiscrollcounter_ = 0;
+				interval = norminterval_;
+			}
+			timer_.start(interval);
+			return;
+		}
+		antiscrollcounter_ = 0;
+		tune.setName(trackpair.second);
 		tune.setTime(SendMessage(h,WM_WA_IPC,1,IPC_GETOUTPUTTIME));
 	}
-	return tune;
+
+
+
+	if (prev_tune_ != tune) {
+		prev_tune_ = tune;
+		if (tune.isNull()) {
+			emit stopped();
+		}
+		else {
+			emit playing(tune);
+		}
+	}
+	timer_.start(norminterval_);
+}
+
+
+Tune WinAmpController::currentTune()
+{
+	return prev_tune_;
 }
