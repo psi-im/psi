@@ -25,13 +25,13 @@ mac {
 mac { include($$PWD/tools/mac_dock/mac_dock.pri) }
 
 # Tune
-include($$PWD/tools/tunecontroller/tunecontroller.pri)
 pep {
 	DEFINES += USE_PEP
 	CONFIG += tc_psifile
 	mac { CONFIG += tc_itunes }
 	windows { CONFIG += tc_winamp }
 }
+include($$PWD/tools/tunecontroller/tunecontroller.pri)
 
 # Crash
 use_crash {
