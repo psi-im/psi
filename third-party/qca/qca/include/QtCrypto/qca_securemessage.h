@@ -702,6 +702,8 @@ else
 		void finished();
 
 	private:
+		Q_DISABLE_COPY(SecureMessage)
+
 		class Private;
 		friend class Private;
 		Private *d;
@@ -736,6 +738,9 @@ else
 		   provider is required.
 		*/
 		SecureMessageSystem(QObject *parent, const QString &type, const QString &provider);
+
+	private:
+		Q_DISABLE_COPY(SecureMessageSystem)
 	};
 
 	/**
@@ -759,6 +764,9 @@ else
 		*/
 		explicit OpenPGP(QObject *parent = 0, const QString &provider = QString());
 		~OpenPGP();
+
+	private:
+		Q_DISABLE_COPY(OpenPGP)
 	};
 
 	/**
@@ -807,6 +815,20 @@ else
 		void setTrustedCertificates(const CertificateCollection &trusted);
 
 		/**
+		   Set the untrusted certificates to use for the
+		   messages built using this CMS object.
+
+		   This function is useful when verifying messages that don't
+		   contain the certificates (or intermediate signers) within
+		   the CMS blob.  In order to verify such messages, you'll
+		   have to pass the possible signer certs with this function.
+
+		   \param untrusted the collection of untrusted
+		   certificates to use
+		*/
+		void setUntrustedCertificates(const CertificateCollection &untrusted);
+
+		/**
 		   Set the private keys to use for the messages built
 		   using this CMS object.
 
@@ -816,6 +838,9 @@ else
 		   \param keys the collection of keys to use
 		*/
 		void setPrivateKeys(const SecureMessageKeyList &keys);
+
+	private:
+		Q_DISABLE_COPY(CMS)
 	};
 }
 

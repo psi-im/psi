@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2005  Justin Karneges <justin@affinix.com>
+ * Copyright (C) 2003-2007  Justin Karneges <justin@affinix.com>
  * Copyright (C) 2004,2005  Brad Hards <bradh@frogmouth.net>
  *
  * This library is free software; you can redistribute it and/or
@@ -291,10 +291,10 @@ public slots:
 	// hack with void *
 	void *entryPassive(const QString &serialized)
 	{
-		foreach(Item i, items)
+		foreach(KeyStoreListContext *ksl, sources)
 		{
 			// "is this yours?"
-			KeyStoreEntryContext *e = i.owner->entryPassive(serialized);
+			KeyStoreEntryContext *e = ksl->entryPassive(serialized);
 			if(e)
 				return e;
 		}
@@ -759,15 +759,99 @@ KeyStoreEntry KeyStoreEntryWatcher::entry() const
 //----------------------------------------------------------------------------
 // KeyStore
 //----------------------------------------------------------------------------
-class KeyStorePrivate
+// union thingy
+class KeyStoreWriteEntry
 {
+public:
+	enum Type { TypeKeyBundle, TypeCertificate, TypeCRL, TypePGPKey };
+
+	Type type;
+	KeyBundle keyBundle;
+	Certificate cert;
+	CRL crl;
+	PGPKey pgpKey;
+
+	KeyStoreWriteEntry()
+	{
+	}
+
+	KeyStoreWriteEntry(const KeyBundle &_keyBundle)
+	:type(TypeKeyBundle), keyBundle(_keyBundle)
+	{
+	}
+
+	KeyStoreWriteEntry(const Certificate &_cert)
+	:type(TypeCertificate), cert(_cert)
+	{
+	}
+
+	KeyStoreWriteEntry(const CRL &_crl)
+	:type(TypeCRL), crl(_crl)
+	{
+	}
+
+	KeyStoreWriteEntry(const PGPKey &_pgpKey)
+	:type(TypePGPKey), pgpKey(_pgpKey)
+	{
+	}
+};
+
+class KeyStoreOperation : public QThread
+{
+	Q_OBJECT
+public:
+	enum Type { EntryList, WriteEntry, RemoveEntry };
+
+	Type type;
+	int trackerId;
+
+	KeyStoreWriteEntry wentry; // in: WriteEntry
+	QList<KeyStoreEntry> entryList; // out: EntryList
+	QString entryId; // in: RemoveEntry, out: WriteEntry
+	bool success; // out: RemoveEntry
+
+	KeyStoreOperation(QObject *parent = 0)
+	:QThread(parent)
+	{
+	}
+
+protected:
+	virtual void run()
+	{
+		if(type == EntryList)
+			entryList = qVariantValue< QList<KeyStoreEntry> >(trackercall("entryList", QVariantList() << trackerId));
+		else if(type == WriteEntry)
+		{
+			/*if(type == TypeKeyBundle)
+				return store->writeEntry(keyBundle);
+			else if(type == TypeCertificate)
+				return store->writeEntry(cert);
+			else if(type == TypeCRL)
+				return store->writeEntry(crl);
+			else // TypePGPKey
+				return store->writeEntry(pgpKey);
+			entryId = wentry.writeToKeyStore();*/
+		}
+		else // RemoveEntry
+		{
+		}
+	}
+};
+
+class KeyStorePrivate : public QObject
+{
+	Q_OBJECT
 public:
 	KeyStore *q;
 	KeyStoreManager *ksm;
 	int trackerId;
 	KeyStoreTracker::Item item;
+	bool async;
+	bool need_update;
+	QList<KeyStoreEntry> latestEntryList;
+	KeyStoreOperation *op;
 
-	KeyStorePrivate(KeyStore *_q) : q(_q)
+	KeyStorePrivate(KeyStore *_q) : QObject(_q), q(_q), async(false), op(0)
 	{
 	}
 
@@ -780,6 +864,45 @@ public:
 	void invalidate()
 	{
 		trackerId = -1;
+	}
+
+	void handle_updated()
+	{
+		if(async)
+		{
+			if(!op)
+				async_entryList();
+			else
+				need_update = true;
+		}
+		else
+			emit q->updated();
+	}
+
+	void async_entryList()
+	{
+		op = new KeyStoreOperation(this);
+		// use queued for signal-safety
+		connect(op, SIGNAL(finished()), SLOT(op_entryList_finished()), Qt::QueuedConnection);
+		op->type = KeyStoreOperation::EntryList;
+		op->trackerId = trackerId;
+		op->start();
+	}
+
+private slots:
+	void op_entryList_finished()
+	{
+		latestEntryList = op->entryList;
+		delete op;
+		op = 0;
+
+		if(need_update)
+		{
+			need_update = false;
+			async_entryList();
+		}
+
+		emit q->updated();
 	}
 };
 
@@ -831,12 +954,21 @@ bool KeyStore::isReadOnly() const
 
 void KeyStore::startAsynchronousMode()
 {
-	// TODO
-	QMetaObject::invokeMethod(this, "updated", Qt::QueuedConnection);
+	if(d->async)
+		return;
+
+	d->async = true;
+
+	// initial entrylist
+	d->need_update = false;
+	d->async_entryList();
 }
 
 QList<KeyStoreEntry> KeyStore::entryList() const
 {
+	if(d->async)
+		return d->latestEntryList;
+
 	if(d->trackerId == -1)
 		return QList<KeyStoreEntry>();
 	return qVariantValue< QList<KeyStoreEntry> >(trackercall("entryList", QVariantList() << d->trackerId));
@@ -879,6 +1011,8 @@ QString KeyStore::writeEntry(const KeyBundle &kb)
 {
 	// TODO
 	Q_UNUSED(kb);
+	if(d->async)
+		QMetaObject::invokeMethod(this, "entryWritten", Qt::QueuedConnection, Q_ARG(QString, QString()));
 	return QString();
 }
 
@@ -886,6 +1020,8 @@ QString KeyStore::writeEntry(const Certificate &cert)
 {
 	// TODO
 	Q_UNUSED(cert);
+	if(d->async)
+		QMetaObject::invokeMethod(this, "entryWritten", Qt::QueuedConnection, Q_ARG(QString, QString()));
 	return QString();
 }
 
@@ -893,6 +1029,8 @@ QString KeyStore::writeEntry(const CRL &crl)
 {
 	// TODO
 	Q_UNUSED(crl);
+	if(d->async)
+		QMetaObject::invokeMethod(this, "entryWritten", Qt::QueuedConnection, Q_ARG(QString, QString()));
 	return QString();
 }
 
@@ -900,6 +1038,8 @@ QString KeyStore::writeEntry(const PGPKey &key)
 {
 	// TODO
 	Q_UNUSED(key);
+	if(d->async)
+		QMetaObject::invokeMethod(this, "entryWritten", Qt::QueuedConnection, Q_ARG(QString, QString()));
 	return QString();
 }
 
@@ -907,6 +1047,8 @@ bool KeyStore::removeEntry(const QString &id)
 {
 	// TODO
 	Q_UNUSED(id);
+	if(d->async)
+		QMetaObject::invokeMethod(this, "entryRemoved", Qt::QueuedConnection, Q_ARG(bool, false));
 	return false;
 }
 
@@ -935,6 +1077,7 @@ void KeyStoreManager::start(const QString &provider)
 
 QString KeyStoreManager::diagnosticText()
 {
+	// TODO: spin one event cycle in the tracker to receive pending text?
 	ensure_init();
 	return KeyStoreTracker::instance()->getDText();
 }
@@ -1094,6 +1237,9 @@ public:
 				here += i.storeId;
 		}
 
+		busy = newbusy;
+		items = newitems;
+
 		// signals
 		foreach(int trackerId, gone)
 		{
@@ -1112,7 +1258,7 @@ public:
 			KeyStore *ks = keyStoreForTrackerId.value(trackerId);
 			if(ks)
 			{
-				emit ks->updated();
+				ks->d->handle_updated();
 				if(!self)
 					return;
 			}
@@ -1124,9 +1270,6 @@ public:
 			if(!self)
 				return;
 		}
-
-		busy = newbusy;
-		items = newitems;
 	}
 
 public slots:
@@ -1225,7 +1368,7 @@ void KeyStoreManager::sync()
 }
 
 //----------------------------------------------------------------------------
-// KeyStoreManager
+// KeyStoreInfo
 //----------------------------------------------------------------------------
 class KeyStoreInfo::Private : public QSharedData
 {

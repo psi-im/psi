@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004  Justin Karneges  <justin@affinix.com>
+ * Copyright (C) 2004-2007  Justin Karneges <justin@affinix.com>
  * Copyright (C) 2004-2006  Brad Hards <bradh@frogmouth.net>
  *
  * This library is free software; you can redistribute it and/or
@@ -1175,10 +1175,13 @@ public:
 	EVP_PKEY *pkey;
 	EVP_MD_CTX mdctx;
 	State state;
+	bool raw_type;
+	SecureArray raw;
 
 	EVPKey()
 	{
 		pkey = 0;
+		raw_type = false;
 		state = Idle;
 	}
 
@@ -1199,47 +1202,60 @@ public:
 		if(pkey)
 			EVP_PKEY_free(pkey);
 		pkey = 0;
+		raw.clear ();
+		raw_type = false;
 	}
 
 	void startSign(const EVP_MD *type)
 	{
+		state = SignActive;
 		if(!type)
 		{
-			state = SignError;
-			return;
+			raw_type = true;
+			raw.clear ();
 		}
-
-		state = SignActive;
-		EVP_MD_CTX_init(&mdctx);
-		if(!EVP_SignInit_ex(&mdctx, type, NULL))
-			state = SignError;
+		else
+		{
+			raw_type = false;
+			EVP_MD_CTX_init(&mdctx);
+			if(!EVP_SignInit_ex(&mdctx, type, NULL))
+				state = SignError;
+		}
 	}
 
 	void startVerify(const EVP_MD *type)
 	{
+		state = VerifyActive;
 		if(!type)
 		{
-			state = VerifyError;
-			return;
+			raw_type = true;
+			raw.clear ();
 		}
-
-		state = VerifyActive;
-		EVP_MD_CTX_init(&mdctx);
-		if(!EVP_VerifyInit_ex(&mdctx, type, NULL))
-			state = VerifyError;
+		else
+		{
+			EVP_MD_CTX_init(&mdctx);
+			if(!EVP_VerifyInit_ex(&mdctx, type, NULL))
+				state = VerifyError;
+		}
 	}
 
 	void update(const SecureArray &in)
 	{
 		if(state == SignActive)
 		{
-			if(!EVP_SignUpdate(&mdctx, in.data(), (unsigned int)in.size()))
-				state = SignError;
+			if (raw_type)
+				raw += in;
+			else
+				if(!EVP_SignUpdate(&mdctx, in.data(), (unsigned int)in.size()))
+					state = SignError;
 		}
 		else if(state == VerifyActive)
 		{
-			if(!EVP_VerifyUpdate(&mdctx, in.data(), (unsigned int)in.size()))
-				state = VerifyError;
+			if (raw_type)
+				raw += in;
+			else
+				if(!EVP_VerifyUpdate(&mdctx, in.data(), (unsigned int)in.size()))
+					state = VerifyError;
 		}
 	}
 
@@ -1249,10 +1265,35 @@ public:
 		{
 			SecureArray out(EVP_PKEY_size(pkey));
 			unsigned int len = out.size();
-			if(!EVP_SignFinal(&mdctx, (unsigned char *)out.data(), &len, pkey))
+			if (raw_type)
 			{
-				state = SignError;
-				return SecureArray();
+				if (pkey->type == EVP_PKEY_RSA)
+				{
+					if(RSA_private_encrypt (raw.size(), (unsigned char *)raw.data(),
+						(unsigned char *)out.data(), pkey->pkey.rsa,
+						RSA_PKCS1_PADDING) == -1) {
+
+						state = SignError;
+						return SecureArray ();
+					}
+				}
+				else if (pkey->type == EVP_PKEY_DSA)
+				{
+					state = SignError;
+					return SecureArray ();
+				}
+				else
+				{
+					state = SignError;
+					return SecureArray ();
+				}
+			}
+			else {
+				if(!EVP_SignFinal(&mdctx, (unsigned char *)out.data(), &len, pkey))
+				{
+					state = SignError;
+					return SecureArray();
+				}
 			}
 			out.resize(len);
 			state = Idle;
@@ -1266,10 +1307,45 @@ public:
 	{
 		if(state == VerifyActive)
 		{
-			if(EVP_VerifyFinal(&mdctx, (unsigned char *)sig.data(), (unsigned int)sig.size(), pkey) != 1)
+			if (raw_type)
 			{
-				state = VerifyError;
-				return false;
+				SecureArray out(EVP_PKEY_size(pkey));
+				int len = 0;
+
+				if (pkey->type == EVP_PKEY_RSA) {
+					if((len = RSA_public_decrypt (sig.size(), (unsigned char *)sig.data(),
+						(unsigned char *)out.data (), pkey->pkey.rsa,
+						RSA_PKCS1_PADDING)) == -1) {
+
+						state = VerifyError;
+						return false;
+					}
+				}
+				else if (pkey->type == EVP_PKEY_DSA)
+				{
+					state = VerifyError;
+					return false;
+				}
+				else
+				{
+					state = VerifyError;
+					return false;
+				}
+
+				out.resize (len);
+
+				if (out != raw) {
+					state = VerifyError;
+					return false;
+				}
+			}
+			else
+			{
+				if(EVP_VerifyFinal(&mdctx, (unsigned char *)sig.data(), (unsigned int)sig.size(), pkey) != 1)
+				{
+					state = VerifyError;
+					return false;
+				}
 			}
 			state = Idle;
 			return true;
@@ -1708,7 +1784,7 @@ public:
 			md = EVP_ripemd160();
 		else if(alg == EMSA3_Raw)
 		{
-			// TODO
+			// md = 0
 		}
 		evp.startSign(md);
 	}
@@ -1726,7 +1802,7 @@ public:
 			md = EVP_ripemd160();
 		else if(alg == EMSA3_Raw)
 		{
-			// TODO
+			// md = 0
 		}
 		evp.startVerify(md);
 	}
@@ -2461,6 +2537,11 @@ public:
 			OPENSSL_cleanse(tmps,(unsigned int)j+1);
 			OPENSSL_free(tmps);
 		}
+
+		// TODO: even though we return error here, PKCS7_sign will
+		//   not return error.  what gives?
+		if(result.isEmpty())
+			return 0;
 
 		memcpy(sigret, result.data(), result.size());
 		*siglen = result.size();
@@ -3650,6 +3731,13 @@ public:
 		return r;
 	}
 
+	void fromX509(X509_CRL *x)
+	{
+		CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509_CRL);
+		item.crl = x;
+		make_props();
+	}
+
 	virtual const CRLContextProps *props() const
 	{
 		return &_props;
@@ -3776,6 +3864,85 @@ public:
 		p.issuer = opts.infoOrdered();
 
 		_props = p;
+	}
+};
+
+//----------------------------------------------------------------------------
+// MyCertCollectionContext
+//----------------------------------------------------------------------------
+class MyCertCollectionContext : public CertCollectionContext
+{
+	Q_OBJECT
+public:
+	MyCertCollectionContext(Provider *p) : CertCollectionContext(p)
+	{
+	}
+
+	virtual Provider::Context *clone() const
+	{
+		return new MyCertCollectionContext(*this);
+	}
+
+	virtual QByteArray toPKCS7(const QList<CertContext*> &certs, const QList<CRLContext*> &crls) const
+	{
+		// TODO: implement
+		Q_UNUSED(certs);
+		Q_UNUSED(crls);
+		return QByteArray();
+	}
+
+	virtual ConvertResult fromPKCS7(const QByteArray &a, QList<CertContext*> *certs, QList<CRLContext*> *crls) const
+	{
+		BIO *bi = BIO_new(BIO_s_mem());
+		BIO_write(bi, a.data(), a.size());
+		PKCS7 *p7 = d2i_PKCS7_bio(bi, NULL);
+		BIO_free(bi);
+		if(!p7)
+			return ErrorDecode;
+
+		STACK_OF(X509) *xcerts = 0;
+		STACK_OF(X509_CRL) *xcrls = 0;
+
+		int i = OBJ_obj2nid(p7->type);
+		if(i == NID_pkcs7_signed)
+		{
+			xcerts = p7->d.sign->cert;
+			xcrls = p7->d.sign->crl;
+		}
+		else if(i == NID_pkcs7_signedAndEnveloped)
+		{
+			xcerts = p7->d.signed_and_enveloped->cert;
+			xcrls = p7->d.signed_and_enveloped->crl;
+		}
+
+		QList<CertContext*> _certs;
+		QList<CRLContext*> _crls;
+
+		if(xcerts)
+		{
+			for(int n = 0; n < sk_X509_num(xcerts); ++n)
+			{
+				MyCertContext *cc = new MyCertContext(provider());
+				cc->fromX509(sk_X509_value(xcerts, n));
+				_certs += cc;
+			}
+		}
+		if(xcrls)
+		{
+			for(int n = 0; n < sk_X509_CRL_num(xcrls); ++n)
+			{
+				MyCRLContext *cc = new MyCRLContext(provider());
+				cc->fromX509(sk_X509_CRL_value(xcrls, n));
+				_crls += cc;
+			}
+		}
+
+		PKCS7_free(p7);
+
+		*certs = _certs;
+		*crls = _crls;
+
+		return ConvertGood;
 	}
 };
 
@@ -4042,6 +4209,8 @@ public:
 				sk_X509_pop_free(ca, X509_free);
 			return ErrorDecode;
 		}
+
+		// TODO: require cert
 
 		int aliasLength;
 		char *aliasData = (char*)X509_alias_get0(cert, &aliasLength);
@@ -5215,7 +5384,7 @@ public:
 
 			if(!tmp_kc->sameProvider(this))
 			{
-				printf("experimental: private key supplied by a different provider\n");
+				//fprintf(stderr, "experimental: private key supplied by a different provider\n");
 
 				// make a pkey pointing to the existing private key
 				EVP_PKEY *pkey;
@@ -5362,6 +5531,7 @@ class CMSContext : public SMSContext
 {
 public:
 	CertificateCollection trustedCerts;
+	CertificateCollection untrustedCerts;
 	QList<SecureMessageKey> privateKeys;
 
 	CMSContext(Provider *p) : SMSContext(p, "cms")
@@ -5380,6 +5550,11 @@ public:
 	virtual void setTrustedCertificates(const CertificateCollection &trusted)
 	{
 		trustedCerts = trusted;
+	}
+
+	virtual void setUntrustedCertificates(const CertificateCollection &untrusted)
+	{
+		untrustedCerts = untrusted;
 	}
 
 	virtual void setPrivateKeys(const QList<SecureMessageKey> &keys)
@@ -5401,6 +5576,70 @@ STACK_OF(X509) *get_pk7_certs(PKCS7 *p7)
 		return 0;
 }
 
+class MyMessageContextThread : public QThread
+{
+	Q_OBJECT
+public:
+	SecureMessage::Format format;
+	SecureMessage::SignMode signMode;
+	Certificate cert;
+	PrivateKey key;
+	STACK_OF(X509) *other_certs;
+	BIO *bi;
+	int flags;
+	PKCS7 *p7;
+	bool ok;
+	QByteArray out, sig;
+
+	MyMessageContextThread(QObject *parent = 0) : QThread(parent), ok(false)
+	{
+	}
+
+protected:
+	virtual void run()
+	{
+		MyCertContext *cc = static_cast<MyCertContext *>(cert.context());
+		MyPKeyContext *kc = static_cast<MyPKeyContext *>(key.context());
+		X509 *cx = cc->item.cert;
+		EVP_PKEY *kx = kc->get_pkey();
+
+		p7 = PKCS7_sign(cx, kx, other_certs, bi, flags);
+
+		BIO_free(bi);
+		sk_X509_pop_free(other_certs, X509_free);
+
+		if(p7)
+		{
+			//printf("good\n");
+			BIO *bo;
+
+			//BIO *bo = BIO_new(BIO_s_mem());
+			//i2d_PKCS7_bio(bo, p7);
+			//PEM_write_bio_PKCS7(bo, p7);
+			//SecureArray buf = bio2buf(bo);
+			//printf("[%s]\n", buf.data());
+
+			bo = BIO_new(BIO_s_mem());
+			if(format == SecureMessage::Binary)
+				i2d_PKCS7_bio(bo, p7);
+			else // Ascii
+				PEM_write_bio_PKCS7(bo, p7);
+
+			if (SecureMessage::Detached == signMode)
+				sig = bio2ba(bo);
+			else
+				out = bio2ba(bo);
+
+			ok = true;
+		}
+		else
+		{
+			printf("bad here\n");
+			ERR_print_errors_fp(stdout);
+		}
+	}
+};
+
 class MyMessageContext : public MessageContext
 {
 	Q_OBJECT
@@ -5421,11 +5660,15 @@ public:
 	CertificateChain signerChain;
 	int ver_ret;
 
+	MyMessageContextThread *thread;
+
 	MyMessageContext(CMSContext *_cms, Provider *p) : MessageContext(p, "cmsmsg")
 	{
 		cms = _cms;
 
 		ver_ret = 0;
+
+		thread = 0;
 	}
 
 	~MyMessageContext()
@@ -5514,7 +5757,7 @@ public:
 
 			if(!tmp_kc->sameProvider(this))
 			{
-				printf("experimental: private key supplied by a different provider\n");
+				//fprintf(stderr, "experimental: private key supplied by a different provider\n");
 
 				// make a pkey pointing to the existing private key
 				EVP_PKEY *pkey;
@@ -5528,16 +5771,16 @@ public:
 				key.change(pk);
 			}
 
-			MyCertContext *cc = static_cast<MyCertContext *>(cert.context());
-			MyPKeyContext *kc = static_cast<MyPKeyContext *>(key.context());
+			//MyCertContext *cc = static_cast<MyCertContext *>(cert.context());
+			//MyPKeyContext *kc = static_cast<MyPKeyContext *>(key.context());
 
-			X509 *cx = cc->item.cert;
-			EVP_PKEY *kx = kc->get_pkey();
+			//X509 *cx = cc->item.cert;
+			//EVP_PKEY *kx = kc->get_pkey();
 
 			STACK_OF(X509) *other_certs;
 			BIO *bi;
 			int flags;
-			PKCS7 *p7;
+			//PKCS7 *p7;
 
 			// nonroots
 			other_certs = sk_X509_new_null();
@@ -5560,36 +5803,19 @@ public:
 			}
 			if (false == bundleSigner)
 				flags |= PKCS7_NOCERTS;
-			p7 = PKCS7_sign(cx, kx, other_certs, bi, flags);
 
-			BIO_free(bi);
-			sk_X509_pop_free(other_certs, X509_free);
-
-			if(p7)
-			{
-				//printf("good\n");
-				BIO *bo;
-
-				//BIO *bo = BIO_new(BIO_s_mem());
-				//i2d_PKCS7_bio(bo, p7);
-				//PEM_write_bio_PKCS7(bo, p7);
-				//SecureArray buf = bio2buf(bo);
-				//printf("[%s]\n", buf.data());
-
-				// FIXME: format
-				bo = BIO_new(BIO_s_mem());
-				i2d_PKCS7_bio(bo, p7);
-				if (SecureMessage::Detached == signMode)
-					sig = bio2ba(bo);
-				else
-					out = bio2ba(bo);
-			}
-			else
-			{
-				printf("bad here\n");
-				ERR_print_errors_fp(stdout);
-				return;
-			}
+			if(thread)
+				delete thread;
+			thread = new MyMessageContextThread(this);
+			thread->format = format;
+			thread->signMode = signMode;
+			thread->cert = cert;
+			thread->key = key;
+			thread->other_certs = other_certs;
+			thread->bi = bi;
+			thread->flags = flags;
+			connect(thread, SIGNAL(finished()), SLOT(thread_finished()));
+			thread->start();
 		}
 		else if(op == Encrypt)
 		{
@@ -5643,19 +5869,35 @@ public:
 			} else {
 				BIO_write(bi, in.data(), in.size());
 			}
-			PKCS7 *p7 = d2i_PKCS7_bio(bi, NULL);
+			PKCS7 *p7;
+			if(format == SecureMessage::Binary)
+				p7 = d2i_PKCS7_bio(bi, NULL);
+			else // Ascii
+				p7 = PEM_read_bio_PKCS7(bi, NULL, NULL, NULL);
 			BIO_free(bi);
 
 			if(!p7)
 			{
 				// TODO
 				printf("bad1\n");
+				QMetaObject::invokeMethod(this, "updated", Qt::QueuedConnection);
 				return;
+			}
+
+			// intermediates/signers that may not be in the blob
+			STACK_OF(X509) *other_certs = sk_X509_new_null();
+			QList<Certificate> untrusted_list = cms->untrustedCerts.certificates();
+			QList<CRL> untrusted_crls = cms->untrustedCerts.crls(); // we'll use the crls later
+			for(int n = 0; n < untrusted_list.count(); ++n)
+			{
+				X509 *x = static_cast<MyCertContext *>(untrusted_list[n].context())->item.cert;
+				CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
+				sk_X509_push(other_certs, x);
 			}
 
 			// get the possible message signers
 			QList<Certificate> signers;
-			STACK_OF(X509) *xs = PKCS7_get0_signers(p7, NULL, 0);
+			STACK_OF(X509) *xs = PKCS7_get0_signers(p7, other_certs, 0);
 			if(xs)
 			{
 				for(int n = 0; n < sk_X509_num(xs); ++n)
@@ -5664,6 +5906,7 @@ public:
 					cc->fromX509(sk_X509_value(xs, n));
 					Certificate cert;
 					cert.change(cc);
+					//printf("signer: [%s]\n", qPrintable(cert.commonName()));
 					signers.append(cert);
 				}
 				sk_X509_free(xs);
@@ -5681,13 +5924,17 @@ public:
 					Certificate cert;
 					cert.change(cc);
 					others.append(cert);
+					//printf("other: [%s]\n", qPrintable(cert.commonName()));
 				}
 			}
 
-			// TODO: what happens if the signer cert isn't here?
-			// TODO: support using a signer not stored in the signature
+			// signer needs to be supplied in the message itself
+			//   or via cms->untrustedCerts
 			if(signers.isEmpty())
+			{
+				QMetaObject::invokeMethod(this, "updated", Qt::QueuedConnection);
 				return;
+			}
 
 			// FIXME: handle more than one signer
 			CertificateChain chain;
@@ -5704,11 +5951,21 @@ public:
 			int n;
 			for(n = 0; n < cert_list.count(); ++n)
 			{
+				//printf("trusted: [%s]\n", qPrintable(cert_list[n].commonName()));
 				const MyCertContext *cc = static_cast<const MyCertContext *>(cert_list[n].context());
 				X509 *x = cc->item.cert;
 				CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
 				X509_STORE_add_cert(store, x);
 			}
+			for(n = 0; n < crl_list.count(); ++n)
+			{
+				const MyCRLContext *cc = static_cast<const MyCRLContext *>(crl_list[n].context());
+				X509_CRL *x = cc->item.crl;
+				CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509_CRL);
+				X509_STORE_add_crl(store, x);
+			}
+			// add these crls also
+			crl_list = untrusted_crls;
 			for(n = 0; n < crl_list.count(); ++n)
 			{
 				const MyCRLContext *cc = static_cast<const MyCRLContext *>(crl_list[n].context());
@@ -5722,19 +5979,22 @@ public:
 				// Detached signMode
 				bi = BIO_new(BIO_s_mem());
 				BIO_write(bi, in.data(), in.size());
-				ret = PKCS7_verify(p7, NULL, store, bi, NULL, 0);
+				ret = PKCS7_verify(p7, other_certs, store, bi, NULL, 0);
 				BIO_free(bi);
 			} else {
-				ret = PKCS7_verify(p7, NULL, store, NULL, out, 0);
+				ret = PKCS7_verify(p7, other_certs, store, NULL, out, 0);
 				// qDebug() << "Verify: " << ret;
 			}
 			//if(!ret)
 			//	ERR_print_errors_fp(stdout);
+			sk_X509_pop_free(other_certs, X509_free);
 			X509_STORE_free(store);
 			PKCS7_free(p7);
 
 			ver_ret = ret;
 			// TODO
+
+			QMetaObject::invokeMethod(this, "updated", Qt::QueuedConnection);
 		}
 		else if(op == Decrypt)
 		{
@@ -5771,6 +6031,7 @@ public:
 
 				ok = true;
 				out = bio2ba(bo);
+				break;
 			}
 
 			if(!ok)
@@ -5792,6 +6053,12 @@ public:
 	{
 		// TODO
 		Q_UNUSED(msecs);
+
+		if(thread)
+		{
+			thread->wait();
+			getresults();
+		}
 	}
 
 	virtual bool success() const
@@ -5838,6 +6105,19 @@ public:
 
 		// TODO
 		return SecureMessageSignatureList() << s;
+	}
+
+	void getresults()
+	{
+		sig = thread->sig;
+		out = thread->out;
+	}
+
+private slots:
+	void thread_finished()
+	{
+		getresults();
+		emit updated();
 	}
 };
 
@@ -5894,7 +6174,7 @@ public:
 		return new opensslCipherContext( *this );
 	}
 
-	unsigned int blockSize() const
+	int blockSize() const
 	{
 		return EVP_CIPHER_CTX_block_size(&m_context);
 	}
@@ -5987,6 +6267,13 @@ using namespace opensslQCAPlugin;
 class opensslProvider : public Provider
 {
 public:
+	bool openssl_initted;
+
+	opensslProvider()
+	{
+		openssl_initted = false;
+	}
+
 	void init()
 	{
 		OpenSSL_add_all_algorithms();
@@ -5997,16 +6284,22 @@ public:
 		for(int n = 0; n < 128; ++n)
 			buf[n] = rand();
 		RAND_seed(buf, 128);
+
+		openssl_initted = true;
 	}
 
 	~opensslProvider()
 	{
+		// FIXME: ?  for now we never deinit, in case other libs/code
+		//   are using openssl
+		/*if(!openssl_initted)
+			return;
 		// todo: any other shutdown?
 		EVP_cleanup();
 		//ENGINE_cleanup();
 		CRYPTO_cleanup_all_ex_data();
 		ERR_remove_state(0);
-		ERR_free_strings();
+		ERR_free_strings();*/
 	}
 
 	int version() const
@@ -6097,6 +6390,7 @@ public:
 		list += "cert";
 		list += "csr";
 		list += "crl";
+		list += "certcollection";
 		list += "pkcs12";
 		list += "tls";
 		list += "cms";
@@ -6227,6 +6521,8 @@ public:
 			return new MyCSRContext( this );
 		else if ( type == "crl" )
 			return new MyCRLContext( this );
+		else if ( type == "certcollection" )
+			return new MyCertCollectionContext( this );
 		else if ( type == "pkcs12" )
 			return new MyPKCS12Context( this );
 		else if ( type == "tls" )

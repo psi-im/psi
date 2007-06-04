@@ -23,6 +23,7 @@
 #include "qcaprovider.h"
 
 #include <QMutexLocker>
+#include <QtGlobal>
 
 namespace QCA {
 
@@ -36,6 +37,21 @@ Random *global_random();
 Random::Random(const QString &provider)
 :Algorithm("random", provider)
 {
+}
+
+Random::Random(const Random &from)
+:Algorithm(from)
+{
+}
+
+Random::~Random()
+{
+}
+
+Random & Random::operator=(const Random &from)
+{
+	Algorithm::operator=(from);
+	return *this;
 }
 
 uchar Random::nextByte()
@@ -75,6 +91,27 @@ SecureArray Random::randomArray(int size)
 Hash::Hash(const QString &type, const QString &provider)
 :Algorithm(type, provider)
 {
+}
+
+Hash::Hash(const Hash &from)
+:Algorithm(from), BufferedComputation(from)
+{
+}
+
+Hash::~Hash()
+{
+}
+
+Hash & Hash::operator=(const Hash &from)
+{
+	Algorithm::operator=(from);
+	return *this;
+}
+
+QString Hash::type() const
+{
+	// algorithm type is the same as the hash type
+	return Algorithm::type();
 }
 
 void Hash::clear()
@@ -133,6 +170,9 @@ QString Hash::hashToString(const SecureArray &a)
 class Cipher::Private
 {
 public:
+	QString type;
+	Cipher::Mode mode;
+	Cipher::Padding pad;
 	Direction dir;
 	SymmetricKey key;
 	InitializationVector iv;
@@ -140,13 +180,16 @@ public:
 	bool ok, done;
 };
 
-Cipher::Cipher( const QString &type, Mode m, Padding pad,
+Cipher::Cipher(const QString &type, Mode mode, Padding pad,
 	Direction dir, const SymmetricKey &key,
 	const InitializationVector &iv,
-	const QString &provider )
-:Algorithm(withAlgorithms( type, m, pad ), provider)
+	const QString &provider)
+:Algorithm(withAlgorithms(type, mode, pad), provider)
 {
 	d = new Private;
+	d->type = type;
+	d->mode = mode;
+	d->pad = pad;
 	if(!key.isEmpty())
 		setup(dir, key, iv);
 }
@@ -169,6 +212,26 @@ Cipher & Cipher::operator=(const Cipher &from)
 	return *this;
 }
 
+QString Cipher::type() const
+{
+	return d->type;
+}
+
+Cipher::Mode Cipher::mode() const
+{
+	return d->mode;
+}
+
+Cipher::Padding Cipher::padding() const
+{
+	return d->pad;
+}
+
+Direction Cipher::direction() const
+{
+	return d->dir;
+}
+
 KeyLength Cipher::keyLength() const
 {
 	return static_cast<const CipherContext *>(context())->keyLength();
@@ -180,7 +243,7 @@ bool Cipher::validKeyLength(int n) const
 	return ((n >= len.minimum()) && (n <= len.maximum()) && (n % len.multiple() == 0));
 }
 
-unsigned int Cipher::blockSize() const
+int Cipher::blockSize() const
 {
 	return static_cast<const CipherContext *>(context())->blockSize();
 }
@@ -240,7 +303,7 @@ QString Cipher::withAlgorithms(const QString &cipherType, Mode modeType, Padding
 		mode = "ecb";
 		break;
 	default:
-		abort();
+		Q_ASSERT(0);
 	}
 
 	// do the default
@@ -280,9 +343,9 @@ public:
 
 
 MessageAuthenticationCode::MessageAuthenticationCode(const QString &type,
-						     const SymmetricKey &key,
-						     const QString &provider)
-  :Algorithm(type, provider)
+	const SymmetricKey &key,
+	const QString &provider)
+:Algorithm(type, provider)
 {
 	d = new Private;
 	setup(key);
@@ -304,6 +367,12 @@ MessageAuthenticationCode & MessageAuthenticationCode::operator=(const MessageAu
 	Algorithm::operator=(from);
 	*d = *from.d;
 	return *this;
+}
+
+QString MessageAuthenticationCode::type() const
+{
+	// algorithm type is the same as the mac type
+	return Algorithm::type();
 }
 
 KeyLength MessageAuthenticationCode::keyLength() const

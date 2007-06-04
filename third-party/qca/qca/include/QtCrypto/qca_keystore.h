@@ -315,20 +315,60 @@ namespace QCA
 		friend class KeyStoreTracker;
 	};
 
+	/**
+	   Class to monitor the availability of a KeyStoreEntry
+
+	   Some KeyStore types have the concept of an entry that can be
+	   available only part of the time (for example, a smart card that
+	   can be removed). This class allows you to identify when a 
+	   KeyStoreEntry becomes available / unavailable.
+
+	   \note You can also monitor availability of a whole KeyStore,
+	   using KeyStoreManager::keyStoreAvailable() signal, and
+	   the KeyStore::unavailable() signal. 
+
+	   \sa KeyStore for more discussion on availability of 
+	   keys and related objects.
+	*/
 	class QCA_EXPORT KeyStoreEntryWatcher : public QObject
 	{
 		Q_OBJECT
 	public:
+		/**
+		   Standard constructor.
+
+		   This creates an object that monitors the specified KeyStore entry,
+		   emitting available() and unavailable() as the entry becomes available
+		   and unavailable respectively.
+
+		   \param e the KeyStoreEntry to monitor
+		   \param parent the parent object for this object
+		*/
 		explicit KeyStoreEntryWatcher(const KeyStoreEntry &e, QObject *parent = 0);
+
 		~KeyStoreEntryWatcher();
 
+		/**
+		   The KeyStoreEntry that is being monitored
+		*/
 		KeyStoreEntry entry() const;
 
 	Q_SIGNALS:
+		/**
+		   This signal is emitted when the entry that is being monitored
+		   becomes available.
+		*/
 		void available();
+
+		/**
+		   This signal is emitted when the entry that is being monitored
+		   becomes unavailble.
+		*/
 		void unavailable();
 
 	private:
+		Q_DISABLE_COPY(KeyStoreEntryWatcher)
+
 		class Private;
 		friend class Private;
 		Private *d;
@@ -502,27 +542,99 @@ namespace QCA
 		*/
 		void entryWritten(const QString &entryId);
 
+		/**
+		   Emitted when an entry has been removed, in asynchronous
+		   mode.  success indicates if the removal succeeded or not.
+		*/
+		void entryRemoved(bool success);
+
 	private:
+		Q_DISABLE_COPY(KeyStore)
+
 		friend class KeyStorePrivate;
 		KeyStorePrivate *d;
 
 		friend class KeyStoreManagerPrivate;
 	};
 
-	// holds key store information outside of a keystore object
+	/**
+	   Key store information, outside of a KeyStore object
+
+	   This class is used in conjunction with the Event class,
+	   and related classes such as PasswordAsker and TokenAsker,
+	   to describe the key store source of the Event.
+
+	   Each KeyStoreInfo represents a single KeyStore, and describes
+	   the type of store (e.g. smartcard or PGP keyring - see 
+	   KeyStore::Type), and a couple of names. The id() of a KeyStore
+	   is used to reference it, and is typically of the form 
+	   "qca-mystorename". The name() of a KeyStore is used to describe
+	   it (i.e. this is the "pretty" name to show the user), and is
+	   typically of the form "My Store Name".
+	*/
 	class QCA_EXPORT KeyStoreInfo
 	{
 	public:
+		/**
+		   Constructor.
+
+		   \note This form of constructor for KeyStoreInfo
+		   produces an object that does not describe any 
+		   KeyStore, and isNull() will return true.
+		*/
 		KeyStoreInfo();
+
+		/**
+		   Standard constructor.
+
+		   This builds a KeyStoreInfo object that descibes a
+		   KeyStore.
+
+		   \param type the type of KeyStore
+		   \param id the identification of the KeyStore
+		   \param name the descriptive name of the KeyStore
+		*/
 		KeyStoreInfo(KeyStore::Type type, const QString &id, const QString &name);
+
+		/**
+		   Copy constructor.
+
+		   \param from the KeyStoreInfo to copy from
+		*/
 		KeyStoreInfo(const KeyStoreInfo &from);
+
 		~KeyStoreInfo();
+
+		/**
+		   Assignment operator.
+
+		   \param from the KeyStoreInfo to copy from
+		*/
 		KeyStoreInfo & operator=(const KeyStoreInfo &from);
 
+		/**
+		   Test if this object is valid
+
+		   \return true if the object is not valid
+		*/
 		bool isNull() const;
 
+		/**
+		   The Type of KeyStore that this KeyStoreInfo object
+		   describes.
+		*/
 		KeyStore::Type type() const;
+
+		/**
+		   The unique identification of the KeyStore that
+		   this KeyStoreInfo object describes.
+		*/
 		QString id() const;
+
+		/**
+		   The descriptive name of the KeyStore that this
+		   KeyStoreInfo object describes.
+		*/
 		QString name() const;
 
 	private:
@@ -616,6 +728,8 @@ namespace QCA
 		void keyStoreAvailable(const QString &id);
 
 	private:
+		Q_DISABLE_COPY(KeyStoreManager)
+
 		friend class KeyStoreManagerPrivate;
 		KeyStoreManagerPrivate *d;
 

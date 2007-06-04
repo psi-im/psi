@@ -567,6 +567,11 @@ void CMS::setTrustedCertificates(const CertificateCollection &trusted)
 	static_cast<SMSContext *>(context())->setTrustedCertificates(trusted);
 }
 
+void CMS::setUntrustedCertificates(const CertificateCollection &untrusted)
+{
+	static_cast<SMSContext *>(context())->setUntrustedCertificates(untrusted);
+}
+
 void CMS::setPrivateKeys(const SecureMessageKeyList &keys)
 {
 	static_cast<SMSContext *>(context())->setPrivateKeys(keys);

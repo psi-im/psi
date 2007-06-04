@@ -339,6 +339,9 @@ public:
 
 	void start()
 	{
+		if(active)
+			return;
+
 		m.lock();
 		active = true;
 		do_quit = false;
@@ -357,6 +360,7 @@ public:
 		w.wakeOne();
 		m.unlock();
 		wait();
+		active = false;
 	}
 
 	bool waitForCondition(int msecs)
@@ -445,7 +449,6 @@ Synchronizer::Synchronizer(QObject *parent)
 :QObject(parent)
 {
 	d = new Private(parent, this);
-	d->start();
 }
 
 Synchronizer::~Synchronizer()
@@ -455,6 +458,7 @@ Synchronizer::~Synchronizer()
 
 bool Synchronizer::waitForCondition(int msecs)
 {
+	d->start();
 	return d->waitForCondition(msecs);
 }
 

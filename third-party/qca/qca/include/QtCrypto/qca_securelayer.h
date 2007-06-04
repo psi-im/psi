@@ -206,6 +206,9 @@ namespace QCA
 		   can determine the error type using errorCode().
 		*/
 		void error();
+
+	private:
+		Q_DISABLE_COPY(SecureLayer)
 	};
 
 	/**
@@ -616,6 +619,8 @@ namespace QCA
 		void handshaken();
 
 	private:
+		Q_DISABLE_COPY(TLS)
+
 		class Private;
 		friend class Private;
 		Private *d;
@@ -984,6 +989,8 @@ namespace QCA
 		void authenticated();
 
 	private:
+		Q_DISABLE_COPY(SASL)
+
 		class Private;
 		friend class Private;
 		Private *d;

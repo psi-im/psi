@@ -89,6 +89,7 @@ class Pooling_Allocator : public Allocator
                   return false;
                return (buffer < other.buffer);
                }
+
          private:
             typedef u64bit bitmap_type;
             static const u32bit BITMAP_SIZE;

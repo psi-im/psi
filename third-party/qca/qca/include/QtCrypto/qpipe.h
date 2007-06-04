@@ -30,6 +30,8 @@
 #ifndef QPIPE_H
 #define QPIPE_H
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
 #ifndef QPIPE_NO_SECURE
 # define QPIPE_SECURE
 #endif
@@ -48,6 +50,8 @@ typedef HANDLE Q_PIPE_ID;
 #else
 typedef int Q_PIPE_ID;
 #define INVALID_Q_PIPE_ID -1
+#endif
+
 #endif
 
 // Note: for Windows console, I/O must be in UTF-8.  Reads are guaranteed to
@@ -79,9 +83,7 @@ public:
 	void enable();                         // enables usage (read/write) of the pipe
 	void close();                          // close the pipe
 	void release();                        // let go of the pipe but don't close
-#ifdef Q_OS_WIN
-	bool winDupHandle();                   // DuplicateHandle()
-#endif
+	bool setInheritable(bool enabled);     // note: on windows, this operation changes the id
 
 	int bytesAvailable() const;            // bytes available to read
 	int read(char *data, int maxsize);     // return number read, 0 = EOF, -1 = error
@@ -92,6 +94,8 @@ Q_SIGNALS:
 	void notify();                         // can read or can write, depending on type
 
 private:
+	Q_DISABLE_COPY(QPipeDevice)
+
 	class Private;
 	friend class Private;
 	Private *d;
@@ -116,7 +120,7 @@ public:
 	QPipeDevice::Type type() const;
 	bool isValid() const;
 	Q_PIPE_ID id() const;
-	QString idAsString() const;
+	int idAsInt() const;
 
 	void take(Q_PIPE_ID id, QPipeDevice::Type t);
 #ifdef QPIPE_SECURE
@@ -125,9 +129,7 @@ public:
 	void enable();
 	void close();
 	void release();
-#ifdef Q_OS_WIN
-	bool winDupHandle();
-#endif
+	bool setInheritable(bool enabled);
 
 	void finalize(); // do an immediate read, and invalidate
 	void finalizeAndRelease(); // same as above, but don't close pipe
@@ -158,30 +160,66 @@ Q_SIGNALS:
 	void error(QCA::QPipeEnd::Error e);
 
 private:
+	Q_DISABLE_COPY(QPipeEnd)
+
 	class Private;
 	friend class Private;
 	Private *d;
 };
 
-// creates a full pipe (two pipe ends)
+/**
+   A FIFO buffer (named pipe) abstraction
+
+   This class creates a full buffer, consisting of two ends (QPipeEnd).
+
+   By default, the pipe ends are not inheritable by child processes.  On
+   Windows, the pipe is created with inheritability disabled.  On Unix, the
+   FD_CLOEXEC flag is set on each end's file descriptor.
+*/
 class QCA_EXPORT QPipe
 {
 public:
+	/**
+	   Standard constructor
+
+	   \param parent the parent object for this object
+	*/
 	QPipe(QObject *parent = 0);
+
 	~QPipe();
 
+	/**
+	   reset the pipe
+	*/
 	void reset();
 
 #ifdef QPIPE_SECURE
+	/**
+	   create the pipe
+
+	   \param secure whether to use secure memory (true) or not (false)
+	*/
 	bool create(bool secure = false);
 #else
+	/**
+	   create the pipe
+	*/
 	bool create();
 #endif
 
+	/**
+	   The read end of the pipe.
+	*/
 	QPipeEnd & readEnd() { return i; }
+
+	/**
+	   The write end of the pipe.
+	*/
 	QPipeEnd & writeEnd() { return o; }
 
 private:
+	Q_DISABLE_COPY(QPipe)
+
 	QPipeEnd i, o;
 };
 

@@ -41,6 +41,43 @@ ProviderList allProviders();
 Provider *providerForName(const QString &name);
 bool use_asker_fallback(ConvertResult r);
 
+// last 3 arguments must be valid, and chain must be empty
+static bool get_pkcs12_der(const QByteArray &der, const QString &fileName, void *ptr, const SecureArray &passphrase, ConvertResult *result, const QString &provider, QString *name, CertificateChain *chain, PrivateKey *key)
+{
+	QString _name;
+	QList<CertContext*> list;
+	PKeyContext *kc = 0;
+
+	PKCS12Context *pix = static_cast<PKCS12Context *>(getContext("pkcs12", provider));
+	ConvertResult r = pix->fromPKCS12(der, passphrase, &_name, &list, &kc);
+
+	// error converting without passphrase?  maybe a passphrase is needed
+	if(use_asker_fallback(r) && passphrase.isEmpty())
+	{
+		SecureArray pass;
+		if(ask_passphrase(fileName, ptr, &pass))
+			r = pix->fromPKCS12(der, pass, &_name, &list, &kc);
+	}
+	delete pix;
+
+	if(result)
+		*result = r;
+
+	if(r == ConvertGood)
+	{
+		*name = _name;
+		for(int n = 0; n < list.count(); ++n)
+		{
+			Certificate cert;
+			cert.change(list[n]);
+			chain->append(cert);
+		}
+		key->change(kc);
+		return true;
+	}
+	return false;
+}
+
 static CertificateInfo orderedToMap(const CertificateInfoOrdered &info)
 {
 	CertificateInfo out;
@@ -1137,11 +1174,6 @@ bool Certificate::operator==(const Certificate &otherCert) const
 	return true;
 }
 
-bool Certificate::operator!=(const Certificate &a) const
-{
-	return !(*this == a);
-}
-
 void Certificate::change(CertContext *c)
 {
 	Algorithm::change(c);
@@ -1449,11 +1481,6 @@ CRLEntry::CRLEntry()
 	_reason = Unspecified;
 }
 
-bool CRLEntry::isNull() const
-{
-	return (_time.isNull());
-}
-
 CRLEntry::CRLEntry(const Certificate &c, Reason r)
 {
 	_serial = c.serialNumber();
@@ -1461,11 +1488,33 @@ CRLEntry::CRLEntry(const Certificate &c, Reason r)
 	_reason = r;
 }
 
-CRLEntry::CRLEntry(const BigInteger serial, const QDateTime time, Reason r)
+CRLEntry::CRLEntry(const BigInteger serial, const QDateTime &time, Reason r)
 {
 	_serial = serial;
 	_time = time;
 	_reason = r;
+}
+
+CRLEntry::CRLEntry(const CRLEntry &from)
+:_serial(from._serial), _time(from._time), _reason(from._reason)
+{
+}
+
+CRLEntry::~CRLEntry()
+{
+}
+
+CRLEntry & CRLEntry::operator=(const CRLEntry &from)
+{
+	_serial = from._serial;
+	_time = from._time;
+	_reason = from._reason;
+	return *this;
+}
+
+bool CRLEntry::isNull() const
+{
+	return (_time.isNull());
 }
 
 BigInteger CRLEntry::serialNumber() const
@@ -1590,11 +1639,6 @@ QList<CRLEntry> CRL::revoked() const
 	return static_cast<const CRLContext *>(context())->props()->revoked;
 }
 
-SecureArray CRL::signature() const
-{
-	return static_cast<const CRLContext *>(context())->props()->sig;
-}
-
 SignatureAlgorithm CRL::signatureAlgorithm() const
 {
 	return static_cast<const CRLContext *>(context())->props()->sigalgo;
@@ -1627,6 +1671,9 @@ bool CRL::operator==(const CRL &otherCrl) const
 		return false;
 	}
 
+	const CRLContextProps *a = static_cast<const CRLContext *>(context())->props();
+	const CRLContextProps *b = static_cast<const CRLContext *>(otherCrl.context())->props();
+
 	if ( number() != otherCrl.number() )
 		return false;
 
@@ -1636,7 +1683,7 @@ bool CRL::operator==(const CRL &otherCrl) const
 	if ( nextUpdate() != otherCrl.nextUpdate() )
 		return false;
 
-	if ( signature() != otherCrl.signature() )
+	if ( a->sig != b->sig )
 		return false;
 
 	if ( signatureAlgorithm() != otherCrl.signatureAlgorithm() )
@@ -1951,6 +1998,21 @@ CertificateAuthority::CertificateAuthority(const Certificate &cert, const Privat
 	static_cast<CAContext *>(context())->setup(*(static_cast<const CertContext *>(cert.context())), *(static_cast<const PKeyContext *>(key.context())));
 }
 
+CertificateAuthority::CertificateAuthority(const CertificateAuthority &from)
+:Algorithm(from)
+{
+}
+
+CertificateAuthority::~CertificateAuthority()
+{
+}
+
+CertificateAuthority & CertificateAuthority::operator=(const CertificateAuthority &from)
+{
+	Algorithm::operator=(from);
+	return *this;
+}
+
 Certificate CertificateAuthority::certificate() const
 {
 	Certificate c;
@@ -2073,37 +2135,8 @@ bool KeyBundle::toFile(const QString &fileName, const SecureArray &passphrase, c
 
 KeyBundle KeyBundle::fromArray(const QByteArray &a, const SecureArray &passphrase, ConvertResult *result, const QString &provider)
 {
-	QString name;
-	QList<CertContext*> list;
-	PKeyContext *kc = 0;
-
 	KeyBundle bundle;
-	PKCS12Context *pix = static_cast<PKCS12Context *>(getContext("pkcs12", provider));
-	ConvertResult r = pix->fromPKCS12(a, passphrase, &name, &list, &kc);
-
-	// error converting without passphrase?  maybe a passphrase is needed
-	if(use_asker_fallback(r) && passphrase.isEmpty())
-	{
-		SecureArray pass;
-		if(ask_passphrase(QString(), 0, &pass))
-			r = pix->fromPKCS12(a, pass, &name, &list, &kc);
-	}
-	delete pix;
-
-	if(result)
-		*result = r;
-
-	if(r == ConvertGood)
-	{
-		bundle.d->name = name;
-		for(int n = 0; n < list.count(); ++n)
-		{
-			Certificate cert;
-			cert.change(list[n]);
-			bundle.d->chain.append(cert);
-		}
-		bundle.d->key.change(kc);
-	}
+	get_pkcs12_der(a, QString(), (void *)&a, passphrase, result, provider, &bundle.d->name, &bundle.d->chain, &bundle.d->key);
 	return bundle;
 }
 
@@ -2116,7 +2149,10 @@ KeyBundle KeyBundle::fromFile(const QString &fileName, const SecureArray &passph
 			*result = ErrorFile;
 		return KeyBundle();
 	}
-	return fromArray(der, passphrase, result, provider);
+
+	KeyBundle bundle;
+	get_pkcs12_der(der, fileName, 0, passphrase, result, provider, &bundle.d->name, &bundle.d->chain, &bundle.d->key);
+	return bundle;
 }
 
 //----------------------------------------------------------------------------

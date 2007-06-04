@@ -23,8 +23,6 @@
 #include <QMutex>
 #include <QHash>
 #include "qcaprovider.h"
-#include <stdlib.h>
-#include <time.h>
 
 #ifndef QCA_NO_SYSTEMSTORE
 # include "qca_systemstore.h"
@@ -89,7 +87,7 @@ public:
 	{
 		SecureArray buf(size);
 		for(int n = 0; n < (int)buf.size(); ++n)
-			buf[n] = (char)rand();
+			buf[n] = (char)qrand();
 		return buf;
 	}
 };
@@ -123,7 +121,7 @@ public:
   ghost@aladdin.com
 
  */
-/* $Id: qca_default.cpp 657399 2007-04-23 22:58:40Z infiniti $ */
+/* $Id: qca_default.cpp 669694 2007-05-30 04:55:35Z infiniti $ */
 /*
   Independent implementation of MD5 (RFC 1321).
 
@@ -1081,11 +1079,11 @@ public:
 	virtual void init()
 	{
 		QDateTime now = QDateTime::currentDateTime();
-		// avoid divide-by-zero
-	        while(0 == now.time().msec())
-			now = QDateTime::currentDateTime();
-		time_t t = now.toTime_t() / now.time().msec();
-		srand(t);
+
+		uint t = now.toTime_t();
+	        if(now.time().msec() > 0)
+			t /= now.time().msec();
+		qsrand(t);
 	}
 
 	virtual int version() const

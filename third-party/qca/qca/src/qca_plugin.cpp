@@ -54,8 +54,9 @@ static void logDebug(const QString &str)
 
 static bool validVersion(int ver)
 {
-	// make sure the provider isn't newer than qca
-	if((ver & 0xffff00) <= (QCA_VERSION & 0xffff00))
+	// major version must be equal, minor version must be equal or lesser
+	if((ver & 0xff0000) == (QCA_VERSION & 0xff0000)
+		&& (ver & 0xff00) <= (QCA_VERSION & 0xff00))
 		return true;
 	return false;
 }

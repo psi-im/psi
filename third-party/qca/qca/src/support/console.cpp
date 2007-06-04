@@ -340,6 +340,7 @@ public:
 
 	bool started;
 	Console::Type type;
+	Console::ChannelMode cmode;
 	Console::TerminalMode mode;
 	ConsoleThread *thread;
 	ConsoleReference *ref;
@@ -423,6 +424,7 @@ Console::Console(Type type, ChannelMode cmode, TerminalMode tmode, QObject *pare
 
 	d = new ConsolePrivate(this);
 	d->type = type;
+	d->cmode = cmode;
 
 	Q_PIPE_ID in = INVALID_Q_PIPE_ID;
 	Q_PIPE_ID out = INVALID_Q_PIPE_ID;
@@ -490,6 +492,21 @@ Console::~Console()
 		g_stdio_console = 0;
 }
 
+Console::Type Console::type() const
+{
+	return d->type;
+}
+
+Console::ChannelMode Console::channelMode() const
+{
+	return d->cmode;
+}
+
+Console::TerminalMode Console::terminalMode() const
+{
+	return d->mode;
+}
+
 bool Console::isStdinRedirected()
 {
 #ifdef Q_OS_WIN
@@ -552,6 +569,7 @@ public:
 
 	Console *console;
 	ConsoleThread *thread;
+	ConsoleReference::SecurityMode smode;
 	QTimer lateTrigger;
 	bool late_read, late_close;
 
@@ -614,6 +632,7 @@ bool ConsoleReference::start(Console *console, SecurityMode mode)
 	}
 
 	// enable security?  it will last for this active session only
+	d->smode = mode;
 	if(mode == SecurityEnabled)
 		d->thread->setSecurityEnabled(true);
 
@@ -652,6 +671,16 @@ void ConsoleReference::stop()
 	d->console->d->ref = 0;
 	d->thread = 0;
 	d->console = 0;
+}
+
+Console *ConsoleReference::console() const
+{
+	return d->console;
+}
+
+ConsoleReference::SecurityMode ConsoleReference::securityMode() const
+{
+	return d->smode;
 }
 
 QByteArray ConsoleReference::read(int bytes)

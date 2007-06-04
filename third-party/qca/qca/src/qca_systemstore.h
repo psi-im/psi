@@ -25,10 +25,11 @@
 
 #include "qca_cert.h"
 
-namespace QCA
-{
-	bool qca_have_systemstore();
-	CertificateCollection qca_get_systemstore(const QString &provider);
+namespace QCA {
+
+bool qca_have_systemstore();
+CertificateCollection qca_get_systemstore(const QString &provider);
+
 }
 
 #endif

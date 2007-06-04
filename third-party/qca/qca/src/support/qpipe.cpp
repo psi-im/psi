@@ -99,6 +99,33 @@ static bool pipe_set_blocking(Q_PIPE_ID pipe, bool b)
 #endif
 }
 
+// on windows, the pipe is closed and the new pipe is returned in newPipe
+static bool pipe_set_inheritable(Q_PIPE_ID pipe, bool b, Q_PIPE_ID *newPipe = 0)
+{
+#ifdef Q_OS_WIN
+	// windows is required to accept a new pipe id
+	if(!newPipe)
+		return false;
+	HANDLE h;
+	if(!DuplicateHandle(GetCurrentProcess(), pipe, GetCurrentProcess(), &h, 0, b, DUPLICATE_SAME_ACCESS))
+		return false;
+	*newPipe = h;
+	return true;
+#endif
+#ifdef Q_OS_UNIX
+	if(newPipe)
+		*newPipe = pipe;
+	int flags = fcntl(pipe, F_GETFD);
+	if(!b)
+		flags |= FD_CLOEXEC;
+	else
+		flags &= ~FD_CLOEXEC;
+	if(fcntl(pipe, F_SETFD, flags) == -1)
+		return false;
+	return true;
+#endif
+}
+
 // returns number of bytes available
 static int pipe_read_avail(Q_PIPE_ID pipe)
 {
@@ -1154,19 +1181,25 @@ void QPipeDevice::release()
 	d->reset();
 }
 
-#ifdef Q_OS_WIN
-bool QPipeDevice::winDupHandle()
+bool QPipeDevice::setInheritable(bool enabled)
 {
-	HANDLE h;
-	if(!DuplicateHandle(GetCurrentProcess(), d->pipe, GetCurrentProcess(), &h, 0, false, DUPLICATE_SAME_ACCESS))
+#ifdef Q_OS_WIN
+	Q_PIPE_ID newPipe;
+	if(!pipe_set_inheritable(d->pipe, enabled, &newPipe))
 		return false;
-
-	Type t = d->type;
-	d->reset();
-	d->setup(h, t);
-	return true;
-}
+	d->pipe = newPipe;
+#ifdef USE_POLL
+	if(d->pipeReader)
+		static_cast<QPipeReaderPoll*>(d->pipeReader)->pipe = d->pipe;
+	if(d->pipeWriter)
+		static_cast<QPipeWriterPoll*>(d->pipeWriter)->pipe = d->pipe;
 #endif
+	return true;
+#endif
+#ifdef Q_OS_UNIX
+	return pipe_set_inheritable(d->pipe, enabled, 0);
+#endif
+}
 
 int QPipeDevice::bytesAvailable() const
 {
@@ -1840,9 +1873,9 @@ Q_PIPE_ID QPipeEnd::id() const
 	return d->pipe.id();
 }
 
-QString QPipeEnd::idAsString() const
+int QPipeEnd::idAsInt() const
 {
-	return QString::number(d->pipe.idAsInt());
+	return d->pipe.idAsInt();
 }
 
 void QPipeEnd::take(Q_PIPE_ID id, QPipeDevice::Type t)
@@ -1900,12 +1933,10 @@ void QPipeEnd::release()
 	d->reset(ResetSession);
 }
 
-#ifdef Q_OS_WIN
-bool QPipeEnd::winDupHandle()
+bool QPipeEnd::setInheritable(bool enabled)
 {
-	return d->pipe.winDupHandle();
+	return d->pipe.setInheritable(enabled);
 }
-#endif
 
 void QPipeEnd::finalize()
 {
@@ -2034,7 +2065,7 @@ bool QPipe::create()
 	SECURITY_ATTRIBUTES secAttr;
 	memset(&secAttr, 0, sizeof secAttr);
 	secAttr.nLength = sizeof secAttr;
-	secAttr.bInheritHandle = true;
+	secAttr.bInheritHandle = false;
 
 	HANDLE r, w;
 	if(!CreatePipe(&r, &w, &secAttr, 0))
@@ -2047,6 +2078,13 @@ bool QPipe::create()
 	int p[2];
 	if(pipe(p) == -1)
 		return false;
+	if(!pipe_set_inheritable(p[0], false, 0) ||
+		!pipe_set_inheritable(p[1], false, 0))
+	{
+		close(p[0]);
+		close(p[1]);
+		return false;
+	}
 	i.take(p[0], QPipeDevice::Read);
 	o.take(p[1], QPipeDevice::Write);
 #endif

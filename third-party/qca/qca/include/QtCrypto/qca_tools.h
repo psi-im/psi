@@ -75,212 +75,206 @@ QCA_EXPORT void *qca_secure_realloc(void *p, int bytes);
 namespace QCA {
 
 /**
- \class SecureArray qca_tools.h QtCrypto
+   \class SecureArray qca_tools.h QtCrypto
 
- Secure array of bytes
+   Secure array of bytes
 
- The %SecureArray provides an array of memory from a pool that is,
- at least partly, secure. In this sense, secure means that the contents
- of the memory should not be made available to other applications. By
- comparison, a QMemArray (or subclass such as QCString or QByteArray) may
- be held in pages that might be swapped to disk or free'd without being
- cleared first.
- 
- Note that this class is implicitly shared (that is, copy on write).
- **/
+   The %SecureArray provides an array of memory from a pool that is,
+   at least partly, secure. In this sense, secure means that the contents
+   of the memory should not be made available to other applications. By
+   comparison, a QMemArray (or subclass such as QCString or QByteArray) may
+   be held in pages that might be swapped to disk or free'd without being
+   cleared first.
+
+   Note that this class is implicitly shared (that is, copy on write).
+*/
 class QCA_EXPORT SecureArray
 {
 public:
 	/**
-	 * Construct a secure byte array, zero length
-	 */
+	   Construct a secure byte array, zero length
+	*/
 	SecureArray();
 
 	/**
-	 * Construct a secure byte array of the specified length
-	 *
-	 * \param size the number of bytes in the array
-	 * \param ch the value every byte should be set to
-	 */
+	   Construct a secure byte array of the specified length
+
+	   \param size the number of bytes in the array
+	   \param ch the value every byte should be set to
+	*/
 	explicit SecureArray(int size, char ch = 0);
 
 	/**
-	 * Construct a secure byte array from a string
-	 *
-	 * Note that this copies, rather than references the source array
-	 */
+	   Construct a secure byte array from a string
+
+	   Note that this copies, rather than references the source array
+	*/
 	SecureArray(const char *str);
 
 	/**
-	 * Construct a secure byte array from a QByteArray
-	 *
-	 * Note that this copies, rather than references the source array
-	 *
-	 * \sa operator=()
-	 */
+	   Construct a secure byte array from a QByteArray
+
+	   Note that this copies, rather than references the source array
+
+	   \sa operator=()
+	*/
 	SecureArray(const QByteArray &a);
 
 	/**
-	 * Construct a (shallow) copy of another secure byte array
-	 *
-	 * \param from the source of the data and length.
-	 */
+	   Construct a (shallow) copy of another secure byte array
+
+	   \param from the source of the data and length.
+	*/
 	SecureArray(const SecureArray &from);
 
 	~SecureArray();
 
-	/** 
-	 * Creates a reference, rather than a deep copy.
-	 * if you want a deep copy then you should use copy()
-	 * instead, or use operator=(), then call detach() when required.
-	 */
+	/**
+	   Creates a reference, rather than a deep copy.
+	*/
 	SecureArray & operator=(const SecureArray &from);
 
 	/**
-	 * Creates a copy, rather than references
-	 *
-	 * \param a the array to copy from
-	 */
+	   Creates a copy, rather than references
+
+	   \param a the array to copy from
+	*/
 	SecureArray & operator=(const QByteArray &a);
 
 	/**
-	 * Clears the contents of the array and makes it empty
-	 */
+	   Clears the contents of the array and makes it empty
+	*/
 	void clear();
 
 	/**
-	 * Returns a reference to the byte at the index position
-	 *
-	 * \param index the zero-based offset to obtain
-	 */
+	   Returns a reference to the byte at the index position
+
+	   \param index the zero-based offset to obtain
+	*/
 	char & operator[](int index);
 
 	/**
-	 * Returns a reference to the byte at the index position
-	 *
-	 * \param index the zero-based offset to obtain
-	 */
+	   Returns a reference to the byte at the index position
+
+	   \param index the zero-based offset to obtain
+	*/
 	const char & operator[](int index) const;
 
 	/**
-	 * Pointer to the data in the secure array
-	 * 
-	 * You can use this for memcpy and similar functions. If you are trying
-	 * to obtain data at a particular offset, you might be better off using
-	 * at() or operator[]
-	 *
-	 */
+	   Pointer to the data in the secure array
+
+	   You can use this for memcpy and similar functions. If you are trying
+	   to obtain data at a particular offset, you might be better off using
+	   at() or operator[]
+	*/
 	char *data();
 
 	/**
-	 * Pointer to the data in the secure array
-	 * 
-	 * You can use this for memcpy and similar functions. If you are trying
-	 * to obtain data at a particular offset, you might be better off using
-	 * at() or operator[]
-	 *
-	 */
+	   Pointer to the data in the secure array
+
+	   You can use this for memcpy and similar functions. If you are trying
+	   to obtain data at a particular offset, you might be better off using
+	   at() or operator[]
+	*/
 	const char *data() const;
 
 	/**
-	 * Pointer to the data in the secure array
-	 * 
-	 * You can use this for memcpy and similar functions. If you are trying
-	 * to obtain data at a particular offset, you might be better off using
-	 * at() or operator[]
-	 *
-	 */
+	   Pointer to the data in the secure array
+
+	   You can use this for memcpy and similar functions. If you are trying
+	   to obtain data at a particular offset, you might be better off using
+	   at() or operator[]
+	*/
 	const char *constData() const;
 
 	/**
-	 * Returns a reference to the byte at the index position
-	 *
-	 * \param index the zero-based offset to obtain
-	 */
+	   Returns a reference to the byte at the index position
+
+	   \param index the zero-based offset to obtain
+	*/
 	char & at(int index);
 
 	/**
-	 * Returns a reference to the byte at the index position
-	 *
-	 * \param index the zero-based offset to obtain
-	 */
+	   Returns a reference to the byte at the index position
+
+	   \param index the zero-based offset to obtain
+	*/
 	const char & at(int index) const;
 
 	/**
-	 * Returns the number of bytes in the array
-	 */
+	   Returns the number of bytes in the array
+	*/
 	int size() const;
 
 	/**
-	 * Test if the array contains any bytes.
-	 * 
-	 * This is equivalent to testing (size() != 0). Note that if
-	 * the array is allocated, isEmpty() is false (even if no data
-	 * has been added)
-	 *
-	 * \return true if the array has zero length, otherwise false
-	 */
+	   Test if the array contains any bytes.
+
+	   This is equivalent to testing (size() != 0). Note that if
+	   the array is allocated, isEmpty() is false (even if no data
+	   has been added)
+
+	   \return true if the array has zero length, otherwise false
+	*/
 	bool isEmpty() const;
 
 	/**
-	 * Change the length of this array
-	 * If the new length is less than the old length, the extra information
-	 * is (safely) discarded. If the new length is equal to or greater than
-	 * the old length, the existing data is copied into the array.
-	 *
-	 * \param size the new length
-	 */
+	   Change the length of this array
+	   If the new length is less than the old length, the extra information
+	   is (safely) discarded. If the new length is equal to or greater than
+	   the old length, the existing data is copied into the array.
+
+	   \param size the new length
+	*/
 	bool resize(int size);
 
-        /**
-         * Fill the data array with a specified character
-	 *
-	 * \param fillChar the character to use as the fill
-	 * \param fillToPosition the number of characters to fill
-	 *        to. If not specified (or -1), fills array to
-	 *        current length.
-	 *
-	 * \note This function does not extend the array - if
-	 * you ask for fill beyond the current length, only
-	 * the current length will be used.
-	 * \note The number of characters is 1 based, so if
-	 * you ask for fill('x', 10), it will fill from
-	 * 
-         */
+	/**
+	   Fill the data array with a specified character
+
+	   \param fillChar the character to use as the fill
+	   \param fillToPosition the number of characters to fill
+	   to. If not specified (or -1), fills array to
+	   current length.
+
+	   \note This function does not extend the array - if
+	   you ask for fill beyond the current length, only
+	   the current length will be used.
+	   \note The number of characters is 1 based, so if
+	   you ask for fill('x', 10), it will fill from
+	*/
         void fill(char fillChar, int fillToPosition = -1);
 
 	/**
-	  * Copy the contents of the secure array out to a 
-	  * standard QByteArray. Note that this performs a deep copy
-	  * of the data.
-	  */
+	   Copy the contents of the secure array out to a 
+	   standard QByteArray. Note that this performs a deep copy
+	   of the data.
+	*/
 	QByteArray toByteArray() const;
 
 	/**
-	 * Append a secure byte array to the end of this array
-	 */
+	   Append a secure byte array to the end of this array
+	*/
 	SecureArray & append(const SecureArray &a);
 
 	/**
-	 * Append a secure byte array to the end of this array
-	 */
+	   Append a secure byte array to the end of this array
+	*/
 	SecureArray & operator+=(const SecureArray &a);
 
 protected:
 	/**
-	 * Assign the contents of a provided byte array to this
-	 * object.
-	 *
-	 * \param from the byte array to copy
-	 */
+	   Assign the contents of a provided byte array to this
+	   object.
+
+	   \param from the byte array to copy
+	*/
 	void set(const SecureArray &from);
 
 	/**
-	 * Assign the contents of a provided byte array to this
-	 * object.
-	 *
-	 * \param from the byte array to copy
-	 */
+	   Assign the contents of a provided byte array to this
+	   object.
+
+	   \param from the byte array to copy
+	*/
 	void set(const QByteArray &from);
 
 private:
@@ -289,27 +283,27 @@ private:
 };
 
 /**
- * Equality operator. Returns true if the two SecureArray
- * arguments have the same data (and the same length, of course).
- *
- * \relates SecureArray
- **/
+   Equality operator. Returns true if the two SecureArray
+   arguments have the same data (and the same length, of course).
+
+   \relates SecureArray
+*/
 QCA_EXPORT bool operator==(const SecureArray &a, const SecureArray &b);
 
 /**
- * Inequality operator. Returns true if the two SecureArray
- * arguments have different length, or the same length but
- * different data
- *
- * \relates SecureArray
- **/
+   Inequality operator. Returns true if the two SecureArray
+   arguments have different length, or the same length but
+   different data
+
+   \relates SecureArray
+*/
 QCA_EXPORT bool operator!=(const SecureArray &a, const SecureArray &b);
 
 /**
- * Returns an array that is the result of concatenating a and b
- *
- * \relates SecureArray
- **/
+   Returns an array that is the result of concatenating a and b
+
+   \relates SecureArray
+*/
 QCA_EXPORT const SecureArray operator+(const SecureArray &a, const SecureArray &b);
 
 /**
@@ -319,184 +313,183 @@ QCA_EXPORT const SecureArray operator+(const SecureArray &a, const SecureArray &
 
    BigInteger provides arbitrary precision integers.
    \code
-   if ( BigInteger("3499543804349") == 
-       BigInteger("38493290803248") + BigInteger( 343 ) )
-   {
-       // do something
-   }
+if ( BigInteger("3499543804349") == 
+	BigInteger("38493290803248") + BigInteger( 343 ) )
+{
+	// do something
+}
    \endcode
- **/
+*/
 class QCA_EXPORT BigInteger
 {
 public:
 	/**
-	 * Constructor. Creates a new BigInteger, initialised to zero.
-	 */
+	   Constructor. Creates a new BigInteger, initialised to zero.
+	*/
 	BigInteger();
 
 	/**
-	 * \overload
-	 *
-	 * \param n an alternative integer initialisation value.
-	 */
+	   \overload
+
+	   \param n an alternative integer initialisation value.
+	*/
 	BigInteger(int n);
 
 	/**
-	 * \overload
-	 *
-	 * \param c an alternative initialisation value, encoded as a character array
-	 *
-	 * \code
-	 * BigInteger b ( "9890343" );
-	 * \endcode
-	 */
+	   \overload
+
+	   \param c an alternative initialisation value, encoded as a character array
+
+	   \code
+BigInteger b ( "9890343" );
+	   \endcode
+	*/
 	BigInteger(const char *c);
 
 	/**
-	 * \overload
-	 *
-	 * \param s an alternative initialisation value, encoded as a string
-	 */
+	   \overload
+
+	   \param s an alternative initialisation value, encoded as a string
+	*/
 	BigInteger(const QString &s);
 
 	/**
-	 * \overload
-	 *
-	 * \param a an alternative initialisation value, encoded as SecureArray
-	 */
+	   \overload
+
+	   \param a an alternative initialisation value, encoded as SecureArray
+	*/
 	BigInteger(const QCA::SecureArray &a);
 
 	/**
-	 * \overload
-	 *
-	 * \param from an alternative initialisation value, encoded as a %BigInteger
-	 */
+	   \overload
+
+	   \param from an alternative initialisation value, encoded as a %BigInteger
+	*/
 	BigInteger(const BigInteger &from);
 
 	~BigInteger();
 
 	/**
-	 * Assignment operator
-	 * 
-	 * \param from the BigInteger to copy from
-	 *
-	 * \code
-	 * BigInteger a; // a is zero
-	 * BigInteger b( 500 );
-	 * a = b; // a is now 500
-	 * \endcode
-	 */
+	   Assignment operator
+
+	   \param from the BigInteger to copy from
+
+	   \code
+BigInteger a; // a is zero
+BigInteger b( 500 );
+a = b; // a is now 500
+	   \endcode
+	*/
 	BigInteger & operator=(const BigInteger &from);
 
 	/**
-	 * \overload
-	 *
-	 * \param s the QString containing an integer representation
-	 *
-	 * \sa bool fromString(const QString &s)
-	 *
-	 * \note it is the application's responsibility to make sure
-	 * that the QString represents a valid integer (ie it only
-	 * contains numbers and an optional minus sign at the start)
-	 * 
-	 **/
+	   \overload
+
+	   \param s the QString containing an integer representation
+
+	   \sa bool fromString(const QString &s)
+
+	   \note it is the application's responsibility to make sure
+	   that the QString represents a valid integer (ie it only
+	   contains numbers and an optional minus sign at the start)
+	*/
 	BigInteger & operator=(const QString &s);
 
 	/**
-	 * Increment in place operator
-	 *
-	 * \param b the amount to increment by
-	 *
-	 * \code
-	 * BigInteger a; // a is zero
-	 * BigInteger b( 500 );
-	 * a += b; // a is now 500
-	 * a += b; // a is now 1000
-	 * \endcode
-	 **/
+	   Increment in place operator
+
+	   \param b the amount to increment by
+
+	   \code
+BigInteger a; // a is zero
+BigInteger b( 500 );
+a += b; // a is now 500
+a += b; // a is now 1000
+	   \endcode
+	*/
 	BigInteger & operator+=(const BigInteger &b);
 
 	/**
-	 * Decrement in place operator
-	 *
-	 * \param b the amount to decrement by
-	 *
-	 * \code
-	 * BigInteger a; // a is zero
-	 * BigInteger b( 500 );
-	 * a -= b; // a is now -500
-	 * a -= b; // a is now -1000
-	 * \endcode
-	 **/
+	   Decrement in place operator
+
+	   \param b the amount to decrement by
+
+	   \code
+BigInteger a; // a is zero
+BigInteger b( 500 );
+a -= b; // a is now -500
+a -= b; // a is now -1000
+	   \endcode
+	*/
 	BigInteger & operator-=(const BigInteger &b);
 
-	/** 
-	 * Output %BigInteger as a byte array, useful for storage or
-	 * transmission.  The format is a binary integer in sign-extended
-	 * network-byte-order.
-	 *
-	 * \sa void fromArray(const SecureArray &a);
-	 */
+	/**
+	   Output %BigInteger as a byte array, useful for storage or
+	   transmission.  The format is a binary integer in sign-extended
+	   network-byte-order.
+
+	   \sa void fromArray(const SecureArray &a);
+	*/
 	QCA::SecureArray toArray() const;
 
 	/**
-	 * Assign from an array.  The input is expected to be a binary integer
-	 * in sign-extended network-byte-order.
-	 *
-	 * \param a a SecureArray that represents an integer
-	 *
-	 * \sa BigInteger(const SecureArray &a);
-	 * \sa SecureArray toArray() const;
-	 */
+	   Assign from an array.  The input is expected to be a binary integer
+	   in sign-extended network-byte-order.
+
+	   \param a a SecureArray that represents an integer
+
+	   \sa BigInteger(const SecureArray &a);
+	   \sa SecureArray toArray() const;
+	*/
 	void fromArray(const QCA::SecureArray &a);
 
-	/** 
-	 * Convert %BigInteger to a QString
-	 *
-	 * \code
-	 * QString aString;
-	 * BigInteger aBiggishInteger( 5878990 );
-	 * aString = aBiggishInteger.toString(); // aString is now "5878990"
-	 * \endcode
-	 */
+	/**
+	   Convert %BigInteger to a QString
+
+	   \code
+QString aString;
+BigInteger aBiggishInteger( 5878990 );
+aString = aBiggishInteger.toString(); // aString is now "5878990"
+	   \endcode
+	*/
 	QString toString() const;
 
 	/**
-	 * Assign from a QString
-	 *
-	 * \param s a QString that represents an integer
-	 *
-	 * \note it is the application's responsibility to make sure
-	 * that the QString represents a valid integer (ie it only
-	 * contains numbers and an optional minus sign at the start)
-	 * 
-	 * \sa BigInteger(const QString &s)
-	 * \sa BigInteger & operator=(const QString &s)
-	 */
+	   Assign from a QString
+
+	   \param s a QString that represents an integer
+
+	   \note it is the application's responsibility to make sure
+	   that the QString represents a valid integer (ie it only
+	   contains numbers and an optional minus sign at the start)
+
+	   \sa BigInteger(const QString &s)
+	   \sa BigInteger & operator=(const QString &s)
+	*/
 	bool fromString(const QString &s);
 
-	/** 
-	 * Compare this value with another %BigInteger
-	 *
-	 * Normally it is more readable to use one of the operator overloads,
-	 * so you don't need to use this method directly.
-	 *
-	 * \param n the BigInteger to compare with
-	 *
-	 * \return zero if the values are the same, negative if the argument
-	 * is less than the value of this BigInteger, and positive if the argument
-	 * value is greater than this BigInteger
-	 *
-	 * \code
-	 * BigInteger a( "400" );
-	 * BigInteger b( "-400" );
-	 * BigInteger c( " 200 " );
-	 * int result;
-	 * result = a.compare( b );        // return positive 400 > -400
-	 * result = a.compare( c );        // return positive,  400 > 200
-	 * result = b.compare( c );        // return negative, -400 < 200
-	 * \endcode
-	 **/
+	/**
+	   Compare this value with another %BigInteger
+
+	   Normally it is more readable to use one of the operator overloads,
+	   so you don't need to use this method directly.
+
+	   \param n the BigInteger to compare with
+
+	   \return zero if the values are the same, negative if the argument
+	   is less than the value of this BigInteger, and positive if the argument
+	   value is greater than this BigInteger
+
+	   \code
+BigInteger a( "400" );
+BigInteger b( "-400" );
+BigInteger c( " 200 " );
+int result;
+result = a.compare( b );        // return positive 400 > -400
+result = a.compare( c );        // return positive,  400 > 200
+result = b.compare( c );        // return negative, -400 < 200
+	   \endcode
+	*/
 	int compare(const BigInteger &n) const;
 
 private:
@@ -505,80 +498,80 @@ private:
 };
 
 /**
- * Equality operator. Returns true if the two BigInteger values
- * are the same, including having the same sign. 
- *
- * \relates BigInteger
- **/
+   Equality operator. Returns true if the two BigInteger values
+   are the same, including having the same sign
+
+   \relates BigInteger
+*/
 inline bool operator==(const BigInteger &a, const BigInteger &b)
 {
 	return (0 == a.compare( b ) );
 }
 
 /**
- * Inequality operator. Returns true if the two BigInteger values
- * are different in magnitude, sign or both  
- *
- * \relates BigInteger
- **/
+   Inequality operator. Returns true if the two BigInteger values
+   are different in magnitude, sign or both
+
+   \relates BigInteger
+*/
 inline bool operator!=(const BigInteger &a, const BigInteger &b)
 {
 	return (0 != a.compare( b ) );
 }
 
 /**
- * Less than or equal operator. Returns true if the BigInteger value
- * on the left hand side is equal to or less than the BigInteger value
- * on the right hand side.
- *
- * \relates BigInteger
- **/
+   Less than or equal operator. Returns true if the BigInteger value
+   on the left hand side is equal to or less than the BigInteger value
+   on the right hand side.
+
+   \relates BigInteger
+*/
 inline bool operator<=(const BigInteger &a, const BigInteger &b)
 {
 	return (a.compare( b ) <= 0 );
 }
 
 /**
- * Greater than or equal operator. Returns true if the BigInteger value
- * on the left hand side is equal to or greater than the BigInteger value
- * on the right hand side.
- *
- * \relates BigInteger
- **/
+   Greater than or equal operator. Returns true if the BigInteger value
+   on the left hand side is equal to or greater than the BigInteger value
+   on the right hand side.
+
+   \relates BigInteger
+*/
 inline bool operator>=(const BigInteger &a, const BigInteger &b)
 {
 	return (a.compare( b ) >= 0 );
 }
 
 /**
- * Less than operator. Returns true if the BigInteger value
- * on the left hand side is less than the BigInteger value
- * on the right hand side.
- *
- * \relates BigInteger
- **/
+   Less than operator. Returns true if the BigInteger value
+   on the left hand side is less than the BigInteger value
+   on the right hand side.
+
+   \relates BigInteger
+*/
 inline bool operator<(const BigInteger &a, const BigInteger &b)
 {
 	return (a.compare( b ) < 0 );
 }
 
 /**
- * Greater than operator. Returns true if the BigInteger value
- * on the left hand side is greater than the BigInteger value
- * on the right hand side.
- *
- * \relates BigInteger
- **/
+   Greater than operator. Returns true if the BigInteger value
+   on the left hand side is greater than the BigInteger value
+   on the right hand side.
+
+   \relates BigInteger
+*/
 inline bool operator>(const BigInteger &a, const BigInteger &b)
 {
 	return (a.compare( b ) > 0 );
 }
 
 /**
- * Stream operator.
- *
- * \relates BigInteger
- **/
+   Stream operator
+
+   \relates BigInteger
+*/
 QCA_EXPORT QTextStream &operator<<(QTextStream &stream, const BigInteger &b);
 
 }

@@ -21,6 +21,7 @@
 
 #ifdef Q_OS_UNIX
 # include <unistd.h>
+# include <fcntl.h>
 #endif
 
 namespace gpgQCAPlugin {
@@ -38,16 +39,16 @@ SProcess::~SProcess()
 }
 
 #ifdef Q_OS_UNIX
-void SProcess::setClosePipeList(const QList<int> &list)
+void SProcess::setInheritPipeList(const QList<int> &list)
 {
 	pipeList = list;
 }
 
 void SProcess::setupChildProcess()
 {
-	// close all pipes
+	// set the pipes to be inheritable
 	for(int n = 0; n < pipeList.count(); ++n)
-		::close(pipeList[n]);
+		::fcntl(pipeList[n], F_SETFD, (::fcntl(pipeList[n], F_GETFD) & ~FD_CLOEXEC));
 }
 #endif
 

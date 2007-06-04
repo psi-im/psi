@@ -400,6 +400,14 @@ void clearPluginDiagnosticText()
 	global->manager->clearDiagnosticText();
 }
 
+void appendPluginDiagnosticText(const QString &text)
+{
+	if(!global_check())
+		return;
+
+	global->manager->appendDiagnosticText(text);
+}
+
 void setProperty(const QString &name, const QVariant &value)
 {
 	if(!global_check())
@@ -1045,6 +1053,10 @@ void TLSContext::setMTU(int)
 // SMSContext
 //----------------------------------------------------------------------------
 void SMSContext::setTrustedCertificates(const CertificateCollection &)
+{
+}
+
+void SMSContext::setUntrustedCertificates(const CertificateCollection &)
 {
 }
 

@@ -33,7 +33,7 @@ public:
 	~SProcess();
 
 #ifdef Q_OS_UNIX
-	void setClosePipeList(const QList<int> &);
+	void setInheritPipeList(const QList<int> &);
 
 protected:
 	virtual void setupChildProcess();

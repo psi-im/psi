@@ -57,12 +57,18 @@ bool botan_init(int prealloc, bool mmap)
 	if(prealloc < 64)
 		prealloc = 64;
 
+	try
 	{
 		Botan::Builtin_Modules modules;
 		Botan::Library_State *libstate = new Botan::Library_State(modules.mutex_factory());
 		libstate->prealloc_size = prealloc * 1024;
 		Botan::set_global_state(libstate);
 		Botan::global_state().load(modules);
+	}
+	catch(std::exception &)
+	{
+		fprintf(stderr, "QCA: Error initializing internal Botan\n");
+		abort();
 	}
 
 	bool secmem = false;

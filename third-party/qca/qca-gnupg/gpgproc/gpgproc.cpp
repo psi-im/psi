@@ -21,7 +21,9 @@
 
 #include "sprocess.h"
 
+#ifdef Q_OS_MAC
 #define QT_PIPE_HACK
+#endif
 
 using namespace QCA;
 
@@ -85,7 +87,6 @@ public slots:
 };
 #endif
 
-
 //----------------------------------------------------------------------------
 // GPGProc
 //----------------------------------------------------------------------------
@@ -103,6 +104,7 @@ public:
 	GPGProc *q;
 	QString bin;
 	QStringList args;
+	GPGProc::Mode mode;
 	SProcess *proc;
 #ifdef QT_PIPE_HACK
 	QProcessSignalRelay *proc_relay;
@@ -245,36 +247,67 @@ public:
 			return false;
 		}
 
-#ifdef Q_OS_WIN
-		if(makeAux && !pipeAux.writeEnd().winDupHandle())
-		{
-			closePipes();
-			emit q->debug("Win: Error dup'ing pipeAux");
-			return false;
-		}
-
-		if(!pipeCommand.writeEnd().winDupHandle())
-		{
-			closePipes();
-			emit q->debug("Win: Error dup'ing pipeCommand");
-			return false;
-		}
-
-		if(!pipeStatus.readEnd().winDupHandle())
-		{
-			closePipes();
-			emit q->debug("Win: Error dup'ing pipeStatus");
-			return false;
-		}
-#endif
-
 		return true;
+	}
+
+	void setupArguments()
+	{
+		QStringList fullargs;
+		fullargs += "--no-tty";
+
+		if(mode == ExtendedMode)
+		{
+			fullargs += "--enable-special-filenames";
+
+			fullargs += "--status-fd";
+			fullargs += QString::number(pipeStatus.writeEnd().idAsInt());
+
+			fullargs += "--command-fd";
+			fullargs += QString::number(pipeCommand.readEnd().idAsInt());
+		}
+
+		for(int n = 0; n < args.count(); ++n)
+		{
+			QString a = args[n];
+			if(mode == ExtendedMode && a == "-&?")
+				fullargs += QString("-&") + QString::number(pipeAux.readEnd().idAsInt());
+			else
+				fullargs += a;
+		}
+
+		QString fullcmd = fullargs.join(" ");
+		emit q->debug(QString("Running: [") + bin + ' ' + fullcmd + ']');
+
+		args = fullargs;
 	}
 
 public slots:
 	void doStart()
 	{
+#ifdef Q_OS_WIN
+		// Note: for unix, inheritability is set in SProcess
+		if(pipeAux.readEnd().isValid())
+			pipeAux.readEnd().setInheritable(true);
+		if(pipeCommand.readEnd().isValid())
+			pipeCommand.readEnd().setInheritable(true);
+		if(pipeStatus.writeEnd().isValid())
+			pipeStatus.writeEnd().setInheritable(true);
+#endif
+
+		setupArguments();
+
 		proc->start(bin, args);
+
+		// FIXME: From reading the source to Qt on both windows
+		//   and unix platforms, we know that fork/CreateProcess
+		//   are called in start.  However this is not guaranteed
+		//   from an API perspective.  We should probably call
+		//   QProcess::waitForStarted() to synchronously ensure
+		//   fork/CreateProcess are called before closing these
+		//   pipes.
+		pipeAux.readEnd().close();
+		pipeCommand.readEnd().close();
+		pipeStatus.writeEnd().close();
 	}
 
 	void aux_written(int x)
@@ -322,10 +355,12 @@ public slots:
 	{
 		emit q->debug("Process started");
 
+		// Note: we don't close these here anymore.  instead we
+		//   do it just after calling proc->start().
 		// close these, we don't need them
-		pipeAux.readEnd().close();
+		/*pipeAux.readEnd().close();
 		pipeCommand.readEnd().close();
-		pipeStatus.writeEnd().close();
+		pipeStatus.writeEnd().close();*/
 
 		// do the pre* stuff
 		if(!pre_stdin.isEmpty())
@@ -546,8 +581,6 @@ bool GPGProc::isActive() const
 
 void GPGProc::start(const QString &bin, const QStringList &args, Mode mode)
 {
-	int n;
-
 	if(isActive())
 		d->reset(ResetSessionAndData);
 
@@ -562,45 +595,22 @@ void GPGProc::start(const QString &bin, const QStringList &args, Mode mode)
 			return;
 		}
 
+		d->need_status = true;
+
 		emit debug("Pipe setup complete");
 	}
-
-	QStringList fullargs;
-	fullargs += "--no-tty";
-
-	if(mode == ExtendedMode)
-	{
-		fullargs += "--enable-special-filenames";
-
-		fullargs += "--status-fd";
-		fullargs += d->pipeStatus.writeEnd().idAsString();
-
-		fullargs += "--command-fd";
-		fullargs += d->pipeCommand.readEnd().idAsString();
-
-		d->need_status = true;
-	}
-
-	for(n = 0; n < args.count(); ++n)
-	{
-		QString a = args[n];
-		if(mode == ExtendedMode && a == "-&?")
-			fullargs += (QString("-&") + d->pipeAux.readEnd().idAsString());
-		else
-			fullargs += a;
-	}
-
-	QString fullcmd = fullargs.join(" ");
-	emit debug(QString("Running: [") + bin + ' ' + fullcmd + ']');
 
 	d->proc = new SProcess(d);
 
 #ifdef Q_OS_UNIX
 	QList<int> plist;
-	plist += d->pipeAux.writeEnd().id();
-	plist += d->pipeCommand.writeEnd().id();
-	plist += d->pipeStatus.readEnd().id();
-	d->proc->setClosePipeList(plist);
+	if(d->pipeAux.readEnd().isValid())
+		plist += d->pipeAux.readEnd().id();
+	if(d->pipeCommand.readEnd().isValid())
+		plist += d->pipeCommand.readEnd().id();
+	if(d->pipeStatus.writeEnd().isValid())
+		plist += d->pipeStatus.writeEnd().id();
+	d->proc->setInheritPipeList(plist);
 #endif
 
 	// enable the pipes we want
@@ -629,7 +639,8 @@ void GPGProc::start(const QString &bin, const QStringList &args, Mode mode)
 #endif
 
 	d->bin = bin;
-	d->args = fullargs;
+	d->args = args;
+	d->mode = mode;
 	d->startTrigger.start();
 }
 

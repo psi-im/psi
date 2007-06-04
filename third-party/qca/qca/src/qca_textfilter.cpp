@@ -35,6 +35,11 @@ void TextFilter::setup(Direction dir)
 	_dir = dir;
 }
 
+Direction TextFilter::direction() const
+{
+	return _dir;
+}
+
 SecureArray TextFilter::encode(const SecureArray &a)
 {
 	setup(Encode);
@@ -211,6 +216,16 @@ void Base64::clear()
 	partial.resize(0);
 	_ok = true;
 	col = 0;
+}
+
+bool Base64::lineBreaksEnabled() const
+{
+	return _lb_enabled;
+}
+
+int Base64::lineBreaksColumn() const
+{
+	return _lb_column;
 }
 
 void Base64::setLineBreaksEnabled(bool b)

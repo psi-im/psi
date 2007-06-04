@@ -47,8 +47,11 @@ PUBLIC_HEADERS += \
 HEADERS += $$PRIVATE_HEADERS $$PUBLIC_HEADERS
 
 # do support first
-SOURCES += $$QCA_CPP/support/synchronizer.cpp
-include($$QCA_SRCBASE/support/dirwatch/dirwatch.pri)
+SOURCES += \
+	$$QCA_CPP/support/syncthread.cpp \
+	$$QCA_CPP/support/logger.cpp \
+	$$QCA_CPP/support/synchronizer.cpp \
+	$$QCA_CPP/support/dirwatch.cpp
 
 SOURCES += \
 	$$QCA_CPP/qca_tools.cpp \
@@ -61,8 +64,6 @@ SOURCES += \
 	$$QCA_CPP/qca_keystore.cpp \
 	$$QCA_CPP/qca_securelayer.cpp \
 	$$QCA_CPP/qca_securemessage.cpp \
-	$$QCA_CPP/support/logger.cpp \
-	$$QCA_CPP/support/syncthread.cpp \
 	$$QCA_CPP/qca_default.cpp \
 	$$QCA_CPP/support/qpipe.cpp \
 	$$QCA_CPP/support/console.cpp
