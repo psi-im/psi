@@ -336,8 +336,7 @@ void AccountModifyDlg::init()
 		tab_main->removeTab(tab_main->indexOf(tab_misc));
 	}
 	
-
-	resize(minimumSize());
+	resize(minimumSizeHint());
 }
 
 AccountModifyDlg::~AccountModifyDlg()
