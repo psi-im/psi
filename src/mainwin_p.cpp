@@ -410,6 +410,8 @@ public:
 		}
 		else {
 			btn->setMenu(0);
+			// connect exactly once:
+			disconnect(btn, SIGNAL(clicked()), sm, SLOT(map()));
 			connect(btn, SIGNAL(clicked()), sm, SLOT(map()));
 		}
 	}
