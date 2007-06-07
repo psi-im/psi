@@ -76,11 +76,11 @@ void sleepCallBack(void *, io_service_t, natural_t messageType, void * messageAr
 MacSystemWatch::MacSystemWatch()
 {
 	// Initialize sleep callback
-	IONotificationPortRef  notify;
-	io_object_t			   anIterator;
+	IONotificationPortRef notify;
+	io_object_t           anIterator;
 	root_port = IORegisterForSystemPower(0, &notify, sleepCallBack, &anIterator);
-	if (root_port == NULL)
-			printf("IORegisterForSystemPower failed\n");
+	if (!root_port)
+		printf("IORegisterForSystemPower failed\n");
 	else
 		CFRunLoopAddSource(CFRunLoopGetCurrent(), IONotificationPortGetRunLoopSource(notify), kCFRunLoopCommonModes);
 }
