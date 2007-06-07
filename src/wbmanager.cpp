@@ -142,8 +142,9 @@ void WbManager::messageReceived(const Message &message) {
 	}
 }
 
-void WbManager::removeSession(const QString &session) {
-	WbDlg* d;
+void WbManager::removeSession(const QString &session)
+{
+	WbDlg* d = 0;
 	for(int i = 0; i < dialogs_.size(); i++) {
 		// does the session match?
 		if(dialogs_.at(i)->session() == session) {
