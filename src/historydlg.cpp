@@ -51,15 +51,12 @@
 
 static QString getNext(QString *str)
 {
-	// are we in space?
 	int n = 0;
-	if(str->at(n).isSpace()) {
-		// get out of it
-		while(n < (int)str->length() && str->at(n).isSpace())
-			++n;
-		if(n == (int)str->length())
-			return QString::null;
-	}
+	// skip leading spaces (but *do* return them later!)
+	while(n < (int)str->length() && str->at(n).isSpace())
+		++n;
+	if(n == (int)str->length())
+		return QString::null;
 	// find end or next space
 	while(n < (int)str->length() && !str->at(n).isSpace())
 		++n;
