@@ -60,7 +60,7 @@ bool SpellChecker::available() const
 
 bool SpellChecker::writable() const
 {
-	return false;
+	return true;
 }
 
 bool SpellChecker::isCorrect(const QString&)
