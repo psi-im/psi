@@ -291,21 +291,11 @@ void HistoryDlg::doSave()
 	QString s = JIDUtil::encode(them).toLower();
 
 	QString str = option.lastSavePath + "/" + s + ".txt";
-	while(1) {
-		str = QFileDialog::getSaveFileName(this, tr("Export message history"), str, tr("Text files (*.txt);;All files (*.*)"));
-		if(str.isEmpty())
-			break;
-
+	str = QFileDialog::getSaveFileName(this, tr("Export message history"), str, tr("Text files (*.txt);;All files (*.*)"));
+	if(!str.isEmpty()) {
 		QFileInfo fi(str);
-		if(fi.exists()) {
-			int x = QMessageBox::information(this, tr("Confirm overwrite"), tr("File already exists, overwrite?"), tr("&Yes"), tr("&No"));
-			if(x != 0)
-				continue;
-		}
-
 		option.lastSavePath = fi.dirPath();
 		exportHistory(str);
-		break;
 	}
 }
 
