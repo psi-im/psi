@@ -414,7 +414,6 @@ bool PsiCon::init()
 	// Connect to the system monitor
 	SystemWatch* sw = SystemWatch::instance();
 	connect(sw, SIGNAL(sleep()), this, SLOT(doSleep()));
-	connect(sw, SIGNAL(idleSleep()), this, SLOT(doSleep()));
 	connect(sw, SIGNAL(wakeup()), this, SLOT(doWakeup()));
 
 #ifdef PSI_PLUGINS
