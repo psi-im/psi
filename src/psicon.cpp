@@ -452,15 +452,15 @@ bool PsiCon::init()
 		<< "http://jabber.org/protocol/tune" 
 		<< "http://jabber.org/protocol/physloc" 
 		<< "http://jabber.org/protocol/geoloc" 
-		<< "http://jabber.org/protocol/avatar#data" 
-		<< "http://jabber.org/protocol/avatar#metadata";
+		<< "http://www.xmpp.org/extensions/xep-0084.html#ns-data" 
+		<< "http://www.xmpp.org/extensions/xep-0084.html#ns-metadata";
 	CapsRegistry::instance()->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),"ep"),identities,features);
 	features.clear();
 	features << "http://jabber.org/protocol/mood+notify"
 		<< "http://jabber.org/protocol/tune+notify" 
 		<< "http://jabber.org/protocol/physloc+notify" 
 		<< "http://jabber.org/protocol/geoloc+notify" 
-		<< "http://jabber.org/protocol/avatar#metadata+notify";
+		<< "http://www.xmpp.org/extensions/xep-0084.html#ns-metadata+notify";
 	CapsRegistry::instance()->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),"ep-notify"),identities,features);
 	CapsRegistry::instance()->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),"html"),identities,Features("http://jabber.org/protocol/xhtml-im"));
 

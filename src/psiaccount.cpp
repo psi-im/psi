@@ -678,7 +678,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent)
 		pepNodes += "http://jabber.org/protocol/tune+notify";
 		pepNodes += "http://jabber.org/protocol/physloc+notify";
 		pepNodes += "http://jabber.org/protocol/geoloc+notify";
-		pepNodes += "http://jabber.org/protocol/avatar#metadata+notify";
+		pepNodes += "http://www.xmpp.org/extensions/xep-0084.html#ns-metadata+notify";
 		d->client->addExtension("ep-notify",Features(pepNodes));
 	}
 		
@@ -1530,8 +1530,8 @@ void PsiAccount::setPEPAvailable(bool b)
 		pepNodes += "http://jabber.org/protocol/tune";
 		pepNodes += "http://jabber.org/protocol/physloc";
 		pepNodes += "http://jabber.org/protocol/geoloc";
-		pepNodes += "http://jabber.org/protocol/avatar#data";
-		pepNodes += "http://jabber.org/protocol/avatar#metadata";
+		pepNodes += "http://www.xmpp.org/extensions/xep-0084.html#ns-data";
+		pepNodes += "http://www.xmpp.org/extensions/xep-0084.html#ns-metadata";
 		d->client->addExtension("ep",Features(pepNodes));
 		setStatusActual(d->loginStatus);
 	}
