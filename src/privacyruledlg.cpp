@@ -36,16 +36,16 @@ void PrivacyRuleDlg::setRule(const PrivacyListItem& item)
 	if (item.type() == PrivacyListItem::SubscriptionType) {
 		ui_.cb_type->setCurrentIndex(ui_.cb_type->findText(tr("Subscription")));
 		if (item.value() == "both") {
-			ui_.cb_type->setCurrentIndex(ui_.cb_type->findText(tr("Both")));
+			ui_.cb_value->setCurrentIndex(ui_.cb_value->findText(tr("Both")));
 		}
 		else if (item.value() == "none") {
-			ui_.cb_type->setCurrentIndex(ui_.cb_type->findText(tr("None")));
+			ui_.cb_value->setCurrentIndex(ui_.cb_value->findText(tr("None")));
 		}
 		else if (item.value() == "from") {
-			ui_.cb_type->setCurrentIndex(ui_.cb_type->findText(tr("From")));
+			ui_.cb_value->setCurrentIndex(ui_.cb_value->findText(tr("From")));
 		}
 		else if (item.value() == "to") {
-			ui_.cb_type->setCurrentIndex(ui_.cb_type->findText(tr("To")));
+			ui_.cb_value->setCurrentIndex(ui_.cb_value->findText(tr("To")));
 		}
 	}
 	else {
