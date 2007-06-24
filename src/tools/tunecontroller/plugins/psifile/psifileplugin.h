@@ -48,5 +48,4 @@ public:
 	virtual TuneController* createController();
 };
 
-#include "psifileplugin.moc"
 #endif
