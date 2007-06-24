@@ -23,13 +23,3 @@
 UnixSystemWatch::UnixSystemWatch()
 {
 }
-
-UnixSystemWatch* UnixSystemWatch::instance()
-{
-	if (!instance_) 
-		instance_ = new UnixSystemWatch();
-
-	return instance_;
-}
-
-UnixSystemWatch* UnixSystemWatch::instance_ = 0;

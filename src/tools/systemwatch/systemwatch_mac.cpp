@@ -38,15 +38,16 @@
 
 io_connect_t  root_port;
 
-void sleepCallBack(void *, io_service_t, natural_t messageType, void * messageArgument)
+void sleepCallBack(void* systemWatch, io_service_t, natural_t messageType, void * messageArgument)
 {
 	//printf("messageType %08lx, arg %08lx\n",
 	//  (long unsigned int)messageType, (long unsigned int)messageArgument);
 	
+	MacSystemWatch* macSystemWatch = static_cast<MacSystemWatch*>(systemWatch);
 	switch (messageType) {
 		case kIOMessageSystemWillSleep:
 			// Sleep
-			MacSystemWatch::instance()->emitSleep();
+			macSystemWatch->emitSleep();
 			IOAllowPowerChange(root_port, (long)messageArgument);
 			break;
 			
@@ -57,13 +58,13 @@ void sleepCallBack(void *, io_service_t, natural_t messageType, void * messageAr
 			// if there are.
 			//IOCancelPowerChange(root_port, (long)messageArgument);
 
-			MacSystemWatch::instance()->emitIdleSleep();
+			macSystemWatch->emitIdleSleep();
 			IOAllowPowerChange(root_port, (long)messageArgument);
 			break;
 			
 		case kIOMessageSystemHasPoweredOn:
 			// Wakeup
-			MacSystemWatch::instance()->emitWakeup();
+			macSystemWatch->emitWakeup();
 			break;
 	}
 }
@@ -78,20 +79,11 @@ MacSystemWatch::MacSystemWatch()
 	// Initialize sleep callback
 	IONotificationPortRef notify;
 	io_object_t           anIterator;
-	root_port = IORegisterForSystemPower(0, &notify, sleepCallBack, &anIterator);
-	if (!root_port)
+	root_port = IORegisterForSystemPower(this, &notify, sleepCallBack, &anIterator);
+	if (!root_port) {
 		printf("IORegisterForSystemPower failed\n");
-	else
+	}
+	else {
 		CFRunLoopAddSource(CFRunLoopGetCurrent(), IONotificationPortGetRunLoopSource(notify), kCFRunLoopCommonModes);
+	}
 }
-
-
-MacSystemWatch* MacSystemWatch::instance()
-{
-	if (!instance_) 
-		instance_ = new MacSystemWatch();
-
-	return instance_;
-}
-
-MacSystemWatch* MacSystemWatch::instance_ = 0;

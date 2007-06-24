@@ -75,27 +75,18 @@
 #endif // WINVER >= 0x0400
 
 // -----------------------------------------------------------------------------
-// WinSystemWatchPrivate
+// WinSystemWatch
 // -----------------------------------------------------------------------------
 
-class WinSystemWatch::WinSystemWatchPrivate : public QWidget
+WinSystemWatch::WinSystemWatch() 
 {
-	Q_OBJECT
+}
 
-public:
-	WinSystemWatchPrivate( ) : QWidget( 0 ) { }
-    ~WinSystemWatchPrivate() { }
-
-	bool winEvent( MSG *, long * ); 
-
-signals:
-	void sleep();
-	void wakeup();
-};
-
-
-bool WinSystemWatch::WinSystemWatchPrivate::winEvent( MSG *m, long *result ) 
+void WinSystemWatch::processWinEvent(MSG *m)
 {
+	// NOTE: If you need another message type here, do not forget to add it to
+	// PsiApplication::winEventFilter()
+	
 	if(WM_POWERBROADCAST == m->message) {
 		switch (m->wParam) {
 			case PBT_APMSUSPEND:
@@ -128,39 +119,4 @@ bool WinSystemWatch::WinSystemWatchPrivate::winEvent( MSG *m, long *result )
 		// are doing a file transfer, we should probably also give
 		// them the chance to cancel a shutdown or log-off
 	}
-	return QWidget::winEvent( m, result );
 }
-
-
-// -----------------------------------------------------------------------------
-// WinSystemWatch
-// -----------------------------------------------------------------------------
-
-WinSystemWatch::WinSystemWatch() 
-{
-	d = new WinSystemWatchPrivate();
-	connect(d,SIGNAL(sleep()),this,SIGNAL(sleep()));
-	connect(d,SIGNAL(wakeup()),this,SIGNAL(wakeup()));
-}
-
-WinSystemWatch::~WinSystemWatch()
-{
-	disconnect(d,SIGNAL(sleep()),this,SIGNAL(sleep()));
-	disconnect(d,SIGNAL(wakeup()),this,SIGNAL(wakeup()));
-	delete d;
-}
-
-WinSystemWatch* WinSystemWatch::instance()
-{
-	if (!instance_) 
-		instance_ = new WinSystemWatch();
-
-	return instance_;
-}
-
-WinSystemWatch* WinSystemWatch::instance_ = 0;
-
-// -----------------------------------------------------------------------------
-
-#include "systemwatch_win.moc"
-

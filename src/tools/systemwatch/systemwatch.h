@@ -35,24 +35,11 @@ signals:
 	void idleSleep();
 	void wakeup();
 
-private:
+protected:
 	SystemWatch();
 
+private:
 	static SystemWatch* instance_;
-};
-
-
-class SystemWatchImpl : public QObject
-{
-	Q_OBJECT
-
-protected:
-	SystemWatchImpl();
-		
-signals:
-	void sleep();
-	void idleSleep();
-	void wakeup();
 };
 
 #endif

@@ -61,6 +61,10 @@ const int KeyPress = XKeyPress;
 #endif
 #endif
 
+#ifdef Q_WS_WIN
+#include "systemwatch_win.h"
+#endif
+
 // mblsha:
 // currently this file contains some Anti-"focus steling prevention" code by
 // Lubos Lunak (l.lunak@kde.org)
@@ -311,6 +315,17 @@ bool PsiApplication::macEventFilter( EventHandlerCallRef, EventRef inEvent )
 	int etype = GetEventKind(inEvent);
 	if(eclass == 'eppc' && etype == kEventAppleEvent) {
 		dockActivated();
+	}
+	return false;
+}
+#endif
+
+#ifdef Q_WS_WIN
+bool PsiApplication::winEventFilter(MSG* msg, long* result)
+{
+	if (msg->message == WM_POWERBROADCAST || msg->message == WM_QUERYENDSESSION) {
+		static_cast<WinSystemWatch*>(SystemWatch::instance())->processWinEvent(msg);
+		return true;
 	}
 	return false;
 }

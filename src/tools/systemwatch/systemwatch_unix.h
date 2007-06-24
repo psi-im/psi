@@ -23,17 +23,10 @@
 
 #include "systemwatch.h"
 
-class UnixSystemWatch : public SystemWatchImpl
+class UnixSystemWatch : public SystemWatch
 {
-	Q_OBJECT
-
 public:
-	static UnixSystemWatch* instance();
-	
-private:
 	UnixSystemWatch();
-	
-	static UnixSystemWatch* instance_;
 };
 
 

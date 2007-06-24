@@ -29,35 +29,23 @@
 
 #include <QApplication>
 
-SystemWatch::SystemWatch()
-	: QObject(qApp)
+SystemWatch::SystemWatch() : QObject(qApp)
 {
-	SystemWatchImpl* impl;
-#if defined(Q_WS_MAC)
-	impl = MacSystemWatch::instance();
-#elif defined(Q_WS_WIN)
-	impl = WinSystemWatch::instance();
-#else
-	impl = UnixSystemWatch::instance();
-#endif
-	connect(impl,SIGNAL(sleep()),this,SIGNAL(sleep()));
-	connect(impl,SIGNAL(idleSleep()),this,SIGNAL(idleSleep()));
-	connect(impl,SIGNAL(wakeup()),this,SIGNAL(wakeup()));
 }
-
 
 SystemWatch* SystemWatch::instance()
 {
-	if (!instance_) 
-		instance_ = new SystemWatch();
-
+	if (!instance_) {
+#if defined(Q_WS_MAC)
+		instance_ = new MacSystemWatch();
+#elif defined(Q_WS_WIN)
+		instance_ = new WinSystemWatch();
+#else
+		instance_ = new UnixSystemWatch();
+#endif
+	}
 	return instance_;
 }
 
 
 SystemWatch* SystemWatch::instance_ = 0;
-
-SystemWatchImpl::SystemWatchImpl()
-	: QObject(qApp)
-{
-}

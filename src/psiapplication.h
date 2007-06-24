@@ -25,6 +25,9 @@
 #ifdef Q_WS_MAC
 #include <Carbon/Carbon.h>
 #endif
+#ifdef Q_WS_WIN
+#include <qt_windows.h>
+#endif
 
 class QEvent;
 
@@ -41,6 +44,9 @@ public:
 #endif
 #ifdef Q_WS_MAC
 	bool macEventFilter(EventHandlerCallRef, EventRef);
+#endif
+#ifdef Q_WS_WIN
+	bool winEventFilter(MSG* msg, long* result);
 #endif
 
 signals:

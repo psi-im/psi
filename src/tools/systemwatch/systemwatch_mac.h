@@ -23,22 +23,15 @@
 
 #include "systemwatch.h"
 
-class MacSystemWatch : public SystemWatchImpl
+class MacSystemWatch : public SystemWatch
 {
-	Q_OBJECT
-
 public:
-	static MacSystemWatch* instance();
-	
+	MacSystemWatch();
+
 	// These shouldn't be called from outside, but i can't hide them atm.
 	void emitSleep() { emit sleep(); }
 	void emitIdleSleep() { emit idleSleep(); }
 	void emitWakeup() { emit wakeup(); }
-
-private:
-	MacSystemWatch();
-	
-	static MacSystemWatch* instance_;
 };
 
 #endif
