@@ -74,7 +74,8 @@ tc_psifile {
 	INCLUDEPATH += $$PSIFILE_PLUGIN_PATH
 
 	HEADERS += \
-		$$PSIFILE_PLUGIN_PATH/psifilecontroller.h 
+		$$PSIFILE_PLUGIN_PATH/psifilecontroller.h \
+		$$PSIFILE_PLUGIN_PATH/psifileplugin.h
 		
 	SOURCES += \
 		$$PSIFILE_PLUGIN_PATH/psifilecontroller.cpp \

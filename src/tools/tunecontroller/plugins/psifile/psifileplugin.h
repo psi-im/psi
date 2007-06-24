@@ -1,5 +1,5 @@
 /*
- * winampplugin.cpp
+ * psifileplugin.h
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -18,18 +18,35 @@
  *
  */
 
-#include "winampplugin.h"
+#ifndef PSIFILEPLUGIN_H
+#define PSIFILEPLUGIN_H
+
+#ifndef QT_STATICPLUGIN
+#define QT_STATICPLUGIN
+#endif
+
+#include <QtCore>
+#include <QObject>
+#include <QString>
+
+#include "tunecontrollerplugin.h"
+#include "psifilecontroller.h"
 
 
-QString WinAmpPlugin::name()
+
+
+/**
+ * \brief A TuneController plugin for the Psi file controller.
+ */
+class PsiFilePlugin : public QObject, public TuneControllerPlugin
 {
-	return "WinAmp";
-}
+	Q_OBJECT
+	Q_INTERFACES(TuneControllerPlugin)
 
-TuneController* WinAmpPlugin::createController() 
-{
-	return new WinAmpController();
-}
+public:
+	virtual QString name();
+	virtual TuneController* createController();
+};
 
-Q_EXPORT_PLUGIN2(winampplugin, WinAmpPlugin);
-
+#include "psifileplugin.moc"
+#endif

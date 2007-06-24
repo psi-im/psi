@@ -18,32 +18,8 @@
  *
  */
 
-#ifndef QT_STATICPLUGIN
-#define QT_STATICPLUGIN
-#endif
+#include "psifileplugin.h"
 
-#include <QtCore>
-#include <QObject>
-#include <QString>
-
-#include "tunecontrollerplugin.h"
-#include "psifilecontroller.h"
-
-
-/**
- * \brief A TuneController plugin for the Psi file controller.
- */
-class PsiFilePlugin : public QObject, public TuneControllerPlugin
-{
-	Q_OBJECT
-	Q_INTERFACES(TuneControllerPlugin)
-
-public:
-	virtual QString name();
-	virtual TuneController* createController();
-};
-
-Q_EXPORT_PLUGIN2(psifileplugin, PsiFilePlugin);
 
 QString PsiFilePlugin::name()
 {
@@ -55,4 +31,4 @@ TuneController* PsiFilePlugin::createController()
 	return new PsiFileController();
 }
 
-#include "psifileplugin.moc"
+Q_EXPORT_PLUGIN2(psifileplugin, PsiFilePlugin);

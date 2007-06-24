@@ -1,5 +1,5 @@
 /*
- * winampplugin.cpp
+ * winampplugin.h
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -18,18 +18,29 @@
  *
  */
 
-#include "winampplugin.h"
+#ifndef WINAMPPLUGIN_H
+#define WINAMPPLUGIN_H
 
+#ifndef QT_STATICPLUGIN
+#define QT_STATICPLUGIN
+#endif
 
-QString WinAmpPlugin::name()
+#include <QtCore>
+#include <QObject>
+#include <QString>
+
+#include "winampcontroller.h"
+#include "tunecontrollerplugin.h"
+
+class WinAmpPlugin : public QObject, public TuneControllerPlugin
 {
-	return "WinAmp";
-}
+	Q_OBJECT
+	Q_INTERFACES(TuneControllerPlugin)
 
-TuneController* WinAmpPlugin::createController() 
-{
-	return new WinAmpController();
-}
+public:
+	virtual QString name();
+	virtual TuneController* createController();
+};
 
-Q_EXPORT_PLUGIN2(winampplugin, WinAmpPlugin);
+#endif
 
