@@ -132,11 +132,21 @@ private:
 		Display* appDpy = QX11Info::display();
 		XModifierKeymap* map = XGetModifierMapping(appDpy);
 		if (map) {
+			// XKeycodeToKeysym helper code adapeted from xmodmap
+			int min_keycode, max_keycode, keysyms_per_keycode = 1;
+			XDisplayKeycodes (appDpy, &min_keycode, &max_keycode);
+			XFree(XGetKeyboardMapping (appDpy, min_keycode, (max_keycode - min_keycode + 1), &keysyms_per_keycode));
+			
 			int i, maskIndex = 0, mapIndex = 0;
 			for (maskIndex = 0; maskIndex < 8; maskIndex++) {
 				for (i = 0; i < map->max_keypermod; i++) {
 					if (map->modifiermap[mapIndex]) {
-						KeySym sym = XKeycodeToKeysym(appDpy, map->modifiermap[mapIndex], 0);
+						KeySym sym;
+						int symIndex = 0;
+						do {
+							sym = XKeycodeToKeysym(appDpy, map->modifiermap[mapIndex], symIndex);
+							symIndex++;
+ 						} while ( !sym && symIndex < keysyms_per_keycode);
 						if (alt_mask == 0 && (sym == XK_Alt_L || sym == XK_Alt_R)) {
 							alt_mask = 1 << maskIndex;
 						}
