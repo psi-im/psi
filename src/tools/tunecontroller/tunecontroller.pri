@@ -58,7 +58,8 @@ tc_winamp {
 	INCLUDEPATH += $$WINAMP_PLUGIN_PATH
 
 	HEADERS += \
-		$$WINAMP_PLUGIN_PATH/winampcontroller.h 
+		$$WINAMP_PLUGIN_PATH/winampcontroller.h \
+		$$WINAMP_PLUGIN_PATH/winampplugin.h 
 		
 	SOURCES += \
 		$$WINAMP_PLUGIN_PATH/winampcontroller.cpp \
