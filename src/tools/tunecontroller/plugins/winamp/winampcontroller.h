@@ -29,6 +29,7 @@
 
 class WinAmpController : public TuneController
 {
+	Q_OBJECT
 public:
 	WinAmpController();
 	virtual Tune currentTune();
