@@ -189,6 +189,7 @@ void OptionsTabGroupchat::chooseGCNickColor()
 
 void OptionsTabGroupchat::selectedGCNickColor(QListWidgetItem * item)
 {
+	if (!item) return; // no selection on empty list
 	GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
 	d->le_newNickColor->setText( item->text() );
 }
