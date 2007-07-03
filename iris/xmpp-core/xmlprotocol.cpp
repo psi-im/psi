@@ -146,16 +146,40 @@ static void createRootXmlTags(const QDomElement &root, QString *xmlHeader, QStri
 	*xmlHeader = "<?xml version=\"1.0\"?>";
 }
 
+// w3c xml spec:
+// [2] Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+static inline bool validChar(const quint32 ch) 
+{
+	return  ch == 0x9 || ch == 0xA || ch == 0xD
+			|| ch >= 0x20 && ch <= 0xD7FF
+			|| ch >= 0xE000 && ch <= 0xFFFD
+			|| ch >= 0x10000 && ch <= 0x10FFFF;
+}
+
+static inline bool lowSurrogate(const quint32 ch) 
+{
+	return  ch >= 0xDC00 && ch <= 0xDFFF;
+}
+
+static inline bool highSurrogate(const quint32 ch) 
+{
+	return  ch >= 0xD800 && ch <= 0xDBFF;
+}
+
+
 // force encoding of '>'.  this function is needed for XMPP-Core, which
 //  requires the '>' character to be encoded as "&gt;" even though this is
 //  not required by the XML spec.
-static QString ensureGTEncoded(const QString &in)
+// Also remove chars that are ouside the allowed range for XML (see validChar)
+//  and invalid surrogate pairs
+static QString sanitizeForStream(const QString &in)
 {
 	QString out;
 	bool intag = false;
 	bool inquote = false;
 	QChar quotechar;
-	for(int n = 0; n < in.length(); ++n)
+	int inlength = in.length();
+	for(int n = 0; n < inlength; ++n)
 	{
 		QChar c = in[n];
 		bool escape = false;
@@ -191,8 +215,23 @@ static QString ensureGTEncoded(const QString &in)
 
 		if(escape) {
 			out += "&gt;";
-		 }else
-			out += c;
+		 } else {
+			// don't silently drop invalid chars in element or attribute names,
+			// because that's something that should not happen.
+			if (intag && (!inquote)) {
+				out += c;
+			} else if (validChar(c.unicode()))  {
+				out += c;
+			} else if (highSurrogate(c.unicode()) && (n+1 < inlength) && lowSurrogate(in[n+1].unicode())) {
+				//uint unicode = (c.unicode() & 0x3FF) << 10 | in[n+1].unicode() & 0x3FF + 0x10000;
+				// we don't need to recheck this, because 0x10000 <= unicode <= 0x100000 is always true
+				out += c;
+				out += in[n+1];
+				++n;
+			} else {
+				qDebug("Dropping invalid XML char U+%04x",c.unicode());
+			}
+		}
 	}
 	return out;
 }
@@ -412,7 +451,7 @@ QString XmlProtocol::elementToString(const QDomElement &e, bool clip)
 	qn += elem.localName();
 
 	// make the string
-	return ensureGTEncoded(xmlToString(e, ns, qn, clip));
+	return sanitizeForStream(xmlToString(e, ns, qn, clip));
 }
 
 bool XmlProtocol::stepRequiresElement() const
@@ -479,7 +518,7 @@ int XmlProtocol::writeElement(const QDomElement &e, int id, bool external, bool 
 	transferItemList += TransferItem(e, true, external);
 
 	//elementSend(e);
-	QString out = ensureGTEncoded(elementToString(e, clip));
+	QString out = sanitizeForStream(elementToString(e, clip));
 	return internalWriteString(out, TrackItem::Custom, id);
 }
 
@@ -511,7 +550,7 @@ int XmlProtocol::internalWriteData(const QByteArray &a, TrackItem::Type t, int i
 
 int XmlProtocol::internalWriteString(const QString &s, TrackItem::Type t, int id)
 {
-	QString out=ensureGTEncoded(s);
+	QString out=sanitizeForStream(s);
 	Q3CString cs = s.utf8();
 	QByteArray a(cs.length());
 	memcpy(a.data(), cs.data(), a.size());
@@ -528,7 +567,7 @@ void XmlProtocol::sendTagOpen()
 
 	QString s;
 	s += xmlHeader + '\n';
-	s += ensureGTEncoded(tagOpen) + '\n';
+	s += sanitizeForStream(tagOpen) + '\n';
 
 	transferItemList += TransferItem(xmlHeader, true);
 	transferItemList += TransferItem(tagOpen, true);
