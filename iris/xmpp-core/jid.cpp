@@ -23,7 +23,7 @@
 #include <QApplication>
 #include <QByteArray>
 #include <QHash>
-#include <stringprep.h>
+#include <libidn/stringprep.h>
 
 
 using namespace XMPP;

@@ -1,4 +1,4 @@
-#include <stringprep.h>
+#include <libidn/stringprep.h>
 
 /*
  * A.1 Unassigned code points in Unicode 3.2
