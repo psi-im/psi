@@ -68,7 +68,7 @@ extern "C"
 #endif
 
 #include <stddef.h>		/* size_t */
-#include <idn-int.h>		/* my_uint32_t */
+#include <libidn/idn-int.h>		/* my_uint32_t */
 
   typedef enum
   {

@@ -36,7 +36,7 @@ typedef int ssize_t;
 #include <unistd.h>		/* ssize_t */
 #endif
 
-#include <idn-int.h>		/* my_uint32_t */
+#include <libidn/idn-int.h>		/* my_uint32_t */
 #include "qint.h"
 
 #define STRINGPREP_VERSION "0.3.1"

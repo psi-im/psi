@@ -64,9 +64,9 @@
 
 #endif /* _LIBC */
 
-#include "stringprep.h"
-#include "punycode.h"
-#include "idna.h"
+#include "libidn/stringprep.h"
+#include "libidn/punycode.h"
+#include "libidn/idna.h"
 
 /*! \mainpage GNU Internationalized Domain Name Library
  *

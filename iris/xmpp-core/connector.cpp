@@ -36,7 +36,7 @@
 #include <QList>
 #include <QUrl>
 #include "safedelete.h"
-#include <idna.h>
+#include <libidn/idna.h>
 
 #ifdef NO_NDNS
 #include <q3dns.h>
