@@ -94,6 +94,7 @@ public:
 		dlg = d;
 		nickSeparator = ":";
 		typingStatus = Typing_Normal;
+		nonAnonymous = false;
 		
 		trackBar = false;
 		oldTrackBarPosition = 0;
@@ -106,6 +107,7 @@ public:
 	Jid jid;
 	QString self, prev_self;
 	QString password;
+	bool nonAnonymous;     // got status code 100 ?
 	IconAction *act_find, *act_clear, *act_icon, *act_configure;
 #ifdef WHITEBOARDING
 	IconAction *act_whiteboard;
@@ -938,6 +940,10 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 		return;
 	}
 
+	if ((nick == "") && (s.mucStatus() == 100)) {
+		d->nonAnonymous = true;
+	}
+
 	if (nick == d->self) {
 		// Update configuration dialog
 		if (d->configDlg) 
@@ -1129,7 +1135,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 	}
 	
 	if (!s.capsNode().isEmpty()) {
-		Jid caps_jid(s.mucItem().jid().isEmpty() ? Jid(d->jid).withResource(nick) : s.mucItem().jid());
+		Jid caps_jid(s.mucItem().jid().isEmpty() || !d->nonAnonymous ? Jid(d->jid).withResource(nick) : s.mucItem().jid());
 		d->pa->capsManager()->updateCaps(caps_jid,s.capsNode(),s.capsVersion(),s.capsExt());
 	}
 
