@@ -25,6 +25,9 @@
 
 #include <QTextStream>
 #include <QFile>
+#include <QUrl>
+
+#include <stdlib.h>
 
 namespace QCA {
 
@@ -86,7 +89,7 @@ static CertificateInfo orderedToMap(const CertificateInfoOrdered &info)
 	for(int n = 0; n < info.count(); ++n)
 	{
 		const CertificateInfoPair &i = info[n];
-		if(i.type() != OtherInfoType && i.type() != EmailLegacy)
+		if(i.type().known() != EmailLegacy)
 			out.insert(i.type(), i.value());
 	}
 
@@ -94,7 +97,7 @@ static CertificateInfo orderedToMap(const CertificateInfoOrdered &info)
 	for(int n = 0; n < info.count(); ++n)
 	{
 		const CertificateInfoPair &i = info[n];
-		if(i.type() == EmailLegacy)
+		if(i.type().known() == EmailLegacy)
 		{
 			// de-dup
 			QList<QString> emails = out.values(Email);
@@ -106,7 +109,7 @@ static CertificateInfo orderedToMap(const CertificateInfoOrdered &info)
 	return out;
 }
 
-static void moveMapValues(CertificateInfo *from, CertificateInfoOrdered *to, CertificateInfoType type)
+static void moveMapValues(CertificateInfo *from, CertificateInfoOrdered *to, const CertificateInfoType &type)
 {
 	QList<QString> values = from->values(type);
 	from->remove(type);
@@ -137,7 +140,6 @@ static CertificateInfoOrdered mapToOrdered(const CertificateInfo &info)
 
 	// get remaining types
 	QList<CertificateInfoType> typesLeft = in.keys();
-	typesLeft.removeAll(OtherInfoType);
 
 	// dedup
 	QList<CertificateInfoType> types;
@@ -159,9 +161,128 @@ static CertificateInfoOrdered mapToOrdered(const CertificateInfo &info)
 //----------------------------------------------------------------------------
 // Global
 //----------------------------------------------------------------------------
-static const char *shortNameByType(CertificateInfoType type)
+static const char CommonName_id[]             = "2.5.4.3";
+static const char Email_id[]                  = "GeneralName.rfc822Name";
+static const char EmailLegacy_id[]            = "1.2.840.113549.1.9.1";
+static const char Organization_id[]           = "2.5.4.10";
+static const char OrganizationalUnit_id[]     = "2.5.4.11";
+static const char Locality_id[]               = "2.5.4.7";
+static const char IncorporationLocality_id[]  = "1.3.6.1.4.1.311.60.2.1.1";
+static const char State_id[]                  = "2.5.4.8";
+static const char IncorporationState_id[]     = "1.3.6.1.4.1.311.60.2.1.2";
+static const char Country_id[]                = "2.5.4.6";
+static const char IncorporationCountry_id[]   = "1.3.6.1.4.1.311.60.2.1.3";
+static const char URI_id[]                    = "GeneralName.uniformResourceIdentifier";
+static const char DNS_id[]                    = "GeneralName.dNSName";
+static const char IPAddress_id[]              = "GeneralName.iPAddress";
+static const char XMPP_id[]                   = "1.3.6.1.5.5.7.8.5";
+
+static const char DigitalSignature_id[]    = "KeyUsage.digitalSignature";
+static const char NonRepudiation_id[]      = "KeyUsage.nonRepudiation";
+static const char KeyEncipherment_id[]     = "KeyUsage.keyEncipherment";
+static const char DataEncipherment_id[]    = "KeyUsage.dataEncipherment";
+static const char KeyAgreement_id[]        = "KeyUsage.keyAgreement";
+static const char KeyCertificateSign_id[]  = "KeyUsage.keyCertSign";
+static const char CRLSign_id[]             = "KeyUsage.crlSign";
+static const char EncipherOnly_id[]        = "KeyUsage.encipherOnly";
+static const char DecipherOnly_id[]        = "KeyUsage.decipherOnly";
+static const char ServerAuth_id[]          = "1.3.6.1.5.5.7.3.1";
+static const char ClientAuth_id[]          = "1.3.6.1.5.5.7.3.2";
+static const char CodeSigning_id[]         = "1.3.6.1.5.5.7.3.3";
+static const char EmailProtection_id[]     = "1.3.6.1.5.5.7.3.4";
+static const char IPSecEndSystem_id[]      = "1.3.6.1.5.5.7.3.5";
+static const char IPSecTunnel_id[]         = "1.3.6.1.5.5.7.3.6";
+static const char IPSecUser_id[]           = "1.3.6.1.5.5.7.3.7";
+static const char TimeStamping_id[]        = "1.3.6.1.5.5.7.3.8";
+static const char OCSPSigning_id[]         = "1.3.6.1.5.5.7.3.9";
+
+static QString knownToId(CertificateInfoTypeKnown k)
 {
-	switch(type)
+	const char *out = 0;
+	switch(k)
+	{
+		case CommonName:            out = CommonName_id; break;
+		case Email:                 out = Email_id; break;
+		case EmailLegacy:           out = EmailLegacy_id; break;
+		case Organization:          out = Organization_id; break;
+		case OrganizationalUnit:    out = OrganizationalUnit_id; break;
+		case Locality:              out = Locality_id; break;
+		case IncorporationLocality: out = IncorporationLocality_id; break;
+		case State:                 out = State_id; break;
+		case IncorporationState:    out = IncorporationState_id; break;
+		case Country:               out = Country_id; break;
+		case IncorporationCountry:  out = IncorporationCountry_id; break;
+		case URI:                   out = URI_id; break;
+		case DNS:                   out = DNS_id; break;
+		case IPAddress:             out = IPAddress_id; break;
+		case XMPP:                  out = XMPP_id; break;
+	}
+	Q_ASSERT(out);
+	if(!out)
+		abort();
+	return QString(out);
+}
+
+static int idToKnown(const QString &id)
+{
+	if(id == CommonName_id)
+		return CommonName;
+	else if(id == Email_id)
+		return Email;
+	else if(id == EmailLegacy_id)
+		return EmailLegacy;
+	else if(id == Organization_id)
+		return Organization;
+	else if(id == OrganizationalUnit_id)
+		return OrganizationalUnit;
+	else if(id == Locality_id)
+		return Locality;
+	else if(id == IncorporationLocality_id)
+		return IncorporationLocality;
+	else if(id == State_id)
+		return State;
+	else if(id == IncorporationState_id)
+		return IncorporationState;
+	else if(id == Country_id)
+		return Country;
+	else if(id == IncorporationCountry_id)
+		return IncorporationCountry;
+	else if(id == URI_id)
+		return URI;
+	else if(id == DNS_id)
+		return DNS;
+	else if(id == IPAddress_id)
+		return IPAddress;
+	else if(id == XMPP_id)
+		return XMPP;
+	else
+		return -1;
+}
+
+static CertificateInfoType::Section knownToSection(CertificateInfoTypeKnown k)
+{
+	switch(k)
+	{
+		case CommonName:
+		case EmailLegacy:
+		case Organization:
+		case OrganizationalUnit:
+		case Locality:
+		case IncorporationLocality:
+		case State:
+		case IncorporationState:
+		case Country:
+		case IncorporationCountry:
+			return CertificateInfoType::DN;
+		default:
+			break;
+	}
+	return CertificateInfoType::AlternativeName;
+}
+
+static const char *knownToShortName(CertificateInfoTypeKnown k)
+{
+	switch(k)
 	{
 		case CommonName:         return "CN";
 		case Locality:           return "L";
@@ -170,41 +291,115 @@ static const char *shortNameByType(CertificateInfoType type)
 		case OrganizationalUnit: return "OU";
 		case Country:            return "C";
 		case EmailLegacy:        return "emailAddress";
-		default:                 break;
+		default:                                      break;
 	}
 	return 0;
 }
 
-static const char *oidByDNType(CertificateInfoType type)
+static QString constraintKnownToId(ConstraintTypeKnown k)
 {
-	switch(type)
+	const char *out = 0;
+	switch(k)
 	{
-		case CommonName:            break;
-		case EmailLegacy:           return "1.2.840.113549.1.9.1";
-		case Organization:          break;
-		case OrganizationalUnit:    break;
-		case Locality:              break;
-		case IncorporationLocality: return "1.3.6.1.4.1.311.60.2.1.1";
-		case State:                 break;
-		case IncorporationState:    return "1.3.6.1.4.1.311.60.2.1.2";
-		case Country:               break;
-		case IncorporationCountry:  return "1.3.6.1.4.1.311.60.2.1.3";
-		default:                    break;
+		case DigitalSignature:   out = DigitalSignature_id; break;
+		case NonRepudiation:     out = NonRepudiation_id; break;
+		case KeyEncipherment:    out = KeyEncipherment_id; break;
+		case DataEncipherment:   out = DataEncipherment_id; break;
+		case KeyAgreement:       out = KeyAgreement_id; break;
+		case KeyCertificateSign: out = KeyCertificateSign_id; break;
+		case CRLSign:            out = CRLSign_id; break;
+		case EncipherOnly:       out = EncipherOnly_id; break;
+		case DecipherOnly:       out = DecipherOnly_id; break;
+		case ServerAuth:         out = ServerAuth_id; break;
+		case ClientAuth:         out = ClientAuth_id; break;
+		case CodeSigning:        out = CodeSigning_id; break;
+		case EmailProtection:    out = EmailProtection_id; break;
+		case IPSecEndSystem:     out = IPSecEndSystem_id; break;
+		case IPSecTunnel:        out = IPSecTunnel_id; break;
+		case IPSecUser:          out = IPSecUser_id; break;
+		case TimeStamping:       out = TimeStamping_id; break;
+		case OCSPSigning:        out = OCSPSigning_id; break;
 	}
-	return 0;
+	Q_ASSERT(out);
+	if(!out)
+		abort();
+	return QString(out);
 }
 
-static QString knownDNLabel(CertificateInfoType type)
+static int constraintIdToKnown(const QString &id)
 {
-	const char *str = shortNameByType(type);
+	if(id == DigitalSignature_id)
+		return DigitalSignature;
+	else if(id == NonRepudiation_id)
+		return NonRepudiation;
+	else if(id == KeyEncipherment_id)
+		return KeyEncipherment;
+	else if(id == DataEncipherment_id)
+		return DataEncipherment;
+	else if(id == KeyAgreement_id)
+		return KeyAgreement;
+	else if(id == KeyCertificateSign_id)
+		return KeyCertificateSign;
+	else if(id == CRLSign_id)
+		return CRLSign;
+	else if(id == EncipherOnly_id)
+		return EncipherOnly;
+	else if(id == DecipherOnly_id)
+		return DecipherOnly;
+	else if(id == ServerAuth_id)
+		return ServerAuth;
+	else if(id == ClientAuth_id)
+		return ClientAuth;
+	else if(id == CodeSigning_id)
+		return CodeSigning;
+	else if(id == EmailProtection_id)
+		return EmailProtection;
+	else if(id == IPSecEndSystem_id)
+		return IPSecEndSystem;
+	else if(id == IPSecTunnel_id)
+		return IPSecTunnel;
+	else if(id == IPSecUser_id)
+		return IPSecUser;
+	else if(id == TimeStamping_id)
+		return TimeStamping;
+	else if(id == OCSPSigning_id)
+		return OCSPSigning;
+	else
+		return -1;
+}
+
+static ConstraintType::Section constraintKnownToSection(ConstraintTypeKnown k)
+{
+	switch(k)
+	{
+		case DigitalSignature:
+		case NonRepudiation:
+		case KeyEncipherment:
+		case DataEncipherment:
+		case KeyAgreement:
+		case KeyCertificateSign:
+		case CRLSign:
+		case EncipherOnly:
+		case DecipherOnly:
+			return ConstraintType::KeyUsage;
+		default:
+			break;
+	}
+	return ConstraintType::ExtendedKeyUsage;
+}
+
+static QString dnLabel(const CertificateInfoType &type)
+{
+	const char *str = knownToShortName(type.known());
 	if(str)
 		return str;
 
-	str = oidByDNType(type);
-	if(str)
-		return QString("OID.") + str;
+	QString id = type.id();
+	// is it an oid?
+	if(id[0].isDigit())
+		return QString("OID.") + id;
 
-	return QString();
+	return QString("qca.") + id;
 }
 
 QString orderedToDNString(const CertificateInfoOrdered &in)
@@ -212,13 +407,10 @@ QString orderedToDNString(const CertificateInfoOrdered &in)
 	QStringList parts;
 	foreach(const CertificateInfoPair &i, in)
 	{
-		if(i.section() != CertificateInfoPair::DN)
+		if(i.type().section() != CertificateInfoType::DN)
 			continue;
 
-		QString name = knownDNLabel(i.type());
-		if(name.isEmpty())
-			name = QString("OID.") + i.oid();
-
+		QString name = dnLabel(i.type());
 		parts += name + '=' + i.value();
 	}
 	return parts.join(", ");
@@ -229,7 +421,7 @@ CertificateInfoOrdered orderedDNOnly(const CertificateInfoOrdered &in)
 	CertificateInfoOrdered out;
 	for(int n = 0; n < in.count(); ++n)
 	{
-		if(in[n].section() == CertificateInfoPair::DN)
+		if(in[n].type().section() == CertificateInfoType::DN)
 			out += in[n];
 	}
 	return out;
@@ -258,7 +450,7 @@ static QList<int> findSameName(const QString &name, const QStringList &list)
 	return out;
 }
 
-static QString uniqueSubjectValue(CertificateInfoType type, const QList<int> items, const QList<Certificate> &certs, int i)
+static QString uniqueSubjectValue(const CertificateInfoType &type, const QList<int> items, const QList<Certificate> &certs, int i)
 {
 	QStringList vals = certs[items[i]].subjectInfo().values(type);
 	if(!vals.isEmpty())
@@ -313,9 +505,9 @@ static QString uniqueIssuerName(const QList<int> items, const QList<Certificate>
 	return QString();
 }
 
-static const char *constraintToString(ConstraintType type)
+static const char *constraintToString(const ConstraintType &type)
 {
-	switch(type)
+	switch(type.known())
 	{
 		case DigitalSignature:   return "DigitalSignature";
 		case NonRepudiation:     return "NonRepudiation";
@@ -339,7 +531,7 @@ static const char *constraintToString(ConstraintType type)
 	return 0;
 }
 
-static QString uniqueConstraintValue(ConstraintType type, const QList<int> items, const QList<Certificate> &certs, int i)
+static QString uniqueConstraintValue(const ConstraintType &type, const QList<int> items, const QList<Certificate> &certs, int i)
 {
 	ConstraintType val = type;
 	if(certs[items[i]].constraints().contains(type))
@@ -522,21 +714,126 @@ QStringList makeFriendlyNames(const QList<Certificate> &list)
 }
 
 //----------------------------------------------------------------------------
+// CertificateInfoType
+//----------------------------------------------------------------------------
+class CertificateInfoType::Private : public QSharedData
+{
+public:
+	CertificateInfoType::Section section;
+	int known;
+	QString id;
+
+	Private() :
+		section(CertificateInfoType::DN),
+		known(-1)
+	{
+	}
+};
+
+CertificateInfoType::CertificateInfoType()
+:d(new Private)
+{
+}
+
+CertificateInfoType::CertificateInfoType(CertificateInfoTypeKnown known)
+:d(new Private)
+{
+	d->section = knownToSection(known);
+	d->known = known;
+	d->id = knownToId(known); // always valid
+}
+
+CertificateInfoType::CertificateInfoType(const QString &id, Section section)
+:d(new Private)
+{
+	d->section = section;
+	d->known = idToKnown(id); // can be -1 for unknown
+	d->id = id;
+}
+
+CertificateInfoType::CertificateInfoType(const CertificateInfoType &from)
+:d(from.d)
+{
+}
+
+CertificateInfoType::~CertificateInfoType()
+{
+}
+
+CertificateInfoType & CertificateInfoType::operator=(const CertificateInfoType &from)
+{
+	d = from.d;
+	return *this;
+}
+
+CertificateInfoType::Section CertificateInfoType::section() const
+{
+	return d->section;
+}
+
+CertificateInfoTypeKnown CertificateInfoType::known() const
+{
+	return (CertificateInfoTypeKnown)d->known;
+}
+
+QString CertificateInfoType::id() const
+{
+	return d->id;
+}
+
+bool CertificateInfoType::operator<(const CertificateInfoType &other) const
+{
+	// sort by knowns (in enum order), then by ids (in string order)
+	if(d->known != -1)
+	{
+		if(other.d->known == -1)
+			return true;
+		else if(d->known < other.d->known)
+			return true;
+		else
+			return false;
+	}
+	else
+	{
+		if(other.d->known != -1)
+			return false;
+		else if(d->id < other.d->id)
+			return true;
+		else
+			return false;
+	}
+}
+
+bool CertificateInfoType::operator==(const CertificateInfoType &other) const
+{
+	// are both known types?
+	if(d->known != -1 && other.d->known != -1)
+	{
+		// if so, compare the ints
+		if(d->known != other.d->known)
+			return false;
+	}
+	else
+	{
+		// otherwise, compare the string ids
+		if(d->id != other.d->id)
+			return false;
+	}
+
+	if(d->section != other.d->section)
+		return false;
+
+	return true;
+}
+
+//----------------------------------------------------------------------------
 // CertificateInfoPair
 //----------------------------------------------------------------------------
 class CertificateInfoPair::Private : public QSharedData
 {
 public:
-	bool use_altname;
 	CertificateInfoType type;
-	QString oid;
 	QString value;
-
-	Private()
-	{
-		use_altname = false;
-		type = (CertificateInfoType)-1;
-	}
 };
 
 CertificateInfoPair::CertificateInfoPair()
@@ -544,42 +841,10 @@ CertificateInfoPair::CertificateInfoPair()
 {
 }
 
-CertificateInfoPair::CertificateInfoPair(CertificateInfoType type, const QString &value)
+CertificateInfoPair::CertificateInfoPair(const CertificateInfoType &type, const QString &value)
 :d(new Private)
 {
-	switch(type)
-	{
-		case CommonName:
-		case EmailLegacy:
-		case Organization:
-		case OrganizationalUnit:
-		case Locality:
-		case IncorporationLocality:
-		case State:
-		case IncorporationState:
-		case Country:
-		case IncorporationCountry:
-			d->use_altname = false;
-			break;
-		default:
-			d->use_altname = true;
-			break;
-	}
-
 	d->type = type;
-	d->value = value;
-}
-
-CertificateInfoPair::CertificateInfoPair(const QString &oid, const QString &value, Section section)
-:d(new Private)
-{
-	if(section == AltName)
-		d->use_altname = true;
-	else
-		d->use_altname = false;
-
-	d->type = OtherInfoType;
-	d->oid = oid;
 	d->value = value;
 }
 
@@ -598,22 +863,9 @@ CertificateInfoPair & CertificateInfoPair::operator=(const CertificateInfoPair &
 	return *this;
 }
 
-CertificateInfoPair::Section CertificateInfoPair::section() const
-{
-	if(d->use_altname)
-		return AltName;
-	else
-		return DN;
-}
-
 CertificateInfoType CertificateInfoPair::type() const
 {
 	return d->type;
-}
-
-QString CertificateInfoPair::oid() const
-{
-	return d->oid;
 }
 
 QString CertificateInfoPair::value() const
@@ -623,9 +875,122 @@ QString CertificateInfoPair::value() const
 
 bool CertificateInfoPair::operator==(const CertificateInfoPair &other) const
 {
-	if((d->type == other.d->type || (d->use_altname == other.d->use_altname && d->oid == other.d->oid)) && d->value == other.d->value)
+	if(d->type == other.d->type && d->value == other.d->value)
 		return true;
 	return false;
+}
+
+//----------------------------------------------------------------------------
+// ConstraintType
+//----------------------------------------------------------------------------
+class ConstraintType::Private : public QSharedData
+{
+public:
+	ConstraintType::Section section;
+	int known;
+	QString id;
+
+	Private() :
+		section(ConstraintType::KeyUsage),
+		known(-1)
+	{
+	}
+};
+
+ConstraintType::ConstraintType()
+:d(new Private)
+{
+}
+
+ConstraintType::ConstraintType(ConstraintTypeKnown known)
+:d(new Private)
+{
+	d->section = constraintKnownToSection(known);
+	d->known = known;
+	d->id = constraintKnownToId(known); // always valid
+}
+
+ConstraintType::ConstraintType(const QString &id, Section section)
+:d(new Private)
+{
+	d->section = section;
+	d->known = constraintIdToKnown(id); // can be -1 for unknown
+	d->id = id;
+}
+
+ConstraintType::ConstraintType(const ConstraintType &from)
+:d(from.d)
+{
+}
+
+ConstraintType::~ConstraintType()
+{
+}
+
+ConstraintType & ConstraintType::operator=(const ConstraintType &from)
+{
+	d = from.d;
+	return *this;
+}
+
+ConstraintType::Section ConstraintType::section() const
+{
+	return d->section;
+}
+
+ConstraintTypeKnown ConstraintType::known() const
+{
+	return (ConstraintTypeKnown)d->known;
+}
+
+QString ConstraintType::id() const
+{
+	return d->id;
+}
+
+bool ConstraintType::operator<(const ConstraintType &other) const
+{
+	// sort by knowns (in enum order), then by ids (in string order)
+	if(d->known != -1)
+	{
+		if(other.d->known == -1)
+			return true;
+		else if(d->known < other.d->known)
+			return true;
+		else
+			return false;
+	}
+	else
+	{
+		if(other.d->known != -1)
+			return false;
+		else if(d->id < other.d->id)
+			return true;
+		else
+			return false;
+	}
+}
+
+bool ConstraintType::operator==(const ConstraintType &other) const
+{
+	// are both known types?
+	if(d->known != -1 && other.d->known != -1)
+	{
+		// if so, compare the ints
+		if(d->known != other.d->known)
+			return false;
+	}
+	else
+	{
+		// otherwise, compare the string ids
+		if(d->id != other.d->id)
+			return false;
+	}
+
+	if(d->section != other.d->section)
+		return false;
+
+	return true;
 }
 
 //----------------------------------------------------------------------------
@@ -641,7 +1006,7 @@ public:
 	CertificateInfo infoMap;
 	Constraints constraints;
 	QStringList policies;
-	QStringList crlLocations;
+	QStringList crlLocations, issuerLocations, ocspLocations;
 	bool isCA;
 	int pathLimit;
 	BigInteger serial;
@@ -726,6 +1091,16 @@ QStringList CertificateOptions::crlLocations() const
 	return d->crlLocations;
 }
 
+QStringList CertificateOptions::issuerLocations() const
+{
+	return d->issuerLocations;
+}
+
+QStringList CertificateOptions::ocspLocations() const
+{
+	return d->ocspLocations;
+}
+
 bool CertificateOptions::isCA() const
 {
 	return d->isCA;
@@ -783,6 +1158,16 @@ void CertificateOptions::setCRLLocations(const QStringList &locations)
 	d->crlLocations = locations;
 }
 
+void CertificateOptions::setIssuerLocations(const QStringList &locations)
+{
+	d->issuerLocations = locations;
+}
+
+void CertificateOptions::setOCSPLocations(const QStringList &locations)
+{
+	d->ocspLocations = locations;
+}
+
 void CertificateOptions::setAsCA(int pathLimit)
 {
 	d->isCA = true;
@@ -809,65 +1194,212 @@ void CertificateOptions::setValidityPeriod(const QDateTime &start, const QDateTi
 //----------------------------------------------------------------------------
 // Certificate
 //----------------------------------------------------------------------------
-// (adapted from kdelibs) -- Justin
-static bool certnameMatchesAddress(const QString &_cn, const QString &peerHost)
+// ip address string to binary (msb), adapted from jdns (adapted from qt)
+// return: size 4 = ipv4, size 16 = ipv6, size 0 = error
+static QByteArray ipaddr_str2bin(const QString &str)
 {
-	QString cn = _cn.trimmed().toLower();
-	QRegExp rx;
-
-	// Check for invalid characters
-	if(QRegExp("[^a-zA-Z0-9\\.\\*\\-]").indexIn(cn) >= 0)
-		return false;
-
-	// Domains can legally end with '.'s.  We don't need them though.
-	while(cn.endsWith("."))
-		cn.truncate(cn.length()-1);
-
-	// Do not let empty CN's get by!!
-	if(cn.isEmpty())
-		return false;
-
-	// Check for IPv4 address
-	rx.setPattern("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}");
-	if(rx.exactMatch(peerHost))
-		return peerHost == cn;
-
-	// Check for IPv6 address here...
-	rx.setPattern("^\\[.*\\]$");
-	if(rx.exactMatch(peerHost))
-		return peerHost == cn;
-
-	if(cn.contains('*'))
+	// ipv6
+	if(str.contains(':'))
 	{
-		// First make sure that there are at least two valid parts
-		// after the wildcard (*).
-		QStringList parts = cn.split('.', QString::SkipEmptyParts);
+		QStringList parts = str.split(':', QString::KeepEmptyParts);
+		if(parts.count() < 3 || parts.count() > 8)
+			return QByteArray();
 
-		while(parts.count() > 2)
-			parts.removeFirst();
+		QByteArray ipv6(16, 0);
+		int at = 16;
+		int fill = 9 - parts.count();
+		for(int n = parts.count() - 1; n >= 0; --n)
+		{
+			if(at <= 0)
+				return QByteArray();
 
-		if(parts.count() != 2)
-			return false;  // we don't allow *.root - that's bad
+			if(parts[n].isEmpty())
+			{
+				if(n == parts.count() - 1)
+				{
+					if(!parts[n - 1].isEmpty())
+						return QByteArray();
+					ipv6[--at] = 0;
+					ipv6[--at] = 0;
+				}
+				else if(n == 0)
+				{
+					if(!parts[n + 1].isEmpty())
+						return QByteArray();
+					ipv6[--at] = 0;
+					ipv6[--at] = 0;
+				}
+				else
+				{
+					for(int i = 0; i < fill; ++i)
+					{
+						if(at <= 0)
+							return QByteArray();
+						ipv6[--at] = 0;
+						ipv6[--at] = 0;
+					}
+				}
+			}
+			else
+			{
+				if(parts[n].indexOf('.') == -1)
+				{
+					bool ok;
+					int x = parts[n].toInt(&ok, 16);
+					if(!ok || x < 0 || x > 0xffff)
+						return QByteArray();
+					ipv6[--at] = x & 0xff;
+					ipv6[--at] = (x >> 8) & 0xff;
+				}
+				else
+				{
+					if(n != parts.count() - 1)
+						return QByteArray();
 
-		if(parts[0].contains('*') || parts[1].contains('*'))
-			return false;
+					QByteArray buf = ipaddr_str2bin(parts[n]);
+					if(buf.isEmpty())
+						return QByteArray();
 
-		// RFC2818 says that *.example.com should match against
-		// foo.example.com but not bar.foo.example.com
-		// (ie. they must have the same number of parts)
-		if(QRegExp(cn, Qt::CaseInsensitive, QRegExp::Wildcard).exactMatch(peerHost) &&
-		   cn.split('.', QString::SkipEmptyParts).count() ==
-		   peerHost.split('.', QString::SkipEmptyParts).count())
-			return true;
+					ipv6[--at] = buf[3];
+					ipv6[--at] = buf[2];
+					ipv6[--at] = buf[1];
+					ipv6[--at] = buf[0];
+					--fill;
+				}
+			}
+		}
 
+		return ipv6;
+	}
+	else if(str.contains('.'))
+	{
+		QStringList parts = str.split('.', QString::KeepEmptyParts);
+		if(parts.count() != 4)
+			return QByteArray();
+
+		QByteArray out(4, 0);
+		for(int n = 0; n < 4; ++n)
+		{
+			bool ok;
+			int x = parts[n].toInt(&ok);
+			if(!ok || x < 0 || x > 0xff)
+				return QByteArray();
+			out[n] = (unsigned char)x;
+		}
+		return out;
+	}
+	else
+		return QByteArray();
+}
+
+// acedomain must be all lowercase, with no trailing dot or wildcards
+static bool cert_match_domain(const QString &certname, const QString &acedomain)
+{
+	// KSSL strips start/end whitespace, even though such whitespace is
+	//   probably not legal anyway. (compat)
+	QString name = certname.trimmed();
+
+	// KSSL strips trailing dot, even though the dot is probably not
+	//   legal anyway. (compat)
+	if(name.length() > 0 && name[name.length()-1] == '.')
+		name.truncate(name.length()-1);
+
+	// after our compatibility modifications, make sure the name isn't
+	//   empty.
+	if(name.isEmpty())
 		return false;
+
+	// lowercase, for later performing case insensitive matching
+	name = name.toLower();
+
+	// ensure the cert field contains valid characters only
+	if(QRegExp("[^a-z0-9\\.\\*\\-]").indexIn(name) >= 0)
+		return false;
+
+	// hack into parts, and require at least 1 part
+	QStringList parts_name = name.split('.', QString::KeepEmptyParts);
+	if(parts_name.isEmpty())
+		return false;
+
+	// KSSL checks to make sure the last two parts don't contain
+	//   wildcards.  I don't know where it is written that this
+	//   should be done, but for compat sake we'll do it.
+	if(parts_name[0].contains('*'))
+		return false;
+	if(parts_name.count() >= 2 && parts_name[1].contains('*'))
+		return false;
+
+	QStringList parts_compare = acedomain.split('.', QString::KeepEmptyParts);
+	if(parts_compare.isEmpty())
+		return false;
+
+	// don't allow empty parts
+	foreach(const QString &s, parts_name)
+	{
+		if(s.isEmpty())
+			return false;
+	}
+	foreach(const QString &s, parts_compare)
+	{
+		if(s.isEmpty())
+			return false;
 	}
 
-	// We must have an exact match in this case (insensitive though)
-	// (note we already did .lower())
-	if(cn == peerHost)
-		return true;
-	return false;
+	// RFC2818: "Names may contain the wildcard character * which is
+	//   considered to match any single domain name component or
+	//   component fragment. E.g., *.a.com matches foo.a.com but not
+	//   bar.foo.a.com. f*.com matches foo.com but not bar.com."
+	//
+	// This means that for the domain to match it must have the
+	//   same number of components, wildcards or not.  If there are
+	//   wildcards, their scope must only be within the component
+	//   they reside in.
+	//
+	// First, make sure the number of parts is equal.
+	if(parts_name.count() != parts_compare.count())
+		return false;
+
+	// Now compare each part
+	for(int n = 0; n < parts_name.count(); ++n)
+	{
+		const QString &p1 = parts_name[n];
+		const QString &p2 = parts_compare[n];
+
+		if(!QRegExp(p1, Qt::CaseSensitive, QRegExp::Wildcard).exactMatch(p2))
+			return false;
+	}
+
+	return true;
+}
+
+// ipaddress must be an ipv4 or ipv6 address in binary format
+static bool cert_match_ipaddress(const QString &certname, const QByteArray &ipaddress)
+{
+	// KSSL strips start/end whitespace, even though such whitespace is
+	//   probably not legal anyway. (compat)
+	QString name = certname.trimmed();
+
+	// KSSL accepts IPv6 in brackets, which is usually done for URIs, but
+	//   IMO sounds very strange for a certificate.  We'll follow this
+	//   behavior anyway. (compat)
+	if(name.length() >= 2 && name[0] == '[' && name[name.length()-1] == ']')
+		name = name.mid(1, name.length() - 2); // chop off brackets
+
+	// after our compatibility modifications, make sure the name isn't
+	//   empty.
+	if(name.isEmpty())
+		return false;
+
+	// convert to binary form
+	QByteArray addr = ipaddr_str2bin(name);
+	if(addr.isEmpty())
+		return false;
+
+	// not the same?
+	if(addr != ipaddress)
+		return false;
+
+	return true;
 }
 
 class Certificate::Private : public QSharedData
@@ -977,6 +1509,16 @@ QStringList Certificate::crlLocations() const
 	return static_cast<const CertContext *>(context())->props()->crlLocations;
 }
 
+QStringList Certificate::issuerLocations() const
+{
+	return static_cast<const CertContext *>(context())->props()->issuerLocations;
+}
+
+QStringList Certificate::ocspLocations() const
+{
+	return static_cast<const CertContext *>(context())->props()->ocspLocations;
+}
+
 QString Certificate::commonName() const
 {
 	return d->subjectInfoMap.value(CommonName);
@@ -1031,43 +1573,19 @@ QByteArray Certificate::issuerKeyId() const
 	return static_cast<const CertContext *>(context())->props()->issuerId;
 }
 
-Validity Certificate::validate(const CertificateCollection &trusted, const CertificateCollection &untrusted, UsageMode u) const
+Validity Certificate::validate(const CertificateCollection &trusted, const CertificateCollection &untrusted, UsageMode u, ValidateFlags vf) const
 {
 	QList<Certificate> issuers = trusted.certificates() + untrusted.certificates();
 	CertificateChain chain;
 	chain += *this;
-	chain = chain.complete(issuers);
-	return chain.validate(trusted, untrusted.crls(), u);
-
-	/*QList<CertContext*> trusted_list;
-	QList<CertContext*> untrusted_list;
-	QList<CRLContext*> crl_list;
-
-	QList<Certificate> trusted_certs = trusted.certificates();
-	QList<Certificate> untrusted_certs = untrusted.certificates();
-	QList<CRL> crls = trusted.crls() + untrusted.crls();
-
-	int n;
-	for(n = 0; n < trusted_certs.count(); ++n)
-	{
-		CertContext *c = static_cast<CertContext *>(trusted_certs[n].context());
-		trusted_list += c;
-	}
-	for(n = 0; n < untrusted_certs.count(); ++n)
-	{
-		CertContext *c = static_cast<CertContext *>(untrusted_certs[n].context());
-		untrusted_list += c;
-	}
-	for(n = 0; n < crls.count(); ++n)
-	{
-		CRLContext *c = static_cast<CRLContext *>(crls[n].context());
-		crl_list += c;
-	}
-
-	return static_cast<const CertContext *>(context())->validate(trusted_list, untrusted_list, crl_list, u);*/
+	Validity result;
+	chain = chain.complete(issuers, &result);
+	if(result != ValidityGood)
+		return result;
+	return chain.validate(trusted, untrusted.crls(), u, vf);
 }
 
-SecureArray Certificate::toDER() const
+QByteArray Certificate::toDER() const
 {
 	return static_cast<const CertContext *>(context())->toDER();
 }
@@ -1082,7 +1600,7 @@ bool Certificate::toPEMFile(const QString &fileName) const
 	return stringToFile(fileName, toPEM());
 }
 
-Certificate Certificate::fromDER(const SecureArray &a, ConvertResult *result, const QString &provider)
+Certificate Certificate::fromDER(const QByteArray &a, ConvertResult *result, const QString &provider)
 {
 	Certificate c;
 	CertContext *cc = static_cast<CertContext *>(getContext("cert", provider));
@@ -1122,25 +1640,67 @@ Certificate Certificate::fromPEMFile(const QString &fileName, ConvertResult *res
 	return fromPEM(pem, result, provider);
 }
 
-bool Certificate::matchesHostname(const QString &realHost) const
+// check for ip addresses in iPAddress, dNSName, then commonName
+// for all else, check in dNSName, then commonName
+bool Certificate::matchesHostName(const QString &host) const
 {
-	QString peerHost = realHost.trimmed();
-	while(peerHost.endsWith("."))
-		peerHost.truncate(peerHost.length()-1);
-	peerHost = peerHost.toLower();
-	foreach( const QString &commonName, subjectInfo().values(CommonName) ) {
-		if (certnameMatchesAddress(commonName, peerHost))
-			return true;
-	}
+	QByteArray ipaddr = ipaddr_str2bin(host);
+	if(!ipaddr.isEmpty()) // ip address
+	{
+		// check iPAddress
+		foreach(const QString &s, subjectInfo().values(IPAddress))
+		{
+			if(cert_match_ipaddress(s, ipaddr))
+				return true;
+		}
 
-	foreach( const QString &dnsName, subjectInfo().values(DNS) ) {
-		if (certnameMatchesAddress(dnsName, peerHost))
-			return true;
-	}
+		// check dNSName
+		foreach(const QString &s, subjectInfo().values(DNS))
+		{
+			if(cert_match_ipaddress(s, ipaddr))
+				return true;
+		}
 
-	foreach( const QString &ipAddy, subjectInfo().values(IPAddress) ) {
-		if (certnameMatchesAddress(ipAddy, peerHost))
-			return true;
+		// check commonName
+		foreach(const QString &s, subjectInfo().values(CommonName))
+		{
+			if(cert_match_ipaddress(s, ipaddr))
+				return true;
+		}
+	}
+	else // domain
+	{
+		// lowercase
+		QString name = host.toLower();
+
+		// ACE
+		name = QString::fromLatin1(QUrl::toAce(name));
+
+		// don't allow wildcards in the comparison host
+		if(name.contains('*'))
+			return false;
+
+		// strip out trailing dot
+		if(name.length() > 0 && name[name.length()-1] == '.')
+			name.truncate(name.length()-1);
+
+		// make sure the name is not empty after our modifications
+		if(name.isEmpty())
+			return false;
+
+		// check dNSName
+		foreach(const QString &s, subjectInfo().values(DNS))
+		{
+			if(cert_match_domain(s, name))
+				return true;
+		}
+
+		// check commonName
+		foreach(const QString &s, subjectInfo().values(CommonName))
+		{
+			if(cert_match_domain(s, name))
+				return true;
+		}
 	}
 
 	return false;
@@ -1148,30 +1708,18 @@ bool Certificate::matchesHostname(const QString &realHost) const
 
 bool Certificate::operator==(const Certificate &otherCert) const
 {
-	if ( isNull() ) {
-		if ( otherCert.isNull() ) {
+	if(isNull())
+	{
+		if(otherCert.isNull())
 			return true;
-		} else {
+		else
 			return false;
-		}
-	} else if ( otherCert.isNull() ) {
-		return false;
 	}
+	else if(otherCert.isNull())
+		return false;
 
-	const CertContextProps *a = static_cast<const CertContext *>(context())->props();
-	const CertContextProps *b = static_cast<const CertContext *>(otherCert.context())->props();
-
-	// logic from Botan
-	if(a->sig != b->sig || a->sigalgo != b->sigalgo ||
-	   subjectPublicKey() != otherCert.subjectPublicKey())
-		return false;
-	if(a->issuer != b->issuer || a->subject != b->subject)
-		return false;
-	if(a->serial != b->serial || a->version != b->version)
-		return false;
-	if(a->start != b->start || a->end != b->end)
-		return false;
-	return true;
+	const CertContext *other = static_cast<const CertContext *>(otherCert.context());
+	return static_cast<const CertContext *>(context())->compare(other);
 }
 
 void Certificate::change(CertContext *c)
@@ -1180,7 +1728,7 @@ void Certificate::change(CertContext *c)
 	d->update(static_cast<CertContext *>(context()));
 }
 
-Validity Certificate::chain_validate(const CertificateChain &chain, const CertificateCollection &trusted, const QList<CRL> &untrusted_crls, UsageMode u) const
+Validity Certificate::chain_validate(const CertificateChain &chain, const CertificateCollection &trusted, const QList<CRL> &untrusted_crls, UsageMode u, ValidateFlags vf) const
 {
 	QList<CertContext*> chain_list;
 	QList<CertContext*> trusted_list;
@@ -1206,14 +1754,16 @@ Validity Certificate::chain_validate(const CertificateChain &chain, const Certif
 		crl_list += c;
 	}
 
-	return static_cast<const CertContext *>(context())->validate_chain(chain_list, trusted_list, crl_list, u);
+	return static_cast<const CertContext *>(context())->validate_chain(chain_list, trusted_list, crl_list, u, vf);
 }
 
-CertificateChain Certificate::chain_complete(const CertificateChain &chain, const QList<Certificate> &issuers) const
+CertificateChain Certificate::chain_complete(const CertificateChain &chain, const QList<Certificate> &issuers, Validity *result) const
 {
 	CertificateChain out;
 	QList<Certificate> pool = issuers + chain.mid(1);
 	out += chain.first();
+	if(result)
+		*result = ValidityGood;
 	while(!out.last().isSelfSigned())
 	{
 		// try to get next in chain
@@ -1230,7 +1780,11 @@ CertificateChain Certificate::chain_complete(const CertificateChain &chain, cons
 			//printf("%s  no\n", qPrintable(str));
 		}
 		if(at == -1)
+		{
+			if(result)
+				*result = ErrorInvalidCA;
 			break;
+		}
 
 		// take it out of the pool
 		Certificate next = pool.takeAt(at);
@@ -1369,31 +1923,21 @@ SignatureAlgorithm CertificateRequest::signatureAlgorithm() const
 
 bool CertificateRequest::operator==(const CertificateRequest &otherCsr) const
 {
-	if (isNull()) {
-		if (otherCsr.isNull())
-			// they are both null
+	if(isNull())
+	{
+		if(otherCsr.isNull())
 			return true;
 		else
 			return false;
 	}
-	if (otherCsr.isNull())
+	else if(otherCsr.isNull())
 		return false;
 
-	if (signatureAlgorithm() != otherCsr.signatureAlgorithm())
-		return false;
-
-	const CertContextProps *a = static_cast<const CSRContext *>(context())->props();
-	const CertContextProps *b = static_cast<const CSRContext *>(otherCsr.context())->props();
-
-	if (a->sig != b->sig)
-		return false;
-
-	// TODO: Anything else we should compare?
-
-	return true;
+	const CSRContext *other = static_cast<const CSRContext *>(otherCsr.context());
+	return static_cast<const CSRContext *>(context())->compare(other);
 }
 
-SecureArray CertificateRequest::toDER() const
+QByteArray CertificateRequest::toDER() const
 {
 	return static_cast<const CSRContext *>(context())->toDER();
 }
@@ -1408,7 +1952,7 @@ bool CertificateRequest::toPEMFile(const QString &fileName) const
 	return stringToFile(fileName, toPEM());
 }
 
-CertificateRequest CertificateRequest::fromDER(const SecureArray &a, ConvertResult *result, const QString &provider)
+CertificateRequest CertificateRequest::fromDER(const QByteArray &a, ConvertResult *result, const QString &provider)
 {
 	CertificateRequest c;
 	CSRContext *csr = static_cast<CSRContext *>(getContext("csr", provider));
@@ -1534,34 +2078,32 @@ CRLEntry::Reason CRLEntry::reason() const
 
 bool CRLEntry::operator==(const CRLEntry &otherEntry) const
 {
-	if ( isNull() ) {
-		if ( otherEntry.isNull() ) {
+	if(isNull())
+	{
+		if(otherEntry.isNull())
 			return true;
-		} else {
+		else
 			return false;
-		}
-	} else if ( otherEntry.isNull() ) {
-		return false;
 	}
+	else if(otherEntry.isNull())
+		return false;
 
-	if ( ( _serial != otherEntry.serialNumber() ) ||
-	     ( _time != otherEntry.time() ) ||
-	     ( _reason != otherEntry.reason() ) ) {
+	if((_serial != otherEntry._serial) ||
+		(_time != otherEntry._time) ||
+		(_reason != otherEntry._reason))
+	{
 		return false;
 	}
 	return true;
-
 }
 
 bool CRLEntry::operator<(const CRLEntry &otherEntry) const
 {
-	if ( isNull() || otherEntry.isNull() ) {
+	if(isNull() || otherEntry.isNull())
 		return false;
-	}
 
-	if ( _serial < otherEntry.serialNumber() ) {
+	if(_serial < otherEntry._serial)
 		return true;
-	}
 
 	return false;
 }
@@ -1649,7 +2191,7 @@ QByteArray CRL::issuerKeyId() const
 	return static_cast<const CRLContext *>(context())->props()->issuerId;
 }
 
-SecureArray CRL::toDER() const
+QByteArray CRL::toDER() const
 {
 	return static_cast<const CRLContext *>(context())->toDER();
 }
@@ -1661,48 +2203,21 @@ QString CRL::toPEM() const
 
 bool CRL::operator==(const CRL &otherCrl) const
 {
-	if ( isNull() ) {
-		if ( otherCrl.isNull() ) {
+	if(isNull())
+	{
+		if(otherCrl.isNull())
 			return true;
-		} else {
+		else
 			return false;
-		}
-	} else if ( otherCrl.isNull() ) {
-		return false;
 	}
-
-	const CRLContextProps *a = static_cast<const CRLContext *>(context())->props();
-	const CRLContextProps *b = static_cast<const CRLContext *>(otherCrl.context())->props();
-
-	if ( number() != otherCrl.number() )
+	else if(otherCrl.isNull())
 		return false;
 
-	if ( thisUpdate() != otherCrl.thisUpdate() )
-		return false;
-
-	if ( nextUpdate() != otherCrl.nextUpdate() )
-		return false;
-
-	if ( a->sig != b->sig )
-		return false;
-
-	if ( signatureAlgorithm() != otherCrl.signatureAlgorithm() )
-		return false;
-
-	if ( issuerKeyId() != otherCrl.issuerKeyId() )
-		return false;
-
-	if ( revoked() != otherCrl.revoked() )
-		return false;
-
-	if ( issuerKeyId() != otherCrl.issuerKeyId() )
-		return false;
-
-	return true;
-
+	const CRLContext *other = static_cast<const CRLContext *>(otherCrl.context());
+	return static_cast<const CRLContext *>(context())->compare(other);
 }
 
-CRL CRL::fromDER(const SecureArray &a, ConvertResult *result, const QString &provider)
+CRL CRL::fromDER(const QByteArray &a, ConvertResult *result, const QString &provider)
 {
 	CRL c;
 	CRLContext *cc = static_cast<CRLContext *>(getContext("crl", provider));
@@ -2232,7 +2747,7 @@ bool PGPKey::isTrusted() const
 	return static_cast<const PGPKeyContext *>(context())->props()->isTrusted;
 }
 
-SecureArray PGPKey::toArray() const
+QByteArray PGPKey::toArray() const
 {
 	return static_cast<const PGPKeyContext *>(context())->toBinary();
 }
@@ -2247,7 +2762,7 @@ bool PGPKey::toFile(const QString &fileName) const
 	return stringToFile(fileName, toString());
 }
 
-PGPKey PGPKey::fromArray(const SecureArray &a, ConvertResult *result, const QString &provider)
+PGPKey PGPKey::fromArray(const QByteArray &a, ConvertResult *result, const QString &provider)
 {
 	PGPKey k;
 	PGPKeyContext *kc = static_cast<PGPKeyContext *>(getContext("pgpkey", provider));

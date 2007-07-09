@@ -126,10 +126,10 @@ public:
 		return &_props;
 	}
 
-	virtual SecureArray toBinary() const
+	virtual QByteArray toBinary() const
 	{
 		// TODO
-		return SecureArray();
+		return QByteArray();
 	}
 
 	virtual QString toAscii() const
@@ -149,7 +149,7 @@ public:
 		return str;
 	}
 
-	virtual ConvertResult fromBinary(const SecureArray &a)
+	virtual ConvertResult fromBinary(const QByteArray &a)
 	{
 		// TODO
 		Q_UNUSED(a);
@@ -683,6 +683,7 @@ public:
 	SecureMessage::SignMode signMode;
 	SecureMessage::Format format;
 	QByteArray in, out, sig;
+	int wrote;
 	bool ok, wasSigned;
 	GpgOp::Error op_err;
 	SecureMessageSignature signer;
@@ -695,6 +696,7 @@ public:
 	MyMessageContext(MyOpenPGPContext *_sms, Provider *p) : MessageContext(p, "pgpmsg"), gpg(find_bin())
 	{
 		sms = _sms;
+		wrote = 0;
 		ok = false;
 		wasSigned = false;
 
@@ -726,6 +728,7 @@ public:
 
 	virtual void reset()
 	{
+		wrote = 0;
 		ok = false;
 		wasSigned = false;
 	}
@@ -809,6 +812,13 @@ public:
 		QByteArray a = out;
 		out.clear();
 		return a;
+	}
+
+	virtual int written()
+	{
+		int x = wrote;
+		wrote = 0;
+		return x;
 	}
 
 	virtual void end()
@@ -1005,9 +1015,7 @@ private slots:
 
 	void gpg_bytesWritten(int bytes)
 	{
-		Q_UNUSED(bytes);
-
-		// do nothing
+		wrote += bytes;
 	}
 
 	void gpg_finished()
@@ -1092,7 +1100,7 @@ public:
 	{
 	}
 
-	virtual int version() const
+	virtual int qcaVersion() const
 	{
 		return QCA_VERSION;
 	}

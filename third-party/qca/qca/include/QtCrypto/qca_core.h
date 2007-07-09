@@ -495,10 +495,10 @@ QCA_EXPORT void setAppName(const QString &name);
    representation.
 
    This is a convenience function to convert an arbitrary
-   SecureArray to a printable representation.
+   QByteArray to a printable representation.
 
    \code
-SecureArray test(10);
+QByteArray test(10);
 test.fill('a');
 // 0x61 is 'a' in ASCII
 if (QString("61616161616161616161") == QCA::arrayToHex(test) )
@@ -510,7 +510,7 @@ if (QString("61616161616161616161") == QCA::arrayToHex(test) )
    \param array the array to be converted
    \return a printable representation
 */
-QCA_EXPORT QString arrayToHex(const SecureArray &array);
+QCA_EXPORT QString arrayToHex(const QByteArray &array);
 
 /**
    Convert a QString containing a hexadecimal representation
@@ -642,7 +642,7 @@ public:
 	class Context;
 
 	/**
-	   Initialisation routine.
+	   Initialisation routine
 
 	   This routine will be called when your plugin
 	   is loaded, so this is a good place to do any
@@ -653,17 +653,38 @@ public:
 	virtual void init();
 
 	/**
+	   Deinitialisation routine
+
+	   This routine will be called just before provider destruction.
+	   Notably, during QCA shutdown, deinit() will be called on all
+	   providers before any of the providers are destructed.  Use this
+	   opportunity to free any resources that may be used by other
+	   providers.
+	*/
+	virtual void deinit();
+
+	/**
+	   Version number of the plugin
+
+	   The format is the same as QCA itself.  Version 1.2.3 would be
+	   represented as 0x010203.
+
+	   The default returns 0 (version 0.0.0).
+	*/
+	virtual int version() const;
+
+	/**
 	   Target QCA version for the provider.
 
 	   This is used to verify compatibility between the
 	   provider and QCA.  For a provider to be used, it
-	   must have major and minor version numbers that are
-	   less-than or equal to the QCA version (the patch
+	   must supply major and minor version numbers here that are
+	   less-than or equal to the actual QCA version (the patch
 	   version number is ignored).  This means an older
 	   provider may be used with a newer QCA, but a newer
 	   provider cannot be used with an older QCA.
 	*/
-	virtual int version() const = 0;
+	virtual int qcaVersion() const = 0;
 
 	/**
 	   The name of the provider.
@@ -706,7 +727,10 @@ QStringList features() const
 
 	   You might display this information in a credits or
 	   "About" dialog.  Returns an empty string if the
-	   provider has no credit text.
+	   provider has no credit text.  Only report credit text
+	   when absolutely required (for example, an "advertisement
+	   clause" related to licensing).  Do not use it for
+	   reporting general author information.
 	*/
 	virtual QString credit() const;
 
@@ -905,12 +929,12 @@ public:
 	   \param a the byte array of data that is to 
 	   be used to update the internal state.
 	*/
-	virtual void update(const SecureArray &a) = 0;
+	virtual void update(const MemoryRegion &a) = 0;
 
 	/**
 	   Complete the algorithm and return the internal state
 	*/
-	virtual SecureArray final() = 0;
+	virtual MemoryRegion final() = 0;
 
 	/**
 	   Perform an "all in one" update, returning
@@ -922,7 +946,7 @@ public:
 	   \note This will invalidate any previous
 	   computation using this object.
 	*/
-	SecureArray process(const SecureArray &a);
+	MemoryRegion process(const MemoryRegion &a);
 };
 
 /**
@@ -957,13 +981,13 @@ public:
 
 	   \param a the array containing data to process
 	*/
-	virtual SecureArray update(const SecureArray &a) = 0;
+	virtual MemoryRegion update(const MemoryRegion &a) = 0;
 
 	/**
 	   Complete the algorithm, returning any 
 	   additional results.
 	*/
-	virtual SecureArray final() = 0;
+	virtual MemoryRegion final() = 0;
 
 	/**
 	   Test if an update() or final() call succeeded.
@@ -982,7 +1006,7 @@ public:
 	   \note This will invalidate any previous
 	   computation using this object.
 	*/
-	SecureArray process(const SecureArray &a);
+	MemoryRegion process(const MemoryRegion &a);
 };
 
 /**

@@ -57,10 +57,45 @@ enum CertificateRequestFormat
 };
 
 /**
-   Certificate information types
+   Known types of information stored in certificates
 
-   This enumeration provides the values that may appear in a
-   CertificateInfo key field.  These are from RFC3280
+   This enumerator offers a convenient way to work with common types.
+*/
+enum CertificateInfoTypeKnown
+{
+	CommonName,             ///< The common name (eg person), id = "2.5.4.3"
+	Email,                  ///< Email address, id = "GeneralName.rfc822Name"
+	EmailLegacy,            ///< PKCS#9 Email field, id = "1.2.840.113549.1.9.1"
+	Organization,           ///< An organisation (eg company), id = "2.5.4.10"
+	OrganizationalUnit,     ///< An part of an organisation (eg a division or branch), id = "2.5.4.11"
+	Locality,               ///< The locality (eg city, a shire, or part of a state), id = "2.5.4.7"
+	IncorporationLocality,  ///< The locality of incorporation (EV certificates), id = "1.3.6.1.4.1.311.60.2.1.1"
+	State,                  ///< The state within the country, id = "2.5.4.8"
+	IncorporationState,     ///< The state of incorporation (EV certificates), id = "1.3.6.1.4.1.311.60.2.1.2"
+	Country,                ///< The country, id = "2.5.4.6"
+	IncorporationCountry,   ///< The country of incorporation (EV certificates), id = "1.3.6.1.4.1.311.60.2.1.3"
+	URI,                    ///< Uniform Resource Identifier, id = "GeneralName.uniformResourceIdentifier"
+	DNS,                    ///< DNS name, id = "GeneralName.dNSName"
+	IPAddress,              ///< IP address, id = "GeneralName.iPAddress"
+	XMPP                    ///< XMPP address (see http://www.ietf.org/rfc/rfc3920.txt), id = "1.3.6.1.5.5.7.8.5"
+};
+
+/**
+   Certificate information type
+
+   This class represents a type of information being stored in
+   a certificate.  It can be created either using a known type
+   (from the Known enumerator) or an identifier string (usually
+   an OID).  Types created either way are interchangeable.
+
+   Types also have the notion of a Section.  Some types may
+   reside in the Distinguished Name field of a certificate, and
+   some types may reside in the Subject Alternative Name field.
+   This class is capable of representing a type from either
+   section.
+
+   In the general case, applications will want to use the
+   CertificateInfoTypeKnown enumerator types.  These are from RFC3280
    (http://www.ietf.org/rfc/rfc3280.txt) except where shown.
 
    The entries for IncorporationLocality, IncorporationState
@@ -77,24 +112,110 @@ enum CertificateRequestFormat
    \sa Certificate::subjectInfo() and Certificate::issuerInfo()
    \sa CRL::issuerInfo()
 */
-enum CertificateInfoType
+class QCA_EXPORT CertificateInfoType
 {
-	OtherInfoType,          ///< Type is not listed in this enumerator (CertificateInfoPair only)
-	CommonName,             ///< The common name (eg person)
-	Email,                  ///< Email address
-	EmailLegacy,            ///< PKCS#9 Email field (CertificateInfoPair only)
-	Organization,           ///< An organisation (eg company)
-	OrganizationalUnit,     ///< An part of an organisation (eg a division or branch)
-	Locality,               ///< The locality (eg city, a shire, or part of a state) 
-	IncorporationLocality,  ///< The locality of incorporation (EV certificates)
-	State,                  ///< The state within the country
-	IncorporationState,     ///< The state of incorporation (EV certificates)
-	Country,                ///< The country
-	IncorporationCountry,   ///< The country of incorporation (EV certificates)
-	URI,                    ///< Uniform Resource Identifier
-	DNS,                    ///< DNS name
-	IPAddress,              ///< IP address
-	XMPP                    ///< XMPP address (see http://www.ietf.org/rfc/rfc3920.txt)
+public:
+	/**
+	   Section of the certificate that the information belongs in
+	*/
+	enum Section
+	{
+		DN,              ///< Distinguished name (the primary name)
+		AlternativeName  ///< Alternative name
+	};
+
+	/**
+	   Standard constructor
+	*/
+	CertificateInfoType();
+
+	/**
+	   Construct a new type
+
+	   The section will be derived by \a known.
+
+	   \param known the type as part of the CertificateInfoTypeKnown
+	   enumerator
+	*/
+	CertificateInfoType(CertificateInfoTypeKnown known);
+
+	/**
+	   Construct a new type
+
+	   \param id the type as an identifier string (OID or internal)
+	   \param section the section this type belongs in
+
+	   \sa id
+	*/
+	CertificateInfoType(const QString &id, Section section);
+
+	/**
+	   Standard copy constructor
+	*/
+	CertificateInfoType(const CertificateInfoType &from);
+
+	~CertificateInfoType();
+
+	/**
+	   Standard assignment operator
+	*/
+	CertificateInfoType & operator=(const CertificateInfoType &from);
+
+	/**
+	   The section the type is part of
+	*/
+	Section section() const;
+
+	/**
+	   The type as part of the CertificateInfoTypeKnown enumerator
+
+	   This function may return a value that does not exist in the
+	   enumerator.  In that case, you may use id() to determine the
+	   type.
+	*/
+	CertificateInfoTypeKnown known() const;
+
+	/**
+	   The type as an identifier string
+
+	   For types that have OIDs, this function returns an OID in string
+	   form.  For types that do not have OIDs, this function returns an
+	   internal identifier string whose first character is not a digit
+	   (this allows you to tell the difference between an OID and an
+	   internal identifier).
+
+	   It is hereby stated that General Names (of the X.509 Subject
+	   Alternative Name) shall use the internal identifier format
+	   "GeneralName.[rfc field name]".  For example, the rfc822Name
+	   field would have the identifier "GeneralName.rfc822Name".
+
+	   Applications should not store, use, or compare against internal
+	   identifiers unless the identifiers are explicitly documented
+	   (e.g. GeneralName).
+	*/
+	QString id() const;
+
+	/**
+	   Comparison operator
+	*/
+	bool operator<(const CertificateInfoType &other) const;
+
+	/**
+	   Comparison operator
+	*/
+	bool operator==(const CertificateInfoType &other) const;
+
+	/**
+	   Inequality operator
+	*/
+	inline bool operator!=(const CertificateInfoType &other) const
+	{
+		return !(*this == other);
+	}
+
+private:
+	class Private;
+	QSharedDataPointer<Private> d;
 };
 
 /**
@@ -103,15 +224,6 @@ enum CertificateInfoType
 class QCA_EXPORT CertificateInfoPair
 {
 public:
-	/**
-	   Section of the certificate that the information belongs in
-	*/
-	enum Section
-	{
-		DN,     ///< Distinguished name (the primary name)
-		AltName ///< Alternate name
-	};
-
 	/**
 	   Standard constructor
 	*/
@@ -123,16 +235,7 @@ public:
 	   \param type the type of information stored in this pair
 	   \param value the value of the information to be stored
 	*/
-	CertificateInfoPair(CertificateInfoType type, const QString &value);
-
-	/**
-	   Construct a new pair
-
-	   \param oid the type of information stored in this pair as an OID
-	   \param value the value of the information to be stored
-	   \param section the section the information belongs in
-	*/
-	CertificateInfoPair(const QString &oid, const QString &value, Section section);
+	CertificateInfoPair(const CertificateInfoType &type, const QString &value);
 
 	/**
 	   Standard copy constructor
@@ -147,22 +250,9 @@ public:
 	CertificateInfoPair & operator=(const CertificateInfoPair &from);
 
 	/**
-	   The section the information is part of
-	*/
-	Section section() const;
-
-	/**
 	   The type of information stored in the pair
 	*/
 	CertificateInfoType type() const;
-
-	/**
-	   The type of information stored in the pair as an OID
-
-	   For use with types not listed in the CertificateInfoType
-	   enumerator.
-	*/
-	QString oid() const;
 
 	/**
 	   The value of the information stored in the pair
@@ -188,37 +278,148 @@ private:
 };
 
 /**
-   Certificate constraints
+   Known types of certificate constraints
+
+   This enumerator offers a convenient way to work with common types.
+*/
+enum ConstraintTypeKnown
+{
+	// KeyUsage
+	DigitalSignature,    ///< %Certificate can be used to create digital signatures, id = "KeyUsage.digitalSignature"
+	NonRepudiation,      ///< %Certificate can be used for non-repudiation, id = "KeyUsage.nonRepudiation"
+	KeyEncipherment,     ///< %Certificate can be used for encrypting / decrypting keys, id = "KeyUsage.keyEncipherment"
+	DataEncipherment,    ///< %Certificate can be used for encrypting / decrypting data, id = "KeyUsage.dataEncipherment"
+	KeyAgreement,        ///< %Certificate can be used for key agreement, id = "KeyUsage.keyAgreement"
+	KeyCertificateSign,  ///< %Certificate can be used for key certificate signing, id = "KeyUsage.keyCertSign"
+	CRLSign,             ///< %Certificate can be used to sign %Certificate Revocation Lists, id = "KeyUsage.crlSign"
+	EncipherOnly,        ///< %Certificate can only be used for encryption, id = "KeyUsage.encipherOnly"
+	DecipherOnly,        ///< %Certificate can only be used for decryption, id = "KeyUsage.decipherOnly"
+
+	// ExtKeyUsage
+	ServerAuth,       ///< %Certificate can be used for server authentication (e.g. web server), id = "1.3.6.1.5.5.7.3.1". This is an extended usage constraint.
+	ClientAuth,       ///< %Certificate can be used for client authentication (e.g. web browser), id = "1.3.6.1.5.5.7.3.2". This is an extended usage constraint.
+	CodeSigning,      ///< %Certificate can be used to sign code, id = "1.3.6.1.5.5.7.3.3". This is an extended usage constraint.
+	EmailProtection,  ///< %Certificate can be used to sign / encrypt email, id = "1.3.6.1.5.5.7.3.4". This is an extended usage constraint.
+	IPSecEndSystem,   ///< %Certificate can be used to authenticate a endpoint in IPSEC, id = "1.3.6.1.5.5.7.3.5". This is an extended usage constraint.
+	IPSecTunnel,      ///< %Certificate can be used to authenticate a tunnel in IPSEC, id = "1.3.6.1.5.5.7.3.6". This is an extended usage constraint.
+	IPSecUser,        ///< %Certificate can be used to authenticate a user in IPSEC, id = "1.3.6.1.5.5.7.3.7". This is an extended usage constraint.
+	TimeStamping,     ///< %Certificate can be used to create a "time stamp" signature, id = "1.3.6.1.5.5.7.3.8". This is an extended usage constraint.
+	OCSPSigning       ///< %Certificate can be used to sign an Online %Certificate Status Protocol (OCSP) assertion, id = "1.3.6.1.5.5.7.3.9". This is an extended usage constraint.
+};
+
+/**
+   Certificate constraint
 
    X.509 certificates can be constrained in their application - that is, some
-   certificates can only be used for certain purposes. This enumeration is
-   used to identify the approved purposes for a certificate. 
+   certificates can only be used for certain purposes. This class is used to
+   identify an approved purpose for a certificate.
 
    \note It is common for a certificate to have more than one purpose.
 */
-enum ConstraintType
+class QCA_EXPORT ConstraintType
 {
-	// basic
-	DigitalSignature,    ///< %Certificate can be used to create digital signatures
-	NonRepudiation,      ///< %Certificate can be used for non-repudiation
-	KeyEncipherment,     ///< %Certificate can be used for encrypting / decrypting keys
-	DataEncipherment,    ///< %Certificate can be used for encrypting / decrypting data
-	KeyAgreement,        ///< %Certificate can be used for key agreement
-	KeyCertificateSign,  ///< %Certificate can be used for key certificate signing
-	CRLSign,             ///< %Certificate can be used to sign %Certificate Revocation Lists
-	EncipherOnly,        ///< %Certificate can only be used for encryption
-	DecipherOnly,        ///< %Certificate can only be used for decryption
+public:
+	/**
+	   Section of the certificate that the constraint belongs in
+	*/
+	enum Section
+	{
+		KeyUsage,          ///< Stored in the key usage section
+		ExtendedKeyUsage   ///< Stored in the extended key usage section
+	};
 
-	// extended
-	ServerAuth,        ///< %Certificate can be used for server authentication (e.g. web server). This is an extended usage constraint.
-	ClientAuth,        ///< %Certificate can be used for client authentication (e.g. web browser). This is an extended usage constraint.
-	CodeSigning,       ///< %Certificate can be used to sign code. This is an extended usage constraint.
-	EmailProtection,   ///< %Certificate can be used to sign / encrypt email. This is an extended usage constraint.
-	IPSecEndSystem,    ///< %Certificate can be used to authenticate a endpoint in IPSEC. This is an extended usage constraint.
-	IPSecTunnel,       ///< %Certificate can be used to authenticate a tunnel in IPSEC. This is an extended usage constraint.
-	IPSecUser,         ///< %Certificate can be used to authenticate a user in IPSEC. This is an extended usage constraint.
-	TimeStamping,      ///< %Certificate can be used to create a "time stamp" signature. This is an extended usage constraint.
-	OCSPSigning        ///< %Certificate can be used to sign an Online %Certificate Status Protocol (OCSP) assertion. This is an extended usage constraint.
+	/**
+	   Standard constructor
+	*/
+	ConstraintType();
+
+	/**
+	   Construct a new constraint
+
+	   The section will be derived by \a known.
+
+	   \param known the type as part of the ConstraintTypeKnown
+	   enumerator
+	*/
+	ConstraintType(ConstraintTypeKnown known);
+
+	/**
+	   Construct a new constraint
+
+	   \param id the type as an identifier string (OID or internal)
+	   \param section the section this type belongs in
+
+	   \sa id
+	*/
+	ConstraintType(const QString &id, Section section);
+
+	/**
+	   Standard copy constructor
+	*/
+	ConstraintType(const ConstraintType &from);
+
+	~ConstraintType();
+
+	/**
+	   Standard assignment operator
+	*/
+	ConstraintType & operator=(const ConstraintType &from);
+
+	/**
+	   The section the constraint is part of
+	*/
+	Section section() const;
+
+	/**
+	   The type as part of the ConstraintTypeKnown enumerator
+
+	   This function may return a value that does not exist in the
+	   enumerator.  In that case, you may use id() to determine the
+	   type.
+	*/
+	ConstraintTypeKnown known() const;
+
+	/**
+	   The type as an identifier string
+
+	   For types that have OIDs, this function returns an OID in string
+	   form.  For types that do not have OIDs, this function returns an
+	   internal identifier string whose first character is not a digit
+	   (this allows you to tell the difference between an OID and an
+	   internal identifier).
+
+	   It is hereby stated that the KeyUsage bit fields shall use the
+	   internal identifier format "KeyUsage.[rfc field name]".  For
+	   example, the keyEncipherment field would have the identifier
+	   "KeyUsage.keyEncipherment".
+
+	   Applications should not store, use, or compare against internal
+	   identifiers unless the identifiers are explicitly documented
+	   (e.g. KeyUsage).
+	*/
+	QString id() const;
+
+	/**
+	   Comparison operator
+	*/
+	bool operator<(const ConstraintType &other) const;
+
+	/**
+	   Comparison operator
+	*/
+	bool operator==(const ConstraintType &other) const;
+
+	/**
+	   Inequality operator
+	*/
+	inline bool operator!=(const ConstraintType &other) const
+	{
+		return !(*this == other);
+	}
+
+private:
+	class Private;
+	QSharedDataPointer<Private> d;
 };
 
 /**
@@ -251,16 +452,38 @@ enum Validity
 	ErrorPathLengthExceeded, ///< The path length from the root CA to this certificate is too long
 	ErrorExpired,            ///< The certificate has expired, or is not yet valid (e.g. current time is earlier than notBefore time)
 	ErrorExpiredCA,          ///< The Certificate Authority has expired
-	ErrorValidityUnknown     ///< Validity is unknown
+	ErrorValidityUnknown = 64  ///< Validity is unknown
+};
+
+/**
+   The conditions to validate for a certificate
+*/
+enum ValidateFlags
+{
+	ValidateAll     = 0x00,  // Verify all conditions
+	ValidateRevoked = 0x01,  // Verify the certificate was not revoked
+	ValidateExpired = 0x02,  // Verify the certificate has not expired
+	ValidatePolicy  = 0x04   // Verify the certificate can be used for a specified purpose
 };
 
 /**
    Certificate properties type
+
+   With this container, the information is not necessarily stored
+   in the same sequence as the certificate format itself.  Use this
+   container if the order the information is/was stored does not
+   matter for you (this is the case with most applications).
+
+   Additionally, the EmailLegacy type should not be used with this
+   container.  Use Email instead.
 */
 typedef QMultiMap<CertificateInfoType, QString> CertificateInfo;
 
 /**
    Ordered certificate properties type
+
+   This container stores the information in the same sequence as
+   the certificate format itself.
 */
 class CertificateInfoOrdered : public QList<CertificateInfoPair>
 {
@@ -403,6 +626,22 @@ public:
 	QStringList crlLocations() const;
 
 	/**
+	   list of URI locations for issuer certificate files
+
+	   each URI refers to the same issuer file
+
+	   For Certificate creation only
+	*/
+	QStringList issuerLocations() const;
+
+	/**
+	   list of URI locations for OCSP services
+
+	   For Certificate creation only
+	*/
+	QStringList ocspLocations() const;
+
+	/**
 	   test if the certificate is a CA cert
 
 	   \sa setAsCA
@@ -488,6 +727,22 @@ public:
 	   \param locations a list of URIs to CRL files
 	*/
 	void setCRLLocations(const QStringList &locations);
+
+	/**
+	   set the issuer certificate locations of the certificate
+
+	   each location refers to the same issuer file.
+
+	   \param locations a list of URIs to issuer certificate files
+	*/
+	void setIssuerLocations(const QStringList &locations);
+
+	/**
+	   set the OCSP service locations of the certificate
+
+	   \param locations a list of URIs to OCSP services
+	*/
+	void setOCSPLocations(const QStringList &locations);
 
 	/**
 	   set the certificate to be a CA cert
@@ -664,6 +919,18 @@ CertificateInfoOrdered info = cert.subjectInfoOrdered();
 	QStringList crlLocations() const;
 
 	/**
+	   list of URI locations for issuer certificate files
+
+	   each URI refers to the same issuer file
+	*/
+	QStringList issuerLocations() const;
+
+	/**
+	   list of URI locations for OCSP services
+	*/
+	QStringList ocspLocations() const;
+
+	/**
 	   The common name of the subject of the certificate
 
 	   Common names are normally the name of a person, company or
@@ -731,13 +998,16 @@ CertificateInfoOrdered info = cert.subjectInfoOrdered();
 	   \param untrusted a collection of additional certificates, not
 	   necessarily trusted
 	   \param u the use required for the certificate
+	   \param vf the conditions to validate
+
+	   \note This function may block
 	*/
-	Validity validate(const CertificateCollection &trusted, const CertificateCollection &untrusted, UsageMode u = UsageAny) const;
+	Validity validate(const CertificateCollection &trusted, const CertificateCollection &untrusted, UsageMode u = UsageAny, ValidateFlags vf = ValidateAll) const;
 
 	/**
 	   Export the Certificate into a DER format
 	*/
-	SecureArray toDER() const;
+	QByteArray toDER() const;
 
 	/**
 	   Export the Certificate into a PEM format
@@ -763,7 +1033,7 @@ CertificateInfoOrdered info = cert.subjectInfoOrdered();
 	   \return the Certificate corresponding to the certificate in the
 	   provided array
 	*/
-	static Certificate fromDER(const SecureArray &a, ConvertResult *result = 0, const QString &provider = QString());
+	static Certificate fromDER(const QByteArray &a, ConvertResult *result = 0, const QString &provider = QString());
 
 	/**
 	   Import the certificate from PEM format
@@ -798,13 +1068,15 @@ CertificateInfoOrdered info = cert.subjectInfoOrdered();
 	   Test if the subject of the certificate matches a specified host
 	   name
 
-	   This will return true (indicating a match), if the
-	   specified host name matches either the CommonName,
-	   or an alternative name specified in the certificate.
+	   This will return true (indicating a match), if the specified host
+	   name meets the RFC 2818 validation rules with this certificate.
+
+	   If the host is an internationalized domain name, then it must be
+	   provided in unicode format, not in IDNA ACE/punycode format.
 
 	   \param host the name of the host to compare to
 	*/
-	bool matchesHostname(const QString &host) const;
+	bool matchesHostName(const QString &host) const;
 
 	/**
 	   Test for equality of two certificates
@@ -832,8 +1104,8 @@ private:
 	QSharedDataPointer<Private> d;
 
 	friend class CertificateChain;
-	Validity chain_validate(const CertificateChain &chain, const CertificateCollection &trusted, const QList<CRL> &untrusted_crls, UsageMode u) const;
-	CertificateChain chain_complete(const CertificateChain &chain, const QList<Certificate> &issuers) const;
+	Validity chain_validate(const CertificateChain &chain, const CertificateCollection &trusted, const QList<CRL> &untrusted_crls, UsageMode u, ValidateFlags vf) const;
+	CertificateChain chain_complete(const CertificateChain &chain, const QList<Certificate> &issuers, Validity *result) const;
 };
 
 /**
@@ -884,10 +1156,13 @@ public:
 	   \param untrusted_crls a list of additional CRLs, not necessarily
 	   trusted
 	   \param u the use required for the primary certificate
+	   \param vf the conditions to validate
+
+	   \note This function may block
 
 	   \sa Certificate::validate()
 	*/
-	inline Validity validate(const CertificateCollection &trusted, const QList<CRL> &untrusted_crls = QList<CRL>(), UsageMode u = UsageAny) const;
+	inline Validity validate(const CertificateCollection &trusted, const QList<CRL> &untrusted_crls = QList<CRL>(), UsageMode u = UsageAny, ValidateFlags vf = ValidateAll) const;
 
 	/**
 	   Complete a certificate chain for the primary certificate, using the
@@ -895,8 +1170,10 @@ public:
 	   \a issuers, as possible issuers in the chain.  If there are issuers
 	   missing, then the chain might be incomplete (at the worst case, if
 	   no issuers exist for the primary certificate, then the resulting
-	   chain will consist of just the primary certificate).  To ensure a
-	   CertificateChain is fully complete, you must use validate().
+	   chain will consist of just the primary certificate).  Use the
+	   \a result argument to find out if there was a problem during
+	   completion.  A result of ValidityGood means the chain was completed
+	   successfully.
 
 	   The newly constructed CertificateChain is returned.
 
@@ -904,24 +1181,27 @@ public:
 	   CertificateChain object.
 
 	   \param issuers a pool of issuers to draw from as necessary
+	   \param result the result of the completion operation
+
+	   \note This function may block
 
 	   \sa validate
 	*/
-	inline CertificateChain complete(const QList<Certificate> &issuers) const;
+	inline CertificateChain complete(const QList<Certificate> &issuers = QList<Certificate>(), Validity *result = 0) const;
 };
 
-inline Validity CertificateChain::validate(const CertificateCollection &trusted, const QList<CRL> &untrusted_crls, UsageMode u) const
+inline Validity CertificateChain::validate(const CertificateCollection &trusted, const QList<CRL> &untrusted_crls, UsageMode u, ValidateFlags vf) const
 {
 	if(isEmpty())
 		return ErrorValidityUnknown;
-	return first().chain_validate(*this, trusted, untrusted_crls, u);
+	return first().chain_validate(*this, trusted, untrusted_crls, u, vf);
 }
 
-inline CertificateChain CertificateChain::complete(const QList<Certificate> &issuers) const
+inline CertificateChain CertificateChain::complete(const QList<Certificate> &issuers, Validity *result) const
 {
 	if(isEmpty())
 		return CertificateChain();
-	return first().chain_complete(*this, issuers);
+	return first().chain_complete(*this, issuers, result);
 }
 
 /**
@@ -1081,7 +1361,7 @@ public:
 
 	   \note this only applies to PKCS#10 format certificate requests
 	*/
-	SecureArray toDER() const;
+	QByteArray toDER() const;
 
 	/**
 	   Export the Certificate Request into a PEM format
@@ -1113,7 +1393,7 @@ public:
 
 	   \note this only applies to PKCS#10 format certificate requests
 	*/
-	static CertificateRequest fromDER(const SecureArray &a, ConvertResult *result = 0, const QString &provider = QString());
+	static CertificateRequest fromDER(const QByteArray &a, ConvertResult *result = 0, const QString &provider = QString());
 
 	/**
 	   Import the certificate request from PEM format
@@ -1418,7 +1698,7 @@ public:
 
 	   \return an array containing the CRL in DER format
 	*/
-	SecureArray toDER() const;
+	QByteArray toDER() const;
 
 	/**
 	   Export the %Certificate Revocation List (CRL) in PEM format
@@ -1446,7 +1726,7 @@ public:
 
 	   \return the CRL corresponding to the contents of the array
 	*/
-	static CRL fromDER(const SecureArray &a, ConvertResult *result = 0, const QString &provider = QString());
+	static CRL fromDER(const QByteArray &a, ConvertResult *result = 0, const QString &provider = QString());
 
 	/**
 	   Import a PEM encoded %Certificate Revocation List (CRL)
@@ -1759,6 +2039,9 @@ public:
 
 	   \sa fromFile for a more flexible version of the
 	   same capability.
+
+	   \note This synchronous operation may require event handling, and so
+	   it must not be called from the same thread as an EventHandler.
 	*/
 	explicit KeyBundle(const QString &fileName, const SecureArray &passphrase = SecureArray());
 
@@ -1903,6 +2186,9 @@ else
 	   required
 
 	   \sa QCA::KeyLoader for an asynchronous loader approach.
+
+	   \note This synchronous operation may require event handling, and so
+	   it must not be called from the same thread as an EventHandler.
 	*/
 	static KeyBundle fromArray(const QByteArray &a, const SecureArray &passphrase = SecureArray(), ConvertResult *result = 0, const QString &provider = QString());
 
@@ -1932,6 +2218,9 @@ else
 	   required
 
 	   \sa QCA::KeyLoader for an asynchronous loader approach.
+
+	   \note This synchronous operation may require event handling, and so
+	   it must not be called from the same thread as an EventHandler.
 	*/
 	static KeyBundle fromFile(const QString &fileName, const SecureArray &passphrase = SecureArray(), ConvertResult *result = 0, const QString &provider = QString());
 
@@ -2057,7 +2346,7 @@ public:
 	   \sa fromArray for a static import method.
 	   \sa toString for an "ascii armoured" export method.
 	*/
-	SecureArray toArray() const;
+	QByteArray toArray() const;
 
 	/**
 	   Export the key to a string
@@ -2085,7 +2374,7 @@ public:
 	   \param provider the provider to use, if a particular provider is
 	   required
 	*/
-	static PGPKey fromArray(const SecureArray &a, ConvertResult *result = 0, const QString &provider = QString());
+	static PGPKey fromArray(const QByteArray &a, ConvertResult *result = 0, const QString &provider = QString());
 
 	/**
 	   Import the key from a string

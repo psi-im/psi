@@ -244,14 +244,14 @@ public:
 
 	   \param a the byte array to add to the hash
 	*/
-	virtual void update(const SecureArray &a);
+	virtual void update(const MemoryRegion &a);
 
 	/**
 	   \overload
 
 	   \param a the QByteArray to add to the hash
 	*/
-	virtual void update(const QByteArray &a);
+	void update(const QByteArray &a);
 
 	/**
 	   \overload
@@ -267,7 +267,7 @@ public:
 	   determined with strlen(), which may not be what you want
 	   if the array contains a null (0x00) character.
 	*/
-	virtual void update(const char *data, int len = -1);
+	void update(const char *data, int len = -1);
 
 	/**
 	   \overload
@@ -286,12 +286,12 @@ QFile f( "file.dat" );
 if ( f1.open( IO_ReadOnly ) )
 {
 	QCA::Hash hashObj("sha1");
-	hashObj.update( f1 );
+	hashObj.update( &f1 );
 	QString output = hashObj.final() ) ),
 }
 	   \endcode
 	*/
-	virtual void update(QIODevice &file);
+	void update(QIODevice *file);
 
 	/**
 	   Finalises input and returns the hash result
@@ -306,7 +306,7 @@ if ( f1.open( IO_ReadOnly ) )
 	   reuse the Hash object, you should call clear() and
 	   start to update() again.
 	*/
-	virtual SecureArray final();
+	virtual MemoryRegion final();
 
 	/**
 	   %Hash a byte array, returning it as another
@@ -328,7 +328,7 @@ SecureArray outputArray = QCA::Hash("md2")::hash(sampleArray);
 	   consider creating an Hash object, and then calling
 	   update() and final().
 	*/
-	SecureArray hash(const SecureArray &array);
+	MemoryRegion hash(const MemoryRegion &array);
 
 	/**
 	   %Hash a byte array, returning it as a printable
@@ -344,7 +344,7 @@ SecureArray outputArray = QCA::Hash("md2")::hash(sampleArray);
 	   object, call Hash::update() as required, then call 
 	   Hash::final(), before using the static arrayToHex() method.
 	*/
-	QString hashToString(const SecureArray &array);
+	QString hashToString(const MemoryRegion &array);
 
 private:
 	class Private;
@@ -630,13 +630,13 @@ public:
 
 	   \param a the array of data to encrypt / decrypt
 	*/
-	virtual SecureArray update(const SecureArray &a);
+	virtual MemoryRegion update(const MemoryRegion &a);
 
 	/**
 	   complete the block of data, padding as required, and returning
 	   the completed block
 	*/
-	virtual SecureArray final();
+	virtual MemoryRegion final();
 
 	/**
 	   Test if an update() or final() call succeeded.
@@ -760,7 +760,7 @@ public:
 
 	   \param array the message contents
 	*/
-	virtual void update(const SecureArray &array);
+	virtual void update(const MemoryRegion &array);
 
 	/**
 	   Finalises input and returns the MAC result
@@ -773,7 +773,7 @@ public:
 	   reuse the %MessageAuthenticationCode object, you
 	   should call clear() and start to update() again.
 	*/
-	virtual SecureArray final();
+	virtual MemoryRegion final();
 
 	/**
 	   Initialise the MAC algorithm

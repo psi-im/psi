@@ -37,6 +37,7 @@ private:
 	bool _use_system;
 	QString _roots_file;
 	QStringList _skip_plugins;
+	QStringList _plugin_priorities;
 
 public:
 	DefaultShared() : _use_system(true)
@@ -61,12 +62,19 @@ public:
 		return _skip_plugins;
 	}
 
-	void set(bool use_system, const QString &roots_file, const QStringList &skip_plugins)
+	QStringList plugin_priorities() const
+	{
+		QMutexLocker locker(&m);
+		return _plugin_priorities;
+	}
+
+	void set(bool use_system, const QString &roots_file, const QStringList &skip_plugins, const QStringList &plugin_priorities)
 	{
 		QMutexLocker locker(&m);
 		_use_system = use_system;
 		_roots_file = roots_file;
 		_skip_plugins = skip_plugins;
+		_plugin_priorities = plugin_priorities;
 	}
 };
 
@@ -121,7 +129,7 @@ public:
   ghost@aladdin.com
 
  */
-/* $Id: qca_default.cpp 669694 2007-05-30 04:55:35Z infiniti $ */
+/* $Id: qca_default.cpp 681693 2007-06-29 21:34:01Z infiniti $ */
 /*
   Independent implementation of MD5 (RFC 1321).
 
@@ -521,21 +529,34 @@ public:
 
 	virtual void clear()
 	{
+		secure = true;
 		md5_init(&md5);
 	}
 
-	virtual void update(const SecureArray &in)
+	virtual void update(const MemoryRegion &in)
 	{
+		if(!in.isSecure())
+			secure = false;
 		md5_append(&md5, (const md5_byte_t *)in.data(), in.size());
 	}
 
-	virtual SecureArray final()
+	virtual MemoryRegion final()
 	{
-		SecureArray b(16);
-		md5_finish(&md5, (md5_byte_t *)b.data());
-		return b;
+		if(secure)
+		{
+			SecureArray b(16, 0);
+			md5_finish(&md5, (md5_byte_t *)b.data());
+			return b;
+		}
+		else
+		{
+			QByteArray b(16, 0);
+			md5_finish(&md5, (md5_byte_t *)b.data());
+			return b;
+		}
 	}
 
+	bool secure;
 	md5_state_t md5;
 };
 
@@ -599,6 +620,7 @@ class DefaultSHA1Context : public HashContext
 public:
 	SHA1_CONTEXT _context;
 	CHAR64LONG16* block;
+	bool secure;
 
 	DefaultSHA1Context(Provider *p) : HashContext(p, "sha1")
 	{
@@ -612,19 +634,31 @@ public:
 
 	virtual void clear()
 	{
+		secure = true;
 		sha1_init(&_context);
 	}
 
-	virtual void update(const SecureArray &in)
+	virtual void update(const MemoryRegion &in)
 	{
+		if(!in.isSecure())
+			secure = false;
 		sha1_update(&_context, (unsigned char *)in.data(), (unsigned int)in.size());
 	}
 
-	virtual SecureArray final()
+	virtual MemoryRegion final()
 	{
-		SecureArray b(20);
-		sha1_final((unsigned char *)b.data(), &_context);
-		return b;
+		if(secure)
+		{
+			SecureArray b(20, 0);
+			sha1_final((unsigned char *)b.data(), &_context);
+			return b;
+		}
+		else
+		{
+			QByteArray b(20, 0);
+			sha1_final((unsigned char *)b.data(), &_context);
+			return b;
+		}
 	}
 
 	inline unsigned long blk0(quint32 i)
@@ -949,6 +983,7 @@ public:
 			ready = true;
 		}
 #endif
+		QMetaObject::invokeMethod(this, "busyEnd", Qt::QueuedConnection);
 	}
 
 	virtual QList<int> keyStores()
@@ -1015,7 +1050,7 @@ public:
 			//c->item_id = QString::number(n);
 			QString ename = c->makeName();
 			//QString ename = names[n];
-			QString eid = QString::number(qHash(certs[n].toDER().toByteArray()));
+			QString eid = QString::number(qHash(certs[n].toDER()));
 			c->item_name = ename;
 			c->item_id = eid;
 			c->item_save = makeId(storeId(0), name(0), eid, ename, "cert", certs[n].toPEM());
@@ -1025,7 +1060,7 @@ public:
 		{
 			DefaultKeyStoreEntry *c = new DefaultKeyStoreEntry(crls[n], storeId(0), name(0), provider());
 			QString ename = c->makeName();
-			QString eid = QString::number(qHash(certs[n].toDER().toByteArray()));
+			QString eid = QString::number(qHash(certs[n].toDER()));
 			c->item_name = ename;
 			c->item_id = eid;
 			c->item_save = makeId(storeId(0), name(0), eid, ename, "crl", crls[n].toPEM());
@@ -1091,6 +1126,11 @@ public:
 		return QCA_VERSION;
 	}
 
+	virtual int qcaVersion() const
+	{
+		return QCA_VERSION;
+	}
+
 	virtual QString name() const
 	{
 		return "default";
@@ -1127,6 +1167,7 @@ public:
 		config["use_system"] = true;
 		config["roots_file"] = QString();
 		config["skip_plugins"] = QString();
+		config["plugin_priorities"] = QString();
 		return config;
 	}
 
@@ -1135,13 +1176,34 @@ public:
 		bool use_system = config["use_system"].toBool();
 		QString roots_file = config["roots_file"].toString();
 		QString skip_plugins_str = config["skip_plugins"].toString();
+		QString plugin_priorities_str = config["plugin_priorities"].toString();
+
 		QStringList skip_plugins = skip_plugins_str.split(",");
 		for(int n = 0; n < skip_plugins.count(); ++n)
 		{
 			QString &s = skip_plugins[n];
 			s = unescape_string(s).trimmed();
 		}
-		shared.set(use_system, roots_file, skip_plugins);
+
+		QStringList plugin_priorities = plugin_priorities_str.split(",");
+		for(int n = 0; n < plugin_priorities.count(); ++n)
+		{
+			QString &s = plugin_priorities[n];
+			s = unescape_string(s).trimmed();
+
+			// make sure the entry ends with ":number"
+			int x = s.indexOf(':');
+			bool ok = false;
+			if(x != -1)
+				s.mid(x + 1).toInt(&ok);
+			if(!ok)
+			{
+				plugin_priorities.removeAt(n);
+				--n;
+			}
+		}
+
+		shared.set(use_system, roots_file, skip_plugins, plugin_priorities);
 	}
 };
 
@@ -1154,6 +1216,12 @@ QStringList skip_plugins(Provider *defaultProvider)
 {
 	DefaultProvider *that = (DefaultProvider *)defaultProvider;
 	return that->shared.skip_plugins();
+}
+
+QStringList plugin_priorities(Provider *defaultProvider)
+{
+	DefaultProvider *that = (DefaultProvider *)defaultProvider;
+	return that->shared.plugin_priorities();
 }
 
 #include "qca_default.moc"

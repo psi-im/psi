@@ -225,7 +225,6 @@ namespace XMPP
 		void tls_readyReadOutgoing();
 		void tls_closed();
 		void tls_error();
-		void tls_firstStepDone();
 
 	private:
 		class Private;

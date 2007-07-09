@@ -75,6 +75,219 @@ QCA_EXPORT void *qca_secure_realloc(void *p, int bytes);
 namespace QCA {
 
 /**
+   \class MemoryRegion qca_tools.h QtCrypto
+
+   Array of bytes that may be optionally secured
+
+   This class is mostly unusable on its own.  Either use it as a SecureArray
+   subclass or call toByteArray() to convert to QByteArray.
+
+   Note that this class is implicitly shared (that is, copy on write).
+*/
+class QCA_EXPORT MemoryRegion
+{
+public:
+	MemoryRegion();
+
+	/**
+	   Constructs a new Memory Region from a null terminated 
+	   character array
+
+	   \param str pointer to the array of data to copy
+	*/
+	MemoryRegion(const char *str);
+
+	/**
+	   Constructs a new MemoryRegion from the data in a 
+	   byte array
+	*/
+	MemoryRegion(const QByteArray &from);
+
+	/**
+	   Standard copy constructor
+	*/
+	MemoryRegion(const MemoryRegion &from);
+	~MemoryRegion();
+
+	/**
+	   Standard assignment operator
+	*/
+	MemoryRegion & operator=(const MemoryRegion &from);
+
+	/**
+	   Standard assignment operator
+	*/
+	MemoryRegion & operator=(const QByteArray &from);
+
+	/**
+	   Test if the MemoryRegion is null (i.e. was created
+	   as a null array, and hasn't been resized).
+
+	   This is probably not what you are trying to do. If
+	   you are trying to determine whether there are any
+	   bytes in the array, use isEmpty() instead.
+	*/
+	bool isNull() const;
+
+	/**
+	   Test if the MemoryRegion is using secure memory, or not.
+
+	   In this context, memory is secure if it will not be paged
+	   out to disk.
+
+	   \return true if the memory region is secure
+	*/
+	bool isSecure() const;
+
+	/**
+	   Convert this memory region to a byte array.
+
+	   \note For secure data, this will make it insecure
+
+	   \sa data() and constData() for other ways to convert
+	   to an "accessible" format.
+	*/
+	QByteArray toByteArray() const;
+
+	/**
+	   Returns true if the size of the memory region is zero.
+	*/
+	bool isEmpty() const;
+
+	/**
+	   Returns the number of bytes in the memory region.
+	*/
+	int size() const;
+
+	/**
+	   Convert the contents of the memory region to 
+	   a C-compatible character array. This consists
+	   of size() bytes, followed by a null terminator.
+
+	   \sa toByteArray for an alternative approach.
+	   \sa constData, which is equivalent to this method, but avoids
+	   the possibility that the compiler picks the wrong version.
+	*/
+	const char *data() const;
+
+	/**
+	   Convert the contents of the memory region to 
+	   a C-compatible character array. This consists
+	   of size() bytes, followed by a null terminator.
+
+	   \sa toByteArray for an alternative approach.
+	   \sa data which is equivalent to this method
+	*/
+	const char *constData() const;
+
+	/**
+	   Obtain the value of the memory location at the specified
+	   position.
+	   
+	   \param index the offset into the memory region.
+
+	   \note The contents of a memory region are between
+	   0 and size()-1. The content at position size() is 
+	   always a null terminator.
+	*/
+	const char & at(int index) const;
+
+protected:
+	/**
+	   Create a memory region, optionally using secure
+	   storage.
+
+	   \param secure if this is true, the memory region
+	   will use secure storage.
+
+	   \note This will create a memory region without
+	   any content (i.e. both isNull() and isEmpty() will
+	   return true.
+	*/
+	MemoryRegion(bool secure);
+
+	/**
+	   Create a memory region, optionally using secure
+	   storage.
+
+	   \param size the number of bytes in the memory
+	   region.
+	   \param secure if this is true, the memory region
+	   will use secure storage.
+	*/
+	MemoryRegion(int size, bool secure);
+
+	/**
+	   Create a memory region, optionally using secure
+	   storage.
+
+	   This constructor variant allows you to 
+	   initialize the memory region from an existing
+	   array.
+
+	   \param from the byte array to copy from.
+	   \param secure if this is true, the memory region
+	   will use secure storage.
+	*/
+	MemoryRegion(const QByteArray &from, bool secure);
+
+	/**
+	   Convert the contents of the memory region to 
+	   a C-compatible character array. This consists
+	   of size() bytes, followed by a null terminator.
+	*/
+	char *data();
+
+	/**
+	   Obtain the value of the memory location at the specified
+	   position.
+	   
+	   \param index the offset into the memory region.
+
+	   \note The contents of a memory region are between
+	   0 and size()-1. The content at position size() is 
+	   always a null terminator.
+	*/
+	char & at(int index);
+
+	/**
+	   Resize the memory region to the specified size.
+
+	   \param size the new size of the region.
+	*/
+	bool resize(int size);
+
+	/**
+	   Modify the memory region to match a specified
+	   byte array. This resizes the memory region
+	   as required to match the byte array size.
+
+	   \param from the byte array to copy from.
+	   \param secure if this is true, the memory region
+	   will use secure storage.
+	*/
+	void set(const QByteArray &from, bool secure);
+
+	/**
+	   Convert the memory region to use the specified
+	   memory type.
+
+	   This may involve copying data from secure to
+	   insecure storage, or from insecure to secure
+	   storage.
+
+	   \param secure if true, use secure memory; otherwise
+	   use insecure memory.
+	*/
+	void setSecure(bool secure);
+
+private:
+	bool _secure;
+	class Private;
+	QSharedDataPointer<Private> d;
+};
+
+/**
    \class SecureArray qca_tools.h QtCrypto
 
    Secure array of bytes
@@ -88,7 +301,7 @@ namespace QCA {
 
    Note that this class is implicitly shared (that is, copy on write).
 */
-class QCA_EXPORT SecureArray
+class QCA_EXPORT SecureArray : public MemoryRegion
 {
 public:
 	/**
@@ -119,6 +332,15 @@ public:
 	   \sa operator=()
 	*/
 	SecureArray(const QByteArray &a);
+
+	/**
+	   Construct a secure byte array from a MemoryRegion
+
+	   Note that this copies, rather than references the source array
+
+	   \sa operator=()
+	*/
+	SecureArray(const MemoryRegion &a);
 
 	/**
 	   Construct a (shallow) copy of another secure byte array
@@ -241,7 +463,7 @@ public:
 	   \note The number of characters is 1 based, so if
 	   you ask for fill('x', 10), it will fill from
 	*/
-        void fill(char fillChar, int fillToPosition = -1);
+	void fill(char fillChar, int fillToPosition = -1);
 
 	/**
 	   Copy the contents of the secure array out to a 
@@ -254,6 +476,21 @@ public:
 	   Append a secure byte array to the end of this array
 	*/
 	SecureArray & append(const SecureArray &a);
+
+	/**
+	   Equality operator. Returns true if both arrays have the same
+	   data (and the same length, of course).
+	*/
+	bool operator==(const MemoryRegion &other) const;
+	
+	/**
+	   Inequality operator. Returns true if both arrays have different
+	   length, or the same length but different data.
+	*/
+	inline bool operator!=(const MemoryRegion &other) const
+	{
+		return !(*this == other);
+	}
 
 	/**
 	   Append a secure byte array to the end of this array
@@ -276,33 +513,10 @@ protected:
 	   \param from the byte array to copy
 	*/
 	void set(const QByteArray &from);
-
-private:
-	class Private;
-	QSharedDataPointer<Private> d;
 };
 
 /**
-   Equality operator. Returns true if the two SecureArray
-   arguments have the same data (and the same length, of course).
-
-   \relates SecureArray
-*/
-QCA_EXPORT bool operator==(const SecureArray &a, const SecureArray &b);
-
-/**
-   Inequality operator. Returns true if the two SecureArray
-   arguments have different length, or the same length but
-   different data
-
-   \relates SecureArray
-*/
-QCA_EXPORT bool operator!=(const SecureArray &a, const SecureArray &b);
-
-/**
    Returns an array that is the result of concatenating a and b
-
-   \relates SecureArray
 */
 QCA_EXPORT const SecureArray operator+(const SecureArray &a, const SecureArray &b);
 
@@ -477,8 +691,8 @@ aString = aBiggishInteger.toString(); // aString is now "5878990"
 	   \param n the BigInteger to compare with
 
 	   \return zero if the values are the same, negative if the argument
-	   is less than the value of this BigInteger, and positive if the argument
-	   value is greater than this BigInteger
+	   is less than the value of this BigInteger, and positive if the
+	   argument value is greater than this BigInteger
 
 	   \code
 BigInteger a( "400" );
@@ -492,80 +706,68 @@ result = b.compare( c );        // return negative, -400 < 200
 	*/
 	int compare(const BigInteger &n) const;
 
+	/**
+	   Equality operator. Returns true if the two BigInteger values
+	   are the same, including having the same sign.
+	*/
+	inline bool operator==(const BigInteger &other) const
+	{
+		return (compare(other) == 0);
+	}
+
+	/**
+	   Inequality operator. Returns true if the two BigInteger values
+	   are different in magnitude, sign or both.
+	*/
+	inline bool operator!=(const BigInteger &other) const
+	{
+		return !(*this == other);
+	}
+
+	/**
+	   Less than or equal operator. Returns true if the BigInteger value
+	   on the left hand side is equal to or less than the BigInteger
+	   value on the right hand side.
+	*/
+	inline bool operator<=(const BigInteger &other) const
+	{
+		return (compare(other) <= 0);
+	}
+
+	/**
+	   Greater than or equal operator. Returns true if the BigInteger
+	   value on the left hand side is equal to or greater than the
+	   BigInteger value on the right hand side.
+	*/
+	inline bool operator>=(const BigInteger &other) const
+	{
+		return (compare(other) >= 0);
+	}
+
+	/**
+	   Less than operator. Returns true if the BigInteger value
+	   on the left hand side is less than the BigInteger value
+	   on the right hand side.
+	*/
+	inline bool operator<(const BigInteger &other) const
+	{
+		return (compare(other) < 0);
+	}
+
+	/**
+	   Greater than operator. Returns true if the BigInteger value
+	   on the left hand side is greater than the BigInteger value
+	   on the right hand side.
+	*/
+	inline bool operator>(const BigInteger &other) const
+	{
+		return (compare(other) > 0);
+	}
+
 private:
 	class Private;
 	QSharedDataPointer<Private> d;
 };
-
-/**
-   Equality operator. Returns true if the two BigInteger values
-   are the same, including having the same sign
-
-   \relates BigInteger
-*/
-inline bool operator==(const BigInteger &a, const BigInteger &b)
-{
-	return (0 == a.compare( b ) );
-}
-
-/**
-   Inequality operator. Returns true if the two BigInteger values
-   are different in magnitude, sign or both
-
-   \relates BigInteger
-*/
-inline bool operator!=(const BigInteger &a, const BigInteger &b)
-{
-	return (0 != a.compare( b ) );
-}
-
-/**
-   Less than or equal operator. Returns true if the BigInteger value
-   on the left hand side is equal to or less than the BigInteger value
-   on the right hand side.
-
-   \relates BigInteger
-*/
-inline bool operator<=(const BigInteger &a, const BigInteger &b)
-{
-	return (a.compare( b ) <= 0 );
-}
-
-/**
-   Greater than or equal operator. Returns true if the BigInteger value
-   on the left hand side is equal to or greater than the BigInteger value
-   on the right hand side.
-
-   \relates BigInteger
-*/
-inline bool operator>=(const BigInteger &a, const BigInteger &b)
-{
-	return (a.compare( b ) >= 0 );
-}
-
-/**
-   Less than operator. Returns true if the BigInteger value
-   on the left hand side is less than the BigInteger value
-   on the right hand side.
-
-   \relates BigInteger
-*/
-inline bool operator<(const BigInteger &a, const BigInteger &b)
-{
-	return (a.compare( b ) < 0 );
-}
-
-/**
-   Greater than operator. Returns true if the BigInteger value
-   on the left hand side is greater than the BigInteger value
-   on the right hand side.
-
-   \relates BigInteger
-*/
-inline bool operator>(const BigInteger &a, const BigInteger &b)
-{
-	return (a.compare( b ) > 0 );
-}
 
 /**
    Stream operator

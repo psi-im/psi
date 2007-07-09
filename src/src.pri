@@ -47,12 +47,12 @@ qca-static {
 
 	# QCA-OpenSSL
 	contains(DEFINES, HAVE_OPENSSL) {
-		include($$PWD/../third-party/qca/qca-openssl.pri)
+		include($$PWD/../third-party/qca/qca-ossl.pri)
 	}
 	
 	# QCA-SASL
 	contains(DEFINES, HAVE_CYRUSSASL) {
-		include($$PWD/../third-party/qca/qca-sasl.pri)
+		include($$PWD/../third-party/qca/qca-cyrus-sasl.pri)
 	}
 
 	# QCA-GnuPG

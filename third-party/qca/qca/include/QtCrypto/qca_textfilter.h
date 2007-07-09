@@ -80,7 +80,7 @@ public:
 
 	   \param a the array to encode
 	*/
-	SecureArray encode(const SecureArray &a);
+	MemoryRegion encode(const MemoryRegion &a);
 
 	/**
 	   Process an array in the "reverse" direction,
@@ -89,11 +89,11 @@ public:
 	   This method runs in the reverse direction, so
 	   for something like a Base64 encoding, it takes
 	   a Base64 encoded array, and returns the "native"
-	   representation..
+	   representation.
 
 	   \param a the array to decode
 	*/
-	SecureArray decode(const SecureArray &a);
+	MemoryRegion decode(const MemoryRegion &a);
 
 	/**
 	   Process an array in the "forward" direction,
@@ -105,7 +105,7 @@ public:
 
 	   \param a the array to encode
 	*/
-	QString arrayToString(const SecureArray &a);
+	QString arrayToString(const MemoryRegion &a);
 
 	/**
 	   Process an string in the "reverse" direction,
@@ -117,7 +117,7 @@ public:
 
 	   \param s the array to decode
 	*/
-	SecureArray stringToArray(const QString &s);
+	MemoryRegion stringToArray(const QString &s);
 
 	/**
 	   Process a string in the "forward" direction,
@@ -190,7 +190,7 @@ public:
 
 	   \param a the array containing data to process
 	*/
-	virtual SecureArray update(const SecureArray &a);
+	virtual MemoryRegion update(const MemoryRegion &a);
 
 	/**
 	   Complete the algorithm
@@ -200,7 +200,7 @@ public:
 	   zero length array - any output will have been returned
 	   from the update() call.
 	*/
-	virtual SecureArray final();
+	virtual MemoryRegion final();
 
 	/**
 	   Test if an update() or final() call succeeded.
@@ -210,6 +210,8 @@ public:
 	virtual bool ok() const;
 
 private:
+	Q_DISABLE_COPY(Hex)
+
 	uchar val;
 	bool partial;
 	bool _ok;
@@ -277,7 +279,7 @@ public:
 
 	   \param a the array containing data to process
 	*/
-	virtual SecureArray update(const SecureArray &a);
+	virtual MemoryRegion update(const MemoryRegion &a);
 
 	/**
 	   Complete the algorithm
@@ -287,7 +289,7 @@ public:
 	   empty array, or an array containing one or two
 	   "=" (equals, 0x3D) characters.
 	*/
-	virtual SecureArray final();
+	virtual MemoryRegion final();
 
 	/**
 	   Test if an update() or final() call succeeded.
@@ -297,11 +299,16 @@ public:
 	virtual bool ok() const;
 
 private:
-	SecureArray partial;
+	Q_DISABLE_COPY(Base64)
+
+	QByteArray partial;
 	bool _ok;
 	int col;
 	bool _lb_enabled;
 	int _lb_column;
+
+	class Private;
+	Private *d;
 };
 
 }

@@ -49,7 +49,93 @@
 
 namespace QCA {
 
+/**
+   Convenience method to determine the return type of a method
+
+   This function identifies the return type of a specified
+   method. This function can be used as shown:
+   \code
+class TestClass : public QObject
+{
+    Q_OBJECT
+    // ...
+public slots:
+    QString qstringMethod()  { return QString(); };
+    bool boolMethod( const QString & )  { return true; };
+};
+
+QByteArray myTypeName;
+
+TestClass testClass;
+QList<QByteArray> argsList; // empty list, since no args
+
+myTypeName = QCA::methodReturnType( testClass.metaObject(), QByteArray( "qstringMethod" ), argsList );
+// myTypeName is "QString"
+
+myTypeName = QCA::methodReturnType( testClass.metaObject(), QByteArray( "boolMethod" ), argsList );
+// myTypeName is "", because there is no method called "boolMethod" that has no arguments
+
+argsList << "QString"; // now we have one argument
+myTypeName = QCA::methodReturnType( testClass.metaObject(), QByteArray( "boolMethod" ), argsList );
+// myTypeName is "bool"
+   \endcode
+
+   The return type name of a method returning void is an empty string, not "void"
+
+   \note This function is not normally required for use with
+   %QCA. It is provided for use in your code, if required.
+
+   \param obj the QMetaObject for the object
+   \param method the name of the method (without the arguments or brackets)
+   \param argTypes the list of argument types of the method 
+
+   \return the name of the type that this method will return with the specified
+   argument types.
+
+   \sa QMetaType for more information on the Qt meta type system.
+*/
+
 QCA_EXPORT QByteArray methodReturnType(const QMetaObject *obj, const QByteArray &method, const QList<QByteArray> argTypes);
+
+/**
+   Convenience method to invoke a method by name, using a variant
+   list of arguments.
+
+   This function can be used as shown:
+   \code
+class TestClass : public QObject
+{
+    Q_OBJECT
+    // ...
+public slots:
+    QString qstringMethod()  { return QString( "the result" ); };
+    bool boolMethod( const QString & )  { return true; };
+};
+
+TestClass *testClass = new TestClass;
+QVariantList args;
+
+QVariant stringRes;
+// calls testClass->qstringMethod() with no arguments ( since args is an empty list)
+bool ret = QCA::invokeMethodWithVariants( testClass, QByteArray( "qstringMethod" ), args, &stringRes );
+// ret is true (since call succeeded), stringRes.toString() is a string - "the result"
+
+QVariant boolResult;
+QString someString( "not important" );
+args << someString;
+// calls testClass->boolMethod( someString ), returning result in boolResult
+ret = QCA::invokeMethodWithVariants( testClass1, QByteArray( "boolMethod" ), args, &boolResult );
+// ret is true (since call succeeded), boolResult.toBool() is true.
+   \endcode
+
+   \param obj the object to call the method on
+   \param method the name of the method (without the arguments or brackets)
+   \param args the list of arguments to use in the method call
+   \param ret the return value of the method (unchanged if the call fails)
+   \param type the type of connection to use
+
+   \return true if the call succeeded, otherwise false
+*/
 QCA_EXPORT bool invokeMethodWithVariants(QObject *obj, const QByteArray &method, const QVariantList &args, QVariant *ret, Qt::ConnectionType type = Qt::AutoConnection);
 
 class QCA_EXPORT SyncThread : public QThread
@@ -316,10 +402,11 @@ public:
 	~ConsolePrompt();
 
 	void getHidden(const QString &promptStr);
-	void getEnter();
+	void getChar();
 	void waitForFinished();
 
 	SecureArray result() const;
+	QChar resultChar() const;
 
 signals:
 	void finished();

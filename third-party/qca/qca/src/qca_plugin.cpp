@@ -43,6 +43,7 @@ QVariantMap getProviderConfig_internal(Provider *p);
 
 // from qca_default.cpp
 QStringList skip_plugins(Provider *defaultProvider);
+QStringList plugin_priorities(Provider *defaultProvider);
 
 static ProviderManager *g_pluginman = 0;
 
@@ -236,6 +237,11 @@ public:
 			p->configChanged(conf);
 	}
 
+	bool initted() const
+	{
+		return init_done;
+	}
+
 private:
 	PluginInstance *instance;
 	bool init_done;
@@ -262,6 +268,7 @@ ProviderManager::ProviderManager()
 
 ProviderManager::~ProviderManager()
 {
+	def->deinit();
 	unloadAll();
 	delete def;
 	g_pluginman = 0;
@@ -289,7 +296,7 @@ void ProviderManager::scan()
 				continue;
 			}
 
-			int ver = i->p->version();
+			int ver = i->p->qcaVersion();
 			if(!validVersion(ver))
 			{
 				logDebug(QString().sprintf("plugin version 0x%06x is in the future", ver));
@@ -297,7 +304,7 @@ void ProviderManager::scan()
 				continue;
 			}
 
-			addItem(i, -1);
+			addItem(i, get_default_priority(i->p->name()));
 		}
 		scanned_static = true;
 	}
@@ -359,7 +366,7 @@ void ProviderManager::scan()
 				continue;
 			}
 
-			int ver = i->p->version();
+			int ver = i->p->qcaVersion();
 			if(!validVersion(ver))
 			{
 				logDebug(QString().sprintf("plugin version 0x%06x is in the future", ver));
@@ -374,7 +381,7 @@ void ProviderManager::scan()
 				continue;
 			}
 
-			addItem(i, -1);
+			addItem(i, get_default_priority(i->p->name()));
 		}
 	}
 }
@@ -390,7 +397,7 @@ bool ProviderManager::add(Provider *p, int priority)
 		return false;
 	}
 
-	int ver = p->version();
+	int ver = p->qcaVersion();
 	if(!validVersion(ver))
 	{
 		logDebug(QString().sprintf("plugin version 0x%06x is in the future", ver));
@@ -419,6 +426,12 @@ void ProviderManager::unload(const QString &name)
 
 void ProviderManager::unloadAll()
 {
+	foreach(ProviderItem *i, providerItemList)
+	{
+		if(i->initted())
+			i->p->deinit();
+	}
+
 	qDeleteAll(providerItemList);
 	providerItemList.clear();
 	providerList.clear();
@@ -687,6 +700,21 @@ void ProviderManager::mergeFeatures(QStringList *a, const QStringList &b)
 		if(!a->contains(*it))
 			a->append(*it);
 	}
+}
+
+int ProviderManager::get_default_priority(const QString &name) const
+{
+	QStringList list = plugin_priorities(def);
+	foreach(const QString &s, list)
+	{
+		// qca_default already sanity checks the strings
+		int n = s.indexOf(':');
+		QString sname = s.mid(0, n);
+		int spriority = s.mid(n + 1).toInt();
+		if(sname == name)
+			return spriority;
+	}
+	return -1;
 }
 
 }

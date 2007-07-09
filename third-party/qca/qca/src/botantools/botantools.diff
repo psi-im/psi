@@ -1,6 +1,6 @@
 diff -ur a/include/bigint.h b/include/bigint.h
 --- a/include/bigint.h	2007-03-24 11:51:37.000000000 -0700
-+++ b/include/bigint.h	2007-04-19 14:21:54.000000000 -0700
++++ b/include/bigint.h	2007-06-26 11:31:40.000000000 -0700
 @@ -6,7 +6,13 @@
  #ifndef BOTAN_BIGINT_H__
  #define BOTAN_BIGINT_H__
@@ -58,7 +58,7 @@ diff -ur a/include/bigint.h b/include/bigint.h
  #endif
 diff -ur a/include/charset.h b/include/charset.h
 --- a/include/charset.h	2007-03-24 11:51:37.000000000 -0700
-+++ b/include/charset.h	2007-04-19 14:21:54.000000000 -0700
++++ b/include/charset.h	2007-06-26 11:31:40.000000000 -0700
 @@ -7,7 +7,9 @@
  #define BOTAN_CHARSET_H__
  
@@ -96,7 +96,7 @@ diff -ur a/include/charset.h b/include/charset.h
  bool is_space(char);
 diff -ur a/include/libstate.h b/include/libstate.h
 --- a/include/libstate.h	2007-03-24 11:51:37.000000000 -0700
-+++ b/include/libstate.h	2007-04-19 14:21:54.000000000 -0700
++++ b/include/libstate.h	2007-06-26 11:31:40.000000000 -0700
 @@ -6,9 +6,13 @@
  #ifndef BOTAN_LIB_STATE_H__
  #define BOTAN_LIB_STATE_H__
@@ -205,9 +205,67 @@ diff -ur a/include/libstate.h b/include/libstate.h
     };
  
  /*************************************************
+diff -ur a/include/mem_ops.h b/include/mem_ops.h
+--- a/include/mem_ops.h	2007-03-24 11:51:37.000000000 -0700
++++ b/include/mem_ops.h	2007-06-26 11:31:40.000000000 -0700
+@@ -8,6 +8,7 @@
+ 
+ #include <botan/types.h>
+ #include <cstring>
++#include <string.h>
+ 
+ namespace Botan {
+ 
+@@ -15,16 +16,16 @@
+ * Memory Manipulation Functions                  *
+ *************************************************/
+ template<typename T> inline void copy_mem(T* out, const T* in, u32bit n)
+-   { std::memmove(out, in, sizeof(T)*n); }
++   { memmove(out, in, sizeof(T)*n); }
+ 
+ template<typename T> inline void clear_mem(T* ptr, u32bit n)
+-   { std::memset(ptr, 0, sizeof(T)*n); }
++   { memset(ptr, 0, sizeof(T)*n); }
+ 
+ template<typename T> inline void set_mem(T* ptr, u32bit n, byte val)
+-   { std::memset(ptr, val, sizeof(T)*n); }
++   { memset(ptr, val, sizeof(T)*n); }
+ 
+ template<typename T> inline bool same_mem(const T* p1, const T* p2, u32bit n)
+-   { return (std::memcmp(p1, p2, sizeof(T)*n) == 0); }
++   { return (memcmp(p1, p2, sizeof(T)*n) == 0); }
+ 
+ }
+ 
+diff -ur a/include/mem_pool.h b/include/mem_pool.h
+--- a/include/mem_pool.h	2007-03-24 11:51:37.000000000 -0700
++++ b/include/mem_pool.h	2007-06-26 11:31:40.000000000 -0700
+@@ -46,13 +46,17 @@
+             byte* alloc(u32bit) throw();
+             void free(void*, u32bit) throw();
+ 
+-            bool operator<(const void*) const;
+             bool operator<(const Memory_Block& other) const
+-               { return (buffer < other.buffer); }
++               {
++               if(buffer < other.buffer && other.buffer < buffer_end)
++                  return false;
++               return (buffer < other.buffer);
++               }
++
+          private:
+             typedef u64bit bitmap_type;
+-            static const u32bit BITMAP_SIZE = 8 * sizeof(bitmap_type);
+-            static const u32bit BLOCK_SIZE = 64;
++            static const u32bit BITMAP_SIZE;
++            static const u32bit BLOCK_SIZE;
+ 
+             bitmap_type bitmap;
+             byte* buffer, *buffer_end;
+Only in b/include: mmap_mem.h
 diff -ur a/include/modules.h b/include/modules.h
 --- a/include/modules.h	2007-03-24 11:51:37.000000000 -0700
-+++ b/include/modules.h	2007-04-19 14:21:54.000000000 -0700
++++ b/include/modules.h	2007-06-26 11:31:40.000000000 -0700
 @@ -6,7 +6,9 @@
  #ifndef BOTAN_MODULE_FACTORIES_H__
  #define BOTAN_MODULE_FACTORIES_H__
@@ -270,7 +328,7 @@ diff -ur a/include/modules.h b/include/modules.h
  }
 diff -ur a/include/mutex.h b/include/mutex.h
 --- a/include/mutex.h	2007-03-24 11:51:37.000000000 -0700
-+++ b/include/mutex.h	2007-04-19 14:21:54.000000000 -0700
++++ b/include/mutex.h	2007-06-26 11:31:40.000000000 -0700
 @@ -55,6 +55,7 @@
  /*************************************************
  * Named Mutex Holder                             *
@@ -287,9 +345,10 @@ diff -ur a/include/mutex.h b/include/mutex.h
  
  }
  
+Only in b/include: mux_qt.h
 diff -ur a/include/numthry.h b/include/numthry.h
 --- a/include/numthry.h	2007-03-24 11:51:37.000000000 -0700
-+++ b/include/numthry.h	2007-04-19 14:21:54.000000000 -0700
++++ b/include/numthry.h	2007-06-26 11:31:40.000000000 -0700
 @@ -7,11 +7,14 @@
  #define BOTAN_NUMBTHRY_H__
  
@@ -327,7 +386,7 @@ diff -ur a/include/numthry.h b/include/numthry.h
  
 diff -ur a/include/parsing.h b/include/parsing.h
 --- a/include/parsing.h	2007-03-24 11:51:37.000000000 -0700
-+++ b/include/parsing.h	2007-04-19 14:21:54.000000000 -0700
++++ b/include/parsing.h	2007-06-26 11:31:40.000000000 -0700
 @@ -15,17 +15,21 @@
  /*************************************************
  * String Parsing Functions                       *
@@ -352,7 +411,7 @@ diff -ur a/include/parsing.h b/include/parsing.h
  
 diff -ur a/include/types.h b/include/types.h
 --- a/include/types.h	2007-03-24 11:51:37.000000000 -0700
-+++ b/include/types.h	2007-04-19 14:21:54.000000000 -0700
++++ b/include/types.h	2007-06-26 11:31:40.000000000 -0700
 @@ -6,10 +6,24 @@
  #ifndef BOTAN_TYPES_H__
  #define BOTAN_TYPES_H__
@@ -389,7 +448,7 @@ diff -ur a/include/types.h b/include/types.h
  namespace Botan_types {
 diff -ur a/include/util.h b/include/util.h
 --- a/include/util.h	2007-03-24 11:51:37.000000000 -0700
-+++ b/include/util.h	2007-04-19 14:21:54.000000000 -0700
++++ b/include/util.h	2007-06-26 11:31:40.000000000 -0700
 @@ -13,8 +13,10 @@
  /*************************************************
  * Timer Access Functions                         *
@@ -421,7 +480,7 @@ diff -ur a/include/util.h b/include/util.h
  
 diff -ur a/modules/mux_qt/mux_qt.cpp b/modules/mux_qt/mux_qt.cpp
 --- a/modules/mux_qt/mux_qt.cpp	2007-03-24 11:51:37.000000000 -0700
-+++ b/modules/mux_qt/mux_qt.cpp	2007-04-19 14:23:06.000000000 -0700
++++ b/modules/mux_qt/mux_qt.cpp	2007-06-26 11:32:30.000000000 -0700
 @@ -6,7 +6,7 @@
  #include <botan/mux_qt.h>
  #include <qmutex.h>
@@ -433,7 +492,7 @@ diff -ur a/modules/mux_qt/mux_qt.cpp b/modules/mux_qt/mux_qt.cpp
  
 diff -ur a/src/big_code.cpp b/src/big_code.cpp
 --- a/src/big_code.cpp	2007-03-24 11:51:37.000000000 -0700
-+++ b/src/big_code.cpp	2007-04-19 14:22:32.000000000 -0700
++++ b/src/big_code.cpp	2007-06-26 11:31:30.000000000 -0700
 @@ -6,7 +6,9 @@
  #include <botan/bigint.h>
  #include <botan/numthry.h>
@@ -494,7 +553,7 @@ diff -ur a/src/big_code.cpp b/src/big_code.cpp
        const u32bit RADIX = ((base == Decimal) ? 10 : 8);
 diff -ur a/src/big_io.cpp b/src/big_io.cpp
 --- a/src/big_io.cpp	2007-03-24 11:51:37.000000000 -0700
-+++ b/src/big_io.cpp	2007-04-19 14:22:32.000000000 -0700
++++ b/src/big_io.cpp	2007-06-26 11:31:30.000000000 -0700
 @@ -8,6 +8,8 @@
  
  namespace Botan {
@@ -511,10 +570,64 @@ diff -ur a/src/big_io.cpp b/src/big_io.cpp
 +#endif
 +
  }
+diff -ur a/src/big_ops2.cpp b/src/big_ops2.cpp
+--- a/src/big_ops2.cpp	2007-03-24 11:51:37.000000000 -0700
++++ b/src/big_ops2.cpp	2007-06-26 11:31:30.000000000 -0700
+@@ -19,7 +19,11 @@
+    {
+    const u32bit x_sw = sig_words(), y_sw = y.sig_words();
+ 
++#ifdef BOTAN_TYPES_QT
++   const u32bit reg_size = qMax(x_sw, y_sw) + 1;
++#else
+    const u32bit reg_size = std::max(x_sw, y_sw) + 1;
++#endif
+    grow_to(reg_size);
+ 
+    if((sign() == y.sign()))
+@@ -56,7 +60,11 @@
+ 
+    s32bit relative_size = bigint_cmp(data(), x_sw, y.data(), y_sw);
+ 
++#ifdef BOTAN_TYPES_QT
++   const u32bit reg_size = qMax(x_sw, y_sw) + 1;
++#else
+    const u32bit reg_size = std::max(x_sw, y_sw) + 1;
++#endif
+    grow_to(reg_size);
+ 
+    if(relative_size < 0)
+diff -ur a/src/big_ops3.cpp b/src/big_ops3.cpp
+--- a/src/big_ops3.cpp	2007-03-24 11:51:37.000000000 -0700
++++ b/src/big_ops3.cpp	2007-06-26 11:31:30.000000000 -0700
+@@ -18,7 +18,11 @@
+    {
+    const u32bit x_sw = x.sig_words(), y_sw = y.sig_words();
+ 
++#ifdef BOTAN_TYPES_QT
++   BigInt z(x.sign(), qMax(x_sw, y_sw) + 1);
++#else
+    BigInt z(x.sign(), std::max(x_sw, y_sw) + 1);
++#endif
+ 
+    if((x.sign() == y.sign()))
+       bigint_add3(z.get_reg(), x.data(), x_sw, y.data(), y_sw);
+@@ -49,7 +53,11 @@
+ 
+    s32bit relative_size = bigint_cmp(x.data(), x_sw, y.data(), y_sw);
+ 
++#ifdef BOTAN_TYPES_QT
++   BigInt z(BigInt::Positive, qMax(x_sw, y_sw) + 1);
++#else
+    BigInt z(BigInt::Positive, std::max(x_sw, y_sw) + 1);
++#endif
+ 
+    if(relative_size < 0)
+       {
 diff -ur a/src/charset.cpp b/src/charset.cpp
 --- a/src/charset.cpp	2007-03-24 11:51:37.000000000 -0700
-+++ b/src/charset.cpp	2007-04-19 14:22:32.000000000 -0700
-@@ -4,8 +4,12 @@
++++ b/src/charset.cpp	2007-06-26 11:31:30.000000000 -0700
+@@ -4,10 +4,15 @@
  *************************************************/
  
  #include <botan/charset.h>
@@ -526,8 +639,11 @@ diff -ur a/src/charset.cpp b/src/charset.cpp
 +#endif
  #include <botan/libstate.h>
  #include <cctype>
++#include <ctype.h>
  
-@@ -16,11 +20,13 @@
+ namespace Botan {
+ 
+@@ -16,11 +21,13 @@
  /*************************************************
  * Perform character set transcoding              *
  *************************************************/
@@ -541,7 +657,13 @@ diff -ur a/src/charset.cpp b/src/charset.cpp
  
  /*************************************************
  * Check if a character represents a digit        *
-@@ -97,6 +103,8 @@
+@@ -92,11 +99,13 @@
+ *************************************************/
+ bool caseless_cmp(char a, char b)
+    {
+-   return (std::tolower((unsigned char)a) == std::tolower((unsigned char)b));
++   return (tolower((unsigned char)a) == tolower((unsigned char)b));
+    }
  
  }
  
@@ -550,16 +672,60 @@ diff -ur a/src/charset.cpp b/src/charset.cpp
  /*************************************************
  * Hex Encoder Lookup Tables                      *
  *************************************************/
-@@ -168,4 +176,6 @@
+@@ -168,4 +177,6 @@
  0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
  0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80 };
  
 +#endif
 +
  }
+diff -ur a/src/defalloc.cpp b/src/defalloc.cpp
+--- a/src/defalloc.cpp	2007-03-24 11:51:37.000000000 -0700
++++ b/src/defalloc.cpp	2007-06-26 11:31:30.000000000 -0700
+@@ -8,6 +8,8 @@
+ #include <botan/util.h>
+ #include <cstdlib>
+ #include <cstring>
++#include <stdlib.h>
++#include <string.h>
+ 
+ namespace Botan {
+ 
+@@ -18,7 +20,7 @@
+ *************************************************/
+ void* do_malloc(u32bit n, bool do_lock)
+    {
+-   void* ptr = std::malloc(n);
++   void* ptr = malloc(n);
+ 
+    if(!ptr)
+       return 0;
+@@ -26,7 +28,7 @@
+    if(do_lock)
+       lock_mem(ptr, n);
+ 
+-   std::memset(ptr, 0, n);
++   memset(ptr, 0, n);
+    return ptr;
+    }
+ 
+@@ -38,11 +40,11 @@
+    if(!ptr)
+       return;
+ 
+-   std::memset(ptr, 0, n);
++   memset(ptr, 0, n);
+    if(do_lock)
+       unlock_mem(ptr, n);
+ 
+-   std::free(ptr);
++   free(ptr);
+    }
+ 
+ }
 diff -ur a/src/libstate.cpp b/src/libstate.cpp
 --- a/src/libstate.cpp	2007-03-24 11:51:37.000000000 -0700
-+++ b/src/libstate.cpp	2007-04-19 14:22:32.000000000 -0700
++++ b/src/libstate.cpp	2007-06-26 11:31:30.000000000 -0700
 @@ -4,14 +4,20 @@
  *************************************************/
  
@@ -668,7 +834,7 @@ diff -ur a/src/libstate.cpp b/src/libstate.cpp
     }
  
  /*************************************************
-@@ -352,18 +378,26 @@
+@@ -352,25 +378,39 @@
        throw Exception("Library_State: no mutex found");
  
     this->mutex_factory = mutex_factory;
@@ -695,15 +861,20 @@ diff -ur a/src/libstate.cpp b/src/libstate.cpp
     }
  
  /*************************************************
-@@ -371,6 +405,7 @@
+ * Library_State Destructor                       *
  *************************************************/
++static void delete_lock(std::pair<const std::string, Mutex*> &pair)
++   {
++   delete pair.second;
++   }
++
  Library_State::~Library_State()
     {
 +#ifndef BOTAN_TOOLS_ONLY
     delete x509_state_obj;
     delete transcoder;
     delete rng;
-@@ -381,6 +416,7 @@
+@@ -381,6 +421,7 @@
     std::for_each(entropy_sources.begin(), entropy_sources.end(),
                   del_fun<EntropySource>());
     std::for_each(engines.begin(), engines.end(), del_fun<Engine>());
@@ -711,9 +882,19 @@ diff -ur a/src/libstate.cpp b/src/libstate.cpp
  
     cached_default_allocator = 0;
  
+@@ -390,8 +431,7 @@
+       delete allocators[j];
+       }
+ 
+-   std::for_each(locks.begin(), locks.end(),
+-                 delete2nd<std::map<std::string, Mutex*>::value_type>);
++   std::for_each(locks.begin(), locks.end(), delete_lock);
+ 
+    delete mutex_factory;
+    }
 diff -ur a/src/mem_pool.cpp b/src/mem_pool.cpp
 --- a/src/mem_pool.cpp	2007-03-24 11:51:37.000000000 -0700
-+++ b/src/mem_pool.cpp	2007-04-19 14:22:32.000000000 -0700
++++ b/src/mem_pool.cpp	2007-06-26 11:31:30.000000000 -0700
 @@ -5,8 +5,12 @@
  
  #include <botan/mem_pool.h>
@@ -739,9 +920,47 @@ diff -ur a/src/mem_pool.cpp b/src/mem_pool.cpp
     if(result)
        return result;
  
+@@ -42,16 +50,6 @@
+    }
+ 
+ /*************************************************
+-* Compare a Memory_Block with a void pointer     *
+-*************************************************/
+-inline bool Pooling_Allocator::Memory_Block::operator<(const void* other) const
+-   {
+-   if(buffer <= other && other < buffer_end)
+-      return false;
+-   return (buffer < other);
+-   }
+-
+-/*************************************************
+ * See if ptr is contained by this block          *
+ *************************************************/
+ bool Pooling_Allocator::Memory_Block::contains(void* ptr,
+@@ -207,7 +205,7 @@
+       const u32bit block_no = round_up(n, BLOCK_SIZE) / BLOCK_SIZE;
+ 
+       std::vector<Memory_Block>::iterator i =
+-         std::lower_bound(blocks.begin(), blocks.end(), ptr);
++         std::lower_bound(blocks.begin(), blocks.end(), Memory_Block(ptr));
+ 
+       if(i == blocks.end() || !i->contains(ptr, block_no))
+          throw Invalid_State("Pointer released to the wrong allocator");
+@@ -270,7 +268,10 @@
+       }
+ 
+    std::sort(blocks.begin(), blocks.end());
+-   last_used = std::lower_bound(blocks.begin(), blocks.end(), ptr);
++   last_used = std::lower_bound(blocks.begin(), blocks.end(), Memory_Block(ptr));
+    }
+ 
++const u32bit Pooling_Allocator::Memory_Block::BITMAP_SIZE = 8 * sizeof(Pooling_Allocator::Memory_Block::bitmap_type);
++const u32bit Pooling_Allocator::Memory_Block::BLOCK_SIZE = 64;
++
+ }
 diff -ur a/src/modules.cpp b/src/modules.cpp
 --- a/src/modules.cpp	2007-03-24 11:51:37.000000000 -0700
-+++ b/src/modules.cpp	2007-04-19 14:22:32.000000000 -0700
++++ b/src/modules.cpp	2007-06-26 11:31:30.000000000 -0700
 @@ -5,71 +5,77 @@
  
  #include <botan/modules.h>
@@ -888,7 +1107,7 @@ diff -ur a/src/modules.cpp b/src/modules.cpp
  }
 diff -ur a/src/mp_asm.cpp b/src/mp_asm.cpp
 --- a/src/mp_asm.cpp	2007-03-24 11:51:37.000000000 -0700
-+++ b/src/mp_asm.cpp	2007-04-19 14:22:32.000000000 -0700
++++ b/src/mp_asm.cpp	2007-06-26 11:31:30.000000000 -0700
 @@ -174,6 +174,7 @@
  /*************************************************
  * Montgomery Reduction Algorithm                 *
@@ -907,10 +1126,12 @@ diff -ur a/src/mp_asm.cpp b/src/mp_asm.cpp
  
 diff -ur a/src/mutex.cpp b/src/mutex.cpp
 --- a/src/mutex.cpp	2007-03-24 11:51:37.000000000 -0700
-+++ b/src/mutex.cpp	2007-04-19 14:22:32.000000000 -0700
-@@ -4,7 +4,9 @@
++++ b/src/mutex.cpp	2007-06-26 11:31:30.000000000 -0700
+@@ -3,8 +3,11 @@
+ * (C) 1999-2007 The Botan Project                *
  *************************************************/
  
++#include <stdlib.h>
  #include <botan/mutex.h>
 +#ifndef BOTAN_NO_LIBSTATE
  #include <botan/libstate.h>
@@ -918,7 +1139,7 @@ diff -ur a/src/mutex.cpp b/src/mutex.cpp
  
  namespace Botan {
  
-@@ -26,6 +28,7 @@
+@@ -26,6 +29,7 @@
     mux->unlock();
     }
  
@@ -926,7 +1147,7 @@ diff -ur a/src/mutex.cpp b/src/mutex.cpp
  /*************************************************
  * Named_Mutex_Holder Constructor                 *
  *************************************************/
-@@ -42,12 +45,17 @@
+@@ -42,12 +46,17 @@
     {
     global_state().get_named_mutex(mutex_name)->unlock();
     }
@@ -944,7 +1165,7 @@ diff -ur a/src/mutex.cpp b/src/mutex.cpp
     class Default_Mutex : public Mutex
        {
        public:
-@@ -78,6 +86,12 @@
+@@ -78,6 +87,12 @@
           bool locked;
        };
  
@@ -959,7 +1180,7 @@ diff -ur a/src/mutex.cpp b/src/mutex.cpp
  
 diff -ur a/src/parsing.cpp b/src/parsing.cpp
 --- a/src/parsing.cpp	2007-03-24 11:51:37.000000000 -0700
-+++ b/src/parsing.cpp	2007-04-19 14:22:32.000000000 -0700
++++ b/src/parsing.cpp	2007-06-26 11:31:30.000000000 -0700
 @@ -12,6 +12,7 @@
  /*************************************************
  * Convert a string into an integer               *
@@ -994,7 +1215,7 @@ diff -ur a/src/parsing.cpp b/src/parsing.cpp
  }
 diff -ur a/src/util.cpp b/src/util.cpp
 --- a/src/util.cpp	2007-03-24 11:51:37.000000000 -0700
-+++ b/src/util.cpp	2007-04-19 14:22:32.000000000 -0700
++++ b/src/util.cpp	2007-06-26 11:31:30.000000000 -0700
 @@ -4,7 +4,9 @@
  *************************************************/
  

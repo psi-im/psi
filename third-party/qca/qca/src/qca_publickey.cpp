@@ -171,7 +171,7 @@ class Getter_PublicKey
 {
 public:
 	// DER
-	static ConvertResult fromData(PKeyContext *c, const SecureArray &in)
+	static ConvertResult fromData(PKeyContext *c, const QByteArray &in)
 	{
 		return c->publicFromDER(in);
 	}
@@ -421,11 +421,11 @@ QByteArray get_hash_id(const QString &name)
 		return QByteArray();
 }
 
-SecureArray emsa3Encode(const QString &hashName, const SecureArray &digest, int size)
+QByteArray emsa3Encode(const QString &hashName, const QByteArray &digest, int size)
 {
 	QByteArray hash_id = get_hash_id(hashName);
 	if(hash_id.isEmpty())
-		return SecureArray();
+		return QByteArray();
 
 	// logic adapted from Botan
 	int basesize = hash_id.size() + digest.size() + 2;
@@ -433,9 +433,9 @@ SecureArray emsa3Encode(const QString &hashName, const SecureArray &digest, int 
 		size = basesize + 1; // default to 1-byte pad
 	int padlen = size - basesize;
 	if(padlen < 1)
-		return SecureArray();
+		return QByteArray();
 
-	SecureArray out(size, (char)0xff); // pad with 0xff
+	QByteArray out(size, (char)0xff); // pad with 0xff
 	out[0] = 0x01;
 	out[padlen + 1] = 0x00;
 	int at = padlen + 2;
@@ -803,26 +803,26 @@ void PublicKey::startVerify(SignatureAlgorithm alg, SignatureFormat format)
 	static_cast<PKeyContext *>(context())->key()->startVerify(alg, format);
 }
 
-void PublicKey::update(const SecureArray &a)
+void PublicKey::update(const MemoryRegion &a)
 {
 	static_cast<PKeyContext *>(context())->key()->update(a);
 }
 
-bool PublicKey::validSignature(const SecureArray &sig)
+bool PublicKey::validSignature(const QByteArray &sig)
 {
 	return static_cast<PKeyContext *>(context())->key()->endVerify(sig);
 }
 
-bool PublicKey::verifyMessage(const SecureArray &a, const SecureArray &sig, SignatureAlgorithm alg, SignatureFormat format)
+bool PublicKey::verifyMessage(const MemoryRegion &a, const QByteArray &sig, SignatureAlgorithm alg, SignatureFormat format)
 {
 	startVerify(alg, format);
 	update(a);
 	return validSignature(sig);
 }
 
-SecureArray PublicKey::toDER() const
+QByteArray PublicKey::toDER() const
 {
-	SecureArray out;
+	QByteArray out;
 	Provider *p = providerForIOType(type());
 	if(!p)
 		return out;
@@ -867,9 +867,9 @@ bool PublicKey::toPEMFile(const QString &fileName) const
 	return stringToFile(fileName, toPEM());
 }
 
-PublicKey PublicKey::fromDER(const SecureArray &a, ConvertResult *result, const QString &provider)
+PublicKey PublicKey::fromDER(const QByteArray &a, ConvertResult *result, const QString &provider)
 {
-	return getKey<PublicKey, Getter_PublicKey<SecureArray>, SecureArray>(provider, a, SecureArray(), result);
+	return getKey<PublicKey, Getter_PublicKey<QByteArray>, QByteArray>(provider, a, SecureArray(), result);
 }
 
 PublicKey PublicKey::fromPEM(const QString &s, ConvertResult *result, const QString &provider)
@@ -958,17 +958,17 @@ void PrivateKey::startSign(SignatureAlgorithm alg, SignatureFormat format)
 	static_cast<PKeyContext *>(context())->key()->startSign(alg, format);
 }
 
-void PrivateKey::update(const SecureArray &a)
+void PrivateKey::update(const MemoryRegion &a)
 {
 	static_cast<PKeyContext *>(context())->key()->update(a);
 }
 
-SecureArray PrivateKey::signature()
+QByteArray PrivateKey::signature()
 {
 	return static_cast<PKeyContext *>(context())->key()->endSign();
 }
 
-SecureArray PrivateKey::signMessage(const SecureArray &a, SignatureAlgorithm alg, SignatureFormat format)
+QByteArray PrivateKey::signMessage(const MemoryRegion &a, SignatureAlgorithm alg, SignatureFormat format)
 {
 	startSign(alg, format);
 	update(a);
@@ -1145,12 +1145,12 @@ KeyGenerator::~KeyGenerator()
 	delete d;
 }
 
-bool KeyGenerator::blocking() const
+bool KeyGenerator::blockingEnabled() const
 {
 	return d->blocking;
 }
 
-void KeyGenerator::setBlocking(bool b)
+void KeyGenerator::setBlockingEnabled(bool b)
 {
 	d->blocking = b;
 }

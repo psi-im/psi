@@ -150,94 +150,420 @@ void *qca_secure_realloc(void *p, int bytes)
 
 namespace QCA {
 
-//----------------------------------------------------------------------------
-// SecureArray
-//----------------------------------------------------------------------------
-class SecureArray::Private : public QSharedData
+// secure or non-secure buffer, with trailing 0-byte.
+// buffer size of 0 is okay (sbuf/qbuf will be 0).
+struct alloc_info
 {
-public:
-	Botan::SecureVector<Botan::byte> *buf;
+	bool sec;
+	char *data;
 	int size;
 
-	Private(uint _size)
+	// internal
+	Botan::SecureVector<Botan::byte> *sbuf;
+	QByteArray *qbuf;
+};
+
+// note: these functions don't return error if memory allocation/resizing
+//   fails..  maybe fix this someday?
+
+// ai: uninitialized
+// size: >= 0
+// note: memory will be initially zero'd out
+static bool ai_new(alloc_info *ai, int size, bool sec);
+
+// ai: uninitialized
+// from: initialized
+static bool ai_copy(alloc_info *ai, const alloc_info *from);
+
+// ai: initialized
+// new_size: >= 0
+static bool ai_resize(alloc_info *ai, int new_size);
+
+// ai: initialized
+static void ai_delete(alloc_info *ai);
+
+bool ai_new(alloc_info *ai, int size, bool sec)
+{
+	if(size < 0)
+		return false;
+
+	ai->size = size;
+	ai->sec = sec;
+
+	if(size == 0)
 	{
-		size = _size;
-		buf = new Botan::SecureVector<Botan::byte>((Botan::u32bit)size + 1);
-		(*buf)[size] = 0;
+		ai->sbuf = 0;
+		ai->qbuf = 0;
+		ai->data = 0;
+		return true;
 	}
 
-	Private(const QByteArray &from)
+	if(sec)
 	{
-		size = from.size();
-		buf = new Botan::SecureVector<Botan::byte>((Botan::u32bit)size + 1);
-		(*buf)[size] = 0;
-		Botan::byte *p = (Botan::byte *)(*buf);
-		memcpy(p, from.data(), from.size());
+		ai->sbuf = new Botan::SecureVector<Botan::byte>((Botan::u32bit)size + 1);
+		(*(ai->sbuf))[size] = 0;
+		ai->qbuf = 0;
+		Botan::byte *bp = (Botan::byte *)(*(ai->sbuf));
+		ai->data = (char *)bp;
+	}
+	else
+	{
+		ai->sbuf = 0;
+		ai->qbuf = new QByteArray(size, 0);
+		ai->data = ai->qbuf->data();
+	}
+
+	return true;
+}
+
+bool ai_copy(alloc_info *ai, const alloc_info *from)
+{
+	ai->size = from->size;
+	ai->sec = from->sec;
+
+	if(ai->size == 0)
+	{
+		ai->sbuf = 0;
+		ai->qbuf = 0;
+		ai->data = 0;
+		return true;
+	}
+
+	if(ai->sec)
+	{
+		ai->sbuf = new Botan::SecureVector<Botan::byte>(*(from->sbuf));
+		ai->qbuf = 0;
+		Botan::byte *bp = (Botan::byte *)(*(ai->sbuf));
+		ai->data = (char *)bp;
+	}
+	else
+	{
+		ai->sbuf = 0;
+		ai->qbuf = new QByteArray(*(from->qbuf));
+		ai->data = ai->qbuf->data();
+	}
+
+	return true;
+}
+
+bool ai_resize(alloc_info *ai, int new_size)
+{
+	if(new_size < 0)
+		return false;
+
+	// new size is empty
+	if(new_size == 0)
+	{
+		// we currently aren't empty
+		if(ai->size > 0)
+		{
+			if(ai->sec)
+			{
+				delete ai->sbuf;
+				ai->sbuf = 0;
+			}
+			else
+			{
+				delete ai->qbuf;
+				ai->qbuf = 0;
+			}
+
+			ai->size = 0;
+			ai->data = 0;
+		}
+
+		return true;
+	}
+
+	if(ai->sec)
+	{
+		Botan::SecureVector<Botan::byte> *new_buf = new Botan::SecureVector<Botan::byte>((Botan::u32bit)new_size + 1);
+		Botan::byte *new_p = (Botan::byte *)(*new_buf);
+		if(ai->size > 0)
+		{
+			const Botan::byte *old_p = (const Botan::byte *)(*(ai->sbuf));
+			memcpy(new_p, old_p, qMin(new_size, ai->size));
+			delete ai->sbuf;
+		}
+		ai->sbuf = new_buf;
+		ai->size = new_size;
+		(*(ai->sbuf))[new_size] = 0;
+		ai->data = (char *)new_p;
+	}
+	else
+	{
+		if(ai->size > 0)
+			ai->qbuf->resize(new_size);
+		else
+			ai->qbuf = new QByteArray(new_size, 0);
+
+		ai->size = new_size;
+		ai->data = ai->qbuf->data();
+	}
+
+	return true;
+}
+
+void ai_delete(alloc_info *ai)
+{
+	if(ai->size > 0)
+	{
+		if(ai->sec)
+			delete ai->sbuf;
+		else
+			delete ai->qbuf;
+	}
+}
+
+//----------------------------------------------------------------------------
+// MemoryRegion
+//----------------------------------------------------------------------------
+static char blank[] = "";
+
+class MemoryRegion::Private : public QSharedData
+{
+public:
+	alloc_info ai;
+
+	Private(int size, bool sec)
+	{
+		ai_new(&ai, size, sec);
+	}
+
+	Private(const QByteArray &from, bool sec)
+	{
+		ai_new(&ai, from.size(), sec);
+		memcpy(ai.data, from.data(), ai.size);
 	}
 
 	Private(const Private &from) : QSharedData(from)
 	{
-		buf = new Botan::SecureVector<Botan::byte>(*(from.buf));
-		size = from.size;
+		ai_copy(&ai, &from.ai);
 	}
 
 	~Private()
 	{
-		delete buf;
+		ai_delete(&ai);
 	}
 
 	bool resize(int new_size)
 	{
-		Botan::SecureVector<Botan::byte> *new_buf = new Botan::SecureVector<Botan::byte>((Botan::u32bit)new_size + 1);
-		Botan::byte *new_p = (Botan::byte *)(*new_buf);
-		const Botan::byte *old_p = (const Botan::byte *)(*buf);
-		memcpy(new_p, old_p, qMin(new_size, size));
-		delete buf;
-		buf = new_buf;
-		size = new_size;
-		(*buf)[size] = 0;
-		return true;
+		return ai_resize(&ai, new_size);
+	}
+
+	void setSecure(bool sec)
+	{
+		// if same mode, do nothing
+		if(ai.sec == sec)
+			return;
+
+		alloc_info other;
+		ai_new(&other, ai.size, sec);
+		memcpy(other.data, ai.data, ai.size);
+		ai_delete(&ai);
+		ai = other;
 	}
 };
 
-SecureArray::SecureArray()
+MemoryRegion::MemoryRegion()
+:_secure(false), d(0)
 {
-	d = 0;
+}
+
+MemoryRegion::MemoryRegion(const char *str)
+:_secure(false), d(new Private(QByteArray::fromRawData(str, strlen(str)), false))
+{
+}
+
+MemoryRegion::MemoryRegion(const QByteArray &from)
+:_secure(false), d(new Private(from, false))
+{
+}
+
+MemoryRegion::MemoryRegion(const MemoryRegion &from)
+:_secure(from._secure), d(from.d)
+{
+}
+
+MemoryRegion::~MemoryRegion()
+{
+}
+
+MemoryRegion & MemoryRegion::operator=(const MemoryRegion &from)
+{
+	_secure = from._secure;
+	d = from.d;
+	return *this;
+}
+
+MemoryRegion & MemoryRegion::operator=(const QByteArray &from)
+{
+	set(from, false);
+	return *this;
+}
+
+bool MemoryRegion::isNull() const
+{
+	return (d ? false : true);
+}
+
+bool MemoryRegion::isSecure() const
+{
+	return _secure;
+}
+
+QByteArray MemoryRegion::toByteArray() const
+{
+	if(!d)
+		return QByteArray();
+
+	if(d->ai.sec)
+	{
+		QByteArray buf(d->ai.size, 0);
+		memcpy(buf.data(), d->ai.data, d->ai.size);
+		return buf;
+	}
+	else
+	{
+		if(d->ai.size > 0)
+			return *(d->ai.qbuf);
+		else
+			return QByteArray((int)0, (char)0);
+	}
+}
+
+MemoryRegion::MemoryRegion(bool secure)
+:_secure(secure), d(0)
+{
+}
+
+MemoryRegion::MemoryRegion(int size, bool secure)
+:_secure(secure), d(new Private(size, secure))
+{
+}
+
+MemoryRegion::MemoryRegion(const QByteArray &from, bool secure)
+:_secure(secure), d(new Private(from, secure))
+{
+}
+
+char *MemoryRegion::data()
+{
+	if(!d)
+		return blank;
+	return d->ai.data;
+}
+
+const char *MemoryRegion::data() const
+{
+	if(!d)
+		return blank;
+	return d->ai.data;
+}
+
+const char *MemoryRegion::constData() const
+{
+	if(!d)
+		return blank;
+	return d->ai.data;
+}
+
+char & MemoryRegion::at(int index)
+{
+	return *(d->ai.data + index);
+}
+
+const char & MemoryRegion::at(int index) const
+{
+	return *(d->ai.data + index);
+}
+
+int MemoryRegion::size() const
+{
+	if(!d)
+		return 0;
+	return d->ai.size;
+}
+
+bool MemoryRegion::isEmpty() const
+{
+	if(!d)
+		return true;
+	return (d->ai.size > 0 ? false : true);
+}
+
+bool MemoryRegion::resize(int size)
+{
+	if(!d)
+	{
+		d = new Private(size, _secure);
+		return true;
+	}
+
+	if(d->ai.size == size)
+		return true;
+
+	return d->resize(size);
+}
+
+void MemoryRegion::set(const QByteArray &from, bool secure)
+{
+	_secure = secure;
+
+	if(!from.isEmpty())
+		d = new Private(from, secure);
+	else
+		d = new Private(0, secure);
+}
+
+void MemoryRegion::setSecure(bool secure)
+{
+	_secure = secure;
+
+	if(!d)
+	{
+		d = new Private(0, secure);
+		return;
+	}
+
+	d->setSecure(secure);
+}
+
+//----------------------------------------------------------------------------
+// SecureArray
+//----------------------------------------------------------------------------
+SecureArray::SecureArray()
+:MemoryRegion(true)
+{
 }
 
 SecureArray::SecureArray(int size, char ch)
+:MemoryRegion(size, true)
 {
-	if(size > 0)
-	{
-		d = new Private(size);
-
-		// botan fills with zeros for us
-		if(ch != 0)
-			fill(ch, size);
-	}
-	else
-		d = 0;
+	// ai_new fills with zeros for us
+	if(ch != 0)
+		fill(ch, size);
 }
 
 SecureArray::SecureArray(const char *str)
+:MemoryRegion(QByteArray::fromRawData(str, strlen(str)), true)
 {
-	QByteArray a = QByteArray::fromRawData(str, strlen(str));
-	if(a.size() > 0)
-		d = new Private(a);
-	else
-		d = 0;
 }
 
 SecureArray::SecureArray(const QByteArray &a)
+:MemoryRegion(a, true)
 {
-	d = 0;
-	*this = a;
+}
+
+SecureArray::SecureArray(const MemoryRegion &a)
+:MemoryRegion(a)
+{
+	setSecure(true);
 }
 
 SecureArray::SecureArray(const SecureArray &from)
+:MemoryRegion(from)
 {
-	d = 0;
-	*this = from;
 }
 
 SecureArray::~SecureArray()
@@ -246,45 +572,24 @@ SecureArray::~SecureArray()
 
 SecureArray & SecureArray::operator=(const SecureArray &from)
 {
-	d = from.d;
+	MemoryRegion::operator=(from);
 	return *this;
 }
 
 SecureArray & SecureArray::operator=(const QByteArray &from)
 {
-	d = 0;
-	if(!from.isEmpty())
-		d = new Private(from);
-
+	MemoryRegion::set(from, true);
 	return *this;
 }
 
 void SecureArray::clear()
 {
-	d = 0;
+	MemoryRegion::resize(0);
 }
 
 bool SecureArray::resize(int size)
 {
-	int cur_size = (d ? d->size : 0);
-	if(cur_size == size)
-		return true;
-
-	if(size > 0)
-	{
-		if(d)
-		{
-			if(!d->resize(size))
-				return false;
-		}
-		else
-			d = new Private(size);
-	}
-	else
-	{
-		d = 0;
-	}
-	return true;
+	return MemoryRegion::resize(size);
 }
 
 char & SecureArray::operator[](int index)
@@ -299,57 +604,42 @@ const char & SecureArray::operator[](int index) const
 
 char & SecureArray::at(int index)
 {
-	Botan::byte *bp = (Botan::byte *)(*d->buf) + index;
-	char *cp = (char *)bp;
-	return *cp;
+	return MemoryRegion::at(index);
 }
 
 const char & SecureArray::at(int index) const
 {
-	const Botan::byte *bp = (const Botan::byte *)(*d->buf) + index;
-	const char *cp = (const char *)bp;
-	return *cp;
+	return MemoryRegion::at(index);
 }
 
 char *SecureArray::data()
 {
-	if(!d)
-		return 0;
-	Botan::byte *p = (Botan::byte *)(*d->buf);
-	return ((char *)p);
+	return MemoryRegion::data();
 }
 
 const char *SecureArray::data() const
 {
-	if(!d)
-		return 0;
-	const Botan::byte *p = (const Botan::byte *)(*d->buf);
-	return ((const char *)p);
+	return MemoryRegion::data();
 }
 
 const char *SecureArray::constData() const
 {
-	return data();
+	return MemoryRegion::constData();
 }
 
 int SecureArray::size() const
 {
-	return (d ? d->size : 0);
+	return MemoryRegion::size();
 }
 
 bool SecureArray::isEmpty() const
 {
-	return (size() == 0);
+	return MemoryRegion::isEmpty();
 }
 
 QByteArray SecureArray::toByteArray() const
 {
-	if(isEmpty())
-		return QByteArray();
-
-	QByteArray buf(size(), 0);
-	memcpy(buf.data(), data(), size());
-	return buf;
+	return MemoryRegion::toByteArray();
 }
 
 SecureArray & SecureArray::append(const SecureArray &a)
@@ -358,6 +648,15 @@ SecureArray & SecureArray::append(const SecureArray &a)
 	resize(oldsize + a.size());
 	memcpy(data() + oldsize, a.data(), a.size());
 	return *this;
+}
+
+bool SecureArray::operator==(const MemoryRegion &other) const
+{
+	if(this == &other)
+		return true;
+	if(size() == other.size() && memcmp(data(), other.data(), size()) == 0)
+		return true;
+	return false;
 }
 
 SecureArray & SecureArray::operator+=(const SecureArray &a)
@@ -380,20 +679,6 @@ void SecureArray::set(const SecureArray &from)
 void SecureArray::set(const QByteArray &from)
 {
 	*this = from;
-}
-
-bool operator==(const SecureArray &a, const SecureArray &b)
-{
-	if(&a == &b)
-		return true;
-	if(a.size() == b.size() && memcmp(a.data(), b.data(), a.size()) == 0)
-		return true;
-	return false;
-}
-
-bool operator!=(const SecureArray &a, const SecureArray &b)
-{
-	return !(a == b);
 }
 
 const SecureArray operator+(const SecureArray &a, const SecureArray &b)

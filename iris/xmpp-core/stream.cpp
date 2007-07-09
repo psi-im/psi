@@ -718,9 +718,9 @@ void ClientStream::sasl_needParams(const QCA::SASL::Params& p)
 		d->sasl->setAuthzid(d->jid.bare());
 		//d->sasl->setAuthzid("infiniti.homelesshackers.org");
 	}*/
-	if(p.user || p.pass || p.realm) {
+	if(p.needUsername() || p.needPassword() || p.canSendRealm()) {
 		d->state = NeedParams;
-		needAuthParams(p.user, p.pass, p.realm);
+		needAuthParams(p.needUsername(), p.needPassword(), p.canSendRealm());
 	}
 	else
 		d->sasl->continueAfterParams();
@@ -1101,9 +1101,9 @@ bool ClientStream::handleNeed()
 			connect(d->sasl, SIGNAL(error()), SLOT(sasl_error()));
 
 			if(d->haveLocalAddr)
-				d->sasl->setLocalAddr(d->localAddr.toString(), d->localPort);
+				d->sasl->setLocalAddress(d->localAddr.toString(), d->localPort);
 			if(d->conn->havePeerAddress())
-				d->sasl->setRemoteAddr(d->conn->peerAddress().toString(), d->conn->peerPort());
+				d->sasl->setRemoteAddress(d->conn->peerAddress().toString(), d->conn->peerPort());
 
 			//d->sasl_mech = "ANONYMOUS";
 			//d->sasl->setRequirePassCredentials(true);
@@ -1163,11 +1163,11 @@ bool ClientStream::handleNeed()
 int ClientStream::convertedSASLCond() const
 {
 	int x = d->sasl->authCondition();
-	if(x == QCA::SASL::NoMech)
+	if(x == QCA::SASL::NoMechanism)
 		return NoMech;
-	else if(x == QCA::SASL::BadProto)
+	else if(x == QCA::SASL::BadProtocol)
 		return BadProto;
-	else if(x == QCA::SASL::BadServ)
+	else if(x == QCA::SASL::BadServer)
 		return BadServ;
 	else if(x == QCA::SASL::TooWeak)
 		return MechTooWeak;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2005  Justin Karneges <justin@affinix.com>
+ * Copyright (C) 2003-2007  Justin Karneges <justin@affinix.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,7 +29,6 @@ using namespace QCA;
 
 namespace gpgQCAPlugin {
 
-#ifdef QT_PIPE_HACK
 class QProcessSignalRelay : public QObject
 {
 	Q_OBJECT
@@ -85,7 +84,6 @@ public slots:
 		emit error(x);
 	}
 };
-#endif
 
 //----------------------------------------------------------------------------
 // GPGProc

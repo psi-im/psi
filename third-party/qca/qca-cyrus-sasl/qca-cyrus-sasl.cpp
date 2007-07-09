@@ -1,6 +1,7 @@
 /*
  * qca-sasl.cpp - SASL plugin for QCA
- * Copyright (C) 2003-2006  Justin Karneges, Michail Pishchagin
+ * Copyright (C) 2003-2007  Justin Karneges <justin@affinix.com>
+ * Copyright (C) 2006  Michail Pishchagin <mblsha@gmail.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,8 +19,9 @@
  *
  */
 
-#include <QtCore>
 #include <QtCrypto>
+#include <QDebug>
+#include <QtCore/qplugin.h>
 
 extern "C"
 {
@@ -44,7 +46,7 @@ public:
 	saslProvider();
 	void init();
 	~saslProvider();
-        int version() const;
+	int qcaVersion() const;
 	QString name() const;
 	QString credit() const;
 	QStringList features() const;
@@ -62,6 +64,12 @@ public:
 class SASLParams
 {
 public:
+	class SParams
+	{
+	public:
+		bool user, authzid, pass, realm;
+	};
+
 	SASLParams()
 	{
 		reset();
@@ -104,7 +112,7 @@ public:
 		authzid = s;
 	}
 
-	void setPassword(const QSecureArray &s)
+	void setPassword(const SecureArray &s)
 	{
 		have.pass = true;
 		pass = QString::fromUtf8(s.toByteArray());
@@ -146,14 +154,14 @@ public:
 
 	bool missingAny() const
 	{
-		if((need.user && !have.user) || /*(need.authzid && !have.authzid) || */ (need.pass && !have.pass) || (need.realm && !have.realm))
+		if((need.user && !have.user) /*|| (need.authzid && !have.authzid)*/ || (need.pass && !have.pass) /*|| (need.realm && !have.realm)*/)
 			return true;
 		return false;
 	}
 
-	SASL::Params missing() const
+	SParams missing() const
 	{
-		SASL::Params np = need;
+		SParams np = need;
 		if(have.user)
 			np.user = false;
 		if(have.authzid)
@@ -182,8 +190,8 @@ public:
 	}
 
 	QList<char *> results;
-	SASL::Params need;
-	SASL::Params have;
+	SParams need;
+	SParams have;
 	QString user, authzid, pass, realm;
 };
 
@@ -315,14 +323,15 @@ private:
 
 	void setAuthCondition(int r)
 	{
+            //qDebug() << "authcondition: " << r;
 		SASL::AuthCondition x;
 		switch(r) {
 			// common
-			case SASL_NOMECH:    x = SASL::NoMech; break;
-			case SASL_BADPROT:   x = SASL::BadProto; break;
+			case SASL_NOMECH:    x = SASL::NoMechanism; break;
+			case SASL_BADPROT:   x = SASL::BadProtocol; break;
 
 			// client
-			case SASL_BADSERV:   x = SASL::BadServ; break;
+			case SASL_BADSERV:   x = SASL::BadServer; break;
 
 			// server
 			case SASL_BADAUTH:   x = SASL::BadAuth; break;
@@ -332,7 +341,7 @@ private:
 			case SASL_EXPIRED:   x = SASL::Expired; break;
 			case SASL_DISABLED:  x = SASL::Disabled; break;
 			case SASL_NOUSER:    x = SASL::NoUser; break;
-			case SASL_UNAVAIL:   x = SASL::RemoteUnavail; break;
+			case SASL_UNAVAIL:   x = SASL::RemoteUnavailable; break;
 
 			default: x = SASL::AuthFail; break;
 		}
@@ -380,7 +389,7 @@ private:
 
 				params.applyInteract(need);
 				if(params.missingAny()) {
-					result_result = NeedParams;
+					result_result = Params;
 					return;
 				}
 			}
@@ -421,7 +430,7 @@ private:
 
 				params.applyInteract(need);
 				if(params.missingAny()) {
-					result_result = NeedParams;
+					result_result = Params;
 					return;
 				}
 			}
@@ -637,22 +646,29 @@ public:
 		int r = sasl_client_new(service.toLatin1().data(), host.toLatin1().data(), localAddr.isEmpty() ? 0 : localAddr.toLatin1().data(), remoteAddr.isEmpty() ? 0 : remoteAddr.toLatin1().data(), callbacks, 0, &con);
 		if(r != SASL_OK) {
 			setAuthCondition(r);
+			doResultsReady();
 			return;
 		}
 
 		if(!setsecprops())
+		{
+			doResultsReady();
 			return;
+		}
 
 		result_mechlist = mechlist;
 		servermode = false;
 		step = 0;
 		result_result = Success;
+		clientTryAgain();
+		doResultsReady();
 		return;
 	}
 
 	// TODO: make use of disableServerSendLast
 	virtual void startServer(const QString &realm, bool disableServerSendLast)
 	{
+		Q_UNUSED(disableServerSendLast);
 		resetState();
 
 		g->appname = SASL_APP;
@@ -676,11 +692,15 @@ public:
 		int r = sasl_server_new(service.toLatin1().data(), host.toLatin1().data(), !realm.isEmpty() ? realm.toLatin1().data() : 0, localAddr.isEmpty() ? 0 : localAddr.toLatin1().data(), remoteAddr.isEmpty() ? 0 : remoteAddr.toLatin1().data(), callbacks, 0, &con);
 		if(r != SASL_OK) {
 			setAuthCondition(r);
+			doResultsReady();
 			return;
 		}
 
 		if(!setsecprops())
+		{
+			doResultsReady();
 			return;
+		}
 
 		const char *ml;
 		r = sasl_listmech(con, 0, 0, " ", 0, &ml, 0, 0);
@@ -693,6 +713,7 @@ public:
 		ca_done = false;
 		ca_skip = false;
 		result_result = Success;
+		doResultsReady();
 		return;
 	}
 
@@ -706,14 +727,16 @@ public:
 		else
 			in_useClientInit = false;
 		serverTryAgain();
+		doResultsReady();
 	}
 
-	virtual SASL::Params clientParamsNeeded() const
+	virtual SASL::Params clientParams() const
 	{
-		return params.missing();
+		SASLParams::SParams sparams = params.missing();
+		return SASL::Params(sparams.user, sparams.authzid, sparams.pass, sparams.realm);
 	}
 
-	virtual void setClientParams(const QString *user, const QString *authzid, const QSecureArray *pass, const QString *realm)
+	virtual void setClientParams(const QString *user, const QString *authzid, const SecureArray *pass, const QString *realm)
 	{
 		if(user)
 			params.setUsername(*user);
@@ -747,6 +770,7 @@ public:
 			serverTryAgain();
 		else
 			clientTryAgain();
+		doResultsReady();
 	}
 
 	virtual QString mech() const
@@ -757,9 +781,15 @@ public:
 			return out_mech;
 	}
 
-	virtual QString mechlist() const
+	virtual QStringList mechlist() const
 	{
-		return result_mechlist.join(" ");
+		return result_mechlist;
+	}
+
+	virtual QStringList realmlist() const
+	{
+		// TODO
+		return QStringList();
 	}
 
 	virtual void setConstraints(SASL::AuthFlags f, int minSSF, int maxSSF)
@@ -843,17 +873,14 @@ public:
 //----------------------------------------------------------------------------
 // saslProvider
 //----------------------------------------------------------------------------
-
 saslProvider::saslProvider()
-	: Provider()
 {
-	init();
+	client_init = false;
+	server_init = false;
 }
 
 void saslProvider::init()
 {
-	client_init = false;
-	server_init = false;
 }
 
 saslProvider::~saslProvider()
@@ -862,7 +889,7 @@ saslProvider::~saslProvider()
 		sasl_done();
 }
 
-int saslProvider::version() const
+int saslProvider::qcaVersion() const
 {
         return QCA_VERSION;
 }
@@ -901,7 +928,7 @@ using namespace saslQCAPlugin;
 // saslPlugin
 //----------------------------------------------------------------------------
 
-class saslPlugin : public QCAPlugin
+class saslPlugin : public QObject, public QCAPlugin
 {
 	Q_OBJECT
 	Q_INTERFACES(QCAPlugin)
@@ -909,7 +936,7 @@ public:
 	virtual Provider *createProvider() { return new saslProvider; }
 };
 
-#include "qca-sasl.moc"
+#include "qca-cyrus-sasl.moc"
 
-Q_EXPORT_PLUGIN2(qca_sasl, saslPlugin)
+Q_EXPORT_PLUGIN2(qca_cyrus_sasl, saslPlugin)
 

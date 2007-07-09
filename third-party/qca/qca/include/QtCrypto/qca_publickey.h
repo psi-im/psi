@@ -139,7 +139,7 @@ enum DLGroupSet
    function of QCA and does not utilize a provider.  SHA1, MD5, MD2,
    and RIPEMD160 are supported.
 */
-QCA_EXPORT SecureArray emsa3Encode(const QString &hashName, const SecureArray &digest, int size = -1);
+QCA_EXPORT QByteArray emsa3Encode(const QString &hashName, const QByteArray &digest, int size = -1);
 
 /**
    \class DLGroup qca_publickey.h QtCrypto
@@ -582,7 +582,7 @@ public:
 
 	   \param a the array containing the data that should be added to the signature
 	*/
-	void update(const SecureArray &a);
+	void update(const MemoryRegion &a);
 
 	/**
 	   Check the signature is valid for the message
@@ -609,7 +609,7 @@ if( pubkey.canVerify() )
 
 	   \return true if the signature is correct
 	*/
-	bool validSignature(const SecureArray &sig);
+	bool validSignature(const QByteArray &sig);
 
 	/**
 	   Single step message verification
@@ -624,12 +624,12 @@ if( pubkey.canVerify() )
 
 	   \return true if the signature is valid for the message
 	*/
-	bool verifyMessage(const SecureArray &a, const SecureArray &sig, SignatureAlgorithm alg, SignatureFormat format = DefaultFormat);
+	bool verifyMessage(const MemoryRegion &a, const QByteArray &sig, SignatureAlgorithm alg, SignatureFormat format = DefaultFormat);
 
 	/**
 	   Export the key in Distinguished Encoding Rules (DER) format
 	*/
-	SecureArray toDER() const;
+	QByteArray toDER() const;
 
 	/**
 	   Export the key in Privacy Enhanced Mail (PEM) format
@@ -676,7 +676,7 @@ if (! QCA::ConvertGood == conversionResult)
 	   conversion succeeded (ConvertGood) or not
 	   \param provider the name of the provider to use for the import.
 	*/
-	static PublicKey fromDER(const SecureArray &a, ConvertResult *result = 0, const QString &provider = QString());
+	static PublicKey fromDER(const QByteArray &a, ConvertResult *result = 0, const QString &provider = QString());
 
 	/**
 	   Import a key in Privacy Enhanced Mail (PEM) format
@@ -768,6 +768,9 @@ public:
 	   \param passphrase the pass phrase for the private key
 
 	   \sa fromPEMFile for an alternative method
+
+	   \note This synchronous operation may require event handling, and so
+	   it must not be called from the same thread as an EventHandler.
 	*/
 	explicit PrivateKey(const QString &fileName, const SecureArray &passphrase = SecureArray());
 
@@ -822,6 +825,9 @@ public:
 	   \param in the cipher (encrypted) data
 	   \param out the plain text data
 	   \param alg the algorithm to use
+
+	   \note This synchronous operation may require event handling, and so
+	   it must not be called from the same thread as an EventHandler.
 	*/
 	bool decrypt(const SecureArray &in, SecureArray *out, EncryptionAlgorithm alg);
 
@@ -830,6 +836,9 @@ public:
 
 	   \param alg the algorithm to use for the message signature process
 	   \param format the signature format to use, for DSA
+
+	   \note This synchronous operation may require event handling, and so
+	   it must not be called from the same thread as an EventHandler.
 	*/
 	void startSign(SignatureAlgorithm alg, SignatureFormat format = DefaultFormat);
 
@@ -837,13 +846,19 @@ public:
 	   Update the signature process
 
 	   \param a the message to use to update the signature
+
+	   \note This synchronous operation may require event handling, and so
+	   it must not be called from the same thread as an EventHandler.
 	*/
-	void update(const SecureArray &a);
+	void update(const MemoryRegion &a);
 
 	/**
 	   The resulting signature
+
+	   \note This synchronous operation may require event handling, and so
+	   it must not be called from the same thread as an EventHandler.
 	*/
-	SecureArray signature();
+	QByteArray signature();
 
 	/**
 	   One step signature process
@@ -853,8 +868,11 @@ public:
 	   \param format the signature format to use, for DSA
 
 	   \return the signature
+
+	   \note This synchronous operation may require event handling, and so
+	   it must not be called from the same thread as an EventHandler.
 	*/
-	SecureArray signMessage(const SecureArray &a, SignatureAlgorithm alg, SignatureFormat format = DefaultFormat);
+	QByteArray signMessage(const MemoryRegion &a, SignatureAlgorithm alg, SignatureFormat format = DefaultFormat);
 
 	/**
 	   Derive a shared secret key from a public key
@@ -930,6 +948,9 @@ public:
 	   array
 
 	   \sa QCA::KeyLoader for an asynchronous loader approach.
+
+	   \note This synchronous operation may require event handling, and so
+	   it must not be called from the same thread as an EventHandler.
 	*/
 	static PrivateKey fromDER(const SecureArray &a, const SecureArray &passphrase = SecureArray(), ConvertResult *result = 0, const QString &provider = QString());
 
@@ -947,6 +968,9 @@ public:
 	   string in PEM encoding.
 
 	   \sa QCA::KeyLoader for an asynchronous loader approach.
+
+	   \note This synchronous operation may require event handling, and so
+	   it must not be called from the same thread as an EventHandler.
 	*/
 	static PrivateKey fromPEM(const QString &s, const SecureArray &passphrase = SecureArray(), ConvertResult *result = 0, const QString &provider = QString());
 
@@ -968,6 +992,9 @@ public:
 
 	   \note there is also a constructor form, that allows you to create
 	   the key directly
+
+	   \note This synchronous operation may require event handling, and so
+	   it must not be called from the same thread as an EventHandler.
 	*/
 	static PrivateKey fromPEMFile(const QString &fileName, const SecureArray &passphrase = SecureArray(), ConvertResult *result = 0, const QString &provider = QString());
 
@@ -1013,9 +1040,9 @@ public:
 
 	   \return true if the key generator is in blocking mode
 
-	   \sa setBlocking
+	   \sa setBlockingEnabled
 	*/
-	bool blocking() const;
+	bool blockingEnabled() const;
 
 	/**
 	   Set whether the key generator is in blocking mode, nor not
@@ -1023,9 +1050,9 @@ public:
 	   \param b if true, the key generator will be set to operate in
 	   blocking mode, otherwise it will operate in non-blocking mode
 
-	   \sa blocking()
+	   \sa blockingEnabled()
 	*/
-	void setBlocking(bool b);
+	void setBlockingEnabled(bool b);
 
 	/**
 	   Test if the key generator is currently busy, or not

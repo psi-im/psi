@@ -65,6 +65,7 @@ private:
 	bool scanned_static;
 	void addItem(ProviderItem *i, int priority);
 	bool haveAlready(const QString &name) const;
+	int get_default_priority(const QString &name) const;
 };
 
 }

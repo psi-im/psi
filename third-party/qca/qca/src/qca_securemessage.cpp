@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2005  Justin Karneges <justin@affinix.com>
+ * Copyright (C) 2003-2007  Justin Karneges <justin@affinix.com>
  * Copyright (C) 2004,2005  Brad Hards <bradh@frogmouth.net>
  *
  * This library is free software; you can redistribute it and/or
@@ -137,6 +137,12 @@ void SecureMessageKey::setX509PrivateKey(const PrivateKey &k)
 {
 	d->ensureType(SecureMessageKey::X509);
 	d->cert_sec = k;
+}
+
+void SecureMessageKey::setX509KeyBundle(const KeyBundle &kb)
+{
+	setX509CertificateChain(kb.certificateChain());
+	setX509PrivateKey(kb.privateKey());
 }
 
 bool SecureMessageKey::havePrivate() const
@@ -296,13 +302,22 @@ public slots:
 	void updated()
 	{
 		bool sig_read = false;
+		bool sig_written = false;
 		bool sig_done = false;
+		int written = 0;
 		{
 			QByteArray a = c->read();
 			if(!a.isEmpty())
 			{
 				sig_read = true;
 				in.append(a);
+			}
+
+			int x = c->written();
+			if(x > 0)
+			{
+				sig_written = true;
+				written = x;
 			}
 		}
 
@@ -323,6 +338,8 @@ public slots:
 
 		if(sig_read)
 			QTimer::singleShot(0, q, SIGNAL(readyRead()));
+		if(sig_written)
+			QMetaObject::invokeMethod(q, "bytesWritten", Qt::QueuedConnection, Q_ARG(int, written));
 		if(sig_done)
 			QTimer::singleShot(0, q, SIGNAL(finished()));
 	}
@@ -367,12 +384,37 @@ void SecureMessage::reset()
 	d->reset(ResetAll);
 }
 
-void SecureMessage::setEnableBundleSigner(bool b)
+bool SecureMessage::bundleSignerEnabled() const
+{
+	return d->bundleSigner;
+}
+
+bool SecureMessage::smimeAttributesEnabled() const
+{
+	return d->smime;
+}
+
+SecureMessage::Format SecureMessage::format() const
+{
+	return d->format;
+}
+
+SecureMessageKeyList SecureMessage::recipientKeys() const
+{
+	return d->to;
+}
+
+SecureMessageKeyList SecureMessage::signerKeys() const
+{
+	return d->from;
+}
+
+void SecureMessage::setBundleSignerEnabled(bool b)
 {
 	d->bundleSigner = b;
 }
 
-void SecureMessage::setEnableSMIMEAttributes(bool b)
+void SecureMessage::setSMIMEAttributesEnabled(bool b)
 {
 	d->smime = b;
 }
@@ -553,27 +595,54 @@ OpenPGP::~OpenPGP()
 //----------------------------------------------------------------------------
 // CMS
 //----------------------------------------------------------------------------
+class CMS::Private
+{
+public:
+	CertificateCollection trusted, untrusted;
+	SecureMessageKeyList privateKeys;
+};
+
 CMS::CMS(QObject *parent, const QString &provider)
 :SecureMessageSystem(parent, "cms", provider)
 {
+	d = new Private;
 }
 
 CMS::~CMS()
 {
+	delete d;
+}
+
+CertificateCollection CMS::trustedCertificates() const
+{
+	return d->trusted;
+}
+
+CertificateCollection CMS::untrustedCertificates() const
+{
+	return d->untrusted;
+}
+
+SecureMessageKeyList CMS::privateKeys() const
+{
+	return d->privateKeys;
 }
 
 void CMS::setTrustedCertificates(const CertificateCollection &trusted)
 {
+	d->trusted = trusted;
 	static_cast<SMSContext *>(context())->setTrustedCertificates(trusted);
 }
 
 void CMS::setUntrustedCertificates(const CertificateCollection &untrusted)
 {
+	d->untrusted = untrusted;
 	static_cast<SMSContext *>(context())->setUntrustedCertificates(untrusted);
 }
 
 void CMS::setPrivateKeys(const SecureMessageKeyList &keys)
 {
+	d->privateKeys = keys;
 	static_cast<SMSContext *>(context())->setPrivateKeys(keys);
 }
 

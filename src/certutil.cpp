@@ -76,7 +76,7 @@ CertificateCollection CertUtil::allCertificates()
 				QDomElement data = cl.item(n).toElement().elementsByTagName("data").item(0).toElement();
 				if(!data.isNull()) {
 					ConvertResult result;
-					Certificate cert = Certificate::fromDER(Base64().stringToArray(data.text()),&result);
+					Certificate cert = Certificate::fromDER(Base64().stringToArray(data.text()).toByteArray(),&result);
 					if (result == ConvertGood) {
 						certs.addCertificate(cert);
 					}

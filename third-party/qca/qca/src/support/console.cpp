@@ -736,7 +736,7 @@ public:
 	bool waiting;
 	int at;
 	bool done;
-	bool enterMode;
+	bool charMode;
 	QTextCodec *codec;
 	QTextCodec::ConverterState *encstate, *decstate;
 
@@ -779,7 +779,7 @@ public:
 		}
 	}
 
-	bool start(bool _enterMode)
+	bool start(bool _charMode)
 	{
 		own_con = false;
 		con = Console::ttyInstance();
@@ -792,7 +792,7 @@ public:
 		result.clear();
 		at = 0;
 		done = false;
-		enterMode = _enterMode;
+		charMode = _charMode;
 
 		encstate = new QTextCodec::ConverterState(QTextCodec::IgnoreHeader);
 		decstate = new QTextCodec::ConverterState(QTextCodec::IgnoreHeader);
@@ -804,7 +804,7 @@ public:
 			return false;
 		}
 
-		if(!enterMode)
+		if(!charMode)
 			writeString(promptStr + ": ");
 
 		return true;
@@ -819,15 +819,19 @@ public:
 	//   is easier to edit (e.g. backspace)
 	bool processChar(QChar c)
 	{
+		if(charMode)
+		{
+			appendChar(c);
+			done = true;
+			return false;
+		}
+
 		if(c == '\r' || c == '\n')
 		{
 			writeString("\n");
 			done = true;
 			return false;
 		}
-
-		if(enterMode)
-			return true;
 
 		if(c == '\b' || c == 0x7f)
 		{
@@ -845,13 +849,18 @@ public:
 		if(at >= CONSOLEPROMPT_INPUT_MAX)
 			return true;
 
+		appendChar(c);
+
+		writeString("*");
+		return true;
+	}
+
+	void appendChar(QChar c)
+	{
 		if((at + 1) * (int)sizeof(ushort) > result.size())
 			result.resize((at + 1) * sizeof(ushort));
 		ushort *p = (ushort *)result.data();
 		p[at++] = c.unicode();
-
-		writeString("*");
-		return true;
 	}
 
 	void convertToUtf8()
@@ -896,8 +905,7 @@ private slots:
 
 		if(done)
 		{
-			if(!enterMode)
-				convertToUtf8();
+			convertToUtf8();
 
 			reset();
 			if(waiting)
@@ -947,7 +955,7 @@ void ConsolePrompt::getHidden(const QString &promptStr)
 	}
 }
 
-void ConsolePrompt::getEnter()
+void ConsolePrompt::getChar()
 {
 	d->reset();
 
@@ -977,6 +985,17 @@ void ConsolePrompt::waitForFinished()
 SecureArray ConsolePrompt::result() const
 {
 	return d->result;
+}
+
+QChar ConsolePrompt::resultChar() const
+{
+	QString str = QString::fromUtf8(d->result.toByteArray());
+
+	// this will never happen if getChar completes
+	if(str.isEmpty())
+		return QChar();
+
+	return str[0];
 }
 
 }

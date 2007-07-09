@@ -683,7 +683,7 @@ void setAppName(const QString &s)
 	global->app_name = s;
 }
 
-QString arrayToHex(const SecureArray &a)
+QString arrayToHex(const QByteArray &a)
 {
 	return Hex().arrayToString(a);
 }
@@ -785,6 +785,15 @@ void Provider::init()
 {
 }
 
+void Provider::deinit()
+{
+}
+
+int Provider::version() const
+{
+	return 0;
+}
+
 QString Provider::credit() const
 {
 	return QString();
@@ -882,16 +891,16 @@ void PKeyBase::startVerify(SignatureAlgorithm, SignatureFormat)
 {
 }
 
-void PKeyBase::update(const SecureArray &)
+void PKeyBase::update(const MemoryRegion &)
 {
 }
 
-SecureArray PKeyBase::endSign()
+QByteArray PKeyBase::endSign()
 {
-	return SecureArray();
+	return QByteArray();
 }
 
-bool PKeyBase::endVerify(const SecureArray &)
+bool PKeyBase::endVerify(const QByteArray &)
 {
 	return false;
 }
@@ -904,9 +913,9 @@ SymmetricKey PKeyBase::deriveKey(const PKeyBase &)
 //----------------------------------------------------------------------------
 // PKeyContext
 //----------------------------------------------------------------------------
-SecureArray PKeyContext::publicToDER() const
+QByteArray PKeyContext::publicToDER() const
 {
-	return SecureArray();
+	return QByteArray();
 }
 
 QString PKeyContext::publicToPEM() const
@@ -914,7 +923,7 @@ QString PKeyContext::publicToPEM() const
 	return QString();
 }
 
-ConvertResult PKeyContext::publicFromDER(const SecureArray &)
+ConvertResult PKeyContext::publicFromDER(const QByteArray &)
 {
 	return ErrorDecode;
 }
@@ -947,6 +956,11 @@ ConvertResult PKeyContext::privateFromPEM(const QString &, const SecureArray &)
 //----------------------------------------------------------------------------
 // KeyStoreEntryContext
 //----------------------------------------------------------------------------
+bool KeyStoreEntryContext::isAvailable() const
+{
+	return true;
+}
+
 KeyBundle KeyStoreEntryContext::keyBundle() const
 {
 	return KeyBundle();
@@ -982,12 +996,11 @@ bool KeyStoreEntryContext::ensureAccess()
 //----------------------------------------------------------------------------
 void KeyStoreListContext::start()
 {
+	QMetaObject::invokeMethod(this, "busyEnd", Qt::QueuedConnection);
 }
 
-void KeyStoreListContext::setUpdatesEnabled(bool enabled)
+void KeyStoreListContext::setUpdatesEnabled(bool)
 {
-	if(enabled)
-		QMetaObject::invokeMethod(this, "busyEnd", Qt::QueuedConnection);
 }
 
 bool KeyStoreListContext::isReadOnly(int) const
@@ -1071,7 +1084,7 @@ BufferedComputation::~BufferedComputation()
 {
 }
 
-SecureArray BufferedComputation::process(const SecureArray &a)
+MemoryRegion BufferedComputation::process(const MemoryRegion &a)
 {
 	clear();
 	update(a);
@@ -1085,19 +1098,19 @@ Filter::~Filter()
 {
 }
 
-SecureArray Filter::process(const SecureArray &a)
+MemoryRegion Filter::process(const MemoryRegion &a)
 {
 	clear();
-	SecureArray buf = update(a);
+	MemoryRegion buf = update(a);
 	if(!ok())
-		return SecureArray();
-	SecureArray fin = final();
+		return MemoryRegion();
+	MemoryRegion fin = final();
 	if(!ok())
-		return SecureArray();
-	int oldsize = buf.size();
-	buf.resize(oldsize + fin.size());
-	memcpy(buf.data() + oldsize, fin.data(), fin.size());
-	return buf;
+		return MemoryRegion();
+	if(buf.isSecure() || fin.isSecure())
+		return (SecureArray(buf) + SecureArray(fin));
+	else
+		return (buf.toByteArray() + fin.toByteArray());
 }
 
 //----------------------------------------------------------------------------

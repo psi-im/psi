@@ -165,6 +165,29 @@ public:
 class SimpleSASLContext : public QCA::SASLContext
 {
 public:
+		class ParamsMutable
+		{
+		public:
+			/**
+			   User is held
+			*/
+			bool user;
+
+			/**
+			   Authorization ID is held
+			*/
+			bool authzid;
+
+			/**
+			   Password is held
+			*/
+			bool pass;
+
+			/**
+			   Realm is held
+			*/
+			bool realm;
+		};
 	// core props
 	QString service, host;
 
@@ -176,8 +199,8 @@ public:
 	QString mechanism_;
 	QString out_mech;
 
-	QCA::SASL::Params need;
-	QCA::SASL::Params have;
+	ParamsMutable need;
+	ParamsMutable have;
 	QString user, authz, realm;
 	QCA::SecureArray pass;
 	Result result_;
@@ -252,7 +275,7 @@ public:
 
 		if(!capable || mechanism_.isEmpty()) {
 			result_ = Error;
-			authCondition_ = QCA::SASL::NoMech;
+			authCondition_ = QCA::SASL::NoMechanism;
 			if (!capable)
 				qWarning("simplesasl.cpp: Not enough capabilities");
 			if (mechanism_.isEmpty()) 
@@ -263,6 +286,7 @@ public:
 		resetState();
 		result_ = Continue;
 		step = 0;
+		tryAgain();
 	}
 
 	virtual void nextStep(const QByteArray &from_net) {
@@ -271,25 +295,27 @@ public:
 	}
 
 	virtual void tryAgain() {
+		// All exits of the method must emit the ready signal
+		// so all exits go through a goto ready; 
 		if(step == 0) {
 			out_mech = mechanism_;
 			
 #ifdef SIMPLESASL_PLAIN
 			// PLAIN 
 			if (out_mech == "PLAIN") {
-				// Firnst, check if we have everything
+				// First, check if we have everything
 				if(need.user || need.pass) {
 					qWarning("simplesasl.cpp: Did not receive necessary auth parameters");
 					result_ = Error;
-					return;
+					goto ready;
 				}
 				if(!have.user)
 					need.user = true;
 				if(!have.pass)
 					need.pass = true;
 				if(need.user || need.pass) {
-					result_ = NeedParams;
-					return;
+					result_ = Params;
+					goto ready;
 				}
 
 				// Continue with authentication
@@ -309,7 +335,7 @@ public:
 			if(need.user || need.authzid || need.pass || need.realm) {
 				qWarning("simplesasl.cpp: Did not receive necessary auth parameters");
 				result_ = Error;
-				return;
+				goto ready;
 			}
 
 			// see if some params are needed
@@ -320,17 +346,17 @@ public:
 			if(!have.pass)
 				need.pass = true;
 			if(need.user || need.authzid || need.pass) {
-				result_ = NeedParams;
-				return;
+				result_ = Params;
+				goto ready;
 			}
 
 			// get props
 			QByteArray cs(in_buf);
 			PropList in;
 			if(!in.fromString(cs)) {
-				authCondition_ = QCA::SASL::BadProto;
+				authCondition_ = QCA::SASL::BadProtocol;
 				result_ = Error;
-				return;
+				goto ready;
 			}
 			//qDebug() << (QString("simplesasl.cpp: IN: %1").arg(QString(in.toString())));
 
@@ -401,6 +427,8 @@ public:
 			out_buf.resize(0);
 			result_ = Success;
 		}
+ready:
+		QMetaObject::invokeMethod(this, "resultsReady", Qt::QueuedConnection);
 	}
 
 	virtual void update(const QByteArray &from_net, const QByteArray &from_app) {
@@ -421,8 +449,8 @@ public:
 		return result_;
 	}
 
-	virtual QString mechlist() const {
-		return QString();
+	virtual QStringList mechlist() const {
+		return QStringList();
 	}
 	
 	virtual QString mech() const {
@@ -457,8 +485,8 @@ public:
 		return authCondition_;
 	}
 
-	virtual QCA::SASL::Params clientParamsNeeded() const {
-		return need;
+	virtual QCA::SASL::Params clientParams() const {
+		return QCA::SASL::Params(need.user, need.authzid, need.pass, need.realm);
 	}
 	
 	virtual void setClientParams(const QString *_user, const QString *_authzid, const QCA::SecureArray *_pass, const QString *_realm) {
@@ -484,6 +512,12 @@ public:
 		}
 	}
 
+	virtual QStringList realmlist() const
+	{
+		// TODO
+		return QStringList();
+	}
+
 	virtual QString username() const {
 		return QString();
 	}
@@ -498,8 +532,14 @@ public:
 		return s;
 	}
 	
-	virtual void startServer(const QString &, bool) {}
-	virtual void serverFirstStep(const QString &, const QByteArray *) { }
+	virtual void startServer(const QString &, bool) {
+		result_ =  QCA::SASLContext::Error;
+		QMetaObject::invokeMethod(this, "resultsReady", Qt::QueuedConnection);
+	}
+	virtual void serverFirstStep(const QString &, const QByteArray *) {
+		result_ =  QCA::SASLContext::Error;
+		QMetaObject::invokeMethod(this, "resultsReady", Qt::QueuedConnection);
+	}
 
 };
 
@@ -527,7 +567,7 @@ public:
 			return new SimpleSASLContext(this);
 		return 0;
 	}
-	int version() const
+	int qcaVersion() const
 	{
 		return QCA_VERSION;
 	}
