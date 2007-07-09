@@ -446,29 +446,48 @@ fi
 
 printf "Verifying Qt 4 build environment ... "
 
+# run qmake -v and check version
+qmake_check_v4() {
+	if [ -x "$1" ]; then
+		if echo `$1 -v 2>&1` | grep "Qt version 4\." >/dev/null 2>&1; then
+			return 0
+		elif [ "$QC_VERBOSE" = "Y" ]; then
+			echo "Warning: $1 not for Qt 4"
+		fi
+	fi
+	return 1
+}
+
 if [ "$QC_VERBOSE" = "Y" ]; then
 	echo
 fi
 
 qm=""
+names="qmake-qt4 qmake4 qmake"
 
 # qt4 check: --qtdir
-if [ -z "$qm" ]; then
-	qstr=$EX_QTDIR/bin/qmake
-	if [ -x "$qstr" ]; then
-		qm=$qstr
-	fi
+if [ -z "$qm" ] && [ ! -z "$EX_QTDIR" ]; then
+	for n in $names; do
+		qstr=$EX_QTDIR/bin/$n
+		if qmake_check_v4 "$qstr"; then
+			qm=$qstr
+			break;
+		fi
+	done
 fi
 if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
 	echo "Warning: qmake not found via --qtdir"
 fi
 
 # qt4 check: QTDIR
-if [ -z "$qm" ]; then
-	qstr=$QTDIR/bin/qmake
-	if [ -x "$qstr" ]; then
-		qm=$qstr
-	fi
+if [ -z "$qm" ] && [ ! -z "$QTDIR" ]; then
+	for n in $names; do
+		qstr=$QTDIR/bin/$n
+		if qmake_check_v4 "$qstr"; then
+			qm=$qstr
+			break;
+		fi
+	done
 fi
 if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
 	echo "Warning: qmake not found via \$QTDIR"
@@ -478,10 +497,13 @@ fi
 if [ -z "$qm" ]; then
 	str=`pkg-config QtCore --variable=exec_prefix 2>/dev/null`
 	if [ ! -z "$str" ]; then
-		qstr=$str/bin/qmake
-		if [ -x "$qstr" ]; then
-			qm=$qstr
-		fi
+		for n in $names; do
+			qstr=$str/bin/$n
+			if qmake_check_v4 "$qstr"; then
+				qm=$qstr
+				break;
+			fi
+		done
 	fi
 fi
 if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
@@ -490,10 +512,13 @@ fi
 
 # qt4 check: PATH
 if [ -z "$qm" ]; then
-	qstr=`$WHICH qmake 2>/dev/null`
-	if [ -x "$qstr" ]; then
-		qm=$qstr
-	fi
+	for n in $names; do
+		qstr=`$WHICH $n 2>/dev/null`
+		if qmake_check_v4 "$qstr"; then
+			qm=$qstr
+			break;
+		fi
+	done
 fi
 if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
 	echo "Warning: qmake not found via \$PATH"
@@ -506,7 +531,7 @@ if [ -z "$qm" ]; then
 		echo "fail"
 	fi
 	printf "\n"
-	printf "Reason: Unable to find the 'qmake' tool.\n"
+	printf "Reason: Unable to find the 'qmake' tool for Qt 4.\n"
 	printf "\n"
 	show_qt_info
 	exit 1;
@@ -686,14 +711,15 @@ public:
 			"  if(x >= 0x00907000) return 0; else return 1;\n"
 			"}\n";
 		QString ext;
+		QStringList incs;
 		if(!inc.isEmpty())
-			ext += QString("-I") + inc + ' ';
+			incs += inc;
 		if(kb)
-			ext += QString("-I") + kbdir + ' ';
+			incs += kbdir;
 		if(!lib.isEmpty())
 			ext += QString("-L") + lib + " -lssl -lcrypto ";
 		int ret;
-		if(!conf->doCompileAndLink(str, QStringList(), ext, QString(), &ret))
+		if(!conf->doCompileAndLink(str, incs, ext, QString(), &ret))
 			return false;
 		if(ret == 0)
 			conf->addDefine("OSSL_097");
@@ -2636,6 +2662,9 @@ int main()
 		var = qc_getenv("BINDIR");
 		if(!var.isEmpty())
 			str += QString("BINDIR = %1\n").arg(var);
+		var = qc_getenv("INCDIR");
+		if(!var.isEmpty())
+			str += QString("INCDIR = %1\n").arg(var);
 		var = qc_getenv("LIBDIR");
 		if(!var.isEmpty())
 			str += QString("LIBDIR = %1\n").arg(var);
