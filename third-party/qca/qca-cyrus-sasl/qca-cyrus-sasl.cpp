@@ -271,7 +271,7 @@ private:
 
 		localAddr = "";
 		remoteAddr = "";
-		maxoutbuf = 0;
+		maxoutbuf = 128;
 		sc_username = "";
 		sc_authzid = "";
 
@@ -350,11 +350,13 @@ private:
 
 	void getssfparams()
 	{
-		const int *ssfp;
-		int r = sasl_getprop(con, SASL_SSF, (const void **)&ssfp);
-		if(r == SASL_OK)
-			result_ssf = *ssfp;
-		sasl_getprop(con, SASL_MAXOUTBUF, (const void **)&maxoutbuf);
+		const void *maybe_sff;
+		if( SASL_OK == sasl_getprop( con, SASL_SSF, &maybe_sff ) )
+			result_ssf = *(const int*)maybe_sff;
+
+		const void *maybe_maxoutbuf;
+		if (SASL_OK == sasl_getprop( con, SASL_MAXOUTBUF, &maybe_maxoutbuf ) )
+			maxoutbuf = *(const int*)maybe_maxoutbuf;
 	}
 
 	static int scb_checkauth(sasl_conn_t *, void *context, const char *requested_user, unsigned, const char *auth_identity, unsigned, const char *, unsigned, struct propctx *)

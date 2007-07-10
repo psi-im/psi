@@ -223,10 +223,26 @@ class QCA_EXPORT TLSSession : public Algorithm
 {
 public:
 	TLSSession();
+
+	/**
+	   Copy constructor
+
+	   \param from the session token to copy from
+	*/
 	TLSSession(const TLSSession &from);
+
 	~TLSSession();
+
+	/**
+	   Assignment operator
+
+	   \param from the session token to assign from
+	*/
 	TLSSession & operator=(const TLSSession &from);
 
+	/**
+	   Test if the session token is valid
+	*/
 	bool isNull() const;
 };
 

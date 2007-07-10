@@ -599,9 +599,12 @@ private slots:
 			bool more = false;
 			if(mode == TLS::Stream)
 			{
-				pending_write -= enc;
-				if(pending_write > 0)
-					more = true;
+				if(!a.isEmpty())
+				{
+					pending_write -= enc;
+					if(pending_write > 0)
+						more = true;
+				}
 			}
 			else
 			{
@@ -1365,8 +1368,11 @@ private slots:
 				}
 				else if(r == SASLContext::Success)
 				{
-					// FIXME: not signal safe
-					emit q->nextStep(c->stepData());
+					if(!disableServerSendLast)
+					{
+						// FIXME: not signal safe
+						emit q->nextStep(c->stepData());
+					}
 
 					authed = true;
 					emit q->authenticated();
