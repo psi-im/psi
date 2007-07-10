@@ -12,7 +12,7 @@ public:
 
 	// Pass WM_POWERBROADCAST and WM_QUERYENDSESSION 
 	// messages from QApplication::winFilterEvent() here
-	void processWinEvent(MSG *m);
+	bool processWinEvent(MSG *m, long* result);
 };
 
 #endif

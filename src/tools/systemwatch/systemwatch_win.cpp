@@ -82,7 +82,7 @@ WinSystemWatch::WinSystemWatch()
 {
 }
 
-void WinSystemWatch::processWinEvent(MSG *m)
+bool WinSystemWatch::processWinEvent(MSG *m, long* result)
 {
 	// NOTE: If you need another message type here, do not forget to add it to
 	// PsiApplication::winEventFilter()
@@ -119,4 +119,6 @@ void WinSystemWatch::processWinEvent(MSG *m)
 		// are doing a file transfer, we should probably also give
 		// them the chance to cancel a shutdown or log-off
 	}
+
+	return false; // Let Qt handle the right return value.
 }
