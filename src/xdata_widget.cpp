@@ -431,6 +431,7 @@ public:
 XDataWidget::XDataWidget(QWidget *parent, const char *name)
 : QWidget(parent, name)
 {
+	layout_ = new QVBoxLayout(this);
 }
 
 XDataWidget::~XDataWidget()
@@ -464,23 +465,21 @@ void XDataWidget::setFields(const XData::FieldList &f)
 {
 	fields_.clear();
 
-	// delete all child widgets
-	QObjectList objlist = queryList();
-	while (!objlist.isEmpty()) {
-		delete objlist.takeFirst();
+	QLayoutItem *child;
+	while ((child = layout_->takeAt(0)) != 0) {
+		delete child->widget();
+		delete child;
 	}
 
-
-	QVBoxLayout* vert = new QVBoxLayout(this);
 	if (!instructions_.isEmpty()) {
 		QLabel* l = new QLabel(instructions_, this);
 		l->setWordWrap(true);
 		l->setTextInteractionFlags(Qt::TextSelectableByMouse|Qt::LinksAccessibleByMouse);
 		connect(l,SIGNAL(linkActivated(const QString&)),SLOT(linkActivated(const QString&)));
-		vert->addWidget(l);
+		layout_->addWidget(l);
 	}
 	QWidget *fields = new QWidget(this);
-	vert->addWidget(fields);
+	layout_->addWidget(fields);
 	if ( f.count() ) {
 		QGridLayout *grid = new QGridLayout(fields, 3, f.count(), 0, 3);
 

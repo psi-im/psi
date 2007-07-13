@@ -24,6 +24,7 @@
 #include <QWidget>
 #include <QList>
 #include <QString>
+#include <QVBoxLayout>
 
 #include "xmpp_xdata.h"
 
@@ -51,6 +52,7 @@ private:
 	typedef QList<XDataField*> XDataFieldList;
 	XDataFieldList fields_;
 	QString instructions_;
+	QVBoxLayout* layout_;
 };
 
 #endif
