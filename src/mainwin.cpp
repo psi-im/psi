@@ -291,8 +291,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	buildOptionsMenu();
 	connect(d->optionsMenu, SIGNAL(aboutToShow()), SLOT(buildOptionsMenu()));
 
-	d->optionsButton->setMenu( d->optionsMenu );
-	d->statusButton->setMenu( d->statusMenu );
 
 	X11WM_CLASS("main");
 
@@ -360,6 +358,8 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	//else 
 	//	mainMenuBar()->show();
 #endif
+	d->optionsButton->setMenu( d->optionsMenu );
+	d->statusButton->setMenu( d->statusMenu );
 	
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt()))/100);
 
