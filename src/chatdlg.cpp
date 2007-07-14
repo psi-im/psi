@@ -164,7 +164,7 @@ public slots:
 		if (!composingTimer) {
 			/* User (re)starts composing */
 			composingTimer = new QTimer(this);
-			connect(composingTimer, SIGNAL(timeout()), SLOT(checkComposing()));
+			connect(composingTimer, SIGNAL(timeout()), SLOT(composingTimeout()));
 			composingTimer->start(2000); // FIXME: magic number
 			emit composing(true);
 		}
@@ -172,7 +172,7 @@ public slots:
 	}
 
 	// Checks if the user is still composing
-	void checkComposing() {
+	void composingTimeout() {
 		if (!isComposing) {
 			// User stopped composing
 			delete composingTimer;
@@ -429,17 +429,19 @@ bool ChatDlg::readyToHide()
 		setAttribute(Qt::WA_DeleteOnClose);
 	}
 	else {
-		if(option.delChats == dcHour)
+		if(option.delChats == dcHour) {
 			setSelfDestruct(60);
-		else if(option.delChats == dcDay)
+		} else if(option.delChats == dcDay) {
 			setSelfDestruct(60 * 24);
+		}
 	}
 
 	// Reset 'contact is composing' & cancel own composing event
 	d->resetComposing();
 	setChatState(StateGone);
-	if (d->contactChatState == StateComposing || d->contactChatState == StateInactive)
+	if (d->contactChatState == StateComposing || d->contactChatState == StateInactive) {
 		setContactChatState(StatePaused);
+	}
 
 	if(d->pending > 0) {
 		d->pending = 0;
@@ -666,8 +668,9 @@ void ChatDlg::updateContact(const Jid &jid, bool fromPresence)
 		
 		// Reset 'is composing' event if the status changed
 		if (statusChanged && d->contactChatState != StateNone) {
-			if (d->contactChatState == StateComposing || d->contactChatState == StateInactive)
+			if (d->contactChatState == StateComposing || d->contactChatState == StateInactive) {
 				setContactChatState(StatePaused);
+			}
 		}
 	}
 }
@@ -965,8 +968,8 @@ void ChatDlg::doneSend()
 	disconnect(ui_.mle->chatEdit(), SIGNAL(textChanged()), d, SLOT(setComposing()));
 	ui_.mle->chatEdit()->setText("");
 
-	// Reset composing timer
 	connect(ui_.mle->chatEdit(), SIGNAL(textChanged()), d, SLOT(setComposing()));
+	// Reset composing timer
 	d->resetComposing();
 }
 
@@ -989,23 +992,26 @@ void ChatDlg::incomingMessage(const Message &m)
 {
 	if (m.body().isEmpty()) {
 		/* Event message */
-		if (m.containsEvent(CancelEvent))
+		if (m.containsEvent(CancelEvent)) {
 			setContactChatState(StatePaused);
-		else if (m.containsEvent(ComposingEvent))
+		} else if (m.containsEvent(ComposingEvent)) {
 			setContactChatState(StateComposing);
+		}
 		
-		if (m.chatState() != StateNone)
+		if (m.chatState() != StateNone) {
 			setContactChatState(m.chatState());
+		}
 	}
 	else {
 		// Normal message
 		// Check if user requests event messages
 		d->sendComposingEvents = m.containsEvent(ComposingEvent);
-		if (!m.eventId().isEmpty())
+		if (!m.eventId().isEmpty()) {
 			d->eventId = m.eventId();
-		if (m.containsEvents() || m.chatState() != StateNone)
+		}
+		if (m.containsEvents() || m.chatState() != StateNone) {
 			setContactChatState(StateActive);
-		else {
+		} else {
 			setContactChatState(StateNone);
 		}
 		appendMessage(m);
@@ -1181,8 +1187,14 @@ void ChatDlg::setChatState(ChatState state)
 		}
 
 		// Transform to more privacy-enabled chat states if necessary
-		if (!option.inactiveEvents && (state == StateGone || state == StateInactive)) 
+		if (!option.inactiveEvents && (state == StateGone || state == StateInactive)) { 
 			state = StatePaused;
+		}
+
+		if (d->lastChatState == StateNone && (state != StateActive && state != StateComposing && state != StateGone)) {
+			//this isn't a valid transition, so don't send it, and don't update laststate
+			return;
+		}
 			
 		// Check if we should send a message
 		if (state == d->lastChatState || state == StateActive || (d->lastChatState == StateActive && state == StatePaused) ) {
@@ -1221,8 +1233,9 @@ void ChatDlg::setChatState(ChatState state)
 		}
 
 		// Save last state
-		if (d->lastChatState != StateGone || state == StateActive)
+		if (d->lastChatState != StateGone || state == StateActive) {
 			d->lastChatState = state;
+		}
 	}
 }
 
@@ -1273,8 +1286,9 @@ void ChatDlg::buildMenu()
 
 bool ChatDlg::eventFilter(QObject *obj, QEvent *event)
 {
-	if (ui_.log->handleCopyEvent(obj, event, ui_.mle->chatEdit()))
+	if (ui_.log->handleCopyEvent(obj, event, ui_.mle->chatEdit())) {
 		return true;
+	}
 	
 	return QWidget::eventFilter(obj, event);
 }
@@ -1286,8 +1300,9 @@ void ChatDlg::chatEditCreated()
 
 	connect(ui_.mle->chatEdit(), SIGNAL(textChanged()), d, SLOT(updateCounter()));
 	ui_.mle->chatEdit()->installEventFilter(this);
-	if (highlightersInstalled_)
+	if (highlightersInstalled_) {
 		connect(ui_.mle->chatEdit(), SIGNAL(textChanged()), d, SLOT(setComposing()));
+	}
 }
 
 #include "chatdlg.moc"
