@@ -25,6 +25,11 @@ test of a version which the developers believe is ready for a final release.
 As such we do not know of any critical issues is this version, but it is 
 still advisable to maintain backups and to not deploy on critical production 
 systems.
+Issues with Qt 4.2.3: There is a bug in Qt 4.2.3 that corrupts incoming text
+with rare Unicode characters (outside of the BMP)
+Issues with Qt 4.3.0: On X11 Qt 4.3.0 seems to have problems with some
+window managers that result in windows not beeing displayed or displayed 
+with a broken layout.
 
 Notes
 -----
