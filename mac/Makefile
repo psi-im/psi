@@ -24,7 +24,7 @@ PSI_DIR=..
 
 NAME=Psi
 #VERSION=0.11-devel_$(shell date +"%Y%m%d")_debug
-VERSION=0.11-RC1
+VERSION=0.11-RC2
 FILES=Psi.app 
 DISK_DIR=disk
 ifneq ($(BUILD),no)

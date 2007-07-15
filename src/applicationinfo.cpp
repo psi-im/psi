@@ -27,7 +27,7 @@
 
 #define PROG_NAME "Psi"
 //#define PROG_VERSION "0.11-dev" " (" __DATE__ ")"; //CVS Builds are dated
-#define PROG_VERSION "0.11-RC1";
+#define PROG_VERSION "0.11-RC2";
 #define PROG_CAPS_NODE "http://psi-im.org/caps";
 #define PROG_CAPS_VERSION "0.11-dev-rev8";
 #define PROG_OPTIONS_NS "http://psi-im.org/options";
