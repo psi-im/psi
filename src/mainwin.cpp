@@ -300,7 +300,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	updateCaption();
 
 	d->registerActions();
-	buildToolbars();
 	
 	connect(d->psi->contactList(), SIGNAL(accountFeaturesChanged()), SLOT(accountFeaturesChanged()));
 	accountFeaturesChanged();
@@ -360,6 +359,8 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 #endif
 	d->optionsButton->setMenu( d->optionsMenu );
 	d->statusButton->setMenu( d->statusMenu );
+	
+	buildToolbars();
 	
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt()))/100);
 
