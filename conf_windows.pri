@@ -1,6 +1,6 @@
 # Windows build settings
-CONFIG += debug
-CONFIG += qca-static
+CONFIG += release
+#CONFIG += qca-static
 
 # OpenSSL
 qca-static {
