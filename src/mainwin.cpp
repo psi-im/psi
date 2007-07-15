@@ -89,8 +89,7 @@ public:
 
 	QVBoxLayout *vb_main;
 	bool onTop, asTool;
-	//duplicate menu items for the buttons - filthy, but sadly seemingly necessary with Qt-4.3
-	QMenu *mainMenu, *statusMenu, *statusButtonMenu, *optionsMenu, *optionsButtonMenu, *toolsMenu;
+	QMenu *mainMenu, *statusMenu, *optionsMenu, *toolsMenu;
 	int sbState;
 	QString nickname;
 	PsiTrayIcon *tray;
@@ -280,8 +279,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 
 	d->statusMenu = new QMenu(this);
 	d->optionsMenu = new QMenu(this);
-	d->statusButtonMenu = new QMenu(this);
-	d->optionsButtonMenu = new QMenu(this);
 #ifdef Q_WS_MAC
 	d->trayMenu = d->statusMenu;
 #else
@@ -292,7 +289,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	buildStatusMenu();
 	buildTrayMenu();
 	buildOptionsMenu();
-	connect(d->optionsButtonMenu, SIGNAL(aboutToShow()), SLOT(buildOptionsMenu()));
 	connect(d->optionsMenu, SIGNAL(aboutToShow()), SLOT(buildOptionsMenu()));
 
 
@@ -362,8 +358,8 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	//else 
 	//	mainMenuBar()->show();
 #endif
-	d->optionsButton->setMenu( d->optionsButtonMenu );
-	d->statusButton->setMenu( d->statusButtonMenu );
+	d->optionsButton->setMenu( d->optionsMenu );
+	d->statusButton->setMenu( d->statusMenu );
 	
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt()))/100);
 
@@ -551,29 +547,25 @@ void MainWin::setUseDock(bool use)
 
 void MainWin::buildStatusMenu()
 {
-	for (QMenu *menu = d->statusMenu; menu != NULL; menu = (menu == d->statusButtonMenu) ? NULL : d->statusButtonMenu) {
-		menu->clear();
-		menu->setTitle(tr("Status"));
-		d->getAction("status_online")->addTo(menu);
-		if (PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool())
-			d->getAction("status_chat")->addTo(menu);
-		menu->insertSeparator();
-		d->getAction("status_away")->addTo(menu);
-		if (PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool())
-			d->getAction("status_xa")->addTo(menu);
-		d->getAction("status_dnd")->addTo(menu);
-		if (PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool()) {
-			menu->insertSeparator();
-			d->getAction("status_invisible")->addTo(menu);
-		}
-		menu->insertSeparator();
-		d->getAction("status_offline")->addTo(menu);
+	d->statusMenu->clear();
+	d->getAction("status_online")->addTo(d->statusMenu);
+	if (PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool())
+		d->getAction("status_chat")->addTo(d->statusMenu);
+	d->statusMenu->insertSeparator();
+	d->getAction("status_away")->addTo(d->statusMenu);
+	if (PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool())
+		d->getAction("status_xa")->addTo(d->statusMenu);
+	d->getAction("status_dnd")->addTo(d->statusMenu);
+	if (PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool()) {
+		d->statusMenu->insertSeparator();
+		d->getAction("status_invisible")->addTo(d->statusMenu);
+	}
+	d->statusMenu->insertSeparator();
+	d->getAction("status_offline")->addTo(d->statusMenu);
 #ifdef USE_PEP
-		menu->insertSeparator();
-		d->getAction("publish_tune")->addTo(menu);
+	d->statusMenu->insertSeparator();
+	d->getAction("publish_tune")->addTo(d->statusMenu);
 #endif
-
-	}	
 }
 
 void MainWin::activatedStatusAction(int id)
@@ -665,14 +657,11 @@ void MainWin::buildOptionsMenu()
 	d->updateMenu(actions, helpMenu);
 
 	buildGeneralMenu( d->optionsMenu );
-	buildGeneralMenu( d->optionsButtonMenu );
 
 	d->optionsMenu->insertSeparator();
 	d->optionsMenu->insertItem(IconsetFactory::icon("psi/help").icon(), tr("&Help"), helpMenu);
 	d->getAction("menu_quit")->addTo( d->optionsMenu );
-	d->optionsButtonMenu->insertSeparator();
-	d->optionsButtonMenu->insertItem(IconsetFactory::icon("psi/help").icon(), tr("&Help"), helpMenu);
-	d->getAction("menu_quit")->addTo( d->optionsButtonMenu );
+
 }
 
 void MainWin::buildMainMenu()
