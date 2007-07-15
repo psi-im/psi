@@ -60,6 +60,7 @@ public:
 
 		if(x.attribute("type") == "result") {
 			bool found;
+			// FIXME Check namespace...
 			QDomElement e = findSubTag(x, "pubsub", &found);
 			if (found) {
 				QDomElement i = findSubTag(e, "items", &found);
@@ -594,6 +595,9 @@ void PEPManager::get(const Jid& jid, const QString& node, const QString& id)
 
 void PEPManager::messageReceived(const Message& m)
 {
+	foreach(PubSubRetraction i, m.pubsubRetractions()) {
+		emit itemRetracted(m.from(),m.pubsubNode(), i);
+	}
 	foreach(PubSubItem i, m.pubsubItems()) {
 		emit itemPublished(m.from(),m.pubsubNode(),i);
 	}

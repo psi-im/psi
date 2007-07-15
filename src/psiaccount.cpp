@@ -581,6 +581,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent)
 	// Initialize PubSub stuff
 	d->pepManager = new PEPManager(d->client, d->serverInfoManager);
 	connect(d->pepManager,SIGNAL(itemPublished(const Jid&, const QString&, const PubSubItem&)),SLOT(itemPublished(const Jid&, const QString&, const PubSubItem&)));
+	connect(d->pepManager,SIGNAL(itemRetracted(const Jid&, const QString&, const PubSubRetraction&)),SLOT(itemRetracted(const Jid&, const QString&, const PubSubRetraction&)));
 	d->pepAvailable = false;
 
 #ifdef WHITEBOARDING
@@ -2542,6 +2543,46 @@ void PsiAccount::enableNotifyOnline()
 	}
 	else
 		notifyOnlineOk = true;
+}
+
+
+void PsiAccount::itemRetracted(const Jid& j, const QString& n, const PubSubRetraction& item)
+{
+	// User Tune
+	if (n == "http://jabber.org/protocol/tune") {
+		// Parse tune
+		foreach(UserListItem* u, findRelevant(j)) {
+			// FIXME: try to find the right resource using JEP-33 'replyto'
+			//UserResourceList::Iterator rit = u->userResourceList().find(<resource>);
+			//bool found = (rit == u->userResourceList().end()) ? false: true;
+			//if(found) 
+			//	(*rit).setTune(tune);
+			u->setTune(QString());
+			cpUpdate(*u);
+		}
+	}
+	else if (n == "http://jabber.org/protocol/mood") {
+		foreach(UserListItem* u, findRelevant(j)) {
+			u->setMood(Mood());
+			cpUpdate(*u);
+		}
+	}
+	else if (n == "http://jabber.org/protocol/geoloc") {
+		// FIXME: try to find the right resource using JEP-33 'replyto'
+		// see tune case above
+		foreach(UserListItem* u, findRelevant(j)) {
+			u->setGeoLocation(GeoLocation());
+			cpUpdate(*u);
+		}
+	}
+	else if (n == "http://jabber.org/protocol/physloc") {
+		// FIXME: try to find the right resource using JEP-33 'replyto'
+		// see tune case above
+		foreach(UserListItem* u, findRelevant(j)) {
+			u->setPhysicalLocation(PhysicalLocation());
+			cpUpdate(*u);
+		}
+	}
 }
 
 void PsiAccount::itemPublished(const Jid& j, const QString& n, const PubSubItem& item)

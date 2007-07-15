@@ -28,6 +28,7 @@ namespace XMPP {
 	class Jid;
 	class Message;
 	class PubSubItem;
+	class PubSubRetraction;
 }
 class PubSubSubscription;
 class QString;
@@ -66,6 +67,7 @@ signals:
 	void publish_success(const QString&, const PubSubItem&);
 	void publish_error(const QString&, const PubSubItem&);
 	void itemPublished(const Jid& jid, const QString& node, const PubSubItem&);
+	void itemRetracted(const Jid& jid, const QString& node, const PubSubRetraction&);
 	//void ready(const QString& node);
 	//void getSubscriptions_success(const Jid& jid, const QList<PubSubSubscription>& subscriptions);
 	//void getSubscriptions_error(const Jid&, int, const QString&);
