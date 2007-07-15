@@ -142,12 +142,11 @@ void AddUserDlg::ok()
 	add(jid(), le_nick->text(), list, ck_authreq->isChecked());
 
 	QMessageBox::information(this, tr("Add User: Success"), tr("Added %1 to your roster.").arg(jid().full()));
-
+	le_jid->setText("");
+	le_nick->setText("");
 	if(ck_close->isChecked())
 		accept();
 	else {
-		le_jid->setText("");
-		le_nick->setText("");
 		le_jid->setFocus();
 	}
 }
