@@ -283,11 +283,12 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	d->trayMenu = d->statusMenu;
 #else
 	d->trayMenu = new QMenu(this);
+	buildTrayMenu();
+	connect(d->trayMenu, SIGNAL(aboutToShow()), SLOT(buildTrayMenu()));
 #endif
 
 
 	buildStatusMenu();
-	buildTrayMenu();
 	buildOptionsMenu();
 	connect(d->optionsMenu, SIGNAL(aboutToShow()), SLOT(buildOptionsMenu()));
 
