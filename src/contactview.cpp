@@ -3494,7 +3494,7 @@ void ContactViewItem::setContact(UserListItem *u)
 	QString oldName = text(0);
 	bool wasAgent = d->isAgent;
 
-	QString newName = JIDUtil::nickOrJid(u->name(),u->jid().full());
+	//QString newName = JIDUtil::nickOrJid(u->name(),u->jid().full());
 
 	d->u = u;
 	cacheValues();
@@ -3504,8 +3504,11 @@ void ContactViewItem::setContact(UserListItem *u)
 		resetStatus();
 		needUpdate = true;
 	}
+
+	// Hack, but that's the safest way.
+	resetName();
+	QString newName = text(0);
 	if(newName != oldName) {
-		resetName();
 		needUpdate = true;
 	}
 
