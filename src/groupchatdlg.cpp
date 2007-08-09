@@ -1591,7 +1591,7 @@ GCFindDlg::GCFindDlg(const QString &str, QWidget *parent, const char *name)
 	hb->addWidget(pb_find);
 	pb_find->setAutoDefault(true);
 
-	resize(200, minimumSize().height());
+	resize(200, minimumSizeHint().height());
 
 	le_input->setText(str);
 	le_input->setFocus();
