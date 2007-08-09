@@ -227,8 +227,10 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 //: Q3MainWindow(0,name,(_onTop ? Qt::WStyle_StaysOnTop : Qt::Widget) | (_asTool ? (Qt::WStyle_Tool |TOOLW_FLAGS) : Qt::Widget))
 {
 	setObjectName(name);
-  	if ( option.brushedMetal )
+	setAttribute(Qt::WA_AlwaysShowToolTips);
+  	if ( option.brushedMetal ) {
 		setAttribute(Qt::WA_MacMetalStyle);
+	}
 	d = new Private(psi, this);
 
 	setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).impix());
