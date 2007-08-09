@@ -309,6 +309,7 @@ void ProviderManager::scan()
 		scanned_static = true;
 	}
 
+#ifndef QCA_NO_PLUGINS
 	if(qgetenv("QCA_NO_PLUGINS") == "1")
 		return;
 
@@ -384,6 +385,7 @@ void ProviderManager::scan()
 			addItem(i, get_default_priority(i->p->name()));
 		}
 	}
+#endif
 }
 
 bool ProviderManager::add(Provider *p, int priority)
