@@ -31,7 +31,7 @@ class PsiHttpAuthRequest;
 
 class HttpAuthManager : public QObject
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	HttpAuthManager(XMPP::Task *);

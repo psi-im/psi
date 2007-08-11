@@ -29,7 +29,7 @@ class PsiAccount;
 class AccountLabel : public QLabel
 {
 	Q_OBJECT
-	Q_PROPERTY(bool showJid READ showJid WRITE setShowJid);
+	Q_PROPERTY(bool showJid READ showJid WRITE setShowJid)
 public:
 	AccountLabel(QWidget* parent);
 	~AccountLabel();
