@@ -280,6 +280,7 @@ public:
 				qWarning("simplesasl.cpp: Not enough capabilities");
 			if (mechanism_.isEmpty()) 
 				qWarning("simplesasl.cpp: No mechanism available");
+			QMetaObject::invokeMethod(this, "resultsReady", Qt::QueuedConnection);
 			return;
 		}
 
