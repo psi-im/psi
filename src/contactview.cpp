@@ -3071,10 +3071,10 @@ void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
 
 		if(type_ == Profile) {
  			xcg.setColor(QColorGroup::Text, option.color[cProfileFore]);
-			#if QT_VERSION >= 0x040103 
+			#if QT_VERSION < 0x040301
 				xcg.setColor(QColorGroup::Background, option.color[cProfileBack]);
-			 #else
- 				xcg.setColor(QColorGroup::WindowText, option.color[cProfileBack]);
+			#else
+ 				xcg.setColor(QColorGroup::Base, option.color[cProfileBack]);
  			#endif
 			
 		}
@@ -3084,10 +3084,10 @@ void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
 			p->setFont(f);
 			xcg.setColor(QColorGroup::Text, option.color[cGroupFore]);
 			if (!option.clNewHeadings) {
- 				#if QT_VERSION >= 0x040103 
+ 				#if QT_VERSION < 0x040301
 					xcg.setColor(QColorGroup::Background, option.color[cGroupBack]);
 				#else
- 					xcg.setColor(QColorGroup::WindowText, option.color[cGroupBack]);
+ 					xcg.setColor(QColorGroup::Base, option.color[cGroupBack]);
 				#endif
 			}
 		} 

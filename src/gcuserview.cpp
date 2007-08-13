@@ -78,10 +78,10 @@ void GCUserViewGroupItem::paintCell(QPainter *p, const QColorGroup & cg, int col
 	p->setFont(f);
 	xcg.setColor(QColorGroup::Text, option.color[cGroupFore]);
 	if (!option.clNewHeadings) {
-		#if QT_VERSION >= 0x040103
+		#if QT_VERSION < 0x040301
 			xcg.setColor(QColorGroup::Background, option.color[cGroupBack]);
 		#else
-			xcg.setColor(QColorGroup::WindowText, option.color[cGroupBack]);
+			xcg.setColor(QColorGroup::Base, option.color[cGroupBack]);
 		#endif
 	}
 	Q3ListViewItem::paintCell(p, xcg, column, width, alignment);
