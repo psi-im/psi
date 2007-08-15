@@ -1284,7 +1284,7 @@ void PsiCon::processEvent(PsiEvent *e)
 			if ( option.useTabs)
 			{
 				TabDlg* tabSet = getManagingTabs(c);
-				tabSet->selectTab(c);
+				if (tabSet) tabSet->selectTab(c);
 			}
 		}
 		else
