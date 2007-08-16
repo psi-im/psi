@@ -157,6 +157,7 @@ int PsiTabWidget::currentPageIndex()
  */
 void PsiTabWidget::addTab(QWidget* widget, QString name) 
 {
+	Q_ASSERT(widget);
 	if (widgets_.contains(widget)) {
 		return;
 	}
