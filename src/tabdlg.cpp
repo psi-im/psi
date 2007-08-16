@@ -215,6 +215,7 @@ QString TabDlg::getName()
 
 void TabDlg::tabSelected(QWidget* chat)
 {
+	if (!chat) return; // FIXME
 	((ChatDlg*)chat)->activated(); //is this still necessary?
 	updateCaption();
 }
@@ -261,6 +262,10 @@ void TabDlg::detachChat(QWidget* chat)
 	if (tabs->count()==1)
 		return;
 	
+	if (!chat) { // fail gracefully this is delayed/signaled user input.
+		return;
+	}
+
 	TabDlg *newTab = psi->newTabs();
 	sendChatTo(chat, newTab);
 }
