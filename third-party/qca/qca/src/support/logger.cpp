@@ -88,12 +88,12 @@ void Logger::unregisterLogDevice(const QString &loggerName)
         }
 }
 
-void Logger::setLevel (Logger::Severity level)
+void Logger::setLevel (Severity level)
 {
 	m_logLevel = level;
 }
 
-void Logger::logTextMessage(const QString &message, Logger::Severity severity )
+void Logger::logTextMessage(const QString &message, Severity severity )
 {
 	if (severity <= level ()) {
 		for ( int i = 0; i < m_loggers.size(); ++i )
@@ -103,7 +103,7 @@ void Logger::logTextMessage(const QString &message, Logger::Severity severity )
 	}
 }
 
-void Logger::logBinaryMessage(const QByteArray &blob, Logger::Severity severity )
+void Logger::logBinaryMessage(const QByteArray &blob, Severity severity )
 {
 	if (severity <= level ()) {
 		for ( int i = 0; i < m_loggers.size(); ++i )

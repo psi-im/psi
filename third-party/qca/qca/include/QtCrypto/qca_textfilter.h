@@ -44,6 +44,8 @@ namespace QCA {
    This differs from Filter in that it has the concept
    of an algorithm that works in two directions, and 
    supports operations on QString arguments.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT TextFilter : public Filter
 {
@@ -155,6 +157,8 @@ protected:
    \class Hex qca_textfilter.h QtCrypto
 
    Hexadecimal encoding / decoding
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT Hex : public TextFilter
 {
@@ -221,6 +225,8 @@ private:
    \class Base64 qca_textfilter.h QtCrypto
 
    %Base64 encoding / decoding
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT Base64 : public TextFilter
 {
@@ -250,12 +256,16 @@ public:
 	   added to encoded output or accepted in encoded input.
 	   If disabled, linebreaks in encoded input will cause
 	   a failure to decode.  The default is disabled.
+
+	   \param b whether to enable line breaks (true) or disable line breaks (false)
 	*/
 	void setLineBreaksEnabled(bool b);
 
 	/**
 	   Sets the column that linebreaks should be inserted at
 	   when encoding.
+
+	   \param column the column number that line breaks should be inserted at.
 	*/
 	void setLineBreaksColumn(int column);
 

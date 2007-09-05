@@ -133,6 +133,8 @@ if(entry.ensureAccess())
    In this case, any PIN prompting and private key operations
    would be caused/handled from the TLS object.  Omit step 2 and
    the private key operations might cause token prompting.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT KeyStoreEntry : public Algorithm
 {
@@ -157,6 +159,8 @@ public:
 	/**
 	   Create a passive KeyStoreEntry based on a serialized
 	   string
+
+	   \param serialized the string containing the keystore entry information
 
 	   \sa fromString
 	*/
@@ -247,6 +251,8 @@ public:
 	   Load a passive entry by using a serialized string
 	   as input
 
+	   \param serialized the string containing the keystore entry information
+
 	   \return the newly created KeyStoreEntry
 	*/
 	static KeyStoreEntry fromString(const QString &serialized);
@@ -322,6 +328,8 @@ private:
 };
 
 /**
+   \class KeyStoreEntryWatcher qca_keystore.h QtCrypto
+
    Class to monitor the availability of a KeyStoreEntry
 
    Some KeyStore types have the concept of an entry that can be
@@ -335,6 +343,8 @@ private:
 
    \sa KeyStore for more discussion on availability of 
    keys and related objects.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT KeyStoreEntryWatcher : public QObject
 {
@@ -399,6 +409,8 @@ private:
     becomes invalid (isValid() == false), and unavailable() is emitted.
     even if the device later reappears, the KeyStore remains invalid.
     a new KeyStore will have to be created to use the device again.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT KeyStore : public QObject, public Algorithm
 {
@@ -564,14 +576,18 @@ Q_SIGNALS:
 
 	/**
 	   Emitted when an entry has been written, in asynchronous
-	   mode.  entryId is the newly written entry id on success,
+	   mode.  
+
+	   \param entryId is the newly written entry id on success,
 	   or an empty string if the write failed.
 	*/
 	void entryWritten(const QString &entryId);
 
 	/**
 	   Emitted when an entry has been removed, in asynchronous
-	   mode.  success indicates if the removal succeeded or not.
+	   mode.  
+
+	   \param success indicates if the removal succeeded (true) or not (false).
 	*/
 	void entryRemoved(bool success);
 
@@ -585,6 +601,8 @@ private:
 };
 
 /**
+   \class KeyStoreInfo qca_keystore.h QtCrypto
+
    Key store information, outside of a KeyStore object
 
    This class is used in conjunction with the Event class,
@@ -598,6 +616,8 @@ private:
    "qca-mystorename". The name() of a KeyStore is used to describe
    it (i.e. this is the "pretty" name to show the user), and is
    typically of the form "My Store Name".
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT KeyStoreInfo
 {
@@ -682,6 +702,8 @@ private:
    If you know the KeyStoreEntry that you need, you can
    use KeyStore passively, as described in the KeyStoreEntry
    documentation.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT KeyStoreManager : public QObject
 {
@@ -702,6 +724,8 @@ public:
 
 	/**
 	   Initialize a specific key store provider
+
+	   \param provider the name of the provider to start
 	*/
 	static void start(const QString &provider);
 
@@ -750,6 +774,8 @@ Q_SIGNALS:
 
 	/**
 	   emitted when a new key store becomes available
+
+	   \param id the name of the key store that has become available
 	*/
 	void keyStoreAvailable(const QString &id);
 

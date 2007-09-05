@@ -130,7 +130,7 @@ public:
 	};
 	typedef QList<Key> KeyList;
 
-	GpgOp(const QString &bin, QObject *parent = 0);
+	explicit GpgOp(const QString &bin, QObject *parent = 0);
 	~GpgOp();
 
 	void reset();

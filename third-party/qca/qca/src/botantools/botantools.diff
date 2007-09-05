@@ -478,6 +478,39 @@ diff -ur a/include/util.h b/include/util.h
  
  }
  
+diff -ur a/modules/alloc_mmap/mmap_mem.cpp b/modules/alloc_mmap/mmap_mem.cpp
+--- a/modules/alloc_mmap/mmap_mem.cpp	2007-03-24 11:51:37.000000000 -0700
++++ b/modules/alloc_mmap/mmap_mem.cpp	2007-08-20 07:51:08.000000000 -0700
+@@ -102,6 +102,11 @@
+ void MemoryMapping_Allocator::dealloc_block(void* ptr, u32bit n)
+    {
+    if(ptr == 0) return;
++#ifdef MLOCK_NOT_VOID_PTR
++# define MLOCK_TYPE_CAST (char *)
++#else
++# define MLOCK_TYPE_CAST
++#endif
+ 
+    const u32bit OVERWRITE_PASSES = 12;
+    const byte PATTERNS[] = { 0x00, 0xFF, 0xAA, 0x55, 0x73, 0x8C, 0x5F, 0xA0,
+@@ -110,14 +115,14 @@
+    for(u32bit j = 0; j != OVERWRITE_PASSES; j++)
+       {
+       std::memset(ptr, PATTERNS[j % sizeof(PATTERNS)], n);
+-      if(msync(ptr, n, MS_SYNC))
++      if(msync(MLOCK_TYPE_CAST ptr, n, MS_SYNC))
+          throw MemoryMapping_Failed("Sync operation failed");
+       }
+    std::memset(ptr, 0, n);
+-   if(msync(ptr, n, MS_SYNC))
++   if(msync(MLOCK_TYPE_CAST ptr, n, MS_SYNC))
+       throw MemoryMapping_Failed("Sync operation failed");
+ 
+-   if(munmap(ptr, n))
++   if(munmap(MLOCK_TYPE_CAST ptr, n))
+       throw MemoryMapping_Failed("Could not unmap file");
+    }
+ 
 diff -ur a/modules/mux_qt/mux_qt.cpp b/modules/mux_qt/mux_qt.cpp
 --- a/modules/mux_qt/mux_qt.cpp	2007-03-24 11:51:37.000000000 -0700
 +++ b/modules/mux_qt/mux_qt.cpp	2007-06-26 11:32:30.000000000 -0700
@@ -1126,7 +1159,7 @@ diff -ur a/src/mp_asm.cpp b/src/mp_asm.cpp
  
 diff -ur a/src/mutex.cpp b/src/mutex.cpp
 --- a/src/mutex.cpp	2007-03-24 11:51:37.000000000 -0700
-+++ b/src/mutex.cpp	2007-06-26 11:31:30.000000000 -0700
++++ b/src/mutex.cpp	2007-08-20 07:53:57.000000000 -0700
 @@ -3,8 +3,11 @@
  * (C) 1999-2007 The Botan Project                *
  *************************************************/

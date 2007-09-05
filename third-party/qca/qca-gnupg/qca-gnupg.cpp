@@ -19,6 +19,10 @@
 #include <QtCrypto>
 #include <QtPlugin>
 
+#ifdef Q_OS_MAC
+#include <QFileInfo>
+#endif
+
 #ifdef Q_OS_WIN
 # include<windows.h>
 #endif
@@ -58,6 +62,12 @@ static QString find_bin()
 	QString s = find_reg_gpgProgram();
 	if(!s.isNull())
 		bin = s;
+#endif
+#ifdef Q_OS_MAC
+	// mac-gpg
+	QFileInfo fi("/usr/local/bin/gpg");
+	if(fi.exists())
+		bin = fi.filePath();
 #endif
 	return bin;
 }
@@ -689,6 +699,7 @@ public:
 	SecureMessageSignature signer;
 	GpgOp gpg;
 	bool _finished;
+	QString dtext;
 
 	PasswordAsker asker;
 	TokenAsker tokenAsker;
@@ -838,6 +849,8 @@ public:
 	{
 		_finished = true;
 
+		dtext = gpg.readDiagnosticText();
+
 		ok = gpg.success();
 		if(ok)
 		{
@@ -898,7 +911,7 @@ public:
 		return _finished;
 	}
 
-	virtual void waitForFinished(int msecs)
+	virtual bool waitForFinished(int msecs)
 	{
 		// FIXME
 		Q_UNUSED(msecs);
@@ -935,7 +948,7 @@ public:
 				if(!asker.accepted())
 				{
 					seterror();
-					return;
+					return true;
 				}
 
 				gpg.submitPassphrase(asker.password());
@@ -947,7 +960,7 @@ public:
 				if(!tokenAsker.accepted())
 				{
 					seterror();
-					return;
+					return true;
 				}
 
 				gpg.cardOkay();
@@ -957,6 +970,7 @@ public:
 		}
 
 		complete();
+		return true;
 	}
 
 	virtual bool success() const
@@ -1005,6 +1019,11 @@ public:
 		if(ok && wasSigned)
 			list += signer;
 		return list;
+	}
+
+	virtual QString diagnosticText() const
+	{
+		return dtext;
 	}
 
 private slots:

@@ -141,6 +141,15 @@ static SecureArray dsasig_raw_to_der(const SecureArray &in)
 	return result;
 }
 
+static int passphrase_cb(char *buf, int size, int rwflag, void *u)
+{
+	Q_UNUSED(buf);
+	Q_UNUSED(size);
+	Q_UNUSED(rwflag);
+	Q_UNUSED(u);
+	return 0;
+}
+
 /*static bool is_basic_constraint(const ConstraintType &t)
 {
 	bool basic = false;
@@ -2636,15 +2645,6 @@ public:
 		return nk;
 	}
 
-	static int passphrase_cb(char *buf, int size, int rwflag, void *u)
-	{
-		Q_UNUSED(buf);
-		Q_UNUSED(size);
-		Q_UNUSED(rwflag);
-		Q_UNUSED(u);
-		return 0;
-	}
-
 	virtual QByteArray publicToDER() const
 	{
 		EVP_PKEY *pkey = get_pkey();
@@ -2701,7 +2701,7 @@ public:
 		QByteArray in = s.toLatin1();
 		BIO *bi = BIO_new(BIO_s_mem());
 		BIO_write(bi, in.data(), in.size());
-		EVP_PKEY *pkey = PEM_read_bio_PUBKEY(bi, NULL, NULL, NULL);
+		EVP_PKEY *pkey = PEM_read_bio_PUBKEY(bi, NULL, passphrase_cb, NULL);
 		BIO_free(bi);
 
 		if(!pkey)
@@ -2781,7 +2781,7 @@ public:
 		if(!passphrase.isEmpty())
 			pkey = qca_d2i_PKCS8PrivateKey(in, NULL, NULL, (void *)passphrase.data());
 		else
-			pkey = qca_d2i_PKCS8PrivateKey(in, NULL, &passphrase_cb, NULL);
+			pkey = qca_d2i_PKCS8PrivateKey(in, NULL, passphrase_cb, NULL);
 
 		if(!pkey)
 			return ErrorDecode;
@@ -2805,7 +2805,7 @@ public:
 		if(!passphrase.isEmpty())
 			pkey = PEM_read_bio_PrivateKey(bi, NULL, NULL, (void *)passphrase.data());
 		else
-			pkey = PEM_read_bio_PrivateKey(bi, NULL, &passphrase_cb, NULL);
+			pkey = PEM_read_bio_PrivateKey(bi, NULL, passphrase_cb, NULL);
 		BIO_free(bi);
 
 		if(!pkey)
@@ -2938,11 +2938,11 @@ public:
 		BIO_write(bi, in.data(), in.size());
 
 		if(t == TypeCert)
-			cert = PEM_read_bio_X509(bi, NULL, NULL, NULL);
+			cert = PEM_read_bio_X509(bi, NULL, passphrase_cb, NULL);
 		else if(t == TypeReq)
-			req = PEM_read_bio_X509_REQ(bi, NULL, NULL, NULL);
+			req = PEM_read_bio_X509_REQ(bi, NULL, passphrase_cb, NULL);
 		else if(t == TypeCRL)
-			crl = PEM_read_bio_X509_CRL(bi, NULL, NULL, NULL);
+			crl = PEM_read_bio_X509_CRL(bi, NULL, passphrase_cb, NULL);
 
 		BIO_free(bi);
 
@@ -5047,10 +5047,10 @@ public:
 	{
 		if(mode == Active)
 		{
-			bool ok;
+			bool ok = true;
 			if(!from_app.isEmpty())
 				ok = priv_encode(from_app, &result_to_net, &result_encoded);
-			else
+			if(ok)
 				ok = priv_decode(from_net, &result_plain, &result_to_net);
 			result_result = ok ? Success : Error;
 		}
@@ -5214,7 +5214,7 @@ public:
 			}
 		}
 
-		*to_net = readOutgoing();
+		*to_net += readOutgoing();
 		*enc = encoded;
 		return true;
 	}
@@ -5256,14 +5256,15 @@ public:
 		recvQueue.resize(0);
 
 		// could be outgoing data also
-		*to_net = readOutgoing();
+		*to_net += readOutgoing();
 		return true;
 	}
 
-	virtual void waitForResultsReady(int msecs)
+	virtual bool waitForResultsReady(int msecs)
 	{
 		// TODO: for now, all operations block anyway
 		Q_UNUSED(msecs);
+		return true;
 	}
 
 	virtual Result result() const
@@ -5405,14 +5406,14 @@ public:
 			{
 				const MyCertContext *cc = static_cast<const MyCertContext *>(cert_list[n].context());
 				X509 *x = cc->item.cert;
-				CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
+				//CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
 				X509_STORE_add_cert(store, x);
 			}
 			for(n = 0; n < crl_list.count(); ++n)
 			{
 				const MyCRLContext *cc = static_cast<const MyCRLContext *>(crl_list[n].context());
 				X509_CRL *x = cc->item.crl;
-				CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509_CRL);
+				//CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509_CRL);
 				X509_STORE_add_crl(store, x);
 			}
 		}
@@ -5721,6 +5722,7 @@ public:
 	SecureMessage::Format format;
 
 	Operation op;
+	bool _finished;
 
 	QByteArray in, out;
 	QByteArray sig;
@@ -5787,6 +5789,7 @@ public:
 	virtual void start(SecureMessage::Format f, Operation op)
 	{
 		format = f;
+		_finished = false;
 
 		// TODO: other operations
 		//if(op == Sign)
@@ -5803,6 +5806,7 @@ public:
 	{
 		this->in.append(in);
 		total += in.size();
+		QMetaObject::invokeMethod(this, "updated", Qt::QueuedConnection);
 	}
 
 	virtual QByteArray read()
@@ -5819,6 +5823,8 @@ public:
 
 	virtual void end()
 	{
+		_finished = true;
+
 		// sign
 		if(op == Sign)
 		{
@@ -5964,7 +5970,7 @@ public:
 			if(format == SecureMessage::Binary)
 				p7 = d2i_PKCS7_bio(bi, NULL);
 			else // Ascii
-				p7 = PEM_read_bio_PKCS7(bi, NULL, NULL, NULL);
+				p7 = PEM_read_bio_PKCS7(bi, NULL, passphrase_cb, NULL);
 			BIO_free(bi);
 
 			if(!p7)
@@ -6044,14 +6050,14 @@ public:
 				//printf("trusted: [%s]\n", qPrintable(cert_list[n].commonName()));
 				const MyCertContext *cc = static_cast<const MyCertContext *>(cert_list[n].context());
 				X509 *x = cc->item.cert;
-				CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
+				//CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
 				X509_STORE_add_cert(store, x);
 			}
 			for(int n = 0; n < crl_list.count(); ++n)
 			{
 				const MyCRLContext *cc = static_cast<const MyCRLContext *>(crl_list[n].context());
 				X509_CRL *x = cc->item.crl;
-				CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509_CRL);
+				//CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509_CRL);
 				X509_STORE_add_crl(store, x);
 			}
 			// add these crls also
@@ -6060,7 +6066,7 @@ public:
 			{
 				const MyCRLContext *cc = static_cast<const MyCRLContext *>(crl_list[n].context());
 				X509_CRL *x = cc->item.crl;
-				CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509_CRL);
+				//CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509_CRL);
 				X509_STORE_add_crl(store, x);
 			}
 
@@ -6135,11 +6141,10 @@ public:
 
 	virtual bool finished() const
 	{
-		// TODO
-		return true;
+		return _finished;
 	}
 
-	virtual void waitForFinished(int msecs)
+	virtual bool waitForFinished(int msecs)
 	{
 		// TODO
 		Q_UNUSED(msecs);
@@ -6149,6 +6154,7 @@ public:
 			thread->wait();
 			getresults();
 		}
+		return true;
 	}
 
 	virtual bool success() const
@@ -6187,11 +6193,21 @@ public:
 		// TODO/FIXME !!! InvalidSignature might be used here even
 		//   if the signature is just fine, and the key is invalid
 		//   (we need to use InvalidKey instead).
-		SecureMessageSignature s(
-			ver_ret ? SecureMessageSignature::Valid : SecureMessageSignature::InvalidSignature,
-			ver_ret ? ValidityGood : ErrorValidityUnknown,
-			key,
-			QDateTime::currentDateTime());
+
+		Validity vr = ErrorValidityUnknown;
+		if(!signerChain.isEmpty())
+			vr = signerChain.validate(cms->trustedCerts, cms->untrustedCerts.crls());
+
+		SecureMessageSignature::IdentityResult ir;
+		if(vr == ValidityGood)
+			ir = SecureMessageSignature::Valid;
+		else
+			ir = SecureMessageSignature::InvalidKey;
+
+		if(!ver_ret)
+			ir = SecureMessageSignature::InvalidSignature;
+
+		SecureMessageSignature s(ir, vr, key, QDateTime::currentDateTime());
 
 		// TODO
 		return SecureMessageSignatureList() << s;
@@ -6331,6 +6347,8 @@ public:
 			return KeyLength( 24, 24, 1);
 		} else if (m_type.left(6) == "aes256") {
 			return KeyLength( 32, 32, 1);
+		} else if (m_type.left(5) == "cast5") {
+			return KeyLength( 5, 16, 1);
 		} else if (m_type.left(8) == "blowfish") {
 			// Don't know - TODO
 			return KeyLength( 1, 32, 1);
@@ -6348,6 +6366,122 @@ protected:
 	Direction m_direction;
 	int m_pad;
 	QString m_type;
+};
+
+static QStringList all_hash_types()
+{
+	QStringList list;
+	list += "sha1";
+	list += "sha0";
+	list += "ripemd160";
+	list += "md2";
+	list += "md4";
+	list += "md5";
+#ifdef SHA224_DIGEST_LENGTH
+	list += "sha224";
+#endif
+#ifdef SHA256_DIGEST_LENGTH
+	list += "sha256";
+#endif
+#ifdef SHA384_DIGEST_LENGTH
+	list += "sha384";
+#endif
+#ifdef SHA512_DIGEST_LENGTH
+	list += "sha512";
+#endif
+#ifdef OBJ_whirlpool
+	list += "whirlpool";
+#endif
+	return list;
+}
+
+static QStringList all_cipher_types()
+{
+	QStringList list;
+	list += "aes128-ecb";
+	list += "aes128-cfb";
+	list += "aes128-cbc";
+	list += "aes128-cbc-pkcs7";
+	list += "aes128-ofb";
+	list += "aes192-ecb";
+	list += "aes192-cfb";
+	list += "aes192-cbc";
+	list += "aes192-cbc-pkcs7";
+	list += "aes192-ofb";
+	list += "aes256-ecb";
+	list += "aes256-cbc";
+	list += "aes256-cbc-pkcs7";
+	list += "aes256-cfb";
+	list += "aes256-ofb";
+	list += "blowfish-ecb";
+	list += "blowfish-cbc-pkcs7";
+	list += "blowfish-cbc";
+	list += "blowfish-cfb";
+	list += "blowfish-ofb";
+	list += "tripledes-ecb";
+	list += "tripledes-cbc";
+	list += "des-ecb";
+	list += "des-ecb-pkcs7";
+	list += "des-cbc";
+	list += "des-cbc-pkcs7";
+	list += "des-cfb";
+	list += "des-ofb";
+	list += "cast5-ecb";
+	list += "cast5-cbc";
+	list += "cast5-cbc-pkcs7";
+	list += "cast5-cfb";
+	list += "cast5-ofb";
+	return list;
+}
+
+static QStringList all_mac_types()
+{
+	QStringList list;
+	list += "hmac(md5)";
+	list += "hmac(sha1)";
+#ifdef SHA224_DIGEST_LENGTH
+	list += "hmac(sha224)";
+#endif
+#ifdef SHA256_DIGEST_LENGTH
+	list += "hmac(sha256)";
+#endif
+#ifdef SHA384_DIGEST_LENGTH
+	list += "hmac(sha384)";
+#endif
+#ifdef SHA512_DIGEST_LENGTH
+	list += "hmac(sha512)";
+#endif
+	list += "hmac(ripemd160)";
+	return list;
+}
+
+class opensslInfoContext : public InfoContext
+{
+	Q_OBJECT
+public:
+	opensslInfoContext(Provider *p) : InfoContext(p)
+	{
+	}
+
+	Context *clone() const
+	{
+		return new opensslInfoContext(*this);
+	}
+
+	QStringList supportedHashTypes() const
+	{
+		return all_hash_types();
+	}
+
+	QStringList supportedCipherTypes() const
+	{
+		return all_cipher_types();
+	}
+
+	QStringList supportedMACTypes() const
+	{
+		return all_mac_types();
+	}
 };
 
 }
@@ -6412,66 +6546,11 @@ public:
 	QStringList features() const
 	{
 		QStringList list;
-		list += "sha1";
-		list += "sha0";
-		list += "ripemd160";
-		list += "md2";
-		list += "md4";
-		list += "md5";
-#ifdef SHA224_DIGEST_LENGTH
-		list += "sha224";
-#endif
-#ifdef SHA256_DIGEST_LENGTH
-		list += "sha256";
-#endif
-#ifdef SHA384_DIGEST_LENGTH
-		list += "sha384";
-#endif
-#ifdef SHA512_DIGEST_LENGTH
-		list += "sha512";
-#endif
-		list += "hmac(md5)";
-		list += "hmac(sha1)";
-#ifdef SHA224_DIGEST_LENGTH
-		list += "hmac(sha224)";
-#endif
-#ifdef SHA256_DIGEST_LENGTH
-		list += "hmac(sha256)";
-#endif
-#ifdef SHA384_DIGEST_LENGTH
-		list += "hmac(sha384)";
-#endif
-#ifdef SHA512_DIGEST_LENGTH
-		list += "hmac(sha512)";
-#endif
-		list += "hmac(ripemd160)";
+		list += all_hash_types();
+		list += all_mac_types();
+		list += all_cipher_types();
 		list += "pbkdf1(md2)";
 		list += "pbkdf1(sha1)";
-		list += "aes128-ecb";
-		list += "aes128-cfb";
-		list += "aes128-cbc";
-		list += "aes128-cbc-pkcs7";
-		list += "aes128-ofb";
-		list += "aes192-ecb";
-		list += "aes192-cfb";
-		list += "aes192-cbc";
-		list += "aes192-ofb";
-		list += "aes256-ecb";
-		list += "aes256-cbc";
-		list += "aes256-cfb";
-		list += "aes256-ofb";
-		list += "blowfish-ecb";
-		list += "blowfish-cbc-pkcs7";
-		list += "blowfish-cbc";
-		list += "blowfish-cfb";
-		list += "blowfish-ofb";
-		list += "tripledes-ecb";
-		list += "des-ecb";
-		list += "des-ecb-pkcs7";
-		list += "des-cbc";
-		list += "des-cbc-pkcs7";
-		list += "des-cfb";
-		list += "des-ofb";
 		list += "pkey";
 		list += "dlgroup";
 		list += "rsa";
@@ -6491,7 +6570,9 @@ public:
 	Context *createContext(const QString &type)
 	{
 		//OpenSSL_add_all_digests();
-		if ( type == "sha1" )
+		if ( type == "info" )
+			return new opensslInfoContext(this);
+		else if ( type == "sha1" )
 			return new opensslHashContext( EVP_sha1(), this, type);
 		else if ( type == "sha0" )
 			return new opensslHashContext( EVP_sha(), this, type);
@@ -6518,6 +6599,10 @@ public:
 #ifdef SHA512_DIGEST_LENGTH
 		else if ( type == "sha512" )
 			return new opensslHashContext( EVP_sha512(), this, type);
+#endif
+#ifdef OBJ_whirlpool
+		else if ( type == "whirlpool" )
+			return new opensslHashContext( EVP_whirlpool(), this, type);
 #endif
 		else if ( type == "pbkdf1(sha1)" )
 			return new opensslPbkdf1Context( EVP_sha1(), this, type );
@@ -6561,6 +6646,8 @@ public:
 			return new opensslCipherContext( EVP_aes_192_cfb(), 0, this, type);
 		else if ( type == "aes192-cbc" )
 			return new opensslCipherContext( EVP_aes_192_cbc(), 0, this, type);
+		else if ( type == "aes192-cbc-pkcs7" )
+			return new opensslCipherContext( EVP_aes_192_cbc(), 1, this, type);
 		else if ( type == "aes192-ofb" )
 			return new opensslCipherContext( EVP_aes_192_ofb(), 0, this, type);
 		else if ( type == "aes256-ecb" )
@@ -6569,6 +6656,8 @@ public:
 			return new opensslCipherContext( EVP_aes_256_cfb(), 0, this, type);
 		else if ( type == "aes256-cbc" )
 			return new opensslCipherContext( EVP_aes_256_cbc(), 0, this, type);
+		else if ( type == "aes256-cbc-pkcs7" )
+			return new opensslCipherContext( EVP_aes_256_cbc(), 1, this, type);
 		else if ( type == "aes256-ofb" )
 			return new opensslCipherContext( EVP_aes_256_ofb(), 0, this, type);
 		else if ( type == "blowfish-ecb" )
@@ -6583,6 +6672,8 @@ public:
 			return new opensslCipherContext( EVP_bf_cbc(), 1, this, type);
 		else if ( type == "tripledes-ecb" )
 			return new opensslCipherContext( EVP_des_ede3(), 0, this, type);
+		else if ( type == "tripledes-cbc" )
+			return new opensslCipherContext( EVP_des_ede3_cbc(), 0, this, type);
 		else if ( type == "des-ecb" )
 			return new opensslCipherContext( EVP_des_ecb(), 0, this, type);
 		else if ( type == "des-ecb-pkcs7" )
@@ -6595,6 +6686,16 @@ public:
 			return new opensslCipherContext( EVP_des_cfb(), 0, this, type);
 		else if ( type == "des-ofb" )
 			return new opensslCipherContext( EVP_des_ofb(), 0, this, type);
+		else if ( type == "cast5-ecb" )
+			return new opensslCipherContext( EVP_cast5_ecb(), 0, this, type);
+		else if ( type == "cast5-cbc" )
+			return new opensslCipherContext( EVP_cast5_cbc(), 0, this, type);
+		else if ( type == "cast5-cbc-pkcs7" )
+			return new opensslCipherContext( EVP_cast5_cbc(), 1, this, type);
+		else if ( type == "cast5-cfb" )
+			return new opensslCipherContext( EVP_cast5_cfb(), 0, this, type);
+		else if ( type == "cast5-ofb" )
+			return new opensslCipherContext( EVP_cast5_ofb(), 0, this, type);
 		else if ( type == "pkey" )
 			return new MyPKeyContext( this );
 		else if ( type == "dlgroup" )

@@ -1,7 +1,7 @@
 /*
  * qca_basic.h - Qt Cryptographic Architecture
  * Copyright (C) 2003-2007  Justin Karneges <justin@affinix.com>
- * Copyright (C) 2004-2006  Brad Hards <bradh@frogmouth.net>
+ * Copyright (C) 2004-2007  Brad Hards <bradh@frogmouth.net>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,7 +22,7 @@
 /**
    \file qca_basic.h
 
-   Header file for classes for cryptographic primitives (basic operations)
+   Header file for classes for cryptographic primitives (basic operations).
 
    \note You should not use this header directly from an
    application. You should just use <tt> \#include \<QtCrypto>
@@ -37,9 +37,16 @@
 namespace QCA {
 
 /**
+   \defgroup UserAPI QCA user API
+
+   This is the main set of QCA classes, intended for use
+   in standard applications.
+*/
+
+/**
    \class Random qca_basic.h QtCrypto
 
-   Source of random numbers
+   Source of random numbers.
 
    QCA provides a built in source of random numbers, which
    can be accessed through this class. You can also use
@@ -48,6 +55,8 @@ namespace QCA {
 
    The normal use of this class is expected to be through the
    static members - randomChar(), randomInt() and randomArray().
+
+   \ingroup UserAPI
  */
 class QCA_EXPORT Random : public Algorithm
 {
@@ -60,19 +69,19 @@ public:
 	*/
 	Random(const QString &provider = QString());
 
-        /**
-           Copy constructor
+	/**
+	   Copy constructor
 
-           \param from the Random object to copy from
+	   \param from the %Random object to copy from
         */
 	Random(const Random &from);
 
 	~Random();
 
         /**
-           Assignment operator
+	   Assignment operator
 
-           \param from the Random object to copy state from
+	   \param from the %Random object to copy state from
         */
 	Random & operator=(const Random &from);
 
@@ -87,7 +96,7 @@ public:
 	uchar nextByte();
 
 	/**
-	   Provide a specified number of random bytes
+	   Provide a specified number of random bytes.
 
 	   This method isn't normally required - you should use
 	   the static randomArray() method instead.
@@ -107,12 +116,12 @@ public:
 myRandomChar = QCA::Random::randomChar();
 	   \endcode
 
-	   If you need a number of bytes, perhaps randomArray() may be of use
+	   If you need a number of bytes, perhaps randomArray() may be of use.
 	*/
 	static uchar randomChar();
 
 	/**
-	   Provide a random integer
+	   Provide a random integer.
 
 	   This is the normal way of obtaining a single random integer,
 	   as shown below:
@@ -123,7 +132,7 @@ myRandomInt = QCA::Random::randomInt();
 	static int randomInt();
 
 	/**
-	   Provide a specified number of random bytes
+	   Provide a specified number of random bytes.
 
 	   \code
 // build a 30 byte secure array.
@@ -187,6 +196,10 @@ else
    you could simply call QCA::Hash("algoName").hash() with the
    data that you would otherwise have provided to the update()
    call.
+
+   For more information on hashing algorithms, see \ref hashing.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT Hash : public Algorithm, public BufferedComputation
 {
@@ -195,26 +208,36 @@ public:
 	   Constructor
 
 	   \param type label for the type of hash to be
-	   created (eg "sha1" or "md2")
+	   created (for example, "sha1" or "md2")
 	   \param provider the name of the provider plugin
-	   for the subclass (eg "qca-openssl")
+	   for the subclass (eg "qca-ossl")
 	*/
 	explicit Hash(const QString &type, const QString &provider = QString());
-        /**
-           Copy constructor
 
-           \param from the Hash object to copy from
+	/**
+	   Copy constructor
+
+	   \param from the Hash object to copy from
         */
 	Hash(const Hash &from);
 
 	~Hash();
 
-        /**
-           Assignment operator
+	/**
+	   Assignment operator
 
-           \param from the Hash object to copy state from
+	   \param from the Hash object to copy state from
         */
 	Hash & operator=(const Hash &from);
+
+	/**
+	   Returns a list of all of the hash types available
+
+	   \param provider the name of the provider to get a list from, if one
+	   provider is required. If not specified, available hash types from all
+	   providers will be returned.
+	*/
+	static QStringList supportedTypes(const QString &provider = QString());
 
 	/**
 	   Return the hash type
@@ -466,10 +489,21 @@ private:
    "Specifications for the Secure %Hash Standard", available from
    http://csrc.nist.gov/publications/. The label for SHA-512 is
    "sha512".
+
+   The Whirlpool algorithm takes an arbitrary data stream, known as
+   the message (up to \f$2^{256}\f$ bits in length) and outputs a
+   condensed 512 bit (64 byte) representation of that data
+   stream, known as the message digest. The Whirlpool algorithm is
+   considered secure in that it is considered computationally
+   infeasible to find the message that produced the message
+   digest. For more information on Whirlpool, see 
+   http://paginas.terra.com.br/informatica/paulobarreto/WhirlpoolPage.html
+   or ISO/IEC 10118-3:2004. The label for Whirlpool is
+   "whirlpool".
 */
 
 /**
-   \Page padding Padding
+   \page paddingDescription Padding
 
    For those Cipher sub-classes that are block based, there are modes
    that require a full block on encryption and decryption - %Cipher Block
@@ -491,16 +525,17 @@ private:
    then the padding is 0x03 0x03 0x03 ).
 
    On encryption, for algorithm / mode combinations that require
-   padding, you will get a block of ciphertext when the input plain text
-   block is complete. When you call final(), you will get out the ciphertext
-   that corresponds to the last bit of plain text, plus any padding. If you
-   had provided plaintext that matched up with a block size, then the cipher
-   text block is generated from pure padding - you always get at least some
-   padding, to ensure that the padding can be safely removed on decryption.
+   padding, you will get a block of ciphertext when the input plain
+   text block is complete. When you call final(), you will get out the
+   ciphertext that corresponds to the last part of the plain text,
+   plus any padding. If you had provided plaintext that matched up
+   with a block size, then the cipher text block is generated from
+   pure padding - you always get at least some padding, to ensure that
+   the padding can be safely removed on decryption.
 
    On decryption, for algorithm / mode combinations that use padding,
    you will get back a block of plaintext when the input ciphertext block
-   is complete. When you call final(), you will a block that has been
+   is complete. When you call final(), you will get a block that has been
    stripped of ciphertext.
 */
 
@@ -521,12 +556,30 @@ private:
    - AES128 - "aes128"
    - AES192 - "aes192"
    - AES256 - "aes256"
+   - CAST5 (CAST-128) - "cast5"
+
+   When checking for the availability of a particular kind
+   of cipher operation (e.g. AES128 in CBC mode with PKCS7
+   padding), you append the mode and padding type (in that
+   example "aes128-cbc-pkcs7"). CFB and OFB modes don't use
+   padding, so they are always just the cipher name followed
+   by the mode (e.g. "blowfish-cfb" or "aes192-ofb"). If
+   you are not using padding with CBC mode (i.e. you are
+   ensuring block size operations yourself), just use 
+   the cipher name followed by "-cbc" (e.g. "blowfish-cbc"
+   or "aes256-cbc"). 
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT Cipher : public Algorithm, public Filter
 {
 public:
 	/**
-	   Mode settings for cipher algorithms
+	   Mode settings for cipher algorithms.
+
+	   \note ECB is almost never what you want, unless you
+	   are trying to implement a %Cipher variation that is not
+	   supported by %QCA.
 	*/
 	enum Mode
 	{
@@ -537,7 +590,10 @@ public:
 	};
 
 	/**
-	   Padding variations for cipher algorithms
+	   Padding variations for cipher algorithms.
+
+	   See the \ref paddingDescription description for more details on
+	   padding schemes.
 	*/
 	enum Padding
 	{
@@ -569,8 +625,11 @@ public:
 
 	/**
 	   Standard copy constructor
+
+	   \param from the Cipher to copy state from
 	*/
 	Cipher(const Cipher &from);
+
 	~Cipher();
 
 	/**
@@ -579,6 +638,15 @@ public:
 	   \param from the Cipher to copy state from
 	*/
 	Cipher & operator=(const Cipher &from);
+
+	/**
+	   Returns a list of all of the cipher types available
+
+	   \param provider the name of the provider to get a list from, if one
+	   provider is required. If not specified, available cipher types from all
+	   providers will be returned.
+	*/
+	static QStringList supportedTypes(const QString &provider = QString());
 
 	/**
 	   Return the cipher type
@@ -654,7 +722,9 @@ public:
 	   \param dir the Direction that this Cipher should use (Encode for
 	   encryption, Decode for decryption)
 	   \param key the SymmetricKey array that is the key
-	   \param iv the InitializationVector to use
+	   \param iv the InitializationVector to use (not used for ECB Mode)
+
+	   \note You should not leave iv empty for any Mode except ECB.
 	*/
 	void setup(Direction dir, const SymmetricKey &key, const InitializationVector &iv = InitializationVector());
 
@@ -691,6 +761,8 @@ private:
 
    For more information on HMAC, see H. Krawczyk et al. RFC2104 
    "HMAC: Keyed-Hashing for Message Authentication"
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT MessageAuthenticationCode : public Algorithm, public BufferedComputation
 {
@@ -708,6 +780,11 @@ public:
 
 	/**
 	   Standard copy constructor
+
+	   Copies the state (including key) from one MessageAuthenticationCode
+	   to another
+
+	   \param from the MessageAuthenticationCode to copy state from
 	*/
 	MessageAuthenticationCode(const MessageAuthenticationCode &from);
 
@@ -718,8 +795,20 @@ public:
 
 	   Copies the state (including key) from one MessageAuthenticationCode
 	   to another
+
+	   \param from the MessageAuthenticationCode to assign from.
 	*/
 	MessageAuthenticationCode & operator=(const MessageAuthenticationCode &from);
+
+	/**
+	   Returns a list of all of the message authentication code types
+	   available
+
+	   \param provider the name of the provider to get a list from, if one
+	   provider is required. If not specified, available message authentication
+	   codes types from all providers will be returned.
+	*/
+	static QStringList supportedTypes(const QString &provider = QString());
 
 	/**
 	   Return the MAC type
@@ -797,14 +886,20 @@ private:
    not need to use it directly unless you are
    adding another key derivation capability to %QCA - you should be
    using a sub-class. PBKDF2 using SHA1 is recommended for new applications.
+
+   \ingroup UserAPI
+
 */
 class QCA_EXPORT KeyDerivationFunction : public Algorithm
 {
 public:
 	/**
 	   Standard copy constructor
+
+	   \param from the KeyDerivationFunction to copy from
 	*/
 	KeyDerivationFunction(const KeyDerivationFunction &from);
+
 	~KeyDerivationFunction();
 
 	/**
@@ -812,6 +907,8 @@ public:
 
 	   Copies the state (including key) from one KeyDerivationFunction
 	   to another
+
+	   \param from the KeyDerivationFunction to assign from
 	*/
 	KeyDerivationFunction & operator=(const KeyDerivationFunction &from);
 
@@ -835,12 +932,20 @@ public:
 	   You can use this to build a standard name string.
 	   You probably only need this method if you are 
 	   creating a new subclass.
+
+	   \param kdfType the type of key derivation function
+	   \param algType the name of the algorithm to use with the key derivation function
+
+	   \return the name of the KDF/algorithm pair
 	*/
 	static QString withAlgorithm(const QString &kdfType, const QString &algType);
 
 protected:
 	/**
 	   Special constructor for subclass initialisation
+
+	   \param type the algorithm to create
+	   \param provider the name of the provider to create the key derivation function in.
 	*/
 	KeyDerivationFunction(const QString &type, const QString &provider);
 
@@ -856,6 +961,8 @@ private:
 
    This class implements Password Based Key Derivation Function version 1,
    as specified in RFC2898, and also in PKCS#5.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT PBKDF1 : public KeyDerivationFunction
 {
@@ -876,6 +983,8 @@ public:
 
    This class implements Password Based Key Derivation Function version 2,
    as specified in RFC2898, and also in PKCS#5.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT PBKDF2 : public KeyDerivationFunction
 {

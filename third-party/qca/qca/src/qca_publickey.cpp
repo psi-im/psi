@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2005  Justin Karneges <justin@affinix.com>
+ * Copyright (C) 2003-2007  Justin Karneges <justin@affinix.com>
  * Copyright (C) 2004,2005  Brad Hards <bradh@frogmouth.net>
  *
  * This library is free software; you can redistribute it and/or
@@ -251,22 +251,44 @@ Provider *providerForGroupSet(DLGroupSet set)
 	return 0;
 }
 
-Provider *providerForPBE(PBEAlgorithm alg, PKey::Type ioType)
+Provider *providerForPBE(PBEAlgorithm alg, PKey::Type ioType, const PKeyContext *prefer = 0)
 {
+	Provider *preferProvider = 0;
+	if(prefer)
+	{
+		preferProvider = prefer->provider();
+		if(prefer->supportedPBEAlgorithms().contains(alg) && prefer->supportedIOTypes().contains(ioType))
+			return preferProvider;
+	}
+
 	ProviderList pl = allProviders();
 	for(int n = 0; n < pl.count(); ++n)
 	{
+		if(preferProvider && pl[n] == preferProvider)
+			continue;
+
 		if(Getter_PBE::getList(pl[n]).contains(alg) && Getter_IOType::getList(pl[n]).contains(ioType))
 			return pl[n];
 	}
 	return 0;
 }
 
-Provider *providerForIOType(PKey::Type type)
+Provider *providerForIOType(PKey::Type type, const PKeyContext *prefer = 0)
 {
+	Provider *preferProvider = 0;
+	if(prefer)
+	{
+		preferProvider = prefer->provider();
+		if(prefer && prefer->supportedIOTypes().contains(type))
+			return preferProvider;
+	}
+
 	ProviderList pl = allProviders();
 	for(int n = 0; n < pl.count(); ++n)
 	{
+		if(preferProvider && pl[n] == preferProvider)
+			continue;
+
 		if(Getter_IOType::getList(pl[n]).contains(type))
 			return pl[n];
 	}
@@ -823,10 +845,10 @@ bool PublicKey::verifyMessage(const MemoryRegion &a, const QByteArray &sig, Sign
 QByteArray PublicKey::toDER() const
 {
 	QByteArray out;
-	Provider *p = providerForIOType(type());
+	const PKeyContext *cur = static_cast<const PKeyContext *>(context());
+	Provider *p = providerForIOType(type(), cur);
 	if(!p)
 		return out;
-	const PKeyContext *cur = static_cast<const PKeyContext *>(context());
 	if(cur->provider() == p)
 	{
 		out = cur->publicToDER();
@@ -844,10 +866,10 @@ QByteArray PublicKey::toDER() const
 QString PublicKey::toPEM() const
 {
 	QString out;
-	Provider *p = providerForIOType(type());
+	const PKeyContext *cur = static_cast<const PKeyContext *>(context());
+	Provider *p = providerForIOType(type(), cur);
 	if(!p)
 		return out;
-	const PKeyContext *cur = static_cast<const PKeyContext *>(context());
 	if(cur->provider() == p)
 	{
 		out = cur->publicToPEM();
@@ -991,10 +1013,10 @@ SecureArray PrivateKey::toDER(const SecureArray &passphrase, PBEAlgorithm pbe) c
 	SecureArray out;
 	if(pbe == PBEDefault)
 		pbe = get_pbe_default();
-	Provider *p = providerForPBE(pbe, type());
+	const PKeyContext *cur = static_cast<const PKeyContext *>(context());
+	Provider *p = providerForPBE(pbe, type(), cur);
 	if(!p)
 		return out;
-	const PKeyContext *cur = static_cast<const PKeyContext *>(context());
 	if(cur->provider() == p)
 	{
 		out = cur->privateToDER(passphrase, pbe);
@@ -1014,10 +1036,10 @@ QString PrivateKey::toPEM(const SecureArray &passphrase, PBEAlgorithm pbe) const
 	QString out;
 	if(pbe == PBEDefault)
 		pbe = get_pbe_default();
-	Provider *p = providerForPBE(pbe, type());
+	const PKeyContext *cur = static_cast<const PKeyContext *>(context());
+	Provider *p = providerForPBE(pbe, type(), cur);
 	if(!p)
 		return out;
-	const PKeyContext *cur = static_cast<const PKeyContext *>(context());
 	if(cur->provider() == p)
 	{
 		out = cur->privateToPEM(passphrase, pbe);

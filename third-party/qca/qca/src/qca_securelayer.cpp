@@ -29,6 +29,13 @@ namespace QCA {
 
 Provider::Context *getContext(const QString &type, const QString &provider);
 
+enum ResetMode
+{
+	ResetSession        = 0,
+	ResetSessionAndData = 1,
+	ResetAll            = 2
+};
+
 //----------------------------------------------------------------------------
 // LayerTracker
 //----------------------------------------------------------------------------
@@ -147,62 +154,104 @@ bool TLSSession::isNull() const
 //----------------------------------------------------------------------------
 // TLS
 //----------------------------------------------------------------------------
-enum ResetMode
-{
-	ResetSession        = 0,
-	ResetSessionAndData = 1,
-	ResetAll            = 2
-};
-
 class TLS::Private : public QObject
 {
 	Q_OBJECT
 public:
+	enum
+	{
+		OpStart,
+		OpUpdate
+	};
+
+	enum State
+	{
+		Inactive,
+		Initializing,
+		Handshaking,
+		Connected,
+		Closing
+	};
+
+	class Action
+	{
+	public:
+		enum Type
+		{
+			ReadyRead,
+			ReadyReadOutgoing,
+			Handshaken,
+			Close,
+			CheckPeerCertificate,
+			CertificateRequested,
+			HostNameReceived
+		};
+
+		int type;
+
+		Action(int _type) : type(_type)
+		{
+		}
+	};
+
 	TLS *q;
 	TLSContext *c;
 	TLS::Mode mode;
 
-	bool active, server;
+	// signal connected flags
+	bool connect_hostNameReceived;
+	bool connect_certificateRequested;
+	bool connect_peerCertificateAvailable;
+	bool connect_handshaken;
+
+	// persistent settings (survives ResetSessionAndData)
 	CertificateChain localCert;
 	PrivateKey localKey;
 	CertificateCollection trusted;
 	bool con_ssfMode;
 	int con_minSSF, con_maxSSF;
 	QStringList con_cipherSuites;
-	QList<CertificateInfoOrdered> issuerList;
-	TLSSession session;
 	bool tryCompress;
 	int packet_mtu;
+	QList<CertificateInfoOrdered> issuerList;
+	TLSSession session;
 
+	// session
+	State state;
+	bool blocked;
+	bool server;
 	QString host;
+	TLSContext::SessionInfo sessionInfo;
+	QTimer actionTrigger;
+	int op;
+	QList<Action> actionQueue;
+	bool need_update;
+	bool maybe_input;
+	bool emitted_hostNameReceived;
+	bool emitted_certificateRequested;
+	bool emitted_peerCertificateAvailable;
+
+	// data (survives ResetSession)
 	CertificateChain peerCert;
 	Validity peerValidity;
-	bool blocked;
 	bool hostMismatch;
-	TLSContext::SessionInfo sessionInfo;
-
-	QByteArray in, out;
-	QByteArray to_net, from_net;
-	int pending_write;
-	LayerTracker layer;
-	bool need_finish_handshake;
-
-	QList<QByteArray> packet_in, packet_out;
-	QList<QByteArray> packet_to_net, packet_from_net;
-	QList<int> packet_to_net_encoded;
-
-	bool connect_hostNameReceived, connect_certificateRequested, connect_peerCertificateAvailable, connect_handshaken;
-
-	enum { OpStart, OpUpdate };
-
-	int op;
-
-	bool handshaken, closing;
-	bool tryMore;
-	int bytesEncoded;
 	Error errorCode;
 
-	Private(TLS *_q, TLS::Mode _mode) : QObject(_q), q(_q), mode(_mode)
+	// stream i/o
+	QByteArray in, out;
+	QByteArray to_net, from_net;
+	QByteArray unprocessed;
+	int out_pending;
+	int to_net_encoded;
+	LayerTracker layer;
+
+	// datagram i/o
+	QList<QByteArray> packet_in, packet_out;
+	QList<QByteArray> packet_to_net, packet_from_net;
+	int packet_out_pending; // packet count
+	QList<int> packet_to_net_encoded;
+
+	Private(TLS *_q, TLS::Mode _mode) : QObject(_q), q(_q), mode(_mode), actionTrigger(this)
 	{
 		// c is 0 during initial reset, so we don't redundantly reset it
 		c = 0;
@@ -212,6 +261,9 @@ public:
 		connect_handshaken = false;
 		server = false;
 
+		connect(&actionTrigger, SIGNAL(timeout()), SLOT(doNextAction()));
+		actionTrigger.setSingleShot(true);
+
 		reset(ResetAll);
 
 		c = static_cast<TLSContext *>(q->context());
@@ -220,6 +272,7 @@ public:
 		c->setParent(this);
 
 		connect(c, SIGNAL(resultsReady()), SLOT(tls_resultsReady()));
+		connect(c, SIGNAL(dtlsTimeout()), SLOT(tls_dtlsTimeout()));
 	}
 
 	~Private()
@@ -233,35 +286,48 @@ public:
 		if(c)
 			c->reset();
 
+		// if we reset while in client mode, then clear this list
+		//   (it should only persist when used for server mode)
 		if(!server)
 			issuerList.clear();
-		active = false;
+
+		state = Inactive;
+		blocked = false;
 		server = false;
 		host = QString();
-		out.clear();
-		packet_out.clear();
-		handshaken = false;
-		closing = false;
-		tryMore = false;
-		bytesEncoded = 0;
+		sessionInfo = TLSContext::SessionInfo();
+		actionTrigger.stop();
 		op = -1;
-		pending_write = 0;
-		blocked = false;
-		layer.reset();
-		need_finish_handshake = false;
+		actionQueue.clear();
+		need_update = false;
+		maybe_input = false;
+		emitted_hostNameReceived = false;
+		emitted_certificateRequested = false;
+		emitted_peerCertificateAvailable = false;
+
+		out.clear();
+		out_pending = 0;
+		packet_out.clear();
+		packet_out_pending = 0;
 
 		if(mode >= ResetSessionAndData)
 		{
 			peerCert = CertificateChain();
 			peerValidity = ErrorValidityUnknown;
 			hostMismatch = false;
+			errorCode = (TLS::Error)-1;
+
 			in.clear();
 			to_net.clear();
 			from_net.clear();
+			unprocessed.clear();
+			to_net_encoded = 0;
+			layer.reset();
+
 			packet_in.clear();
 			packet_to_net.clear();
-			packet_to_net_encoded.clear();
 			packet_from_net.clear();
+			packet_to_net_encoded.clear();
 		}
 
 		if(mode >= ResetAll)
@@ -282,7 +348,7 @@ public:
 
 	void start(bool serverMode)
 	{
-		active = true;
+		state = Initializing;
 		server = serverMode;
 
 		c->setup(serverMode, host, tryCompress);
@@ -303,360 +369,427 @@ public:
 		}
 		c->setMTU(packet_mtu);
 
+		QCA_logTextMessage(QString("tls[%1]: c->start()").arg(q->objectName()), Logger::Information);
 		op = OpStart;
 		c->start();
 	}
 
 	void close()
 	{
-		if(!handshaken || closing)
+		QCA_logTextMessage(QString("tls[%1]: close").arg(q->objectName()), Logger::Information);
+
+		if(state != Connected)
 			return;
 
-		closing = true;
+		state = Closing;
 		c->shutdown();
 	}
 
 	void continueAfterStep()
 	{
-		//printf("continuing\n");
+		QCA_logTextMessage(QString("tls[%1]: continueAfterStep").arg(q->objectName()), Logger::Information);
+
+		if(!blocked)
+			return;
 
 		blocked = false;
 		update();
 	}
 
-	void update()
+	void processNextAction()
 	{
-		//printf("update attempt\n");
-		if(blocked)
-			return;
-
-		// only allow one operation at a time
-		if(op != -1)
-			return;
-
-		//printf("update\n");
-		if(need_finish_handshake)
+		if(actionQueue.isEmpty())
 		{
-			need_finish_handshake = false;
+			if(need_update)
+			{
+				QCA_logTextMessage(QString("tls[%1]: need_update").arg(q->objectName()), Logger::Information);
+				update();
+			}
+			return;
+		}
 
-			handshaken = true;
+		Action a = actionQueue.takeFirst();
+
+		// set up for the next one, if necessary
+		if(!actionQueue.isEmpty() || need_update)
+		{
+			if(!actionTrigger.isActive())
+				actionTrigger.start();
+		}
+
+		if(a.type == Action::ReadyRead)
+		{
+			emit q->readyRead();
+		}
+		else if(a.type == Action::ReadyReadOutgoing)
+		{
+			emit q->readyReadOutgoing();
+		}
+		else if(a.type == Action::Handshaken)
+		{
+			state = Connected;
+
+			// write any app data waiting during handshake
+			if(!out.isEmpty())
+			{
+				need_update = true;
+				if(!actionTrigger.isActive())
+					actionTrigger.start();
+			}
+
+			QCA_logTextMessage(QString("tls[%1]: handshaken").arg(q->objectName()), Logger::Information);
+
 			if(connect_handshaken)
 			{
 				blocked = true;
-				QMetaObject::invokeMethod(q, "handshaken", Qt::QueuedConnection);
-				return;
+				emit q->handshaken();
 			}
 		}
-
-		if(!handshaken)
+		else if(a.type == Action::Close)
 		{
-			// FIXME: optimize this somehow.  we need to force
-			//   the update after start() succeeds, but not in any
-			//   other case afaict.
+			unprocessed = c->unprocessed();
+			reset(ResetSession);
+			emit q->closed();
+		}
+		else if(a.type == Action::CheckPeerCertificate)
+		{
+			peerCert = c->peerCertificateChain();
+			if(!peerCert.isEmpty())
+			{
+				peerValidity = c->peerCertificateValidity();
+				if(peerValidity == ValidityGood && !host.isEmpty() && !peerCert.primary().matchesHostName(host))
+					hostMismatch = true;
+			}
+
+			if(connect_peerCertificateAvailable)
+			{
+				blocked = true;
+				emitted_peerCertificateAvailable = true;
+				emit q->peerCertificateAvailable();
+			}
+		}
+		else if(a.type == Action::CertificateRequested)
+		{
+			issuerList = c->issuerList();
+			if(connect_certificateRequested)
+			{
+				blocked = true;
+				emitted_certificateRequested = true;
+				emit q->certificateRequested();
+			}
+		}
+		else if(a.type == Action::HostNameReceived)
+		{
+			if(connect_hostNameReceived)
+			{
+				blocked = true;
+				emitted_hostNameReceived = true;
+				emit q->hostNameReceived();
+			}
+		}
+	}
+
+	void update()
+	{
+		QCA_logTextMessage(QString("tls[%1]: update").arg(q->objectName()), Logger::Information);
+
+		if(blocked)
+		{
+			QCA_logTextMessage(QString("tls[%1]: ignoring update while blocked").arg(q->objectName()), Logger::Information);
+			return;
+		}
+
+		if(!actionQueue.isEmpty())
+		{
+			QCA_logTextMessage(QString("tls[%1]: ignoring update while processing actions").arg(q->objectName()), Logger::Information);
+			need_update = true;
+			return;
+		}
+
+		// only allow one operation at a time
+		if(op != -1)
+		{
+			QCA_logTextMessage(QString("tls[%1]: ignoring update while operation active").arg(q->objectName()), Logger::Information);
+			return;
+		}
+
+		need_update = false;
+
+		QByteArray arg_from_net, arg_from_app;
+
+		if(state == Handshaking)
+		{
+			// during handshake, only send from_net (no app data)
 
 			if(mode == TLS::Stream)
 			{
-				// during handshake, only send from_net (no app data)
-				//if(!from_net.isEmpty())
-				//{
-					op = OpUpdate;
-					c->update(from_net, QByteArray());
-					from_net.clear();
-				//}
+				arg_from_net = from_net;
+				from_net.clear();
 			}
 			else
 			{
 				// note: there may not be a packet
-				QByteArray pkt = packet_from_net.takeFirst();
-
-				op = OpUpdate;
-				c->update(pkt, QByteArray());
+				if(!packet_from_net.isEmpty())
+					arg_from_net = packet_from_net.takeFirst();
 			}
 		}
 		else
 		{
 			if(mode == TLS::Stream)
 			{
-				// FIXME: we should be able to send both at once,
-				//   but if we do this then qca-ossl gives us
-				//   broken security layer.  probably a bug in
-				//   qca-ossl?
-
-				// otherwise, send both from_net and out
-				/*if(!from_net.isEmpty() || !out.isEmpty())
-				{
-					op = OpUpdate;
-					pending_write += out.size();
-					c->update(from_net, out);
-					from_net.clear();
-					out.clear();
-				}*/
-
 				if(!from_net.isEmpty())
 				{
-					op = OpUpdate;
-					c->update(from_net, QByteArray());
+					arg_from_net = from_net;
 					from_net.clear();
 				}
-				else //if(!out.isEmpty())
+
+				if(!out.isEmpty())
 				{
-					op = OpUpdate;
-					pending_write += out.size();
-					c->update(QByteArray(), out);
+					out_pending += out.size();
+					arg_from_app = out;
 					out.clear();
 				}
 			}
 			else
 			{
-				op = OpUpdate;
-				QByteArray pkta = packet_from_net.takeFirst();
-				QByteArray pktb = packet_out.takeFirst();
-				if(!pktb.isEmpty())
-					packet_to_net_encoded += pktb.size();
-				c->update(pkta, pktb);
+				if(!packet_from_net.isEmpty())
+					arg_from_net = packet_from_net.takeFirst();
+
+				if(!packet_out.isEmpty())
+				{
+					arg_from_app = packet_out.takeFirst();
+					++packet_out_pending;
+				}
 			}
+		}
+
+		if(arg_from_net.isEmpty() && arg_from_app.isEmpty() && !maybe_input)
+		{
+			QCA_logTextMessage(QString("tls[%1]: ignoring update: no output and no expected input").arg(q->objectName()), Logger::Information);
+			return;
+		}
+
+		// clear this flag
+		maybe_input = false;
+
+		QCA_logTextMessage(QString("tls[%1]: c->update").arg(q->objectName()), Logger::Information);
+		op = OpUpdate;
+		c->update(arg_from_net, arg_from_app);
+	}
+
+	void start_finished()
+	{
+		bool ok = c->result() == TLSContext::Success;
+		if(!ok)
+		{
+			reset(ResetSession);
+			errorCode = TLS::ErrorInit;
+			emit q->error();
+			return;
+		}
+
+		state = Handshaking;
+
+		// immediately update so we can get the first packet to send
+		maybe_input = true;
+		update();
+	}
+
+	void update_finished()
+	{
+		TLSContext::Result r = c->result();
+		if(r == TLSContext::Error)
+		{
+			if(state == Handshaking || state == Closing)
+			{
+				reset(ResetSession);
+				errorCode = ErrorHandshake;
+			}
+			else
+			{
+				reset(ResetSession);
+				errorCode = ErrorCrypt;
+			}
+
+			emit q->error();
+			return;
+		}
+
+		QByteArray c_to_net = c->to_net();
+		if(!c_to_net.isEmpty())
+		{
+			QCA_logTextMessage(QString("tls[%1]: to_net %2").arg(q->objectName(), QString::number(c_to_net.size())), Logger::Information);
+		}
+
+		if(state == Closing)
+		{
+			if(mode == TLS::Stream)
+				to_net += c_to_net;
+			else
+				packet_to_net += c_to_net;
+
+			if(!c_to_net.isEmpty())
+				actionQueue += Action(Action::ReadyReadOutgoing);
+
+			if(r == TLSContext::Success)
+				actionQueue += Action(Action::Close);
+
+			processNextAction();
+			return;
+		}
+		else if(state == Handshaking)
+		{
+			if(mode == TLS::Stream)
+				to_net += c_to_net;
+			else
+				packet_to_net += c_to_net;
+
+			if(!c_to_net.isEmpty())
+				actionQueue += Action(Action::ReadyReadOutgoing);
+
+			bool clientHello = false;
+			bool serverHello = false;
+			if(server)
+				clientHello = c->clientHelloReceived();
+			else
+				serverHello = c->serverHelloReceived();
+
+			// client specifies a host?
+			if(!emitted_hostNameReceived && clientHello)
+			{
+				host = c->hostName();
+				if(!host.isEmpty())
+					actionQueue += Action(Action::HostNameReceived);
+			}
+
+			// successful handshake or server hello means there might be a peer cert
+			if(!emitted_peerCertificateAvailable && (r == TLSContext::Success || (!server && serverHello)))
+				actionQueue += Action(Action::CheckPeerCertificate);
+
+			// server requests a cert from us?
+			if(!emitted_certificateRequested && (serverHello && c->certificateRequested()))
+				actionQueue += Action(Action::CertificateRequested);
+
+			if(r == TLSContext::Success)
+			{
+				sessionInfo = c->sessionInfo();
+				if(sessionInfo.id)
+				{
+					TLSSessionContext *sc = static_cast<TLSSessionContext*>(sessionInfo.id->clone());
+					session.change(sc);
+				}
+
+				actionQueue += Action(Action::Handshaken);
+			}
+
+			processNextAction();
+			return;
+		}
+		else // Connected
+		{
+			QByteArray c_to_app = c->to_app();
+			if(!c_to_app.isEmpty())
+			{
+				QCA_logTextMessage(QString("tls[%1]: to_app %2").arg(q->objectName(), QString::number(c_to_app.size())), Logger::Information);
+			}
+
+			bool eof = c->eof();
+			int enc = -1;
+			if(!c_to_net.isEmpty())
+				enc = c->encoded();
+
+			bool io_pending = false;
+			if(mode == TLS::Stream)
+			{
+				if(!c_to_net.isEmpty())
+					out_pending -= enc;
+
+				if(out_pending > 0)
+				{
+					maybe_input = true;
+					io_pending = true;
+				}
+
+				if(!out.isEmpty())
+					io_pending = true;
+			}
+			else
+			{
+				if(!c_to_net.isEmpty())
+					--packet_out_pending;
+
+				if(packet_out_pending > 0)
+				{
+					maybe_input = true;
+					io_pending = true;
+				}
+
+				if(!packet_out.isEmpty())
+					io_pending = true;
+			}
+
+			if(mode == TLS::Stream)
+			{
+				to_net += c_to_net;
+				in += c_to_app;
+				to_net_encoded += enc;
+			}
+			else
+			{
+				packet_to_net += c_to_net;
+				packet_in += c_to_app;
+			}
+
+			if(!c_to_net.isEmpty())
+				actionQueue += Action(Action::ReadyReadOutgoing);
+
+			if(!c_to_app.isEmpty())
+				actionQueue += Action(Action::ReadyRead);
+
+			if(eof)
+			{
+				close();
+				maybe_input = true;
+			}
+
+			if(eof || io_pending)
+			{
+				QCA_logTextMessage(QString("tls[%1]: eof || io_pending").arg(q->objectName()), Logger::Information);
+				update();
+			}
+
+			processNextAction();
+			return;
 		}
 	}
 
 private slots:
 	void tls_resultsReady()
 	{
-		QPointer<QObject> self = this;
+		QCA_logTextMessage(QString("tls[%1]: c->resultsReady()").arg(q->objectName()), Logger::Information);
+
+		Q_ASSERT(op != -1);
 
 		int last_op = op;
 		op = -1;
-		//printf("results ready: %d\n", last_op);
 
 		if(last_op == OpStart)
-		{
-			bool ok = c->result() == TLSContext::Success;
-			if(!ok)
-			{
-				reset(ResetSession);
-				errorCode = TLS::ErrorInit;
-				QMetaObject::invokeMethod(q, "error", Qt::QueuedConnection);
-				//emit q->error();
-				return;
-			}
-
-			update();
-		}
+			start_finished();
 		else // OpUpdate
-		{
-			TLSContext::Result r = c->result();
-			QByteArray a = c->to_net();
+			update_finished();
+	}
 
-			if(closing)
-			{
-				if(r == TLSContext::Error)
-				{
-					reset(ResetSession);
-					errorCode = ErrorHandshake;
-					QMetaObject::invokeMethod(q, "error", Qt::QueuedConnection);
-					//emit q->error();
-					return;
-				}
+	void tls_dtlsTimeout()
+	{
+		QCA_logTextMessage(QString("tls[%1]: c->dtlsTimeout()").arg(q->objectName()), Logger::Information);
 
-				if(mode == TLS::Stream)
-					to_net.append(a);
-				else
-					packet_to_net += a;
+		maybe_input = true;
+		update();
+	}
 
-				if(!a.isEmpty())
-				{
-					QMetaObject::invokeMethod(q, "readyReadOutgoing", Qt::QueuedConnection);
-					//emit q->readyReadOutgoing();
-					if(!self)
-						return;
-				}
-
-				if(r == TLSContext::Success)
-				{
-					from_net = c->unprocessed();
-					reset(ResetSession);
-					QMetaObject::invokeMethod(q, "closed", Qt::QueuedConnection);
-					//emit q->closed();
-					return;
-				}
-
-				return;
-			}
-
-			if(!handshaken)
-			{
-				if(r == TLSContext::Error)
-				{
-					reset(ResetSession);
-					errorCode = TLS::ErrorHandshake;
-					QMetaObject::invokeMethod(q, "error", Qt::QueuedConnection);
-					//emit q->error();
-					return;
-				}
-
-				if(mode == TLS::Stream)
-					to_net.append(a);
-				else
-					packet_to_net += a;
-
-				if(!a.isEmpty())
-				{
-					QMetaObject::invokeMethod(q, "readyReadOutgoing", Qt::QueuedConnection);
-					//emit q->readyReadOutgoing();
-					if(!self)
-						return;
-				}
-
-				if(r == TLSContext::Success)
-				{
-					peerCert = c->peerCertificateChain();
-					if(!peerCert.isEmpty())
-					{
-						peerValidity = c->peerCertificateValidity();
-						if(peerValidity == ValidityGood && !host.isEmpty() && !peerCert.primary().matchesHostName(host))
-							hostMismatch = true;
-					}
-
-					sessionInfo = c->sessionInfo();
-					if(sessionInfo.id)
-					{
-						TLSSessionContext *sc = static_cast<TLSSessionContext*>(sessionInfo.id->clone());
-						session.change(sc);
-					}
-
-					need_finish_handshake = true;
-					if(connect_peerCertificateAvailable)
-					{
-						blocked = true;
-						QMetaObject::invokeMethod(q, "peerCertificateAvailable", Qt::QueuedConnection);
-						return;
-					}
-
-					update();
-					return;
-				}
-				else // Continue
-				{
-					if(server)
-					{
-						bool clientHello = c->clientHelloReceived();
-						if(clientHello)
-						{
-							host = c->hostName();
-							if(!host.isEmpty())
-							{
-								if(connect_hostNameReceived)
-								{
-									blocked = true;
-									emit q->hostNameReceived();
-									if(!self)
-										return;
-								}
-							}
-						}
-						return;
-					}
-					else
-					{
-						// TODO: check for server certificate here also, and emit peerCertificateAvailable
-
-						bool serverHello = c->serverHelloReceived();
-						if(serverHello)
-						{
-							if(c->certificateRequested())
-							{
-								issuerList = c->issuerList();
-								if(connect_certificateRequested)
-								{
-									blocked = true;
-									emit q->certificateRequested();
-									if(!self)
-										return;
-								}
-							}
-						}
-						return;
-					}
-				}
-
-				return;
-			}
-
-			bool ok = (r == TLSContext::Success);
-			if(!ok)
-			{
-				reset(ResetSession);
-				errorCode = ErrorCrypt;
-				QMetaObject::invokeMethod(q, "error", Qt::QueuedConnection);
-				//emit q->error();
-				return;
-			}
-
-			QByteArray b = c->to_app();
-			//printf("to_app: %d (%s)\n", b.size(), b.data());
-			bool eof = c->eof();
-			int enc = c->encoded();
-
-			bool more = false;
-			if(mode == TLS::Stream)
-			{
-				if(!a.isEmpty())
-				{
-					pending_write -= enc;
-					if(pending_write > 0)
-						more = true;
-				}
-			}
-			else
-			{
-				if(!a.isEmpty() && enc > 0)
-				{
-					enc = packet_to_net_encoded.takeFirst();
-					if(!packet_to_net_encoded.isEmpty())
-						more = true;
-				}
-
-				// datagram mode might have more pending out
-				if(!packet_out.isEmpty())
-					more = true;
-			}
-
-			if(!out.isEmpty())
-				more = true;
-
-			if(mode == TLS::Stream)
-			{
-				to_net.append(a);
-				in.append(b);
-				bytesEncoded += enc;
-			}
-			else
-			{
-				packet_to_net += a;
-				packet_in += b;
-			}
-
-			if(!a.isEmpty())
-			{
-				QMetaObject::invokeMethod(q, "readyReadOutgoing", Qt::QueuedConnection);
-				//emit q->readyReadOutgoing();
-				if(!self)
-					return;
-			}
-
-			if(!b.isEmpty())
-			{
-				QMetaObject::invokeMethod(q, "readyRead", Qt::QueuedConnection);
-				//emit q->readyRead();
-				if(!self)
-					return;
-			}
-
-			if(eof)
-				close();
-
-			if(eof || more)
-				update();
-		}
+	void doNextAction()
+	{
+		processNextAction();
 	}
 };
 
@@ -691,7 +824,7 @@ void TLS::setCertificate(const CertificateChain &cert, const PrivateKey &key)
 {
 	d->localCert = cert;
 	d->localKey = key;
-	if(d->active)
+	if(d->state != TLS::Private::Inactive)
 		d->c->setCertificate(cert, key);
 }
 
@@ -708,7 +841,7 @@ CertificateCollection TLS::trustedCertificates() const
 void TLS::setTrustedCertificates(const CertificateCollection &trusted)
 {
 	d->trusted = trusted;
-	if(d->active)
+	if(d->state != TLS::Private::Inactive)
 		d->c->setTrustedCertificates(trusted);
 }
 
@@ -741,7 +874,7 @@ void TLS::setConstraints(SecurityLevel s)
 	d->con_minSSF = min;
 	d->con_maxSSF = -1;
 
-	if(d->active)
+	if(d->state != TLS::Private::Inactive)
 		d->c->setConstraints(d->con_minSSF, d->con_maxSSF);
 }
 
@@ -751,7 +884,7 @@ void TLS::setConstraints(int minSSF, int maxSSF)
 	d->con_minSSF = minSSF;
 	d->con_maxSSF = maxSSF;
 
-	if(d->active)
+	if(d->state != TLS::Private::Inactive)
 		d->c->setConstraints(d->con_minSSF, d->con_maxSSF);
 }
 
@@ -760,7 +893,7 @@ void TLS::setConstraints(const QStringList &cipherSuiteList)
 	d->con_ssfMode = false;
 	d->con_cipherSuites = cipherSuiteList;
 
-	if(d->active)
+	if(d->state != TLS::Private::Inactive)
 		d->c->setConstraints(d->con_cipherSuites);
 }
 
@@ -772,7 +905,7 @@ QList<CertificateInfoOrdered> TLS::issuerList() const
 void TLS::setIssuerList(const QList<CertificateInfoOrdered> &issuers)
 {
 	d->issuerList = issuers;
-	if(d->active)
+	if(d->state != TLS::Private::Inactive)
 		d->c->setIssuerList(issuers);
 }
 
@@ -826,7 +959,10 @@ void TLS::continueAfterStep()
 
 bool TLS::isHandshaken() const
 {
-	return d->handshaken;
+	if(d->state == TLS::Private::Connected || d->state == TLS::Private::Closing)
+		return true;
+	else
+		return false;
 }
 
 bool TLS::isCompressed() const
@@ -934,6 +1070,7 @@ void TLS::write(const QByteArray &a)
 	}
 	else
 		d->packet_out.append(a);
+	QCA_logTextMessage(QString("tls[%1]: write").arg(objectName()), Logger::Information);
 	d->update();
 }
 
@@ -946,7 +1083,12 @@ QByteArray TLS::read()
 		return a;
 	}
 	else
-		return d->packet_in.takeFirst();
+	{
+		if(!d->packet_in.isEmpty())
+			return d->packet_in.takeFirst();
+		else
+			return QByteArray();
+	}
 }
 
 void TLS::writeIncoming(const QByteArray &a)
@@ -955,6 +1097,7 @@ void TLS::writeIncoming(const QByteArray &a)
 		d->from_net.append(a);
 	else
 		d->packet_from_net.append(a);
+	QCA_logTextMessage(QString("tls[%1]: writeIncoming %2").arg(objectName(), QString::number(a.size())), Logger::Information);
 	d->update();
 }
 
@@ -965,18 +1108,27 @@ QByteArray TLS::readOutgoing(int *plainBytes)
 		QByteArray a = d->to_net;
 		d->to_net.clear();
 		if(plainBytes)
-			*plainBytes = d->bytesEncoded;
-		d->layer.specifyEncoded(a.size(), d->bytesEncoded);
-		d->bytesEncoded = 0;
+			*plainBytes = d->to_net_encoded;
+		d->layer.specifyEncoded(a.size(), d->to_net_encoded);
+		d->to_net_encoded = 0;
 		return a;
 	}
 	else
 	{
-		QByteArray a = d->packet_to_net.takeFirst();
-		int x = d->packet_to_net_encoded.takeFirst();
-		if(plainBytes)
-			*plainBytes = x;
-		return a;
+		if(!d->packet_to_net.isEmpty())
+		{
+			QByteArray a = d->packet_to_net.takeFirst();
+			int x = d->packet_to_net_encoded.takeFirst();
+			if(plainBytes)
+				*plainBytes = x;
+			return a;
+		}
+		else
+		{
+			if(plainBytes)
+				*plainBytes = 0;
+			return QByteArray();
+		}
 	}
 }
 
@@ -984,8 +1136,8 @@ QByteArray TLS::readUnprocessed()
 {
 	if(d->mode == Stream)
 	{
-		QByteArray a = d->from_net;
-		d->from_net.clear();
+		QByteArray a = d->unprocessed;
+		d->unprocessed.clear();
 		return a;
 	}
 	else
@@ -1015,7 +1167,7 @@ int TLS::packetMTU() const
 void TLS::setPacketMTU(int size) const
 {
 	d->packet_mtu = size;
-	if(d->active)
+	if(d->state != TLS::Private::Inactive)
 		d->c->setMTU(size);
 }
 
@@ -1123,9 +1275,6 @@ class SASL::Private : public QObject
 {
 	Q_OBJECT
 public:
-	SASL *q;
-	SASLContext *c;
-
 	enum
 	{
 		OpStart,
@@ -1135,42 +1284,77 @@ public:
 		OpUpdate
 	};
 
+	class Action
+	{
+	public:
+		enum Type
+		{
+			NextStep,
+			Authenticated,
+			ReadyRead,
+			ReadyReadOutgoing
+		};
+
+		int type;
+		QByteArray stepData;
+
+		Action(int _type) : type(_type)
+		{
+		}
+
+		Action(int _type, const QByteArray &_stepData) : type(_type), stepData(_stepData)
+		{
+		}
+	};
+
+	SASL *q;
+	SASLContext *c;
+
+	// persistent settings (survives ResetSessionAndData)
 	AuthFlags auth_flags;
 	int ssfmin, ssfmax;
 	QString ext_authid;
 	int ext_ssf;
 	bool localSet, remoteSet;
 	SASLContext::HostPort local, remote;
-
 	bool set_username, set_authzid, set_password, set_realm;
 	QString username, authzid, realm;
 	SecureArray password;
 
+	// session
 	bool server;
 	QStringList mechlist;
 	QString server_realm;
 	bool allowClientSendFirst;
 	bool disableServerSendLast;
-
+	QTimer actionTrigger;
 	int op;
+	QList<Action> actionQueue;
+	bool need_update;
 	bool first;
 	bool authed;
+
+	// data (survives ResetSession)
+	QString mech; // selected mech
 	Error errorCode;
-	QByteArray out;
-	QByteArray in;
-	QByteArray to_net;
-	QByteArray from_net;
-	int bytesEncoded;
-	int pending_write;
+
+	// stream i/o
+	QByteArray in, out;
+	QByteArray to_net, from_net;
+	int out_pending;
+	int to_net_encoded;
 	LayerTracker layer;
 
-	Private(SASL *_q) : QObject(_q), q(_q)
+	Private(SASL *_q) : QObject(_q), q(_q), actionTrigger(this)
 	{
 		c = 0;
 		set_username = false;
 		set_authzid = false;
 		set_password = false;
 		set_realm = false;
+
+		connect(&actionTrigger, SIGNAL(timeout()), SLOT(doNextAction()));
+		actionTrigger.setSingleShot(true);
 
 		reset(ResetAll);
 
@@ -1191,41 +1375,33 @@ public:
 	void reset(ResetMode mode)
 	{
 		if(c)
-		{
 			c->reset();
 
-			if(mode < ResetAll)
-			{
-				QString *p_username = 0;
-				QString *p_authzid = 0;
-				SecureArray *p_password = 0;
-				QString *p_realm = 0;
-
-				if(set_username)
-					p_username = &username;
-				if(set_authzid)
-					p_authzid = &authzid;
-				if(set_password)
-					p_password = &password;
-				if(set_realm)
-					p_realm = &realm;
-
-				c->setClientParams(p_username, p_authzid, p_password, p_realm);
-			}
-		}
-
+		server = false;
+		mechlist.clear();
+		server_realm = QString();
+		allowClientSendFirst = false;
+		disableServerSendLast = true;
+		actionTrigger.stop();
 		op = -1;
+		actionQueue.clear();
+		need_update = false;
+		first = false;
 		authed = false;
+
 		out.clear();
-		from_net.clear();
-		bytesEncoded = 0;
-		pending_write = 0;
-		layer.reset();
+		out_pending = 0;
 
 		if(mode >= ResetSessionAndData)
 		{
+			mech = QString();
+			errorCode = (SASL::Error)-1;
+
 			in.clear();
 			to_net.clear();
+			from_net.clear();
+			to_net_encoded = 0;
+			layer.reset();
 		}
 
 		if(mode >= ResetAll)
@@ -1255,6 +1431,22 @@ public:
 	{
 		c->setup(service, host, localSet ? &local : 0, remoteSet ? &remote : 0, ext_authid, ext_ssf);
 		c->setConstraints(auth_flags, ssfmin, ssfmax);
+
+		QString *p_username = 0;
+		QString *p_authzid = 0;
+		SecureArray *p_password = 0;
+		QString *p_realm = 0;
+
+		if(set_username)
+			p_username = &username;
+		if(set_authzid)
+			p_authzid = &authzid;
+		if(set_password)
+			p_password = &password;
+		if(set_realm)
+			p_realm = &realm;
+
+		c->setClientParams(p_username, p_authzid, p_password, p_realm);
 	}
 
 	void start()
@@ -1263,9 +1455,15 @@ public:
 		first = true;
 
 		if(server)
+		{
+			QCA_logTextMessage(QString("sasl[%1]: c->startServer()").arg(q->objectName()), Logger::Information);
 			c->startServer(server_realm, disableServerSendLast);
+		}
 		else
+		{
+			QCA_logTextMessage(QString("sasl[%1]: c->startClient()").arg(q->objectName()), Logger::Information);
 			c->startClient(mechlist, allowClientSendFirst);
+		}
 	}
 
 	void putServerFirstStep(const QString &mech, const QByteArray *clientInit)
@@ -1273,8 +1471,8 @@ public:
 		if(op != -1)
 			return;
 
+		QCA_logTextMessage(QString("sasl[%1]: c->serverFirstStep()").arg(q->objectName()), Logger::Information);
 		op = OpServerFirstStep;
-
 		c->serverFirstStep(mech, clientInit);
 	}
 
@@ -1283,8 +1481,8 @@ public:
 		if(op != -1)
 			return;
 
+		QCA_logTextMessage(QString("sasl[%1]: c->nextStep()").arg(q->objectName()), Logger::Information);
 		op = OpNextStep;
-
 		c->nextStep(stepData);
 	}
 
@@ -1293,19 +1491,86 @@ public:
 		if(op != -1)
 			return;
 
+		QCA_logTextMessage(QString("sasl[%1]: c->tryAgain()").arg(q->objectName()), Logger::Information);
 		op = OpTryAgain;
-
 		c->tryAgain();
+	}
+
+	void processNextAction()
+	{
+		if(actionQueue.isEmpty())
+		{
+			if(need_update)
+				update();
+			return;
+		}
+
+		Action a = actionQueue.takeFirst();
+
+		// set up for the next one, if necessary
+		if(!actionQueue.isEmpty() || need_update)
+		{
+			if(!actionTrigger.isActive())
+				actionTrigger.start();
+		}
+
+		if(a.type == Action::NextStep)
+		{
+			emit q->nextStep(a.stepData);
+		}
+		else if(a.type == Action::Authenticated)
+		{
+			authed = true;
+
+			// write any app data waiting during authentication
+			if(!out.isEmpty())
+			{
+				need_update = true;
+				if(!actionTrigger.isActive())
+					actionTrigger.start();
+			}
+
+			QCA_logTextMessage(QString("sasl[%1]: authenticated").arg(q->objectName()), Logger::Information);
+			emit q->authenticated();
+		}
+		else if(a.type == Action::ReadyRead)
+		{
+			emit q->readyRead();
+		}
+		else if(a.type == Action::ReadyReadOutgoing)
+		{
+			emit q->readyReadOutgoing();
+		}
 	}
 
 	void update()
 	{
-		if(op != -1)
+		// defer writes while authenticating
+		if(!authed)
+		{
+			QCA_logTextMessage(QString("sasl[%1]: ignoring update while not yet authenticated").arg(q->objectName()), Logger::Information);
 			return;
+		}
 
+		if(!actionQueue.isEmpty())
+		{
+			QCA_logTextMessage(QString("sasl[%1]: ignoring update while processing actions").arg(q->objectName()), Logger::Information);
+			need_update = true;
+			return;
+		}
+
+		// only allow one operation at a time
+		if(op != -1)
+		{
+			QCA_logTextMessage(QString("sasl[%1]: ignoring update while operation active").arg(q->objectName()), Logger::Information);
+			return;
+		}
+
+		need_update = false;
+
+		QCA_logTextMessage(QString("sasl[%1]: c->update()").arg(q->objectName()), Logger::Information);
 		op = OpUpdate;
-
-		pending_write += out.size();
+		out_pending += out.size();
 		c->update(from_net, out);
 		from_net.clear();
 		out.clear();
@@ -1314,7 +1579,7 @@ public:
 private slots:
 	void sasl_resultsReady()
 	{
-		QPointer<QObject> self = this;
+		QCA_logTextMessage(QString("sasl[%1]: c->resultsReady()").arg(q->objectName()), Logger::Information);
 
 		int last_op = op;
 		op = -1;
@@ -1323,6 +1588,8 @@ private slots:
 
 		if(last_op == OpStart)
 		{
+			mech = c->mech();
+
 			if(server)
 			{
 				if(r != SASLContext::Success)
@@ -1369,13 +1636,11 @@ private slots:
 				else if(r == SASLContext::Success)
 				{
 					if(!disableServerSendLast)
-					{
-						// FIXME: not signal safe
-						emit q->nextStep(c->stepData());
-					}
+						actionQueue += Action(Action::NextStep, c->stepData());
 
-					authed = true;
-					emit q->authenticated();
+					actionQueue += Action(Action::Authenticated);
+
+					processNextAction();
 					return;
 				}
 				else // error
@@ -1430,11 +1695,10 @@ private slots:
 					}
 					else if(r == SASLContext::Success)
 					{
-						// FIXME: not signal safe
-						emit q->nextStep(c->stepData());
+						actionQueue += Action(Action::NextStep, c->stepData());
+						actionQueue += Action(Action::Authenticated);
 
-						authed = true;
-						emit q->authenticated();
+						processNextAction();
 						return;
 					}
 				}
@@ -1449,36 +1713,43 @@ private slots:
 				return;
 			}
 
-			QByteArray a = c->to_net();
-			QByteArray b = c->to_app();
-			int enc = c->encoded();
+			QByteArray c_to_net = c->to_net();
+			QByteArray c_to_app = c->to_app();
+			int enc = -1;
+			if(!c_to_net.isEmpty())
+				enc = c->encoded();
 
-			to_net += a;
-			in += b;
+			bool io_pending = false;
+			if(!c_to_net.isEmpty())
+				out_pending -= enc;
 
-			bool more = false;
-			pending_write -= enc;
-			if(pending_write > 0)
-				more = true;
-			bytesEncoded += enc;
+			if(out_pending > 0)
+				io_pending = true;
 
-			if(!a.isEmpty())
-			{
-				emit q->readyReadOutgoing();
-				if(!self)
-					return;
-			}
+			if(!out.isEmpty())
+				io_pending = true;
 
-			if(!b.isEmpty())
-			{
-				emit q->readyRead();
-				if(!self)
-					return;
-			}
+			to_net += c_to_net;
+			in += c_to_app;
+			to_net_encoded += enc;
 
-			if(more)
+			if(!c_to_net.isEmpty())
+				actionQueue += Action(Action::ReadyReadOutgoing);
+
+			if(!c_to_app.isEmpty())
+				actionQueue += Action(Action::ReadyRead);
+
+			if(io_pending)
 				update();
+
+			processNextAction();
+			return;
 		}
+	}
+
+	void doNextAction()
+	{
+		processNextAction();
 	}
 };
 
@@ -1511,15 +1782,15 @@ SASL::AuthCondition SASL::authCondition() const
 void SASL::setConstraints(AuthFlags f, SecurityLevel s)
 {
 	int min = 0;
-	if (s == SL_Integrity)
+	if(s == SL_Integrity)
 		min = 1;
-	else if (s == SL_Export)
+	else if(s == SL_Export)
 		min = 56;
-	else if (s == SL_Baseline)
+	else if(s == SL_Baseline)
 		min = 128;
-	else if (s == SL_High)
+	else if(s == SL_High)
 		min = 192;
-	else if (s == SL_Highest)
+	else if(s == SL_Highest)
 		min = 256;
 
 	setConstraints(f, min, 256);
@@ -1632,7 +1903,7 @@ void SASL::continueAfterAuthCheck()
 
 QString SASL::mechanism() const
 {
-	return d->c->mech();
+	return d->mech;
 }
 
 QStringList SASL::mechanismList() const
@@ -1685,9 +1956,9 @@ QByteArray SASL::readOutgoing(int *plainBytes)
 	QByteArray a = d->to_net;
 	d->to_net.clear();
 	if(plainBytes)
-		*plainBytes = d->bytesEncoded;
-	d->layer.specifyEncoded(a.size(), d->bytesEncoded);
-	d->bytesEncoded = 0;
+		*plainBytes = d->to_net_encoded;
+	d->layer.specifyEncoded(a.size(), d->to_net_encoded);
+	d->to_net_encoded = 0;
 	return a;
 }
 

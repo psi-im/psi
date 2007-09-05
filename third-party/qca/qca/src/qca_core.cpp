@@ -861,6 +861,24 @@ BasicContext::~BasicContext()
 }
 
 //----------------------------------------------------------------------------
+// InfoContext
+//----------------------------------------------------------------------------
+QStringList InfoContext::supportedHashTypes() const
+{
+	return QStringList();
+}
+
+QStringList InfoContext::supportedCipherTypes() const
+{
+	return QStringList();
+}
+
+QStringList InfoContext::supportedMACTypes() const
+{
+	return QStringList();
+}
+
+//----------------------------------------------------------------------------
 // PKeyBase
 //----------------------------------------------------------------------------
 PKeyBase::PKeyBase(Provider *p, const QString &type)
@@ -1060,6 +1078,14 @@ bool KeyStoreListContext::removeEntry(int, const QString &)
 //----------------------------------------------------------------------------
 void TLSContext::setMTU(int)
 {
+}
+
+//----------------------------------------------------------------------------
+// MessageContext
+//----------------------------------------------------------------------------
+QString MessageContext::diagnosticText() const
+{
+	return QString();
 }
 
 //----------------------------------------------------------------------------

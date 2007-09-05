@@ -32,6 +32,8 @@ namespace QCA { // WRAPNS_LINE
 
 } // WRAPNS_LINE
 #include <stdlib.h>
+namespace QCA { // WRAPNS_LINE
+} // WRAPNS_LINE
 #include <botan/mutex.h>
 namespace QCA { // WRAPNS_LINE
 #ifndef BOTAN_NO_LIBSTATE

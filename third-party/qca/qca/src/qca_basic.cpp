@@ -30,6 +30,86 @@ namespace QCA {
 // from qca_core.cpp
 QMutex *global_random_mutex();
 Random *global_random();
+Provider::Context *getContext(const QString &type, Provider *p);
+
+// from qca_publickey.cpp
+ProviderList allProviders();
+Provider *providerForName(const QString &name);
+
+static void mergeList(QStringList *a, const QStringList &b)
+{
+	foreach(const QString &s, b)
+	{
+		if(!a->contains(s))
+			a->append(s);
+	}
+}
+
+static QStringList get_hash_types(Provider *p)
+{
+	QStringList out;
+	InfoContext *c = static_cast<InfoContext *>(getContext("info", p));
+	if(!c)
+		return out;
+	out = c->supportedHashTypes();
+	delete c;
+	return out;
+}
+
+static QStringList get_cipher_types(Provider *p)
+{
+	QStringList out;
+	InfoContext *c = static_cast<InfoContext *>(getContext("info", p));
+	if(!c)
+		return out;
+	out = c->supportedCipherTypes();
+	delete c;
+	return out;
+}
+
+static QStringList get_mac_types(Provider *p)
+{
+	QStringList out;
+	InfoContext *c = static_cast<InfoContext *>(getContext("info", p));
+	if(!c)
+		return out;
+	out = c->supportedMACTypes();
+	delete c;
+	return out;
+}
+
+static QStringList get_types(QStringList (*get_func)(Provider *p), const QString &provider)
+{
+	QStringList out;
+	if(!provider.isEmpty())
+	{
+		Provider *p = providerForName(provider);
+		if(p)
+			out = get_func(p);
+	}
+	else
+	{
+		ProviderList pl = allProviders();
+		foreach(Provider *p, pl)
+			mergeList(&out, get_func(p));
+	}
+	return out;
+}
+
+static QStringList supportedHashTypes(const QString &provider)
+{
+	return get_types(get_hash_types, provider);
+}
+
+static QStringList supportedCipherTypes(const QString &provider)
+{
+	return get_types(get_cipher_types, provider);
+}
+
+static QStringList supportedMACTypes(const QString &provider)
+{
+	return get_types(get_mac_types, provider);
+}
 
 //----------------------------------------------------------------------------
 // Random
@@ -106,6 +186,11 @@ Hash & Hash::operator=(const Hash &from)
 {
 	Algorithm::operator=(from);
 	return *this;
+}
+
+QStringList Hash::supportedTypes(const QString &provider)
+{
+	return supportedHashTypes(provider);
 }
 
 QString Hash::type() const
@@ -210,6 +295,11 @@ Cipher & Cipher::operator=(const Cipher &from)
 	Algorithm::operator=(from);
 	*d = *from.d;
 	return *this;
+}
+
+QStringList Cipher::supportedTypes(const QString &provider)
+{
+	return supportedCipherTypes(provider);
 }
 
 QString Cipher::type() const
@@ -367,6 +457,11 @@ MessageAuthenticationCode & MessageAuthenticationCode::operator=(const MessageAu
 	Algorithm::operator=(from);
 	*d = *from.d;
 	return *this;
+}
+
+QStringList MessageAuthenticationCode::supportedTypes(const QString &provider)
+{
+	return supportedMACTypes(provider);
 }
 
 QString MessageAuthenticationCode::type() const

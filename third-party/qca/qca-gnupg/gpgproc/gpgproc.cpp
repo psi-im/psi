@@ -25,6 +25,8 @@
 #define QT_PIPE_HACK
 #endif
 
+#define QPROC_SIGNAL_RELAY
+
 using namespace QCA;
 
 namespace gpgQCAPlugin {
@@ -104,7 +106,7 @@ public:
 	QStringList args;
 	GPGProc::Mode mode;
 	SProcess *proc;
-#ifdef QT_PIPE_HACK
+#ifdef QPROC_SIGNAL_RELAY
 	QProcessSignalRelay *proc_relay;
 #endif
 	QPipe pipeAux, pipeCommand, pipeStatus;
@@ -131,7 +133,7 @@ public:
 		qRegisterMetaType<gpgQCAPlugin::GPGProc::Error>("gpgQCAPlugin::GPGProc::Error");
 
 		proc = 0;
-#ifdef QT_PIPE_HACK
+#ifdef QPROC_SIGNAL_RELAY
 		proc_relay = 0;
 #endif
 		startTrigger.setSingleShot(true);
@@ -179,7 +181,7 @@ public:
 			if(proc->state() != QProcess::NotRunning)
 				proc->terminate();
 			proc->setParent(0);
-#ifdef QT_PIPE_HACK
+#ifdef QPROC_SIGNAL_RELAY
 			delete proc_relay;
 			proc_relay = 0;
 			delete proc; // should be safe to do thanks to relay
@@ -619,7 +621,7 @@ void GPGProc::start(const QString &bin, const QStringList &args, Mode mode)
 	if(d->pipeStatus.readEnd().isValid())
 		d->pipeStatus.readEnd().enable();
 
-#ifdef QT_PIPE_HACK
+#ifdef QPROC_SIGNAL_RELAY
 	d->proc_relay = new QProcessSignalRelay(d->proc, d);
 	connect(d->proc_relay, SIGNAL(started()), d, SLOT(proc_started()));
 	connect(d->proc_relay, SIGNAL(readyReadStandardOutput()), d, SLOT(proc_readyReadStandardOutput()));

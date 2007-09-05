@@ -138,6 +138,10 @@ enum DLGroupSet
    to raw RSA signing (mainly smartcard providers).  This is a built-in
    function of QCA and does not utilize a provider.  SHA1, MD5, MD2,
    and RIPEMD160 are supported.
+
+   \param hashName the hash type used to create the digest
+   \param digest the digest to encode in EMSA3 format
+   \param size the desired size of the encoding output (-1 for automatic size)
 */
 QCA_EXPORT QByteArray emsa3Encode(const QString &hashName, const QByteArray &digest, int size = -1);
 
@@ -145,6 +149,8 @@ QCA_EXPORT QByteArray emsa3Encode(const QString &hashName, const QByteArray &dig
    \class DLGroup qca_publickey.h QtCrypto
 
    A discrete logarithm group
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT DLGroup
 {
@@ -154,22 +160,24 @@ public:
 	/**
 	   Construct a discrete logarithm group from raw parameters
 
-	   \param p
-	   \param q
-	   \param g
+	   \param p the P parameter
+	   \param q the Q parameter
+	   \param g the G parameter
 	*/
 	DLGroup(const BigInteger &p, const BigInteger &q, const BigInteger &g);
 
 	/**
 	   Construct a discrete logarithm group from raw parameters
 
-	   \param p
-	   \param g
+	   \param p the P parameter
+	   \param g the G parameter
 	*/
 	DLGroup(const BigInteger &p, const BigInteger &g);
 
 	/**
 	   Standard copy constructor
+
+	   \param from the group to copy from
 	*/
 	DLGroup(const DLGroup &from);
 	~DLGroup();
@@ -219,6 +227,9 @@ private:
 
    General superclass for public (PublicKey) and private (PrivateKey) keys
    used with asymmetric encryption techniques.
+
+   \ingroup UserAPI
+
 */
 class QCA_EXPORT PKey : public Algorithm
 {
@@ -232,6 +243,9 @@ public:
 		DH   ///< Diffie Hellman key
 	};
 
+	/**
+	   Standard constructor
+	*/
 	PKey();
 
 	/**
@@ -240,6 +254,7 @@ public:
 	   \param from the key to copy from
 	*/
 	PKey(const PKey &from);
+
 	~PKey();
 
 	/**
@@ -275,6 +290,9 @@ else
 	   that uses them, including the constructor form that takes a
 	   fileName), then you need to check for supportedIOTypes() instead.
 
+	   \param provider the name of the provider to use, if a particular 
+	   provider is required.
+
 	   \sa supportedIOTypes()
 	*/
 	static QList<Type> supportedTypes(const QString &provider = QString());
@@ -302,6 +320,9 @@ else
 	   (ie not PEM or DER import/export), then you can use
 	   supportedTypes().  There is no need to use both - if the key type
 	   is supported for IO, then is also supported for basic operations.
+
+	   \param provider the name of the provider to use, if a particular 
+	   provider is required.
 
 	   \sa supportedTypes()
 	*/
@@ -377,22 +398,31 @@ else
 
 	/**
 	   test if two keys are equal
+
+	   \param a the key to compare with this key
 	*/
 	bool operator==(const PKey &a) const;
 
 	/**
 	   test if two keys are not equal
+
+	   \param a the key to compare with this key
 	*/
 	bool operator!=(const PKey &a) const;
 
 protected:
 	/**
 	   Create a key of the specified type
+
+	   \param type the name of the type of key to create
+	   \param provider the name of the provider to create the key in
 	*/
 	PKey(const QString &type, const QString &provider);
 
 	/**
 	   Set the key
+
+	   \param k the key to assign from
 	*/
 	void set(const PKey &k);
 
@@ -474,6 +504,9 @@ private:
    \class PublicKey qca_publickey.h QtCrypto
 
    Generic public key
+
+   \ingroup UserAPI
+
 */
 class QCA_EXPORT PublicKey : public PKey
 {
@@ -752,6 +785,9 @@ private:
    \class PrivateKey qca_publickey.h QtCrypto
 
    Generic private key
+
+   \ingroup UserAPI
+
 */
 class QCA_EXPORT PrivateKey : public PKey
 {
@@ -1019,7 +1055,10 @@ private:
    Class for generating asymmetric key pairs
 
    This class is used for generating asymmetric keys (public/private key
-   pairs)
+   pairs).
+
+   \ingroup UserAPI
+
 */
 class QCA_EXPORT KeyGenerator : public QObject
 {
@@ -1155,6 +1194,9 @@ private:
    \class RSAPublicKey qca_publickey.h QtCrypto
 
    RSA Public Key
+
+   \ingroup UserAPI
+
 */
 class QCA_EXPORT RSAPublicKey : public PublicKey
 {
@@ -1203,6 +1245,9 @@ public:
    \class RSAPrivateKey qca_publickey.h QtCrypto
 
    RSA Private Key
+
+   \ingroup UserAPI
+
 */
 class QCA_EXPORT RSAPrivateKey : public PrivateKey
 {
@@ -1263,6 +1308,9 @@ public:
    \class DSAPublicKey qca_publickey.h QtCrypto
 
    Digital Signature %Algorithm Public Key
+
+   \ingroup UserAPI
+
 */
 class QCA_EXPORT DSAPublicKey : public PublicKey
 {
@@ -1304,6 +1352,9 @@ public:
    \class DSAPrivateKey qca_publickey.h QtCrypto
 
    Digital Signature %Algorithm Private Key
+
+   \ingroup UserAPI
+
 */
 class QCA_EXPORT DSAPrivateKey : public PrivateKey
 {
@@ -1344,6 +1395,9 @@ public:
    \class DHPublicKey qca_publickey.h QtCrypto
 
    Diffie-Hellman Public Key
+
+   \ingroup UserAPI
+
 */
 class QCA_EXPORT DHPublicKey : public PublicKey
 {
@@ -1385,6 +1439,9 @@ public:
    \class DHPrivateKey qca_publickey.h QtCrypto
 
    Diffie-Hellman Private Key
+
+   \ingroup UserAPI
+
 */
 class QCA_EXPORT DHPrivateKey : public PrivateKey
 {
@@ -1420,7 +1477,7 @@ public:
 	*/
 	BigInteger x() const;
 };
-
+/*@}*/
 }
 
 #endif

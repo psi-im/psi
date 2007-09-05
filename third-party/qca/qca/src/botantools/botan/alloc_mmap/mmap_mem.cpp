@@ -145,6 +145,11 @@ void* MemoryMapping_Allocator::alloc_block(u32bit n)
 void MemoryMapping_Allocator::dealloc_block(void* ptr, u32bit n)
    {
    if(ptr == 0) return;
+#ifdef MLOCK_NOT_VOID_PTR
+# define MLOCK_TYPE_CAST (char *)
+#else
+# define MLOCK_TYPE_CAST
+#endif
 
    const u32bit OVERWRITE_PASSES = 12;
    const byte PATTERNS[] = { 0x00, 0xFF, 0xAA, 0x55, 0x73, 0x8C, 0x5F, 0xA0,
@@ -153,14 +158,14 @@ void MemoryMapping_Allocator::dealloc_block(void* ptr, u32bit n)
    for(u32bit j = 0; j != OVERWRITE_PASSES; j++)
       {
       std::memset(ptr, PATTERNS[j % sizeof(PATTERNS)], n);
-      if(msync(ptr, n, MS_SYNC))
+      if(msync(MLOCK_TYPE_CAST ptr, n, MS_SYNC))
          throw MemoryMapping_Failed("Sync operation failed");
       }
    std::memset(ptr, 0, n);
-   if(msync(ptr, n, MS_SYNC))
+   if(msync(MLOCK_TYPE_CAST ptr, n, MS_SYNC))
       throw MemoryMapping_Failed("Sync operation failed");
 
-   if(munmap(ptr, n))
+   if(munmap(MLOCK_TYPE_CAST ptr, n))
       throw MemoryMapping_Failed("Could not unmap file");
    }
 

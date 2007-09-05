@@ -39,6 +39,7 @@
 #else
 # include <QSocketNotifier>
 # include <QTimer>
+# include <QMutex>
 #endif
 
 #ifdef Q_OS_UNIX
@@ -47,6 +48,9 @@
 # include <errno.h>
 # include <sys/ioctl.h>
 # include <signal.h>
+# ifdef HAVE_SYS_FILIO_H
+#  include <sys/filio.h>
+# endif
 #endif
 
 #define USE_POLL
@@ -63,12 +67,22 @@ namespace QCA {
 
 #ifdef Q_OS_UNIX
 // adapted from qt
+Q_GLOBAL_STATIC(QMutex, ign_mutex)
+static bool ign_sigpipe = false;
+
 static void ignore_sigpipe()
 {
 	// Set to ignore SIGPIPE once only.
-	static QBasicAtomic atom = Q_ATOMIC_INIT(0);
-	if(atom.testAndSet(0, 1))
+//#if QT_VERSION < 0x040400
+	QMutexLocker locker(ign_mutex());
+	if(!ign_sigpipe)
 	{
+		ign_sigpipe = true;
+//#else
+//	static QBasicAtomicInt atom = Q_BASIC_ATOMIC_INITIALIZER(0);
+//	if(atom.testAndSetRelaxed(0, 1))
+//	{
+//#endif
 		struct sigaction noaction;
 		memset(&noaction, 0, sizeof(noaction));
 		noaction.sa_handler = SIG_IGN;

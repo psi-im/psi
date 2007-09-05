@@ -291,7 +291,7 @@ QCA_EXPORT void setProviderPriority(const QString &name, int priority);
 /**
    Return the priority of a specified provider
 
-   The name of the provider (eg "qca-openssl") is used to look up the 
+   The name of the provider (eg "qca-ossl") is used to look up the 
    current priority associated with that provider. If the provider
    is not found (or something else went wrong), -1 is returned.
 
@@ -316,6 +316,8 @@ QCA_EXPORT ProviderList providers();
 
 /**
    Return the named provider, or 0 if not found
+
+   \param name the name of the provider to search for.
 */
 QCA_EXPORT Provider *findProvider(const QString &name);
 
@@ -348,16 +350,27 @@ QCA_EXPORT void clearPluginDiagnosticText();
    Add plugin diagnostic text
 
    This function should only be called by providers.
+
+   \param text the diagnostic message to append
 */
 QCA_EXPORT void appendPluginDiagnosticText(const QString &text);
 
 /**
    Set a global property
+
+   \param name the name of the property
+   \param value the value to set the property to
+
+   \sa getProperty
 */
 QCA_EXPORT void setProperty(const QString &name, const QVariant &value);
 
 /**
    Retrieve a global property
+
+   \param name the name of the property to look up
+
+   \sa setProperty
 */
 QCA_EXPORT QVariant getProperty(const QString &name);
 
@@ -365,16 +378,23 @@ QCA_EXPORT QVariant getProperty(const QString &name);
    Set provider configuration
 
    Allowed value types: QString, int, bool
+
+   \param name the name of the provider to set the configuration to
+   \param config the configuration
 */
 QCA_EXPORT void setProviderConfig(const QString &name, const QVariantMap &config);
 
 /**
    Retrieve provider configuration
+
+   \param name the name of the provider to retrieve the configuration of
 */
 QCA_EXPORT QVariantMap getProviderConfig(const QString &name);
 
 /**
    Save provider configuration to persistent storage
+
+   \param name the name of the provider to have its configuration saved
 */
 QCA_EXPORT void saveProviderConfig(const QString &name);
 
@@ -389,6 +409,9 @@ QCA_EXPORT QString globalRandomProvider();
    The Random capabilities of %QCA are provided as part of the
    built in capabilities, however the generator can be changed
    if required.
+
+   \param provider the name of the provider to use as the global random
+   provider.
 */
 QCA_EXPORT void setGlobalRandomProvider(const QString &provider);
 
@@ -547,6 +570,8 @@ QCA_EXPORT QByteArray hexToArray(const QString &hexString);
    To ensure that QCA is properly initialised and cleaned up,
    it is convenient to create an Initializer object, and let it
    go out of scope at the end of %QCA usage.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT Initializer
 {
@@ -583,6 +608,8 @@ KeyLength keyLen( 4, 12, 4 );
 #include<limits>
 KeyLength( 0, std::numeric_limits<int>::max(), 1 );
    \endcode
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT KeyLength
 {
@@ -633,6 +660,8 @@ private:
    QCA capabilities and plugins, however there is nothing stopping
    you from using it to obtain information about specific plugins,
    as shown in the example below.
+
+   \ingroup ProviderAPI
 */
 class QCA_EXPORT Provider
 {
@@ -794,6 +823,8 @@ QVariantMap defaultConfig() const
 	   If your provider supports configuration options, you
 	   will be advised of user changes to the configuration 
 	   when this method is called.
+
+	   \param config the new configuration to be used by the provider
 	*/
 	virtual void configChanged(const QVariantMap &config);
 };
@@ -804,6 +835,8 @@ QVariantMap defaultConfig() const
    Internal context class used for the plugin
 
    \internal
+
+   \ingroup ProviderAPI
 */
 class QCA_EXPORT Provider::Context : public QObject
 {
@@ -872,6 +905,8 @@ private:
    itself, thereby disabling the event properties of the underlying
    QObject.  Context types that need to be a QObject should inherit from
    Provider::Context, those that don't should inherit from BasicContext.
+
+   \ingroup ProviderAPI
 */
 class QCA_EXPORT BasicContext : public Provider::Context
 {
@@ -912,6 +947,8 @@ private:
    algorithm has some internal state that is modified
    when you call update() and returned when you call
    final().
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT BufferedComputation
 {
@@ -945,6 +982,8 @@ public:
 
 	   \note This will invalidate any previous
 	   computation using this object.
+
+	   \param a the data to process.
 	*/
 	MemoryRegion process(const MemoryRegion &a);
 };
@@ -964,6 +1003,8 @@ public:
    your class from a subclass with stronger semantics, or if your
    update() function is always returning null results, and
    everything comes out at final(), try BufferedComputation.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT Filter
 {
@@ -1005,6 +1046,8 @@ public:
 
 	   \note This will invalidate any previous
 	   computation using this object.
+
+	   \param a the data to process in this step
 	*/
 	MemoryRegion process(const MemoryRegion &a);
 };
@@ -1016,6 +1059,8 @@ public:
 
    This is a fairly abstract class, mainly used for
    implementing the backend "provider" interface.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT Algorithm
 {
@@ -1114,6 +1159,8 @@ private:
    \class SymmetricKey qca_core.h QtCrypto
 
    Container for keys for symmetric encryption algorithms.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT SymmetricKey : public SecureArray
 {
@@ -1158,6 +1205,8 @@ public:
    \class InitializationVector qca_core.h QtCrypto
 
    Container for initialisation vectors and nonces
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT InitializationVector : public SecureArray
 {
@@ -1190,6 +1239,8 @@ public:
 };
 
 /**
+   \class Event qca_core.h QtCrypto
+
    An asynchronous event
 
    Events are produced in response to the library's need for some user
@@ -1198,6 +1249,8 @@ public:
 
    Event is an abstraction, so you can handle this need in a way that makes
    sense for your application.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT Event
 {
@@ -1368,6 +1421,8 @@ private:
 };
 
 /**
+   \class EventHandler qca_core.h QtCrypto
+
    Interface class for password / passphrase / PIN and token handlers
 
    This class is used on client side applications to handle
@@ -1379,6 +1434,8 @@ private:
    may (or may not) be handled by the application using a
    handler object (that has-a EventHandler, or possibly is-a
    EventHandler) that is connected to the eventReady() signal.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT EventHandler : public QObject
 {
@@ -1439,6 +1496,9 @@ Q_SIGNALS:
 
 	   You typically need to connect this signal to
 	   a compatible slot in your callback handler
+
+	   \param id the identification number for the event 
+	   \param context information about the type of response required
 	*/
 	void eventReady(int id, const QCA::Event &context);
 
@@ -1451,9 +1511,13 @@ private:
 };
 
 /**
+   \class PasswordAsker qca_core.h QtCrypto
+
    User password / passphrase / PIN handler
 
    This class is used to obtain a password from a user.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT PasswordAsker : public QObject
 {
@@ -1539,9 +1603,13 @@ private:
 };
 
 /**
+   \class TokenAsker qca_core.h QtCrypto
+
    User token handler
 
    This class is used to request the user to insert a token.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT TokenAsker : public QObject
 {

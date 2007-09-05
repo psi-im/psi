@@ -47,6 +47,7 @@ class CRL;
 class CertificateCollection;
 class CertificateChain;
 
+
 /**
    Certificate Request Format
 */
@@ -81,6 +82,8 @@ enum CertificateInfoTypeKnown
 };
 
 /**
+   \class CertificateInfoType qca_cert.h QtCrypto
+
    Certificate information type
 
    This class represents a type of information being stored in
@@ -111,6 +114,8 @@ enum CertificateInfoTypeKnown
 
    \sa Certificate::subjectInfo() and Certificate::issuerInfo()
    \sa CRL::issuerInfo()
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT CertificateInfoType
 {
@@ -151,6 +156,8 @@ public:
 
 	/**
 	   Standard copy constructor
+
+	   \param from the certificate information to copy from
 	*/
 	CertificateInfoType(const CertificateInfoType &from);
 
@@ -158,6 +165,8 @@ public:
 
 	/**
 	   Standard assignment operator
+
+	   \param from the certificate information to assign from
 	*/
 	CertificateInfoType & operator=(const CertificateInfoType &from);
 
@@ -197,16 +206,25 @@ public:
 
 	/**
 	   Comparison operator
+
+	   \param other the certificate information to compare with this
+	   certificate information.
 	*/
 	bool operator<(const CertificateInfoType &other) const;
 
 	/**
 	   Comparison operator
+
+	   \param other the certificate information to compare with this
+	   certificate information.
 	*/
 	bool operator==(const CertificateInfoType &other) const;
 
 	/**
 	   Inequality operator
+
+	   \param other the certificate information to compare with this
+	   certificate information.
 	*/
 	inline bool operator!=(const CertificateInfoType &other) const
 	{
@@ -219,7 +237,11 @@ private:
 };
 
 /**
+   \class CertificateInfoPair qca_cert.h QtCrypto
+
    One entry in a certificate information list
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT CertificateInfoPair
 {
@@ -239,6 +261,8 @@ public:
 
 	/**
 	   Standard copy constructor
+
+	   \param from the information pair to copy from
 	*/
 	CertificateInfoPair(const CertificateInfoPair &from);
 
@@ -246,6 +270,8 @@ public:
 
 	/**
 	   Standard assignment operator
+
+	   \param from the information pair to assign from
 	*/
 	CertificateInfoPair & operator=(const CertificateInfoPair &from);
 
@@ -261,11 +287,17 @@ public:
 
 	/**
 	   Comparison operator
+
+	   \param other the certificate information pair to compare with this
+	   certificate information pair.
 	*/
 	bool operator==(const CertificateInfoPair &other) const;
 
 	/**
 	   Inequality operator
+
+	   \param other the certificate information pair to compare with this
+	   certificate information pair.
 	*/
 	inline bool operator!=(const CertificateInfoPair &other) const
 	{
@@ -276,6 +308,7 @@ private:
 	class Private;
 	QSharedDataPointer<Private> d;
 };
+
 
 /**
    Known types of certificate constraints
@@ -308,6 +341,8 @@ enum ConstraintTypeKnown
 };
 
 /**
+   \class ConstraintType qca_cert.h QtCrypto
+
    Certificate constraint
 
    X.509 certificates can be constrained in their application - that is, some
@@ -315,6 +350,8 @@ enum ConstraintTypeKnown
    identify an approved purpose for a certificate.
 
    \note It is common for a certificate to have more than one purpose.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT ConstraintType
 {
@@ -355,6 +392,8 @@ public:
 
 	/**
 	   Standard copy constructor
+
+	   \param from the constraint type to copy from
 	*/
 	ConstraintType(const ConstraintType &from);
 
@@ -362,6 +401,8 @@ public:
 
 	/**
 	   Standard assignment operator
+
+	   \param from the constraint type to assign from
 	*/
 	ConstraintType & operator=(const ConstraintType &from);
 
@@ -401,16 +442,22 @@ public:
 
 	/**
 	   Comparison operator
+
+	   \param other the constraint type to compare with this constraint
 	*/
 	bool operator<(const ConstraintType &other) const;
 
 	/**
 	   Comparison operator
+
+	   \param other the constraint type to compare with this constraint
 	*/
 	bool operator==(const ConstraintType &other) const;
 
 	/**
 	   Inequality operator
+
+	   \param other the constraint type to compare with this constraint
 	*/
 	inline bool operator!=(const ConstraintType &other) const
 	{
@@ -480,10 +527,14 @@ enum ValidateFlags
 typedef QMultiMap<CertificateInfoType, QString> CertificateInfo;
 
 /**
+   \class CertificateInfoOrdered qca_cert.h QtCrypto
+
    Ordered certificate properties type
 
    This container stores the information in the same sequence as
    the certificate format itself.
+
+   \ingroup UserAPI
 */
 class CertificateInfoOrdered : public QList<CertificateInfoPair>
 {
@@ -502,12 +553,16 @@ public:
 
 /**
    Convert to RFC 1779 string format
+
+   \param in the certificate info to convert
 */
 QCA_EXPORT QString orderedToDNString(const CertificateInfoOrdered &in);
 
 /**
    Return a new CertificateInfoOrdered that only contains
    the Distinguished Name (DN) types found in the input object.
+
+   \param in the certificate info to extract from
 */
 QCA_EXPORT CertificateInfoOrdered orderedDNOnly(const CertificateInfoOrdered &in);
 
@@ -528,6 +583,9 @@ typedef QList<ConstraintType> Constraints;
 
 /**
    Create a list of unique friendly names among a list of certificates
+
+   \param list the list of certificates for which a friendly name is required.
+
 */
 QCA_EXPORT QStringList makeFriendlyNames(const QList<Certificate> &list);
 
@@ -537,6 +595,8 @@ QCA_EXPORT QStringList makeFriendlyNames(const QList<Certificate> &list);
    %Certificate options
 
    \note In SPKAC mode, all options are ignored except for challenge
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT CertificateOptions
 {
@@ -782,6 +842,8 @@ private:
    Public Key (X.509) certificate
 
    This class contains one X.509 certificate
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT Certificate : public Algorithm
 {
@@ -812,6 +874,8 @@ public:
 
 	/**
 	   Standard copy constructor
+
+	   \param from the certificate to copy from
 	*/
 	Certificate(const Certificate &from);
 
@@ -819,6 +883,8 @@ public:
 
 	/**
 	   Standard assignment operator
+
+	   \param from the Certificate to assign from
 	*/
 	Certificate & operator=(const Certificate &from);
 
@@ -912,21 +978,21 @@ CertificateInfoOrdered info = cert.subjectInfoOrdered();
 	QStringList policies() const;
 
 	/**
-	   list of URI locations for CRL files
+	   List of URI locations for CRL files
 
-	   each URI refers to the same CRL file
+	   Each URI refers to the same CRL file
 	*/
 	QStringList crlLocations() const;
 
 	/**
-	   list of URI locations for issuer certificate files
+	   List of URI locations for issuer certificate files
 
-	   each URI refers to the same issuer file
+	   Each URI refers to the same issuer file
 	*/
 	QStringList issuerLocations() const;
 
 	/**
-	   list of URI locations for OCSP services
+	   List of URI locations for OCSP services
 	*/
 	QStringList ocspLocations() const;
 
@@ -966,7 +1032,9 @@ CertificateInfoOrdered info = cert.subjectInfoOrdered();
 	   Test if the Certificate has signed another Certificate
 	   object and is therefore the issuer
 
-	   \return true if the certificate is the issuer
+	   \param other the certificate to test
+
+	   \return true if this certificate is the issuer of the argument
 	*/
 	bool isIssuerOf(const Certificate &other) const;
 
@@ -1081,12 +1149,16 @@ CertificateInfoOrdered info = cert.subjectInfoOrdered();
 	/**
 	   Test for equality of two certificates
 
+	   \param a the certificate to compare this certificate with
+
 	   \return true if the two certificates are the same
 	*/
 	bool operator==(const Certificate &a) const;
 
 	/**
 	   Inequality operator
+
+	   \param other the certificate to compare this certificate with
 	*/
 	inline bool operator!=(const Certificate &other) const
 	{
@@ -1095,6 +1167,8 @@ CertificateInfoOrdered info = cert.subjectInfoOrdered();
 
 	/**
 	   \internal
+
+	   \param c context (internal)
 	*/
 	void change(CertContext *c);
 
@@ -1127,6 +1201,8 @@ private:
 
    \sa QCA::CertificateCollection for an alternative way to represent a group
    of Certificates that do not necessarily have a chained relationship.
+
+   \ingroup UserAPI
 */
 class CertificateChain : public QList<Certificate>
 {
@@ -1210,6 +1286,8 @@ inline CertificateChain CertificateChain::complete(const QList<Certificate> &iss
    %Certificate Request
 
    A CertificateRequest is a unsigned request for a Certificate
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT CertificateRequest : public Algorithm
 {
@@ -1240,6 +1318,8 @@ public:
 
 	/**
 	   Standard copy constructor
+
+	   \param from the request to copy from
 	*/
 	CertificateRequest(const CertificateRequest &from);
 
@@ -1247,6 +1327,8 @@ public:
 
 	/**
 	   Standard assignment operator
+
+	   \param from the request to assign from
 	*/
 	CertificateRequest & operator=(const CertificateRequest &from);
 
@@ -1344,12 +1426,16 @@ public:
 	/**
 	   Test for equality of two certificate requests
 
+	   \param csr the certificate request to be compared to this certificate request
+
 	   \return true if the two certificate requests are the same
 	*/
 	bool operator==(const CertificateRequest &csr) const;
 
 	/**
 	   Inequality operator
+
+	   \param other the certificate request to be compared to this certificate request
 	*/
 	inline bool operator!=(const CertificateRequest &other) const
 	{
@@ -1456,6 +1542,8 @@ public:
 
 	/**
 	   \internal
+
+	   \param c context (internal)
 	*/
 	void change(CSRContext *c);
 
@@ -1469,6 +1557,8 @@ private:
    \class CRLEntry qca_cert.h QtCrypto
 
    Part of a CRL representing a single certificate
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT CRLEntry
 {
@@ -1556,11 +1646,15 @@ public:
 	   Test if one CRL entry is "less than" another
 
 	   CRL entries are compared based on their serial number
+
+	   \param a the CRL entry to be compared to this CRL entry.
 	*/
 	bool operator<(const CRLEntry &a) const;
 
 	/**
 	   Test for equality of two CRL Entries
+
+	   \param a the CRL entry to be compared to this CRL entry.
 
 	   \return true if the two certificates are the same
 	*/
@@ -1568,6 +1662,8 @@ public:
 
 	/**
 	   Inequality operator
+
+	   \param other the CRL entry to be compared to this CRL entry.
 	*/
 	inline bool operator!=(const CRLEntry &other) const
 	{
@@ -1600,6 +1696,8 @@ private:
    \sa CertificateCollection for a way to handle Certificates
    and CRLs as a single entity.
    \sa CRLEntry for the %CRL segment representing a single Certificate.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT CRL : public Algorithm
 {
@@ -1608,6 +1706,8 @@ public:
 
 	/**
 	   Standard copy constructor
+
+	   \param from the revocation list to copy from
 	*/
 	CRL(const CRL &from);
 
@@ -1615,6 +1715,8 @@ public:
 
 	/**
 	   Standard assignment operator
+
+	   \param from the revocation list to assign from
 	*/
 	CRL & operator=(const CRL &from);
 
@@ -1681,12 +1783,16 @@ public:
 	/**
 	   Test for equality of two %Certificate Revocation Lists
 
+	   \param a the CRL to be compared to this CRL 
+
 	   \return true if the two CRLs are the same
 	*/
 	bool operator==(const CRL &a) const;
 
 	/**
 	   Inequality operator
+
+	   \param other the CRL to be compared to this CRL 
 	*/
 	inline bool operator!=(const CRL &other) const
 	{
@@ -1757,6 +1863,8 @@ public:
 
 	/**
 	   \internal
+
+	   \param c context (internal)
 	*/
 	void change(CRLContext *c);
 
@@ -1776,6 +1884,8 @@ private:
 
    \sa QCA::CertificateChain for a representation of a chain of Certificates
    related by signatures.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT CertificateCollection
 {
@@ -1921,6 +2031,8 @@ private:
 
    A %Certificate Authority is used to generate Certificates and
    %Certificate Revocation Lists (CRLs).
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT CertificateAuthority : public Algorithm
 {
@@ -2017,6 +2129,8 @@ private:
    For more information on PKCS12 "Personal Information
    Exchange Syntax Standard", see <a
    href="ftp://ftp.rsasecurity.com/pub/pkcs/pkcs-12/pkcs-12v1.pdf">ftp://ftp.rsasecurity.com/pub/pkcs/pkcs-12/pkcs-12v1.pdf</a>. 
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT KeyBundle
 {
@@ -2240,6 +2354,8 @@ private:
    Note that with the latter method, the key is of no use besides
    being informational.  The key must be in a keyring
    (that is, inKeyring() == true) to actually do crypto with it.
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT PGPKey : public Algorithm
 {
@@ -2252,8 +2368,11 @@ public:
 	/**
 	   Create a PGP key from an encoded file
 
-	   \sa fromFile
-	   \sa toFile
+	   \param fileName the name (and path, if required) of the file
+	   that the PGP key is to be loaded from.
+
+	   \sa fromFile for a version that allows better error checking / validation 
+	   \sa toFile for a method to write out the key.
 	*/
 	PGPKey(const QString &fileName);
 
@@ -2405,6 +2524,8 @@ private:
 };
 
 /**
+   \class KeyLoader qca_cert.h QtCrypto
+
    Asynchronous private key loader
 
    GUI applications generally must use KeyLoader to load private keys.  This
@@ -2438,6 +2559,8 @@ private:
    QCA::PrivateKey::fromPEMFile(), QCA::PrivateKey::fromPEM() and
    QCA::PrivateKey::fromDER(). %QCA provides synchronous key bundle loading
    using QCA::KeyBundle::fromArray() and QCA::KeyBundle::fromFile().
+
+   \ingroup UserAPI
 */
 class QCA_EXPORT KeyLoader : public QObject
 {
