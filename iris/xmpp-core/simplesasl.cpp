@@ -329,7 +329,10 @@ public:
 			}
 #endif
 			++step;
-			result_ = Success;
+			if (out_mech == "PLAIN")
+				result_ = Success;
+			else
+				result_ = Continue;
 		}
 		else if(step == 1) {
 			// if we still need params, then the app has failed us!
