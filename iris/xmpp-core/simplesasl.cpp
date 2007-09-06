@@ -329,7 +329,7 @@ public:
 			}
 #endif
 			++step;
-			result_ = Continue;
+			result_ = Success;
 		}
 		else if(step == 1) {
 			// if we still need params, then the app has failed us!
