@@ -1289,6 +1289,7 @@ public:
 	public:
 		enum Type
 		{
+			ClientStarted,
 			NextStep,
 			Authenticated,
 			ReadyRead,
@@ -1297,12 +1298,17 @@ public:
 
 		int type;
 		QByteArray stepData;
+		bool haveInit;
 
 		Action(int _type) : type(_type)
 		{
 		}
 
 		Action(int _type, const QByteArray &_stepData) : type(_type), stepData(_stepData)
+		{
+		}
+
+		Action(int _type, bool _haveInit, const QByteArray &_stepData) : type(_type), stepData(_stepData), haveInit(_haveInit)
 		{
 		}
 	};
@@ -1514,7 +1520,11 @@ public:
 				actionTrigger.start();
 		}
 
-		if(a.type == Action::NextStep)
+		if(a.type == Action::ClientStarted)
+		{
+			emit q->clientStarted(a.haveInit, a.stepData);
+		}
+		else if(a.type == Action::NextStep)
 		{
 			emit q->nextStep(a.stepData);
 		}
@@ -1671,7 +1681,11 @@ private slots:
 					}
 
 					first = false;
-					emit q->clientStarted(c->haveClientInit(), c->stepData());
+					actionQueue += Action(Action::ClientStarted, c->haveClientInit(), c->stepData());
+					if(r == SASLContext::Success)
+						actionQueue += Action(Action::Authenticated);
+
+					processNextAction();
 					return;
 				}
 				else
