@@ -385,8 +385,10 @@ static QString extractLine(QByteArray *buf, bool *found)
 	int n;
 	for(n = 0; n < (int)buf->size()-1; ++n) {
 		if(buf->at(n) == '\r' && buf->at(n+1) == '\n') {
-			Q3CString cstr;
-			cstr.resize(n+1);
+			//Q3CString cstr;
+			//cstr.resize(n+1);
+			QByteArray cstr;
+			cstr.resize(n);
 			memcpy(cstr.data(), buf->data(), n);
 			n += 2; // hack off CR/LF
 
