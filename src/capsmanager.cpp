@@ -188,12 +188,15 @@ void CapsManager::discoFinished()
 	DiscoItem item = disco->item();
 	Jid jid = disco->jid();
 	//qDebug() << QString("caps.cpp: Disco response from %1, node=%2, success=%3").arg(QString(jid.full()).replace('%',"%%")).arg(disco->node()).arg(disco->success());
-	QStringList tokens = disco->node().split("#",QString::SkipEmptyParts);
-
+    
 	// Update features
-	Q_ASSERT(tokens.count() == 2);
-	QString node = tokens[0];
-	QString ext = tokens[1];
+    int hash_index = disco->node().indexOf('#');
+    if (hash_index == -1) {
+        qWarning() << "CapsManager: Node" << disco->node() << "invalid";
+        return;
+    }
+	QString node = disco->node().left(hash_index);
+	QString ext = disco->node().right(disco->node().length() - hash_index - 1);
 	CapsSpec jid_cs = capsSpecs_[jid.full()];
 	if (jid_cs.node() == node) {
 		CapsSpec cs(node,jid_cs.version(),ext);
