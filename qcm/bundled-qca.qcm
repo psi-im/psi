@@ -19,6 +19,7 @@ public:
 		// FIXME: Check QCA version number
 		if (QFile::exists("third-party/qca/qca")) {
 			conf->addExtra("CONFIG += qca-static");
+			conf->addDefine("QCA_NO_PLUGINS");
 			return true;
 		}
 		else {
