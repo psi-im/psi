@@ -370,6 +370,7 @@ bool PsiCon::init()
 	connect(this, SIGNAL(emitOptionsUpdate()), d->mainwin->cvlist, SLOT(optionsUpdate()));
 
 	d->mainwin->restoreSavedGeometry(d->pro.mwgeom);
+	d->mwgeom = d->pro.mwgeom;
 	
 	if(!(option.useDock && option.dockHideMW))
 		d->mainwin->show();

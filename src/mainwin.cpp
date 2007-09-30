@@ -888,7 +888,9 @@ void MainWin::closeEvent(QCloseEvent *e)
 	if(!askQuit())
 		return;
 
-        closeProgram();
+	emit geomChanged(saveableGeometry());
+	closeProgram();
+
 	e->accept();
 #endif
 }
