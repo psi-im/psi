@@ -17,14 +17,14 @@
 #
 
 # Change these according to your own setup
-QTDIR=/usr/local/Trolltech/Qt-4.2.3
+QTDIR=/usr/local/Trolltech/Qt-4.3.1
 QCADIR=/usr/local
 GROWLDIR=/Library/Frameworks
 PSI_DIR=..
 
 NAME=Psi
 #VERSION=0.11-devel_$(shell date +"%Y%m%d")_debug
-VERSION=0.11-RC2
+VERSION=0.11-RC3
 FILES=Psi.app 
 DISK_DIR=disk
 ifneq ($(BUILD),no)
