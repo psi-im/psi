@@ -1896,7 +1896,8 @@ void EventDlg::updateEvent(PsiEvent *e)
 			//show/enable controls we want
 			d->pb_form_submit->show();
 			d->pb_form_cancel->show();
-
+			d->pb_form_submit->setEnabled(true);
+			d->pb_form_cancel->setEnabled(true);
 			//set title if specified
 			const XData& form = m.getForm();
 			if ( !form.title().isEmpty() )
