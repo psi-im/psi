@@ -90,17 +90,18 @@ void TranslationManager::loadTranslation(const QString& language)
 	
 	// Try loading the translation file
 	QStringList dirs = translationDirs();
-	for(QStringList::Iterator it = dirs.begin(); it != dirs.end(); ++it) {
-		if(!QFile::exists(*it))
+	foreach(QString dir, dirs) {
+		if(!QFile::exists(dir))
 			continue;
-		if (translator_->load("psi_" + language, *it)) {
+		if (translator_->load("psi_" + language, dir)) {
 			// try to load qt library translation
-			qt_translator_->load("qt_" + language, *it);
+			qt_translator_->load("qt_" + language, dir);
 			if (currentLanguage_ == "en") {
 				QCoreApplication::instance()->installTranslator(translator_);
 				QCoreApplication::instance()->installTranslator(qt_translator_);
 			}
 			currentLanguage_ = language;
+			break;
 		}
 	}
 }
