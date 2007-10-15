@@ -1,6 +1,6 @@
 Psi 0.11-RC3
 ---------
-Date: Sept 24th, 2007
+Date: October 15th, 2007
 
 Project Lead/Maintainer (2004-current):
   Kevin Smith
@@ -20,21 +20,19 @@ Original Author (2001-2004):
 
 Known Issues
 ------------
-This is a release candidate version of Psi. This release cycle is used as a 
-test of a version which the developers believe is ready for a final release. 
-As such we do not know of any critical issues is this version, but it is 
-still advisable to maintain backups and to not deploy on critical production 
-systems.
+The following are known issues with this release:
 Issues with Qt 4.2.3: There is a bug in Qt 4.2.3 that corrupts incoming text
 with rare Unicode characters (outside of the BMP)
 Issues with Qt 4.3.(0|1): On X11 Qt 4.3 seems to have problems with some
 window managers that result in windows not beeing displayed or displayed 
 with a broken layout.
+In rare situations, primarily when reconnecting after a forced disconnect,
+a very small group of users experience a crash of Psi.
 
 Notes
 -----
   - QCA --
-    * The latest version of QCA2 is required to build Psi.
+    * QCA2 is required to build Psi: a version is bundled with Psi.
     * The qca-ossl and qca-gnupg plugins are desirable for full 
       functionality of Psi.
 
