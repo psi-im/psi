@@ -14,9 +14,11 @@ qca-static {
 SUBDIRS += \
 	src
 
-unix {
-	# unittest
-	QMAKE_EXTRA_TARGETS += check
-	check.commands += cd unittest && make check && cd ..
-}
+tests {
+	SUBDIRS += \
+		qa/unittest \
+		qa/guitest
 
+	QMAKE_EXTRA_TARGETS += check
+	check.commands += make -C qa/unittest check
+}

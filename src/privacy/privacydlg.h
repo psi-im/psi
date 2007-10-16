@@ -22,21 +22,22 @@
 #define PRIVACYDLG_H
 
 #include <QDialog>
+#include <QPointer>
 
 #include "ui_privacy.h"
 #include "privacylistmodel.h"
 
-class PsiAccount;
 class QWidget;
 class QString;
 class QStringList;
+class PrivacyManager;
 
 class PrivacyDlg : public QDialog
 {
 	Q_OBJECT
 
 public:
-	PrivacyDlg(PsiAccount* acc, QWidget* parent);
+	PrivacyDlg(const QString&, PrivacyManager* manager, QWidget* parent = NULL);
 	~PrivacyDlg() { };
 
 protected:
@@ -71,7 +72,7 @@ protected slots:
 private:
 	Ui::Privacy ui_;
 	int previousActive_, previousDefault_, previousList_;
-	PsiAccount* acc_;
+	QPointer<PrivacyManager> manager_;
 	PrivacyListModel model_;
 	bool newList_;
 };

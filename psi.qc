@@ -26,6 +26,9 @@
   <dep type='dnotify'/>
   <dep type='ghbnr'/>
   <dep type='aspell'/>
+  <dep type='tests'>
+    <disabled/>
+  </dep>
   <dep type='debug'>
 	<required/>
   </dep>

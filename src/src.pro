@@ -7,8 +7,6 @@ TEMPLATE = app
 TARGET    = psi
 CONFIG  += qt thread x11 
 
-QT += xml network qt3support
-
 #CONFIG += use_crash
 CONFIG += pep
 DEFINES += QT_STATICPLUGIN
@@ -16,7 +14,8 @@ DEFINES += QT_STATICPLUGIN
 # Import several very useful Makefile targets 
 # as well as set up default directories for 
 # generated files
-include(../unittest/unittest.pri)
+include(../qa/valgrind/valgrind.pri)
+include(../qa/oldtest/unittest.pri)
 
 # qconf
 

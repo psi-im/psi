@@ -62,7 +62,7 @@
 #include "psievent.h"
 #include "jidutil.h"
 #include "eventdlg.h"
-#include "privacymanager.h"
+#include "psiprivacymanager.h"
 #include "rosteritemexchangetask.h"
 #include "chatdlg.h"
 #include "contactview.h"
@@ -268,7 +268,7 @@ public:
 	QList<Message*> messageQueue;
 	BlockTransportPopupList *blockTransportPopupList;
 	int userCounter;
-	PrivacyManager* privacyManager;
+	PsiPrivacyManager* privacyManager;
 	CapsManager* capsManager;
 	RosterItemExchangeTask* rosterItemExchangeTask;
 	bool pepAvailable;
@@ -526,7 +526,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent)
 	connect(d->client->fileTransferManager(), SIGNAL(incomingReady()), SLOT(client_incomingFileTransfer()));
 	
 	// Privacy manager
-	d->privacyManager = new PrivacyManager(d->client->rootTask());
+	d->privacyManager = new PsiPrivacyManager(d->client->rootTask());
 
 	// Caps manager
 	d->capsManager = new CapsManager(d->client);

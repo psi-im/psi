@@ -1,5 +1,4 @@
 /*
- * privacymanager.cpp
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -24,6 +23,7 @@
 #include "xmpp_xmlcommon.h"
 #include "xmpp_task.h"
 #include "xmpp_jid.h"
+#include "psiprivacymanager.h"
 #include "privacymanager.h"
 #include "privacylist.h"
 
@@ -262,31 +262,31 @@ public:
 
 // -----------------------------------------------------------------------------
 
-PrivacyManager::PrivacyManager(XMPP::Task* rootTask) : rootTask_(rootTask), getDefault_waiting_(false), block_waiting_(false)
+PsiPrivacyManager::PsiPrivacyManager(XMPP::Task* rootTask) : rootTask_(rootTask), getDefault_waiting_(false), block_waiting_(false)
 {
    listener_ = new PrivacyListListener(rootTask_);	
 }
 
-PrivacyManager::~PrivacyManager()
+PsiPrivacyManager::~PsiPrivacyManager()
 {
 	delete listener_;
 }
 
-void PrivacyManager::requestListNames()
+void PsiPrivacyManager::requestListNames()
 {
 	GetPrivacyListsTask* t = new GetPrivacyListsTask(rootTask_);
 	connect(t,SIGNAL(finished()),SLOT(receiveLists()));
 	t->go(true);
 }
 
-void PrivacyManager::requestList(const QString& name)
+void PsiPrivacyManager::requestList(const QString& name)
 {
 	GetPrivacyListTask* t = new GetPrivacyListTask(rootTask_, name);
 	connect(t,SIGNAL(finished()),SLOT(receiveList()));
 	t->go(true);
 }
 
-void PrivacyManager::block(const QString& target)
+void PsiPrivacyManager::block(const QString& target)
 {
 	block_targets_.push_back(target);
 	if (!block_waiting_) {
@@ -297,7 +297,7 @@ void PrivacyManager::block(const QString& target)
 	}
 }
 
-void PrivacyManager::block_getDefaultList_success(const PrivacyList& l_)
+void PsiPrivacyManager::block_getDefaultList_success(const PrivacyList& l_)
 {
 	PrivacyList l = l_;
 	disconnect(this,SIGNAL(defaultListAvailable(const PrivacyList&)),this,SLOT(block_getDefault_success(const PrivacyList&)));
@@ -308,7 +308,7 @@ void PrivacyManager::block_getDefaultList_success(const PrivacyList& l_)
 	changeList(l);
 }
 
-void PrivacyManager::block_getDefaultList_error()
+void PsiPrivacyManager::block_getDefaultList_error()
 {
 	disconnect(this,SIGNAL(defaultListAvailable(const PrivacyList&)),this,SLOT(block_getDefault_success(const PrivacyList&)));
 	disconnect(this,SIGNAL(defaultListError()),this,SLOT(block_getDefault_error()));
@@ -316,14 +316,14 @@ void PrivacyManager::block_getDefaultList_error()
 	block_targets_.clear();
 }
 
-void PrivacyManager::getDefaultList()
+void PsiPrivacyManager::getDefaultList()
 {
 	connect(this,SIGNAL(listsReceived(const QString&, const QString&, const QStringList&)),SLOT(getDefault_listsReceived(const QString&, const QString&, const QStringList&)));
 	connect(this,SIGNAL(listsError()),SLOT(getDefault_listsError()));
 	requestListNames();
 }
 
-void PrivacyManager::getDefault_listsReceived(const QString& defaultList, const QString&, const QStringList&)
+void PsiPrivacyManager::getDefault_listsReceived(const QString& defaultList, const QString&, const QStringList&)
 {
 	disconnect(this,SIGNAL(listsReceived(const QString&, const QString&, const QStringList&)),this,SLOT(getDefault_listsReceived(const QString&, const QString&, const QStringList&)));
 	disconnect(this,SIGNAL(listsError()),this,SLOT(getDefault_listsError()));
@@ -340,14 +340,14 @@ void PrivacyManager::getDefault_listsReceived(const QString& defaultList, const 
 	}
 }
 
-void PrivacyManager::getDefault_listsError()
+void PsiPrivacyManager::getDefault_listsError()
 {
 	disconnect(this,SIGNAL(listsReceived(const QString&, const QString&, const QStringList&)),this,SLOT(getDefault_listsReceived(const QString&, const QString&, const QStringList&)));
 	disconnect(this,SIGNAL(listsError()),this,SLOT(getDefault_listsError()));
 	emit defaultListError();
 }
 
-void PrivacyManager::getDefault_listReceived(const PrivacyList& l)
+void PsiPrivacyManager::getDefault_listReceived(const PrivacyList& l)
 {
 	if (l.name() == getDefault_default_ && getDefault_waiting_) {
 		disconnect(this,SIGNAL(listReceived(const PrivacyList&)),this,SLOT(getDefault_listReceived(const PrivacyList&)));
@@ -357,12 +357,12 @@ void PrivacyManager::getDefault_listReceived(const PrivacyList& l)
 	}
 }
 
-void PrivacyManager::getDefault_listError()
+void PsiPrivacyManager::getDefault_listError()
 {
 	emit defaultListError();
 }
 
-void PrivacyManager::changeDefaultList(const QString& name)
+void PsiPrivacyManager::changeDefaultList(const QString& name)
 {
 	SetPrivacyListsTask* t = new SetPrivacyListsTask(rootTask_);
 	t->setDefault(name);
@@ -370,7 +370,7 @@ void PrivacyManager::changeDefaultList(const QString& name)
 	t->go(true);
 }
 
-void PrivacyManager::changeDefaultList_finished()
+void PsiPrivacyManager::changeDefaultList_finished()
 {
 	SetPrivacyListsTask *t = (SetPrivacyListsTask*)sender();
 	if (!t) {
@@ -386,7 +386,7 @@ void PrivacyManager::changeDefaultList_finished()
 	}
 }
 
-void PrivacyManager::changeActiveList(const QString& name)
+void PsiPrivacyManager::changeActiveList(const QString& name)
 {
 	SetPrivacyListsTask* t = new SetPrivacyListsTask(rootTask_);
 	t->setActive(name);
@@ -394,7 +394,7 @@ void PrivacyManager::changeActiveList(const QString& name)
 	t->go(true);
 }
 
-void PrivacyManager::changeActiveList_finished()
+void PsiPrivacyManager::changeActiveList_finished()
 {
 	SetPrivacyListsTask *t = (SetPrivacyListsTask*)sender();
 	if (!t) {
@@ -410,7 +410,7 @@ void PrivacyManager::changeActiveList_finished()
 	}
 }
 
-void PrivacyManager::changeList(const PrivacyList& list)
+void PsiPrivacyManager::changeList(const PrivacyList& list)
 {
 	SetPrivacyListsTask* t = new SetPrivacyListsTask(rootTask_);
 	t->setList(list);
@@ -418,7 +418,7 @@ void PrivacyManager::changeList(const PrivacyList& list)
 	t->go(true);
 }
 
-void PrivacyManager::changeList_finished()
+void PsiPrivacyManager::changeList_finished()
 {
 	SetPrivacyListsTask *t = (SetPrivacyListsTask*)sender();
 	if (!t) {
@@ -434,7 +434,7 @@ void PrivacyManager::changeList_finished()
 	}
 }
 
-void PrivacyManager::receiveLists() 
+void PsiPrivacyManager::receiveLists() 
 {
 	GetPrivacyListsTask *t = (GetPrivacyListsTask*)sender();
 	if (!t) {
@@ -451,7 +451,7 @@ void PrivacyManager::receiveLists()
 	}
 }
 
-void PrivacyManager::receiveList() 
+void PsiPrivacyManager::receiveList() 
 {
 	GetPrivacyListTask *t = (GetPrivacyListTask*)sender();
 	if (!t) {
@@ -468,4 +468,4 @@ void PrivacyManager::receiveList()
 	}
 }
 
-#include "privacymanager.moc"
+#include "psiprivacymanager.moc"

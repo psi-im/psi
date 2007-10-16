@@ -575,7 +575,7 @@ void AccountModifyDlg::removeBlockClicked()
 
 void AccountModifyDlg::privacyClicked()
 {
-	PrivacyDlg *d = new PrivacyDlg(pa,this);
+	PrivacyDlg *d = new PrivacyDlg(pa->name(), pa->privacyManager(), this);
 	d->show();
 }
 

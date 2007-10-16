@@ -23,34 +23,34 @@
 #include <QMessageBox>
 
 #include "privacydlg.h"
-#include "psiaccount.h"
 #include "privacylist.h"
 #include "privacymanager.h"
 #include "privacylistmodel.h"
 
-PrivacyDlg::PrivacyDlg(PsiAccount* acc, QWidget* parent) : QDialog(parent), acc_(acc)
+// fixme: subscribe on the destroyed() signal of the manager
+
+PrivacyDlg::PrivacyDlg(const QString& account_name, PrivacyManager* manager, QWidget* parent) : QDialog(parent), manager_(manager)
 {
 	ui_.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
-	setWindowTitle(tr("%1: Privacy Lists").arg(acc->name()));
+	setWindowTitle(tr("%1: Privacy Lists").arg(account_name));
 
-	PrivacyManager* manager = acc->privacyManager();
-	connect(manager,SIGNAL(listsReceived(const QString&, const QString&, const QStringList&)),SLOT(updateLists(const QString&, const QString&, const QStringList&)));
-	connect(manager,SIGNAL(listReceived(const PrivacyList&)),SLOT(refreshList(const PrivacyList&)));
-	connect(manager,SIGNAL(listError()),SLOT(list_failed()));
-	//connect(manager,SIGNAL(listNamesError()),SLOT(listNamesError()));
-	//connect(manager,SIGNAL(listReceiveError()),SLOT(listReceiveError()));
+	connect(manager_,SIGNAL(listsReceived(const QString&, const QString&, const QStringList&)),SLOT(updateLists(const QString&, const QString&, const QStringList&)));
+	connect(manager_,SIGNAL(listReceived(const PrivacyList&)),SLOT(refreshList(const PrivacyList&)));
+	connect(manager_,SIGNAL(listError()),SLOT(list_failed()));
+	//connect(manager_,SIGNAL(listNamesError()),SLOT(listNamesError()));
+	//connect(manager_,SIGNAL(listReceiveError()),SLOT(listReceiveError()));
 
 	connect(ui_.cb_active,SIGNAL(activated(int)),SLOT(active_selected(int)));
 	connect(ui_.cb_default,SIGNAL(activated(int)),SLOT(default_selected(int)));
 	connect(ui_.cb_lists,SIGNAL(activated(int)),SLOT(list_selected(int)));
 	connect(ui_.cb_lists,SIGNAL(currentIndexChanged(int)),SLOT(list_changed(int)));
-	connect(manager,SIGNAL(changeActiveList_success()),SLOT(change_succeeded()));
-	connect(manager,SIGNAL(changeActiveList_error()),SLOT(change_failed()));
-	connect(manager,SIGNAL(changeDefaultList_success()),SLOT(change_succeeded()));
-	connect(manager,SIGNAL(changeDefaultList_error()),SLOT(change_failed()));
-	connect(manager,SIGNAL(changeList_success()),SLOT(changeList_succeeded()));
-	connect(manager,SIGNAL(changeList_error()),SLOT(changeList_failed()));
+	connect(manager_,SIGNAL(changeActiveList_success()),SLOT(change_succeeded()));
+	connect(manager_,SIGNAL(changeActiveList_error()),SLOT(change_failed()));
+	connect(manager_,SIGNAL(changeDefaultList_success()),SLOT(change_succeeded()));
+	connect(manager_,SIGNAL(changeDefaultList_error()),SLOT(change_failed()));
+	connect(manager_,SIGNAL(changeList_success()),SLOT(changeList_succeeded()));
+	connect(manager_,SIGNAL(changeList_error()),SLOT(changeList_failed()));
 
 	connect(ui_.pb_newList,SIGNAL(clicked()),SLOT(newList()));
 	connect(ui_.pb_deleteList,SIGNAL(clicked()),SLOT(removeList()));
@@ -74,7 +74,7 @@ PrivacyDlg::PrivacyDlg(PsiAccount* acc, QWidget* parent) : QDialog(parent), acc_
 	// FIXME: Temporarily disabling auto-activate
 	ui_.ck_autoActivate->hide();
 	
-	manager->requestListNames();
+	manager_->requestListNames();
 }
 
 void PrivacyDlg::setWidgetsEnabled(bool b)
@@ -129,9 +129,9 @@ void PrivacyDlg::applyList()
 {
 	if (!model_.list().isEmpty()) {
 		setWidgetsEnabled(false);
-		acc_->privacyManager()->changeList(model_.list());
+		manager_->changeList(model_.list());
 		if (newList_)
-			acc_->privacyManager()->requestListNames();
+			manager_->requestListNames();
 	}
 }
 
@@ -180,7 +180,7 @@ void PrivacyDlg::updateLists(const QString& defaultList, const QString& activeLi
 				ui_.cb_lists->setCurrentItem(names.findIndex(currentList));
 			}
 		}
-		acc_->privacyManager()->requestList(ui_.cb_lists->currentText());
+		manager_->requestList(ui_.cb_lists->currentText());
 	}
 	else {
 		setWidgetsEnabled(true);
@@ -196,7 +196,7 @@ void PrivacyDlg::listChanged()
 		rememberSettings();
 	}
 	setWidgetsEnabled(false);
-	acc_->privacyManager()->requestList(ui_.cb_lists->currentText());
+	manager_->requestList(ui_.cb_lists->currentText());
 }
 
 void PrivacyDlg::refreshList(const PrivacyList& list)
@@ -212,7 +212,7 @@ void PrivacyDlg::active_selected(int i)
 {
 	if (i != previousActive_) {
 		setWidgetsEnabled(false);
-		acc_->privacyManager()->changeActiveList((i == 0 ? "" : ui_.cb_active->text(i)));
+		manager_->changeActiveList((i == 0 ? "" : ui_.cb_active->text(i)));
 	}
 }
 
@@ -220,7 +220,7 @@ void PrivacyDlg::default_selected(int i)
 {
 	if (i != previousDefault_) {
 		setWidgetsEnabled(false);
-		acc_->privacyManager()->changeDefaultList((i == 0 ? "" : ui_.cb_active->text(i)));
+		manager_->changeDefaultList((i == 0 ? "" : ui_.cb_active->text(i)));
 	}
 }
 
@@ -326,6 +326,6 @@ void PrivacyDlg::newList()
 void PrivacyDlg::removeList()
 {
 	model_.list().clear();
-	acc_->privacyManager()->changeList(model_.list());
-	acc_->privacyManager()->requestListNames();
+	manager_->changeList(model_.list());
+	manager_->requestListNames();
 }

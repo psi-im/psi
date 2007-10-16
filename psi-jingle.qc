@@ -30,6 +30,7 @@
   <dep type='google_ft'/>
   <dep type='jingle'/>
   <dep type='plugins'/>
+  <dep type='cppunit'/>
   <dep type='debug'>
 	<required/>
   </dep>

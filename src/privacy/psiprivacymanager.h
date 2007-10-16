@@ -18,11 +18,13 @@
  *
  */
  
-#ifndef PRIVACYMANAGER_H
-#define PRIVACYMANAGER_H
+#ifndef PSIPRIVACYMANAGER_H
+#define PSIPRIVACYMANAGER_H
 
 #include <QObject>
 #include <QStringList>
+
+#include "privacymanager.h"
 
 class QString;
 class PrivacyList;
@@ -32,13 +34,13 @@ namespace XMPP {
 }
 
 
-class PrivacyManager : public QObject
+class PsiPrivacyManager : public PrivacyManager
 {
 	Q_OBJECT
 
 public:
-	PrivacyManager(XMPP::Task* rootTask);
-	virtual ~PrivacyManager();
+	PsiPrivacyManager(XMPP::Task* rootTask);
+	virtual ~PsiPrivacyManager();
 
 	void requestListNames();
 
@@ -68,22 +70,6 @@ protected slots:
 	
 	void block_getDefaultList_success(const PrivacyList&);
 	void block_getDefaultList_error();
-
-signals:
-	void changeDefaultList_success();
-	void changeDefaultList_error();
-	void changeActiveList_success();
-	void changeActiveList_error();
-	void changeList_success();
-	void changeList_error();
-	void defaultListAvailable(const PrivacyList&);
-	void defaultListError();
-	void listChangeSuccess();
-	void listChangeError();
-	void listReceived(const PrivacyList& p);
-	void listError();
-	void listsReceived(const QString& defaultList, const QString& activeList, const QStringList& lists);
-	void listsError();
 
 private:
 	XMPP::Task* rootTask_;

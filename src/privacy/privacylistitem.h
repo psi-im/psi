@@ -61,6 +61,7 @@ public:
 	void fromXml(const QDomElement& e);
 
 	bool operator<(const PrivacyListItem& it) const { return order() < it.order(); }
+	bool operator==(const PrivacyListItem& o) const { return type_ == o.type_ && action_ == o.action_ && message_ == o.message_ && presenceIn_ == o.presenceIn_ && presenceOut_ == o.presenceOut_ && iq_ == o.iq_ && order_ == o.order_ && value_ == o.value_; }
 
 	static PrivacyListItem blockItem(const QString& jid);
 	

@@ -1,5 +1,10 @@
+QT += xml network qt3support
+
 # cutestuff
 include($$PWD/../cutestuff/cutestuff.pri)
+
+# modules
+include($$PWD/privacy/privacy.pri)
 
 # tools
 include($$PWD/tools/trayicon/trayicon.pri)
@@ -188,13 +193,6 @@ HEADERS += \
 	$$PWD/rc.h \
 	$$PWD/psihttpauthrequest.h \
 	$$PWD/httpauthmanager.h \
- 	$$PWD/privacylistitem.h \
- 	$$PWD/privacylist.h \
- 	$$PWD/privacylistmodel.h \
- 	$$PWD/privacylistblockedmodel.h \
- 	$$PWD/privacymanager.h \
- 	$$PWD/privacydlg.h \
- 	$$PWD/privacyruledlg.h \
 	$$PWD/ahcommand.h \
 	$$PWD/ahcommandserver.h \
 	$$PWD/ahcommanddlg.h \
@@ -302,13 +300,6 @@ SOURCES += \
 	$$PWD/pubsubsubscription.cpp \
 	$$PWD/rc.cpp \
 	$$PWD/httpauthmanager.cpp \
- 	$$PWD/privacylistitem.cpp \
- 	$$PWD/privacylist.cpp \
- 	$$PWD/privacylistmodel.cpp \
- 	$$PWD/privacylistblockedmodel.cpp \
- 	$$PWD/privacymanager.cpp \
- 	$$PWD/privacydlg.cpp \
- 	$$PWD/privacyruledlg.cpp \
 	$$PWD/ahcommand.cpp \
 	$$PWD/ahcommandserver.cpp \
  	$$PWD/ahcommanddlg.cpp \
@@ -380,8 +371,6 @@ INTERFACES += \
 	$$PWD/disco.ui \
 	$$PWD/tip.ui \
 	$$PWD/filetrans.ui \
-	$$PWD/privacy.ui \
-	$$PWD/privacyrule.ui \
 	$$PWD/mood.ui \
 	$$PWD/voicecall.ui \
 	$$PWD/chatdlg.ui \
@@ -401,3 +390,4 @@ mac {
 	QMAKE_LFLAGS += -framework Carbon -framework IOKit
 }
 
+INCLUDEPATH += $$PWD
