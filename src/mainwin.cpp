@@ -169,8 +169,9 @@ void MainWin::Private::registerActions()
 	QStringList::Iterator it = names.begin();
 	for ( ; it != names.end(); ++it ) {
 		IconAction *action = actions.action( *it );
-		if ( action )
+		if ( action ) {
 			mainWin->registerAction( action );
+		}
 	}
 }
 
@@ -180,8 +181,9 @@ IconAction *MainWin::Private::getAction( QString name )
 	ActionList actions = psi->actionList()->suitableActions( type );
 	IconAction *action = actions.action( name );
 
-	if ( !action )
+	if ( !action ) {
 		qWarning("MainWin::Private::getAction(): action %s not found!", name.latin1());
+	}
 	//else
 	//	mainWin->registerAction( action );
 
@@ -201,8 +203,9 @@ void MainWin::Private::updateMenu(QStringList actions, QMenu *menu)
 			continue;
 		}
 		
-		if ( (action = getAction(name)) )
+		if ( (action = getAction(name)) ) {
 			action->addTo(menu);
+		}
 	}
 }
 
@@ -330,8 +333,9 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	QMenu *viewMenu = new QMenu(this);
 	mainMenuBar()->insertItem(tr("View"), viewMenu);
 	d->getAction("show_offline")->addTo(viewMenu);
-	if (PsiOptions::instance()->getOption("options.ui.menu.view.show-away").toBool())
+	if (PsiOptions::instance()->getOption("options.ui.menu.view.show-away").toBool()) {
 		d->getAction("show_away")->addTo(viewMenu);
+	}
 	d->getAction("show_hidden")->addTo(viewMenu);
 	d->getAction("show_agents")->addTo(viewMenu);
 	d->getAction("show_self")->addTo(viewMenu);
@@ -355,8 +359,9 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	d->getAction("help_psi_muc")->addTo (helpMenu);
 	d->getAction("help_report_bug")->addTo (helpMenu);
 #else
-	if (option.hideMenubar) 
+	if (option.hideMenubar)  {
 		mainMenuBar()->hide();
+	}
 	//else 
 	//	mainMenuBar()->show();
 #endif
@@ -450,16 +455,18 @@ void MainWin::registerAction( IconAction *action )
 		if ( aName == action->name() ) {
 #ifdef USE_PEP
 			// Check before connecting, otherwise we get a loop
-			if ( aName == "publish_tune")
+			if ( aName == "publish_tune") {
 				action->setChecked( PsiOptions::instance()->getOption("options.extended-presence.tune.publish").toBool() );
+			}
 #endif
 
 			disconnect( action, actionlist[i].signal, actionlist[i].receiver, actionlist[i].slot ); // for safety
 			connect( action, actionlist[i].signal, actionlist[i].receiver, actionlist[i].slot );
 
 			// special cases
-			if ( aName == "menu_play_sounds" )
+			if ( aName == "menu_play_sounds" ) {
 				action->setChecked( useSound );
+			}
 			//else if ( aName == "foobar" )
 			//	;
 		}
@@ -501,17 +508,20 @@ PsiCon *MainWin::psiCon() const
 
 void MainWin::setWindowOpts(bool _onTop, bool _asTool)
 {
-	if(_onTop == d->onTop && _asTool == d->asTool)
+	if(_onTop == d->onTop && _asTool == d->asTool) {
 		return;
+	}
 
 	d->onTop = _onTop;
 	d->asTool = _asTool;
 
 	Qt::WFlags flags = 0;
-	if(d->onTop)
+	if(d->onTop) {
 		flags |= Qt::WStyle_StaysOnTop;
-	if(d->asTool)
+	}
+	if(d->asTool) {
 		flags |= Qt::WStyle_Tool | TOOLW_FLAGS;
+	}
 
 	QPoint p = pos();
 	reparent(parentWidget(), flags, p, FALSE);
@@ -527,12 +537,14 @@ void MainWin::setUseDock(bool use)
 			d->tray = 0;
 		}
 
-		if (use == false)
+		if (use == false) {
 			return;
+		}
 	}
 
-	if(d->tray)
+	if(d->tray) {
 		return;
+	}
 
 	d->tray = new PsiTrayIcon("Psi", d->trayMenu, d->old_trayicon);
 	if (d->old_trayicon) {
@@ -553,12 +565,14 @@ void MainWin::buildStatusMenu()
 {
 	d->statusMenu->clear();
 	d->getAction("status_online")->addTo(d->statusMenu);
-	if (PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool())
+	if (PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool()) {
 		d->getAction("status_chat")->addTo(d->statusMenu);
+	}
 	d->statusMenu->insertSeparator();
 	d->getAction("status_away")->addTo(d->statusMenu);
-	if (PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool())
+	if (PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool()) {
 		d->getAction("status_xa")->addTo(d->statusMenu);
+	}
 	d->getAction("status_dnd")->addTo(d->statusMenu);
 	if (PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool()) {
 		d->statusMenu->insertSeparator();
@@ -602,15 +616,18 @@ void MainWin::buildToolbars()
 
 	for (int i = 0; i < option.toolbars["mainWin"].count(); i++) {
 		PsiToolBar *tb = 0;
-		if ( i < toolbars.count() )
+		if ( i < toolbars.count() ) {
 			tb = toolbars.at(i);
+		}
 
 		Options::ToolbarPrefs &tbPref = option.toolbars["mainWin"][i];
-		if ( tb && !tbPref.dirty )
+		if ( tb && !tbPref.dirty ) {
 			continue;
+		}
 
-		if ( tb )
+		if ( tb ) {
 			delete tb;
+		}
 
 		tb = new PsiToolBar(tbPref.name, this, d->psi);
 		moveDockWindow ( tb, tbPref.dock, tbPref.nl, tbPref.index, tbPref. extraOffset );
@@ -620,8 +637,9 @@ void MainWin::buildToolbars()
 		//connect( tb, SIGNAL( registerAction( IconAction * ) ), SLOT( registerAction( IconAction * ) ) );
 		tb->initialize( tbPref, false );
 
-		if ( i < toolbars.count() )
+		if ( i < toolbars.count() ) {
 			toolbars.removeAt(i);
+		}
 		toolbars.insert(i, tb);
 	}
 }
@@ -673,14 +691,16 @@ void MainWin::buildMainMenu()
 	// main menu
 	QStringList actions;
 	actions << "menu_add_contact";
-	if (PsiOptions::instance()->getOption("options.ui.message.enabled").toBool())
+	if (PsiOptions::instance()->getOption("options.ui.message.enabled").toBool()) {
 		actions << "menu_new_message";
 	actions << "menu_disco"
 	        << "menu_join_groupchat"
 	        << "separator"
 	        << "menu_account_setup";
-	if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool())
+	}
+	if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
 	        actions << "menu_change_profile";
+	}
 	actions << "menu_play_sounds";
 
 	d->updateMenu(actions, d->mainMenu);
@@ -701,15 +721,17 @@ void MainWin::buildGeneralMenu(QMenu *menu)
 	// options menu
 	QStringList actions;
 	actions << "menu_add_contact";
-	if (PsiOptions::instance()->getOption("options.ui.message.enabled").toBool())
+	if (PsiOptions::instance()->getOption("options.ui.message.enabled").toBool()) {
 		actions << "menu_new_message";
+	}
 	actions << "menu_disco"
 	        << "menu_join_groupchat"
 	        << "menu_account_setup"
 	        << "menu_options"
 	        << "menu_file_transfer";
-	if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool())
+	if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
 	        actions << "menu_change_profile";
+	}
 	actions << "menu_play_sounds";
 
 	d->updateMenu(actions, menu);
@@ -740,8 +762,9 @@ void MainWin::actOnlineHomeActivated ()
 void MainWin::actJoinPsiMUCActivated()
 {
 	PsiAccount *account = d->psi->contactList()->defaultAccount();
-	if(!account)
+	if(!account) {
 		return;
+	}
 
 	MUCJoinDlg *w = new MUCJoinDlg(d->psi, account);
 	w->le_host->setText("conference.psi-im.org");
@@ -782,12 +805,15 @@ void MainWin::actPublishTuneActivated (bool state)
 
 void MainWin::activatedAccOption(PsiAccount *pa, int x)
 {
-	if(x == 0)
+	if(x == 0) {
 		pa->openAddUserDlg();
-	else if(x == 2)
+	}
+	else if(x == 2) {
 		pa->showXmlConsole();
-	else if(x == 3)
+	}
+	else if(x == 3) {
 		pa->doDisco();
+	}
 }
 
 void MainWin::buildTrayMenu()
@@ -800,10 +826,12 @@ void MainWin::buildTrayMenu()
 		d->trayMenu->insertSeparator();
 	}
 
-	if(isHidden())
+	if(isHidden()) {
 		d->trayMenu->insertItem(tr("Un&hide"), this, SLOT(trayShow()));
-	else
+	}
+	else {
 		d->trayMenu->insertItem(tr("&Hide"), this, SLOT(trayHide()));
+	}
 	d->optionsButton->addTo(d->trayMenu);
 	d->trayMenu->insertItem(tr("Status"), d->statusMenu);
 	
@@ -815,8 +843,9 @@ void MainWin::buildTrayMenu()
 
 void MainWin::setTrayToolTip(int status)
 {
-	if (!d->tray)
+	if (!d->tray) {
 		return;
+	}
 	d->tray->setToolTip(QString("Psi - " + status2txt(status)));
 }
 
@@ -829,8 +858,9 @@ void MainWin::decorateButton(int status)
 		action->setChecked ( d->statusActions[action] == status );
 	}
 
-	if(d->lastStatus == status)
+	if(d->lastStatus == status) {
 		return;
+	}
 	d->lastStatus = status;
 
 	if(status == -1) {
@@ -869,8 +899,9 @@ void MainWin::try2tryCloseProgram()
 
 void MainWin::tryCloseProgram()
 {
-	if(askQuit())
+	if(askQuit()) {
 		closeProgram();
+	}
 }
 
 void MainWin::closeEvent(QCloseEvent *e)
@@ -885,12 +916,11 @@ void MainWin::closeEvent(QCloseEvent *e)
 		return;
 	}
 
-	if(!askQuit())
+	if(!askQuit()) {
 		return;
+	}
 
-	emit geomChanged(saveableGeometry());
-	closeProgram();
-
+        closeProgram();
 	e->accept();
 #endif
 }
@@ -904,11 +934,13 @@ void MainWin::keyPressEvent(QKeyEvent *e)
 #endif
 
 	bool closekey = false;
-	if(e->key() == Qt::Key_Escape)
+	if(e->key() == Qt::Key_Escape) {
 		closekey = true;
+	}
 #ifdef Q_WS_MAC
-	else if(e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier)
+	else if(e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier) {
 		closekey = true;
+	}
 #endif
 
 	if(allowed && closekey) {
@@ -938,16 +970,20 @@ void MainWin::updateCaption()
 {
 	QString str = "";
 
-	if(d->nextAmount > 0)
+	if(d->nextAmount > 0) {
 		str += "* ";
+	}
 
-	if(d->nickname.isEmpty())
+	if(d->nickname.isEmpty()) {
 		str += ApplicationInfo::name();
-	else
+	}
+	else {
 		str += d->nickname;
+	}
 
-	if(str == caption())
+	if(str == caption()) {
 		return;
+	}
 
 	setWindowTitle(str);
 }
@@ -959,10 +995,12 @@ void MainWin::optionsUpdate()
 	decorateButton(status);
 
 #ifndef Q_WS_MAC
-	if (option.hideMenubar) 
+	if (option.hideMenubar) {
 		mainMenuBar()->hide();
-	else 
+	}
+	else {
 		mainMenuBar()->show();
+	}
 #endif
 	
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt()))/100);
@@ -974,16 +1012,19 @@ void MainWin::optionsUpdate()
 
 void MainWin::toggleVisible()
 {
-	if(!isHidden())
+	if(!isHidden()) {
 		trayHide();
-	else
+	}
+	else {
 		trayShow();
+	}
 }
 
 void MainWin::setTrayToolTip(const Status &status, bool)
 {
-	if (!d->tray)
+	if (!d->tray) {
 		return;
+	}
 	QString s = "Psi";
 
  	QString show = status.show();
@@ -993,32 +1034,37 @@ void MainWin::setTrayToolTip(const Status &status, bool)
 	}
 
 	QString text = status.status();
-	if(!text.isEmpty())
+	if(!text.isEmpty()) {
 		s += ": "+text;
+	}
 
 	d->tray->setToolTip(s);
 }
 
 void MainWin::trayClicked(const QPoint &, int button)
 {
-	if(option.dockDCstyle)
+	if(option.dockDCstyle) {
 		return;
+	}
 
 	if(button == Qt::MidButton) {
 		doRecvNextEvent();
 		return;
 	}
 
-	if(!isHidden())
+	if(!isHidden()) {
 		trayHide();
-	else
+	}
+	else {
 		trayShow();
+	}
 }
 
 void MainWin::trayDoubleClicked()
 {
-	if(!option.dockDCstyle)
+	if(!option.dockDCstyle) {
 		return;
+	}
 
 	if(d->nextAmount > 0) {
 		doRecvNextEvent();
@@ -1026,10 +1072,12 @@ void MainWin::trayDoubleClicked()
 	}
 
 
-	if(!isHidden())
+	if(!isHidden()) {
 		trayHide();
-	else
+	}
+	else {
 		trayShow();
+	}
 }
 
 void MainWin::trayShow()
@@ -1046,10 +1094,12 @@ void MainWin::trayHide()
 void MainWin::updateReadNext(PsiIcon *anim, int amount)
 {
 	d->nextAnim = anim;
-	if(anim == 0)
+	if(anim == 0) {
 		d->nextAmount = 0;
-	else
+	}
+	else {
 		d->nextAmount = amount;
+	}
 
 	if(d->nextAmount <= 0) {
 		d->eventNotifier->hide();
@@ -1069,27 +1119,34 @@ void MainWin::updateReadNext(PsiIcon *anim, int amount)
 QString MainWin::numEventsString(int x) const
 {
 	QString s;
-	if(x <= 0)
+	if(x <= 0) {
 		s = "";
-	else if(x == 1)
+	}
+	else if(x == 1) {
 		s = tr("1 event received");
-	else
+	}
+	else {
 		s = tr("%1 events received").arg(x);
+	}
 
 	return s;
 }
 
 void MainWin::updateTray()
 {
-	if(!d->tray)
+	if(!d->tray) {
 		return;
+	}
 
-	if ( d->nextAmount > 0 )
+	if ( d->nextAmount > 0 ) {
 		d->tray->setAlert(d->nextAnim);
-	else if ( d->lastStatus == -1 )
+	}
+	else if ( d->lastStatus == -1 ) {
 		d->tray->setAlert(IconsetFactory::iconPtr("psi/connect"));
-	else
+	}
+	else {
 		d->tray->setIcon(PsiIconset::instance()->statusPtr(d->lastStatus));
+	}
 	
 	buildTrayMenu();
 	d->tray->setContextMenu(d->trayMenu);
@@ -1102,8 +1159,9 @@ void MainWin::doRecvNextEvent()
 
 void MainWin::statusClicked(int x)
 {
-	if(x == Qt::MidButton)
+	if(x == Qt::MidButton) {
 		recvNextEvent();
+	}
 }
 
 void MainWin::numAccountsChanged()
@@ -1128,8 +1186,9 @@ void MainWin::accountFeaturesChanged()
 
 void MainWin::dockActivated()
 {
-	if(isHidden())
+	if(isHidden()) {
 		show();
+	}
 }
 
 
