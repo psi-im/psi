@@ -980,7 +980,6 @@ public:
 	QList<MUCInvite> mucInvites;
 	MUCDecline mucDecline;
 	QString mucPassword;
-	int mucHistoryMaxChars, mucHistoryMaxStanzas, mucHistorySeconds;
 
 	bool spooled, wasEncrypted;
 };
