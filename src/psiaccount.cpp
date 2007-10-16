@@ -2739,7 +2739,7 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
 		if (option.useTabs)
 		{
 			//get a tab from the mainwin
-			d->psi->getTabs()->addChat(c);
+			d->psi->getTabs()->addTab(c);
 		}
 		connect(c, SIGNAL(aSend(const Message &)), SLOT(dj_sendMessage(const Message &)));
 		connect(c, SIGNAL(messagesRead(const Jid &)), SLOT(chatMessagesRead(const Jid &)));
@@ -3981,7 +3981,7 @@ void PsiAccount::openChat(const Jid &j)
 		if ( !d->psi->isChatTabbed(c) )
 		{
 			//get a tab from the psicon
-			d->psi->getTabs()->addChat(c);
+			d->psi->getTabs()->addTab(c);
 		}
 		TabDlg* tabSet = d->psi->getManagingTabs(c);
 		tabSet->selectTab(c);
@@ -4024,6 +4024,9 @@ void PsiAccount::openGroupChat(const Jid &j)
 		d->groupchats += str;
 
 	GCMainDlg *w = new GCMainDlg(this, j);
+	if(option.useTabs) {
+		d->psi->getTabs()->addTab(w);
+	}
 	w->setPassword(d->client->groupChatPassword(j.user(),j.host()));
 	connect(w, SIGNAL(aSend(const Message &)), SLOT(dj_sendMessage(const Message &)));
 	connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));

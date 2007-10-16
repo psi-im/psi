@@ -189,12 +189,13 @@ static QString sanitizeForStream(const QString &in)
 		}
 		else if(c == '>')
 		{
-			if(inquote)
+			if(inquote) {
 				escape = true;
-			else if(!intag)
+			} else if(!intag) {
 				escape = true;
-			else
+			} else {
 				intag = false;
+			}
 		}
 		else if(c == '\'' || c == '\"')
 		{
@@ -207,8 +208,9 @@ static QString sanitizeForStream(const QString &in)
 				}
 				else
 				{
-					if(quotechar == c)
+					if(quotechar == c) {
 						inquote = false;
+					}
 				}
 			}
 		}

@@ -53,13 +53,16 @@ static QString getNext(QString *str)
 {
 	int n = 0;
 	// skip leading spaces (but *do* return them later!)
-	while(n < (int)str->length() && str->at(n).isSpace())
+	while(n < (int)str->length() && str->at(n).isSpace()) {
 		++n;
-	if(n == (int)str->length())
+	}
+	if(n == (int)str->length()) {
 		return QString::null;
+	}
 	// find end or next space
-	while(n < (int)str->length() && !str->at(n).isSpace())
+	while(n < (int)str->length() && !str->at(n).isSpace()) {
 		++n;
+	}
 	QString result = str->mid(0, n);
 	*str = str->mid(n);
 	return result;
@@ -89,8 +92,9 @@ static QStringList wrapString(const QString &str, int wid)
 			// trim the whitespace in front
 			for(int n = 0; n < (int)word.length(); ++n) {
 				if(!word.at(n).isSpace()) {
-					if(n > 0)
+					if(n > 0) {
 						word = word.mid(n);
+					}
 					break;
 				}
 			}
@@ -283,8 +287,9 @@ void HistoryDlg::doNext()
 
 void HistoryDlg::doSave()
 {
-	if(option.lastSavePath.isEmpty())
+	if(option.lastSavePath.isEmpty()) {
 		option.lastSavePath = QDir::homeDirPath();
+	}
 
 	UserListItem *u = d->pa->findFirstRelevant(d->jid);
 	QString them = JIDUtil::nickOrJid(u->name(), u->jid().full());
@@ -486,18 +491,22 @@ void HistoryDlg::exportHistory(const QString &fname)
 	d->exp = new EDBHandle(d->pa->edb());
 	QString id;
 	while(1) {
-		if(id.isEmpty())
+		if(id.isEmpty()) {
 			d->exp->getOldest(d->jid, 1000);
-		else
+		} else {
 			d->exp->get(d->jid, id, EDB::Forward, 1000);
-		while(d->exp->busy())
+		}
+		while(d->exp->busy()) {
 			qApp->processEvents();
+		}
 
 		const EDBResult *r = d->exp->result();
-		if(!r)
+		if(!r) {
 			break;
-		if(r->count() <= 0)
+		}
+		if(r->count() <= 0) {
 			break;
+		}
 
 		// events are in forward order
 		Q3PtrListIterator<EDBItem> it(*r);
@@ -512,10 +521,11 @@ void HistoryDlg::exportHistory(const QString &fname)
 			ts = dt.toString(Qt::LocalDate);
 
 			QString nick;
-			if(e->originLocal())
+			if(e->originLocal()) {
 				nick = us;
-			else
+			} else {
 				nick = them;
+			}
 
 			QString heading = QString("(%1) ").arg(ts) + nick + ": ";
 			if(e->type() == PsiEvent::Message) {
@@ -525,19 +535,22 @@ void HistoryDlg::exportHistory(const QString &fname)
 				QStringList lines = QStringList::split('\n', me->message().body(), true);
 				for(QStringList::ConstIterator lit = lines.begin(); lit != lines.end(); ++lit) {
 					QStringList sub = wrapString(*lit, 72);
-					for(QStringList::ConstIterator lit2 = sub.begin(); lit2 != sub.end(); ++lit2)
+					for(QStringList::ConstIterator lit2 = sub.begin(); lit2 != sub.end(); ++lit2) {
 						txt += QString("    ") + *lit2 + '\n';
+					}
 				}
 			}
-			else
+			else {
 				continue;
+			}
 
 			stream << txt << endl;
 		}
 
 		// done!
-		if(id.isEmpty())
+		if(id.isEmpty()) {
 			break;
+		}
 	}
 	delete d->exp;
 	d->exp = 0;

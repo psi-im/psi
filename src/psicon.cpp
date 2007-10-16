@@ -690,31 +690,32 @@ void PsiCon::tabDying(TabDlg* tab)
 	d->tabs.remove(tab);
 }
 
-bool PsiCon::isChatTabbed(ChatDlg* chat)
+bool PsiCon::isChatTabbed(Tabbable* chat)
 {
 	for (uint i = 0; i < d->tabs.count(); ++i)
 	{
-		if ( d->tabs.at(i)->managesChat(chat) )
+		if ( d->tabs.at(i)->managesTab
+		(chat) )
 				return true;
 	}
 	return false;
 }
 
-ChatDlg* PsiCon::getChatInTabs(QString jid){
+Tabbable* PsiCon::getChatInTabs(QString jid){
 	for (uint i = 0; i < d->tabs.count(); ++i)
 	{
-		if ( d->tabs.at(i)->getChatPointer(jid) )
-				return d->tabs.at(i)->getChatPointer(jid);
+		if ( d->tabs.at(i)->getTabPointer(jid) )
+				return d->tabs.at(i)->getTabPointer(jid);
 	}
 	return NULL;
 
 }
 
-TabDlg* PsiCon::getManagingTabs(ChatDlg* chat)
+TabDlg* PsiCon::getManagingTabs(Tabbable* chat)
 {
 	for (uint i = 0; i < d->tabs.count(); ++i)
 	{
-		if ( d->tabs.at(i)->managesChat(chat) )
+		if ( d->tabs.at(i)->managesTab(chat) )
 				return d->tabs.at(i);
 	}
 	return NULL;
@@ -726,7 +727,7 @@ Q3PtrList<TabDlg>* PsiCon::getTabSets()
 	return &d->tabs;
 }
 
-bool PsiCon::isChatActiveWindow(ChatDlg* chat)
+bool PsiCon::isChatActiveWindow(Tabbable* chat)
 {
 	//returns true if chat is on top of a tab pile
 	if ( chat->isHidden() )
@@ -741,7 +742,7 @@ bool PsiCon::isChatActiveWindow(ChatDlg* chat)
 	{
 		if ( d->tabs.at(i)->isActiveWindow() )
 		{
-			if ( d->tabs.at(i)->chatOnTop( chat ) )
+			if ( d->tabs.at(i)->tabOnTop( chat ) )
 			{
 				return true;
 			}

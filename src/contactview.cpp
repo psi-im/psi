@@ -57,6 +57,7 @@
 #include "resourcemenu.h"
 #include "shortcutmanager.h"
 #include "xmpp_message.h"
+#include "textutil.h"
 
 
 static inline int rankStatus(int status) 
@@ -603,6 +604,7 @@ void ContactProfile::resetAllContactItemNames()
 		Q3PtrListIterator<ContactViewItem> cvi_it(e->cvi);
 		for(ContactViewItem *i; (i = cvi_it.current()); ++cvi_it) {
 			i->resetName();
+			contactView()->filterContact(i);
 		}
 	}
 }
@@ -870,7 +872,10 @@ void ContactProfile::updateGroups()
 	{
 		Q3PtrListIterator<ContactViewItem> it(d->groups);
 		for(ContactViewItem *g; (g = it.current()); ++it)
+		{
 			updateGroupInfo(g);
+			contactView()->filterGroup(g);
+		}
 	}
 }
 
@@ -1823,72 +1828,15 @@ public:
 		cv = _cv;
 		autoRosterResizeInProgress = false;
 
-		// type ahead
-		typeAheadTimer = new QTimer(cv);
-		connect(typeAheadTimer, SIGNAL(timeout()), SLOT(resetTypeAhead()));
 	}
 
 	ContactView *cv;
 	QTimer *animTimer, *recalculateSizeTimer;
 	Q3PtrList<ContactProfile> profiles;
-	QString typeAhead;
-	QTimer *typeAheadTimer;
 	QSize lastSize;
 	bool autoRosterResizeInProgress;
 
-	bool doTypeAhead(QKeyEvent *e)
-	{
-		typeAheadTimer->start(3000, TRUE); // reset type ahead in 3 seconds of inactivity
 
-		QString text = e->text().lower();
-		if ( text.isEmpty() ) {
-			// Shift key could be used for entering '@', '#' and other extended chars
-			// and other modifier keys could be used for layout changing
-
-			//if ( e->key() != Qt::Key_Shift )
-			//	typeAhead = QString::null;
-			return false;
-		}
-
-		bool searchFromStart = true;
-		if ( typeAhead.isEmpty() )
-			searchFromStart = false;
-
-		bool found = false;
-		typeAhead += text;
-
-		Q3ListViewItemIterator it(cv);
-		ContactViewItem *item;
-
-		if ( !searchFromStart && cv->currentItem() ) {
-			for ( ; (item = (ContactViewItem *)it.current()); ++it) {
-				if ( item == cv->currentItem() ) {
-					++it; // we want the search to start from next contact
-					break;
-				}
-			}
-		}
-
-		for ( ; (item = (ContactViewItem *)it.current()); ++it) {
-			//qWarning("->%s | %s | %s", text.latin1(), item->text(0).lower().latin1(), typeAhead.latin1());
-			if ( item->text(0).lower().startsWith(typeAhead) ) {
-				found = true;
-				cv->setSelected(item, true);
-				cv->ensureItemVisible(item);
-				item->optionsUpdate();
-				item->repaint();
-				break;
-			}
-		}
-
-		//qWarning("---------------\n");
-		if ( !found ) {
-			typeAhead = text;
-			return false;
-		}
-
-		return true;
-	}
 
 public slots:
 	/*
@@ -1992,10 +1940,6 @@ private slots:
 		autoRosterResizeInProgress = false;
 	}
 
-	void resetTypeAhead()
-	{
-		typeAhead = QString::null;
-	}
 };
 
 ContactView::ContactView(QWidget *parent, const char *name)
@@ -2077,6 +2021,8 @@ ContactView::ContactView(QWidget *parent, const char *name)
 	optionsUpdate();
 	setAcceptDrops(true);
 	viewport()->setAcceptDrops(true);
+	
+	filterString_ = QString();
 }
 
 ContactView::~ContactView()
@@ -2084,6 +2030,96 @@ ContactView::~ContactView()
 	clear();
 	delete d;
 }
+
+bool ContactView::filterContact(ContactViewItem *item, bool refineSearch)
+{
+	if (!item) {
+		return false;
+	}
+	if (item->type() != ContactViewItem::Contact) {
+		return false;
+	}
+	if (filterString_.isNull()) {
+		return true;	
+	}
+	//if refineSearch, only search still visible items
+	if (refineSearch && !item->isVisible()) {
+		return false;		
+	}
+	if (TextUtil::rich2plain(item->text(0)).contains(filterString_,Qt::CaseInsensitive))
+	{
+		ensureItemVisible(item);
+		item->setVisible(true);
+		item->optionsUpdate();			
+	}
+	else
+	{
+		item->setVisible(false);
+	}
+	item->repaint();	
+	return item->isVisible();
+}
+
+bool ContactView::filterGroup(ContactViewItem *group, bool refineSearch)
+{
+	if (!group) {
+		return false;	
+	} else if (group->type() != ContactViewItem::Group) {
+		return false;
+	} else if (filterString_.isNull()) {
+		return true;
+	}
+	//if refine_search, only search still visible items
+	if (refineSearch && !group->isVisible()) {
+		return false;	
+	}
+	group->setVisible(true); //if not refined search
+	
+	//iterate over children
+	Q3ListViewItemIterator it(group);
+	bool groupContainsAFinding = false;
+	ContactViewItem *item = static_cast<ContactViewItem*>(group->firstChild());
+	while(item) {
+		if (filterContact(item,refineSearch))
+			groupContainsAFinding = true;
+        item = static_cast<ContactViewItem*>(item->nextSibling());
+	}
+	if (groupContainsAFinding == false) {
+		group->setVisible(false);		
+	}
+	group->repaint();
+	return groupContainsAFinding;
+}
+
+void ContactView::setFilter(QString const &text)
+{
+	bool refineSearch = text.startsWith(filterString_);
+	filterString_ = text;
+	
+	Q3ListViewItemIterator it(d->cv);
+	for (ContactViewItem *item; (item = (ContactViewItem *)it.current()); ++it)
+	{	
+		if (item->type() == ContactViewItem::Group) {
+			filterGroup(item, refineSearch);
+		}
+	}
+}
+
+void ContactView::clearFilter()
+{
+	filterString_=QString();
+	Q3ListViewItemIterator it(d->cv);
+	for (ContactViewItem *item; (item = (ContactViewItem *)it.current()); ++it) 
+	{
+		if (item->type() != ContactViewItem::Contact && item->type() != ContactViewItem::Group) {
+			continue;
+		}
+		item->setVisible(true);
+		item->optionsUpdate();
+		item->repaint();
+	}	
+}
+
 
 QTimer *ContactView::animTimer() const
 {
@@ -2110,21 +2146,25 @@ void ContactView::unlink(ContactProfile *cp)
 void ContactView::keyPressEvent(QKeyEvent *e)
 {
 	int key = e->key();
-	if(key == Qt::Key_Enter || key == Qt::Key_Return)
+	if(key == Qt::Key_Enter || key == Qt::Key_Return) {
 		doEnter();
-	else if(key == Qt::Key_Space && d->typeAhead.isEmpty())
+	} else if(key == Qt::Key_Space /*&& d->typeAhead.isEmpty()*/) {
 		doContext();
-	else if (key == Qt::Key_Home   || key == Qt::Key_End      ||
+	} else if (key == Qt::Key_Home   || key == Qt::Key_End      ||
 		 key == Qt::Key_PageUp || key == Qt::Key_PageDown ||
 		 key == Qt::Key_Up     || key == Qt::Key_Down     ||
 		 key == Qt::Key_Left   || key == Qt::Key_Right) {
 
-		d->typeAhead = QString::null;
+		//d->typeAhead = QString::null;
 		Q3ListView::keyPressEvent(e);
-	}
-	else {
-		if (!d->doTypeAhead(e))
+	} else {
+		QString text = e->text().lower();
+		if ( text.isEmpty() ) {
 			Q3ListView::keyPressEvent(e);
+		} else {
+			emit searchInput(text);
+		}
+
 	}
 }
 
@@ -2324,7 +2364,7 @@ void ContactView::qlv_singleclick(int button, Q3ListViewItem *i, const QPoint &p
 		}
 	}
 
-	d->typeAhead = "";
+	//d->typeAhead = "";
 }
 
 void ContactView::qlv_doubleclick(Q3ListViewItem *i)
@@ -2340,7 +2380,7 @@ void ContactView::qlv_doubleclick(Q3ListViewItem *i)
 	ContactViewItem *item = (ContactViewItem *)i;
 	item->contactProfile()->scActionDefault(item);
 
-	d->typeAhead = "";
+	//d->typeAhead = "";
 }
 
 void ContactView::qlv_itemRenamed(Q3ListViewItem *lvi, int, const QString &text)

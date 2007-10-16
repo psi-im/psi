@@ -203,6 +203,11 @@ public:
 	bool isShowSelf() const { return v_showSelf; }
 	bool isShowStatusMsg() const { return v_showStatusMsg; }
 
+	bool filterContact(ContactViewItem *item, bool refineSearch = false);
+	bool filterGroup(ContactViewItem *item, bool refineSearch = false);
+	void setFilter(QString const &text);
+	void clearFilter();
+	
 	void clear();
 	void resetAnim();
 	QTimer *animTimer() const;
@@ -230,6 +235,7 @@ signals:
 	void showAgents(bool);
 	void showSelf(bool);
 	void showStatusMsg(bool);
+	void searchInput(const QString&);
 
 public slots:
 	void setShowOffline(bool);
@@ -278,6 +284,7 @@ private:
 	QPoint lcto_pos;
 	Q3ListViewItem *lcto_item;
 	QSize lastSize;
+	QString filterString_;
 
 	friend class ContactProfile;
 	void link(ContactProfile *);

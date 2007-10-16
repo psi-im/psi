@@ -197,14 +197,14 @@
      <item>
       <widget class="QPushButton" name="pb_close" >
        <property name="text" >
-        <string>Close</string>
+        <string>&amp;Close</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="pb_join" >
        <property name="text" >
-        <string>Join</string>
+        <string>&amp;Join</string>
        </property>
       </widget>
      </item>

@@ -28,11 +28,6 @@ else {
 	EXEC_TARGET = $$TARGET
 }
 
-# check target (TODO: Make it work on Windows too)
-QMAKE_EXTRA_TARGETS += check
-check.depends = $$EXEC_TARGET
-check.commands = ./$$EXEC_TARGET
-
 unix {
 	# gdb target
 	QMAKE_EXTRA_TARGETS += gdb

@@ -462,7 +462,7 @@ public:
 };
 
 GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
-	: AdvancedWidget<QWidget>(0)
+	: Tabbable(j, pa)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
   	if ( option.brushedMetal )
@@ -666,6 +666,11 @@ void GCMainDlg::windowActivationChange(bool oldstate)
 	} else {
 		d->trackBar = true;
 	}
+}
+
+void GCMainDlg::activated()
+{
+	windowActivationChange(true);
 }
 
 void GCMainDlg::mucInfoDialog(const QString& title, const QString& message, const Jid& actor, const QString& reason)
@@ -1356,24 +1361,30 @@ void GCMainDlg::updateCaption()
 
 	if(d->pending > 0) {
 		cap += "* ";
-		if(d->pending > 1)
+		if(d->pending > 1) {
 			cap += QString("[%1] ").arg(d->pending);
+		}
 	}
 	cap += d->jid.full();
 
 	// if taskbar flash, then we need to erase first and redo
 #ifdef Q_WS_WIN
 	bool on = false;
-	if(d->flashTimer)
+	if(d->flashTimer) {
 		on = d->flashCount & 1;
-	if(on)
+	}
+	if(on) {
 		FlashWindow(winId(), true);
+	}
 #endif
 	setWindowTitle(cap);
 #ifdef Q_WS_WIN
-	if(on)
+	if(on) {
 		FlashWindow(winId(), true);
+	}
 #endif
+	emit captionChanged(cap);
+	emit unreadEventUpdate(d->pending);
 }
 
 #ifdef Q_WS_WIN

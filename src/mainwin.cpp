@@ -102,6 +102,10 @@ public:
 	PsiCon *psi;
 	MainWin *mainWin;
 
+	QLineEdit *searchText;
+	QToolButton *searchPb;
+	QWidget *searchWidget;
+
 	QSignalMapper *statusMapper;
 
 	PsiIcon *nextAnim;
@@ -111,16 +115,15 @@ public:
 
 	int lastStatus;
 	bool old_trayicon;
+	bool filterActive, prefilterShowOffline, prefilterShowAway;
 
 	void registerActions();
 	IconAction *getAction( QString name );
 	void updateMenu(QStringList actions, QMenu *menu);
 };
 
-MainWin::Private::Private(PsiCon *_psi, MainWin *_mainWin)
+MainWin::Private::Private(PsiCon *_psi, MainWin *_mainWin) : psi(_psi), mainWin(_mainWin)
 {
-	psi = _psi;
-	mainWin = _mainWin;
 
 	statusGroup   = (IconActionGroup *)getAction("status_all");
 	eventNotifier = (EventNotifierAction *)getAction("event_notifier");
@@ -130,6 +133,10 @@ MainWin::Private::Private(PsiCon *_psi, MainWin *_mainWin)
 
 	statusMapper = new QSignalMapper(mainWin, "statusMapper");
 	mainWin->connect(statusMapper, SIGNAL(mapped(int)), mainWin, SLOT(activatedStatusAction(int)));
+  
+	filterActive = false;
+	prefilterShowOffline = false;
+	prefilterShowAway = false;  
 }
 
 MainWin::Private::~Private()
@@ -273,6 +280,22 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	d->vb_main->setMargin(layoutMargin);
 	d->vb_main->setSpacing(layoutMargin);
 
+	// create search bar
+	d->searchWidget = new QWidget(centralWidget());
+	d->vb_main->addWidget(d->searchWidget);
+	QHBoxLayout* searchLayout = new QHBoxLayout(d->searchWidget);
+	searchLayout->setMargin(0);
+	searchLayout->setSpacing(0);
+	d->searchText = new QLineEdit(d->searchWidget);
+	connect(d->searchText,SIGNAL(textEdited(const QString&)),SLOT(searchTextEntered(const QString&)));
+	searchLayout->addWidget(d->searchText);
+	d->searchPb = new QToolButton(d->searchWidget);
+	d->searchPb->setText("X");
+	connect(d->searchPb,SIGNAL(clicked()),SLOT(searchClearClicked()));
+	connect(cvlist, SIGNAL(searchInput(const QString&)), SLOT(searchTextStarted(const QString&)));
+	searchLayout->addWidget(d->searchPb);
+	d->searchWidget->setVisible(false);
+	//add contact view
 	d->vb_main->addWidget(cvlist);
 
 #ifdef Q_WS_MAC
@@ -920,7 +943,9 @@ void MainWin::closeEvent(QCloseEvent *e)
 		return;
 	}
 
-        closeProgram();
+	emit geomChanged(saveableGeometry());
+	closeProgram();
+
 	e->accept();
 #endif
 }
@@ -1191,6 +1216,56 @@ void MainWin::dockActivated()
 	}
 }
 
+/**
+ * Called when the cancel is clicked or the search becomes empty.
+ * Cancels the search.
+ */ 
+void MainWin::searchClearClicked()
+{
+	d->searchWidget->setVisible(false);
+	d->searchText->clear();
+	cvlist->clearFilter();
+	if (d->filterActive)
+	{
+		d->getAction("show_offline")->setChecked(d->prefilterShowOffline);
+		d->getAction("show_away")->setChecked(d->prefilterShowAway);  
+	}
+	d->filterActive=false;  
+}
+
+/**
+ * Called when the contactview has a keypress.
+ * Starts the search/filter process
+ */ 
+void MainWin::searchTextStarted(QString const &text)
+{
+	d->searchWidget->setVisible(true);
+	d->searchText->setText(d->searchText->text() + text);
+	searchTextEntered(d->searchText->text());
+	d->searchText->setFocus();
+}
+
+/**
+ * Called when the search input is changed.
+ * Updates the search.
+ */ 
+void MainWin::searchTextEntered(QString const &text)
+{
+	if (!d->filterActive)
+	{
+		d->filterActive = true;
+		d->prefilterShowOffline = d->getAction("show_offline")->isChecked();
+		d->prefilterShowAway = d->getAction("show_away")->isChecked();
+		d->getAction("show_offline")->setChecked(true);
+		d->getAction("show_away")->setChecked(true);
+	}
+	if (text.isEmpty()) {
+		searchClearClicked();
+	} else {
+		
+		cvlist->setFilter(text);
+	}
+}
 
 #ifdef Q_WS_MAC
 void MainWin::setWindowIcon(const QPixmap&)

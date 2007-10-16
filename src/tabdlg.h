@@ -29,6 +29,9 @@
 #include "xmpp_chatstate.h"
 #include "advwidget.h"
 
+#include "tabbable.h"
+
+
 class PsiCon;
 class ChatTabs;
 class ChatDlg;
@@ -45,10 +48,10 @@ class TabDlg : public AdvancedWidget<QWidget>
 public:
 	TabDlg(PsiCon*);
 	~TabDlg();
-	bool managesChat(ChatDlg*);
-	bool chatOnTop(ChatDlg*);
+	bool managesTab(Tabbable*);
+	bool tabOnTop(Tabbable*);
 	QString getName();
-	ChatDlg *getTab(int i);
+	Tabbable *getTab(int i);
 	
 signals:
 	void isDying(TabDlg*);
@@ -68,37 +71,38 @@ protected slots:
 	void sendChatTo(QWidget*, TabDlg *);
 	void queuedSendChatTo(QWidget*, TabDlg *);
 public slots:
-	void addChat(ChatDlg *chat);
+	void addTab(Tabbable *tab);
 	void setLooks();
-	void closeChat(ChatDlg*,bool);
-	void selectTab(ChatDlg*);
+	void closeTab(Tabbable*,bool);
+	void selectTab(Tabbable*);
 	void activated();
 	void optionsUpdate();
 private slots:
 	void tabSelected(QWidget* chat);
 	void checkHasChats();
 	void closeMe();
-	void updateTab(ChatDlg*);
+	void updateTab(QString);
+	void updateTab(Tabbable*);
 	void nextTab();
 	void previousTab();
 	void setTabState( XMPP::ChatState );
-	void setTabHasMessages(ChatDlg*, int);
+	void setTabHasEvents(int);
 	void tab_aboutToShowMenu(QMenu *menu);
 	void menu_sendChatTo(QAction *act);
 	void showTabMenu(int tab, QPoint pos, QContextMenuEvent * event);
 
 	
 public:
-	ChatDlg* getChatPointer(QString fullJid);
+	Tabbable* getTabPointer(QString fullJid);
 private:
 	void updateCaption();
 	PsiCon *psi;
-	Q3PtrList<ChatDlg> chats;
+	Q3PtrList<Tabbable> chats;
 	PsiTabWidget *tabs;
 	QPushButton *detachButton, *closeButton, *closeCross;
 	QMenu *tabMenu;
-	QMap<ChatDlg*, bool> tabIsComposing;
-	QMap<ChatDlg*, bool> tabHasMessages;
+	QMap<Tabbable*, bool> tabIsComposing;
+	QMap<Tabbable*, int> tabHasMessages;
 	QAction *act_close, *act_next, *act_prev;
 
 	QSize chatSize;

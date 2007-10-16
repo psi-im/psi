@@ -24,6 +24,10 @@
 #include <QWidget>
 #include <QDialog>
 
+
+#include "advwidget.h"
+#include "tabbable.h"
+
 #include "ui_groupchatdlg.h"
 #include "mucmanager.h"
 #include "advwidget.h"
@@ -56,7 +60,7 @@ protected:
 	void keyPressEvent(QKeyEvent *);
 };*/
 
-class GCMainDlg : public AdvancedWidget<QWidget>
+class GCMainDlg : public Tabbable
 {
 	Q_OBJECT
 public:
@@ -88,10 +92,13 @@ protected:
 
 signals:
 	void aSend(const Message &);
+	void captionChanged(QString);
+	void unreadEventUpdate(int);
 
 public slots:
 	void optionsUpdate();
-
+	virtual void activated();
+	
 private slots:
 	void scrollUp();
 	void scrollDown();

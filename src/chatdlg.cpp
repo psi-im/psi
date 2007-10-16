@@ -118,7 +118,9 @@ public:
 	bool sendComposingEvents;
 	QString eventId;
 	ChatState contactChatState;
-	ChatState lastChatState; 
+	ChatState lastChatState;
+
+	QDateTime lastMsgTime;
 
 signals:
 	// Signals if user (re)started/stopped composing
@@ -131,9 +133,9 @@ public slots:
 	}
 
 	void addEmoticon(const PsiIcon *icon) {
-		if ( !dlg->isActiveWindow() )
+		if ( !dlg->isActiveWindow() ) {
 		     return;
-		
+		}
 		QString text;
 
 		QHash<QString,QString> itext = icon->text();
@@ -144,15 +146,24 @@ public slots:
 			}
 		}
 
-		if ( !text.isEmpty() )
+		if ( !text.isEmpty() ) {
 			dlg->ui_.mle->chatEdit()->insert( text );
+		}
 	}
 
 	void addEmoticon(QString text) {
-		if ( !pa->psi()->isChatActiveWindow(dlg) )
+		if ( !pa->psi()->isChatActiveWindow(dlg) ) {
 		     return;
-
+		}
 		dlg->ui_.mle->chatEdit()->insert( text + " " );
+	}
+
+	void updateLastMsgTime(QDateTime t)
+	{
+		if (t.date() != lastMsgTime.date()) {
+			dlg->ui_.log->appendText(QString("<font color=\"#00A000\">") + QString(" *** %1</font>").arg(t.date().toString(Qt::ISODate)));
+		}
+		lastMsgTime = t;
 	}
 
 	void updateCounter() {
@@ -192,10 +203,11 @@ public slots:
 };
 
 ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
-	: highlightersInstalled_(false)
+	: Tabbable(jid, pa), highlightersInstalled_(false)
 {
-  	if ( option.brushedMetal )
+  	if ( option.brushedMetal ) {
 		setAttribute(Qt::WA_MacMetalStyle);
+	}
 	d = new Private(this);
 	d->jid = jid;
 	d->pa = pa;
@@ -274,12 +286,14 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 	ui_.toolbar->addWidget(new StretchWidget(ui_.toolbar));
 	ui_.toolbar->addAction(d->act_icon);
 	ui_.toolbar->addAction(d->act_file);
-	if (PsiOptions::instance()->getOption("options.pgp.enable").toBool())
+	if (PsiOptions::instance()->getOption("options.pgp.enable").toBool()) {
 		ui_.toolbar->addAction(d->act_pgp);
+	}
 	ui_.toolbar->addAction(d->act_info);
 	ui_.toolbar->addAction(d->act_history);
-	if (d->pa->voiceCaller())
+	if (d->pa->voiceCaller()) {
 		ui_.toolbar->addAction(d->act_voice);
+	}
 
 	PsiToolTip::install(ui_.avatar);
 	
@@ -324,8 +338,9 @@ ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
 	resize(PsiOptions::instance()->getOption("options.ui.chat.size").toSize());
 
 	UserListItem *u = d->pa->findFirstRelevant(d->jid);
-	if(u && u->isSecure(d->jid.resource()))
+	if(u && u->isSecure(d->jid.resource())) {
 		d->act_pgp->setChecked(true);
+	}
 	
 	connect(d->pa->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
 }
@@ -378,22 +393,24 @@ void ChatDlg::scrollDown()
 void ChatDlg::keyPressEvent(QKeyEvent *e)
 {
 	QKeySequence key = e->key() + ( e->modifiers() & ~Qt::KeypadModifier );
-	if(!option.useTabs && ShortcutManager::instance()->shortcuts("common.close").contains(key))
+	if(!option.useTabs && ShortcutManager::instance()->shortcuts("common.close").contains(key)) {
 		close();
-	else if(ShortcutManager::instance()->shortcuts("chat.send").contains(key))
+	} else if(ShortcutManager::instance()->shortcuts("chat.send").contains(key)) {
 		doSend();
-	else if(ShortcutManager::instance()->shortcuts("common.scroll-up").contains(key))
+	} else if(ShortcutManager::instance()->shortcuts("common.scroll-up").contains(key)) {
 		scrollUp();
-	else if(ShortcutManager::instance()->shortcuts("common.scroll-down").contains(key))
+	} else if(ShortcutManager::instance()->shortcuts("common.scroll-down").contains(key)) {
 		scrollDown();
-	else
+	} else {
 		e->ignore();
+	}
 }
 
 void ChatDlg::resizeEvent(QResizeEvent *e)
 {
-	if (option.keepSizes)
+	if (option.keepSizes) {
 		PsiOptions::instance()->setOption("options.ui.chat.size", e->size());
+	}
 }
 
 void ChatDlg::closeEvent(QCloseEvent *e)
@@ -495,10 +512,11 @@ void ChatDlg::logSelectionChanged()
 {
 #ifdef Q_WS_MAC
 	// A hack to only give the message log focus when text is selected
-	if (ui_.log->hasSelectedText())
+	if (ui_.log->hasSelectedText()) {
 		ui_.log->setFocus();
-	else 
+	} else {
 		ui_.mle->chatEdit()->setFocus();
+	}
 #endif
 }
 
@@ -511,11 +529,11 @@ void ChatDlg::activated()
 	}
 	doFlash(false);
 
-	if(option.showCounter && !d->smallChat)
+	if(option.showCounter && !d->smallChat) {
 		ui_.lb_count->show();
-	else
+	} else {
 		ui_.lb_count->hide();
-
+	}
 	ui_.mle->chatEdit()->setFocus();
 }
 
@@ -523,8 +541,9 @@ void ChatDlg::activated()
 void ChatDlg::dropEvent(QDropEvent* event)
 {
 	QStringList l;
-	if (d->pa->loggedIn() && Q3UriDrag::decodeLocalFiles(event,l) && !l.isEmpty())
+	if (d->pa->loggedIn() && Q3UriDrag::decodeLocalFiles(event,l) && !l.isEmpty()) {
 		d->pa->actionSendFiles(d->jid,l);
+	}
 }
 
 void ChatDlg::dragEnterEvent(QDragEnterEvent* event)
@@ -534,7 +553,7 @@ void ChatDlg::dragEnterEvent(QDragEnterEvent* event)
 }
 
 
-const Jid & ChatDlg::jid() const
+Jid ChatDlg::jid() const
 {
 	return d->jid;
 }
@@ -549,7 +568,7 @@ void ChatDlg::setJid(const Jid &jid)
 	}
 }
 
-const QString& ChatDlg::getDisplayNick()
+const QString& ChatDlg::getDisplayName()
 {
 	return d->dispNick;
 }
@@ -562,8 +581,9 @@ QSize ChatDlg::defaultSize()
 void ChatDlg::updateContact(const Jid &jid, bool fromPresence)
 {
 	// if groupchat, only update if the resource matches
-	if(d->pa->findGCContact(jid) && !d->jid.compare(jid))
+	if(d->pa->findGCContact(jid) && !d->jid.compare(jid)) {
 		return;
+	}
 
 	if(d->jid.compare(jid, false)) {
 		QString rname = d->jid.resource();
@@ -575,9 +595,9 @@ void ChatDlg::updateContact(const Jid &jid, bool fromPresence)
 			u = ul.first();
 			if(rname.isEmpty()) {
 				// use priority
-				if(!u->isAvailable())
+				if(!u->isAvailable()) {
 					status = STATUS_OFFLINE;
-				else {
+				} else {
 					const UserResource &r = *u->userResourceList().priority();
 					status = makeSTATUS(r.status());
 					statusString = r.status().status();
@@ -615,29 +635,33 @@ void ChatDlg::updateContact(const Jid &jid, bool fromPresence)
 		}
 
 		if(statusChanged) {
-			if(status == -1 || !u)
+			if(status == -1 || !u) {
 				ui_.lb_status->setPsiIcon(IconsetFactory::iconPtr("status/noauth"));
-			else
+			} else {
 				ui_.lb_status->setPsiIcon(PsiIconset::instance()->statusPtr(jid, status));
+			}
 		}
 
-		if(u)
+		if(u) {
 			d->setContactToolTip(u->makeTip(true, false));
-		else
+		} else {
 			d->setContactToolTip(QString());
+		}
 
 		if(u) {
 			QString name;
 			QString j;
-			if(rname.isEmpty())
+			if(rname.isEmpty()) {
 				j = JIDUtil::toString(u->jid(),true);
-			else
+			} else {
 				j = JIDUtil::toString(u->jid().userHost(),false) + '/' + rname;
+			}
 
-			if(!u->name().isEmpty())
+			if(!u->name().isEmpty()) {
 				name = u->name() + QString(" <%1>").arg(j);
-			else
+			} else {
 				name = j;
+			}
 
 			ui_.le_jid->setText(name);
 			ui_.le_jid->setCursorPosition(0);
@@ -653,10 +677,12 @@ void ChatDlg::updateContact(const Jid &jid, bool fromPresence)
 				QString msg = tr("%1 is %2").arg(Qt::escape(d->dispNick)).arg(status2txt(d->status));
 				if(!statusString.isEmpty()) {
 					QString ss = TextUtil::linkify(TextUtil::plain2rich(statusString));
-					if(option.useEmoticons)
+					if(option.useEmoticons) {
 						ss = TextUtil::emoticonify(ss);
-					if( PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool() )
+					}
+					if( PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool() ) {
 						ss = TextUtil::legacyFormat(ss);
+					}
 					msg += QString(" [%1]").arg(ss);
 				}
 				appendSysMsg(msg);
@@ -682,8 +708,9 @@ void ChatDlg::doVoice()
 
 void ChatDlg::updateAvatar(const Jid& j)
 {
-	if (j.compare(d->jid,false))
+	if (j.compare(d->jid,false)) {
 		updateAvatar();
+	}
 }
 
 void ChatDlg::updateAvatar()
@@ -699,8 +726,9 @@ void ChatDlg::updateAvatar()
 	UserListItem *ul = d->pa->findFirstRelevant(d->jid);
 	if (ul && !ul->userResourceList().isEmpty()) {
 		UserResourceList::Iterator it = ul->userResourceList().find(d->jid.resource());
-		if(it == ul->userResourceList().end())
+		if(it == ul->userResourceList().end()) {
 			it = ul->userResourceList().priority();
+		}
 
 		res = (*it).name();
 		client = (*it).clientName();
@@ -753,10 +781,11 @@ void ChatDlg::setLooks()
 	}
 	updateIdentityVisibility();
 
-	if ( option.showCounter && !d->smallChat )
+	if ( option.showCounter && !d->smallChat ) {
 		ui_.lb_count->show();
-	else
+	} else {
 		ui_.lb_count->hide();
+	}
 
 	// update contact info
 	d->status = -2; // sick way of making it redraw the status
@@ -792,12 +821,13 @@ void ChatDlg::optionsUpdate()
 			return;
 		}
 		else {
-			if(option.delChats == dcHour)
+			if(option.delChats == dcHour) {
 				setSelfDestruct(60);
-			else if(option.delChats == dcDay)
+			} else if(option.delChats == dcDay) {
 				setSelfDestruct(60 * 24);
-			else
+			} else {
 				setSelfDestruct(0);
+			}
 		}
 	}
 }
@@ -842,8 +872,9 @@ void ChatDlg::doFile()
 void ChatDlg::doClearButton()
 {
 	int n = QMessageBox::information(this, tr("Warning"), tr("Are you sure you want to clear the chat window?\n(note: does not affect saved history)"), tr("&Yes"), tr("&No"));
-	if(n == 0)
+	if(n == 0) {
 		doClear();
+	}
 }
 
 void ChatDlg::doClear()
@@ -885,29 +916,33 @@ void ChatDlg::updateCaption()
 
 	if(d->pending > 0) {
 		cap += "* ";
-		if(d->pending > 1)
+		if(d->pending > 1) {
 			cap += QString("[%1] ").arg(d->pending);
+		}
 	}
 	cap += d->dispNick;
 
-	if (d->contactChatState == StateComposing)
+	if (d->contactChatState == StateComposing) {
 		cap = tr("%1 (Composing ...)").arg(cap);
-	else if (d->contactChatState == StateInactive)
+	} else if (d->contactChatState == StateInactive) {
 		cap = tr("%1 (Inactive)").arg(cap);
+	}
 
 	setWindowTitle(cap);
 
-	emit captionChanged(this);
-	emit unreadMessageUpdate(this, d->pending);
+	emit captionChanged(cap);
+	emit unreadEventUpdate(d->pending);
 }
 
 void ChatDlg::doSend()
 {
-	if(!ui_.mle->chatEdit()->isEnabled())
+	if(!ui_.mle->chatEdit()->isEnabled()) {
 		return;
+	}
 
-	if(ui_.mle->chatEdit()->text().isEmpty())
+	if(ui_.mle->chatEdit()->text().isEmpty()) {
 		return;
+	}
 
 	if(ui_.mle->chatEdit()->text() == "/clear") {
 		ui_.mle->chatEdit()->setText("");
@@ -915,8 +950,9 @@ void ChatDlg::doSend()
 		return;
 	}
 
-	if(!d->pa->loggedIn())
+	if(!d->pa->loggedIn()) {
 		return;
+	}
 
 	if(d->warnSend) {
 		d->warnSend = false;
@@ -924,23 +960,26 @@ void ChatDlg::doSend()
 			"<p>Encryption was recently disabled by the remote contact.  "
 			"Are you sure you want to send this message without encryption?</p>"
 			), tr("&Yes"), tr("&No"));
-		if(n != 0)
+		if(n != 0) {
 			return;
+		}
 	}
 
 	Message m(d->jid);
 	m.setType("chat");
 	m.setBody(ui_.mle->chatEdit()->text());
 	m.setTimeStamp(QDateTime::currentDateTime());
-	if(d->act_pgp->isChecked())
+	if(d->act_pgp->isChecked()) {
 		m.setWasEncrypted(true);
+	}
 	d->m = m;
 
  	// Request events
  	if (option.messageEvents) {
 		// Only request more events when really necessary
-		if (d->sendComposingEvents)
+		if (d->sendComposingEvents) {
 			m.addEvent(ComposingEvent);
+		}
 		m.setChatState(StateActive);
  	}
 
@@ -975,15 +1014,18 @@ void ChatDlg::doneSend()
 
 void ChatDlg::encryptedMessageSent(int x, bool b, int e)
 {
-	if(d->transid == -1)
+	if(d->transid == -1) {
 		return;
-	if(d->transid != x)
+	}
+	if(d->transid != x) {
 		return;
+	}
 	d->transid = -1;
-	if(b)
+	if(b) {
 		doneSend();
-	else
+	} else {
 		QMessageBox::critical(this, tr("Error"), tr("There was an error trying to send the message encrypted.\nReason: %1.").arg(PGPUtil::instance().messageErrorString((QCA::SecureMessage::Error) e)));
+	}
 	ui_.mle->chatEdit()->setEnabled(true);
 	ui_.mle->chatEdit()->setFocus();
 }
@@ -1020,12 +1062,16 @@ void ChatDlg::incomingMessage(const Message &m)
 
 void ChatDlg::appendSysMsg(const QString &str)
 {
-	QString timestr = ui_.log->formatTimeStamp(QDateTime::currentDateTime());
+	QDateTime t = QDateTime::currentDateTime();
+	d->updateLastMsgTime(t);
+	QString timestr = ui_.log->formatTimeStamp(t);
 	ui_.log->appendText(QString("<font color=\"#00A000\">[%1]").arg(timestr) + QString(" *** %1</font>").arg(str));
 }
 
 void ChatDlg::appendMessage(const Message &m, bool local)
 {
+	d->updateLastMsgTime(m.timeStamp());
+
 	QString who, color;
 
 	if(local) {
@@ -1036,22 +1082,25 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 		who = d->dispNick;
 		color = "#0000FF";
 	}
-	if(m.spooled())
+	if(m.spooled()) {
 		color = "#008000";
+	}
 
 	// figure out the encryption state
 	bool encChanged = false;
 	bool encEnabled = false;
-	if(d->lastWasEncrypted != m.wasEncrypted())
+	if(d->lastWasEncrypted != m.wasEncrypted()) {
 		encChanged = true;
+	}
 	d->lastWasEncrypted = m.wasEncrypted();
 	encEnabled = d->lastWasEncrypted;
 
 	if(encChanged) {
 		if(encEnabled) {
 			appendSysMsg(QString("<icon name=\"psi/cryptoYes\"> ") + tr("Encryption Enabled"));
-			if(!local)
+			if(!local) {
 				d->act_pgp->setChecked(true);
+			}
 		}
 		else {
 			appendSysMsg(QString("<icon name=\"psi/cryptoNo\"> ") + tr("Encryption Disabled"));
@@ -1069,8 +1118,9 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 	bool emote = false;
 
 	QString me_cmd = "/me ";
-	if(m.body().startsWith(me_cmd) || m.html().text().trimmed().startsWith(me_cmd))
+	if(m.body().startsWith(me_cmd) || m.html().text().trimmed().startsWith(me_cmd)) {
 		emote = true;
+	}
 
 	QString txt;
 
@@ -1086,29 +1136,32 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 	else {
 		txt = m.body();
 
-		if(emote)
+		if(emote) {
 			txt = txt.mid(me_cmd.length());
+		}
 
 		txt = TextUtil::plain2rich(txt);
 		txt = TextUtil::linkify(txt);
 		// qWarning("regular body:\n%s\n",qPrintable(txt));
 	}
 
-	if(option.useEmoticons)
-		txt = TextUtil::emoticonify(txt);
-	if( PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool() )
+	if(option.useEmoticons) {
+		txt = TextUtil::emoticonify(txt); 
+	}
+	if( PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool() ) {
 		txt = TextUtil::legacyFormat(txt);
-
+	}
 	who = Qt::escape(who);
 
 	if(emote) {
 		ui_.log->appendText(QString("<span style=\"color: %1\">").arg(color) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(who) + txt + "</span>");
 	}
 	else {
-		if(option.chatSays)
+		if(option.chatSays) {
 			ui_.log->appendText(QString("<p style=\"color: %1\">").arg(color) + QString("[%1] ").arg(timestr) + tr("%1 says:").arg(who) + "</p>" + txt);
-		else
+		} else {
 			ui_.log->appendText(QString("<span style=\"color: %1\">").arg(color) + QString("[%1] &lt;").arg(timestr) + who + QString("&gt;</span> ") + txt);
+		}
 	}
 	if(!m.subject().isEmpty()) {
 		ui_.log->appendText(QString("<b>") + tr("Subject:") + "</b> " + QString("%1").arg(TextUtil::plain2rich(m.subject())));
@@ -1123,15 +1176,17 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 		}
 	}
 
-	if(local)
+	if(local) {
 		deferredScroll();
+	}
 
 	// if we're not active, notify the user by changing the title
 	if(!isActiveWindow() || isHidden()) { //isHidden==tab hack
 		++d->pending;
 		updateCaption();
-		if (PsiOptions::instance()->getOption("options.ui.flash-windows").toBool())
+		if (PsiOptions::instance()->getOption("options.ui.flash-windows").toBool()) {
 			doFlash(true);
+		}
 		if (option.raiseChatWindow) {
 			if (option.useTabs) {
 				TabDlg* tabSet = d->pa->psi()->getManagingTabs(this);
@@ -1247,8 +1302,9 @@ void ChatDlg::setContactChatState(ChatState state)
 	}
 	else {
 		// Activate ourselves
-		if (d->lastChatState == StateGone)
+		if (d->lastChatState == StateGone) {
 			setChatState(StateActive);
+		}
 	}
 	emit contactStateChanged( state );
 	updateCaption();
@@ -1275,8 +1331,9 @@ void ChatDlg::buildMenu()
 
 	d->pm_settings->addAction(d->act_icon);
 	d->pm_settings->addAction(d->act_file);
-	if (d->pa->voiceCaller())
+	if (d->pa->voiceCaller()) {
 		d->act_voice->addTo( d->pm_settings );
+	}
 	d->pm_settings->addAction(d->act_pgp);
 	d->pm_settings->insertSeparator();
 

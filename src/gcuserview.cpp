@@ -270,7 +270,11 @@ bool GCUserView::maybeTip(const QPoint &pos)
 	const Status &s = lvi->s;
 	UserListItem u;
 	// SICK SICK SICK SICK
-	GCMainDlg* dlg = (GCMainDlg*) window();
+	GCMainDlg* dlg = gcDlg_;
+	if (!dlg) {
+		qDebug("Calling maybetip on an entity without an owning dialog");
+		return false;
+	}
 	u.setJid(dlg->jid().withResource(nick));
 	u.setName(nick);
 

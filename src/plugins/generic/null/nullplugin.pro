@@ -1,5 +1,6 @@
 TEMPLATE = lib
 CONFIG += plugin
+QT += xml
 
 PSI_PATH = ../../..
 

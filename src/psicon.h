@@ -26,6 +26,9 @@
 
 #include "profiles.h"
 
+#include "tabbable.h"
+
+
 using namespace XMPP;
 
 class PsiCon;
@@ -76,10 +79,10 @@ public:
 
 	TabDlg* getTabs();
 	TabDlg*	newTabs();
-	bool isChatTabbed(ChatDlg*);
-	bool isChatActiveWindow(ChatDlg*);
-	ChatDlg* getChatInTabs(QString);
-	TabDlg* getManagingTabs(ChatDlg*);
+	bool isChatTabbed(Tabbable*);
+	bool isChatActiveWindow(Tabbable*);
+	Tabbable* getChatInTabs(QString);
+	TabDlg* getManagingTabs(Tabbable*);
 	Q3PtrList<TabDlg>* getTabSets();
 
 	QWidget *dialogFind(const char *className);

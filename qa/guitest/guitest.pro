@@ -1,6 +1,6 @@
 CONFIG -= app_bundle
 
-MOC_DIR = ../../src/moc
+MOC_DIR = ../../src/.moc
 OBJECTS_DIR = ../../src/.obj
 UI_DIR = ../../src/.ui
 
