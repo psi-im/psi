@@ -53,7 +53,7 @@ class ChatDlg : public Tabbable
 {
 	Q_OBJECT
 public:
-	ChatDlg(const Jid &, PsiAccount *);
+	ChatDlg(const Jid &, PsiAccount *, TabManager *tabManager);
 	~ChatDlg();
 
 	Jid jid() const;

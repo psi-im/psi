@@ -84,6 +84,7 @@
 #include "shortcutmanager.h"
 #include "globalshortcutmanager.h"
 #include "desktoputil.h"
+#include "tabmanager.h"
 
 
 #ifdef Q_WS_MAC
@@ -177,9 +178,6 @@ public:
 		: contactList(0), iconSelect(0)
 	{
 		psi = parent;
-		//the list 'owns' the tabs
-		tabs.setAutoDelete( true );
-		tabControlledChats.setAutoDelete( false );
 	}
 
 	~Private()
@@ -225,8 +223,6 @@ public:
 	MainWin *mainwin;
 	Idle idle;
 	QList<item_dialog*> dialogList;
-	Q3PtrList<TabDlg> tabs;
-	Q3PtrList<ChatDlg> tabControlledChats;
 	int eventId;
 	QStringList recentGCList, recentBrowseList, recentNodeList;
 	EDB *edb;
@@ -239,6 +235,7 @@ public:
 	//GlobalAccelManager *globalAccelManager;
 	TuneController* tuneController;
 	QMenuBar* defaultMenuBar;
+	TabManager *tabManager;
 };
 
 //----------------------------------------------------------------------------
@@ -251,6 +248,7 @@ PsiCon::PsiCon()
 	//pdb(DEBUG_JABCON, QString("%1 v%2\n By Justin Karneges\n    infiniti@affinix.com\n\n").arg(PROG_NAME).arg(PROG_VERSION));
 
 	d = new Private(this);
+	d->tabManager = new TabManager(this);
 
 	d->lastStatusString = "";
 	useSound = true;
@@ -266,6 +264,7 @@ PsiCon::PsiCon()
 
 	d->actionList = 0;
 	d->defaultMenuBar = new QMenuBar(0);
+	
 }
 
 PsiCon::~PsiCon()
@@ -276,6 +275,7 @@ PsiCon::~PsiCon()
 	delete d->edb;
 	delete d->defaultMenuBar;
 	delete d;
+	delete d->tabManager;
 }
 
 bool PsiCon::init()
@@ -320,7 +320,7 @@ bool PsiCon::init()
 	options->setOption("trigger-save",true);
 	
 	connect(options, SIGNAL(optionChanged(const QString&)), SLOT(optionsUpdate()));
-
+	
 	QDir profileDir( pathToProfile( activeProfile ) );
 	profileDir.rmdir( "info" ); // remove unused dir
 
@@ -663,69 +663,6 @@ QMenuBar* PsiCon::defaultMenuBar() const
 	return d->defaultMenuBar;
 }
 
-TabDlg* PsiCon::newTabs()
-{
-	TabDlg *tab;
-	tab=new TabDlg(this);
-	d->tabs.append(tab);
-	connect (tab, SIGNAL ( isDying(TabDlg*) ), SLOT ( tabDying(TabDlg*) ) );
-	connect(this, SIGNAL(emitOptionsUpdate()), tab, SLOT(optionsUpdate()));
-	return tab;
-}
-
-TabDlg* PsiCon::getTabs()
-{
-	if (!d->tabs.isEmpty())
-	{
-		return d->tabs.getFirst();
-	}
-	else
-	{
-		return newTabs();
-	}
-}
-
-void PsiCon::tabDying(TabDlg* tab)
-{
-	d->tabs.remove(tab);
-}
-
-bool PsiCon::isChatTabbed(Tabbable* chat)
-{
-	for (uint i = 0; i < d->tabs.count(); ++i)
-	{
-		if ( d->tabs.at(i)->managesTab
-		(chat) )
-				return true;
-	}
-	return false;
-}
-
-Tabbable* PsiCon::getChatInTabs(QString jid){
-	for (uint i = 0; i < d->tabs.count(); ++i)
-	{
-		if ( d->tabs.at(i)->getTabPointer(jid) )
-				return d->tabs.at(i)->getTabPointer(jid);
-	}
-	return NULL;
-
-}
-
-TabDlg* PsiCon::getManagingTabs(Tabbable* chat)
-{
-	for (uint i = 0; i < d->tabs.count(); ++i)
-	{
-		if ( d->tabs.at(i)->managesTab(chat) )
-				return d->tabs.at(i);
-	}
-	return NULL;
-
-}
-
-Q3PtrList<TabDlg>* PsiCon::getTabSets()
-{
-	return &d->tabs;
-}
 
 bool PsiCon::isChatActiveWindow(Tabbable* chat)
 {
@@ -738,11 +675,11 @@ bool PsiCon::isChatActiveWindow(Tabbable* chat)
 	{
 		return chat->isActiveWindow();
 	}
-	for (uint i = 0; i < d->tabs.count(); ++i)
+	for (uint i = 0; i < d->tabManager->getTabSets()->count(); ++i)
 	{
-		if ( d->tabs.at(i)->isActiveWindow() )
+		if ( d->tabManager->getTabSets()->at(i)->isActiveWindow() )
 		{
-			if ( d->tabs.at(i)->tabOnTop( chat ) )
+			if ( d->tabManager->getTabSets()->at(i)->tabOnTop( chat ) )
 			{
 				return true;
 			}
@@ -779,7 +716,7 @@ void PsiCon::deleteAllDialogs()
 		delete i->widget;
 		delete i;
 	}
-	d->tabs.clear();
+	d->tabManager->deleteAll();
 }
 
 AccountsComboBox *PsiCon::accountsComboBox(QWidget *parent, bool online_only)
@@ -795,7 +732,7 @@ void PsiCon::createAccount(const QString &name, const Jid &j, const QString &pas
 
 PsiAccount *PsiCon::createAccount(const UserAccount& acc)
 {
-	PsiAccount *pa = new PsiAccount(acc, d->contactList);
+	PsiAccount *pa = new PsiAccount(acc, d->contactList, d->tabManager);
 	connect(&d->idle, SIGNAL(secondsIdle(int)), pa, SLOT(secondsIdle(int)));
 	connect(pa, SIGNAL(updatedActivity()), SLOT(pa_updatedActivity()));
 	connect(pa, SIGNAL(updatedAccount()), SLOT(pa_updatedAccount()));
@@ -1285,8 +1222,10 @@ void PsiCon::processEvent(PsiEvent *e)
 			bringToFront((QWidget *)c);
 			if ( option.useTabs)
 			{
-				TabDlg* tabSet = getManagingTabs(c);
-				if (tabSet) tabSet->selectTab(c);
+				TabDlg* tabSet = d->tabManager->getManagingTabs(c);
+				if (tabSet) {
+					tabSet->selectTab(c);
+				}
 			}
 		}
 		else

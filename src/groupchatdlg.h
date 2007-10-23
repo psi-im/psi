@@ -64,7 +64,7 @@ class GCMainDlg : public Tabbable
 {
 	Q_OBJECT
 public:
-	GCMainDlg(PsiAccount *, const Jid &);
+	GCMainDlg(PsiAccount *, const Jid &, TabManager *tabManager);
 	~GCMainDlg();
 
 	Jid jid() const;

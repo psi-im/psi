@@ -202,8 +202,8 @@ public slots:
 	}
 };
 
-ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa)
-	: Tabbable(jid, pa), highlightersInstalled_(false)
+ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa, TabManager *tabManager)
+	: Tabbable(jid, pa, tabManager), highlightersInstalled_(false)
 {
   	if ( option.brushedMetal ) {
 		setAttribute(Qt::WA_MacMetalStyle);
@@ -1189,7 +1189,7 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 		}
 		if (option.raiseChatWindow) {
 			if (option.useTabs) {
-				TabDlg* tabSet = d->pa->psi()->getManagingTabs(this);
+				TabDlg* tabSet = getManagingTabDlg();
 				tabSet->selectTab(this);
 				bringToFront(tabSet, false);
 			}

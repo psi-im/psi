@@ -119,6 +119,7 @@
 #include "certutil.h"
 #include "proxy.h"
 #include "psicontactlist.h"
+#include "tabmanager.h"
 
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
@@ -287,6 +288,8 @@ public:
 
 	// Voice Call
 	VoiceCaller* voiceCaller;
+	
+	TabManager *tabManager;
 
 #ifdef GOOGLE_FT
 	// Google file transfer manager
@@ -414,8 +417,8 @@ public:
 			item_dialog2* i = dialogList.takeFirst();
 			ChatDlg* chat = qobject_cast<ChatDlg*>(i->widget);
 			if (chat) {
-				if (psi->isChatTabbed(chat)) {
-					psi->getManagingTabs(chat)->close(chat);
+				if (tabManager->isChatTabbed(chat)) {
+					tabManager->getManagingTabs(chat)->close(chat);
 				}
 			}
 			delete i->widget;
@@ -430,11 +433,12 @@ private slots:
 	}
 };
 
-PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent)
+PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManager *tabManager)
 :QObject(parent)
 {
 	d = new Private( this );
 	d->contactList = parent;
+	d->tabManager = tabManager;
 	d->psi = parent->psi();
 	d->options = PsiOptions::instance();
 	d->client = 0;
@@ -2735,11 +2739,11 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
 	ChatDlg *c = findDialog<ChatDlg*>(j);
 	if(!c) {
 		// create the chatbox
-		c = new ChatDlg(j, this);
+		c = new ChatDlg(j, this, d->tabManager);
 		if (option.useTabs)
 		{
 			//get a tab from the mainwin
-			d->psi->getTabs()->addTab(c);
+			d->tabManager->getTabs()->addTab(c);
 		}
 		connect(c, SIGNAL(aSend(const Message &)), SLOT(dj_sendMessage(const Message &)));
 		connect(c, SIGNAL(messagesRead(const Jid &)), SLOT(chatMessagesRead(const Jid &)));
@@ -3593,7 +3597,7 @@ void PsiAccount::handleEvent(PsiEvent *e)
 
 			//if the chat exists, and is either open in a tab,
 			//or in a window
-			if( c && ( d->psi->isChatTabbed(c) || !c->isHidden() ) ) {
+			if( c && ( d->tabManager->isChatTabbed(c) || !c->isHidden() ) ) {
 				c->incomingMessage(m);
 				playSound(option.onevent[eChat2]);
 				if(option.alertOpenChats && !d->psi->isChatActiveWindow(c)) {
@@ -3978,12 +3982,12 @@ void PsiAccount::openChat(const Jid &j)
 	QWidget *w = c;
 	if ( option.useTabs )
 	{
-		if ( !d->psi->isChatTabbed(c) )
+		if ( !d->tabManager->isChatTabbed(c) )
 		{
 			//get a tab from the psicon
-			d->psi->getTabs()->addTab(c);
+			d->tabManager->getTabs()->addTab(c);
 		}
-		TabDlg* tabSet = d->psi->getManagingTabs(c);
+		TabDlg* tabSet = d->tabManager->getManagingTabs(c);
 		tabSet->selectTab(c);
 		w = tabSet;
 	}
@@ -3993,8 +3997,9 @@ void PsiAccount::openChat(const Jid &j)
 
 void PsiAccount::chatMessagesRead(const Jid &j)
 {
-	if(option.alertOpenChats)
+	if(option.alertOpenChats) {
 		processChats(j);
+	}
 }
 
 void PsiAccount::logEvent(const Jid &j, PsiEvent *e)
@@ -4023,9 +4028,9 @@ void PsiAccount::openGroupChat(const Jid &j)
 	if(!found)
 		d->groupchats += str;
 
-	GCMainDlg *w = new GCMainDlg(this, j);
+	GCMainDlg *w = new GCMainDlg(this, j, d->tabManager);
 	if(option.useTabs) {
-		d->psi->getTabs()->addTab(w);
+		d->tabManager->getTabs()->addTab(w);
 	}
 	w->setPassword(d->client->groupChatPassword(j.user(),j.host()));
 	connect(w, SIGNAL(aSend(const Message &)), SLOT(dj_sendMessage(const Message &)));

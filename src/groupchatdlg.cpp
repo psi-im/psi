@@ -461,8 +461,8 @@ public:
 	}
 };
 
-GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j)
-	: Tabbable(j, pa)
+GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
+	: Tabbable(j, pa, tabManager)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
   	if ( option.brushedMetal )

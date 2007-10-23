@@ -14,7 +14,6 @@ SOURCES += \
 	$$PWD/psirichtext.cpp \
 	$$PWD/psitooltip.cpp \
 	$$PWD/psitabwidget.cpp \
-	$$PWD/tabbable.cpp \
 	$$PWD/psitabbar.cpp
 
 HEADERS += \
@@ -38,8 +37,7 @@ HEADERS += \
 	$$PWD/psirichtext.h \
 	$$PWD/psitooltip.h \
 	$$PWD/psitabwidget.h \
-	$$PWD/psitabbar.h \
-	$$PWD/tabbable.h
+	$$PWD/psitabbar.h 
 
 # to remove dependency on iconset and stuff
 #DEFINES += WIDGET_PLUGIN

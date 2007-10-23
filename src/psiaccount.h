@@ -77,6 +77,7 @@ class QHostAddress;
 class AvatarFactory;
 class PEPManager;
 class ServerInfoManager;
+class TabManager;
 #ifdef GOOGLE_FT
 class GoogleFileTransfer;
 #endif
@@ -88,7 +89,7 @@ class PsiAccount : public QObject
 {
 	Q_OBJECT
 public:
-	PsiAccount(const UserAccount &acc, PsiContactList *parent);
+	PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManager *tabManager);
 	~PsiAccount();
 
 	bool enabled() const;
