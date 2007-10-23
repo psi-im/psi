@@ -1,4 +1,5 @@
 INCLUDEPATH *= $$PWD
+DEPENDPATH *= $$PWD
 
 HEADERS += \
  	$$PWD/privacylistitem.h \

@@ -45,7 +45,9 @@ public:
 	virtual const QString & getDisplayName();
 
 	virtual bool readyToHide();
-	TabDlg* getManagingTabDlg();
+	TabDlg* getManagingTabDlg() const;
+
+	bool isActiveTab() const;
 
 signals:
 	void eventsRead(const Jid &);

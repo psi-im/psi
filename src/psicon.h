@@ -154,6 +154,7 @@ public slots:
 
 private slots:
 	void saveAccounts();
+	void saveCapabilities();
 	void optionsUpdate();
 
 private:

@@ -107,6 +107,7 @@
 #include "psipopup.h"
 #include "pgputil.h"
 #include "translationmanager.h"
+#include "irisprotocol/discoinfoquerier.h"
 #include "iconwidget.h"
 #include "filetransdlg.h"
 #include "systeminfo.h"
@@ -465,7 +466,7 @@ private slots:
 	}
 };
 
-PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManager *tabManager)
+PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegistry* capsRegistry, TabManager *tabManager)
 :QObject(parent)
 {
 	d = new Private( this );
@@ -568,7 +569,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
 	d->privacyManager = new PsiPrivacyManager(d->client->rootTask());
 
 	// Caps manager
-	d->capsManager = new CapsManager(d->client);
+	d->capsManager = new CapsManager(d->client->jid(), capsRegistry, new IrisProtocol::DiscoInfoQuerier(d->client));
 	d->capsManager->setEnabled(option.useCaps);
 
 	// Roster item exchange task

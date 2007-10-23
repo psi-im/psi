@@ -209,7 +209,7 @@ void TabDlg::setLooks()
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt()))/100);
 }
 
-QString TabDlg::getName()
+QString TabDlg::getName() const
 {
 	return ((Tabbable*)(tabs->currentPage()))->getDisplayName();
 }
@@ -221,14 +221,14 @@ void TabDlg::tabSelected(QWidget* chat)
 	updateCaption();
 }
 
-bool TabDlg::managesTab(Tabbable* chat)
+bool TabDlg::managesTab(const Tabbable* chat) const
 {
 	if ( chats.contains(chat) )
 			return true;
 	return false;
 }
 
-bool TabDlg::tabOnTop(Tabbable* chat)
+bool TabDlg::tabOnTop(const Tabbable* chat) const
 {
 	if ( tabs->currentPage() == chat )
 		return true;
@@ -373,7 +373,7 @@ void TabDlg::closeMe()
 }
 
 
-Tabbable *TabDlg::getTab(int i)
+Tabbable *TabDlg::getTab(int i) const
 {
 	return ((Tabbable*)tabs->page(i));
 }

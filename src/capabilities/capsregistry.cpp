@@ -26,6 +26,7 @@
 
 #include "xmpp_features.h"
 #include "capsregistry.h"
+#include "iodeviceopener.h"
 
 using namespace XMPP;
 
@@ -132,30 +133,15 @@ void CapsRegistry::CapsInfo::fromXml(const QDomElement& e)
 /**
  * \brief Default constructor.
  */
-CapsRegistry::CapsRegistry() : QObject(qApp)
+CapsRegistry::CapsRegistry() 
 {
-	connect(QCoreApplication::instance(),SIGNAL(aboutToQuit()),SLOT(save()));
 }
-
-/**
- * \brief Destructor. Saves data before exiting.
- */
-CapsRegistry::~CapsRegistry()
-{
-	save();
-}
-
 
 /**
  * \brief Convert all capabilities info to XML.
  */
-void CapsRegistry::save()
+void CapsRegistry::save(QIODevice& out)
 {
-	//qDebug() << QString("Saving caps to '%1'").arg(fileName_);
-	
-	if (fileName_.isEmpty())
-		return;
-
 	// Generate XML
 	QDomDocument doc;
 	QDomElement capabilities = doc.createElement("capabilities");
@@ -169,35 +155,33 @@ void CapsRegistry::save()
 		capabilities.appendChild(info);
 	}
 
-	// Save
-	QFile f(fileName_);
-	if(!f.open(QIODevice::WriteOnly)) {
-		qWarning("caps.cpp: Unable to open caps file");
+	IODeviceOpener opener(&out, QIODevice::WriteOnly);
+	if (!opener.isOpen()) {
+		qWarning() << "Caps: Unable to open IO device";
 		return;
 	}
 	QTextStream t;
-	t.setDevice(&f);
+	t.setDevice(&out);
 	t.setCodec(QTextCodec::codecForName("UTF-8"));
 	t << doc.toString();
-	f.close();
 }
 
 /**
  * \brief Sets the file to save the capabilities info to
  */
-void CapsRegistry::setFile(const QString& fileName)
+void CapsRegistry::load(QIODevice& in)
 {
-	fileName_ = fileName;
-	
 	// Load settings
-	//qDebug() << "Loading " << fileName;
 	QDomDocument doc;
-	QFile f(fileName_);
-	if (!f.open(QIODevice::ReadOnly))
+	IODeviceOpener opener(&in, QIODevice::ReadOnly);
+	if (!opener.isOpen()) {
+		qWarning() << "CapsRegistry: Cannot open input device";
 		return;
-	if (!doc.setContent(&f))
+	}
+	if (!doc.setContent(&in)) {
+		qWarning() << "CapsRegistry: Cannnot parse input";
 		return;
-	f.close();
+	}
 
 	QDomElement caps = doc.documentElement();
 	if (caps.tagName() != "capabilities") {
@@ -235,7 +219,6 @@ void CapsRegistry::registerCaps(const CapsSpec& spec,const XMPP::DiscoItem::Iden
 		info.setIdentities(identities);
 		info.setFeatures(features);
 		capsInfo_[spec] = info;
-		save();
 		emit registered(spec);
 	}
 }
@@ -264,21 +247,3 @@ XMPP::DiscoItem::Identities CapsRegistry::identities(const CapsSpec& spec) const
 {
 	return capsInfo_[spec].identities();
 }
-
-/**
- * \brief Retrieves the instance of the CapsRegistry.
- * If no instance existed, a new one is created.
- */
-CapsRegistry* CapsRegistry::instance()
-{
-	if (!instance_) {
-		instance_ = new CapsRegistry();
-	}
-	return instance_;
-}
-
-/**
- * \brief The instance of the CapsRegistry.
- */
-CapsRegistry* CapsRegistry::instance_ = NULL;
-

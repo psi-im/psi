@@ -4,7 +4,11 @@ QT += xml network qt3support
 include($$PWD/../cutestuff/cutestuff.pri)
 
 # modules
+include($$PWD/protocol/protocol.pri)
+include($$PWD/irisprotocol/irisprotocol.pri)
 include($$PWD/privacy/privacy.pri)
+include($$PWD/capabilities/capabilities.pri)
+include($$PWD/utilities/utilities.pri)
 include($$PWD/tabs/tabs.pri)
 
 # tools
@@ -100,7 +104,6 @@ include($$PWD/../iris/iris.pri)
 
 # Header files
 HEADERS += \
-	$$PWD/maybe.h \ 
 	$$PWD/varlist.h \ 
 	$$PWD/jidutil.h \
 	$$PWD/showtextdlg.h \ 
@@ -158,9 +161,6 @@ HEADERS += \
 	$$PWD/sslcertdlg.h \
 	$$PWD/tasklist.h \
 	$$PWD/discodlg.h \
-	$$PWD/capsspec.h \
-	$$PWD/capsregistry.h \
-	$$PWD/capsmanager.h \
 	$$PWD/alerticon.h \
 	$$PWD/alertable.h \
 	$$PWD/psipopup.h \
@@ -265,9 +265,6 @@ SOURCES += \
 	$$PWD/vcardfactory.cpp \
 	$$PWD/sslcertdlg.cpp \
 	$$PWD/discodlg.cpp \
-	$$PWD/capsspec.cpp \
-	$$PWD/capsregistry.cpp \
-	$$PWD/capsmanager.cpp \
 	$$PWD/alerticon.cpp \
 	$$PWD/alertable.cpp \
 	$$PWD/psipopup.cpp \
@@ -389,3 +386,4 @@ mac {
 }
 
 INCLUDEPATH += $$PWD
+DEPENDPATH += $$PWD

@@ -32,8 +32,6 @@
 #include <QApplication>
 #include <QDebug>
 
-#include "xmpp_client.h"
-#include "xmpp_discoinfotask.h"
 #include "capsregistry.h"
 #include "capsmanager.h"
 
@@ -52,11 +50,17 @@ using namespace XMPP;
 /**
  * \brief Default constructor.
  */
-CapsManager::CapsManager(Client* client) : client_(client), isEnabled_(true)
+CapsManager::CapsManager(const Jid& jid, CapsRegistry* registry, Protocol::DiscoInfoQuerier* discoInfoQuerier) : jid_(jid), registry_(registry), discoInfoQuerier_(discoInfoQuerier), isEnabled_(true)
 {
-	connect(CapsRegistry::instance(),SIGNAL(registered(const CapsSpec&)),SLOT(capsRegistered(const CapsSpec&)));
+	connect(registry_,SIGNAL(registered(const CapsSpec&)),SLOT(capsRegistered(const CapsSpec&)));
+	connect(discoInfoQuerier_, SIGNAL(getDiscoInfo_success(const XMPP::Jid&, const QString&, const XMPP::DiscoItem&)), SLOT(getDiscoInfo_success(const XMPP::Jid&, const QString&, const XMPP::DiscoItem&)));
+	connect(discoInfoQuerier_, SIGNAL(getDiscoInfo_error(const XMPP::Jid&, const QString&, int, const QString&)), SLOT(getDiscoInfo_error(const XMPP::Jid&, const QString&, int, const QString&)));
 }
 
+CapsManager::~CapsManager()
+{
+	delete discoInfoQuerier_;
+}
 
 /**
  * \brief Checks whether the caps manager is enabled (and does lookups).
@@ -86,7 +90,7 @@ void CapsManager::setEnabled(bool b)
  */
 void CapsManager::updateCaps(const Jid& jid, const QString& node, const QString& ver, const QString& ext)
 {
-	if (jid.compare(client_->jid(),false))
+	if (jid.compare(jid_,false))
 		return;
 
 	CapsSpec c(node,ver,ext);
@@ -116,9 +120,9 @@ void CapsManager::updateCaps(const Jid& jid, const QString& node, const QString&
 			// Register new caps and check if we need to discover features
 			if (isEnabled()) {
 				foreach(CapsSpec s, caps) {
-					if (!CapsRegistry::instance()->isRegistered(s) && capsJids_[s].count() == 1) {
+					if (!registry_->isRegistered(s) && capsJids_[s].count() == 1) {
 						//qDebug() << QString("caps.cpp: Sending disco request to %1, node=%2").arg(QString(jid.full()).replace('%',"%%")).arg(node + "#" + s.extensions());
-						requestDiscoInfo(jid,node + "#" + s.extensions());
+						discoInfoQuerier_->getDiscoInfo(jid,node + "#" + s.extensions());
 					}
 				}
 			}
@@ -158,62 +162,43 @@ void CapsManager::disableCaps(const Jid& jid)
 }
 
 /**
- * \brief Sends a disco#info request to a given node of a jid.
- * When the request is finished, the discoFinished() slot is called.
- *
- * @param jid The target entity's JID 
- * @param node The target disco#info node
- */
-void CapsManager::requestDiscoInfo(const Jid& jid, const QString& node) 
-{
-	JT_DiscoInfo* disco = new JT_DiscoInfo(client_->rootTask());
-	connect(disco, SIGNAL(finished()), SLOT(discoFinished()));
-	disco->get(jid, node);
-	disco->go(true);
-}
-
-
-/**
  * \brief Called when a reply to disco#info request was received.
  * If the result was succesful, the resulting features are recorded in the
  * features database for the requested node, and all the affected jids are
  * put in the queue for update notification.
  */
-void CapsManager::discoFinished()
+void CapsManager::getDiscoInfo_success(const XMPP::Jid& jid, const QString& node, const XMPP::DiscoItem& item)
 {
-	JT_DiscoInfo *disco = (JT_DiscoInfo*)sender();
-	if (!disco)
-		return;
-
-	DiscoItem item = disco->item();
-	Jid jid = disco->jid();
-	//qDebug() << QString("caps.cpp: Disco response from %1, node=%2, success=%3").arg(QString(jid.full()).replace('%',"%%")).arg(disco->node()).arg(disco->success());
-    
+	//qDebug() << QString("caps.cpp: Disco response from %1, node=%2").arg(QString(jid.full()).replace('%',"%%")).arg(node);
 	// Update features
-    int hash_index = disco->node().indexOf('#');
-    if (hash_index == -1) {
-        qWarning() << "CapsManager: Node" << disco->node() << "invalid";
-        return;
-    }
-	QString node = disco->node().left(hash_index);
-	QString ext = disco->node().right(disco->node().length() - hash_index - 1);
-	CapsSpec jid_cs = capsSpecs_[jid.full()];
-	if (jid_cs.node() == node) {
-		CapsSpec cs(node,jid_cs.version(),ext);
-
-		if (disco->success()) {
-			// Save identities & features
-			CapsRegistry::instance()->registerCaps(cs,item.identities(),item.features().list());
-		}
-		else {
-			// TODO: Fall back on another jid
-			qWarning(QString("capsmanager.cpp: Disco to '%1' at node '%2' failed.").arg(jid.full()).arg(node).toAscii());
-		}
+	bool ok = false;
+	CapsSpec cs(getCapsSpecForNode(jid, node, ok));
+	if (!ok) {
+		return;
 	}
-	else 
-		qWarning(QString("caps.cpp: Current client node '%1' does not match response '%2'").arg(jid_cs.node()).arg(node).toAscii());
+	registry_->registerCaps(cs,item.identities(),item.features().list());
 }
 
+CapsSpec CapsManager::getCapsSpecForNode(const XMPP::Jid& jid, const QString& disco_node, bool& ok) const
+{
+    int hash_index = disco_node.indexOf('#');
+    if (hash_index == -1) {
+        qWarning() << "CapsManager: Node" << disco_node << "invalid";
+        ok = false;
+        return CapsSpec();
+    }
+	QString node = disco_node.left(hash_index);
+	QString ext = disco_node.right(disco_node.length() - hash_index - 1);
+	CapsSpec jid_cs = capsSpecs_[jid.full()];
+	if (jid_cs.node() == node) {
+		ok = true;
+		return CapsSpec(node,jid_cs.version(),ext);
+	}
+	else {
+		ok = false;
+		return CapsSpec();
+	}
+}
 
 /**
  * \brief This slot is called whenever capabilities of a client were discovered.
@@ -247,8 +232,8 @@ XMPP::Features CapsManager::features(const Jid& jid) const
 	if (capsEnabled(jid)) {
 		CapsSpecs cs = capsSpecs_[jid.full()].flatten();
 		foreach(CapsSpec s, cs) {
-			//qDebug() << QString("    %1").arg(CapsRegistry::instance()->features(s).list().join("\n"));
-			f += CapsRegistry::instance()->features(s).list();
+			//qDebug() << QString("    %1").arg(registry_->features(s).list().join("\n"));
+			f += registry_->features(s).list();
 		}
 	}
 	return Features(f);
@@ -263,7 +248,7 @@ QString CapsManager::clientName(const Jid& jid) const
 	if (capsEnabled(jid)) {
 		QString name;
 		CapsSpec cs = capsSpecs_[jid.full()];
-		const DiscoItem::Identities& i = CapsRegistry::instance()->identities(CapsSpec(cs.node(),cs.version(),cs.version()));
+		const DiscoItem::Identities& i = registry_->identities(CapsSpec(cs.node(),cs.version(),cs.version()));
 		if (i.count() > 0) {
 			name = i.first().name;
 		}

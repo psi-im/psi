@@ -25,13 +25,15 @@
 #include <QList>
 #include <QString>
 #include <QObject>
+#include <QPointer>
 
+#include "protocol/discoinfoquerier.h"
 #include "capsspec.h"
+#include "capsregistry.h"
 #include "xmpp_features.h"
 
 namespace XMPP {
 	class Jid;
-	class Client;
 }
 using namespace XMPP;
 
@@ -40,7 +42,8 @@ class CapsManager : public QObject
 	Q_OBJECT
 
 public:
-	CapsManager(XMPP::Client*);
+	CapsManager(const XMPP::Jid&, CapsRegistry* registry, Protocol::DiscoInfoQuerier* discoInfoQuerier);
+	~CapsManager();
 
 	bool isEnabled();
 	void setEnabled(bool);
@@ -58,15 +61,19 @@ signals:
 	 */
 	void capsChanged(const Jid& jid);
 
+protected:
+	CapsSpec getCapsSpecForNode(const XMPP::Jid& jid, const QString& disco_node, bool& ok) const;
+
 protected slots:
-	void discoFinished();
+	void getDiscoInfo_success(const XMPP::Jid& jid, const QString& node, const XMPP::DiscoItem& item);
+	void getDiscoInfo_error(const XMPP::Jid& jid, const QString& node, int error_code, const QString& error_string);
+
 	void capsRegistered(const CapsSpec&);
 
-protected:
-	void requestDiscoInfo(const Jid& jid, const QString& node);
-	
 private:
-	XMPP::Client* client_;
+	XMPP::Jid jid_;
+	QPointer<CapsRegistry> registry_;
+	QPointer<Protocol::DiscoInfoQuerier> discoInfoQuerier_;
 	bool isEnabled_;
 	QMap<QString,CapsSpec> capsSpecs_;
 	QMap<CapsSpec,QList<QString> > capsJids_;

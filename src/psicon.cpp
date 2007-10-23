@@ -29,6 +29,7 @@
 #include <qcolor.h>
 #include <qimage.h>
 #include <qpixmapcache.h>
+#include <QFile>
 #include <QPixmap>
 #include <QList>
 #include <QImageReader>
@@ -235,6 +236,7 @@ public:
 	//GlobalAccelManager *globalAccelManager;
 	TuneController* tuneController;
 	QMenuBar* defaultMenuBar;
+	CapsRegistry* capsRegistry;
 	TabManager *tabManager;
 };
 
@@ -264,12 +266,16 @@ PsiCon::PsiCon()
 
 	d->actionList = 0;
 	d->defaultMenuBar = new QMenuBar(0);
-	
+	d->capsRegistry = new CapsRegistry();
+	connect(d->capsRegistry, SIGNAL(registered(const CapsSpec&)), SLOT(saveCapabilities()));
 }
 
 PsiCon::~PsiCon()
 {
 	deinit();
+
+	saveCapabilities();
+	delete d->capsRegistry;
 
 	delete d->actionList;
 	delete d->edb;
@@ -424,9 +430,6 @@ bool PsiCon::init()
 
 	// Global shortcuts
 	setShortcuts();
-
-	// Entity capabilities
-	CapsRegistry::instance()->setFile(ApplicationInfo::homeDir() + "/caps.xml");
 	
 	// FIXME
 #ifdef __GNUC__
@@ -445,8 +448,8 @@ bool PsiCon::init()
 		<< "http://jabber.org/protocol/rosterx" 
 		<< "http://jabber.org/protocol/muc" 
 		<< "jabber:x:data";
-	CapsRegistry::instance()->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),ApplicationInfo::capsVersion()),identities,Features(features));
-	CapsRegistry::instance()->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),"cs"),identities,Features("http://jabber.org/protocol/chatstates"));
+	d->capsRegistry->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),ApplicationInfo::capsVersion()),identities,Features(features));
+	d->capsRegistry->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),"cs"),identities,Features("http://jabber.org/protocol/chatstates"));
 	features.clear();
 	features << "http://jabber.org/protocol/mood"
 		<< "http://jabber.org/protocol/tune" 
@@ -454,15 +457,15 @@ bool PsiCon::init()
 		<< "http://jabber.org/protocol/geoloc" 
 		<< "http://www.xmpp.org/extensions/xep-0084.html#ns-data" 
 		<< "http://www.xmpp.org/extensions/xep-0084.html#ns-metadata";
-	CapsRegistry::instance()->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),"ep"),identities,features);
+	d->capsRegistry->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),"ep"),identities,features);
 	features.clear();
 	features << "http://jabber.org/protocol/mood+notify"
 		<< "http://jabber.org/protocol/tune+notify" 
 		<< "http://jabber.org/protocol/physloc+notify" 
 		<< "http://jabber.org/protocol/geoloc+notify" 
 		<< "http://www.xmpp.org/extensions/xep-0084.html#ns-metadata+notify";
-	CapsRegistry::instance()->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),"ep-notify"),identities,features);
-	CapsRegistry::instance()->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),"html"),identities,Features("http://jabber.org/protocol/xhtml-im"));
+	d->capsRegistry->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),"ep-notify"),identities,features);
+	d->capsRegistry->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),"html"),identities,Features("http://jabber.org/protocol/xhtml-im"));
 
 
 	// load accounts
@@ -732,7 +735,7 @@ void PsiCon::createAccount(const QString &name, const Jid &j, const QString &pas
 
 PsiAccount *PsiCon::createAccount(const UserAccount& acc)
 {
-	PsiAccount *pa = new PsiAccount(acc, d->contactList, d->tabManager);
+	PsiAccount *pa = new PsiAccount(acc, d->contactList, d->capsRegistry, d->tabManager);
 	connect(&d->idle, SIGNAL(secondsIdle(int)), pa, SLOT(secondsIdle(int)));
 	connect(pa, SIGNAL(updatedActivity()), SLOT(pa_updatedActivity()));
 	connect(pa, SIGNAL(updatedAccount()), SLOT(pa_updatedAccount()));
@@ -829,6 +832,12 @@ void PsiCon::saveAccounts()
 	//d->pro.acc = acc;
 	//d->pro.toFile(pathToProfileConfig(activeProfile));
 	d->saveProfile(acc);
+}
+
+void PsiCon::saveCapabilities()
+{
+	QFile file(ApplicationInfo::homeDir() + "/caps.xml");
+	d->capsRegistry->save(file);
 }
 
 void PsiCon::updateMainwinStatus()

@@ -1,4 +1,5 @@
 INCLUDEPATH *= $$PWD
+DEPENDPATH  *= $$PWD
 
 HEADERS += $$PWD/tabdlg.h
 HEADERS += $$PWD/tabmanager.h 

@@ -59,6 +59,7 @@ class BookmarkManager;
 class URLBookmark;
 class ConferenceBookmark;
 class VoiceCaller;
+class CapsRegistry;
 class UserAccount;
 class ContactProfile;
 class QWidget;
@@ -89,7 +90,7 @@ class PsiAccount : public QObject
 {
 	Q_OBJECT
 public:
-	PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManager *tabManager);
+	PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegistry* capsRegistry, TabManager *tabManager);
 	~PsiAccount();
 
 	bool enabled() const;

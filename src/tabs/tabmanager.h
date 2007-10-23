@@ -34,6 +34,8 @@ public:
 	TabManager(PsiCon *psiCon, QObject *parent = 0);
 	~TabManager();
 
+	PsiCon* psiCon() const;
+
 	/**
 	 * Get the default tabdlg (created if needed).
 	 */ 
@@ -47,7 +49,7 @@ public:
 	/**
 	 * Checks if a tabset manages this widget.
 	 */ 
-	bool isChatTabbed(Tabbable*);
+	bool isChatTabbed(const Tabbable*) const;
 	
 	/**
 	 * Gets the tabbed widget with the specified jid.
@@ -57,7 +59,7 @@ public:
 	/**
 	 * Returns the tab dialog that owns the supplied widget.
 	 */
-	TabDlg* getManagingTabs(Tabbable*);
+	TabDlg* getManagingTabs(const Tabbable*) const;
 	
 	/**
 	 * Returns all active tabsets (could be empty).

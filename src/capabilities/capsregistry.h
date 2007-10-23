@@ -33,7 +33,6 @@
 
 #include "capsspec.h"
 
-class PsiAccount;
 class QDomDocument;
 class QDomElement;
 
@@ -42,25 +41,21 @@ class CapsRegistry : public QObject
 	Q_OBJECT
 
 public:
-	static CapsRegistry* instance();
-	
+	CapsRegistry();
+
 	void registerCaps(const CapsSpec&, const XMPP::DiscoItem::Identities&, const XMPP::Features& features);
 	bool isRegistered(const CapsSpec&) const;
 	XMPP::Features features(const CapsSpec&) const;
 	XMPP::DiscoItem::Identities identities(const CapsSpec&) const;
 
-	void setFile(const QString&);
-
 signals:
 	void registered(const CapsSpec&);
 
 public slots:
-	void save();
+	void load(QIODevice& target);
+	void save(QIODevice& target);
 
 private:
-	CapsRegistry();
-	~CapsRegistry();
-
 	class CapsInfo
 	{
 		public:
@@ -83,9 +78,6 @@ private:
 			QDateTime lastSeen_;
 	};
 	QMap<CapsSpec,CapsInfo> capsInfo_;
-
-	static CapsRegistry* instance_;
-	QString fileName_;
 };
 
 
