@@ -32,6 +32,8 @@
 #include <qmessagebox.h>
 #include <QtCrypto>
 #include <QTranslator>
+#include <QDir>
+
 #include <stdlib.h>
 #include <time.h>
 #include "profiles.h"
@@ -239,9 +241,16 @@ int main(int argc, char *argv[])
 	// it must be initialized first in order for ApplicationInfo::resourcesDir() to work
 	QCA::Initializer init;
 	PsiApplication app(argc, argv);
-	QApplication::addLibraryPath(ApplicationInfo::homeDir());
 	QApplication::addLibraryPath(ApplicationInfo::resourcesDir());
+	QApplication::addLibraryPath(ApplicationInfo::homeDir());
 	QApplication::setQuitOnLastWindowClosed(false);
+
+#ifdef Q_WS_MAC
+	QDir dir(QApplication::applicationDirPath());
+	dir.cdUp();
+	dir.cd("Plugins");
+	QApplication::addLibraryPath(dir.absolutePath());
+#endif
 
 	// Initialize QCA
 	QCA::setProperty("pgp-always-trust", true);
