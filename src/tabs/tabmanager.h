@@ -47,7 +47,7 @@ public:
 	/**
 	 * Checks if a tabset manages this widget.
 	 */ 
-	bool isChatTabbed(const Tabbable*) const;
+	bool isChatTabbed(Tabbable*);
 	
 	/**
 	 * Gets the tabbed widget with the specified jid.
@@ -57,7 +57,7 @@ public:
 	/**
 	 * Returns the tab dialog that owns the supplied widget.
 	 */
-	TabDlg* getManagingTabs(const Tabbable*) const;
+	TabDlg* getManagingTabs(Tabbable*);
 	
 	/**
 	 * Returns all active tabsets (could be empty).

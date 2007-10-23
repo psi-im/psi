@@ -38,37 +38,39 @@ void TabManager::tabDying(TabDlg* tab)
 	tabs_.remove(tab);
 }
 
-bool TabManager::isChatTabbed(const Tabbable* chat) const
+bool TabManager::isChatTabbed(Tabbable* chat)
 {
-	foreach(TabDlg* tabDlg, tabs_) {
-		if (tabDlg->managesTab(chat)) {
+	for (uint i = 0; i < tabs_.count(); ++i)
+	{
+		if ( tabs_.at(i)->managesTab(chat) ) {
 			return true;
 		}
 	}
 	return false;
 }
 
-Tabbable* TabManager::getChatInTabs(QString jid)
-{
-	foreach(TabDlg* tabDlg, tabs_) {
-		if (tabDlg->getTabPointer(jid)) {
-			return tabDlg->getTabPointer(jid);
+Tabbable* TabManager::getChatInTabs(QString jid){
+	for (uint i = 0; i < tabs_.count(); ++i)
+	{
+		if ( tabs_.at(i)->getTabPointer(jid) ) {
+			return tabs_.at(i)->getTabPointer(jid);
 		}
 	}
-	return 0;
+	return NULL;
 
 }
 
-TabDlg* TabManager::getManagingTabs(const Tabbable* chat) const
+TabDlg* TabManager::getManagingTabs(Tabbable* chat)
 {
 	//FIXME: this looks like it could be broken to me (KIS)
 	//Does this mean that opening two chats to the same jid will go wrong?
-	foreach(TabDlg* tabDlg, tabs_) {
-		if (tabDlg->managesTab(chat)) {
-			return tabDlg;
+	for (uint i = 0; i < tabs_.count(); ++i)
+	{
+		if ( tabs_.at(i)->managesTab(chat) ) {
+			return tabs_.at(i);
 		}
 	}
-	return 0;
+	return NULL;
 
 }
 

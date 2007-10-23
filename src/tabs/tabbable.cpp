@@ -42,7 +42,7 @@ Tabbable::~Tabbable()
 {
 }
 
-TabDlg* Tabbable::getManagingTabDlg() const
+TabDlg* Tabbable::getManagingTabDlg()
 {
 	return tabManager_->getManagingTabs(this);
 }
@@ -69,22 +69,4 @@ const QString& Tabbable::getDisplayName()
 
 void Tabbable::activated()
 {
-}
-
-/**
- * Returns true if chat is on top of a tab pile
- */
-bool Tabbable::isActiveTab() const
-{
-	if (isHidden()) {
-		return false;
-	}
-
-	if (!option.useTabs) {
-		return isActiveWindow();
-	}
-
-	Q_ASSERT(getManagingTabDlg());
-	return getManagingTabDlg()->isActiveWindow() &&
-	       getManagingTabDlg()->tabOnTop(this);
 }

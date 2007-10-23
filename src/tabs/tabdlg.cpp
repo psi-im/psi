@@ -221,14 +221,14 @@ void TabDlg::tabSelected(QWidget* chat)
 	updateCaption();
 }
 
-bool TabDlg::managesTab(const Tabbable* chat) const
+bool TabDlg::managesTab(Tabbable* chat)
 {
 	if ( chats.contains(chat) )
 			return true;
 	return false;
 }
 
-bool TabDlg::tabOnTop(const Tabbable* chat) const
+bool TabDlg::tabOnTop(Tabbable* chat)
 {
 	if ( tabs->currentPage() == chat )
 		return true;

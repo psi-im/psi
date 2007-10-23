@@ -48,8 +48,8 @@ class TabDlg : public AdvancedWidget<QWidget>
 public:
 	TabDlg(TabManager* tabManager);
 	~TabDlg();
-	bool managesTab(const Tabbable*) const;
-	bool tabOnTop(const Tabbable*) const;
+	bool managesTab(Tabbable*);
+	bool tabOnTop(Tabbable*);
 	QString getName();
 	Tabbable *getTab(int i);
 	

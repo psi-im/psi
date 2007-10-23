@@ -1013,7 +1013,7 @@ public:
 
 			ba = file.readAll();
 		}
-#ifndef ICONSET_ZIP
+#ifdef ICONSET_ZIP
 		else if ( fi.extension(false) == "jisp" || fi.extension(false) == "zip" ) {
 			UnZip z(dir);
 			if ( !z.open() )

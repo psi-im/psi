@@ -133,7 +133,7 @@ public slots:
 	}
 
 	void addEmoticon(const PsiIcon *icon) {
-		if ( !dlg->isActiveTab() ) {
+		if ( !dlg->isActiveWindow() ) {
 			return;
 		}
 
@@ -145,10 +145,9 @@ public slots:
 	}
 
 	void addEmoticon(QString text) {
-		if ( !dlg->isActiveTab() ) {
+		if ( !pa->psi()->isChatActiveWindow(dlg) ) {
 			return;
 		}
-
 		dlg->ui_.mle->chatEdit()->insert( text + " " );
 	}
 
@@ -497,7 +496,7 @@ void ChatDlg::windowActivationChange(bool oldstate)
 	QWidget::windowActivationChange(oldstate);
 
 	// if we're bringing it to the front, get rid of the '*' if necessary
-	if( isActiveWindow() && !isHidden() ) { //this is a tab hack
+	if (isActiveTab()) {
 		activated();
 	}
 }
@@ -1175,7 +1174,7 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 	}
 
 	// if we're not active, notify the user by changing the title
-	if(!isActiveWindow() || isHidden()) { //isHidden==tab hack
+	if (!isActiveTab()) {
 		++d->pending;
 		updateCaption();
 		if (PsiOptions::instance()->getOption("options.ui.flash-windows").toBool()) {

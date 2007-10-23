@@ -663,6 +663,31 @@ QMenuBar* PsiCon::defaultMenuBar() const
 	return d->defaultMenuBar;
 }
 
+
+bool PsiCon::isChatActiveWindow(Tabbable* chat)
+{
+	//returns true if chat is on top of a tab pile
+	if ( chat->isHidden() )
+	{
+		return false;
+	}
+	if (!option.useTabs)
+	{
+		return chat->isActiveWindow();
+	}
+	for (uint i = 0; i < d->tabManager->getTabSets()->count(); ++i)
+	{
+		if ( d->tabManager->getTabSets()->at(i)->isActiveWindow() )
+		{
+			if ( d->tabManager->getTabSets()->at(i)->tabOnTop( chat ) )
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 void PsiCon::dialogRegister(QWidget *w)
 {
 	item_dialog *i = new item_dialog;

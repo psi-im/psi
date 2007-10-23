@@ -3635,7 +3635,7 @@ void PsiAccount::handleEvent(PsiEvent *e)
 			if( c && ( d->tabManager->isChatTabbed(c) || !c->isHidden() ) ) {
 				c->incomingMessage(m);
 				playSound(option.onevent[eChat2]);
-				if(option.alertOpenChats && !c->isActiveTab()) {
+				if(option.alertOpenChats && !d->psi->isChatActiveWindow(c)) {
 					// to alert the chat also, we put it in the queue
 					me->setSentToChatWindow(true);
 				}

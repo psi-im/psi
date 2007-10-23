@@ -21,12 +21,12 @@ SOURCES += \
 		$$PWD/legacy/safedelete.h \
 		$$PWD/legacy/ndns.h \
 		$$PWD/legacy/srvresolver.h \
-		$$PWD/legacy/servsock.h \
+		$$PWD/legacy/servsock.h
 		
 	SOURCES += \
 		$$PWD/legacy/safedelete.cpp \
 		$$PWD/legacy/ndns.cpp \
 		$$PWD/legacy/srvresolver.cpp \
-		$$PWD/legacy/servsock.cpp \
-
+		$$PWD/legacy/servsock.cpp
 }
+

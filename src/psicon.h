@@ -77,6 +77,9 @@ public:
 	ProxyManager *proxy() const;
 	FileTransDlg *ftdlg() const;
 
+	bool isChatActiveWindow(Tabbable*);
+
+
 	QWidget *dialogFind(const char *className);
 	void dialogRegister(QWidget *w);
 	void dialogUnregister(QWidget *w);
