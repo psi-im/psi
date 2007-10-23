@@ -596,13 +596,19 @@ EventNotifierAction::~EventNotifierAction()
 
 bool EventNotifierAction::addTo(QWidget *w)
 {
-	if ( w->inherits("QToolBar") || w->inherits("Q3ToolBar") ) {
+	if ( w ) {
 		MLabel *label = new MLabel(w, "EventNotifierAction::MLabel");
 		label->setText(text());
 		d->labels.append(label);
 		connect(label, SIGNAL(destroyed()), SLOT(objectDestroyed()));
 		connect(label, SIGNAL(doubleClicked()), SIGNAL(activated()));
 		connect(label, SIGNAL(clicked(int)), SIGNAL(clicked(int)));
+
+		if (!w->inherits("QToolBar") && !w->inherits("Q3ToolBar")) {
+			QLayout* layout = w->layout();
+			if (layout)
+				layout->addWidget(label);
+		}
 
 		if ( d->hide )
 			hide();
@@ -638,18 +644,19 @@ void EventNotifierAction::hide()
 	for ( ; it.current(); ++it) {
 		MLabel *label = it.current();
 		label->hide();
-		Q3ToolBar *toolBar = (Q3ToolBar *)label->parent();
+		Q3ToolBar *toolBar = dynamic_cast<Q3ToolBar*>(label->parent());
+		if (toolBar) {
+			QObjectList l = toolBar->queryList( "QWidget" );
+			int found = 0;
 
-		QObjectList l = toolBar->queryList( "QWidget" );
-		int found = 0;
+			for ( QObjectList::ConstIterator it = l.begin(); it != l.end(); ++it) {
+				if ( QString((*it)->name()).left(3) != "qt_" ) // misc internal Qt objects
+					found++;
+			}
 
-		for ( QObjectList::ConstIterator it = l.begin(); it != l.end(); ++it) {
-			if ( QString((*it)->name()).left(3) != "qt_" ) // misc internal Qt objects
-				found++;
+			if ( found == 1 ) // only MLabel is on ToolBar
+				toolBar->hide();
 		}
-
-		if ( found == 1 ) // only MLabel is on ToolBar
-			toolBar->hide();
 	}
 }
 
@@ -660,9 +667,10 @@ void EventNotifierAction::show()
 	Q3PtrListIterator<MLabel> it ( d->labels );
 	for ( ; it.current(); ++it) {
 		MLabel *label = it.current();
-		Q3ToolBar *toolBar = (Q3ToolBar *)label->parent();
 		label->show();
-		toolBar->show();
+		Q3ToolBar *toolBar = dynamic_cast<Q3ToolBar*>(label->parent());
+		if (toolBar)
+			toolBar->show();
 	}
 }
 
