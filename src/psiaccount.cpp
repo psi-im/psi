@@ -2764,7 +2764,7 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
 		//TODO: This doesn't work as expected atm, it doesn't seem to reparent the tabset
 		QWidget *window=c;
 		if ( option.useTabs )
-			window = d->psi->getManagingTabs(c);
+			window = d->tabManager->getManagingTabs(c);
 		if(window && window->isHidden()) {
 			const QPixmap *pp = c->icon();
 			QPixmap p;
