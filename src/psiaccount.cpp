@@ -244,8 +244,9 @@ class PsiAccount::Private : public QObject
 {
 	Q_OBJECT
 public:
-	Private(PsiAccount *parent) {
+	Private(PsiAccount *parent) : xmlRingbuf(1000) {
 		account = parent;
+		xmlRingbufWrite = 0;
 	}
 
 	PsiContactList* contactList;
@@ -321,6 +322,9 @@ public:
 	bool usingSSL;
 	bool doPopups;
 
+	QVector<xmlRingElem> xmlRingbuf;
+	int xmlRingbufWrite;
+
 	QHostAddress localAddress;
 
 	QString pathToProfileEvents()
@@ -359,6 +363,21 @@ public slots:
 		account->updatedAccount();
 	}
 
+	void client_xmlIncoming(const QString &s)
+	{
+		xmlRingbuf[xmlRingbufWrite].type = RingXmlIn;
+		xmlRingbuf[xmlRingbufWrite].xml = s;
+		xmlRingbuf[xmlRingbufWrite].time = QDateTime::currentDateTime();
+		xmlRingbufWrite = (xmlRingbufWrite + 1) % xmlRingbuf.count();
+	}
+	void client_xmlOutgoing(const QString &s)
+	{
+		xmlRingbuf[xmlRingbufWrite].type = RingXmlOut;
+		xmlRingbuf[xmlRingbufWrite].xml = s;
+		xmlRingbuf[xmlRingbufWrite].time = QDateTime::currentDateTime();
+		xmlRingbufWrite = (xmlRingbufWrite + 1) % xmlRingbuf.count();
+	}
+
 private:
 	struct item_dialog2
 	{
@@ -374,6 +393,19 @@ private:
 	}
 
 public:
+	// implementation for QList<PsiAccount::xmlRingElem> PsiAccount::dumpRingbuf()
+	QList< xmlRingElem > dumpRingbuf()
+	{
+		xmlRingElem el;
+		QList< xmlRingElem > ret;
+		for(int i=0; i < xmlRingbuf.count(); i++) {
+			el = xmlRingbuf[(xmlRingbufWrite + 1 + i) % xmlRingbuf.count()];
+			if (!el.xml.isEmpty()) {
+				ret += el;
+			}
+		}
+		return ret;
+	}
 	QWidget* findDialog(const QMetaObject& mo, const Jid& jid, bool compareResource) const
 	{
 		foreach(item_dialog2* i, dialogList) {
@@ -528,7 +560,10 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
 	connect(d->client, SIGNAL(groupChatPresence(const Jid &, const Status &)), SLOT(client_groupChatPresence(const Jid &, const Status &)));
 	connect(d->client, SIGNAL(groupChatError(const Jid &, int, const QString &)), SLOT(client_groupChatError(const Jid &, int, const QString &)));
 	connect(d->client->fileTransferManager(), SIGNAL(incomingReady()), SLOT(client_incomingFileTransfer()));
-	
+	connect(d->client, SIGNAL(xmlIncoming(const QString &)), d, SLOT(client_xmlIncoming(const QString &)));
+	connect(d->client, SIGNAL(xmlOutgoing(const QString &)), d, SLOT(client_xmlOutgoing(const QString &)));
+
+
 	// Privacy manager
 	d->privacyManager = new PsiPrivacyManager(d->client->rootTask());
 
@@ -4697,5 +4732,16 @@ BookmarkManager* PsiAccount::bookmarkManager()
 {
 	return d->bookmarkManager;
 }
+
+/**
+ * \brief Returns the current contents of the debug ringbuffer.
+ * it doesn't clear the ringbuffer
+ * \return a QList<xmlRingElem> of the current debug buffer items.
+ */
+QList<PsiAccount::xmlRingElem> PsiAccount::dumpRingbuf()
+{
+	return d->dumpRingbuf();
+}
+
 
 #include "psiaccount.moc"

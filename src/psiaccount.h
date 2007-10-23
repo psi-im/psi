@@ -183,6 +183,10 @@ public:
 	ServerInfoManager* serverInfoManager();
 	BookmarkManager* bookmarkManager();
 
+	enum xmlRingType {RingXmlIn, RingXmlOut, RingSysMsg};
+	class xmlRingElem { public: int type; QDateTime time; QString xml; };
+	QList< xmlRingElem > dumpRingbuf();
+
 signals:
 	void disconnected();
 	void reconnecting();

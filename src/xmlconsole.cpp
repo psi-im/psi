@@ -61,6 +61,7 @@ XmlConsole::XmlConsole(PsiAccount *_pa)
 	connect(ui_.pb_clear, SIGNAL(clicked()), SLOT(clear()));
 	connect(ui_.pb_input, SIGNAL(clicked()), SLOT(insertXml()));
 	connect(ui_.pb_close, SIGNAL(clicked()), SLOT(close()));
+	connect(ui_.pb_dumpRingbuf, SIGNAL(clicked()), SLOT(dumpRingbuf()));
 	connect(ui_.ck_enable, SIGNAL(clicked(bool)), ui_.gb_filter, SLOT(setEnabled(bool)));
 
 	resize(560,400);
@@ -115,6 +116,23 @@ bool XmlConsole::filtered(const QString& str) const
 		return false;
 	}
 	return true;
+}
+
+void XmlConsole::dumpRingbuf()
+{
+	QList<PsiAccount::xmlRingElem> buf = pa->dumpRingbuf();
+	bool enablesave = ui_.ck_enable->isChecked();
+	ui_.ck_enable->setChecked(true);
+	QString stamp;
+	foreach (PsiAccount::xmlRingElem el, buf) {
+		stamp = "<!-- TS:" + el.time.toString(Qt::ISODate) + "-->";
+		if (el.type == PsiAccount::RingXmlOut) {
+			client_xmlOutgoing(stamp + el.xml);
+		} else {
+			client_xmlIncoming(stamp + el.xml);
+		}
+	}
+	ui_.ck_enable->setChecked(enablesave);
 }
 
 void XmlConsole::client_xmlIncoming(const QString &str)

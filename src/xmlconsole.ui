@@ -1,7 +1,4 @@
 <ui version="4.0" >
- <author></author>
- <comment></comment>
- <exportmacro></exportmacro>
  <class>XMLConsole</class>
  <widget class="QWidget" name="XMLConsole" >
   <property name="geometry" >
@@ -125,6 +122,13 @@
       </spacer>
      </item>
      <item>
+      <widget class="QPushButton" name="pb_dumpRingbuf" >
+       <property name="text" >
+        <string>Dump Ringbuf</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="pb_clear" >
        <property name="text" >
         <string>Clear</string>
@@ -149,7 +153,6 @@
    </item>
   </layout>
  </widget>
- <pixmapfunction></pixmapfunction>
  <resources/>
  <connections/>
 </ui>

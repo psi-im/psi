@@ -44,6 +44,7 @@ private slots:
 	void clear();
 	void updateCaption();
 	void insertXml();
+	void dumpRingbuf();
 	void client_xmlIncoming(const QString &);
 	void client_xmlOutgoing(const QString &);
 	void xml_textReady(const QString &);
