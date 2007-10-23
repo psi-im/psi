@@ -5,6 +5,7 @@ include($$PWD/../cutestuff/cutestuff.pri)
 
 # modules
 include($$PWD/privacy/privacy.pri)
+include($$PWD/tabs/tabs.pri)
 
 # tools
 include($$PWD/tools/trayicon/trayicon.pri)
@@ -140,7 +141,6 @@ HEADERS += \
 	$$PWD/chatdlg.h \
 	$$PWD/chatsplitter.h \
 	$$PWD/chateditproxy.h \
-	$$PWD/tabdlg.h \
 	$$PWD/adduserdlg.h \
 	$$PWD/groupchatdlg.h \
 	$$PWD/gcuserview.h \
@@ -250,7 +250,6 @@ SOURCES += \
 	$$PWD/chatsplitter.cpp \
 	$$PWD/chateditproxy.cpp \
 	$$PWD/tipdlg.cpp \
-	$$PWD/tabdlg.cpp \
 	$$PWD/adduserdlg.cpp \
 	$$PWD/groupchatdlg.cpp \
 	$$PWD/gcuserview.cpp \

@@ -23,7 +23,7 @@ PSI_DIR=..
 
 EXECUTABLE_NAME=psi
 NAME=Psi
-VERSION=0.12-devel_$(shell date +"%Y%m%d")_tabs
+VERSION=0.12-devel_$(shell date +"%Y%m%d")
 #VERSION=0.11-RC1_tab
 
 APPFILE_NAME=Psi.app
