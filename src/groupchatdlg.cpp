@@ -139,7 +139,7 @@ private:
 
 public slots:
 	void addEmoticon(const PsiIcon *icon) {
-		if ( !dlg->isActiveWindow() ) {
+		if ( !dlg->isActiveTab() ) {
 			return;
 		}
 
@@ -151,7 +151,7 @@ public slots:
 	}
 
 	void addEmoticon(QString text) {
-		if ( !dlg->isActiveWindow() ) {
+		if ( !dlg->isActiveTab() ) {
 			return;
 		}
 

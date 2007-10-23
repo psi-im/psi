@@ -133,7 +133,7 @@ public slots:
 	}
 
 	void addEmoticon(const PsiIcon *icon) {
-		if ( !dlg->isActiveWindow() ) {
+		if ( !dlg->isActiveTab() ) {
 			return;
 		}
 
@@ -145,9 +145,10 @@ public slots:
 	}
 
 	void addEmoticon(QString text) {
-		if ( !pa->psi()->isChatActiveWindow(dlg) ) {
+		if ( !dlg->isActiveTab() ) {
 			return;
 		}
+
 		dlg->ui_.mle->chatEdit()->insert( text + " " );
 	}
 
