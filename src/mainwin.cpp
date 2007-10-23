@@ -716,11 +716,11 @@ void MainWin::buildMainMenu()
 	actions << "menu_add_contact";
 	if (PsiOptions::instance()->getOption("options.ui.message.enabled").toBool()) {
 		actions << "menu_new_message";
+	}
 	actions << "menu_disco"
 	        << "menu_join_groupchat"
 	        << "separator"
 	        << "menu_account_setup";
-	}
 	if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
 	        actions << "menu_change_profile";
 	}
