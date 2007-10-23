@@ -156,7 +156,6 @@ HEADERS += \
 	$$PWD/passphrasedlg.h \
 	$$PWD/vcardfactory.h \
 	$$PWD/sslcertdlg.h \
-#	$$PWD/qwextend.h \
 	$$PWD/tasklist.h \
 	$$PWD/discodlg.h \
 	$$PWD/capsspec.h \
@@ -265,7 +264,6 @@ SOURCES += \
 	$$PWD/passphrasedlg.cpp \
 	$$PWD/vcardfactory.cpp \
 	$$PWD/sslcertdlg.cpp \
-#	$$PWD/qwextend.cpp \
 	$$PWD/discodlg.cpp \
 	$$PWD/capsspec.cpp \
 	$$PWD/capsregistry.cpp \

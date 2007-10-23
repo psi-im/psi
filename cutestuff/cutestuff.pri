@@ -28,5 +28,5 @@ SOURCES += \
 		$$PWD/legacy/ndns.cpp \
 		$$PWD/legacy/srvresolver.cpp \
 		$$PWD/legacy/servsock.cpp \
-}
 
+}
