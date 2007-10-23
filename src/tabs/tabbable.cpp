@@ -19,6 +19,8 @@
  */
 
 #include "tabbable.h"
+#include "tabmanager.h"
+#include "tabdlg.h"
 
 #include "jidutil.h"
 
@@ -30,15 +32,19 @@
 // Tabbable
 //----------------------------------------------------------------------------
 
-Tabbable::Tabbable(const Jid &jid, PsiAccount *pa)
-	:AdvancedWidget<QWidget>(0)
+Tabbable::Tabbable(const Jid &jid, PsiAccount *pa, TabManager *tabManager)
+	:AdvancedWidget<QWidget>(0), jid_(jid), pa_(pa), tabManager_(tabManager)
 {
-	jid_ = jid;
-	pa_ = pa;
+
 }
 
 Tabbable::~Tabbable()
 {
+}
+
+TabDlg* Tabbable::getManagingTabDlg() const
+{
+	return tabManager_->getManagingTabs(this);
 }
 
 /**
@@ -63,4 +69,22 @@ const QString& Tabbable::getDisplayName()
 
 void Tabbable::activated()
 {
+}
+
+/**
+ * Returns true if chat is on top of a tab pile
+ */
+bool Tabbable::isActiveTab() const
+{
+	if (isHidden()) {
+		return false;
+	}
+
+	if (!option.useTabs) {
+		return isActiveWindow();
+	}
+
+	Q_ASSERT(getManagingTabDlg());
+	return getManagingTabDlg()->isActiveWindow() &&
+	       getManagingTabDlg()->tabOnTop(this);
 }

@@ -31,18 +31,23 @@ namespace XMPP {
 using namespace XMPP;
 
 class PsiAccount;
+class TabManager;
+class TabDlg;
 
 class Tabbable : public AdvancedWidget<QWidget>
 {
 	Q_OBJECT
 public:
-	Tabbable(const Jid &, PsiAccount *);
+	Tabbable(const Jid &, PsiAccount *, TabManager *tabManager);
 	~Tabbable();
 
 	virtual Jid jid() const; 
 	virtual const QString & getDisplayName();
 
 	virtual bool readyToHide();
+	TabDlg* getManagingTabDlg() const;
+
+	bool isActiveTab() const;
 
 signals:
 	void eventsRead(const Jid &);
@@ -56,6 +61,7 @@ public slots:
 private:
 	Jid jid_;
 	PsiAccount *pa_;
+	TabManager *tabManager_;
 };
 
 #endif

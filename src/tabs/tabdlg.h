@@ -41,15 +41,15 @@ class QString;
 class Q3DragObject;
 class QContextMenuEvent;
 class PsiTabWidget;
-
+class TabManager;
 class TabDlg : public AdvancedWidget<QWidget>
 {
 	Q_OBJECT
 public:
-	TabDlg(PsiCon*);
+	TabDlg(TabManager* tabManager);
 	~TabDlg();
-	bool managesTab(Tabbable*);
-	bool tabOnTop(Tabbable*);
+	bool managesTab(const Tabbable*) const;
+	bool tabOnTop(const Tabbable*) const;
 	QString getName();
 	Tabbable *getTab(int i);
 	
@@ -96,7 +96,6 @@ public:
 	Tabbable* getTabPointer(QString fullJid);
 private:
 	void updateCaption();
-	PsiCon *psi;
 	Q3PtrList<Tabbable> chats;
 	PsiTabWidget *tabs;
 	QPushButton *detachButton, *closeButton, *closeCross;
@@ -104,6 +103,7 @@ private:
 	QMap<Tabbable*, bool> tabIsComposing;
 	QMap<Tabbable*, int> tabHasMessages;
 	QAction *act_close, *act_next, *act_prev;
+	TabManager *tabManager_;
 
 	QSize chatSize;
 };

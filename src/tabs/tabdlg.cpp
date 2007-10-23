@@ -38,6 +38,7 @@
 #include "psioptions.h"
 #include "shortcutmanager.h"
 #include "chatdlg.h"
+#include "tabmanager.h"
 
 #ifdef Q_WS_WIN
 #include <windows.h>
@@ -46,11 +47,10 @@
 //----------------------------------------------------------------------------
 // TabDlg
 //----------------------------------------------------------------------------
-TabDlg::TabDlg(PsiCon *psiCon)
+TabDlg::TabDlg(TabManager* tabManager) : tabManager_(tabManager)
 {
   	if ( option.brushedMetal )
 		setAttribute(Qt::WA_MacMetalStyle);
-	psi=psiCon;
 
 	tabMenu = new QMenu( this );
 	
@@ -129,9 +129,9 @@ void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent * event)
 		QMenu* sendTo = new QMenu(tabMenu);
 		sendTo->setTitle(tr("Send Tab to"));
 		QMap<QAction*, TabDlg*> sentTos;
-		for (uint i = 0; i < psi->getTabSets()->count(); ++i)
+		for (uint i = 0; i < tabManager_->getTabSets()->count(); ++i)
 		{
-			TabDlg* tabSet= psi->getTabSets()->at(i);
+			TabDlg* tabSet= tabManager_->getTabSets()->at(i);
 			QAction *act = sendTo->addAction( tabSet->getName());
 			if (tabSet == this) act->setEnabled(false);
 			sentTos[act] = tabSet;
@@ -160,9 +160,9 @@ void TabDlg::tab_aboutToShowMenu(QMenu *menu)
 	QMenu* sendTo = new QMenu(menu);
 	sendTo->setTitle(tr("Send Current Tab to"));
 	int tabdlgmetatype = qRegisterMetaType<TabDlg*>("TabDlg*");
-	for (uint i = 0; i < psi->getTabSets()->count(); ++i)
+	for (uint i = 0; i < tabManager_->getTabSets()->count(); ++i)
 	{
-		TabDlg* tabSet= psi->getTabSets()->at(i);
+		TabDlg* tabSet= tabManager_->getTabSets()->at(i);
 		QAction *act = sendTo->addAction( tabSet->getName());
 		act->setData(QVariant(tabdlgmetatype, &tabSet));
 		if (tabSet == this) act->setEnabled(false);
@@ -221,14 +221,14 @@ void TabDlg::tabSelected(QWidget* chat)
 	updateCaption();
 }
 
-bool TabDlg::managesTab(Tabbable* chat)
+bool TabDlg::managesTab(const Tabbable* chat) const
 {
 	if ( chats.contains(chat) )
 			return true;
 	return false;
 }
 
-bool TabDlg::tabOnTop(Tabbable* chat)
+bool TabDlg::tabOnTop(const Tabbable* chat) const
 {
 	if ( tabs->currentPage() == chat )
 		return true;
@@ -267,7 +267,7 @@ void TabDlg::detachChat(QWidget* chat)
 		return;
 	}
 
-	TabDlg *newTab = psi->newTabs();
+	TabDlg *newTab = tabManager_->newTabs();
 	sendChatTo(chat, newTab);
 }
 
@@ -292,7 +292,7 @@ void TabDlg::closeTab(Tabbable* chat, bool doclose=true)
 	chat->hide();
 	disconnect ( chat, SIGNAL( captionChanged( QString) ), this, SLOT( updateTab( Tabbable* ) ) );
 	disconnect ( chat, SIGNAL( contactStateChanged( XMPP::ChatState ) ), this, SLOT( setTabState( XMPP::ChatState ) ) );
-	disconnect ( chat, SIGNAL( unreadEventUpdate(int) ), this, SLOT( setTabHasEvents(Tabbable*, int) ) );
+	disconnect ( chat, SIGNAL( unreadEventUpdate(int) ), this, SLOT( setTabHasEvents(int) ) );
 	tabs->removePage(chat);
 	tabIsComposing.erase(chat);
 	tabHasMessages.erase(chat);
@@ -512,7 +512,7 @@ void TabDlg::dropEvent(QDropEvent *event)
 		PsiTabWidget* barParent = source->psiTabWidget();
 		QWidget* widget = barParent->widget(remoteTab);
 		Tabbable* chat=dynamic_cast<Tabbable*>(widget);
-		TabDlg *dlg=psi->getManagingTabs(chat);
+		TabDlg *dlg = tabManager_->getManagingTabs(chat);
 		if (!chat || !dlg)
 			return;
 		dlg->queuedSendChatTo(chat, this);
