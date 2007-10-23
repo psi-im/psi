@@ -118,50 +118,19 @@ private:
 			}
 
 			if ( !ic->text().isEmpty() ) {
-				// first, try to get the text by priorities
-				QStringList lang;
-				lang << QString(QTextCodec::locale()).left(2); // most prioritent, is the local language
-				lang << "";                                    // and then the language without name goes (international?)
-				lang << "en";                                  // then real English
-
-				QString str;
-				QStringList::Iterator it = lang.begin();
-				for ( ; it != lang.end(); ++it) {
-					QHash<QString, QString>::const_iterator it2 = ic->text().find( *it );
-					if ( it2 != ic->text().end() ) {
-						str = it2.value();
-						break;
-					}
-				}
-
-				// if all fails, just get the first text
-				if ( str.isEmpty() )
-				{
-					QHashIterator<QString, QString> it ( ic->text() );
-					while ( it.hasNext() ) {
-						it.next();
-
-						if ( !it.value().isEmpty() ) {
-							str = it.value();
-							break;
-						}
-					}
-				}
-
-				if ( !str.isEmpty() )
-					text = str;
+				text = ic->defaultText();
 
 				// and list of possible variants in the ToolTip
-				QString toolTip;
-				foreach ( QString icText, ic->text() ) {
-					if ( !toolTip.isEmpty() )
-						toolTip += ", ";
-					toolTip += icText;
-					break; // comment this to get list of iconsets
+				QStringList toolTip;
+				foreach(PsiIcon::IconText t, ic->text()) {
+					toolTip += t.text;
 				}
-				if ( toolTip.length() > 30 )
-					toolTip = toolTip.left(30) + "...";
-				setToolTip(toolTip);
+
+				QString toolTipText = toolTip.join(", ");
+				if ( toolTipText.length() > 30 )
+					toolTipText = toolTipText.left(30) + "...";
+
+				setToolTip(toolTipText);
 			}
 		}
 	}

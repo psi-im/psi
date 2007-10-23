@@ -113,8 +113,8 @@ public:
 	// operator const QImage &() const { return impix().image(); }
 
 	//!
-	//! see iconSet().
-	// operator const QIcon &() const { return iconSet(); }
+	//! see icon().
+	// operator const QIcon &() const { return icon(); }
 
 	virtual bool isAnimated() const;
 	virtual const QPixmap &pixmap() const;
@@ -137,8 +137,19 @@ public:
 	const QRegExp &regExp() const;
 	void setRegExp(const QRegExp &);
 
-	const QHash<QString, QString> &text() const;
-	void setText(const QHash<QString, QString> &);
+	struct IconText {
+		IconText(QString _lang, QString _text)
+			: lang(_lang), text(_text)
+		{}
+
+		QString lang;
+		QString text;
+	};
+
+	const QList<IconText> &text() const;
+	void setText(const QList<IconText> &);
+
+	QString defaultText() const;
 
 	const QString &sound() const;
 	void setSound(const QString &);

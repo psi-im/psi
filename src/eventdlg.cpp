@@ -557,18 +557,11 @@ public slots:
 		if ( !dlg->isActiveWindow() )
 		     return;
 
-		QString text;
+		QString text = icon->defaultText();
 
-		QHash<QString,QString> itext = icon->text();
-		for (QHash<QString,QString>::ConstIterator it = itext.begin() ; it != itext.end(); ++it) {
-			if ( !it->isEmpty() ) {
-				text = (*it) + " ";
-				break;
-			}
+		if ( !text.isEmpty() ) {
+			mle->insert( text + " " );
 		}
-
-		if ( !text.isEmpty() )
-			mle->insert( text );
 	}
 
 	void addEmoticon(QString text) {

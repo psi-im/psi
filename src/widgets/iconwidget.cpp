@@ -437,16 +437,12 @@ public:
 
 		h = icon->pixmap().height();
 
-		QString str;
-		QHashIterator<QString, QString> it ( icon->text() );
-		while ( it.hasNext() ) {
-			it.next();
-			if ( !str.isEmpty() )
-				str += ", ";
-			str += it.value();
-		}
+		QStringList str;
+		foreach(PsiIcon::IconText t, icon->text())
+			str += t.text;
+
 		if ( !str.isEmpty() )
-			setText(str);
+			setText(str.join(", "));
 		else
 			setText(tr("Name: '%1'").arg(icon->name()));
 #else

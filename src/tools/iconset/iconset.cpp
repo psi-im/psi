@@ -19,7 +19,6 @@
  */
 
 #include "iconset.h"
-#include "zip.h"
 
 #include <QObject>
 #include <QFile>
@@ -32,6 +31,7 @@
 #include <QDomDocument>
 #include <QThread>
 #include <QCoreApplication>
+#include <QTextCodec>
 
 #include "anim.h"
 
@@ -43,6 +43,14 @@
 #ifdef ICONSET_SOUND
 #	include <QDataStream>
 #	include <qca_basic.h>
+#endif
+
+#ifndef NO_ICONSET_ZIP
+#define ICONSET_ZIP
+#endif
+
+#ifdef ICONSET_ZIP
+#	include "zip.h"
 #endif
 
 #include <QApplication>
@@ -289,7 +297,7 @@ public slots:
 public:
 	QString name;
 	QRegExp regExp;
-	QHash<QString, QString> text;
+	QList<IconText> text;
 	QString sound;
 
 	Impix impix;
@@ -563,7 +571,7 @@ void PsiIcon::setRegExp(const QRegExp &regExp)
  * \sa setText()
  * \sa regExp()
  */
-const QHash<QString, QString> &PsiIcon::text() const
+const QList<PsiIcon::IconText> &PsiIcon::text() const
 {
 	return d->text;
 }
@@ -572,11 +580,50 @@ const QHash<QString, QString> &PsiIcon::text() const
  * Sets the PsiIcon text to \a t.
  * \sa text()
  */
-void PsiIcon::setText(const QHash<QString, QString> &t)
+void PsiIcon::setText(const QList<PsiIcon::IconText> &t)
 {
 	detach();
 
 	d->text = t;
+}
+
+/**
+ * Returns default icon text that could be used as a default value
+ * for e.g. emoticon selector.
+ */
+QString PsiIcon::defaultText() const
+{
+	if (text().isEmpty())
+		return QString();
+
+	// first, try to get the text by priorities
+	QStringList lang;
+	lang << QString(QTextCodec::locale()).left(2); // most prioritent, is the local language
+	lang << "";                                    // and then the language without name goes (international?)
+	lang << "en";                                  // then real English
+
+	QString str;
+	QStringList::Iterator it = lang.begin();
+	for (; it != lang.end(); ++it) {
+		foreach(IconText t, text()){
+			if (t.lang == *it) {
+				str = t.text;
+				break;
+			}
+		}
+	}
+
+	// if all fails, just get the first text
+	if (str.isEmpty()) {
+		foreach(IconText t, text()){
+			if (!t.text.isEmpty()) {
+				str = t.text;
+				break;
+			}
+		}
+	}
+
+	return str;
 }
 
 /**
@@ -961,10 +1008,12 @@ public:
 		QFileInfo fi(dir);
 		if ( fi.isDir() ) {
 			QFile file ( dir + "/" + fileName );
-			file.open (IO_ReadOnly);
+			if (!file.open(IO_ReadOnly))
+				return ba;
 
 			ba = file.readAll();
 		}
+#ifndef ICONSET_ZIP
 		else if ( fi.extension(false) == "jisp" || fi.extension(false) == "zip" ) {
 			UnZip z(dir);
 			if ( !z.open() )
@@ -976,6 +1025,7 @@ public:
 				z.readFile(n, &ba);
 			}
 		}
+#endif
 
 		return ba;
 	}
@@ -1033,7 +1083,8 @@ public:
 		PsiIcon icon;
 		icon.blockSignals(true);
 
-		QHash<QString, QString> text, graphic, sound, object;
+		QList<PsiIcon::IconText> text;
+		QHash<QString, QString> graphic, sound, object;
 
 		QString name;
 		name.sprintf("icon_%04d", icon_counter++);
@@ -1050,7 +1101,7 @@ public:
 				QString lang = e.attribute("xml:lang");
 				if ( lang.isEmpty() )
 					lang = ""; // otherwise there would be many warnings :-(
-				text.insertMulti(lang, e.text());
+				text.append(PsiIcon::IconText(lang, e.text()));
 			}
 			else if ( tag == "object" ) {
 				object[e.attribute("mime")] = e.text();
@@ -1131,12 +1182,14 @@ public:
 							}
 					}
 
-					if ( icon.loadFromData( loadData(graphic[*it], dir), isAnimated ) ) {
+					QByteArray ba = loadData(graphic[*it], dir);
+
+					if ( icon.loadFromData( ba, isAnimated ) ) {
 						loadSuccess = true;
 						break;
 					}
 					else {
-						qDebug("Iconset::load(): Couldn't load %s graphic for the %s icon for the %s iconset", (*it).latin1(), name.latin1(), this->name.latin1());
+						qDebug("Iconset::load(): Couldn't load %s (%s) graphic for the %s icon for the %s iconset", (*it).toLatin1().data(), graphic[*it].toLatin1().data(), name.toLatin1().data(), this->name.latin1());
 						loadSuccess = false;
 					}
 				}
@@ -1182,23 +1235,16 @@ public:
 			}
 		}
 
-		if ( text.count() )
-		{	// construct RegExp
-			QString regexp;
-			
-			QHashIterator<QString, QString> it( text);
-			while ( it.hasNext() ) {
-				it.next();
-				
-				if ( !regexp.isEmpty() )
-					regexp += '|';
-
-				regexp += QRegExp::escape(it.value());
+		// construct RegExp
+		if ( text.count() ) {
+			QStringList regexp;
+			foreach(PsiIcon::IconText t, text) {
+				regexp += QRegExp::escape(t.text);
 			}
-			
+
 			// make sure there is some form of whitespace on at least one side of the text string
 			//regexp = QString("(\\b(%1))|((%2)\\b)").arg(regexp).arg(regexp);
-			icon.setRegExp ( QRegExp(regexp) );
+			icon.setRegExp ( QRegExp(regexp.join("|")) );
 		}
 
 		icon.blockSignals(false);

@@ -139,26 +139,21 @@ private:
 
 public slots:
 	void addEmoticon(const PsiIcon *icon) {
-		if ( !dlg->isActiveWindow() )
-		     return;
-
-		QString text;
-
-		QHash<QString,QString> itext = icon->text();
-		for ( QHash<QString,QString>::ConstIterator it = itext.begin(); it != itext.end(); ++it) {
-			if (  !it->isEmpty() ) {
-				text = (*it) + " ";
-				break;
-			}
+		if ( !dlg->isActiveWindow() ) {
+			return;
 		}
 
-		if ( !text.isEmpty() )
-			mle()->insert( text );
+		QString text = icon->defaultText();
+
+		if (!text.isEmpty()) {
+			mle()->insert(text + " ");
+		}
 	}
 
 	void addEmoticon(QString text) {
-		if ( !dlg->isActiveWindow() )
-		     return;
+		if ( !dlg->isActiveWindow() ) {
+			return;
+		}
 
 		mle()->insert( text + " " );
 	}
