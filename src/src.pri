@@ -19,6 +19,7 @@ include($$PWD/tools/advwidget/advwidget.pri)
 include($$PWD/tools/spellchecker/spellchecker.pri)
 include($$PWD/tools/contactlist/contactlist.pri)
 include($$PWD/tools/grepshortcutkeydlg/grepshortcutkeydlg.pri)
+include($$PWD/tools/atomicxmlfile/atomicxmlfile.pri)
 
 # Growl
 mac {

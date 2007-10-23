@@ -39,6 +39,7 @@
 #include "advwidget.h"
 #include "psioptions.h"
 #include "varlist.h"
+#include "atomicxmlfile.h"
 
 using namespace XMPP;
 using namespace XMLHelper;
@@ -1242,16 +1243,11 @@ bool UserProfile::toFile(const QString &fname)
 		stick.appendChild( textTag(doc, "stickToWindows", GAdvancedWidget::stickToWindows()) );
 	}
 
-	QFile f(fname);
-	if(!f.open(QIODevice::WriteOnly))
-		return FALSE;
-	QTextStream t;
-	t.setDevice(&f);
-	t.setEncoding(QTextStream::UnicodeUTF8);
-	t << doc.toString();
-	f.close();
+	AtomicXmlFile f(fname);
+	if (!f.saveDocument(doc))
+		return false;
 
-	return TRUE;
+	return true;
 }
 
 bool UserProfile::fromFile(const QString &fname)
@@ -1260,12 +1256,9 @@ bool UserProfile::fromFile(const QString &fname)
 	QDomDocument doc;
 	QString progver;
 
-	QFile f(fname);
-	if(!f.open(QIODevice::ReadOnly))
-		return FALSE;
-	if(!doc.setContent(&f))
-		return FALSE;
-	f.close();
+	AtomicXmlFile f(fname);
+	if (!f.loadDocument(&doc))
+		return false;
 
 	QDomElement base = doc.documentElement();
 	if(base.tagName() != "psiconf")

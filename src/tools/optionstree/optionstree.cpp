@@ -23,7 +23,7 @@
 #include <QDebug>
 
 #include "optionstree.h"
-
+#include "atomicxmlfile.h"
 
 /**
  * Default constructor
@@ -127,17 +127,9 @@ bool OptionsTree::saveOptions(const QString& fileName, const QString& configName
 	doc.appendChild(base);
 	
 	tree_.toXml(doc, base);
-	QFile file(fileName);
-	if(!file.open(QIODevice::WriteOnly))
-	{
-		//qWarning(qPrintable(tr(QString("Could not open options file for saving, %1").arg(fileName))));
+	AtomicXmlFile f(fileName);
+	if (!f.saveDocument(doc))
 		return false;
-	}
-	QTextStream text;
-	text.setDevice(&file);
-	text.setCodec("UTF-8");
-	text << doc.toString();
-	file.close();
 
 	return true;
 }
@@ -152,17 +144,10 @@ bool OptionsTree::saveOptions(const QString& fileName, const QString& configName
  */
 bool OptionsTree::loadOptions(const QString& fileName, const QString& configName, const QString& configNS,  const QString& configVersion)
 {
-	// Open the file
-	QFile file(fileName);
-	if(!file.open(QIODevice::ReadOnly)) {
-		return false;
-	}
-	
-	// Load document from file
+	AtomicXmlFile f(fileName);
 	QDomDocument doc;
-	if(!doc.setContent(&file))
+	if (!f.loadDocument(&doc))
 		return false;
-	file.close();
 
 	return loadOptions(doc.documentElement(), configName, configVersion, configNS);
 }

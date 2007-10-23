@@ -30,6 +30,7 @@
 #include "filetransfer.h"
 #include "applicationinfo.h"
 #include "psicontactlist.h"
+#include "atomicxmlfile.h"
 
 using namespace XMPP;
 using namespace XMLHelper;
@@ -912,33 +913,19 @@ bool EventQueue::fromXml(const QDomElement *q)
 bool EventQueue::toFile(const QString &fname)
 {
 	QDomDocument doc;
-
 	QDomElement element = toXml(&doc);
 	doc.appendChild(element);
 
-	QFile f( fname );
-	if( !f.open(QIODevice::WriteOnly) )
-		return FALSE;
-	QTextStream t;
-	t.setDevice( &f );
-	t.setEncoding( QTextStream::UnicodeUTF8 );
-	t << doc.toString(4);
-	f.close();
-
-	return TRUE;
+	AtomicXmlFile f(fname);
+	return f.saveDocument(doc);
 }
 
 bool EventQueue::fromFile(const QString &fname)
 {
-	QString confver;
+	AtomicXmlFile f(fname);
 	QDomDocument doc;
-
-	QFile f(fname);
-	if(!f.open(QIODevice::ReadOnly))
-		return FALSE;
-	if(!doc.setContent(&f, true))
-		return FALSE;
-	f.close();
+	if (!f.loadDocument(&doc))
+		return false;
 
 	QDomElement base = doc.documentElement();
 	return fromXml(&base);
