@@ -151,7 +151,10 @@ void PsiToolBar::initialize( Options::ToolbarPrefs &tbPref, bool createUniqueAct
 		for (int j = 0; j < keys.size(); j++) {
 			IconAction *action = actions.action( keys[j] );
 
-			if ( action ) {
+			if ( action && action->isSeparator() ) {
+				addSeparator();
+			}
+			else if ( action ) {
 				if ( createUniqueActions ) {
 					action = action->copy();
 					d->uniqueActions.append( action );
