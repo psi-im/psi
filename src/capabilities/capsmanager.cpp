@@ -179,6 +179,12 @@ void CapsManager::getDiscoInfo_success(const XMPP::Jid& jid, const QString& node
 	registry_->registerCaps(cs,item.identities(),item.features().list());
 }
 
+void CapsManager::getDiscoInfo_error(const XMPP::Jid& jid, const QString& node, int, const QString&)
+{
+	qWarning(QString("capsmanager.cpp: Disco to '%1' at node '%2' failed.").arg(jid.full()).arg(node).toAscii());
+}
+
+
 CapsSpec CapsManager::getCapsSpecForNode(const XMPP::Jid& jid, const QString& disco_node, bool& ok) const
 {
     int hash_index = disco_node.indexOf('#');
