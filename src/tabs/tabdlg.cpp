@@ -426,7 +426,7 @@ void TabDlg::updateTab(Tabbable* chat) {
 			doFlash(true);
 		}
 	} else {
-		tabs->setTabTextColor( chat, Qt::black );
+		tabs->setTabTextColor( chat, colorGroup().foreground() );
 	}
 	updateCaption();
 }
