@@ -339,8 +339,8 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 #ifdef Q_WS_MAC
 	QMenu *mainMenu = new QMenu(this);
 	mainMenuBar()->insertItem(tr("Menu"), mainMenu);
-	mainMenu->insertItem(tr("Preferences"), this, SIGNAL(doOptions()));
-	mainMenu->insertItem(tr("Quit"), this, SLOT(try2tryCloseProgram()));
+	d->getAction("menu_options")->addTo(mainMenu);
+	d->getAction("menu_quit")->addTo(mainMenu);
 	d->getAction("help_about")->addTo(mainMenu);
 	d->getAction("help_about_qt")->addTo(mainMenu);
 

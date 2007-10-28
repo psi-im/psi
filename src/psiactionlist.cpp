@@ -198,18 +198,19 @@ void PsiActionList::Private::createMainWin()
 
 		IconAction *actNewMessage = new IconAction (tr("New blank message"), "psi/sendMessage", tr("New &blank message"), 0, this);
 		IconAction *actJoinGroupchat = new IconAction (tr("Join Groupchat"), "psi/groupChat", tr("Join &Groupchat"), 0, this);
-		IconAction *actAccountSetup = 0;
-		actAccountSetup = new IconAction (tr("Account Setup"), "psi/account", tr("Acc&ount Setup"), 0, this);
-		IconAction *actOptions = 0;
-		actOptions = new IconAction (tr("Options"), "psi/options", tr("&Options"), 0, this);
+		IconAction *actAccountSetup = new IconAction (tr("Account Setup"), "psi/account", tr("Acc&ount Setup"), 0, this);
+
+		IconAction *actOptions = new IconAction (tr("Options"), "psi/options", tr("&Options"), 0, this);
+		actOptions->setMenuRole(QAction::PreferencesRole);
+
 		IconAction *actToolbars = new IconAction(tr("Configure Toolbars"), "psi/toolbars", tr("Configure Tool&bars"), 0, this);
-		IconAction *actChangeProfile = 0;
-		actChangeProfile = new IconAction (tr("Change Profile"), "psi/profile", tr("&Change profile"), 0, this);
+		IconAction *actChangeProfile = new IconAction (tr("Change Profile"), "psi/profile", tr("&Change profile"), 0, this);
 
 		IconAction *actPlaySounds = new IconAction (tr("Play sounds"), "psi/playSounds", tr("Play &sounds"), 0, this, 0, true);
 		actPlaySounds->setWhatsThis (tr("Toggles whether sound should be played or not"));
 		
 		IconAction *actQuit = new IconAction (tr("Quit"), "psi/quit", tr("&Quit"), 0, this);
+		actQuit->setMenuRole(QAction::QuitRole);
 		actQuit->setWhatsThis (tr("Quits Psi"));
 
 		IconAction *actTip = new IconAction (tr("Tip of the Day"), "psi/tip", tr("&Tip of the Day"), 0, this);
@@ -328,8 +329,10 @@ void PsiActionList::Private::createMainWin()
 		actBugReport->setWhatsThis (tr("Report a Bug (Online)"));
 
 		IconAction *actAbout = new IconAction (tr("About"), "psi/logo_16", tr("&About"), 0, this);
+		actAbout->setMenuRole(QAction::AboutRole);
 
 		IconAction *actAboutQt = new IconAction (tr("About Qt"), tr("About &Qt"), 0, this);
+		actAboutQt->setMenuRole(QAction::AboutQtRole);
 
 		ActionNames actions[] = {
 			{ "help_readme",      actReadme     },
