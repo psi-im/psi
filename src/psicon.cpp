@@ -280,8 +280,8 @@ PsiCon::~PsiCon()
 	delete d->actionList;
 	delete d->edb;
 	delete d->defaultMenuBar;
-	delete d;
 	delete d->tabManager;
+	delete d;
 }
 
 bool PsiCon::init()
