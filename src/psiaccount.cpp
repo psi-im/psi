@@ -107,7 +107,7 @@
 #include "psipopup.h"
 #include "pgputil.h"
 #include "translationmanager.h"
-#include "irisprotocol/discoinfoquerier.h"
+#include "irisprotocol/iris_discoinfoquerier.h"
 #include "iconwidget.h"
 #include "filetransdlg.h"
 #include "systeminfo.h"
