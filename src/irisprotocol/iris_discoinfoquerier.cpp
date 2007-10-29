@@ -1,4 +1,4 @@
-#include "irisprotocol/discoinfoquerier.h"
+#include "irisprotocol/iris_discoinfoquerier.h"
 #include "xmpp_discoinfotask.h"
 
 using namespace XMPP;
@@ -30,3 +30,4 @@ void DiscoInfoQuerier::discoFinished()
 }
 
 } // namespace
+

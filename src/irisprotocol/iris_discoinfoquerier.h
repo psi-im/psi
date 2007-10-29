@@ -15,6 +15,7 @@ namespace IrisProtocol {
 
 class DiscoInfoQuerier : public Protocol::DiscoInfoQuerier
 {
+	Q_OBJECT
 public:
 	DiscoInfoQuerier(XMPP::Client* client);
 
@@ -30,3 +31,4 @@ private:
 } // namespace
 
 #endif
+
