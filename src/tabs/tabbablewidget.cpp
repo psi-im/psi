@@ -122,5 +122,6 @@ bool TabbableWidget::isActiveTab()
 	{
 		return isActiveWindow();
 	}
-	return getManagingTabDlg()->tabOnTop(this);
+	return getManagingTabDlg()->isActiveWindow() &&
+	       getManagingTabDlg()->tabOnTop(this);
 }
