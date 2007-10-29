@@ -26,7 +26,7 @@
 
 
 #include "advwidget.h"
-#include "tabbable.h"
+#include "tabbablewidget.h"
 
 #include "ui_groupchatdlg.h"
 #include "mucmanager.h"
@@ -60,7 +60,7 @@ protected:
 	void keyPressEvent(QKeyEvent *);
 };*/
 
-class GCMainDlg : public Tabbable
+class GCMainDlg : public TabbableWidget
 {
 	Q_OBJECT
 public:

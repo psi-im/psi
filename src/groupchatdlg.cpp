@@ -139,7 +139,7 @@ private:
 
 public slots:
 	void addEmoticon(const PsiIcon *icon) {
-		if ( !dlg->isActiveWindow() ) {
+		if ( !dlg->isActiveTab() ) {
 			return;
 		}
 
@@ -151,7 +151,7 @@ public slots:
 	}
 
 	void addEmoticon(QString text) {
-		if ( !dlg->isActiveWindow() ) {
+		if ( !dlg->isActiveTab() ) {
 			return;
 		}
 
@@ -457,7 +457,7 @@ public:
 };
 
 GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
-	: Tabbable(j, pa, tabManager)
+	: TabbableWidget(j, pa, tabManager)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
   	if ( option.brushedMetal )
@@ -813,7 +813,7 @@ void GCMainDlg::doClearButton()
 void GCMainDlg::openFind()
 {
 	if(d->findDlg)
-		bringToFront(d->findDlg);
+		::bringToFront(d->findDlg);
 	else {
 		d->findDlg = new GCFindDlg(d->lastSearch, this);
 		connect(d->findDlg, SIGNAL(find(const QString &)), SLOT(doFind(const QString &)));
@@ -824,7 +824,7 @@ void GCMainDlg::openFind()
 void GCMainDlg::configureRoom()
 {
 	if(d->configDlg)
-		bringToFront(d->configDlg);
+		::bringToFront(d->configDlg);
 	else {
 		GCUserViewItem* c = (GCUserViewItem*)ui_.lv_users->findEntry(d->self);
 		d->configDlg = new MUCConfigDlg(d->mucManager, this);

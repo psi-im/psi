@@ -1,6 +1,8 @@
 #include "tabmanager.h"
 #include "tabdlg.h"
-#include "tabbable.h"
+#include "tabbablewidget.h"
+#include "groupchatdlg.h"
+#include "chatdlg.h"
 
 TabManager::TabManager(PsiCon* psiCon, QObject *parent) : QObject(parent), psiCon_(psiCon) {
 	//the list 'owns' the tabs
@@ -29,6 +31,25 @@ TabDlg* TabManager::getTabs()
 	}
 }
 
+bool TabManager::shouldBeTabbed(QWidget *widget) {
+	qDebug("Checking if widget should be tabbed");
+	if (!option.useTabs)
+	{
+		qDebug("Tabs disabled");
+		return false;
+	}
+	if (qobject_cast<ChatDlg*> (widget)) {
+		qDebug("Casts to ChatDlg");
+		return true;
+	}
+	if (qobject_cast<GCMainDlg*> (widget)) {
+		qDebug("Casts to GCMainDlg");
+		return true;
+	}
+	qDebug("Unknown type");
+	return false;
+}
+
 TabDlg* TabManager::newTabs()
 {
 	TabDlg *tab = new TabDlg(this);
@@ -43,7 +64,7 @@ void TabManager::tabDying(TabDlg* tab)
 	tabs_.remove(tab);
 }
 
-bool TabManager::isChatTabbed(const Tabbable* chat) const
+bool TabManager::isChatTabbed(const TabbableWidget* chat) const
 {
 	foreach(TabDlg* tabDlg, tabs_) {
 		if (tabDlg->managesTab(chat)) {
@@ -53,7 +74,7 @@ bool TabManager::isChatTabbed(const Tabbable* chat) const
 	return false;
 }
 
-Tabbable* TabManager::getChatInTabs(QString jid)
+TabbableWidget* TabManager::getChatInTabs(QString jid)
 {
 	foreach(TabDlg* tabDlg, tabs_) {
 		if (tabDlg->getTabPointer(jid)) {
@@ -64,7 +85,7 @@ Tabbable* TabManager::getChatInTabs(QString jid)
 
 }
 
-TabDlg* TabManager::getManagingTabs(const Tabbable* chat) const
+TabDlg* TabManager::getManagingTabs(const TabbableWidget* chat) const
 {
 	//FIXME: this looks like it could be broken to me (KIS)
 	//Does this mean that opening two chats to the same jid will go wrong?

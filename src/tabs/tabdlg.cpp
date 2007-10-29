@@ -180,7 +180,7 @@ void TabDlg::sendChatTo(QWidget* chatw, TabDlg* otherTabs)
 {
 	if (otherTabs==this)
 		return;
-	Tabbable* chat = (Tabbable*)chatw;
+	TabbableWidget* chat = (TabbableWidget*)chatw;
 	closeTab(chat, false);
 	otherTabs->addTab(chat);
 }
@@ -211,31 +211,31 @@ void TabDlg::setLooks()
 
 QString TabDlg::getName() const
 {
-	return ((Tabbable*)(tabs->currentPage()))->getDisplayName();
+	return ((TabbableWidget*)(tabs->currentPage()))->getDisplayName();
 }
 
 void TabDlg::tabSelected(QWidget* chat)
 {
 	if (!chat) return; // FIXME
-	((Tabbable*)chat)->activated(); //is this still necessary?
+	((TabbableWidget*)chat)->activated(); //is this still necessary?
 	updateCaption();
 }
 
-bool TabDlg::managesTab(const Tabbable* chat) const
+bool TabDlg::managesTab(const TabbableWidget* chat) const
 {
 	if ( chats.contains(chat) )
 			return true;
 	return false;
 }
 
-bool TabDlg::tabOnTop(const Tabbable* chat) const
+bool TabDlg::tabOnTop(const TabbableWidget* chat) const
 {
 	if ( tabs->currentPage() == chat )
 		return true;
 	return false;
 }
 
-void TabDlg::addTab(Tabbable* chat)
+void TabDlg::addTab(TabbableWidget* chat)
 {
 	chats.append(chat);
 	QString tablabel = chat->getDisplayName();
@@ -273,8 +273,22 @@ void TabDlg::detachChat(QWidget* chat)
 
 void TabDlg::closeChat()
 {
-	Tabbable* chat = (Tabbable*)(tabs->currentPage());
+	TabbableWidget* chat = (TabbableWidget*)(tabs->currentPage());
 	closeChat(chat);
+}
+
+/**
+ * Call this when you want a tab to be removed immediately with no readiness checks
+ * or reparenting, hiding etc (Such as on tab destruction).
+ */ 
+void TabDlg::removeTabWithNoChecks(TabbableWidget *tab) {
+	disconnect ( tab, SIGNAL( captionChanged( QString) ), this, SLOT( updateTab( TabbableWidget* ) ) );
+	disconnect ( tab, SIGNAL( contactStateChanged( XMPP::ChatState ) ), this, SLOT( setTabState( XMPP::ChatState ) ) );
+	disconnect ( tab, SIGNAL( unreadEventUpdate(int) ), this, SLOT( setTabHasEvents(int) ) );
+	tabs->removePage(tab);
+	tabIsComposing.erase(tab);
+	tabHasMessages.erase(tab);
+	chats.remove(tab);
 }
 
 /**
@@ -284,33 +298,29 @@ void TabDlg::closeChat()
  * \param chat Chat to remove.
  * \param doclose Whether the chat is 'closed' while removing it.
  */ 
-void TabDlg::closeTab(Tabbable* chat, bool doclose=true)
+void TabDlg::closeTab(TabbableWidget* chat, bool doclose=true)
 {
 	if (doclose && !chat->readyToHide()) {
 		return;
 	}
 	chat->hide();
-	disconnect ( chat, SIGNAL( captionChanged( QString) ), this, SLOT( updateTab( Tabbable* ) ) );
-	disconnect ( chat, SIGNAL( contactStateChanged( XMPP::ChatState ) ), this, SLOT( setTabState( XMPP::ChatState ) ) );
-	disconnect ( chat, SIGNAL( unreadEventUpdate(int) ), this, SLOT( setTabHasEvents(int) ) );
-	tabs->removePage(chat);
-	tabIsComposing.erase(chat);
-	tabHasMessages.erase(chat);
-	chats.remove(chat);
+	removeTabWithNoChecks(chat);
 	chat->reparent(0,QPoint());
-	if (doclose && chat->testAttribute(Qt::WA_DeleteOnClose))
+	if (doclose && chat->testAttribute(Qt::WA_DeleteOnClose)) {
 		chat->close();
-	if (tabs->count()>0)
+	}
+	if (tabs->count()>0) {
 		updateCaption();
+	}
 	checkHasChats();
 }
 
 void TabDlg::closeChat(QWidget* chat)
 {
-	closeTab((Tabbable*)chat);
+	closeTab((TabbableWidget*)chat);
 }
 
-void TabDlg::selectTab(Tabbable* chat)
+void TabDlg::selectTab(TabbableWidget* chat)
 {
 	tabs->showPage(chat);
 }
@@ -352,7 +362,7 @@ void TabDlg::updateCaption()
 			cap += QString("[%1] ").arg(pending);
 	}
 	cap += getName();
-	if (tabIsComposing[(Tabbable*)(tabs->currentPage())])
+	if (tabIsComposing[(TabbableWidget*)(tabs->currentPage())])
 		cap += tr(" is composing");
 	setWindowTitle(cap);
 }
@@ -373,13 +383,13 @@ void TabDlg::closeMe()
 }
 
 
-Tabbable *TabDlg::getTab(int i) const
+TabbableWidget *TabDlg::getTab(int i) const
 {
-	return ((Tabbable*)tabs->page(i));
+	return ((TabbableWidget*)tabs->page(i));
 }
 
 
-Tabbable* TabDlg::getTabPointer(QString fullJid)
+TabbableWidget* TabDlg::getTabPointer(QString fullJid)
 {
 	for (int i=0; i < tabs->count() ; i++)
 	{
@@ -393,11 +403,11 @@ Tabbable* TabDlg::getTabPointer(QString fullJid)
 
 void TabDlg::updateTab(QString caption)
 {
-	Tabbable *tab = qobject_cast<Tabbable*>(sender());
+	TabbableWidget *tab = qobject_cast<TabbableWidget*>(sender());
 	updateTab(tab);
 }
 	
-void TabDlg::updateTab(Tabbable* chat) {
+void TabDlg::updateTab(TabbableWidget* chat) {
 	QString label, prefix;
 	int num = tabHasMessages[chat];
 	if (num == 0)
@@ -433,7 +443,7 @@ void TabDlg::updateTab(Tabbable* chat) {
 
 void TabDlg::setTabState( XMPP::ChatState state )
 {
-	Tabbable* chat = (Tabbable*) sender();
+	TabbableWidget* chat = (TabbableWidget*) sender();
 	if ( state == XMPP::StateComposing )
 		tabIsComposing[chat] = true;
 	else
@@ -443,7 +453,7 @@ void TabDlg::setTabState( XMPP::ChatState state )
 
 void TabDlg::setTabHasEvents(int messages)
 {
-	Tabbable* chat = qobject_cast<Tabbable*>(sender());
+	TabbableWidget* chat = qobject_cast<TabbableWidget*>(sender());
 	tabHasMessages[chat] = messages;
 	updateTab(chat);
 }
@@ -511,7 +521,7 @@ void TabDlg::dropEvent(QDropEvent *event)
 	{
 		PsiTabWidget* barParent = source->psiTabWidget();
 		QWidget* widget = barParent->widget(remoteTab);
-		Tabbable* chat=dynamic_cast<Tabbable*>(widget);
+		TabbableWidget* chat=dynamic_cast<TabbableWidget*>(widget);
 		TabDlg *dlg = tabManager_->getManagingTabs(chat);
 		if (!chat || !dlg)
 			return;

@@ -18,31 +18,72 @@
  *
  */
 
-#include "tabbable.h"
+#include "tabbablewidget.h"
 #include "tabmanager.h"
 #include "tabdlg.h"
-
+#include "common.h"
 #include "jidutil.h"
+#include "groupchatdlg.h"
+#include <QTimer>
+
 
 #ifdef Q_WS_WIN
 #include <windows.h>
 #endif
 
 //----------------------------------------------------------------------------
-// Tabbable
+// TabbableWidget
 //----------------------------------------------------------------------------
 
-Tabbable::Tabbable(const Jid &jid, PsiAccount *pa, TabManager *tabManager)
+TabbableWidget::TabbableWidget(const Jid &jid, PsiAccount *pa, TabManager *tabManager)
 	:AdvancedWidget<QWidget>(0), jid_(jid), pa_(pa), tabManager_(tabManager)
 {
-
+	hide();
+	QTimer::singleShot(0,this,SLOT(ensureTabbedCorrectly()));
 }
 
-Tabbable::~Tabbable()
+void TabbableWidget::ensureTabbedCorrectly() {
+	if (tabManager_->shouldBeTabbed(this)) {
+		if (!isTabbed()) {
+			tabManager_->getTabs()->addTab(this);
+		}
+	} else {
+		if (isTabbed()) {
+			getManagingTabDlg()->closeTab(this, false);
+		}
+	}
+	show();
+}
+
+void TabbableWidget::bringToFront() 
 {
+	if ( isTabbed() )
+	{
+		getManagingTabDlg()->selectTab(this);
+	}
+	::bringToFront(this);
 }
 
-TabDlg* Tabbable::getManagingTabDlg() const
+TabbableWidget::~TabbableWidget()
+{
+	hide();
+}
+
+void TabbableWidget::hideEvent ( QHideEvent * event ) {
+	Q_UNUSED(event);
+	if (!isVisible()) {
+		//you can have a hideEvent and still be visible, check the docs.
+		if (isTabbed()) {
+			getManagingTabDlg()->removeTabWithNoChecks(this);
+		}
+	}
+}
+
+bool TabbableWidget::isTabbed() {
+	return tabManager_->isChatTabbed(this);
+}
+
+TabDlg* TabbableWidget::getManagingTabDlg()
 {
 	return tabManager_->getManagingTabs(this);
 }
@@ -50,41 +91,36 @@ TabDlg* Tabbable::getManagingTabDlg() const
 /**
  * Runs any gumph necessary before hiding a tab.
  * (checking new messages, setting the autodelete, cancelling composing etc)
- * \return Tabbable is ready to be hidden.
+ * \return TabbableWidget is ready to be hidden.
  */
-bool Tabbable::readyToHide()
+bool TabbableWidget::readyToHide()
 {
 	return true;
 }
 
-Jid Tabbable::jid() const
+Jid TabbableWidget::jid() const
 {
 	return jid_;
 }
 
-const QString& Tabbable::getDisplayName()
+const QString& TabbableWidget::getDisplayName()
 {
 	return jid_.user();
 }
 
-void Tabbable::activated()
+void TabbableWidget::activated()
 {
 }
 
-/**
- * Returns true if chat is on top of a tab pile
- */
-bool Tabbable::isActiveTab() const
+bool TabbableWidget::isActiveTab()
 {
-	if (isHidden()) {
+	if ( isHidden() )
+	{
 		return false;
 	}
-
-	if (!option.useTabs) {
+	if (!isTabbed()/* && !getManagingTabDlg()*/)
+	{
 		return isActiveWindow();
 	}
-
-	Q_ASSERT(getManagingTabDlg());
-	return getManagingTabDlg()->isActiveWindow() &&
-	       getManagingTabDlg()->tabOnTop(this);
+	return getManagingTabDlg()->tabOnTop(this);
 }

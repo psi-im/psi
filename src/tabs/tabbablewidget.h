@@ -34,30 +34,42 @@ class PsiAccount;
 class TabManager;
 class TabDlg;
 
-class Tabbable : public AdvancedWidget<QWidget>
+class TabbableWidget : public AdvancedWidget<QWidget>
 {
 	Q_OBJECT
 public:
-	Tabbable(const Jid &, PsiAccount *, TabManager *tabManager);
-	~Tabbable();
+	TabbableWidget(const Jid &, PsiAccount *, TabManager *tabManager);
+	~TabbableWidget();
 
 	virtual Jid jid() const; 
 	virtual const QString & getDisplayName();
 
 	virtual bool readyToHide();
-	TabDlg* getManagingTabDlg() const;
+	TabDlg* getManagingTabDlg();
 
-	bool isActiveTab() const;
+	/**
+	 * Checks if the dialog is in a tabset
+	 */
+	bool isTabbed(); 
+
+	/**
+	 * Returns true if this tab is active in the active window.
+	 */ 
+	bool isActiveTab();
 
 signals:
 	void eventsRead(const Jid &);
 	void captionChanged(QString);
-	void contactStateChanged( XMPP::ChatState );
+	void contactStateChanged(XMPP::ChatState);
 	void unreadEventUpdate(int);
 
 public slots:
 	virtual void activated();
-
+	void bringToFront();
+protected:
+	virtual void hideEvent(QHideEvent *event);
+protected slots:
+	void ensureTabbedCorrectly();
 private:
 	Jid jid_;
 	PsiAccount *pa_;

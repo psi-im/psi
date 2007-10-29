@@ -31,7 +31,7 @@
 
 #include "advwidget.h"
 
-#include "tabbable.h"
+#include "tabbablewidget.h"
 
 #include "xmpp_chatstate.h" 
 
@@ -49,7 +49,7 @@ class QDragEnterEvent;
 
 #include "ui_chatdlg.h"
 
-class ChatDlg : public Tabbable
+class ChatDlg : public TabbableWidget
 {
 	Q_OBJECT
 public:

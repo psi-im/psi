@@ -3,10 +3,10 @@ DEPENDPATH  *= $$PWD
 
 HEADERS += $$PWD/tabdlg.h
 HEADERS += $$PWD/tabmanager.h 
-HEADERS += $$PWD/tabbable.h 
+HEADERS += $$PWD/tabbablewidget.h 
 
 SOURCES += $$PWD/tabdlg.cpp
 SOURCES += $$PWD/tabmanager.cpp 
-SOURCES += $$PWD/tabbable.cpp 
+SOURCES += $$PWD/tabbablewidget.cpp 
 
 #INTERFACES += $$PWD/.ui 

@@ -32,7 +32,7 @@ class URLObject::Private : QObject
 	Q_OBJECT
 public:
 	QString link;
-	IconAction *act_mailto, *act_browser, *act_add_to_roster, *act_copy;
+	IconAction *act_mailto, *act_join_groupchat, *act_send_message, *act_browser, *act_add_to_roster, *act_copy;
 	URLObject *urlObject;
 
 	Private(URLObject *parent)
@@ -53,6 +53,14 @@ public:
 		act_add_to_roster = new IconAction(tr, "psi/addContact", tr, 0, this);
 		connect(act_add_to_roster, SIGNAL(activated()), SLOT(popupAction()));
 
+		tr = qApp->translate("URLLabel", "Send massage to");
+		act_send_message = new IconAction(tr, "psi/message", tr, 0, this);
+		connect(act_send_message, SIGNAL(activated()), SLOT(popupAction()));
+
+		tr = qApp->translate("URLLabel", "Join groupchat");
+		act_join_groupchat = new IconAction(tr, "psi/groupChat", tr, 0, this);
+		connect(act_join_groupchat, SIGNAL(activated()), SLOT(popupAction()));
+
 		tr = qApp->translate("URLLabel", "Copy location");
 		act_copy = new IconAction(tr, tr, 0, this);
 		connect(act_copy, SIGNAL(activated()), SLOT(popupCopy()));
@@ -67,7 +75,7 @@ public:
 			colon = 0;
 		QString service = l.left( colon );
 
-		if ( service == "mailto" || service == "jabber" || service == "jid" || service == "xmpp" ) {
+		if ( service == "mailto" || service == "jabber" || service == "jid" || service == "xmpp" || service == "atstyle") {
 			if ( colon > -1 )
 				l = l.mid( colon + 1 );
 
@@ -141,12 +149,14 @@ QMenu *URLObject::createPopupMenu(const QString &lnk)
 
 	QMenu *m = new QMenu;
 	
-	if ( service == "mailto" ) {
+	if ( service == "mailto" || service == "atstyle") {
 		m->addAction(d->act_mailto);
 	}
-	else if ( service == "jabber" || service == "jid" || service == "xmpp" ) {
+	else if ( service == "jabber" || service == "jid" || service == "xmpp" || service == "atstyle") {
 		// TODO: need more actions to jabber item. Ex: "add to roster", "send message"
 		m->addAction(d->act_add_to_roster);
+		m->addAction(d->act_send_message);
+		m->addAction(d->act_join_groupchat);
 	}
 	else { //if ( service == "http" || service == "https" || service.isEmpty() ) {
 		m->addAction(d->act_browser);

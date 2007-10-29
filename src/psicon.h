@@ -26,7 +26,7 @@
 
 #include "profiles.h"
 
-#include "tabbable.h"
+#include "tabbablewidget.h"
 
 
 using namespace XMPP;
@@ -76,9 +76,6 @@ public:
 	TuneController* tuneController() const;
 	ProxyManager *proxy() const;
 	FileTransDlg *ftdlg() const;
-
-	bool isChatActiveWindow(Tabbable*);
-
 
 	QWidget *dialogFind(const char *className);
 	void dialogRegister(QWidget *w);

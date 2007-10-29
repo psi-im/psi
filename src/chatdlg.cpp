@@ -133,7 +133,7 @@ public slots:
 	}
 
 	void addEmoticon(const PsiIcon *icon) {
-		if ( !dlg->isActiveWindow() ) {
+		if ( !dlg->isActiveTab() ) {
 			return;
 		}
 
@@ -145,7 +145,7 @@ public slots:
 	}
 
 	void addEmoticon(QString text) {
-		if ( !pa->psi()->isChatActiveWindow(dlg) ) {
+		if ( !dlg->isActiveTab() ) {
 			return;
 		}
 		dlg->ui_.mle->chatEdit()->insert( text + " " );
@@ -196,7 +196,7 @@ public slots:
 };
 
 ChatDlg::ChatDlg(const Jid &jid, PsiAccount *pa, TabManager *tabManager)
-	: Tabbable(jid, pa, tabManager), highlightersInstalled_(false)
+	: TabbableWidget(jid, pa, tabManager), highlightersInstalled_(false)
 {
   	if ( option.brushedMetal ) {
 		setAttribute(Qt::WA_MacMetalStyle);
@@ -1184,10 +1184,10 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 			if (option.useTabs) {
 				TabDlg* tabSet = getManagingTabDlg();
 				tabSet->selectTab(this);
-				bringToFront(tabSet, false);
+				::bringToFront(tabSet, false);
 			}
 			else {
-				bringToFront(this, false);
+				::bringToFront(this, false);
 			}
 		}
 	}

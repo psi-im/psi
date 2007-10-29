@@ -448,12 +448,7 @@ public:
 	{
 		while (!dialogList.isEmpty()) {
 			item_dialog2* i = dialogList.takeFirst();
-			ChatDlg* chat = qobject_cast<ChatDlg*>(i->widget);
-			if (chat) {
-				if (tabManager->isChatTabbed(chat)) {
-					tabManager->getManagingTabs(chat)->close(chat);
-				}
-			}
+			
 			delete i->widget;
 			delete i;
 		}
@@ -2776,11 +2771,6 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
 	if(!c) {
 		// create the chatbox
 		c = new ChatDlg(j, this, d->tabManager);
-		if (option.useTabs)
-		{
-			//get a tab from the mainwin
-			d->tabManager->getTabs()->addTab(c);
-		}
 		connect(c, SIGNAL(aSend(const Message &)), SLOT(dj_sendMessage(const Message &)));
 		connect(c, SIGNAL(messagesRead(const Jid &)), SLOT(chatMessagesRead(const Jid &)));
 		connect(c, SIGNAL(aInfo(const Jid &)), SLOT(actionInfo(const Jid &)));
@@ -3636,7 +3626,7 @@ void PsiAccount::handleEvent(PsiEvent *e)
 			if( c && ( d->tabManager->isChatTabbed(c) || !c->isHidden() ) ) {
 				c->incomingMessage(m);
 				playSound(option.onevent[eChat2]);
-				if(option.alertOpenChats && !d->psi->isChatActiveWindow(c)) {
+				if(option.alertOpenChats && !c->isActiveTab()) {
 					// to alert the chat also, we put it in the queue
 					me->setSentToChatWindow(true);
 				}
@@ -4015,20 +4005,8 @@ void PsiAccount::processChats(const Jid &j)
 void PsiAccount::openChat(const Jid &j)
 {
 	ChatDlg *c = ensureChatDlg(j);
-	QWidget *w = c;
-	if ( option.useTabs )
-	{
-		if ( !d->tabManager->isChatTabbed(c) )
-		{
-			//get a tab from the psicon
-			d->tabManager->getTabs()->addTab(c);
-		}
-		TabDlg* tabSet = d->tabManager->getManagingTabs(c);
-		tabSet->selectTab(c);
-		w = tabSet;
-	}
+	c->bringToFront();
 	processChats(j);
-	bringToFront(w);
 }
 
 void PsiAccount::chatMessagesRead(const Jid &j)
@@ -4065,9 +4043,6 @@ void PsiAccount::openGroupChat(const Jid &j)
 		d->groupchats += str;
 
 	GCMainDlg *w = new GCMainDlg(this, j, d->tabManager);
-	if(option.useTabs) {
-		d->tabManager->getTabs()->addTab(w);
-	}
 	w->setPassword(d->client->groupChatPassword(j.user(),j.host()));
 	connect(w, SIGNAL(aSend(const Message &)), SLOT(dj_sendMessage(const Message &)));
 	connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));

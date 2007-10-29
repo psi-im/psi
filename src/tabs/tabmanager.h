@@ -24,7 +24,7 @@
 #include <Q3PtrList>
 #include "psicon.h"
 
-class Tabbable;
+class TabbableWidget;
 class TabDlg;
 
 class TabManager : public QObject
@@ -49,23 +49,30 @@ public:
 	/**
 	 * Checks if a tabset manages this widget.
 	 */ 
-	bool isChatTabbed(const Tabbable*) const;
+	bool isChatTabbed(const TabbableWidget*) const;
 	
 	/**
 	 * Gets the tabbed widget with the specified jid.
 	 */ 
-	Tabbable* getChatInTabs(QString);
+	TabbableWidget* getChatInTabs(QString);
 	
 	/**
 	 * Returns the tab dialog that owns the supplied widget.
 	 */
-	TabDlg* getManagingTabs(const Tabbable*) const;
+	TabDlg* getManagingTabs(const TabbableWidget*) const;
 	
 	/**
 	 * Returns all active tabsets (could be empty).
 	 */ 
 	Q3PtrList<TabDlg>* getTabSets();
 	
+	/**
+	 * Checks if a given widget should be in a tabset 
+	 * (depends on set options and widget type).
+	 */
+	bool shouldBeTabbed(QWidget *widget); 
+
+
 	void deleteAll();
 
 public slots:
@@ -77,7 +84,7 @@ public slots:
 
 private:
  	Q3PtrList<TabDlg> tabs_;
-	Q3PtrList<Tabbable> tabControlledChats_;
+	Q3PtrList<TabbableWidget> tabControlledChats_;
 	PsiCon *psiCon_;
 };
 
