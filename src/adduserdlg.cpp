@@ -91,7 +91,7 @@ AddUserDlg::AddUserDlg(const QStringList &services, const QStringList &names, co
 
 	pb_add->setDefault(true);
 	connect(pb_add, SIGNAL(clicked()), SLOT(ok()));
-	connect(pb_close, SIGNAL(clicked()), SLOT(reject()));
+	connect(pb_close, SIGNAL(clicked()), SLOT(cancel()));
 	connect(pb_transGet, SIGNAL(clicked()), SLOT(getTransID()));
 
 	connect(tb_vCard, SIGNAL(clicked()), SLOT(getVCardActivated()));
@@ -123,6 +123,14 @@ Jid AddUserDlg::jid() const
 	return Jid(le_jid->text().stripWhiteSpace());
 }
 
+void AddUserDlg::cancel()
+{
+	le_jid->setText("");
+	le_nick->setText("");
+	cb_group->setCurrentItem(0);
+	reject();
+}
+
 void AddUserDlg::ok()
 {
 	if(le_jid->text().isEmpty()) {
@@ -136,17 +144,19 @@ void AddUserDlg::ok()
 
 	QString gname = cb_group->currentText();
 	QStringList list;
-	if(gname != tr("<None>"))
+	if(gname != tr("<None>")) {
 		list += gname;
+	}
 
 	add(jid(), le_nick->text(), list, ck_authreq->isChecked());
 
 	QMessageBox::information(this, tr("Add User: Success"), tr("Added %1 to your roster.").arg(jid().full()));
 	le_jid->setText("");
 	le_nick->setText("");
-	if(ck_close->isChecked())
+	if(ck_close->isChecked()) {
+		cb_group->setCurrentItem(0);
 		accept();
-	else {
+	} else {
 		le_jid->setFocus();
 	}
 }

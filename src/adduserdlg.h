@@ -42,6 +42,7 @@ signals:
 
 private slots:
 	void ok();
+	void cancel();
 	void serviceActivated(int);
 	void getTransID();
 	void pa_updatedActivity();
