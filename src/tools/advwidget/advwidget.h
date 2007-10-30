@@ -1,6 +1,6 @@
 /*
  * advwidget.h - AdvancedWidget template class
- * Copyright (C) 2005  Michail Pishchagin
+ * Copyright (C) 2005-2007  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -42,7 +42,7 @@ public:
 	void doFlash(bool on);
 
 #ifdef Q_OS_WIN
-	bool winEvent(MSG *msg);
+	bool winEvent(MSG* msg, long* result);
 #endif
 
 	void moveEvent(QMoveEvent *e);
@@ -67,8 +67,10 @@ private:
 public:
 	AdvancedWidget(QWidget *parent = 0, Qt::WindowFlags f = 0)
 		: BaseClass(parent)
+		, gAdvWidget(0)
 	{
-		BaseClass::setWindowFlags(f);
+		if (f != 0)
+			BaseClass::setWindowFlags(f);
 		gAdvWidget = new GAdvancedWidget( this );
 	}
 
@@ -92,42 +94,52 @@ public:
 
 	QRect saveableGeometry() const
 	{
+		if (BaseClass::isHidden() || BaseClass::isMinimized())
+			return QRect();
 		return QRect(BaseClass::pos(), BaseClass::size());
 	}
 
 	virtual void restoreSavedGeometry(QRect savedGeometry)
 	{
-		gAdvWidget->restoreSavedGeometry(savedGeometry);
+		if (gAdvWidget)
+			gAdvWidget->restoreSavedGeometry(savedGeometry);
 	}
 
 	void doFlash( bool on )
 	{
-		gAdvWidget->doFlash( on );
+		if (gAdvWidget)
+			gAdvWidget->doFlash( on );
 	}
 
 #ifdef Q_OS_WIN
-	bool winEvent( MSG *msg )
+	bool winEvent(MSG* msg, long* result)
 	{
-		return gAdvWidget->winEvent( msg );
+		if (gAdvWidget)
+			return gAdvWidget->winEvent(msg, result);
+		return BaseClass::winEvent(msg, result);
 	}
 #endif
 
 	void moveEvent( QMoveEvent *e )
 	{
-		gAdvWidget->moveEvent(e);
+		if (gAdvWidget)
+			gAdvWidget->moveEvent(e);
 	}
 
 	void setWindowTitle( const QString &c )
 	{
-		gAdvWidget->preSetCaption();
+		if (gAdvWidget)
+			gAdvWidget->preSetCaption();
 		BaseClass::setWindowTitle( c );
-		gAdvWidget->postSetCaption();
+		if (gAdvWidget)
+			gAdvWidget->postSetCaption();
 	}
 
 protected:
 	void windowActivationChange( bool oldstate )
 	{
-		gAdvWidget->windowActivationChange( oldstate );
+		if (gAdvWidget)
+			gAdvWidget->windowActivationChange( oldstate );
 		BaseClass::windowActivationChange( oldstate );
 	}
 };

@@ -1,6 +1,6 @@
 /*
  * advwidget.cpp - AdvancedWidget template class
- * Copyright (C) 2005  Michail Pishchagin
+ * Copyright (C) 2005-2007  Michail Pishchagin
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,7 +31,6 @@
 #endif
 
 // TODO: Make use of KDE taskbar flashing support
-// TODO: Use FlashWindowEx instead of FlashWindow!
 
 //----------------------------------------------------------------------------
 // AdvancedWidgetShared
@@ -72,18 +71,14 @@ public:
 
 	QWidget *parentWidget;
 
-	bool flashing();
 	void doFlash(bool on);
 	void posChanging(int *x, int *y, int *width, int *height);
 	void moveEvent(QMoveEvent *e);
 
 private:
-	QTimer *flashTimer;
-	int flashCount;
 	QRect newGeometry;
 
 private slots:
-	void flashAnimate();
 	void updateGeometry();
 };
 
@@ -98,8 +93,6 @@ GAdvancedWidget::Private::Private(QWidget *parent)
 		advancedWidgetShared = new AdvancedWidgetShared();
 
 	parentWidget = parent;
-	flashTimer = 0;
-	flashCount = 0;
 }
 
 void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *height)
@@ -199,40 +192,22 @@ void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *heig
 void GAdvancedWidget::Private::doFlash(bool yes)
 {
 #ifdef Q_WS_WIN
-	if ( yes ) {
-		if ( flashTimer )
-			return;
-		flashTimer = new QTimer(this);
-		connect(flashTimer, SIGNAL(timeout()), SLOT(flashAnimate()));
-		flashCount = 0;
-		flashAnimate(); // kick the first one immediately
-		flashTimer->start(500);
+	FLASHWINFO fwi;
+	fwi.cbSize = sizeof(fwi);
+	fwi.hwnd = parentWidget->winId();
+	if (yes) {
+		fwi.dwFlags = FLASHW_ALL | FLASHW_TIMER;
+		fwi.dwTimeout = 0;
+		fwi.uCount = -1;
 	}
 	else {
-		if ( flashTimer ) {
-			delete flashTimer;
-			flashTimer = 0;
-			// comment this out to fix titlebar repaint on Windows??
-			//FlashWindow(winId(), false);
-		}
+		fwi.dwFlags = FLASHW_STOP;
+		fwi.uCount = 0;
 	}
+	FlashWindowEx(&fwi);
 #else
 	Q_UNUSED(yes)
 #endif
-}
-
-void GAdvancedWidget::Private::flashAnimate()
-{
-#ifdef Q_WS_WIN
-	FlashWindow( parentWidget->winId(), true );
-	if ( ++flashCount == 5 )
-		flashTimer->stop();
-#endif
-}
-
-bool GAdvancedWidget::Private::flashing()
-{
-	return flashTimer && flashCount & 1;
 }
 
 void GAdvancedWidget::Private::moveEvent(QMoveEvent *)
@@ -279,13 +254,14 @@ GAdvancedWidget::GAdvancedWidget(QWidget *parent)
 }
 
 #ifdef Q_OS_WIN
-bool GAdvancedWidget::winEvent(MSG *msg)
+bool GAdvancedWidget::winEvent(MSG* msg, long* result)
 {
 	if ( msg->message == WM_WINDOWPOSCHANGING ) {
 		WINDOWPOS *wpos = (WINDOWPOS *)msg->lParam;
 
 		d->posChanging(&wpos->x, &wpos->y, &wpos->cx, &wpos->cy);
 
+		result = 0;
 		return true;
 	}
 
@@ -295,18 +271,10 @@ bool GAdvancedWidget::winEvent(MSG *msg)
 
 void GAdvancedWidget::preSetCaption()
 {
-#ifdef Q_WS_WIN
-	if ( d->flashing() )
-		FlashWindow( d->parentWidget->winId(), true );
-#endif
 }
 
 void GAdvancedWidget::postSetCaption()
 {
-#ifdef Q_WS_WIN
-	if ( d->flashing() )
-		FlashWindow( d->parentWidget->winId(), true );
-#endif
 }
 
 void GAdvancedWidget::restoreSavedGeometry(QRect savedGeometry)
