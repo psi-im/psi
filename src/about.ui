@@ -194,19 +194,6 @@ Copyright (C) 2001 - 2007 by Justin Karneges&lt;br>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
-         <property name="text" >
-          <string>I. M. Anonymous &lt;note text="replace with your real name">&lt;br>
-&amp;nbsp;&amp;nbsp;&lt;a href="mailto:noone@nowhere.com">nowhere@nowhere.com&lt;/a> &lt;note text="replace with your email">&lt;br>
-&amp;nbsp;&amp;nbsp;&lt;a href="http://blah.com">http://blah.com&lt;/a> &lt;note text="write your site URL here">&lt;br>
-&amp;nbsp;&amp;nbsp;Jabber: &lt;a href="jabber:blah@jabber.org">blah@jabber.org &lt;note text="write your JID here">&lt;/a>&lt;br>
-&amp;nbsp;&amp;nbsp;Translator &lt;note text="write description for the work, you've done">&lt;br>
-&lt;br>
-&lt;note text="you can add as many people here as you want">
-
-&lt;note text="and translate following text">
-Join the translation team today! Go to &lt;a href="http://psi-im.org/forum/forum/3">http://psi.affinix.com/forums/index.php?act=SF&amp;f=3&lt;/a> for further details!
-</string>
-         </property>
         </widget>
        </item>
       </layout>

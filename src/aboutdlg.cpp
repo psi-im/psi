@@ -102,6 +102,19 @@ AboutDlg::AboutDlg(QWidget* parent)
 	//	     "The above list only reflects the contributors I managed to keep track of.\n"
 	//	     "If you're not included but you think that you must be in the list, contact the developers.");
 	ui_.te_thanks->setText( thanks );
+
+	QString translation = tr(
+		"I. M. Anonymous <note text=\"replace with your real name\"><br>\n"
+		"&nbsp;&nbsp;<a href=\"http://me.com\">http://me.com</a><br>\n"
+		"&nbsp;&nbsp;Jabber: <a href=\"xmpp:me@me.com\">me@me.com</a><br>\n"
+		"&nbsp;&nbsp;<a href=\"mailto:me@me.com\">me@me.com</a><br>\n"
+		"&nbsp;&nbsp;Translator<br>\n"
+		"<br>\n"
+		"Join the translation team today! Go to \n"
+		"<a href=\"http://forum.psi-im.org/forum/14\">\n"
+		"http://forum.psi-im.org/forum/14</a> for further details!"
+	);
+	ui_.te_translation->appendText(translation);
 }
 
 QString AboutDlg::loadText( const QString & fileName )
