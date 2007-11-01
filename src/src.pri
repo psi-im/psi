@@ -143,6 +143,7 @@ HEADERS += \
 	$$PWD/certutil.h \
 	$$PWD/eventdlg.h \
 	$$PWD/chatdlg.h \
+	$$PWD/psichatdlg.h \
 	$$PWD/chatsplitter.h \
 	$$PWD/chateditproxy.h \
 	$$PWD/adduserdlg.h \
@@ -247,6 +248,7 @@ SOURCES += \
 	$$PWD/statusdlg.cpp \
 	$$PWD/eventdlg.cpp \
 	$$PWD/chatdlg.cpp \
+	$$PWD/psichatdlg.cpp \
 	$$PWD/chatsplitter.cpp \
 	$$PWD/chateditproxy.cpp \
 	$$PWD/tipdlg.cpp \

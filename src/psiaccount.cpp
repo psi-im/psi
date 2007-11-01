@@ -2770,7 +2770,7 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
 	ChatDlg *c = findDialog<ChatDlg*>(j);
 	if(!c) {
 		// create the chatbox
-		c = new ChatDlg(j, this, d->tabManager);
+		c = ChatDlg::create(j, this, d->tabManager);
 		connect(c, SIGNAL(aSend(const Message &)), SLOT(dj_sendMessage(const Message &)));
 		connect(c, SIGNAL(messagesRead(const Jid &)), SLOT(chatMessagesRead(const Jid &)));
 		connect(c, SIGNAL(aInfo(const Jid &)), SLOT(actionInfo(const Jid &)));
