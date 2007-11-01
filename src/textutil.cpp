@@ -271,84 +271,56 @@ static bool linkify_okEmail(const QString &addy)
 	return TRUE;
 }
 
-/*QString TextUtil::linkifyMailTo(const QString &in)
-{
-	
-}
-
-QString TextUtil::linkifyUrl(const QString &in)
-{
-	
-}
-
-QString TextUtil::linkifyJabber(const QString &in)
-{
-	
-}*/
-
 QString TextUtil::linkify(const QString &in)
 {
 	QString out = in;
 	int x1, x2;
-	bool isUrl, isEmail, isJabber, isAtStyle;
+	bool isUrl, isEmail;
 	QString linked, link, href;
-	
-	QStringList urlPrefixes;
-	urlPrefixes << "http://" << "https://" << "ftp://" << "news://" << "ed2k://";
-	QStringList mailToPrefixes;
-	mailToPrefixes << "mailto:";
-	QStringList jabberPrefixes;
-	jabberPrefixes << "xmpp:";
-	
+
 	for(int n = 0; n < (int)out.length(); ++n) {
 		isUrl = FALSE;
 		isEmail = FALSE;
-		isJabber = FALSE;
-		isAtStyle = FALSE;
-		bool found = FALSE;
 		x1 = n;
 
-		foreach (QString prefix, urlPrefixes) {
-			if(linkify_pmatch(out, n, prefix)) {
-				n += prefix.length();
-				isUrl = TRUE;
-				href = "";
-			}
+		if(linkify_pmatch(out, n, "http://")) {
+			n += 7;
+			isUrl = TRUE;
+			href = "";
+		}
+		else if(linkify_pmatch(out, n, "https://")) {
+			n += 8;
+			isUrl = TRUE;
+			href = "";
+		}
+		else if(linkify_pmatch(out, n, "ftp://")) {
+			n += 6;
+			isUrl = TRUE;
+			href = "";
+		}
+		else if(linkify_pmatch(out, n, "news://")) {
+			n += 7;
+			isUrl = TRUE;
+			href = "";
+		}
+		else if (linkify_pmatch(out, n, "ed2k://")) {
+			n += 7;
+			isUrl = TRUE;
+			href = "";
+		}
+		else if(linkify_pmatch(out, n, "www.")) {
+			isUrl = TRUE;
+			href = "http://";
+		}
+		else if(linkify_pmatch(out, n, "ftp.")) {
+			isUrl = TRUE;
+			href = "ftp://";
+		}
+		else if(linkify_pmatch(out, n, "@")) {
+			isEmail = TRUE;
+			href = "mailto:";
 		}
 
-		if (!found) {
-			foreach (QString prefix, mailToPrefixes) {
-				if(linkify_pmatch(out, n, prefix)) {
-					n += prefix.length();
-					isEmail = TRUE;
-					href = "";
-				}
-			}
-		}
-		if (!found) {
-			foreach (QString prefix, jabberPrefixes) {
-				if(linkify_pmatch(out, n, prefix)) {
-					n += prefix.length();
-					isJabber = TRUE;
-					href = "";
-				}
-			}
-		}
-		if (!found) {
-			if(linkify_pmatch(out, n, "www.")) {
-				isUrl = TRUE;
-				href = "http://";
-			}
-			else if(linkify_pmatch(out, n, "ftp.")) {
-				isUrl = TRUE;
-				href = "ftp://";
-			}
-			else if(linkify_pmatch(out, n, "@")) {
-				isAtStyle = TRUE;
-				href = "atstyle:";
-			}
-		}
-		
 		if(isUrl) {
 			// make sure the previous char is not alphanumeric
 			if(x1 > 0 && out.at(x1-1).isLetterOrNumber())
