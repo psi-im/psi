@@ -18,17 +18,21 @@
  *
  */
 
+#include <qglobal.h>
+#ifdef Q_OS_WIN
+#if __GNUC__ >= 3
+#	define WINVER 0x0500
+#endif
+#include <windows.h>
+#include <winuser.h>
+#endif
+
 #include "advwidget.h"
 
 #include <QApplication>
 #include <QWidget>
 #include <QTimer>
 #include <QDesktopWidget>
-
-#ifdef Q_OS_WIN
-#include <windows.h>
-#include <winuser.h>
-#endif
 
 // TODO: Make use of KDE taskbar flashing support
 
@@ -198,7 +202,7 @@ void GAdvancedWidget::Private::doFlash(bool yes)
 	if (yes) {
 		fwi.dwFlags = FLASHW_ALL | FLASHW_TIMER;
 		fwi.dwTimeout = 0;
-		fwi.uCount = -1;
+		fwi.uCount = (UINT)-1;
 	}
 	else {
 		fwi.dwFlags = FLASHW_STOP;
