@@ -29,6 +29,7 @@ class QSize;
 class QColor;
 class QStringList;
 
+QDateTime stamp2TS(const QString &ts);
 bool stamp2TS(const QString &ts, QDateTime *d);
 QString TS2stamp(const QDateTime &d);
 QDomElement textTag(QDomDocument *doc, const QString &name, const QString &content);

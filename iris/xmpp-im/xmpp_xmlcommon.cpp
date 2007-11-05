@@ -29,10 +29,10 @@
 #include <qstringlist.h>
 #include <qcolor.h>
 
-bool stamp2TS(const QString &ts, QDateTime *d)
+QDateTime stamp2TS(const QString &ts)
 {
 	if(ts.length() != 17)
-		return false;
+		return QDateTime();
 
 	int year  = ts.mid(0,4).toInt();
 	int month = ts.mid(4,2).toInt();
@@ -45,15 +45,23 @@ bool stamp2TS(const QString &ts, QDateTime *d)
 	QDate xd;
 	xd.setYMD(year, month, day);
 	if(!xd.isValid())
-		return false;
+		return QDateTime();
 
 	QTime xt;
 	xt.setHMS(hour, min, sec);
 	if(!xt.isValid())
+		return QDateTime();
+
+	return QDateTime(xd, xt);
+}
+
+bool stamp2TS(const QString &ts, QDateTime *d)
+{
+	QDateTime dateTime = stamp2TS(ts);
+	if (dateTime.isNull())
 		return false;
 
-	d->setDate(xd);
-	d->setTime(xt);
+	*d = dateTime;
 
 	return true;
 }
