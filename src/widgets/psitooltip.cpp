@@ -20,263 +20,15 @@
 
 #include "psitooltip.h"
 
-#include <QFrame>
 #include <QApplication>
 #include <QDesktopWidget>
-#include <QEvent>
 #include <QKeyEvent>
-#include <QHash>
 #include <QPointer>
-#include <QStyle>
-#include <QStyleOption>
-#include <QStylePainter>
-#include <QTimer>
+#include <QHash>
 #include <QToolTip>
-#include <QAbstractTextDocumentLayout>
-#include <QTextFrame>
-#include <QTextEdit>
 #include "private/qeffects_p.h"
 
-#include "psirichtext.h"
-
-//----------------------------------------------------------------------------
-// PsiTipLabel
-//----------------------------------------------------------------------------
-
-class PsiTipLabel : public QFrame
-{
-	Q_OBJECT
-public:
-	PsiTipLabel(const QString& text, QWidget* parent);
-	~PsiTipLabel();
-	static PsiTipLabel *instance;
-
-	// int heightForWidth(int w) const;
-	QSize sizeHint() const;
-	QSize minimumSizeHint() const;
-	bool eventFilter(QObject *, QEvent *);
-
-	QString theText() const;
-
-	QBasicTimer hideTimer, deleteTimer;
-
-	void hideTip();
-protected:
-	void enterEvent(QEvent*){ hideTip(); }
-	void timerEvent(QTimerEvent *e);
-	void paintEvent(QPaintEvent *e);
-	// QSize sizeForWidth(int w) const;
-
-private:
-	QTextDocument *doc;
-	QString theText_;
-	bool isRichText;
-	int margin;
-	// int indent;
-};
-
-PsiTipLabel *PsiTipLabel::instance = 0;
-
-PsiTipLabel::PsiTipLabel(const QString& text, QWidget* parent)
-	: QFrame(parent, Qt::ToolTip)
-{
-	delete instance;
-	instance = this;
-
-	margin = 1 + style()->pixelMetric(QStyle::PM_ToolTipLabelFrameWidth, 0, this);
-	setFrameStyle(QFrame::NoFrame);
-
-	// doc = new QTextDocument(this);
-	// QTextDocumentLayout is private in Qt4
-	// and it's impossible to set wrapping mode directly.
-	// So we create this QTextEdit instance and use its QTextDocument,
-	// just because QTextEdit can set the wrapping mode.
-	// Yes, this is crazy...
-	QTextEdit *edit = new QTextEdit(this);
-	edit->hide();
-	edit->setWordWrapMode(QTextOption::WordWrap);
-	doc = edit->document();
-	doc->setUndoRedoEnabled(false);
-	doc->setDefaultFont(font());
-
-	ensurePolished();
-	
-	theText_ = text;
-	isRichText = false;
-	if (Qt::mightBeRichText(theText_)) {
-		isRichText = true;
-		PsiRichText::install(doc);
-		PsiRichText::setText(doc, theText_);
-	}
-	else {
-		doc->setPlainText(theText_);
-	}
-
-	resize(sizeHint());
-	qApp->installEventFilter(this);
-	hideTimer.start(10000, this);
-	setWindowOpacity(style()->styleHint(QStyle::SH_ToolTipLabel_Opacity, 0, this) / 255.0);
-	// No resources for this yet (unlike on Windows).
-	//QPalette pal(Qt::black, QColor(255,255,220),
-	//             QColor(96,96,96), Qt::black, Qt::black,
-	//             Qt::black, QColor(255,255,220));
-	setPalette(QToolTip::palette());
-}
-
-QString PsiTipLabel::theText() const
-{
-	return theText_;
-}
-
-/*
-QSize PsiTipLabel::sizeForWidth(int w) const
-{
-	QRect br;
-	
-	int hextra = 2 * margin;
-	int vextra = hextra;
-	
-	if (isRichText) {
-		hextra = 1;
-		vextra = 1;
-	}
-	
-	PsiRichText::ensureTextLayouted(doc, w);
-	const qreal oldTextWidth = doc->textWidth();
-	
-	doc->adjustSize();
-	br = QRect(QPoint(0, 0), doc->size().toSize());
-	doc->setTextWidth(oldTextWidth);
-	
-	QFontMetrics fm(font());
-	QSize extra(hextra + 1, vextra);
-
-	// Make it look good with the default ToolTip font on Mac, which has a small descent.
-	if (fm.descent() == 2 && fm.ascent() >= 11)
-		vextra++;
-	
-	const QSize contentsSize(br.width() + hextra, br.height() + vextra);
-	return contentsSize;
-}
-*/
-QSize PsiTipLabel::sizeHint() const
-{
-	QTextFrameFormat fmt = doc->rootFrame()->frameFormat();
-	fmt.setMargin(0);
-	doc->rootFrame()->setFrameFormat(fmt);
-	// PsiRichText::ensureTextLayouted(doc, -1);
-
-	doc->adjustSize();
-	// br = QRect(QPoint(0, 0), doc->size().toSize());
-	// this way helps to fight empty space on the right:
-	QSize docSize = QSize(doc->idealWidth(), doc->size().toSize().height());
-
-	QFontMetrics fm(font());
-	QSize extra(2*margin + 2, 2*margin + 1);	// "+" for tip's frame
-	// Make it look good with the default ToolTip font on Mac, which has a small descent.
-	if (fm.descent() == 2 && fm.ascent() >= 11)
-		++extra.rheight();
-
-	return docSize + extra;
-}
-
-QSize PsiTipLabel::minimumSizeHint() const
-{
-	return sizeHint();
-	// qWarning("PsiTipLabel::minimumSizeHint");
-	// ensurePolished();
-	// QSize sh = sizeForWidth(-1);
-	// QSize msh(-1, -1);
-	// 
-	// msh.rheight() = sizeForWidth(QWIDGETSIZE_MAX).height(); // height for one line
-	// msh.rwidth()  = sizeForWidth(0).width(); // wrap ? size of biggest word : min doc size
-	// if (sh.height() < msh.height())
-	// 	msh.rheight() = sh.height();
-	// 
-	// return msh;
-}
-
-void PsiTipLabel::paintEvent(QPaintEvent *)
-{
-	QStylePainter p(this);
-	QStyleOptionFrame opt;
-	opt.init(this);
-	p.drawPrimitive(QStyle::PE_PanelTipLabel, opt);
-	p.end();
-
-	// stolen from QLabel::paintEvent
-	QPainter painter(this);
-	drawFrame(&painter);
-	QRect cr = contentsRect();
-	cr.adjust(margin, margin, -margin, -margin);
-
-	PsiRichText::ensureTextLayouted(doc, width() - 2*margin);
-	QAbstractTextDocumentLayout *layout = doc->documentLayout();
-	// QRect lr = rect();
-	QRect lr = cr;
-
-	QAbstractTextDocumentLayout::PaintContext context;
-
-	// Adjust the palette
-	context.palette = palette();
-	if (foregroundRole() != QPalette::Text && isEnabled())
-		context.palette.setColor(QPalette::Text, context.palette.color(foregroundRole()));
-
-	painter.save();
-	painter.translate(lr.x() + 1, lr.y() + 1);
-	painter.setClipRect(lr.translated(-lr.x() - 1, -lr.y() - 1));
-	layout->draw(&painter, context);
-	painter.restore();
-}
-
-PsiTipLabel::~PsiTipLabel()
-{
-	instance = 0;
-}
-
-void PsiTipLabel::hideTip()
-{
-	hide();
-	// timer based deletion to prevent animation
-	deleteTimer.start(250, this);
-}
-
-void PsiTipLabel::timerEvent(QTimerEvent *e)
-{
-	if (e->timerId() == hideTimer.timerId())
-		hideTip();
-	else if (e->timerId() == deleteTimer.timerId())
-		delete this;
-}
-
-bool PsiTipLabel::eventFilter(QObject *, QEvent *e)
-{
-	switch (e->type()) {
-		case QEvent::KeyPress:
-		case QEvent::KeyRelease: {
-			int key = static_cast<QKeyEvent *>(e)->key();
-			Qt::KeyboardModifiers mody = static_cast<QKeyEvent *>(e)->modifiers();
-
-			if ((mody & Qt::KeyboardModifierMask)
-			    || (key == Qt::Key_Shift || key == Qt::Key_Control
-			    || key == Qt::Key_Alt || key == Qt::Key_Meta))
-				break;
-		}
-		case QEvent::Leave:
-		case QEvent::WindowActivate:
-		case QEvent::WindowDeactivate:
-		case QEvent::MouseButtonPress:
-		case QEvent::MouseButtonRelease:
-		case QEvent::MouseButtonDblClick:
-		case QEvent::FocusIn:
-		case QEvent::FocusOut:
-		case QEvent::Wheel:
-			hideTip();
-		default:
-			;
-	}
-	return false;
-}
+#include "psitiplabel.h"
 
 //----------------------------------------------------------------------------
 // PsiToolTipHandler
@@ -297,19 +49,33 @@ public:
 
 	void install(QWidget *widget)
 	{
-		widget->installEventFilter(this);
+		watchedWidgets_[widget] = true;
+		connect(widget, SIGNAL(destroyed(QObject*)), SLOT(widgetDestroyed(QObject*)));
 	}
-	
+
+private slots:
+	void widgetDestroyed(QObject* obj)
+	{
+		QWidget* widget = static_cast<QWidget*>(obj);
+		watchedWidgets_.remove(widget);
+	}
+
 private:
+	QHash<QWidget*, bool> watchedWidgets_;
+
 	PsiToolTipHandler()
 		: QObject(qApp)
-	{ }
+	{
+		qApp->installEventFilter(this);
+	}
 
 	bool eventFilter(QObject *obj, QEvent *event)
 	{
 		if (event->type() == QEvent::ToolTip) {
-			QWidget *widget = dynamic_cast<QWidget *>(obj);
-			if (widget->isActiveWindow()) {
+			QWidget *widget = static_cast<QWidget *>(obj);
+			if (watchedWidgets_.contains(widget) &&
+			    (widget->isActiveWindow() ||
+			     widget->window()->testAttribute(Qt::WA_AlwaysShowToolTips))) {
 				QPoint pos = dynamic_cast<QHelpEvent *>(event)->globalPos();
 				PsiToolTip::showText(pos, widget->toolTip(), widget);
 				event->setAccepted(true);
@@ -317,7 +83,7 @@ private:
 			}
 		}
 
-		return QObject::eventFilter(obj, event);
+		return false;
 	}
 };
 
@@ -325,64 +91,65 @@ private:
 // ToolTipPosition
 //----------------------------------------------------------------------------
 
-class ToolTipPosition
+ToolTipPosition::ToolTipPosition(const QPoint& _pos, const QWidget* _w)
+	: pos(_pos)
+	, w(_w)
 {
-private:
-	QPoint pos;
-	QWidget *w;
-	
-public:
-	ToolTipPosition(const QPoint &_pos, QWidget *_w)
-	{
-		pos = _pos;
-		w   = _w;
-	}
+}
 
-	int getScreenNumber()
-	{
-		if (QApplication::desktop()->isVirtualDesktop())
-			return QApplication::desktop()->screenNumber(pos);
-		
-		return QApplication::desktop()->screenNumber(w);
-	}
+int ToolTipPosition::getScreenNumber() const
+{
+	if (QApplication::desktop()->isVirtualDesktop())
+		return QApplication::desktop()->screenNumber(pos);
 
-	QPoint calculateTipPosition(QWidget *label)
-	{
+	return QApplication::desktop()->screenNumber(w);
+}
+
+QRect ToolTipPosition::screenRect() const
+{
 #ifdef Q_WS_MAC
-		QRect screen = QApplication::desktop()->availableGeometry(getScreenNumber());
+	return QApplication::desktop()->availableGeometry(getScreenNumber());
 #else
-		QRect screen = QApplication::desktop()->screenGeometry(getScreenNumber());
+	return QApplication::desktop()->screenGeometry(getScreenNumber());
 #endif
+}
 
-		QPoint p = pos;
-		p += QPoint(2,
+QPoint ToolTipPosition::calculateTipPosition(const QWidget* label) const
+{
+	QRect screen = screenRect();
+
+	QPoint p = pos;
+	p += QPoint(2,
 #ifdef Q_WS_WIN
-		              24
+	              24
 #else
-		              16
+	              16
 #endif
-		           );
+	           );
 
-		if (p.x() + label->width() > screen.x() + screen.width())
-			p.rx() -= 4 + label->width();
-		if (p.y() + label->height() > screen.y() + screen.height())
-			p.ry() -= 24 + label->height();
-		if (p.y() < screen.y())
-			p.setY(screen.y());
-		if (p.x() + label->width() > screen.x() + screen.width())
-			p.setX(screen.x() + screen.width() - label->width());
-		if (p.x() < screen.x())
-			p.setX(screen.x());
-		if (p.y() + label->height() > screen.y() + screen.height())
-			p.setY(screen.y() + screen.height() - label->height());
-	
-		return p;
-	}
-};
+	if (p.x() + label->width() > screen.x() + screen.width())
+		p.rx() -= 4 + label->width();
+	if (p.y() + label->height() > screen.y() + screen.height())
+		p.ry() -= 24 + label->height();
+	if (p.y() < screen.y())
+		p.setY(screen.y());
+	if (p.x() + label->width() > screen.x() + screen.width())
+		p.setX(screen.x() + screen.width() - label->width());
+	if (p.x() < screen.x())
+		p.setX(screen.x());
+	if (p.y() + label->height() > screen.y() + screen.height())
+		p.setY(screen.y() + screen.height() - label->height());
+
+	return p;
+}
 
 //----------------------------------------------------------------------------
 // PsiToolTip
 //----------------------------------------------------------------------------
+
+PsiToolTip::PsiToolTip()
+	: QObject(QCoreApplication::instance())
+{}
 
 /**
  * QTipLabel's font is being determined at run-time. However QTipLabel's and
@@ -405,29 +172,29 @@ static void installPsiToolTipFont()
  * optional widget argument, \a w, is used to determine the
  * appropriate screen on multi-head systems.
  */
-void PsiToolTip::showText(const QPoint &pos, const QString &text, QWidget *w)
+void PsiToolTip::doShowText(const QPoint &pos, const QString &text, const QWidget *w)
 {
-	if (text.isEmpty()) {
-		if (PsiTipLabel::instance)
-			PsiTipLabel::instance->hideTip();
+	if (text.isEmpty() || (w && !w->underMouse())) {
+		if (PsiTipLabel::instance())
+			PsiTipLabel::instance()->hideTip();
 		return;
 	}
 
-	if (!w->underMouse())
-		return;
+	QPointer<ToolTipPosition> calc(createTipPosition(pos, w));
+	calc->deleteLater();
+	if (PsiTipLabel::instance() && moveAndUpdateTipLabel(PsiTipLabel::instance(), text)) {
+		updateTipLabel(PsiTipLabel::instance(), text);
 
-	ToolTipPosition calc(pos, w);
-	if (PsiTipLabel::instance && PsiTipLabel::instance->theText() == text) {
 		// fancy moving tooltip effect
-		PsiTipLabel::instance->move(calc.calculateTipPosition(PsiTipLabel::instance));
+		PsiTipLabel::instance()->move(calc->calculateTipPosition(PsiTipLabel::instance()));
 		return;
 	}
 
-	bool preventAnimation = (PsiTipLabel::instance != 0);
+	bool preventAnimation = (PsiTipLabel::instance() != 0);
 
 	installPsiToolTipFont();
-	QFrame *label = new PsiTipLabel(text, QApplication::desktop()->screen(calc.getScreenNumber()));
-	label->move(calc.calculateTipPosition(label));
+	QFrame *label = createTipLabel(text, QApplication::desktop()->screen(calc->getScreenNumber()));
+	label->move(calc->calculateTipPosition(label));
 
 	if ( QApplication::isEffectEnabled(Qt::UI_AnimateTooltip) == false || preventAnimation)
 		label->show();
@@ -437,13 +204,45 @@ void PsiToolTip::showText(const QPoint &pos, const QString &text, QWidget *w)
 		qScrollEffect(label);
 }
 
+bool PsiToolTip::moveAndUpdateTipLabel(PsiTipLabel* label, const QString& text)
+{
+	return label->theText() == text;
+}
+
+void PsiToolTip::updateTipLabel(PsiTipLabel* label, const QString& text)
+{
+	Q_UNUSED(label);
+	Q_UNUSED(text);
+}
+
+ToolTipPosition* PsiToolTip::createTipPosition(const QPoint& cursorPos, const QWidget* parentWidget)
+{
+	return new ToolTipPosition(cursorPos, parentWidget);
+}
+
+PsiTipLabel* PsiToolTip::createTipLabel(const QString& text, QWidget* parent)
+{
+	PsiTipLabel* label = new PsiTipLabel(parent);
+	label->init(text);
+	return label;
+}
+
 /**
  * After installation, all tool tips in specified widget will be processed
  * through PsiToolTip and thus <icon> tags would be correctly handled.
  */
-void PsiToolTip::install(QWidget *w)
+void PsiToolTip::doInstall(QWidget *w)
 {
 	PsiToolTipHandler::getInstance()->install(w);
+}
+
+PsiToolTip *PsiToolTip::instance_ = 0;
+
+PsiToolTip* PsiToolTip::instance()
+{
+	if (!instance_)
+		instance_ = new PsiToolTip();
+	return instance_;
 }
 
 #include "psitooltip.moc"

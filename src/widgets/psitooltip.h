@@ -23,12 +23,42 @@
 
 #include <QWidget>
 
-class PsiToolTip
+class PsiTipLabel;
+
+class ToolTipPosition : public QObject
 {
-	PsiToolTip();
 public:
-	static void showText(const QPoint &pos, const QString &text, QWidget *w = 0);
-	static void install(QWidget *w);
+	ToolTipPosition(const QPoint& cursorPos, const QWidget* parentWidget);
+	virtual ~ToolTipPosition() {}
+
+	int getScreenNumber() const;
+	QRect screenRect() const;
+
+	virtual QPoint calculateTipPosition(const QWidget* label) const;
+
+protected:
+	QPoint pos;
+	const QWidget* w;
+};
+
+class PsiToolTip : public QObject
+{
+public:
+	static void showText(const QPoint &pos, const QString &text, const QWidget *w = 0) { instance()->doShowText(pos, text, w); }
+	static void install(QWidget *w) { instance()->doInstall(w); }
+
+	static PsiToolTip* instance();
+
+protected:
+	PsiToolTip();
+	void doShowText(const QPoint &pos, const QString &text, const QWidget *w = 0);
+	void doInstall(QWidget *w);
+	virtual ToolTipPosition* createTipPosition(const QPoint& cursorPos, const QWidget* parentWidget);
+	virtual PsiTipLabel* createTipLabel(const QString& text, QWidget* parent);
+	virtual bool moveAndUpdateTipLabel(PsiTipLabel* label, const QString& text);
+	virtual void updateTipLabel(PsiTipLabel* label, const QString& text);
+
+	static PsiToolTip* instance_;
 };
 
 #endif

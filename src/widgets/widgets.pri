@@ -13,6 +13,7 @@ SOURCES += \
 	$$PWD/fancypopup.cpp \
 	$$PWD/psirichtext.cpp \
 	$$PWD/psitooltip.cpp \
+	$$PWD/psitiplabel.cpp \
 	$$PWD/psitabwidget.cpp \
 	$$PWD/psitabbar.cpp
 
@@ -36,6 +37,7 @@ HEADERS += \
 	$$PWD/fancypopuplist.h \
 	$$PWD/psirichtext.h \
 	$$PWD/psitooltip.h \
+	$$PWD/psitiplabel.h \
 	$$PWD/psitabwidget.h \
 	$$PWD/psitabbar.h 
 
