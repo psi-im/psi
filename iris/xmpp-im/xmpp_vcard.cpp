@@ -29,63 +29,10 @@
 #include <QImageWriter>
 #include <QtCrypto>
 
-// Justin's XML helper functions
-
-static QDomElement textTag(QDomDocument *doc, const QString &name, const QString &content)
-{
-	QDomElement tag = doc->createElement(name);
-	QDomText text = doc->createTextNode(content);
-	tag.appendChild(text);
-
-	return tag;
-}
-
-static QDomElement findSubTag(const QDomElement &e, const QString &name, bool *found)
-{
-	if(found)
-		*found = FALSE;
-
-	for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling()) {
-		QDomElement i = n.toElement();
-		if(i.isNull())
-			continue;
-		if(i.tagName().upper() == name.upper()) { // mblsha: ignore case when searching
-			if(found)
-				*found = TRUE;
-			return i;
-		}
-	}
-
-	QDomElement tmp;
-	return tmp;
-}
-
-// mblsha's own functions
-
-static QDomElement emptyTag(QDomDocument *doc, const QString &name)
-{
-	QDomElement tag = doc->createElement(name);
-
-	return tag;
-}
-
-static bool hasSubTag(const QDomElement &e, const QString &name)
-{
-	bool found;
-	findSubTag(e, name, &found);
-	return found;
-}
-
-static QString subTagText(const QDomElement &e, const QString &name)
-{
-	bool found;
-	QDomElement i = findSubTag(e, name, &found);
-	if ( found )
-		return i.text().stripWhiteSpace();
-	return QString::null;
-}
+#include "xmpp_xmlcommon.h"
 
 using namespace XMPP;
+using namespace XMLHelper;
 
 //----------------------------------------------------------------------------
 // VCard
