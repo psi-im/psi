@@ -432,12 +432,10 @@ QString TextUtil::emoticonify(const QString &in)
 							continue;
 
 						if(ePos == -1 || n < ePos || (rx.matchedLength() > foundLen && n < ePos + foundLen)) {
+							bool leftSpace  = n == 0 || (n > 0 && str[n-1].isSpace());
+							bool rightSpace = (n+rx.matchedLength() == (int)str.length()) || (n+rx.matchedLength() < (int)str.length() && str[n+rx.matchedLength()].isSpace());
 							// there must be whitespace at least on one side of the emoticon
-							if ( ( n == 0 ) ||
-							     ( n+rx.matchedLength() == (int)str.length() ) ||
-							     ( n > 0 && str[n-1].isSpace() ) ||
-							     ( n+rx.matchedLength() < (int)str.length() && str[n+rx.matchedLength()].isSpace() ) )
-							{
+							if (leftSpace || rightSpace) {
 								ePos = n;
 								closest = icon;
 
