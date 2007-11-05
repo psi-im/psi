@@ -300,7 +300,6 @@ public:
 	UserList userList;
 	UserListItem self;
 	int lastIdle;
-	Status lastStatus, origStatus;
 	bool nickFromVCard;
 	QCA::PGPKey cur_pgpSecretKey;
 	QList<Message*> messageQueue;
@@ -510,6 +509,47 @@ private slots:
 	{
 		dialogUnregister(static_cast<QWidget*>(obj));
 	}
+
+public:
+	enum AutoAway {
+		AutoAway_None = 0,
+		AutoAway_Away,
+		AutoAway_XA,
+		AutoAway_Offline
+	};
+
+	void setAutoAway(AutoAway autoAway)
+	{
+		Status status = autoAwayStatus(autoAway);
+		if (status.type() != loginStatus.type() ||
+		    status.status() != loginStatus.status())
+		{
+			account->setStatusDirect(status);
+		}
+	}
+
+	void setManualStatus(Status status)
+	{
+		lastManualStatus_ = status;
+	}
+
+private:
+	Status lastManualStatus_;
+
+	XMPP::Status autoAwayStatus(AutoAway autoAway)
+	{
+		switch (autoAway) {
+		case AutoAway_Away:
+			return Status(XMPP::Status::Away, option.asMessage, acc.priority);
+		case AutoAway_XA:
+			return Status(XMPP::Status::XA, option.asMessage, acc.priority);
+		case AutoAway_Offline:
+			return Status(Status::Offline, loginStatus.status(), acc.priority);
+		default:
+			;
+		}
+		return lastManualStatus_;
+	}
 };
 
 PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegistry* capsRegistry, TabManager *tabManager)
@@ -532,13 +572,12 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	isDisconnecting = false;
 	notifyOnlineOk = false;
 	doReconnect = false;
-	usingAutoStatus = false;
 	presenceSent = false;
 
 	d->loginStatus = Status(Status::Offline);
 	d->loginWithPriority = false;
 	d->lastIdle = 0;
-	d->lastStatus = Status(Status::Offline, "", 0);
+	d->setManualStatus(Status(Status::Offline, "", 0));
 
 	d->eventQueue = new EventQueue(this);
 	connect(d->eventQueue, SIGNAL(queueChanged()), SIGNAL(queueChanged()));
@@ -2142,6 +2181,8 @@ Status PsiAccount::status() const
 
 void PsiAccount::setStatus(const Status &_s,  bool withPriority)
 {
+	d->setManualStatus(_s);
+
 	// Block all transports' contacts' status change popups from popping
 	{
 		Roster::ConstIterator rit = d->acc.roster.begin();
@@ -2153,7 +2194,6 @@ void PsiAccount::setStatus(const Status &_s,  bool withPriority)
 	}
 
 	// cancel auto-status and reconnect
-	usingAutoStatus = false;
 	doReconnect = false;
 
 	Status s = _s;
@@ -2329,65 +2369,18 @@ void PsiAccount::publishTune(const Tune& tune)
 	d->pepManager->publish("http://jabber.org/protocol/tune",PubSubItem("current",t));
 }
 
-void PsiAccount::secondsIdle(int x)
+void PsiAccount::secondsIdle(int seconds)
 {
-	if(!loggedIn())
-		return;
+	int minutes = seconds / 60;
 
-	int lastIdle = d->lastIdle;
-	Status lastStatus = d->lastStatus;
-
-	ResourceList::ConstIterator it = d->client->resourceList().find(d->client->resource());
-	if (it == d->client->resourceList().end())
-		return;
-
-	Resource r = *it;
-	Status ls = r.status();
-
-	//must avoid status change when invisible KEVIN
-	if(ls.isInvisible())
-		return;
-
-	if(ls.isAvailable()) {
-		// no longer idle?
-		if(lastIdle > x) {
-			if(ls.isAway() && usingAutoStatus) {
-				lastStatus = d->origStatus;
-				setStatusDirect(lastStatus);
-				usingAutoStatus = false;
-			}
-		}
-		else if( !(ls.isAway() && !usingAutoStatus) ) {
-			int minutes = x / 60;
-
-			if(option.use_asOffline && option.asOffline > 0 && minutes >= option.asOffline) {
-				lastStatus = Status("", "", d->acc.priority, false);
-				usingAutoStatus = false;
-				logout();
-			}
-			else if(option.use_asXa && option.asXa > 0 && minutes >= option.asXa) {
-				if(ls.type() != XMPP::Status::XA && lastStatus.type() != XMPP::Status::XA) {
-					lastStatus = Status(XMPP::Status::XA, option.asMessage, d->acc.priority);
-					if(!usingAutoStatus)
-						d->origStatus = d->loginStatus;
-					setStatusDirect(lastStatus);
-					usingAutoStatus = true;
-				}
-			}
-			else if(option.use_asAway && option.asAway > 0 && minutes >= option.asAway) {
-				if(ls.type() != XMPP::Status::Away && lastStatus.type() != XMPP::Status::Away) {
-					lastStatus = Status(XMPP::Status::Away, option.asMessage, d->acc.priority);
-					if(!usingAutoStatus)
-						d->origStatus = d->loginStatus;
-					setStatusDirect(lastStatus);
-					usingAutoStatus = true;
-				}
-			}
-		}
-	}
-
-	d->lastIdle = x;
-	d->lastStatus = lastStatus;
+	if(option.use_asOffline && option.asOffline > 0 && minutes >= option.asOffline)
+		d->setAutoAway(Private::AutoAway_Offline);
+	else if(option.use_asXa && option.asXa > 0 && minutes >= option.asXa)
+		d->setAutoAway(Private::AutoAway_XA);
+	else if(option.use_asAway && option.asAway > 0 && minutes >= option.asAway)
+		d->setAutoAway(Private::AutoAway_Away);
+	else
+		d->setAutoAway(Private::AutoAway_None);
 }
 
 void PsiAccount::playSound(const QString &str)

@@ -394,7 +394,7 @@ private:
 	EventDlg *ensureEventDlg(const Jid &);
 	friend class PsiCon;
 
-	bool isDisconnecting, notifyOnlineOk, doReconnect, usingAutoStatus, rosterDone, presenceSent, v_isActive;
+	bool isDisconnecting, notifyOnlineOk, doReconnect, rosterDone, presenceSent, v_isActive;
 	void cleanupStream();
 
 	QWidget* findDialog(const QMetaObject& mo, const Jid& jid, bool compareResource) const;
