@@ -23,6 +23,7 @@
 #include "xmpp_stanza.h"
 #include "xmpp_url.h"
 #include "xmpp_chatstate.h"
+#include "xmpp_receipts.h"
 #include "xmpp_address.h"
 #include "xmpp_rosterx.h"
 #include "xmpp_muc.h"
@@ -100,6 +101,10 @@ namespace XMPP {
 		ChatState chatState() const;
 		void setChatState(ChatState);
  
+		// XEP-0184
+		MessageReceipt messageReceipt() const;
+		void setMessageReceipt(MessageReceipt);
+
 		// JEP-0027
 		QString xencrypted() const;
 		void setXEncrypted(const QString &s);

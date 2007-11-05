@@ -1989,6 +1989,13 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 	//if(m.type() == "chat" && (!m.urlList().isEmpty() || !m.subject().isEmpty()))
 	//	m.setType("");
 
+	if(m.messageReceipt() == ReceiptRequest && !m.id().isEmpty()) {
+		Message tm(m.from());
+		tm.setId(m.id());
+		tm.setMessageReceipt(ReceiptReceived);
+		dj_sendMessage(tm, false);
+	}
+
 	MessageEvent *me = new MessageEvent(m, this);
 	me->setOriginLocal(false);
 	handleEvent(me);

@@ -970,6 +970,7 @@ public:
 	QString eventId;
 	QString xencrypted, invite;
 	ChatState chatState;
+	MessageReceipt messageReceipt;
 	QString nick;
 	HttpAuthRequest httpAuthRequest;
 	XData xdata;
@@ -1331,6 +1332,16 @@ void Message::setChatState(ChatState state)
 	d->chatState = state;
 }
 
+MessageReceipt Message::messageReceipt() const
+{
+	return d->messageReceipt;
+}
+
+void Message::setMessageReceipt(MessageReceipt messageReceipt)
+{
+	d->messageReceipt = messageReceipt;
+}
+
 QString Message::xencrypted() const
 {
 	return d->xencrypted;
@@ -1568,6 +1579,21 @@ Stanza Message::toStanza(Stream *stream) const
 		}
 	}
 
+	// message receipt
+	QString messageReceiptNS = "urn:xmpp:receipts";
+	if (d->messageReceipt != ReceiptNone) {
+		switch(d->messageReceipt) {
+			case ReceiptRequest:
+				s.appendChild(s.createElement(messageReceiptNS, "request"));
+				break;
+			case ReceiptReceived:
+				s.appendChild(s.createElement(messageReceiptNS, "received"));
+				break;
+			default: 
+				break;
+		}
+	}
+
 	// xencrypted
 	if(!d->xencrypted.isEmpty())
 		s.appendChild(s.createTextElement("jabber:x:encrypted", "x", d->xencrypted));
@@ -1779,7 +1805,15 @@ bool Message::fromStanza(const Stanza &s, int timeZoneOffset)
 	t = root.elementsByTagNameNS(chatStateNS, "gone").item(0).toElement();
 	if(!t.isNull())
 		d->chatState = StateGone;
-	
+
+	// message receipts
+	QString messageReceiptNS = "urn:xmpp:receipts";
+	t = root.elementsByTagNameNS(messageReceiptNS, "request").item(0).toElement();
+	if(!t.isNull())
+		d->messageReceipt = ReceiptRequest;
+	t = root.elementsByTagNameNS(messageReceiptNS, "received").item(0).toElement();
+	if(!t.isNull())
+		d->messageReceipt = ReceiptReceived;
 
 	// xencrypted
 	t = root.elementsByTagNameNS("jabber:x:encrypted", "x").item(0).toElement();

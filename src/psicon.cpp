@@ -467,6 +467,7 @@ bool PsiCon::init()
 
 	registerCaps("html", QStringList("http://jabber.org/protocol/xhtml-im"));
 	registerCaps("cs", QStringList("http://jabber.org/protocol/chatstates"));
+	registerCaps("mr", QStringList("urn:xmpp:receipts"));
 
 	// load accounts
 	d->contactList->loadAccounts(d->pro.acc);

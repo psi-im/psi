@@ -32,6 +32,7 @@ HEADERS += \
 	$$PWD/include/xmpp_jid.h \
 	$$PWD/include/xmpp_url.h \
 	$$PWD/include/xmpp_chatstate.h \
+	$$PWD/include/xmpp_receipts.h \
 	$$PWD/include/xmpp_client.h \
 	$$PWD/include/xmpp_clientstream.h \
 	$$PWD/include/xmpp_stanza.h \
