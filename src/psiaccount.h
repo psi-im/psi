@@ -30,6 +30,7 @@
 
 #include "xmpp_rosterx.h"
 #include "xmpp_status.h"
+#include "psiactions.h"
 
 namespace XMPP
 {
@@ -96,6 +97,7 @@ public:
 	bool enabled() const;
 	void setEnabled(bool e = TRUE);
 
+	bool isAvailable() const;
 	bool isActive() const;
 	bool isConnected() const;
 	const QString &name() const;
@@ -124,6 +126,8 @@ public:
 	QString nick() const;
 	bool hasPGP() const;
 	QHostAddress *localAddress() const;
+
+	ChatDlg* findChatDialog(const Jid& jid) const;
 
 	template<typename T>
 	inline T findDialog(const Jid& jid = Jid(), bool compareResource = true) const { 
@@ -212,7 +216,7 @@ public slots:
 	void incomingVoiceCall(const Jid&);
 	
 	void secondsIdle(int);
-	void openNextEvent();
+	void openNextEvent(ActivationType activationType);
 	int forwardPendingEvents(const Jid &jid);
 	void autoLogin();
 
@@ -360,7 +364,7 @@ private slots:
 	void eventFromXml(PsiEvent* e);
 
 private:
-	void handleEvent(PsiEvent* e);
+	void handleEvent(PsiEvent* e, ActivationType activationType);
 
 public:
 	class Private;
@@ -373,8 +377,8 @@ private:
 	void simulateRosterOffline();
 	void cpUpdate(const UserListItem &, const QString &rname="", bool fromPresence=false);
 	void logEvent(const Jid &, PsiEvent *);
-	void queueEvent(PsiEvent *);
-	void openNextEvent(const UserListItem &);
+	void queueEvent(PsiEvent* e, ActivationType activationType);
+	void openNextEvent(const UserListItem &, ActivationType activationType);
 	void updateReadNext(const Jid &);
 	ChatDlg *ensureChatDlg(const Jid &);
 	void lastStepLogin();
@@ -386,7 +390,7 @@ private:
 	void verifyStatus(const Jid &j, const Status &s);
 
 	void processChats(const Jid &);
-	void openChat(const Jid &);
+	void openChat(const Jid &, ActivationType activationType);
 	EventDlg *ensureEventDlg(const Jid &);
 	friend class PsiCon;
 

@@ -157,7 +157,7 @@ void PsiPopup::Private::popupClicked(int button)
 {
 	if ( button == (int)Qt::LeftButton ) {
 		if ( event )
-			psi->processEvent( event );
+			psi->processEvent(event, UserAction);
 		else if ( account ) {
 			// FIXME: it should work in most cases, but
 			// maybe it's better to fix UserList::find()?

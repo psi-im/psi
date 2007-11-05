@@ -207,7 +207,8 @@ HEADERS += \
 	$$PWD/resourcemenu.h \
 	$$PWD/shortcutmanager.h \
 	$$PWD/psicontactlist.h \
-	$$PWD/accountlabel.h
+	$$PWD/accountlabel.h \
+	$$PWD/psiactions.h
 
 # Source files
 SOURCES += \

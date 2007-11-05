@@ -742,9 +742,9 @@ void PsiCon::removeAccount(PsiAccount *pa)
 void PsiCon::statusMenuChanged(int x)
 {
 	if(x == STATUS_OFFLINE && !option.askOffline) {
-		setGlobalStatus(Status("","Logged out",0,false));
+		setGlobalStatus(Status(Status::Offline, "Logged out", 0));
 		if(option.useDock == true)
-			d->mainwin->setTrayToolTip(Status("","",0,false));
+			d->mainwin->setTrayToolTip(Status(Status::Offline, "", 0));
 	}
 	else {
 		if(x == STATUS_ONLINE && !option.askOnline) {
@@ -1053,7 +1053,7 @@ void PsiCon::recvNextEvent()
 	}*/
 	PsiAccount *pa = d->contactList->queueLowestEventId();
 	if(pa)
-		pa->openNextEvent();
+		pa->openNextEvent(UserAction);
 }
 
 void PsiCon::playSound(const QString &str)
@@ -1161,7 +1161,7 @@ IconSelectPopup *PsiCon::iconSelectPopup() const
 	return d->iconSelect;
 }
 
-void PsiCon::processEvent(PsiEvent *e)
+void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 {
 	if ( e->type() == PsiEvent::PGP ) {
 		e->account()->eventQueue()->dequeue(e);
@@ -1206,28 +1206,23 @@ void PsiCon::processEvent(PsiEvent *e)
 	}
 
 	if ( isChat ) {
+		PsiAccount* account = e->account();
+		XMPP::Jid from = e->from();
+
 		if ( option.alertOpenChats && sentToChatWindow ) {
 			// Message already displayed, need only to pop up chat dialog, so that
 			// it will be read (or marked as read)
-			ChatDlg *c = e->account()->findDialog<ChatDlg*>(e->from());
+			ChatDlg *c = account->findChatDialog(from);
 			if(!c)
-				c = e->account()->findDialog<ChatDlg*>(e->jid());
+				c = account->findChatDialog(e->jid());
 			if(!c)
 				return; // should never happen
 
-			e->account()->processChats(e->from()); // this will delete all events, corresponding to that chat dialog
-			//KIS: I changed the following line with the one following that to attempt to get tabs to behave correctly. Lots of this stuff isn't great.
-			bringToFront((QWidget *)c);
-			if ( option.useTabs)
-			{
-				TabDlg* tabSet = d->tabManager->getManagingTabs(c);
-				if (tabSet) {
-					tabSet->selectTab(c);
-				}
-			}
+			account->processChats(from); // this will delete all events, corresponding to that chat dialog
 		}
-		else
-			e->account()->openChat(e->from());
+
+		// as the event could be deleted just above, we're using cached account and from values
+		account->openChat(from, activationType);
 	}
 	else {
 		// search for an already opened eventdlg
@@ -1313,7 +1308,7 @@ void PsiCon::s5b_init()
 
 void PsiCon::doSleep()
 {
-	setGlobalStatus(Status("",tr("Computer went to sleep"),0,false));
+	setGlobalStatus(Status(Status::Offline, tr("Computer went to sleep"), 0));
 }
 
 void PsiCon::doWakeup()

@@ -25,6 +25,7 @@
 #include <QList>
 
 #include "profiles.h"
+#include "psiactions.h"
 
 #include "tabbablewidget.h"
 
@@ -111,7 +112,7 @@ public:
 	bool getToolbarLocation(Q3DockWindow* dw, Qt::Dock& dock, int& index, bool& nl, int& extraOffset) const;
 
 	IconSelectPopup *iconSelectPopup() const;
-	void processEvent(PsiEvent *);
+	void processEvent(PsiEvent*, ActivationType activationType);
 
 signals:
 	void quit(int);
