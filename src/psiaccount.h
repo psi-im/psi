@@ -357,7 +357,10 @@ protected:
 	void sessionStarted();
 
 private slots:
-	void handleEvent(PsiEvent *);
+	void eventFromXml(PsiEvent* e);
+
+private:
+	void handleEvent(PsiEvent* e);
 
 public:
 	class Private;

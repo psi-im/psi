@@ -245,9 +245,44 @@ class PsiAccount::Private : public QObject
 {
 	Q_OBJECT
 public:
-	Private(PsiAccount *parent) : xmlRingbuf(1000) {
-		account = parent;
-		xmlRingbufWrite = 0;
+	Private(PsiAccount *parent)
+		: QObject(parent)
+		, contactList(0)
+		, psi(0)
+		, account(parent)
+		, options(0)
+		, client(0)
+		, cp(0)
+		, eventQueue(0)
+		, xmlConsole(0)
+		, blockTransportPopupList(0)
+		, privacyManager(0)
+		, capsManager(0)
+		, rosterItemExchangeTask(0)
+		, ahcManager(0)
+		, rcSetStatusServer(0)
+		, rcSetOptionsServer(0)
+		, rcForwardServer(0)
+		, avatarFactory(0)
+		, voiceCaller(0)
+		, tabManager(0)
+#ifdef GOOGLE_FT
+		, googleFTManager(0)
+#endif
+#ifdef WHITEBOARDING
+		, wbManager(0)
+#endif
+		, serverInfoManager(0)
+		, pepManager(0)
+		, bookmarkManager(0)
+		, httpAuthManager(0)
+		, conn(0)
+		, stream(0)
+		, tls(0)
+		, tlsHandler(0)
+		, xmlRingbuf(1000)
+		, xmlRingbufWrite(0)
+	{
 	}
 
 	PsiContactList* contactList;
@@ -484,15 +519,15 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	usingAutoStatus = false;
 	presenceSent = false;
 
-	d->loginStatus = Status("", "");
+	d->loginStatus = Status(Status::Offline);
 	d->loginWithPriority = false;
 	d->lastIdle = 0;
-	d->lastStatus = Status("", "", 0, false);
+	d->lastStatus = Status(Status::Offline, "", 0);
 
 	d->eventQueue = new EventQueue(this);
 	connect(d->eventQueue, SIGNAL(queueChanged()), SIGNAL(queueChanged()));
 	connect(d->eventQueue, SIGNAL(queueChanged()), d, SLOT(queueChanged()));
-	connect(d->eventQueue, SIGNAL(handleEvent(PsiEvent *)), SLOT(handleEvent(PsiEvent *)));
+	connect(d->eventQueue, SIGNAL(eventFromXml(PsiEvent *)), SLOT(eventFromXml(PsiEvent *)));
 	d->userList.setAutoDelete(true);
 	d->self = UserListItem(true);
 	d->self.setSubscription(Subscription::Both);
@@ -3547,6 +3582,11 @@ void PsiAccount::dj_rosterExchange(const RosterExchangeItems& items)
 			// TODO
 		}
 	}
+}
+
+void PsiAccount::eventFromXml(PsiEvent* e)
+{
+	handleEvent(e);
 }
 
 // handle an incoming event

@@ -48,6 +48,8 @@ namespace XMPP
 		enum { Idle, Requesting, Connecting, WaitingForAccept, Active };
 		~FileTransfer();
 
+		FileTransfer *copy() const;
+
 		void setProxy(const Jid &proxy);
 
 		// send
@@ -93,6 +95,7 @@ namespace XMPP
 
 		friend class FileTransferManager;
 		FileTransfer(FileTransferManager *, QObject *parent=0);
+		FileTransfer(const FileTransfer& other);
 		void man_waitForAccept(const FTRequest &req);
 		void takeConnection(S5BConnection *c);
 	};
@@ -103,6 +106,8 @@ namespace XMPP
 	public:
 		FileTransferManager(Client *);
 		~FileTransferManager();
+
+		bool isActive(const FileTransfer *ft) const;
 
 		Client *client() const;
 		FileTransfer *createTransfer();

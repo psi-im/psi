@@ -82,6 +82,8 @@ public:
 
 	virtual int priority() const;
 
+	virtual QString description() const;
+
 	virtual PsiEvent *copy() const;
 
 private:
@@ -119,6 +121,8 @@ public:
 
 	virtual int priority() const;
 
+	virtual QString description() const;
+
 	virtual PsiEvent *copy() const;
 
 private:
@@ -149,6 +153,8 @@ public:
 
 	virtual int priority() const;
 
+	virtual QString description() const;
+
 	virtual PsiEvent *copy() const;
 
 private:
@@ -177,6 +183,7 @@ class FileEvent : public PsiEvent
 	Q_OBJECT
 public:
 	FileEvent(const XMPP::Jid &j, XMPP::FileTransfer *ft, PsiAccount *acc);
+	FileEvent(const FileEvent &from);
 	~FileEvent();
 
 	int type() const { return File; }
@@ -185,6 +192,10 @@ public:
 	XMPP::FileTransfer *takeFileTransfer();
 
 	virtual int priority() const;
+
+	virtual QString description() const;
+
+	virtual PsiEvent *copy() const;
 
 private:
 	XMPP::Jid v_from;
@@ -207,6 +218,8 @@ public:
 	void setText(const QString& text);
 	
 	virtual int priority() const;
+
+	virtual QString description() const;
 
 private:
 	XMPP::Jid v_from;
@@ -245,9 +258,25 @@ public:
 
 	const PsiHttpAuthRequest & request() { return v_req; }
 
+	virtual QString description() const;
+
 private:
 	PsiHttpAuthRequest v_req;
 
+};
+
+class EventItem
+{
+public:
+	EventItem(PsiEvent *_e, int i);
+	EventItem(const EventItem &from);
+	~EventItem();
+	int id() const;
+	PsiEvent *event() const;
+
+private:
+	PsiEvent *e;
+	int v_id;
 };
 
 // event queue
@@ -285,7 +314,7 @@ public:
 	bool fromFile(const QString &fname);
 
 signals:
-	void handleEvent(PsiEvent *);
+	void eventFromXml(PsiEvent *);
 	void queueChanged();
 
 private:

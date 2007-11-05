@@ -77,10 +77,29 @@ FileTransfer::FileTransfer(FileTransferManager *m, QObject *parent)
 	reset();
 }
 
+FileTransfer::FileTransfer(const FileTransfer& other)
+	: QObject(other.parent())
+{
+	d = new Private;
+	*d = *other.d;
+	d->m = other.d->m;
+	d->ft = 0;
+	d->c = 0;
+	reset();
+
+	if (d->m->isActive(&other))
+		d->m->link(this);
+}
+
 FileTransfer::~FileTransfer()
 {
 	reset();
 	delete d;
+}
+
+FileTransfer *FileTransfer::copy() const
+{
+	return new FileTransfer(*this);
 }
 
 void FileTransfer::reset()
@@ -371,6 +390,11 @@ FileTransfer *FileTransferManager::takeIncoming()
 	// move to active list
 	d->list.append(ft);
 	return ft;
+}
+
+bool FileTransferManager::isActive(const FileTransfer *ft) const
+{
+	return d->list.contains(ft) > 0;
 }
 
 void FileTransferManager::pft_incoming(const FTRequest &req)
