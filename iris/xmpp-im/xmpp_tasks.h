@@ -241,7 +241,7 @@ namespace XMPP
 		~JT_VCard();
 
 		void get(const Jid &);
-		void set(const VCard &);
+		void set(const Jid &, const VCard &);
 
 		const Jid & jid() const;
 		const VCard  & vcard() const;

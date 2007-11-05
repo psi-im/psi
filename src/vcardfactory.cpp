@@ -30,6 +30,7 @@
 #include "applicationinfo.h"
 #include "vcardfactory.h"
 #include "jidutil.h"
+#include "psiaccount.h"
 #include "xmpp_vcard.h"
 #include "xmpp_tasks.h"
 
@@ -87,30 +88,35 @@ void VCardFactory::taskFinished()
 	if ( task->success() ) {
 		Jid j = task->jid();
 
-		VCard *vcard = new VCard;
-		*vcard = task->vcard();
-		checkLimit(j.userHost(), vcard);
-
-		// save vCard to disk
-
-		// ensure that there's a vcard directory to save into
-		QDir p(pathToProfile(activeProfile));
-		QDir v(pathToProfile(activeProfile) + "/vcard");
-		if(!v.exists())
-			p.mkdir("vcard");
-
-		QFile file ( ApplicationInfo::vCardDir() + "/" + JIDUtil::encode(j.userHost()).lower() + ".xml" );
-		file.open ( QIODevice::WriteOnly );
-		QTextStream out ( &file );
-		out.setEncoding ( QTextStream::UnicodeUTF8 );
-		QDomDocument doc;
-		doc.appendChild( vcard->toXml ( &doc ) );
-		out << doc.toString(4);
-
-		emit vcardChanged(j);
+		saveVCard(j, task->vcard());
 	}
 }
 
+void VCardFactory::saveVCard(const Jid& j, const VCard& _vcard)
+{
+	VCard *vcard = new VCard;
+	*vcard = _vcard;
+	checkLimit(j.userHost(), vcard);
+
+	// save vCard to disk
+
+	// ensure that there's a vcard directory to save into
+	QDir p(pathToProfile(activeProfile));
+	QDir v(pathToProfile(activeProfile) + "/vcard");
+	if(!v.exists())
+		p.mkdir("vcard");
+
+	QFile file ( ApplicationInfo::vCardDir() + "/" + JIDUtil::encode(j.userHost()).lower() + ".xml" );
+	file.open ( QIODevice::WriteOnly );
+	QTextStream out ( &file );
+	out.setEncoding ( QTextStream::UnicodeUTF8 );
+	QDomDocument doc;
+	doc.appendChild( vcard->toXml ( &doc ) );
+	out << doc.toString(4);
+
+	Jid jid = j;
+	emit vcardChanged(jid);
+}
 
 /**
  * \brief Call this, when you need a cached vCard.
@@ -143,12 +149,32 @@ const VCard* VCardFactory::vcard(const Jid &j)
  */
 void VCardFactory::setVCard(const Jid &j, const VCard &v)
 {
-	VCard *vcard = new VCard;
-	*vcard = v;
-	checkLimit(j.userHost(), vcard);
-	emit vcardChanged(j);
+	saveVCard(j, v);
 }
 
+/**
+ * \brief Updates vCard on specified \a account.
+ */
+void VCardFactory::setVCard(const PsiAccount* account, const VCard &v, QObject* obj, const char* slot)
+{
+	JT_VCard* jtVCard_ = new JT_VCard(account->client()->rootTask());
+	if (obj)
+		connect(jtVCard_, SIGNAL(finished()), obj, slot);
+	connect(jtVCard_, SIGNAL(finished()), SLOT(updateVCardFinished()));
+	jtVCard_->set(account->jid(), v);
+	jtVCard_->go(true);
+}
+
+void VCardFactory::updateVCardFinished()
+{
+	JT_VCard* jtVCard = static_cast<JT_VCard*> (sender());
+	if (jtVCard && jtVCard->success()) {
+		setVCard(jtVCard->jid(), jtVCard->vcard());
+	}
+	if (jtVCard) {
+		jtVCard->deleteLater();
+	}
+}
 
 /**
  * \brief Call this when you need to retrieve fresh vCard from server (and store it in cache afterwards)

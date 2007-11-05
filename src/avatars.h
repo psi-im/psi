@@ -62,6 +62,7 @@ public:
 	
 	static QString getManualDir();
 	static QString getCacheDir();
+	static int maxAvatarSize();
 
 signals:
 	void avatarChanged(const Jid&);

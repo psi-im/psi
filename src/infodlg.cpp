@@ -165,19 +165,22 @@ void InfoDlg::closeEvent ( QCloseEvent * e ) {
 
 void InfoDlg::jt_finished()
 {
+	d->jt = 0;
+	JT_VCard* jtVCard = static_cast<JT_VCard*> (sender());
+
 	d->busy->stop();
 	ui_.pb_refresh->setEnabled(true);
 	ui_.pb_submit->setEnabled(true);
 	ui_.pb_close->setEnabled(true);
 	fieldsEnable(true);
 
-	if(d->jt->success()) {
+	if(jtVCard->success()) {
 		if(d->actionType == 0) {
-			d->vcard = d->jt->vcard();
+			d->vcard = jtVCard->vcard();
 			setData(d->vcard);
 		}
 		else if(d->actionType == 1) {
-			d->vcard = d->jt->vcard();
+			d->vcard = jtVCard->vcard();
 			if ( d->cacheVCard )
 				VCardFactory::instance()->setVCard(d->jid, d->vcard);
 			setData(d->vcard);
@@ -198,14 +201,12 @@ void InfoDlg::jt_finished()
 			if(d->type == Self)
 				QMessageBox::critical(this, tr("Error"), tr("Unable to retrieve your account information.  Perhaps you haven't entered any yet."));
 			else
-				QMessageBox::critical(this, tr("Error"), tr("Unable to retrieve information about this contact.\nReason: %1").arg(d->jt->statusString()));
+				QMessageBox::critical(this, tr("Error"), tr("Unable to retrieve information about this contact.\nReason: %1").arg(jtVCard->statusString()));
 		}
 		else {
-			QMessageBox::critical(this, tr("Error"), tr("Unable to publish your account information.\nReason: %1").arg(d->jt->statusString()));
+			QMessageBox::critical(this, tr("Error"), tr("Unable to publish your account information.\nReason: %1").arg(jtVCard->statusString()));
 		}
 	}
-
-	d->jt = 0;
 }
 
 void InfoDlg::setData(const VCard &i)
@@ -407,10 +408,7 @@ void InfoDlg::doSubmit()
 	d->actionType = 1;
 	d->busy->start();
 
-	d->jt = new JT_VCard(d->pa->client()->rootTask());
-	connect(d->jt, SIGNAL(finished()), SLOT(jt_finished()));
-	d->jt->set(submit_vcard);
-	d->jt->go(true);
+	VCardFactory::instance()->setVCard(d->pa, submit_vcard, this, SLOT(jt_finished()));
 }
 
 VCard InfoDlg::makeVCard()
