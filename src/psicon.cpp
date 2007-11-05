@@ -436,37 +436,37 @@ bool PsiCon::init()
 #warning "Temporary hard-coding caps registration of own version"
 #endif
 	// client()->identity()
-	DiscoItem::Identity identity = { "client",  ApplicationInfo::name(), "pc" };
-	DiscoItem::Identities identities;
-	identities += identity;
-	QStringList features;
-	features << "http://jabber.org/protocol/bytestreams"
-		<< "http://jabber.org/protocol/si" 
-		<< "http://jabber.org/protocol/si/profile/file-transfer" 
-		<< "http://jabber.org/protocol/disco#info" 
-		<< "http://jabber.org/protocol/commands" 
-		<< "http://jabber.org/protocol/rosterx" 
-		<< "http://jabber.org/protocol/muc" 
-		<< "jabber:x:data";
-	d->capsRegistry->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),ApplicationInfo::capsVersion()),identities,Features(features));
-	d->capsRegistry->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),"cs"),identities,Features("http://jabber.org/protocol/chatstates"));
-	features.clear();
-	features << "http://jabber.org/protocol/mood"
-		<< "http://jabber.org/protocol/tune" 
-		<< "http://jabber.org/protocol/physloc" 
-		<< "http://jabber.org/protocol/geoloc" 
-		<< "http://www.xmpp.org/extensions/xep-0084.html#ns-data" 
-		<< "http://www.xmpp.org/extensions/xep-0084.html#ns-metadata";
-	d->capsRegistry->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),"ep"),identities,features);
-	features.clear();
-	features << "http://jabber.org/protocol/mood+notify"
-		<< "http://jabber.org/protocol/tune+notify" 
-		<< "http://jabber.org/protocol/physloc+notify" 
-		<< "http://jabber.org/protocol/geoloc+notify" 
-		<< "http://www.xmpp.org/extensions/xep-0084.html#ns-metadata+notify";
-	d->capsRegistry->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),"ep-notify"),identities,features);
-	d->capsRegistry->registerCaps(CapsSpec(ApplicationInfo::capsNode(),ApplicationInfo::capsVersion(),"html"),identities,Features("http://jabber.org/protocol/xhtml-im"));
 
+	registerCaps(ApplicationInfo::capsVersion(), QStringList()
+	             << "http://jabber.org/protocol/bytestreams"
+	             << "http://jabber.org/protocol/si"
+	             << "http://jabber.org/protocol/si/profile/file-transfer"
+	             << "http://jabber.org/protocol/disco#info"
+	             << "http://jabber.org/protocol/commands"
+	             << "http://jabber.org/protocol/rosterx"
+	             << "http://jabber.org/protocol/muc"
+	             << "jabber:x:data"
+	            );
+
+	registerCaps("ep", QStringList()
+	             << "http://jabber.org/protocol/mood"
+	             << "http://jabber.org/protocol/tune"
+	             << "http://jabber.org/protocol/physloc"
+	             << "http://jabber.org/protocol/geoloc"
+	             << "http://www.xmpp.org/extensions/xep-0084.html#ns-data"
+	             << "http://www.xmpp.org/extensions/xep-0084.html#ns-metadata"
+	            );
+
+	registerCaps("ep-notify", QStringList()
+	             << "http://jabber.org/protocol/mood+notify"
+	             << "http://jabber.org/protocol/tune+notify"
+	             << "http://jabber.org/protocol/physloc+notify"
+	             << "http://jabber.org/protocol/geoloc+notify"
+	             << "http://www.xmpp.org/extensions/xep-0084.html#ns-metadata+notify"
+	            );
+
+	registerCaps("html", QStringList("http://jabber.org/protocol/xhtml-im"));
+	registerCaps("cs", QStringList("http://jabber.org/protocol/chatstates"));
 
 	// load accounts
 	d->contactList->loadAccounts(d->pro.acc);
@@ -481,6 +481,18 @@ bool PsiCon::init()
 		TipDlg::show(this);
 
 	return true;
+}
+
+void PsiCon::registerCaps(const QString& ext, const QStringList& features)
+{
+	DiscoItem::Identity identity = { "client", ApplicationInfo::name(), "pc" };
+	DiscoItem::Identities identities;
+	identities += identity;
+
+	d->capsRegistry->registerCaps(CapsSpec(ApplicationInfo::capsNode(),
+	                                       ApplicationInfo::capsVersion(), ext),
+	                              identities,
+	                              Features(features));
 }
 
 void PsiCon::deinit()

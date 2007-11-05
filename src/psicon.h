@@ -168,6 +168,8 @@ private:
 	void getToggles(bool *tog_offline, bool *tog_away, bool *tog_agents, bool *tog_hidden, bool *tog_self);
 	void promptUserToCreateAccount();
 
+	void registerCaps(const QString& ext, const QStringList& features);
+
 	friend class EventQueue;
 	int getId();
 };
