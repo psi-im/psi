@@ -38,9 +38,6 @@ class TabbableWidget : public AdvancedWidget<QWidget>
 {
 	Q_OBJECT
 public:
-	/**
-	 * See ensureTabbedCorrectly.
-	 */ 
 	TabbableWidget(const Jid &, PsiAccount *, TabManager *tabManager);
 	~TabbableWidget();
 
@@ -69,13 +66,10 @@ signals:
 public slots:
 	virtual void activated();
 	void bringToFront();
-	/**
-	 * Call this after creation and before display to ensure the widget is tabbed correctly.
-	 * Ideally use a factory function for this.
-	 */ 
-	void ensureTabbedCorrectly();
 protected:
 	virtual void hideEvent(QHideEvent *event);
+protected slots:
+	void ensureTabbedCorrectly();
 private:
 	Jid jid_;
 	PsiAccount *pa_;

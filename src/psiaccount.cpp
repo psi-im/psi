@@ -4147,7 +4147,7 @@ void PsiAccount::openGroupChat(const Jid &j)
 	w->setPassword(d->client->groupChatPassword(j.user(),j.host()));
 	connect(w, SIGNAL(aSend(const Message &)), SLOT(dj_sendMessage(const Message &)));
 	connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));
-	w->ensureTabbedCorrectly();
+	// w->ensureTabbedCorrectly();
 	w->show();
 }
 
