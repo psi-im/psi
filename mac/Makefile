@@ -23,6 +23,7 @@ PSI_DIR=..
 
 EXECUTABLE_NAME=psi
 NAME=Psi
+VOLUME_NAME=$(NAME)
 VERSION=0.12-devel_$(shell date +"%Y%m%d")
 #VERSION=0.11-RC1_tab
 
@@ -143,7 +144,7 @@ $(TEMPLATE_DMG).bz2:
 	@echo
 	@echo --------------------- Generating empty template --------------------
 	mkdir template
-	hdiutil create -size 80m "$(TEMPLATE_DMG)" -srcfolder template -format UDRW -volname "$(NAME)" -quiet
+	hdiutil create -size 80m "$(TEMPLATE_DMG)" -srcfolder template -format UDRW -volname "$(VOLUME_NAME)" -quiet
 	rmdir template
 	bzip2 "$(TEMPLATE_DMG)"
 	@echo
@@ -163,8 +164,7 @@ $(MASTER_DMG): $(WC_DMG) $(DISK_FILES)
 	done
 	#rm -f "$@"
 	#hdiutil create -srcfolder "$(WC_DIR)" -format UDZO -imagekey zlib-level=9 "$@" -volname "$(NAME) $(VERSION)" -scrub -quiet
-	WC_DEV=`hdiutil info | grep "$(WC_DIR)" | grep "Apple_HFS" | awk '{print $$1}'` && \
-	hdiutil detach $$WC_DEV -quiet -force
+	diskutil eject `diskutil list | grep "$(VOLUME_NAME)" | grep "Apple_HFS" | awk '{print $$6}'`
 	rm -f "$(MASTER_DMG)"
 	hdiutil convert "$(WC_DMG)" -quiet -format UDZO -imagekey zlib-level=9 -o "$@"
 	rm -rf $(WC_DIR)
