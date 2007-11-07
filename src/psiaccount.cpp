@@ -538,15 +538,17 @@ private:
 
 	XMPP::Status autoAwayStatus(AutoAway autoAway)
 	{
-		switch (autoAway) {
-		case AutoAway_Away:
-			return Status(XMPP::Status::Away, option.asMessage, acc.priority);
-		case AutoAway_XA:
-			return Status(XMPP::Status::XA, option.asMessage, acc.priority);
-		case AutoAway_Offline:
-			return Status(Status::Offline, loginStatus.status(), acc.priority);
-		default:
-			;
+		if (!lastManualStatus_.isAway()) {
+			switch (autoAway) {
+			case AutoAway_Away:
+				return Status(XMPP::Status::Away, option.asMessage, acc.priority);
+			case AutoAway_XA:
+				return Status(XMPP::Status::XA, option.asMessage, acc.priority);
+			case AutoAway_Offline:
+				return Status(Status::Offline, loginStatus.status(), acc.priority);
+			default:
+				;
+			}
 		}
 		return lastManualStatus_;
 	}
