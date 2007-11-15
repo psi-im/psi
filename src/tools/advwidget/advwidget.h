@@ -105,7 +105,7 @@ public:
 			gAdvWidget->restoreSavedGeometry(savedGeometry);
 	}
 
-	void doFlash( bool on )
+	virtual void doFlash( bool on )
 	{
 		if (gAdvWidget)
 			gAdvWidget->doFlash( on );

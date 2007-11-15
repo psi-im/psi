@@ -125,3 +125,17 @@ bool TabbableWidget::isActiveTab()
 	return getManagingTabDlg()->isActiveWindow() &&
 	       getManagingTabDlg()->tabOnTop(this);
 }
+
+void TabbableWidget::doFlash(bool on)
+{
+	flashing_ = on;
+	if (!isTabbed()) {
+		AdvancedWidget<QWidget>::doFlash(on);
+	}
+	emit updateFlashState();
+}
+
+bool TabbableWidget::flashing() const
+{
+	return flashing_;
+}

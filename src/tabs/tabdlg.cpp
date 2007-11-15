@@ -61,16 +61,8 @@ TabDlg::TabDlg(TabManager* tabManager) : tabManager_(tabManager)
 	connect (tabs, SIGNAL(aboutToShowMenu(QMenu *)), SLOT(tab_aboutToShowMenu(QMenu *)));
 	connect (tabs, SIGNAL(tabContextMenu(int,QPoint,QContextMenuEvent*)), SLOT(showTabMenu(int,QPoint,QContextMenuEvent*)));
 
-	//connect (tabs, SIGNAL( testCanDecode(const QDragMoveEvent*, bool&) ), SLOT( tabTestCanDecode(const QDragMoveEvent*, bool&) ) );
-	//connect (tabs, SIGNAL( receivedDropEvent( QDropEvent* ) ), SLOT( tabReceivedDropEvent( QDropEvent* ) ) );
-	//connect (tabs, SIGNAL( receivedDropEvent( QWidget*, QDropEvent* ) ), SLOT( tabReceivedDropEvent( QWidget*, QDropEvent* ) ) );
-	//connect (tabs, SIGNAL( initiateDrag( QWidget* ) ), SLOT( startDrag( QWidget* ) ) );
-	//connect (tabs, SIGNAL( closeRequest( QWidget* ) ), SLOT( closeChat( QWidget* ) ) );
-	
-		
 	QVBoxLayout *vert1 = new QVBoxLayout( this, 1);
 	vert1->addWidget(tabs);
-	chats.setAutoDelete( FALSE );
 	X11WM_CLASS("chat");
 	
 	connect( tabs, SIGNAL( closeButtonClicked() ), SLOT( closeChat() ) );
@@ -223,8 +215,8 @@ void TabDlg::tabSelected(QWidget* chat)
 
 bool TabDlg::managesTab(const TabbableWidget* chat) const
 {
-	if ( chats.contains(chat) )
-			return true;
+	if (chats.contains(const_cast<TabbableWidget*>(chat)))
+		return true;
 	return false;
 }
 
@@ -235,19 +227,20 @@ bool TabDlg::tabOnTop(const TabbableWidget* chat) const
 	return false;
 }
 
-void TabDlg::addTab(TabbableWidget* chat)
+void TabDlg::addTab(TabbableWidget* tab)
 {
-	chats.append(chat);
-	QString tablabel = chat->getDisplayName();
+	chats.append(tab);
+	QString tablabel = tab->getDisplayName();
 	tablabel.replace("&", "&&");
-	tabs->addTab(chat, tablabel);
-	//tabs->setTabIconSet(chat, IconsetFactory::icon("psi/start-chat").icon());
+	tabs->addTab(tab, tablabel);
+	//tabs->setTabIconSet(tab, IconsetFactory::icon("psi/start-chat").icon());
 
-	//tabs->showPage(chat);
-	connect ( chat, SIGNAL( captionChanged( QString) ), SLOT( updateTab( QString ) ) );
-	connect ( chat, SIGNAL( contactStateChanged( XMPP::ChatState ) ), SLOT( setTabState( XMPP::ChatState ) ) );
-	connect ( chat, SIGNAL( unreadEventUpdate(int) ), SLOT( setTabHasEvents(int) ) );
-	
+	//tabs->showPage(tab);
+	connect(tab, SIGNAL(captionChanged(QString)), SLOT(updateTab(QString)));
+	connect(tab, SIGNAL(contactStateChanged(XMPP::ChatState)), SLOT(setTabState(XMPP::ChatState)));
+	connect(tab, SIGNAL(unreadEventUpdate(int)), SLOT(setTabHasEvents(int)));
+	connect(tab, SIGNAL(updateFlashState()), SLOT(updateFlashState()));
+
 	this->show();
 	updateCaption();
 }
@@ -281,14 +274,17 @@ void TabDlg::closeChat()
  * Call this when you want a tab to be removed immediately with no readiness checks
  * or reparenting, hiding etc (Such as on tab destruction).
  */ 
-void TabDlg::removeTabWithNoChecks(TabbableWidget *tab) {
-	disconnect ( tab, SIGNAL( captionChanged( QString) ), this, SLOT( updateTab( TabbableWidget* ) ) );
-	disconnect ( tab, SIGNAL( contactStateChanged( XMPP::ChatState ) ), this, SLOT( setTabState( XMPP::ChatState ) ) );
-	disconnect ( tab, SIGNAL( unreadEventUpdate(int) ), this, SLOT( setTabHasEvents(int) ) );
+void TabDlg::removeTabWithNoChecks(TabbableWidget *tab)
+{
+	disconnect(tab, SIGNAL(captionChanged(QString)), this, SLOT(updateTab(TabbableWidget*)));
+	disconnect(tab, SIGNAL(contactStateChanged(XMPP::ChatState)), this, SLOT(setTabState(XMPP::ChatState)));
+	disconnect(tab, SIGNAL(unreadEventUpdate(int)), this, SLOT(setTabHasEvents(int)));
+	disconnect(tab, SIGNAL(updateFlashState()), this, SLOT(updateFlashState()));
+
 	tabs->removePage(tab);
 	tabIsComposing.erase(tab);
 	tabHasMessages.erase(tab);
-	chats.remove(tab);
+	chats.removeAll(tab);
 }
 
 /**
@@ -345,7 +341,7 @@ void TabDlg::windowActivationChange(bool oldstate)
 void TabDlg::activated()
 {
 	updateCaption();
-	doFlash(false);
+	extinguishFlashingTabs();
 }
 
 void TabDlg::updateCaption()
@@ -406,20 +402,18 @@ void TabDlg::updateTab(QString caption)
 	TabbableWidget *tab = qobject_cast<TabbableWidget*>(sender());
 	updateTab(tab);
 }
-	
-void TabDlg::updateTab(TabbableWidget* chat) {
+
+void TabDlg::updateTab(TabbableWidget* chat)
+{
 	QString label, prefix;
 	int num = tabHasMessages[chat];
-	if (num == 0)
-	{
+	if (num == 0) {
 		prefix = "";
-	} 
-	else if (num == 1) 
-	{
+	}
+	else if (num == 1) {
 		prefix = "* ";
 	}
-	else
-	{
+	else {
 		prefix = QString("[%1] ").arg(num);
 	}
 
@@ -429,14 +423,13 @@ void TabDlg::updateTab(TabbableWidget* chat) {
 	//now set text colour based upon whether there are new messages/composing etc
 
 	if (tabIsComposing[chat]) {
-		tabs->setTabTextColor( chat, Qt::darkGreen );
-	} else if (tabHasMessages[chat]) {
-		tabs->setTabTextColor( chat, Qt::red );
-		if (PsiOptions::instance()->getOption("options.ui.flash-windows").toBool()) {
-			doFlash(true);
-		}
-	} else {
-		tabs->setTabTextColor( chat, colorGroup().foreground() );
+		tabs->setTabTextColor(chat, Qt::darkGreen);
+	}
+	else if (tabHasMessages[chat]) {
+		tabs->setTabTextColor(chat, Qt::red);
+	}
+	else {
+		tabs->setTabTextColor(chat, colorGroup().foreground());
 	}
 	updateCaption();
 }
@@ -476,25 +469,15 @@ void TabDlg::previousTab()
 
 void TabDlg::keyPressEvent(QKeyEvent *e)
 {
-	if (e->key() == Qt::Key_Escape)
-	{
+	if (e->key() == Qt::Key_Escape) {
 		closeChat();
 	}
-	else if ( e->key() == Qt::Key_W && (e->modifiers() & Qt::ControlModifier) )
-	{
+	else if (e->key() == Qt::Key_W && (e->modifiers() & Qt::ControlModifier)) {
 		closeChat();
 	}
-	else if ( e->key() == Qt::Key_PageUp && (e->modifiers() & Qt::ControlModifier) )
-	{
-		previousTab();
-	}
-	else if ( e->key() == Qt::Key_PageDown && (e->modifiers() & Qt::ControlModifier) )
-	{
-		nextTab();
-	}
-	else
+	else {
 		e->ignore();
-	
+	}
 }
 
 void TabDlg::dragEnterEvent(QDragEnterEvent *event)
@@ -528,4 +511,31 @@ void TabDlg::dropEvent(QDropEvent *event)
 		dlg->queuedSendChatTo(chat, this);
 	} 
 	
+}
+
+void TabDlg::extinguishFlashingTabs()
+{
+	foreach(TabbableWidget* tab, chats) {
+		if (tab->flashing()) {
+			tab->blockSignals(true);
+			tab->doFlash(false);
+			tab->blockSignals(false);
+		}
+	}
+
+	updateFlashState();
+}
+
+void TabDlg::updateFlashState()
+{
+	bool flash = false;
+	foreach(TabbableWidget* tab, chats) {
+		if (tab->flashing()) {
+			flash = true;
+			break;
+		}
+	}
+
+	flash = flash && !isActiveWindow();
+	doFlash(flash);
 }

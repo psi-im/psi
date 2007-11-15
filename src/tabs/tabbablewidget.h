@@ -57,7 +57,12 @@ public:
 	 */ 
 	bool isActiveTab();
 
+	// reimplemented
+	virtual void doFlash(bool on);
+	bool flashing() const;
+
 signals:
+	void updateFlashState();
 	void eventsRead(const Jid &);
 	void captionChanged(QString);
 	void contactStateChanged(XMPP::ChatState);
@@ -74,6 +79,7 @@ private:
 	Jid jid_;
 	PsiAccount *pa_;
 	TabManager *tabManager_;
+	bool flashing_;
 };
 
 #endif

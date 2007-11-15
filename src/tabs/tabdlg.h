@@ -31,7 +31,6 @@
 
 #include "tabbablewidget.h"
 
-
 class PsiCon;
 class ChatTabs;
 class ChatDlg;
@@ -42,6 +41,7 @@ class Q3DragObject;
 class QContextMenuEvent;
 class PsiTabWidget;
 class TabManager;
+
 class TabDlg : public AdvancedWidget<QWidget>
 {
 	Q_OBJECT
@@ -53,9 +53,12 @@ public:
 	QString getName() const;
 	TabbableWidget *getTab(int i) const;
 	void removeTabWithNoChecks(TabbableWidget *tab);
-	
+
+	TabbableWidget* getTabPointer(QString fullJid);
+
 signals:
 	void isDying(TabDlg*);
+
 protected:
 	void setShortcuts();
 	void closeEvent( QCloseEvent* );
@@ -64,6 +67,7 @@ protected:
 	void resizeEvent(QResizeEvent *);
 	void dragEnterEvent(QDragEnterEvent *event);
 	void dropEvent(QDropEvent *event);
+
 protected slots:
 	void detachChat();
 	void detachChat(QWidget*);
@@ -71,6 +75,7 @@ protected slots:
 	void closeChat(QWidget*);
 	void sendChatTo(QWidget*, TabDlg *);
 	void queuedSendChatTo(QWidget*, TabDlg *);
+
 public slots:
 	void addTab(TabbableWidget *tab);
 	void setLooks();
@@ -78,7 +83,9 @@ public slots:
 	void selectTab(TabbableWidget*);
 	void activated();
 	void optionsUpdate();
+
 private slots:
+	void updateFlashState();
 	void tabSelected(QWidget* chat);
 	void checkHasChats();
 	void closeMe();
@@ -92,12 +99,8 @@ private slots:
 	void menu_sendChatTo(QAction *act);
 	void showTabMenu(int tab, QPoint pos, QContextMenuEvent * event);
 
-	
-public:
-	TabbableWidget* getTabPointer(QString fullJid);
 private:
-	void updateCaption();
-	Q3PtrList<TabbableWidget> chats;
+	QList<TabbableWidget*> chats;
 	PsiTabWidget *tabs;
 	QPushButton *detachButton, *closeButton, *closeCross;
 	QMenu *tabMenu;
@@ -107,6 +110,9 @@ private:
 	TabManager *tabManager_;
 
 	QSize chatSize;
+
+	void extinguishFlashingTabs();
+	void updateCaption();
 };
 
 #endif
