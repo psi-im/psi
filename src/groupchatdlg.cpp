@@ -117,9 +117,6 @@ public:
 	int pending;
 	bool connecting;
 
-	QTimer *flashTimer;
-	int flashCount;
-
 	QStringList hist;
 	int histAt;
 
@@ -474,7 +471,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	options_ = PsiOptions::instance();
 
 	d->pending = 0;
-	d->flashTimer = 0;
 	d->connecting = false;
 
 	d->histAt = 0;
@@ -1363,59 +1359,9 @@ void GCMainDlg::updateCaption()
 	cap += d->jid.full();
 
 	// if taskbar flash, then we need to erase first and redo
-#ifdef Q_WS_WIN
-	bool on = false;
-	if(d->flashTimer) {
-		on = d->flashCount & 1;
-	}
-	if(on) {
-		FlashWindow(winId(), true);
-	}
-#endif
 	setWindowTitle(cap);
-#ifdef Q_WS_WIN
-	if(on) {
-		FlashWindow(winId(), true);
-	}
-#endif
 	emit captionChanged(cap);
 	emit unreadEventUpdate(d->pending);
-}
-
-#ifdef Q_WS_WIN
-void GCMainDlg::doFlash(bool yes)
-{
-	if(yes) {
-		if(d->flashTimer)
-			return;
-		d->flashTimer = new QTimer(this);
-		connect(d->flashTimer, SIGNAL(timeout()), SLOT(flashAnimate()));
-		d->flashCount = 0;
-		flashAnimate(); // kick the first one immediately
-		d->flashTimer->start(500);
-	}
-	else {
-		if(d->flashTimer) {
-			delete d->flashTimer;
-			d->flashTimer = 0;
-			FlashWindow(winId(), false);
-		}
-	}
-}
-#else
-void GCMainDlg::doFlash(bool)
-{
-}
-#endif
-
-void GCMainDlg::flashAnimate()
-{
-#ifdef Q_WS_WIN
-	FlashWindow(winId(), true);
-	++d->flashCount;
-	if(d->flashCount == 5)
-		d->flashTimer->stop();
-#endif
 }
 
 void GCMainDlg::setLooks()

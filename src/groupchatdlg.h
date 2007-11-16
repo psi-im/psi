@@ -107,7 +107,6 @@ private slots:
 	void openFind();
 	void configureRoom();
 	void doFind(const QString &);
-	void flashAnimate();
 	void pa_updatedActivity();
 	void goDisc();
 	void goConn();
@@ -132,7 +131,6 @@ private:
 	Private *d;
 	Ui::GroupChatDlg ui_;
 
-	void doFlash(bool);
 	void doAlert();
 	void updateCaption();
 	void appendSysMsg(const QString &, bool, const QDateTime &ts=QDateTime());
