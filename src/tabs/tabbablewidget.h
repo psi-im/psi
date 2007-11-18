@@ -75,6 +75,7 @@ public slots:
 
 protected:
 	virtual void setJid(const Jid&);
+	PsiAccount* account() const;
 
 protected:
 	// reimplemented

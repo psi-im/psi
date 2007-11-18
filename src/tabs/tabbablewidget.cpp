@@ -163,3 +163,8 @@ void TabbableWidget::invalidateTab()
 	setWindowTitle(desiredCaption());
 	emit invalidateTabInfo();
 }
+
+PsiAccount* TabbableWidget::account() const
+{
+	return pa_;
+}

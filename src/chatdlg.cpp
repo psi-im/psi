@@ -90,7 +90,6 @@ ChatDlg* ChatDlg::create(const Jid& jid, PsiAccount* account, TabManager* tabMan
 
 ChatDlg::ChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
 	: TabbableWidget(jid, pa, tabManager)
-	, pa_(pa)
 	, highlightersInstalled_(false)
 {
 	if (option.brushedMetal) {
@@ -1022,7 +1021,7 @@ void ChatDlg::resetComposing()
 
 PsiAccount* ChatDlg::account() const
 {
-	return pa_;
+	return TabbableWidget::account();
 }
 
 void ChatDlg::nicksChanged()

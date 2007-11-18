@@ -102,7 +102,6 @@ public:
 
 	GCMainDlg *dlg;
 	int state;
-	PsiAccount *pa;
 	MUCManager *mucManager;
 	QString self, prev_self;
 	QString password;
@@ -460,11 +459,10 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 		setAttribute(Qt::WA_MacMetalStyle);
 	nicknumber=0;
 	d = new Private(this);
-	d->pa = pa;
 	d->self = d->prev_self = j.resource();
-	d->pa->dialogRegister(this, jid());
-	connect(d->pa, SIGNAL(updatedActivity()), SLOT(pa_updatedActivity()));
-	d->mucManager = new MUCManager(d->pa->client(), jid());
+	account()->dialogRegister(this, jid());
+	connect(account(), SIGNAL(updatedActivity()), SLOT(pa_updatedActivity()));
+	d->mucManager = new MUCManager(account()->client(), jid());
 
 	options_ = PsiOptions::instance();
 
@@ -484,13 +482,13 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 #endif
 
 	ui_.setupUi(this);
-	ui_.lb_ident->setAccount(d->pa);
+	ui_.lb_ident->setAccount(account());
 	ui_.lb_ident->setShowJid(false);
 
 	connect(ui_.pb_topic, SIGNAL(clicked()), SLOT(doTopic()));
 	PsiToolTip::install(ui_.le_topic);
 
-	connect(d->pa->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
+	connect(account()->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
 	updateIdentityVisibility();
 
 	d->act_find = new IconAction(tr("Find"), "psi/search", tr("&Find"), 0, this);
@@ -581,13 +579,13 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 GCMainDlg::~GCMainDlg()
 {
 	if(d->state != Private::Idle)
-		d->pa->groupChatLeave(jid().host(), jid().user());
+		account()->groupChatLeave(jid().host(), jid().user());
 
 	//QMimeSourceFactory *m = ui_.log->mimeSourceFactory();
 	//ui_.log->setMimeSourceFactory(0);
 	//delete m;
 
-	d->pa->dialogUnregister(this);
+	account()->dialogUnregister(this);
 	delete d->mucManager;
 	delete d;
 }
@@ -695,13 +693,13 @@ void GCMainDlg::setConnecting()
 
 void GCMainDlg::updateIdentityVisibility()
 {
-	ui_.lb_ident->setVisible(d->pa->psi()->contactList()->enabledAccounts().count() > 1);
+	ui_.lb_ident->setVisible(account()->psi()->contactList()->enabledAccounts().count() > 1);
 }
 
 #ifdef WHITEBOARDING
 void GCMainDlg::openWhiteboard()
 {
-	d->pa->actionOpenWhiteboardSpecific(jid(), jid().withResource(d->self), true);
+	account()->actionOpenWhiteboardSpecific(jid(), jid().withResource(d->self), true);
 }
 #endif
 
@@ -735,7 +733,7 @@ void GCMainDlg::mle_returnPressed()
 		if ( !nick.isEmpty() ) {
 			d->prev_self = d->self;
 			d->self = nick;
-			d->pa->groupChatChangeNick(jid().host(), jid().user(), d->self, d->pa->status());
+			account()->groupChatChangeNick(jid().host(), jid().user(), d->self, account()->status());
 		}
 		ui_.mle->chatEdit()->setText("");
 		return;
@@ -856,7 +854,7 @@ void GCMainDlg::goConn()
 		QString room = jid().user();
 		QString nick = d->self;
 
-		if(!d->pa->groupChatJoin(host, room, nick, d->password)) {
+		if(!account()->groupChatJoin(host, room, nick, d->password)) {
 			appendSysMsg(tr("Error: You are in or joining this room already!"), true);
 			d->state = Private::Idle;
 		}
@@ -878,30 +876,31 @@ void GCMainDlg::dropEvent(QDropEvent *e)
 		if (!d->password.isEmpty())
 			m.setMUCPassword(d->password);
 		m.setTimeStamp(QDateTime::currentDateTime());
-		d->pa->dj_sendMessage(m);
+		account()->dj_sendMessage(m);
 	}
 }
 
 
 void GCMainDlg::pa_updatedActivity()
 {
-	if(!d->pa->loggedIn())
+	if(!account()->loggedIn()) {
 		goDisc();
+	}
 	else {
 		if(d->state == Private::Idle) {
 			goConn();
 		}
 		else if(d->state == Private::Connected) {
-			Status s = d->pa->status();
+			Status s = account()->status();
 			s.setXSigned("");
-			d->pa->groupChatSetStatus(jid().host(), jid().user(), s);
+			account()->groupChatSetStatus(jid().host(), jid().user(), s);
 		}
 	}
 }
 
 PsiAccount* GCMainDlg::account() const
 {
-	return d->pa;
+	return TabbableWidget::account();
 }
 
 void GCMainDlg::error(int, const QString &str)
@@ -1027,7 +1026,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 				message += tr("Do you want to join the alternate venue '%1' ?").arg(s.mucDestroy().jid().full());
 				int ret = QMessageBox::information(this, tr("Room Destroyed"), message, QMessageBox::Yes, QMessageBox::No);
 				if (ret == QMessageBox::Yes) {
-					d->pa->actionJoin(s.mucDestroy().jid().full());
+					account()->actionJoin(s.mucDestroy().jid().full());
 				}
 			}
 			else {
@@ -1126,7 +1125,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 	
 	if (!s.capsNode().isEmpty()) {
 		Jid caps_jid(s.mucItem().jid().isEmpty() || !d->nonAnonymous ? Jid(jid()).withResource(nick) : s.mucItem().jid());
-		d->pa->capsManager()->updateCaps(caps_jid,s.capsNode(),s.capsVersion(),s.capsExt());
+		account()->capsManager()->updateCaps(caps_jid,s.capsNode(),s.capsVersion(),s.capsExt());
 	}
 
 }
@@ -1171,11 +1170,11 @@ void GCMainDlg::message(const Message &_m)
 	// play sound?
 	if(from == d->self) {
 		if(!m.spooled())
-			d->pa->playSound(option.onevent[eSend]);
+			account()->playSound(option.onevent[eSend]);
 	}
 	else {
 		if(alert || (!option.noGCSound && !m.spooled() && !from.isEmpty()) )
-			d->pa->playSound(option.onevent[eChat2]);
+			account()->playSound(option.onevent[eChat2]);
 	}
 
 	if(from.isEmpty())
@@ -1404,10 +1403,10 @@ void GCMainDlg::optionsUpdate()
 void GCMainDlg::lv_action(const QString &nick, const Status &s, int x)
 {
 	if(x == 0) {
-		d->pa->invokeGCMessage(jid().withResource(nick));
+		account()->invokeGCMessage(jid().withResource(nick));
 	}
 	else if(x == 1) {
-		d->pa->invokeGCChat(jid().withResource(nick));
+		account()->invokeGCChat(jid().withResource(nick));
 	}
 	else if(x == 2) {
 		UserListItem u;
@@ -1424,10 +1423,10 @@ void GCMainDlg::lv_action(const QString &nick, const Status &s, int x)
 		w->show();
 	}
 	else if(x == 3) {
-		d->pa->invokeGCInfo(jid().withResource(nick));
+		account()->invokeGCInfo(jid().withResource(nick));
 	}
 	else if(x == 4) {
-		d->pa->invokeGCFile(jid().withResource(nick));
+		account()->invokeGCFile(jid().withResource(nick));
 	}
 	else if(x == 10) {
 		d->mucManager->kick(nick);

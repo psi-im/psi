@@ -175,7 +175,6 @@ protected:
 	virtual ChatEdit* chatEdit() const = 0;
 
 private:
-	PsiAccount* pa_;
 	bool highlightersInstalled_;
 	QString dispNick_;
 	int status_;
