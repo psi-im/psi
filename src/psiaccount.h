@@ -153,7 +153,7 @@ public:
 
 	void showXmlConsole();
 	void openAddUserDlg();
-	void openGroupChat(const Jid &);
+	void openGroupChat(const Jid &, ActivationType activationType);
 	bool groupChatJoin(const QString &host, const QString &room, const QString &nick, const QString& pass, bool nohistory = false);
 	void groupChatSetStatus(const QString &host, const QString &room, const Status &);
 	void groupChatChangeNick(const QString &host, const QString &room, const QString& nick, const Status &);

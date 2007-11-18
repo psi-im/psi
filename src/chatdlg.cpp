@@ -85,7 +85,6 @@ ChatDlg* ChatDlg::create(const Jid& jid, PsiAccount* account, TabManager* tabMan
 {
 	ChatDlg* chat = new PsiChatDlg(jid, account, tabManager);
 	chat->init();
-	chat->ensureTabbedCorrectly();
 	return chat;
 }
 

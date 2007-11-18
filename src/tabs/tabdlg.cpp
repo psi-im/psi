@@ -132,8 +132,7 @@ void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent * event)
 		QMenu* sendTo = new QMenu(tabMenu_);
 		sendTo->setTitle(tr("Send Tab to"));
 		QMap<QAction*, TabDlg*> sentTos;
-		for (uint i = 0; i < tabManager_->getTabSets()->count(); ++i) {
-			TabDlg* tabSet = tabManager_->getTabSets()->at(i);
+		foreach(TabDlg* tabSet, tabManager_->tabSets()) {
 			QAction *act = sendTo->addAction(tabSet->desiredCaption());
 			if (tabSet == this)
 				act->setEnabled(false);
@@ -166,8 +165,7 @@ void TabDlg::tab_aboutToShowMenu(QMenu *menu)
 
 	QMenu* sendTo = new QMenu(menu);
 	sendTo->setTitle(tr("Send Current Tab to"));
-	for (uint i = 0; i < tabManager_->getTabSets()->count(); ++i) {
-		TabDlg* tabSet = tabManager_->getTabSets()->at(i);
+	foreach(TabDlg* tabSet, tabManager_->tabSets()) {
 		QAction *act = sendTo->addAction(tabSet->desiredCaption());
 		act->setData(QVariant(&tabSet));
 		act->setEnabled(tabSet != this);
@@ -310,7 +308,7 @@ void TabDlg::checkHasChats()
 {
 	if (tabWidget_->count() > 0)
 		return;
-	closeMe();
+	deleteLater();
 }
 
 void TabDlg::windowActivationChange(bool oldstate)
@@ -360,18 +358,10 @@ void TabDlg::closeEvent(QCloseEvent* closeEvent)
 	}
 }
 
-void TabDlg::closeMe()
-{
-	emit isDying(this);
-	//we do not delete it here, let the PsiCon do that, they create, they destroy.
-}
-
-
 TabbableWidget *TabDlg::getTab(int i) const
 {
 	return static_cast<TabbableWidget*>(tabWidget_->page(i));
 }
-
 
 TabbableWidget* TabDlg::getTabPointer(QString fullJid)
 {

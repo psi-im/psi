@@ -21,7 +21,7 @@
 #define _TABMANAGER_H_
 
 #include <QObject>
-#include <Q3PtrList>
+#include <QList>
 #include "psicon.h"
 
 class TabbableWidget;
@@ -52,11 +52,6 @@ public:
 	bool isChatTabbed(const TabbableWidget*) const;
 	
 	/**
-	 * Gets the tabbed widget with the specified jid.
-	 */ 
-	TabbableWidget* getChatInTabs(QString);
-	
-	/**
 	 * Returns the tab dialog that owns the supplied widget.
 	 */
 	TabDlg* getManagingTabs(const TabbableWidget*) const;
@@ -64,7 +59,7 @@ public:
 	/**
 	 * Returns all active tabsets (could be empty).
 	 */ 
-	Q3PtrList<TabDlg>* getTabSets();
+	const QList<TabDlg*>& tabSets();
 	
 	/**
 	 * Checks if a given widget should be in a tabset 
@@ -72,19 +67,14 @@ public:
 	 */
 	bool shouldBeTabbed(QWidget *widget); 
 
-
 	void deleteAll();
 
 public slots:
-	/**
-	 * Called when a tab dialog is closed.
-	 * Removes it from the list of possible tabdlgs.
-	 */ 
-	void tabDying(TabDlg*);
+	void tabDestroyed(QObject*);
 
 private:
- 	Q3PtrList<TabDlg> tabs_;
-	Q3PtrList<TabbableWidget> tabControlledChats_;
+ 	QList<TabDlg*> tabs_;
+	QList<TabbableWidget*> tabControlledChats_;
 	PsiCon *psiCon_;
 };
 

@@ -2887,6 +2887,7 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
 #endif
 	}
 
+	Q_ASSERT(c);
 	return c;
 }
 
@@ -4092,22 +4093,13 @@ void PsiAccount::processChats(const Jid &j)
 void PsiAccount::openChat(const Jid& j, ActivationType activationType)
 {
 	bool activateChat = activationType == UserAction;
-	ChatDlg *c = ensureChatDlg(j);
-	QWidget *w = c;
-	if (option.useTabs) {
-		if (!d->tabManager->isChatTabbed(c)) {
-			//get a tab from the psicon
-			d->tabManager->getTabs()->addTab(c);
-		}
-		TabDlg* tabSet = d->tabManager->getManagingTabs(c);
-		activateChat = activateChat /* || !tabSet->isActiveWindow() */;
-		if (activateChat)
-			tabSet->selectTab(c);
-		w = tabSet;
-	}
+	ChatDlg* chat = ensureChatDlg(j);
+	chat->ensureTabbedCorrectly();
+
 	processChats(j);
+
 	if (activateChat)
-		bringToFront(w);
+		chat->bringToFront();
 }
 
 void PsiAccount::chatMessagesRead(const Jid &j)
@@ -4130,7 +4122,7 @@ void PsiAccount::edb_finished()
 	delete h;
 }
 
-void PsiAccount::openGroupChat(const Jid &j)
+void PsiAccount::openGroupChat(const Jid &j, ActivationType activationType)
 {
 	QString str = j.userHost();
 	bool found = false;
@@ -4147,8 +4139,9 @@ void PsiAccount::openGroupChat(const Jid &j)
 	w->setPassword(d->client->groupChatPassword(j.user(),j.host()));
 	connect(w, SIGNAL(aSend(const Message &)), SLOT(dj_sendMessage(const Message &)));
 	connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));
-	// w->ensureTabbedCorrectly();
-	w->show();
+	w->ensureTabbedCorrectly();
+	if (activationType == UserAction)
+		w->bringToFront();
 }
 
 bool PsiAccount::groupChatJoin(const QString &host, const QString &room, const QString &nick, const QString& pass, bool nohistory)
@@ -4207,7 +4200,8 @@ void PsiAccount::client_groupChatJoined(const Jid &j)
 		return;
 	w->joined();
 
-	openGroupChat(j);
+	// TODO: Correctly handle auto-join groupchats
+	openGroupChat(j, UserAction);
 }
 
 void PsiAccount::client_groupChatLeft(const Jid &j)

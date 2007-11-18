@@ -36,18 +36,22 @@
 //----------------------------------------------------------------------------
 
 TabbableWidget::TabbableWidget(const Jid &jid, PsiAccount *pa, TabManager *tabManager)
-	:AdvancedWidget<QWidget>(0), jid_(jid), pa_(pa), tabManager_(tabManager)
+	: AdvancedWidget<QWidget>(0)
+	, jid_(jid)
+	, pa_(pa)
+	, tabManager_(tabManager)
 {
-	hide();
-	QTimer::singleShot(0,this,SLOT(ensureTabbedCorrectly()));
+	QTimer::singleShot(0, this, SLOT(ensureTabbedCorrectly()));
 }
 
-void TabbableWidget::ensureTabbedCorrectly() {
+void TabbableWidget::ensureTabbedCorrectly()
+{
 	if (tabManager_->shouldBeTabbed(this)) {
 		if (!isTabbed()) {
 			tabManager_->getTabs()->addTab(this);
 		}
-	} else {
+	}
+	else {
 		if (isTabbed()) {
 			getManagingTabDlg()->closeTab(this, false);
 		}
@@ -55,10 +59,9 @@ void TabbableWidget::ensureTabbedCorrectly() {
 	show();
 }
 
-void TabbableWidget::bringToFront() 
+void TabbableWidget::bringToFront()
 {
-	if ( isTabbed() )
-	{
+	if (isTabbed()) {
 		getManagingTabDlg()->selectTab(this);
 	}
 	::bringToFront(this);
@@ -66,10 +69,10 @@ void TabbableWidget::bringToFront()
 
 TabbableWidget::~TabbableWidget()
 {
-	hide();
 }
 
-void TabbableWidget::hideEvent ( QHideEvent * event ) {
+void TabbableWidget::hideEvent(QHideEvent* event)
+{
 	Q_UNUSED(event);
 	if (!isVisible()) {
 		//you can have a hideEvent and still be visible, check the docs.

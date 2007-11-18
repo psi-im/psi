@@ -56,9 +56,6 @@ public:
 
 	virtual QString desiredCaption() const;
 
-signals:
-	void isDying(TabDlg*);
-
 protected:
 	void setShortcuts();
 
@@ -89,7 +86,6 @@ private slots:
 	void updateFlashState();
 	void tabSelected(QWidget* tab);
 	void checkHasChats();
-	void closeMe();
 	void updateTab();
 	void updateTab(TabbableWidget*);
 	void nextTab();

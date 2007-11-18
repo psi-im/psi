@@ -1,17 +1,21 @@
 #include "tabmanager.h"
+
+#include <QtAlgorithms>
+
 #include "tabdlg.h"
 #include "tabbablewidget.h"
 #include "groupchatdlg.h"
 #include "chatdlg.h"
 
-TabManager::TabManager(PsiCon* psiCon, QObject *parent) : QObject(parent), psiCon_(psiCon) {
-	//the list 'owns' the tabs
-	tabs_.setAutoDelete( true );
-	tabControlledChats_.setAutoDelete( false );
+TabManager::TabManager(PsiCon* psiCon, QObject *parent)
+	: QObject(parent)
+	, psiCon_(psiCon)
+{
 }
 
-TabManager::~TabManager() {
-	
+TabManager::~TabManager()
+{
+	qDeleteAll(tabs_);
 }
 
 PsiCon* TabManager::psiCon() const
@@ -21,20 +25,18 @@ PsiCon* TabManager::psiCon() const
 
 TabDlg* TabManager::getTabs()
 {
-	if (!tabs_.isEmpty())
-	{
-		return tabs_.getFirst();
+	if (!tabs_.isEmpty()) {
+		return tabs_.first();
 	}
-	else
-	{
+	else {
 		return newTabs();
 	}
 }
 
-bool TabManager::shouldBeTabbed(QWidget *widget) {
+bool TabManager::shouldBeTabbed(QWidget *widget)
+{
 	qDebug("Checking if widget should be tabbed");
-	if (!option.useTabs)
-	{
+	if (!option.useTabs) {
 		qDebug("Tabs disabled");
 		return false;
 	}
@@ -54,14 +56,15 @@ TabDlg* TabManager::newTabs()
 {
 	TabDlg *tab = new TabDlg(this);
 	tabs_.append(tab);
-	connect (tab, SIGNAL ( isDying(TabDlg*) ), SLOT ( tabDying(TabDlg*) ) );
-	connect (psiCon_, SIGNAL(emitOptionsUpdate()), tab, SLOT(optionsUpdate()));
+	connect(tab, SIGNAL(destroyed(QObject*)), SLOT(tabDestroyed(QObject*)));
+	connect(psiCon_, SIGNAL(emitOptionsUpdate()), tab, SLOT(optionsUpdate()));
 	return tab;
 }
 
-void TabManager::tabDying(TabDlg* tab)
+void TabManager::tabDestroyed(QObject* obj)
 {
-	tabs_.remove(tab);
+	Q_ASSERT(tabs_.contains(static_cast<TabDlg*>(obj)));
+	tabs_.removeAll(static_cast<TabDlg*>(obj));
 }
 
 bool TabManager::isChatTabbed(const TabbableWidget* chat) const
@@ -74,17 +77,6 @@ bool TabManager::isChatTabbed(const TabbableWidget* chat) const
 	return false;
 }
 
-TabbableWidget* TabManager::getChatInTabs(QString jid)
-{
-	foreach(TabDlg* tabDlg, tabs_) {
-		if (tabDlg->getTabPointer(jid)) {
-			return tabDlg->getTabPointer(jid);
-		}
-	}
-	return 0;
-
-}
-
 TabDlg* TabManager::getManagingTabs(const TabbableWidget* chat) const
 {
 	//FIXME: this looks like it could be broken to me (KIS)
@@ -95,12 +87,11 @@ TabDlg* TabManager::getManagingTabs(const TabbableWidget* chat) const
 		}
 	}
 	return 0;
-
 }
 
-Q3PtrList<TabDlg>* TabManager::getTabSets()
+const QList<TabDlg*>& TabManager::tabSets()
 {
-	return &tabs_;
+	return tabs_;
 }
 
 void TabManager::deleteAll()

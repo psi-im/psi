@@ -71,12 +71,10 @@ signals:
 public slots:
 	virtual void activated();
 	void bringToFront();
+	void ensureTabbedCorrectly();
 
 protected:
 	virtual void setJid(const Jid&);
-
-protected slots:
-	void ensureTabbedCorrectly();
 
 protected:
 	// reimplemented
