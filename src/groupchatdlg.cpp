@@ -644,24 +644,24 @@ void GCMainDlg::windowActivationChange(bool oldstate)
 {
 	QWidget::windowActivationChange(oldstate);
 
-	// if we're bringing it to the front, get rid of the '*' if necessary
-	if(isActiveTab()) {
-		if(d->pending > 0) {
-			d->pending = 0;
-			invalidateTab();
-		}
-		doFlash(false);
-
-		ui_.mle->chatEdit()->setFocus();
-		d->trackBar = false;
-	} else {
+	if (isActiveTab()) {
+		activated();
+	}
+	else {
 		d->trackBar = true;
 	}
 }
 
 void GCMainDlg::activated()
 {
-	windowActivationChange(true);
+	if(d->pending > 0) {
+		d->pending = 0;
+		invalidateTab();
+	}
+	doFlash(false);
+
+	ui_.mle->chatEdit()->setFocus();
+	d->trackBar = false;
 }
 
 void GCMainDlg::mucInfoDialog(const QString& title, const QString& message, const Jid& actor, const QString& reason)

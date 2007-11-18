@@ -49,11 +49,12 @@ public:
 	~TabDlg();
 	bool managesTab(const TabbableWidget*) const;
 	bool tabOnTop(const TabbableWidget*) const;
-	QString getName() const;
 	TabbableWidget *getTab(int i) const;
 	void removeTabWithNoChecks(TabbableWidget *tab);
 
 	TabbableWidget* getTabPointer(QString fullJid);
+
+	virtual QString desiredCaption() const;
 
 signals:
 	void isDying(TabDlg*);
@@ -62,7 +63,7 @@ protected:
 	void setShortcuts();
 
 	// reimplemented
-	void closeEvent( QCloseEvent* );
+	void closeEvent(QCloseEvent*);
 	void keyPressEvent(QKeyEvent *);
 	void windowActivationChange(bool);
 	void resizeEvent(QResizeEvent *);
@@ -70,24 +71,23 @@ protected:
 	void dropEvent(QDropEvent *event);
 
 protected slots:
-	void detachChat();
-	void detachChat(QWidget*);
-	void closeChat();
-	void closeChat(QWidget*);
-	void sendChatTo(QWidget*, TabDlg *);
-	void queuedSendChatTo(QWidget*, TabDlg *);
+	void detachCurrentTab();
+	void mouseDoubleClickTab(QWidget*);
+	void detachTab(TabbableWidget*);
+	void sendTabTo(TabbableWidget*, TabDlg *);
 
 public slots:
 	void addTab(TabbableWidget *tab);
 	void setLooks();
-	void closeTab(TabbableWidget*,bool);
+	void closeCurrentTab();
+	void closeTab(TabbableWidget*, bool doclose = true);
 	void selectTab(TabbableWidget*);
 	void activated();
 	void optionsUpdate();
 
 private slots:
 	void updateFlashState();
-	void tabSelected(QWidget* chat);
+	void tabSelected(QWidget* tab);
 	void checkHasChats();
 	void closeMe();
 	void updateTab();
@@ -95,7 +95,8 @@ private slots:
 	void nextTab();
 	void previousTab();
 	void tab_aboutToShowMenu(QMenu *menu);
-	void menu_sendChatTo(QAction *act);
+	void menu_sendTabTo(QAction *act);
+	void queuedSendTabTo(TabbableWidget* chat, TabDlg *dest);
 	void showTabMenu(int tab, QPoint pos, QContextMenuEvent * event);
 
 private:

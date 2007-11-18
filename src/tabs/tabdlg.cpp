@@ -44,9 +44,12 @@
 #include <windows.h>
 #endif
 
+static const QString psiTabDragMimeType = "application/psi-tab-drag";
+
 //----------------------------------------------------------------------------
 // TabDlg
 //----------------------------------------------------------------------------
+
 TabDlg::TabDlg(TabManager* tabManager)
 	: tabWidget_(0)
 	, detachButton_(0)
@@ -58,30 +61,32 @@ TabDlg::TabDlg(TabManager* tabManager)
 	, act_prev_(0)
 	, tabManager_(tabManager)
 {
-  	if ( option.brushedMetal )
+	if ( option.brushedMetal )
 		setAttribute(Qt::WA_MacMetalStyle);
+
+	// FIXME
+	qRegisterMetaType<TabDlg*>("TabDlg*");
+	qRegisterMetaType<TabbableWidget*>("TabbableWidget*");
 
 	tabWidget_ = new PsiTabWidget(this);
 	tabWidget_->setCloseIcon(IconsetFactory::icon("psi/closetab").icon());
-	connect(tabWidget_, SIGNAL(mouseDoubleClickTab(QWidget*)), SLOT(detachChat(QWidget*)));
+	connect(tabWidget_, SIGNAL(mouseDoubleClickTab(QWidget*)), SLOT(mouseDoubleClickTab(QWidget*)));
 	connect(tabWidget_, SIGNAL(aboutToShowMenu(QMenu*)), SLOT(tab_aboutToShowMenu(QMenu*)));
 	connect(tabWidget_, SIGNAL(tabContextMenu(int, QPoint, QContextMenuEvent*)), SLOT(showTabMenu(int, QPoint, QContextMenuEvent*)));
-	connect(tabWidget_, SIGNAL(closeButtonClicked()), SLOT(closeChat()));
+	connect(tabWidget_, SIGNAL(closeButtonClicked()), SLOT(closeCurrentTab()));
 	connect(tabWidget_, SIGNAL(currentChanged(QWidget*)), SLOT(tabSelected(QWidget*)));
 
 	QVBoxLayout *vert1 = new QVBoxLayout( this, 1);
 	vert1->addWidget(tabWidget_);
-	X11WM_CLASS("chat");
 
 	setAcceptDrops(TRUE);
 
+	X11WM_CLASS("tabs");
 	setLooks();
-
-	resize(option.sizeTabDlg);
 
 	act_close_ = new QAction(this);
 	addAction(act_close_);
-	connect(act_close_,SIGNAL(activated()), SLOT(closeChat()));
+	connect(act_close_,SIGNAL(activated()), SLOT(closeCurrentTab()));
 	act_prev_ = new QAction(this);
 	addAction(act_prev_);
 	connect(act_prev_,SIGNAL(activated()), SLOT(previousTab()));
@@ -90,6 +95,8 @@ TabDlg::TabDlg(TabManager* tabManager)
 	connect(act_next_,SIGNAL(activated()), SLOT(nextTab()));
 
 	setShortcuts();
+
+	resize(option.sizeTabDlg);
 }
 
 TabDlg::~TabDlg()
@@ -97,7 +104,8 @@ TabDlg::~TabDlg()
 }
 
 // FIXME: This is a bad idea to store pointers in QMimeData
-Q_DECLARE_METATYPE ( TabDlg* );
+Q_DECLARE_METATYPE(TabDlg*);
+Q_DECLARE_METATYPE(TabbableWidget*);
 
 void TabDlg::setShortcuts()
 {
@@ -108,8 +116,8 @@ void TabDlg::setShortcuts()
 
 void TabDlg::resizeEvent(QResizeEvent *e)
 {
-  if(option.keepSizes)
-	option.sizeTabDlg = e->size();
+	if (option.keepSizes)
+		option.sizeTabDlg = e->size();
 }
 
 void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent * event)
@@ -117,73 +125,73 @@ void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent * event)
 	Q_UNUSED(event);
 	tabMenu_->clear();
 
-	if (tab!=-1) {
+	if (tab != -1) {
 		QAction *d = tabMenu_->addAction(tr("Detach Tab"));
 		QAction *c = tabMenu_->addAction(tr("Close Tab"));
 
 		QMenu* sendTo = new QMenu(tabMenu_);
 		sendTo->setTitle(tr("Send Tab to"));
 		QMap<QAction*, TabDlg*> sentTos;
-		for (uint i = 0; i < tabManager_->getTabSets()->count(); ++i)
-		{
-			TabDlg* tabSet= tabManager_->getTabSets()->at(i);
-			QAction *act = sendTo->addAction( tabSet->getName());
-			if (tabSet == this) act->setEnabled(false);
+		for (uint i = 0; i < tabManager_->getTabSets()->count(); ++i) {
+			TabDlg* tabSet = tabManager_->getTabSets()->at(i);
+			QAction *act = sendTo->addAction(tabSet->desiredCaption());
+			if (tabSet == this)
+				act->setEnabled(false);
 			sentTos[act] = tabSet;
 		}
 		tabMenu_->addMenu(sendTo);
 
 		QAction *act = tabMenu_->exec(pos);
-		if (!act) return;
+		if (!act)
+			return;
 		if (act == c) {
-			closeChat(getTab(tab));
-		} else if (act == d) {
-			detachChat(getTab(tab));
-		} else {
+			closeTab(getTab(tab));
+		}
+		else if (act == d) {
+			detachTab(getTab(tab));
+		}
+		else {
 			TabDlg* target = sentTos[act];
-			if (target) queuedSendChatTo(getTab(tab), target);
+			if (target)
+				queuedSendTabTo(getTab(tab), target);
 		}
 	}
 }
 
 void TabDlg::tab_aboutToShowMenu(QMenu *menu)
 {
-	menu->addSeparator ();
-	menu->addAction( tr("Detach Current Tab"), this, SLOT( detachChat() ) );
-	menu->addAction( tr("Close Current Tab"), this, SLOT( closeChat() ) );
+	menu->addSeparator();
+	menu->addAction(tr("Detach Current Tab"), this, SLOT(detachCurrentTab()));
+	menu->addAction(tr("Close Current Tab"), this, SLOT(closeCurrentTab()));
 
 	QMenu* sendTo = new QMenu(menu);
 	sendTo->setTitle(tr("Send Current Tab to"));
-	int tabdlgmetatype = qRegisterMetaType<TabDlg*>("TabDlg*");
-	for (uint i = 0; i < tabManager_->getTabSets()->count(); ++i)
-	{
-		TabDlg* tabSet= tabManager_->getTabSets()->at(i);
-		QAction *act = sendTo->addAction( tabSet->getName());
-		act->setData(QVariant(tabdlgmetatype, &tabSet));
-		if (tabSet == this) act->setEnabled(false);
+	for (uint i = 0; i < tabManager_->getTabSets()->count(); ++i) {
+		TabDlg* tabSet = tabManager_->getTabSets()->at(i);
+		QAction *act = sendTo->addAction(tabSet->desiredCaption());
+		act->setData(QVariant(&tabSet));
+		act->setEnabled(tabSet != this);
 	}
-	connect(sendTo, SIGNAL(triggered(QAction*)), SLOT(menu_sendChatTo(QAction*)));
+	connect(sendTo, SIGNAL(triggered(QAction*)), SLOT(menu_sendTabTo(QAction*)));
 	menu->addMenu(sendTo);
 }
 
-void TabDlg::menu_sendChatTo(QAction *act)
+void TabDlg::menu_sendTabTo(QAction *act)
 {
-	queuedSendChatTo(tabWidget_->currentPage(), act->data().value<TabDlg*>());
+	queuedSendTabTo(static_cast<TabbableWidget*>(tabWidget_->currentPage()), act->data().value<TabDlg*>());
 }
 
-void TabDlg::sendChatTo(QWidget* chatw, TabDlg* otherTabs)
+void TabDlg::sendTabTo(TabbableWidget* tab, TabDlg* otherTabs)
 {
-	if (otherTabs==this)
+	if (otherTabs == this)
 		return;
-	TabbableWidget* chat = (TabbableWidget*)chatw;
-	closeTab(chat, false);
-	otherTabs->addTab(chat);
+	closeTab(tab, false);
+	otherTabs->addTab(tab);
 }
 
-void TabDlg::queuedSendChatTo(QWidget* chat, TabDlg *dest)
+void TabDlg::queuedSendTabTo(TabbableWidget* tab, TabDlg *dest)
 {
-	qRegisterMetaType<TabDlg*>("TabDlg*");
-	QMetaObject::invokeMethod(this, "sendChatTo",  Qt::QueuedConnection, Q_ARG(QWidget*, chat), Q_ARG(TabDlg*, dest));
+	QMetaObject::invokeMethod(this, "sendTabTo", Qt::QueuedConnection, Q_ARG(TabbableWidget*, tab), Q_ARG(TabDlg*, dest));
 }
 
 void TabDlg::optionsUpdate()
@@ -204,30 +212,22 @@ void TabDlg::setLooks()
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt()))/100);
 }
 
-QString TabDlg::getName() const
+void TabDlg::tabSelected(QWidget* tab)
 {
-	return ((TabbableWidget*)(tabWidget_->currentPage()))->getDisplayName();
-}
-
-void TabDlg::tabSelected(QWidget* chat)
-{
-	if (!chat) return; // FIXME
-	((TabbableWidget*)chat)->activated(); //is this still necessary?
+	if (!tab)
+		return;
+	static_cast<TabbableWidget*>(tab)->activated(); // FIXME: is this still necessary?
 	updateCaption();
 }
 
-bool TabDlg::managesTab(const TabbableWidget* chat) const
+bool TabDlg::managesTab(const TabbableWidget* tab) const
 {
-	if (tabs_.contains(const_cast<TabbableWidget*>(chat)))
-		return true;
-	return false;
+	return tabs_.contains(const_cast<TabbableWidget*>(tab));
 }
 
-bool TabDlg::tabOnTop(const TabbableWidget* chat) const
+bool TabDlg::tabOnTop(const TabbableWidget* tab) const
 {
-	if ( tabWidget_->currentPage() == chat )
-		return true;
-	return false;
+	return tabWidget_->currentPage() == tab;
 }
 
 void TabDlg::addTab(TabbableWidget* tab)
@@ -236,7 +236,6 @@ void TabDlg::addTab(TabbableWidget* tab)
 	QString tablabel = tab->getDisplayName();
 	tablabel.replace("&", "&&");
 	tabWidget_->addTab(tab, tablabel);
-	//tabWidget_->setTabIconSet(tab, IconsetFactory::icon("psi/start-chat").icon());
 
 	//tabWidget_->showPage(tab);
 	connect(tab, SIGNAL(invalidateTabInfo()), SLOT(updateTab()));
@@ -246,29 +245,23 @@ void TabDlg::addTab(TabbableWidget* tab)
 	updateCaption();
 }
 
-void TabDlg::detachChat()
+void TabDlg::detachCurrentTab()
 {
-	detachChat(tabWidget_->currentPage());
+	detachTab(static_cast<TabbableWidget*>(tabWidget_->currentPage()));
 }
 
-void TabDlg::detachChat(QWidget* chat)
+void TabDlg::mouseDoubleClickTab(QWidget* widget)
 {
-	//don't detach singleton chats, fix for flyspray #477
-	if (tabWidget_->count()==1)
+	detachTab(static_cast<TabbableWidget*>(widget));
+}
+
+void TabDlg::detachTab(TabbableWidget* tab)
+{
+	if (tabWidget_->count() == 1 || !tab)
 		return;
-	
-	if (!chat) { // fail gracefully this is delayed/signaled user input.
-		return;
-	}
 
 	TabDlg *newTab = tabManager_->newTabs();
-	sendChatTo(chat, newTab);
-}
-
-void TabDlg::closeChat()
-{
-	TabbableWidget* chat = (TabbableWidget*)(tabWidget_->currentPage());
-	closeChat(chat);
+	sendTabTo(tab, newTab);
 }
 
 /**
@@ -291,7 +284,7 @@ void TabDlg::removeTabWithNoChecks(TabbableWidget *tab)
  * \param chat Chat to remove.
  * \param doclose Whether the chat is 'closed' while removing it.
  */ 
-void TabDlg::closeTab(TabbableWidget* chat, bool doclose=true)
+void TabDlg::closeTab(TabbableWidget* chat, bool doclose)
 {
 	if (doclose && !chat->readyToHide()) {
 		return;
@@ -302,15 +295,10 @@ void TabDlg::closeTab(TabbableWidget* chat, bool doclose=true)
 	if (doclose && chat->testAttribute(Qt::WA_DeleteOnClose)) {
 		chat->close();
 	}
-	if (tabWidget_->count()>0) {
+	if (tabWidget_->count() > 0) {
 		updateCaption();
 	}
 	checkHasChats();
-}
-
-void TabDlg::closeChat(QWidget* chat)
-{
-	closeTab((TabbableWidget*)chat);
 }
 
 void TabDlg::selectTab(TabbableWidget* chat)
@@ -320,7 +308,7 @@ void TabDlg::selectTab(TabbableWidget* chat)
 
 void TabDlg::checkHasChats()
 {
-	if (tabWidget_->count()>0)
+	if (tabWidget_->count() > 0)
 		return;
 	closeMe();
 }
@@ -341,7 +329,7 @@ void TabDlg::activated()
 	extinguishFlashingTabs();
 }
 
-void TabDlg::updateCaption()
+QString TabDlg::desiredCaption() const
 {
 	QString cap = "";
 	uint pending = 0;
@@ -353,19 +341,22 @@ void TabDlg::updateCaption()
 		if (pending > 1)
 			cap += QString("[%1] ").arg(pending);
 	}
-	cap += getName();
+	cap += static_cast<TabbableWidget*>(tabWidget_->currentPage())->getDisplayName();
 	if (static_cast<TabbableWidget*>(tabWidget_->currentPage())->state() == TabbableWidget::StateComposing)
 		cap += tr(" is composing");
+	return cap;
+}
 
-	setWindowTitle(cap);
+void TabDlg::updateCaption()
+{
+	setWindowTitle(desiredCaption());
 }
 
 void TabDlg::closeEvent(QCloseEvent* closeEvent)
 {
 	Q_UNUSED(closeEvent);
-	int count=tabWidget_->count();
-	for (int i=0;i<count;++i) {
-		closeChat();
+	foreach(TabbableWidget* tab, tabs_) {
+		closeTab(tab);
 	}
 }
 
@@ -378,20 +369,19 @@ void TabDlg::closeMe()
 
 TabbableWidget *TabDlg::getTab(int i) const
 {
-	return ((TabbableWidget*)tabWidget_->page(i));
+	return static_cast<TabbableWidget*>(tabWidget_->page(i));
 }
 
 
 TabbableWidget* TabDlg::getTabPointer(QString fullJid)
 {
-	for (int i=0; i < tabWidget_->count() ; i++)
-	{
-		if (getTab(i)->jid().full()==fullJid)
-		{
-			return getTab(i);
+	foreach(TabbableWidget* tab, tabs_) {
+		if (tab->jid().full() == fullJid) {
+			return tab;
 		}
 	}
-	return false;
+
+	return 0;
 }
 
 void TabDlg::updateTab()
@@ -446,13 +436,18 @@ void TabDlg::previousTab()
 	tabWidget_->setCurrentPage( page );
 }
 
+void TabDlg::closeCurrentTab()
+{
+	closeTab(static_cast<TabbableWidget*>(tabWidget_->currentPage()));
+}
+
 void TabDlg::keyPressEvent(QKeyEvent *e)
 {
 	if (e->key() == Qt::Key_Escape) {
-		closeChat();
+		closeCurrentTab();
 	}
 	else if (e->key() == Qt::Key_W && (e->modifiers() & Qt::ControlModifier)) {
-		closeChat();
+		closeCurrentTab();
 	}
 	else {
 		e->ignore();
@@ -461,7 +456,7 @@ void TabDlg::keyPressEvent(QKeyEvent *e)
 
 void TabDlg::dragEnterEvent(QDragEnterEvent *event)
 {
-	if ( event->mimeData()->hasFormat("psiTabDrag") ) {
+	if (event->mimeData()->hasFormat(psiTabDragMimeType)) {
 		event->setDropAction(Qt::MoveAction);
 		event->accept();
 	}
@@ -469,27 +464,24 @@ void TabDlg::dragEnterEvent(QDragEnterEvent *event)
 
 void TabDlg::dropEvent(QDropEvent *event)
 {
-	QByteArray data;
-	if (event->mimeData()->hasFormat("psiTabDrag")) {
-		data = event->mimeData()->data("psiTabDrag");
-	} else {
+	if (!event->mimeData()->hasFormat(psiTabDragMimeType)) {
 		return;
 	}
+	QByteArray data = event->mimeData()->data(psiTabDragMimeType);
+
 	int remoteTab = data.toInt();
 	event->acceptProposedAction();
 	//the event's been and gone, now do something about it
-	PsiTabBar* source = dynamic_cast<PsiTabBar*> (event->source());
-	if (source)
-	{
+	PsiTabBar* source = dynamic_cast<PsiTabBar*>(event->source());
+	if (source) {
 		PsiTabWidget* barParent = source->psiTabWidget();
 		QWidget* widget = barParent->widget(remoteTab);
-		TabbableWidget* chat=dynamic_cast<TabbableWidget*>(widget);
+		TabbableWidget* chat = dynamic_cast<TabbableWidget*>(widget);
 		TabDlg *dlg = tabManager_->getManagingTabs(chat);
 		if (!chat || !dlg)
 			return;
-		dlg->queuedSendChatTo(chat, this);
-	} 
-	
+		dlg->queuedSendTabTo(chat, this);
+	}
 }
 
 void TabDlg::extinguishFlashingTabs()
