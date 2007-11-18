@@ -74,7 +74,9 @@ public:
 	static bool stickEnabled;
 
 	QWidget *parentWidget;
+	bool flashing_;
 
+	bool flashing() const;
 	void doFlash(bool on);
 	void posChanging(int *x, int *y, int *width, int *height);
 	void moveEvent(QMoveEvent *e);
@@ -92,6 +94,8 @@ bool GAdvancedWidget::Private::stickEnabled   = true;
 
 GAdvancedWidget::Private::Private(QWidget *parent)
 	: QObject(parent)
+	, parentWidget(parent)
+	, flashing_(false)
 {
 	if ( !advancedWidgetShared )
 		advancedWidgetShared = new AdvancedWidgetShared();
@@ -193,8 +197,17 @@ void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *heig
 	}
 }
 
+bool GAdvancedWidget::Private::flashing() const
+{
+	return flashing_;
+}
+
 void GAdvancedWidget::Private::doFlash(bool yes)
 {
+	flashing_ = yes;
+	if (parentWidget->window() != parentWidget)
+		return;
+
 #ifdef Q_WS_WIN
 	FLASHWINFO fwi;
 	fwi.cbSize = sizeof(fwi);
@@ -202,7 +215,7 @@ void GAdvancedWidget::Private::doFlash(bool yes)
 	if (yes) {
 		fwi.dwFlags = FLASHW_ALL | FLASHW_TIMER;
 		fwi.dwTimeout = 0;
-		fwi.uCount = (UINT)-1;
+		fwi.uCount = 5;
 	}
 	else {
 		fwi.dwFlags = FLASHW_STOP;
@@ -273,14 +286,6 @@ bool GAdvancedWidget::winEvent(MSG* msg, long* result)
 }
 #endif
 
-void GAdvancedWidget::preSetCaption()
-{
-}
-
-void GAdvancedWidget::postSetCaption()
-{
-}
-
 void GAdvancedWidget::restoreSavedGeometry(QRect savedGeometry)
 {
 	QRect geom = savedGeometry;
@@ -305,6 +310,11 @@ void GAdvancedWidget::restoreSavedGeometry(QRect savedGeometry)
 
 	d->parentWidget->move(geom.topLeft());
 	d->parentWidget->resize(geom.size());
+}
+
+bool GAdvancedWidget::flashing() const
+{
+	return d->flashing();
 }
 
 void GAdvancedWidget::doFlash(bool on)

@@ -39,6 +39,8 @@ public:
 	static void setStickToWindows(bool val);
 
 	void restoreSavedGeometry(QRect savedGeometry);
+
+	bool flashing() const;
 	void doFlash(bool on);
 
 #ifdef Q_OS_WIN
@@ -46,9 +48,6 @@ public:
 #endif
 
 	void moveEvent(QMoveEvent *e);
-
-	void preSetCaption();
-	void postSetCaption();
 
 	void windowActivationChange(bool oldstate);
 
@@ -105,6 +104,13 @@ public:
 			gAdvWidget->restoreSavedGeometry(savedGeometry);
 	}
 
+	bool flashing() const
+	{
+		if (gAdvWidget)
+			return gAdvWidget->flashing();
+		return false;
+	}
+
 	virtual void doFlash( bool on )
 	{
 		if (gAdvWidget)
@@ -128,11 +134,14 @@ public:
 
 	void setWindowTitle( const QString &c )
 	{
-		if (gAdvWidget)
-			gAdvWidget->preSetCaption();
 		BaseClass::setWindowTitle( c );
-		if (gAdvWidget)
-			gAdvWidget->postSetCaption();
+		windowTitleChanged();
+	}
+
+protected:
+	virtual void windowTitleChanged()
+	{
+		doFlash(flashing());
 	}
 
 protected:

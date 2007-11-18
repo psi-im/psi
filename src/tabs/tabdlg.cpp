@@ -92,9 +92,8 @@ TabDlg::~TabDlg()
 
 }
 
-
+// FIXME: This is a bad idea to store pointers in QMimeData
 Q_DECLARE_METATYPE ( TabDlg* );
-
 
 void TabDlg::setShortcuts()
 {
@@ -347,19 +346,19 @@ void TabDlg::activated()
 void TabDlg::updateCaption()
 {
 	QString cap = "";
-	uint pending=0;
-	for ( int i=0; i<tabHasMessages.count(); ++i)
-	{
-		pending+=tabHasMessages.values()[i];
+	uint pending = 0;
+	for (int i = 0; i < tabHasMessages.count(); ++i) {
+		pending += tabHasMessages.values()[i];
 	}
-	if(pending > 0) {
+	if (pending > 0) {
 		cap += "* ";
-		if(pending > 1)
+		if (pending > 1)
 			cap += QString("[%1] ").arg(pending);
 	}
 	cap += getName();
 	if (tabIsComposing[(TabbableWidget*)(tabs->currentPage())])
 		cap += tr(" is composing");
+
 	setWindowTitle(cap);
 }
 

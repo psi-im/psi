@@ -59,7 +59,6 @@ public:
 
 	// reimplemented
 	virtual void doFlash(bool on);
-	bool flashing() const;
 
 signals:
 	void updateFlashState();
@@ -71,15 +70,18 @@ signals:
 public slots:
 	virtual void activated();
 	void bringToFront();
+
 protected:
+	// reimplemented
 	virtual void hideEvent(QHideEvent *event);
+
 protected slots:
 	void ensureTabbedCorrectly();
+
 private:
 	Jid jid_;
 	PsiAccount *pa_;
 	TabManager *tabManager_;
-	bool flashing_;
 };
 
 #endif

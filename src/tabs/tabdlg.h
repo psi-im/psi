@@ -61,6 +61,8 @@ signals:
 
 protected:
 	void setShortcuts();
+
+	// reimplemented
 	void closeEvent( QCloseEvent* );
 	void keyPressEvent(QKeyEvent *);
 	void windowActivationChange(bool);

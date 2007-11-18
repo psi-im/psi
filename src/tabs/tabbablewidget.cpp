@@ -128,14 +128,6 @@ bool TabbableWidget::isActiveTab()
 
 void TabbableWidget::doFlash(bool on)
 {
-	flashing_ = on;
-	if (!isTabbed()) {
-		AdvancedWidget<QWidget>::doFlash(on);
-	}
+	AdvancedWidget<QWidget>::doFlash(on);
 	emit updateFlashState();
-}
-
-bool TabbableWidget::flashing() const
-{
-	return flashing_;
 }
