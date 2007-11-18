@@ -152,7 +152,8 @@ void BSocket::reset(bool clear)
 		//}
 
 		//d->sd.deleteLater(d->qsock);
-		delete d->qsock;
+		// delete d->qsock;
+		d->qsock->deleteLater();
 		d->qsock = 0;
 	}
 	else {
