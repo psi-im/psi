@@ -920,7 +920,7 @@ bool PsiAccount::isConnected() const
  */
 bool PsiAccount::isAvailable() const
 {
-	return isConnected() && isActive();
+	return isConnected() && isActive() && loggedIn();
 }
 
 const QString & PsiAccount::name() const
@@ -4286,6 +4286,9 @@ QStringList PsiAccount::hiddenChats(const Jid &j) const
 
 void PsiAccount::slotCheckVCard()
 {
+	if (!isConnected() || !isActive())
+		return;
+
 	QString nick = d->jid.user();
 	JT_VCard* j = static_cast<JT_VCard*>(sender());
 	if (j->success() && j->statusCode() == Task::ErrDisc) {
