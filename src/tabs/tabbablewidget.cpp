@@ -131,3 +131,19 @@ void TabbableWidget::doFlash(bool on)
 	AdvancedWidget<QWidget>::doFlash(on);
 	emit updateFlashState();
 }
+
+TabbableWidget::State TabbableWidget::state() const
+{
+	return TabbableWidget::StateNone;
+}
+
+int TabbableWidget::unreadMessageCount() const
+{
+	return 0;
+}
+
+void TabbableWidget::invalidateTab()
+{
+	setWindowTitle(desiredCaption());
+	emit invalidateTabInfo();
+}

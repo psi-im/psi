@@ -576,7 +576,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 
 	setLooks();
 	setShortcuts();
-	updateCaption();
+	invalidateTab();
 	setConnecting();
 }
 
@@ -645,10 +645,10 @@ void GCMainDlg::windowActivationChange(bool oldstate)
 	QWidget::windowActivationChange(oldstate);
 
 	// if we're bringing it to the front, get rid of the '*' if necessary
-	if(isActiveWindow()) {
+	if(isActiveTab()) {
 		if(d->pending > 0) {
 			d->pending = 0;
-			updateCaption();
+			invalidateTab();
 		}
 		doFlash(false);
 
@@ -1322,9 +1322,9 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
 		d->deferredScroll();
 
 	// if we're not active, notify the user by changing the title
-	if(!isActiveWindow()) {
+	if(!isActiveTab()) {
 		++d->pending;
-		updateCaption();
+		invalidateTab();
 	}
 
 	//if someone directed their comments to us, notify the user
@@ -1341,27 +1341,24 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
 
 void GCMainDlg::doAlert()
 {
-	if(!isActiveWindow())
+	if(!isActiveTab())
 		if (PsiOptions::instance()->getOption("options.ui.flash-windows").toBool())
 			doFlash(true);
 }
 
-void GCMainDlg::updateCaption()
+QString GCMainDlg::desiredCaption() const
 {
 	QString cap = "";
 
-	if(d->pending > 0) {
+	if (d->pending > 0) {
 		cap += "* ";
-		if(d->pending > 1) {
+		if (d->pending > 1) {
 			cap += QString("[%1] ").arg(d->pending);
 		}
 	}
 	cap += d->jid.full();
 
-	// if taskbar flash, then we need to erase first and redo
-	setWindowTitle(cap);
-	emit captionChanged(cap);
-	emit unreadEventUpdate(d->pending);
+	return cap;
 }
 
 void GCMainDlg::setLooks()
@@ -1508,6 +1505,16 @@ void GCMainDlg::chatEditCreated()
 	ui_.mle->chatEdit()->setDialog(this);
 
 	ui_.mle->chatEdit()->installEventFilter(d);
+}
+
+TabbableWidget::State GCMainDlg::state() const
+{
+	return TabbableWidget::StateNone;
+}
+
+int GCMainDlg::unreadMessageCount() const
+{
+	return d->pending;
 }
 
 //----------------------------------------------------------------------------

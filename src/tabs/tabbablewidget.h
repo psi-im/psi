@@ -60,12 +60,23 @@ public:
 	// reimplemented
 	virtual void doFlash(bool on);
 
+	/**
+	 * Use this to invalidate tab state.
+	 */
+	virtual void invalidateTab();
+
+	enum State {
+		StateNone = 0,
+		StateComposing
+	};
+	virtual State state() const = 0;
+	virtual int unreadMessageCount() const = 0;
+	virtual QString desiredCaption() const = 0;
+
 signals:
+	void invalidateTabInfo();
 	void updateFlashState();
 	void eventsRead(const Jid &);
-	void captionChanged(QString);
-	void contactStateChanged(XMPP::ChatState);
-	void unreadEventUpdate(int);
 
 public slots:
 	virtual void activated();

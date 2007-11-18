@@ -33,7 +33,6 @@
 
 #include "tabbablewidget.h"
 
-#include "xmpp_chatstate.h"
 
 namespace XMPP
 {
@@ -67,6 +66,11 @@ public:
 	static QSize defaultSize();
 	bool readyToHide();
 
+	// reimplemented
+	virtual TabbableWidget::State state() const;
+	virtual int unreadMessageCount() const;
+	virtual QString desiredCaption() const;
+
 public:
 	PsiAccount* account() const;
 
@@ -77,9 +81,6 @@ signals:
 	void messagesRead(const Jid &);
 	void aSend(const Message &);
 	void aFile(const Jid &);
-	void captionChanged(QString);
-	void contactStateChanged(XMPP::ChatState);
-	void unreadEventUpdate(int);
 
 	/**
 	 * Signals if user (re)started/stopped composing
@@ -138,11 +139,13 @@ protected slots:
 	void checkComposing();
 
 protected:
+	// reimplemented
+	virtual void invalidateTab();
+
 	void resetComposing();
 	void doneSend();
 	virtual void setLooks();
 	void setSelfDestruct(int);
-	void updateCaption();
 	void deferredScroll();
 	bool isEmoteMessage(const XMPP::Message& m);
 	QString messageText(const XMPP::Message& m);

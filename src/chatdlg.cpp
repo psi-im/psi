@@ -110,8 +110,8 @@ ChatDlg::ChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
 	status_ = -1;
 
 	// Message events
-	contactChatState_ = StateNone;
-	lastChatState_ = StateNone;
+	contactChatState_ = XMPP::StateNone;
+	lastChatState_ = XMPP::StateNone;
 	sendComposingEvents_ = false;
 	isComposing_ = false;
 	composingTimer_ = 0;
@@ -287,7 +287,7 @@ bool ChatDlg::readyToHide()
 	if (pending_ > 0) {
 		pending_ = 0;
 		messagesRead(jid());
-		updateCaption();
+		invalidateTab();
 	}
 	doFlash(false);
 
@@ -347,7 +347,7 @@ void ChatDlg::activated()
 	if (pending_ > 0) {
 		pending_ = 0;
 		messagesRead(jid());
-		updateCaption();
+		invalidateTab();
 	}
 	doFlash(false);
 
@@ -448,7 +448,7 @@ void ChatDlg::updateContact(const Jid &j, bool fromPresence)
 		QList<UserListItem*> ul = account()->findRelevant(j);
 		UserStatus userStatus = userStatusFor(jid(), ul, false);
 		if (userStatus.statusType == XMPP::Status::Offline)
-			contactChatState_ = StateNone;
+			contactChatState_ = XMPP::StateNone;
 
 		bool statusChanged = false;
 		if (status_ != userStatus.statusType || statusString_ != userStatus.status) {
@@ -462,7 +462,7 @@ void ChatDlg::updateContact(const Jid &j, bool fromPresence)
 		if (userStatus.userListItem) {
 			dispNick_ = JIDUtil::nickOrJid(userStatus.userListItem->name(), userStatus.userListItem->jid().full());
 			nicksChanged();
-			updateCaption();
+			invalidateTab();
 
 			key_ = userStatus.publicKeyID;
 			updatePGP();
@@ -487,9 +487,9 @@ void ChatDlg::updateContact(const Jid &j, bool fromPresence)
 		capsChanged(jid());
 
 		// Reset 'is composing' event if the status changed
-		if (statusChanged && contactChatState_ != StateNone) {
-			if (contactChatState_ == StateComposing || contactChatState_ == StateInactive) {
-				setContactChatState(StatePaused);
+		if (statusChanged && contactChatState_ != XMPP::StateNone) {
+			if (contactChatState_ == XMPP::StateComposing || contactChatState_ == XMPP::StateInactive) {
+				setContactChatState(XMPP::StatePaused);
 			}
 		}
 	}
@@ -614,7 +614,7 @@ void ChatDlg::setSelfDestruct(int minutes)
 	selfDestruct_->start(minutes * 60000);
 }
 
-void ChatDlg::updateCaption()
+QString ChatDlg::desiredCaption() const
 {
 	QString cap = "";
 
@@ -626,17 +626,19 @@ void ChatDlg::updateCaption()
 	}
 	cap += dispNick_;
 
-	if (contactChatState_ == StateComposing) {
+	if (contactChatState_ == XMPP::StateComposing) {
 		cap = tr("%1 (Composing ...)").arg(cap);
 	}
-	else if (contactChatState_ == StateInactive) {
+	else if (contactChatState_ == XMPP::StateInactive) {
 		cap = tr("%1 (Inactive)").arg(cap);
 	}
 
-	setWindowTitle(cap);
+	return cap;
+}
 
-	emit captionChanged(cap);
-	emit unreadEventUpdate(pending_);
+void ChatDlg::invalidateTab()
+{
+	TabbableWidget::invalidateTab();
 }
 
 bool ChatDlg::isEncryptionEnabled() const
@@ -690,11 +692,11 @@ void ChatDlg::doSend()
 		if (sendComposingEvents_) {
 			m.addEvent(ComposingEvent);
 		}
-		m.setChatState(StateActive);
+		m.setChatState(XMPP::StateActive);
 	}
 
 	// Update current state
-	setChatState(StateActive);
+	setChatState(XMPP::StateActive);
 
 	if (isEncryptionEnabled()) {
 		chatEdit()->setEnabled(false);
@@ -746,13 +748,13 @@ void ChatDlg::incomingMessage(const Message &m)
 	if (m.body().isEmpty()) {
 		// Event message
 		if (m.containsEvent(CancelEvent)) {
-			setContactChatState(StatePaused);
+			setContactChatState(XMPP::StatePaused);
 		}
 		else if (m.containsEvent(ComposingEvent)) {
-			setContactChatState(StateComposing);
+			setContactChatState(XMPP::StateComposing);
 		}
 
-		if (m.chatState() != StateNone) {
+		if (m.chatState() != XMPP::StateNone) {
 			setContactChatState(m.chatState());
 		}
 	}
@@ -763,11 +765,11 @@ void ChatDlg::incomingMessage(const Message &m)
 		if (!m.eventId().isEmpty()) {
 			eventId_ = m.eventId();
 		}
-		if (m.containsEvents() || m.chatState() != StateNone) {
-			setContactChatState(StateActive);
+		if (m.containsEvents() || m.chatState() != XMPP::StateNone) {
+			setContactChatState(XMPP::StateActive);
 		}
 		else {
-			setContactChatState(StateNone);
+			setContactChatState(XMPP::StateNone);
 		}
 		appendMessage(m);
 	}
@@ -841,7 +843,7 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 	// if we're not active, notify the user by changing the title
 	if (!isActiveTab()) {
 		++pending_;
-		updateCaption();
+		invalidateTab();
 		if (PsiOptions::instance()->getOption("options.ui.flash-windows").toBool()) {
 			doFlash(true);
 		}
@@ -878,39 +880,39 @@ void ChatDlg::slotScroll()
 
 void ChatDlg::updateIsComposing(bool b)
 {
-	setChatState(b ? StateComposing : StatePaused);
+	setChatState(b ? XMPP::StateComposing : XMPP::StatePaused);
 }
 
 void ChatDlg::setChatState(ChatState state)
 {
-	if (option.messageEvents && (sendComposingEvents_ || (contactChatState_ != StateNone))) {
+	if (option.messageEvents && (sendComposingEvents_ || (contactChatState_ != XMPP::StateNone))) {
 		// Don't send to offline resource
 		QList<UserListItem*> ul = account()->findRelevant(jid());
 		if (ul.isEmpty()) {
 			sendComposingEvents_ = false;
-			lastChatState_ = StateNone;
+			lastChatState_ = XMPP::StateNone;
 			return;
 		}
 
 		UserListItem *u = ul.first();
 		if (!u->isAvailable()) {
 			sendComposingEvents_ = false;
-			lastChatState_ = StateNone;
+			lastChatState_ = XMPP::StateNone;
 			return;
 		}
 
 		// Transform to more privacy-enabled chat states if necessary
-		if (!option.inactiveEvents && (state == StateGone || state == StateInactive)) {
-			state = StatePaused;
+		if (!option.inactiveEvents && (state == XMPP::StateGone || state == XMPP::StateInactive)) {
+			state = XMPP::StatePaused;
 		}
 
-		if (lastChatState_ == StateNone && (state != StateActive && state != StateComposing && state != StateGone)) {
+		if (lastChatState_ == XMPP::StateNone && (state != XMPP::StateActive && state != XMPP::StateComposing && state != XMPP::StateGone)) {
 			//this isn't a valid transition, so don't send it, and don't update laststate
 			return;
 		}
 
 		// Check if we should send a message
-		if (state == lastChatState_ || state == StateActive || (lastChatState_ == StateActive && state == StatePaused)) {
+		if (state == lastChatState_ || state == XMPP::StateActive || (lastChatState_ == XMPP::StateActive && state == XMPP::StatePaused)) {
 			lastChatState_ = state;
 			return;
 		}
@@ -919,20 +921,20 @@ void ChatDlg::setChatState(ChatState state)
 		Message m(jid());
 		if (sendComposingEvents_) {
 			m.setEventId(eventId_);
-			if (state == StateComposing) {
+			if (state == XMPP::StateComposing) {
 				m.addEvent(ComposingEvent);
 			}
-			else if (lastChatState_ == StateComposing) {
+			else if (lastChatState_ == XMPP::StateComposing) {
 				m.addEvent(CancelEvent);
 			}
 		}
-		if (contactChatState_ != StateNone) {
-			if (lastChatState_ != StateGone) {
-				if ((state == StateInactive && lastChatState_ == StateComposing) || (state == StateComposing && lastChatState_ == StateInactive)) {
+		if (contactChatState_ != XMPP::StateNone) {
+			if (lastChatState_ != XMPP::StateGone) {
+				if ((state == XMPP::StateInactive && lastChatState_ == XMPP::StateComposing) || (state == XMPP::StateComposing && lastChatState_ == XMPP::StateInactive)) {
 					// First go to the paused state
 					Message tm(jid());
 					m.setType("chat");
-					m.setChatState(StatePaused);
+					m.setChatState(XMPP::StatePaused);
 					account()->dj_sendMessage(m, false);
 				}
 				m.setChatState(state);
@@ -940,13 +942,13 @@ void ChatDlg::setChatState(ChatState state)
 		}
 
 		// Send event message
-		if (m.containsEvents() || m.chatState() != StateNone) {
+		if (m.containsEvents() || m.chatState() != XMPP::StateNone) {
 			m.setType("chat");
 			account()->dj_sendMessage(m, false);
 		}
 
 		// Save last state
-		if (lastChatState_ != StateGone || state == StateActive)
+		if (lastChatState_ != XMPP::StateGone || state == XMPP::StateActive)
 			lastChatState_ = state;
 	}
 }
@@ -954,17 +956,16 @@ void ChatDlg::setChatState(ChatState state)
 void ChatDlg::setContactChatState(ChatState state)
 {
 	contactChatState_ = state;
-	if (state == StateGone) {
+	if (state == XMPP::StateGone) {
 		appendSysMsg(tr("%1 ended the conversation").arg(Qt::escape(dispNick_)));
 	}
 	else {
 		// Activate ourselves
-		if (lastChatState_ == StateGone) {
-			setChatState(StateActive);
+		if (lastChatState_ == XMPP::StateGone) {
+			setChatState(XMPP::StateActive);
 		}
 	}
-	emit contactStateChanged(state);
-	updateCaption();
+	invalidateTab();
 }
 
 bool ChatDlg::eventFilter(QObject *obj, QEvent *event)
@@ -1088,4 +1089,16 @@ void ChatDlg::chatEditCreated()
 	if (highlightersInstalled_) {
 		connect(chatEdit(), SIGNAL(textChanged()), this, SLOT(setComposing()));
 	}
+}
+
+TabbableWidget::State ChatDlg::state() const
+{
+	return contactChatState_ == XMPP::StateComposing ?
+	       TabbableWidget::StateComposing :
+	       TabbableWidget::StateNone;
+}
+
+int ChatDlg::unreadMessageCount() const
+{
+	return pending_;
 }

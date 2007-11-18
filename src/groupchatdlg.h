@@ -77,6 +77,11 @@ public:
 	void setPassword(const QString&);
 	const QString& nick() const;
 
+	// reimplemented
+	virtual TabbableWidget::State state() const;
+	virtual int unreadMessageCount() const;
+	virtual QString desiredCaption() const;
+
 protected:
 	void setShortcuts();
 
@@ -92,8 +97,6 @@ protected:
 
 signals:
 	void aSend(const Message &);
-	void captionChanged(QString);
-	void unreadEventUpdate(int);
 
 public slots:
 	void optionsUpdate();
@@ -132,7 +135,6 @@ private:
 	Ui::GroupChatDlg ui_;
 
 	void doAlert();
-	void updateCaption();
 	void appendSysMsg(const QString &, bool, const QDateTime &ts=QDateTime());
 	void appendMessage(const Message &, bool);
 	void setLooks();

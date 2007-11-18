@@ -26,7 +26,6 @@
 #include <QMap>
 #include <Q3PtrList>
 
-#include "xmpp_chatstate.h"
 #include "advwidget.h"
 
 #include "tabbablewidget.h"
@@ -91,27 +90,27 @@ private slots:
 	void tabSelected(QWidget* chat);
 	void checkHasChats();
 	void closeMe();
-	void updateTab(QString);
+	void updateTab();
 	void updateTab(TabbableWidget*);
 	void nextTab();
 	void previousTab();
-	void setTabState( XMPP::ChatState );
-	void setTabHasEvents(int);
 	void tab_aboutToShowMenu(QMenu *menu);
 	void menu_sendChatTo(QAction *act);
 	void showTabMenu(int tab, QPoint pos, QContextMenuEvent * event);
 
 private:
-	QList<TabbableWidget*> chats;
-	PsiTabWidget *tabs;
-	QPushButton *detachButton, *closeButton, *closeCross;
-	QMenu *tabMenu;
-	QMap<TabbableWidget*, bool> tabIsComposing;
-	QMap<TabbableWidget*, int> tabHasMessages;
-	QAction *act_close, *act_next, *act_prev;
+	QList<TabbableWidget*> tabs_;
+	PsiTabWidget *tabWidget_;
+	QPushButton *detachButton_;
+	QPushButton *closeButton_;
+	QPushButton *closeCross_;
+	QMenu *tabMenu_;
+	QAction *act_close_;
+	QAction *act_next_;
+	QAction *act_prev_;
 	TabManager *tabManager_;
 
-	QSize chatSize;
+	QSize chatSize_;
 
 	void extinguishFlashingTabs();
 	void updateCaption();
