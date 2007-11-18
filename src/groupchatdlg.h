@@ -67,7 +67,6 @@ public:
 	GCMainDlg(PsiAccount *, const Jid &, TabManager *tabManager);
 	~GCMainDlg();
 
-	Jid jid() const;
 	PsiAccount* account() const;
 
 	void error(int, const QString &);

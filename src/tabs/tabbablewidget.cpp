@@ -79,7 +79,11 @@ void TabbableWidget::hideEvent ( QHideEvent * event ) {
 	}
 }
 
-bool TabbableWidget::isTabbed() {
+/**
+ * Checks if the dialog is in a tabset
+ */
+bool TabbableWidget::isTabbed()
+{
 	return tabManager_->isChatTabbed(this);
 }
 
@@ -103,6 +107,11 @@ Jid TabbableWidget::jid() const
 	return jid_;
 }
 
+void TabbableWidget::setJid(const Jid& j)
+{
+	jid_ = j;
+}
+
 const QString& TabbableWidget::getDisplayName()
 {
 	return jid_.user();
@@ -112,14 +121,15 @@ void TabbableWidget::activated()
 {
 }
 
+/**
+ * Returns true if this tab is active in the active window.
+ */
 bool TabbableWidget::isActiveTab()
 {
-	if ( isHidden() )
-	{
+	if (isHidden()) {
 		return false;
 	}
-	if (!isTabbed()/* && !getManagingTabDlg()*/)
-	{
+	if (!isTabbed()) {
 		return isActiveWindow();
 	}
 	return getManagingTabDlg()->isActiveWindow() &&
@@ -142,6 +152,9 @@ int TabbableWidget::unreadMessageCount() const
 	return 0;
 }
 
+/**
+ * Use this to invalidate tab state.
+ */
 void TabbableWidget::invalidateTab()
 {
 	setWindowTitle(desiredCaption());

@@ -91,7 +91,6 @@ ChatDlg* ChatDlg::create(const Jid& jid, PsiAccount* account, TabManager* tabMan
 
 ChatDlg::ChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
 	: TabbableWidget(jid, pa, tabManager)
-	, jid_(jid)
 	, pa_(pa)
 	, highlightersInstalled_(false)
 {
@@ -368,17 +367,11 @@ void ChatDlg::dragEnterEvent(QDragEnterEvent* event)
 	event->accept(account()->loggedIn() && Q3UriDrag::canDecode(event) && Q3UriDrag::decodeLocalFiles(event, l) && !l.isEmpty());
 }
 
-
-Jid ChatDlg::jid() const
-{
-	return jid_;
-}
-
 void ChatDlg::setJid(const Jid &j)
 {
 	if (!j.compare(jid())) {
 		account()->dialogUnregister(this);
-		jid_ = j;
+		TabbableWidget::setJid(j);
 		account()->dialogRegister(this, jid());
 		updateContact(jid(), false);
 	}

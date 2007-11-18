@@ -104,7 +104,6 @@ public:
 	int state;
 	PsiAccount *pa;
 	MUCManager *mucManager;
-	Jid jid;
 	QString self, prev_self;
 	QString password;
 	bool nonAnonymous;     // got status code 100 ?
@@ -454,7 +453,7 @@ public:
 };
 
 GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
-	: TabbableWidget(j, pa, tabManager)
+	: TabbableWidget(j.userHost(), pa, tabManager)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
   	if ( option.brushedMetal )
@@ -462,11 +461,10 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	nicknumber=0;
 	d = new Private(this);
 	d->pa = pa;
-	d->jid = j.userHost();
 	d->self = d->prev_self = j.resource();
-	d->pa->dialogRegister(this, d->jid);
+	d->pa->dialogRegister(this, jid());
 	connect(d->pa, SIGNAL(updatedActivity()), SLOT(pa_updatedActivity()));
-	d->mucManager = new MUCManager(d->pa->client(),d->jid);
+	d->mucManager = new MUCManager(d->pa->client(), jid());
 
 	options_ = PsiOptions::instance();
 
@@ -583,7 +581,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 GCMainDlg::~GCMainDlg()
 {
 	if(d->state != Private::Idle)
-		d->pa->groupChatLeave(d->jid.host(), d->jid.user());
+		d->pa->groupChatLeave(jid().host(), jid().user());
 
 	//QMimeSourceFactory *m = ui_.log->mimeSourceFactory();
 	//ui_.log->setMimeSourceFactory(0);
@@ -703,7 +701,7 @@ void GCMainDlg::updateIdentityVisibility()
 #ifdef WHITEBOARDING
 void GCMainDlg::openWhiteboard()
 {
-	d->pa->actionOpenWhiteboardSpecific(d->jid, d->jid.withResource(d->self), true);
+	d->pa->actionOpenWhiteboardSpecific(jid(), jid().withResource(d->self), true);
 }
 #endif
 
@@ -737,7 +735,7 @@ void GCMainDlg::mle_returnPressed()
 		if ( !nick.isEmpty() ) {
 			d->prev_self = d->self;
 			d->self = nick;
-			d->pa->groupChatChangeNick(d->jid.host(), d->jid.user(), d->self, d->pa->status());
+			d->pa->groupChatChangeNick(jid().host(), jid().user(), d->self, d->pa->status());
 		}
 		ui_.mle->chatEdit()->setText("");
 		return;
@@ -746,7 +744,7 @@ void GCMainDlg::mle_returnPressed()
 	if(d->state != Private::Connected)
 		return;
 
-	Message m(d->jid);
+	Message m(jid());
 	m.setType("groupchat");
 	m.setBody(str);
 	m.setTimeStamp(QDateTime::currentDateTime());
@@ -786,7 +784,7 @@ void GCMainDlg::doTopic()
 		QLineEdit::Normal, ui_.le_topic->text(), &ok, this);
 
 	if(ok) {
-		Message m(d->jid);
+		Message m(jid());
 		m.setType("groupchat");
 		m.setSubject(str);
 		m.setTimeStamp(QDateTime::currentDateTime());
@@ -854,8 +852,8 @@ void GCMainDlg::goConn()
 		d->state = Private::Connecting;
 		appendSysMsg(tr("Reconnecting..."), true);
 
-		QString host = d->jid.host();
-		QString room = d->jid.user();
+		QString host = jid().host();
+		QString room = jid().user();
 		QString nick = d->self;
 
 		if(!d->pa->groupChatJoin(host, room, nick, d->password)) {
@@ -875,7 +873,7 @@ void GCMainDlg::dropEvent(QDropEvent *e)
 	Jid jid(e->mimeData()->text());
 	if (jid.isValid() && !ui_.lv_users->hasJid(jid)) {
 		Message m;
-		m.setTo(d->jid);
+		m.setTo(this->jid());
 		m.addMUCInvite(MUCInvite(jid));
 		if (!d->password.isEmpty())
 			m.setMUCPassword(d->password);
@@ -890,19 +888,15 @@ void GCMainDlg::pa_updatedActivity()
 	if(!d->pa->loggedIn())
 		goDisc();
 	else {
-		if(d->state == Private::Idle)
+		if(d->state == Private::Idle) {
 			goConn();
+		}
 		else if(d->state == Private::Connected) {
 			Status s = d->pa->status();
 			s.setXSigned("");
-			d->pa->groupChatSetStatus(d->jid.host(), d->jid.user(), s);
+			d->pa->groupChatSetStatus(jid().host(), jid().user(), s);
 		}
 	}
-}
-
-Jid GCMainDlg::jid() const
-{
-	return d->jid;
 }
 
 PsiAccount* GCMainDlg::account() const
@@ -1131,7 +1125,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 	}
 	
 	if (!s.capsNode().isEmpty()) {
-		Jid caps_jid(s.mucItem().jid().isEmpty() || !d->nonAnonymous ? Jid(d->jid).withResource(nick) : s.mucItem().jid());
+		Jid caps_jid(s.mucItem().jid().isEmpty() || !d->nonAnonymous ? Jid(jid()).withResource(nick) : s.mucItem().jid());
 		d->pa->capsManager()->updateCaps(caps_jid,s.capsNode(),s.capsVersion(),s.capsExt());
 	}
 
@@ -1356,7 +1350,7 @@ QString GCMainDlg::desiredCaption() const
 			cap += QString("[%1] ").arg(d->pending);
 		}
 	}
-	cap += d->jid.full();
+	cap += jid().full();
 
 	return cap;
 }
@@ -1410,14 +1404,14 @@ void GCMainDlg::optionsUpdate()
 void GCMainDlg::lv_action(const QString &nick, const Status &s, int x)
 {
 	if(x == 0) {
-		d->pa->invokeGCMessage(d->jid.withResource(nick));
+		d->pa->invokeGCMessage(jid().withResource(nick));
 	}
 	else if(x == 1) {
-		d->pa->invokeGCChat(d->jid.withResource(nick));
+		d->pa->invokeGCChat(jid().withResource(nick));
 	}
 	else if(x == 2) {
 		UserListItem u;
-		u.setJid(d->jid.withResource(nick));
+		u.setJid(jid().withResource(nick));
 		u.setName(nick);
 
 		// make a resource so the contact appears online
@@ -1430,10 +1424,10 @@ void GCMainDlg::lv_action(const QString &nick, const Status &s, int x)
 		w->show();
 	}
 	else if(x == 3) {
-		d->pa->invokeGCInfo(d->jid.withResource(nick));
+		d->pa->invokeGCInfo(jid().withResource(nick));
 	}
 	else if(x == 4) {
-		d->pa->invokeGCFile(d->jid.withResource(nick));
+		d->pa->invokeGCFile(jid().withResource(nick));
 	}
 	else if(x == 10) {
 		d->mucManager->kick(nick);

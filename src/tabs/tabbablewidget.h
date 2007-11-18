@@ -47,22 +47,12 @@ public:
 	virtual bool readyToHide();
 	TabDlg* getManagingTabDlg();
 
-	/**
-	 * Checks if the dialog is in a tabset
-	 */
 	bool isTabbed(); 
-
-	/**
-	 * Returns true if this tab is active in the active window.
-	 */ 
 	bool isActiveTab();
 
 	// reimplemented
 	virtual void doFlash(bool on);
 
-	/**
-	 * Use this to invalidate tab state.
-	 */
 	virtual void invalidateTab();
 
 	enum State {
@@ -83,11 +73,14 @@ public slots:
 	void bringToFront();
 
 protected:
-	// reimplemented
-	virtual void hideEvent(QHideEvent *event);
+	virtual void setJid(const Jid&);
 
 protected slots:
 	void ensureTabbedCorrectly();
+
+protected:
+	// reimplemented
+	virtual void hideEvent(QHideEvent *event);
 
 private:
 	Jid jid_;

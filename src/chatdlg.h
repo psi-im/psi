@@ -59,7 +59,7 @@ public:
 	static ChatDlg* create(const Jid& jid, PsiAccount* account, TabManager* tabManager);
 	~ChatDlg();
 
-	Jid jid() const;
+	// reimplemented
 	void setJid(const Jid &);
 	const QString & getDisplayName();
 
@@ -175,7 +175,6 @@ protected:
 	virtual ChatEdit* chatEdit() const = 0;
 
 private:
-	Jid jid_;
 	PsiAccount* pa_;
 	bool highlightersInstalled_;
 	QString dispNick_;
