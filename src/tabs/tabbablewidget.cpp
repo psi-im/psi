@@ -71,17 +71,6 @@ TabbableWidget::~TabbableWidget()
 {
 }
 
-void TabbableWidget::hideEvent(QHideEvent* event)
-{
-	Q_UNUSED(event);
-	if (!isVisible()) {
-		//you can have a hideEvent and still be visible, check the docs.
-		if (isTabbed()) {
-			getManagingTabDlg()->removeTabWithNoChecks(this);
-		}
-	}
-}
-
 /**
  * Checks if the dialog is in a tabset
  */
@@ -118,6 +107,10 @@ void TabbableWidget::setJid(const Jid& j)
 const QString& TabbableWidget::getDisplayName()
 {
 	return jid_.user();
+}
+
+void TabbableWidget::deactivated()
+{
 }
 
 void TabbableWidget::activated()

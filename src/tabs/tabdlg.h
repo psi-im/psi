@@ -24,7 +24,7 @@
 #include <QWidget>
 #include <QSize>
 #include <QMap>
-#include <Q3PtrList>
+#include <QPointer>
 
 #include "advwidget.h"
 
@@ -55,6 +55,7 @@ public:
 	TabbableWidget* getTabPointer(QString fullJid);
 
 	virtual QString desiredCaption() const;
+	QString captionForTab(TabbableWidget* tab) const;
 
 protected:
 	void setShortcuts();
@@ -84,7 +85,7 @@ public slots:
 
 private slots:
 	void updateFlashState();
-	void tabSelected(QWidget* tab);
+	void tabSelected(QWidget* selected);
 	void checkHasChats();
 	void updateTab();
 	void updateTab(TabbableWidget*);
@@ -106,6 +107,7 @@ private:
 	QAction *act_next_;
 	QAction *act_prev_;
 	TabManager *tabManager_;
+	QPointer<TabbableWidget> selectedTab_;
 
 	QSize chatSize_;
 

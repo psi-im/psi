@@ -98,8 +98,11 @@ signals:
 	void aSend(const Message &);
 
 public slots:
-	void optionsUpdate();
+	// reimplemented
+	virtual void deactivated();
 	virtual void activated();
+
+	void optionsUpdate();
 	
 private slots:
 	void scrollUp();

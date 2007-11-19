@@ -102,10 +102,13 @@ protected:
 	bool eventFilter(QObject *obj, QEvent *event);
 
 public slots:
+	// reimplemented
+	virtual void deactivated();
+	virtual void activated();
+
 	virtual void optionsUpdate();
 	void updateContact(const Jid &, bool);
 	void incomingMessage(const Message &);
-	virtual void activated();
 	virtual void updateAvatar() = 0;
 	void updateAvatar(const Jid&);
 

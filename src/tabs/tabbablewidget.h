@@ -69,6 +69,7 @@ signals:
 	void eventsRead(const Jid &);
 
 public slots:
+	virtual void deactivated();
 	virtual void activated();
 	void bringToFront();
 	void ensureTabbedCorrectly();
@@ -76,10 +77,6 @@ public slots:
 protected:
 	virtual void setJid(const Jid&);
 	PsiAccount* account() const;
-
-protected:
-	// reimplemented
-	virtual void hideEvent(QHideEvent *event);
 
 private:
 	Jid jid_;

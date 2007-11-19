@@ -326,7 +326,7 @@ void GAdvancedWidget::windowActivationChange(bool oldstate)
 {
 	Q_UNUSED(oldstate);
 	if ( d->parentWidget->isActiveWindow() ) {
-		d->doFlash(false);
+		doFlash(false);
 	}
 }
 

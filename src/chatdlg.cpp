@@ -303,12 +303,13 @@ void ChatDlg::capsChanged()
 {
 }
 
-void ChatDlg::hideEvent(QHideEvent *)
+void ChatDlg::hideEvent(QHideEvent* e)
 {
 	if (isMinimized()) {
 		resetComposing();
 		setChatState(StateInactive);
 	}
+	TabbableWidget::hideEvent(e);
 }
 
 void ChatDlg::showEvent(QShowEvent *)
@@ -339,8 +340,15 @@ void ChatDlg::logSelectionChanged()
 #endif
 }
 
+void ChatDlg::deactivated()
+{
+	TabbableWidget::deactivated();
+}
+
 void ChatDlg::activated()
 {
+	TabbableWidget::activated();
+
 	if (pending_ > 0) {
 		pending_ = 0;
 		messagesRead(jid());

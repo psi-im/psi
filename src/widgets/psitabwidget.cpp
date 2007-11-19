@@ -143,7 +143,6 @@ void PsiTabWidget::tab_currentChanged( int tab )
 	emit currentChanged(currentPage());
 }
 
-
 /**
  * Returns the index of the current page
  */

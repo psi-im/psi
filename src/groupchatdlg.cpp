@@ -644,12 +644,21 @@ void GCMainDlg::windowActivationChange(bool oldstate)
 		activated();
 	}
 	else {
-		d->trackBar = true;
+		deactivated();
 	}
+}
+
+void GCMainDlg::deactivated()
+{
+	TabbableWidget::deactivated();
+
+	d->trackBar = true;
 }
 
 void GCMainDlg::activated()
 {
+	TabbableWidget::activated();
+
 	if(d->pending > 0) {
 		d->pending = 0;
 		invalidateTab();

@@ -165,9 +165,10 @@ void TabDlg::tab_aboutToShowMenu(QMenu *menu)
 
 	QMenu* sendTo = new QMenu(menu);
 	sendTo->setTitle(tr("Send Current Tab to"));
+	int tabDlgMetaType = qRegisterMetaType<TabDlg*>("TabDlg*");
 	foreach(TabDlg* tabSet, tabManager_->tabSets()) {
 		QAction *act = sendTo->addAction(tabSet->desiredCaption());
-		act->setData(QVariant(&tabSet));
+		act->setData(QVariant(tabDlgMetaType, &tabSet));
 		act->setEnabled(tabSet != this);
 	}
 	connect(sendTo, SIGNAL(triggered(QAction*)), SLOT(menu_sendTabTo(QAction*)));
@@ -181,6 +182,7 @@ void TabDlg::menu_sendTabTo(QAction *act)
 
 void TabDlg::sendTabTo(TabbableWidget* tab, TabDlg* otherTabs)
 {
+	Q_ASSERT(otherTabs);
 	if (otherTabs == this)
 		return;
 	closeTab(tab, false);
@@ -189,6 +191,8 @@ void TabDlg::sendTabTo(TabbableWidget* tab, TabDlg* otherTabs)
 
 void TabDlg::queuedSendTabTo(TabbableWidget* tab, TabDlg *dest)
 {
+	Q_ASSERT(tab);
+	Q_ASSERT(dest);
 	QMetaObject::invokeMethod(this, "sendTabTo", Qt::QueuedConnection, Q_ARG(TabbableWidget*, tab), Q_ARG(TabDlg*, dest));
 }
 
@@ -210,11 +214,17 @@ void TabDlg::setLooks()
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt()))/100);
 }
 
-void TabDlg::tabSelected(QWidget* tab)
+void TabDlg::tabSelected(QWidget* _selected)
 {
-	if (!tab)
-		return;
-	static_cast<TabbableWidget*>(tab)->activated(); // FIXME: is this still necessary?
+	TabbableWidget* selected = static_cast<TabbableWidget*>(_selected);
+	if (!selectedTab_.isNull())
+		selectedTab_->deactivated();
+
+	selectedTab_ = selected;
+
+	if (selected)
+		selected->activated();
+
 	updateCaption();
 }
 
@@ -231,16 +241,13 @@ bool TabDlg::tabOnTop(const TabbableWidget* tab) const
 void TabDlg::addTab(TabbableWidget* tab)
 {
 	tabs_.append(tab);
-	QString tablabel = tab->getDisplayName();
-	tablabel.replace("&", "&&");
-	tabWidget_->addTab(tab, tablabel);
+	tabWidget_->addTab(tab, captionForTab(tab));
 
-	//tabWidget_->showPage(tab);
 	connect(tab, SIGNAL(invalidateTabInfo()), SLOT(updateTab()));
 	connect(tab, SIGNAL(updateFlashState()), SLOT(updateFlashState()));
 
 	this->show();
-	updateCaption();
+	updateTab(tab);
 }
 
 void TabDlg::detachCurrentTab()
@@ -380,22 +387,27 @@ void TabDlg::updateTab()
 	updateTab(tab);
 }
 
-void TabDlg::updateTab(TabbableWidget* chat)
+QString TabDlg::captionForTab(TabbableWidget* tab) const
 {
 	QString label, prefix;
-	if (!chat->unreadMessageCount()) {
+	if (!tab->unreadMessageCount()) {
 		prefix = "";
 	}
-	else if (chat->unreadMessageCount() == 1) {
+	else if (tab->unreadMessageCount() == 1) {
 		prefix = "* ";
 	}
 	else {
-		prefix = QString("[%1] ").arg(chat->unreadMessageCount());
+		prefix = QString("[%1] ").arg(tab->unreadMessageCount());
 	}
 
-	label = prefix + chat->getDisplayName();
+	label = prefix + tab->getDisplayName();
 	label.replace("&", "&&");
-	tabWidget_->setTabLabel(chat, label);
+	return label;
+}
+
+void TabDlg::updateTab(TabbableWidget* chat)
+{
+	tabWidget_->setTabLabel(chat, captionForTab(chat));
 	//now set text colour based upon whether there are new messages/composing etc
 
 	if (chat->state() == TabbableWidget::StateComposing) {

@@ -35,20 +35,16 @@ TabDlg* TabManager::getTabs()
 
 bool TabManager::shouldBeTabbed(QWidget *widget)
 {
-	qDebug("Checking if widget should be tabbed");
 	if (!option.useTabs) {
-		qDebug("Tabs disabled");
 		return false;
 	}
 	if (qobject_cast<ChatDlg*> (widget)) {
-		qDebug("Casts to ChatDlg");
 		return true;
 	}
 	if (qobject_cast<GCMainDlg*> (widget)) {
-		qDebug("Casts to GCMainDlg");
 		return true;
 	}
-	qDebug("Unknown type");
+	qDebug("Checking if widget should be tabbed: Unknown type");
 	return false;
 }
 

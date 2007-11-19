@@ -66,7 +66,7 @@ public slots:
 
 signals:
 	void mouseDoubleClickTab( QWidget* tab );
-	void currentChanged(QWidget*);
+	void currentChanged(QWidget* selected);
 	void closeButtonClicked();
 	void aboutToShowMenu(QMenu *);
 	// context menu on the blank space will have tab==-1

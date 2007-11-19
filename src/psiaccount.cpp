@@ -4092,13 +4092,12 @@ void PsiAccount::processChats(const Jid &j)
 
 void PsiAccount::openChat(const Jid& j, ActivationType activationType)
 {
-	bool activateChat = activationType == UserAction;
 	ChatDlg* chat = ensureChatDlg(j);
 	chat->ensureTabbedCorrectly();
 
 	processChats(j);
 
-	if (activateChat)
+	if (activationType == UserAction)
 		chat->bringToFront();
 }
 
