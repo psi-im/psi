@@ -34,7 +34,7 @@ PassphraseDlg::PassphraseDlg(QWidget *parent) : QDialog (parent)
 void PassphraseDlg::promptPassphrase(const QString& name)
 {
 	setWindowTitle(tr("%1: OpenPGP Passphrase").arg(name));
-	resize(minimumSize());
+	resize(minimumSizeHint());
 }
 
 QString PassphraseDlg::getPassphrase() const
