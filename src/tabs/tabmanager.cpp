@@ -15,7 +15,7 @@ TabManager::TabManager(PsiCon* psiCon, QObject *parent)
 
 TabManager::~TabManager()
 {
-	qDeleteAll(tabs_);
+	deleteAll();
 }
 
 PsiCon* TabManager::psiCon() const
@@ -92,5 +92,6 @@ const QList<TabDlg*>& TabManager::tabSets()
 
 void TabManager::deleteAll()
 {
+	qDeleteAll(tabs_);
 	tabs_.clear();
 }
