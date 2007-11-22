@@ -15,3 +15,5 @@ SOURCES += \
 	guitestmanager.cpp
 
 include(../../src/privacy/guitest/guitest.pri)
+
+QMAKE_CLEAN += ${QMAKE_TARGET}

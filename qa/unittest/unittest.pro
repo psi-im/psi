@@ -20,3 +20,5 @@ include(../../src/utilities/unittest/unittest.pri)
 
 QMAKE_EXTRA_TARGETS = check
 check.commands = make && ./unittest
+
+QMAKE_CLEAN += ${QMAKE_TARGET}
