@@ -467,6 +467,7 @@ bool PsiCon::init()
 
 	registerCaps("html", QStringList("http://jabber.org/protocol/xhtml-im"));
 	registerCaps("cs", QStringList("http://jabber.org/protocol/chatstates"));
+	//I've commented out the automatic replies, so commenting out support as well - KIS
 	registerCaps("mr", QStringList("urn:xmpp:receipts"));
 
 	// load accounts
