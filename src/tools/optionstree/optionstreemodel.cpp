@@ -155,7 +155,7 @@ QVariant OptionsTreeModel::data(const QModelIndex& index, int role) const
 			if (section == Type)
 				return tree_->getOption(option).typeName();
 			else if (section == Value)
-				return tree_->getOption(option).toString();
+				return tree_->getOption(option);//.toString();
 		}
 	} else if (role == Qt::ToolTipRole) {
 		if (!tree_->isInternalNode(option)) {

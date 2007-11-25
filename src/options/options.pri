@@ -23,6 +23,8 @@ HEADERS += \
 	$$PWD/opt_advanced.h \
 	$$PWD/opt_shortcuts.h
 
+HEADERS += $$PWD/opt_tree.h
+
 SOURCES += \
 	$$PWD/opt_application.cpp \
 	$$PWD/opt_chat.cpp \
@@ -36,6 +38,7 @@ SOURCES += \
 	$$PWD/opt_advanced.cpp \
 	$$PWD/opt_shortcuts.cpp
 
+SOURCES += $$PWD/opt_tree.cpp
 
 INTERFACES += \
 	$$PWD/opt_application.ui \

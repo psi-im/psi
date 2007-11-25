@@ -201,6 +201,7 @@ HEADERS += \
 	$$PWD/ahcexecutetask.h \
 	$$PWD/ahcservermanager.h \
 	$$PWD/serverlistquerier.h \
+	$$PWD/psioptionseditor.h \
 	$$PWD/psioptions.h \
 	$$PWD/voicecaller.h \
 	$$PWD/voicecalldlg.h \
@@ -306,6 +307,7 @@ SOURCES += \
  	$$PWD/ahcservermanager.cpp \
 	$$PWD/serverlistquerier.cpp \
 	$$PWD/psioptions.cpp \
+	$$PWD/psioptionseditor.cpp \
 	$$PWD/voicecalldlg.cpp \
 	$$PWD/resourcemenu.cpp \
 	$$PWD/shortcutmanager.cpp \
@@ -362,6 +364,7 @@ INTERFACES += \
 	$$PWD/info.ui \
 	$$PWD/search.ui \
 	$$PWD/about.ui \
+	$$PWD/optioneditor.ui \
 	$$PWD/passphrase.ui \
 	$$PWD/sslcert.ui \
 	$$PWD/mucconfig.ui \
