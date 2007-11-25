@@ -941,6 +941,7 @@ Message::Message(const Jid &to)
 	d->errorCode = -1;*/
 	d->chatState = StateNone;
 	d->mucStatus = -1;
+	d->messageReceipt = ReceiptNone;
 }
 
 //! \brief Constructs a copy of Message object
