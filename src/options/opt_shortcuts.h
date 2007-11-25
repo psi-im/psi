@@ -45,6 +45,8 @@ public:
 		KeyItem
 	};
 
+	bool stretchable() const {return true;};
+
 private slots:
 	void onAdd();
 	void onRemove();
