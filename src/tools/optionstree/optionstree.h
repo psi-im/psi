@@ -39,19 +39,22 @@ public:
 	OptionsTree(QObject *parent = 0);
 	~OptionsTree();
 	
-	QVariant getOption(const QString& name);
+	QVariant getOption(const QString& name) const;
 	void setOption(const QString& name, const QVariant& value);
+	bool isInternalNode(const QString &node) const;
 	void setComment(const QString& name, const QString& comment);
-	QString getComment(const QString& name);
-	QStringList allOptionNames();
+	QString getComment(const QString& name) const;
+	QStringList allOptionNames() const;
 	QStringList getChildOptionNames(const QString& = QString(""), bool direct = false, bool internal_nodes = false) const;
 	
-	bool saveOptions(const QString& fileName, const QString& configName, const QString& configNS, const QString& configVersion);
+	bool saveOptions(const QString& fileName, const QString& configName, const QString& configNS, const QString& configVersion) const;
 	bool loadOptions(const QString& fileName, const QString& configName, const QString& configNS = "", const QString& configVersion = "");
 	bool loadOptions(const QDomElement& name, const QString& configName, const QString& configNS = "", const QString& configVersion = "");
 	
 signals:
 	void optionChanged(const QString& option);
+	void optionAboutToBeInserted(const QString& option);
+	void optionInserted(const QString& option);	
 	
 private:
 	VariantTree tree_;

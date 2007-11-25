@@ -42,16 +42,35 @@ VariantTree::~VariantTree()
 	
 }
 
+
 /**
- * TODO
+ * Split a @a node into local key and rest
+ * @param node 
+ * @param key part of the @a node before first dot
+ * @param rest part of the @a node after first dot
+ * @return 
+ */
+bool VariantTree::getKeyRest(QString node, QString &key, QString &rest)
+{
+	int idx = node.indexOf(".");
+	if (idx != -1) {
+		key=node.left(idx);
+		rest=node.mid(idx+1);
+		return true;
+	}
+	return false;
+}
+
+
+/**
+ * Set @a node to value @a value
  */
 void VariantTree::setValue(QString node, QVariant value)
 {
-	if (node.contains("."))
-	{
+	QString key, subnode;
+	if (getKeyRest(node, key, subnode)) {
 		//not this tier
-		QString key=node.left(node.indexOf("."));
-		QString subnode=node.remove(0,node.indexOf(".")+1);
+		Q_ASSERT(key != "");
 		if (!trees_.contains(key))
 		{
 			if (values_.contains(key))
@@ -66,9 +85,10 @@ void VariantTree::setValue(QString node, QVariant value)
 		trees_[key]->setValue(subnode,value);
 	} else {
 		//this tier
+		Q_ASSERT(node != "");
 		if (trees_.contains(node))
 		{
-			qWarning(qPrintable(QString("Error: Trying to add option value %1 but it already exists as a node").arg(node)));
+			qWarning(qPrintable(QString("Error: Trying to add option value %1 but it already exists as a subtree").arg(node)));
 			return;
 		}
 		values_[node]=value;
@@ -76,15 +96,14 @@ void VariantTree::setValue(QString node, QVariant value)
 }
 
 /**
- * TODO
+ * Get value at @a node
+ * @return the value of @a node if @a node exists, otherwise VariantTree::missingValue
  */
-QVariant VariantTree::getValue(QString node)
+QVariant VariantTree::getValue(QString node) const
 {
-	if (node.contains("."))
-	{
+	QString key,subnode;
+	if (getKeyRest(node, key, subnode)) {
 		//not this tier
-		QString key=node.left(node.indexOf("."));
-		QString subnode=node.remove(0,node.indexOf(".")+1);
 		if (trees_.contains(key))
 		{
 			return trees_[key]->getValue(subnode);
@@ -98,7 +117,28 @@ QVariant VariantTree::getValue(QString node)
 }
 
 /**
- * TODO
+ * @return true iff the node @a node is an internal node (i.e. has a child tree).
+ */
+bool VariantTree::isInternalNode(QString node) const
+{
+	QString key,subnode;
+	if (getKeyRest(node, key, subnode)) {
+		//not this tier
+		if (trees_.contains(key)) {
+			return trees_[key]->isInternalNode(subnode);
+		}
+		qWarning() << "isInternalNode called on non existant node: ... " << node;
+	} else {
+		return trees_.contains(node);
+	}
+}
+
+
+
+/**
+ * \brief Sets the comment of the specified node.
+ * \param name "Path" to the node
+ * \param comment the comment to store
  */
 void VariantTree::setComment(QString node, QString comment)
 {
@@ -107,6 +147,7 @@ void VariantTree::setComment(QString node, QString comment)
 		//not this tier
 		QString key=node.left(node.indexOf("."));
 		QString subnode=node.remove(0,node.indexOf(".")+1);
+		Q_ASSERT(key != "");
 		if (!trees_.contains(key))
 		{
 			if (values_.contains(key))
@@ -121,14 +162,16 @@ void VariantTree::setComment(QString node, QString comment)
 		trees_[key]->setComment(subnode,comment);
 	} else {
 		//this tier
+		Q_ASSERT(node != "");
 		comments_[node]=comment;
 	}
 }
 
 /**
- * Returns the comment associated with a node. 
+ * Returns the comment associated with a node.
+ * (or a null QString if the node has no comment)
  */
-QString VariantTree::getComment(QString node)
+QString VariantTree::getComment(QString node) const
 {
 	if (node.contains("."))
 	{
@@ -144,11 +187,11 @@ QString VariantTree::getComment(QString node)
 		if (comments_.contains(node))
 			return comments_[node];
 	}
-	return missingComment;
+	return QString();
 }
 
 /**
- * Find all the children of the provided node (if no node is provided),
+ * Find all the children of the provided node \a node or, if no node is provided,
  * all children.
  *
  * \param direct only return direct children
@@ -199,12 +242,13 @@ QStringList VariantTree::nodeChildren(const QString& node, bool direct, bool int
 
 
 /**
- *
+ * 
  */
 void VariantTree::toXml(QDomDocument &doc, QDomElement& ele) const
 {
 	// Subtrees
 	foreach (QString node, trees_.keys()) {
+		Q_ASSERT(node != "");
 		QDomElement nodeEle = doc.createElement(node);
 		trees_[node]->toXml(doc, nodeEle);
 		if (comments_.contains(node))
@@ -214,6 +258,7 @@ void VariantTree::toXml(QDomDocument &doc, QDomElement& ele) const
 	
 	// Values
 	foreach (QString child, values_.keys()) {
+		Q_ASSERT(child != "");
 		QVariant var = values_[child];
 		QDomElement valEle = doc.createElement(child);
 		variantToElement(var,valEle);
@@ -223,11 +268,16 @@ void VariantTree::toXml(QDomDocument &doc, QDomElement& ele) const
 	}
 } 
 
+/**
+ * 
+ * @param ele 
+ */
 void VariantTree::fromXml(const QDomElement &ele)
 {
 	QDomElement child = ele.firstChildElement();
 	while (!child.isNull()) {
 		QString name = child.nodeName();
+		Q_ASSERT(name != "");
 		if (!child.hasAttribute("type")) {
 			// Subnode
 			if ( !trees_.contains(name) )
@@ -359,4 +409,3 @@ void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
 }
 
 const QVariant VariantTree::missingValue=QVariant(QVariant::Invalid);
-const QString VariantTree::missingComment=QString("There is no comment for this node");

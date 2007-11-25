@@ -47,7 +47,7 @@ OptionsTree::~OptionsTree()
  * \param name 'Path' to the option ("appearance.emoticons.useSmilies")
  * \return value of the option. Will be invalid if non-existant.
  */
-QVariant OptionsTree::getOption(const QString& name)
+QVariant OptionsTree::getOption(const QString& name) const
 {
 	QVariant value=tree_.getValue(name);
 	if (value==VariantTree::missingValue) {
@@ -58,22 +58,44 @@ QVariant OptionsTree::getOption(const QString& name)
 }
 
 /**
- * Sets the value of the named option. If the option or any parents in the 
- * hierachy do not exist, they are created. Emits the optionChanged signal
- * if the value differs from the existing value.
+ * \brief Sets the value of the named option.
+ * If the option or any parents in the 
+ * hierachy do not exist, they are created and optionAboutToBeInserted and
+ * optionInserted will be emited.
+ *
+ * Emits the optionChanged signal if the value differs from the existing value.
  * \param name "Path" to the option
  * \param value Value of the option
  */
 void OptionsTree::setOption(const QString& name, const QVariant& value)
 {
-	if ( tree_.getValue(name) == value )
+	const QVariant &prev = tree_.getValue(name);
+	if ( prev == value ) {
 		return;
+	}
+	if (!prev.isValid()) {
+		emit optionAboutToBeInserted(name);
+	}
 	tree_.setValue(name, value);
+	if (!prev.isValid()) {
+		emit optionInserted(name);
+	}
 	emit optionChanged(name);
 }
 
+
 /**
- * TODO
+ * @brief returns true iff the node @a node is an internal node.
+ */
+bool OptionsTree::isInternalNode(const QString &node) const
+{
+	return tree_.isInternalNode(node);
+}
+
+/**
+ * \brief Sets the comment of the named option.
+ * \param name "Path" to the option
+ * \param comment the comment to store
  */
 void OptionsTree::setComment(const QString& name, const QString& comment)
 {
@@ -81,9 +103,10 @@ void OptionsTree::setComment(const QString& name, const QString& comment)
 }
 
 /**
- * TODO
+ * \brief Returns the comment of the specified option.
+ * \param name "Path" to the option
  */
-QString OptionsTree::getComment(const QString& name)
+QString OptionsTree::getComment(const QString& name) const
 {
 	return tree_.getComment(name);
 }
@@ -93,7 +116,7 @@ QString OptionsTree::getComment(const QString& name)
  * Names of every stored option
  * \return Names of options
  */
-QStringList OptionsTree::allOptionNames()
+QStringList OptionsTree::allOptionNames() const
 {
 	return tree_.nodeChildren();
 }
@@ -101,7 +124,8 @@ QStringList OptionsTree::allOptionNames()
 /**
  * Names of all child options of the given option.
  * \param direct return only the direct children
- * \return Names of options
+ * \param internal_nodes include internal (non-final) nodes
+ * \return Full names of options
  */
 QStringList OptionsTree::getChildOptionNames(const QString& parent, bool direct, bool internal_nodes) const
 {
@@ -116,7 +140,7 @@ QStringList OptionsTree::getChildOptionNames(const QString& parent, bool direct,
  * \param configNS Namespace of the config format
  * \return 'true' if the file saves, 'false' if it fails
  */
-bool OptionsTree::saveOptions(const QString& fileName, const QString& configName, const QString& configNS, const QString& configVersion)
+bool OptionsTree::saveOptions(const QString& fileName, const QString& configName, const QString& configNS, const QString& configVersion) const
 {
 	QDomDocument doc(configName);
 
@@ -154,8 +178,9 @@ bool OptionsTree::loadOptions(const QString& fileName, const QString& configName
 
 /**
  * Loads all options from an XML element
- * \param element the element to read the options from
+ * \param base the element to read the options from
  * \param configName Name of the root element to check for
+ * \param configNS Namespace of the config format
  * \param configVersion If specified, the function will fail if the file version doesn't match
  */
 bool OptionsTree::loadOptions(const QDomElement& base, const QString& configName, const QString& configNS, const QString& configVersion)

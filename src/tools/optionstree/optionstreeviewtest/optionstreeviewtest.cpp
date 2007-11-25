@@ -13,7 +13,7 @@ class MyHeaderViewWidget : public QWidget
 
 public:
 	MyHeaderViewWidget(QWidget* parent = 0) : QWidget(parent) {
-		o_.loadOptions("../options.xml","OptionsTest","0.1");
+		o_.loadOptions("../options.xml","OptionsTest", "", "0.1");
 		tm_ = new OptionsTreeModel(&o_);
 		
 		QVBoxLayout* layout = new QVBoxLayout(this);
@@ -28,7 +28,9 @@ public:
 		connect(cb_,SIGNAL(toggled(bool)),tm_,SLOT(setFlat(bool)));
 		layout->addWidget(cb_);
 	}
-
+	~MyHeaderViewWidget() {
+		o_.saveOptions("../options.xml","OptionsTest", "", "0.1");
+	}
 private:
 	OptionsTree o_;
 	QTreeView* tv_;

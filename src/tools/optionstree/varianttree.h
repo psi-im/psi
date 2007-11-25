@@ -28,6 +28,7 @@
 class QDomDocument;
 class QDomElement;
 
+
 /**
  * \class VariantTree
  * \brief A recursive structure for storing QVariants in trees, with comments
@@ -53,10 +54,12 @@ public:
 	~VariantTree();
 
 	void setValue(QString node, QVariant value);
-	QVariant getValue(QString node);
+	QVariant getValue(QString node) const;
+	
+	bool isInternalNode(QString node) const;
 
 	void setComment(QString node, QString comment);
-	QString getComment(QString node);
+	QString getComment(QString node) const;
 
 	QStringList nodeChildren(const QString& node = "", bool direct = false, bool internal_nodes = false) const; 
 
@@ -69,6 +72,8 @@ public:
 protected:
 	static QVariant elementToVariant(const QDomElement&);
 	static void variantToElement(const QVariant&, QDomElement&);
+	
+	static bool getKeyRest(QString node, QString &key, QString &rest);
 
 private:
 	QMap<QString, VariantTree*> trees_;
