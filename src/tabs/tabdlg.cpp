@@ -346,9 +346,11 @@ QString TabDlg::desiredCaption() const
 		if (pending > 1)
 			cap += QString("[%1] ").arg(pending);
 	}
-	cap += static_cast<TabbableWidget*>(tabWidget_->currentPage())->getDisplayName();
-	if (static_cast<TabbableWidget*>(tabWidget_->currentPage())->state() == TabbableWidget::StateComposing)
-		cap += tr(" is composing");
+	if (tabWidget_->currentPage()) {
+		cap += static_cast<TabbableWidget*>(tabWidget_->currentPage())->getDisplayName();
+		if (static_cast<TabbableWidget*>(tabWidget_->currentPage())->state() == TabbableWidget::StateComposing)
+			cap += tr(" is composing");
+	}
 	return cap;
 }
 
