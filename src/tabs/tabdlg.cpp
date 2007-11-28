@@ -240,6 +240,7 @@ bool TabDlg::tabOnTop(const TabbableWidget* tab) const
 
 void TabDlg::addTab(TabbableWidget* tab)
 {
+	setUpdatesEnabled(false);
 	tabs_.append(tab);
 	tabWidget_->addTab(tab, captionForTab(tab));
 
@@ -248,6 +249,7 @@ void TabDlg::addTab(TabbableWidget* tab)
 
 	this->show();
 	updateTab(tab);
+	setUpdatesEnabled(true);
 }
 
 void TabDlg::detachCurrentTab()
@@ -294,6 +296,7 @@ void TabDlg::closeTab(TabbableWidget* chat, bool doclose)
 	if (doclose && !chat->readyToHide()) {
 		return;
 	}
+	setUpdatesEnabled(false);
 	chat->hide();
 	removeTabWithNoChecks(chat);
 	chat->reparent(0,QPoint());
@@ -304,11 +307,14 @@ void TabDlg::closeTab(TabbableWidget* chat, bool doclose)
 		updateCaption();
 	}
 	checkHasChats();
+	setUpdatesEnabled(true);
 }
 
 void TabDlg::selectTab(TabbableWidget* chat)
 {
+	setUpdatesEnabled(false);
 	tabWidget_->showPage(chat);
+	setUpdatesEnabled(true);
 }
 
 void TabDlg::checkHasChats()
