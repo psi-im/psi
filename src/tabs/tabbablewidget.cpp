@@ -55,10 +55,9 @@ void TabbableWidget::ensureTabbedCorrectly()
 		if (isTabbed()) {
 			getManagingTabDlg()->closeTab(this, false);
 		}
+
+		show();
 	}
-	// We shouldn't manually call show() here, since it fools the QStackedLayout
-	// and some visual artifacts may appear
-	// show();
 }
 
 void TabbableWidget::bringToFront()
