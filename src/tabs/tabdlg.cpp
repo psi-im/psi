@@ -293,7 +293,7 @@ void TabDlg::removeTabWithNoChecks(TabbableWidget *tab)
  */ 
 void TabDlg::closeTab(TabbableWidget* chat, bool doclose)
 {
-	if (doclose && !chat->readyToHide()) {
+	if (!chat || (doclose && !chat->readyToHide())) {
 		return;
 	}
 	setUpdatesEnabled(false);
