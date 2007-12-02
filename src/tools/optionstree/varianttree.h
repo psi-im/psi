@@ -27,6 +27,7 @@
 
 class QDomDocument;
 class QDomElement;
+class QDomDocumentFragment;
 
 
 /**
@@ -79,6 +80,10 @@ private:
 	QMap<QString, VariantTree*> trees_;
 	QMap<QString, QVariant> values_;
 	QMap<QString, QString> comments_;
+	QMap<QString, QDomDocumentFragment> unknowns_;		// unknown types preservation
+	
+	// needed to have a document for the fragments.
+	static QDomDocument *unknownsDoc;
 	
 }; 
 

@@ -20,9 +20,13 @@
 
 #include <QDomElement>
 #include <QDomDocument>
+#include <QDomDocumentFragment>
 #include <QKeySequence>
 
 #include "varianttree.h"
+
+
+QDomDocument *VariantTree::unknownsDoc=0;
 
 /**
  * Default Constructor
@@ -266,6 +270,11 @@ void VariantTree::toXml(QDomDocument &doc, QDomElement& ele) const
 		if (comments_.contains(child))
 			valEle.setAttribute("comment",comments_[child]);
 	}
+	
+	// unknown types passthrough
+	foreach (QDomDocumentFragment df, unknowns_) {
+		ele.appendChild(doc.importNode(df, true));
+	}
 } 
 
 /**
@@ -276,6 +285,7 @@ void VariantTree::fromXml(const QDomElement &ele)
 {
 	QDomElement child = ele.firstChildElement();
 	while (!child.isNull()) {
+		bool isunknown=false;
 		QString name = child.nodeName();
 		Q_ASSERT(name != "");
 		if (!child.hasAttribute("type")) {
@@ -286,11 +296,21 @@ void VariantTree::fromXml(const QDomElement &ele)
 		} 
 		else {
 			// Value
-			values_[name] = elementToVariant(child);
+			QVariant val;
+			val = elementToVariant(child);
+			if (val.isValid()) {
+				values_[name] = val;
+			} else {
+				isunknown = true;
+				if (!unknownsDoc) unknownsDoc = new QDomDocument();
+				QDomDocumentFragment frag(unknownsDoc->createDocumentFragment());
+				frag.appendChild(unknownsDoc->importNode(child, true));
+				unknowns_[name] = frag;
+			}
 		}
 
 		// Comments
-		if (child.hasAttribute("comment")) {
+		if (!isunknown && child.hasAttribute("comment")) {
 			QString comment=child.attribute("comment");
 			comments_[name]=comment;
 		}
@@ -345,22 +365,34 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
 		value = QVariant(QSize(width,height));
 	}
 	else { // Standard values
-		for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
-			if ( node.isText() )
-				value=node.toText().data();
+		QVariant::Type varianttype;
+		bool known = true;
+		
+		if (type=="QString") {
+			varianttype = QVariant::String;
+		} else if (type=="bool") {
+			varianttype = QVariant::Bool;
+		} else if (type=="int") {
+			varianttype = QVariant::Int;
+		} else if (type == "QKeySequence") {
+			varianttype = QVariant::KeySequence;
+		} else {
+			known = false;
 		}
+		
+		if (known) {
+			for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
+				if ( node.isText() )
+					value=node.toText().data();
+			}
+		
+			if (!value.isValid())
+				value = QString("");
 	
-		if (!value.isValid())
-			value = QString("");
-
-		if (type=="QString")
-			value.convert(QVariant::String);
-		else if (type=="bool")
-			value.convert(QVariant::Bool);
-		else if (type=="int")
-			value.convert(QVariant::Int);
-		else if (type == "QKeySequence")
-			value.convert(QVariant::KeySequence);
+			value.convert(varianttype);
+		} else {
+			value = QVariant();
+		}
 	}
 	return value;
 }
