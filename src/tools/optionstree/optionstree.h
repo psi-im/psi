@@ -51,6 +51,12 @@ public:
 	
 	static bool isValidName(const QString &name);
 	
+	// Map helpers
+	QString mapLookup(const QString &basename, const QVariant &key) const;
+	QString mapPut(const QString &basename, const QVariant &key);
+	QVariantList mapKeyList(const QString &basename) const;
+	
+	
 	bool saveOptions(const QString& fileName, const QString& configName, const QString& configNS, const QString& configVersion) const;
 	bool loadOptions(const QString& fileName, const QString& configName, const QString& configNS = "", const QString& configVersion = "");
 	bool loadOptions(const QDomElement& name, const QString& configName, const QString& configNS = "", const QString& configVersion = "");
