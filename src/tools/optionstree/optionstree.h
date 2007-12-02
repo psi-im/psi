@@ -47,6 +47,8 @@ public:
 	QStringList allOptionNames() const;
 	QStringList getChildOptionNames(const QString& = QString(""), bool direct = false, bool internal_nodes = false) const;
 	
+	bool removeOption(const QString &name, bool internal_nodes = false);
+	
 	static bool isValidName(const QString &name);
 	
 	bool saveOptions(const QString& fileName, const QString& configName, const QString& configNS, const QString& configVersion) const;
@@ -57,6 +59,8 @@ signals:
 	void optionChanged(const QString& option);
 	void optionAboutToBeInserted(const QString& option);
 	void optionInserted(const QString& option);	
+	void optionAboutToBeRemoved(const QString& option);
+	void optionRemoved(const QString& option);
 	
 private:
 	VariantTree tree_;

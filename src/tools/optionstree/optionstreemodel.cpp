@@ -40,6 +40,8 @@ OptionsTreeModel::OptionsTreeModel(OptionsTree* tree, QObject* parent)
 	connect(tree_, SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
 	connect(tree_, SIGNAL(optionAboutToBeInserted(const QString&)), SLOT(optionAboutToBeInserted(const QString&)));
 	connect(tree_, SIGNAL(optionInserted(const QString&)), SLOT(optionInserted(const QString&)));
+	connect(tree_, SIGNAL(optionAboutToBeRemoved(const QString&)), SLOT(optionAboutToBeRemoved(const QString&)));
+	connect(tree_, SIGNAL(optionRemoved(const QString&)), SLOT(optionRemoved(const QString&)));
 
 #ifdef HAVE_MODELTEST
 	new ModelTest(this, this);
@@ -259,6 +261,30 @@ void OptionsTreeModel::optionInserted(const QString& option)
 	Q_UNUSED(option)
 	endInsertRows ();
 }
+
+void OptionsTreeModel::optionAboutToBeRemoved(const QString& option)
+{
+	QString parentname(getParentName(option));
+	
+	QModelIndex parent(index(parentname));
+	
+	QStringList children = tree_->getChildOptionNames(parentname,true,true);
+	children.sort();
+	int row = children.indexOf(option);
+	
+	if (row != -1) {
+		realRemove.push(true);
+		emit beginRemoveRows(parent, row, row);
+	} else {
+		realRemove.push(false);
+	}
+}
+void OptionsTreeModel::optionRemoved(const QString& option)
+{
+	Q_UNUSED(option)
+	if (realRemove.pop()) endRemoveRows ();
+}
+
 
 void OptionsTreeModel::optionChanged(const QString& option)
 {

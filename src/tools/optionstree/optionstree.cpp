@@ -111,6 +111,14 @@ QString OptionsTree::getComment(const QString& name) const
 	return tree_.getComment(name);
 }
 
+bool OptionsTree::removeOption(const QString &name, bool internal_nodes)
+{
+	emit optionAboutToBeRemoved(name);
+	bool ok = tree_.remove(name, internal_nodes);
+	emit optionRemoved(name);
+	return ok;
+}
+
 
 /**
  * Names of every stored option

@@ -62,6 +62,8 @@ public:
 	void setComment(QString node, QString comment);
 	QString getComment(QString node) const;
 
+	bool remove(const QString &node, bool internal_nodes = false);
+	
 	QStringList nodeChildren(const QString& node = "", bool direct = false, bool internal_nodes = false) const; 
 
 	void toXml(QDomDocument &doc, QDomElement& ele) const;

@@ -43,7 +43,9 @@ VariantTree::VariantTree(QObject *parent)
  */
 VariantTree::~VariantTree()
 {
-	
+	foreach(VariantTree* vt, trees_.values()) {
+		delete vt;
+	}
 }
 
 
@@ -142,6 +144,28 @@ QVariant VariantTree::getValue(QString node) const
 			return values_[node];
 	}
 	return missingValue;
+}
+
+
+bool VariantTree::remove(const QString &node, bool internal_nodes)
+{
+	QString key,subnode;
+	if (getKeyRest(node, key, subnode)) {
+		//not this tier
+		if (trees_.contains(key)) {
+			return trees_[key]->remove(subnode, internal_nodes);
+		}
+	} else {
+		//this tier
+		if (values_.contains(node)) {
+			values_.remove(node);
+			return true;
+		} else if (internal_nodes && trees_.contains(node)) {
+			trees_.remove(node);
+			return true;
+		}
+	}
+	return false;
 }
 
 /**

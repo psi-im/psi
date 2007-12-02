@@ -24,6 +24,7 @@
 #include <QAbstractItemModel>
 #include <QVariant>
 #include <QHash>
+#include <QStack>
 
 class OptionsTree;
 
@@ -62,6 +63,8 @@ protected slots:
 	void optionChanged(const QString& option);
 	void optionAboutToBeInserted(const QString& option);
 	void optionInserted(const QString& option);	
+	void optionAboutToBeRemoved(const QString& option);
+	void optionRemoved(const QString& option);	
 	
 
 private:
@@ -70,6 +73,7 @@ private:
 	mutable QHash<int, QString> indexMap;
 	mutable QHash<QString, int> nameMap;
 	mutable int nextIdx;
+	QStack<bool> realRemove;
 };
 
 #endif
