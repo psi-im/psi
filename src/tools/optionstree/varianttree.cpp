@@ -388,6 +388,27 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
 		}
 		value = QVariant(QSize(width,height));
 	}
+	else if (type == "QRect") {
+		int x = 0, y = 0, width = 0, height = 0;
+		for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
+			QDomElement e = node.toElement();
+			if (!e.isNull()) {
+				if (e.tagName() == "width") {
+					width = e.text().toInt();
+				}
+				else if (e.tagName() == "height") {
+					height = e.text().toInt();
+				}
+				else if (e.tagName() == "x") {
+					x = e.text().toInt();
+				}
+				else if (e.tagName() == "y") {
+					y = e.text().toInt();
+				}
+			}
+		}
+		value = QVariant(QRect(x,y,width,height));
+	}
 	else { // Standard values
 		QVariant::Type varianttype;
 		bool known = true;
@@ -400,6 +421,8 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
 			varianttype = QVariant::Int;
 		} else if (type == "QKeySequence") {
 			varianttype = QVariant::KeySequence;
+		} else if (type == "QColor") {
+			varianttype = QVariant::Color;
 		} else {
 			known = false;
 		}
@@ -450,6 +473,21 @@ void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
 		e.appendChild(width_element);
 		QDomElement height_element = e.ownerDocument().createElement("height");
 		height_element.appendChild(e.ownerDocument().createTextNode(QString::number(size.height())));
+		e.appendChild(height_element);
+	}
+	else if (type == "QRect") {
+		QRect rect = var.toRect();
+		QDomElement x_element = e.ownerDocument().createElement("x");
+		x_element.appendChild(e.ownerDocument().createTextNode(QString::number(rect.x())));
+		e.appendChild(x_element);
+		QDomElement y_element = e.ownerDocument().createElement("y");
+		y_element.appendChild(e.ownerDocument().createTextNode(QString::number(rect.y())));
+		e.appendChild(y_element);
+		QDomElement width_element = e.ownerDocument().createElement("width");
+		width_element.appendChild(e.ownerDocument().createTextNode(QString::number(rect.width())));
+		e.appendChild(width_element);
+		QDomElement height_element = e.ownerDocument().createElement("height");
+		height_element.appendChild(e.ownerDocument().createTextNode(QString::number(rect.height())));
 		e.appendChild(height_element);
 	}
 	else if (type == "QKeySequence") {
