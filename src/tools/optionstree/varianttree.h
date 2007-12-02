@@ -67,6 +67,8 @@ public:
 	void toXml(QDomDocument &doc, QDomElement& ele) const;
 	void fromXml(const QDomElement &ele);
 
+	static bool isValidNodeName(const QString &name);
+	
 	static const QVariant missingValue;
 	static const QString missingComment;
 

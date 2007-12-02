@@ -47,6 +47,8 @@ public:
 	QStringList allOptionNames() const;
 	QStringList getChildOptionNames(const QString& = QString(""), bool direct = false, bool internal_nodes = false) const;
 	
+	static bool isValidName(const QString &name);
+	
 	bool saveOptions(const QString& fileName, const QString& configName, const QString& configNS, const QString& configVersion) const;
 	bool loadOptions(const QString& fileName, const QString& configName, const QString& configNS = "", const QString& configVersion = "");
 	bool loadOptions(const QDomElement& name, const QString& configName, const QString& configNS = "", const QString& configVersion = "");

@@ -132,6 +132,15 @@ QStringList OptionsTree::getChildOptionNames(const QString& parent, bool direct,
 	return tree_.nodeChildren(parent,direct,internal_nodes);
 }
 
+bool OptionsTree::isValidName(const QString &name)
+{
+	foreach(QString part, name.split('.')) {
+		if (!VariantTree::isValidNodeName(part)) return false;
+	}
+	return true;
+}
+
+
 /**
  * Saves all options to the specified file
  * \param fileName Name of the file to which to save options

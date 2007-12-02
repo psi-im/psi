@@ -66,6 +66,30 @@ bool VariantTree::getKeyRest(QString node, QString &key, QString &rest)
 }
 
 
+bool VariantTree::isValidNodeName(const QString &name)
+{
+/* XML backend:
+[4]   	NameChar	   ::=   	 Letter | Digit | '.' | '-' | '_' | ':' | CombiningChar | Extender
+[5]   	Name	   ::=   	(Letter | '_' | ':') (NameChar)*
+but we don't want to have namespaces in the node names....
+	
+	but for now just allow ascii subset of this:
+	*/	
+	if (name == "") return false;
+	int len = name.length();
+	QString other(".-_");
+	QChar ch = name[0];
+	if (!((ch>='A' && ch<='Z') || (ch>='a' && ch<='z') || (ch=='_'))) return false;
+	for (int i=1; i < len; i++) {
+		ch = name[i];
+		if (!((ch>='A' && ch<='Z')
+			|| (ch>='a' && ch<='z')
+			|| (other.contains(ch))
+			|| (ch >= '0' && ch <= '9'))) return false;
+	}
+	return true;
+}
+
 /**
  * Set @a node to value @a value
  */
@@ -74,7 +98,7 @@ void VariantTree::setValue(QString node, QVariant value)
 	QString key, subnode;
 	if (getKeyRest(node, key, subnode)) {
 		//not this tier
-		Q_ASSERT(key != "");
+		Q_ASSERT(isValidNodeName(key));
 		if (!trees_.contains(key))
 		{
 			if (values_.contains(key))
@@ -89,7 +113,7 @@ void VariantTree::setValue(QString node, QVariant value)
 		trees_[key]->setValue(subnode,value);
 	} else {
 		//this tier
-		Q_ASSERT(node != "");
+		Q_ASSERT(isValidNodeName(node));
 		if (trees_.contains(node))
 		{
 			qWarning(qPrintable(QString("Error: Trying to add option value %1 but it already exists as a subtree").arg(node)));
@@ -131,7 +155,7 @@ bool VariantTree::isInternalNode(QString node) const
 		if (trees_.contains(key)) {
 			return trees_[key]->isInternalNode(subnode);
 		}
-		qWarning() << "isInternalNode called on non existant node: ... " << node;
+		qWarning() << "isInternalNode called on non existant node: " << node;
 	} else {
 		return trees_.contains(node);
 	}
@@ -151,7 +175,7 @@ void VariantTree::setComment(QString node, QString comment)
 		//not this tier
 		QString key=node.left(node.indexOf("."));
 		QString subnode=node.remove(0,node.indexOf(".")+1);
-		Q_ASSERT(key != "");
+		Q_ASSERT(isValidNodeName(key));
 		if (!trees_.contains(key))
 		{
 			if (values_.contains(key))
@@ -166,7 +190,7 @@ void VariantTree::setComment(QString node, QString comment)
 		trees_[key]->setComment(subnode,comment);
 	} else {
 		//this tier
-		Q_ASSERT(node != "");
+		Q_ASSERT(isValidNodeName(node));
 		comments_[node]=comment;
 	}
 }
