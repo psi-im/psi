@@ -155,8 +155,8 @@ void OptionsTabShortcuts::applyOptions(Options *opt) {
 				options->setOption(optionsPath, QVariant(keySequences));
 			}
 			else {
-				/* zero key sequences, so set an empty variant, so it will be written empty to the options.xml */
-				options->setOption(optionsPath, QVariant());
+				/* zero key sequences, so set an empty string, so it will be written empty to the options.xml */
+				options->setOption(optionsPath, "");
 			}
 		}
 	}
