@@ -79,6 +79,7 @@ private:
 	Private *d;
 
 	void tryNext();
+	void resolve(const QString &server, const QString &type, const QString &proto, bool srvOnly);
 };
 
 // CS_NAMESPACE_END

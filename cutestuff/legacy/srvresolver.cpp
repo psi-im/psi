@@ -25,6 +25,7 @@
 #include <q3dns.h>
 //Added by qt3to4:
 #include <QList>
+#include <QtAlgorithms>
 #include "safedelete.h"
 
 #ifndef NO_NDNS
@@ -33,28 +34,18 @@
 
 // CS_NAMESPACE_BEGIN
 
+bool serverLessThan(const Q3Dns::Server &s1, const Q3Dns::Server &s2)
+{
+	int a = s1.priority;
+	int b = s2.priority;
+	int j = s1.weight;
+	int k = s2.weight;
+	return a < b || (a == b && j < k);
+}
+
 static void sortSRVList(QList<Q3Dns::Server> &list)
 {
-	QList<Q3Dns::Server> tmp = list;
-	list.clear();
-
-	while(!tmp.isEmpty()) {
-		QList<Q3Dns::Server>::Iterator p = tmp.end();
-		for(QList<Q3Dns::Server>::Iterator it = tmp.begin(); it != tmp.end(); ++it) {
-			if(p == tmp.end())
-				p = it;
-			else {
-				int a = (*it).priority;
-				int b = (*p).priority;
-				int j = (*it).weight;
-				int k = (*p).weight;
-				if(a < b || (a == b && j < k))
-					p = it;
-			}
-		}
-		list.append(*p);
-		tmp.remove(p);
-	}
+	qStableSort(list.begin(), list.end(), serverLessThan);
 }
 
 class SrvResolver::Private
@@ -99,12 +90,12 @@ SrvResolver::~SrvResolver()
 	delete d;
 }
 
-void SrvResolver::resolve(const QString &server, const QString &type, const QString &proto)
+void SrvResolver::resolve(const QString &server, const QString &type, const QString &proto, bool srvOnly)
 {
 	stop();
 
 	d->failed = false;
-	d->srvonly = false;
+	d->srvonly = srvOnly;
 	d->srv = QString("_") + type + "._" + proto + '.' + server;
 	d->t.start(15000, true);
 	d->qdns = new Q3Dns;
@@ -113,18 +104,14 @@ void SrvResolver::resolve(const QString &server, const QString &type, const QStr
 	d->qdns->setLabel(d->srv);
 }
 
+void SrvResolver::resolve(const QString &server, const QString &type, const QString &proto)
+{
+	resolve(server, type, proto, false);
+}
+
 void SrvResolver::resolveSrvOnly(const QString &server, const QString &type, const QString &proto)
 {
-	stop();
-
-	d->failed = false;
-	d->srvonly = true;
-	d->srv = QString("_") + type + "._" + proto + '.' + server;
-	d->t.start(15000, true);
-	d->qdns = new Q3Dns;
-	connect(d->qdns, SIGNAL(resultsReady()), SLOT(qdns_done()));
-	d->qdns->setRecordType(Q3Dns::Srv);
-	d->qdns->setLabel(d->srv);
+	resolve(server, type, proto, true);
 }
 
 void SrvResolver::next()
@@ -249,7 +236,7 @@ void SrvResolver::ndns_done()
 	d->servers.remove(d->servers.begin());
 
 	if(!r.isNull()) {
-		d->resultAddress = d->ndns.result();
+		d->resultAddress = r;
 		d->resultPort = port;
 		resultsReady();
 	}

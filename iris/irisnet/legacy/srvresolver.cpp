@@ -20,34 +20,27 @@
 
 #include "srvresolver.h"
 
+#include <QtAlgorithms>
+
 #ifndef NO_NDNS
 # include "ndns.h"
 #endif
 
 // CS_NAMESPACE_BEGIN
 
+bool serverLessThan(const Q3Dns::Server &s1, const Q3Dns::Server &s2)
+{
+	int a = s1.priority;
+	int b = s2.priority;
+	int j = s1.weight;
+	int k = s2.weight;
+	return a < b || (a == b && j < k);
+}
+
+
 static void sortSRVList(QList<Q3Dns::Server> &list)
 {
-	QList<Q3Dns::Server> tmp = list;
-	list.clear();
-
-	while(!tmp.isEmpty()) {
-		QList<Q3Dns::Server>::Iterator p = tmp.end();
-		for(QList<Q3Dns::Server>::Iterator it = tmp.begin(); it != tmp.end(); ++it) {
-			if(p == tmp.end())
-				p = it;
-			else {
-				int a = (*it).priority;
-				int b = (*p).priority;
-				int j = (*it).weight;
-				int k = (*p).weight;
-				if(a < b || (a == b && j < k))
-					p = it;
-			}
-		}
-		list.append(*p);
-		tmp.erase(p);
-	}
+	qStableSort(list.begin(), list.end(), serverLessThan);
 }
 
 class SrvResolver::Private
@@ -97,12 +90,12 @@ SrvResolver::~SrvResolver()
 	delete d;
 }
 
-void SrvResolver::resolve(const QString &server, const QString &type, const QString &proto)
+void SrvResolver::resolve(const QString &server, const QString &type, const QString &proto, bool srvOnly)
 {
 	stop();
 
 	d->failed = false;
-	d->srvonly = false;
+	d->srvonly = srvOnly;
 	d->srv = QString("_") + type + "._" + proto + '.' + server;
 	d->t.setSingleShot(true);
 	d->t.start(15000);
@@ -111,18 +104,14 @@ void SrvResolver::resolve(const QString &server, const QString &type, const QStr
 	d->nndns.start(d->srv.toLatin1(), d->nntype);
 }
 
+void SrvResolver::resolve(const QString &server, const QString &type, const QString &proto)
+{
+	resolve(server, type, proto, false);
+}
+
 void SrvResolver::resolveSrvOnly(const QString &server, const QString &type, const QString &proto)
 {
-	stop();
-
-	d->failed = false;
-	d->srvonly = true;
-	d->srv = QString("_") + type + "._" + proto + '.' + server;
-	d->t.setSingleShot(true);
-	d->t.start(15000);
-	d->nndns_busy = true;
-	d->nntype = XMPP::NameRecord::Srv;
-	d->nndns.start(d->srv.toLatin1(), d->nntype);
+	resolve(server, type, proto, true);
 }
 
 void SrvResolver::next()
@@ -282,7 +271,7 @@ void SrvResolver::ndns_done()
 	d->servers.removeFirst();
 
 	if(!r.isNull()) {
-		d->resultAddress = d->ndns.result();
+		d->resultAddress = r;
 		d->resultPort = port;
 		resultsReady();
 	}
