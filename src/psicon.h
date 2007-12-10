@@ -90,7 +90,6 @@ public:
 	void removeAccount(PsiAccount *);
 
 	void playSound(const QString &);
-	void raiseMainwin();
 
 	AccountsComboBox *accountsComboBox(QWidget *parent=0, bool online_only = false);
 
@@ -147,6 +146,8 @@ public slots:
 	void setStatusFromDialog(const XMPP::Status &, bool withPriority);
 	void proxy_settingsChanged();
 	void updateMainwinStatus();
+	void doOpenUri(const QUrl &uri);
+	void raiseMainwin();
 
 	void mainWinGeomChanged(QRect saveableGeometry);
 

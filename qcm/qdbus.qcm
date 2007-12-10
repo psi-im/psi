@@ -1,0 +1,43 @@
+/*
+-----BEGIN QCMOD-----
+name: QDBUS
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_qdbus
+//----------------------------------------------------------------------------
+class qc_qdbus : public ConfObj
+{
+public:
+	qc_qdbus(Conf *c) : ConfObj(c) {}
+	QString name() const { return "QDBUS"; }
+	QString shortname() const { return "qdbus"; }
+	bool exec()
+	{
+		if (!conf->getenv("QC_DISABLE_qdbus").isEmpty())
+			return false;
+
+		// test for "qdbus" feature
+
+		QString proextra =
+		"CONFIG += qt qdbus\n"
+		"QT -= gui\n";
+
+		QString str =
+		"\n"
+		"int main()\n"
+		"{\n"
+		"	return 0;\n"
+		"}\n";
+
+		int ret;
+		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
+			return false;
+		if(ret != 0)
+			return false;
+		
+		conf->addExtra("CONFIG += dbus");
+		return true;
+	}
+};

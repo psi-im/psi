@@ -108,6 +108,7 @@ HEADERS += \
 	$$PWD/jidutil.h \
 	$$PWD/showtextdlg.h \ 
 	$$PWD/profiles.h \
+	$$PWD/activeprofiles.h \
 	$$PWD/profiledlg.h \
 	$$PWD/aboutdlg.h \
 	$$PWD/desktoputil.h \
@@ -217,6 +218,7 @@ SOURCES += \
 	$$PWD/jidutil.cpp \
 	$$PWD/showtextdlg.cpp \
 	$$PWD/psi_profiles.cpp \
+	$$PWD/activeprofiles.cpp \
 	$$PWD/profiledlg.cpp \
 	$$PWD/aboutdlg.cpp \
 	$$PWD/desktoputil.cpp \
@@ -385,6 +387,24 @@ psi_plugins {
 	HEADERS += $$PWD/pluginmanager.h \
 				$$PWD/psiplugin.h
 	SOURCES += $$PWD/pluginmanager.cpp
+}
+
+dbus {
+	HEADERS += 	$$PWD/dbus.h
+	SOURCES += 	$$PWD/dbus.cpp
+	SOURCES += $$PWD/activeprofiles_dbus.cpp
+	DEFINES += USE_DBUS
+	CONFIG += qdbus
+}
+
+win32:!dbus {
+	SOURCES += $$PWD/activeprofiles_win.cpp
+	LIBS += -lUser32
+}
+
+
+unix:!dbus {
+	SOURCES += $$PWD/activeprofiles_stub.cpp
 }
 
 mac {

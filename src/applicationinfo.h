@@ -11,6 +11,7 @@ public:
 	static QString version();
 	static QString capsNode();
 	static QString capsVersion();
+	static QString IPCName();
 
 	// Directories
 	static QString homeDir();

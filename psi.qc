@@ -21,6 +21,7 @@
   <dep type='certstore'>
 	<required/>
   </dep>
+  <dep type='qdbus'/>
   <dep type='growl'/>
   <dep type='xss'/>
   <dep type='dnotify'/>

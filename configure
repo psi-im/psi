@@ -31,6 +31,7 @@ Dependency options:
   --with-zlib-inc=[path]       Path to zlib include files
   --with-zlib-lib=[path]       Path to zlib library files
   --enable-universal           Enable use of Mac OS X universal binary support
+  --disable-qdbus              Disable use of QDBUS
   --disable-growl              Disable use of Growl
   --with-growl=[path]          Path to the Growl framework
   --disable-xss                Disable use of the XScreenSaver extension
@@ -199,6 +200,11 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
+		--disable-qdbus)
+			QC_DISABLE_qdbus="Y"
+			shift
+			;;
+
 		--disable-growl)
 			QC_DISABLE_growl="Y"
 			shift
@@ -288,6 +294,7 @@ echo QC_WITH_OPENSSL_LIB=$QC_WITH_OPENSSL_LIB
 echo QC_WITH_ZLIB_INC=$QC_WITH_ZLIB_INC
 echo QC_WITH_ZLIB_LIB=$QC_WITH_ZLIB_LIB
 echo QC_ENABLE_universal=$QC_ENABLE_universal
+echo QC_DISABLE_qdbus=$QC_DISABLE_qdbus
 echo QC_DISABLE_growl=$QC_DISABLE_growl
 echo QC_WITH_GROWL=$QC_WITH_GROWL
 echo QC_DISABLE_xss=$QC_DISABLE_xss
@@ -797,6 +804,50 @@ private:
 	QString path;
 	bool bundled;
 };
+#line 1 "qdbus.qcm"
+/*
+-----BEGIN QCMOD-----
+name: QDBUS
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_qdbus
+//----------------------------------------------------------------------------
+class qc_qdbus : public ConfObj
+{
+public:
+	qc_qdbus(Conf *c) : ConfObj(c) {}
+	QString name() const { return "QDBUS"; }
+	QString shortname() const { return "qdbus"; }
+	bool exec()
+	{
+		if (!conf->getenv("QC_DISABLE_qdbus").isEmpty())
+			return false;
+
+		// test for "qdbus" feature
+
+		QString proextra =
+		"CONFIG += qt qdbus\n"
+		"QT -= gui\n";
+
+		QString str =
+		"\n"
+		"int main()\n"
+		"{\n"
+		"	return 0;\n"
+		"}\n";
+
+		int ret;
+		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
+			return false;
+		if(ret != 0)
+			return false;
+		
+		conf->addExtra("CONFIG += dbus");
+		return true;
+	}
+};
 #line 1 "growl.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -1193,6 +1244,9 @@ cat >$1/modules_new.cpp <<EOT
     o->disabled = true;
     o = new qc_certstore(conf);
     o->required = true;
+    o->disabled = false;
+    o = new qc_qdbus(conf);
+    o->required = false;
     o->disabled = false;
     o = new qc_growl(conf);
     o->required = false;
@@ -2167,6 +2221,7 @@ export QC_WITH_OPENSSL_LIB
 export QC_WITH_ZLIB_INC
 export QC_WITH_ZLIB_LIB
 export QC_ENABLE_universal
+export QC_DISABLE_qdbus
 export QC_DISABLE_growl
 export QC_WITH_GROWL
 export QC_DISABLE_xss

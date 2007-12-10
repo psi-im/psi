@@ -30,6 +30,7 @@
 //#define PROG_VERSION "0.11-RC1";
 #define PROG_CAPS_NODE "http://psi-im.org/caps";
 #define PROG_CAPS_VERSION "0.12-dev-rev1";
+#define PROG_IPC_NAME "org.psi-im.Psi"	// must not contain '\\' character on Windows
 #define PROG_OPTIONS_NS "http://psi-im.org/options";
 #define PROG_STORAGE_NS "http://psi-im.org/storage";
 
@@ -57,6 +58,11 @@ QString ApplicationInfo::capsNode()
 QString ApplicationInfo::capsVersion()
 {
 	return PROG_CAPS_VERSION;
+}
+
+QString ApplicationInfo::IPCName()
+{
+	return PROG_IPC_NAME;
 }
 
 QString ApplicationInfo::optionsNS()

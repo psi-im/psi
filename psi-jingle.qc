@@ -20,7 +20,8 @@
   </dep>
   <dep type='certstore'>
 	<required/>
-  </dep>
+  </dep>  
+  <dep type='qdbus'/>
   <dep type='growl'/>
   <dep type='xss'/>
   <dep type='aspell'/>

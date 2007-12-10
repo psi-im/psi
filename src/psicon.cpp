@@ -37,6 +37,7 @@
 
 #include "s5b.h"
 #include "psiaccount.h"
+#include "activeprofiles.h"
 #include "accountadddlg.h"
 #include "psiiconset.h"
 #include "contactview.h"
@@ -81,6 +82,7 @@
 #include "pluginmanager.h"
 #endif
 #include "psicontactlist.h"
+#include "dbus.h"
 #include "tipdlg.h"
 #include "shortcutmanager.h"
 #include "globalshortcutmanager.h"
@@ -286,6 +288,10 @@ PsiCon::~PsiCon()
 
 bool PsiCon::init()
 {
+	// check active profiles
+	if (!ActiveProfiles::instance()->setThisProfile(activeProfile))
+		return false;
+
 	// PGP initialization (needs to be before any gpg usage!)
 	PGPUtil::instance();
 
@@ -477,10 +483,17 @@ bool PsiCon::init()
 	foreach(PsiAccount* account, d->contactList->accounts()) {
 		account->autoLogin();
 	}
-
+	
 	// show tip of the day
-	if ( PsiOptions::instance()->getOption("options.ui.tip.show").toBool() )
+	if ( PsiOptions::instance()->getOption("options.ui.tip.show").toBool() ) {
 		TipDlg::show(this);
+	}
+
+#ifdef USE_DBUS
+	addPsiConAdapter(this);
+#endif
+
+	connect(ActiveProfiles::instance(), SIGNAL(raiseMainWindow()), SLOT(raiseMainwin()));
 
 	return true;
 }
@@ -592,6 +605,7 @@ void PsiCon::closeProgram()
 
 void PsiCon::changeProfile()
 {
+	ActiveProfiles::instance()->unsetThisProfile();
 	if(d->contactList->haveActiveAccounts()) {
 		QMessageBox::information(0, CAP(tr("Error")), tr("Please disconnect before changing the profile."));
 		return;
@@ -897,6 +911,88 @@ void PsiCon::checkAccountsEmpty()
 		promptUserToCreateAccount();
 	}
 }
+
+void PsiCon::doOpenUri(const QUrl &uriToOpen)
+{/*
+	QUrl uri(uriToOpen);	// got to copy, because setQueryDelimiters() is not const
+
+	qWarning("uri:  " + uri.toString());
+
+	// scheme
+
+	if (uri.scheme() != "xmpp") {	// try handling legacy URIs
+		QMessageBox::warning(0, tr("Warning"), QString("URI (link) type \"%1\" is unsupported.").arg(uri.scheme()));
+	}
+
+	// authority
+
+	PsiAccount *pa = 0;
+	if (uri.authority().isEmpty()) {
+		pa = d->contactList->defaultAccount();
+		if (!pa) {
+			QMessageBox::warning(0, tr("Warning"), QString("You don't have any account enabled."));
+		}
+	}
+	else {
+		qWarning("uri auth: [" + uri.authority() + "]");
+
+		Jid authJid = JIDUtil::fromString(uri.authority());
+		foreach(PsiAccount* acc, d->contactList->enabledAccounts()) {
+			if (acc->jid().compare(authJid, false)) {
+				pa = acc;
+			}
+		}
+
+		if (!pa) {
+			foreach(PsiAccount* acc, d->contactList->accounts()) {
+				if (acc->jid().compare(authJid, false)) {
+					QMessageBox::warning(0, tr("Warning"), QString("The account for %1 JID is disabled right now.").arg(authJid.bare()));
+					return;	// FIX-ME: Should suggest enabling it now
+				}
+			}
+		}
+		if (!pa) {
+			QMessageBox::warning(0, tr("Warning"), QString("You don't have an account for %1.").arg(authJid.bare()));
+			return;
+		}
+	}
+
+	// entity
+
+	QString path = uri.path();
+	if (path.startsWith('/'))	// this happens when authority part is present
+		path = path.mid(1);
+	Jid entity = JIDUtil::fromString(path);
+
+	// query
+
+	uri.setQueryDelimiters('=', ';');
+
+	QString querytype = uri.queryItems().value(0).first;	// defaults to empty string
+
+	if (querytype == "message") {
+		if (uri.queryItemValue("type") == "chat")
+			pa->actionOpenChat(entity);
+		else {
+			pa->dj_newMessage(entity, uri.queryItemValue("body"), uri.queryItemValue("subject"), uri.queryItemValue("thread"));
+		}
+	}
+	else if (querytype == "roster") {
+		pa->openAddUserDlg(entity, uri.queryItemValue("name"), uri.queryItemValue("group"));
+	}
+	else if (querytype == "join") {
+		pa->actionJoin(entity, uri.queryItemValue("password"));
+	}
+	else if (querytype == "vcard") {
+		pa->actionInfo(entity);
+	}
+	else if (querytype == "disco") {
+		pa->actionDisco(entity, uri.queryItemValue("node"));
+	}
+	else {
+		pa->actionSendMessage(entity);
+	}
+*/}
 
 void PsiCon::doToolbars()
 {

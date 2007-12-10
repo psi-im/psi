@@ -38,6 +38,7 @@
 #include <time.h>
 #include "profiles.h"
 #include "profiledlg.h"
+#include "activeprofiles.h"
 
 #include "eventdlg.h"
 #include "psicon.h"
@@ -184,10 +185,22 @@ void PsiMain::chooseProfile()
 			continue;
 		}
 		else {
-			if(r == QDialog::Accepted)
-				str = w->cb_profile->currentText();
+			bool again = false;
 			autoOpen = w->ck_auto->isChecked();
+			if(r == QDialog::Accepted) {
+				str = w->cb_profile->currentText();
+				again = !ActiveProfiles::instance()->setThisProfile(str);
+				if (again && !QMessageBox::query(tr("Psi profile already running"), tr("This psi profile already running.<br>Would you like to choose another one, or you want switch to that profile?"), tr("choose another one"), tr("switch"))) {
+					ActiveProfiles::instance()->raiseOther(str, true);
+					quit();
+					return;
+				}
+			}
 			delete w;
+			if (again) {
+				str = "";
+				continue;
+			}
 			break;
 		}
 	}
@@ -207,6 +220,12 @@ void PsiMain::chooseProfile()
 void PsiMain::sessionStart()
 {
 	// get a PsiCon
+	if (!ActiveProfiles::instance()->setThisProfile(activeProfile)) { // already running
+		if (!ActiveProfiles::instance()->raiseOther(activeProfile, true))
+			QMessageBox::critical(0, tr("Error"), tr("Cannot open this profile - it is already running, but not responding"));
+		quit();
+		return;
+	}
 	pcon = new PsiCon();
 	if(!pcon->init()) {
 		delete pcon;
