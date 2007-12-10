@@ -520,6 +520,8 @@ public:
 
 	void setAutoAway(AutoAway autoAway)
 	{
+		if (!account->isAvailable())
+			return;
 		Status status = autoAwayStatus(autoAway);
 		if (status.type() != loginStatus.type() ||
 		    status.status() != loginStatus.status())
