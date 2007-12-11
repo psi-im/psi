@@ -18,7 +18,7 @@
  *
  */
 
-#include "activepsiprofiles.h"
+#include "activeprofiles.h"
 #include "applicationinfo.h"
 #include "psicon.h"
 
