@@ -321,6 +321,7 @@ public:
 
 	// Avatars
 	AvatarFactory* avatarFactory;
+	QString photoHash;
 
 	// Voice Call
 	VoiceCaller* voiceCaller;
@@ -427,6 +428,29 @@ public slots:
 		xmlRingbuf[xmlRingbufWrite].xml = s;
 		xmlRingbuf[xmlRingbufWrite].time = QDateTime::currentDateTime();
 		xmlRingbufWrite = (xmlRingbufWrite + 1) % xmlRingbuf.count();
+	}
+
+	void vcardChanged(const Jid &j)
+	{
+		// our own vcard?
+		if(j.compare(jid, false)) {
+			const VCard *vcard = VCardFactory::instance()->vcard(j);
+			if(vcard) {
+				vcardPhotoUpdate(vcard->photo());
+			}
+		}
+	}
+
+	void vcardPhotoUpdate(const QByteArray &photoData)
+	{
+		QString newHash;
+		if(!photoData.isEmpty()) {
+			newHash = QCA::Hash("sha1").hashToString(photoData);
+		}
+		if(newHash != photoHash) {
+			photoHash = newHash;
+			account->setStatusDirect(loginStatus);
+		}
 	}
 
 private:
@@ -720,6 +744,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	// Avatars
 	d->avatarFactory = new AvatarFactory(this);
 	d->self.setAvatarFactory(avatarFactory());
+
+	connect(VCardFactory::instance(), SIGNAL(vcardChanged(const Jid&)), d, SLOT(vcardChanged(const Jid&)));
 
 	// Bookmarks
 	d->bookmarkManager = new BookmarkManager(d->client);
@@ -2292,6 +2318,11 @@ void PsiAccount::setStatusActual(const Status &_s)
 		s.setCapsNode(d->client->capsNode());
 		s.setCapsVersion(d->client->capsVersion());
 		s.setCapsExt(d->client->capsExt());
+	}
+
+        // Add vcard photo hash if available
+	if(!d->photoHash.isEmpty()) {
+		s.setPhotoHash(d->photoHash);
 	}
 
 	// Set the status
@@ -4297,6 +4328,10 @@ void PsiAccount::slotCheckVCard()
 	if (j->vcard().isEmpty()) {
 		changeVCard();
 		return;
+	}
+
+	if (!j->vcard().photo().isEmpty()) {
+		d->vcardPhotoUpdate(j->vcard().photo());
 	}
 
 	setNick(nick);

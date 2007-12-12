@@ -605,6 +605,13 @@ void JT_Presence::pres(const Status &s)
 			}
 			tag.appendChild(m);
 		}
+
+		if(s.hasPhotoHash()) {
+			QDomElement m = doc()->createElement("x");
+			m.setAttribute("xmlns", "vcard-temp:x:update");
+			m.appendChild(textTag(doc(), "photo", s.photoHash()));
+			tag.appendChild(m);
+		}
 	}
 }
 
