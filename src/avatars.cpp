@@ -640,7 +640,9 @@ void AvatarFactory::itemPublished(const Jid& jid, const QString& n, const PubSub
 {
 	if (n == "http://www.xmpp.org/extensions/xep-0084.html#ns-data") {
 		if (item.payload().tagName() == "data") {
-			pep_avatars_[jid.bare()]->setData(item.id(),item.payload().text());
+			if (pep_avatars_.contains(jid.bare())) {
+				pep_avatars_[jid.bare()]->setData(item.id(),item.payload().text());
+			}
 		}
 		else {
 			qWarning("avatars.cpp: Unexpected item payload");
