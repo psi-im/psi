@@ -189,7 +189,7 @@ public:
 			delete iconSelect;
 	}
 
-	void saveProfile(UserAccountList acc = UserAccountList())
+	void saveProfile(UserAccountList acc)
 	{
 		pro.recentGCList = recentGCList;
 		pro.recentBrowseList = recentBrowseList;
@@ -199,8 +199,7 @@ public:
 		if ( proxy )
 			pro.proxyList = proxy->itemList();
 
-		if ( acc.count() )
-			pro.acc = acc;
+		pro.acc = acc;
 
 		pro.toFile(pathToProfileConfig(activeProfile));
 	}
@@ -1089,7 +1088,7 @@ void PsiCon::slotApplyOptions(const Options &opt)
 	// save just the options
 	//d->pro.prefs = option;
 	//d->pro.toFile(pathToProfileConfig(activeProfile));
-	d->saveProfile();
+	d->saveProfile(d->pro.acc);
 }
 
 int PsiCon::getId()
