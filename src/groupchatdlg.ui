@@ -47,106 +47,124 @@
         <number>4</number>
        </property>
        <item>
-        <layout class="QHBoxLayout" >
-         <property name="margin" >
-          <number>0</number>
+        <widget class="QWidget" native="1" name="widget" >
+         <property name="sizePolicy" >
+          <sizepolicy>
+           <hsizetype>5</hsizetype>
+           <vsizetype>0</vsizetype>
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
          </property>
-         <property name="spacing" >
-          <number>4</number>
-         </property>
-         <item>
-          <widget class="QPushButton" name="pb_topic" >
-           <property name="text" >
-            <string>Topic:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="le_topic" >
-           <property name="readOnly" >
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="AccountLabel" name="lb_ident" >
-           <property name="sizePolicy" >
-            <sizepolicy>
-             <hsizetype>1</hsizetype>
-             <vsizetype>5</vsizetype>
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text" >
-            <string>AccountLabel</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QToolButton" name="tb_find" >
-           <property name="toolTip" >
-            <string>Select icon</string>
-           </property>
-           <property name="text" >
-            <string/>
-           </property>
-           <property name="iconSize" >
-            <size>
-             <width>16</width>
-             <height>16</height>
-            </size>
-           </property>
-           <property name="popupMode" >
-            <enum>QToolButton::InstantPopup</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QToolButton" name="tb_emoticons" >
-           <property name="toolTip" >
-            <string>Select icon</string>
-           </property>
-           <property name="text" >
-            <string/>
-           </property>
-           <property name="iconSize" >
-            <size>
-             <width>16</width>
-             <height>16</height>
-            </size>
-           </property>
-           <property name="popupMode" >
-            <enum>QToolButton::InstantPopup</enum>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QToolButton" name="tb_actions" >
-           <property name="toolTip" >
-            <string>Actions</string>
-           </property>
-           <property name="text" >
-            <string/>
-           </property>
-           <property name="iconSize" >
-            <size>
-             <width>16</width>
-             <height>16</height>
-            </size>
-           </property>
-           <property name="popupMode" >
-            <enum>QToolButton::InstantPopup</enum>
-           </property>
-           <property name="arrowType" >
-            <enum>Qt::DownArrow</enum>
-           </property>
-          </widget>
-         </item>
-        </layout>
+         <layout class="QHBoxLayout" >
+          <property name="margin" >
+           <number>0</number>
+          </property>
+          <property name="spacing" >
+           <number>4</number>
+          </property>
+          <item>
+           <widget class="QPushButton" name="pb_topic" >
+            <property name="text" >
+             <string>Topic:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="le_topic" >
+            <property name="readOnly" >
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="AccountLabel" name="lb_ident" >
+            <property name="sizePolicy" >
+             <sizepolicy>
+              <hsizetype>1</hsizetype>
+              <vsizetype>0</vsizetype>
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text" >
+             <string>AccountLabel</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="tb_find" >
+            <property name="toolTip" >
+             <string>Select icon</string>
+            </property>
+            <property name="text" >
+             <string/>
+            </property>
+            <property name="iconSize" >
+             <size>
+              <width>16</width>
+              <height>16</height>
+             </size>
+            </property>
+            <property name="popupMode" >
+             <enum>QToolButton::InstantPopup</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="tb_emoticons" >
+            <property name="toolTip" >
+             <string>Select icon</string>
+            </property>
+            <property name="text" >
+             <string/>
+            </property>
+            <property name="iconSize" >
+             <size>
+              <width>16</width>
+              <height>16</height>
+             </size>
+            </property>
+            <property name="popupMode" >
+             <enum>QToolButton::InstantPopup</enum>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QToolButton" name="tb_actions" >
+            <property name="toolTip" >
+             <string>Actions</string>
+            </property>
+            <property name="text" >
+             <string/>
+            </property>
+            <property name="iconSize" >
+             <size>
+              <width>16</width>
+              <height>16</height>
+             </size>
+            </property>
+            <property name="popupMode" >
+             <enum>QToolButton::InstantPopup</enum>
+            </property>
+            <property name="arrowType" >
+             <enum>Qt::DownArrow</enum>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
        </item>
        <item>
         <widget class="QSplitter" name="hsplitter" >
+         <property name="sizePolicy" >
+          <sizepolicy>
+           <hsizetype>7</hsizetype>
+           <vsizetype>5</vsizetype>
+           <horstretch>0</horstretch>
+           <verstretch>1</verstretch>
+          </sizepolicy>
+         </property>
          <property name="orientation" >
           <enum>Qt::Horizontal</enum>
          </property>
@@ -235,9 +253,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>GCUserView</class>
-   <extends>Q3ListView</extends>
-   <header>gcuserview.h</header>
+   <class>AccountLabel</class>
+   <extends>QLabel</extends>
+   <header>accountlabel.h</header>
   </customwidget>
   <customwidget>
    <class>Q3ListView</class>
@@ -245,19 +263,19 @@
    <header>q3listview.h</header>
   </customwidget>
   <customwidget>
-   <class>AccountLabel</class>
-   <extends>QLabel</extends>
-   <header>accountlabel.h</header>
-  </customwidget>
-  <customwidget>
-   <class>ChatView</class>
-   <extends>QTextEdit</extends>
-   <header>msgmle.h</header>
+   <class>GCUserView</class>
+   <extends>Q3ListView</extends>
+   <header>gcuserview.h</header>
   </customwidget>
   <customwidget>
    <class>ChatSplitter</class>
    <extends>QSplitter</extends>
    <header>chatsplitter.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ChatView</class>
+   <extends>QTextEdit</extends>
+   <header>msgmle.h</header>
   </customwidget>
   <customwidget>
    <class>ChatEditProxy</class>
