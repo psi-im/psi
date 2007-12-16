@@ -23,6 +23,7 @@
 #include "psicon.h"
 
 #include <QWidget>
+#include <QTimer>
 #include <windows.h>
 
 class ActiveProfiles::Private : public QWidget
@@ -33,17 +34,17 @@ public:
 		app.replace('\\', '/');	// '\\' has a special meaning in mutex name
 		home.replace('\\', '/');
 
-		changesMutex = CreateMutex(0, FALSE, QString("%1 ChangesMutex {4F5AEDA9-7D3D-4ebe-8614-FB338146CE80}").arg(app).utf16());
+		changesMutex = CreateMutex(0, FALSE, (wchar_t*)QString("%1 ChangesMutex {4F5AEDA9-7D3D-4ebe-8614-FB338146CE80}").arg(app).utf16());
 		if (changesMutex == NULL)
 			qWarning("Couldn't create IPC mutex");
 
-		psiIpcCommand = RegisterWindowMessage(QString("%1 IPC Command {4F5AEDA9-7D3D-4ebe-8614-FB338146CE80}").arg(app).utf16());
+		psiIpcCommand = RegisterWindowMessage((wchar_t*)QString("%1 IPC Command {4F5AEDA9-7D3D-4ebe-8614-FB338146CE80}").arg(app).utf16());
 		if (psiIpcCommand == 0)
 			qWarning("Couldn't register IPC WM_message");
 	}
 
-	ActiveProfiles * const ap;
 	QString app, home, profile;
+	ActiveProfiles * const ap;
 	HANDLE mutex, changesMutex;
 
 	QString mutexName(const QString &profile) const {
@@ -80,7 +81,7 @@ WPARAM ActiveProfiles::Private::raiseCommand = 1;
 
 bool ActiveProfiles::Private::sendMessage(const QString &to, UINT message, WPARAM wParam, LPARAM lParam) const
 {
-	HWND hwnd = FindWindow(0, windowName(to).utf16());
+	HWND hwnd = FindWindow(0, (wchar_t*)windowName(to).utf16());
 
 	if (!hwnd)
 		return false;
@@ -174,7 +175,7 @@ bool ActiveProfiles::setThisProfile(const QString &profile)
 	}
 
 	d->startChanges();
-	HANDLE m = CreateMutex(0, TRUE, d->mutexName(profile).utf16());
+	HANDLE m = CreateMutex(0, TRUE, (wchar_t*)d->mutexName(profile).utf16());
 	if (GetLastError() == ERROR_ALREADY_EXISTS) {
 		CloseHandle(m);
 		d->endChanges();
@@ -185,7 +186,7 @@ bool ActiveProfiles::setThisProfile(const QString &profile)
 		d->mutex = m;
 		d->profile = profile;
 		//d->setWindowTitle() does not work - use SetWindowText
-		SetWindowText(d->winId(), d->windowName(profile).utf16());
+		SetWindowText(d->winId(), (wchar_t*)d->windowName(profile).utf16());
 		d->endChanges();
 		return true;
 	}
@@ -208,7 +209,7 @@ QString ActiveProfiles::thisProfile() const
 
 bool ActiveProfiles::isActive(const QString &profile) const
 {
-	HANDLE m = OpenMutex(0, FALSE, d->mutexName(profile).utf16());
+	HANDLE m = OpenMutex(0, FALSE, (wchar_t*)d->mutexName(profile).utf16());
 	if (GetLastError() == ERROR_FILE_NOT_FOUND) {
 		return false;
 	}
