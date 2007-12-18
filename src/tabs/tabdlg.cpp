@@ -216,14 +216,15 @@ void TabDlg::setLooks()
 
 void TabDlg::tabSelected(QWidget* _selected)
 {
-	TabbableWidget* selected = static_cast<TabbableWidget*>(_selected);
-	if (!selectedTab_.isNull())
+	TabbableWidget* selected = qobject_cast<TabbableWidget*>(_selected);
+	assert(selected);
+	if (!selectedTab_.isNull()) {
 		selectedTab_->deactivated();
+	}
 
 	selectedTab_ = selected;
-
-	if (selected)
-		selected->activated();
+	assert(!selectedTab_.isNull());
+	selected->activated();
 
 	updateCaption();
 }
@@ -280,8 +281,9 @@ void TabDlg::removeTabWithNoChecks(TabbableWidget *tab)
 	disconnect(tab, SIGNAL(invalidateTabInfo()), this, SLOT(updateTab()));
 	disconnect(tab, SIGNAL(updateFlashState()), this, SLOT(updateFlashState()));
 
-	tabWidget_->removePage(tab);
 	tabs_.removeAll(tab);
+	tabWidget_->removePage(tab);
+	checkHasChats();
 }
 
 /**
@@ -300,14 +302,15 @@ void TabDlg::closeTab(TabbableWidget* chat, bool doclose)
 	chat->hide();
 	removeTabWithNoChecks(chat);
 	chat->reparent(0,QPoint());
-	if (doclose && chat->testAttribute(Qt::WA_DeleteOnClose)) {
-		chat->close();
-	}
 	if (tabWidget_->count() > 0) {
 		updateCaption();
 	}
-	checkHasChats();
+	//moved to NoChecks
+	//checkHasChats();
 	setUpdatesEnabled(true);
+	if (doclose && chat->testAttribute(Qt::WA_DeleteOnClose)) {
+		chat->close();
+	}
 }
 
 void TabDlg::selectTab(TabbableWidget* chat)
@@ -349,13 +352,15 @@ QString TabDlg::desiredCaption() const
 	}
 	if (pending > 0) {
 		cap += "* ";
-		if (pending > 1)
+		if (pending > 1) {
 			cap += QString("[%1] ").arg(pending);
+		}
 	}
 	if (tabWidget_->currentPage()) {
-		cap += static_cast<TabbableWidget*>(tabWidget_->currentPage())->getDisplayName();
-		if (static_cast<TabbableWidget*>(tabWidget_->currentPage())->state() == TabbableWidget::StateComposing)
+		cap += qobject_cast<TabbableWidget*>(tabWidget_->currentPage())->getDisplayName();
+		if (qobject_cast<TabbableWidget*>(tabWidget_->currentPage())->state() == TabbableWidget::StateComposing) {
 			cap += tr(" is composing");
+		}
 	}
 	return cap;
 }

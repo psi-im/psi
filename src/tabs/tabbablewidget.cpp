@@ -70,6 +70,9 @@ void TabbableWidget::bringToFront()
 
 TabbableWidget::~TabbableWidget()
 {
+	if (isTabbed()) {
+		getManagingTabDlg()->removeTabWithNoChecks(this);
+	}
 }
 
 /**
