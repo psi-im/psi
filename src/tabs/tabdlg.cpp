@@ -217,13 +217,13 @@ void TabDlg::setLooks()
 void TabDlg::tabSelected(QWidget* _selected)
 {
 	TabbableWidget* selected = qobject_cast<TabbableWidget*>(_selected);
-	assert(selected);
+	Q_ASSERT(selected);
 	if (!selectedTab_.isNull()) {
 		selectedTab_->deactivated();
 	}
 
 	selectedTab_ = selected;
-	assert(!selectedTab_.isNull());
+	Q_ASSERT(!selectedTab_.isNull());
 	selected->activated();
 
 	updateCaption();
@@ -307,10 +307,10 @@ void TabDlg::closeTab(TabbableWidget* chat, bool doclose)
 	}
 	//moved to NoChecks
 	//checkHasChats();
-	setUpdatesEnabled(true);
 	if (doclose && chat->testAttribute(Qt::WA_DeleteOnClose)) {
 		chat->close();
 	}
+	setUpdatesEnabled(true);
 }
 
 void TabDlg::selectTab(TabbableWidget* chat)
