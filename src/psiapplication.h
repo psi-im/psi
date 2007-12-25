@@ -49,7 +49,11 @@ public:
 	bool winEventFilter(MSG* msg, long* result);
 #endif
 
+	// reimplemented
+	void commitData(QSessionManager& manager);
+
 signals:
+	void forceSavePreferences();
 	void dockActivated();
 	void newTrayOwner();
 	void trayOwnerDied();

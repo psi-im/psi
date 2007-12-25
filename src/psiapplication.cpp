@@ -329,3 +329,8 @@ bool PsiApplication::winEventFilter(MSG* msg, long* result)
 	return false;
 }
 #endif
+
+void PsiApplication::commitData(QSessionManager& manager)
+{
+	emit forceSavePreferences();
+}

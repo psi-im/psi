@@ -1369,3 +1369,20 @@ void MainWin::showNoFocus()
 }
 
 //#endif
+
+void MainWin::moveEvent(QMoveEvent* e)
+{
+	AdvancedWidget<Q3MainWindow>::moveEvent(e);
+	QTimer::singleShot(0, this, SLOT(geometryChanged()));
+}
+
+void MainWin::resizeEvent(QResizeEvent* e)
+{
+	AdvancedWidget<Q3MainWindow>::resizeEvent(e);
+	QTimer::singleShot(0, this, SLOT(geometryChanged()));
+}
+
+void MainWin::geometryChanged()
+{
+	emit geomChanged(saveableGeometry());
+}

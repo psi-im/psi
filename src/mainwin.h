@@ -68,12 +68,15 @@ public:
 	PsiCon *psiCon() const;
 
 protected:
+	// reimplemented
 	void closeEvent(QCloseEvent *);
 	void keyPressEvent(QKeyEvent *);
 	QMenuBar* mainMenuBar() const;
 #ifdef Q_WS_WIN
 	bool winEvent(MSG *, long *);
 #endif
+	void moveEvent(QMoveEvent*);
+	void resizeEvent(QResizeEvent*);
 
 signals:
 	void statusChanged(int);
@@ -106,6 +109,7 @@ private slots:
 	void trayShow();
 	void trayHide();
 
+	void geometryChanged();
 	void doRecvNextEvent();
 	void statusClicked(int);
 	void try2tryCloseProgram();

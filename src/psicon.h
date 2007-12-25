@@ -155,6 +155,7 @@ private slots:
 	void saveAccounts();
 	void saveCapabilities();
 	void optionsUpdate();
+	void forceSavePreferences();
 
 private:
 	class Private;
@@ -169,6 +170,7 @@ private:
 	void setToggles(bool tog_offline, bool tog_away, bool tog_agents, bool tog_hidden, bool tog_self);
 	void getToggles(bool *tog_offline, bool *tog_away, bool *tog_agents, bool *tog_hidden, bool *tog_self);
 	void promptUserToCreateAccount();
+	QString optionsFile() const;
 
 	void registerCaps(const QString& ext, const QStringList& features);
 

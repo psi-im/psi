@@ -231,7 +231,6 @@ public:
 	S5BServer *s5bServer;
 	ProxyManager *proxy;
 	IconSelectPopup *iconSelect;
-	QRect mwgeom;
 	FileTransDlg *ftwin;
 	PsiActionList *actionList;
 	//GlobalAccelManager *globalAccelManager;
@@ -291,6 +290,8 @@ bool PsiCon::init()
 	if (!ActiveProfiles::instance()->setThisProfile(activeProfile))
 		return false;
 
+	connect(qApp, SIGNAL(forceSavePreferences()), SLOT(forceSavePreferences()));
+
 	// PGP initialization (needs to be before any gpg usage!)
 	PGPUtil::instance();
 
@@ -320,12 +321,10 @@ bool PsiCon::init()
 	d->pro.fromFile(pathToProfileConfig(activeProfile));
 	
 	//load the new profile
-	QString optionsFile=pathToProfile( activeProfile );
-	optionsFile += "/options.xml";
-	options->load(optionsFile);
 	//Save every time an option is changed
-	options->autoSave(true, optionsFile);
-	
+	options->load(optionsFile());
+	options->autoSave(true, optionsFile());
+
 	//just set a dummy option to trigger saving
 	options->setOption("trigger-save",false);
 	options->setOption("trigger-save",true);
@@ -381,8 +380,7 @@ bool PsiCon::init()
 	connect(this, SIGNAL(emitOptionsUpdate()), d->mainwin->cvlist, SLOT(optionsUpdate()));
 
 	d->mainwin->restoreSavedGeometry(d->pro.mwgeom);
-	d->mwgeom = d->pro.mwgeom;
-	
+
 	if(!(option.useDock && option.dockHideMW))
 		d->mainwin->show();
 
@@ -526,17 +524,8 @@ void PsiCon::deinit()
 	delete d->ftwin;
 
 	if(d->mainwin) {
-		// shut down mainwin
-		QRect mwgeom;
-		if ( !d->mainwin->isHidden() && !d->mainwin->isMinimized() )
-			mwgeom = d->mainwin->saveableGeometry();
-		else
-			mwgeom = d->mwgeom;
-
 		delete d->mainwin;
 		d->mainwin = 0;
-
-		d->pro.mwgeom = mwgeom;
 	}
 
 	// TuneController
@@ -1338,7 +1327,8 @@ void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 
 void PsiCon::mainWinGeomChanged(QRect saveableGeometry)
 {
-	d->mwgeom = saveableGeometry;
+	if (!saveableGeometry.isNull())
+		d->pro.mwgeom = saveableGeometry;
 }
 
 void PsiCon::updateS5BServerAddresses()
@@ -1474,5 +1464,15 @@ void PsiCon::promptUserToCreateAccount()
 	}
 }
 
+QString PsiCon::optionsFile() const
+{
+	return pathToProfile(activeProfile) + "/options.xml";
+}
 
+void PsiCon::forceSavePreferences()
+{
+	slotApplyOptions(option);
+	PsiOptions::instance()->save(optionsFile());
+}
+ 
 #include "psicon.moc"
