@@ -1,7 +1,54 @@
+/*
+ * desktoputil.cpp - url-opening routines
+ * Copyright (C) 2007  Maciej Niedzielski, Michail Pishchagin
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+
 #include "desktoputil.h"
 
 #include <QDesktopServices>
 #include <QUrl>
+#include <QSettings>
+#include <QFileInfo>
+#include <QProcess>
+
+#ifdef Q_WS_WIN
+QString defaultBrowser()
+{
+	QSettings settings("HKEY_CLASSES_ROOT\\HTTP\\shell\\open\\command", QSettings::NativeFormat);
+	QString command = settings.value(".").toString();
+	QRegExp rx("\"(.+)\"");
+	if (rx.indexIn(command) != -1)
+		return rx.capturedTexts()[1];
+	return command;
+}
+#endif
+
+static bool doOpenUrl(const QUrl& url)
+{
+#ifdef Q_WS_WIN
+	QFileInfo browserFileInfo(defaultBrowser());
+	if (browserFileInfo.fileName() == "iexplore.exe") {
+		return QProcess::startDetached(browserFileInfo.absoluteFilePath(),
+		                               QStringList() << "-new" << url.toEncoded());
+	}
+#endif
+	return QDesktopServices::openUrl(url);
+}
 
 /**
  *	\brief Opens URL using OS default handler
@@ -18,7 +65,7 @@ bool DesktopUtil::openUrl(const QString &url)
 {
 	QByteArray ascii = url.toAscii();
 	if (ascii == url)
-		return QDesktopServices::openUrl(QUrl::fromEncoded(ascii));
+		return doOpenUrl(QUrl::fromEncoded(ascii));
 	else
-		return QDesktopServices::openUrl(QUrl(url, QUrl::TolerantMode));
+		return doOpenUrl(QUrl(url, QUrl::TolerantMode));
 }
