@@ -224,7 +224,7 @@ int PsiTabWidget::getIndex(QWidget* widget) {
 /**
  * Set the text of the tab.
  */
-void PsiTabWidget::setTabLabel(QWidget* widget, const QString& label) {
+void PsiTabWidget::setTabText(QWidget* widget, const QString& label) {
 	int index = getIndex(widget);
 	if (index == -1) {
 		return;

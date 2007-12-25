@@ -420,7 +420,7 @@ QString TabDlg::captionForTab(TabbableWidget* tab) const
 
 void TabDlg::updateTab(TabbableWidget* chat)
 {
-	tabWidget_->setTabLabel(chat, captionForTab(chat));
+	tabWidget_->setTabText(chat, captionForTab(chat));
 	//now set text colour based upon whether there are new messages/composing etc
 
 	if (chat->state() == TabbableWidget::StateComposing) {
