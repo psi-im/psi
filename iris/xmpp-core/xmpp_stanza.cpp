@@ -461,6 +461,7 @@ Stanza::Stanza()
 
 Stanza::Stanza(Stream *s, Kind k, const Jid &to, const QString &type, const QString &id)
 {
+	Q_ASSERT(s);
 	d = new Private;
 
 	Kind kind;
@@ -470,7 +471,8 @@ Stanza::Stanza(Stream *s, Kind k, const Jid &to, const QString &type, const QStr
 		kind = Message;
 
 	d->s = s;
-	d->e = d->s->doc().createElementNS(s->baseNS(), Private::kindToString(kind));
+	if(d->s)
+		d->e = d->s->doc().createElementNS(s->baseNS(), Private::kindToString(kind));
 	if(to.isValid())
 		setTo(to);
 	if(!type.isEmpty())
@@ -481,6 +483,7 @@ Stanza::Stanza(Stream *s, Kind k, const Jid &to, const QString &type, const QStr
 
 Stanza::Stanza(Stream *s, const QDomElement &e)
 {
+	Q_ASSERT(s);
 	d = 0;
 	if(e.namespaceURI() != s->baseNS())
 		return;

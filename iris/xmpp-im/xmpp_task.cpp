@@ -114,7 +114,15 @@ void Task::go(bool autoDelete)
 {
 	d->autoDelete = autoDelete;
 
-	onGo();
+	if (!client() || !&client()->stream()) {
+		qWarning("Task::go(): attempted to send a task over the broken connection.");
+		if (autoDelete) {
+			deleteLater();
+		}
+	}
+	else {
+		onGo();
+	}
 }
 
 bool Task::take(const QDomElement &x)

@@ -934,7 +934,9 @@ void ChatDlg::setChatState(ChatState state)
 					Message tm(jid());
 					m.setType("chat");
 					m.setChatState(XMPP::StatePaused);
-					account()->dj_sendMessage(m, false);
+					if (account()->isAvailable()) {
+						account()->dj_sendMessage(m, false);
+					}
 				}
 				m.setChatState(state);
 			}
@@ -943,7 +945,9 @@ void ChatDlg::setChatState(ChatState state)
 		// Send event message
 		if (m.containsEvents() || m.chatState() != XMPP::StateNone) {
 			m.setType("chat");
-			account()->dj_sendMessage(m, false);
+			if (account()->isAvailable()) {
+				account()->dj_sendMessage(m, false);
+			}
 		}
 
 		// Save last state
