@@ -35,6 +35,8 @@
 #include <QBuffer>
 #include <QPainter>
 
+#include <qca_basic.h>
+
 #include "xmpp_xmlcommon.h"
 #include "xmpp_vcard.h"
 #include "xmpp_client.h"
@@ -56,7 +58,7 @@ using namespace QCA;
 
 //------------------------------------------------------------------------------
 
-static QByteArray scaleAvatar(const QByteArray& b)	
+static QByteArray scaleAvatar(const QByteArray& b)
 {
 	//int maxSize = (option.avatarsSize > MAX_AVATAR_SIZE ? MAX_AVATAR_SIZE : option.avatarsSize);
 	int maxSize = AvatarFactory::maxAvatarSize();
@@ -145,7 +147,7 @@ protected:
 	
 	virtual bool isCached(const QString& hash);
 	virtual void loadFromCache(const QString& hash);
-	virtual void saveToCache(const QString& hash, const QByteArray& data);
+	virtual void saveToCache(const QByteArray& data);
 
 private:
 	QString hash_;
@@ -188,9 +190,9 @@ void CachedAvatar::loadFromCache(const QString& h)
 	}
 }
 
-void CachedAvatar::saveToCache(const QString& hash, const QByteArray& data)
+void CachedAvatar::saveToCache(const QByteArray& data)
 {
-	// Write file to cache
+	QString hash = QCA::Hash("sha1").hashToString(data);
 	// printf("Saving %s to cache.\n",hash.latin1());
 	QString fn = QDir(AvatarFactory::getCacheDir()).filePath(hash);
 	QFile f(fn);
@@ -222,7 +224,7 @@ public:
 		if (h == hash()) {
 			QByteArray ba = Base64().stringToArray(data).toByteArray();
 			if (!ba.isEmpty()) {
-				saveToCache(hash(),ba);
+				saveToCache(ba);
 				setImage(ba);
 				if (pixmap().isNull()) {
 					qWarning("PEPAvatar::setData(): Null pixmap. Unsupported format ?");
@@ -292,7 +294,7 @@ void VCardAvatar::receivedVCard()
 {
 	const VCard* vcard = VCardFactory::instance()->vcard(jid_);
 	if (vcard) {
-		saveToCache(hash(),vcard->photo());
+		saveToCache(vcard->photo());
 		setImage(vcard->photo());
 		emit avatarChanged(jid_);
 	}

@@ -1210,9 +1210,6 @@ public:
 						if ( path.isEmpty() )
 							break;
 
-						if( !QCA::isSupported("sha1") )
-							continue;
-
 						QFileInfo ext(sound[*it]);
 						path += "/" + QCA::Hash("sha1").hashToString(QString(fi.absFilePath() + "/" + *sound[*it]).utf8()) + "." + ext.extension();
 
