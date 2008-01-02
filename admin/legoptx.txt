@@ -1,34 +1,34 @@
 ==========bool:
-useleft
-singleclick
-hideMenubar
-useTransportIconsForContacts
-alwaysOnTop
-keepSizes
-ignoreHeadline
-ignoreNonRoster
-excludeGroupChatsFromIgnore
+useleft	psi/options/ui/contactlist/use-left-click
+singleclick	psi/options/ui/contactlist/use-single-click
+!hideMenubar	psi/options/ui/contactlist/show-menubar
+useTransportIconsForContacts	psi/options/ui/contactlist/use-transport-icons
+alwaysOnTop	psi/options/ui/contactlist/always-on-top
+keepSizes	psi/options/ui/remember-window-sizes
+ignoreHeadline	psi/options/message/ignore-headlines
+ignoreNonRoster	psi/options/message/ignore-non-roster-contacts
+excludeGroupChatsFromIgnore	psi/options/messages/exclude-muc-from-ignore
 scrollTo
-useEmoticons
-alertOpenChats
-raiseChatWindow
-showSubjects
-showGroupCounts
-showCounter
-chatSays
-jidComplete
+useEmoticons	psi/options/ui/emoticons/use-emoticons
+alertOpenChats	psi/options/ui/chat/alert-for-already-open-chats
+raiseChatWindow	psi/options/ui/chat/raise-chat-windows-on-new-messages
+showSubjects	psi/options/ui/message/show-subjects
+showGroupCounts	psi/options/ui/contactlist/show-group-counts
+showCounter	psi/options/ui/message/show-character-count
+chatSays	psi/options/ui/chat/use-chat-says-style
+jidComplete	
 grabUrls
-smallChats
-brushedMetal
-chatLineEdit
-useTabs
-usePerTabCloseButton
+smallChats	psi/options/ui/chat/use-small-chats
+brushedMetal	psi/options/ui/mac/use-brushed-metal-windows
+chatLineEdit	psi/options/ui/chat/use-expanding-line-edit
+useTabs		psi/options/ui/tabs/use-tabs
+usePerTabCloseButton	
 putTabsAtBottom
-autoRosterSize
-autoRosterSizeGrowTop
-autoResolveNicksOnAdd
-messageEvents
-inactiveEvents
+autoRosterSize	psi/options/ui/contactlist/automatically-resize-roster
+autoRosterSizeGrowTop	psi/options/ui/contactlist/grow-roster-upwards
+autoResolveNicksOnAdd	psi/options/contactlist/resolve-nicks-on-contact-add
+messageEvents	psi/options/message/send-composing-events
+inactiveEvents	psi/options/message/send-inactivity-events
 autoCopy
 useCaps
 useRC
@@ -148,7 +148,7 @@ rosterGroupSortStyle
 rosterAccountSortStyle
 
 =========== QMaps:
-sp
-serviceRosterIconset
-customRosterIconset
-mainwintoolbars
+sp	
+serviceRosterIconset	
+customRosterIconset	
+mainwintoolbars	
