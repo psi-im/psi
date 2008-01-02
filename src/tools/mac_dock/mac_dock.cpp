@@ -69,9 +69,8 @@ void MacDock::overlay(const QString& text)
 		overlayed = true;
 
 		// Add some subtle drop down shadow
-		// FIXME: Disabled because 10.2 doesn't support it
-		//CGSize s = { 2.0, -4.0 };
-		//CGContextSetShadow(context,s,5.0);
+		CGSize s = { 2.0, -4.0 };
+		CGContextSetShadow(context, s, 5.0);
 	}
 
 	// Draw a circle
