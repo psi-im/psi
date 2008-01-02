@@ -156,6 +156,7 @@ private slots:
 	void saveCapabilities();
 	void optionsUpdate();
 	void forceSavePreferences();
+	void startBounce();
 
 private:
 	class Private;

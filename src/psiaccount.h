@@ -205,6 +205,7 @@ signals:
 	void pgpKeyChanged();
 	void encryptedMessageSent(int, bool, int);
 	void enabledChanged();
+	void startBounce();
 
 public slots:
 	void setStatus(const XMPP::Status &, bool withStatus = false);

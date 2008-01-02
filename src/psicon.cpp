@@ -732,8 +732,10 @@ PsiAccount *PsiCon::createAccount(const UserAccount& acc)
 	connect(pa, SIGNAL(updatedActivity()), SLOT(pa_updatedActivity()));
 	connect(pa, SIGNAL(updatedAccount()), SLOT(pa_updatedAccount()));
 	connect(pa, SIGNAL(queueChanged()), SLOT(queueChanged()));
-	if(d->s5bServer)
+	connect(pa, SIGNAL(startBounce()), SLOT(startBounce()));
+	if (d->s5bServer) {
 		pa->client()->s5bManager()->setServer(d->s5bServer);
+	}
 	return pa;
 }
 
@@ -1095,37 +1097,28 @@ void PsiCon::queueChanged()
 
 #ifdef Q_WS_MAC
 	{
-		// The Mac Dock icon
-
 		// Update the event count
-		if (nextAmount) 
-			MacDock::overlay(QString::number(nextAmount));
-		else 
-			MacDock::overlay(QString::null);
+		MacDock::overlay(nextAmount ? QString::number(nextAmount) : QString());
 
-		// Check if bouncing is necessary
-		bool doBounce = false;
-		foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
-			if (account->eventQueue()->count() && pa->status().type() != XMPP::Status::DND) {
-				doBounce = true;
-				break;
-			}
-		}
-
-		// Bouncy bouncy
-		if (doBounce) {
-			if (option.bounceDock != Options::NoBounce) {
-				MacDock::startBounce();
-				if (option.bounceDock == Options::BounceOnce) 
-					MacDock::stopBounce();
-			}
-		}
-		else 
+		if (!nextAmount) {
 			MacDock::stopBounce();
+		}
 	}
 #endif
 
 	d->mainwin->updateReadNext(nextAnim, nextAmount);
+}
+
+void PsiCon::startBounce()
+{
+#ifdef Q_WS_MAC
+	if (option.bounceDock != Options::NoBounce) {
+		MacDock::startBounce();
+		if (option.bounceDock == Options::BounceOnce) {
+			MacDock::stopBounce();
+		}
+	}
+#endif
 }
 
 void PsiCon::recvNextEvent()

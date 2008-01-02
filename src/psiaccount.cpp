@@ -283,6 +283,7 @@ public:
 		, tlsHandler(0)
 		, xmlRingbuf(1000)
 		, xmlRingbufWrite(0)
+		, doPopups_(true)
 	{
 	}
 
@@ -357,7 +358,6 @@ public:
 	QCA::TLS *tls;
 	QCATLSHandler *tlsHandler;
 	bool usingSSL;
-	bool doPopups;
 
 	QVector<xmlRingElem> xmlRingbuf;
 	int xmlRingbufWrite;
@@ -369,10 +369,13 @@ public:
 		return pathToProfile(activeProfile) + "/events-" + acc.name + ".xml";
 	}
 
+private:
+	bool doPopups_;
+
 public:
 	bool noPopup(ActivationType activationType) const
 	{
-		if (activationType == FromXml)
+		if (activationType == FromXml || !doPopups_)
 			return true;
 
 		if (lastManualStatus_.isAvailable()) {
@@ -394,15 +397,15 @@ public slots:
 	void loadQueue()
 	{
 		bool soundEnabled = useSound;
-		useSound = FALSE; // disable the sound and popups
-		doPopups = FALSE;
+		useSound  = false; // disable the sound and popups
+		doPopups_ = false;
 
 		QFileInfo fi( pathToProfileEvents() );
 		if ( fi.exists() )
 			eventQueue->fromFile(pathToProfileEvents());
 
 		useSound = soundEnabled;
-		doPopups = TRUE;
+		doPopups_ = true;
 	}
 
 	void setEnabled( bool e )
@@ -596,7 +599,6 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	d->voiceCaller = 0;
 	d->blockTransportPopupList = new BlockTransportPopupList();
 
-	d->doPopups = true;
 	v_isActive = false;
 	isDisconnecting = false;
 	notifyOnlineOk = false;
@@ -1895,7 +1897,7 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
 	// Do the popup test earlier (to avoid needless JID lookups)
 	if ((popupType == PopupOnline && option.ppOnline) || (popupType == PopupStatusChange && option.ppStatus))
 #endif
-	if(notifyOnlineOk && doPopup && d->doPopups && !d->blockTransportPopupList->find(j, popupType == PopupOnline) && !d->noPopup(IncomingStanza)) {
+	if(notifyOnlineOk && doPopup && !d->blockTransportPopupList->find(j, popupType == PopupOnline) && !d->noPopup(IncomingStanza)) {
 		QString name;
 		UserListItem *u = findFirstRelevant(j);
 
@@ -1974,7 +1976,7 @@ void PsiAccount::client_resourceUnavailable(const Jid &j, const Resource &r)
 	// Do the popup test earlier (to avoid needless JID lookups)
 	if (option.ppOffline)
 #endif
-	if(doPopup && d->doPopups && !d->blockTransportPopupList->find(j) && !d->noPopup(IncomingStanza)) {
+	if(doPopup && !d->blockTransportPopupList->find(j) && !d->noPopup(IncomingStanza)) {
 		QString name;
 		UserListItem *u = findFirstRelevant(j);
 
@@ -3703,8 +3705,10 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 				j = bare;
 		}
 	}
-	else
+	else {
 		j = ul.first()->jid();
+	}
+
 	e->setJid(j);
 
 #ifdef PSI_PLUGINS
@@ -3851,15 +3855,12 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 		doPopup = false;
 	}
 
-#if !defined(Q_WS_MAC) || !defined(HAVE_GROWL)
-	// Do the popup test earlier (to avoid needless JID lookups)
-	if ((popupType == PsiPopup::AlertChat && option.ppChat) || (popupType == PsiPopup::AlertMessage && option.ppMessage) || (popupType == PsiPopup::AlertHeadline && option.ppHeadline) || (popupType == PsiPopup::AlertFile && option.ppFile))
-#endif
-	if (doPopup && d->doPopups && !d->noPopup(activationType)) {
+	if (doPopup && !d->noPopup(activationType)) {
 		Resource r;
 		UserListItem *u = findFirstRelevant(j);
-		if ( u && u->priority() != u->userResourceList().end())
+		if (u && u->priority() != u->userResourceList().end()) {
 			r = *(u->priority());
+		}
 
 		if ((popupType == PsiPopup::AlertChat     && option.ppChat)     ||
 		    (popupType == PsiPopup::AlertMessage  && option.ppMessage)  ||
@@ -3872,6 +3873,7 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 #if defined(Q_WS_MAC) && defined(HAVE_GROWL)
 		PsiGrowlNotifier::instance()->popup(this, popupType, j, r, u, e);
 #endif
+		emit startBounce();
 	}
 
 	if ( putToQueue )
