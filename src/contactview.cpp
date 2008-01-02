@@ -2161,6 +2161,8 @@ void ContactView::keyPressEvent(QKeyEvent *e)
 		QString text = e->text().lower();
 		if ( text.isEmpty() ) {
 			Q3ListView::keyPressEvent(e);
+		} else if (key == Qt::Key_Escape) {
+			e->ignore();
 		} else {
 			emit searchInput(text);
 		}
