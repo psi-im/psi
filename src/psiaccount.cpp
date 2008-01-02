@@ -375,10 +375,10 @@ public:
 		if (activationType == FromXml)
 			return true;
 
-		if (loginStatus.isAvailable()) {
-			if (loginStatus.type() == XMPP::Status::DND)
+		if (lastManualStatus_.isAvailable()) {
+			if (lastManualStatus_.type() == XMPP::Status::DND)
 				return true;
-			if ((loginStatus.type() == XMPP::Status::Away || loginStatus.type() == XMPP::Status::XA) && option.noAwayPopup)
+			if ((lastManualStatus_.type() == XMPP::Status::Away || lastManualStatus_.type() == XMPP::Status::XA) && option.noAwayPopup)
 				return true;
 		}
 
@@ -1895,7 +1895,7 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
 	// Do the popup test earlier (to avoid needless JID lookups)
 	if ((popupType == PopupOnline && option.ppOnline) || (popupType == PopupStatusChange && option.ppStatus))
 #endif
-	if(notifyOnlineOk && doPopup && d->doPopups && !d->blockTransportPopupList->find(j, popupType == PopupOnline) && makeSTATUS(status()) != STATUS_DND ) {
+	if(notifyOnlineOk && doPopup && d->doPopups && !d->blockTransportPopupList->find(j, popupType == PopupOnline) && !d->noPopup(IncomingStanza)) {
 		QString name;
 		UserListItem *u = findFirstRelevant(j);
 
@@ -1974,7 +1974,7 @@ void PsiAccount::client_resourceUnavailable(const Jid &j, const Resource &r)
 	// Do the popup test earlier (to avoid needless JID lookups)
 	if (option.ppOffline)
 #endif
-	if(doPopup && d->doPopups && !d->blockTransportPopupList->find(j) && makeSTATUS(status()) != STATUS_DND ) {
+	if(doPopup && d->doPopups && !d->blockTransportPopupList->find(j) && !d->noPopup(IncomingStanza)) {
 		QString name;
 		UserListItem *u = findFirstRelevant(j);
 
@@ -3855,13 +3855,17 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 	// Do the popup test earlier (to avoid needless JID lookups)
 	if ((popupType == PsiPopup::AlertChat && option.ppChat) || (popupType == PsiPopup::AlertMessage && option.ppMessage) || (popupType == PsiPopup::AlertHeadline && option.ppHeadline) || (popupType == PsiPopup::AlertFile && option.ppFile))
 #endif
-	if ( doPopup && d->doPopups && makeSTATUS(status()) != STATUS_DND ) {
+	if (doPopup && d->doPopups && !d->noPopup(activationType)) {
 		Resource r;
 		UserListItem *u = findFirstRelevant(j);
 		if ( u && u->priority() != u->userResourceList().end())
 			r = *(u->priority());
 
-		if (((popupType == PsiPopup::AlertChat && option.ppChat) || (popupType == PsiPopup::AlertMessage && option.ppMessage) || (popupType == PsiPopup::AlertHeadline && option.ppHeadline) || (popupType == PsiPopup::AlertFile && option.ppFile)) && makeSTATUS(status()) != STATUS_DND) {
+		if ((popupType == PsiPopup::AlertChat     && option.ppChat)     ||
+		    (popupType == PsiPopup::AlertMessage  && option.ppMessage)  ||
+		    (popupType == PsiPopup::AlertHeadline && option.ppHeadline) ||
+		    (popupType == PsiPopup::AlertFile     && option.ppFile))
+		{
 			PsiPopup *popup = new PsiPopup(popupType, this);
 			popup->setData(j, r, u, e);
 		}
