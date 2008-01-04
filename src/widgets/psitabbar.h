@@ -35,6 +35,8 @@ public:
 	~PsiTabBar();
 	PsiTabWidget *psiTabWidget();
 
+	void setDragsEnabled(bool enabled); // default enabled
+
 signals:
 	void mouseDoubleClickTab(int tab);
 	void tabDropped(int tab, PsiTabBar *source);
@@ -54,6 +56,7 @@ private:
 	int findTabUnder(const QPoint &pos);
 	QPoint dragStartPosition_;
 	int dragTab_;
+	bool dragsEnabled_;
 };
 
 #endif /* _PSITABBAR_H_ */

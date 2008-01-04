@@ -286,3 +286,34 @@ QWidget* PsiTabWidget::page(int index) {
 	Q_ASSERT(index >=0 && index < count());
 	return widgets_[index];
 }
+
+/**
+ * Show/hide the tab bar of this widget
+ */
+void PsiTabWidget::setTabBarShown(bool shown) {
+	if (shown && tabBar_->isHidden()) {
+		tabBar_->show();
+	} else if (!shown && !tabBar_->isHidden()) {
+		tabBar_->hide();
+	}
+}
+
+/**
+ * Show/hide the menu and close buttons that appear next to the tab bar
+ */
+void PsiTabWidget::setTabButtonsShown(bool shown) {
+	if (shown && downButton_->isHidden()) {
+		downButton_->show();
+		closeButton_->show();
+	} else if (!shown && !downButton_->isHidden()) {
+		downButton_->hide();
+		closeButton_->hide();
+	}
+}
+
+/**
+ * Enable/disable dragging of tabs
+ */
+void PsiTabWidget::setDragsEnabled(bool enabled) {
+	((PsiTabBar *)tabBar_)->setDragsEnabled(enabled);
+}

@@ -27,7 +27,8 @@
  * Constructor
  */
 PsiTabBar::PsiTabBar(PsiTabWidget *parent)
-		: QTabBar(parent) {
+		: QTabBar(parent)
+		, dragsEnabled_(true) {
 	//acceptDrops();
 }
 
@@ -83,6 +84,9 @@ void PsiTabBar::mousePressEvent(QMouseEvent *event) {
  * Used for starting drags of tabs
  */
 void PsiTabBar::mouseMoveEvent(QMouseEvent *event) {
+	if (!dragsEnabled_) {
+		return;
+	}
 	if (!(event->buttons() & Qt::LeftButton)) {
 		return;
 	}
@@ -129,4 +133,11 @@ void PsiTabBar::wheelEvent(QWheelEvent *event) {
 	setCurrentIndex(newIndex);
 
 	event->accept();	
+}
+
+/*
+ * Enable/disable dragging of tabs
+ */
+void PsiTabBar::setDragsEnabled(bool enabled) {
+	dragsEnabled_ = enabled;
 }
