@@ -27,112 +27,106 @@
  * Constructor
  */
 PsiTabBar::PsiTabBar(PsiTabWidget *parent)
-	: QTabBar(parent)
-{
+		: QTabBar(parent) {
 	//acceptDrops();
 }
 
 /**
  * Destructor
  */
-PsiTabBar::~PsiTabBar()
-{
-	
+PsiTabBar::~PsiTabBar() {
 }
 
 /**
  * Returns the parent PsiTabWidget.
  */
-PsiTabWidget* PsiTabBar::psiTabWidget()
-{
+PsiTabWidget* PsiTabBar::psiTabWidget() {
 	return dynamic_cast<PsiTabWidget*> (parent());
 }
 
 /**
  * Overriding this allows us to emit signals for double clicks
  */
-void PsiTabBar::mouseDoubleClickEvent( QMouseEvent* event )
-{
+void PsiTabBar::mouseDoubleClickEvent(QMouseEvent *event) {
 	const QPoint pos = event->pos();
-	int tab = findTabUnder( pos );
-	if ( tab >=0 && tab < count() )
+	int tab = findTabUnder(pos);
+	if (tab >= 0 && tab < count()) {
 		emit mouseDoubleClickTab(tab);
+	}
 }
 
 /*
  * Returns the index of the tab at a position, or -1 if out of bounds.
  */
-int PsiTabBar::findTabUnder( const QPoint& pos )
-{
-	for (int i = 0; i < count(); i++)
-	{
-		if ( tabRect(i).contains(pos) )
-				return i;
+int PsiTabBar::findTabUnder(const QPoint &pos) {
+	for (int i = 0; i < count(); i++) {
+		if (tabRect(i).contains(pos)) {
+			return i;
+		}
 	}
 	return -1;
 } 
 
-void PsiTabBar::mousePressEvent(QMouseEvent *event)
-{
-    if (event->button() == Qt::LeftButton) {
-		int tabno = findTabUnder( event->pos() );
-        dragStartPosition_ = event->pos();
+void PsiTabBar::mousePressEvent(QMouseEvent *event) {
+	if (event->button() == Qt::LeftButton) {
+		int tabno = findTabUnder(event->pos());
+		dragStartPosition_ = event->pos();
 		dragTab_ = tabno;
-		if (tabno != -1) setCurrentIndex( tabno );
- 	}
+		if (tabno != -1) {
+			setCurrentIndex(tabno);
+		}
+	}
 	event->accept();
 }
 
 /*
  * Used for starting drags of tabs
- */ 
-void PsiTabBar::mouseMoveEvent(QMouseEvent *event)
- {
-	if (!(event->buttons() & Qt::LeftButton))
+ */
+void PsiTabBar::mouseMoveEvent(QMouseEvent *event) {
+	if (!(event->buttons() & Qt::LeftButton)) {
 		return;
-	if ( (event->pos() - dragStartPosition_).manhattanLength() 
-		< QApplication::startDragDistance() )
+	}
+	if ((event->pos() - dragStartPosition_).manhattanLength()
+		< QApplication::startDragDistance()) {
 		return;
+	}
 
 	if (dragTab_ != -1) {
-
 		QDrag *drag = new QDrag(this);
 		QMimeData *mimeData = new QMimeData;
 		QByteArray data;
 		QPixmap icon;
-	
+
 		data.setNum(dragTab_);
-	
-		mimeData->setData("psiTabDrag",data);
+
+		mimeData->setData("psiTabDrag", data);
 		drag->setMimeData(mimeData);
 		drag->setPixmap(icon);
-			
+
 		Qt::DropAction dropAction = drag->start(Qt::MoveAction);
 		Q_UNUSED(dropAction);
 	}
 
 	event->accept();
- }
+}
 
-void PsiTabBar::contextMenuEvent ( QContextMenuEvent * event )
-{
+void PsiTabBar::contextMenuEvent(QContextMenuEvent *event) {
 	event->accept();
 	emit contextMenu(event, findTabUnder(event->pos()));
 }
 
-void PsiTabBar::wheelEvent(QWheelEvent *event)
-{
+void PsiTabBar::wheelEvent(QWheelEvent *event) {
 	int numDegrees = event->delta() / 8;
 	int numSteps = numDegrees / 15;
-	
+
 	int newIndex = currentIndex() - numSteps;
 
-	while (newIndex < 0) newIndex += count();
+	while (newIndex < 0) {
+		newIndex += count();
+	}
 	newIndex = newIndex % count();
 
 	setCurrentIndex(newIndex);
 
 	event->accept();	
 }
-
-

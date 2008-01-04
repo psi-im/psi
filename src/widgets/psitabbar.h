@@ -17,6 +17,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
+
 #ifndef _PSITABBAR_H_
 #define _PSITABBAR_H_
 
@@ -32,28 +33,27 @@ class PsiTabBar : public QTabBar
 public:
 	PsiTabBar(PsiTabWidget *parent);
 	~PsiTabBar();
-	PsiTabWidget* psiTabWidget();
+	PsiTabWidget *psiTabWidget();
 
 signals:
-	void mouseDoubleClickTab( int tab );
-	void tabDropped( int tab, PsiTabBar* source);
+	void mouseDoubleClickTab(int tab);
+	void tabDropped(int tab, PsiTabBar *source);
 	// context menu on the blank space will have tab==-1
-	void contextMenu( QContextMenuEvent * event, int tab);
+	void contextMenu(QContextMenuEvent *event, int tab);
 
 protected:
-	void mouseDoubleClickEvent( QMouseEvent* event );
-	void mouseMoveEvent( QMouseEvent *event );
+	void mouseDoubleClickEvent(QMouseEvent *event);
+	void mouseMoveEvent(QMouseEvent *event);
 	//void dragEnterEvent(QDragEnterEvent *event);
 	//void dropEvent(QDropEvent *event);
 	void mousePressEvent(QMouseEvent *event);
-	void contextMenuEvent ( QContextMenuEvent * event );
+	void contextMenuEvent(QContextMenuEvent *event);
 	void wheelEvent(QWheelEvent *event);
 
 private:
-	int findTabUnder(const QPoint& pos);
+	int findTabUnder(const QPoint &pos);
 	QPoint dragStartPosition_;
 	int dragTab_;
-	
 };
 
 #endif /* _PSITABBAR_H_ */

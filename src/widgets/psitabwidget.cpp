@@ -33,9 +33,8 @@
 /**
  * Constructor
  */
-PsiTabWidget::PsiTabWidget(QWidget *parent) : QWidget(parent)
-	//: QTabWidget(parent)
-{
+PsiTabWidget::PsiTabWidget(QWidget *parent)
+		: QWidget(parent) {
 	tabsPosition_ = QTabWidget::East; // impossible => uninitialised state
 	tabBar_ = new PsiTabBar(this);
 	tabBar_->setUsesScrollButtons(true);
@@ -49,7 +48,7 @@ PsiTabWidget::PsiTabWidget(QWidget *parent) : QWidget(parent)
 	barLayout_->setAlignment(Qt::AlignLeft);
 
 	int buttonwidth = qMax(tabBar_->style()->pixelMetric(QStyle::PM_TabBarScrollButtonWidth, 0, tabBar_),
-                    QApplication::globalStrut().width());
+		QApplication::globalStrut().width());
 
 	downButton_ = new QToolButton(this);
 	downButton_->setMinimumSize(3,3);
@@ -87,9 +86,7 @@ void PsiTabWidget::setCloseIcon(const QIcon& icon) {
 /**
  * Destructor
  */
-PsiTabWidget::~PsiTabWidget()
-{
-	
+PsiTabWidget::~PsiTabWidget() {
 }
 
 /**
@@ -97,11 +94,10 @@ PsiTabWidget::~PsiTabWidget()
  * \param tab Widget for the tab to change.
  * \param color Color to set text.
  */
-void PsiTabWidget::setTabTextColor( QWidget* tab, const QColor& color)
-{
-	for (int i=0; i < count(); i++) {
-		if ( widget(i) == tab ) {
-			tabBar_->setTabTextColor(i,color);
+void PsiTabWidget::setTabTextColor( QWidget* tab, const QColor& color) {
+	for (int i = 0; i < count(); i++) {
+		if (widget(i) == tab) {
+			tabBar_->setTabTextColor(i, color);
 		}
 	}
 }
@@ -111,36 +107,31 @@ void PsiTabWidget::setTabTextColor( QWidget* tab, const QColor& color)
  * \param index Widget to return.
  * \return Specified widget. 
  */
-QWidget* PsiTabWidget::widget(int index)
-{
+QWidget *PsiTabWidget::widget(int index) {
 	return widgets_[index];
 }
 
-void PsiTabWidget::mouseDoubleClickTab( int tab )
-{
+void PsiTabWidget::mouseDoubleClickTab(int tab) {
 	emit mouseDoubleClickTab(widget(tab));
 }
 
 /**
  * Number of tabs/widgets
  */
-int PsiTabWidget::count()
-{
+int PsiTabWidget::count() {
 	return tabBar_->count();
 } 
 
 /**
  * Returns the widget of the current page
  */
-QWidget* PsiTabWidget::currentPage()
-{
+QWidget *PsiTabWidget::currentPage() {
 	if (currentPageIndex() == -1)
 		return 0;
 	return widgets_[currentPageIndex()];
 }
 
-void PsiTabWidget::tab_currentChanged( int tab )
-{
+void PsiTabWidget::tab_currentChanged(int tab) {
 	setCurrentPage(tab);
 	emit currentChanged(currentPage());
 }
@@ -148,16 +139,14 @@ void PsiTabWidget::tab_currentChanged( int tab )
 /**
  * Returns the index of the current page
  */
-int PsiTabWidget::currentPageIndex()
-{
+int PsiTabWidget::currentPageIndex() {
 	return tabBar_->currentIndex();
 }
 
 /**
  * Add the Widget to the tab stack.
  */
-void PsiTabWidget::addTab(QWidget* widget, QString name) 
-{
+void PsiTabWidget::addTab(QWidget *widget, QString name) {
 	Q_ASSERT(widget);
 	if (widgets_.contains(widget)) {
 		return;
@@ -172,7 +161,7 @@ void PsiTabWidget::addTab(QWidget* widget, QString name)
  * Selects the page for the specified widget.
  */
 void PsiTabWidget::showPage(QWidget* widget) {
-	for (int i=0; i < count(); i++) {
+	for (int i = 0; i < count(); i++) {
 		if (widgets_[i] == widget) {
 			showPageDirectly(widget);
 			tabBar_->setCurrentIndex(i);
@@ -241,9 +230,10 @@ void PsiTabWidget::removeCurrentPage() {
 	removePage(currentPage());
 }
 
-void PsiTabWidget::setTabPosition(QTabWidget::TabPosition pos)
-{
-	if (tabsPosition_ == pos) return;
+void PsiTabWidget::setTabPosition(QTabWidget::TabPosition pos) {
+	if (tabsPosition_ == pos) {
+		return;
+	}
 
 	tabsPosition_ = pos;
 	tabBar_->setShape(tabsPosition_ == QTabWidget::Top ? QTabBar::RoundedNorth : QTabBar::RoundedSouth);
@@ -263,11 +253,10 @@ void PsiTabWidget::setTabPosition(QTabWidget::TabPosition pos)
 	}
 }
 
-void PsiTabWidget::menu_aboutToShow()
-{
+void PsiTabWidget::menu_aboutToShow() {
 	menu_->clear();
 	bool vis = false;
-	for (int i=0; i < tabBar_->count(); i++) {
+	for (int i = 0; i < tabBar_->count(); i++) {
 		QRect r = tabBar_->tabRect(i);
 		bool newvis = tabBar_->rect().contains(r);
 		if (newvis != vis) {
@@ -279,8 +268,7 @@ void PsiTabWidget::menu_aboutToShow()
 	emit aboutToShowMenu(menu_);
 }
 
-void PsiTabWidget::menu_triggered(QAction *act)
-{
+void PsiTabWidget::menu_triggered(QAction *act) {
 	int idx = act->data().toInt();
 	if (idx <= 0 || idx > tabBar_->count()) {
 		// out of range
@@ -290,13 +278,9 @@ void PsiTabWidget::menu_triggered(QAction *act)
 	}
 }
 
-
-void PsiTabWidget::tab_contextMenu( QContextMenuEvent * event, int tab)
-{
+void PsiTabWidget::tab_contextMenu( QContextMenuEvent * event, int tab) {
 	emit tabContextMenu(tab, tabBar_->mapToGlobal(event->pos()), event);
 }
-
-
 
 QWidget* PsiTabWidget::page(int index) {
 	Q_ASSERT(index >=0 && index < count());

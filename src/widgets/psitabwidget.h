@@ -18,7 +18,6 @@
  *
  */
 
-
 #ifndef PSITABWIDGET_H
 #define PSITABWIDGET_H
 
@@ -43,47 +42,47 @@ class PsiTabWidget : public QWidget //: public QTabWidget
 public:
 	PsiTabWidget(QWidget *parent = 0);
 	~PsiTabWidget();
-	
-	void setTabTextColor( QWidget* tab, const QColor& color);
+
+	void setTabTextColor(QWidget *tab, const QColor &color);
 	int count();
-	QWidget* currentPage();
+	QWidget *currentPage();
 	int currentPageIndex();
-	QWidget* widget(int index);
-	void addTab(QWidget*, QString);
-	void showPage(QWidget*);
-	void showPageDirectly(QWidget*);
-	
-	void removePage(QWidget*);
+	QWidget *widget(int index);
+	void addTab(QWidget *, QString);
+	void showPage(QWidget *);
+	void showPageDirectly(QWidget *);
+
+	void removePage(QWidget *);
 	QWidget* page(int index);
-	int getIndex(QWidget*);
-	void setTabText(QWidget*, const QString&);
+	int getIndex(QWidget *);
+	void setTabText(QWidget *, const QString &);
 	void setTabPosition(QTabWidget::TabPosition pos);
-	void setCloseIcon(const QIcon&);
+	void setCloseIcon(const QIcon &);
 
 public slots:
 	void setCurrentPage(int);
 	void removeCurrentPage();
 
 signals:
-	void mouseDoubleClickTab( QWidget* tab );
-	void currentChanged(QWidget* selected);
+	void mouseDoubleClickTab(QWidget *tab);
+	void currentChanged(QWidget *selected);
 	void closeButtonClicked();
 	void aboutToShowMenu(QMenu *);
-	// context menu on the blank space will have tab==-1
-	void tabContextMenu( int tab, QPoint pos, QContextMenuEvent * event);
 
+	// context menu on the blank space will have tab==-1
+	void tabContextMenu(int tab, QPoint pos, QContextMenuEvent *event);
 
 private slots:
-	void mouseDoubleClickTab( int tab );
-	void tab_currentChanged( int tab );
-	void tab_contextMenu( QContextMenuEvent * event, int tab);
+	void mouseDoubleClickTab(int tab);
+	void tab_currentChanged(int tab);
+	void tab_contextMenu(QContextMenuEvent *event, int tab);
 	void menu_aboutToShow();
 	void menu_triggered(QAction *act);
-	
+
 private:
 	QVector<QWidget*> widgets_;
-	QTabBar* tabBar_;
-	QVBoxLayout* layout_;
+	QTabBar *tabBar_;
+	QVBoxLayout *layout_;
 	QHBoxLayout *barLayout_;
 	QStackedLayout *stacked_;
 	QToolButton *closeButton_;
@@ -91,6 +90,5 @@ private:
 	QTabWidget::TabPosition tabsPosition_;
 	QMenu *menu_;
 }; 
-
 
 #endif
