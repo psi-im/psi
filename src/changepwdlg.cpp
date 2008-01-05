@@ -35,8 +35,9 @@
 using namespace XMPP;
 
 ChangePasswordDlg::ChangePasswordDlg(PsiAccount *_pa, QWidget *parent)
-:QDialog(parent)
+	: QDialog(parent)
 {
+	setAttribute(Qt::WA_DeleteOnClose, true);
 	setupUi(this);
 	setModal(false);
   	pa = _pa;
@@ -138,24 +139,22 @@ void ChangePasswordDlg::disc()
 
 void ChangePasswordDlg::blockWidgets()
 {
-	lb_pwcur->setEnabled(false);
-	lb_pwnew->setEnabled(false);
-	lb_pwver->setEnabled(false);
-	le_pwcur->setEnabled(false);
-	le_pwnew->setEnabled(false);
-	le_pwver->setEnabled(false);
-	pb_close->setEnabled(false);
-	pb_apply->setEnabled(false);
+	setWidgetsEnabled(false);
 }
 
 void ChangePasswordDlg::restoreWidgets()
 {
-	lb_pwcur->setEnabled(true);
-	lb_pwnew->setEnabled(true);
-	lb_pwver->setEnabled(true);
-	le_pwcur->setEnabled(true);
-	le_pwnew->setEnabled(true);
-	le_pwver->setEnabled(true);
-	pb_close->setEnabled(true);
-	pb_apply->setEnabled(true);
+	setWidgetsEnabled(true);
+}
+
+void ChangePasswordDlg::setWidgetsEnabled(bool enabled)
+{
+	lb_pwcur->setEnabled(enabled);
+	lb_pwnew->setEnabled(enabled);
+	lb_pwver->setEnabled(enabled);
+	le_pwcur->setEnabled(enabled);
+	le_pwnew->setEnabled(enabled);
+	le_pwver->setEnabled(enabled);
+	pb_close->setEnabled(enabled);
+	pb_apply->setEnabled(enabled);
 }

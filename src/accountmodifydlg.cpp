@@ -454,8 +454,9 @@ void AccountModifyDlg::detailsVCard()
 
 void AccountModifyDlg::detailsChangePW()
 {
-	if (pa)
+	if (pa) {
 		pa->changePW();
+	}
 }
 
 void AccountModifyDlg::save()

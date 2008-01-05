@@ -2510,8 +2510,9 @@ void PsiAccount::deleteAllDialogs()
 
 bool PsiAccount::checkConnected(QWidget *par)
 {
-	if(!loggedIn()) {
-		QMessageBox::information(par, CAP(tr("Error")), tr("You must be connected to the server in order to do this."));
+	if (!isAvailable()) {
+		QMessageBox::information(par, CAP(tr("Error")),
+		                         tr("You must be connected to the server in order to do this."));
 		return false;
 	}
 
@@ -2521,8 +2522,9 @@ bool PsiAccount::checkConnected(QWidget *par)
 void PsiAccount::modify()
 {
 	AccountModifyDlg *w = findDialog<AccountModifyDlg*>();
-	if(w)
+	if (w) {
 		bringToFront(w);
+	}
 	else {
 		w = new AccountModifyDlg(this, 0);
 		w->show();
@@ -2536,12 +2538,14 @@ void PsiAccount::changeVCard()
 
 void PsiAccount::changePW()
 {
-	if(!checkConnected())
+	if (!checkConnected()) {
 		return;
+	}
 
 	ChangePasswordDlg *w = findDialog<ChangePasswordDlg*>();
-	if(w)
+	if (w) {
 		bringToFront(w);
+	}
 	else {
 		w = new ChangePasswordDlg(this);
 		w->show();

@@ -46,6 +46,7 @@ private slots:
 private:
 	void blockWidgets();
 	void restoreWidgets();
+	void setWidgetsEnabled(bool enabled);
 
 	PsiAccount *pa;
 };
