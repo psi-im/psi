@@ -30,6 +30,7 @@ public:
 			sl += "/usr/include";
 			sl += "/usr/local/include";
 			sl += "/sw/include";
+			sl += "/opt/local/include";
 			if(!conf->findHeader("cppunit/Test.h", sl, &s)) {
 				conf->debug("CppUnit includes not found!");
 				return false;
