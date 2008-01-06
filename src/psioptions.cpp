@@ -139,14 +139,18 @@ bool PsiOptions::save(QString file)
 	return saveOptions(file, "options", ApplicationInfo::optionsNS(), ApplicationInfo::version());
 }
 
-/**
- * Default (private) constructor
- */
 PsiOptions::PsiOptions()
 	: OptionsTree()
+	, autoSaveTimer_(0)
 {
+	autoSaveTimer_ = new QTimer(this);
+	autoSaveTimer_->setSingleShot(true);
+	autoSaveTimer_->setInterval(1000);
+	connect(autoSaveTimer_, SIGNAL(timeout()), SLOT(saveToAutoFile()));
+
 	setParent(QCoreApplication::instance());
 	autoSave(false);
+
 	if (!load(":/options/default.xml"))
 		qWarning("ERROR: Failed to load default options");
 #ifdef Q_WS_MAC
@@ -159,12 +163,14 @@ PsiOptions::PsiOptions()
 #endif
 }
 
-/**
- * Boom (Destructor)
- */
 PsiOptions::~PsiOptions()
 {
-	
+	// since we queue connection to saveToAutoFile, so if some option was saved prior
+	// to program termination, the PsiOptions is never given the chance to save
+	// the changed option
+	if (!autoFile_.isEmpty()) {
+		saveToAutoFile();
+	}
 }
 
 /**
@@ -176,15 +182,13 @@ PsiOptions::~PsiOptions()
 void PsiOptions::autoSave(bool autoSave, QString autoFile)
 {
 	if (autoSave) {
-		connect(this, SIGNAL(optionChanged(const QString&)), SLOT(saveToAutoFile()));
-		autoFile_=autoFile;
+		connect(this, SIGNAL(optionChanged(const QString&)), autoSaveTimer_, SLOT(start()));
+		autoFile_ = autoFile;
 	}
 	else {
-		disconnect(this, SLOT(saveToAutoFile()));
-		autoFile="";
+		disconnect(this, SIGNAL(optionChanged(const QString&)), autoSaveTimer_, SLOT(start()));
+		autoFile = "";
 	}
-		
-	
 }
 
 /**
@@ -192,8 +196,9 @@ void PsiOptions::autoSave(bool autoSave, QString autoFile)
  */
 void PsiOptions::saveToAutoFile()
 {
-	if (autoFile_ != "")
+	if (autoFile_ != "") {
 		save(autoFile_);
+	}
 }
 
 /**
