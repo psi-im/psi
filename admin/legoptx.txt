@@ -48,8 +48,8 @@ raise	psi/options/ui/contactlist/raise-on-new-event
 askOnline	psi/options/status/ask-for-message-on-online
 askOffline	psi/options/status/ask-for-message-on-offline
 rosterAnim	psi/options/ui/contactlist/use-status-change-animation
-autoVCardOnLogin
-xmlConsoleOnLogin
+autoVCardOnLogin psi/options/vcard/prompt-on-login-for-empty-vcard
+xmlConsoleOnLogin psi/options/vcard/xml-console/enable-at-login
 use_asAway	psi/options/status/auto-away/use-away
 use_asXa	psi/options/status/auto-away/use-not-availible
 use_asOffline	psi/options/status/auto-away/use-offline
@@ -90,8 +90,8 @@ asXa	psi/options/status/auto-away/not-availible-after
 asAway	psi/options/status/auto-away/away-after
 alertStyle	psi/options/ui/notifications/???
 delChats	psi/options/ui/chat/contents-after
-defaultAction
-incomingAs
+defaultAction psi/options/message/default-outgoing-message-type
+incomingAs psi/options/message/force-incoming-message-type
 
 =========QSize:
 sizeEventDlg	psi/options/ui/message/size
