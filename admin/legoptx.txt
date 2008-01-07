@@ -8,7 +8,7 @@ keepSizes	psi/options/ui/remember-window-sizes
 ignoreHeadline	psi/options/message/ignore-headlines
 ignoreNonRoster	psi/options/message/ignore-non-roster-contacts
 excludeGroupChatsFromIgnore	psi/options/messages/exclude-muc-from-ignore
-scrollTo
+scrollTo	psi/options/ui/contactlist/ensure-contact-visible-on-event
 useEmoticons	psi/options/ui/emoticons/use-emoticons
 alertOpenChats	psi/options/ui/chat/alert-for-already-open-chats
 raiseChatWindow	psi/options/ui/chat/raise-chat-windows-on-new-messages
@@ -16,139 +16,139 @@ showSubjects	psi/options/ui/message/show-subjects
 showGroupCounts	psi/options/ui/contactlist/show-group-counts
 showCounter	psi/options/ui/message/show-character-count
 chatSays	psi/options/ui/chat/use-chat-says-style
-jidComplete	
-grabUrls
+jidComplete	psi/options/ui/message/use-jid-auto-completion
+grabUrls	psi/options/ui/message/auto-grab-urls-from-clipboard
 smallChats	psi/options/ui/chat/use-small-chats
 brushedMetal	psi/options/ui/mac/use-brushed-metal-windows
 chatLineEdit	psi/options/ui/chat/use-expanding-line-edit
-useTabs		psi/options/ui/tabs/use-tabs
-usePerTabCloseButton	
-putTabsAtBottom
+useTabs	psi/options/ui/tabs/use-tabs
+usePerTabCloseButton	UNUSED
+putTabsAtBottom	psi/options/ui/tabs/put-tabs-at-bottom
 autoRosterSize	psi/options/ui/contactlist/automatically-resize-roster
 autoRosterSizeGrowTop	psi/options/ui/contactlist/grow-roster-upwards
 autoResolveNicksOnAdd	psi/options/contactlist/resolve-nicks-on-contact-add
 messageEvents	psi/options/message/send-composing-events
 inactiveEvents	psi/options/message/send-inactivity-events
-autoCopy
-useCaps
-useRC
-useDock
-dockDCstyle
-dockHideMW
-dockToolMW
-autoAuth
-notifyAuth
-popupMsgs
-popupChats
-popupHeadlines
-popupFiles
-noAwayPopup
-noUnlistedPopup
-raise
-askOnline
-askOffline
-rosterAnim
+autoCopy	psi/options/ui/automatically-copy-selected-text
+useCaps	DIE?
+useRC	psi/options/external-control/adhoc-remote-control/enable
+useDock	psi/options/systemtray/enable
+dockDCstyle	psi/options/systemtray/use-double-click
+dockHideMW	psi/options/contactlist/hide-on-start
+dockToolMW	psi/options/contactlist/use-toolwindow
+autoAuth	psi/options/subscriptions/automatically-allow-authorisation
+notifyAuth	psi/options/ui/notifications/successful-subscription
+popupMsgs	psi/options/ui/message/auto-popup
+popupChats	psi/options/ui/chat/auto-popup
+popupHeadlines	psi/options/ui/message/auto-popup-headlines
+popupFiles	psi/options/ui/file-transfer/auto-popup
+noAwayPopup	psi/options/ui/notifications/popup-dialogs/suppress-while-away
+noUnlistedPopup	psi/options/ui/notifications/popup-dialogs/suppress-when-not-on-roster
+raise	psi/options/ui/contactlist/raise-on-new-event
+askOnline	psi/options/status/ask-for-message-on-online
+askOffline	psi/options/status/ask-for-message-on-offline
+rosterAnim	psi/options/ui/contactlist/use-status-change-animation
 autoVCardOnLogin
 xmlConsoleOnLogin
-use_asAway
-use_asXa
-use_asOffline
-clNewHeadings
-outlineHeadings
-noAwaySound
-noGCSound
-gcNickColoring
-gcHighlighting
-ppIsOn
-ppOnline
-ppOffline
-ppStatus
-ppMessage
-ppChat
-ppHeadline
-ppFile
-lockdown.roster
-lockdown.services
-discoItems
-discoInfo
-useSound
+use_asAway	psi/options/status/auto-away/use-away
+use_asXa	psi/options/status/auto-away/use-not-availible
+use_asOffline	psi/options/status/auto-away/use-offline
+clNewHeadings	psi/options/look/use-slim-group-headings
+outlineHeadings	psi/options/look/use-outlined-group-headings
+noAwaySound	psi/options/ui/notifications/sounds/silent-while-away
+!noGCSound	psi/options/ui/notifications/sounds/notify-every-muc-message
+gcNickColoring	psi/options/ui/muc/use-nick-coloring
+gcHighlighting	psi/options/ui/muc/use-highlighting
+ppIsOn	psi/options/ui/notifications/passive-popups/enabled
+ppOnline	psi/options/ui/notifications/passive-popups/status/online
+ppOffline	psi/options/ui/notifications/passive-popups/status/offline
+ppStatus	psi/options/ui/notifications/passive-popups/status/other-changes
+ppMessage	psi/options/ui/notifications/passive-popups/incoming-message
+ppChat	psi/options/ui/notifications/passive-popups/incoming-chat
+ppHeadline	psi/options/ui/notifications/passive-popups/incoming-headline
+ppFile	psi/options/ui/notifications/passive-popups/incoming-file-transfer
+lockdown.roster	psi/options/ui/contactlist/lockdown-roster
+lockdown.services	psi/options/ui/contactlist/disable-service-discovery
+discoItems	psi/options/ui/service-discovery/automatically-get-items
+discoInfo	psi/options/ui/service-discovery/automatically-browse-into
+useSound	psi/options/ui/notifications/sounds/enable
 
 ==========int:
-ppJidClip
-ppStatusClip
-ppTextClip
-ppHideTime
+ppJidClip	psi/options/ui/notifications/passive-popups/maximum-jid-length
+ppStatusClip	psi/options/ui/notifications/passive-popups/maximum-status-length
+ppTextClip	psi/options/ui/notifications/passive-popups/maximum-text-length
+ppHideTime	psi/options/ui/notifications/passive-popups/duration
 eventPriorityMessage
 eventPriorityChat
 eventPriorityHeadline
 eventPriorityAuth
 eventPriorityFile
 eventPriorityRosterExchange
-dtPort
-asOffline
-asXa
-asAway
-alertStyle
-delChats
+dtPort	psi/options/p2p/bytestreams/listen-port
+asOffline	psi/options/status/auto-away/offline-after
+asXa	psi/options/status/auto-away/not-availible-after
+asAway	psi/options/status/auto-away/away-after
+alertStyle	psi/options/ui/notifications/???
+delChats	psi/options/ui/chat/contents-after
 defaultAction
 incomingAs
 
 =========QSize:
-sizeEventDlg
-sizeTabDlg
+sizeEventDlg	psi/options/ui/message/size
+sizeTabDlg	psi/options/ui/tabs/size
 
 =========QColor
-ppBorderColor
-color.Online
-color.ListBack
-color.Away
-color.DND
-color.Offline
-color.Status
-color.GroupFore
-color.GroupBack
-color.ProfileFore
-color.ProfileBack
-color.AnimFront
-color.AnimBack
+ppBorderColor	psi/options/ui/look/colors/passive-popup/border
+color.Online	psi/options/ui/look/colors/contactlist/status/online
+color.ListBack	psi/options/ui/look/colors/contactlist/background
+color.Away	psi/options/ui/look/colors/contactlist/status/away
+color.DND	psi/options/ui/look/colors/contactlist/status/do-no-disturb
+color.Offline	psi/options/ui/look/colors/contactlist/status/offline
+color.Status	psi/options/ui/look/colors/contactlist/status-messages
+color.GroupFore	psi/options/ui/look/colors/contactlist/grouping/header-foreground
+color.GroupBack	psi/options/ui/look/colors/contactlist/grouping/header-background
+color.ProfileFore	psi/options/ui/look/colors/contactlist/profile/header-foreground
+color.ProfileBack	psi/options/ui/look/colors/contactlist/profile/header-background
+color.AnimFront	psi/options/ui/look/contactlist/status-change-animation/color1
+color.AnimBack	psi/options/ui/look/contactlist/status-change-animation/color2
 
 =========QStringList
-emoticons
-gcHighlights
-gcNickColors
-recentGCList
-recentBrowseList
+emoticons	psi/options/iconsets/emoticons
+gcHighlights	psi/options/ui/muc/highlight-words
+gcNickColors	psi/options/ui/look/colors/muc/nick-colors
+recentGCList	psi/options/muc/recent-joins/jids
+recentBrowseList	psi/options/ui/service-discovery/recent-jids
 
 =========QString:
-systemIconset
-defaultRosterIconset
-asMessage
-player
-dtExternal
-lastPath
-lastSavePath
-lastStatusString
-onevent.Message
-onevent.Chat1
-onevent.Chat2
-onevent.System
-onevent.Headline
-onevent.Online
-onevent.Offline
-onevent.Send
-onevent.IncomingFT
-onevent.FTComplete
-font.Roster
-font.Message
-font.Chat
-font.Popup
-bounceDock
-rosterContactSortStyle
-rosterGroupSortStyle
-rosterAccountSortStyle
+systemIconset	psi/options/iconsets/system
+defaultRosterIconset	psi/options/iconsets/status
+asMessage	psi/options/status/auto-away/message
+player	psi/options/ui/notifications/sounds/unix-sound-player
+dtExternal	psi/options/p2p/bytestreams/external-address
+lastPath	psi/options/ui/last-used-open-path
+lastSavePath	psi/options/ui/last-used-save-path
+lastStatusString	psi/options/status/last-message
+onevent.Message	psi/options/ui/notifications/sounds/incoming-message
+onevent.Chat1	psi/options/ui/notifications/sounds/new-chat
+onevent.Chat2	psi/options/ui/notifications/sounds/chat-message
+onevent.System	psi/options/ui/notifications/sounds/system-message
+onevent.Headline	psi/options/ui/notifications/sounds/incoming-headline
+onevent.Online	psi/options/ui/notifications/sounds/contact-online
+onevent.Offline	psi/options/ui/notifications/sounds/contact-offline
+onevent.Send	psi/options/ui/notifications/sounds/outgoing-chat
+onevent.IncomingFT	psi/options/ui/notifications/sounds/incoming-file-transfer
+onevent.FTComplete	psi/options/ui/notifications/sounds/completed-file-transfer
+font.Roster	psi/options/ui/look/font/contactlist
+font.Message	psi/options/ui/look/font/message
+font.Chat	psi/options/ui/look/font/chat
+font.Popup	psi/options/ui/look/font/passive-popup
+bounceDock	psi/options/ui/notifications/bounce-dock
+rosterContactSortStyle	psi/options/ui/contactlist/contact-sort-style
+rosterGroupSortStyle	psi/options/ui/contactlist/group-sort-style
+rosterAccountSortStyle	psi/options/ui/contactlist/account-sort-style
 
 =========== QMaps:
-sp	
-serviceRosterIconset	
-customRosterIconset	
-mainwintoolbars	
+sp	psi/options/status/presets
+serviceRosterIconset	psi/options/iconsets/service-status
+customRosterIconset	psi/options/iconsets/custom-status
+mainwintoolbars	psi/options/ui/contactlist/toolbars
