@@ -47,22 +47,80 @@
 static const QString psiTabDragMimeType = "application/psi-tab-drag";
 
 //----------------------------------------------------------------------------
+// TabDlgDelegate
+//----------------------------------------------------------------------------
+
+TabDlgDelegate::TabDlgDelegate(QObject *parent)
+		: QObject(parent) {
+}
+
+TabDlgDelegate::~TabDlgDelegate() {
+}
+
+Qt::WindowFlags TabDlgDelegate::initWindowFlags() const {
+}
+
+void TabDlgDelegate::create(QWidget *) {
+}
+
+void TabDlgDelegate::destroy(QWidget *) {
+}
+
+bool TabDlgDelegate::paintEvent(QWidget *, QPaintEvent *) {
+	return false;
+}
+
+bool TabDlgDelegate::resizeEvent(QWidget *, QResizeEvent *) {
+	return false;
+}
+
+bool TabDlgDelegate::mousePressEvent(QWidget *, QMouseEvent *) {
+	return false;
+}
+
+bool TabDlgDelegate::mouseMoveEvent(QWidget *, QMouseEvent *) {
+	return false;
+}
+
+bool TabDlgDelegate::mouseReleaseEvent(QWidget *, QMouseEvent *) {
+	return false;
+}
+
+bool TabDlgDelegate::changeEvent(QWidget *, QEvent *) {
+	return false;
+}
+
+bool TabDlgDelegate::event(QWidget *, QEvent *) {
+	return false;
+}
+
+bool TabDlgDelegate::eventFilter(QWidget *, QObject *, QEvent *) {
+	return false;
+}
+
+//----------------------------------------------------------------------------
 // TabDlg
 //----------------------------------------------------------------------------
 
-TabDlg::TabDlg(TabManager* tabManager)
-	: tabWidget_(0)
-	, detachButton_(0)
-	, closeButton_(0)
-	, closeCross_(0)
-	, tabMenu_(new QMenu(this))
-	, act_close_(0)
-	, act_next_(0)
-	, act_prev_(0)
-	, tabManager_(tabManager)
-{
-	if ( option.brushedMetal )
+TabDlg::TabDlg(TabManager* tabManager, TabDlgDelegate *delegate)
+		: AdvancedWidget<QWidget>(0, delegate ? delegate->initWindowFlags() : (Qt::WindowFlags)0)
+		, delegate_(delegate)
+		, tabWidget_(0)
+		, detachButton_(0)
+		, closeButton_(0)
+		, closeCross_(0)
+		, tabMenu_(new QMenu(this))
+		, act_close_(0)
+		, act_next_(0)
+		, act_prev_(0)
+		, tabManager_(tabManager) {
+	if (delegate_) {
+		delegate_->create(this);
+	}
+
+	if (option.brushedMetal) {
 		setAttribute(Qt::WA_MacMetalStyle);
+	}
 
 	// FIXME
 	qRegisterMetaType<TabDlg*>("TabDlg*");
@@ -99,8 +157,10 @@ TabDlg::TabDlg(TabManager* tabManager)
 	resize(option.sizeTabDlg);
 }
 
-TabDlg::~TabDlg()
-{
+TabDlg::~TabDlg() {
+	if (delegate_) {
+		delegate_->destroy(this);
+	}
 }
 
 // FIXME: This is a bad idea to store pointers in QMimeData
@@ -116,8 +176,15 @@ void TabDlg::setShortcuts()
 
 void TabDlg::resizeEvent(QResizeEvent *e)
 {
+	AdvancedWidget<QWidget>::resizeEvent(e);
+
 	if (option.keepSizes)
 		option.sizeTabDlg = e->size();
+
+	// delegate may want to act on resize event
+	if (delegate_) {
+		delegate_->resizeEvent(this, e);
+	}
 }
 
 void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent * event)
@@ -524,4 +591,67 @@ void TabDlg::updateFlashState()
 
 	flash = flash && !isActiveWindow();
 	doFlash(flash);
+}
+
+void TabDlg::paintEvent(QPaintEvent *event) {
+	// delegate if possible, otherwise use default
+	if (delegate_ && delegate_->paintEvent(this, event)) {
+		return;
+	} else {
+		AdvancedWidget<QWidget>::paintEvent(event);
+	}
+}
+
+void TabDlg::mousePressEvent(QMouseEvent *event) {
+	// delegate if possible, otherwise use default
+	if (delegate_ && delegate_->mousePressEvent(this, event)) {
+		return;
+	} else {
+		AdvancedWidget<QWidget>::mousePressEvent(event);
+	}
+}
+
+void TabDlg::mouseMoveEvent(QMouseEvent *event) {
+	// delegate if possible, otherwise use default
+	if (delegate_ && delegate_->mouseMoveEvent(this, event)) {
+		return;
+	} else {
+		AdvancedWidget<QWidget>::mouseMoveEvent(event);
+	}
+}
+
+void TabDlg::mouseReleaseEvent(QMouseEvent *event) {
+	// delegate if possible, otherwise use default
+	if (delegate_ && delegate_->mouseReleaseEvent(this, event)) {
+		return;
+	} else {
+		AdvancedWidget<QWidget>::mouseReleaseEvent(event);
+	}
+}
+
+void TabDlg::changeEvent(QEvent *event) {
+	// delegate if possible, otherwise use default
+	if (delegate_ && delegate_->changeEvent(this, event)) {
+		return;
+	} else {
+		AdvancedWidget<QWidget>::changeEvent(event);
+	}
+}
+
+bool TabDlg::event(QEvent *event) {
+	// delegate if possible, otherwise use default
+	if (delegate_ && delegate_->event(this, event)) {
+		return true;
+	} else {
+		return AdvancedWidget<QWidget>::event(event);
+	}
+}
+
+bool TabDlg::eventFilter(QObject *obj, QEvent *event) {
+	// delegate if possible, otherwise use default
+	if (delegate_ && delegate_->eventFilter(this, obj, event)) {
+		return true;
+	} else {
+		return AdvancedWidget<QWidget>::eventFilter(obj, event);
+	}
 }
