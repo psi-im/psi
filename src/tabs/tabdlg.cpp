@@ -102,6 +102,14 @@ bool TabDlgDelegate::eventFilter(QWidget *, QObject *, QEvent *) {
 // TabDlg
 //----------------------------------------------------------------------------
 
+/**
+ * Constructs a TabDlg
+ *
+ * \param tabManager The tabManager that will manage this TabDlg
+ * \param delegate If non-zero, this is a pointer to a TabDlgDelegate that
+ *        will manage some aspects of the TabDlg behavior.  Ownership is not
+ *        passed.
+ */ 
 TabDlg::TabDlg(TabManager* tabManager, TabDlgDelegate *delegate)
 		: AdvancedWidget<QWidget>(0, delegate ? delegate->initWindowFlags() : (Qt::WindowFlags)0)
 		, delegate_(delegate)
