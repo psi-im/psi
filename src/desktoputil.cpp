@@ -27,6 +27,8 @@
 #include <QProcess>
 
 #ifdef Q_WS_WIN
+#include <windows.h>
+
 QString defaultBrowser()
 {
 	QSettings settings("HKEY_CLASSES_ROOT\\HTTP\\shell\\open\\command", QSettings::NativeFormat);
@@ -45,6 +47,11 @@ static bool doOpenUrl(const QUrl& url)
 	if (browserFileInfo.fileName() == "iexplore.exe") {
 		return QProcess::startDetached(browserFileInfo.absoluteFilePath(),
 		                               QStringList() << "-new" << url.toEncoded());
+	}
+	else {
+		// FIXME: This is necessary for Qt 4.3.3 to handle all URLs correctly
+		ShellExecute(0, 0, (TCHAR *)QString(url.toEncoded()).utf16(), 0, 0, SW_SHOWNORMAL);
+		return true;
 	}
 #endif
 	return QDesktopServices::openUrl(url);
