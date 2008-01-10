@@ -58,6 +58,7 @@ TabDlgDelegate::~TabDlgDelegate() {
 }
 
 Qt::WindowFlags TabDlgDelegate::initWindowFlags() const {
+	return (Qt::WindowFlags)0;
 }
 
 void TabDlgDelegate::create(QWidget *) {
