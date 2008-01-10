@@ -102,8 +102,6 @@ protected:
 protected slots:
 	void detachCurrentTab();
 	void mouseDoubleClickTab(QWidget*);
-	void detachTab(TabbableWidget*);
-	void sendTabTo(TabbableWidget*, TabDlg *);
 
 public slots:
 	void addTab(TabbableWidget *tab);
@@ -113,6 +111,8 @@ public slots:
 	void selectTab(TabbableWidget*);
 	void activated();
 	void optionsUpdate();
+	void detachTab(TabbableWidget*);
+	void sendTabTo(TabbableWidget*, TabDlg *);
 
 private slots:
 	void updateFlashState();
