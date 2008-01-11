@@ -2163,10 +2163,11 @@ void ContactView::keyPressEvent(QKeyEvent *e)
 			Q3ListView::keyPressEvent(e);
 		} else if (key == Qt::Key_Escape) {
 			e->ignore();
+		} else if (e->modifiers() != Qt::NoModifier) {
+			e->ignore();
 		} else {
 			emit searchInput(text);
 		}
-
 	}
 }
 
