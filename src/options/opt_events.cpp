@@ -102,7 +102,7 @@ void OptionsTabEvents::applyOptions()
 	PsiOptions::instance()->setOption("options.ui.contactlist.raise-on-new-event", d->ck_raise->isChecked());
 	PsiOptions::instance()->setOption("options.messages.ignore-non-roster-contacts", d->ck_ignoreNonRoster->isChecked());
 	PsiOptions::instance()->setOption("options.ui.notifications.alert-style", d->cb_animation->itemData(d->cb_animation->currentIndex()));
-	PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorisation", d->ck_autoAuth->isChecked());
+	PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorization", d->ck_autoAuth->isChecked());
 	PsiOptions::instance()->setOption("options.ui.notifications.successful-subscription", d->ck_notifyAuth->isChecked());
 	PsiOptions::instance()->setOption("options.ui.notifications.bounce-dock", d->cb_bounce->itemData( d->cb_bounce->currentItem()));
 
@@ -130,7 +130,7 @@ void OptionsTabEvents::restoreOptions()
 	d->ck_raise->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.raise-on-new-event").toBool() );
 	d->ck_ignoreNonRoster->setChecked( PsiOptions::instance()->getOption("options.messages.ignore-non-roster-contacts").toBool() );
 	d->cb_animation->setCurrentItem(d->cb_animation->findData(PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString()));
-	d->ck_autoAuth->setChecked( PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorisation").toBool() );
+	d->ck_autoAuth->setChecked( PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorization").toBool() );
 	d->ck_notifyAuth->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.successful-subscription").toBool() );
 	d->cb_bounce->setCurrentItem( d->cb_bounce->findData(PsiOptions::instance()->getOption("options.ui.notifications.bounce-dock").toString()) );
 

@@ -425,7 +425,7 @@
 			</presets>
 		</status>
 		<subscriptions>
-			<automatically-allow-authorisation type="bool">false</automatically-allow-authorisation>
+			<automatically-allow-authorization type="bool">false</automatically-allow-authorization>
 		</subscriptions>
 		<vcard>
 			<query-own-vcard-on-login type="bool">true</query-own-vcard-on-login>

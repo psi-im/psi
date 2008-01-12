@@ -1122,7 +1122,7 @@ bool OptionsMigration::fromFile(const QString &fname)
 			readNumEntry(p_events, "alertstyle", &alertstyle);
 			QString ase[3] = {"no", "blink", "animate"};
 			PsiOptions::instance()->setOption("options.ui.notifications.alert-style", ase[alertstyle]);
-			migrateBoolEntry(p_events, "autoAuth", "options.subscriptions.automatically-allow-authorisation");
+			migrateBoolEntry(p_events, "autoAuth", "options.subscriptions.automatically-allow-authorization");
 			migrateBoolEntry(p_events, "notifyAuth", "options.ui.notifications.successful-subscription");
 
 			QDomElement tag = findSubTag(p_events, "receive", &found);

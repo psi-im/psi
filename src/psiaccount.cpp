@@ -3837,7 +3837,7 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 
 		AuthEvent *ae = (AuthEvent *)e;
 		if(ae->authType() == "subscribe") {
-			if(PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorisation").toBool()) {
+			if(PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorization").toBool()) {
 				// Check if we want to request auth as well
 				UserListItem *u = d->userList.find(ae->from());
 				if (!u || (u->subscription().type() != Subscription::Both && u->subscription().type() != Subscription::To)) {

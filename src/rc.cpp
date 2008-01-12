@@ -188,7 +188,7 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
 		auto_auth_field.setType(XData::Field::Field_Boolean);
 		auto_auth_field.setLabel(QObject::tr("Auto-authorize contacts"));
 		auto_auth_field.setVar("auto-auth");
-		auto_auth_field.setValue(QStringList((PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorisation").toBool() ? "1" : "0")));
+		auto_auth_field.setValue(QStringList((PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorization").toBool() ? "1" : "0")));
 		auto_auth_field.setRequired(false);
 		fields += auto_auth_field;
 		
@@ -226,9 +226,9 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
 			else if (fl[i].var() == "auto-auth") {
 				QString v =  fl[i].value().first();
 				if (v == "1") 
-					PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorisation", (bool) true);
+					PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorization", (bool) true);
 				else if (v == "0") 
-					PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorisation", (bool) false);
+					PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorization", (bool) false);
 			}
 			else if (fl[i].var() == "auto-open") {
 				QString v =  fl[i].value().first();
