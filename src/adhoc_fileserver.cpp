@@ -21,7 +21,6 @@
 #include <qdir.h>
 #include <qfileinfo.h>
 
-#include "common.h"
 #include "psiaccount.h"
 #include "adhoc_fileserver.h"
 #include "xmpp_xdata.h"

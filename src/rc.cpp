@@ -18,7 +18,6 @@
  *
  */
 
-#include "common.h"
 #include "iconaction.h"
 #include "psiaccount.h"
 #include "psiactionlist.h"
@@ -173,7 +172,7 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
 		sounds_field.setType(XData::Field::Field_Boolean);
 		sounds_field.setLabel(QObject::tr("Play sounds"));
 		sounds_field.setVar("sounds");
-		sounds_field.setValue(QStringList((useSound ? "1" : "0")));
+		sounds_field.setValue(QStringList((PsiOptions::instance()->getOption("options.ui.notifications.sounds.enable").toBool() ? "1" : "0")));
 		sounds_field.setRequired(false);
 		fields += sounds_field;
 		
@@ -181,7 +180,7 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
 		auto_offline_field.setType(XData::Field::Field_Boolean);
 		auto_offline_field.setLabel(QObject::tr("Automatically go offline when idle"));
 		auto_offline_field.setVar("auto-offline");
-		auto_offline_field.setValue(QStringList((option.use_asOffline ? "1" : "0")));
+		auto_offline_field.setValue(QStringList((PsiOptions::instance()->getOption("options.status.auto-away.use-offline").toBool() ? "1" : "0")));
 		auto_offline_field.setRequired(false);
 		fields += auto_offline_field;
 		
@@ -189,7 +188,7 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
 		auto_auth_field.setType(XData::Field::Field_Boolean);
 		auto_auth_field.setLabel(QObject::tr("Auto-authorize contacts"));
 		auto_auth_field.setVar("auto-auth");
-		auto_auth_field.setValue(QStringList((option.autoAuth ? "1" : "0")));
+		auto_auth_field.setValue(QStringList((PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorisation").toBool() ? "1" : "0")));
 		auto_auth_field.setRequired(false);
 		fields += auto_auth_field;
 		
@@ -197,7 +196,7 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
 		auto_open_field.setType(XData::Field::Field_Boolean);
 		auto_open_field.setLabel(QObject::tr("Auto-open new messages"));
 		auto_open_field.setVar("auto-open");
-		auto_open_field.setValue(QStringList((option.popupMsgs ? "1" : "0")));
+		auto_open_field.setValue(QStringList((PsiOptions::instance()->getOption("options.ui.message.auto-popup").toBool() ? "1" : "0")));
 		auto_open_field.setRequired(false);
 		fields += auto_open_field;
 		
@@ -220,23 +219,23 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
 			else if (fl[i].var() == "auto-offline") {
 				QString v =  fl[i].value().first();
 				if (v == "1") 
-					option.use_asOffline = true;
+					PsiOptions::instance()->setOption("options.status.auto-away.use-offline", (bool) true);
 				else if (v == "0") 
-					option.use_asOffline = false;
+					PsiOptions::instance()->setOption("options.status.auto-away.use-offline", (bool) false);
 			}
 			else if (fl[i].var() == "auto-auth") {
 				QString v =  fl[i].value().first();
 				if (v == "1") 
-					option.autoAuth = true;
+					PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorisation", (bool) true);
 				else if (v == "0") 
-					option.autoAuth = false;
+					PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorisation", (bool) false);
 			}
 			else if (fl[i].var() == "auto-open") {
 				QString v =  fl[i].value().first();
 				if (v == "1") 
-					option.popupMsgs = true;
+					PsiOptions::instance()->setOption("options.ui.message.auto-popup", (bool) true);
 				else if (v == "0") 
-					option.popupMsgs = false;
+					PsiOptions::instance()->setOption("options.ui.message.auto-popup", (bool) false);
 			}
 		}
 		return AHCommand::completedReply(c);

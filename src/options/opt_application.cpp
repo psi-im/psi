@@ -1,6 +1,7 @@
 #include "opt_application.h"
 #include "common.h"
 #include "iconwidget.h"
+#include "psioptions.h"
 
 #include <qcheckbox.h>
 #include <qcombobox.h>
@@ -72,50 +73,50 @@ QWidget *OptionsTabApplication::widget()
 	return w;
 }
 
-void OptionsTabApplication::applyOptions(Options *opt)
+void OptionsTabApplication::applyOptions()
 {
 	if ( !w )
 		return;
 
 	OptApplicationUI *d = (OptApplicationUI *)w;
 
-	opt->alwaysOnTop = d->ck_alwaysOnTop->isChecked();
-	opt->autoRosterSize = d->ck_autoRosterSize->isChecked();
-	opt->keepSizes   = d->ck_keepSizes->isChecked();
-	opt->useleft = d->ck_useleft->isChecked();
-	opt->hideMenubar = !d->ck_showMenubar->isChecked();
+	PsiOptions::instance()->setOption("options.ui.contactlist.always-on-top", d->ck_alwaysOnTop->isChecked());
+	PsiOptions::instance()->setOption("options.ui.contactlist.automatically-resize-roster", d->ck_autoRosterSize->isChecked());
+	PsiOptions::instance()->setOption("options.ui.remember-window-sizes",d->ck_keepSizes->isChecked());
+	PsiOptions::instance()->setOption("options.ui.contactlist.use-left-click", d->ck_useleft->isChecked());
+	PsiOptions::instance()->setOption("options.ui.contactlist.show-menubar", d->ck_showMenubar->isChecked());
 
 	// docklet
-	opt->useDock = d->ck_docklet->isChecked();
-	opt->dockDCstyle = d->ck_dockDCstyle->isChecked();
-	opt->dockHideMW = d->ck_dockHideMW->isChecked();
-	opt->dockToolMW = d->ck_dockToolMW->isChecked();
+	PsiOptions::instance()->setOption("options.ui.systemtray.enable", d->ck_docklet->isChecked());
+	PsiOptions::instance()->setOption("options.ui.systemtray.use-double-click", d->ck_dockDCstyle->isChecked());
+	PsiOptions::instance()->setOption("options.contactlist.hide-on-start", d->ck_dockHideMW->isChecked());
+	PsiOptions::instance()->setOption("options.contactlist.use-toolwindow", d->ck_dockToolMW->isChecked());
 
 	// data transfer
-	opt->dtPort = d->le_dtPort->text().toInt();
-	opt->dtExternal = d->le_dtExternal->text().trimmed();
+	PsiOptions::instance()->setOption("options.p2p.bytestreams.listen-port", d->le_dtPort->text().toInt());
+	PsiOptions::instance()->setOption("options.p2p.bytestreams.external-address", d->le_dtExternal->text().trimmed());
 }
 
-void OptionsTabApplication::restoreOptions(const Options *opt)
+void OptionsTabApplication::restoreOptions()
 {
 	if ( !w )
 		return;
 
 	OptApplicationUI *d = (OptApplicationUI *)w;
 
-	d->ck_alwaysOnTop->setChecked( opt->alwaysOnTop );
-	d->ck_autoRosterSize->setChecked( opt->autoRosterSize );
-	d->ck_keepSizes->setChecked( opt->keepSizes );
-	d->ck_showMenubar->setChecked( !opt->hideMenubar );
-	d->ck_useleft->setChecked( opt->useleft );
+	d->ck_alwaysOnTop->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool() );
+	d->ck_autoRosterSize->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.automatically-resize-roster").toBool() );
+	d->ck_keepSizes->setChecked( PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool() );
+	d->ck_showMenubar->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool() );
+	d->ck_useleft->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.use-left-click").toBool() );
 
 	// docklet
-	d->ck_docklet->setChecked( opt->useDock );
-	d->ck_dockDCstyle->setChecked( opt->dockDCstyle );
-	d->ck_dockHideMW->setChecked( opt->dockHideMW );
-	d->ck_dockToolMW->setChecked( opt->dockToolMW );
+	d->ck_docklet->setChecked( PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() );
+	d->ck_dockDCstyle->setChecked( PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool() );
+	d->ck_dockHideMW->setChecked( PsiOptions::instance()->getOption("options.contactlist.hide-on-start").toBool() );
+	d->ck_dockToolMW->setChecked( PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool() );
 
 	// data transfer
-	d->le_dtPort->setText( QString::number(opt->dtPort) );
-	d->le_dtExternal->setText( opt->dtExternal );
+	d->le_dtPort->setText( QString::number(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt()) );
+	d->le_dtExternal->setText( PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString() );
 }

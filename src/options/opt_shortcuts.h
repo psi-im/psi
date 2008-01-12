@@ -36,8 +36,8 @@ public:
 	~OptionsTabShortcuts();
 
 	QWidget *widget();
-	void applyOptions(Options *opt);
-	void restoreOptions(const Options *opt);
+	void applyOptions();
+	void restoreOptions();
 
 	typedef enum Kind {
 		TopLevelItem = 1,

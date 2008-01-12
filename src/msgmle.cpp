@@ -32,7 +32,6 @@
 #include <QTextDocument>
 #include <QTimer>
 
-#include "common.h"
 #include "msgmle.h"
 #include "shortcutmanager.h"
 #include "spellhighlighter.h"
@@ -128,7 +127,7 @@ void ChatView::keyPressEvent(QKeyEvent *e)
  */
 void ChatView::autoCopy()
 {
-	if (isReadOnly() && option.autoCopy) {
+	if (isReadOnly() && PsiOptions::instance()->getOption("options.ui.automatically-copy-selected-text").toBool()) {
 		copy();
 	}
 }
@@ -285,7 +284,7 @@ void ChatEdit::keyPressEvent(QKeyEvent *e)
 		e->ignore();
 	else*/ if(e->key() == Qt::Key_U && (e->modifiers() & Qt::ControlModifier))
 		setText("");
-/*	else if((e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter) && !((e->modifiers() & Qt::ShiftModifier) || (e->modifiers() & Qt::AltModifier)) && option.chatSoftReturn)
+/*	else if((e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter) && !((e->modifiers() & Qt::ShiftModifier) || (e->modifiers() & Qt::AltModifier)) && LEGOPTS.chatSoftReturn)
 		e->ignore();
 	else if((e->key() == Qt::Key_PageUp || e->key() == Qt::Key_PageDown) && (e->modifiers() & Qt::ShiftModifier))
 		e->ignore();

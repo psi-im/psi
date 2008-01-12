@@ -4,7 +4,6 @@
 #include "optionstab.h"
 
 class QWidget;
-struct Options;
 
 class OptionsTabPlugins : public OptionsTab
 {

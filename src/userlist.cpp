@@ -581,7 +581,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 					s = TextUtil::plain2rich(s);
 				if ( doLinkify )
 					s = TextUtil::linkify(s);
-				if( option.useEmoticons && !doLinkify )
+				if( PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool() && !doLinkify )
 					s = TextUtil::emoticonify(s);
 				if( !doLinkify && PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool() )
 					s = TextUtil::legacyFormat(s);

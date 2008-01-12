@@ -61,9 +61,8 @@ public:
 	QMap<QString, QAction*> actions;
 
 	ContactView *cvlist;
-	QList<PsiToolBar*> toolbars;
+	void addToolbar(const QString &base);
 
-	void buildToolbars();
 	void saveToolbarsPositions();
 	PsiCon *psiCon() const;
 
@@ -154,6 +153,7 @@ public slots:
 
 private:
 	void buildGeneralMenu(QMenu *);
+	void buildinitialToolbars();
 	QString numEventsString(int) const;
 
 	bool askQuit();
@@ -165,6 +165,7 @@ private:
 	class Private;
 	Private *d;
 	friend class Private;
+	QList<PsiToolBar*> toolbars;
 };
 
 #endif

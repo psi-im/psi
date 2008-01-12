@@ -20,6 +20,7 @@
 
 #include "psiactionlist.h"
 #include "iconset.h"
+#include "psioptions.h"
 
 #include <qobject.h>
 
@@ -172,13 +173,13 @@ void PsiActionList::Private::createMainWin()
 
 	{
 		IconAction *add_act = 0;
-		if (!option.lockdown.roster)
+		if (!PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool())
 			add_act = new MAction(IconsetFactory::icon("psi/addContact"), tr("&Add a contact"), 0, psi, this);
 
 		IconAction *lw_act = new MAction(IconsetFactory::icon("psi/xml"), tr("&XML Console"), 2, psi, this);
 
 		IconAction *actDisco = 0;
-		if(!option.lockdown.services)
+		if(!PsiOptions::instance()->getOption("options.ui.contactlist.disable-service-discovery").toBool())
 			actDisco = new MAction(IconsetFactory::icon("psi/disco"), tr("Service &Discovery"), 3, psi, this);
 
 //		IconAction *actReadme = new IconAction (tr("ReadMe"), tr("&ReadMe"), 0, this);

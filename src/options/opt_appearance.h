@@ -23,7 +23,6 @@ private:
 };
 
 class QWidget;
-struct Options;
 class QButtonGroup;
 class QLineEdit;
 
@@ -42,15 +41,14 @@ public:
 	~OptionsTabAppearanceMisc();
 
 	QWidget *widget();
-	void applyOptions(Options *opt);
-	void restoreOptions(const Options *opt);
+	void applyOptions();
+	void restoreOptions();
 
 private slots:
 	void setData(PsiCon *, QWidget *);
 
 private:
 	QWidget *w, *parentWidget;
-	Options *o;
 };
 
 class OptionsTabAppearanceGeneral : public OptionsTab
@@ -61,8 +59,8 @@ public:
 	~OptionsTabAppearanceGeneral();
 
 	QWidget *widget();
-	void applyOptions(Options *opt);
-	void restoreOptions(const Options *opt);
+	void applyOptions();
+	void restoreOptions();
 
 private slots:
 	void setData(PsiCon *, QWidget *);
@@ -74,7 +72,6 @@ private:
 	QButtonGroup *bg_color;
 	FontLabel *le_font[4];
 	QButtonGroup *bg_font;
-	Options *o;
 };
 
 #endif

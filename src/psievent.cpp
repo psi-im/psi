@@ -31,6 +31,17 @@
 #include "applicationinfo.h"
 #include "psicontactlist.h"
 #include "atomicxmlfile.h"
+#include "psioptions.h"
+
+// FIXME renames those
+const int eventPriorityHeadline = 0;
+const int eventPriorityChat     = 1;
+const int eventPriorityMessage  = 1;
+const int eventPriorityAuth     = 2;
+//const int eventPriorityFile     = 3;
+const int eventPriorityFile     = 2;
+const int eventPriorityRosterExchange = 0; // LEGOPTFIXME: was uninitialised
+
 
 using namespace XMPP;
 using namespace XMLHelper;
@@ -176,7 +187,7 @@ bool PsiEvent::fromXml(PsiCon *psi, PsiAccount *account, const QDomElement *e)
 
 int PsiEvent::priority() const
 {
-	return Options::EventPriorityDontCare;
+	return EventPriorityDontCare;
 }
 
 QString PsiEvent::description() const
@@ -300,11 +311,11 @@ bool MessageEvent::fromXml(PsiCon *psi, PsiAccount *account, const QDomElement *
 int MessageEvent::priority() const
 {
 	if ( v_m.type() == "headline" )
-		return option.eventPriorityHeadline;
+		return eventPriorityHeadline;
 	else if ( v_m.type() == "chat" )
-		return option.eventPriorityChat;
+		return eventPriorityChat;
 
-	return option.eventPriorityMessage;
+	return eventPriorityMessage;
 }
 
 QString MessageEvent::description() const
@@ -403,7 +414,7 @@ bool AuthEvent::fromXml(PsiCon *psi, PsiAccount *account, const QDomElement *e)
 
 int AuthEvent::priority() const
 {
-	return option.eventPriorityAuth;
+	return eventPriorityAuth;
 }
 
 QString AuthEvent::description() const
@@ -450,7 +461,7 @@ FileEvent::FileEvent(const FileEvent &from)
 
 int FileEvent::priority() const
 {
-	return option.eventPriorityFile;
+	return eventPriorityFile;
 }
 
 Jid FileEvent::from() const
@@ -525,7 +536,7 @@ RosterExchangeEvent::RosterExchangeEvent(const Jid &j, const RosterExchangeItems
 
 int RosterExchangeEvent::priority() const
 {
-	return option.eventPriorityRosterExchange;
+	return eventPriorityRosterExchange;
 }
 
 Jid RosterExchangeEvent::from() const
@@ -575,7 +586,7 @@ QString RosterExchangeEvent::description() const
 
 int StatusEvent::priority() const
 {
-	return option.eventPriorityChat;
+	return eventPriorityChat;
 }
 
 Jid StatusEvent::from() const

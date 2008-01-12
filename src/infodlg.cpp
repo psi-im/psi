@@ -43,6 +43,8 @@
 #include "iconwidget.h"
 #include "contactview.h"
 #include "psirichtext.h"
+#include "psioptions.h"
+#include "psioptions.h"
 
 
 using namespace XMPP;
@@ -69,7 +71,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	: QDialog(parent)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
-  	if ( option.brushedMetal )
+  	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
 		setAttribute(Qt::WA_MacMetalStyle);
 	ui_.setupUi(this);
 	d = new Private;
@@ -496,16 +498,16 @@ void InfoDlg::textChanged()
 void InfoDlg::selectPhoto()
 {
 	while(1) {
-		if(option.lastPath.isEmpty())
-			option.lastPath = QDir::homeDirPath();
-		QString str = QFileDialog::getOpenFileName(this, tr("Choose a file"), option.lastPath, tr("Images (*.png *.xpm *.jpg *.PNG *.XPM *.JPG)"));
+		if(PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString().isEmpty())
+			PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString() = QDir::homeDirPath();
+		QString str = QFileDialog::getOpenFileName(this, tr("Choose a file"), PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString(), tr("Images (*.png *.xpm *.jpg *.PNG *.XPM *.JPG)"));
 		if(!str.isEmpty()) {
 			QFileInfo fi(str);
 			if(!fi.exists()) {
 				QMessageBox::information(this, tr("Error"), tr("The file specified does not exist."));
 				continue;
 			}
-			option.lastPath = fi.dirPath();
+			PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString() = fi.dirPath();
 			//printf(QDir::convertSeparators(fi.filePath()));
 			
 			// put the image in the preview box

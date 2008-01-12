@@ -6,6 +6,7 @@
 #include "tabbablewidget.h"
 #include "groupchatdlg.h"
 #include "chatdlg.h"
+#include "psioptions.h"
 
 TabManager::TabManager(PsiCon* psiCon, QObject *parent)
 	: QObject(parent)
@@ -35,7 +36,7 @@ TabDlg* TabManager::getTabs()
 
 bool TabManager::shouldBeTabbed(QWidget *widget)
 {
-	if (!option.useTabs) {
+	if (!PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool()) {
 		return false;
 	}
 	if (qobject_cast<ChatDlg*> (widget)) {

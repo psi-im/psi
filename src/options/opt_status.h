@@ -1,10 +1,14 @@
 #ifndef OPT_STATUS_H
 #define OPT_STATUS_H
 
+#include <QMap>
+#include <QSet>
+#include <QStringList>
+
 #include "optionstab.h"
+#include "statuspreset.h"
 
 class QWidget;
-struct Options;
 
 class OptionsTabStatus : public OptionsTab
 {
@@ -14,8 +18,8 @@ public:
 	~OptionsTabStatus();
 
 	QWidget *widget();
-	void applyOptions(Options *opt);
-	void restoreOptions(const Options *opt);
+	void applyOptions();
+	void restoreOptions();
 
 	void setData(PsiCon *, QWidget *parentDialog);
 	//bool stretchable() const { return true; }
@@ -28,7 +32,10 @@ private slots:
 
 private:
 	QWidget *w, *parentWidget;
-	Options *o;
+	QMap<QString, StatusPreset> presets;
+	QSet<QString> dirtyPresets;
+	QStringList deletedPresets;
+	QMap<QString, StatusPreset> newPresets;
 };
 
 #endif

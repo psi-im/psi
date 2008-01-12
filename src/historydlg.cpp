@@ -48,6 +48,7 @@
 #include "textutil.h"
 #include "jidutil.h"
 #include "userlist.h"
+#include "psioptions.h"
 
 static QString getNext(QString *str)
 {
@@ -130,7 +131,7 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 	: QWidget(0, 0)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
-  	if ( option.brushedMetal )
+  	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
 		setAttribute(Qt::WA_MacMetalStyle);
 	d = new Private;
 	d->pa = pa;
@@ -287,19 +288,19 @@ void HistoryDlg::doNext()
 
 void HistoryDlg::doSave()
 {
-	if(option.lastSavePath.isEmpty()) {
-		option.lastSavePath = QDir::homeDirPath();
+	if(PsiOptions::instance()->getOption("options.ui.last-used-save-path").toString().isEmpty()) {
+		PsiOptions::instance()->getOption("options.ui.last-used-save-path").toString() = QDir::homeDirPath();
 	}
 
 	UserListItem *u = d->pa->findFirstRelevant(d->jid);
 	QString them = JIDUtil::nickOrJid(u->name(), u->jid().full());
 	QString s = JIDUtil::encode(them).toLower();
 
-	QString str = option.lastSavePath + "/" + s + ".txt";
+	QString str = PsiOptions::instance()->getOption("options.ui.last-used-save-path").toString() + "/" + s + ".txt";
 	str = QFileDialog::getSaveFileName(this, tr("Export message history"), str, tr("Text files (*.txt);;All files (*.*)"));
 	if(!str.isEmpty()) {
 		QFileInfo fi(str);
-		option.lastSavePath = fi.dirPath();
+		PsiOptions::instance()->getOption("options.ui.last-used-save-path").toString() = fi.dirPath();
 		exportHistory(str);
 	}
 }

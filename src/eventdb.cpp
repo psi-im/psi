@@ -29,7 +29,7 @@
 #include <qtimer.h>
 #include <qtextstream.h>
 
-#include "profiles.h"
+#include "common.h"
 #include "applicationinfo.h"
 #include "psievent.h"
 #include "jidutil.h"

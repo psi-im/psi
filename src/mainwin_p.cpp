@@ -18,7 +18,6 @@
  *
  */
 
-#include "common.h"
 #include "mainwin_p.h"
 
 #include <qapplication.h>

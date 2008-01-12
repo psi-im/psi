@@ -3,7 +3,6 @@
 #include <QTimer>
 #include <QtCrypto>
 
-#include "common.h"
 #include "psipopup.h"
 #include "iconset.h"
 #include "psicon.h" // for PsiCon

@@ -103,7 +103,7 @@ void AccountAddDlg::add()
 		int port = w->port();
 		bool legacy_ssl_probe = w->legacySSLProbe();
 		UserAccount::SSLFlag ssl = w->ssl();
-		int proxy = w->proxy();
+		QString proxy = w->proxy();
 
 		delete w;
 

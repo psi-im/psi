@@ -4,7 +4,6 @@
 #include "optionstab.h"
 
 class QWidget;
-struct Options;
 
 class OptionsTabAdvanced : public OptionsTab
 {
@@ -14,8 +13,8 @@ public:
 	~OptionsTabAdvanced();
 
 	QWidget *widget();
-	void applyOptions(Options *opt);
-	void restoreOptions(const Options *opt);
+	void applyOptions();
+	void restoreOptions();
 
 private:
 	QWidget *w;

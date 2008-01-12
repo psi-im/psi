@@ -19,7 +19,7 @@
  */
 
 #include "alerticon.h"
-#include "common.h"
+#include "psioptions.h"
 #include <qtimer.h>
 #include <qapplication.h>
 //Added by qt3to4:
@@ -148,7 +148,7 @@ void AlertIcon::Private::init()
 	connect(metaAlertIcon, SIGNAL(update()), SLOT(update()));
 	connect(real, SIGNAL(iconModified()), SLOT(pixmapChanged()));
 
-	if ( option.alertStyle == 2 && real->isAnimated() )
+	if ( PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString() == "animate" && real->isAnimated() )
 		impix = real->frameImpix();
 	else
 		impix = real->impix();
@@ -162,14 +162,14 @@ void AlertIcon::Private::update()
 
 void AlertIcon::Private::activated(bool playSound)
 {
-	if ( option.alertStyle == 2 && real->isAnimated() ) {
+	if ( PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString() == "animate" && real->isAnimated() ) {
 		if ( !isActivated ) {
 			connect(real, SIGNAL(pixmapChanged()), SLOT(pixmapChanged()));
 			real->activated(playSound);
 			isActivated = true;
 		}
 	}
-	else if ( option.alertStyle == 1 || (option.alertStyle == 2 && !real->isAnimated()) ) {
+	else if ( PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString() == "blink" || (PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString() == "animate" && !real->isAnimated()) ) {
 		connect(metaAlertIcon, SIGNAL(updateFrame(int)), SLOT(updateFrame(int)));
 	}
 	else {
@@ -266,10 +266,10 @@ const Impix &AlertIcon::impix() const
 
 int AlertIcon::frameNumber() const
 {
-	if ( option.alertStyle == 2 && d->real->isAnimated() ) {
+	if ( PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString() == "animate" && d->real->isAnimated() ) {
 		return d->real->frameNumber();
 	}
-	else if ( option.alertStyle == 1 || (option.alertStyle == 2 && !d->real->isAnimated()) ) {
+	else if ( PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString() == "blink" || (PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString() == "animate" && !d->real->isAnimated()) ) {
 		return metaAlertIcon->framenumber();
 	}
 

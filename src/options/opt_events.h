@@ -5,7 +5,6 @@
 #include "qradiobutton.h"
 
 class QWidget;
-struct Options;
 
 class OptionsTabEvents : public OptionsTab
 {
@@ -14,8 +13,8 @@ public:
 	OptionsTabEvents(QObject *parent);
 
 	QWidget *widget();
-	void applyOptions(Options *opt);
-	void restoreOptions(const Options *opt);
+	void applyOptions();
+	void restoreOptions();
 
 private:
 	QWidget *w;

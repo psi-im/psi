@@ -21,6 +21,7 @@
 #include "profiledlg.h"
 #include "applicationinfo.h"
 #include "iconset.h"
+#include "psioptions.h"
 
 #include <QLabel>
 #include <QComboBox>
@@ -36,6 +37,7 @@
 #include <Q3ButtonGroup>
 #include <QPixmap>
 #include "profiles.h"
+#include "common.h"
 #include "iconwidget.h"
 
 #include <qpainter.h>
@@ -331,11 +333,17 @@ void ProfileNewDlg::slotCreate()
 	}
 
 	// save config
-	UserProfile p;
-	p.prefs.defaultAction = bg_defAct->selected() == (Q3Button *)rb_message ? 0: 1;
-	p.prefs.useEmoticons = ck_useEmoticons->isChecked();
-	p.toFile(pathToProfileConfig(name));
-
+	PsiOptions o;
+	
+	if (!o.load(":/options/newprofile.xml")) {
+		qWarning("ERROR: Failed to new profile default options");
+	}
+	
+	
+	o.setOption("options.messages.default-outgoing-message-type" ,bg_defAct->selected() == (Q3Button *)rb_message ? "message": "chat");
+	o.setOption("options.ui.emoticons.use-emoticons" ,ck_useEmoticons->isChecked());
+	o.save(pathToProfile(name) + "/options.xml");
+	
 	accept();
 }
 

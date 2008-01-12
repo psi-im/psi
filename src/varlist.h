@@ -27,6 +27,7 @@
 class QDomDocument;
 class QDomElement;
 class QStringList;
+class OptionsTree;
 
 class VarListItem
 {
@@ -57,6 +58,10 @@ public:
 	VarList::Iterator findByNum(int);
 
 	QStringList varsToStringList();
+	
+	void fromOptions(OptionsTree *o, QString base);
+	void toOptions(OptionsTree *o, QString base);
+	
 	QDomElement toXml(QDomDocument &doc, const QString &tagName);
 	void fromXml(const QDomElement &);
 };

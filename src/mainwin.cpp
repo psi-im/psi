@@ -238,7 +238,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 {
 	setObjectName(name);
 	setAttribute(Qt::WA_AlwaysShowToolTips);
-  	if ( option.brushedMetal ) {
+  	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() ) {
 		setAttribute(Qt::WA_MacMetalStyle);
 	}
 	d = new Private(psi, this);
@@ -382,7 +382,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	d->getAction("help_psi_muc")->addTo (helpMenu);
 	d->getAction("help_report_bug")->addTo (helpMenu);
 #else
-	if (option.hideMenubar)  {
+	if (!PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool())  {
 		mainMenuBar()->hide();
 	}
 	//else 
@@ -391,7 +391,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	d->optionsButton->setMenu( d->optionsMenu );
 	d->statusButton->setMenu( d->statusMenu );
 	
-	buildToolbars();
+	buildinitialToolbars();
 	
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt()))/100);
 
@@ -488,7 +488,7 @@ void MainWin::registerAction( IconAction *action )
 
 			// special cases
 			if ( aName == "menu_play_sounds" ) {
-				action->setChecked( useSound );
+				action->setChecked(PsiOptions::instance()->getOption("options.ui.notifications.sounds.enable").toBool());
 			}
 			//else if ( aName == "foobar" )
 			//	;
@@ -500,14 +500,15 @@ void MainWin::registerAction( IconAction *action )
 		QObject *sender;
 		const char *signal;
 		const char *slot;
+		bool checked;
 	} reverseactionlist[] = {
-		{ "show_away",    cvlist, SIGNAL( showAway(bool) ), setChecked },
-		{ "show_hidden",  cvlist, SIGNAL( showHidden(bool) ), setChecked },
-		{ "show_offline", cvlist, SIGNAL( showOffline(bool) ), setChecked },
-		{ "show_self",    cvlist, SIGNAL( showSelf(bool) ), setChecked },
-		{ "show_agents",  cvlist, SIGNAL( showAgents(bool) ), setChecked },
-		{ "show_statusmsg", cvlist, SIGNAL( showStatusMsg(bool) ), setChecked },
-		{ "", 0, 0, 0 }
+		{ "show_away",    cvlist, SIGNAL( showAway(bool) ), setChecked, cvlist->isShowAway()},
+		{ "show_hidden",  cvlist, SIGNAL( showHidden(bool) ), setChecked, cvlist->isShowHidden()},
+		{ "show_offline", cvlist, SIGNAL( showOffline(bool) ), setChecked, cvlist->isShowOffline()},
+		{ "show_self",    cvlist, SIGNAL( showSelf(bool) ), setChecked, cvlist->isShowSelf()},
+		{ "show_agents",  cvlist, SIGNAL( showAgents(bool) ), setChecked, cvlist->isShowAgents()},
+		{ "show_statusmsg", cvlist, SIGNAL( showStatusMsg(bool) ), setChecked, cvlist->isShowStatusMsg()},
+		{ "", 0, 0, 0, false }
 	};
 
 	for ( i = 0; !(aName = QString(reverseactionlist[i].name)).isEmpty(); i++ ) {
@@ -519,7 +520,7 @@ void MainWin::registerAction( IconAction *action )
 				action->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.status-messages.show").toBool() );
 			}
 			else
-				action->setChecked( true );
+				action->setChecked( reverseactionlist[i].checked );
 		}
 	}
 }
@@ -629,51 +630,35 @@ QMenuBar* MainWin::mainMenuBar() const
 #endif
 }
 
-void MainWin::buildToolbars()
+void MainWin::addToolbar(const QString &base)
 {
-	while ( option.toolbars["mainWin"].count() < toolbars.count() && toolbars.count() ) {
-		PsiToolBar *tb = toolbars.last();
-		toolbars.removeLast();
-		delete tb;
-	}
+	PsiToolBar *tb = PsiToolBar::fromOptions(base, this, d->psi, PsiActionList::Actions_MainWin);
+	
+	//connect( tb, SIGNAL( registerAction( IconAction * ) ), SLOT( registerAction( IconAction * ) ) );
+	
+	toolbars << tb;
+}
 
-	for (int i = 0; i < option.toolbars["mainWin"].count(); i++) {
-		PsiToolBar *tb = 0;
-		if ( i < toolbars.count() ) {
-			tb = toolbars.at(i);
-		}
 
-		Options::ToolbarPrefs &tbPref = option.toolbars["mainWin"][i];
-		if ( tb && !tbPref.dirty ) {
-			continue;
-		}
-
-		if ( tb ) {
-			delete tb;
-		}
-
-		tb = new PsiToolBar(tbPref.name, this, d->psi);
-		moveDockWindow ( tb, tbPref.dock, tbPref.nl, tbPref.index, tbPref. extraOffset );
-
-		tb->setGroup( "mainWin", i );
-		tb->setType( PsiActionList::Actions_MainWin );
-		//connect( tb, SIGNAL( registerAction( IconAction * ) ), SLOT( registerAction( IconAction * ) ) );
-		tb->initialize( tbPref, false );
-
-		if ( i < toolbars.count() ) {
-			toolbars.removeAt(i);
-		}
-		toolbars.insert(i, tb);
+void MainWin::buildinitialToolbars()
+{
+	QStringList bases = PsiOptions::instance()->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
+	foreach(QString base, bases) {
+		addToolbar(base);
 	}
 }
 
+
 void MainWin::saveToolbarsPositions()
 {
+/*
+	LEGOPTFIXME
 	for (int i = 0; i < toolbars.count(); i++) {
-		Options::ToolbarPrefs &tbPref = option.toolbars["mainWin"][i];
+		Options::ToolbarPrefs &tbPref = LEGOPTS.toolbars["mainWin"][i];
 		getLocation ( toolbars.at(i), tbPref.dock, tbPref.index, tbPref.nl, tbPref.extraOffset );
 		tbPref.on = toolbars.at(i)->isVisible();
 	}
+*/
 }
 
 bool MainWin::showDockMenu(const QPoint &)
@@ -818,7 +803,7 @@ void MainWin::actAboutQtActivated ()
 
 void MainWin::actPlaySoundsActivated (bool state)
 {
-	useSound = state;
+	PsiOptions::instance()->setOption("options.ui.notifications.sounds.enable", state);
 }
 
 void MainWin::actPublishTuneActivated (bool state)
@@ -888,7 +873,7 @@ void MainWin::decorateButton(int status)
 
 	if(status == -1) {
 		d->statusButton->setText(tr("Connecting"));
-		if (option.alertStyle != 0) {
+		if (PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString() != "no") {
 			d->statusButton->setAlert(IconsetFactory::iconPtr("psi/connect"));
 			d->statusGroup->setPsiIcon(IconsetFactory::iconPtr("psi/connect"));
 		}
@@ -1020,7 +1005,7 @@ void MainWin::optionsUpdate()
 	decorateButton(status);
 
 #ifndef Q_WS_MAC
-	if (option.hideMenubar) {
+	if (!PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool()) {
 		mainMenuBar()->hide();
 	}
 	else {
@@ -1068,7 +1053,7 @@ void MainWin::setTrayToolTip(const Status &status, bool)
 
 void MainWin::trayClicked(const QPoint &, int button)
 {
-	if(option.dockDCstyle) {
+	if(PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool()) {
 		return;
 	}
 
@@ -1087,7 +1072,7 @@ void MainWin::trayClicked(const QPoint &, int button)
 
 void MainWin::trayDoubleClicked()
 {
-	if(!option.dockDCstyle) {
+	if(!PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool()) {
 		return;
 	}
 

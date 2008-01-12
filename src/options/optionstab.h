@@ -6,7 +6,6 @@
 #include <q3ptrlist.h>
 #include <QByteArray>
 
-struct Options;
 class PsiIcon;
 class QWidget;
 class PsiCon;
@@ -41,8 +40,8 @@ signals:
 
 public slots:
 	virtual void setData(PsiCon *, QWidget *parentDialog);
-	virtual void applyOptions(Options *opt);
-	virtual void restoreOptions(const Options *opt);
+	virtual void applyOptions();
+	virtual void restoreOptions();
 	virtual void tabAdded(OptionsTab *tab);	// called when tab 'tab' specifies this tab as parent
 
 private:
@@ -59,8 +58,8 @@ public:
 	~MetaOptionsTab();
 
 	QWidget *widget();
-	void applyOptions(Options *opt);
-	void restoreOptions(const Options *opt);
+	void applyOptions();
+	void restoreOptions();
 
 	void setData(PsiCon *, QWidget *);
 	bool stretchable() const { return true; }

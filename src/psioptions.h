@@ -43,7 +43,7 @@ public:
 	bool save(QString file);
 	void autoSave(bool autoSave, QString autoFile = "");
 
-private:
+// don't call this normally
 	PsiOptions();
 
 private slots:

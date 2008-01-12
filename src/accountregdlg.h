@@ -55,7 +55,7 @@ public:
 	int port() const { return port_; }
 	bool legacySSLProbe() { return legacy_ssl_probe_; }
 	UserAccount::SSLFlag ssl() const { return ssl_; }
-	int proxy() const { return proxy_; }
+	QString proxy() const { return proxy_; }
 
 public slots:
 	void done(int);
@@ -100,7 +100,7 @@ private:
 	QString host_;
 	int port_;
 	QString pass_;
-	int proxy_;
+	QString proxy_;
 };
 
 #endif

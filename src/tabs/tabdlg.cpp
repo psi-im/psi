@@ -22,7 +22,6 @@
 
 #include "iconwidget.h"
 #include "iconset.h"
-#include "common.h"
 #include "psicon.h"
 #include <qmenubar.h>
 #include <qcursor.h>
@@ -127,7 +126,7 @@ TabDlg::TabDlg(TabManager* tabManager, TabDlgDelegate *delegate)
 		delegate_->create(this);
 	}
 
-	if (option.brushedMetal) {
+	if (PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool()) {
 		setAttribute(Qt::WA_MacMetalStyle);
 	}
 
@@ -163,7 +162,9 @@ TabDlg::TabDlg(TabManager* tabManager, TabDlgDelegate *delegate)
 
 	setShortcuts();
 
-	resize(option.sizeTabDlg);
+	if (PsiOptions::instance()->getOption("options.ui.tabs.size").toSize().isValid()) {
+		resize(PsiOptions::instance()->getOption("options.ui.tabs.size").toSize());
+	}
 }
 
 TabDlg::~TabDlg() {
@@ -187,8 +188,8 @@ void TabDlg::resizeEvent(QResizeEvent *e)
 {
 	AdvancedWidget<QWidget>::resizeEvent(e);
 
-	if (option.keepSizes)
-		option.sizeTabDlg = e->size();
+	if (PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool())
+		PsiOptions::instance()->getOption("options.ui.tabs.size").toSize() = e->size();
 
 	// delegate may want to act on resize event
 	if (delegate_) {
@@ -284,7 +285,7 @@ void TabDlg::setLooks()
 	setWindowIcon(IconsetFactory::icon("psi/start-chat").icon());
 #endif
 	tabWidget_->setTabPosition(QTabWidget::Top);
-	if (option.putTabsAtBottom)
+	if (PsiOptions::instance()->getOption("options.ui.tabs.put-tabs-at-bottom").toBool())
 		tabWidget_->setTabPosition(QTabWidget::Bottom);
 
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt()))/100);

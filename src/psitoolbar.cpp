@@ -26,10 +26,12 @@
 //Added by qt3to4:
 #include <QContextMenuEvent>
 #include <Q3PtrList>
+#include <Q3MainWindow>
 #include "psicon.h"
 #include "iconset.h"
 #include "psicon.h"
 #include "iconaction.h"
+#include "psioptions.h"
 #include "options/opt_toolbars.h"
 
 //----------------------------------------------------------------------------
@@ -43,10 +45,10 @@ public:
 
 	bool customizeable, moveable;
 	PsiActionList::ActionsType type;
-	QString group;
-	int groupIndex;
 	PsiCon *psi;
 	Q3PtrList<IconAction> uniqueActions;
+	QString base;
+	bool dirty;
 };
 
 PsiToolBar::Private::Private()
@@ -54,6 +56,7 @@ PsiToolBar::Private::Private()
 	customizeable = true;
 	moveable = true;
 	psi = 0;
+	dirty = false;
 	uniqueActions.setAutoDelete( true );
 }
 
@@ -61,11 +64,31 @@ PsiToolBar::Private::Private()
 // PsiToolBar
 //----------------------------------------------------------------------------
 
+PsiToolBar *PsiToolBar::fromOptions(const QString &base, Q3MainWindow* mainWindow, PsiCon* psi, PsiActionList::ActionsType t)
+{
+	PsiToolBar *tb = 0;
+
+	tb = new PsiToolBar(PsiOptions::instance()->getOption(base + ".name").toString(),
+						mainWindow, psi);
+	mainWindow->moveDockWindow ( tb, 
+				(Qt::Dock)PsiOptions::instance()->getOption(base + ".dock.position").toInt(), // LEGOPTFIXME
+				PsiOptions::instance()->getOption(base + ".dock.nl").toBool(), 
+				PsiOptions::instance()->getOption(base + ".dock.index").toInt(), 
+				PsiOptions::instance()->getOption(base + ".dock.extra-offset").toInt() );
+
+	tb->setType(t);
+	tb->initialize( base, false );
+	return tb;
+}
+
+
 PsiToolBar::PsiToolBar(const QString& label, Q3MainWindow* mainWindow, PsiCon* psi)
 : Q3ToolBar(label, mainWindow, (QWidget*)mainWindow)
 {
 	d = new Private();
 	d->psi = psi;
+	connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
+	connect(PsiOptions::instance(), SIGNAL(optionRemoved(const QString&)),SLOT(optionRemoved(const QString&)));
 }
 
 PsiToolBar::~PsiToolBar()
@@ -73,25 +96,51 @@ PsiToolBar::~PsiToolBar()
 	delete d;
 }
 
-bool PsiToolBar::isCustomizeable() const
+
+void PsiToolBar::optionChanged(const QString& option)
 {
-	return d->customizeable;
+	if (d->dirty) return;
+	if (!option.startsWith(d->base + ".")) return;
+	
+	d->dirty = true;
+	// collapse all updates until next mainloop iteration...
+	QMetaObject::invokeMethod(this, "update", Qt::QueuedConnection);
 }
 
-void PsiToolBar::setCustomizeable( bool b )
+void PsiToolBar::update()
 {
-	d->customizeable = b;
+	d->dirty = false;
+	clear();
+	initialize( d->base, false );
 }
 
-bool PsiToolBar::isMoveable() const
+void PsiToolBar::optionRemoved(const QString& option)
 {
-	return d->moveable;
+	if (d->base == option || d->base.startsWith(option+".")) {
+		deleteLater();
+	}
 }
 
-void PsiToolBar::setMoveable( bool b )
-{
-	d->moveable = b;
-}
+
+// bool PsiToolBar::isCustomizeable() const
+// {
+// 	return d->customizeable;
+// }
+// 
+// void PsiToolBar::setCustomizeable( bool b )
+// {
+// 	d->customizeable = b;
+// }
+// 
+// bool PsiToolBar::isMoveable() const
+// {
+// 	return d->moveable;
+// }
+// 
+// void PsiToolBar::setMoveable( bool b )
+// {
+// 	d->moveable = b;
+// }
 	
 void PsiToolBar::contextMenuEvent(QContextMenuEvent *e)
 {
@@ -115,39 +164,26 @@ PsiActionList::ActionsType PsiToolBar::type() const
 	return d->type;
 }
 
-QString PsiToolBar::group() const
-{
-	return d->group;
-}
-
-int PsiToolBar::groupIndex() const
-{
-	return d->groupIndex;
-}
-
-void PsiToolBar::setGroup( QString group, int index )
-{
-	d->group = group;
-	d->groupIndex = index;
-}
-
 void PsiToolBar::setType( PsiActionList::ActionsType type )
 {
 	d->type = PsiActionList::ActionsType( PsiActionList::ActionsType( type ) | PsiActionList::Actions_Common );
 }
 
-void PsiToolBar::initialize( Options::ToolbarPrefs &tbPref, bool createUniqueActions )
+void PsiToolBar::initialize( QString base, bool createUniqueActions )
 {
+	d->base = base;
 	d->uniqueActions.clear();
 
-	setHorizontallyStretchable( tbPref.stretchable );
-	setVerticallyStretchable( tbPref.stretchable );
+// PsiOptions::instance()->getOption(base + ".").toString()	
+	
+	setHorizontallyStretchable(PsiOptions::instance()->getOption(base + ".stretchable").toBool());
+	setVerticallyStretchable(PsiOptions::instance()->getOption(base + ".stretchable").toBool());
 
-	setMovingEnabled ( !tbPref.locked );
+	setMovingEnabled (!PsiOptions::instance()->getOption(base + ".locked").toBool());
 
 	if ( d->psi ) {
 		ActionList actions = d->psi->actionList()->suitableActions( d->type );
-		QStringList keys = tbPref.keys;
+		QStringList keys = PsiOptions::instance()->getOption(base + ".actions").toStringList();
 		for (int j = 0; j < keys.size(); j++) {
 			IconAction *action = actions.action( keys[j] );
 
@@ -163,17 +199,33 @@ void PsiToolBar::initialize( Options::ToolbarPrefs &tbPref, bool createUniqueAct
 				action->addTo( this );
 				emit registerAction( action );
 			}
-			else
+			else {
 				qWarning("PsiToolBar::initialize(): action %s not found!", keys[j].latin1());
+			}
 		}
 	}
-	else
+	else {
 		qWarning("PsiToolBar::initialize(): psi is NULL!");
+	}
 
-	if ( tbPref.on )
+	if (PsiOptions::instance()->getOption(base + ".visible").toBool()) {
 		show();
-	else
+	} else {
 		hide();
+	}
+}
 
-	tbPref.dirty = false;
+
+void PsiToolBar::structToOptions(const QString &base, ToolbarPrefs *tb)
+{
+	PsiOptions *o = PsiOptions::instance();
+	o->setOption(base+".name",tb->name);
+	o->setOption(base+".visible",tb->on);
+	o->setOption(base+".locked",tb->locked);
+	o->setOption(base+".stretchable",tb->stretchable);
+	o->setOption(base+".actions",tb->keys);
+	o->setOption(base+".dock.position",tb->dock); // LEGOPTFIXME
+	o->setOption(base+".dock.index",tb->index);
+	o->setOption(base+".dock.nl",tb->nl);
+	o->setOption(base+".dock.extra-offset",tb->extraOffset);	
 }

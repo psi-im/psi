@@ -21,7 +21,6 @@
 #include "tabbablewidget.h"
 #include "tabmanager.h"
 #include "tabdlg.h"
-#include "common.h"
 #include "jidutil.h"
 #include "groupchatdlg.h"
 #include <QTimer>

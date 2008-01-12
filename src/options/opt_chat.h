@@ -4,7 +4,6 @@
 #include "optionstab.h"
 
 class QWidget;
-struct Options;
 class QButtonGroup;
 
 class OptionsTabChat : public OptionsTab
@@ -15,8 +14,8 @@ public:
 	~OptionsTabChat();
 
 	QWidget *widget();
-	void applyOptions(Options *opt);
-	void restoreOptions(const Options *opt);
+	void applyOptions();
+	void restoreOptions();
 
 private:
 	QWidget *w;

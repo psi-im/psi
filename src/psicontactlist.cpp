@@ -99,7 +99,7 @@ PsiAccount *PsiContactList::defaultAccount() const
 /**
  * Creates new PsiAccount based on some initial settings. This is used by AccountAddDlg.
  */
-void PsiContactList::createAccount(const QString& name, const Jid& j, const QString& pass, bool opt_host, const QString& host, int port, bool legacy_ssl_probe, UserAccount::SSLFlag ssl, int proxy, bool modify)
+void PsiContactList::createAccount(const QString& name, const Jid& j, const QString& pass, bool opt_host, const QString& host, int port, bool legacy_ssl_probe, UserAccount::SSLFlag ssl, QString proxyID, bool modify)
 {
 	UserAccount acc;
 	acc.name = name;
@@ -114,7 +114,7 @@ void PsiContactList::createAccount(const QString& name, const Jid& j, const QStr
 	acc.host = host;
 	acc.port = port;
 	acc.ssl = ssl;
-	acc.proxy_index = proxy;
+	acc.proxyID = proxyID;
 	acc.legacy_ssl_probe = legacy_ssl_probe;
 
 	PsiAccount *pa = loadAccount(acc);
@@ -205,9 +205,9 @@ void PsiContactList::loadAccounts(const UserAccountList &list)
 UserAccountList PsiContactList::getUserAccountList() const
 {
 	UserAccountList acc;
-	foreach(PsiAccount* account, accounts_)
+	foreach(PsiAccount* account, accounts_) {
 		acc += account->userAccount();
-
+	}
 	return acc;
 }
 
@@ -243,7 +243,7 @@ PsiAccount *PsiContactList::tryQueueLowestEventId(bool includeDND)
 {
 	PsiAccount *low = 0;
 	int low_id = 0;
-	int low_prior = option.EventPriorityDontCare;
+	int low_prior = EventPriorityDontCare;
 
 	foreach(PsiAccount *account, enabledAccounts_) {
 		int n = account->eventQueue()->nextId();

@@ -24,6 +24,7 @@
 #include "psievent.h"
 #include "psiiconset.h"
 #include "applicationinfo.h"
+#include "psioptions.h"
 
 #include <QUrl>
 #include <QProcess>
@@ -56,7 +57,11 @@
 
 Qt::WFlags psi_dialog_flags = (Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint);
 
-Options option;
+// used to be part of the global options struct. 
+// FIXME find it a new home!
+int common_smallFontSize=0;
+
+
 bool useSound;
 
 
@@ -225,11 +230,29 @@ bool fileCopy(const QString &src, const QString &dest)
 }
 
 
-void soundPlay(const QString &str)
+/** Detect default player helper on unix like systems
+ */
+QString soundDetectPlayer()
 {
+	// prefer ALSA on linux
+	if (QFile("/proc/asound").exists()) {
+		return "aplay";
+	}
+	// fallback to "play"
+	return "play";
+	
+}
+
+void soundPlay(const QString &s)
+{
+	QString str = s;
 	if(str == "!beep") {
 		QApplication::beep();
 		return;
+	}
+	
+	if (QDir::isRelativePath(str)) {
+		str = ApplicationInfo::resourcesDir() + "/" + str;
 	}
 
 	if(!QFile::exists(str))
@@ -238,13 +261,13 @@ void soundPlay(const QString &str)
 #if defined(Q_WS_WIN) || defined(Q_WS_MAC)
 	QSound::play(str);
 #else
-	if(!option.player.isEmpty()) {
-		QStringList args;
-		args = QStringList::split(' ', option.player);
-		args += str;
-		QString prog = args.takeFirst();
-		QProcess::startDetached(prog, args);
-	}
+	QString player = PsiOptions::instance()->getOption("options.ui.notifications.sounds.unix-sound-player").toString();
+	if (player == "") player = soundDetectPlayer();
+	QStringList args;
+	args = QStringList::split(' ', player);
+	args += str;
+	QString prog = args.takeFirst();
+	QProcess::startDetached(prog, args);
 #endif
 }
 

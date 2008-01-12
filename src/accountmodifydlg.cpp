@@ -27,7 +27,6 @@
 #include "iconset.h"
 #include "psioptions.h"
 #include "jidutil.h"
-#include "profiles.h"
 #include "psicon.h"
 #include "proxy.h"
 #include "privacymanager.h"
@@ -152,7 +151,7 @@ void AccountModifyDlg::init()
 
 	pc = psi->proxy()->createProxyChooser(tab_connection);
 	replaceWidget(lb_proxychooser, pc);
-	pc->setCurrentItem(acc.proxy_index);
+	pc->setCurrentItem(acc.proxyID);
 	
 	// Security level
 	cb_security_level->addItem(tr("None"),QCA::SL_None);
@@ -528,7 +527,7 @@ void AccountModifyDlg::save()
 
 	acc.pgpSecretKey = key;
 
-	acc.proxy_index = pc->currentItem();
+	acc.proxyID = pc->currentItem();
 
 	if(pa && pa->isActive()) {
 		QMessageBox::information(this, tr("Warning"), tr("This account is currently active, so certain changes may not take effect until the next login."));

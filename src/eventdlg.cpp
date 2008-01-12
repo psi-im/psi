@@ -450,7 +450,7 @@ void AttachView::addUrlList(const UrlList &list)
 AddUrlDlg::AddUrlDlg(QWidget *parent)
 :QDialog(parent)
 {
-	if ( option.brushedMetal )
+	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
 		setAttribute(Qt::WA_MacMetalStyle);
 	setupUi(this);
 #ifndef Q_WS_MAC
@@ -580,7 +580,7 @@ EventDlg::EventDlg(const QString &to, PsiCon *psi, PsiAccount *pa)
 	: AdvancedWidget<QWidget>(0)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
-  	if ( option.brushedMetal )
+  	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
 		setAttribute(Qt::WA_MacMetalStyle);	
 	d = new Private(this);
 	d->composing = true;
@@ -605,7 +605,7 @@ EventDlg::EventDlg(const QString &to, PsiCon *psi, PsiAccount *pa)
 	d->le_to->setText(expandAddresses(to, false));
 	d->le_to->setCursorPosition(0);
 
-	if(option.grabUrls) {
+	if(PsiOptions::instance()->getOption("options.ui.message.auto-grab-urls-from-clipboard").toBool()) {
 		// url in clipboard?
 		QClipboard *cb = QApplication::clipboard();
 		QString text = cb->text(QClipboard::Clipboard);
@@ -813,7 +813,7 @@ void EventDlg::init()
 	QHBoxLayout *hb3 = new QHBoxLayout(vb1);
 
 //	if(d->composing /* && config->showsubject */) {
-	if(option.showSubjects) {
+	if(PsiOptions::instance()->getOption("options.ui.message.show-subjects").toBool()) {
 		// third row
 		l = new QLabel(tr("Subject:"), this);
 		hb3->addWidget(l);
@@ -991,7 +991,11 @@ void EventDlg::init()
 	connect(d->pa, SIGNAL(pgpKeyChanged()), SLOT(updatePGP()));
 	connect(d->pa, SIGNAL(encryptedMessageSent(int, bool, int)), SLOT(encryptedMessageSent(int, bool, int)));
 
-	resize(option.sizeEventDlg);
+	if (PsiOptions::instance()->getOption("options.ui.message.size").toSize().isValid()) {
+		resize(PsiOptions::instance()->getOption("options.ui.message.size").toSize());
+	} else {
+		resize(defaultSize());
+	}
 	optionsUpdate();
 
 	//ShortcutManager::connect("common.close", this, SLOT(close()));
@@ -1199,7 +1203,7 @@ void EventDlg::to_changeResource(const QString &r)
 
 void EventDlg::to_tryComplete()
 {
-	if(!option.jidComplete)
+	if(!PsiOptions::instance()->getOption("options.ui.message.use-jid-auto-completion").toBool())
 		return;
 
 	QString str = d->le_to->text();
@@ -1336,18 +1340,18 @@ void EventDlg::optionsUpdate()
 {
 	// update the font
 	QFont f;
-	f.fromString(option.font[fMessage]);
+	f.fromString(PsiOptions::instance()->getOption("options.ui.look.font.message").toString());
 	d->mle->setFont(f);
 
 	// update status icon
 	doWhois(true);
 
-	if ( option.showCounter && d->composing )
+	if ( PsiOptions::instance()->getOption("options.ui.message.show-character-count").toBool() && d->composing )
 		d->lb_count->show();
 	else
 		d->lb_count->hide();
 
-	if ( option.useEmoticons )
+	if ( PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool() )
 		d->tb_icon->show();
 	else
 		d->tb_icon->hide();
@@ -1398,8 +1402,8 @@ void EventDlg::showEvent(QShowEvent *e)
 
 void EventDlg::resizeEvent(QResizeEvent *e)
 {
-	if(option.keepSizes)
-		option.sizeEventDlg = e->size();
+	if(PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool())
+		PsiOptions::instance()->getOption("options.ui.message.size").toSize() = e->size();
 }
 
 void EventDlg::keyPressEvent(QKeyEvent *e)
@@ -1857,11 +1861,11 @@ void EventDlg::updateEvent(PsiEvent *e)
 		QString txt = xhtml ? m.html().toString("div") : TextUtil::plain2rich(m.body());
 
 		// show subject line if the incoming message has one
-		if(m.subject() != "" && !option.showSubjects)
+		if(m.subject() != "" && !PsiOptions::instance()->getOption("options.ui.message.show-subjects").toBool())
 			txt = "<p><font color=\"red\"><b>" + tr("Subject:") + " " + TextUtil::plain2rich(m.subject()) + "</b></font></p>" + (xhtml? "" : "<br>") + txt;
 
 		if (!xhtml) {
-			if(option.useEmoticons)
+			if(PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool())
 				txt = TextUtil::emoticonify(txt);
 			if( PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool() )
 				txt = TextUtil::legacyFormat(txt);

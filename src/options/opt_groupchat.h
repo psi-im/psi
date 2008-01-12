@@ -5,7 +5,6 @@
 
 class QWidget;
 class QListWidgetItem;
-struct Options;
 
 class OptionsTabGroupchat : public OptionsTab
 {
@@ -14,8 +13,8 @@ public:
 	OptionsTabGroupchat(QObject *parent);
 
 	QWidget *widget();
-	void applyOptions(Options *opt);
-	void restoreOptions(const Options *opt);
+	void applyOptions();
+	void restoreOptions();
 
 	void setData(PsiCon *, QWidget *);
 	bool stretchable() const { return true; }

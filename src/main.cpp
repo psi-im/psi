@@ -36,7 +36,6 @@
 
 #include <stdlib.h>
 #include <time.h>
-#include "profiles.h"
 #include "profiledlg.h"
 #include "activeprofiles.h"
 

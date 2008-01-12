@@ -35,7 +35,7 @@
 //----------------------------------------------------------------------------
 
 WbDlg::WbDlg(const Jid &target, const QString &session, const Jid &ownJid, bool groupChat, PsiAccount *pa) {
-	if ( option.brushedMetal )
+	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
 		setAttribute(Qt::WA_MacMetalStyle);
 
 	groupChat_ = groupChat;
@@ -192,7 +192,7 @@ WbDlg::WbDlg(const Jid &target, const QString &session, const Jid &ownJid, bool 
 	
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY, PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt())) / 100);
 
-	resize(option.sizeChatDlg);
+	resize(LEGOPTS.sizeChatDlg);
 }
 
 WbDlg::~WbDlg() {
@@ -216,7 +216,7 @@ void WbDlg::incomingWbElement(const QDomElement &wb, const Jid &sender)
 			++pending_;
 			updateCaption();
 			doFlash(true);
-			if(option.raiseChatWindow)
+			if(PsiOptions::instance()->getOption("options.ui.chat.raise-chat-windows-on-new-messages").toBool())
 				bringToFront(this, false);
 		}
 		keepOpen_ = true;
@@ -335,9 +335,9 @@ void WbDlg::activated() {
 }
 
 void WbDlg::keyPressEvent(QKeyEvent *e) {
-	if(e->key() == Qt::Key_Escape && !option.useTabs)
+	if(e->key() == Qt::Key_Escape && !PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool())
 		close();
-	else if(e->key() == Qt::Key_W && e->state() & Qt::ControlButton && !option.useTabs)
+	else if(e->key() == Qt::Key_W && e->state() & Qt::ControlButton && !PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool())
 		close();
 	else
 		e->ignore();
@@ -356,19 +356,19 @@ void WbDlg::closeEvent(QCloseEvent *e) {
 	}
 
 	// destroy the dialog if delChats is dcClose
-	if(option.delChats == dcClose)
+	if(PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString() == "instant")
 		endSession();
 	else {
-		if(option.delChats == dcHour)
+		if(PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString() == "hour")
 			setSelfDestruct(60);
-		else if(option.delChats == dcDay)
+		else if(PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString() == "day")
 			setSelfDestruct(60 * 24);
 	}
 }
 
 void WbDlg::resizeEvent(QResizeEvent *e) {
-	if(option.keepSizes)
-		option.sizeChatDlg = e->size();
+	if(PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool())
+		LEGOPTS.sizeChatDlg = e->size();
 }
 
 void WbDlg::showEvent(QShowEvent *) {

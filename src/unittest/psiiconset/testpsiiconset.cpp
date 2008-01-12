@@ -3,7 +3,6 @@
 #include <QStringList>
 #include <Q3PtrList>
 
-#include "common.h"
 #include "iconset.h"
 #include "psiiconset.h"
 

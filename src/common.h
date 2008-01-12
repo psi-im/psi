@@ -34,162 +34,45 @@
 // Options
 // -----------------------------------------------------------------------------
 
-enum { 
-	cOnline, 
-	cOffline, 
-	cAway, 
-	cDND, 
-	cProfileFore, 
-	cProfileBack, 
-	cGroupFore, 
-	cGroupBack, 
-	cListBack, 
-	cAnimFront, 
-	cAnimBack,
-	cStatus,
-	cNumColors // A guard to store the number of colors
-};
-enum { fRoster, fMessage, fChat, fPopup };
-enum { eMessage, eChat1, eChat2, eHeadline, eSystem, eOnline, eOffline, eSend, eIncomingFT, eFTComplete };
 enum { dcClose, dcHour, dcDay, dcNever };
 
-struct Options
-{
-	QColor color[cNumColors];
-	QString font[4];
-	int smallFontSize; // do not modify or save/load this value! it is calculated at run time!
-	int alertStyle;
 
-	QString systemIconset;
-	QStringList emoticons;
-	QString defaultRosterIconset;
+struct ToolbarPrefs {
+	bool dirty;
+
+	QString name;
+	bool on;
+	bool locked;
+	bool stretchable;
+	QStringList keys;
+
+	Qt::Dock dock;
+	int index;
+	bool nl;
+	int extraOffset;
+};
+
+
+struct lateMigrationOptions
+{
+
 	QMap<QString, QString> serviceRosterIconset;
 	QMap<QString, QString> customRosterIconset;
 
-	bool useleft, singleclick, hideMenubar, askOnline, askOffline, popupMsgs, popupChats, popupHeadlines, popupFiles, raise;
-	bool alwaysOnTop, noAwaySound, noAwayPopup, noUnlistedPopup, rosterAnim, autoVCardOnLogin, xmlConsoleOnLogin;
-	bool useDock, dockDCstyle, dockHideMW, dockToolMW;
-	bool smallChats, chatLineEdit, useTabs, putTabsAtBottom, usePerTabCloseButton, autoRosterSize, autoRosterSizeGrowTop, autoResolveNicksOnAdd, brushedMetal;
-
-	bool autoCopy; // although this setting is ignored under linux,
-	               // it is preserved in case user uses the same config file on different platforms
-	bool useCaps;
-
-	bool oldSmallChats; //Filthy hack, see chat code.
-	int delChats, browser;
-	
-	bool useRC;
-
-	int defaultAction;
-	int incomingAs;
-	QStringList recentStatus; //recent status messages
 	QMap<QString,StatusPreset> sp; // Status message presets.
 
-	int asAway, asXa, asOffline;
-	bool use_asAway, use_asXa, use_asOffline;
-	QString asMessage;
-	QString onevent[10];
-
-	// Added by Kiko 020621: points to the directory where the trusted
-	// certificates used in validating the server's certificate are kept
-	QString trustCertStoreDir;
-
-	QString player;
-
-	bool ignoreHeadline, ignoreNonRoster, excludeGroupChatsFromIgnore, scrollTo, keepSizes, useEmoticons, alertOpenChats;
-	bool raiseChatWindow, showSubjects, showCounter, chatSays, showGroupCounts;
-
-	QSize sizeEventDlg, sizeChatDlg, sizeTabDlg;
-	bool jidComplete, grabUrls, noGCSound;
-
-	struct ToolbarPrefs {
-		bool dirty;
-
-		QString name;
-		bool on;
-		bool locked;
-		bool stretchable;
-		QStringList keys;
-
-		Qt::Dock dock;
-		int index;
-		bool nl;
-		int extraOffset;
-	};
 	QMap< QString, QList<ToolbarPrefs> > toolbars;
-
-	// groupchat highlighting/nick colouring
-	bool gcHighlighting, gcNickColoring;
-	QStringList gcHighlights, gcNickColors;
-
-	bool clNewHeadings;
-	bool outlineHeadings;
-
-	// passive popups
-	bool ppIsOn;
-	bool ppMessage, ppHeadline, ppChat, ppOnline, ppStatus, ppOffline, ppFile;
-	int  ppJidClip, ppStatusClip, ppTextClip, ppHideTime;
-	QColor ppBorderColor;
-
-	// Bouncing of the dock (Mac OS X)
-	typedef enum { NoBounce, BounceOnce, BounceForever } BounceDockSetting;
-	BounceDockSetting bounceDock;
-
-	struct {
-		bool roster, services;
-	} lockdown;
-
-	bool useTransportIconsForContacts;
-
-	// roster sorting styles
-	typedef enum Roster_ContactSortStyle {
-		ContactSortStyle_Status = 0,
-		ContactSortStyle_Alpha
-	};
-	Roster_ContactSortStyle rosterContactSortStyle;
-
-	typedef enum Roster_GroupSortStyle {
-		GroupSortStyle_Alpha = 0,
-		GroupSortStyle_Rank
-	};
-	Roster_GroupSortStyle rosterGroupSortStyle;
-
-	typedef enum Roster_AccountSortStyle {
-		AccountSortStyle_Alpha = 0,
-		AccountSortStyle_Rank
-	};
-	Roster_AccountSortStyle rosterAccountSortStyle;
-
-	bool discoItems, discoInfo;
-
-	bool autoAuth, notifyAuth;
-
-	// event priority
-	enum { EventPriorityDontCare = -1 };
-	int eventPriorityHeadline;
-	int eventPriorityChat;
-	int eventPriorityMessage;
-	int eventPriorityAuth;
-	int eventPriorityFile;
-	int eventPriorityRosterExchange;
-
-	// Message events
-	bool messageEvents;
-	bool inactiveEvents;
-
-	int dtPort;
-	QString dtExternal;
-
-	// Last used path remembering
-	QString lastPath;
-	QString lastSavePath;
-
-	//background images
-	QString chatBgImage, rosterBgImage;
 };
 
-extern
-Options option;
+// used to be part of the global options struct. 
+// do not modify or save/load this value! it is calculated at run time!
+// FIXME find it a new home!
+extern int common_smallFontSize;
+
+// used to be part of the global options struct. 
+// FIXME find it a new home!
+enum { EventPriorityDontCare = -1 };
+
 
 // -----------------------------------------------------------------------------
 // Status
@@ -252,9 +135,11 @@ bool operator!=(const QMap<QString, QString> &, const QMap<QString, QString> &);
 
 bool fileCopy(const QString &src, const QString &dest);
 
+
+// used in option migration
+QString soundDetectPlayer();
 void soundPlay(const QString &);
 
 extern Qt::WFlags psi_dialog_flags;
-extern bool useSound;
 
 #endif

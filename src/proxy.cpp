@@ -36,8 +36,10 @@
 //Added by qt3to4:
 #include <QHBoxLayout>
 #include <QList>
+#include <QDebug>
 #include "common.h"
 #include "iconwidget.h"
+#include "psioptions.h"
 
 static QDomElement textTag(QDomDocument &doc, const QString &name, const QString &content)
 {
@@ -143,6 +145,29 @@ ProxySettings::ProxySettings()
 	useAuth = false;
 }
 
+#define PASSWORDKEY "Cae1voo:ea}fae2OCai|f1il"
+
+void ProxySettings::toOptions(OptionsTree* o, QString base) const
+{
+	o->setOption(base + ".host", host);
+	o->setOption(base + ".port", port);
+	o->setOption(base + ".url", url);
+	o->setOption(base + ".useAuth", useAuth);
+	o->setOption(base + ".user", user);
+	o->setOption(base + ".pass", encodePassword(pass, PASSWORDKEY));
+}
+
+void ProxySettings::fromOptions(OptionsTree* o, QString base)
+{
+	host = o->getOption(base + ".host").toString();
+	port = o->getOption(base + ".port").toInt();
+	url = o->getOption(base + ".url").toString();
+	useAuth = o->getOption(base + ".useAuth").toBool();
+	user = o->getOption(base + ".user").toString();
+	pass = decodePassword(o->getOption(base + ".pass").toString(), PASSWORDKEY);
+}
+	
+	
 QDomElement ProxySettings::toXml(QDomDocument *doc) const
 {
 	QDomElement e = doc->createElement("proxySettings");
@@ -303,7 +328,7 @@ public:
 	int last;
 };
 
-ProxyDlg::ProxyDlg(const ProxyItemList &list, const QStringList &methods, int def, QWidget *parent)
+ProxyDlg::ProxyDlg(const ProxyItemList &list, const QStringList &methods, const QString &def, QWidget *parent)
 	: QDialog(parent)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
@@ -331,12 +356,17 @@ ProxyDlg::ProxyDlg(const ProxyItemList &list, const QStringList &methods, int de
 	cb_type->insertStringList(methods);
 	connect(cb_type, SIGNAL(activated(int)), SLOT(cb_activated(int)));
 
-	for(ProxyItemList::ConstIterator it = d->list.begin(); it != d->list.end(); ++it)
+	int defIdx = -1;
+	int i = 0;
+	for(ProxyItemList::ConstIterator it = d->list.begin(); it != d->list.end(); ++it) {
 		lbx_proxy->insertItem((*it).name);
+		if ((*it).id == def) defIdx= i;
+		++i;
+	}
 	if(!list.isEmpty()) {
-		if(def < 0)
-			def = 0;
-		lbx_proxy->setCurrentItem(def);
+		if(defIdx < 0)
+			defIdx = 0;
+		lbx_proxy->setCurrentItem(defIdx);
 		selectCurrent();
 	}
 
@@ -354,7 +384,7 @@ ProxyDlg::~ProxyDlg()
 void ProxyDlg::proxy_new()
 {
 	ProxyItem s;
-	s.id = -1; // id of -1 means 'new'
+	s.id = ""; // id of "" means 'new'
 	s.name = getUniqueName();
 	d->list += s;
 
@@ -530,50 +560,57 @@ ProxyChooser::~ProxyChooser()
 	delete d;
 }
 
-int ProxyChooser::currentItem() const
+QString ProxyChooser::currentItem() const
 {
-	return d->cb_proxy->currentItem();
+	return d->cb_proxy->itemData(d->cb_proxy->currentItem()).toString();
 }
 
-void ProxyChooser::setCurrentItem(int x)
+void ProxyChooser::setCurrentItem(const QString &id)
 {
-	d->cb_proxy->setCurrentItem(x);
+	d->cb_proxy->setCurrentItem(d->cb_proxy->findData(id));
 }
+
+void ProxyChooser::pm_settingsChangedApply()
+{
+	disconnect(d->m, SIGNAL(settingsChanged()), this, SLOT(pm_settingsChangedApply()));
+	QString prev = currentItem();
+	buildComboBox();
+	prev = d->m->lastEdited();
+	int x = d->cb_proxy->findData(prev);
+	if(x == -1) {
+		d->cb_proxy->setCurrentItem(0);
+	} else {
+		d->cb_proxy->setCurrentItem(x);
+	}
+}
+
 
 void ProxyChooser::pm_settingsChanged()
 {
-	int x = d->cb_proxy->currentItem();
+	QString prev = currentItem();
 	buildComboBox();
-	if(x >= 1) {
-		x = d->m->findOldIndex(x-1);
-		if(x == -1)
-			d->cb_proxy->setCurrentItem(0);
-		else
-			d->cb_proxy->setCurrentItem(x+1);
-	}
-	else {
-		x = d->m->lastEdited();
-		if(x != -1)
-			d->cb_proxy->setCurrentItem(x+1);
+	int x = d->cb_proxy->findData(prev);
+	if(x == -1) {
+		d->cb_proxy->setCurrentItem(0);
+	} else {
+		d->cb_proxy->setCurrentItem(x);
 	}
 }
 
 void ProxyChooser::buildComboBox()
 {
 	d->cb_proxy->clear();
-	d->cb_proxy->insertItem(tr("None"));
+	d->cb_proxy->addItem(tr("None"), "");
 	ProxyItemList list = d->m->itemList();
-	for(ProxyItemList::ConstIterator it = list.begin(); it != list.end(); ++it)
-		d->cb_proxy->insertItem((*it).name);
+	foreach(ProxyItem pi, list) {
+		d->cb_proxy->addItem(pi.name, pi.id);
+	}
 }
 
 void ProxyChooser::doOpen()
 {
-	int x = d->cb_proxy->currentItem();
-	if(x < 1)
-		x = -1;
-	else
-		--x;
+	QString x = d->cb_proxy->itemData(d->cb_proxy->currentItem()).toString();
+	connect(d->m, SIGNAL(settingsChanged()), SLOT(pm_settingsChangedApply()));
 	d->m->openDialog(x);
 }
 
@@ -593,16 +630,24 @@ class ProxyManager::Private
 public:
 	Private() {}
 
-	ProxyItemList list;
 	QPointer<ProxyDlg> pd;
 	QList<int> prevMap;
-	int lastEdited;
+	QString lastEdited;
+	OptionsTree *o;
+	
+	void itemToOptions(ProxyItem pi) {
+		QString base = "proxies." + pi.id;
+		pi.settings.toOptions( o, base);
+		o->setOption(base + ".name", pi.name);
+		o->setOption(base + ".type", pi.type);
+	}
 };
 
-ProxyManager::ProxyManager(QObject *parent)
-:QObject(parent)
+ProxyManager::ProxyManager(OptionsTree *opt, QObject *parent)
+		: QObject(parent)
 {
 	d = new Private;
+	d->o = opt;
 }
 
 ProxyManager::~ProxyManager()
@@ -617,23 +662,36 @@ ProxyChooser *ProxyManager::createProxyChooser(QWidget *parent)
 
 ProxyItemList ProxyManager::itemList() const
 {
-	return d->list;
+	QList<ProxyItem> proxies;
+	QString opt = "proxies";
+	QStringList keys = d->o->getChildOptionNames(opt, true, true);
+	foreach(QString key, keys) {
+		proxies += getItem(key.mid(opt.length()+1));
+	}
+	return proxies;
 }
 
-const ProxyItem & ProxyManager::getItem(int x) const
+ProxyItem ProxyManager::getItem(const QString &x) const
 {
-	return d->list[x];
+	QString base = "proxies." + x;
+	ProxyItem pi;
+	pi.settings.fromOptions( d->o, base);
+	pi.name = d->o->getOption(base + ".name").toString();
+	pi.type = d->o->getOption(base + ".type").toString();
+	pi.id = x;
+	return pi;
 }
 
-int ProxyManager::lastEdited() const
+QString ProxyManager::lastEdited() const
 {
 	return d->lastEdited;
 }
 
-void ProxyManager::setItemList(const ProxyItemList &list)
+void ProxyManager::migrateItemList(const ProxyItemList &list)
 {
-	d->list = list;
-	assignIds();
+	foreach(ProxyItem pi, list) {
+		d->itemToOptions(pi);
+	}
 }
 
 QStringList ProxyManager::methodList() const
@@ -645,12 +703,12 @@ QStringList ProxyManager::methodList() const
 	return list;
 }
 
-void ProxyManager::openDialog(int def)
+void ProxyManager::openDialog(QString def)
 {
 	if(d->pd)
 		bringToFront(d->pd);
 	else {
-		d->pd = new ProxyDlg(d->list, methodList(), def, 0);
+		d->pd = new ProxyDlg(itemList(), methodList(), def, 0);
 		connect(d->pd, SIGNAL(applyList(const ProxyItemList &, int)), SLOT(pd_applyList(const ProxyItemList &, int)));
 		d->pd->show();
 	}
@@ -658,38 +716,34 @@ void ProxyManager::openDialog(int def)
 
 void ProxyManager::pd_applyList(const ProxyItemList &list, int x)
 {
-	d->list = list;
-	d->lastEdited = x;
-
-	// grab old id list
-	d->prevMap.clear();
-	for(ProxyItemList::ConstIterator it = d->list.begin(); it != d->list.end(); ++it)
-		d->prevMap += (*it).id;
-	assignIds(); // re-assign proper ids
-
-	settingsChanged();
-}
-
-void ProxyManager::assignIds()
-{
-	int n = 0;
-	for(ProxyItemList::Iterator it = d->list.begin(); it != d->list.end(); ++it)
-		(*it).id = n++;
-}
-
-int ProxyManager::findOldIndex(int x) const
-{
-	int newPos = 0;
-	bool found = false;
-	for(QList<int>::ConstIterator it = d->prevMap.begin(); it != d->prevMap.end(); ++it) {
-		if(*it == x) {
-			found = true;
-			break;
-		}
-		++newPos;
+	QSet<QString> current;
+	
+	QString opt = "proxies";
+	QStringList old = d->o->getChildOptionNames(opt, true, true);
+	for (int i=0; i < old.size(); i++) {
+		old[i] = old[i].mid(opt.length()+1);
 	}
-	if(found)
-		return newPos;
-	else
-		return -1;
+	
+	// Update all
+	int idx = 0;
+	int i = 0;
+	foreach(ProxyItem pi, list) {
+		if (pi.id.isEmpty()) {
+			do {
+				pi.id = "a"+QString::number(idx++);
+			} while (old.contains(pi.id) || current.contains(pi.id));
+		}
+		d->itemToOptions(pi);
+		current += pi.id;
+		
+		if (i++ == x) d->lastEdited = pi.id;
+	}
+	
+	// and remove removed
+	foreach(QString key, old.toSet() - current) {
+		d->o->removeOption("proxies." + key, true);
+		emit proxyRemoved(key);
+	}	
+	
+	settingsChanged();
 }

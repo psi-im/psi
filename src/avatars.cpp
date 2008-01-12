@@ -60,7 +60,7 @@ using namespace QCA;
 
 static QByteArray scaleAvatar(const QByteArray& b)
 {
-	//int maxSize = (option.avatarsSize > MAX_AVATAR_SIZE ? MAX_AVATAR_SIZE : option.avatarsSize);
+	//int maxSize = (LEGOPTS.avatarsSize > MAX_AVATAR_SIZE ? MAX_AVATAR_SIZE : LEGOPTS.avatarsSize);
 	int maxSize = AvatarFactory::maxAvatarSize();
 	QImage i(b);
 	if (i.isNull()) {

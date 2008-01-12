@@ -33,6 +33,8 @@
 #include "xmpp_roster.h"
 #include "xmpp_jid.h"
 
+class OptionsTree;
+
 class UserAccount
 {
 public:
@@ -43,6 +45,9 @@ public:
 
 	QDomElement toXml(QDomDocument &, const QString &tagName);
 	void fromXml(const QDomElement &);
+	
+	void fromOptions(OptionsTree *o, QString base);
+	void toOptions(OptionsTree *o, QString base=QString());
 
 	QString name;
 	QString jid, pass, host, resource, authid, realm;
@@ -50,16 +55,13 @@ public:
 	int port, priority;
  	bool opt_enabled, opt_pass, opt_host, opt_auto, opt_keepAlive, opt_log, opt_reconn, opt_ignoreSSLWarnings, opt_compress;
 	XMPP::ClientStream::AllowPlainType allow_plain;
-	bool tog_offline, tog_away, tog_agents, tog_hidden, tog_self;
 	bool req_mutual_auth;
 	bool legacy_ssl_probe;
 	bool opt_automatic_resource;
 	int security_level;
 	enum SSLFlag { SSL_No = 0, SSL_Yes = 1, SSL_Auto = 2, SSL_Legacy = 3 } ssl;
 
-	int proxy_index;
-	int proxy_type, proxy_port;
-	QString proxy_host, proxy_user, proxy_pass;
+	QString proxyID;
 
 	XMPP::Roster roster;
 
@@ -74,31 +76,34 @@ public:
 	VarList keybind;
 
 	XMPP::Jid dtProxy;
+	
+	QString optionsBase;
+	
+	
+	/* migration only */
+	int proxy_index;
+	int proxy_type, proxy_port;
+	QString proxy_host, proxy_user, proxy_pass;
+	bool tog_offline, tog_away, tog_agents, tog_hidden, tog_self;
 };
 
 typedef QList<UserAccount> UserAccountList;
 
 
-class UserProfile
+class OptionsMigration
 {
 public:
-	UserProfile();
-
-	void reset();
-	bool toFile(const QString &);
 	bool fromFile(const QString &);
+	
+	void lateMigration();
 
-	QString progver;
-	UserAccountList acc;
-	Options prefs;
+	//QString progver;
+	UserAccountList accMigration;
 
-	QRect mwgeom;
-	QStringList recentGCList;
-	QStringList recentBrowseList;
-	QString lastStatusString;
-	bool useSound;
-
-	ProxyItemList proxyList;
+	ProxyItemList proxyMigration;
+	
+private:
+	lateMigrationOptions lateMigrationData;
 };
 
 QString pathToProfile(const QString &);

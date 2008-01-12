@@ -202,7 +202,7 @@ public:
 	bool isShowHidden() const { return v_showHidden; }
 	bool isShowSelf() const { return v_showSelf; }
 	bool isShowStatusMsg() const { return v_showStatusMsg; }
-
+	
 	bool filterContact(ContactViewItem *item, bool refineSearch = false);
 	bool filterGroup(ContactViewItem *item, bool refineSearch = false);
 	void setFilter(QString const &text);

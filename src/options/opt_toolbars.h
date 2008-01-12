@@ -5,7 +5,6 @@
 
 class PsiCon;
 class PsiToolBar;
-struct Options;
 class QAction;
 class IconButton;
 class QListWidget;
@@ -18,10 +17,12 @@ public:
 	OptionsTabToolbars(QObject* parent);
 	~OptionsTabToolbars();
 
+	bool stretchable() const {return true;};
+	
 	//void setCurrentToolbar(PsiToolBar *);
 	QWidget* widget();
-	void applyOptions(Options *opt);
-	void restoreOptions(const Options* opt);
+	void applyOptions();
+	void restoreOptions();
 
 private slots:
 	void setData(PsiCon*, QWidget*);
@@ -42,10 +43,7 @@ private slots:
 	void selAct_selectionChanged(QListWidgetItem *);
 	void avaAct_selectionChanged(QTreeWidgetItem *);
 
-	void doApply();
 	void toolbarPositionApply();
-
-	void rebuildToolbarList();
 
 signals:
 	void dataChanged();
@@ -55,7 +53,6 @@ private:
 
 	QWidget *w;
 	QWidget *parent;
-	Options *opt;
 	PsiCon *psi;
 	bool noDirty;
 	IconButton *pb_apply;

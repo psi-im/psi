@@ -45,7 +45,6 @@
 #include "psiaccount.h"
 #include "psicon.h"
 #include "busywidget.h"
-#include "common.h"
 #include "iconaction.h"
 #include "psiiconset.h"
 #include "psitooltip.h"
@@ -1432,8 +1431,8 @@ DiscoDlg::DiscoDlg(PsiAccount *pa, const Jid &jid, const QString &node)
 	setAttribute(Qt::WA_DeleteOnClose);
   	setupUi(this);
 	// restore options
-	ck_autoItems->setChecked(option.discoItems);
-	ck_autoInfo->setChecked(option.discoInfo);
+	ck_autoItems->setChecked(PsiOptions::instance()->getOption("options.ui.service-discovery.automatically-get-items").toBool());
+	ck_autoInfo->setChecked(PsiOptions::instance()->getOption("options.ui.service-discovery.automatically-browse-into").toBool());
 
 	// initialize
 	d = new Private(this, pa);
@@ -1470,8 +1469,8 @@ DiscoDlg::~DiscoDlg()
 	delete d;
 
 	// save options
-	option.discoItems = ck_autoItems->isChecked();
-	option.discoInfo  = ck_autoInfo->isChecked();
+	PsiOptions::instance()->setOption("options.ui.service-discovery.automatically-get-items", (bool) ck_autoItems->isChecked());
+	PsiOptions::instance()->setOption("options.ui.service-discovery.automatically-browse-into", (bool) ck_autoInfo->isChecked());
 }
 
 void DiscoDlg::doDisco(QString host, QString node)

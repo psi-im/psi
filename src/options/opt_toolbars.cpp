@@ -6,6 +6,7 @@
 #include "psitoolbar.h"
 #include "iconaction.h"
 #include "psiactionlist.h"
+#include "psioptions.h"
 
 #include "ui_opt_lookfeel_toolbars.h"
 #include "ui_ui_positiontoolbar.h"
@@ -38,7 +39,7 @@ class PositionOptionsTabToolbars : public QDialog, public Ui::PositionToolbarUI
 {
 	Q_OBJECT
 public:
-	PositionOptionsTabToolbars(QWidget *parent, Options::ToolbarPrefs *, int);
+	PositionOptionsTabToolbars(QWidget *parent, ToolbarPrefs *, int);
 	~PositionOptionsTabToolbars();
 
 	int n();
@@ -55,10 +56,10 @@ private slots:
 
 private:
 	int id;
-	Options::ToolbarPrefs *tb;
+	ToolbarPrefs *tb;
 };
 
-PositionOptionsTabToolbars::PositionOptionsTabToolbars(QWidget *parent, Options::ToolbarPrefs *_tb, int _id)
+PositionOptionsTabToolbars::PositionOptionsTabToolbars(QWidget *parent, ToolbarPrefs *_tb, int _id)
 : QDialog(parent)
 {
 	setupUi(this);
@@ -145,27 +146,31 @@ bool PositionOptionsTabToolbars::eventFilter(QObject *watched, QEvent *e)
 class OptionsTabToolbars::Private
 {
 public:
-	struct ToolbarItem {
-		QString group;
-		int index;
-		ToolbarItem() {
-			group = "";
-			index = -1;
-		}
-		ToolbarItem( QString _w, int _i ) {
-			group = _w;
-			index = _i;
-		}
-	};
+// 	struct ToolbarItem {
+// 		QString group;
+// 		int index;
+// 		ToolbarItem() {
+// 			group = "";
+// 			index = -1;
+// 		}
+// 		ToolbarItem( QString _w, int _i ) {
+// 			group = _w;
+// 			index = _i;
+// 		}
+// 	};
 
-	QMap<int, ToolbarItem> toolbars;
-
-	PsiActionList::ActionsType class2id( QString name ) {
+	QMap<QString, ToolbarPrefs> toolbarsCurrent;
+	// hack: can't really assign real ids to new toolbars before apply
+	// So new toolbars will get "..%n" as name (is invalid in OptionsTree)
+	int newTBidx;
+	QMap<QString, ToolbarPrefs> toolbarsNew;
+	QSet<QString> toolbarsDirty;
+	QSet<QString> toolbarsDelete;
+	
+	
+	PsiActionList::ActionsType class2id() {
 		int ret = (int)PsiActionList::Actions_Common;
-
-		if ( name == "mainWin" )
-			ret |= (int)PsiActionList::Actions_MainWin;
-
+		ret |= (int)PsiActionList::Actions_MainWin;
 		return (PsiActionList::ActionsType)ret;
 	}
 };
@@ -176,8 +181,9 @@ OptionsTabToolbars::OptionsTabToolbars(QObject *parent)
 	w = 0;
 	p = new Private();
 
+	p->newTBidx=0;
+	
 	noDirty = false;
-	opt = new Options;
 }
 
 QWidget *OptionsTabToolbars::widget()
@@ -253,7 +259,6 @@ QWidget *OptionsTabToolbars::widget()
 
 OptionsTabToolbars::~OptionsTabToolbars()
 {
-	delete opt;
 	delete p;
 }
 
@@ -289,59 +294,94 @@ void OptionsTabToolbars::setData(PsiCon * psi_, QWidget *parent_)
 	}
 }*/
 
-void OptionsTabToolbars::applyOptions(Options *o)
-{
-	if ( !w )
-		opt->toolbars = o->toolbars;
-
-	// get current toolbars' positions
-	QList<PsiToolBar*> toolbars = psi->toolbarList();
-	for (int i = 0; i < opt->toolbars["mainWin"].count() && i < toolbars.count(); i++) {
-		//if ( toolbarPositionInProgress && posTbDlg->n() == (int)i )
-		//	continue;
-
-		Options::ToolbarPrefs &tbPref = opt->toolbars["mainWin"][i];
-		psi->getToolbarLocation(toolbars.at(i), tbPref.dock, tbPref.index, tbPref.nl, tbPref.extraOffset);
-	}
-
-	// apply options
-	o->toolbars = opt->toolbars;
-
-	doApply();
-}
-
-void OptionsTabToolbars::rebuildToolbarList()
-{
-	LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
-
-	d->cb_toolbars->clear();
-	p->toolbars.clear();
-
-	QMap< QString, QList<Options::ToolbarPrefs> >::Iterator it = opt->toolbars.begin();
-	for ( ; it != opt->toolbars.end(); ++it ) {
-		if ( p->toolbars.count() )
-			d->cb_toolbars->insertItem( "---" ); // TODO: think of better separator
-
-		int i = 0;
-		QList<Options::ToolbarPrefs>::Iterator it2 = it.data().begin();
-		for ( ; it2 != it.data().end(); ++it2, ++i ) {
-			d->cb_toolbars->insertItem( (*it2).name );
-			p->toolbars[d->cb_toolbars->count()-1] = Private::ToolbarItem( it.key(), i );
-		}
-	}
-}
-
-void OptionsTabToolbars::restoreOptions(const Options *o)
+void OptionsTabToolbars::applyOptions()
 {
 	if ( !w )
 		return;
 
 	LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
-	opt->toolbars = o->toolbars;
-	opt->hideMenubar = o->hideMenubar;
 
-	rebuildToolbarList();
+	PsiOptions *o = PsiOptions::instance();
+	
+	
+	foreach (QString base, p->toolbarsDelete) {
+		o->removeOption(base, true);
+		// UI will auto updated by option change signal.
+	}
+	p->toolbarsDelete.clear();
+	foreach (QString base, p->toolbarsDirty) {
+		ToolbarPrefs tb = p->toolbarsCurrent[base];
+		// update options
+		PsiToolBar::structToOptions(base, &tb);
+		// UI will auto updated by option change signal.
+	}
+	p->toolbarsDirty.clear();
+	
+	QStringList toolbarBases = o->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
+	int idx = 0;
+	foreach (QString pseudoBase, p->toolbarsNew.keys()) {
+		ToolbarPrefs tb = p->toolbarsNew[pseudoBase];
+	
+		// get a real base
+		QString base;
+		do {
+			base = "options.ui.contactlist.toolbars" ".a" + QString::number(idx++);
+		} while (toolbarBases.contains(base));
+		toolbarBases += base;
+		PsiToolBar::structToOptions(base, &tb);
+		
+		// merge to current
+		p->toolbarsCurrent[base] = tb;
+		d->cb_toolbars->setItemData(d->cb_toolbars->findData(pseudoBase), base);
+		// update options
+		PsiToolBar::structToOptions(base, &tb);
+		// update ui
+		psi->addToolbar(base);
+	}
+	p->toolbarsNew.clear();
+		
+	
 
+/* old stuff
+	// get current toolbars' positions
+	QList<PsiToolBar*> toolbars = psi->toolbarList();
+	for (int i = 0; i < LEGOPTS.toolbars["mainWin"].count() && i < toolbars.count(); i++) {
+		//if ( toolbarPositionInProgress && posTbDlg->n() == (int)i )
+		//	continue;
+
+		Options::ToolbarPrefs &tbPref = LEGOPTS.toolbars["mainWin"][i];
+		//psi->getToolbarLocation(toolbars.at(i), tbPref.dock, tbPref.index, tbPref.nl, tbPref.extraOffset);
+	}
+*/
+}
+
+void OptionsTabToolbars::restoreOptions()
+{
+	if ( !w )
+		return;
+
+	LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
+
+	PsiOptions *o = PsiOptions::instance();
+	
+	QStringList toolbarBases = o->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
+	
+	foreach(QString base, toolbarBases) {
+		ToolbarPrefs tb;
+		tb.name = o->getOption(base + ".name").toString();
+		tb.on = o->getOption(base + ".visible").toBool();
+		tb.locked = o->getOption(base + ".locked").toBool();
+		tb.stretchable = o->getOption(base + ".stretchable").toBool();
+		tb.dock = (Qt::Dock)o->getOption(base + ".dock.position").toInt(); //FIXME
+		tb.index = o->getOption(base + ".dock.index").toInt();
+		tb.nl = o->getOption(base + ".dock.nl").toBool();
+		tb.extraOffset = o->getOption(base + ".dock.extra-offset").toInt();
+		tb.keys = o->getOption(base + ".actions").toStringList();
+		
+		p->toolbarsCurrent[base] = tb;
+		d->cb_toolbars->addItem(tb.name, base);
+	}
+	
 	if(d->cb_toolbars->count() > 0) {
 		d->cb_toolbars->setCurrentIndex( 0 );
 		toolbarSelectionChanged( 0 );
@@ -358,8 +398,25 @@ void OptionsTabToolbars::toolbarAdd()
 
 	int i = d->cb_toolbars->count();
 
-	Options::ToolbarPrefs tb;
-	tb.name = QObject::tr("<unnamed>");
+	ToolbarPrefs tb;
+	int j = 0;
+	bool ok;
+	do {
+		ok = true;
+		tb.name = QObject::tr("<unnamed%1>").arg(j++);
+		foreach(ToolbarPrefs other, p->toolbarsNew) {
+			if (other.name == tb.name) {
+				ok = false;
+				break;
+			}
+		}
+		if (ok) foreach(ToolbarPrefs other, p->toolbarsCurrent) {
+			if (other.name == tb.name) {
+				ok = false;
+				break;
+			}
+		}
+	} while (!ok);
 	tb.on = false;
 	tb.locked = false;
 	tb.stretchable = false;
@@ -372,9 +429,18 @@ void OptionsTabToolbars::toolbarAdd()
 
 	tb.dirty = true;
 
-	opt->toolbars["mainWin"].append(tb);
+	QString base;
+	j=0;
+	do {
+		ok = true;
+		base = ".." + QString::number(j++);
+	} while (p->toolbarsNew.keys().contains(base));
+	qDebug() << "allocted " << base << " for new toolbar";
+	
+	p->toolbarsNew[base] = tb;
 
-	rebuildToolbarList();
+	d->cb_toolbars->addItem(tb.name, base);
+
 	d->cb_toolbars->setCurrentIndex( d->cb_toolbars->count()-1 );
 	toolbarSelectionChanged( d->cb_toolbars->currentIndex() );
 
@@ -385,21 +451,24 @@ void OptionsTabToolbars::toolbarDelete()
 {
 	LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
 	int n = d->cb_toolbars->currentIndex();
+	
+	QString base = d->cb_toolbars->itemData(n).toString();
+	qDebug() << "removing " << base;
 
-	{
-		int idx = p->toolbars[n].index;
-		QList<Options::ToolbarPrefs>::Iterator it = opt->toolbars[p->toolbars[n].group].begin();
-		for (int i = 0; i < idx; i++)
-			++it;
-
-		noDirty = true;
-		opt->toolbars[p->toolbars[n].group].remove(it);
-
-		toolbarSelectionChanged(-1);
-		rebuildToolbarList();
-		noDirty = false;
-		toolbarSelectionChanged( d->cb_toolbars->currentIndex() );
+	noDirty = true;
+	toolbarSelectionChanged(-1);
+	
+	if (p->toolbarsNew.contains(base)) {
+		p->toolbarsNew.remove(base);
+	} else {
+		p->toolbarsCurrent.remove(base);
+		p->toolbarsDelete += base;
 	}
+	
+	d->cb_toolbars->removeItem(d->cb_toolbars->findData(base));
+	
+	noDirty = false;
+	toolbarSelectionChanged( d->cb_toolbars->currentIndex() );
 }
 
 void OptionsTabToolbars::addToolbarAction(QListWidget *parent, QString name, int toolbarId)
@@ -429,12 +498,12 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 		return;
 
 	int n = item;
-	PsiToolBar *toolBar = 0;
-	if ( item != -1 )
-		toolBar = psi->findToolBar( p->toolbars[n].group, p->toolbars[n].index );
+//	PsiToolBar *toolBar = 0;
+//	if ( item != -1 )
+//		toolBar = psi->findToolBar( p->toolbars[n].group, p->toolbars[n].index );
 
-	bool customizeable = toolBar ? toolBar->isCustomizeable() : true;
-	bool moveable      = toolBar ? toolBar->isMoveable() : true;
+	bool customizeable = true;
+	bool moveable      = true;
 
 	LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
 	bool enable = (item == -1) ? false: true;
@@ -449,7 +518,7 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 	d->tb_down->setEnabled( enable && customizeable );
 	d->tb_left->setEnabled( enable && customizeable );
 	d->tb_right->setEnabled( enable && customizeable );
-	d->pb_deleteToolbar->setEnabled( enable && p->toolbars[n].group == "mainWin" );
+	d->pb_deleteToolbar->setEnabled( enable );
 	d->cb_toolbars->setEnabled( enable );
 
 	d->tw_availActions->clear();
@@ -462,7 +531,15 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 
 	noDirty = true;
 
-	Options::ToolbarPrefs tb = opt->toolbars[p->toolbars[n].group][p->toolbars[n].index];
+	QString base = d->cb_toolbars->itemData(n).toString();
+	ToolbarPrefs tb;
+	if (p->toolbarsNew.contains(base)) {
+		tb = p->toolbarsNew[base];
+	} else {
+		tb = p->toolbarsCurrent[base];
+	}
+	
+	
 	d->le_toolbarName->setText( tb.name );
 	d->ck_toolbarOn->setChecked( tb.on );
 	d->ck_toolbarLocked->setChecked( tb.locked || !moveable );
@@ -473,7 +550,7 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 		QTreeWidget *tw = d->tw_availActions;
 		QTreeWidgetItem *lastRoot = 0;
 
-		foreach(ActionList* actionList, psi->actionList()->actionLists( p->class2id( p->toolbars[n].group ) )) {
+		foreach(ActionList* actionList, psi->actionList()->actionLists( p->class2id() )) {
 			QTreeWidgetItem *root = new QTreeWidgetItem(tw, lastRoot);
 			lastRoot = root;
 			root->setText( 0, actionList->name() );
@@ -485,12 +562,13 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 			QStringList::Iterator it2 = actionNames.begin();
 			for ( ; it2 != actionNames.end(); ++it2 ) {
 				IconAction *action = actionList->action( *it2 );
-		        	QTreeWidgetItem *item = new QTreeWidgetItem( root, last );
+				QTreeWidgetItem *item = new QTreeWidgetItem( root, last );
 				last = item;
 
 				QString n = actionName((QAction *)action);
-				if ( !action->whatsThis().isEmpty() )
+				if ( !action->whatsThis().isEmpty() ) {
 					n += " - " + action->whatsThis();
+				}
 				item->setText( 0, n );
 				item->setIcon( 0, action->iconSet() );
 				item->setData( 0, Qt::UserRole, action->name() );
@@ -501,7 +579,7 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 
 	QStringList::Iterator it = tb.keys.begin();
 	for ( ; it != tb.keys.end(); ++it) {
-		addToolbarAction(d->lw_selectedActions, *it, p->class2id( p->toolbars[n].group ) );
+		addToolbarAction(d->lw_selectedActions, *it, p->class2id());
 	}
 	updateArrows();
 
@@ -520,10 +598,16 @@ void OptionsTabToolbars::rebuildToolbarKeys()
 	int count = d->lw_selectedActions->count();
 	for (int i = 0; i < count; i++) {
 		keys << d->lw_selectedActions->item(i)->data(Qt::UserRole).toString();
-        }
+	}
 
-	opt->toolbars["mainWin"][n].keys  = keys;
-	opt->toolbars["mainWin"][n].dirty = true;
+	QString base = d->cb_toolbars->itemData(n).toString();
+	if (p->toolbarsNew.contains(base)) {
+		p->toolbarsNew[base].keys = keys;
+	} else {
+		p->toolbarsCurrent[base].keys = keys;
+		p->toolbarsDirty += base;
+	}
+		
 	emit dataChanged();
 }
 
@@ -559,9 +643,18 @@ void OptionsTabToolbars::toolbarNameChanged()
 	if ( !d->cb_toolbars->count() )
 		return;
 
+	QString name = d->le_toolbarName->text();
+	
 	int n = d->cb_toolbars->currentIndex();
-	d->cb_toolbars->changeItem(d->le_toolbarName->text(), n);
-	opt->toolbars["mainWin"][n].name = d->le_toolbarName->text();
+	QString base = d->cb_toolbars->itemData(n).toString();
+	if (p->toolbarsNew.contains(base)) {
+		p->toolbarsNew[base].name = name;
+	} else {
+		p->toolbarsCurrent[base].name = name;
+		p->toolbarsDirty += base;
+	}
+	
+	d->cb_toolbars->setItemText(d->cb_toolbars->findData(base), name);
 
 	emit dataChanged();
 }
@@ -609,7 +702,7 @@ void OptionsTabToolbars::toolbarAddAction()
 	if ( !item || item->data(0, Qt::UserRole).toString().isEmpty() )
 		return;
 
-	addToolbarAction(d->lw_selectedActions, item->data(0, Qt::UserRole).toString(), p->class2id( p->toolbars[d->cb_toolbars->currentIndex()].group ) );
+	addToolbarAction(d->lw_selectedActions, item->data(0, Qt::UserRole).toString(), p->class2id());
 	rebuildToolbarKeys();
 	updateArrows();
 }
@@ -636,13 +729,30 @@ void OptionsTabToolbars::toolbarDataChanged()
 	if ( !d->cb_toolbars->count() )
 		return;
 	int n = d->cb_toolbars->currentIndex();
+	
+	
+	
+	QString base = d->cb_toolbars->itemData(n).toString();
+	ToolbarPrefs tb;
+	if (p->toolbarsNew.contains(base)) {
+		tb = p->toolbarsNew[base];
+	} else {
+		tb = p->toolbarsCurrent[base];
+		p->toolbarsDirty += base;
+	}
 
-	opt->toolbars["mainWin"][n].dirty = true;
-	opt->toolbars["mainWin"][n].name = d->le_toolbarName->text();
-	opt->toolbars["mainWin"][n].on = d->ck_toolbarOn->isChecked();
-	opt->toolbars["mainWin"][n].locked = d->ck_toolbarLocked->isChecked();
-	opt->toolbars["mainWin"][n].stretchable = d->ck_toolbarStretch->isChecked();
+	tb.dirty = true;
+	tb.name = d->le_toolbarName->text();
+	tb.on = d->ck_toolbarOn->isChecked();
+	tb.locked = d->ck_toolbarLocked->isChecked();
+	tb.stretchable = d->ck_toolbarStretch->isChecked();
 
+	if (p->toolbarsNew.contains(base)) {
+		p->toolbarsNew[base] = tb;
+	} else {
+		p->toolbarsCurrent[base] = tb;
+	}
+	
 	emit dataChanged();
 }
 
@@ -663,30 +773,30 @@ QString OptionsTabToolbars::actionName(const QAction *a)
 
 void OptionsTabToolbars::toolbarPosition()
 {
+#if 0
+ LEGOPTFIXME
 	LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
 	if ( !d->cb_toolbars->count() )
 		return;
 	int n = d->cb_toolbars->currentIndex();
 
-	PositionOptionsTabToolbars *posTbDlg = new PositionOptionsTabToolbars(w, &opt->toolbars["mainWin"][n], n);
+	PositionOptionsTabToolbars *posTbDlg = new PositionOptionsTabToolbars(w, &LEGOPTS.toolbars["mainWin"][n], n);
 	connect(posTbDlg, SIGNAL(applyPressed()), SLOT(toolbarPositionApply()));
 
 	posTbDlg->exec();
 	delete posTbDlg;
+#endif
 }
 
 void OptionsTabToolbars::toolbarPositionApply()
 {
+#if 0
+ LEGOPTFIXME
 	emit dataChanged();
 
-	option.toolbars = opt->toolbars;
+	LEGOPTS.toolbars = LEGOPTS.toolbars;
 	psi->buildToolbars();
-}
-
-void OptionsTabToolbars::doApply()
-{
-	option.toolbars = opt->toolbars;
-	psi->buildToolbars();
+#endif
 }
 
 void OptionsTabToolbars::selAct_selectionChanged(QListWidgetItem *)

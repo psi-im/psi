@@ -29,7 +29,6 @@
 
 class PsiEvent;
 class UserListItem;
-struct Options;
 namespace XMPP {
 	class Status;
 	class Jid;
@@ -43,7 +42,7 @@ public:
 	bool loadSystem();
 	bool loadAll();
 
-	bool optionsChanged(const Options *old); // returns 'true' if Psi needs to be restarted
+	bool optionsChanged();
 
 	Q3Dict<Iconset> roster;
 	Q3PtrList<Iconset> emoticons;

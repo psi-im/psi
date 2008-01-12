@@ -27,7 +27,6 @@
 
 #include "psioptions.h"
 #include "psicon.h"
-#include "common.h"
 
 void TipDlg::show(PsiCon* psi)
 {

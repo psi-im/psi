@@ -24,7 +24,6 @@
 
 #include "msgmle.h"
 #include "psioptions.h"
-#include "common.h"
 
 ChatEditProxy::ChatEditProxy(QWidget* parent)
 	: QWidget(parent)
@@ -112,10 +111,10 @@ void ChatEditProxy::updateLayout()
 
 /**
  * Update ChatEdit widget according to current options.
- * FIXME: When option.chatLineEdit finally makes it to PsiOptions, make this slot
+ * FIXME: When PsiOptions::instance()->getOption("options.ui.chat.use-expanding-line-edit").toBool() finally makes it to PsiOptions, make this slot
  *        private.
  */
 void ChatEditProxy::optionsChanged()
 {
-	setLineEditEnabled(option.chatLineEdit);
+	setLineEditEnabled(PsiOptions::instance()->getOption("options.ui.chat.use-expanding-line-edit").toBool());
 }

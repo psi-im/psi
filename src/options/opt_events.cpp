@@ -8,6 +8,7 @@
 #include <qlabel.h>
 #include <qcombobox.h>
 #include <qlineedit.h>
+#include "psioptions.h"
 
 #include "ui_opt_events.h"
 
@@ -54,6 +55,10 @@ QWidget *OptionsTabEvents::widget()
 		" not already in your list of contacts."));
 	QWhatsThis::add(d->cb_animation,
 		tr("What kind of animation should psi use for incoming event icons on the main window?"));
+	
+	d->cb_animation->setItemData ( 0, "no");
+	d->cb_animation->setItemData ( 1, "blink");
+	d->cb_animation->setItemData ( 2, "animate");
 /*	QWhatsThis::add(d->rb_aSolid,
 		tr("Does not animate or blink incoming event icons on the main window as they are received."));
 	QWhatsThis::add(d->rb_aBlink,
@@ -65,6 +70,11 @@ QWidget *OptionsTabEvents::widget()
 	QWhatsThis::add(d->ck_notifyAuth,
 		tr("Makes Psi notify you when your authorization request was approved."));
 
+	
+	d->cb_bounce->setItemData(0, "never");
+	d->cb_bounce->setItemData(1, "once");
+	d->cb_bounce->setItemData(2, "forever");
+	
 #ifndef Q_WS_MAC
 	d->cb_bounce->hide();
 	d->lb_bounce->hide();
@@ -77,58 +87,58 @@ QWidget *OptionsTabEvents::widget()
 	return w;
 }
 
-void OptionsTabEvents::applyOptions(Options *opt)
+void OptionsTabEvents::applyOptions()
 {
 	if ( !w )
 		return;
 
 	OptEventsUI *d = (OptEventsUI *)w;
-	opt->popupMsgs  = d->ck_popupMsgs->isChecked();
-	opt->popupChats = d->ck_popupMsgs->isChecked();
-	opt->popupHeadlines = d->ck_popupHeadlines->isChecked();
-	opt->popupFiles = d->ck_popupFiles->isChecked();
-	opt->noAwayPopup = !d->ck_allowAwayPopup->isChecked();
-	opt->noUnlistedPopup = !d->ck_allowUnlistedPopup->isChecked();
-	opt->raise = d->ck_raise->isChecked();
-	opt->ignoreNonRoster = d->ck_ignoreNonRoster->isChecked();
-	opt->alertStyle = d->cb_animation->currentIndex();
-	opt->autoAuth = d->ck_autoAuth->isChecked();
-	opt->notifyAuth = d->ck_notifyAuth->isChecked();
-	opt->bounceDock = (Options::BounceDockSetting) d->cb_bounce->currentItem();
+	PsiOptions::instance()->setOption("options.ui.message.auto-popup", d->ck_popupMsgs->isChecked());
+	PsiOptions::instance()->setOption("options.ui.chat.auto-popup", d->ck_popupMsgs->isChecked());
+	PsiOptions::instance()->setOption("options.ui.message.auto-popup-headlines", d->ck_popupHeadlines->isChecked());
+	PsiOptions::instance()->setOption("options.ui.file-transfer.auto-popup", d->ck_popupFiles->isChecked());
+	PsiOptions::instance()->setOption("options.ui.notifications.popup-dialogs.suppress-while-away", !d->ck_allowAwayPopup->isChecked());
+	PsiOptions::instance()->setOption("options.ui.notifications.popup-dialogs.suppress-when-not-on-roster", !d->ck_allowUnlistedPopup->isChecked());
+	PsiOptions::instance()->setOption("options.ui.contactlist.raise-on-new-event", d->ck_raise->isChecked());
+	PsiOptions::instance()->setOption("options.messages.ignore-non-roster-contacts", d->ck_ignoreNonRoster->isChecked());
+	PsiOptions::instance()->setOption("options.ui.notifications.alert-style", d->cb_animation->itemData(d->cb_animation->currentIndex()));
+	PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorisation", d->ck_autoAuth->isChecked());
+	PsiOptions::instance()->setOption("options.ui.notifications.successful-subscription", d->ck_notifyAuth->isChecked());
+	PsiOptions::instance()->setOption("options.ui.notifications.bounce-dock", d->cb_bounce->itemData( d->cb_bounce->currentItem()));
 
-	opt->ppIsOn = d->ck_popupOn->isChecked();
-	opt->ppMessage = d->ck_popupOnMessage->isChecked();
-	opt->ppChat    = d->ck_popupOnMessage->isChecked();
-	opt->ppHeadline = d->ck_popupOnHeadline->isChecked();
-	opt->ppFile    = d->ck_popupOnFile->isChecked();
-	opt->ppOnline  = d->ck_popupOnOnline->isChecked();
-	opt->ppOffline = d->ck_popupOnOffline->isChecked();
-	opt->ppStatus  = d->ck_popupOnStatus->isChecked();
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.enabled", d->ck_popupOn->isChecked());
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.incoming-message", d->ck_popupOnMessage->isChecked());
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.incoming-chat", d->ck_popupOnMessage->isChecked());
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.incoming-headline", d->ck_popupOnHeadline->isChecked());
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.incoming-file-transfer", d->ck_popupOnFile->isChecked());
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.status.online", d->ck_popupOnOnline->isChecked());
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.status.offline", d->ck_popupOnOffline->isChecked());
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.status.other-changes", d->ck_popupOnStatus->isChecked());
 }
 
-void OptionsTabEvents::restoreOptions(const Options *opt)
+void OptionsTabEvents::restoreOptions()
 {
 	if ( !w )
 		return;
 
 	OptEventsUI *d = (OptEventsUI *)w;
-	d->ck_popupMsgs->setChecked( opt->popupMsgs || opt->popupChats );
-	d->ck_popupHeadlines->setChecked( opt->popupHeadlines );
-	d->ck_popupFiles->setChecked( opt->popupFiles );
-	d->ck_allowAwayPopup->setChecked( !opt->noAwayPopup );
-	d->ck_allowUnlistedPopup->setChecked( !opt->noUnlistedPopup );
-	d->ck_raise->setChecked( opt->raise );
-	d->ck_ignoreNonRoster->setChecked( opt->ignoreNonRoster );
-	d->cb_animation->setCurrentItem(opt->alertStyle);
-	d->ck_autoAuth->setChecked( opt->autoAuth );
-	d->ck_notifyAuth->setChecked( opt->notifyAuth );
-	d->cb_bounce->setCurrentItem( opt->bounceDock );
+	d->ck_popupMsgs->setChecked( PsiOptions::instance()->getOption("options.ui.message.auto-popup").toBool() || PsiOptions::instance()->getOption("options.ui.chat.auto-popup").toBool() );
+	d->ck_popupHeadlines->setChecked( PsiOptions::instance()->getOption("options.ui.message.auto-popup-headlines").toBool() );
+	d->ck_popupFiles->setChecked( PsiOptions::instance()->getOption("options.ui.file-transfer.auto-popup").toBool() );
+	d->ck_allowAwayPopup->setChecked( !PsiOptions::instance()->getOption("options.ui.notifications.popup-dialogs.suppress-while-away").toBool() );
+	d->ck_allowUnlistedPopup->setChecked( !PsiOptions::instance()->getOption("options.ui.notifications.popup-dialogs.suppress-when-not-on-roster").toBool() );
+	d->ck_raise->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.raise-on-new-event").toBool() );
+	d->ck_ignoreNonRoster->setChecked( PsiOptions::instance()->getOption("options.messages.ignore-non-roster-contacts").toBool() );
+	d->cb_animation->setCurrentItem(d->cb_animation->findData(PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toInt()));
+	d->ck_autoAuth->setChecked( PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorisation").toBool() );
+	d->ck_notifyAuth->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.successful-subscription").toBool() );
+	d->cb_bounce->setCurrentItem( d->cb_bounce->findData(PsiOptions::instance()->getOption("options.ui.notifications.bounce-dock").toString()) );
 
-	d->ck_popupOn->setChecked( opt->ppIsOn );
-	d->ck_popupOnMessage->setChecked( opt->ppMessage || opt->ppChat );
-	d->ck_popupOnHeadline->setChecked( opt->ppHeadline );
-	d->ck_popupOnFile->setChecked( opt->ppFile );
-	d->ck_popupOnOnline->setChecked( opt->ppOnline );
-	d->ck_popupOnOffline->setChecked( opt->ppOffline );
-	d->ck_popupOnStatus->setChecked( opt->ppStatus );
+	d->ck_popupOn->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.enabled").toBool() );
+	d->ck_popupOnMessage->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool() || PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-chat").toBool() );
+	d->ck_popupOnHeadline->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-headline").toBool() );
+	d->ck_popupOnFile->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-file-transfer").toBool() );
+	d->ck_popupOnOnline->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.online").toBool() );
+	d->ck_popupOnOffline->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.offline").toBool() );
+	d->ck_popupOnStatus->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.other-changes").toBool() );
 }

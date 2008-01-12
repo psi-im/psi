@@ -1,6 +1,7 @@
 #include "opt_groupchat.h"
 #include "common.h"
 #include "iconwidget.h"
+#include "psioptions.h"
 
 #include <qbuttongroup.h>
 #include <qwhatsthis.h>
@@ -58,28 +59,28 @@ QWidget *OptionsTabGroupchat::widget()
 	return w;
 }
 
-void OptionsTabGroupchat::applyOptions(Options *opt)
+void OptionsTabGroupchat::applyOptions()
 {
 	if ( !w )
 		return;
 
 	GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
-	opt->gcHighlighting = d->ck_gcHighlights->isChecked();
-	opt->gcNickColoring = d->ck_gcNickColoring->isChecked();
+	PsiOptions::instance()->setOption("options.ui.muc.use-highlighting", d->ck_gcHighlights->isChecked());
+	PsiOptions::instance()->setOption("options.ui.muc.use-nick-coloring", d->ck_gcNickColoring->isChecked());
 
 	QStringList highlight;
 	int i;
 	for (i = 0; i < (int)d->lw_highlightWords->count(); i++)
 		highlight << d->lw_highlightWords->item(i)->text();
-	opt->gcHighlights = highlight;
+	PsiOptions::instance()->setOption("options.ui.muc.highlight-words", highlight);
 
 	QStringList colors;
 	for (i = 0; i < (int)d->lw_nickColors->count(); i++)
 		colors << d->lw_nickColors->item(i)->text();
-	opt->gcNickColors = colors;
+	PsiOptions::instance()->setOption("options.ui.look.colors.muc.nick-colors", colors);
 }
 
-void OptionsTabGroupchat::restoreOptions(const Options *opt)
+void OptionsTabGroupchat::restoreOptions()
 {
 	if ( !w )
 		return;
@@ -92,16 +93,17 @@ void OptionsTabGroupchat::restoreOptions(const Options *opt)
 	connect(d->le_newNickColor,	   SIGNAL(textChanged(const QString &)), SLOT(displayGCNickColor()));
 
 	d->ck_gcHighlights->setChecked( true );
-	d->ck_gcHighlights->setChecked( opt->gcHighlighting );
+	d->ck_gcHighlights->setChecked( PsiOptions::instance()->getOption("options.ui.muc.use-highlighting").toBool() );
 	d->ck_gcNickColoring->setChecked( true );
-	d->ck_gcNickColoring->setChecked( opt->gcNickColoring );
+	d->ck_gcNickColoring->setChecked( PsiOptions::instance()->getOption("options.ui.muc.use-nick-coloring").toBool() );
 	d->lw_highlightWords->clear();
-	d->lw_highlightWords->addItems( opt->gcHighlights );
+	d->lw_highlightWords->addItems( PsiOptions::instance()->getOption("options.ui.muc.highlight-words").toStringList() );
 	d->lw_nickColors->clear();
 
-	QStringList::ConstIterator it = opt->gcNickColors.begin();
-	for ( ; it != opt->gcNickColors.end(); ++it)
-		addNickColor( *it );
+	
+	foreach(QString col, PsiOptions::instance()->getOption("options.ui.look.colors.muc.nick-colors").toStringList()) {
+		addNickColor(col);
+	}
 
 	d->le_newHighlightWord->setText("");
 	d->le_newNickColor->setText("#FFFFFF");

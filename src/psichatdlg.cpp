@@ -20,7 +20,6 @@
 
 #include "psicon.h"
 #include "psiaccount.h"
-#include "common.h"
 #include "iconaction.h"
 #include "stretchwidget.h"
 #include "psiiconset.h"
@@ -86,12 +85,12 @@ void PsiChatDlg::initUi()
 	list << 96;
 	ui_.splitter->setSizes(list);
 
-	smallChat_ = option.smallChats;
+	smallChat_ = PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool();
 }
 
 void PsiChatDlg::updateCountVisibility()
 {
-	if (option.showCounter && !smallChat_) {
+	if (PsiOptions::instance()->getOption("options.ui.message.show-character-count").toBool() && !smallChat_) {
 		ui_.lb_count->show();
 	}
 	else {
@@ -124,7 +123,7 @@ void PsiChatDlg::setLooks()
 		}
 		else {
 			ui_.toolbar->hide();
-			ui_.tb_emoticons->setVisible(option.useEmoticons);
+			ui_.tb_emoticons->setVisible(PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool());
 			ui_.tb_actions->show();
 		}
 	}
@@ -308,7 +307,7 @@ void PsiChatDlg::updateAvatar()
 
 void PsiChatDlg::optionsUpdate()
 {
-	smallChat_ = option.smallChats;
+	smallChat_ = PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool();
 
 	ChatDlg::optionsUpdate();
 }
@@ -385,7 +384,7 @@ void PsiChatDlg::appendNormalMessage(SpooledType spooled, const QDateTime& time,
 	QString color = colorString(local, spooled);
 	QString timestr = chatView()->formatTimeStamp(time);
 
-	if (option.chatSays) {
+	if (PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
 		chatView()->appendText(QString("<p style=\"color: %1\">").arg(color) + QString("[%1] ").arg(timestr) + tr("%1 says:").arg(whoNick(local)) + "</p>" + txt);
 	}
 	else {

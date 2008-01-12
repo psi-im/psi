@@ -6,7 +6,6 @@
 #include <QEvent>
 
 class QWidget;
-struct Options;
 class QListWidgetItem;
 class IconsetLoadThread;
 class QTreeWidgetItem;
@@ -19,8 +18,8 @@ public:
 	~OptionsTabIconsetSystem();
 
 	QWidget *widget();
-	void applyOptions(Options *opt);
-	void restoreOptions(const Options *opt);
+	void applyOptions();
+	void restoreOptions();
 	bool stretchable() const { return true; }
 
 private slots:
@@ -36,7 +35,6 @@ private:
 
 	int numIconsets, iconsetsLoaded;
 	IconsetLoadThread *thread;
-	Options *o;
 };
 
 class OptionsTabIconsetEmoticons : public OptionsTab
@@ -47,8 +45,8 @@ public:
 	~OptionsTabIconsetEmoticons();
 
 	QWidget *widget();
-	void applyOptions(Options *opt);
-	void restoreOptions(const Options *opt);
+	void applyOptions();
+	void restoreOptions();
 	bool stretchable() const { return true; }
 
 private slots:
@@ -74,8 +72,8 @@ public:
 	~OptionsTabIconsetRoster();
 
 	QWidget *widget();
-	void applyOptions(Options *opt);
-	void restoreOptions(const Options *opt);
+	void applyOptions();
+	void restoreOptions();
 	bool stretchable() const { return true; }
 
 private slots:
@@ -104,7 +102,6 @@ private:
 
 	int numIconsets, iconsetsLoaded;
 	IconsetLoadThread *thread;
-	Options *o;
 };
 
 #endif

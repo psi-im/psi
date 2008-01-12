@@ -84,7 +84,7 @@ public:
 
 	QMenuBar* defaultMenuBar() const;
 
-	void createAccount(const QString &name, const Jid &j="", const QString &pass="", bool opt_host=false, const QString &host="", int port=5222, bool legacy_ssl_probe = true, UserAccount::SSLFlag ssl=UserAccount::SSL_Auto, int proxy=0);
+	void createAccount(const QString &name, const Jid &j="", const QString &pass="", bool opt_host=false, const QString &host="", int port=5222, bool legacy_ssl_probe = true, UserAccount::SSLFlag ssl=UserAccount::SSL_Auto, QString proxy="");
 	PsiAccount *createAccount(const UserAccount &);
 	//void createAccount(const QString &, const QString &host="", int port=5222, bool ssl=false, const QString &user="", const QString &pass="");
 	void removeAccount(PsiAccount *);
@@ -93,9 +93,9 @@ public:
 
 	AccountsComboBox *accountsComboBox(QWidget *parent=0, bool online_only = false);
 
-	const QStringList & recentGCList() const;
+	QStringList recentGCList() const;
 	void recentGCAdd(const QString &);
-	const QStringList & recentBrowseList() const;
+	QStringList recentBrowseList() const;
 	void recentBrowseAdd(const QString &);
 	const QStringList & recentNodeList() const;
 	void recentNodeAdd(const QString &);
@@ -103,12 +103,9 @@ public:
 	EventDlg *createEventDlg(const QString &, PsiAccount *);
 	void updateContactGlobal(PsiAccount *, const Jid &);
 
-	QList<PsiToolBar*> toolbarList() const;
-	PsiToolBar *findToolBar(QString group, int index);
 	PsiActionList *actionList() const;
 
-	void buildToolbars();
-	bool getToolbarLocation(Q3DockWindow* dw, Qt::Dock& dock, int& index, bool& nl, int& extraOffset) const;
+	void addToolbar(const QString &base);
 
 	IconSelectPopup *iconSelectPopup() const;
 	void processEvent(PsiEvent*, ActivationType activationType);
@@ -140,7 +137,7 @@ public slots:
 	void statusMenuChanged(int);
 	void pa_updatedActivity();
 	void pa_updatedAccount();
-	void slotApplyOptions(const Options &);
+	void slotApplyOptions();
 	void queueChanged();
 	void recvNextEvent();
 	void setStatusFromDialog(const XMPP::Status &, bool withPriority);
@@ -154,7 +151,7 @@ public slots:
 private slots:
 	void saveAccounts();
 	void saveCapabilities();
-	void optionsUpdate();
+	void optionChanged(const QString& option);
 	void forceSavePreferences();
 	void startBounce();
 
@@ -168,8 +165,6 @@ private:
 	void setShortcuts();
 
 	friend class PsiAccount; // FIXME
-	void setToggles(bool tog_offline, bool tog_away, bool tog_agents, bool tog_hidden, bool tog_self);
-	void getToggles(bool *tog_offline, bool *tog_away, bool *tog_agents, bool *tog_hidden, bool *tog_self);
 	void promptUserToCreateAccount();
 	QString optionsFile() const;
 

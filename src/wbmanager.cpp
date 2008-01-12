@@ -93,11 +93,11 @@ void WbManager::messageReceived(const Message &message) {
 			if (w) {
 	// 			PsiPopup::PopupType popupType = PsiPopup::AlertNone;
 	//			bool doPopup = false;
-				pa_->playSound(option.onevent[eChat2]);
-	// 			if(!w->isActiveWindow() || option.alertOpenChats) {
+				pa_->playSound(PsiOptions::instance()->getOption("options.ui.notifications.sounds.chat-message").toString());
+	// 			if(!w->isActiveWindow() || PsiOptions::instance()->getOption("options.ui.chat.alert-for-already-open-chats").toBool()) {
 	// 				popupType = PsiPopup::AlertChat;
-	// 				if(option.popupChats) {
-	// 					if(!option.noUnlistedPopup && message.type() != "groupchat") {
+	// 				if(PsiOptions::instance()->getOption("options.ui.chat.auto-popup").toBool()) {
+	// 					if(!PsiOptions::instance()->getOption("options.ui.notifications.popup-dialogs.suppress-when-not-on-roster").toBool() && message.type() != "groupchat") {
 	// 						// don't popup wb's from unlisted contacts
 	// 						if(!pa_->find(message.from()))
 	// 							return;
@@ -105,10 +105,10 @@ void WbManager::messageReceived(const Message &message) {
 						w->show();
 	// 				}
 	// 			}
-				if(option.raiseChatWindow) {
+				if(PsiOptions::instance()->getOption("options.ui.chat.raise-chat-windows-on-new-messages").toBool()) {
 					bringToFront(w);
 				}
-	// 			if ((popupType == PsiPopup::AlertChat && option.ppChat) /*&& makeSTATUS(status()) != STATUS_DND*/) {
+	// 			if ((popupType == PsiPopup::AlertChat && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-chat").toBool()) /*&& makeSTATUS(status()) != STATUS_DND*/) {
 	// 				PsiPopup *popup = new PsiPopup(popupType, pa_);
 	// 				popup->setData(j, r, u, e);
 	// 			}
@@ -178,7 +178,7 @@ WbDlg* WbManager::negotiateSession(const Message &message) {
 	if(session.isEmpty())
 		return 0;
 
-	if(option.ignoreNonRoster && message.type() != "groupchat") {
+	if(PsiOptions::instance()->getOption("options.messages.ignore-non-roster-contacts").toBool() && message.type() != "groupchat") {
 		// Ignore the message if contact not in roster
 		if(!pa_->find(message.from())) {
 			qDebug("Whiteboard invitation received from contact that is not in roster.");

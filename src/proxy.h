@@ -26,6 +26,7 @@
 
 #include "ui_proxy.h"
 
+class OptionsTree;
 class QDomElement;
 class QDomDocument;
 
@@ -61,6 +62,9 @@ public:
 	bool useAuth;
 	QString url;
 
+	
+	void toOptions(OptionsTree* o, QString base) const;
+	void fromOptions(OptionsTree* o, QString base);
 	QDomElement toXml(QDomDocument *) const;
 	bool fromXml(const QDomElement &);
 };
@@ -90,7 +94,7 @@ class ProxyDlg : public QDialog, public Ui::Proxy
 {
 	Q_OBJECT
 public:
-	ProxyDlg(const ProxyItemList &, const QStringList &, int def, QWidget *parent=0);
+	ProxyDlg(const ProxyItemList &, const QStringList &, const QString &def, QWidget *parent=0);
 	~ProxyDlg();
 
 signals:
@@ -122,12 +126,13 @@ public:
 	ProxyChooser(ProxyManager *, QWidget *parent=0, const char *name=0);
 	~ProxyChooser();
 
-	int currentItem() const;
-	void setCurrentItem(int);
+	QString currentItem() const;
+	void setCurrentItem(const QString &item);
 	void fixTabbing(QWidget *a, QWidget *b);
 
 private slots:
 	void pm_settingsChanged();
+	void pm_settingsChangedApply();
 	void doOpen();
 
 private:
@@ -142,7 +147,7 @@ class ProxyItem
 public:
 	ProxyItem() {}
 
-	int id; // used to keep track of 'old' position in a list
+	QString id;
 	QString name;
 	QString type;
 	ProxySettings settings;
@@ -152,22 +157,23 @@ class ProxyManager : public QObject
 {
 	Q_OBJECT
 public:
-	ProxyManager(QObject *parent=0);
+	ProxyManager(OptionsTree *o, QObject *parent=0);
 	~ProxyManager();
 
 	ProxyChooser *createProxyChooser(QWidget *parent=0);
 	ProxyItemList itemList() const;
-	const ProxyItem & getItem(int) const;
-	int lastEdited() const;
-	void setItemList(const ProxyItemList &);
+	ProxyItem getItem(const QString &id) const;
+	QString lastEdited() const;
+	void migrateItemList(const ProxyItemList &);
 	QStringList methodList() const;
-	int findOldIndex(int) const;
+//	int findOldIndex(int) const;
 
 signals:
 	void settingsChanged();
+	void proxyRemoved(QString);
 
 public slots:
-	void openDialog(int);
+	void openDialog(QString);
 
 private slots:
 	void pd_applyList(const ProxyItemList &, int cur);
@@ -175,8 +181,6 @@ private slots:
 private:
 	class Private;
 	Private *d;
-
-	void assignIds();
 };
 
 #endif

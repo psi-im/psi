@@ -72,6 +72,11 @@ QWidget *OptionsTabAdvanced::widget()
 		"<P><B>Normal</B> - messages come as messages, chats come as chats.</P>"
 		"<P><B>Messages</B> - All messages/chats come as messages, no matter what their original form was.</P>"
 		"<P><B>Chats</B> - All messages/chats come as chats, no matter what their original form was.</P>"));
+	
+	d->cb_incomingAs->setItemData(0, "no");
+	d->cb_incomingAs->setItemData(1, "message");
+	d->cb_incomingAs->setItemData(2, "chat");
+	d->cb_incomingAs->setItemData(3, "current-open");
 	QWhatsThis::add(d->ck_showSubjects,
 		tr("Makes Psi show separate subject line in messages. Uncheck this if you want to save some screen space."));
 	QWhatsThis::add(d->ck_showCounter,
@@ -92,56 +97,56 @@ QWidget *OptionsTabAdvanced::widget()
 	return w;
 }
 
-void OptionsTabAdvanced::applyOptions(Options *opt)
+void OptionsTabAdvanced::applyOptions()
 {
 	if ( !w )
 		return;
 
 	OptAdvancedUI *d = (OptAdvancedUI *)w;
 
-	opt->messageEvents = d->ck_messageevents->isChecked();
-	opt->inactiveEvents = d->ck_inactiveevents->isChecked();
-	opt->useRC = d->ck_rc->isChecked();
+	PsiOptions::instance()->setOption("options.messages.send-composing-events", d->ck_messageevents->isChecked());
+	PsiOptions::instance()->setOption("options.messages.send-inactivity-events", d->ck_inactiveevents->isChecked());
+	PsiOptions::instance()->setOption("options.external-control.adhoc-remote-control.enable", d->ck_rc->isChecked());
 	if ( SpellChecker::instance()->available() )
 		PsiOptions::instance()->setOption("options.ui.spell-check.enabled",d->ck_spell->isChecked());
 	PsiOptions::instance()->setOption("options.html.chat.render", d->ck_contactsMessageFormatting->isChecked());
-	opt->autoCopy = d->ck_autocopy->isChecked();
-	opt->singleclick = d->ck_singleclick->isChecked();
-	opt->jidComplete = d->ck_jidComplete->isChecked();
-	opt->grabUrls    = d->ck_grabUrls->isChecked();
-	opt->incomingAs = d->cb_incomingAs->currentItem();
-	opt->showSubjects = d->ck_showSubjects->isChecked();
-	opt->showCounter = d->ck_showCounter->isChecked();
-	opt->autoVCardOnLogin = d->ck_autoVCardOnLogin->isChecked();
-	opt->rosterAnim = d->ck_rosterAnim->isChecked();
-	opt->scrollTo = d->ck_scrollTo->isChecked();
-	opt->ignoreHeadline = d->ck_ignoreHeadline->isChecked();
+	PsiOptions::instance()->setOption("options.ui.automatically-copy-selected-text", d->ck_autocopy->isChecked());
+	PsiOptions::instance()->setOption("options.ui.contactlist.use-single-click", d->ck_singleclick->isChecked());
+	PsiOptions::instance()->setOption("options.ui.message.use-jid-auto-completion", d->ck_jidComplete->isChecked());
+	PsiOptions::instance()->setOption("options.ui.message.auto-grab-urls-from-clipboard", d->ck_grabUrls->isChecked());
+	PsiOptions::instance()->setOption("options.messages.force-incoming-message-type", d->cb_incomingAs->itemData(d->cb_incomingAs->currentItem()));
+	PsiOptions::instance()->setOption("options.ui.message.show-subjects", d->ck_showSubjects->isChecked());
+	PsiOptions::instance()->setOption("options.ui.message.show-character-count", d->ck_showCounter->isChecked());
+	PsiOptions::instance()->setOption("options.vcard.query-own-vcard-on-login", d->ck_autoVCardOnLogin->isChecked());
+	PsiOptions::instance()->setOption("options.ui.contactlist.use-status-change-animation", d->ck_rosterAnim->isChecked());
+	PsiOptions::instance()->setOption("options.ui.contactlist.ensure-contact-visible-on-event", d->ck_scrollTo->isChecked());
+	PsiOptions::instance()->setOption("options.messages.ignore-headlines", d->ck_ignoreHeadline->isChecked());
 }
 
-void OptionsTabAdvanced::restoreOptions(const Options *opt)
+void OptionsTabAdvanced::restoreOptions()
 {
 	if ( !w )
 		return;
 
 	OptAdvancedUI *d = (OptAdvancedUI *)w;
 
-	d->ck_messageevents->setChecked( opt->messageEvents );
-	d->ck_inactiveevents->setChecked( opt->inactiveEvents );
-	d->ck_rc->setChecked( opt->useRC );
+	d->ck_messageevents->setChecked( PsiOptions::instance()->getOption("options.messages.send-composing-events").toBool() );
+	d->ck_inactiveevents->setChecked( PsiOptions::instance()->getOption("options.messages.send-inactivity-events").toBool() );
+	d->ck_rc->setChecked( PsiOptions::instance()->getOption("options.external-control.adhoc-remote-control.enable").toBool() );
 	if ( !SpellChecker::instance()->available() )
 		d->ck_spell->setChecked(false);
 	else
 		d->ck_spell->setChecked(PsiOptions::instance()->getOption("options.ui.spell-check.enabled").toBool());
 	d->ck_contactsMessageFormatting->setChecked(PsiOptions::instance()->getOption("options.html.chat.render").toBool());
-	d->ck_autocopy->setChecked( opt->autoCopy );
-	d->ck_singleclick->setChecked( opt->singleclick );
-	d->ck_jidComplete->setChecked( opt->jidComplete );
-	d->ck_grabUrls->setChecked( opt->grabUrls );
-	d->cb_incomingAs->setCurrentItem( opt->incomingAs );
-	d->ck_showSubjects->setChecked( opt->showSubjects );
-	d->ck_showCounter->setChecked( opt->showCounter );
-	d->ck_autoVCardOnLogin->setChecked( opt->autoVCardOnLogin );
-	d->ck_rosterAnim->setChecked( opt->rosterAnim );
-	d->ck_scrollTo->setChecked( opt->scrollTo );
-	d->ck_ignoreHeadline->setChecked( opt->ignoreHeadline );
+	d->ck_autocopy->setChecked( PsiOptions::instance()->getOption("options.ui.automatically-copy-selected-text").toBool() );
+	d->ck_singleclick->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.use-single-click").toBool() );
+	d->ck_jidComplete->setChecked( PsiOptions::instance()->getOption("options.ui.message.use-jid-auto-completion").toBool() );
+	d->ck_grabUrls->setChecked( PsiOptions::instance()->getOption("options.ui.message.auto-grab-urls-from-clipboard").toBool() );
+	d->cb_incomingAs->setCurrentItem(d->cb_incomingAs->findData( PsiOptions::instance()->getOption("options.messages.force-incoming-message-type").toString()));
+	d->ck_showSubjects->setChecked( PsiOptions::instance()->getOption("options.ui.message.show-subjects").toBool() );
+	d->ck_showCounter->setChecked( PsiOptions::instance()->getOption("options.ui.message.show-character-count").toBool() );
+	d->ck_autoVCardOnLogin->setChecked( PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool() );
+	d->ck_rosterAnim->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.use-status-change-animation").toBool() );
+	d->ck_scrollTo->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.ensure-contact-visible-on-event").toBool() );
+	d->ck_ignoreHeadline->setChecked( PsiOptions::instance()->getOption("options.messages.ignore-headlines").toBool() );
 }

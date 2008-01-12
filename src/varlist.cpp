@@ -24,6 +24,7 @@
 #include <QDomDocument>
 
 #include "varlist.h"
+#include "optionstree.h"
 
 
 VarList::VarList() :QList<VarListItem>()
@@ -37,6 +38,26 @@ QStringList VarList::varsToStringList()
 		list.append((*it).key());
 	return list;
 }
+
+void VarList::fromOptions(OptionsTree *o, QString base)
+{
+	QStringList bases = o->getChildOptionNames( base, true, true);
+	foreach(QString ibase, bases) {
+		QString var = o->getOption(ibase + ".key").toString();
+		QString val = o->getOption(ibase + ".data").toString();
+		set(var, val);
+	}
+}
+
+void VarList::toOptions(OptionsTree *o, QString base)
+{
+	o->removeOption(base, true);
+	foreach(VarListItem item, *this) {
+		QString ibase = o->mapPut(base, item.key());
+		o->setOption(ibase + ".data", item.data());
+	}
+}
+
 
 QDomElement VarList::toXml(QDomDocument &doc, const QString &tagName)
 {

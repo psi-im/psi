@@ -6,7 +6,6 @@
 #include "optionstab.h"
 
 class QWidget;
-struct Options;
 class QLineEdit;
 class QButtonGroup;
 class QAbstractButton;
@@ -19,8 +18,8 @@ public:
 	~OptionsTabSound();
 
 	QWidget *widget();
-	void applyOptions(Options *opt);
-	void restoreOptions(const Options *opt);
+	void applyOptions();
+	void restoreOptions();
 
 private slots:
 	void chooseSoundEvent(QAbstractButton*);

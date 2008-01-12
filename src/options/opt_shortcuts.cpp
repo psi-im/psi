@@ -106,8 +106,7 @@ QWidget *OptionsTabShortcuts::widget()
  * \brief	applyOptions, if options have changed, they will be applied by calling this function
  * \param	opt, unused, totally ignored
  */
-void OptionsTabShortcuts::applyOptions(Options *opt) {
-	Q_UNUSED(opt);
+void OptionsTabShortcuts::applyOptions() {
 	if ( !w )
 		return;
 
@@ -166,9 +165,8 @@ void OptionsTabShortcuts::applyOptions(Options *opt) {
  * \brief	restoreOptions, reads in the currently set options
  * \param	opt, unused, totally ignored
  */
-void OptionsTabShortcuts::restoreOptions(const Options *opt)
+void OptionsTabShortcuts::restoreOptions()
 {
-	Q_UNUSED(opt);
 
 	if ( !w )
 		return;

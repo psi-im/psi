@@ -32,6 +32,7 @@
 #include "psiiconset.h"
 #include "groupchatdlg.h"
 #include "common.h"
+#include "psioptions.h"
 
 static bool caseInsensitiveLessThan(const QString &s1, const QString &s2)
 {
@@ -74,26 +75,26 @@ void GCUserViewGroupItem::paintCell(QPainter *p, const QColorGroup & cg, int col
 {
 	QColorGroup xcg = cg;
 	QFont f = p->font();
-	f.setPointSize(option.smallFontSize);
+	f.setPointSize(common_smallFontSize);
 	p->setFont(f);
-	xcg.setColor(QColorGroup::Text, option.color[cGroupFore]);
-	if (!option.clNewHeadings) {
+	xcg.setColor(QColorGroup::Text, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-foreground").value<QColor>());
+	if (!PsiOptions::instance()->getOption("options.ui.look.contactlist.use-slim-group-headings").toBool()) {
 		#if QT_VERSION < 0x040301
-			xcg.setColor(QColorGroup::Background, option.color[cGroupBack]);
+			xcg.setColor(QColorGroup::Background, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-background").value<QColor>());
 		#else
-			xcg.setColor(QColorGroup::Base, option.color[cGroupBack]);
+			xcg.setColor(QColorGroup::Base, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-background").value<QColor>());
 		#endif
 	}
 	Q3ListViewItem::paintCell(p, xcg, column, width, alignment);
-	if (option.clNewHeadings && !isSelected()) {
+	if (PsiOptions::instance()->getOption("options.ui.look.contactlist.use-slim-group-headings").toBool() && !isSelected()) {
 		QFontMetrics fm(p->font());
 		int x = fm.width(text(column)) + 8;
 		if(x < width - 8) {
 			int h = (height() / 2) - 1;
-			p->setPen(QPen(option.color[cGroupBack]));
+			p->setPen(QPen(PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-background").value<QColor>()));
 			p->drawLine(x, h, width - 8, h);
 			h++;
-			p->setPen(QPen(option.color[cGroupFore]));
+			p->setPen(QPen(PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-foreground").value<QColor>()));
 			p->drawLine(x, h, width - 8, h);
 		}
 	}
@@ -310,7 +311,7 @@ void GCUserView::qlv_doubleClicked(Q3ListViewItem *i)
 		return;
 
 	GCUserViewItem *lvi = (GCUserViewItem *)i;
-	if(option.defaultAction == 0)
+	if(PsiOptions::instance()->getOption("options.messages.default-outgoing-message-type").toString() == "message")
 		action(lvi->text(0), lvi->s, 0);
 	else
 		action(lvi->text(0), lvi->s, 1);

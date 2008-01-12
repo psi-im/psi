@@ -4,6 +4,7 @@
 #include "applicationinfo.h"
 #include "psiiconset.h"
 #include "psicon.h"
+#include "psioptions.h"
 
 #include <QDir>
 #include <qcheckbox.h>
@@ -396,7 +397,7 @@ QWidget *OptionsTabIconsetSystem::widget()
 	return w;
 }
 
-void OptionsTabIconsetSystem::applyOptions(Options *opt)
+void OptionsTabIconsetSystem::applyOptions()
 {
 	if ( !w || thread )
 		return;
@@ -405,16 +406,15 @@ void OptionsTabIconsetSystem::applyOptions(Options *opt)
 	const Iconset *is = d->iss_system->iconset();
 	if ( is ) {
 		QFileInfo fi( is->fileName() );
-		opt->systemIconset = fi.fileName();
+		PsiOptions::instance()->setOption("options.iconsets.system", fi.fileName());
 	}
 }
 
-void OptionsTabIconsetSystem::restoreOptions(const Options *opt)
+void OptionsTabIconsetSystem::restoreOptions()
 {
 	if ( !w || thread )
 		return;
 
-	o = (Options *)opt;
 	IconsetSystemUI *d = (IconsetSystemUI *)w;
 	d->iss_system->clear();
 	QStringList loaded;
@@ -460,7 +460,7 @@ bool OptionsTabIconsetSystem::event(QEvent *e)
 			d->iss_system->insert(*i);
 
 			QFileInfo fi( i->fileName() );
-			if ( fi.fileName() == o->systemIconset )
+			if ( fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.system").toString() )
 				d->iss_system->setItemSelected(d->iss_system->lastItem(), true);
 
 			delete i;
@@ -552,15 +552,15 @@ QWidget *OptionsTabIconsetEmoticons::widget()
 	return w;
 }
 
-void OptionsTabIconsetEmoticons::applyOptions(Options *opt)
+void OptionsTabIconsetEmoticons::applyOptions()
 {
 	if ( !w || thread )
 		return;
 
 	IconsetEmoUI *d = (IconsetEmoUI *)w;
-	opt->useEmoticons = d->ck_useEmoticons->isChecked();
+	PsiOptions::instance()->setOption("options.ui.emoticons.use-emoticons", d->ck_useEmoticons->isChecked());
 
-	opt->emoticons.clear();
+	QStringList list;
 	for (int row = 0; row < d->iss_emoticons->count(); row++) {
 		IconWidgetItem *item = (IconWidgetItem *)d->iss_emoticons->item(row);
 
@@ -568,19 +568,20 @@ void OptionsTabIconsetEmoticons::applyOptions(Options *opt)
 			const Iconset *is = item->iconset();
 			if ( is ) {
 				QFileInfo fi( is->fileName() );
-				opt->emoticons << fi.fileName();
+				list << fi.fileName();
 			}
 		}
 	}
+	PsiOptions::instance()->setOption("options.iconsets.emoticons", list);
 }
 
-void OptionsTabIconsetEmoticons::restoreOptions(const Options *opt)
+void OptionsTabIconsetEmoticons::restoreOptions()
 {
 	if ( !w || thread )
 		return;
 
 	IconsetEmoUI *d = (IconsetEmoUI *)w;
-	d->ck_useEmoticons->setChecked( opt->useEmoticons );
+	d->ck_useEmoticons->setChecked( PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool() );
 
 	// fill in the iconset view
 	d->iss_emoticons->clear();
@@ -773,54 +774,82 @@ QWidget *OptionsTabIconsetRoster::widget()
 	return w;
 }
 
-void OptionsTabIconsetRoster::applyOptions(Options *opt)
+void OptionsTabIconsetRoster::applyOptions()
 {
 	if ( !w || thread )
 		return;
 
 	IconsetRosterUI *d = (IconsetRosterUI *)w;
-	opt->useTransportIconsForContacts = d->ck_useTransportIconsForContacts->isChecked();
+	PsiOptions::instance()->setOption("options.ui.contactlist.use-transport-icons", d->ck_useTransportIconsForContacts->isChecked());
 
 	// roster - default
 	{
 		const Iconset *is = d->iss_defRoster->iconset();
 		if ( is ) {
 			QFileInfo fi( is->fileName() );
-			opt->defaultRosterIconset = fi.fileName();
+			PsiOptions::instance()->setOption("options.iconsets.status", fi.fileName());
 		}
 	}
 
 	// roster - services
 	{
-		opt->serviceRosterIconset.clear();
-
+		// can't add or remove entries, so just update it.
 		QTreeWidgetItemIterator it( d->tw_isServices );
 		while(*it) {
-			opt->serviceRosterIconset[(*it)->data(0, Qt::UserRole).toString()] = (*it)->data(1, Qt::UserRole).toString();
+			PsiOptions::instance()->setOption( 
+				PsiOptions::instance()->mapLookup("options.iconsets.service-status", (*it)->data(0, Qt::UserRole).toString())+".iconset",
+				(*it)->data(1, Qt::UserRole).toString());
 			++it;
 		}
 	}
 
 	// roster - custom
 	{
-		opt->customRosterIconset.clear();
-
+		// gather new data
+		QMap<QString, QString> newdata;
+		
 		QTreeWidgetItemIterator it( d->tw_customRoster );
 		while(*it) {
-			opt->customRosterIconset[(*it)->data(0, Qt::UserRole).toString()] = (*it)->data(1, Qt::UserRole).toString();
+			newdata[(*it)->data(0, Qt::UserRole).toString()] = (*it)->data(1, Qt::UserRole).toString();
 			++it;
+		}
+
+		// remove deleted ones
+		QStringList previousIdx = PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true);
+		QMap<QString,QString> previous; // (regexp, base)
+		foreach(QString base, previousIdx) {
+			previous[PsiOptions::instance()->getOption(base + ".regexp").toString()] = base;
+		}
+		foreach(QString todel, previous.keys().toSet() - newdata.keys().toSet()) {
+			QString base = previous[todel];
+			PsiOptions::instance()->removeOption(base, true);
+		}
+		// update/add all others
+		foreach(QString regexp, newdata.keys()) {
+			QString base;
+			if (previous.contains(regexp)) {
+				base = previous[regexp];
+			} else {
+				int idx = 0;
+				do {
+					base = "options.iconsets.custom-status" ".a" + QString::number(idx);
+					idx++;
+				} while (previousIdx.contains(base));
+				previous[regexp] = base;
+				PsiOptions::instance()->setOption(base + ".regexp", regexp);
+			}
+			PsiOptions::instance()->setOption(base + ".iconset", newdata[regexp]);
 		}
 	}
 }
 
-void OptionsTabIconsetRoster::restoreOptions(const Options *opt)
+void OptionsTabIconsetRoster::restoreOptions()
 {
 	if ( !w || thread )
 		return;
 
-	o = (Options *)opt;
 	IconsetRosterUI *d = (IconsetRosterUI *)w;
-	d->ck_useTransportIconsForContacts->setChecked( opt->useTransportIconsForContacts );
+	d->ck_useTransportIconsForContacts->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.use-transport-icons").toBool() );
 
 	d->iss_defRoster->clear();
 	d->iss_servicesRoster->clear();
@@ -867,7 +896,7 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
 
 			// roster - default
 			d->iss_defRoster->insert(*i);
-			if ( fi.fileName() == o->defaultRosterIconset )
+			if ( fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.status"))
 				d->iss_defRoster->setItemSelected(d->iss_defRoster->lastItem(), true);
 
 			// roster - service
@@ -889,7 +918,10 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
 			while(*it) {
 				QTreeWidgetItem *i = *it;
 				if ( !i->data(0, Qt::UserRole).toString().isEmpty() ) {
-					Iconset *iss = PsiIconset::instance()->roster[o->serviceRosterIconset[i->data(0, Qt::UserRole).toString()]];
+					Iconset *iss = PsiIconset::instance()->roster[
+							PsiOptions::instance()->getOption(
+								PsiOptions::instance()->mapLookup(
+									"options.iconsets.service-status",i->data(0, Qt::UserRole).toString())+".iconset").toString()];
 					if ( iss ) {
 						i->setText(1, iss->name());
 						QFileInfo fi ( iss->fileName() );
@@ -904,15 +936,17 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
 		{
 			// Then, fill the QListView
 			QTreeWidgetItem *last = 0;
-			QMap<QString, QString>::ConstIterator it = o->customRosterIconset.begin();
-			for ( ; it != o->customRosterIconset.end(); ++it) {
+			QStringList customicons = PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true);
+			foreach(QString base, customicons) {
+				QString regexp = PsiOptions::instance()->getOption(base + ".regexp").toString();
+				QString icoset = PsiOptions::instance()->getOption(base + ".iconset").toString();
 				QTreeWidgetItem *item = new QTreeWidgetItem(d->tw_customRoster, last);
 				last = item;
 
-				item->setText(0, clipCustomText(it.key())); // RegExp
-				item->setData(0, Qt::UserRole, it.key());
+				item->setText(0, clipCustomText(regexp));
+				item->setData(0, Qt::UserRole, regexp);
 
-				Iconset *iss = PsiIconset::instance()->roster[it.data()];
+				Iconset *iss = PsiIconset::instance()->roster[icoset];
 				if ( iss ) {
 					item->setText(1, iss->name());
 					QFileInfo fi ( iss->fileName() );
