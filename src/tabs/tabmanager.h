@@ -37,14 +37,14 @@ public:
 	PsiCon* psiCon() const;
 
 	/**
-	 * Get the default tabdlg (created if needed).
+	 * Get the default tabset for this widget (created if needed).
 	 */ 
-	TabDlg* getTabs();
+	TabDlg* getTabs(QWidget *widget);
 	
 	/**
-	 * Return a new tabset.
+	 * Return a new tabset (for this widget).
 	 */ 
-	TabDlg*	newTabs();
+	TabDlg*	newTabs(QWidget *widget=0);
 	
 	/**
 	 * Checks if a tabset manages this widget.
@@ -67,12 +67,34 @@ public:
 	 */
 	bool shouldBeTabbed(QWidget *widget); 
 
+	/**
+	 * removes and deletes all tabsets
+	 */
 	void deleteAll();
 
+	
+	/**
+	 * Returns the Kind of the given widget.
+	 */
+	QChar tabKind(QWidget *widget);
+	
+	/**
+	 * return the preferred tabset for a given kind of tabs(0 for none).
+	 */ 
+	TabDlg *preferredTabsForKind(QChar kind);
+	
+	/**
+	 * set the preferred tabset for a given kind of tabs
+	 */
+	void setPreferredTabsForKind(QChar kind, TabDlg *tabs);
+	
 public slots:
 	void tabDestroyed(QObject*);
+	void tabResized(QSize);
 
 private:
+	QMap<QChar, TabDlg*> preferedTabsetForKind_;
+	QMap<TabDlg*, QString> tabsetToKinds_;
  	QList<TabDlg*> tabs_;
 	QList<TabbableWidget*> tabControlledChats_;
 	PsiCon *psiCon_;

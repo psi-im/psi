@@ -47,7 +47,7 @@ void TabbableWidget::ensureTabbedCorrectly()
 {
 	if (tabManager_->shouldBeTabbed(this)) {
 		if (!isTabbed()) {
-			tabManager_->getTabs()->addTab(this);
+			tabManager_->getTabs(this)->addTab(this);
 		}
 	}
 	else {

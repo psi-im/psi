@@ -110,7 +110,7 @@ bool TabDlgDelegate::eventFilter(QWidget *, QObject *, QEvent *) {
  *        will manage some aspects of the TabDlg behavior.  Ownership is not
  *        passed.
  */ 
-TabDlg::TabDlg(TabManager* tabManager, TabDlgDelegate *delegate)
+TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 		: AdvancedWidget<QWidget>(0, delegate ? delegate->initWindowFlags() : (Qt::WindowFlags)0)
 		, delegate_(delegate)
 		, tabWidget_(0)
@@ -162,8 +162,8 @@ TabDlg::TabDlg(TabManager* tabManager, TabDlgDelegate *delegate)
 
 	setShortcuts();
 
-	if (PsiOptions::instance()->getOption("options.ui.tabs.size").toSize().isValid()) {
-		resize(PsiOptions::instance()->getOption("options.ui.tabs.size").toSize());
+	if (size.isValid()) {
+		resize(size);
 	}
 }
 
@@ -188,8 +188,7 @@ void TabDlg::resizeEvent(QResizeEvent *e)
 {
 	AdvancedWidget<QWidget>::resizeEvent(e);
 
-	if (PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool())
-		PsiOptions::instance()->getOption("options.ui.tabs.size").toSize() = e->size();
+	emit resized(e->size());
 
 	// delegate may want to act on resize event
 	if (delegate_) {
@@ -250,7 +249,24 @@ void TabDlg::tab_aboutToShowMenu(QMenu *menu)
 	}
 	connect(sendTo, SIGNAL(triggered(QAction*)), SLOT(menu_sendTabTo(QAction*)));
 	menu->addMenu(sendTo);
+	menu->addSeparator();
+	
+	QAction *act;
+	act = menu->addAction(tr("Use for new chats"), this, SLOT(setAsDefaultForChat()));
+	act->setCheckable(true);
+	act->setChecked(tabManager_->preferredTabsForKind('C') == this); 
+	act = menu->addAction(tr("Use for new mucs"), this, SLOT(setAsDefaultForMuc()));
+	act->setCheckable(true);
+	act->setChecked(tabManager_->preferredTabsForKind('M') == this); 
 }
+
+void TabDlg::setAsDefaultForChat() {
+	tabManager_->setPreferredTabsForKind('C', this);
+}
+void TabDlg::setAsDefaultForMuc() {
+	tabManager_->setPreferredTabsForKind('M', this);
+}
+
 
 void TabDlg::menu_sendTabTo(QAction *act)
 {

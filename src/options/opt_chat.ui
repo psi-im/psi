@@ -1,15 +1,12 @@
 <ui version="4.0" >
- <author></author>
- <comment></comment>
- <exportmacro></exportmacro>
  <class>OptChat</class>
  <widget class="QWidget" name="OptChat" >
   <property name="geometry" >
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>319</width>
-    <height>375</height>
+    <width>346</width>
+    <height>421</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -51,11 +48,71 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_tabChats" >
-     <property name="text" >
-      <string>Open chats in tabbed mode</string>
+    <layout class="QHBoxLayout" >
+     <property name="margin" >
+      <number>0</number>
      </property>
-    </widget>
+     <property name="spacing" >
+      <number>6</number>
+     </property>
+     <item>
+      <widget class="QCheckBox" name="ck_tabChats" >
+       <property name="sizePolicy" >
+        <sizepolicy>
+         <hsizetype>0</hsizetype>
+         <vsizetype>0</vsizetype>
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text" >
+        <string>Use tabbed mode</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="cb_tabGrouping" >
+       <item>
+        <property name="text" >
+         <string>for chats only</string>
+        </property>
+       </item>
+       <item>
+        <property name="text" >
+         <string>for mucs only</string>
+        </property>
+       </item>
+       <item>
+        <property name="text" >
+         <string>for chats and mucs separately</string>
+        </property>
+       </item>
+       <item>
+        <property name="text" >
+         <string>for mucs and chats in one window.</string>
+        </property>
+       </item>
+       <item>
+        <property name="text" >
+         <string>[customized]</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item>
+      <spacer>
+       <property name="orientation" >
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" >
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
    </item>
    <item>
     <widget class="QCheckBox" name="ck_autoResize" >
@@ -71,7 +128,7 @@
      </property>
      <layout class="QHBoxLayout" >
       <property name="margin" >
-       <number>-1</number>
+       <number>9</number>
       </property>
       <property name="spacing" >
        <number>6</number>

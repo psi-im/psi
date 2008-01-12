@@ -67,7 +67,7 @@ class TabDlg : public AdvancedWidget<QWidget>
 {
 	Q_OBJECT
 public:
-	TabDlg(TabManager* tabManager, TabDlgDelegate *delegate = 0);
+	TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate = 0);
 	~TabDlg();
 	bool managesTab(const TabbableWidget*) const;
 	bool tabOnTop(const TabbableWidget*) const;
@@ -114,6 +114,9 @@ public slots:
 	void detachTab(TabbableWidget*);
 	void sendTabTo(TabbableWidget*, TabDlg *);
 
+signals:
+	void resized(QSize size);
+	
 private slots:
 	void updateFlashState();
 	void tabSelected(QWidget* selected);
@@ -123,6 +126,8 @@ private slots:
 	void nextTab();
 	void previousTab();
 	void tab_aboutToShowMenu(QMenu *menu);
+	void setAsDefaultForChat();
+	void setAsDefaultForMuc();
 	void menu_sendTabTo(QAction *act);
 	void queuedSendTabTo(TabbableWidget* chat, TabDlg *dest);
 	void showTabMenu(int tab, QPoint pos, QContextMenuEvent * event);

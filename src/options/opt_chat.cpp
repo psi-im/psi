@@ -56,6 +56,8 @@ QWidget *OptionsTabChat::widget()
 	bg_delChats->insert( d->rb_delChatsHour);
 	bg_delChats->insert( d->rb_delChatsDay);
 	bg_delChats->insert( d->rb_delChatsNever);
+	
+	connect(d->ck_tabChats, SIGNAL(toggled(bool)), d->cb_tabGrouping, SLOT(setEnabled(bool)));
 
 	QWhatsThis::add(d->rb_defActMsg,
 		tr("Make the default action open a normal message window."));
@@ -119,6 +121,30 @@ void OptionsTabChat::applyOptions()
 	}
 	PsiOptions::instance()->setOption("options.ui.chat.delete-contents-after", delafter);
 	PsiOptions::instance()->setOption("options.ui.tabs.use-tabs", d->ck_tabChats->isChecked());
+	QString tabGrouping;
+	int idx = d->cb_tabGrouping->currentIndex();
+	switch (idx) {
+		case 0:
+			tabGrouping = "C";
+			break;
+		case 1:
+			tabGrouping = "M";
+			break;
+		case 2:
+			tabGrouping = "C:M";
+			break;
+		case 3:
+			tabGrouping = "CM";
+			break;
+	}
+	if (!tabGrouping.isEmpty()) {
+		PsiOptions::instance()->setOption("options.ui.tabs.grouping", tabGrouping);
+	} else {
+		if (d->cb_tabGrouping->count() == 5) {
+			d->cb_tabGrouping->removeItem(4);
+		}
+	}
+	
 	PsiOptions::instance()->setOption("options.ui.chat.use-expanding-line-edit", d->ck_autoResize->isChecked());
 	
 	// Soft return.
@@ -149,6 +175,27 @@ void OptionsTabChat::restoreOptions()
 	d->ck_raiseChatWindow->setChecked( PsiOptions::instance()->getOption("options.ui.chat.raise-chat-windows-on-new-messages").toBool() );
 	d->ck_smallChats->setChecked( PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool() );
 	d->ck_tabChats->setChecked( PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool() );
+	QString tabGrouping = PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString();
+	bool custom = false;
+	if (tabGrouping == "C") {
+		d->cb_tabGrouping->setCurrentIndex(0);
+	} else if (tabGrouping == "M") {
+		d->cb_tabGrouping->setCurrentIndex(1);
+	} else if (tabGrouping == "C:M") {
+		d->cb_tabGrouping->setCurrentIndex(2);
+	} else if (tabGrouping == "CM") {
+		d->cb_tabGrouping->setCurrentIndex(3);
+	} else {
+		if (d->cb_tabGrouping->count() == 5) {
+			d->cb_tabGrouping->setCurrentIndex(4);
+		} else {
+			d->cb_tabGrouping->setCurrentIndex(-1);
+		}
+		custom = true;
+	}
+	if (!custom && d->cb_tabGrouping->count() == 5) {
+		d->cb_tabGrouping->removeItem(4);
+	}
 	d->ck_autoResize->setChecked( PsiOptions::instance()->getOption("options.ui.chat.use-expanding-line-edit").toBool() );
 	QString delafter = PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString();
 	if (delafter == "instant") {

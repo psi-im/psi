@@ -306,6 +306,8 @@
 				<put-tabs-at-bottom type="bool">false</put-tabs-at-bottom>
 				<use-tabs type="bool">false</use-tabs>
 				<size type="QString"></size> <!-- will be invalid when converted to QSize so we can detect first load -->
+				<grouping type="QString" comment="A ':' seperated list of groups of kinds of tabs to keep in the same tabset. 'C' for chat and 'M' for mucs">C:M</grouping>
+				<group-state comment="saved state data of the tabsets defined by options.ui.tabs.grouping"/>
 			</tabs>
 		</ui>
 		<shortcuts comment="Shortcuts">

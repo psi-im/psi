@@ -24,14 +24,27 @@ PsiCon* TabManager::psiCon() const
 	return psiCon_;
 }
 
-TabDlg* TabManager::getTabs()
+TabDlg* TabManager::getTabs(QWidget *widget)
 {
-	if (!tabs_.isEmpty()) {
-		return tabs_.first();
+	QChar kind = tabKind(widget);
+	if (preferedTabsetForKind_.contains(kind)) {
+		return preferedTabsetForKind_[kind];
+	} else {
+		return newTabs(widget);
 	}
-	else {
-		return newTabs();
+}
+
+QChar TabManager::tabKind(QWidget *widget) {
+	QChar retval = 0;
+	
+	if (qobject_cast<ChatDlg*> (widget)) {
+		retval = 'C';
+	} else if (qobject_cast<GCMainDlg*> (widget)) {
+		retval = 'M';
+	} else {
+		qDebug("Checking if widget should be tabbed: Unknown type");
 	}
+	return retval;
 }
 
 bool TabManager::shouldBeTabbed(QWidget *widget)
@@ -39,21 +52,55 @@ bool TabManager::shouldBeTabbed(QWidget *widget)
 	if (!PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool()) {
 		return false;
 	}
-	if (qobject_cast<ChatDlg*> (widget)) {
+	
+	QString grouping = PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString();
+	if (grouping.contains(tabKind(widget))) {
 		return true;
 	}
-	if (qobject_cast<GCMainDlg*> (widget)) {
-		return true;
-	}
-	qDebug("Checking if widget should be tabbed: Unknown type");
 	return false;
 }
 
-TabDlg* TabManager::newTabs()
+void TabManager::tabResized(QSize size) {
+	if (PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool()) {
+		PsiOptions::instance()->mapPut("options.ui.tabs.group-state", 
+					tabsetToKinds_[static_cast<TabDlg*>(sender())], "size", size);
+	}
+}
+
+TabDlg* TabManager::newTabs(QWidget *widget)
 {
-	TabDlg *tab = new TabDlg(this);
+	QChar kind = tabKind(widget);
+	QString group, grouping = PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString();
+	foreach(QString g, grouping.split(":")) {
+		if (g.contains(kind)) {
+			group = g;
+			break;
+		}
+	}
+	
+	
+	QVariantList savedSizes = PsiOptions::instance()->mapKeyList("options.ui.tabs.group-state");
+	QSize size = PsiOptions::instance()->getOption("options.ui.tabs.size").toSize();
+	if (savedSizes.contains(group)) {
+		size = PsiOptions::instance()->mapGet("options.ui.tabs.group-state", group, "size").toSize();
+	} else {
+		foreach(QVariant v, savedSizes) {
+			if (v.toString().contains(kind)) {
+				size = PsiOptions::instance()->mapGet("options.ui.tabs.group-state", v.toString(), "size").toSize();
+			}
+		}
+	}
+	TabDlg *tab = new TabDlg(this, size);
+	tabsetToKinds_.insert(tab, group);
+	for (int i=0; i < group.length(); i++) {
+		QChar k = group.at(i);
+		if (!preferedTabsetForKind_.contains(k)) {
+			preferedTabsetForKind_.insert(k, tab);
+		}
+	}
 	tabs_.append(tab);
 	connect(tab, SIGNAL(destroyed(QObject*)), SLOT(tabDestroyed(QObject*)));
+	connect(tab, SIGNAL(resized(QSize)), SLOT(tabResized(QSize)));
 	connect(psiCon_, SIGNAL(emitOptionsUpdate()), tab, SLOT(optionsUpdate()));
 	return tab;
 }
@@ -62,6 +109,31 @@ void TabManager::tabDestroyed(QObject* obj)
 {
 	Q_ASSERT(tabs_.contains(static_cast<TabDlg*>(obj)));
 	tabs_.removeAll(static_cast<TabDlg*>(obj));
+	tabsetToKinds_.remove(static_cast<TabDlg*>(obj));
+	QMutableMapIterator<QChar, TabDlg*> it(preferedTabsetForKind_);
+	while (it.hasNext()) {
+		it.next();
+		if (preferedTabsetForKind_[it.key()] != obj) continue;
+		bool ok = false;
+		foreach(TabDlg* tabDlg, tabs_) {
+			// currently destroyed tab is removed from the list a few lines above
+			if (tabsetToKinds_[tabDlg].contains(it.key())) {
+				preferedTabsetForKind_[it.key()] = tabDlg;
+				ok = true;
+				break;
+			}
+		}
+		if (!ok) it.remove();
+	}
+}
+
+TabDlg *TabManager::preferredTabsForKind(QChar kind) {
+	return preferedTabsetForKind_.value(kind);
+}
+
+void TabManager::setPreferredTabsForKind(QChar kind, TabDlg *tab) {
+	Q_ASSERT(tabs_.contains(tab));
+	preferedTabsetForKind_[kind] = tab;
 }
 
 bool TabManager::isChatTabbed(const TabbableWidget* chat) const
