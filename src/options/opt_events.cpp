@@ -129,7 +129,7 @@ void OptionsTabEvents::restoreOptions()
 	d->ck_allowUnlistedPopup->setChecked( !PsiOptions::instance()->getOption("options.ui.notifications.popup-dialogs.suppress-when-not-on-roster").toBool() );
 	d->ck_raise->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.raise-on-new-event").toBool() );
 	d->ck_ignoreNonRoster->setChecked( PsiOptions::instance()->getOption("options.messages.ignore-non-roster-contacts").toBool() );
-	d->cb_animation->setCurrentItem(d->cb_animation->findData(PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toInt()));
+	d->cb_animation->setCurrentItem(d->cb_animation->findData(PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString()));
 	d->ck_autoAuth->setChecked( PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorisation").toBool() );
 	d->ck_notifyAuth->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.successful-subscription").toBool() );
 	d->cb_bounce->setCurrentItem( d->cb_bounce->findData(PsiOptions::instance()->getOption("options.ui.notifications.bounce-dock").toString()) );
