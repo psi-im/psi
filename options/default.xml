@@ -202,8 +202,8 @@
 			<file-transfer>
 				<auto-popup type="bool">false</auto-popup>
 			</file-transfer>
-			<last-used-open-path type="QString">/home/martin</last-used-open-path>
-			<last-used-save-path type="QString">/home/martin</last-used-save-path>
+			<last-used-open-path type="QString"></last-used-open-path>
+			<last-used-save-path type="QString"></last-used-save-path>
 			<look>
 				<colors>
 					<contactlist>
@@ -218,7 +218,7 @@
 						</profile>
 						<status>
 							<away type="QColor">#004bb4</away>
-							<do-not-disturb type="QColor">#7e0000</do-no-disturb>
+							<do-not-disturb type="QColor">#7e0000</do-not-disturb>
 							<offline type="QColor">#646464</offline>
 							<online type="QColor">#000000</online>
 						</status>
