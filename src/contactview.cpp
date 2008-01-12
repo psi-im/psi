@@ -1909,7 +1909,7 @@ public slots:
 		int top_offs    = abs( desktop.top()    - topParent->frameGeometry().top() );
 		int bottom_offs = abs( desktop.bottom() - topParent->frameGeometry().bottom() );
 
-		PsiOptions::instance()->setOption("options.ui.contactlist.grow-roster-upwards", (bool) bottom_offs < top_offs);
+		PsiOptions::instance()->setOption("options.ui.contactlist.grow-roster-upwards", (bool) (bottom_offs < top_offs));
 		//qWarning("growTop = %d", PsiOptions::instance()->getOption("options.ui.contactlist.automatically-resize-roster").toBool()GrowTop);
 	}
 	
@@ -3084,7 +3084,7 @@ void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
 		if(d->status == STATUS_AWAY || d->status == STATUS_XA)
 			xcg.setColor(QColorGroup::Text, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.away").value<QColor>());
 		else if(d->status == STATUS_DND)
-			xcg.setColor(QColorGroup::Text, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.do-no-disturb").value<QColor>());
+			xcg.setColor(QColorGroup::Text, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.do-not-disturb").value<QColor>());
 		else if(d->status == STATUS_OFFLINE)
 			xcg.setColor(QColorGroup::Text, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.offline").value<QColor>());
 

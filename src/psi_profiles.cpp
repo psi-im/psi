@@ -1212,7 +1212,7 @@ bool OptionsMigration::fromFile(const QString &fname)
 				migrateColorEntry(tag, "online", "options.ui.look.colors.contactlist.status.online");
 				migrateColorEntry(tag, "listback", "options.ui.look.colors.contactlist.background");
 				migrateColorEntry(tag, "away", "options.ui.look.colors.contactlist.status.away");
-				migrateColorEntry(tag, "dnd", "options.ui.look.colors.contactlist.status.do-no-disturb");
+				migrateColorEntry(tag, "dnd", "options.ui.look.colors.contactlist.status.do-not-disturb");
 				migrateColorEntry(tag, "offline", "options.ui.look.colors.contactlist.status.offline");
 				migrateColorEntry(tag, "status", "options.ui.look.colors.contactlist.status-messages");
 				migrateColorEntry(tag, "groupfore", "options.ui.look.colors.contactlist.grouping.header-foreground");

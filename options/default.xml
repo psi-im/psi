@@ -218,7 +218,7 @@
 						</profile>
 						<status>
 							<away type="QColor">#004bb4</away>
-							<do-no-disturb type="QColor">#7e0000</do-no-disturb>
+							<do-not-disturb type="QColor">#7e0000</do-no-disturb>
 							<offline type="QColor">#646464</offline>
 							<online type="QColor">#000000</online>
 						</status>

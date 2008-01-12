@@ -269,12 +269,11 @@ void OptionsTabAppearanceGeneral::applyOptions()
 	PsiOptions::instance()->setOption("options.ui.look.font.message", d->le_fMessage->fontName());
 	PsiOptions::instance()->setOption("options.ui.look.font.chat", d->le_fChat->fontName());
 	PsiOptions::instance()->setOption("options.ui.look.font.passive-popup", d->le_fPopup->fontName());
-	int n;
 
 	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.status.online", getColor(d->pb_cOnline));
 	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.status.offline", getColor(d->pb_cOffline));
 	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.status.away", getColor(d->pb_cAway));
-	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.status.do-no-disturb", getColor(d->pb_cDND));
+	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.status.do-not-disturb", getColor(d->pb_cDND));
 	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.profile.header-foreground", getColor(d->pb_cProfileFore));
 	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.profile.header-background", getColor(d->pb_cProfileBack));
 	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.grouping.header-foreground", getColor(d->pb_cGroupFore));
@@ -307,7 +306,7 @@ void OptionsTabAppearanceGeneral::restoreOptions()
 	restoreColor(d->pb_cOnline, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.online").value<QColor>());
 	restoreColor(d->pb_cOffline, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.offline").value<QColor>());
 	restoreColor(d->pb_cAway, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.away").value<QColor>());
-	restoreColor(d->pb_cDND, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.do-no-disturb").value<QColor>());
+	restoreColor(d->pb_cDND, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.do-not-disturb").value<QColor>());
 	restoreColor(d->pb_cProfileFore, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.profile.header-foreground").value<QColor>());
 	restoreColor(d->pb_cProfileBack, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.profile.header-background").value<QColor>());
 	restoreColor(d->pb_cGroupFore, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-foreground").value<QColor>());

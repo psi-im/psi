@@ -395,6 +395,7 @@ bool PsiIconset::optionsChanged()
 	}
 
 	return old->defaultRosterIconset != PsiOptions::instance()->getOption("options.iconsets.status").toString();*/
+	return false; // FIXMELEGOPT for now just to make it compile
 }
 
 PsiIcon *PsiIconset::event2icon(PsiEvent *e)
