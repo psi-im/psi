@@ -960,7 +960,7 @@ bool OptionsMigration::fromFile(const QString &fname)
 	}
 	for (int i=0; i < accMigration.size(); i++) {
 		if (accMigration[i].proxy_index != 0) {
-			accMigration[i].proxyID = proxyMigration[accMigration[i].proxy_index].id;
+			accMigration[i].proxyID = proxyMigration[accMigration[i].proxy_index-1].id;
 		}
 	}
 	
