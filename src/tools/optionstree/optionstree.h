@@ -54,6 +54,9 @@ public:
 	// Map helpers
 	QString mapLookup(const QString &basename, const QVariant &key) const;
 	QString mapPut(const QString &basename, const QVariant &key);
+	void mapPut(const QString &basename, const QVariant &key, const QString &node, const QVariant &value);
+	QVariant mapGet(const QString &basename, const QVariant &key, const QString &node) const;
+	QVariant mapGet(const QString &basename, const QVariant &key, const QString &node, const QVariant &def) const;
 	QVariantList mapKeyList(const QString &basename) const;
 	
 	
