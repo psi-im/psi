@@ -1143,9 +1143,9 @@ void PsiCon::queueChanged()
 void PsiCon::startBounce()
 {
 #ifdef Q_WS_MAC
-	if (option.bounceDock != Options::NoBounce) {
+	if (PsiOptions::instance()->getOption("options.ui.notifications.bounce-dock").toString() != "never") {
 		MacDock::startBounce();
-		if (option.bounceDock == Options::BounceOnce) {
+		if (PsiOptions::instance()->getOption("options.ui.notifications.bounce-dock").toString() == "once") {
 			MacDock::stopBounce();
 		}
 	}
