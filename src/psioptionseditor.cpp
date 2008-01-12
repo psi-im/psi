@@ -82,7 +82,7 @@ OptionEditor::OptionEditor(bool new_, QString name_, QVariant value_)
 void OptionEditor::finished()
 {	
 	QString option = le_option->text();
-	if (option.isEmpty() || option.endsWith(".") || option.contains("..")) {
+	if (option.isEmpty() || option.endsWith(".") || option.contains("..") || !PsiOptions::isValidName(option)) {
 		QMessageBox::critical(this, tr("Psi: Optioneditor"),
 			tr("Please enter option name.\n\n"
 			"Option names may not be empty, end in '.' or contain '..'."), QMessageBox::Close);
@@ -154,6 +154,11 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
 
 	buttonLine->addStretch(1);
 
+	if (1) { // FIXME
+		pb_delete = new QPushButton(tr("delete"), this);
+		buttonLine->addWidget(pb_delete);
+		connect(pb_delete, SIGNAL(clicked()), SLOT(deleteit()));
+	}
 	
 	pb_edit = new QPushButton(tr("edit..."), this);
 	buttonLine->addWidget(pb_edit);
@@ -244,6 +249,22 @@ void PsiOptionsEditor::edit()
 	QString option = tm_->indexToOptionName(idx);
 	if (!o_->isInternalNode(option)) {
 		new OptionEditor(false, option, PsiOptions::instance()->getOption(option));
+	}
+}
+
+void PsiOptionsEditor::deleteit()
+{
+	QModelIndex idx = tv_->currentIndex();
+	QString option = tm_->indexToOptionName(idx);
+	bool sub = false;
+	QString confirm = tr("Really delete options %1?");
+	if (o_->isInternalNode(option)) {
+		sub = true;
+		confirm = tr("Really delete all options starting with %1.?");
+	}
+	if (QMessageBox::Yes == QMessageBox::warning(this, tr("Psi: Option Editor"),
+                   confirm.arg(option), QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel)) {
+		PsiOptions::instance()->removeOption( option, sub);
 	}
 }
 
