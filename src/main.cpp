@@ -38,6 +38,7 @@
 #include <time.h>
 #include "profiledlg.h"
 #include "activeprofiles.h"
+#include "psioptions.h"
 
 #include "eventdlg.h"
 #include "psicon.h"
@@ -218,6 +219,8 @@ void PsiMain::chooseProfile()
 
 void PsiMain::sessionStart()
 {
+	// make sure we have clean PsiOptions
+	PsiOptions::reset();
 	// get a PsiCon
 	if (!ActiveProfiles::instance()->setThisProfile(activeProfile)) { // already running
 		if (!ActiveProfiles::instance()->raiseOther(activeProfile, true))

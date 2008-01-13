@@ -106,6 +106,16 @@ PsiOptions* PsiOptions::instance()
 	return instance_;
 }
 
+
+/**
+ * Reset the singleton instance of this class
+ * this delete the old instance so be sure no references are there anymore
+ */
+void PsiOptions::reset() {
+	instance_ = 0;
+	delete instance_;
+}
+
 /**
  * Loads the options present in the xml config file named.
  * \param file Name of the xml config file to load
