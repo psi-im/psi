@@ -26,7 +26,7 @@
 #include <QPixmap>
 #include <QStringList>
 #include <QCoreApplication>
-
+#include "common.h"
 #include "psiaccount.h"
 #include "avatars.h"
 #include "growlnotifier.h"
