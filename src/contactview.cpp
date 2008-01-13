@@ -1382,6 +1382,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		int x = pm.exec(pos);
 
 		// restore actions
+		d->cv->qa_logon->setEnabled(true);
 		if(PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool()) {
 			d->cv->qa_ren->setEnabled(false);
 			d->cv->qa_rem->setEnabled(false);
