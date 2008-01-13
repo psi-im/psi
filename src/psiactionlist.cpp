@@ -56,6 +56,10 @@ private:
 	};
 
 	void createActionList( QString name, int id, ActionNames * );
+
+private slots:
+	void optionsChanged();
+
 };
 
 PsiActionList::Private::Private(PsiActionList *_list, PsiCon *_psi)
@@ -71,6 +75,9 @@ PsiActionList::Private::Private(PsiActionList *_list, PsiCon *_psi)
 	createMessage();
 	createChat();
 	createGroupchat();
+
+	connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionsChanged()));
+	optionsChanged();
 }
 
 PsiActionList::Private::~Private()
@@ -374,6 +381,14 @@ void PsiActionList::Private::createChat()
 
 void PsiActionList::Private::createGroupchat()
 {
+}
+
+void PsiActionList::Private::optionsChanged()
+{
+	ActionList *statusList = list->actionList(tr("Status"));
+	statusList->action("status_chat")->setVisible(PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool());
+	statusList->action("status_xa")->setVisible(PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool());
+	statusList->action("status_invisible")->setVisible(PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool());
 }
 
 //----------------------------------------------------------------------------

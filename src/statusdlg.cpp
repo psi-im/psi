@@ -39,6 +39,7 @@
 #include "common.h"
 #include "msgmle.h"
 #include "statuspreset.h"
+#include "statuscombobox.h"
 #include "shortcutmanager.h"
 
 
@@ -86,7 +87,8 @@ public:
 	PsiAccount *pa;
 	Status s;
 	ChatView *te;
-	QComboBox *cb_type, *cb_preset;
+	StatusComboBox *cb_type;
+	QComboBox *cb_preset;
 	QLineEdit *le_priority;
 	QCheckBox *save;
 };
@@ -131,24 +133,7 @@ void StatusSetDlg::init()
 	QLabel *l;
 	l = new QLabel(tr("Status:"), this);
 	hb1->addWidget(l);
-	d->cb_type = new QComboBox(this);
-
-	QList<XMPP::Status::Type> statuses;
-	statuses << STATUS_CHAT << STATUS_ONLINE << STATUS_AWAY << STATUS_XA << STATUS_DND;
-	if (PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool()) {
-		statuses << STATUS_INVISIBLE;
-	}
-	statuses << STATUS_OFFLINE;
-	
-	foreach(XMPP::Status::Type status, statuses) {
-		d->cb_type->addItem(status2txt(status), status);
-	}
-	for(int i = 0; i < d->cb_type->count(); i++) {
-		if (d->cb_type->itemData(i).toInt() == type) {
-			d->cb_type->setCurrentItem(i);
-			break;
-		}
-	}
+	d->cb_type = new StatusComboBox(this, static_cast<XMPP::Status::Type>(type));
 	hb1->addWidget(d->cb_type,3);
 
 	// Priority
@@ -250,12 +235,11 @@ void StatusSetDlg::doButton()
 		} else {
 			PsiOptions::instance()->setOption(base+".force-priority", false);
 		}
-		PsiOptions::instance()->setOption(base+".status", XMPP::Status((XMPP::Status::Type) d->cb_type->itemData(d->cb_type->currentIndex()).toInt()).typeString());
-		
+		PsiOptions::instance()->setOption(base+".status", XMPP::Status(d->cb_type->status()).typeString());
 	} 
 
 	// Set status
-	int type = d->cb_type->itemData(d->cb_type->currentIndex()).toInt();
+	int type = d->cb_type->status();
 	QString str = d->te->text();
 
  	if (d->le_priority->text().isEmpty())
@@ -281,13 +265,7 @@ void StatusSetDlg::chooseStatusPreset(int x)
 
 	XMPP::Status status;
 	status.setType(PsiOptions::instance()->getOption(base+".status").toString());
-	int n;
-	for(n = 0; n < d->cb_type->count(); ++n) {
-		if(status.type() == d->cb_type->itemData(n).toInt()) {
-			d->cb_type->setCurrentItem(n);
-			break;
-		}
-	}
+	d->cb_type->setStatus(status.type());
 }
 
 void StatusSetDlg::cancel()

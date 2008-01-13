@@ -26,8 +26,6 @@ public:
 // OptionsTabStatus
 //----------------------------------------------------------------------------
 
-static XMPP::Status::Type combomap[7] = { STATUS_CHAT, STATUS_ONLINE, STATUS_AWAY, STATUS_XA, STATUS_DND, STATUS_INVISIBLE, STATUS_OFFLINE };
-
 OptionsTabStatus::OptionsTabStatus(QObject *parent)
 : OptionsTab(parent, "status", "", tr("Status"), tr("Status preferences"), "psi/status")
 {
@@ -74,10 +72,6 @@ QWidget *OptionsTabStatus::widget()
 	connect(d->le_sp_priority, SIGNAL(textChanged(const QString&)), SLOT(changeStatusPreset()));
 	connect(d->cb_sp_status, SIGNAL(activated(int)), SLOT(changeStatusPreset()));
 	
-	int n;
-	for(n = 0; n < 7; ++n)
-		d->cb_sp_status->insertItem(status2txt(combomap[n]));
-
 	QWhatsThis::add(d->pb_spNew,
 		tr("Press this button to create a new status message preset."));
 	QWhatsThis::add(d->pb_spDelete,
@@ -249,13 +243,7 @@ void OptionsTabStatus::selectStatusPreset(int x)
 	else
 		d->le_sp_priority->clear();
 	d->le_sp_priority->setEnabled(true);
-	int n;
-	for(n = 0; n < 7; ++n) {
-		if(preset.status() == combomap[n]) {
-			d->cb_sp_status->setCurrentItem(n);
-			break;
-		}
-	}
+	d->cb_sp_status->setStatus(preset.status());
 	d->cb_sp_status->setEnabled(true);
 
 	//noDirty = FALSE;
@@ -342,7 +330,7 @@ void OptionsTabStatus::changeStatusPreset()
 		sp.clearPriority();
 	else
 		sp.setPriority(d->le_sp_priority->text().toInt());
-	sp.setStatus(combomap[d->cb_sp_status->currentItem()]);
+	sp.setStatus(d->cb_sp_status->status());
 
 	QString name = d->cb_preset->text(id);
 	

@@ -225,7 +225,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="cb_sp_status" />
+         <widget class="StatusComboBox" name="cb_sp_status" />
         </item>
         <item>
          <spacer>
@@ -291,6 +291,13 @@
  </widget>
  <layoutdefault spacing="6" margin="11" />
  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+ <customwidgets>
+  <customwidget>
+   <class>StatusComboBox</class>
+   <extends>QComboBox</extends>
+   <header>statuscombobox.h</header>
+  </customwidget>
+ </customwidgets>
  <tabstops>
   <tabstop>ck_asAway</tabstop>
   <tabstop>sb_asAway</tabstop>

@@ -141,6 +141,7 @@ HEADERS += \
 	$$PWD/changepwdlg.h \
 	$$PWD/msgmle.h \
 	$$PWD/statusdlg.h \
+	$$PWD/statuscombobox.h \
 	$$PWD/certutil.h \
 	$$PWD/eventdlg.h \
 	$$PWD/chatdlg.h \
@@ -251,6 +252,7 @@ SOURCES += \
 	$$PWD/changepwdlg.cpp \
 	$$PWD/msgmle.cpp \
 	$$PWD/statusdlg.cpp \
+	$$PWD/statuscombobox.cpp \
 	$$PWD/eventdlg.cpp \
 	$$PWD/chatdlg.cpp \
 	$$PWD/psichatdlg.cpp \

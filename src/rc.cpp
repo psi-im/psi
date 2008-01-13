@@ -63,10 +63,12 @@ AHCommand RCSetStatusServer::execute(const AHCommand& c, const Jid&)
 		status_field.setRequired(true);
 		status_field.setValue(QStringList(manager()->account()->status().typeString()));
 		XData::Field::OptionList status_options;
-		XData::Field::Option chat_option;
-		chat_option.label = QObject::tr("Chat");
-		chat_option.value = "chat";
-		status_options += chat_option;
+		if (PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool()) {
+			XData::Field::Option chat_option;
+			chat_option.label = QObject::tr("Chat");
+			chat_option.value = "chat";
+			status_options += chat_option;
+		}
 		XData::Field::Option online_option;
 		online_option.label = QObject::tr("Online");
 		online_option.value = "online";
@@ -75,10 +77,12 @@ AHCommand RCSetStatusServer::execute(const AHCommand& c, const Jid&)
 		away_option.label = QObject::tr("Away");
 		away_option.value = "away";
 		status_options += away_option;
-		XData::Field::Option xa_option;
-		xa_option.label = QObject::tr("Extended Away");
-		xa_option.value = "xa";
-		status_options += xa_option;
+		if (PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool()) {
+			XData::Field::Option xa_option;
+			xa_option.label = QObject::tr("Extended Away");
+			xa_option.value = "xa";
+			status_options += xa_option;
+		}
 		XData::Field::Option dnd_option;
 		dnd_option.label = QObject::tr("Do Not Disturb");
 		dnd_option.value = "dnd";

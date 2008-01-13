@@ -490,6 +490,7 @@ void OptionsTabToolbars::addToolbarAction(QListWidget *parent, const QAction *ac
 	item->setText(n);
 	item->setData(Qt::UserRole, name);
 	item->setIcon(action->iconSet());
+	item->setHidden(!action->isVisible());
 }
 
 void OptionsTabToolbars::toolbarSelectionChanged(int item)
@@ -562,6 +563,8 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 			QStringList::Iterator it2 = actionNames.begin();
 			for ( ; it2 != actionNames.end(); ++it2 ) {
 				IconAction *action = actionList->action( *it2 );
+				if ( !action->isVisible() )
+					continue;
 				QTreeWidgetItem *item = new QTreeWidgetItem( root, last );
 				last = item;
 
@@ -625,10 +628,21 @@ void OptionsTabToolbars::updateArrows()
 		// get numeric index of item
 		int n = d->lw_selectedActions->row(i);
 
-		if(n > 0)
-			up = true;
-		if(n < d->lw_selectedActions->count() - 1)
-			down = true;
+		int i = n;
+		while (--i > 0) {
+			if (!d->lw_selectedActions->item(i)->isHidden()) {
+				up = true;
+				break;
+			}
+		}
+		
+		i = n;
+		while (++i < d->lw_selectedActions->count()) {
+			if (!d->lw_selectedActions->item(i)->isHidden()) {
+				down = true;
+				break;
+			}
+		}
 	}
 
 	d->tb_up->setEnabled(up);
@@ -669,7 +683,11 @@ void OptionsTabToolbars::toolbarActionUp()
 	int row = d->lw_selectedActions->row(item);
 	if ( row > 0 ) {
 		d->lw_selectedActions->takeItem(row);
-		d->lw_selectedActions->insertItem(row - 1, item);
+		--row;
+		while (row > 0 && d->lw_selectedActions->item(row)->isHidden()) {
+			--row;
+		}
+		d->lw_selectedActions->insertItem(row, item);
 		d->lw_selectedActions->setCurrentItem(item);
 	}
 
@@ -687,7 +705,11 @@ void OptionsTabToolbars::toolbarActionDown()
 	int row = d->lw_selectedActions->row(item);
 	if ( row < d->lw_selectedActions->count() ) {
 		d->lw_selectedActions->takeItem(row);
-		d->lw_selectedActions->insertItem(row + 1, item);
+		++row;
+		while (row < d->lw_selectedActions->count() && d->lw_selectedActions->item(row)->isHidden()) {
+			++row;
+		}
+		d->lw_selectedActions->insertItem(row, item);
 		d->lw_selectedActions->setCurrentItem(item);
 	}
 
