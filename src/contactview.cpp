@@ -2160,14 +2160,21 @@ void ContactView::keyPressEvent(QKeyEvent *e)
 		Q3ListView::keyPressEvent(e);
 	} else {
 		QString text = e->text().lower();
-		if ( text.isEmpty() ) {
+		if (text.isEmpty()) {
 			Q3ListView::keyPressEvent(e);
-		} else if (key == Qt::Key_Escape) {
-			e->ignore();
-		} else if (e->modifiers() != Qt::NoModifier) {
-			e->ignore();
-		} else {
-			emit searchInput(text);
+		}
+		else {
+			bool printable = true;
+			foreach (QChar ch, text) {
+				if (!ch.isPrint()) {
+					Q3ListView::keyPressEvent(e);
+					printable = false;
+					break;
+				}
+			}
+			if (printable) {
+				emit searchInput(text);
+			}
 		}
 	}
 }
