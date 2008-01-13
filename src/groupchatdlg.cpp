@@ -1167,8 +1167,9 @@ void GCMainDlg::message(const Message &_m)
 		d->lastReferrer = m.from().resource();
 
 	if(PsiOptions::instance()->getOption("options.ui.muc.use-highlighting").toBool()) {
-		for(QStringList::Iterator it=PsiOptions::instance()->getOption("options.ui.muc.highlight-words").toStringList().begin();it!=PsiOptions::instance()->getOption("options.ui.muc.highlight-words").toStringList().end();it++) {
-			if(m.body().contains((*it), Qt::CaseInsensitive)) {
+		QStringList highlightWords = PsiOptions::instance()->getOption("options.ui.muc.highlight-words").toStringList();
+		foreach (QString word, highlightWords) {
+			if(m.body().contains((word), Qt::CaseInsensitive)) {
 				alert = true;
 			}
 		}
@@ -1244,16 +1245,18 @@ QString GCMainDlg::getNickColor(QString nick)
 		}
 		sender=nicks[nick];
 	}
-
-	if(!PsiOptions::instance()->getOption("options.ui.muc.use-nick-coloring").toBool() || PsiOptions::instance()->getOption("options.ui.look.colors.muc.nick-colors").toStringList().empty()) {
+	
+	QStringList nickColors = PsiOptions::instance()->getOption("options.ui.look.colors.muc.nick-colors").toStringList();
+	
+	if(!PsiOptions::instance()->getOption("options.ui.muc.use-nick-coloring").toBool() || nickColors.empty()) {
 		return "#000000";
 	}
-	else if(sender == -1 || PsiOptions::instance()->getOption("options.ui.look.colors.muc.nick-colors").toStringList().size() == 1) {
-		return PsiOptions::instance()->getOption("options.ui.look.colors.muc.nick-colors").toStringList()[PsiOptions::instance()->getOption("options.ui.look.colors.muc.nick-colors").toStringList().size()-1];
+	else if(sender == -1 || nickColors.size() == 1) {
+		return nickColors[nickColors.size()-1];
 	}
 	else {
-		int n = sender % (PsiOptions::instance()->getOption("options.ui.look.colors.muc.nick-colors").toStringList().size()-1);
-		return PsiOptions::instance()->getOption("options.ui.look.colors.muc.nick-colors").toStringList()[n];
+		int n = sender % (nickColors.size()-1);
+		return nickColors[n];
 	}
 }
 
