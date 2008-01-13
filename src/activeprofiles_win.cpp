@@ -182,7 +182,9 @@ bool ActiveProfiles::setThisProfile(const QString &profile)
 		return false;
 	}
 	else {
-		CloseHandle(d->mutex);
+		if (d->mutex) {
+			CloseHandle(d->mutex);
+		}
 		d->mutex = m;
 		d->profile = profile;
 		//d->setWindowTitle() does not work - use SetWindowText
@@ -196,6 +198,7 @@ void ActiveProfiles::unsetThisProfile()
 {
 	d->startChanges();
 	CloseHandle(d->mutex);
+	d->mutex = 0;
 	d->profile = QString::null;
 	//d->setWindowTitle("");
 	SetWindowText(d->winId(), L"");
