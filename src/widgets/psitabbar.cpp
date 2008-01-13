@@ -29,7 +29,7 @@
 PsiTabBar::PsiTabBar(PsiTabWidget *parent)
 		: QTabBar(parent)
 		, dragsEnabled_(true) {
-	//acceptDrops();
+	//setAcceptDrops(true);
 }
 
 /**
@@ -103,7 +103,7 @@ void PsiTabBar::mouseMoveEvent(QMouseEvent *event) {
 
 		data.setNum(dragTab_);
 
-		mimeData->setData("psiTabDrag", data);
+		mimeData->setData(PSITABDRAGMIMETYPE, data);
 		drag->setMimeData(mimeData);
 		drag->setPixmap(icon);
 

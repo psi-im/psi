@@ -95,4 +95,7 @@ private:
 	QMenu *menu_;
 }; 
 
+
+#define PSITABDRAGMIMETYPE "x-drag-drop/x-psi-tab-drag"
+
 #endif

@@ -43,8 +43,6 @@
 #include <windows.h>
 #endif
 
-static const QString psiTabDragMimeType = "application/psi-tab-drag";
-
 //----------------------------------------------------------------------------
 // TabDlgDelegate
 //----------------------------------------------------------------------------
@@ -361,7 +359,7 @@ void TabDlg::detachTab(TabbableWidget* tab)
 	if (tabWidget_->count() == 1 || !tab)
 		return;
 
-	TabDlg *newTab = tabManager_->newTabs();
+	TabDlg *newTab = tabManager_->newTabs(tab);
 	sendTabTo(tab, newTab);
 }
 
@@ -564,7 +562,7 @@ void TabDlg::keyPressEvent(QKeyEvent *e)
 
 void TabDlg::dragEnterEvent(QDragEnterEvent *event)
 {
-	if (event->mimeData()->hasFormat(psiTabDragMimeType)) {
+	if (event->mimeData()->hasFormat(PSITABDRAGMIMETYPE)) {
 		event->setDropAction(Qt::MoveAction);
 		event->accept();
 	}
@@ -572,10 +570,10 @@ void TabDlg::dragEnterEvent(QDragEnterEvent *event)
 
 void TabDlg::dropEvent(QDropEvent *event)
 {
-	if (!event->mimeData()->hasFormat(psiTabDragMimeType)) {
+	if (!event->mimeData()->hasFormat(PSITABDRAGMIMETYPE)) {
 		return;
 	}
-	QByteArray data = event->mimeData()->data(psiTabDragMimeType);
+	QByteArray data = event->mimeData()->data(PSITABDRAGMIMETYPE);
 
 	int remoteTab = data.toInt();
 	event->acceptProposedAction();
