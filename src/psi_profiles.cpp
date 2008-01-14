@@ -1540,8 +1540,8 @@ void OptionsMigration::lateMigration()
 		//QMap<QString, QString> customRosterIconset;
 		int idx=0;
 		QMapIterator<QString, QString> iCRI(lateMigrationData.customRosterIconset);
- 		while (iSRI.hasNext()) {
-			iSRI.next();
+ 		while (iCRI.hasNext()) {
+			iCRI.next();
 			QString base = "options.iconsets.custom-status" ".a" + QString::number(idx++);
 			o->setOption(base+".regexp", iCRI.key());
 			o->setOption(base+".iconset", iCRI.value());
