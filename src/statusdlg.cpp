@@ -201,6 +201,9 @@ StatusSetDlg::~StatusSetDlg()
 
 void StatusSetDlg::doButton()
 {
+	// Trim whitespace
+	d->te->setText(d->te->text().trimmed());
+
 	// Save preset
 	if (d->save->isChecked()) {
 		QString text;
