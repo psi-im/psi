@@ -256,6 +256,21 @@ void Task::debug(const QString &str)
 	client()->debug(QString("%1: ").arg(metaObject()->className()) + str);
 }
 
+
+/**
+ * \brief verifiys a stanza is a IQ reply for this task
+ *
+ * it checks that the stanze is form the jid the request was send to and the id and the namespace (if given) match.
+ *
+ * it further checks that the sender jid is not empty (except if \a to is our server), it's not from
+ * our bare jid (except if send to one of our resources or our server)
+ * \param x the stanza to test
+ * \param to the Jid this task send a IQ to
+ * \param id the id of the send IQ
+ * \param xmlns the expected namespace if the reply (if non empty)
+ * \return true if it's a valid reply
+*/
+
 bool Task::iqVerify(const QDomElement &x, const Jid &to, const QString &id, const QString &xmlns)
 {
 	if(x.tagName() != "iq")

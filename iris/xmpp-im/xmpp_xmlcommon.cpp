@@ -131,6 +131,15 @@ QDomElement findSubTag(const QDomElement &e, const QString &name, bool *found)
 	return tmp;
 }
 
+
+/**
+ * \brief create a new IQ stanza
+ * \param doc 
+ * \param type 
+ * \param to destination jid
+ * \param id stanza id
+ * \return the created stanza
+*/
 QDomElement createIQ(QDomDocument *doc, const QString &type, const QString &to, const QString &id)
 {
 	QDomElement iq = doc->createElement("iq");
