@@ -1002,7 +1002,7 @@ void JT_VCard::set(const Jid &j, const VCard &card)
 	type = 1;
 	d->vcard = card;
 	d->jid = j;
-	d->iq = createIQ(doc(), "set", d->jid.full(), id());
+	d->iq = createIQ(doc(), "set", "", id());
 	d->iq.appendChild(card.toXml(doc()) );
 }
 
