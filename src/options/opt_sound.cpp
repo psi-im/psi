@@ -209,15 +209,15 @@ void OptionsTabSound::soundReset()
 {
 	OptSoundUI *d = (OptSoundUI *)w;
 	
-	d->le_oeMessage->setText(ApplicationInfo::resourcesDir() + "/sound/chat2.wav");
-	d->le_oeChat1->setText(ApplicationInfo::resourcesDir() + "/sound/chat1.wav");
-	d->le_oeChat2->setText(ApplicationInfo::resourcesDir() + "/sound/chat2.wav");
-	d->le_oeSystem->setText(ApplicationInfo::resourcesDir() + "/sound/chat2.wav");
-	d->le_oeHeadline->setText(ApplicationInfo::resourcesDir() + "/sound/chat2.wav");
-	d->le_oeOnline->setText(ApplicationInfo::resourcesDir() + "/sound/online.wav");
-	d->le_oeOffline->setText(ApplicationInfo::resourcesDir() + "/sound/offline.wav");
-	d->le_oeSend->setText(ApplicationInfo::resourcesDir() + "/sound/send.wav");
-	d->le_oeIncomingFT->setText(ApplicationInfo::resourcesDir() + "/sound/ft_incoming.wav");
-	d->le_oeFTComplete->setText(ApplicationInfo::resourcesDir() + "/sound/ft_complete.wav");
+	d->le_oeMessage->setText("sound/chat2.wav");
+	d->le_oeChat1->setText("sound/chat1.wav");
+	d->le_oeChat2->setText("sound/chat2.wav");
+	d->le_oeSystem->setText("sound/chat2.wav");
+	d->le_oeHeadline->setText("sound/chat2.wav");
+	d->le_oeOnline->setText("sound/online.wav");
+	d->le_oeOffline->setText("sound/offline.wav");
+	d->le_oeSend->setText("sound/send.wav");
+	d->le_oeIncomingFT->setText("sound/ft_incoming.wav");
+	d->le_oeFTComplete->setText("sound/ft_complete.wav");
 	emit dataChanged();
 }
