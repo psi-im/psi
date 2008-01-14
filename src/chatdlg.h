@@ -91,7 +91,6 @@ protected:
 	virtual void setShortcuts();
 
 	// reimplemented
-	void keyPressEvent(QKeyEvent *);
 	void closeEvent(QCloseEvent *);
 	void resizeEvent(QResizeEvent *);
 	void hideEvent(QHideEvent *);

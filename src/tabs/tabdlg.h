@@ -84,7 +84,6 @@ protected:
 
 	// reimplemented
 	void closeEvent(QCloseEvent*);
-	void keyPressEvent(QKeyEvent *);
 	void windowActivationChange(bool);
 	void resizeEvent(QResizeEvent *);
 	void dragEnterEvent(QDragEnterEvent *event);

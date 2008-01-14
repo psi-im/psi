@@ -78,28 +78,6 @@ bool ChatView::focusNextPrevChild(bool next)
 
 void ChatView::keyPressEvent(QKeyEvent *e)
 {
-	if(dialog_) {
-		QKeySequence k(e->key() + (e->modifiers() & ~Qt::KeypadModifier));
-
-		// Temporary workaround for what i think is a Qt bug
-		if(ShortcutManager::instance()->shortcuts("common.close").contains(k)
-			|| ShortcutManager::instance()->shortcuts("message.send").contains(k)) {
-			e->ignore();
-			return;
-		}
-
-		// Ignore registered key sequences (and pass them up)
-		foreach(QAction* act, dialog_->actions()) {
-			foreach(QKeySequence keyseq, act->shortcuts()) {
-				if(!keyseq.isEmpty() && keyseq.matches(k) == QKeySequence::ExactMatch) {
-					e->ignore();
-					//act->trigger();
-					return;
-				}
-			}
-		}
-	}
-
 /*	if(e->key() == Qt::Key_Escape)
 		e->ignore(); 
 #ifdef Q_WS_MAC
@@ -245,28 +223,18 @@ bool ChatEdit::focusNextPrevChild(bool next)
 	return QWidget::focusNextPrevChild(next);
 }
 
+// Qt text controls are quite greedy to grab key events.
+// disable that.
+bool ChatEdit::event(QEvent * event) {
+	if (event->type() == QEvent::ShortcutOverride) {
+		qDebug().nospace() << "S";
+		return false;
+	}
+	return QTextEdit::event(event);
+}
+
 void ChatEdit::keyPressEvent(QKeyEvent *e)
 {
-	if(dialog_) {
-		QKeySequence k(e->key() + (e->modifiers() & ~Qt::KeypadModifier));
-		// Temporary workaround for what i think is a Qt bug
-		if(ShortcutManager::instance()->shortcuts("common.close").contains(k)
-			|| ShortcutManager::instance()->shortcuts("chat.send").contains(k)) {
-			e->ignore();
-			return;
-		}
-
-		// Ignore registered key sequences (and pass them up)
-		foreach(QAction* act, dialog_->actions()) {
-			foreach(QKeySequence keyseq, act->shortcuts()) {
-				if(!keyseq.isEmpty() && keyseq.matches(k) == QKeySequence::ExactMatch) {
-					e->ignore();
-					//act->trigger();
-					return;
-				}
-			}
-		}
-	}
 /*	if(e->key() == Qt::Key_Escape || (e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier))
 		e->ignore();
 	else if(e->key() == Qt::Key_Return && 

@@ -85,7 +85,6 @@ protected:
 	void setShortcuts();
 
 	// reimplemented
-	void keyPressEvent(QKeyEvent *);
 	void dragEnterEvent(QDragEnterEvent *);
 	void dropEvent(QDropEvent *);
 	void closeEvent(QCloseEvent *);

@@ -1408,6 +1408,7 @@ void EventDlg::resizeEvent(QResizeEvent *e)
 
 void EventDlg::keyPressEvent(QKeyEvent *e)
 {
+	// FIXMEKEY
 	QKeySequence key = e->key() + ( e->modifiers() & ~Qt::KeypadModifier);
 	if(ShortcutManager::instance()->shortcuts("common.close").contains(key))
 		close();

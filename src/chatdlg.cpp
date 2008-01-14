@@ -181,13 +181,13 @@ void ChatDlg::initActions()
 
 void ChatDlg::setShortcuts()
 {
-	//act_send_->setShortcuts(ShortcutManager::instance()->shortcuts("chat.send"));
+	act_send_->setShortcuts(ShortcutManager::instance()->shortcuts("chat.send"));
 	act_scrollup_->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-up"));
 	act_scrolldown_->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-down"));
 
-	//if(!PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool()) {
-	//	act_close_->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
-	//}
+	if(!PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool()) {
+		act_close_->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
+	}
 }
 
 void ChatDlg::scrollUp()
@@ -198,29 +198,6 @@ void ChatDlg::scrollUp()
 void ChatDlg::scrollDown()
 {
 	chatView()->verticalScrollBar()->setValue(chatView()->verticalScrollBar()->value() + chatView()->verticalScrollBar()->pageStep() / 2);
-}
-
-// FIXME: This should be unnecessary, since these keys are all registered as
-// actions in the constructor. Somehow, Qt ignores this sometimes (i think
-// just for actions that have no modifier).
-void ChatDlg::keyPressEvent(QKeyEvent *e)
-{
-	QKeySequence key = e->key() + (e->modifiers() & ~Qt::KeypadModifier);
-	if (!PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool() && ShortcutManager::instance()->shortcuts("common.close").contains(key)) {
-		close();
-	}
-	else if (ShortcutManager::instance()->shortcuts("chat.send").contains(key)) {
-		doSend();
-	}
-	else if (ShortcutManager::instance()->shortcuts("common.scroll-up").contains(key)) {
-		scrollUp();
-	}
-	else if (ShortcutManager::instance()->shortcuts("common.scroll-down").contains(key)) {
-		scrollDown();
-	}
-	else {
-		e->ignore();
-	}
 }
 
 void ChatDlg::resizeEvent(QResizeEvent *e)

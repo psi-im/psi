@@ -86,6 +86,7 @@ protected:
 	// override the tab/esc behavior
 	bool focusNextPrevChild(bool next);
 	void keyPressEvent(QKeyEvent *);
+	bool event(QEvent * event);
 	void contextMenuEvent(QContextMenuEvent *e);
 
 private:

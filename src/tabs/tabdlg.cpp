@@ -547,19 +547,6 @@ void TabDlg::closeCurrentTab()
 	closeTab(static_cast<TabbableWidget*>(tabWidget_->currentPage()));
 }
 
-void TabDlg::keyPressEvent(QKeyEvent *e)
-{
-	if (e->key() == Qt::Key_Escape) {
-		closeCurrentTab();
-	}
-	else if (e->key() == Qt::Key_W && (e->modifiers() & Qt::ControlModifier)) {
-		closeCurrentTab();
-	}
-	else {
-		e->ignore();
-	}
-}
-
 void TabDlg::dragEnterEvent(QDragEnterEvent *event)
 {
 	if (event->mimeData()->hasFormat(PSITABDRAGMIMETYPE)) {
