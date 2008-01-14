@@ -227,7 +227,6 @@ bool ChatEdit::focusNextPrevChild(bool next)
 // disable that.
 bool ChatEdit::event(QEvent * event) {
 	if (event->type() == QEvent::ShortcutOverride) {
-		qDebug().nospace() << "S";
 		return false;
 	}
 	return QTextEdit::event(event);

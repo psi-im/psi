@@ -177,7 +177,7 @@ Q_DECLARE_METATYPE(TabbableWidget*);
 
 void TabDlg::setShortcuts()
 {
-	//act_close_->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
+	act_close_->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
 	act_prev_->setShortcuts(ShortcutManager::instance()->shortcuts("chat.previous-tab"));
 	act_next_->setShortcuts(ShortcutManager::instance()->shortcuts("chat.next-tab"));
 }
