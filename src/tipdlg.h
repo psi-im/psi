@@ -54,6 +54,9 @@ protected:
 	void updateTip();
 	void addTip(const QString& tip, const QString& author);
 
+private slots:
+	void openUrl(const QUrl&);
+
 private:
 	PsiCon* psi_;
 	QStringList tips;

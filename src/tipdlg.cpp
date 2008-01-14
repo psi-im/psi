@@ -27,6 +27,7 @@
 
 #include "psioptions.h"
 #include "psicon.h"
+#include "desktoputil.h"
 
 void TipDlg::show(PsiCon* psi)
 {
@@ -58,6 +59,9 @@ TipDlg::TipDlg(PsiCon* psi)
 	connect(pb_previous,SIGNAL(clicked()),SLOT(previous()));
 	connect(pb_next,SIGNAL(clicked()),SLOT(next()));
 	connect(ck_showTips,SIGNAL(toggled(bool)),SLOT(showTipsChanged(bool)));
+
+	tv_psi->setOpenLinks(false);
+	connect(tv_psi, SIGNAL(anchorClicked(const QUrl&)), SLOT(openUrl(const QUrl&)));
 
 	// add useful tips here
 	addTip( tr("Hello! Thank you for downloading Psi!\nWe hope that you will enjoy using it as we have enjoyed making it!\n"
@@ -159,4 +163,9 @@ void TipDlg::addTip(const QString& tip, const QString& author )
 		t += "<br><br><i>" + tr("Contributed by") + " " + author + "</i>";
 
 	tips += "<qt>" + t + "</qt>";
+}
+
+void TipDlg::openUrl(const QUrl& url)
+{
+	DesktopUtil::openUrl(url);
 }
