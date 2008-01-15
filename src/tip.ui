@@ -105,7 +105,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QTextBrowser" name="tv_psi" >
+           <widget class="PsiTextView" name="tv_psi" >
             <property name="frameShadow" >
              <enum>QFrame::Sunken</enum>
             </property>
