@@ -72,7 +72,7 @@ public slots:
 	virtual void deactivated();
 	virtual void activated();
 	void bringToFront();
-	void ensureTabbedCorrectly();
+	virtual void ensureTabbedCorrectly();
 
 protected:
 	virtual void setJid(const Jid&);

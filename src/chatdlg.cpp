@@ -179,14 +179,22 @@ void ChatDlg::initActions()
 	connect(act_scrolldown_, SIGNAL(activated()), SLOT(scrollDown()));
 }
 
+void ChatDlg::ensureTabbedCorrectly() {
+	TabbableWidget::ensureTabbedCorrectly();
+	setShortcuts();
+}
+
+
 void ChatDlg::setShortcuts()
 {
 	act_send_->setShortcuts(ShortcutManager::instance()->shortcuts("chat.send"));
 	act_scrollup_->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-up"));
 	act_scrolldown_->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-down"));
 
-	if(!PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool()) {
+	if(!isTabbed()) {
 		act_close_->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
+	} else {
+		act_close_->QAction::setShortcuts (QList<QKeySequence>());
 	}
 }
 
@@ -822,7 +830,7 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 			doFlash(true);
 		}
 		if (PsiOptions::instance()->getOption("options.ui.chat.raise-chat-windows-on-new-messages").toBool()) {
-			if (PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool()) {
+			if (isTabbed()) {
 				TabDlg* tabSet = getManagingTabDlg();
 				tabSet->selectTab(this);
 				::bringToFront(tabSet, false);

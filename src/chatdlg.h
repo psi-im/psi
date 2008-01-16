@@ -70,6 +70,7 @@ public:
 	virtual TabbableWidget::State state() const;
 	virtual int unreadMessageCount() const;
 	virtual QString desiredCaption() const;
+	virtual void ensureTabbedCorrectly();
 
 public:
 	PsiAccount* account() const;

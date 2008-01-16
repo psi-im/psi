@@ -100,6 +100,7 @@ public slots:
 	// reimplemented
 	virtual void deactivated();
 	virtual void activated();
+	virtual void ensureTabbedCorrectly();
 
 	void optionsUpdate();
 	

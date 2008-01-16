@@ -588,12 +588,21 @@ GCMainDlg::~GCMainDlg()
 	delete d;
 }
 
+void GCMainDlg::ensureTabbedCorrectly() {
+	TabbableWidget::ensureTabbedCorrectly();
+	setShortcuts();
+}
+
 void GCMainDlg::setShortcuts()
 {
 	d->act_clear->setShortcuts(ShortcutManager::instance()->shortcuts("chat.clear"));
 	d->act_find->setShortcuts(ShortcutManager::instance()->shortcuts("chat.find"));
 	d->act_send->setShortcuts(ShortcutManager::instance()->shortcuts("chat.send"));
-	d->act_close->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
+	if (!isTabbed()) {
+		d->act_close->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
+	} else {
+		d->act_close->QAction::setShortcuts (QList<QKeySequence>());
+	}
 	d->act_scrollup->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-up"));
 	d->act_scrolldown->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-down"));
 }
