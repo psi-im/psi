@@ -818,8 +818,10 @@ void GCMainDlg::configureRoom()
 		::bringToFront(d->configDlg);
 	else {
 		GCUserViewItem* c = (GCUserViewItem*)ui_.lv_users->findEntry(d->self);
+		MUCItem::Role role = c ? c->s.mucItem().role() : MUCItem::UnknownRole;
+		MUCItem::Affiliation affiliation = c ? c->s.mucItem().affiliation() : MUCItem::UnknownAffiliation;
 		d->configDlg = new MUCConfigDlg(d->mucManager, this);
-		d->configDlg->setRoleAffiliation(c->s.mucItem().role(), c->s.mucItem().affiliation());
+		d->configDlg->setRoleAffiliation(role, affiliation);
 		d->configDlg->show();
 	}
 }
