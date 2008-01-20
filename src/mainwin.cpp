@@ -555,34 +555,31 @@ void MainWin::setWindowOpts(bool _onTop, bool _asTool)
 
 void MainWin::setUseDock(bool use)
 {
-	if(use == false || d->tray) {
-		if(d->tray) {
-			delete d->tray;
-			d->tray = 0;
-		}
-
-		if (use == false) {
-			return;
-		}
-	}
-
-	if(d->tray) {
+	if (use == (d->tray != 0)) {
 		return;
 	}
 
-	d->tray = new PsiTrayIcon("Psi", d->trayMenu, d->old_trayicon);
-	if (d->old_trayicon) {
-		connect(d->tray, SIGNAL(closed()), SLOT(dockActivated()));
-		connect(qApp, SIGNAL(trayOwnerDied()), SLOT(dockActivated()));
+	if (d->tray) {
+		delete d->tray;
+		d->tray = 0;
 	}
-	connect(d->tray, SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
-	connect(d->tray, SIGNAL(doubleClicked(const QPoint &)), SLOT(trayDoubleClicked()));
-	d->tray->setIcon( PsiIconset::instance()->statusPtr( STATUS_OFFLINE ));
-	d->tray->setToolTip(ApplicationInfo::name());
 
-	updateReadNext(d->nextAnim, d->nextAmount);
+	Q_ASSERT(!d->tray);
+	if (use) {
+		d->tray = new PsiTrayIcon("Psi", d->trayMenu, d->old_trayicon);
+		if (d->old_trayicon) {
+			connect(d->tray, SIGNAL(closed()), SLOT(dockActivated()));
+			connect(qApp, SIGNAL(trayOwnerDied()), SLOT(dockActivated()));
+		}
+		connect(d->tray, SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
+		connect(d->tray, SIGNAL(doubleClicked(const QPoint &)), SLOT(trayDoubleClicked()));
+		d->tray->setIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
+		d->tray->setToolTip(ApplicationInfo::name());
 
-	d->tray->show();
+		updateReadNext(d->nextAnim, d->nextAmount);
+
+		d->tray->show();
+	}
 }
 
 void MainWin::buildStatusMenu()
