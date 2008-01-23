@@ -344,8 +344,8 @@
 		<x xmlns='name'>psi/command</x>
 		<object mime='image/png'>command.png</object>
 	</icon>
-
 	
+		
 	<!-- FIXME -->
 	<icon>
 		<x xmlns='name'>psi/roster</x>

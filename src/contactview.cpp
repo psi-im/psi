@@ -58,6 +58,7 @@
 #include "shortcutmanager.h"
 #include "xmpp_message.h"
 #include "textutil.h"
+#include "bookmarksmanagerdlg.h"
 
 
 static inline int rankStatus(int status) 
@@ -949,6 +950,8 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		pm.setItemEnabled(14, d->pa->serverInfoManager()->hasPEP());
 #endif
 
+		pm.insertItem(tr("Bookmarks"), 15);
+		
 		pm.insertSeparator();
 		pm.insertItem(IconsetFactory::icon("psi/addContact").icon(), tr("&Add a contact"), 7);
 		pm.insertItem(IconsetFactory::icon("psi/disco").icon(), tr("Service &Discovery"), 9);
@@ -958,7 +961,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		pm.insertItem(IconsetFactory::icon("psi/xml").icon(), tr("&XML Console"), 10);
 		pm.insertSeparator();
 		pm.insertItem(IconsetFactory::icon("psi/account").icon(), tr("&Modify Account..."), 0);
-
+		
 		if (PsiOptions::instance()->getOption("options.ui.menu.account.admin").toBool()) {
 			pm.insertSeparator();
 			pm.setItemEnabled(pm.insertItem(tr("&Admin"), am), online);
@@ -1015,6 +1018,15 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		}
 		else if(x == 13  && pm.isItemEnabled(14)) {
 			emit actionUnsetAvatar();
+		}
+		else if(x == 15) {
+			BookmarksManagerDlg *dlg = d->pa->findDialog<BookmarksManagerDlg*>(d->pa->jid());
+			if(dlg) {
+				bringToFront(dlg);
+			} else {
+				dlg = new BookmarksManagerDlg(d->pa);
+				dlg->show();
+			}
 		}
 		else if(x >= status_start) {
 			int status = x - status_start;
