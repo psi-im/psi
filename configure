@@ -497,7 +497,7 @@ public:
 		"int main()\n"
 		"{\n"
 		"	unsigned long x = QCA_VERSION;\n"
-		"	if(x >= 0x016363) return 0; else return 1;\n"
+		"	if(x >= 0x020000 && x < 0x030000) return 0; else return 1;\n"
 		"}\n";
 
 		int ret;

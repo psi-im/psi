@@ -31,7 +31,7 @@
   <dep type='google_ft'/>
   <dep type='jingle'/>
   <dep type='plugins'/>
-  <dep type='cppunit'/>
+  <dep type='tests'/>
   <dep type='debug'>
 	<required/>
   </dep>
