@@ -209,7 +209,15 @@ void MainWin::Private::updateMenu(QStringList actions, QMenu *menu)
 			menu->insertSeparator();
 			continue;
 		}
-		
+
+		if ( name == "diagnostics" ) {
+			QMenu *diagMenu = new QMenu(mainWin);
+			menu->insertItem(tr("Diagnostics"), diagMenu);
+			getAction("help_diag_qcaplugin")->addTo(diagMenu);
+			getAction("help_diag_qcakeystore")->addTo(diagMenu);
+			continue;
+		}
+
 		if ( (action = getAction(name)) ) {
 			action->addTo(menu);
 		}
@@ -381,6 +389,10 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	d->getAction("help_online_home")->addTo (helpMenu);
 	d->getAction("help_psi_muc")->addTo (helpMenu);
 	d->getAction("help_report_bug")->addTo (helpMenu);
+	QMenu *diagMenu = new QMenu(this);
+	helpMenu->insertItem(tr("Diagnostics"), diagMenu);
+	d->getAction("help_diag_qcaplugin")->addTo (diagMenu);
+	d->getAction("help_diag_qcakeystore")->addTo (diagMenu);
 #else
 	if (!PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool())  {
 		mainMenuBar()->hide();
@@ -468,6 +480,8 @@ void MainWin::registerAction( IconAction *action )
 		{ "help_report_bug",  activated, this, SLOT( actBugReportActivated() ) },
 		{ "help_about",       activated, this, SLOT( actAboutActivated() ) },
 		{ "help_about_qt",    activated, this, SLOT( actAboutQtActivated() ) },
+		{ "help_diag_qcaplugin",   activated, this, SLOT( actDiagQCAPluginActivated() ) },
+		{ "help_diag_qcakeystore", activated, this, SLOT( actDiagQCAKeyStoreActivated() ) },
 
 		{ "", 0, 0, 0 }
 	};
@@ -677,6 +691,7 @@ void MainWin::buildOptionsMenu()
 	        << "help_online_home"
 	        << "help_psi_muc"
 	        << "help_report_bug"
+		<< "diagnostics"
 	        << "separator"
 	        << "help_about"
 	        << "help_about_qt";
@@ -796,6 +811,24 @@ void MainWin::actTipActivated ()
 void MainWin::actAboutQtActivated ()
 {
 	QMessageBox::aboutQt(this);
+}
+
+void MainWin::actDiagQCAPluginActivated()
+{
+	QString dtext = QCA::pluginDiagnosticText();
+	ShowTextDlg *w = new ShowTextDlg(dtext, true, false, this);
+	w->setWindowTitle(CAP(tr("Security Plugins Diagnostic Text")));
+	w->resize(560, 240);
+	w->show();
+}
+
+void MainWin::actDiagQCAKeyStoreActivated()
+{
+	QString dtext = QCA::KeyStoreManager::diagnosticText();
+	ShowTextDlg *w = new ShowTextDlg(dtext, true, false, this);
+	w->setWindowTitle(CAP(tr("Key Storage Diagnostic Text")));
+	w->resize(560, 240);
+	w->show();
 }
 
 void MainWin::actPlaySoundsActivated (bool state)

@@ -129,6 +129,8 @@ private slots:
 	void actPlaySoundsActivated (bool);
 	void actPublishTuneActivated (bool);
 	void actTipActivated();
+	void actDiagQCAPluginActivated();
+	void actDiagQCAKeyStoreActivated();
 
 	bool showDockMenu(const QPoint &);
 	void dockActivated();

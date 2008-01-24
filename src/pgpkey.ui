@@ -63,7 +63,7 @@
           <item>
             <widget class="IconButton" name="pb_dtext" >
               <property name="text" >
-                <string>&amp;Diagnostic Text</string>
+                <string>&amp;Diagnostics</string>
               </property>
             </widget>
           </item>

@@ -342,16 +342,22 @@ void PsiActionList::Private::createMainWin()
 		IconAction *actAboutQt = new IconAction (tr("About Qt"), tr("About &Qt"), 0, this);
 		actAboutQt->setMenuRole(QAction::AboutQtRole);
 
+		IconAction *actDiagQCAPlugin = new IconAction (tr("Security Plugins"), tr("Security &Plugins"), 0, this);
+
+		IconAction *actDiagQCAKeyStore = new IconAction (tr("Key Storage"), tr("&Key Storage"), 0, this);
+
 		ActionNames actions[] = {
-			{ "help_readme",      actReadme     },
-			{ "help_tip",         actTip        },
-			{ "help_online_help", actOnlineHelp },
-			{ "help_online_wiki", actOnlineWiki },
-			{ "help_online_home", actOnlineHome },
-			{ "help_psi_muc",     actPsiMUC     },
-			{ "help_report_bug",  actBugReport  },
-			{ "help_about",       actAbout      },
-			{ "help_about_qt",    actAboutQt    },
+			{ "help_readme",           actReadme          },
+			{ "help_tip",              actTip             },
+			{ "help_online_help",      actOnlineHelp      },
+			{ "help_online_wiki",      actOnlineWiki      },
+			{ "help_online_home",      actOnlineHome      },
+			{ "help_psi_muc",          actPsiMUC          },
+			{ "help_report_bug",       actBugReport       },
+			{ "help_about",            actAbout           },
+			{ "help_about_qt",         actAboutQt         },
+			{ "help_diag_qcaplugin",   actDiagQCAPlugin  },
+			{ "help_diag_qcakeystore", actDiagQCAKeyStore },
 			{ "", 0 }
 		};
 
