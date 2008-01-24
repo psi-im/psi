@@ -29,6 +29,8 @@
 
 #include <pgputil.h>
 #include "pgpkeydlg.h"
+#include "common.h"
+#include "showtextdlg.h"
 
 class KeyViewItem : public Q3ListViewItem
 {
@@ -50,6 +52,7 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString& defaultKeyID, QWidget *parent) : QDi
 	connect(ui_.lv_keys, SIGNAL(doubleClicked(Q3ListViewItem *)), SLOT(qlv_doubleClicked(Q3ListViewItem *)));
 	connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(do_accept()));
 	connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(reject()));
+	connect(ui_.pb_dtext, SIGNAL(clicked()), SLOT(show_ksm_dtext()));
 
 	Q3ListViewItem *isel = 0;
 
@@ -104,4 +107,13 @@ void PGPKeyDlg::do_accept()
 	}
 	entry_ = i->entry_;
 	accept();
+}
+
+void PGPKeyDlg::show_ksm_dtext()
+{
+	QString dtext = QCA::KeyStoreManager::diagnosticText();
+	ShowTextDlg *w = new ShowTextDlg(dtext, true, false, this);
+	w->setWindowTitle(CAP(tr("Key Storage Diagnostic Text")));
+	w->resize(560, 240);
+	w->show();
 }

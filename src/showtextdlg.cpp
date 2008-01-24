@@ -60,3 +60,28 @@ ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent)
 
 	resize(560, 384);
 }
+
+ShowTextDlg::ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *parent)
+	: QDialog(parent)
+{
+	Q_UNUSED(nonfile);
+
+	setAttribute(Qt::WA_DeleteOnClose);
+
+	QVBoxLayout *vb1 = new QVBoxLayout(this, 8);
+	QTextEdit *te = new QTextEdit(this);
+	te->setReadOnly(TRUE);
+	te->setTextFormat(rich ? Qt::RichText : Qt::PlainText);
+	te->setText(text);
+
+	vb1->addWidget(te);
+
+	QHBoxLayout *hb1 = new QHBoxLayout(vb1);
+	hb1->addStretch(1);
+	QPushButton *pb = new QPushButton(tr("&OK"), this);
+	connect(pb, SIGNAL(clicked()), SLOT(accept()));
+	hb1->addWidget(pb);
+	hb1->addStretch(1);
+
+	resize(560, 384);
+}

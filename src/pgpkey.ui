@@ -61,6 +61,13 @@
             <number>0</number>
           </property>
           <item>
+            <widget class="IconButton" name="pb_dtext" >
+              <property name="text" >
+                <string>&amp;Diagnostic Text</string>
+              </property>
+            </widget>
+          </item>
+          <item>
             <spacer name="spacer1" >
               <property name="sizeHint" >
                 <size>

@@ -43,6 +43,7 @@ public:
 private slots:
 	void qlv_doubleClicked(Q3ListViewItem *);
 	void do_accept();
+	void show_ksm_dtext();
 
 private:
 	Ui::PGPKey ui_;

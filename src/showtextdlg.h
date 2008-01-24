@@ -27,7 +27,8 @@ class ShowTextDlg : public QDialog
 {
 	Q_OBJECT
 public:
-        ShowTextDlg(const QString &fname, bool rich=FALSE, QWidget *parent=0);
+	ShowTextDlg(const QString &fname, bool rich=FALSE, QWidget *parent=0);
+	ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *parent);
 };
 
 #endif
