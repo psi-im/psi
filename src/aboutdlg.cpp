@@ -61,13 +61,13 @@ AboutDlg::AboutDlg(QWidget* parent)
 	authors += details(QString::fromUtf8("Martin Hostettler"),
 			   "martin@psi-im.org", "", "",
 			   tr("Developer"));
-	authors += details(QString::fromUtf8("Akito Nozaki"),
-			   "anpluto@usa.net", "", "",
-			   tr("Miscellaneous Developer"));
 	ui_.te_authors->setText( authors );
 
 	// fill in Thanks To tab...
 	QString thanks;
+	thanks += details(QString::fromUtf8("Akito Nozaki"),
+			  "anpluto@usa.net", "", "",
+			  tr("Language coordinator, miscellaneous assistance"));
 	thanks += details(QString::fromUtf8("Jan Niehusmann"),
 			  "jan@gondor.com", "", "",
 			  tr("Build setup, miscellaneous assistance"));
