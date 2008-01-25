@@ -72,6 +72,7 @@
 #include "shortcutmanager.h"
 #include "psicontactlist.h"
 #include "accountlabel.h"
+#include "showtextdlg.h"
 
 #ifdef Q_WS_WIN
 #include <windows.h>
@@ -139,7 +140,7 @@ void ChatDlg::init()
 	updatePGP();
 
 	connect(account(), SIGNAL(pgpKeyChanged()), SLOT(updatePGP()));
-	connect(account(), SIGNAL(encryptedMessageSent(int, bool, int)), SLOT(encryptedMessageSent(int, bool, int)));
+	connect(account(), SIGNAL(encryptedMessageSent(int, bool, int, const QString &)), SLOT(encryptedMessageSent(int, bool, int, const QString &)));
 	account()->dialogRegister(this, jid());
 
 	chatView()->setFocusPolicy(Qt::NoFocus);
@@ -709,7 +710,7 @@ void ChatDlg::doneSend()
 	resetComposing();
 }
 
-void ChatDlg::encryptedMessageSent(int x, bool b, int e)
+void ChatDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
 {
 	if (transid_ == -1 || transid_ != x) {
 		return;
@@ -719,7 +720,21 @@ void ChatDlg::encryptedMessageSent(int x, bool b, int e)
 		doneSend();
 	}
 	else {
-		QMessageBox::critical(this, tr("Error"), tr("There was an error trying to send the message encrypted.\nReason: %1.").arg(PGPUtil::instance().messageErrorString((QCA::SecureMessage::Error) e)));
+		while (1) {
+			QMessageBox msgbox(QMessageBox::Critical, tr("Error"), tr("There was an error trying to send the message encrypted.\nReason: %1.").arg(PGPUtil::instance().messageErrorString((QCA::SecureMessage::Error) e)), QMessageBox::Ok, 0);
+			QPushButton *diag = msgbox.addButton(tr("Diagnostics"), QMessageBox::HelpRole);
+			msgbox.exec();
+			if (msgbox.clickedButton() == diag) {
+				ShowTextDlg *w = new ShowTextDlg(dtext, true, false, 0);
+				w->setWindowTitle(tr("OpenPGP Diagnostic Text"));
+				w->resize(560, 240);
+				w->exec();
+
+				continue;
+			} else {
+				break;
+			}
+		}
 	}
 	chatEdit()->setEnabled(true);
 	chatEdit()->setFocus();

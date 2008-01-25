@@ -74,6 +74,7 @@
 #include "accountlabel.h"
 #include "xdata_widget.h"
 #include "desktoputil.h"
+#include "showtextdlg.h"
 
 static QString findJid(const QString &s, int x, int *p1, int *p2)
 {
@@ -989,7 +990,7 @@ void EventDlg::init()
 
 	updatePGP();
 	connect(d->pa, SIGNAL(pgpKeyChanged()), SLOT(updatePGP()));
-	connect(d->pa, SIGNAL(encryptedMessageSent(int, bool, int)), SLOT(encryptedMessageSent(int, bool, int)));
+	connect(d->pa, SIGNAL(encryptedMessageSent(int, bool, int, const QString &)), SLOT(encryptedMessageSent(int, bool, int, const QString &)));
 
 	if (PsiOptions::instance()->getOption("options.ui.message.size").toSize().isValid()) {
 		resize(PsiOptions::instance()->getOption("options.ui.message.size").toSize());
@@ -2103,7 +2104,7 @@ void EventDlg::trySendEncryptedNext()
 	}
 }
 
-void EventDlg::encryptedMessageSent(int x, bool b, int e)
+void EventDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
 {
 	if(d->transid == -1)
 		return;
@@ -2128,8 +2129,23 @@ void EventDlg::encryptedMessageSent(int x, bool b, int e)
 			return;
 		}
 	}
-	else
-		QMessageBox::critical(this, tr("Error"), tr("There was an error trying to send the message encrypted.\nReason: %1.").arg(PGPUtil::instance().messageErrorString((QCA::SecureMessage::Error) e)));
+	else {
+		while (1) {
+			QMessageBox msgbox(QMessageBox::Critical, tr("Error"), tr("There was an error trying to send the message encrypted.\nReason: %1.").arg(PGPUtil::instance().messageErrorString((QCA::SecureMessage::Error) e)), QMessageBox::Ok, 0);
+			QPushButton *diag = msgbox.addButton(tr("Diagnostics"), QMessageBox::HelpRole);
+			msgbox.exec();
+			if (msgbox.clickedButton() == diag) {
+				ShowTextDlg *w = new ShowTextDlg(dtext, true, false, 0);
+				w->setWindowTitle(tr("OpenPGP Diagnostic Text"));
+				w->resize(560, 240);
+				w->exec();
+
+				continue;
+			} else {
+				break;
+			}
+		}
+	}
 
 	d->le_to->setEnabled(true);
 	d->mle->setEnabled(true);

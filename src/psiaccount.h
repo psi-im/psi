@@ -203,7 +203,7 @@ signals:
 	void updateContact(const Jid &, bool);
 	void nickChanged();
 	void pgpKeyChanged();
-	void encryptedMessageSent(int, bool, int);
+	void encryptedMessageSent(int, bool, int, const QString &);
 	void enabledChanged();
 	void startBounce();
 

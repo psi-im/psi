@@ -122,6 +122,7 @@
 #include "proxy.h"
 #include "psicontactlist.h"
 #include "tabmanager.h"
+#include "showtextdlg.h"
 
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
@@ -4433,7 +4434,23 @@ void PsiAccount::pgp_signFinished()
 				PGPUtil::instance().removePassphrase(ke.id());
 		}
 
-		QMessageBox::critical(0, tr("Error"), tr("There was an error trying to sign your status.\nReason: %1.").arg(PGPUtil::instance().messageErrorString(t->errorCode())));
+		QString dtext = t->diagnosticText();
+
+		while (1) {
+			QMessageBox msgbox(QMessageBox::Critical, tr("Error"), tr("There was an error trying to sign your status.\nReason: %1.").arg(PGPUtil::instance().messageErrorString(t->errorCode())), QMessageBox::Ok, 0);
+			QPushButton *diag = msgbox.addButton(tr("Diagnostics"), QMessageBox::HelpRole);
+			msgbox.exec();
+			if (msgbox.clickedButton() == diag) {
+				ShowTextDlg *w = new ShowTextDlg(dtext, true, false, 0);
+				w->setWindowTitle(tr("OpenPGP Diagnostic Text"));
+				w->resize(560, 240);
+				w->exec();
+
+				continue;
+			} else {
+				break;
+			}
+		}
 
 		logout();
 		return;
@@ -4542,7 +4559,7 @@ void PsiAccount::pgp_encryptFinished()
 		mwrap.setChatState(m.chatState());
 		dj_sendMessage(mwrap);
 	}
-	emit encryptedMessageSent(x, pt->success(), pt->errorCode());
+	emit encryptedMessageSent(x, pt->success(), pt->errorCode(), pt->diagnosticText());
 	pt->deleteLater();
 }
 

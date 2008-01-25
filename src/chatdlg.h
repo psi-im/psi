@@ -127,7 +127,7 @@ private slots:
 	void setWarnSendFalse();
 	virtual void updatePGP();
 	virtual void setPGPEnabled(bool enabled);
-	void encryptedMessageSent(int, bool, int);
+	void encryptedMessageSent(int, bool, int, const QString &);
 	void slotScroll();
 	void setChatState(XMPP::ChatState s);
 	void updateIsComposing(bool);

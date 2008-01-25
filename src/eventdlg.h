@@ -178,7 +178,7 @@ private slots:
 	void doFormCancel();
 
 	void updatePGP();
-	void encryptedMessageSent(int, bool, int);
+	void encryptedMessageSent(int, bool, int, const QString &);
 	void trySendEncryptedNext();
 
 public:
