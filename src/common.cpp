@@ -444,7 +444,8 @@ void bringToFront(QWidget *widget, bool)
 	long dsk, curr_dsk;
 	Window win = w->winId();
 	if(desktopOfWindow(&win, &dsk) && currentDesktop(&curr_dsk)) {
-		if((dsk != curr_dsk) && (dsk != 0xFFFFFFFF)) {  // second condition for sticky windows
+		//qDebug() << "bringToFront current desktop=" << curr_dsk << " windowDesktop=" << dsk;
+		if((dsk != curr_dsk) && (dsk != -1)) {  // second condition for sticky windows
 			w->hide();
 		}
 	}
