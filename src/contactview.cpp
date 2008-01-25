@@ -58,8 +58,8 @@
 #include "shortcutmanager.h"
 #include "xmpp_message.h"
 #include "textutil.h"
-#include "bookmarksmanagerdlg.h"
-
+#include "bookmarkmanagedlg.h"
+#include "bookmarkmanager.h"
 
 static inline int rankStatus(int status) 
 {
@@ -950,8 +950,9 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		pm.setItemEnabled(14, d->pa->serverInfoManager()->hasPEP());
 #endif
 
-		pm.insertItem(tr("Bookmarks"), 15);
-		
+		pm.insertItem(tr("Manage Bookmarks..."), 15);
+		pm.setItemEnabled(15, d->pa->bookmarkManager()->isAvailable());
+
 		pm.insertSeparator();
 		pm.insertItem(IconsetFactory::icon("psi/addContact").icon(), tr("&Add a contact"), 7);
 		pm.insertItem(IconsetFactory::icon("psi/disco").icon(), tr("Service &Discovery"), 9);
@@ -1020,11 +1021,11 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 			emit actionUnsetAvatar();
 		}
 		else if(x == 15) {
-			BookmarksManagerDlg *dlg = d->pa->findDialog<BookmarksManagerDlg*>(d->pa->jid());
+			BookmarkManageDlg *dlg = d->pa->findDialog<BookmarkManageDlg*>();
 			if(dlg) {
 				bringToFront(dlg);
 			} else {
-				dlg = new BookmarksManagerDlg(d->pa);
+				dlg = new BookmarkManageDlg(d->pa);
 				dlg->show();
 			}
 		}
