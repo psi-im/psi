@@ -10,6 +10,7 @@ class ITunesController : public TuneController
 {
 public:
 	ITunesController();
+	~ITunesController();
 
 	virtual Tune currentTune();
 

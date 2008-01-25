@@ -55,7 +55,13 @@ ITunesController::ITunesController()
 {
 	// TODO: Poll iTunes for current playing tune
 	CFNotificationCenterRef center = CFNotificationCenterGetDistributedCenter();
-	CFNotificationCenterAddObserver(center, this, ITunesController::iTunesCallback, CFSTR("com.apple.iTunes.playerInfo"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately); 
+	CFNotificationCenterAddObserver(center, this, ITunesController::iTunesCallback, CFSTR("com.apple.iTunes.playerInfo"), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
+}
+
+ITunesController::~ITunesController()
+{
+	CFNotificationCenterRef center = CFNotificationCenterGetDistributedCenter();
+	CFNotificationCenterRemoveObserver(center, this, CFSTR("com.apple.iTunes.playerInfo"), NULL);
 }
 
 Tune ITunesController::currentTune() 
