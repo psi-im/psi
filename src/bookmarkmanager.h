@@ -1,6 +1,6 @@
 /*
  * bookmarkmanager.h
- * Copyright (C) 2006  Remko Troncon
+ * Copyright (C) 2006-2008  Remko Troncon, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,34 +27,42 @@
 #include "conferencebookmark.h"
 #include "urlbookmark.h"
 
-namespace XMPP {
-	class Client;
-}
+class PsiAccount;
 
 class BookmarkManager : public QObject
 {
 	Q_OBJECT
 
 public:
-	BookmarkManager(XMPP::Client* client);
+	BookmarkManager(PsiAccount* account);
 
-	void getBookmarks();
+	bool isAvailable() const;
+
+	QList<URLBookmark> urls() const;
+	QList<ConferenceBookmark> conferences() const;
+
 	void setBookmarks(const QList<URLBookmark>&, const QList<ConferenceBookmark>&);
 	void setBookmarks(const QList<URLBookmark>&);
 	void setBookmarks(const QList<ConferenceBookmark>&);
 
 signals:
-	void getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&);
-	void getBookmarks_error(int, const QString&);
-	void setBookmarks_success();
-	void setBookmarks_error(int, const QString&);
+	void availabilityChanged();
+	void urlsChanged(const QList<URLBookmark>&);
+	void conferencesChanged(const QList<ConferenceBookmark>&);
 
 private slots:
 	void getBookmarks_finished();
 	void setBookmarks_finished();
+	void accountStateChanged();
 
 private:
-	XMPP::Client* client_;
+	void getBookmarks();
+	void setIsAvailable(bool available);
+
+private:
+	PsiAccount* account_;
+	bool accountAvailable_;
+	bool isAvailable_;
 	QList<URLBookmark> urls_;
 	QList<ConferenceBookmark> conferences_;
 };

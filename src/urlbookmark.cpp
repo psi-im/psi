@@ -62,3 +62,10 @@ QDomElement URLBookmark::toXml(QDomDocument& doc) const
 		e.setAttribute("url",url_);
 	return e;
 }
+
+bool URLBookmark::operator==(const URLBookmark & other) const
+{
+	return
+	    name_ == other.name_ &&
+	    url_  == other.url_;
+}

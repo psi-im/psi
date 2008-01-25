@@ -39,6 +39,8 @@ public:
 	void fromXml(const QDomElement&);
 	QDomElement toXml(QDomDocument&) const;
 
+	bool operator==(const URLBookmark& other) const;
+
 private:
 	QString name_;
 	QString url_;

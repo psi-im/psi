@@ -761,7 +761,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	connect(VCardFactory::instance(), SIGNAL(vcardChanged(const Jid&)), d, SLOT(vcardChanged(const Jid&)));
 
 	// Bookmarks
-	d->bookmarkManager = new BookmarkManager(d->client);
+	d->bookmarkManager = new BookmarkManager(this);
+	connect(d->bookmarkManager, SIGNAL(availabilityChanged()), SLOT(bookmarksAvailabilityChanged()));
 
 #ifdef USE_PEP
 	// Tune Controller
@@ -1737,11 +1738,15 @@ void PsiAccount::setPEPAvailable(bool b)
 #endif
 }
 
-void PsiAccount::getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>& conferences)
+void PsiAccount::bookmarksAvailabilityChanged()
 {
-	QObject::disconnect(d->bookmarkManager,SIGNAL(getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&)),this,SLOT(getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&)));
+	if (!d->bookmarkManager->isAvailable() ||
+	    !PsiOptions::instance()->getOption("options.muc.bookmarks.auto-join").toBool())
+	{
+		return;
+	}
 
-	foreach(ConferenceBookmark c, conferences) {
+	foreach(ConferenceBookmark c, d->bookmarkManager->conferences()) {
 		if (!findDialog<GCMainDlg*>(Jid(c.jid().userHost())) && c.autoJoin()) {
 			QString nick = c.nick();
 			if (nick.isEmpty())
@@ -2346,12 +2351,6 @@ void PsiAccount::setStatusActual(const Status &_s)
 		stateChanged();
 		QTimer::singleShot(15000, this, SLOT(enableNotifyOnline()));
 
-		// Get the bookmarks
-		if (PsiOptions::instance()->getOption("options.muc.bookmarks.auto-join").toBool()) {
-			connect(d->bookmarkManager,SIGNAL(getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&)),SLOT(getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&)));
-			d->bookmarkManager->getBookmarks();
-		}
-		
 		// Get the vcard
 		const VCard *vcard = VCardFactory::instance()->vcard(d->jid);
 		if ( PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool() || !vcard || vcard->isEmpty() || vcard->nickName().isEmpty() )

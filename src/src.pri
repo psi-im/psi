@@ -213,7 +213,7 @@ HEADERS += \
 	$$PWD/psicontactlist.h \
 	$$PWD/accountlabel.h \
 	$$PWD/psiactions.h \
-	$$PWD/bookmarksmanagerdlg.h
+	$$PWD/bookmarkmanagedlg.h
 
 # Source files
 SOURCES += \
@@ -322,7 +322,7 @@ SOURCES += \
 	$$PWD/psicon.cpp \
 	$$PWD/psiaccount.cpp \
 	$$PWD/accountlabel.cpp \
-	$$PWD/bookmarksmanagerdlg.cpp
+	$$PWD/bookmarkmanagedlg.cpp
 
 whiteboarding {
 	# Whiteboarding support. Still experimental.
@@ -384,7 +384,7 @@ INTERFACES += \
 	$$PWD/voicecall.ui \
 	$$PWD/chatdlg.ui \
 	$$PWD/groupchatdlg.ui \
-	$$PWD/bookmarksmanagerdlg.ui
+	$$PWD/bookmarkmanage.ui
 
 # options dialog
 include($$PWD/options/options.pri)

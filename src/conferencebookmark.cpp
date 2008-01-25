@@ -97,3 +97,13 @@ QDomElement ConferenceBookmark::toXml(QDomDocument& doc) const
 
 	return e;
 }
+
+bool ConferenceBookmark::operator==(const ConferenceBookmark & other) const
+{
+	return
+	    name_       == other.name_       &&
+	    jid_.full() == other.jid_.full() &&
+	    auto_join_  == other.auto_join_  &&
+	    nick_       == other.nick_       &&
+	    password_   == other.password_;
+}

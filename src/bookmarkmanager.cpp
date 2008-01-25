@@ -1,6 +1,6 @@
 /*
  * bookmarkmanager.cpp
- * Copyright (C) 2006  Remko Troncon
+ * Copyright (C) 2006-2008  Remko Troncon, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,12 +18,12 @@
  *
  */
 
+#include "bookmarkmanager.h"
+
 #include "xmpp_task.h"
 #include "xmpp_client.h"
 #include "xmpp_xmlcommon.h"
-#include "bookmarkmanager.h"
-
-using namespace XMPP;
+#include "psiaccount.h"
 
 // -----------------------------------------------------------------------------
 
@@ -117,13 +117,53 @@ private:
 
 // -----------------------------------------------------------------------------
 
-BookmarkManager::BookmarkManager(XMPP::Client* client) : client_(client)
+BookmarkManager::BookmarkManager(PsiAccount* account)
+	: account_(account)
+	, accountAvailable_(false)
+	, isAvailable_(false)
 {
+	connect(account_, SIGNAL(updatedActivity()), SLOT(accountStateChanged()));
+}
+
+bool BookmarkManager::isAvailable() const
+{
+	return isAvailable_;
+}
+
+void BookmarkManager::setIsAvailable(bool available)
+{
+	if (available != isAvailable_) {
+		isAvailable_ = available;
+		emit availabilityChanged();
+	}
+}
+
+QList<URLBookmark> BookmarkManager::urls() const
+{
+	return urls_;
+}
+
+QList<ConferenceBookmark> BookmarkManager::conferences() const
+{
+	return conferences_;
+}
+
+void BookmarkManager::accountStateChanged()
+{
+	if (!account_->isAvailable()) {
+		setIsAvailable(false);
+	}
+
+	if (account_->isAvailable() && !accountAvailable_) {
+		getBookmarks();
+	}
+
+	accountAvailable_ = account_->isAvailable();
 }
 
 void BookmarkManager::getBookmarks()
 {
-	BookmarkTask* t = new BookmarkTask(client_->rootTask());
+	BookmarkTask* t = new BookmarkTask(account_->client()->rootTask());
 	connect(t,SIGNAL(finished()),SLOT(getBookmarks_finished()));
 	t->get();
 	t->go(true);
@@ -131,7 +171,9 @@ void BookmarkManager::getBookmarks()
 
 void BookmarkManager::setBookmarks(const QList<URLBookmark>& urls, const QList<ConferenceBookmark>& conferences)
 {
-	BookmarkTask* t = new BookmarkTask(client_->rootTask());
+	urls_ = urls;
+	conferences_ = conferences;
+	BookmarkTask* t = new BookmarkTask(account_->client()->rootTask());
 	connect(t,SIGNAL(finished()),SLOT(setBookmarks_finished()));
 	t->set(urls,conferences);
 	t->go(true);
@@ -139,40 +181,36 @@ void BookmarkManager::setBookmarks(const QList<URLBookmark>& urls, const QList<C
 
 void BookmarkManager::setBookmarks(const QList<URLBookmark>& urls)
 {
-	BookmarkTask* t = new BookmarkTask(client_->rootTask());
-	connect(t,SIGNAL(finished()),SLOT(setBookmarks_finished()));
-	t->set(urls,conferences_);
-	t->go(true);
+	setBookmarks(urls, conferences());
 }
 
 void BookmarkManager::setBookmarks(const QList<ConferenceBookmark>& conferences)
 {
-	BookmarkTask* t = new BookmarkTask(client_->rootTask());
-	connect(t,SIGNAL(finished()),SLOT(setBookmarks_finished()));
-	t->set(urls_,conferences);
-	t->go(true);
+	setBookmarks(urls(), conferences);
 }
 
 void BookmarkManager::getBookmarks_finished()
 {
-	BookmarkTask* t = (BookmarkTask*) sender();
+	BookmarkTask* t = static_cast<BookmarkTask*>(sender());
 	if (t->success()) {
+		bool urlsWereChanged = urls_ != t->urls();
+		bool conferencesWereChanged = conferences_ != t->conferences();
 		urls_ = t->urls();
 		conferences_ = t->conferences();
-		emit getBookmarks_success(urls_,conferences_);
+
+		if (urlsWereChanged)
+			emit urlsChanged(urls_);
+		if (conferencesWereChanged)
+			emit conferencesChanged(conferences_);
+
+		setIsAvailable(true);
 	}
 	else {
-		emit getBookmarks_error(t->statusCode(), t->statusString());
+		setIsAvailable(false);
 	}
 }
 
 void BookmarkManager::setBookmarks_finished()
 {
-	BookmarkTask* t = (BookmarkTask*) sender();
-	if (t->success()) {
-		emit setBookmarks_success();
-	}
-	else {
-		emit setBookmarks_error(t->statusCode(), t->statusString());
-	}
+	BookmarkTask* t = static_cast<BookmarkTask*>(sender());
 }

@@ -45,6 +45,8 @@ public:
 	void fromXml(const QDomElement&);
 	QDomElement toXml(QDomDocument&) const;
 
+	bool operator==(const ConferenceBookmark& other) const;
+
 private:
 	QString name_;
 	XMPP::Jid jid_;

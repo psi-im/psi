@@ -323,7 +323,7 @@ private slots:
 	void serverFeaturesChanged();
 	void setPEPAvailable(bool);
 
-	void getBookmarks_success(const QList<URLBookmark>&, const QList<ConferenceBookmark>&);
+	void bookmarksAvailabilityChanged();
 
 	void incomingHttpAuthRequest(const PsiHttpAuthRequest &);
 
