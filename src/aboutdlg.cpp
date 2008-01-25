@@ -20,6 +20,7 @@
 
 #include <QTextStream>
 #include <QFile>
+#include <QtCrypto>
 
 #include "applicationinfo.h"
 #include "aboutdlg.h"
@@ -97,7 +98,16 @@ AboutDlg::AboutDlg(QWidget* parent)
 	thanks += details(QString::fromUtf8("Jacek Tomasiak"),
 			 "", "", "",
 			 tr("Patches"));
-					  
+
+	foreach(QCA::Provider *p, QCA::providers()) {
+		QString credit = p->credit();
+		if(!credit.isEmpty()) {
+			thanks += details(tr("Security plugin: %1").arg(p->name()),
+				"", "", "",
+				credit);
+		}
+	}
+
 	//thanks += tr("Thanks to many others.\n"
 	//	     "The above list only reflects the contributors I managed to keep track of.\n"
 	//	     "If you're not included but you think that you must be in the list, contact the developers.");
