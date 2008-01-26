@@ -74,6 +74,7 @@ Stanza::Error::Error(int _type, int _condition, const QString &_text, const QDom
 	condition = _condition;
 	text = _text;
 	appSpec = _appSpec;
+	originalCode = 0;
 }
 
 
