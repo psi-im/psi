@@ -729,9 +729,10 @@ void GCMainDlg::mle_returnPressed()
 
 	if(str.lower().startsWith("/nick ")) {
 		QString nick = str.mid(6).stripWhiteSpace();
-		if ( !nick.isEmpty() ) {
+		QString norm_nick;
+		if (!nick.isEmpty() && XMPP::Jid::validResource(nick, &norm_nick)) {
 			d->prev_self = d->self;
-			d->self = nick;
+			d->self = norm_nick;
 			account()->groupChatChangeNick(jid().host(), jid().user(), d->self, account()->status());
 		}
 		ui_.mle->chatEdit()->setText("");
