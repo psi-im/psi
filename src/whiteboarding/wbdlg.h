@@ -49,14 +49,12 @@ class AccountLabel;
 using namespace XMPP;
 
 /*! \brief The dialog for a whiteboard session.
- *  Inherits Advanced Widget.
- *
- *  Takes in whiteboard elements for the session from the WbManager and passes
- *  them on to the WbWidget.
  *
  *  Contains the WbWidget and provides controls for setting the mode, stroke
- *  width and color of new items. TODO: Also provides controls for setting general
- *  properties of the session and a control for ending the session.
+ *  width and color of new items.
+ *
+ *  Also provides controls for setting general properties of the session and
+ *  a control for ending and saving the session.
  * 
  *  \sa WbManager
  *  \sa WbWidget
@@ -65,54 +63,22 @@ class WbDlg : public AdvancedWidget<QWidget>
 {
 	Q_OBJECT
 
-	struct incomingElement {
-		QDomElement wb;
-		Jid sender;
-	};
-
 public:
 	/*! \brief Constructor.
 	*  Creates a new dialog for the specified jid and session.
 	*/
-	WbDlg(const Jid &target, const QString &session, const Jid &ownJid, bool groupChat, PsiAccount *pa);
+	WbDlg(SxeSession* session, PsiAccount* pa);
 	/*! \brief Destructor.
 	*  Emits sessionEnded()
 	*/
 	~WbDlg();
 
-	/*! \brief Passes the incoming element to the WbWidget and remembers the last edit.*/
-	void incomingWbElement(const QDomElement &, const Jid &sender);
-	/*! \brief Returns true if the target is a groupchat.*/
-	const bool groupChat() const;
-	/*! \brief Returns the target contact's JID.*/
-	const Jid target() const;
 	/*! \brief Returns the session identifier.*/
-	const QString session() const;
-	/*! \brief Returns the JID used by the user in the session.*/
-	const Jid ownJid() const;
+    SxeSession* session() const;
 	/*! \brief Returns whether further edits to the session are allowed.*/
-	bool allowEdits() const;
+        bool allowEdits() const;
 	/*! \brief Sets whether further edits to the session are allowed.*/
 	void setAllowEdits(bool);
-	/*! \brief Asks whether dialog should be deleted if peer left the session.*/
-	void peerLeftSession();
-	/*! \brief Sets whether new wb elements should be queued.*/
-	void setQueueing(bool);
-	/*! \brief Erases the wb elements from the incoming queue up to and including the wb identified by the parameters.
-	 *  The parameters correspond to the attributes of the last-edit element.
-	 */
-	void eraseQueueUntil(QString sender, QString hash);
-	/*! \brief Return the snapshot that was created when queueing was set true.*/
-	QList<WbItem*> snapshot() const;
-	/*! \brief Sets whether configure edits are accepted regardless of version.
-	 *  Default is false. Should be set true if the session state is Negotiation::DocumentBegun.
-	 *  Clears the whiteboard without emitting emitting wb elements when set true.
-	 */
-	void setImporting(bool);
-	/*! \brief Return a hash with information identifying the last processed wb element.*/
-	QHash<QString, QString> lastWb() const;
-	/*! \brief Sets the information identifying the last processed wb.*/
-	void setLastWb(const QString &sender, const QString &hash);
 
 public slots:
 	/*! \brief Ends the session.
@@ -121,12 +87,12 @@ public slots:
 	void endSession();
 	/*! \brief Removes indicators of new edits.*/
 	void activated();
+	/*! \brief Notifies the user that \a peer left the session.*/
+	void peerLeftSession(const Jid &peer);
 
 signals:
-	/*! \brief Passes the new whiteboard elements from the widget.*/
-	void newWbElement(const QDomElement &, const Jid &, bool groupChat);
 	/*! \brief Signals that the session ended and the dialog is to be deleted.*/
-	void sessionEnded(const QString &);
+	void sessionEnded(WbDlg* dialog);
 
 protected:
 	// reimplemented
@@ -142,6 +108,8 @@ protected:
 	void changeEvent(QEvent *e);
 
 private slots:
+	/*! \brief Popsup a dialog for saving the contents of the whiteboard to an SVG file. */
+	void save();
 	/*! \brief Popsup a dialog asking for a new viewBox for the whiteboard.*/
 	void setGeometry();
 	/*! \brief Popsup a color dialog and sets the selected color as the default stroke color for new items.*/
@@ -152,8 +120,6 @@ private slots:
 	void setStrokeWidth(QAction *);
 	/*! \brief Sets the WbWidget's mode based on the invoker.*/
 	void setMode(QAction *);
-	/*! \brief Emits the newWbElement() signal with the given element (usually from WbWidget).*/
-	void doSend(const QDomElement &);
 	/*! \brief Sets keep open false.*/
 	void setKeepOpenFalse();
 	/*! \brief Constructs the context menu.*/
@@ -166,9 +132,6 @@ private:
 	void setSelfDestruct(int);
 	/*! \brief Update the caption to indicate the number of unseen whiteboard messages.*/
 	void updateCaption();
-
-	/*! \brief The target JID.*/
-	Jid target_;
 
 	/*! \brief The main widget.*/
 	WbWidget *wbWidget_;
@@ -195,13 +158,7 @@ private:
 	/*! \brief The menu for modes.*/
 	QMenu *menu_modes_;
 	QAction *act_color_, *act_fill_;
-	IconAction *act_end_, *act_clear_, *act_geometry_, *act_widths_, *act_modes_;
-	/*! \brief List of queued incoming wb elements.*/
-	QList<incomingElement> queuedIncomingElements_;
-	/*! \brief List of queued outgoing wb elements.*/
-	QList<QDomElement> queuedOutgoingElements_;
-	/*! \brief An SVG document representing the the whiteboard when queued was set true.*/
-	QList<WbItem*> snapshot_;
+	IconAction *act_end_, *act_clear_, *act_save_, *act_geometry_, *act_widths_, *act_modes_;
 	/*! \brief True if the target is a groupchat.*/
 	bool groupChat_;
 	/*! \brief The number of whiteboard messages since last activation.*/
@@ -210,10 +167,6 @@ private:
 	bool keepOpen_;
 	/*! \brief Boolean about whether further edits to the session are allowed.*/
 	bool allowEdits_;
-	/*! \brief If true, new wb elements are queued rather than processed.*/
-	bool queueing_;
-	/*! \brief A string that identifies the last edit that was processed.*/
-	QHash<QString, QString> lastWb_;
 
 	/*! \brief Pointer to the timer that will invoke destruction.*/
 	QTimer *selfDestruct_;

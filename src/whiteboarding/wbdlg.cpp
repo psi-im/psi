@@ -25,6 +25,9 @@
 #include "wbdlg.h"
 
 #include <QMessageBox>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QColorDialog>
 
 #include "accountlabel.h"
 #include "stretchwidget.h"
@@ -34,15 +37,15 @@
 // WbDlg
 //----------------------------------------------------------------------------
 
-WbDlg::WbDlg(const Jid &target, const QString &session, const Jid &ownJid, bool groupChat, PsiAccount *pa) {
+WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
 	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
 		setAttribute(Qt::WA_MacMetalStyle);
 
-	groupChat_ = groupChat;
+	groupChat_ = session->groupChat();
 	pending_ = 0;
 	keepOpen_ = false;
 	allowEdits_ = true;
-	queueing_ = false;
+
 	selfDestruct_ = 0;
 
 	QVBoxLayout *vb1 = new QVBoxLayout(this);
@@ -62,21 +65,23 @@ WbDlg::WbDlg(const Jid &target, const QString &session, const Jid &ownJid, bool 
 	vb1->addLayout(hb1);
 
 	// mid area
-	wbWidget_ = new WbWidget(session, ownJid.full(), QSize(600, 600), this);
+	wbWidget_ = new WbWidget(session, this);
 	wbWidget_->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding));
 	vb1->addWidget(wbWidget_);
-	connect(wbWidget_, SIGNAL(newWb(QDomElement)), SLOT(doSend(QDomElement)));
 
 	// Bottom (tool) area
-	act_end_ = new IconAction(tr("End session"), "psi/closetab", tr("End session"), 0, this );
-	act_clear_ = new IconAction(tr("End session"), "psi/clearChat", tr("Clear the whiteboard"), 0, this );
+	act_save_ = new IconAction(tr("Save session"), "psi/save", tr("Save the contents of the whiteboard"), 0, this );
 	act_geometry_ = new IconAction(tr("Change the geometry"), "psi/whiteboard", tr("Change the geometry"), 0, this );
+	act_clear_ = new IconAction(tr("End session"), "psi/clearChat", tr("Clear the whiteboard"), 0, this );
+	act_end_ = new IconAction(tr("End session"), "psi/closetab", tr("End session"), 0, this );
+
 	// Black is the default color
 	QPixmap pixmap(16, 16);
 	pixmap.fill(QColor(Qt::black));
 	act_color_ = new QAction(QIcon(pixmap), tr("Stroke color"), this);
-	pixmap.fill(QColor(Qt::transparent));
+	pixmap.fill(QColor(Qt::lightGray));
 	act_fill_ = new QAction(QIcon(pixmap), tr("Fill color"), this);
+
 	act_widths_ = new IconAction(tr("Stroke width" ), "psi/drawPaths", tr("Stroke width"), 0, this );
 	act_modes_ = new IconAction(tr("Edit mode" ), "psi/select", tr("Edit mode"), 0, this );
 	group_widths_ = new QActionGroup(this);
@@ -86,9 +91,10 @@ WbDlg::WbDlg(const Jid &target, const QString &session, const Jid &ownJid, bool 
 	connect(act_fill_, SIGNAL(triggered()), SLOT(setFillColor()));
 	connect(group_widths_, SIGNAL(triggered(QAction *)), SLOT(setStrokeWidth(QAction *)));
 	connect(group_modes_, SIGNAL(triggered(QAction *)), SLOT(setMode(QAction *)));
-	connect(act_end_, SIGNAL(activated()), SLOT(endSession()));
-	connect(act_clear_, SIGNAL(activated()), wbWidget_, SLOT(clear()));
+	connect(act_save_, SIGNAL(activated()), SLOT(save()));
 	connect(act_geometry_, SIGNAL(activated()), SLOT(setGeometry()));
+	connect(act_clear_, SIGNAL(activated()), wbWidget_, SLOT(clear()));
+	connect(act_end_, SIGNAL(activated()), SLOT(endSession()));
 
 	pixmap = QPixmap(2, 2);
 	pixmap.fill(QColor(Qt::black));
@@ -107,18 +113,19 @@ WbDlg::WbDlg(const Jid &target, const QString &session, const Jid &ownJid, bool 
 	widthaction->setData(QVariant(6));
 	widthaction->setCheckable(true);
 
-	IconAction* action = new IconAction(tr("Select"), "psi/select", tr("Select"), 0, group_modes_ );
-	action->setData(QVariant(WbWidget::Select));
-	action->setCheckable(true);
+    IconAction* action;
+    action = new IconAction(tr("Select"), "psi/select", tr("Select"), 0, group_modes_ );
+    action->setData(QVariant(WbWidget::Select));
+    action->setCheckable(true);
 	action = new IconAction(tr( "Translate"), "psi/translate", tr("Translate"), 0, group_modes_ );
 	action->setData(QVariant(WbWidget::Translate));
 	action->setCheckable(true);
-	action = new IconAction(tr( "Rotate"), "psi/rotate", tr("Rotate"), 0, group_modes_ );
-	action->setData(QVariant(WbWidget::Rotate));
-	action->setCheckable(true);
-	action = new IconAction(tr( "Scale"), "psi/scale", tr("Scale"), 0, group_modes_ );
-	action->setData(QVariant(WbWidget::Scale));
-	action->setCheckable(true);
+    action = new IconAction(tr( "Rotate"), "psi/rotate", tr("Rotate"), 0, group_modes_ );
+    action->setData(QVariant(WbWidget::Rotate));
+    action->setCheckable(true);
+    action = new IconAction(tr( "Scale"), "psi/scale", tr("Scale"), 0, group_modes_ );
+    action->setData(QVariant(WbWidget::Scale));
+    action->setCheckable(true);
 	action = new IconAction(tr( "Erase"), "psi/erase", tr("Erase"), 0, group_modes_ );
 	action->setData(QVariant(WbWidget::Erase));
 	action->setCheckable(true);
@@ -133,24 +140,24 @@ WbDlg::WbDlg(const Jid &target, const QString &session, const Jid &ownJid, bool 
 	action->setData(QVariant(WbWidget::DrawPath));
 	action->setCheckable(true);
 	action->trigger();
-	action = new IconAction(tr( "Draw lines"), "psi/drawLines", tr("Draw lines"), 0, group_modes_ );
-	action->setData(QVariant(WbWidget::DrawLine));
-	action->setCheckable(true);
-	action = new IconAction(tr( "Draw ellipses"), "psi/drawEllipses", tr("Draw ellipses"), 0, group_modes_ );
-	action->setData(QVariant(WbWidget::DrawEllipse));
-	action->setCheckable(true);
-	action = new IconAction(tr( "Draw circles"), "psi/drawCircles", tr("Draw circles"), 0, group_modes_ );
-	action->setData(QVariant(WbWidget::DrawCircle));
-	action->setCheckable(true);
-	action = new IconAction(tr( "Draw rectangles"), "psi/drawRectangles", tr("Draw rectangles"), 0, group_modes_ );
-	action->setData(QVariant(WbWidget::DrawRectangle));
-	action->setCheckable(true);
+    // action = new IconAction(tr( "Draw lines"), "psi/drawLines", tr("Draw lines"), 0, group_modes_ );
+    // action->setData(QVariant(WbWidget::DrawLine));
+    // action->setCheckable(true);
+    // action = new IconAction(tr( "Draw ellipses"), "psi/drawEllipses", tr("Draw ellipses"), 0, group_modes_ );
+    // action->setData(QVariant(WbWidget::DrawEllipse));
+    // action->setCheckable(true);
+    // action = new IconAction(tr( "Draw circles"), "psi/drawCircles", tr("Draw circles"), 0, group_modes_ );
+    // action->setData(QVariant(WbWidget::DrawCircle));
+    // action->setCheckable(true);
+    // action = new IconAction(tr( "Draw rectangles"), "psi/drawRectangles", tr("Draw rectangles"), 0, group_modes_ );
+    // action->setData(QVariant(WbWidget::DrawRectangle));
+    // action->setCheckable(true);
 // 	action = new IconAction(tr( "Add text"), "psi/addText", tr("Add text"), 0, group_modes_ );
 // 	action->setData(QVariant(WbWidget::DrawText));
 // 	action->setCheckable(true);
-	action = new IconAction(tr( "Add an image"), "psi/addImage", tr("Add an image"), 0, group_modes_ );
-	action->setData(QVariant(WbWidget::DrawImage));
-	action->setCheckable(true);
+    action = new IconAction(tr( "Add images"), "psi/addImage", tr("Add images"), 0, group_modes_ );
+    action->setData(QVariant(WbWidget::DrawImage));
+    action->setCheckable(true);
 
 	menu_widths_ = new QMenu(this);
 	menu_widths_->addActions(group_widths_->actions());
@@ -165,7 +172,8 @@ WbDlg::WbDlg(const Jid &target, const QString &session, const Jid &ownJid, bool 
 	toolbar_->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum));
 	toolbar_->addAction(act_end_);
 	toolbar_->addAction(act_clear_);
-	toolbar_->addAction(act_geometry_);
+	toolbar_->addAction(act_save_);
+    toolbar_->addAction(act_geometry_);
 	toolbar_->addWidget(new StretchWidget(this));
 	toolbar_->addAction(act_fill_);
 	toolbar_->addAction(act_color_);
@@ -180,10 +188,9 @@ WbDlg::WbDlg(const Jid &target, const QString &session, const Jid &ownJid, bool 
 	X11WM_CLASS("whiteboard");
 
 	// set the Jid -> le_jid.
-	target_ = target;
-	le_jid_->setText(QString("%1: %2").arg(session).arg(target_.full()));
+	le_jid_->setText(QString("%1 (session: %2)").arg(session->target().full()).arg(session->session()));
 	le_jid_->setCursorPosition(0);
-	le_jid_->setToolTip(target_.full());
+	le_jid_->setToolTip(session->target().full());
 
 	// update the widget icon
 #ifndef Q_WS_MAC
@@ -192,52 +199,18 @@ WbDlg::WbDlg(const Jid &target, const QString &session, const Jid &ownJid, bool 
 	
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY, PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt())) / 100);
 
-	resize(LEGOPTS.sizeChatDlg);
+    resize(PsiOptions::instance()->getOption("options.ui.chat.size").toSize());
 }
 
 WbDlg::~WbDlg() {
-// 	emit sessionEnded(session());
+    // terminate the underlying SXE session
+    session()->endSession();
+
+    emit sessionEnded(this);
 }
 
-void WbDlg::incomingWbElement(const QDomElement &wb, const Jid &sender)
-{
-	if(queueing_) {
-		incomingElement incoming = incomingElement();
-		incoming.wb = wb;
-		incoming.sender = sender;
-		queuedIncomingElements_.append(incoming);
-	} else {
-		// Save the information of last processed edit
-		lastWb_["sender"] = sender.full();
-		lastWb_["hash"] = wb.attribute("hash");
-		// Process the wb element
-		wbWidget_->processWb(wb);
-		if(!isActiveWindow()) {
-			++pending_;
-			updateCaption();
-			doFlash(true);
-			if(PsiOptions::instance()->getOption("options.ui.chat.raise-chat-windows-on-new-messages").toBool())
-				bringToFront(this, false);
-		}
-		keepOpen_ = true;
-		QTimer::singleShot(1000, this, SLOT(setKeepOpenFalse()));
-	}
-}
-
-const bool WbDlg::groupChat() const {
-	return groupChat_;
-}
-
-const Jid WbDlg::target() const {
-	return target_;
-}
-
-const QString WbDlg::session() const {
-	return wbWidget_->session();
-}
-
-const Jid WbDlg::ownJid() const {
-	return Jid(wbWidget_->ownJid());
+SxeSession* WbDlg::session() const {
+     return wbWidget_->session();
 }
 
 bool WbDlg::allowEdits() const {
@@ -250,69 +223,8 @@ void WbDlg::setAllowEdits(bool a) {
 		wbWidget_->setMode(WbWidget::Scroll);
 }
 
-void WbDlg::peerLeftSession() {
-	setQueueing(true);
-	le_jid_->setText(tr("%1: %2 left the session.").arg(session()).arg(target_.full()));
-}
-
-void WbDlg::setQueueing(bool q) {
-	if(queueing_ && !q) {
-		queueing_ = false;
-		// Process queued elements
-		while(!queuedOutgoingElements_.isEmpty())
-			emit newWbElement(queuedOutgoingElements_.takeFirst(), target(), groupChat());
-		while(!queuedIncomingElements_.isEmpty()) {
-			incomingElement incoming = queuedIncomingElements_.takeFirst();
-			incomingWbElement(incoming.wb, incoming.sender);
-		}
-		// Delete snapshot
-		foreach(WbItem* item, snapshot_)
-			item->deleteLater();
-		snapshot_.clear();
-		le_jid_->setText(tr("%1: %2").arg(session()).arg(target_.full()));
-	} else if(!queueing_ && q) {
-		queueing_ = true;
-		snapshot_ = wbWidget_->scene->elements();
-	}
-}
-
-void WbDlg::eraseQueueUntil(QString sender, QString hash) {
-	for(int i = 0; i < queuedIncomingElements_.size(); i++) {
-		// Check each queued element if the sender matches
-		if(queuedIncomingElements_.at(i).sender.full() == sender && queuedIncomingElements_.at(i).wb.attribute("hash") == hash) {
-			// Erase the queue up to and including the matching edit
-			while(i >= 0) {
-				queuedIncomingElements_.removeFirst();
-				i--;
-			}
-			// Set the information of last processed edit
-			lastWb_["sender"] = sender;
-			lastWb_["hash"] = hash;
-			return;
-		}
-	}
-}
-
-QList<WbItem*> WbDlg::snapshot() const {
-	return snapshot_;
-}
-
-void WbDlg::setImporting(bool i) {
-	wbWidget_->setImporting(i);
-	if(i) {
-		wbWidget_->clear(false);
-		queuedIncomingElements_.clear();
-		queuedOutgoingElements_.clear();
-	}
-}
-
-QHash<QString, QString> WbDlg::lastWb() const {
-	return lastWb_;
-}
-
-void WbDlg::setLastWb(const QString &sender, const QString &hash) {
-	lastWb_["sender"] = sender;
-	lastWb_["hash"] = hash;
+void WbDlg::peerLeftSession(const Jid &peer) {
+	le_jid_->setText(tr("%1 left (session: %2).").arg(peer.full()).arg(session()->session()));
 }
 
 void WbDlg::endSession() {
@@ -322,7 +234,6 @@ void WbDlg::endSession() {
 			return;
 	}
 	setAttribute(Qt::WA_DeleteOnClose);
-	emit sessionEnded(session());
 	close();
 }
 
@@ -367,8 +278,9 @@ void WbDlg::closeEvent(QCloseEvent *e) {
 }
 
 void WbDlg::resizeEvent(QResizeEvent *e) {
-	if(PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool())
-		LEGOPTS.sizeChatDlg = e->size();
+	if (PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool()) {
+		PsiOptions::instance()->setOption("options.ui.chat.size", e->size());
+	}
 }
 
 void WbDlg::showEvent(QShowEvent *) {
@@ -413,13 +325,6 @@ void WbDlg::setMode(QAction *a) {
 		wbWidget_->setMode(WbWidget::Scroll);
 }
 
-void WbDlg::doSend(const QDomElement &wb) {
-	if(queueing_)
-		queuedOutgoingElements_.append(wb);
-	else
-		emit newWbElement(wb, target(), groupChat());
-}
-
 void WbDlg::setKeepOpenFalse() {
 	keepOpen_ = false;
 }
@@ -431,27 +336,43 @@ void WbDlg::buildMenu()
 	pm_settings_->addAction(act_widths_);
 	pm_settings_->addAction(act_color_);
 	pm_settings_->insertSeparator();
-	pm_settings_->addAction(act_end_);
+	pm_settings_->addAction(act_save_);
 	pm_settings_->addAction(act_clear_);
+	pm_settings_->addAction(act_end_);
 }
 
 void WbDlg::setGeometry() {
-	// TODO: do a proper dialog
-	bool ok;
-        int width = QInputDialog::getInteger(this, tr("Set new width:"), tr("Width:"), static_cast<int>(wbWidget_->scene->sceneRect().width()), 10, 100000, 10, &ok);
-	if(!ok)
-		return;
-        int height = QInputDialog::getInteger(this, tr("Set new height:"), tr("Height:"), static_cast<int>(wbWidget_->scene->sceneRect().height()), 10, 100000, 10, &ok);
-	if(!ok)
-		return;
+    // TODO: make a proper dialog
+    QSize size;
 
-	WbItem* root = wbWidget_->scene->findWbItem("root");
-	if(root) {
-		QDomElement _svg = root->svg();
-		wbWidget_->scene->queueAttributeEdit("root", "viewBox", QString("%1 %2 %3 %4").arg(0).arg(0).arg(width).arg(height), _svg.attribute("viewBox"));
-		_svg.setAttribute("viewBox", QString("%1 %2 %3 %4").arg(0).arg(0).arg(width).arg(height));
-		root->parseSvg(_svg);
-	}
+    bool ok;
+    size.setWidth(QInputDialog::getInteger(this, tr("Set new width:"), tr("Width:"), static_cast<int>(wbWidget_->scene()->sceneRect().width()), 10, 100000, 10, &ok));
+    if(!ok)
+        return;
+
+    size.setHeight(QInputDialog::getInteger(this, tr("Set new height:"), tr("Height:"), static_cast<int>(wbWidget_->scene()->sceneRect().height()), 10, 100000, 10, &ok));
+    if(!ok)
+        return;
+
+    wbWidget_->setSize(size);
+}
+
+void WbDlg::save() {
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Whitebaord"),
+                                QDir::homePath(),
+                                tr("Scalable Vector Graphics (*.svg)"));
+    fileName = fileName.trimmed();
+    if(!fileName.endsWith(".svg", Qt::CaseInsensitive))
+        fileName += ".svg";
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        return;
+
+    QTextStream stream(&file);
+    wbWidget_->session()->document().save(stream, 2);
+
+    file.close();
 }
 
 void WbDlg::contextMenuEvent(QContextMenuEvent * e) {
@@ -484,7 +405,7 @@ void WbDlg::updateCaption() {
 		if(pending_ > 1)
 			cap += QString("[%1] ").arg(pending_);
 	}
-	cap += target_.full();
+	cap += session()->target().full();
 
 	setWindowTitle(cap);
 }

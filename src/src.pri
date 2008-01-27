@@ -327,20 +327,41 @@ SOURCES += \
 whiteboarding {
 	# Whiteboarding support. Still experimental.
 	DEFINES += WHITEBOARDING
+	QT += svg
 
 	HEADERS += \
-		$$PWD/wbmanager.h \
-		$$PWD/wbdlg.h \
-		$$PWD/wbwidget.h \
-		$$PWD/wbscene.h \
-		$$PWD/wbitems.h
+		$$PWD/sxe/sxemanager.h \
+		$$PWD/sxe/sxesession.h \
+		$$PWD/sxe/sxeedit.h \
+		$$PWD/sxe/sxenewedit.h \
+		$$PWD/sxe/sxeremoveedit.h \
+		$$PWD/sxe/sxerecordedit.h \
+ 		$$PWD/sxe/sxerecord.h \
+		$$PWD/whiteboarding/whiteboardingmanager.h \
+		$$PWD/whiteboarding/whiteboardingdlg.h \
+		$$PWD/whiteboarding/whiteboardingwidget.h \
+		$$PWD/whiteboarding/whiteboardingscene.h \
+		$$PWD/whiteboarding/whiteboardingitem.h \
+		$$PWD/whiteboarding/whiteboardingnewitem.h \
+		$$PWD/whiteboarding/whiteboardingnewpath.h \
+		$$PWD/whiteboarding/whiteboardingnewimage.h
 	
 	SOURCES += \
-		$$PWD/wbmanager.cpp \
-		$$PWD/wbdlg.cpp \
-		$$PWD/wbwidget.cpp \
-		$$PWD/wbscene.cpp \
-		$$PWD/wbitems.cpp
+		$$PWD/sxe/sxemanager.cpp \
+		$$PWD/sxe/sxesession.cpp \
+		$$PWD/sxe/sxeedit.cpp \
+		$$PWD/sxe/sxenewedit.cpp \
+		$$PWD/sxe/sxeremoveedit.cpp \
+		$$PWD/sxe/sxerecordedit.cpp \
+		$$PWD/sxe/sxerecord.cpp \
+		$$PWD/wb/wbmanager.cpp \
+		$$PWD/wb/wbdlg.cpp \
+		$$PWD/wb/wbwidget.cpp \
+		$$PWD/wb/wbscene.cpp \
+		$$PWD/wb/wbitem.cpp \
+		$$PWD/wb/wbnewitem.cpp \
+		$$PWD/wb/wbnewpath.cpp \
+		$$PWD/wb/wbnewimage.cpp
 }
 
 mac {

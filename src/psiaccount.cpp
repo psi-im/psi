@@ -95,7 +95,8 @@
 #include "pepmanager.h"
 #include "serverinfomanager.h"
 #ifdef WHITEBOARDING
-#include "wbmanager.h"
+#include "sxe/sxemanager.h"
+#include "whiteboarding/wbmanager.h"
 #endif
 #include "bookmarkmanager.h"
 #include "vcardfactory.h"
@@ -337,6 +338,8 @@ public:
 #endif
 	
 #ifdef WHITEBOARDING
+	// SXE
+	SxeManager* sxeManager;
 	// Whiteboard
 	WbManager* wbManager;
 #endif
@@ -750,8 +753,10 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	d->pepAvailable = false;
 
 #ifdef WHITEBOARDING
+ 	 // Initialize SXE manager
+ 	d->sxeManager = new SxeManager(d->client, this);
 	 // Initialize Whiteboard manager
-	d->wbManager = new WbManager(d->client, this);
+	d->wbManager = new WbManager(this, d->sxeManager);
 #endif
 
 	// Avatars
@@ -884,6 +889,7 @@ PsiAccount::~PsiAccount()
 	delete d->serverInfoManager;
 #ifdef WHITEBOARDING
 	delete d->wbManager;
+	delete d->sxeManager;
 #endif
 	delete d->bookmarkManager;
 	delete d->client;
@@ -3274,7 +3280,8 @@ void PsiAccount::actionOpenWhiteboardSpecific(const Jid &target, Jid ownJid, boo
 {
 	if(ownJid.isEmpty())
 		ownJid = jid();
-	d->wbManager->openWhiteboard(target, ownJid, groupChat);
+	
+	d->wbManager->openWhiteboard(target, ownJid, groupChat, true);
 }
 #endif
 
