@@ -389,6 +389,11 @@
 	</icon>
 
 	<icon>
+		<x xmlns='name'>psi/save</x>
+		<object mime='image/png'>whiteboarding/save.png</object>
+	</icon>
+
+	<icon>
 		<x xmlns='name'>psi/select</x>
 		<object mime='image/png'>whiteboarding/select.png</object>
 	</icon>

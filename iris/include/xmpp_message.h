@@ -132,9 +132,9 @@ namespace XMPP {
 		void setForm(const XData&);
 		const XData& getForm() const;
 
-		// JEP-xxxx Whiteboarding
-		void setWhiteboard(const QDomElement&);
-		const QDomElement& whiteboard() const;
+		// JEP-xxxx SXE
+		void setSxe(const QDomElement&);
+		const QDomElement& sxe() const;
 
 		// MUC
 		void setMUCStatus(int);
