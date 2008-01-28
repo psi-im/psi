@@ -74,7 +74,6 @@
 #include "accountlabel.h"
 #include "xdata_widget.h"
 #include "desktoputil.h"
-#include "showtextdlg.h"
 
 static QString findJid(const QString &s, int x, int *p1, int *p2)
 {
@@ -2130,21 +2129,7 @@ void EventDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
 		}
 	}
 	else {
-		while (1) {
-			QMessageBox msgbox(QMessageBox::Critical, tr("Error"), tr("There was an error trying to send the message encrypted.\nReason: %1.").arg(PGPUtil::instance().messageErrorString((QCA::SecureMessage::Error) e)), QMessageBox::Ok, 0);
-			QPushButton *diag = msgbox.addButton(tr("Diagnostics"), QMessageBox::HelpRole);
-			msgbox.exec();
-			if (msgbox.clickedButton() == diag) {
-				ShowTextDlg *w = new ShowTextDlg(dtext, true, false, 0);
-				w->setWindowTitle(tr("OpenPGP Diagnostic Text"));
-				w->resize(560, 240);
-				w->exec();
-
-				continue;
-			} else {
-				break;
-			}
-		}
+		PGPUtil::showDiagnosticText(static_cast<QCA::SecureMessage::Error>(e), dtext);
 	}
 
 	d->le_to->setEnabled(true);

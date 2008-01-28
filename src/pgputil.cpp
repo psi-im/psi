@@ -1,10 +1,14 @@
+#include "pgputil.h"
+
 #include <QtCore>
 #include <QStringList>
 #include <QDialog>
+#include <QMessageBox>
 
-#include "pgputil.h"
 #include "passphrasedlg.h"
+#include "showtextdlg.h"
 
+PGPUtil* PGPUtil::instance_ = 0;
 
 PGPUtil::PGPUtil() : qcaEventHandler_(NULL), passphraseDlg_(NULL)
 {
@@ -275,7 +279,32 @@ void PGPUtil::keyStoreAvailable(const QString& k)
 	keystores_ += ks;
 }
 
+void PGPUtil::showDiagnosticText(const QString& event, const QString& diagnostic)
+{
+	while (1) {
+		QMessageBox msgbox(QMessageBox::Critical,
+		                   tr("Error"),
+		                   event,
+		                   QMessageBox::Ok, 0);
+		QPushButton *diag = msgbox.addButton(tr("Diagnostics"), QMessageBox::HelpRole);
+		msgbox.exec();
+		if (msgbox.clickedButton() == diag) {
+			ShowTextDlg* w = new ShowTextDlg(diagnostic, true, false, 0);
+			w->setWindowTitle(tr("OpenPGP Diagnostic Text"));
+			w->resize(560, 240);
+			w->exec();
 
+			continue;
+		}
+		else {
+			break;
+		}
+	}
+}
 
-
-PGPUtil* PGPUtil::instance_ = NULL;
+void PGPUtil::showDiagnosticText(QCA::SecureMessage::Error error, const QString& diagnostic)
+{
+	showDiagnosticText(tr("There was an error trying to send the message encrypted.\nReason: %1.")
+	                   .arg(PGPUtil::instance().messageErrorString(error)),
+	                   diagnostic);
+}

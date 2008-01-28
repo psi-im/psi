@@ -25,12 +25,15 @@ public:
 
 	bool pgpAvailable();
 
+	static void showDiagnosticText(const QString& event, const QString& diagnostic);
+	static void showDiagnosticText(QCA::SecureMessage::Error error, const QString& diagnostic);
+
 	QCA::KeyStoreEntry getSecretKeyStoreEntry(const QString& key);
 	QCA::KeyStoreEntry getPublicKeyStoreEntry(const QString& key);
-	
+
 	QString stripHeaderFooter(const QString &);
 	QString addHeaderFooter(const QString &, int);
-			
+
 	QString messageErrorString(enum QCA::SecureMessage::Error);
 
 	bool equals(QCA::PGPKey, QCA::PGPKey);

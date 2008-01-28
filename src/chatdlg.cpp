@@ -72,7 +72,6 @@
 #include "shortcutmanager.h"
 #include "psicontactlist.h"
 #include "accountlabel.h"
-#include "showtextdlg.h"
 
 #ifdef Q_WS_WIN
 #include <windows.h>
@@ -720,21 +719,7 @@ void ChatDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
 		doneSend();
 	}
 	else {
-		while (1) {
-			QMessageBox msgbox(QMessageBox::Critical, tr("Error"), tr("There was an error trying to send the message encrypted.\nReason: %1.").arg(PGPUtil::instance().messageErrorString((QCA::SecureMessage::Error) e)), QMessageBox::Ok, 0);
-			QPushButton *diag = msgbox.addButton(tr("Diagnostics"), QMessageBox::HelpRole);
-			msgbox.exec();
-			if (msgbox.clickedButton() == diag) {
-				ShowTextDlg *w = new ShowTextDlg(dtext, true, false, 0);
-				w->setWindowTitle(tr("OpenPGP Diagnostic Text"));
-				w->resize(560, 240);
-				w->exec();
-
-				continue;
-			} else {
-				break;
-			}
-		}
+		PGPUtil::showDiagnosticText(static_cast<QCA::SecureMessage::Error>(e), dtext);
 	}
 	chatEdit()->setEnabled(true);
 	chatEdit()->setFocus();

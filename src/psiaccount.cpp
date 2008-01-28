@@ -123,7 +123,6 @@
 #include "proxy.h"
 #include "psicontactlist.h"
 #include "tabmanager.h"
-#include "showtextdlg.h"
 
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
@@ -4440,23 +4439,9 @@ void PsiAccount::pgp_signFinished()
 				PGPUtil::instance().removePassphrase(ke.id());
 		}
 
-		QString dtext = t->diagnosticText();
-
-		while (1) {
-			QMessageBox msgbox(QMessageBox::Critical, tr("Error"), tr("There was an error trying to sign your status.\nReason: %1.").arg(PGPUtil::instance().messageErrorString(t->errorCode())), QMessageBox::Ok, 0);
-			QPushButton *diag = msgbox.addButton(tr("Diagnostics"), QMessageBox::HelpRole);
-			msgbox.exec();
-			if (msgbox.clickedButton() == diag) {
-				ShowTextDlg *w = new ShowTextDlg(dtext, true, false, 0);
-				w->setWindowTitle(tr("OpenPGP Diagnostic Text"));
-				w->resize(560, 240);
-				w->exec();
-
-				continue;
-			} else {
-				break;
-			}
-		}
+		PGPUtil::showDiagnosticText(tr("There was an error trying to sign your status.\nReason: %1.")
+		                            .arg(PGPUtil::instance().messageErrorString(t->errorCode())),
+		                            t->diagnosticText());
 
 		logout();
 		return;
@@ -4601,6 +4586,7 @@ void PsiAccount::pgp_decryptFinished()
 			if (!pt->message().id().isEmpty())
 				m.setId(pt->message().id());
 			m.setBody(pt->message().body());
+
 			m.setError(Stanza::Error(Stanza::Error::Wait,
 			                         Stanza::Error::NotAcceptable,
 			                         "Unable to decrypt"));
