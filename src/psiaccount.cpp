@@ -1757,13 +1757,7 @@ void PsiAccount::bookmarksAvailabilityChanged()
 			if (nick.isEmpty())
 				nick = d->jid.node();
 
-			MUCJoinDlg *w = new MUCJoinDlg(psi(), this);
-			w->le_host->setText(c.jid().domain());
-			w->le_room->setText(c.jid().node());
-			w->le_nick->setText(nick);
-			w->le_pass->setText(c.password());
-			w->show();
-			w->doJoin();
+			actionJoin(c.jid(), nick, c.password(), true);
 		}
 	}
 }
@@ -2639,15 +2633,24 @@ void PsiAccount::featureActivated(QString feature, Jid jid, QString node)
 	}
 }
 
-void PsiAccount::actionJoin(const Jid &j, const QString& password)
+void PsiAccount::actionJoin(const Jid& mucJid, const QString& password)
+{
+	actionJoin(mucJid, QString(), password, false);
+}
+
+void PsiAccount::actionJoin(const Jid& mucJid, const QString& nick, const QString& password, bool connectImmediately)
 {
 	MUCJoinDlg *w = new MUCJoinDlg(psi(), this);
 
-	w->le_host->setText ( j.host() );
-	w->le_room->setText ( j.user() );
-	w->le_pass->setText (password);
+	w->le_host->setText(mucJid.host());
+	w->le_room->setText(mucJid.user());
+	w->le_nick->setText(nick);
+	w->le_pass->setText(password);
 
 	w->show();
+	if (connectImmediately) {
+		w->doJoin();
+	}
 }
 
 void PsiAccount::stateChanged()

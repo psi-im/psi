@@ -187,7 +187,7 @@ QModelIndex BookmarkManageDlg::currentIndex() const
 
 void BookmarkManageDlg::joinCurrentRoom()
 {
-	account_->actionJoin(jid(), ui_.password->text());
+	account_->actionJoin(jid(), ui_.nickname->text(), ui_.password->text(), true);
 }
 
 void BookmarkManageDlg::appendItem(QStandardItem* item)
