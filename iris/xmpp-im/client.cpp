@@ -796,6 +796,15 @@ void Client::updatePresence(LiveRosterItem *i, const Jid &j, const Status &s)
 			i->resourceList().remove(rit);
 			i->setLastUnavailableStatus(s);
 		}
+		else {
+			// create the resource just for the purpose of emit
+			Resource r = Resource(j.resource(), s);
+			i->resourceList() += r;
+			rit = i->resourceList().find(j.resource());
+			resourceUnavailable(j, *rit);
+			i->resourceList().remove(rit);
+			i->setLastUnavailableStatus(s);
+		}
 	}
 	// available?  add/update the resource
 	else {

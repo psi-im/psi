@@ -1972,6 +1972,20 @@ void PsiAccount::client_resourceUnavailable(const Jid &j, const Resource &r)
 					doPopup = true;
 				}
 			}
+		} else {
+			// if we get here, then we've received unavailable
+			//   presence for a contact that is already considered
+			//   unavailable
+			u->setLastUnavailableStatus(r.status());
+
+			if (!u->isAvailable()) {
+				QDateTime ts = r.status().timeStamp();
+				if (ts.isValid()) {
+					u->setLastAvailable(ts);
+				}
+			}
+
+			// no sounds/popups in this case
 		}
 
 		u->setPresenceError("");
