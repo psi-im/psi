@@ -2272,10 +2272,20 @@ void PsiAccount::setStatus(const Status &_s,  bool withPriority)
 					  tr("Please enter the password for %1:").arg(JIDUtil::toString(j,true))
 					  : tr("Please enter your password:") ),
 					QLineEdit::Password, QString::null, &ok, 0);
-				if(ok && !text.isEmpty())
+				if(ok && !text.isEmpty()) {
 					d->acc.pass = text;
-				else
+				} else {
+					// if the user clicks 'online' in the
+					//   status menu, then the online
+					//   option will be 'checked' in the
+					//   menu.  if the user cancels the
+					//   password dialog, we call
+					//   updateMainwinStatus to restore
+					//   the status menu to the correct
+					//   state.
+					d->psi->updateMainwinStatus();
 					return;
+				}
 			}
 
 			login();
