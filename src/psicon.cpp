@@ -944,7 +944,10 @@ void PsiCon::checkAccountsEmpty()
 }
 
 void PsiCon::doOpenUri(const QUrl &uriToOpen)
-{/*
+{
+	Q_UNUSED(uriToOpen);	
+	
+/*
 	QUrl uri(uriToOpen);	// got to copy, because setQueryDelimiters() is not const
 
 	qWarning("uri:  " + uri.toString());
@@ -1079,8 +1082,6 @@ void PsiCon::optionChanged(const QString& option)
 
 void PsiCon::slotApplyOptions()
 {
-	bool notifyRestart = true;
-	
 	PsiOptions *o = PsiOptions::instance();
 
 #ifndef Q_WS_MAC
