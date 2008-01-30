@@ -290,6 +290,7 @@ QDomElement XData::Field::toXml(QDomDocument *doc, bool submitForm) const
 XData::XData()
 {
 	d = new Private;
+	d->type = Data_Form;
 }
 
 QString XData::title() const
