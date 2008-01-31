@@ -148,10 +148,11 @@ ContactProfile::ContactProfile(PsiAccount *pa, const QString &name, ContactView 
 
 	d->self = 0;
 
-	if(!unique)
+	if (!unique) {
 		d->cvi = new ContactViewItem(name, this, d->cv);
-	else
+	} else {
 		d->cvi = 0;
+	}
 
 	d->oldstate = -2;
 
@@ -216,8 +217,9 @@ const QString & ContactProfile::name() const
 void ContactProfile::setName(const QString &name)
 {
 	d->name = name;
-	if(d->cvi)
+	if (d->cvi) {
 		d->cvi->setProfileName(name);
+	}
 }
 
 void ContactProfile::setName(const char *s)
@@ -922,7 +924,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		am->insertItem(/*IconsetFactory::iconPixmap("psi/edit/clear"),*/ tr("Update MOTD"), 3);
 		am->insertItem(IconsetFactory::icon("psi/remove").icon(), tr("Delete MOTD"), 4);
 
-		const int status_start = 16;
+		const int status_start = 15;
 		Q3PopupMenu *sm = new Q3PopupMenu(&pm);
 		sm->insertItem(PsiIconset::instance()->status(STATUS_ONLINE).icon(),	status2txt(STATUS_ONLINE),	STATUS_ONLINE		+ status_start);
 		if (PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool())
@@ -949,9 +951,22 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		pm.insertItem(tr("Avatar"), avatarm, 14);
 		pm.setItemEnabled(14, d->pa->serverInfoManager()->hasPEP());
 #endif
+		const int bookmarks_start = STATUS_CHAT + status_start + 1; // STATUS_CHAT is the highest value of the states
+		QMenu *bookmarks = new QMenu(&pm);
+		bookmarks->insertItem(tr("Manage"), bookmarks_start);
+		if (d->pa->bookmarkManager()->isAvailable()) {
+			int idx = 1;
+			bookmarks->insertSeparator();
+			foreach (ConferenceBookmark c, psiAccount()->bookmarkManager()->conferences()) {
+				bookmarks->insertItem(QString(tr("join %1")).arg(c.jid().full()), bookmarks_start + idx);
+				idx++;
+			}
+		}
+		else {
+			bookmarks->setItemEnabled(bookmarks_start, false);
+		}
 
-		pm.insertItem(tr("Manage Bookmarks..."), 15);
-		pm.setItemEnabled(15, d->pa->bookmarkManager()->isAvailable());
+		pm.insertItem(tr("Bookmarks"), bookmarks);
 
 		pm.insertSeparator();
 		pm.insertItem(IconsetFactory::icon("psi/addContact").icon(), tr("&Add a contact"), 7);
@@ -1020,7 +1035,11 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		else if(x == 13  && pm.isItemEnabled(14)) {
 			emit actionUnsetAvatar();
 		}
-		else if(x == 15) {
+		else if(x >= status_start && x <= STATUS_CHAT + status_start) { // STATUS_CHAT is the highest value of the states
+			int status = x - status_start;
+			d->pa->changeStatus(status);
+		}
+        else if(x == bookmarks_start) {
 			BookmarkManageDlg *dlg = d->pa->findDialog<BookmarkManageDlg*>();
 			if(dlg) {
 				bringToFront(dlg);
@@ -1028,11 +1047,11 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 				dlg = new BookmarkManageDlg(d->pa);
 				dlg->show();
 			}
-		}
-		else if(x >= status_start) {
-			int status = x - status_start;
-			d->pa->changeStatus(status);
-		}
+        }
+        else if (x > bookmarks_start) {
+			ConferenceBookmark c = psiAccount()->bookmarkManager()->conferences() [x - bookmarks_start - 1];
+			psiAccount()->actionJoin(c.jid(), c.nick(), c.password(), true);
+        }
 	}
 	else if(i->type() == ContactViewItem::Group) {
 		QString gname = i->groupName();
