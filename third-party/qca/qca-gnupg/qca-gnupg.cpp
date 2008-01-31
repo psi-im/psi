@@ -17,6 +17,7 @@
  */
 
 #include <QtCrypto>
+#include <qcaprovider.h>
 #include <QtPlugin>
 
 #ifdef Q_OS_MAC

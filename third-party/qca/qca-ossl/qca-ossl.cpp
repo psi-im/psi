@@ -19,9 +19,9 @@
  */
 
 #include <QtCrypto>
-
+#include <qcaprovider.h>
 #include <QDebug>
-#include <QtCore/qplugin.h>
+#include <QtPlugin>
 
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
@@ -1087,6 +1087,31 @@ public:
 protected:
     const EVP_MD *m_algorithm;
     EVP_MD_CTX m_context;
+};
+
+class opensslPbkdf2Context : public KDFContext
+{
+public:
+    opensslPbkdf2Context(Provider *p, const QString &type) : KDFContext(p, type)
+    {
+    }
+
+    Provider::Context *clone() const
+    {
+	return new opensslPbkdf2Context( *this );
+    }
+
+    SymmetricKey makeKey(const SecureArray &secret, const InitializationVector &salt,
+			      unsigned int keyLength, unsigned int iterationCount)
+    {
+      SecureArray out(keyLength);
+      PKCS5_PBKDF2_HMAC_SHA1( (char*)secret.data(), secret.size(),
+			      (unsigned char*)salt.data(), salt.size(),
+			      iterationCount, keyLength, (unsigned char*)out.data() );
+      return out;
+    }
+
+protected:
 };
 
 class opensslHMACContext : public MACContext
@@ -2840,21 +2865,35 @@ public:
 
 	X509Item(const X509Item &from)
 	{
-		cert = from.cert;
-		req = from.req;
-		crl = from.crl;
-
-		if(cert)
-			CRYPTO_add(&cert->references, 1, CRYPTO_LOCK_X509);
-		if(req)
-			CRYPTO_add(&req->references, 1, CRYPTO_LOCK_X509_REQ);
-		if(crl)
-			CRYPTO_add(&crl->references, 1, CRYPTO_LOCK_X509_CRL);
+		cert = 0;
+		req = 0;
+		crl = 0;
+		*this = from;
 	}
 
 	~X509Item()
 	{
 		reset();
+	}
+
+	X509Item & operator=(const X509Item &from)
+	{
+		if(this != &from)
+		{
+			reset();
+			cert = from.cert;
+			req = from.req;
+			crl = from.crl;
+
+			if(cert)
+				CRYPTO_add(&cert->references, 1, CRYPTO_LOCK_X509);
+			if(req)
+				CRYPTO_add(&req->references, 1, CRYPTO_LOCK_X509_REQ);
+			if(crl)
+				CRYPTO_add(&crl->references, 1, CRYPTO_LOCK_X509_CRL);
+		}
+
+		return *this;
 	}
 
 	void reset()
@@ -3403,6 +3442,175 @@ bool sameChain(STACK_OF(X509) *ossl, const QList<const MyCertContext*> &qca)
 
 	return true;
 }
+
+//----------------------------------------------------------------------------
+// MyCAContext
+//----------------------------------------------------------------------------
+// Thanks to Pascal Patry
+class MyCAContext : public CAContext
+{
+public:
+	X509Item caCert;
+	MyPKeyContext *privateKey;
+
+	MyCAContext(Provider *p) : CAContext(p)
+	{
+		privateKey = 0;
+	}
+
+	MyCAContext(const MyCAContext &from) : CAContext(from), caCert(from.caCert)
+	{
+		privateKey = static_cast<MyPKeyContext*>(from.privateKey -> clone());
+	}
+
+	~MyCAContext()
+	{
+		delete privateKey;
+	}
+
+	virtual CertContext *certificate() const
+	{
+		MyCertContext *cert = new MyCertContext(provider());
+
+		cert->fromX509(caCert.cert);
+		return cert;
+	}
+
+	virtual CertContext *createCertificate(const PKeyContext &pub, const CertificateOptions &opts) const
+	{
+		// TODO: implement
+		Q_UNUSED(pub)
+		Q_UNUSED(opts)
+		return 0;
+	}
+
+	virtual CRLContext *createCRL(const QDateTime &nextUpdate) const
+	{
+		// TODO: implement
+		Q_UNUSED(nextUpdate)
+		return 0;
+	}
+
+	virtual void setup(const CertContext &cert, const PKeyContext &priv)
+	{
+		caCert = static_cast<const MyCertContext&>(cert).item;
+		delete privateKey;
+		privateKey = 0;
+		privateKey = static_cast<MyPKeyContext*>(priv.clone());
+	}
+
+	virtual CertContext *signRequest(const CSRContext &req, const QDateTime &notValidAfter) const
+	{
+		MyCertContext *cert = 0;
+		const EVP_MD *md = 0;
+		X509 *x = 0;
+		const CertContextProps &props = *req.props();
+		CertificateOptions subjectOpts;
+		X509_NAME *subjectName = 0;
+		X509_EXTENSION *ex = 0;
+
+		if(privateKey -> key()->type() == PKey::RSA)
+			md = EVP_sha1();
+		else if(privateKey -> key()->type() == PKey::DSA)
+			md = EVP_dss1();
+		else
+			return 0;
+
+		cert = new MyCertContext(provider());
+
+		subjectOpts.setInfoOrdered(props.subject);
+		subjectName = new_cert_name(subjectOpts.info());
+
+		// create
+		x = X509_new();
+		X509_set_version(x, 2);
+
+		// serial
+		BIGNUM *bn = bi2bn(props.serial);
+		BN_to_ASN1_INTEGER(bn, X509_get_serialNumber(x));
+		BN_free(bn);
+
+		// validity period
+		ASN1_TIME_set(X509_get_notBefore(x), QDateTime::currentDateTime().toUTC().toTime_t());
+		ASN1_TIME_set(X509_get_notAfter(x), notValidAfter.toTime_t());
+
+		X509_set_pubkey(x, static_cast<const MyPKeyContext*>(req.subjectPublicKey()) -> get_pkey());
+		X509_set_subject_name(x, subjectName);
+		X509_set_issuer_name(x, X509_get_subject_name(caCert.cert));
+
+		// subject key id
+		ex = new_subject_key_id(x);
+		{
+			X509_add_ext(x, ex, -1);
+			X509_EXTENSION_free(ex);
+		}
+
+		// CA mode
+		ex = new_basic_constraints(props.isCA, props.pathLimit);
+		if(ex)
+		{
+			X509_add_ext(x, ex, -1);
+			X509_EXTENSION_free(ex);
+		}
+
+		// subject alt name
+		ex = new_cert_subject_alt_name(subjectOpts.info());
+		if(ex)
+		{
+			X509_add_ext(x, ex, -1);
+			X509_EXTENSION_free(ex);
+		}
+
+		// key usage
+		ex = new_cert_key_usage(props.constraints);
+		if(ex)
+		{
+			X509_add_ext(x, ex, -1);
+			X509_EXTENSION_free(ex);
+		}
+
+		// extended key usage
+		ex = new_cert_ext_key_usage(props.constraints);
+		if(ex)
+		{
+			X509_add_ext(x, ex, -1);
+			X509_EXTENSION_free(ex);
+		}
+
+		// policies
+		ex = new_cert_policies(props.policies);
+		if(ex)
+		{
+			X509_add_ext(x, ex, -1);
+			X509_EXTENSION_free(ex);
+		}
+
+		if(!X509_sign(x, privateKey->get_pkey(), md))
+		{
+			X509_free(x);
+			delete cert;
+			return 0;
+		}
+
+		cert->fromX509(x);
+		X509_free(x);
+		return cert;
+	}
+
+	virtual CRLContext *updateCRL(const CRLContext &crl, const QList<CRLEntry> &entries, const QDateTime &nextUpdate) const
+	{
+		// TODO: implement
+		Q_UNUSED(crl)
+		Q_UNUSED(entries)
+		Q_UNUSED(nextUpdate)
+		return 0;
+	}
+
+	virtual Provider::Context *clone() const
+	{
+		return new MyCAContext(*this);
+	}
+};
 
 //----------------------------------------------------------------------------
 // MyCSRContext
@@ -6551,6 +6759,7 @@ public:
 		list += all_cipher_types();
 		list += "pbkdf1(md2)";
 		list += "pbkdf1(sha1)";
+		list += "pbkdf2(sha1)";
 		list += "pkey";
 		list += "dlgroup";
 		list += "rsa";
@@ -6563,6 +6772,7 @@ public:
 		list += "pkcs12";
 		list += "tls";
 		list += "cms";
+		list += "ca";
 
 		return list;
 	}
@@ -6608,6 +6818,8 @@ public:
 			return new opensslPbkdf1Context( EVP_sha1(), this, type );
 		else if ( type == "pbkdf1(md2)" )
 			return new opensslPbkdf1Context( EVP_md2(), this, type );
+		else if ( type == "pbkdf2(sha1)" )
+			return new opensslPbkdf2Context( this, type );
 		else if ( type == "hmac(md5)" )
 			return new opensslHMACContext( EVP_md5(), this, type );
 		else if ( type == "hmac(sha1)" )
@@ -6720,6 +6932,8 @@ public:
 			return new MyTLSContext( this );
 		else if ( type == "cms" )
 			return new CMSContext( this );
+		else if ( type == "ca" )
+			return new MyCAContext( this );
 		return 0;
 	}
 };
