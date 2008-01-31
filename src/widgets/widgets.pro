@@ -20,8 +20,8 @@ SOURCES += \
 	urlobject.cpp \
 	urllabel.cpp \
 	psirichtext.cpp \
-	psitooltip.cpp \
 	psitextview.cpp
+#	psitooltip.cpp \
 #	psitabwidget.cpp \
 #	psitabbar.cpp
 
@@ -40,8 +40,8 @@ HEADERS += \
 	iconlabel.h \
 	icontoolbutton.h \
 	psirichtext.h \
-	psitooltip.h \
 	psitextview.h
+#	psitooltip.h \
 #	psitabwidget.h \
 #	psitabbar.h
 
