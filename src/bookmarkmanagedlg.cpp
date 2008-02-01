@@ -22,6 +22,7 @@
 
 #include <QStandardItemModel>
 #include <QPushButton>
+#include <QAction>
 
 #include "bookmarkmanager.h"
 #include "psiaccount.h"
@@ -34,6 +35,11 @@ BookmarkManageDlg::BookmarkManageDlg(PsiAccount* account)
 	setAttribute(Qt::WA_DeleteOnClose, true);
 	ui_.setupUi(this);
 	account_->dialogRegister(this);
+
+	QAction* removeBookmarkAction = new QAction(this);
+	connect(removeBookmarkAction, SIGNAL(activated()), SLOT(removeBookmark()));
+	removeBookmarkAction->setShortcuts(QKeySequence::Delete);
+	ui_.listView->addAction(removeBookmarkAction);
 
 	addButton_    = ui_.bookmarkButtonBox->addButton(tr("&Add"),    QDialogButtonBox::ActionRole);
 	removeButton_ = ui_.bookmarkButtonBox->addButton(tr("&Remove"), QDialogButtonBox::DestructiveRole);
