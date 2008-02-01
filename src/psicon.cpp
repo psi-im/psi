@@ -782,7 +782,9 @@ void PsiCon::deleteAllDialogs()
 
 AccountsComboBox *PsiCon::accountsComboBox(QWidget *parent, bool online_only)
 {
-	AccountsComboBox *acb = new AccountsComboBox(this, parent, online_only);
+	AccountsComboBox* acb = new AccountsComboBox(parent);
+	acb->setController(this);
+	acb->setOnlineOnly(online_only);
 	return acb;
 }
 

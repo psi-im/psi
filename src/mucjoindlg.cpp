@@ -1,6 +1,6 @@
 /*
  * mucjoindlg.cpp
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2008  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,198 +29,157 @@
 #include "mucjoindlg.h"
 #include "psicontactlist.h"
 
-using namespace XMPP;
-
-
-class MUCJoinDlg::Private
-{
-public:
-	Private() {}
-
-	PsiCon *psi;
-	PsiAccount *pa;
-	AccountsComboBox *cb_ident;
-	BusyWidget *busy;
-	QStringList rl;
-	Jid jid;
-};
-
-MUCJoinDlg::MUCJoinDlg(PsiCon *psi, PsiAccount *pa)
+MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
 	: QDialog(0)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
-	d = new Private;
 	setModal(false);
-	setupUi(this);
-	d->psi = psi;
-	d->pa = 0;
-	d->psi->dialogRegister(this);
-	d->busy = busy;
-	ck_history->setChecked(true);
+	ui_.setupUi(this);
+	controller_ = psi;
+	account_ = 0;
+	controller_->dialogRegister(this);
+	ui_.ck_history->setChecked(true);
+	ui_.ck_history->hide();
+	joinButton_ = ui_.buttonBox->addButton(tr("&Join"), QDialogButtonBox::AcceptRole);
+	joinButton_->setDefault(true);
 
 	updateIdentity(pa);
-	
-	d->cb_ident = d->psi->accountsComboBox(this,true);
-	connect(d->cb_ident, SIGNAL(activated(PsiAccount *)), SLOT(updateIdentity(PsiAccount *)));
-	d->cb_ident->setAccount(pa);
-	replaceWidget(lb_ident, d->cb_ident);
 
-	connect(d->psi, SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
+	ui_.cb_ident->setController(controller_);
+	ui_.cb_ident->setOnlineOnly(true);
+	connect(ui_.cb_ident, SIGNAL(activated(PsiAccount *)), SLOT(updateIdentity(PsiAccount *)));
+	ui_.cb_ident->setAccount(pa);
+
+	connect(controller_, SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
 	updateIdentityVisibility();
 
-	d->rl = d->psi->recentGCList();
-	for(QStringList::ConstIterator it = d->rl.begin(); it != d->rl.end(); ++it) {
-		Jid j(*it);
-		QString s = tr("%1 on %2").arg(j.resource()).arg(JIDUtil::toString(j,false));
-		cb_recent->insertItem(s);
+	foreach(QString j, controller_->recentGCList()) {
+		Jid jid(j);
+		QString s = tr("%1 on %2").arg(jid.resource()).arg(JIDUtil::toString(jid, false));
+		ui_.cb_recent->addItem(s);
+		ui_.cb_recent->setItemData(ui_.cb_recent->count()-1, QVariant(j));
 	}
 
 	setWindowTitle(CAP(caption()));
-	pb_join->setDefault(true);
-	connect(pb_close, SIGNAL(clicked()), SLOT(close()));
-	connect(pb_join, SIGNAL(clicked()), SLOT(doJoin()));
-	connect(cb_recent, SIGNAL(activated(int)), SLOT(recent_activated(int)));
-	if(d->rl.isEmpty()) {
-		cb_recent->setEnabled(false);
-		le_host->setFocus();
+	connect(ui_.cb_recent, SIGNAL(activated(int)), SLOT(recent_activated(int)));
+	if (!ui_.cb_recent->count()) {
+		ui_.cb_recent->setEnabled(false);
+		ui_.le_host->setFocus();
 	}
-	else
+	else {
 		recent_activated(0);
+	}
+
+	setWidgetsEnabled(true);
+	resize(sizeHint());
 }
 
 MUCJoinDlg::~MUCJoinDlg()
 {
-	if(d->psi)
-		d->psi->dialogUnregister(this);
-	if(d->pa)
-		d->pa->dialogUnregister(this);
-	delete d;
+	if (controller_)
+		controller_->dialogUnregister(this);
+	if (account_)
+		account_->dialogUnregister(this);
 }
-
-/*void MUCJoinDlg::closeEvent(QCloseEvent *e)
-{
-	e->ignore();
-	reject();
-}*/
 
 void MUCJoinDlg::done(int r)
 {
-	if(d->busy->isActive()) {
+	if (ui_.busy->isActive()) {
 		//int n = QMessageBox::information(0, tr("Warning"), tr("Are you sure you want to cancel joining groupchat?"), tr("&Yes"), tr("&No"));
 		//if(n != 0)
 		//	return;
-		d->pa->groupChatLeave(d->jid.host(), d->jid.user());
+		account_->groupChatLeave(jid_.host(), jid_.user());
 	}
 	QDialog::done(r);
 }
 
 void MUCJoinDlg::updateIdentity(PsiAccount *pa)
 {
-	if(d->pa)
-		disconnect(d->pa, SIGNAL(disconnected()), this, SLOT(pa_disconnected()));
+	if (account_)
+		disconnect(account_, SIGNAL(disconnected()), this, SLOT(pa_disconnected()));
 
-	d->pa = pa;
-	pb_join->setEnabled(d->pa);
+	account_ = pa;
+	joinButton_->setEnabled(account_);
 
-	if(!d->pa) {
-		d->busy->stop();
+	if (!account_) {
+		ui_.busy->stop();
 		return;
 	}
 
-	connect(d->pa, SIGNAL(disconnected()), this, SLOT(pa_disconnected()));
+	connect(account_, SIGNAL(disconnected()), this, SLOT(pa_disconnected()));
 }
 
 void MUCJoinDlg::updateIdentityVisibility()
 {
-	bool visible = d->psi->contactList()->enabledAccounts().count() > 1;
-	d->cb_ident->setVisible(visible);
-	lb_identity->setVisible(visible);
+	bool visible = controller_->contactList()->enabledAccounts().count() > 1;
+	ui_.cb_ident->setVisible(visible);
+	ui_.lb_identity->setVisible(visible);
 }
 
 void MUCJoinDlg::pa_disconnected()
 {
-	if(d->busy->isActive()) {
-		d->busy->stop();
+	if (ui_.busy->isActive()) {
+		ui_.busy->stop();
 	}
 }
 
 void MUCJoinDlg::recent_activated(int x)
 {
-	int n = 0;
-	bool found = false;
-	QString str;
-	for(QStringList::ConstIterator it = d->rl.begin(); it != d->rl.end(); ++it) {
-		if(n == x) {
-			found = true;
-			str = *it;
-			break;
-		}
-		++n;
-	}
-	if(!found)
+	Jid jid(ui_.cb_recent->itemData(x).toString());
+	if (jid.full().isEmpty())
 		return;
 
-	Jid j(str);
-	le_host->setText(j.host());
-	le_room->setText(j.user());
-	le_nick->setText(j.resource());
+	ui_.le_host->setText(jid.host());
+	ui_.le_room->setText(jid.user());
+	ui_.le_nick->setText(jid.resource());
 }
 
 void MUCJoinDlg::doJoin()
 {
-	if(!d->pa || !d->pa->checkConnected(this))
+	if (!account_ || !account_->checkConnected(this))
 		return;
 
-	QString host = le_host->text();
-	QString room = le_room->text();
-	QString nick = le_nick->text();
-	QString pass = le_pass->text();
+	QString host = ui_.le_host->text();
+	QString room = ui_.le_room->text();
+	QString nick = ui_.le_nick->text();
+	QString pass = ui_.le_pass->text();
 
-	if(host.isEmpty() || room.isEmpty() || nick.isEmpty()) {
+	if (host.isEmpty() || room.isEmpty() || nick.isEmpty()) {
 		QMessageBox::information(this, tr("Error"), tr("You must fill out the fields in order to join."));
 		return;
 	}
 
 	Jid j = room + '@' + host + '/' + nick;
-	if(!j.isValid()) {
+	if (!j.isValid()) {
 		QMessageBox::information(this, tr("Error"), tr("You entered an invalid room name."));
 		return;
 	}
 
-	if(!d->pa->groupChatJoin(host, room, nick, pass, !ck_history->isChecked())) {
+	if (!account_->groupChatJoin(host, room, nick, pass, !ui_.ck_history->isChecked())) {
 		QMessageBox::information(this, tr("Error"), tr("You are in or joining this room already!"));
 		return;
 	}
 
-	d->psi->dialogUnregister(this);
-	d->jid = room + '@' + host + '/' + nick;
-	d->pa->dialogRegister(this, d->jid);
+	controller_->dialogUnregister(this);
+	jid_ = room + '@' + host + '/' + nick;
+	account_->dialogRegister(this, jid_);
 
-	disableWidgets();
-	d->busy->start();
+	setWidgetsEnabled(false);
+	ui_.busy->start();
 }
 
-void MUCJoinDlg::disableWidgets()
+void MUCJoinDlg::setWidgetsEnabled(bool enabled)
 {
-	d->cb_ident->setEnabled(false);
-	cb_recent->setEnabled(false);
-	gb_info->setEnabled(false);
-	pb_join->setEnabled(false);
-}
-
-void MUCJoinDlg::enableWidgets()
-{
-	d->cb_ident->setEnabled(true);
-	if(!d->rl.isEmpty())
-		cb_recent->setEnabled(true);
-	gb_info->setEnabled(true);
-	pb_join->setEnabled(true);
+	ui_.cb_ident->setEnabled(enabled);
+	ui_.cb_recent->setEnabled(enabled && ui_.cb_recent->count() > 0);
+	ui_.gb_info->setEnabled(enabled);
+	joinButton_->setEnabled(enabled);
 }
 
 void MUCJoinDlg::joined()
 {
-	d->psi->recentGCAdd(d->jid.full());
-	d->busy->stop();
+	controller_->recentGCAdd(jid_.full());
+	ui_.busy->stop();
 
 	closeDialogs(this);
 	deleteLater();
@@ -228,15 +187,32 @@ void MUCJoinDlg::joined()
 
 void MUCJoinDlg::error(int, const QString &str)
 {
-	d->busy->stop();
-	enableWidgets();
+	ui_.busy->stop();
+	setWidgetsEnabled(true);
 
-	pb_join->setFocus();
-
-	d->pa->dialogUnregister(this);
-	d->psi->dialogRegister(this);
+	account_->dialogUnregister(this);
+	controller_->dialogRegister(this);
 
 	QMessageBox::information(this, tr("Error"), tr("Unable to join groupchat.\nReason: %1").arg(str));
 }
 
+void MUCJoinDlg::setJid(const Jid& mucJid)
+{
+	ui_.le_host->setText(mucJid.host());
+	ui_.le_room->setText(mucJid.user());
+}
 
+void MUCJoinDlg::setNick(const QString nick)
+{
+	ui_.le_nick->setText(nick);
+}
+
+void MUCJoinDlg::setPassword(const QString& password)
+{
+	ui_.le_pass->setText(password);
+}
+
+void MUCJoinDlg::accept()
+{
+	doJoin();
+}

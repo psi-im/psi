@@ -5,15 +5,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>608</width>
-    <height>282</height>
+    <width>539</width>
+    <height>257</height>
    </rect>
   </property>
   <property name="windowTitle" >
    <string>Manage Bookmarks</string>
   </property>
   <layout class="QGridLayout" >
-   <item row="0" column="0" colspan="2" >
+   <item row="0" column="0" >
     <layout class="QVBoxLayout" >
      <item>
       <widget class="QListView" name="listView" >
@@ -31,12 +31,18 @@
      </item>
     </layout>
    </item>
-   <item row="0" column="2" >
+   <item row="0" column="1" >
     <layout class="QGridLayout" >
+     <property name="horizontalSpacing" >
+      <number>-1</number>
+     </property>
      <item row="0" column="0" >
       <widget class="QLabel" name="label" >
        <property name="text" >
         <string>Host:</string>
+       </property>
+       <property name="alignment" >
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
@@ -48,6 +54,9 @@
        <property name="text" >
         <string>Room:</string>
        </property>
+       <property name="alignment" >
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
       </widget>
      </item>
      <item row="1" column="1" >
@@ -57,6 +66,9 @@
       <widget class="QLabel" name="label_3" >
        <property name="text" >
         <string>Nickname:</string>
+       </property>
+       <property name="alignment" >
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
@@ -68,6 +80,9 @@
        <property name="text" >
         <string>Password:</string>
        </property>
+       <property name="alignment" >
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
       </widget>
      </item>
      <item row="3" column="1" >
@@ -77,36 +92,36 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="0" colspan="2" >
+     <item row="4" column="1" >
       <widget class="QCheckBox" name="autoJoin" >
        <property name="text" >
         <string>Auto-join</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="0" >
+     <item row="5" column="1" >
       <spacer>
        <property name="orientation" >
         <enum>Qt::Vertical</enum>
        </property>
        <property name="sizeHint" >
         <size>
-         <width>20</width>
-         <height>40</height>
+         <width>66</width>
+         <height>31</height>
         </size>
        </property>
       </spacer>
      </item>
     </layout>
    </item>
-   <item row="1" column="0" colspan="3" >
+   <item row="1" column="0" colspan="2" >
     <widget class="Line" name="line" >
      <property name="orientation" >
       <enum>Qt::Horizontal</enum>
      </property>
     </widget>
    </item>
-   <item row="2" column="1" colspan="2" >
+   <item row="2" column="0" colspan="2" >
     <widget class="QDialogButtonBox" name="buttonBox" >
      <property name="standardButtons" >
       <set>QDialogButtonBox::Cancel|QDialogButtonBox::NoButton|QDialogButtonBox::Ok</set>
@@ -124,12 +139,12 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel" >
-     <x>463</x>
-     <y>389</y>
+     <x>475</x>
+     <y>252</y>
     </hint>
     <hint type="destinationlabel" >
      <x>454</x>
-     <y>322</y>
+     <y>259</y>
     </hint>
    </hints>
   </connection>
@@ -140,12 +155,12 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel" >
-     <x>372</x>
-     <y>391</y>
+     <x>384</x>
+     <y>252</y>
     </hint>
     <hint type="destinationlabel" >
      <x>352</x>
-     <y>325</y>
+     <y>259</y>
     </hint>
    </hints>
   </connection>

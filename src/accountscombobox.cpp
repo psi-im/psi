@@ -1,6 +1,6 @@
 /*
  * accountscombobox.cpp
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2008  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,84 +23,98 @@
 #include "psiaccount.h"
 #include "psicontactlist.h"
 
-AccountsComboBox::AccountsComboBox(PsiCon *_psi, QWidget *parent, bool online_only)
-:QComboBox(parent), onlineOnly(online_only)
+AccountsComboBox::AccountsComboBox(QWidget* parent)
+	: QComboBox(parent)
+	, controller_(0)
+	, account_(0)
+	, onlineOnly_(false)
 {
-	psi = _psi;
-	// TODO: Status changes of accounts should be notified when onlineOnly is true
-	connect(psi, SIGNAL(accountCountChanged()), this, SLOT(updateAccounts()));
-	connect(psi, SIGNAL(destroyed()), SLOT(deleteMe()));
+	setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed));
 	connect(this, SIGNAL(activated(int)), this, SLOT(changeAccount()));
-	if (online_only)
-		connect(psi, SIGNAL(accountActivityChanged()), this, SLOT(updateAccounts()));
-
-	pa = 0;
-	setSizePolicy(QSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Fixed ));
-
-	if(psi->contactList()->haveEnabledAccounts())
-		setAccount(psi->contactList()->enabledAccounts().first());
 }
 
 AccountsComboBox::~AccountsComboBox()
 {
 }
 
-void AccountsComboBox::setAccount(PsiAccount *_pa)
+PsiAccount* AccountsComboBox::account() const
 {
-	pa = _pa;
+	return account_;
+}
+
+void AccountsComboBox::setAccount(PsiAccount* account)
+{
+	account_ = account;
+	updateAccounts();
+}
+
+PsiCon* AccountsComboBox::controller() const
+{
+	return controller_;
+}
+
+void AccountsComboBox::setController(PsiCon* controller)
+{
+	if (controller_) {
+		disconnect(controller_, SIGNAL(accountCountChanged()), this, SLOT(updateAccounts()));
+		disconnect(controller_, SIGNAL(accountActivityChanged()), this, SLOT(updateAccounts()));
+	}
+
+	controller_ = controller;
+
+	if (controller_) {
+		connect(controller_, SIGNAL(accountCountChanged()), this, SLOT(updateAccounts()));
+		connect(controller_, SIGNAL(accountActivityChanged()), this, SLOT(updateAccounts()));
+	}
+
+	if (controller_->contactList()->haveEnabledAccounts()) {
+		setAccount(controller_->contactList()->enabledAccounts().first());
+	}
+
+	updateAccounts();
+}
+
+bool AccountsComboBox::onlineOnly() const
+{
+	return onlineOnly_;
+}
+
+void AccountsComboBox::setOnlineOnly(bool onlineOnly)
+{
+	onlineOnly_ = onlineOnly;
 	updateAccounts();
 }
 
 void AccountsComboBox::changeAccount()
 {
-	int i = currentItem();
-
-	int n = 0;
-	bool found = false;
-	foreach(PsiAccount* p, psi->contactList()->enabledAccounts()) {
-		if (!onlineOnly || p->loggedIn()) {
-			if(i == n) {
-				pa = p;
-				found = true;
-				break;
-			}
-			++n;
-		}
-	}
-	if(!found)
-		pa = 0;
-
-	activated(pa);
+	account_ = 0;
+	if (currentIndex() >= 0 && currentIndex() < accounts().count())
+		account_ = accounts().at(currentIndex());
+	emit activated(account_);
 }
 
 void AccountsComboBox::updateAccounts()
 {
 	clear();
-	int n = 0;
-	bool found = false;
-	PsiAccount *firstAccount = 0;
-	foreach(PsiAccount* p, psi->contactList()->enabledAccounts()) {
-		if (!onlineOnly || p->loggedIn()) {
-			insertItem(p->nameWithJid());
-			if(p == pa) {
-				setCurrentItem(n);
-				found = true;
-			}
-			if (!firstAccount)
-				firstAccount = p;
-			++n;
-		}
+
+	foreach(PsiAccount* account, accounts())
+		insertItem(account->nameWithJid());
+
+	if (accounts().indexOf(account_) == -1) {
+		account_ = accounts().isEmpty() ? 0 : accounts().first();
+		emit activated(account_);
 	}
-	if(!found) {
-		// choose a different account
-		pa = firstAccount;
-		activated(pa);
-	}
+	setCurrentIndex(accounts().indexOf(account_));
 }
 
-void AccountsComboBox::deleteMe()
+QList<PsiAccount*> AccountsComboBox::accounts() const
 {
-	delete this;
+	QList<PsiAccount*> result;
+	if (controller_) {
+		foreach(PsiAccount* account, controller_->contactList()->enabledAccounts())
+			if (!onlineOnly_ || account->isAvailable())
+				result << account;
+	}
+
+	return result;
 }
-
-

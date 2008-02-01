@@ -2656,10 +2656,9 @@ void PsiAccount::actionJoin(const Jid& mucJid, const QString& nick, const QStrin
 {
 	MUCJoinDlg *w = new MUCJoinDlg(psi(), this);
 
-	w->le_host->setText(mucJid.host());
-	w->le_room->setText(mucJid.user());
-	w->le_nick->setText(nick);
-	w->le_pass->setText(password);
+	w->setJid(mucJid);
+	w->setNick(nick);
+	w->setPassword(password);
 
 	w->show();
 	if (connectImmediately) {
@@ -2669,8 +2668,9 @@ void PsiAccount::actionJoin(const Jid& mucJid, const QString& nick, const QStrin
 
 void PsiAccount::stateChanged()
 {
-	if(loggedIn())
+	if(loggedIn()) {
 		d->cp->setState(makeSTATUS(status()));
+	}
 	else {
 		if(isActive()) {
 			d->cp->setState(-1);

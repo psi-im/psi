@@ -1,6 +1,6 @@
 /*
  * accountscombobox.h
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2008  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -30,23 +30,31 @@ class AccountsComboBox : public QComboBox
 {
 	Q_OBJECT
 public:
-	AccountsComboBox(PsiCon *, QWidget *parent=0, bool online_only = false);
+	AccountsComboBox(QWidget* parent);
 	~AccountsComboBox();
 
-	void setAccount(PsiAccount *);
+	PsiAccount* account() const;
+	void setAccount(PsiAccount* account);
+
+	PsiCon* controller() const;
+	void setController(PsiCon* controller);
+
+	bool onlineOnly() const;
+	void setOnlineOnly(bool onlineOnly);
 
 signals:
-	void activated(PsiAccount *);
+	void activated(PsiAccount* account);
 
 private slots:
 	void changeAccount();
 	void updateAccounts();
-	void deleteMe();
 
 private:
-	PsiCon *psi;
-	PsiAccount *pa;
-	bool onlineOnly;
+	PsiCon* controller_;
+	PsiAccount* account_;
+	bool onlineOnly_;
+
+	QList<PsiAccount*> accounts() const;
 };
 
 #endif

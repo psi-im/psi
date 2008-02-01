@@ -1,6 +1,6 @@
 /*
  * mucjoindlg.h
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2008  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,7 +29,9 @@ class PsiCon;
 class QString;
 class PsiAccount;
 
-class MUCJoinDlg : public QDialog, public Ui::MUCJoin
+#include "xmpp_jid.h"
+
+class MUCJoinDlg : public QDialog
 {
 	Q_OBJECT
 
@@ -37,15 +39,19 @@ public:
 	MUCJoinDlg(PsiCon *, PsiAccount *);
 	~MUCJoinDlg();
 
+	void setJid(const XMPP::Jid& jid);
+	void setNick(const QString nick);
+	void setPassword(const QString& password);
+
 	void joined();
 	void error(int, const QString &);
-
-protected:
-	//void closeEvent(QCloseEvent *);
 
 public slots:
 	void done(int);
 	void doJoin();
+
+	// reimplemented
+	void accept();
 
 private slots:
 	void updateIdentity(PsiAccount *);
@@ -54,11 +60,15 @@ private slots:
 	void recent_activated(int);
 
 private:
-	class Private;
-	Private *d;
+	Ui::MUCJoin ui_;
+	PsiCon* controller_;
+	PsiAccount* account_;
+	QPushButton* joinButton_;
+	XMPP::Jid jid_;
 
 	void disableWidgets();
 	void enableWidgets();
+	void setWidgetsEnabled(bool enabled);
 };
 
 #endif
