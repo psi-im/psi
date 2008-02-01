@@ -958,7 +958,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 			int idx = 1;
 			bookmarks->insertSeparator();
 			foreach(ConferenceBookmark c, psiAccount()->bookmarkManager()->conferences()) {
-				bookmarks->insertItem(QString(tr("Join %1")).arg(c.jid().full()), bookmarks_start + idx);
+				bookmarks->insertItem(QString(tr("Join %1")).arg(c.name()), bookmarks_start + idx);
 				idx++;
 			}
 		}
