@@ -1753,11 +1753,7 @@ void PsiAccount::bookmarksAvailabilityChanged()
 
 	foreach(ConferenceBookmark c, d->bookmarkManager->conferences()) {
 		if (!findDialog<GCMainDlg*>(Jid(c.jid().userHost())) && c.autoJoin()) {
-			QString nick = c.nick();
-			if (nick.isEmpty())
-				nick = d->jid.node();
-
-			actionJoin(c.jid(), nick, c.password(), true);
+			actionJoin(c, true);
 		}
 	}
 }
@@ -2649,16 +2645,17 @@ void PsiAccount::featureActivated(QString feature, Jid jid, QString node)
 
 void PsiAccount::actionJoin(const Jid& mucJid, const QString& password)
 {
-	actionJoin(mucJid, QString(), password, false);
+	actionJoin(ConferenceBookmark(QString(), mucJid, false, QString(), password),
+	           false);
 }
 
-void PsiAccount::actionJoin(const Jid& mucJid, const QString& nick, const QString& password, bool connectImmediately)
+void PsiAccount::actionJoin(const ConferenceBookmark& bookmark, bool connectImmediately)
 {
-	MUCJoinDlg *w = new MUCJoinDlg(psi(), this);
+	MUCJoinDlg* w = new MUCJoinDlg(psi(), this);
 
-	w->setJid(mucJid);
-	w->setNick(nick);
-	w->setPassword(password);
+	w->setJid(bookmark.jid());
+	w->setNick(bookmark.nick().isEmpty() ? d->jid.node() : bookmark.nick());
+	w->setPassword(bookmark.password());
 
 	w->show();
 	if (connectImmediately) {

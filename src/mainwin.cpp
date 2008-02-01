@@ -786,10 +786,7 @@ void MainWin::actJoinPsiMUCActivated()
 		return;
 	}
 
-	MUCJoinDlg *w = new MUCJoinDlg(d->psi, account);
-	w->le_host->setText("conference.psi-im.org");
-	w->le_room->setText("psi");
-	w->show();
+	account->actionJoin("psi@conference.psi-im.org");
 }
 
 void MainWin::actBugReportActivated ()

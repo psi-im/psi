@@ -97,16 +97,21 @@ void BookmarkManageDlg::loadBookmarks()
 	}
 }
 
+ConferenceBookmark BookmarkManageDlg::bookmarkFor(const QModelIndex& index) const
+{
+	return ConferenceBookmark(index.data(Qt::DisplayRole).toString(),
+	                          index.data(JidRole).toString(),
+	                          index.data(AutoJoinRole).toBool(),
+	                          index.data(NickRole).toString(),
+	                          index.data(PasswordRole).toString());
+}
+
 void BookmarkManageDlg::saveBookmarks()
 {
 	QList<ConferenceBookmark> conferences;
 	for (int row = 0; row < model_->rowCount(); ++row) {
 		QModelIndex index = model_->index(row, 0, QModelIndex());
-		conferences += ConferenceBookmark(index.data(Qt::DisplayRole).toString(),
-		                                  index.data(JidRole).toString(),
-		                                  index.data(AutoJoinRole).toBool(),
-		                                  index.data(NickRole).toString(),
-		                                  index.data(PasswordRole).toString());
+		conferences += bookmarkFor(index);
 	}
 
 	account_->bookmarkManager()->setBookmarks(conferences);
@@ -193,7 +198,7 @@ QModelIndex BookmarkManageDlg::currentIndex() const
 
 void BookmarkManageDlg::joinCurrentRoom()
 {
-	account_->actionJoin(jid(), ui_.nickname->text(), ui_.password->text(), true);
+	account_->actionJoin(bookmarkFor(currentIndex()), true);
 }
 
 void BookmarkManageDlg::appendItem(QStandardItem* item)

@@ -953,17 +953,17 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 #endif
 		const int bookmarks_start = STATUS_CHAT + status_start + 1; // STATUS_CHAT is the highest value of the states
 		QMenu *bookmarks = new QMenu(&pm);
-		bookmarks->insertItem(tr("Manage"), bookmarks_start);
+		bookmarks->insertItem(tr("Manage..."), bookmarks_start);
 		if (d->pa->bookmarkManager()->isAvailable()) {
 			int idx = 1;
 			bookmarks->insertSeparator();
-			foreach (ConferenceBookmark c, psiAccount()->bookmarkManager()->conferences()) {
-				bookmarks->insertItem(QString(tr("join %1")).arg(c.jid().full()), bookmarks_start + idx);
+			foreach(ConferenceBookmark c, psiAccount()->bookmarkManager()->conferences()) {
+				bookmarks->insertItem(QString(tr("Join %1")).arg(c.jid().full()), bookmarks_start + idx);
 				idx++;
 			}
 		}
 		else {
-			bookmarks->setItemEnabled(bookmarks_start, false);
+			bookmarks->setEnabled(false);
 		}
 
 		pm.insertItem(tr("Bookmarks"), bookmarks);
@@ -1039,7 +1039,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 			int status = x - status_start;
 			d->pa->changeStatus(status);
 		}
-        else if(x == bookmarks_start) {
+		else if(x == bookmarks_start) {
 			BookmarkManageDlg *dlg = d->pa->findDialog<BookmarkManageDlg*>();
 			if(dlg) {
 				bringToFront(dlg);
@@ -1047,11 +1047,11 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 				dlg = new BookmarkManageDlg(d->pa);
 				dlg->show();
 			}
-        }
-        else if (x > bookmarks_start) {
-			ConferenceBookmark c = psiAccount()->bookmarkManager()->conferences() [x - bookmarks_start - 1];
-			psiAccount()->actionJoin(c.jid(), c.nick(), c.password(), true);
-        }
+		}
+		else if (x > bookmarks_start) {
+			ConferenceBookmark c = psiAccount()->bookmarkManager()->conferences()[x - bookmarks_start - 1];
+			psiAccount()->actionJoin(c, true);
+		}
 	}
 	else if(i->type() == ContactViewItem::Group) {
 		QString gname = i->groupName();

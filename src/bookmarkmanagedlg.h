@@ -29,6 +29,7 @@ class PsiAccount;
 class QPushButton;
 class QStandardItemModel;
 class QStandardItem;
+class ConferenceBookmark;
 
 #include "xmpp_jid.h"
 
@@ -75,6 +76,8 @@ private:
 	QPushButton* addButton_;
 	QPushButton* removeButton_;
 	QPushButton* joinButton_;
+
+	ConferenceBookmark bookmarkFor(const QModelIndex& index) const;
 };
 
 #endif
