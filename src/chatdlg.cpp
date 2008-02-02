@@ -238,8 +238,16 @@ bool ChatDlg::readyToHide()
 	}
 
 	if (keepOpen_) {
-		int n = QMessageBox::information(this, tr("Warning"), tr("A new chat message was just received.\nDo you still want to close the window?"), tr("&Yes"), tr("&No"));
-		if (n != 0) {
+		QMessageBox mb(QMessageBox::Information,
+			tr("Warning"),
+			tr("A new chat message was just received.\nDo you still want to close the window?"),
+			QMessageBox::NoButton, // buttons defined below
+			this);
+		QPushButton *close = mb.addButton(tr("Close"), QMessageBox::AcceptRole);
+		QPushButton *no = mb.addButton(QMessageBox::No);
+		mb.setEscapeButton(no);
+		mb.exec();
+		if (mb.clickedButton() != close) {
 			return false;
 		}
 	}
