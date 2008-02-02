@@ -1,5 +1,4 @@
 /*
- *
  * opt_shortcuts.cpp - an OptionsTab for setting the Keyboard Shortcuts of Psi
  * Copyright (C) 2006 Cestonaro Thilo
  *
@@ -18,7 +17,12 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
+
 #include "opt_shortcuts.h"
+
+#include <QMessageBox>
+
+#include "common.h"
 #include "psioptions.h"
 #include "shortcutmanager.h"
 #include "grepshortcutkeydlg.h"
@@ -71,25 +75,6 @@ QWidget *OptionsTabShortcuts::widget()
 	
 	d->treeShortcuts->setColumnWidth(0, 320);	
 
-	PsiOptions *options = PsiOptions::instance();
-	QTreeWidgetItem *topLevelItem;
-	QList<QString> shortcutGroups = options->getChildOptionNames("options.shortcuts", true, true);
-
-	/* step through the shortcut groups e.g. chatdlg */
-	foreach(QString shortcutGroup, shortcutGroups) {
-		topLevelItem = new QTreeWidgetItem(d->treeShortcuts);
-
-		QString comment = options->getComment(shortcutGroup);
-		if (comment.isNull()) {
-			comment = "Unnamend group";
-		}
-		topLevelItem->setText(0, translateShortcut(comment));
-		topLevelItem->setData(0, OPTIONSTREEPATH, QVariant(shortcutGroup));
-		topLevelItem->setData(0, ITEMKIND, QVariant((int)OptionsTabShortcuts::TopLevelItem));
-		topLevelItem->setExpanded(true);
-		d->treeShortcuts->addTopLevelItem(topLevelItem);
-	}
-
 	d->add->setEnabled(false);
 	d->remove->setEnabled(false);
 	d->edit->setEnabled(false);
@@ -99,6 +84,7 @@ QWidget *OptionsTabShortcuts::widget()
 	connect(d->add, SIGNAL(clicked()), this, SLOT(onAdd()));
 	connect(d->remove, SIGNAL(clicked()), this, SLOT(onRemove()));
 	connect(d->edit, SIGNAL(clicked()), this, SLOT(onEdit()));
+	connect(d->restoreDefaults, SIGNAL(clicked()), this, SLOT(onRestoreDefaults()));
 	return w;
 }
 
@@ -163,19 +149,41 @@ void OptionsTabShortcuts::applyOptions() {
 
 /**
  * \brief	restoreOptions, reads in the currently set options
- * \param	opt, unused, totally ignored
  */
 void OptionsTabShortcuts::restoreOptions()
 {
-
 	if ( !w )
 		return;
+	
+	readShortcuts(PsiOptions::instance());
+}
 
+/**
+ * \brief	readShortcuts, reads shortcuts from given PsiOptions instance
+ */
+void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
+{
 	OptShortcutsUI *d = (OptShortcutsUI *)w;
-	PsiOptions *options = PsiOptions::instance();
+
+	QTreeWidgetItem *topLevelItem;
+	QList<QString> shortcutGroups = options->getChildOptionNames("options.shortcuts", true, true);
+
+	/* step through the shortcut groups e.g. chatdlg */
+	foreach(QString shortcutGroup, shortcutGroups) {
+		topLevelItem = new QTreeWidgetItem(d->treeShortcuts);
+
+		QString comment = options->getComment(shortcutGroup);
+		if (comment.isNull()) {
+			comment = "Unnamend group";
+		}
+		topLevelItem->setText(0, translateShortcut(comment));
+		topLevelItem->setData(0, OPTIONSTREEPATH, QVariant(shortcutGroup));
+		topLevelItem->setData(0, ITEMKIND, QVariant((int)OptionsTabShortcuts::TopLevelItem));
+		topLevelItem->setExpanded(true);
+		d->treeShortcuts->addTopLevelItem(topLevelItem);
+	}
 
 	int toplevelItemsCount = d->treeShortcuts->topLevelItemCount();
-	QTreeWidgetItem *topLevelItem;
 	QTreeWidgetItem *shortcutItem;
 	QTreeWidgetItem *keyItem;
 	QString optionsPath;
@@ -196,7 +204,7 @@ void OptionsTabShortcuts::restoreOptions()
 			/* step through the shortcuts */
 			foreach(QString shortcut, shortcuts) {
 				
-				keys = ShortcutManager::instance()->shortcuts(shortcut.mid(QString("options.shortcuts").length() + 1));
+				keys = ShortcutManager::readShortcutsFromOptions(shortcut.mid(QString("options.shortcuts").length() + 1), options);
 				comment = options->getComment(shortcut);
 				if (comment.isNull()) {
 					comment = "Unnamend group";
@@ -322,6 +330,22 @@ void OptionsTabShortcuts::onEdit() {
 
 	if((Kind)keyItem->data(0, ITEMKIND).toInt() == OptionsTabShortcuts::KeyItem)
 		grep();
+}
+
+/**
+ * \brief Button Restore Defaults pressed
+ */
+void OptionsTabShortcuts::onRestoreDefaults() {
+	if (QMessageBox::information(w, CAP(tr("Restore default shortcuts")),
+                   tr("Are you sure you would like to restore the default shortcuts?"),
+                   QMessageBox::Yes | QMessageBox::No,
+                   QMessageBox::No) == QMessageBox::Yes) {
+
+		OptShortcutsUI *d = (OptShortcutsUI *)w;
+		d->treeShortcuts->clear();
+		readShortcuts(PsiOptions::defaults());
+		emit dataChanged();	
+	}
 }
 
 /**

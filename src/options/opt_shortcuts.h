@@ -28,6 +28,8 @@
 class QTreeWidgetItem;
 class QWidget;
 
+class PsiOptions;
+
 class OptionsTabShortcuts : public OptionsTab
 {
 	Q_OBJECT
@@ -51,6 +53,7 @@ private slots:
 	void onAdd();
 	void onRemove();
 	void onEdit();
+	void onRestoreDefaults();
 	void onItemDoubleClicked(QTreeWidgetItem *item, int column);
 	void onItemSelectionChanged();
 	void onNewShortcutKey(QKeySequence key);
@@ -59,6 +62,7 @@ private:
 	void addTo(QTreeWidgetItem *shortcutItem);
 	void grep();
 	QString translateShortcut(QString comment);
+	void readShortcuts(const PsiOptions *options);
 
 	QWidget *w;
 };

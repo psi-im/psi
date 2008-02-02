@@ -106,6 +106,16 @@ PsiOptions* PsiOptions::instance()
 	return instance_;
 }
 
+/**
+ * Returns the instance of this class containing default values of all options
+ * \return Instance of PsiOptions
+ */
+const PsiOptions* PsiOptions::defaults()
+{
+	if ( !defaults_ )
+		defaults_ = new PsiOptions();
+	return defaults_;
+}
 
 /**
  * Reset the singleton instance of this class
@@ -225,4 +235,5 @@ void PsiOptions::getOptionsStorage_finished()
 }
 
 PsiOptions* PsiOptions::instance_ = NULL;
+PsiOptions* PsiOptions::defaults_ = NULL;
 

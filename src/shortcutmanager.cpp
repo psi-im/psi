@@ -60,8 +60,20 @@ QKeySequence ShortcutManager::shortcut(const QString& name)
  */
 QList<QKeySequence> ShortcutManager::shortcuts(const QString& name)
 {
+	return readShortcutsFromOptions(name, PsiOptions::instance());
+}
+ 
+/**
+ * \brief read the QVariantList associated with the keyname "name" in given PsiOptions
+ * \param name, the shortcut name e.g. "misc.sendmessage" which is in the options xml then
+ *        mirrored as options.shortcuts.misc.sendmessage
+ * \param options, options instance to read from
+ * \return List of sequences
+ */
+QList<QKeySequence> ShortcutManager::readShortcutsFromOptions(const QString& name, const PsiOptions* options)
+{
 	QList<QKeySequence> list;
-	QVariant variant = PsiOptions::instance()->getOption(QString("options.shortcuts.%1").arg(name));
+	QVariant variant = options->getOption(QString("options.shortcuts.%1").arg(name));
 	QString type = variant.typeName();
 	if (type == "QVariantList") {
 		foreach(QVariant variant, variant.toList()) {
@@ -75,7 +87,6 @@ QList<QKeySequence> ShortcutManager::shortcuts(const QString& name)
 	}
 	return list;
 }
-
 
 /**
  * \brief this function connects the Key or Keys associated with the keyname "path" with the slot "slot"

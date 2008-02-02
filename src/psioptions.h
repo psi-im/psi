@@ -37,6 +37,7 @@ class PsiOptions : public OptionsTree//, QObject
 	Q_OBJECT
 public:
 	static PsiOptions* instance();
+	static const PsiOptions* defaults();
 	static void reset();
 	~PsiOptions();
 	bool load(QString file);
@@ -55,6 +56,7 @@ private:
 	QString autoFile_;
 	QTimer *autoSaveTimer_;
 	static PsiOptions* instance_;
+	static PsiOptions* defaults_;
 }; 
 
 #endif /* _PSIOPTIONS_H_ */
