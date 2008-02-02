@@ -174,7 +174,7 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
 
 		QString comment = options->getComment(shortcutGroup);
 		if (comment.isNull()) {
-			comment = "Unnamend group";
+			comment = tr("Unnamed group");
 		}
 		topLevelItem->setText(0, translateShortcut(comment));
 		topLevelItem->setData(0, OPTIONSTREEPATH, QVariant(shortcutGroup));
@@ -207,7 +207,7 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
 				keys = ShortcutManager::readShortcutsFromOptions(shortcut.mid(QString("options.shortcuts").length() + 1), options);
 				comment = options->getComment(shortcut);
 				if (comment.isNull()) {
-					comment = "Unnamend group";
+					comment = tr("Unnamed group");
 				}
 				
 				/* create the TreeWidgetItem and set the Data the Kind and it's Optionspath and append it */
