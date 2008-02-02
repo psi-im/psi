@@ -67,9 +67,7 @@ QWidget *OptionsTabStatus::widget()
 		tr("Specifies an extended message to use if you allow Psi"
 		" to set your status automatically.  See options above."));
 
-	d->pb_spNew->setEnabled(TRUE);
-	d->pb_spDelete->setEnabled(FALSE);
-	d->te_sp->setEnabled(FALSE);
+	setStatusPresetWidgetsEnabled(false);
 	connect(d->pb_spNew, SIGNAL(clicked()), SLOT(newStatusPreset()));
 	connect(d->pb_spDelete, SIGNAL(clicked()), SLOT(removeStatusPreset()));
 	connect(d->cb_preset, SIGNAL(highlighted(int)), SLOT(selectStatusPreset(int)));
@@ -216,20 +214,15 @@ void OptionsTabStatus::selectStatusPreset(int x)
 	disconnect(d->te_sp, SIGNAL(textChanged()), 0, 0);
 	disconnect(d->le_sp_priority, SIGNAL(textChanged(const QString&)), 0, 0);
 	if ( x == -1 ) {
-		d->pb_spDelete->setEnabled(false);
+		setStatusPresetWidgetsEnabled(false);
 		d->te_sp->setText("");
-		d->te_sp->setEnabled(false);
 		d->le_sp_priority->clear();
-		d->le_sp_priority->setEnabled(false);
-		d->cb_sp_status->setEnabled(false);
 
 		//noDirty = FALSE;
 		connect(d->te_sp, SIGNAL(textChanged()), SLOT(changeStatusPreset()));
 		connect(d->le_sp_priority, SIGNAL(textChanged(const QString&)), SLOT(changeStatusPreset()));
 		return;
 	}
-
-	d->pb_spDelete->setEnabled(true);
 
 	StatusPreset preset;
 	QString name = d->cb_preset->text(x);
@@ -240,20 +233,18 @@ void OptionsTabStatus::selectStatusPreset(int x)
 		preset = presets[name];
 	}
 	
-	
 	d->te_sp->setText(preset.message());
-	d->te_sp->setEnabled(true);
 	if (preset.priority().hasValue())
 		d->le_sp_priority->setText(QString::number(preset.priority().value()));
 	else
 		d->le_sp_priority->clear();
-	d->le_sp_priority->setEnabled(true);
 	d->cb_sp_status->setStatus(preset.status());
-	d->cb_sp_status->setEnabled(true);
-
+	
 	//noDirty = FALSE;
 	connect(d->te_sp, SIGNAL(textChanged()), SLOT(changeStatusPreset()));
 	connect(d->le_sp_priority, SIGNAL(textChanged(const QString&)), SLOT(changeStatusPreset()));
+	
+	setStatusPresetWidgetsEnabled(true);
 }
 
 void OptionsTabStatus::newStatusPreset()
@@ -348,4 +339,14 @@ void OptionsTabStatus::changeStatusPreset()
 	}
 	
 	emit dataChanged();
+}
+
+void OptionsTabStatus::setStatusPresetWidgetsEnabled(bool enabled)
+{
+	OptStatusUI *d = (OptStatusUI *)w;
+	d->cb_preset->setEnabled(enabled);
+	d->pb_spDelete->setEnabled(enabled);
+	d->cb_sp_status->setEnabled(enabled);
+	d->le_sp_priority->setEnabled(enabled);
+	d->te_sp->setEnabled(enabled);
 }
