@@ -1426,7 +1426,7 @@ void PsiCon::doWakeup()
 	//setGlobalStatus(Status());
 
 	foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
-		if (account->userAccount().opt_reconn) {
+		if (account->userAccount().opt_connectAfterSleep) {
 			// Should we do this when the network comes up ?
 			account->setStatus(Status("", "", account->userAccount().priority));
 		}

@@ -138,6 +138,7 @@ void AccountModifyDlg::init()
 	ck_compress->setChecked(acc.opt_compress);
 	ck_auto->setChecked(acc.opt_auto);
 	ck_reconn->setChecked(acc.opt_reconn);
+	ck_connectAfterSleep->setChecked(acc.opt_connectAfterSleep);
 	ck_log->setChecked(acc.opt_log);
 	ck_keepAlive->setChecked(acc.opt_keepAlive);
 	ck_ignoreSSLWarnings->setChecked(acc.opt_ignoreSSLWarnings);
@@ -200,6 +201,9 @@ void AccountModifyDlg::init()
 		tr("Automatically login to this account on Psi startup.  Useful if "
 		"you have Psi automatically launched when an Internet "
 		"connection is detected."));
+	ck_connectAfterSleep->setWhatsThis(
+		tr("Makes Psi try to connect when the computer resumes "
+		"after a sleep."));
 	ck_reconn->setWhatsThis(
 		tr("Makes Psi try to reconnect if the connection was broken.  "
 		"Useful, if you have an unstable connection and have to "
@@ -519,6 +523,7 @@ void AccountModifyDlg::save()
 	acc.allow_plain =  (ClientStream::AllowPlainType) cb_plain->itemData(cb_plain->currentIndex()).toInt();
 	acc.opt_compress = ck_compress->isChecked();
 	acc.opt_auto = ck_auto->isChecked();
+	acc.opt_connectAfterSleep = ck_connectAfterSleep->isChecked();
 	acc.opt_reconn = ck_reconn->isChecked();
 	acc.opt_log = ck_log->isChecked();
 	acc.opt_keepAlive = ck_keepAlive->isChecked();

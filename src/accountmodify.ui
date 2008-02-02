@@ -151,6 +151,13 @@
            </widget>
           </item>
           <item>
+           <widget class="QCheckBox" name="ck_connectAfterSleep" >
+            <property name="text" >
+             <string>Automatically connect after sleep</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QCheckBox" name="ck_reconn" >
             <property name="text" >
              <string>Automatically reconnect if disconnected</string>
@@ -1086,6 +1093,7 @@
   <tabstop>le_pass</tabstop>
   <tabstop>pb_changepw</tabstop>
   <tabstop>ck_auto</tabstop>
+  <tabstop>ck_connectAfterSleep</tabstop>
   <tabstop>ck_reconn</tabstop>
   <tabstop>ck_log</tabstop>
   <tabstop>pb_vcard</tabstop>

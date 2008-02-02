@@ -134,6 +134,7 @@ void UserAccount::reset()
 	opt_compress = FALSE;
 	opt_log = TRUE;
 	opt_reconn = FALSE;
+	opt_connectAfterSleep = false;
 	opt_ignoreSSLWarnings = false;
 
 	proxy_index = 0;
@@ -166,6 +167,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	legacy_ssl_probe = o->getOption(base + ".legacy-ssl-probe").toBool();
 	opt_automatic_resource = o->getOption(base + ".automatic-resource").toBool();
 	opt_log = o->getOption(base + ".log").toBool();
+	opt_connectAfterSleep = o->getOption(base + ".connect-after-sleep").toBool();
 	opt_reconn = o->getOption(base + ".reconn").toBool();
 	opt_ignoreSSLWarnings = o->getOption(base + ".ignore-SSL-warnings").toBool();
 	
@@ -270,6 +272,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 	o->setOption(base + ".automatic-resource", opt_automatic_resource);
 	o->setOption(base + ".log", opt_log);
 	o->setOption(base + ".reconn", opt_reconn);
+	o->setOption(base + ".connect-after-sleep", opt_connectAfterSleep);
 	o->setOption(base + ".ignore-SSL-warnings", opt_ignoreSSLWarnings);
 
 	o->setOption(base + ".name", name);
