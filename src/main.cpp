@@ -190,10 +190,19 @@ void PsiMain::chooseProfile()
 			if(r == QDialog::Accepted) {
 				str = w->cb_profile->currentText();
 				again = !ActiveProfiles::instance()->setThisProfile(str);
-				if (again && !QMessageBox::query(tr("Psi profile already running"), tr("This psi profile already running.<br>Would you like to choose another one, or you want switch to that profile?"), tr("choose another one"), tr("switch"))) {
-					ActiveProfiles::instance()->raiseOther(str, true);
-					quit();
-					return;
+				if (again) {
+					QMessageBox mb(QMessageBox::Question,
+						CAP(tr("Profile already in use")),
+						QString(tr("The \"%1\" profile is already in use.\nWould you like to activate that session now?")).arg(str));
+					QPushButton *activate = mb.addButton(tr("Activate"), QMessageBox::AcceptRole);
+					QPushButton *no = mb.addButton(QMessageBox::No);
+					mb.setEscapeButton(no);
+					mb.exec();					
+					if (mb.clickedButton() == activate) {
+						ActiveProfiles::instance()->raiseOther(str, true);
+						quit();
+						return;
+					}
 				}
 			}
 			delete w;
