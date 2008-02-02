@@ -66,6 +66,8 @@ void PsiChatDlg::initUi()
 	initToolButtons();
 	initToolBar();
 	updateAvatar();
+	
+	PsiToolTip::install(ui_.avatar);
 
 	UserListItem* u = account()->findFirstRelevant(jid());
 	if (u && u->isSecure(jid().resource())) {
