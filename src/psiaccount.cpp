@@ -2439,7 +2439,7 @@ void PsiAccount::secondsIdle(int seconds)
 
 	if(PsiOptions::instance()->getOption("options.status.auto-away.use-offline").toBool() && PsiOptions::instance()->getOption("options.status.auto-away.offline-after").toInt() > 0 && minutes >= PsiOptions::instance()->getOption("options.status.auto-away.offline-after").toInt())
 		d->setAutoAway(Private::AutoAway_Offline);
-	else if(PsiOptions::instance()->getOption("options.status.auto-away.use-not-availible").toBool() && PsiOptions::instance()->getOption("options.status.auto-away.not-availible-after").toInt() > 0 && minutes >= PsiOptions::instance()->getOption("options.status.auto-away.not-availible-after").toInt())
+	else if(PsiOptions::instance()->getOption("options.status.auto-away.use-not-availible").toBool() && PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool() && PsiOptions::instance()->getOption("options.status.auto-away.not-availible-after").toInt() > 0 && minutes >= PsiOptions::instance()->getOption("options.status.auto-away.not-availible-after").toInt())
 		d->setAutoAway(Private::AutoAway_XA);
 	else if(PsiOptions::instance()->getOption("options.status.auto-away.use-away").toBool() && PsiOptions::instance()->getOption("options.status.auto-away.away-after").toInt() > 0 && minutes >= PsiOptions::instance()->getOption("options.status.auto-away.away-after").toInt())
 		d->setAutoAway(Private::AutoAway_Away);
