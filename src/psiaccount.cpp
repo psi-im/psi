@@ -577,7 +577,7 @@ private:
 
 	XMPP::Status autoAwayStatus(AutoAway autoAway)
 	{
-		if (!lastManualStatus_.isAway()) {
+		if (!lastManualStatus_.isAway() && !lastManualStatus_.isInvisible()) {
 			switch (autoAway) {
 			case AutoAway_Away:
 				return Status(XMPP::Status::Away, PsiOptions::instance()->getOption("options.status.auto-away.message").toString(), acc.priority);
