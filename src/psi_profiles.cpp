@@ -167,9 +167,16 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	legacy_ssl_probe = o->getOption(base + ".legacy-ssl-probe").toBool();
 	opt_automatic_resource = o->getOption(base + ".automatic-resource").toBool();
 	opt_log = o->getOption(base + ".log").toBool();
-	opt_connectAfterSleep = o->getOption(base + ".connect-after-sleep").toBool();
 	opt_reconn = o->getOption(base + ".reconn").toBool();
 	opt_ignoreSSLWarnings = o->getOption(base + ".ignore-SSL-warnings").toBool();
+	
+	// FIX-ME: See FS#771
+	if (o->getChildOptionNames().contains(base + ".connect-after-sleep")) {
+		opt_connectAfterSleep = o->getOption(base + ".connect-after-sleep").toBool();
+	}
+	else {
+		o->setOption(base + ".connect-after-sleep", opt_connectAfterSleep);
+	}
 	
 	name = o->getOption(base + ".name").toString();
 	jid = o->getOption(base + ".jid").toString();
