@@ -148,7 +148,7 @@ QString TextUtil::rich2plain(const QString &in)
 			if(in[i] == QChar::nbsp)
 				out += ' ';
 			else if(in[i] != '\n') {
-				if(i == 0)
+				if(i == 0 || out.length() == 0)
 					out += ' ';
 				else {
 					QChar last = out.at(out.length()-1);
