@@ -97,66 +97,6 @@
     </iconsets>
     <status>
       <presets>
-        <m0>
-          <force-priority type="bool">false</force-priority>
-          <key type="QString">Air</key>
-          <message type="QString">Stepping out to get some fresh air.</message>
-          <status type="QString">away</status>
-        </m0>
-        <m1>
-          <force-priority type="bool">false</force-priority>
-          <key type="QString">Away from desk</key>
-          <message type="QString">I am away from my desk.  Leave a message.</message>
-          <status type="QString">away</status>
-        </m1>
-        <m2>
-          <force-priority type="bool">false</force-priority>
-          <key type="QString">Eating</key>
-          <message type="QString">Out eating.  Mmmm.. food.</message>
-          <status type="QString">away</status>
-        </m2>
-        <m3>
-          <force-priority type="bool">false</force-priority>
-          <key type="QString">Greece</key>
-          <message type="QString">I have gone to a far away place.  I will be back someday!</message>
-          <status type="QString">xa</status>
-        </m3>
-        <m4>
-          <force-priority type="bool">false</force-priority>
-          <key type="QString">Movie</key>
-          <message type="QString">Out to a movie.  Is that OK with you?</message>
-          <status type="QString">away</status>
-        </m4>
-        <m5>
-          <force-priority type="bool">false</force-priority>
-          <key type="QString">Out for the night</key>
-          <message type="QString">Out for the night.</message>
-          <status type="QString">away</status>
-        </m5>
-        <m6>
-          <force-priority type="bool">false</force-priority>
-          <key type="QString">Secret</key>
-          <message type="QString">I'm not available right now and that's all you need to know.</message>
-          <status type="QString">xa</status>
-        </m6>
-        <m7>
-          <force-priority type="bool">false</force-priority>
-          <key type="QString">Showering</key>
-          <message type="QString">I'm in the shower.  You'll have to wait for me to get out.</message>
-          <status type="QString">away</status>
-        </m7>
-        <m8>
-          <force-priority type="bool">false</force-priority>
-          <key type="QString">Sleep</key>
-          <message type="QString">Sleep is good.  Zzzzz</message>
-          <status type="QString">dnd</status>
-        </m8>
-        <m9>
-          <force-priority type="bool">false</force-priority>
-          <key type="QString">Work</key>
-          <message type="QString">Can't chat.  Gotta work.</message>
-          <status type="QString">dnd</status>
-        </m9>
       </presets>
     </status>
   </options>

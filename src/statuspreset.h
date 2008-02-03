@@ -25,6 +25,7 @@
 
 #include "maybe.h"
 #include "xmpp_status.h"
+#include "optionstree.h"
 
 class QDomDocument;
 class QDomElement;
@@ -47,6 +48,7 @@ public:
 	void setPriority(int priority);
 	void clearPriority();
 
+	void toOptions(OptionsTree *o);
 	QDomElement toXml(QDomDocument&) const;
 	void fromXml(const QDomElement&);
 

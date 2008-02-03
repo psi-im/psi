@@ -129,13 +129,7 @@ void OptionsTabStatus::applyOptions()
 			sp = presets[name];
 		}
 		PsiOptions *o = PsiOptions::instance();
-		QString base = o->mapPut("options.status.presets", sp.name());
-		o->setOption(base+".message",sp.message());
-		o->setOption(base+".status",XMPP::Status(sp.status()).typeString());
-		o->setOption(base+".force-priority", sp.priority().hasValue());
-		if (sp.priority().hasValue()) {
-			o->setOption(base+".priority", sp.priority().value());
-		}
+		sp.toOptions(o);
 	}
 	dirtyPresets.clear();
 	presets.unite(newPresets);

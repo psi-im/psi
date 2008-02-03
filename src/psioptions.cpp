@@ -26,6 +26,7 @@
 #include "xmpp_task.h"
 #include "xmpp_jid.h"
 #include "xmpp_client.h"
+#include "statuspreset.h"
 
 using namespace XMPP;
 
@@ -125,6 +126,59 @@ void PsiOptions::reset() {
 	instance_ = 0;
 	delete instance_;
 }
+
+
+/**
+ * initizialises the default options for a new profile
+ */
+bool PsiOptions::newProfile() {
+	bool ok = true;
+	if (!load(":/options/newprofile.xml")) {
+		ok = false;
+	}
+	StatusPreset(QObject::tr("Away from desk"),
+				 QObject::tr("I am away from my desk.  Leave a message."),
+				 XMPP::Status::Away
+				).toOptions(this);
+	StatusPreset(QObject::tr("Showering"),
+				 QObject::tr("I'm in the shower.  You'll have to wait for me to get out."),
+				 XMPP::Status::Away
+				).toOptions(this);
+	StatusPreset(QObject::tr("Eating"),
+				 QObject::tr("Out eating.  Mmmm.. food."),
+				 XMPP::Status::Away
+				).toOptions(this);
+	StatusPreset(QObject::tr("Sleep"),
+				 QObject::tr("Sleep is good.  Zzzzz"),
+				 XMPP::Status::DND
+				).toOptions(this);
+	StatusPreset(QObject::tr("Work"),
+				 QObject::tr("Can't chat.  Gotta work."),
+				 XMPP::Status::DND
+				).toOptions(this);
+	StatusPreset(QObject::tr("Air"),
+				 QObject::tr("Stepping out to get some fresh air."),
+				 XMPP::Status::Away
+				).toOptions(this);
+	StatusPreset(QObject::tr("Movie"),
+				 QObject::tr("Out to a movie.  Is that OK with you?"),
+				 XMPP::Status::Away
+				).toOptions(this);
+	StatusPreset(QObject::tr("Secret"),
+				 QObject::tr("I'm not available right now and that's all you need to know."),
+				 XMPP::Status::XA
+				).toOptions(this);
+	StatusPreset(QObject::tr("Out for the night"),
+				 QObject::tr("Out for the night."),
+				 XMPP::Status::Away
+				).toOptions(this);
+	StatusPreset(QObject::tr("Greece"),
+				 QObject::tr("I have gone to a far away place.  I will be back someday!"),
+				 XMPP::Status::XA
+				).toOptions(this);
+	return ok;
+}
+
 
 /**
  * Loads the options present in the xml config file named.

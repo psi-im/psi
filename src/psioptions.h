@@ -42,6 +42,7 @@ public:
 	~PsiOptions();
 	bool load(QString file);
 	void load(XMPP::Client* client);
+	bool newProfile();
 	bool save(QString file);
 	void autoSave(bool autoSave, QString autoFile = "");
 

@@ -335,7 +335,7 @@ void ProfileNewDlg::slotCreate()
 	// save config
 	PsiOptions o;
 	
-	if (!o.load(":/options/newprofile.xml")) {
+	if (!o.newProfile()) {
 		qWarning("ERROR: Failed to new profile default options");
 	}
 	

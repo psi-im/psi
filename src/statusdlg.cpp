@@ -230,15 +230,13 @@ void StatusSetDlg::doButton()
 				break;
 		}
 		// Store preset
-		QString base = PsiOptions::instance()->mapPut("options.status.presets", text);
-		PsiOptions::instance()->setOption(base+".message", d->te->text());
+		StatusPreset sp(text, d->te->text(), XMPP::Status(d->cb_type->status()).type());
  		if (!d->le_priority->text().isEmpty()) {
-			PsiOptions::instance()->setOption(base+".force-priority", true);
-			PsiOptions::instance()->setOption(base+".priority", d->le_priority->text().toInt());
-		} else {
-			PsiOptions::instance()->setOption(base+".force-priority", false);
+			sp.setPriority(d->le_priority->text().toInt());
 		}
-		PsiOptions::instance()->setOption(base+".status", XMPP::Status(d->cb_type->status()).typeString());
+		
+		sp.toOptions(PsiOptions::instance());
+		QString base = PsiOptions::instance()->mapPut("options.status.presets", text);
 	} 
 
 	// Set status

@@ -1559,13 +1559,7 @@ void OptionsMigration::lateMigration()
 
 		//QMap<QString,StatusPreset> sp; // Status message presets.
 		foreach (StatusPreset sp, lateMigrationData.sp) {
-			QString base = o->mapPut("options.status.presets", sp.name());
-			o->setOption(base+".message",sp.message());
-			o->setOption(base+".status",XMPP::Status(sp.status()).typeString());
-			o->setOption(base+".force-priority", sp.priority().hasValue());
-			if (sp.priority().hasValue()) {
-				o->setOption(base+".priority", sp.priority().value());
-			}
+			sp.toOptions(o);
 		}
 		//QMap< QString, QList<ToolbarPrefs> > toolbars;
 		idx = 0;
