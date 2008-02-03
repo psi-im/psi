@@ -790,7 +790,6 @@ void OptionsTabIconsetRoster::applyOptions()
 		QString baseServicesPath = "options.iconsets.service-status";
 		PsiOptions::instance()->removeOption(baseServicesPath, true);
 
-		int index = 0;
 		QTreeWidgetItemIterator it(d->tw_isServices);
 		while (*it) {
 			QString path = PsiOptions::instance()->mapPut(baseServicesPath, (*it)->data(0, ServiceRole).toString());

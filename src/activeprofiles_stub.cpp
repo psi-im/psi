@@ -24,11 +24,13 @@
 
 bool ActiveProfiles::isActive(const QString &profile) const
 {
+	Q_UNUSED(profile);
 	return false;
 }
 
 bool ActiveProfiles::setThisProfile(const QString &profile)
 {
+	Q_UNUSED(profile);
 	return true;
 }
 
@@ -38,7 +40,7 @@ void ActiveProfiles::unsetThisProfile()
 
 QString ActiveProfiles::thisProfile() const
 {
-	return "";
+	return QString();
 }
 
 ActiveProfiles::ActiveProfiles()
@@ -52,13 +54,14 @@ ActiveProfiles::~ActiveProfiles()
 bool ActiveProfiles::raiseOther(QString profile, bool withUI) const
 {
 	// FIXME stub
+	Q_UNUSED(profile);
+	Q_UNUSED(withUI);
 	return true;
 }
-
-
 
 bool ActiveProfiles::sendOpenUri(const QString &uri, const QString &profile) const
 {
+	Q_UNUSED(uri);
+	Q_UNUSED(profile);
 	return true;
 }
-

@@ -213,4 +213,5 @@ void BookmarkManager::getBookmarks_finished()
 void BookmarkManager::setBookmarks_finished()
 {
 	BookmarkTask* t = static_cast<BookmarkTask*>(sender());
+	Q_UNUSED(t);
 }
