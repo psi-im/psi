@@ -591,6 +591,12 @@ GCMainDlg::~GCMainDlg()
 void GCMainDlg::ensureTabbedCorrectly() {
 	TabbableWidget::ensureTabbedCorrectly();
 	setShortcuts();
+	// QSplitter is broken again, force resize so that
+	// lv_users gets initizalised properly and context menu
+	// works in tabs too.
+	QList<int> tmp = ui_.hsplitter->sizes();
+	ui_.hsplitter->setSizes(QList<int>() << 0);
+	ui_.hsplitter->setSizes(tmp);
 }
 
 void GCMainDlg::setShortcuts()
