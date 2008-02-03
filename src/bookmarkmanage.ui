@@ -33,9 +33,6 @@
    </item>
    <item row="0" column="1" >
     <layout class="QGridLayout" >
-     <property name="horizontalSpacing" >
-      <number>-1</number>
-     </property>
      <item row="0" column="0" >
       <widget class="QLabel" name="label" >
        <property name="text" >

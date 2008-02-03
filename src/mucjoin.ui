@@ -13,9 +13,6 @@
    <string>Join Groupchat</string>
   </property>
   <layout class="QGridLayout" >
-   <property name="horizontalSpacing" >
-    <number>-1</number>
-   </property>
    <item row="0" column="0" >
     <widget class="QLabel" name="lb_identity" >
      <property name="text" >
@@ -55,9 +52,6 @@
       <string>Room information:</string>
      </property>
      <layout class="QGridLayout" >
-      <property name="horizontalSpacing" >
-       <number>-1</number>
-      </property>
       <item row="0" column="0" >
        <widget class="QLabel" name="TextLabel2" >
         <property name="text" >
