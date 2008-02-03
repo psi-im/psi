@@ -404,14 +404,12 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	d->statusButton->setMenu( d->statusMenu );
 	
 	buildinitialToolbars();
-	
-	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt()))/100);
 
 	connect(qApp, SIGNAL(dockActivated()), SLOT(dockActivated()));
 
-	connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionsUpdate()));
+	connect(psi, SIGNAL(emitOptionsUpdate()), SLOT(optionsUpdate()));
+	optionsUpdate();
 }
-	
 
 MainWin::~MainWin()
 {
@@ -1039,7 +1037,7 @@ void MainWin::optionsUpdate()
 		mainMenuBar()->show();
 	}
 #endif
-	
+
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt()))/100);
 
 	buildStatusMenu();

@@ -36,13 +36,13 @@ namespace XMPP {
 
 class PsiIconset : public QObject
 {
+	Q_OBJECT
 public:
 	static PsiIconset* instance();
 
 	bool loadSystem();
+	void reloadRoster();
 	bool loadAll();
-
-	bool optionsChanged();
 
 	Q3Dict<Iconset> roster;
 	Q3PtrList<Iconset> emoticons;
@@ -77,6 +77,12 @@ public:
 	PsiIcon *statusPtr(UserListItem *);
 	PsiIcon status(UserListItem *);
 
+signals:
+	void emoticonsChanged();
+
+private slots:
+	void optionChanged(const QString& option);
+
 private:
 	PsiIconset();
 	~PsiIconset();
@@ -85,6 +91,9 @@ private:
 	Private *d;
 
 	static PsiIconset* instance_;
+
+	bool loadRoster();
+	void loadEmoticons();
 };
 
 #endif

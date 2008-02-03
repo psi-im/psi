@@ -174,8 +174,9 @@ struct item_dialog
 	QString className;
 };
 
-class PsiCon::Private
+class PsiCon::Private : public QObject
 {
+	Q_OBJECT
 public:
 	Private(PsiCon *parent)
 		: contactList(0), iconSelect(0)
@@ -218,6 +219,7 @@ public:
 		
 	}
 
+private slots:
 	void updateIconSelect()
 	{
 		Iconset iss;
@@ -230,8 +232,10 @@ public:
 		}
 
 		iconSelect->setIconset(iss);
+		QPixmapCache::clear();
 	}
 
+public:
 	PsiCon* psi;
 	PsiContactList* contactList;
 	OptionsMigration optionsMigration;
@@ -396,7 +400,8 @@ bool PsiCon::init()
 	QDir profileDir( pathToProfile( activeProfile ) );
 	profileDir.rmdir( "info" ); // remove unused dir
 
-
+	d->iconSelect = new IconSelectPopup(0);
+	connect(PsiIconset::instance(), SIGNAL(emoticonsChanged()), d, SLOT(updateIconSelect()));
 
 	// first thing, try to load the iconset
 	if( !PsiIconset::instance()->loadAll() ) {
@@ -413,9 +418,6 @@ bool PsiCon::init()
 	new PsiConObject(this);
 		
 	Anim::setMainThread(QThread::currentThread());
-
-	d->iconSelect = new IconSelectPopup(0);
-	d->updateIconSelect();
 
 	// setup the main window
 	d->mainwin = new MainWin(PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool(), (PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool()), this, "psimain"); 
@@ -1047,44 +1049,30 @@ void PsiCon::doToolbars()
 
 void PsiCon::optionChanged(const QString& option)
 {
+	bool notifyRestart = true;
+
 	// Global shortcuts
 	setShortcuts();
-	
+
 	if (option == "options.ui.notifications.alert-style") {
-		alertIconUpdateAlertStyle();		
+		alertIconUpdateAlertStyle();
 	}
-	
-	if ( option == "options.ui.tabs.use-tabs") {
+
+	if (option == "options.ui.tabs.use-tabs") {
 		QMessageBox::information(0, tr("Information"), tr("Some of the options you changed will only have full effect upon restart."));
-		//notifyRestart = false;
+		notifyRestart = false;
 	}
-	
+
 	// update s5b
-	if(option == "options.p2p.bytestreams.listen-port") {
+	if (option == "options.p2p.bytestreams.listen-port") {
 		s5b_init();
 	}
-
-/* LEGOPTFIXME
-	// change icon set
-	if ( "options.iconsets.system" "options.iconsets.emoticons" "options.iconsets.status"	||
-	     operator!=(LEGOPTS.serviceRosterIconset,oldOpt.serviceRosterIconset)	||
-	     operator!=(LEGOPTS.customRosterIconset,oldOpt.customRosterIconset) )
-	{
-		if ( notifyRestart && PsiIconset::instance()->optionsChanged(&oldOpt) )
-			QMessageBox::information(0, tr("Information"), tr("The complete iconset update will happen on next Psi start."));
-
-		// update icon selector
-		d->updateIconSelect();
-
-		// flush the QPixmapCache
-		QPixmapCache::clear();
-	}
-*/
 }
 
 void PsiCon::slotApplyOptions()
 {
 	PsiOptions *o = PsiOptions::instance();
+	PsiIconset::instance()->reloadRoster();
 
 #ifndef Q_WS_MAC
 	if (!PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool()) {
@@ -1111,9 +1099,8 @@ void PsiCon::slotApplyOptions()
 	d->mainwin->setWindowOpts(PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool(), (PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool()));
 	d->mainwin->setUseDock(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool());
 
-
 	// notify about options change
-	emitOptionsUpdate();
+	emit emitOptionsUpdate();
 }
 
 int PsiCon::getId()

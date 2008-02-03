@@ -53,7 +53,7 @@ public:
 	{
 		setAttribute(Qt::WA_DeleteOnClose);
 		setupUi(this); 
-		
+
 		QStringList bold_labels;
 		bold_labels << "lb_name2";
 		bold_labels << "lb_version2";
@@ -61,7 +61,7 @@ public:
 		bold_labels << "lb_home2";
 		bold_labels << "lb_desc2";
 		bold_labels << "lb_authors";
-		
+
 		QList<QLabel *> labels = findChildren<QLabel *>();
 		foreach (QLabel *l, labels) {
 			if (bold_labels.contains(l->objectName())) {
@@ -717,6 +717,14 @@ OptionsTabIconsetRoster::~OptionsTabIconsetRoster()
 	cancelThread();
 }
 
+void OptionsTabIconsetRoster::addService(const QString& id, const QString& name)
+{
+	IconsetRosterUI*d = (IconsetRosterUI*)w;
+	QTreeWidgetItem* item = new QTreeWidgetItem(d->tw_isServices, QStringList(QString(name)));
+	item->setData(0, ServiceRole, QVariant(QString(id)));
+	d->tw_isServices->addTopLevelItem(item);
+}
+
 QWidget *OptionsTabIconsetRoster::widget()
 {
 	if ( w )
@@ -726,27 +734,13 @@ QWidget *OptionsTabIconsetRoster::widget()
 	IconsetRosterUI *d = (IconsetRosterUI *)w;
 
 	// Initialize transport iconsets
-	QList<QTreeWidgetItem *> items;
-	QTreeWidgetItem *ti = new QTreeWidgetItem(d->tw_isServices, QStringList(QString("AIM")));
-	ti->setData(0, Qt::UserRole, QVariant(QString("aim")));
-	items.append(ti);
-        ti = new QTreeWidgetItem(d->tw_isServices, QStringList(QString("Gadu-Gadu")));
-        ti->setData(0, Qt::UserRole, QVariant(QString("gadugadu")));
-        items.append(ti);
-        ti = new QTreeWidgetItem(d->tw_isServices, QStringList(QString("ICQ")));
-        ti->setData(0, Qt::UserRole, QVariant(QString("icq")));
-        items.append(ti);
-        ti = new QTreeWidgetItem(d->tw_isServices, QStringList(QString("MSN")));
-        ti->setData(0, Qt::UserRole, QVariant(QString("msn")));
-        items.append(ti);
-        ti = new QTreeWidgetItem(d->tw_isServices, QStringList(QString("SMS")));
-        ti->setData(0, Qt::UserRole, QVariant(QString("sms")));
-        items.append(ti);
-        ti = new QTreeWidgetItem(d->tw_isServices, QStringList(QString("Yahoo!")));
-        ti->setData(0, Qt::UserRole, QVariant(QString("yahoo")));
-        items.append(ti);
-	d->tw_isServices->insertTopLevelItems(0, items);
-	
+	addService("aim", "AIM");
+	addService("gadugadu", "Gadu-Gadu");
+	addService("icq", "ICQ");
+	addService("msn", "MSN");
+	addService("sms", "SMS");
+	addService("yahoo", "Yahoo!");
+	addService("transport", tr("Transport"));
 	d->tw_isServices->resizeColumnToContents(0);
 
 	connect(d->pb_defRosterDetails, SIGNAL(clicked()), SLOT(defaultDetails()));
@@ -776,7 +770,7 @@ QWidget *OptionsTabIconsetRoster::widget()
 
 void OptionsTabIconsetRoster::applyOptions()
 {
-	if ( !w || thread )
+	if (!w || thread)
 		return;
 
 	IconsetRosterUI *d = (IconsetRosterUI *)w;
@@ -785,60 +779,38 @@ void OptionsTabIconsetRoster::applyOptions()
 	// roster - default
 	{
 		const Iconset *is = d->iss_defRoster->iconset();
-		if ( is ) {
-			QFileInfo fi( is->fileName() );
+		if (is) {
+			QFileInfo fi(is->fileName());
 			PsiOptions::instance()->setOption("options.iconsets.status", fi.fileName());
 		}
 	}
 
 	// roster - services
 	{
-		// can't add or remove entries, so just update it.
-		QTreeWidgetItemIterator it( d->tw_isServices );
-		while(*it) {
-			PsiOptions::instance()->setOption( 
-				PsiOptions::instance()->mapLookup("options.iconsets.service-status", (*it)->data(0, Qt::UserRole).toString())+".iconset",
-				(*it)->data(1, Qt::UserRole).toString());
+		QString baseServicesPath = "options.iconsets.service-status";
+		PsiOptions::instance()->removeOption(baseServicesPath, true);
+
+		int index = 0;
+		QTreeWidgetItemIterator it(d->tw_isServices);
+		while (*it) {
+			QString path = PsiOptions::instance()->mapPut(baseServicesPath, (*it)->data(0, ServiceRole).toString());
+			PsiOptions::instance()->setOption(path + ".iconset", (*it)->data(0, IconsetRole).toString());
 			++it;
 		}
 	}
 
 	// roster - custom
 	{
-		// gather new data
-		QMap<QString, QString> newdata;
-		
-		QTreeWidgetItemIterator it( d->tw_customRoster );
-		while(*it) {
-			newdata[(*it)->data(0, Qt::UserRole).toString()] = (*it)->data(1, Qt::UserRole).toString();
-			++it;
-		}
+		QString baseCustomStatusPath = "options.iconsets.custom-status";
+		PsiOptions::instance()->removeOption(baseCustomStatusPath, true);
 
-		// remove deleted ones
-		QStringList previousIdx = PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true);
-		QMap<QString,QString> previous; // (regexp, base)
-		foreach(QString base, previousIdx) {
-			previous[PsiOptions::instance()->getOption(base + ".regexp").toString()] = base;
-		}
-		foreach(QString todel, previous.keys().toSet() - newdata.keys().toSet()) {
-			QString base = previous[todel];
-			PsiOptions::instance()->removeOption(base, true);
-		}
-		// update/add all others
-		foreach(QString regexp, newdata.keys()) {
-			QString base;
-			if (previous.contains(regexp)) {
-				base = previous[regexp];
-			} else {
-				int idx = 0;
-				do {
-					base = "options.iconsets.custom-status" ".a" + QString::number(idx);
-					idx++;
-				} while (previousIdx.contains(base));
-				previous[regexp] = base;
-				PsiOptions::instance()->setOption(base + ".regexp", regexp);
-			}
-			PsiOptions::instance()->setOption(base + ".iconset", newdata[regexp]);
+		int index = 0;
+		QTreeWidgetItemIterator it(d->tw_customRoster);
+		while (*it) {
+			QString path = baseCustomStatusPath + ".a" + QString::number(index++);
+			PsiOptions::instance()->setOption(path + ".regexp", (*it)->data(0, RegexpRole).toString());
+			PsiOptions::instance()->setOption(path + ".iconset", (*it)->data(0, IconsetRole).toString());
+			++it;
 		}
 	}
 }
@@ -914,18 +886,19 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
 		// roster - service
 		{
 			// fill the QTreeWidget
-			QTreeWidgetItemIterator it( d->tw_isServices );
-			while(*it) {
+			QTreeWidgetItemIterator it(d->tw_isServices);
+			while (*it) {
 				QTreeWidgetItem *i = *it;
-				if ( !i->data(0, Qt::UserRole).toString().isEmpty() ) {
+				if (!i->data(0, ServiceRole).toString().isEmpty()) {
 					Iconset *iss = PsiIconset::instance()->roster[
-							PsiOptions::instance()->getOption(
-								PsiOptions::instance()->mapLookup(
-									"options.iconsets.service-status",i->data(0, Qt::UserRole).toString())+".iconset").toString()];
-					if ( iss ) {
+					                   PsiOptions::instance()->getOption(
+					                       PsiOptions::instance()->mapLookup(
+					                           "options.iconsets.service-status",
+					                           i->data(0, ServiceRole).toString())+".iconset").toString()];
+					if (iss) {
 						i->setText(1, iss->name());
-						QFileInfo fi ( iss->fileName() );
-						i->setData(1, Qt::UserRole, fi.fileName());
+						QFileInfo fi(iss->fileName());
+						i->setData(0, IconsetRole, fi.fileName());
 					}
 				}
 				++it;
@@ -944,13 +917,13 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
 				last = item;
 
 				item->setText(0, clipCustomText(regexp));
-				item->setData(0, Qt::UserRole, regexp);
+				item->setData(0, RegexpRole, regexp);
 
 				Iconset *iss = PsiIconset::instance()->roster[icoset];
 				if ( iss ) {
 					item->setText(1, iss->name());
 					QFileInfo fi ( iss->fileName() );
-					item->setData(1, Qt::UserRole, fi.fileName());
+					item->setData(0, IconsetRole, fi.fileName());
 				}
 			}
 			d->tw_customRoster->resizeColumnToContents(0);
@@ -1021,7 +994,7 @@ void OptionsTabIconsetRoster::isServices_iconsetSelected(QListWidgetItem *item, 
 
 	it->setText(1, is->name());
 	QFileInfo fi ( is->fileName() );
-	it->setData(1, Qt::UserRole, fi.fileName());
+	it->setData(0, IconsetRole, fi.fileName());
 }
 
 void OptionsTabIconsetRoster::isServices_selectionChanged(QTreeWidgetItem *it)
@@ -1033,10 +1006,9 @@ void OptionsTabIconsetRoster::isServices_selectionChanged(QTreeWidgetItem *it)
 	if ( !it )
 		return;
 
-	if ( it->data(1, Qt::UserRole).toString().isEmpty() )
+	QString name = it->data(0, IconsetRole).toString();
+	if (name.isEmpty())
 		return;
-
-	QString name = it->data(1, Qt::UserRole).toString();
 
 	emit noDirty(true);
 	for (int row = 0; row < d->iss_servicesRoster->count(); row++) {
@@ -1075,7 +1047,7 @@ void OptionsTabIconsetRoster::isCustom_iconsetSelected(QListWidgetItem *item, QL
 
 	it->setText(1, is->name());
 	QFileInfo fi ( is->fileName() );
-	it->setData(1, Qt::UserRole,  fi.fileName());
+	it->setData(0, IconsetRole, fi.fileName());
 }
 
 void OptionsTabIconsetRoster::isCustom_selectionChanged(QTreeWidgetItem *it)
@@ -1090,12 +1062,12 @@ void OptionsTabIconsetRoster::isCustom_selectionChanged(QTreeWidgetItem *it)
 	if ( !it )
 		return;
 
-	if ( it->data(1, Qt::UserRole).toString().isEmpty() )
+	QString name = it->data(0, IconsetRole).toString();
+	if (name.isEmpty())
 		return;
 
 	emit noDirty(true);
-	d->le_customRoster->setText(it->data(0, Qt::UserRole).toString());
-	QString name = it->data(1, Qt::UserRole).toString();
+	d->le_customRoster->setText(it->data(0, RegexpRole).toString());
 
 	for (int row = 0; row < d->iss_customRoster->count(); row++) {
 		IconWidgetItem *item = (IconWidgetItem *)d->iss_customRoster->item(row);
@@ -1120,8 +1092,8 @@ void OptionsTabIconsetRoster::isCustom_textChanged()
 	if ( !item )
 		return;
 
-	item->setText( 0, clipCustomText(d->le_customRoster->text()) );
-	item->setData( 0, Qt::UserRole, d->le_customRoster->text() );
+	item->setText(0, clipCustomText(d->le_customRoster->text()));
+	item->setData(0, RegexpRole, d->le_customRoster->text());
 }
 
 void OptionsTabIconsetRoster::isCustom_add()
@@ -1143,7 +1115,7 @@ void OptionsTabIconsetRoster::isCustom_add()
 		item->setText(1, i->name());
 
 		QFileInfo fi(i->fileName());
-		item->setData(1, Qt::UserRole, fi.fileName());
+		item->setData(0, IconsetRole, fi.fileName());
 	}
 
 	d->tw_customRoster->setCurrentItem(item);

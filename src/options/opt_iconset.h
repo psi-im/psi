@@ -98,10 +98,18 @@ protected:
 	void cancelThread();
 
 private:
-	QWidget *w, *parentWidget;
-
+	QWidget* w;
+	QWidget* parentWidget;
 	int numIconsets, iconsetsLoaded;
 	IconsetLoadThread *thread;
+
+	enum {
+		IconsetRole = Qt::UserRole + 0,
+		ServiceRole = Qt::UserRole + 1,
+		RegexpRole  = Qt::UserRole + 2
+	};
+
+	void addService(const QString& id, const QString& name);
 };
 
 #endif
