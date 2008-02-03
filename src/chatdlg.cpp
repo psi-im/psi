@@ -241,13 +241,10 @@ bool ChatDlg::readyToHide()
 		QMessageBox mb(QMessageBox::Information,
 			tr("Warning"),
 			tr("A new chat message was just received.\nDo you still want to close the window?"),
-			QMessageBox::NoButton, // buttons defined below
+			QMessageBox::Cancel,
 			this);
-		QPushButton *close = mb.addButton(tr("Close"), QMessageBox::AcceptRole);
-		QPushButton *no = mb.addButton(QMessageBox::No);
-		mb.setEscapeButton(no);
-		mb.exec();
-		if (mb.clickedButton() != close) {
+		mb.addButton(tr("Close"), QMessageBox::AcceptRole);
+		if (mb.exec() == QMessageBox::Cancel) {
 			return false;
 		}
 	}

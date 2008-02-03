@@ -193,11 +193,10 @@ void PsiMain::chooseProfile()
 				if (again) {
 					QMessageBox mb(QMessageBox::Question,
 						CAP(tr("Profile already in use")),
-						QString(tr("The \"%1\" profile is already in use.\nWould you like to activate that session now?")).arg(str));
+						QString(tr("The \"%1\" profile is already in use.\nWould you like to activate that session now?")).arg(str),
+						QMessageBox::Cancel);
 					QPushButton *activate = mb.addButton(tr("Activate"), QMessageBox::AcceptRole);
-					QPushButton *no = mb.addButton(QMessageBox::No);
-					mb.setEscapeButton(no);
-					mb.exec();					
+					mb.exec();
 					if (mb.clickedButton() == activate) {
 						ActiveProfiles::instance()->raiseOther(str, true);
 						quit();
