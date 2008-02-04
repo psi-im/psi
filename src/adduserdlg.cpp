@@ -290,6 +290,8 @@ void AddUserDlg::resolveNickFinished()
 	if(jt->success()) {
 		if ( !jt->vcard().nickName().isEmpty() )
 			le_nick->setText( jt->vcard().nickName() );
+		else if( !jt->vcard().fullName().isEmpty() )
+			le_nick->setText( jt->vcard().fullName() );
 	}
 }
 

@@ -1696,10 +1696,13 @@ void PsiAccount::client_rosterRequestFinished(bool success, int, const QString &
 void PsiAccount::resolveContactName()
 {
 	JT_VCard *j = (JT_VCard *)sender();
-	if ( j->success() ) {
+	if (j->success()) {
 		QString nick = j->vcard().nickName();
-		if ( !nick.isEmpty() ) {
-			actionRename( j->jid(), nick );
+		QString full = j->vcard().fullName();
+		if (!nick.isEmpty()) {
+			actionRename(j->jid(), nick);
+		} else if (!full.isEmpty()) {
+			actionRename(j->jid(), full);
 		}
 	}
 }
@@ -2372,11 +2375,16 @@ void PsiAccount::setStatusActual(const Status &_s)
 
 		// Get the vcard
 		const VCard *vcard = VCardFactory::instance()->vcard(d->jid);
-		if ( PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool() || !vcard || vcard->isEmpty() || vcard->nickName().isEmpty() )
+		if (PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool() || !vcard || vcard->isEmpty() || (vcard->nickName().isEmpty() && vcard->fullName().isEmpty()))
 			VCardFactory::instance()->getVCard(d->jid, d->client->rootTask(), this, SLOT(slotCheckVCard()));
 		else {
 			d->nickFromVCard = true;
-			setNick( vcard->nickName() );
+			// if we get here, one of these fields is non-empty
+			if (!vcard->nickName().isEmpty()) {
+				setNick(vcard->nickName());
+			} else {
+				setNick(vcard->fullName());
+			}
 		}
 	}
 }
@@ -4369,6 +4377,9 @@ void PsiAccount::slotCheckVCard()
 		if (!j->vcard().nickName().isEmpty()) {
 			d->nickFromVCard = true;
 			nick = j->vcard().nickName();
+		} else if (!j->vcard().fullName().isEmpty()) {
+			d->nickFromVCard = true;
+			nick = j->vcard().fullName();
 		}
 	}
 
