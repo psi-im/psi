@@ -1,6 +1,6 @@
-Psi 0.11-RC3
+Psi 0.12-RC1
 ---------
-Date: October 15th, 2007
+Date: February 4th, 2008
 
 Project Lead/Maintainer (2004-current):
   Kevin Smith
@@ -26,8 +26,7 @@ with rare Unicode characters (outside of the BMP)
 Issues with Qt 4.3.(0|1): On X11 Qt 4.3 seems to have problems with some
 window managers that result in windows not beeing displayed or displayed 
 with a broken layout.
-In rare situations, primarily when reconnecting after a forced disconnect,
-a very small group of users experience a crash of Psi.
+Issues with Qt 4.3.3: On Windows, qmake has a bug which prevents compilation with mingw, using an earlier Qt or qmake should work.
 
 Notes
 -----
@@ -36,26 +35,11 @@ Notes
     * The qca-ossl and qca-gnupg plugins are desirable for full 
       functionality of Psi.
 
-  - Upgrading to 0.11 --
-    * Unless you use the 'default' profile, the last used profile settings 
-	    will not be transferred from 0.10 and previous Qt3-based builds to the 
-	    0.11-beta1 and newer Qt4 based builds.
-      If Psi loads with a blank profile, cancel the account creation and use 
-      "Choose profile" to reset your default profile.	
-    * When you decide to switch to Psi 0.11 permanently, you can safely clear
-      the 'affinix.com' keys from your registry.
-    * The PEM format is now used for storing SSL certificates.
-    * You must use the QCA-OpenSSL plugin for QCA2 to utilize SSL.
-      The older 'QSSL' plugin and QCA1 plugin will not work.
-    * Users upgrading from pre-0.10 will not benefit from the new colour 
-      scheme. If they want the new colours, they should quit Psi and edit 
-      their config.xml file by hand. For details, please see the User Guide in 
-      the Help menu. 
-    * The WindowMaker docklet has been discontinued. We have been suffering
-      problems with it since the previous release(s), it is non-standard,
-      it lacks documentation, and so we decided to only support the 
-      FreeDesktop.org tray. People using WindowMaker can use tools such as 
-      Docker as a replacement.
+  - Upgrading to 0.12 --
+    * During the upgrade process, the old config.xml configuration file will
+      be imported into the new option.xml format. Neither file should now be
+      edited by hand, since all options are exposed in the options window.
+
 
   - GnuPG tips --
     * Always use the latest version of GnuPG.
@@ -68,6 +52,29 @@ Notes
 
 Changes
 -------
+  New in 0.12
+  - Multi-user chat windows now join one on one chat windows and can be opened
+    in tabbed form, either sharing a window, or seperately.
+  - The roster search has been updated, and now triggers a filter when typing
+    into the roster window.
+  - An XML ringbuffer is now used, allowing access to already received XML in
+    the XML console.
+  - When resolving a name for new contacts, the full name is now used if the 
+    nick name is missing from the vcard.
+  - Auto-connect on wake is now an independent option.
+  - MUCs can now be bookmarked, and auto-joined.
+  - The old config.xml file has been dropped in favour of the new options.xml
+    format - all options in Psi can now be configured from the Advanced 
+    options pane (no more hand-editing of config files is required).
+  - Vcard avatars are now transmitted for the benefit of legacy clients and
+    servers not supporting PEP.
+  - A new diagnostics group is available in the help menu, to allow debugging
+    problems with the QCA security layer.
+  - Launching several instances of the same profile on Windows now behaves
+    more sensibly.
+  - On X11, the taskbar should now flash on new messages for compliant
+    window managers.
+
   New in 0.11
   - Reworked account registration process (including proper support for
     XEP-0077 (In-band registration))
