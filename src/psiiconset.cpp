@@ -103,11 +103,24 @@ public:
 				PsiIcon *toIcon = (PsiIcon *)to->icon(icon->name());
 				if ( toIcon ) {
 					if ( icon->anim() ) {
+						// setAnim and setImpix both
+						//   emit pixmapChanged(),
+						//   however we only want this
+						//   to happen once, and only
+						//   after both functions have
+						//   been processed.  so we
+						//   block signals during the
+						//   first call.
+						bool b = toIcon->blockSignals(true);
 						toIcon->setAnim  ( *icon->anim(), false );
+						toIcon->blockSignals(b);
 						toIcon->setImpix ( icon->impix(), false );
 					}
 					else {
+						// same as above
+						bool b = toIcon->blockSignals(true);
 						toIcon->setAnim  ( Anim(),        false );
+						toIcon->blockSignals(b);
 						toIcon->setImpix ( icon->impix(), false );
 					}
 				}
