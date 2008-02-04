@@ -970,7 +970,11 @@ void MainWin::keyPressEvent(QKeyEvent *e)
 
 	bool closekey = false;
 	if(e->key() == Qt::Key_Escape) {
-		closekey = true;
+		if (d->searchWidget->isVisible()) {
+			searchClearClicked();
+		} else {
+			closekey = true;
+		}
 	}
 #ifdef Q_WS_MAC
 	else if(e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier) {

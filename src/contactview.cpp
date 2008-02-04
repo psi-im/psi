@@ -2191,6 +2191,10 @@ void ContactView::keyPressEvent(QKeyEvent *e)
 
 		//d->typeAhead = QString::null;
 		Q3ListView::keyPressEvent(e);
+#ifdef Q_WS_MAC
+	} else if (e->modifiers() == Qt::ControlModifier) {
+		Q3ListView::keyPressEvent(e);
+#endif 
 	} else {
 		QString text = e->text().lower();
 		if (text.isEmpty()) {
