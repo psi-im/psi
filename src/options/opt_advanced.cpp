@@ -23,7 +23,7 @@ public:
 //----------------------------------------------------------------------------
 
 OptionsTabAdvanced::OptionsTabAdvanced(QObject *parent)
-: OptionsTab(parent, "advanced", "", tr("Advanced"), tr("Options for advanced users"), "psi/advanced")
+: OptionsTab(parent, "misc", "", tr("Misc."), tr("Extra uncategorized options"), "psi/advanced")
 {
 	w = 0;
 }
