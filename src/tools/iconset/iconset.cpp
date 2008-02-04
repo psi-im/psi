@@ -449,6 +449,11 @@ void PsiIcon::setImpix(const Impix &impix, bool doDetach)
 		detach();
 
 	d->impix = impix;
+	if ( d->icon ) {
+		delete d->icon;
+		d->icon = 0;
+	}
+
 	emit d->pixmapChanged();
 	emit d->iconModified();
 }
