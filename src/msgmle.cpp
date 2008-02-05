@@ -95,8 +95,12 @@ void ChatView::keyPressEvent(QKeyEvent *e)
 		insert("\n");
 /*	else if(e->key() == Qt::Key_U && (e->modifiers() & Qt::ControlModifier) && !isReadOnly())
 		setText(""); */
-	else
+	else if ((e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter) && (e->modifiers() & Qt::ControlModifier) || (e->modifiers() & Qt::AltModifier)) {
+		e->ignore();
+	}
+	else {
 		PsiTextView::keyPressEvent(e);
+	}
 }
 
 /**
