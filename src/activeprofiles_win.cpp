@@ -26,6 +26,15 @@
 #include <QTimer>
 #include <windows.h>
 
+/*
+	Implementor notes:
+	
+	This file uses WinAPI a lot. It is important to remember that we still want to support Win9x family.
+	For that reason, we have to use QT_WA macro for functions that exist in two versions.
+	
+	Also note that writing QString("x").toLocal8Bit().constData() is a bad idea and must not be done.
+*/
+
 class ActiveProfiles::Private : public QWidget
 {
 public:
@@ -34,13 +43,25 @@ public:
 		app.replace('\\', '/');	// '\\' has a special meaning in mutex name
 		home.replace('\\', '/');
 
-		changesMutex = CreateMutex(0, FALSE, (wchar_t*)QString("%1 ChangesMutex {4F5AEDA9-7D3D-4ebe-8614-FB338146CE80}").arg(app).utf16());
-		if (changesMutex == NULL)
-			qWarning("Couldn't create IPC mutex");
+		const QString m = QString("%1 ChangesMutex {4F5AEDA9-7D3D-4ebe-8614-FB338146CE80}").arg(app);
+		const QString c = QString("%1 IPC Command {4F5AEDA9-7D3D-4ebe-8614-FB338146CE80}").arg(app);
+		
+		QT_WA(
+			changesMutex = CreateMutex(0, FALSE, (LPCWSTR)m.utf16());
+			psiIpcCommand = RegisterWindowMessage((LPCWSTR)c.utf16());
+		,
+			QByteArray a = m.toLocal8Bit();	// must not call constData() of a temp object
+			changesMutex = CreateMutexA(0, FALSE, (LPCSTR)a.constData());
+			a = c.toLocal8Bit();
+			psiIpcCommand = RegisterWindowMessageA((LPCSTR)a.constData());
+		)
 
-		psiIpcCommand = RegisterWindowMessage((wchar_t*)QString("%1 IPC Command {4F5AEDA9-7D3D-4ebe-8614-FB338146CE80}").arg(app).utf16());
-		if (psiIpcCommand == 0)
+		if (!changesMutex) {
+			qWarning("Couldn't create IPC mutex");
+		}
+		if (!psiIpcCommand) {
 			qWarning("Couldn't register IPC WM_message");
+		}
 	}
 
 	QString app, home, profile;
@@ -63,6 +84,15 @@ public:
 		ReleaseMutex(changesMutex);
 	}
 
+	void setWindowText(const QString &text) {
+		QT_WA(
+			SetWindowTextW(winId(), (LPCWSTR)text.utf16());
+		,
+			QByteArray a = text.toLocal8Bit();
+			SetWindowTextA(winId(), (LPCSTR)a.constData());
+		)
+	}
+
 	// WM_PSICOMMAND
 	static UINT psiIpcCommand;	// = RegisterWindowMessage()
 	static WPARAM raiseCommand;	// = 1
@@ -81,12 +111,18 @@ WPARAM ActiveProfiles::Private::raiseCommand = 1;
 
 bool ActiveProfiles::Private::sendMessage(const QString &to, UINT message, WPARAM wParam, LPARAM lParam) const
 {
-	HWND hwnd = FindWindow(0, (wchar_t*)windowName(to).utf16());
+	HWND hwnd;
+	QT_WA(
+		hwnd = FindWindowW(0, (LPCWSTR)windowName(to).utf16());
+	,
+		QByteArray a = windowName(to).toLocal8Bit();
+		hwnd = FindWindowA(0, (LPCSTR)a.constData());
+	)
 
 	if (!hwnd)
 		return false;
 
-	SendMessage(hwnd, message, wParam, lParam);
+	SendMessageA(hwnd, message, wParam, lParam);
 	return true;
 }
 
@@ -98,7 +134,7 @@ bool ActiveProfiles::Private::sendStringList(const QString &to, const QStringLis
 	QByteArray ba;
 
 	ba.append(list[0].toUtf8());
-	for ( int i = 1; i < list.size(); ++i ) {
+	for (int i = 1; i < list.size(); ++i) {
 		const int z = ba.size();
 		ba.append(" " + list[i].toUtf8());
 		ba[z] = '\0';
@@ -175,7 +211,14 @@ bool ActiveProfiles::setThisProfile(const QString &profile)
 	}
 
 	d->startChanges();
-	HANDLE m = CreateMutex(0, TRUE, (wchar_t*)d->mutexName(profile).utf16());
+	HANDLE m;
+	QT_WA(
+		m = CreateMutexW(0, TRUE, (LPCWSTR)d->mutexName(profile).utf16());
+	,
+		QByteArray a = d->mutexName(profile).toLocal8Bit();
+		m = CreateMutexA(0, TRUE, (LPCSTR)a.constData());
+	)	
+		
 	if (GetLastError() == ERROR_ALREADY_EXISTS) {
 		CloseHandle(m);
 		d->endChanges();
@@ -187,8 +230,7 @@ bool ActiveProfiles::setThisProfile(const QString &profile)
 		}
 		d->mutex = m;
 		d->profile = profile;
-		//d->setWindowTitle() does not work - use SetWindowText
-		SetWindowText(d->winId(), (wchar_t*)d->windowName(profile).utf16());
+		d->setWindowText(d->windowName(profile));
 		d->endChanges();
 		return true;
 	}
@@ -200,8 +242,7 @@ void ActiveProfiles::unsetThisProfile()
 	CloseHandle(d->mutex);
 	d->mutex = 0;
 	d->profile = QString::null;
-	//d->setWindowTitle("");
-	SetWindowText(d->winId(), L"");
+	d->setWindowText("");
 	d->endChanges();
 }
 
@@ -211,8 +252,14 @@ QString ActiveProfiles::thisProfile() const
 }
 
 bool ActiveProfiles::isActive(const QString &profile) const
-{
-	HANDLE m = OpenMutex(0, FALSE, (wchar_t*)d->mutexName(profile).utf16());
+{	
+	HANDLE m;
+	QT_WA(
+		m = OpenMutexW(0, FALSE, (LPCWSTR)d->mutexName(profile).utf16());
+	,
+		QByteArray a = d->mutexName(profile).toLocal8Bit();
+		m = OpenMutexA(0, FALSE, (LPCSTR)a.constData());
+	)
 	if (GetLastError() == ERROR_FILE_NOT_FOUND) {
 		return false;
 	}
