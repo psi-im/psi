@@ -50,7 +50,11 @@ static bool doOpenUrl(const QUrl& url)
 	}
 	else {
 		// FIXME: This is necessary for Qt 4.3.3 to handle all URLs correctly
-		ShellExecute(0, 0, (TCHAR *)QString(url.toEncoded()).utf16(), 0, 0, SW_SHOWNORMAL);
+		QT_WA(
+			ShellExecuteW(0, 0, (TCHAR *)QString(url.toEncoded()).utf16(), 0, 0, SW_SHOWNORMAL);
+		,
+			ShellExecuteA(0, 0, (TCHAR *)QString(url.toEncoded()).toLocal8Bit(), 0, 0, SW_SHOWNORMAL);
+		)
 		return true;
 	}
 #endif
