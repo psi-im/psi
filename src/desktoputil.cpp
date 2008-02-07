@@ -51,9 +51,10 @@ static bool doOpenUrl(const QUrl& url)
 	else {
 		// FIXME: This is necessary for Qt 4.3.3 to handle all URLs correctly
 		QT_WA(
-			ShellExecuteW(0, 0, (TCHAR *)QString(url.toEncoded()).utf16(), 0, 0, SW_SHOWNORMAL);
+			ShellExecuteW(0, 0, (WCHAR *)QString(url.toEncoded()).utf16(), 0, 0, SW_SHOWNORMAL);
 		,
-			ShellExecuteA(0, 0, (TCHAR *)QString(url.toEncoded()).toLocal8Bit(), 0, 0, SW_SHOWNORMAL);
+			QByteArray a = QString(url.toEncoded()).toLocal8Bit();	// must not call constData() of a temp object
+			ShellExecuteA(0, 0, (CHAR *)a.constData(), 0, 0, SW_SHOWNORMAL);
 		)
 		return true;
 	}
