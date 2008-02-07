@@ -418,16 +418,6 @@ void TabDlg::checkHasChats()
 	deleteLater();
 }
 
-void TabDlg::windowActivationChange(bool oldstate)
-{
-	QWidget::windowActivationChange(oldstate);
-
-	// if we're bringing it to the front, get rid of the '*' if necessary
-	if( isActiveWindow() ) { 
-		activated();
-	}
-}
-
 void TabDlg::activated()
 {
 	updateCaption();
@@ -641,6 +631,16 @@ void TabDlg::mouseReleaseEvent(QMouseEvent *event) {
 }
 
 void TabDlg::changeEvent(QEvent *event) {
+	if (event->type() == QEvent::ActivationChange || event->type() == QEvent::WindowStateChange) {
+		// if we're bringing it to the front, get rid of the '*' if necessary
+		if (isActiveWindow()) {
+			if (tabWidget_->currentPage()) {
+				qApp->sendEvent(tabWidget_->currentPage(), event);
+			}
+			activated();
+		}
+	}
+
 	// delegate if possible, otherwise use default
 	if (delegate_ && delegate_->changeEvent(this, event)) {
 		return;

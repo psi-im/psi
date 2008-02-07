@@ -632,15 +632,17 @@ void GCMainDlg::resizeEvent(QResizeEvent* e)
 		PsiOptions::instance()->setOption("options.ui.muc.size", e->size());
 }
 
-void GCMainDlg::windowActivationChange(bool oldstate)
+void GCMainDlg::changeEvent(QEvent *event)
 {
-	QWidget::windowActivationChange(oldstate);
+	TabbableWidget::changeEvent(event);
 
-	if (isActiveTab()) {
-		activated();
-	}
-	else {
-		deactivated();
+	if (event->type() == QEvent::ActivationChange || event->type() == QEvent::WindowStateChange) {
+		if (isActiveTab()) {
+			activated();
+		}
+		else {
+			deactivated();
+		}
 	}
 }
 

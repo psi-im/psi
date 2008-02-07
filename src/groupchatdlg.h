@@ -89,8 +89,7 @@ protected:
 	void dropEvent(QDropEvent *);
 	void closeEvent(QCloseEvent *);
 	void resizeEvent(QResizeEvent*);
-
-	void windowActivationChange(bool);
+	void changeEvent(QEvent *event);
 	void mucInfoDialog(const QString& title, const QString& message, const Jid& actor, const QString& reason);
 
 signals:

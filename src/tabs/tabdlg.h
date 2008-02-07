@@ -84,7 +84,7 @@ protected:
 
 	// reimplemented
 	void closeEvent(QCloseEvent*);
-	void windowActivationChange(bool);
+	void changeEvent(QEvent *event);	// also for delegate
 	void resizeEvent(QResizeEvent *);
 	void dragEnterEvent(QDragEnterEvent *event);
 	void dropEvent(QDropEvent *event);
@@ -94,7 +94,6 @@ protected:
 	virtual void mousePressEvent(QMouseEvent *event);
 	virtual void mouseMoveEvent(QMouseEvent *event);
 	virtual void mouseReleaseEvent(QMouseEvent *event);
-	virtual void changeEvent(QEvent *event);
 	virtual bool event(QEvent *event);
 	virtual bool eventFilter(QObject *obj, QEvent *event);
 

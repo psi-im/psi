@@ -305,13 +305,15 @@ void ChatDlg::showEvent(QShowEvent *)
 	setSelfDestruct(0);
 }
 
-void ChatDlg::windowActivationChange(bool oldstate)
+void ChatDlg::changeEvent(QEvent *event)
 {
-	QWidget::windowActivationChange(oldstate);
-
-	// if we're bringing it to the front, get rid of the '*' if necessary
-	if (isActiveTab()) {
-		activated();
+	TabbableWidget::changeEvent(event);
+	
+	if (event->type() == QEvent::ActivationChange || event->type() == QEvent::WindowStateChange) {
+		// if we're bringing it to the front, get rid of the '*' if necessary
+		if (isActiveTab()) {
+			activated();
+		}
 	}
 }
 

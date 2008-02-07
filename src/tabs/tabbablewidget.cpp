@@ -129,10 +129,11 @@ bool TabbableWidget::isActiveTab()
 		return false;
 	}
 	if (!isTabbed()) {
-		return isActiveWindow();
+		return isActiveWindow() && !isMinimized();
 	}
 	return getManagingTabDlg()->isActiveWindow() &&
-	       getManagingTabDlg()->tabOnTop(this);
+	       getManagingTabDlg()->tabOnTop(this) &&
+	      !getManagingTabDlg()->isMinimized();
 }
 
 void TabbableWidget::doFlash(bool on)

@@ -49,7 +49,7 @@ public:
 
 	void moveEvent(QMoveEvent *e);
 
-	void windowActivationChange(bool oldstate);
+	void changeEvent(QEvent *event);
 
 public:
 	class Private;
@@ -145,11 +145,12 @@ protected:
 	}
 
 protected:
-	void windowActivationChange( bool oldstate )
+	void changeEvent(QEvent *event)
 	{
-		if (gAdvWidget)
-			gAdvWidget->windowActivationChange( oldstate );
-		BaseClass::windowActivationChange( oldstate );
+		if (gAdvWidget) {
+			gAdvWidget->changeEvent(event);
+		}
+		BaseClass::changeEvent(event);
 	}
 };
 

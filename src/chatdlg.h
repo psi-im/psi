@@ -96,7 +96,7 @@ protected:
 	void resizeEvent(QResizeEvent *);
 	void hideEvent(QHideEvent *);
 	void showEvent(QShowEvent *);
-	void windowActivationChange(bool);
+	void changeEvent(QEvent *event);
 	void dropEvent(QDropEvent* event);
 	void dragEnterEvent(QDragEnterEvent* event);
 	bool eventFilter(QObject *obj, QEvent *event);
