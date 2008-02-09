@@ -44,7 +44,6 @@
 #include "contactview.h"
 #include "psirichtext.h"
 #include "psioptions.h"
-#include "psioptions.h"
 
 
 using namespace XMPP;
