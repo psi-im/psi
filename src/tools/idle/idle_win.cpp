@@ -23,7 +23,7 @@
 #include <qlibrary.h>
 #include <windows.h>
 
-#if defined(Q_OS_WIN32) && !defined(Q_CC_GNU)
+#if defined(Q_OS_WIN32) && !defined(Q_CC_GNU) && (_WIN32_WINNT < 0x0500)
 typedef struct tagLASTINPUTINFO {
 	UINT cbSize;
 	DWORD dwTime;
