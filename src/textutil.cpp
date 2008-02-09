@@ -271,6 +271,10 @@ static bool linkify_okEmail(const QString &addy)
 	return TRUE;
 }
 
+/**
+ * takes a richtext string and heuristically adds links for uris of common protocols
+ * @return a richtext string with link markup added
+ */
 QString TextUtil::linkify(const QString &in)
 {
 	QString out = in;
@@ -349,6 +353,8 @@ QString TextUtil::linkify(const QString &in)
 				continue;
 			}
 			href += link;
+			// attributes need to be encoded too.
+			href = Qt::escape(href);
 			href = linkify_htmlsafe(href);
 			//printf("link: [%s], href=[%s]\n", link.latin1(), href.latin1());
 			linked = QString("<a href=\"%1\">").arg(href) + Qt::escape(link) + "</a>" + Qt::escape(pre.mid(cutoff));
