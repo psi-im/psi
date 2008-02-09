@@ -18,7 +18,6 @@
  */
 
 #include <QTimer>
-#include <qplatformdefs.h>
 
 #include "safedelete.h"
 #include "xmpp_task.h"
@@ -228,26 +227,11 @@ void Task::clientDisconnected()
 
 void Task::debug(const char *fmt, ...)
 {
-	char *buf;
+	va_list ap;
+	va_start(ap, fmt);
 	QString str;
-	int size = 1024;
-	int r;
-
-	do {
-		buf = new char[size];
-		va_list ap;
-		va_start(ap, fmt);
-		r = QT_VSNPRINTF(buf, size, fmt, ap);
-		va_end(ap);
-
-		if(r != -1)
-			str = QString(buf);
-
-		delete [] buf;
-
-		size *= 2;
-	} while(r == -1);
-
+	str.vsprintf(fmt, ap);
+	va_end(ap);
 	debug(str);
 }
 
