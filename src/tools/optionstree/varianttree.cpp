@@ -180,6 +180,7 @@ bool VariantTree::isInternalNode(QString node) const
 			return trees_[key]->isInternalNode(subnode);
 		}
 		qWarning() << "isInternalNode called on non existant node: " << node;
+		return false;
 	} else {
 		return trees_.contains(node);
 	}
