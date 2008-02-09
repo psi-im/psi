@@ -1,5 +1,5 @@
 #ifndef OPT_PLUGINS_H
-#define OPT_PLUGNS_H
+#define OPT_PLUGINS_H
 
 #include "optionstab.h"
 
