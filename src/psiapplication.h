@@ -45,9 +45,6 @@ public:
 #ifdef Q_WS_MAC
 	bool macEventFilter(EventHandlerCallRef, EventRef);
 #endif
-#ifdef Q_WS_WIN
-	bool winEventFilter(MSG* msg, long* result);
-#endif
 
 	// reimplemented
 	void commitData(QSessionManager& manager);

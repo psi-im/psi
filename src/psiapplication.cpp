@@ -320,16 +320,6 @@ bool PsiApplication::macEventFilter( EventHandlerCallRef, EventRef inEvent )
 }
 #endif
 
-#ifdef Q_WS_WIN
-bool PsiApplication::winEventFilter(MSG* msg, long* result)
-{
-	if (msg->message == WM_POWERBROADCAST || msg->message == WM_QUERYENDSESSION) {
-		return static_cast<WinSystemWatch*>(SystemWatch::instance())->processWinEvent(msg, result);
-	}
-	return false;
-}
-#endif
-
 void PsiApplication::commitData(QSessionManager& manager)
 {
 	emit forceSavePreferences();

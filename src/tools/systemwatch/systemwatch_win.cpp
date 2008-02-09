@@ -1,6 +1,6 @@
 /*
- * systemwatch_mac.cpp - Detect changes in the system state (Windows).
- * Copyright (C) 2005  James Chaldecott
+ * systemwatch_win.cpp - Detect changes in the system state (Windows).
+ * Copyright (C) 2005, 2008  James Chaldecott, Maciej Niedzielski
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,73 +20,67 @@
 
 #include "systemwatch_win.h"
 
-#include <qwidget.h>
-#include <qt_windows.h>
+#include <QWidget>
+#include <windows.h>
 
-// These defines come from Microsoft Platform SDK, August 2005
-#if(WINVER >= 0x0400)
-# ifndef WM_POWERBROADCAST
-#  define WM_POWERBROADCAST                0x0218
-# endif // WM_POWERBROADCAST
-# ifndef _WIN32_WCE
-#  ifndef PBT_APMQUERYSUSPEND
-#   define PBT_APMQUERYSUSPEND             0x0000
-#  endif // PBT_APMQUERYSUSPEND
-#  ifndef PBT_APMQUERYSTANDBY
-#   define PBT_APMQUERYSTANDBY             0x0001
-#  endif // PBT_APMQUERYSTANDBY
-#  ifndef PBT_APMQUERYSUSPENDFAILED
-#   define PBT_APMQUERYSUSPENDFAILED       0x0002
-#  endif // PBT_APMQUERYSUSPENDFAILED
-#  ifndef PBT_APMQUERYSTANDBYFAILED
-#   define PBT_APMQUERYSTANDBYFAILED       0x0003
-#  endif // PBT_APMQUERYSTANDBYFAILED
-#  ifndef PBT_APMSUSPEND
-#   define PBT_APMSUSPEND                  0x0004
-#  endif // PBT_APMSUSPEND
-#  ifndef PBT_APMSTANDBY
-#   define PBT_APMSTANDBY                  0x0005
-#  endif // PBT_APMSTANDBY
-#  ifndef PBT_APMRESUMECRITICAL
-#   define  PBT_APMRESUMECRITICAL          0x0006
-#  endif // PBT_APMRESUMECRITICAL
-#  ifndef PBT_APMRESUMESUSPEND
-#   define PBT_APMRESUMESUSPEND            0x0007
-#  endif // PBT_APMRESUMESUSPEND
-#  ifndef PBT_APMRESUMESTANDBY
-#   define PBT_APMRESUMESTANDBY            0x0008
-#  endif // PBT_APMRESUMESTANDBY
-#  ifndef PBTF_APMRESUMEFROMFAILURE
-#   define PBTF_APMRESUMEFROMFAILURE       0x00000001
-#  endif // PBTF_APMRESUMEFROMFAILURE
-#  ifndef PBT_APMBATTERYLOW
-#   define PBT_APMBATTERYLOW               0x0009
-#  endif // PBT_APMBATTERYLOW
-#  ifndef PBT_APMPOWERSTATUSCHANGE
-#   define PBT_APMPOWERSTATUSCHANGE        0x000A
-#  endif // PBT_APMPOWERSTATUSCHANGE
-#  ifndef PBT_APMOEMEVENT
-#   define PBT_APMOEMEVENT                 0x000B
-#  endif // PBT_APMOEMEVENT
-#  ifndef PBT_APMRESUMEAUTOMATIC
-#   define PBT_APMRESUMEAUTOMATIC          0x0012
-#  endif // PBT_APMRESUMEAUTOMATIC
-# endif // _WIN32_WCE
-#endif // WINVER >= 0x0400
+/*
+	Implementor notes:
+
+	This class needs to get Windows messages.
+	The easiest way is to get them from a top level QWidget instance.
+	There was an attempt to use QApplication::winEventFilter(),
+	but - as its name says - this is a filter, so all messages to
+	all widgets go through it. So as a consequence, sleep() and wakeup()
+	are emited many times during one event.
+
+	Right now, there is a dummy window created just for SystemWatch.
+	This may seem to be an unnecesary waste of resources, but the example
+	above shows that too aggressive optimizations may hurt.
+	A possible solution "in between" would be to catch events in already
+	existing window (main window, probably)
+	and pass them (by using ugly casting) directly to processWinEvent()
+	But this would break the beauty of this tool.
+*/
 
 // -----------------------------------------------------------------------------
 // WinSystemWatch
 // -----------------------------------------------------------------------------
 
+class WinSystemWatch::MessageWindow : public QWidget
+{
+public:
+	MessageWindow(WinSystemWatch *parent)
+		: syswatch(parent) {
+		create();	// really create the window to enable messages
+	}
+
+	bool winEvent(MSG *m, long* result) {
+		if (syswatch->processWinEvent(m, result)) {
+			return true;
+		}
+		else {
+			return QWidget::winEvent(m, result);
+		}
+	}
+
+	WinSystemWatch *syswatch;
+};
+
+
+
 WinSystemWatch::WinSystemWatch() 
 {
+	d = new MessageWindow(this);
+}
+
+WinSystemWatch::~WinSystemWatch()
+{
+	delete d;
+	d = 0;
 }
 
 bool WinSystemWatch::processWinEvent(MSG *m, long* result)
 {
-	// NOTE: If you need another message type here, do not forget to add it to
-	// PsiApplication::winEventFilter()
-	
 	if(WM_POWERBROADCAST == m->message) {
 		switch (m->wParam) {
 			case PBT_APMSUSPEND:

@@ -9,9 +9,11 @@ class WinSystemWatch : public SystemWatch
 {
 public:
 	WinSystemWatch();
+	~WinSystemWatch();
 
-	// Pass WM_POWERBROADCAST and WM_QUERYENDSESSION 
-	// messages from QApplication::winFilterEvent() here
+private:
+	class MessageWindow;
+	MessageWindow *d;
 	bool processWinEvent(MSG *m, long* result);
 };
 
