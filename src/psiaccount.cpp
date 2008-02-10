@@ -3094,8 +3094,9 @@ void PsiAccount::actionSetMood()
 void PsiAccount::actionSetAvatar()
 {
 	while(1) {
-		if(PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString().isEmpty())
-			PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString() = QDir::homeDirPath();
+		if(PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString().isEmpty()) {
+			PsiOptions::instance()->setOption("options.ui.last-used-open-path", QDir::homeDirPath());
+		}
 		QString str = QFileDialog::getOpenFileName(0,tr("Choose a file"),PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString(), tr("Images (*.png *.xpm *.jpg *.PNG *.XPM *.JPG)"));
 		if(!str.isEmpty()) {
 			QFileInfo fi(str);
@@ -3103,7 +3104,7 @@ void PsiAccount::actionSetAvatar()
 				QMessageBox::critical(0, tr("Error"), tr("The file specified does not exist."));
 				continue;
 			}
-			PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString() = fi.dirPath();
+			PsiOptions::instance()->setOption("options.ui.last-used-open-path", fi.dirPath());
 			avatarFactory()->setSelfAvatar(str);
 		}
 		break;

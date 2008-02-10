@@ -189,12 +189,13 @@ void OptionsTabSound::setData(PsiCon *, QWidget *p)
 
 void OptionsTabSound::chooseSoundEvent(QAbstractButton* b)
 {
-	if(PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString().isEmpty())
-		PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString() = QDir::homeDirPath();
+	if(PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString().isEmpty()) {
+		PsiOptions::instance()->setOption("options.ui.last-used-open-path", QDir::homeDirPath());
+	}
 	QString str = QFileDialog::getOpenFileName(PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString(), tr("Sound (*.wav)"), parentWidget, "", tr("Choose a sound file"));
 	if(!str.isEmpty()) {
 		QFileInfo fi(str);
-		PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString() = fi.dirPath();
+		PsiOptions::instance()->setOption("options.ui.last-used-open-path", fi.dirPath());
 		modify_buttons_[b]->setText(str);
 		emit dataChanged();
 	}

@@ -585,7 +585,7 @@ FileRequestDlg::FileRequestDlg(const Jid &jid, PsiCon *psi, PsiAccount *pa, cons
 			return;
 		}
 		
-		PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString() = fi.dirPath();
+		PsiOptions::instance()->setOption("options.ui.last-used-open-path", fi.dirPath());
 		le_fname->setText(QDir::convertSeparators(fi.filePath()));
 		lb_size->setText(tr("%1 byte(s)").arg(fi.size())); // TODO: large file support
 	}
@@ -753,8 +753,9 @@ void FileRequestDlg::unblockWidgets()
 void FileRequestDlg::chooseFile()
 {
 	while(1) {
-		if(PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString().isEmpty())
-			PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString() = QDir::homeDirPath();
+		if(PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString().isEmpty()) {
+			PsiOptions::instance()->setOption("options.ui.last-used-open-path", QDir::homeDirPath());
+		}
 		QString str = QFileDialog::getOpenFileName(this, tr("Choose a file"), PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString(), tr("All files (*)"));
 		if(!str.isEmpty()) {
 			QFileInfo fi(str);
@@ -762,7 +763,7 @@ void FileRequestDlg::chooseFile()
 				QMessageBox::information(this, tr("Error"), tr("The file specified does not exist."));
 				continue;
 			}
-			PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString() = fi.dirPath();
+			PsiOptions::instance()->setOption("options.ui.last-used-open-path", fi.dirPath());
 			le_fname->setText(QDir::convertSeparators(fi.filePath()));
 			lb_size->setText(tr("%1 byte(s)").arg(fi.size())); // TODO: large file support
 		}
@@ -807,13 +808,14 @@ void FileRequestDlg::doStart()
 	}
 	else {
 		QString fname, savename;
-		if(PsiOptions::instance()->getOption("options.ui.last-used-save-path").toString().isEmpty())
-			PsiOptions::instance()->getOption("options.ui.last-used-save-path").toString() = QDir::homeDirPath();
+		if(PsiOptions::instance()->getOption("options.ui.last-used-save-path").toString().isEmpty()) {
+			PsiOptions::instance()->setOption("options.ui.last-used-save-path", QDir::homeDirPath());
+		}
 		fname = QFileDialog::getSaveFileName(this, tr("Save As"), QDir(PsiOptions::instance()->getOption("options.ui.last-used-save-path").toString()).filePath(d->fileName), tr("All files (*)"));
 		if(fname.isEmpty())
 			return;
 		QFileInfo fi(fname);
-		PsiOptions::instance()->getOption("options.ui.last-used-save-path").toString() = fi.dirPath();
+		PsiOptions::instance()->setOption("options.ui.last-used-save-path", fi.dirPath());
 		savename = fname + ".part";
 		fname = fi.fileName();
 

@@ -289,7 +289,7 @@ void HistoryDlg::doNext()
 void HistoryDlg::doSave()
 {
 	if(PsiOptions::instance()->getOption("options.ui.last-used-save-path").toString().isEmpty()) {
-		PsiOptions::instance()->getOption("options.ui.last-used-save-path").toString() = QDir::homeDirPath();
+		PsiOptions::instance()->setOption("options.ui.last-used-save-path", QDir::homeDirPath());
 	}
 
 	UserListItem *u = d->pa->findFirstRelevant(d->jid);
@@ -300,7 +300,7 @@ void HistoryDlg::doSave()
 	str = QFileDialog::getSaveFileName(this, tr("Export message history"), str, tr("Text files (*.txt);;All files (*.*)"));
 	if(!str.isEmpty()) {
 		QFileInfo fi(str);
-		PsiOptions::instance()->getOption("options.ui.last-used-save-path").toString() = fi.dirPath();
+		PsiOptions::instance()->setOption("options.ui.last-used-save-path", fi.dirPath());
 		exportHistory(str);
 	}
 }
