@@ -120,22 +120,21 @@ void StatusPreset::fromXml(const QDomElement &el)
 
 	setName(el.attribute("name"));
 	setMessage(el.text());
-	if (el.hasAttribute("priority")) 
+	if (el.hasAttribute("priority"))
 		setPriority(el.attribute("priority").toInt());
-	
+
 	XMPP::Status status;
 	status.setType(el.attribute("status", "away"));
 	setStatus(status.type());
- }
+}
 
- 
- 
-void StatusPreset::toOptions(OptionsTree *o) {
+void StatusPreset::toOptions(OptionsTree *o)
+{
 	QString base = o->mapPut("options.status.presets", name());
-	o->setOption(base+".message",message());
-	o->setOption(base+".status",XMPP::Status(status()).typeString());
-	o->setOption(base+".force-priority", priority().hasValue());
+	o->setOption(base + ".message", message());
+	o->setOption(base + ".status", XMPP::Status(status()).typeString());
+	o->setOption(base + ".force-priority", priority().hasValue());
 	if (priority().hasValue()) {
-		o->setOption(base+".priority", priority().value());
+		o->setOption(base + ".priority", priority().value());
 	}
 }

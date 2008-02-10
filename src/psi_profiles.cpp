@@ -1529,45 +1529,45 @@ bool OptionsMigration::fromFile(const QString &fname)
 
 void OptionsMigration::lateMigration()
 {
-	QStringList allSetOptions = PsiOptions::instance()->allOptionNames();
-
-	bool migrated=false;
-	foreach(QString opt, allSetOptions) {
-		if (opt.startsWith("options.status.presets.")) {
-			migrated = true;
+	foreach(QString opt, PsiOptions::instance()->allOptionNames()) {
+		if (opt.startsWith("options.status.presets.") ||
+		    opt.startsWith("options.iconsets.service-status.") ||
+		    opt.startsWith("options.iconsets.custom-status."))
+		{
+			return;
 		}
 	}
-	if (!migrated) {
-		PsiOptions *o = PsiOptions::instance();
-		//QMap<QString, QString> serviceRosterIconset;
-		QMapIterator<QString, QString> iSRI(lateMigrationData.serviceRosterIconset);
- 		while (iSRI.hasNext()) {
-			iSRI.next();
-			QString base = o->mapPut("options.iconsets.service-status", iSRI.key());
-			o->setOption(base+".iconset", iSRI.value());
-		}
-	
-		//QMap<QString, QString> customRosterIconset;
-		int idx=0;
-		QMapIterator<QString, QString> iCRI(lateMigrationData.customRosterIconset);
- 		while (iCRI.hasNext()) {
-			iCRI.next();
-			QString base = "options.iconsets.custom-status" ".a" + QString::number(idx++);
-			o->setOption(base+".regexp", iCRI.key());
-			o->setOption(base+".iconset", iCRI.value());
-		}
 
-		//QMap<QString,StatusPreset> sp; // Status message presets.
-		foreach (StatusPreset sp, lateMigrationData.sp) {
-			sp.toOptions(o);
-		}
-		//QMap< QString, QList<ToolbarPrefs> > toolbars;
-		idx = 0;
-		QList<ToolbarPrefs> tbs = lateMigrationData.toolbars["mainWin"];
-		foreach(ToolbarPrefs tb, tbs) {
-			QString base = "options.ui.contactlist.toolbars" ".a" + QString::number(idx++);
-			PsiToolBar::structToOptions(base, &tb);
-		}
+	PsiOptions *o = PsiOptions::instance();
+	// QMap<QString, QString> serviceRosterIconset;
+	QMapIterator<QString, QString> iSRI(lateMigrationData.serviceRosterIconset);
+	while (iSRI.hasNext()) {
+		iSRI.next();
+		QString base = o->mapPut("options.iconsets.service-status", iSRI.key());
+		o->setOption(base + ".iconset", iSRI.value());
+	}
+
+	// QMap<QString, QString> customRosterIconset;
+	int idx = 0;
+	QMapIterator<QString, QString> iCRI(lateMigrationData.customRosterIconset);
+	while (iCRI.hasNext()) {
+		iCRI.next();
+		QString base = "options.iconsets.custom-status" ".a" + QString::number(idx++);
+		o->setOption(base + ".regexp", iCRI.key());
+		o->setOption(base + ".iconset", iCRI.value());
+	}
+
+	// QMap<QString,StatusPreset> sp; // Status message presets.
+	foreach(StatusPreset sp, lateMigrationData.sp) {
+		sp.toOptions(o);
+	}
+
+	// QMap< QString, QList<ToolbarPrefs> > toolbars;
+	idx = 0;
+	QList<ToolbarPrefs> tbs = lateMigrationData.toolbars["mainWin"];
+	foreach(ToolbarPrefs tb, tbs) {
+		QString base = "options.ui.contactlist.toolbars" ".a" + QString::number(idx++);
+		PsiToolBar::structToOptions(base, &tb);
 	}
 }
 
