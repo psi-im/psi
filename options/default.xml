@@ -382,8 +382,8 @@
 			</adhoc-remote-control>
 		</external-control>
 		<iconsets>
-			<service-status>
-			</service-status>
+			<custom-status/>
+			<service-status/>
 			<emoticons type="QStringList" >
 				<item>default</item>
 			</emoticons>
@@ -421,8 +421,7 @@
 				<use-offline type="bool">false</use-offline>
 			</auto-away>
 			<last-message type="QString"/>
-			<presets>
-			</presets>
+			<presets/>
 		</status>
 		<subscriptions>
 			<automatically-allow-authorization type="bool">false</automatically-allow-authorization>
