@@ -366,9 +366,12 @@ void GAdvancedWidget::doFlash(bool on)
 
 void GAdvancedWidget::changeEvent(QEvent *event)
 {
-	Q_UNUSED(event);
-	if (d->parentWidget->isActiveWindow()) {
-		doFlash(false);
+	if (event->type() == QEvent::ActivationChange ||
+	    event->type() == QEvent::WindowStateChange)
+	{
+		if (d->parentWidget->isActiveWindow()) {
+			doFlash(false);
+		}
 	}
 }
 
