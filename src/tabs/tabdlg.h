@@ -84,7 +84,7 @@ protected:
 
 	// reimplemented
 	void closeEvent(QCloseEvent*);
-	void changeEvent(QEvent *event);	// also for delegate
+	void changeEvent(QEvent *event);
 	void resizeEvent(QResizeEvent *);
 	void dragEnterEvent(QDragEnterEvent *event);
 	void dropEvent(QDropEvent *event);

@@ -78,6 +78,9 @@ protected:
 	virtual void setJid(const Jid&);
 	PsiAccount* account() const;
 
+	// reimplemented
+	void changeEvent(QEvent* e);
+
 private:
 	Jid jid_;
 	PsiAccount *pa_;

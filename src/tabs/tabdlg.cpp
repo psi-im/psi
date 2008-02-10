@@ -630,13 +630,16 @@ void TabDlg::mouseReleaseEvent(QMouseEvent *event) {
 	}
 }
 
-void TabDlg::changeEvent(QEvent *event) {
-	if (event->type() == QEvent::ActivationChange || event->type() == QEvent::WindowStateChange) {
-		// if we're bringing it to the front, get rid of the '*' if necessary
+void TabDlg::changeEvent(QEvent *event)
+{
+	if (event->type() == QEvent::ActivationChange ||
+	    event->type() == QEvent::WindowStateChange)
+	{
+		if (tabWidget_->currentPage()) {
+			QCoreApplication::sendEvent(tabWidget_->currentPage(), event);
+		}
+
 		if (isActiveWindow()) {
-			if (tabWidget_->currentPage()) {
-				qApp->sendEvent(tabWidget_->currentPage(), event);
-			}
 			activated();
 		}
 	}
@@ -644,7 +647,8 @@ void TabDlg::changeEvent(QEvent *event) {
 	// delegate if possible, otherwise use default
 	if (delegate_ && delegate_->changeEvent(this, event)) {
 		return;
-	} else {
+	}
+	else {
 		AdvancedWidget<QWidget>::changeEvent(event);
 	}
 }

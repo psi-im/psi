@@ -305,18 +305,6 @@ void ChatDlg::showEvent(QShowEvent *)
 	setSelfDestruct(0);
 }
 
-void ChatDlg::changeEvent(QEvent *event)
-{
-	TabbableWidget::changeEvent(event);
-	
-	if (event->type() == QEvent::ActivationChange || event->type() == QEvent::WindowStateChange) {
-		// if we're bringing it to the front, get rid of the '*' if necessary
-		if (isActiveTab()) {
-			activated();
-		}
-	}
-}
-
 void ChatDlg::logSelectionChanged()
 {
 #ifdef Q_WS_MAC

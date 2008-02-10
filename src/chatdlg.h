@@ -96,7 +96,6 @@ protected:
 	void resizeEvent(QResizeEvent *);
 	void hideEvent(QHideEvent *);
 	void showEvent(QShowEvent *);
-	void changeEvent(QEvent *event);
 	void dropEvent(QDropEvent* event);
 	void dragEnterEvent(QDragEnterEvent* event);
 	bool eventFilter(QObject *obj, QEvent *event);

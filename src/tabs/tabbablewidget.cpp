@@ -165,3 +165,19 @@ PsiAccount* TabbableWidget::account() const
 {
 	return pa_;
 }
+
+void TabbableWidget::changeEvent(QEvent* event)
+{
+	AdvancedWidget<QWidget>::changeEvent(event);
+
+	if (event->type() == QEvent::ActivationChange ||
+	    event->type() == QEvent::WindowStateChange)
+	{
+		if (isActiveTab()) {
+			activated();
+		}
+		else {
+			deactivated();
+		}
+	}
+}
