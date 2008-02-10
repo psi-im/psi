@@ -36,6 +36,7 @@
 #include <QVBoxLayout>
 #include <QMenu>
 #include <QMenuItem>
+#include <QtAlgorithms>
 
 #ifdef Q_WS_WIN
 #include <windows.h>
@@ -64,11 +65,11 @@
 using namespace XMPP;
 
 // deletes submenus in a popupmenu
-/*void qpopupmenuclear(QMenu *p)
+/*void qpopupmenuclear(QMenu* p)
 {
 	while(p->count()) {
-		QMenuItem *item = p->findItem(p->idAt(0));
-		QMenu *popup = item->menu();
+		QMenuItem* item = p->findItem(p->idAt(0));
+		QMenu* popup = item->menu();
 		p->removeItemAt(0);
 
 		if(popup)
@@ -87,28 +88,28 @@ public:
 	Private(PsiCon *, MainWin *);
 	~Private();
 
-	QVBoxLayout *vb_main;
+	QVBoxLayout* vb_main;
 	bool onTop, asTool;
-	QMenu *mainMenu, *statusMenu, *optionsMenu, *toolsMenu;
+	QMenu* mainMenu, *statusMenu, *optionsMenu, *toolsMenu;
 	int sbState;
 	QString nickname;
-	PsiTrayIcon *tray;
-	QMenu *trayMenu;
+	PsiTrayIcon* tray;
+	QMenu* trayMenu;
 	QString statusTip;
 
-	PopupAction *optionsButton, *statusButton;
-	IconActionGroup *statusGroup;
-	EventNotifierAction *eventNotifier;
-	PsiCon *psi;
-	MainWin *mainWin;
+	PopupAction* optionsButton, *statusButton;
+	IconActionGroup* statusGroup;
+	EventNotifierAction* eventNotifier;
+	PsiCon* psi;
+	MainWin* mainWin;
 
-	QLineEdit *searchText;
-	QToolButton *searchPb;
-	QWidget *searchWidget;
+	QLineEdit* searchText;
+	QToolButton* searchPb;
+	QWidget* searchWidget;
 
-	QSignalMapper *statusMapper;
+	QSignalMapper* statusMapper;
 
-	PsiIcon *nextAnim;
+	PsiIcon* nextAnim;
 	int nextAmount;
 
 	QMap<QAction *, int> statusActions;
@@ -118,11 +119,11 @@ public:
 	bool filterActive, prefilterShowOffline, prefilterShowAway;
 
 	void registerActions();
-	IconAction *getAction( QString name );
-	void updateMenu(QStringList actions, QMenu *menu);
+	IconAction* getAction( QString name );
+	void updateMenu(QStringList actions, QMenu* menu);
 };
 
-MainWin::Private::Private(PsiCon *_psi, MainWin *_mainWin) : psi(_psi), mainWin(_mainWin)
+MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) : psi(_psi), mainWin(_mainWin)
 {
 
 	statusGroup   = (IconActionGroup *)getAction("status_all");
@@ -146,7 +147,7 @@ MainWin::Private::~Private()
 void MainWin::Private::registerActions()
 {
 	struct {
-		const char *name;
+		const char* name;
 		int id;
 	} statuslist[] = {
 		{ "status_chat",      STATUS_CHAT      },
@@ -162,7 +163,7 @@ void MainWin::Private::registerActions()
 	int i;
 	QString aName;
 	for ( i = 0; !(aName = QString(statuslist[i].name)).isEmpty(); i++ ) {
-		IconAction *action = getAction( aName );
+		IconAction* action = getAction( aName );
 		connect (action, SIGNAL(activated()), statusMapper, SLOT(map()));
 
 		statusMapper->setMapping(action, statuslist[i].id);
@@ -175,18 +176,18 @@ void MainWin::Private::registerActions()
 	QStringList names = actions.actions();
 	QStringList::Iterator it = names.begin();
 	for ( ; it != names.end(); ++it ) {
-		IconAction *action = actions.action( *it );
+		IconAction* action = actions.action( *it );
 		if ( action ) {
 			mainWin->registerAction( action );
 		}
 	}
 }
 
-IconAction *MainWin::Private::getAction( QString name )
+IconAction* MainWin::Private::getAction( QString name )
 {
 	PsiActionList::ActionsType type = PsiActionList::ActionsType( PsiActionList::Actions_MainWin | PsiActionList::Actions_Common );
 	ActionList actions = psi->actionList()->suitableActions( type );
-	IconAction *action = actions.action( name );
+	IconAction* action = actions.action( name );
 
 	if ( !action ) {
 		qWarning("MainWin::Private::getAction(): action %s not found!", name.latin1());
@@ -197,11 +198,11 @@ IconAction *MainWin::Private::getAction( QString name )
 	return action;
 }
 
-void MainWin::Private::updateMenu(QStringList actions, QMenu *menu)
+void MainWin::Private::updateMenu(QStringList actions, QMenu* menu)
 {
 	menu->clear();
 
-	IconAction *action;
+	IconAction* action;
 	foreach (QString name, actions) {
 		// workind around Qt/X11 bug, which displays
 		// actions's text and the separator bar in Qt 4.1.1
@@ -211,7 +212,7 @@ void MainWin::Private::updateMenu(QStringList actions, QMenu *menu)
 		}
 
 		if ( name == "diagnostics" ) {
-			QMenu *diagMenu = new QMenu(mainWin);
+			QMenu* diagMenu = new QMenu(mainWin);
 			menu->insertItem(tr("Diagnostics"), diagMenu);
 			getAction("help_diag_qcaplugin")->addTo(diagMenu);
 			getAction("help_diag_qcakeystore")->addTo(diagMenu);
@@ -240,7 +241,7 @@ void MainWin::Private::updateMenu(QStringList actions, QMenu *menu)
 #define TOOLW_FLAGS ((Qt::WFlags) 0)
 #endif
 
-MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
+MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 :AdvancedWidget<Q3MainWindow>(0, (_onTop ? Qt::WStyle_StaysOnTop : Qt::Widget) | (_asTool ? (Qt::WStyle_Tool |TOOLW_FLAGS) : Qt::Widget))
 //: Q3MainWindow(0,name,(_onTop ? Qt::WStyle_StaysOnTop : Qt::Widget) | (_asTool ? (Qt::WStyle_Tool |TOOLW_FLAGS) : Qt::Widget))
 {
@@ -274,7 +275,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	d->old_trayicon = PsiOptions::instance()->getOption("options.ui.systemtray.use-old").toBool();
 #endif
 
-	QWidget *center = new QWidget (this, "Central widget");
+	QWidget* center = new QWidget (this, "Central widget");
 	setCentralWidget ( center );
 
 	d->vb_main = new QVBoxLayout(center);
@@ -345,7 +346,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 
 	// Mac-only menus
 #ifdef Q_WS_MAC
-	QMenu *mainMenu = new QMenu(this);
+	QMenu* mainMenu = new QMenu(this);
 	mainMenuBar()->insertItem(tr("Menu"), mainMenu);
 	d->getAction("menu_options")->addTo(mainMenu);
 	d->getAction("menu_quit")->addTo(mainMenu);
@@ -361,7 +362,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 
 	mainMenuBar()->insertItem(tr("Status"), d->statusMenu);
 
-	QMenu *viewMenu = new QMenu(this);
+	QMenu* viewMenu = new QMenu(this);
 	mainMenuBar()->insertItem(tr("View"), viewMenu);
 	d->getAction("show_offline")->addTo(viewMenu);
 	if (PsiOptions::instance()->getOption("options.ui.menu.view.show-away").toBool()) {
@@ -379,7 +380,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	mainMenuBar()->insertItem(tr("Tools"), d->toolsMenu);
 	connect(d->toolsMenu, SIGNAL(aboutToShow()), SLOT(buildToolsMenu()));
 
-	QMenu *helpMenu = new QMenu(this);
+	QMenu* helpMenu = new QMenu(this);
 	mainMenuBar()->insertItem(tr("Help"), helpMenu);
 	d->getAction("help_readme")->addTo (helpMenu);
 	d->getAction("help_tip")->addTo (helpMenu);
@@ -389,7 +390,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	d->getAction("help_online_home")->addTo (helpMenu);
 	d->getAction("help_psi_muc")->addTo (helpMenu);
 	d->getAction("help_report_bug")->addTo (helpMenu);
-	QMenu *diagMenu = new QMenu(this);
+	QMenu* diagMenu = new QMenu(this);
 	helpMenu->insertItem(tr("Diagnostics"), diagMenu);
 	d->getAction("help_diag_qcaplugin")->addTo (diagMenu);
 	d->getAction("help_diag_qcakeystore")->addTo (diagMenu);
@@ -402,8 +403,8 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 #endif
 	d->optionsButton->setMenu( d->optionsMenu );
 	d->statusButton->setMenu( d->statusMenu );
-	
-	buildinitialToolbars();
+
+	buildToolbars();
 
 	connect(qApp, SIGNAL(dockActivated()), SLOT(dockActivated()));
 
@@ -420,25 +421,20 @@ MainWin::~MainWin()
 		d->tray = 0;
 	}
 
-	//saveToolbarsPositions();
-	// need to find some workaround to case, when you're logging off. in that case
-	// toobars are all disabled, and when you start psi again you need to enable
-	// your toolbars
-
 	delete d;
 }
 
-void MainWin::registerAction( IconAction *action )
+void MainWin::registerAction( IconAction* action )
 {
 	char activated[] = SIGNAL( activated() );
 	char toggled[]   = SIGNAL( toggled(bool) );
 	char setChecked[]     = SLOT( setChecked(bool) );
 
 	struct {
-		const char *name;
-		const char *signal;
-		QObject *receiver;
-		const char *slot;
+		const char* name;
+		const char* signal;
+		QObject* receiver;
+		const char* slot;
 	} actionlist[] = {
 		{ "show_offline", toggled, cvlist, SLOT( setShowOffline(bool) ) },
 		{ "show_away",    toggled, cvlist, SLOT( setShowAway(bool) ) },
@@ -508,10 +504,10 @@ void MainWin::registerAction( IconAction *action )
 	}
 
 	struct {
-		const char *name;
-		QObject *sender;
-		const char *signal;
-		const char *slot;
+		const char* name;
+		QObject* sender;
+		const char* signal;
+		const char* slot;
 		bool checked;
 	} reverseactionlist[] = {
 		{ "show_away",    cvlist, SIGNAL( showAway(bool) ), setChecked, cvlist->isShowAway()},
@@ -537,7 +533,7 @@ void MainWin::registerAction( IconAction *action )
 	}
 }
 
-PsiCon *MainWin::psiCon() const
+PsiCon* MainWin::psiCon() const
 {
 	return d->psi;
 }
@@ -623,7 +619,7 @@ void MainWin::activatedStatusAction(int id)
 {
 	QObjectList l = d->statusGroup->queryList( "IconAction" );
 	for (QObjectList::Iterator it = l.begin() ; it != l.end(); ++it) {
-		IconAction *action = (IconAction *)(*it);
+		IconAction* action = (IconAction *)(*it);
 		action->setChecked ( d->statusActions[action] == id );
 	}
 
@@ -639,35 +635,17 @@ QMenuBar* MainWin::mainMenuBar() const
 #endif
 }
 
-void MainWin::addToolbar(const QString &base)
+void MainWin::buildToolbars()
 {
-	PsiToolBar *tb = PsiToolBar::fromOptions(base, this, d->psi, PsiActionList::Actions_MainWin);
-	
-	//connect( tb, SIGNAL( registerAction( IconAction * ) ), SLOT( registerAction( IconAction * ) ) );
-	
-	toolbars << tb;
-}
+	setUpdatesEnabled(false);
+	qDeleteAll(toolbars_);
+	toolbars_.clear();
 
-
-void MainWin::buildinitialToolbars()
-{
-	QStringList bases = PsiOptions::instance()->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
-	foreach(QString base, bases) {
-		addToolbar(base);
+	foreach(QString base, PsiOptions::instance()->getChildOptionNames("options.ui.contactlist.toolbars", true, true)) {
+		PsiToolBar* tb = PsiToolBar::fromOptions(base, this, d->psi, PsiActionList::Actions_MainWin);
+		toolbars_ << tb;
 	}
-}
-
-
-void MainWin::saveToolbarsPositions()
-{
-/*
-	LEGOPTFIXME
-	for (int i = 0; i < toolbars.count(); i++) {
-		Options::ToolbarPrefs &tbPref = LEGOPTS.toolbars["mainWin"][i];
-		getLocation ( toolbars.at(i), tbPref.dock, tbPref.index, tbPref.nl, tbPref.extraOffset );
-		tbPref.on = toolbars.at(i)->isVisible();
-	}
-*/
+	setUpdatesEnabled(true);
 }
 
 bool MainWin::showDockMenu(const QPoint &)
@@ -678,7 +656,7 @@ bool MainWin::showDockMenu(const QPoint &)
 void MainWin::buildOptionsMenu()
 {
 	// help menu
-	QMenu *helpMenu = new QMenu(d->optionsMenu);
+	QMenu* helpMenu = new QMenu(d->optionsMenu);
 
 	QStringList actions;
 	actions << "help_readme"
@@ -734,7 +712,7 @@ void MainWin::buildToolsMenu()
 	d->updateMenu(actions, d->toolsMenu);
 }
 	
-void MainWin::buildGeneralMenu(QMenu *menu)
+void MainWin::buildGeneralMenu(QMenu* menu)
 {
 	// options menu
 	QStringList actions;
@@ -757,7 +735,7 @@ void MainWin::buildGeneralMenu(QMenu *menu)
 
 void MainWin::actReadmeActivated ()
 {
-	ShowTextDlg *w = new ShowTextDlg(":/README");
+	ShowTextDlg* w = new ShowTextDlg(":/README");
 	w->setWindowTitle(CAP(tr("ReadMe")));
 	w->show();
 }
@@ -779,7 +757,7 @@ void MainWin::actOnlineHomeActivated ()
 
 void MainWin::actJoinPsiMUCActivated()
 {
-	PsiAccount *account = d->psi->contactList()->defaultAccount();
+	PsiAccount* account = d->psi->contactList()->defaultAccount();
 	if(!account) {
 		return;
 	}
@@ -794,7 +772,7 @@ void MainWin::actBugReportActivated ()
 
 void MainWin::actAboutActivated ()
 {
-	AboutDlg *about = new AboutDlg();
+	AboutDlg* about = new AboutDlg();
 	about->show();
 }
 
@@ -811,7 +789,7 @@ void MainWin::actAboutQtActivated ()
 void MainWin::actDiagQCAPluginActivated()
 {
 	QString dtext = QCA::pluginDiagnosticText();
-	ShowTextDlg *w = new ShowTextDlg(dtext, true, false, this);
+	ShowTextDlg* w = new ShowTextDlg(dtext, true, false, this);
 	w->setWindowTitle(CAP(tr("Security Plugins Diagnostic Text")));
 	w->resize(560, 240);
 	w->show();
@@ -820,7 +798,7 @@ void MainWin::actDiagQCAPluginActivated()
 void MainWin::actDiagQCAKeyStoreActivated()
 {
 	QString dtext = QCA::KeyStoreManager::diagnosticText();
-	ShowTextDlg *w = new ShowTextDlg(dtext, true, false, this);
+	ShowTextDlg* w = new ShowTextDlg(dtext, true, false, this);
 	w->setWindowTitle(CAP(tr("Key Storage Diagnostic Text")));
 	w->resize(560, 240);
 	w->show();
@@ -836,7 +814,7 @@ void MainWin::actPublishTuneActivated (bool state)
 	PsiOptions::instance()->setOption("options.extended-presence.tune.publish",state);
 }
 
-void MainWin::activatedAccOption(PsiAccount *pa, int x)
+void MainWin::activatedAccOption(PsiAccount* pa, int x)
 {
 	if(x == 0) {
 		pa->openAddUserDlg();
@@ -887,7 +865,7 @@ void MainWin::decorateButton(int status)
 	// update the 'change status' buttons
 	QObjectList l = d->statusGroup->queryList( "IconAction" );
 	for (QObjectList::Iterator it = l.begin() ; it != l.end(); ++it) {
-		IconAction *action = (IconAction *)(*it);
+		IconAction* action = (IconAction *)(*it);
 		action->setChecked ( d->statusActions[action] == status );
 	}
 
@@ -937,7 +915,7 @@ void MainWin::tryCloseProgram()
 	}
 }
 
-void MainWin::closeEvent(QCloseEvent *e)
+void MainWin::closeEvent(QCloseEvent* e)
 {
 #ifdef Q_WS_MAC
 	trayHide();
@@ -960,7 +938,7 @@ void MainWin::closeEvent(QCloseEvent *e)
 #endif
 }
 
-void MainWin::keyPressEvent(QKeyEvent *e)
+void MainWin::keyPressEvent(QKeyEvent* e)
 {
 #ifdef Q_WS_MAC
 	bool allowed = true;
@@ -993,7 +971,7 @@ void MainWin::keyPressEvent(QKeyEvent *e)
 
 #ifdef Q_WS_WIN
 #include <windows.h>
-bool MainWin::winEvent(MSG *msg, long *result)
+bool MainWin::winEvent(MSG* msg, long* result)
 {
 	if (d->asTool && msg->message == WM_SYSCOMMAND && msg->wParam == SC_MINIMIZE) {
 		hide();	// minimized toolwindows look bad on Windows, so let's just hide it instead
@@ -1059,7 +1037,7 @@ void MainWin::toggleVisible()
 	}
 }
 
-void MainWin::setTrayToolTip(const Status &status, bool)
+void MainWin::setTrayToolTip(const Status& status, bool)
 {
 	if (!d->tray) {
 		return;
@@ -1130,7 +1108,7 @@ void MainWin::trayHide()
 	hide();
 }
 
-void MainWin::updateReadNext(PsiIcon *anim, int amount)
+void MainWin::updateReadNext(PsiIcon* anim, int amount)
 {
 	d->nextAnim = anim;
 	if(anim == 0) {
@@ -1251,7 +1229,7 @@ void MainWin::searchClearClicked()
  * Called when the contactview has a keypress.
  * Starts the search/filter process
  */ 
-void MainWin::searchTextStarted(QString const &text)
+void MainWin::searchTextStarted(QString const& text)
 {
 	d->searchWidget->setVisible(true);
 	d->searchText->setText(d->searchText->text() + text);
@@ -1263,7 +1241,7 @@ void MainWin::searchTextStarted(QString const &text)
  * Called when the search input is changed.
  * Updates the search.
  */ 
-void MainWin::searchTextEntered(QString const &text)
+void MainWin::searchTextEntered(QString const& text)
 {
 	if (!d->filterActive)
 	{
@@ -1352,8 +1330,8 @@ void MainWin::showNoFocus()
 
 	if ( children() ) {
 		QObjectListIt it(*children());
-		register QObject *object;
-		QWidget *widget;
+		register QObject* object;
+		QWidget* widget;
 		while ( it ) {				// show all widget children
 			object = it.current();		//   (except popups and other toplevels)
 			++it;

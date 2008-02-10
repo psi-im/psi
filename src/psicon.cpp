@@ -1078,9 +1078,11 @@ void PsiCon::slotApplyOptions()
 	if (!PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool()) {
 		// check if all toolbars are disabled
 		bool toolbarsVisible = false;
-		QStringList bases = o->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
-		foreach(QString base, bases) {
-			toolbarsVisible = toolbarsVisible || o->getOption( base + ".visible").toBool();
+		foreach(QString base, o->getChildOptionNames("options.ui.contactlist.toolbars", true, true)) {
+			if (o->getOption( base + ".visible").toBool()) {
+				toolbarsVisible = true;
+				break;
+			}
 		}
 
 		// Check whether it is legal to disable the menubar
@@ -1098,6 +1100,7 @@ void PsiCon::slotApplyOptions()
 	// mainwin stuff
 	d->mainwin->setWindowOpts(PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool(), (PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool()));
 	d->mainwin->setUseDock(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool());
+	d->mainwin->buildToolbars();
 
 	// notify about options change
 	emit emitOptionsUpdate();
@@ -1419,12 +1422,6 @@ void PsiCon::doWakeup()
 		}
 	}
 }
-
-void PsiCon::addToolbar(const QString &base)
-{
-	d->mainwin->addToolbar(base);
-}
-
 
 PsiActionList *PsiCon::actionList() const
 {

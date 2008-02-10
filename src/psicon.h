@@ -105,8 +105,6 @@ public:
 
 	PsiActionList *actionList() const;
 
-	void addToolbar(const QString &base);
-
 	IconSelectPopup *iconSelectPopup() const;
 	void processEvent(PsiEvent*, ActivationType activationType);
 

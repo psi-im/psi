@@ -56,14 +56,14 @@ public:
 	void setWindowOpts(bool onTop, bool asTool);
 	void setUseDock(bool);
 
+	void buildToolbars();
+
 	// evil stuff! remove ASAP!!
 	QStringList actionList;
 	QMap<QString, QAction*> actions;
 
 	ContactView *cvlist;
-	void addToolbar(const QString &base);
 
-	void saveToolbarsPositions();
 	PsiCon *psiCon() const;
 
 protected:
@@ -155,7 +155,6 @@ public slots:
 
 private:
 	void buildGeneralMenu(QMenu *);
-	void buildinitialToolbars();
 	QString numEventsString(int) const;
 
 	bool askQuit();
@@ -167,7 +166,7 @@ private:
 	class Private;
 	Private *d;
 	friend class Private;
-	QList<PsiToolBar*> toolbars;
+	QList<PsiToolBar*> toolbars_;
 };
 
 #endif
