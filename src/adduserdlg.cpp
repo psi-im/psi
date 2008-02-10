@@ -83,7 +83,9 @@ AddUserDlg::AddUserDlg(const QStringList &services, const QStringList &names, co
 
 	QString str = tr("<None>");
 	cb_group->insertItem(str);
-	cb_group->insertStringList(groups);
+	QStringList temp=groups;
+	temp.sort();
+	cb_group->insertStringList(temp);
 	str = ContactView::tr("Hidden");
 	if(!groups.contains(str))
 		cb_group->insertItem(str);
