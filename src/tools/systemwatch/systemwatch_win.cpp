@@ -23,6 +23,11 @@
 #include <QWidget>
 #include <windows.h>
 
+// workaround for the very old MinGW version bundled with Qt
+#ifndef PBT_APMSUSPEND
+#include <pbt.h>
+#endif
+
 /*
 	Implementor notes:
 
