@@ -18,13 +18,17 @@
  *
  */
 
+#include "varianttree.h"
+
 #include <QDomElement>
 #include <QDomDocument>
 #include <QDomDocumentFragment>
 #include <QKeySequence>
+#include <QtCrypto>
 
-#include "varianttree.h"
-
+// FIXME: Helpers from xmpp_xmlcommon.h would be very appropriate for
+// void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
+// void VariantTree::elementToVariant(const QVariant& var, QDomElement& e)
 
 QDomDocument *VariantTree::unknownsDoc=0;
 
@@ -434,6 +438,15 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
 		}
 		value = QVariant(QRect(x,y,width,height));
 	}
+	else if (type == "QByteArray") {
+		value = QByteArray();
+		for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
+			if (node.isText()) {
+				value = QCA::Base64().stringToArray(node.toText().data()).toByteArray();
+				break;
+			}
+		}
+	}
 	else { // Standard values
 		QVariant::Type varianttype;
 		bool known = true;
@@ -514,6 +527,10 @@ void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
 		QDomElement height_element = e.ownerDocument().createElement("height");
 		height_element.appendChild(e.ownerDocument().createTextNode(QString::number(rect.height())));
 		e.appendChild(height_element);
+	}
+	else if (type == "QByteArray") {
+		QDomText text = e.ownerDocument().createTextNode(QCA::Base64().arrayToString(var.toByteArray()));
+		e.appendChild(text);
 	}
 	else if (type == "QKeySequence") {
 		QKeySequence k = var.value<QKeySequence>();

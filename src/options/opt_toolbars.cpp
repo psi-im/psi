@@ -34,132 +34,12 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// PositionOptionsTabToolbars
-//----------------------------------------------------------------------------
-
-class PositionOptionsTabToolbars : public QDialog, public Ui::PositionToolbarUI
-{
-	Q_OBJECT
-public:
-	PositionOptionsTabToolbars(QWidget *parent, ToolbarPrefs *, int);
-	~PositionOptionsTabToolbars();
-
-	int n();
-	bool dirty;
-
-	bool eventFilter(QObject *watched, QEvent *e);
-
-signals:
-	void applyPressed();
-
-private slots:
-	void dataChanged();
-	void apply();
-
-private:
-	int id;
-	ToolbarPrefs *tb;
-};
-
-PositionOptionsTabToolbars::PositionOptionsTabToolbars(QWidget *parent, ToolbarPrefs *_tb, int _id)
-	: QDialog(parent)
-{
-	setupUi(this);
-	setModal(true);
-	tb = _tb;
-	id = _id;
-
-	connect(pb_ok, SIGNAL(clicked()), SLOT(apply()));
-	connect(pb_ok, SIGNAL(clicked()), SLOT(accept()));
-	connect(pb_apply, SIGNAL(clicked()), SLOT(apply()));
-	connect(pb_cancel, SIGNAL(clicked()), SLOT(reject()));
-
-	connect(cb_dock, SIGNAL(highlighted(int)), SLOT(dataChanged()));
-	sb_index->installEventFilter(this);
-	sb_extraOffset->installEventFilter(this);
-	connect(ck_nl, SIGNAL(toggled(bool)), SLOT(dataChanged()));
-
-	le_name->setText(tb->name);
-	if (tb->dock >= Qt::DockUnmanaged && tb->dock <= Qt::DockTornOff) {
-		cb_dock->setCurrentItem(tb->dock + Qt::DockMinimized - Qt::DockTornOff);
-	}
-	else {
-		cb_dock->setCurrentItem(tb->dock - Qt::DockTop);
-	}
-	sb_index->setValue(tb->index);
-	sb_extraOffset->setValue(tb->extraOffset);
-	ck_nl->setChecked(tb->nl);
-
-	dirty = false;
-	pb_apply->setEnabled(false);
-
-	resize(sizeHint());
-}
-
-PositionOptionsTabToolbars::~PositionOptionsTabToolbars()
-{
-}
-
-int PositionOptionsTabToolbars::n()
-{
-	return id;
-}
-
-void PositionOptionsTabToolbars::dataChanged()
-{
-	dirty = true;
-	pb_apply->setEnabled(true);
-}
-
-void PositionOptionsTabToolbars::apply()
-{
-	tb->dirty = true;
-	if (cb_dock->currentItem() >= 0 && cb_dock->currentItem() < 5) {
-		// Top, Bottom, Left, Right and Minimised
-		tb->dock = (Qt::ToolBarDock)(cb_dock->currentItem() + Qt::DockTop);
-	}
-	else {
-		// Unmanaged and TornOff
-		tb->dock = (Qt::ToolBarDock)(cb_dock->currentItem() - (Qt::DockMinimized - Qt::DockTornOff));
-	}
-
-	tb->index = sb_index->value();
-	tb->extraOffset = sb_extraOffset->value();
-	tb->nl = ck_nl->isChecked();
-
-	if (dirty)
-		emit applyPressed();
-	dirty = false;
-	pb_apply->setEnabled(false);
-}
-
-bool PositionOptionsTabToolbars::eventFilter(QObject *watched, QEvent *e)
-{
-	if (watched->inherits("QSpinBox") && e->type() == QEvent::KeyRelease)
-		dataChanged();
-	return false;
-}
-
-//----------------------------------------------------------------------------
 // OptionsTabToolbars
 //----------------------------------------------------------------------------
 
 class OptionsTabToolbars::Private
 {
 public:
-// 	struct ToolbarItem {
-// 		QString group;
-// 		int index;
-// 		ToolbarItem() {
-// 			group = "";
-// 			index = -1;
-// 		}
-// 		ToolbarItem( QString _w, int _i ) {
-// 			group = _w;
-// 			index = _i;
-// 		}
-// 	};
-
 	QMap<QString, ToolbarPrefs> toolbarsCurrent;
 	// hack: can't really assign real ids to new toolbars before apply
 	// So new toolbars will get "..%n" as name (is invalid in OptionsTree)
@@ -198,7 +78,7 @@ QWidget *OptionsTabToolbars::widget()
 	connect(d->pb_deleteToolbar, SIGNAL(clicked()), SLOT(toolbarDelete()));
 	connect(d->cb_toolbars, SIGNAL(activated(int)), SLOT(toolbarSelectionChanged(int)));
 	connect(d->le_toolbarName, SIGNAL(textChanged(const QString &)), SLOT(toolbarNameChanged()));
-	connect(d->pb_toolbarPosition, SIGNAL(clicked()), SLOT(toolbarPosition()));
+	// connect(d->pb_toolbarPosition, SIGNAL(clicked()), SLOT(toolbarPosition()));
 	connect(d->tb_up, SIGNAL(clicked()), SLOT(toolbarActionUp()));
 	connect(d->tb_down, SIGNAL(clicked()), SLOT(toolbarActionDown()));
 	connect(d->tb_right, SIGNAL(clicked()), SLOT(toolbarAddAction()));
@@ -206,7 +86,7 @@ QWidget *OptionsTabToolbars::widget()
 
 	connect(d->ck_toolbarOn, SIGNAL(toggled(bool)), SLOT(toolbarDataChanged()));
 	connect(d->ck_toolbarLocked, SIGNAL(toggled(bool)), SLOT(toolbarDataChanged()));
-	connect(d->ck_toolbarStretch, SIGNAL(toggled(bool)), SLOT(toolbarDataChanged()));
+	// connect(d->ck_toolbarStretch, SIGNAL(toggled(bool)), SLOT(toolbarDataChanged()));
 	connect(d->lw_selectedActions, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)), SLOT(selAct_selectionChanged(QListWidgetItem *)));
 	connect(d->tw_availActions, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)), SLOT(avaAct_selectionChanged(QTreeWidgetItem *)));
 
@@ -303,53 +183,14 @@ void OptionsTabToolbars::applyOptions()
 
 	PsiOptions *o = PsiOptions::instance();
 
+	PsiOptions::instance()->removeOption("options.ui.contactlist.toolbars", true);
+	QMap<QString, ToolbarPrefs>::Iterator it = p->toolbarsCurrent.begin();
+	for (; it != p->toolbarsCurrent.end(); ++it) {
+		PsiToolBar::structToOptions(it.data());
+	}
 
-	foreach(QString base, p->toolbarsDelete) {
-		o->removeOption(base, true);
-		// UI will auto updated by option change signal.
-	}
-	p->toolbarsDelete.clear();
-	foreach(QString base, p->toolbarsDirty) {
-		ToolbarPrefs tb = p->toolbarsCurrent[base];
-		// update options
-		PsiToolBar::structToOptions(base, &tb);
-		// UI will auto updated by option change signal.
-	}
 	p->toolbarsDirty.clear();
-
-	QStringList toolbarBases = o->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
-	int idx = 0;
-	foreach(QString pseudoBase, p->toolbarsNew.keys()) {
-		ToolbarPrefs tb = p->toolbarsNew[pseudoBase];
-
-		// get a real base
-		QString base;
-		do {
-			base = "options.ui.contactlist.toolbars" ".a" + QString::number(idx++);
-		}
-		while (toolbarBases.contains(base));
-		toolbarBases += base;
-		PsiToolBar::structToOptions(base, &tb);
-
-		// merge to current
-		p->toolbarsCurrent[base] = tb;
-		d->cb_toolbars->setItemData(d->cb_toolbars->findData(pseudoBase), base);
-		// update options
-		PsiToolBar::structToOptions(base, &tb);
-	}
 	p->toolbarsNew.clear();
-
-	/* old stuff
-		// get current toolbars' positions
-		QList<PsiToolBar*> toolbars = psi->toolbarList();
-		for (int i = 0; i < LEGOPTS.toolbars["mainWin"].count() && i < toolbars.count(); i++) {
-			//if ( toolbarPositionInProgress && posTbDlg->n() == (int)i )
-			//	continue;
-
-			Options::ToolbarPrefs &tbPref = LEGOPTS.toolbars["mainWin"][i];
-			//psi->getToolbarLocation(toolbars.at(i), tbPref.dock, tbPref.index, tbPref.nl, tbPref.extraOffset);
-		}
-	*/
 }
 
 void OptionsTabToolbars::restoreOptions()
@@ -368,11 +209,11 @@ void OptionsTabToolbars::restoreOptions()
 		tb.name = o->getOption(base + ".name").toString();
 		tb.on = o->getOption(base + ".visible").toBool();
 		tb.locked = o->getOption(base + ".locked").toBool();
-		tb.stretchable = o->getOption(base + ".stretchable").toBool();
+		// tb.stretchable = o->getOption(base + ".stretchable").toBool();
 		tb.dock = (Qt::Dock)o->getOption(base + ".dock.position").toInt(); //FIXME
-		tb.index = o->getOption(base + ".dock.index").toInt();
+		// tb.index = o->getOption(base + ".dock.index").toInt();
 		tb.nl = o->getOption(base + ".dock.nl").toBool();
-		tb.extraOffset = o->getOption(base + ".dock.extra-offset").toInt();
+		// tb.extraOffset = o->getOption(base + ".dock.extra-offset").toInt();
 		tb.keys = o->getOption(base + ".actions").toStringList();
 
 		p->toolbarsCurrent[base] = tb;
@@ -417,13 +258,13 @@ void OptionsTabToolbars::toolbarAdd()
 	while (!ok);
 	tb.on = false;
 	tb.locked = false;
-	tb.stretchable = false;
+	// tb.stretchable = false;
 	tb.keys.clear();
 
 	tb.dock = Qt::DockTop;
-	tb.index = i;
+	// tb.index = i;
 	tb.nl = true;
-	tb.extraOffset = 0;
+	// tb.extraOffset = 0;
 
 	tb.dirty = true;
 
@@ -509,10 +350,10 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 	LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
 	bool enable = (item == -1) ? false : true;
 	d->le_toolbarName->setEnabled(enable);
-	d->pb_toolbarPosition->setEnabled(enable && moveable);
+	// d->pb_toolbarPosition->setEnabled(enable && moveable);
 	d->ck_toolbarOn->setEnabled(enable);
 	d->ck_toolbarLocked->setEnabled(enable && moveable);
-	d->ck_toolbarStretch->setEnabled(enable && moveable);
+	// d->ck_toolbarStretch->setEnabled(enable && moveable);
 	d->lw_selectedActions->setEnabled(enable && customizeable);
 	d->tw_availActions->setEnabled(enable && customizeable);
 	d->tb_up->setEnabled(enable && customizeable);
@@ -545,7 +386,7 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 	d->le_toolbarName->setText(tb.name);
 	d->ck_toolbarOn->setChecked(tb.on);
 	d->ck_toolbarLocked->setChecked(tb.locked || !moveable);
-	d->ck_toolbarStretch->setChecked(tb.stretchable);
+	// d->ck_toolbarStretch->setChecked(tb.stretchable);
 
 	{
 		// Fill the TreeWidget with toolbar-specific actions
@@ -771,7 +612,7 @@ void OptionsTabToolbars::toolbarDataChanged()
 	tb.name = d->le_toolbarName->text();
 	tb.on = d->ck_toolbarOn->isChecked();
 	tb.locked = d->ck_toolbarLocked->isChecked();
-	tb.stretchable = d->ck_toolbarStretch->isChecked();
+	// tb.stretchable = d->ck_toolbarStretch->isChecked();
 
 	if (p->toolbarsNew.contains(base)) {
 		p->toolbarsNew[base] = tb;

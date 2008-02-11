@@ -850,7 +850,7 @@ static ToolbarPrefs loadToolbarData( const QDomElement &e )
 	readEntry(tb_prefs, "name",		&tb.name);
 	readBoolEntry(tb_prefs, "on",		&tb.on);
 	readBoolEntry(tb_prefs, "locked",	&tb.locked);
-	readBoolEntry(tb_prefs, "stretchable",	&tb.stretchable);
+	// readBoolEntry(tb_prefs, "stretchable",	&tb.stretchable);
 	xmlToStringList(tb_prefs, "keys",	&tb.keys);
 
 	bool found3 = false;
@@ -877,9 +877,9 @@ static ToolbarPrefs loadToolbarData( const QDomElement &e )
 
 		tb.dock = dock;
 
-		readNumEntry(tb_position, "index",		&tb.index);
+		// readNumEntry(tb_position, "index",		&tb.index);
 		readBoolEntry(tb_position, "nl",		&tb.nl);
-		readNumEntry(tb_position, "extraOffset",	&tb.extraOffset);
+		// readNumEntry(tb_position, "extraOffset",	&tb.extraOffset);
 	}
 
 	return tb;
@@ -1283,7 +1283,6 @@ bool OptionsMigration::fromFile(const QString &fname)
 			migrateSizeEntry(p_sizes, "tabdlg", "options.ui.tabs.size");
 		}
 
-
 		QDomElement p_toolbars = findSubTag(p, "toolbars", &found);
 		if (found) {
 			QStringList goodTags;
@@ -1362,10 +1361,10 @@ bool OptionsMigration::fromFile(const QString &fname)
 					tb.name = QObject::tr("Event notifier");
 					tb.on = false;
 					tb.locked = true;
-					tb.stretchable = true;
+					// tb.stretchable = true;
 					tb.keys << "event_notifier";
 					tb.dock  = Qt::DockBottom;
-					tb.index = 0;
+					// tb.index = 0;
 					lateMigrationData.toolbars["mainWin"].append(tb);
 				}
 			}
@@ -1563,11 +1562,9 @@ void OptionsMigration::lateMigration()
 	}
 
 	// QMap< QString, QList<ToolbarPrefs> > toolbars;
-	idx = 0;
-	QList<ToolbarPrefs> tbs = lateMigrationData.toolbars["mainWin"];
-	foreach(ToolbarPrefs tb, tbs) {
-		QString base = "options.ui.contactlist.toolbars" ".a" + QString::number(idx++);
-		PsiToolBar::structToOptions(base, &tb);
+	PsiOptions::instance()->removeOption("options.ui.contactlist.toolbars", true);
+	foreach(ToolbarPrefs tb, lateMigrationData.toolbars["mainWin"]) {
+		PsiToolBar::structToOptions(tb);
 	}
 }
 

@@ -74,6 +74,7 @@ public:
 
 	void hide();
 	void show();
+	void updateVisibility();
 
 	virtual IconAction *copy() const;
 	virtual EventNotifierAction &operator=( const EventNotifierAction & );

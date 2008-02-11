@@ -34,9 +34,9 @@ public:
 	enum ActionsType {
 		Actions_Common    = (1 << 0),
 		Actions_MainWin   = (1 << 1),
-		Actions_Message   = (1 << 2),
-		Actions_Chat      = (1 << 3),
-		Actions_Groupchat = (1 << 4)
+		// Actions_Message   = (1 << 2),
+		// Actions_Chat      = (1 << 3),
+		// Actions_Groupchat = (1 << 4)
 	};
 
 public:

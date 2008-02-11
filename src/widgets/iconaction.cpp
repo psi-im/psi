@@ -166,34 +166,37 @@ QString IconAction::psiIconName() const
 
 bool IconAction::addTo(QWidget *w)
 {
+	w->addAction(this);
+	return true;
+
 	QStringList supportedContainers;
 	supportedContainers << "QWidget";
-	if ( w->inherits("QToolBar") || w->inherits("Q3ToolBar") ||
-	     supportedContainers.contains(w->metaObject()->className()) ) {
+	if (w->inherits("QToolBar") ||
+	    supportedContainers.contains(w->metaObject()->className())) {
 		QString bname = objectName() + "_action_button";
-		IconToolButton *btn = new IconToolButton ( w );
-		btn->setObjectName( bname );
-		d->buttons.append ( btn );
+		IconToolButton *btn = new IconToolButton(w);
+		btn->setObjectName(bname);
+		d->buttons.append(btn);
 
 		btn->setDefaultAction(this);
-		
-		btn->setText( text() );
-		btn->setPsiIcon( d->icon, false );
+
+		btn->setText(text());
+		btn->setPsiIcon(d->icon, false);
 
 		btn->setDefaultAction(this);
 
 		// need to explicitly update popupMode,
 		// because setDefaultAction resets it
-		btn->setPopupMode( QToolButton::InstantPopup );
+		btn->setPopupMode(QToolButton::InstantPopup);
 
 		btn->setToolTip(toolTipFromMenuText());
 
 		btn->setAutoRaise(true);
 		btn->setFocusPolicy(Qt::NoFocus);
 
-		if ( supportedContainers.contains(w->metaObject()->className()) )
-			if ( w->layout() )
-				w->layout()->addWidget( btn );
+		if (supportedContainers.contains(w->metaObject()->className()))
+			if (w->layout())
+				w->layout()->addWidget(btn);
 
 		connect(btn, SIGNAL(toggled(bool)), this, SLOT(setChecked(bool)));
 		connect(btn, SIGNAL(destroyed()), SLOT(objectDestroyed()));
@@ -202,7 +205,7 @@ bool IconAction::addTo(QWidget *w)
 	}
 	else
 		w->addAction(this);
-	
+
 	return true;
 }
 
@@ -420,7 +423,8 @@ bool IconActionGroup::addTo( QWidget *w )
 		return true;
 	}
 
-	return IconAction::addTo( w );
+	w->addAction(this);
+	return true;
 }
 
 IconAction *IconActionGroup::copy() const

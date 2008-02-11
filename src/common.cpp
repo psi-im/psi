@@ -35,6 +35,7 @@
 #include <QSound>
 #include <QObject>
 #include <QMessageBox>
+#include <QUuid>
 
 #include <stdio.h>
 #ifdef Q_WS_X11
@@ -481,3 +482,34 @@ bool operator!=(const QMap<QString, QString> &m1, const QMap<QString, QString> &
 	return false;
 }
 
+//----------------------------------------------------------------------------
+// ToolbarPrefs
+//----------------------------------------------------------------------------
+
+ToolbarPrefs::ToolbarPrefs()
+	: dock(Qt::DockTop)
+	// , dirty(true)
+	, on(false)
+	, locked(false)
+	// , stretchable(false)
+	// , index(0)
+	, nl(true)
+	// , extraOffset(0)
+{
+	id = QUuid::createUuid().toString();
+}
+
+bool ToolbarPrefs::operator==(const ToolbarPrefs& other)
+{
+	return id == other.id &&
+	       name == other.name &&
+	       keys == other.keys &&
+	       dock == other.dock &&
+	       // dirty == other.dirty &&
+	       on == other.on &&
+	       locked == other.locked &&
+	       // stretchable == other.stretchable &&
+	       // index == other.index &&
+	       nl == other.nl;
+	       // extraOffset == other.extraOffset;
+}

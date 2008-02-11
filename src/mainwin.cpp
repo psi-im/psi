@@ -64,20 +64,7 @@
 
 using namespace XMPP;
 
-// deletes submenus in a popupmenu
-/*void qpopupmenuclear(QMenu* p)
-{
-	while(p->count()) {
-		QMenuItem* item = p->findItem(p->idAt(0));
-		QMenu* popup = item->menu();
-		p->removeItemAt(0);
 
-		if(popup)
-			delete popup;
-	}
-}*/
-
-	
 //----------------------------------------------------------------------------
 // MainWin::Private
 //----------------------------------------------------------------------------
@@ -242,8 +229,7 @@ void MainWin::Private::updateMenu(QStringList actions, QMenu* menu)
 #endif
 
 MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
-:AdvancedWidget<Q3MainWindow>(0, (_onTop ? Qt::WStyle_StaysOnTop : Qt::Widget) | (_asTool ? (Qt::WStyle_Tool |TOOLW_FLAGS) : Qt::Widget))
-//: Q3MainWindow(0,name,(_onTop ? Qt::WStyle_StaysOnTop : Qt::Widget) | (_asTool ? (Qt::WStyle_Tool |TOOLW_FLAGS) : Qt::Widget))
+:AdvancedWidget<QMainWindow>(0, (_onTop ? Qt::WStyle_StaysOnTop : Qt::Widget) | (_asTool ? (Qt::WStyle_Tool |TOOLW_FLAGS) : Qt::Widget))
 {
 	setObjectName(name);
 	setAttribute(Qt::WA_AlwaysShowToolTips);
@@ -405,6 +391,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 	d->statusButton->setMenu( d->statusMenu );
 
 	buildToolbars();
+	// setUnifiedTitleAndToolBarOnMac(true);
 
 	connect(qApp, SIGNAL(dockActivated()), SLOT(dockActivated()));
 
@@ -421,6 +408,7 @@ MainWin::~MainWin()
 		d->tray = 0;
 	}
 
+	saveToolbarsState();
 	delete d;
 }
 
@@ -635,16 +623,40 @@ QMenuBar* MainWin::mainMenuBar() const
 #endif
 }
 
+const QString toolbarsStateOptionPath = "options.ui.contactlist.toolbars-state";
+
+void MainWin::saveToolbarsState()
+{
+	PsiOptions::instance()->setOption(toolbarsStateOptionPath, saveState());
+}
+
+void MainWin::loadToolbarsState()
+{
+	restoreState(PsiOptions::instance()->getOption(toolbarsStateOptionPath).toByteArray());
+}
+
 void MainWin::buildToolbars()
 {
 	setUpdatesEnabled(false);
+	if (toolbars_.count() > 0) {
+		saveToolbarsState();
+	}
+
 	qDeleteAll(toolbars_);
 	toolbars_.clear();
 
 	foreach(QString base, PsiOptions::instance()->getChildOptionNames("options.ui.contactlist.toolbars", true, true)) {
-		PsiToolBar* tb = PsiToolBar::fromOptions(base, this, d->psi, PsiActionList::Actions_MainWin);
+		PsiToolBar* tb = new PsiToolBar(base, this, d->psi->actionList());
+		tb->initialize();
+		connect(tb, SIGNAL(customize()), d->psi, SLOT(doToolbars()));
 		toolbars_ << tb;
 	}
+
+	loadToolbarsState();
+	foreach(PsiToolBar* tb, toolbars_) {
+		tb->updateVisibility();
+	}
+	// d->eventNotifier->updateVisibility();
 	setUpdatesEnabled(true);
 }
 
@@ -667,7 +679,7 @@ void MainWin::buildOptionsMenu()
 	        << "help_online_home"
 	        << "help_psi_muc"
 	        << "help_report_bug"
-		<< "diagnostics"
+	        << "diagnostics"
 	        << "separator"
 	        << "help_about"
 	        << "help_about_qt";
@@ -1266,7 +1278,7 @@ void MainWin::setWindowIcon(const QPixmap&)
 #else
 void MainWin::setWindowIcon(const QPixmap& p)
 {
-	Q3MainWindow::setWindowIcon(p);
+	QMainWindow::setWindowIcon(p);
 }
 #endif
 
@@ -1364,14 +1376,14 @@ void MainWin::showNoFocus()
 
 void MainWin::moveEvent(QMoveEvent* e)
 {
-	AdvancedWidget<Q3MainWindow>::moveEvent(e);
-	QTimer::singleShot(0, this, SLOT(geometryChanged()));
+	AdvancedWidget<QMainWindow>::moveEvent(e);
+	geometryChanged();
 }
 
 void MainWin::resizeEvent(QResizeEvent* e)
 {
-	AdvancedWidget<Q3MainWindow>::resizeEvent(e);
-	QTimer::singleShot(0, this, SLOT(geometryChanged()));
+	AdvancedWidget<QMainWindow>::resizeEvent(e);
+	geometryChanged();
 }
 
 void MainWin::geometryChanged()

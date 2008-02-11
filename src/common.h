@@ -38,18 +38,23 @@ enum { dcClose, dcHour, dcDay, dcNever };
 
 
 struct ToolbarPrefs {
-	bool dirty;
+	ToolbarPrefs();
 
+	QString id;
 	QString name;
+	QStringList keys;
+	Qt::Dock dock;
+
+	bool dirty;
 	bool on;
 	bool locked;
-	bool stretchable;
-	QStringList keys;
+	// bool stretchable;
 
-	Qt::Dock dock;
-	int index;
+	// int index;
 	bool nl;
-	int extraOffset;
+	// int extraOffset;
+
+	bool operator==(const ToolbarPrefs& other);
 };
 
 

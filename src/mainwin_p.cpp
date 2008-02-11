@@ -22,7 +22,7 @@
 
 #include <qapplication.h>
 #include <qstyle.h>
-#include <q3toolbar.h>
+#include <QToolBar>
 #include <qtimer.h>
 #include <qsignalmapper.h>
 #include <qobject.h>
@@ -54,7 +54,10 @@ public:
 
 	void setIcon(PsiIcon *, bool showText);
 	void setLabel(QString);
+
+	// reimplemented
 	QSize sizeHint() const;
+	QSize minimumSizeHint() const;
 
 private slots:
 	void pixmapUpdated();
@@ -86,6 +89,11 @@ QSize PopupActionButton::sizeHint() const
 		return QSize(16, 16);
 
 	return QPushButton::sizeHint();
+}
+
+QSize PopupActionButton::minimumSizeHint() const
+{
+	return QSize(16, 16);
 }
 
 void PopupActionButton::setIcon(PsiIcon *i, bool st)
@@ -288,22 +296,25 @@ void PopupAction::setText (const QString &text)
 	}
 }
 
-bool PopupAction::addTo (QWidget *w)
+bool PopupAction::addTo(QWidget *w)
 {
-	if ( w->inherits("QToolBar") || w->inherits("Q3ToolBar") ) {
-		QByteArray bname((const char*) (QString(name()) + QString("_action_button")));
-		PopupActionButton *btn = new PopupActionButton ( (Q3ToolBar*)w, bname );
-		d->buttons.append ( btn );
-		btn->setMenu ( menu() );
-		btn->setLabel ( text() );
-		btn->setIcon ( d->icon, d->showText );
-		btn->setSizePolicy ( d->size );
-		btn->setEnabled ( isEnabled() );
+	QToolBar* toolbar = dynamic_cast<QToolBar*>(w);
+	if (toolbar) {
+		QByteArray bname((const char*)(QString(name()) + QString("_action_button")));
+		PopupActionButton *btn = new PopupActionButton(w, bname);
+		d->buttons.append(btn);
+		btn->setMenu(menu());
+		btn->setLabel(text());
+		btn->setIcon(d->icon, d->showText);
+		btn->setSizePolicy(d->size);
+		btn->setEnabled(isEnabled());
+		toolbar->addWidget(btn);
 
-		connect( btn, SIGNAL( destroyed() ), SLOT( objectDestroyed() ) );
+		connect(btn, SIGNAL(destroyed()), SLOT(objectDestroyed()));
 	}
-	else
+	else {
 		return IconAction::addTo(w);
+	}
 
 	return true;
 }
@@ -526,8 +537,10 @@ SpacerAction::~SpacerAction()
 
 bool SpacerAction::addTo(QWidget *w)
 {
-	if ( w->inherits("QToolBar") || w->inherits("Q3ToolBar") ) {
-		new StretchWidget(w);
+	QToolBar* toolbar = dynamic_cast<QToolBar*>(w);
+	if (toolbar) {
+		StretchWidget* stretch = new StretchWidget(w);
+		toolbar->addWidget(stretch);
 		return true;
 	}
 
@@ -595,7 +608,7 @@ EventNotifierAction::~EventNotifierAction()
 
 bool EventNotifierAction::addTo(QWidget *w)
 {
-	if ( w ) {
+	if (w) {
 		MLabel *label = new MLabel(w, "EventNotifierAction::MLabel");
 		label->setText(text());
 		d->labels.append(label);
@@ -603,13 +616,17 @@ bool EventNotifierAction::addTo(QWidget *w)
 		connect(label, SIGNAL(doubleClicked()), SIGNAL(activated()));
 		connect(label, SIGNAL(clicked(int)), SIGNAL(clicked(int)));
 
-		if (!w->inherits("QToolBar") && !w->inherits("Q3ToolBar")) {
+		QToolBar* toolbar = dynamic_cast<QToolBar*>(w);
+		if (!toolbar) {
 			QLayout* layout = w->layout();
 			if (layout)
 				layout->addWidget(label);
 		}
+		else {
+			toolbar->addWidget(label);
+		}
 
-		if ( d->hide )
+		if (d->hide)
 			hide();
 
 		return true;
@@ -639,21 +656,21 @@ void EventNotifierAction::hide()
 {
 	d->hide = true;
 
-	Q3PtrListIterator<MLabel> it ( d->labels );
-	for ( ; it.current(); ++it) {
+	Q3PtrListIterator<MLabel> it(d->labels);
+	for (; it.current(); ++it) {
 		MLabel *label = it.current();
 		label->hide();
-		Q3ToolBar *toolBar = dynamic_cast<Q3ToolBar*>(label->parent());
+		QToolBar *toolBar = dynamic_cast<QToolBar*>(label->parent());
 		if (toolBar) {
-			QObjectList l = toolBar->queryList( "QWidget" );
+			QObjectList l = toolBar->queryList("QWidget");
 			int found = 0;
 
-			for ( QObjectList::ConstIterator it = l.begin(); it != l.end(); ++it) {
-				if ( QString((*it)->name()).left(3) != "qt_" ) // misc internal Qt objects
+			for (QObjectList::ConstIterator it = l.begin(); it != l.end(); ++it) {
+				if (QString((*it)->name()).left(3) != "qt_")   // misc internal Qt objects
 					found++;
 			}
 
-			if ( found == 1 ) // only MLabel is on ToolBar
+			if (found == 1)   // only MLabel is on ToolBar
 				toolBar->hide();
 		}
 	}
@@ -667,10 +684,18 @@ void EventNotifierAction::show()
 	for ( ; it.current(); ++it) {
 		MLabel *label = it.current();
 		label->show();
-		Q3ToolBar *toolBar = dynamic_cast<Q3ToolBar*>(label->parent());
+		QToolBar *toolBar = dynamic_cast<QToolBar*>(label->parent());
 		if (toolBar)
 			toolBar->show();
 	}
+}
+
+void EventNotifierAction::updateVisibility()
+{
+	if (d->hide)
+		hide();
+	else
+		show();
 }
 
 IconAction *EventNotifierAction::copy() const

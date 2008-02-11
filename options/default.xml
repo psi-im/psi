@@ -136,7 +136,8 @@
 				</show>
 				<show-group-counts type="bool">true</show-group-counts>
 				<show-menubar type="bool">true</show-menubar>
-				<toolbars></toolbars>
+				<toolbars/>
+				<toolbars-state type="QByteArray"/>
 				<use-left-click type="bool">false</use-left-click>
 				<use-single-click type="bool">false</use-single-click>
 				<use-status-change-animation type="bool">true</use-status-change-animation>

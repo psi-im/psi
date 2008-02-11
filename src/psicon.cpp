@@ -593,6 +593,8 @@ void PsiCon::deinit()
 
 	if(d->mainwin) {
 		// shut down mainwin
+		// FIXME: when saving geometry, we should also save the minimized, maximized and hidden flags
+		// and even the desktop number, in order to correctly restore position
 		if (!d->mainwin->isHidden() && !d->mainwin->isMinimized()) {
 			PsiOptions::instance()->setOption("options.ui.contactlist.saved-window-geometry", d->mainwin->saveableGeometry());
 		}

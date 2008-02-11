@@ -27,6 +27,8 @@
 #include "xmpp_jid.h"
 #include "xmpp_client.h"
 #include "statuspreset.h"
+#include "psitoolbar.h"
+#include "common.h"
 
 using namespace XMPP;
 
@@ -131,51 +133,83 @@ void PsiOptions::reset() {
 /**
  * initizialises the default options for a new profile
  */
-bool PsiOptions::newProfile() {
+bool PsiOptions::newProfile()
+{
 	bool ok = true;
 	if (!load(":/options/newprofile.xml")) {
 		ok = false;
 	}
-	StatusPreset(QObject::tr("Away from desk"),
-				 QObject::tr("I am away from my desk.  Leave a message."),
-				 XMPP::Status::Away
-				).toOptions(this);
-	StatusPreset(QObject::tr("Showering"),
-				 QObject::tr("I'm in the shower.  You'll have to wait for me to get out."),
-				 XMPP::Status::Away
-				).toOptions(this);
-	StatusPreset(QObject::tr("Eating"),
-				 QObject::tr("Out eating.  Mmmm.. food."),
-				 XMPP::Status::Away
-				).toOptions(this);
-	StatusPreset(QObject::tr("Sleep"),
-				 QObject::tr("Sleep is good.  Zzzzz"),
-				 XMPP::Status::DND
-				).toOptions(this);
-	StatusPreset(QObject::tr("Work"),
-				 QObject::tr("Can't chat.  Gotta work."),
-				 XMPP::Status::DND
-				).toOptions(this);
-	StatusPreset(QObject::tr("Air"),
-				 QObject::tr("Stepping out to get some fresh air."),
-				 XMPP::Status::Away
-				).toOptions(this);
-	StatusPreset(QObject::tr("Movie"),
-				 QObject::tr("Out to a movie.  Is that OK with you?"),
-				 XMPP::Status::Away
-				).toOptions(this);
-	StatusPreset(QObject::tr("Secret"),
-				 QObject::tr("I'm not available right now and that's all you need to know."),
-				 XMPP::Status::XA
-				).toOptions(this);
-	StatusPreset(QObject::tr("Out for the night"),
-				 QObject::tr("Out for the night."),
-				 XMPP::Status::Away
-				).toOptions(this);
-	StatusPreset(QObject::tr("Greece"),
-				 QObject::tr("I have gone to a far away place.  I will be back someday!"),
-				 XMPP::Status::XA
-				).toOptions(this);
+	StatusPreset(tr("Away from desk"),
+	             tr("I am away from my desk.  Leave a message."),
+	             XMPP::Status::Away
+	            ).toOptions(this);
+	StatusPreset(tr("Showering"),
+	             tr("I'm in the shower.  You'll have to wait for me to get out."),
+	             XMPP::Status::Away
+	            ).toOptions(this);
+	StatusPreset(tr("Eating"),
+	             tr("Out eating.  Mmmm.. food."),
+	             XMPP::Status::Away
+	            ).toOptions(this);
+	StatusPreset(tr("Sleep"),
+	             tr("Sleep is good.  Zzzzz"),
+	             XMPP::Status::DND
+	            ).toOptions(this);
+	StatusPreset(tr("Work"),
+	             tr("Can't chat.  Gotta work."),
+	             XMPP::Status::DND
+	            ).toOptions(this);
+	StatusPreset(tr("Air"),
+	             tr("Stepping out to get some fresh air."),
+	             XMPP::Status::Away
+	            ).toOptions(this);
+	StatusPreset(tr("Movie"),
+	             tr("Out to a movie.  Is that OK with you?"),
+	             XMPP::Status::Away
+	            ).toOptions(this);
+	StatusPreset(tr("Secret"),
+	             tr("I'm not available right now and that's all you need to know."),
+	             XMPP::Status::XA
+	            ).toOptions(this);
+	StatusPreset(tr("Out for the night"),
+	             tr("Out for the night."),
+	             XMPP::Status::Away
+	            ).toOptions(this);
+	StatusPreset(tr("Greece"),
+	             tr("I have gone to a far away place.  I will be back someday!"),
+	             XMPP::Status::XA
+	            ).toOptions(this);
+
+	{
+		ToolbarPrefs buttons;
+		buttons.name = tr("Buttons");
+#ifndef Q_WS_MAC
+		buttons.on = true;
+#endif
+		buttons.stretchable = true;
+		buttons.keys << "button_options" << "button_status";
+		buttons.dock = Qt::DockBottom;
+
+		ToolbarPrefs showContacts;
+		showContacts.name = tr("Show contacts");
+		showContacts.keys << "show_offline" << "show_hidden" << "show_agents" << "show_self" << "show_statusmsg";
+
+		ToolbarPrefs eventNotifier;
+		eventNotifier.name = tr("Event notifier");
+		eventNotifier.stretchable = true;
+		eventNotifier.keys << "event_notifier";
+		eventNotifier.dock = Qt::DockBottom;
+
+		QList<ToolbarPrefs> toolbars;
+		toolbars << buttons
+		         << showContacts
+		         << eventNotifier;
+		foreach(ToolbarPrefs tb, toolbars) {
+			tb.locked = true;
+			PsiToolBar::structToOptions(tb);
+		}
+	}
+
 	return ok;
 }
 

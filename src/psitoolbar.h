@@ -1,6 +1,6 @@
 /*
  * psitoolbar.h - the Psi toolbar class
- * Copyright (C) 2003  Michail Pishchagin
+ * Copyright (C) 2003-2008  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,49 +21,37 @@
 #ifndef PSITOOLBAR_H
 #define PSITOOLBAR_H
 
-#include <q3toolbar.h>
+#include <QToolBar>
 
-#include "psiactionlist.h"
-#include "common.h" // Options + ToolbarPrefs
-
-class PsiCon;
 class QContextMenuEvent;
 
-class PsiToolBar : public Q3ToolBar
+class ToolbarPrefs;
+
+#include "psiactionlist.h"
+
+class PsiToolBar : public QToolBar
 {
 	Q_OBJECT
 
 public:
-	static PsiToolBar *fromOptions(const QString &base, Q3MainWindow* mainWindow, PsiCon* psi, PsiActionList::ActionsType t);
-	static void structToOptions(const QString &base, ToolbarPrefs *s);
-	
-	PsiToolBar(const QString& label, Q3MainWindow* mainWindow, PsiCon* psi);
+	PsiToolBar(const QString& base, QMainWindow* mainWindow, MetaActionList* actionList);
 	~PsiToolBar();
 
-	PsiActionList::ActionsType type() const;
-	void setType( PsiActionList::ActionsType );
-	void initialize( QString base, bool createUniqueActions );
+	void initialize();
+	void updateVisibility();
 
-/*	bool isCustomizeable() const;
-	void setCustomizeable( bool );
+	static void structToOptions(const ToolbarPrefs& s);
 
-	bool isMoveable() const;
-	void setMoveable( bool );*/
-	
 signals:
-	void registerAction( IconAction * );
-	
-public slots:
-	void optionChanged(const QString& option);
-	void update();
-	void optionRemoved(const QString& option);
+	void customize();
 
 protected:
-	void contextMenuEvent(QContextMenuEvent *e);
+	void contextMenuEvent(QContextMenuEvent* e);
 
 private:
-	class Private;
-	Private *d;
+	MetaActionList* actionList_;
+	QAction* customizeAction_;
+	QString base_;
 };
 
 #endif

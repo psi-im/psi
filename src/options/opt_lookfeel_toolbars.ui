@@ -13,20 +13,8 @@
    <string>LookFeelToolbarsUI</string>
   </property>
   <layout class="QVBoxLayout" >
-   <property name="margin" >
-    <number>9</number>
-   </property>
-   <property name="spacing" >
-    <number>6</number>
-   </property>
    <item>
     <layout class="QHBoxLayout" >
-     <property name="margin" >
-      <number>0</number>
-     </property>
-     <property name="spacing" >
-      <number>6</number>
-     </property>
      <item>
       <widget class="QLabel" name="textLabel1" >
        <property name="text" >
@@ -37,9 +25,7 @@
      <item>
       <widget class="QComboBox" name="cb_toolbars" >
        <property name="sizePolicy" >
-        <sizepolicy>
-         <hsizetype>7</hsizetype>
-         <vsizetype>0</vsizetype>
+        <sizepolicy vsizetype="Fixed" hsizetype="Expanding" >
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -99,20 +85,8 @@
    </item>
    <item>
     <layout class="QVBoxLayout" >
-     <property name="margin" >
-      <number>0</number>
-     </property>
-     <property name="spacing" >
-      <number>6</number>
-     </property>
      <item>
       <layout class="QHBoxLayout" >
-       <property name="margin" >
-        <number>0</number>
-       </property>
-       <property name="spacing" >
-        <number>6</number>
-       </property>
        <item>
         <widget class="QLabel" name="textLabel20" >
          <property name="text" >
@@ -127,12 +101,6 @@
      </item>
      <item>
       <layout class="QHBoxLayout" >
-       <property name="margin" >
-        <number>0</number>
-       </property>
-       <property name="spacing" >
-        <number>6</number>
-       </property>
        <item>
         <widget class="QCheckBox" name="ck_toolbarOn" >
          <property name="whatsThis" >
@@ -146,28 +114,10 @@
        <item>
         <widget class="QCheckBox" name="ck_toolbarLocked" >
          <property name="whatsThis" >
-          <string>Specifies, whether it is possible to move toolbar.</string>
+          <string/>
          </property>
          <property name="text" >
           <string>Locked</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="ck_toolbarStretch" >
-         <property name="whatsThis" >
-          <string>Specifies, whether toolbar is stretchable.
-Note: it is impossible to dock stretchable toolbar. Uncheck that check box, click apply, dock the toolbar, and then check stretchable again.</string>
-         </property>
-         <property name="text" >
-          <string>Stretchable</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="IconButton" name="pb_toolbarPosition" >
-         <property name="text" >
-          <string>Change Position (Advanced)</string>
          </property>
         </widget>
        </item>
@@ -206,12 +156,6 @@ Note: it is impossible to dock stretchable toolbar. Uncheck that check box, clic
    </item>
    <item>
     <layout class="QGridLayout" >
-     <property name="margin" >
-      <number>0</number>
-     </property>
-     <property name="spacing" >
-      <number>6</number>
-     </property>
      <item rowspan="3" row="1" column="2" >
       <widget class="QListWidget" name="lw_selectedActions" >
        <property name="editTriggers" >
@@ -262,9 +206,7 @@ Note: it is impossible to dock stretchable toolbar. Uncheck that check box, clic
      <item row="1" column="1" >
       <widget class="IconToolButton" name="tb_right" >
        <property name="sizePolicy" >
-        <sizepolicy>
-         <hsizetype>4</hsizetype>
-         <vsizetype>1</vsizetype>
+        <sizepolicy vsizetype="Minimum" hsizetype="Maximum" >
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -273,8 +215,8 @@ Note: it is impossible to dock stretchable toolbar. Uncheck that check box, clic
         <string>...</string>
        </property>
        <property name="psiIconName" stdset="0" >
-	    <string>psi/arrowRight</string>
-	   </property>
+        <string>psi/arrowRight</string>
+       </property>
       </widget>
      </item>
      <item row="0" column="2" >
@@ -290,9 +232,7 @@ Note: it is impossible to dock stretchable toolbar. Uncheck that check box, clic
      <item row="1" column="3" >
       <widget class="IconToolButton" name="tb_up" >
        <property name="sizePolicy" >
-        <sizepolicy>
-         <hsizetype>4</hsizetype>
-         <vsizetype>1</vsizetype>
+        <sizepolicy vsizetype="Minimum" hsizetype="Maximum" >
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -301,8 +241,8 @@ Note: it is impossible to dock stretchable toolbar. Uncheck that check box, clic
         <string>...</string>
        </property>
        <property name="psiIconName" stdset="0" >
-	    <string>psi/arrowUp</string>
-	   </property>
+        <string>psi/arrowUp</string>
+       </property>
       </widget>
      </item>
      <item row="3" column="3" >
@@ -324,9 +264,7 @@ Note: it is impossible to dock stretchable toolbar. Uncheck that check box, clic
      <item row="2" column="3" >
       <widget class="IconToolButton" name="tb_down" >
        <property name="sizePolicy" >
-        <sizepolicy>
-         <hsizetype>4</hsizetype>
-         <vsizetype>1</vsizetype>
+        <sizepolicy vsizetype="Minimum" hsizetype="Maximum" >
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -335,8 +273,8 @@ Note: it is impossible to dock stretchable toolbar. Uncheck that check box, clic
         <string>...</string>
        </property>
        <property name="psiIconName" stdset="0" >
-	    <string>psi/arrowDown</string>
-	   </property>
+        <string>psi/arrowDown</string>
+       </property>
       </widget>
      </item>
      <item row="0" column="0" >
@@ -352,9 +290,7 @@ Note: it is impossible to dock stretchable toolbar. Uncheck that check box, clic
      <item row="2" column="1" >
       <widget class="IconToolButton" name="tb_left" >
        <property name="sizePolicy" >
-        <sizepolicy>
-         <hsizetype>4</hsizetype>
-         <vsizetype>1</vsizetype>
+        <sizepolicy vsizetype="Minimum" hsizetype="Maximum" >
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -363,8 +299,8 @@ Note: it is impossible to dock stretchable toolbar. Uncheck that check box, clic
         <string>...</string>
        </property>
        <property name="psiIconName" stdset="0" >
-	    <string>psi/arrowLeft</string>
-	   </property>
+        <string>psi/arrowLeft</string>
+       </property>
       </widget>
      </item>
     </layout>
@@ -375,14 +311,14 @@ Note: it is impossible to dock stretchable toolbar. Uncheck that check box, clic
  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
  <customwidgets>
   <customwidget>
-   <class>IconToolButton</class>
-   <extends>QToolButton</extends>
-   <header>icontoolbutton.h</header>
-  </customwidget>
-  <customwidget>
    <class>IconButton</class>
    <extends>QPushButton</extends>
    <header>iconbutton.h</header>
+  </customwidget>
+  <customwidget>
+   <class>IconToolButton</class>
+   <extends>QToolButton</extends>
+   <header>icontoolbutton.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>
@@ -392,8 +328,6 @@ Note: it is impossible to dock stretchable toolbar. Uncheck that check box, clic
   <tabstop>le_toolbarName</tabstop>
   <tabstop>ck_toolbarOn</tabstop>
   <tabstop>ck_toolbarLocked</tabstop>
-  <tabstop>ck_toolbarStretch</tabstop>
-  <tabstop>pb_toolbarPosition</tabstop>
  </tabstops>
  <resources/>
  <connections/>
