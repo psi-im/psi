@@ -9,7 +9,6 @@
 #include "psioptions.h"
 
 #include "ui_opt_lookfeel_toolbars.h"
-#include "ui_ui_positiontoolbar.h"
 
 #include <qlayout.h>
 #include <qpushbutton.h>
