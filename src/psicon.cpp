@@ -1043,7 +1043,7 @@ void PsiCon::doToolbars()
 	}
 	else {
 		w = new OptionsDlg(this);
-		connect(w, SIGNAL(applyOptions(const Options &)), SLOT(slotApplyOptions(const Options &)));
+		connect(w, SIGNAL(applyOptions()), SLOT(slotApplyOptions()));
 		w->openTab("toolbars");
 		w->show();
 	}
