@@ -50,7 +50,6 @@ INTERFACES += \
 	$$PWD/opt_sound.ui \
 	$$PWD/opt_advanced.ui \
 	$$PWD/opt_lookfeel_toolbars.ui \
-	$$PWD/ui_positiontoolbar.ui \
 	$$PWD/ui_isdetails.ui \
 	$$PWD/opt_iconset_emo.ui \
 	$$PWD/opt_iconset_system.ui \

@@ -37,7 +37,9 @@
 enum { dcClose, dcHour, dcDay, dcNever };
 
 
-struct ToolbarPrefs {
+class ToolbarPrefs
+{
+public:
 	ToolbarPrefs();
 
 	QString id;
