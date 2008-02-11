@@ -676,5 +676,3 @@ void OptionsTabToolbars::avaAct_selectionChanged(QTreeWidgetItem *)
 {
 	updateArrows();
 }
-
-#include "opt_toolbars.moc"

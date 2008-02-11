@@ -186,7 +186,6 @@ bool PsiOptions::newProfile()
 #ifndef Q_WS_MAC
 		buttons.on = true;
 #endif
-		buttons.stretchable = true;
 		buttons.keys << "button_options" << "button_status";
 		buttons.dock = Qt::DockBottom;
 
@@ -196,7 +195,6 @@ bool PsiOptions::newProfile()
 
 		ToolbarPrefs eventNotifier;
 		eventNotifier.name = tr("Event notifier");
-		eventNotifier.stretchable = true;
 		eventNotifier.keys << "event_notifier";
 		eventNotifier.dock = Qt::DockBottom;
 
