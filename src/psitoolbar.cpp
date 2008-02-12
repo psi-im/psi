@@ -89,7 +89,7 @@ void PsiToolBar::initialize()
 	}
 	setObjectName(QString("mainwin-toolbar-%1").arg(o->getOption(base_ + ".key").toString()));
 	setMovable(!o->getOption(base_ + ".locked").toBool());
-	setName(o->getOption(base_ + ".name").toString());
+	setWindowTitle(o->getOption(base_ + ".name").toString());
 
 	ActionList actions = actionList_->suitableActions(PsiActionList::Actions_MainWin | PsiActionList::Actions_Common);
 	foreach(QString actionName, o->getOption(base_ + ".actions").toStringList()) {
