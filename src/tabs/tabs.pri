@@ -2,11 +2,11 @@ INCLUDEPATH *= $$PWD
 DEPENDPATH  *= $$PWD
 
 HEADERS += $$PWD/tabdlg.h
-HEADERS += $$PWD/tabmanager.h 
-HEADERS += $$PWD/tabbablewidget.h 
+HEADERS += $$PWD/tabmanager.h
+HEADERS += $$PWD/tabbablewidget.h
 
 SOURCES += $$PWD/tabdlg.cpp
-SOURCES += $$PWD/tabmanager.cpp 
-SOURCES += $$PWD/tabbablewidget.cpp 
+SOURCES += $$PWD/tabmanager.cpp
+SOURCES += $$PWD/tabbablewidget.cpp
 
-#INTERFACES += $$PWD/.ui 
+#INTERFACES += $$PWD/.ui
