@@ -205,6 +205,7 @@ void OptionsTabToolbars::restoreOptions()
 
 	foreach(QString base, toolbarBases) {
 		ToolbarPrefs tb;
+		tb.id = o->getOption(base + ".key").toString();
 		tb.name = o->getOption(base + ".name").toString();
 		tb.on = o->getOption(base + ".visible").toBool();
 		tb.locked = o->getOption(base + ".locked").toBool();

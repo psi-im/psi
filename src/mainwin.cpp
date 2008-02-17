@@ -653,9 +653,13 @@ void MainWin::buildToolbars()
 	}
 
 	loadToolbarsState();
+
+	// loadToolbarsState also restores correct toolbar visibility,
+	// we might want to override that
 	foreach(PsiToolBar* tb, toolbars_) {
 		tb->updateVisibility();
 	}
+
 	// d->eventNotifier->updateVisibility();
 	setUpdatesEnabled(true);
 }
