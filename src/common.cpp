@@ -36,6 +36,7 @@
 #include <QObject>
 #include <QMessageBox>
 #include <QUuid>
+#include <QDir>
 
 #include <stdio.h>
 #ifdef Q_WS_X11

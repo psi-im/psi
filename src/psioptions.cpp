@@ -18,9 +18,11 @@
  *
  */
 
-#include <QCoreApplication>
-
 #include "psioptions.h"
+
+#include <QCoreApplication>
+#include <QTimer>
+
 #include "applicationinfo.h"
 #include "xmpp_xmlcommon.h"
 #include "xmpp_task.h"

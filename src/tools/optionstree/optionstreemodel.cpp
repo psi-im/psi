@@ -19,6 +19,9 @@
  */
 
 #include "optionstreemodel.h"
+
+#include <QStringList>
+
 #include "optionstree.h"
 
 
@@ -228,7 +231,7 @@ bool OptionsTreeModel::setData ( const QModelIndex & index, const QVariant & val
 	QVariant current = tree_->getOption(option);
 	QVariant newval = value;
 	if (!newval.canConvert(current.type())) {
-		qWarning() << "Sorry don't know how to do that!";
+		qWarning("Sorry don't know how to do that!");
 		return false;
 	}
 	newval.convert(current.type());

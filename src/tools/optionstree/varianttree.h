@@ -21,7 +21,7 @@
 #ifndef _VARIANTTREE_H_
 #define _VARIANTTREE_H_
 
-#include <QtCore>
+#include <QObject>
 #include <QVariant>
 #include <QMap>
 

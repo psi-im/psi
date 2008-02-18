@@ -18,6 +18,8 @@
  *
  */
 
+#include "msgmle.h"
+
 #include <QAbstractTextDocumentLayout>
 #include <QAction>
 #include <QApplication>
@@ -31,8 +33,8 @@
 #include <QTextCharFormat>
 #include <QTextDocument>
 #include <QTimer>
+#include <QDateTime>
 
-#include "msgmle.h"
 #include "shortcutmanager.h"
 #include "spellhighlighter.h"
 #include "spellchecker.h"

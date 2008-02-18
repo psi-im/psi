@@ -28,9 +28,8 @@
 #include "psioptions.h"
 
 #include <QFileInfo>
-#include <Q3Dict>
-#include <Q3PtrList>
 #include <QCoreApplication>
+#include <QSet>
 
 using namespace XMPP;
 

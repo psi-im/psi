@@ -21,9 +21,6 @@
 #ifndef OPTIONSTREE_H
 #define OPTIONSTREE_H
 
-#include <QtCore>
-#include <QVariant>
-
 #include "varianttree.h"
 
 /**

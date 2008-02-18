@@ -35,12 +35,12 @@
 #include <QDesktopWidget>
 #include <QDebug>
 
+#include "psioptions.h"
+
 #ifdef Q_WS_X11
 #include<X11/Xutil.h>
 #include <QX11Info>
 #endif
-
-#include "psioptions.h"
 
 // TODO: Make use of KDE taskbar flashing support
 

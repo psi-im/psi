@@ -18,11 +18,12 @@
  *
  */
 
+#include "optionstree.h"
+
 #include <QDomElement>
 #include <QDomDocument>
-#include <QDebug>
+#include <QStringList>
 
-#include "optionstree.h"
 #include "atomicxmlfile.h"
 
 /**
@@ -52,7 +53,7 @@ QVariant OptionsTree::getOption(const QString& name) const
 	QVariant value=tree_.getValue(name);
 	if (value==VariantTree::missingValue) {
 		value=QVariant(QVariant::Invalid);
-		qDebug() << "Accessing missing option " << name;
+		qWarning("Accessing missing option %s", qPrintable(name));
 	}
 	return value;
 }
@@ -157,7 +158,7 @@ QString OptionsTree::mapLookup(const QString &basename, const QVariant &key) con
 			return path;
 		}
 	}
-	qDebug() << "Accessing missing key " << key.toString() << "in option map " << basename;
+	qWarning("Accessing missing key '%s' in option map '%s'", qPrintable(key.toString()), qPrintable(basename));
 	return basename + "XXX";
 }
 

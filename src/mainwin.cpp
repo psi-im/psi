@@ -20,7 +20,6 @@
 
 #include "mainwin.h"
 
-#include <QDesktopServices>
 #include <qmessagebox.h>
 #include <qicon.h>
 #include <qapplication.h>
@@ -59,6 +58,7 @@
 #include "tipdlg.h"
 #include "mucjoindlg.h"
 #include "psicontactlist.h"
+#include "desktoputil.h"
 
 #include "mainwin_p.h"
 
@@ -758,17 +758,17 @@ void MainWin::actReadmeActivated ()
 
 void MainWin::actOnlineHelpActivated ()
 {
-	QDesktopServices::openUrl(QUrl("http://psi-im.org/wiki/User_Guide"));
+	DesktopUtil::openUrl("http://psi-im.org/wiki/User_Guide");
 }
 
 void MainWin::actOnlineWikiActivated ()
 {
-	QDesktopServices::openUrl(QUrl("http://psi-im.org/wiki"));
+	DesktopUtil::openUrl("http://psi-im.org/wiki");
 }
 
 void MainWin::actOnlineHomeActivated ()
 {
-	QDesktopServices::openUrl(QUrl("http://psi-im.org"));
+	DesktopUtil::openUrl("http://psi-im.org");
 }
 
 void MainWin::actJoinPsiMUCActivated()
@@ -783,7 +783,7 @@ void MainWin::actJoinPsiMUCActivated()
 
 void MainWin::actBugReportActivated ()
 {
-	QDesktopServices::openUrl(QUrl("http://psi-im.org/forum/forum/2"));
+	DesktopUtil::openUrl("http://psi-im.org/forum/forum/2");
 }
 
 void MainWin::actAboutActivated ()
