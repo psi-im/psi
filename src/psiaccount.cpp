@@ -3094,9 +3094,7 @@ void PsiAccount::actionSetMood()
 
 void PsiAccount::actionSetAvatar()
 {
-	QString str = FileUtil::getOpenFileName(0,
-	                                        tr("Choose a file"),
-	                                        tr("Images (*.png *.xpm *.jpg *.PNG *.XPM *.JPG)"));
+	QString str = FileUtil::getImageFileName(0);
 	if (!str.isEmpty()) {
 		avatarFactory()->setSelfAvatar(str);
 	}

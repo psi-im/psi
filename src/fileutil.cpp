@@ -104,3 +104,9 @@ QString FileUtil::getSaveFileName(QWidget* parent, const QString& caption, const
 
 	return QString();
 }
+
+QString FileUtil::getImageFileName(QWidget* parent)
+{
+	return FileUtil::getOpenFileName(parent, tr("Choose a file"),
+	                                 tr("Images (*.png *.xpm *.jpg *.PNG *.XPM *.JPG)"));
+}

@@ -496,8 +496,7 @@ void InfoDlg::textChanged()
 */
 void InfoDlg::selectPhoto()
 {
-	QString str = FileUtil::getOpenFileName(this, tr("Choose a file"),
-	                                        tr("Images (*.png *.xpm *.jpg *.PNG *.XPM *.JPG)"));
+	QString str = FileUtil::getImageFileName(this);
 	if (!str.isEmpty()) {
 		setPreviewPhoto(str);
 	}
