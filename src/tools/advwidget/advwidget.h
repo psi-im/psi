@@ -38,7 +38,8 @@ public:
 	static bool stickToWindows();
 	static void setStickToWindows(bool val);
 
-	void restoreSavedGeometry(QRect savedGeometry);
+	QString geometryOptionPath() const;
+	void setGeometryOptionPath(const QString& optionPath);
 
 	bool flashing() const;
 	void doFlash(bool on);
@@ -48,8 +49,8 @@ public:
 #endif
 
 	void moveEvent(QMoveEvent *e);
-
 	void changeEvent(QEvent *event);
+
 
 public:
 	class Private;
@@ -91,17 +92,17 @@ public:
 	static bool stickToWindows() { return GAdvancedWidget::stickToWindows(); }
 	static void setStickToWindows( bool val ) { GAdvancedWidget::setStickToWindows( val ); }
 
-	QRect saveableGeometry() const
-	{
-		if (BaseClass::isHidden() || BaseClass::isMinimized())
-			return QRect();
-		return QRect(BaseClass::pos(), BaseClass::size());
-	}
-
-	virtual void restoreSavedGeometry(QRect savedGeometry)
+	QString geometryOptionPath() const
 	{
 		if (gAdvWidget)
-			gAdvWidget->restoreSavedGeometry(savedGeometry);
+			return gAdvWidget->geometryOptionPath();
+		return QString();
+	}
+
+	void setGeometryOptionPath(const QString& optionPath)
+	{
+		if (gAdvWidget)
+			gAdvWidget->setGeometryOptionPath(optionPath);
 	}
 
 	bool flashing() const

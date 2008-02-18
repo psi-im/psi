@@ -40,6 +40,8 @@
 #include <QX11Info>
 #endif
 
+#include "psioptions.h"
+
 // TODO: Make use of KDE taskbar flashing support
 
 //----------------------------------------------------------------------------
@@ -79,19 +81,31 @@ public:
 	static bool stickToWindows;
 	static bool stickEnabled;
 
-	QWidget *parentWidget;
+	QWidget* parentWidget_;
 	bool flashing_;
+	QString geometryOptionPath_;
 
 	bool flashing() const;
 	void doFlash(bool on);
 	void posChanging(int *x, int *y, int *width, int *height);
 	void moveEvent(QMoveEvent *e);
 
+protected:
+	// reimplemented
+	bool eventFilter(QObject* obj, QEvent* e);
+
 private:
-	QRect newGeometry;
+	QTimer* saveGeometryTimer_;
+	QRect newGeometry_;
+
+public slots:
+	void saveGeometry();
+	void restoreGeometry();
 
 private slots:
 	void updateGeometry();
+
+	void restoreGeometry(QRect savedGeometry);
 };
 
 int  GAdvancedWidget::Private::stickAt        = 5;
@@ -100,27 +114,32 @@ bool GAdvancedWidget::Private::stickEnabled   = true;
 
 GAdvancedWidget::Private::Private(QWidget *parent)
 	: QObject(parent)
-	, parentWidget(parent)
+	, parentWidget_(parent)
 	, flashing_(false)
 {
-	if ( !advancedWidgetShared )
+	if (!advancedWidgetShared)
 		advancedWidgetShared = new AdvancedWidgetShared();
 
-	parentWidget = parent;
+	parentWidget_ = parent;
+
+	saveGeometryTimer_ = new QTimer(this);
+	saveGeometryTimer_->setInterval(100);
+	saveGeometryTimer_->setSingleShot(true);
+	connect(saveGeometryTimer_, SIGNAL(timeout()), SLOT(saveGeometry()));
 }
 
 void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *height)
 {
-	if ( stickAt <= 0                    ||
-	    !stickEnabled                    ||
-	    !parentWidget->isTopLevel()      ||
-	     parentWidget->isMaximized()     ||
-	    !parentWidget->updatesEnabled() )
+	if ( stickAt <= 0                     ||
+	    !stickEnabled                     ||
+	    !parentWidget_->isTopLevel()      ||
+	     parentWidget_->isMaximized()     ||
+	    !parentWidget_->updatesEnabled() )
 	{
 		return;
 	}
 
-	QWidget *p = parentWidget;
+	QWidget *p = parentWidget_;
 	if ( p->pos() == QPoint(*x, *y) &&
 	     p->frameSize() == QSize(*width, *height) )
 		return;
@@ -211,13 +230,13 @@ bool GAdvancedWidget::Private::flashing() const
 void GAdvancedWidget::Private::doFlash(bool yes)
 {
 	flashing_ = yes;
-	if (parentWidget->window() != parentWidget)
+	if (parentWidget_->window() != parentWidget_)
 		return;
 
 #ifdef Q_WS_WIN
 	FLASHWINFO fwi;
 	fwi.cbSize = sizeof(fwi);
-	fwi.hwnd = parentWidget->winId();
+	fwi.hwnd = parentWidget_->winId();
 	if (yes) {
 		fwi.dwFlags = FLASHW_ALL | FLASHW_TIMER;
 		fwi.dwTimeout = 0;
@@ -249,7 +268,7 @@ void GAdvancedWidget::Private::doFlash(bool yes)
     e.xclient.type = ClientMessage;
     e.xclient.message_type = wmState;
     e.xclient.display = xdisplay;
-    e.xclient.window = parentWidget->winId();
+    e.xclient.window = parentWidget_->winId();
     e.xclient.format = 32;
     e.xclient.data.l[1] = demandsAttention;
     e.xclient.data.l[2] = 0l;
@@ -271,11 +290,11 @@ void GAdvancedWidget::Private::doFlash(bool yes)
 
 void GAdvancedWidget::Private::moveEvent(QMoveEvent *)
 {
-	if (!parentWidget->isTopLevel())
+	if (!parentWidget_->isTopLevel())
 		return;
 #ifdef Q_WS_MAC
-	QRect r = qApp->desktop()->availableGeometry(parentWidget);
-	QRect g = parentWidget->frameGeometry();
+	QRect r = qApp->desktop()->availableGeometry(parentWidget_);
+	QRect g = parentWidget_->frameGeometry();
 
 	int margin = 5;
 
@@ -291,7 +310,7 @@ void GAdvancedWidget::Private::moveEvent(QMoveEvent *)
 	if (g.top() > r.bottom() - margin)
 		g.moveTo(g.x(), r.bottom() - margin);
 
-	newGeometry = g;
+	newGeometry_ = g;
 	QTimer::singleShot(0, this, SLOT(updateGeometry()));
 #endif
 }
@@ -299,7 +318,63 @@ void GAdvancedWidget::Private::moveEvent(QMoveEvent *)
 void GAdvancedWidget::Private::updateGeometry()
 {
 	QWidget *w = (QWidget *)parent();
-	w->move(newGeometry.topLeft());
+	w->move(newGeometry_.topLeft());
+}
+
+void GAdvancedWidget::Private::saveGeometry()
+{
+	PsiOptions::instance()->setOption(geometryOptionPath_, parentWidget_->saveGeometry());
+}
+
+void GAdvancedWidget::Private::restoreGeometry()
+{
+	QRect savedGeometry = PsiOptions::instance()->getOption(geometryOptionPath_).toRect();
+	if (!savedGeometry.isEmpty()) {
+		restoreGeometry(savedGeometry);
+	}
+	else {
+		parentWidget_->restoreGeometry(PsiOptions::instance()->getOption(geometryOptionPath_).toByteArray());
+	}
+}
+
+// FIXME: should use frameGeometry
+void GAdvancedWidget::Private::restoreGeometry(QRect savedGeometry)
+{
+	QRect geom = savedGeometry;
+	QDesktopWidget *pdesktop = QApplication::desktop();
+	int nscreen = pdesktop->screenNumber(geom.topLeft());
+	QRect r = pdesktop->screenGeometry(nscreen);
+
+	// if the coordinates are out of the desktop bounds, reset to the top left
+	int pad = 10;
+	if (geom.left() < r.left())
+		geom.moveLeft(r.left());
+	if (geom.right() >= r.right())
+		geom.moveRight(r.right() - 1);
+	if (geom.top() < r.top())
+		geom.moveTop(r.top());
+	if (geom.bottom() >= r.bottom())
+		geom.moveBottom(r.bottom() - 1);
+	if ((geom.width() + pad * 2) > r.width())
+		geom.setWidth(r.width() - pad * 2);
+	if ((geom.height() + pad * 2) > r.height())
+		geom.setHeight(r.height() - pad * 2);
+
+	parentWidget_->move(geom.topLeft());
+	parentWidget_->resize(geom.size());
+}
+
+bool GAdvancedWidget::Private::eventFilter(QObject* obj, QEvent* e)
+{
+	if (obj == parentWidget_) {
+		if (e->type() == QEvent::Move || e->type() == QEvent::Resize) {
+			saveGeometryTimer_->start();
+		}
+
+		return false;
+	}
+
+	return QObject::eventFilter(obj, e);
 }
 
 //----------------------------------------------------------------------------
@@ -328,30 +403,18 @@ bool GAdvancedWidget::winEvent(MSG* msg, long* result)
 }
 #endif
 
-void GAdvancedWidget::restoreSavedGeometry(QRect savedGeometry)
+QString GAdvancedWidget::geometryOptionPath() const
 {
-	QRect geom = savedGeometry;
-	QDesktopWidget *pdesktop = QApplication::desktop();
-	int nscreen = pdesktop->screenNumber(geom.topLeft());
-	QRect r = pdesktop->screenGeometry(nscreen);
+	return d->geometryOptionPath_;
+}
 
-	// if the coordinates are out of the desktop bounds, reset to the top left
-	int pad = 10;
-	if((geom.width() + pad * 2) > r.width())
-		geom.setWidth(r.width() - pad * 2);
-	if((geom.height() + pad * 2) > r.height())
-		geom.setHeight(r.height() - pad * 2);
-	if(geom.left() < r.left())
-		geom.moveLeft(r.left());
-	if(geom.right() >= r.right())
-		geom.moveRight(r.right() - 1);
-	if(geom.top() < r.top())
-		geom.moveTop(r.top());
-	if(geom.bottom() >= r.bottom())
-		geom.moveBottom(r.bottom() - 1);
-
-	d->parentWidget->move(geom.topLeft());
-	d->parentWidget->resize(geom.size());
+void GAdvancedWidget::setGeometryOptionPath(const QString& optionPath)
+{
+	Q_ASSERT(d->geometryOptionPath_.isEmpty());
+	Q_ASSERT(!optionPath.isEmpty());
+	d->geometryOptionPath_ = optionPath;
+	d->restoreGeometry();
+	d->parentWidget_->installEventFilter(d);
 }
 
 bool GAdvancedWidget::flashing() const
@@ -369,7 +432,7 @@ void GAdvancedWidget::changeEvent(QEvent *event)
 	if (event->type() == QEvent::ActivationChange ||
 	    event->type() == QEvent::WindowStateChange)
 	{
-		if (d->parentWidget->isActiveWindow()) {
+		if (d->parentWidget_->isActiveWindow()) {
 			doFlash(false);
 		}
 	}

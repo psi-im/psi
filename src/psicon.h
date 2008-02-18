@@ -144,8 +144,6 @@ public slots:
 	void doOpenUri(const QUrl &uri);
 	void raiseMainwin();
 
-	void mainWinGeomChanged(QRect saveableGeometry);
-
 private slots:
 	void saveAccounts();
 	void saveCapabilities();

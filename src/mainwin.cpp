@@ -947,7 +947,6 @@ void MainWin::closeEvent(QCloseEvent* e)
 		return;
 	}
 
-	emit geomChanged(saveableGeometry());
 	closeProgram();
 
 	e->accept();
@@ -1120,7 +1119,6 @@ void MainWin::trayShow()
 
 void MainWin::trayHide()
 {
-	emit geomChanged(saveableGeometry());
 	hide();
 }
 
@@ -1377,20 +1375,3 @@ void MainWin::showNoFocus()
 }
 
 //#endif
-
-void MainWin::moveEvent(QMoveEvent* e)
-{
-	AdvancedWidget<QMainWindow>::moveEvent(e);
-	geometryChanged();
-}
-
-void MainWin::resizeEvent(QResizeEvent* e)
-{
-	AdvancedWidget<QMainWindow>::resizeEvent(e);
-	geometryChanged();
-}
-
-void MainWin::geometryChanged()
-{
-	emit geomChanged(saveableGeometry());
-}

@@ -433,13 +433,11 @@ bool PsiCon::init()
 	connect(d->mainwin, SIGNAL(doToolbars()), SLOT(doToolbars()));
 	connect(d->mainwin, SIGNAL(doFileTransDlg()), SLOT(doFileTransDlg()));
 	connect(d->mainwin, SIGNAL(recvNextEvent()), SLOT(recvNextEvent()));
-	connect(d->mainwin, SIGNAL(geomChanged(QRect)), SLOT(mainWinGeomChanged(QRect)));
 	connect(this, SIGNAL(emitOptionsUpdate()), d->mainwin, SLOT(optionsUpdate()));
 
 	connect(this, SIGNAL(emitOptionsUpdate()), d->mainwin->cvlist, SLOT(optionsUpdate()));
 
-	QRect geom = PsiOptions::instance()->getOption("options.ui.contactlist.saved-window-geometry").toRect();
-	if (geom.isValid()) d->mainwin->restoreSavedGeometry(geom);
+	d->mainwin->setGeometryOptionPath("options.ui.contactlist.saved-window-geometry");
 	
 	if(!(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.hide-on-start").toBool()))
 		d->mainwin->show();
@@ -592,13 +590,6 @@ void PsiCon::deinit()
 	delete d->ftwin;
 
 	if(d->mainwin) {
-		// shut down mainwin
-		// FIXME: when saving geometry, we should also save the minimized, maximized and hidden flags
-		// and even the desktop number, in order to correctly restore position
-		if (!d->mainwin->isHidden() && !d->mainwin->isMinimized()) {
-			PsiOptions::instance()->setOption("options.ui.contactlist.saved-window-geometry", d->mainwin->saveableGeometry());
-		}
-
 		delete d->mainwin;
 		d->mainwin = 0;
 	}
@@ -1338,12 +1329,6 @@ void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 
 		bringToFront(w);
 	}
-}
-
-void PsiCon::mainWinGeomChanged(QRect saveableGeometry)
-{
-	if (!saveableGeometry.isNull())
-		PsiOptions::instance()->setOption("options.ui.contactlist.saved-window-geometry", saveableGeometry);
 }
 
 void PsiCon::updateS5BServerAddresses()
