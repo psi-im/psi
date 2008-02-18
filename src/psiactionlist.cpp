@@ -116,29 +116,30 @@ void PsiActionList::Private::createCommon()
 void PsiActionList::Private::createMainWin()
 {
 	{
-		IconActionGroup *viewGroups = new IconActionGroup ( this );
-		viewGroups->setMenuText (tr("View Groups"));
-		viewGroups->setWhatsThis (tr("Toggle visibility of special roster groups"));
-		viewGroups->setUsesDropDown (true);
-		viewGroups->setExclusive (false);
+		IconActionGroup *viewGroups = new IconActionGroup(this);
+		viewGroups->setMenuText(tr("View Groups"));
+		viewGroups->setWhatsThis(tr("Toggle visibility of special roster groups"));
+		viewGroups->setUsesDropDown(true);
+		viewGroups->setExclusive(false);
 
-		IconAction *showOffline = new IconAction (tr("Show Offline Contacts"), "psi/show_offline", tr("Show Offline Contacts"), 0, viewGroups, 0, true);
-		showOffline->setWhatsThis (tr("Toggles visibility of offline contacts in roster"));
+		IconAction *showOffline = new IconAction(tr("Show Offline Contacts"), "psi/show_offline", tr("Show Offline Contacts"), 0, viewGroups, 0, true);
+		showOffline->setWhatsThis(tr("Toggles visibility of offline contacts in roster"));
 
-		IconAction *showAway = new IconAction (tr("Show Away/XA/DnD Contacts"), "psi/show_away", tr("Show Away/XA/DnD Contacts"), 0, viewGroups, 0, true);
-		showAway->setWhatsThis (tr("Toggles visibility of away/xa/dnd contacts in roster"));
+		IconAction *showAway = new IconAction(tr("Show Away/XA/DnD Contacts"), "psi/show_away", tr("Show Away/XA/DnD Contacts"), 0,
+		                                      PsiOptions::instance()->getOption("options.ui.menu.view.show-away").toBool() ? (QObject*)viewGroups : (QObject*)this, 0, true);
+		showAway->setWhatsThis(tr("Toggles visibility of away/xa/dnd contacts in roster"));
 
-		IconAction *showHidden = new IconAction (tr("Show Hidden Contacts"), "psi/show_hidden", tr("Show Hidden Contacts"), 0, viewGroups, 0, true);
-		showHidden->setWhatsThis (tr("Toggles visibility of hidden contacts in roster"));
+		IconAction *showHidden = new IconAction(tr("Show Hidden Contacts"), "psi/show_hidden", tr("Show Hidden Contacts"), 0, viewGroups, 0, true);
+		showHidden->setWhatsThis(tr("Toggles visibility of hidden contacts in roster"));
 
-		IconAction *showAgents = new IconAction (tr("Show Agents/Transports"), "psi/disco", tr("Show Agents/Transports"), 0, viewGroups, 0, true);
-		showAgents->setWhatsThis (tr("Toggles visibility of agents/transports in roster"));
+		IconAction *showAgents = new IconAction(tr("Show Agents/Transports"), "psi/disco", tr("Show Agents/Transports"), 0, viewGroups, 0, true);
+		showAgents->setWhatsThis(tr("Toggles visibility of agents/transports in roster"));
 
-		IconAction *showSelf = new IconAction (tr("Show Self Contact"), "psi/show_self", tr("Show Self Contact"), 0, viewGroups, 0, true);
-		showSelf->setWhatsThis (tr("Toggles visibility of self contact in roster"));
+		IconAction *showSelf = new IconAction(tr("Show Self Contact"), "psi/show_self", tr("Show Self Contact"), 0, viewGroups, 0, true);
+		showSelf->setWhatsThis(tr("Toggles visibility of self contact in roster"));
 
-		IconAction *showStatusMsg = new IconAction (tr("Show Status Messages"), "psi/statusmsg", tr("Show Status Messages"), 0, viewGroups, 0, true);
-		showSelf->setWhatsThis (tr("Toggles visibility of status messages of contacts"));
+		IconAction *showStatusMsg = new IconAction(tr("Show Status Messages"), "psi/statusmsg", tr("Show Status Messages"), 0, viewGroups, 0, true);
+		showSelf->setWhatsThis(tr("Toggles visibility of status messages of contacts"));
 
 		ActionNames actions[] = {
 			{ "view_groups",  viewGroups  },
@@ -151,7 +152,7 @@ void PsiActionList::Private::createMainWin()
 			{ "", 0 }
 		};
 
-		createActionList( tr( "Show Contacts" ), Actions_MainWin, actions );
+		createActionList(tr("Show Contacts"), Actions_MainWin, actions);
 	}
 
 	{
