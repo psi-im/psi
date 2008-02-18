@@ -49,6 +49,7 @@
 #include "jidutil.h"
 #include "userlist.h"
 #include "psioptions.h"
+#include "fileutil.h"
 
 static QString getNext(QString *str)
 {
@@ -288,19 +289,16 @@ void HistoryDlg::doNext()
 
 void HistoryDlg::doSave()
 {
-	if(PsiOptions::instance()->getOption("options.ui.last-used-save-path").toString().isEmpty()) {
-		PsiOptions::instance()->setOption("options.ui.last-used-save-path", QDir::homeDirPath());
-	}
-
 	UserListItem *u = d->pa->findFirstRelevant(d->jid);
 	QString them = JIDUtil::nickOrJid(u->name(), u->jid().full());
 	QString s = JIDUtil::encode(them).toLower();
 
-	QString str = PsiOptions::instance()->getOption("options.ui.last-used-save-path").toString() + "/" + s + ".txt";
-	str = QFileDialog::getSaveFileName(this, tr("Export message history"), str, tr("Text files (*.txt);;All files (*.*)"));
-	if(!str.isEmpty()) {
-		QFileInfo fi(str);
-		PsiOptions::instance()->setOption("options.ui.last-used-save-path", fi.dirPath());
+	QString str = FileUtil::getSaveFileName(this,
+	                                        tr("Export message history"),
+	                                        s + ".txt",
+	                                        tr("Text files (*.txt);;All files (*.*)"));
+
+	if (!str.isEmpty()) {
 		exportHistory(str);
 	}
 }

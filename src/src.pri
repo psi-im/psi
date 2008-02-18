@@ -112,6 +112,7 @@ HEADERS += \
 	$$PWD/profiledlg.h \
 	$$PWD/aboutdlg.h \
 	$$PWD/desktoputil.h \
+	$$PWD/fileutil.h \
 	$$PWD/textutil.h \
 	$$PWD/pixmaputil.h \
 	$$PWD/psiaccount.h \
@@ -225,6 +226,7 @@ SOURCES += \
 	$$PWD/profiledlg.cpp \
 	$$PWD/aboutdlg.cpp \
 	$$PWD/desktoputil.cpp \
+	$$PWD/fileutil.cpp \
 	$$PWD/textutil.cpp \
 	$$PWD/pixmaputil.cpp \
 	$$PWD/accountscombobox.cpp \

@@ -73,7 +73,7 @@ static bool doOpenUrl(const QUrl& url)
  *
  *	\sa QDesktopServices::openUrl()
  */
-bool DesktopUtil::openUrl(const QString &url)
+bool DesktopUtil::openUrl(const QString& url)
 {
 	QByteArray ascii = url.toAscii();
 	if (ascii == url)

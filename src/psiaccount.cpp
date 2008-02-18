@@ -123,6 +123,7 @@
 #include "proxy.h"
 #include "psicontactlist.h"
 #include "tabmanager.h"
+#include "fileutil.h"
 
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
@@ -3093,21 +3094,11 @@ void PsiAccount::actionSetMood()
 
 void PsiAccount::actionSetAvatar()
 {
-	while(1) {
-		if(PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString().isEmpty()) {
-			PsiOptions::instance()->setOption("options.ui.last-used-open-path", QDir::homeDirPath());
-		}
-		QString str = QFileDialog::getOpenFileName(0,tr("Choose a file"),PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString(), tr("Images (*.png *.xpm *.jpg *.PNG *.XPM *.JPG)"));
-		if(!str.isEmpty()) {
-			QFileInfo fi(str);
-			if(!fi.exists()) {
-				QMessageBox::critical(0, tr("Error"), tr("The file specified does not exist."));
-				continue;
-			}
-			PsiOptions::instance()->setOption("options.ui.last-used-open-path", fi.dirPath());
-			avatarFactory()->setSelfAvatar(str);
-		}
-		break;
+	QString str = FileUtil::getOpenFileName(0,
+	                                        tr("Choose a file"),
+	                                        tr("Images (*.png *.xpm *.jpg *.PNG *.XPM *.JPG)"));
+	if (!str.isEmpty()) {
+		avatarFactory()->setSelfAvatar(str);
 	}
 }
 

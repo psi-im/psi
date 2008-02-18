@@ -1,9 +1,4 @@
 #include "opt_sound.h"
-#include "common.h"
-#include "iconwidget.h"
-#include "iconset.h"
-#include "applicationinfo.h"
-#include "psioptions.h"
 
 #include <qbuttongroup.h>
 #include <qwhatsthis.h>
@@ -13,6 +8,13 @@
 #include <qlineedit.h>
 #include <qfiledialog.h>
 #include <qlabel.h>
+
+#include "common.h"
+#include "iconwidget.h"
+#include "iconset.h"
+#include "applicationinfo.h"
+#include "psioptions.h"
+#include "fileutil.h"
 
 #include "ui_opt_sound.h"
 
@@ -189,13 +191,10 @@ void OptionsTabSound::setData(PsiCon *, QWidget *p)
 
 void OptionsTabSound::chooseSoundEvent(QAbstractButton* b)
 {
-	if(PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString().isEmpty()) {
-		PsiOptions::instance()->setOption("options.ui.last-used-open-path", QDir::homeDirPath());
-	}
-	QString str = QFileDialog::getOpenFileName(PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString(), tr("Sound (*.wav)"), parentWidget, "", tr("Choose a sound file"));
-	if(!str.isEmpty()) {
-		QFileInfo fi(str);
-		PsiOptions::instance()->setOption("options.ui.last-used-open-path", fi.dirPath());
+	QString str = FileUtil::getOpenFileName(parentWidget,
+	                                        tr("Choose a sound file"),
+	                                        tr("Sound (*.wav)"));
+	if (!str.isEmpty()) {
 		modify_buttons_[b]->setText(str);
 		emit dataChanged();
 	}

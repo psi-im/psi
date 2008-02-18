@@ -1,6 +1,6 @@
 /*
- * desktoputil.h - url-opening routines
- * Copyright (C) 2007  Maciej Niedzielski, Michail Pishchagin
+ * fileutil.h - common file dialogs
+ * Copyright (C) 2008  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,14 +18,24 @@
  *
  */
 
-#ifndef DESKTOPUTIL_H
-#define DESKTOPUTIL_H
+#ifndef FILEUTIL_H
+#define FILEUTIL_H
 
-class QString;
+#include <QObject>
 
-namespace DesktopUtil
+class QWidget;
+
+class FileUtil : public QObject
 {
-	bool openUrl(const QString& url);
+public:
+	static QString lastUsedOpenPath();
+	static void setLastUsedOpenPath(const QString& path);
+
+	static QString lastUsedSavePath();
+	static void setLastUsedSavePath(const QString& path);
+
+	static QString getOpenFileName(QWidget* parent = 0, const QString& caption = QString(), const QString& filter = QString(), QString* selectedFilter = 0);
+	static QString getSaveFileName(QWidget* parent = 0, const QString& caption = QString(), const QString& defaultFileName = QString(), const QString& filter = QString(), QString* selectedFilter = 0);
 };
 
 #endif
