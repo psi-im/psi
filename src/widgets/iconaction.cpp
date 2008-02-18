@@ -380,6 +380,9 @@ IconActionGroup::IconActionGroup(QObject *parent, const char *name, bool exclusi
 {
 	d = new Private(this);
 	d->popup = new QMenu();
+	d->dirty = true;
+	setUsesDropDown(true);
+	d->updatePopup();
 
 	d->exclusive = exclusive;
 }
@@ -393,7 +396,7 @@ IconActionGroup::~IconActionGroup()
 void IconActionGroup::childEvent(QChildEvent *e)
 {
 	IconAction::childEvent(e);
-	
+
 	d->dirty = true;
 	QTimer::singleShot( 0, d, SLOT( updatePopup() ) );
 }
