@@ -26,6 +26,7 @@
 
 class TabbableWidget;
 class TabDlg;
+class TabDlgDelegate;
 
 class TabManager : public QObject
 {
@@ -87,7 +88,17 @@ public:
 	 * set the preferred tabset for a given kind of tabs
 	 */
 	void setPreferredTabsForKind(QChar kind, TabDlg *tabs);
-	
+
+	/**
+	 * set the delegate to be used for all created TabDlgs
+	 */
+	void setTabDlgDelegate(TabDlgDelegate *delegate);
+
+	/**
+	 * enable/disable user dragging/detach/assignment of tabs
+	 */
+	void setUserManagementEnabled(bool enabled);
+
 public slots:
 	void tabDestroyed(QObject*);
 	void tabResized(QSize);
@@ -98,6 +109,8 @@ private:
  	QList<TabDlg*> tabs_;
 	QList<TabbableWidget*> tabControlledChats_;
 	PsiCon *psiCon_;
+	TabDlgDelegate *tabDlgDelegate_;
+	bool userManagement_;
 };
 
 #endif /* _TABMANAGER_H_ */

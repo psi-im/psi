@@ -11,6 +11,8 @@
 TabManager::TabManager(PsiCon* psiCon, QObject *parent)
 	: QObject(parent)
 	, psiCon_(psiCon)
+	, tabDlgDelegate_(0)
+	, userManagement_(true)
 {
 }
 
@@ -90,7 +92,8 @@ TabDlg* TabManager::newTabs(QWidget *widget)
 			}
 		}
 	}
-	TabDlg *tab = new TabDlg(this, size);
+	TabDlg *tab = new TabDlg(this, size, tabDlgDelegate_);
+	tab->setUserManagementEnabled(userManagement_);
 	tabsetToKinds_.insert(tab, group);
 	for (int i=0; i < group.length(); i++) {
 		QChar k = group.at(i);
@@ -167,4 +170,20 @@ void TabManager::deleteAll()
 {
 	qDeleteAll(tabs_);
 	tabs_.clear();
+}
+
+void TabManager::setTabDlgDelegate(TabDlgDelegate *delegate)
+{
+	tabDlgDelegate_ = delegate;
+}
+
+void TabManager::setUserManagementEnabled(bool enabled)
+{
+	if(userManagement_ == enabled)
+		return;
+
+	userManagement_ = enabled;
+	foreach(TabDlg *tab, tabs_) {
+		tab->setUserManagementEnabled(enabled);
+	}
 }
