@@ -206,7 +206,7 @@ bool PsiOptions::newProfile()
 		         << eventNotifier;
 		foreach(ToolbarPrefs tb, toolbars) {
 			tb.locked = true;
-			PsiToolBar::structToOptions(tb);
+			PsiToolBar::structToOptions(this, tb);
 		}
 	}
 

@@ -26,6 +26,7 @@
 class QContextMenuEvent;
 
 class ToolbarPrefs;
+class PsiOptions;
 
 #include "psiactionlist.h"
 
@@ -40,7 +41,7 @@ public:
 	void initialize();
 	void updateVisibility();
 
-	static void structToOptions(const ToolbarPrefs& s);
+	static void structToOptions(PsiOptions* options, const ToolbarPrefs& s);
 
 signals:
 	void customize();

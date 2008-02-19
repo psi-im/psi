@@ -128,18 +128,17 @@ void PsiToolBar::updateVisibility()
 	}
 }
 
-void PsiToolBar::structToOptions(const ToolbarPrefs& tb)
+void PsiToolBar::structToOptions(PsiOptions* options, const ToolbarPrefs& tb)
 {
 	Q_ASSERT(!tb.id.isEmpty());
-	PsiOptions* o = PsiOptions::instance();
-	QString base = o->mapPut("options.ui.contactlist.toolbars", tb.id);
-	o->setOption(base + ".name", tb.name);
-	o->setOption(base + ".visible", tb.on);
-	o->setOption(base + ".locked", tb.locked);
-	// o->setOption(base + ".stretchable", tb.stretchable);
-	o->setOption(base + ".actions", tb.keys);
-	o->setOption(base + ".dock.position", tb.dock);
-	// o->setOption(base + ".dock.index", tb.index);
-	o->setOption(base + ".dock.nl", tb.nl);
-	// o->setOption(base + ".dock.extra-offset", tb.extraOffset);
+	QString base = options->mapPut("options.ui.contactlist.toolbars", tb.id);
+	options->setOption(base + ".name", tb.name);
+	options->setOption(base + ".visible", tb.on);
+	options->setOption(base + ".locked", tb.locked);
+	// options->setOption(base + ".stretchable", tb.stretchable);
+	options->setOption(base + ".actions", tb.keys);
+	options->setOption(base + ".dock.position", tb.dock);
+	// options->setOption(base + ".dock.index", tb.index);
+	options->setOption(base + ".dock.nl", tb.nl);
+	// options->setOption(base + ".dock.extra-offset", tb.extraOffset);
 }
