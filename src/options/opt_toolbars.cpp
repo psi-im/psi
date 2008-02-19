@@ -23,6 +23,7 @@
 #include <QHBoxLayout>
 #include <QList>
 #include <QVBoxLayout>
+#include <QDebug>
 
 class LookFeelToolbarsUI : public QWidget, public Ui::LookFeelToolbars
 {
