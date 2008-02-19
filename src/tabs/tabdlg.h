@@ -53,6 +53,7 @@ public:
 	virtual Qt::WindowFlags initWindowFlags() const;
 	virtual void create(QWidget *widget);
 	virtual void destroy(QWidget *widget);
+	virtual void tabWidgetCreated(QWidget *widget, PsiTabWidget *tabWidget);
 	virtual bool paintEvent(QWidget *widget, QPaintEvent *event);
 	virtual bool resizeEvent(QWidget *widget, QResizeEvent *event);
 	virtual bool mousePressEvent(QWidget *widget, QMouseEvent *event);
