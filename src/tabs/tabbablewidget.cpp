@@ -51,7 +51,7 @@ void TabbableWidget::ensureTabbedCorrectly()
 			tabManager_->getTabs(this)->addTab(this);
 		}
 	} else {
-		if(PsiOptions::instance()->getOption("options.ui.tabs.tab-singles").toBool()) {
+		if(PsiOptions::instance()->getOption("options.ui.tabs.tab-singles").toString().contains(tabManager_->tabKind(this))) {
 			if (isTabbed()) {
 				if(getManagingTabDlg()->tabCount() > 1) {
 					getManagingTabDlg()->closeTab(this, false);

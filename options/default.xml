@@ -309,7 +309,7 @@
 				<size type="QString"></size> <!-- will be invalid when converted to QSize so we can detect first load -->
 				<grouping type="QString" comment="A ':' seperated list of groups of kinds of tabs to keep in the same tabset. 'C' for chat and 'M' for mucs">C:M</grouping>
 				<group-state comment="Saved state data of the tabsets defined by options.ui.tabs.grouping"/>
-				<tab-singles type="bool" comment="Windows that would have been untabbed are given their own tabset">false</tab-singles>
+				<tab-singles type="QString" comment="Tab types that would have been untabbed are given their own tabset. 'C' for chat and 'M' for mucs"/>
 			</tabs>
 		</ui>
 		<shortcuts comment="Shortcuts">
