@@ -82,6 +82,7 @@ public:
 
 	int tabCount() const;
 	void setUserManagementEnabled(bool enabled); // default enabled
+	void setTabBarShownForSingles(bool enabled); // default enabled
 
 protected:
 	void setShortcuts();
@@ -148,11 +149,13 @@ private:
 	TabManager *tabManager_;
 	QPointer<TabbableWidget> selectedTab_;
 	bool userManagement_;
+	bool tabBarSingles_;
 
 	QSize chatSize_;
 
 	void extinguishFlashingTabs();
 	void updateCaption();
+	void updateTabBar();
 };
 
 #endif

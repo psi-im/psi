@@ -123,7 +123,8 @@ TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 		, act_next_(0)
 		, act_prev_(0)
 		, tabManager_(tabManager)
-		, userManagement_(true) {
+		, userManagement_(true)
+		, tabBarSingles_(true) {
 	if (delegate_) {
 		delegate_->create(this);
 	}
@@ -462,6 +463,9 @@ QString TabDlg::desiredCaption() const
 void TabDlg::updateCaption()
 {
 	setWindowTitle(desiredCaption());
+
+	// FIXME: this probably shouldn't be in here, but it works easily
+	updateTabBar();
 }
 
 void TabDlg::closeEvent(QCloseEvent* closeEvent)
@@ -689,10 +693,31 @@ int TabDlg::tabCount() const {
 }
 
 void TabDlg::setUserManagementEnabled(bool enabled) {
-	if(userManagement_ == enabled)
+	if(userManagement_ == enabled) {
 		return;
+	}
 
 	userManagement_ = enabled;
 	tabWidget_->setTabButtonsShown(enabled);
 	tabWidget_->setDragsEnabled(enabled);
+}
+
+void TabDlg::setTabBarShownForSingles(bool enabled) {
+	if(tabBarSingles_ == enabled) {
+		return;
+	}
+
+	tabBarSingles_ = enabled;
+	updateTabBar();
+}
+
+void TabDlg::updateTabBar() {
+	if(tabBarSingles_) {
+		tabWidget_->setTabBarShown(true);
+	} else {
+		if(tabWidget_->count() > 1)
+			tabWidget_->setTabBarShown(true);
+		else
+			tabWidget_->setTabBarShown(false);
+	}
 }
