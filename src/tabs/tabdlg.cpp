@@ -119,7 +119,8 @@ TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 		, act_close_(0)
 		, act_next_(0)
 		, act_prev_(0)
-		, tabManager_(tabManager) {
+		, tabManager_(tabManager)
+		, userManagement_(true) {
 	if (delegate_) {
 		delegate_->create(this);
 	}
@@ -200,19 +201,25 @@ void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent * event)
 	tabMenu_->clear();
 
 	if (tab != -1) {
-		QAction *d = tabMenu_->addAction(tr("Detach Tab"));
+		QAction *d = 0;
+		if(userManagement_) {
+			d = tabMenu_->addAction(tr("Detach Tab"));
+		}
+	
 		QAction *c = tabMenu_->addAction(tr("Close Tab"));
 
-		QMenu* sendTo = new QMenu(tabMenu_);
-		sendTo->setTitle(tr("Send Tab to"));
 		QMap<QAction*, TabDlg*> sentTos;
-		foreach(TabDlg* tabSet, tabManager_->tabSets()) {
-			QAction *act = sendTo->addAction(tabSet->desiredCaption());
-			if (tabSet == this)
-				act->setEnabled(false);
-			sentTos[act] = tabSet;
+		if(userManagement_) {
+			QMenu* sendTo = new QMenu(tabMenu_);
+			sendTo->setTitle(tr("Send Tab to"));
+			foreach(TabDlg* tabSet, tabManager_->tabSets()) {
+				QAction *act = sendTo->addAction(tabSet->desiredCaption());
+				if (tabSet == this)
+					act->setEnabled(false);
+				sentTos[act] = tabSet;
+			}
+			tabMenu_->addMenu(sendTo);
 		}
-		tabMenu_->addMenu(sendTo);
 
 		QAction *act = tabMenu_->exec(pos);
 		if (!act)
@@ -673,4 +680,13 @@ bool TabDlg::eventFilter(QObject *obj, QEvent *event) {
 
 int TabDlg::tabCount() const {
 	return tabs_.count();
+}
+
+void TabDlg::setUserManagementEnabled(bool enabled) {
+	if(userManagement_ == enabled)
+		return;
+
+	userManagement_ = enabled;
+	tabWidget_->setTabButtonsShown(enabled);
+	tabWidget_->setDragsEnabled(enabled);
 }

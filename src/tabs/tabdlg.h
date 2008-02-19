@@ -80,6 +80,7 @@ public:
 	QString captionForTab(TabbableWidget* tab) const;
 
 	int tabCount() const;
+	void setUserManagementEnabled(bool enabled); // default enabled
 
 protected:
 	void setShortcuts();
@@ -145,6 +146,7 @@ private:
 	QAction *act_prev_;
 	TabManager *tabManager_;
 	QPointer<TabbableWidget> selectedTab_;
+	bool userManagement_;
 
 	QSize chatSize_;
 
