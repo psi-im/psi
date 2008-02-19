@@ -23,6 +23,7 @@
 #include "tabdlg.h"
 #include "jidutil.h"
 #include "groupchatdlg.h"
+#include "psioptions.h"
 #include <QTimer>
 
 
@@ -49,13 +50,22 @@ void TabbableWidget::ensureTabbedCorrectly()
 		if (!isTabbed()) {
 			tabManager_->getTabs(this)->addTab(this);
 		}
-	}
-	else {
-		if (isTabbed()) {
-			getManagingTabDlg()->closeTab(this, false);
+	} else {
+		if(PsiOptions::instance()->getOption("options.ui.tabs.tab-singles").toBool()) {
+			if (isTabbed()) {
+				if(getManagingTabDlg()->tabCount() > 1) {
+					getManagingTabDlg()->closeTab(this, false);
+					tabManager_->newTabs(this)->addTab(this);
+				}
+			}
+			else
+				tabManager_->newTabs(this)->addTab(this);
+		} else {
+			if (isTabbed()) {
+				getManagingTabDlg()->closeTab(this, false);
+				show();
+			}
 		}
-
-		show();
 	}
 }
 

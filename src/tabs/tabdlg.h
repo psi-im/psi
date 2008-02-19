@@ -79,6 +79,8 @@ public:
 	virtual QString desiredCaption() const;
 	QString captionForTab(TabbableWidget* tab) const;
 
+	int tabCount() const;
+
 protected:
 	void setShortcuts();
 

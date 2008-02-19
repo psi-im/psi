@@ -670,3 +670,7 @@ bool TabDlg::eventFilter(QObject *obj, QEvent *event) {
 		return AdvancedWidget<QWidget>::eventFilter(obj, event);
 	}
 }
+
+int TabDlg::tabCount() const {
+	return tabs_.count();
+}
