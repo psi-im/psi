@@ -64,6 +64,9 @@ void TabDlgDelegate::create(QWidget *) {
 void TabDlgDelegate::destroy(QWidget *) {
 }
 
+void TabDlgDelegate::tabWidgetCreated(QWidget *, PsiTabWidget *) {
+}
+
 bool TabDlgDelegate::paintEvent(QWidget *, QPaintEvent *) {
 	return false;
 }
@@ -140,6 +143,9 @@ TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 	connect(tabWidget_, SIGNAL(tabContextMenu(int, QPoint, QContextMenuEvent*)), SLOT(showTabMenu(int, QPoint, QContextMenuEvent*)));
 	connect(tabWidget_, SIGNAL(closeButtonClicked()), SLOT(closeCurrentTab()));
 	connect(tabWidget_, SIGNAL(currentChanged(QWidget*)), SLOT(tabSelected(QWidget*)));
+
+	if(delegate_)
+		delegate_->tabWidgetCreated(this, tabWidget_);
 
 	QVBoxLayout *vert1 = new QVBoxLayout( this, 1);
 	vert1->addWidget(tabWidget_);
