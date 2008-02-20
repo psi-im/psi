@@ -13,6 +13,7 @@ TabManager::TabManager(PsiCon* psiCon, QObject *parent)
 	, psiCon_(psiCon)
 	, tabDlgDelegate_(0)
 	, userManagement_(true)
+	, tabSingles_(true)
 {
 }
 
@@ -94,6 +95,7 @@ TabDlg* TabManager::newTabs(QWidget *widget)
 	}
 	TabDlg *tab = new TabDlg(this, size, tabDlgDelegate_);
 	tab->setUserManagementEnabled(userManagement_);
+	tab->setTabBarShownForSingles(tabSingles_);
 	tabsetToKinds_.insert(tab, group);
 	for (int i=0; i < group.length(); i++) {
 		QChar k = group.at(i);
@@ -179,11 +181,24 @@ void TabManager::setTabDlgDelegate(TabDlgDelegate *delegate)
 
 void TabManager::setUserManagementEnabled(bool enabled)
 {
-	if(userManagement_ == enabled)
+	if(userManagement_ == enabled) {
 		return;
+	}
 
 	userManagement_ = enabled;
 	foreach(TabDlg *tab, tabs_) {
 		tab->setUserManagementEnabled(enabled);
+	}
+}
+
+void TabManager::setTabBarShownForSingles(bool enabled)
+{
+	if(tabSingles_ == enabled) {
+		return;
+	}
+
+	tabSingles_ = enabled;
+	foreach(TabDlg *tab, tabs_) {
+		tab->setTabBarShownForSingles(enabled);
 	}
 }

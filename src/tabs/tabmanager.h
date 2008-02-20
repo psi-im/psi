@@ -96,8 +96,17 @@ public:
 
 	/**
 	 * enable/disable user dragging/detach/assignment of tabs
+	 *
+	 * the default is enabled
 	 */
 	void setUserManagementEnabled(bool enabled);
+
+	/**
+	 * enable/disable display of PsiTabBar when there is only one tab
+	 *
+	 * the default is enabled
+	 */
+	void setTabBarShownForSingles(bool enabled);
 
 public slots:
 	void tabDestroyed(QObject*);
@@ -111,6 +120,7 @@ private:
 	PsiCon *psiCon_;
 	TabDlgDelegate *tabDlgDelegate_;
 	bool userManagement_;
+	bool tabSingles_;
 };
 
 #endif /* _TABMANAGER_H_ */
