@@ -1583,7 +1583,6 @@ void OptionsMigration::lateMigration()
 	}
 
 	// QMap< QString, QList<ToolbarPrefs> > toolbars;
-	PsiOptions::instance()->removeOption("options.ui.contactlist.toolbars", true);
 	QList<ToolbarPrefs> toolbars;
 	if(qVersionInt() >= 0x040300) {
 		toolbars = lateMigrationData.toolbars["mainWin"];
@@ -1593,7 +1592,7 @@ void OptionsMigration::lateMigration()
 		}
 	}
 	foreach(ToolbarPrefs tb, toolbars) {
-		PsiToolBar::structToOptions(tb);
+		PsiToolBar::structToOptions(o, tb);
 	}
 }
 
