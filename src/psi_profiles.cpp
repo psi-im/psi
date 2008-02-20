@@ -1526,6 +1526,27 @@ bool OptionsMigration::fromFile(const QString &fname)
 	return TRUE;
 }
 
+static int qVersionInt()
+{
+	static int out = -1;
+
+	if(out == -1) {
+		QString str = QString::fromLatin1(qVersion());
+		QStringList parts = str.split('.', QString::KeepEmptyParts);
+		Q_ASSERT(parts.count() == 3);
+		out = 0;
+		for(int n = 0; n < 3; ++n) {
+			bool ok;
+			int x = parts[n].toInt(&ok);
+			Q_ASSERT(ok);
+			Q_ASSERT(x > 0 && x <= 0xff);
+			out <<= x;
+		}
+	}
+
+	return out;
+}
+
 void OptionsMigration::lateMigration()
 {
 	foreach(QString opt, PsiOptions::instance()->allOptionNames()) {
@@ -1563,7 +1584,15 @@ void OptionsMigration::lateMigration()
 
 	// QMap< QString, QList<ToolbarPrefs> > toolbars;
 	PsiOptions::instance()->removeOption("options.ui.contactlist.toolbars", true);
-	foreach(ToolbarPrefs tb, lateMigrationData.toolbars["mainWin"]) {
+	QList<ToolbarPrefs> toolbars;
+	if(qVersionInt() >= 0x040300) {
+		toolbars = lateMigrationData.toolbars["mainWin"];
+	} else {
+		foreach(ToolbarPrefs tb, lateMigrationData.toolbars["mainWin"]) {
+			toolbars.insert(0, tb);
+		}
+	}
+	foreach(ToolbarPrefs tb, toolbars) {
 		PsiToolBar::structToOptions(tb);
 	}
 }
