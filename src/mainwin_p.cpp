@@ -662,12 +662,13 @@ void EventNotifierAction::hide()
 		label->hide();
 		QToolBar *toolBar = dynamic_cast<QToolBar*>(label->parent());
 		if (toolBar) {
-			QObjectList l = toolBar->queryList("QWidget");
 			int found = 0;
-
-			for (QObjectList::ConstIterator it = l.begin(); it != l.end(); ++it) {
-				if (QString((*it)->name()).left(3) != "qt_")   // misc internal Qt objects
+			foreach(QWidget* widget, toolBar->findChildren<QWidget*>()) {
+				if (!widget->objectName().startsWith("qt_") &&
+				    !QString(widget->metaObject()->className()).startsWith("QToolBar"))
+				{
 					found++;
+				}
 			}
 
 			if (found == 1)   // only MLabel is on ToolBar
