@@ -1,6 +1,6 @@
 Psi 0.12-RC1
 ---------
-Date: February 4th, 2008
+Date: February 21st, 2008
 
 Project Lead/Maintainer (2004-current):
   Kevin Smith
@@ -38,8 +38,8 @@ Notes
   - Upgrading to 0.12 --
     * During the upgrade process, the old config.xml configuration file will
       be imported into the new option.xml format. Neither file should now be
-      edited by hand, since all options are exposed in the options window.
-
+      edited by hand, since all options are exposed in the options window. 
+      Config.xml can be safely removed once the upgrade is complete.
 
   - GnuPG tips --
     * Always use the latest version of GnuPG.
@@ -70,8 +70,8 @@ Changes
     servers not supporting PEP.
   - A new diagnostics group is available in the help menu, to allow debugging
     problems with the QCA security layer.
-  - Launching several instances of the same profile on Windows now behaves
-    more sensibly.
+  - Launching several instances of the same profile on Windows and Unices with
+    DBUS now behaves more sensibly.
   - On X11, the taskbar should now flash on new messages for compliant
     window managers.
 
