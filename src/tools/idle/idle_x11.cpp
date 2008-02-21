@@ -49,18 +49,15 @@ extern "C" int xerrhandler(Display* dpy, XErrorEvent* err)
 class IdlePlatform::Private
 {
 public:
-	Private()
-	: ss_info(0)
-	, maxTilOrSince(0)
-	{}
+	Private() {}
 
 	XScreenSaverInfo *ss_info;
-	unsigned long maxTilOrSince; // This is a hack. We collect the maximal time for screensaver to run.
 };
 
 IdlePlatform::IdlePlatform()
 {
 	d = new Private;
+	d->ss_info = 0;
 }
 
 IdlePlatform::~IdlePlatform()
@@ -91,14 +88,11 @@ bool IdlePlatform::init()
 
 int IdlePlatform::secondsIdle()
 {
-	if (!d->ss_info ||
-	    !XScreenSaverQueryInfo(QApplication::desktop()->screen()->x11Display(), QX11Info::appRootWindow(), d->ss_info)) {
+	if(!d->ss_info)
 		return 0;
-	}
-	if (d->maxTilOrSince < d->ss_info->til_or_since / 1000) {
-		d->maxTilOrSince = d->ss_info->til_or_since / 1000;
-	}
-	return d->ss_info->idle / 1000 + (d->ss_info->til_or_since / 1000 ? 0 : d->maxTilOrSince);
+	if(!XScreenSaverQueryInfo(QApplication::desktop()->screen()->x11Display(), QX11Info::appRootWindow(), d->ss_info))
+		return 0;
+	return d->ss_info->idle / 1000;
 }
 
 #endif
