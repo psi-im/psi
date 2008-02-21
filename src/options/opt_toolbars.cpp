@@ -23,7 +23,6 @@
 #include <QHBoxLayout>
 #include <QList>
 #include <QVBoxLayout>
-#include <QDebug>
 
 class LookFeelToolbarsUI : public QWidget, public Ui::LookFeelToolbars
 {
@@ -275,7 +274,6 @@ void OptionsTabToolbars::toolbarAdd()
 		base = ".." + QString::number(j++);
 	}
 	while (p->toolbarsNew.keys().contains(base));
-	qDebug() << "allocted " << base << " for new toolbar";
 
 	p->toolbarsNew[base] = tb;
 
@@ -293,7 +291,6 @@ void OptionsTabToolbars::toolbarDelete()
 	int n = d->cb_toolbars->currentIndex();
 
 	QString base = d->cb_toolbars->itemData(n).toString();
-	qDebug() << "removing " << base;
 
 	noDirty = true;
 	toolbarSelectionChanged(-1);
