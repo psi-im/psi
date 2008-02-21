@@ -591,13 +591,14 @@ public:
 
 	Q3PtrList<MLabel> labels;
 	bool hide;
+	QString message;
 };
 
 EventNotifierAction::EventNotifierAction(QObject *parent, const char *name)
 : IconAction(parent, name)
 {
 	d = new Private;
-	setMenuText(tr("<Event notifier>"));
+	setText(tr("<Event notifier>"));
 	d->hide = true;
 }
 
@@ -610,7 +611,7 @@ bool EventNotifierAction::addTo(QWidget *w)
 {
 	if (w) {
 		MLabel *label = new MLabel(w, "EventNotifierAction::MLabel");
-		label->setText(text());
+		label->setText(d->message);
 		d->labels.append(label);
 		connect(label, SIGNAL(destroyed()), SLOT(objectDestroyed()));
 		connect(label, SIGNAL(doubleClicked()), SIGNAL(activated()));
@@ -635,14 +636,14 @@ bool EventNotifierAction::addTo(QWidget *w)
 	return false;
 }
 
-void EventNotifierAction::setText(const QString &t)
+void EventNotifierAction::setMessage(const QString &m)
 {
-	IconAction::setText("<nobr>" + t + "</nobr>");
+	d->message = m;
 
 	Q3PtrListIterator<MLabel> it ( d->labels );
 	for ( ; it.current(); ++it) {
 		MLabel *label = it.current();
-		label->setText(text());
+		label->setText(d->message);
 	}
 }
 

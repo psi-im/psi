@@ -69,7 +69,7 @@ public:
 	EventNotifierAction(QObject *parent, const char *name = 0);
 	~EventNotifierAction();
 
-	void setText(const QString &);
+	void setMessage(const QString &);
 	bool addTo (QWidget *w);
 
 	void hide();

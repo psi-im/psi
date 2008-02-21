@@ -1134,10 +1134,10 @@ void MainWin::updateReadNext(PsiIcon* anim, int amount)
 
 	if(d->nextAmount <= 0) {
 		d->eventNotifier->hide();
-		d->eventNotifier->setText("");
+		d->eventNotifier->setMessage("");
 	}
 	else {
-		d->eventNotifier->setText(QString("<b>") + numEventsString(d->nextAmount) + "</b>");
+		d->eventNotifier->setMessage(QString("<b>") + numEventsString(d->nextAmount) + "</b>");
 		d->eventNotifier->show();
 		// make sure it shows
 		//qApp->processEvents();
