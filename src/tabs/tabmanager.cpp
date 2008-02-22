@@ -14,6 +14,7 @@ TabManager::TabManager(PsiCon* psiCon, QObject *parent)
 	, tabDlgDelegate_(0)
 	, userManagement_(true)
 	, tabSingles_(true)
+	, simplifiedCaption_(false)
 {
 }
 
@@ -96,6 +97,7 @@ TabDlg* TabManager::newTabs(QWidget *widget)
 	TabDlg *tab = new TabDlg(this, size, tabDlgDelegate_);
 	tab->setUserManagementEnabled(userManagement_);
 	tab->setTabBarShownForSingles(tabSingles_);
+	tab->setSimplifiedCaptionEnabled(simplifiedCaption_);
 	tabsetToKinds_.insert(tab, group);
 	for (int i=0; i < group.length(); i++) {
 		QChar k = group.at(i);
@@ -181,24 +183,36 @@ void TabManager::setTabDlgDelegate(TabDlgDelegate *delegate)
 
 void TabManager::setUserManagementEnabled(bool enabled)
 {
-	if(userManagement_ == enabled) {
+	if (userManagement_ == enabled) {
 		return;
 	}
 
 	userManagement_ = enabled;
-	foreach(TabDlg *tab, tabs_) {
+	foreach (TabDlg *tab, tabs_) {
 		tab->setUserManagementEnabled(enabled);
 	}
 }
 
 void TabManager::setTabBarShownForSingles(bool enabled)
 {
-	if(tabSingles_ == enabled) {
+	if (tabSingles_ == enabled) {
 		return;
 	}
 
 	tabSingles_ = enabled;
-	foreach(TabDlg *tab, tabs_) {
+	foreach (TabDlg *tab, tabs_) {
 		tab->setTabBarShownForSingles(enabled);
+	}
+}
+
+void TabManager::setSimplifiedCaptionEnabled(bool enabled)
+{
+	if (simplifiedCaption_ == enabled) {
+		return;
+	}
+
+	simplifiedCaption_ = enabled;
+	foreach (TabDlg *tab, tabs_) {
+		tab->setSimplifiedCaptionEnabled(enabled);
 	}
 }

@@ -108,6 +108,13 @@ public:
 	 */
 	void setTabBarShownForSingles(bool enabled);
 
+	/**
+	 * enable/disable simplified caption mode
+	 *
+	 * the default is disabled
+	 */
+	void setSimplifiedCaptionEnabled(bool enabled);
+
 public slots:
 	void tabDestroyed(QObject*);
 	void tabResized(QSize);
@@ -121,6 +128,7 @@ private:
 	TabDlgDelegate *tabDlgDelegate_;
 	bool userManagement_;
 	bool tabSingles_;
+	bool simplifiedCaption_;
 };
 
 #endif /* _TABMANAGER_H_ */

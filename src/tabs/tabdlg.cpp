@@ -124,7 +124,8 @@ TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 		, act_prev_(0)
 		, tabManager_(tabManager)
 		, userManagement_(true)
-		, tabBarSingles_(true) {
+		, tabBarSingles_(true)
+		, simplifiedCaption_(false) {
 	if (delegate_) {
 		delegate_->create(this);
 	}
@@ -447,14 +448,19 @@ QString TabDlg::desiredCaption() const
 	}
 	if (pending > 0) {
 		cap += "* ";
-		if (pending > 1) {
+		if (!simplifiedCaption_ && pending > 1) {
 			cap += QString("[%1] ").arg(pending);
 		}
 	}
+
 	if (tabWidget_->currentPage()) {
-		cap += qobject_cast<TabbableWidget*>(tabWidget_->currentPage())->getDisplayName();
-		if (qobject_cast<TabbableWidget*>(tabWidget_->currentPage())->state() == TabbableWidget::StateComposing) {
-			cap += tr(" is composing");
+		if (simplifiedCaption_ && tabs_.count() > 1) {
+			cap += tr("%1 Conversations").arg(tabs_.count());
+		} else {
+			cap += qobject_cast<TabbableWidget*>(tabWidget_->currentPage())->getDisplayName();
+			if (qobject_cast<TabbableWidget*>(tabWidget_->currentPage())->state() == TabbableWidget::StateComposing) {
+				cap += tr(" is composing");
+			}
 		}
 	}
 	return cap;
@@ -693,7 +699,7 @@ int TabDlg::tabCount() const {
 }
 
 void TabDlg::setUserManagementEnabled(bool enabled) {
-	if(userManagement_ == enabled) {
+	if (userManagement_ == enabled) {
 		return;
 	}
 
@@ -703,7 +709,7 @@ void TabDlg::setUserManagementEnabled(bool enabled) {
 }
 
 void TabDlg::setTabBarShownForSingles(bool enabled) {
-	if(tabBarSingles_ == enabled) {
+	if (tabBarSingles_ == enabled) {
 		return;
 	}
 
@@ -712,12 +718,21 @@ void TabDlg::setTabBarShownForSingles(bool enabled) {
 }
 
 void TabDlg::updateTabBar() {
-	if(tabBarSingles_) {
+	if (tabBarSingles_) {
 		tabWidget_->setTabBarShown(true);
 	} else {
-		if(tabWidget_->count() > 1)
+		if (tabWidget_->count() > 1)
 			tabWidget_->setTabBarShown(true);
 		else
 			tabWidget_->setTabBarShown(false);
 	}
+}
+
+void TabDlg::setSimplifiedCaptionEnabled(bool enabled) {
+	if (simplifiedCaption_ == enabled) {
+		return;
+	}
+
+	simplifiedCaption_ = enabled;
+	updateCaption();
 }

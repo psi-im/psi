@@ -83,6 +83,7 @@ public:
 	int tabCount() const;
 	void setUserManagementEnabled(bool enabled); // default enabled
 	void setTabBarShownForSingles(bool enabled); // default enabled
+	void setSimplifiedCaptionEnabled(bool enabled); // default disabled
 
 protected:
 	void setShortcuts();
@@ -150,6 +151,7 @@ private:
 	QPointer<TabbableWidget> selectedTab_;
 	bool userManagement_;
 	bool tabBarSingles_;
+	bool simplifiedCaption_;
 
 	QSize chatSize_;
 
