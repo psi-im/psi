@@ -124,6 +124,13 @@ PsiMain::PsiMain(QObject *par)
 			QTimer::singleShot(0, this, SLOT(bail()));
 		}
 		else {
+			PsiOptions o;
+			if (!o.newProfile()) {
+				qWarning("ERROR: Failed to new profile default options");
+			}
+
+			o.save(pathToProfile("default") + "/options.xml");
+
 			lastProfile = activeProfile = "default";
 			autoOpen = true;
 			QTimer::singleShot(0, this, SLOT(sessionStart()));
