@@ -5,6 +5,9 @@ class QString;
 
 namespace TextUtil 
 {
+	QString escape(const QString& unescaped);
+	QString unescape(const QString& escaped);
+
 	QString quote(const QString &, int width=60, bool quoteEmpty=false);
 	QString plain2rich(const QString &);
 	QString rich2plain(const QString &);

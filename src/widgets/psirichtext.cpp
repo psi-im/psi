@@ -32,6 +32,8 @@
 #include <QQueue>
 #include <QTextFrame>
 
+#include "textutil.h"
+
 #ifndef WIDGET_PLUGIN
 #include "iconset.h"
 #else
@@ -160,16 +162,6 @@ void PsiRichText::ensureTextLayouted(QTextDocument *doc, int documentWidth, Qt::
 	doc->setTextWidth(documentWidth);
 }
 
-// TODO: FIXME: put this to common.h?
-static QString unescape(const QString& escaped)
-{
-	QString plain = escaped;
-	plain.replace("&lt;", "<");
-	plain.replace("&gt;", ">");
-	plain.replace("&amp;", "&");
-	return plain;
-}
-
 /**
  * Inserts an PsiIcon into document.
  * \param cursor this cursor is used to insert icon
@@ -240,10 +232,10 @@ static QString convertIconsToObjectReplacementCharacters(QString text, TextIconF
 		
 		QString fragment = work.mid(start, end - start);
 		if (rxName.indexIn(fragment) != -1) {
-			QString iconName = unescape(rxName.capturedTexts()[1]);
+			QString iconName = TextUtil::unescape(rxName.capturedTexts()[1]);
 			QString iconText;
 			if (rxText.indexIn(fragment) != -1)
-				iconText = unescape(rxText.capturedTexts()[1]);
+				iconText = TextUtil::unescape(rxText.capturedTexts()[1]);
 			
 			queue->enqueue(new TextIconFormat(iconName, iconText));
 			result += QChar::ObjectReplacementCharacter;

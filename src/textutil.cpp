@@ -5,6 +5,27 @@
 #include "psiiconset.h"
 #include "rtparse.h"
 
+// Qt::escape() doesn't escape " to &quot; -- it sucks
+QString TextUtil::escape(const QString& unescaped)
+{
+	QString plain = unescaped;
+	plain.replace("<", "&lt;");
+	plain.replace(">", "&gt;");
+	plain.replace("&", "&amp;");
+	plain.replace("\"", "&quot;");
+	return plain;
+}
+
+QString TextUtil::unescape(const QString& escaped)
+{
+	QString plain = escaped;
+	plain.replace("&lt;", "<");
+	plain.replace("&gt;", ">");
+	plain.replace("&amp;", "&");
+	plain.replace("&quot;", "\"");
+	return plain;
+}
+
 QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
 {
 	int ql = 0, col = 0, atstart = 1, ls=0;
@@ -470,7 +491,7 @@ QString TextUtil::emoticonify(const QString &in)
 			if ( !closest )
 				break;
 
-			p.putRich( QString("<icon name=\"%1\" text=\"%2\">").arg(Qt::escape(closest->name())).arg(Qt::escape(str.mid(foundPos, foundLen))) );
+			p.putRich( QString("<icon name=\"%1\" text=\"%2\">").arg(TextUtil::escape(closest->name())).arg(TextUtil::escape(str.mid(foundPos, foundLen))) );
 			i = foundPos + foundLen;
 		}
 	}
