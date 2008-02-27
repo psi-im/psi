@@ -67,6 +67,7 @@ ProfileOpenDlg::ProfileOpenDlg(const QString &def, const VarList &_langs, const 
 	setupUi(this);
 	setModal(true);
 	setWindowTitle(CAP(caption()));
+	pb_open->setDefault(true);
 
 	langs = _langs;
 
