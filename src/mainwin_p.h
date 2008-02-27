@@ -131,7 +131,7 @@ signals:
 	void doubleClicked();
 };
 
-class MAction : public IconAction
+class MAction : public IconActionGroup
 {
 	Q_OBJECT
 
@@ -139,7 +139,8 @@ public:
 	MAction(PsiIcon, const QString &, int id, PsiCon *, QObject *parent);
 	MAction(const QString &, int id, PsiCon *, QObject *parent);
 
-	bool addTo(QWidget *w);
+	// reimplemented
+	virtual bool addTo(QWidget *);
 
 	virtual IconAction *copy() const;
 	virtual MAction &operator=( const MAction & );
@@ -149,16 +150,15 @@ signals:
 
 private slots:
 	void numAccountsChanged();
-	void itemActivated(int n);
-
-protected:
-	void addingToolButton(IconToolButton *);
+	void actionActivated();
+	void slotActivated();
 
 private:
-	class Private;
-	Private *d;
+	int id_;
+	PsiCon* controller_;
 
-	void init (PsiIcon, int id, PsiCon *psi);
+	void init(const QString& name, PsiIcon, int id, PsiCon* psi);
+	QList<PsiAccount*> accounts() const;
 };
 
 #endif

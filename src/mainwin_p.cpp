@@ -34,6 +34,8 @@
 #include <QLabel>
 #include <QMenu>
 #include <QMouseEvent>
+#include <QtAlgorithms>
+
 #include "psiaccount.h"
 #include "stretchwidget.h"
 #include "iconwidget.h"
@@ -385,127 +387,75 @@ void MLabel::mouseDoubleClickEvent(QMouseEvent *e)
 // MAction
 //----------------------------------------------------------------------------
 
-class MAction::Private : public QObject
+MAction::MAction(PsiIcon i, const QString& s, int id, PsiCon* psi, QObject* parent)
+	: IconActionGroup(parent)
 {
-public:
-	int id;
-	PsiCon *psi;
-	QSignalMapper *sm;
-
-	Private (int _id, PsiCon *_psi, QObject *parent)
-	: QObject (parent)
-	{
-		id = _id;
-		psi = _psi;
-		sm = new QSignalMapper(this, "MAction::Private::SignalMapper");
-	}
-
-	QMenu *subMenu(QWidget *p)
-	{
-		QMenu *pm = new QMenu (p);
-		uint i = 0;
-		foreach(PsiAccount* acc, psi->contactList()->enabledAccounts()) {
-			pm->insertItem( acc->name(), parent(), SLOT(itemActivated(int)), 0, id*1000 + i );
-			pm->setItemParameter ( id*1000 + i, i );
-			i++;
-		}
-		return pm;
-	}
-
-	void updateToolButton(QToolButton *btn)
-	{
-		if (psi->contactList()->enabledAccounts().count() >= 2) {
-			btn->setMenu(subMenu(btn));
-			disconnect(btn, SIGNAL(clicked()), sm, SLOT(map()));
-		}
-		else {
-			btn->setMenu(0);
-			// connect exactly once:
-			disconnect(btn, SIGNAL(clicked()), sm, SLOT(map()));
-			connect(btn, SIGNAL(clicked()), sm, SLOT(map()));
-		}
-	}
-};
-
-MAction::MAction(PsiIcon i, const QString &s, int id, PsiCon *psi, QObject *parent)
-: IconAction(s, s, 0, parent)
-{
-	init (i, id, psi);
+	init(s, i, id, psi);
 }
 
-MAction::MAction(const QString &s, int id, PsiCon *psi, QObject *parent)
-: IconAction(s, s, 0, parent)
+MAction::MAction(const QString& s, int id, PsiCon* psi, QObject* parent)
+	: IconActionGroup(parent)
 {
-	init (PsiIcon(), id, psi);
+	init(s, PsiIcon(), id, psi);
 }
 
-void MAction::init(PsiIcon i, int id, PsiCon *psi)
+void MAction::init(const QString& name, PsiIcon i, int id, PsiCon* psi)
 {
-	d = new Private(id, psi, this);
-	setPsiIcon (&i);
-	connect(psi, SIGNAL(accountCountChanged()), SLOT(numAccountsChanged()));
-	setEnabled ( d->psi->contactList()->haveEnabledAccounts() );
-	connect (d->sm, SIGNAL(mapped(int)), SLOT(itemActivated(int)));
+	id_ = id;
+	controller_ = psi;
+
+	setText(name);
+	setStatusTip(name);
+	setPsiIcon(&i);
+
+	connect(controller_, SIGNAL(accountCountChanged()), SLOT(numAccountsChanged()));
+	connect(this, SIGNAL(activated()), SLOT(slotActivated()));
+	numAccountsChanged();
 }
 
-bool MAction::addTo(QWidget *w)
+bool MAction::addTo(QWidget* widget)
 {
-	if ( w->inherits("QPopupMenu") || w->inherits("QMenu") )
-	{
-		QMenu *menu = (QMenu*)w;
-        QIcon iconset;
-#ifndef Q_WS_MAC
-		iconset = iconSet();
-#endif
-		if ( d->psi->contactList()->enabledAccounts().count() < 2 ) {
-			menu->insertItem ( iconset, menuText(), this, SLOT(itemActivated(int)), 0, d->id*1000 + 0 );
-			menu->setItemEnabled (d->id*1000 + 0, isEnabled());
-			menu->setItemParameter ( d->id*1000 + 0, 0 );
-		}
-		else
-			menu->insertItem(iconset, menuText(), d->subMenu(w));
-	}
-	else
-		return IconAction::addTo(w);
-
+	widget->addAction(this);
 	return true;
 }
 
-void MAction::addingToolButton(IconToolButton *btn)
+QList<PsiAccount*> MAction::accounts() const
 {
-	d->sm->setMapping(btn, 0);
-
-	d->updateToolButton(btn);
+	return controller_->contactList()->enabledAccounts();
 }
 
-void MAction::itemActivated(int n)
+void MAction::slotActivated()
 {
-	QList<PsiAccount*> list = d->psi->contactList()->enabledAccounts();
+	if (accounts().count() > 0) {
+		emit activated(accounts().first(), id_);
+	}
+}
 
-	if (n >= list.count()) // just in case
-		return;
-
-	emit activated((PsiAccount *)list.at(n), d->id);
+void MAction::actionActivated()
+{
+	QAction* action = static_cast<QAction*>(sender());
+	int num = action->property("id").toInt();
+	if (num >= 0 && num < accounts().count()) {
+		emit activated(accounts().at(num), id_);
+	}
 }
 
 void MAction::numAccountsChanged()
 {
-	setEnabled( d->psi->contactList()->haveEnabledAccounts() );
+	setEnabled(accounts().count() > 0);
 
-	QList<IconToolButton*> btns = buttonList();
-	for ( QList<IconToolButton*>::Iterator it = btns.begin(); it != btns.end(); ++it ) {
-		QToolButton *btn = (*it);
+	qDeleteAll(findChildren<QAction*>());
 
-		if (btn->menu())
-			delete btn->menu();
-
-		d->updateToolButton(btn);
+	foreach(PsiAccount* account, accounts()) {
+		QAction* act = new QAction(account->name(), this);
+		act->setProperty("id", accounts().indexOf(account));
+		connect(act, SIGNAL(activated()), SLOT(actionActivated()));
 	}
 }
 
 IconAction *MAction::copy() const
 {
-	MAction *act = new MAction(text(), d->id, d->psi, 0);
+	MAction *act = new MAction(text(), id_, controller_, 0);
 
 	*act = *this;
 
