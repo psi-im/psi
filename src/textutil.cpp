@@ -6,14 +6,23 @@
 #include "rtparse.h"
 
 // Qt::escape() doesn't escape " to &quot; -- it sucks
-QString TextUtil::escape(const QString& unescaped)
+QString TextUtil::escape(const QString& plain)
 {
-	QString plain = unescaped;
-	plain.replace("<", "&lt;");
-	plain.replace(">", "&gt;");
-	plain.replace("&", "&amp;");
-	plain.replace("\"", "&quot;");
-	return plain;
+	QString rich;
+	rich.reserve(int(plain.length() * 1.1));
+	for (int i = 0; i < plain.length(); ++i) {
+		if (plain.at(i) == QLatin1Char('<'))
+			rich += QLatin1String("&lt;");
+		else if (plain.at(i) == QLatin1Char('>'))
+			rich += QLatin1String("&gt;");
+		else if (plain.at(i) == QLatin1Char('"'))
+			rich += QLatin1String("&quot;");
+		else if (plain.at(i) == QLatin1Char('&'))
+			rich += QLatin1String("&amp;");
+		else
+			rich += plain.at(i);
+	}
+	return rich;
 }
 
 QString TextUtil::unescape(const QString& escaped)
@@ -21,8 +30,8 @@ QString TextUtil::unescape(const QString& escaped)
 	QString plain = escaped;
 	plain.replace("&lt;", "<");
 	plain.replace("&gt;", ">");
-	plain.replace("&amp;", "&");
 	plain.replace("&quot;", "\"");
+	plain.replace("&amp;", "&");
 	return plain;
 }
 
