@@ -24,6 +24,7 @@ public:
 	static PGPUtil& instance();
 
 	bool pgpAvailable();
+	void clearPGPAvailableCache();
 
 	static void showDiagnosticText(const QString& event, const QString& diagnostic);
 	static void showDiagnosticText(QCA::SecureMessage::Error error, const QString& diagnostic);
@@ -70,6 +71,7 @@ private:
 	PassphraseDlg* passphraseDlg_;
 	int currentEventId_;
 	QString currentEntryId_;
+	bool cache_no_pgp_;
 
 	// FIXME
 	friend class PGPKeyDlg;

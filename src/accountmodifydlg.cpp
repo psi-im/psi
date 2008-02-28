@@ -146,6 +146,7 @@ void AccountModifyDlg::init()
 
 	key = acc.pgpSecretKey;
 	updateUserID();
+	PGPUtil::instance().clearPGPAvailableCache();
 	if(PGPUtil::instance().pgpAvailable()) {
 		gb_pgp->setEnabled(true);
 	}

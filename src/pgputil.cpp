@@ -10,7 +10,7 @@
 
 PGPUtil* PGPUtil::instance_ = 0;
 
-PGPUtil::PGPUtil() : qcaEventHandler_(NULL), passphraseDlg_(NULL)
+PGPUtil::PGPUtil() : qcaEventHandler_(NULL), passphraseDlg_(NULL), cache_no_pgp_(false)
 {
 	qcaEventHandler_ = new QCA::EventHandler(this);
 	connect(qcaEventHandler_,SIGNAL(eventReady(int,const QCA::Event&)),SLOT(handleEvent(int,const QCA::Event&)));
@@ -127,7 +127,18 @@ void PGPUtil::passphraseDone(int result)
 
 bool PGPUtil::pgpAvailable()
 {
-	return (QCA::isSupported("openpgp") && keystores_.count() > 0);
+	bool have_openpgp = false;
+	if(!cache_no_pgp_) {
+		have_openpgp = QCA::isSupported("openpgp");
+		if(!have_openpgp)
+			cache_no_pgp_ = true;
+	}
+	return (have_openpgp && keystores_.count() > 0);
+}
+
+void PGPUtil::clearPGPAvailableCache()
+{
+	cache_no_pgp_ = false;
 }
 
 QString PGPUtil::stripHeaderFooter(const QString &str)
