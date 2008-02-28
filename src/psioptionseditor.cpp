@@ -83,7 +83,7 @@ void OptionEditor::finished()
 {	
 	QString option = le_option->text();
 	if (option.isEmpty() || option.endsWith(".") || option.contains("..") || !PsiOptions::isValidName(option)) {
-		QMessageBox::critical(this, tr("Psi: Optioneditor"),
+		QMessageBox::critical(this, tr("Psi: Option Editor"),
 			tr("Please enter option name.\n\n"
 			"Option names may not be empty, end in '.' or contain '..'."), QMessageBox::Close);
 		return;
@@ -94,7 +94,7 @@ void OptionEditor::finished()
 	newval.convert(type);
 	PsiOptions::instance()->setOption(option, newval);
 
-	accepted();
+	accept();
 }
 
 PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
