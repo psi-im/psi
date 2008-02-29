@@ -27,6 +27,8 @@ class QWidget;
 
 class FileUtil : public QObject
 {
+	Q_OBJECT
+
 public:
 	static QString lastUsedOpenPath();
 	static void setLastUsedOpenPath(const QString& path);
