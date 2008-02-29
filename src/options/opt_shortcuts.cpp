@@ -176,7 +176,10 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
 		if (comment.isNull()) {
 			comment = tr("Unnamed group");
 		}
-		topLevelItem->setText(0, translateShortcut(comment));
+		else {
+			comment = translateShortcut(comment);
+		}
+		topLevelItem->setText(0, comment);
 		topLevelItem->setData(0, OPTIONSTREEPATH, QVariant(shortcutGroup));
 		topLevelItem->setData(0, ITEMKIND, QVariant((int)OptionsTabShortcuts::TopLevelItem));
 		topLevelItem->setExpanded(true);
@@ -209,10 +212,13 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
 				if (comment.isNull()) {
 					comment = tr("Unnamed group");
 				}
+				else {
+					comment = translateShortcut(comment);
+				}
 				
 				/* create the TreeWidgetItem and set the Data the Kind and it's Optionspath and append it */
 				shortcutItem = new QTreeWidgetItem(topLevelItem);
-				shortcutItem->setText(0, translateShortcut(comment));
+				shortcutItem->setText(0, comment);
 				shortcutItem->setData(0, ITEMKIND, QVariant((int)OptionsTabShortcuts::ShortcutItem));
 				shortcutItem->setData(0, OPTIONSTREEPATH, QVariant(shortcut));
 				topLevelItem->addChild(shortcutItem);
@@ -446,5 +452,5 @@ void OptionsTabShortcuts::onNewShortcutKey(QKeySequence key) {
  */
 QString OptionsTabShortcuts::translateShortcut(QString comment)
 {
-	return QCoreApplication::translate("Shortcuts", comment.toUtf8(), 0, QCoreApplication::UnicodeUTF8, 0);
+	return QCoreApplication::translate("Shortcuts", comment);
 }
