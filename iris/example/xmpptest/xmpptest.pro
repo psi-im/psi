@@ -17,6 +17,7 @@ include(../../../conf.pri)
 windows:include(../../../conf_windows.pri)
 
 include(../../../src/tools/zip/zip.pri)
+windows:LIBS += -lws2_32
 
 !qca-static {
 	CONFIG += crypto	
