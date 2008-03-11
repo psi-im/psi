@@ -883,10 +883,10 @@ int main(int argc, char **argv)
 {
 	QCA::Initializer init;
 
-#ifdef Q_OS_WIN32
-	QApplication::addLibraryPath(".");
-	putenv("SASL_PATH=.\\sasl");
-#endif
+//#ifdef Q_OS_WIN32
+//	QApplication::addLibraryPath(".");
+//	putenv("SASL_PATH=.\\sasl");
+//#endif
 	QApplication app(argc, argv);
 
 	// seed the random number generator (needed at least for HttpPoll)
