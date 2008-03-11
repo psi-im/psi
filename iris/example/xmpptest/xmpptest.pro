@@ -10,11 +10,13 @@ OBJECTS_DIR    = .obj
 UI_DIR         = .ui
 
 #DEFINES += CS_XMPP
-DEFINES += XMPP_DEBUG
+#DEFINES += XMPP_DEBUG
 
 # Dependencies
 include(../../../conf.pri)
 windows:include(../../../conf_windows.pri)
+
+include(../../../src/tools/zip/zip.pri)
 
 !qca-static {
 	CONFIG += crypto	
