@@ -112,7 +112,7 @@ QString ActiveProfiles::Private::dbusName(QString prof)
 	name += ".";
 	name += encodeAlNumD(ApplicationInfo::homeDir()).right(qMax(0,200-name.size()));
 	if (!prof.isEmpty()) {
-		name += ".";
+		name += ".psi";
 		name += encodeAlNumD(prof).right(qMax(0,250-name.size()));
 	}
 	return name;
