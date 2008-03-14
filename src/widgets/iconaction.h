@@ -61,6 +61,7 @@ public slots:
 	void setText(const QString &);
 
 protected:
+	virtual void doSetMenu(QMenu* menu);
 	virtual void addingToolButton(IconToolButton *) { }
 	//virtual void addingMenuItem(QPopupMenu *, int id) { Q_UNUSED(id); }
 	QList<IconToolButton *> buttonList();

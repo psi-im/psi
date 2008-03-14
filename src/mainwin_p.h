@@ -153,6 +153,10 @@ private slots:
 	void actionActivated();
 	void slotActivated();
 
+protected:
+	// reimplemented
+	virtual void doSetMenu(QMenu* menu);
+
 private:
 	int id_;
 	PsiCon* controller_;

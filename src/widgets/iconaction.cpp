@@ -172,7 +172,8 @@ bool IconAction::addTo(QWidget *w)
 	QStringList supportedContainers;
 	supportedContainers << "QWidget";
 	if (w->inherits("QToolBar") ||
-	    supportedContainers.contains(w->metaObject()->className())) {
+	    supportedContainers.contains(w->metaObject()->className()))
+	{
 		QString bname = objectName() + "_action_button";
 		IconToolButton *btn = new IconToolButton(w);
 		btn->setObjectName(bname);
@@ -270,14 +271,19 @@ QString IconAction::toolTipFromMenuText() const
 
 void IconAction::setMenu( QMenu *p )
 {
-	QAction::setMenu( p );
+	doSetMenu(p);
+}
 
-	IconToolButton *btn;
-	foreach ( btn, d->buttons ) {
-		btn->setMenu (0);
+void IconAction::doSetMenu(QMenu* p)
+{
+	QAction::setMenu(p);
 
-		if ( menu() )
-			btn->setMenu ( menu() );
+	IconToolButton* btn;
+	foreach(btn, d->buttons) {
+		btn->setMenu(0);
+
+		if (menu())
+			btn->setMenu(menu());
 	}
 }
 
@@ -355,23 +361,23 @@ public slots:
 
 void IconActionGroup::Private::updatePopup()
 {
-	if ( !dirty )
+	if (!dirty)
 		return;
 
-	if ( !usesDropDown )
+	if (!usesDropDown)
 		qWarning("IconActionGroup does not support !usesDropDown yet");
 
 	popup->clear();
 
 	QList<QAction *> list = group->findChildren<QAction *>();
-	foreach ( QAction *action, list ) {
-		if ( !group->psiIcon() && action->inherits( "IconAction" ) )
-			group->setIcon( ((IconAction * )action)->icon() );
+	foreach(QAction *action, list) {
+		if (!group->psiIcon() && action->inherits("IconAction"))
+			group->setIcon(((IconAction *)action)->icon());
 
 		popup->addAction(action);
 	}
 
-	group->setMenu( popup );
+	group->setMenu(popup);
 	dirty = false;
 }
 

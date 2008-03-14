@@ -469,6 +469,11 @@ MAction &MAction::operator=( const MAction &from )
 	return *this;
 }
 
+void MAction::doSetMenu(QMenu* menu)
+{
+	IconActionGroup::doSetMenu(findChildren<QAction*>().count() > 1 ? menu : 0);
+}
+
 //----------------------------------------------------------------------------
 // SpacerAction
 //----------------------------------------------------------------------------
