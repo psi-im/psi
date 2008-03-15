@@ -53,7 +53,7 @@ class DummyStream : public Stream
 {
 public:
 	QDomDocument & doc() const { return v_doc; }
-	QString baseNS() const { return QString::null; }
+	QString baseNS() const { return "jabber:client"; }
 	bool old() const { return false; }
 
 	void close() { }
@@ -293,7 +293,7 @@ bool MessageEvent::fromXml(PsiCon *psi, PsiAccount *account, const QDomElement *
 	QDomElement msg = findSubTag(*e, "message", &found);
 	if ( found ) {
 		DummyStream stream;
-		Stanza s = stream.createStanza(msg);
+		Stanza s = stream.createStanza(addCorrectNS(msg));
 		v_m.fromStanza(s, 0); // FIXME: fix tzoffset?
 
 		// if message was not spooled, it will be initialized with the
