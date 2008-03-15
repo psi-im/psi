@@ -339,14 +339,14 @@ whiteboarding {
 		$$PWD/sxe/sxeremoveedit.h \
 		$$PWD/sxe/sxerecordedit.h \
  		$$PWD/sxe/sxerecord.h \
-		$$PWD/whiteboarding/whiteboardingmanager.h \
-		$$PWD/whiteboarding/whiteboardingdlg.h \
-		$$PWD/whiteboarding/whiteboardingwidget.h \
-		$$PWD/whiteboarding/whiteboardingscene.h \
-		$$PWD/whiteboarding/whiteboardingitem.h \
-		$$PWD/whiteboarding/whiteboardingnewitem.h \
-		$$PWD/whiteboarding/whiteboardingnewpath.h \
-		$$PWD/whiteboarding/whiteboardingnewimage.h
+		$$PWD/whiteboarding/wbmanager.h \
+		$$PWD/whiteboarding/wbdlg.h \
+		$$PWD/whiteboarding/wbwidget.h \
+		$$PWD/whiteboarding/wbscene.h \
+		$$PWD/whiteboarding/wbitem.h \
+		$$PWD/whiteboarding/wbnewitem.h \
+		$$PWD/whiteboarding/wbnewpath.h \
+		$$PWD/whiteboarding/wbnewimage.h
 	
 	SOURCES += \
 		$$PWD/sxe/sxemanager.cpp \
@@ -356,14 +356,14 @@ whiteboarding {
 		$$PWD/sxe/sxeremoveedit.cpp \
 		$$PWD/sxe/sxerecordedit.cpp \
 		$$PWD/sxe/sxerecord.cpp \
-		$$PWD/wb/wbmanager.cpp \
-		$$PWD/wb/wbdlg.cpp \
-		$$PWD/wb/wbwidget.cpp \
-		$$PWD/wb/wbscene.cpp \
-		$$PWD/wb/wbitem.cpp \
-		$$PWD/wb/wbnewitem.cpp \
-		$$PWD/wb/wbnewpath.cpp \
-		$$PWD/wb/wbnewimage.cpp
+		$$PWD/whiteboarding/wbmanager.cpp \
+		$$PWD/whiteboarding/wbdlg.cpp \
+		$$PWD/whiteboarding/wbwidget.cpp \
+		$$PWD/whiteboarding/wbscene.cpp \
+		$$PWD/whiteboarding/wbitem.cpp \
+		$$PWD/whiteboarding/wbnewitem.cpp \
+		$$PWD/whiteboarding/wbnewpath.cpp \
+		$$PWD/whiteboarding/wbnewimage.cpp
 }
 
 mac {

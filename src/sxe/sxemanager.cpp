@@ -22,6 +22,7 @@
 #include "psipopup.h"
 #include "psioptions.h"
 #include "common.h"
+#include <QUrl>
 
 using namespace XMPP;
 
