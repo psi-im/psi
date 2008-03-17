@@ -149,6 +149,7 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
 	cb_ = new QCheckBox(this);
 	cb_->setText(tr("Flat"));
 	cb_->setToolTip("Display all options as a flat list.");
+	cb_->setProperty("isOption", false);
 	connect(cb_,SIGNAL(toggled(bool)),tm_,SLOT(setFlat(bool)));
 	buttonLine->addWidget(cb_);
 

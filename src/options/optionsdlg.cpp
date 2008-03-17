@@ -480,6 +480,10 @@ void OptionsDlg::Private::connectDataChanged(QWidget *widget)
 {
 	QObjectList l = widget->queryList( "QWidget", 0, false, true ); // search for all QWidget children of widget
 	for ( QObjectList::Iterator it = l.begin(); it != l.end(); ++it) {
+		QVariant isOption = (*it)->property("isOption");
+		if (isOption.isValid() && !isOption.toBool()) {
+			continue;	// skip controls that only change Options dialog look
+		}
 		QWidget *w = (QWidget*) (*it);
 		QMap<QString, QByteArray>::Iterator it2 = changedMap.find( w->className() );
 		if ( it2 != changedMap.end() ) {
