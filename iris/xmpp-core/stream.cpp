@@ -665,6 +665,7 @@ void ClientStream::ss_tlsHandshaken()
 	securityLayerActivated(LayerTLS);
 	if(!self)
 		return;
+	d->client.setAllowPlain(d->allowPlain == AllowPlain || d->allowPlain == AllowPlainOverTLS);
 	processNext();
 }
 
