@@ -447,7 +447,7 @@ QString TextUtil::emoticonify(const QString &in)
 
 			Q3PtrListIterator<Iconset> iconsets(PsiIconset::instance()->emoticons);
 			Iconset *iconset;
-    			while ( (iconset = iconsets.current()) != 0 ) {
+			while ( (iconset = iconsets.current()) != 0 ) {
 				QListIterator<PsiIcon*> it = iconset->iterator();
 				while ( it.hasNext()) {
 					PsiIcon *icon = it.next();

@@ -1106,7 +1106,10 @@ public:
 				QString lang = e.attribute("xml:lang");
 				if ( lang.isEmpty() )
 					lang = ""; // otherwise there would be many warnings :-(
-				text.append(PsiIcon::IconText(lang, e.text()));
+				QString t = e.text();
+				if (!t.isEmpty()) {
+					text.append(PsiIcon::IconText(lang, t));
+				}
 			}
 			else if ( tag == "object" ) {
 				object[e.attribute("mime")] = e.text();
