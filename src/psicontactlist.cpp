@@ -93,6 +93,9 @@ bool PsiContactList::haveEnabledAccounts() const
  */
 PsiAccount *PsiContactList::defaultAccount() const
 {
+	if (enabledAccounts_.isEmpty()) {
+		return 0;
+	}
 	return enabledAccounts_.first();
 }
 
