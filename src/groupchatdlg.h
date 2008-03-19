@@ -137,6 +137,7 @@ private:
 	void doAlert();
 	void appendSysMsg(const QString &, bool, const QDateTime &ts=QDateTime());
 	void appendMessage(const Message &, bool);
+	void updateLastMsgTime(QDateTime t);
 	void setLooks();
 
 	void contextMenuEvent(QContextMenuEvent *);
@@ -145,6 +146,7 @@ private:
 	QMap<QString,int> nicks;
 	int nicknumber;
 	PsiOptions* options_;
+	QDateTime lastMsgTime_;
 };
 
 class GCFindDlg : public QDialog
