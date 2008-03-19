@@ -49,17 +49,18 @@ static QString encodeAlNumD(QString in)
 {
 	QString out;
 	QByteArray chars = in.toUtf8();
+	bool first = true;
 	foreach(char c, chars) {
 		if (('A' <= c) && (c <= 'z')) {
 			out += (char)c;
-		} else if (('0' <= c) && (c <= '9')) {
+		} else if (('0' <= c) && (c <= '9') && !first) {
 			out += (char)c;
 		} else if ('/' == c) {
 			out += "_";
 		} else {
 			out += QString("-%1").arg(c, 2, 16, QChar('0'));
 		}
-		
+		first = false;
 	}
 	return out;
 }
@@ -112,7 +113,7 @@ QString ActiveProfiles::Private::dbusName(QString prof)
 	name += ".";
 	name += encodeAlNumD(ApplicationInfo::homeDir()).right(qMax(0,200-name.size()));
 	if (!prof.isEmpty()) {
-		name += ".psi";
+		name += ".";
 		name += encodeAlNumD(prof).right(qMax(0,250-name.size()));
 	}
 	return name;
