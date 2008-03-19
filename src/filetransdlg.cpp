@@ -758,7 +758,6 @@ void FileRequestDlg::chooseFile()
 	                                        tr("All files (*)"));
 	if (!str.isEmpty()) {
 		QFileInfo fi(str);
-		Q_ASSERT(fi.exists());
 		le_fname->setText(QDir::convertSeparators(fi.filePath()));
 		lb_size->setText(tr("%1 byte(s)").arg(fi.size())); // TODO: large file support
 	}

@@ -30,12 +30,6 @@
 static QString lastUsedOpenPathOptionPath = "options.ui.last-used-open-path";
 static QString lastUsedSavePathOptionPath = "options.ui.last-used-save-path";
 
-static void validatePath(const QString& path)
-{
-	QFileInfo fi(path);
-	Q_ASSERT(fi.exists());
-}
-
 QString FileUtil::lastUsedOpenPath()
 {
 	return PsiOptions::instance()->getOption(lastUsedOpenPathOptionPath).toString();
@@ -43,8 +37,10 @@ QString FileUtil::lastUsedOpenPath()
 
 void FileUtil::setLastUsedOpenPath(const QString& path)
 {
-	validatePath(path);
-	PsiOptions::instance()->setOption(lastUsedOpenPathOptionPath, path);
+	QFileInfo fi(path);
+	if (fi.exists()) {
+		PsiOptions::instance()->setOption(lastUsedOpenPathOptionPath, path);
+	}
 }
 
 QString FileUtil::lastUsedSavePath()
@@ -54,8 +50,10 @@ QString FileUtil::lastUsedSavePath()
 
 void FileUtil::setLastUsedSavePath(const QString& path)
 {
-	validatePath(path);
-	PsiOptions::instance()->setOption(lastUsedSavePathOptionPath, path);
+	QFileInfo fi(path);
+	if (fi.exists()) {
+		PsiOptions::instance()->setOption(lastUsedSavePathOptionPath, path);
+	}
 }
 
 QString FileUtil::getOpenFileName(QWidget* parent, const QString& caption, const QString& filter, QString* selectedFilter)
