@@ -415,7 +415,6 @@
 			<ask-for-message-on-online type="bool">false</ask-for-message-on-online>
 			<auto-away>
 				<away-after type="int">10</away-after>
-				<message type="QString">Auto Status (idle)</message>
 				<not-availible-after type="int">30</not-availible-after>
 				<offline-after type="int">0</offline-after>
 				<use-away type="bool">true</use-away>

@@ -210,6 +210,8 @@ bool PsiOptions::newProfile()
 		}
 	}
 
+	setOption("options.status.auto-away.message", tr("Auto Status (idle)"));
+	
 	return ok;
 }
 
