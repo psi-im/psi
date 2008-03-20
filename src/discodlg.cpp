@@ -1432,7 +1432,7 @@ DiscoDlg::DiscoDlg(PsiAccount *pa, const Jid &jid, const QString &node)
   	setupUi(this);
 	// restore options
 	ck_autoItems->setChecked(PsiOptions::instance()->getOption("options.ui.service-discovery.automatically-get-items").toBool());
-	ck_autoInfo->setChecked(PsiOptions::instance()->getOption("options.ui.service-discovery.automatically-browse-into").toBool());
+	ck_autoInfo->setChecked(PsiOptions::instance()->getOption("options.ui.service-discovery.automatically-get-info").toBool());
 
 	// initialize
 	d = new Private(this, pa);
@@ -1470,7 +1470,7 @@ DiscoDlg::~DiscoDlg()
 
 	// save options
 	PsiOptions::instance()->setOption("options.ui.service-discovery.automatically-get-items", (bool) ck_autoItems->isChecked());
-	PsiOptions::instance()->setOption("options.ui.service-discovery.automatically-browse-into", (bool) ck_autoInfo->isChecked());
+	PsiOptions::instance()->setOption("options.ui.service-discovery.automatically-get-info", (bool) ck_autoInfo->isChecked());
 }
 
 void DiscoDlg::doDisco(QString host, QString node)

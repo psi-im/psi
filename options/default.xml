@@ -299,7 +299,7 @@
 			</notifications>
 			<remember-window-sizes type="bool">true</remember-window-sizes>
 			<service-discovery>
-				<automatically-browse-into type="bool">true</automatically-browse-into>
+        <automatically-get-info type="bool">true</automatically-get-info>
 				<automatically-get-items type="bool">false</automatically-get-items>
 				<recent-jids type="QStringList" />
 			</service-discovery>

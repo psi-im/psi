@@ -1477,7 +1477,7 @@ bool OptionsMigration::fromFile(const QString &fname)
 		QDomElement p_disco = findSubTag(p, "disco", &found);
 		if (found) {
 			migrateBoolEntry(p_disco, "items", "options.ui.service-discovery.automatically-get-items");
-			migrateBoolEntry(p_disco, "info", "options.ui.service-discovery.automatically-browse-into");
+			migrateBoolEntry(p_disco, "info", "options.ui.service-discovery.automatically-get-info");
 		}
 
 		QDomElement p_dt = findSubTag(p, "dt", &found);
