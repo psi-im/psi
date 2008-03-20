@@ -59,7 +59,7 @@ private:
 };
 
 class WbItem : public QGraphicsSvgItem {
-
+	Q_OBJECT
 public:
 	/*! \brief Constructor
 	 *  Constructs a new whiteboard item that visualized \a node.
