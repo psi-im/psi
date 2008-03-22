@@ -100,6 +100,7 @@ TRANSLATIONS = \
 	$$LANG_PATH/psi_se.ts \
 	$$LANG_PATH/psi_sk.ts \
 	$$LANG_PATH/psi_sr.ts \
+	$$LANG_PATH/psi_uk.ts \
 	$$LANG_PATH/psi_zh.ts
 
 OPTIONS_TRANSLATIONS_FILE=$$PWD/option_translations.cpp
