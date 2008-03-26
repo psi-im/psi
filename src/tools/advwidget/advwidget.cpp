@@ -323,17 +323,55 @@ void GAdvancedWidget::Private::updateGeometry()
 
 void GAdvancedWidget::Private::saveGeometry()
 {
-	PsiOptions::instance()->setOption(geometryOptionPath_, parentWidget_->saveGeometry());
+	PsiOptions::instance()->setOption(geometryOptionPath_, parentWidget_->normalGeometry());
+	PsiOptions::instance()->setOption(geometryOptionPath_ + "-frame", parentWidget_->frameGeometry());
+	PsiOptions::instance()->setOption(geometryOptionPath_ + "-screen", QApplication::desktop()->screenNumber(parentWidget_));
+	PsiOptions::instance()->setOption(geometryOptionPath_ + "-maximized", (parentWidget_->windowState() & Qt::WindowMaximized) != 0);
+	PsiOptions::instance()->setOption(geometryOptionPath_ + "-fullscreen", (parentWidget_->windowState() & Qt::WindowFullScreen) != 0);
 }
 
 void GAdvancedWidget::Private::restoreGeometry()
 {
-	QRect savedGeometry = PsiOptions::instance()->getOption(geometryOptionPath_).toRect();
-	if (!savedGeometry.isEmpty()) {
-		restoreGeometry(savedGeometry);
-	}
-	else {
-		parentWidget_->restoreGeometry(PsiOptions::instance()->getOption(geometryOptionPath_).toByteArray());
+	PsiOptions *o = PsiOptions::instance();
+	QVariant v(o->getOption(geometryOptionPath_));
+
+
+	if (v.type() == QVariant::ByteArray) {
+		// migrate options back from format used for a short time before
+		// 0.12-RC2. This can be removed later.
+		parentWidget_->restoreGeometry(v.toByteArray());
+	} else if (o->getOption(geometryOptionPath_ + "-frame").toRect() != QRect(0,0,0,0)) {
+		// this is at least as safe as saving this kind of binary blob into the options file.
+		// if future Qt versions drop support for restoring from this format old options files
+		// would break anyway. If we want to (e.g. to add other features) we can also reimplement
+		// restoring any other way without breaking the options format at all.
+		// and this way we are sure no Qt version the user happens to have installed writes some
+		// newer version of the format that older Qts can't restore from.
+
+
+		QByteArray array;
+		QDataStream stream(&array, QIODevice::WriteOnly);
+		stream.setVersion(QDataStream::Qt_4_0);
+		const quint32 magicNumber = 0x1D9D0CB;
+		quint16 majorVersion = 1;
+		quint16 minorVersion = 0;
+		stream << magicNumber
+			<< majorVersion
+			<< minorVersion
+			<< o->getOption(geometryOptionPath_ + "-frame").toRect()
+			<< o->getOption(geometryOptionPath_).toRect()
+			<< qint32(o->getOption(geometryOptionPath_ + "-screen").toInt())
+			<< quint8(o->getOption(geometryOptionPath_ + "-maximized").toBool())
+			<< quint8(o->getOption(geometryOptionPath_ + "-fullscreen").toBool());
+
+		parentWidget_->restoreGeometry(array);
+		return;
+	} else {
+		// used for bootstrapping and for pre 0.12-RC1 options files.
+		QRect savedGeometry = o->getOption(geometryOptionPath_).toRect();
+		if (!savedGeometry.isEmpty()) {
+			restoreGeometry(savedGeometry);
+		}
 	}
 }
 

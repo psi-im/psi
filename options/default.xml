@@ -148,6 +148,16 @@
 					<width>150</width>
 					<height>360</height>
 				</saved-window-geometry>
+				<saved-window-geometry-frame type="QRect" >
+					<x>0</x>
+					<y>0</y>
+					<width>0</width>
+					<height>0</height>
+				</saved-window-geometry-frame>
+				<saved-window-geometry-screen type="int">0</saved-window-geometry-screen>
+				<saved-window-geometry-maximized type="bool">false</saved-window-geometry-maximized>
+				<saved-window-geometry-fullscreen type="bool">false</saved-window-geometry-fullscreen>
+
 			</contactlist>
 			<menu comment="Options for the menu">
 				<account comment="Options for the account-specific menu">
