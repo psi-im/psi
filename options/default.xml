@@ -157,7 +157,6 @@
 				<saved-window-geometry-screen type="int">0</saved-window-geometry-screen>
 				<saved-window-geometry-maximized type="bool">false</saved-window-geometry-maximized>
 				<saved-window-geometry-fullscreen type="bool">false</saved-window-geometry-fullscreen>
-
 			</contactlist>
 			<menu comment="Options for the menu">
 				<account comment="Options for the account-specific menu">
