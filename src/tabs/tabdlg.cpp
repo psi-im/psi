@@ -366,7 +366,8 @@ void TabDlg::detachCurrentTab()
 
 void TabDlg::mouseDoubleClickTab(QWidget* widget)
 {
-	detachTab(static_cast<TabbableWidget*>(widget));
+	if(userManagement_)
+		detachTab(static_cast<TabbableWidget*>(widget));
 }
 
 void TabDlg::detachTab(TabbableWidget* tab)
