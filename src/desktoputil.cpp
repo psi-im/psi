@@ -25,6 +25,7 @@
 #include <QSettings>
 #include <QFileInfo>
 #include <QProcess>
+#include <QSysInfo>
 
 #ifdef Q_WS_WIN
 #include <windows.h>
@@ -43,8 +44,11 @@ QString defaultBrowser()
 static bool doOpenUrl(const QUrl& url)
 {
 #ifdef Q_WS_WIN
+	// on Vista it always returns iexplore.exe as default browser
+	bool oldStyleDefaultBrowserInfo = QSysInfo::WindowsVersion < QSysInfo::WV_VISTA;
+
 	QFileInfo browserFileInfo(defaultBrowser());
-	if (browserFileInfo.fileName() == "iexplore.exe") {
+	if (oldStyleDefaultBrowserInfo && browserFileInfo.fileName() == "iexplore.exe") {
 		return QProcess::startDetached(browserFileInfo.absoluteFilePath(),
 		                               QStringList() << "-new" << url.toEncoded());
 	}
