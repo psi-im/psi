@@ -142,7 +142,7 @@ void StatusSetDlg::init()
 	d->le_priority = new QLineEdit(this);
 	d->le_priority->setMinimumWidth(30);
 	hb1->addWidget(d->le_priority,1);
-	
+
 	// Status preset
 	l = new QLabel(tr("Preset:"), this);
 	hb1->addWidget(l);
@@ -154,7 +154,7 @@ void StatusSetDlg::init()
 	}
 	presets.sort();
 	d->cb_preset->insertStringList(presets);
-	connect(d->cb_preset, SIGNAL(highlighted(int)), SLOT(chooseStatusPreset(int)));
+	connect(d->cb_preset, SIGNAL(currentIndexChanged(int)), SLOT(chooseStatusPreset(int)));
 	hb1->addWidget(d->cb_preset,3);
 
 	d->te = new ChatView(this);

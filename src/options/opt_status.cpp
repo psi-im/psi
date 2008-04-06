@@ -70,7 +70,7 @@ QWidget *OptionsTabStatus::widget()
 	setStatusPresetWidgetsEnabled(false);
 	connect(d->pb_spNew, SIGNAL(clicked()), SLOT(newStatusPreset()));
 	connect(d->pb_spDelete, SIGNAL(clicked()), SLOT(removeStatusPreset()));
-	connect(d->cb_preset, SIGNAL(highlighted(int)), SLOT(selectStatusPreset(int)));
+	connect(d->cb_preset, SIGNAL(currentIndexChanged(int)), SLOT(selectStatusPreset(int)));
 	connect(d->te_sp, SIGNAL(textChanged()), SLOT(changeStatusPreset()));
 	connect(d->le_sp_priority, SIGNAL(textChanged(const QString&)), SLOT(changeStatusPreset()));
 	connect(d->cb_sp_status, SIGNAL(activated(int)), SLOT(changeStatusPreset()));
