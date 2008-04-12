@@ -132,6 +132,8 @@ QWidget *PsiTabWidget::currentPage() {
 }
 
 void PsiTabWidget::tab_currentChanged(int tab) {
+	// qt 4.4 sends -1 i case of an empty QTabbar, ignore that case.
+	if (tab == -1) return;
 	setCurrentPage(tab);
 	emit currentChanged(currentPage());
 }
