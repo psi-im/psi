@@ -171,6 +171,8 @@ TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 
 	if (size.isValid()) {
 		resize(size);
+	} else {
+		resize(ChatDlg::defaultSize()); //TODO: no!
 	}
 }
 

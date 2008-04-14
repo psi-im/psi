@@ -146,7 +146,12 @@ void ChatDlg::init()
 	chatEdit()->setFocus();
 
 	// TODO: port to restoreSavedSize() (and adapt it from restoreSavedGeometry())
-	resize(PsiOptions::instance()->getOption("options.ui.chat.size").toSize());
+	QSize size = PsiOptions::instance()->getOption("options.ui.chat.size").toSize();
+	if (!size.isEmpty()) {
+		resize(size);
+	} else {
+		resize(defaultSize());
+	}
 }
 
 ChatDlg::~ChatDlg()
