@@ -140,16 +140,16 @@ void OptionsTabWidget::addTab(OptionsTab *tab)
 	// when inserting it with "addTab"
 	QWidget *w = new QWidget(NULL, tab->name().latin1());
 
-	if ( tab->tabIcon() )
-		QTabWidget::addTab(w, tab->tabIcon()->icon(), tab->tabName());
-	else
-		QTabWidget::addTab(w, tab->tabName());
-
 	if ( !tab->desc().isEmpty() )
 		setTabToolTip(w, tab->desc());
 
 	w2tab[w] = TabData(tab);
 	
+	if ( tab->tabIcon() )
+		QTabWidget::addTab(w, tab->tabIcon()->icon(), tab->tabName());
+	else
+		QTabWidget::addTab(w, tab->tabName());
+
 	//FIXME: this is safe for our current use of addTab, but may
 	//be inconvenient in the future (Qt circa 4.2 had a bug which stopped
 	//setCurrentIndex(0); from working)
