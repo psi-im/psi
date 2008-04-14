@@ -1349,7 +1349,10 @@ void PsiAccount::showCert()
 void PsiAccount::cs_connected()
 {
 	// get IP address
-	ByteStream *bs = d->conn->stream();
+	ByteStream *bs = d->conn ? d->conn->stream() : 0;
+	if (!bs)
+		return;
+
 	if(bs->inherits("BSocket") || bs->inherits("XMPP::BSocket")) {
 		d->localAddress = ((BSocket *)bs)->address();
 	}
@@ -1458,19 +1461,25 @@ void PsiAccount::cs_delayedCloseFinished()
 
 void PsiAccount::cs_warning(int w)
 {
-	if (w == ClientStream::WarnNoTLS && d->acc.ssl == UserAccount::SSL_Yes) {
+	bool showNoTlsWarning = w == ClientStream::WarnNoTLS && d->acc.ssl == UserAccount::SSL_Yes;
+	bool doCleanupStream = !d->stream || showNoTlsWarning;
+
+	if (doCleanupStream) {
 		d->client->close();
 		cleanupStream();
 		v_isActive = false;
 		d->loginStatus = Status(Status::Offline);
 		stateChanged();
 		disconnected();
+	}
 
+	if (showNoTlsWarning) {
 		QMessageBox* m = new QMessageBox(QMessageBox::Critical, (d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Error"), tr("The server does not support TLS encryption."), QMessageBox::Ok, 0, Qt::WDestructiveClose);
 		m->setModal(true);
 		m->show();
 	}
-	else {
+	else if (!doCleanupStream) {
+		Q_ASSERT(d->stream);
 		d->stream->continueAfterWarning();
 	}
 }
