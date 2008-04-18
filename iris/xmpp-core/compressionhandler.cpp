@@ -4,13 +4,20 @@
 #include "compressionhandler.h"
 #include "compress.h"
 
-CompressionHandler::CompressionHandler() : errorCode_(0)
+CompressionHandler::CompressionHandler()
+	: errorCode_(0)
 {
 	outgoing_buffer_.open(QIODevice::ReadWrite);
 	compressor_ = new Compressor(&outgoing_buffer_);
 	
 	incoming_buffer_.open(QIODevice::ReadWrite);
 	decompressor_ = new Decompressor(&incoming_buffer_);
+}
+
+CompressionHandler::~CompressionHandler()
+{
+	delete compressor_;
+	delete decompressor_;
 }
 
 void CompressionHandler::writeIncoming(const QByteArray& a)

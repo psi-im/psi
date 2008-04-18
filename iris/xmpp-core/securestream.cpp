@@ -154,6 +154,7 @@ public:
 	
 	SecureLayer(CompressionHandler *t)
 	{
+		t->setParent(this); // automatically clean up CompressionHandler when SecureLayer is destroyed
 		type = Compression;
 		p.compressionHandler = t;
 		init();
