@@ -38,6 +38,7 @@ public:
 
 private:
 	GlobalShortcutManager();
+	~GlobalShortcutManager();
 	static GlobalShortcutManager* instance_;
 	class KeyTrigger;
 	QMap<QKeySequence, KeyTrigger*> triggers_;

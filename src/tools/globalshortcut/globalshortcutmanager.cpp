@@ -32,6 +32,11 @@ GlobalShortcutManager::GlobalShortcutManager()
 {
 }
 
+GlobalShortcutManager::~GlobalShortcutManager()
+{
+	clear();
+}
+
 GlobalShortcutManager* GlobalShortcutManager::instance_ = 0;
 
 /**

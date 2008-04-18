@@ -600,6 +600,8 @@ void PsiCon::deinit()
 
 	// save profile
 	d->saveProfile(acc);
+
+	GlobalShortcutManager::clear();
 }
 
 
