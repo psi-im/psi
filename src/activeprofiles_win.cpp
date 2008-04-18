@@ -22,6 +22,7 @@
 #include "applicationinfo.h"
 #include "psicon.h"
 
+#include <QCoreApplication>
 #include <QWidget>
 #include <QTimer>
 #include <windows.h>
@@ -190,6 +191,7 @@ bool ActiveProfiles::Private::winEvent(MSG *msg, long *result)
 }
 
 ActiveProfiles::ActiveProfiles()
+	: QObject(QCoreApplication::instance())
 {
 	d = new ActiveProfiles::Private(this);
 }

@@ -20,6 +20,8 @@
  */
  
 #include "activeprofiles.h"
+
+#include <QCoreApplication>
 #include <QString>
 
 bool ActiveProfiles::isActive(const QString &profile) const
@@ -44,6 +46,7 @@ QString ActiveProfiles::thisProfile() const
 }
 
 ActiveProfiles::ActiveProfiles()
+	: QObject(QCoreApplication::instance())
 {
 }
 

@@ -17,9 +17,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
- 
- #include "activeprofiles.h"
 
+#include "activeprofiles.h"
+
+#include <QCoreApplication>
 #include <QString>
 #include <QStringList>
 #include <QByteArray>
@@ -185,6 +186,7 @@ QString ActiveProfiles::thisProfile() const
 }
 
 ActiveProfiles::ActiveProfiles()
+	: QObject(QCoreApplication::instance())
 {
 	d = new ActiveProfiles::Private;
 }
