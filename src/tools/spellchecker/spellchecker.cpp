@@ -25,6 +25,9 @@
  */
 
 #include "spellchecker.h"
+
+#include <QCoreApplication>
+
 #if defined(Q_WS_MAC)
 #include "macspellchecker.h"
 #elif defined(HAVE_ASPELL)
@@ -46,6 +49,7 @@ SpellChecker* SpellChecker::instance()
 }
 
 SpellChecker::SpellChecker()
+	: QObject(QCoreApplication::instance())
 {
 }
 

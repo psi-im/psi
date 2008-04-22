@@ -27,10 +27,11 @@
 #ifndef SPELLCHECKER_H
 #define SPELLCHECKER_H
 
+#include <QObject>
 #include <QList>
 #include <QString>
 
-class SpellChecker
+class SpellChecker : public QObject
 {
 public:
 	static SpellChecker* instance();
