@@ -1,7 +1,7 @@
 Building Psi on Mac OS X
 ------------------------
 
-To simply compile Psi, the same instructions apply as for other *nix 
+To simply compile Psi, the same instructions apply as for other *nix
 platforms:
 1. First, configure the build using the 'configure' script, optionally
    adding parameters to specify where to find certain dependencies:
