@@ -45,7 +45,8 @@ public:
 		Verify,            // --verify
 		VerifyDetached,    // --verify
 		Import,            // --import
-		Export             // --export
+		Export,            // --export
+		DeleteKey          // --delete-key
 	};
 
 	enum VerifyResult
@@ -158,6 +159,7 @@ public:
 	void doVerifyDetached(const QByteArray &sig);
 	void doImport(const QByteArray &in);
 	void doExport(const QString &key_id);
+	void doDeleteKey(const QString &key_fingerprint);
 
 #ifdef QPIPE_SECURE
 	void submitPassphrase(const QCA::SecureArray &a);

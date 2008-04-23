@@ -31,6 +31,76 @@ using namespace QCA;
 
 namespace gpgQCAPlugin {
 
+void releaseAndDeleteLater(QObject *owner, QObject *obj)
+{
+	obj->disconnect(owner);
+	obj->setParent(0);
+	obj->deleteLater();
+}
+
+//----------------------------------------------------------------------------
+// SafeTimer
+//----------------------------------------------------------------------------
+SafeTimer::SafeTimer(QObject *parent) :
+	QObject(parent)
+{
+	timer = new QTimer(this);
+	connect(timer, SIGNAL(timeout()), SIGNAL(timeout()));
+}
+
+SafeTimer::~SafeTimer()
+{
+	releaseAndDeleteLater(this, timer);
+}
+
+int SafeTimer::interval() const
+{
+	return timer->interval();
+}
+
+bool SafeTimer::isActive() const
+{
+	return timer->isActive();
+}
+
+bool SafeTimer::isSingleShot() const
+{
+	return timer->isSingleShot();
+}
+
+void SafeTimer::setInterval(int msec)
+{
+	timer->setInterval(msec);
+}
+
+void SafeTimer::setSingleShot(bool singleShot)
+{
+	timer->setSingleShot(singleShot);
+}
+
+int SafeTimer::timerId() const
+{
+	return timer->timerId();
+}
+
+void SafeTimer::start(int msec)
+{
+	timer->start(msec);
+}
+
+void SafeTimer::start()
+{
+	timer->start();
+}
+
+void SafeTimer::stop()
+{
+	timer->stop();
+}
+
+//----------------------------------------------------------------------------
+// QProcessSignalRelay
+//----------------------------------------------------------------------------
 class QProcessSignalRelay : public QObject
 {
 	Q_OBJECT
@@ -114,7 +184,7 @@ public:
 	QStringList statusLines;
 	GPGProc::Error error;
 	int exitCode;
-	QTimer startTrigger, doneTrigger;
+	SafeTimer startTrigger, doneTrigger;
 
 	QByteArray pre_stdin, pre_aux;
 #ifdef QPIPE_SECURE
@@ -182,7 +252,7 @@ public:
 				proc->terminate();
 			proc->setParent(0);
 #ifdef QPROC_SIGNAL_RELAY
-			delete proc_relay;
+			releaseAndDeleteLater(this, proc_relay);
 			proc_relay = 0;
 			delete proc; // should be safe to do thanks to relay
 #else

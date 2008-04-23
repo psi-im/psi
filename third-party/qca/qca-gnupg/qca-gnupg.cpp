@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2005  Justin Karneges <justin@affinix.com>
+ * Copyright (C) 2003-2008  Justin Karneges <justin@affinix.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,11 @@
 #include <QtCrypto>
 #include <qcaprovider.h>
 #include <QtPlugin>
+#include <QTemporaryFile>
+#include <QDir>
+#include <QLatin1String>
+#include <QMutex>
+#include <stdio.h>
 
 #ifdef Q_OS_MAC
 #include <QFileInfo>
@@ -28,6 +33,181 @@
 # include<windows.h>
 #endif
 #include "gpgop.h"
+
+// for SafeTimer and release function
+#include "gpgproc.h"
+
+using namespace QCA;
+
+namespace gpgQCAPlugin {
+
+static int qVersionInt()
+{
+	static int out = -1;
+
+	if(out == -1) {
+		QString str = QString::fromLatin1(qVersion());
+		QStringList parts = str.split('.', QString::KeepEmptyParts);
+		Q_ASSERT(parts.count() == 3);
+		out = 0;
+		for(int n = 0; n < 3; ++n) {
+			bool ok;
+			int x = parts[n].toInt(&ok);
+			Q_ASSERT(ok);
+			Q_ASSERT(x > 0 && x <= 0xff);
+			out <<= x;
+		}
+	}
+
+	return out;
+}
+
+#ifdef Q_OS_LINUX
+static bool qt_buggy_fsw()
+{
+	// FIXME: just a guess that this is fixed in 4.3.5 and 4.4.0
+	if(qVersionInt() < 0x040305)
+		return true;
+	else
+		return false;
+}
+#else
+static bool qt_buggy_fsw()
+{
+	return false;
+}
+#endif
+
+// begin ugly hack for qca 2.0.0 with broken dirwatch support
+
+// hacks:
+//  1) we must construct with a valid file to watch.  passing an empty
+//     string doesn't work.  this means we can't create the objects in
+//     advance.  instead we'll use new/delete as necessary.
+//  2) there's a wrong internal connect() statement in the qca source.
+//     assuming fixed internals for qca 2.0.0, we can fix that connect from
+//     here...
+
+#include <QFileSystemWatcher>
+
+// some structures below to give accessible interface to qca 2.0.0 internals
+
+class DirWatch2 : public QObject
+{
+        Q_OBJECT
+public:
+        explicit DirWatch2(const QString &dir = QString(), QObject *parent = 0)
+	{
+		Q_UNUSED(dir);
+		Q_UNUSED(parent);
+	}
+
+	~DirWatch2()
+	{
+	}
+
+	QString dirName() const
+	{
+		return QString();
+	}
+
+	void setDirName(const QString &dir)
+	{
+		Q_UNUSED(dir);
+	}
+
+Q_SIGNALS:
+	void changed();
+
+public:
+	Q_DISABLE_COPY(DirWatch2)
+
+	class Private;
+	friend class Private;
+	Private *d;
+};
+
+/*class FileWatch2 : public QObject
+{
+	Q_OBJECT
+public:
+	explicit FileWatch2(const QString &file = QString(), QObject *parent = 0)
+	{
+		Q_UNUSED(file);
+		Q_UNUSED(parent);
+	}
+
+	~FileWatch2()
+	{
+	}
+
+	QString fileName() const
+	{
+		return QString();
+	}
+
+	void setFileName(const QString &file)
+	{
+		Q_UNUSED(file);
+	}
+
+Q_SIGNALS:
+	void changed();
+
+public:
+	Q_DISABLE_COPY(FileWatch2)
+
+	class Private;
+	friend class Private;
+	Private *d;
+};*/
+
+class QFileSystemWatcherRelay2 : public QObject
+{
+	Q_OBJECT
+public:
+};
+
+class DirWatch2::Private : public QObject
+{
+        Q_OBJECT
+public:
+        DirWatch2 *q;
+        QFileSystemWatcher *watcher;
+        QFileSystemWatcherRelay2 *watcher_relay;
+        QString dirName;
+
+private slots:
+	void watcher_changed(const QString &path)
+	{
+		Q_UNUSED(path);
+	}
+};
+
+/*class FileWatch2::Private : public QObject
+{
+	Q_OBJECT
+public:
+	FileWatch2 *q;
+	QFileSystemWatcher *watcher;
+	QFileSystemWatcherRelay2 *watcher_relay;
+	QString fileName;
+
+private slots:
+	void watcher_changed(const QString &path)
+	{
+		Q_UNUSED(path);
+	}
+};*/
+
+static void hack_fix(DirWatch *dw)
+{
+	DirWatch2 *dw2 = reinterpret_cast<DirWatch2*>(dw);
+	QObject::connect(dw2->d->watcher_relay, SIGNAL(directoryChanged(const QString &)), dw2->d, SLOT(watcher_changed(const QString &)));
+	fprintf(stderr, "qca-gnupg: patching DirWatch to fix failed connect\n");
+}
+
+// end ugly hack
 
 #ifdef Q_OS_WIN
 static QString find_reg_gpgProgram()
@@ -110,26 +290,58 @@ static QString unescape_string(const QString &in)
 	return out;
 }
 
-using namespace QCA;
+static void gpg_waitForFinished(GpgOp *gpg)
+{
+	while(1)
+	{
+		GpgOp::Event e = gpg->waitForEvent(-1);
+		if(e.type == GpgOp::Event::Finished)
+			break;
+	}
+}
 
-namespace gpgQCAPlugin {
+Q_GLOBAL_STATIC(QMutex, ksl_mutex)
+
+class MyKeyStoreList;
+static MyKeyStoreList *keyStoreList = 0;
+
+static void gpg_keyStoreLog(const QString &str);
 
 class MyPGPKeyContext : public PGPKeyContext
 {
 public:
 	PGPKeyContextProps _props;
 
+	// keys loaded externally (not from the keyring) need to have these
+	//   values cached, since we can't extract them later
+	QByteArray cacheExportBinary;
+	QString cacheExportAscii;
+
 	MyPGPKeyContext(Provider *p) : PGPKeyContext(p)
 	{
-		// FIXME
-		_props.inKeyring = true;
+		// zero out the props
 		_props.isSecret = false;
+		_props.inKeyring = true;
 		_props.isTrusted = false;
 	}
 
 	virtual Provider::Context *clone() const
 	{
 		return new MyPGPKeyContext(*this);
+	}
+
+	void set(const GpgOp::Key &i, bool isSecret, bool inKeyring, bool isTrusted)
+	{
+		const GpgOp::KeyItem &ki = i.keyItems.first();
+
+		_props.keyId = ki.id;
+		_props.userIds = i.userIds;
+		_props.isSecret = isSecret;
+		_props.creationDate = ki.creationDate;
+		_props.expirationDate = ki.expirationDate;
+		_props.fingerprint = ki.fingerprint.toLower();
+		_props.inKeyring = inKeyring;
+		_props.isTrusted = isTrusted;
 	}
 
 	virtual const PGPKeyContextProps *props() const
@@ -139,39 +351,173 @@ public:
 
 	virtual QByteArray toBinary() const
 	{
-		// TODO
-		return QByteArray();
+		if(_props.inKeyring)
+		{
+			GpgOp gpg(find_bin());
+			gpg.setAsciiFormat(false);
+			gpg.doExport(_props.keyId);
+			gpg_waitForFinished(&gpg);
+			gpg_keyStoreLog(gpg.readDiagnosticText());
+			if(!gpg.success())
+				return QByteArray();
+			return gpg.read();
+		}
+		else
+			return cacheExportBinary;
 	}
 
 	virtual QString toAscii() const
 	{
-		GpgOp gpg(find_bin());
-		gpg.setAsciiFormat(true);
-		gpg.doExport(_props.keyId);
-		while(1)
+		if(_props.inKeyring)
 		{
-			GpgOp::Event e = gpg.waitForEvent(-1);
-			if(e.type == GpgOp::Event::Finished)
-				break;
+			GpgOp gpg(find_bin());
+			gpg.setAsciiFormat(true);
+			gpg.doExport(_props.keyId);
+			gpg_waitForFinished(&gpg);
+			gpg_keyStoreLog(gpg.readDiagnosticText());
+			if(!gpg.success())
+				return QString();
+			return QString::fromLocal8Bit(gpg.read());
 		}
-		if(!gpg.success())
-			return QString();
-		QString str = QString::fromLocal8Bit(gpg.read());
-		return str;
+		else
+			return cacheExportAscii;
+	}
+
+	static void cleanup_temp_keyring(const QString &name)
+	{
+		QFile::remove(name);
+		QFile::remove(name + '~'); // remove possible backup file
 	}
 
 	virtual ConvertResult fromBinary(const QByteArray &a)
 	{
-		// TODO
-		Q_UNUSED(a);
-		return ErrorDecode;
+		GpgOp::Key key;
+		bool sec = false;
+
+		// temporary keyrings
+		QString pubname, secname;
+
+		QTemporaryFile pubtmp(QDir::tempPath() + QLatin1String("/qca_gnupg_tmp.XXXXXX.gpg"));
+		if(!pubtmp.open())
+			return ErrorDecode;
+
+		QTemporaryFile sectmp(QDir::tempPath() + QLatin1String("/qca_gnupg_tmp.XXXXXX.gpg"));
+		if(!sectmp.open())
+			return ErrorDecode;
+
+		pubname = pubtmp.fileName();
+		secname = sectmp.fileName();
+
+		// we turn off autoRemove so that we can close the files
+		//   without them getting deleted
+		pubtmp.setAutoRemove(false);
+		sectmp.setAutoRemove(false);
+		pubtmp.close();
+		sectmp.close();
+
+		// import key into temporary keyring
+		GpgOp gpg(find_bin());
+		gpg.setKeyrings(pubname, secname);
+		gpg.doImport(a);
+		gpg_waitForFinished(&gpg);
+		gpg_keyStoreLog(gpg.readDiagnosticText());
+		// comment this out.  apparently gpg will report failure for
+		//   an import if there are trust issues, even though the
+		//   key actually did get imported
+		/*if(!gpg.success())
+		{
+			cleanup_temp_keyring(pubname);
+			cleanup_temp_keyring(secname);
+			return ErrorDecode;
+		}*/
+
+		// now extract the key from gpg like normal
+
+		// is it a public key?
+		gpg.doPublicKeys();
+		gpg_waitForFinished(&gpg);
+		gpg_keyStoreLog(gpg.readDiagnosticText());
+		if(!gpg.success())
+		{
+			cleanup_temp_keyring(pubname);
+			cleanup_temp_keyring(secname);
+			return ErrorDecode;
+		}
+
+		GpgOp::KeyList pubkeys = gpg.keys();
+		if(!pubkeys.isEmpty())
+		{
+			key = pubkeys.first();
+		}
+		else
+		{
+			// is it a secret key?
+			gpg.doSecretKeys();
+			gpg_waitForFinished(&gpg);
+			gpg_keyStoreLog(gpg.readDiagnosticText());
+			if(!gpg.success())
+			{
+				cleanup_temp_keyring(pubname);
+				cleanup_temp_keyring(secname);
+				return ErrorDecode;
+			}
+
+			GpgOp::KeyList seckeys = gpg.keys();
+			if(!seckeys.isEmpty())
+			{
+				key = seckeys.first();
+				sec = true;
+			}
+			else
+			{
+				// no keys found
+				cleanup_temp_keyring(pubname);
+				cleanup_temp_keyring(secname);
+				return ErrorDecode;
+			}
+		}
+
+		// export binary/ascii and cache
+
+		gpg.setAsciiFormat(false);
+		gpg.doExport(key.keyItems.first().id);
+		gpg_waitForFinished(&gpg);
+		gpg_keyStoreLog(gpg.readDiagnosticText());
+		if(!gpg.success())
+		{
+			cleanup_temp_keyring(pubname);
+			cleanup_temp_keyring(secname);
+			return ErrorDecode;
+		}
+		cacheExportBinary = gpg.read();
+
+		gpg.setAsciiFormat(true);
+		gpg.doExport(key.keyItems.first().id);
+		gpg_waitForFinished(&gpg);
+		gpg_keyStoreLog(gpg.readDiagnosticText());
+		if(!gpg.success())
+		{
+			cleanup_temp_keyring(pubname);
+			cleanup_temp_keyring(secname);
+			return ErrorDecode;
+		}
+		cacheExportAscii = QString::fromLocal8Bit(gpg.read());
+
+		// all done
+
+		cleanup_temp_keyring(pubname);
+		cleanup_temp_keyring(secname);
+
+		set(key, sec, false, false);
+		return ConvertGood;
 	}
 
 	virtual ConvertResult fromAscii(const QString &s)
 	{
-		// TODO
-		Q_UNUSED(s);
-		return ErrorDecode;
+		// GnuPG does ascii/binary detection for imports, so for
+		//   simplicity we consider an ascii import to just be a
+		//   binary import that happens to be comprised of ascii
+		return fromBinary(s.toLocal8Bit());
 	}
 };
 
@@ -242,6 +588,8 @@ public:
 
 	virtual QString serialize() const
 	{
+		// we only serialize the key id.  this means the keyring
+		//   must be available to restore the data
 		QStringList out;
 		out += escape_string("qca-gnupg-1");
 		out += escape_string(pub.keyId());
@@ -249,144 +597,220 @@ public:
 	}
 };
 
-class MyMessageContext;
-
-GpgOp *global_gpg;
-
-/*class MyKeyStore : public KeyStoreContext
+// since keyring files are often modified by creating a new copy and
+//   overwriting the original file, this messes up Qt's file watching
+//   capability since the original file goes away.  to work around this
+//   problem, we'll watch the directories containing the keyring files
+//   instead of watching the actual files themselves.
+//
+// FIXME: consider moving this logic into FileWatch
+class RingWatch : public QObject
 {
 	Q_OBJECT
 public:
-	friend class MyMessageContext;
-
-	MyKeyStore(Provider *p) : KeyStoreContext(p) {}
-
-	virtual Provider::Context *clone() const
+	class DirItem
 	{
-		return 0;
+	public:
+		DirWatch *dirWatch;
+		SafeTimer *changeTimer;
+	};
+
+	class FileItem
+	{
+	public:
+		DirWatch *dirWatch;
+		QString fileName;
+		bool exists;
+		qint64 size;
+		QDateTime lastModified;
+	};
+
+	QList<DirItem> dirs;
+	QList<FileItem> files;
+
+	RingWatch(QObject *parent = 0) :
+		QObject(parent)
+	{
 	}
 
-	virtual int contextId() const
+	~RingWatch()
 	{
-		// TODO
-		return 0; // there is only 1 context, so this can be static
+		clear();
 	}
 
-	virtual QString deviceId() const
+	void add(const QString &filePath)
 	{
-		// TODO
-		return "qca-gnupg-(gpg)";
-	}
+		QFileInfo fi(filePath);
+		QString path = fi.absolutePath();
 
-	virtual KeyStore::Type type() const
-	{
-		return KeyStore::PGPKeyring;
-	}
-
-	virtual QString name() const
-	{
-		return "GnuPG Keyring";
-	}
-
-	virtual QList<KeyStoreEntryContext*> entryList() const
-	{
-		QList<KeyStoreEntryContext*> out;
-
-		GpgOp::KeyList seckeys;
+		// watching this path already?
+		DirWatch *dirWatch = 0;
+		foreach(const DirItem &di, dirs)
 		{
-			GpgOp gpg(find_bin());
-			gpg.doSecretKeys();
-			while(1)
+			if(di.dirWatch->dirName() == path)
 			{
-				GpgOp::Event e = gpg.waitForEvent(-1);
-				if(e.type == GpgOp::Event::Finished)
-					break;
+				dirWatch = di.dirWatch;
+				break;
 			}
-			if(!gpg.success())
-				return out;
-			seckeys = gpg.keys();
 		}
 
-		GpgOp::KeyList pubkeys;
+		// if not, make a watcher
+		if(!dirWatch)
 		{
-			GpgOp gpg(find_bin());
-			gpg.doPublicKeys();
-			while(1)
-			{
-				GpgOp::Event e = gpg.waitForEvent(-1);
-				if(e.type == GpgOp::Event::Finished)
-					break;
-			}
-			if(!gpg.success())
-				return out;
-			pubkeys = gpg.keys();
+			//printf("creating dirwatch for [%s]\n", qPrintable(path));
+
+			DirItem di;
+			di.dirWatch = new DirWatch(path, this);
+			connect(di.dirWatch, SIGNAL(changed()), SLOT(dirChanged()));
+
+			if(qcaVersion() == 0x020000)
+				hack_fix(di.dirWatch);
+
+			di.changeTimer = new SafeTimer(this);
+			di.changeTimer->setSingleShot(true);
+			connect(di.changeTimer, SIGNAL(timeout()), SLOT(handleChanged()));
+
+			dirWatch = di.dirWatch;
+			dirs += di;
 		}
 
-		for(int n = 0; n < pubkeys.count(); ++n)
+		FileItem i;
+		i.dirWatch = dirWatch;
+		i.fileName = fi.fileName();
+		i.exists = fi.exists();
+		if(i.exists)
 		{
-			QString id = pubkeys[n].keyItems.first().id;
-			MyPGPKeyContext *kc = new MyPGPKeyContext(provider());
-			kc->_props.keyId = id;
-			kc->_props.userIds = QStringList() << pubkeys[n].userIds.first();
-			PGPKey pub, sec;
-			pub.change(kc);
-			for(int i = 0; i < seckeys.count(); ++i)
+			i.size = fi.size();
+			i.lastModified = fi.lastModified();
+		}
+		files += i;
+
+		//printf("watching [%s] in [%s]\n", qPrintable(fi.fileName()), qPrintable(i.dirWatch->dirName()));
+	}
+
+	void clear()
+	{
+		files.clear();
+
+		foreach(const DirItem &di, dirs)
+		{
+			delete di.changeTimer;
+			delete di.dirWatch;
+		}
+
+		dirs.clear();
+	}
+
+signals:
+	void changed(const QString &filePath);
+
+private slots:
+	void dirChanged()
+	{
+		DirWatch *dirWatch = (DirWatch *)sender();
+
+		int at = -1;
+		for(int n = 0; n < dirs.count(); ++n)
+		{
+			if(dirs[n].dirWatch == dirWatch)
 			{
-				if(seckeys[i].keyItems.first().id == id)
+				at = n;
+				break;
+			}
+		}
+		if(at == -1)
+			return;
+
+		// we get a ton of change notifications for the dir when
+		//   something happens..   let's collect them and only
+		//   report after 100ms
+
+		if(!dirs[at].changeTimer->isActive())
+			dirs[at].changeTimer->start(100);
+	}
+
+	void handleChanged()
+	{
+		SafeTimer *t = (SafeTimer *)sender();
+
+		int at = -1;
+		for(int n = 0; n < dirs.count(); ++n)
+		{
+			if(dirs[n].changeTimer == t)
+			{
+				at = n;
+				break;
+			}
+		}
+		if(at == -1)
+			return;
+
+		DirWatch *dirWatch = dirs[at].dirWatch;
+		QString dir = dirWatch->dirName();
+
+		// see which files changed
+		QStringList changeList;
+		for(int n = 0; n < files.count(); ++n)
+		{
+			FileItem &i = files[n];
+			QString filePath = dir + '/' + i.fileName;
+			QFileInfo fi(filePath);
+
+			// if the file didn't exist, and still doesn't, skip
+			if(!i.exists && !fi.exists())
+				continue;
+
+			// size/lastModified should only get checked here if
+			//   the file existed and still exists
+			if(fi.exists() != i.exists || fi.size() != i.size || fi.lastModified() != i.lastModified)
+			{
+				changeList += filePath;
+
+				i.exists = fi.exists();
+				if(i.exists)
 				{
-					MyPGPKeyContext *kc = new MyPGPKeyContext(provider());
-					kc->_props.keyId = id;
-					kc->_props.userIds = QStringList() << pubkeys[n].userIds.first();
-					sec.change(kc);
+					i.size = fi.size();
+					i.lastModified = fi.lastModified();
 				}
 			}
-
-			MyKeyStoreEntry *c = new MyKeyStoreEntry(pub, sec, provider());
-			out.append(c);
 		}
 
-		return out;
+		foreach(const QString &s, changeList)
+			emit changed(s);
 	}
-
-	virtual QList<KeyStoreEntry::Type> entryTypes() const
-	{
-		QList<KeyStoreEntry::Type> list;
-		list += KeyStoreEntry::TypePGPSecretKey;
-		list += KeyStoreEntry::TypePGPPublicKey;
-		return list;
-	}
-
-	virtual void submitPassphrase(const SecureArray &a)
-	{
-		global_gpg->submitPassphrase(a.toByteArray());
-	}
-};*/
-
-class MyKeyStoreList;
-class MyMessageContext;
-
-static MyKeyStoreList *keyStoreList = 0;
+};
 
 class MyKeyStoreList : public KeyStoreListContext
 {
 	Q_OBJECT
 public:
-	friend class MyMessageContext;
-	//MyKeyStore *ks;
+	int init_step;
+	bool initialized;
+	GpgOp gpg;
+	GpgOp::KeyList pubkeys, seckeys;
+	QString pubring, secring;
+	bool pubdirty, secdirty;
+	RingWatch ringWatch;
+	QMutex ringMutex;
 
-	MyKeyStoreList(Provider *p) : KeyStoreListContext(p)
+	MyKeyStoreList(Provider *p) :
+		KeyStoreListContext(p),
+		initialized(false),
+		gpg(find_bin(), this),
+		pubdirty(false),
+		secdirty(false),
+		ringWatch(this)
 	{
+		QMutexLocker locker(ksl_mutex());
 		keyStoreList = this;
 
-		//ks = 0;
-
-		//ks = new MyKeyStore(provider());
+		connect(&gpg, SIGNAL(finished()), SLOT(gpg_finished()));
+		connect(&ringWatch, SIGNAL(changed(const QString &)), SLOT(ring_changed(const QString &)));
 	}
 
 	~MyKeyStoreList()
 	{
-		//delete ks;
-
+		QMutexLocker locker(ksl_mutex());
 		keyStoreList = 0;
 	}
 
@@ -395,15 +819,38 @@ public:
 		return 0;
 	}
 
-	/*virtual void start()
+	static MyKeyStoreList *instance()
 	{
-		QTimer::singleShot(0, this, SLOT(do_ready()));
-	}*/
+		QMutexLocker locker(ksl_mutex());
+		return keyStoreList;
+	}
+
+	void ext_keyStoreLog(const QString &str)
+	{
+		if(str.isEmpty())
+			return;
+
+		// FIXME: collect and emit in one pass
+		QMetaObject::invokeMethod(this, "diagnosticText", Qt::QueuedConnection, Q_ARG(QString, str));
+	}
+
+	virtual void start()
+	{
+		// kick start our init procedure:
+		//   ensure gpg is installed
+		//   obtain keyring file names for monitoring
+		//   cache initial keyrings
+
+		init_step = 0;
+		gpg.doCheck();
+	}
 
 	virtual QList<int> keyStores()
 	{
+		// we just support one fixed keyring, if any
 		QList<int> list;
-		list += 0; // TODO
+		if(initialized)
+			list += 0;
 		return list;
 	}
 
@@ -414,7 +861,6 @@ public:
 
 	virtual QString storeId(int) const
 	{
-		// TODO
 		return "qca-gnupg";
 	}
 
@@ -433,57 +879,23 @@ public:
 
 	virtual QList<KeyStoreEntryContext*> entryList(int)
 	{
+		QMutexLocker locker(&ringMutex);
+
 		QList<KeyStoreEntryContext*> out;
 
-		GpgOp::KeyList seckeys;
+		foreach(const GpgOp::Key &pkey, pubkeys)
 		{
-			GpgOp gpg(find_bin());
-			gpg.doSecretKeys();
-			while(1)
-			{
-				GpgOp::Event e = gpg.waitForEvent(-1);
-				if(e.type == GpgOp::Event::Finished)
-					break;
-			}
-			if(!gpg.success())
-				return out;
-			seckeys = gpg.keys();
-		}
-
-		GpgOp::KeyList pubkeys;
-		{
-			GpgOp gpg(find_bin());
-			gpg.doPublicKeys();
-			while(1)
-			{
-				GpgOp::Event e = gpg.waitForEvent(-1);
-				if(e.type == GpgOp::Event::Finished)
-					break;
-			}
-			if(!gpg.success())
-				return out;
-			pubkeys = gpg.keys();
-		}
-
-		for(int n = 0; n < pubkeys.count(); ++n)
-		{
-			QString id = pubkeys[n].keyItems.first().id;
-			MyPGPKeyContext *kc = new MyPGPKeyContext(provider());
-			kc->_props.keyId = id;
-			kc->_props.userIds = QStringList() << pubkeys[n].userIds.first();
 			PGPKey pub, sec;
+
+			QString id = pkey.keyItems.first().id;
+
+			MyPGPKeyContext *kc = new MyPGPKeyContext(provider());
+			// not secret, in keyring
+			kc->set(pkey, false, true, pkey.isTrusted);
 			pub.change(kc);
-			for(int i = 0; i < seckeys.count(); ++i)
-			{
-				if(seckeys[i].keyItems.first().id == id)
-				{
-					MyPGPKeyContext *kc = new MyPGPKeyContext(provider());
-					kc->_props.keyId = id;
-					kc->_props.userIds = QStringList() << pubkeys[n].userIds.first();
-					kc->_props.isSecret = true;
-					sec.change(kc);
-				}
-			}
+
+			// optional
+			sec = getSecKey(id, pkey.userIds);
 
 			MyKeyStoreEntry *c = new MyKeyStoreEntry(pub, sec, provider());
 			c->_storeId = storeId(0);
@@ -494,75 +906,16 @@ public:
 		return out;
 	}
 
-	virtual KeyStoreEntryContext *entryPassive(const QString &serialized)
+	virtual KeyStoreEntryContext *entry(int, const QString &entryId)
 	{
-		QStringList parts = serialized.split(':');
-		if(parts.count() < 2)
-			return 0;
-		if(unescape_string(parts[0]) != "qca-gnupg-1")
-			return 0;
+		QMutexLocker locker(&ringMutex);
 
-		QString keyId = unescape_string(parts[1]);
-
-		GpgOp::KeyList seckeys;
-		{
-			GpgOp gpg(find_bin());
-			gpg.doSecretKeys();
-			while(1)
-			{
-				GpgOp::Event e = gpg.waitForEvent(-1);
-				if(e.type == GpgOp::Event::Finished)
-					break;
-			}
-			if(!gpg.success())
-				return 0;
-			seckeys = gpg.keys();
-		}
-
-		GpgOp::KeyList pubkeys;
-		{
-			GpgOp gpg(find_bin());
-			gpg.doPublicKeys();
-			while(1)
-			{
-				GpgOp::Event e = gpg.waitForEvent(-1);
-				if(e.type == GpgOp::Event::Finished)
-					break;
-			}
-			if(!gpg.success())
-				return 0;
-			pubkeys = gpg.keys();
-		}
-
-		int at = -1;
-		for(int n = 0; n < pubkeys.count(); ++n)
-		{
-			QString id = pubkeys[n].keyItems.first().id;
-			if(id == keyId)
-			{
-				at = n;
-				break;
-			}
-		}
-		if(at == -1)
+		PGPKey pub = getPubKey(entryId);
+		if(pub.isNull())
 			return 0;
 
-		MyPGPKeyContext *kc = new MyPGPKeyContext(provider());
-		kc->_props.keyId = keyId;
-		kc->_props.userIds = QStringList() << pubkeys[at].userIds.first();
-		PGPKey pub, sec;
-		pub.change(kc);
-		for(int i = 0; i < seckeys.count(); ++i)
-		{
-			if(seckeys[i].keyItems.first().id == keyId)
-			{
-				MyPGPKeyContext *kc = new MyPGPKeyContext(provider());
-				kc->_props.keyId = keyId;
-				kc->_props.userIds = QStringList() << pubkeys[at].userIds.first();
-				kc->_props.isSecret = true;
-				sec.change(kc);
-			}
-		}
+		// optional
+		PGPKey sec = getSecKey(entryId, static_cast<MyPGPKeyContext *>(pub.context())->_props.userIds);
 
 		MyKeyStoreEntry *c = new MyKeyStoreEntry(pub, sec, provider());
 		c->_storeId = storeId(0);
@@ -570,100 +923,355 @@ public:
 		return c;
 	}
 
-	virtual void submitPassphrase(int, int, const SecureArray &a)
+	virtual KeyStoreEntryContext *entryPassive(const QString &serialized)
 	{
-		global_gpg->submitPassphrase(a.toByteArray());
+		QMutexLocker locker(&ringMutex);
+
+		QStringList parts = serialized.split(':');
+		if(parts.count() < 2)
+			return 0;
+		if(unescape_string(parts[0]) != "qca-gnupg-1")
+			return 0;
+
+		QString entryId = unescape_string(parts[1]);
+		if(entryId.isEmpty())
+			return 0;
+
+		PGPKey pub = getPubKey(entryId);
+		if(pub.isNull())
+			return 0;
+
+		// optional
+		PGPKey sec = getSecKey(entryId, static_cast<MyPGPKeyContext *>(pub.context())->_props.userIds);
+
+		MyKeyStoreEntry *c = new MyKeyStoreEntry(pub, sec, provider());
+		c->_storeId = storeId(0);
+		c->_storeName = name(0);
+		return c;
 	}
 
-/*private slots:
-	void do_ready()
+	// TODO: cache should reflect this change immediately
+	virtual QString writeEntry(int, const PGPKey &key)
 	{
-		emit busyEnd();
-	}*/
-};
+		const MyPGPKeyContext *kc = static_cast<const MyPGPKeyContext *>(key.context());
+		QByteArray buf = kc->toBinary();
 
-// FIXME: sloooooow
-static PGPKey publicKeyFromId(const QString &id, Provider *p)
-{
-	GpgOp::KeyList pubkeys;
-	{
 		GpgOp gpg(find_bin());
-		gpg.doPublicKeys();
-		while(1)
-		{
-			GpgOp::Event e = gpg.waitForEvent(-1);
-			if(e.type == GpgOp::Event::Finished)
-				break;
-		}
+		gpg.doImport(buf);
+		gpg_waitForFinished(&gpg);
+		gpg_keyStoreLog(gpg.readDiagnosticText());
 		if(!gpg.success())
-			return PGPKey(); // FIXME
-		pubkeys = gpg.keys();
+			return QString();
+
+		return kc->_props.keyId;
 	}
 
-	int at = -1;
-	for(int n = 0; n < pubkeys.count(); ++n)
+	// TODO: cache should reflect this change immediately
+	virtual bool removeEntry(int, const QString &entryId)
 	{
-		if(pubkeys[n].keyItems.first().id == id)
-		{
-			at = n;
-			break;
-		}
-	}
-	if(at == -1)
-		return PGPKey(); // FIXME
+		ringMutex.lock();
+		PGPKey pub = getPubKey(entryId);
+		ringMutex.unlock();
 
-	MyPGPKeyContext *kc = new MyPGPKeyContext(p);
-	kc->_props.keyId = pubkeys[at].keyItems.first().id;
-	kc->_props.userIds = QStringList() << pubkeys[at].userIds.first();
+		const MyPGPKeyContext *kc = static_cast<const MyPGPKeyContext *>(pub.context());
+		QString fingerprint = kc->_props.fingerprint;
 
-	PGPKey pub;
-	pub.change(kc);
-	return pub;
-}
-
-static PGPKey secretKeyFromId(const QString &id, Provider *p)
-{
-	GpgOp::KeyList seckeys;
-	{
 		GpgOp gpg(find_bin());
-		gpg.doSecretKeys();
-		while(1)
-		{
-			GpgOp::Event e = gpg.waitForEvent(-1);
-			if(e.type == GpgOp::Event::Finished)
-				break;
-		}
-		if(!gpg.success())
-			return PGPKey(); // FIXME
-		seckeys = gpg.keys();
+		gpg.doDeleteKey(fingerprint);
+		gpg_waitForFinished(&gpg);
+		gpg_keyStoreLog(gpg.readDiagnosticText());
+		return gpg.success();
 	}
 
-	int at = -1;
-	for(int n = 0; n < seckeys.count(); ++n)
+	// internal
+	PGPKey getPubKey(const QString &keyId) const
 	{
-		const GpgOp::Key &key = seckeys[n];
-		for(int k = 0; k < key.keyItems.count(); ++k)
+		int at = -1;
+		for(int n = 0; n < pubkeys.count(); ++n)
 		{
-			const GpgOp::KeyItem &ki = key.keyItems[k];
-			if(ki.id == id)
+			if(pubkeys[n].keyItems.first().id == keyId)
 			{
 				at = n;
 				break;
 			}
 		}
-		if(at != -1)
-			break;
+		if(at == -1)
+			return PGPKey();
+
+		const GpgOp::Key &pkey = pubkeys[at];
+
+		PGPKey pub;
+		MyPGPKeyContext *kc = new MyPGPKeyContext(provider());
+		// not secret, in keyring
+		kc->set(pkey, false, true, pkey.isTrusted);
+		pub.change(kc);
+
+		return pub;
 	}
-	if(at == -1)
-		return PGPKey(); // FIXME
 
-	MyPGPKeyContext *kc = new MyPGPKeyContext(p);
-	kc->_props.keyId = seckeys[at].keyItems.first().id;
-	kc->_props.userIds = QStringList() << seckeys[at].userIds.first();
+	// internal
+	PGPKey getSecKey(const QString &keyId, const QStringList &userIdsOverride) const
+	{
+		Q_UNUSED(userIdsOverride);
 
-	PGPKey sec;
-	sec.change(kc);
-	return sec;
+		int at = -1;
+		for(int n = 0; n < seckeys.count(); ++n)
+		{
+			if(seckeys[n].keyItems.first().id == keyId)
+			{
+				at = n;
+				break;
+			}
+		}
+		if(at == -1)
+			return PGPKey();
+
+		const GpgOp::Key &skey = seckeys[at];
+
+		PGPKey sec;
+		MyPGPKeyContext *kc = new MyPGPKeyContext(provider());
+		// secret, in keyring, trusted
+		kc->set(skey, true, true, true);
+		//kc->_props.userIds = userIdsOverride;
+		sec.change(kc);
+
+		return sec;
+	}
+
+	PGPKey publicKeyFromId(const QString &keyId)
+	{
+		QMutexLocker locker(&ringMutex);
+
+		int at = -1;
+		for(int n = 0; n < pubkeys.count(); ++n)
+		{
+			const GpgOp::Key &pkey = pubkeys[n];
+			for(int k = 0; k < pkey.keyItems.count(); ++k)
+			{
+				const GpgOp::KeyItem &ki = pkey.keyItems[k];
+				if(ki.id == keyId)
+				{
+					at = n;
+					break;
+				}
+			}
+			if(at != -1)
+				break;
+		}
+		if(at == -1)
+			return PGPKey();
+
+		const GpgOp::Key &pkey = pubkeys[at];
+
+		PGPKey pub;
+		MyPGPKeyContext *kc = new MyPGPKeyContext(provider());
+		// not secret, in keyring
+		kc->set(pkey, false, true, pkey.isTrusted);
+		pub.change(kc);
+
+		return pub;
+	}
+
+	PGPKey secretKeyFromId(const QString &keyId)
+	{
+		QMutexLocker locker(&ringMutex);
+
+		int at = -1;
+		for(int n = 0; n < seckeys.count(); ++n)
+		{
+			const GpgOp::Key &skey = seckeys[n];
+			for(int k = 0; k < skey.keyItems.count(); ++k)
+			{
+				const GpgOp::KeyItem &ki = skey.keyItems[k];
+				if(ki.id == keyId)
+				{
+					at = n;
+					break;
+				}
+			}
+			if(at != -1)
+				break;
+		}
+		if(at == -1)
+			return PGPKey();
+
+		const GpgOp::Key &skey = seckeys[at];
+
+		PGPKey sec;
+		MyPGPKeyContext *kc = new MyPGPKeyContext(provider());
+		// secret, in keyring, trusted
+		kc->set(skey, true, true, true);
+		sec.change(kc);
+
+		return sec;
+	}
+
+private slots:
+	void gpg_finished()
+	{
+		gpg_keyStoreLog(gpg.readDiagnosticText());
+
+		if(!initialized)
+		{
+			// any steps that fail during init, just give up completely
+			if(!gpg.success())
+			{
+				ringWatch.clear();
+				emit busyEnd();
+				return;
+			}
+
+			// check
+			if(init_step == 0)
+			{
+				// obtain keyring file names for monitoring
+				init_step = 1;
+				gpg.doSecretKeyringFile();
+			}
+			// secret keyring filename
+			else if(init_step == 1)
+			{
+				secring = gpg.keyringFile();
+
+				if(qt_buggy_fsw())
+					fprintf(stderr, "qca-gnupg: disabling keyring monitoring in Qt version < 4.3.5\n");
+
+				if(!secring.isEmpty())
+				{
+					if(!qt_buggy_fsw())
+						ringWatch.add(secring);
+				}
+
+				// obtain keyring file names for monitoring
+				init_step = 2;
+				gpg.doPublicKeyringFile();
+			}
+			// public keyring filename
+			else if(init_step == 2)
+			{
+				pubring = gpg.keyringFile();
+				if(!pubring.isEmpty())
+				{
+					if(!qt_buggy_fsw())
+						ringWatch.add(pubring);
+				}
+
+				// cache initial keyrings
+				init_step = 3;
+				gpg.doSecretKeys();
+			}
+			else if(init_step == 3)
+			{
+				ringMutex.lock();
+				seckeys = gpg.keys();
+				ringMutex.unlock();
+
+				// cache initial keyrings
+				init_step = 4;
+				gpg.doPublicKeys();
+			}
+			else if(init_step == 4)
+			{
+				ringMutex.lock();
+				pubkeys = gpg.keys();
+				ringMutex.unlock();
+
+				initialized = true;
+				handleDirtyRings();
+				emit busyEnd();
+			}
+		}
+		else
+		{
+			if(!gpg.success())
+				return;
+
+			GpgOp::Type op = gpg.op();
+			if(op == GpgOp::SecretKeys)
+			{
+				ringMutex.lock();
+				seckeys = gpg.keys();
+				ringMutex.unlock();
+
+				secdirty = false;
+			}
+			else if(op == GpgOp::PublicKeys)
+			{
+				ringMutex.lock();
+				pubkeys = gpg.keys();
+				ringMutex.unlock();
+
+				pubdirty = false;
+			}
+
+			if(!secdirty && !pubdirty)
+			{
+				emit storeUpdated(0);
+				return;
+			}
+
+			handleDirtyRings();
+		}
+	}
+
+	void ring_changed(const QString &filePath)
+	{
+		ext_keyStoreLog(QString("ring_changed: [%1]\n").arg(filePath));
+
+		if(filePath == secring)
+			sec_changed();
+		else if(filePath == pubring)
+			pub_changed();
+	}
+
+private:
+	void pub_changed()
+	{
+		pubdirty = true;
+		handleDirtyRings();
+	}
+
+	void sec_changed()
+	{
+		secdirty = true;
+		handleDirtyRings();
+	}
+
+	void handleDirtyRings()
+	{
+		if(!initialized || gpg.isActive())
+			return;
+
+		if(secdirty)
+			gpg.doSecretKeys();
+		else if(pubdirty)
+			gpg.doPublicKeys();
+	}
+};
+
+static void gpg_keyStoreLog(const QString &str)
+{
+	MyKeyStoreList *ksl = MyKeyStoreList::instance();
+	if(ksl)
+		ksl->ext_keyStoreLog(str);
+}
+
+static PGPKey publicKeyFromId(const QString &id)
+{
+	MyKeyStoreList *ksl = MyKeyStoreList::instance();
+	if(!ksl)
+		return PGPKey();
+
+	return ksl->publicKeyFromId(id);
+}
+
+static PGPKey secretKeyFromId(const QString &id)
+{
+	MyKeyStoreList *ksl = MyKeyStoreList::instance();
+	if(!ksl)
+		return PGPKey();
+
+	return ksl->secretKeyFromId(id);
 }
 
 class MyOpenPGPContext : public SMSContext
@@ -888,7 +1496,7 @@ public:
 				}
 
 				SecureMessageKey key;
-				PGPKey pub = publicKeyFromId(signerId, provider());
+				PGPKey pub = publicKeyFromId(signerId);
 				if(pub.isNull())
 				{
 					MyPGPKeyContext *kc = new MyPGPKeyContext(provider());
@@ -903,8 +1511,6 @@ public:
 		}
 		else
 			op_err = gpg.errorCode();
-
-		global_gpg = 0;
 	}
 
 	virtual bool finished() const
@@ -927,12 +1533,11 @@ public:
 				// TODO
 
 				QString keyId;
-				PGPKey sec = secretKeyFromId(e.keyId, provider());
+				PGPKey sec = secretKeyFromId(e.keyId);
 				if(!sec.isNull())
 					keyId = sec.keyId();
 				else
 					keyId = e.keyId;
-				//emit keyStoreList->storeNeedPassphrase(0, 0, keyId);
 				QStringList out;
 				out += escape_string("qca-gnupg-1");
 				out += escape_string(keyId);
@@ -1049,7 +1654,7 @@ private slots:
 		// FIXME: copied from above, clean up later
 
 		QString keyId;
-		PGPKey sec = secretKeyFromId(in_keyId, provider());
+		PGPKey sec = secretKeyFromId(in_keyId);
 		if(!sec.isNull())
 			keyId = sec.keyId();
 		else

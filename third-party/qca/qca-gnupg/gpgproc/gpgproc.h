@@ -22,7 +22,43 @@
 
 #include "qpipe.h"
 
+class QTimer;
+
 namespace gpgQCAPlugin {
+
+// FIXME: Even though deleting an object during a metacall event is supposed
+//   to be legal with Qt, it is unfortunately buggy (at least before Qt 4.4).
+//   This function performs the following steps:
+//     obj->disconnect(owner); // to prevent future signals to owner
+//     obj->setParent(0);      // to prevent delete if parent is deleted
+//     obj->deleteLater();     // now we can forget about the object
+void releaseAndDeleteLater(QObject *owner, QObject *obj);
+
+class SafeTimer : public QObject
+{
+	Q_OBJECT
+public:
+	SafeTimer(QObject *parent = 0);
+	~SafeTimer();
+
+	int interval() const;
+	bool isActive() const;
+	bool isSingleShot() const;
+	void setInterval(int msec);
+	void setSingleShot(bool singleShot);
+	int timerId() const;
+
+public slots:
+	void start(int msec);
+	void start();
+	void stop();
+
+signals:
+	void timeout();
+
+private:
+	QTimer *timer;
+};
 
 // GPGProc - executes gpg and provides access to all 6 channels.  NormalMode
 //   enables stdout, stderr, and stdin.  ExtendedMode has those 3 plus status

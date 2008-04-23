@@ -411,6 +411,7 @@ public:
 		QByteArray sig;
 		QByteArray inkey;
 		QString export_key_id;
+		QString delete_key_fingerprint;
 
 		Input() : opt_ascii(false), opt_noagent(false), opt_alwaystrust(false) {}
 	};
@@ -446,7 +447,7 @@ public:
 	bool badPassphrase;
 	bool need_submitPassphrase, need_cardOkay;
 	QString diagnosticText;
-	QTimer dtextTimer;
+	SafeTimer dtextTimer;
 
 #ifdef GPG_PROFILE
 	QTime timer;
@@ -688,6 +689,13 @@ public:
 				collectOutput = false;
 				if(input.opt_ascii)
 					readText = true;
+				break;
+			}
+			case GpgOp::DeleteKey:
+			{
+				args += "--batch";
+				args += "--delete-key";
+				args += QString("0x") + input.delete_key_fingerprint;
 				break;
 			}
 		}
@@ -1196,7 +1204,7 @@ public:
 	{
 		if(act)
 		{
-			delete act;
+			releaseAndDeleteLater(this, act);
 			act = 0;
 		}
 
@@ -1514,6 +1522,13 @@ void GpgOp::doExport(const QString &key_id)
 {
 	d->make_act(Export);
 	d->act->input.export_key_id = key_id;
+	d->act->start();
+}
+
+void GpgOp::doDeleteKey(const QString &key_fingerprint)
+{
+	d->make_act(DeleteKey);
+	d->act->input.delete_key_fingerprint = key_fingerprint;
 	d->act->start();
 }
 
