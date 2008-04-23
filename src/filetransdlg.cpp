@@ -446,6 +446,23 @@ void FileTransferHandler::ft_error(int x)
 
 void FileTransferHandler::trySend()
 {
+	// Since trySend comes from singleShot which is an "uncancelable"
+	//   action, we should protect that d->ft is valid, for good measure
+	if(!d->ft)
+		return;
+
+	// When FileTransfer emits error, you are not allowed to call
+	//   dataSizeNeeded() afterwards.  Simetime ago, we changed to using
+	//   QueuedConnection for error() signal delivery (see mapSignals()).
+	//   This made it possible to call dataSizeNeeded by accident between
+	//   the error() signal emit and the ft_error() slot invocation.  To
+	//   work around this problem, we'll check to see if the FileTransfer
+	//   is internally active by checking if s5bConnection() is null.
+	//   FIXME: this probably breaks other file transfer methods, whenever
+	//   we get those.  Probably we need a real fix in Iris..
+	if(!d->ft->s5bConnection())
+		return;
+
 	int blockSize = d->ft->dataSizeNeeded();
 	QByteArray a(blockSize, 0);
 	int r = 0;
