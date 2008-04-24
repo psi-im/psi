@@ -13,7 +13,8 @@
 #	* BUILD: Set this to 'no' if you do not want to build the source tree or
 #		check dependencies of the 'disk' dir when building the DMG.
 #
-# Remko Troncon <remko@psi-im.org>
+# Remko Troncon 
+# http://el-tramo.be
 #
 
 # Change these according to your own setup
