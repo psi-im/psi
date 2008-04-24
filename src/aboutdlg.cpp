@@ -50,7 +50,7 @@ AboutDlg::AboutDlg(QWidget* parent)
 			   "kismith@psi-im.org", "", "",
 			   tr("Project Lead/Maintainer"));
 	authors += details(QString::fromUtf8("Remko Tronçon"),
-			   "remko@psi-im.org", "", "",
+			   "", "", "http://el-tramo.be",
 			   tr("Lead Developer"));
 	authors += details(QString::fromUtf8("Michail Pishchagin"),
 			   "mblsha@psi-im.org", "", "",
