@@ -582,8 +582,11 @@ void PsiCon::deinit()
 	d->idle.stop();
 
 	// shut down all accounts
-	UserAccountList acc = d->contactList->getUserAccountList();
-	delete d->contactList;
+	UserAccountList acc;
+	if(d->contactList) {
+		acc = d->contactList->getUserAccountList();
+		delete d->contactList;
+	}
 
 	// delete s5b server
 	delete d->s5bServer;
@@ -599,7 +602,8 @@ void PsiCon::deinit()
 	delete d->tuneController;
 
 	// save profile
-	d->saveProfile(acc);
+	if(d->contactList)
+		d->saveProfile(acc);
 
 	GlobalShortcutManager::clear();
 }
