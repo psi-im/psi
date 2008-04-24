@@ -149,4 +149,7 @@ void soundPlay(const QString &);
 
 extern Qt::WFlags psi_dialog_flags;
 
+// like QT_VERSION, but runtime
+int qVersionInt();
+
 #endif

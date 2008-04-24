@@ -514,3 +514,33 @@ bool ToolbarPrefs::operator==(const ToolbarPrefs& other)
 	       nl == other.nl;
 	       // extraOffset == other.extraOffset;
 }
+
+
+int qVersionInt()
+{
+	static int out = -1;
+
+	if (out == -1) {
+		QString str = QString::fromLatin1(qVersion());
+		QStringList parts = str.split('.', QString::KeepEmptyParts);
+		if (parts.count() != 3) {
+			out = 0;
+			return out;
+		}
+
+		out = 0;
+		for (int n = 0; n < 3; ++n) {
+			bool ok;
+			int x = parts[n].toInt(&ok);
+			if (ok && x >= 0 && x <= 0xff) {
+				out <<= 8;
+				out += x;
+			} else {
+				out = 0;
+				return out;
+			}
+		}
+	}
+
+	return out;
+}
