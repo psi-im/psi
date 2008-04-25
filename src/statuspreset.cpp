@@ -20,7 +20,7 @@
 
 #include <QString>
 
-#include "maybe.h"
+#include "utilities/maybe.h"
 #include "statuspreset.h"
 
 //-----------------------------------------------------------------------------

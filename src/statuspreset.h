@@ -23,7 +23,7 @@
 
 #include <QString>
 
-#include "maybe.h"
+#include "utilities/maybe.h"
 #include "xmpp_status.h"
 #include "optionstree.h"
 
