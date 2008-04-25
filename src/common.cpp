@@ -516,31 +516,33 @@ bool ToolbarPrefs::operator==(const ToolbarPrefs& other)
 }
 
 
+int versionStringToInt(const char* version)
+{
+	QString str = QString::fromLatin1(version);
+	QStringList parts = str.split('.', QString::KeepEmptyParts);
+	if (parts.count() != 3) {
+		return 0;
+	}
+
+	int versionInt = 0;
+	for (int n = 0; n < 3; ++n) {
+		bool ok;
+		int x = parts[n].toInt(&ok);
+		if (ok && x >= 0 && x <= 0xff) {
+			versionInt <<= 8;
+			versionInt += x;
+		} else {
+			return 0;
+		}
+	}
+	return versionInt;
+}
+
 int qVersionInt()
 {
 	static int out = -1;
-
 	if (out == -1) {
-		QString str = QString::fromLatin1(qVersion());
-		QStringList parts = str.split('.', QString::KeepEmptyParts);
-		if (parts.count() != 3) {
-			out = 0;
-			return out;
-		}
-
-		out = 0;
-		for (int n = 0; n < 3; ++n) {
-			bool ok;
-			int x = parts[n].toInt(&ok);
-			if (ok && x >= 0 && x <= 0xff) {
-				out <<= 8;
-				out += x;
-			} else {
-				out = 0;
-				return out;
-			}
-		}
+		out = versionStringToInt(qVersion());
 	}
-
 	return out;
 }

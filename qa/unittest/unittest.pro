@@ -18,6 +18,7 @@ SOURCES += \
 include(../../src/capabilities/unittest/unittest.pri)
 include(../../src/privacy/unittest/unittest.pri)
 include(../../src/utilities/unittest/unittest.pri)
+include(../../src/unittest/unittest.pri)
 
 QMAKE_EXTRA_TARGETS = check
 check.commands = make && ./unittest
