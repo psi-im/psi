@@ -1,8 +1,6 @@
 /*
 -----BEGIN QCMOD-----
 name: Tests
-arg: with-cppunit-inc=[path],Path to CppUnit include files
-arg: with-cppunit-lib=[path],Path to CppUnit library files
 -----END QCMOD-----
 */
 
@@ -17,47 +15,7 @@ public:
 	QString shortname() const { return "tests"; }
 	bool exec()
 	{
-		QString s = conf->getenv("QC_WITH_CPPUNIT_INC");
-		if(!s.isEmpty()) {
-			if(!conf->checkHeader(s, "cppunit/Test.h")) {
-				conf->debug("CppUnit includes not found!");
-				return false;
-			}
-			conf->addIncludePath(s);
-		}
-		else {
-			QStringList sl;
-			sl += "/usr/include";
-			sl += "/usr/local/include";
-			sl += "/sw/include";
-			sl += "/opt/local/include";
-			if(!conf->findHeader("cppunit/Test.h", sl, &s)) {
-				conf->debug("CppUnit includes not found!");
-				return false;
-			}
-			conf->addIncludePath(s);
-		}
-
-		s = conf->getenv("QC_WITH_CPPUNIT_LIB");
-		if(!s.isEmpty()) {
-			if(!conf->checkLibrary(s, "cppunit")) {
-				conf->debug("CppUnit libraries not found!");
-				return false;
-			}
-			conf->addLib(QString("-L") + s);
-		}
-		else {
-			if(!conf->findLibrary("cppunit", &s)) {
-				conf->debug("CppUnit libraries not found!");
-				return false;
-			}
-			if (!s.isEmpty())
-				conf->addLib(QString("-L") + s);
-		}
-
-		conf->addLib("-lcppunit");
 		conf->addExtra("CONFIG += tests");
-
 		return true;
 	}
 };
