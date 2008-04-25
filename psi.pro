@@ -16,6 +16,7 @@ SUBDIRS += \
 
 tests {
 	SUBDIRS += \
+    third-party/cppunit \
 		qa/unittest \
 		qa/guitest
 

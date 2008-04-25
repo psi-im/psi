@@ -9,6 +9,7 @@ DEFINES += QT_STATICPLUGIN
 
 include(../../conf.pri)
 include(../../src/src.pri)
+include(../../third-party/cppunit/cppunit.pri)
 
 SOURCES += \
 	unittest.cpp \
