@@ -72,14 +72,14 @@ BookmarkManageDlg::~BookmarkManageDlg()
 
 void BookmarkManageDlg::reject()
 {
-	close();
+	QDialog::reject();
 }
 
 void BookmarkManageDlg::accept()
 {
 	if (account_->checkConnected(this)) {
 		saveBookmarks();
-		close();
+		QDialog::accept();
 	}
 }
 
