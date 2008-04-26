@@ -31,7 +31,7 @@ else {
 # run target (TODO: Make it work on Windows too)
 QMAKE_EXTRA_TARGETS += run
 run.depends = $$EXEC_TARGET
-run.commands = ./$$EXEC_TARGET
+run.commands = PSIDATADIR=~/.psi-test ./$$EXEC_TARGET
 
 unix {
 	# gdb target
@@ -47,7 +47,7 @@ unix {
 				install_name_tool -change "$$FRAMEWORK" "$$FRAMEWORK""_debug" "./$$EXEC_TARGET"; \
 			done;
 	}
-	gdb.commands += gdb ./$$EXEC_TARGET
+	gdb.commands += PSIDATADIR=~/.psi-test gdb ./$$EXEC_TARGET
 	mac {
 		gdb.commands += ; \
 			for f in $$QT_FRAMEWORKS; do \
