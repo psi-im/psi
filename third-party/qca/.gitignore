@@ -1,3 +1,5 @@
-.moc
-.obj
-libqca_psi.a
+/.moc
+/.obj
+/libqca_psi.a
+/Makefile
+
