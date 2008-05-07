@@ -240,7 +240,7 @@ void NDnsManager::tryDestroy()
 {
 	if(d->list.isEmpty()) {
 		man = 0;
-		delete this;
+		deleteLater();
 	}
 }
 

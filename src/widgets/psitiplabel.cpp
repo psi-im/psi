@@ -208,7 +208,7 @@ void PsiTipLabel::timerEvent(QTimerEvent *e)
 	if (e->timerId() == hideTimer.timerId())
 		hideTip();
 	else if (e->timerId() == deleteTimer.timerId())
-		delete this;
+		deleteLater();
 }
 
 bool PsiTipLabel::eventFilter(QObject *, QEvent *e)

@@ -590,7 +590,7 @@ void EDBFlatFile::file_timeout()
 {
 	File *i = (File *)sender();
 	d->flist.remove(i);
-	delete i;
+	i->deleteLater();
 }
 
 
