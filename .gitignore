@@ -2,4 +2,6 @@
 /conf.log
 /conf.pri
 /tmtags
+._*
+.DS_Store
 
