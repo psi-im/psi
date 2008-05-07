@@ -324,15 +324,16 @@ void TabDlg::setLooks()
 
 void TabDlg::tabSelected(QWidget* _selected)
 {
-	TabbableWidget* selected = qobject_cast<TabbableWidget*>(_selected);
-	Q_ASSERT(selected);
+	// _selected could be null when TabDlg is closing and deleting all its tabs
+	TabbableWidget* selected = _selected ? qobject_cast<TabbableWidget*>(_selected) : 0;
 	if (!selectedTab_.isNull()) {
 		selectedTab_->deactivated();
 	}
 
 	selectedTab_ = selected;
-	Q_ASSERT(!selectedTab_.isNull());
-	selected->activated();
+	if (selected) {
+		selected->activated();
+	}
 
 	updateCaption();
 }
