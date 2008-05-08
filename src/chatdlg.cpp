@@ -998,7 +998,7 @@ void ChatDlg::checkComposing()
 {
 	if (!isComposing_) {
 		// User stopped composing
-		delete composingTimer_;
+		composingTimer_->deleteLater();
 		composingTimer_ = 0;
 		emit composing(false);
 	}
