@@ -176,7 +176,11 @@ TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 	}
 }
 
-TabDlg::~TabDlg() {
+TabDlg::~TabDlg()
+{
+	// ensure all tabs are closed at this moment
+	closeEvent(0);
+
 	if (delegate_) {
 		delegate_->destroy(this);
 	}
