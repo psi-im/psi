@@ -662,6 +662,12 @@ void MainWin::buildToolbars()
 
 	// d->eventNotifier->updateVisibility();
 	setUpdatesEnabled(true);
+
+	// in case we have floating toolbars, they have inherited the 'no updates enabled'
+	// state. now we need to explicitly re-enable updates.
+	foreach(PsiToolBar* tb, toolbars_) {
+		tb->setUpdatesEnabled(true);
+	}
 }
 
 bool MainWin::showDockMenu(const QPoint &)
