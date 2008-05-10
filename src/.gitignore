@@ -2,6 +2,8 @@
 .obj
 .rcc
 .ui
-Makefile
-config.h
-psi.app
+/Makefile
+/config.h
+/psi.app
+/psi
+

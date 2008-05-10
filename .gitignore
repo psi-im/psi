@@ -2,6 +2,7 @@
 /conf.log
 /conf.pri
 /tmtags
+/psi
 ._*
 .DS_Store
 
