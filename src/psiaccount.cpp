@@ -357,10 +357,10 @@ public:
 	QList<GCContact*> gcbank;
 	QStringList groupchats;
 
-	AdvancedConnector *conn;
-	ClientStream *stream;
-	QCA::TLS *tls;
-	QCATLSHandler *tlsHandler;
+	QPointer<AdvancedConnector> conn;
+	QPointer<ClientStream> stream;
+	QPointer<QCA::TLS> tls;
+	QPointer<QCATLSHandler> tlsHandler;
 	bool usingSSL;
 
 	QVector<xmlRingElem> xmlRingbuf;
