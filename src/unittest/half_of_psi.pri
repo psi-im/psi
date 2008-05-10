@@ -1,10 +1,9 @@
-# linking half of psi :-/
-INCLUDEPATH += \
-	../..
-
 # Yay! Almost all Psi sources are here!
-PSI_CPP = ../..
+PSI_CPP = $$PWD/..
 include($$PSI_CPP/src.pri)
+
+# linking half of psi :-/
+INCLUDEPATH += $$PSI_CPP
 
 # iconsets
 RESOURCES += $$PSI_CPP/../iconsets.qrc

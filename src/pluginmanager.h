@@ -14,6 +14,7 @@ class PsiAccount;
 class UserLisItem;
 namespace XMPP {
 	class Jid;
+	class Client;
 }
 namespace QCA {
 	class DirWatch;

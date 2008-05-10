@@ -8,7 +8,7 @@
 #include "applicationinfo.h"
 #include "psioptions.h"
 #include <QtCrypto>
-
+#include "xmpp_client.h"
 
 /**
  * Function to obtain all the directories in which plugins can be stored
@@ -377,7 +377,7 @@ void PluginManager::getGlobalOption( const QString& option, QVariant& value)
 void PluginManager::message(PsiAccount* account, const XMPP::Jid& from, const UserListItem* ul, const QString& message)
 {
 	QString fromString=QString("%1").arg(from.full());
-	qDebug() << "message from %1" << fromString;
+	qDebug() << "message from" << fromString;
 	foreach(PsiPlugin* plugin, plugins_.values() ) {
 		plugin->message( account, message , fromString , from.full() );
 	}
