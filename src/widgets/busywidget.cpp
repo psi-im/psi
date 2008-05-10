@@ -307,7 +307,8 @@ void BusyWidget::animate()
 
 		if(!isValid)
 		{
-			delete d->t;
+			if (d->t)
+				d->t->deleteLater();
 			d->t = 0;
 		}
 	}

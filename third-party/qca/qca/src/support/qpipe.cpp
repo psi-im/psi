@@ -955,9 +955,15 @@ public:
 		consoleMode = false;
 #endif
 #ifdef Q_OS_UNIX
-		delete sn_read;
+		if (sn_read) {
+			sn_read->setEnabled(false);
+			sn_read->deleteLater();
+		}
 		sn_read = 0;
-		delete sn_write;
+		if (sn_write) {
+			sn_write->setEnabled(false);
+			sn_write->deleteLater();
+		}
 		sn_write = 0;
 #endif
 		if(pipe != INVALID_Q_PIPE_ID)
