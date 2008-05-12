@@ -25,7 +25,6 @@
   <dep type='growl'/>
   <dep type='xss'/>
   <dep type='aspell'/>
-  <dep type='dnotify'/>
   <dep type='ghbnr'/>
   <!-- <dep type='xmms'/> -->
   <dep type='google_ft'/>
