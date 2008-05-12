@@ -35,7 +35,6 @@ Dependency options:
   --disable-growl              Disable use of Growl
   --with-growl=[path]          Path to the Growl framework
   --disable-xss                Disable use of the XScreenSaver extension
-  --disable-dnotify            Disable use of Linux Directory Notification
   --disable-ghbnr              Disable use of gethostbyname_r()
   --disable-aspell             Disable use of ASPELL
   --with-aspell-inc=[path]     Path to Aspell include files
@@ -218,11 +217,6 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
-		--disable-dnotify)
-			QC_DISABLE_dnotify="Y"
-			shift
-			;;
-
 		--disable-ghbnr)
 			QC_DISABLE_ghbnr="Y"
 			shift
@@ -286,7 +280,6 @@ echo QC_DISABLE_qdbus=$QC_DISABLE_qdbus
 echo QC_DISABLE_growl=$QC_DISABLE_growl
 echo QC_WITH_GROWL=$QC_WITH_GROWL
 echo QC_DISABLE_xss=$QC_DISABLE_xss
-echo QC_DISABLE_dnotify=$QC_DISABLE_dnotify
 echo QC_DISABLE_ghbnr=$QC_DISABLE_ghbnr
 echo QC_DISABLE_aspell=$QC_DISABLE_aspell
 echo QC_WITH_ASPELL_INC=$QC_WITH_ASPELL_INC
@@ -943,51 +936,6 @@ public:
 		return true;
 	}
 };
-#line 1 "dnotify.qcm"
-/*
------BEGIN QCMOD-----
-name: Linux Directory Notification
------END QCMOD-----
-*/
-
-#include<unistd.h>
-#include<fcntl.h>
-#include<signal.h>
-#include<sys/utsname.h>
-
-//----------------------------------------------------------------------------
-// qc_dnotify
-//----------------------------------------------------------------------------
-class qc_dnotify : public ConfObj
-{
-public:
-	qc_dnotify(Conf *c) : ConfObj(c) { }
-
-	QString name() const { return "Linux Directory Notification"; }
-	QString shortname() const { return "dnotify"; }
-
-	bool exec()
-	{
-		QString str =
-			"#define _GNU_SOURCE\n"
-			"#include<unistd.h>\n"
-			"#include<fcntl.h>\n"
-			"#include<signal.h>\n"
-			"#include<sys/utsname.h>\n"
-			"\n"
-			"int main()\n"
-			"{\n"
-			"	 DN_DELETE|DN_CREATE|DN_RENAME|DN_MULTISHOT|DN_MODIFY|DN_ATTRIB;\n"
-			"	 return 0;\n"
-			"}\n";
-		int ret;
-		if (!conf->doCompileAndLink(str, QStringList(), QString(), QString(), &ret) || ret != 0)
-			return false;
-			
-		conf->addDefine("HAVE_DNOTIFY");
-		return true;
-	}
-};
 #line 1 "ghbnr.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -1197,9 +1145,6 @@ cat >$1/modules_new.cpp <<EOT
     o->required = false;
     o->disabled = false;
     o = new qc_xss(conf);
-    o->required = false;
-    o->disabled = false;
-    o = new qc_dnotify(conf);
     o->required = false;
     o->disabled = false;
     o = new qc_ghbnr(conf);
@@ -2174,7 +2119,6 @@ export QC_DISABLE_qdbus
 export QC_DISABLE_growl
 export QC_WITH_GROWL
 export QC_DISABLE_xss
-export QC_DISABLE_dnotify
 export QC_DISABLE_ghbnr
 export QC_DISABLE_aspell
 export QC_WITH_ASPELL_INC
