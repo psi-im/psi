@@ -79,11 +79,16 @@ static int qVersionInt()
 #ifdef Q_OS_LINUX
 static bool qt_buggy_fsw()
 {
-	// FIXME: just a guess that this is fixed in 4.3.5 and 4.4.0
-	if(qVersionInt() < 0x040305)
+	// fixed in 4.3.5 and 4.4.1
+	int ver = qVersionInt();
+	int majmin = ver >> 8;
+	if(majmin < 0x0403)
 		return true;
-	else
-		return false;
+	else if(majmin == 0x0403 && ver < 0x040305)
+		return true;
+	else if(majmin == 0x0404 && ver < 0x040401)
+		return true;
+	return false;
 }
 #else
 static bool qt_buggy_fsw()
@@ -1148,7 +1153,7 @@ private slots:
 				secring = gpg.keyringFile();
 
 				if(qt_buggy_fsw())
-					fprintf(stderr, "qca-gnupg: disabling keyring monitoring in Qt version < 4.3.5\n");
+					fprintf(stderr, "qca-gnupg: disabling keyring monitoring in Qt version < 4.3.5 or 4.4.1\n");
 
 				if(!secring.isEmpty())
 				{
