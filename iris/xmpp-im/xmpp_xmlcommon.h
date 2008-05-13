@@ -22,6 +22,7 @@
 #define JABBER_XMLCOMMON_H
 
 #include <qdom.h>
+#include <qlist.h>
 
 class QDateTime;
 class QRect;
@@ -29,12 +30,42 @@ class QSize;
 class QColor;
 class QStringList;
 
+class XDomNodeList
+{
+public:
+	XDomNodeList();
+	XDomNodeList(const XDomNodeList &from);
+	XDomNodeList(const QDomNodeList &from);
+	~XDomNodeList();
+	XDomNodeList & operator=(const XDomNodeList &from);
+
+	QDomNode at(int index) const { return item(index); }
+	int count() const { return (int)length(); }
+	bool isEmpty() const;
+	QDomNode item(int index) const;
+	uint length() const;
+	int size() const { return (int)length(); }
+
+	void append(const QDomNode &i);
+
+	bool operator==(const XDomNodeList &a) const;
+
+	bool operator!=(const XDomNodeList &a) const
+	{
+		return !operator==(a);
+	}
+
+private:
+	QList<QDomNode> list;
+};
+
 QDateTime stamp2TS(const QString &ts);
 bool stamp2TS(const QString &ts, QDateTime *d);
 QString TS2stamp(const QDateTime &d);
 QDomElement textTag(QDomDocument *doc, const QString &name, const QString &content);
 QString tagContent(const QDomElement &e);
 QDomElement findSubTag(const QDomElement &e, const QString &name, bool *found);
+XDomNodeList childElementsByTagNameNS(const QDomElement &e, const QString &nsURI, const QString &localName);
 QDomElement createIQ(QDomDocument *doc, const QString &type, const QString &to, const QString &id);
 QDomElement queryTag(const QDomElement &e);
 QString queryNS(const QDomElement &e);
