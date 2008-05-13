@@ -205,7 +205,7 @@
 			<flash-windows comment="Allow windows to flash upon activity" type="bool">true</flash-windows>
 			<automatically-copy-selected-text type="bool">false</automatically-copy-selected-text>
 			<emoticons>
-				<use-emoticons type="bool">false</use-emoticons>
+				<use-emoticons type="bool">true</use-emoticons>
 			</emoticons>
 			<file-transfer>
 				<auto-popup type="bool">false</auto-popup>
