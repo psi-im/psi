@@ -1621,7 +1621,7 @@ bool Message::fromStanza(const Stanza &s, int timeZoneOffset)
 
 	QDomElement root = s.element();
 
-	QDomNodeList nl = root.childNodes();
+	XDomNodeList nl = root.childNodes();
 	int n;
 	for(n = 0; n < nl.count(); ++n) {
 		QDomNode i = nl.item(n);
@@ -1671,7 +1671,7 @@ bool Message::fromStanza(const Stanza &s, int timeZoneOffset)
 		d->error = s.error();
 
 	// xhtml-im
-	nl = root.elementsByTagNameNS("http://jabber.org/protocol/xhtml-im", "html");
+	nl = childElementsByTagNameNS(root, "http://jabber.org/protocol/xhtml-im", "html");
 	if (nl.count()) {
 		nl = nl.item(0).childNodes();
 		for(n = 0; n < nl.count(); ++n) {
@@ -1684,7 +1684,7 @@ bool Message::fromStanza(const Stanza &s, int timeZoneOffset)
 	}
 
 	// timestamp
-	QDomElement t = root.elementsByTagNameNS("jabber:x:delay", "x").item(0).toElement();
+	QDomElement t = childElementsByTagNameNS(root, "jabber:x:delay", "x").item(0).toElement();
 	if(!t.isNull()) {
 		d->timeStamp = stamp2TS(t.attribute("stamp"));
 		d->timeStamp = d->timeStamp.addSecs(timeZoneOffset * 3600);
@@ -1697,7 +1697,7 @@ bool Message::fromStanza(const Stanza &s, int timeZoneOffset)
 
 	// urls
 	d->urlList.clear();
-	nl = root.elementsByTagNameNS("jabber:x:oob", "x");
+	nl = childElementsByTagNameNS(root, "jabber:x:oob", "x");
 	for(n = 0; n < nl.count(); ++n) {
 		QDomElement t = nl.item(n).toElement();
 		Url u;
@@ -1708,7 +1708,7 @@ bool Message::fromStanza(const Stanza &s, int timeZoneOffset)
 	
     // events
 	d->eventList.clear();
-	nl = root.elementsByTagNameNS("jabber:x:event", "x");
+	nl = childElementsByTagNameNS(root, "jabber:x:event", "x");
 	if (nl.count()) {
 		nl = nl.item(0).childNodes();
 		for(n = 0; n < nl.count(); ++n) {
@@ -1729,33 +1729,33 @@ bool Message::fromStanza(const Stanza &s, int timeZoneOffset)
 
 	// Chat states
 	QString chatStateNS = "http://jabber.org/protocol/chatstates";
-	t = root.elementsByTagNameNS(chatStateNS, "active").item(0).toElement();
+	t = childElementsByTagNameNS(root, chatStateNS, "active").item(0).toElement();
 	if(!t.isNull())
 		d->chatState = StateActive;
-	t = root.elementsByTagNameNS(chatStateNS, "composing").item(0).toElement();
+	t = childElementsByTagNameNS(root, chatStateNS, "composing").item(0).toElement();
 	if(!t.isNull())
 		d->chatState = StateComposing;
-	t = root.elementsByTagNameNS(chatStateNS, "paused").item(0).toElement();
+	t = childElementsByTagNameNS(root, chatStateNS, "paused").item(0).toElement();
 	if(!t.isNull())
 		d->chatState = StatePaused;
-	t = root.elementsByTagNameNS(chatStateNS, "inactive").item(0).toElement();
+	t = childElementsByTagNameNS(root, chatStateNS, "inactive").item(0).toElement();
 	if(!t.isNull())
 		d->chatState = StateInactive;
-	t = root.elementsByTagNameNS(chatStateNS, "gone").item(0).toElement();
+	t = childElementsByTagNameNS(root, chatStateNS, "gone").item(0).toElement();
 	if(!t.isNull())
 		d->chatState = StateGone;
 
 	// message receipts
 	QString messageReceiptNS = "urn:xmpp:receipts";
-	t = root.elementsByTagNameNS(messageReceiptNS, "request").item(0).toElement();
+	t = childElementsByTagNameNS(root, messageReceiptNS, "request").item(0).toElement();
 	if(!t.isNull())
 		d->messageReceipt = ReceiptRequest;
-	t = root.elementsByTagNameNS(messageReceiptNS, "received").item(0).toElement();
+	t = childElementsByTagNameNS(root, messageReceiptNS, "received").item(0).toElement();
 	if(!t.isNull())
 		d->messageReceipt = ReceiptReceived;
 
 	// xencrypted
-	t = root.elementsByTagNameNS("jabber:x:encrypted", "x").item(0).toElement();
+	t = childElementsByTagNameNS(root, "jabber:x:encrypted", "x").item(0).toElement();
 	if(!t.isNull())
 		d->xencrypted = t.text();
 	else
@@ -1763,7 +1763,7 @@ bool Message::fromStanza(const Stanza &s, int timeZoneOffset)
 		
 	// addresses
 	d->addressList.clear();
-	nl = root.elementsByTagNameNS("http://jabber.org/protocol/address", "addresses");
+	nl = childElementsByTagNameNS(root, "http://jabber.org/protocol/address", "addresses");
 	if (nl.count()) {
 		QDomElement t = nl.item(0).toElement();
 		nl = t.elementsByTagName("address");
@@ -1774,7 +1774,7 @@ bool Message::fromStanza(const Stanza &s, int timeZoneOffset)
 	
 	// roster item exchange
 	d->rosterExchangeItems.clear();
-	nl = root.elementsByTagNameNS("http://jabber.org/protocol/rosterx", "x");
+	nl = childElementsByTagNameNS(root, "http://jabber.org/protocol/rosterx", "x");
 	if (nl.count()) {
 		QDomElement t = nl.item(0).toElement();
 		nl = t.elementsByTagName("item");
@@ -1786,27 +1786,27 @@ bool Message::fromStanza(const Stanza &s, int timeZoneOffset)
 	}
 
 	// invite
-	t = root.elementsByTagNameNS("jabber:x:conference", "x").item(0).toElement();
+	t = childElementsByTagNameNS(root, "jabber:x:conference", "x").item(0).toElement();
 	if(!t.isNull())
 		d->invite = t.attribute("jid");
 	else
 		d->invite = QString();
 	
 	// nick
-	t = root.elementsByTagNameNS("http://jabber.org/protocol/nick", "nick").item(0).toElement();
+	t = childElementsByTagNameNS(root, "http://jabber.org/protocol/nick", "nick").item(0).toElement();
 	if(!t.isNull())
 		d->nick = t.text();
 	else
 		d->nick = QString();
 
 	// sxe
-	t = root.elementsByTagNameNS("http://jabber.org/protocol/sxe", "sxe").item(0).toElement();
+	t = childElementsByTagNameNS(root, "http://jabber.org/protocol/sxe", "sxe").item(0).toElement();
 	if(!t.isNull())
 		d->sxe = t;
 	else
 		d->sxe = QDomElement();
 
-	t = root.elementsByTagNameNS("http://jabber.org/protocol/muc#user", "x").item(0).toElement();
+	t = childElementsByTagNameNS(root, "http://jabber.org/protocol/muc#user", "x").item(0).toElement();
 	if(!t.isNull()) {
 		for(QDomNode muc_n = t.firstChild(); !muc_n.isNull(); muc_n = muc_n.nextSibling()) {
 			QDomElement muc_e = muc_n.toElement();
@@ -1830,7 +1830,7 @@ bool Message::fromStanza(const Stanza &s, int timeZoneOffset)
 	}
 
 	// http auth
-	t = root.elementsByTagNameNS("http://jabber.org/protocol/http-auth", "confirm").item(0).toElement();
+	t = childElementsByTagNameNS(root, "http://jabber.org/protocol/http-auth", "confirm").item(0).toElement();
 	if(!t.isNull()){
 		d->httpAuthRequest = HttpAuthRequest(t);
 	}
@@ -1839,7 +1839,7 @@ bool Message::fromStanza(const Stanza &s, int timeZoneOffset)
 	}
 
 	// data form
-	t = root.elementsByTagNameNS("jabber:x:data", "x").item(0).toElement();
+	t = childElementsByTagNameNS(root, "jabber:x:data", "x").item(0).toElement();
 	if(!t.isNull()){
 		d->xdata.fromXml(t);
 	}
