@@ -4185,7 +4185,7 @@ void PsiAccount::openChat(const Jid& j, ActivationType activationType)
 
 	processChats(j);
 
-	if (activationType == UserAction || activationType == IncomingStanza)
+	if (activationType == UserAction)
 		chat->bringToFront();
 }
 
