@@ -4187,8 +4187,6 @@ void PsiAccount::openChat(const Jid& j, ActivationType activationType)
 
 	if (activationType == UserAction || activationType == IncomingStanza)
 		chat->bringToFront();
-	else
-		chat->show();
 }
 
 void PsiAccount::chatMessagesRead(const Jid &j)
