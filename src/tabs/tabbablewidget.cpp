@@ -50,22 +50,29 @@ void TabbableWidget::ensureTabbedCorrectly()
 		if (!isTabbed()) {
 			tabManager_->getTabs(this)->addTab(this);
 		}
-	} else {
-		if(PsiOptions::instance()->getOption("options.ui.tabs.tab-singles").toString().contains(tabManager_->tabKind(this))) {
+	}
+	else {
+		if (PsiOptions::instance()->getOption("options.ui.tabs.tab-singles").toString().contains(tabManager_->tabKind(this))) {
 			if (isTabbed()) {
-				if(getManagingTabDlg()->tabCount() > 1) {
+				if (getManagingTabDlg()->tabCount() > 1) {
 					getManagingTabDlg()->closeTab(this, false);
 					tabManager_->newTabs(this)->addTab(this);
 				}
 			}
-			else
+			else {
 				tabManager_->newTabs(this)->addTab(this);
-		} else {
+			}
+		}
+		else {
 			if (isTabbed()) {
 				getManagingTabDlg()->closeTab(this, false);
 				show();
 			}
 		}
+	}
+
+	if (!isTabbed()) {
+		showWithoutActivation();
 	}
 }
 

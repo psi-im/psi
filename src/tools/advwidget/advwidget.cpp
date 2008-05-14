@@ -466,6 +466,110 @@ void GAdvancedWidget::doFlash(bool on)
 	d->doFlash( on );
 }
 
+#ifdef Q_WS_WIN
+// http://groups.google.ru/group/borland.public.cppbuilder.winapi/msg/6eb6f1832d68686d?hl=ru&
+bool ForceForegroundWindow(HWND hwnd)
+{
+	// Code from Thomas Stutz @ delphi3000.com
+	// Converted to Borland C++ Builder Code by Wolfgang Frisch
+	bool Result;
+	// #define SPI_GETFOREGROUNDLOCKTIMEOUT (0x2000);
+	// #define SPI_SETFOREGROUNDLOCKTIMEOUT (0x2001);
+	DWORD nullvalue = 0;
+
+	DWORD ForegroundThreadID;
+	DWORD ThisThreadID;
+	DWORD timeout;
+
+	if (IsIconic(hwnd)) {
+		ShowWindow(hwnd, SW_RESTORE);
+	}
+
+	if (GetForegroundWindow() == hwnd) {
+		return true;
+	}
+	else {
+		OSVERSIONINFO osvi;
+		osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+		GetVersionEx(&osvi);
+
+		// Windows 98/2000 doesn't want to foreground a window when some other
+		// window has keyboard focus
+		if (((osvi.dwPlatformId == VER_PLATFORM_WIN32_NT) && (osvi.dwMajorVersion > 4))
+		    || ((osvi.dwPlatformId  == VER_PLATFORM_WIN32_WINDOWS)
+		        && ((osvi.dwMajorVersion  > 4) || ((osvi.dwMajorVersion == 4) &&
+		                                           (osvi.dwMinorVersion > 0))))) {
+			// Code from Karl E. Peterson, www.mvps.org/vb/sample.htm
+			// Converted to Delphi by Ray Lischner
+			// Published in The Delphi Magazine 55, page 16
+
+			Result = false;
+			ForegroundThreadID = GetWindowThreadProcessId(GetForegroundWindow(), NULL);
+			ThisThreadID = GetWindowThreadProcessId(hwnd, NULL);
+			if (AttachThreadInput(ThisThreadID, ForegroundThreadID, true)) {
+				BringWindowToTop(hwnd); // IE 5.5 related hack
+				SetForegroundWindow(hwnd);
+				AttachThreadInput(ThisThreadID, ForegroundThreadID, false);
+				Result = (GetForegroundWindow() == hwnd);
+			}
+
+			if (!Result) {
+				// Code by Daniel P. Stasinski
+				SystemParametersInfo(SPI_GETFOREGROUNDLOCKTIMEOUT, 0, &timeout, 0);
+				SystemParametersInfo(SPI_SETFOREGROUNDLOCKTIMEOUT, 0, &nullvalue, SPIF_SENDCHANGE);
+				BringWindowToTop(hwnd); // IE 5.5 related hack
+				SetForegroundWindow(hwnd);
+				SystemParametersInfo(SPI_SETFOREGROUNDLOCKTIMEOUT, 0, &timeout, SPIF_SENDCHANGE);
+			}
+		}
+		else {
+			BringWindowToTop(hwnd); // IE 5.5 related hack
+			SetForegroundWindow(hwnd);
+		}
+		Result = (GetForegroundWindow() == hwnd);
+	}
+	return Result;
+}
+#endif
+
+/**
+ * http://trolltech.com/developer/task-tracker/index_html?id=202971&method=entry
+ * There's a bug in Qt that prevents us to show a window on Windows
+ * without it being activated in the process. This is not good in some cases.
+ * We try our best to work-around this on Windows.
+ */
+void GAdvancedWidget::showWithoutActivation()
+{
+	if (d->parentWidget_->isVisible())
+		return;
+
+	// TODO: look at Qt::WA_ShowWithoutActivating that was introduced
+	// in Qt 4.4.0, maybe it'll provide a simpler alternative to this
+	// windows-specific code
+
+#ifdef Q_WS_WIN
+	HWND foregroundWindow = GetForegroundWindow();
+#endif
+
+#if QT_VERSION >= 0x040400
+	bool showWithoutActivating = d->parentWidget_->testAttribute(Qt::WA_ShowWithoutActivating);
+	d->parentWidget_->setAttribute(Qt::WA_ShowWithoutActivating, true);
+#endif
+	d->parentWidget_->show();
+#if QT_VERSION >= 0x040400
+	d->parentWidget_->setAttribute(Qt::WA_ShowWithoutActivating, showWithoutActivating);
+#endif
+
+#ifdef Q_WS_WIN
+	if (foregroundWindow) {
+		// the first step is to make sure we're the topmost window
+		// otherwise step two doesn't seem to have any effect at all
+		ForceForegroundWindow(d->parentWidget_->winId());
+		ForceForegroundWindow(foregroundWindow);
+	}
+#endif
+}
+
 void GAdvancedWidget::changeEvent(QEvent *event)
 {
 	if (event->type() == QEvent::ActivationChange ||

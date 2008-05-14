@@ -41,6 +41,8 @@ public:
 	QString geometryOptionPath() const;
 	void setGeometryOptionPath(const QString& optionPath);
 
+	void showWithoutActivation();
+
 	bool flashing() const;
 	void doFlash(bool on);
 
@@ -110,6 +112,12 @@ public:
 		if (gAdvWidget)
 			return gAdvWidget->flashing();
 		return false;
+	}
+
+	void showWithoutActivation()
+	{
+		if (gAdvWidget)
+			gAdvWidget->showWithoutActivation();
 	}
 
 	virtual void doFlash( bool on )

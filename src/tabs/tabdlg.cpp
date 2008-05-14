@@ -361,7 +361,7 @@ void TabDlg::addTab(TabbableWidget* tab)
 	connect(tab, SIGNAL(invalidateTabInfo()), SLOT(updateTab()));
 	connect(tab, SIGNAL(updateFlashState()), SLOT(updateFlashState()));
 
-	this->show();
+	this->showWithoutActivation();
 	updateTab(tab);
 	setUpdatesEnabled(true);
 }
