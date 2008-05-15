@@ -253,6 +253,7 @@ bool ChatDlg::readyToHide()
 			return false;
 		}
 	}
+	keepOpen_ = false; // tabdlg calls readyToHide twice on tabdlg close, only display message once.
 
 	// destroy the dialog if delChats is dcClose
 	if (PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString() == "instant") {

@@ -64,9 +64,9 @@ public:
 	const QString & getDisplayName();
 
 	static QSize defaultSize();
-	bool readyToHide();
 
 	// reimplemented
+	virtual bool readyToHide();
 	virtual TabbableWidget::State state() const;
 	virtual int unreadMessageCount() const;
 	virtual QString desiredCaption() const;

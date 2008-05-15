@@ -484,7 +484,12 @@ void TabDlg::updateCaption()
 
 void TabDlg::closeEvent(QCloseEvent* closeEvent)
 {
-	Q_UNUSED(closeEvent);
+	foreach(TabbableWidget* tab, tabs_) {
+		if (!tab->readyToHide()) {
+			closeEvent->ignore();
+			return;
+		}
+	}
 	foreach(TabbableWidget* tab, tabs_) {
 		closeTab(tab);
 	}
