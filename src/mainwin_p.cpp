@@ -125,11 +125,14 @@ void PopupActionButton::setLabel(QString lbl)
 
 void PopupActionButton::update()
 {
-	if((showText && !label.isEmpty()) && styleSheet().isEmpty()) {
-		setStyleSheet("text-align: left");
-	}
-	else if((!showText || label.isEmpty()) && styleSheet() == "text-align: left") {
-		setStyleSheet(QString());
+	if(qVersionInt() >= 0x040300)
+	{
+		if((showText && !label.isEmpty()) && styleSheet().isEmpty()) {
+			setStyleSheet("text-align: left");
+		}
+		else if((!showText || label.isEmpty()) && styleSheet() == "text-align: left") {
+			setStyleSheet(QString());
+		}
 	}
 
 	if (showText) {
