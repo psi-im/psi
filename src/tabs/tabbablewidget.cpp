@@ -66,13 +66,22 @@ void TabbableWidget::ensureTabbedCorrectly()
 		else {
 			if (isTabbed()) {
 				getManagingTabDlg()->closeTab(this, false);
-				show();
 			}
-		}
-	}
 
-	if (!isTabbed()) {
-		showWithoutActivation();
+			// FIXME: showWithoutActivation() works on all
+			//   platforms, but bringToFront() (which might be
+			//   called immediately after) does not work on all
+			//   platforms if it follows a call to
+			//   showWithoutActivation().  As a temporary fix, we
+			//   will only call showWithoutActivation() on
+			//   platforms where both calls can be made in
+			//   succession.
+#ifdef Q_WS_WIN
+			showWithoutActivation();
+#else
+			show();
+#endif
+		}
 	}
 }
 
