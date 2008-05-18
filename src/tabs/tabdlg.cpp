@@ -178,8 +178,14 @@ TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 
 TabDlg::~TabDlg()
 {
+	// TODO: make sure that TabDlg is properly closed and its closeEvent() is invoked,
+	// so it could cancel an application quit
+	// Q_ASSERT(tabs_.isEmpty());
+
 	// ensure all tabs are closed at this moment
-	closeEvent(0);
+	foreach(TabbableWidget* tab, tabs_) {
+		delete tab;
+	}
 
 	if (delegate_) {
 		delegate_->destroy(this);
