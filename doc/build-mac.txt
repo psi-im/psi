@@ -1,14 +1,12 @@
 Building Psi on Mac OS X
 ------------------------
 
-To simply compile Psi, similar instructions apply as for other *nix
+To simply compile Psi, the same instructions apply as for other *nix
 platforms:
-1. First, ensure that Qt is in Makefile mode and not Xcode mode, by running:
-	export QMAKESPEC=macx-g++
-2. Next, configure the build using the 'configure' script, optionally
+1. First, configure the build using the 'configure' script, optionally
    adding parameters to specify where to find certain dependencies:
 	./configure
-3. Build the binary:
+2. Build the binary:
 	make
 After this, the built binary 'psi.app' will be available in src/.
 For more details, check 'doc/build-unix.txt'.
