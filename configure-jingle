@@ -555,7 +555,7 @@ if [ -z "$defmakespec" ]; then
 	fi
 	if [ ! -z "$READLINK" ]; then
 		qt_mkspecsdir=`$qm -query QT_INSTALL_DATA`/mkspecs
-		if [ -a "$qt_mkspecsdir" ] && [ -h "$qt_mkspecsdir/default" ]; then
+		if [ -d "$qt_mkspecsdir" ] && [ -h "$qt_mkspecsdir/default" ]; then
 			defmakespec=`$READLINK $qt_mkspecsdir/default`
 		fi
 	fi
@@ -565,12 +565,14 @@ if [ "$QC_VERBOSE" = "Y" ]; then
 	echo makespec is $defmakespec
 fi
 
+qm_spec=""
 # if the makespec is macx-xcode, force macx-g++
 if [ "$defmakespec" = "macx-xcode" ]; then
-	QMAKESPEC=macx-g++
+	qm_spec=macx-g++
+	QMAKESPEC=$qm_spec
 	export QMAKESPEC
 	if [ "$QC_VERBOSE" = "Y" ]; then
-		echo overriding makespec to $QMAKESPEC
+		echo overriding makespec to $qm_spec
 	fi
 fi
 
@@ -1909,6 +1911,7 @@ class Conf
 public:
 	bool debug_enabled;
 	QString qmake_path;
+	QString qmakespec;
 	QString maketool;
 
 	QString DEFINES;
@@ -2690,6 +2693,7 @@ int main()
 	QString confCommand = qc_getenv("QC_COMMAND");
 	QString proName = qc_getenv("QC_PROFILE");
 	conf->qmake_path = qc_getenv("QC_QMAKE");
+	conf->qmakespec = qc_getenv("QC_QMAKESPEC");
 	conf->maketool = qc_getenv("QC_MAKETOOL");
 
 	if(conf->debug_enabled)
@@ -2713,6 +2717,7 @@ int main()
 		printf("builddir:     [%s]\n", qPrintable(builddir));
 		printf("profile:      [%s]\n", qPrintable(proPath));
 		printf("qmake path:   [%s]\n", qPrintable(conf->qmake_path));
+		printf("qmakespec:    [%s]\n", qPrintable(conf->qmakespec));
 		printf("make tool:    [%s]\n", qPrintable(conf->maketool));
 		printf("\n");
 	}
@@ -2770,13 +2775,21 @@ int main()
 		success = true;
 	}
 	QString qmake_path = conf->qmake_path;
+	QString qmakespec = conf->qmakespec;
 	delete conf;
 
 	if(!success)
 		return 1;
 
 	// run qmake on the project file
-	int ret = qc_runprogram(qmake_path, QStringList() << proPath, 0, true);
+	QStringList args;
+	if(!qmakespec.isEmpty())
+	{
+		args += "-spec";
+		args += qmakespec;
+	}
+	args += proPath;
+	int ret = qc_runprogram(qmake_path, args, 0, true);
 	if(ret != 0)
 		return 1;
 
@@ -2850,7 +2863,11 @@ rm -rf .qconftemp
 	mkdir .qconftemp
 	gen_files .qconftemp
 	cd .qconftemp
-	$qm conf4.pro >/dev/null
+	if [ ! -z "$qm_spec" ]; then
+		$qm -spec $qm_spec conf4.pro >/dev/null
+	else
+		$qm conf4.pro >/dev/null
+	fi
 	$MAKE clean >/dev/null 2>&1
 	$MAKE >../conf.log 2>&1
 )
@@ -2879,6 +2896,8 @@ QC_PROFILE=psi.pro
 export QC_PROFILE
 QC_QMAKE=$qm
 export QC_QMAKE
+QC_QMAKESPEC=$qm_spec
+export QC_QMAKESPEC
 QC_MAKETOOL=$MAKE
 export QC_MAKETOOL
 .qconftemp/conf
