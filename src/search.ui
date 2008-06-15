@@ -61,9 +61,9 @@
                         <property name="text" >
                           <string>Instructions go here.</string>
                         </property>
-						 <property name="wordWrap" >
-						   <bool>true</bool>
-						 </property>
+                        <property name="wordWrap" >
+                          <bool>true</bool>
+                        </property>
                       </widget>
                     </item>
                     <item>
@@ -130,12 +130,30 @@
                 <number>0</number>
               </property>
               <item>
-                <widget class="Q3ListView" name="lv_results" >
+                <widget class="QTreeWidget" name="lv_results" >
+                  <property name="alternatingRowColors" >
+                    <bool>true</bool>
+                  </property>
+                  <property name="selectionMode" >
+                    <enum>QAbstractItemView::ExtendedSelection</enum>
+                  </property>
+                  <property name="selectionBehavior" >
+                    <enum>QAbstractItemView::SelectRows</enum>
+                  </property>
+                  <property name="indentation" >
+                    <number>0</number>
+                  </property>
+                  <property name="uniformRowHeights" >
+                    <bool>true</bool>
+                  </property>
+                  <property name="itemsExpandable" >
+                    <bool>false</bool>
+                  </property>
                   <property name="allColumnsShowFocus" >
                     <bool>true</bool>
                   </property>
-                  <property name="resizeMode" >
-                    <enum>Q3ListView::AllColumns</enum>
+                  <property name="sortingEnabled" >
+                    <bool>true</bool>
                   </property>
                   <column>
                     <property name="text" >
