@@ -37,9 +37,10 @@ public:
 	const QString& currentLanguage() const;
 	QString currentXMLLanguage() const;
 	void loadTranslation(const QString& language);
-	
+
 protected:
 	QStringList translationDirs() const;
+	bool loadQtTranslation(const QString& language);
 
 private:
 	TranslationManager();

@@ -22,6 +22,7 @@
 #include <QCoreApplication>
 #include <QFile>
 #include <QDir>
+#include <QLibraryInfo>
 
 #include "translationmanager.h"
 #include "applicationinfo.h"
@@ -77,6 +78,24 @@ QString TranslationManager::currentXMLLanguage() const
 	return xmllang;
 }
 
+static bool loadQtTranslationHelper(const QString& language, const QString& dir, QTranslator* qt_translator)
+{
+	return qt_translator->load("qt_" + language, dir);
+}
+
+bool TranslationManager::loadQtTranslation(const QString& language)
+{
+	foreach(QString dir, translationDirs()) {
+		if (loadQtTranslationHelper(language, dir, qt_translator_)) {
+			return true;
+		}
+	}
+
+	return loadQtTranslationHelper(language,
+	                               QLibraryInfo::location(QLibraryInfo::TranslationsPath),
+	                               qt_translator_);
+}
+
 void TranslationManager::loadTranslation(const QString& language)
 {
 	// The default translation
@@ -89,13 +108,12 @@ void TranslationManager::loadTranslation(const QString& language)
 	}
 	
 	// Try loading the translation file
-	QStringList dirs = translationDirs();
-	foreach(QString dir, dirs) {
+	foreach(QString dir, translationDirs()) {
 		if(!QFile::exists(dir))
 			continue;
 		if (translator_->load("psi_" + language, dir)) {
-			// try to load qt library translation
-			qt_translator_->load("qt_" + language, dir);
+			loadQtTranslation(language);
+
 			if (currentLanguage_ == "en") {
 				QCoreApplication::instance()->installTranslator(translator_);
 				QCoreApplication::instance()->installTranslator(qt_translator_);
@@ -114,17 +132,12 @@ VarList TranslationManager::availableTranslations()
 	langs.set("en", "English");
 	
 	// Search the paths
-	QStringList dirs = TranslationManager::translationDirs();
-	for(QStringList::Iterator it = dirs.begin(); it != dirs.end(); ++it) {
-		if(!QFile::exists(*it))
+	foreach(QString dirName, translationDirs()) {
+		if(!QFile::exists(dirName))
 			continue;
-		QDir d(*it);
-		QStringList entries = d.entryList();
-		for(QStringList::Iterator it2 = entries.begin(); it2 != entries.end(); ++it2) {
-			if(*it2 == "." || *it2 == "..")
-				continue;
 
-			QString str = *it2;
+		QDir d(dirName);
+		foreach(QString str, d.entryList()) {
 			// verify that it is a language file
 			if(str.left(4) != "psi_")
 				continue;
@@ -140,7 +153,7 @@ VarList TranslationManager::availableTranslations()
 			// get the language_name
 			QString name = QString("[") + str + "]";
 			QTranslator t(0);
-			if(!t.load(str, *it))
+			if(!t.load(str, dirName))
 				continue;
 
 			//Is translate equivalent to the old findMessage? I hope so
