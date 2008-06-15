@@ -228,7 +228,41 @@ public:
 
 public:
 	QString lastReferrer;  // contains nick of last person, who have said "yourNick: ..."
-protected:		
+
+public slots:
+	void insertNick(const QString& nick)
+	{
+		if (nick.isEmpty())
+			return;
+
+		QTextCursor cursor(mle()->textCursor());
+	
+		mle()->setUpdatesEnabled(false);
+		cursor.beginEditBlock();
+
+		int index = cursor.position();
+		cursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor);
+		QString prev = cursor.selectedText();
+		cursor.setPosition(index, QTextCursor::KeepAnchor);
+
+		if (index > 0) {
+			if (!prev.isEmpty() && !prev[0].isSpace())
+				mle()->insertPlainText(" ");
+			mle()->insertPlainText(nick);
+		}
+		else {
+			mle()->insertPlainText(nick);
+			mle()->insertPlainText(nickSeparator);
+		}
+		mle()->insertPlainText(" ");
+		mle()->setFocus();
+
+		cursor.endEditBlock();
+		mle()->setUpdatesEnabled(true);
+		mle()->viewport()->update();
+	}
+
+protected:
 	// Nick auto-completion code follows...
 	enum TypingStatus {
 		Typing_Normal = 0,
@@ -315,8 +349,7 @@ protected:
 		}
 
 		if ( fromStart ) {
-			newText += nickSeparator;
-			newText += " ";
+			newText += nickSeparator + " ";
 		}
 
 		return newText;
@@ -332,8 +365,7 @@ protected:
 			if ( suggestedNicks.count() == 1 ) {
 				newText = suggestedNicks.first();
 				if ( fromStart ) {
-					newText += nickSeparator;
-					newText += " ";
+					newText += nickSeparator + " ";
 				}
 			}
 			else {
@@ -373,8 +405,7 @@ public:
 
 			newText = suggestedNicks[suggestedIndex];
 			if ( suggestedFromStart ) {
-				newText += nickSeparator;
-				newText += " ";
+				newText += nickSeparator + " ";
 			}
 
 			replaced = true;
@@ -502,6 +533,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 
 	ui_.lv_users->setMainDlg(this);
 	connect(ui_.lv_users, SIGNAL(action(const QString &, const Status &, int)), SLOT(lv_action(const QString &, const Status &, int)));
+	connect(ui_.lv_users, SIGNAL(insertNick(const QString&)), d, SLOT(insertNick(const QString&)));
 
 	d->act_clear = new IconAction (tr("Clear chat window"), "psi/clearChat", tr("Clear chat window"), 0, this);
 	connect( d->act_clear, SIGNAL( activated() ), SLOT( doClearButton() ) );
