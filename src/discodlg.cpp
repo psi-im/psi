@@ -1429,7 +1429,7 @@ DiscoDlg::DiscoDlg(PsiAccount *pa, const Jid &jid, const QString &node)
 	: QDialog(0)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
-  	setupUi(this);
+	setupUi(this);
 	// restore options
 	ck_autoItems->setChecked(PsiOptions::instance()->getOption("options.ui.service-discovery.automatically-get-items").toBool());
 	ck_autoInfo->setChecked(PsiOptions::instance()->getOption("options.ui.service-discovery.automatically-get-info").toBool());
@@ -1438,6 +1438,7 @@ DiscoDlg::DiscoDlg(PsiAccount *pa, const Jid &jid, const QString &node)
 	d = new Private(this, pa);
 	d->jid  = jid;
 	d->node = node;
+	d->data.pa->dialogRegister(this);
 
 	setWindowTitle(CAP(caption()));
 	setWindowIcon(PsiIconset::instance()->transportStatus("transport", STATUS_ONLINE).icon());
@@ -1466,6 +1467,7 @@ DiscoDlg::DiscoDlg(PsiAccount *pa, const Jid &jid, const QString &node)
 
 DiscoDlg::~DiscoDlg()
 {
+	d->data.pa->dialogUnregister(this);
 	delete d;
 
 	// save options
