@@ -32,6 +32,7 @@ protected:
 
 private:
 	QWidget *w, *parentWidget;
+	PsiCon *psi;
 
 	int numIconsets, iconsetsLoaded;
 	IconsetLoadThread *thread;
@@ -59,6 +60,7 @@ protected:
 
 private:
 	QWidget *w, *parentWidget;
+	PsiCon *psi;
 
 	int numIconsets, iconsetsLoaded;
 	IconsetLoadThread *thread;
@@ -100,6 +102,7 @@ protected:
 private:
 	QWidget* w;
 	QWidget* parentWidget;
+	PsiCon *psi;
 	int numIconsets, iconsetsLoaded;
 	IconsetLoadThread *thread;
 

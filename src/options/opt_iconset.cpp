@@ -48,11 +48,14 @@ public:
 class IconsetDetailsDlg : public QDialog, public Ui::IconsetDetailsDlg
 {
 public:
-	IconsetDetailsDlg(QWidget* parent, const char* name, bool modal)
+	IconsetDetailsDlg(PsiCon *psicon, QWidget* parent, const char* name, bool modal)
 		: QDialog(parent)
 	{
 		setAttribute(Qt::WA_DeleteOnClose);
-		setupUi(this); 
+		setupUi(this);
+
+		psi = psicon;
+		psi->dialogRegister(this);
 
 		QStringList bold_labels;
 		bold_labels << "lb_name2";
@@ -73,6 +76,11 @@ public:
 		
 		setName(name); 
 		setModal(modal); 
+	}
+
+	~IconsetDetailsDlg()
+	{
+		psi->dialogUnregister(this);
 	}
 	
 	void setIconset( const Iconset &is ) {
@@ -125,11 +133,14 @@ public:
 		
 		resize(sizeHint());
 	}
+
+private:
+	PsiCon *psi;
 };
 
-static void isDetails(const Iconset &is, QWidget *parent)
+static void isDetails(const Iconset &is, QWidget *parent, PsiCon *psi)
 {
-	IconsetDetailsDlg *isd = new IconsetDetailsDlg(parent, "IconsetDetailsDlg", false);
+	IconsetDetailsDlg *isd = new IconsetDetailsDlg(psi, parent, "IconsetDetailsDlg", false);
 	isd->setIconset(is);
 	isd->show();
 }
@@ -492,12 +503,14 @@ void OptionsTabIconsetSystem::previewIconset()
 {
 	IconsetSystemUI *d = (IconsetSystemUI *)w;
 	const Iconset *is = d->iss_system->iconset();
-	if ( is )
-		isDetails(*is, parentWidget);
+	if (is) {
+		isDetails(*is, parentWidget->parentWidget(), psi);
+	}
 }
 
-void OptionsTabIconsetSystem::setData(PsiCon *, QWidget *p)
+void OptionsTabIconsetSystem::setData(PsiCon *psicon, QWidget *p)
 {
+	psi = psicon;
 	parentWidget = p;
 }
 
@@ -681,12 +694,14 @@ void OptionsTabIconsetEmoticons::previewIconset()
 {
 	IconsetEmoUI *d = (IconsetEmoUI *)w;
 	const Iconset *is = d->iss_emoticons->iconset();
-	if ( is )
-		isDetails(*is, parentWidget);
+	if (is) {
+		isDetails(*is, parentWidget->parentWidget(), psi);
+	}
 }
 
-void OptionsTabIconsetEmoticons::setData(PsiCon *, QWidget *p)
+void OptionsTabIconsetEmoticons::setData(PsiCon *psicon, QWidget *p)
 {
+	psi = psicon;
 	parentWidget = p;
 }
 
@@ -946,8 +961,9 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
 	return false;
 }
 
-void OptionsTabIconsetRoster::setData(PsiCon *, QWidget *p)
+void OptionsTabIconsetRoster::setData(PsiCon *psicon, QWidget *p)
 {
+	psi = psicon;
 	parentWidget = p;
 }
 
@@ -955,24 +971,27 @@ void OptionsTabIconsetRoster::defaultDetails()
 {
 	IconsetRosterUI *d = (IconsetRosterUI *)w;
 	const Iconset *is = d->iss_defRoster->iconset();
-	if ( is )
-		isDetails(*is, parentWidget);
+	if (is) {
+		isDetails(*is, parentWidget->parentWidget(), psi);
+	}
 }
 
 void OptionsTabIconsetRoster::servicesDetails()
 {
 	IconsetRosterUI *d = (IconsetRosterUI *)w;
 	const Iconset *is = d->iss_servicesRoster->iconset();
-	if ( is )
-		isDetails(*is, parentWidget);
+	if (is) {
+		isDetails(*is, parentWidget->parentWidget(), psi);
+	}
 }
 
 void OptionsTabIconsetRoster::customDetails()
 {
 	IconsetRosterUI *d = (IconsetRosterUI *)w;
 	const Iconset *is = d->iss_customRoster->iconset();
-	if ( is )
-		isDetails(*is, parentWidget);
+	if (is) {
+		isDetails(*is, parentWidget->parentWidget(), psi);
+	}
 }
 
 //------------------------------------------------------------

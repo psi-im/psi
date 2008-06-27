@@ -421,7 +421,7 @@ class IconsetDisplayItem : public RealIconWidgetItem
 	Q_OBJECT
 private:
 	static const int margin;
-	PsiIcon *icon;
+	PsiIcon icon;
 	int w, h;
 
 public:
@@ -429,22 +429,22 @@ public:
 	: RealIconWidgetItem(parent)
 	{
 #ifndef WIDGET_PLUGIN
-		icon = i;
+		icon = *i;
 		w = iconW;
 
-		connect(icon, SIGNAL(pixmapChanged()), SLOT(update()));
-		icon->activated(false);
+		connect(&icon, SIGNAL(pixmapChanged()), SLOT(update()));
+		icon.activated(false);
 
-		h = icon->pixmap().height();
+		h = icon.pixmap().height();
 
 		QStringList str;
-		foreach(PsiIcon::IconText t, icon->text())
+		foreach(PsiIcon::IconText t, icon.text())
 			str += t.text;
 
 		if ( !str.isEmpty() )
 			setText(str.join(", "));
 		else
-			setText(tr("Name: '%1'").arg(icon->name()));
+			setText(tr("Name: '%1'").arg(icon.name()));
 #else
 		Q_UNUSED( i );
 		Q_UNUSED( iconW );
@@ -454,7 +454,7 @@ public:
 	~IconsetDisplayItem()
 	{
 #ifndef WIDGET_PLUGIN
-		icon->stop();
+		icon.stop();
 #endif
 	}
 
@@ -473,7 +473,7 @@ public:
 	void paint(QPainter *painter) const
 	{
 #ifndef WIDGET_PLUGIN
-		painter->drawPixmap(QPoint((2*margin+w - icon->pixmap().width())/2, margin), icon->pixmap());
+		painter->drawPixmap(QPoint((2*margin+w - icon.pixmap().width())/2, margin), icon.pixmap());
 #else
 		Q_UNUSED(painter);
 #endif
