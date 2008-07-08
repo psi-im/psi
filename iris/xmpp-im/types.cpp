@@ -840,11 +840,11 @@ HTMLElement::HTMLElement()
 {
 }
 
-HTMLElement::HTMLElement(const QDomElement &body) : body_(body) {}
+HTMLElement::HTMLElement(const QDomElement &body) { setBody(body); }
 
 void HTMLElement::setBody(const QDomElement &body)
 {
-	body_ = body;
+	body_ = doc_.importNode(body, true).toElement();
 }
 
 const QDomElement& HTMLElement::body() const

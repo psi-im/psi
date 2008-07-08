@@ -38,6 +38,7 @@ namespace XMPP
 		QString text() const;
 
 	private:
+		QDomDocument doc_;
 		QDomElement body_;
 	};
 }
