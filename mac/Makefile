@@ -25,8 +25,8 @@ PSI_DIR=..
 EXECUTABLE_NAME=psi
 NAME=Psi
 VOLUME_NAME=$(NAME)
-#VERSION=0.12-devel_$(shell date +"%Y%m%d")
-VERSION=0.12
+VERSION=0.13-devel_$(shell date +"%Y%m%d")
+#VERSION=0.12
 
 APPFILE_NAME=Psi.app
 FILES=$(APPFILE_NAME)

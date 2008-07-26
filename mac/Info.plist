@@ -7,7 +7,7 @@
 	<key>CFBundleExecutable</key>
 	<string>psi</string>
 	<key>CFBundleGetInfoString</key>
-	<string>Psi 0.12 by the Psi team. This program is licensed under the GNU GPL.</string>
+	<string>Psi 0.13-devel by the Psi team. This program is licensed under the GNU GPL.</string>
 	<key>CFBundleIconFile</key>
 	<string>application.icns</string>
 	<key>CFBundleIdentifier</key>
@@ -19,11 +19,11 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>Psi 0.12</string>
+	<string>Psi 0.13-devel</string>
 	<key>CFBundleSignature</key>
 	<string>psi</string>
 	<key>CFBundleVersion</key>
-	<string>0.12</string>
+	<string>0.13-devel</string>
 	<key>CSResourcesFileMapped</key>
 	<true/>
 </dict>
