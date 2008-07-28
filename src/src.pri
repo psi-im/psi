@@ -1,8 +1,5 @@
 QT += xml network qt3support
 
-# cutestuff
-include($$PWD/../cutestuff/cutestuff.pri)
-
 # modules
 include($$PWD/protocol/protocol.pri)
 include($$PWD/irisprotocol/irisprotocol.pri)
