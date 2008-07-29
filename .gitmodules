@@ -1,0 +1,3 @@
+[submodule "iris"]
+	path = iris
+	url = git://github.com/mblsha/iris.git
