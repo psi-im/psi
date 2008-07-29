@@ -146,7 +146,7 @@ private slots:
 	void addToIdLess(const QDomElement &element);
 	/*! \brief If node is an 'id' attribute node, adds the ownerElement to idlessItems_. */
     void checkForRemovalOfId(QDomNode node);
-    /*! \brief Checks if \a node is the 'viewbox' attribute of the <svg/> element.
+    /*! \brief Checks if \a node is the 'viewBox' attribute of the <svg/> element.
      *  If so, the scene size is adjusted accordingly.
      */
     void checkForViewBoxChange(const QDomNode &node);

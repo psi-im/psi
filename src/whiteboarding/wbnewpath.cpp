@@ -20,6 +20,7 @@
  */
 
 #include "wbnewpath.h"
+#include "../sxe/sxesession.h"
 
 #include <QGraphicsScene>
 
@@ -34,6 +35,7 @@ WbNewPath::WbNewPath(QGraphicsScene* s, QPointF startPos, int strokeWidth, const
     scene->addItem(&graphicsitem_);
 
     QPainterPath painterpath(startPos);
+    painterpath.setFillRule(Qt::WindingFill);
     graphicsitem_.setPath(painterpath);
 }
 
@@ -59,7 +61,6 @@ void WbNewPath::parseCursorMove(QPointF newPos) {
 QDomNode WbNewPath::serializeToSvg() {
     if(controlPoint_) {
         QPainterPath painterpath = graphicsitem_.path();
-        // FIXME: the path should actually go through the "controlPoint_".
         painterpath.lineTo(*controlPoint_);
         graphicsitem_.setPath(painterpath);
 
@@ -67,7 +68,42 @@ QDomNode WbNewPath::serializeToSvg() {
         controlPoint_ = 0;
     }
 
-    return WbNewItem::serializeToSvg();
+    // trim the generated SVG to remove unnecessary nested <g/>'s
+    
+    // first find the <path/> element
+    QDomNode out = WbNewItem::serializeToSvg();
+    QDomNodeList children = out.childNodes();
+    QDomElement trimmed;
+    for(uint i = 0; i < children.length(); i++) {
+        if(children.at(i).isElement()) {
+            if(children.at(i).nodeName() == "path") {
+                trimmed = children.at(i).toElement();
+                break;
+            } else {
+                trimmed = children.at(i).toElement().elementsByTagName("path").at(0).toElement();
+                if(!trimmed.isNull())
+                    break;
+            }
+        }
+    }
+    
+    // copy relevant attributes from the parent <g/>
+    QDomNamedNodeMap parentAttr = trimmed.parentNode().toElement().attributes();
+    for(int i = parentAttr.length() - 1; i >= 0; i--) {
+        QString name = parentAttr.item(i).nodeName();
+        if((name == "stroke"
+            || name == "stroke-width"
+            || name == "stroke-linecap"
+            || name == "fill"
+            || name == "fill-opacity")
+            && !trimmed.hasAttribute(name))
+            trimmed.setAttributeNode(parentAttr.item(i).toAttr());
+    }
+
+    // add a unique 'id' attribute in anticipation of WbWidget's requirements
+    trimmed.setAttribute("id", "e" + SxeSession::generateUUID());
+
+    return trimmed;
 }
 
 QGraphicsItem* WbNewPath::graphicsItem() {

@@ -22,7 +22,10 @@
 #include "psipopup.h"
 #include "psioptions.h"
 #include "common.h"
+#include "capsmanager.h"
 #include <QUrl>
+
+#define SXENS "urn:xmpp:tmp:sxe"
 
 using namespace XMPP;
 
@@ -34,6 +37,9 @@ SxeManager::SxeManager(Client* client, PsiAccount* pa) : client_(client) {
     sxeId_ = QTime::currentTime().toString("z").toInt();
 
     pa_ = pa;
+    
+    client_->addExtension("sxe", Features(SXENS));
+    
     connect(client_, SIGNAL(messageReceived(const Message &)), SLOT(messageReceived(const Message &)));
     connect(client_, SIGNAL(groupChatLeft(const Jid &)), SLOT(groupChatLeft(const Jid &)));
     // connect(client_, SIGNAL(groupChatJoined(const Jid &, const Jid &)), SLOT(groupChatJoined(const Jid &, const Jid &)));
@@ -557,6 +563,12 @@ void SxeManager::joinSession(const Jid &target, const Jid &ownJid, bool groupCha
 
 void SxeManager::startNewSession(const Jid &target, const Jid &ownJid, bool groupChat, const QDomDocument &initialDoc, QList<QString> features) {
 
+    // check that the target supports SXE and all specified features
+    if(!checkSupport(target, features)) {
+        qDebug(QString("Tried to start an SXE session with %1 but the client doesn't support all features.").arg(target.full()).toAscii());
+        return;
+    }
+
     // generate a session identifier
     QString session;
     do {
@@ -716,4 +728,18 @@ void SxeManager::groupChatLeft(const Jid &jid) {
 void SxeManager::groupChatJoined(const Jid &, const Jid &ownJid) {
     if(!ownJids_.contains(ownJid.full()))
         ownJids_.append(ownJid.full());
+}
+
+bool SxeManager::checkSupport(const Jid &jid, const QList<QString> &features) {
+    QStringList supported = pa_->capsManager()->features(jid).list();
+
+    if(!supported.contains(SXENS))
+        return false;
+
+    foreach(QString f, features) {
+        if(!supported.contains(f))
+            return false;
+    }
+
+    return true;
 }

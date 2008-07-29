@@ -69,7 +69,7 @@ WbWidget::WbWidget(SxeSession* session, QWidget *parent) : QGraphicsView(parent)
     // remove items if corresponding nodes are deleted
     connect(session_, SIGNAL(nodeToBeRemoved(QDomNode, bool)), SLOT(removeWbItem(QDomNode)));
     connect(session_, SIGNAL(nodeToBeRemoved(QDomNode, bool)), SLOT(checkForRemovalOfId(QDomNode)));
-    // adjust the viewbox as necessary
+    // adjust the viewBox as necessary
     connect(session_, SIGNAL(nodeAdded(QDomNode, bool)), SLOT(checkForViewBoxChange(QDomNode)));
     connect(session_, SIGNAL(nodeMoved(QDomNode, bool)), SLOT(checkForViewBoxChange(QDomNode)));
     connect(session_, SIGNAL(chdataChanged(QDomNode, bool)), SLOT(checkForViewBoxChange(QDomNode)));
@@ -78,8 +78,8 @@ WbWidget::WbWidget(SxeSession* session, QWidget *parent) : QGraphicsView(parent)
 	setMode(Select);
 
     // set the initial size
-    if(session_->document().documentElement().hasAttribute("viewbox"))
-	    checkForViewBoxChange(session_->document().documentElement().attributeNode("viewbox"));
+    if(session_->document().documentElement().hasAttribute("viewBox"))
+	    checkForViewBoxChange(session_->document().documentElement().attributeNode("viewBox"));
 	else {
         QSize size;
         QRectF rect = scene_->sceneRect();
@@ -137,11 +137,11 @@ void WbWidget::setMode(Mode mode) {
 }
 
 void WbWidget::setSize(const QSize &size) {
-    session_->setAttribute(session_->document().documentElement(), "viewbox", QString("0 0 %1 %2").arg(size.width()).arg(size.height()));
+    session_->setAttribute(session_->document().documentElement(), "viewBox", QString("0 0 %1 %2").arg(size.width()).arg(size.height()));
     session_->flush();
 }
 
-/*! \brief Generates a QRectF based on \a string provided in the SVG viewbox format. */
+/*! \brief Generates a QRectF based on \a string provided in the SVG viewBox format. */
 static QRectF parseSvgViewBox(QString string) {
     QString strings[4];
     qreal numbers[4];

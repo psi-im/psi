@@ -756,7 +756,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
  	 // Initialize SXE manager
  	d->sxeManager = new SxeManager(d->client, this);
 	 // Initialize Whiteboard manager
-	d->wbManager = new WbManager(this, d->sxeManager);
+	d->wbManager = new WbManager(d->client, this, d->sxeManager);
 #endif
 
 	// Avatars

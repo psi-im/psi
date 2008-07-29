@@ -27,21 +27,34 @@
 #include <QDebug>
 #include <QMessageBox>
 
-#define WBNS "http://www.w3.org/TR/SVG11/"
+#define WBNS "http://www.w3.org/2000/svg"
+#define EMPTYWB "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\"> <svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.2\" viewBox=\"0 0 600 400\" baseProfile=\"tiny\" />"
 
 using namespace XMPP;
 
 // -----------------------------------------------------------------------------
 
-WbManager::WbManager(PsiAccount* pa, SxeManager* sxemanager) {
+WbManager::WbManager(XMPP::Client* client, PsiAccount* pa, SxeManager* sxemanager) {
 	pa_ = pa;
     sxemanager_ = sxemanager;
-    
+
+    client->addExtension("whiteboard", Features(WBNS));
+
     connect(sxemanager_, SIGNAL(sessionNegotiated(SxeSession*)), SLOT(createWbDlg(SxeSession*)));
     sxemanager_->addInvitationCallback(WbManager::checkInvitation);
 }
 
 void WbManager::openWhiteboard(const Jid &target, const Jid &ownJid, bool groupChat, bool promptInitialDoc) {
+    
+    // check that the target supports whiteboarding via SXE
+    QList<QString> features;
+    features += WBNS;
+    if(!sxemanager_->checkSupport(target, features)) {
+        QMessageBox::information(NULL, tr("Unsupported"), tr("The contact does not support whiteboarding."));
+        return;
+    }
+    
+    
 	// See if we have a session for the JID
 	WbDlg* w = findWbDlg(target);
 	if(!w) {
@@ -74,15 +87,12 @@ void WbManager::openWhiteboard(const Jid &target, const Jid &ownJid, bool groupC
 
             // initialize with an empty whiteboarding document
             doc = QDomDocument();
-            QDomElement root = doc.createElementNS(WBNS, "svg");
-            doc.appendChild(root);
+            doc.setContent(QString(EMPTYWB), true);
 
         }
 
 
         // negotiate the session
-        QList<QString> features;
-        features += WBNS;
 		sxemanager_->startNewSession(target, ownJid, groupChat, doc, features);
 	}
 	else

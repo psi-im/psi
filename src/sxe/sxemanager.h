@@ -107,6 +107,8 @@ public:
     void startNewSession(const Jid &target, const Jid &ownJid, bool groupChat, const QDomDocument &initialDoc, QList<QString> features = QList<QString>());
     /*! \brief Join an existing session.*/
     void joinSession(const Jid &target, const Jid &ownJid, bool groupChat, const QString &session);
+    /*! \brief Checks that \a jid supports SXE and \a features. */
+    bool checkSupport(const Jid &jid, const QList<QString> &features);
 
 signals:
     /*! \brief Emitted when \a session has been established.*/

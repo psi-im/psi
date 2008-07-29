@@ -55,7 +55,7 @@ public:
 	/*! \brief Constructor.
 	 *  Creates a new manager for the specified Client and PsiAccount
 	 */
-	WbManager(PsiAccount* pa, SxeManager* sxemanager);
+	WbManager(XMPP::Client* client, PsiAccount* pa, SxeManager* sxemanager);
 	/*! \brief Returns true if features contains WBNS and the user wishes to accept the invitation. */
     static bool checkInvitation(const Jid &peer, const QList<QString> &features);
 
