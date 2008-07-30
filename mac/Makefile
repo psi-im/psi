@@ -39,7 +39,7 @@ MASTER_DMG=$(NAME)-$(VERSION).dmg
 
 # Other variables
 QT_FRAMEWORK_VERSION=4
-QT_FRAMEWORKS=QtCore QtXml QtNetwork QtGui QtSql Qt3Support
+QT_FRAMEWORKS=QtCore QtXml QtNetwork QtGui QtSql Qt3Support QtSvg
 QT_PLUGINS=imageformats/libqjpeg.dylib imageformats/libqgif.dylib
 
 # The rules
