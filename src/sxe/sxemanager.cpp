@@ -386,8 +386,9 @@ QPointer<SxeSession> SxeManager::processNegotiationMessage(const Message &messag
                 } else if(negotiation->role == SxeNegotiation::Joiner) {
                     if(!processNegotiationAsJoiner(n.childNodes().at(j), negotiation, response, message))
                         return 0;
-                } else
-                    assert(false);
+                } else {
+										Q_ASSERT(false);
+								}
 
                 // Send any responses that were generated
                 if(response.hasChildNodes()) {
