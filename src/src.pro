@@ -9,7 +9,7 @@ CONFIG  += qt thread x11
 
 #CONFIG += use_crash
 CONFIG += pep
-#CONFIG += whiteboarding
+CONFIG += whiteboarding
 DEFINES += QT_STATICPLUGIN
 
 # Import several very useful Makefile targets 
