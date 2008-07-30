@@ -29,7 +29,7 @@
 #define PROG_VERSION "0.13-dev" " (" __DATE__ ")"; //CVS Builds are dated
 //#define PROG_VERSION "0.12";
 #define PROG_CAPS_NODE "http://psi-im.org/caps";
-#define PROG_CAPS_VERSION "0.13-dev-rev1";
+#define PROG_CAPS_VERSION "0.13-dev-rev2";
 #define PROG_IPC_NAME "org.psi-im.Psi"	// must not contain '\\' character on Windows
 #define PROG_OPTIONS_NS "http://psi-im.org/options";
 #define PROG_STORAGE_NS "http://psi-im.org/storage";
