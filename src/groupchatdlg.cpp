@@ -405,7 +405,8 @@ public:
 			int position = cursor.position() + newText.length();
 			
 			cursor.beginEditBlock();
-			cursor.select(QTextCursor::BlockUnderCursor);
+			cursor.movePosition(QTextCursor::StartOfBlock);
+			cursor.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
 			cursor.insertText(newText + paraText.mid(index, paraText.length() - index));
 			cursor.setPosition(position, QTextCursor::KeepAnchor);
 			cursor.clearSelection();
