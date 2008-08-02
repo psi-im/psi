@@ -1,8 +1,12 @@
 #include <QString>
+#include <QStringList>
 #include <QFile>
 #include <QFileInfo>
+#include <QDir>
 #include <QCoreApplication>
 #include <QSysInfo>
+#include <QProcess>
+#include <QTextStream>
 
 #if defined(Q_WS_X11) || defined(Q_WS_MAC)
 #include <time.h>
@@ -17,37 +21,49 @@
 
 #include "systeminfo.h"
 
-SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
-{
-	// Initialize
-	timezone_offset_ = 0;
-	timezone_str_ = "N/A";
-	os_str_ = "Unknown";
-	
-	// Detect
-#if defined(Q_WS_X11) || defined(Q_WS_MAC)
-	time_t x;
-	time(&x);
-	char str[256];
-	char fmt[32];
-	strcpy(fmt, "%z");
-	strftime(str, 256, fmt, localtime(&x));
-	if(strcmp(fmt, str)) {
-		QString s = str;
-		if(s.at(0) == '+')
-			s.remove(0,1);
-		s.truncate(s.length()-2);
-		timezone_offset_ = s.toInt();
-	}
-	strcpy(fmt, "%Z");
-	strftime(str, 256, fmt, localtime(&x));
-	if(strcmp(fmt, str))
-		timezone_str_ = str;
-#endif
 #if defined(Q_WS_X11)
+static QString lsbRelease(const QStringList& args)
+{
+	QStringList path = QString(qgetenv("PATH")).split(':');
+	QString found;
+	
+	foreach(QString dirname, path) {
+		QDir dir(dirname);
+		QFileInfo cand(dir.filePath("lsb_release"));
+		if (cand.isExecutable()) {
+			found = cand.absoluteFilePath();
+			break;
+		}
+	}
+
+	if (found.isEmpty()) {
+		return QString();
+	}
+
+	QProcess process;
+	process.start(found, args, QIODevice::ReadOnly);
+
+	if(!process.waitForStarted())
+		return QString();   // process failed to start
+
+    QTextStream stream(&process);
+	QString ret;
+
+	while(process.waitForReadyRead())
+	   ret += stream.readAll();
+
+	process.close();
+	return ret.trimmed();
+}
+
+
+static QString unixHeuristicDetect() {
+	
+	QString ret;
+	
 	struct utsname u;
 	uname(&u);
-	os_str_.sprintf("%s", u.sysname);
+	ret.sprintf("%s", u.sysname);
 
 	// get description about os
 	enum LinuxName {
@@ -117,19 +133,60 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 
 			switch ( osInfo[i].flags ) {
 				case OsUseFile:
-					os_str_ = desc;
+					ret = desc;
 					break;
 				case OsUseName:
-					os_str_ = osInfo[i].name;
+					ret = osInfo[i].name;
 					break;
 				case OsAppendFile:
-					os_str_ = osInfo[i].name + " (" + desc + ")";
+					ret = osInfo[i].name + " (" + desc + ")";
 					break;
 			}
 
 			break;
 		}
 	}
+	return ret;
+}
+#endif
+
+
+
+SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
+{
+	// Initialize
+	timezone_offset_ = 0;
+	timezone_str_ = "N/A";
+	os_str_ = "Unknown";
+	
+	// Detect
+#if defined(Q_WS_X11) || defined(Q_WS_MAC)
+	time_t x;
+	time(&x);
+	char str[256];
+	char fmt[32];
+	strcpy(fmt, "%z");
+	strftime(str, 256, fmt, localtime(&x));
+	if(strcmp(fmt, str)) {
+		QString s = str;
+		if(s.at(0) == '+')
+			s.remove(0,1);
+		s.truncate(s.length()-2);
+		timezone_offset_ = s.toInt();
+	}
+	strcpy(fmt, "%Z");
+	strftime(str, 256, fmt, localtime(&x));
+	if(strcmp(fmt, str))
+		timezone_str_ = str;
+#endif
+#if defined(Q_WS_X11)
+	// attempt to get LSB version before trying the distro-specific approach
+	os_str_ = lsbRelease(QStringList() << "--description" << "--short");
+
+	if(os_str_.isEmpty()) {
+		os_str_ = unixHeuristicDetect();
+	}
+
 #elif defined(Q_WS_MAC)
 	QSysInfo::MacVersion v = QSysInfo::MacintoshVersion;
 	if(v == QSysInfo::MV_10_3)
