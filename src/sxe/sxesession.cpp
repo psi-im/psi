@@ -178,7 +178,7 @@ QList<const SxeEdit*> SxeSession::startQueueing() {
     // starting from the root, add all edits to a list recursively
     QList<const SxeEdit*> edits;
 
-    if(!rootid.isNull());
+    if(!rootid.isNull())
         arrangeEdits(ridByParent, edits, rootid);
 
     return nonDocElementEdits + edits;
