@@ -58,6 +58,7 @@ windows {
 
 	LIBS += -lWSock32 -lUser32 -lShell32 -lGdi32 -lAdvAPI32
 	DEFINES += QT_STATICPLUGIN
+	DEFINES += NOMINMAX # suppress min/max #defines in windows headers
 	INCLUDEPATH += . # otherwise MSVC will fail to find "common.h" when compiling options/* stuff
 	#QTPLUGIN += qjpeg qgif
 }
