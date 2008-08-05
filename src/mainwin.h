@@ -116,6 +116,7 @@ private slots:
 	void actOnlineHelpActivated ();
 	void actOnlineWikiActivated ();
 	void actOnlineHomeActivated ();
+	void actOnlineForumActivated ();
 	void actJoinPsiMUCActivated();
 	void actBugReportActivated ();
 	void actAboutActivated ();

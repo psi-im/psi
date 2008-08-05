@@ -374,6 +374,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 	d->getAction("help_online_help")->addTo (helpMenu);
 	d->getAction("help_online_wiki")->addTo (helpMenu);
 	d->getAction("help_online_home")->addTo (helpMenu);
+	d->getAction("help_online_forum")->addTo (helpMenu);
 	d->getAction("help_psi_muc")->addTo (helpMenu);
 	d->getAction("help_report_bug")->addTo (helpMenu);
 	QMenu* diagMenu = new QMenu(this);
@@ -458,6 +459,7 @@ void MainWin::registerAction( IconAction* action )
 		{ "help_online_help", activated, this, SLOT( actOnlineHelpActivated() ) },
 		{ "help_online_wiki", activated, this, SLOT( actOnlineWikiActivated() ) },
 		{ "help_online_home", activated, this, SLOT( actOnlineHomeActivated() ) },
+		{ "help_online_forum", activated, this, SLOT( actOnlineForumActivated() ) },
 		{ "help_psi_muc",     activated, this, SLOT( actJoinPsiMUCActivated() ) },
 		{ "help_report_bug",  activated, this, SLOT( actBugReportActivated() ) },
 		{ "help_about",       activated, this, SLOT( actAboutActivated() ) },
@@ -687,6 +689,7 @@ void MainWin::buildOptionsMenu()
 	        << "help_online_help"
 	        << "help_online_wiki"
 	        << "help_online_home"
+	        << "help_online_forum"
 	        << "help_psi_muc"
 	        << "help_report_bug"
 	        << "diagnostics"
@@ -777,6 +780,11 @@ void MainWin::actOnlineHomeActivated ()
 	DesktopUtil::openUrl("http://psi-im.org");
 }
 
+void MainWin::actOnlineForumActivated ()
+{
+    DesktopUtil::openUrl("http://forum.psi-im.org");
+}
+
 void MainWin::actJoinPsiMUCActivated()
 {
 	PsiAccount* account = d->psi->contactList()->defaultAccount();
@@ -789,7 +797,7 @@ void MainWin::actJoinPsiMUCActivated()
 
 void MainWin::actBugReportActivated ()
 {
-	DesktopUtil::openUrl("http://psi-im.org/forum/forum/2");
+	DesktopUtil::openUrl("http://forum.psi-im.org/forum/2");
 }
 
 void MainWin::actAboutActivated ()
