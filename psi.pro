@@ -12,6 +12,7 @@ qca-static {
 }
 
 SUBDIRS += \
+	iris \
 	src
 
 tests {
