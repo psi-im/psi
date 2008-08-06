@@ -2,6 +2,9 @@
 CONFIG += release
 #CONFIG += qca-static
 
+# tell iris to use our internal libz
+CONFIG += psi-zip
+
 # OpenSSL
 qca-static {
 	DEFINES += HAVE_OPENSSL
