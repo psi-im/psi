@@ -96,13 +96,14 @@ TRANSLATIONS = \
 	$$LANG_PATH/psi_nl.ts \
 	$$LANG_PATH/psi_pl.ts \
 	$$LANG_PATH/psi_pt.ts \
-	$$LANG_PATH/psi_ptbr.ts \
+	$$LANG_PATH/psi_pt_br.ts \
 	$$LANG_PATH/psi_ru.ts \
 	$$LANG_PATH/psi_se.ts \
 	$$LANG_PATH/psi_sk.ts \
 	$$LANG_PATH/psi_sr.ts \
 	$$LANG_PATH/psi_uk.ts \
-	$$LANG_PATH/psi_zh.ts
+	$$LANG_PATH/psi_zh.ts \
+	$$LANG_PATH/psi_zh_tw.ts
 
 OPTIONS_TRANSLATIONS_FILE=$$PWD/option_translations.cpp
 
