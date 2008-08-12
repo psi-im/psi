@@ -1548,7 +1548,7 @@ public:
 };
 
 FileTransDlg::FileTransDlg(PsiCon *psi)
-:AdvancedWidget(0, psi_dialog_flags)
+:AdvancedWidget<QDialog>(0, psi_dialog_flags)
 {
 	d = new Private(this);
 	d->psi = psi;
