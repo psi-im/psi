@@ -7,4 +7,15 @@
 .DS_Store
 .AppleDouble
 :2e_*
-
+third-party/qca/.moc
+third-party/qca/.obj
+third-party/qca/libqca_psi.a
+third-party/qca/Makefile
+src/.moc
+src/.obj
+src/.rcc
+src/.ui
+src/Makefile
+src/config.h
+src/psi.app
+src/psi
