@@ -22,7 +22,6 @@
 #include <QLabel>
 #include <QPushButton>
 
-#include "iconwidget.h"
 #include "Certificates/CertificateHelpers.h"
 #include "Certificates/CertificateDisplayDialog.h"
 
@@ -91,7 +90,9 @@ QString CertificateDisplayDialog::makePropTable(const QString &heading, const QC
 
 void CertificateDisplayDialog::setLabelStatus(QLabel& l, bool ok)
 {
-	l.setPaletteForegroundColor(ok ? QColor("#2A993B") : QColor("#810000"));
+	QPalette palette;
+	palette.setColor(l.foregroundRole(), ok ? QColor("#2A993B") : QColor("#810000"));
+	l.setPalette(palette);
 }
 
 QString CertificateDisplayDialog::makePropEntry(QCA::CertificateInfoType var, const QString &name, const QCA::CertificateInfo &list)

@@ -1,6 +1,8 @@
 #ifndef CERTUTIL_H
 #define CERTUTIL_H
 
+#include <QtCrypto>
+
 class QString;
 namespace QCA {
 	class CertificateCollection;

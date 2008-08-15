@@ -174,14 +174,6 @@
  </widget>
  <layoutdefault spacing="6" margin="11" />
  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
- <customwidgets>
-  <customwidget>
-   <class>IconButton</class>
-   <extends>QWidget</extends>
-   <header>iconbutton.h</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <tabstops>
   <tabstop>tb_cert</tabstop>
  </tabstops>

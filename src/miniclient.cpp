@@ -20,12 +20,13 @@
 
 #include <QtCrypto>
 #include <QMessageBox>
+#include <QUrl>
 
 #include "applicationinfo.h"
 #include "miniclient.h"
 #include "proxy.h"
 #include "Certificates/CertificateHelpers.h"
-#include "Certificates/CertificateDisplayDialog.h"
+#include "Certificates/CertificateErrorDialog.h"
 #include "psiaccount.h"
 #include "xmpp_tasks.h"
 
@@ -159,31 +160,23 @@ void MiniClient::tls_handshaken()
 	if (r == QCA::TLS::Valid && !tlsHandler->certMatchesHostname()) r = QCA::TLS::HostMismatch;
 	if(r != QCA::TLS::Valid) {
 		QCA::Validity validity =  tls->peerCertificateValidity();
-		QString str = CertificateHelpers::resultToString(r,validity);
-		while(1) {
-			int n = QMessageBox::warning(0,
-				tr("Server Authentication"),
-				tr("The %1 certificate failed the authenticity test.").arg(j.host()) + '\n' + tr("Reason: %1.").arg(str),
-				tr("&Details..."),
-				tr("Co&ntinue"),
-				tr("&Cancel"), 0, 2);
-			if(n == 0) {
-				CertificateDisplayDialog dlg(cert, r, validity);
-				dlg.exec();
-			}
-			else if(n == 1) {
-				tlsHandler->continueAfterHandshake();
-				break;
-			}
-			else if(n == 2) {
-				close();
-				error();
-				break;
-			}
+		CertificateErrorDialog errorDialog(
+			tr("Server Authentication"),
+			j.host(),
+			cert,
+			r,
+			validity);
+		if (errorDialog.exec() == QDialog::Accepted) {
+			tlsHandler->continueAfterHandshake();
+		}
+		else {
+			close();
+			error();
 		}
 	}
-	else
+	else {
 		tlsHandler->continueAfterHandshake();
+	}
 }
 
 void MiniClient::cs_connected()

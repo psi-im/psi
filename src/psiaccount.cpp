@@ -31,6 +31,7 @@
 #include <qapplication.h>
 #include <qpushbutton.h>
 #include <qlayout.h>
+#include <QUrl>
 #include <qobject.h>
 #include <qmap.h>
 #include <qca.h>
@@ -123,6 +124,7 @@
 #include "tabmanager.h"
 #include "fileutil.h"
 #include "Certificates/CertificateHelpers.h"
+#include "Certificates/CertificateErrorDialog.h"
 #include "Certificates/CertificateDisplayDialog.h"
 
 #ifdef PSI_PLUGINS
@@ -1295,45 +1297,30 @@ bool PsiAccount::loggedIn() const
 void PsiAccount::tls_handshaken()
 {
 	QCA::Certificate cert = d->tls->peerCertificateChain().primary();
-	int r = d->tls->peerIdentityResult();
-	if (r == QCA::TLS::Valid && !d->tlsHandler->certMatchesHostname()) r = QCA::TLS::HostMismatch;
-	if(r != QCA::TLS::Valid && !d->acc.opt_ignoreSSLWarnings) {
-		QCA::Validity validity =  d->tls->peerCertificateValidity();
-		QString str = CertificateHelpers::resultToString(r,validity);
-		QMessageBox msgBox(QMessageBox::Warning,
-			(d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Authentication"),
-			tr("The %1 certificate failed the authenticity test.").arg(d->jid.host()) + '\n' + tr("Reason: %1.").arg(str));
-		QPushButton *detailsButton = msgBox.addButton(tr("&Details..."), QMessageBox::ActionRole);
-		QPushButton *continueButton = msgBox.addButton(tr("Co&ntinue"), QMessageBox::AcceptRole);
-		QPushButton *cancelButton = msgBox.addButton(QMessageBox::Cancel);
-		msgBox.setDefaultButton(detailsButton);
-		msgBox.setResult(QDialog::Accepted);
+	int result = d->tls->peerIdentityResult();
+	if (result == QCA::TLS::Valid && !d->tlsHandler->certMatchesHostname()) {
+		result = QCA::TLS::HostMismatch;
+	}
 
-		connect(this, SIGNAL(disconnected()), &msgBox, SLOT(reject()));
-		connect(this, SIGNAL(reconnecting()), &msgBox, SLOT(reject()));
-
-		while (msgBox.result() != QDialog::Rejected) {
-			msgBox.exec();
-			if (msgBox.clickedButton() == detailsButton) {
-				msgBox.setResult(QDialog::Accepted);
-				CertificateDisplayDialog dlg(cert, r, validity);
-				dlg.exec();
-			}
-			else if (msgBox.clickedButton() == continueButton) {
-				d->tlsHandler->continueAfterHandshake();
-				break;
-			}
-			else if (msgBox.clickedButton() == cancelButton) {
-				logout();
-				break;
-			}
-			else {	// msgBox was hidden because connection was closed
-				break;
-			}
+	if (result != QCA::TLS::Valid && !d->acc.opt_ignoreSSLWarnings) {
+		CertificateErrorDialog errorDialog(
+				(d->psi->contactList()->enabledAccounts().count() > 1 ?  QString("%1: ").arg(name()) : "") + tr("Server Authentication"),
+				d->jid.host(), 
+				cert,
+				result, 
+				d->tls->peerCertificateValidity());
+		connect(this, SIGNAL(disconnected()), errorDialog.getMessageBox(), SLOT(reject()));
+		connect(this, SIGNAL(reconnecting()), errorDialog.getMessageBox(), SLOT(reject()));
+		if (errorDialog.exec() == QDialog::Accepted) {
+			d->tlsHandler->continueAfterHandshake();
+		}
+		else {
+			logout();
 		}
 	}
-	else
+	else {
 		d->tlsHandler->continueAfterHandshake();
+	}
 }
 
 void PsiAccount::showCert()

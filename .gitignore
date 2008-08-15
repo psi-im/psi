@@ -11,6 +11,8 @@
 qrc_*
 *.moc
 *.o
+ui_*
+moc_*
 third-party/qca/.moc
 third-party/qca/.obj
 third-party/qca/libqca_psi.a
