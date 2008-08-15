@@ -165,7 +165,8 @@ void MiniClient::tls_handshaken()
 			j.host(),
 			cert,
 			r,
-			validity);
+			validity,
+			ApplicationInfo::getCertificateStoreSaveDir());
 		if (errorDialog.exec() == QDialog::Accepted) {
 			tlsHandler->continueAfterHandshake();
 		}

@@ -23,6 +23,7 @@ public:
 	static QString historyDir();
 	static QString vCardDir();
 	static QStringList getCertificateStoreDirs();
+	static QString getCertificateStoreSaveDir();
 	
 	// Namespaces
 	static QString optionsNS();

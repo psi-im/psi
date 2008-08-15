@@ -12,3 +12,5 @@ else {
 
 SOURCES += \
 	$$PWD/main.cpp
+
+RESOURCES += guitest.qrc

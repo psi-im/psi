@@ -1308,7 +1308,8 @@ void PsiAccount::tls_handshaken()
 				d->jid.host(), 
 				cert,
 				result, 
-				d->tls->peerCertificateValidity());
+				d->tls->peerCertificateValidity(),
+				ApplicationInfo::getCertificateStoreSaveDir());
 		connect(this, SIGNAL(disconnected()), errorDialog.getMessageBox(), SLOT(reject()));
 		connect(this, SIGNAL(reconnecting()), errorDialog.getMessageBox(), SLOT(reject()));
 		if (errorDialog.exec() == QDialog::Accepted) {

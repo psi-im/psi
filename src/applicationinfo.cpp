@@ -93,6 +93,10 @@ QStringList ApplicationInfo::getCertificateStoreDirs()
 	return l;
 }
 
+QString ApplicationInfo::getCertificateStoreSaveDir()
+{
+	return ApplicationInfo::homeDir() + "/certs";
+}
 
 QString ApplicationInfo::resourcesDir()
 {
