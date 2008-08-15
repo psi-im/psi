@@ -51,7 +51,7 @@
 #endif
 
 #ifdef Q_WS_MAC
-#include "cocoautil.h"
+#include "CocoaUtilities/CocoaInitializer.h"
 #endif
 
 #ifdef Q_OS_WIN
@@ -276,6 +276,7 @@ int main(int argc, char *argv[])
 {
 	// it must be initialized first in order for ApplicationInfo::resourcesDir() to work
 	QCA::Initializer init;
+	CocoaInitializer cocoaInitializer;
 	PsiApplication app(argc, argv);
 	QApplication::addLibraryPath(ApplicationInfo::resourcesDir());
 	QApplication::addLibraryPath(ApplicationInfo::homeDir());
@@ -293,11 +294,6 @@ int main(int argc, char *argv[])
 	QCA::KeyStoreManager keystoremgr;
 	QCA::KeyStoreManager::start();
 	keystoremgr.waitForBusyFinished(); // FIXME get rid of this
-
-
-#ifdef Q_WS_MAC
-	CocoaUtil::initialize();
-#endif
 
 #ifdef USE_CRASH
 	int useCrash = true;

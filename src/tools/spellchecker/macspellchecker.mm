@@ -38,11 +38,9 @@ MacSpellChecker::~MacSpellChecker()
 
 bool MacSpellChecker::isCorrect(const QString& word)
 {
-	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 	NSString* ns_word = [NSString stringWithUTF8String: word.toUtf8().data()];
 	NSRange range = {0,0};
 	range = [[NSSpellChecker sharedSpellChecker] checkSpellingOfString:ns_word startingAt:0];
-	[pool release];
 	return (range.length == 0);
 }
 
@@ -50,13 +48,11 @@ QList<QString> MacSpellChecker::suggestions(const QString& word)
 {
 	QList<QString> s;
 
-	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 	NSString* ns_word = [NSString stringWithUTF8String: word.toUtf8().data()];
 	NSArray* ns_suggestions = [[NSSpellChecker sharedSpellChecker] guessesForWord:ns_word];
 	for(unsigned int i = 0; i < [ns_suggestions count]; i++) {
 		s += QString::fromUtf8([[ns_suggestions objectAtIndex:i] UTF8String]);
 	}
-	[pool release];
 
 	return s;
 }
