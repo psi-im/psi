@@ -19,7 +19,8 @@ class SparkleAutoUpdater : public AutoUpdater
 		void checkForUpdates();
 	
 	private:
-		void* updater_;
+		class Private;
+		Private* d;
 };
 
 #endif
