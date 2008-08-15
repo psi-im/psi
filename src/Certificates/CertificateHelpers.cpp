@@ -6,36 +6,24 @@
 #include <QFile>
 
 #include "applicationinfo.h"
-#include "certutil.h"
+#include "Certificates/CertificateHelpers.h"
 
 using namespace QCA;
 
 /**
- * \class CertUtil
+ * \class CertificateHelpers
  * \brief A class providing utility functions for Certificates.
  */
-
-/**
- * \brief Returns the list of directories with certificates.
- */
-static QStringList certificateStores()
-{
-	QStringList l;
-	l += ApplicationInfo::resourcesDir() + "/certs";
-	l += ApplicationInfo::homeDir() + "/certs";
-	return l;
-}
 
 /**
  * \brief Returns the collection of all available certificates.
  * This collection includes the system-wide certificates, as well as any
  * custom certificate in the Psi-specific cert dirs.
  */
-CertificateCollection CertUtil::allCertificates()
+CertificateCollection CertificateHelpers::allCertificates(const QStringList& storeDirs)
 {
 	CertificateCollection certs(systemStore());
-	QStringList stores = certificateStores();
-	for (QStringList::ConstIterator s = stores.begin(); s != stores.end(); ++s) {
+	for (QStringList::ConstIterator s = storeDirs.begin(); s != storeDirs.end(); ++s) {
 		QDir store(*s);
 
 		// Read in PEM certificates
@@ -90,7 +78,7 @@ CertificateCollection CertUtil::allCertificates()
 	return certs;
 }
 
-QString CertUtil::validityToString(QCA::Validity v)
+QString CertificateHelpers::validityToString(QCA::Validity v)
 {
 	QString s;
 	switch(v)
@@ -136,7 +124,7 @@ QString CertUtil::validityToString(QCA::Validity v)
 	return s;
 }
 
-QString CertUtil::resultToString(int result, QCA::Validity validity)
+QString CertificateHelpers::resultToString(int result, QCA::Validity validity)
 {
 	QString s;
 	switch(result) {

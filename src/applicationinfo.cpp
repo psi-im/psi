@@ -85,6 +85,15 @@ QString ApplicationInfo::storageNS()
 	return PROG_STORAGE_NS;
 }	
 
+QStringList ApplicationInfo::getCertificateStoreDirs()
+{
+	QStringList l;
+	l += ApplicationInfo::resourcesDir() + "/certs";
+	l += ApplicationInfo::homeDir() + "/certs";
+	return l;
+}
+
+
 QString ApplicationInfo::resourcesDir()
 {
 #if defined(Q_WS_X11)

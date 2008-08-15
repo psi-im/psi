@@ -1,6 +1,6 @@
 <ui version="4.0" >
- <class>SSLCert</class>
- <widget class="QDialog" name="SSLCert" >
+ <class>CertificateDisplay</class>
+ <widget class="QDialog" name="CertificateDisplay" >
   <property name="geometry" >
    <rect>
     <x>0</x>
@@ -10,7 +10,7 @@
    </rect>
   </property>
   <property name="windowTitle" >
-   <string>SSL Cert</string>
+   <string>Certificate Information</string>
   </property>
   <layout class="QVBoxLayout" >
    <property name="margin" >

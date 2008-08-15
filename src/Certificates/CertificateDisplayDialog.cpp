@@ -1,5 +1,4 @@
 /*
- * sslcertdlg.cpp
  * Copyright (C) 2003  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
@@ -24,53 +23,30 @@
 #include <QPushButton>
 
 #include "iconwidget.h"
-#include "certutil.h"
-#include "common.h"
-#include "sslcertdlg.h"
+#include "Certificates/CertificateHelpers.h"
+#include "Certificates/CertificateDisplayDialog.h"
 
 
-SSLCertDlg::SSLCertDlg(QWidget *parent)
-:QDialog(parent)
+CertificateDisplayDialog::CertificateDisplayDialog(const QCA::Certificate &cert, int result, QCA::Validity validity, QWidget *parent) : QDialog(parent)
 {
 	ui_.setupUi(this);
 	setModal(true);
-	setWindowTitle(CAP(caption()));
 
 	connect(ui_.pb_close, SIGNAL(clicked()), SLOT(close()));
 	ui_.pb_close->setDefault(true);
 	ui_.pb_close->setFocus();
-}
 
-QString SSLCertDlg::makePropTable(const QString &heading, const QCA::CertificateInfo &list)
-{
-	QString str;
-	str += "<tr><td><i>" + heading + "</i><br>";
-	str += "<table>";
-	str += makePropEntry(QCA::Organization, tr("Organization:"), list);
-	str += makePropEntry(QCA::OrganizationalUnit, tr("Organizational unit:"), list);
-	str += makePropEntry(QCA::Locality, tr("Locality:"), list);
-	str += makePropEntry(QCA::State, tr("State:"), list);
-	str += makePropEntry(QCA::Country, tr("Country:"), list);
-	str += makePropEntry(QCA::CommonName, tr("Common name:"), list);
-	str += makePropEntry(QCA::DNS, tr("Domain name:"), list);
-	str += makePropEntry(QCA::XMPP, tr("XMPP name:"), list);
-	str += makePropEntry(QCA::Email, tr("Email:"), list);
-	str += "</table></td></tr>";
-	return str;
-}
-
-void SSLCertDlg::setCert(const QCA::Certificate &cert, int result, QCA::Validity validity)
-{
-	if(cert.isNull())
+	if(cert.isNull()) {
 		return;
+	}
 
-	if(result == QCA::TLS::Valid) {
+	if (result == QCA::TLS::Valid) {
 		ui_.lb_valid->setText(tr("The certificate is valid."));
-		setLabelStatus(*ui_.lb_valid,true);
+		setLabelStatus(*ui_.lb_valid, true);
 	}
 	else {
-		ui_.lb_valid->setText(tr("The certificate is NOT valid!") + "\n" + QString(tr("Reason: %1.")).arg(CertUtil::resultToString(result, validity)));
-		setLabelStatus(*ui_.lb_valid,false);
+		ui_.lb_valid->setText(tr("The certificate is NOT valid!") + "\n" + QString(tr("Reason: %1.")).arg(CertificateHelpers::resultToString(result, validity)));
+		setLabelStatus(*ui_.lb_valid, false);
 	}
 
 	QDateTime now = QDateTime::currentDateTime();
@@ -89,27 +65,36 @@ void SSLCertDlg::setCert(const QCA::Certificate &cert, int result, QCA::Validity
 	str += makePropTable(tr("Issuer Details:"), cert.issuerInfo());
 	str += "</table>";
 	for (int i=0; i < 2; i++) {
-		QString hashstr = QCA::Hash(i == 0 ? "md5" : "sha1").hashToString(cert.toDER())
-					.toUpper().replace(QRegExp("(..)"), ":\\1").mid(1);
+		QString hashstr = QCA::Hash(i == 0 ? "md5" : "sha1").hashToString(cert.toDER()).toUpper().replace(QRegExp("(..)"), ":\\1").mid(1);
 		str += QString("Fingerprint(%1): %2<br>").arg(i == 0 ? "MD5" : "SHA-1").arg(hashstr);
 	}
 	ui_.tb_cert->setText(str);
 }
 
-void SSLCertDlg::showCert(const QCA::Certificate &certificate, int result, QCA::Validity validity)
+QString CertificateDisplayDialog::makePropTable(const QString &heading, const QCA::CertificateInfo &list)
 {
-	SSLCertDlg *w = new SSLCertDlg(0);
-	w->setCert(certificate, result, validity);
-	w->exec();
-	delete w;
+	QString str;
+	str += "<tr><td><i>" + heading + "</i><br>";
+	str += "<table>";
+	str += makePropEntry(QCA::Organization, tr("Organization:"), list);
+	str += makePropEntry(QCA::OrganizationalUnit, tr("Organizational unit:"), list);
+	str += makePropEntry(QCA::Locality, tr("Locality:"), list);
+	str += makePropEntry(QCA::State, tr("State:"), list);
+	str += makePropEntry(QCA::Country, tr("Country:"), list);
+	str += makePropEntry(QCA::CommonName, tr("Common name:"), list);
+	str += makePropEntry(QCA::DNS, tr("Domain name:"), list);
+	str += makePropEntry(QCA::XMPP, tr("XMPP name:"), list);
+	str += makePropEntry(QCA::Email, tr("Email:"), list);
+	str += "</table></td></tr>";
+	return str;
 }
 
-void SSLCertDlg::setLabelStatus(QLabel& l, bool ok)
+void CertificateDisplayDialog::setLabelStatus(QLabel& l, bool ok)
 {
 	l.setPaletteForegroundColor(ok ? QColor("#2A993B") : QColor("#810000"));
 }
 
-QString SSLCertDlg::makePropEntry(QCA::CertificateInfoType var, const QString &name, const QCA::CertificateInfo &list)
+QString CertificateDisplayDialog::makePropEntry(QCA::CertificateInfoType var, const QString &name, const QCA::CertificateInfo &list)
 {
 	QString val;
 	QList<QString> values = list.values(var);

@@ -22,6 +22,7 @@ public:
 	static QString profilesDir();
 	static QString historyDir();
 	static QString vCardDir();
+	static QStringList getCertificateStoreDirs();
 	
 	// Namespaces
 	static QString optionsNS();

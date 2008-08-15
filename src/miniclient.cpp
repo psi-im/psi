@@ -21,11 +21,12 @@
 #include <QtCrypto>
 #include <QMessageBox>
 
+#include "applicationinfo.h"
 #include "miniclient.h"
 #include "proxy.h"
-#include "certutil.h"
+#include "Certificates/CertificateHelpers.h"
+#include "Certificates/CertificateDisplayDialog.h"
 #include "psiaccount.h"
-#include "sslcertdlg.h"
 #include "xmpp_tasks.h"
 
 using namespace XMPP;
@@ -101,7 +102,7 @@ void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool leg
 
 	conn = new AdvancedConnector;
 	tls = new QCA::TLS;
-	tls->setTrustedCertificates(CertUtil::allCertificates());
+	tls->setTrustedCertificates(CertificateHelpers::allCertificates(ApplicationInfo::getCertificateStoreDirs()));
 	tlsHandler = new QCATLSHandler(tls);
 	tlsHandler->setXMPPCertCheck(true);
 	connect(tlsHandler, SIGNAL(tlsHandshaken()), SLOT(tls_handshaken()));
@@ -158,7 +159,7 @@ void MiniClient::tls_handshaken()
 	if (r == QCA::TLS::Valid && !tlsHandler->certMatchesHostname()) r = QCA::TLS::HostMismatch;
 	if(r != QCA::TLS::Valid) {
 		QCA::Validity validity =  tls->peerCertificateValidity();
-		QString str = CertUtil::resultToString(r,validity);
+		QString str = CertificateHelpers::resultToString(r,validity);
 		while(1) {
 			int n = QMessageBox::warning(0,
 				tr("Server Authentication"),
@@ -167,7 +168,8 @@ void MiniClient::tls_handshaken()
 				tr("Co&ntinue"),
 				tr("&Cancel"), 0, 2);
 			if(n == 0) {
-				SSLCertDlg::showCert(cert, r, validity);
+				CertificateDisplayDialog dlg(cert, r, validity);
+				dlg.exec();
 			}
 			else if(n == 1) {
 				tlsHandler->continueAfterHandshake();

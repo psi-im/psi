@@ -1,5 +1,4 @@
 /*
- * sslcertdlg.h
  * Copyright (C) 2003  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
@@ -18,29 +17,27 @@
  *
  */
 
-#ifndef SSLCERTDLG_H
-#define SSLCERTDLG_H
+#ifndef CERTIFICATEDISPLAYDIALOG_H
+#define CERTIFICATEDISPLAYDIALOG_H
 
 #include <QtCrypto>
 
-#include "ui_sslcert.h"
+#include "ui_CertificateDisplay.h"
 
-class SSLCertDlg : public QDialog
+class CertificateDisplayDialog : public QDialog
 {
-	Q_OBJECT
-public:
-	SSLCertDlg(QWidget *parent=0);
+		Q_OBJECT
 
-	void setCert(const QCA::Certificate &, int result, QCA::Validity);
-	static void showCert(const QCA::Certificate &, int result, QCA::Validity);
+	public:
+		CertificateDisplayDialog(const QCA::Certificate &, int result, QCA::Validity, QWidget *parent=0);
 
-protected:
-	static void setLabelStatus(QLabel& l, bool ok);
-	static QString makePropEntry(QCA::CertificateInfoType var, const QString &name, const QCA::CertificateInfo &list);
-	QString makePropTable(const QString &heading, const QCA::CertificateInfo &props);
+	protected:
+		static void setLabelStatus(QLabel& l, bool ok);
+		static QString makePropEntry(QCA::CertificateInfoType var, const QString &name, const QCA::CertificateInfo &list);
+		QString makePropTable(const QString &heading, const QCA::CertificateInfo &props);
 
-private:
-	Ui::SSLCert ui_;
+	private:
+		Ui::CertificateDisplay ui_;
 };
 
 #endif

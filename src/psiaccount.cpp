@@ -101,7 +101,6 @@
 #include "bookmarkmanager.h"
 #include "vcardfactory.h"
 //#include "qssl.h"
-#include "sslcertdlg.h"
 #include "mooddlg.h"
 #include "qwextend.h"
 #include "geolocation.h"
@@ -119,11 +118,12 @@
 #include "ahcservermanager.h"
 #include "rc.h"
 #include "tabdlg.h"
-#include "certutil.h"
 #include "proxy.h"
 #include "psicontactlist.h"
 #include "tabmanager.h"
 #include "fileutil.h"
+#include "Certificates/CertificateHelpers.h"
+#include "Certificates/CertificateDisplayDialog.h"
 
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
@@ -1203,7 +1203,7 @@ void PsiAccount::login()
 	d->conn = new AdvancedConnector;
 	if(d->acc.ssl != UserAccount::SSL_No && QCA::isSupported("tls")) {
 		d->tls = new QCA::TLS;
-		d->tls->setTrustedCertificates(CertUtil::allCertificates());
+		d->tls->setTrustedCertificates(CertificateHelpers::allCertificates(ApplicationInfo::getCertificateStoreDirs()));
 		d->tlsHandler = new QCATLSHandler(d->tls);
 		d->tlsHandler->setXMPPCertCheck(true);
 		connect(d->tlsHandler, SIGNAL(tlsHandshaken()), SLOT(tls_handshaken()));
@@ -1299,7 +1299,7 @@ void PsiAccount::tls_handshaken()
 	if (r == QCA::TLS::Valid && !d->tlsHandler->certMatchesHostname()) r = QCA::TLS::HostMismatch;
 	if(r != QCA::TLS::Valid && !d->acc.opt_ignoreSSLWarnings) {
 		QCA::Validity validity =  d->tls->peerCertificateValidity();
-		QString str = CertUtil::resultToString(r,validity);
+		QString str = CertificateHelpers::resultToString(r,validity);
 		QMessageBox msgBox(QMessageBox::Warning,
 			(d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Authentication"),
 			tr("The %1 certificate failed the authenticity test.").arg(d->jid.host()) + '\n' + tr("Reason: %1.").arg(str));
@@ -1316,7 +1316,8 @@ void PsiAccount::tls_handshaken()
 			msgBox.exec();
 			if (msgBox.clickedButton() == detailsButton) {
 				msgBox.setResult(QDialog::Accepted);
-				SSLCertDlg::showCert(cert, r, validity);
+				CertificateDisplayDialog dlg(cert, r, validity);
+				dlg.exec();
 			}
 			else if (msgBox.clickedButton() == continueButton) {
 				d->tlsHandler->continueAfterHandshake();
@@ -1342,7 +1343,8 @@ void PsiAccount::showCert()
 	int r = d->tls->peerIdentityResult();
 	if (r == QCA::TLS::Valid && !d->tlsHandler->certMatchesHostname()) r = QCA::TLS::HostMismatch;
 	QCA::Validity validity =  d->tls->peerCertificateValidity();
-	SSLCertDlg::showCert(cert, r, validity);
+	CertificateDisplayDialog dlg(cert, r, validity);
+	dlg.exec();
 }
 
 
