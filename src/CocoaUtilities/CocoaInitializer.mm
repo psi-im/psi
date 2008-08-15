@@ -1,3 +1,8 @@
+/*
+ * Copyright (C) 2008 Remko Troncon
+ * See COPYING file for the detailed license.
+ */
+
 #include "CocoaUtilities/CocoaInitializer.h"
 
 #include <AppKit/AppKit.h>

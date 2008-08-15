@@ -1,3 +1,8 @@
+/*
+ * Copyright (C) 2008 Remko Troncon
+ * See COPYING file for the detailed license.
+ */
+
 #ifndef AUTOUPDATER_H
 #define AUTOUPDATER_H
 
