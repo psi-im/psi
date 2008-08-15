@@ -70,7 +70,16 @@ QWidget *OptionsTabApplication::widget()
 	d->gb_docklet->hide();
 #endif
 
+	if (!haveAutoUpdater_) {
+		d->ck_autoUpdate->hide();
+	}
+
 	return w;
+}
+
+void OptionsTabApplication::setHaveAutoUpdater(bool b) 
+{
+	haveAutoUpdater_ = b;
 }
 
 void OptionsTabApplication::applyOptions()
@@ -86,6 +95,9 @@ void OptionsTabApplication::applyOptions()
 	PsiOptions::instance()->setOption("options.ui.contactlist.use-left-click", d->ck_useleft->isChecked());
 	PsiOptions::instance()->setOption("options.ui.contactlist.show-menubar", d->ck_showMenubar->isChecked());
 
+	// Auto-update
+	PsiOptions::instance()->setOption("options.auto-update.check-on-startup", d->ck_autoUpdate->isChecked());
+	
 	// docklet
 	PsiOptions::instance()->setOption("options.ui.systemtray.enable", d->ck_docklet->isChecked());
 	PsiOptions::instance()->setOption("options.ui.systemtray.use-double-click", d->ck_dockDCstyle->isChecked());
@@ -109,6 +121,7 @@ void OptionsTabApplication::restoreOptions()
 	d->ck_keepSizes->setChecked( PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool() );
 	d->ck_showMenubar->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool() );
 	d->ck_useleft->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.use-left-click").toBool() );
+	d->ck_autoUpdate->setChecked(PsiOptions::instance()->getOption("options.auto-update.check-on-startup").toBool());
 
 	// docklet
 	d->ck_docklet->setChecked( PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() );

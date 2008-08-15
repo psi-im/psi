@@ -91,6 +91,11 @@
 #include "tabmanager.h"
 
 
+#include "AutoUpdater/AutoUpdater.h"
+#ifdef HAVE_SPARKLE
+#include "AutoUpdater/SparkleAutoUpdater.h"
+#endif
+
 #ifdef Q_WS_MAC
 #include "mac_dock.h"
 #endif
@@ -257,6 +262,7 @@ public:
 	QMenuBar* defaultMenuBar;
 	CapsRegistry* capsRegistry;
 	TabManager *tabManager;
+	AutoUpdater *autoUpdater;
 };
 
 //----------------------------------------------------------------------------
@@ -280,6 +286,7 @@ PsiCon::PsiCon()
 	d->s5bServer = 0;
 	d->proxy = 0;
 	d->tuneController = 0;
+	d->autoUpdater = 0;
 
 	d->actionList = 0;
 	d->defaultMenuBar = new QMenuBar(0);
@@ -294,6 +301,7 @@ PsiCon::~PsiCon()
 	saveCapabilities();
 	delete d->capsRegistry;
 
+	delete d->autoUpdater;
 	delete d->actionList;
 	delete d->edb;
 	delete d->defaultMenuBar;
@@ -347,6 +355,14 @@ bool PsiCon::init()
 	// Create the tune controller
 	d->tuneController = new CombinedTuneController();
 #endif
+
+	// Auto updater initialization
+#ifdef HAVE_SPARKLE
+	d->autoUpdater = new SparkleAutoUpdater(ApplicationInfo::getAppCastURL());
+#endif
+	if (d->autoUpdater && PsiOptions::instance()->getOption("options.auto-update.check-on-startup").toBool()) {
+		d->autoUpdater->checkForUpdates();
+	}
 
 	// calculate the small font size
 	const int minimumFontSize = 7;
@@ -560,6 +576,11 @@ bool PsiCon::init()
 	connect(ActiveProfiles::instance(), SIGNAL(raiseMainWindow()), SLOT(raiseMainwin()));
 
 	return true;
+}
+
+bool PsiCon::haveAutoUpdater() const
+{
+	return d->autoUpdater != 0;
 }
 
 void PsiCon::registerCaps(const QString& ext, const QStringList& features)

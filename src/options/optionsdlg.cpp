@@ -310,6 +310,8 @@ void OptionsDlg::Private::createTabs()
 	//tabs.append( new OptionsTabBase(this, "sound",    "", "psi/playSounds",	tr("Sound"),		tr("Configure how Psi sounds")) );
 	*/
 
+	OptionsTabApplication* applicationTab = new OptionsTabApplication(this);
+	applicationTab->setHaveAutoUpdater(psi->haveAutoUpdater());
 	tabs.append( new OptionsTabApplication(this) );
 	tabs.append( new OptionsTabChat(this) );
 	tabs.append( new OptionsTabEvents(this) );

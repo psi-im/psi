@@ -107,6 +107,16 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="ck_autoUpdate" >
+     <property name="text" >
+      <string>Check for updates on startup</string>
+     </property>
+     <property name="checked" >
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
     <layout class="QHBoxLayout" >
      <property name="margin" >
       <number>0</number>

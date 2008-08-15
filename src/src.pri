@@ -47,6 +47,9 @@ use_crash {
 	include($$PWD/tools/crash/crash.pri)
 }
 
+# AutoUpdater
+include($$PWD/AutoUpdater/AutoUpdater.pri)
+
 # qca
 qca-static {
 	# QCA
@@ -369,8 +372,7 @@ mac {
 		SOURCES += $$PWD/psigrowlnotifier.cpp 
 	}
 
-	HEADERS += $$PWD/cocoautil.h
-	OBJECTIVE_SOURCES += $$PWD/cocoautil.mm
+	include($$PWD/CocoaUtilities/CocoaUtilities.pri)
 }
 
 # Qt Designer interfaces

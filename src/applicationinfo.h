@@ -13,6 +13,9 @@ public:
 	static QString capsVersion();
 	static QString IPCName();
 
+	// URLs
+	static QString getAppCastURL();
+
 	// Directories
 	static QString homeDir();
 	static QString resourcesDir();

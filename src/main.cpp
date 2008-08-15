@@ -276,7 +276,11 @@ int main(int argc, char *argv[])
 {
 	// it must be initialized first in order for ApplicationInfo::resourcesDir() to work
 	QCA::Initializer init;
+
+#ifdef Q_WS_MAC
 	CocoaInitializer cocoaInitializer;
+#endif
+
 	PsiApplication app(argc, argv);
 	QApplication::addLibraryPath(ApplicationInfo::resourcesDir());
 	QApplication::addLibraryPath(ApplicationInfo::homeDir());

@@ -33,6 +33,11 @@
 #define PROG_IPC_NAME "org.psi-im.Psi"	// must not contain '\\' character on Windows
 #define PROG_OPTIONS_NS "http://psi-im.org/options";
 #define PROG_STORAGE_NS "http://psi-im.org/storage";
+#ifdef Q_WS_MAC
+#define PROG_APPCAST_URL "http://psi-im.org/appcast/psi-mac.xml";
+#else
+#define PROG_APPCAST_URL "";
+#endif
 
 #if defined(Q_WS_X11) && !defined(PSI_DATADIR)
 #define PSI_DATADIR "/usr/local/share/psi"
@@ -63,6 +68,11 @@ QString ApplicationInfo::capsVersion()
 QString ApplicationInfo::IPCName()
 {
 	return PROG_IPC_NAME;
+}
+
+QString ApplicationInfo::getAppCastURL()
+{
+	return PROG_APPCAST_URL;
 }
 
 QString ApplicationInfo::optionsNS()

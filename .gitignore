@@ -7,6 +7,10 @@
 .DS_Store
 .AppleDouble
 :2e_*
+*.swp
+qrc_*
+*.moc
+*.o
 third-party/qca/.moc
 third-party/qca/.obj
 third-party/qca/libqca_psi.a
@@ -19,3 +23,10 @@ src/Makefile
 src/config.h
 src/psi.app
 src/psi
+src/AutoUpdater/guitest/Makefile
+src/AutoUpdater/guitest/testapp-2.0/Makefile
+src/AutoUpdater/guitest/testapp-2.0/testapp.app
+src/AutoUpdater/guitest/testapp-2.0/testapp-2.0.zip
+src/AutoUpdater/guitest/testapp/Makefile
+src/AutoUpdater/guitest/testapp/testapp.app
+

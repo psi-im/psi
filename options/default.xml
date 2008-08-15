@@ -18,6 +18,9 @@
 		<account comment="Default account options">
 			<domain comment="Always use the same domain to register with. Leave this empty to allow the user to choose his server." type="QString"/>
 		</account>
+    <auto-update comment="Auto updater">
+      <check-on-startup comment="Check for available updates on startup" type="bool">true</check-on-startup>
+    </auto-update>
 		<enable-multicast comment="Enable multicasting messages to multiple recipients" type="bool">false</enable-multicast>
 		<html comment="Hypertext markup options">
 			<chat comment="HTML in chats">

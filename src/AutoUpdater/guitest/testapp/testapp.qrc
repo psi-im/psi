@@ -1,0 +1,6 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+	<qresource>
+		<file alias='testapp-2.0.zip'>../testapp-2.0/testapp-2.0.zip</file>
+	</qresource>
+</RCC>

@@ -13,12 +13,15 @@ public:
 	OptionsTabApplication(QObject *parent);
 	~OptionsTabApplication();
 
+	void setHaveAutoUpdater(bool);
+
 	QWidget *widget();
 	void applyOptions();
 	void restoreOptions();
 
 private:
 	QWidget *w;
+	bool haveAutoUpdater_;
 };
 
 #endif
