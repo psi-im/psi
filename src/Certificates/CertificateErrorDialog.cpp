@@ -19,7 +19,7 @@ CertificateErrorDialog::CertificateErrorDialog(const QString& title, const QStri
 
 	detailsButton_ = messageBox_->addButton(QObject::tr("&Details..."), QMessageBox::ActionRole);
 	continueButton_ = messageBox_->addButton(QObject::tr("&Connect anyway"), QMessageBox::AcceptRole);
-	saveButton_ = messageBox_->addButton(QObject::tr("Always &trust this server"), QMessageBox::AcceptRole);
+	saveButton_ = messageBox_->addButton(QObject::tr("&Trust this certificate"), QMessageBox::AcceptRole);
 	cancelButton_ = messageBox_->addButton(QMessageBox::Cancel);
 
 	messageBox_->setDefaultButton(detailsButton_);
