@@ -103,7 +103,7 @@ public:
 	MUCManager *mucManager;
 	QString self, prev_self;
 	QString password;
-	bool nonAnonymous;     // got status code 100 ?
+	bool nonAnonymous;		 // got status code 100 ?
 	IconAction *act_find, *act_clear, *act_icon, *act_configure;
 #ifdef WHITEBOARDING
 	IconAction *act_whiteboard;
@@ -257,7 +257,7 @@ protected:
 		QString beforeNick;
 		if ( !fromStart ) {
 			beforeNick = beforeNickText(text);
-			nickText   = text.mid(beforeNick.length());
+			nickText	 = text.mid(beforeNick.length());
 		}
 
 		QStringList nicks = dlg->ui_.lv_users->nickList();
@@ -454,7 +454,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	: TabbableWidget(j.userHost(), pa, tabManager)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
-  	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
+		if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
 		setAttribute(Qt::WA_MacMetalStyle);
 	nicknumber=0;
 	d = new Private(this);
@@ -905,7 +905,7 @@ void GCMainDlg::error(int, const QString &str)
 	ui_.pb_topic->setEnabled(false);
 
 	if(d->state == Private::Connecting)
-		appendSysMsg(tr("Unable to join groupchat.  Reason: %1").arg(str), true);
+		appendSysMsg(tr("Unable to join groupchat.	Reason: %1").arg(str), true);
 	else
 		appendSysMsg(tr("Unexpected groupchat error: %1").arg(str), true);
 
@@ -926,7 +926,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 		return;
 	}
 
-	if ((nick == "") && (s.mucStatus() == 100)) {
+	if ((nick == "") && (s.getMUCStatuses().contains(100))) {
 		d->nonAnonymous = true;
 	}
 
@@ -939,7 +939,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 	
 	if(s.isAvailable()) {
 		// Available
-		if (s.mucStatus() == 201) {
+		if (s.getMUCStatuses().contains(201)) {
 			appendSysMsg(tr("New room created"), false, QDateTime::currentDateTime());
 			if (options_->getOption("options.muc.accept-defaults").toBool())
 				d->mucManager->setDefaultConfiguration();
@@ -1040,80 +1040,74 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 			else
 				nickJid = nick;
 
-			switch (s.mucStatus()) {
-				case 301:
-					// Ban
-					if (nick == d->self) {
-						mucInfoDialog(tr("Banned"), tr("You have been banned from the room"), s.mucItem().actor(), s.mucItem().reason());
-						close();
-					}
+			if (s.getMUCStatuses().contains(301)) {
+				// Ban
+				if (nick == d->self) {
+					mucInfoDialog(tr("Banned"), tr("You have been banned from the room"), s.mucItem().actor(), s.mucItem().reason());
+					close();
+				}
 
-					if (!s.mucItem().actor().isEmpty())
-						message = tr("%1 has been banned by %2").arg(nickJid, s.mucItem().actor().full());
-					else
-						message = tr("%1 has been banned").arg(nickJid);
+				if (!s.mucItem().actor().isEmpty())
+					message = tr("%1 has been banned by %2").arg(nickJid, s.mucItem().actor().full());
+				else
+					message = tr("%1 has been banned").arg(nickJid);
 
-					if (!s.mucItem().reason().isEmpty()) 
-						message += QString(" (%1)").arg(s.mucItem().reason());
-					break;
+				if (!s.mucItem().reason().isEmpty()) 
+					message += QString(" (%1)").arg(s.mucItem().reason());
+			}
+			else if (s.getMUCStatuses().contains(303)) {
+				message = tr("%1 is now known as %2").arg(nick).arg(s.mucItem().nick());
+				ui_.lv_users->updateEntry(s.mucItem().nick(), s);
+			}
+			else if (s.getMUCStatuses().contains(307)) {
+				// Kick
+				if (nick == d->self) {
+					mucInfoDialog(tr("Kicked"), tr("You have been kicked from the room"), s.mucItem().actor(), s.mucItem().reason());
+					close();
+				}
 
-				case 303:
-					message = tr("%1 is now known as %2").arg(nick).arg(s.mucItem().nick());
-					ui_.lv_users->updateEntry(s.mucItem().nick(), s);
-					break;
-					
-				case 307:
-					// Kick
-					if (nick == d->self) {
-						mucInfoDialog(tr("Kicked"), tr("You have been kicked from the room"), s.mucItem().actor(), s.mucItem().reason());
-						close();
-					}
+				if (!s.mucItem().actor().isEmpty())
+					message = tr("%1 has been kicked by %2").arg(nickJid).arg(s.mucItem().actor().full());
+				else
+					message = tr("%1 has been kicked").arg(nickJid);
+				if (!s.mucItem().reason().isEmpty()) 
+					message += QString(" (%1)").arg(s.mucItem().reason());
+			}
+			else if (s.getMUCStatuses().contains(321)) {
+				// Remove due to affiliation change
+				if (nick == d->self) {
+					mucInfoDialog(tr("Removed"), tr("You have been removed from the room due to an affiliation change"), s.mucItem().actor(), s.mucItem().reason());
+					close();
+				}
 
-					if (!s.mucItem().actor().isEmpty())
-						message = tr("%1 has been kicked by %2").arg(nickJid).arg(s.mucItem().actor().full());
-					else
-						message = tr("%1 has been kicked").arg(nickJid);
-					if (!s.mucItem().reason().isEmpty()) 
-						message += QString(" (%1)").arg(s.mucItem().reason());
-					break;
-					
-				case 321:
-					// Remove due to affiliation change
-					if (nick == d->self) {
-						mucInfoDialog(tr("Removed"), tr("You have been removed from the room due to an affiliation change"), s.mucItem().actor(), s.mucItem().reason());
-						close();
-					}
+				if (!s.mucItem().actor().isEmpty())
+					message = tr("%1 has been removed from the room by %2 due to an affilliation change").arg(nickJid).arg(s.mucItem().actor().full());
+				else
+					message = tr("%1 has been removed from the room due to an affilliation change").arg(nickJid);
 
-					if (!s.mucItem().actor().isEmpty())
-						message = tr("%1 has been removed from the room by %2 due to an affilliation change").arg(nickJid).arg(s.mucItem().actor().full());
-					else
-						message = tr("%1 has been removed from the room due to an affilliation change").arg(nickJid);
+				if (!s.mucItem().reason().isEmpty()) 
+					message += QString(" (%1)").arg(s.mucItem().reason());
+			}
+			else if (s.getMUCStatuses().contains(322)) {
+				// Remove due to members only
+				if (nick == d->self) {
+					mucInfoDialog(tr("Removed"), tr("You have been removed from the room because the room was made members only"), s.mucItem().actor(), s.mucItem().reason());
+					close();
+				}
 
-					if (!s.mucItem().reason().isEmpty()) 
-						message += QString(" (%1)").arg(s.mucItem().reason());
-					break;
-					
-				case 322:
-					// Remove due to members only
-					if (nick == d->self) {
-						mucInfoDialog(tr("Removed"), tr("You have been removed from the room because the room was made members only"), s.mucItem().actor(), s.mucItem().reason());
-						close();
-					}
+				if (!s.mucItem().actor().isEmpty())
+					message = tr("%1 has been removed from the room by %2 because the room was made members-only").arg(nickJid).arg(s.mucItem().actor().full());
+				else
+					message = tr("%1 has been removed from the room because the room was made members-only").arg(nickJid);
 
-					if (!s.mucItem().actor().isEmpty())
-						message = tr("%1 has been removed from the room by %2 because the room was made members-only").arg(nickJid).arg(s.mucItem().actor().full());
-					else
-						message = tr("%1 has been removed from the room because the room was made members-only").arg(nickJid);
-
-					if (!s.mucItem().reason().isEmpty()) 
-						message += QString(" (%1)").arg(s.mucItem().reason());
-					break;
-
-				default:
-					//contact leaving
-					message = tr("%1 has left the room").arg(nickJid);
-					if (!s.status().isEmpty())
-						message += QString(" (%1)").arg(s.status());
+				if (!s.mucItem().reason().isEmpty()) 
+					message += QString(" (%1)").arg(s.mucItem().reason());
+			}
+			else {
+				//contact leaving
+				message = tr("%1 has left the room").arg(nickJid);
+				if (!s.status().isEmpty())
+					message += QString(" (%1)").arg(s.status());
 			}
 			appendSysMsg(message, false, QDateTime::currentDateTime());
 		}
@@ -1216,7 +1210,7 @@ void GCMainDlg::updateLastMsgTime(QDateTime t)
 void GCMainDlg::appendSysMsg(const QString &str, bool alert, const QDateTime &ts)
 {
 	if (d->trackBar)
-	 	d->doTrackBar();
+		d->doTrackBar();
 
 	if (!PsiOptions::instance()->getOption("options.ui.muc.use-highlighting").toBool())
 		alert=false;
@@ -1271,7 +1265,7 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
 
 	who = m.from().resource();
 	if (d->trackBar&&m.from().resource() != d->self&&!m.spooled())
-	 	d->doTrackBar();
+		d->doTrackBar();
 	/*if(local) {
 		color = "#FF0000";
 	}
@@ -1341,7 +1335,7 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
 	/*if(alert) {
 		d->keepOpen = true;
 		QTimer::singleShot(1000, this, SLOT(setKeepOpenFalse()));
-        }*/
+				}*/
 }
 
 void GCMainDlg::doAlert()
