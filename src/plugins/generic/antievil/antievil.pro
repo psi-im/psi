@@ -1,3 +1,2 @@
 include(../../psiplugin.pri)
-
-SOURCES += echoplugin.cpp
+SOURCES += antievil.cpp

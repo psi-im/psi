@@ -1,9 +1,3 @@
-TEMPLATE = lib
-CONFIG += plugin
-QT += xml
-
-PSI_PATH = ../../..
-
-INCLUDEPATH += $$PSI_PATH
+include(../../psiplugin.pri)
 
 SOURCES += nullplugin.cpp

@@ -122,7 +122,7 @@ void OptionsTabPlugins::pluginSelected(int index)
 		QString pluginName=d->cb_plugins->currentText();
 		d->le_location->setText(PluginManager::instance()->pathToPlugin( pluginName ));
 		d->cb_loadPlugin->setEnabled(true);
-		QWidget* pluginOptions = PluginManager::instance()->getOptionsWidget( pluginName );
+		QWidget* pluginOptions = PluginManager::instance()->optionsWidget( pluginName );
 		d->cb_plugins->setEnabled(true);
 	
 		QString option=QString("%1.%2")

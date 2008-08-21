@@ -27,19 +27,31 @@
 #include <QDebug>
 
 #include "psiplugin.h"
+#include "eventfilter.h"
+#include "stanzasender.h"
+#include "stanzasendinghost.h"
+
 #include "tictac.h"
 
-class NoughtsAndCrossesPlugin : public PsiPlugin
+class NoughtsAndCrossesPlugin : public QObject, public PsiPlugin, public EventFilter, public StanzaSender
 {
 	Q_OBJECT
-	Q_INTERFACES(PsiPlugin)
+	Q_INTERFACES(PsiPlugin EventFilter StanzaSender)
 
 public:
 	NoughtsAndCrossesPlugin();
-	virtual QString name() const; 
-	virtual void message( const PsiAccount* account, const QString& message, const QString& fromJid, const QString& fromDisplay); 
+
+	virtual QString name() const;
 	virtual QString shortName() const;
 	virtual QString version() const;
+	virtual QWidget* options() const;
+	virtual bool enable();
+	virtual bool disable();
+
+	virtual void setStanzaSendingHost(StanzaSendingHost *host);
+
+    virtual bool processEvent(int account, const QDomElement& e);
+	virtual bool processMessage(int account, const QString& fromJid, const QString& body, const QString& subject);
 
 private slots:
 	void stopGame();
@@ -48,20 +60,24 @@ private slots:
 	void gameOver(TicTacGameBoard::State state);
 	
 private:
-	void startGame(QString jid, int size, bool meFirst, const PsiAccount* account);
+	void startGame(QString jid, int size, bool meFirst, int account);
 	
 
 	
 	TicTacToe* game;
 	QString playingWith;
-	PsiAccount* account_;
+	int account_;
+	bool enabled_;
+	StanzaSendingHost* stanzaSender_;
 };
 
 Q_EXPORT_PLUGIN(NoughtsAndCrossesPlugin);
 
-NoughtsAndCrossesPlugin::NoughtsAndCrossesPlugin() : PsiPlugin()
+NoughtsAndCrossesPlugin::NoughtsAndCrossesPlugin()
 {
 	game = NULL;
+	enabled_ = false;
+	stanzaSender_ = 0;
 }
 
 QString NoughtsAndCrossesPlugin::name() const
@@ -76,21 +92,63 @@ QString NoughtsAndCrossesPlugin::shortName() const
 
 QString NoughtsAndCrossesPlugin::version() const
 {
-	return "0.0.1";
+	return "0.1";
 }
 
-void NoughtsAndCrossesPlugin::message( const PsiAccount* account, const QString& message, const QString& fromJid, const QString& fromDisplay)
+QWidget* NoughtsAndCrossesPlugin::options() const
 {
+	return 0;
+}
+
+bool NoughtsAndCrossesPlugin::enable()
+{
+	if (stanzaSender_) {
+		enabled_ = true;
+	}
+	return enabled_;
+}
+
+bool NoughtsAndCrossesPlugin::disable()
+{
+	stopGame();
+	enabled_ = false;
+	return true;
+}
+
+void NoughtsAndCrossesPlugin::setStanzaSendingHost(StanzaSendingHost *host)
+{
+	stanzaSender_ = host;
+}
+
+
+bool NoughtsAndCrossesPlugin::processEvent(int account, const QDomElement& e)
+{
+	Q_UNUSED(account);
+	Q_UNUSED(e);
+	return false;
+}
+
+bool NoughtsAndCrossesPlugin::processMessage(int account, const QString& fromJid, const QString& message, const QString& subject)
+{
+	// FIXME(mck)
+	QString fromDisplay = fromJid;
+
+	Q_UNUSED(subject);
+
+	if (!enabled_) {
+		return false;
+	}
+
 	QString reply;
 	qDebug("naughtsandcrosses message");
 	if (!message.startsWith("noughtsandcrosses"))
-		return;
+		return false;
 	qDebug("message for us in noughtsandcrosses");
 	if (game && fromJid != playingWith)
 	{
 		reply=QString("<message to=\"%1\" type=\"chat\"><body>already playing with %2, sorry</body></message>").arg(fromJid).arg(playingWith);
-		emit sendStanza(account, reply);
-		return;
+		stanzaSender_->sendStanza(account, reply);
+		return true;
 	}
 	QString command = QString(message);
 	command.remove(0,18);
@@ -98,26 +156,26 @@ void NoughtsAndCrossesPlugin::message( const PsiAccount* account, const QString&
 	if (command == QString("start"))
 	{
 		if (game)
-			return;
+			return true;
 		qWarning(qPrintable(QString("Received message '%1', launching nac with %2").arg(message).arg(fromDisplay)));
 		QString reply;
 		reply=QString("<message to=\"%1\" type=\"chat\"><body>noughtsandcrosses starting</body></message>").arg(fromJid);
-		emit sendStanza(account, reply);
+		stanzaSender_->sendStanza(account, reply);
 		startGame(fromJid, 3, false, account);
 	}
 	else if (command == QString("starting"))
 	{
 		if (game)
-			return;
+			return true;
 		qWarning(qPrintable(QString("Received message '%1', launching nac with %2").arg(message).arg(fromDisplay)));
 		QString reply;
 		reply=QString("<message to=\"%1\" type=\"chat\"><body>starting noughts and crosses, I go first :)</body></message>").arg(fromJid);
-		emit sendStanza(account, reply);
+		stanzaSender_->sendStanza(account, reply);
 		startGame(fromJid, 3, true, account);
 	}
 	else if (!game)
 	{
-		return;
+		return true;
 	}
 	else if (command.startsWith("move"))
 	{
@@ -127,15 +185,16 @@ void NoughtsAndCrossesPlugin::message( const PsiAccount* account, const QString&
 		qDebug() << (qPrintable(QString("noughtsandcrosses move to space %1").arg(space)));
 		theirTurn(space);
 	}
+	return true;
 }	
 
-void NoughtsAndCrossesPlugin::startGame(QString jid, int size, bool meFirst, const PsiAccount* account)
+void NoughtsAndCrossesPlugin::startGame(QString jid, int size, bool meFirst, int account)
 {
 	game = new TicTacToe( meFirst, size );
 	game->setCaption(QString("Noughts and Crosses with %1").arg(jid));
 	playingWith=jid;
     game->show();
-	account_=(PsiAccount*)account;
+	account_=account;
 	connect(game, SIGNAL(closing()), this, SLOT(stopGame()));
 	connect(game, SIGNAL(myMove(int)), this, SLOT(myTurn(int)));
 	connect(game, SIGNAL(gameOverSignal(TicTacGameBoard::State)), this, SLOT(gameOver(TicTacGameBoard::State)));
@@ -166,7 +225,7 @@ void NoughtsAndCrossesPlugin::gameOver(TicTacGameBoard::State state)
 			winner="ERROR!!!";
 	}
 	reply=QString("<message to=\"%1\" type=\"chat\"><body>%2 won. Good game.</body></message>").arg(playingWith).arg(winner);
-	emit sendStanza(account_, reply);
+	stanzaSender_->sendStanza(account_, reply);
 }
 
 void NoughtsAndCrossesPlugin::myTurn(int space)
@@ -176,7 +235,7 @@ void NoughtsAndCrossesPlugin::myTurn(int space)
 		return;
 	QString reply;
 	reply=QString("<message to=\"%1\" type=\"chat\"><body>noughtsandcrosses move %2</body></message>").arg(playingWith).arg(space);
-	emit sendStanza(account_, reply);
+	stanzaSender_->sendStanza(account_, reply);
 }
 
 void NoughtsAndCrossesPlugin::theirTurn(int space)

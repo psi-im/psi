@@ -3747,7 +3747,7 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 
 #ifdef PSI_PLUGINS
 	QDomElement eXml = e->toXml(new QDomDocument());
-	if (!PluginManager::instance()->processEvent(this, eXml)) {
+	if (PluginManager::instance()->processEvent(this, eXml)) {
 		delete e;
 		return;
 	}
@@ -3765,6 +3765,20 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 	if(e->type() == PsiEvent::Message) {
 		MessageEvent *me = (MessageEvent *)e;
 		const Message &m = me->message();
+
+#ifdef PSI_PLUGINS
+		//TODO(mck): clean up
+		//UserListItem *ulItem=NULL;
+		//if ( !ul.isEmpty() )
+		//	ulItem=ul.first();
+		if (PluginManager::instance()->processMessage(this, e->from().full(), m.body(), m.subject())) {
+			delete e;
+			return;
+		}
+		//PluginManager::instance()->message(this,e->from(),ulItem,((MessageEvent*)e)->message().body());
+#endif
+
+
 
 		// Pass message events to chat window
 		if ((m.containsEvents() || m.chatState() != StateNone) && m.body().isEmpty()) {
@@ -3830,12 +3844,6 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 			// FIXME: handle message errors
 			//msg.text = QString(tr("<big>[Error Message]</big><br>%1").arg(plain2rich(msg.text)));
 		}
-#ifdef PSI_PLUGINS
-		UserListItem *ulItem=NULL;
-		if ( !ul.isEmpty() )
-			ulItem=ul.first();
-		PluginManager::instance()->message(this,e->from(),ulItem,((MessageEvent*)e)->message().body());
-#endif
 	}
 	else if(e->type() == PsiEvent::HttpAuth) {
 		playSound(PsiOptions::instance()->getOption("options.ui.notifications.sounds.system-message").toString());
