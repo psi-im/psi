@@ -13,6 +13,8 @@ Categories=Network;InstantMessaging;Qt;
 # Translations
 GenericName[ca]=Client Jabber
 Comment[ca]=Comuniqui's a través de la xarxa Jabber
+GenericName[de]=Jabber-Programm
+Comment[de]=Im Jabber-Netzwerk kommunizieren
 GenericName[eo]=Ĵabbera Klientilo
 Comment[eo]=Komunikiĝu per la ĵabbera reto
 GenericName[fr]=Client Jabber
