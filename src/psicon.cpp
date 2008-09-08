@@ -89,6 +89,7 @@
 #include "globalshortcutmanager.h"
 #include "desktoputil.h"
 #include "tabmanager.h"
+#include "capsmanager.h"
 
 
 #include "AutoUpdater/AutoUpdater.h"
@@ -574,6 +575,7 @@ bool PsiCon::init()
 #endif
 
 	connect(ActiveProfiles::instance(), SIGNAL(raiseMainWindow()), SLOT(raiseMainwin()));
+	connect(ActiveProfiles::instance(), SIGNAL(openUri(const QUrl &)), SLOT(doOpenUri(const QUrl &)));
 
 	return true;
 }
@@ -968,90 +970,57 @@ void PsiCon::checkAccountsEmpty()
 	}
 }
 
-void PsiCon::doOpenUri(const QUrl &uriToOpen)
+void PsiCon::doOpenUri(const QUrl &uri)
 {
-	Q_UNUSED(uriToOpen);	
-	
-/*
-	QUrl uri(uriToOpen);	// got to copy, because setQueryDelimiters() is not const
-
-	qWarning("uri:  " + uri.toString());
+	qDebug("uri:  " + uri.toString());
 
 	// scheme
-
-	if (uri.scheme() != "xmpp") {	// try handling legacy URIs
-		QMessageBox::warning(0, tr("Warning"), QString("URI (link) type \"%1\" is unsupported.").arg(uri.scheme()));
+	if (uri.scheme() != "xmpp") {
+		QMessageBox::critical(0, tr("Unsupported URI type"), QString("URI (link) type \"%1\" is not supported.").arg(uri.scheme()));
 	}
 
 	// authority
-
 	PsiAccount *pa = 0;
-	if (uri.authority().isEmpty()) {
+	//if (uri.authority().isEmpty()) {
 		pa = d->contactList->defaultAccount();
 		if (!pa) {
-			QMessageBox::warning(0, tr("Warning"), QString("You don't have any account enabled."));
+			QMessageBox::critical(0, tr("Error"), QString("You need to have an account configured and enabled to open URIs (links)."));
 		}
-	}
-	else {
-		qWarning("uri auth: [" + uri.authority() + "]");
+	//
+	// TODO: finish authority component handling
+	//
+	//} else {
+	//	qDebug("uri auth: [" + uri.authority() + "]");
 
-		Jid authJid = JIDUtil::fromString(uri.authority());
-		foreach(PsiAccount* acc, d->contactList->enabledAccounts()) {
-			if (acc->jid().compare(authJid, false)) {
-				pa = acc;
-			}
-		}
+	//	// is there such account ready to use?
+	//	Jid authJid = JIDUtil::fromString(uri.authority());
+	//	foreach (PsiAccount* acc, d->contactList->enabledAccounts()) {
+	//		if (acc->jid().compare(authJid, false)) {
+	//			pa = acc;
+	//		}
+	//	}
 
-		if (!pa) {
-			foreach(PsiAccount* acc, d->contactList->accounts()) {
-				if (acc->jid().compare(authJid, false)) {
-					QMessageBox::warning(0, tr("Warning"), QString("The account for %1 JID is disabled right now.").arg(authJid.bare()));
-					return;	// FIX-ME: Should suggest enabling it now
-				}
-			}
-		}
-		if (!pa) {
-			QMessageBox::warning(0, tr("Warning"), QString("You don't have an account for %1.").arg(authJid.bare()));
-			return;
-		}
-	}
+	//	// or maybe it is configured but not enabled?
+	//	if (!pa) {
+	//		foreach (PsiAccount* acc, d->contactList->accounts()) {
+	//			if (acc->jid().compare(authJid, false)) {
+	//				QMessageBox::error(0, tr("Error"), QString("The account for %1 JID is disabled right now.").arg(authJid.bare()));
+	//				return;	// TODO: Should suggest enabling it now
+	//			}
+	//		}
+	//	}
 
-	// entity
+	//	// nope..
+	//	if (!pa) {
+	//		QMessageBox::error(0, tr("Error"), QString("You don't have an account for %1.").arg(authJid.bare()));
+	//		return;
+	//	}
+	//}
 
-	QString path = uri.path();
-	if (path.startsWith('/'))	// this happens when authority part is present
-		path = path.mid(1);
-	Jid entity = JIDUtil::fromString(path);
+	pa->openUri(uri);
 
-	// query
 
-	uri.setQueryDelimiters('=', ';');
-
-	QString querytype = uri.queryItems().value(0).first;	// defaults to empty string
-
-	if (querytype == "message") {
-		if (uri.queryItemValue("type") == "chat")
-			pa->actionOpenChat(entity);
-		else {
-			pa->dj_newMessage(entity, uri.queryItemValue("body"), uri.queryItemValue("subject"), uri.queryItemValue("thread"));
-		}
-	}
-	else if (querytype == "roster") {
-		pa->openAddUserDlg(entity, uri.queryItemValue("name"), uri.queryItemValue("group"));
-	}
-	else if (querytype == "join") {
-		pa->actionJoin(entity, uri.queryItemValue("password"));
-	}
-	else if (querytype == "vcard") {
-		pa->actionInfo(entity);
-	}
-	else if (querytype == "disco") {
-		pa->actionDisco(entity, uri.queryItemValue("node"));
-	}
-	else {
-		pa->actionSendMessage(entity);
-	}
-*/}
+}
 
 void PsiCon::doToolbars()
 {

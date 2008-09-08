@@ -316,6 +316,8 @@ int main(int argc, char *argv[])
 	srand(time(NULL));
 
 	//dtcp_port = 8000;
+
+	QString uri;
 	for(int n = 1; n < argc; ++n) {
 		QString str = argv[n];
 		QString var, val;
@@ -329,12 +331,22 @@ int main(int argc, char *argv[])
 			val = str.mid(x+1);
 		}
 
+		if (var == "--uri") {
+			uri = val;
+		}
 		//if(var == "--no-gpg")
 		//	use_gpg = false;
 		//else if(var == "--no-gpg-agent")
 		//	no_gpg_agent = true;
 		//else if(var == "--linktest")
 		//	link_test = true;
+	}
+
+	if (!uri.isEmpty()) {
+		if (ActiveProfiles::instance()->sendOpenUri(uri)) {
+			return 0;
+		}
+		// TODO(mck): else, this instance must handle the uri after loading profile
 	}
 
 	//if(link_test)

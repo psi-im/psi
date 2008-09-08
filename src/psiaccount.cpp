@@ -2915,7 +2915,7 @@ EventDlg *PsiAccount::ensureEventDlg(const Jid &j)
 		w = new EventDlg(j, this, true);
 		connect(w, SIGNAL(aReadNext(const Jid &)), SLOT(processReadNext(const Jid &)));
 		connect(w, SIGNAL(aChat(const Jid &)), SLOT(actionOpenChat(const Jid&)));
-		connect(w, SIGNAL(aReply(const Jid &, const QString &, const QString &, const QString &)), SLOT(dj_composeMessage(const Jid &, const QString &, const QString &, const QString &)));
+		connect(w, SIGNAL(aReply(const Jid &, const QString &, const QString &, const QString &)), SLOT(dj_replyMessage(const Jid &, const QString &, const QString &, const QString &)));
 		connect(w, SIGNAL(aAuth(const Jid &)), SLOT(dj_addAuth(const Jid &)));
 		connect(w, SIGNAL(aDeny(const Jid &)), SLOT(dj_deny(const Jid &)));
 		connect(w, SIGNAL(aHttpConfirm(const PsiHttpAuthRequest &)), SLOT(dj_confirmHttpAuth(const PsiHttpAuthRequest &)));
@@ -3213,7 +3213,7 @@ void PsiAccount::actionHistoryBox(PsiEvent *e)
 {
 	EventDlg *w = new EventDlg(e->from(), this, false);
 	connect(w, SIGNAL(aChat(const Jid &)), SLOT(actionOpenChat(const Jid&)));
-	connect(w, SIGNAL(aReply(const Jid &, const QString &, const QString &, const QString &)), SLOT(dj_composeMessage(const Jid &, const QString &, const QString &, const QString &)));
+	connect(w, SIGNAL(aReply(const Jid &, const QString &, const QString &, const QString &)), SLOT(dj_replyMessage(const Jid &, const QString &, const QString &, const QString &)));
 	connect(w, SIGNAL(aAuth(const Jid &)), SLOT(dj_addAuth(const Jid &)));
 	connect(w, SIGNAL(aDeny(const Jid &)), SLOT(dj_deny(const Jid &)));
 	connect(w, SIGNAL(aRosterExchange(const RosterExchangeItems &)), SLOT(dj_rosterExchange(const RosterExchangeItems &)));
@@ -3462,6 +3462,73 @@ void PsiAccount::actionUnassignKey(const Jid &j)
 	}
 }
 
+void PsiAccount::openUri(const QUrl &uriToOpen)
+{
+	QUrl uri(uriToOpen);	// got to copy, because setQueryDelimiters() is not const
+
+	// entity
+	QString path = uri.path();
+	if (path.startsWith('/')) {	// this happens when authority part is present
+		path = path.mid(1);
+	}
+	Jid entity = JIDUtil::fromString(path);
+
+	// query
+	uri.setQueryDelimiters('=', ';');
+	QString querytype = uri.queryItems().value(0).first;	// defaults to empty string
+
+	if (0) {
+	//} else if (querytype == "command") {
+	//	// action
+	//} else if (querytype == "disco") {
+	//	actionDisco(entity, uri.queryItemValue("node")); //x
+	//	// request, type
+	} else if (querytype == "invite") {
+		actionJoin(entity, uri.queryItemValue("password"));
+		// jid
+	} else if (querytype == "join") {
+		actionJoin(entity, uri.queryItemValue("password"));
+	} else if (querytype == "message") {
+		QString subject = uri.queryItemValue("subject");
+		QString body = uri.queryItemValue("body");
+		QString type = uri.queryItemValue("type");
+		if (type == "chat" && subject.isEmpty() && body.isEmpty()) {
+			if (!find(entity)) {
+				addUserListItem(entity);
+			}
+			actionOpenChat(entity);
+		} else {
+			dj_newMessage(entity, body, subject, "");
+		}
+		// thread, from, id
+	//} else if (querytype == "pubsub") {
+	//	// action, node
+	//} else if (querytype == "recvfile") {
+	//	// ...
+	//} else if (querytype == "register") {
+	//} else if (querytype == "remove") {
+	//} else if (querytype == "roster") {
+	//	openAddUserDlg(entity, uri.queryItemValue("name"), uri.queryItemValue("group"));
+	//} else if (querytype == "sendfile") {
+	//} else if (querytype == "subscribe") {
+	//} else if (querytype == "unregister") {
+	//} else if (querytype == "unsubscribe") {
+	//} else if (querytype == "vcard") {
+	//	pa->actionInfo(entity, true, true);
+	} else {
+		
+		// TODO: default case - be more smart!! ;-)
+
+		//if (QMessageBox::question(0, tr("Hmm.."), QString(tr("So, you'd like to open %1 URI, right?\n"
+		//	"Unfortunately, this URI only identifies an entity, but it doesn't say what action to perform (or at least Psi cannot understand it). "
+		//	"So it's pretty much like if I said \"John\" to you - you'd immediately ask \"But what about John?\".\n"
+		//	"So... What about %1??\n"
+		//	"At worst, you may send a message to %2 to ask what to do (and maybe complain about this URI ;)) "
+		//	"Would you like to do this now?")).arg(uri).arg(entity.full()), QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
+		actionSendMessage(entity);
+	}
+}
+
 void PsiAccount::dj_sendMessage(const Message &m, bool log)
 {
 	UserListItem *u = findFirstRelevant(m.to());
@@ -3515,26 +3582,30 @@ void PsiAccount::dj_sendMessage(const Message &m, bool log)
 	}
 }
 
-void PsiAccount::dj_composeMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread)
+void PsiAccount::dj_newMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread)
 {
 	EventDlg *w = d->psi->createEventDlg(jid.full(), this);
-	if(!body.isEmpty())
-		w->setHtml(TextUtil::plain2rich(TextUtil::quote(body)));
-
-	if(!subject.isEmpty() && subject.left(3) != "Re:")
-		w->setSubject("Re: " + subject);
-	else if (subject.left(3) == "Re:")
+	if (!body.isEmpty()) {
+		w->setHtml(TextUtil::plain2rich(body));
+	}
+	if (!subject.isEmpty()) {
 		w->setSubject(subject);
-
-	if(!thread.isEmpty())
+	}
+	if (!thread.isEmpty()) {
 		w->setThread(thread);
-
+	}
 	w->show();
 }
 
-void PsiAccount::dj_composeMessage(const Jid &j, const QString &body)
+void PsiAccount::dj_replyMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread)
 {
-	dj_composeMessage(j, body, QString::null, QString::null);
+	QString re = (!subject.isEmpty() && subject.left(3) != "Re:") ? "Re: " : QString();
+	dj_newMessage(jid, TextUtil::quote(body), re + subject, thread);
+}
+
+void PsiAccount::dj_replyMessage(const Jid &j, const QString &body)
+{
+	dj_replyMessage(j, body, QString::null, QString::null);
 }
 
 void PsiAccount::dj_addAuth(const Jid &j)
@@ -3924,17 +3995,49 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 		delete e;
 }
 
+UserListItem* PsiAccount::addUserListItem(const Jid& jid, const QString& nick)
+{
+	// create item
+	UserListItem *u = new UserListItem;
+	u->setJid(jid);
+	u->setInList(false);
+	u->setAvatarFactory(avatarFactory());
+	u->setName(nick);
+
+	// is it a private groupchat?
+	Jid j = u->jid();
+	GCContact *c = findGCContact(j);
+	if(c) {
+		u->setName(j.resource());
+		u->setPrivate(true);
+
+		// make a resource so the contact appears online
+		UserResource ur;
+		ur.setName(j.resource());
+		ur.setStatus(c->status);
+		u->userResourceList().append(ur);
+	}
+
+	// treat it like a push  [pushinfo]
+	//VCard info;
+	//if(readUserInfo(item->jid, &info) && !info.field[vNickname].isEmpty())
+	//	item->nick = info.field[vNickname];
+	//else {
+	//	if(localStatus != STATUS_OFFLINE)
+	//		serv->getVCard(item->jid);
+	//}
+
+	d->userList.append(u);
+	cpUpdate(*u);
+	return u;
+}
+
 // put an event into the event queue, and update the related alerts
 void PsiAccount::queueEvent(PsiEvent* e, ActivationType activationType)
 {
 	// do we have roster item for this?
 	UserListItem *u = find(e->jid());
 	if(!u) {
-		// create item
-		u = new UserListItem;
-		u->setJid(e->jid());
-		u->setInList(false);
-		u->setAvatarFactory(avatarFactory());
 		QString nick;
 		if (e->type() == PsiEvent::Auth) {
 			AuthEvent* ae = (AuthEvent*) e;
@@ -3945,32 +4048,8 @@ void PsiAccount::queueEvent(PsiEvent* e, ActivationType activationType)
 			if (me->message().type()  != "error")
 				nick = me->nick();
 		}
-		u->setName(nick);
 
-		// is it a private groupchat?
-		Jid j = u->jid();
-		GCContact *c = findGCContact(j);
-		if(c) {
-			u->setName(j.resource());
-			u->setPrivate(true);
-
-			// make a resource so the contact appears online
-			UserResource ur;
-			ur.setName(j.resource());
-			ur.setStatus(c->status);
-			u->userResourceList().append(ur);
-		}
-
-		// treat it like a push  [pushinfo]
-		//VCard info;
-		//if(readUserInfo(item->jid, &info) && !info.field[vNickname].isEmpty())
-		//	item->nick = info.field[vNickname];
-		//else {
-		//	if(localStatus != STATUS_OFFLINE)
-		//		serv->getVCard(item->jid);
-		//}
-
-		d->userList.append(u);
+		u = addUserListItem(e->jid(), nick);
 	}
 
 	//printf("queuing message from [%s] for [%s].\n", e->from().full().latin1(), e->jid().full().latin1());
@@ -3980,7 +4059,7 @@ void PsiAccount::queueEvent(PsiEvent* e, ActivationType activationType)
 	if(PsiOptions::instance()->getOption("options.ui.contactlist.raise-on-new-event").toBool())
 		d->psi->raiseMainwin();
 
-	// udpate the roster
+	// update the roster
 	cpUpdate(*u);
 
 	// FIXME: We shouldn't be doing this kind of stuff here, because this
