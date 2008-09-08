@@ -95,7 +95,13 @@ QStringList ApplicationInfo::getCertificateStoreDirs()
 
 QString ApplicationInfo::getCertificateStoreSaveDir()
 {
-	return ApplicationInfo::homeDir() + "/certs";
+	QDir certsave(homeDir() + "/certs");
+	if(!certsave.exists()) {
+		QDir home(homeDir());
+		home.mkdir("certs");
+	}
+
+	return certsave.path();
 }
 
 QString ApplicationInfo::resourcesDir()
