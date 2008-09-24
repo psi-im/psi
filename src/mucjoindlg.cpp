@@ -88,7 +88,7 @@ void MUCJoinDlg::done(int r)
 		//int n = QMessageBox::information(0, tr("Warning"), tr("Are you sure you want to cancel joining groupchat?"), tr("&Yes"), tr("&No"));
 		//if(n != 0)
 		//	return;
-		account_->groupChatLeave(jid_.host(), jid_.user());
+		account_->groupChatLeave(jid_.domain(), jid_.node());
 	}
 	QDialog::done(r);
 }
@@ -129,8 +129,8 @@ void MUCJoinDlg::recent_activated(int x)
 	if (jid.full().isEmpty())
 		return;
 
-	ui_.le_host->setText(jid.host());
-	ui_.le_room->setText(jid.user());
+	ui_.le_host->setText(jid.domain());
+	ui_.le_room->setText(jid.node());
 	ui_.le_nick->setText(jid.resource());
 }
 
@@ -198,8 +198,8 @@ void MUCJoinDlg::error(int, const QString &str)
 
 void MUCJoinDlg::setJid(const Jid& mucJid)
 {
-	ui_.le_host->setText(mucJid.host());
-	ui_.le_room->setText(mucJid.user());
+	ui_.le_host->setText(mucJid.domain());
+	ui_.le_room->setText(mucJid.node());
 }
 
 void MUCJoinDlg::setNick(const QString nick)

@@ -447,7 +447,7 @@ EDBFlatFile::File *EDBFlatFile::ensureFile(const Jid &j)
 {
 	File *i = findFile(j);
 	if(!i) {
-		i = new File(Jid(j.userHost()));
+		i = new File(Jid(j.bare()));
 		connect(i, SIGNAL(timeout()), SLOT(file_timeout()));
 		d->flist.append(i);
 	}
@@ -635,7 +635,7 @@ EDBFlatFile::File::~File()
 
 QString EDBFlatFile::File::jidToFileName(const XMPP::Jid &j)
 {
-	return ApplicationInfo::historyDir() + "/" + JIDUtil::encode(j.userHost()).toLower() + ".history";
+	return ApplicationInfo::historyDir() + "/" + JIDUtil::encode(j.bare()).toLower() + ".history";
 }
 
 void EDBFlatFile::File::ensureIndex()

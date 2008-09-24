@@ -137,7 +137,7 @@ public:
 		PsiIcon *icon = (PsiIcon *)IconsetFactory::iconPtr(iconName);
 
 		// second level -- transport icon
-		if ( jid.user().isEmpty() || PsiOptions::instance()->getOption("options.ui.contactlist.use-transport-icons").toBool() ) {
+		if ( jid.node().isEmpty() || PsiOptions::instance()->getOption("options.ui.contactlist.use-transport-icons").toBool() ) {
 			QMap<QString, QRegExp> services;
 			services["aim"]		= QRegExp("^aim");
 			services["gadugadu"]	= QRegExp("^gg");
@@ -152,7 +152,7 @@ public:
 			foreach(QVariant serviceV, PsiOptions::instance()->mapKeyList("options.iconsets.service-status")) {
 				QString service = serviceV.toString();
 				if (services.contains(service)) {
-					if (services[service].search(jid.host()) != -1 ) {
+					if (services[service].search(jid.domain()) != -1 ) {
 						Iconset *is = psi->roster.find(
 								PsiOptions::instance()->getOption(
 								PsiOptions::instance()->mapLookup("options.iconsets.service-status", service)+".iconset").toString());
@@ -170,7 +170,7 @@ public:
 			
 
 			// let's try the default transport iconset then...
-			if ( !found && jid.user().isEmpty() ) {
+			if ( !found && jid.node().isEmpty() ) {
 				if (PsiOptions::instance()->mapKeyList("options.iconsets.service-status").contains("transport")) {
 					Iconset *is = psi->roster.find(
 								PsiOptions::instance()->getOption(
@@ -189,7 +189,7 @@ public:
 		QStringList customicons = PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true);
 		foreach(QString base, customicons) {
 			QRegExp rx = QRegExp(PsiOptions::instance()->getOption(base + ".regexp").toString());
-			if ( rx.search(jid.userHost()) != -1 ) {
+			if ( rx.search(jid.bare()) != -1 ) {
 				Iconset *is = psi->roster.find(PsiOptions::instance()->getOption(base + ".iconset").toString());
 				if ( is ) {
 					PsiIcon *i = (PsiIcon *)is->icon(iconName);

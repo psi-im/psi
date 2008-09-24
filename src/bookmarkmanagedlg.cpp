@@ -173,9 +173,7 @@ void BookmarkManageDlg::selectionChanged(const QItemSelection& selected, const Q
 
 XMPP::Jid BookmarkManageDlg::jid() const
 {
-	XMPP::Jid jid;
-	jid.set(ui_.host->text(), ui_.room->text());
-	return jid;
+	return XMPP::Jid(ui_.room->text(), ui_.host->text());
 }
 
 void BookmarkManageDlg::updateCurrentItem()

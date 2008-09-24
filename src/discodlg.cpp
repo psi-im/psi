@@ -283,7 +283,7 @@ void DiscoListItem::copyItem(const DiscoItem &it)
 	if ( !(!di.identities().isEmpty() && it.identities().isEmpty()) )
 		di.setIdentities ( it.identities() );
 
-	if ( di.jid().userHost().left(4) == "jud." || di.jid().userHost().left(6) == "users." ) {
+	if ( di.jid().bare().left(4) == "jud." || di.jid().bare().left(6) == "users." ) {
 		// nasty hack for the nasty (and outdated) JUD service :-/
 		if ( !di.features().canSearch() ) {
 			QStringList features = di.features().list();
@@ -399,8 +399,8 @@ void DiscoListItem::updateItems(bool parentAutoItems)
 			if ( id.category == "service" && id.type == "jud" )
 				return;
 		}
-		QString j = item().jid().host(); // just another method to discover if we're gonna to browse JUD
-		if ( item().jid().user().isEmpty() && (j.left(4) == "jud." || j.left(6) == "users.") )
+		QString j = item().jid().domain(); // just another method to discover if we're gonna to browse JUD
+		if ( item().jid().node().isEmpty() && (j.left(4) == "jud." || j.left(6) == "users.") )
 			return;
 	}
 

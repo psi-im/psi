@@ -1149,7 +1149,7 @@ QString EventDlg::expandAddresses(const QString &in, bool enc) const
 		if(j.resource().isEmpty())
 			jid = u->jid().full();
 		else
-			jid = u->jid().userHost() + '/' + j.resource();
+			jid = u->jid().withResource(j.resource());
 
 		QString name;
 		if(!u->name().isEmpty())
@@ -1264,7 +1264,7 @@ QString EventDlg::jidToString(const Jid &jid, const QString &r) const
 		if(r.isEmpty())
 			j = u->jid().full();
 		else
-			j = u->jid().userHost() + '/' + r;
+			j = Jid(u->jid().bare()).withResource(r).full();
 
 		if(!u->name().isEmpty())
 			name = u->name() + QString(" <%1>").arg(JIDUtil::encode822(j));

@@ -482,7 +482,7 @@ public:
 };
 
 GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
-	: TabbableWidget(j.userHost(), pa, tabManager)
+	: TabbableWidget(j.bare(), pa, tabManager)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
 		if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
@@ -610,7 +610,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 GCMainDlg::~GCMainDlg()
 {
 	if(d->state != Private::Idle)
-		account()->groupChatLeave(jid().host(), jid().user());
+		account()->groupChatLeave(jid().domain(), jid().node());
 
 	//QMimeSourceFactory *m = ui_.log->mimeSourceFactory();
 	//ui_.log->setMimeSourceFactory(0);
@@ -756,11 +756,11 @@ void GCMainDlg::mle_returnPressed()
 
 	if(str.lower().startsWith("/nick ")) {
 		QString nick = str.mid(6).stripWhiteSpace();
-		QString norm_nick;
-		if (!nick.isEmpty() && XMPP::Jid::validResource(nick, &norm_nick)) {
+    XMPP::Jid newJid = jid().withResource(nick);
+		if (!nick.isEmpty() && newJid.isValid()) {
 			d->prev_self = d->self;
-			d->self = norm_nick;
-			account()->groupChatChangeNick(jid().host(), jid().user(), d->self, account()->status());
+			d->self = newJid.resource();
+			account()->groupChatChangeNick(jid().domain(), jid().node(), d->self, account()->status());
 		}
 		ui_.mle->chatEdit()->setText("");
 		return;
@@ -879,8 +879,8 @@ void GCMainDlg::goConn()
 		d->state = Private::Connecting;
 		appendSysMsg(tr("Reconnecting..."), true);
 
-		QString host = jid().host();
-		QString room = jid().user();
+		QString host = jid().domain();
+		QString room = jid().node();
 		QString nick = d->self;
 
 		if(!account()->groupChatJoin(host, room, nick, d->password)) {
@@ -922,7 +922,7 @@ void GCMainDlg::pa_updatedActivity()
 		else if(d->state == Private::Connected) {
 			Status s = account()->status();
 			s.setXSigned("");
-			account()->groupChatSetStatus(jid().host(), jid().user(), s);
+			account()->groupChatSetStatus(jid().domain(), jid().node(), s);
 		}
 	}
 }

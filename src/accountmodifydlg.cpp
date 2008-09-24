@@ -471,7 +471,7 @@ void AccountModifyDlg::save()
 	}*/
 
 	Jid newJid( JIDUtil::accountFromString(le_jid->text().trimmed()) );
-	if ( newJid.user().isEmpty() || newJid.host().isEmpty() ) {
+	if ( newJid.node().isEmpty() || newJid.domain().isEmpty() ) {
 		if (!PsiOptions::instance()->getOption("options.account.domain").toString().isEmpty()) {
 			QMessageBox::information(this, tr("Error"), tr("<i>Username</i> is invalid."));
 		}

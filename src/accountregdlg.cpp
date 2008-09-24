@@ -211,7 +211,7 @@ void AccountRegDlg::next()
 		// Determine the username and password
 		foreach(XMPP::XData::Field field, fields.fields()) {
 			if (field.var() == "username" && !field.value().isEmpty()) {
-				jid_.set(server_.bare(), field.value().at(0), "");
+				jid_ = Jid(field.value().at(0), server_.bare(), "");
 			}
 			else if (field.var() == "password" && !field.value().isEmpty()) {
 				pass_ = field.value().at(0);

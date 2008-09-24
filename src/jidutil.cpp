@@ -102,9 +102,9 @@ QString JIDUtil::nickOrJid(const QString &nick, const QString &jid)
 
 QString JIDUtil::accountToString(const Jid& j, bool withResource)
 {
-	QString s = j.user();
+	QString s = j.node();
 	if (!defaultDomain().isEmpty()) {
-		return (withResource && !j.resource().isEmpty() ? j.user() + "/" + j.resource() : j.user());
+		return (withResource && !j.resource().isEmpty() ? j.node() + "/" + j.resource() : j.node());
 	}
 	else {
 		return (withResource ? j.full() : j.bare());
@@ -114,9 +114,7 @@ QString JIDUtil::accountToString(const Jid& j, bool withResource)
 Jid JIDUtil::accountFromString(const QString& s)
 {
 	if (!defaultDomain().isEmpty()) {
-		Jid j;
-		j.set(defaultDomain(), s, "");
-		return j;
+		return Jid(s, defaultDomain(), "");
 	}
 	else {
 		return Jid(s);

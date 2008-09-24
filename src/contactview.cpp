@@ -991,26 +991,26 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		if(x == 0)
 			d->pa->modify();
 		else if(x == 1) {
-			Jid j = d->pa->jid().host() + '/' + "announce/online";
+			Jid j = d->pa->jid().domain() + '/' + "announce/online";
 			actionSendMessage(j);
 		}
 		else if(x == 2) {
-			Jid j = d->pa->jid().host() + '/' + "announce/motd";
+			Jid j = d->pa->jid().domain() + '/' + "announce/motd";
 			actionSendMessage(j);
 		}
 		else if(x == 3) {
-			Jid j = d->pa->jid().host() + '/' + "announce/motd/update";
+			Jid j = d->pa->jid().domain() + '/' + "announce/motd/update";
 			actionSendMessage(j);
 		}
 		else if(x == 4) {
-			Jid j = d->pa->jid().host() + '/' + "announce/motd/delete";
+			Jid j = d->pa->jid().domain() + '/' + "announce/motd/delete";
 			Message m;
 			m.setTo(j);
 			d->pa->dj_sendMessage(m, false);
 		}
 		else if(x == 5) {
 			// FIXME: will it still work on XMPP servers?
-			Jid j = d->pa->jid().host() + '/' + "admin";
+			Jid j = d->pa->jid().domain() + '/' + "admin";
 			actionDisco(j, "");
 		}
 		else if(x == 6) {
@@ -1020,7 +1020,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 			d->pa->openAddUserDlg();
 		}
 		else if(x == 9) {
-			Jid j = d->pa->jid().host();
+			Jid j = d->pa->jid().domain();
 			actionDisco(j, "");
 		}
 		else if(x == 10) {
@@ -1544,7 +1544,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 				const UserResource &r = rl[res];
 				rname = r.name();
 			//}
-			QString s = u->jid().userHost();
+			QString s = u->jid().bare();
 			if(!rname.isEmpty()) {
 				s += '/';
 				s += rname;
@@ -1578,7 +1578,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 				++n;
 			}
 
-			QString s = u->jid().userHost();
+			QString s = u->jid().bare();
 			if(!rname.isEmpty()) {
 				s += '/';
 				s += rname;

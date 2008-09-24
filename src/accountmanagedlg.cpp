@@ -176,9 +176,8 @@ void AccountRemoveDlg::remove()
 	gb_account->setEnabled(false);
 	pb_remove->setEnabled(false);
 
-	Jid j = d->acc.jid;
 	QString pass = le_pass->text();
-	j.setResource(d->acc.resource);
+	Jid j(Jid(d->acc.jid).withResource(d->acc.resource));
 	client->connectToServer(j, d->acc.legacy_ssl_probe, d->acc.ssl == UserAccount::SSL_Legacy, d->acc.ssl == UserAccount::SSL_Yes, d->acc.opt_host ? d->acc.host : QString(), d->acc.port, d->proxyman, d->acc.proxyID, &pass);
 }
 
@@ -247,7 +246,7 @@ public:
 		setText(0, pa->name());
 		//setPixmap(0, IconsetFactory::icon("psi/account"));
 		Jid j = acc.jid;
-		setText(1, acc.opt_host && acc.host.length() ? acc.host : j.host());
+		setText(1, acc.opt_host && acc.host.length() ? acc.host : j.domain());
 		setText(2, pa->isActive() ? AccountManageDlg::tr("Active") : AccountManageDlg::tr("Not active"));
 		setOn(pa->enabled());
 	}

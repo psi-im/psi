@@ -184,9 +184,9 @@ BlockTransportPopup::BlockTransportPopup(QObject *parent, const Jid &_j)
 	userCounter = 0;
 
 	// Hack for ICQ SMS
-	if ( j.host().left(3) == "icq" ) {
-		new BlockTransportPopup(parent, "sms." + j.host()); // sms.icq.host.com
-		new BlockTransportPopup(parent, "sms"  + j.host().right(j.host().length() - 3)); // sms.host.com
+	if ( j.domain().left(3) == "icq" ) {
+		new BlockTransportPopup(parent, "sms." + j.domain()); // sms.icq.host.com
+		new BlockTransportPopup(parent, "sms"  + j.domain().right(j.domain().length() - 3)); // sms.host.com
 	}
 
 	QTimer::singleShot(15000, this, SLOT(timeout()));
@@ -227,12 +227,12 @@ BlockTransportPopupList::BlockTransportPopupList()
 
 bool BlockTransportPopupList::find(const Jid &j, bool online)
 {
-	if ( j.user().isEmpty() ) // always show popups for transports
+	if ( j.node().isEmpty() ) // always show popups for transports
 		return false;
 
 	QList<BlockTransportPopup *> list = findChildren<BlockTransportPopup *>();
 	foreach(BlockTransportPopup* btp, list) {
-		if ( j.host() == btp->jid().host() ) {
+		if ( j.domain() == btp->jid().domain() ) {
 			if ( online )
 				btp->userCounter++;
 			return true;
@@ -1095,7 +1095,7 @@ void PsiAccount::setUserAccount(const UserAccount &acc)
 		d->cp->updateEntry(d->self);
 	}
 	if(!d->nickFromVCard)
-		setNick(j.user());
+		setNick(j.node());
 
 	QString pgpSecretKeyID = (d->acc.pgpSecretKey.isNull() ? "" : d->acc.pgpSecretKey.keyId());
 	d->self.setPublicKeyID(pgpSecretKeyID);
@@ -1191,7 +1191,7 @@ void PsiAccount::login()
 				if (useHost)
 					u.addQueryItem("server",host + ':' + QString::number(port));
 				else
-					u.addQueryItem("server",d->jid.host());
+					u.addQueryItem("server",d->jid.domain());
 			}
 			p.setHttpPoll(pi.settings.host, pi.settings.port, u.toString());
 			p.setPollInterval(2);
@@ -1305,7 +1305,7 @@ void PsiAccount::tls_handshaken()
 	if (result != QCA::TLS::Valid && !d->acc.opt_ignoreSSLWarnings) {
 		CertificateErrorDialog errorDialog(
 				(d->psi->contactList()->enabledAccounts().count() > 1 ?  QString("%1: ").arg(name()) : "") + tr("Server Authentication"),
-				d->jid.host(), 
+				d->jid.node(), 
 				cert,
 				result, 
 				d->tls->peerCertificateValidity(),
@@ -1364,7 +1364,7 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
 		if (d->acc.customAuth && !d->acc.authid.isEmpty())
 			d->stream->setUsername(d->acc.authid);
 		else
-			d->stream->setUsername(d->jid.user());
+			d->stream->setUsername(d->jid.node());
     }
 	else if (d->acc.customAuth && !d->acc.authid.isEmpty())
 		qWarning("Custom authentication user not used");
@@ -1400,7 +1400,7 @@ void PsiAccount::cs_authenticated()
 
 	QString resource = (d->stream->jid().resource().isEmpty() ? ( d->acc.opt_automatic_resource ? localHostName() : d->acc.resource) : d->stream->jid().resource());
 
-	d->client->start(d->jid.host(), d->jid.user(), d->acc.pass, resource);
+	d->client->start(d->jid.domain(), d->jid.node(), d->acc.pass, resource);
 	if (!d->stream->old()) {
 		JT_Session *j = new JT_Session(d->client->rootTask());
 		connect(j,SIGNAL(finished()),SLOT(sessionStart_finished()));
@@ -1755,7 +1755,7 @@ void PsiAccount::bookmarksAvailabilityChanged()
 	}
 
 	foreach(ConferenceBookmark c, d->bookmarkManager->conferences()) {
-		if (!findDialog<GCMainDlg*>(Jid(c.jid().userHost())) && c.autoJoin()) {
+		if (!findDialog<GCMainDlg*>(Jid(c.jid().bare())) && c.autoJoin()) {
 			actionJoin(c, true);
 		}
 	}
@@ -1837,7 +1837,7 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
 	};
 	PopupType popupType = PopupOnline;
 
-	if ( j.user().isEmpty() )
+	if ( j.node().isEmpty() )
 		new BlockTransportPopup(d->blockTransportPopupList, j);
 
 	bool doSound = false;
@@ -1946,7 +1946,7 @@ void PsiAccount::client_resourceUnavailable(const Jid &j, const Resource &r)
 	bool doSound = false;
 	bool doPopup = false;
 
-	if ( j.user().isEmpty() )
+	if ( j.node().isEmpty() )
 		new BlockTransportPopup(d->blockTransportPopupList, j);
 
 	foreach(UserListItem* u, findRelevant(j)) {
@@ -2072,7 +2072,7 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 		return;
 
 	if(_m.type() == "groupchat") {
-		GCMainDlg *w = findDialog<GCMainDlg*>(Jid(_m.from().userHost()));
+		GCMainDlg *w = findDialog<GCMainDlg*>(Jid(_m.from().bare()));
 		if(w)
 			w->message(_m);
 		return;
@@ -2101,7 +2101,7 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 	{
 		if (PsiOptions::instance()->getOption("options.messages.exclude-muc-from-ignore").toBool())
 		{
-			GCMainDlg *w = findDialog<GCMainDlg*>(Jid(_m.from().userHost()));
+			GCMainDlg *w = findDialog<GCMainDlg*>(Jid(_m.from().bare()));
 			if(!w)
 			{
 				return;
@@ -2115,7 +2115,7 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 	}
 
 	if(ul.isEmpty())
-		j = m.from().userHost();
+		j = m.from().bare();
 	else
 		j = ul.first()->jid();
 
@@ -2246,7 +2246,7 @@ void PsiAccount::setStatus(const Status &_s,  bool withPriority)
 		Roster::ConstIterator rit = d->acc.roster.begin();
 		for ( ; rit != d->acc.roster.end(); ++rit) {
 			const RosterItem &i = *rit;
-			if ( i.jid().user().isEmpty() /*&& i.jid().resource() == "registered"*/ ) // it is very likely then, that it's transport
+			if ( i.jid().node().isEmpty() /*&& i.jid().resource() == "registered"*/ ) // it is very likely then, that it's transport
 				new BlockTransportPopup(d->blockTransportPopupList, i.jid());
 		}
 	}
@@ -2617,7 +2617,7 @@ void PsiAccount::openAddUserDlg()
 
 void PsiAccount::doDisco()
 {
-	actionDisco(d->jid.host(), "");
+	actionDisco(d->jid.domain(), "");
 }
 
 void PsiAccount::actionDisco(const Jid &j, const QString &node)
@@ -2701,8 +2701,9 @@ void PsiAccount::simulateContactOffline(UserListItem *u)
 		for(UserResourceList::ConstIterator rit = rl.begin(); rit != rl.end(); ++rit) {
 			const UserResource &r = *rit;
 			Jid j = u->jid();
-			if(u->jid().resource().isEmpty())
-				j.setResource(r.name());
+			if(u->jid().resource().isEmpty()) {
+				j = j.withResource(r.name());
+      }
 			client_resourceUnavailable(j, r);
 		}
 	}
@@ -2723,8 +2724,9 @@ void PsiAccount::simulateRosterOffline()
 		UserResourceList rl = u->userResourceList();
 		for(UserResourceList::ConstIterator rit = rl.begin(); rit != rl.end(); ++rit) {
 			Jid j = u->jid();
-			if(u->jid().resource().isEmpty())
-				j.setResource((*rit).name());
+			if(u->jid().resource().isEmpty()) {
+				j = j.withResource((*rit).name());
+			}
 			u->setPresenceError("");
 			client_resourceUnavailable(j, *rit);
 		}
@@ -2901,8 +2903,9 @@ void PsiAccount::cpUpdate(const UserListItem &u, const QString &rname, bool from
 
 	updateContact(u);
 	Jid j = u.jid();
-	if(!rname.isEmpty())
-		j.setResource(rname);
+	if(!rname.isEmpty()) {
+		j = j.withResource(rname);
+	}
 	updateContact(j);
 	updateContact(j, fromPresence);
 	d->psi->updateContactGlobal(this, j);
@@ -3033,7 +3036,7 @@ void PsiAccount::sendFiles(const Jid& j, const QStringList& l, bool direct)
 	if(j.resource().isEmpty()) {
 		UserListItem *u = find(j);
 		if(u && u->isAvailable())
-			j2.setResource((*u->userResourceList().priority()).name());
+			j2 = j2.withResource((*u->userResourceList().priority()).name());
 	}
 
 	// Create a dialog for each file in the list. Once the xfer dialog itself
@@ -3068,7 +3071,7 @@ void PsiAccount::actionExecuteCommand(const Jid& j, const QString& node)
 	if(j.resource().isEmpty()) {
 		UserListItem *u = find(j);
 		if(u && u->isAvailable())
-			j2.setResource((*u->userResourceList().priority()).name());
+			j2 = j2.withResource((*u->userResourceList().priority()).name());
 	}
 
 	actionExecuteCommandSpecific(j2, node);
@@ -3307,7 +3310,7 @@ void PsiAccount::actionOpenWhiteboardSpecific(const Jid &target, Jid ownJid, boo
 
 void PsiAccount::actionAgentSetStatus(const Jid &j, Status &s)
 {
-	if ( j.user().isEmpty() ) // add all transport popups to block list
+	if ( j.node().isEmpty() ) // add all transport popups to block list
 		new BlockTransportPopup(d->blockTransportPopupList, j);
 
 	JT_Presence *p = new JT_Presence(d->client->rootTask());
@@ -3324,7 +3327,7 @@ void PsiAccount::actionInfo(const Jid &_j, bool showStatusInfo)
 		j = _j;
 	}
 	else {
-		j = _j.userHost();
+		j = _j.bare();
 	}
 
 	InfoDlg *w = findDialog<InfoDlg*>(j);
@@ -3437,7 +3440,7 @@ void PsiAccount::actionInvite(const Jid &j, const QString &gc)
 	m.setTo(room);
 	m.addMUCInvite(MUCInvite(j));
 
-	QString password = d->client->groupChatPassword(room.user(),room.host());
+	QString password = d->client->groupChatPassword(room.node(),room.domain());
 	if (!password.isEmpty())
 		m.setMUCPassword(password);
 	m.setTimeStamp(QDateTime::currentDateTime());
@@ -3794,7 +3797,7 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 			j = e->from();
 		}
 		else {
-			Jid bare = e->from().userHost();
+			Jid bare = e->from().bare();
 			Jid reg = bare.withResource("registered");
 
 			// see if we have a "registered" variant of the jid
@@ -4289,7 +4292,7 @@ void PsiAccount::edb_finished()
 
 void PsiAccount::openGroupChat(const Jid &j, ActivationType activationType)
 {
-	QString str = j.userHost();
+	QString str = j.bare();
 	bool found = false;
 	for(QStringList::ConstIterator it = d->groupchats.begin(); it != d->groupchats.end(); ++it) {
 		if((*it) == str) {
@@ -4301,7 +4304,7 @@ void PsiAccount::openGroupChat(const Jid &j, ActivationType activationType)
 		d->groupchats += str;
 
 	GCMainDlg *w = new GCMainDlg(this, j, d->tabManager);
-	w->setPassword(d->client->groupChatPassword(j.user(),j.host()));
+	w->setPassword(d->client->groupChatPassword(j.node(),j.domain()));
 	connect(w, SIGNAL(aSend(const Message &)), SLOT(dj_sendMessage(const Message &)));
 	connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));
 	w->ensureTabbedCorrectly();
@@ -4352,11 +4355,11 @@ QStringList PsiAccount::groupchats() const
 
 void PsiAccount::client_groupChatJoined(const Jid &j)
 {
-	//d->client->groupChatSetStatus(j.host(), j.user(), d->loginStatus);
+	//d->client->groupChatSetStatus(j.domain(), j.node(), d->loginStatus);
 
-	GCMainDlg *m = findDialog<GCMainDlg*>(Jid(j.userHost()));
+	GCMainDlg *m = findDialog<GCMainDlg*>(Jid(j.bare()));
 	if(m) {
-		m->setPassword(d->client->groupChatPassword(j.user(),j.host()));
+		m->setPassword(d->client->groupChatPassword(j.node(),j.domain()));
 		m->joined();
 		return;
 	}
@@ -4394,7 +4397,7 @@ void PsiAccount::client_groupChatLeft(const Jid &j)
 
 void PsiAccount::client_groupChatPresence(const Jid &j, const Status &s)
 {
-	GCMainDlg *w = findDialog<GCMainDlg*>(Jid(j.userHost()));
+	GCMainDlg *w = findDialog<GCMainDlg*>(Jid(j.bare()));
 	if(!w)
 		return;
 
@@ -4421,7 +4424,7 @@ void PsiAccount::client_groupChatPresence(const Jid &j, const Status &s)
 
 void PsiAccount::client_groupChatError(const Jid &j, int code, const QString &str)
 {
-	GCMainDlg *w = findDialog<GCMainDlg*>(Jid(j.userHost()));
+	GCMainDlg *w = findDialog<GCMainDlg*>(Jid(j.bare()));
 	if(w) {
 		w->error(code, str);
 	}
@@ -4448,7 +4451,7 @@ void PsiAccount::slotCheckVCard()
 	if (!isConnected() || !isActive())
 		return;
 
-	QString nick = d->jid.user();
+	QString nick = d->jid.node();
 	JT_VCard* j = static_cast<JT_VCard*>(sender());
 	if (j->success() && j->statusCode() == Task::ErrDisc) {
 		if (!j->vcard().nickName().isEmpty()) {

@@ -98,7 +98,7 @@ void ChangePasswordDlg::apply()
 	JT_Register *reg = new JT_Register(pa->client()->rootTask());
 	connect(reg, SIGNAL(finished()), SLOT(finished()));
 	Jid j = pa->userAccount().jid;
-	reg->reg(j.user(), le_pwnew->text());
+	reg->reg(j.node(), le_pwnew->text());
 	reg->go(true);
 }
 

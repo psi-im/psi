@@ -263,7 +263,7 @@ void PsiChatDlg::contactUpdated(UserListItem* u, int status, const QString& stat
 		if (jid().resource().isEmpty())
 			j = JIDUtil::toString(u->jid(), true);
 		else
-			j = JIDUtil::toString(u->jid().userHost(), false) + '/' + jid().resource();
+			j = JIDUtil::toString(u->jid().bare(), false) + '/' + jid().resource();
 
 		if (!u->name().isEmpty())
 			name = u->name() + QString(" <%1>").arg(j);
