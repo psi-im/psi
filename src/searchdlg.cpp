@@ -138,15 +138,11 @@ public:
 			}
 		}
 
-		Q3ListViewItem* i = dlg->lv_results->firstChild();
-		while (i) {
-			if (i->isSelected()) {
-				NickAndJid nickJid;
-				nickJid.jid  = XMPP::Jid(i->text(jid));
-				nickJid.nick = i->text(nick);
-				result << nickJid;
-			}
-			i = i->nextSibling();
+		foreach(QTreeWidgetItem* i, dlg->lv_results->selectedItems()) {
+			NickAndJid nickJid;
+			nickJid.jid  = XMPP::Jid(i->text(jid));
+			nickJid.nick = i->text(nick);
+			result << nickJid;
 		}
 
 		return result;
@@ -194,9 +190,8 @@ SearchDlg::SearchDlg(const Jid &jid, PsiAccount *pa)
 	pb_stop->setEnabled(false);
 	pb_search->setEnabled(false);
 
-	lv_results->setMultiSelection(true);
-	lv_results->setSelectionMode( Q3ListView::Extended );
-	connect(lv_results, SIGNAL(selectionChanged()), SLOT(selectionChanged()));
+	connect(lv_results, SIGNAL(itemSelectionChanged()), SLOT(selectionChanged()));
+	connect(lv_results, SIGNAL(itemActivated(QTreeWidgetItem*, int)), SLOT(itemActivated(QTreeWidgetItem*, int)));
 	connect(pb_close, SIGNAL(clicked()), SLOT(close()));
 	connect(pb_search, SIGNAL(clicked()), SLOT(doSearchSet()));
 	connect(pb_stop, SIGNAL(clicked()), SLOT(doStop()));
@@ -240,7 +235,7 @@ SearchDlg::~SearchDlg()
 
 void SearchDlg::addEntry(const QString &jid, const QString &nick, const QString &first, const QString &last, const QString &email)
 {
-	Q3ListViewItem *lvi = new Q3ListViewItem(lv_results);
+	QTreeWidgetItem* lvi = new QTreeWidgetItem(lv_results);
 	lvi->setText(0, nick);
 	lvi->setText(1, first);
 	lvi->setText(2, last);
@@ -378,6 +373,8 @@ void SearchDlg::jt_finished()
 			resize(sizeHint());
 		}
 		else {
+			lv_results->setUpdatesEnabled(false);
+
 			if ( !d->xdata ) {
 				const QList<SearchResult> &list = jt->results();
 				if(list.isEmpty())
@@ -403,28 +400,33 @@ void SearchDlg::jt_finished()
 					}
 				}
 
-				while ( lv_results->columns() )
-					lv_results->removeColumn( 0 );
-
-				QList<XData::ReportField>::ConstIterator it = form.report().begin();
-				for ( ; it != form.report().end(); ++it ) {
-					lv_results->addColumn( ( *it ).label );
+				QStringList header_labels;
+				foreach(XData::ReportField report, form.report()) {
+					header_labels << report.label;
 				}
 
-				QList<XData::ReportItem>::ConstIterator iit = form.reportItems().begin();
-				for ( ; iit != form.reportItems().end(); ++iit ) {
-					Q3ListViewItem *lvi = new Q3ListViewItem(lv_results);
+				lv_results->clear();
+				lv_results->setColumnCount(0);
+				lv_results->setHeaderLabels(header_labels);
 
+				foreach(XData::ReportItem ri, form.reportItems()) {
 					int i = 0;
-					it = form.report().begin();
-					for ( ; it != form.report().end(); ++it ) {
-						QString name = ( *it ).name;
-						lvi->setText( i++, ( *iit )[name] );
+					QTreeWidgetItem* lvi = new QTreeWidgetItem(lv_results);
+					foreach(XData::ReportField report, form.report()) {
+						lvi->setText(i++, ri[report.name]);
 					}
 				}
 
 				d->xdata_form = form;
 			}
+
+			for (int i = 0; i < lv_results->columnCount(); ++i) {
+				lv_results->resizeColumnToContents(i);
+				lv_results->setColumnWidth(i, qMin(lv_results->columnWidth(i), 300));
+			}
+
+			lv_results->sortByColumn(0, Qt::AscendingOrder);
+			lv_results->setUpdatesEnabled(true);
 		}
 	}
 	else {
@@ -461,31 +463,16 @@ void SearchDlg::doStop()
 
 void SearchDlg::selectionChanged()
 {
-	int d = 0;
-	Q3ListViewItem *lastChild = lv_results->firstChild();
+	bool enable = !lv_results->selectedItems().isEmpty();
+	pb_add->setEnabled(enable);
+	pb_info->setEnabled(enable);
+}
 
-	if(!lastChild) {
-		pb_add->setEnabled(false);
-		pb_info->setEnabled(false);
-		return;
-	}
-
-	if( lastChild->isSelected() ) {
-		pb_add->setEnabled(true);
-		pb_info->setEnabled(true);
-	}
-	d++;
-
-	if ( lastChild ) {
-		while ( lastChild->nextSibling() ) {
-			lastChild = lastChild->nextSibling();
-			if( lastChild->isSelected() ) {
-				pb_add->setEnabled(true);
-				pb_info->setEnabled(true);
-			}
- 			d++;
-		}
-	}
+void SearchDlg::itemActivated(QTreeWidgetItem* item, int column)
+{
+	Q_UNUSED(item);
+	Q_UNUSED(column);
+	doInfo();
 }
 
 void SearchDlg::doAdd()

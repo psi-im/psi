@@ -146,6 +146,7 @@ GCUserView::GCUserView(QWidget* parent)
 
 	connect(this, SIGNAL(doubleClicked(Q3ListViewItem *)), SLOT(qlv_doubleClicked(Q3ListViewItem *)));
 	connect(this, SIGNAL(contextMenuRequested(Q3ListViewItem *, const QPoint &, int)), SLOT(qlv_contextMenuRequested(Q3ListViewItem *, const QPoint &, int)));
+	connect(this, SIGNAL(mouseButtonClicked(int, Q3ListViewItem*, const QPoint&, int)), SLOT(qlv_mouseButtonClicked(int, Q3ListViewItem*, const QPoint&, int)));
 }
 
 GCUserView::~GCUserView()
@@ -376,4 +377,14 @@ void GCUserView::qlv_contextMenuRequested(Q3ListViewItem *i, const QPoint &pos, 
 	if(x == -1 || !enabled || lvi.isNull())
 		return;
 	action(lvi->text(0), lvi->s, x);
+}
+
+void GCUserView::qlv_mouseButtonClicked(int button, Q3ListViewItem* item, const QPoint& pos, int c)
+{
+	if (!item || !item->parent() || !gcDlg_)
+		return;
+	if (button != Qt::MidButton)
+		return;
+
+	emit insertNick(item->text(0));
 }
