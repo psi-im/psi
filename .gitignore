@@ -37,6 +37,9 @@ src/Makefile
 src/config.h
 src/psi.app
 src/psi
+src/capabilities/unittest/Makefile
+src/unittest/Makefile
+src/utilities/unittest/Makefile
 src/AutoUpdater/guitest/Makefile
 src/AutoUpdater/guitest/testapp-2.0/Makefile
 src/AutoUpdater/guitest/testapp-2.0/testapp.app
@@ -44,4 +47,4 @@ src/AutoUpdater/guitest/testapp-2.0/testapp-2.0.zip
 src/AutoUpdater/guitest/testapp/Makefile
 src/AutoUpdater/guitest/testapp/testapp.app
 src/plugins/*/*/Makefile
-
+checker

@@ -18,13 +18,3 @@ qca-static {
 SUBDIRS += \
 	iris \
 	src
-
-tests {
-	SUBDIRS += \
-    third-party/cppunit \
-		qa/unittest \
-		qa/guitest
-
-	QMAKE_EXTRA_TARGETS += check
-	check.commands += make -C qa/unittest check
-}

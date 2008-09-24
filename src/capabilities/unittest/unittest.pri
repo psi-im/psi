@@ -1,3 +1,3 @@
 SOURCES += \
-	$$PWD/capsspectest.cpp \
-	$$PWD/capsmanagertest.cpp 
+	$$PWD/capsmanagertest.cpp \
+	$$PWD/capsspectest.cpp

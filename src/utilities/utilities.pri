@@ -1,5 +1,5 @@
-INCLUDEPATH *= $$PWD
-DEPENDPATH *= $$PWD
+INCLUDEPATH *= $$PWD $$PWD/..
+DEPENDPATH *= $$PWD $$PWD/..
 
 HEADERS += \
 	$$PWD/maybe.h \

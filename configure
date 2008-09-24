@@ -41,7 +41,6 @@ Dependency options:
   --disable-aspell             Disable use of ASPELL
   --with-aspell-inc=[path]     Path to Aspell include files
   --with-aspell-lib=[path]     Path to Aspell library files
-  --enable-tests               Enable use of Tests
   --enable-debug               Enable debugging support
 
 EOT
@@ -249,11 +248,6 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
-		--enable-tests)
-			QC_ENABLE_tests="Y"
-			shift
-			;;
-
 		--enable-debug)
 			QC_ENABLE_DEBUG="Y"
 			shift
@@ -298,7 +292,6 @@ echo QC_DISABLE_ghbnr=$QC_DISABLE_ghbnr
 echo QC_DISABLE_aspell=$QC_DISABLE_aspell
 echo QC_WITH_ASPELL_INC=$QC_WITH_ASPELL_INC
 echo QC_WITH_ASPELL_LIB=$QC_WITH_ASPELL_LIB
-echo QC_ENABLE_tests=$QC_ENABLE_tests
 echo QC_ENABLE_DEBUG=$QC_ENABLE_DEBUG
 echo
 fi
@@ -1140,28 +1133,6 @@ public:
 		return true;
 	}
 };
-#line 1 "tests.qcm"
-/*
------BEGIN QCMOD-----
-name: Tests
------END QCMOD-----
-*/
-
-//----------------------------------------------------------------------------
-// qc_tests
-//----------------------------------------------------------------------------
-class qc_tests : public ConfObj
-{
-public:
-	qc_tests(Conf *c) : ConfObj(c) {}
-	QString name() const { return "tests"; }
-	QString shortname() const { return "tests"; }
-	bool exec()
-	{
-		conf->addExtra("CONFIG += tests");
-		return true;
-	}
-};
 #line 1 "debug.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -1264,9 +1235,6 @@ cat >$1/modules_new.cpp <<EOT
     o = new qc_aspell(conf);
     o->required = false;
     o->disabled = false;
-    o = new qc_tests(conf);
-    o->required = false;
-    o->disabled = true;
     o = new qc_debug(conf);
     o->required = true;
     o->disabled = false;
@@ -2259,7 +2227,6 @@ export QC_DISABLE_ghbnr
 export QC_DISABLE_aspell
 export QC_WITH_ASPELL_INC
 export QC_WITH_ASPELL_LIB
-export QC_ENABLE_tests
 export QC_ENABLE_DEBUG
 export QC_VERBOSE
 rm -rf .qconftemp
