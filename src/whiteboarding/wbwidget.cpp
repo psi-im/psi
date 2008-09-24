@@ -39,6 +39,12 @@ WbWidget::WbWidget(SxeSession* session, QWidget *parent) : QGraphicsView(parent)
 	setRenderHint(QPainter::Antialiasing);
 	setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
+    // Make the scroll bars always stay on because otherwise the resize event can cause
+    // an infinite loop as the effective size of the widget changes when scroll bars are
+    // added/removed
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+
     // create the scene
 	scene_ = new WbScene(session_, this);
 	scene_->setItemIndexMethod(QGraphicsScene::NoIndex);
@@ -206,9 +212,7 @@ void WbWidget::resizeEvent(QResizeEvent * event) {
 	QMatrix t;
 	qreal sx = event->size().width() / scene_->sceneRect().width();
 	qreal sy = event->size().height() / scene_->sceneRect().height();
-	// Skip through the boundary region where the scroll bars change to avoid a nasty loop
-	if((sx-sy)/sx < 0.03 && (sy-sx)/sx < 0.03)
-		sx *= 1.05;
+
 	// Never shrink the view. Only enlarge if necessary.
 	if(sx > 1 || sy > 1) {
 		if(sx > sy)
@@ -216,6 +220,7 @@ void WbWidget::resizeEvent(QResizeEvent * event) {
 		else
 			t.scale(sy, sy);
 	}
+
 	setMatrix(t);
 	QGraphicsView::resizeEvent(event);
 }
