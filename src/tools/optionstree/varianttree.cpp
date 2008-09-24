@@ -26,7 +26,10 @@
 #include <QDomDocument>
 #include <QDomDocumentFragment>
 #include <QKeySequence>
-#include <QtCrypto>
+#include <QStringList>
+#include "xmpp/base64/base64.h"
+
+using namespace XMPP;
 
 // FIXME: Helpers from xmpp_xmlcommon.h would be very appropriate for
 // void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
@@ -444,7 +447,7 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
 		value = QByteArray();
 		for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
 			if (node.isText()) {
-				value = QCA::Base64().stringToArray(node.toText().data()).toByteArray();
+				value = Base64::decode(node.toText().data());
 				break;
 			}
 		}
@@ -531,7 +534,7 @@ void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
 		e.appendChild(height_element);
 	}
 	else if (type == "QByteArray") {
-		QDomText text = e.ownerDocument().createTextNode(QCA::Base64().arrayToString(var.toByteArray()));
+		QDomText text = e.ownerDocument().createTextNode(Base64::encode(var.toByteArray()));
 		e.appendChild(text);
 	}
 	else if (type == "QKeySequence") {
