@@ -64,9 +64,6 @@ windows {
 	#QTPLUGIN += qjpeg qgif
 }
 
-# IPv6 ?
-#DEFINES += NO_NDNS
-
 # Psi sources
 include(src.pri)
 
