@@ -681,13 +681,6 @@
         </layout>
        </item>
        <item>
-        <widget class="QCheckBox" name="ck_ignoreSSLWarnings" >
-         <property name="text" >
-          <string>Ignore SSL warnings</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QCheckBox" name="ck_legacy_ssl_probe" >
          <property name="text" >
           <string>Probe legacy SSL port</string>

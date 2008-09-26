@@ -141,7 +141,6 @@ void AccountModifyDlg::init()
 	ck_connectAfterSleep->setChecked(acc.opt_connectAfterSleep);
 	ck_log->setChecked(acc.opt_log);
 	ck_keepAlive->setChecked(acc.opt_keepAlive);
-	ck_ignoreSSLWarnings->setChecked(acc.opt_ignoreSSLWarnings);
 	le_dtProxy->setText(acc.dtProxy.full());
 
 	key = acc.pgpSecretKey;
@@ -219,11 +218,6 @@ void AccountModifyDlg::init()
 		"automatically disconnected after a certain period of "
 		"inactivity (for example, by your ISP) and you want to keep it "
 		"up all the time."));
-	ck_ignoreSSLWarnings->setWhatsThis(
-		tr("Ignores all the SSL warnings, for example, about "
-		"incorrect certificates.  Useful if your server doesn't "
-		"use a validated SSL certificate and you are "
-		"annoyed with warnings."));
 	cb_ssl->setWhatsThis(
 		tr("Check this option to use an encrypted SSL connection to "
 		"the Jabber server.  You may use this option if your "
@@ -291,9 +285,6 @@ void AccountModifyDlg::init()
 		le_port->hide();
 	}
 	
-	if (!PsiOptions::instance()->getOption("options.ui.account.ignore-ssl-warnings").toBool()) 
-		ck_ignoreSSLWarnings->hide();
-	
 	if (!PsiOptions::instance()->getOption("options.ui.account.keepalive").toBool()) 
 		ck_keepAlive->hide();
 	
@@ -308,7 +299,7 @@ void AccountModifyDlg::init()
 		cb_security_level->hide();
 	}
 
-	if (!PsiOptions::instance()->getOption("options.ui.account.security.show").toBool() && !PsiOptions::instance()->getOption("options.ui.account.legacy-ssl-probe").toBool() && !PsiOptions::instance()->getOption("options.ui.account.keepalive").toBool() && !PsiOptions::instance()->getOption("options.ui.account.ignore-ssl-warnings").toBool() && !PsiOptions::instance()->getOption("options.ui.account.manual-host").toBool() && !PsiOptions::instance()->getOption("options.ui.account.proxy.show").toBool()) {
+	if (!PsiOptions::instance()->getOption("options.ui.account.security.show").toBool() && !PsiOptions::instance()->getOption("options.ui.account.legacy-ssl-probe").toBool() && !PsiOptions::instance()->getOption("options.ui.account.keepalive").toBool() && !PsiOptions::instance()->getOption("options.ui.account.manual-host").toBool() && !PsiOptions::instance()->getOption("options.ui.account.proxy.show").toBool()) {
 		tab_main->removeTab(tab_main->indexOf(tab_connection));
 	}
 	
@@ -528,7 +519,6 @@ void AccountModifyDlg::save()
 	acc.opt_reconn = ck_reconn->isChecked();
 	acc.opt_log = ck_log->isChecked();
 	acc.opt_keepAlive = ck_keepAlive->isChecked();
-	acc.opt_ignoreSSLWarnings = ck_ignoreSSLWarnings->isChecked();
 	acc.dtProxy = le_dtProxy->text();
 
 	acc.pgpSecretKey = key;
