@@ -113,22 +113,3 @@ void PhoneCallDialog::handleStateChanged(PhoneSession::State state)
 			break;
 	}
 }
-
-/*
-void PhoneCallDialog::finalize()
-{
-	// Close connection
-	if (status_ == Incoming) {
-		reject_call();
-	}
-	else if (status_ == InProgress || status_ == Calling || status_ == Accepting || status_ == Accepted) {
-		terminate_call();
-	}
-
-	// Disconnect signals
-	disconnect(session_,SIGNAL(accepted()),this,SLOT(accepted()));
-	disconnect(session_,SIGNAL(rejected()),this,SLOT(rejected()));
-	disconnect(session_,SIGNAL(in_progress()),this,SLOT(in_progress()));
-	disconnect(session_,SIGNAL(terminated()),this,SLOT(terminated()));
-}
-*/
