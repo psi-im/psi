@@ -1254,8 +1254,11 @@ public:
 
 		icon.blockSignals(false);
 
-		if ( loadSuccess )
+		if ( loadSuccess ) {
 			append( name, new PsiIcon(icon) );
+		} else {
+			qWarning("can't load icon because of unknown type");
+		}
 
 		return loadSuccess;
 	}
@@ -1264,8 +1267,10 @@ public:
 	bool load(const QDomDocument &doc, const QString dir)
 	{
 		QDomElement base = doc.documentElement();
-		if ( base.tagName() != "icondef" )
+		if ( base.tagName() != "icondef" ) {
+			qWarning("failed to load iconset invalid toplevel xml element");
 			return false;
+		}
 
 		bool success = true;
 
@@ -1429,6 +1434,8 @@ bool Iconset::load(const QString &dir)
 		}
 		else
 			qWarning("Iconset::load(): Failed to load iconset: icondef.xml is invalid XML");
+	} else {
+		qWarning("Iconset::load(): Failed to load iconset.xml");
 	}
 
 	//QPixmap::setDefaultOptimization( optimization );
