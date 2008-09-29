@@ -13,7 +13,7 @@
       </rect>
     </property>
     <property name="windowTitle" >
-      <string>Add User</string>
+      <string>Add Contact</string>
     </property>
     <layout class="QHBoxLayout" >
       <property name="margin" >
