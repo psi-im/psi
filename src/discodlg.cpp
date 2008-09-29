@@ -1029,7 +1029,6 @@ DiscoDlg::Private::Private(DiscoDlg *parent, PsiAccount *pa)
 	toolBar->addAction(actRegister);
 	toolBar->addAction(actSearch);
 	toolBar->addAction(actJoin);
-	toolBar->addAction(actAHCommand);
 
 	toolBar->addSeparator();
 	toolBar->addAction(actAdd);
