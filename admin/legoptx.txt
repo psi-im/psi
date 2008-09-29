@@ -5,9 +5,9 @@ singleclick	psi/options/ui/contactlist/use-single-click
 useTransportIconsForContacts	psi/options/ui/contactlist/use-transport-icons
 alwaysOnTop	psi/options/ui/contactlist/always-on-top
 keepSizes	psi/options/ui/remember-window-sizes
-ignoreHeadline	psi/options/message/ignore-headlines
-ignoreNonRoster	psi/options/message/ignore-non-roster-contacts
-excludeGroupChatsFromIgnore	psi/options/messages/exclude-muc-from-ignore
+ignoreHeadline	psi/options/messages/ignore-headlines
+ignoreNonRoster	psi/options/messages/ignore-non-roster-contacts
+excludeGroupChatsFromIgnore	psi/options/messagess/exclude-muc-from-ignore
 scrollTo	psi/options/ui/contactlist/ensure-contact-visible-on-event
 useEmoticons	psi/options/ui/emoticons/use-emoticons
 alertOpenChats	psi/options/ui/chat/alert-for-already-open-chats
@@ -27,13 +27,13 @@ putTabsAtBottom	psi/options/ui/tabs/put-tabs-at-bottom
 autoRosterSize	psi/options/ui/contactlist/automatically-resize-roster
 autoRosterSizeGrowTop	psi/options/ui/contactlist/grow-roster-upwards
 autoResolveNicksOnAdd	psi/options/contactlist/resolve-nicks-on-contact-add
-messageEvents	psi/options/message/send-composing-events
-inactiveEvents	psi/options/message/send-inactivity-events
+messageEvents	psi/options/messages/send-composing-events
+inactiveEvents	psi/options/messages/send-inactivity-events
 autoCopy	psi/options/ui/automatically-copy-selected-text
-useCaps	DIE?
+useCaps	psi/options/service-discovery/enable-entity-capabilities
 useRC	psi/options/external-control/adhoc-remote-control/enable
-useDock	psi/options/systemtray/enable
-dockDCstyle	psi/options/systemtray/use-double-click
+useDock	psi/options/ui/systemtray/enable
+dockDCstyle	psi/options/ui/systemtray/use-double-click
 dockHideMW	psi/options/contactlist/hide-on-start
 dockToolMW	psi/options/contactlist/use-toolwindow
 autoAuth	psi/options/subscriptions/automatically-allow-authorisation
@@ -48,13 +48,13 @@ raise	psi/options/ui/contactlist/raise-on-new-event
 askOnline	psi/options/status/ask-for-message-on-online
 askOffline	psi/options/status/ask-for-message-on-offline
 rosterAnim	psi/options/ui/contactlist/use-status-change-animation
-autoVCardOnLogin psi/options/vcard/prompt-on-login-for-empty-vcard
-xmlConsoleOnLogin psi/options/vcard/xml-console/enable-at-login
+autoVCardOnLogin	psi/options/vcard/query-own-vcard-on-login
+xmlConsoleOnLogin	psi/options/xml-console/enable-at-login
 use_asAway	psi/options/status/auto-away/use-away
 use_asXa	psi/options/status/auto-away/use-not-availible
 use_asOffline	psi/options/status/auto-away/use-offline
-clNewHeadings	psi/options/look/use-slim-group-headings
-outlineHeadings	psi/options/look/use-outlined-group-headings
+clNewHeadings	psi/options/ui/look/use-slim-group-headings
+outlineHeadings	psi/options/ui/look/use-outlined-group-headings
 noAwaySound	psi/options/ui/notifications/sounds/silent-while-away
 !noGCSound	psi/options/ui/notifications/sounds/notify-every-muc-message
 gcNickColoring	psi/options/ui/muc/use-nick-coloring
@@ -88,10 +88,10 @@ dtPort	psi/options/p2p/bytestreams/listen-port
 asOffline	psi/options/status/auto-away/offline-after
 asXa	psi/options/status/auto-away/not-availible-after
 asAway	psi/options/status/auto-away/away-after
-alertStyle	psi/options/ui/notifications/???
-delChats	psi/options/ui/chat/contents-after
-defaultAction psi/options/message/default-outgoing-message-type
-incomingAs psi/options/message/force-incoming-message-type
+alertStyle	psi/options/ui/notifications/alert-style
+delChats	psi/options/ui/chat/delete-contents-after
+defaultAction	psi/options/messages/default-outgoing-message-type
+incomingAs	psi/options/messages/force-incoming-message-type
 
 =========QSize:
 sizeEventDlg	psi/options/ui/message/size
