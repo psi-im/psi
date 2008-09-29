@@ -358,7 +358,7 @@ bool PsiCon::init()
 	
 	
 	if (!QFile::exists(optionsFile()) && !QFile::exists(pathToProfileConfig(activeProfile))) {
-		if (!options->load(":/options/newprofile.xml")) {
+		if (!options->newProfile()) {
 			qWarning("ERROR: Failed to new profile default options");
 		}
 	}
