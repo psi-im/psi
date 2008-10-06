@@ -9,6 +9,9 @@ qca-static {
 	DEFINES += QCA_STATIC
 	INCLUDEPATH += $$PWD/../third-party/qca/qca/include/QtCrypto
 }
+else {
+	CONFIG += crypto
+}
 
 # use zlib from psi if necessary
 psi-zip {
