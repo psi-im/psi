@@ -1,7 +1,6 @@
 /*
- * qca.h - Qt Cryptographic Architecture
- * Copyright (C) 2003-2005  Justin Karneges <justin@affinix.com>
- * Copyright (C) 2004-2006  Brad Hards <bradh@frogmouth.net>
+ * qca_safeobj.cpp - Qt Cryptographic Architecture
+ * Copyright (C) 2008  Justin Karneges <justin@affinix.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,28 +19,15 @@
  *
  */
 
-/**
-   \file qca.h
+#include "qca_safeobj.h"
 
-   Summary header file for %QCA.
+namespace QCA {
 
-   \note You should not use this header directly from an
-   application. You should just use <tt> \#include \<QtCrypto>
-   </tt> instead.
-*/
+void releaseAndDeleteLater(QObject *owner, QObject *obj)
+{
+	obj->disconnect(owner);
+	obj->setParent(0);
+	obj->deleteLater();
+}
 
-#ifndef QCA_H
-#define QCA_H
-
-#include "qca_core.h"
-#include "qca_textfilter.h"
-#include "qca_basic.h"
-#include "qca_publickey.h"
-#include "qca_cert.h"
-#include "qca_keystore.h"
-#include "qca_securelayer.h"
-#include "qca_securemessage.h"
-#include "qcaprovider.h"
-#include "qpipe.h"
-
-#endif
+}

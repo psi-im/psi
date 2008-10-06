@@ -937,7 +937,7 @@ private:
 		else if(s == "GET_HIDDEN")
 		{
 			QString arg = nextArg(rest);
-			if(arg == "passphrase.enter")
+			if(arg == "passphrase.enter" || arg == "passphrase.pin.ask")
 			{
 				need_submitPassphrase = true;
 

@@ -20,15 +20,15 @@
  */
 
 #include <QtCrypto>
+#include <qcaprovider.h>
 #include <QDebug>
-#include <QtCore/qplugin.h>
+#include <QtPlugin>
 
 extern "C"
 {
 #include <sasl/sasl.h>
 }
 
-#include <QHostAddress>
 #include <QStringList>
 #include <QList>
 #include <QFile>
@@ -255,6 +255,7 @@ class saslContext : public SASLContext
 	SASL::AuthCondition result_authCondition;
 	QByteArray result_to_net;
 	QByteArray result_plain;
+	int result_encoded;
 
 private:
 	void resetState()
@@ -391,6 +392,7 @@ private:
 
 				params.applyInteract(need);
 				if(params.missingAny()) {
+					out_mech = m;
 					result_result = Params;
 					return;
 				}
@@ -826,12 +828,13 @@ public:
 
 	virtual void update(const QByteArray &from_net, const QByteArray &from_app)
 	{
-		bool ok;
+		bool ok = true;
 		if(!from_app.isEmpty())
 			ok = sasl_endecode(from_app, &result_to_net, true);
-		else
+		if(ok && !from_net.isEmpty())
 			ok = sasl_endecode(from_net, &result_plain, false);
 		result_result = ok ? Success : Error;
+		result_encoded = from_app.size();
 
 		//printf("update (from_net=%d, to_net=%d, from_app=%d, to_app=%d)\n", from_net.size(), result_to_net.size(), from_app.size(), result_plain.size());
 
@@ -857,7 +860,7 @@ public:
 
 	virtual int encoded() const
 	{
-		return result_ssf;
+		return result_encoded;
 	}
 
 	virtual QByteArray to_app()

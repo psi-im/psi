@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301  USA
  *
  */
 
@@ -133,7 +134,7 @@ public:
   ghost@aladdin.com
 
  */
-/* $Id: qca_default.cpp 697168 2007-08-07 01:46:20Z infiniti $ */
+/* $Id: qca_default.cpp 808523 2008-05-16 20:41:50Z infiniti $ */
 /*
   Independent implementation of MD5 (RFC 1321).
 

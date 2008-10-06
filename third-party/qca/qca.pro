@@ -27,6 +27,7 @@ include($$QCA_SRCBASE/botantools/botantools.pri)
 
 PRIVATE_HEADERS += \
 	$$QCA_CPP/qca_plugin.h \
+	$$QCA_CPP/qca_safeobj.h \
 	$$QCA_CPP/qca_systemstore.h
 
 PUBLIC_HEADERS += \
@@ -63,6 +64,7 @@ SOURCES += \
 	$$QCA_CPP/qca_cert.cpp \
 	$$QCA_CPP/qca_keystore.cpp \
 	$$QCA_CPP/qca_securelayer.cpp \
+	$$QCA_CPP/qca_safeobj.cpp \
 	$$QCA_CPP/qca_securemessage.cpp \
 	$$QCA_CPP/qca_default.cpp \
 	$$QCA_CPP/support/qpipe.cpp \

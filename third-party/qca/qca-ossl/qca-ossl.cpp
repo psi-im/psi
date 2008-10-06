@@ -327,7 +327,7 @@ static X509_EXTENSION *new_subject_key_id(X509 *cert)
 	X509V3_CTX ctx;
 	X509V3_set_ctx_nodb(&ctx);
 	X509V3_set_ctx(&ctx, NULL, cert, NULL, NULL, 0);
-	X509_EXTENSION *ex = X509V3_EXT_conf_nid(NULL, &ctx, NID_subject_key_identifier, "hash");
+	X509_EXTENSION *ex = X509V3_EXT_conf_nid(NULL, &ctx, NID_subject_key_identifier, (char *)"hash");
 	return ex;
 }
 
@@ -5128,6 +5128,16 @@ public:
 		v_eof = false;
 	}
 
+	// dummy verification function for SSL_set_verify()
+	static int ssl_verify_callback(int preverify_ok, X509_STORE_CTX *x509_ctx)
+	{
+		Q_UNUSED(preverify_ok);
+		Q_UNUSED(x509_ctx);
+
+		// don't terminate handshake in case of verification failure
+		return 1;
+	}
+
 	virtual QStringList supportedCipherSuites(const TLS::Version &version) const
 	{
 		OpenSSL_add_ssl_algorithms();
@@ -5692,6 +5702,14 @@ public:
 			}
 		}
 
+		// request a certificate from the client, if in server mode
+		if(serv)
+		{
+			SSL_set_verify(ssl,
+				SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE,
+				ssl_verify_callback);
+		}
+
 		return true;
 	}
 
@@ -6155,6 +6173,7 @@ public:
 				i2d_PKCS7_bio(bo, p7);
 				//PEM_write_bio_PKCS7(bo, p7);
 				out = bio2ba(bo);
+				PKCS7_free(p7);
 			}
 			else
 			{
@@ -6597,9 +6616,11 @@ static QStringList all_hash_types()
 #ifdef SHA512_DIGEST_LENGTH
 	list += "sha512";
 #endif
+/*
 #ifdef OBJ_whirlpool
 	list += "whirlpool";
 #endif
+*/
 	return list;
 }
 
@@ -6671,7 +6692,7 @@ public:
 	{
 	}
 
-	Context *clone() const
+	Provider::Context *clone() const
 	{
 		return new opensslInfoContext(*this);
 	}
@@ -6689,6 +6710,34 @@ public:
 	QStringList supportedMACTypes() const
 	{
 		return all_mac_types();
+	}
+};
+
+class opensslRandomContext : public RandomContext
+{
+public:
+	opensslRandomContext(QCA::Provider *p) : RandomContext(p)
+	{
+	}
+
+	Context *clone() const
+	{
+		return new opensslRandomContext(*this);
+	}
+
+	QCA::SecureArray nextBytes(int size)
+	{
+		QCA::SecureArray buf(size);
+		int r;
+		// FIXME: loop while we don't have enough random bytes.
+		while (true) {
+			r = RAND_bytes((unsigned char*)(buf.data()), size);
+			if (r == 1) break; // success
+			r = RAND_pseudo_bytes((unsigned char*)(buf.data()),
+						size);
+			if (r >= 0) break; // accept insecure random numbers
+		}
+		return buf;
 	}
 };
 
@@ -6711,11 +6760,14 @@ public:
 		OpenSSL_add_all_algorithms();
 		ERR_load_crypto_strings();
 
-		srand(time(NULL));
-		char buf[128];
-		for(int n = 0; n < 128; ++n)
-			buf[n] = rand();
-		RAND_seed(buf, 128);
+		// seed the RNG if it's not seeded yet
+		if (RAND_status() == 0) {
+			qsrand(time(NULL));
+			char buf[128];
+			for(int n = 0; n < 128; ++n)
+				buf[n] = qrand();
+			RAND_seed(buf, 128);
+		}
 
 		openssl_initted = true;
 	}
@@ -6754,6 +6806,7 @@ public:
 	QStringList features() const
 	{
 		QStringList list;
+		list += "random";
 		list += all_hash_types();
 		list += all_mac_types();
 		list += all_cipher_types();
@@ -6780,7 +6833,9 @@ public:
 	Context *createContext(const QString &type)
 	{
 		//OpenSSL_add_all_digests();
-		if ( type == "info" )
+		if ( type == "random" )
+			return new opensslRandomContext(this);
+		else if ( type == "info" )
 			return new opensslInfoContext(this);
 		else if ( type == "sha1" )
 			return new opensslHashContext( EVP_sha1(), this, type);
@@ -6810,10 +6865,12 @@ public:
 		else if ( type == "sha512" )
 			return new opensslHashContext( EVP_sha512(), this, type);
 #endif
+/*
 #ifdef OBJ_whirlpool
 		else if ( type == "whirlpool" )
 			return new opensslHashContext( EVP_whirlpool(), this, type);
 #endif
+*/
 		else if ( type == "pbkdf1(sha1)" )
 			return new opensslPbkdf1Context( EVP_sha1(), this, type );
 		else if ( type == "pbkdf1(md2)" )
