@@ -97,16 +97,20 @@ void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool leg
 			p.setPollInterval(2);
 		}
 
-		if(pi.settings.useAuth)
+		if(pi.settings.useAuth) {
 			p.setUserPass(pi.settings.user, pi.settings.pass);
+		}
 	}
 
 	conn = new AdvancedConnector;
-	tls = new QCA::TLS;
-	tls->setTrustedCertificates(CertificateHelpers::allCertificates(ApplicationInfo::getCertificateStoreDirs()));
-	tlsHandler = new QCATLSHandler(tls);
-	tlsHandler->setXMPPCertCheck(true);
-	connect(tlsHandler, SIGNAL(tlsHandshaken()), SLOT(tls_handshaken()));
+	if (QCA::isSupported("tls")) {
+		tls = new QCA::TLS;
+		tls->setTrustedCertificates(CertificateHelpers::allCertificates(ApplicationInfo::getCertificateStoreDirs()));
+		tlsHandler = new QCATLSHandler(tls);
+		tlsHandler->setXMPPCertCheck(true);
+		connect(tlsHandler, SIGNAL(tlsHandshaken()), SLOT(tls_handshaken()));
+	}
+
 	conn->setProxy(p);
 	if (useHost) {
 		conn->setOptHostPort(host, port);

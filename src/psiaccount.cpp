@@ -1152,7 +1152,7 @@ void PsiAccount::login()
 		return;
 
 	if((d->acc.ssl == UserAccount::SSL_Yes || d->acc.ssl == UserAccount::SSL_Legacy) && !QCA::isSupported("tls")) {
-		QMessageBox::information(0, (d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("SSL Error"), tr("Cannot login: SSL is enabled but no SSL/TLS (plugin) support is available."));
+		QMessageBox::information(0, (d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Encryption Error"), tr("Cannot connect: Encryption is enabled but no QCA2 SSL/TLS plugin is available."));
 		return;
 	}
 
