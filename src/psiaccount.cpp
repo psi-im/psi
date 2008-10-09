@@ -1493,10 +1493,11 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 	}
 	else if(err == XMPP::ClientStream::ErrStream) {
 		int x;
-		QString s;
+		QString s, detail;
 		reconn = true;
 		if (stream) // Stream can apparently be gone if you disconnect in time
 			x = stream->errorCondition();
+			detail = stream->errorText();
 		else {
 			x = XMPP::Stream::GenericStreamError;
 			reconn = false;
@@ -1522,9 +1523,10 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 			s = tr("Server out of resources");
 			reconn = false;
 		}
-		else if(x == XMPP::ClientStream::SystemShutdown)
+		else if(x == XMPP::ClientStream::SystemShutdown) {
 			s = tr("Server is shutting down");
-		str = tr("XMPP Stream Error: %1").arg(s);
+		}
+		str = tr("XMPP Stream Error: %1").arg(s) + "\n" + detail;
 	}
 	else if(err == XMPP::ClientStream::ErrConnection) {
 		int x = conn->errorCode();
@@ -1547,8 +1549,9 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 		str = tr("Connection Error: %1").arg(s);
 	}
 	else if(err == XMPP::ClientStream::ErrNeg) {
+		QString s, detail;
 		int x = stream->errorCondition();
-		QString s;
+		detail = stream->errorText();
 		if(x == XMPP::ClientStream::HostGone)
 			s = tr("Host no longer hosted");
 		else if(x == XMPP::ClientStream::HostUnknown)
@@ -1561,7 +1564,7 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 			s = tr("See other host: %1").arg(stream->errorText());
 		else if(x == XMPP::ClientStream::UnsupportedVersion)
 			s = tr("Server does not support proper XMPP version");
-		str = tr("Stream Negotiation Error: %1").arg(s);
+		str = tr("Stream Negotiation Error: %1").arg(s) + "\n" + detail;
 	}
 	else if(err == XMPP::ClientStream::ErrTLS) {
 		int x = stream->errorCondition();
@@ -1580,28 +1583,30 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 	else if(err == XMPP::ClientStream::ErrAuth) {
 		int x = stream->errorCondition();
 		QString s;
-		if(x == XMPP::ClientStream::GenericAuthError)
+		if(x == XMPP::ClientStream::GenericAuthError) {
 			s = tr("Unable to login");
-		else if(x == XMPP::ClientStream::NoMech)
+		} else if(x == XMPP::ClientStream::NoMech) {
 			s = tr("No appropriate mechanism available for given security settings (e.g. SASL library too weak, or plaintext authentication not enabled)");
-		else if(x == XMPP::ClientStream::BadProto)
+			s += "\n" + stream->errorText();
+		} else if(x == XMPP::ClientStream::BadProto) {
 			s = tr("Bad server response");
-		else if(x == XMPP::ClientStream::BadServ)
+		} else if(x == XMPP::ClientStream::BadServ) {
 			s = tr("Server failed mutual authentication");
-		else if(x == XMPP::ClientStream::EncryptionRequired)
+		} else if(x == XMPP::ClientStream::EncryptionRequired) {
 			s = tr("Encryption required for chosen SASL mechanism");
-		else if(x == XMPP::ClientStream::InvalidAuthzid)
+		} else if(x == XMPP::ClientStream::InvalidAuthzid) {
 			s = tr("Invalid account information");
-		else if(x == XMPP::ClientStream::InvalidMech)
+		} else if(x == XMPP::ClientStream::InvalidMech) {
 			s = tr("Invalid SASL mechanism");
-		else if(x == XMPP::ClientStream::InvalidRealm)
+		} else if(x == XMPP::ClientStream::InvalidRealm) {
 			s = tr("Invalid realm");
-		else if(x == XMPP::ClientStream::MechTooWeak)
+		} else if(x == XMPP::ClientStream::MechTooWeak) {
 			s = tr("SASL mechanism too weak for this account");
-		else if(x == XMPP::ClientStream::NotAuthorized)
+		} else if(x == XMPP::ClientStream::NotAuthorized) {
 			s = tr("Not authorized");
-		else if(x == XMPP::ClientStream::TemporaryAuthFailure)
+		} else if(x == XMPP::ClientStream::TemporaryAuthFailure) {
 			s = tr("Temporary auth failure");
+		}
 		str = tr("Authentication error: %1").arg(s);
 	}
 	else if(err == XMPP::ClientStream::ErrSecurityLayer)
