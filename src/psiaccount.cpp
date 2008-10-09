@@ -1495,10 +1495,10 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 		int x;
 		QString s, detail;
 		reconn = true;
-		if (stream) // Stream can apparently be gone if you disconnect in time
+		if (stream) { // Stream can apparently be gone if you disconnect in time
 			x = stream->errorCondition();
 			detail = stream->errorText();
-		else {
+		} else {
 			x = XMPP::Stream::GenericStreamError;
 			reconn = false;
 		}
