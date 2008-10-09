@@ -38,6 +38,7 @@ class SxeRecordEdit : public SxeEdit {
          *  Parses a SxeRecordEdit from \a sxeElement.
          */
         SxeRecordEdit(const QDomElement &sxeElement, bool remote = true);
+
         /*! \brief The type of edit.*/
         SxeEdit::EditType type() const;
         /*! \brief The XML (the SXE) representing the edit.*/
@@ -48,7 +49,10 @@ class SxeRecordEdit : public SxeEdit {
         QList<Key> keys() const;
         /*! \brief The value that the edit will set for the given record entry. */
         QString value(Key key) const;
-    
+
+        /*! \brief Turns the edit into a no-op.*/
+        void nullify();
+
     private:
         static QString keyToString(Key key);
         

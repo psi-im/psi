@@ -42,9 +42,17 @@ QString SxeEdit::rid() const {
     return rid_;
 };
 
+bool SxeEdit::isNull() {
+    return null_;
+}
 
-bool SxeEdit::overrides(const SxeEdit &e) const {
-    if(e.rid() != rid()) {
+void SxeEdit::nullify() {
+    null_ = true;
+}
+
+
+bool SxeEdit::overridenBy(const SxeEdit &e) const {
+    if(e.rid() == rid()) {
         if(e.type() == SxeEdit::Remove)
             return true;
         else if(type() == SxeEdit::Record && e.type() == SxeEdit::Record) {
@@ -55,4 +63,34 @@ bool SxeEdit::overrides(const SxeEdit &e) const {
     }
 
     return false;
+}
+
+bool SxeEdit::operator<(const SxeEdit &other) const {
+
+    // Can't compare edits to different records
+    if(rid() != other.rid())  {
+        qDebug(QString("Comparing SxeEdits to %1 an %2.").arg(rid()).arg(other.rid()).toAscii());
+        return false;
+    }
+
+    if(type() == other.type()) {
+
+        // Only Record edits can be unequal with other edits of the same type
+        if(type() == SxeEdit::Record) {
+            const SxeRecordEdit* thisp = dynamic_cast<const SxeRecordEdit*>(this);
+            const SxeRecordEdit* otherp = dynamic_cast<const SxeRecordEdit*>(&other);
+            return (thisp->version() < otherp->version());
+        }
+
+        return false;
+
+    } else {
+
+        // New < Record, Record < Remove
+        if(type() == SxeEdit::New)           return true;
+        if(other.type() == SxeEdit::Remove)  return true;
+        
+        return false;
+
+    }
 }

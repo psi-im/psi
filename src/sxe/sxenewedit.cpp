@@ -91,7 +91,7 @@ SxeEdit::EditType SxeNewEdit::type() const {
 
 
 QDomElement SxeNewEdit::xml(QDomDocument &doc) const {
-    QDomElement edit = doc.createElementNS(SXDENS, "new");
+    QDomElement edit = doc.createElementNS(SXENS, "new");
 
     edit.setAttribute("rid", rid_);
     edit.setAttribute("type", type_);
