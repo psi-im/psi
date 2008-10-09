@@ -131,7 +131,7 @@ void AccountRegDlg::sslActivated(int i)
 bool AccountRegDlg::checkSSL()
 {
 	if(!QCA::isSupported("tls")) {
-		QMessageBox::information(this, tr("SSL error"), tr("Cannot enable SSL/TLS.  Plugin not found."));
+		QMessageBox::information(this, tr("SSL error"), tr("Cannot enable SSL/TLS. QCA2 Plugin not found."));
 		return false;
 	}
 	return true;
