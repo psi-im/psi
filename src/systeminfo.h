@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) 2007-2008  Psi Development Team
+ * Licensed under the GNU General Public License.
+ * See the COPYING file for more information.
+ */
+
 #ifndef SYSTEMINFO_H
 #define SYSTEMINFO_H
 
