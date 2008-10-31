@@ -174,7 +174,12 @@ void OptionsTabChat::restoreOptions()
 	d->ck_alertOpenChats->setChecked( PsiOptions::instance()->getOption("options.ui.chat.alert-for-already-open-chats").toBool() );
 	d->ck_raiseChatWindow->setChecked( PsiOptions::instance()->getOption("options.ui.chat.raise-chat-windows-on-new-messages").toBool() );
 	d->ck_smallChats->setChecked( PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool() );
-	d->ck_tabChats->setChecked( PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool() );
+	if(PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool()) {
+		d->cb_tabGrouping->setEnabled(true);
+		d->ck_tabChats->setChecked( PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool() );
+	} else {
+		d->cb_tabGrouping->setEnabled(false);
+	}
 	QString tabGrouping = PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString();
 	bool custom = false;
 	if (tabGrouping == "C") {
@@ -208,4 +213,18 @@ void OptionsTabChat::restoreOptions()
 		d->rb_delChatsNever->setChecked(true);
 	}
 	d->ck_chatSoftReturn->setChecked(ShortcutManager::instance()->shortcuts("chat.send").contains(QKeySequence(Qt::Key_Return)));
+}
+
+void OptionsTabChat::useTabbedChat_stateChanged(int state)
+{
+	if (!w) {
+		return;
+   }
+	OptChatUI *d = (OptChatUI *)w;
+
+	if((Qt::CheckState)state == Qt::Checked) {
+		d->cb_tabGrouping->setEnabled(true);
+	} else {
+		d->cb_tabGrouping->setEnabled(false);
+	}
 }

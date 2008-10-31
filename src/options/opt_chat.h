@@ -17,6 +17,9 @@ public:
 	void applyOptions();
 	void restoreOptions();
 
+protected slots:
+	void useTabbedChat_stateChanged(int state);
+
 private:
 	QWidget *w;
 	QButtonGroup *bg_defAct, *bg_delChats;
