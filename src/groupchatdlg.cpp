@@ -1346,6 +1346,20 @@ void GCMainDlg::message(const Message &_m)
 	QString from = m.from().resource();
 	bool alert = false;
 
+	if (m.getMUCStatuses().contains(100)) {
+		d->nonAnonymous = true;
+	}
+	if (m.getMUCStatuses().contains(172)) {
+		d->nonAnonymous = true;
+	}
+	if (m.getMUCStatuses().contains(173)) {
+		d->nonAnonymous = false;
+	}
+	if (m.getMUCStatuses().contains(174)) {
+		d->nonAnonymous = false;
+	}
+
+
 	if(!m.subject().isEmpty()) {
 		ui_.le_topic->setText(m.subject());
 		ui_.le_topic->setCursorPosition(0);
