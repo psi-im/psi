@@ -600,7 +600,6 @@ void TabDlg::dropEvent(QDropEvent *event)
 	PsiTabBar* source = dynamic_cast<PsiTabBar*>(event->source());
 	if (source) {
 		PsiTabWidget* barParent = source->psiTabWidget();
-		if (remoteTab >= barParent->count()) return;
 		QWidget* widget = barParent->widget(remoteTab);
 		TabbableWidget* chat = dynamic_cast<TabbableWidget*>(widget);
 		TabDlg *dlg = tabManager_->getManagingTabs(chat);
