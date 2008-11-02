@@ -215,6 +215,9 @@ HEADERS += \
 	$$PWD/psiactions.h \
 	$$PWD/bookmarkmanagedlg.h
 
+HEADERS += tabcompletion.h
+SOURCES += tabcompletion.cpp
+
 # Source files
 SOURCES += \
 	$$PWD/varlist.cpp \

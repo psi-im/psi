@@ -75,6 +75,7 @@
 #include "psicontactlist.h"
 #include "accountlabel.h"
 #include "gcuserview.h"
+#include "tabcompletion.h"
 
 #ifdef Q_WS_WIN
 #include <windows.h>
@@ -88,10 +89,9 @@ class GCMainDlg::Private : public QObject
 	Q_OBJECT
 public:
 	enum { Connecting, Connected, Idle };
-	Private(GCMainDlg *d) {
+	Private(GCMainDlg *d) : tabCompletion(this) {
 		dlg = d;
 		nickSeparator = ":";
-		typingStatus = Typing_Normal;
 		nonAnonymous = false;
 		
 		trackBar = false;
@@ -109,6 +109,9 @@ public:
 	IconAction *act_whiteboard;
 #endif
 	QAction *act_send, *act_scrollup, *act_scrolldown, *act_close;
+	
+	QString nickSeparator; // equals ":"
+	
 	Q3PopupMenu *pm_settings;
 	int pending;
 	bool connecting;
@@ -126,7 +129,7 @@ public:
 protected:
 	int  oldTrackBarPosition;
 
-private:
+public:
 	ChatEdit* mle() const { return dlg->ui_.mle->chatEdit(); }
 	ChatView* te_log() const { return dlg->ui_.log; }
 
@@ -230,6 +233,8 @@ public:
 	QString lastReferrer;  // contains nick of last person, who have said "yourNick: ..."
 
 public slots:
+	/** Insert a nick FIXME called from mini roster.
+	 */
 	void insertNick(const QString& nick)
 	{
 		if (nick.isEmpty())
@@ -262,192 +267,7 @@ public slots:
 		mle()->viewport()->update();
 	}
 
-protected:
-	// Nick auto-completion code follows...
-	enum TypingStatus {
-		Typing_Normal = 0,
-		Typing_TabPressed,
-		Typing_TabbingNicks,
-		Typing_MultipleSuggestions
-	};
-	TypingStatus typingStatus;
-	QString nickSeparator; // in case of "nick: ...", it equals ":"
-	QStringList suggestedNicks;
-	int  suggestedIndex;
-	bool suggestedFromStart;
-
-	QString beforeNickText(QString text) {
-		int i;
-		for (i = text.length() - 1; i >= 0; --i)
-			if ( text[i].isSpace() )
-				break;
-
-		QString beforeNick = text.left(i+1);
-		return beforeNick;
-	}
-
-	QStringList suggestNicks(QString text, bool fromStart) {
-		QString nickText = text;
-		QString beforeNick;
-		if ( !fromStart ) {
-			beforeNick = beforeNickText(text);
-			nickText	 = text.mid(beforeNick.length());
-		}
-
-		QStringList nicks = dlg->ui_.lv_users->nickList();
-		QStringList::Iterator it = nicks.begin();
-		QStringList suggestedNicks;
-		for ( ; it != nicks.end(); ++it) {
-			if ( (*it).left(nickText.length()).lower() == nickText.lower() ) {
-				if ( fromStart )
-					suggestedNicks << *it;
-				else
-					suggestedNicks << beforeNick + *it;
-			}
-		}
-
-		return suggestedNicks;
-	}
-
-	QString longestSuggestedString(QStringList suggestedNicks) {
-		QString testString = suggestedNicks.first();
-		while ( testString.length() > 0 ) {
-			bool found = true;
-			QStringList::Iterator it = suggestedNicks.begin();
-			for ( ; it != suggestedNicks.end(); ++it) {
-				if ( (*it).left(testString.length()).lower() != testString.lower() ) {
-					found = false;
-					break;
-				}
-			}
-
-			if ( found )
-				break;
-
-			testString = testString.left( testString.length() - 1 );
-		}
-
-		return testString;
-	}
-
-	QString insertNick(bool fromStart, QString beforeNick = "") {
-		typingStatus = Typing_MultipleSuggestions;
-		suggestedFromStart = fromStart;
-		suggestedNicks = dlg->ui_.lv_users->nickList();
-		QStringList::Iterator it = suggestedNicks.begin();
-		for ( ; it != suggestedNicks.end(); ++it)
-			*it = beforeNick + *it;
-
-		QString newText;
-		if ( !lastReferrer.isEmpty() ) {
-			newText = beforeNick + lastReferrer;
-			suggestedIndex = -1;
-		}
-		else {
-			newText = suggestedNicks.first();
-			suggestedIndex = 0;
-		}
-
-		if ( fromStart ) {
-			newText += nickSeparator + " ";
-		}
-
-		return newText;
-	}
-
-	QString suggestNick(bool fromStart, QString origText, bool *replaced) {
-		suggestedFromStart = fromStart;
-		suggestedNicks = suggestNicks(origText, fromStart);
-		suggestedIndex = -1;
-
-		QString newText;
-		if ( suggestedNicks.count() ) {
-			if ( suggestedNicks.count() == 1 ) {
-				newText = suggestedNicks.first();
-				if ( fromStart ) {
-					newText += nickSeparator + " ";
-				}
-			}
-			else {
-				newText = longestSuggestedString(suggestedNicks);
-				if ( !newText.length() )
-					return origText;
-
-				typingStatus = Typing_MultipleSuggestions;
-				// TODO: display a tooltip that will contain all suggestedNicks
-			}
-
-			*replaced = true;
-		}
-
-		return newText;
-	}
-
-public:		
-	void doAutoNickInsertion() {
-		QTextCursor cursor = mle()->textCursor();
-		
-		// we need to get index from beginning of current block
-		int index = cursor.position();
-		cursor.movePosition(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
-		index -= cursor.position();
-		
-		QString paraText = cursor.block().text();
-		QString origText = paraText.left(index);
-		QString newText;
-		
-		bool replaced = false;
-
-		if ( typingStatus == Typing_MultipleSuggestions ) {
-			suggestedIndex++;
-			if ( suggestedIndex >= (int)suggestedNicks.count() )
-				suggestedIndex = 0;
-
-			newText = suggestedNicks[suggestedIndex];
-			if ( suggestedFromStart ) {
-				newText += nickSeparator + " ";
-			}
-
-			replaced = true;
-		}
-
-		if ( !cursor.block().position() && !replaced ) {
-			if ( !index && typingStatus == Typing_TabbingNicks ) {
-				newText = insertNick(true, "");
-				replaced = true;
-			}
-			else {
-				newText = suggestNick(true, origText, &replaced);
-			}
-		}
-
-		if ( !replaced ) {
-			if ( (!index || origText[index-1].isSpace()) && typingStatus == Typing_TabbingNicks ) {
-				newText = insertNick(false, beforeNickText(origText));
-				replaced = true;
-			}
-			else {
-				newText = suggestNick(false, origText, &replaced);
-			}
-		}
-
-		if ( replaced ) {
-			mle()->setUpdatesEnabled( false );
-			int position = cursor.position() + newText.length();
-			
-			cursor.beginEditBlock();
-			cursor.movePosition(QTextCursor::StartOfBlock);
-			cursor.movePosition(QTextCursor::EndOfBlock, QTextCursor::KeepAnchor);
-			cursor.insertText(newText + paraText.mid(index, paraText.length() - index));
-			cursor.setPosition(position, QTextCursor::KeepAnchor);
-			cursor.clearSelection();
-			cursor.endEditBlock();
-			mle()->setTextCursor(cursor);
-			
-			mle()->setUpdatesEnabled( true );
-			mle()->viewport()->update();
-		}
-	}
+public:
 
 	bool eventFilter( QObject *obj, QEvent *ev ) {
 		if (te_log()->handleCopyEvent(obj, ev, mle()))
@@ -457,28 +277,65 @@ public:
 			QKeyEvent *e = (QKeyEvent *)ev;
 
 			if ( e->key() == Qt::Key_Tab ) {
-				switch ( typingStatus ) {
-				case Typing_Normal:
-					typingStatus = Typing_TabPressed;
-					break;
-				case Typing_TabPressed:
-					typingStatus = Typing_TabbingNicks;
-					break;
-				default:
-					break;
-				}
-
-				doAutoNickInsertion();
-				return TRUE;
+				tabCompletion.tryComplete();
+				return true;
 			}
-
-			typingStatus = Typing_Normal;
-
-			return FALSE;
+			
+			tabCompletion.reset();
+			return false;
 		}
 
 		return QObject::eventFilter( obj, ev );
 	}
+	
+	class TabCompletionMUC : public TabCompletion {
+		public:
+		GCMainDlg::Private *p_;
+		TabCompletionMUC(GCMainDlg::Private *p) : p_(p), nickSeparator(":") {};
+
+		virtual QStringList possibleCompletions() {
+			QStringList suggestedNicks;
+			QStringList nicks = allNicks();
+
+			QString postAdd = atStart_ ? nickSeparator + " " : "";
+
+			foreach(QString nick, nicks) {
+				if (nick.left(toComplete_.length()).lower() == toComplete_.lower()) {
+					suggestedNicks << nick + postAdd;
+				}
+			}
+			return suggestedNicks;
+		};
+
+		virtual QStringList allChoices(QString &guess) {
+			guess = p_->lastReferrer;
+			if (!guess.isEmpty() && atStart_) {
+				guess += nickSeparator + " ";
+			}
+			
+			QStringList all = allNicks();
+
+			if (atStart_) {
+				QStringList::Iterator it = all.begin();
+				for ( ; it != all.end(); ++it) {
+					*it = *it + nickSeparator + " ";
+				}
+			}
+			return all;
+		};
+
+		QStringList allNicks() {
+			return p_->dlg->ui_.lv_users->nickList();
+		}
+
+		QStringList mCmdList_;
+		
+		// FIXME where to move this?
+		QString nickSeparator; // equals ":"
+	};
+	
+	TabCompletionMUC tabCompletion;
+
 };
 
 GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
@@ -741,10 +598,12 @@ void GCMainDlg::action_error(MUCManager::Action, int, const QString& err)
 
 void GCMainDlg::mle_returnPressed()
 {
-	if(ui_.mle->chatEdit()->text().isEmpty())
+	d->tabCompletion.reset();
+	QString str = d->mle()->text();
+
+	if(str.isEmpty())
 		return;
 
-	QString str = ui_.mle->chatEdit()->text();
 	if(str == "/clear") {
 		doClear();
 
@@ -1532,6 +1391,8 @@ void GCMainDlg::buildMenu()
 
 void GCMainDlg::chatEditCreated()
 {
+	d->tabCompletion.setTextEdit(d->mle());
+
 	ui_.log->setDialog(this);
 	ui_.mle->chatEdit()->setDialog(this);
 
