@@ -16,8 +16,9 @@
  *
  */
 
- // Generic tab completion support code.#ifndef TABCOMPLETION_H
+// Generic tab completion support code.
 
+ #ifndef TABCOMPLETION_H
 #define TABCOMPLETION_H
 
 #include <QObject>
