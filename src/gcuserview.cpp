@@ -381,6 +381,8 @@ void GCUserView::qlv_contextMenuRequested(Q3ListViewItem *i, const QPoint &pos, 
 
 void GCUserView::qlv_mouseButtonClicked(int button, Q3ListViewItem* item, const QPoint& pos, int c)
 {
+	Q_UNUSED(pos);
+	Q_UNUSED(c);
 	if (!item || !item->parent() || !gcDlg_)
 		return;
 	if (button != Qt::MidButton)

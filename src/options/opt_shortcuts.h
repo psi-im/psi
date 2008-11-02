@@ -41,7 +41,7 @@ public:
 	void applyOptions();
 	void restoreOptions();
 
-	typedef enum Kind {
+	enum Kind {
 		TopLevelItem = 1,
 		ShortcutItem,
 		KeyItem

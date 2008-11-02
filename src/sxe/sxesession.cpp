@@ -150,11 +150,11 @@ const QDomDocument& SxeSession::document() const {
     return doc_;
 }
 
-const bool SxeSession::groupChat() const {
+bool SxeSession::groupChat() const {
     return groupChat_;
 }
 
-const bool SxeSession::serverSupport() const {
+bool SxeSession::serverSupport() const {
     return serverSupport_;
 }
 

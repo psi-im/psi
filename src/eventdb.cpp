@@ -311,7 +311,7 @@ struct item_file_req
 	QString findStr;
 	PsiEvent *event;
 
-	typedef enum Type {
+	enum Type {
 		Type_getLatest = 0,
 		Type_getOldest,
 		Type_get,
