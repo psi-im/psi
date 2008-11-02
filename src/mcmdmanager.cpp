@@ -136,8 +136,8 @@ bool MCmdManager::processCommand(QString command) {
 	}
 
 	tmpstate = state_;
-	state_ = 0;
 	bool ret = state_->unhandled(items);
+	state_ = 0;
 	if (state_ == 0) {
 		tmpstate->dispose();
 		uiSite_->mCmdClose();
