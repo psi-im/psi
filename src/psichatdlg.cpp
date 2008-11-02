@@ -17,6 +17,7 @@
 #include <QMenu>
 #include <QDragEnterEvent>
 #include <QMessageBox>
+#include <QDebug>
 
 #include "psicon.h"
 #include "psiaccount.h"
@@ -38,11 +39,110 @@
 #include "userlist.h"
 #include "jidutil.h"
 #include "textutil.h"
+#include "xmpp_tasks.h"
+
+
+#define MCMDCHAT		"http://psi-im.org/ids/mcmd#chatmain"
+
+
+
+class PsiChatDlg::ChatDlgMCmdProvider : public QObject, public MCmdProviderIface {
+	Q_OBJECT
+public:
+	ChatDlgMCmdProvider(PsiChatDlg *dlg) : dlg_(dlg) {};
+
+	virtual bool mCmdTryStateTransit(MCmdStateIface *oldstate, QStringList command, MCmdStateIface *&newstate, QStringList &preset) {
+		if (oldstate->getName() == MCMDCHAT) {
+			QString cmd;
+			if (command.count() > 0) cmd = command[0].lower();
+			if (cmd == "version") {
+				JT_ClientVersion *version = new JT_ClientVersion(dlg_->account()->client()->rootTask());
+				connect(version, SIGNAL(finished()), SLOT(version_finished()));
+
+				qDebug() << "querying: " << dlg_->jid().full();
+				version->get(dlg_->jid());
+				version->go();
+				newstate = 0;
+			} else if (cmd == "clear") {
+				dlg_->doClear();
+				newstate = 0;
+			} else if (cmd == "vcard") {
+				dlg_->doInfo();
+				newstate = 0;
+			} else if (cmd == "auth") {
+				if (command.count() == 2) {
+					if (command[1].lower() == "request") {
+						// FIXME
+					}
+				}
+				newstate = 0;
+			} else if (cmd == "compact") {
+				if (command.count() == 2) {
+					QString sub = command[1].lower();
+					if ("on" == sub) {
+						dlg_->smallChat_ = true;
+					} else if ("off" == sub) {
+						dlg_->smallChat_ = false;
+					} else {
+						dlg_->appendSysMsg("usage: compact {on,off}");
+					}
+				} else {
+					dlg_->smallChat_ = !dlg_->smallChat_;
+				}
+				dlg_->setLooks();
+				newstate = 0;
+			} else if (cmd != "") {
+				return false;
+			}
+			return true;
+		} else {
+			return false;
+		}
+	};
+
+	virtual QStringList mCmdTryCompleteCommand(MCmdStateIface *state, QString query, QStringList partcommand, int item) {
+		Q_UNUSED(partcommand);
+		QStringList all;
+		if (state->getName() == MCMDCHAT) {
+			if (item == 0) {
+				all << "version" << "clear" << "vcard" << "auth" << "compact";
+			}
+		}
+		QStringList res;
+		foreach(QString cmd, all) {
+			if (cmd.startsWith(query)) {
+				res << cmd;
+			}
+		}
+		return res;
+	};
+
+	virtual void mCmdSiteDestroyed() {};
+	virtual ~ChatDlgMCmdProvider() {};
+
+
+public slots:
+	void version_finished() {
+		JT_ClientVersion *version = qobject_cast<JT_ClientVersion*>(sender());
+		if (!version) {
+			dlg_->appendSysMsg("Error in version getter!");
+			return;
+		}
+		dlg_->appendSysMsg(QString("Version response: N: %2 V: %3 OS: %4")
+			.arg(version->name(), version->version(), version->os()));
+	};
+
+private:
+	PsiChatDlg *dlg_;
+};
+
+
 
 PsiChatDlg::PsiChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
-		: ChatDlg(jid, pa, tabManager)
+		: ChatDlg(jid, pa, tabManager), mCmdManager_(&mCmdSite_), tabCompletion(&mCmdManager_)
 {
 	connect(account()->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
+	mCmdManager_.registerProvider(new ChatDlgMCmdProvider(this));
 }
 
 void PsiChatDlg::initUi()
@@ -66,7 +166,7 @@ void PsiChatDlg::initUi()
 	initToolButtons();
 	initToolBar();
 	updateAvatar();
-	
+
 	PsiToolTip::install(ui_.avatar);
 
 	UserListItem* u = account()->findFirstRelevant(jid());
@@ -88,6 +188,14 @@ void PsiChatDlg::initUi()
 	ui_.splitter->setSizes(list);
 
 	smallChat_ = PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool();
+
+	act_mini_cmd_ = new QAction(this);
+	act_mini_cmd_->setText("Input command...");
+	connect(act_mini_cmd_, SIGNAL(activated()), SLOT(doMiniCmd()));
+	addAction(act_mini_cmd_);
+
+	ui_.mini_prompt->hide();
+
 }
 
 void PsiChatDlg::updateCountVisibility()
@@ -148,6 +256,9 @@ void PsiChatDlg::setShortcuts()
 	act_clear_->setShortcuts(ShortcutManager::instance()->shortcuts("chat.clear"));
 	act_info_->setShortcuts(ShortcutManager::instance()->shortcuts("common.user-info"));
 	act_history_->setShortcuts(ShortcutManager::instance()->shortcuts("common.history"));
+
+	act_mini_cmd_->setShortcuts(ShortcutManager::instance()->shortcuts("chat.quick-command"));
+
 }
 
 void PsiChatDlg::updateIdentityVisibility()
@@ -452,6 +563,23 @@ void PsiChatDlg::chatEditCreated()
 
 	connect(chatEdit(), SIGNAL(textChanged()), this, SLOT(updateCounter()));
 	chatEdit()->installEventFilter(this);
+
+	mCmdSite_.setInput(chatEdit());
+	mCmdSite_.setPrompt(ui_.mini_prompt);
+	tabCompletion.setTextEdit(chatEdit());
+}
+
+
+void PsiChatDlg::doSend() {
+	tabCompletion.reset();
+	if (mCmdSite_.isActive()) {
+		QString str = chatEdit()->text();
+		if (!mCmdManager_.processCommand(str)) {
+			appendSysMsg(tr("Error can parse command: ") + str);
+		}
+	} else {
+		ChatDlg::doSend();
+	}
 }
 
 void PsiChatDlg::updateLastMsgTime(QDateTime t)
@@ -463,3 +591,28 @@ void PsiChatDlg::updateLastMsgTime(QDateTime t)
 		chatView()->appendText(QString("<font color=\"%1\">*** %2</font>").arg(color).arg(t.date().toString(Qt::ISODate)));
 	}
 }
+
+void PsiChatDlg::doMiniCmd()
+{
+	mCmdManager_.open(new MCmdSimpleState(MCMDCHAT, "Command>"), QStringList() );
+}
+
+
+bool PsiChatDlg::eventFilter( QObject *obj, QEvent *ev ) {
+	if ( obj == chatEdit() && ev->type() == QEvent::KeyPress ) {
+		QKeyEvent *e = (QKeyEvent *)ev;
+
+		if ( e->key() == Qt::Key_Tab ) {
+			tabCompletion.tryComplete();
+			return true;
+		}
+
+		tabCompletion.reset();
+		return false;
+	}
+
+	return ChatDlg::eventFilter( obj, ev );
+}
+
+
+#include "psichatdlg.moc"

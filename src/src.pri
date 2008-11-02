@@ -151,6 +151,8 @@ HEADERS += \
 	$$PWD/chateditproxy.h \
 	$$PWD/adduserdlg.h \
 	$$PWD/groupchatdlg.h \
+	$$PWD/minicmd.h \
+	$$PWD/mcmdmanager.h \
 	$$PWD/gcuserview.h \
 	$$PWD/infodlg.h \
 	$$PWD/translationmanager.h \
@@ -215,8 +217,12 @@ HEADERS += \
 	$$PWD/psiactions.h \
 	$$PWD/bookmarkmanagedlg.h
 
+
 HEADERS += tabcompletion.h
 SOURCES += tabcompletion.cpp
+
+HEADERS += mcmdcompletion.h
+SOURCES += mcmdcompletion.cpp
 
 # Source files
 SOURCES += \
@@ -266,6 +272,8 @@ SOURCES += \
 	$$PWD/tipdlg.cpp \
 	$$PWD/adduserdlg.cpp \
 	$$PWD/groupchatdlg.cpp \
+	$$PWD/mcmdmanager.cpp \
+	$$PWD/mcmdsimplesite.cpp \
 	$$PWD/gcuserview.cpp \
 	$$PWD/infodlg.cpp \
 	$$PWD/translationmanager.cpp \

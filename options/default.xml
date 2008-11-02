@@ -337,6 +337,7 @@
 					<item type="QKeySequence">Enter</item>
 				</send>
 				<clear type="QKeySequence" comment="Clear the text"/>
+				<quick-command type="QKeySequence" comment="Change to quick command mode">Ctrl+7</quick-command>
 			</chat>
 			<contactlist comment="Shortcuts in the contactlist">
 				<assign-custom-avatar type="QKeySequence" comment="Assign a custom avatar to the selected contact"/>
