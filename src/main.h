@@ -30,7 +30,7 @@ class PsiMain : public QObject
 {
 	Q_OBJECT
 public:
-	PsiMain(QObject *parent=0);
+	PsiMain(const QString& uriToOpen, QObject *parent=0);
 	~PsiMain();
 
 signals:
@@ -45,6 +45,7 @@ private slots:
 private:
 	QString lastProfile, lastLang;
 	bool autoOpen;
+	QString uri;
 
 	PsiCon *pcon;
 };

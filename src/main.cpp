@@ -74,8 +74,9 @@
 
 using namespace XMPP;
 
-PsiMain::PsiMain(QObject *par)
-:QObject(par)
+PsiMain::PsiMain(const QString& uriToOpen, QObject *par)
+	: QObject(par)
+	, uri(uriToOpen)
 {
 	pcon = 0;
 
@@ -234,23 +235,29 @@ void PsiMain::chooseProfile()
 
 void PsiMain::sessionStart()
 {
-	// make sure we have clean PsiOptions
-	PsiOptions::reset();
-	// get a PsiCon
 	if (!ActiveProfiles::instance()->setThisProfile(activeProfile)) { // already running
-		if (!ActiveProfiles::instance()->raiseOther(activeProfile, true))
+		if (!ActiveProfiles::instance()->raiseOther(activeProfile, true)) {
 			QMessageBox::critical(0, tr("Error"), tr("Cannot open this profile - it is already running, but not responding"));
+		}
 		quit();
 		return;
 	}
+
+	// make sure we have clean PsiOptions
+	PsiOptions::reset();
+	// get a PsiCon
 	pcon = new PsiCon();
-	if(!pcon->init()) {
+	if (!pcon->init()) {
 		delete pcon;
 		pcon = 0;
 		quit();
 		return;
 	}
 	connect(pcon, SIGNAL(quit(int)), SLOT(sessionQuit(int)));
+	if (!uri.isEmpty()) {
+		pcon->doOpenUri(uri);
+		uri.clear();
+	}
 }
 
 void PsiMain::sessionQuit(int x)
@@ -333,6 +340,8 @@ int main(int argc, char *argv[])
 
 		if (var == "--uri") {
 			uri = val;
+		} else if (var.startsWith("xmpp:")) {
+			uri = var;
 		}
 		//if(var == "--no-gpg")
 		//	use_gpg = false;
@@ -346,7 +355,6 @@ int main(int argc, char *argv[])
 		if (ActiveProfiles::instance()->sendOpenUri(uri)) {
 			return 0;
 		}
-		// TODO(mck): else, this instance must handle the uri after loading profile
 	}
 
 	//if(link_test)
@@ -363,7 +371,7 @@ int main(int argc, char *argv[])
 	//if(!QCA::isSupported(QCA::CAP_SHA1))
 	//	QCA::insertProvider(XMPP::createProviderHash());
 
-	PsiMain *psi = new PsiMain;
+	PsiMain *psi = new PsiMain(uri);
 	QObject::connect(psi, SIGNAL(quit()), &app, SLOT(quit()));
 	int returnValue = app.exec();
 	delete psi;
