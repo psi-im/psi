@@ -23,6 +23,8 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QMenu>
+#include <QSignalMapper>
+#include <QUrl>
 
 #include "iconaction.h"
 
@@ -32,8 +34,15 @@ class URLObject::Private : QObject
 	Q_OBJECT
 public:
 	QString link;
-	IconAction *act_mailto, *act_join_groupchat, *act_send_message, *act_browser, *act_add_to_roster, *act_copy;
+	IconAction *act_xmpp, *act_mailto, *act_join_groupchat, *act_send_message, *act_chat, *act_browser, *act_add_to_roster, *act_copy;
 	URLObject *urlObject;
+	QSignalMapper xmppActionMapper;
+
+	void connectXmppAction(QAction* action, const QString& query)
+	{
+		connect(action, SIGNAL(activated()), &xmppActionMapper, SLOT(map()));
+		xmppActionMapper.setMapping(action, query);
+	}
 
 	Private(URLObject *parent)
 		: QObject(parent)
@@ -41,6 +50,10 @@ public:
 		urlObject = parent;
 		QString tr;
 		
+		tr = qApp->translate("URLLabel", "Open");
+		act_xmpp = new IconAction(tr, "psi/jabber", tr, 0, this);
+		connect(act_xmpp, SIGNAL(activated()), SLOT(popupAction()));
+
 		tr = qApp->translate("URLLabel", "Open mail composer");
 		act_mailto = new IconAction(tr, "psi/email", tr, 0, this);
 		connect(act_mailto, SIGNAL(activated()), SLOT(popupAction()));
@@ -51,19 +64,25 @@ public:
 
 		tr = qApp->translate("URLLabel", "Add to Roster");
 		act_add_to_roster = new IconAction(tr, "psi/addContact", tr, 0, this);
-		connect(act_add_to_roster, SIGNAL(activated()), SLOT(popupAction()));
+		connectXmppAction(act_add_to_roster, "roster");
 
 		tr = qApp->translate("URLLabel", "Send massage to");
 		act_send_message = new IconAction(tr, "psi/message", tr, 0, this);
-		connect(act_send_message, SIGNAL(activated()), SLOT(popupAction()));
+		connectXmppAction(act_send_message, "message");
+		
+		tr = qApp->translate("URLLabel", "Chat with");
+		act_chat = new IconAction(tr, "psi/chat", tr, 0, this);
+		connectXmppAction(act_chat, "message;type=chat");
 
 		tr = qApp->translate("URLLabel", "Join groupchat");
 		act_join_groupchat = new IconAction(tr, "psi/groupChat", tr, 0, this);
-		connect(act_join_groupchat, SIGNAL(activated()), SLOT(popupAction()));
+		connectXmppAction(act_join_groupchat, "join");
 
 		tr = qApp->translate("URLLabel", "Copy location");
 		act_copy = new IconAction(tr, tr, 0, this);
 		connect(act_copy, SIGNAL(activated()), SLOT(popupCopy()));
+
+		connect(&xmppActionMapper, SIGNAL(mapped(const QString&)), SLOT(xmppAction(const QString&)));
 	}
 		
 	QString copyString(QString from)
@@ -103,6 +122,20 @@ public slots:
 
 	void popupCopy() {
 		popupCopy(link);
+	}
+
+	void xmppAction(const QString& lnk, const QString& query) {
+		QUrl uri(lnk);
+		QString queryType = query.left(query.indexOf(';'));
+		uri.setQueryDelimiters('=', ';');
+		if (uri.queryItems().value(0).first != queryType) {
+			uri.setEncodedQuery(query.toAscii());
+		}
+		emit urlObject->openURL(uri);
+	}
+
+	void xmppAction(const QString& query) {
+		xmppAction(link, query);
 	}
 };
 //! \endif
@@ -149,16 +182,21 @@ QMenu *URLObject::createPopupMenu(const QString &lnk)
 
 	QMenu *m = new QMenu;
 	
-	if ( service == "mailto" || service == "atstyle") {
+	// FIXME: atstyle doesn't work. it's always mailto.
+	bool needGenericOpen = true;
+	if (service == "mailto" || service == "atstyle") {
+		needGenericOpen = false;
 		m->addAction(d->act_mailto);
 	}
-	else if ( service == "jabber" || service == "jid" || service == "xmpp" || service == "atstyle") {
-		// TODO: need more actions to jabber item. Ex: "add to roster", "send message"
-		m->addAction(d->act_add_to_roster);
+	if (service == "jabber" || service == "jid" || service == "xmpp" || service == "atstyle") {
+		needGenericOpen = false;
+		m->addAction(d->act_xmpp);
+		m->addAction(d->act_chat);
 		m->addAction(d->act_send_message);
 		m->addAction(d->act_join_groupchat);
+		//m->addAction(d->act_add_to_roster);
 	}
-	else { //if ( service == "http" || service == "https" || service.isEmpty() ) {
+	if (needGenericOpen) {
 		m->addAction(d->act_browser);
 	}
 

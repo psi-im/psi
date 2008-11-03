@@ -317,7 +317,12 @@ QString TextUtil::linkify(const QString &in)
 		isEmail = FALSE;
 		x1 = n;
 
-		if(linkify_pmatch(out, n, "http://")) {
+		if(linkify_pmatch(out, n, "xmpp:")) {
+			n += 5;
+			isUrl = TRUE;
+			href = "";
+		}
+		else if(linkify_pmatch(out, n, "http://")) {
 			n += 7;
 			isUrl = TRUE;
 			href = "";

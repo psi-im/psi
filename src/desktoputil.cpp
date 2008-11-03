@@ -26,6 +26,7 @@
 #include <QFileInfo>
 #include <QProcess>
 #include <QSysInfo>
+#include <QSet>
 
 #ifdef Q_WS_WIN
 #include <windows.h>
@@ -41,26 +42,30 @@ QString defaultBrowser()
 }
 #endif
 
+static QSet<QString> handlers;
+
 static bool doOpenUrl(const QUrl& url)
 {
 #ifdef Q_WS_WIN
-	// on Vista it always returns iexplore.exe as default browser
-	bool oldStyleDefaultBrowserInfo = QSysInfo::WindowsVersion < QSysInfo::WV_VISTA;
+	if (!handlers.contains(url.scheme())) {
+		// on Vista it always returns iexplore.exe as default browser
+		bool oldStyleDefaultBrowserInfo = QSysInfo::WindowsVersion < QSysInfo::WV_VISTA;
 
-	QFileInfo browserFileInfo(defaultBrowser());
-	if (oldStyleDefaultBrowserInfo && browserFileInfo.fileName() == "iexplore.exe") {
-		return QProcess::startDetached(browserFileInfo.absoluteFilePath(),
-		                               QStringList() << "-new" << url.toEncoded());
-	}
-	else {
-		// FIXME: This is necessary for Qt 4.3.3 to handle all URLs correctly
-		QT_WA(
-			ShellExecuteW(0, 0, (WCHAR *)QString(url.toEncoded()).utf16(), 0, 0, SW_SHOWNORMAL);
-		,
-			QByteArray a = QString(url.toEncoded()).toLocal8Bit();	// must not call constData() of a temp object
-			ShellExecuteA(0, 0, (CHAR *)a.constData(), 0, 0, SW_SHOWNORMAL);
-		)
-		return true;
+		QFileInfo browserFileInfo(defaultBrowser());
+		if (oldStyleDefaultBrowserInfo && browserFileInfo.fileName() == "iexplore.exe") {
+			return QProcess::startDetached(browserFileInfo.absoluteFilePath(),
+				QStringList() << "-new" << url.toEncoded());
+		}
+		else {
+			// FIXME: This is necessary for Qt 4.3.3 to handle all URLs correctly
+			QT_WA(
+				ShellExecuteW(0, 0, (WCHAR *)QString(url.toEncoded()).utf16(), 0, 0, SW_SHOWNORMAL);
+			,
+				QByteArray a = QString(url.toEncoded()).toLocal8Bit();	// must not call constData() of a temp object
+				ShellExecuteA(0, 0, (CHAR *)a.constData(), 0, 0, SW_SHOWNORMAL);
+			)
+			return true;
+		}
 	}
 #endif
 	return QDesktopServices::openUrl(url);
@@ -84,4 +89,30 @@ bool DesktopUtil::openUrl(const QString& url)
 		return doOpenUrl(QUrl::fromEncoded(ascii));
 	else
 		return doOpenUrl(QUrl(url, QUrl::TolerantMode));
+}
+
+/**
+ * \brief Sets the handler for the given \a scheme to be the \a handler method provided by the \a receiver object.
+ *
+ * Handler is set in QDesktopServices and DesktopUtil will always use QDesktopServices to open URLs of this type.
+ *
+ * Note: Always manage handlers via DesktopUtil. Using QDestopServices directly may lead to unexpected behavior.
+ */
+void DesktopUtil::setUrlHandler(const QString& scheme, QObject* receiver, const char* method)
+{
+	QDesktopServices::setUrlHandler(scheme, receiver, method);
+	handlers.insert(scheme);
+}
+
+/**
+ * Removes a previously set URL handler for the specified \a scheme.
+ *
+ * Handler is unset in QDesktopServices.
+ *
+ * Note: Always manage handlers via DesktopUtil. Using QDestopServices directly may lead to unexpected behavior.
+ */
+void DesktopUtil::unsetUrlHandler(const QString& scheme)
+{
+	handlers.remove(scheme);
+	QDesktopServices::unsetUrlHandler(scheme);
 }

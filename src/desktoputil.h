@@ -22,10 +22,14 @@
 #define DESKTOPUTIL_H
 
 class QString;
+class QObject;
 
 namespace DesktopUtil
 {
 	bool openUrl(const QString& url);
+
+	void setUrlHandler(const QString& scheme, QObject* receiver, const char* method);
+	void unsetUrlHandler(const QString& scheme);
 };
 
 #endif

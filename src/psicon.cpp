@@ -577,6 +577,8 @@ bool PsiCon::init()
 	connect(ActiveProfiles::instance(), SIGNAL(raiseMainWindow()), SLOT(raiseMainwin()));
 	connect(ActiveProfiles::instance(), SIGNAL(openUri(const QUrl &)), SLOT(doOpenUri(const QUrl &)));
 
+	DesktopUtil::setUrlHandler("xmpp", this, "doOpenUri");
+
 	return true;
 }
 
@@ -629,6 +631,8 @@ void PsiCon::deinit()
 		d->saveProfile(acc);
 
 	GlobalShortcutManager::clear();
+
+	DesktopUtil::unsetUrlHandler("xmpp");
 }
 
 
