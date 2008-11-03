@@ -3190,18 +3190,18 @@ void PsiAccount::actionGroupRename(const QString &oldname, const QString &newnam
 			u->removeGroup(oldname);
 			u->addGroup(newname);
 			cpUpdate(*u);
-			if(u->inList())
-				nu.append(u);
+                        if(u->inList()) {
+                                nu.append(u);
+                        }
 		}
 	}
 
 	if(!nu.isEmpty()) {
-		JT_Roster *r = new JT_Roster(d->client->rootTask());
-		foreach(UserListItem* u, nu) {
-			r->set(u->jid(), u->name(), u->groups());
+                foreach(UserListItem* u, nu) {
+                        JT_Roster *r = new JT_Roster(d->client->rootTask());
+                        r->set(u->jid(), u->name(), u->groups());
+                        r->go(true);
 		}
-
-		r->go(true);
 	}
 }
 
