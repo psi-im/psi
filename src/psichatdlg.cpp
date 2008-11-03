@@ -575,7 +575,7 @@ void PsiChatDlg::doSend() {
 	if (mCmdSite_.isActive()) {
 		QString str = chatEdit()->text();
 		if (!mCmdManager_.processCommand(str)) {
-			appendSysMsg(tr("Error can parse command: ") + str);
+			appendSysMsg(tr("Error: Can not parse command: ") + str);
 		}
 	} else {
 		ChatDlg::doSend();

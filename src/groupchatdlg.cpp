@@ -886,7 +886,7 @@ void GCMainDlg::mle_returnPressed()
 
 	if (d->mCmdSite.isActive()) {
 		if (!d->mCmdManager.processCommand(str)) {
-			appendSysMsg(tr("Error can parse command: ") + str, false);
+			appendSysMsg(tr("Error: Can not parse command: ") + str, false);
 		}
 		return;
 	}
