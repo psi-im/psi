@@ -2057,6 +2057,7 @@ ContactView::ContactView(QWidget *parent, const char *name)
 	viewport()->setAcceptDrops(true);
 	
 	filterString_ = QString();
+	applyingFilter = false;
 }
 
 ContactView::~ContactView()
@@ -2130,6 +2131,7 @@ void ContactView::setFilter(QString const &text)
 	bool refineSearch = text.startsWith(filterString_);
 	filterString_ = text;
 	
+	applyingFilter = true;
 	Q3ListViewItemIterator it(d->cv);
 	for (ContactViewItem *item; (item = (ContactViewItem *)it.current()); ++it)
 	{	
@@ -2137,6 +2139,7 @@ void ContactView::setFilter(QString const &text)
 			filterGroup(item, refineSearch);
 		}
 	}
+	applyingFilter = false;
 }
 
 void ContactView::clearFilter()
@@ -2145,10 +2148,8 @@ void ContactView::clearFilter()
 	Q3ListViewItemIterator it(d->cv);
 	for (ContactViewItem *item; (item = (ContactViewItem *)it.current()); ++it) 
 	{
-		if (item->type() != ContactViewItem::Contact && item->type() != ContactViewItem::Group) {
-			continue;
-		}
 		item->setVisible(true);
+		item->clearFilter();
 		item->optionsUpdate();
 		item->repaint();
 	}	
@@ -2880,6 +2881,8 @@ public:
 		animateNickColor = false;
 
 		icon = lastIcon = 0;
+
+		prefilterOpen = cvi->isOpen();
 	}
 
 	~Private() {
@@ -2939,6 +2942,8 @@ public:
 
 	PsiIcon *icon, *lastIcon;
 	int animateNickX, animateNickColor; // nick animation
+
+	bool prefilterOpen;
 };
 
 ContactViewItem::ContactViewItem(const QString &profileName, ContactProfile *cp, ContactView *parent)
@@ -3254,6 +3259,10 @@ void ContactViewItem::setOpen(bool o)
 	UserAccount::GroupData gd = d->groupData();
 	gd.open = o;
 	d->groupState()->insert(d->getGroupName(), gd);
+
+	if (!((ContactView *)listView())->isApplyingFilter()) {
+		d->prefilterOpen = o;
+	}
 }
 
 void ContactViewItem::insertItem(Q3ListViewItem *i)
@@ -3682,6 +3691,29 @@ void ContactViewItem::cancelRename (int i)
 {
 	Q3ListViewItem::cancelRename(i);
 	resetName();
+}
+
+void ContactViewItem::clearFilter()
+{
+	if (d->prefilterOpen != isOpen()) {
+		setOpen(d->prefilterOpen);
+
+		// if closing group that contains selected subitem, select this group
+		if (d->prefilterOpen == false) {
+			bool containsSelection = false;
+			Q3ListViewItem* i = listView()->selectedItem();
+			while (i) {
+				if (i == this) {
+					containsSelection = true;
+					break;
+				}
+				i = i->parent();
+			}
+			if (containsSelection) {
+				listView()->setSelected(this, true);
+			}
+		}
+	}
 }
 
 int ContactViewItem::rtti() const

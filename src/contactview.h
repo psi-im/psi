@@ -207,6 +207,7 @@ public:
 	bool filterGroup(ContactViewItem *item, bool refineSearch = false);
 	void setFilter(QString const &text);
 	void clearFilter();
+	bool isApplyingFilter() const { return applyingFilter; }
 	
 	void clear();
 	void resetAnim();
@@ -285,6 +286,7 @@ private:
 	Q3ListViewItem *lcto_item;
 	QSize lastSize;
 	QString filterString_;
+	bool applyingFilter;
 
 	friend class ContactProfile;
 	void link(ContactProfile *);
@@ -375,6 +377,8 @@ public:
 
 	void updatePosition();
 	void optionsUpdate();
+
+	void clearFilter();
 
 	// reimplemented functions
 	int rtti() const;
