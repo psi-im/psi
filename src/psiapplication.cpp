@@ -321,5 +321,6 @@ bool PsiApplication::macEventFilter( EventHandlerCallRef, EventRef inEvent )
 
 void PsiApplication::commitData(QSessionManager& manager)
 {
+	Q_UNUSED(manager);
 	emit forceSavePreferences();
 }

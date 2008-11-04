@@ -71,9 +71,9 @@ class SxeSession : public QObject {
         /*! \brief Returns a const reference to the target document.*/
         const QDomDocument& document() const;
         /*! \brief Returns true if the target is a groupchat.*/
-        const bool groupChat() const;
+        bool groupChat() const;
         /*! \brief Returns true if the target is a groupchat.*/
-        const bool serverSupport() const;
+        bool serverSupport() const;
         /*! \brief Returns the target contact's JID.*/
         const Jid target() const;
         /*! \brief Returns the session identifier.*/

@@ -52,6 +52,7 @@ public:
 	ChatDlgMCmdProvider(PsiChatDlg *dlg) : dlg_(dlg) {};
 
 	virtual bool mCmdTryStateTransit(MCmdStateIface *oldstate, QStringList command, MCmdStateIface *&newstate, QStringList &preset) {
+		Q_UNUSED(preset);
 		if (oldstate->getName() == MCMDCHAT) {
 			QString cmd;
 			if (command.count() > 0) cmd = command[0].lower();
@@ -575,7 +576,7 @@ void PsiChatDlg::doSend() {
 	if (mCmdSite_.isActive()) {
 		QString str = chatEdit()->text();
 		if (!mCmdManager_.processCommand(str)) {
-			appendSysMsg(tr("Error can parse command: ") + str);
+			appendSysMsg(tr("Error: Can not parse command: ") + str);
 		}
 	} else {
 		ChatDlg::doSend();

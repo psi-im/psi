@@ -271,7 +271,7 @@ bool ChatDlg::readyToHide()
 	// Reset 'contact is composing' & cancel own composing event
 	resetComposing();
 	setChatState(StateGone);
-	if (contactChatState_ == StateComposing || contactChatState_ == StateInactive) {
+	if (contactChatState_ == XMPP::StateComposing || contactChatState_ == XMPP::StateInactive) {
 		setContactChatState(StatePaused);
 	}
 
