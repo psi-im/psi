@@ -170,8 +170,6 @@ void OptionsTabToolbars::applyOptions()
 	if (!w)
 		return;
 
-	LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
-
 	PsiOptions *o = PsiOptions::instance();
 	o->removeOption("options.ui.contactlist.toolbars", true);
 	QMap<QString, ToolbarPrefs>::Iterator it = p->toolbars.begin();
@@ -221,8 +219,6 @@ void OptionsTabToolbars::restoreOptions()
 void OptionsTabToolbars::toolbarAdd()
 {
 	LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
-
-	int i = d->cb_toolbars->count();
 
 	ToolbarPrefs tb;
 	int j = 0;

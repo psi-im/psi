@@ -21,6 +21,8 @@
 #include "psiapplication.h"
 #include "resourcemenu.h"
 
+#include <QSessionManager>
+
 #ifdef Q_WS_MAC
 #include <Carbon/Carbon.h>
 #endif
