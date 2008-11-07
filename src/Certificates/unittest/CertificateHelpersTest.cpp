@@ -24,26 +24,6 @@ class CertificateHelpersTest : public QObject
 
 		void cleanupTestCase() {
 		}
-
-		void testIsValidCertificate_ValidPeerResult() {
-			Certificate cert;
-			QVERIFY(CertificateHelpers::isValidCertificate(cert, QCA::TLS::Valid, CertificateCollection()));
-		}
-
-		void testIsValidCertificate_InvalidPeerResultCertInLibrary() {
-			Certificate cert("a");
-			CertificateCollection certs;
-			certs += Certificate("b");
-			certs += Certificate("a");
-			QVERIFY(CertificateHelpers::isValidCertificate(cert, QCA::TLS::InvalidCertificate, certs));
-		}
-
-		void testIsValidCertificate_InvalidPeerResultCertNotInLibrary() {
-			Certificate cert("a");
-			CertificateCollection certs;
-			certs += Certificate("b");
-			QVERIFY(!CertificateHelpers::isValidCertificate(cert, QCA::TLS::InvalidCertificate, certs));
-		}
 };
 
 QTTESTUTIL_REGISTER_TEST(CertificateHelpersTest);

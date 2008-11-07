@@ -153,16 +153,3 @@ QString CertificateHelpers::resultToString(int result, QCA::Validity validity)
 	}
 	return s;
 }
-
-bool CertificateHelpers::isValidCertificate(const QCA::Certificate& certificate, int peerValidityResult, const QCA::CertificateCollection& collection)
-{
-	if (peerValidityResult == QCA::TLS::Valid) {
-		return true;
-	}
-	foreach(Certificate cert, collection.certificates()) {
-		if (cert == certificate) {
-			return true;
-		}
-	}
-	return false;
-}

@@ -19,7 +19,6 @@ class CertificateHelpers
 	public:
 		static QCA::CertificateCollection allCertificates(const QStringList& dirs);
 		static QString resultToString(int result, QCA::Validity);
-		static bool isValidCertificate(const QCA::Certificate& certificate, int peerValidityResult, const QCA::CertificateCollection&);
 
 	protected:
 		static QString validityToString(QCA::Validity);

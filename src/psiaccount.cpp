@@ -1302,7 +1302,7 @@ void PsiAccount::tls_handshaken()
 		result = QCA::TLS::HostMismatch;
 	}
 
-	if (!CertificateHelpers::isValidCertificate(cert, result, CertificateHelpers::allCertificates(ApplicationInfo::getCertificateStoreDirs()))) {
+	if (result != QCA::TLS::Valid && !CertificateHelpers::allCertificates(ApplicationInfo::getCertificateStoreDirs()).contains(cert)) {
 		CertificateErrorDialog errorDialog(
 				(d->psi->contactList()->enabledAccounts().count() > 1 ?  QString("%1: ").arg(name()) : "") + tr("Server Authentication"),
 				d->jid.node(), 
