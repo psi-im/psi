@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2008  <Your Name>
+ * Copyright (C) 2008  Remko Troncon
+ * Licensed under the GNU GPL.
  * See COPYING for license details.
  */
 
