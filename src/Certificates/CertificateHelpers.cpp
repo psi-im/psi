@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) 2008  Remko Troncon
+ * Licensed under the GNU GPL license.
+ * See COPYING for details.
+ */
+
 #include <QtDebug>
 #include <QtCrypto>
 #include <QStringList>
@@ -146,4 +152,12 @@ QString CertificateHelpers::resultToString(int result, QCA::Validity validity)
 			break;
 	}
 	return s;
+}
+
+bool CertificateHelpers::isValidCertificate(const QCA::Certificate& certificate, int peerValidityResult)
+{
+	if (peerValidityResult == QCA::TLS::Valid) {
+		return true;
+	}
+	return false;
 }

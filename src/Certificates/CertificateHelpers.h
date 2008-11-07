@@ -1,3 +1,9 @@
+/*
+ * Copyright (C) 2008  Remko Troncon
+ * Licensed under the GNU GPL license.
+ * See COPYING for details.
+ */
+
 #ifndef CERTUTIL_H
 #define CERTUTIL_H
 
@@ -13,6 +19,7 @@ class CertificateHelpers
 	public:
 		static QCA::CertificateCollection allCertificates(const QStringList& dirs);
 		static QString resultToString(int result, QCA::Validity);
+		static bool isValidCertificate(const QCA::Certificate& certificate, int peerValidityResult);
 
 	protected:
 		static QString validityToString(QCA::Validity);
