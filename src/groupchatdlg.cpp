@@ -404,7 +404,7 @@ join <channel>{,<channel>} [pass{,<pass>}
 		}
 		QStringList res;
 		foreach(QString cmd, all) {
-			if (cmd.startsWith(query)) {
+			if (cmd.startsWith(query, Qt::CaseInsensitive)) {
 				res << cmd;
 			}
 		}
