@@ -91,6 +91,7 @@
 #include "capsmanager.h"
 #include "avcall/avcall.h"
 #include "avcall/calldlg.h"
+#include "alertmanager.h"
 
 
 #include "AutoUpdater/AutoUpdater.h"
@@ -190,7 +191,7 @@ class PsiCon::Private : public QObject
 	Q_OBJECT
 public:
 	Private(PsiCon *parent)
-		: contactList(0), iconSelect(0)
+		: contactList(0), iconSelect(0), alertManager(parent)
 	{
 		psi = parent;
 	}
@@ -264,6 +265,7 @@ public:
 	CapsRegistry* capsRegistry;
 	TabManager *tabManager;
 	AutoUpdater *autoUpdater;
+	AlertManager alertManager;
 };
 
 //----------------------------------------------------------------------------
@@ -692,6 +694,11 @@ TuneController *PsiCon::tuneController() const
 {
 	return d->tuneController;
 }
+
+AlertManager *PsiCon::alertManager() const {
+	return &(d->alertManager);
+}
+
 
 void PsiCon::closeProgram()
 {

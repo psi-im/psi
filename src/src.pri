@@ -230,6 +230,12 @@ HEADERS += \
 HEADERS += tabcompletion.h
 SOURCES += tabcompletion.cpp
 
+HEADERS += alertmanager.h
+SOURCES += alertmanager.cpp
+
+HEADERS += accountloginpassword.h
+SOURCES += accountloginpassword.cpp
+
 HEADERS += mcmdcompletion.h
 SOURCES += mcmdcompletion.cpp
 

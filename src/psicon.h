@@ -50,6 +50,7 @@ class PsiToolBar;
 class TabDlg;
 class AccountsComboBox;
 class ChatDlg;
+class AlertManager;
 class TuneController;
 class PsiContactList;
 class Q3DockWindow;
@@ -77,6 +78,8 @@ public:
 	TuneController* tuneController() const;
 	ProxyManager *proxy() const;
 	FileTransDlg *ftdlg() const;
+
+	AlertManager *alertManager() const;
 
 	QWidget *dialogFind(const char *className);
 	void dialogRegister(QWidget *w);

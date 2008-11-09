@@ -127,6 +127,8 @@
 #include "Certificates/CertificateHelpers.h"
 #include "Certificates/CertificateErrorDialog.h"
 #include "Certificates/CertificateDisplayDialog.h"
+#include "accountloginpassword.h"
+#include "alertmanager.h"
 
 #include "psimedia/psimedia.h"
 #include "avcall/avcall.h"
@@ -512,8 +514,9 @@ public:
 	QWidget* findDialog(const QMetaObject& mo, const Jid& jid, bool compareResource) const
 	{
 		foreach(item_dialog2* i, dialogList) {
-			if (mo.cast(i->widget) && compareJids(i->jid, jid, compareResource))
+			if (mo.cast(i->widget) && compareJids(i->jid, jid, compareResource)) {
 				return i->widget;
+			}
 		}
 		return 0;
 	}
@@ -521,8 +524,9 @@ public:
 	void findDialogs(const QMetaObject& mo, const Jid& jid, bool compareResource, QList<void*>* list) const
 	{
 		foreach(item_dialog2* i, dialogList) {
-			if (mo.cast(i->widget) && compareJids(i->jid, jid, compareResource))
+			if (mo.cast(i->widget) && compareJids(i->jid, jid, compareResource)) {
 				list->append(i->widget);
+			}
 		}
 	}
 
@@ -1193,7 +1197,15 @@ void PsiAccount::login()
 		return;
 
 	if((d->acc.ssl == UserAccount::SSL_Yes || d->acc.ssl == UserAccount::SSL_Legacy) && !QCA::isSupported("tls")) {
-		QMessageBox::information(0, (d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Encryption Error"), tr("Cannot connect: Encryption is enabled but no QCA2 SSL/TLS plugin is available."));
+		QString title;
+		if (d->psi->contactList()->enabledAccounts().count() > 1) {
+			title = QString("%1: ").arg(name());
+		}
+		title +=  tr("Encryption Error");
+		QString message = tr("Cannot connect: Encryption is enabled but no QCA2 SSL/TLS plugin is available.");
+
+		psi()->alertManager()->raiseMessageBox(AlertManager::ConnectionError,
+			QMessageBox::Information, title, message);
 		return;
 	}
 
@@ -1266,10 +1278,11 @@ void PsiAccount::login()
 	d->stream->setAllowPlain(d->acc.allow_plain);
 	d->stream->setCompress(d->acc.opt_compress);
 	d->stream->setLang(TranslationManager::instance()->currentXMLLanguage());
-	if(d->acc.opt_keepAlive)
+	if(d->acc.opt_keepAlive) {
 		d->stream->setNoopTime(55000);  // prevent NAT timeouts every minute
-	else
+	} else {
 		d->stream->setNoopTime(0);
+	}
 	connect(d->stream, SIGNAL(connected()), SLOT(cs_connected()));
 	connect(d->stream, SIGNAL(securityLayerActivated(int)), SLOT(cs_securityLayerActivated(int)));
 	connect(d->stream, SIGNAL(needAuthParams(bool, bool, bool)), SLOT(cs_needAuthParams(bool, bool, bool)));
@@ -1488,10 +1501,15 @@ void PsiAccount::cs_warning(int w)
 	}
 
 	if (showNoTlsWarning) {
-		QMessageBox* m = new QMessageBox(QMessageBox::Critical, (d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Error"), tr("The server does not support TLS encryption."), QMessageBox::Ok, 0);
-		m->setAttribute(Qt::WA_DeleteOnClose, true);
-		m->setModal(true);
-		m->show();
+		QString message = tr("The server does not support TLS encryption.");
+		QString title;
+		if (d->psi->contactList()->enabledAccounts().count() > 1) {
+			title = QString("%1: ").arg(name());
+		}
+		title += tr("Server Error");
+
+		psi()->alertManager()->raiseMessageBox(AlertManager::ConnectionError, QMessageBox::Critical,
+			title, message);
 	}
 	else if (!doCleanupStream) {
 		Q_ASSERT(d->stream);
@@ -1679,14 +1697,13 @@ void PsiAccount::cs_error(int err)
 	stateChanged();
 	disconnected();
 
-	bool printAccountName = d->psi->contactList()->enabledAccounts().count() > 1;
-	QMessageBox* m = new QMessageBox(QMessageBox::Critical,
-	                                 (printAccountName ? QString("%1: ").arg(name()) : "") + tr("Server Error"),
-	                                 tr("There was an error communicating with the server.\nDetails: %1").arg(str),
-	                                 QMessageBox::Ok, 0);
-	m->setAttribute(Qt::WA_DeleteOnClose, true);
-	m->setModal(true);
-	m->show();
+	QString title;
+	if (d->psi->contactList()->enabledAccounts().count() > 1) {
+		title = QString("%1: ").arg(name());
+	}
+	title += tr("Server Error");
+	QString message = tr("There was an error communicating with the server.\nDetails: %1").arg(str);
+	psi()->alertManager()->raiseMessageBox(AlertManager::ConnectionError, QMessageBox::Critical, title, message);
 }
 
 void PsiAccount::client_rosterRequestFinished(bool success, int, const QString &)
@@ -2306,30 +2323,11 @@ void PsiAccount::setStatus(const Status &_s,  bool withPriority)
 				return;
 			}
 			if(!d->acc.opt_pass) {
-				bool ok = false;
-				QString text = QInputDialog::getText(0,
-					tr("Need Password"),
-					( d->psi->contactList()->enabledAccounts().count() > 1 ?
-					  tr("Please enter the password for %1:").arg(JIDUtil::toString(j,true))
-					  : tr("Please enter your password:") ),
-					QLineEdit::Password, QString::null, &ok);
-				if(ok && !text.isEmpty()) {
-					d->acc.pass = text;
-				} else {
-					// if the user clicks 'online' in the
-					//   status menu, then the online
-					//   option will be 'checked' in the
-					//   menu.  if the user cancels the
-					//   password dialog, we call
-					//   updateMainwinStatus to restore
-					//   the status menu to the correct
-					//   state.
-					d->psi->updateMainwinStatus();
-					return;
-				}
+				// will call back to us later
+				new AccountLoginPassword(this);
+			} else {
+				login();
 			}
-
-			login();
 		}
 		// change status
 		else {
@@ -2352,6 +2350,11 @@ void PsiAccount::setStatus(const Status &_s,  bool withPriority)
 		if(isActive())
 			logout(false, s);
 	}
+}
+
+void PsiAccount::passwordReady(QString password) {
+	d->acc.pass = password;
+	login();
 }
 
 void PsiAccount::setStatusDirect(const Status &_s, bool withPriority)

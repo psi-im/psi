@@ -130,6 +130,7 @@ public:
 	QString nick() const;
 	bool hasPGP() const;
 	QHostAddress *localAddress() const;
+	void passwordReady(QString password);
 
 	ChatDlg* findChatDialog(const Jid& jid) const;
 
