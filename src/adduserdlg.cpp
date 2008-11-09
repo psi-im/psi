@@ -229,7 +229,13 @@ void AddUserDlg::jt_setFinished()
 	d->jt = 0;
 
 	if(jt->success()) {
-		le_jid->setText(jt->prompt());
+		QString jid = jt->translatedJid().full();
+		if (jid.isEmpty()) {
+			jid = jt->prompt();
+			// we used to read only prompt() in the past,
+			// and many gateways still send it
+		}
+		le_jid->setText(jid);
 		le_nick->setText(le_transPrompt->text());
 		le_transPrompt->setText("");
 		le_jid->setCursorPosition(0);
