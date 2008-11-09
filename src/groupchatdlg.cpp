@@ -1499,11 +1499,12 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
 	}
 
 	//if(local)
-	if(m.from().resource() == d->self)
+	if(m.from().resource() == d->self) {
 		d->deferredScroll();
+	}
 
 	// if we're not active, notify the user by changing the title
-	if(!isActiveTab()) {
+	if(!isActiveTab() && (who != d->self)) {
 		++d->pending;
 		invalidateTab();
 	}
