@@ -166,7 +166,7 @@ void MiniClient::tls_handshaken()
 		QCA::Validity validity =  tls->peerCertificateValidity();
 		CertificateErrorDialog errorDialog(
 			tr("Server Authentication"),
-			j.node(),
+			j.domain(),
 			cert,
 			r,
 			validity,

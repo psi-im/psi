@@ -1305,7 +1305,7 @@ void PsiAccount::tls_handshaken()
 	if (result != QCA::TLS::Valid && !CertificateHelpers::allCertificates(ApplicationInfo::getCertificateStoreDirs()).certificates().contains(cert)) {
 		CertificateErrorDialog errorDialog(
 				(d->psi->contactList()->enabledAccounts().count() > 1 ?  QString("%1: ").arg(name()) : "") + tr("Server Authentication"),
-				d->jid.node(), 
+				d->jid.domain(),
 				cert,
 				result, 
 				d->tls->peerCertificateValidity(),
