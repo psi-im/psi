@@ -30,7 +30,7 @@ using namespace XMPP;
 
 class PsiCon;
 class PsiAccount;
-class XMPP::Jid;
+namespace XMPP { class Jid; }
 
 class PsiContactList : public ContactList
 {
