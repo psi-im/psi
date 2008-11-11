@@ -181,7 +181,7 @@ class GCMainDlg::Private : public QObject, public MCmdProviderIface
 {
 	Q_OBJECT
 public:
-	enum { Connecting, Connected, Idle };
+	enum { Connecting, Connected, Idle, ForcedLeave };
 	Private(GCMainDlg *d) : mCmdManager(&mCmdSite), tabCompletion(this) {
 		dlg = d;
 		nickSeparator = ":";
@@ -748,8 +748,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 
 GCMainDlg::~GCMainDlg()
 {
-	if(d->state != Private::Idle)
+	if(d->state != Private::Idle && d->state != Private::ForcedLeave) {
 		account()->groupChatLeave(jid().domain(), jid().node());
+	}
 
 	//QMimeSourceFactory *m = ui_.log->mimeSourceFactory();
 	//ui_.log->setMimeSourceFactory(0);
@@ -837,7 +838,10 @@ void GCMainDlg::mucInfoDialog(const QString& title, const QString& message, cons
 	if (!reason.isEmpty())
 		m += tr("\nReason: %1").arg(reason);
 
-	QMessageBox::information(this, title, m);
+	// FIXME maybe this should be queued in the future?
+	QMessageBox* msg = new QMessageBox(QMessageBox::Information, title, m, QMessageBox::Ok, this, Qt::WDestructiveClose);
+	msg->setModal(false);
+	msg->show();
 }
 
 void GCMainDlg::logSelectionChanged()
@@ -1014,13 +1018,32 @@ void GCMainDlg::doFind(const QString &str)
 
 void GCMainDlg::goDisc()
 {
-	if(d->state != Private::Idle) {
+	if(d->state != Private::Idle && d->state != Private::ForcedLeave) {
 		d->state = Private::Idle;
 		ui_.pb_topic->setEnabled(false);
 		appendSysMsg(tr("Disconnected."), true);
 		ui_.mle->chatEdit()->setEnabled(false);
 	}
 }
+
+// kick, ban, removed muc, etc
+void GCMainDlg::goForcedLeave() {
+	if(d->state != Private::Idle && d->state != Private::ForcedLeave) {
+		goDisc();
+		account()->groupChatLeave(jid().domain(), jid().node());
+		d->state = Private::ForcedLeave;
+	}
+}
+
+bool GCMainDlg::isInactive() const {
+	return d->state == Private::ForcedLeave;
+}
+
+void GCMainDlg::reactivate() {
+	d->state = Private::Idle;
+	goConn();
+}
+
 
 void GCMainDlg::goConn()
 {
@@ -1091,6 +1114,30 @@ void GCMainDlg::error(int, const QString &str)
 		appendSysMsg(tr("Unexpected groupchat error: %1").arg(str), true);
 
 	d->state = Private::Idle;
+}
+
+
+void GCMainDlg::mucKickMsgHelper(const QString &nick, const Status &s, const QString &nickJid, const QString &title,
+			const QString &youSimple, const QString &youBy, const QString &someoneSimple,
+			const QString &someoneBy) {
+	QString message;
+	if (nick == d->self) {
+		message = youSimple;
+		mucInfoDialog(title, message, s.mucItem().actor(), s.mucItem().reason());
+		if (!s.mucItem().actor().isEmpty()) {
+			message = youBy.arg(s.mucItem().actor().full());
+		}
+		goForcedLeave();
+	} else if (!s.mucItem().actor().isEmpty()) {
+		message = someoneBy.arg(nickJid, s.mucItem().actor().full());
+	} else {
+		message = someoneSimple.arg(nickJid);
+	}
+
+	if (!s.mucItem().reason().isEmpty()) {
+		message += QString(" (%1)").arg(s.mucItem().reason());
+	}
+	appendSysMsg(message, false, QDateTime::currentDateTime());
 }
 
 void GCMainDlg::presence(const QString &nick, const Status &s)
@@ -1202,9 +1249,12 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 		if (s.hasMUCDestroy()) {
 			// Room was destroyed
 			QString message = tr("This room has been destroyed.");
+			QString log = message;
 			if (!s.mucDestroy().reason().isEmpty()) {
 				message += "\n";
-				message += tr("Reason: %1").arg(s.mucDestroy().reason());
+				QString reason = tr("Reason: %1").arg(s.mucDestroy().reason());
+				message += reason;
+				log += " " + reason;
 			}
 			if (!s.mucDestroy().jid().isEmpty()) {
 				message += "\n";
@@ -1217,87 +1267,60 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 			else {
 				QMessageBox::information(this,tr("Room Destroyed"), message);
 			}
-			close();
+			appendSysMsg(log, false, QDateTime::currentDateTime());
+			goForcedLeave();
 		}
-		if ( !d->connecting && options_->getOption("options.muc.show-joins").toBool() ) {
-			QString message;
-			QString nickJid;
-			GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
-			if (contact && !contact->s.mucItem().jid().isEmpty()) {
-				nickJid = QString("%1 (%2)").arg(nick).arg(contact->s.mucItem().jid().full());
-			} else {
-				nickJid = nick;
-			}
 
-			if (s.getMUCStatuses().contains(301)) {
-				// Ban
-				if (nick == d->self) {
-					mucInfoDialog(tr("Banned"), tr("You have been banned from the room"), s.mucItem().actor(), s.mucItem().reason());
-					close();
-				}
+		QString message;
+		QString nickJid;
+		GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
+		if (contact && !contact->s.mucItem().jid().isEmpty()) {
+			nickJid = QString("%1 (%2)").arg(nick).arg(contact->s.mucItem().jid().full());
+		} else {
+			nickJid = nick;
+		}
 
-				if (!s.mucItem().actor().isEmpty())
-					message = tr("%1 has been banned by %2").arg(nickJid, s.mucItem().actor().full());
-				else
-					message = tr("%1 has been banned").arg(nickJid);
+		bool suppressDefault = false;
 
-				if (!s.mucItem().reason().isEmpty()) 
-					message += QString(" (%1)").arg(s.mucItem().reason());
-			}
+		if (s.getMUCStatuses().contains(301)) {
+			// Ban
+			mucKickMsgHelper(nick, s, nickJid, tr("Banned"), tr("You have been banned from the room"),
+						 tr("You have been banned from the room by %1"),
+						 tr("%1 has been banned"),
+						 tr("%1 has been banned by %2"));
+			suppressDefault = true;
+		}
+		if (s.getMUCStatuses().contains(307)) {
+			// Kick
+			mucKickMsgHelper(nick, s, nickJid, tr("Kicked"), tr("You have been kicked from the room"),
+						  tr("You have been kicked from the room by %1"),
+						  tr("%1 has been kicked"),
+						  tr("%1 has been kicked by %2"));
+			suppressDefault = true;
+		}
+		if (s.getMUCStatuses().contains(321)) {
+			// Remove due to affiliation change
+			mucKickMsgHelper(nick, s, nickJid, tr("Removed"),
+						 tr("You have been removed from the room due to an affiliation change"),
+						 tr("You have been removed from the room due to an affiliation change by %1"),
+						 tr("%1 has been removed from the room due to an affilliation change"),
+						 tr("%1 has been removed from the room by %2 due to an affilliation change"));
+			suppressDefault = true;
+		}
+		if (s.getMUCStatuses().contains(322)) {
+			mucKickMsgHelper(nick, s, nickJid, tr("Removed"),
+						 tr("You have been removed from the room because the room was made members only"),
+						 tr("You have been removed from the room because the room was made members only by %1"),
+						 tr("%1 has been removed from the room because the room was made members-only"),
+						 tr("%1 has been removed from the room by %2 because the room was made members-only"));
+			suppressDefault = true;
+		}
+
+		if ( !d->connecting && !suppressDefault && options_->getOption("options.muc.show-joins").toBool() ) {
 			if (s.getMUCStatuses().contains(303)) {
 				message = tr("%1 is now known as %2").arg(nick).arg(s.mucItem().nick());
 				ui_.lv_users->updateEntry(s.mucItem().nick(), s);
-			}
-			if (s.getMUCStatuses().contains(307)) {
-				// Kick
-				if (nick == d->self) {
-					mucInfoDialog(tr("Kicked"), tr("You have been kicked from the room"), s.mucItem().actor(), s.mucItem().reason());
-					close();
-				}
-
-				if (!s.mucItem().actor().isEmpty()) {
-					message = tr("%1 has been kicked by %2").arg(nickJid).arg(s.mucItem().actor().full());
-				} else {
-					message = tr("%1 has been kicked").arg(nickJid);
-				}
-				if (!s.mucItem().reason().isEmpty()) 
-					message += QString(" (%1)").arg(s.mucItem().reason());
-			}
-			if (s.getMUCStatuses().contains(321)) {
-				// Remove due to affiliation change
-				if (nick == d->self) {
-					mucInfoDialog(tr("Removed"), tr("You have been removed from the room due to an affiliation change"), s.mucItem().actor(), s.mucItem().reason());
-					close();
-				}
-
-				if (!s.mucItem().actor().isEmpty()) {
-					message = tr("%1 has been removed from the room by %2 due to an affilliation change").arg(nickJid).arg(s.mucItem().actor().full());
-				} else {
-					message = tr("%1 has been removed from the room due to an affilliation change").arg(nickJid);
-				}
-
-				if (!s.mucItem().reason().isEmpty()) {
-					message += QString(" (%1)").arg(s.mucItem().reason());
-				}
-			}
-			if (s.getMUCStatuses().contains(322)) {
-				// Remove due to members only
-				if (nick == d->self) {
-					mucInfoDialog(tr("Removed"), tr("You have been removed from the room because the room was made members only"), s.mucItem().actor(), s.mucItem().reason());
-					close();
-				}
-
-				if (!s.mucItem().actor().isEmpty()) {
-					message = tr("%1 has been removed from the room by %2 because the room was made members-only").arg(nickJid).arg(s.mucItem().actor().full());
-				} else {
-					message = tr("%1 has been removed from the room because the room was made members-only").arg(nickJid);
-				}
-
-				if (!s.mucItem().reason().isEmpty()) {
-					message += QString(" (%1)").arg(s.mucItem().reason());
-				}
-			}
-			else {
+			} else {
 				//contact leaving
 				message = tr("%1 has left the room").arg(nickJid);
 				if (!s.status().isEmpty()) {
