@@ -28,6 +28,7 @@
 #include "psiaccount.h"
 #include "mucjoindlg.h"
 #include "psicontactlist.h"
+#include "groupchatdlg.h"
 
 MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
 	: QDialog(0)
@@ -155,6 +156,17 @@ void MUCJoinDlg::doJoin()
 		return;
 	}
 
+	GCMainDlg *gc = account_->findDialog<GCMainDlg*>(j.bare());
+	if (gc) {
+		gc->bringToFront();
+		if (gc->isInactive()) {
+			gc->reactivate();
+		}
+		joined();
+		return;
+	}
+
+
 	if (!account_->groupChatJoin(host, room, nick, pass, !ui_.ck_history->isChecked())) {
 		QMessageBox::information(this, tr("Error"), tr("You are in or joining this room already!"));
 		return;
@@ -193,7 +205,9 @@ void MUCJoinDlg::error(int, const QString &str)
 	account_->dialogUnregister(this);
 	controller_->dialogRegister(this);
 
-	QMessageBox::information(this, tr("Error"), tr("Unable to join groupchat.\nReason: %1").arg(str));
+	QMessageBox* msg = new QMessageBox(QMessageBox::Information, tr("Error"), tr("Unable to join groupchat.\nReason: %1").arg(str), QMessageBox::Ok, this, Qt::WDestructiveClose);
+	msg->setModal(false);
+	msg->show();
 }
 
 void MUCJoinDlg::setJid(const Jid& mucJid)
