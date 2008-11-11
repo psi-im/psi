@@ -1148,8 +1148,9 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 			message = tr("Please choose a different nickname");
 			d->self = d->prev_self;
 		}
-		else
-			message = tr("An error occurred");
+		else {
+			message = tr("An error occurred (errorcode: %1)").arg(s.errorCode());
+		}
 		appendSysMsg(message, false, QDateTime::currentDateTime());
 		return;
 	}
