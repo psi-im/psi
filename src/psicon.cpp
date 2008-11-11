@@ -981,6 +981,7 @@ void PsiCon::doOpenUri(const QUrl &uri)
 	// scheme
 	if (uri.scheme() != "xmpp") {
 		QMessageBox::critical(0, tr("Unsupported URI type"), QString("URI (link) type \"%1\" is not supported.").arg(uri.scheme()));
+		return;
 	}
 
 	// authority
@@ -989,6 +990,7 @@ void PsiCon::doOpenUri(const QUrl &uri)
 		pa = d->contactList->defaultAccount();
 		if (!pa) {
 			QMessageBox::critical(0, tr("Error"), QString("You need to have an account configured and enabled to open URIs (links)."));
+			return;
 		}
 	//
 	// TODO: finish authority component handling
