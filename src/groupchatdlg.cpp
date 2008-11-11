@@ -1113,8 +1113,9 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 
 	if (nick == d->self) {
 		// Update configuration dialog
-		if (d->configDlg) 
+		if (d->configDlg) {
 			d->configDlg->setRoleAffiliation(s.mucItem().role(),s.mucItem().affiliation());
+		}
 		d->act_configure->setEnabled(s.mucItem().affiliation() >= MUCItem::Member);
 	}
 	
@@ -1123,10 +1124,11 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 		// Available
 		if (s.getMUCStatuses().contains(201)) {
 			appendSysMsg(tr("New room created"), false, QDateTime::currentDateTime());
-			if (options_->getOption("options.muc.accept-defaults").toBool())
+			if (options_->getOption("options.muc.accept-defaults").toBool()) {
 				d->mucManager->setDefaultConfiguration();
-			else if (options_->getOption("options.muc.auto-configure").toBool())
+			} else if (options_->getOption("options.muc.auto-configure").toBool()) {
 				QTimer::singleShot(0, this, SLOT(configureRoom()));
+			}
 		}
 
 		GCUserViewItem* contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
@@ -1148,10 +1150,11 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 						message = tr("%2 has joined the room as %1").arg(MUCManager::affiliationToString(s.mucItem().affiliation(),true));
 					}
 				}
-				if (!s.mucItem().jid().isEmpty())
+				if (!s.mucItem().jid().isEmpty()) {
 					message = message.arg(QString("%1 (%2)").arg(nick).arg(s.mucItem().jid().full()));
-				else
+				} else {
 					message = message.arg(nick);
+				}
 				appendSysMsg(message, false, QDateTime::currentDateTime());
 			}
 		}
@@ -1171,20 +1174,23 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 					message += tr("%1 is now %2").arg(nick).arg(MUCManager::affiliationToString(s.mucItem().affiliation(),true));
 				}
 
-				if (!message.isEmpty())
+				if (!message.isEmpty()) {
 					appendSysMsg(message, false, QDateTime::currentDateTime());
+				}
 			}
 			if ( !d->connecting && options_->getOption("options.muc.show-status-changes").toBool() ) {
 				if (s.status() != contact->s.status() || s.show() != contact->s.show())	{
 					QString message;
 					QString st;
-					if (s.show().isEmpty()) 
+					if (s.show().isEmpty()) {
 						st=tr("online");
-					else
+					} else {
 						st=s.show();
+					}
 					message = tr("%1 is now %2").arg(nick).arg(st);
-					if (!s.status().isEmpty())
+					if (!s.status().isEmpty()) {
 						message+=QString(" (%1)").arg(s.status());
+					}
 					appendSysMsg(message, false, QDateTime::currentDateTime());
 				}
 			}
@@ -1217,10 +1223,11 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 			QString message;
 			QString nickJid;
 			GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
-			if (contact && !contact->s.mucItem().jid().isEmpty())
+			if (contact && !contact->s.mucItem().jid().isEmpty()) {
 				nickJid = QString("%1 (%2)").arg(nick).arg(contact->s.mucItem().jid().full());
-			else
+			} else {
 				nickJid = nick;
+			}
 
 			if (s.getMUCStatuses().contains(301)) {
 				// Ban
@@ -1237,59 +1244,65 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 				if (!s.mucItem().reason().isEmpty()) 
 					message += QString(" (%1)").arg(s.mucItem().reason());
 			}
-			else if (s.getMUCStatuses().contains(303)) {
+			if (s.getMUCStatuses().contains(303)) {
 				message = tr("%1 is now known as %2").arg(nick).arg(s.mucItem().nick());
 				ui_.lv_users->updateEntry(s.mucItem().nick(), s);
 			}
-			else if (s.getMUCStatuses().contains(307)) {
+			if (s.getMUCStatuses().contains(307)) {
 				// Kick
 				if (nick == d->self) {
 					mucInfoDialog(tr("Kicked"), tr("You have been kicked from the room"), s.mucItem().actor(), s.mucItem().reason());
 					close();
 				}
 
-				if (!s.mucItem().actor().isEmpty())
+				if (!s.mucItem().actor().isEmpty()) {
 					message = tr("%1 has been kicked by %2").arg(nickJid).arg(s.mucItem().actor().full());
-				else
+				} else {
 					message = tr("%1 has been kicked").arg(nickJid);
+				}
 				if (!s.mucItem().reason().isEmpty()) 
 					message += QString(" (%1)").arg(s.mucItem().reason());
 			}
-			else if (s.getMUCStatuses().contains(321)) {
+			if (s.getMUCStatuses().contains(321)) {
 				// Remove due to affiliation change
 				if (nick == d->self) {
 					mucInfoDialog(tr("Removed"), tr("You have been removed from the room due to an affiliation change"), s.mucItem().actor(), s.mucItem().reason());
 					close();
 				}
 
-				if (!s.mucItem().actor().isEmpty())
+				if (!s.mucItem().actor().isEmpty()) {
 					message = tr("%1 has been removed from the room by %2 due to an affilliation change").arg(nickJid).arg(s.mucItem().actor().full());
-				else
+				} else {
 					message = tr("%1 has been removed from the room due to an affilliation change").arg(nickJid);
+				}
 
-				if (!s.mucItem().reason().isEmpty()) 
+				if (!s.mucItem().reason().isEmpty()) {
 					message += QString(" (%1)").arg(s.mucItem().reason());
+				}
 			}
-			else if (s.getMUCStatuses().contains(322)) {
+			if (s.getMUCStatuses().contains(322)) {
 				// Remove due to members only
 				if (nick == d->self) {
 					mucInfoDialog(tr("Removed"), tr("You have been removed from the room because the room was made members only"), s.mucItem().actor(), s.mucItem().reason());
 					close();
 				}
 
-				if (!s.mucItem().actor().isEmpty())
+				if (!s.mucItem().actor().isEmpty()) {
 					message = tr("%1 has been removed from the room by %2 because the room was made members-only").arg(nickJid).arg(s.mucItem().actor().full());
-				else
+				} else {
 					message = tr("%1 has been removed from the room because the room was made members-only").arg(nickJid);
+				}
 
-				if (!s.mucItem().reason().isEmpty()) 
+				if (!s.mucItem().reason().isEmpty()) {
 					message += QString(" (%1)").arg(s.mucItem().reason());
+				}
 			}
 			else {
 				//contact leaving
 				message = tr("%1 has left the room").arg(nickJid);
-				if (!s.status().isEmpty())
+				if (!s.status().isEmpty()) {
 					message += QString(" (%1)").arg(s.status());
+				}
 			}
 			appendSysMsg(message, false, QDateTime::currentDateTime());
 		}
