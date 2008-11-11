@@ -338,10 +338,10 @@ int main(int argc, char *argv[])
 			val = str.mid(x+1);
 		}
 
-		if (var == "--uri") {
+		if (str.startsWith("xmpp:")) {
+			uri = str;
+		} else if (var == "--uri") {
 			uri = val;
-		} else if (var.startsWith("xmpp:")) {
-			uri = var;
 		}
 		//if(var == "--no-gpg")
 		//	use_gpg = false;
