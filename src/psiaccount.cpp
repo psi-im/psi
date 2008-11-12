@@ -2594,30 +2594,32 @@ void PsiAccount::showXmlConsole()
 
 void PsiAccount::openAddUserDlg()
 {
-	if(!checkConnected())
-		return;
+	openAddUserDlg(QString(), QString(), QString());
+}
 
-	AddUserDlg *w = findDialog<AddUserDlg*>();
-	if(w)
-		bringToFront(w);
-	else {
-		QStringList gl, services, names;
-		UserListIt it(d->userList);
-		for(UserListItem *u; (u = it.current()); ++it) {
-			if(u->isTransport()) {
-				services += u->jid().full();
-				names += JIDUtil::nickOrJid(u->name(), u->jid().full());
-			}
-			foreach(QString group, u->groups()) {
-				if(!gl.contains(group))
-					gl.append(group);
-			}
+void PsiAccount::openAddUserDlg(const Jid &jid, const QString &nick, const QString &group)
+{
+	QStringList gl, services, names;
+	UserListIt it(d->userList);
+	for(UserListItem *u; (u = it.current()); ++it) {
+		if(u->isTransport()) {
+			services += u->jid().full();
+			names += JIDUtil::nickOrJid(u->name(), u->jid().full());
 		}
-
-		w = new AddUserDlg(services, names, gl, this);
-		connect(w, SIGNAL(add(const XMPP::Jid &, const QString &, const QStringList &, bool)), SLOT(dj_add(const XMPP::Jid &, const QString &, const QStringList &, bool)));
-		w->show();
+		foreach(QString group, u->groups()) {
+			if(!gl.contains(group))
+				gl.append(group);
+		}
 	}
+
+	AddUserDlg* w;
+	if (jid.isEmpty()) {
+		w = new AddUserDlg(services, names, gl, this);
+	} else {
+		w = new AddUserDlg(jid, nick, group, gl, this);
+	}
+	connect(w, SIGNAL(add(const XMPP::Jid &, const QString &, const QStringList &, bool)), SLOT(dj_add(const XMPP::Jid &, const QString &, const QStringList &, bool)));
+	w->show();
 }
 
 void PsiAccount::doDisco()
@@ -3515,8 +3517,8 @@ void PsiAccount::openUri(const QUrl &uriToOpen)
 	//	// ...
 	//} else if (querytype == "register") {
 	//} else if (querytype == "remove") {
-	//} else if (querytype == "roster") {
-	//	openAddUserDlg(entity, uri.queryItemValue("name"), uri.queryItemValue("group"));
+	} else if (querytype == "roster") {
+		openAddUserDlg(entity, uri.queryItemValue("name"), uri.queryItemValue("group"));
 	//} else if (querytype == "sendfile") {
 	//} else if (querytype == "subscribe") {
 	//} else if (querytype == "unregister") {

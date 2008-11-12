@@ -35,6 +35,7 @@ class AddUserDlg : public QDialog, public Ui::AddUser
 	Q_OBJECT
 public:
 	AddUserDlg(const QStringList &services, const QStringList &names, const QStringList &groups, PsiAccount *);
+	AddUserDlg(const XMPP::Jid &jid, const QString &nick, const QString &group, const QStringList &groups, PsiAccount *);
 	~AddUserDlg();
 
 signals:
@@ -45,7 +46,6 @@ private slots:
 	void cancel();
 	void serviceActivated(int);
 	void getTransID();
-	void pa_updatedActivity();
 	void jt_getFinished();
 	void jt_setFinished();
 	void le_transPromptChanged(const QString &);
@@ -57,6 +57,7 @@ private slots:
 	void jid_Changed();
 
 private:
+	void init(const QStringList &groups, PsiAccount *);
 	class Private;
 	Private *d;
 

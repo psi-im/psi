@@ -53,24 +53,11 @@ public:
 };
 
 AddUserDlg::AddUserDlg(const QStringList &services, const QStringList &names, const QStringList &groups, PsiAccount *pa)
-:QDialog(0)
+	: QDialog(0)
 {
-  	setupUi(this);
-	setModal(false);
-	d = new Private;
-	d->pa = pa;
-	d->pa->dialogRegister(this);
-	connect(d->pa, SIGNAL(updatedActivity()), SLOT(pa_updatedActivity()));
+	init(groups, pa);
 	d->services = services;
-	d->jt = 0;
-	d->tasks = new TaskList;
-	connect(d->tasks, SIGNAL(started()),  busy, SLOT(start()));
-	connect(d->tasks, SIGNAL(finished()), busy, SLOT(stop()));
 
-	setWindowTitle(CAP(caption()));
-	setWindowIcon(IconsetFactory::icon("psi/addContact").icon());
-
-	d->busy = busy;
 
 	QStringList::ConstIterator it1 = services.begin();
 	QStringList::ConstIterator it2 = names.begin();
@@ -81,14 +68,56 @@ AddUserDlg::AddUserDlg(const QStringList &services, const QStringList &names, co
 	connect(le_transPrompt, SIGNAL(textChanged(const QString &)), SLOT(le_transPromptChanged(const QString &)));
 	pb_transGet->setEnabled(false);
 
+}
+
+AddUserDlg::AddUserDlg(const XMPP::Jid &jid, const QString &nick, const QString &group, const QStringList &groups, PsiAccount *pa)
+{
+	init(groups, pa);
+
+	le_jid->setText(jid.full());	// TODO: do we want to encourage adding jids with resource?
+	le_nick->setText(nick);
+
+	QStringList suggestedGroups = groups.filter(group, Qt::CaseInsensitive);
+	if (suggestedGroups.size() > 0) {
+		cb_group->lineEdit()->setText(suggestedGroups[0]);
+	} else {
+		cb_group->lineEdit()->setText(group);
+	}
+
+	QSize s(te_info->width(), w_serviceTranslation->sizeHint().height());
+	w_serviceTranslation->hide();
+	w_serviceTranslation->setEnabled(false);
+	te_info->hide();
+	
+	resize(size() - s);
+}
+
+void AddUserDlg::init(const QStringList &groups, PsiAccount *pa)
+{
+  	setupUi(this);
+	setModal(false);
+	d = new Private;
+	d->pa = pa;
+	d->pa->dialogRegister(this);
+	d->jt = 0;
+	d->tasks = new TaskList;
+	connect(d->tasks, SIGNAL(started()),  busy, SLOT(start()));
+	connect(d->tasks, SIGNAL(finished()), busy, SLOT(stop()));
+
+	setWindowTitle(CAP(caption()));
+	setWindowIcon(IconsetFactory::icon("psi/addContact").icon());
+
+	d->busy = busy;
+
 	QString str = tr("<None>");
 	cb_group->insertItem(str);
 	QStringList temp=groups;
 	temp.sort();
 	cb_group->insertStringList(temp);
 	str = ContactView::tr("Hidden");
-	if(!groups.contains(str))
+	if (!groups.contains(str)) {
 		cb_group->insertItem(str);
+	}
 	cb_group->setAutoCompletion(true);
 
 	pb_add->setDefault(true);
@@ -114,12 +143,6 @@ AddUserDlg::~AddUserDlg()
 	delete d;
 }
 
-void AddUserDlg::pa_updatedActivity()
-{
-	if(!d->pa->loggedIn())
-		close();
-}
-
 Jid AddUserDlg::jid() const
 {
 	return Jid(le_jid->text().stripWhiteSpace());
@@ -135,6 +158,10 @@ void AddUserDlg::cancel()
 
 void AddUserDlg::ok()
 {
+	if (!d->pa->checkConnected()) {
+		return;
+	}
+
 	if(le_jid->text().isEmpty()) {
 		QMessageBox::information(this, tr("Add User: Error"), tr("Please fill in the Jabber ID of the person you wish to add."));
 		return;
