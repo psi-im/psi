@@ -41,7 +41,7 @@ MCmdManager::~MCmdManager() {
 }
 
 
-QStringList MCmdManager::parseCommand(const QString command, int pos, int &part, QString &partial, int &start, int &end)
+QStringList MCmdManager::parseCommand(const QString command, int pos, int &part, QString &partial, int &start, int &end, char &quotedAtPos)
 {
 	QStringList list;
 	QString item;
@@ -50,12 +50,14 @@ QStringList MCmdManager::parseCommand(const QString command, int pos, int &part,
 	bool space=true;
 
 	int partStart = 0;
+	quotedAtPos = 0;
 	for (int i=0; i < command.length(); i++) {
 		if (i == pos) {
 			part = list.size();
 			partial = item;
 			end = i;
 			start = partStart;
+			if (quote) quotedAtPos =  (quote == 1) ? '"' : '\'';
 		}
 
 
@@ -94,6 +96,7 @@ QStringList MCmdManager::parseCommand(const QString command, int pos, int &part,
 		partial = item;
 		end = command.length();
 		start = partStart;
+		if (quote) quotedAtPos =  (quote == 1) ? '"' : '\'';
 	}
 
 	if (!space) list << item;
@@ -121,7 +124,8 @@ bool MCmdManager::processCommand(QString command) {
 	QStringList preset;
 	int tmp_1;
 	QString tmp_2;
-	QStringList items = parseCommand(command, -1, tmp_1, tmp_2, tmp_1, tmp_1);
+	char tmp_3;
+	QStringList items = parseCommand(command, -1, tmp_1, tmp_2, tmp_1, tmp_1, tmp_3);
 	foreach(MCmdProviderIface *prov, providers_) {
 		if (prov->mCmdTryStateTransit(state_, items, tmpstate, preset)) {
 			state_ = tmpstate;
@@ -159,15 +163,30 @@ bool MCmdManager::open(MCmdStateIface *state, QStringList preset) {
 QStringList MCmdManager::completeCommand(QString &command, int pos, int &start, int &end) {
 	int part;
 	QString query;
-	QStringList all = parseCommand(command, pos, part, query, start, end);
+	char quotedAtPos;
+	QStringList all = parseCommand(command, pos, part, query, start, end, quotedAtPos);
 
 	QStringList res;
 	foreach(MCmdProviderIface *prov, providers_) {
 		res += prov->mCmdTryCompleteCommand(state_, query, all, part);
 	}
 	res.sort();
-	qDebug() << "completeCommand" << res;
-	return res;
+
+	QStringList quoted;
+	foreach(QString str, res) {
+		QString trail;
+		if (str.size() > 1 && str.at(str.size()-1) == QChar(0)) {
+			str.chop(1);
+			trail = " ";
+		}
+		str = str.replace("\\", "\\\\");
+		if (quotedAtPos == 0) {
+			quoted << str.replace(" ", "\\ ").replace("\"", "\\\"").replace("'", "\\'") + trail;
+		} else {
+			quoted << quotedAtPos + str.replace(quotedAtPos, QString("\\") + quotedAtPos) + trail;
+		}
+	}
+	return quoted;
 }
 
 bool MCmdManager::isActive() {

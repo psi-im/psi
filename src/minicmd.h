@@ -141,6 +141,9 @@ public:
 	 *  cursor). If the provider needs more context to find the list of
 	 *  possible completions \a partcommand contains the parsed current
 	 *  commandline and \a item indicates which part contains the cursor.
+	 *
+	 * \return a QStringList of all possible completions. If a completion ends with a null char,
+	 *           an unquoted/unescaped space will be added at the end of the completion.
 	 */
 	virtual QStringList mCmdTryCompleteCommand(MCmdStateIface *state, QString query, QStringList partcommand, int item)=0;
 

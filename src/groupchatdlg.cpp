@@ -396,8 +396,9 @@ join <channel>{,<channel>} [pass{,<pass>}
 		qDebug() << "mCmdTryCompleteCommand " << item << ":" << query;
 		QStringList all;
 		if (state->getName() == MCMDMUC) {
+			QString spaceAtEnd = QString(QChar(0));
 			if (item == 0) {
-				all << "clear " << "nick " << "sping " << "version " << "quote ";
+				all << "clear" + spaceAtEnd << "nick" + spaceAtEnd << "sping" + spaceAtEnd << "version" + spaceAtEnd << "quote" + spaceAtEnd;
 			} else if (item == 1 && partcommand[0] == "version") {
 				all = dlg->ui_.lv_users->nickList();
 			}
