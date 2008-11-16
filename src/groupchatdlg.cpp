@@ -306,7 +306,7 @@ public slots:
 
 	void doNick()
 	{
-		MCmdSimpleState *state = new MCmdSimpleState(MCMDMUCNICK, "new nick>");
+		MCmdSimpleState *state = new MCmdSimpleState(MCMDMUCNICK, "new nick=", MCMDSTATE_UNPARSED);
 		connect(state, SIGNAL(unhandled(QStringList)), SLOT(NickComplete(QStringList)));
 		mCmdManager.open(state, QStringList() << self);
 	}
@@ -362,9 +362,10 @@ join <channel>{,<channel>} [pass{,<pass>}
 					newstate = 0;
 				} else {
 					// FIXME DRY with doNick
-					MCmdSimpleState *state = new MCmdSimpleState("nick", "new nick>");
+					MCmdSimpleState *state = new MCmdSimpleState("nick", "new nick=", MCMDSTATE_UNPARSED);
 					connect(state, SIGNAL(unhandled(QStringList)), SLOT(NickComplete(QStringList)));
-					mCmdManager.open(state, QStringList() << self);
+					newstate = state;
+					preset = QStringList() << self;
 				}
 			} else if(cmd == "sping") {
 				doSPing();

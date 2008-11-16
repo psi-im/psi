@@ -35,10 +35,13 @@ class MCmdSimpleState : public QObject, public MCmdStateIface
 	Q_OBJECT
 public:
 	MCmdSimpleState(QString name, QString prompt);
+	MCmdSimpleState(QString name, QString prompt, int flags);
 
 	virtual QString getName() { return name_;};
 
 	virtual QString getPrompt() { return prompt_;};
+
+	virtual int getFlags() { return flags_;};
 
 	virtual const QHash<QString, QVariant> &getInfo() { return info_; };
 
@@ -54,6 +57,7 @@ signals:
 
 protected:
 	QString name_, prompt_;
+	int flags_;
 };
 
 

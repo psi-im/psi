@@ -29,6 +29,10 @@ class QString;
 class QStringList;
 class MCmdProviderIface;
 
+/** unparsed state: this is a state where the whole user input is passed
+  * unparsed as the first part to the handler functions
+  */
+#define MCMDSTATE_UNPARSED	1
 
 /** This interface models the methods common to all mini command states.
   */
@@ -41,6 +45,10 @@ public:
 	/** \return the prompt of the state
 	  */
 	virtual QString getPrompt()=0;
+
+	/** \return flags for this state
+	  */
+	virtual int getFlags()=0;
 
 	/** Called when the state is no longer needed to free associated memory.
 	 */
