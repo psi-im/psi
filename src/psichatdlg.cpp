@@ -60,7 +60,7 @@ public:
 				JT_ClientVersion *version = new JT_ClientVersion(dlg_->account()->client()->rootTask());
 				connect(version, SIGNAL(finished()), SLOT(version_finished()));
 
-				qDebug() << "querying: " << dlg_->jid().full();
+				//qDebug() << "querying: " << dlg_->jid().full();
 				version->get(dlg_->jid());
 				version->go();
 				newstate = 0;

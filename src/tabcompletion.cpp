@@ -51,6 +51,8 @@ QTextEdit* TabCompletion::getTextEdit() {
 
 
 void TabCompletion::highlight(bool set) {
+	Q_UNUSED(set);
+/*
 	if (set) {
 		QTextEdit::ExtraSelection es;
 		es.cursor = replacementCursor_;
@@ -58,7 +60,7 @@ void TabCompletion::highlight(bool set) {
 		textEdit_->setExtraSelections(QList<QTextEdit::ExtraSelection>() << es);
 	} else {
 		if (textEdit_) textEdit_->setExtraSelections(QList<QTextEdit::ExtraSelection>());
-	}
+	}*/
 }
 
 

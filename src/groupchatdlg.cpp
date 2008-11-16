@@ -394,7 +394,7 @@ join <channel>{,<channel>} [pass{,<pass>}
 	}
 
 	virtual QStringList mCmdTryCompleteCommand(MCmdStateIface *state, QString query, QStringList partcommand, int item) {
-		qDebug() << "mCmdTryCompleteCommand " << item << ":" << query;
+		//qDebug() << "mCmdTryCompleteCommand " << item << ":" << query;
 		QStringList all;
 		if (state->getName() == MCMDMUC) {
 			QString spaceAtEnd = QString(QChar(0));
