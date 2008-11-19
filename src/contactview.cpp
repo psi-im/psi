@@ -3409,28 +3409,29 @@ void ContactViewItem::resetName(bool forceNoStatusMsg)
 		QString s = JIDUtil::nickOrJid(d->u->name(), d->u->jid().full());
 			
 		if (d->status_single && !forceNoStatusMsg) {
-			s = "<nobr>" + s + "</nobr>";
+			s = "<nobr>" + TextUtil::plain2rich(s) + "</nobr>";
 		}
 
 		// Add the status message if wanted 
 		if (!forceNoStatusMsg && static_cast<ContactView*>(Q3ListViewItem::listView())->isShowStatusMsg()) {
 			QString statusMsg;
-			if (d->u->priority() != d->u->userResourceList().end()) 
+			if (d->u->priority() != d->u->userResourceList().end()) {
 				statusMsg = (*d->u->priority()).status().status();
-			else 
+			} else {
 				statusMsg = d->u->lastUnavailableStatus().status();
+			}
 
 			if (d->status_single) {
-				statusMsg.replace("<","&lt;");
-				statusMsg.replace(">","&gt;");
 				statusMsg = statusMsg.simplifyWhiteSpace();
-				if (!statusMsg.isEmpty())
-					s += "<br><font size=-1 color='" + PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-messages").value<QColor>().name() + "'><nobr>" + statusMsg + "</nobr></font>";
+				if (!statusMsg.isEmpty()) {
+					s += "<br><font size=-1 color='" + PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-messages").value<QColor>().name() + "'><nobr>" + TextUtil::plain2rich(statusMsg) + "</nobr></font>";
+				}
 			}
 			else {
-				statusMsg.replace('\n'," ");
-				if (!statusMsg.isEmpty())
+				if (!statusMsg.isEmpty()) {
+					statusMsg.replace('\n'," ");
 					s += " (" + statusMsg + ")";
+				}
 			}
 		}
 
