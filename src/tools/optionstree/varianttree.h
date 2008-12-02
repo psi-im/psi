@@ -55,7 +55,7 @@ public:
 	~VariantTree();
 
 	void setValue(QString node, QVariant value);
-	QVariant getValue(QString node) const;
+	QVariant getValue(const QString& node) const;
 	
 	bool isInternalNode(QString node) const;
 
@@ -78,7 +78,7 @@ protected:
 	static QVariant elementToVariant(const QDomElement&);
 	static void variantToElement(const QVariant&, QDomElement&);
 	
-	static bool getKeyRest(QString node, QString &key, QString &rest);
+	static bool getKeyRest(const QString& node, QString &key, QString &rest);
 
 private:
 	QMap<QString, VariantTree*> trees_;

@@ -65,7 +65,7 @@ VariantTree::~VariantTree()
  * @param rest part of the @a node after first dot
  * @return 
  */
-bool VariantTree::getKeyRest(QString node, QString &key, QString &rest)
+bool VariantTree::getKeyRest(const QString& node, QString &key, QString &rest)
 {
 	int idx = node.indexOf(".");
 	if (idx != -1) {
@@ -138,7 +138,7 @@ void VariantTree::setValue(QString node, QVariant value)
  * Get value at @a node
  * @return the value of @a node if @a node exists, otherwise VariantTree::missingValue
  */
-QVariant VariantTree::getValue(QString node) const
+QVariant VariantTree::getValue(const QString& node) const
 {
 	QString key,subnode;
 	if (getKeyRest(node, key, subnode)) {
