@@ -62,6 +62,9 @@ public:
 	void link(PsiAccount*);
 	void unlink(PsiAccount*);
 
+	void beginBulkOperation();
+	void endBulkOperation();
+
 signals:
 	/**
 	 * This signal is emitted when account is loaded from disk or created

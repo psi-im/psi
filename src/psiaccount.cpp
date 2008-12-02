@@ -417,6 +417,8 @@ public slots:
 
 	void setEnabled( bool e )
 	{
+		psi->contactList()->beginBulkOperation();
+
 		acc.opt_enabled = e;
 		cp->setEnabled(e);
 		account->cpUpdate(self);
@@ -424,6 +426,8 @@ public slots:
 		// signals
 		account->enabledChanged();
 		account->updatedAccount();
+
+		psi->contactList()->endBulkOperation();
 	}
 
 	void client_xmlIncoming(const QString &s)
@@ -1667,6 +1671,7 @@ void PsiAccount::client_rosterRequestFinished(bool success, int, const QString &
 {
 	if(success) {
 		//printf("PsiAccount: [%s] roster retrieved ok.  %d entries.\n", name().latin1(), d->client->roster().count());
+		psi()->contactList()->beginBulkOperation();
 
 		// delete flagged items
 		UserListIt it(d->userList);
@@ -1683,6 +1688,8 @@ void PsiAccount::client_rosterRequestFinished(bool success, int, const QString &
 			else
 				++it;
 		}
+
+		psi()->contactList()->endBulkOperation();
 	}
 	else {
 		//printf("PsiAccount: [%s] error retrieving roster: [%d, %s]\n", name().latin1(), code, str.latin1());

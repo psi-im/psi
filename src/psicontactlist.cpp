@@ -24,6 +24,7 @@
 #include "accountadddlg.h"
 #include "serverinfomanager.h"
 #include "psicon.h"
+#include "contactview.h"
 
 /**
  * Constructs new PsiContactList. \param psi will not be PsiContactList's parent though.
@@ -187,9 +188,11 @@ PsiAccount* PsiContactList::queueLowestEventId()
  */
 PsiAccount *PsiContactList::loadAccount(const UserAccount& acc)
 {
+	beginBulkOperation();
 	PsiAccount *pa = psi_->createAccount(acc);
 	connect(pa, SIGNAL(enabledChanged()), SIGNAL(accountCountChanged()));
 	emit accountAdded(pa);
+	endBulkOperation();
 	return pa;
 }
 
@@ -198,8 +201,10 @@ PsiAccount *PsiContactList::loadAccount(const UserAccount& acc)
  */
 void PsiContactList::loadAccounts(const UserAccountList &list)
 {
+	beginBulkOperation();
 	foreach(UserAccount account, list)
 		loadAccount(account);
+	endBulkOperation();
 }
 
 /**
@@ -275,3 +280,36 @@ void PsiContactList::accountEnabledChanged()
 		enabledAccounts_.append(account);
 }
 
+static int sortColumn = -1;
+static int operationCount = 0;
+/**
+ * This function should be called when a big update inside PsiContactList is taking place
+ * to enable optimizations (currently it just turns off the sorting of ContactView).
+ */
+void PsiContactList::beginBulkOperation()
+{
+	operationCount++;
+	if (operationCount == 1) {
+		Q_ASSERT(psi());
+		Q_ASSERT(psi()->contactView());
+		sortColumn = psi()->contactView()->sortColumn();
+		Q_ASSERT(sortColumn != -1);
+		psi()->contactView()->setSorting(-1, true);
+	}
+}
+
+/**
+ * This function should be called when a big update inside PsiContactList is finished
+ * (currently it re-enables the sorting of ContactView).
+ */
+void PsiContactList::endBulkOperation()
+{
+	operationCount--;
+	if (operationCount <= 0) {
+		Q_ASSERT(psi());
+		Q_ASSERT(psi()->contactView());
+		Q_ASSERT(sortColumn != -1);
+		psi()->contactView()->setSorting(sortColumn, true);
+		sortColumn = -1;
+	}
+}
