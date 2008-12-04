@@ -92,7 +92,7 @@
       <item>
        <widget class="QCheckBox" name="ck_dockHideMW" >
         <property name="text" >
-         <string>Hide roster window on startup</string>
+         <string>Start minimized</string>
         </property>
        </widget>
       </item>
