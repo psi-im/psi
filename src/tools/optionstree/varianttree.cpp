@@ -67,7 +67,7 @@ VariantTree::~VariantTree()
  */
 bool VariantTree::getKeyRest(const QString& node, QString &key, QString &rest)
 {
-	int idx = node.indexOf(".");
+	int idx = node.indexOf(QChar('.'));
 	if (idx != -1) {
 		key=node.left(idx);
 		rest=node.mid(idx+1);
@@ -86,7 +86,7 @@ but we don't want to have namespaces in the node names....
 	
 	but for now just allow ascii subset of this:
 	*/	
-	if (name == "") return false;
+	if (name.isEmpty()) return false;
 	int len = name.length();
 	QString other(".-_");
 	QChar ch = name[0];
@@ -204,11 +204,11 @@ bool VariantTree::isInternalNode(QString node) const
  */
 void VariantTree::setComment(QString node, QString comment)
 {
-	if (node.contains("."))
+	if (node.contains(QChar('.')))
 	{
 		//not this tier
-		QString key=node.left(node.indexOf("."));
-		QString subnode=node.remove(0,node.indexOf(".")+1);
+		QString key=node.left(node.indexOf(QChar('.')));
+		QString subnode=node.remove(0,node.indexOf(QChar('.'))+1);
 		Q_ASSERT(isValidNodeName(key));
 		if (!trees_.contains(key))
 		{
@@ -235,11 +235,11 @@ void VariantTree::setComment(QString node, QString comment)
  */
 QString VariantTree::getComment(QString node) const
 {
-	if (node.contains("."))
+	if (node.contains(QChar('.')))
 	{
 		//not this tier
-		QString key=node.left(node.indexOf("."));
-		QString subnode=node.remove(0,node.indexOf(".")+1);
+		QString key=node.left(node.indexOf(QChar('.')));
+		QString subnode=node.remove(0,node.indexOf(QChar('.'))+1);
 		if (trees_.contains(key))
 		{
 			return trees_[key]->getComment(subnode);
@@ -267,8 +267,8 @@ QStringList VariantTree::nodeChildren(const QString& node, bool direct, bool int
 		// Go down further
 		QString subnode;
 		if (node.contains('.')) {
-			key = node.left(node.indexOf("."));
-			subnode = node.right(node.length() - node.indexOf(".") - 1);
+			key = node.left(node.indexOf(QChar('.')));
+			subnode = node.right(node.length() - node.indexOf(QChar('.')) - 1);
 		}
 		if (trees_.contains(key)) {
 			children = trees_[key]->nodeChildren(subnode,direct,internal_nodes);
@@ -310,7 +310,7 @@ void VariantTree::toXml(QDomDocument &doc, QDomElement& ele) const
 {
 	// Subtrees
 	foreach (QString node, trees_.keys()) {
-		Q_ASSERT(node != "");
+		Q_ASSERT(!node.isEmpty());
 		QDomElement nodeEle = doc.createElement(node);
 		trees_[node]->toXml(doc, nodeEle);
 		if (comments_.contains(node))
@@ -320,7 +320,7 @@ void VariantTree::toXml(QDomDocument &doc, QDomElement& ele) const
 	
 	// Values
 	foreach (QString child, values_.keys()) {
-		Q_ASSERT(child != "");
+		Q_ASSERT(!child.isEmpty());
 		QVariant var = values_[child];
 		QDomElement valEle = doc.createElement(child);
 		variantToElement(var,valEle);
@@ -345,7 +345,7 @@ void VariantTree::fromXml(const QDomElement &ele)
 	while (!child.isNull()) {
 		bool isunknown=false;
 		QString name = child.nodeName();
-		Q_ASSERT(name != "");
+		Q_ASSERT(!name.isEmpty());
 		if (!child.hasAttribute("type")) {
 			// Subnode
 			if ( !trees_.contains(name) )

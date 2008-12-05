@@ -23,7 +23,7 @@
 
 #include <QObject>
 #include <QVariant>
-#include <QMap>
+#include <QHash>
 
 class QDomDocument;
 class QDomElement;
@@ -81,10 +81,10 @@ protected:
 	static bool getKeyRest(const QString& node, QString &key, QString &rest);
 
 private:
-	QMap<QString, VariantTree*> trees_;
-	QMap<QString, QVariant> values_;
-	QMap<QString, QString> comments_;
-	QMap<QString, QDomDocumentFragment> unknowns_;		// unknown types preservation
+	QHash<QString, VariantTree*> trees_;
+	QHash<QString, QVariant> values_;
+	QHash<QString, QString> comments_;
+	QHash<QString, QDomDocumentFragment> unknowns_;		// unknown types preservation
 	
 	// needed to have a document for the fragments.
 	static QDomDocument *unknownsDoc;
