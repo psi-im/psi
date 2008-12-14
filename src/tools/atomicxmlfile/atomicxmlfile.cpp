@@ -22,7 +22,6 @@
 
 #include <QDomDocument>
 #include <QFile>
-#include <QStringList>
 #include <QTextStream>
 
 /**
@@ -35,62 +34,12 @@ AtomicXmlFile::AtomicXmlFile(QString fileName)
 {
 }
 
-/**
- * Atomically save \a doc to specified name. Prior to saving, back up
- * of old config data is created, and only then data is saved.
- */
-bool AtomicXmlFile::saveDocument(const QDomDocument& doc) const
-{
-	if (!saveDocument(doc, tempFileName())) {
-		qWarning("AtomicXmlFile::saveDocument(): Unable to save '%s'. Possibly drive is full.",
-		         qPrintable(tempFileName()));
-		return false;
-	}
-
-	if (QFile::exists(backupFileName()))
-		QFile::remove(backupFileName());
-
-	if (QFile::exists(fileName_)) {
-		if (!QFile::rename(fileName_, backupFileName())) {
-			qWarning("AtomicXmlFile::saveDocument(): Unable to rename '%s' to '%s'.",
-			         qPrintable(fileName_), qPrintable(backupFileName()));
-			return false;
-		}
-	}
-
-	if (!QFile::rename(tempFileName(), fileName_)) {
-		qWarning("AtomicXmlFile::saveDocument(): Unable to rename '%s' to '%s'.",
-		         qPrintable(tempFileName()), qPrintable(fileName_));
-		return false;
-	}
-
-	return true;
-}
-
-
 QStringList AtomicXmlFile::loadCandidateList() const {
 	QStringList fileNames;
 	fileNames << fileName_
 	          << tempFileName()
 	          << backupFileName();
 	return fileNames;
-}
-
-/**
- * Tries to load \a doc from config file, or if that fails, from a back up.
- */
-bool AtomicXmlFile::loadDocument(QDomDocument* doc) const
-{
-	Q_ASSERT(doc);
-
-
-	foreach(QString fileName, loadCandidateList()) {
-		if (loadDocument(doc, fileName)) {
-			return true;
-		}
-	}
-
-	return false;
 }
 
 /**
@@ -111,11 +60,9 @@ QString AtomicXmlFile::backupFileName() const
 
 bool AtomicXmlFile::saveDocument(const QDomDocument& doc, QString fileName) const
 {
-	bool result = false;
-
 	QFile file(fileName);
 	if (!file.open(QIODevice::WriteOnly)) {
-		return result;
+		return false;
 	}
 
 	QTextStream text;
@@ -123,31 +70,51 @@ bool AtomicXmlFile::saveDocument(const QDomDocument& doc, QString fileName) cons
 	text.setCodec("UTF-8");
 	text << doc.toString();
 
-	result = file.error() == QFile::NoError;
-	file.close();
-
-	// QFile error checking should be enough, but to be completely sure that
-	// XML is well-formed we could try to parse data we just had written:
-	// if (result) {
-	// 	QDomDocument temp;
-	// 	result = loadDocument(&temp, fileName);
-	// }
-
-	return result;
+	return file.error() == QFile::NoError;
 }
 
 bool AtomicXmlFile::loadDocument(QDomDocument* doc, QString fileName) const
 {
+	Q_ASSERT(doc);
 	QFile file(fileName);
 	if (!file.open(QIODevice::ReadOnly)) {
 		return false;
 	}
 
-	if (!doc->setContent(&file)) {
+	return doc->setContent(&file);
+}
+
+bool AtomicXmlFile::saveDocument(AtomicXmlFileWriter* writer, QString fileName) const
+{
+	Q_ASSERT(writer);
+	QFile file(fileName);
+	if (!file.open(QIODevice::WriteOnly)) {
 		return false;
 	}
 
-	file.close();
+	if (!writer->write(&file)) {
+		return false;
+	}
+
+	return file.error() == QFile::NoError;
+}
+
+bool AtomicXmlFile::loadDocument(AtomicXmlFileReader* reader, QString fileName) const
+{
+	Q_ASSERT(reader);
+	QFile file(fileName);
+	if (!file.open(QIODevice::ReadOnly)) {
+		return false;
+	}
+
+	if (!reader->read(&file)) {
+		qWarning("Parse error in file %s at line %d, column %d:\n%s",
+		         qPrintable(fileName), (int)reader->lineNumber(),
+		         (int)reader->columnNumber(), qPrintable(reader->errorString()));
+
+		return false;
+	}
+
 	return true;
 }
 
@@ -166,5 +133,3 @@ bool AtomicXmlFile::exists(QString fileName) {
 	}
 	return false;
 }
-
-

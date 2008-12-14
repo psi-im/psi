@@ -88,7 +88,8 @@ private:
 	
 	// needed to have a document for the fragments.
 	static QDomDocument *unknownsDoc;
-	
-}; 
+	friend class OptionsTreeReader;
+	friend class OptionsTreeWriter;
+};
 
 #endif /* _VARIANTTREE_H_ */

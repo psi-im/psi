@@ -25,6 +25,8 @@
 #include <QStringList>
 
 #include "atomicxmlfile.h"
+#include "optionstreereader.h"
+#include "optionstreewriter.h"
 
 /**
  * Default constructor
@@ -221,8 +223,16 @@ QVariantList OptionsTree::mapKeyList(const QString &basename) const
  * \param configNS Namespace of the config format
  * \return 'true' if the file saves, 'false' if it fails
  */
-bool OptionsTree::saveOptions(const QString& fileName, const QString& configName, const QString& configNS, const QString& configVersion) const
+bool OptionsTree::saveOptions(const QString& fileName, const QString& configName, const QString& configNS, const QString& configVersion, bool streamWriter) const
 {
+	AtomicXmlFile f(fileName);
+	if (streamWriter) {
+		OptionsTreeWriter writer(this);
+		writer.setName(configName);
+		writer.setNameSpace(configNS);
+		writer.setVersion(configVersion);
+		return f.saveDocument(&writer);
+	}
 	QDomDocument doc(configName);
 
 	QDomElement base = doc.createElement(configName);
@@ -232,7 +242,6 @@ bool OptionsTree::saveOptions(const QString& fileName, const QString& configName
 	doc.appendChild(base);
 	
 	tree_.toXml(doc, base);
-	AtomicXmlFile f(fileName);
 	if (!f.saveDocument(doc))
 		return false;
 
@@ -247,9 +256,14 @@ bool OptionsTree::saveOptions(const QString& fileName, const QString& configName
  * \param configNS Namespace of the config format
  * \return 'true' if the file loads, 'false' if it fails
  */
-bool OptionsTree::loadOptions(const QString& fileName, const QString& configName, const QString& configNS,  const QString& configVersion)
+bool OptionsTree::loadOptions(const QString& fileName, const QString& configName, const QString& configNS,  const QString& configVersion, bool streamReader)
 {
 	AtomicXmlFile f(fileName);
+	if (streamReader) {
+		OptionsTreeReader reader(this);
+		return f.loadDocument(&reader);
+	}
+
 	QDomDocument doc;
 	if (!f.loadDocument(&doc))
 		return false;
