@@ -3,6 +3,7 @@
 #include <QSize>
 #include <QRect>
 #include <QKeySequence>
+#include <QBuffer>
 
 #include "optionstree.h";
 #include "varianttree.h"
@@ -71,7 +72,9 @@ void OptionsTreeWriter::writeTree(const VariantTree* tree)
 		writeEndElement();
 	}
 
-	// TODO: handle unknowns
+	foreach(QString unknown, tree->unknowns2_.keys()) {
+		writeUnknown(tree->unknowns2_[unknown]);
+	}
 }
 
 void OptionsTreeWriter::writeVariant(const QVariant& variant)
@@ -111,4 +114,43 @@ void OptionsTreeWriter::writeVariant(const QVariant& variant)
 	else {
 		writeCharacters(variant.toString());
 	}
+}
+
+void OptionsTreeWriter::writeUnknown(const QString& unknown)
+{
+	QByteArray ba = unknown.toUtf8();
+	QBuffer buffer(&ba);
+	buffer.open(QIODevice::ReadOnly);
+	QXmlStreamReader reader;
+	reader.setDevice(&buffer);
+
+	while (!reader.atEnd()) {
+		reader.readNext();
+
+		if (reader.isStartElement()) {
+			readUnknownTree(&reader);
+		}
+	}
+}
+
+void OptionsTreeWriter::readUnknownTree(QXmlStreamReader* reader)
+{
+	Q_ASSERT(reader->isStartElement());
+	writeStartElement(reader->name().toString());
+	foreach(QXmlStreamAttribute attr, reader->attributes()) {
+		writeAttribute(attr.name().toString(), attr.value().toString());
+	}
+
+	while (!reader->atEnd()) {
+		writeCharacters(reader->text().toString());
+		reader->readNext();
+
+		if (reader->isEndElement())
+			break;
+
+		if (reader->isStartElement())
+			readUnknownTree(reader);
+	}
+
+	writeEndElement();
 }

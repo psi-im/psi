@@ -2,6 +2,7 @@
 
 #include <QSize>
 #include <QRect>
+#include <QBuffer>
 
 #include "optionstree.h"
 #include "varianttree.h"
@@ -55,7 +56,7 @@ void OptionsTreeReader::readTree(VariantTree* tree)
 					tree->values_[name().toString()] = v;
 				}
 				else {
-					// TODO: preserve yet unknown values
+					tree->unknowns2_[name().toString()] = unknown_;
 				}
 			}
 		}
@@ -104,7 +105,20 @@ QVariant OptionsTreeReader::readVariant(const QString& type)
 			result.convert(varianttype);
 		}
 		else {
-			readUnknownElement();
+			QString result;
+			QByteArray ba;
+			QBuffer buffer(&ba);
+			buffer.open(QIODevice::WriteOnly);
+			QXmlStreamWriter writer;
+			writer.setDevice(&buffer);
+
+			writer.writeStartDocument();
+			readUnknownElement(&writer);
+			writer.writeEndDocument();
+			buffer.close();
+
+			// qWarning("ba: %d, '%s'", ba.length(), qPrintable(QString::fromUtf8(ba)));
+			unknown_ = QString::fromUtf8(ba);
 		}
 	}
 	return result;
@@ -194,18 +208,24 @@ QRect OptionsTreeReader::readRect()
 	return QRect(x, y, width, height);
 }
 
-// TODO: return string representing entire tag contents?
-void OptionsTreeReader::readUnknownElement()
+void OptionsTreeReader::readUnknownElement(QXmlStreamWriter* writer)
 {
 	Q_ASSERT(isStartElement());
+	writer->writeStartElement(name().toString());
+	foreach(QXmlStreamAttribute attr, attributes()) {
+		writer->writeAttribute(attr.name().toString(), attr.value().toString());
+	}
 
 	while (!atEnd()) {
+		writer->writeCharacters(text().toString());
 		readNext();
 
 		if (isEndElement())
 			break;
 
 		if (isStartElement())
-			readUnknownElement();
+			readUnknownElement(writer);
 	}
+
+	writer->writeEndElement();
 }

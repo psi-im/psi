@@ -23,7 +23,7 @@ public:
 protected:
 	void readTree(VariantTree* tree);
 	QVariant readVariant(const QString& type);
-	void readUnknownElement();
+	void readUnknownElement(QXmlStreamWriter* writer);
 
 	QStringList readStringList();
 	QVariantList readVariantList();
@@ -32,6 +32,7 @@ protected:
 
 private:
 	OptionsTree* options_;
+	QString unknown_;
 };
 
 

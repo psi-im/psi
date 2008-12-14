@@ -23,6 +23,8 @@ public:
 protected:
 	void writeTree(const VariantTree* tree);
 	void writeVariant(const QVariant& variant);
+	void writeUnknown(const QString& unknown);
+	void readUnknownTree(QXmlStreamReader* reader);
 
 private:
 	const OptionsTree* options_;
