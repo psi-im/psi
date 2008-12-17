@@ -261,7 +261,8 @@ static int spc_get_version(QByteArray *from, SPCS_VERSION *s)
 		return -1;
 	if(from->size() < 2)
 		return 0;
-	int num = from->at(1);
+	unsigned char mlen = from->at(1);
+	int num = mlen;
 	if(num > 16) // who the heck has over 16 auth methods??
 		return -1;
 	if(from->size() < 2 + num)
