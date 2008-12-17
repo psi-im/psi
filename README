@@ -1,6 +1,6 @@
-Psi 0.12
+Psi 0.12.1
 ---------
-Date: July 25th, 2008
+Date: December 17th, 2008
 
 Project Lead/Maintainer (2004-current):
   Kevin Smith
@@ -52,6 +52,8 @@ Notes
 
 Changes
 -------
+  New in 0.12.1
+  - Bugfix for DOS vulnerability in the file transfer code.
   New in 0.12
   - Multi-user chat windows now join one on one chat windows and can be opened
     in tabbed form, either sharing a window, or seperately.
