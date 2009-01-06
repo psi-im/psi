@@ -1,4 +1,0 @@
-finish dns glue stuff
-win/mac/bsd/solaris netinterface
-if jdns ever does multiple interfaces, don't forget that late conflict should
-  unpublish on all interfaces
