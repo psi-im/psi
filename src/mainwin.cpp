@@ -18,8 +18,9 @@
  *
  */
 
-#include "mainwin.h"
+#include "mainwin_b.h"
 
+#include <QDesktopServices>
 #include <qmessagebox.h>
 #include <qicon.h>
 #include <qapplication.h>
@@ -35,7 +36,7 @@
 #include <QVBoxLayout>
 #include <QMenu>
 #include <QMenuItem>
-#include <QtAlgorithms>
+#include <QImage>
 
 #ifdef Q_WS_WIN
 #include <windows.h>
@@ -44,11 +45,11 @@
 #include "common.h"
 #include "showtextdlg.h"
 #include "psicon.h"
-#include "contactview.h"
+#include "contactview_b.h"
 #include "psiiconset.h"
 #include "serverinfomanager.h"
 #include "applicationinfo.h"
-#include "psiaccount.h"
+#include "psiaccount_b.h"
 #include "psitrayicon.h"
 #include "psitoolbar.h"
 #include "aboutdlg.h"
@@ -58,45 +59,201 @@
 #include "tipdlg.h"
 #include "mucjoindlg.h"
 #include "psicontactlist.h"
-#include "desktoputil.h"
+#include "avatars.h"
+#include "xmpp_vcard.h"
+#include "vcardfactory.h"
+//#include "transportwizard.h"
+#include "transportsetupdlg.h"
+#include "profiles.h"
+#include "userlist.h"
+#include "psievent.h"
 
-#include "mainwin_p.h"
+#include "mainwin_p_b.h"
+
+#ifdef QUICKVOIP
+#include "quickvoip/jinglertp.h"
+#endif
 
 using namespace XMPP;
 
+QImage makeAvatarImage(const QImage &_in)
+{
+	QImage out(50, 50, QImage::Format_ARGB32);
+	QImage in;
+	if(!_in.isNull())
+		in = _in.convertToFormat(QImage::Format_ARGB32).scaled(48, 48, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+
+	out.fill(qRgba(255, 255, 255, 255));
+	for(int ny = 1; ny < out.height() - 1; ++ny)
+	{
+		for(int nx = 1; nx < out.width() - 1; ++nx)
+			out.setPixel(nx, ny, qRgba(0, 0, 0, 255));
+	}
+
+	if(in.isNull())
+		in = cuda_defaultAvatar();
+
+	if(!in.isNull())
+	{
+		for(int ny = 1; ny < out.height() - 1; ++ny)
+		{
+			for(int nx = 1; nx < out.width() - 1; ++nx)
+			{
+				out.setPixel(nx, ny, in.pixel(nx - 1, ny - 1));
+			}
+		}
+	}
+
+	return out;
+}
+
+class PopupActionButton : public QPushButton
+{
+	Q_OBJECT
+public:
+	PopupActionButton(QWidget *parent = 0, const char *name = 0);
+	~PopupActionButton();
+
+	void setIcon(PsiIcon *, bool showText);
+	void setLabel(QString);
+	QSize sizeHint() const;
+
+private slots:
+	void pixmapUpdated();
+
+private:
+	void update();
+	void paintEvent(QPaintEvent *);
+	bool hasToolTip;
+	PsiIcon *icon;
+	bool showText;
+	QString label;
+};
 
 //----------------------------------------------------------------------------
-// MainWin::Private
+// ClickableLabel
+//----------------------------------------------------------------------------
+ClickableLabel::ClickableLabel(QWidget *parent)
+:QLabel(parent)
+{
+}
+
+ClickableLabel::~ClickableLabel()
+{
+}
+
+void ClickableLabel::mousePressEvent(QMouseEvent *event)
+{
+	event->accept();
+}
+
+void ClickableLabel::mouseReleaseEvent(QMouseEvent *event)
+{
+	event->accept();
+
+	int w = width();
+	int h = height();
+	int x = event->x();
+	int y = event->y();
+	if(x >= 0 && x < w && y >= 0 && y < h)
+		emit clicked();
+}
+
+//----------------------------------------------------------------------------
+// SearchLineEdit
+//----------------------------------------------------------------------------
+SearchLineEdit::SearchLineEdit(QWidget *parent)
+:CudaLineEdit(parent)
+{
+	cuda_applyTheme(this);
+
+	connect(this, SIGNAL(textEdited(const QString &)), SLOT(le_textEdited(const QString &)));
+	defaultMode = true;
+	QPalette pal = QPalette();
+	pal.setColor(QPalette::Text, get_frameCol1());
+	setPalette(pal);
+	setText("Search contacts/address book");
+}
+
+QString SearchLineEdit::search() const
+{
+	if(defaultMode)
+		return QString();
+	else
+		return text();
+}
+
+void SearchLineEdit::clearSearch()
+{
+	defaultMode = true;
+	QPalette pal = palette();
+	pal.setColor(QPalette::Text, get_frameCol1());
+	setPalette(pal);
+	setText("Search contacts/address book");
+}
+
+void SearchLineEdit::focusInEvent(QFocusEvent *event)
+{
+	QLineEdit::focusInEvent(event);
+
+	if(defaultMode) {
+		defaultMode = false;
+		setText("");
+		QPalette pal = palette();
+		pal.setColor(QPalette::Text, Qt::black);
+		setPalette(pal);
+	}
+}
+
+void SearchLineEdit::focusOutEvent(QFocusEvent *event)
+{
+	QLineEdit::focusOutEvent(event);
+
+	if(text().isEmpty()) {
+		defaultMode = true;
+		QPalette pal = palette();
+		pal.setColor(QPalette::Text, get_frameCol1());
+		setPalette(pal);
+		setText("Search contacts/address book");
+
+		// null string = remove the 'x' button
+		emit searchChanged(QString());
+	}
+}
+
+void SearchLineEdit::le_textEdited(const QString &text)
+{
+	emit searchChanged(text);
+}
+
+//----------------------------------------------------------------------------
+// MainWinB::Private
 //----------------------------------------------------------------------------
 
-class MainWin::Private
+class MainWinB::Private
 {
 public:
-	Private(PsiCon *, MainWin *);
+	Private(PsiCon *, MainWinB *);
 	~Private();
 
-	QVBoxLayout* vb_main;
+	QVBoxLayout *vb_main;
 	bool onTop, asTool;
-	QMenu* mainMenu, *statusMenu, *optionsMenu, *toolsMenu;
+	QMenu *mainMenu, *statusMenu, *optionsMenu, *toolsMenu;
 	int sbState;
 	QString nickname;
-	PsiTrayIcon* tray;
-	QMenu* trayMenu;
+	PsiTrayIcon *tray;
+	QMenu *trayMenu;
 	QString statusTip;
 
-	PopupAction* optionsButton, *statusButton;
-	IconActionGroup* statusGroup;
-	EventNotifierAction* eventNotifier;
-	PsiCon* psi;
-	MainWin* mainWin;
+	PopupAction *optionsButton, *statusButton;
+	IconActionGroup *statusGroup;
+	EventNotifierAction *eventNotifier;
+	PsiCon *psi;
+	MainWinB *mainWin;
 
-	QLineEdit* searchText;
-	QToolButton* searchPb;
-	QWidget* searchWidget;
+	QSignalMapper *statusMapper;
 
-	QSignalMapper* statusMapper;
-
-	PsiIcon* nextAnim;
+	PsiIcon *nextAnim;
 	int nextAmount;
 
 	QMap<QAction *, int> statusActions;
@@ -104,14 +261,57 @@ public:
 	int lastStatus;
 	bool old_trayicon;
 	bool filterActive, prefilterShowOffline, prefilterShowAway;
+	QStringList prefilterClosedGroups;
 
 	void registerActions();
-	IconAction* getAction( QString name );
-	void updateMenu(QStringList actions, QMenu* menu);
+	IconAction *getAction( QString name );
+	void updateMenu(QStringList actions, QMenu *menu);
+
+	ClickableLabel *lb_avatar;
+	QLabel *lb_name;
+	PopupActionButton *pb_status;
+	SearchLineEdit *le_search;
+	QPushButton *pb_view, *pb_searchcancel;
+	SimpleSearch *serv_search;
+	QTimer searchTimeout;
+
+	void savePreSearchState()
+	{
+		prefilterShowOffline = getAction("show_offline")->isChecked();
+		prefilterShowAway = getAction("show_away")->isChecked();
+		getAction("show_offline")->setChecked(true);
+		getAction("show_away")->setChecked(true);
+
+		prefilterClosedGroups.clear();
+		const QMap<QString, UserAccount::GroupData> &groupState = psi->contactList()->defaultAccount()->userAccount().groupState;
+		QMapIterator<QString, UserAccount::GroupData> it(groupState);
+		while(it.hasNext())
+		{
+			it.next();
+			if(!it.value().open && !prefilterClosedGroups.contains(it.key()))
+				prefilterClosedGroups += it.key();
+		}
+	}
+
+	void restorePreSearchState()
+	{
+		getAction("show_offline")->setChecked(prefilterShowOffline);
+		getAction("show_away")->setChecked(prefilterShowAway);
+
+		for(ContactViewItemB *i = (ContactViewItemB *)mainWin->cvlist->firstChild(); i; i = (ContactViewItemB *)i->nextSibling())
+		{
+			if(i->type() == ContactViewItemB::Group && prefilterClosedGroups.contains(i->groupName()) && i->isOpen())
+			{
+				i->setOpen(false);
+			}
+		}
+	}
 };
 
-MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) : psi(_psi), mainWin(_mainWin)
+MainWinB::Private::Private(PsiCon *_psi, MainWinB *_mainWin)
 {
+	psi = _psi;
+	mainWin = _mainWin;
 
 	statusGroup   = (IconActionGroup *)getAction("status_all");
 	eventNotifier = (EventNotifierAction *)getAction("event_notifier");
@@ -121,20 +321,20 @@ MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) : psi(_psi), mainWin(
 
 	statusMapper = new QSignalMapper(mainWin, "statusMapper");
 	mainWin->connect(statusMapper, SIGNAL(mapped(int)), mainWin, SLOT(activatedStatusAction(int)));
-  
+
 	filterActive = false;
 	prefilterShowOffline = false;
-	prefilterShowAway = false;  
+	prefilterShowAway = false;
 }
 
-MainWin::Private::~Private()
+MainWinB::Private::~Private()
 {
 }
 
-void MainWin::Private::registerActions()
+void MainWinB::Private::registerActions()
 {
 	struct {
-		const char* name;
+		const char *name;
 		int id;
 	} statuslist[] = {
 		{ "status_chat",      STATUS_CHAT      },
@@ -150,7 +350,7 @@ void MainWin::Private::registerActions()
 	int i;
 	QString aName;
 	for ( i = 0; !(aName = QString(statuslist[i].name)).isEmpty(); i++ ) {
-		IconAction* action = getAction( aName );
+		IconAction *action = getAction( aName );
 		connect (action, SIGNAL(activated()), statusMapper, SLOT(map()));
 
 		statusMapper->setMapping(action, statuslist[i].id);
@@ -163,33 +363,31 @@ void MainWin::Private::registerActions()
 	QStringList names = actions.actions();
 	QStringList::Iterator it = names.begin();
 	for ( ; it != names.end(); ++it ) {
-		IconAction* action = actions.action( *it );
-		if ( action ) {
+		IconAction *action = actions.action( *it );
+		if ( action )
 			mainWin->registerAction( action );
-		}
 	}
 }
 
-IconAction* MainWin::Private::getAction( QString name )
+IconAction *MainWinB::Private::getAction( QString name )
 {
 	PsiActionList::ActionsType type = PsiActionList::ActionsType( PsiActionList::Actions_MainWin | PsiActionList::Actions_Common );
 	ActionList actions = psi->actionList()->suitableActions( type );
-	IconAction* action = actions.action( name );
+	IconAction *action = actions.action( name );
 
-	if ( !action ) {
-		qWarning("MainWin::Private::getAction(): action %s not found!", name.latin1());
-	}
+	if ( !action )
+		qWarning("MainWinB::Private::getAction(): action %s not found!", name.latin1());
 	//else
 	//	mainWin->registerAction( action );
 
 	return action;
 }
 
-void MainWin::Private::updateMenu(QStringList actions, QMenu* menu)
+void MainWinB::Private::updateMenu(QStringList actions, QMenu *menu)
 {
 	menu->clear();
 
-	IconAction* action;
+	IconAction *action;
 	foreach (QString name, actions) {
 		// workind around Qt/X11 bug, which displays
 		// actions's text and the separator bar in Qt 4.1.1
@@ -198,22 +396,22 @@ void MainWin::Private::updateMenu(QStringList actions, QMenu* menu)
 			continue;
 		}
 
-		if ( name == "diagnostics" ) {
-			QMenu* diagMenu = new QMenu(mainWin);
-			menu->insertItem(tr("Diagnostics"), diagMenu);
-			getAction("help_diag_qcaplugin")->addTo(diagMenu);
-			getAction("help_diag_qcakeystore")->addTo(diagMenu);
-			continue;
+		if ( name == "cuda_transports") {
+			/*QMenu *tmenu = menu->addMenu("&Public IM Accounts");
+			getAction("reg_aim")->addTo(tmenu);
+			getAction("reg_msn")->addTo(tmenu);
+			getAction("reg_yahoo")->addTo(tmenu);
+			getAction("reg_icq")->addTo(tmenu);*/
+			getAction("reg_trans")->addTo(menu);
 		}
 
-		if ( (action = getAction(name)) ) {
+		if ( (action = getAction(name)) )
 			action->addTo(menu);
-		}
 	}
 }
 
 //----------------------------------------------------------------------------
-// MainWin
+// MainWinB
 //----------------------------------------------------------------------------
 
 //#ifdef Q_WS_X11
@@ -228,17 +426,36 @@ void MainWin::Private::updateMenu(QStringList actions, QMenu* menu)
 #define TOOLW_FLAGS ((Qt::WFlags) 0)
 #endif
 
-MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
-:AdvancedWidget<QMainWindow>(0, (_onTop ? Qt::WStyle_StaysOnTop : Qt::Widget) | (_asTool ? (Qt::WStyle_Tool |TOOLW_FLAGS) : Qt::Widget))
+MainWinB::MainWinB(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
+:AdvancedWidget<CudaFrame>(0, (_onTop ? Qt::WStyle_StaysOnTop : Qt::Widget) | (_asTool ? (Qt::WStyle_Tool |TOOLW_FLAGS) : Qt::Widget))
+//: QMainWindow(0,name,(_onTop ? Qt::WStyle_StaysOnTop : Qt::Widget) | (_asTool ? (Qt::WStyle_Tool |TOOLW_FLAGS) : Qt::Widget))
 {
+	{
+		QVBoxLayout *vb = new QVBoxLayout(this);
+		vb->setMargin(0);
+		mainWindow = new QMainWindow(this, 0);
+		Qt::WindowFlags wflags = mainWindow->windowFlags();
+		wflags &= ~Qt::Window;
+		wflags |= Qt::Widget;
+		mainWindow->setWindowFlags(wflags);
+		mainWindow->show();
+		vb->addWidget(mainWindow);
+#ifndef Q_OS_MAC
+		mainWindow->menuBar()->setAutoFillBackground(false);
+		mainWindow->menuBar()->setFixedHeight(24);
+		cuda_applyTheme(mainWindow->menuBar());
+#endif
+	}
+
 	setObjectName(name);
 	setAttribute(Qt::WA_AlwaysShowToolTips);
-  	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() ) {
+	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() ) {
 		setAttribute(Qt::WA_MacMetalStyle);
 	}
 	d = new Private(psi, this);
 
-	setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).impix());
+	//setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).impix());
+	setWindowIcon(IconsetFactory::icon("psi/logo_16").pixmap());
 
 	d->onTop = _onTop;
 	d->asTool = _asTool;
@@ -261,37 +478,92 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 	d->old_trayicon = PsiOptions::instance()->getOption("options.ui.systemtray.use-old").toBool();
 #endif
 
-	QWidget* center = new QWidget (this, "Central widget");
-	setCentralWidget ( center );
+	d->serv_search = 0;
+
+	QWidget *center = new QWidget (mainWindow, "Central widget");
+	mainWindow->setCentralWidget ( center );
 
 	d->vb_main = new QVBoxLayout(center);
-	cvlist = new ContactView(center);
+
+	CudaSubFrame *topFrame = new CudaSubFrame(center);
+	QHBoxLayout *hb_tf = new QHBoxLayout(topFrame);
+	hb_tf->setSpacing(12);
+	QVBoxLayout *vb_tf = new QVBoxLayout;
+	hb_tf->addLayout(vb_tf);
+	d->lb_avatar = new ClickableLabel(topFrame);
+	d->lb_avatar->setAlignment(Qt::AlignTop);
+	connect(d->lb_avatar, SIGNAL(clicked()), SLOT(avatar_clicked()));
+	vb_tf->addWidget(d->lb_avatar);
+
+	vb_tf = new QVBoxLayout;
+	hb_tf->addLayout(vb_tf);
+	d->lb_name = new QLabel(topFrame);
+	cuda_applyTheme(d->lb_name);
+	vb_tf->addWidget(d->lb_name);
+	hb_tf = new QHBoxLayout;
+	vb_tf->addLayout(hb_tf);
+	d->pb_status = new PopupActionButton(topFrame);
+	d->pb_status->setLabel(status2txt(STATUS_OFFLINE));
+	//d->pb_status->setIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE), true);
+	cuda_applyTheme(d->pb_status);
+	d->pb_status->setFixedHeight(20);
+	d->pb_status->setMinimumWidth(120);
+	hb_tf->addWidget(d->pb_status);
+	hb_tf->addStretch(1);
+
+	d->vb_main->addWidget(topFrame);
+
+	CudaSubFrame *botFrame = new CudaSubFrame(center);
+	QVBoxLayout *vb_bf = new QVBoxLayout(botFrame);
+
+	QHBoxLayout *search_layout = new QHBoxLayout;
+	vb_bf->addLayout(search_layout);
+	d->le_search = new SearchLineEdit(botFrame);
+	d->le_search->setFixedHeight(20);
+	connect(d->le_search, SIGNAL(searchChanged(const QString &)), SLOT(searchTextChanged(const QString &)));
+	search_layout->addWidget(d->le_search);
+	d->pb_searchcancel = new QPushButton("X", botFrame);
+	connect(d->pb_searchcancel, SIGNAL(clicked()), SLOT(searchCancel()));
+	cuda_applyTheme(d->pb_searchcancel);
+	d->pb_searchcancel->setFixedWidth(20);
+	d->pb_searchcancel->setFixedHeight(20);
+	search_layout->addWidget(d->pb_searchcancel);
+	d->pb_searchcancel->hide();
+
+	connect(&d->searchTimeout, SIGNAL(timeout()), SLOT(searchCancel()));
+	d->searchTimeout.setInterval(1000 * 60 * 30); // 30 mins
+	d->searchTimeout.setSingleShot(true);
+
+	QHBoxLayout *hb_bf = new QHBoxLayout;
+	vb_bf->addLayout(hb_bf);
+
+	d->pb_view = new QPushButton("&View", botFrame);
+	cuda_applyTheme(d->pb_view);
+	d->pb_view->setFixedHeight(20);
+	hb_bf->addWidget(d->pb_view);
+	hb_bf->addStretch(1);
+	QPushButton *pb = new QPushButton("&Add Contact", botFrame);
+	connect(pb, SIGNAL(clicked()), SLOT(addUser()));
+	cuda_applyTheme(pb);
+	pb->setFixedHeight(20);
+	hb_bf->addWidget(pb);
+
+	cvlist = new ContactView(botFrame);
+	cuda_applyTheme(cvlist);
+	vb_bf->addWidget(cvlist);
+	d->eventNotifier->addTo(botFrame);
 
 	int layoutMargin = 2;
 #ifdef Q_WS_MAC
 	layoutMargin = 0;
 	cvlist->setFrameShape(QFrame::NoFrame);
 #endif
-	d->vb_main->setMargin(layoutMargin);
+	//d->vb_main->setMargin(layoutMargin);
+	d->vb_main->setMargin(0);
 	d->vb_main->setSpacing(layoutMargin);
 
-	// create search bar
-	d->searchWidget = new QWidget(centralWidget());
-	d->vb_main->addWidget(d->searchWidget);
-	QHBoxLayout* searchLayout = new QHBoxLayout(d->searchWidget);
-	searchLayout->setMargin(0);
-	searchLayout->setSpacing(0);
-	d->searchText = new QLineEdit(d->searchWidget);
-	connect(d->searchText,SIGNAL(textEdited(const QString&)),SLOT(searchTextEntered(const QString&)));
-	searchLayout->addWidget(d->searchText);
-	d->searchPb = new QToolButton(d->searchWidget);
-	d->searchPb->setText("X");
-	connect(d->searchPb,SIGNAL(clicked()),SLOT(searchClearClicked()));
-	connect(cvlist, SIGNAL(searchInput(const QString&)), SLOT(searchTextStarted(const QString&)));
-	searchLayout->addWidget(d->searchPb);
-	d->searchWidget->setVisible(false);
-	//add contact view
-	d->vb_main->addWidget(cvlist);
+	d->vb_main->addWidget(botFrame);
+	//d->vb_main->addWidget(cvlist);
 
 #ifdef Q_WS_MAC
 	// Disable the empty vertical scrollbar:
@@ -305,7 +577,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 #ifdef Q_WS_MAC
 	d->trayMenu = d->statusMenu;
 #else
-	d->trayMenu = new QMenu(this);
+	d->trayMenu = new QMenu(mainWindow);
 	buildTrayMenu();
 	connect(d->trayMenu, SIGNAL(aboutToShow()), SLOT(buildTrayMenu()));
 #endif
@@ -317,6 +589,8 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 
 
 	X11WM_CLASS("main");
+
+	//connect(VCardFactory::instance(), SIGNAL(vcardChanged(const Jid &)), SLOT(vcardChanged(const Jid &)));
 
 	connect(d->psi, SIGNAL(accountCountChanged()), SLOT(numAccountsChanged()));
 	numAccountsChanged();
@@ -332,74 +606,124 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 
 	// Mac-only menus
 #ifdef Q_WS_MAC
-	QMenu* mainMenu = new QMenu(this);
+	QMenu *mainMenu = new QMenu(mainWindow);
 	mainMenuBar()->insertItem(tr("Menu"), mainMenu);
-	d->getAction("menu_options")->addTo(mainMenu);
-	d->getAction("menu_quit")->addTo(mainMenu);
+	mainMenu->insertItem(tr("Preferences"), this, SIGNAL(doOptions()));
+	mainMenu->insertItem(tr("Quit"), this, SLOT(try2tryCloseProgram()));
 	d->getAction("help_about")->addTo(mainMenu);
-	d->getAction("help_about_qt")->addTo(mainMenu);
+	//d->getAction("help_about_qt")->addTo(mainMenu);
 
-	d->mainMenu = new QMenu(this);
-	mainMenuBar()->insertItem(tr("General"), d->mainMenu);
+	d->mainMenu = new QMenu(mainWindow);
+	mainMenuBar()->insertItem(tr("File"), d->mainMenu);
 	connect(d->mainMenu, SIGNAL(aboutToShow()), SLOT(buildMainMenu()));
 #else
-	mainMenuBar()->insertItem(tr("General"), d->optionsMenu);
+	mainMenuBar()->insertItem(tr("File"), d->optionsMenu);
 #endif
 
-	mainMenuBar()->insertItem(tr("Status"), d->statusMenu);
+	//mainMenuBar()->insertItem(tr("Status"), d->statusMenu);
 
-	QMenu* viewMenu = new QMenu(this);
+	QMenu *actionsMenu = new QMenu(mainWindow);
+	mainMenuBar()->insertItem(tr("Actions"), actionsMenu);
+	d->getAction("menu_new_message")->addTo(actionsMenu);
+	d->getAction("menu_join_groupchat")->addTo(actionsMenu);
+
+	QMenu *settingsMenu = new QMenu(mainWindow);
+	mainMenuBar()->insertItem(tr("Settings"), settingsMenu);
+	d->getAction("menu_account_modify")->addTo(settingsMenu);
+	d->getAction("link_password")->addTo(settingsMenu);
+	d->getAction("menu_edit_vcard")->addTo(settingsMenu);
+	/*QMenu *tmenu = settingsMenu->addMenu("&Public IM Accounts");
+	d->getAction("reg_aim")->addTo(tmenu);
+	d->getAction("reg_msn")->addTo(tmenu);
+	d->getAction("reg_yahoo")->addTo(tmenu);
+	d->getAction("reg_icq")->addTo(tmenu);*/
+	d->getAction("reg_trans")->addTo(settingsMenu);
+	settingsMenu->insertSeparator();
+	d->getAction("menu_options")->addTo(settingsMenu);
+	d->getAction("menu_play_sounds")->addTo(settingsMenu);
+
+	QMenu *helpMenu = new QMenu(mainWindow);
+	mainMenuBar()->insertItem(tr("Help"), helpMenu);
+	d->getAction("help_about")->addTo (helpMenu);
+
+	/*QMenu *viewMenu = new QMenu(mainWindow);
 	mainMenuBar()->insertItem(tr("View"), viewMenu);
 	d->getAction("show_offline")->addTo(viewMenu);
-	if (PsiOptions::instance()->getOption("options.ui.menu.view.show-away").toBool()) {
+	if (PsiOptions::instance()->getOption("options.ui.menu.view.show-away").toBool())
 		d->getAction("show_away")->addTo(viewMenu);
-	}
+	d->getAction("show_hidden")->addTo(viewMenu);
+	d->getAction("show_agents")->addTo(viewMenu);
+	d->getAction("show_self")->addTo(viewMenu);
+	viewMenu->insertSeparator();
+	d->getAction("show_statusmsg")->addTo(viewMenu);*/
+
+	// Mac-only menus
+#ifdef Q_WS_MAC
+	/*d->toolsMenu = new QMenu(mainWindow);
+	mainMenuBar()->insertItem(tr("Tools"), d->toolsMenu);
+	connect(d->toolsMenu, SIGNAL(aboutToShow()), SLOT(buildToolsMenu()));*/
+
+	//QMenu *helpMenu = new QMenu(mainWindow);
+	//mainMenuBar()->insertItem(tr("Help"), helpMenu);
+	//d->getAction("help_readme")->addTo (helpMenu);
+	//d->getAction("help_tip")->addTo (helpMenu);
+	//helpMenu->insertSeparator();
+	//d->getAction("help_online_help")->addTo (helpMenu);
+	//d->getAction("help_online_wiki")->addTo (helpMenu);
+	//d->getAction("help_online_home")->addTo (helpMenu);
+	//d->getAction("help_psi_muc")->addTo (helpMenu);
+	//d->getAction("help_report_bug")->addTo (helpMenu);
+#else
+	if (!PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool())
+		mainMenuBar()->hide();
+	//else 
+	//	mainMenuBar()->show();
+#endif
+
+	// view menu button thing
+	QMenu *viewMenu = new QMenu(mainWindow);
+	d->getAction("show_offline")->addTo(viewMenu);
+	//if (PsiOptions::instance()->getOption("options.ui.menu.view.show-away").toBool())
+	d->getAction("show_away")->addTo(viewMenu);
 	d->getAction("show_hidden")->addTo(viewMenu);
 	d->getAction("show_agents")->addTo(viewMenu);
 	d->getAction("show_self")->addTo(viewMenu);
 	viewMenu->insertSeparator();
 	d->getAction("show_statusmsg")->addTo(viewMenu);
+	d->pb_view->setMenu(viewMenu);
 
-	// Mac-only menus
-#ifdef Q_WS_MAC
-	d->toolsMenu = new QMenu(this);
-	mainMenuBar()->insertItem(tr("Tools"), d->toolsMenu);
-	connect(d->toolsMenu, SIGNAL(aboutToShow()), SLOT(buildToolsMenu()));
+	QMenu *oldMenu = d->statusMenu;
+	d->statusMenu = new QMenu(mainWindow);
+	buildStatusMenu();
+	d->pb_status->setMenu(d->statusMenu);
+	d->statusMenu = oldMenu;
 
-	QMenu* helpMenu = new QMenu(this);
-	mainMenuBar()->insertItem(tr("Help"), helpMenu);
-	d->getAction("help_readme")->addTo (helpMenu);
-	d->getAction("help_tip")->addTo (helpMenu);
-	helpMenu->insertSeparator();
-	d->getAction("help_online_help")->addTo (helpMenu);
-	d->getAction("help_online_wiki")->addTo (helpMenu);
-	d->getAction("help_online_home")->addTo (helpMenu);
-	d->getAction("help_psi_muc")->addTo (helpMenu);
-	d->getAction("help_report_bug")->addTo (helpMenu);
-	QMenu* diagMenu = new QMenu(this);
-	helpMenu->insertItem(tr("Diagnostics"), diagMenu);
-	d->getAction("help_diag_qcaplugin")->addTo (diagMenu);
-	d->getAction("help_diag_qcakeystore")->addTo (diagMenu);
-#else
-	if (!PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool())  {
-		mainMenuBar()->hide();
-	}
-	//else 
-	//	mainMenuBar()->show();
-#endif
-	d->optionsButton->setMenu( d->optionsMenu );
+	/*d->optionsButton->setMenu( d->optionsMenu );
 	d->statusButton->setMenu( d->statusMenu );
+	
+	buildToolbars();*/
 
-	buildToolbars();
-	// setUnifiedTitleAndToolBarOnMac(true);
+	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt()))/100);
 
 	connect(qApp, SIGNAL(dockActivated()), SLOT(dockActivated()));
 
 	connect(psi, SIGNAL(emitOptionsUpdate()), SLOT(optionsUpdate()));
 	optionsUpdate();
-}
 
-MainWin::~MainWin()
+	cvlist->setFocus();
+
+	// special shortcuts
+	QShortcut *sp_ss = new QShortcut(QKeySequence(tr("Ctrl+Shift+X")), this);
+	connect(sp_ss, SIGNAL(activated()), SLOT(showXmlConsole()));
+	sp_ss = new QShortcut(QKeySequence(tr("Ctrl+Shift+U")), this);
+	connect(sp_ss, SIGNAL(activated()), SLOT(checkUpgrade()));
+
+	sp_ss = new QShortcut(QKeySequence(tr("Ctrl+Shift+N")), this);
+	connect(sp_ss, SIGNAL(activated()), SLOT(voipConfig()));
+}
+	
+
+MainWinB::~MainWinB()
 {
 	PsiPopup::deleteAll();
 
@@ -408,21 +732,21 @@ MainWin::~MainWin()
 		d->tray = 0;
 	}
 
-	saveToolbarsState();
+	//saveToolbarsState();
 	delete d;
 }
 
-void MainWin::registerAction( IconAction* action )
+void MainWinB::registerAction( IconAction *action )
 {
 	char activated[] = SIGNAL( activated() );
 	char toggled[]   = SIGNAL( toggled(bool) );
 	char setChecked[]     = SLOT( setChecked(bool) );
 
 	struct {
-		const char* name;
-		const char* signal;
-		QObject* receiver;
-		const char* slot;
+		const char *name;
+		const char *signal;
+		QObject *receiver;
+		const char *slot;
 	} actionlist[] = {
 		{ "show_offline", toggled, cvlist, SLOT( setShowOffline(bool) ) },
 		{ "show_away",    toggled, cvlist, SLOT( setShowAway(bool) ) },
@@ -462,8 +786,17 @@ void MainWin::registerAction( IconAction* action )
 		{ "help_report_bug",  activated, this, SLOT( actBugReportActivated() ) },
 		{ "help_about",       activated, this, SLOT( actAboutActivated() ) },
 		{ "help_about_qt",    activated, this, SLOT( actAboutQtActivated() ) },
-		{ "help_diag_qcaplugin",   activated, this, SLOT( actDiagQCAPluginActivated() ) },
-		{ "help_diag_qcakeystore", activated, this, SLOT( actDiagQCAKeyStoreActivated() ) },
+		{ "log_on",               activated, this, SLOT( actDoLogOn() ) },
+		{ "log_off",              activated, this, SLOT( actDoLogOff() ) },
+		{ "menu_account_modify",  activated, this, SLOT( actDoAccountModify() ) },
+		{ "menu_edit_vcard",      activated, this, SLOT( actDoEditVCard() ) },
+		{ "link_history",         activated, this, SLOT( actDoLinkHistory() ) },
+		{ "link_password",        activated, this, SLOT( actDoLinkPassword() ) },
+		{ "reg_aim",          activated, this, SLOT( actDoRegAim() ) },
+		{ "reg_msn",          activated, this, SLOT( actDoRegMsn() ) },
+		{ "reg_yahoo",        activated, this, SLOT( actDoRegYahoo() ) },
+		{ "reg_icq",          activated, this, SLOT( actDoRegIcq() ) },
+		{ "reg_trans",          activated, this, SLOT( actDoRegTrans() ) },
 
 		{ "", 0, 0, 0 }
 	};
@@ -474,28 +807,26 @@ void MainWin::registerAction( IconAction* action )
 		if ( aName == action->name() ) {
 #ifdef USE_PEP
 			// Check before connecting, otherwise we get a loop
-			if ( aName == "publish_tune") {
+			if ( aName == "publish_tune")
 				action->setChecked( PsiOptions::instance()->getOption("options.extended-presence.tune.publish").toBool() );
-			}
 #endif
 
 			disconnect( action, actionlist[i].signal, actionlist[i].receiver, actionlist[i].slot ); // for safety
 			connect( action, actionlist[i].signal, actionlist[i].receiver, actionlist[i].slot );
 
 			// special cases
-			if ( aName == "menu_play_sounds" ) {
+			if ( aName == "menu_play_sounds" )
 				action->setChecked(PsiOptions::instance()->getOption("options.ui.notifications.sounds.enable").toBool());
-			}
 			//else if ( aName == "foobar" )
 			//	;
 		}
 	}
 
 	struct {
-		const char* name;
-		QObject* sender;
-		const char* signal;
-		const char* slot;
+		const char *name;
+		QObject *sender;
+		const char *signal;
+		const char *slot;
 		bool checked;
 	} reverseactionlist[] = {
 		{ "show_away",    cvlist, SIGNAL( showAway(bool) ), setChecked, cvlist->isShowAway()},
@@ -521,27 +852,24 @@ void MainWin::registerAction( IconAction* action )
 	}
 }
 
-PsiCon* MainWin::psiCon() const
+PsiCon *MainWinB::psiCon() const
 {
 	return d->psi;
 }
 
-void MainWin::setWindowOpts(bool _onTop, bool _asTool)
+void MainWinB::setWindowOpts(bool _onTop, bool _asTool)
 {
-	if(_onTop == d->onTop && _asTool == d->asTool) {
+	if(_onTop == d->onTop && _asTool == d->asTool)
 		return;
-	}
 
 	d->onTop = _onTop;
 	d->asTool = _asTool;
 
 	Qt::WFlags flags = 0;
-	if(d->onTop) {
+	if(d->onTop)
 		flags |= Qt::WStyle_StaysOnTop;
-	}
-	if(d->asTool) {
+	if(d->asTool)
 		flags |= Qt::WStyle_Tool | TOOLW_FLAGS;
-	}
 
 	QPoint p = pos();
 	reparent(parentWidget(), flags, p, FALSE);
@@ -549,47 +877,50 @@ void MainWin::setWindowOpts(bool _onTop, bool _asTool)
 	show();
 }
 
-void MainWin::setUseDock(bool use)
+void MainWinB::setUseDock(bool use)
 {
-	if (use == (d->tray != 0)) {
-		return;
-	}
-
-	if (d->tray) {
-		delete d->tray;
-		d->tray = 0;
-	}
-
-	Q_ASSERT(!d->tray);
-	if (use) {
-		d->tray = new PsiTrayIcon("Psi", d->trayMenu, d->old_trayicon);
-		if (d->old_trayicon) {
-			connect(d->tray, SIGNAL(closed()), SLOT(dockActivated()));
-			connect(qApp, SIGNAL(trayOwnerDied()), SLOT(dockActivated()));
+	if(use == false || d->tray) {
+		if(d->tray) {
+			delete d->tray;
+			d->tray = 0;
 		}
-		connect(d->tray, SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
-		connect(d->tray, SIGNAL(doubleClicked(const QPoint &)), SLOT(trayDoubleClicked()));
-		d->tray->setIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
-		d->tray->setToolTip(ApplicationInfo::name());
 
-		updateReadNext(d->nextAnim, d->nextAmount);
-
-		d->tray->show();
+		if (use == false)
+			return;
 	}
+
+	if(d->tray)
+		return;
+
+	d->tray = new PsiTrayIcon("Barracuda", d->trayMenu, d->old_trayicon);
+	if (d->old_trayicon) {
+		connect(d->tray, SIGNAL(closed()), SLOT(dockActivated()));
+		connect(qApp, SIGNAL(trayOwnerDied()), SLOT(dockActivated()));
+	}
+	connect(d->tray, SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
+	connect(d->tray, SIGNAL(doubleClicked(const QPoint &)), SLOT(trayDoubleClicked()));
+
+	// ###cuda
+	//d->tray->setIcon( PsiIconset::instance()->statusPtr( STATUS_OFFLINE ));
+	d->tray->setIcon(IconsetFactory::iconPtr("psi/logo_16"));
+
+	d->tray->setToolTip(ApplicationInfo::name());
+
+	updateReadNext(d->nextAnim, d->nextAmount);
+
+	d->tray->show();
 }
 
-void MainWin::buildStatusMenu()
+void MainWinB::buildStatusMenu()
 {
 	d->statusMenu->clear();
 	d->getAction("status_online")->addTo(d->statusMenu);
-	if (PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool()) {
+	if (PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool())
 		d->getAction("status_chat")->addTo(d->statusMenu);
-	}
 	d->statusMenu->insertSeparator();
 	d->getAction("status_away")->addTo(d->statusMenu);
-	if (PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool()) {
+	if (PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool())
 		d->getAction("status_xa")->addTo(d->statusMenu);
-	}
 	d->getAction("status_dnd")->addTo(d->statusMenu);
 	if (PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool()) {
 		d->statusMenu->insertSeparator();
@@ -597,259 +928,270 @@ void MainWin::buildStatusMenu()
 	}
 	d->statusMenu->insertSeparator();
 	d->getAction("status_offline")->addTo(d->statusMenu);
-#ifdef USE_PEP
-	d->statusMenu->insertSeparator();
-	d->getAction("publish_tune")->addTo(d->statusMenu);
-#endif
+//#ifdef USE_PEP
+//	d->statusMenu->insertSeparator();
+//	d->getAction("publish_tune")->addTo(d->statusMenu);
+//#endif
 }
 
-void MainWin::activatedStatusAction(int id)
+void MainWinB::activatedStatusAction(int id)
 {
 	QObjectList l = d->statusGroup->queryList( "IconAction" );
 	for (QObjectList::Iterator it = l.begin() ; it != l.end(); ++it) {
-		IconAction* action = (IconAction *)(*it);
+		IconAction *action = (IconAction *)(*it);
 		action->setChecked ( d->statusActions[action] == id );
 	}
 
 	statusChanged(id);
 }
 
-QMenuBar* MainWin::mainMenuBar() const
+QMenuBar* MainWinB::mainMenuBar() const
 {
 #ifdef Q_WS_MAC
 	return psiCon()->defaultMenuBar();
 #else
-	return menuBar();
+	return mainWindow->menuBar();
 #endif
 }
 
-const QString toolbarsStateOptionPath = "options.ui.contactlist.toolbars-state";
+//void MainWinB::buildToolbars()
+//{
+	/*while ( option.toolbars["mainWin"].count() < toolbars.count() && toolbars.count() ) {
+		PsiToolBar *tb = toolbars.last();
+		toolbars.removeLast();
+		delete tb;
+	}
 
-void MainWin::saveToolbarsState()
+	for (int i = 0; i < option.toolbars["mainWin"].count(); i++) {
+		PsiToolBar *tb = 0;
+		if ( i < toolbars.count() )
+			tb = toolbars.at(i);
+
+		Options::ToolbarPrefs &tbPref = option.toolbars["mainWin"][i];
+		if ( tb && !tbPref.dirty )
+			continue;
+
+		if ( tb )
+			delete tb;
+
+		tb = new PsiToolBar(tbPref.name, mainWindow, d->psi);
+		mainWindow->moveDockWindow ( tb, tbPref.dock, tbPref.nl, tbPref.index, tbPref. extraOffset );
+
+		tb->setGroup( "mainWin", i );
+		tb->setType( PsiActionList::Actions_MainWin );
+		//connect( tb, SIGNAL( registerAction( IconAction * ) ), SLOT( registerAction( IconAction * ) ) );
+		tb->initialize( tbPref, false );
+
+		if ( i < toolbars.count() )
+			toolbars.removeAt(i);
+		toolbars.insert(i, tb);
+	}*/
+//}
+
+void MainWinB::saveToolbarsState()
 {
-	PsiOptions::instance()->setOption(toolbarsStateOptionPath, saveState());
 }
 
-void MainWin::loadToolbarsState()
+void MainWinB::loadToolbarsState()
 {
-	restoreState(PsiOptions::instance()->getOption(toolbarsStateOptionPath).toByteArray());
 }
 
-void MainWin::buildToolbars()
+void MainWinB::buildToolbars()
 {
-	setUpdatesEnabled(false);
-	if (toolbars_.count() > 0) {
-		saveToolbarsState();
-	}
-
-	qDeleteAll(toolbars_);
-	toolbars_.clear();
-
-	foreach(QString base, PsiOptions::instance()->getChildOptionNames("options.ui.contactlist.toolbars", true, true)) {
-		PsiToolBar* tb = new PsiToolBar(base, this, d->psi->actionList());
-		tb->initialize();
-		connect(tb, SIGNAL(customize()), d->psi, SLOT(doToolbars()));
-		toolbars_ << tb;
-	}
-
-	loadToolbarsState();
-
-	// loadToolbarsState also restores correct toolbar visibility,
-	// we might want to override that
-	foreach(PsiToolBar* tb, toolbars_) {
-		tb->updateVisibility();
-	}
-
-	// d->eventNotifier->updateVisibility();
-	setUpdatesEnabled(true);
-
-	// in case we have floating toolbars, they have inherited the 'no updates enabled'
-	// state. now we need to explicitly re-enable updates.
-	foreach(PsiToolBar* tb, toolbars_) {
-		tb->setUpdatesEnabled(true);
-	}
+	/*QStringList bases = PsiOptions::instance()->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
+	foreach(QString base, bases) {
+		addToolbar(base);
+	}*/
 }
 
-bool MainWin::showDockMenu(const QPoint &)
+bool MainWinB::showDockMenu(const QPoint &)
 {
 	return false;
 }
 
-void MainWin::buildOptionsMenu()
+void MainWinB::buildOptionsMenu()
 {
 	// help menu
-	QMenu* helpMenu = new QMenu(d->optionsMenu);
+	QMenu *helpMenu = new QMenu(d->optionsMenu);
 
 	QStringList actions;
-	actions << "help_readme"
-	        << "help_tip"
-	        << "separator"
-	        << "help_online_help"
-	        << "help_online_wiki"
-	        << "help_online_home"
-	        << "help_psi_muc"
-	        << "help_report_bug"
-	        << "diagnostics"
-	        << "separator"
-	        << "help_about"
-	        << "help_about_qt";
+	actions // << "help_readme"
+	        // << "help_tip"
+	        // << "separator"
+	        // << "help_online_help"
+	        // << "help_online_wiki"
+	        // << "help_online_home"
+	        // << "help_psi_muc"
+	        // << "help_report_bug"
+	        // << "separator"
+	        << "help_about";
+	        // << "help_about_qt";
 
 	d->updateMenu(actions, helpMenu);
 
 	buildGeneralMenu( d->optionsMenu );
 
 	d->optionsMenu->insertSeparator();
-	d->optionsMenu->insertItem(IconsetFactory::icon("psi/help").icon(), tr("&Help"), helpMenu);
+	//d->optionsMenu->insertItem(IconsetFactory::icon("psi/help").icon(), tr("&Help"), helpMenu);
 	d->getAction("menu_quit")->addTo( d->optionsMenu );
 
 }
 
-void MainWin::buildMainMenu()
+void MainWinB::buildMainMenu()
 {
 	// main menu
 	QStringList actions;
-	actions << "menu_add_contact";
-	if (PsiOptions::instance()->getOption("options.ui.message.enabled").toBool()) {
-		actions << "menu_new_message";
-	}
-	actions << "menu_disco"
-	        << "menu_join_groupchat"
+	//actions << "menu_add_contact";
+	//if (PsiOptions::instance()->getOption("options.ui.message.enabled").toBool())
+	//	actions << "menu_new_message";
+	actions << "log_on"
+		<< "log_off"
+		<< "separator"
+		<< "link_history"
+		<< "menu_file_transfer";
+	        /*<< "menu_join_groupchat"
 	        << "separator"
 	        << "menu_account_setup";
-	if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
+	if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool())
 	        actions << "menu_change_profile";
-	}
-	actions << "menu_play_sounds";
+	actions << "menu_play_sounds";*/
 
 	d->updateMenu(actions, d->mainMenu);
 }
 
-void MainWin::buildToolsMenu()
+void MainWinB::buildToolsMenu()
 {
-	QStringList actions;
+	/*QStringList actions;
 	actions << "menu_file_transfer"
 	        << "separator"
 	        << "menu_xml_console";
 	
-	d->updateMenu(actions, d->toolsMenu);
+	d->updateMenu(actions, d->toolsMenu);*/
 }
 	
-void MainWin::buildGeneralMenu(QMenu* menu)
+void MainWinB::buildGeneralMenu(QMenu *menu)
 {
 	// options menu
 	QStringList actions;
-	actions << "menu_add_contact";
-	if (PsiOptions::instance()->getOption("options.ui.message.enabled").toBool()) {
-		actions << "menu_new_message";
-	}
-	actions << "menu_disco"
-	        << "menu_join_groupchat"
-	        << "menu_account_setup"
-	        << "menu_options"
+	//actions << "menu_add_contact";
+	//if (PsiOptions::instance()->getOption("options.ui.message.enabled").toBool())
+	//	actions << "menu_new_message";
+	actions << "log_on"
+		<< "log_off"
+		<< "separator"
+		<< "link_history"
 	        << "menu_file_transfer";
-	if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
-	        actions << "menu_change_profile";
-	}
-	actions << "menu_play_sounds";
+	        /*<< "menu_join_groupchat"
+	        << "menu_account_setup"
+		<< "cuda_transports"
+	        << "menu_options"*/
+	//if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool())
+	//	actions << "menu_change_profile";
+	//actions << "menu_play_sounds";
 
 	d->updateMenu(actions, menu);
 }
 
-void MainWin::actReadmeActivated ()
+void MainWinB::actReadmeActivated ()
 {
-	ShowTextDlg* w = new ShowTextDlg(":/README");
+	ShowTextDlg *w = new ShowTextDlg(":/README");
 	w->setWindowTitle(CAP(tr("ReadMe")));
 	w->show();
 }
 
-void MainWin::actOnlineHelpActivated ()
+void MainWinB::actOnlineHelpActivated ()
 {
-	DesktopUtil::openUrl("http://psi-im.org/wiki/User_Guide");
+	QDesktopServices::openUrl(QUrl("http://psi-im.org/wiki/User_Guide"));
 }
 
-void MainWin::actOnlineWikiActivated ()
+void MainWinB::actOnlineWikiActivated ()
 {
-	DesktopUtil::openUrl("http://psi-im.org/wiki");
+	QDesktopServices::openUrl(QUrl("http://psi-im.org/wiki"));
 }
 
-void MainWin::actOnlineHomeActivated ()
+void MainWinB::actOnlineHomeActivated ()
 {
-	DesktopUtil::openUrl("http://psi-im.org");
+	QDesktopServices::openUrl(QUrl("http://psi-im.org"));
 }
 
-void MainWin::actJoinPsiMUCActivated()
+void MainWinB::actJoinPsiMUCActivated()
 {
-	PsiAccount* account = d->psi->contactList()->defaultAccount();
-	if(!account) {
+	PsiAccount *account = d->psi->contactList()->defaultAccount();
+	if(!account)
 		return;
-	}
 
 	account->actionJoin("psi@conference.psi-im.org");
 }
 
-void MainWin::actBugReportActivated ()
+void MainWinB::actBugReportActivated ()
 {
-	DesktopUtil::openUrl("http://psi-im.org/forum/forum/2");
+	QDesktopServices::openUrl(QUrl("http://psi-im.org/forum/forum/2"));
 }
 
-void MainWin::actAboutActivated ()
+void MainWinB::actAboutActivated ()
 {
-	AboutDlg* about = new AboutDlg();
+	AboutDlg *about = new AboutDlg();
 	about->show();
 }
 
-void MainWin::actTipActivated ()
+void MainWinB::actTipActivated ()
 {
 	TipDlg::show(d->psi);
 }
 
-void MainWin::actAboutQtActivated ()
+void MainWinB::actAboutQtActivated ()
 {
 	QMessageBox::aboutQt(this);
 }
 
-void MainWin::actDiagQCAPluginActivated()
+void MainWinB::actDiagQCAPluginActivated()
 {
 	QString dtext = QCA::pluginDiagnosticText();
-	ShowTextDlg* w = new ShowTextDlg(dtext, true, false, this);
+	ShowTextDlg *w = new ShowTextDlg(dtext, true, false, this);
 	w->setWindowTitle(CAP(tr("Security Plugins Diagnostic Text")));
 	w->resize(560, 240);
 	w->show();
 }
 
-void MainWin::actDiagQCAKeyStoreActivated()
+void MainWinB::actDiagQCAKeyStoreActivated()
 {
 	QString dtext = QCA::KeyStoreManager::diagnosticText();
-	ShowTextDlg* w = new ShowTextDlg(dtext, true, false, this);
+	ShowTextDlg *w = new ShowTextDlg(dtext, true, false, this);
 	w->setWindowTitle(CAP(tr("Key Storage Diagnostic Text")));
 	w->resize(560, 240);
 	w->show();
 }
 
-void MainWin::actPlaySoundsActivated (bool state)
+void MainWinB::actPlaySoundsActivated (bool state)
 {
 	PsiOptions::instance()->setOption("options.ui.notifications.sounds.enable", state);
 }
 
-void MainWin::actPublishTuneActivated (bool state)
+void MainWinB::actPublishTuneActivated (bool state)
 {
 	PsiOptions::instance()->setOption("options.extended-presence.tune.publish",state);
 }
 
-void MainWin::activatedAccOption(PsiAccount* pa, int x)
+void MainWinB::addUser()
 {
-	if(x == 0) {
-		pa->openAddUserDlg();
-	}
-	else if(x == 2) {
-		pa->showXmlConsole();
-	}
-	else if(x == 3) {
-		pa->doDisco();
-	}
+	PsiAccount *account = d->psi->contactList()->defaultAccount();
+	if(!account)
+		return;
+
+	account->openAddUserDlg();
 }
 
-void MainWin::buildTrayMenu()
+void MainWinB::activatedAccOption(PsiAccount *pa, int x)
+{
+	if(x == 0)
+		pa->openAddUserDlg();
+	else if(x == 2)
+		pa->showXmlConsole();
+	else if(x == 3)
+		pa->doDisco();
+}
+
+void MainWinB::buildTrayMenu()
 {
 #ifndef Q_WS_MAC
 	d->trayMenu->clear();
@@ -859,13 +1201,13 @@ void MainWin::buildTrayMenu()
 		d->trayMenu->insertSeparator();
 	}
 
-	if(isHidden()) {
+	if(isHidden())
 		d->trayMenu->insertItem(tr("Un&hide"), this, SLOT(trayShow()));
-	}
-	else {
+	else
 		d->trayMenu->insertItem(tr("&Hide"), this, SLOT(trayHide()));
-	}
-	d->optionsButton->addTo(d->trayMenu);
+	//d->optionsButton->addTo(d->trayMenu);
+	d->getAction("log_on")->addTo(d->trayMenu);
+	d->getAction("log_off")->addTo(d->trayMenu);
 	d->trayMenu->insertItem(tr("Status"), d->statusMenu);
 	
 	d->trayMenu->insertSeparator();
@@ -874,32 +1216,32 @@ void MainWin::buildTrayMenu()
 #endif
 }
 
-void MainWin::setTrayToolTip(int status)
+void MainWinB::setTrayToolTip(int status)
 {
-	if (!d->tray) {
+	if (!d->tray)
 		return;
-	}
-	d->tray->setToolTip(QString("Psi - " + status2txt(status)));
+	d->tray->setToolTip(QString("Barracuda - " + status2txt(status)));
 }
 
-void MainWin::decorateButton(int status)
+void MainWinB::decorateButton(int status)
 {
 	// update the 'change status' buttons
 	QObjectList l = d->statusGroup->queryList( "IconAction" );
 	for (QObjectList::Iterator it = l.begin() ; it != l.end(); ++it) {
-		IconAction* action = (IconAction *)(*it);
+		IconAction *action = (IconAction *)(*it);
 		action->setChecked ( d->statusActions[action] == status );
 	}
 
-	if(d->lastStatus == status) {
+	if(d->lastStatus == status)
 		return;
-	}
 	d->lastStatus = status;
 
 	if(status == -1) {
 		d->statusButton->setText(tr("Connecting"));
+		d->pb_status->setLabel(tr("Connecting"));
 		if (PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString() != "no") {
 			d->statusButton->setAlert(IconsetFactory::iconPtr("psi/connect"));
+			//d->pb_status->setIcon(IconsetFactory::iconPtr("psi/connect"));
 			d->statusGroup->setPsiIcon(IconsetFactory::iconPtr("psi/connect"));
 		}
 		else {
@@ -907,37 +1249,40 @@ void MainWin::decorateButton(int status)
 			d->statusGroup->setPsiIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
 		}
 
-		setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).impix());
+		// ###cuda
+		//setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).impix());
 	}
 	else {
 		d->statusButton->setText(status2txt(status));
+		d->pb_status->setLabel(status2txt(status));
 		d->statusButton->setIcon(PsiIconset::instance()->statusPtr(status));
+		//d->pb_status->setIcon(PsiIconset::instance()->statusPtr(status));
 		d->statusGroup->setPsiIcon(PsiIconset::instance()->statusPtr(status));
 
-		setWindowIcon(PsiIconset::instance()->status(status).impix());
+		// ###cuda
+		//setWindowIcon(PsiIconset::instance()->status(status).impix());
 	}
 
 	updateTray();
 }
 
-bool MainWin::askQuit()
+bool MainWinB::askQuit()
 {
 	return TRUE;
 }
 
-void MainWin::try2tryCloseProgram()
+void MainWinB::try2tryCloseProgram()
 {
 	QTimer::singleShot(0, this, SLOT(tryCloseProgram()));
 }
 
-void MainWin::tryCloseProgram()
+void MainWinB::tryCloseProgram()
 {
-	if(askQuit()) {
+	if(askQuit())
 		closeProgram();
-	}
 }
 
-void MainWin::closeEvent(QCloseEvent* e)
+void MainWinB::closeEvent(QCloseEvent *e)
 {
 #ifdef Q_WS_MAC
 	trayHide();
@@ -949,17 +1294,15 @@ void MainWin::closeEvent(QCloseEvent* e)
 		return;
 	}
 
-	if(!askQuit()) {
+	if(!askQuit())
 		return;
-	}
 
-	closeProgram();
-
+        closeProgram();
 	e->accept();
 #endif
 }
 
-void MainWin::keyPressEvent(QKeyEvent* e)
+void MainWinB::keyPressEvent(QKeyEvent *e)
 {
 #ifdef Q_WS_MAC
 	bool allowed = true;
@@ -968,17 +1311,16 @@ void MainWin::keyPressEvent(QKeyEvent* e)
 #endif
 
 	bool closekey = false;
-	if(e->key() == Qt::Key_Escape) {
-		if (d->searchWidget->isVisible()) {
-			searchClearClicked();
-		} else {
+	if(e->key() == Qt::Key_Escape)
+	{
+		if(d->le_search->hasFocus())
+			searchCancel();
+		else
 			closekey = true;
-		}
 	}
 #ifdef Q_WS_MAC
-	else if(e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier) {
+	else if(e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier)
 		closekey = true;
-	}
 #endif
 
 	if(allowed && closekey) {
@@ -992,7 +1334,7 @@ void MainWin::keyPressEvent(QKeyEvent* e)
 
 #ifdef Q_WS_WIN
 #include <windows.h>
-bool MainWin::winEvent(MSG* msg, long* result)
+bool MainWinB::winEvent(MSG *msg, long *result)
 {
 	if (d->asTool && msg->message == WM_SYSCOMMAND && msg->wParam == SC_MINIMIZE) {
 		hide();	// minimized toolwindows look bad on Windows, so let's just hide it instead
@@ -1004,43 +1346,37 @@ bool MainWin::winEvent(MSG* msg, long* result)
 }
 #endif
 
-void MainWin::updateCaption()
+void MainWinB::updateCaption()
 {
 	QString str = "";
 
-	if(d->nextAmount > 0) {
+	if(d->nextAmount > 0)
 		str += "* ";
-	}
 
-	if(d->nickname.isEmpty()) {
+	if(d->nickname.isEmpty())
 		str += ApplicationInfo::name();
-	}
-	else {
+	else
 		str += d->nickname;
-	}
 
-	if(str == caption()) {
+	if(str == caption())
 		return;
-	}
 
 	setWindowTitle(str);
 }
 
-void MainWin::optionsUpdate()
+void MainWinB::optionsUpdate()
 {
 	int status = d->lastStatus;
 	d->lastStatus = -2;
 	decorateButton(status);
 
 #ifndef Q_WS_MAC
-	if (!PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool()) {
+	if (!PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool()) 
 		mainMenuBar()->hide();
-	}
-	else {
+	else 
 		mainMenuBar()->show();
-	}
 #endif
-
+	
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt()))/100);
 
 	buildStatusMenu();
@@ -1048,22 +1384,19 @@ void MainWin::optionsUpdate()
 	updateTray();
 }
 
-void MainWin::toggleVisible()
+void MainWinB::toggleVisible()
 {
-	if(!isHidden()) {
+	if(!isHidden())
 		trayHide();
-	}
-	else {
+	else
 		trayShow();
-	}
 }
 
-void MainWin::setTrayToolTip(const Status& status, bool)
+void MainWinB::setTrayToolTip(const Status &status, bool)
 {
-	if (!d->tray) {
+	if (!d->tray)
 		return;
-	}
-	QString s = "Psi";
+	QString s = "Barracuda";
 
  	QString show = status.show();
 	if(!show.isEmpty()) {
@@ -1072,71 +1405,64 @@ void MainWin::setTrayToolTip(const Status& status, bool)
 	}
 
 	QString text = status.status();
-	if(!text.isEmpty()) {
+	if(!text.isEmpty())
 		s += ": "+text;
-	}
 
 	d->tray->setToolTip(s);
 }
 
-void MainWin::trayClicked(const QPoint &, int button)
+void MainWinB::trayClicked(const QPoint &, int button)
 {
-	if(PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool()) {
+	if(PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool())
 		return;
-	}
 
 	if(button == Qt::MidButton) {
 		doRecvNextEvent();
 		return;
 	}
 
-	if(!isHidden()) {
+	if(!isHidden())
 		trayHide();
-	}
-	else {
+	else
 		trayShow();
-	}
 }
 
-void MainWin::trayDoubleClicked()
+void MainWinB::trayDoubleClicked()
 {
-	if(!PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool()) {
+	if(!PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool())
 		return;
-	}
 
 	if(d->nextAmount > 0) {
 		doRecvNextEvent();
 		return;
 	}
 
-
-	if(!isHidden()) {
+	// for windows, always bring to front.  for other platforms, toggle.
+#ifndef Q_WS_WIN
+	if(!isHidden())
 		trayHide();
-	}
-	else {
+	else
+#endif
 		trayShow();
-	}
 }
 
-void MainWin::trayShow()
+void MainWinB::trayShow()
 {
 	bringToFront(this);
 }
 
-void MainWin::trayHide()
+void MainWinB::trayHide()
 {
 	hide();
 }
 
-void MainWin::updateReadNext(PsiIcon* anim, int amount)
+void MainWinB::updateReadNext(PsiIcon *anim, int amount)
 {
 	d->nextAnim = anim;
-	if(anim == 0) {
+	if(anim == 0)
 		d->nextAmount = 0;
-	}
-	else {
+	else
 		d->nextAmount = amount;
-	}
 
 	if(d->nextAmount <= 0) {
 		d->eventNotifier->hide();
@@ -1153,60 +1479,102 @@ void MainWin::updateReadNext(PsiIcon* anim, int amount)
 	updateCaption();
 }
 
-QString MainWin::numEventsString(int x) const
+QString MainWinB::numEventsString(int x) const
 {
 	QString s;
-	if(x <= 0) {
+	if(x <= 0)
 		s = "";
-	}
-	else if(x == 1) {
+	else if(x == 1)
 		s = tr("1 event received");
-	}
-	else {
+	else
 		s = tr("%1 events received").arg(x);
-	}
 
 	return s;
 }
 
-void MainWin::updateTray()
+void MainWinB::updateTray()
 {
-	if(!d->tray) {
+	if(!d->tray)
 		return;
+
+	if ( d->nextAmount > 0 )
+		d->tray->setAlert(d->nextAnim);
+	else if ( d->lastStatus == -1 )
+	{
+		// ###cuda
+		//d->tray->setAlert(IconsetFactory::iconPtr("psi/connect"));
+	}
+	else
+	{
+		// ###cuda
+		//d->tray->setIcon(PsiIconset::instance()->statusPtr(d->lastStatus));
+		d->tray->setIcon(IconsetFactory::iconPtr("psi/logo_16"));
 	}
 
-	if ( d->nextAmount > 0 ) {
-		d->tray->setAlert(d->nextAnim);
-	}
-	else if ( d->lastStatus == -1 ) {
-		d->tray->setAlert(IconsetFactory::iconPtr("psi/connect"));
-	}
-	else {
-		d->tray->setIcon(PsiIconset::instance()->statusPtr(d->lastStatus));
-	}
-	
 	buildTrayMenu();
 	d->tray->setContextMenu(d->trayMenu);
 }
 
-void MainWin::doRecvNextEvent()
+void MainWinB::doRecvNextEvent()
 {
 	recvNextEvent();
 }
 
-void MainWin::statusClicked(int x)
+void MainWinB::statusClicked(int x)
 {
-	if(x == Qt::MidButton) {
+	if(x == Qt::MidButton)
 		recvNextEvent();
-	}
 }
 
-void MainWin::numAccountsChanged()
+void MainWinB::numAccountsChanged()
 {
+	if(!d->psi->contactList()->haveEnabledAccounts())
+		return;
+
+	QList<PsiAccount*> accountList = d->psi->contactList()->accounts();
+	foreach(PsiAccount *acc, accountList)
+	{
+		disconnect(acc->avatarFactory(), SIGNAL(avatarChanged(const Jid &)), this, SLOT(vcardChanged(const Jid &)));
+		connect(acc->avatarFactory(), SIGNAL(avatarChanged(const Jid &)), SLOT(vcardChanged(const Jid &)));
+	}
+
+	PsiAccount *account = d->psi->contactList()->defaultAccount();
+	QString jid, name;
+	QImage img;
+	if(account)
+	{
+		jid = account->jid().bare();
+
+		QPixmap avatarPixmap = account->avatarFactory()->getAvatar(account->jid());
+		if(!avatarPixmap.isNull())
+			img = avatarPixmap.toImage();
+
+		const VCard *vcard = VCardFactory::instance()->vcard(account->jid());
+		if(vcard)
+			name = vcard->fullName();
+	}
+
+	QString str;
+	if(!name.isEmpty())
+		str += QString("<b>%1</b><br>").arg(name);
+	str += jid;
+	if(str.isEmpty())
+		str = "&lt;Unknown&gt;";
+	d->lb_name->setText(str);
+	d->lb_avatar->setPixmap(QPixmap::fromImage(makeAvatarImage(img)));
+
 	d->statusButton->setEnabled(d->psi->contactList()->haveEnabledAccounts());
+
+	if(!d->serv_search && !accountList.isEmpty())
+	{
+		d->serv_search = new SimpleSearch(d->psi->contactList()->defaultAccount());
+		connect(d->serv_search, SIGNAL(results(const QList<SimpleSearch::Result> &)), SLOT(serv_search_results(const QList<SimpleSearch::Result> &)));
+	}
+	else if(d->serv_search && accountList.isEmpty())
+		delete d->serv_search;
 }
 
-void MainWin::accountFeaturesChanged()
+void MainWinB::accountFeaturesChanged()
 {
 	bool have_pep = false;
 	foreach(PsiAccount* account, d->psi->contactList()->enabledAccounts()) {
@@ -1221,79 +1589,28 @@ void MainWin::accountFeaturesChanged()
 #endif
 }
 
-void MainWin::dockActivated()
+void MainWinB::dockActivated()
 {
-	if(isHidden()) {
+	if(isHidden())
 		show();
-	}
 }
 
-/**
- * Called when the cancel is clicked or the search becomes empty.
- * Cancels the search.
- */ 
-void MainWin::searchClearClicked()
-{
-	d->searchWidget->setVisible(false);
-	d->searchText->clear();
-	cvlist->clearFilter();
-	if (d->filterActive)
-	{
-		d->getAction("show_offline")->setChecked(d->prefilterShowOffline);
-		d->getAction("show_away")->setChecked(d->prefilterShowAway);  
-	}
-	d->filterActive=false;  
-}
-
-/**
- * Called when the contactview has a keypress.
- * Starts the search/filter process
- */ 
-void MainWin::searchTextStarted(QString const& text)
-{
-	d->searchWidget->setVisible(true);
-	d->searchText->setText(d->searchText->text() + text);
-	searchTextEntered(d->searchText->text());
-	d->searchText->setFocus();
-}
-
-/**
- * Called when the search input is changed.
- * Updates the search.
- */ 
-void MainWin::searchTextEntered(QString const& text)
-{
-	if (!d->filterActive)
-	{
-		d->filterActive = true;
-		d->prefilterShowOffline = d->getAction("show_offline")->isChecked();
-		d->prefilterShowAway = d->getAction("show_away")->isChecked();
-		d->getAction("show_offline")->setChecked(true);
-		d->getAction("show_away")->setChecked(true);
-	}
-	if (text.isEmpty()) {
-		searchClearClicked();
-	} else {
-		
-		cvlist->setFilter(text);
-	}
-}
 
 #ifdef Q_WS_MAC
-void MainWin::setWindowIcon(const QPixmap&)
+void MainWinB::setWindowIcon(const QPixmap&)
 {
 }
 #else
-void MainWin::setWindowIcon(const QPixmap& p)
+void MainWinB::setWindowIcon(const QPixmap& p)
 {
-	QMainWindow::setWindowIcon(p);
+	AdvancedWidget<CudaFrame>::setWindowIcon(p);
 }
 #endif
 
 #if 0
 #if defined(Q_WS_WIN)
 #include <windows.h>
-void MainWin::showNoFocus()
+void MainWinB::showNoFocus()
 {
 	clearWState( WState_ForceHide );
 
@@ -1350,8 +1667,8 @@ void MainWin::showNoFocus()
 
 	if ( children() ) {
 		QObjectListIt it(*children());
-		register QObject* object;
-		QWidget* widget;
+		register QObject *object;
+		QWidget *widget;
 		while ( it ) {				// show all widget children
 			object = it.current();		//   (except popups and other toplevels)
 			++it;
@@ -1375,9 +1692,244 @@ void MainWin::showNoFocus()
 #endif
 #endif
 
-void MainWin::showNoFocus()
+void MainWinB::showNoFocus()
 {
 	bringToFront(this);
 }
 
 //#endif
+
+void MainWinB::searchClearClicked()
+{
+}
+
+void MainWinB::searchTextEntered(QString const &text)
+{
+	Q_UNUSED(text);
+}
+
+void MainWinB::searchTextStarted(QString const &text)
+{
+	Q_UNUSED(text);
+}
+
+// ###cuda
+void MainWinB::vcardChanged(const Jid &jid)
+{
+	PsiAccount *account = d->psi->contactList()->defaultAccount();
+	if(account && account->jid().compare(jid, false))
+		numAccountsChanged();
+}
+
+void MainWinB::searchTextChanged(const QString &text)
+{
+	// search cancelled
+	if(text.isNull())
+	{
+		d->pb_searchcancel->hide();
+		d->restorePreSearchState();
+		d->filterActive = false;
+
+		d->serv_search->stop();
+		return;
+	}
+
+	if(!d->filterActive)
+	{
+		d->filterActive = true;
+		d->pb_searchcancel->show();
+		d->savePreSearchState();
+	}
+
+	if(text.length() < 2)
+	{
+		cvlist->clearFilter();
+		d->serv_search->stop();
+	}
+	else
+	{
+		cvlist->setFilter(text);
+		d->serv_search->search(text);
+		d->searchTimeout.start();
+	}
+}
+
+void MainWinB::searchCancel()
+{
+	d->le_search->clearSearch();
+	d->pb_searchcancel->hide();
+	cvlist->setFocus();
+	cvlist->clearFilter();
+	d->restorePreSearchState();
+	d->filterActive = false;
+
+	d->serv_search->stop();
+}
+
+void MainWinB::actDoLogOn()
+{
+	d->psi->setGlobalStatus(makeStatus(STATUS_ONLINE, QString()));
+}
+
+void MainWinB::actDoLogOff()
+{
+	d->psi->setGlobalStatus(makeStatus(STATUS_OFFLINE, QString()));
+}
+
+void MainWinB::actDoAccountModify()
+{
+	PsiAccount *account = d->psi->contactList()->defaultAccount();
+	account->modify();
+}
+
+void MainWinB::actDoEditVCard()
+{
+	PsiAccount *account = d->psi->contactList()->defaultAccount();
+	account->changeVCard();
+}
+
+void MainWinB::actDoLinkHistory()
+{
+	PsiAccount *account = d->psi->contactList()->defaultAccount();
+	account->doGotoWebHistory();
+}
+
+void MainWinB::actDoLinkPassword()
+{
+	PsiAccount *account = d->psi->contactList()->defaultAccount();
+	account->doGotoWebPass();
+}
+
+void MainWinB::actDoRegAim()
+{
+	/*PsiAccount *account = d->psi->contactList()->defaultAccount();
+	if(!account)
+		return;
+	transportWizard *w = new transportWizard(0, "", account, "aim");
+	w->show();*/
+}
+
+void MainWinB::actDoRegMsn()
+{
+	/*PsiAccount *account = d->psi->contactList()->defaultAccount();
+	if(!account)
+		return;
+	transportWizard *w = new transportWizard(0, "", account, "msn");
+	w->show();*/
+}
+
+void MainWinB::actDoRegYahoo()
+{
+	/*PsiAccount *account = d->psi->contactList()->defaultAccount();
+	if(!account)
+		return;
+	transportWizard *w = new transportWizard(0, "", account, "yahoo");
+	w->show();*/
+}
+
+void MainWinB::actDoRegIcq()
+{
+	/*PsiAccount *account = d->psi->contactList()->defaultAccount();
+	if(!account)
+		return;
+	transportWizard *w = new transportWizard(0, "", account, "icq");
+	w->show();*/
+}
+
+void MainWinB::actDoRegTrans()
+{
+	PsiAccount *account = d->psi->contactList()->defaultAccount();
+	if(!account)
+		return;
+	TransportSetupDlg *w = new TransportSetupDlg(account, 0);
+	w->setAttribute(Qt::WA_DeleteOnClose);
+	w->show();
+}
+
+void MainWinB::avatar_clicked()
+{
+	actDoEditVCard();
+}
+
+void MainWinB::serv_search_results(const QList<SimpleSearch::Result> &list)
+{
+	PsiAccount *account = d->psi->contactList()->defaultAccount();
+	UserList *userList = account->userList();
+	AvatarFactory *avatarFactory = account->avatarFactory();
+	ContactProfile *cp = account->contactProfile();
+
+	// remove results that are no longer in the result set
+	UserListIt it(*userList);
+	for(UserListItem *u; (u = it.current());)
+	{
+		if(u->inList())
+		{
+			++it;
+			continue;
+		}
+
+		bool found = false;
+		foreach(const SimpleSearch::Result &r, list)
+		{
+			if(r.jid.compare(u->jid()))
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if(!found)
+		{
+			account->eventQueue()->clear(u->jid());
+			cp->removeEntry(u->jid());
+			userList->removeRef(u);
+		}
+		else
+			++it;
+	}
+
+	// add results from the result set that we don't yet have
+	foreach(const SimpleSearch::Result &r, list)
+	{
+		bool found = false;
+		UserListIt it(*userList);
+		for(UserListItem *u; (u = it.current()); ++it)
+		{
+			if(u->jid().compare(r.jid))
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if(!found)
+		{
+			UserListItem *u = new UserListItem;
+			u->setJid(r.jid);
+			u->setInList(false);
+			u->setAvatarFactory(avatarFactory);
+			u->setName(r.name);
+			userList->append(u);
+			account->cpUpdate_pub(*u);
+		}
+	}
+}
+
+void MainWinB::showXmlConsole()
+{
+	PsiAccount *account = d->psi->contactList()->defaultAccount();
+	account->showXmlConsole();
+}
+
+void MainWinB::checkUpgrade()
+{
+	PsiAccount *account = d->psi->contactList()->defaultAccount();
+	account->checkUpgrade();
+}
+
+void MainWinB::voipConfig()
+{
+#ifdef QUICKVOIP
+	JingleRtpManager::instance()->config();
+#endif
+}

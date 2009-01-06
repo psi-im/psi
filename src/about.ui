@@ -8,12 +8,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>504</width>
+    <width>610</width>
     <height>320</height>
    </rect>
   </property>
   <property name="windowTitle" >
-   <string>About Psi</string>
+   <string>About Barracuda IM Client</string>
   </property>
   <layout class="QVBoxLayout" >
    <property name="margin" >
@@ -39,7 +39,7 @@
         <enum>QFrame::Plain</enum>
        </property>
        <property name="psiIconName" stdset="0" >
-        <string>psi/logo_48</string>
+        <string>psi/cudafull</string>
        </property>
       </widget>
      </item>
@@ -100,9 +100,9 @@
           </sizepolicy>
          </property>
          <property name="text" >
-          <string>A cross-platform Jabber client designed for the Jabber power user.&lt;br>
-&lt;br>
-Copyright © 2001-2008 The Psi Team.&lt;br>
+          <string>The Barracuda IM client designed for the Barracuda IM Firewall.&lt;br&gt;
+&lt;br&gt;
+Copyright (C) 2005-2008 Barracuda Networks, Inc.
 </string>
          </property>
          <property name="textFormat" >
@@ -116,10 +116,44 @@ Copyright © 2001-2008 The Psi Team.&lt;br>
           <set>Qt::AlignCenter</set>
          </property>
          <property name="url" >
-          <string>http://psi-im.org</string>
+          <string>http://www.barracuda.com/im</string>
          </property>
          <property name="title" >
-          <string>http://psi-im.org</string>
+          <string>http://www.barracuda.com/im</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="lb_about2" >
+         <property name="sizePolicy" >
+          <sizepolicy>
+           <hsizetype>7</hsizetype>
+           <vsizetype>7</vsizetype>
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text" >
+          <string>This software is based on the Psi XMPP/Jabber client.&lt;br&gt;
+&lt;br&gt;
+Copyright (C) 2001-2008 The Psi Team.
+</string>
+         </property>
+         <property name="textFormat" >
+          <enum>Qt::RichText</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="URLLabel" name="uRLLabel2" >
+         <property name="alignment" >
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="url" >
+          <string>http://psi-im.org/</string>
+         </property>
+         <property name="title" >
+          <string>http://psi-im.org/</string>
          </property>
         </widget>
        </item>
@@ -193,6 +227,19 @@ Copyright © 2001-2008 The Psi Team.&lt;br>
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
+         </property>
+         <property name="text" >
+          <string>I. M. Anonymous &lt;note text="replace with your real name">&lt;br>
+&amp;nbsp;&amp;nbsp;&lt;a href="mailto:noone@nowhere.com">nowhere@nowhere.com&lt;/a> &lt;note text="replace with your email">&lt;br>
+&amp;nbsp;&amp;nbsp;&lt;a href="http://blah.com">http://blah.com&lt;/a> &lt;note text="write your site URL here">&lt;br>
+&amp;nbsp;&amp;nbsp;Jabber: &lt;a href="jabber:blah@jabber.org">blah@jabber.org &lt;note text="write your JID here">&lt;/a>&lt;br>
+&amp;nbsp;&amp;nbsp;Translator &lt;note text="write description for the work, you've done">&lt;br>
+&lt;br>
+&lt;note text="you can add as many people here as you want">
+
+&lt;note text="and translate following text">
+Join the translation team today! Go to &lt;a href="http://psi-im.org/forum/forum/3">http://psi.affinix.com/forums/index.php?act=SF&amp;f=3&lt;/a> for further details!
+</string>
          </property>
         </widget>
        </item>

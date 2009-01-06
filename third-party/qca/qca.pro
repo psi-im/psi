@@ -1,10 +1,12 @@
+PSIDIR_TP = ../../psi/third-party
+
 TEMPLATE = lib
 QT      -= gui
-CONFIG += staticlib
+CONFIG += staticlib release
 DEFINES += QCA_STATIC
 TARGET = qca_psi
 
-QCA_BASE = qca
+QCA_BASE = $$PSIDIR_TP/qca/qca
 QCA_INCBASE = $$QCA_BASE/include
 QCA_SRCBASE = $$QCA_BASE/src
 
@@ -68,8 +70,10 @@ SOURCES += \
 	$$QCA_CPP/support/qpipe.cpp \
 	$$QCA_CPP/support/console.cpp
 
+include(../../conf.pri)
+
 unix:!mac: {
-	SOURCES += $$QCA_CPP/qca_systemstore_flatfile.cpp
+	!no_systemstore:SOURCES += $$QCA_CPP/qca_systemstore_flatfile.cpp
 }
 windows: {
 	SOURCES += $$QCA_CPP/qca_systemstore_win.cpp
@@ -77,8 +81,6 @@ windows: {
 mac: {
 	SOURCES += $$QCA_CPP/qca_systemstore_mac.cpp
 }
-
-include(../../conf.pri)
 
 qc_universal:contains(QT_CONFIG,x86):contains(QT_CONFIG,ppc) {
 	CONFIG += x86 ppc

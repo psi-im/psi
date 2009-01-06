@@ -26,6 +26,11 @@
 	</icon>
 
 	<icon>
+		<x xmlns='name'>psi/cudafull</x>
+		<object mime='image/png'>cudafull.png</object>
+	</icon>
+
+	<icon>
 		<x xmlns='name'>psi/addContact</x>
 		<object mime='image/png'>add.png</object>
 	</icon>
@@ -488,4 +493,54 @@
 		<object mime='image/png'>whiteboarding/ungroup.png</object>
 	</icon>
 	<!-- End whiteboarding -->
+
+	<icon>
+		<x xmlns='name'>psi/aimregister</x>
+		<object mime='image/png'>aim_registration.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/msnregister</x>
+		<object mime='image/png'>msn_registration.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/yahooregister</x>
+		<object mime='image/png'>yahoo_registration.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/icqregister</x>
+		<object mime='image/png'>icq_registration.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/barracudaregister</x>
+		<object mime='image/png'>barracuda_registration.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/jabberregister</x>
+		<object mime='image/png'>jabber_registration.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/aimlogo</x>
+		<object mime='image/png'>aim_logo.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/msnlogo</x>
+		<object mime='image/png'>msn_logo.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/yahoologo</x>
+		<object mime='image/png'>yahoo_logo.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/icqlogo</x>
+		<object mime='image/png'>icq_logo.png</object>
+	</icon>
 </icondef>

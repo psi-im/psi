@@ -38,7 +38,6 @@
 #include "psicontactlist.h"
 #include "accountlabel.h"
 #include "psioptions.h"
-#include "fileutil.h"
 
 typedef Q_UINT64 LARGE_TYPE;
 
@@ -162,7 +161,8 @@ FileTransferHandler::FileTransferHandler(PsiAccount *pa, FileTransfer *ft)
 		d->shift = calcShift(d->fileSize);
 		d->complement = calcComplement(d->fileSize, d->shift);
 		d->ft = ft;
-		Jid proxy = d->pa->userAccount().dtProxy;
+		//Jid proxy = d->pa->userAccount().dtProxy;
+		Jid proxy = QString("proxy65.") + d->pa->jid().domain();
 		if(proxy.isValid())
 			d->ft->setProxy(proxy);
 		mapSignals();
@@ -199,7 +199,8 @@ void FileTransferHandler::send(const XMPP::Jid &to, const QString &fname, const 
 	d->complement = calcComplement(d->fileSize, d->shift);
 
 	d->ft = d->pa->client()->fileTransferManager()->createTransfer();
-	Jid proxy = d->pa->userAccount().dtProxy;
+	//Jid proxy = d->pa->userAccount().dtProxy;
+	Jid proxy = QString("proxy65.") + d->pa->jid().domain();
 	if(proxy.isValid())
 		d->ft->setProxy(proxy);
 	mapSignals();
@@ -436,6 +437,8 @@ void FileTransferHandler::ft_error(int x)
 		error(ErrReject, x, "");
 	else if(x == FileTransfer::ErrNeg)
 		error(ErrTransfer, x, tr("Unable to negotiate transfer."));
+	else if(x == FileTransfer::Err400)
+		error(ErrTransfer, x, tr("Unable to negotiate transfer (possibly old client)."));
 	else if(x == FileTransfer::ErrConnect)
 		error(ErrTransfer, x, tr("Unable to connect to peer for data transfer."));
 	else if(x == FileTransfer::ErrProxy)
@@ -528,6 +531,7 @@ FileRequestDlg::FileRequestDlg(const Jid &j, PsiCon *psi, PsiAccount *pa)
 	setAttribute(Qt::WA_DeleteOnClose);
 	setModal(false);
 	setupUi(this);
+	busy->hide();
 	QStringList l;
 	FileRequestDlg(j, psi, pa, l);
 }
@@ -540,6 +544,7 @@ FileRequestDlg::FileRequestDlg(const Jid &jid, PsiCon *psi, PsiAccount *pa, cons
 	d = new Private;
 	setModal(false);
 	setupUi(this);
+	busy->hide();
 	d->psi = psi;
 	d->pa = 0;
 	d->jid = jid;
@@ -602,8 +607,8 @@ FileRequestDlg::FileRequestDlg(const Jid &jid, PsiCon *psi, PsiAccount *pa, cons
 			QTimer::singleShot(0, this, SLOT(reject()));
 			return;
 		}
-
-		FileUtil::setLastUsedSavePath(fi.dirPath());
+		
+		PsiOptions::instance()->setOption("options.ui.last-used-open-path", fi.dirPath());
 		le_fname->setText(QDir::convertSeparators(fi.filePath()));
 		lb_size->setText(tr("%1 byte(s)").arg(fi.size())); // TODO: large file support
 	}
@@ -620,6 +625,7 @@ FileRequestDlg::FileRequestDlg(const QDateTime &ts, FileTransfer *ft, PsiAccount
 	d = new Private;
 	setModal(false);
 	setupUi(this);
+	busy->hide();
 	d->psi = 0;
 	d->pa = 0;
 	d->jid = ft->peer();
@@ -770,13 +776,21 @@ void FileRequestDlg::unblockWidgets()
 
 void FileRequestDlg::chooseFile()
 {
-	QString str = FileUtil::getOpenFileName(this,
-	                                        tr("Choose a file"),
-	                                        tr("All files (*)"));
-	if (!str.isEmpty()) {
-		QFileInfo fi(str);
-		le_fname->setText(QDir::convertSeparators(fi.filePath()));
-		lb_size->setText(tr("%1 byte(s)").arg(fi.size())); // TODO: large file support
+	while(1) {
+		if(PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString().isEmpty())
+			PsiOptions::instance()->setOption("options.ui.last-used-open-path", QDir::homeDirPath());
+		QString str = QFileDialog::getOpenFileName(this, tr("Choose a file"), PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString(), tr("All files (*)"));
+		if(!str.isEmpty()) {
+			QFileInfo fi(str);
+			if(!fi.exists()) {
+				QMessageBox::information(this, tr("Error"), tr("The file specified does not exist."));
+				continue;
+			}
+			PsiOptions::instance()->setOption("options.ui.last-used-open-path", fi.dirPath());
+			le_fname->setText(QDir::convertSeparators(fi.filePath()));
+			lb_size->setText(tr("%1 byte(s)").arg(fi.size())); // TODO: large file support
+		}
+		break;
 	}
 }
 
@@ -803,7 +817,7 @@ void FileRequestDlg::doStart()
 		pb_stop->setText(tr("&Cancel"));
 		pb_stop->setFocus();
 		busy->start();
-		lb_status->setText(tr("Requesting..."));
+		lb_status->setText(tr("Waiting for file to be accepted..."));
 
 		d->fileName = fi.fileName();
 		d->fileSize = fi.size(); // TODO: large file support
@@ -817,13 +831,13 @@ void FileRequestDlg::doStart()
 	}
 	else {
 		QString fname, savename;
-		fname = FileUtil::getSaveFileName(this,
-		                                  tr("Save As"),
-		                                  d->fileName,
-		                                  tr("All files (*)"));
+		if(PsiOptions::instance()->getOption("options.ui.last-used-save-path").toString().isEmpty())
+			PsiOptions::instance()->setOption("options.ui.last-used-save-path", QDir::homeDirPath());
+		fname = QFileDialog::getSaveFileName(this, tr("Save As"), QDir(PsiOptions::instance()->getOption("options.ui.last-used-save-path").toString()).filePath(d->fileName), tr("All files (*)"));
 		if(fname.isEmpty())
 			return;
 		QFileInfo fi(fname);
+		PsiOptions::instance()->setOption("options.ui.last-used-save-path", fi.dirPath());
 		savename = fname + ".part";
 		fname = fi.fileName();
 
@@ -915,6 +929,12 @@ void FileRequestDlg::ft_error(int x, int fx, const QString &)
 				"Unable to negotiate transfer.\n\n"
 				"This can happen if the contact did not understand our request, or if the\n"
 				"contact is offline."
+				);
+		else if(fx == FileTransfer::Err400)
+			str = tr(
+				"Unable to negotiate transfer.\n\n"
+				"This can happen if the contact is using an older version of the Barracuda\n"
+				"IM Client, or if the contact is offline."
 				);
 		else if(fx == FileTransfer::ErrConnect)
 			str = tr(

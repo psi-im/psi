@@ -23,7 +23,7 @@
 #include "xmpp_xmlcommon.h"
 #include "xmpp_task.h"
 #include "xmpp_jid.h"
-#include "psiprivacymanager.h"
+#include "psiprivacymanager_b.h"
 #include "privacymanager.h"
 #include "privacylist.h"
 
@@ -47,8 +47,11 @@ public:
 		
 		QString ns = queryNS(e);
 		if(ns == "jabber:iq:privacy") {
-			// TODO: Do something with update
-			
+			QDomElement listTag = findSubTag(queryTag(e), "list", 0);
+			if (!listTag.isNull()) {
+				emit privacyListChanged(listTag.attribute("name"));
+			}
+
 			// Confirm receipt
 			QDomElement iq = createIQ(doc(), "result", e.attribute("from"), e.attribute("id"));
 			send(iq);
@@ -57,6 +60,9 @@ public:
 
 		return false;
 	}
+
+signals:
+	void privacyListChanged(const QString& name);
 };
 
 // -----------------------------------------------------------------------------
@@ -265,11 +271,18 @@ public:
 PsiPrivacyManager::PsiPrivacyManager(XMPP::Task* rootTask) : rootTask_(rootTask), getDefault_waiting_(false), block_waiting_(false)
 {
    listener_ = new PrivacyListListener(rootTask_);	
+   connect(listener_, SIGNAL(privacyListChanged(const QString&)), SLOT(privacyListChanged(const QString&)));
 }
 
 PsiPrivacyManager::~PsiPrivacyManager()
 {
 	delete listener_;
+}
+
+void PsiPrivacyManager::privacyListChanged(const QString& name)
+{
+	if (!name.isEmpty())
+		requestList(name);
 }
 
 void PsiPrivacyManager::requestListNames()

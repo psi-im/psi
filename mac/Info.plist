@@ -5,25 +5,25 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>psi</string>
+	<string>Barracuda</string>
 	<key>CFBundleGetInfoString</key>
-	<string>Psi 0.12 by the Psi team. This program is licensed under the GNU GPL.</string>
+	<string>Barracuda IM Client 3.3.2 by Barracuda Networks. This program is licensed under the GNU GPL.</string>
 	<key>CFBundleIconFile</key>
 	<string>application.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.psi-im</string>
+	<string>com.barracuda</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Psi</string>
+	<string>Barracuda IM Client</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>Psi 0.12</string>
+	<string>Barracuda IM Client 3.3.2</string>
 	<key>CFBundleSignature</key>
-	<string>psi</string>
+	<string>barracuda</string>
 	<key>CFBundleVersion</key>
-	<string>0.12</string>
+	<string>3.3.2</string>
 	<key>CSResourcesFileMapped</key>
 	<true/>
 </dict>

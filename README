@@ -1,290 +1,76 @@
-Psi 0.12
----------
-Date: July 25th, 2008
+Barracuda IM Client 3.3.2
+-------------------------
+Date: November 6th, 2008
 
-Project Lead/Maintainer (2004-current):
-  Kevin Smith
-  kismith@psi-im.org
-  http://www.kismith.co.uk/
-
-Original Author (2001-2004):
-  Justin Karneges
-  justin@affinix.com
-  http://psi-im.org/
+Barracuda Networks - http://www.barracudanetworks.com/
 
 
   For installation or compiling instructions, see the INSTALL file.
+  (On Windows, see Install.txt)
 
   This program is licensed under the GNU General Public License.  See
-  the COPYING file for more information.
-
-Known Issues
-------------
-The following are known issues with this release:
-Issues with Qt 4.2.3: There is a bug in Qt 4.2.3 that corrupts incoming text
-with rare Unicode characters (outside of the BMP)
-Issues with Qt 4.3.(0|1): On X11 Qt 4.3 seems to have problems with some
-window managers that result in windows not beeing displayed or displayed 
-with a broken layout.
-Issues with Qt 4.3.3: On Windows, qmake has a bug which prevents compilation with mingw, using an earlier Qt or qmake should work.
-
-Notes
------
-  - QCA --
-    * QCA2 is required to build Psi: a version is bundled with Psi.
-    * The qca-ossl and qca-gnupg plugins are desirable for full 
-      functionality of Psi.
-
-  - Upgrading to 0.12 --
-    * During the upgrade process, the old config.xml configuration file will
-      be imported into the new option.xml format. Neither file should now be
-      edited by hand, since all options are exposed in the options window. 
-      Config.xml can be safely removed once the upgrade is complete.
-
-  - GnuPG tips --
-    * Always use the latest version of GnuPG.
-    * On Windows, use a native build instead of one based on cygwin, and make
-      sure it is properly installed in the registry.
-    * Ensure 'gpg' actually works, by testing it from the command-line.
-    * You must have a public and secret keyring.  Psi cannot operate
-      without them, and they must be there when you start it.
+  the COPYING file for more information. (On Windows, see Copying.txt)
 
 
 Changes
 -------
-  New in 0.12
-  - Multi-user chat windows now join one on one chat windows and can be opened
-    in tabbed form, either sharing a window, or seperately.
-  - The roster search has been updated, and now triggers a filter when typing
-    into the roster window.
-  - An XML ringbuffer is now used, allowing access to already received XML in
-    the XML console.
-  - When resolving a name for new contacts, the full name is now used if the 
-    nick name is missing from the vcard.
-  - Auto-connect on wake is now an independent option.
-  - MUCs can now be bookmarked, and auto-joined.
-  - The old config.xml file has been dropped in favour of the new options.xml
-    format - all options in Psi can now be configured from the Advanced 
-    options pane (no more hand-editing of config files is required).
-  - Vcard avatars are now transmitted for the benefit of legacy clients and
-    servers not supporting PEP.
-  - A new diagnostics group is available in the help menu, to allow debugging
-    problems with the QCA security layer.
-  - Launching several instances of the same profile on Windows and Unices with
-    DBUS now behaves more sensibly.
-  - On X11, the taskbar should now flash on new messages for compliant
-    window managers.
+  New in 3.3.2
+  - Theme groupchat just like regular chats
+  - Restored regular chat to group chat conversion feature
+  - Simplified handling of group chat invitations
+  - If tabs are enabled, then group chats are also tabbed
+  - No need to enter hostname (e.g. 'conference') to use groupchat
+  - Connecting should be more reliable after switching networks
+  - Other small bugfixes
 
-  New in 0.11
-  - Reworked account registration process (including proper support for
-    XEP-0077 (In-band registration))
-  - Finished support for XEP-0004 (Data Forms) by supporting forms in
-    messages. (thanks to Roelof Naude)
-  - Added support for XEP-0070 (Verifying HTTP Requests via XMPP).
-    Thanks to Maciej Niedzielski.
-  - Customizable shortcuts (thanks to Ephraim)
-  - System-wide shortcuts
-  - Added spell checking (thanks to Ephraim).
-    Currently only aspell is supported.
-  - Added option to automatically set the resource (using the hostname)
-  - Added new default Stellar3 iconset
-  - Added support for XEP-138 (Stream Compression)
-  - Added support for using XEP-33 (Extended Stanza Addressing) to multicast
-    messages to multiple users. Use option.enable-multicasting to enable it.
-  - Added 'Show status message' toggle. There is a hidden option to put 
-    status messages under the nickname (at the cost of 2 extra pixels
-	  when no status message is shown)
-  - Support for Bookmark Storage (XEP-0048), where bookmarked conferences are
-    auto-joined. No UI is provided for creating bookmarks (yet).
-  - Better error messages, including error condition mappings (XEP-0086)
-  - Support dynamically changing priority
-  - Improved PGP error messages
-  - Hiding the deprecated protocol selector for service discovery by default.
-    Use option.ui.show-deprecated.service-discovery.protocol-selector to
-	  re-enable it.
-  - New options system (see options.xml)
-  - Receiving support for vCard-Based Avatars (XEP-0153)
-  - Support for Multi-User-Chat (XEP-0045)
-  - Preliminary support for User Nickname (XEP-0172)
-  - Preliminary support for Roster Item Exchange (XEP-0144)
-  - Psi now uses the Qt4(>=4.3) and QCA2 libraries, replacing the Qt3 and QCA1 
-    requirements.
-  - "Privacy List" support in the account dialog.
-  - Support for XEP-0050 (Ad-hoc commands)
-  - Preliminary support for XEP-0163 (Personal Eventing Protocol)
-  - Preliminary support for XEP-0146 (Remote Controlling Clients)
-  - Large parts of the codebase have been restructured.
-  - Fixed a chat room bug where subject/topic changes were not shown.
-  - Mac OS X builds are now universal binaries, supporting the new Intel 
-    based Macs.
-  - Support for XEP-85 (Chat State Notifications).
-  - Support for XEP-0115 (Entity Capabilities).
-  - There is now a config.xml option to make some windows use the brushed
-    metal theme on Mac OS X.
-  - Window opacity support is now present for all three supported platforms.
-  - Fixed Unicode URL opening bug #510
-  - Auto-reconnect accounts on wakeup
-  - Copy-pasting with emoticons now works
-  - Fixed issue #263 where emoticons would disappear in a reply or quote
-  - History index is rebuilt faster
-  - Configure toolbars merged into main preferences dialog
-  - Moving tooltips
-  - MingW32 compiler support (Coupled with the open source Qt4 Windows library
-    this now allows completely free building of Psi on Windows)
+  New in 3.2.2
+  - Ability for administrators to push organization-wide connect settings
+  - Initial support for Kerberos authentication (passwordless)
+  - Automatic reconnect feature now works after suspend
+  - Chat window position cascading restored from 3.0
+  - Other small bugfixes
 
-  New in 0.10
-  - Psi will now sign out before Windows or Mac OS X machines go to 'sleep'
-  - The default text input line in the chat dialogs starts at one line tall, and grows as necessary.
-  - The Roster can now be automatically resized to fit all contacts.
-  - The Roster now has a menu bar available on Windows and Linux
-  - Chat windows can be collected together using tabs
-  - On Windows and Mac OS X, selected text may be automatically copied to the clipboard.
-  - Mac OS X builds now enjoy Growl(.info) support
-  - Photos are now available in the VCard dialog
-  - New default colour scheme
-  - New default iconsets
-  - Roster and chat dialog opacity is now configurable on Windows and Mac OS X
-  - The colour scheme is now slightly more configurable
-  - Assorted minor feature additions and bug fixes
+  New in 3.1.5
+  - Improved Public IM Account configuration
+  - Searching checks the server directory as well as local contact list
+  - Ability to block contacts
+  - Resizing the contact list and chat window now works from the top/left
+  - Fix disclaimer messages to appear only after long inactivity, like 2.2
+  - Ignore Headlines option works again
+  - Ignore events from Agents/Transports if they are hidden
+  - Workaround an issue where an active search would hog the processor
+  - Preview message text in corner popup notifications
+  - On Mac, use Growl for notifications
+  - Upgrade to Psi 0.12 client base
+  - Other small bugfixes and improvements
 
-  New in 0.9.3
-  - Notification when a user is typing
-  - Advanced Data Forms capability (x:data)
-  - Mac version uses the menu bar and also has a new color scheme
-  - Slightly improved new user dialog
-  - Drag and drop File Transfer
-  - Ability to specify a status messages when going offline
-  - The tray icon under X11 should now be more beautiful
-  - Show self-contact is now a toolbar button instead of a normal option
-  - There is now an option for all chat windows to be compact by default
-  - Bugfix: file transfer sometimes wouldn't send the whole file
-  - Fixed many other small bugs
+  New in 3.0.7
+  - Upgrade to Psi 0.11 client base
+  - Brand new theme and UI
+  - Too many fixes and features to name
 
-  New in 0.9.2
-  - File transfer
-  - Event queue is saved to disk at all times for fault protection
-  - Enable/disable accounts
-  - Groupchat nickname tab-completion
-  - Groupchat trackbar to mark last read text when unfocused
-  - *bold*, /italic/, _underline_
-  - Fixed bug where the roster window could get lost on Windows
-  - 'Compact' mode for chat window
-  - Tip of the day
-  - Hidden roster group
-  - Ability to export history as readable text
-  - Event queue sorting by type
-  - Type-ahead search in the roster
-  - External programs can now have parameters
-  - Toolbar configuration is now accessed from the right-click menu
-  - Show dates in local format
-  - Use the gnome-open utility for opening URLs with GNOME2
-  - Fixed "broken pipe" crash when receiving GnuPG errors
+  New in 2.2.5
+  - Typing notifications
+  - Tabbed chatting
+  - Chat window grows vertically as you type
+  - Redesigned preferences window
+  - Other small bugfixes and features
 
-  New in 0.9.1
-  - Service Discovery browser (XEP-0030)
-  - Popup notifications
-  - Redesigned Iconset & Emoticons system, based on XEP-0038
-  - Now possible to use service/transport icons for individual contacts
-  - Ability to use custom roster icons for contacts via RegExps
-  - Emoticon popup menu in chat window, for quick access
-  - Reorganized Options window
-  - Toolbar Editor
-  - GnuPG 1.2.3 compatibility
-  - New XMPP/Jabber engine (partially complete, XMPP 1.0 support deferred)
-  - SOCKS5 proxy support
-  - HTTP polling proxy support (XEP-0025)
-  - Roster groups open/closed state saved
-  - 'Free for Chat' status
-  - Character counter
-  - Selectable colors for roster 'blink' animation
-  - Copy Location in URL attachment context menu
-  - X11: WindowMaker docklet
-  - Windows: fixed idle detection on Windows 9x
-  - Mac: ability to hide/restore main window
-  - Option: ignore messages from addresses not in your roster
-  - Option: enter key sends chat messages
-  - Option: raise chat window on receiving new messages
-  - Option: auto-authorize contacts
-  - Option: 'small' group headings
-  - Option: treat incoming chats as messages unless chatting
-  - Option: show/hide subject line
-  - Option: enable/disable vCard check during login
-  - Account dialogs ensure the JID is a valid user-JID before accepting
-  - Bugfix: crash after using the Jabber browser
-  - Bugfix: crash when resolving DNS
-  - Bugfix: busy indicator sometimes stopped when it should still be running
-  - Fixed many other bugs
+  New in 2.1.1
+  - Support for new Barracuda IM server firmware
+  - Fix random crash during regular usage that some users experienced.
+
+  New in 2.1.0
+  - User search in contact view list.
+  - Enhanced look(Icons in menu items, different icon modes).
+  - Replaced add user tool with a wizard.
+  - Multi-language support.
+  - Fix for "invisible" icon under windows in 16bit graphics mode.
+  - Fix for opening multiple pages when a link is clicked in a chat.
 
 
 Description
 -----------
-
-  Psi is a capable Jabber client aimed at experienced users.  Its design
-  goals are simplicity and stability.  Psi is highly portable and runs on
-  Windows, Unix/X11, and Mac OS X.
-
-  The interface is very ICQ-like.  Alerts appear in the contact list when
-  events are received, and things like subscriptions requests appear as
-  "system messages" (ICQ users know these well).  Even "Chats" are
-  queued in the contact list.  Also, chats are "remembered" by default,
-  so that you don't have to keep a bunch of windows open for each person.
-  Just close the chat window.  If you open it again it will all be there.
-
-  Psi is minimal but powerful.  There are keybindings for just about
-  everything, Unicode is supported throughout, and contacts are cached
-  offline.  Security is also a major consideration, and Psi provides it for
-  both client-to-server (SSL) and client-to-client (GnuPG).
-
-
-How you can help
-----------------
-
-  Comments
-  --------
-  We like comments, even (especially) if they are a simple thanks.
-
-  Bug reports
-  -----------
-  If you want to help us out, please file a bug report on our forum at 
-  http://forum.psi-im.org/forum/2 for release versions, or email us  a bug 
-  report to the development mailing list for development builds, details at:
-  http://lists.affinix.com/listinfo.cgi/psi-devel-affinix.com
-  Please be as descriptive as possible and tell us what exactly you were doing 
-  at the time something went wrong.  If possible, send us a stack backtrace.
-
-  Wishes
-  ------
-  We can't possibly know what everyone wants, so we appreciate all feature
-  requests. These can be submitted to http://forum.psi-im.org/forum/4
-
-  Porting
-  -------
-  Psi should be very portable.  Please e-mail us first if you want to
-  port Psi to another platform.
-
-  Graphics
-  --------
-  There are many ways to contribute to the Psi project, if you think you can 
-  do a better job with any of the Psi graphics, then go right ahead!
-
-  Sound
-  -----
-  Same goes for sound.  Start mixing!
-
-  Programming
-  -----------
-  Patches are welcome.  External tools would be useful as well, like Licq
-  conversion utilities (iconsets, message history, etc).  Get to work!
-
-  Packaging
-  ---------
-  Want to make an RPM or something?
-
-  Financial
-  ---------
-  You can send a paypal gift if you'd like, to donate@psi-im.org
-
-
-Have fun,
--The Psi team
+  Barracuda instant messaging client for the Barracuda messaging system.
+  This client is based on the Psi XMPP client.
 

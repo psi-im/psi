@@ -1,0 +1,126 @@
+/*
+-----BEGIN QCMOD-----
+name: QCA >= 2.0
+arg: with-qca=[path],Specify path to QCA tree, mainly for building against an uninstalled QCA.
+-----END QCMOD-----
+*/
+
+// based on crypto.prf. any changes made to that file need to be tracked here.
+static QString internal_crypto_prf(const QString &incdir, const QString &libdir)
+{
+	QString out = QString(
+"QCA_INCDIR = %1\n"
+"QCA_LIBDIR = %2\n"
+"\n"
+"CONFIG *= qt\n"
+"\n"
+"LINKAGE =\n"
+"\n"
+"# on mac, if qca was built as a framework, link against it\n"
+"mac: {\n"
+"	framework_dir = $$QCA_LIBDIR\n"
+"	exists($$framework_dir/qca.framework) {\n"
+"		#QMAKE_FRAMEWORKPATH *= $$framework_dir\n"
+"		LIBS += -F$$framework_dir\n"
+"		INCLUDEPATH += $$framework_dir/qca.framework/Headers\n"
+"		LINKAGE = -framework qca\n"
+"	}\n"
+"}\n"
+"\n"
+"# else, link normally\n"
+"isEmpty(LINKAGE) {\n"
+"	INCLUDEPATH += $$QCA_INCDIR/QtCrypto\n"
+"	LIBS += -L$$QCA_LIBDIR\n"
+"	LINKAGE = -lqca\n"
+"	CONFIG(debug, debug|release) {\n"
+"		windows:LINKAGE = -lqcad\n"
+"		mac:LINKAGE = -lqca_debug\n"
+"	}\n"
+"}\n"
+"\n"
+"LIBS += $$LINKAGE\n"
+	).arg(incdir, libdir);
+	return out;
+}
+
+#define QC_QCA
+QString qc_qca_procode;
+
+//----------------------------------------------------------------------------
+// qc_qca
+//----------------------------------------------------------------------------
+class qc_qca : public ConfObj
+{
+public:
+	qc_qca(Conf *c) : ConfObj(c) {}
+	QString name() const { return "QCA >= 2.0"; }
+	QString shortname() const { return "qca"; }
+	bool exec()
+	{
+		// get the build mode
+#ifdef QC_BUILDMODE
+		bool release = qc_buildmode_release;
+		bool debug = qc_buildmode_debug;
+#else
+		// else, default to just release mode
+		bool release = true;
+		bool debug = false;
+#endif
+
+		// test for "crypto" feature and check qca version number
+		QString qca_prefix, qca_incdir, qca_libdir, qca_crypto_prf;
+		qca_prefix = conf->getenv("QC_WITH_QCA");
+
+		QString proextra;
+		if(!qca_prefix.isEmpty()) {
+			qca_incdir = qca_prefix + "/include";
+			qca_libdir = qca_prefix + "/lib";
+			qca_crypto_prf = internal_crypto_prf(qca_incdir, qca_libdir);
+			proextra =
+			"CONFIG += qt\n"
+			"QT -= gui\n";
+			proextra += qca_crypto_prf;
+		} else {
+			proextra =
+			"CONFIG += qt crypto\n"
+			"QT -= gui\n";
+		}
+
+		QString str =
+		"#include <QtCrypto>\n"
+		"\n"
+		"int main()\n"
+		"{\n"
+		"	unsigned long x = QCA_VERSION;\n"
+		"	if(x >= 0x020000 && x < 0x030000) return 0; else return 1;\n"
+		"}\n";
+
+		if(release)
+		{
+			int ret;
+			if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra + "CONFIG += release\n", &ret))
+				return false;
+			if(ret != 0)
+				return false;
+		}
+
+		if(debug)
+		{
+			int ret;
+			if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra + "CONFIG += debug\n", &ret))
+				return false;
+			if(ret != 0)
+				return false;
+		}
+
+		if(!qca_prefix.isEmpty())
+			str = qca_crypto_prf;
+		else
+			str = "CONFIG += crypto\n";
+
+		qc_qca_procode = str;
+		conf->addExtra(str);
+
+		return true;
+	}
+};

@@ -25,17 +25,20 @@
 // place (like an external file loaded through the resources system)
 // Should also be overridable through an optional file.
 
-#define PROG_NAME "Psi"
-//#define PROG_VERSION "0.12-dev" " (" __DATE__ ")"; //CVS Builds are dated
-#define PROG_VERSION "0.12";
-#define PROG_CAPS_NODE "http://psi-im.org/caps";
-#define PROG_CAPS_VERSION "0.12";
-#define PROG_IPC_NAME "org.psi-im.Psi"	// must not contain '\\' character on Windows
+#define PROG_NAME "Barracuda IM Client"
+//#define PROG_VERSION "0.11-dev" " (" __DATE__ ")"; //CVS Builds are dated
+//#define PROG_VERSION "0.11-RC2";
+//#define PROG_CAPS_NODE "http://psi-im.org/caps";
+//#define PROG_CAPS_VERSION "0.11-dev-rev8";
+#define PROG_VERSION "3.3.2";
+#define PROG_CAPS_NODE "http://barracuda.com/caps";
+#define PROG_CAPS_VERSION "3.3.2";
+#define PROG_IPC_NAME "com.barracuda/im/client"  // must not contain '\\' character on Windows
 #define PROG_OPTIONS_NS "http://psi-im.org/options";
 #define PROG_STORAGE_NS "http://psi-im.org/storage";
 
 #if defined(Q_WS_X11) && !defined(PSI_DATADIR)
-#define PSI_DATADIR "/usr/local/share/psi"
+#define PSI_DATADIR "/usr/local/share/barracuda"
 #endif
 
 
@@ -78,6 +81,18 @@ QString ApplicationInfo::storageNS()
 QString ApplicationInfo::resourcesDir()
 {
 #if defined(Q_WS_X11)
+	QString appDirPath = QCoreApplication::applicationDirPath();
+	if(!appDirPath.isEmpty())
+	{
+		QDir appDir(appDirPath);
+		if(appDir.exists()
+			&& appDir.cdUp()
+			&& appDir.cd("share")
+			&& appDir.cd("barracuda"))
+		{
+			return appDir.path();
+		}
+	}
 	return PSI_DATADIR;
 #elif defined(Q_WS_WIN)
 	return qApp->applicationDirPath();
@@ -137,10 +152,10 @@ QString ApplicationInfo::homeDir()
 		return p;
 
 #if defined(Q_WS_X11)
-	QDir proghome(QDir::homeDirPath() + "/.psi");
+	QDir proghome(QDir::homeDirPath() + "/.barracuda");
 	if(!proghome.exists()) {
 		QDir home = QDir::home();
-		home.mkdir(".psi");
+		home.mkdir(".barracuda");
 		chmod(QFile::encodeName(proghome.path()), 0700);
 	}
 	return proghome.path();
@@ -158,18 +173,18 @@ QString ApplicationInfo::homeDir()
 	if(base.at(base.length()-1) == '/')
 		base.truncate(base.length()-1);
 
-	QDir proghome(base + "/PsiData");
+	QDir proghome(base + "/BarracudaData");
 	if(!proghome.exists()) {
 		QDir home(base);
-		home.mkdir("PsiData");
+		home.mkdir("BarracudaData");
 	}
 
 	return proghome.path();
 #elif defined(Q_WS_MAC)
-	QDir proghome(QDir::homeDirPath() + "/.psi");
+	QDir proghome(QDir::homeDirPath() + "/.barracuda");
 	if(!proghome.exists()) {
 		QDir home = QDir::home();
-		home.mkdir(".psi");
+		home.mkdir(".barracuda");
 		chmod(QFile::encodeName(proghome.path()), 0700);
 	}
 

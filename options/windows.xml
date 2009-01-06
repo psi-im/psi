@@ -5,7 +5,7 @@
 			<systemtray comment="Options related to the system tray">
 				<enable type="bool">true</enable>
 				<use-double-click type="bool">true</use-double-click>
-			</systemtray>
+                        </systemtray>
 		</ui>
 	</options>
 </psi>

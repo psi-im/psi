@@ -1,0 +1,90 @@
+/*
+-----BEGIN QCMOD-----
+name: extra
+section: project
+arg: disable-tests,Don't build examples and unittests.
+-----END QCMOD-----
+*/
+
+class qc_extra : public ConfObj
+{
+public:
+	qc_extra(Conf *c) : ConfObj(c) {}
+	QString name() const { return "extra"; }
+	QString shortname() const { return "extra"; }
+
+	// no output
+	QString checkString() const { return QString(); }
+
+	bool exec()
+	{
+		QString str;
+		QFile f;
+
+		if(conf->getenv("QC_DISABLE_TESTS") == "Y")
+			str += "CONFIG += no_tests\n";
+
+		conf->addExtra(str);
+
+		bool release = true;
+		bool debug = false;
+		bool debug_info = false;
+		bool universal = false;
+		QString sdk;
+
+#ifdef QC_BUILDMODE
+		release = qc_buildmode_release;
+		debug = qc_buildmode_debug;
+		debug_info = qc_buildmode_separate_debug_info;
+#endif
+
+#ifdef QC_UNIVERSAL
+		universal = qc_universal_enabled;
+		sdk = qc_universal_sdk;
+#endif
+
+		// write confapp_unix.pri
+		str = QString();
+                QString var = conf->getenv("BINDIR");
+                if(!var.isEmpty())
+			str += QString("BINDIR = %1\n").arg(var);
+		if(debug) // debug or debug-and-release
+			str += QString("CONFIG += debug\n");
+		else // release
+			str += QString("CONFIG += release\n");
+		if(debug_info)
+		{
+			str += QString("CONFIG += separate_debug_info\n");
+			str += "QMAKE_CFLAGS += -g\n";
+			str += "QMAKE_CXXFLAGS += -g\n";
+		}
+		if(universal)
+		{
+			str +=
+			"contains(QT_CONFIG,x86):contains(QT_CONFIG,ppc) {\n"
+			"	CONFIG += x86 ppc\n"
+			"}\n";
+
+			if(!sdk.isEmpty())
+				str += QString("QMAKE_MAC_SDK = %1\n").arg(sdk);
+		}
+#ifdef QC_QCA
+		if(!qc_qca_procode.isEmpty())
+			str += qc_qca_procode;
+#endif
+		f.setFileName("confapp_unix.pri");
+		if(f.open(QFile::WriteOnly | QFile::Truncate))
+			f.write(str.toLatin1());
+		f.close();
+
+		return true;
+	}
+
+	QString makeEscapedDefine(const QString &var, const QString &val)
+	{
+		QString str = QString(
+		"DEFINES += %1=\\\\\\\\\\\\\\"%2\\\\\\\\\\\\\\"\n"
+		).arg(var).arg(val);
+		return str;
+	}
+};

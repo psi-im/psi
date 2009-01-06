@@ -86,19 +86,21 @@
 			<chat comment="Chat dialog options">
 				<central-toolbar comment="Have a central toolbar" type="bool">false</central-toolbar>
 				<size comment="Remembered window size" type="QSize">
-				</size><!-- will be invalid when converted to QSize so we can detect first load -->
+					<width>100</width>
+					<height>100</height>
+				</size>
 				<opacity comment="Opacity percentage of chat dialogs" type="int">100</opacity>
 				<legacy-formatting comment="This enables legacy usenet-style formatting (// ** __)" type="bool">true</legacy-formatting>
 				<avatars comment="Avatar options">
 					<size comment="Maximum size of the avatar" type="int">32</size>
 					<show comment="Show avatars in the chat dialog" type="bool">true</show>
 				</avatars>
-				<alert-for-already-open-chats type="bool">true</alert-for-already-open-chats>
+				<alert-for-already-open-chats type="bool">false</alert-for-already-open-chats>
 				<auto-popup type="bool">false</auto-popup>
-				<delete-contents-after type="QString">hour</delete-contents-after>
+				<delete-contents-after type="QString">instant</delete-contents-after>
 				<raise-chat-windows-on-new-messages type="bool">false</raise-chat-windows-on-new-messages>
 				<use-chat-says-style type="bool">false</use-chat-says-style>
-				<use-expanding-line-edit type="bool">true</use-expanding-line-edit>
+				<use-expanding-line-edit type="bool">false</use-expanding-line-edit>
 				<use-small-chats type="bool">false</use-small-chats>
 			</chat>
 			<contactlist comment="Contact list options">
@@ -126,11 +128,11 @@
 				<lockdown-roster type="bool">false</lockdown-roster>
 				<raise-on-new-event type="bool">false</raise-on-new-event>
 				<show>
-					<agent-contacts type="bool">true</agent-contacts>
+					<agent-contacts type="bool">false</agent-contacts>
 					<away-contacts type="bool">true</away-contacts>
 					<hidden-contacts-group type="bool">true</hidden-contacts-group>
 					<offline-contacts type="bool">true</offline-contacts>
-					<self-contact type="bool">true</self-contact>
+					<self-contact type="bool">false</self-contact>
 				</show>
 				<show-group-counts type="bool">true</show-group-counts>
 				<show-menubar type="bool">true</show-menubar>
@@ -139,12 +141,12 @@
 				<use-left-click type="bool">false</use-left-click>
 				<use-single-click type="bool">false</use-single-click>
 				<use-status-change-animation type="bool">true</use-status-change-animation>
-				<use-transport-icons type="bool">false</use-transport-icons>
+				<use-transport-icons type="bool">true</use-transport-icons>
 				<saved-window-geometry type="QRect" >
 					<x>64</x>
 					<y>64</y>
-					<width>150</width>
-					<height>360</height>
+					<width>278</width>
+					<height>504</height>
 				</saved-window-geometry>
 				<saved-window-geometry-frame type="QRect" >
 					<x>0</x>
@@ -267,8 +269,8 @@
 				<alert-style type="QString">animate</alert-style>
 				<bounce-dock type="QString">forever</bounce-dock>
 				<passive-popups>
-					<duration type="int">10000</duration>
-					<enabled type="bool">false</enabled>
+					<duration type="int">60000</duration>
+					<enabled type="bool">true</enabled>
 					<incoming-chat type="bool">true</incoming-chat>
 					<incoming-file-transfer type="bool">true</incoming-file-transfer>
 					<incoming-headline type="bool">true</incoming-headline>
@@ -277,8 +279,8 @@
 					<maximum-text-length type="int">300</maximum-text-length>
 					<maximum-status-length type="int">-1</maximum-status-length>
 					<status>
-						<offline type="bool">true</offline>
-						<online type="bool">true</online>
+						<offline type="bool">false</offline>
+						<online type="bool">false</online>
 						<other-changes type="bool">false</other-changes>
 					</status>
 				</passive-popups>
@@ -312,11 +314,11 @@
 			</service-discovery>
 			<tabs>
 				<put-tabs-at-bottom type="bool">false</put-tabs-at-bottom>
-				<use-tabs type="bool">false</use-tabs>
+				<use-tabs type="bool">true</use-tabs>
 				<size type="QString"></size> <!-- will be invalid when converted to QSize so we can detect first load -->
-				<grouping type="QString" comment="A ':' seperated list of groups of kinds of tabs to keep in the same tabset. 'C' for chat and 'M' for mucs">C:M</grouping>
-				<group-state comment="Saved state data of the tabsets defined by options.ui.tabs.grouping"/>
-				<tab-singles type="QString" comment="Tab types that would have been untabbed are given their own tabset. 'C' for chat and 'M' for mucs"/>
+				<grouping type="QString" comment="A ':' seperated list of groups of kinds of tabs to keep in the same tabset. 'C' for chat and 'M' for mucs">CM</grouping>
+				<group-state comment="saved state data of the tabsets defined by options.ui.tabs.grouping"/>
+				<tab-singles type="QString" comment="Tab types that would have been untabbed are given their own tabset. 'C' for chat and 'M' for mucs">CM</tab-singles>
 			</tabs>
 		</ui>
 		<shortcuts comment="Shortcuts">
@@ -333,6 +335,7 @@
 				<send type="QVariantList" comment="Sends the message">
 					<item type="QKeySequence">Return</item>
 					<item type="QKeySequence">Enter</item>
+					<item type="QKeySequence">Alt+S</item>
 				</send>
 				<clear type="QKeySequence" comment="Clear the text"/>
 			</chat>
@@ -368,6 +371,7 @@
 					<item type="QKeySequence">Ctrl+Enter</item>
 					<item type="QKeySequence">Alt+Return</item>
 					<item type="QKeySequence">Alt+Enter</item>
+					<item type="QKeySequence">Alt+S</item>
 				</send>
 			</message>
 			<status comment="Shortcuts in the status dialog">
@@ -425,14 +429,14 @@
 				<not-availible-after type="int">30</not-availible-after>
 				<offline-after type="int">0</offline-after>
 				<use-away type="bool">true</use-away>
-				<use-not-availible type="bool">true</use-not-availible>
+				<use-not-availible type="bool">false</use-not-availible>
 				<use-offline type="bool">false</use-offline>
 			</auto-away>
 			<last-message type="QString"/>
 			<presets/>
 		</status>
 		<subscriptions>
-			<automatically-allow-authorization type="bool">false</automatically-allow-authorization>
+			<automatically-allow-authorization type="bool">true</automatically-allow-authorization>
 		</subscriptions>
 		<vcard>
 			<query-own-vcard-on-login type="bool">true</query-own-vcard-on-login>

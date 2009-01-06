@@ -13,23 +13,21 @@
 #	* BUILD: Set this to 'no' if you do not want to build the source tree or
 #		check dependencies of the 'disk' dir when building the DMG.
 #
-# Remko Troncon 
-# http://el-tramo.be
+# Remko Troncon <remko@psi-im.org>
 #
 
 # Change these according to your own setup
+QTDIR=/Users/jkarneges/dev/qt/qt-mac-opensource-src-4.3.4
 QCADIR=/usr/local
 GROWLDIR=/Library/Frameworks
+# requires growlnotifier.pri fix
+GROWLFRAMEWORK=Growl-WithInstaller.framework
 PSI_DIR=..
 
-EXECUTABLE_NAME=psi
-NAME=Psi
-VOLUME_NAME=$(NAME)
-#VERSION=0.12-devel_$(shell date +"%Y%m%d")
-VERSION=0.12
-
-APPFILE_NAME=Psi.app
-FILES=$(APPFILE_NAME)
+NAME=Barracuda_IM_Client
+#VERSION=0.11-devel_$(shell date +"%Y%m%d")_debug
+VERSION=3.3.2
+FILES=Barracuda.app 
 DISK_DIR=disk
 ifneq ($(BUILD),no)
 DISK_FILES=$(foreach f,$(FILES), $(addprefix $(DISK_DIR)/,$(f)))
@@ -40,7 +38,6 @@ MASTER_DMG=$(NAME)-$(VERSION).dmg
 # Other variables
 QT_FRAMEWORK_VERSION=4
 QT_FRAMEWORKS=QtCore QtXml QtNetwork QtGui QtSql Qt3Support
-QT_PLUGINS=imageformats/libqjpeg.dylib imageformats/libqgif.dylib
 
 # The rules
 .PHONY: buildall
@@ -79,29 +76,27 @@ endif
 ################################################################################
 
 # The binary
-$(DISK_DIR)/$(APPFILE_NAME): $(PSI_DIR)/src/$(EXECUTABLE_NAME).app
+$(DISK_DIR)/Barracuda.app: $(PSI_DIR)/src/Barracuda.app
 	@echo
 	@echo --------------------- Packaging Binary --------------------
 	rm -rf "$@"
 	ditto -rsrc "$<" "$@"
 	mkdir -p "$@/Contents/Frameworks"
-	-ditto -rsrc "$(GROWLDIR)/Growl.framework" "$@/Contents/Frameworks/Growl.framework"
-	#strip "$@/Contents/MacOS/$(EXECUTABLE_NAME)"
+	-ditto -rsrc "$(GROWLDIR)/$(GROWLFRAMEWORK)" "$@/Contents/Frameworks/$(GROWLFRAMEWORK)"
+	#strip "$@/Contents/MacOS/psi"
 	#
 	#@echo
 	#@echo Installing QCA ...
 	#cp -f "$(QCADIR)/lib/libqca.2.dylib" "$@/Contents/Frameworks/"
 	#install_name_tool -id "@executable_path/../Frameworks/libqca.2.dylib" "$@/Contents/Frameworks/libqca.2.dylib"
-	#install_name_tool -change "libqca.2.dylib" "@executable_path/../Frameworks/libqca.2.dylib" "$@/Contents/MacOS/$(EXECUTABLE_NAME)"
-	#install_name_tool -change "$(QCADIR)/lib/libqca.2.dylib" "@executable_path/../Frameworks/libqca.2.dylib" "$@/Contents/MacOS/$(EXECUTABLE_NAME)"
+	#install_name_tool -change "libqca.2.dylib" "@executable_path/../Frameworks/libqca.2.dylib" "$@/Contents/MacOS/psi"
+	#install_name_tool -change "$(QCADIR)/lib/libqca.2.dylib" "@executable_path/../Frameworks/libqca.2.dylib" "$@/Contents/MacOS/psi"
 	#mkdir -p "$@/Contents/Resources/crypto"
 	#cp -f "$(QTDIR)/plugins/crypto/libqca-openssl.dylib" "$@/Contents/Resources/crypto/"
 	#install_name_tool -change "$(QCADIR)/lib/libqca.2.dylib" "@executable_path/../Frameworks/libqca.2.dylib" "$@/Contents/Resources/crypto/libqca-openssl.dylib"
 	#install_name_tool -change "libqca.2.dylib" "@executable_path/../Frameworks/libqca.2.dylib" "$@/Contents/Resources/crypto/libqca-openssl.dylib"
-	for f in $(QT_PLUGINS); do \
-		mkdir -p "$@/Contents/Plugins/`dirname $$f`"; \
-		cp -f "$(QTDIR)/plugins/$$f" "$@/Contents/Plugins/`dirname $$f`"; \
-	done; \
+	mkdir -p "$@/Contents/Resources/imageformats"
+	cp -f "$(QTDIR)/plugins/imageformats/libqjpeg.dylib" "$@/Contents/Resources/imageformats/"
 	#
 	@echo
 	@echo Installing Qt Frameworks ...
@@ -117,12 +112,10 @@ $(DISK_DIR)/$(APPFILE_NAME): $(PSI_DIR)/src/$(EXECUTABLE_NAME).app
 		for g in $(QT_FRAMEWORKS); do \
 			install_name_tool -change "$(QTDIR)/lib/$$g.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$g" "@executable_path/../Frameworks/$$g.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$g" "$@/Contents/Frameworks/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f"; \
 		done; \
-		for g in $(QT_PLUGINS); do \
-			install_name_tool -change "$(QTDIR)/lib/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "@executable_path/../Frameworks/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "$@/Contents/Plugins/$$g"; \
-		done; \
 		\# install_name_tool -change "$(QTDIR)/lib/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "@executable_path/../Frameworks/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "$@/Contents/Frameworks/libqca.2.dylib"; \
 		\# install_name_tool -change "$(QTDIR)/lib/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "@executable_path/../Frameworks/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "$@/Contents/Resources/crypto/libqca-openssl.dylib"; \
-		install_name_tool -change "$(QTDIR)/lib/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "@executable_path/../Frameworks/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "$@/Contents/MacOS/$(EXECUTABLE_NAME)"; \
+		install_name_tool -change "$(QTDIR)/lib/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "@executable_path/../Frameworks/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "$@/Contents/Resources/imageformats/libqjpeg.dylib"; \
+		install_name_tool -change "$(QTDIR)/lib/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "@executable_path/../Frameworks/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "$@/Contents/MacOS/Barracuda"; \
 	done
 
 # The rest
@@ -145,7 +138,7 @@ $(TEMPLATE_DMG).bz2:
 	@echo
 	@echo --------------------- Generating empty template --------------------
 	mkdir template
-	hdiutil create -size 80m "$(TEMPLATE_DMG)" -srcfolder template -format UDRW -volname "$(VOLUME_NAME)" -quiet
+	hdiutil create -size 80m "$(TEMPLATE_DMG)" -srcfolder template -format UDRW -volname "$(NAME)" -quiet
 	rmdir template
 	bzip2 "$(TEMPLATE_DMG)"
 	@echo
@@ -165,7 +158,8 @@ $(MASTER_DMG): $(WC_DMG) $(DISK_FILES)
 	done
 	#rm -f "$@"
 	#hdiutil create -srcfolder "$(WC_DIR)" -format UDZO -imagekey zlib-level=9 "$@" -volname "$(NAME) $(VERSION)" -scrub -quiet
-	diskutil eject `diskutil list | grep "$(VOLUME_NAME)" | grep "Apple_HFS" | awk '{print $$6}'`
+	WC_DEV=`hdiutil info | grep "$(WC_DIR)" | grep "Apple_HFS" | awk '{print $$1}'` && \
+	hdiutil detach $$WC_DEV -quiet -force
 	rm -f "$(MASTER_DMG)"
 	hdiutil convert "$(WC_DMG)" -quiet -format UDZO -imagekey zlib-level=9 -o "$@"
 	rm -rf $(WC_DIR)

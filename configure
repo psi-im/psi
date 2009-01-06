@@ -20,6 +20,7 @@ Main options:
 Project options:
   --certstore-path=[path]    Path to the SSL/X509 Certificate store file
                              (bundled QCA only)
+  --certstore-internal       Force the use of the bundled store.
 
 Dependency options:
   --disable-bundled-qca        Disable use of Use bundled QCA
@@ -31,7 +32,6 @@ Dependency options:
   --with-zlib-inc=[path]       Path to zlib include files
   --with-zlib-lib=[path]       Path to zlib library files
   --enable-universal           Enable use of Mac OS X universal binary support
-  --disable-qdbus              Disable use of QDBUS
   --disable-growl              Disable use of Growl
   --with-growl=[path]          Path to the Growl framework
   --disable-xss                Disable use of the XScreenSaver extension
@@ -162,6 +162,11 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
+		--certstore-internal)
+			QC_CERTSTORE_INTERNAL="Y"
+			shift
+			;;
+
 		--disable-bundled-qca)
 			QC_DISABLE_bundled_qca="Y"
 			shift
@@ -194,11 +199,6 @@ while [ $# -gt 0 ]; do
 
 		--enable-universal)
 			QC_ENABLE_universal="Y"
-			shift
-			;;
-
-		--disable-qdbus)
-			QC_DISABLE_qdbus="Y"
 			shift
 			;;
 
@@ -260,7 +260,7 @@ PREFIX=${PREFIX:-/usr/local}
 BINDIR=${BINDIR:-$PREFIX/bin}
 DATADIR=${DATADIR:-$PREFIX/share}
 
-echo "Configuring Psi ..."
+echo "Configuring Barracuda ..."
 
 if [ "$QC_VERBOSE" = "Y" ]; then
 echo
@@ -269,6 +269,7 @@ echo BINDIR=$BINDIR
 echo DATADIR=$DATADIR
 echo EX_QTDIR=$EX_QTDIR
 echo QC_CERTSTORE_PATH=$QC_CERTSTORE_PATH
+echo QC_CERTSTORE_INTERNAL=$QC_CERTSTORE_INTERNAL
 echo QC_DISABLE_bundled_qca=$QC_DISABLE_bundled_qca
 echo QC_DISABLE_openssl=$QC_DISABLE_openssl
 echo QC_WITH_OPENSSL_INC=$QC_WITH_OPENSSL_INC
@@ -276,7 +277,6 @@ echo QC_WITH_OPENSSL_LIB=$QC_WITH_OPENSSL_LIB
 echo QC_WITH_ZLIB_INC=$QC_WITH_ZLIB_INC
 echo QC_WITH_ZLIB_LIB=$QC_WITH_ZLIB_LIB
 echo QC_ENABLE_universal=$QC_ENABLE_universal
-echo QC_DISABLE_qdbus=$QC_DISABLE_qdbus
 echo QC_DISABLE_growl=$QC_DISABLE_growl
 echo QC_WITH_GROWL=$QC_WITH_GROWL
 echo QC_DISABLE_xss=$QC_DISABLE_xss
@@ -533,7 +533,7 @@ public:
 	QString shortname() const { return "openssl"; }
 
 	QString checkString() const {
-		if (!QFile::exists("third-party/qca/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
+		if (!QFile::exists("psi/third-party/qca/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
 			return "";
 		else
 			return ConfObj::checkString();
@@ -541,7 +541,7 @@ public:
 
 	bool exec()
 	{
-		if (!QFile::exists("third-party/qca/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty() || !QFile::exists("third-party/qca/qca-ossl"))
+		if (!QFile::exists("psi/third-party/qca/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty() || !QFile::exists("psi/third-party/qca/qca-ossl"))
 			return false;
 
 		QString inc, lib;
@@ -700,6 +700,7 @@ public:
 name: certstore
 section: project
 arg: certstore-path=[path],Path to the SSL/X509 Certificate store file (bundled QCA only)
+arg: certstore-internal,Force the use of the bundled store.
 -----END QCMOD-----
 */
 
@@ -711,7 +712,7 @@ public:
 	QString shortname() const { return "certstore"; }
 
 	QString checkString() const {
-		if (!QFile::exists("third-party/qca/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
+		if (!QFile::exists("psi/third-party/qca/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
 			return "";
 		else
 			return ConfObj::checkString();
@@ -719,7 +720,7 @@ public:
 
 	bool exec()
 	{
-		if (!QFile::exists("third-party/qca/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty() || !QFile::exists("third-party/qca/qca-ossl")) {
+		if (!QFile::exists("psi/third-party/qca/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty() || !QFile::exists("psi/third-party/qca/qca-ossl")) {
 			return true;
 		}
 			
@@ -763,21 +764,35 @@ public:
 			}
 		}
 
+		bool do_bundle = false;
+		if(conf->getenv("QC_CERTSTORE_INTERNAL") == "Y" || path.isEmpty())
+		{
+			path.clear();
+			// disable fixed system store, we'll use the relative psi store
+			conf->addDefine("QCA_NO_SYSTEMSTORE");
+			conf->addExtra("CONFIG += no_systemstore");
+			do_bundle = true;
+		}
+
 		// fall back to bundled
-		if(path.isEmpty())
+		if(do_bundle)
 		{
 			// --prefix=\$pwd ?
-			if(QFile::exists(conf->getenv("PREFIX") + "/certs/rootcerts.pem"))
-				path = "\$\$PREFIX/certs/rootcerts.pem";
+			if(QFile::exists(conf->getenv("PREFIX") + "psi/third-party/qca/qca/certs/rootcerts.pem"))
+				path = "\$\$PREFIX/psi/third-party/qca/qca/certs/rootcerts.pem";
 			else
-				path = "\$\$DATADIR/psi/certs/rootcerts.pem";
+				path = "\$\$DATADIR/barracuda/certs/rootcerts.pem";
 
 			QString extra =
-			"qcasharedfiles.path = \$\$DATADIR/psi\n"
-			"qcasharedfiles.files = third-party/qca/qca/certs\n"
+			//"qcasharedfiles.path = \$\$DATADIR/barracuda\n"
+			"qcasharedfiles.path = \$\$DATADIR/barracuda/certs\n"
+			//"qcasharedfiles.files = third-party/qca/qca/certs\n"
+			"qcasharedfiles.files = psi/third-party/qca/qca/certs/rootcerts.pem\n"
 			"INSTALLS += qcasharedfiles\n";
 			conf->addExtra(extra);
 			bundled = true;
+
+			return true;
 		}
 
 		// Qt<4.2 workaround
@@ -811,50 +826,6 @@ public:
 private:
 	QString path;
 	bool bundled;
-};
-#line 1 "qdbus.qcm"
-/*
------BEGIN QCMOD-----
-name: QDBUS
------END QCMOD-----
-*/
-
-//----------------------------------------------------------------------------
-// qc_qdbus
-//----------------------------------------------------------------------------
-class qc_qdbus : public ConfObj
-{
-public:
-	qc_qdbus(Conf *c) : ConfObj(c) {}
-	QString name() const { return "QDBUS"; }
-	QString shortname() const { return "qdbus"; }
-	bool exec()
-	{
-		if (!conf->getenv("QC_DISABLE_qdbus").isEmpty())
-			return false;
-
-		// test for "qdbus" feature
-
-		QString proextra =
-		"CONFIG += qt qdbus\n"
-		"QT -= gui\n";
-
-		QString str =
-		"\n"
-		"int main()\n"
-		"{\n"
-		"	return 0;\n"
-		"}\n";
-
-		int ret;
-		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
-			return false;
-		if(ret != 0)
-			return false;
-		
-		conf->addExtra("CONFIG += dbus");
-		return true;
-	}
 };
 #line 1 "growl.qcm"
 /*
@@ -1130,12 +1101,12 @@ public:
 	QString checkString() const { return QString(); }
 	bool exec()
 	{
-		conf->addExtra(QString("PSI_DATADIR=%1/psi").arg(conf->getenv("DATADIR")));
+		conf->addExtra(QString("PSI_DATADIR=%1/barracuda").arg(conf->getenv("DATADIR")));
 
 		QFile file("src/config.h");
 		if ( file.open(QIODevice::WriteOnly | QIODevice::Text) ) {
 			QTextStream stream( &file );
-			stream << "#define PSI_DATADIR \"" << conf->getenv("DATADIR") << "/psi\"" << endl;
+			stream << "#define PSI_DATADIR \"" << conf->getenv("DATADIR") << "/barracuda\"" << endl;
 		}
 		
 		conf->addDefine("HAVE_CONFIG");
@@ -1166,9 +1137,6 @@ cat >$1/modules_new.cpp <<EOT
     o->disabled = true;
     o = new qc_certstore(conf);
     o->required = true;
-    o->disabled = false;
-    o = new qc_qdbus(conf);
-    o->required = false;
     o->disabled = false;
     o = new qc_growl(conf);
     o->required = false;
@@ -2160,6 +2128,7 @@ export BINDIR
 export DATADIR
 export EX_QTDIR
 export QC_CERTSTORE_PATH
+export QC_CERTSTORE_INTERNAL
 export QC_DISABLE_bundled_qca
 export QC_DISABLE_openssl
 export QC_WITH_OPENSSL_INC
@@ -2167,7 +2136,6 @@ export QC_WITH_OPENSSL_LIB
 export QC_WITH_ZLIB_INC
 export QC_WITH_ZLIB_LIB
 export QC_ENABLE_universal
-export QC_DISABLE_qdbus
 export QC_DISABLE_growl
 export QC_WITH_GROWL
 export QC_DISABLE_xss

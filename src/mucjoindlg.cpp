@@ -28,6 +28,7 @@
 #include "psiaccount.h"
 #include "mucjoindlg.h"
 #include "psicontactlist.h"
+#include "serverinfomanager_b.h"
 
 MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
 	: QDialog(0)
@@ -38,6 +39,7 @@ MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
 	controller_ = psi;
 	account_ = 0;
 	controller_->dialogRegister(this);
+	ui_.busy->hide();
 	ui_.ck_history->setChecked(true);
 	ui_.ck_history->hide();
 	joinButton_ = ui_.buttonBox->addButton(tr("&Join"), QDialogButtonBox::AcceptRole);
@@ -53,6 +55,8 @@ MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
 	connect(controller_, SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
 	updateIdentityVisibility();
 
+	ui_.cb_recent->addItem("<Select>");
+	ui_.cb_recent->setItemData(ui_.cb_recent->count()-1, QVariant());
 	foreach(QString j, controller_->recentGCList()) {
 		Jid jid(j);
 		QString s = tr("%1 on %2").arg(jid.resource()).arg(JIDUtil::toString(jid, false));
@@ -62,13 +66,21 @@ MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
 
 	setWindowTitle(CAP(caption()));
 	connect(ui_.cb_recent, SIGNAL(activated(int)), SLOT(recent_activated(int)));
-	if (!ui_.cb_recent->count()) {
+	if (ui_.cb_recent->count() <= 1) {
 		ui_.cb_recent->setEnabled(false);
-		ui_.le_host->setFocus();
+		//ui_.le_host->setFocus();
 	}
 	else {
 		recent_activated(0);
 	}
+
+	ui_.le_host->setText(pa->serverInfoManager()->mucService());
+	ui_.le_nick->setText(pa->jid().node());
+
+	if(!ui_.le_host->text().isEmpty())
+		ui_.le_room->setFocus();
+	else
+		ui_.le_host->setFocus();
 
 	setWidgetsEnabled(true);
 	resize(sizeHint());
@@ -125,6 +137,9 @@ void MUCJoinDlg::pa_disconnected()
 
 void MUCJoinDlg::recent_activated(int x)
 {
+	if(x == 0)
+		return;
+
 	Jid jid(ui_.cb_recent->itemData(x).toString());
 	if (jid.full().isEmpty())
 		return;
@@ -171,7 +186,7 @@ void MUCJoinDlg::doJoin()
 void MUCJoinDlg::setWidgetsEnabled(bool enabled)
 {
 	ui_.cb_ident->setEnabled(enabled);
-	ui_.cb_recent->setEnabled(enabled && ui_.cb_recent->count() > 0);
+	ui_.cb_recent->setEnabled(enabled && ui_.cb_recent->count() > 1);
 	ui_.gb_info->setEnabled(enabled);
 	joinButton_->setEnabled(enabled);
 }

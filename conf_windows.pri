@@ -2,11 +2,13 @@
 CONFIG += release
 #CONFIG += qca-static
 
+CONFIG += psi-zip
+
 # OpenSSL
 qca-static {
 	DEFINES += HAVE_OPENSSL
 	DEFINES += OSSL_097
-	OPENSSL_PREFIX = /local
+	OPENSSL_PREFIX = c:/dev/local
 	INCLUDEPATH += $$OPENSSL_PREFIX/include
 	LIBS += -L$$OPENSSL_PREFIX/lib
 }

@@ -103,7 +103,7 @@ StatusSetDlg::StatusSetDlg(PsiCon *psi, const Status &s)
 	d->psi->dialogRegister(this);
 	d->s = s;
 
-	setWindowTitle(CAP(tr("Set Status: All accounts")));
+	setWindowTitle(CAP(tr("Set Status")));
 	init();
 }
 

@@ -69,7 +69,7 @@ QSize FontLabel::sizeHint() const
 //----------------------------------------------------------------------------
 // OptionsTabAppearance
 //----------------------------------------------------------------------------
-OptionsTabAppearance::OptionsTabAppearance(QObject *parent) : MetaOptionsTab(parent, "appearance", "", tr("Appearance"), tr("Psi's Appearance"), "psi/appearance")
+OptionsTabAppearance::OptionsTabAppearance(QObject *parent) : MetaOptionsTab(parent, "appearance", "", tr("Appearance"), tr("Barracuda IM Client's Appearance"), "psi/appearance")
 {    
 	addTab( new OptionsTabAppearanceGeneral(this) );
 	addTab( new OptionsTabIconsetEmoticons(this) );

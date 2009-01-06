@@ -22,6 +22,7 @@
 		<file>iconsets/roster/default/xa.png</file>
 
 		<file>iconsets/system/default/account.png</file>
+		<file>iconsets/system/default/cudafull.png</file>
 		<file>iconsets/system/default/add.png</file>
 		<file>iconsets/system/default/advanced.png</file>
 		<file>iconsets/system/default/appearance.png</file>
@@ -109,6 +110,16 @@
 		<file>iconsets/system/default/whiteboarding/send_to_back.png</file>
 		<file>iconsets/system/default/whiteboarding/group.png</file>
 		<file>iconsets/system/default/whiteboarding/ungroup.png</file>
+		<file>iconsets/system/default/aim_registration.png</file>
+		<file>iconsets/system/default/msn_registration.png</file>
+		<file>iconsets/system/default/yahoo_registration.png</file>
+		<file>iconsets/system/default/icq_registration.png</file>
+		<file>iconsets/system/default/barracuda_registration.png</file>
+		<file>iconsets/system/default/jabber_registration.png</file>
+		<file>iconsets/system/default/aim_logo.png</file>
+		<file>iconsets/system/default/msn_logo.png</file>
+		<file>iconsets/system/default/yahoo_logo.png</file>
+		<file>iconsets/system/default/icq_logo.png</file>
 		<file>iconsets/emoticons/default/angry.png</file>
 		<file>iconsets/emoticons/default/bat.png</file>
 		<file>iconsets/emoticons/default/beer.png</file>

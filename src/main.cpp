@@ -32,12 +32,10 @@
 #include <qmessagebox.h>
 #include <QtCrypto>
 #include <QTranslator>
-#include <QDir>
-
 #include <stdlib.h>
 #include <time.h>
+#include "profiles.h"
 #include "profiledlg.h"
-#include "activeprofiles.h"
 #include "psioptions.h"
 
 #include "eventdlg.h"
@@ -57,6 +55,15 @@
 #ifdef Q_OS_WIN
 #	include <qt_windows.h> // for RegDeleteKey
 #endif
+
+#ifdef Q_OS_WIN
+#pragma data_seg("Shared")
+LONG g_Counter = -1;
+#pragma data_seg()
+#pragma comment(linker, "/section:Shared,rws")
+#endif
+
+#include "cudaskin.h"
 
 /** \mainpage Psi API Documentation
  *
@@ -124,13 +131,6 @@ PsiMain::PsiMain(QObject *par)
 			QTimer::singleShot(0, this, SLOT(bail()));
 		}
 		else {
-			PsiOptions o;
-			if (!o.newProfile()) {
-				qWarning("ERROR: Failed to new profile default options");
-			}
-
-			o.save(pathToProfile("default") + "/options.xml");
-
 			lastProfile = activeProfile = "default";
 			autoOpen = true;
 			QTimer::singleShot(0, this, SLOT(sessionStart()));
@@ -192,30 +192,10 @@ void PsiMain::chooseProfile()
 			continue;
 		}
 		else {
-			bool again = false;
-			autoOpen = w->ck_auto->isChecked();
-			if(r == QDialog::Accepted) {
+			if(r == QDialog::Accepted)
 				str = w->cb_profile->currentText();
-				again = !ActiveProfiles::instance()->setThisProfile(str);
-				if (again) {
-					QMessageBox mb(QMessageBox::Question,
-						CAP(tr("Profile already in use")),
-						QString(tr("The \"%1\" profile is already in use.\nWould you like to activate that session now?")).arg(str),
-						QMessageBox::Cancel);
-					QPushButton *activate = mb.addButton(tr("Activate"), QMessageBox::AcceptRole);
-					mb.exec();
-					if (mb.clickedButton() == activate) {
-						ActiveProfiles::instance()->raiseOther(str, true);
-						quit();
-						return;
-					}
-				}
-			}
+			autoOpen = w->ck_auto->isChecked();
 			delete w;
-			if (again) {
-				str = "";
-				continue;
-			}
 			break;
 		}
 	}
@@ -236,13 +216,8 @@ void PsiMain::sessionStart()
 {
 	// make sure we have clean PsiOptions
 	PsiOptions::reset();
+
 	// get a PsiCon
-	if (!ActiveProfiles::instance()->setThisProfile(activeProfile)) { // already running
-		if (!ActiveProfiles::instance()->raiseOther(activeProfile, true))
-			QMessageBox::critical(0, tr("Error"), tr("Cannot open this profile - it is already running, but not responding"));
-		quit();
-		return;
-	}
 	pcon = new PsiCon();
 	if(!pcon->init()) {
 		delete pcon;
@@ -276,17 +251,44 @@ int main(int argc, char *argv[])
 {
 	// it must be initialized first in order for ApplicationInfo::resourcesDir() to work
 	QCA::Initializer init;
-	PsiApplication app(argc, argv);
-	QApplication::addLibraryPath(ApplicationInfo::resourcesDir());
-	QApplication::addLibraryPath(ApplicationInfo::homeDir());
-	QApplication::setQuitOnLastWindowClosed(false);
 
-#ifdef Q_WS_MAC
-	QDir dir(QApplication::applicationDirPath());
-	dir.cdUp();
-	dir.cd("Plugins");
-	QApplication::addLibraryPath(dir.absolutePath());
+#ifdef Q_OS_WIN
+	// see if there is an already running client instance
+	BOOL fFirstInstance = (InterlockedIncrement(&g_Counter) == 0);
+	if( !fFirstInstance ) {
+		MessageBox(NULL,
+			__TEXT("The Barracuda IM client is already running - ")
+			__TEXT("Terminating this instance."),
+			__TEXT("Multiple Instance"),
+			MB_OK | MB_ICONINFORMATION);
+		return 0;
+	}
 #endif
+
+	PsiApplication app(argc, argv);
+	QApplication::addLibraryPath(ApplicationInfo::homeDir());
+	QApplication::addLibraryPath(ApplicationInfo::resourcesDir());
+	QApplication::setQuitOnLastWindowClosed(false);
+	QFont font = QApplication::font();
+#ifdef Q_OS_WIN
+	font.setFamily("Tahoma");
+	font.setPixelSize(11);
+#else
+	font.setPixelSize(10);
+#endif
+	QApplication::setFont(font);
+
+	if(!app.arguments().contains("--nobrand"))
+	{
+		if(!cuda_loadTheme(ApplicationInfo::resourcesDir() + "/gfx"))
+		{
+			if(!cuda_loadTheme("./gfx"))
+			{
+				QMessageBox::critical(0, PsiMain::tr("Barracuda Theme"), PsiMain::tr("Error loading theme files.  Be sure the application is properly installed."));
+				return 1;
+			}
+		}
+	}
 
 	// Initialize QCA
 	QCA::setProperty("pgp-always-trust", true);
@@ -356,6 +358,24 @@ int main(int argc, char *argv[])
 	int returnValue = app.exec();
 	delete psi;
 
+        // ###cuda
+	if(cuda_isThemed())
+	{
+		QString localName = QApplication::applicationDirPath();
+#if defined(Q_OS_WIN)
+		localName += "/barracuda-upgrade.exe";
+#elif defined(Q_OS_MAC)
+		localName += "/barracuda-upgrade-mac";
+#else
+		localName += "/barracuda-upgrade-lin";
+#endif
+		QFileInfo fi(localName);
+		if(fi.exists())
+			QProcess::startDetached(localName, QStringList());
+
+		cuda_unloadTheme();
+	}
+
 	return returnValue;
 }
 
@@ -367,10 +387,11 @@ Q_IMPORT_PLUGIN(qca_ossl)
 #ifdef HAVE_CYRUSSASL
 Q_IMPORT_PLUGIN(qca_cyrus_sasl)
 #endif
-Q_IMPORT_PLUGIN(qca_gnupg)
+//Q_IMPORT_PLUGIN(qca_gnupg)
 #endif
 
 //#if defined(Q_WS_WIN) && defined(QT_STATICPLUGIN)
-//Q_IMPORT_PLUGIN(qjpeg)
-//Q_IMPORT_PLUGIN(qgif)
-//#endif
+#ifdef IMPORT_QT_PLUGINS
+Q_IMPORT_PLUGIN(qjpeg)
+Q_IMPORT_PLUGIN(qgif)
+#endif

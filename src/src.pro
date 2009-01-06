@@ -4,19 +4,26 @@
 
 # Configuration
 TEMPLATE = app
-TARGET    = psi
+TARGET    = barracuda
+mac:TARGET = Barracuda
 CONFIG  += qt thread x11 
 
 #CONFIG += use_crash
 CONFIG += pep
-#CONFIG += whiteboarding
 DEFINES += QT_STATICPLUGIN
+
+#CONFIG += qt-static
+
+qt-static {
+	DEFINES += IMPORT_QT_PLUGINS
+	QTPLUGIN += qjpeg qgif
+}
 
 # Import several very useful Makefile targets 
 # as well as set up default directories for 
 # generated files
-include(../qa/valgrind/valgrind.pri)
-include(../qa/oldtest/unittest.pri)
+include(../psi/qa/valgrind/valgrind.pri)
+include(../psi/qa/oldtest/unittest.pri)
 
 # qconf
 
@@ -29,7 +36,7 @@ exists(../conf.pri) {
 
 	# Shared files
 	sharedfiles.path  = $$PSI_DATADIR
-	sharedfiles.files = ../README ../COPYING ../iconsets ../sound ../certs
+	sharedfiles.files = ../README ../COPYING ../iconsets ../sound ../certs ../gfx
 	INSTALLS += sharedfiles
 
 	# Widgets
@@ -39,18 +46,18 @@ exists(../conf.pri) {
 
 	# icons and desktop files
 	dt.path=$$PREFIX/share/applications/
-	dt.files = ../psi.desktop 
+	dt.files = ../barracuda.desktop 
 	icon1.path=$$PREFIX/share/icons/hicolor/16x16/apps
-	icon1.extra = cp -f ../iconsets/system/default/logo_16.png $(INSTALL_ROOT)$$icon1.path/psi.png
+	icon1.extra = cp -f ../iconsets/system/default/logo_16.png $(INSTALL_ROOT)$$icon1.path/barracuda.png
 	icon2.path=$$PREFIX/share/icons/hicolor/32x32/apps
-	icon2.extra = cp -f ../iconsets/system/default/logo_32.png $(INSTALL_ROOT)$$icon2.path/psi.png
+	icon2.extra = cp -f ../iconsets/system/default/logo_32.png $(INSTALL_ROOT)$$icon2.path/barracuda.png
 	icon3.path=$$PREFIX/share/icons/hicolor/48x48/apps
-	icon3.extra = cp -f ../iconsets/system/default/logo_48.png $(INSTALL_ROOT)$$icon3.path/psi.png
+	icon3.extra = cp -f ../iconsets/system/default/logo_48.png $(INSTALL_ROOT)$$icon3.path/barracuda.png
 	icon4.path=$$PREFIX/share/icons/hicolor/64x64/apps
-	icon4.extra = cp -f ../iconsets/system/default/logo_64.png $(INSTALL_ROOT)$$icon4.path/psi.png
+	icon4.extra = cp -f ../iconsets/system/default/logo_64.png $(INSTALL_ROOT)$$icon4.path/barracuda.png
 	icon5.path=$$PREFIX/share/icons/hicolor/128x128/apps
-	icon5.extra = cp -f ../iconsets/system/default/logo_128.png $(INSTALL_ROOT)$$icon5.path/psi.png
-	INSTALLS += dt icon1 icon2 icon3 icon4 icon5
+	icon5.extra = cp -f ../iconsets/system/default/logo_128.png $(INSTALL_ROOT)$$icon5.path/barracuda.png
+	INSTALLS += icon1 icon2 icon3 icon4 icon5 dt
 }
 
 windows {
@@ -65,12 +72,15 @@ windows {
 # IPv6 ?
 #DEFINES += NO_NDNS
 
+PSIDIR = $$PWD/../psi
+INCLUDEPATH += $$PSIDIR/src
+
 # Psi sources
 include(src.pri)
 
 # don't clash with unittests
 SOURCES += main.cpp
-HEADERS += main.h
+HEADERS += $$PSIDIR/src/main.h
 
 ################################################################################
 # Translation
@@ -100,7 +110,6 @@ TRANSLATIONS = \
 	$$LANG_PATH/psi_se.ts \
 	$$LANG_PATH/psi_sk.ts \
 	$$LANG_PATH/psi_sr.ts \
-	$$LANG_PATH/psi_uk.ts \
 	$$LANG_PATH/psi_zh.ts
 
 OPTIONS_TRANSLATIONS_FILE=$$PWD/option_translations.cpp
@@ -125,7 +134,7 @@ RESOURCES += ../psi.qrc ../iconsets.qrc
 
 # Platform specifics
 unix:!mac {
-	QMAKE_POST_LINK = rm -f ../psi ; ln -s src/psi ../psi
+	QMAKE_POST_LINK = rm -f ../barracuda ; ln -s src/barracuda ../barracuda
 }
 win32 {
 	RC_FILE = ../win32/psi_win32.rc
@@ -138,12 +147,11 @@ mac {
 	qc_universal:contains(QT_CONFIG,x86):contains(QT_CONFIG,ppc) {
 		CONFIG += x86 ppc
 		QMAKE_MAC_SDK=/Developer/SDKs/MacOSX10.4u.sdk
-		QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.4
 	}
 
 	# Frameworks are specified in src.pri
 
 	QMAKE_INFO_PLIST = ../mac/Info.plist
 	RC_FILE = ../mac/application.icns
-	QMAKE_POST_LINK = cp -R ../certs ../iconsets ../sound `dirname $(TARGET)`/../Resources ; echo "APPLpsi " > `dirname $(TARGET)`/../PkgInfo
+	QMAKE_POST_LINK = cp -R ../certs ../iconsets ../sound ../gfx `dirname $(TARGET)`/../Resources ; echo "APPLpsi " > `dirname $(TARGET)`/../PkgInfo
 }

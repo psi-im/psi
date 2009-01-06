@@ -1,0 +1,482 @@
+<ui version="4.0" >
+ <class>TestUI</class>
+ <widget class="QDialog" name="TestUI" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>652</width>
+    <height>685</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>Form1</string>
+  </property>
+  <layout class="QHBoxLayout" >
+   <item>
+    <widget class="QTabWidget" name="tb_main" >
+     <widget class="QWidget" name="tab" >
+      <property name="geometry" >
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>322</width>
+        <height>639</height>
+       </rect>
+      </property>
+      <attribute name="title" >
+       <string>Core</string>
+      </attribute>
+      <layout class="QVBoxLayout" >
+       <property name="margin" >
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QGroupBox" name="gb_server" >
+         <property name="title" >
+          <string>Server</string>
+         </property>
+         <layout class="QVBoxLayout" >
+          <item>
+           <layout class="QHBoxLayout" >
+            <property name="margin" >
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="textLabel1" >
+              <property name="text" >
+               <string>Full JID:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="le_jid" />
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" >
+            <property name="margin" >
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="textLabel5_2" >
+              <property name="text" >
+               <string>User (if needed):</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="le_user" >
+              <property name="text" >
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="textLabel7_2" >
+              <property name="text" >
+               <string>Pass:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="le_pass" >
+              <property name="echoMode" >
+               <enum>QLineEdit::Password</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QGridLayout" >
+            <property name="margin" >
+             <number>0</number>
+            </property>
+            <item row="1" column="2" >
+             <widget class="QCheckBox" name="ck_ssl" >
+              <property name="text" >
+               <string>SSL</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1" colspan="2" >
+             <widget class="QComboBox" name="cb_proxy" >
+              <item>
+               <property name="text" >
+                <string>None</string>
+               </property>
+              </item>
+              <item>
+               <property name="text" >
+                <string>HTTP(S)</string>
+               </property>
+              </item>
+              <item>
+               <property name="text" >
+                <string>SOCKS5</string>
+               </property>
+              </item>
+              <item>
+               <property name="text" >
+                <string>HTTP Polling</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="1" column="0" >
+             <widget class="QLabel" name="lb_host" >
+              <property name="text" >
+               <string>Host:Port:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0" colspan="3" >
+             <widget class="QCheckBox" name="ck_probe" >
+              <property name="text" >
+               <string>Legacy SSL probe</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0" >
+             <widget class="QLabel" name="textLabel4" >
+              <property name="text" >
+               <string>Proxy:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1" >
+             <widget class="QLineEdit" name="le_host" />
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="gb_proxy" >
+            <property name="title" >
+             <string>Proxy Settings</string>
+            </property>
+            <layout class="QGridLayout" >
+             <item row="0" column="0" >
+              <widget class="QLabel" name="textLabel2_2" >
+               <property name="text" >
+                <string>Host:Port:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1" colspan="3" >
+              <widget class="QLineEdit" name="le_proxyhost" />
+             </item>
+             <item row="1" column="0" >
+              <widget class="QLabel" name="textLabel5" >
+               <property name="text" >
+                <string>User/Pass:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1" >
+              <widget class="QLineEdit" name="le_proxyuser" />
+             </item>
+             <item row="1" column="2" >
+              <widget class="QLabel" name="textLabel7" >
+               <property name="text" >
+                <string>/</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="3" >
+              <widget class="QLineEdit" name="le_proxypass" >
+               <property name="echoMode" >
+                <enum>QLineEdit::Password</enum>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0" >
+              <widget class="QLabel" name="lb_proxyurl" >
+               <property name="text" >
+                <string>Polling URL:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1" colspan="3" >
+              <widget class="QLineEdit" name="le_proxyurl" />
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QGroupBox" name="gb_security" >
+            <property name="title" >
+             <string>Security Settings</string>
+            </property>
+            <layout class="QVBoxLayout" >
+             <item>
+              <widget class="QCheckBox" name="ck_plain" >
+               <property name="text" >
+                <string>Allow plaintext login</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="ck_mutual" >
+               <property name="text" >
+                <string>Require mutual authentication</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" >
+               <property name="margin" >
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QLabel" name="textLabel1_2" >
+                 <property name="text" >
+                  <string>SASL SSF min/max:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QSpinBox" name="sb_ssfmin" />
+               </item>
+               <item>
+                <widget class="QLabel" name="textLabel2" >
+                 <property name="text" >
+                  <string>/</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QSpinBox" name="sb_ssfmax" />
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" >
+         <property name="margin" >
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="pb_go" >
+           <property name="text" >
+            <string>&amp;Connect</string>
+           </property>
+           <property name="shortcut" >
+            <string>Alt+C</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="spacer5" >
+           <property name="orientation" >
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeType" >
+            <enum>QSizePolicy::Expanding</enum>
+           </property>
+           <property name="sizeHint" stdset="0" >
+            <size>
+             <width>130</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pb_about" >
+           <property name="text" >
+            <string>&amp;About</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="spacer3_2" >
+         <property name="orientation" >
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType" >
+          <enum>QSizePolicy::Expanding</enum>
+         </property>
+         <property name="sizeHint" stdset="0" >
+          <size>
+           <width>20</width>
+           <height>16</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox3" >
+         <property name="title" >
+          <string>Quick XML >></string>
+         </property>
+         <layout class="QVBoxLayout" >
+          <item>
+           <layout class="QHBoxLayout" >
+            <property name="margin" >
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="textLabel8" >
+              <property name="text" >
+               <string>To:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="le_to" />
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" >
+            <property name="margin" >
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QPushButton" name="pb_im" >
+              <property name="text" >
+               <string>&amp;IM Session</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pb_msg" >
+              <property name="text" >
+               <string>&amp;Message</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pb_iqv" >
+              <property name="text" >
+               <string>IQ &amp;Version</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab2" >
+      <property name="geometry" >
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>640</width>
+        <height>409</height>
+       </rect>
+      </property>
+      <attribute name="title" >
+       <string>IM</string>
+      </attribute>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <layout class="QVBoxLayout" >
+     <property name="margin" >
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QTextEdit" name="te_log" >
+       <property name="minimumSize" >
+        <size>
+         <width>300</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="readOnly" >
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QTextEdit" name="te_input" >
+       <property name="maximumSize" >
+        <size>
+         <width>32767</width>
+         <height>200</height>
+        </size>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" >
+       <property name="margin" >
+        <number>0</number>
+       </property>
+       <item>
+        <spacer name="spacer3" >
+         <property name="orientation" >
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType" >
+          <enum>QSizePolicy::Expanding</enum>
+         </property>
+         <property name="sizeHint" stdset="0" >
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pb_send" >
+         <property name="text" >
+          <string>&amp;Send</string>
+         </property>
+         <property name="shortcut" >
+          <string>Alt+S</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11" />
+ <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+ <tabstops>
+  <tabstop>le_jid</tabstop>
+  <tabstop>le_user</tabstop>
+  <tabstop>le_pass</tabstop>
+  <tabstop>ck_probe</tabstop>
+  <tabstop>le_host</tabstop>
+  <tabstop>ck_ssl</tabstop>
+  <tabstop>cb_proxy</tabstop>
+  <tabstop>le_proxyhost</tabstop>
+  <tabstop>le_proxyuser</tabstop>
+  <tabstop>le_proxypass</tabstop>
+  <tabstop>le_proxyurl</tabstop>
+  <tabstop>ck_plain</tabstop>
+  <tabstop>ck_mutual</tabstop>
+  <tabstop>sb_ssfmin</tabstop>
+  <tabstop>sb_ssfmax</tabstop>
+  <tabstop>pb_go</tabstop>
+  <tabstop>pb_about</tabstop>
+  <tabstop>le_to</tabstop>
+  <tabstop>pb_im</tabstop>
+  <tabstop>pb_msg</tabstop>
+  <tabstop>pb_iqv</tabstop>
+  <tabstop>te_input</tabstop>
+  <tabstop>pb_send</tabstop>
+  <tabstop>te_log</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

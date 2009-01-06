@@ -39,13 +39,16 @@
 #include <QFrame>
 #include <QList>
 #include <QHostInfo>
+#include <QProgressDialog>
 
-#include "psiaccount.h"
+#include "xmpp.h"
+#include "profiles_b.h"
+#include "psiaccount_b.h"
 #include "psiiconset.h"
-#include "psicon.h"
-#include "profiles.h"
+#include "psicon_b.h"
 #include "xmpp_tasks.h"
 #include "xmpp_xmlcommon.h"
+#include "cudatasks.h"
 #include "pongserver.h"
 #include "s5b.h"
 #include "filetransfer.h"
@@ -63,7 +66,7 @@
 #include "psievent.h"
 #include "jidutil.h"
 #include "eventdlg.h"
-#include "psiprivacymanager.h"
+#include "simpleprivacymanager.h"
 #include "rosteritemexchangetask.h"
 #include "chatdlg.h"
 #include "contactview.h"
@@ -75,7 +78,8 @@
 #include "groupchatdlg.h"
 #include "statusdlg.h"
 #include "infodlg.h"
-#include "adduserdlg.h"
+//#include "adduserdlg.h"
+#include "adduserwizard.h"
 #include "historydlg.h"
 #include "capsmanager.h"
 #include "registrationdlg.h"
@@ -93,7 +97,7 @@
 #include "googleftmanager.h"
 #endif
 #include "pepmanager.h"
-#include "serverinfomanager.h"
+#include "serverinfomanager_b.h"
 #ifdef WHITEBOARDING
 #include "sxe/sxemanager.h"
 #include "whiteboarding/wbmanager.h"
@@ -123,7 +127,14 @@
 #include "proxy.h"
 #include "psicontactlist.h"
 #include "tabmanager.h"
-#include "fileutil.h"
+#include "httppoll.h"
+#include "desktoputil.h"
+#include "cudaskin.h"
+
+#ifdef QUICKVOIP
+#include "quickvoip/jinglertp.h"
+#include "quickvoip/calldlg.h"
+#endif
 
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
@@ -150,6 +161,71 @@ struct GCContact
 {
 	Jid jid;
 	Status status;
+};
+
+//----------------------------------------------------------------------------
+// DisclaimerManager
+//----------------------------------------------------------------------------
+class DisclaimerManager : public QObject
+{
+	Q_OBJECT
+
+public:
+	QHash<QTimer*,QString> jidOfTimer;
+	QHash<QString,QTimer*> timerOfJid;
+
+	~DisclaimerManager()
+	{
+		//qDeleteAll(jidOfTimer);
+		qDeleteAll(timerOfJid);
+	}
+
+	bool needDisclaimer(const Jid &jid)
+	{
+		QString j = jid.full();
+
+		if(timerOfJid.contains(j))
+			return false;
+
+		QTimer *t = new QTimer(this);
+		connect(t, SIGNAL(timeout()), SLOT(t_timeout()));
+		t->setSingleShot(true);
+		t->setInterval(1000 * 60 * 30); // 30 mins
+		jidOfTimer.insert(t, j);
+		timerOfJid.insert(j, t);
+		t->start();
+		return true;
+	}
+
+	void extendTime(const Jid &jid)
+	{
+		QString j = jid.full();
+
+		QTimer *t = timerOfJid.value(j);
+		if(!t)
+			return;
+		t->start();
+	}
+
+	void resetJid(const Jid &jid)
+	{
+		QString j = jid.full();
+
+		QTimer *t = timerOfJid.value(j);
+		if(!t)
+			return;
+
+		jidOfTimer.remove(t);
+		timerOfJid.remove(j);
+		delete t;
+	}
+
+private slots:
+	void t_timeout()
+	{
+		QTimer *t = (QTimer *)sender();
+		resetJid(jidOfTimer[t]);
+	}
 };
 
 //----------------------------------------------------------------------------
@@ -329,7 +405,11 @@ public:
 
 	// Voice Call
 	VoiceCaller* voiceCaller;
-	
+
+#ifdef QUICKVOIP
+	JingleRtpManager *jingleRtpManager;
+#endif
+
 	TabManager *tabManager;
 
 #ifdef GOOGLE_FT
@@ -357,16 +437,27 @@ public:
 	QList<GCContact*> gcbank;
 	QStringList groupchats;
 
-	QPointer<AdvancedConnector> conn;
-	QPointer<ClientStream> stream;
-	QPointer<QCA::TLS> tls;
-	QPointer<QCATLSHandler> tlsHandler;
+	AdvancedConnector *conn;
+	ClientStream *stream;
+	QCA::TLS *tls;
+	QCATLSHandler *tlsHandler;
 	bool usingSSL;
 
 	QVector<xmlRingElem> xmlRingbuf;
 	int xmlRingbufWrite;
 
 	QHostAddress localAddress;
+
+	// ###cuda
+	QString disclaimer;
+	JT_GetClientVersion *jgcv;
+	JT_GetDisclaimer *jgdis;
+	HttpProxyGetStream *http;
+	int http_total;
+	QFile http_file;
+	QProgressDialog *download_progress;
+	bool keep_file;
+	DisclaimerManager disclaimer_manager;
 
 	QString pathToProfileEvents()
 	{
@@ -453,6 +544,10 @@ public slots:
 				vcardPhotoUpdate(vcard->photo());
 			}
 		}
+		else {
+			foreach(UserListItem *u, account->findRelevant(j))
+				account->cpUpdate(*u);
+		}
 	}
 
 	void vcardPhotoUpdate(const QByteArray &photoData)
@@ -465,6 +560,12 @@ public slots:
 			photoHash = newHash;
 			account->setStatusDirect(loginStatus);
 		}
+	}
+
+	void simulateContactOffline(const XMPP::Jid &j)
+	{
+		foreach(UserListItem* u, account->findRelevant(j))
+			account->simulateContactOffline(u);
 	}
 
 private:
@@ -542,10 +643,249 @@ public:
 		}
 	}
 
+	// ###cuda
+	void checkUpgrade()
+	{
+		if(jgcv)
+			return;
+
+		// Make sure this client version is the latest
+		jgcv = new JT_GetClientVersion(client->rootTask());
+		connect(jgcv, SIGNAL(finished()), SLOT(newClientAvailable()));
+
+		// Tell the upgrader bot which version we're on
+		Jid jid_clientupgrader = Jid("clientupgrader");
+		jgcv->get(jid_clientupgrader);
+		jgcv->go(true);
+	}
+
+	void checkDisclaimer()
+	{
+		if(jgdis)
+			return;
+
+		jgdis = new JT_GetDisclaimer(client->rootTask());
+		connect(jgdis, SIGNAL(finished()), SLOT(newDisclaimer()));
+
+		Jid jid_disclaimer = Jid("disclaimer");
+		jgdis->get(jid_disclaimer);
+		jgdis->go(true);
+	}
+
+	QList<ChatDlg*> getChats()
+	{
+		QList<ChatDlg*> out;
+		foreach(item_dialog2 *i, dialogList) {
+			ChatDlg *c = qobject_cast<ChatDlg*>(i->widget);
+			if(c)
+				out += c;
+		}
+		return out;
+	}
+
+	QList<GCMainDlg*> getGroupChats()
+	{
+		QList<GCMainDlg*> out;
+		foreach(item_dialog2 *i, dialogList) {
+			GCMainDlg *c = qobject_cast<GCMainDlg*>(i->widget);
+			if(c)
+				out += c;
+		}
+		return out;
+	}
+
 private slots:
 	void forceDialogUnregister(QObject* obj)
 	{
 		dialogUnregister(static_cast<QWidget*>(obj));
+	}
+
+	// ###cuda
+	void newClientAvailable()
+	{
+		jgcv = 0;
+
+		QDateTime next_time = QDateTime::fromString(acc_lastUpdateMsg, Qt::ISODate);
+
+		if(QDateTime::currentDateTime() < next_time)
+			return;
+
+		JT_GetClientVersion *j = (JT_GetClientVersion *)sender();
+		if(j->success()) {
+			QDateTime time = QDateTime::currentDateTime();
+			time = time.addSecs( 60 * 60 * 24 ); // Show update message again in 24 hours time
+			acc_lastUpdateMsg = time.toString(Qt::ISODate);//date().toString(Qt::ISODate) + time.time().toString(Qt::ISODate);
+
+			QString update_message = j->message();
+			if(update_message.isEmpty()) {
+				update_message = tr(
+				"Your system administrator has recommended that you\n"
+				"update the version of the Barracuda IM client you are using.\n"
+				"Would you like to update now?\n"
+				"\n"
+				"Updating will shut down the currently running client\n"
+				"and begin the update process.");
+			}
+
+			QString update_message_title = j->message_title();
+			if(update_message_title.isEmpty())
+				update_message_title = "Client Update Recommended";
+
+			int n = QMessageBox::information(0, update_message_title, update_message, tr("&Yes"), tr("&No"));
+			if(n == 0) {
+				// perform http download of upgrader file
+
+				int port = 8000;
+				int x = j->port().toInt();
+				if(x >= 1 && x <= 65535)
+					port = x;
+
+				bool use_ssl = false;
+				if(j->ssl() == "yes")
+					use_ssl = true;
+
+				http = new HttpProxyGetStream;
+				connect(http, SIGNAL(handshaken()), SLOT(http_handshaken()));
+				connect(http, SIGNAL(dataReady(const QByteArray &)), SLOT(http_dataReady(const QByteArray &)));
+				connect(http, SIGNAL(finished()), SLOT(http_finished()));
+				connect(http, SIGNAL(error(int)), SLOT(http_error(int)));
+				http_total = 0;
+				http->get(acc.host, port, j->updater(), use_ssl);
+
+				QString localName = QApplication::applicationDirPath();
+#if defined(Q_OS_WIN)
+				localName += "/barracuda-upgrade.exe";
+#elif defined(Q_OS_MAC)
+				localName += "/barracuda-upgrade-mac";
+#else
+				localName += "/barracuda-upgrade-lin";
+#endif
+				http_file.setFileName(localName);
+
+				download_progress = new QProgressDialog("Downloading upgrade...", "Abort Upgrade", 0, 0);
+				download_progress->setAttribute(Qt::WA_DeleteOnClose, true);
+				connect(download_progress, SIGNAL(canceled()), this, SLOT(userCancelled()));
+				download_progress->show();
+			}
+		}
+	}
+
+	void newDisclaimer()
+	{
+		jgdis = 0;
+
+		JT_GetDisclaimer *j = (JT_GetDisclaimer *)sender();
+		if(j->success())
+			disclaimer = j->message();
+	}
+
+	void downloadComplete()
+	{
+		QMetaObject::invokeMethod(psi, "closeProgram", Qt::QueuedConnection);
+	}
+
+	void downloadFailed()
+	{
+		deleteUpgrader();
+	}
+
+	void userCancelled()
+	{
+		resetDownload();
+		downloadFailed();
+	}
+
+	void resetDownload()
+	{
+		delete http;
+		http = 0;
+
+		if(download_progress)
+		{
+			download_progress->hide();
+			delete download_progress;
+			download_progress = 0;
+		}
+	}
+
+	void http_handshaken()
+	{
+		if(!http_file.open(QFile::IO_WriteOnly | QFile::IO_Truncate))
+		{
+			resetDownload();
+
+			//printf("http error (can't open)\n");
+
+			QMetaObject::invokeMethod(this, "downloadFailed", Qt::QueuedConnection);
+			return;
+		}
+
+		/*printf("http handshaken:\n");
+		printf("  length:   %d\n", http->length());
+		printf("  destfile: %s\n", qPrintable(http_file.fileName()));*/
+
+		if(http->length() != -1)
+			download_progress->setMaximum(http->length());
+	}
+
+	void http_dataReady(const QByteArray &buf)
+	{
+		http_file.write(buf);
+		http_total += buf.size();
+		//printf("http recv: packet=%d progress=(%d/%d)\n", buf.size(), http_total, http->length());
+
+		if(http->length() != -1)
+			download_progress->setValue(http_total);
+	}
+
+	void http_finished()
+	{
+		resetDownload();
+		http_file.close();
+		keep_file = true;
+
+		//printf("http finished\n");
+
+		QMetaObject::invokeMethod(this, "downloadComplete", Qt::QueuedConnection);
+	}
+
+	void http_error(int x)
+	{
+		Q_UNUSED(x);
+
+		resetDownload();
+		http_file.close();
+
+		//printf("http error\n");
+
+		QMetaObject::invokeMethod(this, "downloadFailed", Qt::QueuedConnection);
+	}
+
+	void gotoWebPass()
+	{
+		JT_CudaLogin *j = (JT_CudaLogin *)sender();
+		if(j->success()) {
+			DesktopUtil::openUrl( j->url() + "&primary_tab=PREFERENCES&secondary_tab=pu_security" );
+		}
+	}
+
+	void gotoWebHistory()
+	{
+		JT_CudaLogin *j = (JT_CudaLogin *)sender();
+		if(j->success()) {
+			DesktopUtil::openUrl( j->url() + "&primary_tab=LOGGING/REPORTING&secondary_tab=my_logs" );
+		}
+	}
+
+	void incoming_call()
+	{
+#ifdef QUICKVOIP
+		JingleRtpSession *sess = jingleRtpManager->takeIncoming();
+		CallDlg *w = new CallDlg(0);
+		w->setAttribute(Qt::WA_DeleteOnClose);
+		w->setIncoming(sess);
+		w->show();
+#endif
 	}
 
 public:
@@ -571,6 +911,28 @@ public:
 	void setManualStatus(Status status)
 	{
 		lastManualStatus_ = status;
+	}
+
+	// ###cuda
+	void deleteUpgrader()
+	{
+		//printf("deleteUpgrader (keep_file = %d)\n", keep_file);
+		QString localName = QApplication::applicationDirPath();
+#if defined(Q_OS_WIN)
+		localName += "/barracuda-upgrade.exe";
+#elif defined(Q_OS_MAC)
+		localName += "/barracuda-upgrade-mac";
+#else
+		localName += "/barracuda-upgrade-lin";
+#endif
+		if(QFile::exists(localName))
+		{
+			QFile::setPermissions(localName, QFile::permissions(localName) | QFile::ReadUser | QFile::WriteUser);
+			if(!QFile::remove(localName))
+			{
+				//printf("Error deleting upgrader file [%s]\n", qPrintable(localName));
+			}
+		}
 	}
 
 private:
@@ -663,6 +1025,15 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 
 	d->client->setFileTransferEnabled(true);
 
+	// ###cuda
+	d->jgcv = 0;
+	d->jgdis = 0;
+	d->http = 0;
+	d->download_progress = 0;
+	d->keep_file = false;
+	if(cuda_isThemed())
+		d->deleteUpgrader();
+
 	setSendChatState(PsiOptions::instance()->getOption("options.messages.send-composing-events").toBool());
 
 	//connect(d->client, SIGNAL(connected()), SLOT(client_connected()));
@@ -691,7 +1062,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	connect(d->client, SIGNAL(xmlOutgoing(const QString &)), d, SLOT(client_xmlOutgoing(const QString &)));
 
 	// Privacy manager
-	d->privacyManager = new PsiPrivacyManager(d->client->rootTask());
+	d->privacyManager = new SimplePrivacyManager(this);
+	connect(d->privacyManager, SIGNAL(simulateContactOffline(const XMPP::Jid &)), d, SLOT(simulateContactOffline(const XMPP::Jid &)));
 
 	// Caps manager
 	d->capsManager = new CapsManager(d->client->jid(), capsRegistry, new IrisProtocol::DiscoInfoQuerier(d->client));
@@ -702,7 +1074,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	connect(d->rosterItemExchangeTask,SIGNAL(rosterItemExchange(const Jid&, const RosterExchangeItems&)),SLOT(actionRecvRosterExchange(const Jid&,const RosterExchangeItems&)));
 
 	// contactprofile context
-	d->cp = new ContactProfile(this, acc.name, d->psi->contactView());
+	d->cp = new ContactProfile(this, acc.name, d->psi->contactView(), true);
 	connect(d->cp, SIGNAL(actionDefault(const Jid &)),SLOT(actionDefault(const Jid &)));
 	connect(d->cp, SIGNAL(actionRecvEvent(const Jid &)),SLOT(actionRecvEvent(const Jid &)));
 	connect(d->cp, SIGNAL(actionSendMessage(const Jid &)),SLOT(actionSendMessage(const Jid &)));
@@ -822,6 +1194,9 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	// Listen to the capabilities manager
 	connect(capsManager(),SIGNAL(capsChanged(const Jid&)),SLOT(capsChanged(const Jid&)));
 
+	// ###cuda
+	connect(avatarFactory(), SIGNAL(avatarChanged(const Jid &)), d, SLOT(vcardChanged(const Jid &)));
+
 	//printf("PsiAccount: [%s] loaded\n", name().latin1());
 	d->xmlConsole = new XmlConsole(this);
 	if(PsiOptions::instance()->getOption("options.xml-console.enable-at-login").toBool() && d->acc.opt_enabled) {
@@ -844,6 +1219,11 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	connect(d->googleFTManager,SIGNAL(incomingFileTransfer(GoogleFileTransfer*)),SLOT(incomingGoogleFileTransfer(GoogleFileTransfer*)));
 #endif
 
+#ifdef QUICKVOIP
+	d->jingleRtpManager = new JingleRtpManager(this);
+	connect(d->jingleRtpManager, SIGNAL(incomingReady()), d, SLOT(incoming_call()));
+#endif
+
 	// Extended presence
 	if (d->options->getOption("options.extended-presence.notify").toBool()) {
 		QStringList pepNodes;
@@ -861,6 +1241,13 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 
 PsiAccount::~PsiAccount()
 {
+	// ###cuda
+	if(cuda_isThemed())
+	{
+		if(!d->keep_file)
+			d->deleteUpgrader();
+	}
+
 #ifdef __GNUC__
 #warning "Uncomment these"
 #endif
@@ -1066,6 +1453,28 @@ void PsiAccount::setUserAccount(const UserAccount &acc)
 
 	d->acc = acc;
 
+	if(acc_useSystemSettings) {
+#ifdef Q_OS_MAC
+		QSettings settings("barracuda.com", "Barracuda IM");
+#else
+		QSettings settings("Barracuda", "Barracuda IM");
+#endif
+
+		QString domain = settings.value("Automatic Settings/domain").toString();
+		QString host = settings.value("Automatic Settings/connectHost").toString();
+		if(!domain.isEmpty()) {
+			Jid jid = d->acc.jid;
+			if(!jid.domain().isEmpty()) {
+				jid.setDomain(domain);
+				d->acc.jid = jid.full();
+			}
+		}
+		if(!host.isEmpty()) {
+			d->acc.host = host;
+			acc_hosts = QStringList() << host;
+		}
+	}
+
 	// rename queue file?
 	if(renamed) {
 		QFileInfo oldfi(oldfname);
@@ -1137,7 +1546,7 @@ void PsiAccount::autoLogin()
 	// auto-login ?
 	if (d->acc.opt_enabled) {
 		bool autoLogin = d->acc.opt_auto;
-		if (autoLogin) {
+		if (autoLogin && !d->acc.jid.isEmpty()) {
 			setStatus(Status(Status::Online, "", d->acc.priority));
 		}
 	}
@@ -1166,6 +1575,7 @@ void PsiAccount::login()
 
 	bool useHost = false;
 	QString host;
+	QStringList hosts;
 	int port = -1;
 	if(d->acc.opt_host) {
 		useHost = true;
@@ -1173,6 +1583,27 @@ void PsiAccount::login()
 		if (host.isEmpty()) {
 			host = d->jid.domain();
 		}
+		hosts = acc_hosts;
+
+		// hacky way of ensuring we don't connect to empty host.  this
+		// logic should probably be pushed down into Connector
+		for(int n = 0; n < hosts.count(); ++n)
+		{
+			if(hosts[n].isEmpty())
+			{
+				hosts.removeAt(n);
+				--n; // adjust position
+			}
+		}
+		if(hosts.isEmpty())
+		{
+			v_isActive = false;
+			stateChanged();
+
+			QMessageBox::information(0, tr("Connect Error"), tr("Cannot login: No host specified in account settings."));
+			return;
+		}
+
 		port = d->acc.port;
 	}
 
@@ -1210,7 +1641,7 @@ void PsiAccount::login()
 	}
 	d->conn->setProxy(p);
 	if (useHost) {
-		d->conn->setOptHostPort(host, port);
+		d->conn->setOptHostsPort(hosts, port);
 		d->conn->setOptSSL(d->acc.ssl == UserAccount::SSL_Legacy);
 	}
 	else if (QCA::isSupported("tls")) {
@@ -1355,6 +1786,9 @@ void PsiAccount::cs_connected()
 
 	if(bs->inherits("BSocket") || bs->inherits("XMPP::BSocket")) {
 		d->localAddress = ((BSocket *)bs)->address();
+#ifdef QUICKVOIP
+		d->jingleRtpManager->setSelfAddress(d->localAddress);
+#endif
 	}
 }
 
@@ -1406,6 +1840,19 @@ void PsiAccount::cs_authenticated()
 	// Update our jid (if necessary)
 	if (!d->stream->jid().isEmpty()) {
 		d->jid = d->stream->jid().bare();
+	}
+
+	// update hosts
+	QStringList serverHosts = d->stream->hosts();
+	if(!serverHosts.isEmpty())
+	{
+		// if the host we succeeded with is not in the list,
+		//   we keep it anyway
+		if(!serverHosts.contains(d->acc.host))
+			serverHosts += d->acc.host;
+
+		acc_hosts = serverHosts;
+		d->acc.host = serverHosts.first();
 	}
 
 	QString resource = (d->stream->jid().resource().isEmpty() ? ( d->acc.opt_automatic_resource ? localHostName() : d->acc.resource) : d->stream->jid().resource());
@@ -1534,7 +1981,11 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 		}
 		else if(x == XMPP::ClientStream::SystemShutdown)
 			s = tr("Server is shutting down");
-		str = tr("XMPP Stream Error: %1").arg(s);
+
+		if(x == XMPP::ClientStream::Conflict)
+			str = tr("Login detected at another location.");
+		else
+			str = tr("XMPP Stream Error: %1").arg(s);
 	}
 	else if(err == XMPP::ClientStream::ErrConnection) {
 		int x = conn->errorCode();
@@ -1571,7 +2022,15 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 			s = tr("See other host: %1").arg(stream->errorText());
 		else if(x == XMPP::ClientStream::UnsupportedVersion)
 			s = tr("Server does not support proper XMPP version");
-		str = tr("Stream Negotiation Error: %1").arg(s);
+
+		if(x == XMPP::ClientStream::HostUnknown) {
+			XMPP::ClientStream *cstream = (XMPP::ClientStream *)stream;
+			str = tr("The IM domain \"%1\" is not hosted at the server.").arg(cstream->jid().domain());
+			if(!conn->host().isEmpty())
+				str += tr(" (%1)").arg(conn->host());
+		}
+		else
+			str = tr("Stream Negotiation Error: %1").arg(s);
 	}
 	else if(err == XMPP::ClientStream::ErrTLS) {
 		int x = stream->errorCondition();
@@ -1591,7 +2050,7 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 		int x = stream->errorCondition();
 		QString s;
 		if(x == XMPP::ClientStream::GenericAuthError)
-			s = tr("Unable to login");
+			s = tr("Unable to login, maybe your Barracuda ID or password is wrong");
 		else if(x == XMPP::ClientStream::NoMech)
 			s = tr("No appropriate mechanism available for given security settings (e.g. SASL library too weak, or plaintext authentication not enabled)");
 		else if(x == XMPP::ClientStream::BadProto)
@@ -1609,10 +2068,11 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 		else if(x == XMPP::ClientStream::MechTooWeak)
 			s = tr("SASL mechanism too weak for this account");
 		else if(x == XMPP::ClientStream::NotAuthorized)
-			s = tr("Not authorized");
+			s = tr("Invalid Barracuda ID or password");
 		else if(x == XMPP::ClientStream::TemporaryAuthFailure)
 			s = tr("Temporary auth failure");
-		str = tr("Authentication error: %1").arg(s);
+		//str = tr("Authentication error: %1").arg(s);
+		str = tr("Error: %1").arg(s);
 	}
 	else if(err == XMPP::ClientStream::ErrSecurityLayer)
 		str = tr("Broken security layer (SASL)");
@@ -1699,6 +2159,12 @@ void PsiAccount::client_rosterRequestFinished(bool success, int, const QString &
 	// FIXME: Should be an account-specific option
 	//if (PsiOptions::instance()->getOption("options.options-storage.load").toBool())
 	//	PsiOptions::instance()->load(d->client);
+
+	// ###cuda
+	if(cuda_isThemed()) {
+		d->checkUpgrade();
+		d->checkDisclaimer();
+	}
 
 	setStatusDirect(d->loginStatus, d->loginWithPriority);
 }
@@ -2091,6 +2557,32 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 	// only toggle if not an invite or body is not empty
 	if(_m.invite().isEmpty() && !_m.body().isEmpty() && _m.mucInvites().isEmpty() && _m.rosterExchangeItems().isEmpty())
 		toggleSecurity(_m.from(), _m.wasEncrypted());
+
+	// auto-join?
+	if(!_m.invite().isEmpty() && _m.invite().startsWith("auto_"))
+	{
+		QString room = _m.invite();
+
+		// don't auto join rooms we are already in
+		if(groupchats().contains(room))
+			return;
+
+		// find associated chat window
+		ChatDlg *c = findDialog<ChatDlg*>(_m.from(), false);
+		if(c)
+		{
+			// immediately join 'room'
+			actionJoin(ConferenceBookmark(QString(), room, false, QString(), QString()), true);
+
+			TabDlg *t = d->psi->tabManager()->getManagingTabs(c);
+			if(t)
+				t->closeTab(c);
+			else
+				c->close();
+
+			return;
+		}
+	}
 
 	UserListItem *u = findFirstRelevant(_m.from());
 	if(u) {
@@ -2602,7 +3094,7 @@ void PsiAccount::openAddUserDlg()
 	if(!checkConnected())
 		return;
 
-	AddUserDlg *w = findDialog<AddUserDlg*>();
+	addUserWizard *w = findDialog<addUserWizard*>();
 	if(w)
 		bringToFront(w);
 	else {
@@ -2619,7 +3111,7 @@ void PsiAccount::openAddUserDlg()
 			}
 		}
 
-		w = new AddUserDlg(services, names, gl, this);
+		w = new addUserWizard(0, "", this, gl, services);
 		connect(w, SIGNAL(add(const XMPP::Jid &, const QString &, const QStringList &, bool)), SLOT(dj_add(const XMPP::Jid &, const QString &, const QStringList &, bool)));
 		w->show();
 	}
@@ -2675,10 +3167,13 @@ void PsiAccount::actionJoin(const ConferenceBookmark& bookmark, bool connectImme
 	w->setNick(bookmark.nick().isEmpty() ? d->jid.node() : bookmark.nick());
 	w->setPassword(bookmark.password());
 
-	w->show();
+	// ###cuda don't show join window if connecting immediately
+	//w->show();
 	if (connectImmediately) {
 		w->doJoin();
 	}
+	else
+		w->show();
 }
 
 void PsiAccount::stateChanged()
@@ -2954,6 +3449,8 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
 		connect(c, SIGNAL(aVoice(const Jid &)), SLOT(actionVoice(const Jid &)));
 		connect(d->psi, SIGNAL(emitOptionsUpdate()), c, SLOT(optionsUpdate()));
 		connect(this, SIGNAL(updateContact(const Jid &, bool)), c, SLOT(updateContact(const Jid &, bool)));
+
+		//c->ensureTabbedCorrectly();
 	}
 	else {
 		// on X11, do a special reparent to open on the right desktop
@@ -3009,6 +3506,19 @@ void PsiAccount::changeStatus(int x)
 
 void PsiAccount::actionVoice(const Jid &j)
 {
+#ifdef QUICKVOIP
+	Jid j2 = j;
+	if(j.resource().isEmpty()) {
+		UserListItem *u = find(j);
+		if(u && u->isAvailable())
+			j2.setResource((*u->userResourceList().priority()).name());
+        }
+
+	CallDlg *w = new CallDlg(0);
+	w->setAttribute(Qt::WA_DeleteOnClose);
+	w->setOutgoing(j2);
+	w->show();
+#else
 	Q_ASSERT(voiceCaller() != NULL);
 
 	Jid jid;
@@ -3035,6 +3545,7 @@ void PsiAccount::actionVoice(const Jid &j)
 	VoiceCallDlg* vc = new VoiceCallDlg(jid,voiceCaller());
 	vc->show();
 	vc->call();
+#endif
 }
 
 void PsiAccount::sendFiles(const Jid& j, const QStringList& l, bool direct)
@@ -3103,9 +3614,20 @@ void PsiAccount::actionSetMood()
 
 void PsiAccount::actionSetAvatar()
 {
-	QString str = FileUtil::getImageFileName(0);
-	if (!str.isEmpty()) {
-		avatarFactory()->setSelfAvatar(str);
+	while(1) {
+		if(PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString().isEmpty())
+			PsiOptions::instance()->setOption("options.ui.last-used-open-path", QDir::homeDirPath());
+		QString str = QFileDialog::getOpenFileName(0,tr("Choose a file"),PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString(), tr("Images (*.png *.xpm *.jpg *.PNG *.XPM *.JPG)"));
+		if(!str.isEmpty()) {
+			QFileInfo fi(str);
+			if(!fi.exists()) {
+				QMessageBox::critical(0, tr("Error"), tr("The file specified does not exist."));
+				continue;
+			}
+			PsiOptions::instance()->setOption("options.ui.last-used-open-path", fi.dirPath());
+			avatarFactory()->setSelfAvatar(str);
+		}
+		break;
 	}
 }
 
@@ -3443,14 +3965,16 @@ void PsiAccount::actionSearch(const Jid &j)
 void PsiAccount::actionInvite(const Jid &j, const QString &gc)
 {
 	Message m;
-	Jid room(gc);
-	m.setTo(room);
-	m.addMUCInvite(MUCInvite(j));
+	//Jid room(gc);
+	//m.setTo(room);
+	//m.addMUCInvite(MUCInvite(j));
+	m.setTo(j);
+	m.setInvite(gc);
 
-	QString password = d->client->groupChatPassword(room.user(),room.host());
+	/*QString password = d->client->groupChatPassword(room.user(),room.host());
 	if (!password.isEmpty())
 		m.setMUCPassword(password);
-	m.setTimeStamp(QDateTime::currentDateTime());
+	m.setTimeStamp(QDateTime::currentDateTime());*/
 	dj_sendMessage(m);
 }
 
@@ -3751,6 +4275,17 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 	}
 	else {
 		j = ul.first()->jid();
+
+		// from a transport in our roster
+		if(ul.first()->inList() && ul.first()->isTransport())
+		{
+			if(!PsiOptions::instance()->getOption("options.ui.contactlist.show.agent-contacts").toBool())
+			{
+				// ignore event if transports are hidden
+				delete e;
+				return;
+			}
+		}
 	}
 
 	e->setJid(j);
@@ -3870,10 +4405,11 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 		playSound(PsiOptions::instance()->getOption("options.ui.notifications.sounds.system-message").toString());
 	}
 	else if (e->type() == PsiEvent::Auth) {
-		playSound(PsiOptions::instance()->getOption("options.ui.notifications.sounds.system-message").toString());
-
 		AuthEvent *ae = (AuthEvent *)e;
+		bool do_sound = false;
 		if(ae->authType() == "subscribe") {
+			do_sound = true;
+
 			if(PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorization").toBool()) {
 				// Check if we want to request auth as well
 				UserListItem *u = d->userList.find(ae->from());
@@ -3889,10 +4425,29 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 		else if(ae->authType() == "subscribed") {
 			if(!PsiOptions::instance()->getOption("options.ui.notifications.successful-subscription").toBool())
 				putToQueue = false;
+			if(!PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorization").toBool())
+				do_sound = true;
+			else
+				putToQueue = false;
 		}
 		else if(ae->authType() == "unsubscribe") {
-			putToQueue = false;
+			if(!PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorization").toBool())
+				do_sound = true;
+			else
+				putToQueue = false;
 		}
+		else if(ae->authType() == "unsubscribed") {
+			if(!PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorization").toBool())
+				do_sound = true;
+			else
+				putToQueue = false;
+		}
+
+		if(PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorization").toBool())
+			putToQueue = false;
+
+		if(do_sound)
+			playSound(PsiOptions::instance()->getOption("options.ui.notifications.sounds.system-message").toString());
 	}
 	else {
 		putToQueue = false;
@@ -4384,7 +4939,7 @@ void PsiAccount::slotCheckVCard()
 	}
 
 	if (j->vcard().isEmpty()) {
-		changeVCard();
+		//changeVCard();
 		return;
 	}
 
@@ -4914,5 +5469,127 @@ QList<PsiAccount::xmlRingElem> PsiAccount::dumpRingbuf()
 	return d->dumpRingbuf();
 }
 
+// ###cuda
+bool PsiAccount::needDisclaimer(const Jid &j)
+{
+	return d->disclaimer_manager.needDisclaimer(j);
+}
+
+void PsiAccount::extendDisclaimerTime(const Jid &j)
+{
+	d->disclaimer_manager.extendTime(j);
+}
+
+QString PsiAccount::disclaimer() const
+{
+	return d->disclaimer;
+}
+
+QList<Jid> PsiAccount::servicesList() const
+{
+	// FIXME: don't hardcode these
+	QList<Jid> list;
+	list += Jid("aim.transport");
+	list += Jid("msn.transport");
+	list += Jid("yahoo.transport");
+	list += Jid("icq.transport");
+	return list;
+}
+
+void PsiAccount::doGotoWebPass()
+{
+	if(!v_isActive)
+		return;
+
+	JT_CudaLogin *jcv = new JT_CudaLogin(d->client->rootTask());
+	connect(jcv, SIGNAL(finished()), d, SLOT(gotoWebPass()));
+	jcv->get(d->jid);
+	jcv->go(true);
+}
+
+void PsiAccount::doGotoWebHistory()
+{
+	if(!v_isActive)
+		return;
+
+	JT_CudaLogin *jcv = new JT_CudaLogin(d->client->rootTask());
+	connect(jcv, SIGNAL(finished()), d, SLOT(gotoWebHistory()));
+	jcv->get(d->jid);
+	jcv->go(true);
+}
+
+QList<ChatDlg*> PsiAccount::getChats()
+{
+	return d->getChats();
+}
+
+QList<GCMainDlg*> PsiAccount::getGroupChats()
+{
+	return d->getGroupChats();
+}
+
+void PsiAccount::cpUpdate_pub(const UserListItem &u)
+{
+	cpUpdate(u);
+}
+
+void PsiAccount::checkUpgrade()
+{
+	// must be connected and not already downloading an upgrade :)
+	if(!v_isActive || d->http)
+		return;
+
+	// reset any current check
+	delete d->jgcv;
+	d->jgcv = 0;
+
+	// set the check date to right now
+	QDateTime time = QDateTime::currentDateTime();
+	acc_lastUpdateMsg = time.toString(Qt::ISODate); //time.date().toString(Qt::ISODate) + time.time().toString(Qt::ISODate);
+
+	d->checkUpgrade();
+}
+
+void PsiAccount::doMultiInvite(const QList<Jid> &list, bool groupchat, const Jid &jid)
+{
+	QString room;
+
+	// if regular chat, then invite the other participant and then convert
+	//   the window to groupchat (by joining the room immedately and
+	//   closing the chat)
+	if(!groupchat)
+	{
+		QString host = serverInfoManager()->mucService();
+		if(host.isEmpty())
+			host = "conference";
+
+		// create random room jid
+		room = QString("auto_") + QCA::arrayToHex(QCA::Random::randomArray(8).toByteArray()) + "@" + host;
+
+		actionInvite(jid, room);
+
+		// immediately join 'room'
+		actionJoin(ConferenceBookmark(QString(), room, false, QString(), QString()), true);
+
+		// close associated chat window, if there is one
+		//   (why would there not be one?  i dunno, maybe if you close
+		//   during invite or something)
+		ChatDlg *c = findDialog<ChatDlg*>(jid, false);
+		if(c)
+		{
+			TabDlg *t = d->psi->tabManager()->getManagingTabs(c);
+			if(t)
+				t->closeTab(c);
+			else
+				c->close();
+		}
+	}
+	else
+		room = jid.bare();
+
+	// for regular chat or groupchat, invite the list
+	foreach(const Jid &jid, list)
+		actionInvite(jid, room);
+}
 
 #include "psiaccount.moc"

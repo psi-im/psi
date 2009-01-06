@@ -18,7 +18,7 @@
  *
  */
 
-#include "chatdlg.h"
+#include "chatdlg_b.h"
 
 #include <QLabel>
 #include <QCursor>
@@ -48,7 +48,9 @@
 #include <QDragEnterEvent>
 #include <QTextDocument> // for Qt::escape()
 
+#include "profiles.h"
 #include "psiaccount.h"
+#include "common.h"
 #include "userlist.h"
 #include "stretchwidget.h"
 #include "psiiconset.h"
@@ -77,11 +79,11 @@
 #include <windows.h>
 #endif
 
-#include "psichatdlg.h"
+#include "psichatdlg_b.h"
 
 ChatDlg* ChatDlg::create(const Jid& jid, PsiAccount* account, TabManager* tabManager)
 {
-	ChatDlg* chat = new PsiChatDlg(jid, account, tabManager);
+	ChatDlg* chat = new PsiChatDlgB(jid, account, tabManager);
 	chat->init();
 	return chat;
 }
@@ -90,9 +92,9 @@ ChatDlg::ChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
 	: TabbableWidget(jid, pa, tabManager)
 	, highlightersInstalled_(false)
 {
-	if (PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool()) {
+	/*if (option.brushedMetal) {
 		setAttribute(Qt::WA_MacMetalStyle);
-	}
+	}*/
 
 	pending_ = 0;
 	keepOpen_ = false;
@@ -146,12 +148,7 @@ void ChatDlg::init()
 	chatEdit()->setFocus();
 
 	// TODO: port to restoreSavedSize() (and adapt it from restoreSavedGeometry())
-	QSize size = PsiOptions::instance()->getOption("options.ui.chat.size").toSize();
-	if (!size.isEmpty()) {
-		resize(size);
-	} else {
-		resize(defaultSize());
-	}
+	resize(PsiOptions::instance()->getOption("options.ui.chat.size").toSize());
 }
 
 ChatDlg::~ChatDlg()
@@ -184,11 +181,11 @@ void ChatDlg::initActions()
 	connect(act_scrolldown_, SIGNAL(activated()), SLOT(scrollDown()));
 }
 
-void ChatDlg::ensureTabbedCorrectly() {
+void ChatDlg::ensureTabbedCorrectly()
+{
 	TabbableWidget::ensureTabbedCorrectly();
 	setShortcuts();
 }
-
 
 void ChatDlg::setShortcuts()
 {
@@ -215,6 +212,8 @@ void ChatDlg::scrollDown()
 
 void ChatDlg::resizeEvent(QResizeEvent *e)
 {
+	AdvancedWidget<QWidget>::resizeEvent(e);
+
 	if (PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool()) {
 		PsiOptions::instance()->setOption("options.ui.chat.size", e->size());
 	}
@@ -243,13 +242,8 @@ bool ChatDlg::readyToHide()
 	}
 
 	if (keepOpen_) {
-		QMessageBox mb(QMessageBox::Information,
-			tr("Warning"),
-			tr("A new chat message was just received.\nDo you still want to close the window?"),
-			QMessageBox::Cancel,
-			this);
-		mb.addButton(tr("Close"), QMessageBox::AcceptRole);
-		if (mb.exec() == QMessageBox::Cancel) {
+		int n = QMessageBox::information(this, tr("Warning"), tr("A new chat message was just received.\nDo you still want to close the window?"), tr("&Yes"), tr("&No"));
+		if (n != 0) {
 			return false;
 		}
 	}
@@ -309,6 +303,18 @@ void ChatDlg::hideEvent(QHideEvent* e)
 void ChatDlg::showEvent(QShowEvent *)
 {
 	setSelfDestruct(0);
+}
+
+void ChatDlg::changeEvent(QEvent *event)
+{
+	TabbableWidget::changeEvent(event);
+
+	if (event->type() == QEvent::ActivationChange || event->type() == QEvent::WindowStateChange) {
+		// if we're bringing it to the front, get rid of the '*' if necessary
+		if (isActiveTab()) {
+			activated();
+		}
+	}
 }
 
 void ChatDlg::logSelectionChanged()
@@ -509,12 +515,12 @@ void ChatDlg::setLooks()
 	updateContact(jid(), false);
 
 	// update the widget icon
-#ifndef Q_WS_MAC
-	setWindowIcon(IconsetFactory::icon("psi/start-chat").icon());
-#endif
+//#ifndef Q_WS_MAC
+//	setWindowIcon(IconsetFactory::icon("psi/start-chat").icon());
+//#endif
 
 	/*QBrush brush;
-	brush.setPixmap( QPixmap( LEGOPTS.chatBgImage ) );
+	brush.setPixmap( QPixmap( option.chatBgImage ) );
 	chatView()->setPaper(brush);
 	chatView()->setStaticBackground(true);*/
 
@@ -662,7 +668,19 @@ void ChatDlg::doSend()
 
 	Message m(jid());
 	m.setType("chat");
-	m.setBody(chatEdit()->text());
+
+	// ###cuda
+	//m.setBody(chatEdit()->text());
+	QString inputText = chatEdit()->text();
+	// we're supposed to pass the jid of the contact to getDisclaimer,
+	//   but I don't know how with the new chatdlg, and it doesn't
+	//   matter anyway since it doesn't get used
+	QString disclaimer_text = PsiChatDlgB_getDisclaimer(this, Jid());
+	if(!disclaimer_text.isEmpty())
+		m.setBody("\n" + disclaimer_text + "\n" + inputText);
+	else
+		m.setBody(inputText);
+
 	m.setTimeStamp(QDateTime::currentDateTime());
 	if (isEncryptionEnabled()) {
 		m.setWasEncrypted(true);
@@ -710,7 +728,7 @@ void ChatDlg::doneSend()
 	resetComposing();
 }
 
-void ChatDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
+void ChatDlg::encryptedMessageSent(int x, bool b, int e, const QString &)
 {
 	if (transid_ == -1 || transid_ != x) {
 		return;
@@ -720,7 +738,7 @@ void ChatDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
 		doneSend();
 	}
 	else {
-		PGPUtil::showDiagnosticText(static_cast<QCA::SecureMessage::Error>(e), dtext);
+		QMessageBox::critical(this, tr("Error"), tr("There was an error trying to send the message encrypted.\nReason: %1.").arg(PGPUtil::instance().messageErrorString((QCA::SecureMessage::Error) e)));
 	}
 	chatEdit()->setEnabled(true);
 	chatEdit()->setFocus();

@@ -1,0 +1,7 @@
+# don't distribute these files
+rm makediff.sh
+rm makepsidiff.sh
+rm win32/upgrade.c
+
+# make tarball ready for msvc building
+./win32/premsvc.sh

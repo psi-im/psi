@@ -311,22 +311,22 @@ void OptionsDlg::Private::createTabs()
 	*/
 
 	tabs.append( new OptionsTabApplication(this) );
-	tabs.append( new OptionsTabChat(this) );
+	//tabs.append( new OptionsTabChat(this) );
 	tabs.append( new OptionsTabEvents(this) );
 	tabs.append( new OptionsTabStatus(this) );
-	tabs.append( new OptionsTabAppearance(this) );
+	//tabs.append( new OptionsTabAppearance(this) );
 	//tabs.append( new OptionsTabIconsetSystem(this) );
 	//tabs.append( new OptionsTabIconsetRoster(this) );
 	//tabs.append( new OptionsTabIconsetEmoticons(this) );
-	tabs.append( new OptionsTabGroupchat(this) );
+	//tabs.append( new OptionsTabGroupchat(this) );
 	tabs.append( new OptionsTabSound(this) );
-	tabs.append( new OptionsTabToolbars(this) );
+	//tabs.append( new OptionsTabToolbars(this) );
 #ifdef PSI_PLUGINS
 	tabs.append( new OptionsTabPlugins(this) );
 #endif
-	tabs.append( new OptionsTabShortcuts(this) );
-	tabs.append( new OptionsTabAdvanced(this) );
-	tabs.append( new OptionsTabTree(this) );
+	//tabs.append( new OptionsTabShortcuts(this) );
+	//tabs.append( new OptionsTabAdvanced(this) );
+	//tabs.append( new OptionsTabTree(this) );
 
 	// tabs - general
 	/*tabs.append( new OptionsTabGeneralRoster(this) );
@@ -482,7 +482,7 @@ void OptionsDlg::Private::connectDataChanged(QWidget *widget)
 	for ( QObjectList::Iterator it = l.begin(); it != l.end(); ++it) {
 		QVariant isOption = (*it)->property("isOption");
 		if (isOption.isValid() && !isOption.toBool()) {
-			continue;	// skip controls that only change Options dialog look
+			continue;       // skip controls that only change Options dialog look
 		}
 		QWidget *w = (QWidget*) (*it);
 		QMap<QString, QByteArray>::Iterator it2 = changedMap.find( w->className() );

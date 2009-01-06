@@ -131,6 +131,29 @@ void PsiOptions::reset() {
 	delete instance_;
 }
 
+void ensureStatusPresets(PsiOptions *o)
+{
+	QVariantList presetNames = o->mapKeyList("options.status.presets");
+	if(!presetNames.isEmpty())
+		return;
+
+	StatusPreset(PsiOptions::tr("Away from desk"),
+		PsiOptions::tr("I am away from my desk.  Please leave a message."),
+		XMPP::Status::Away
+		).toOptions(o);
+	StatusPreset(PsiOptions::tr("Gone Home"),
+		PsiOptions::tr("I have gone home.  Please leave a message."),
+		XMPP::Status::Away
+		).toOptions(o);
+	StatusPreset(PsiOptions::tr("Lunch"),
+		PsiOptions::tr("I have gone to lunch.  Please leave a message."),
+		XMPP::Status::Away
+		).toOptions(o);
+	StatusPreset(PsiOptions::tr("Work"),
+		PsiOptions::tr("I'm currently amidst a great deal of work and can not talk at the moment.  Please leave a message."),
+		XMPP::Status::DND
+		).toOptions(o);
+}
 
 /**
  * initizialises the default options for a new profile
@@ -141,47 +164,7 @@ bool PsiOptions::newProfile()
 	if (!load(":/options/newprofile.xml")) {
 		ok = false;
 	}
-	StatusPreset(tr("Away from desk"),
-	             tr("I am away from my desk.  Leave a message."),
-	             XMPP::Status::Away
-	            ).toOptions(this);
-	StatusPreset(tr("Showering"),
-	             tr("I'm in the shower.  You'll have to wait for me to get out."),
-	             XMPP::Status::Away
-	            ).toOptions(this);
-	StatusPreset(tr("Eating"),
-	             tr("Out eating.  Mmmm.. food."),
-	             XMPP::Status::Away
-	            ).toOptions(this);
-	StatusPreset(tr("Sleep"),
-	             tr("Sleep is good.  Zzzzz"),
-	             XMPP::Status::DND
-	            ).toOptions(this);
-	StatusPreset(tr("Work"),
-	             tr("Can't chat.  Gotta work."),
-	             XMPP::Status::DND
-	            ).toOptions(this);
-	StatusPreset(tr("Air"),
-	             tr("Stepping out to get some fresh air."),
-	             XMPP::Status::Away
-	            ).toOptions(this);
-	StatusPreset(tr("Movie"),
-	             tr("Out to a movie.  Is that OK with you?"),
-	             XMPP::Status::Away
-	            ).toOptions(this);
-	StatusPreset(tr("Secret"),
-	             tr("I'm not available right now and that's all you need to know."),
-	             XMPP::Status::XA
-	            ).toOptions(this);
-	StatusPreset(tr("Out for the night"),
-	             tr("Out for the night."),
-	             XMPP::Status::Away
-	            ).toOptions(this);
-	StatusPreset(tr("Greece"),
-	             tr("I have gone to a far away place.  I will be back someday!"),
-	             XMPP::Status::XA
-	            ).toOptions(this);
-
+	ensureStatusPresets(this);
 	{
 		ToolbarPrefs buttons;
 		buttons.name = tr("Buttons");
@@ -210,8 +193,8 @@ bool PsiOptions::newProfile()
 		}
 	}
 
-	setOption("options.status.auto-away.message", tr("Auto Status (idle)"));
-	
+	setOption("options.status.auto-away.message", tr("Idle"));
+
 	return ok;
 }
 

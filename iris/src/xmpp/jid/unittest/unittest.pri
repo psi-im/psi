@@ -1,0 +1,2 @@
+SOURCES += \
+	$$PWD/jidtest.cpp

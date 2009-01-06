@@ -1,39 +1,44 @@
+PSIDIR_SRC = $$PSIDIR/src
+
 QT += xml network qt3support
 
-# cutestuff
-include($$PWD/../cutestuff/cutestuff.pri)
-
 # modules
-include($$PWD/protocol/protocol.pri)
-include($$PWD/irisprotocol/irisprotocol.pri)
+include($$PSIDIR_SRC/protocol/protocol.pri)
+include($$PSIDIR_SRC/irisprotocol/irisprotocol.pri)
 include($$PWD/privacy/privacy.pri)
-include($$PWD/capabilities/capabilities.pri)
-include($$PWD/utilities/utilities.pri)
-include($$PWD/tabs/tabs.pri)
+include($$PSIDIR_SRC/capabilities/capabilities.pri)
+include($$PSIDIR_SRC/utilities/utilities.pri)
+include($$PSIDIR_SRC/tabs/tabs.pri)
 
 # tools
-include($$PWD/tools/trayicon/trayicon.pri)
-include($$PWD/tools/iconset/iconset.pri)
-include($$PWD/tools/idle/idle.pri)
-include($$PWD/tools/systemwatch/systemwatch.pri)
-include($$PWD/tools/zip/zip.pri)
-include($$PWD/tools/optionstree/optionstree.pri)
-include($$PWD/tools/globalshortcut/globalshortcut.pri)
-include($$PWD/tools/advwidget/advwidget.pri)
-include($$PWD/tools/spellchecker/spellchecker.pri)
-include($$PWD/tools/contactlist/contactlist.pri)
-include($$PWD/tools/grepshortcutkeydlg/grepshortcutkeydlg.pri)
-include($$PWD/tools/atomicxmlfile/atomicxmlfile.pri)
+include($$PSIDIR_SRC/tools/trayicon/trayicon.pri)
+include($$PSIDIR_SRC/tools/iconset/iconset.pri)
+include($$PSIDIR_SRC/tools/idle/idle.pri)
+include($$PSIDIR_SRC/tools/systemwatch/systemwatch.pri)
+include($$PSIDIR_SRC/tools/zip/zip.pri)
+include($$PSIDIR_SRC/tools/optionstree/optionstree.pri)
+include($$PSIDIR_SRC/tools/globalshortcut/globalshortcut.pri)
+include($$PSIDIR_SRC/tools/advwidget/advwidget.pri)
+include($$PSIDIR_SRC/tools/spellchecker/spellchecker.pri)
+include($$PSIDIR_SRC/tools/contactlist/contactlist.pri)
+include($$PSIDIR_SRC/tools/grepshortcutkeydlg/grepshortcutkeydlg.pri)
+include($$PSIDIR_SRC/tools/atomicxmlfile/atomicxmlfile.pri)
+
+quickvoip {
+	DEFINES += QUICKVOIP
+	include($$PWD/quickvoip/psimedia.pri)
+	include($$PWD/quickvoip/quickvoip.pri)
+}
 
 # Growl
 mac {
 	contains(DEFINES, HAVE_GROWL) {
-		include($$PWD/tools/growlnotifier/growlnotifier.pri)
+		include($$PSIDIR_SRC/tools/growlnotifier/growlnotifier.pri)
 	}
 }
 
 # Mac dock
-mac { include($$PWD/tools/mac_dock/mac_dock.pri) }
+mac { include($$PSIDIR_SRC/tools/mac_dock/mac_dock.pri) }
 
 # Tune
 pep {
@@ -42,12 +47,12 @@ pep {
 	mac { CONFIG += tc_itunes }
 	windows { CONFIG += tc_winamp }
 }
-include($$PWD/tools/tunecontroller/tunecontroller.pri)
+include($$PSIDIR_SRC/tools/tunecontroller/tunecontroller.pri)
 
 # Crash
 use_crash {
 	DEFINES += USE_CRASH
-	include($$PWD/tools/crash/crash.pri)
+	include($$PSIDIR_SRC/tools/crash/crash.pri)
 }
 
 # qca
@@ -67,14 +72,14 @@ qca-static {
 	}
 
 	# QCA-GnuPG
-	include($$PWD/../third-party/qca/qca-gnupg.pri)
+	include($$PSIDIR/third-party/qca/qca-gnupg.pri)
 }
 else {
 	CONFIG += crypto	
 }
 
 # Widgets
-include($$PWD/widgets/widgets.pri)
+include($$PSIDIR_SRC/widgets/widgets.pri)
 
 # Google FT
 google_ft {
@@ -104,310 +109,330 @@ include($$PWD/../iris/iris.pri)
 
 # Header files
 HEADERS += \
-	$$PWD/varlist.h \ 
-	$$PWD/jidutil.h \
-	$$PWD/showtextdlg.h \ 
-	$$PWD/profiles.h \
-	$$PWD/activeprofiles.h \
-	$$PWD/profiledlg.h \
-	$$PWD/aboutdlg.h \
-	$$PWD/desktoputil.h \
-	$$PWD/fileutil.h \
-	$$PWD/textutil.h \
-	$$PWD/pixmaputil.h \
-	$$PWD/psiaccount.h \
-	$$PWD/psicon.h \
-	$$PWD/accountscombobox.h \
-	$$PWD/psievent.h \
-	$$PWD/xmlconsole.h \
-	$$PWD/contactview.h \
-	$$PWD/psiiconset.h \
-	$$PWD/applicationinfo.h \
-	$$PWD/pgpkeydlg.h \
-	$$PWD/pgputil.h \
-	$$PWD/pgptransaction.h \
-	$$PWD/userlist.h \
-	$$PWD/mainwin.h \
-	$$PWD/mainwin_p.h \
-	$$PWD/psitrayicon.h \
-	$$PWD/rtparse.h \
-	$$PWD/systeminfo.h \
-	$$PWD/common.h \
-	$$PWD/proxy.h \
-	$$PWD/miniclient.h \
-	$$PWD/accountmanagedlg.h \
-	$$PWD/accountadddlg.h \
-	$$PWD/accountregdlg.h \
-	$$PWD/accountmodifydlg.h \
-	$$PWD/changepwdlg.h \
-	$$PWD/msgmle.h \
-	$$PWD/statusdlg.h \
-	$$PWD/statuscombobox.h \
-	$$PWD/certutil.h \
-	$$PWD/eventdlg.h \
-	$$PWD/chatdlg.h \
-	$$PWD/psichatdlg.h \
-	$$PWD/chatsplitter.h \
-	$$PWD/chateditproxy.h \
-	$$PWD/adduserdlg.h \
-	$$PWD/groupchatdlg.h \
-	$$PWD/gcuserview.h \
-	$$PWD/infodlg.h \
-	$$PWD/translationmanager.h \
-	$$PWD/eventdb.h \
-	$$PWD/historydlg.h \
-	$$PWD/tipdlg.h \
-	$$PWD/searchdlg.h \
-	$$PWD/registrationdlg.h \
-	$$PWD/psitoolbar.h \
-	$$PWD/passphrasedlg.h \
-	$$PWD/vcardfactory.h \
-	$$PWD/sslcertdlg.h \
-	$$PWD/tasklist.h \
-	$$PWD/discodlg.h \
-	$$PWD/alerticon.h \
-	$$PWD/alertable.h \
-	$$PWD/psipopup.h \
-	$$PWD/psiapplication.h \
-	$$PWD/filetransdlg.h \
-	$$PWD/avatars.h \
-	$$PWD/actionlist.h \
-	$$PWD/serverinfomanager.h \
-	$$PWD/psiactionlist.h \
-	$$PWD/xdata_widget.h \
-	$$PWD/statuspreset.h \
-	$$PWD/lastactivitytask.h \
-	$$PWD/mucmanager.h \
-	$$PWD/mucjoindlg.h \
-	$$PWD/mucconfigdlg.h \
-	$$PWD/mucaffiliationsmodel.h \
-	$$PWD/mucaffiliationsproxymodel.h \
-	$$PWD/mucaffiliationsview.h \
-	$$PWD/rosteritemexchangetask.h \
-	$$PWD/mood.h \
-	$$PWD/moodcatalog.h \
-	$$PWD/mooddlg.h \
-	$$PWD/geolocation.h \
-	$$PWD/physicallocation.h \
-	$$PWD/urlbookmark.h \
-	$$PWD/conferencebookmark.h \
-	$$PWD/bookmarkmanager.h \
-	$$PWD/pepmanager.h \
-	$$PWD/pubsubsubscription.h \
-	$$PWD/rc.h \
-	$$PWD/psihttpauthrequest.h \
-	$$PWD/httpauthmanager.h \
-	$$PWD/ahcommand.h \
-	$$PWD/pongserver.h \
-	$$PWD/ahcommandserver.h \
-	$$PWD/ahcommanddlg.h \
-	$$PWD/ahcformdlg.h \
-	$$PWD/ahcexecutetask.h \
-	$$PWD/ahcservermanager.h \
-	$$PWD/serverlistquerier.h \
-	$$PWD/psioptionseditor.h \
-	$$PWD/psioptions.h \
-	$$PWD/voicecaller.h \
-	$$PWD/voicecalldlg.h \
-	$$PWD/resourcemenu.h \
-	$$PWD/shortcutmanager.h \
-	$$PWD/psicontactlist.h \
-	$$PWD/accountlabel.h \
-	$$PWD/psiactions.h \
-	$$PWD/bookmarkmanagedlg.h
+#	$$PSIDIR_SRC/maybe.h \ 
+	$$PSIDIR_SRC/varlist.h \ 
+	$$PSIDIR_SRC/jidutil.h \
+	$$PSIDIR_SRC/showtextdlg.h \ 
+	$$PWD/profiles_b.h \
+	$$PSIDIR_SRC/activeprofiles.h \
+	$$PSIDIR_SRC/profiledlg.h \
+	$$PSIDIR_SRC/aboutdlg.h \
+	$$PSIDIR_SRC/desktoputil.h \
+	$$PSIDIR_SRC/fileutil.h \
+	$$PSIDIR_SRC/textutil.h \
+	$$PSIDIR_SRC/pixmaputil.h \
+	$$PWD/psiaccount_b.h \
+	$$PWD/psicon_b.h \
+	$$PSIDIR_SRC/accountscombobox.h \
+	$$PSIDIR_SRC/psievent.h \
+	$$PSIDIR_SRC/xmlconsole.h \
+	$$PWD/contactview_b.h \
+	$$PSIDIR_SRC/psiiconset.h \
+	$$PSIDIR_SRC/applicationinfo.h \
+	$$PSIDIR_SRC/pgpkeydlg.h \
+	$$PSIDIR_SRC/pgputil.h \
+	$$PSIDIR_SRC/pgptransaction.h \
+	$$PSIDIR_SRC/userlist.h \
+	$$PWD/mainwin_b.h \
+	$$PWD/mainwin_p_b.h \
+	$$PSIDIR_SRC/psitrayicon.h \
+	$$PSIDIR_SRC/rtparse.h \
+	$$PSIDIR_SRC/systeminfo.h \
+	$$PWD/common_b.h \
+	$$PSIDIR_SRC/proxy.h \
+	$$PSIDIR_SRC/miniclient.h \
+	$$PSIDIR_SRC/accountmanagedlg.h \
+	$$PSIDIR_SRC/accountadddlg.h \
+	$$PSIDIR_SRC/accountregdlg.h \
+	$$PSIDIR_SRC/accountmodifydlg.h \
+	$$PSIDIR_SRC/changepwdlg.h \
+	$$PSIDIR_SRC/msgmle.h \
+	$$PSIDIR_SRC/statusdlg.h \
+	$$PSIDIR_SRC/statuscombobox.h \
+	$$PSIDIR_SRC/certutil.h \
+	$$PSIDIR_SRC/eventdlg.h \
+	$$PWD/chatdlg_b.h \
+	$$PWD/psichatdlg_b.h \
+	$$PSIDIR_SRC/chatsplitter.h \
+	$$PSIDIR_SRC/chateditproxy.h \
+#	$$PWD/tabdlg.h \
+	$$PSIDIR_SRC/adduserdlg.h \
+	$$PWD/groupchatdlg_b.h \
+	$$PSIDIR_SRC/gcuserview.h \
+	$$PSIDIR_SRC/infodlg.h \
+	$$PSIDIR_SRC/translationmanager.h \
+	$$PSIDIR_SRC/eventdb.h \
+	$$PSIDIR_SRC/historydlg.h \
+	$$PSIDIR_SRC/tipdlg.h \
+	$$PSIDIR_SRC/searchdlg.h \
+	$$PSIDIR_SRC/registrationdlg.h \
+	$$PSIDIR_SRC/psitoolbar.h \
+	$$PSIDIR_SRC/passphrasedlg.h \
+	$$PSIDIR_SRC/vcardfactory.h \
+	$$PSIDIR_SRC/sslcertdlg.h \
+	$$PSIDIR_SRC/tasklist.h \
+	$$PSIDIR_SRC/discodlg.h \
+#	$$PSIDIR_SRC/capsspec.h \
+#	$$PSIDIR_SRC/capsregistry.h \
+#	$$PSIDIR_SRC/capsmanager.h \
+	$$PSIDIR_SRC/alerticon.h \
+	$$PSIDIR_SRC/alertable.h \
+	$$PSIDIR_SRC/psipopup.h \
+	$$PSIDIR_SRC/psiapplication.h \
+	$$PSIDIR_SRC/filetransdlg.h \
+	$$PSIDIR_SRC/avatars.h \
+	$$PSIDIR_SRC/actionlist.h \
+	$$PWD/serverinfomanager_b.h \
+	$$PSIDIR_SRC/psiactionlist.h \
+	$$PSIDIR_SRC/xdata_widget.h \
+	$$PSIDIR_SRC/statuspreset.h \
+	$$PSIDIR_SRC/lastactivitytask.h \
+	$$PSIDIR_SRC/mucmanager.h \
+	$$PSIDIR_SRC/mucjoindlg.h \
+	$$PSIDIR_SRC/mucconfigdlg.h \
+	$$PSIDIR_SRC/mucaffiliationsmodel.h \
+	$$PSIDIR_SRC/mucaffiliationsproxymodel.h \
+	$$PSIDIR_SRC/mucaffiliationsview.h \
+	$$PSIDIR_SRC/rosteritemexchangetask.h \
+	$$PSIDIR_SRC/mood.h \
+	$$PSIDIR_SRC/moodcatalog.h \
+	$$PSIDIR_SRC/mooddlg.h \
+	$$PSIDIR_SRC/geolocation.h \
+	$$PSIDIR_SRC/physicallocation.h \
+	$$PSIDIR_SRC/urlbookmark.h \
+	$$PSIDIR_SRC/conferencebookmark.h \
+	$$PSIDIR_SRC/bookmarkmanager.h \
+	$$PSIDIR_SRC/pepmanager.h \
+	$$PSIDIR_SRC/pubsubsubscription.h \
+	$$PSIDIR_SRC/rc.h \
+	$$PSIDIR_SRC/psihttpauthrequest.h \
+	$$PSIDIR_SRC/httpauthmanager.h \
+#	$$PSIDIR_SRC/privacylistitem.h \
+#	$$PSIDIR_SRC/privacylist.h \
+#	$$PSIDIR_SRC/privacylistmodel.h \
+#	$$PSIDIR_SRC/privacylistblockedmodel.h \
+#	$$PSIDIR_SRC/privacymanager.h \
+#	$$PSIDIR_SRC/privacydlg.h \
+#	$$PSIDIR_SRC/privacyruledlg.h \
+	$$PSIDIR_SRC/ahcommand.h \
+	$$PSIDIR_SRC/pongserver.h \
+	$$PSIDIR_SRC/ahcommandserver.h \
+	$$PSIDIR_SRC/ahcommanddlg.h \
+	$$PSIDIR_SRC/ahcformdlg.h \
+	$$PSIDIR_SRC/ahcexecutetask.h \
+	$$PSIDIR_SRC/ahcservermanager.h \
+	$$PSIDIR_SRC/serverlistquerier.h \
+	$$PSIDIR_SRC/psioptionseditor.h \
+	$$PSIDIR_SRC/psioptions.h \
+	$$PSIDIR_SRC/voicecaller.h \
+	$$PSIDIR_SRC/voicecalldlg.h \
+	$$PSIDIR_SRC/resourcemenu.h \
+	$$PSIDIR_SRC/shortcutmanager.h \
+	$$PSIDIR_SRC/psicontactlist.h \
+	$$PSIDIR_SRC/accountlabel.h \
+	$$PSIDIR_SRC/psiactions.h \
+	$$PSIDIR_SRC/bookmarkmanagedlg.h \
+	$$PWD/adduserwizard.h \
+	$$PWD/transportsetupdlg.h \
+	$$PWD/cudaskin.h \
+	$$PWD/cudatasks.h \
+	$$PWD/simplesearch.h \
+	$$PWD/simpleprivacymanager.h \
+	$$PWD/invitedlg.h
 
 # Source files
 SOURCES += \
-	$$PWD/varlist.cpp \
-	$$PWD/jidutil.cpp \
-	$$PWD/showtextdlg.cpp \
+	$$PSIDIR_SRC/varlist.cpp \
+	$$PSIDIR_SRC/jidutil.cpp \
+	$$PSIDIR_SRC/showtextdlg.cpp \
 	$$PWD/psi_profiles.cpp \
-	$$PWD/activeprofiles.cpp \
-	$$PWD/profiledlg.cpp \
+	$$PSIDIR_SRC/activeprofiles.cpp \
+	$$PSIDIR_SRC/profiledlg.cpp \
 	$$PWD/aboutdlg.cpp \
-	$$PWD/desktoputil.cpp \
-	$$PWD/fileutil.cpp \
-	$$PWD/textutil.cpp \
-	$$PWD/pixmaputil.cpp \
-	$$PWD/accountscombobox.cpp \
-	$$PWD/psievent.cpp \
-	$$PWD/xmlconsole.cpp \
+	$$PSIDIR_SRC/desktoputil.cpp \
+	$$PSIDIR_SRC/fileutil.cpp \
+	$$PSIDIR_SRC/textutil.cpp \
+	$$PSIDIR_SRC/pixmaputil.cpp \
+	$$PSIDIR_SRC/accountscombobox.cpp \
+	$$PSIDIR_SRC/psievent.cpp \
+	$$PSIDIR_SRC/xmlconsole.cpp \
 	$$PWD/contactview.cpp \
-	$$PWD/psiiconset.cpp \
+	$$PSIDIR_SRC/psiiconset.cpp \
 	$$PWD/applicationinfo.cpp \
-	$$PWD/pgpkeydlg.cpp \
-	$$PWD/pgputil.cpp \
-	$$PWD/pgptransaction.cpp \
+	$$PSIDIR_SRC/pgpkeydlg.cpp \
+	$$PSIDIR_SRC/pgputil.cpp \
+	$$PSIDIR_SRC/pgptransaction.cpp \
 	$$PWD/serverinfomanager.cpp \
-	$$PWD/userlist.cpp \
+	$$PSIDIR_SRC/userlist.cpp \
 	$$PWD/mainwin.cpp \
 	$$PWD/mainwin_p.cpp \
-	$$PWD/psitrayicon.cpp \
-	$$PWD/rtparse.cpp \
-	$$PWD/systeminfo.cpp \
+	$$PSIDIR_SRC/psitrayicon.cpp \
+	$$PSIDIR_SRC/rtparse.cpp \
+	$$PSIDIR_SRC/systeminfo.cpp \
 	$$PWD/common.cpp \
-	$$PWD/proxy.cpp \
-	$$PWD/miniclient.cpp \
-	$$PWD/accountmanagedlg.cpp \
-	$$PWD/accountadddlg.cpp \
-	$$PWD/accountregdlg.cpp \
+	$$PSIDIR_SRC/proxy.cpp \
+	$$PSIDIR_SRC/miniclient.cpp \
+	$$PSIDIR_SRC/accountmanagedlg.cpp \
+	$$PSIDIR_SRC/accountadddlg.cpp \
+	$$PSIDIR_SRC/accountregdlg.cpp \
 	$$PWD/accountmodifydlg.cpp \
-	$$PWD/changepwdlg.cpp \
-	$$PWD/msgmle.cpp \
+	$$PSIDIR_SRC/changepwdlg.cpp \
+	$$PSIDIR_SRC/msgmle.cpp \
 	$$PWD/statusdlg.cpp \
-	$$PWD/statuscombobox.cpp \
-	$$PWD/eventdlg.cpp \
+	$$PSIDIR_SRC/statuscombobox.cpp \
+	$$PSIDIR_SRC/eventdlg.cpp \
 	$$PWD/chatdlg.cpp \
 	$$PWD/psichatdlg.cpp \
-	$$PWD/chatsplitter.cpp \
-	$$PWD/chateditproxy.cpp \
-	$$PWD/tipdlg.cpp \
-	$$PWD/adduserdlg.cpp \
+	$$PSIDIR_SRC/chatsplitter.cpp \
+	$$PSIDIR_SRC/chateditproxy.cpp \
+	$$PSIDIR_SRC/tipdlg.cpp \
+#	$$PWD/tabdlg.cpp \
+	$$PSIDIR_SRC/adduserdlg.cpp \
 	$$PWD/groupchatdlg.cpp \
-	$$PWD/gcuserview.cpp \
+	$$PSIDIR_SRC/gcuserview.cpp \
 	$$PWD/infodlg.cpp \
-	$$PWD/translationmanager.cpp \
-	$$PWD/certutil.cpp \
-	$$PWD/eventdb.cpp \
-	$$PWD/historydlg.cpp \
-	$$PWD/searchdlg.cpp \
-	$$PWD/registrationdlg.cpp \
-	$$PWD/psitoolbar.cpp \
-	$$PWD/passphrasedlg.cpp \
-	$$PWD/vcardfactory.cpp \
-	$$PWD/sslcertdlg.cpp \
-	$$PWD/discodlg.cpp \
-	$$PWD/alerticon.cpp \
-	$$PWD/alertable.cpp \
+	$$PSIDIR_SRC/translationmanager.cpp \
+	$$PSIDIR_SRC/certutil.cpp \
+	$$PSIDIR_SRC/eventdb.cpp \
+	$$PSIDIR_SRC/historydlg.cpp \
+	$$PSIDIR_SRC/searchdlg.cpp \
+	$$PSIDIR_SRC/registrationdlg.cpp \
+	$$PSIDIR_SRC/psitoolbar.cpp \
+	$$PSIDIR_SRC/passphrasedlg.cpp \
+	$$PSIDIR_SRC/vcardfactory.cpp \
+	$$PSIDIR_SRC/sslcertdlg.cpp \
+	$$PSIDIR_SRC/discodlg.cpp \
+#	$$PSIDIR_SRC/capsspec.cpp \
+#	$$PSIDIR_SRC/capsregistry.cpp \
+#	$$PWD/capsmanager.cpp \
+	$$PSIDIR_SRC/alerticon.cpp \
+	$$PSIDIR_SRC/alertable.cpp \
 	$$PWD/psipopup.cpp \
-	$$PWD/psiapplication.cpp \
+	$$PSIDIR_SRC/psiapplication.cpp \
 	$$PWD/filetransdlg.cpp \
-	$$PWD/avatars.cpp \
-	$$PWD/actionlist.cpp \
+	$$PSIDIR_SRC/avatars.cpp \
+	$$PSIDIR_SRC/actionlist.cpp \
 	$$PWD/psiactionlist.cpp \
-	$$PWD/xdata_widget.cpp \
-	$$PWD/lastactivitytask.cpp \
-	$$PWD/statuspreset.cpp \
-	$$PWD/mucmanager.cpp \
+	$$PSIDIR_SRC/xdata_widget.cpp \
+	$$PSIDIR_SRC/lastactivitytask.cpp \
+	$$PSIDIR_SRC/statuspreset.cpp \
+	$$PSIDIR_SRC/mucmanager.cpp \
 	$$PWD/mucjoindlg.cpp \
 	$$PWD/mucconfigdlg.cpp \
-	$$PWD/mucaffiliationsmodel.cpp \
-	$$PWD/mucaffiliationsproxymodel.cpp \
-	$$PWD/mucaffiliationsview.cpp \
-	$$PWD/rosteritemexchangetask.cpp \
-	$$PWD/mood.cpp \
-	$$PWD/moodcatalog.cpp \
-	$$PWD/mooddlg.cpp \
-	$$PWD/geolocation.cpp \
-	$$PWD/physicallocation.cpp \
-	$$PWD/urlbookmark.cpp \
-	$$PWD/conferencebookmark.cpp \
-	$$PWD/bookmarkmanager.cpp \
-	$$PWD/pepmanager.cpp \
-	$$PWD/pubsubsubscription.cpp \
-	$$PWD/rc.cpp \
-	$$PWD/httpauthmanager.cpp \
-	$$PWD/ahcommand.cpp \
-	$$PWD/pongserver.cpp \
-	$$PWD/ahcommandserver.cpp \
- 	$$PWD/ahcommanddlg.cpp \
-	$$PWD/ahcformdlg.cpp \
-	$$PWD/ahcexecutetask.cpp \
- 	$$PWD/ahcservermanager.cpp \
-	$$PWD/serverlistquerier.cpp \
+	$$PSIDIR_SRC/mucaffiliationsmodel.cpp \
+	$$PSIDIR_SRC/mucaffiliationsproxymodel.cpp \
+	$$PSIDIR_SRC/mucaffiliationsview.cpp \
+	$$PSIDIR_SRC/rosteritemexchangetask.cpp \
+	$$PSIDIR_SRC/mood.cpp \
+	$$PSIDIR_SRC/moodcatalog.cpp \
+	$$PSIDIR_SRC/mooddlg.cpp \
+	$$PSIDIR_SRC/geolocation.cpp \
+	$$PSIDIR_SRC/physicallocation.cpp \
+	$$PSIDIR_SRC/urlbookmark.cpp \
+	$$PSIDIR_SRC/conferencebookmark.cpp \
+	$$PSIDIR_SRC/bookmarkmanager.cpp \
+	$$PSIDIR_SRC/pepmanager.cpp \
+	$$PSIDIR_SRC/pubsubsubscription.cpp \
+	$$PSIDIR_SRC/rc.cpp \
+	$$PSIDIR_SRC/httpauthmanager.cpp \
+#	$$PSIDIR_SRC/privacylistitem.cpp \
+#	$$PSIDIR_SRC/privacylist.cpp \
+#	$$PSIDIR_SRC/privacylistmodel.cpp \
+#	$$PSIDIR_SRC/privacylistblockedmodel.cpp \
+#	$$PSIDIR_SRC/privacymanager.cpp \
+#	$$PSIDIR_SRC/privacydlg.cpp \
+#	$$PSIDIR_SRC/privacyruledlg.cpp \
+	$$PSIDIR_SRC/ahcommand.cpp \
+	$$PSIDIR_SRC/pongserver.cpp \
+	$$PSIDIR_SRC/ahcommandserver.cpp \
+	$$PSIDIR_SRC/ahcommanddlg.cpp \
+	$$PSIDIR_SRC/ahcformdlg.cpp \
+	$$PSIDIR_SRC/ahcexecutetask.cpp \
+	$$PSIDIR_SRC/ahcservermanager.cpp \
+	$$PSIDIR_SRC/serverlistquerier.cpp \
 	$$PWD/psioptions.cpp \
-	$$PWD/psioptionseditor.cpp \
-	$$PWD/voicecalldlg.cpp \
-	$$PWD/resourcemenu.cpp \
-	$$PWD/shortcutmanager.cpp \
-	$$PWD/psicontactlist.cpp \
+	$$PSIDIR_SRC/psioptionseditor.cpp \
+	$$PSIDIR_SRC/voicecalldlg.cpp \
+	$$PSIDIR_SRC/resourcemenu.cpp \
+	$$PSIDIR_SRC/shortcutmanager.cpp \
+	$$PSIDIR_SRC/psicontactlist.cpp \
 	$$PWD/psicon.cpp \
 	$$PWD/psiaccount.cpp \
-	$$PWD/accountlabel.cpp \
-	$$PWD/bookmarkmanagedlg.cpp
+	$$PSIDIR_SRC/accountlabel.cpp \
+	$$PSIDIR_SRC/bookmarkmanagedlg.cpp \
+	$$PWD/adduserwizard.cpp \
+	$$PWD/transportsetupdlg.cpp \
+	$$PWD/cudaskin.cpp \
+	$$PWD/cudatasks.cpp \
+	$$PWD/simplesearch.cpp \
+	$$PWD/simpleprivacymanager.cpp \
+	$$PWD/invitedlg.cpp
 
 whiteboarding {
 	# Whiteboarding support. Still experimental.
 	DEFINES += WHITEBOARDING
-	QT += svg
 
 	HEADERS += \
-		$$PWD/sxe/sxemanager.h \
-		$$PWD/sxe/sxesession.h \
-		$$PWD/sxe/sxeedit.h \
-		$$PWD/sxe/sxenewedit.h \
-		$$PWD/sxe/sxeremoveedit.h \
-		$$PWD/sxe/sxerecordedit.h \
- 		$$PWD/sxe/sxerecord.h \
-		$$PWD/whiteboarding/wbmanager.h \
-		$$PWD/whiteboarding/wbdlg.h \
-		$$PWD/whiteboarding/wbwidget.h \
-		$$PWD/whiteboarding/wbscene.h \
-		$$PWD/whiteboarding/wbitem.h \
-		$$PWD/whiteboarding/wbnewitem.h \
-		$$PWD/whiteboarding/wbnewpath.h \
-		$$PWD/whiteboarding/wbnewimage.h
+		$$PWD/wbmanager.h \
+		$$PWD/wbdlg.h \
+		$$PWD/wbwidget.h \
+		$$PWD/wbscene.h \
+		$$PWD/wbitems.h
 	
 	SOURCES += \
-		$$PWD/sxe/sxemanager.cpp \
-		$$PWD/sxe/sxesession.cpp \
-		$$PWD/sxe/sxeedit.cpp \
-		$$PWD/sxe/sxenewedit.cpp \
-		$$PWD/sxe/sxeremoveedit.cpp \
-		$$PWD/sxe/sxerecordedit.cpp \
-		$$PWD/sxe/sxerecord.cpp \
-		$$PWD/whiteboarding/wbmanager.cpp \
-		$$PWD/whiteboarding/wbdlg.cpp \
-		$$PWD/whiteboarding/wbwidget.cpp \
-		$$PWD/whiteboarding/wbscene.cpp \
-		$$PWD/whiteboarding/wbitem.cpp \
-		$$PWD/whiteboarding/wbnewitem.cpp \
-		$$PWD/whiteboarding/wbnewpath.cpp \
-		$$PWD/whiteboarding/wbnewimage.cpp
+		$$PWD/wbmanager.cpp \
+		$$PWD/wbdlg.cpp \
+		$$PWD/wbwidget.cpp \
+		$$PWD/wbscene.cpp \
+		$$PWD/wbitems.cpp
 }
 
 mac {
 	contains( DEFINES, HAVE_GROWL ) {
-		HEADERS += $$PWD/psigrowlnotifier.h 
+		HEADERS += $$PSIDIR_SRC/psigrowlnotifier.h 
 		SOURCES += $$PWD/psigrowlnotifier.cpp 
 	}
 
-	HEADERS += $$PWD/cocoautil.h
-	OBJECTIVE_SOURCES += $$PWD/cocoautil.mm
+	HEADERS += $$PSIDIR_SRC/cocoautil.h
+	OBJECTIVE_SOURCES += $$PSIDIR_SRC/cocoautil.mm
 }
 
 # Qt Designer interfaces
 INTERFACES += \
-	$$PWD/profileopen.ui \
-	$$PWD/profilemanage.ui \
-	$$PWD/profilenew.ui \
-	$$PWD/proxy.ui \
-	$$PWD/pgpkey.ui \
-	$$PWD/accountmanage.ui \
-	$$PWD/accountadd.ui \
-	$$PWD/accountreg.ui \
-	$$PWD/accountremove.ui \
+	$$PSIDIR_SRC/profileopen.ui \
+	$$PSIDIR_SRC/profilemanage.ui \
+	$$PSIDIR_SRC/profilenew.ui \
+	$$PSIDIR_SRC/proxy.ui \
+	$$PSIDIR_SRC/pgpkey.ui \
+	$$PSIDIR_SRC/accountmanage.ui \
+	$$PSIDIR_SRC/accountadd.ui \
+	$$PSIDIR_SRC/accountreg.ui \
+	$$PSIDIR_SRC/accountremove.ui \
 	$$PWD/accountmodify.ui \
-	$$PWD/changepw.ui \
-	$$PWD/addurl.ui \
-	$$PWD/adduser.ui \
-	$$PWD/mucjoin.ui \
+	$$PSIDIR_SRC/changepw.ui \
+	$$PSIDIR_SRC/addurl.ui \
+	$$PSIDIR_SRC/adduser.ui \
+	$$PSIDIR_SRC/mucjoin.ui \
 	$$PWD/info.ui \
-	$$PWD/search.ui \
+	$$PSIDIR_SRC/search.ui \
 	$$PWD/about.ui \
-	$$PWD/optioneditor.ui \
-	$$PWD/passphrase.ui \
-	$$PWD/sslcert.ui \
-	$$PWD/mucconfig.ui \
-	$$PWD/xmlconsole.ui \
-	$$PWD/disco.ui \
-	$$PWD/tip.ui \
-	$$PWD/filetrans.ui \
-	$$PWD/mood.ui \
-	$$PWD/voicecall.ui \
-	$$PWD/chatdlg.ui \
-	$$PWD/groupchatdlg.ui \
-	$$PWD/bookmarkmanage.ui
+	$$PSIDIR_SRC/optioneditor.ui \
+	$$PSIDIR_SRC/passphrase.ui \
+	$$PSIDIR_SRC/sslcert.ui \
+	$$PSIDIR_SRC/mucconfig.ui \
+	$$PSIDIR_SRC/xmlconsole.ui \
+	$$PSIDIR_SRC/disco.ui \
+	$$PSIDIR_SRC/tip.ui \
+	$$PSIDIR_SRC/filetrans.ui \
+	#$$PSIDIR_SRC/privacy.ui \
+	#$$PSIDIR_SRC/privacyrule.ui \
+	$$PSIDIR_SRC/mood.ui \
+	$$PSIDIR_SRC/voicecall.ui \
+	$$PSIDIR_SRC/chatdlg.ui \
+	$$PSIDIR_SRC/groupchatdlg.ui \
+	$$PSIDIR_SRC/bookmarkmanage.ui \
+	$$PWD/transportsetup.ui \
+	$$PWD/invite.ui
 
 # options dialog
 include($$PWD/options/options.pri)
@@ -419,26 +444,26 @@ psi_plugins {
 	SOURCES += $$PWD/pluginmanager.cpp
 }
 
+mac {
+	QMAKE_LFLAGS += -framework Carbon -framework IOKit
+}
+
 dbus {
-	HEADERS += 	$$PWD/dbus.h
-	SOURCES += 	$$PWD/dbus.cpp
-	SOURCES += $$PWD/activeprofiles_dbus.cpp
+	HEADERS +=	$$PSIDIR_SRC/dbus.h
+	SOURCES +=	$$PSIDIR_SRC/dbus.cpp
+	SOURCES += $$PSIDIR_SRC/activeprofiles_dbus.cpp
 	DEFINES += USE_DBUS
 	CONFIG += qdbus
 }
 
 win32:!dbus {
-	SOURCES += $$PWD/activeprofiles_win.cpp
+	SOURCES += $$PSIDIR_SRC/activeprofiles_win.cpp
 	LIBS += -lUser32
 }
 
 
 unix:!dbus {
-	SOURCES += $$PWD/activeprofiles_stub.cpp
-}
-
-mac {
-	QMAKE_LFLAGS += -framework Carbon -framework IOKit
+	SOURCES += $$PSIDIR_SRC/activeprofiles_stub.cpp
 }
 
 INCLUDEPATH += $$PWD

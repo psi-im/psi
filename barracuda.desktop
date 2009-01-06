@@ -1,0 +1,29 @@
+[Desktop Entry]
+# This is the spec version, *not* the application version
+Version=1.0
+Type=Application
+Name=Barracuda IM Client
+GenericName=Jabber Client
+Comment=Communicate over the Jabber network
+Icon=barracuda
+Exec=barracuda
+Terminal=false
+Categories=Network;InstantMessaging;Qt;
+
+# Translations
+GenericName[ca]=Client Jabber
+Comment[ca]=Comuniqui's a través de la xarxa Jabber
+GenericName[eo]=Ĵabbera Klientilo
+Comment[eo]=Komunikiĝu per la ĵabbera reto
+GenericName[fr]=Client Jabber
+Comment[fr]=Communiquez sur le réseau Jabber
+GenericName[mk]=Клиент за Jabber
+Comment[mk]=Комуницирајте преку Jabber мрежата
+GenericName[nl]=Jabber Client
+Comment[nl]=Communiceer over het Jabber netwerk
+GenericName[pl]=Klient Jabber
+Comment[pl]=Komunikacja poprzez sieć Jabber
+GenericName[pt_BR]=Cliente Jabber
+Comment[pt_BR]=Comunique-se através da rede Jabber
+GenericName[sl]=Odjemalec za Jabber
+Comment[sl]=Komuniciranje prek omrežja Jabber

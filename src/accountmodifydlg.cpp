@@ -21,6 +21,7 @@
 #include <QInputDialog>
 #include <QMessageBox>
 
+#include "profiles_b.h"
 #include "accountmodifydlg.h"
 #include "pgputil.h"
 #include "psiaccount.h"
@@ -68,23 +69,23 @@ void AccountModifyDlg::init()
 	setWindowIcon(IconsetFactory::icon("psi/account").icon());
 #endif
 
-	le_pass->setEnabled(true);
+	/*le_pass->setEnabled(true);
 	le_host->setEnabled(false);
 	lb_host->setEnabled(false);
 	le_port->setEnabled(false);
-	lb_port->setEnabled(false);
+	lb_port->setEnabled(false);*/
 
 	// FIXME: Temporarily removing security level settings
-	ck_req_mutual->hide();
-	cb_security_level->hide();
-	lb_security_level->hide();
+	//ck_req_mutual->hide();
+	//cb_security_level->hide();
+	//lb_security_level->hide();
 
 	connect(pb_close, SIGNAL(clicked()), SLOT(reject()));
-	connect(ck_host, SIGNAL(toggled(bool)), SLOT(hostToggled(bool)));
+	/*connect(ck_host, SIGNAL(toggled(bool)), SLOT(hostToggled(bool)));
 	connect(pb_key, SIGNAL(clicked()), SLOT(chooseKey()));
-	connect(pb_keyclear, SIGNAL(clicked()), SLOT(clearKey()));
+	connect(pb_keyclear, SIGNAL(clicked()), SLOT(clearKey()));*/
 	connect(pb_save, SIGNAL(clicked()), SLOT(save()));
-	connect(ck_automatic_resource, SIGNAL(toggled(bool)), le_resource, SLOT(setDisabled(bool)));
+	/*connect(ck_automatic_resource, SIGNAL(toggled(bool)), le_resource, SLOT(setDisabled(bool)));
 	connect(ck_automatic_resource, SIGNAL(toggled(bool)), lb_resource, SLOT(setDisabled(bool)));
 
 	gb_pgp->setEnabled(false);
@@ -96,13 +97,13 @@ void AccountModifyDlg::init()
 	else {
 		pb_vcard->setEnabled(false);
 		pb_changepw->setEnabled(false);
-	}
+	}*/
 
 	// Hide the name if necessary
-	le_name->setText(acc.name);
+	//le_name->setText(acc.name);
 	le_jid->setText(JIDUtil::accountToString(acc.jid,false));
 
-	cb_ssl->addItem(tr("Always"),UserAccount::SSL_Yes);
+	/*cb_ssl->addItem(tr("Always"),UserAccount::SSL_Yes);
 	cb_ssl->addItem(tr("When available"),UserAccount::SSL_Auto);
 	cb_ssl->addItem(tr("Never"), UserAccount::SSL_No);
 	cb_ssl->addItem(tr("Legacy SSL"), UserAccount::SSL_Legacy);
@@ -112,14 +113,15 @@ void AccountModifyDlg::init()
 	cb_plain->addItem(tr("Always"),ClientStream::AllowPlain);
 	cb_plain->addItem(tr("Over encrypted connection"), ClientStream::AllowPlainOverTLS);
 	cb_plain->addItem(tr("Never"), ClientStream::NoAllowPlain);
-	cb_plain->setCurrentIndex(cb_plain->findData(acc.allow_plain));
+	cb_plain->setCurrentIndex(cb_plain->findData(acc.allow_plain));*/
 	
 	if (acc.opt_pass)
 		le_pass->setText(acc.pass);
 
-	ck_host->setChecked(acc.opt_host);
-	le_host->setText(acc.host);
-	le_port->setText(QString::number(acc.port));
+	//ck_host->setChecked(acc.opt_host);
+	foreach(const QString &str, acc_hosts)
+		cb_hosts->insertItem(cb_hosts->count(), str);
+	/*le_port->setText(QString::number(acc.port));
 	ck_req_mutual->setChecked(acc.req_mutual_auth);
 	ck_legacy_ssl_probe->setChecked(acc.legacy_ssl_probe);
 
@@ -133,27 +135,26 @@ void AccountModifyDlg::init()
 	connect(ck_custom_auth,SIGNAL(toggled(bool)), le_realm, SLOT(setEnabled(bool)));
 	ck_custom_auth->setChecked(acc.customAuth);
 	le_authid->setText(acc.authid);
-	le_realm->setText(acc.realm);
-		
-	ck_compress->setChecked(acc.opt_compress);
+	le_realm->setText(acc.realm);*/
+
+	//ck_compress->setChecked(acc.opt_compress);
 	ck_auto->setChecked(acc.opt_auto);
 	ck_reconn->setChecked(acc.opt_reconn);
-	ck_connectAfterSleep->setChecked(acc.opt_connectAfterSleep);
 	ck_log->setChecked(acc.opt_log);
-	ck_keepAlive->setChecked(acc.opt_keepAlive);
-	ck_ignoreSSLWarnings->setChecked(acc.opt_ignoreSSLWarnings);
-	le_dtProxy->setText(acc.dtProxy.full());
+	ck_system->setChecked(acc_useSystemSettings);
+	//ck_keepAlive->setChecked(acc.opt_keepAlive);
+	//ck_ignoreSSLWarnings->setChecked(acc.opt_ignoreSSLWarnings);
+	//le_dtProxy->setText(acc.dtProxy.full());
 
-	key = acc.pgpSecretKey;
+	/*key = acc.pgpSecretKey;
 	updateUserID();
-	PGPUtil::instance().clearPGPAvailableCache();
 	if(PGPUtil::instance().pgpAvailable()) {
 		gb_pgp->setEnabled(true);
 	}
 
 	pc = psi->proxy()->createProxyChooser(tab_connection);
 	replaceWidget(lb_proxychooser, pc);
-	pc->setCurrentItem(acc.proxyID);
+	pc->setCurrentItem(acc.proxy_index);
 	
 	// Security level
 	cb_security_level->addItem(tr("None"),QCA::SL_None);
@@ -161,18 +162,18 @@ void AccountModifyDlg::init()
 	cb_security_level->addItem(tr("Baseline"),QCA::SL_Baseline);
 	cb_security_level->addItem(tr("High"),QCA::SL_High);
 	cb_security_level->addItem(tr("Highest"),QCA::SL_Highest);
-	cb_security_level->setCurrentIndex(cb_security_level->findData(acc.security_level));
+	cb_security_level->setCurrentIndex(cb_security_level->findData(acc.security_level));*/
 
 	// Name
-	if(le_name->text().isEmpty())
+	/*if(le_name->text().isEmpty())
 		le_name->setFocus();
-	else if(le_jid->text().isEmpty())
+	else*/ if(le_jid->text().isEmpty())
 		le_jid->setFocus();
 	else
 		pb_save->setFocus();
 
 	// Privacy
-	privacyInitialized = false;
+	/*privacyInitialized = false;
 	lb_customPrivacy->hide();
 	privacyBlockedModel.setSourceModel(&privacyModel);
 	lv_blocked->setModel(&privacyBlockedModel);
@@ -197,14 +198,11 @@ void AccountModifyDlg::init()
 		"to the Jabber server. Use this option only if you have "
 		"problems connecting with the normal login procedure, as it "
 		"makes your connection potentially vulnerable to "
-		"attacks."));
+		"attacks."));*/
 	ck_auto->setWhatsThis(
 		tr("Automatically login to this account on Psi startup.  Useful if "
 		"you have Psi automatically launched when an Internet "
 		"connection is detected."));
-	ck_connectAfterSleep->setWhatsThis(
-		tr("Makes Psi try to connect when the computer resumes "
-		"after a sleep."));
 	ck_reconn->setWhatsThis(
 		tr("Makes Psi try to reconnect if the connection was broken.  "
 		"Useful, if you have an unstable connection and have to "
@@ -213,7 +211,7 @@ void AccountModifyDlg::init()
 		tr("Keep a log of message history.  Disable this "
 		"option if you want to conserve disk space or if you need "
 		"maximum security."));
-	ck_keepAlive->setWhatsThis(
+	/*ck_keepAlive->setWhatsThis(
 		tr("Sends so called \"Keep-alive\" packets periodically.  "
 		"It is useful if your connection is set to be "
 		"automatically disconnected after a certain period of "
@@ -286,7 +284,7 @@ void AccountModifyDlg::init()
 	if (!PsiOptions::instance()->getOption("options.ui.account.manual-host").toBool()) {
 		ck_host->hide();
 		lb_host->hide();
-		le_host->hide();
+		cb_hosts->hide();
 		lb_port->hide();
 		le_port->hide();
 	}
@@ -338,7 +336,7 @@ void AccountModifyDlg::init()
 
 	if (!PsiOptions::instance()->getOption("options.ui.account.resource").toBool() && !PsiOptions::instance()->getOption("options.ui.account.priority").toBool() && !PsiOptions::instance()->getOption("options.ui.account.data-proxy").toBool()) {
 		tab_main->removeTab(tab_main->indexOf(tab_misc));
-	}
+	}*/
 	
 	resize(minimumSizeHint());
 }
@@ -351,17 +349,17 @@ AccountModifyDlg::~AccountModifyDlg()
 
 void AccountModifyDlg::updateUserID()
 {
-	if(key.isNull()) {
+	/*if(key.isNull()) {
 		setKeyID(false);
 	}
 	else {
 		setKeyID(true, key.primaryUserId());
-	}
+	}*/
 }
 
 void AccountModifyDlg::setKeyID(bool b, const QString &s)
 {
-	if(b) {
+	/*if(b) {
 		lb_keyname->setText(s);
 		lb_keyname->setMinimumWidth(100);
 		lb_keyicon->setEnabled(true);
@@ -373,7 +371,7 @@ void AccountModifyDlg::setKeyID(bool b, const QString &s)
 		lb_keyicon->setEnabled(false);
 		lb_keyname->setEnabled(false);
 		pb_keyclear->setEnabled(false);
-	}
+	}*/
 }
 
 //void AccountModifyDlg::pgpToggled(bool b)
@@ -395,27 +393,27 @@ void AccountModifyDlg::setPassword(const QString &pw)
 
 void AccountModifyDlg::sslActivated(int i)
 {
-	if ((cb_ssl->itemData(i) == UserAccount::SSL_Yes || cb_ssl->itemData(i) == UserAccount::SSL_Legacy) && !checkSSL()) {
+	/*if ((cb_ssl->itemData(i) == UserAccount::SSL_Yes || cb_ssl->itemData(i) == UserAccount::SSL_Legacy) && !checkSSL()) {
 		cb_ssl->setCurrentIndex(cb_ssl->findData(UserAccount::SSL_Auto));
 	}
 	else if (cb_ssl->itemData(i) == UserAccount::SSL_Legacy && !ck_host->isChecked()) {
 		QMessageBox::critical(this, tr("Error"), tr("Legacy SSL is only available in combination with manual host/port."));
 		cb_ssl->setCurrentIndex(cb_ssl->findData(UserAccount::SSL_Auto));
-	}
+	}*/
 }
 
 bool AccountModifyDlg::checkSSL()
 {
-	if(!QCA::isSupported("tls")) {
+	/*if(!QCA::isSupported("tls")) {
 		QMessageBox::critical(this, tr("SSL error"), tr("Cannot enable SSL/TLS.  Plugin not found."));
 		return false;
-	}
+	}*/
 	return true;
 }
 
 void AccountModifyDlg::hostToggled(bool on)
 {
-	le_host->setEnabled(on);
+	/*le_host->setEnabled(on);
 	lb_host->setEnabled(on);
 	le_port->setEnabled(on);
 	lb_port->setEnabled(on);
@@ -423,13 +421,13 @@ void AccountModifyDlg::hostToggled(bool on)
 	ck_legacy_ssl_probe->setChecked(on ? false : acc.legacy_ssl_probe);
 	if (!on && cb_ssl->currentIndex() == cb_ssl->findData(UserAccount::SSL_Legacy)) {
 		cb_ssl->setCurrentIndex(cb_ssl->findData(UserAccount::SSL_Auto));
-	}
+	}*/
 }
 
 void AccountModifyDlg::chooseKey()
 {
 	// Show the key dialog
-	QString id = (key.isNull() ? "" : key.keyId());
+	/*QString id = (key.isNull() ? "" : key.keyId());
 	PGPKeyDlg *w = new PGPKeyDlg(PGPKeyDlg::Secret, id, this);
 	w->setWindowTitle(tr("Secret Key"));
 	int r = w->exec();
@@ -441,26 +439,25 @@ void AccountModifyDlg::chooseKey()
 	if(!entry.isNull()) {
 		key = entry.pgpSecretKey();
 		updateUserID();
-	}
+	}*/
 }
 
 void AccountModifyDlg::clearKey()
 {
-	setKeyID(false);
-	key = QCA::PGPKey();
+	//setKeyID(false);
+	//key = QCA::PGPKey();
 }
 
 void AccountModifyDlg::detailsVCard()
 {
-	if (pa)
-		pa->changeVCard();
+	//if (pa)
+	//	pa->changeVCard();
 }
 
 void AccountModifyDlg::detailsChangePW()
 {
-	if (pa) {
-		pa->changePW();
-	}
+	//if (pa)
+	//	pa->changePW();
 }
 
 void AccountModifyDlg::save()
@@ -476,15 +473,16 @@ void AccountModifyDlg::save()
 			QMessageBox::information(this, tr("Error"), tr("<i>Username</i> is invalid."));
 		}
 		else {
-			QMessageBox::information(this, tr("Error"), tr("<i>Jabber ID</i> must be specified in the format <i>user@host</i>."));
+			QMessageBox::information(this, tr("Error"), tr("<i>Barracuda ID</i> must be specified in the format <i>user@host</i>."));
 		}
 		return;
 	}
 
 	// do not allow duplicate account names
-	if (!pa && le_name->text().isEmpty())
-		le_name->setText(newJid.domain());
-	QString def = le_name->text();
+	QString le_name_text = acc.name;
+	if (!pa && le_name_text.isEmpty())
+		le_name_text = newJid.domain();
+	QString def = le_name_text;
 	QString aname = def;
 	int n = 0;
 	{
@@ -498,42 +496,56 @@ void AccountModifyDlg::save()
 
 	if ( n )
 		aname = def + '_' + QString::number(++n);
-	le_name->setText( aname );
+	le_name_text = aname;
 
-	acc.name = le_name->text();
+	acc.name = le_name_text;
 	acc.jid = JIDUtil::accountFromString(le_jid->text().trimmed()).bare();
 	acc.pass = le_pass->text();
 	acc.opt_pass = !acc.pass.isEmpty();
 
-	acc.opt_host = ck_host->isChecked();
-	acc.host = le_host->text();
-	acc.port = le_port->text().toInt();
+	acc.opt_host = true; //ck_host->isChecked();
+	QStringList hosts;
+	for(int n = 0; n < cb_hosts->count(); ++n)
+		hosts += cb_hosts->itemText(n);
+	QString editedHost = cb_hosts->currentText();
+	//printf("editedHost: [%s]\n", qPrintable(editedHost));
+	if(!hosts.contains(editedHost))
+		hosts.prepend(editedHost);
+	acc_hosts = hosts;
+	if(!hosts.isEmpty())
+		acc.host = hosts.first();
+	else
+		acc.host = QString();
+	acc.port = 5223; //le_port->text().toInt();
 
-	acc.req_mutual_auth = ck_req_mutual->isChecked();
+	/*acc.req_mutual_auth = ck_req_mutual->isChecked();
 	if (!ck_host->isChecked())
 		acc.legacy_ssl_probe = ck_legacy_ssl_probe->isChecked();
 	acc.security_level = cb_security_level->itemData(cb_security_level->currentIndex()).toInt();
 
-	acc.opt_automatic_resource = ck_automatic_resource->isChecked();
-	acc.resource = le_resource->text();
-	acc.priority = le_priority->text().toInt();
+	acc.opt_automatic_resource = ck_automatic_resource->isChecked();*/
+	acc.resource = "Work"; //le_resource->text();
+	/*acc.priority = le_priority->text().toInt();
 	acc.customAuth = ck_custom_auth->isChecked();
 	acc.authid = le_authid->text();
-	acc.realm = le_realm->text();
-	acc.ssl =  (UserAccount::SSLFlag) cb_ssl->itemData(cb_ssl->currentIndex()).toInt();
-	acc.allow_plain =  (ClientStream::AllowPlainType) cb_plain->itemData(cb_plain->currentIndex()).toInt();
-	acc.opt_compress = ck_compress->isChecked();
+	acc.realm = le_realm->text();*/
+	//acc.ssl =  (UserAccount::SSLFlag) cb_ssl->itemData(cb_ssl->currentIndex()).toInt();
+	acc.ssl = UserAccount::SSL_Legacy;
+	//acc.allow_plain =  (ClientStream::AllowPlainType) cb_plain->itemData(cb_plain->currentIndex()).toInt();
+	acc.allow_plain = ClientStream::AllowPlain;
+	//acc.opt_compress = ck_compress->isChecked();
 	acc.opt_auto = ck_auto->isChecked();
-	acc.opt_connectAfterSleep = ck_connectAfterSleep->isChecked();
 	acc.opt_reconn = ck_reconn->isChecked();
+	acc.opt_connectAfterSleep = ck_reconn->isChecked();
 	acc.opt_log = ck_log->isChecked();
-	acc.opt_keepAlive = ck_keepAlive->isChecked();
+	acc_useSystemSettings = ck_system->isChecked();
+	/*acc.opt_keepAlive = ck_keepAlive->isChecked();
 	acc.opt_ignoreSSLWarnings = ck_ignoreSSLWarnings->isChecked();
-	acc.dtProxy = le_dtProxy->text();
+	acc.dtProxy = le_dtProxy->text();*/
 
-	acc.pgpSecretKey = key;
+	/*acc.pgpSecretKey = key;
 
-	acc.proxyID = pc->currentItem();
+	acc.proxy_index = pc->currentItem();*/
 
 	if(pa && pa->isActive()) {
 		QMessageBox::information(this, tr("Warning"), tr("This account is currently active, so certain changes may not take effect until the next login."));
@@ -549,12 +561,12 @@ void AccountModifyDlg::save()
 
 void AccountModifyDlg::tabChanged(int)
 {
-	updatePrivacyTab();
+	//updatePrivacyTab();
 }
 
 void AccountModifyDlg::addBlockClicked()
 {
-	if (!pa)
+	/*if (!pa)
 		return;
 
 	bool ok;
@@ -564,30 +576,30 @@ void AccountModifyDlg::addBlockClicked()
 		privacyModel.list().insertItem(0,PrivacyListItem::blockItem(jid.full()));
 		privacyModel.reset();
 		pa->privacyManager()->changeList(privacyModel.list());
-	}
+	}*/
 }
 
 void AccountModifyDlg::removeBlockClicked()
 {
-	if (!pa)
+	/*if (!pa)
 		return;
 
 	if (lv_blocked->currentIndex().isValid()) {
 		QModelIndex idx = privacyBlockedModel.mapToSource(lv_blocked->currentIndex());
 		privacyModel.removeRow(idx.row(),idx.parent());
 		pa->privacyManager()->changeList(privacyModel.list());
-	}
+	}*/
 }
 
 void AccountModifyDlg::privacyClicked()
 {
-	PrivacyDlg *d = new PrivacyDlg(pa->name(), pa->privacyManager(), this);
-	d->show();
+	/*PrivacyDlg *d = new PrivacyDlg(pa,this);
+	d->show();*/
 }
 
 void AccountModifyDlg::updatePrivacyTab()
 {
-	if (tab_main->currentWidget() == tab_privacy) {
+	/*if (tab_main->currentWidget() == tab_privacy) {
 		if (pa && pa->loggedIn()) {
 			if (!privacyInitialized) {
 				lb_privacyStatus->setText(tr("Retrieving blocked contact list ..."));
@@ -603,32 +615,32 @@ void AccountModifyDlg::updatePrivacyTab()
 			privacyInitialized = false;
 			setPrivacyTabEnabled(false);
 		}
-	}
+	}*/
 }
 
 void AccountModifyDlg::setPrivacyTabEnabled(bool b)
 {
-	ws_privacy->setCurrentWidget(b ? pg_privacy : pg_privacyStatus);
+	//ws_privacy->setCurrentWidget(b ? pg_privacy : pg_privacyStatus);
 }
 
 void AccountModifyDlg::updateBlockedContacts(const PrivacyList& l)
 {
-	privacyInitialized = true;
+	/*privacyInitialized = true;
 	privacyModel.setList(l);
 	lb_customPrivacy->setVisible(!l.onlyBlockItems());
-	setPrivacyTabEnabled(true);
+	setPrivacyTabEnabled(true);*/
 }
 
 void AccountModifyDlg::changeList_error()
 {
-	privacyInitialized = false;
-	updatePrivacyTab();
+	//privacyInitialized = false;
+	//updatePrivacyTab();
 }
 
 void AccountModifyDlg::getDefaultList_error()
 {
-	privacyInitialized = true;
-	lb_privacyStatus->setText(tr("Your server does not support blocking."));
-	setPrivacyTabEnabled(false);
+	//privacyInitialized = true;
+	//lb_privacyStatus->setText(tr("Your server does not support blocking."));
+	//setPrivacyTabEnabled(false);
 }
 

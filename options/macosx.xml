@@ -6,5 +6,13 @@
 				<history type="QKeySequence" comment="Open the message history">Ctrl+Shift+H</history>
 			</common>
 		</shortcuts>
+		<ui comment="User interface options">
+			<chat comment="Chat dialog options">
+				<alert-for-already-open-chats type="bool">true</alert-for-already-open-chats>
+			</chat>
+			<systemtray comment="Options related to the system tray">
+				<enable type="bool">false</enable>
+			</systemtray>
+		</ui>
 	</options>
 </psi>

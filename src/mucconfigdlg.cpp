@@ -37,6 +37,7 @@ MUCConfigDlg::MUCConfigDlg(MUCManager* manager, QWidget* parent)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
 	ui_.setupUi(this);
+	ui_.busy->hide();
 	setModal(false);
 
 	QVBoxLayout *data_layout = new QVBoxLayout(ui_.pg_general_data);
@@ -250,16 +251,9 @@ void MUCConfigDlg::setConfiguration_error(int, const QString& e)
 void MUCConfigDlg::getItemsByAffiliation_success(MUCItem::Affiliation a, const QList<MUCItem>& items)
 {
 	if (pending_requests_.contains(a) && ui_.tabs->currentWidget() == ui_.tab_affiliations) {
-		ui_.tv_affiliations->setUpdatesEnabled(false);
-		bool dynamicSortFilter = affiliations_proxy_model_->dynamicSortFilter();
-		affiliations_proxy_model_->setDynamicSortFilter(false);
-
 		affiliations_model_->setAffiliationListEnabled(a);
 		affiliations_model_->addItems(items);
 		removePendingRequest(a);
-
-		affiliations_proxy_model_->setDynamicSortFilter(dynamicSortFilter);
-		ui_.tv_affiliations->setUpdatesEnabled(true);
 	}
 }
 

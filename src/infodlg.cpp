@@ -19,6 +19,7 @@
  */
 
 #include <QFileDialog>
+#include <QImageWriter>
 
 #include "infodlg.h"
 
@@ -44,7 +45,8 @@
 #include "contactview.h"
 #include "psirichtext.h"
 #include "psioptions.h"
-#include "fileutil.h"
+
+#define MAX_AVATAR_SIZE 96
 
 using namespace XMPP;
 		
@@ -84,6 +86,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	d->pa->dialogRegister(this, j);
 	d->cacheVCard = cacheVCard;
 	d->busy = ui_.busy;
+	d->busy->hide();
 
 	ui_.te_desc->setTextFormat(Qt::PlainText);
 
@@ -100,6 +103,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	connect(ui_.pb_close, SIGNAL(clicked()), this, SLOT(close()));
 
 	if(d->type == Self) {
+		setReadOnly(true); // this blocks editing of everything but photo
 		connect(ui_.pb_submit, SIGNAL(clicked()), this, SLOT(doSubmit()));
 	}
 	else {
@@ -110,11 +114,17 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 		setReadOnly(true);
 	}
 
+	// remove about tab
+	ui_.tabwidget->removeTab(3);
+
 	// Add a status tab
 	connect(d->pa->client(), SIGNAL(resourceAvailable(const Jid &, const Resource &)), SLOT(contactAvailable(const Jid &, const Resource &)));
 	connect(d->pa->client(), SIGNAL(resourceUnavailable(const Jid &, const Resource &)), SLOT(contactUnavailable(const Jid &, const Resource &)));
 	connect(d->pa,SIGNAL(updateContact(const Jid&)),SLOT(contactUpdated(const Jid&)));
 	ui_.te_status->setReadOnly(true);
+	QPalette pal;
+	pal.setColor(QPalette::Base, palette().window());
+	ui_.te_status->setPalette(pal);
 	ui_.te_status->setTextFormat(Qt::RichText);
 	PsiRichText::install(ui_.te_status->document());
 	updateStatus();
@@ -166,22 +176,19 @@ void InfoDlg::closeEvent ( QCloseEvent * e ) {
 
 void InfoDlg::jt_finished()
 {
-	d->jt = 0;
-	JT_VCard* jtVCard = static_cast<JT_VCard*> (sender());
-
 	d->busy->stop();
 	ui_.pb_refresh->setEnabled(true);
 	ui_.pb_submit->setEnabled(true);
 	ui_.pb_close->setEnabled(true);
 	fieldsEnable(true);
 
-	if(jtVCard->success()) {
+	if(d->jt->success()) {
 		if(d->actionType == 0) {
-			d->vcard = jtVCard->vcard();
+			d->vcard = d->jt->vcard();
 			setData(d->vcard);
 		}
 		else if(d->actionType == 1) {
-			d->vcard = jtVCard->vcard();
+			d->vcard = d->jt->vcard();
 			if ( d->cacheVCard )
 				VCardFactory::instance()->setVCard(d->jid, d->vcard);
 			setData(d->vcard);
@@ -202,26 +209,28 @@ void InfoDlg::jt_finished()
 			if(d->type == Self)
 				QMessageBox::critical(this, tr("Error"), tr("Unable to retrieve your account information.  Perhaps you haven't entered any yet."));
 			else
-				QMessageBox::critical(this, tr("Error"), tr("Unable to retrieve information about this contact.\nReason: %1").arg(jtVCard->statusString()));
+				QMessageBox::critical(this, tr("Error"), tr("Unable to retrieve information about this contact.\nReason: %1").arg(d->jt->statusString()));
 		}
 		else {
-			QMessageBox::critical(this, tr("Error"), tr("Unable to publish your account information.\nReason: %1").arg(jtVCard->statusString()));
+			QMessageBox::critical(this, tr("Error"), tr("Unable to publish your account information.\nReason: %1").arg(d->jt->statusString()));
 		}
 	}
+
+	d->jt = 0;
 }
 
 void InfoDlg::setData(const VCard &i)
 {
 	ui_.le_fullname->setText( i.fullName() );
 	ui_.le_nickname->setText( i.nickName() );
-	ui_.le_bday->setText( i.bdayStr() );
+	//ui_.le_bday->setText( i.bdayStr() );
 
 	QString email;
 	if ( !i.emailList().isEmpty() )
 		email = i.emailList()[0].userid;
 	ui_.le_email->setText( email );
 
-	ui_.le_homepage->setText( i.url() );
+	//ui_.le_homepage->setText( i.url() );
 
 	QString phone;
 	if ( !i.phoneList().isEmpty() )
@@ -280,9 +289,9 @@ void InfoDlg::fieldsEnable(bool x)
 {
 	ui_.le_fullname->setEnabled(x);
 	ui_.le_nickname->setEnabled(x);
-	ui_.le_bday->setEnabled(x);
+	//ui_.le_bday->setEnabled(x);
 	ui_.le_email->setEnabled(x);
-	ui_.le_homepage->setEnabled(x);
+	//ui_.le_homepage->setEnabled(x);
 	ui_.le_phone->setEnabled(x);
 	ui_.pb_open->setEnabled(x);
 	ui_.pb_clear->setEnabled(x);
@@ -307,9 +316,9 @@ void InfoDlg::setEdited(bool x)
 {
 	ui_.le_fullname->setEdited(x);
 	ui_.le_nickname->setEdited(x);
-	ui_.le_bday->setEdited(x);
+	//ui_.le_bday->setEdited(x);
 	ui_.le_email->setEdited(x);
-	ui_.le_homepage->setEdited(x);
+	//ui_.le_homepage->setEdited(x);
 	ui_.le_phone->setEdited(x);
 	ui_.le_street->setEdited(x);
 	ui_.le_ext->setEdited(x);
@@ -331,9 +340,9 @@ bool InfoDlg::edited()
 
 	if(ui_.le_fullname->edited()) x = true;
 	if(ui_.le_nickname->edited()) x = true;
-	if(ui_.le_bday->edited()) x = true;
+	//if(ui_.le_bday->edited()) x = true;
 	if(ui_.le_email->edited()) x = true;
-	if(ui_.le_homepage->edited()) x = true;
+	//if(ui_.le_homepage->edited()) x = true;
 	if(ui_.le_phone->edited()) x = true;
 	if(ui_.le_street->edited()) x = true;
 	if(ui_.le_ext->edited()) x = true;
@@ -354,9 +363,9 @@ void InfoDlg::setReadOnly(bool x)
 {
 	ui_.le_fullname->setReadOnly(x);
 	ui_.le_nickname->setReadOnly(x);
-	ui_.le_bday->setReadOnly(x);
+	//ui_.le_bday->setReadOnly(x);
 	ui_.le_email->setReadOnly(x);
-	ui_.le_homepage->setReadOnly(x);
+	//ui_.le_homepage->setReadOnly(x);
 	ui_.le_phone->setReadOnly(x);
 	ui_.le_street->setReadOnly(x);
 	ui_.le_ext->setReadOnly(x);
@@ -369,6 +378,26 @@ void InfoDlg::setReadOnly(bool x)
 	ui_.le_title->setReadOnly(x);
 	ui_.le_role->setReadOnly(x);
 	ui_.te_desc->setReadOnly(x);
+
+	QPalette pal;
+	pal.setColor(QPalette::Base, palette().window());
+	ui_.le_fullname->setPalette(pal);
+	ui_.le_nickname->setPalette(pal);
+	//ui_.le_bday->setPalette(pal);
+	ui_.le_email->setPalette(pal);
+	//ui_.le_homepage->setPalette(pal);
+	ui_.le_phone->setPalette(pal);
+	ui_.le_street->setPalette(pal);
+	ui_.le_ext->setPalette(pal);
+	ui_.le_city->setPalette(pal);
+	ui_.le_state->setPalette(pal);
+	ui_.le_pcode->setPalette(pal);
+	ui_.le_country->setPalette(pal);
+	ui_.le_orgName->setPalette(pal);
+	ui_.le_orgUnit->setPalette(pal);
+	ui_.le_title->setPalette(pal);
+	ui_.le_role->setPalette(pal);
+	ui_.te_desc->setPalette(pal);
 }
 
 void InfoDlg::doRefresh()
@@ -409,7 +438,10 @@ void InfoDlg::doSubmit()
 	d->actionType = 1;
 	d->busy->start();
 
-	VCardFactory::instance()->setVCard(d->pa, submit_vcard, this, SLOT(jt_finished()));
+	d->jt = new JT_VCard(d->pa->client()->rootTask());
+	connect(d->jt, SIGNAL(finished()), SLOT(jt_finished()));
+	d->jt->set(submit_vcard);
+	d->jt->go(true);
 }
 
 VCard InfoDlg::makeVCard()
@@ -418,7 +450,7 @@ VCard InfoDlg::makeVCard()
 
 	v.setFullName( ui_.le_fullname->text() );
 	v.setNickName( ui_.le_nickname->text() );
-	v.setBdayStr( ui_.le_bday->text() );
+	//v.setBdayStr( ui_.le_bday->text() );
 
 	if ( !ui_.le_email->text().isEmpty() ) {
 		VCard::Email email;
@@ -430,7 +462,7 @@ VCard InfoDlg::makeVCard()
 		v.setEmailList( list );
 	}
 
-	v.setUrl( ui_.le_homepage->text() );
+	//v.setUrl( ui_.le_homepage->text() );
 
 	if ( !ui_.le_phone->text().isEmpty() ) {
 		VCard::Phone p;
@@ -496,10 +528,25 @@ void InfoDlg::textChanged()
 */
 void InfoDlg::selectPhoto()
 {
-	QString str = FileUtil::getImageFileName(this);
-	if (!str.isEmpty()) {
-		setPreviewPhoto(str);
+	while(1) {
+		if(PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString().isEmpty())
+			PsiOptions::instance()->setOption("options.ui.last-used-open-path", QDir::homeDirPath());
+		QString str = QFileDialog::getOpenFileName(this, tr("Choose a file"), PsiOptions::instance()->getOption("options.ui.last-used-open-path").toString(), tr("Images (*.png *.xpm *.jpg *.gif *.PNG *.XPM *.JPG *.GIF)"));
+		if(!str.isEmpty()) {
+			QFileInfo fi(str);
+			if(!fi.exists()) {
+				QMessageBox::information(this, tr("Error"), tr("The file specified does not exist."));
+				continue;
+			}
+			PsiOptions::instance()->setOption("options.ui.last-used-open-path", fi.dirPath());
+			//printf(QDir::convertSeparators(fi.filePath()));
+
+			// put the image in the preview box
+			setPreviewPhoto(str);
+		}
+		break;
 	}
+
 }
 
 /**
@@ -511,13 +558,23 @@ void InfoDlg::setPreviewPhoto(const QString& path)
 	QFile photo_file(path);
 	if (!photo_file.open(QIODevice::ReadOnly))
 		return;
-	
+
 	QByteArray photo_data = photo_file.readAll();
 	QImage photo_image(photo_data);
 	if(!photo_image.isNull()) {
-		d->photo = photo_data;
-		updatePhoto();
-		d->te_edited = true;
+		if(photo_image.width() > MAX_AVATAR_SIZE || photo_image.height() > MAX_AVATAR_SIZE) {
+			photo_image = photo_image.scaled(MAX_AVATAR_SIZE, MAX_AVATAR_SIZE, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+		}
+
+		QBuffer buf;
+		QImageWriter imageWriter(&buf, "PNG");
+		if(imageWriter.write(photo_image)) {
+			photo_data = buf.data();
+
+			d->photo = photo_data;
+			updatePhoto();
+			d->te_edited = true;
+		}
 	}
 }
 

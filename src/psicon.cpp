@@ -18,7 +18,7 @@
  *
  */
 
-#include "psicon.h"
+#include "psicon_b.h"
 
 #include <q3ptrlist.h>
 #include <qapplication.h>
@@ -34,18 +34,16 @@
 #include <QList>
 #include <QImageReader>
 #include <QMessageBox>
-#include <QDir>
 
 #include "s5b.h"
-#include "psiaccount.h"
+#include "psiaccount_b.h"
 #include "activeprofiles.h"
 #include "accountadddlg.h"
 #include "psiiconset.h"
 #include "contactview.h"
 #include "psievent.h"
 #include "passphrasedlg.h"
-#include "common.h"
-#include "mainwin.h"
+#include "mainwin_b.h"
 #include "idle.h"
 #include "accountmanagedlg.h"
 #include "statusdlg.h"
@@ -75,6 +73,7 @@
 #include "accountscombobox.h"
 #include "tabdlg.h"
 #include "chatdlg.h"
+#include "groupchatdlg.h"
 #include "capsregistry.h"
 #include "urlobject.h"
 #include "anim.h"
@@ -89,11 +88,19 @@
 #include "globalshortcutmanager.h"
 #include "desktoputil.h"
 #include "tabmanager.h"
-
+#include "cudaskin.h"
+#include "iconaction.h"
+#include "conferencebookmark.h"
 
 #ifdef Q_WS_MAC
 #include "mac_dock.h"
 #endif
+
+// ###cuda from psioptions.cpp
+void ensureStatusPresets(PsiOptions *o);
+
+// ###cuda from psi_profiles.cpp
+void version_parse(const QString &str, int *_vmaj, int *_vmin, int *_vbug);
 
 //----------------------------------------------------------------------------
 // PsiConObject
@@ -241,7 +248,7 @@ public:
 	PsiContactList* contactList;
 	OptionsMigration optionsMigration;
 	OptionsTree accountTree;
-	MainWin *mainwin;
+	MainWinB *mainwin;
 	Idle idle;
 	QList<item_dialog*> dialogList;
 	int eventId;
@@ -257,6 +264,8 @@ public:
 	QMenuBar* defaultMenuBar;
 	CapsRegistry* capsRegistry;
 	TabManager *tabManager;
+
+	IconAction *tabChatsAction;
 };
 
 //----------------------------------------------------------------------------
@@ -391,6 +400,111 @@ bool PsiCon::init()
 		d->accountTree.loadOptions(accountsFile.fileName(), "accounts", ApplicationInfo::optionsNS());
 	}
 
+	//ensureStatusPresets(options);
+
+	// ###cuda - force some options
+	int vmaj, vmin, vbug;
+	version_parse(PsiOptions::instance()->getOption("progver").toString(), &vmaj, &vmin, &vbug);
+	bool reading_old_config = false;
+	if(vmaj < 3) {
+		reading_old_config = true;
+	}
+	if(reading_old_config)
+	{
+		PsiOptions::instance()->setOption("options.status.auto-away.message", tr("Idle"));
+		PsiOptions::instance()->setOption("options.status.auto-away.use-not-available", false);
+		PsiOptions::instance()->setOption("options.status.auto-away.use-offline", false);
+		PsiOptions::instance()->removeOption("options.ui.contactlist.toolbars", true);
+		PsiOptions::instance()->setOption("options.ui.contactlist.show-menubar", true);
+		PsiOptions::instance()->setOption("options.ui.chat.delete-contents-after", "instant");
+#ifndef Q_OS_MAC
+		PsiOptions::instance()->setOption("options.ui.chat.alert-for-already-open-chats", false);
+#endif
+		PsiOptions::instance()->setOption("options.ui.chat.use-expanding-line-edit", false);
+#ifdef Q_OS_MAC
+		PsiOptions::instance()->setOption("options.ui.systemtray.enable", false);
+#else
+		PsiOptions::instance()->setOption("options.ui.systemtray.enable", true);
+#endif
+		PsiOptions::instance()->setOption("options.ui.look.contactlist.use-slim-group-headings", false);
+		PsiOptions::instance()->setOption("options.ui.tabs.use-tabs", true);
+		PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.status.online", false);
+		PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.status.offline", false);
+		PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.status.other-changes", false);
+		PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.duration", 60000);
+
+		// force iconsets
+		QMap<QString, QString> serviceRosterIconset;
+		serviceRosterIconset["transport"] = "crystal-service.jisp";
+		serviceRosterIconset["aim"]       = "crystal-aim.jisp";
+		serviceRosterIconset["gadugadu"]  = "crystal-gadugadu.jisp";
+		serviceRosterIconset["icq"]       = "crystal-icq.jisp";
+		serviceRosterIconset["msn"]       = "crystal-msn.jisp";
+		serviceRosterIconset["yahoo"]     = "crystal-yahoo.jisp";
+		serviceRosterIconset["sms"]       = "crystal-sms.jisp";
+		PsiOptions::instance()->removeOption("options.iconsets.service-status", true);
+		QMapIterator<QString, QString> it(serviceRosterIconset);
+		while(it.hasNext()) {
+			it.next();
+			QString base = PsiOptions::instance()->mapPut("options.iconsets.service-status", it.key());
+			PsiOptions::instance()->setOption(base + ".iconset", it.value());
+		}
+	}
+
+	int vnum = (vmaj << 16) + (vmin << 8) + vbug;
+	if(vnum < 0x030102)
+		PsiOptions::instance()->setOption("options.ui.contactlist.show.agent-contacts", false);
+	if(vnum < 0x030103)
+		PsiOptions::instance()->setOption("options.ui.contactlist.use-transport-icons", true);
+#ifdef Q_OS_WIN
+	if(vnum < 0x030105)
+		PsiOptions::instance()->setOption("options.ui.systemtray.use-double-click", true);
+#endif
+	if(vnum < 0x030105)
+		PsiOptions::instance()->setOption("options.ui.contactlist.status-messages.show", true);
+#ifdef Q_OS_MAC
+	if(vnum < 0x030105)
+		PsiOptions::instance()->setOption("options.ui.chat.alert-for-already-open-chats", true);
+#endif
+
+	// force these every time
+	PsiOptions::instance()->setOption("options.ui.look.font.contactlist", QApplication::font().toString());
+	//PsiOptions::instance()->setOption("options.ui.look.font.message", QApplication::font().toString());
+	//PsiOptions::instance()->setOption("options.ui.look.font.chat", QApplication::font().toString());
+	PsiOptions::instance()->setOption("options.ui.look.font.passive-popup", QApplication::font().toString());
+	PsiOptions::instance()->setOption("options.ui.tabs.tab-singles", "CM");
+
+	// ensure that both C and M are tabbed together, if at all
+	{
+		bool tabsMode = false;
+		QString grouping = PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString();
+		QStringList parts = grouping.split(':', QString::SkipEmptyParts);
+		foreach(const QString &s, parts) {
+			if(s.contains('C') || s.contains('M')) {
+				tabsMode = true;
+				break;
+			}
+		}
+
+		if(tabsMode && grouping != "CM")
+			PsiOptions::instance()->setOption("options.ui.tabs.grouping", "CM");
+	}
+
+#ifdef Q_OS_MAC
+	// force disable on mac, where we have growl instead
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.enabled", false);
+#endif
+
+	// chat.auto-popup, message.auto-popup-headlines, file-transfer.auto-popup = message.auto-popup
+	PsiOptions::instance()->setOption("options.ui.chat.auto-popup", PsiOptions::instance()->getOption("options.ui.message.auto-popup").toBool());
+	PsiOptions::instance()->setOption("options.ui.message.auto-popup-headlines", PsiOptions::instance()->getOption("options.ui.message.auto-popup").toBool());
+	PsiOptions::instance()->setOption("options.ui.file-transfer.auto-popup", PsiOptions::instance()->getOption("options.ui.message.auto-popup").toBool());
+
+	// incoming-chat, incoming-headline, incoming-file-transfer = incoming-message
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.incoming-chat", PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool());
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.incoming-headline", PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool());
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.incoming-file-transfer", PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool());
+
 	// proxy
 	d->proxy = new ProxyManager(&d->accountTree, this);
 	if (accountMigration) d->proxy->migrateItemList(d->optionsMigration.proxyMigration);
@@ -421,7 +535,7 @@ bool PsiCon::init()
 	Anim::setMainThread(QThread::currentThread());
 
 	// setup the main window
-	d->mainwin = new MainWin(PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool(), (PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool()), this, "psimain"); 
+	d->mainwin = new MainWinB(PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool(), (PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool()), this, "psimain"); 
 	d->mainwin->setUseDock(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool());
 
 	connect(d->mainwin, SIGNAL(closeProgram()), SLOT(closeProgram()));
@@ -434,12 +548,13 @@ bool PsiCon::init()
 	connect(d->mainwin, SIGNAL(doToolbars()), SLOT(doToolbars()));
 	connect(d->mainwin, SIGNAL(doFileTransDlg()), SLOT(doFileTransDlg()));
 	connect(d->mainwin, SIGNAL(recvNextEvent()), SLOT(recvNextEvent()));
+	//connect(d->mainwin, SIGNAL(geomChanged(QRect)), SLOT(mainWinGeomChanged(QRect)));
 	connect(this, SIGNAL(emitOptionsUpdate()), d->mainwin, SLOT(optionsUpdate()));
 
 	connect(this, SIGNAL(emitOptionsUpdate()), d->mainwin->cvlist, SLOT(optionsUpdate()));
 
 	d->mainwin->setGeometryOptionPath("options.ui.contactlist.saved-window-geometry");
-	
+
 	if(!(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.hide-on-start").toBool()))
 		d->mainwin->show();
 
@@ -463,7 +578,12 @@ bool PsiCon::init()
 
 	// Global shortcuts
 	setShortcuts();
-	
+
+	d->tabManager->setTabDlgDelegate(get_tab_delegate());
+	d->tabManager->setUserManagementEnabled(false);
+	d->tabManager->setTabBarShownForSingles(false);
+	d->tabManager->setSimplifiedCaptionEnabled(true);
+
 	// FIXME
 #ifdef __GNUC__
 #warning "Temporary hard-coding caps registration of own version"
@@ -542,22 +662,30 @@ bool PsiCon::init()
 	
 	checkAccountsEmpty();
 	
-	
+	// ###cuda - now that options are loaded, set our current version
+	d->accountTree.setOption("progver", ApplicationInfo::version());
+	PsiOptions::instance()->setOption("progver", ApplicationInfo::version());
+
 	// try autologin if needed
 	foreach(PsiAccount* account, d->contactList->accounts()) {
 		account->autoLogin();
 	}
 	
 	// show tip of the day
-	if ( PsiOptions::instance()->getOption("options.ui.tip.show").toBool() ) {
-		TipDlg::show(this);
-	}
+	//if ( PsiOptions::instance()->getOption("options.ui.tip.show").toBool() ) {
+	//	TipDlg::show(this);
+	//}
 
 #ifdef USE_DBUS
 	addPsiConAdapter(this);
 #endif
 
 	connect(ActiveProfiles::instance(), SIGNAL(raiseMainWindow()), SLOT(raiseMainwin()));
+
+	d->tabChatsAction = new IconAction(tr("Tab chats"), tr("Tab chats"), 0, this);
+	d->tabChatsAction->setCheckable(true);
+	d->tabChatsAction->setChecked(isTabsModeEnabled());
+	connect(d->tabChatsAction, SIGNAL(toggled(bool)), SLOT(setTabsModeEnabled(bool)));
 
 	return true;
 }
@@ -594,6 +722,13 @@ void PsiCon::deinit()
 	delete d->ftwin;
 
 	if(d->mainwin) {
+		// shut down mainwin
+		// FIXME: when saving geometry, we should also save the minimized, maximized and hidden flags
+		// and even the desktop number, in order to correctly restore position
+		/*if (!d->mainwin->isHidden() && !d->mainwin->isMinimized()) {
+			PsiOptions::instance()->setOption("options.ui.contactlist.saved-window-geometry", d->mainwin->saveableGeometry());
+		}*/
+
 		delete d->mainwin;
 		d->mainwin = 0;
 	}
@@ -1058,10 +1193,10 @@ void PsiCon::optionChanged(const QString& option)
 		alertIconUpdateAlertStyle();
 	}
 
-	if (option == "options.ui.tabs.use-tabs") {
+	/*if (option == "options.ui.tabs.use-tabs") {
 		QMessageBox::information(0, tr("Information"), tr("Some of the options you changed will only have full effect upon restart."));
 		notifyRestart = false;
-	}
+	}*/
 
 	// update s5b
 	if (option == "options.p2p.bytestreams.listen-port") {
@@ -1078,11 +1213,9 @@ void PsiCon::slotApplyOptions()
 	if (!PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool()) {
 		// check if all toolbars are disabled
 		bool toolbarsVisible = false;
-		foreach(QString base, o->getChildOptionNames("options.ui.contactlist.toolbars", true, true)) {
-			if (o->getOption( base + ".visible").toBool()) {
-				toolbarsVisible = true;
-				break;
-			}
+		QStringList bases = o->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
+		foreach(QString base, bases) {
+			toolbarsVisible = toolbarsVisible || o->getOption( base + ".visible").toBool();
 		}
 
 		// Check whether it is legal to disable the menubar
@@ -1301,6 +1434,56 @@ void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 			isChat = true;
 			sentToChatWindow = me->sentToChatWindow();
 		}
+
+		if(!isChat)
+		{
+			QString room;
+			Jid from;
+			if(!m.mucInvites().isEmpty())
+			{
+				MUCInvite i = m.mucInvites().first();
+				room = m.from().bare();
+				from = i.from();
+			}
+			else if(!m.invite().isEmpty())
+			{
+				room = m.invite();
+				from = m.from();
+			}
+
+			if(!room.isEmpty())
+			{
+				PsiAccount *pa = e->account();
+				e->account()->eventQueue()->dequeue(e);
+				e->account()->queueChanged();
+				e->account()->cpUpdate(*u);
+
+				QString nick;
+				UserListItem *u = pa->find(from);
+				if(u)
+					nick = JIDUtil::nickOrJid(u->name(), u->jid().full());
+				else
+					nick = from.bare();
+
+				QString body;
+				if(room.startsWith("auto_"))
+					body = tr("%1 invited you to a private group chat.\nDo you want to join?").arg(nick);
+				else
+					body = tr("%1 invited you to the group chat \"%2\".\nDo you want to join?").arg(nick, room);
+
+				QMessageBox::StandardButton ret = QMessageBox::information(0,
+					tr("Invite to group chat"),
+					body,
+					QMessageBox::Yes | QMessageBox::No,
+					QMessageBox::Yes);
+				if(ret == QMessageBox::Yes)
+				{
+					pa->actionJoin(ConferenceBookmark(QString(), room, false, QString(), QString()), true);
+				}
+
+				return;
+			}
+		}
 	}
 
 	if ( isChat ) {
@@ -1338,12 +1521,18 @@ void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 	}
 }
 
+/*void PsiCon::mainWinGeomChanged(QRect saveableGeometry)
+{
+	if (!saveableGeometry.isNull())
+		PsiOptions::instance()->setOption("options.ui.contactlist.saved-window-geometry", saveableGeometry);
+}*/
+
 void PsiCon::updateS5BServerAddresses()
 {
 	if(!d->s5bServer)
 		return;
 
-	QList<QHostAddress> list;
+	/*QList<QHostAddress> list;
 
 	// grab all IP addresses
 	foreach(PsiAccount* account, d->contactList->accounts()) {
@@ -1362,11 +1551,11 @@ void PsiCon::updateS5BServerAddresses()
 		}
 		if(!found)
 			list += (*a);
-	}
+	}*/
 
 	// convert to stringlist
-	QStringList slist;
-	for(QList<QHostAddress>::ConstIterator hit = list.begin(); hit != list.end(); ++hit)
+	//QStringList slist;
+	/*for(QList<QHostAddress>::ConstIterator hit = list.begin(); hit != list.end(); ++hit)
 		slist += (*hit).toString();
 
 	// add external
@@ -1381,10 +1570,10 @@ void PsiCon::updateS5BServerAddresses()
 		}
 		if(!found)
 			slist += PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString();
-	}
+	}*/
 
 	// set up the server
-	d->s5bServer->setHostList(slist);
+	//d->s5bServer->setHostList(slist);
 }
 
 void PsiCon::s5b_init()
@@ -1392,11 +1581,11 @@ void PsiCon::s5b_init()
 	if(d->s5bServer->isActive())
 		d->s5bServer->stop();
 
-	if (PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt()) {
+	/*if (PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt()) {
 		if(!d->s5bServer->start(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt())) {
 			QMessageBox::warning(0, tr("Warning"), tr("Unable to bind to port %1 for Data Transfer.\nThis may mean you are already running another instance of Psi. You may experience problems sending and/or receiving files.").arg(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt()));
 		}
-	}
+	}*/
 }
 
 void PsiCon::doSleep()
@@ -1417,6 +1606,7 @@ void PsiCon::doWakeup()
 	}
 }
 
+
 PsiActionList *PsiCon::actionList() const
 {
 	return d->actionList;
@@ -1427,7 +1617,9 @@ PsiActionList *PsiCon::actionList() const
  */
 void PsiCon::promptUserToCreateAccount()
 {
-	QMessageBox msgBox(QMessageBox::Question,tr("Account setup"),tr("You need to set up an account to start. Would you like to register a new account, or use an existing account?"));
+	contactList()->createAccount("Default", Jid(), QString(), false, QString(), 5222, true, UserAccount::SSL_Auto, QString(), true);
+
+	/*QMessageBox msgBox(QMessageBox::Question,tr("Account setup"),tr("You need to set up an account to start. Would you like to register a new account, or use an existing account?"));
 	QPushButton *registerButton = msgBox.addButton(tr("Register new account"), QMessageBox::AcceptRole);
 	QPushButton *existingButton = msgBox.addButton(tr("Use existing account"),QMessageBox::AcceptRole);
 	msgBox.addButton(QMessageBox::Cancel);
@@ -1442,7 +1634,7 @@ void PsiCon::promptUserToCreateAccount()
 		if (n == QDialog::Accepted) {
 			contactList()->createAccount(w.jid().node(),w.jid(),w.pass(),w.useHost(),w.host(),w.port(),w.legacySSLProbe(),w.ssl(),w.proxy(),false);
 		}
-	}
+	}*/
 }
 
 QString PsiCon::optionsFile() const
@@ -1454,5 +1646,94 @@ void PsiCon::forceSavePreferences()
 {
 	PsiOptions::instance()->save(optionsFile());
 }
- 
+
+bool PsiCon::isTabsModeEnabled() const
+{
+	QString grouping = PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString();
+	QStringList parts = grouping.split(':', QString::SkipEmptyParts);
+	foreach(const QString &s, parts) {
+		if(s.contains('C') || s.contains('M')) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void PsiCon::setTabsModeEnabled(bool b)
+{
+	if(isTabsModeEnabled() == b)
+		return;
+
+	/*QList<TabDlg*> tabdlgs;
+	{
+		Q3PtrList<TabDlg> *tablist3 = getTabSets();
+		foreach(TabDlg *t, *tablist3)
+			tabdlgs += t;
+	}*/
+	QList<ChatDlg*> chatdlgs;
+	foreach(PsiAccount *pa, contactList()->accounts())
+		chatdlgs += pa->getChats();
+	QList<GCMainDlg*> groupchatdlgs;
+	foreach(PsiAccount *pa, contactList()->accounts())
+		groupchatdlgs += pa->getGroupChats();
+
+	PsiOptions::instance()->setOption("options.ui.tabs.grouping", b ? QString("CM") : QString());
+	if(b)
+	{
+		TabbableWidget *first = 0;
+		if(!chatdlgs.isEmpty())
+			first = chatdlgs.first();
+		else if(!groupchatdlgs.isEmpty())
+			first = groupchatdlgs.first();
+
+		if(first)
+		{
+			// tabify all windows
+			TabDlg *masterTabs = d->tabManager->getTabs(first);
+
+			foreach(ChatDlg *c, chatdlgs)
+			{
+				TabDlg *t = d->tabManager->getManagingTabs(c);
+				if(t && t != masterTabs)
+					t->sendTabTo(c, masterTabs);
+			}
+
+			foreach(GCMainDlg *c, groupchatdlgs)
+			{
+				TabDlg *t = d->tabManager->getManagingTabs(c);
+				if(t && t != masterTabs)
+					t->sendTabTo(c, masterTabs);
+			}
+		}
+	}
+	else
+	{
+		// untabify all windows
+
+		foreach(ChatDlg *c, chatdlgs)
+		{
+			TabDlg *t = d->tabManager->getManagingTabs(c);
+			if(t)
+				t->detachTab(c);
+		}
+
+		foreach(GCMainDlg *c, groupchatdlgs)
+		{
+			TabDlg *t = d->tabManager->getManagingTabs(c);
+			if(t)
+				t->detachTab(c);
+		}
+	}
+}
+
+IconAction *PsiCon::tabChatsAction()
+{
+	return d->tabChatsAction;
+}
+
+TabManager *PsiCon::tabManager()
+{
+	return d->tabManager;
+}
+
 #include "psicon.moc"

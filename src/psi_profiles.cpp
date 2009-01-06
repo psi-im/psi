@@ -51,6 +51,10 @@ using namespace XMLHelper;
 #define PROXY_SOCKS4     2
 #define PROXY_SOCKS5     3
 
+QString acc_lastUpdateMsg;
+QStringList acc_hosts;
+bool acc_useSystemSettings = true;
+
 template<typename T, typename F>
 void migrateEntry(const QDomElement& element, const QString& entry, const QString& option, F f)
 {
@@ -147,10 +151,48 @@ void UserAccount::reset()
 	keybind.clear();
 
 	roster.clear();
+
+	// ###cuda - override defaults
+	opt_auto = true;
+	ssl = SSL_Legacy;
+	port = 5223;
+	opt_host = true;
+	opt_automatic_resource = false;
+	resource = "Work";
+	opt_reconn = true;
+	opt_ignoreSSLWarnings = true;
+
+	if(acc_lastUpdateMsg.isEmpty())
+		acc_lastUpdateMsg = "2000-01-01T00:00:00"; // ISO 8601 date format: YYYY-MM-DDTHH:MM:SS
 }
 
 UserAccount::~UserAccount()
 {
+}
+
+void version_parse(const QString &str, int *_vmaj, int *_vmin, int *_vbug)
+{
+	int vmaj = 0;
+	int vmin = 0;
+	int vbug = 0;
+	{
+		QString numstr;
+		int x = str.indexOf('-');
+		if(x != -1)
+			numstr = str.mid(0, x);
+		else
+			numstr = str;
+		QStringList parts = numstr.split('.');
+		if(parts.count() >= 1)
+			vmaj = parts[0].toInt();
+		if(parts.count() >= 2)
+			vmin = parts[1].toInt();
+		if(parts.count() >= 3)
+			vbug = parts[2].toInt();
+	}
+	*_vmaj = vmaj;
+	*_vmin = vmin;
+	*_vbug = vbug;
 }
 
 void UserAccount::fromOptions(OptionsTree *o, QString base)
@@ -158,6 +200,13 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	optionsBase = base;
 	
 	reset();
+
+	int vmaj, vmin, vbug;
+	version_parse(o->getOption("progver").toString(), &vmaj, &vmin, &vbug);
+	bool reading_old_config = false;
+	if(vmaj < 3 || (vmaj == 3 && vmin < 1)) {
+		reading_old_config = true;
+	}
 
 	opt_enabled = o->getOption(base + ".enabled").toBool();
 	opt_auto = o->getOption(base + ".auto").toBool();
@@ -169,14 +218,18 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	opt_log = o->getOption(base + ".log").toBool();
 	opt_reconn = o->getOption(base + ".reconn").toBool();
 	opt_ignoreSSLWarnings = o->getOption(base + ".ignore-SSL-warnings").toBool();
+	if (o->getChildOptionNames().contains(base + ".use-system-settings")) {
+		acc_useSystemSettings = o->getOption(base + ".use-system-settings").toBool();
+	}
 	
 	// FIX-ME: See FS#771
-	if (o->getChildOptionNames().contains(base + ".connect-after-sleep")) {
+	/*if (o->getChildOptionNames().contains(base + ".connect-after-sleep")) {
 		opt_connectAfterSleep = o->getOption(base + ".connect-after-sleep").toBool();
 	}
 	else {
 		o->setOption(base + ".connect-after-sleep", opt_connectAfterSleep);
-	}
+	}*/
+	opt_connectAfterSleep = opt_reconn;
 	
 	name = o->getOption(base + ".name").toString();
 	jid = o->getOption(base + ".jid").toString();
@@ -231,7 +284,25 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	} else {
 		allow_plain = XMPP::ClientStream::NoAllowPlain;		
 	}
-	
+
+	// ###cuda
+	QStringList hosts_tmp = o->getOption(base + ".hosts").toStringList();
+	acc_hosts.clear();
+	foreach(const QString &str, hosts_tmp) {
+		if(!str.isEmpty() && !acc_hosts.contains(str)) {
+			acc_hosts += str;
+		}
+	}
+	if(reading_old_config) {
+		opt_host = true;
+		port = 5223;
+	}
+	if(!host.isEmpty() && !acc_hosts.contains(host))
+		acc_hosts.prepend(host);
+	if(host.isEmpty() && !acc_hosts.isEmpty())
+		host = acc_hosts.first();
+	acc_lastUpdateMsg = o->getOption(base + ".lastUpdateMsg").toString();
+
 	QStringList rosterCache = o->getChildOptionNames(base + ".roster-cache", true, true);
 	foreach(QString rbase, rosterCache) {
 		RosterItem ri;
@@ -281,6 +352,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 	o->setOption(base + ".reconn", opt_reconn);
 	o->setOption(base + ".connect-after-sleep", opt_connectAfterSleep);
 	o->setOption(base + ".ignore-SSL-warnings", opt_ignoreSSLWarnings);
+	o->setOption(base + ".use-system-settings", acc_useSystemSettings);
 
 	o->setOption(base + ".name", name);
 	o->setOption(base + ".jid", jid);
@@ -334,7 +406,11 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 		default:
 			qFatal("unknown allow_plain enum value in UserAccount::toOptions");
 	}
-	
+
+	// ###cuda
+	o->setOption(base + ".hosts", acc_hosts);
+	o->setOption(base + ".lastUpdateMsg", acc_lastUpdateMsg);
+
 	int idx = 0;
 	foreach(RosterItem ri, roster) {
 		QString rbase = base + ".roster-cache.a" + QString::number(idx++);
@@ -427,7 +503,10 @@ void UserAccount::fromXml(const QDomElement &a)
 		ssl = UserAccount::SSL_Legacy;
 
 	readNumEntry(a, "security-level", &security_level);
-	readNumEntry(a, "ssl", (int*) &ssl);
+	QString ssl_str;
+	readEntry(a, "ssl", &ssl_str);
+	if(!ssl_str.isEmpty())
+		readNumEntry(a, "ssl", (int*) &ssl);
 	readEntry(a, "host", &host);
 	readNumEntry(a, "port", &port);
 
@@ -484,6 +563,26 @@ void UserAccount::fromXml(const QDomElement &a)
 		if (!e.isNull())
 			pgpSecretKey = e.pgpSecretKey();
 	}
+
+	// ###cuda
+	acc_hosts.clear();
+	QDomElement host_list = findSubTag(a, "hosts", &found);
+	for (QDomNode n = host_list.firstChild(); !n.isNull(); n = n.nextSibling()) {
+		QDomElement i = n.toElement();
+		if ( i.isNull() )
+			continue;
+
+		QString str = i.attribute("location");
+		if(!str.isEmpty() && !acc_hosts.contains(str))
+			acc_hosts += str;
+	}
+	opt_host = true;
+	if(!host.isEmpty() && !acc_hosts.contains(host))
+		acc_hosts.prepend(host);
+	if(host.isEmpty() && !acc_hosts.isEmpty())
+		host = acc_hosts.first();
+	port = 5223;
+	readEntry(a, "lastUpdateMsg", &acc_lastUpdateMsg);
 
 	QDomElement r = findSubTag(a, "roster", &found);
 	if(found) {
@@ -1107,6 +1206,11 @@ bool OptionsMigration::fromFile(const QString &fname)
 						vl << qVariantFromValue(QKeySequence(Qt::Key_Enter+Qt::CTRL)) << qVariantFromValue(QKeySequence(Qt::CTRL+Qt::Key_Return));
 					PsiOptions::instance()->setOption("options.shortcuts.chat.send",vl);
 				}
+
+				// ###cuda
+				bool openAsTab = false;
+				readBoolEntry(tag, "openAsTab", &openAsTab);
+				PsiOptions::instance()->setOption("options.ui.tabs.grouping", openAsTab ? QString("C") : QString());
 			}
 
 			tag = findSubTag(p_general, "dock", &found);
@@ -1562,15 +1666,8 @@ void OptionsMigration::lateMigration()
 	}
 
 	// QMap< QString, QList<ToolbarPrefs> > toolbars;
-	QList<ToolbarPrefs> toolbars;
-	if(qVersionInt() >= 0x040300) {
-		toolbars = lateMigrationData.toolbars["mainWin"];
-	} else {
-		foreach(ToolbarPrefs tb, lateMigrationData.toolbars["mainWin"]) {
-			toolbars.insert(0, tb);
-		}
-	}
-	foreach(ToolbarPrefs tb, toolbars) {
+	PsiOptions::instance()->removeOption("options.ui.contactlist.toolbars", true);
+	foreach(ToolbarPrefs tb, lateMigrationData.toolbars["mainWin"]) {
 		PsiToolBar::structToOptions(o, tb);
 	}
 }

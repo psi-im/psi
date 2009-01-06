@@ -23,7 +23,7 @@
 #include <QStringList>
 #include <QList>
 
-#include "privacylist.h"
+#include "privacylist_b.h"
 
 #define ORDER_INCREMENT 10
 
@@ -49,6 +49,11 @@ void PrivacyList::insertItem(int index, const PrivacyListItem& item)
 	items_.insert(index,item); 
 
 	reNumber();
+}
+
+void PrivacyList::appendItem(const PrivacyListItem& item)
+{
+	insertItem(items_.count(), item);
 }
 
 void PrivacyList::reNumber() 

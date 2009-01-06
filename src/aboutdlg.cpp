@@ -20,10 +20,10 @@
 
 #include <QTextStream>
 #include <QFile>
-#include <QtCrypto>
 
 #include "applicationinfo.h"
 #include "aboutdlg.h"
+#include "textutil.h"
 
 AboutDlg::AboutDlg(QWidget* parent)
 	: QDialog(parent)
@@ -35,11 +35,19 @@ AboutDlg::AboutDlg(QWidget* parent)
 
 	ui_.lb_name->setText ( QString("<h3><b>%1 v%2</b></h3>").arg(ApplicationInfo::name()).arg(ApplicationInfo::version()) );
 
+	//QFont f = ui_.te_license->font();
+	//f.setFixedPitch(true);
+	//ui_.te_license->setFont(f);
+
 	ui_.te_license->setText ( loadText(":/COPYING") );
 
 	QString lang_name = qApp->translate( "@default", "language_name" );
 	if ( lang_name == "language_name" ) // remove the translation tab, if no translation is used
 		ui_.tw_tabs->removePage ( ui_.tw_tabs->page(3) );
+
+	// ###cuda
+	ui_.tw_tabs->removePage ( ui_.tw_tabs->page(2) );
+	ui_.tw_tabs->removePage ( ui_.tw_tabs->page(1) );
 
 	// fill in Authors tab...
 	QString authors;
@@ -50,7 +58,7 @@ AboutDlg::AboutDlg(QWidget* parent)
 			   "kismith@psi-im.org", "", "",
 			   tr("Project Lead/Maintainer"));
 	authors += details(QString::fromUtf8("Remko Tronçon"),
-			   "", "", "http://el-tramo.be",
+			   "remko@psi-im.org", "", "",
 			   tr("Lead Developer"));
 	authors += details(QString::fromUtf8("Michail Pishchagin"),
 			   "mblsha@psi-im.org", "", "",
@@ -61,13 +69,13 @@ AboutDlg::AboutDlg(QWidget* parent)
 	authors += details(QString::fromUtf8("Martin Hostettler"),
 			   "martin@psi-im.org", "", "",
 			   tr("Developer"));
+	authors += details(QString::fromUtf8("Akito Nozaki"),
+			   "anpluto@usa.net", "", "",
+			   tr("Miscellaneous Developer"));
 	ui_.te_authors->setText( authors );
 
 	// fill in Thanks To tab...
 	QString thanks;
-	thanks += details(QString::fromUtf8("Akito Nozaki"),
-			  "anpluto@usa.net", "", "",
-			  tr("Language coordinator, miscellaneous assistance"));
 	thanks += details(QString::fromUtf8("Jan Niehusmann"),
 			  "jan@gondor.com", "", "",
 			  tr("Build setup, miscellaneous assistance"));
@@ -98,33 +106,26 @@ AboutDlg::AboutDlg(QWidget* parent)
 	thanks += details(QString::fromUtf8("Jacek Tomasiak"),
 			 "", "", "",
 			 tr("Patches"));
-
-	foreach(QCA::Provider *p, QCA::providers()) {
-		QString credit = p->credit();
-		if(!credit.isEmpty()) {
-			thanks += details(tr("Security plugin: %1").arg(p->name()),
-				"", "", "",
-				credit);
-		}
-	}
-
+					  
 	//thanks += tr("Thanks to many others.\n"
 	//	     "The above list only reflects the contributors I managed to keep track of.\n"
 	//	     "If you're not included but you think that you must be in the list, contact the developers.");
 	ui_.te_thanks->setText( thanks );
+}
 
-	QString translation = tr(
-		"I. M. Anonymous <note text=\"replace with your real name\"><br>\n"
-		"&nbsp;&nbsp;<a href=\"http://me.com\">http://me.com</a><br>\n"
-		"&nbsp;&nbsp;Jabber: <a href=\"xmpp:me@me.com\">me@me.com</a><br>\n"
-		"&nbsp;&nbsp;<a href=\"mailto:me@me.com\">me@me.com</a><br>\n"
-		"&nbsp;&nbsp;Translator<br>\n"
-		"<br>\n"
-		"Join the translation team today! Go to \n"
-		"<a href=\"http://forum.psi-im.org/forum/14\">\n"
-		"http://forum.psi-im.org/forum/14</a> for further details!"
-	);
-	ui_.te_translation->appendText(translation);
+static QString cleanup_text(const QString &in)
+{
+	QString out;
+	for(int n = 0; n < in.length(); ++n)
+	{
+		if(in[n] == '\t')
+			out += "        ";
+		else if(in[n] == '\n' || in[n] == '\r')
+			out += in[n];
+		else if(in[n].isPrint())
+			out += in[n];
+	}
+	return out;
 }
 
 QString AboutDlg::loadText( const QString & fileName )
@@ -132,14 +133,21 @@ QString AboutDlg::loadText( const QString & fileName )
 	QString text;
 
 	QFile f(fileName);
-	if(f.open(IO_ReadOnly)) {
+	if(f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+		//text += "<tt>";
 		QTextStream t(&f);
+		t.setCodec("UTF-8");
 		while(!t.atEnd())
-			text += t.readLine() + '\n';
+		{
+			QString line = t.readLine();
+			line = cleanup_text(line);
+			text += line + '\n';
+		}
 		f.close();
+		//text += "</tt>";
 	}
 
-	return text;
+	return QString("<tt>") + TextUtil::plain2rich(text) + "</tt>";
 }
 
 

@@ -1,0 +1,96 @@
+# -*-shell-script-*-
+
+#
+# This is an example specfile. Delete these comments when you're done.
+#
+
+[Meta]
+RootName: @barracuda.com/imclient:3.3.2
+DisplayName: Barracuda IM Client
+ShortName: barracudaim
+Maintainer: Justin Karneges <jkarneges@barracuda.com>
+Packager: Justin Karneges <jkarneges@barracuda.com>
+Summary: Barracuda IM Client for the Barracuda IM Firewall
+URL: http://www.barracuda.com/
+License: GNU General Public License, Version 2
+SoftwareVersion: 3.3.2
+# SoftwareVersion: @VERSION@
+#Repository: http://www.mysite.org/downloads/myproject.xml
+
+# If you change the autopackage but not the software itself,
+# increment this number.
+
+# PackageVersion: 2
+
+# This is the version of the autopackage runtime this package is
+# written for. Increasing this number implies you have read the
+# "Migrating to 1.X" document and understand the impact it will have
+# on your package. Some APIs may change their behaviour and new
+# features will be enabled depending on what this is set to.
+AutopackageTarget: 1.2
+
+# Only uncomment InterfaceVersion if your package exposes interfaces
+# to other software, for instance if it includes DSOs or python/perl
+# modules. See the developer guide for more info, or ask on
+# autopackage-dev if you aren't sure about interface versioning.
+#
+# InterfaceVersion: 0.0
+
+[BuildPrepare]
+# For ./configure based systems this is a good default
+export INSTALL_ROOT=$build_root
+#prepareBuild --qtdir=/home/jkarneges/work/qt/4.3 --disable-aspell --with-zlib-inc=/home/jkarneges/work/local/include --with-zlib-lib=/home/jkarneges/work/local/lib --with-openssl-inc=/home/jkarneges/work/local/include --with-openssl-lib=/home/jkarneges/work/local/lib --certstore-path=$PWD
+prepareBuild --qtdir=/home/jkarneges/work/qt/4.3 --disable-aspell --certstore-internal --with-openssl-inc=/home/jkarneges/work/local/include --with-openssl-lib=/home/jkarneges/work/local/lib
+
+[BuildUnprepare]
+unprepareBuild
+
+[Globals]
+# Anything put here will be run during makeinstall and at
+# install/uninstall time. Define useful variables here:
+
+# export MY_VAR=1
+
+[Imports]
+# You may wish to delete some things first, eg libtool .la files or
+# development files (headers)
+
+# rm -r include
+# rm libs/*.la
+
+# This imports every file in 
+# (ie, that is installed by "make install")
+echo '*' | import
+
+
+[Prepare]
+# Dependency checking
+
+# You can use "require" and "recommend". They both try to find the
+# given dependency, and install it if missing. But require will return
+# 1 (causing failure) if it can't do that whereas recommend will
+# simply show a notice at the end of the install.
+
+# The second argument here identifies a skeleton file, which is
+# a file that encapsulates a dependency check. The second number
+# identifies the interface version you need. Use as many of these
+# as you need.
+
+#require @whatever.you/need 1.0
+
+# The user may have already installed the program from an RPM.
+# Let's try and uninstall it first. We only need one call if 3rd party
+# packages have split the program up into multiple packages.
+
+#removeOwningPackage $PREFIX/bin/my-program
+
+[Install]
+# Put your installation script here. See the quickstart guide on
+# the website for an API cheat-sheet
+installExe bin/*
+#installLib lib/*
+installData share/*
+
+[Uninstall]
+# Usually just the following line is enough to uninstall everything
+uninstallFromLog

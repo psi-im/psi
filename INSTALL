@@ -3,18 +3,19 @@ Installation
 
 -=[ Linux / Unix ]=-
 
-  For instructions on how to build and install Psi on Unix systems, see 
-  the 'Compiling' section below.
+  For instructions on how to build and install the Barracuda IM Client on Unix
+  systems, see the 'Compiling' section below.
 
 -=[ Windows ]=-
 
-  No installation required for Windows.  You can simply just
-  run the Psi executable.  You might want to move everything into
-  C:\Program Files\Psi
+  No installation required for Windows.  You can simply just run the
+  Barracuda IM Client executable.  You might want to move everything into
+  C:\Program Files\Barracuda
 
 -=[ MacOS X ]=-
 
-  Drag the Psi application file from the disk image into the Applications dir.
+  Drag the Barracuda application file from the disk image into the
+  Applications dir.
 
 
 Compiling
@@ -22,9 +23,9 @@ Compiling
 
 Requirements:
   - Qt 4.2.0
-  - QCA 2.0 beta 4 or higher. This can either be installed system-wide,
+  - QCA 2.0 test 4 or higher. This can either be installed system-wide,
     or you can download the tarball and unpack it in third-party/qca dir
-    of the Psi source tree, and Psi will auto-detect it at configure time. 
+    of the source tree, and Barracuda will auto-detect it at configure time. 
     The different QCA packages should be unpacked in the following locations:
         - QCA 2.0: third-party/qca/qca
         - QCA OpenSSL (optional): third-party/qca/qca-openssl
@@ -32,8 +33,8 @@ Requirements:
 
 You can obtain Qt at http://www.trolltech.com/
 
-You can obtain QCA at http://delta.affinix.com/qca/2.0/beta4
+You can obtain QCA at http://delta.affinix.com/qca/2.0/test4
 
-For information about building Psi on Unix, see doc/build-unix.txt.
-For information about building Psi on Mac OS X, see doc/build-mac.txt.
-For information about building Psi on Windows, see doc/build-win.txt.
+For information about building on Unix, see doc/build-unix.txt.
+For information about building on Mac OS X, see doc/build-mac.txt.
+For information about building on Windows, see doc/build-win.txt.

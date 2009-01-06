@@ -21,7 +21,7 @@
 // TODO: Move all the 'logic' of groupchats into MUCManager. See MUCManager
 // for more details.
 
-#include "groupchatdlg.h"
+#include "groupchatdlg_b.h"
 
 #include <qlabel.h>
 #include <qlayout.h>
@@ -53,7 +53,7 @@
 #include <QTextCursor>
 #include <QTextDocument> // for Qt::escape()
 
-#include "psicon.h"
+#include "psicon_b.h"
 #include "psiaccount.h"
 #include "capsmanager.h"
 #include "userlist.h"
@@ -75,6 +75,8 @@
 #include "psicontactlist.h"
 #include "accountlabel.h"
 #include "gcuserview.h"
+#include "cudaskin.h"
+#include "invitedlg.h"
 
 #ifdef Q_WS_WIN
 #include <windows.h>
@@ -105,6 +107,7 @@ public:
 	QString password;
 	bool nonAnonymous;     // got status code 100 ?
 	IconAction *act_find, *act_clear, *act_icon, *act_configure;
+	IconAction *act_invite;
 #ifdef WHITEBOARDING
 	IconAction *act_whiteboard;
 #endif
@@ -120,7 +123,9 @@ public:
 	QString lastSearch;
 
 	QPointer<MUCConfigDlg> configDlg;
-	
+	QPointer<InviteDlg> inviteDlg;
+	QString dispName;
+
 public:
 	bool trackBar;
 protected:
@@ -154,6 +159,19 @@ public slots:
 	void deferredScroll() {
 		//QTimer::singleShot(250, this, SLOT(slotScroll()));
 		te_log()->scrollToBottom();
+	}
+
+	void doInvite()
+	{
+		if(inviteDlg)
+		{
+			::bringToFront(inviteDlg);
+			return;
+		}
+
+		inviteDlg = new InviteDlg(true, dlg->jid(), dlg->account(), dlg);
+		inviteDlg->setAttribute(Qt::WA_DeleteOnClose);
+		inviteDlg->show();
 	}
 
 protected slots:
@@ -450,7 +468,7 @@ public:
 };
 
 GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
-	: TabbableWidget(j.userHost(), pa, tabManager)
+	: TabbableWidget(j.bare(), pa, tabManager)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
   	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
@@ -483,6 +501,49 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	ui_.lb_ident->setAccount(account());
 	ui_.lb_ident->setShowJid(false);
 
+	ui_.vboxLayout->setMargin(0);
+	CudaSubFrame *tf = new CudaSubFrame(this);
+	ui_.widget->setParent(tf);
+
+	QVBoxLayout *vb = new QVBoxLayout(tf);
+	vb->addWidget(ui_.widget);
+
+	QSplitter *hsplitter = new QSplitter(tf);
+	hsplitter->setObjectName(QString::fromUtf8("hsplitter"));
+	QSizePolicy sizePolicy3(static_cast<QSizePolicy::Policy>(7), static_cast<QSizePolicy::Policy>(5));
+	sizePolicy3.setHorizontalStretch(0);
+	sizePolicy3.setVerticalStretch(1);
+	sizePolicy3.setHeightForWidth(hsplitter->sizePolicy().hasHeightForWidth());
+	hsplitter->setSizePolicy(sizePolicy3);
+	hsplitter->setOrientation(Qt::Horizontal);
+	ui_.log->setParent(hsplitter);
+	hsplitter->addWidget(ui_.log);
+	ui_.lv_users->setParent(hsplitter);
+	hsplitter->addWidget(ui_.lv_users);
+
+	vb->addWidget(hsplitter);
+	delete ui_.topFrame;
+	ui_.hsplitter = hsplitter;
+
+	CudaSubFrame *bf = new CudaSubFrame(this);
+	ui_.mle->setParent(bf);
+	vb = new QVBoxLayout(bf);
+	vb->addWidget(ui_.mle);
+	ui_.toolbar->setParent(this);
+	delete ui_.bottomFrame;
+	ui_.vsplitter->addWidget(tf);
+	ui_.vsplitter->addWidget(bf);
+
+	ui_.tb_emoticons->hide();
+
+	cuda_applyTheme(ui_.pb_topic);
+	cuda_applyTheme(ui_.le_topic);
+	cuda_applyTheme(ui_.tb_find);
+	cuda_applyTheme(ui_.tb_actions);
+	cuda_applyTheme(ui_.log);
+	cuda_applyTheme(ui_.lv_users);
+	cuda_applyTheme(ui_.mle);
+
 	connect(ui_.pb_topic, SIGNAL(clicked()), SLOT(doTopic()));
 	PsiToolTip::install(ui_.le_topic);
 
@@ -502,19 +563,22 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	ui_.lv_users->setMainDlg(this);
 	connect(ui_.lv_users, SIGNAL(action(const QString &, const Status &, int)), SLOT(lv_action(const QString &, const Status &, int)));
 
-	d->act_clear = new IconAction (tr("Clear chat window"), "psi/clearChat", tr("Clear chat window"), 0, this);
+	d->act_clear = new IconAction (tr("Clear chat window"), /*"psi/clearChat",*/ tr("Clear chat window"), 0, this);
 	connect( d->act_clear, SIGNAL( activated() ), SLOT( doClearButton() ) );
 	
-	d->act_configure = new IconAction(tr("Configure Room"), "psi/configure-room", tr("&Configure Room"), 0, this);
+	d->act_configure = new IconAction(tr("Configure Room"), /*"psi/configure-room",*/ tr("&Configure Room"), 0, this);
 	connect(d->act_configure, SIGNAL(activated()), SLOT(configureRoom()));
 
 #ifdef WHITEBOARDING
-	d->act_whiteboard = new IconAction(tr("Open a whiteboard"), "psi/whiteboard", tr("Open a &whiteboard"), 0, this);
+	d->act_whiteboard = new IconAction(tr("Open a whiteboard"), /*"psi/whiteboard",*/ tr("Open a &whiteboard"), 0, this);
 	connect(d->act_whiteboard, SIGNAL(activated()), SLOT(openWhiteboard()));
 #endif
 
+	d->act_invite = new IconAction (tr("Invite..."), /*"psi/clearChat",*/ tr("Invite..."), 0, this);
+	connect( d->act_invite, SIGNAL( activated() ), d, SLOT( doInvite() ) );
+
 	connect(pa->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
-	d->act_icon = new IconAction( tr( "Select icon" ), "psi/smile", tr( "Select icon" ), 0, this );
+	d->act_icon = new IconAction( tr( "Select icon" ), /*"psi/smile",*/ tr( "Select icon" ), 0, this );
 	d->act_icon->setMenu( pa->psi()->iconSelectPopup() );
 	ui_.tb_emoticons->setMenu(pa->psi()->iconSelectPopup());
 
@@ -552,7 +616,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	// resize the horizontal splitter
 	QList<int> list;
 	list << 500;
-	list << 80;
+	list << 160;
 	ui_.hsplitter->setSizes(list);
 
 	list.clear();
@@ -577,7 +641,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 GCMainDlg::~GCMainDlg()
 {
 	if(d->state != Private::Idle)
-		account()->groupChatLeave(jid().host(), jid().user());
+		account()->groupChatLeave(jid().domain(), jid().node());
 
 	//QMimeSourceFactory *m = ui_.log->mimeSourceFactory();
 	//ui_.log->setMimeSourceFactory(0);
@@ -723,11 +787,11 @@ void GCMainDlg::mle_returnPressed()
 
 	if(str.lower().startsWith("/nick ")) {
 		QString nick = str.mid(6).stripWhiteSpace();
-		QString norm_nick;
-		if (!nick.isEmpty() && XMPP::Jid::validResource(nick, &norm_nick)) {
+		XMPP::Jid newJid = jid().withResource(nick);
+		if (!nick.isEmpty() && newJid.isValid()) {
 			d->prev_self = d->self;
-			d->self = norm_nick;
-			account()->groupChatChangeNick(jid().host(), jid().user(), d->self, account()->status());
+			d->self = newJid.resource();
+			account()->groupChatChangeNick(jid().domain(), jid().node(), d->self, account()->status());
 		}
 		ui_.mle->chatEdit()->setText("");
 		return;
@@ -925,7 +989,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 		return;
 	}
 
-	if ((nick == "") && (s.mucStatus() == 100)) {
+	if ((nick == "") && (s.getMUCStatuses().contains(100))) {
 		d->nonAnonymous = true;
 	}
 
@@ -938,7 +1002,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 	
 	if(s.isAvailable()) {
 		// Available
-		if (s.mucStatus() == 201) {
+		if (s.getMUCStatuses().contains(201)) {
 			appendSysMsg(tr("New room created"), false, QDateTime::currentDateTime());
 			if (options_->getOption("options.muc.accept-defaults").toBool())
 				d->mucManager->setDefaultConfiguration();
@@ -1039,80 +1103,74 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 			else
 				nickJid = nick;
 
-			switch (s.mucStatus()) {
-				case 301:
-					// Ban
-					if (nick == d->self) {
-						mucInfoDialog(tr("Banned"), tr("You have been banned from the room"), s.mucItem().actor(), s.mucItem().reason());
-						close();
-					}
+			if (s.getMUCStatuses().contains(301)) {
+				// Ban
+				if (nick == d->self) {
+					mucInfoDialog(tr("Banned"), tr("You have been banned from the room"), s.mucItem().actor(), s.mucItem().reason());
+					close();
+				}
 
-					if (!s.mucItem().actor().isEmpty())
-						message = tr("%1 has been banned by %2").arg(nickJid, s.mucItem().actor().full());
-					else
-						message = tr("%1 has been banned").arg(nickJid);
+				if (!s.mucItem().actor().isEmpty())
+					message = tr("%1 has been banned by %2").arg(nickJid, s.mucItem().actor().full());
+				else
+					message = tr("%1 has been banned").arg(nickJid);
 
-					if (!s.mucItem().reason().isEmpty()) 
-						message += QString(" (%1)").arg(s.mucItem().reason());
-					break;
+				if (!s.mucItem().reason().isEmpty()) 
+					message += QString(" (%1)").arg(s.mucItem().reason());
+			}
+			else if (s.getMUCStatuses().contains(303)) {
+				message = tr("%1 is now known as %2").arg(nick).arg(s.mucItem().nick());
+				ui_.lv_users->updateEntry(s.mucItem().nick(), s);
+			}
+			else if (s.getMUCStatuses().contains(307)) {
+				// Kick
+				if (nick == d->self) {
+					mucInfoDialog(tr("Kicked"), tr("You have been kicked from the room"), s.mucItem().actor(), s.mucItem().reason());
+					close();
+				}
 
-				case 303:
-					message = tr("%1 is now known as %2").arg(nick).arg(s.mucItem().nick());
-					ui_.lv_users->updateEntry(s.mucItem().nick(), s);
-					break;
-					
-				case 307:
-					// Kick
-					if (nick == d->self) {
-						mucInfoDialog(tr("Kicked"), tr("You have been kicked from the room"), s.mucItem().actor(), s.mucItem().reason());
-						close();
-					}
+				if (!s.mucItem().actor().isEmpty())
+					message = tr("%1 has been kicked by %2").arg(nickJid).arg(s.mucItem().actor().full());
+				else
+					message = tr("%1 has been kicked").arg(nickJid);
+				if (!s.mucItem().reason().isEmpty()) 
+					message += QString(" (%1)").arg(s.mucItem().reason());
+			}
+			else if (s.getMUCStatuses().contains(321)) {
+				// Remove due to affiliation change
+				if (nick == d->self) {
+					mucInfoDialog(tr("Removed"), tr("You have been removed from the room due to an affiliation change"), s.mucItem().actor(), s.mucItem().reason());
+					close();
+				}
 
-					if (!s.mucItem().actor().isEmpty())
-						message = tr("%1 has been kicked by %2").arg(nickJid).arg(s.mucItem().actor().full());
-					else
-						message = tr("%1 has been kicked").arg(nickJid);
-					if (!s.mucItem().reason().isEmpty()) 
-						message += QString(" (%1)").arg(s.mucItem().reason());
-					break;
-					
-				case 321:
-					// Remove due to affiliation change
-					if (nick == d->self) {
-						mucInfoDialog(tr("Removed"), tr("You have been removed from the room due to an affiliation change"), s.mucItem().actor(), s.mucItem().reason());
-						close();
-					}
+				if (!s.mucItem().actor().isEmpty())
+					message = tr("%1 has been removed from the room by %2 due to an affilliation change").arg(nickJid).arg(s.mucItem().actor().full());
+				else
+					message = tr("%1 has been removed from the room due to an affilliation change").arg(nickJid);
 
-					if (!s.mucItem().actor().isEmpty())
-						message = tr("%1 has been removed from the room by %2 due to an affilliation change").arg(nickJid).arg(s.mucItem().actor().full());
-					else
-						message = tr("%1 has been removed from the room due to an affilliation change").arg(nickJid);
+				if (!s.mucItem().reason().isEmpty()) 
+					message += QString(" (%1)").arg(s.mucItem().reason());
+			}
+			else if (s.getMUCStatuses().contains(322)) {
+				// Remove due to members only
+				if (nick == d->self) {
+					mucInfoDialog(tr("Removed"), tr("You have been removed from the room because the room was made members only"), s.mucItem().actor(), s.mucItem().reason());
+					close();
+				}
 
-					if (!s.mucItem().reason().isEmpty()) 
-						message += QString(" (%1)").arg(s.mucItem().reason());
-					break;
-					
-				case 322:
-					// Remove due to members only
-					if (nick == d->self) {
-						mucInfoDialog(tr("Removed"), tr("You have been removed from the room because the room was made members only"), s.mucItem().actor(), s.mucItem().reason());
-						close();
-					}
+				if (!s.mucItem().actor().isEmpty())
+					message = tr("%1 has been removed from the room by %2 because the room was made members-only").arg(nickJid).arg(s.mucItem().actor().full());
+				else
+					message = tr("%1 has been removed from the room because the room was made members-only").arg(nickJid);
 
-					if (!s.mucItem().actor().isEmpty())
-						message = tr("%1 has been removed from the room by %2 because the room was made members-only").arg(nickJid).arg(s.mucItem().actor().full());
-					else
-						message = tr("%1 has been removed from the room because the room was made members-only").arg(nickJid);
-
-					if (!s.mucItem().reason().isEmpty()) 
-						message += QString(" (%1)").arg(s.mucItem().reason());
-					break;
-
-				default:
-					//contact leaving
-					message = tr("%1 has left the room").arg(nickJid);
-					if (!s.status().isEmpty())
-						message += QString(" (%1)").arg(s.status());
+				if (!s.mucItem().reason().isEmpty()) 
+					message += QString(" (%1)").arg(s.mucItem().reason());
+			}
+			else {
+				//contact leaving
+				message = tr("%1 has left the room").arg(nickJid);
+				if (!s.status().isEmpty())
+					message += QString(" (%1)").arg(s.status());
 			}
 			appendSysMsg(message, false, QDateTime::currentDateTime());
 		}
@@ -1360,7 +1418,10 @@ QString GCMainDlg::desiredCaption() const
 			cap += QString("[%1] ").arg(d->pending);
 		}
 	}
-	cap += jid().full();
+	if(jid().full().startsWith("auto_"))
+		cap += "Group Chat";
+	else
+		cap += jid().full();
 
 	return cap;
 }
@@ -1382,11 +1443,11 @@ void GCMainDlg::setLooks()
 	if (PsiOptions::instance()->getOption("options.ui.chat.central-toolbar").toBool()) {
 		ui_.toolbar->show();
 		ui_.tb_actions->hide();
-		ui_.tb_emoticons->hide();
+		//ui_.tb_emoticons->hide();
 	}
 	else {
 		ui_.toolbar->hide();
-		ui_.tb_emoticons->setVisible(PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool());
+		//ui_.tb_emoticons->setVisible(PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool());
 		ui_.tb_actions->show();
 	}
 
@@ -1501,6 +1562,10 @@ void GCMainDlg::buildMenu()
 	d->pm_settings->insertSeparator();
 
 	d->act_icon->addTo( d->pm_settings );
+
+	account()->psi()->tabChatsAction()->addTo( d->pm_settings );
+
+	d->act_invite->addTo( d->pm_settings );
 }
 
 void GCMainDlg::chatEditCreated()
@@ -1519,6 +1584,15 @@ TabbableWidget::State GCMainDlg::state() const
 int GCMainDlg::unreadMessageCount() const
 {
 	return d->pending;
+}
+
+const QString& GCMainDlg::getDisplayName()
+{
+	if(jid().full().startsWith("auto_"))
+		d->dispName = "Group Chat";
+	else
+		d->dispName = jid().full();
+	return d->dispName;
 }
 
 //----------------------------------------------------------------------------

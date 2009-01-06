@@ -66,7 +66,6 @@ int common_smallFontSize=0;
 
 bool useSound;
 
-
 QString CAP(const QString &str)
 {
 	return QString("%1: %2").arg(ApplicationInfo::name()).arg(str);
@@ -164,7 +163,7 @@ QString status2txt(int status)
 		case STATUS_INVISIBLE:  return QObject::tr("Invisible");
 
 		case STATUS_ONLINE:
-		default:                return QObject::tr("Online");
+		default:                return QObject::tr("Available");
 	}
 }
 
@@ -242,7 +241,7 @@ QString soundDetectPlayer()
 	}
 	// fallback to "play"
 	return "play";
-	
+
 }
 
 void soundPlay(const QString &s)
@@ -252,8 +251,8 @@ void soundPlay(const QString &s)
 		QApplication::beep();
 		return;
 	}
-	
-	if (QDir::isRelativePath(str)) {
+
+	if (!QDir::isRelativePath(str)) {
 		str = ApplicationInfo::resourcesDir() + "/" + str;
 	}
 
@@ -503,46 +502,44 @@ ToolbarPrefs::ToolbarPrefs()
 bool ToolbarPrefs::operator==(const ToolbarPrefs& other)
 {
 	return id == other.id &&
-	       name == other.name &&
-	       keys == other.keys &&
-	       dock == other.dock &&
-	       // dirty == other.dirty &&
-	       on == other.on &&
-	       locked == other.locked &&
-	       // stretchable == other.stretchable &&
-	       // index == other.index &&
-	       nl == other.nl;
-	       // extraOffset == other.extraOffset;
+	name == other.name &&
+	keys == other.keys &&
+	dock == other.dock &&
+	// dirty == other.dirty &&
+	on == other.on &&
+	locked == other.locked &&
+	// stretchable == other.stretchable &&
+	// index == other.index &&
+	nl == other.nl;
+	// extraOffset == other.extraOffset;
 }
 
-
-int versionStringToInt(const char* version)
-{
-	QString str = QString::fromLatin1(version);
-	QStringList parts = str.split('.', QString::KeepEmptyParts);
-	if (parts.count() != 3) {
-		return 0;
-	}
-
-	int versionInt = 0;
-	for (int n = 0; n < 3; ++n) {
-		bool ok;
-		int x = parts[n].toInt(&ok);
-		if (ok && x >= 0 && x <= 0xff) {
-			versionInt <<= 8;
-			versionInt += x;
-		} else {
-			return 0;
-		}
-	}
-	return versionInt;
-}
 
 int qVersionInt()
 {
 	static int out = -1;
+
 	if (out == -1) {
-		out = versionStringToInt(qVersion());
+		QString str = QString::fromLatin1(qVersion());
+		QStringList parts = str.split('.', QString::KeepEmptyParts);
+		if (parts.count() != 3) {
+			out = 0;
+			return out;
+		}
+
+		out = 0;
+		for (int n = 0; n < 3; ++n) {
+			bool ok;
+			int x = parts[n].toInt(&ok);
+			if (ok && x >= 0 && x <= 0xff) {
+				out <<= 8;
+				out += x;
+			} else {
+				out = 0;
+				return out;
+			}
+		}
 	}
+
 	return out;
 }

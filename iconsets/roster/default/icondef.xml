@@ -6,14 +6,9 @@
 	    <version>0.1</version>
  		<creation>2006-08-30</creation>
 		<author>Jason Kim (Base icon)</author>
-		<author www='http://el-tramo.be'>Remko Tronçon</author>
-		<author www='http://www.everaldo.com'>Everaldo Coelho (Base icons)</author>
-    <copyright>
-        The icons in this iconset are copyright by Remko Tronçon, and
-        are made available under the terms of Lesser General Public License.
-        They are based on the "Crystal project icons", copyright 2006-2007 
-        Everaldo Coelho, under the same license.
-    </copyright>
+		<author www='http://www.everaldo.com'>Everaldo Coelho (Overlay icons)</author>
+		<author jid='remko@el-tramo.be' email='remko@el-tramo.be'
+			www='http://el-tramo.be'>Remko Troncon (Packaging)</author>
 	</meta>
 
 	<!-- Normal status icons -->

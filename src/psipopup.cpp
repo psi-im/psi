@@ -240,7 +240,7 @@ PsiPopup::PsiPopup(PopupType type, PsiAccount *acc)
 
 	d->popupType = type;
 	PsiIcon *icon = 0;
-	QString text = "Psi: ";
+	QString text = "Barracuda: ";
 	bool doAlertIcon = false;
 
 	switch(type) {
@@ -371,9 +371,9 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
 	}
 
 	// show popup
-	if ( d->popupType != AlertHeadline && (d->popupType != AlertFile || !PsiOptions::instance()->getOption("options.ui.file-transfer.auto-popup").toBool()) )
+	if ( d->popupType != AlertHeadline && d->popupType != AlertChat && d->popupType != AlertMessage && (d->popupType != AlertFile || !PsiOptions::instance()->getOption("options.ui.file-transfer.auto-popup").toBool()) )
 		setData(icon, contactText);
-	else if ( d->popupType == AlertHeadline ) {
+	else if ( d->popupType == AlertHeadline || d->popupType == AlertChat || d->popupType == AlertMessage ) {
 		QVBoxLayout *vbox = new QVBoxLayout(0);
 		vbox->addLayout( d->createContactInfo(icon, contactText) );
 

@@ -18,16 +18,51 @@
  *
  */
 
-#include "serverinfomanager.h"
+#include "serverinfomanager_b.h"
 #include "xmpp_tasks.h"
 
 using namespace XMPP;
 
-ServerInfoManager::ServerInfoManager(Client* client) : client_(client)
+// use qobject for the private object so we can destruct it without having to
+//   define ~ServerInfoManager
+class ServerInfoManager::Private : public QObject
 {
+	Q_OBJECT
+
+public:
+	ServerInfoManager *q;
+
+	Client *client_;
+	QStringList items;
+	QString muc;
+	JT_DiscoInfo *curDisco;
+
+	Private(ServerInfoManager *parent = 0) : QObject(parent), q(parent), curDisco(0)
+	{
+	}
+
+	void tryDiscoEachItem()
+	{
+		if(items.isEmpty())
+			return;
+
+		Jid jid = items.takeFirst();
+
+		curDisco = new JT_DiscoInfo(client_->rootTask());
+		connect(curDisco, SIGNAL(finished()), q, SLOT(disco_finished()));
+		curDisco->get(jid);
+		curDisco->go(true);
+	}
+};
+
+ServerInfoManager::ServerInfoManager(Client* client)
+{
+	d = new Private(this);
+	d->client_ = client;
+
 	deinitialize();
-	connect(client_, SIGNAL(rosterRequestFinished(bool, int, const QString &)), SLOT(initialize()));
-	connect(client_, SIGNAL(disconnected()), SLOT(deinitialize()));
+	connect(d->client_, SIGNAL(rosterRequestFinished(bool, int, const QString &)), SLOT(initialize()));
+	connect(d->client_, SIGNAL(disconnected()), SLOT(deinitialize()));
 }
 
 void ServerInfoManager::reset()
@@ -38,10 +73,15 @@ void ServerInfoManager::reset()
 
 void ServerInfoManager::initialize()
 {
-	JT_DiscoInfo *jt = new JT_DiscoInfo(client_->rootTask());
+	JT_DiscoInfo *jt = new JT_DiscoInfo(d->client_->rootTask());
 	connect(jt, SIGNAL(finished()), SLOT(disco_finished()));
-	jt->get(client_->jid().domain());
+	jt->get(d->client_->jid().domain());
 	jt->go(true);
+
+	JT_DiscoItems *jti = new JT_DiscoItems(d->client_->rootTask());
+	connect(jti, SIGNAL(finished()), SLOT(disco_finished()));
+	jti->get(d->client_->jid().domain());
+	jti->go(true);
 }
 
 void ServerInfoManager::deinitialize()
@@ -60,14 +100,57 @@ bool ServerInfoManager::hasPEP() const
 	return hasPEP_;
 }
 
+QString ServerInfoManager::mucService() const
+{
+	return d->muc;
+}
+
 void ServerInfoManager::disco_finished()
 {
-	JT_DiscoInfo *jt = (JT_DiscoInfo *)sender();
+	JT_DiscoItems *jti = qobject_cast<JT_DiscoItems *>(sender());
+	if(jti) {
+		if(jti->success()) {
+			DiscoList items = jti->items();
+			d->items.clear();
+			foreach(const DiscoItem &i, items)
+				d->items += i.jid().full();
+
+			d->tryDiscoEachItem();
+		}
+
+		return;
+	}
+
+	JT_DiscoInfo *jt = qobject_cast<JT_DiscoInfo *>(sender());
+	if (jt == d->curDisco) {
+		d->curDisco = 0;
+
+		// Identities
+		DiscoItem item = jt->item();
+		DiscoItem::Identities is = item.identities();
+		bool isMuc = false;
+		bool isGateway = false;
+		foreach(DiscoItem::Identity i, is) {
+			//printf("item: jid=[%s], category=[%s], type=[%s]\n", qPrintable(item.jid().full()), qPrintable(i.category), qPrintable(i.type));
+			if (i.category == "conference" && i.type == "text")
+				isMuc = true;
+			else if (i.category == "gateway")
+				isGateway = true;
+		}
+
+		if(isMuc && !isGateway)
+			d->muc = item.jid().full();
+
+		d->tryDiscoEachItem();
+
+		return;
+	}
+
 	if (jt->success()) {
 		// Features
 		Features f = jt->item().features();
 		if (f.canMulticast())
-			multicastService_ = client_->jid().domain();
+			multicastService_ = d->client_->jid().domain();
 		// TODO: Remove this, this is legacy
 		if (f.test(QStringList("http://jabber.org/protocol/pubsub#pep")))
 			hasPEP_ = true;
@@ -82,3 +165,5 @@ void ServerInfoManager::disco_finished()
 		emit featuresChanged();
 	}
 }
+
+#include "serverinfomanager.moc"

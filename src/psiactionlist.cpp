@@ -59,7 +59,6 @@ private:
 
 private slots:
 	void optionsChanged();
-
 };
 
 PsiActionList::Private::Private(PsiActionList *_list, PsiCon *_psi)
@@ -116,30 +115,35 @@ void PsiActionList::Private::createCommon()
 void PsiActionList::Private::createMainWin()
 {
 	{
-		IconActionGroup *viewGroups = new IconActionGroup(this);
-		viewGroups->setMenuText(tr("View Groups"));
-		viewGroups->setWhatsThis(tr("Toggle visibility of special roster groups"));
-		viewGroups->setUsesDropDown(true);
-		viewGroups->setExclusive(false);
+		IconActionGroup *viewGroups = new IconActionGroup ( this );
+		viewGroups->setMenuText (tr("View Groups"));
+		viewGroups->setWhatsThis (tr("Toggle visibility of special roster groups"));
+		viewGroups->setUsesDropDown (true);
+		viewGroups->setExclusive (false);
 
-		IconAction *showOffline = new IconAction(tr("Show Offline Contacts"), "psi/show_offline", tr("Show Offline Contacts"), 0, viewGroups, 0, true);
-		showOffline->setWhatsThis(tr("Toggles visibility of offline contacts in roster"));
+		//IconAction *showOffline = new IconAction (tr("Show Offline Contacts"), "psi/show_offline", tr("Show Offline Contacts"), 0, viewGroups, 0, true);
+		IconAction *showOffline = new IconAction (tr("Show Offline Contacts"), tr("Show Offline Contacts"), 0, viewGroups, 0, true);
+		showOffline->setWhatsThis (tr("Toggles visibility of offline contacts in roster"));
 
-		IconAction *showAway = new IconAction(tr("Show Away/XA/DnD Contacts"), "psi/show_away", tr("Show Away/XA/DnD Contacts"), 0,
-		                                      PsiOptions::instance()->getOption("options.ui.menu.view.show-away").toBool() ? (QObject*)viewGroups : (QObject*)this, 0, true);
-		showAway->setWhatsThis(tr("Toggles visibility of away/xa/dnd contacts in roster"));
+		//IconAction *showAway = new IconAction (tr("Show Away/XA/DnD Contacts"), "psi/show_away", tr("Show Away/XA/DnD Contacts"), 0, viewGroups, 0, true);
+		IconAction *showAway = new IconAction (tr("Show Away/XA/DnD Contacts"), tr("Show Away/XA/DnD Contacts"), 0, viewGroups, 0, true);
+		showAway->setWhatsThis (tr("Toggles visibility of away/xa/dnd contacts in roster"));
 
-		IconAction *showHidden = new IconAction(tr("Show Hidden Contacts"), "psi/show_hidden", tr("Show Hidden Contacts"), 0, viewGroups, 0, true);
-		showHidden->setWhatsThis(tr("Toggles visibility of hidden contacts in roster"));
+		//IconAction *showHidden = new IconAction (tr("Show Hidden Contacts"), "psi/show_hidden", tr("Show Hidden Contacts"), 0, viewGroups, 0, true);
+		IconAction *showHidden = new IconAction (tr("Show Hidden Contacts"), tr("Show Hidden Contacts"), 0, viewGroups, 0, true);
+		showHidden->setWhatsThis (tr("Toggles visibility of hidden contacts in roster"));
 
-		IconAction *showAgents = new IconAction(tr("Show Agents/Transports"), "psi/disco", tr("Show Agents/Transports"), 0, viewGroups, 0, true);
-		showAgents->setWhatsThis(tr("Toggles visibility of agents/transports in roster"));
+		//IconAction *showAgents = new IconAction (tr("Show Agents/Transports"), "psi/disco", tr("Show Agents/Transports"), 0, viewGroups, 0, true);
+		IconAction *showAgents = new IconAction (tr("Show Agents/Transports"), tr("Show Agents/Transports"), 0, viewGroups, 0, true);
+		showAgents->setWhatsThis (tr("Toggles visibility of agents/transports in roster"));
 
-		IconAction *showSelf = new IconAction(tr("Show Self Contact"), "psi/show_self", tr("Show Self Contact"), 0, viewGroups, 0, true);
-		showSelf->setWhatsThis(tr("Toggles visibility of self contact in roster"));
+		//IconAction *showSelf = new IconAction (tr("Show Self Contact"), "psi/show_self", tr("Show Self Contact"), 0, viewGroups, 0, true);
+		IconAction *showSelf = new IconAction (tr("Show Self Contact"), tr("Show Self Contact"), 0, viewGroups, 0, true);
+		showSelf->setWhatsThis (tr("Toggles visibility of self contact in roster"));
 
-		IconAction *showStatusMsg = new IconAction(tr("Show Status Messages"), "psi/statusmsg", tr("Show Status Messages"), 0, viewGroups, 0, true);
-		showSelf->setWhatsThis(tr("Toggles visibility of status messages of contacts"));
+		//IconAction *showStatusMsg = new IconAction (tr("Show Status Messages"), "psi/statusmsg", tr("Show Status Messages"), 0, viewGroups, 0, true);
+		IconAction *showStatusMsg = new IconAction (tr("Show Status Messages"), tr("Show Status Messages"), 0, viewGroups, 0, true);
+		showSelf->setWhatsThis (tr("Toggles visibility of status messages of contacts"));
 
 		ActionNames actions[] = {
 			{ "view_groups",  viewGroups  },
@@ -152,14 +156,14 @@ void PsiActionList::Private::createMainWin()
 			{ "", 0 }
 		};
 
-		createActionList(tr("Show Contacts"), Actions_MainWin, actions);
+		createActionList( tr( "Show Contacts" ), Actions_MainWin, actions );
 	}
 
 	{
-		PopupAction *optionsButton = new PopupAction (tr("&Psi"), 0, this, "optionsButton");
+		PopupAction *optionsButton = new PopupAction (tr("&Barracuda"), 0, this, "optionsButton");
 		optionsButton->setWhatsThis (tr("The main Psi button, that provides access to many actions"));
 		optionsButton->setSizePolicy ( QSizePolicy( QSizePolicy::Maximum, QSizePolicy::Preferred ) );
-		optionsButton->setIcon ( IconsetFactory::iconPtr("psi/main"), false );
+		//optionsButton->setIcon ( IconsetFactory::iconPtr("psi/main"), false );
 
 		PopupAction *statusButton = new PopupAction (tr("&Status"), 0, this, "statusButton");
 		statusButton->setWhatsThis (tr("Provides a convenient way to change and to get information about current status"));
@@ -182,13 +186,16 @@ void PsiActionList::Private::createMainWin()
 	{
 		IconAction *add_act = 0;
 		if (!PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool())
-			add_act = new MAction(IconsetFactory::icon("psi/addContact"), tr("&Add a contact"), 0, psi, this);
+			//add_act = new MAction(IconsetFactory::icon("psi/addContact"), tr("&Add a contact"), 0, psi, this);
+			add_act = new MAction(PsiIcon(), tr("&Add a contact"), 0, psi, this);
 
-		IconAction *lw_act = new MAction(IconsetFactory::icon("psi/xml"), tr("&XML Console"), 2, psi, this);
+		//IconAction *lw_act = new MAction(IconsetFactory::icon("psi/xml"), tr("&XML Console"), 2, psi, this);
+		IconAction *lw_act = new MAction(PsiIcon(), tr("&XML Console"), 2, psi, this);
 
 		IconAction *actDisco = 0;
 		if(!PsiOptions::instance()->getOption("options.ui.contactlist.disable-service-discovery").toBool())
-			actDisco = new MAction(IconsetFactory::icon("psi/disco"), tr("Service &Discovery"), 3, psi, this);
+			//actDisco = new MAction(IconsetFactory::icon("psi/disco"), tr("Service &Discovery"), 3, psi, this);
+			actDisco = new MAction(PsiIcon(), tr("Service &Discovery"), 3, psi, this);
 
 //		IconAction *actReadme = new IconAction (tr("ReadMe"), tr("&ReadMe"), 0, this);
 //		actReadme->setWhatsThis (tr("Show Read Me file"));
@@ -205,29 +212,60 @@ void PsiActionList::Private::createMainWin()
 //		IconAction *actBugReport = new IconAction (tr("Report a Bug"), tr("Report a &Bug"), 0, this);
 //		actBugReport->setWhatsThis (tr("Report a Bug"));
 
-		IconAction *actNewMessage = new IconAction (tr("New blank message"), "psi/sendMessage", tr("New &blank message"), 0, this);
-		IconAction *actJoinGroupchat = new IconAction (tr("Join Groupchat"), "psi/groupChat", tr("Join &Groupchat"), 0, this);
-		IconAction *actAccountSetup = new IconAction (tr("Account Setup"), "psi/account", tr("Acc&ount Setup"), 0, this);
+		//IconAction *actNewMessage = new IconAction (tr("New Multi Message"), "psi/sendMessage", tr("New &Multi Message"), 0, this);
+		IconAction *actNewMessage = new IconAction (tr("New Multi Message"), tr("New &Multi Message"), 0, this);
+		//IconAction *actJoinGroupchat = new IconAction (tr("Join/Create Group Chat"), "psi/groupChat", tr("Join/Create &Group Chat"), 0, this);
+		IconAction *actJoinGroupchat = new IconAction (tr("Join/Create Group Chat"), tr("Join/Create &Group Chat"), 0, this);
+		IconAction *actAccountSetup = 0;
+		//actAccountSetup = new IconAction (tr("Account Setup"), "psi/account", tr("Acc&ount Setup"), 0, this);
+		actAccountSetup = new IconAction (tr("Account Setup"), tr("Acc&ount Setup"), 0, this);
+		IconAction *actOptions = 0;
+		//actOptions = new IconAction (tr("Preferences"), "psi/options", tr("&Preferences"), 0, this);
+		actOptions = new IconAction (tr("Preferences"), tr("&Preferences"), 0, this);
+		//IconAction *actToolbars = new IconAction(tr("Configure Toolbars"), "psi/toolbars", tr("Configure Tool&bars"), 0, this);
+		IconAction *actToolbars = new IconAction(tr("Configure Toolbars"), tr("Configure Tool&bars"), 0, this);
+		IconAction *actChangeProfile = 0;
+		//actChangeProfile = new IconAction (tr("Change Profile"), "psi/profile", tr("&Change profile"), 0, this);
+		actChangeProfile = new IconAction (tr("Change Profile"), tr("&Change profile"), 0, this);
 
-		IconAction *actOptions = new IconAction (tr("Options"), "psi/options", tr("&Options"), 0, this);
-		actOptions->setMenuRole(QAction::PreferencesRole);
-
-		IconAction *actToolbars = new IconAction(tr("Configure Toolbars"), "psi/toolbars", tr("Configure Tool&bars"), 0, this);
-		IconAction *actChangeProfile = new IconAction (tr("Change Profile"), "psi/profile", tr("&Change profile"), 0, this);
-
-		IconAction *actPlaySounds = new IconAction (tr("Play sounds"), "psi/playSounds", tr("Play &sounds"), 0, this, 0, true);
+		//IconAction *actPlaySounds = new IconAction (tr("Play sounds"), "psi/playSounds", tr("Play &sounds"), 0, this, 0, true);
+		IconAction *actPlaySounds = new IconAction (tr("Play sounds"), tr("Play &sounds"), 0, this, 0, true);
 		actPlaySounds->setWhatsThis (tr("Toggles whether sound should be played or not"));
 		
-		IconAction *actQuit = new IconAction (tr("Quit"), "psi/quit", tr("&Quit"), 0, this);
-		actQuit->setMenuRole(QAction::QuitRole);
+		//IconAction *actQuit = new IconAction (tr("Quit"), "psi/quit", tr("&Quit"), 0, this);
+		IconAction *actQuit = new IconAction (tr("Quit"), tr("&Quit"), 0, this);
 		actQuit->setWhatsThis (tr("Quits Psi"));
 
-		IconAction *actTip = new IconAction (tr("Tip of the Day"), "psi/tip", tr("&Tip of the Day"), 0, this);
+		//IconAction *actTip = new IconAction (tr("Tip of the Day"), "psi/tip", tr("&Tip of the Day"), 0, this);
+		IconAction *actTip = new IconAction (tr("Tip of the Day"), tr("&Tip of the Day"), 0, this);
 		actTip->setWhatsThis (tr("See many useful tips"));
 
 		// TODO: probably we want to lock down filetransfer, right?
-		IconAction *actFileTrans = new IconAction (tr("Transfer Manager"), "psi/filemanager", tr("Trans&fer Manager"), 0, this);
+		//IconAction *actFileTrans = new IconAction (tr("Transfer Manager"), "psi/filemanager", tr("Trans&fer Manager"), 0, this);
+		IconAction *actFileTrans = new IconAction (tr("Transfer Manager"), tr("Trans&fer Manager"), 0, this);
 		actFileTrans->setWhatsThis (tr("Opens the Transfer Manager dialog"));
+
+		//IconAction *actLogOn = new IconAction (tr("Log On"), "psi/xxxx", tr("&Log On"), 0, this);
+		IconAction *actLogOn = new IconAction (tr("Log On"), tr("&Log On"), 0, this);
+		//IconAction *actLogOff = new IconAction (tr("Log Off"), "psi/xxxx", tr("Log &Off"), 0, this);
+		IconAction *actLogOff = new IconAction (tr("Log Off"), tr("Log &Off"), 0, this);
+		//IconAction *actAccountModify = new IconAction (tr("Account Settings"), "psi/account", tr("&Account Settings"), 0, this);
+		IconAction *actAccountModify = new IconAction (tr("Account Settings"), tr("&Account Settings"), 0, this);
+		//IconAction *actEditVCard = new IconAction (tr("Edit Personal Details"), "psi/xxxx", tr("Edit Personal &Details"), 0, this);
+		IconAction *actEditVCard = new IconAction (tr("Edit Personal Details"), tr("Edit Personal &Details"), 0, this);
+		//IconAction *actLinkHistory = new IconAction (tr("Message History"), "psi/xxxx", tr("Message &History"), 0, this);
+		IconAction *actLinkHistory = new IconAction (tr("Message History"), tr("Message &History"), 0, this);
+		//IconAction *actLinkPassword = new IconAction (tr("Change Password"), "psi/xxxx", tr("Change &Password"), 0, this);
+		IconAction *actLinkPassword = new IconAction (tr("Change Password"), tr("Change &Password"), 0, this);
+		//IconAction *actRegAim = new IconAction (tr("AIM"), "psi/aim", tr("&AIM"), 0, this);
+		IconAction *actRegAim = new IconAction (tr("AIM"), tr("&AIM"), 0, this);
+		//IconAction *actRegMsn = new IconAction (tr("MSN"), "psi/msn", tr("&MSN"), 0, this);
+		IconAction *actRegMsn = new IconAction (tr("MSN"), tr("&MSN"), 0, this);
+		//IconAction *actRegYahoo = new IconAction (tr("Yahoo"), "psi/yahoo", tr("&Yahoo"), 0, this);
+		IconAction *actRegYahoo = new IconAction (tr("Yahoo"), tr("&Yahoo"), 0, this);
+		//IconAction *actRegIcq = new IconAction (tr("ICQ"), "psi/icq", tr("&ICQ"), 0, this);
+		IconAction *actRegIcq = new IconAction (tr("ICQ"), tr("&ICQ"), 0, this);
+		IconAction *actTransports = new IconAction (tr("Public IM Accounts"), tr("&Public IM Accounts"), 0, this);
 
 		ActionNames actions[] = {
 			{ "menu_disco",           actDisco         },
@@ -242,6 +280,17 @@ void PsiActionList::Private::createMainWin()
 			{ "menu_change_profile",  actChangeProfile },
 			{ "menu_play_sounds",     actPlaySounds    },
 			{ "menu_quit",            actQuit          },
+			{ "log_on",               actLogOn         },
+			{ "log_off",              actLogOff        },
+			{ "menu_account_modify",  actAccountModify },
+			{ "menu_edit_vcard",      actEditVCard     },
+			{ "link_history",         actLinkHistory   },
+			{ "link_password",        actLinkPassword  },
+			{ "reg_aim",              actRegAim        },
+			{ "reg_msn",              actRegMsn        },
+			{ "reg_yahoo",            actRegYahoo      },
+			{ "reg_icq",              actRegIcq        },
+			{ "reg_trans",            actTransports    },
 			{ "", 0 }
 		};
 
@@ -250,7 +299,8 @@ void PsiActionList::Private::createMainWin()
 
 #ifdef USE_PEP
 	{
-		IconAction *actPublishTune = new IconAction (tr("Publish tune"), "psi/publishTune", tr("Publish &tune"), 0, this, 0, true);
+		//IconAction *actPublishTune = new IconAction (tr("Publish tune"), "psi/publishTune", tr("Publish &tune"), 0, this, 0, true);
+		IconAction *actPublishTune = new IconAction (tr("Publish tune"), tr("Publish &tune"), 0, this, 0, true);
 		actPublishTune->setWhatsThis (tr("Toggles whether the currently playing tune should be published or not."));
 
 		ActionNames actions[] = {
@@ -319,7 +369,8 @@ void PsiActionList::Private::createMainWin()
 		IconAction *actReadme = new IconAction (tr("ReadMe"), tr("&ReadMe"), 0, this);
 		actReadme->setWhatsThis (tr("Show Read Me file"));
 
-		IconAction *actTip = new IconAction (tr("Tip of the Day"), "psi/tip", tr("&Tip of the Day"), 0, this);
+		//IconAction *actTip = new IconAction (tr("Tip of the Day"), "psi/tip", tr("&Tip of the Day"), 0, this);
+		IconAction *actTip = new IconAction (tr("Tip of the Day"), tr("&Tip of the Day"), 0, this);
 		actTip->setWhatsThis (tr("See many useful tips"));
 
 		IconAction *actOnlineHelp = new IconAction (tr("User Guide (Online)"), tr("&User Guide (Online)"), 0, this);
@@ -337,11 +388,10 @@ void PsiActionList::Private::createMainWin()
 		IconAction *actBugReport = new IconAction (tr("Report a Bug (Online)"), tr("Report a &Bug (Online)"), 0, this);
 		actBugReport->setWhatsThis (tr("Report a Bug (Online)"));
 
-		IconAction *actAbout = new IconAction (tr("About"), "psi/logo_16", tr("&About"), 0, this);
-		actAbout->setMenuRole(QAction::AboutRole);
+		//IconAction *actAbout = new IconAction (tr("About"), "psi/logo_16", tr("&About"), 0, this);
+		IconAction *actAbout = new IconAction (tr("About"), tr("&About"), 0, this);
 
 		IconAction *actAboutQt = new IconAction (tr("About Qt"), tr("About &Qt"), 0, this);
-		actAboutQt->setMenuRole(QAction::AboutQtRole);
 
 		IconAction *actDiagQCAPlugin = new IconAction (tr("Security Plugins"), tr("Security &Plugins"), 0, this);
 

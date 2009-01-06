@@ -1,8 +1,8 @@
 <qconf>
-  <name>Psi</name>
+  <name>Barracuda</name>
   <profile>psi.pro</profile>
-  <sharename>psi</sharename>
   <moddir>qcm</moddir>
+  <moddir>psi/qcm</moddir>
   <datadir/>
   <dep type='qt4'>
     <required/>
@@ -19,20 +19,20 @@
     <disabled/>  
   </dep>
   <dep type='certstore'>
-	<required/>
+    <required/>
   </dep>
-  <dep type='qdbus'/>
+  <!-- <dep type='qdbus'/> -->
   <dep type='growl'/>
   <dep type='xss'/>
   <dep type='ghbnr'/>
   <dep type='aspell'/>
   <dep type='tests'>
-    <disabled/>
+     <disabled/>
   </dep>
   <dep type='debug'>
-	<required/>
+     <required/>
   </dep>
   <dep type='conf'>
-	<required/>
+     <required/>
   </dep>
 </qconf>

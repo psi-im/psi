@@ -1,25 +1,27 @@
-INCLUDEPATH *= $$PWD
-DEPENDPATH *= $$PWD
+PSIDIR_PRV = $$PWD/../../psi/src/privacy
+
+INCLUDEPATH *= $$PWD $$PSIDIR_PRV
+DEPENDPATH *= $$PWD $$PSIDIR_PRV
 
 HEADERS += \
- 	$$PWD/privacylistitem.h \
- 	$$PWD/privacylist.h \
- 	$$PWD/privacylistmodel.h \
- 	$$PWD/privacylistblockedmodel.h \
- 	$$PWD/privacymanager.h \
- 	$$PWD/psiprivacymanager.h \
- 	$$PWD/privacydlg.h \
- 	$$PWD/privacyruledlg.h
+ 	$$PSIDIR_PRV/privacylistitem.h \
+ 	$$PWD/privacylist_b.h \
+ 	$$PSIDIR_PRV/privacylistmodel.h \
+ 	$$PSIDIR_PRV/privacylistblockedmodel.h \
+ 	$$PSIDIR_PRV/privacymanager.h \
+ 	$$PWD/psiprivacymanager_b.h \
+ 	$$PSIDIR_PRV/privacydlg.h \
+ 	$$PSIDIR_PRV/privacyruledlg.h
 
 SOURCES += \
- 	$$PWD/privacylistitem.cpp \
+ 	$$PSIDIR_PRV/privacylistitem.cpp \
  	$$PWD/privacylist.cpp \
- 	$$PWD/privacylistmodel.cpp \
- 	$$PWD/privacylistblockedmodel.cpp \
+ 	$$PSIDIR_PRV/privacylistmodel.cpp \
+ 	$$PSIDIR_PRV/privacylistblockedmodel.cpp \
  	$$PWD/psiprivacymanager.cpp \
- 	$$PWD/privacydlg.cpp \
- 	$$PWD/privacyruledlg.cpp
+ 	$$PSIDIR_PRV/privacydlg.cpp \
+ 	$$PSIDIR_PRV/privacyruledlg.cpp
 
 INTERFACES += \
-	$$PWD/privacy.ui \
-	$$PWD/privacyrule.ui
+	$$PSIDIR_PRV/privacy.ui \
+	$$PSIDIR_PRV/privacyrule.ui

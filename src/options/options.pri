@@ -1,61 +1,62 @@
+PSIDIR_OPT = $$PWD/../../psi/src/options
+
 # base dialog stuff
 HEADERS += \
-	$$PWD/optionsdlg.h \
-	$$PWD/optionstab.h 
+	$$PSIDIR_OPT/optionsdlg.h \
+	$$PSIDIR_OPT/optionstab.h 
 SOURCES += \
-	$$PWD/optionstab.cpp \
+	$$PSIDIR_OPT/optionstab.cpp \
 	$$PWD/optionsdlg.cpp 
 INTERFACES += \
-	$$PWD/ui_options.ui
+	$$PSIDIR_OPT/ui_options.ui
 
 
 # additional tabs
 HEADERS += \
-	$$PWD/opt_application.h \
-	$$PWD/opt_chat.h \
-	$$PWD/opt_events.h \
-	$$PWD/opt_status.h \
-	$$PWD/opt_appearance.h \
-	$$PWD/opt_iconset.h \
-	$$PWD/opt_groupchat.h \
-	$$PWD/opt_sound.h \
-	$$PWD/opt_toolbars.h \
-	$$PWD/opt_advanced.h \
-	$$PWD/opt_shortcuts.h
-
-HEADERS += $$PWD/opt_tree.h
+	$$PWD/opt_application_b.h \
+	$$PSIDIR_OPT/opt_chat.h \
+	$$PSIDIR_OPT/opt_events.h \
+	$$PSIDIR_OPT/opt_status.h \
+	$$PSIDIR_OPT/opt_appearance.h \
+	$$PSIDIR_OPT/opt_iconset.h \
+	$$PSIDIR_OPT/opt_groupchat.h \
+	$$PSIDIR_OPT/opt_sound.h \
+	$$PSIDIR_OPT/opt_toolbars.h \
+	$$PSIDIR_OPT/opt_advanced.h \
+	$$PSIDIR_OPT/opt_shortcuts.h \
+	$$PSIDIR_OPT/opt_tree.h
 
 SOURCES += \
 	$$PWD/opt_application.cpp \
-	$$PWD/opt_chat.cpp \
+	$$PSIDIR_OPT/opt_chat.cpp \
 	$$PWD/opt_events.cpp \
 	$$PWD/opt_status.cpp \
 	$$PWD/opt_appearance.cpp \
 	$$PWD/opt_iconset.cpp \
-	$$PWD/opt_groupchat.cpp \
+	$$PSIDIR_OPT/opt_groupchat.cpp \
 	$$PWD/opt_sound.cpp \
-	$$PWD/opt_toolbars.cpp \
-	$$PWD/opt_advanced.cpp \
-	$$PWD/opt_shortcuts.cpp
+	$$PSIDIR_OPT/opt_toolbars.cpp \
+	$$PSIDIR_OPT/opt_advanced.cpp \
+	$$PSIDIR_OPT/opt_shortcuts.cpp \
+	$$PSIDIR_OPT/opt_tree.cpp
 
-SOURCES += $$PWD/opt_tree.cpp
 
 INTERFACES += \
 	$$PWD/opt_application.ui \
-	$$PWD/opt_chat.ui \
+	$$PSIDIR_OPT/opt_chat.ui \
 	$$PWD/opt_events.ui \
 	$$PWD/opt_status.ui \
-	$$PWD/opt_appearance.ui \
-	$$PWD/opt_appearance_misc.ui \
-	$$PWD/opt_sound.ui \
-	$$PWD/opt_advanced.ui \
-	$$PWD/opt_lookfeel_toolbars.ui \
-	$$PWD/ui_isdetails.ui \
-	$$PWD/opt_iconset_emo.ui \
-	$$PWD/opt_iconset_system.ui \
-	$$PWD/opt_iconset_roster.ui \
-	$$PWD/opt_general_groupchat.ui \
-	$$PWD/opt_shortcuts.ui
+	$$PSIDIR_OPT/opt_appearance.ui \
+	$$PSIDIR_OPT/opt_appearance_misc.ui \
+	$$PSIDIR_OPT/opt_sound.ui \
+	$$PSIDIR_OPT/opt_advanced.ui \
+	$$PSIDIR_OPT/opt_lookfeel_toolbars.ui \
+	$$PSIDIR_OPT/ui_isdetails.ui \
+	$$PSIDIR_OPT/opt_iconset_emo.ui \
+	$$PSIDIR_OPT/opt_iconset_system.ui \
+	$$PSIDIR_OPT/opt_iconset_roster.ui \
+	$$PSIDIR_OPT/opt_general_groupchat.ui \
+	$$PSIDIR_OPT/opt_shortcuts.ui
 
 psi_plugins {
 	INTERFACES += $$PWD/opt_plugins.ui
@@ -63,5 +64,5 @@ psi_plugins {
 	HEADERS += $$PWD/opt_plugins.h
 }
 
-INCLUDEPATH += $$PWD
-DEPENDPATH  += $$PWD
+INCLUDEPATH += $$PWD $$PSIDIR_OPT
+DEPENDPATH  += $$PWD $$PSIDIR_OPT

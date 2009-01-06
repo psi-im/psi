@@ -1,0 +1,42 @@
+Iris XMPP Library
+-----------------
+Date: August 24th, 2008
+Website: http://delta.affinix.com/iris/
+Mailing List: Delta Project <delta@lists.affinix.com>
+
+
+Install
+-------
+  First, build Iris:
+
+    Unix:
+      qconf
+      ./configure
+      make
+
+    Windows:
+      copy conf_win.pri.example conf_win.pri
+      copy confapp_win.pri.example confapp_win.pri
+      qmake
+      make (or nmake)
+
+  There is no installation.  Just include iris.pri in your qmake project.
+  Iris requires Qt 4.2 or greater and QCA 2.0 or greater.
+
+
+License
+-------
+  This library is licensed under the Lesser GNU General Public License.  See
+  the COPYING file for more information.
+
+
+Description
+-----------
+
+  Iris is a comprehensive library for working with the XMPP/Jabber protocol.
+  It complies with the XMPP RFCs and many XEPs.
+
+  In addition to XMPP, Iris also offers access to many other protocols and
+  concepts, including DNS, DNS-SD, connection and transport abstraction, HTTP,
+  SOCKS, XML streaming, network interfaces, compression, encryption,
+  authentication, flow control, proxies, and NAT traversal.

@@ -1,15 +1,12 @@
 <ui version="4.0" >
- <author></author>
- <comment></comment>
- <exportmacro></exportmacro>
  <class>OptApplication</class>
  <widget class="QWidget" name="OptApplication" >
   <property name="geometry" >
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>294</width>
-    <height>500</height>
+    <width>305</width>
+    <height>237</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -25,81 +22,131 @@
    <item>
     <widget class="QCheckBox" name="ck_alwaysOnTop" >
      <property name="text" >
-      <string>Roster window always on top</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="ck_autoRosterSize" >
-     <property name="text" >
-      <string>Auto-resize contact list</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="ck_keepSizes" >
-     <property name="text" >
-      <string>Remember window sizes</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="ck_useleft" >
-     <property name="enabled" >
-      <bool>true</bool>
-     </property>
-     <property name="text" >
-      <string>Use left-click for menu</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="ck_showMenubar" >
-     <property name="text" >
-      <string>Show menubar</string>
+      <string>Contacts window always on top</string>
      </property>
     </widget>
    </item>
    <item>
     <widget class="QCheckBox" name="ck_docklet" >
      <property name="text" >
-      <string>Enable docklet</string>
-     </property>
-     <property name="checked" >
-      <bool>true</bool>
+      <string>Enable system tray icon</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="gb_docklet" >
-     <property name="title" >
-      <string>Docklet</string>
+    <layout class="QHBoxLayout" >
+     <property name="margin" >
+      <number>0</number>
      </property>
-     <layout class="QVBoxLayout" >
+     <property name="spacing" >
+      <number>6</number>
+     </property>
+     <item>
+      <spacer>
+       <property name="orientation" >
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType" >
+        <enum>QSizePolicy::Fixed</enum>
+       </property>
+       <property name="sizeHint" >
+        <size>
+         <width>16</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="ck_dockHideMW" >
+       <property name="text" >
+        <string>Hide contacts window on startup</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="gb_opacity" >
+     <property name="title" >
+      <string>Transparency</string>
+     </property>
+     <layout class="QGridLayout" >
       <property name="margin" >
-       <number>10</number>
+       <number>8</number>
       </property>
       <property name="spacing" >
        <number>6</number>
       </property>
-      <item>
-       <widget class="QCheckBox" name="ck_dockDCstyle" >
-        <property name="text" >
-         <string>Use &quot;double-click&quot; style (like Mirabilis ICQ)</string>
+      <item row="1" column="1" >
+       <widget class="QSlider" name="sl_chatdlgtrans" >
+        <property name="minimum" >
+         <number>0</number>
+        </property>
+        <property name="maximum" >
+         <number>90</number>
+        </property>
+        <property name="orientation" >
+         <enum>Qt::Horizontal</enum>
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QCheckBox" name="ck_dockHideMW" >
+      <item row="1" column="2" >
+       <widget class="QLabel" name="lb_chatdlgop_val" >
+        <property name="minimumSize" >
+         <size>
+          <width>30</width>
+          <height>0</height>
+         </size>
+        </property>
         <property name="text" >
-         <string>Hide roster window on startup</string>
+         <string>0</string>
+        </property>
+        <property name="alignment" >
+         <set>Qt::AlignCenter</set>
         </property>
        </widget>
       </item>
-      <item>
-       <widget class="QCheckBox" name="ck_dockToolMW" >
+      <item row="0" column="1" >
+       <widget class="QSlider" name="sl_rostertrans" >
+        <property name="minimum" >
+         <number>0</number>
+        </property>
+        <property name="maximum" >
+         <number>90</number>
+        </property>
+        <property name="orientation" >
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0" >
+       <widget class="QLabel" name="lb_rosterop" >
         <property name="text" >
-         <string>Make roster window a &quot;tool-window&quot;</string>
+         <string>Contacts window:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2" >
+       <widget class="QLabel" name="lb_rosterop_val" >
+        <property name="minimumSize" >
+         <size>
+          <width>30</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="text" >
+         <string>0</string>
+        </property>
+        <property name="alignment" >
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" >
+       <widget class="QLabel" name="lb_chatdlgop" >
+        <property name="text" >
+         <string>Chat window:</string>
         </property>
        </widget>
       </item>
@@ -107,73 +154,56 @@
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" >
-     <property name="margin" >
-      <number>0</number>
+    <widget class="QCheckBox" name="ck_scrollTo" >
+     <property name="text" >
+      <string>Scroll contact list to contact on event</string>
      </property>
-     <property name="spacing" >
-      <number>6</number>
-     </property>
-     <item>
-      <widget class="QLabel" name="textLabel1" >
-       <property name="text" >
-        <string>Data transfer port:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="le_dtPort" >
-       <property name="minimumSize" >
-        <size>
-         <width>56</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="maximumSize" >
-        <size>
-         <width>56</width>
-         <height>32767</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <spacer>
-       <property name="orientation" >
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType" >
-        <enum>QSizePolicy::Expanding</enum>
-       </property>
-       <property name="sizeHint" >
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-    </layout>
+    </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" >
-     <property name="margin" >
-      <number>0</number>
+    <widget class="QCheckBox" name="ck_ignoreHeadline" >
+     <property name="text" >
+      <string>Ignore "Headline" events (e.g. MSN alerts)</string>
      </property>
-     <property name="spacing" >
-      <number>6</number>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox12" >
+     <property name="title" >
+      <string>Fonts</string>
      </property>
-     <item>
-      <widget class="QLabel" name="textLabel2" >
-       <property name="text" >
-        <string>Data transfer external address:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="le_dtExternal" />
-     </item>
-    </layout>
+     <layout class="QGridLayout" >
+      <property name="margin" >
+       <number>8</number>
+      </property>
+      <property name="spacing" >
+       <number>6</number>
+      </property>
+      <item row="0" column="1" colspan="3" >
+       <widget class="FontLabel" name="le_fChat" />
+      </item>
+      <item row="0" column="0" >
+       <widget class="QLabel" name="tl_fChat" >
+        <property name="enabled" >
+         <bool>true</bool>
+        </property>
+        <property name="text" >
+         <string>Chat/Message</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="4" >
+       <widget class="QPushButton" name="pb_fChat" >
+        <property name="enabled" >
+         <bool>true</bool>
+        </property>
+        <property name="text" >
+         <string>Choose</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
    </item>
   </layout>
  </widget>
@@ -181,17 +211,71 @@
  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
  <tabstops>
   <tabstop>ck_alwaysOnTop</tabstop>
-  <tabstop>ck_autoRosterSize</tabstop>
-  <tabstop>ck_keepSizes</tabstop>
-  <tabstop>ck_useleft</tabstop>
-  <tabstop>ck_showMenubar</tabstop>
   <tabstop>ck_docklet</tabstop>
-  <tabstop>ck_dockDCstyle</tabstop>
   <tabstop>ck_dockHideMW</tabstop>
-  <tabstop>ck_dockToolMW</tabstop>
-  <tabstop>le_dtPort</tabstop>
-  <tabstop>le_dtExternal</tabstop>
+  <tabstop>sl_rostertrans</tabstop>
+  <tabstop>sl_chatdlgtrans</tabstop>
+  <tabstop>ck_scrollTo</tabstop>
+  <tabstop>ck_ignoreHeadline</tabstop>
  </tabstops>
  <resources/>
- <connections/>
+ <customwidgets>
+  <customwidget>
+   <class>FontLabel</class>
+   <extends></extends>
+   <header>../../psi/src/options/opt_appearance.h</header>
+   <container>0</container>
+   <pixmap></pixmap>
+  </customwidget>
+ </customwidgets>
+ <connections>
+  <connection>
+   <sender>ck_docklet</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>ck_dockHideMW</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>69</x>
+     <y>49</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>101</x>
+     <y>72</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>sl_rostertrans</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>lb_rosterop_val</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>185</x>
+     <y>129</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>274</x>
+     <y>132</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>sl_chatdlgtrans</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>lb_chatdlgop_val</receiver>
+   <slot>setNum(int)</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>201</x>
+     <y>151</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>269</x>
+     <y>151</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

@@ -18,7 +18,8 @@
  *
  */
 
-#include "mainwin_p.h"
+// this file is forked only to include mainwin_p_b.h
+#include "mainwin_p_b.h"
 
 #include <qapplication.h>
 #include <qstyle.h>
@@ -125,7 +126,7 @@ void PopupActionButton::setLabel(QString lbl)
 
 void PopupActionButton::update()
 {
-	if(qVersionInt() >= 0x040300)
+	/*if(qVersionInt() >= 0x040300)
 	{
 		if((showText && !label.isEmpty()) && styleSheet().isEmpty()) {
 			setStyleSheet("text-align: left");
@@ -133,7 +134,7 @@ void PopupActionButton::update()
 		else if((!showText || label.isEmpty()) && styleSheet() == "text-align: left") {
 			setStyleSheet(QString());
 		}
-	}
+	}*/
 
 	if (showText) {
 		QPushButton::setText(label);
