@@ -2,7 +2,6 @@
   <name>Barracuda</name>
   <profile>psi.pro</profile>
   <moddir>qcm</moddir>
-  <moddir>psi/qcm</moddir>
   <datadir/>
   <dep type='qt4'>
     <required/>

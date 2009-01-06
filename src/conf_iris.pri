@@ -11,7 +11,7 @@ CONFIG += no_tests
 # use qca from psi if necessary
 qca-static {
 	DEFINES += QCA_STATIC
-	INCLUDEPATH += $$PWD/../psi/third-party/qca/qca/include/QtCrypto
+	INCLUDEPATH += $$PWD/../third-party/qca/qca/include/QtCrypto
 }
 else {
 	CONFIG += crypto
@@ -19,7 +19,7 @@ else {
 
 # use zlib from psi if necessary
 psi-zip {
-	INCLUDEPATH += $$PWD/../psi/src/tools/zip/minizip/win32
+	INCLUDEPATH += $$PWD/../src/tools/zip/minizip/win32
 }
 
 mac {

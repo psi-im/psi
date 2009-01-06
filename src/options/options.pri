@@ -1,4 +1,4 @@
-PSIDIR_OPT = $$PWD/../../psi/src/options
+PSIDIR_OPT = $$PWD/../../src/options
 
 # base dialog stuff
 HEADERS += \

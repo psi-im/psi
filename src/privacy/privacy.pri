@@ -1,4 +1,4 @@
-PSIDIR_PRV = $$PWD/../../psi/src/privacy
+PSIDIR_PRV = $$PWD/../../src/privacy
 
 INCLUDEPATH *= $$PWD $$PSIDIR_PRV
 DEPENDPATH *= $$PWD $$PSIDIR_PRV

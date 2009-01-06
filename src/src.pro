@@ -22,8 +22,8 @@ qt-static {
 # Import several very useful Makefile targets 
 # as well as set up default directories for 
 # generated files
-include(../psi/qa/valgrind/valgrind.pri)
-include(../psi/qa/oldtest/unittest.pri)
+include(../qa/valgrind/valgrind.pri)
+include(../qa/oldtest/unittest.pri)
 
 # qconf
 
@@ -72,7 +72,7 @@ windows {
 # IPv6 ?
 #DEFINES += NO_NDNS
 
-PSIDIR = $$PWD/../psi
+PSIDIR = $$PWD/..
 INCLUDEPATH += $$PSIDIR/src
 
 # Psi sources

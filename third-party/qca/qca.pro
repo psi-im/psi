@@ -1,4 +1,4 @@
-PSIDIR_TP = ../../psi/third-party
+PSIDIR_TP = ../../third-party
 
 TEMPLATE = lib
 QT      -= gui

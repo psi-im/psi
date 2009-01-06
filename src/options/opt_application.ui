@@ -223,7 +223,7 @@
   <customwidget>
    <class>FontLabel</class>
    <extends></extends>
-   <header>../../psi/src/options/opt_appearance.h</header>
+   <header>../../src/options/opt_appearance.h</header>
    <container>0</container>
    <pixmap></pixmap>
   </customwidget>

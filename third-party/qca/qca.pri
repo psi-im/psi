@@ -1,4 +1,4 @@
-PSIDIR_TP = $$PWD/../../psi/third-party
+PSIDIR_TP = $$PWD/../../third-party
 
 INCLUDEPATH += $$PSIDIR_TP/qca/qca/include/QtCrypto
 LIBS += -L$$PWD -lqca_psi
