@@ -12,12 +12,14 @@ JT_CudaLogin::JT_CudaLogin(Task *parent)
 {
 }
 
-void JT_CudaLogin::get(const Jid &jid)
+void JT_CudaLogin::get(const Jid &jid, const QString &target)
 {
 	j = jid;
 	iq = createIQ(doc(), "get", "loginbot", id());
 	QDomElement query = doc()->createElement("query");
 	query.setAttribute("xmlns", "http://barracudanetworks.com/protocol/cudalogin");
+	if(!target.isEmpty())
+		query.appendChild(textTag(doc(), "target", target));
 	iq.appendChild(query);
 }
 
@@ -31,6 +33,7 @@ bool JT_CudaLogin::take(const QDomElement &x)
 	if(!iqVerify(x, "loginbot", id()))
 		return false;
 
+	// TODO: confirm namespace
 	if(x.attribute("type") == "result") {
 		for(QDomNode n = x.firstChild(); !n.isNull(); n = n.nextSibling()) {
 			QDomElement i = n.toElement();
@@ -151,7 +154,33 @@ bool JT_GetClientVersion::take(const QDomElement &x)
 	if(!iqVerify(x, jid_clientupgrader, ""))
 		return false;
 
-	if(x.attribute("type") == "result") {
+	if(x.attribute("type") == "set") {
+		QDomElement q = queryTag(x);
+		if(!q.isNull() && q.attribute("xmlns") == "http://barracuda.com/xmppextensions/upgrade") {
+			for(QDomNode n = q.firstChild(); !n.isNull(); n = n.nextSibling()) {
+				QDomElement i = n.toElement();
+				if(i.isNull())
+					continue;
+
+				if(i.tagName() == "version") {
+					v_ver = tagContent(i);
+				}
+				else if(i.tagName() == "url") {
+					Url url;
+					url.type = i.attribute("type");
+					url.url = tagContent(i);
+					v_urls += url;
+				}
+			}
+
+			setSuccess();
+		}
+		else {
+			//setError(x);
+			return false;
+		}
+	}
+	else if(x.attribute("type") == "result") {
 		for(QDomNode n = x.firstChild(); !n.isNull(); n = n.nextSibling()) {
 			QDomElement i = n.toElement();
 			if(i.isNull())

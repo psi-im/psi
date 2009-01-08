@@ -8,7 +8,7 @@ class JT_CudaLogin : public Task
 public:
 	JT_CudaLogin(Task *);
 
-	void get(const Jid &);
+	void get(const Jid &, const QString &target = QString());
 	void onGo();
 	bool take(const QDomElement &);
 
@@ -45,6 +45,13 @@ class JT_GetClientVersion : public Task
 {
 	Q_OBJECT
 public:
+	class Url
+	{
+	public:
+		QString type;
+		QString url;
+	};
+
 	JT_GetClientVersion(Task *);
 
 	void get(const Jid &);
@@ -66,6 +73,7 @@ private:
 
 	Jid j;
 	QString v_name, v_ver, v_os, v_updater, v_ssl, v_message, v_message_title, v_port;
+	QList<Url> v_urls;
 };
 
 }
