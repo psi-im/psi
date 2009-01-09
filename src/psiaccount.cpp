@@ -163,6 +163,60 @@ struct GCContact
 	Status status;
 };
 
+static QList<int> version_as_intparts(const QString &in)
+{
+	QList<int> out;
+
+	QStringList parts = in.split('.');
+	foreach(const QString &s, parts)
+		out += s.toInt();
+
+	return out;
+}
+
+static QList<int> version_intparts_expand(const QList<int> &in, int num)
+{
+	if(in.count() < num)
+	{
+		// pad up to the desired amount with zeros
+		QList<int> out = in;
+		int addcount = num - in.count();
+		for(int n = 0; n < addcount; ++n)
+			out += 0;
+		return out;
+	}
+	else if(in.count() > num)
+	{
+		// take only the desired amount from the input
+		QList<int> out;
+		for(int n = 0; n < num; ++n)
+			out += in[n];
+		return out;
+	}
+	else // == num
+		return in;
+}
+
+static int compare_versions(const QString &a, const QString &b)
+{
+	QList<int> aparts = version_as_intparts(a);
+	QList<int> bparts = version_as_intparts(b);
+	if(aparts.count() > bparts.count())
+		bparts = version_intparts_expand(bparts, aparts.count());
+	else if(bparts.count() > aparts.count())
+		aparts = version_intparts_expand(aparts, bparts.count());
+
+	for(int n = 0; n < aparts.count(); ++n)
+	{
+		if(aparts[n] < bparts[n])
+			return -1;
+		else if(aparts[n] > bparts[n])
+			return 1;
+	}
+
+	return 0;
+}
+
 //----------------------------------------------------------------------------
 // DisclaimerManager
 //----------------------------------------------------------------------------
@@ -451,6 +505,7 @@ public:
 	// ###cuda
 	QString disclaimer;
 	JT_GetClientVersion *jgcv;
+	JT_PushGetClientVersion *jpgcv;
 	JT_GetDisclaimer *jgdis;
 	HttpProxyGetStream *http;
 	int http_total;
@@ -646,7 +701,7 @@ public:
 	// ###cuda
 	void checkUpgrade()
 	{
-		if(jgcv)
+		/*if(jgcv)
 			return;
 
 		// Make sure this client version is the latest
@@ -656,7 +711,7 @@ public:
 		// Tell the upgrader bot which version we're on
 		Jid jid_clientupgrader = Jid("clientupgrader");
 		jgcv->get(jid_clientupgrader);
-		jgcv->go(true);
+		jgcv->go(true);*/
 	}
 
 	void checkDisclaimer()
@@ -692,6 +747,46 @@ public:
 				out += c;
 		}
 		return out;
+	}
+
+	bool downloadStart(const QString &url)
+	{
+		QUrl qurl(url);
+
+		if(qurl.scheme() != "http" && qurl.scheme() != "https")
+			return false;
+
+		bool use_ssl = (qurl.scheme() == "https") ? true : false;
+
+		downloadStart(qurl.host(), qurl.port(80), qurl.path(), use_ssl);
+		return true;
+	}
+
+	void downloadStart(const QString &host, int port, const QString &resource, bool use_ssl)
+	{
+		// perform http download of upgrader file
+		http = new HttpProxyGetStream;
+		connect(http, SIGNAL(handshaken()), SLOT(http_handshaken()));
+		connect(http, SIGNAL(dataReady(const QByteArray &)), SLOT(http_dataReady(const QByteArray &)));
+		connect(http, SIGNAL(finished()), SLOT(http_finished()));
+		connect(http, SIGNAL(error(int)), SLOT(http_error(int)));
+		http_total = 0;
+		http->get(host, port, resource, use_ssl);
+
+		QString localName = QApplication::applicationDirPath();
+#if defined(Q_OS_WIN)
+		localName += "/barracuda-upgrade.exe";
+#elif defined(Q_OS_MAC)
+		localName += "/barracuda-upgrade-mac";
+#else
+		localName += "/barracuda-upgrade-lin";
+#endif
+		http_file.setFileName(localName);
+
+		download_progress = new QProgressDialog("Downloading upgrade...", "Abort Upgrade", 0, 0);
+		download_progress->setAttribute(Qt::WA_DeleteOnClose, true);
+		connect(download_progress, SIGNAL(canceled()), this, SLOT(userCancelled()));
+		download_progress->show();
 	}
 
 private slots:
@@ -733,8 +828,6 @@ private slots:
 
 			int n = QMessageBox::information(0, update_message_title, update_message, tr("&Yes"), tr("&No"));
 			if(n == 0) {
-				// perform http download of upgrader file
-
 				int port = 8000;
 				int x = j->port().toInt();
 				if(x >= 1 && x <= 65535)
@@ -744,28 +837,7 @@ private slots:
 				if(j->ssl() == "yes")
 					use_ssl = true;
 
-				http = new HttpProxyGetStream;
-				connect(http, SIGNAL(handshaken()), SLOT(http_handshaken()));
-				connect(http, SIGNAL(dataReady(const QByteArray &)), SLOT(http_dataReady(const QByteArray &)));
-				connect(http, SIGNAL(finished()), SLOT(http_finished()));
-				connect(http, SIGNAL(error(int)), SLOT(http_error(int)));
-				http_total = 0;
-				http->get(acc.host, port, j->updater(), use_ssl);
-
-				QString localName = QApplication::applicationDirPath();
-#if defined(Q_OS_WIN)
-				localName += "/barracuda-upgrade.exe";
-#elif defined(Q_OS_MAC)
-				localName += "/barracuda-upgrade-mac";
-#else
-				localName += "/barracuda-upgrade-lin";
-#endif
-				http_file.setFileName(localName);
-
-				download_progress = new QProgressDialog("Downloading upgrade...", "Abort Upgrade", 0, 0);
-				download_progress->setAttribute(Qt::WA_DeleteOnClose, true);
-				connect(download_progress, SIGNAL(canceled()), this, SLOT(userCancelled()));
-				download_progress->show();
+				downloadStart(acc.host, port, j->updater(), use_ssl);
 			}
 		}
 	}
@@ -865,7 +937,7 @@ private slots:
 	{
 		JT_CudaLogin *j = (JT_CudaLogin *)sender();
 		if(j->success()) {
-			DesktopUtil::openUrl( j->url() + "&primary_tab=PREFERENCES&secondary_tab=pu_security" );
+			DesktopUtil::openUrl( j->url() );
 		}
 	}
 
@@ -873,7 +945,15 @@ private slots:
 	{
 		JT_CudaLogin *j = (JT_CudaLogin *)sender();
 		if(j->success()) {
-			DesktopUtil::openUrl( j->url() + "&primary_tab=LOGGING/REPORTING&secondary_tab=my_logs" );
+			DesktopUtil::openUrl( j->url() );
+		}
+	}
+
+	void gotoDownload()
+	{
+		JT_CudaLogin *j = (JT_CudaLogin *)sender();
+		if(j->success()) {
+			DesktopUtil::openUrl( j->url() );
 		}
 	}
 
@@ -886,6 +966,95 @@ private slots:
 		w->setIncoming(sess);
 		w->show();
 #endif
+	}
+
+	void push_newVersion(const QString &version, const QList<JT_PushGetClientVersion::Url> &urls)
+	{
+		// is there an upgrader url?
+		QString upgradeUrl;
+		foreach(const JT_PushGetClientVersion::Url &url, urls)
+		{
+			if(url.type == "upgrade")
+			{
+				upgradeUrl = url.url;
+				break;
+			}
+		}
+
+		// if our version is greater than what we're being asked to
+		//   change to, then it is considered a downgrade.  otherwise
+		//   it is considered an upgrade (yes, even if we're instructed
+		//   to download an equal version).
+		bool isDowngrade = false;
+		if(compare_versions(ApplicationInfo::version(), version) > 0)
+			isDowngrade = true;
+
+		QString update_message;
+		QString update_message_title;
+
+		if(!upgradeUrl.isEmpty())
+		{
+			if(isDowngrade) {
+				update_message = tr(
+				"Your system administrator has recommended that you\n"
+				"downgrade the version of the Barracuda IM client you are using.\n"
+				"Would you like to downgrade now?\n"
+				"\n"
+				"Downgrading will shut down the currently running client\n"
+				"and begin the update process.");
+			}
+			else {
+				update_message = tr(
+				"Your system administrator has recommended that you\n"
+				"update the version of the Barracuda IM client you are using.\n"
+				"Would you like to update now?\n"
+				"\n"
+				"Updating will shut down the currently running client\n"
+				"and begin the update process.");
+			}
+
+			update_message_title = tr(
+				"Client Update Recommended");
+		}
+		else
+		{
+			if(isDowngrade) {
+				update_message = tr(
+				"Your system administrator has recommended that you\n"
+				"downgrade the version of the Barracuda IM client you are using.\n"
+				"\n"
+				"The recommended version is %1.\n"
+				"\n"
+				"Would you like to be taken to the web site where\n"
+				"you can download it?").arg(version);
+			}
+			else {
+				update_message = tr(
+				"Your system administrator has recommended that you\n"
+				"update the version of the Barracuda IM client you are using.\n"
+				"\n"
+				"The recommended version is %1.\n"
+				"\n"
+				"Would you like to be taken to the web site where\n"
+				"you can download it?").arg(version);
+			}
+
+			update_message_title = tr(
+				"Client Update Recommended");
+		}
+
+		int n = QMessageBox::information(0, update_message_title, update_message, tr("&Yes"), tr("&No"));
+		if(n == 0) {
+			if(!upgradeUrl.isEmpty()) {
+				downloadStart(upgradeUrl);
+			}
+			else {
+				JT_CudaLogin *jcv = new JT_CudaLogin(client->rootTask());
+				connect(jcv, SIGNAL(finished()), SLOT(gotoDownload()));
+				jcv->get(jid, "download");
+				jcv->go(true);
+			}
+		}
 	}
 
 public:
@@ -1033,6 +1202,9 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	d->keep_file = false;
 	if(cuda_isThemed())
 		d->deleteUpgrader();
+
+	d->jpgcv = new JT_PushGetClientVersion(d->client->rootTask());
+	connect(d->jpgcv, SIGNAL(newVersion(const QString &, const QList<JT_PushGetClientVersion::Url> &)), d, SLOT(push_newVersion(const QString &, const QList<JT_PushGetClientVersion::Url> &)));
 
 	setSendChatState(PsiOptions::instance()->getOption("options.messages.send-composing-events").toBool());
 
@@ -5503,7 +5675,7 @@ void PsiAccount::doGotoWebPass()
 
 	JT_CudaLogin *jcv = new JT_CudaLogin(d->client->rootTask());
 	connect(jcv, SIGNAL(finished()), d, SLOT(gotoWebPass()));
-	jcv->get(d->jid);
+	jcv->get(d->jid, "password");
 	jcv->go(true);
 }
 
@@ -5514,7 +5686,7 @@ void PsiAccount::doGotoWebHistory()
 
 	JT_CudaLogin *jcv = new JT_CudaLogin(d->client->rootTask());
 	connect(jcv, SIGNAL(finished()), d, SLOT(gotoWebHistory()));
-	jcv->get(d->jid);
+	jcv->get(d->jid, "log");
 	jcv->go(true);
 }
 

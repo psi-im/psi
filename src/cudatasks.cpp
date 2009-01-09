@@ -154,33 +154,7 @@ bool JT_GetClientVersion::take(const QDomElement &x)
 	if(!iqVerify(x, jid_clientupgrader, ""))
 		return false;
 
-	if(x.attribute("type") == "set") {
-		QDomElement q = queryTag(x);
-		if(!q.isNull() && q.attribute("xmlns") == "http://barracuda.com/xmppextensions/upgrade") {
-			for(QDomNode n = q.firstChild(); !n.isNull(); n = n.nextSibling()) {
-				QDomElement i = n.toElement();
-				if(i.isNull())
-					continue;
-
-				if(i.tagName() == "version") {
-					v_ver = tagContent(i);
-				}
-				else if(i.tagName() == "url") {
-					Url url;
-					url.type = i.attribute("type");
-					url.url = tagContent(i);
-					v_urls += url;
-				}
-			}
-
-			setSuccess();
-		}
-		else {
-			//setError(x);
-			return false;
-		}
-	}
-	else if(x.attribute("type") == "result") {
+	if(x.attribute("type") == "result") {
 		for(QDomNode n = x.firstChild(); !n.isNull(); n = n.nextSibling()) {
 			QDomElement i = n.toElement();
 			if(i.isNull())
@@ -259,6 +233,47 @@ const QString & JT_GetClientVersion::port() const
 const QString & JT_GetClientVersion::os() const
 {
 	return v_os;
+}
+
+//----------------------------------------------------------------------------
+// JT_PushGetClientVersion
+//----------------------------------------------------------------------------
+JT_PushGetClientVersion::JT_PushGetClientVersion(Task *parent)
+:Task(parent)
+{
+}
+
+bool JT_PushGetClientVersion::take(const QDomElement &e)
+{
+	if(e.attribute("type") == "set") {
+		QDomElement q = queryTag(e);
+		if(!q.isNull() && q.attribute("xmlns") == "http://barracuda.com/xmppextensions/upgrade") {
+			QString ver;
+			QList<Url> urls;
+			for(QDomNode n = q.firstChild(); !n.isNull(); n = n.nextSibling()) {
+				QDomElement i = n.toElement();
+				if(i.isNull())
+					continue;
+
+				if(i.tagName() == "version") {
+					ver = tagContent(i);
+				}
+				else if(i.tagName() == "url") {
+					Url url;
+					url.type = i.attribute("type");
+					url.url = tagContent(i);
+					urls += url;
+				}
+			}
+
+			emit newVersion(ver, urls);
+
+			send(createIQ(doc(), "result", e.attribute("from"), e.attribute("id")));
+			return true;
+		}
+	}
+
+	return false;
 }
 
 }
