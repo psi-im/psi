@@ -23,6 +23,11 @@ include($$PWD/tools/contactlist/contactlist.pri)
 include($$PWD/tools/grepshortcutkeydlg/grepshortcutkeydlg.pri)
 include($$PWD/tools/atomicxmlfile/atomicxmlfile.pri)
 
+!isEmpty(PSIMEDIA_DIR) {
+	DEFINES += AVCALL
+	include($$PWD/avcall/avcall.pri)
+}
+
 # Growl
 mac {
 	contains(DEFINES, HAVE_GROWL) {
