@@ -1264,7 +1264,6 @@ public slots:
 
 		connect(producer.audioRtpChannel(), SIGNAL(readyRead()), SLOT(rtp_audio_readyRead()));
 
-		sid = randomCredential(16);
 		contentList.clear();
 		if(pAudio)
 		{
@@ -1464,6 +1463,7 @@ void JingleRtpSession::connectToJid(const XMPP::Jid &jid)
 {
 	d->jid = jid;
 	d->init_jid = d->manager->d->pa->client()->jid();
+	d->sid = randomCredential(16);
 	d->start_send();
 }
 
