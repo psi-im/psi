@@ -994,7 +994,10 @@ public:
 	QString sid;
 	QList<RtpContent> contentList;
 	bool prov_accepted;
+	bool sent_local_candidates;
 	QList<Ice176::Candidate> localCandidates;
+	QString remoteUser, remotePass;
+	QList<Ice176::Candidate> remoteCandidates;
 	bool transmitAudio, transmitVideo, transmitting;
 	bool receiveAudio, receiveVideo;
 
@@ -1011,6 +1014,7 @@ public:
 		producer(this),
 		receiver(this),
 		prov_accepted(false),
+		sent_local_candidates(false),
 		transmitAudio(false),
 		transmitVideo(false),
 		transmitting(false),
@@ -1065,12 +1069,14 @@ public:
 		if(!localCandidates.isEmpty())
 		{
 			RtpContent c;
-			c.name = "A";
+			c.name = contentList[0].name;
 			c.trans.user = ice->localUfrag();
 			c.trans.pass = ice->localPassword();
 			c.trans.candidates = localCandidates;
 			localCandidates.clear();
 			sendTransportInfo(c);
+
+			applyPendingRemoteCandidates();
 		}
 
 		transmit();
@@ -1079,6 +1085,8 @@ public:
 
 	void sendTransportInfo(const RtpContent &content)
 	{
+		sent_local_candidates = true;
+
 		JT_JingleRtp *jt = new JT_JingleRtp(manager->d->pa->client()->rootTask());
 		jt->transportInfo(jid, init_jid, sid, QList<RtpContent>() << content);
 		jt->go(true);
@@ -1088,16 +1096,50 @@ public:
 	{
 		printf("getTransportInfo: %d\n", contentList.count());
 
-		// FIXME: assumes on content type that exists
-		ice->setPeerUfrag(contentList[0].trans.user);
-		ice->setPeerPassword(contentList[0].trans.pass);
-		ice->addRemoteCandidates(contentList[0].trans.candidates);
+		if(contentList.isEmpty())
+			return;
+
+		if(sent_local_candidates)
+		{
+			ice->setPeerUfrag(contentList[0].trans.user);
+			ice->setPeerPassword(contentList[0].trans.pass);
+			ice->addRemoteCandidates(contentList[0].trans.candidates);
+		}
+		else
+		{
+			printf("got transport-info before we initialized our ice engine, queuing for later.\n");
+			remoteUser = contentList[0].trans.user;
+			remotePass = contentList[0].trans.pass;
+			remoteCandidates += contentList[0].trans.candidates;
+		}
 	}
 
 	void incomingAccept(const QList<RtpContent> &contentList)
 	{
 		Q_UNUSED(contentList);
 		emit q->activated();
+	}
+
+	void applyPendingRemoteCandidates()
+	{
+		if(!remoteUser.isEmpty())
+		{
+			ice->setPeerUfrag(remoteUser);
+			remoteUser.clear();
+		}
+
+		if(!remotePass.isEmpty())
+		{
+			ice->setPeerPassword(remotePass);
+			remotePass.clear();
+		}
+
+		if(!remoteCandidates.isEmpty())
+		{
+			printf("applying queued remote candidates.\n");
+			ice->addRemoteCandidates(remoteCandidates);
+			remoteCandidates.clear();
+		}
 	}
 
 public slots:
@@ -1264,11 +1306,23 @@ public slots:
 
 		connect(producer.audioRtpChannel(), SIGNAL(readyRead()), SLOT(rtp_audio_readyRead()));
 
+		QString a_name, v_name;
+		if(incoming)
+		{
+			// FIXME
+			a_name = contentList[0].name;
+		}
+		else
+		{
+			a_name = "A";
+			v_name = "V";
+		}
+
 		contentList.clear();
 		if(pAudio)
 		{
 			RtpContent c;
-			c.name = "A";
+			c.name = a_name;
 			c.desc.media = "audio";
 			c.desc.info += *pAudio;
 			contentList += c;
@@ -1276,7 +1330,7 @@ public slots:
 		if(pVideo)
 		{
 			RtpContent c;
-			c.name = "V";
+			c.name = v_name;
 			c.desc.media = "video";
 			c.desc.info += *pVideo;
 			contentList += c;
@@ -1375,11 +1429,13 @@ public slots:
 		if(prov_accepted)
 		{
 			RtpContent c;
-			c.name = "A";
+			c.name = contentList[0].name;
 			c.trans.user = ice->localUfrag();
 			c.trans.pass = ice->localPassword();
 			c.trans.candidates = list;
 			sendTransportInfo(c);
+
+			applyPendingRemoteCandidates();
 		}
 		else
 			localCandidates += list;
@@ -1411,7 +1467,7 @@ public slots:
 			// FIXME: add the used candidates for each component
 
 			JT_JingleRtp *jt = new JT_JingleRtp(manager->d->pa->client()->rootTask());
-			jt->transportInfo(jid, init_jid, sid, list);
+			jt->accept(jid, init_jid, sid, list);
 			jt->go(true);
 		}
 	}
@@ -1451,6 +1507,7 @@ JingleRtpSession::~JingleRtpSession()
 		d->manager->d->sess_in = 0;
 	else
 		d->manager->d->sess_out = 0;
+
 	delete d;
 }
 
@@ -1475,7 +1532,15 @@ void JingleRtpSession::accept()
 void JingleRtpSession::reject()
 {
 	if(d->incoming)
-		d->manager->d->reject_in();
+	{
+		if(!d->jid.isEmpty())
+		{
+			if(!d->prov_accepted)
+				d->manager->d->push_task->respondSuccess(d->jid, d->iq_id);
+			else
+				d->manager->d->reject_in();
+		}
+	}
 	else
 		d->manager->d->reject_out();
 }

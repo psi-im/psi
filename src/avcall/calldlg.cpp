@@ -67,7 +67,7 @@ private slots:
 
 	void cancel_clicked()
 	{
-		if(incoming && !active)
+		//if(incoming && !active)
 			sess->reject();
 		q->close();
 	}
