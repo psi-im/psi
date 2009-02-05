@@ -1251,19 +1251,23 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		}
 
 		// Voice call
+#ifdef AVCALL
+		if(!isAgent) {
+#else
 		if(d->pa->voiceCaller() && !isAgent) {
+#endif
 			pm.insertItem(IconsetFactory::icon("psi/voice").icon(), tr("Voice Call"), 24);
 			if(!online) {
 				pm.setItemEnabled(24, false);
 			}
-			else {
+			/*else {
 				bool hasVoice = false;
 				const UserResourceList &rl = u->userResourceList();
 				for (UserResourceList::ConstIterator it = rl.begin(); it != rl.end() && !hasVoice; ++it) {
 					hasVoice = psiAccount()->capsManager()->features(u->jid().withResource((*it).name())).canVoice();
 				}
 				pm.setItemEnabled(24,!psiAccount()->capsManager()->isEnabled() || hasVoice);
-			}
+			}*/
 		}
 		
 		if(!isAgent) {

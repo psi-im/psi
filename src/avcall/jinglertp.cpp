@@ -3,6 +3,7 @@
 #include <QtCore>
 #include <QtNetwork>
 #include <QtGui>
+#include <QtCrypto>
 #include "psimedia.h"
 #include "ui_config.h"
 #include "xmpp_client.h"
@@ -10,6 +11,29 @@
 #include "xmpp_xmlcommon.h"
 #include "psiaccount.h"
 #include "iris/ice176.h"
+
+static QChar randomPrintableChar()
+{
+	// 0-25 = a-z
+	// 26-51 = A-Z
+	// 52-61 = 0-9
+
+	uchar c = QCA::Random::randomChar() % 62;
+	if(c <= 25)
+		return 'a' + c;
+	else if(c <= 51)
+		return 'A' + (c - 26);
+	else
+		return '0' + (c - 52);
+}
+
+static QString randomCredential(int len)
+{
+	QString out;
+	for(int n = 0; n < len; ++n)
+		out += randomPrintableChar();
+	return out;
+}
 
 static QDomElement candidateToElement(QDomDocument *doc, const XMPP::Ice176::Candidate &c)
 {
@@ -20,7 +44,10 @@ static QDomElement candidateToElement(QDomDocument *doc, const XMPP::Ice176::Can
 	if(!c.id.isEmpty())
 		e.setAttribute("id", c.id);
 	e.setAttribute("ip", c.ip.toString());
-	e.setAttribute("network", QString::number(c.network));
+	if(c.network != -1)
+		e.setAttribute("network", QString::number(c.network));
+	else // weird?
+		e.setAttribute("network", QString::number(0));
 	e.setAttribute("port", QString::number(c.port));
 	e.setAttribute("priority", QString::number(c.priority));
 	e.setAttribute("protocol", c.protocol);
@@ -753,19 +780,20 @@ public:
 	}
 };
 
-/*class JT_PushJingleRtp : public Task
+class RtpPush
+{
+public:
+	Jid from;
+	QString sid;
+	QList<RtpContent> contentList;
+	QString iq_id;
+};
+
+class JT_PushJingleRtp : public Task
 {
 	Q_OBJECT
 
 public:
-	Jid from;
-	QString from_id;
-
-	QString peer_ipAddr;
-	int peer_portA;
-	int peer_portV;
-	QString peer_config;
-
 	JT_PushJingleRtp(Task *parent) :
 		Task(parent)
 	{
@@ -775,16 +803,9 @@ public:
 	{
 	}
 
-	void respondSuccess(const Jid &to, const QString &id, const QString &ipAddr, int portA, int portV, const QString &config)
+	void respondSuccess(const Jid &to, const QString &id)
 	{
 		QDomElement iq = createIQ(doc(), "result", to.full(), id);
-		QDomElement query = doc()->createElement("request");
-		query.setAttribute("xmlns", "http://barracuda.com/xjingle");
-		query.appendChild(textTag(doc(), "address", ipAddr));
-		query.appendChild(textTag(doc(), "audioBasePort", QString::number(portA)));
-		query.appendChild(textTag(doc(), "videoBasePort", QString::number(portV)));
-		query.appendChild(textTag(doc(), "config", config));
-		iq.appendChild(query);
 		send(iq);
 	}
 
@@ -805,55 +826,127 @@ public:
 		if(e.attribute("type") != "set")
 			return false;
 
-		QDomNodeList nl = e.elementsByTagName("request");
-		QDomElement r;
-		if(nl.count() > 0)
-			r = nl.item(0).toElement();
-		if(!r.isNull())
+		QDomElement je;
+		for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling())
 		{
-			from = e.attribute("from");
-			from_id = e.attribute("id");
+			if(!n.isElement())
+				continue;
 
-			QDomElement i;
+			QDomElement e = n.toElement();
+			if(e.tagName() == "jingle" && e.attribute("xmlns") == "urn:xmpp:jingle:0")
+			{
+				je = e;
+				break;
+			}
+		}
 
-			i = r.elementsByTagName("address").item(0).toElement();
-			peer_ipAddr = i.text();
-			i = r.elementsByTagName("audioBasePort").item(0).toElement();
-			peer_portA = i.text().toInt();
-			i = r.elementsByTagName("videoBasePort").item(0).toElement();
-			peer_portV = i.text().toInt();
-			i = r.elementsByTagName("config").item(0).toElement();
-			peer_config = i.text();
+		if(je.isNull())
+			return false;
 
-			emit incomingRequest();
+		Jid from = e.attribute("from");
+		QString iq_id = e.attribute("id");
+
+		QString action = je.attribute("action");
+		if(action != "session-initiate" && action != "transport-info" && action != "session-accept" && action != "session-terminate")
+		{
+			respondError(from, iq_id, 400, QString());
 			return true;
 		}
 
-		nl = e.elementsByTagName("terminate");
-		r = QDomElement();
-		if(nl.count() > 0)
-			r = nl.item(0).toElement();
-		if(!r.isNull())
-		{
-			from = e.attribute("from");
-			from_id = e.attribute("id");
+		RtpPush push;
+		push.from = from;
+		push.iq_id = iq_id;
+		push.sid = je.attribute("sid");
 
-			emit incomingTerminate();
+		if(action == "session-terminate")
+		{
+			emit incomingTerminate(push);
 			return true;
 		}
+
+		for(QDomNode n = je.firstChild(); !n.isNull(); n = n.nextSibling())
+		{
+			if(!n.isElement())
+				continue;
+
+			QDomElement e = n.toElement();
+			printf("child: [%s]\n", qPrintable(e.tagName()));
+			if(e.tagName() != "content")
+				continue;
+
+			RtpContent c;
+			c.name = e.attribute("name");
+
+			for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling())
+			{
+				if(!n.isElement())
+					continue;
+
+				QDomElement e = n.toElement();
+				printf("  child: [%s]\n", qPrintable(e.tagName()));
+				if(e.tagName() == "description" && e.attribute("xmlns") == "urn:xmpp:jingle:apps:rtp:1")
+				{
+					c.desc.media = e.attribute("media");
+
+					for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling())
+					{
+						if(!n.isElement())
+							continue;
+
+						QDomElement e = n.toElement();
+						printf("    child: [%s]\n", qPrintable(e.tagName()));
+						PsiMedia::PayloadInfo pi = elementToPayloadInfo(e);
+						if(!pi.isNull())
+							c.desc.info += pi;
+					}
+				}
+				else if(e.tagName() == "transport" && e.attribute("xmlns") == "urn:xmpp:jingle:transports:ice-udp:0")
+				{
+					c.trans.user = e.attribute("ufrag");
+					c.trans.pass = e.attribute("pwd");
+
+					for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling())
+					{
+						if(!n.isElement())
+							continue;
+
+						QDomElement e = n.toElement();
+						printf("    child: [%s]\n", qPrintable(e.tagName()));
+						Ice176::Candidate ic = elementToCandidate(e);
+						if(!ic.type.isEmpty())
+							c.trans.candidates += ic;
+					}
+				}
+				else
+				{
+					respondError(from, iq_id, 400, QString());
+					return true;
+				}
+			}
+
+			push.contentList += c;
+		}
+
+		if(action == "session-initiate")
+			emit incomingInitiate(push);
+		else if(action == "transport-info")
+			emit incomingTransportInfo(push);
+		else // session-accept
+			emit incomingAccept(push);
 
 		return true;
 	}
 
 signals:
-	void incomingRequest();
-	void incomingTerminate();
-};*/
+	void incomingInitiate(const RtpPush &push);
+	void incomingTransportInfo(const RtpPush &push);
+	void incomingAccept(const RtpPush &push);
+	void incomingTerminate(const RtpPush &push);
+};
 
 //----------------------------------------------------------------------------
 // JingleRtpSession
 //----------------------------------------------------------------------------
-#if 0
 class JingleRtpManagerPrivate : public QObject
 {
 	Q_OBJECT
@@ -871,15 +964,17 @@ public:
 	JingleRtpManagerPrivate(PsiAccount *_pa, JingleRtpManager *_q);
 	~JingleRtpManagerPrivate();
 
-	void connectToJid(const Jid &jid, const QString &config);
+	void connectToJid(const Jid &jid, const QString &sid, const QList<RtpContent> &contentList);
 	void accept();
 	void reject_in();
 	void reject_out();
 
 private slots:
 	void task_finished();
-	void push_task_incomingRequest();
-	void push_task_incomingTerminate();
+	void push_task_incomingInitiate(const RtpPush &push);
+	void push_task_incomingTransportInfo(const RtpPush &push);
+	void push_task_incomingAccept(const RtpPush &push);
+	void push_task_incomingTerminate(const RtpPush &push);
 };
 
 class JingleRtpSessionPrivate : public QObject
@@ -891,37 +986,42 @@ public:
 
 	bool incoming;
 	JingleRtpManager *manager;
-	int selfBasePort;
-	QHostAddress target;
-	int audioBasePort, videoBasePort;
-	QString receive_config;
-	XMPP::Jid jid;
-	PsiMedia::Producer producer;
-	PsiMedia::Receiver receiver;
+	XMPP::Jid jid, init_jid;
+	Ice176 *ice;
+	PsiMedia::RtpSession producer;
+	PsiMedia::RtpSession receiver;
+	QString sid;
+	QList<RtpContent> contentList;
+	bool prov_accepted;
+	QList<Ice176::Candidate> localCandidates;
 	bool transmitAudio, transmitVideo, transmitting;
 	bool receiveAudio, receiveVideo;
-	RtpBinding *sendAudioRtp, *sendVideoRtp;
-	RtpBinding *receiveAudioRtp, *receiveVideoRtp;
 
 	JingleRtpSessionPrivate(JingleRtpSession *_q) :
 		QObject(_q),
 		q(_q),
 		producer(this),
 		receiver(this),
-		sendAudioRtp(0),
-		sendVideoRtp(0),
-		receiveAudioRtp(0),
-		receiveVideoRtp(0)
+		prov_accepted(false),
+		transmitAudio(false),
+		transmitVideo(false),
+		transmitting(false),
+		receiveAudio(false),
+		receiveVideo(false)
 	{
-		//producer.setVideoWidget(ui.vw_self);
-		//receiver.setVideoWidget(ui.vw_remote);
-
 		connect(&producer, SIGNAL(started()), SLOT(producer_started()));
 		connect(&producer, SIGNAL(stopped()), SLOT(producer_stopped()));
 		connect(&producer, SIGNAL(error()), SLOT(producer_error()));
 		connect(&receiver, SIGNAL(started()), SLOT(receiver_started()));
 		connect(&receiver, SIGNAL(stopped()), SLOT(receiver_stopped()));
 		connect(&receiver, SIGNAL(error()), SLOT(receiver_error()));
+
+		ice = new Ice176(this);
+		connect(ice, SIGNAL(started()), SLOT(ice_started()));
+		connect(ice, SIGNAL(localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)), SLOT(ice_localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)));
+		connect(ice, SIGNAL(componentReady(int)), SLOT(ice_componentReady(int)));
+		connect(ice, SIGNAL(readyRead(int)), SLOT(ice_readyRead(int)));
+		connect(ice, SIGNAL(datagramsWritten(int, int)), SLOT(ice_datagramsWritten(int, int)));
 	}
 
 	~JingleRtpSessionPrivate()
@@ -930,29 +1030,19 @@ public:
 		producer.stop();
 		receiver.stop();
 
-		cleanup_send_rtp();
-		cleanup_receive_rtp();
+		ice->disconnect(this);
+		ice->setParent(0);
+		ice->deleteLater();
 	}
 
-	static QString producerErrorToString(PsiMedia::Producer::Error e)
+	static QString rtpSessionErrorToString(PsiMedia::RtpSession::Error e)
 	{
 		QString str;
 		switch(e)
 		{
-			default: // generic
-				str = tr("Generic error"); break;
-		}
-		return str;
-	}
-
-	static QString receiverErrorToString(PsiMedia::Receiver::Error e)
-	{
-		QString str;
-		switch(e)
-		{
-			case PsiMedia::Receiver::ErrorSystem:
+			case PsiMedia::RtpSession::ErrorSystem:
 				str = tr("System error"); break;
-			case PsiMedia::Receiver::ErrorCodec:
+			case PsiMedia::RtpSession::ErrorCodec:
 				str = tr("Codec error"); break;
 			default: // generic
 				str = tr("Generic error"); break;
@@ -960,26 +1050,53 @@ public:
 		return str;
 	}
 
-	void cleanup_send_rtp()
+	void prov_accept()
 	{
-		delete sendAudioRtp;
-		sendAudioRtp = 0;
-		delete sendVideoRtp;
-		sendVideoRtp = 0;
+		prov_accepted = true;
+
+		if(!localCandidates.isEmpty())
+		{
+			RtpContent c;
+			c.name = "A";
+			c.trans.user = ice->localUfrag();
+			c.trans.pass = ice->localPassword();
+			c.trans.candidates = localCandidates;
+			localCandidates.clear();
+			sendTransportInfo(c);
+		}
+
+		transmit();
+		QTimer::singleShot(1000, this, SLOT(start_receive()));
 	}
 
-	void cleanup_receive_rtp()
+	void sendTransportInfo(const RtpContent &content)
 	{
-		delete receiveAudioRtp;
-		receiveAudioRtp = 0;
-		delete receiveVideoRtp;
-		receiveVideoRtp = 0;
+		JT_JingleRtp *jt = new JT_JingleRtp(manager->d->pa->client()->rootTask());
+		jt->transportInfo(jid, init_jid, sid, QList<RtpContent>() << content);
+		jt->go(true);
+	}
+
+	void getTransportInfo(const QList<RtpContent> &contentList)
+	{
+		printf("getTransportInfo: %d\n", contentList.count());
+
+		// FIXME: assumes on content type that exists
+		ice->setPeerUfrag(contentList[0].trans.user);
+		ice->setPeerPassword(contentList[0].trans.pass);
+		ice->addRemoteCandidates(contentList[0].trans.candidates);
+	}
+
+	void incomingAccept(const QList<RtpContent> &contentList)
+	{
+		Q_UNUSED(contentList);
+		emit q->activated();
 	}
 
 public slots:
 	void start_send()
 	{
 		manager->d->config = adjustConfiguration(manager->d->config, PsiMediaFeaturesSnapshot());
+		manager->d->config.videoInDeviceId.clear(); // ### disabling video
 		Configuration &config = manager->d->config;
 
 		transmitAudio = false;
@@ -1001,99 +1118,46 @@ public slots:
 				producer.setAudioInputDevice(config.audioInDeviceId);
 				transmitAudio = true;
 			}
+			else
+				producer.setAudioInputDevice(QString());
 
 			if(!config.videoInDeviceId.isEmpty())
 			{
 				producer.setVideoInputDevice(config.videoInDeviceId);
 				transmitVideo = true;
 			}
+			else
+				producer.setVideoInputDevice(QString());
 		}
 		else // non-live (file) input
 		{
 			producer.setFileInput(config.file);
+			producer.setFileLoopEnabled(config.loopFile);
 
 			// we just assume the file has both audio and video.
 			//   if it doesn't, no big deal, it'll still work.
+			//   update: after producer is started, we can correct
+			//   these variables.
 			transmitAudio = true;
 			transmitVideo = true;
 		}
 
+		QList<PsiMedia::AudioParams> audioParamsList;
 		if(transmitAudio)
-		{
-			QList<PsiMedia::AudioParams> audioParamsList;
 			audioParamsList += config.audioParams;
-			producer.setAudioParams(audioParamsList);
-		}
+		producer.setLocalAudioPreferences(audioParamsList);
 
+		QList<PsiMedia::VideoParams> videoParamsList;
 		if(transmitVideo)
-		{
-			QList<PsiMedia::VideoParams> videoParamsList;
 			videoParamsList += config.videoParams;
-			producer.setVideoParams(videoParamsList);
-		}
+		producer.setLocalVideoPreferences(videoParamsList);
 
-		//ui.pb_startSend->setEnabled(false);
-		//ui.pb_stopSend->setEnabled(true);
 		transmitting = false;
 		producer.start();
 	}
 
 	void transmit()
 	{
-		QHostAddress addr = target;
-		/*if(!addr.setAddress(ui.le_remoteAddress->text()))
-		{
-			QMessageBox::critical(this, tr("Error"), tr(
-				"Invalid send IP address."
-				));
-			return;
-		}*/
-
-		int audioPort = -1;
-		if(transmitAudio)
-		{
-			audioPort = audioBasePort;
-			printf("sending audio to %s:%d\n", qPrintable(addr.toString()), audioPort);
-			/*bool ok;
-			audioPort = ui.le_remoteAudioPort->text().toInt(&ok);
-			if(!ok || audioPort < BASE_PORT_MIN || audioPort > BASE_PORT_MAX)
-			{
-				QMessageBox::critical(this, tr("Error"), tr(
-					"Invalid send audio port."
-					));
-				return;
-			}*/
-		}
-
-		int videoPort = -1;
-		if(transmitVideo)
-		{
-			videoPort = videoBasePort;
-			printf("sending video to %s:%d\n", qPrintable(addr.toString()), videoPort);
-			/*bool ok;
-			videoPort = ui.le_remoteVideoPort->text().toInt(&ok);
-			if(!ok || videoPort < BASE_PORT_MIN || videoPort > BASE_PORT_MAX)
-			{
-				QMessageBox::critical(this, tr("Error"), tr(
-					"Invalid send video port."
-					));
-				return;
-			}*/
-		}
-
-		RtpSocketGroup *audioSocketGroup = new RtpSocketGroup;
-		sendAudioRtp = new RtpBinding(RtpBinding::Send, producer.audioRtpChannel(), audioSocketGroup, this);
-		sendAudioRtp->sendAddress = addr;
-		sendAudioRtp->sendBasePort = audioPort;
-
-		RtpSocketGroup *videoSocketGroup = new RtpSocketGroup;
-		sendVideoRtp = new RtpBinding(RtpBinding::Send, producer.videoRtpChannel(), videoSocketGroup, this);
-		sendVideoRtp->sendAddress = addr;
-		sendVideoRtp->sendBasePort = videoPort;
-
-		//setSendFieldsEnabled(false);
-		//ui.pb_transmit->setEnabled(false);
-
 		if(transmitAudio)
 			producer.transmitAudio();
 		if(transmitVideo)
@@ -1104,64 +1168,26 @@ public slots:
 
 	void stop_send()
 	{
-		//ui.pb_stopSend->setEnabled(false);
-
-		//if(!transmitting)
-		//	ui.pb_transmit->setEnabled(false);
-
 		producer.stop();
 	}
 
 	void start_receive()
 	{
-		//config = adjustConfiguration(config, PsiMediaFeaturesSnapshot());
 		Configuration &config = manager->d->config;
 
-		QString receiveConfig = receive_config; //ui.le_receiveConfig->text();
 		PsiMedia::PayloadInfo audio;
 		PsiMedia::PayloadInfo video;
-		if(receiveConfig.isEmpty() || !codecStringToPayloadInfo(receiveConfig, &audio, &video))
+
+		for(int n = 0; n < contentList.count(); ++n)
 		{
-			QMessageBox::critical(0, tr("Error"), tr(
-				"Invalid codec config."
-				));
-			return;
+			if(contentList[n].desc.media == "audio")
+				audio = contentList[n].desc.info.first();
+			else if(contentList[n].desc.media == "video")
+				video = contentList[n].desc.info.first();
 		}
 
 		receiveAudio = !audio.isNull();
 		receiveVideo = !video.isNull();
-
-		int audioPort = -1;
-		if(receiveAudio)
-		{
-			audioPort = selfBasePort;
-			printf("listening for audio: %d\n", audioPort);
-			/*bool ok;
-			audioPort = ui.le_localAudioPort->text().toInt(&ok);
-			if(!ok || audioPort < BASE_PORT_MIN || audioPort > BASE_PORT_MAX)
-			{
-				QMessageBox::critical(this, tr("Error"), tr(
-					"Invalid receive audio port."
-					));
-				return;
-			}*/
-		}
-
-		int videoPort = -1;
-		if(receiveVideo)
-		{
-			videoPort = selfBasePort + 2;
-			printf("listening for video: %d\n", videoPort);
-			/*bool ok;
-			videoPort = ui.le_localVideoPort->text().toInt(&ok);
-			if(!ok || videoPort < BASE_PORT_MIN || videoPort > BASE_PORT_MAX)
-			{
-				QMessageBox::critical(this, tr("Error"), tr(
-					"Invalid receive video port."
-					));
-				return;
-			}*/
-		}
 
 		if(receiveAudio && !config.audioOutDeviceId.isEmpty())
 		{
@@ -1169,74 +1195,30 @@ public slots:
 
 			QList<PsiMedia::AudioParams> audioParamsList;
 			audioParamsList += config.audioParams;
-			receiver.setAudioParams(audioParamsList);
+			receiver.setLocalAudioPreferences(audioParamsList);
 
 			QList<PsiMedia::PayloadInfo> payloadInfoList;
 			payloadInfoList += audio;
-			receiver.setAudioPayloadInfo(payloadInfoList);
+			receiver.setRemoteAudioPreferences(payloadInfoList);
 		}
 
 		if(receiveVideo)
 		{
 			QList<PsiMedia::VideoParams> videoParamsList;
 			videoParamsList += config.videoParams;
-			receiver.setVideoParams(videoParamsList);
+			receiver.setLocalVideoPreferences(videoParamsList);
 
 			QList<PsiMedia::PayloadInfo> payloadInfoList;
 			payloadInfoList += video;
-			receiver.setVideoPayloadInfo(payloadInfoList);
+			receiver.setRemoteVideoPreferences(payloadInfoList);
 		}
 
-		RtpSocketGroup *audioSocketGroup = new RtpSocketGroup(this);
-		RtpSocketGroup *videoSocketGroup = new RtpSocketGroup(this);
-		if(receiveAudio && !audioSocketGroup->bind(audioPort))
-		{
-			delete audioSocketGroup;
-			audioSocketGroup = 0;
-			delete videoSocketGroup;
-			videoSocketGroup = 0;
-
-			QMessageBox::critical(0, tr("Error"), tr(
-				"Unable to bind to receive audio ports."
-				));
-			return;
-		}
-		if(receiveVideo && !videoSocketGroup->bind(videoPort))
-		{
-			delete audioSocketGroup;
-			audioSocketGroup = 0;
-			delete videoSocketGroup;
-			videoSocketGroup = 0;
-
-			QMessageBox::critical(0, tr("Error"), tr(
-				"Unable to bind to receive video ports."
-				));
-			return;
-		}
-
-		receiveAudioRtp = new RtpBinding(RtpBinding::Receive, receiver.audioRtpChannel(), audioSocketGroup, this);
-		receiveVideoRtp = new RtpBinding(RtpBinding::Receive, receiver.videoRtpChannel(), videoSocketGroup, this);
-
-		//setReceiveFieldsEnabled(false);
-		//ui.pb_startReceive->setEnabled(false);
-		//ui.pb_stopReceive->setEnabled(true);
 		receiver.start();
 	}
 
 	void stop_receive()
 	{
-		//ui.pb_stopReceive->setEnabled(false);
 		receiver.stop();
-	}
-
-	void change_volume_mic(int value)
-	{
-		producer.setVolume(value);
-	}
-
-	void change_volume_spk(int value)
-	{
-		receiver.setVolume(value);
 	}
 
 	void producer_started()
@@ -1250,160 +1232,264 @@ public slots:
 		pVideo = 0;
 		if(transmitAudio)
 		{
-			audio = producer.audioPayloadInfo().first();
-			pAudio = &audio;
+			// confirm transmitting of audio is actually possible,
+			//   in the case that a file is used as input
+			if(producer.canTransmitAudio())
+			{
+				audio = producer.audioPayloadInfo().first();
+				pAudio = &audio;
+			}
+			else
+				transmitAudio = false;
 		}
 		if(transmitVideo)
 		{
-			video = producer.videoPayloadInfo().first();
-			pVideo = &video;
+			// same for video
+			if(producer.canTransmitVideo())
+			{
+				video = producer.videoPayloadInfo().first();
+				pVideo = &video;
+			}
+			else
+				transmitVideo = false;
 		}
 
-		QString str = payloadInfoToCodecString(pAudio, pVideo);
-		//setSendConfig(str);
+		connect(producer.audioRtpChannel(), SIGNAL(readyRead()), SLOT(rtp_audio_readyRead()));
 
-		//ui.pb_transmit->setEnabled(true);
+		sid = randomCredential(16);
+		contentList.clear();
+		if(pAudio)
+		{
+			RtpContent c;
+			c.name = "A";
+			c.desc.media = "audio";
+			c.desc.info += *pAudio;
+			contentList += c;
+		}
+		if(pVideo)
+		{
+			RtpContent c;
+			c.name = "V";
+			c.desc.media = "video";
+			c.desc.info += *pVideo;
+			contentList += c;
+		}
 
-		// outbound?
+		QList<Ice176::LocalAddress> localAddrs;
+		Ice176::LocalAddress addr;
+		addr.addr = manager->d->self_addr;
+		localAddrs += addr;
+		ice->setLocalAddresses(localAddrs);
+
+		ice->setComponentCount(2);
+
+		QHostAddress stunAddr(QString::fromLocal8Bit(qgetenv("PSI_STUNADDR")));
+		int stunPort = 3478;
+		if(!stunAddr.isNull())
+		{
+			XMPP::Ice176::StunServiceType stunType;
+			//if(opt_is_relay)
+			//	stunType = XMPP::Ice176::Relay;
+			//else
+				stunType = XMPP::Ice176::Basic;
+			ice->setStunService(stunType, stunAddr, stunPort);
+			/*if(!opt_user.isEmpty())
+			{
+				ice->setStunUsername(opt_user);
+				ice->setStunPassword(opt_pass.toUtf8());
+			}*/
+
+			printf("STUN service: %s\n", qPrintable(stunAddr.toString()));
+		}
+
 		if(!incoming)
-		{
-			// start the request
-			manager->d->connectToJid(jid, str);
-		}
-		// inbound?
+			ice->start(Ice176::Initiator);
 		else
-		{
-			// respond to the request
-			manager->d->push_task->respondSuccess(jid, manager->d->push_task->from_id, manager->d->self_addr.toString(), selfBasePort, selfBasePort + 2, str);
-
-			// begin transmitting
-			QTimer::singleShot(100, this, SLOT(transmit()));
-			QTimer::singleShot(1000, this, SLOT(start_receive()));
-		}
+			ice->start(Ice176::Responder);
 	}
 
 	void producer_stopped()
 	{
-		cleanup_send_rtp();
-
-		//setSendFieldsEnabled(true);
-		//setSendConfig(QString());
-		//ui.pb_startSend->setEnabled(true);
 	}
 
 	void producer_error()
 	{
-		cleanup_send_rtp();
-
-		//setSendFieldsEnabled(true);
-		//setSendConfig(QString());
-		//ui.pb_startSend->setEnabled(true);
-		//ui.pb_transmit->setEnabled(false);
-		//ui.pb_stopSend->setEnabled(false);
-
 		QMessageBox::critical(0, tr("Error"), tr(
 			"An error occurred while trying to send:\n%1."
-			).arg(producerErrorToString(producer.errorCode())
+			).arg(rtpSessionErrorToString(producer.errorCode())
 			));
 	}
 
 	void receiver_started()
 	{
-		//ui.pb_record->setEnabled(true);
-
-		emit q->activated();
 	}
 
 	void receiver_stopped()
 	{
-		cleanup_receive_rtp();
-		//cleanup_record();
-
-		//setReceiveFieldsEnabled(true);
-		//ui.pb_startReceive->setEnabled(true);
-		//ui.pb_record->setEnabled(false);
 	}
 
 	void receiver_error()
 	{
-		cleanup_receive_rtp();
-		//cleanup_record();
-
-		//setReceiveFieldsEnabled(true);
-		//ui.pb_startReceive->setEnabled(true);
-		//ui.pb_stopReceive->setEnabled(false);
-		//ui.pb_record->setEnabled(false);
-
 		QMessageBox::critical(0, tr("Error"), tr(
 			"An error occurred while trying to receive:\n%1."
-			).arg(receiverErrorToString(receiver.errorCode())
+			).arg(rtpSessionErrorToString(receiver.errorCode())
 			));
 	}
+
+	void ice_started()
+	{
+		// outbound?
+		if(!incoming)
+		{
+			contentList[0].trans.user = ice->localUfrag();
+			contentList[0].trans.pass = ice->localPassword();
+
+			// start the request
+			init_jid = jid;
+			manager->d->connectToJid(jid, sid, contentList);
+		}
+		// inbound?
+		else
+		{
+			// respond to the request
+			/*manager->d->push_task->respondSuccess(jid, manager->d->push_task->from_id, manager->d->self_addr.toString(), selfBasePort, selfBasePort + 2, str);
+
+			// begin transmitting
+			QTimer::singleShot(100, this, SLOT(transmit()));
+			QTimer::singleShot(1000, this, SLOT(start_receive()));*/
+		}
+	}
+
+	void ice_localCandidatesReady(const QList<XMPP::Ice176::Candidate> &list)
+	{
+		if(prov_accepted)
+		{
+			RtpContent c;
+			c.name = "A";
+			c.trans.user = ice->localUfrag();
+			c.trans.pass = ice->localPassword();
+			c.trans.candidates = list;
+			sendTransportInfo(c);
+		}
+		else
+			localCandidates += list;
+	}
+
+	void ice_componentReady(int index)
+	{
+		// TODO
+		Q_UNUSED(index);
+	}
+
+	void ice_readyRead(int componentIndex)
+	{
+		QByteArray buf = ice->readDatagram(componentIndex);
+		receiver.audioRtpChannel()->write(PsiMedia::RtpPacket(buf, componentIndex));
+	}
+
+	void ice_datagramsWritten(int componentIndex, int count)
+	{
+		// nothing?
+		Q_UNUSED(componentIndex);
+		Q_UNUSED(count);
+	}
+
+	void rtp_audio_readyRead()
+	{
+		while(producer.audioRtpChannel()->packetsAvailable() > 0)
+		{
+			PsiMedia::RtpPacket packet = producer.audioRtpChannel()->read();
+			ice->writeDatagram(packet.portOffset(), packet.rawValue());
+		}
+	}
 };
-#endif
 
 JingleRtpSession::JingleRtpSession() :
 	QObject(0)
 {
-	//d = new JingleRtpSessionPrivate(this);
+	d = new JingleRtpSessionPrivate(this);
 }
 
 JingleRtpSession::~JingleRtpSession()
 {
-	/*if(d->incoming)
+	if(d->incoming)
 		d->manager->d->sess_in = 0;
 	else
 		d->manager->d->sess_out = 0;
-	delete d;*/
+	delete d;
 }
 
 XMPP::Jid JingleRtpSession::jid() const
 {
-	return Jid();
-	//return d->jid;
+	return d->jid;
 }
 
 void JingleRtpSession::connectToJid(const XMPP::Jid &jid)
 {
-	Q_UNUSED(jid);
-	//d->jid = jid;
-	//d->start_send();
+	d->jid = jid;
+	d->start_send();
 }
 
 void JingleRtpSession::accept()
 {
-	//d->manager->d->accept();
+	d->manager->d->accept();
 }
 
 void JingleRtpSession::reject()
 {
-	/*if(d->incoming)
+	if(d->incoming)
 		d->manager->d->reject_in();
 	else
-		d->manager->d->reject_out();*/
+		d->manager->d->reject_out();
 }
 
 void JingleRtpSession::setIncomingVideo(PsiMedia::VideoWidget *widget)
 {
-	Q_UNUSED(widget);
-	//d->receiver.setVideoWidget(widget);
+	d->receiver.setVideoOutputWidget(widget);
 }
 
 //----------------------------------------------------------------------------
 // JingleRtpManager
 //----------------------------------------------------------------------------
-/*static JingleRtpManager *g_manager = 0;
+static JingleRtpManager *g_manager = 0;
+
+#ifdef GSTPROVIDER_STATIC
+Q_IMPORT_PLUGIN(gstprovider)
+#endif
+
+#ifndef GSTPROVIDER_STATIC
+static QString findPlugin(const QString &relpath, const QString &basename)
+{
+	QDir dir(QCoreApplication::applicationDirPath());
+	if(!dir.cd(relpath))
+		return QString();
+	foreach(const QString &fileName, dir.entryList())
+	{
+		if(fileName.contains(basename))
+		{
+			QString filePath = dir.filePath(fileName);
+			if(QLibrary::isLibrary(filePath))
+				return filePath;
+		}
+	}
+	return QString();
+}
+#endif
 
 JingleRtpManagerPrivate::JingleRtpManagerPrivate(PsiAccount *_pa, JingleRtpManager *_q) :
 	QObject(_q),
 	q(_q),
-	pa(_pa)
+	pa(_pa),
+	sess_out(0),
+	sess_in(0),
+	task(0)
 {
 #ifndef GSTPROVIDER_STATIC
+	QString pluginFile = findPlugin(".", "gstprovider");
 # ifdef GSTBUNDLE_PATH
-	PsiMedia::loadPlugin("gstprovider", GSTBUNDLE_PATH);
+	PsiMedia::loadPlugin(pluginFile, GSTBUNDLE_PATH);
 # else
-	PsiMedia::loadPlugin("gstprovider", QString());
+	PsiMedia::loadPlugin(pluginFile, QString());
 # endif
 #endif
 
@@ -1420,29 +1506,33 @@ JingleRtpManagerPrivate::JingleRtpManagerPrivate(PsiAccount *_pa, JingleRtpManag
 
 	push_task = new JT_PushJingleRtp(pa->client()->rootTask());
 
-	connect(push_task, SIGNAL(incomingRequest()), SLOT(push_task_incomingRequest()));
-	connect(push_task, SIGNAL(incomingTerminate()), SLOT(push_task_incomingTerminate()));
+	connect(push_task, SIGNAL(incomingInitiate(const RtpPush &)), SLOT(push_task_incomingInitiate(const RtpPush &)));
+	connect(push_task, SIGNAL(incomingTransportInfo(const RtpPush &)), SLOT(push_task_incomingTransportInfo(const RtpPush &)));
+	connect(push_task, SIGNAL(incomingAccept(const RtpPush &)), SLOT(push_task_incomingAccept(const RtpPush &)));
+	connect(push_task, SIGNAL(incomingTerminate(const RtpPush &)), SLOT(push_task_incomingTerminate(const RtpPush &)));
 }
 
 JingleRtpManagerPrivate::~JingleRtpManagerPrivate()
 {
+	delete push_task;
 }
 
-void JingleRtpManagerPrivate::connectToJid(const Jid &jid, const QString &config)
+void JingleRtpManagerPrivate::connectToJid(const Jid &jid, const QString &sid, const QList<RtpContent> &contentList)
 {
 	task = new JT_JingleRtp(pa->client()->rootTask());
 	connect(task, SIGNAL(finished()), SLOT(task_finished()));
-	task->request(jid, self_addr.toString(), sess_out->d->selfBasePort, sess_out->d->selfBasePort + 2, config);
+	task->initiate(jid, sid, contentList);
 	task->go(true);
 }
 
 void JingleRtpManagerPrivate::accept()
 {
-	sess_in->d->start_send();
+	//sess_in->d->start_send();
 }
 
 void JingleRtpManagerPrivate::reject_in()
 {
+	/*
 	// reject incoming request, if any
 	push_task->respondError(push_task->from, push_task->from_id, 400, "reject");
 
@@ -1450,14 +1540,17 @@ void JingleRtpManagerPrivate::reject_in()
 	JT_JingleRtp *jt = new JT_JingleRtp(pa->client()->rootTask());
 	jt->terminate(sess_in->d->jid);
 	jt->go(true);
+	*/
 }
 
 void JingleRtpManagerPrivate::reject_out()
 {
+	/*
 	// terminate active session, if any
 	JT_JingleRtp *jt = new JT_JingleRtp(pa->client()->rootTask());
 	jt->terminate(sess_out->d->jid);
 	jt->go(true);
+	*/
 }
 
 void JingleRtpManagerPrivate::task_finished()
@@ -1469,21 +1562,18 @@ void JingleRtpManagerPrivate::task_finished()
 		return;
 
 	if(jt->success())
-	{
-		sess_out->d->target = jt->peer_ipAddr;
-		sess_out->d->audioBasePort = jt->peer_portA;
-		sess_out->d->videoBasePort = jt->peer_portV;
-		sess_out->d->receive_config = jt->peer_config;
-		sess_out->d->transmit();
-		QTimer::singleShot(1000, sess_out->d, SLOT(start_receive()));
-	}
+		sess_out->d->prov_accept();
 	else
 		emit sess_out->rejected();
 }
 
-void JingleRtpManagerPrivate::push_task_incomingRequest()
+void JingleRtpManagerPrivate::push_task_incomingInitiate(const RtpPush &push)
 {
-	sess_in = new JingleRtpSession;
+	// TODO
+	Q_UNUSED(push);
+	printf("incomingInitiate\n");
+
+	/*sess_in = new JingleRtpSession;
 	sess_in->d->manager = q;
 	sess_in->d->incoming = true;
 	sess_in->d->selfBasePort = 62000;
@@ -1492,69 +1582,99 @@ void JingleRtpManagerPrivate::push_task_incomingRequest()
 	sess_in->d->audioBasePort = push_task->peer_portA;
 	sess_in->d->videoBasePort = push_task->peer_portV;
 	sess_in->d->receive_config = push_task->peer_config;
-	emit q->incomingReady();
+	emit q->incomingReady();*/
 }
 
-void JingleRtpManagerPrivate::push_task_incomingTerminate()
+void JingleRtpManagerPrivate::push_task_incomingTransportInfo(const RtpPush &push)
 {
+	printf("incomingTransportInfo\n");
+
+	if(sess_in && push.from.compare(sess_in->d->jid) && push.sid == sess_in->d->sid)
+	{
+		sess_in->d->getTransportInfo(push.contentList);
+		push_task->respondSuccess(push.from, push.iq_id);
+	}
+	else if(sess_out && push.from.compare(sess_out->d->jid) && push.sid == sess_out->d->sid)
+	{
+		sess_out->d->getTransportInfo(push.contentList);
+		push_task->respondSuccess(push.from, push.iq_id);
+	}
+	else
+		push_task->respondError(push.from, push.iq_id, 400, QString());
+}
+
+void JingleRtpManagerPrivate::push_task_incomingAccept(const RtpPush &push)
+{
+	printf("incomingAccept\n");
+
+	if(sess_in && push.from.compare(sess_in->d->jid) && push.sid == sess_in->d->sid)
+	{
+		sess_in->d->incomingAccept(push.contentList);
+		push_task->respondSuccess(push.from, push.iq_id);
+	}
+	else if(sess_out && push.from.compare(sess_out->d->jid) && push.sid == sess_out->d->sid)
+	{
+		sess_out->d->incomingAccept(push.contentList);
+		push_task->respondSuccess(push.from, push.iq_id);
+	}
+	else
+		push_task->respondError(push.from, push.iq_id, 400, QString());
+}
+
+void JingleRtpManagerPrivate::push_task_incomingTerminate(const RtpPush &push)
+{
+	// TODO
+	Q_UNUSED(push);
+	printf("incomingTerminate\n");
+
 	//if(sess_in)
 	//	emit sess_in->rejected();
 	//else if(sess_out)
 	//	emit sess_out->rejected();
-}*/
+}
 
 JingleRtpManager::JingleRtpManager(PsiAccount *pa) :
 	QObject(0)
 {
-	Q_UNUSED(pa);
-	//g_manager = this;
-	//d = new JingleRtpManagerPrivate(pa, this);
+	g_manager = this;
+	d = new JingleRtpManagerPrivate(pa, this);
 }
 
 JingleRtpManager::~JingleRtpManager()
 {
-	/*delete d->push_task;
 	delete d;
-	g_manager = 0;*/
+	g_manager = 0;
 }
 
 JingleRtpManager *JingleRtpManager::instance()
 {
-	return 0;
-	//return g_manager;
+	return g_manager;
 }
 
 JingleRtpSession *JingleRtpManager::createOutgoing()
 {
 	JingleRtpSession *sess = new JingleRtpSession;
-	/*d->sess_out = sess;
+	d->sess_out = sess;
 	sess->d->manager = this;
 	sess->d->incoming = false;
-	sess->d->selfBasePort = 60000;*/
 	return sess;
 }
 
 JingleRtpSession *JingleRtpManager::takeIncoming()
 {
-	return 0;
-	//return d->sess_in;
+	return d->sess_in;
 }
 
 void JingleRtpManager::config()
 {
-	/*ConfigDlg w(d->config, 0);
+	ConfigDlg w(d->config, 0);
 	w.exec();
-	d->config = w.config;*/
+	d->config = w.config;
 }
 
 void JingleRtpManager::setSelfAddress(const QHostAddress &addr)
 {
-	Q_UNUSED(addr);
-	//d->self_addr = addr;
+	d->self_addr = addr;
 }
-
-#ifdef GSTPROVIDER_STATIC
-Q_IMPORT_PLUGIN(gstprovider)
-#endif
 
 #include "jinglertp.moc"
