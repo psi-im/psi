@@ -1288,7 +1288,7 @@ public slots:
 		localAddrs += addr;
 		ice->setLocalAddresses(localAddrs);
 
-		for(int n = 0; n < channels.count(); ++n)
+		for(int n = 0; n < 2; ++n)
 		{
 			Channel c;
 			c.ready = false;
