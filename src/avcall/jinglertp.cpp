@@ -987,6 +987,7 @@ public:
 	bool incoming;
 	JingleRtpManager *manager;
 	XMPP::Jid jid, init_jid;
+	QString iq_id;
 	Ice176 *ice;
 	PsiMedia::RtpSession producer;
 	PsiMedia::RtpSession receiver;
@@ -996,6 +997,13 @@ public:
 	QList<Ice176::Candidate> localCandidates;
 	bool transmitAudio, transmitVideo, transmitting;
 	bool receiveAudio, receiveVideo;
+
+	class Channel
+	{
+	public:
+		bool ready;
+	};
+	QList<Channel> channels;
 
 	JingleRtpSessionPrivate(JingleRtpSession *_q) :
 		QObject(_q),
@@ -1027,8 +1035,8 @@ public:
 	~JingleRtpSessionPrivate()
 	{
 		printf("~JingleRtpSessionPrivate\n");
-		producer.stop();
-		receiver.stop();
+		//producer.stop();
+		//receiver.stop();
 
 		ice->disconnect(this);
 		ice->setParent(0);
@@ -1281,6 +1289,12 @@ public slots:
 		localAddrs += addr;
 		ice->setLocalAddresses(localAddrs);
 
+		for(int n = 0; n < channels.count(); ++n)
+		{
+			Channel c;
+			c.ready = false;
+			channels += c;
+		}
 		ice->setComponentCount(2);
 
 		QHostAddress stunAddr(QString::fromLocal8Bit(qgetenv("PSI_STUNADDR")));
@@ -1345,18 +1359,15 @@ public slots:
 			contentList[0].trans.pass = ice->localPassword();
 
 			// start the request
-			init_jid = jid;
 			manager->d->connectToJid(jid, sid, contentList);
 		}
 		// inbound?
 		else
 		{
-			// respond to the request
-			/*manager->d->push_task->respondSuccess(jid, manager->d->push_task->from_id, manager->d->self_addr.toString(), selfBasePort, selfBasePort + 2, str);
+			// accept
+			manager->d->push_task->respondSuccess(jid, iq_id);
 
-			// begin transmitting
-			QTimer::singleShot(100, this, SLOT(transmit()));
-			QTimer::singleShot(1000, this, SLOT(start_receive()));*/
+			prov_accept();
 		}
 	}
 
@@ -1377,8 +1388,33 @@ public slots:
 
 	void ice_componentReady(int index)
 	{
-		// TODO
-		Q_UNUSED(index);
+		// do we need this check?
+		if(channels[index].ready)
+			return;
+
+		channels[index].ready = true;
+
+		bool allReady = true;
+		foreach(const Channel &c, channels)
+		{
+			if(!c.ready)
+			{
+				allReady = false;
+				break;
+			}
+		}
+
+		if(allReady)
+		{
+			QList<RtpContent> list = contentList;
+			list[0].trans.user = ice->localUfrag();
+			list[0].trans.pass = ice->localPassword();
+			// FIXME: add the used candidates for each component
+
+			JT_JingleRtp *jt = new JT_JingleRtp(manager->d->pa->client()->rootTask());
+			jt->transportInfo(jid, init_jid, sid, list);
+			jt->go(true);
+		}
 	}
 
 	void ice_readyRead(int componentIndex)
@@ -1427,6 +1463,7 @@ XMPP::Jid JingleRtpSession::jid() const
 void JingleRtpSession::connectToJid(const XMPP::Jid &jid)
 {
 	d->jid = jid;
+	d->init_jid = d->manager->d->pa->client()->jid();
 	d->start_send();
 }
 
@@ -1527,30 +1564,23 @@ void JingleRtpManagerPrivate::connectToJid(const Jid &jid, const QString &sid, c
 
 void JingleRtpManagerPrivate::accept()
 {
-	//sess_in->d->start_send();
+	sess_in->d->start_send();
 }
 
 void JingleRtpManagerPrivate::reject_in()
 {
-	/*
-	// reject incoming request, if any
-	push_task->respondError(push_task->from, push_task->from_id, 400, "reject");
-
 	// terminate active session, if any
 	JT_JingleRtp *jt = new JT_JingleRtp(pa->client()->rootTask());
-	jt->terminate(sess_in->d->jid);
+	jt->terminate(sess_in->d->jid, sess_in->d->init_jid, sess_in->d->sid);
 	jt->go(true);
-	*/
 }
 
 void JingleRtpManagerPrivate::reject_out()
 {
-	/*
 	// terminate active session, if any
 	JT_JingleRtp *jt = new JT_JingleRtp(pa->client()->rootTask());
-	jt->terminate(sess_out->d->jid);
+	jt->terminate(sess_out->d->jid, sess_out->d->init_jid, sess_out->d->sid);
 	jt->go(true);
-	*/
 }
 
 void JingleRtpManagerPrivate::task_finished()
@@ -1569,20 +1599,24 @@ void JingleRtpManagerPrivate::task_finished()
 
 void JingleRtpManagerPrivate::push_task_incomingInitiate(const RtpPush &push)
 {
-	// TODO
-	Q_UNUSED(push);
 	printf("incomingInitiate\n");
 
-	/*sess_in = new JingleRtpSession;
+	if(sess_in)
+	{
+		printf("rejecting, only one session allowed at a time.\n");
+		push_task->respondError(push.from, push.iq_id, 400, QString());
+		return;
+	}
+
+	sess_in = new JingleRtpSession;
 	sess_in->d->manager = q;
 	sess_in->d->incoming = true;
-	sess_in->d->selfBasePort = 62000;
-	sess_in->d->jid = push_task->from;
-	sess_in->d->target = push_task->peer_ipAddr;
-	sess_in->d->audioBasePort = push_task->peer_portA;
-	sess_in->d->videoBasePort = push_task->peer_portV;
-	sess_in->d->receive_config = push_task->peer_config;
-	emit q->incomingReady();*/
+	sess_in->d->jid = push.from;
+	sess_in->d->init_jid = push.from;
+	sess_in->d->sid = push.sid;
+	sess_in->d->contentList = push.contentList;
+	sess_in->d->iq_id = push.iq_id;
+	emit q->incomingReady();
 }
 
 void JingleRtpManagerPrivate::push_task_incomingTransportInfo(const RtpPush &push)
@@ -1623,14 +1657,18 @@ void JingleRtpManagerPrivate::push_task_incomingAccept(const RtpPush &push)
 
 void JingleRtpManagerPrivate::push_task_incomingTerminate(const RtpPush &push)
 {
-	// TODO
-	Q_UNUSED(push);
 	printf("incomingTerminate\n");
 
-	//if(sess_in)
-	//	emit sess_in->rejected();
-	//else if(sess_out)
-	//	emit sess_out->rejected();
+	if(sess_in && push.from.compare(sess_in->d->jid) && push.sid == sess_in->d->sid)
+	{
+		emit sess_in->rejected();
+	}
+	else if(sess_out && push.from.compare(sess_out->d->jid) && push.sid == sess_out->d->sid)
+	{
+		emit sess_out->rejected();
+	}
+	else
+		push_task->respondError(push.from, push.iq_id, 400, QString());
 }
 
 JingleRtpManager::JingleRtpManager(PsiAccount *pa) :
@@ -1653,6 +1691,9 @@ JingleRtpManager *JingleRtpManager::instance()
 
 JingleRtpSession *JingleRtpManager::createOutgoing()
 {
+	// only one session allowed at a time
+	Q_ASSERT(!d->sess_out);
+
 	JingleRtpSession *sess = new JingleRtpSession;
 	d->sess_out = sess;
 	sess->d->manager = this;
