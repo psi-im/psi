@@ -428,9 +428,9 @@ MainWin::~MainWin()
 
 void MainWin::registerAction( IconAction* action )
 {
-	char activated[] = SIGNAL( activated() );
-	char toggled[]   = SIGNAL( toggled(bool) );
-	char setChecked[]     = SLOT( setChecked(bool) );
+	const char *activated  = SIGNAL( activated() );
+	const char *toggled    = SIGNAL( toggled(bool) );
+	const char *setChecked = SLOT( setChecked(bool) );
 
 	struct {
 		const char* name;
