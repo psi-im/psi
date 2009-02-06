@@ -131,19 +131,16 @@ static PsiMedia::PayloadInfo elementToPayloadInfo(const QDomElement &e)
 	out.setClockrate(x);
 
 	x = e.attribute("channels").toInt(&ok);
-	if(!ok)
-		return PsiMedia::PayloadInfo();
-	out.setChannels(x);
+	if(ok)
+		out.setChannels(x);
 
 	x = e.attribute("ptime").toInt(&ok);
-	if(!ok)
-		return PsiMedia::PayloadInfo();
-	out.setPtime(x);
+	if(ok)
+		out.setPtime(x);
 
 	x = e.attribute("maxptime").toInt(&ok);
-	if(!ok)
-		return PsiMedia::PayloadInfo();
-	out.setMaxptime(x);
+	if(ok)
+		out.setMaxptime(x);
 
 	QList<PsiMedia::PayloadInfo::Parameter> plist;
 	for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling())
@@ -152,10 +149,13 @@ static PsiMedia::PayloadInfo elementToPayloadInfo(const QDomElement &e)
 			continue;
 
 		QDomElement pe = n.toElement();
-		PsiMedia::PayloadInfo::Parameter p;
-		p.name = pe.attribute("name");
-		p.value = pe.attribute("value");
-		plist += p;
+		if(pe.tagName() == "parameter")
+		{
+			PsiMedia::PayloadInfo::Parameter p;
+			p.name = pe.attribute("name");
+			p.value = pe.attribute("value");
+			plist += p;
+		}
 	}
 	out.setParameters(plist);
 
@@ -898,7 +898,11 @@ public:
 						PsiMedia::PayloadInfo pi = elementToPayloadInfo(e);
 						if(!pi.isNull())
 							c.desc.info += pi;
+						else
+							printf("error processing element as <payload-type>\n");
 					}
+
+					printf("got %d codecs from remote\n", c.desc.info.count());
 				}
 				else if(e.tagName() == "transport" && e.attribute("xmlns") == "urn:xmpp:jingle:transports:ice-udp:0")
 				{
@@ -1196,6 +1200,8 @@ public slots:
 		if(transmitAudio)
 			audioParamsList += config.audioParams;
 		producer.setLocalAudioPreferences(audioParamsList);
+		if(incoming && !contentList.isEmpty())
+			producer.setRemoteAudioPreferences(contentList[0].desc.info);
 
 		QList<PsiMedia::VideoParams> videoParamsList;
 		if(transmitVideo)
