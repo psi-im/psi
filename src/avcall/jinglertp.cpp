@@ -182,6 +182,8 @@ public:
 	}
 };
 
+static Configuration *g_config = 0;
+
 class PsiMediaFeaturesSnapshot
 {
 public:
@@ -325,6 +327,15 @@ static Configuration adjustConfiguration(const Configuration &in, const PsiMedia
 		out.videoParams = snap.supportedVideoModes.first();
 
 	return out;
+}
+
+static void ensureConfig()
+{
+	if(!g_config)
+	{
+		g_config = new Configuration;
+		*g_config = getDefaultConfiguration();
+	}
 }
 
 class ConfigDlg : public QDialog
@@ -957,7 +968,7 @@ public:
 	PsiAccount *pa;
 	QHostAddress self_addr;
 	JingleRtpSession *sess_out, *sess_in;
-	Configuration config;
+	//Configuration config;
 	JT_PushJingleRtp *push_task;
 	JT_JingleRtp *task;
 
@@ -1145,9 +1156,9 @@ public:
 public slots:
 	void start_send()
 	{
-		manager->d->config = adjustConfiguration(manager->d->config, PsiMediaFeaturesSnapshot());
-		manager->d->config.videoInDeviceId.clear(); // ### disabling video
-		Configuration &config = manager->d->config;
+		*g_config = adjustConfiguration(*g_config, PsiMediaFeaturesSnapshot());
+		(*g_config).videoInDeviceId.clear(); // ### disabling video
+		Configuration &config = *g_config;
 
 		transmitAudio = false;
 		transmitVideo = false;
@@ -1223,7 +1234,7 @@ public slots:
 
 	void start_receive()
 	{
-		Configuration &config = manager->d->config;
+		Configuration &config = *g_config;
 
 		PsiMedia::PayloadInfo audio;
 		PsiMedia::PayloadInfo video;
@@ -1405,6 +1416,8 @@ public slots:
 
 	void ice_started()
 	{
+		printf("ice_started\n");
+
 		// outbound?
 		if(!incoming)
 		{
@@ -1552,7 +1565,7 @@ void JingleRtpSession::setIncomingVideo(PsiMedia::VideoWidget *widget)
 //----------------------------------------------------------------------------
 // JingleRtpManager
 //----------------------------------------------------------------------------
-static JingleRtpManager *g_manager = 0;
+//static JingleRtpManager *g_manager = 0;
 
 #ifdef GSTPROVIDER_STATIC
 Q_IMPORT_PLUGIN(gstprovider)
@@ -1603,7 +1616,7 @@ JingleRtpManagerPrivate::JingleRtpManagerPrivate(PsiAccount *_pa, JingleRtpManag
 		exit(1);
 	}
 
-	config = getDefaultConfiguration();
+	//config = getDefaultConfiguration();
 
 	push_task = new JT_PushJingleRtp(pa->client()->rootTask());
 
@@ -1620,6 +1633,7 @@ JingleRtpManagerPrivate::~JingleRtpManagerPrivate()
 
 void JingleRtpManagerPrivate::connectToJid(const Jid &jid, const QString &sid, const QList<RtpContent> &contentList)
 {
+	printf("sending initiate\n");
 	task = new JT_JingleRtp(pa->client()->rootTask());
 	connect(task, SIGNAL(finished()), SLOT(task_finished()));
 	task->initiate(jid, sid, contentList);
@@ -1738,20 +1752,22 @@ void JingleRtpManagerPrivate::push_task_incomingTerminate(const RtpPush &push)
 JingleRtpManager::JingleRtpManager(PsiAccount *pa) :
 	QObject(0)
 {
-	g_manager = this;
+	ensureConfig();
+
+	//g_manager = this;
 	d = new JingleRtpManagerPrivate(pa, this);
 }
 
 JingleRtpManager::~JingleRtpManager()
 {
 	delete d;
-	g_manager = 0;
+	//g_manager = 0;
 }
 
-JingleRtpManager *JingleRtpManager::instance()
+/*JingleRtpManager *JingleRtpManager::instance()
 {
 	return g_manager;
-}
+}*/
 
 JingleRtpSession *JingleRtpManager::createOutgoing()
 {
@@ -1772,9 +1788,11 @@ JingleRtpSession *JingleRtpManager::takeIncoming()
 
 void JingleRtpManager::config()
 {
-	ConfigDlg w(d->config, 0);
+	ensureConfig();
+
+	ConfigDlg w(*g_config, 0);
 	w.exec();
-	d->config = w.config;
+	*g_config = w.config;
 }
 
 void JingleRtpManager::setSelfAddress(const QHostAddress &addr)

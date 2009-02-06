@@ -567,7 +567,7 @@ private slots:
         {
 #ifdef AVCALL
 		JingleRtpSession *sess = jingleRtpManager->takeIncoming();
-		CallDlg *w = new CallDlg(0);
+		CallDlg *w = new CallDlg(account, 0);
 		w->setAttribute(Qt::WA_DeleteOnClose);
 		w->setIncoming(sess);
 		w->show();
@@ -3061,7 +3061,7 @@ void PsiAccount::actionVoice(const Jid &j)
 			j2.setResource((*u->userResourceList().priority()).name());
 	}
 
-	CallDlg *w = new CallDlg(0);
+	CallDlg *w = new CallDlg(this, 0);
 	w->setAttribute(Qt::WA_DeleteOnClose);
 	w->setOutgoing(j2);
 	w->show();
@@ -5047,6 +5047,15 @@ PEPManager* PsiAccount::pepManager()
 BookmarkManager* PsiAccount::bookmarkManager()
 {
 	return d->bookmarkManager;
+}
+
+JingleRtpManager *PsiAccount::jingleRtpManager()
+{
+#ifdef AVCALL
+	return d->jingleRtpManager;
+#else
+	return 0;
+#endif
 }
 
 /**

@@ -428,9 +428,9 @@ MainWin::~MainWin()
 
 void MainWin::registerAction( IconAction* action )
 {
-	const char *activated  = SIGNAL( activated() );
-	const char *toggled    = SIGNAL( toggled(bool) );
-	const char *setChecked = SLOT( setChecked(bool) );
+	char activated[]  = SIGNAL( activated() );
+	char toggled[]    = SIGNAL( toggled(bool) );
+	char setChecked[] = SLOT( setChecked(bool) );
 
 	struct {
 		const char* name;
@@ -1404,7 +1404,7 @@ void MainWin::showNoFocus()
 void MainWin::avcallConfig()
 {
 #ifdef AVCALL
-	JingleRtpManager::instance()->config();
+	JingleRtpManager::config();
 #endif
 }
 

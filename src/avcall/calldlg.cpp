@@ -6,6 +6,7 @@
 #include "xmpp_client.h"
 #include "psimedia.h"
 #include "common.h"
+#include "psiaccount.h"
 
 class CallDlg::Private : public QObject
 {
@@ -14,6 +15,7 @@ class CallDlg::Private : public QObject
 public:
 	CallDlg *q;
 	Ui::Call ui;
+	PsiAccount *pa;
 	bool incoming;
 	bool active;
 	JingleRtpSession *sess;
@@ -43,7 +45,7 @@ public:
 		ui.pb_accept->hide();
 		ui.pb_reject->setText("&Cancel");
 		ui.lb_status->setText(QString("Calling %1 ...").arg(jid.full()));
-		sess = JingleRtpManager::instance()->createOutgoing();
+		sess = pa->jingleRtpManager()->createOutgoing();
 		connect(sess, SIGNAL(activated()), SLOT(sess_activated()));
 		connect(sess, SIGNAL(rejected()), SLOT(sess_rejected()));
 		sess->connectToJid(jid);
@@ -94,10 +96,11 @@ private slots:
 	}
 };
 
-CallDlg::CallDlg(QWidget *parent) :
+CallDlg::CallDlg(PsiAccount *pa, QWidget *parent) :
 	QDialog(parent)
 {
 	d = new Private(this);
+	d->pa = pa;
 }
 
 CallDlg::~CallDlg()

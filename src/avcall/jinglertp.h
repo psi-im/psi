@@ -55,11 +55,11 @@ public:
 	JingleRtpManager(PsiAccount *pa);
 	~JingleRtpManager();
 
-	static JingleRtpManager *instance();
+	//static JingleRtpManager *instance();
 
 	JingleRtpSession *createOutgoing();
 	JingleRtpSession *takeIncoming();
-	void config();
+	static void config();
 	void setSelfAddress(const QHostAddress &addr);
 
 signals:
