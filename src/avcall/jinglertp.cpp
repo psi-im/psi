@@ -1459,7 +1459,7 @@ public slots:
 			}
 		}
 
-		if(allReady)
+		if(allReady && incoming)
 		{
 			QList<RtpContent> list = contentList;
 			list[0].trans.user = ice->localUfrag();
@@ -1469,6 +1469,8 @@ public slots:
 			JT_JingleRtp *jt = new JT_JingleRtp(manager->d->pa->client()->rootTask());
 			jt->accept(jid, init_jid, sid, list);
 			jt->go(true);
+
+			emit q->activated();
 		}
 	}
 
@@ -1533,13 +1535,10 @@ void JingleRtpSession::reject()
 {
 	if(d->incoming)
 	{
-		if(!d->jid.isEmpty())
-		{
-			if(!d->prov_accepted)
-				d->manager->d->push_task->respondSuccess(d->jid, d->iq_id);
-			else
-				d->manager->d->reject_in();
-		}
+		if(!d->prov_accepted)
+			d->manager->d->push_task->respondError(d->jid, d->iq_id, 400, QString());
+		else
+			d->manager->d->reject_in();
 	}
 	else
 		d->manager->d->reject_out();
