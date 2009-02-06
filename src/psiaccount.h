@@ -88,6 +88,8 @@ class GoogleFileTransfer;
 // sick sick remove this someday please!
 struct GCContact;
 
+class JingleRtpManager;
+
 class PsiAccount : public QObject
 {
 	Q_OBJECT
@@ -189,6 +191,7 @@ public:
 	PEPManager* pepManager();
 	ServerInfoManager* serverInfoManager();
 	BookmarkManager* bookmarkManager();
+	JingleRtpManager *jingleRtpManager();
 
 	enum xmlRingType {RingXmlIn, RingXmlOut, RingSysMsg};
 	class xmlRingElem { public: int type; QDateTime time; QString xml; };

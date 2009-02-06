@@ -8,6 +8,7 @@ namespace XMPP
 	class Jid;
 }
 
+class PsiAccount;
 class JingleRtpSession;
 
 class CallDlg : public QDialog
@@ -15,7 +16,7 @@ class CallDlg : public QDialog
 	Q_OBJECT
 
 public:
-	CallDlg(QWidget *parent = 0);
+	CallDlg(PsiAccount *pa, QWidget *parent = 0);
 	~CallDlg();
 
 	void setOutgoing(const XMPP::Jid &jid);
