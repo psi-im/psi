@@ -15,10 +15,13 @@ public:
 	const Jid &jid() const;
 	const QString &url() const;
 
+	bool supportsTarget() const;
+
 private:
 	QDomElement iq;
 	Jid j;
 	QString v_url;
+	bool _supportsTarget;
 };
 
 class JT_GetDisclaimer : public Task

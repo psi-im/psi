@@ -416,6 +416,7 @@ public:
 		, xmlRingbuf(1000)
 		, xmlRingbufWrite(0)
 		, doPopups_(true)
+		, upgrade_prompting(false)
 	{
 	}
 
@@ -513,6 +514,7 @@ public:
 	QProgressDialog *download_progress;
 	bool keep_file;
 	DisclaimerManager disclaimer_manager;
+	bool upgrade_prompting;
 
 	QString pathToProfileEvents()
 	{
@@ -701,7 +703,7 @@ public:
 	// ###cuda
 	void checkUpgrade()
 	{
-		/*if(jgcv)
+		if(jgcv)
 			return;
 
 		// Make sure this client version is the latest
@@ -711,7 +713,7 @@ public:
 		// Tell the upgrader bot which version we're on
 		Jid jid_clientupgrader = Jid("clientupgrader");
 		jgcv->get(jid_clientupgrader);
-		jgcv->go(true);*/
+		jgcv->go(true);
 	}
 
 	void checkDisclaimer()
@@ -789,6 +791,48 @@ public:
 		download_progress->show();
 	}
 
+	void promptForClientUpgrade(const QString &title, const QString &body, const QString &host, int port, const QString &resource, bool use_ssl, const QString &url)
+	{
+		QDateTime next_time = QDateTime::fromString(acc_lastUpdateMsg, Qt::ISODate);
+		if(QDateTime::currentDateTime() < next_time)
+			return;
+
+		// don't allow two prompts at once.  this function can be
+		//   reentrant if both old and new style upgrade protocols
+		//   are activated at the same time.
+		if(upgrade_prompting)
+			return;
+
+		upgrade_prompting = true;
+
+		QDateTime time = QDateTime::currentDateTime();
+		time = time.addSecs( 60 * 60 * 24 ); // Show update message again in 24 hours time
+		acc_lastUpdateMsg = time.toString(Qt::ISODate);//date().toString(Qt::ISODate) + time.time().toString(Qt::ISODate);
+
+		int n = QMessageBox::information(0, title, body, tr("&Yes"), tr("&No"));
+		upgrade_prompting = false;
+		if(n == 0) {
+			if(port != -1)
+			{
+				// old-style
+				downloadStart(host, port, resource, use_ssl);
+			}
+			else
+			{
+				// new-style
+				if(!url.isEmpty()) {
+					downloadStart(url);
+				}
+				else {
+					JT_CudaLogin *jcv = new JT_CudaLogin(client->rootTask());
+					connect(jcv, SIGNAL(finished()), SLOT(gotoDownload()));
+					jcv->get(jid, "download");
+					jcv->go(true);
+				}
+			}
+		}
+	}
+
 private slots:
 	void forceDialogUnregister(QObject* obj)
 	{
@@ -800,17 +844,8 @@ private slots:
 	{
 		jgcv = 0;
 
-		QDateTime next_time = QDateTime::fromString(acc_lastUpdateMsg, Qt::ISODate);
-
-		if(QDateTime::currentDateTime() < next_time)
-			return;
-
 		JT_GetClientVersion *j = (JT_GetClientVersion *)sender();
 		if(j->success()) {
-			QDateTime time = QDateTime::currentDateTime();
-			time = time.addSecs( 60 * 60 * 24 ); // Show update message again in 24 hours time
-			acc_lastUpdateMsg = time.toString(Qt::ISODate);//date().toString(Qt::ISODate) + time.time().toString(Qt::ISODate);
-
 			QString update_message = j->message();
 			if(update_message.isEmpty()) {
 				update_message = tr(
@@ -826,19 +861,16 @@ private slots:
 			if(update_message_title.isEmpty())
 				update_message_title = "Client Update Recommended";
 
-			int n = QMessageBox::information(0, update_message_title, update_message, tr("&Yes"), tr("&No"));
-			if(n == 0) {
-				int port = 8000;
-				int x = j->port().toInt();
-				if(x >= 1 && x <= 65535)
-					port = x;
+			int port = 8000;
+			int x = j->port().toInt();
+			if(x >= 1 && x <= 65535)
+				port = x;
 
-				bool use_ssl = false;
-				if(j->ssl() == "yes")
-					use_ssl = true;
+			bool use_ssl = false;
+			if(j->ssl() == "yes")
+				use_ssl = true;
 
-				downloadStart(acc.host, port, j->updater(), use_ssl);
-			}
+			promptForClientUpgrade(update_message_title, update_message, acc.host, port, j->updater(), use_ssl, QString());
 		}
 	}
 
@@ -937,7 +969,10 @@ private slots:
 	{
 		JT_CudaLogin *j = (JT_CudaLogin *)sender();
 		if(j->success()) {
-			DesktopUtil::openUrl( j->url() );
+			if(j->supportsTarget())
+				DesktopUtil::openUrl( j->url() );
+			else
+				DesktopUtil::openUrl( j->url() + "&primary_tab=PREFERENCES&secondary_tab=pu_security" );
 		}
 	}
 
@@ -945,7 +980,10 @@ private slots:
 	{
 		JT_CudaLogin *j = (JT_CudaLogin *)sender();
 		if(j->success()) {
-			DesktopUtil::openUrl( j->url() );
+			if(j->supportsTarget())
+				DesktopUtil::openUrl( j->url() );
+			else
+				DesktopUtil::openUrl( j->url() + "&primary_tab=LOGGING/REPORTING&secondary_tab=my_logs" );
 		}
 	}
 
@@ -1043,18 +1081,7 @@ private slots:
 				"Client Update Recommended");
 		}
 
-		int n = QMessageBox::information(0, update_message_title, update_message, tr("&Yes"), tr("&No"));
-		if(n == 0) {
-			if(!upgradeUrl.isEmpty()) {
-				downloadStart(upgradeUrl);
-			}
-			else {
-				JT_CudaLogin *jcv = new JT_CudaLogin(client->rootTask());
-				connect(jcv, SIGNAL(finished()), SLOT(gotoDownload()));
-				jcv->get(jid, "download");
-				jcv->go(true);
-			}
-		}
+		promptForClientUpgrade(update_message_title, update_message, QString(), -1, QString(), false, upgradeUrl);
 	}
 
 public:

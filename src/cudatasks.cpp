@@ -15,6 +15,7 @@ JT_CudaLogin::JT_CudaLogin(Task *parent)
 void JT_CudaLogin::get(const Jid &jid, const QString &target)
 {
 	j = jid;
+	_supportsTarget = false;
 	iq = createIQ(doc(), "get", "loginbot", id());
 	QDomElement query = doc()->createElement("query");
 	query.setAttribute("xmlns", "http://barracudanetworks.com/protocol/cudalogin");
@@ -42,6 +43,18 @@ bool JT_CudaLogin::take(const QDomElement &x)
 
 			if(i.tagName() == "result") {
 				v_url = i.attribute("url");
+
+				// check for 'target' tag in reply
+				for(QDomNode n = i.firstChild(); !n.isNull(); n = n.nextSibling()) {
+					QDomElement i = n.toElement();
+					if(i.isNull())
+						continue;
+
+					if(i.tagName() == "target") {
+						_supportsTarget = true;
+						break;
+					}
+				}
 			}
 		}
 
@@ -62,6 +75,11 @@ const Jid & JT_CudaLogin::jid() const
 const QString & JT_CudaLogin::url() const
 {
 	return v_url;
+}
+
+bool JT_CudaLogin::supportsTarget() const
+{
+	return _supportsTarget;
 }
 
 //----------------------------------------------------------------------------
