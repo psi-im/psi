@@ -1,6 +1,6 @@
-Barracuda IM Client 3.3.2
+Barracuda IM Client 3.4.0
 -------------------------
-Date: November 6th, 2008
+Date: February 17th, 2008
 
 Barracuda Networks - http://www.barracudanetworks.com/
 
@@ -14,6 +14,9 @@ Barracuda Networks - http://www.barracudanetworks.com/
 
 Changes
 -------
+  New in 3.4.0
+  - Add upgrade notifications to Mac and Linux versions
+
   New in 3.3.2
   - Theme groupchat just like regular chats
   - Restored regular chat to group chat conversion feature
