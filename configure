@@ -1102,6 +1102,7 @@ public:
 	bool exec()
 	{
 		conf->addExtra(QString("PSI_DATADIR=%1/barracuda").arg(conf->getenv("DATADIR")));
+		conf->addDefine("IRIS_SASLCONNECTHOST");
 
 		QFile file("src/config.h");
 		if ( file.open(QIODevice::WriteOnly | QIODevice::Text) ) {
