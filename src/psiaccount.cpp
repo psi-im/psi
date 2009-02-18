@@ -826,7 +826,7 @@ public:
 				else {
 					JT_CudaLogin *jcv = new JT_CudaLogin(client->rootTask());
 					connect(jcv, SIGNAL(finished()), SLOT(gotoDownload()));
-					jcv->get(jid, "download");
+					jcv->get(jid, "download_client");
 					jcv->go(true);
 				}
 			}
