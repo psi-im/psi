@@ -4,7 +4,7 @@
 #include "ui_call.h"
 #include "jinglertp.h"
 #include "xmpp_client.h"
-#include "psimedia.h"
+#include "../psimedia/psimedia.h"
 #include "common.h"
 #include "psiaccount.h"
 
@@ -36,6 +36,7 @@ public:
 
 	~Private()
 	{
+		sess->setIncomingVideo(0);
 		sess->deleteLater();
 	}
 

@@ -4,7 +4,7 @@
 #include <QtNetwork>
 #include <QtGui>
 #include <QtCrypto>
-#include "psimedia.h"
+#include "../psimedia/psimedia.h"
 #include "ui_config.h"
 #include "xmpp_client.h"
 #include "xmpp_task.h"
@@ -1297,7 +1297,7 @@ public slots:
 			//   in the case that a file is used as input
 			if(producer.canTransmitAudio())
 			{
-				audio = producer.audioPayloadInfo().first();
+				audio = producer.localAudioPayloadInfo().first();
 				pAudio = &audio;
 			}
 			else
@@ -1308,7 +1308,7 @@ public slots:
 			// same for video
 			if(producer.canTransmitVideo())
 			{
-				video = producer.videoPayloadInfo().first();
+				video = producer.localVideoPayloadInfo().first();
 				pVideo = &video;
 			}
 			else
@@ -1571,7 +1571,7 @@ void JingleRtpSession::setIncomingVideo(PsiMedia::VideoWidget *widget)
 Q_IMPORT_PLUGIN(gstprovider)
 #endif
 
-#ifndef GSTPROVIDER_STATIC
+/*#ifndef GSTPROVIDER_STATIC
 static QString findPlugin(const QString &relpath, const QString &basename)
 {
 	QDir dir(QCoreApplication::applicationDirPath());
@@ -1589,6 +1589,7 @@ static QString findPlugin(const QString &relpath, const QString &basename)
 	return QString();
 }
 #endif
+*/
 
 JingleRtpManagerPrivate::JingleRtpManagerPrivate(PsiAccount *_pa, JingleRtpManager *_q) :
 	QObject(_q),
@@ -1599,7 +1600,8 @@ JingleRtpManagerPrivate::JingleRtpManagerPrivate(PsiAccount *_pa, JingleRtpManag
 	task(0)
 {
 #ifndef GSTPROVIDER_STATIC
-	QString pluginFile = findPlugin(".", "gstprovider");
+	//QString pluginFile = findPlugin(".", "gstprovider");
+	QString pluginFile = qgetenv("PSI_MEDIA_PLUGIN");
 # ifdef GSTBUNDLE_PATH
 	PsiMedia::loadPlugin(pluginFile, GSTBUNDLE_PATH);
 # else
@@ -1615,6 +1617,8 @@ JingleRtpManagerPrivate::JingleRtpManagerPrivate(PsiAccount *_pa, JingleRtpManag
 			));
 		exit(1);
 	}
+
+	ensureConfig();
 
 	//config = getDefaultConfiguration();
 
@@ -1752,8 +1756,6 @@ void JingleRtpManagerPrivate::push_task_incomingTerminate(const RtpPush &push)
 JingleRtpManager::JingleRtpManager(PsiAccount *pa) :
 	QObject(0)
 {
-	ensureConfig();
-
 	//g_manager = this;
 	d = new JingleRtpManagerPrivate(pa, this);
 }
