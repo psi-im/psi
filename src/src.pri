@@ -24,11 +24,11 @@ include($$PWD/tools/grepshortcutkeydlg/grepshortcutkeydlg.pri)
 include($$PWD/tools/atomicxmlfile/atomicxmlfile.pri)
 
 # psimedia
-#include($$PWD/psimedia/psimedia.pri)
+include($$PWD/psimedia/psimedia.pri)
 
 # audio/video calls
-#DEFINES += AVCALL
-#include($$PWD/avcall/avcall.pri)
+DEFINES += AVCALL
+include($$PWD/avcall/avcall.pri)
 
 # Growl
 mac {

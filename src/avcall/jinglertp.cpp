@@ -1609,25 +1609,28 @@ JingleRtpManagerPrivate::JingleRtpManagerPrivate(PsiAccount *_pa, JingleRtpManag
 # endif
 #endif
 
-	if(!PsiMedia::isSupported())
+	if(PsiMedia::isSupported())
 	{
+	/*{
 		QMessageBox::critical(0, tr("PsiMedia Test"),
 			tr(
 			"Error: Could not load PsiMedia subsystem."
 			));
 		exit(1);
-	}
+	}*/
 
-	ensureConfig();
+		printf("psimedia supported\n");
+		ensureConfig();
 
 	//config = getDefaultConfiguration();
 
-	push_task = new JT_PushJingleRtp(pa->client()->rootTask());
+		push_task = new JT_PushJingleRtp(pa->client()->rootTask());
 
-	connect(push_task, SIGNAL(incomingInitiate(const RtpPush &)), SLOT(push_task_incomingInitiate(const RtpPush &)));
-	connect(push_task, SIGNAL(incomingTransportInfo(const RtpPush &)), SLOT(push_task_incomingTransportInfo(const RtpPush &)));
-	connect(push_task, SIGNAL(incomingAccept(const RtpPush &)), SLOT(push_task_incomingAccept(const RtpPush &)));
-	connect(push_task, SIGNAL(incomingTerminate(const RtpPush &)), SLOT(push_task_incomingTerminate(const RtpPush &)));
+		connect(push_task, SIGNAL(incomingInitiate(const RtpPush &)), SLOT(push_task_incomingInitiate(const RtpPush &)));
+		connect(push_task, SIGNAL(incomingTransportInfo(const RtpPush &)), SLOT(push_task_incomingTransportInfo(const RtpPush &)));
+		connect(push_task, SIGNAL(incomingAccept(const RtpPush &)), SLOT(push_task_incomingAccept(const RtpPush &)));
+		connect(push_task, SIGNAL(incomingTerminate(const RtpPush &)), SLOT(push_task_incomingTerminate(const RtpPush &)));
+	}
 }
 
 JingleRtpManagerPrivate::~JingleRtpManagerPrivate()
