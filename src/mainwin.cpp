@@ -37,6 +37,10 @@
 #include <QMenuItem>
 #include <QtAlgorithms>
 
+#ifdef AVCALL
+#include <QShortcut>
+#endif
+
 #ifdef Q_WS_WIN
 #include <windows.h>
 #endif
@@ -61,6 +65,10 @@
 #include "desktoputil.h"
 
 #include "mainwin_p.h"
+
+#ifdef AVCALL
+#include "avcall/jinglertp.h"
+#endif
 
 using namespace XMPP;
 
@@ -398,6 +406,11 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 
 	connect(psi, SIGNAL(emitOptionsUpdate()), SLOT(optionsUpdate()));
 	optionsUpdate();
+
+#ifdef AVCALL
+        QShortcut *sp_ss = new QShortcut(QKeySequence(tr("Ctrl+Shift+N")), this);
+        connect(sp_ss, SIGNAL(activated()), SLOT(avcallConfig()));
+#endif
 }
 
 MainWin::~MainWin()
@@ -415,9 +428,9 @@ MainWin::~MainWin()
 
 void MainWin::registerAction( IconAction* action )
 {
-	char activated[] = SIGNAL( activated() );
-	char toggled[]   = SIGNAL( toggled(bool) );
-	char setChecked[]     = SLOT( setChecked(bool) );
+	const char *activated  = SIGNAL( activated() );
+	const char *toggled    = SIGNAL( toggled(bool) );
+	const char *setChecked = SLOT( setChecked(bool) );
 
 	struct {
 		const char* name;
@@ -1386,6 +1399,13 @@ void MainWin::showNoFocus()
 void MainWin::showNoFocus()
 {
 	bringToFront(this);
+}
+
+void MainWin::avcallConfig()
+{
+#ifdef AVCALL
+	JingleRtpManager::config();
+#endif
 }
 
 //#endif

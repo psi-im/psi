@@ -127,6 +127,11 @@
 #include "Certificates/CertificateErrorDialog.h"
 #include "Certificates/CertificateDisplayDialog.h"
 
+#ifdef AVCALL
+#include "avcall/jinglertp.h"
+#include "avcall/calldlg.h"
+#endif
+
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
 #endif
@@ -331,7 +336,11 @@ public:
 
 	// Voice Call
 	VoiceCaller* voiceCaller;
-	
+
+#ifdef AVCALL
+	JingleRtpManager *jingleRtpManager;
+#endif
+
 	TabManager *tabManager;
 
 #ifdef GOOGLE_FT
@@ -553,6 +562,17 @@ private slots:
 	{
 		dialogUnregister(static_cast<QWidget*>(obj));
 	}
+
+        void incoming_call()
+        {
+#ifdef AVCALL
+		JingleRtpSession *sess = jingleRtpManager->takeIncoming();
+		CallDlg *w = new CallDlg(account, 0);
+		w->setAttribute(Qt::WA_DeleteOnClose);
+		w->setIncoming(sess);
+		w->show();
+#endif
+        }
 
 public:
 	enum AutoAway {
@@ -848,6 +868,20 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	d->googleFTManager = new GoogleFTManager(client());
 	d->client->addExtension("share-v1", Features(QString("http://www.google.com/xmpp/protocol/share/v1")));
 	connect(d->googleFTManager,SIGNAL(incomingFileTransfer(GoogleFileTransfer*)),SLOT(incomingGoogleFileTransfer(GoogleFileTransfer*)));
+#endif
+
+#ifdef AVCALL
+	d->jingleRtpManager = new JingleRtpManager(this);
+	connect(d->jingleRtpManager, SIGNAL(incomingReady()), d, SLOT(incoming_call()));
+	{
+		QStringList features;
+		features << "urn:xmpp:jingle:0";
+		features << "urn:xmpp:jingle:apps:rtp:1";
+		features << "urn:xmpp:jingle:apps:rtp:audio";
+		//features << "urn:xmpp:jingle:apps:rtp:video";
+		features << "urn:xmpp:jingle:transports:ice-udp:0";
+		d->client->addExtension("avchat", Features(features));
+	}
 #endif
 
 	// Extended presence
@@ -1349,6 +1383,9 @@ void PsiAccount::cs_connected()
 
 	if(bs->inherits("BSocket") || bs->inherits("XMPP::BSocket")) {
 		d->localAddress = ((BSocket *)bs)->address();
+#ifdef AVCALL
+		d->jingleRtpManager->setSelfAddress(d->localAddress);
+#endif
 	}
 }
 
@@ -3016,6 +3053,19 @@ void PsiAccount::changeStatus(int x)
 
 void PsiAccount::actionVoice(const Jid &j)
 {
+#ifdef AVCALL
+	Jid j2 = j;
+	if(j.resource().isEmpty()) {
+		UserListItem *u = find(j);
+		if(u && u->isAvailable())
+			j2.setResource((*u->userResourceList().priority()).name());
+	}
+
+	CallDlg *w = new CallDlg(this, 0);
+	w->setAttribute(Qt::WA_DeleteOnClose);
+	w->setOutgoing(j2);
+	w->show();
+#else
 	Q_ASSERT(voiceCaller() != NULL);
 
 	Jid jid;
@@ -3042,6 +3092,7 @@ void PsiAccount::actionVoice(const Jid &j)
 	VoiceCallDlg* vc = new VoiceCallDlg(jid,voiceCaller());
 	vc->show();
 	vc->call();
+#endif
 }
 
 void PsiAccount::sendFiles(const Jid& j, const QStringList& l, bool direct)
@@ -4996,6 +5047,15 @@ PEPManager* PsiAccount::pepManager()
 BookmarkManager* PsiAccount::bookmarkManager()
 {
 	return d->bookmarkManager;
+}
+
+JingleRtpManager *PsiAccount::jingleRtpManager()
+{
+#ifdef AVCALL
+	return d->jingleRtpManager;
+#else
+	return 0;
+#endif
 }
 
 /**

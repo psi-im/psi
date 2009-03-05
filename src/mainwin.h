@@ -148,6 +148,8 @@ public slots:
 
 	void toggleVisible();
 
+	void avcallConfig();
+
 private:
 	void buildGeneralMenu(QMenu *);
 	QString numEventsString(int) const;
