@@ -468,7 +468,7 @@ void OptionsDlg::Private::openTab(QString id)
 		}
 	}
 
-	dlg->ws_tabs->raiseWidget( tab );
+	dlg->ws_tabs->setCurrentWidget( tab );
 
 	// and select item in lv_tabs...
 	Q3ListViewItemIterator it( dlg->lv_tabs );
