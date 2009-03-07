@@ -818,7 +818,7 @@ GameBoard::~GameBoard()
 	delete box;
 	delete drw;
 	delete sock;
-	delete map[];
+	delete[] map;
 	delete protocol;
 }
 
