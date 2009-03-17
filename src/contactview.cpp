@@ -3259,13 +3259,13 @@ void ContactViewItem::setOpen(bool o)
 	Q3ListViewItem::setOpen(o);
 	drawGroupIcon();
 
-	// save state
-	UserAccount::GroupData gd = d->groupData();
-	gd.open = o;
-	d->groupState()->insert(d->getGroupName(), gd);
-
 	if (!((ContactView *)listView())->isApplyingFilter()) {
 		d->prefilterOpen = o;
+
+		// save state
+		UserAccount::GroupData gd = d->groupData();
+		gd.open = o;
+		d->groupState()->insert(d->getGroupName(), gd);
 	}
 }
 
