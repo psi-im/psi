@@ -27,7 +27,7 @@ SoftwareVersion: 3.4.0
 # "Migrating to 1.X" document and understand the impact it will have
 # on your package. Some APIs may change their behaviour and new
 # features will be enabled depending on what this is set to.
-AutopackageTarget: 1.2
+AutopackageTarget: 1.4
 
 # Only uncomment InterfaceVersion if your package exposes interfaces
 # to other software, for instance if it includes DSOs or python/perl
