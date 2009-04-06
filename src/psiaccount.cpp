@@ -128,6 +128,7 @@
 #include "Certificates/CertificateDisplayDialog.h"
 
 #ifdef AVCALL
+#include "../psimedia/psimedia.h"
 #include "avcall/jinglertp.h"
 #include "avcall/calldlg.h"
 #endif
@@ -873,7 +874,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 #ifdef AVCALL
 	d->jingleRtpManager = new JingleRtpManager(this);
 	connect(d->jingleRtpManager, SIGNAL(incomingReady()), d, SLOT(incoming_call()));
-	{
+	if (PsiMedia::isSupported()) {
 		QStringList features;
 		features << "urn:xmpp:jingle:0";
 		features << "urn:xmpp:jingle:apps:rtp:1";
@@ -3054,6 +3055,7 @@ void PsiAccount::changeStatus(int x)
 void PsiAccount::actionVoice(const Jid &j)
 {
 #ifdef AVCALL
+	if (!PsiMedia::isSupported()) return;
 	Jid j2 = j;
 	if(j.resource().isEmpty()) {
 		UserListItem *u = find(j);

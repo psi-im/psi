@@ -61,6 +61,10 @@
 #include "bookmarkmanagedlg.h"
 #include "bookmarkmanager.h"
 
+#ifdef AVCALL
+#include "../psimedia/psimedia.h"
+#endif
+
 static inline int rankStatus(int status) 
 {
 	switch (status) {
@@ -1252,7 +1256,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 
 		// Voice call
 #ifdef AVCALL
-		if(!isAgent) {
+		if(!isAgent && PsiMedia::isSupported()) {
 #else
 		if(d->pa->voiceCaller() && !isAgent) {
 #endif
