@@ -123,15 +123,8 @@ PsiMain::PsiMain(const QString& uriToOpen, QObject *par)
 			QMessageBox::critical(0, tr("Error"), 
 				tr("There was an error creating the default profile."));
 			QTimer::singleShot(0, this, SLOT(bail()));
-		}
-		else {
-			PsiOptions o;
-			if (!o.newProfile()) {
-				qWarning("ERROR: Failed to new profile default options");
-			}
-
-			o.save(pathToProfile("default") + "/options.xml");
-
+		} else {
+			// options.xml will be created by PsiCon::init
 			lastProfile = activeProfile = "default";
 			autoOpen = true;
 			QTimer::singleShot(0, this, SLOT(sessionStart()));
