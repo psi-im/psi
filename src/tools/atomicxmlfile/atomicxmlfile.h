@@ -33,11 +33,14 @@ public:
 	bool saveDocument(const QDomDocument& doc) const;
 	bool loadDocument(QDomDocument* doc) const;
 
+	static bool exists(QString fileName);
+
 private:
 	QString fileName_;
 
 	QString tempFileName() const;
 	QString backupFileName() const;
+	QStringList loadCandidateList() const;
 	bool saveDocument(const QDomDocument& doc, QString fileName) const;
 	bool loadDocument(QDomDocument* doc, QString fileName) const;
 };

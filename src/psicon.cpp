@@ -333,7 +333,7 @@ bool PsiCon::init()
 	// to options.xml only.
 	QString backupfile = optionsFile() + "-preOptionsMigration";
 	if (QFile::exists(pathToProfileConfig(activeProfile))
-		&& QFile::exists(optionsFile())
+		&& PsiOptions::exists(optionsFile())
 		&& !QFile::exists(backupfile)) {
 		QFile::copy(optionsFile(), backupfile);
 	}
@@ -374,8 +374,8 @@ bool PsiCon::init()
 	FancyLabel::setSmallFontSize( common_smallFontSize );
 	
 	
-	if (!QFile::exists(optionsFile()) && !QFile::exists(pathToProfileConfig(activeProfile))) {
-		if (!options->load(":/options/newprofile.xml")) {
+	if (!PsiOptions::exists(optionsFile())) {
+		if (!options->newProfile()) {
 			qWarning("ERROR: Failed to new profile default options");
 		}
 	}

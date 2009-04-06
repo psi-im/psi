@@ -38,6 +38,7 @@
 #include <QtAlgorithms>
 
 #ifdef AVCALL
+#include "../psimedia/psimedia.h"
 #include <QShortcut>
 #endif
 
@@ -1404,7 +1405,7 @@ void MainWin::showNoFocus()
 void MainWin::avcallConfig()
 {
 #ifdef AVCALL
-	JingleRtpManager::config();
+	if (PsiMedia::isSupported()) JingleRtpManager::config();
 #endif
 }
 

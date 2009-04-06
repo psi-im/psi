@@ -80,7 +80,7 @@ PsiMain::PsiMain(const QString& uriToOpen, QObject *par)
 {
 	pcon = 0;
 
-	// load simple registry settings
+	// migrate old (pre 0.11) registry settings...
 	QSettings sUser(QSettings::UserScope, "psi-im.org", "Psi");
 	lastProfile = sUser.value("last_profile").toString();
 	lastLang = sUser.value("last_lang").toString();
@@ -123,15 +123,8 @@ PsiMain::PsiMain(const QString& uriToOpen, QObject *par)
 			QMessageBox::critical(0, tr("Error"), 
 				tr("There was an error creating the default profile."));
 			QTimer::singleShot(0, this, SLOT(bail()));
-		}
-		else {
-			PsiOptions o;
-			if (!o.newProfile()) {
-				qWarning("ERROR: Failed to new profile default options");
-			}
-
-			o.save(pathToProfile("default") + "/options.xml");
-
+		} else {
+			// options.xml will be created by PsiCon::init
 			lastProfile = activeProfile = "default";
 			autoOpen = true;
 			QTimer::singleShot(0, this, SLOT(sessionStart()));
@@ -143,26 +136,6 @@ PsiMain::~PsiMain()
 {
 	delete pcon;
 
-// Removed QSettings stuff for windows, don't think it's necessary anymore (remko)
-/*
-#ifdef Q_OS_WIN
-	// remove Psi's settings from HKLM
-	QSettings *rs = new QSettings;
-	rs->setPath("Affinix", "psi", QSettings::SystemScope);
-	rs->removeEntry("/lastProfile");
-	rs->removeEntry("/lastLang");
-	rs->removeEntry("/autoOpen");
-
-	QString affinixKey = "Software\\Affinix";
-#ifdef Q_OS_TEMP
-	RegDeleteKeyW(HKEY_LOCAL_MACHINE, affinixKey.ucs2());
-#else
-	RegDeleteKeyA(HKEY_LOCAL_MACHINE, affinixKey.latin1());
-#endif
-	delete rs;
-#endif
-*/
-	//QSettings s(QSettings::UserScope, "psi-im.org", "Psi");
 	QSettings s(ApplicationInfo::homeDir() + "/psirc", QSettings::IniFormat);
 	s.setValue("last_profile", lastProfile);
 	s.setValue("last_lang", lastLang);

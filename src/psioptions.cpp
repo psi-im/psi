@@ -211,10 +211,18 @@ bool PsiOptions::newProfile()
 	}
 
 	setOption("options.status.auto-away.message", tr("Auto Status (idle)"));
-	
+
 	return ok;
 }
 
+
+/**
+ * Checks for existing saved Options.
+ * Does not guarantee that load succeeds if the config file was corrupted.
+ */
+bool PsiOptions::exists(QString fileName) {
+	return OptionsTree::exists(fileName);
+}
 
 /**
  * Loads the options present in the xml config file named.

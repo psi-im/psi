@@ -39,6 +39,8 @@ public:
 	static PsiOptions* instance();
 	static const PsiOptions* defaults();
 	static void reset();
+
+	static bool exists(QString fileName);
 	~PsiOptions();
 	bool load(QString file);
 	void load(XMPP::Client* client);
