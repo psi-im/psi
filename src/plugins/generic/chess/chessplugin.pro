@@ -1,4 +1,4 @@
-include(../../plugins.pri)
+include(../../psiplugin.pri)
 
 QT +=  qt3support 
 

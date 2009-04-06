@@ -25,7 +25,7 @@ public:
 	PsiConAdapter(PsiCon *psicon_);
 	~PsiConAdapter();
 public Q_SLOTS:
-//	void openURI(QString uri);
+	void openURI(QString uri);
 	void raise();
 /*Q_SIGNALS:
 	void psi_pong();
@@ -44,10 +44,10 @@ PsiConAdapter::PsiConAdapter(PsiCon *psicon_) : QDBusAbstractAdaptor(psicon_)
 PsiConAdapter::~PsiConAdapter()
 {}
 
-/*void PsiConAdapter::openURI(QString uri)
+void PsiConAdapter::openURI(QString uri)
 {
 	psicon->doOpenUri(uri);
-}*/
+}
 
 // FIXME libguniqueapp uses activate
 void PsiConAdapter::raise()

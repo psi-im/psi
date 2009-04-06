@@ -191,7 +191,7 @@ void InfoDlg::jt_finished()
 			if (!d->vcard.nickName().isEmpty())
 				d->pa->setNick(d->vcard.nickName());
 			else
-				d->pa->setNick(d->pa->jid().user());
+				d->pa->setNick(d->pa->jid().node());
 		}
 
 		if(d->actionType == 1)

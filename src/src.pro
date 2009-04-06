@@ -10,6 +10,7 @@ CONFIG  += qt thread x11
 #CONFIG += use_crash
 CONFIG += pep
 CONFIG += whiteboarding
+#CONFIG += psi_plugins
 DEFINES += QT_STATICPLUGIN
 
 # Import several very useful Makefile targets 
@@ -63,9 +64,6 @@ windows {
 	#QTPLUGIN += qjpeg qgif
 }
 
-# IPv6 ?
-#DEFINES += NO_NDNS
-
 # Psi sources
 include(src.pri)
 
@@ -96,13 +94,14 @@ TRANSLATIONS = \
 	$$LANG_PATH/psi_nl.ts \
 	$$LANG_PATH/psi_pl.ts \
 	$$LANG_PATH/psi_pt.ts \
-	$$LANG_PATH/psi_ptbr.ts \
+	$$LANG_PATH/psi_pt_br.ts \
 	$$LANG_PATH/psi_ru.ts \
 	$$LANG_PATH/psi_se.ts \
 	$$LANG_PATH/psi_sk.ts \
 	$$LANG_PATH/psi_sr.ts \
 	$$LANG_PATH/psi_uk.ts \
-	$$LANG_PATH/psi_zh.ts
+	$$LANG_PATH/psi_zh.ts \
+	$$LANG_PATH/psi_zh_tw.ts
 
 OPTIONS_TRANSLATIONS_FILE=$$PWD/option_translations.cpp
 

@@ -32,7 +32,8 @@ using namespace XMPP;
 // SxeSession
 //----------------------------------------------------------------------------
 
-SxeSession::SxeSession(const Jid &target, const QString &session, const Jid &ownJid, bool groupChat, bool serverSupport, const QList<QString> &features) {
+SxeSession::SxeSession(const Jid &target, const QString &session, const Jid &ownJid,
+                        bool groupChat, bool serverSupport, const QList<QString> &features) {
     serverSupport_ = serverSupport;
     groupChat_ = groupChat;
     target_ = target;
@@ -41,8 +42,10 @@ SxeSession::SxeSession(const Jid &target, const QString &session, const Jid &own
     features_ = features;
 
     queueing_ = false;
-    importing_ = true;
-    highestWeight_ = 0;
+    importing_ = false;
+
+    uuidMaxPostfix_ = 0;
+    setUUIDPrefix();
 }
 
 SxeSession::~SxeSession() {
@@ -50,6 +53,8 @@ SxeSession::~SxeSession() {
 }
 
 void SxeSession::initializeDocument(const QDomDocument &doc) {
+    bool origImporting = importing_;
+
     importing_ = true;
 
     // reset the document
@@ -66,7 +71,7 @@ void SxeSession::initializeDocument(const QDomDocument &doc) {
     doc_.setContent(parseProlog(doc));
 
     // import other nodes
-    // create all nodes recursibely from root
+    // create all nodes recursively from root
     QDomNodeList children = doc.childNodes();
     for(int i = 0; i < children.size(); i++) {
         // skip the XML declaration <?xml ...?> because it isn't a processing instruction
@@ -74,10 +79,43 @@ void SxeSession::initializeDocument(const QDomDocument &doc) {
             generateNewNode(children.at(i), QString(), i);
     }
 
-    importing_ = false;
+    importing_ = origImporting;
 }
 
-void SxeSession::processIncomingSxeElement(const QDomElement &sxe, const Jid &sender) {
+void SxeSession::processIncomingSxeElement(const QDomElement &sxe, const QString &id) {
+    if(id.isEmpty() && !importing_) {
+        qDebug("Trying to process an SXE element without an associated id!");
+        return;
+    }
+
+    if(processSxe(sxe, id))
+        emit documentUpdated(true);
+}
+
+bool SxeSession::processSxe(const QDomElement &sxe, const QString &id) {
+    // Don't accept duplicates
+    if(!id.isEmpty() && usedSxeIds_.contains(id)) {
+        qDebug(QString("Tried to process a duplicate %1 (received: %2).").arg(sxe.attribute("id")).arg(usedSxeIds_.size()).toAscii());
+        return false;
+    }
+
+    if(!id.isEmpty())
+        usedSxeIds_ += id;
+
+    // store incoming edits when queueing
+    if(queueing_) {
+        // Make sure the element is not already in the queue.
+        foreach(IncomingEdit i, queuedIncomingEdits_)
+            if(i.xml == sxe)  return false;
+        
+        IncomingEdit incoming;
+        incoming.id = id;
+        incoming.xml = sxe.cloneNode(true).toElement();
+
+        queuedIncomingEdits_.append(incoming);
+        return false;
+    }
+
     // create an SxeEdit for each child of the <sxe/>
     QDomNodeList children = sxe.childNodes();
 
@@ -91,48 +129,32 @@ void SxeSession::processIncomingSxeElement(const QDomElement &sxe, const Jid &se
             edits.append(new SxeRemoveEdit(children.item(i).toElement()));
     }
 
-    
-    if(queueing_ && !importing_) {
-        // store incoming edits when queueing (unless importing)
-        QString sxeid = sxe.attribute("id");
-        QString senderfull = sender.full();
+    if (edits.size() == 0)  return false;
 
-        foreach(SxeEdit* e, edits) {
-            IncomingEdit incoming;
-            incoming.sxeid = sxeid;
-            incoming.sender = senderfull;
-            incoming.edit = e;
-            queuedIncomingEdits_.append(incoming);
-        }
-    } else {
-        // otherwise, process all the edits
-        foreach(SxeEdit* e, edits) {
-            SxeRecord* meta;
-            if(e->type() == SxeEdit::New)
-                meta = createRecord(e->rid());
-            else
-                meta = record(e->rid());
+    // process all the edits
+    foreach(SxeEdit* e, edits) {
+        SxeRecord* meta;
+        if(e->type() == SxeEdit::New)
+            meta = createRecord(e->rid());
+        else
+            meta = record(e->rid());
 
-            if(meta)
-                meta->apply(doc_, e, importing_);
-        }
-
-        // Save the information of last processed sxe
-        setLastSxe(sender.full(), sxe.attribute("id"));
-
-        emit documentUpdated(true);
+        if(meta)
+            meta->apply(doc_, e);
     }
+
+    return true;
 }
 
 const QDomDocument& SxeSession::document() const {
     return doc_;
 }
 
-const bool SxeSession::groupChat() const {
+bool SxeSession::groupChat() const {
     return groupChat_;
 }
 
-const bool SxeSession::serverSupport() const {
+bool SxeSession::serverSupport() const {
     return serverSupport_;
 }
 
@@ -201,54 +223,35 @@ void SxeSession::stopQueueing() {
     if(!queueing_)
         return;
 
+    queueing_ = false;
+
     // Process queued elements
     flush();
-    while(!queuedIncomingEdits_.isEmpty()) {
-        IncomingEdit incoming = queuedIncomingEdits_.takeFirst();
-        setLastSxe(incoming.sender.full(), incoming.sxeid);
 
-        SxeRecord* meta;
-        if(incoming.edit->type() == SxeEdit::New)
-            meta = createRecord(incoming.edit->rid());
-        else
-            meta = record(incoming.edit->rid());
-
-        if(meta)
-            meta->apply(doc_, incoming.edit, false);
-    }
-    
-    queueing_ = false;
-}
-
-void SxeSession::eraseQueueUntil(QString sender, QString id) {
-    for(int i = 0; i < queuedIncomingEdits_.size(); i++) {
-        // Check each queued element if the sender matches
-        if(queuedIncomingEdits_.at(i).sender.full() == sender && queuedIncomingEdits_.at(i).sxeid == id) {
-            // Erase the queue up to and including the matching edit
-            while(i-- >= 0) {
-                queuedIncomingEdits_.removeFirst();
-            }
-            // Set the information of last processed edit
-            setLastSxe(sender, id);
-            return;
+    if(!queuedIncomingEdits_.isEmpty()) {
+        while(!queuedIncomingEdits_.isEmpty()) {
+            IncomingEdit queued = queuedIncomingEdits_.takeFirst();
+            processSxe(queued.xml, queued.id);
         }
+
+        emit documentUpdated(true);
     }
 }
 
-void SxeSession::setImporting(bool i, const QDomDocument &doc) {
-    if(i) {
-        // reset the document
-        initializeDocument(doc);
+void SxeSession::startImporting(const QDomDocument &doc) {
+    importing_ = true;
 
-        // start queueing outgoing edits
-        startQueueing();
-    } else {
-        stopQueueing();
-    }
+    // reset the document
+    initializeDocument(doc);
+
+    // start queueing outgoing edits
+    startQueueing();
 }
 
-QHash<QString, QString> SxeSession::lastSxe() const {
-    return lastSxe_;
+void SxeSession::stopImporting() {
+    stopQueueing();
+
+    importing_ = false;
 }
 
 void SxeSession::endSession() {
@@ -349,7 +352,7 @@ const QDomNode SxeSession::insertNode(const QDomNode &node, const QString &paren
             SxeRecordEdit* edit = new SxeRecordEdit(meta->rid(), meta->version() + 1, changes);
 
             // apply it
-            meta->apply(doc_, edit, false);
+            meta->apply(doc_, edit);
         
             // send the edit to others
             queueOutgoingEdit(edit);
@@ -447,7 +450,7 @@ void SxeSession::setNodeValue(const QDomNode &node, const QString &value, int fr
     SxeRecordEdit* edit = new SxeRecordEdit(meta->rid(), meta->version() + 1, changes);
 
     // apply it
-    meta->apply(doc_, edit, false);
+    meta->apply(doc_, edit);
     
     // send the edit to others
     queueOutgoingEdit(edit);
@@ -460,7 +463,7 @@ void SxeSession::flush() {
         return;
 
     // create the sxe element
-    QDomElement sxe = doc_.createElementNS(SXDENS, "sxe");
+    QDomElement sxe = doc_.createElementNS(SXENS, "sxe");
     sxe.setAttribute("session", session_);
 
     // append all queued edits
@@ -497,7 +500,7 @@ QDomNode SxeSession::generateNewNode(const QDomNode &node, const QString &parent
         } else {
             SxeEdit* edit = new SxeNewEdit(rid, node, parent, primaryWeight, false);
 
-            meta->apply(doc_, edit, false);
+            meta->apply(doc_, edit);
             queueOutgoingEdit(edit);
         }
 
@@ -539,7 +542,7 @@ void SxeSession::generateRemoves(const QDomNode &node) {
         // generate the appropriate edit for the node
         SxeRemoveEdit* edit = new SxeRemoveEdit(meta->rid());
         queueOutgoingEdit(edit);
-        meta->apply(doc_, edit, false);
+        meta->apply(doc_, edit);
     }
 }
 
@@ -684,9 +687,12 @@ bool SxeSession::removeSmaller(SxeRecord* meta1, SxeRecord* meta2) {
     }
 }
 
-void SxeSession::setLastSxe(const QString &sender, const QString &id) {
-    lastSxe_["sender"] = sender;
-    lastSxe_["id"] = id;
+void SxeSession::addUsedSxeId(QString id) {
+    usedSxeIds_ += id;
+}
+
+QList<QString> SxeSession::usedSxeIds() {
+    return usedSxeIds_;
 }
 
 void SxeSession::queueOutgoingEdit(SxeEdit* edit) {
@@ -738,13 +744,15 @@ SxeRecord* SxeSession::record(const QDomNode &node) const {
     return NULL;
 }
 
-QString SxeSession::generateUUIDForSession() {
-    QString id;
-    do {
-        id = generateUUID();
-    } while(recordByNodeId_.contains(id));
+void SxeSession::setUUIDPrefix(const QString uuidPrefix) {
+    if(!uuidPrefix.isNull())
+        uuidPrefix_ = uuidPrefix;
+    else
+        uuidPrefix_ = generateUUID();
+}
 
-    return id;
+QString SxeSession::generateUUIDForSession() {
+    return QString("%1.%2").arg(uuidPrefix_).arg(++uuidMaxPostfix_, 0, 36); // 36 is the max allowed base
 }
 
 QString SxeSession::generateUUID() {

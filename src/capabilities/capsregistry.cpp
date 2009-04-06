@@ -18,7 +18,7 @@
  *
  */
 
-#include <QApplication>
+#include <QCoreApplication>
 #include <QDebug>
 #include <QTextCodec>
 #include <QFile>

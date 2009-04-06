@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2007  Justin Karneges <justin@affinix.com>
+ * Copyright (C) 2003-2008  Justin Karneges <justin@affinix.com>
  * Copyright (C) 2004,2005  Brad Hards <bradh@frogmouth.net>
  *
  * This library is free software; you can redistribute it and/or
@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301  USA
  *
  */
 
@@ -43,6 +44,9 @@ Q_DECLARE_METATYPE(QCA::PGPKey)
 namespace QCA {
 
 Provider::Context *getContext(const QString &type, Provider *p);
+
+// from qca_plugin.cpp
+QString truncate_log(const QString &in, int size);
 
 /*
   How this stuff works:
@@ -121,9 +125,13 @@ public:
 	{
 		self = this;
 
-		qRegisterMetaType<QCA::KeyStoreEntry>("QCA::KeyStoreEntry");
-		qRegisterMetaType< QList<QCA::KeyStoreEntry> >("QList<QCA::KeyStoreEntry>");
-		qRegisterMetaType< QList<QCA::KeyStoreEntry::Type> >("QList<QCA::KeyStoreEntry::Type>");
+		qRegisterMetaType<KeyStoreEntry>();
+		qRegisterMetaType< QList<KeyStoreEntry> >();
+		qRegisterMetaType< QList<KeyStoreEntry::Type> >();
+		qRegisterMetaType<KeyBundle>();
+		qRegisterMetaType<Certificate>();
+		qRegisterMetaType<CRL>();
+		qRegisterMetaType<PGPKey>();
 
 		connect(this, SIGNAL(updated_p()), SLOT(updated_locked()), Qt::QueuedConnection);
 
@@ -265,7 +273,7 @@ public slots:
 		KeyStoreListContext *c = 0;
 		int contextId = -1;
 		m.lock();
-		foreach(Item i, items)
+		foreach(const Item &i, items)
 		{
 			if(i.storeId == storeId)
 			{
@@ -310,6 +318,46 @@ public slots:
 			return i.owner->writeEntry(i.storeContextId, qVariantValue<PGPKey>(v));
 		else
 			return QString();
+	}
+
+	QString writeEntry(int trackerId, const QCA::KeyBundle &v)
+	{
+		int at = findItem(trackerId);
+		if(at == -1)
+			return QString();
+		Item &i = items[at];
+
+		return i.owner->writeEntry(i.storeContextId, v);
+	}
+
+	QString writeEntry(int trackerId, const QCA::Certificate &v)
+	{
+		int at = findItem(trackerId);
+		if(at == -1)
+			return QString();
+		Item &i = items[at];
+
+		return i.owner->writeEntry(i.storeContextId, v);
+	}
+
+	QString writeEntry(int trackerId, const QCA::CRL &v)
+	{
+		int at = findItem(trackerId);
+		if(at == -1)
+			return QString();
+		Item &i = items[at];
+
+		return i.owner->writeEntry(i.storeContextId, v);
+	}
+
+	QString writeEntry(int trackerId, const QCA::PGPKey &v)
+	{
+		int at = findItem(trackerId);
+		if(at == -1)
+			return QString();
+		Item &i = items[at];
+
+		return i.owner->writeEntry(i.storeContextId, v);
 	}
 
 	bool removeEntry(int trackerId, const QString &entryId)
@@ -505,6 +553,7 @@ private slots:
 	{
 		QMutexLocker locker(&m);
 		dtext += str;
+		dtext = truncate_log(dtext, 100000);
 	}
 
 	void ksl_storeUpdated(int id)
@@ -940,6 +989,15 @@ protected:
 				qVariantSetValue<CRL>(arg, wentry.crl);
 			else if(wentry.type == KeyStoreWriteEntry::TypePGPKey)
 				qVariantSetValue<PGPKey>(arg, wentry.pgpKey);
+
+			// note: each variant in the argument list is resolved
+			//   to its native type.  so even though it looks like
+			//   we're attempting to call a method named
+			//   writeEntry(QString,QVariant), we're actually
+			//   calling one of many possible methods, such as
+			//   writeEntry(QString,PGPKey) or
+			//   writeEntry(QString,Certificate), etc, depending
+			//   on the type of object we put in the variant.
 			entryId = trackercall("writeEntry", QVariantList() << trackerId << arg).toString();
 		}
 		else // RemoveEntry
@@ -1491,7 +1549,7 @@ public:
 			}
 		}
 
-		foreach(QString storeId, here)
+		foreach(const QString &storeId, here)
 		{
 			emit q->keyStoreAvailable(storeId);
 			if(!self)

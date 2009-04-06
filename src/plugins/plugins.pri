@@ -1,13 +1,14 @@
-TEMPLATE = lib
-CONFIG += plugin
-QT += xml
+INCLUDEPATH += $$PWD/include
 
-target.path = $$(HOME)/.psi/plugins
-INSTALLS += target
+HEADERS += \
+	$$PWD/include/psiplugin.h \
+	$$PWD/include/stanzafilter.h \
+	$$PWD/include/stanzasender.h \
+	$$PWD/include/stanzasendinghost.h \
+	$$PWD/include/iqfilter.h \
+	$$PWD/include/iqnamespacefilter.h \
+	$$PWD/include/iqfilteringhost.h \
+	$$PWD/include/eventfilter.h \
+	$$PWD/include/optionaccessor.h \
+	$$PWD/include/optionaccessinghost.h
 
-PSI_PATH = $$PWD/..
-
-
-INCLUDEPATH += $$PSI_PATH
-
-HEADERS += $$PSI_PATH/psiplugin.h

@@ -131,7 +131,7 @@ void AccountRegDlg::sslActivated(int i)
 bool AccountRegDlg::checkSSL()
 {
 	if(!QCA::isSupported("tls")) {
-		QMessageBox::information(this, tr("SSL error"), tr("Cannot enable SSL/TLS.  Plugin not found."));
+		QMessageBox::information(this, tr("SSL error"), tr("Cannot enable SSL/TLS. QCA2 Plugin not found."));
 		return false;
 	}
 	return true;
@@ -174,7 +174,7 @@ void AccountRegDlg::serverListError(const QString& e)
 	if (!e.isEmpty()) {
 		error += ".\n" + tr("Reason: ") + e;
 	}
-	qWarning(error);
+	qWarning("%s", qPrintable(error));
 	//QMessageBox::critical(this, tr("Error"), error);
 	ui_.le_server->setFocus();
 }
@@ -211,7 +211,7 @@ void AccountRegDlg::next()
 		// Determine the username and password
 		foreach(XMPP::XData::Field field, fields.fields()) {
 			if (field.var() == "username" && !field.value().isEmpty()) {
-				jid_.set(server_.bare(), field.value().at(0), "");
+				jid_ = Jid(field.value().at(0), server_.bare(), "");
 			}
 			else if (field.var() == "password" && !field.value().isEmpty()) {
 				pass_ = field.value().at(0);

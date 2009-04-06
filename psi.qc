@@ -23,12 +23,10 @@
   </dep>
   <dep type='qdbus'/>
   <dep type='growl'/>
+  <dep type='sparkle'/>
   <dep type='xss'/>
   <dep type='ghbnr'/>
   <dep type='aspell'/>
-  <dep type='tests'>
-    <disabled/>
-  </dep>
   <dep type='debug'>
 	<required/>
   </dep>

@@ -1,9 +1,4 @@
-TEMPLATE = lib
-CONFIG += plugin
-
-PSI_PATH = ../../..
-
-INCLUDEPATH += $$PSI_PATH
+include(../../psiplugin.pri)
 
 SOURCES += urlwatcherplugin.cpp
 

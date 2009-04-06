@@ -21,7 +21,8 @@
 #ifndef SXDESESSION_H
 #define SXDESESSION_H
 
-#define SXDENS "http://jabber.org/protocol/sxe" 
+#define SXENS "http://jabber.org/protocol/sxe" 
+/*  ^^^^ make sure corresponds to NS used for parsing in iris/src/xmpp/xmpp-im/types.cpp ^^^^ */
 
 #include <QObject>
 #include <QList>
@@ -49,9 +50,8 @@ class SxeSession : public QObject {
 
     private:
         struct IncomingEdit {
-            Jid sender;
-            QString sxeid;
-            SxeEdit* edit;
+            QString id;
+            QDomElement xml;
         };
 
     public:
@@ -67,13 +67,13 @@ class SxeSession : public QObject {
         /*! \brief Initializes the shared document. Only used if starting a new session; not when joining one. */
         void initializeDocument(const QDomDocument &doc);
         /*! \brief Processes the incoming SXE element and remembers its identifying information.*/
-        void processIncomingSxeElement(const QDomElement &, const Jid &sender);
+        void processIncomingSxeElement(const QDomElement &, const QString &id);
         /*! \brief Returns a const reference to the target document.*/
         const QDomDocument& document() const;
         /*! \brief Returns true if the target is a groupchat.*/
-        const bool groupChat() const;
+        bool groupChat() const;
         /*! \brief Returns true if the target is a groupchat.*/
-        const bool serverSupport() const;
+        bool serverSupport() const;
         /*! \brief Returns the target contact's JID.*/
         const Jid target() const;
         /*! \brief Returns the session identifier.*/
@@ -82,6 +82,7 @@ class SxeSession : public QObject {
         const Jid ownJid() const;
         /*! \brief Returns the session identifier.*/
         const QList<QString> features() const;
+
         /*! \brief Starts queueing new edits to the document.
          *  Queueing should be started just before sending <document-begin/>.
          */
@@ -90,20 +91,22 @@ class SxeSession : public QObject {
          *  Queueing should be stopped after sending <document-end/>.
          */
         void stopQueueing();
-        /*! \brief Erases the sxe elements from the incoming queue up to and including the sxe identified by the parameters.
-         *  The parameters correspond to the attributes of the last-edit element.
-         */
-        void eraseQueueUntil(QString sender, QString id);
-        /*! \brief Sets whether configure edits are accepted regardless of version.
-         *  Default is false. Should be set true if the session state is Negotiation::DocumentBegun.
-         *  Initializes the document with \a doc if provided.
-         */
-        void setImporting(bool, const QDomDocument &doc = QDomDocument());
-        /*! \brief Return a id with information identifying the last processed sxe element.*/
-        QHash<QString, QString> lastSxe() const;
-        /*! \brief Sets the information identifying the last processed sxe.*/
-        void setLastSxe(const QString &sender, const QString &id);
 
+        /*! \brief Initializes the document with the prolog of \a doc if provided.
+         * Should be used when <document-begin/> is received when joining.
+         */
+        void startImporting(const QDomDocument &doc = QDomDocument());
+        /*! \brief Enters the normal editing mode.
+         * Should be used when <document-end/> is received when joining.
+         */
+        void stopImporting();
+
+        /*! \brief Add the given ID to the list of used IDs for <sxe/> elements.*/
+        void addUsedSxeId(QString id);
+        /*! \brief Return the list of used IDs for <sxe/> elements.*/
+        QList<QString> usedSxeIds();
+
+        void setUUIDPrefix(const QString uuidPrefix = QString());
         /*! \brief Returns a random UUID without enclosing { }. */
         static QString generateUUID();
         /*! \brief Returns the prolog of the document as a string. */
@@ -183,7 +186,7 @@ class SxeSession : public QObject {
             Returns true iff \a meta1 was removed. */
         bool removeSmaller(SxeRecord* meta1, SxeRecord* meta2);
         /*! \brief Processes an incoming sxe element.*/
-        bool processSxe(const QDomElement &sxe);
+        bool processSxe(const QDomElement &sxe, const QString &id);
         /*! \brief Queues an outgoing edit to be sent when flushed.*/
         void queueOutgoingEdit(SxeEdit* edit);
         /*! \brief Creates the record of node with rid \a id. Returns a pointer to it. */
@@ -236,10 +239,11 @@ class SxeSession : public QObject {
         bool importing_;
         /*! \brief A list of supported features for the session.*/
         QList<QString> features_;
-         /*! \brief A string that identifies the last edit that was processed.*/
-        QHash<QString, QString> lastSxe_;
-        /*! \brief The highest primary weight value in the document.*/
-        int highestWeight_;
+         /*! \brief Identifiers for the <sxe/> elements that have been processed already.*/
+        QList<QString> usedSxeIds_;
+        /*! \brief A unique id is generated as "uuidPrefix.counter".*/
+        QString uuidPrefix_;
+        int uuidMaxPostfix_;
         /*! \brief The main DOM document.*/
         QDomDocument doc_;
 };

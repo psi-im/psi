@@ -20,12 +20,14 @@
 
 #include <QtCrypto>
 #include <QMessageBox>
+#include <QUrl>
 
+#include "applicationinfo.h"
 #include "miniclient.h"
 #include "proxy.h"
-#include "certutil.h"
+#include "Certificates/CertificateHelpers.h"
+#include "Certificates/CertificateErrorDialog.h"
 #include "psiaccount.h"
-#include "sslcertdlg.h"
 #include "xmpp_tasks.h"
 
 using namespace XMPP;
@@ -89,22 +91,26 @@ void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool leg
 				if (useHost)
 					u.addQueryItem("server",host + ':' + QString::number(port));
 				else
-					u.addQueryItem("server",jid.host());
+					u.addQueryItem("server",jid.domain());
 			}
 			p.setHttpPoll(pi.settings.host, pi.settings.port, u.toString());
 			p.setPollInterval(2);
 		}
 
-		if(pi.settings.useAuth)
+		if(pi.settings.useAuth) {
 			p.setUserPass(pi.settings.user, pi.settings.pass);
+		}
 	}
 
 	conn = new AdvancedConnector;
-	tls = new QCA::TLS;
-	tls->setTrustedCertificates(CertUtil::allCertificates());
-	tlsHandler = new QCATLSHandler(tls);
-	tlsHandler->setXMPPCertCheck(true);
-	connect(tlsHandler, SIGNAL(tlsHandshaken()), SLOT(tls_handshaken()));
+	if (QCA::isSupported("tls")) {
+		tls = new QCA::TLS;
+		tls->setTrustedCertificates(CertificateHelpers::allCertificates(ApplicationInfo::getCertificateStoreDirs()));
+		tlsHandler = new QCATLSHandler(tls);
+		tlsHandler->setXMPPCertCheck(true);
+		connect(tlsHandler, SIGNAL(tlsHandshaken()), SLOT(tls_handshaken()));
+	}
+
 	conn->setProxy(p);
 	if (useHost) {
 		conn->setOptHostPort(host, port);
@@ -158,30 +164,24 @@ void MiniClient::tls_handshaken()
 	if (r == QCA::TLS::Valid && !tlsHandler->certMatchesHostname()) r = QCA::TLS::HostMismatch;
 	if(r != QCA::TLS::Valid) {
 		QCA::Validity validity =  tls->peerCertificateValidity();
-		QString str = CertUtil::resultToString(r,validity);
-		while(1) {
-			int n = QMessageBox::warning(0,
-				tr("Server Authentication"),
-				tr("The %1 certificate failed the authenticity test.").arg(j.host()) + '\n' + tr("Reason: %1.").arg(str),
-				tr("&Details..."),
-				tr("Co&ntinue"),
-				tr("&Cancel"), 0, 2);
-			if(n == 0) {
-				SSLCertDlg::showCert(cert, r, validity);
-			}
-			else if(n == 1) {
-				tlsHandler->continueAfterHandshake();
-				break;
-			}
-			else if(n == 2) {
-				close();
-				error();
-				break;
-			}
+		CertificateErrorDialog errorDialog(
+			tr("Server Authentication"),
+			j.domain(),
+			cert,
+			r,
+			validity,
+			ApplicationInfo::getCertificateStoreSaveDir());
+		if (errorDialog.exec() == QDialog::Accepted) {
+			tlsHandler->continueAfterHandshake();
+		}
+		else {
+			close();
+			error();
 		}
 	}
-	else
+	else {
 		tlsHandler->continueAfterHandshake();
+	}
 }
 
 void MiniClient::cs_connected()
@@ -195,7 +195,7 @@ void MiniClient::cs_securityLayerActivated(int)
 void MiniClient::cs_needAuthParams(bool user, bool password, bool realm)
 {
 	if(user) 
-		stream->setUsername(j.user());
+		stream->setUsername(j.node());
 	if(password)
 		stream->setPassword(pass);
 	if(realm)
@@ -205,7 +205,7 @@ void MiniClient::cs_needAuthParams(bool user, bool password, bool realm)
 
 void MiniClient::cs_authenticated()
 {
-	_client->start(j.host(), j.user(), "", "");
+	_client->start(j.domain(), j.node(), "", "");
 
 	if (!stream->old() && auth) {
 		JT_Session *j = new JT_Session(_client->rootTask());

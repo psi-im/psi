@@ -198,5 +198,25 @@
  <layoutdefault spacing="6" margin="11" />
  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>ck_tabChats</sender>
+   <signal>stateChanged(int)</signal>
+   <receiver>OptChat</receiver>
+   <slot>useTabbedMode_stateChanged(int)</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>76</x>
+     <y>145</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>342</x>
+     <y>85</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>useTabbedMode_stateChanged(int)</slot>
+ </slots>
 </ui>

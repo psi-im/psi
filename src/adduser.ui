@@ -13,7 +13,7 @@
       </rect>
     </property>
     <property name="windowTitle" >
-      <string>Add User</string>
+      <string>Add Contact</string>
     </property>
     <layout class="QHBoxLayout" >
       <property name="margin" >
@@ -23,7 +23,7 @@
         <number>6</number>
       </property>
       <item>
-        <widget class="QTextEdit" name="TextEdit1" >
+        <widget class="QTextEdit" name="te_info" >
           <property name="sizePolicy" >
             <sizepolicy>
               <hsizetype>0</hsizetype>
@@ -61,96 +61,103 @@ To add a contact from a &lt;b>non-Jabber&lt;/b> service, make sure you are regis
             <number>0</number>
           </property>
           <item>
-            <layout class="QHBoxLayout" >
-              <property name="margin" >
-                <number>0</number>
-              </property>
-              <property name="spacing" >
-                <number>6</number>
-              </property>
-              <item>
-                <widget class="QLabel" name="TextLabel5" >
-                  <property name="text" >
-                    <string>Service:</string>
-                  </property>
-                </widget>
-              </item>
-              <item>
-                <widget class="QComboBox" name="cb_service" >
-                  <item>
-                    <property name="text" >
-                      <string>Jabber</string>
-                    </property>
-                  </item>
-                </widget>
-              </item>
-              <item>
-                <spacer name="Spacer1" >
-                  <property name="sizeHint" >
-                    <size>
-                      <width>20</width>
-                      <height>0</height>
-                    </size>
-                  </property>
-                  <property name="sizeType" >
-                    <enum>Expanding</enum>
-                  </property>
-                  <property name="orientation" >
-                    <enum>Horizontal</enum>
-                  </property>
-                </spacer>
-              </item>
-            </layout>
-          </item>
-          <item>
-            <widget class="QGroupBox" name="gb_trans" >
-              <property name="enabled" >
-                <bool>false</bool>
-              </property>
-              <property name="title" >
-                <string>Service ID Translation</string>
-              </property>
-              <layout class="QVBoxLayout" >
+            <widget class="QWidget" native="1" name="w_serviceTranslation" >
+              <layout class="QVBoxLayout" name="verticalLayout" >
                 <property name="margin" >
-                  <number>11</number>
-                </property>
-                <property name="spacing" >
-                  <number>6</number>
+                  <number>0</number>
                 </property>
                 <item>
-                  <widget class="QLabel" name="lb_transDesc" >
-                    <property name="sizePolicy" >
-                      <sizepolicy>
-                        <hsizetype>5</hsizetype>
-                        <vsizetype>7</vsizetype>
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                      </sizepolicy>
-                    </property>
-                    <property name="text" >
-                      <string>No description</string>
-                    </property>
-                  </widget>
-                </item>
-                <item>
-                  <layout class="QHBoxLayout" >
-                    <property name="margin" >
-                      <number>0</number>
-                    </property>
+                  <layout class="QHBoxLayout" name="hb_service" >
                     <property name="spacing" >
                       <number>6</number>
                     </property>
+                    <property name="margin" >
+                      <number>0</number>
+                    </property>
                     <item>
-                      <widget class="QLineEdit" name="le_transPrompt" />
-                    </item>
-                    <item>
-                      <widget class="QPushButton" name="pb_transGet" >
+                      <widget class="QLabel" name="TextLabel5" >
                         <property name="text" >
-                          <string>Get Jabber ID</string>
+                          <string>Service:</string>
                         </property>
                       </widget>
                     </item>
+                    <item>
+                      <widget class="QComboBox" name="cb_service" >
+                        <item>
+                          <property name="text" >
+                            <string>Jabber</string>
+                          </property>
+                        </item>
+                      </widget>
+                    </item>
+                    <item>
+                      <spacer name="Spacer1" >
+                        <property name="orientation" >
+                          <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeType" >
+                          <enum>QSizePolicy::Expanding</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0" >
+                          <size>
+                            <width>20</width>
+                            <height>0</height>
+                          </size>
+                        </property>
+                      </spacer>
+                    </item>
                   </layout>
+                </item>
+                <item>
+                  <widget class="QGroupBox" name="gb_trans" >
+                    <property name="enabled" >
+                      <bool>false</bool>
+                    </property>
+                    <property name="title" >
+                      <string>Service ID Translation</string>
+                    </property>
+                    <layout class="QVBoxLayout" name="_2" >
+                      <property name="spacing" >
+                        <number>6</number>
+                      </property>
+                      <property name="margin" >
+                        <number>11</number>
+                      </property>
+                      <item>
+                        <widget class="QLabel" name="lb_transDesc" >
+                          <property name="sizePolicy" >
+                            <sizepolicy vsizetype="Expanding" hsizetype="Preferred" >
+                              <horstretch>0</horstretch>
+                              <verstretch>0</verstretch>
+                            </sizepolicy>
+                          </property>
+                          <property name="text" >
+                            <string>No description</string>
+                          </property>
+                        </widget>
+                      </item>
+                      <item>
+                        <layout class="QHBoxLayout" name="_3" >
+                          <property name="spacing" >
+                            <number>6</number>
+                          </property>
+                          <property name="margin" >
+                            <number>0</number>
+                          </property>
+                          <item>
+                            <widget class="QLineEdit" name="le_transPrompt" />
+                          </item>
+                          <item>
+                            <widget class="QPushButton" name="pb_transGet" >
+                              <property name="text" >
+                                <string>Get Jabber ID</string>
+                              </property>
+                            </widget>
+                          </item>
+                        </layout>
+                      </item>
+                    </layout>
+                  </widget>
                 </item>
               </layout>
             </widget>
@@ -429,7 +436,7 @@ To add a contact from a &lt;b>non-Jabber&lt;/b> service, make sure you are regis
     <tabstop>cb_group</tabstop>
     <tabstop>ck_authreq</tabstop>
     <tabstop>ck_close</tabstop>
-    <tabstop>TextEdit1</tabstop>
+    <tabstop>te_info</tabstop>
   </tabstops>
   <images>
     <image name="image0" >

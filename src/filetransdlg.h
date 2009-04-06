@@ -1,6 +1,7 @@
 #ifndef FILETRANSDLG_H
 #define FILETRANSDLG_H
 
+#include "advwidget.h"
 #include "ui_filetrans.h"
 #include "s5b.h"
 
@@ -103,7 +104,7 @@ private:
 	void unblockWidgets();
 };
 
-class FileTransDlg : public QDialog
+class FileTransDlg : public AdvancedWidget<QDialog>
 {
 	Q_OBJECT
 public:

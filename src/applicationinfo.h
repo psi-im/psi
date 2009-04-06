@@ -13,12 +13,17 @@ public:
 	static QString capsVersion();
 	static QString IPCName();
 
+	// URLs
+	static QString getAppCastURL();
+
 	// Directories
 	static QString homeDir();
 	static QString resourcesDir();
 	static QString profilesDir();
 	static QString historyDir();
 	static QString vCardDir();
+	static QStringList getCertificateStoreDirs();
+	static QString getCertificateStoreSaveDir();
 	
 	// Namespaces
 	static QString optionsNS();

@@ -18,6 +18,9 @@
 		<account comment="Default account options">
 			<domain comment="Always use the same domain to register with. Leave this empty to allow the user to choose his server." type="QString"/>
 		</account>
+    <auto-update comment="Auto updater">
+      <check-on-startup comment="Check for available updates on startup" type="bool">true</check-on-startup>
+    </auto-update>
 		<enable-multicast comment="Enable multicasting messages to multiple recipients" type="bool">false</enable-multicast>
 		<html comment="Hypertext markup options">
 			<chat comment="HTML in chats">
@@ -55,7 +58,6 @@
 		<ui comment="User interface options">
 			<account comment="Account options">
 				<data-proxy comment="Allow changing the data transfer proxy" type="bool">true</data-proxy>
-				<ignore-ssl-warnings comment="Show the ignore SSL warnings option" type="bool">true</ignore-ssl-warnings>
 				<keepalive comment="Show the keepalive option" type="bool">true</keepalive>
 				<legacy-ssl-probe comment="Show legacy SSL probe option" type="bool">true</legacy-ssl-probe>
 				<manual-host comment="Enable manual host configuration" type="bool">true</manual-host>
@@ -335,6 +337,7 @@
 					<item type="QKeySequence">Enter</item>
 				</send>
 				<clear type="QKeySequence" comment="Clear the text"/>
+				<quick-command type="QKeySequence" comment="Change to quick command mode">Ctrl+7</quick-command>
 			</chat>
 			<contactlist comment="Shortcuts in the contactlist">
 				<assign-custom-avatar type="QKeySequence" comment="Assign a custom avatar to the selected contact"/>

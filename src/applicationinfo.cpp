@@ -33,6 +33,11 @@
 #define PROG_IPC_NAME "org.psi-im.Psi"	// must not contain '\\' character on Windows
 #define PROG_OPTIONS_NS "http://psi-im.org/options";
 #define PROG_STORAGE_NS "http://psi-im.org/storage";
+#ifdef Q_WS_MAC
+#define PROG_APPCAST_URL "http://psi-im.org/appcast/psi-mac.xml";
+#else
+#define PROG_APPCAST_URL "";
+#endif
 
 #if defined(Q_WS_X11) && !defined(PSI_DATADIR)
 #define PSI_DATADIR "/usr/local/share/psi"
@@ -65,6 +70,11 @@ QString ApplicationInfo::IPCName()
 	return PROG_IPC_NAME;
 }
 
+QString ApplicationInfo::getAppCastURL()
+{
+	return PROG_APPCAST_URL;
+}
+
 QString ApplicationInfo::optionsNS()
 {
 	return PROG_OPTIONS_NS;
@@ -74,6 +84,25 @@ QString ApplicationInfo::storageNS()
 {
 	return PROG_STORAGE_NS;
 }	
+
+QStringList ApplicationInfo::getCertificateStoreDirs()
+{
+	QStringList l;
+	l += ApplicationInfo::resourcesDir() + "/certs";
+	l += ApplicationInfo::homeDir() + "/certs";
+	return l;
+}
+
+QString ApplicationInfo::getCertificateStoreSaveDir()
+{
+	QDir certsave(homeDir() + "/certs");
+	if(!certsave.exists()) {
+		QDir home(homeDir());
+		home.mkdir("certs");
+	}
+
+	return certsave.path();
+}
 
 QString ApplicationInfo::resourcesDir()
 {

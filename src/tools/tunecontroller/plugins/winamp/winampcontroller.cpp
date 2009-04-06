@@ -122,8 +122,8 @@ QPair<bool, QString> WinAmpController::getTrackTitle(HWND waWnd)
 		if (dotFirst != -1) {
 			// All symbols before the dot are digits?
 			bool allDigits = true;
-			for (int pos = dotFirst; pos;) {
-				allDigits = allDigits && title[--pos].isNumber();
+			for (int pos = dotFirst; pos > 0; --pos) {
+				allDigits = allDigits && title[pos].isNumber();
 			}
 			if (allDigits) {
 				title.remove(0, dotFirst + dot.length ());

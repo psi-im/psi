@@ -76,6 +76,9 @@ public:
 	void setPassword(const QString&);
 	const QString& nick() const;
 
+	bool isInactive() const;
+	void reactivate();
+
 	// reimplemented
 	virtual TabbableWidget::State state() const;
 	virtual int unreadMessageCount() const;
@@ -113,6 +116,7 @@ private slots:
 	void pa_updatedActivity();
 	void goDisc();
 	void goConn();
+	void goForcedLeave();
 	void lv_action(const QString &, const Status &, int);
 	void doClear();
 	void doClearButton();
@@ -139,6 +143,10 @@ private:
 	void appendMessage(const Message &, bool);
 	void updateLastMsgTime(QDateTime t);
 	void setLooks();
+
+	void mucKickMsgHelper(const QString &nick, const Status &s, const QString &nickJid, const QString &title,
+			const QString &youSimple, const QString &youBy, const QString &someoneSimple,
+			const QString &someoneBy);
 
 	void contextMenuEvent(QContextMenuEvent *);
 

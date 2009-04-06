@@ -24,7 +24,15 @@
 PrivacyRuleDlg::PrivacyRuleDlg()
 {
 	ui_.setupUi(this);
-	
+
+	ui_.cb_action->addItem(tr("Deny"), PrivacyListItem::Deny);
+	ui_.cb_action->addItem(tr("Allow"), PrivacyListItem::Allow);
+
+	ui_.cb_type->addItem(tr("JID"), PrivacyListItem::JidType);
+	ui_.cb_type->addItem(tr("Group"), PrivacyListItem::GroupType);
+	ui_.cb_type->addItem(tr("Subscription"), PrivacyListItem::SubscriptionType);
+	ui_.cb_type->addItem(tr("*"), PrivacyListItem::FallthroughType);
+
 	connect(ui_.cb_type,SIGNAL(currentIndexChanged(const QString&)),SLOT(type_selected(const QString&)));
 	connect(ui_.pb_cancel,SIGNAL(clicked()),SLOT(reject()));
 	connect(ui_.pb_ok,SIGNAL(clicked()),SLOT(accept()));
@@ -34,40 +42,15 @@ void PrivacyRuleDlg::setRule(const PrivacyListItem& item)
 {
 	// Type
 	if (item.type() == PrivacyListItem::SubscriptionType) {
-		ui_.cb_type->setCurrentIndex(ui_.cb_type->findText(tr("Subscription")));
-		if (item.value() == "both") {
-			ui_.cb_value->setCurrentIndex(ui_.cb_value->findText(tr("Both")));
-		}
-		else if (item.value() == "none") {
-			ui_.cb_value->setCurrentIndex(ui_.cb_value->findText(tr("None")));
-		}
-		else if (item.value() == "from") {
-			ui_.cb_value->setCurrentIndex(ui_.cb_value->findText(tr("From")));
-		}
-		else if (item.value() == "to") {
-			ui_.cb_value->setCurrentIndex(ui_.cb_value->findText(tr("To")));
-		}
-	}
-	else {
-		if (item.type() == PrivacyListItem::JidType) {
-			ui_.cb_type->setCurrentIndex(ui_.cb_type->findText(tr("JID")));
-		}
-		else if (item.type() == PrivacyListItem::GroupType) {
-			ui_.cb_type->setCurrentIndex(ui_.cb_type->findText(tr("Group")));
-		}
-		else {
-			ui_.cb_type->setCurrentIndex(ui_.cb_type->findText(tr("*")));
-		}
+		ui_.cb_type->setCurrentIndex(ui_.cb_type->findData(item.type()));
+		ui_.cb_value->setCurrentIndex(ui_.cb_value->findData(item.value()));
+	} else {
+		ui_.cb_type->setCurrentIndex(ui_.cb_type->findData(item.type()));
 		ui_.cb_value->setCurrentText(item.value());
 	}
 
 	// Action
-	if (item.action() == PrivacyListItem::Allow) {
-		ui_.cb_action->setCurrentIndex(ui_.cb_action->findText(tr("Allow")));
-	}
-	else {
-		ui_.cb_action->setCurrentIndex(ui_.cb_action->findText(tr("Deny")));
-	}
+	ui_.cb_action->setCurrentIndex(ui_.cb_action->findData(item.action()));
 
 	// Selection
 	ui_.ck_messages->setChecked(item.message());
@@ -81,38 +64,19 @@ PrivacyListItem PrivacyRuleDlg::rule() const
 	PrivacyListItem item;
 
 	// Type & value
-	if(ui_.cb_type->currentText() == tr("Subscription")) {
-		item.setType(PrivacyListItem::SubscriptionType);
-		if (ui_.cb_value->currentText() == tr("To")) 
-			item.setValue("to");
-		else if (ui_.cb_value->currentText() == tr("From")) 
-			item.setValue("from");
-		else if (ui_.cb_value->currentText() == tr("Both")) 
-			item.setValue("both");
-		else if (ui_.cb_value->currentText() == tr("None")) 
-			item.setValue("none");
+	PrivacyListItem::Type t = (PrivacyListItem::Type)ui_.cb_type->itemData(ui_.cb_type->currentIndex()).toInt();
+	if(t == PrivacyListItem::SubscriptionType) {
+		item.setType(t);
+		item.setValue(ui_.cb_value->itemData(ui_.cb_value->currentIndex()).toString());
 	}
 	else {
-		if (ui_.cb_type->currentText() == tr("JID")) {
-			item.setType(PrivacyListItem::JidType);
-		}
-		else if (ui_.cb_type->currentText() == tr("Group")) {
-			item.setType(PrivacyListItem::GroupType);
-		}
-		else {
-			item.setType(PrivacyListItem::FallthroughType);
-		}
+		item.setType(t);
 		item.setValue(ui_.cb_value->currentText());
 	}
-	
+
 	// Action
-	if(ui_.cb_action->currentText() == tr("Deny")) {
-		item.setAction(PrivacyListItem::Deny);
-	}
-	else {
-		item.setAction(PrivacyListItem::Allow);
-	}
-	
+	item.setAction((PrivacyListItem::Action)ui_.cb_action->itemData(ui_.cb_action->currentIndex()).toInt());
+
 	// Selection
 	item.setMessage(ui_.ck_messages->isChecked());
 	item.setIQ(ui_.ck_queries->isChecked());
@@ -126,17 +90,18 @@ void PrivacyRuleDlg::type_selected(const QString& type)
 {
 	ui_.cb_value->clear();
 	ui_.cb_value->setCurrentText("");
-	if (type == tr("Subscription")) {
-		ui_.cb_value->insertItem(tr("None"));
-		ui_.cb_value->insertItem(tr("Both"));
-		ui_.cb_value->insertItem(tr("From"));
-		ui_.cb_value->insertItem(tr("To"));
+	PrivacyListItem::Type t = (PrivacyListItem::Type)ui_.cb_type->itemData(ui_.cb_type->currentIndex()).toInt();
+	if (t == PrivacyListItem::SubscriptionType) {
+		ui_.cb_value->addItem(tr("None"), "none");
+		ui_.cb_value->addItem(tr("Both"), "both");
+		ui_.cb_value->addItem(tr("From"), "from");
+		ui_.cb_value->addItem(tr("To"), "to");
 		ui_.cb_value->setEditable(false);
 	}
 	else {
 		ui_.cb_value->setEditable(true);
 	}
-	
+
 	if (type == tr("*")) {
 		ui_.cb_value->setEnabled(false);
 	}

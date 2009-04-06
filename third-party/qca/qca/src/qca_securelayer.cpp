@@ -14,15 +14,16 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301  USA
  *
  */
 
 #include "qca_securelayer.h"
 
 #include "qcaprovider.h"
+#include "qca_safeobj.h"
 
-#include <QTimer>
 #include <QPointer>
 
 namespace QCA {
@@ -222,7 +223,7 @@ public:
 	bool server;
 	QString host;
 	TLSContext::SessionInfo sessionInfo;
-	QTimer actionTrigger;
+	SafeTimer actionTrigger;
 	int op;
 	QList<Action> actionQueue;
 	bool need_update;
@@ -510,6 +511,7 @@ public:
 		if(op != -1)
 		{
 			QCA_logTextMessage(QString("tls[%1]: ignoring update while operation active").arg(q->objectName()), Logger::Information);
+			need_update = true;
 			return;
 		}
 
@@ -1333,7 +1335,7 @@ public:
 	QString server_realm;
 	bool allowClientSendFirst;
 	bool disableServerSendLast;
-	QTimer actionTrigger;
+	SafeTimer actionTrigger;
 	int op;
 	QList<Action> actionQueue;
 	bool need_update;
@@ -1573,6 +1575,7 @@ public:
 		if(op != -1)
 		{
 			QCA_logTextMessage(QString("sasl[%1]: ignoring update while operation active").arg(q->objectName()), Logger::Information);
+			need_update = true;
 			return;
 		}
 
@@ -1598,8 +1601,6 @@ private slots:
 
 		if(last_op == OpStart)
 		{
-			mech = c->mech();
-
 			if(server)
 			{
 				if(r != SASLContext::Success)
@@ -1614,6 +1615,8 @@ private slots:
 			}
 			else // client
 			{
+				mech = c->mech();
+
 				// fall into this logic
 				last_op = OpTryAgain;
 			}

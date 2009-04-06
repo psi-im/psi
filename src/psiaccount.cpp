@@ -31,6 +31,7 @@
 #include <qapplication.h>
 #include <qpushbutton.h>
 #include <qlayout.h>
+#include <QUrl>
 #include <qobject.h>
 #include <qmap.h>
 #include <qca.h>
@@ -101,7 +102,6 @@
 #include "bookmarkmanager.h"
 #include "vcardfactory.h"
 //#include "qssl.h"
-#include "sslcertdlg.h"
 #include "mooddlg.h"
 #include "qwextend.h"
 #include "geolocation.h"
@@ -119,11 +119,18 @@
 #include "ahcservermanager.h"
 #include "rc.h"
 #include "tabdlg.h"
-#include "certutil.h"
 #include "proxy.h"
 #include "psicontactlist.h"
 #include "tabmanager.h"
 #include "fileutil.h"
+#include "Certificates/CertificateHelpers.h"
+#include "Certificates/CertificateErrorDialog.h"
+#include "Certificates/CertificateDisplayDialog.h"
+
+#ifdef AVCALL
+#include "avcall/jinglertp.h"
+#include "avcall/calldlg.h"
+#endif
 
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
@@ -182,9 +189,9 @@ BlockTransportPopup::BlockTransportPopup(QObject *parent, const Jid &_j)
 	userCounter = 0;
 
 	// Hack for ICQ SMS
-	if ( j.host().left(3) == "icq" ) {
-		new BlockTransportPopup(parent, "sms." + j.host()); // sms.icq.host.com
-		new BlockTransportPopup(parent, "sms"  + j.host().right(j.host().length() - 3)); // sms.host.com
+	if ( j.domain().left(3) == "icq" ) {
+		new BlockTransportPopup(parent, "sms." + j.domain()); // sms.icq.host.com
+		new BlockTransportPopup(parent, "sms"  + j.domain().right(j.domain().length() - 3)); // sms.host.com
 	}
 
 	QTimer::singleShot(15000, this, SLOT(timeout()));
@@ -225,12 +232,12 @@ BlockTransportPopupList::BlockTransportPopupList()
 
 bool BlockTransportPopupList::find(const Jid &j, bool online)
 {
-	if ( j.user().isEmpty() ) // always show popups for transports
+	if ( j.node().isEmpty() ) // always show popups for transports
 		return false;
 
 	QList<BlockTransportPopup *> list = findChildren<BlockTransportPopup *>();
 	foreach(BlockTransportPopup* btp, list) {
-		if ( j.host() == btp->jid().host() ) {
+		if ( j.domain() == btp->jid().domain() ) {
 			if ( online )
 				btp->userCounter++;
 			return true;
@@ -329,7 +336,11 @@ public:
 
 	// Voice Call
 	VoiceCaller* voiceCaller;
-	
+
+#ifdef AVCALL
+	JingleRtpManager *jingleRtpManager;
+#endif
+
 	TabManager *tabManager;
 
 #ifdef GOOGLE_FT
@@ -415,6 +426,8 @@ public slots:
 
 	void setEnabled( bool e )
 	{
+		psi->contactList()->beginBulkOperation();
+
 		acc.opt_enabled = e;
 		cp->setEnabled(e);
 		account->cpUpdate(self);
@@ -422,6 +435,8 @@ public slots:
 		// signals
 		account->enabledChanged();
 		account->updatedAccount();
+
+		psi->contactList()->endBulkOperation();
 	}
 
 	void client_xmlIncoming(const QString &s)
@@ -547,6 +562,17 @@ private slots:
 	{
 		dialogUnregister(static_cast<QWidget*>(obj));
 	}
+
+        void incoming_call()
+        {
+#ifdef AVCALL
+		JingleRtpSession *sess = jingleRtpManager->takeIncoming();
+		CallDlg *w = new CallDlg(account, 0);
+		w->setAttribute(Qt::WA_DeleteOnClose);
+		w->setIncoming(sess);
+		w->show();
+#endif
+        }
 
 public:
 	enum AutoAway {
@@ -844,6 +870,20 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	connect(d->googleFTManager,SIGNAL(incomingFileTransfer(GoogleFileTransfer*)),SLOT(incomingGoogleFileTransfer(GoogleFileTransfer*)));
 #endif
 
+#ifdef AVCALL
+	d->jingleRtpManager = new JingleRtpManager(this);
+	connect(d->jingleRtpManager, SIGNAL(incomingReady()), d, SLOT(incoming_call()));
+	{
+		QStringList features;
+		features << "urn:xmpp:jingle:0";
+		features << "urn:xmpp:jingle:apps:rtp:1";
+		features << "urn:xmpp:jingle:apps:rtp:audio";
+		//features << "urn:xmpp:jingle:apps:rtp:video";
+		features << "urn:xmpp:jingle:transports:ice-udp:0";
+		d->client->addExtension("avchat", Features(features));
+	}
+#endif
+
 	// Extended presence
 	if (d->options->getOption("options.extended-presence.notify").toBool()) {
 		QStringList pepNodes;
@@ -1093,7 +1133,7 @@ void PsiAccount::setUserAccount(const UserAccount &acc)
 		d->cp->updateEntry(d->self);
 	}
 	if(!d->nickFromVCard)
-		setNick(j.user());
+		setNick(j.node());
 
 	QString pgpSecretKeyID = (d->acc.pgpSecretKey.isNull() ? "" : d->acc.pgpSecretKey.keyId());
 	d->self.setPublicKeyID(pgpSecretKeyID);
@@ -1150,7 +1190,7 @@ void PsiAccount::login()
 		return;
 
 	if((d->acc.ssl == UserAccount::SSL_Yes || d->acc.ssl == UserAccount::SSL_Legacy) && !QCA::isSupported("tls")) {
-		QMessageBox::information(0, (d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("SSL Error"), tr("Cannot login: SSL is enabled but no SSL/TLS (plugin) support is available."));
+		QMessageBox::information(0, (d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Encryption Error"), tr("Cannot connect: Encryption is enabled but no QCA2 SSL/TLS plugin is available."));
 		return;
 	}
 
@@ -1189,7 +1229,7 @@ void PsiAccount::login()
 				if (useHost)
 					u.addQueryItem("server",host + ':' + QString::number(port));
 				else
-					u.addQueryItem("server",d->jid.host());
+					u.addQueryItem("server",d->jid.domain());
 			}
 			p.setHttpPoll(pi.settings.host, pi.settings.port, u.toString());
 			p.setPollInterval(2);
@@ -1203,7 +1243,7 @@ void PsiAccount::login()
 	d->conn = new AdvancedConnector;
 	if(d->acc.ssl != UserAccount::SSL_No && QCA::isSupported("tls")) {
 		d->tls = new QCA::TLS;
-		d->tls->setTrustedCertificates(CertUtil::allCertificates());
+		d->tls->setTrustedCertificates(CertificateHelpers::allCertificates(ApplicationInfo::getCertificateStoreDirs()));
 		d->tlsHandler = new QCATLSHandler(d->tls);
 		d->tlsHandler->setXMPPCertCheck(true);
 		connect(d->tlsHandler, SIGNAL(tlsHandshaken()), SLOT(tls_handshaken()));
@@ -1295,44 +1335,31 @@ bool PsiAccount::loggedIn() const
 void PsiAccount::tls_handshaken()
 {
 	QCA::Certificate cert = d->tls->peerCertificateChain().primary();
-	int r = d->tls->peerIdentityResult();
-	if (r == QCA::TLS::Valid && !d->tlsHandler->certMatchesHostname()) r = QCA::TLS::HostMismatch;
-	if(r != QCA::TLS::Valid && !d->acc.opt_ignoreSSLWarnings) {
-		QCA::Validity validity =  d->tls->peerCertificateValidity();
-		QString str = CertUtil::resultToString(r,validity);
-		QMessageBox msgBox(QMessageBox::Warning,
-			(d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Authentication"),
-			tr("The %1 certificate failed the authenticity test.").arg(d->jid.host()) + '\n' + tr("Reason: %1.").arg(str));
-		QPushButton *detailsButton = msgBox.addButton(tr("&Details..."), QMessageBox::ActionRole);
-		QPushButton *continueButton = msgBox.addButton(tr("Co&ntinue"), QMessageBox::AcceptRole);
-		QPushButton *cancelButton = msgBox.addButton(QMessageBox::Cancel);
-		msgBox.setDefaultButton(detailsButton);
-		msgBox.setResult(QDialog::Accepted);
+	int result = d->tls->peerIdentityResult();
+	if (result == QCA::TLS::Valid && !d->tlsHandler->certMatchesHostname()) {
+		result = QCA::TLS::HostMismatch;
+	}
 
-		connect(this, SIGNAL(disconnected()), &msgBox, SLOT(reject()));
-		connect(this, SIGNAL(reconnecting()), &msgBox, SLOT(reject()));
-
-		while (msgBox.result() != QDialog::Rejected) {
-			msgBox.exec();
-			if (msgBox.clickedButton() == detailsButton) {
-				msgBox.setResult(QDialog::Accepted);
-				SSLCertDlg::showCert(cert, r, validity);
-			}
-			else if (msgBox.clickedButton() == continueButton) {
-				d->tlsHandler->continueAfterHandshake();
-				break;
-			}
-			else if (msgBox.clickedButton() == cancelButton) {
-				logout();
-				break;
-			}
-			else {	// msgBox was hidden because connection was closed
-				break;
-			}
+	if (result != QCA::TLS::Valid && !CertificateHelpers::allCertificates(ApplicationInfo::getCertificateStoreDirs()).certificates().contains(cert)) {
+		CertificateErrorDialog errorDialog(
+				(d->psi->contactList()->enabledAccounts().count() > 1 ?  QString("%1: ").arg(name()) : "") + tr("Server Authentication"),
+				d->jid.domain(),
+				cert,
+				result, 
+				d->tls->peerCertificateValidity(),
+				ApplicationInfo::getCertificateStoreSaveDir());
+		connect(this, SIGNAL(disconnected()), errorDialog.getMessageBox(), SLOT(reject()));
+		connect(this, SIGNAL(reconnecting()), errorDialog.getMessageBox(), SLOT(reject()));
+		if (errorDialog.exec() == QDialog::Accepted) {
+			d->tlsHandler->continueAfterHandshake();
+		}
+		else {
+			logout();
 		}
 	}
-	else
+	else {
 		d->tlsHandler->continueAfterHandshake();
+	}
 }
 
 void PsiAccount::showCert()
@@ -1342,7 +1369,8 @@ void PsiAccount::showCert()
 	int r = d->tls->peerIdentityResult();
 	if (r == QCA::TLS::Valid && !d->tlsHandler->certMatchesHostname()) r = QCA::TLS::HostMismatch;
 	QCA::Validity validity =  d->tls->peerCertificateValidity();
-	SSLCertDlg::showCert(cert, r, validity);
+	CertificateDisplayDialog dlg(cert, r, validity);
+	dlg.exec();
 }
 
 
@@ -1355,6 +1383,9 @@ void PsiAccount::cs_connected()
 
 	if(bs->inherits("BSocket") || bs->inherits("XMPP::BSocket")) {
 		d->localAddress = ((BSocket *)bs)->address();
+#ifdef AVCALL
+		d->jingleRtpManager->setSelfAddress(d->localAddress);
+#endif
 	}
 }
 
@@ -1374,7 +1405,7 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
 		if (d->acc.customAuth && !d->acc.authid.isEmpty())
 			d->stream->setUsername(d->acc.authid);
 		else
-			d->stream->setUsername(d->jid.user());
+			d->stream->setUsername(d->jid.node());
     }
 	else if (d->acc.customAuth && !d->acc.authid.isEmpty())
 		qWarning("Custom authentication user not used");
@@ -1410,7 +1441,7 @@ void PsiAccount::cs_authenticated()
 
 	QString resource = (d->stream->jid().resource().isEmpty() ? ( d->acc.opt_automatic_resource ? localHostName() : d->acc.resource) : d->stream->jid().resource());
 
-	d->client->start(d->jid.host(), d->jid.user(), d->acc.pass, resource);
+	d->client->start(d->jid.domain(), d->jid.node(), d->acc.pass, resource);
 	if (!d->stream->old()) {
 		JT_Session *j = new JT_Session(d->client->rootTask());
 		connect(j,SIGNAL(finished()),SLOT(sessionStart_finished()));
@@ -1503,11 +1534,12 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 	}
 	else if(err == XMPP::ClientStream::ErrStream) {
 		int x;
-		QString s;
+		QString s, detail;
 		reconn = true;
-		if (stream) // Stream can apparently be gone if you disconnect in time
+		if (stream) { // Stream can apparently be gone if you disconnect in time
 			x = stream->errorCondition();
-		else {
+			detail = stream->errorText();
+		} else {
 			x = XMPP::Stream::GenericStreamError;
 			reconn = false;
 		}
@@ -1532,9 +1564,10 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 			s = tr("Server out of resources");
 			reconn = false;
 		}
-		else if(x == XMPP::ClientStream::SystemShutdown)
+		else if(x == XMPP::ClientStream::SystemShutdown) {
 			s = tr("Server is shutting down");
-		str = tr("XMPP Stream Error: %1").arg(s);
+		}
+		str = tr("XMPP Stream Error: %1").arg(s) + "\n" + detail;
 	}
 	else if(err == XMPP::ClientStream::ErrConnection) {
 		int x = conn->errorCode();
@@ -1557,8 +1590,9 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 		str = tr("Connection Error: %1").arg(s);
 	}
 	else if(err == XMPP::ClientStream::ErrNeg) {
+		QString s, detail;
 		int x = stream->errorCondition();
-		QString s;
+		detail = stream->errorText();
 		if(x == XMPP::ClientStream::HostGone)
 			s = tr("Host no longer hosted");
 		else if(x == XMPP::ClientStream::HostUnknown)
@@ -1571,7 +1605,7 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 			s = tr("See other host: %1").arg(stream->errorText());
 		else if(x == XMPP::ClientStream::UnsupportedVersion)
 			s = tr("Server does not support proper XMPP version");
-		str = tr("Stream Negotiation Error: %1").arg(s);
+		str = tr("Stream Negotiation Error: %1").arg(s) + "\n" + detail;
 	}
 	else if(err == XMPP::ClientStream::ErrTLS) {
 		int x = stream->errorCondition();
@@ -1590,28 +1624,30 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 	else if(err == XMPP::ClientStream::ErrAuth) {
 		int x = stream->errorCondition();
 		QString s;
-		if(x == XMPP::ClientStream::GenericAuthError)
+		if(x == XMPP::ClientStream::GenericAuthError) {
 			s = tr("Unable to login");
-		else if(x == XMPP::ClientStream::NoMech)
+		} else if(x == XMPP::ClientStream::NoMech) {
 			s = tr("No appropriate mechanism available for given security settings (e.g. SASL library too weak, or plaintext authentication not enabled)");
-		else if(x == XMPP::ClientStream::BadProto)
+			s += "\n" + stream->errorText();
+		} else if(x == XMPP::ClientStream::BadProto) {
 			s = tr("Bad server response");
-		else if(x == XMPP::ClientStream::BadServ)
+		} else if(x == XMPP::ClientStream::BadServ) {
 			s = tr("Server failed mutual authentication");
-		else if(x == XMPP::ClientStream::EncryptionRequired)
+		} else if(x == XMPP::ClientStream::EncryptionRequired) {
 			s = tr("Encryption required for chosen SASL mechanism");
-		else if(x == XMPP::ClientStream::InvalidAuthzid)
+		} else if(x == XMPP::ClientStream::InvalidAuthzid) {
 			s = tr("Invalid account information");
-		else if(x == XMPP::ClientStream::InvalidMech)
+		} else if(x == XMPP::ClientStream::InvalidMech) {
 			s = tr("Invalid SASL mechanism");
-		else if(x == XMPP::ClientStream::InvalidRealm)
+		} else if(x == XMPP::ClientStream::InvalidRealm) {
 			s = tr("Invalid realm");
-		else if(x == XMPP::ClientStream::MechTooWeak)
+		} else if(x == XMPP::ClientStream::MechTooWeak) {
 			s = tr("SASL mechanism too weak for this account");
-		else if(x == XMPP::ClientStream::NotAuthorized)
+		} else if(x == XMPP::ClientStream::NotAuthorized) {
 			s = tr("Not authorized");
-		else if(x == XMPP::ClientStream::TemporaryAuthFailure)
+		} else if(x == XMPP::ClientStream::TemporaryAuthFailure) {
 			s = tr("Temporary auth failure");
+		}
 		str = tr("Authentication error: %1").arg(s);
 	}
 	else if(err == XMPP::ClientStream::ErrSecurityLayer)
@@ -1672,6 +1708,7 @@ void PsiAccount::client_rosterRequestFinished(bool success, int, const QString &
 {
 	if(success) {
 		//printf("PsiAccount: [%s] roster retrieved ok.  %d entries.\n", name().latin1(), d->client->roster().count());
+		psi()->contactList()->beginBulkOperation();
 
 		// delete flagged items
 		UserListIt it(d->userList);
@@ -1688,6 +1725,8 @@ void PsiAccount::client_rosterRequestFinished(bool success, int, const QString &
 			else
 				++it;
 		}
+
+		psi()->contactList()->endBulkOperation();
 	}
 	else {
 		//printf("PsiAccount: [%s] error retrieving roster: [%d, %s]\n", name().latin1(), code, str.latin1());
@@ -1765,7 +1804,7 @@ void PsiAccount::bookmarksAvailabilityChanged()
 	}
 
 	foreach(ConferenceBookmark c, d->bookmarkManager->conferences()) {
-		if (!findDialog<GCMainDlg*>(Jid(c.jid().userHost())) && c.autoJoin()) {
+		if (!findDialog<GCMainDlg*>(Jid(c.jid().bare())) && c.autoJoin()) {
 			actionJoin(c, true);
 		}
 	}
@@ -1847,7 +1886,7 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
 	};
 	PopupType popupType = PopupOnline;
 
-	if ( j.user().isEmpty() )
+	if ( j.node().isEmpty() )
 		new BlockTransportPopup(d->blockTransportPopupList, j);
 
 	bool doSound = false;
@@ -1956,7 +1995,7 @@ void PsiAccount::client_resourceUnavailable(const Jid &j, const Resource &r)
 	bool doSound = false;
 	bool doPopup = false;
 
-	if ( j.user().isEmpty() )
+	if ( j.node().isEmpty() )
 		new BlockTransportPopup(d->blockTransportPopupList, j);
 
 	foreach(UserListItem* u, findRelevant(j)) {
@@ -2082,7 +2121,7 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 		return;
 
 	if(_m.type() == "groupchat") {
-		GCMainDlg *w = findDialog<GCMainDlg*>(Jid(_m.from().userHost()));
+		GCMainDlg *w = findDialog<GCMainDlg*>(Jid(_m.from().bare()));
 		if(w)
 			w->message(_m);
 		return;
@@ -2111,7 +2150,7 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 	{
 		if (PsiOptions::instance()->getOption("options.messages.exclude-muc-from-ignore").toBool())
 		{
-			GCMainDlg *w = findDialog<GCMainDlg*>(Jid(_m.from().userHost()));
+			GCMainDlg *w = findDialog<GCMainDlg*>(Jid(_m.from().bare()));
 			if(!w)
 			{
 				return;
@@ -2125,7 +2164,7 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 	}
 
 	if(ul.isEmpty())
-		j = m.from().userHost();
+		j = m.from().bare();
 	else
 		j = ul.first()->jid();
 
@@ -2256,7 +2295,7 @@ void PsiAccount::setStatus(const Status &_s,  bool withPriority)
 		Roster::ConstIterator rit = d->acc.roster.begin();
 		for ( ; rit != d->acc.roster.end(); ++rit) {
 			const RosterItem &i = *rit;
-			if ( i.jid().user().isEmpty() /*&& i.jid().resource() == "registered"*/ ) // it is very likely then, that it's transport
+			if ( i.jid().node().isEmpty() /*&& i.jid().resource() == "registered"*/ ) // it is very likely then, that it's transport
 				new BlockTransportPopup(d->blockTransportPopupList, i.jid());
 		}
 	}
@@ -2599,35 +2638,37 @@ void PsiAccount::showXmlConsole()
 
 void PsiAccount::openAddUserDlg()
 {
-	if(!checkConnected())
-		return;
+	openAddUserDlg(QString(), QString(), QString());
+}
 
-	AddUserDlg *w = findDialog<AddUserDlg*>();
-	if(w)
-		bringToFront(w);
-	else {
-		QStringList gl, services, names;
-		UserListIt it(d->userList);
-		for(UserListItem *u; (u = it.current()); ++it) {
-			if(u->isTransport()) {
-				services += u->jid().full();
-				names += JIDUtil::nickOrJid(u->name(), u->jid().full());
-			}
-			foreach(QString group, u->groups()) {
-				if(!gl.contains(group))
-					gl.append(group);
-			}
+void PsiAccount::openAddUserDlg(const Jid &jid, const QString &nick, const QString &group)
+{
+	QStringList gl, services, names;
+	UserListIt it(d->userList);
+	for(UserListItem *u; (u = it.current()); ++it) {
+		if(u->isTransport()) {
+			services += u->jid().full();
+			names += JIDUtil::nickOrJid(u->name(), u->jid().full());
 		}
-
-		w = new AddUserDlg(services, names, gl, this);
-		connect(w, SIGNAL(add(const XMPP::Jid &, const QString &, const QStringList &, bool)), SLOT(dj_add(const XMPP::Jid &, const QString &, const QStringList &, bool)));
-		w->show();
+		foreach(QString group, u->groups()) {
+			if(!gl.contains(group))
+				gl.append(group);
+		}
 	}
+
+	AddUserDlg* w;
+	if (jid.isEmpty()) {
+		w = new AddUserDlg(services, names, gl, this);
+	} else {
+		w = new AddUserDlg(jid, nick, group, gl, this);
+	}
+	connect(w, SIGNAL(add(const XMPP::Jid &, const QString &, const QStringList &, bool)), SLOT(dj_add(const XMPP::Jid &, const QString &, const QStringList &, bool)));
+	w->show();
 }
 
 void PsiAccount::doDisco()
 {
-	actionDisco(d->jid.host(), "");
+	actionDisco(d->jid.domain(), "");
 }
 
 void PsiAccount::actionDisco(const Jid &j, const QString &node)
@@ -2711,8 +2752,9 @@ void PsiAccount::simulateContactOffline(UserListItem *u)
 		for(UserResourceList::ConstIterator rit = rl.begin(); rit != rl.end(); ++rit) {
 			const UserResource &r = *rit;
 			Jid j = u->jid();
-			if(u->jid().resource().isEmpty())
-				j.setResource(r.name());
+			if(u->jid().resource().isEmpty()) {
+				j = j.withResource(r.name());
+      }
 			client_resourceUnavailable(j, r);
 		}
 	}
@@ -2733,8 +2775,9 @@ void PsiAccount::simulateRosterOffline()
 		UserResourceList rl = u->userResourceList();
 		for(UserResourceList::ConstIterator rit = rl.begin(); rit != rl.end(); ++rit) {
 			Jid j = u->jid();
-			if(u->jid().resource().isEmpty())
-				j.setResource((*rit).name());
+			if(u->jid().resource().isEmpty()) {
+				j = j.withResource((*rit).name());
+			}
 			u->setPresenceError("");
 			client_resourceUnavailable(j, *rit);
 		}
@@ -2911,8 +2954,9 @@ void PsiAccount::cpUpdate(const UserListItem &u, const QString &rname, bool from
 
 	updateContact(u);
 	Jid j = u.jid();
-	if(!rname.isEmpty())
-		j.setResource(rname);
+	if(!rname.isEmpty()) {
+		j = j.withResource(rname);
+	}
 	updateContact(j);
 	updateContact(j, fromPresence);
 	d->psi->updateContactGlobal(this, j);
@@ -2925,7 +2969,7 @@ EventDlg *PsiAccount::ensureEventDlg(const Jid &j)
 		w = new EventDlg(j, this, true);
 		connect(w, SIGNAL(aReadNext(const Jid &)), SLOT(processReadNext(const Jid &)));
 		connect(w, SIGNAL(aChat(const Jid &)), SLOT(actionOpenChat(const Jid&)));
-		connect(w, SIGNAL(aReply(const Jid &, const QString &, const QString &, const QString &)), SLOT(dj_composeMessage(const Jid &, const QString &, const QString &, const QString &)));
+		connect(w, SIGNAL(aReply(const Jid &, const QString &, const QString &, const QString &)), SLOT(dj_replyMessage(const Jid &, const QString &, const QString &, const QString &)));
 		connect(w, SIGNAL(aAuth(const Jid &)), SLOT(dj_addAuth(const Jid &)));
 		connect(w, SIGNAL(aDeny(const Jid &)), SLOT(dj_deny(const Jid &)));
 		connect(w, SIGNAL(aHttpConfirm(const PsiHttpAuthRequest &)), SLOT(dj_confirmHttpAuth(const PsiHttpAuthRequest &)));
@@ -3009,6 +3053,19 @@ void PsiAccount::changeStatus(int x)
 
 void PsiAccount::actionVoice(const Jid &j)
 {
+#ifdef AVCALL
+	Jid j2 = j;
+	if(j.resource().isEmpty()) {
+		UserListItem *u = find(j);
+		if(u && u->isAvailable())
+			j2.setResource((*u->userResourceList().priority()).name());
+	}
+
+	CallDlg *w = new CallDlg(this, 0);
+	w->setAttribute(Qt::WA_DeleteOnClose);
+	w->setOutgoing(j2);
+	w->show();
+#else
 	Q_ASSERT(voiceCaller() != NULL);
 
 	Jid jid;
@@ -3035,6 +3092,7 @@ void PsiAccount::actionVoice(const Jid &j)
 	VoiceCallDlg* vc = new VoiceCallDlg(jid,voiceCaller());
 	vc->show();
 	vc->call();
+#endif
 }
 
 void PsiAccount::sendFiles(const Jid& j, const QStringList& l, bool direct)
@@ -3043,7 +3101,7 @@ void PsiAccount::sendFiles(const Jid& j, const QStringList& l, bool direct)
 	if(j.resource().isEmpty()) {
 		UserListItem *u = find(j);
 		if(u && u->isAvailable())
-			j2.setResource((*u->userResourceList().priority()).name());
+			j2 = j2.withResource((*u->userResourceList().priority()).name());
 	}
 
 	// Create a dialog for each file in the list. Once the xfer dialog itself
@@ -3078,7 +3136,7 @@ void PsiAccount::actionExecuteCommand(const Jid& j, const QString& node)
 	if(j.resource().isEmpty()) {
 		UserListItem *u = find(j);
 		if(u && u->isAvailable())
-			j2.setResource((*u->userResourceList().priority()).name());
+			j2 = j2.withResource((*u->userResourceList().priority()).name());
 	}
 
 	actionExecuteCommandSpecific(j2, node);
@@ -3192,18 +3250,18 @@ void PsiAccount::actionGroupRename(const QString &oldname, const QString &newnam
 			u->removeGroup(oldname);
 			u->addGroup(newname);
 			cpUpdate(*u);
-			if(u->inList())
-				nu.append(u);
+                        if(u->inList()) {
+                                nu.append(u);
+                        }
 		}
 	}
 
 	if(!nu.isEmpty()) {
-		JT_Roster *r = new JT_Roster(d->client->rootTask());
-		foreach(UserListItem* u, nu) {
-			r->set(u->jid(), u->name(), u->groups());
+                foreach(UserListItem* u, nu) {
+                        JT_Roster *r = new JT_Roster(d->client->rootTask());
+                        r->set(u->jid(), u->name(), u->groups());
+                        r->go(true);
 		}
-
-		r->go(true);
 	}
 }
 
@@ -3223,7 +3281,7 @@ void PsiAccount::actionHistoryBox(PsiEvent *e)
 {
 	EventDlg *w = new EventDlg(e->from(), this, false);
 	connect(w, SIGNAL(aChat(const Jid &)), SLOT(actionOpenChat(const Jid&)));
-	connect(w, SIGNAL(aReply(const Jid &, const QString &, const QString &, const QString &)), SLOT(dj_composeMessage(const Jid &, const QString &, const QString &, const QString &)));
+	connect(w, SIGNAL(aReply(const Jid &, const QString &, const QString &, const QString &)), SLOT(dj_replyMessage(const Jid &, const QString &, const QString &, const QString &)));
 	connect(w, SIGNAL(aAuth(const Jid &)), SLOT(dj_addAuth(const Jid &)));
 	connect(w, SIGNAL(aDeny(const Jid &)), SLOT(dj_deny(const Jid &)));
 	connect(w, SIGNAL(aRosterExchange(const RosterExchangeItems &)), SLOT(dj_rosterExchange(const RosterExchangeItems &)));
@@ -3317,7 +3375,7 @@ void PsiAccount::actionOpenWhiteboardSpecific(const Jid &target, Jid ownJid, boo
 
 void PsiAccount::actionAgentSetStatus(const Jid &j, Status &s)
 {
-	if ( j.user().isEmpty() ) // add all transport popups to block list
+	if ( j.node().isEmpty() ) // add all transport popups to block list
 		new BlockTransportPopup(d->blockTransportPopupList, j);
 
 	JT_Presence *p = new JT_Presence(d->client->rootTask());
@@ -3334,7 +3392,7 @@ void PsiAccount::actionInfo(const Jid &_j, bool showStatusInfo)
 		j = _j;
 	}
 	else {
-		j = _j.userHost();
+		j = _j.bare();
 	}
 
 	InfoDlg *w = findDialog<InfoDlg*>(j);
@@ -3447,7 +3505,7 @@ void PsiAccount::actionInvite(const Jid &j, const QString &gc)
 	m.setTo(room);
 	m.addMUCInvite(MUCInvite(j));
 
-	QString password = d->client->groupChatPassword(room.user(),room.host());
+	QString password = d->client->groupChatPassword(room.node(),room.domain());
 	if (!password.isEmpty())
 		m.setMUCPassword(password);
 	m.setTimeStamp(QDateTime::currentDateTime());
@@ -3472,6 +3530,73 @@ void PsiAccount::actionUnassignKey(const Jid &j)
 	}
 }
 
+void PsiAccount::openUri(const QUrl &uriToOpen)
+{
+	QUrl uri(uriToOpen);	// got to copy, because setQueryDelimiters() is not const
+
+	// entity
+	QString path = uri.path();
+	if (path.startsWith('/')) {	// this happens when authority part is present
+		path = path.mid(1);
+	}
+	Jid entity = JIDUtil::fromString(path);
+
+	// query
+	uri.setQueryDelimiters('=', ';');
+	QString querytype = uri.queryItems().value(0).first;	// defaults to empty string
+
+	if (0) {
+	//} else if (querytype == "command") {
+	//	// action
+	//} else if (querytype == "disco") {
+	//	actionDisco(entity, uri.queryItemValue("node")); //x
+	//	// request, type
+	} else if (querytype == "invite") {
+		actionJoin(entity, uri.queryItemValue("password"));
+		// jid
+	} else if (querytype == "join") {
+		actionJoin(entity, uri.queryItemValue("password"));
+	} else if (querytype == "message") {
+		QString subject = uri.queryItemValue("subject");
+		QString body = uri.queryItemValue("body");
+		QString type = uri.queryItemValue("type");
+		if (type == "chat" && subject.isEmpty() && body.isEmpty()) {
+			if (!find(entity)) {
+				addUserListItem(entity);
+			}
+			actionOpenChat(entity);
+		} else {
+			dj_newMessage(entity, body, subject, "");
+		}
+		// thread, from, id
+	//} else if (querytype == "pubsub") {
+	//	// action, node
+	//} else if (querytype == "recvfile") {
+	//	// ...
+	//} else if (querytype == "register") {
+	//} else if (querytype == "remove") {
+	} else if (querytype == "roster") {
+		openAddUserDlg(entity, uri.queryItemValue("name"), uri.queryItemValue("group"));
+	//} else if (querytype == "sendfile") {
+	//} else if (querytype == "subscribe") {
+	//} else if (querytype == "unregister") {
+	//} else if (querytype == "unsubscribe") {
+	//} else if (querytype == "vcard") {
+	//	pa->actionInfo(entity, true, true);
+	} else {
+		
+		// TODO: default case - be more smart!! ;-)
+
+		//if (QMessageBox::question(0, tr("Hmm.."), QString(tr("So, you'd like to open %1 URI, right?\n"
+		//	"Unfortunately, this URI only identifies an entity, but it doesn't say what action to perform (or at least Psi cannot understand it). "
+		//	"So it's pretty much like if I said \"John\" to you - you'd immediately ask \"But what about John?\".\n"
+		//	"So... What about %1??\n"
+		//	"At worst, you may send a message to %2 to ask what to do (and maybe complain about this URI ;)) "
+		//	"Would you like to do this now?")).arg(uri).arg(entity.full()), QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
+		actionSendMessage(entity);
+	}
+}
+
 void PsiAccount::dj_sendMessage(const Message &m, bool log)
 {
 	UserListItem *u = findFirstRelevant(m.to());
@@ -3488,7 +3613,7 @@ void PsiAccount::dj_sendMessage(const Message &m, bool log)
 
 	if (!nm.body().isEmpty()) {
 		UserListItem *u = findFirstRelevant(m.to());
-		if (!u || u->subscription().type() != Subscription::Both && u->subscription().type() != Subscription::From) {
+		if (!u || (u->subscription().type() != Subscription::Both && u->subscription().type() != Subscription::From)) {
 			nm.setNick(nick());
 		}
 	}
@@ -3525,26 +3650,30 @@ void PsiAccount::dj_sendMessage(const Message &m, bool log)
 	}
 }
 
-void PsiAccount::dj_composeMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread)
+void PsiAccount::dj_newMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread)
 {
 	EventDlg *w = d->psi->createEventDlg(jid.full(), this);
-	if(!body.isEmpty())
-		w->setHtml(TextUtil::plain2rich(TextUtil::quote(body)));
-
-	if(!subject.isEmpty() && subject.left(3) != "Re:")
-		w->setSubject("Re: " + subject);
-	else if (subject.left(3) == "Re:")
+	if (!body.isEmpty()) {
+		w->setHtml(TextUtil::plain2rich(body));
+	}
+	if (!subject.isEmpty()) {
 		w->setSubject(subject);
-
-	if(!thread.isEmpty())
+	}
+	if (!thread.isEmpty()) {
 		w->setThread(thread);
-
+	}
 	w->show();
 }
 
-void PsiAccount::dj_composeMessage(const Jid &j, const QString &body)
+void PsiAccount::dj_replyMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread)
 {
-	dj_composeMessage(j, body, QString::null, QString::null);
+	QString re = (!subject.isEmpty() && subject.left(3) != "Re:") ? "Re: " : QString();
+	dj_newMessage(jid, TextUtil::quote(body), re + subject, thread);
+}
+
+void PsiAccount::dj_replyMessage(const Jid &j, const QString &body)
+{
+	dj_replyMessage(j, body, QString::null, QString::null);
 }
 
 void PsiAccount::dj_addAuth(const Jid &j)
@@ -3733,7 +3862,7 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 			j = e->from();
 		}
 		else {
-			Jid bare = e->from().userHost();
+			Jid bare = e->from().bare();
 			Jid reg = bare.withResource("registered");
 
 			// see if we have a "registered" variant of the jid
@@ -3757,7 +3886,7 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 
 #ifdef PSI_PLUGINS
 	QDomElement eXml = e->toXml(new QDomDocument());
-	if (!PluginManager::instance()->processEvent(this, eXml)) {
+	if (PluginManager::instance()->processEvent(this, eXml)) {
 		delete e;
 		return;
 	}
@@ -3775,6 +3904,20 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 	if(e->type() == PsiEvent::Message) {
 		MessageEvent *me = (MessageEvent *)e;
 		const Message &m = me->message();
+
+#ifdef PSI_PLUGINS
+		//TODO(mck): clean up
+		//UserListItem *ulItem=NULL;
+		//if ( !ul.isEmpty() )
+		//	ulItem=ul.first();
+		if (PluginManager::instance()->processMessage(this, e->from().full(), m.body(), m.subject())) {
+			delete e;
+			return;
+		}
+		//PluginManager::instance()->message(this,e->from(),ulItem,((MessageEvent*)e)->message().body());
+#endif
+
+
 
 		// Pass message events to chat window
 		if ((m.containsEvents() || m.chatState() != StateNone) && m.body().isEmpty()) {
@@ -3840,12 +3983,6 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 			// FIXME: handle message errors
 			//msg.text = QString(tr("<big>[Error Message]</big><br>%1").arg(plain2rich(msg.text)));
 		}
-#ifdef PSI_PLUGINS
-		UserListItem *ulItem=NULL;
-		if ( !ul.isEmpty() )
-			ulItem=ul.first();
-		PluginManager::instance()->message(this,e->from(),ulItem,((MessageEvent*)e)->message().body());
-#endif
 	}
 	else if(e->type() == PsiEvent::HttpAuth) {
 		playSound(PsiOptions::instance()->getOption("options.ui.notifications.sounds.system-message").toString());
@@ -3926,17 +4063,49 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 		delete e;
 }
 
+UserListItem* PsiAccount::addUserListItem(const Jid& jid, const QString& nick)
+{
+	// create item
+	UserListItem *u = new UserListItem;
+	u->setJid(jid);
+	u->setInList(false);
+	u->setAvatarFactory(avatarFactory());
+	u->setName(nick);
+
+	// is it a private groupchat?
+	Jid j = u->jid();
+	GCContact *c = findGCContact(j);
+	if(c) {
+		u->setName(j.resource());
+		u->setPrivate(true);
+
+		// make a resource so the contact appears online
+		UserResource ur;
+		ur.setName(j.resource());
+		ur.setStatus(c->status);
+		u->userResourceList().append(ur);
+	}
+
+	// treat it like a push  [pushinfo]
+	//VCard info;
+	//if(readUserInfo(item->jid, &info) && !info.field[vNickname].isEmpty())
+	//	item->nick = info.field[vNickname];
+	//else {
+	//	if(localStatus != STATUS_OFFLINE)
+	//		serv->getVCard(item->jid);
+	//}
+
+	d->userList.append(u);
+	cpUpdate(*u);
+	return u;
+}
+
 // put an event into the event queue, and update the related alerts
 void PsiAccount::queueEvent(PsiEvent* e, ActivationType activationType)
 {
 	// do we have roster item for this?
 	UserListItem *u = find(e->jid());
 	if(!u) {
-		// create item
-		u = new UserListItem;
-		u->setJid(e->jid());
-		u->setInList(false);
-		u->setAvatarFactory(avatarFactory());
 		QString nick;
 		if (e->type() == PsiEvent::Auth) {
 			AuthEvent* ae = (AuthEvent*) e;
@@ -3947,32 +4116,8 @@ void PsiAccount::queueEvent(PsiEvent* e, ActivationType activationType)
 			if (me->message().type()  != "error")
 				nick = me->nick();
 		}
-		u->setName(nick);
 
-		// is it a private groupchat?
-		Jid j = u->jid();
-		GCContact *c = findGCContact(j);
-		if(c) {
-			u->setName(j.resource());
-			u->setPrivate(true);
-
-			// make a resource so the contact appears online
-			UserResource ur;
-			ur.setName(j.resource());
-			ur.setStatus(c->status);
-			u->userResourceList().append(ur);
-		}
-
-		// treat it like a push  [pushinfo]
-		//VCard info;
-		//if(readUserInfo(item->jid, &info) && !info.field[vNickname].isEmpty())
-		//	item->nick = info.field[vNickname];
-		//else {
-		//	if(localStatus != STATUS_OFFLINE)
-		//		serv->getVCard(item->jid);
-		//}
-
-		d->userList.append(u);
+		u = addUserListItem(e->jid(), nick);
 	}
 
 	//printf("queuing message from [%s] for [%s].\n", e->from().full().latin1(), e->jid().full().latin1());
@@ -3982,7 +4127,7 @@ void PsiAccount::queueEvent(PsiEvent* e, ActivationType activationType)
 	if(PsiOptions::instance()->getOption("options.ui.contactlist.raise-on-new-event").toBool())
 		d->psi->raiseMainwin();
 
-	// udpate the roster
+	// update the roster
 	cpUpdate(*u);
 
 	// FIXME: We shouldn't be doing this kind of stuff here, because this
@@ -4212,7 +4357,7 @@ void PsiAccount::edb_finished()
 
 void PsiAccount::openGroupChat(const Jid &j, ActivationType activationType)
 {
-	QString str = j.userHost();
+	QString str = j.bare();
 	bool found = false;
 	for(QStringList::ConstIterator it = d->groupchats.begin(); it != d->groupchats.end(); ++it) {
 		if((*it) == str) {
@@ -4224,7 +4369,7 @@ void PsiAccount::openGroupChat(const Jid &j, ActivationType activationType)
 		d->groupchats += str;
 
 	GCMainDlg *w = new GCMainDlg(this, j, d->tabManager);
-	w->setPassword(d->client->groupChatPassword(j.user(),j.host()));
+	w->setPassword(d->client->groupChatPassword(j.node(),j.domain()));
 	connect(w, SIGNAL(aSend(const Message &)), SLOT(dj_sendMessage(const Message &)));
 	connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));
 	w->ensureTabbedCorrectly();
@@ -4275,11 +4420,11 @@ QStringList PsiAccount::groupchats() const
 
 void PsiAccount::client_groupChatJoined(const Jid &j)
 {
-	//d->client->groupChatSetStatus(j.host(), j.user(), d->loginStatus);
+	//d->client->groupChatSetStatus(j.domain(), j.node(), d->loginStatus);
 
-	GCMainDlg *m = findDialog<GCMainDlg*>(Jid(j.userHost()));
+	GCMainDlg *m = findDialog<GCMainDlg*>(Jid(j.bare()));
 	if(m) {
-		m->setPassword(d->client->groupChatPassword(j.user(),j.host()));
+		m->setPassword(d->client->groupChatPassword(j.node(),j.domain()));
 		m->joined();
 		return;
 	}
@@ -4317,7 +4462,7 @@ void PsiAccount::client_groupChatLeft(const Jid &j)
 
 void PsiAccount::client_groupChatPresence(const Jid &j, const Status &s)
 {
-	GCMainDlg *w = findDialog<GCMainDlg*>(Jid(j.userHost()));
+	GCMainDlg *w = findDialog<GCMainDlg*>(Jid(j.bare()));
 	if(!w)
 		return;
 
@@ -4344,7 +4489,7 @@ void PsiAccount::client_groupChatPresence(const Jid &j, const Status &s)
 
 void PsiAccount::client_groupChatError(const Jid &j, int code, const QString &str)
 {
-	GCMainDlg *w = findDialog<GCMainDlg*>(Jid(j.userHost()));
+	GCMainDlg *w = findDialog<GCMainDlg*>(Jid(j.bare()));
 	if(w) {
 		w->error(code, str);
 	}
@@ -4371,7 +4516,7 @@ void PsiAccount::slotCheckVCard()
 	if (!isConnected() || !isActive())
 		return;
 
-	QString nick = d->jid.user();
+	QString nick = d->jid.node();
 	JT_VCard* j = static_cast<JT_VCard*>(sender());
 	if (j->success() && j->statusCode() == Task::ErrDisc) {
 		if (!j->vcard().nickName().isEmpty()) {
@@ -4902,6 +5047,15 @@ PEPManager* PsiAccount::pepManager()
 BookmarkManager* PsiAccount::bookmarkManager()
 {
 	return d->bookmarkManager;
+}
+
+JingleRtpManager *PsiAccount::jingleRtpManager()
+{
+#ifdef AVCALL
+	return d->jingleRtpManager;
+#else
+	return 0;
+#endif
 }
 
 /**

@@ -56,7 +56,7 @@ SxeEdit::EditType SxeRecordEdit::type() const {
 }
 
 QDomElement SxeRecordEdit::xml(QDomDocument &doc) const {
-    QDomElement edit = doc.createElementNS(SXDENS, "set");
+    QDomElement edit = doc.createElementNS(SXENS, "set");
 
     edit.setAttribute("rid", rid_);
     edit.setAttribute("version", version_);
@@ -76,7 +76,7 @@ QList<SxeRecordEdit::Key> SxeRecordEdit::keys() const {
 
 QString SxeRecordEdit::value(Key key) const {
     return changes_.value(key);
-};
+}
 
 QString SxeRecordEdit::keyToString(Key key) {
     if(key == Parent) return "parent";
@@ -88,4 +88,10 @@ QString SxeRecordEdit::keyToString(Key key) {
     if(key == ProcessingInstructionTarget) return "pitarget";
     if(key == ProcessingInstructionData) return "pidata";
     return "";
+}
+
+void SxeRecordEdit::nullify() {
+    SxeEdit::nullify();
+
+    changes_.clear();
 }

@@ -20,23 +20,8 @@
 
 #include "sxerecord.h"
 
-//----------------------------------------------------------------------------
-// SxeRecord::VersionData
-//----------------------------------------------------------------------------
 
-SxeRecord::VersionData::VersionData(QString _parent, /*QString _ns,*/ QString _identifier, QString _data)  {
-    version = 0;
-    primaryWeight = 0;
-    parent = _parent;
-    // ns = _ns;
-    identifier = _identifier;
-    data = _data;
-}
-
-SxeRecord::VersionData::VersionData(const VersionData &other) : parent(other.parent), /*ns(other.ns),*/ identifier(other.identifier), data(other.data)  {
-    version = other.version;
-    primaryWeight = other.primaryWeight;
-}
+static bool referencedEditLessThan(const SxeEdit* e1, const SxeEdit* e2) { return *e1 < *e2; }
 
 
 //----------------------------------------------------------------------------
@@ -45,12 +30,9 @@ SxeRecord::VersionData::VersionData(const VersionData &other) : parent(other.par
 
 SxeRecord::SxeRecord(QString rid) {
     rid_ = rid;
-    version_ = 0;
 };
 
 SxeRecord::~SxeRecord() {
-    while(!versions_.isEmpty())
-        delete versions_.takeFirst();
     while(!edits_.isEmpty())
         delete edits_.takeFirst();
 };
@@ -59,13 +41,14 @@ QDomNode SxeRecord::node() const {
     return node_;
 }
 
-void SxeRecord::apply(QDomDocument &doc, SxeEdit* edit, bool importing) {
+void SxeRecord::apply(QDomDocument &doc, SxeEdit* edit) {
     if(edit->rid() == rid()) {
-        if((edit->type() == SxeEdit::New && applySxeNewEdit(doc, dynamic_cast<const SxeNewEdit*>(edit)))
-        || (edit->type() == SxeEdit::Remove && applySxeRemoveEdit(dynamic_cast<const SxeRemoveEdit*>(edit)))
-        || (edit->type() == SxeEdit::Record && applySxeRecordEdit(dynamic_cast<const SxeRecordEdit*>(edit), importing))) {
-            edits_ += edit;
-        }
+        if(edit->type() == SxeEdit::New)
+            applySxeNewEdit(doc, dynamic_cast<SxeNewEdit*>(edit));
+        else if (edit->type() == SxeEdit::Remove)
+            applySxeRemoveEdit(dynamic_cast<SxeRemoveEdit*>(edit));
+        else if (edit->type() == SxeEdit::Record)
+            applySxeRecordEdit(dynamic_cast<SxeRecordEdit*>(edit));
     } else {
         qDebug(QString("Tried to apply an edit meant for %1 to %2.").arg(edit->rid()).arg(rid()).toAscii());
     }
@@ -73,14 +56,14 @@ void SxeRecord::apply(QDomDocument &doc, SxeEdit* edit, bool importing) {
 
 QList<const SxeEdit*> SxeRecord::edits() const {
     QList<const SxeEdit*> edits;
-    foreach(SxeEdit* e, edits_) {
-        edits.append(e);
-    }
+        foreach(SxeEdit* e, edits_) {
+            edits.append(e);
+        }
     return edits;
 };
 
-bool SxeRecord::applySxeNewEdit(QDomDocument &doc, const SxeNewEdit* edit) {
-    if(!(edits_.size() == 0 && version_ == 0 && node_.isNull())) {
+bool SxeRecord::applySxeNewEdit(QDomDocument &doc, SxeNewEdit* edit) {
+    if(!(edits_.size() == 0 && node_.isNull())) {
         qDebug("Someone's not behaving! Tried to apply a SxeNewEdit to an existing node.");
         emit nodeRemovalRequired(node_);
         return false;
@@ -118,22 +101,32 @@ bool SxeRecord::applySxeNewEdit(QDomDocument &doc, const SxeNewEdit* edit) {
     } else
         return false;
 
-    VersionData* data = new VersionData();
-
-    data->version = 0;
-    data->parent = edit->parent();
-    data->primaryWeight = edit->primaryWeight();
-    data->identifier = edit->name();
-    data->data = edit->chdata();
-
-    versions_ += data;
+    edits_ += edit;
+    revertToZero();
 
     emit nodeToBeAdded(node_, edit->remote(), edit->rid());
+
+    lastParent_ = parent();
+    lastPrimaryWeight_ = primaryWeight();
     
     return true;
 }
 
-bool SxeRecord::applySxeRemoveEdit(const SxeRemoveEdit* edit) {
+void SxeRecord::revertToZero() {
+#ifndef NDEBUG
+    if (edits_[0]->type() != SxeEdit::New)
+        qDebug(QString("First edit is of type %1!").arg(edits_[0]->type()));
+#endif
+
+    const SxeNewEdit* edit = dynamic_cast<const SxeNewEdit*>(edits_[0]);
+
+    parent_ = edit->parent();
+    primaryWeight_ = edit->primaryWeight();
+    identifier_ = edit->name();
+    data_ = edit->chdata();
+}
+
+bool SxeRecord::applySxeRemoveEdit(SxeRemoveEdit* edit) {
     if(!node_.isNull()) {
         emit nodeToBeRemoved(node_, edit->remote());
 
@@ -150,7 +143,9 @@ bool SxeRecord::applySxeRemoveEdit(const SxeRemoveEdit* edit) {
             node_.parentNode().removeChild(node_);
             emit nodeRemoved(node_, edit->remote());
         }
-        
+
+        edits_ += edit;
+
         // delete the record
         deleteLater();
     }
@@ -158,139 +153,158 @@ bool SxeRecord::applySxeRemoveEdit(const SxeRemoveEdit* edit) {
     return true;
 }
 
-bool SxeRecord::applySxeRecordEdit(const SxeRecordEdit* edit, bool importing) {
-        if(!node_.isNull() && edits_.size() > 0) {
-            if(importing && version_ < edit->version())
-                // don't check for "in-order" 
-                version_ = edit->version();
-            else
-                version_++;
+bool SxeRecord::applySxeRecordEdit(SxeRecordEdit* edit) {
+    if(!node_.isNull() && edits_.size() > 0) {
 
-            QString oldParent = parent();
-            double oldPrimaryWeight = primaryWeight();
+        if(edit->version() == version() + 1 && !edits_.last()->overridenBy(*edit)) {
 
-            if(edit->version() == version_) {
-                // process the "in order" edit
-                
-                // clone the previous VersionData
-                VersionData* data = new VersionData(*versions_.last());
-                data->version = version_;
+            // process the "in order" edit
+            edits_ += edit;
+            processInOrderRecordEdit(edit);
 
-                versions_ += data;
+        } else {
 
-                foreach(SxeRecordEdit::Key key, edit->keys()) {
-                    if(key == SxeRecordEdit::Parent && edit->value(key) != parent()) {
-                        data->parent = edit->value(key);
-                    } else if(key == SxeRecordEdit::PrimaryWeight && edit->value(key).toDouble() != primaryWeight()) {
-                        data->primaryWeight = edit->value(key).toDouble();
-                    } else if(key == SxeRecordEdit::Name && edit->value(key) != name()) {
-                        data->identifier = edit->value(key);
-                        // TODO: change the name somehow... by copying all the child nodes to a new node i suppose
-                        // emit nameChanged(node_, edit->remote());
-                    } else if(key == SxeRecordEdit::Chdata) {
-                        QString newValue;
-                        
-                        // Check for partial replacements
-                        QList<SxeRecordEdit::Key> keys = edit->keys();
-                        if(keys.contains(SxeRecordEdit::ReplaceFrom)
-                            && keys.contains(SxeRecordEdit::ReplaceN)) {
-                            bool ok1, ok2;
-                            int from = edit->value(SxeRecordEdit::ReplaceFrom).toInt(&ok1);
-                            int n = edit->value(SxeRecordEdit::ReplaceN).toInt(&ok2);
-                            newValue = data->data;
-                            if(ok1 && ok2 && from >= 0 && n >= 0 && from + n <= data->data.length()) {
-                                newValue.replace(from, n, edit->value(key));
-                            } else {
-                                if(!ok1)
-                                    qDebug(QString("Could not convert 'replacefrom' = '%1' to int.").arg(edit->value(SxeRecordEdit::ReplaceFrom)));
-                                if(!ok2)
-                                    qDebug(QString("Could not convert 'replacen' = '%1' to int.").arg(edit->value(SxeRecordEdit::ReplaceN)));
-                                if(from < 0)
-                                    qDebug(QString("'replacefrom' = '%1' is negative.").arg(edit->value(SxeRecordEdit::ReplaceFrom)));
-                                if(n < 0)
-                                    qDebug(QString("'replacen' = '%1' is negative.").arg(edit->value(SxeRecordEdit::ReplaceN)));
-                                if(from + n > data->data.length())
-                                    qDebug(QString("from (%1) + n (%2) > data->data.length() (%3).").arg(from).arg(n).arg(data->data.length()));
-                            }
-                        } else {
-                            newValue = edit->value(key);
-                        }
-
-                        // Only process further if some change resulted
-                        if(newValue != data->data) {
-                            data->data = newValue;
-
-                            emit chdataToBeChanged(node_, edit->remote());
-                            // qDebug(QString("Setting '%1' to \"%2\"").arg(node_.nodeName()).arg(data->data).toAscii());
-                            if(node_.isAttr() || node_.isText() || node_.isComment())
-                                node_.setNodeValue(data->data);
-
-                            emit chdataChanged(node_, edit->remote());
-                        }
-                    } else if(key == SxeRecordEdit::ProcessingInstructionTarget && edit->value(key) != processingInstructionTarget()) {
-                        data->identifier = edit->value(key);
-
-                        if(node_.isProcessingInstruction()) {
-                            // emit processingInstructionTargetToBeChanged(node_, edit->remote());
-
-                            // TODO: figure out a way to change the target
-                            //      will probably need to recreate the pi
-
-                            // emit processingInstructionTargetChanged(node_, edit->remote());
-                        }
-                    } else if(key == SxeRecordEdit::ProcessingInstructionData && edit->value(key) != processingInstructionData()) {
-                        data->data = edit->value(key);
-
-                        if(node_.isProcessingInstruction()) {
-                            emit processingInstructionDataToBeChanged(node_, edit->remote());
-                            node_.toProcessingInstruction().setData(data->data);
-                            emit processingInstructionDataChanged(node_, edit->remote());
-                        }
-                    }
-                }
-
-            } else if (edit->version() < version_) {
-
-                // Revert the changes down to version of the SxeEdit - 1.
-                // by deleting the higher versions and edits
-                while(versions_.size() > 1 && versions_.last()->version >= edit->version())
-                    delete versions_.takeLast();
-                while(edits_.size() > 0 && edits_.last()->type() == SxeEdit::Record && dynamic_cast<const SxeRecordEdit*>(edits_.last())->version() >= edit->version())
-                    delete edits_.takeLast();
-
-                if((node_.isElement() || node_.isAttr())
-                    && node_.nodeName() != name()) {
-                    // TODO: update the name somehow
-                }
-
-                if((node_.isText() || node_.isAttr() || node_.isComment())
-                    && node_.nodeValue() != chdata()) {
-                    node_.setNodeValue(chdata());
-                }
-
-                if(node_.isProcessingInstruction()) {
-                    if(node_.toProcessingInstruction().target() != processingInstructionTarget()) {
-                        // TODO: change the target somehow
-                    }
-
-                    if(node_.toProcessingInstruction().data() != processingInstructionData()) {
-                        node_.toProcessingInstruction().setData(processingInstructionData());
-                    }
-                }
-                
-            } else {
-                // This should never happen given the seriality condition.
-                // Reason to worry about misbehaviour of peers but not much to do from here.
-                qWarning(QString("Configure to node '%1' version '%2' arrived when the node had version '%3'.").arg(edit->rid()).arg(version_).arg(edit->version() - 1).toAscii());
-            }
-
-            if(parent() != oldParent || primaryWeight() != oldPrimaryWeight)
-                emit nodeToBeMoved(node_, edit->remote());
-
-            return true;
+            edits_ += edit;
+            reorderEdits();
 
         }
-        return false;    
+
+        updateNode(edit->remote());
+
+        return true;
+
+    }
+    return false;    
+}
+
+void SxeRecord::processInOrderRecordEdit(const SxeRecordEdit* edit) {
+
+    foreach(SxeRecordEdit::Key key, edit->keys()) {
+
+        if(key == SxeRecordEdit::Parent && edit->value(key) != parent()) {
+
+            parent_ = edit->value(key);
+
+        } else if(key == SxeRecordEdit::PrimaryWeight && edit->value(key).toDouble() != primaryWeight()) {
+
+            primaryWeight_ = edit->value(key).toDouble();
+
+        } else if(key == SxeRecordEdit::Name && edit->value(key) != name()) {
+
+            identifier_ = edit->value(key);
+
+        } else if(key == SxeRecordEdit::ProcessingInstructionTarget && edit->value(key) != processingInstructionTarget()) {
+
+            identifier_ = edit->value(key);
+
+        } else if(key == SxeRecordEdit::Chdata || key == SxeRecordEdit::ProcessingInstructionData) {
+            
+            // Check for partial replacements
+            QList<SxeRecordEdit::Key> keys = edit->keys();
+            if(keys.contains(SxeRecordEdit::ReplaceFrom)
+                && keys.contains(SxeRecordEdit::ReplaceN)) {
+
+                // 'replacefrom' & 'replacen' exist, do they contain integers?
+                bool ok1, ok2;
+                int from = edit->value(SxeRecordEdit::ReplaceFrom).toInt(&ok1);
+                int n = edit->value(SxeRecordEdit::ReplaceN).toInt(&ok2);
+
+                if(ok1 && ok2 && from >= 0 && n >= 0 && from + n <= data_.length()) {
+
+                    // Do partial replace if the range makes sense
+                    data_.replace(from, n, edit->value(key));
+
+                } else {
+                    if(!ok1)
+                        qDebug(QString("Could not convert 'replacefrom' = '%1' to int.").arg(edit->value(SxeRecordEdit::ReplaceFrom)));
+                    if(!ok2)
+                        qDebug(QString("Could not convert 'replacen' = '%1' to int.").arg(edit->value(SxeRecordEdit::ReplaceN)));
+                    if(from < 0)
+                        qDebug(QString("'replacefrom' = '%1' is negative.").arg(edit->value(SxeRecordEdit::ReplaceFrom)));
+                    if(n < 0)
+                        qDebug(QString("'replacen' = '%1' is negative.").arg(edit->value(SxeRecordEdit::ReplaceN)));
+                    if(from + n > data_.length())
+                        qDebug(QString("from (%1) + n (%2) > data_.length() (%3).").arg(from).arg(n).arg(data_.length()));
+                }
+
+            } else {
+
+                data_ = edit->value(key);
+
+            }
+
+        }
+    }
+
+}
+
+void SxeRecord::reorderEdits() {
+    qSort(edits_.begin(), edits_.end(), referencedEditLessThan);
+
+    revertToZero();
+
+    // Apply all the valid record edits
+    for(int i = 1; i < edits_.size(); i++) {
+
+        if (edits_[i]->type() == SxeEdit::Record) {
+            SxeRecordEdit* edit = dynamic_cast<SxeRecordEdit*>(edits_[i]);
+
+            // Check that the version matches and that the next edit doesn't override it.
+            if (i == edit->version() && (i+1 == edits_.size() || !edit->overridenBy(*edits_[i+1])))
+                processInOrderRecordEdit(edit);
+            else if (edit->version() <= i)
+                edit->nullify();  // There's no way the edit could be applied anymore
+
+        } else {
+            qDebug(QString("Edit of type %1 at %2!").arg(edits_[i]->type()).arg(i).toAscii());
+        }
+
+    }
+
+}
+
+void SxeRecord::updateNode(bool remote) {
+    if(parent_ != lastParent_ || primaryWeight_ != lastPrimaryWeight_)
+        emit nodeToBeMoved(node_, remote);
+
+    if(identifier_ != lastIdentifier_) {
+
+        if ((node_.isElement() || node_.isAttr())
+            && node_.nodeName() != name()) {
+
+            // emit nameToBeChanged(node_, remote);
+            // TODO: update the name somehow
+            // emit nameChanged(node_, remote);
+
+        } else if(node_.isProcessingInstruction()) {
+
+            // emit processingInstructionTargetToBeChanged(node_, remote);
+            // TODO: figure out a way to change the target
+            //      will probably need to recreate the pi
+            // emit processingInstructionTargetChanged(node_, remote);
+        }
+    }
+
+    if(data_ != lastData_) {
+
+        // qDebug(QString("Setting '%1' to \"%2\"").arg(node_.nodeName()).arg(data_).toAscii());
+
+        if((node_.isText() || node_.isAttr() || node_.isComment())) {
+
+            emit chdataToBeChanged(node_, remote);
+            node_.setNodeValue(data_);
+            emit chdataChanged(node_, remote);
+
+        } else if(node_.isProcessingInstruction()) {
+
+            emit processingInstructionDataToBeChanged(node_, remote);
+            node_.toProcessingInstruction().setData(data_);
+            emit processingInstructionDataChanged(node_, remote);
+
+        }
+
+    }
+
 }
 
 QString SxeRecord::rid() const {
@@ -298,28 +312,19 @@ QString SxeRecord::rid() const {
 };
 
 QString SxeRecord::parent() const {
-    if(versions_.isEmpty())
-        return "";
-    else
-        return versions_.last()->parent;
+    return parent_;
 }
 
 double SxeRecord::primaryWeight() const {
-    if(versions_.isEmpty())
-        return 0;
-    else
-        return versions_.last()->primaryWeight;
+    return primaryWeight_;
 }
 
 int SxeRecord::version() const {
-    return version_;
+    return edits_.size() - 1;
 }
 
 QString SxeRecord::name() const {
-    if(versions_.isEmpty())
-        return QString();
-    else
-        return versions_.last()->identifier;
+    return identifier_;
 }
 
 QString SxeRecord::nameSpace() const {
@@ -330,24 +335,15 @@ QString SxeRecord::nameSpace() const {
 }
 
 QString SxeRecord::chdata() const {
-    if(versions_.isEmpty())
-        return QString();
-    else
-        return versions_.last()->data;
+    return data_;
 }
 
 QString SxeRecord::processingInstructionTarget() const {
-    if(versions_.isEmpty())
-        return QString();
-    else
-        return versions_.last()->identifier;
+    return identifier_;
 }
 
 QString SxeRecord::processingInstructionData() const {
-    if(versions_.isEmpty())
-        return QString();
-    else
-        return versions_.last()->data;
+    return data_;
 }
 
 bool SxeRecord::hasSmallerSecondaryWeight(const SxeRecord &other) const {

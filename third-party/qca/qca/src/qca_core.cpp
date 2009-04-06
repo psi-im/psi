@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2007  Justin Karneges <justin@affinix.com>
+ * Copyright (C) 2003-2008  Justin Karneges <justin@affinix.com>
  * Copyright (C) 2004,2005  Brad Hards <bradh@frogmouth.net>
  *
  * This library is free software; you can redistribute it and/or
@@ -14,7 +14,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301  USA
  *
  */
 
@@ -72,6 +73,7 @@ public:
 	QMutex prop_mutex;
 	QMap<QString,QVariantMap> config;
 	QMutex config_mutex;
+	QMutex logger_mutex;
 
 	Global()
 	{
@@ -79,7 +81,7 @@ public:
 		secmem = false;
 		first_scan = false;
 		rng = 0;
-		logger = new Logger;
+		logger = 0;
 		manager = new ProviderManager;
 	}
 
@@ -94,7 +96,7 @@ public:
 		logger = 0;
 	}
 
-	void ensure_first_scan()
+	bool ensure_first_scan()
 	{
 		scan_mutex.lock();
 		if(!first_scan)
@@ -102,9 +104,10 @@ public:
 			first_scan = true;
 			manager->scan();
 			scan_mutex.unlock();
-			return;
+			return true;
 		}
 		scan_mutex.unlock();
+		return false;
 	}
 
 	void scan()
@@ -118,6 +121,36 @@ public:
 	void ksm_scan()
 	{
 		KeyStoreManager::scan();
+	}
+
+	Logger *get_logger()
+	{
+		QMutexLocker locker(&logger_mutex);
+		if(!logger)
+		{
+			logger = new Logger;
+
+			// needed so deinit may delete the logger regardless
+			//   of what thread the logger was created from
+			logger->moveToThread(0);
+		}
+		return logger;
+	}
+
+	void unloadAllPlugins()
+	{
+		KeyStoreManager::shutdown();
+
+		// if the global_rng was owned by a plugin, then delete it
+		rng_mutex.lock();
+		if(rng && (rng->provider() != manager->find("default")))
+		{
+			delete rng;
+			rng = 0;
+		}
+		rng_mutex.unlock();
+
+		manager->unloadAll();
 	}
 };
 
@@ -268,6 +301,8 @@ bool isSupported(const QStringList &features, const QString &provider)
 		if(features_have(global->manager->allFeatures(), features))
 			return true;
 
+		global->manager->appendDiagnosticText(QString("Scanning to find features: %1\n").arg(features.join(" ")));
+
 		// ok, try scanning for new stuff
 		global->scan();
 
@@ -372,16 +407,7 @@ void unloadAllPlugins()
 	if(!global_check())
 		return;
 
-	// if the global_rng was owned by a plugin, then delete it
-	global->rng_mutex.lock();
-	if(global->rng && (global->rng->provider() != global->manager->find("default")))
-	{
-		delete global->rng;
-		global->rng = 0;
-	}
-	global->rng_mutex.unlock();
-
-	global->manager->unloadAll();
+	global->unloadAllPlugins();
 }
 
 QString pluginDiagnosticText()
@@ -454,7 +480,7 @@ static QVariantMap readConfig(const QString &name)
 	settings.beginGroup(name);
 	QStringList keys = settings.childKeys();
 	QVariantMap map;
-	foreach(QString key, keys)
+	foreach(const QString &key, keys)
 		map[key] = settings.value(key);
 	settings.endGroup();
 
@@ -612,7 +638,7 @@ void setGlobalRandomProvider(const QString &provider)
 
 Logger *logger()
 {
-	return global->logger;
+	return global->get_logger();
 }
 
 bool haveSystemStore()
@@ -696,12 +722,12 @@ QByteArray hexToArray(const QString &str)
 static Provider *getProviderForType(const QString &type, const QString &provider)
 {
 	Provider *p = 0;
-	bool scanned = false;
+	bool scanned = global->ensure_first_scan();
 	if(!provider.isEmpty())
 	{
 		// try using specific provider
 		p = global->manager->findFor(provider, type);
-		if(!p)
+		if(!p && !scanned)
 		{
 			// maybe this provider is new, so scan and try again
 			global->scan();
@@ -713,7 +739,17 @@ static Provider *getProviderForType(const QString &type, const QString &provider
 	{
 		// try using some other provider
 		p = global->manager->findFor(QString(), type);
-		if((!p || p->name() == "default") && !scanned)
+
+		// note: we used to rescan if no provider was found or if
+		//   the only found provider was 'default'.  now we only
+		//   rescan if no provider was found.  this optimizes lookups
+		//   for features that are in the default provider (such as
+		//   'sha1') when no other plugin is available.  the drawback
+		//   is that if a plugin is installed later during runtime,
+		//   then it won't be picked up without restarting the
+		//   application or manually calling QCA::scanForPlugins.
+		//if((!p || p->name() == "default") && !scanned)
+		if(!p && !scanned)
 		{
 			// maybe there are new providers, so scan and try again
 			//   before giving up or using default

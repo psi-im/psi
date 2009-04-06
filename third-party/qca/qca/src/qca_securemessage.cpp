@@ -14,15 +14,15 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301  USA
  *
  */
 
 #include "qca_securemessage.h"
 
 #include "qcaprovider.h"
-
-#include <QTimer>
+#include "qca_safeobj.h"
 
 namespace QCA {
 
@@ -264,7 +264,7 @@ public:
 	QString dtext;
 
 	QList<int> bytesWrittenArgs;
-	QTimer readyReadTrigger, bytesWrittenTrigger, finishedTrigger;
+	SafeTimer readyReadTrigger, bytesWrittenTrigger, finishedTrigger;
 
 	Private(SecureMessage *_q) : readyReadTrigger(this), bytesWrittenTrigger(this), finishedTrigger(this)
 	{

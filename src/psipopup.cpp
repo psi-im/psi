@@ -161,7 +161,7 @@ void PsiPopup::Private::popupClicked(int button)
 		else if ( account ) {
 			// FIXME: it should work in most cases, but
 			// maybe it's better to fix UserList::find()?
-			Jid j( jid.userHost() );
+			Jid j( jid.bare() );
 			account->actionDefault( j );
 		}
 	}

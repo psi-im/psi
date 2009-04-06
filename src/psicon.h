@@ -36,6 +36,7 @@ class PsiCon;
 class PsiAccount;
 class PsiEvent;
 class ContactView;
+class AutoUpdater;
 class EventDlg;
 class UserListItem;
 class EDB;
@@ -107,6 +108,8 @@ public:
 
 	IconSelectPopup *iconSelectPopup() const;
 	void processEvent(PsiEvent*, ActivationType activationType);
+
+	bool haveAutoUpdater() const;
 
 signals:
 	void quit(int);

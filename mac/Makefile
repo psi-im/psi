@@ -20,6 +20,7 @@
 # Change these according to your own setup
 QCADIR=/usr/local
 GROWLDIR=/Library/Frameworks
+SPARKLEDIR=/Library/Frameworks
 PSI_DIR=..
 
 EXECUTABLE_NAME=psi
@@ -86,6 +87,7 @@ $(DISK_DIR)/$(APPFILE_NAME): $(PSI_DIR)/src/$(EXECUTABLE_NAME).app
 	ditto -rsrc "$<" "$@"
 	mkdir -p "$@/Contents/Frameworks"
 	-ditto -rsrc "$(GROWLDIR)/Growl.framework" "$@/Contents/Frameworks/Growl.framework"
+	-ditto -rsrc "$(SPARKLEDIR)/Sparkle.framework" "$@/Contents/Frameworks/Sparkle.framework"
 	#strip "$@/Contents/MacOS/$(EXECUTABLE_NAME)"
 	#
 	#@echo

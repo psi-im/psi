@@ -89,7 +89,13 @@
 #include "globalshortcutmanager.h"
 #include "desktoputil.h"
 #include "tabmanager.h"
+#include "capsmanager.h"
 
+
+#include "AutoUpdater/AutoUpdater.h"
+#ifdef HAVE_SPARKLE
+#include "AutoUpdater/SparkleAutoUpdater.h"
+#endif
 
 #ifdef Q_WS_MAC
 #include "mac_dock.h"
@@ -257,6 +263,7 @@ public:
 	QMenuBar* defaultMenuBar;
 	CapsRegistry* capsRegistry;
 	TabManager *tabManager;
+	AutoUpdater *autoUpdater;
 };
 
 //----------------------------------------------------------------------------
@@ -280,6 +287,7 @@ PsiCon::PsiCon()
 	d->s5bServer = 0;
 	d->proxy = 0;
 	d->tuneController = 0;
+	d->autoUpdater = 0;
 
 	d->actionList = 0;
 	d->defaultMenuBar = new QMenuBar(0);
@@ -294,6 +302,7 @@ PsiCon::~PsiCon()
 	saveCapabilities();
 	delete d->capsRegistry;
 
+	delete d->autoUpdater;
 	delete d->actionList;
 	delete d->edb;
 	delete d->defaultMenuBar;
@@ -347,6 +356,14 @@ bool PsiCon::init()
 	// Create the tune controller
 	d->tuneController = new CombinedTuneController();
 #endif
+
+	// Auto updater initialization
+#ifdef HAVE_SPARKLE
+	d->autoUpdater = new SparkleAutoUpdater(ApplicationInfo::getAppCastURL());
+#endif
+	if (d->autoUpdater && PsiOptions::instance()->getOption("options.auto-update.check-on-startup").toBool()) {
+		d->autoUpdater->checkForUpdates();
+	}
 
 	// calculate the small font size
 	const int minimumFontSize = 7;
@@ -523,7 +540,7 @@ bool PsiCon::init()
 						haveEnabled = it->opt_enabled;
 						if (it->opt_enabled) {
 							if (!PsiOptions::instance()->getOption("options.account.domain").toString().isEmpty())
-								it->jid = JIDUtil::accountFromString(Jid(it->jid).user()).bare();
+								it->jid = JIDUtil::accountFromString(Jid(it->jid).node()).bare();
 						}
 					}
 					else
@@ -532,7 +549,7 @@ bool PsiCon::init()
 				else {
 					// Overwirte locked properties
 					if (!PsiOptions::instance()->getOption("options.account.domain").toString().isEmpty())
-						it->jid = JIDUtil::accountFromString(Jid(it->jid).user()).bare();
+						it->jid = JIDUtil::accountFromString(Jid(it->jid).node()).bare();
 				}
 			}
 		}
@@ -558,8 +575,16 @@ bool PsiCon::init()
 #endif
 
 	connect(ActiveProfiles::instance(), SIGNAL(raiseMainWindow()), SLOT(raiseMainwin()));
+	connect(ActiveProfiles::instance(), SIGNAL(openUri(const QUrl &)), SLOT(doOpenUri(const QUrl &)));
+
+	DesktopUtil::setUrlHandler("xmpp", this, "doOpenUri");
 
 	return true;
+}
+
+bool PsiCon::haveAutoUpdater() const
+{
+	return d->autoUpdater != 0;
 }
 
 void PsiCon::registerCaps(const QString& ext, const QStringList& features)
@@ -606,6 +631,8 @@ void PsiCon::deinit()
 		d->saveProfile(acc);
 
 	GlobalShortcutManager::clear();
+
+	DesktopUtil::unsetUrlHandler("xmpp");
 }
 
 
@@ -947,90 +974,59 @@ void PsiCon::checkAccountsEmpty()
 	}
 }
 
-void PsiCon::doOpenUri(const QUrl &uriToOpen)
+void PsiCon::doOpenUri(const QUrl &uri)
 {
-	Q_UNUSED(uriToOpen);	
-	
-/*
-	QUrl uri(uriToOpen);	// got to copy, because setQueryDelimiters() is not const
-
-	qWarning("uri:  " + uri.toString());
+	qDebug("uri:  " + uri.toString());
 
 	// scheme
-
-	if (uri.scheme() != "xmpp") {	// try handling legacy URIs
-		QMessageBox::warning(0, tr("Warning"), QString("URI (link) type \"%1\" is unsupported.").arg(uri.scheme()));
+	if (uri.scheme() != "xmpp") {
+		QMessageBox::critical(0, tr("Unsupported URI type"), QString("URI (link) type \"%1\" is not supported.").arg(uri.scheme()));
+		return;
 	}
 
 	// authority
-
 	PsiAccount *pa = 0;
-	if (uri.authority().isEmpty()) {
+	//if (uri.authority().isEmpty()) {
 		pa = d->contactList->defaultAccount();
 		if (!pa) {
-			QMessageBox::warning(0, tr("Warning"), QString("You don't have any account enabled."));
-		}
-	}
-	else {
-		qWarning("uri auth: [" + uri.authority() + "]");
-
-		Jid authJid = JIDUtil::fromString(uri.authority());
-		foreach(PsiAccount* acc, d->contactList->enabledAccounts()) {
-			if (acc->jid().compare(authJid, false)) {
-				pa = acc;
-			}
-		}
-
-		if (!pa) {
-			foreach(PsiAccount* acc, d->contactList->accounts()) {
-				if (acc->jid().compare(authJid, false)) {
-					QMessageBox::warning(0, tr("Warning"), QString("The account for %1 JID is disabled right now.").arg(authJid.bare()));
-					return;	// FIX-ME: Should suggest enabling it now
-				}
-			}
-		}
-		if (!pa) {
-			QMessageBox::warning(0, tr("Warning"), QString("You don't have an account for %1.").arg(authJid.bare()));
+			QMessageBox::critical(0, tr("Error"), QString("You need to have an account configured and enabled to open URIs (links)."));
 			return;
 		}
-	}
+	//
+	// TODO: finish authority component handling
+	//
+	//} else {
+	//	qDebug("uri auth: [" + uri.authority() + "]");
 
-	// entity
+	//	// is there such account ready to use?
+	//	Jid authJid = JIDUtil::fromString(uri.authority());
+	//	foreach (PsiAccount* acc, d->contactList->enabledAccounts()) {
+	//		if (acc->jid().compare(authJid, false)) {
+	//			pa = acc;
+	//		}
+	//	}
 
-	QString path = uri.path();
-	if (path.startsWith('/'))	// this happens when authority part is present
-		path = path.mid(1);
-	Jid entity = JIDUtil::fromString(path);
+	//	// or maybe it is configured but not enabled?
+	//	if (!pa) {
+	//		foreach (PsiAccount* acc, d->contactList->accounts()) {
+	//			if (acc->jid().compare(authJid, false)) {
+	//				QMessageBox::error(0, tr("Error"), QString("The account for %1 JID is disabled right now.").arg(authJid.bare()));
+	//				return;	// TODO: Should suggest enabling it now
+	//			}
+	//		}
+	//	}
 
-	// query
+	//	// nope..
+	//	if (!pa) {
+	//		QMessageBox::error(0, tr("Error"), QString("You don't have an account for %1.").arg(authJid.bare()));
+	//		return;
+	//	}
+	//}
 
-	uri.setQueryDelimiters('=', ';');
+	pa->openUri(uri);
 
-	QString querytype = uri.queryItems().value(0).first;	// defaults to empty string
 
-	if (querytype == "message") {
-		if (uri.queryItemValue("type") == "chat")
-			pa->actionOpenChat(entity);
-		else {
-			pa->dj_newMessage(entity, uri.queryItemValue("body"), uri.queryItemValue("subject"), uri.queryItemValue("thread"));
-		}
-	}
-	else if (querytype == "roster") {
-		pa->openAddUserDlg(entity, uri.queryItemValue("name"), uri.queryItemValue("group"));
-	}
-	else if (querytype == "join") {
-		pa->actionJoin(entity, uri.queryItemValue("password"));
-	}
-	else if (querytype == "vcard") {
-		pa->actionInfo(entity);
-	}
-	else if (querytype == "disco") {
-		pa->actionDisco(entity, uri.queryItemValue("node"));
-	}
-	else {
-		pa->actionSendMessage(entity);
-	}
-*/}
+}
 
 void PsiCon::doToolbars()
 {

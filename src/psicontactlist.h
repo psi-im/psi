@@ -30,7 +30,7 @@ using namespace XMPP;
 
 class PsiCon;
 class PsiAccount;
-class XMPP::Jid;
+namespace XMPP { class Jid; }
 
 class PsiContactList : public ContactList
 {
@@ -61,6 +61,9 @@ public:
 	void loadAccounts(const UserAccountList &);
 	void link(PsiAccount*);
 	void unlink(PsiAccount*);
+
+	void beginBulkOperation();
+	void endBulkOperation();
 
 signals:
 	/**

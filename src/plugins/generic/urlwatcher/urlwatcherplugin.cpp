@@ -28,22 +28,31 @@
 #include <QString>
 
 #include "psiplugin.h"
+#include "eventfilter.h"
 #include "urlevent.h"
 
 
-class URLWatcherPlugin : public QObject, public PsiPlugin
+class URLWatcherPlugin : public QObject, public PsiPlugin, public EventFilter
 {
 	Q_OBJECT
-	Q_INTERFACES(PsiPlugin)
+	Q_INTERFACES(PsiPlugin EventFilter)
 
 public:
 	URLWatcherPlugin();
 	~URLWatcherPlugin();
-	virtual QString name() const; 
+
+	virtual QString name() const;
 	virtual QString shortName() const;
-	virtual void message( const QString& message, const QString& fromJid, const QString& fromDisplay); 
+	virtual QString version() const;
+	virtual QWidget* options() const;
+	virtual bool enable();
+	virtual bool disable();
+
+    virtual bool processEvent(int account, const QDomElement& e);
+	virtual bool processMessage(int account, const QString& fromJid, const QString& body, const QString& subject) ;
 
 private:
+	bool enabled_;
 	QList<URLEvent> urls_;
 	QWidget* viewer_;
 	QTextEdit* viewerText_;
@@ -53,6 +62,7 @@ Q_EXPORT_PLUGIN(URLWatcherPlugin);
 
 URLWatcherPlugin::URLWatcherPlugin()
 {
+	enabled_ = false;
 	viewer_ = new QWidget();
 	QVBoxLayout *vboxLayout;
 	QFrame *frame;
@@ -74,7 +84,7 @@ URLWatcherPlugin::URLWatcherPlugin()
 	label->setText("URLs");
 	vboxLayout->addWidget(label);
 	vboxLayout->addWidget(viewerText_);
-	viewer_->show();
+	//viewer_->show();
 }
 
 URLWatcherPlugin::~URLWatcherPlugin()
@@ -90,6 +100,30 @@ QString URLWatcherPlugin::name() const
 QString URLWatcherPlugin::shortName() const
 {
 	return "urlWatcher";
+}
+
+QString URLWatcherPlugin::version() const
+{
+	return "0.2";
+}
+
+QWidget* URLWatcherPlugin::options() const
+{
+	return 0;
+}
+
+bool URLWatcherPlugin::enable()
+{
+	viewer_->show();
+	enabled_ = true;
+	return true;
+}
+
+bool URLWatcherPlugin::disable()
+{
+	viewer_->hide();
+	enabled_ = false;
+	return true;
 }
 
 QString resolveEntities(const QString &in)
@@ -195,10 +229,21 @@ static bool linkify_okEmail(const QString &addy)
 	return TRUE;
 }
 
-void URLWatcherPlugin::message( const QString& message, const QString& fromJid, const QString& fromDisplay)
+bool URLWatcherPlugin::processEvent(int account, const QDomElement& e)
 {
+	Q_UNUSED(account);
+	Q_UNUSED(e);
+	return false;
+}
+
+
+bool URLWatcherPlugin::processMessage(int account, const QString& fromJid, const QString& body, const QString& subject)
+{
+	Q_UNUSED(account);
+	Q_UNUSED(subject);
+
 	QString newUrl;
-	QString out = message;
+	QString out = body;
 	int x1, x2;
 	bool isUrl, isEmail;
 	QString linked, link, href;
@@ -319,9 +364,11 @@ void URLWatcherPlugin::message( const QString& message, const QString& fromJid, 
 	if (isUrl)
 	{
 		qWarning(qPrintable(QString("it's a url %1").arg(newUrl)));
-		newUrl=QString("&lt;%1> <a href='%2'>%2</a><br />").arg(fromDisplay).arg(newUrl);
+		newUrl=QString("&lt;%1> <a href='%2'>%2</a><br />").arg(fromJid).arg(newUrl);
 		viewerText_->append(newUrl);
 	}
+
+	return false;
 }	
 
 #include "urlwatcherplugin.moc"

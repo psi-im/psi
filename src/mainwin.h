@@ -116,6 +116,7 @@ private slots:
 	void actOnlineHelpActivated ();
 	void actOnlineWikiActivated ();
 	void actOnlineHomeActivated ();
+	void actOnlineForumActivated ();
 	void actJoinPsiMUCActivated();
 	void actBugReportActivated ();
 	void actAboutActivated ();
@@ -146,6 +147,8 @@ public slots:
 	void setTrayToolTip(const XMPP::Status &, bool usePriority = false);
 
 	void toggleVisible();
+
+	void avcallConfig();
 
 private:
 	void buildGeneralMenu(QMenu *);

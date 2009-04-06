@@ -1,0 +1,2 @@
+SOURCES += \
+	$$PWD/CertificateHelpersTest.cpp

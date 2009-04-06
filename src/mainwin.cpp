@@ -37,6 +37,10 @@
 #include <QMenuItem>
 #include <QtAlgorithms>
 
+#ifdef AVCALL
+#include <QShortcut>
+#endif
+
 #ifdef Q_WS_WIN
 #include <windows.h>
 #endif
@@ -61,6 +65,10 @@
 #include "desktoputil.h"
 
 #include "mainwin_p.h"
+
+#ifdef AVCALL
+#include "avcall/jinglertp.h"
+#endif
 
 using namespace XMPP;
 
@@ -374,6 +382,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 	d->getAction("help_online_help")->addTo (helpMenu);
 	d->getAction("help_online_wiki")->addTo (helpMenu);
 	d->getAction("help_online_home")->addTo (helpMenu);
+	d->getAction("help_online_forum")->addTo (helpMenu);
 	d->getAction("help_psi_muc")->addTo (helpMenu);
 	d->getAction("help_report_bug")->addTo (helpMenu);
 	QMenu* diagMenu = new QMenu(this);
@@ -397,6 +406,11 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 
 	connect(psi, SIGNAL(emitOptionsUpdate()), SLOT(optionsUpdate()));
 	optionsUpdate();
+
+#ifdef AVCALL
+        QShortcut *sp_ss = new QShortcut(QKeySequence(tr("Ctrl+Shift+N")), this);
+        connect(sp_ss, SIGNAL(activated()), SLOT(avcallConfig()));
+#endif
 }
 
 MainWin::~MainWin()
@@ -414,9 +428,9 @@ MainWin::~MainWin()
 
 void MainWin::registerAction( IconAction* action )
 {
-	char activated[] = SIGNAL( activated() );
-	char toggled[]   = SIGNAL( toggled(bool) );
-	char setChecked[]     = SLOT( setChecked(bool) );
+	const char *activated  = SIGNAL( activated() );
+	const char *toggled    = SIGNAL( toggled(bool) );
+	const char *setChecked = SLOT( setChecked(bool) );
 
 	struct {
 		const char* name;
@@ -458,6 +472,7 @@ void MainWin::registerAction( IconAction* action )
 		{ "help_online_help", activated, this, SLOT( actOnlineHelpActivated() ) },
 		{ "help_online_wiki", activated, this, SLOT( actOnlineWikiActivated() ) },
 		{ "help_online_home", activated, this, SLOT( actOnlineHomeActivated() ) },
+		{ "help_online_forum", activated, this, SLOT( actOnlineForumActivated() ) },
 		{ "help_psi_muc",     activated, this, SLOT( actJoinPsiMUCActivated() ) },
 		{ "help_report_bug",  activated, this, SLOT( actBugReportActivated() ) },
 		{ "help_about",       activated, this, SLOT( actAboutActivated() ) },
@@ -687,6 +702,7 @@ void MainWin::buildOptionsMenu()
 	        << "help_online_help"
 	        << "help_online_wiki"
 	        << "help_online_home"
+	        << "help_online_forum"
 	        << "help_psi_muc"
 	        << "help_report_bug"
 	        << "diagnostics"
@@ -777,6 +793,11 @@ void MainWin::actOnlineHomeActivated ()
 	DesktopUtil::openUrl("http://psi-im.org");
 }
 
+void MainWin::actOnlineForumActivated ()
+{
+    DesktopUtil::openUrl("http://forum.psi-im.org");
+}
+
 void MainWin::actJoinPsiMUCActivated()
 {
 	PsiAccount* account = d->psi->contactList()->defaultAccount();
@@ -789,7 +810,7 @@ void MainWin::actJoinPsiMUCActivated()
 
 void MainWin::actBugReportActivated ()
 {
-	DesktopUtil::openUrl("http://psi-im.org/forum/forum/2");
+	DesktopUtil::openUrl("http://forum.psi-im.org/forum/2");
 }
 
 void MainWin::actAboutActivated ()
@@ -1378,6 +1399,13 @@ void MainWin::showNoFocus()
 void MainWin::showNoFocus()
 {
 	bringToFront(this);
+}
+
+void MainWin::avcallConfig()
+{
+#ifdef AVCALL
+	JingleRtpManager::config();
+#endif
 }
 
 //#endif

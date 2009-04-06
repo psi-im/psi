@@ -27,6 +27,7 @@
 #define PSIACCOUNT_H
 
 #include <QList>
+#include <QUrl>
 
 #include "xmpp_rosterx.h"
 #include "xmpp_status.h"
@@ -86,6 +87,8 @@ class GoogleFileTransfer;
 
 // sick sick remove this someday please!
 struct GCContact;
+
+class JingleRtpManager;
 
 class PsiAccount : public QObject
 {
@@ -153,6 +156,7 @@ public:
 
 	void showXmlConsole();
 	void openAddUserDlg();
+	void openAddUserDlg(const XMPP::Jid &jid, const QString &nick, const QString &group);
 	void openGroupChat(const Jid &, ActivationType activationType);
 	bool groupChatJoin(const QString &host, const QString &room, const QString &nick, const QString& pass, bool nohistory = false);
 	void groupChatSetStatus(const QString &host, const QString &room, const Status &);
@@ -187,6 +191,7 @@ public:
 	PEPManager* pepManager();
 	ServerInfoManager* serverInfoManager();
 	BookmarkManager* bookmarkManager();
+	JingleRtpManager *jingleRtpManager();
 
 	enum xmlRingType {RingXmlIn, RingXmlOut, RingSysMsg};
 	class xmlRingElem { public: int type; QDateTime time; QString xml; };
@@ -223,10 +228,13 @@ public slots:
 
 	void showCert();
 
+	void openUri(const QUrl &uri);
+
 	//dj_ originally referred to 'direct jabber', if you care
 	void dj_sendMessage(const Message &, bool log=true);
-	void dj_composeMessage(const Jid &jid, const QString &body);
-	void dj_composeMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread);
+	void dj_newMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread);
+	void dj_replyMessage(const Jid &jid, const QString &body);
+	void dj_replyMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread);
 	void dj_addAuth(const Jid &);
 	void dj_addAuth(const Jid &, const QString&);
 	void dj_add(const XMPP::Jid &, const QString &, const QStringList &, bool authReq);
@@ -378,6 +386,7 @@ private:
 	void simulateContactOffline(UserListItem *);
 	void simulateRosterOffline();
 	void cpUpdate(const UserListItem &, const QString &rname="", bool fromPresence=false);
+	UserListItem* addUserListItem(const Jid& jid, const QString& nick="");
 	void logEvent(const Jid &, PsiEvent *);
 	void queueEvent(PsiEvent* e, ActivationType activationType);
 	void openNextEvent(const UserListItem &, ActivationType activationType);

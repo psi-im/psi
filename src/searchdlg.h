@@ -50,6 +50,7 @@ private slots:
 	void doSearchGet();
 	void doSearchSet();
 	void selectionChanged();
+	void itemActivated(QTreeWidgetItem* item, int column);
 	void jt_finished();
 	void doStop();
 	void doAdd();

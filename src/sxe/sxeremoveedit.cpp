@@ -38,7 +38,7 @@ SxeEdit::EditType SxeRemoveEdit::type() const {
 }
 
 QDomElement SxeRemoveEdit::xml(QDomDocument &doc) const {
-    QDomElement edit = doc.createElementNS(SXDENS, "remove");
+    QDomElement edit = doc.createElementNS(SXENS, "remove");
 
     edit.setAttribute("rid", rid_);
 

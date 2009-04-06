@@ -1,7 +1,11 @@
 #ifndef PSICHATDLG_H
 #define PSICHATDLG_H
 
+#include "minicmd.h"
+#include "mcmdsimplesite.h"
+#include "mcmdmanager.h"
 #include "chatdlg.h"
+#include "mcmdcompletion.h"
 
 #include "ui_chatdlg.h"
 
@@ -16,6 +20,9 @@ public:
 protected:
 	// reimplemented
 	void contextMenuEvent(QContextMenuEvent *);
+	void doSend();
+	bool eventFilter(QObject *obj, QEvent *event);
+
 
 private:
 	void setContactToolTip(QString text);
@@ -23,6 +30,7 @@ private:
 private slots:
 	void toggleSmallChat();
 	void doClearButton();
+	void doMiniCmd();
 	void buildMenu();
 	void updateCounter();
 	void updateIdentityVisibility();
@@ -70,8 +78,16 @@ private:
 	IconAction* act_compact_;
 	IconAction* act_voice_;
 
+	QAction *act_mini_cmd_;
+
+	MCmdManager mCmdManager_;
+	MCmdSimpleSite mCmdSite_;
+
+	MCmdTabCompletion tabCompletion;
+
 	bool smallChat_;
 	QDateTime lastMsgTime_;
+	class ChatDlgMCmdProvider;
 };
 
 #endif

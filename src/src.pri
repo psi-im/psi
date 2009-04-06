@@ -7,6 +7,7 @@ include($$PWD/privacy/privacy.pri)
 include($$PWD/capabilities/capabilities.pri)
 include($$PWD/utilities/utilities.pri)
 include($$PWD/tabs/tabs.pri)
+include($$PWD/Certificates/Certificates.pri)
 
 # tools
 include($$PWD/tools/trayicon/trayicon.pri)
@@ -21,6 +22,13 @@ include($$PWD/tools/spellchecker/spellchecker.pri)
 include($$PWD/tools/contactlist/contactlist.pri)
 include($$PWD/tools/grepshortcutkeydlg/grepshortcutkeydlg.pri)
 include($$PWD/tools/atomicxmlfile/atomicxmlfile.pri)
+
+# psimedia
+include($$PWD/psimedia/psimedia.pri)
+
+# audio/video calls
+DEFINES += AVCALL
+include($$PWD/avcall/avcall.pri)
 
 # Growl
 mac {
@@ -46,6 +54,9 @@ use_crash {
 	DEFINES += USE_CRASH
 	include($$PWD/tools/crash/crash.pri)
 }
+
+# AutoUpdater
+include($$PWD/AutoUpdater/AutoUpdater.pri)
 
 # qca
 qca-static {
@@ -140,7 +151,6 @@ HEADERS += \
 	$$PWD/msgmle.h \
 	$$PWD/statusdlg.h \
 	$$PWD/statuscombobox.h \
-	$$PWD/certutil.h \
 	$$PWD/eventdlg.h \
 	$$PWD/chatdlg.h \
 	$$PWD/psichatdlg.h \
@@ -148,6 +158,8 @@ HEADERS += \
 	$$PWD/chateditproxy.h \
 	$$PWD/adduserdlg.h \
 	$$PWD/groupchatdlg.h \
+	$$PWD/minicmd.h \
+	$$PWD/mcmdmanager.h \
 	$$PWD/gcuserview.h \
 	$$PWD/infodlg.h \
 	$$PWD/translationmanager.h \
@@ -159,7 +171,6 @@ HEADERS += \
 	$$PWD/psitoolbar.h \
 	$$PWD/passphrasedlg.h \
 	$$PWD/vcardfactory.h \
-	$$PWD/sslcertdlg.h \
 	$$PWD/tasklist.h \
 	$$PWD/discodlg.h \
 	$$PWD/alerticon.h \
@@ -213,6 +224,13 @@ HEADERS += \
 	$$PWD/psiactions.h \
 	$$PWD/bookmarkmanagedlg.h
 
+
+HEADERS += tabcompletion.h
+SOURCES += tabcompletion.cpp
+
+HEADERS += mcmdcompletion.h
+SOURCES += mcmdcompletion.cpp
+
 # Source files
 SOURCES += \
 	$$PWD/varlist.cpp \
@@ -261,10 +279,11 @@ SOURCES += \
 	$$PWD/tipdlg.cpp \
 	$$PWD/adduserdlg.cpp \
 	$$PWD/groupchatdlg.cpp \
+	$$PWD/mcmdmanager.cpp \
+	$$PWD/mcmdsimplesite.cpp \
 	$$PWD/gcuserview.cpp \
 	$$PWD/infodlg.cpp \
 	$$PWD/translationmanager.cpp \
-	$$PWD/certutil.cpp \
 	$$PWD/eventdb.cpp \
 	$$PWD/historydlg.cpp \
 	$$PWD/searchdlg.cpp \
@@ -272,7 +291,6 @@ SOURCES += \
 	$$PWD/psitoolbar.cpp \
 	$$PWD/passphrasedlg.cpp \
 	$$PWD/vcardfactory.cpp \
-	$$PWD/sslcertdlg.cpp \
 	$$PWD/discodlg.cpp \
 	$$PWD/alerticon.cpp \
 	$$PWD/alertable.cpp \
@@ -369,8 +387,7 @@ mac {
 		SOURCES += $$PWD/psigrowlnotifier.cpp 
 	}
 
-	HEADERS += $$PWD/cocoautil.h
-	OBJECTIVE_SOURCES += $$PWD/cocoautil.mm
+	include($$PWD/CocoaUtilities/CocoaUtilities.pri)
 }
 
 # Qt Designer interfaces
@@ -394,7 +411,6 @@ INTERFACES += \
 	$$PWD/about.ui \
 	$$PWD/optioneditor.ui \
 	$$PWD/passphrase.ui \
-	$$PWD/sslcert.ui \
 	$$PWD/mucconfig.ui \
 	$$PWD/xmlconsole.ui \
 	$$PWD/disco.ui \
@@ -411,9 +427,17 @@ include($$PWD/options/options.pri)
 
 # Plugins
 psi_plugins {
-	HEADERS += $$PWD/pluginmanager.h \
-				$$PWD/psiplugin.h
-	SOURCES += $$PWD/pluginmanager.cpp
+	DEFINES += PSI_PLUGINS
+
+	HEADERS += \
+		$$PWD/pluginmanager.h \
+		$$PWD/pluginhost.h
+
+	SOURCES += \
+		$$PWD/pluginmanager.cpp \
+		$$PWD/pluginhost.cpp
+
+	include($$PWD/plugins/plugins.pri)
 }
 
 dbus {

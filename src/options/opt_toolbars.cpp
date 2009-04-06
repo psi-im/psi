@@ -170,8 +170,6 @@ void OptionsTabToolbars::applyOptions()
 	if (!w)
 		return;
 
-	LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
-
 	PsiOptions *o = PsiOptions::instance();
 	o->removeOption("options.ui.contactlist.toolbars", true);
 	QMap<QString, ToolbarPrefs>::Iterator it = p->toolbars.begin();
@@ -221,8 +219,6 @@ void OptionsTabToolbars::restoreOptions()
 void OptionsTabToolbars::toolbarAdd()
 {
 	LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
-
-	int i = d->cb_toolbars->count();
 
 	ToolbarPrefs tb;
 	int j = 0;
@@ -427,15 +423,15 @@ void OptionsTabToolbars::updateArrows()
 
 	if (d->tw_availActions->currentItem() && !d->tw_availActions->currentItem()->data(0, Qt::UserRole).toString().isEmpty())
 		right = true;
-	QListWidgetItem *i = d->lw_selectedActions->currentItem();
-	if (i) {
+	QListWidgetItem *item = d->lw_selectedActions->currentItem();
+	if (item) {
 		left = true;
 
 		// get numeric index of item
-		int n = d->lw_selectedActions->row(i);
+		int n = d->lw_selectedActions->row(item);
 
 		int i = n;
-		while (--i > 0) {
+		while (--i >= 0) {
 			if (!d->lw_selectedActions->item(i)->isHidden()) {
 				up = true;
 				break;

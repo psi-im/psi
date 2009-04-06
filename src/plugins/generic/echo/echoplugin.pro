@@ -1,5 +1,3 @@
-include(../../plugins.pri)
-
-
+include(../../psiplugin.pri)
 
 SOURCES += echoplugin.cpp

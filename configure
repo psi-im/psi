@@ -34,12 +34,13 @@ Dependency options:
   --disable-qdbus              Disable use of QDBUS
   --disable-growl              Disable use of Growl
   --with-growl=[path]          Path to the Growl framework
+  --disable-sparkle            Disable use of Sparkle
+  --with-sparkle=[path]        Path to the Sparkle framework
   --disable-xss                Disable use of the XScreenSaver extension
   --disable-ghbnr              Disable use of gethostbyname_r()
   --disable-aspell             Disable use of ASPELL
   --with-aspell-inc=[path]     Path to Aspell include files
   --with-aspell-lib=[path]     Path to Aspell library files
-  --enable-tests               Enable use of Tests
   --enable-debug               Enable debugging support
 
 EOT
@@ -212,6 +213,16 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
+		--disable-sparkle)
+			QC_DISABLE_sparkle="Y"
+			shift
+			;;
+
+		--with-sparkle=*)
+			QC_WITH_SPARKLE=$optarg
+			shift
+			;;
+
 		--disable-xss)
 			QC_DISABLE_xss="Y"
 			shift
@@ -234,11 +245,6 @@ while [ $# -gt 0 ]; do
 
 		--with-aspell-lib=*)
 			QC_WITH_ASPELL_LIB=$optarg
-			shift
-			;;
-
-		--enable-tests)
-			QC_ENABLE_tests="Y"
 			shift
 			;;
 
@@ -279,12 +285,13 @@ echo QC_ENABLE_universal=$QC_ENABLE_universal
 echo QC_DISABLE_qdbus=$QC_DISABLE_qdbus
 echo QC_DISABLE_growl=$QC_DISABLE_growl
 echo QC_WITH_GROWL=$QC_WITH_GROWL
+echo QC_DISABLE_sparkle=$QC_DISABLE_sparkle
+echo QC_WITH_SPARKLE=$QC_WITH_SPARKLE
 echo QC_DISABLE_xss=$QC_DISABLE_xss
 echo QC_DISABLE_ghbnr=$QC_DISABLE_ghbnr
 echo QC_DISABLE_aspell=$QC_DISABLE_aspell
 echo QC_WITH_ASPELL_INC=$QC_WITH_ASPELL_INC
 echo QC_WITH_ASPELL_LIB=$QC_WITH_ASPELL_LIB
-echo QC_ENABLE_tests=$QC_ENABLE_tests
 echo QC_ENABLE_DEBUG=$QC_ENABLE_DEBUG
 echo
 fi
@@ -920,6 +927,71 @@ public:
 #endif
 	}
 };
+#line 1 "sparkle.qcm"
+/*
+-----BEGIN QCMOD-----
+name: Sparkle
+arg: with-sparkle=[path],Path to the Sparkle framework
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_sparkle
+//----------------------------------------------------------------------------
+
+class qc_sparkle : public ConfObj
+{
+	public:
+		qc_sparkle(Conf *c) : ConfObj(c) {}
+
+		QString name() const { return "Sparkle"; }
+		QString shortname() const { return "sparkle"; }
+#ifndef Q_WS_MAC
+		QString checkString() const { return QString(); }
+#endif
+
+		// TODO: This should go into ConfObj
+		bool checkFramework(const QString &path, const QString &name)
+		{
+				QString str = "int main() { return 0; }";
+
+				QString extra;
+				if(!path.isEmpty()) {
+						extra += QString("-F") + path + ' ';
+				}
+				extra += QString("-framework ") + name;
+				if(!conf->doCompileAndLink(str, QStringList(), extra, "", NULL)) {
+						return false;
+				}
+				return true;
+		}
+		
+		// TODO: This should go into ConfObj
+		void addFrameworkPath(const QString& str)
+		{
+			conf->addExtra("QMAKE_CXXFLAGS += -F" + str);
+			conf->addLib("-F" + str);
+		}
+
+		bool exec()
+		{
+#ifdef Q_WS_MAC
+			QString sparkle_path = conf->getenv("QC_WITH_SPARKLE");
+			if(!checkFramework(sparkle_path, "Sparkle"))
+				return false;
+
+			if(!sparkle_path.isEmpty()) {
+				addFrameworkPath(sparkle_path);
+			}
+			conf->addExtra("CONFIG += Sparkle");
+			conf->addDefine("HAVE_SPARKLE");
+
+			return true;
+#else
+			return false;
+#endif
+		}
+};
 #line 1 "xss.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -1061,28 +1133,6 @@ public:
 		return true;
 	}
 };
-#line 1 "tests.qcm"
-/*
------BEGIN QCMOD-----
-name: Tests
------END QCMOD-----
-*/
-
-//----------------------------------------------------------------------------
-// qc_tests
-//----------------------------------------------------------------------------
-class qc_tests : public ConfObj
-{
-public:
-	qc_tests(Conf *c) : ConfObj(c) {}
-	QString name() const { return "tests"; }
-	QString shortname() const { return "tests"; }
-	bool exec()
-	{
-		conf->addExtra("CONFIG += tests");
-		return true;
-	}
-};
 #line 1 "debug.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -1173,6 +1223,9 @@ cat >$1/modules_new.cpp <<EOT
     o = new qc_growl(conf);
     o->required = false;
     o->disabled = false;
+    o = new qc_sparkle(conf);
+    o->required = false;
+    o->disabled = false;
     o = new qc_xss(conf);
     o->required = false;
     o->disabled = false;
@@ -1182,9 +1235,6 @@ cat >$1/modules_new.cpp <<EOT
     o = new qc_aspell(conf);
     o->required = false;
     o->disabled = false;
-    o = new qc_tests(conf);
-    o->required = false;
-    o->disabled = true;
     o = new qc_debug(conf);
     o->required = true;
     o->disabled = false;
@@ -2170,12 +2220,13 @@ export QC_ENABLE_universal
 export QC_DISABLE_qdbus
 export QC_DISABLE_growl
 export QC_WITH_GROWL
+export QC_DISABLE_sparkle
+export QC_WITH_SPARKLE
 export QC_DISABLE_xss
 export QC_DISABLE_ghbnr
 export QC_DISABLE_aspell
 export QC_WITH_ASPELL_INC
 export QC_WITH_ASPELL_LIB
-export QC_ENABLE_tests
 export QC_ENABLE_DEBUG
 export QC_VERBOSE
 rm -rf .qconftemp

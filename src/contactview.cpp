@@ -991,26 +991,26 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		if(x == 0)
 			d->pa->modify();
 		else if(x == 1) {
-			Jid j = d->pa->jid().host() + '/' + "announce/online";
+			Jid j = d->pa->jid().domain() + '/' + "announce/online";
 			actionSendMessage(j);
 		}
 		else if(x == 2) {
-			Jid j = d->pa->jid().host() + '/' + "announce/motd";
+			Jid j = d->pa->jid().domain() + '/' + "announce/motd";
 			actionSendMessage(j);
 		}
 		else if(x == 3) {
-			Jid j = d->pa->jid().host() + '/' + "announce/motd/update";
+			Jid j = d->pa->jid().domain() + '/' + "announce/motd/update";
 			actionSendMessage(j);
 		}
 		else if(x == 4) {
-			Jid j = d->pa->jid().host() + '/' + "announce/motd/delete";
+			Jid j = d->pa->jid().domain() + '/' + "announce/motd/delete";
 			Message m;
 			m.setTo(j);
 			d->pa->dj_sendMessage(m, false);
 		}
 		else if(x == 5) {
 			// FIXME: will it still work on XMPP servers?
-			Jid j = d->pa->jid().host() + '/' + "admin";
+			Jid j = d->pa->jid().domain() + '/' + "admin";
 			actionDisco(j, "");
 		}
 		else if(x == 6) {
@@ -1020,7 +1020,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 			d->pa->openAddUserDlg();
 		}
 		else if(x == 9) {
-			Jid j = d->pa->jid().host();
+			Jid j = d->pa->jid().domain();
 			actionDisco(j, "");
 		}
 		else if(x == 10) {
@@ -1251,19 +1251,23 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		}
 
 		// Voice call
+#ifdef AVCALL
+		if(!isAgent) {
+#else
 		if(d->pa->voiceCaller() && !isAgent) {
+#endif
 			pm.insertItem(IconsetFactory::icon("psi/voice").icon(), tr("Voice Call"), 24);
 			if(!online) {
 				pm.setItemEnabled(24, false);
 			}
-			else {
+			/*else {
 				bool hasVoice = false;
 				const UserResourceList &rl = u->userResourceList();
 				for (UserResourceList::ConstIterator it = rl.begin(); it != rl.end() && !hasVoice; ++it) {
 					hasVoice = psiAccount()->capsManager()->features(u->jid().withResource((*it).name())).canVoice();
 				}
 				pm.setItemEnabled(24,!psiAccount()->capsManager()->isEnabled() || hasVoice);
-			}
+			}*/
 		}
 		
 		if(!isAgent) {
@@ -1544,7 +1548,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 				const UserResource &r = rl[res];
 				rname = r.name();
 			//}
-			QString s = u->jid().userHost();
+			QString s = u->jid().bare();
 			if(!rname.isEmpty()) {
 				s += '/';
 				s += rname;
@@ -1578,7 +1582,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 				++n;
 			}
 
-			QString s = u->jid().userHost();
+			QString s = u->jid().bare();
 			if(!rname.isEmpty()) {
 				s += '/';
 				s += rname;
@@ -2057,6 +2061,7 @@ ContactView::ContactView(QWidget *parent, const char *name)
 	viewport()->setAcceptDrops(true);
 	
 	filterString_ = QString();
+	applyingFilter = false;
 }
 
 ContactView::~ContactView()
@@ -2130,6 +2135,7 @@ void ContactView::setFilter(QString const &text)
 	bool refineSearch = text.startsWith(filterString_);
 	filterString_ = text;
 	
+	applyingFilter = true;
 	Q3ListViewItemIterator it(d->cv);
 	for (ContactViewItem *item; (item = (ContactViewItem *)it.current()); ++it)
 	{	
@@ -2137,6 +2143,7 @@ void ContactView::setFilter(QString const &text)
 			filterGroup(item, refineSearch);
 		}
 	}
+	applyingFilter = false;
 }
 
 void ContactView::clearFilter()
@@ -2145,10 +2152,8 @@ void ContactView::clearFilter()
 	Q3ListViewItemIterator it(d->cv);
 	for (ContactViewItem *item; (item = (ContactViewItem *)it.current()); ++it) 
 	{
-		if (item->type() != ContactViewItem::Contact && item->type() != ContactViewItem::Group) {
-			continue;
-		}
 		item->setVisible(true);
+		item->clearFilter();
 		item->optionsUpdate();
 		item->repaint();
 	}	
@@ -2880,6 +2885,8 @@ public:
 		animateNickColor = false;
 
 		icon = lastIcon = 0;
+
+		prefilterOpen = cvi->isOpen();
 	}
 
 	~Private() {
@@ -2939,6 +2946,8 @@ public:
 
 	PsiIcon *icon, *lastIcon;
 	int animateNickX, animateNickColor; // nick animation
+
+	bool prefilterOpen;
 };
 
 ContactViewItem::ContactViewItem(const QString &profileName, ContactProfile *cp, ContactView *parent)
@@ -3250,10 +3259,14 @@ void ContactViewItem::setOpen(bool o)
 	Q3ListViewItem::setOpen(o);
 	drawGroupIcon();
 
-	// save state
-	UserAccount::GroupData gd = d->groupData();
-	gd.open = o;
-	d->groupState()->insert(d->getGroupName(), gd);
+	if (!((ContactView *)listView())->isApplyingFilter()) {
+		d->prefilterOpen = o;
+
+		// save state
+		UserAccount::GroupData gd = d->groupData();
+		gd.open = o;
+		d->groupState()->insert(d->getGroupName(), gd);
+	}
 }
 
 void ContactViewItem::insertItem(Q3ListViewItem *i)
@@ -3400,28 +3413,29 @@ void ContactViewItem::resetName(bool forceNoStatusMsg)
 		QString s = JIDUtil::nickOrJid(d->u->name(), d->u->jid().full());
 			
 		if (d->status_single && !forceNoStatusMsg) {
-			s = "<nobr>" + s + "</nobr>";
+			s = "<nobr>" + TextUtil::plain2rich(s) + "</nobr>";
 		}
 
 		// Add the status message if wanted 
 		if (!forceNoStatusMsg && static_cast<ContactView*>(Q3ListViewItem::listView())->isShowStatusMsg()) {
 			QString statusMsg;
-			if (d->u->priority() != d->u->userResourceList().end()) 
+			if (d->u->priority() != d->u->userResourceList().end()) {
 				statusMsg = (*d->u->priority()).status().status();
-			else 
+			} else {
 				statusMsg = d->u->lastUnavailableStatus().status();
+			}
 
 			if (d->status_single) {
-				statusMsg.replace("<","&lt;");
-				statusMsg.replace(">","&gt;");
 				statusMsg = statusMsg.simplifyWhiteSpace();
-				if (!statusMsg.isEmpty())
-					s += "<br><font size=-1 color='" + PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-messages").value<QColor>().name() + "'><nobr>" + statusMsg + "</nobr></font>";
+				if (!statusMsg.isEmpty()) {
+					s += "<br><font size=-1 color='" + PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-messages").value<QColor>().name() + "'><nobr>" + TextUtil::plain2rich(statusMsg) + "</nobr></font>";
+				}
 			}
 			else {
-				statusMsg.replace('\n'," ");
-				if (!statusMsg.isEmpty())
+				if (!statusMsg.isEmpty()) {
+					statusMsg.replace('\n'," ");
 					s += " (" + statusMsg + ")";
+				}
 			}
 		}
 
@@ -3682,6 +3696,29 @@ void ContactViewItem::cancelRename (int i)
 {
 	Q3ListViewItem::cancelRename(i);
 	resetName();
+}
+
+void ContactViewItem::clearFilter()
+{
+	if (d->prefilterOpen != isOpen()) {
+		setOpen(d->prefilterOpen);
+
+		// if closing group that contains selected subitem, select this group
+		if (d->prefilterOpen == false) {
+			bool containsSelection = false;
+			Q3ListViewItem* i = listView()->selectedItem();
+			while (i) {
+				if (i == this) {
+					containsSelection = true;
+					break;
+				}
+				i = i->parent();
+			}
+			if (containsSelection) {
+				listView()->setSelected(this, true);
+			}
+		}
+	}
 }
 
 int ContactViewItem::rtti() const

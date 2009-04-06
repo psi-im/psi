@@ -11,10 +11,16 @@ Terminal=false
 Categories=Network;InstantMessaging;Qt;
 
 # Translations
+GenericName[bg]=Jabber Клиент
+Comment[bg]=Комуникирайте през Jabber мрежата
 GenericName[ca]=Client Jabber
 Comment[ca]=Comuniqui's a través de la xarxa Jabber
+GenericName[de]=Jabber-Programm
+Comment[de]=Im Jabber-Netzwerk kommunizieren
 GenericName[eo]=Ĵabbera Klientilo
 Comment[eo]=Komunikiĝu per la ĵabbera reto
+GenericName[es]=Cliente Jabber
+Comment[es]=Comunícate a través de la red Jabber
 GenericName[fr]=Client Jabber
 Comment[fr]=Communiquez sur le réseau Jabber
 GenericName[mk]=Клиент за Jabber
@@ -27,3 +33,5 @@ GenericName[pt_BR]=Cliente Jabber
 Comment[pt_BR]=Comunique-se através da rede Jabber
 GenericName[sl]=Odjemalec za Jabber
 Comment[sl]=Komuniciranje prek omrežja Jabber
+GenericName[vi]=Trình khách Jabber
+Comment[vi]=Liên lạc qua mạng Jabber nhé

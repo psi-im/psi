@@ -21,6 +21,8 @@
 #include "psiapplication.h"
 #include "resourcemenu.h"
 
+#include <QSessionManager>
+
 #ifdef Q_WS_MAC
 #include <Carbon/Carbon.h>
 #endif
@@ -33,7 +35,6 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
-#include <X11/SM/SMlib.h>
 #include <QX11Info>
 #include <QDesktopWidget>
 #include <QEvent>
@@ -322,5 +323,6 @@ bool PsiApplication::macEventFilter( EventHandlerCallRef, EventRef inEvent )
 
 void PsiApplication::commitData(QSessionManager& manager)
 {
+	Q_UNUSED(manager);
 	emit forceSavePreferences();
 }

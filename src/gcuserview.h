@@ -82,11 +82,13 @@ protected:
 	bool event(QEvent* e);
 
 signals:
-	void action(const QString &, const Status &, int);
+	void action(const QString &nick, const Status &, int actionType);
+	void insertNick(const QString& nick);
 
 private slots:
 	void qlv_doubleClicked(Q3ListViewItem *);
 	void qlv_contextMenuRequested(Q3ListViewItem *, const QPoint &, int);
+	void qlv_mouseButtonClicked(int button, Q3ListViewItem* item, const QPoint& pos, int c);
 
 private:
 	GCMainDlg* gcDlg_;

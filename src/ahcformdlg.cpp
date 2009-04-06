@@ -21,6 +21,7 @@
 #include <QLayout>
 #include <QPushButton>
 #include <QLabel>
+#include <QScrollArea>
 
 #include "ahcformdlg.h"
 #include "ahcommand.h"
@@ -50,7 +51,9 @@ AHCFormDlg::AHCFormDlg(const AHCommand& r, const Jid& receiver, XMPP::Client* cl
 	// XData form
 	xdata_ = new XDataWidget(this);
 	xdata_->setFields(r.data().fields());
-	vb->addWidget(xdata_);
+	QScrollArea* scrollArea = new QScrollArea(this);
+	scrollArea->setWidget(xdata_);
+	vb->addWidget(scrollArea);
 
 	vb->addStretch(1);
 

@@ -25,7 +25,8 @@
 #include "capsmanager.h"
 #include <QUrl>
 
-#define SXENS "urn:xmpp:tmp:sxe"
+#define ONETOONEPREFIXSELF "0"
+#define ONETOONEPREFIXOTHER "1"
 
 using namespace XMPP;
 
@@ -64,31 +65,24 @@ void SxeManager::messageReceived(const Message &message) {
             return;
         }
 
-        // // Don't process delayed messages (chat history) but remember the session id
-        // if(!message.spooled()) {
+        // Check if the <sxe/> contains a <negotiation/>
+        if(message.sxe().elementsByTagName("negotiation").length() > 0) {
+            processNegotiationMessage(message);
+            // processNegotiationMessage() will also pass regular SXE edits in the message
+            // to the session so we're done
+            return;
+        }
 
-            // Check if the <sxe/> contains a <negotiation/>
-            if(message.sxe().elementsByTagName("negotiation").length() > 0) {
-                processNegotiationMessage(message);
-                // processNegotiationMessage() will also pass regular SXE edits in the message
-                // to the session so we're done
-                return;
-            }
+        // otherwise, try finding a matching session for the session if new one not negotiated
+        SxeSession* w = findSession(message.sxe().attribute("session"));
 
-            // otherwise, try finding a matching session for the session if new one not negotiated
-            SxeSession* w = findSession(message.sxe().attribute("session"));
-
-            if(w) {
-                // pass the message to the session if already established
-                w->processIncomingSxeElement(message.sxe(), message.from());
-            } else {
-                // otherwise record the session id as a "detected session"
-                recordDetectedSession(message);
-            }
-
-        // } else {
-        //      recordDetectedSession(message);
-        // }
+        if(w) {
+            // pass the message to the session if already established
+            w->processIncomingSxeElement(message.sxe(), message.sxe().attribute("id"));
+        } else {
+            // otherwise record the session id as a "detected session"
+            recordDetectedSession(message);
+        }
 
     }
 }
@@ -123,10 +117,10 @@ void SxeManager::removeSession(SxeSession* session) {
 
     // notify the target
     QDomDocument doc;
-    QDomElement sxe = doc.createElementNS(SXDENS, "sxe");
+    QDomElement sxe = doc.createElementNS(SXENS, "sxe");
     sxe.setAttribute("session", session->session());
-    QDomElement negotiation = doc.createElementNS(SXDENS, "negotiation");
-    negotiation.appendChild(doc.createElementNS(SXDENS, "left-session"));
+    QDomElement negotiation = doc.createElementNS(SXENS, "negotiation");
+    negotiation.appendChild(doc.createElementNS(SXENS, "left-session"));
     sxe.appendChild(negotiation);
     sendSxe(sxe, session->target(), session->groupChat());
 
@@ -162,7 +156,7 @@ bool SxeManager::processNegotiationAsParticipant(const QDomNode &negotiationElem
         // accept all <connect-request/>'s automatically
         // if currently not negotiating with someone else
         negotiation->state = SxeNegotiation::HistoryOffered;
-        response.appendChild(doc.createElementNS(SXDENS, "history-offer"));
+        response.appendChild(doc.createElementNS(SXENS, "history-offer"));
 
     } else if((negotiationElement.nodeName() == "accept-history"
                     && negotiation->state == SxeNegotiation::HistoryOffered)
@@ -173,6 +167,7 @@ bool SxeManager::processNegotiationAsParticipant(const QDomNode &negotiationElem
         // create a new SxeSession
         if(!negotiation->session) {
             negotiation->session = createSxeSession(negotiation->target, negotiation->sessionId, negotiation->ownJid, negotiation->groupChat, negotiation->features);
+            negotiation->session->setUUIDPrefix(ONETOONEPREFIXSELF);
             negotiation->session->initializeDocument(negotiation->initialDoc);
         }
 
@@ -186,12 +181,16 @@ bool SxeManager::processNegotiationAsParticipant(const QDomNode &negotiationElem
         QList<const SxeEdit*> snapshot = negotiation->session->startQueueing();
 
         // append <document-begin/>
-        QDomElement documentBegin = doc.createElementNS(SXDENS, "document-begin");
+        QDomElement documentBegin = doc.createElementNS(SXENS, "document-begin");
         response.appendChild(documentBegin);
         QString prolog = SxeSession::parseProlog(negotiation->session->document());
         if(!prolog.isEmpty()) {
             QUrl::encode(prolog);
             documentBegin.setAttribute("prolog", QString("data:text/xml,%1").arg(prolog));
+        }
+        if(!negotiation->groupChat) {
+            // It's safe to give the other participant a prefix to use in 1-to-1 sessions
+            documentBegin.setAttribute("available-uuid-prefix", ONETOONEPREFIXOTHER);
         }
         response.appendChild(documentBegin);
 
@@ -201,14 +200,20 @@ bool SxeManager::processNegotiationAsParticipant(const QDomNode &negotiationElem
         }
 
         // append <documend-end/>
-        QDomElement documentEnd = doc.createElementNS(SXDENS, "document-end");
-        documentEnd.setAttribute("last-sender", negotiation->session->lastSxe()["sender"]);
-        documentEnd.setAttribute("last-id", negotiation->session->lastSxe()["id"]);
+        QDomElement documentEnd = doc.createElementNS(SXENS, "document-end");
+
+        QString usedIds;
+        foreach(const QString usedId, negotiation->session->usedSxeIds())
+            usedIds += usedId + ";";
+        if(usedIds.size() > 0)
+            usedIds = usedIds.left(usedIds.size() - 1); // strip the last ";"
+        documentEnd.setAttribute("used-sxe-ids", usedIds);
+
         response.appendChild(documentEnd);
 
         // Need to "flush" the sxe here before stopping queueing
         if(response.hasChildNodes()) {
-            QDomElement sxe = doc.createElementNS(SXDENS, "sxe");
+            QDomElement sxe = doc.createElementNS(SXENS, "sxe");
             sxe.setAttribute("session", negotiation->sessionId);
             sxe.appendChild(response);
             sendSxe(sxe.toElement(), negotiation->peer, negotiation->groupChat);
@@ -265,7 +270,7 @@ bool SxeManager::processNegotiationAsJoiner(const QDomNode &negotiationElement, 
         // check if one of the invitation callbacks accepts the invitation.
         foreach(bool (*callback)(const Jid &peer, const QList<QString> &features), invitationCallbacks_) {
             if(callback(negotiation->peer, negotiation->features)) {
-                response.appendChild(doc.createElementNS(SXDENS, "accept-invitation"));
+                response.appendChild(doc.createElementNS(SXENS, "accept-invitation"));
                 negotiation->state = SxeNegotiation::InvitationAccepted;
                 return true;
             }
@@ -280,7 +285,7 @@ bool SxeManager::processNegotiationAsJoiner(const QDomNode &negotiationElement, 
         // accept the first <history-offer/> that arrives in response to a <connect-request/>
         negotiation->state = SxeNegotiation::HistoryAccepted;
         negotiation->peer = message.from();
-        response.appendChild(doc.createElementNS(SXDENS, "accept-history"));
+        response.appendChild(doc.createElementNS(SXENS, "accept-history"));
 
     } else if(negotiationElement.nodeName() == "document-begin"
             && (negotiation->state == SxeNegotiation::HistoryAccepted
@@ -289,6 +294,10 @@ bool SxeManager::processNegotiationAsJoiner(const QDomNode &negotiationElement, 
         // Create the new SxeSession
         if(!negotiation->session) {
             negotiation->session = createSxeSession(negotiation->target, negotiation->sessionId, negotiation->ownJid, negotiation->groupChat, negotiation->features);
+
+            // The offer may contain a UUID prefix reserved for us
+            if(negotiationElement.toElement().hasAttribute("available-uuid-prefix"))
+                negotiation->session->setUUIDPrefix(negotiationElement.toElement().attribute("available-uuid-prefix"));
         }
 
         if(negotiation->session) {
@@ -304,21 +313,23 @@ bool SxeManager::processNegotiationAsJoiner(const QDomNode &negotiationElement, 
                 }
             }
 
-            negotiation->session->setImporting(true, doc);
+            negotiation->session->startImporting(doc);
             negotiation->state = SxeNegotiation::DocumentBegan;
         } else {
             // creating the session failed for some reason
+            qDebug("Failed to create session.");
             abortNegotiation(negotiation);
             return false;
         }
+
     } else if(negotiationElement.nodeName() != "document-end"
             && negotiation->state == SxeNegotiation::DocumentBegan) {
 
         // pass the edit to the session
-        QDomElement sxe = doc.createElementNS(SXDENS, "sxe");
+        QDomElement sxe = doc.createElementNS(SXENS, "sxe");
         sxe.setAttribute("session", negotiation->sessionId);
         sxe.appendChild(negotiationElement.cloneNode());
-        negotiation->session->processIncomingSxeElement(sxe, negotiation->peer);
+        negotiation->session->processIncomingSxeElement(sxe, QString());
 
     } else if(negotiationElement.nodeName() == "document-end"
             && negotiation->state == SxeNegotiation::DocumentBegan) {
@@ -326,11 +337,12 @@ bool SxeManager::processNegotiationAsJoiner(const QDomNode &negotiationElement, 
         // The initial document has been received and we're done
         negotiation->state = SxeNegotiation::Finished;
 
-        negotiation->session->eraseQueueUntil(negotiationElement.toElement().attribute("last-sender"),
-                                                negotiationElement.toElement().attribute("last-id"));
+        // Decode the 'used-sxe-ids' field
+        foreach(QString usedId, negotiationElement.toElement().attribute("used-sxe-ids").split(";"))
+            if (usedId.size() > 0) negotiation->session->addUsedSxeId(usedId);
 
         // Exit the "importing" state so that normal version control resumes
-        negotiation->session->setImporting(false);
+        negotiation->session->stopImporting();
 
     }
 
@@ -362,9 +374,9 @@ QPointer<SxeSession> SxeManager::processNegotiationMessage(const Message &messag
 
     // Prepare the response <sxe/>
     QDomDocument doc;
-    QDomElement sxe = doc.createElementNS(SXDENS, "sxe");
+    QDomElement sxe = doc.createElementNS(SXENS, "sxe");
     sxe.setAttribute("session", negotiation->sessionId);
-    QDomElement response = doc.createElementNS(SXDENS, "negotiation");
+    QDomElement response = doc.createElementNS(SXENS, "negotiation");
 
     // Process each child of the <sxe/>
     QDomNode n;
@@ -387,8 +399,8 @@ QPointer<SxeSession> SxeManager::processNegotiationMessage(const Message &messag
                     if(!processNegotiationAsJoiner(n.childNodes().at(j), negotiation, response, message))
                         return 0;
                 } else {
-										Q_ASSERT(false);
-								}
+                    Q_ASSERT(false);
+                }
 
                 // Send any responses that were generated
                 if(response.hasChildNodes()) {
@@ -404,11 +416,8 @@ QPointer<SxeSession> SxeManager::processNegotiationMessage(const Message &messag
         } else if(negotiation->state == SxeNegotiation::Finished
                 && negotiation->session) {
 
-            // If in finished state,
-            // pass the edits to the session normally
-            sxe.appendChild(n);
-            negotiation->session->processIncomingSxeElement(sxe, negotiation->peer);
-            sxe.removeChild(n);
+            // There should be no more children after <negotiation/>...
+            qDebug("Children after <negotiation/> in <sxe/>.");
 
         }
     }
@@ -544,10 +553,10 @@ SxeManager::SxeNegotiation* SxeManager::createNegotiation(const Message &message
 void SxeManager::joinSession(const Jid &target, const Jid &ownJid, bool groupChat, const QString &session) {
     // Prepare the <connect-request/>
     QDomDocument doc;
-    QDomElement sxe = doc.createElementNS(SXDENS, "sxe");
+    QDomElement sxe = doc.createElementNS(SXENS, "sxe");
     sxe.setAttribute("session", session);
-    QDomElement negotiationElement = doc.createElementNS(SXDENS, "negotiation");
-    QDomElement request = doc.createElementNS(SXDENS, "connect-request");
+    QDomElement negotiationElement = doc.createElementNS(SXENS, "negotiation");
+    QDomElement request = doc.createElementNS(SXENS, "connect-request");
     negotiationElement.appendChild(request);
     sxe.appendChild(negotiationElement);
 
@@ -583,11 +592,11 @@ void SxeManager::startNewSession(const Jid &target, const Jid &ownJid, bool grou
 
     // Prepare the <invitation/>
     QDomDocument doc;
-    QDomElement sxe = doc.createElementNS(SXDENS, "sxe");
+    QDomElement sxe = doc.createElementNS(SXENS, "sxe");
     sxe.setAttribute("session", session);
-    QDomElement negotiationElement = doc.createElementNS(SXDENS, "negotiation");
-    QDomElement request = doc.createElementNS(SXDENS, "invitation");
-    QDomElement feature = doc.createElementNS(SXDENS, "feature");
+    QDomElement negotiationElement = doc.createElementNS(SXENS, "negotiation");
+    QDomElement request = doc.createElementNS(SXENS, "invitation");
+    QDomElement feature = doc.createElementNS(SXENS, "feature");
     foreach(QString f, features) {
         feature = feature.cloneNode(false).toElement();
         feature.appendChild(doc.createTextNode(f));
@@ -625,13 +634,15 @@ void SxeManager::negotiationTimeout() {
 // #include <QTextStream>
 void SxeManager::sendSxe(QDomElement sxe, const Jid & receiver, bool groupChat) {
 
-    // Add a unique id to each sent sxe element
-    sxeId_--;
-    sxe.setAttribute("id", sxeId_);
-
     SxeSession* session = qobject_cast<SxeSession*>(sender());
-    if(session)
-        session->setLastSxe(session->ownJid().full(), QString("%1").arg(sxeId_));
+
+    // Add a unique id to each sent sxe element
+    if(session) {
+        QString id = session->generateUUIDForSession();
+        sxe.setAttribute("id", id);
+        session->addUsedSxeId(id);
+    } else
+        sxe.setAttribute("id", SxeSession::generateUUID());
 
     Message m(receiver);
     m.setSxe(sxe);
@@ -690,10 +701,10 @@ QPointer<SxeSession> SxeManager::createSxeSession(const Jid &target, QString ses
 
 void SxeManager::abortNegotiation(QString session, const Jid &peer, bool groupChat) {
     QDomDocument doc = QDomDocument();
-    QDomElement sxe = doc.createElementNS(SXDENS, "sxe");
+    QDomElement sxe = doc.createElementNS(SXENS, "sxe");
     sxe.setAttribute("session", session);
-    QDomElement negotiationElement = doc.createElementNS(SXDENS, "negotiation");
-    negotiationElement.appendChild(doc.createElementNS(SXDENS, "abort-negotiation"));
+    QDomElement negotiationElement = doc.createElementNS(SXENS, "negotiation");
+    negotiationElement.appendChild(doc.createElementNS(SXENS, "abort-negotiation"));
     sxe.appendChild(negotiationElement);
     sendSxe(sxe, peer, groupChat);
 }

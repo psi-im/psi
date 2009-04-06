@@ -29,24 +29,6 @@
 class SxeRecord : public QObject {
     Q_OBJECT
 
-    /*! \brief A class used for keeping track of the values at each version.
-     *      Note that this info could be retrieved by analyzing the Edits but would be more troublesome
-     */
-    class VersionData {
-    public:
-        /*! \brief Default constructor */
-        VersionData(QString _parent = QString(), /*QString _ns = QString(),*/ QString _identifier = QString(), QString _data = QString());
-        /*! \brief Copy constructor */
-        VersionData(const VersionData &other);
-        
-        int version;
-        QString parent;
-        double primaryWeight;
-        // QString ns;
-        QString identifier;
-        QString data;
-    };
-
     public:
         /*! \brief Constructor
          *  Constructs a SxeRecordEdit for \a node.
@@ -58,7 +40,7 @@ class SxeRecord : public QObject {
         /*! \brief Returns the node that the record underlies. */
         QDomNode node() const;
         /*! \brief Applies \a edit to the node. Takes ownership of \a edit. */
-        void apply(QDomDocument &doc, SxeEdit* edit, bool importing);
+        void apply(QDomDocument &doc, SxeEdit* edit);
         /*! \brief Returns a list of edits to the node.*/
         QList<const SxeEdit*> edits() const;
         /*! \brief Returns the rid of the node that the record belongs to. */
@@ -118,18 +100,35 @@ class SxeRecord : public QObject {
 
     private:
         
-        /*! \brief Applies SxeNewEdit \a edit to the node.*/
-        bool applySxeNewEdit(QDomDocument &doc, const SxeNewEdit* edit);
-        /*! \brief Applies SxeRemoveEdit \a edit to the node.*/
-        bool applySxeRemoveEdit(const SxeRemoveEdit* edit);
-        /*! \brief Applies SxeRecordEdit \a edit to the node.*/
-        bool applySxeRecordEdit(const SxeRecordEdit* edit, bool importing = false);
-        
+        /*! \brief Applies SxeNewEdit \a edit to the record.*/
+        bool applySxeNewEdit(QDomDocument &doc, SxeNewEdit* edit);
+        /*! \brief Applies SxeRemoveEdit \a edit to the record.*/
+        bool applySxeRemoveEdit(SxeRemoveEdit* edit);
+        /*! \brief Applies SxeRecordEdit \a edit to the record.*/
+        bool applySxeRecordEdit(SxeRecordEdit* edit);
+
+        /*! \brief Applies an individual SxeRecordEdit assuming it can be applied to the current version.*/
+        void processInOrderRecordEdit(const SxeRecordEdit* edit);
+        /*! \brief Reorder the edits_ list and reapply edits as necessary. */
+        void reorderEdits();
+        /*! \brief Revert the record to version 0. */
+        void revertToZero();
+
+        /*! \brief Synchronize the state of the DOM node with the fields of the record. */
+        void updateNode(bool remote);
+
         QList<SxeEdit*> edits_;
-        QList<VersionData*> versions_;
+
         QDomNode node_;
+
         QString rid_;
         int version_;
+        
+        /* The last* variants hold the values that were last put to the DOM node.*/
+        QString parent_, lastParent_;
+        double primaryWeight_, lastPrimaryWeight_;
+        QString identifier_, lastIdentifier_;
+        QString data_, lastData_;
 };
 
 #endif

@@ -1,0 +1,64 @@
+/*
+-----BEGIN QCMOD-----
+name: Sparkle
+arg: with-sparkle=[path],Path to the Sparkle framework
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_sparkle
+//----------------------------------------------------------------------------
+
+class qc_sparkle : public ConfObj
+{
+	public:
+		qc_sparkle(Conf *c) : ConfObj(c) {}
+
+		QString name() const { return "Sparkle"; }
+		QString shortname() const { return "sparkle"; }
+#ifndef Q_WS_MAC
+		QString checkString() const { return QString(); }
+#endif
+
+		// TODO: This should go into ConfObj
+		bool checkFramework(const QString &path, const QString &name)
+		{
+				QString str = "int main() { return 0; }";
+
+				QString extra;
+				if(!path.isEmpty()) {
+						extra += QString("-F") + path + ' ';
+				}
+				extra += QString("-framework ") + name;
+				if(!conf->doCompileAndLink(str, QStringList(), extra, "", NULL)) {
+						return false;
+				}
+				return true;
+		}
+		
+		// TODO: This should go into ConfObj
+		void addFrameworkPath(const QString& str)
+		{
+			conf->addExtra("QMAKE_CXXFLAGS += -F" + str);
+			conf->addLib("-F" + str);
+		}
+
+		bool exec()
+		{
+#ifdef Q_WS_MAC
+			QString sparkle_path = conf->getenv("QC_WITH_SPARKLE");
+			if(!checkFramework(sparkle_path, "Sparkle"))
+				return false;
+
+			if(!sparkle_path.isEmpty()) {
+				addFrameworkPath(sparkle_path);
+			}
+			conf->addExtra("CONFIG += Sparkle");
+			conf->addDefine("HAVE_SPARKLE");
+
+			return true;
+#else
+			return false;
+#endif
+		}
+};
