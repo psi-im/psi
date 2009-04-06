@@ -875,11 +875,11 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	connect(d->jingleRtpManager, SIGNAL(incomingReady()), d, SLOT(incoming_call()));
 	{
 		QStringList features;
-		features << "urn:xmpp:jingle:0";
+		features << "urn:xmpp:jingle:1";
 		features << "urn:xmpp:jingle:apps:rtp:1";
 		features << "urn:xmpp:jingle:apps:rtp:audio";
 		//features << "urn:xmpp:jingle:apps:rtp:video";
-		features << "urn:xmpp:jingle:transports:ice-udp:0";
+		features << "urn:xmpp:jingle:transports:ice-udp:1";
 		d->client->addExtension("avchat", Features(features));
 	}
 #endif
