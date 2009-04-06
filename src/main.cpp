@@ -254,6 +254,45 @@ void PsiMain::bail()
 
 int main(int argc, char *argv[])
 {
+	// If Psi runs as uri handler the commandline might contain
+	// almost arbitary network supplied data after the "--uri" argument.
+	// To prevent any potentially dangerous options in Psi or
+	// Qt to be triggered by this, filter out the uri and any following data
+	// as early as possible.
+	// see http://www.mozilla.org/security/announce/2007/mfsa2007-23.html
+	// for how this problem affected firefox on windows.
+
+	QString uri;
+	for (int i=1; i<argc; i++) {
+		QString str = QString::fromLocal8Bit(argv[i]);
+		QString var, val;
+		int x = str.find('=');
+		if(x == -1) {
+			var = str;
+			val = "";
+		} else {
+			var = str.mid(0,x);
+			val = str.mid(x+1);
+		}
+
+		if (var == "--uri") {
+			uri = val;
+#ifdef Q_WS_WIN
+			// FIXME think about handling of quirks on the windows platform.
+#endif
+			if (uri.isEmpty() && i+1 < argc) {
+				uri = QString::fromLocal8Bit(argv[i+1]);
+			}
+			
+			// terminate args here. Everything that follow mustn't be availible
+			// in later commandline scanning.
+			argc = i;
+			argv[i] = 0;
+			break;
+		}
+		
+	}
+
 	// NOTE: Qt 4.5 compatibility note: please don't move this call.
 	//   instead, upgrade to QCA 2.0.2, which fixes the bug in the right
 	//   place.
@@ -301,7 +340,6 @@ int main(int argc, char *argv[])
 
 	//dtcp_port = 8000;
 
-	QString uri;
 	for(int n = 1; n < argc; ++n) {
 		QString str = argv[n];
 		QString var, val;
@@ -315,11 +353,6 @@ int main(int argc, char *argv[])
 			val = str.mid(x+1);
 		}
 
-		if (str.startsWith("xmpp:")) {
-			uri = str;
-		} else if (var == "--uri") {
-			uri = val;
-		}
 		//if(var == "--no-gpg")
 		//	use_gpg = false;
 		//else if(var == "--no-gpg-agent")
