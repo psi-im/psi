@@ -934,7 +934,7 @@ public:
 	{
 		// according to xep-167, parameters are unordered
 		if(id == other.id &&
-			name == other.name &&
+			name.compare(other.name, Qt::CaseInsensitive) &&
 			clockrate == other.clockrate &&
 			channels == other.channels &&
 			ptime == other.ptime &&
