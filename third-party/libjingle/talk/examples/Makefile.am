@@ -1,1 +1,0 @@
-SUBDIRS=login call pcp
