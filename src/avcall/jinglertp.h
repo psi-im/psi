@@ -25,6 +25,7 @@ class JingleRtpSession : public QObject
 	Q_OBJECT
 
 public:
+	JingleRtpSession(const JingleRtpSession &from);
 	~JingleRtpSession();
 
 	XMPP::Jid jid() const;
@@ -60,6 +61,7 @@ public:
 	JingleRtpSession *createOutgoing();
 	JingleRtpSession *takeIncoming();
 	static void config();
+	static bool isSupported();
 	void setSelfAddress(const QHostAddress &addr);
 
 signals:

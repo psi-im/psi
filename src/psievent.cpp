@@ -32,6 +32,7 @@
 #include "psicontactlist.h"
 #include "atomicxmlfile.h"
 #include "psioptions.h"
+#include "avcall/jinglertp.h"
 
 // FIXME renames those
 const int eventPriorityHeadline = 0;
@@ -608,6 +609,60 @@ void StatusEvent::setStatus(const XMPP::Status& s)
 {
 	v_status = s;
 }*/
+
+//----------------------------------------------------------------------------
+// AvCallEvent
+//----------------------------------------------------------------------------
+AvCallEvent::AvCallEvent(const XMPP::Jid &j, JingleRtpSession *_sess, PsiAccount *acc)
+:PsiEvent(acc)
+{
+	v_from = j;
+	sess = _sess;
+}
+
+AvCallEvent::AvCallEvent(const AvCallEvent &from)
+:PsiEvent(from.account())
+{
+	v_from = from.v_from;
+	sess = new JingleRtpSession(*from.sess);
+}
+
+AvCallEvent::~AvCallEvent()
+{
+	delete sess;
+}
+
+XMPP::Jid AvCallEvent::from() const
+{
+	return v_from;
+}
+
+void AvCallEvent::setFrom(const XMPP::Jid &j)
+{
+	v_from = j;
+}
+
+JingleRtpSession *AvCallEvent::takeJingleRtpSession()
+{
+	JingleRtpSession *_sess = sess;
+	sess = 0;
+	return _sess;
+}
+
+int AvCallEvent::priority() const
+{
+	return eventPriorityFile; // FIXME
+}
+
+QString AvCallEvent::description() const
+{
+	return tr("The user is calling you.");
+}
+
+PsiEvent *AvCallEvent::copy() const
+{
+	return new AvCallEvent(*this);
+}
 
 //----------------------------------------------------------------------------
 // EventItem

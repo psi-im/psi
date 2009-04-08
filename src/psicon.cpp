@@ -90,6 +90,8 @@
 #include "desktoputil.h"
 #include "tabmanager.h"
 #include "capsmanager.h"
+#include "avcall/jinglertp.h"
+#include "avcall/calldlg.h"
 
 
 #include "AutoUpdater/AutoUpdater.h"
@@ -1282,6 +1284,22 @@ void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 		e->account()->cpUpdate(*u);
 		if(ft) {
 			FileRequestDlg *w = new FileRequestDlg(fe->timeStamp(), ft, e->account());
+			bringToFront(w);
+		}
+		return;
+	}
+
+	if(e->type() == PsiEvent::AvCall) {
+		AvCallEvent *ae = (AvCallEvent *)e;
+		JingleRtpSession *sess = ae->takeJingleRtpSession();
+		e->account()->eventQueue()->dequeue(e);
+		e->account()->queueChanged();
+		e->account()->cpUpdate(*u);
+		if(sess) {
+			//FileRequestDlg *w = new FileRequestDlg(fe->timeStamp(), ft, e->account());
+			CallDlg *w = new CallDlg(e->account(), 0);
+			w->setAttribute(Qt::WA_DeleteOnClose);
+			w->setIncoming(sess);
 			bringToFront(w);
 		}
 		return;

@@ -53,7 +53,8 @@ public:
 		AlertMessage,
 		AlertChat,
 		AlertHeadline,
-		AlertFile
+		AlertFile,
+		AlertAvCall
 	};
 	PsiPopup(PopupType type, PsiAccount *acc);
 

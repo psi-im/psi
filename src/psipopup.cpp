@@ -276,6 +276,11 @@ PsiPopup::PsiPopup(PopupType type, PsiAccount *acc)
 		icon= (PsiIcon *)IconsetFactory::iconPtr("psi/file");
 		doAlertIcon = true;
 		break;
+	case AlertAvCall:
+		text += PsiPopup::tr("Incoming call");
+		icon= (PsiIcon *)IconsetFactory::iconPtr("psi/call");
+		doAlertIcon = true;
+		break;
 	default:
 		break;
 	}

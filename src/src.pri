@@ -27,7 +27,6 @@ include($$PWD/tools/atomicxmlfile/atomicxmlfile.pri)
 include($$PWD/psimedia/psimedia.pri)
 
 # audio/video calls
-DEFINES += AVCALL
 include($$PWD/avcall/avcall.pri)
 
 # Growl

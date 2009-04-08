@@ -1520,6 +1520,14 @@ JingleRtpSession::JingleRtpSession() :
 	d = new JingleRtpSessionPrivate(this);
 }
 
+JingleRtpSession::JingleRtpSession(const JingleRtpSession &from) :
+	QObject(0)
+{
+	// TODO
+	fprintf(stderr, "JingleRtpSession copy not supported\n");
+	abort();
+}
+
 JingleRtpSession::~JingleRtpSession()
 {
 	if(d->incoming)
@@ -1595,6 +1603,30 @@ static QString findPlugin(const QString &relpath, const QString &basename)
 #endif
 */
 
+static bool g_loaded = false;
+
+static void ensureLoaded()
+{
+	if(!g_loaded)
+	{
+#ifndef GSTPROVIDER_STATIC
+		//QString pluginFile = findPlugin(".", "gstprovider");
+		QString pluginFile = qgetenv("PSI_MEDIA_PLUGIN");
+# ifdef GSTBUNDLE_PATH
+		PsiMedia::PluginResult r = PsiMedia::loadPlugin(pluginFile, GSTBUNDLE_PATH);
+# else
+		PsiMedia::PluginResult r = PsiMedia::loadPlugin(pluginFile, QString());
+# endif
+		if(r == PsiMedia::PluginSuccess)
+			g_loaded = true;
+#else
+		g_loaded = true;
+#endif
+		if(g_loaded)
+			ensureConfig();
+	}
+}
+
 JingleRtpManagerPrivate::JingleRtpManagerPrivate(PsiAccount *_pa, JingleRtpManager *_q) :
 	QObject(_q),
 	q(_q),
@@ -1603,38 +1635,11 @@ JingleRtpManagerPrivate::JingleRtpManagerPrivate(PsiAccount *_pa, JingleRtpManag
 	sess_in(0),
 	task(0)
 {
-#ifndef GSTPROVIDER_STATIC
-	//QString pluginFile = findPlugin(".", "gstprovider");
-	QString pluginFile = qgetenv("PSI_MEDIA_PLUGIN");
-# ifdef GSTBUNDLE_PATH
-	PsiMedia::loadPlugin(pluginFile, GSTBUNDLE_PATH);
-# else
-	PsiMedia::loadPlugin(pluginFile, QString());
-# endif
-#endif
-
-	if(PsiMedia::isSupported())
-	{
-	/*{
-		QMessageBox::critical(0, tr("PsiMedia Test"),
-			tr(
-			"Error: Could not load PsiMedia subsystem."
-			));
-		exit(1);
-	}*/
-
-		printf("psimedia supported\n");
-		ensureConfig();
-
-	//config = getDefaultConfiguration();
-
-		push_task = new JT_PushJingleRtp(pa->client()->rootTask());
-
-		connect(push_task, SIGNAL(incomingInitiate(const RtpPush &)), SLOT(push_task_incomingInitiate(const RtpPush &)));
-		connect(push_task, SIGNAL(incomingTransportInfo(const RtpPush &)), SLOT(push_task_incomingTransportInfo(const RtpPush &)));
-		connect(push_task, SIGNAL(incomingAccept(const RtpPush &)), SLOT(push_task_incomingAccept(const RtpPush &)));
-		connect(push_task, SIGNAL(incomingTerminate(const RtpPush &)), SLOT(push_task_incomingTerminate(const RtpPush &)));
-	}
+	push_task = new JT_PushJingleRtp(pa->client()->rootTask());
+	connect(push_task, SIGNAL(incomingInitiate(const RtpPush &)), SLOT(push_task_incomingInitiate(const RtpPush &)));
+	connect(push_task, SIGNAL(incomingTransportInfo(const RtpPush &)), SLOT(push_task_incomingTransportInfo(const RtpPush &)));
+	connect(push_task, SIGNAL(incomingAccept(const RtpPush &)), SLOT(push_task_incomingAccept(const RtpPush &)));
+	connect(push_task, SIGNAL(incomingTerminate(const RtpPush &)), SLOT(push_task_incomingTerminate(const RtpPush &)));
 }
 
 JingleRtpManagerPrivate::~JingleRtpManagerPrivate()
@@ -1803,6 +1808,12 @@ void JingleRtpManager::config()
 	ConfigDlg w(*g_config, 0);
 	w.exec();
 	*g_config = w.config;
+}
+
+bool JingleRtpManager::isSupported()
+{
+	ensureLoaded();
+	return PsiMedia::isSupported();
 }
 
 void JingleRtpManager::setSelfAddress(const QHostAddress &addr)
