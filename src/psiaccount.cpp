@@ -3660,7 +3660,7 @@ void PsiAccount::dj_newMessage(const Jid &jid, const QString &body, const QStrin
 void PsiAccount::dj_replyMessage(const Jid &jid, const QString &body, const QString &subject, const QString &thread)
 {
 	QString re = (!subject.isEmpty() && subject.left(3) != "Re:") ? "Re: " : QString();
-	dj_newMessage(jid, TextUtil::quote(body), re + subject, thread);
+	dj_newMessage(jid, !body.isEmpty() ? TextUtil::quote(body) : body, re + subject, thread);
 }
 
 void PsiAccount::dj_replyMessage(const Jid &j, const QString &body)
