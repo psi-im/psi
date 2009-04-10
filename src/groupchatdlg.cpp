@@ -885,6 +885,18 @@ void GCMainDlg::action_error(MUCManager::Action, int, const QString& err)
 	appendSysMsg(err, false);
 }
 
+
+void MiniCommand_Depreciation_Message(const QString &old,const QString &newCmd, QString &line1, QString &line2) {
+	line1 = QObject::tr("Warning: %1 is depricated and will be removed in the future").arg(old);
+	QList<QKeySequence> keys = ShortcutManager::instance()->shortcuts("chat.quick-command");
+	if (keys.isEmpty()) {
+		line2 = QObject::tr("Please set a shortcut for 'Change to quick command mode', use that shortcut and enter '%1'.").arg(newCmd);
+	} else {
+		line2 = QObject::tr("Please instead press %1 and enter '%2'.").arg(keys.at(0).toString(), newCmd);
+	}
+}
+
+
 void GCMainDlg::mle_returnPressed()
 {
 	d->tabCompletion.reset();
@@ -906,6 +918,11 @@ void GCMainDlg::mle_returnPressed()
 		d->histAt = 0;
 		d->hist.prepend(str);
 		ui_.mle->chatEdit()->setText("");
+
+		QString line1,line2;
+		MiniCommand_Depreciation_Message("/clear", "clear", line1, line2);
+		appendSysMsg(line1, false);
+		appendSysMsg(line2, false);
 		return;
 	}
 
@@ -918,6 +935,10 @@ void GCMainDlg::mle_returnPressed()
 			account()->groupChatChangeNick(jid().domain(), jid().node(), d->self, account()->status());
 		}
 		ui_.mle->chatEdit()->setText("");
+		QString line1,line2;
+		MiniCommand_Depreciation_Message("/nick", "nick", line1, line2);
+		appendSysMsg(line1, false);
+		appendSysMsg(line2, false);
 		return;
 	}
 

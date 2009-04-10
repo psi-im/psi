@@ -642,6 +642,10 @@ void ChatDlg::doSend()
 	if (chatEdit()->text() == "/clear") {
 		chatEdit()->clear();
 		doClear();
+		QString line1,line2;
+		MiniCommand_Depreciation_Message("/clear", "clear", line1, line2);
+		appendSysMsg(line1);
+		appendSysMsg(line2);
 		return;
 	}
 

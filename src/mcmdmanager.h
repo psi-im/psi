@@ -29,6 +29,8 @@
 #include <minicmd.h>
 
 
+// implementation in groupchatdlg.cpp
+void MiniCommand_Depreciation_Message(const QString &old,const QString &newCmd, QString &line1, QString &line2);
 
 class MCmdSimpleState : public QObject, public MCmdStateIface
 {
