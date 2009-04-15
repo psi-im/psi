@@ -402,8 +402,8 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 	connect(psi, SIGNAL(emitOptionsUpdate()), SLOT(optionsUpdate()));
 	optionsUpdate();
 
-        QShortcut *sp_ss = new QShortcut(QKeySequence(tr("Ctrl+Shift+N")), this);
-        connect(sp_ss, SIGNAL(activated()), SLOT(avcallConfig()));
+        /*QShortcut *sp_ss = new QShortcut(QKeySequence(tr("Ctrl+Shift+N")), this);
+        connect(sp_ss, SIGNAL(activated()), SLOT(avcallConfig()));*/
 }
 
 MainWin::~MainWin()

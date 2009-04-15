@@ -19,6 +19,7 @@ HEADERS += \
 	$$PWD/opt_iconset.h \
 	$$PWD/opt_groupchat.h \
 	$$PWD/opt_sound.h \
+	$$PWD/opt_avcall.h \
 	$$PWD/opt_toolbars.h \
 	$$PWD/opt_advanced.h \
 	$$PWD/opt_shortcuts.h
@@ -34,6 +35,7 @@ SOURCES += \
 	$$PWD/opt_iconset.cpp \
 	$$PWD/opt_groupchat.cpp \
 	$$PWD/opt_sound.cpp \
+	$$PWD/opt_avcall.cpp \
 	$$PWD/opt_toolbars.cpp \
 	$$PWD/opt_advanced.cpp \
 	$$PWD/opt_shortcuts.cpp
@@ -48,6 +50,7 @@ INTERFACES += \
 	$$PWD/opt_appearance.ui \
 	$$PWD/opt_appearance_misc.ui \
 	$$PWD/opt_sound.ui \
+	$$PWD/opt_avcall.ui \
 	$$PWD/opt_advanced.ui \
 	$$PWD/opt_lookfeel_toolbars.ui \
 	$$PWD/ui_isdetails.ui \

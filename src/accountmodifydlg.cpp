@@ -33,6 +33,7 @@
 #include "privacydlg.h"
 #include "pgpkeydlg.h"
 #include "psicontactlist.h"
+#include "avcall/jinglertp.h"
 
 AccountModifyDlg::AccountModifyDlg(PsiCon *_psi, QWidget *parent)
 :QDialog(parent)
@@ -142,6 +143,8 @@ void AccountModifyDlg::init()
 	ck_log->setChecked(acc.opt_log);
 	ck_keepAlive->setChecked(acc.opt_keepAlive);
 	le_dtProxy->setText(acc.dtProxy.full());
+	le_stunHost->setText(acc.stunHost);
+	le_stunPort->setText(QString::number(acc.stunPort));
 
 	key = acc.pgpSecretKey;
 	updateUserID();
@@ -520,6 +523,10 @@ void AccountModifyDlg::save()
 	acc.opt_log = ck_log->isChecked();
 	acc.opt_keepAlive = ck_keepAlive->isChecked();
 	acc.dtProxy = le_dtProxy->text();
+	acc.stunHost = le_stunHost->text();
+	acc.stunPort = le_stunPort->text().toInt();
+	if(pa->jingleRtpManager())
+		pa->jingleRtpManager()->setStunHost(acc.stunHost, acc.stunPort);
 
 	acc.pgpSecretKey = key;
 

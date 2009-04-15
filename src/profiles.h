@@ -78,8 +78,10 @@ public:
 	XMPP::Jid dtProxy;
 	
 	QString optionsBase;
-	
-	
+
+	QString stunHost;
+	int stunPort;
+
 	/* migration only */
 	int proxy_index;
 	int proxy_type, proxy_port;

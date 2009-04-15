@@ -144,6 +144,8 @@ void UserAccount::reset()
 	proxy_user = "";
 	proxy_pass = "";
 
+	stunPort = 3478;
+
 	keybind.clear();
 
 	roster.clear();
@@ -260,6 +262,9 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	keybind.fromOptions(o, base + ".pgp-key-bindings");
 
 	dtProxy = o->getOption(base + ".bytestreams-proxy").toString();
+
+	stunHost = o->getOption(base + ".stun-host").toString();
+	stunPort = o->getOption(base + ".stun-port").toInt();
 }
 
 void UserAccount::toOptions(OptionsTree *o, QString base)
@@ -382,7 +387,9 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 
 	keybind.toOptions(o, base + ".pgp-key-bindings");
 	o->setOption(base + ".bytestreams-proxy", dtProxy.full());
-	
+
+	o->setOption(base + ".stun-host", stunHost);
+	o->setOption(base + ".stun-port", QString::number(stunPort));
 }
 
 void UserAccount::fromXml(const QDomElement &a)

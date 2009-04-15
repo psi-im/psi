@@ -60,9 +60,19 @@ public:
 
 	JingleRtpSession *createOutgoing();
 	JingleRtpSession *takeIncoming();
+
 	static void config();
 	static bool isSupported();
+	static bool isVideoSupported();
+
 	void setSelfAddress(const QHostAddress &addr);
+	void setStunHost(const QString &host, int port);
+
+	static void setBasePort(int port);
+	static void setExternalAddress(const QString &host);
+	static void setAudioOutDevice(const QString &id);
+	static void setAudioInDevice(const QString &id);
+	static void setVideoInDevice(const QString &id);
 
 signals:
 	void incomingReady();

@@ -7,6 +7,20 @@
 #include "../psimedia/psimedia.h"
 #include "common.h"
 #include "psiaccount.h"
+#include "psioptions.h"
+
+// from opt_avcall.cpp
+extern void options_avcall_update();
+
+// we have this so if the user plugs in a device, but never goes to the
+//   options screen to select it, and then starts a call, it'll get used
+static void prep_device_opts()
+{
+	options_avcall_update();
+	JingleRtpManager::setAudioOutDevice(PsiOptions::instance()->getOption("options.media.devices.audio-output").toString());
+	JingleRtpManager::setAudioInDevice(PsiOptions::instance()->getOption("options.media.devices.audio-input").toString());
+	JingleRtpManager::setVideoInDevice(PsiOptions::instance()->getOption("options.media.devices.video-input").toString());
+}
 
 class CallDlg::Private : public QObject
 {
@@ -102,6 +116,7 @@ CallDlg::CallDlg(PsiAccount *pa, QWidget *parent) :
 {
 	d = new Private(this);
 	d->pa = pa;
+	prep_device_opts();
 }
 
 CallDlg::~CallDlg()

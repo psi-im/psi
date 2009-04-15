@@ -10,7 +10,13 @@
 #include "xmpp_task.h"
 #include "xmpp_xmlcommon.h"
 #include "psiaccount.h"
+#include "iris/netnames.h"
 #include "iris/ice176.h"
+
+/*
+
+private slots:
+*/
 
 static QChar randomPrintableChar()
 {
@@ -214,7 +220,7 @@ static Configuration getDefaultConfiguration()
 	config.liveInput = true;
 	config.loopFile = true;
 
-	PsiMediaFeaturesSnapshot snap;
+	/*PsiMediaFeaturesSnapshot snap;
 
 	QList<PsiMedia::Device> devs;
 
@@ -231,7 +237,7 @@ static Configuration getDefaultConfiguration()
 		config.videoInDeviceId = devs.first().id();
 
 	config.audioParams = snap.supportedAudioModes.first();
-	config.videoParams = snap.supportedVideoModes.first();
+	config.videoParams = snap.supportedVideoModes.first();*/
 
 	return config;
 }
@@ -967,6 +973,8 @@ public:
 
 	PsiAccount *pa;
 	QHostAddress self_addr;
+	QString stunHost;
+	int stunPort;
 	JingleRtpSession *sess_out, *sess_in;
 	//Configuration config;
 	JT_PushJingleRtp *push_task;
@@ -1012,6 +1020,8 @@ public:
 	bool transmitAudio, transmitVideo, transmitting;
 	bool receiveAudio, receiveVideo;
 	QList<RtpContent> initTrans;
+	XMPP::NameResolver dns;
+	QHostAddress stunAddr;
 
 	class Channel
 	{
@@ -1039,6 +1049,9 @@ public:
 		connect(&receiver, SIGNAL(started()), SLOT(receiver_started()));
 		connect(&receiver, SIGNAL(stopped()), SLOT(receiver_stopped()));
 		connect(&receiver, SIGNAL(error()), SLOT(receiver_error()));
+
+		connect(&dns, SIGNAL(resultsReady(const QList<XMPP::NameRecord> &)), SLOT(dns_resultsReady(const QList<XMPP::NameRecord> &)));
+		connect(&dns, SIGNAL(error(XMPP::NameResolver::Error)), SLOT(dns_error(XMPP::NameResolver::Error)));
 
 		ice = new Ice176(this);
 		connect(ice, SIGNAL(started()), SLOT(ice_started()));
@@ -1160,7 +1173,15 @@ public:
 public slots:
 	void start_send()
 	{
-		*g_config = adjustConfiguration(*g_config, PsiMediaFeaturesSnapshot());
+		if(!manager->d->stunHost.isEmpty())
+			dns.start(manager->d->stunHost.toLatin1(), XMPP::NameRecord::A);
+		else
+			cont_send();
+	}
+
+	void cont_send()
+	{
+		//*g_config = adjustConfiguration(*g_config, PsiMediaFeaturesSnapshot());
 		(*g_config).videoInDeviceId.clear(); // ### disabling video
 		Configuration &config = *g_config;
 
@@ -1350,6 +1371,7 @@ public slots:
 			c.desc.info += *pVideo;
 			contentList += c;
 		}
+		printf("contentList.count = %d\n", contentList.count());
 
 		QList<Ice176::LocalAddress> localAddrs;
 		Ice176::LocalAddress addr;
@@ -1365,9 +1387,8 @@ public slots:
 		}
 		ice->setComponentCount(2);
 
-		QHostAddress stunAddr(QString::fromLocal8Bit(qgetenv("PSI_STUNADDR")));
-		int stunPort = 3478;
-		if(!stunAddr.isNull())
+		int stunPort = manager->d->stunPort;
+		if(!stunAddr.isNull() && stunPort > 0)
 		{
 			XMPP::Ice176::StunServiceType stunType;
 			//if(opt_is_relay)
@@ -1512,6 +1533,19 @@ public slots:
 			ice->writeDatagram(packet.portOffset(), packet.rawValue());
 		}
 	}
+
+	void dns_resultsReady(const QList<XMPP::NameRecord> &results)
+	{
+		stunAddr = results.first().address();
+		cont_send();
+	}
+
+	void dns_error(XMPP::NameResolver::Error e)
+	{
+		Q_UNUSED(e);
+		printf("Unable to resolve stun host.\n");
+		cont_send();
+	}
 };
 
 JingleRtpSession::JingleRtpSession() :
@@ -1631,6 +1665,7 @@ JingleRtpManagerPrivate::JingleRtpManagerPrivate(PsiAccount *_pa, JingleRtpManag
 	QObject(_q),
 	q(_q),
 	pa(_pa),
+	stunPort(-1),
 	sess_out(0),
 	sess_in(0),
 	task(0)
@@ -1816,9 +1851,47 @@ bool JingleRtpManager::isSupported()
 	return PsiMedia::isSupported();
 }
 
+bool JingleRtpManager::isVideoSupported()
+{
+	return false;
+}
+
 void JingleRtpManager::setSelfAddress(const QHostAddress &addr)
 {
 	d->self_addr = addr;
+}
+
+void JingleRtpManager::setStunHost(const QString &host, int port)
+{
+	d->stunHost = host;
+	d->stunPort = port;
+}
+
+void JingleRtpManager::setBasePort(int port)
+{
+	// TODO
+	Q_UNUSED(port);
+}
+
+void JingleRtpManager::setExternalAddress(const QString &host)
+{
+	// TODO
+	Q_UNUSED(host);
+}
+
+void JingleRtpManager::setAudioOutDevice(const QString &id)
+{
+	g_config->audioOutDeviceId = id;
+}
+
+void JingleRtpManager::setAudioInDevice(const QString &id)
+{
+	g_config->audioInDeviceId = id;
+}
+
+void JingleRtpManager::setVideoInDevice(const QString &id)
+{
+	g_config->videoInDeviceId = id;
 }
 
 #include "jinglertp.moc"

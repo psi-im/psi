@@ -870,11 +870,18 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 		connect(d->jingleRtpManager, SIGNAL(incomingReady()), d, SLOT(incoming_call()));
 		QStringList features;
 		features << "urn:xmpp:jingle:1";
+		features << "urn:xmpp:jingle:transports:ice-udp:1";
 		features << "urn:xmpp:jingle:apps:rtp:1";
 		features << "urn:xmpp:jingle:apps:rtp:audio";
-		//features << "urn:xmpp:jingle:apps:rtp:video";
-		features << "urn:xmpp:jingle:transports:ice-udp:1";
-		d->client->addExtension("avcall", Features(features));
+		d->client->addExtension("ca", Features(features));
+
+		if(JingleRtpManager::isVideoSupported()) {
+			features.clear();
+			features << "urn:xmpp:jingle:apps:rtp:video";
+			d->client->addExtension("cv", Features(features));
+		}
+
+		d->jingleRtpManager->setStunHost(acc.stunHost, acc.stunPort);
 	}
 
 	// Extended presence
@@ -4043,7 +4050,8 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 		if ((popupType == PsiPopup::AlertChat     && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-chat").toBool())     ||
 		    (popupType == PsiPopup::AlertMessage  && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool())  ||
 		    (popupType == PsiPopup::AlertHeadline && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-headline").toBool()) ||
-		    (popupType == PsiPopup::AlertFile     && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-file-transfer").toBool()))
+		    (popupType == PsiPopup::AlertFile     && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-file-transfer").toBool()) ||
+		    (popupType == PsiPopup::AlertAvCall   && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool()))
 		{
 			PsiPopup *popup = new PsiPopup(popupType, this);
 			popup->setData(j, r, u, e);

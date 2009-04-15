@@ -103,6 +103,9 @@
 #include "mac_dock.h"
 #endif
 
+// from opt_avcall.cpp
+extern void options_avcall_update();
+
 //----------------------------------------------------------------------------
 // PsiConObject
 //----------------------------------------------------------------------------
@@ -580,6 +583,15 @@ bool PsiCon::init()
 	connect(ActiveProfiles::instance(), SIGNAL(openUri(const QUrl &)), SLOT(doOpenUri(const QUrl &)));
 
 	DesktopUtil::setUrlHandler("xmpp", this, "doOpenUri");
+
+	if(JingleRtpManager::isSupported()) {
+		options_avcall_update();
+		JingleRtpManager::setAudioOutDevice(PsiOptions::instance()->getOption("options.media.devices.audio-output").toString());
+		JingleRtpManager::setAudioInDevice(PsiOptions::instance()->getOption("options.media.devices.audio-input").toString());
+		JingleRtpManager::setVideoInDevice(PsiOptions::instance()->getOption("options.media.devices.video-input").toString());
+		JingleRtpManager::setBasePort(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt());
+		JingleRtpManager::setExternalAddress(PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString());
+	}
 
 	return true;
 }
@@ -1094,6 +1106,14 @@ void PsiCon::slotApplyOptions()
 #endif
 
 	updateS5BServerAddresses();
+
+	if(JingleRtpManager::isSupported()) {
+		JingleRtpManager::setAudioOutDevice(PsiOptions::instance()->getOption("options.media.devices.audio-output").toString());
+		JingleRtpManager::setAudioInDevice(PsiOptions::instance()->getOption("options.media.devices.audio-input").toString());
+		JingleRtpManager::setVideoInDevice(PsiOptions::instance()->getOption("options.media.devices.video-input").toString());
+		JingleRtpManager::setBasePort(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt());
+		JingleRtpManager::setExternalAddress(PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString());
+	}
 
 	// mainwin stuff
 	d->mainwin->setWindowOpts(PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool(), (PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool()));
