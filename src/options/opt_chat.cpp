@@ -43,6 +43,7 @@ QWidget *OptionsTabChat::widget()
 		return 0;
 
 	w = new OptChatUI();
+	connect(w, SIGNAL(useTabbedChat_stateChanged_relay(int)), SLOT(useTabbedChat_stateChanged(int)));
 	OptChatUI *d = (OptChatUI *)w;
 
 	bg_defAct = new QButtonGroup;
@@ -209,18 +210,4 @@ void OptionsTabChat::restoreOptions()
 		d->rb_delChatsNever->setChecked(true);
 	}
 	d->ck_chatSoftReturn->setChecked(ShortcutManager::instance()->shortcuts("chat.send").contains(QKeySequence(Qt::Key_Return)));
-}
-
-void OptionsTabChat::useTabbedChat_stateChanged(int state)
-{
-	if (!w) {
-		return;
-   }
-	OptChatUI *d = (OptChatUI *)w;
-
-	if((Qt::CheckState)state == Qt::Checked) {
-		d->cb_tabGrouping->setEnabled(true);
-	} else {
-		d->cb_tabGrouping->setEnabled(false);
-	}
 }
