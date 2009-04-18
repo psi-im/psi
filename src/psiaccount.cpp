@@ -1147,6 +1147,9 @@ void PsiAccount::setUserAccount(const UserAccount &acc)
 		}
 	}
 
+	if(d->jingleRtpManager)
+		d->jingleRtpManager->setStunHost(d->acc.stunHost, d->acc.stunPort);
+
 	cpUpdate(d->self);
 	updatedAccount();
 }

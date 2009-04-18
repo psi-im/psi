@@ -525,8 +525,6 @@ void AccountModifyDlg::save()
 	acc.dtProxy = le_dtProxy->text();
 	acc.stunHost = le_stunHost->text();
 	acc.stunPort = le_stunPort->text().toInt();
-	if(pa->jingleRtpManager())
-		pa->jingleRtpManager()->setStunHost(acc.stunHost, acc.stunPort);
 
 	acc.pgpSecretKey = key;
 
