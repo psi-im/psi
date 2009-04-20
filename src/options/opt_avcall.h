@@ -1,17 +1,17 @@
-#ifndef OPT_CHAT_H
-#define OPT_CHAT_H
+#ifndef OPT_AVCALL_H
+#define OPT_AVCALL_H
 
 #include "optionstab.h"
 
 class QWidget;
 class QButtonGroup;
 
-class OptionsTabChat : public OptionsTab
+class OptionsTabAvCall : public OptionsTab
 {
 	Q_OBJECT
 public:
-	OptionsTabChat(QObject *parent);
-	~OptionsTabChat();
+	OptionsTabAvCall(QObject *parent);
+	~OptionsTabAvCall();
 
 	QWidget *widget();
 	void applyOptions();
@@ -19,7 +19,6 @@ public:
 
 private:
 	QWidget *w;
-	QButtonGroup *bg_defAct, *bg_delChats;
 };
 
 #endif

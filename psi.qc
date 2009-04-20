@@ -19,7 +19,7 @@
     <disabled/>  
   </dep>
   <dep type='certstore'>
-	<required/>
+    <required/>
   </dep>
   <dep type='qdbus'/>
   <dep type='growl'/>
@@ -27,10 +27,11 @@
   <dep type='xss'/>
   <dep type='ghbnr'/>
   <dep type='aspell'/>
+  <dep type='plugins'/>
   <dep type='debug'>
-	<required/>
+    <required/>
   </dep>
   <dep type='conf'>
-	<required/>
+    <required/>
   </dep>
 </qconf>

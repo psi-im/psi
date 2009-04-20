@@ -3,6 +3,7 @@
 #include "iconwidget.h"
 #include "psioptions.h"
 
+#include <limits.h>
 #include <qbuttongroup.h>
 #include <QMessageBox>
 #include <qwhatsthis.h>
@@ -147,10 +148,13 @@ void OptionsTabStatus::restoreOptions()
 	OptStatusUI *d = (OptStatusUI *)w;
 
 	d->sb_asAway->setMinValue(0);
+	d->sb_asAway->setMaxValue(INT_MAX);
 	d->sb_asAway->setValue( PsiOptions::instance()->getOption("options.status.auto-away.away-after").toInt() );
 	d->sb_asXa->setMinValue(0);
+	d->sb_asXa->setMaxValue(INT_MAX);
 	d->sb_asXa->setValue( PsiOptions::instance()->getOption("options.status.auto-away.not-availible-after").toInt() );
 	d->sb_asOffline->setMinValue(0);
+	d->sb_asOffline->setMaxValue(INT_MAX);
 	d->sb_asOffline->setValue( PsiOptions::instance()->getOption("options.status.auto-away.offline-after").toInt() );
 	/*if (PsiOptions::instance()->getOption("options.status.auto-away.away-after").toInt() <= 0 )
 		PsiOptions::instance()->getOption("options.status.auto-away.use-away").toBool() = FALSE;

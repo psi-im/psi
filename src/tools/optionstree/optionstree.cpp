@@ -257,6 +257,15 @@ bool OptionsTree::loadOptions(const QString& fileName, const QString& configName
 	return loadOptions(doc.documentElement(), configName, configVersion, configNS);
 }
 
+
+/**
+ * Checks for existing saved Options.
+ * Does not guarantee that load succeeds if the config file was corrupted.
+ */
+bool OptionsTree::exists(QString fileName) {
+	return AtomicXmlFile::exists(fileName);
+}
+
 /**
  * Loads all options from an XML element
  * \param base the element to read the options from

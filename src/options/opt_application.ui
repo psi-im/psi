@@ -1,27 +1,18 @@
 <ui version="4.0" >
- <author></author>
- <comment></comment>
- <exportmacro></exportmacro>
  <class>OptApplication</class>
  <widget class="QWidget" name="OptApplication" >
   <property name="geometry" >
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>294</width>
-    <height>500</height>
+    <width>304</width>
+    <height>402</height>
    </rect>
   </property>
   <property name="windowTitle" >
    <string>OptApplicationUI</string>
   </property>
   <layout class="QVBoxLayout" >
-   <property name="margin" >
-    <number>9</number>
-   </property>
-   <property name="spacing" >
-    <number>6</number>
-   </property>
    <item>
     <widget class="QCheckBox" name="ck_alwaysOnTop" >
      <property name="text" >
@@ -76,16 +67,25 @@
       <string>Docklet</string>
      </property>
      <layout class="QVBoxLayout" >
-      <property name="margin" >
-       <number>10</number>
-      </property>
       <property name="spacing" >
        <number>6</number>
+      </property>
+      <property name="leftMargin" >
+       <number>10</number>
+      </property>
+      <property name="topMargin" >
+       <number>10</number>
+      </property>
+      <property name="rightMargin" >
+       <number>10</number>
+      </property>
+      <property name="bottomMargin" >
+       <number>10</number>
       </property>
       <item>
        <widget class="QCheckBox" name="ck_dockDCstyle" >
         <property name="text" >
-         <string>Use &quot;double-click&quot; style (like Mirabilis ICQ)</string>
+         <string>Use "double-click" style (like Mirabilis ICQ)</string>
         </property>
        </widget>
       </item>
@@ -99,7 +99,7 @@
       <item>
        <widget class="QCheckBox" name="ck_dockToolMW" >
         <property name="text" >
-         <string>Make roster window a &quot;tool-window&quot;</string>
+         <string>Make roster window a "tool-window"</string>
         </property>
        </widget>
       </item>
@@ -118,16 +118,10 @@
    </item>
    <item>
     <layout class="QHBoxLayout" >
-     <property name="margin" >
-      <number>0</number>
-     </property>
-     <property name="spacing" >
-      <number>6</number>
-     </property>
      <item>
       <widget class="QLabel" name="textLabel1" >
        <property name="text" >
-        <string>Data transfer port:</string>
+        <string>Data transfer base port:</string>
        </property>
       </widget>
      </item>
@@ -148,6 +142,13 @@
       </widget>
      </item>
      <item>
+      <widget class="QLabel" name="label" >
+       <property name="text" >
+        <string>(1 TCP, 4 UDP)</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <spacer>
        <property name="orientation" >
         <enum>Qt::Horizontal</enum>
@@ -157,7 +158,7 @@
        </property>
        <property name="sizeHint" >
         <size>
-         <width>40</width>
+         <width>20</width>
          <height>20</height>
         </size>
        </property>
@@ -167,11 +168,20 @@
    </item>
    <item>
     <layout class="QHBoxLayout" >
-     <property name="margin" >
-      <number>0</number>
-     </property>
      <property name="spacing" >
       <number>6</number>
+     </property>
+     <property name="leftMargin" >
+      <number>0</number>
+     </property>
+     <property name="topMargin" >
+      <number>0</number>
+     </property>
+     <property name="rightMargin" >
+      <number>0</number>
+     </property>
+     <property name="bottomMargin" >
+      <number>0</number>
      </property>
      <item>
       <widget class="QLabel" name="textLabel2" >
@@ -184,6 +194,19 @@
       <widget class="QLineEdit" name="le_dtExternal" />
      </item>
     </layout>
+   </item>
+   <item>
+    <spacer>
+     <property name="orientation" >
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" >
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
    </item>
   </layout>
  </widget>

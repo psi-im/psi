@@ -36,10 +36,7 @@
 #include <QMenu>
 #include <QMenuItem>
 #include <QtAlgorithms>
-
-#ifdef AVCALL
 #include <QShortcut>
-#endif
 
 #ifdef Q_WS_WIN
 #include <windows.h>
@@ -66,9 +63,7 @@
 
 #include "mainwin_p.h"
 
-#ifdef AVCALL
 #include "avcall/jinglertp.h"
-#endif
 
 using namespace XMPP;
 
@@ -407,10 +402,8 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 	connect(psi, SIGNAL(emitOptionsUpdate()), SLOT(optionsUpdate()));
 	optionsUpdate();
 
-#ifdef AVCALL
-        QShortcut *sp_ss = new QShortcut(QKeySequence(tr("Ctrl+Shift+N")), this);
-        connect(sp_ss, SIGNAL(activated()), SLOT(avcallConfig()));
-#endif
+        /*QShortcut *sp_ss = new QShortcut(QKeySequence(tr("Ctrl+Shift+N")), this);
+        connect(sp_ss, SIGNAL(activated()), SLOT(avcallConfig()));*/
 }
 
 MainWin::~MainWin()
@@ -1403,9 +1396,8 @@ void MainWin::showNoFocus()
 
 void MainWin::avcallConfig()
 {
-#ifdef AVCALL
-	JingleRtpManager::config();
-#endif
+	if (JingleRtpManager::isSupported())
+		JingleRtpManager::config();
 }
 
 //#endif

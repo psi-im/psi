@@ -90,6 +90,8 @@
 #include "desktoputil.h"
 #include "tabmanager.h"
 #include "capsmanager.h"
+#include "avcall/jinglertp.h"
+#include "avcall/calldlg.h"
 
 
 #include "AutoUpdater/AutoUpdater.h"
@@ -100,6 +102,9 @@
 #ifdef Q_WS_MAC
 #include "mac_dock.h"
 #endif
+
+// from opt_avcall.cpp
+extern void options_avcall_update();
 
 //----------------------------------------------------------------------------
 // PsiConObject
@@ -333,7 +338,7 @@ bool PsiCon::init()
 	// to options.xml only.
 	QString backupfile = optionsFile() + "-preOptionsMigration";
 	if (QFile::exists(pathToProfileConfig(activeProfile))
-		&& QFile::exists(optionsFile())
+		&& PsiOptions::exists(optionsFile())
 		&& !QFile::exists(backupfile)) {
 		QFile::copy(optionsFile(), backupfile);
 	}
@@ -374,8 +379,8 @@ bool PsiCon::init()
 	FancyLabel::setSmallFontSize( common_smallFontSize );
 	
 	
-	if (!QFile::exists(optionsFile()) && !QFile::exists(pathToProfileConfig(activeProfile))) {
-		if (!options->load(":/options/newprofile.xml")) {
+	if (!PsiOptions::exists(optionsFile())) {
+		if (!options->newProfile()) {
 			qWarning("ERROR: Failed to new profile default options");
 		}
 	}
@@ -578,6 +583,15 @@ bool PsiCon::init()
 	connect(ActiveProfiles::instance(), SIGNAL(openUri(const QUrl &)), SLOT(doOpenUri(const QUrl &)));
 
 	DesktopUtil::setUrlHandler("xmpp", this, "doOpenUri");
+
+	if(JingleRtpManager::isSupported()) {
+		options_avcall_update();
+		JingleRtpManager::setAudioOutDevice(PsiOptions::instance()->getOption("options.media.devices.audio-output").toString());
+		JingleRtpManager::setAudioInDevice(PsiOptions::instance()->getOption("options.media.devices.audio-input").toString());
+		JingleRtpManager::setVideoInDevice(PsiOptions::instance()->getOption("options.media.devices.video-input").toString());
+		JingleRtpManager::setBasePort(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt());
+		JingleRtpManager::setExternalAddress(PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString());
+	}
 
 	return true;
 }
@@ -1093,6 +1107,14 @@ void PsiCon::slotApplyOptions()
 
 	updateS5BServerAddresses();
 
+	if(JingleRtpManager::isSupported()) {
+		JingleRtpManager::setAudioOutDevice(PsiOptions::instance()->getOption("options.media.devices.audio-output").toString());
+		JingleRtpManager::setAudioInDevice(PsiOptions::instance()->getOption("options.media.devices.audio-input").toString());
+		JingleRtpManager::setVideoInDevice(PsiOptions::instance()->getOption("options.media.devices.video-input").toString());
+		JingleRtpManager::setBasePort(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt());
+		JingleRtpManager::setExternalAddress(PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString());
+	}
+
 	// mainwin stuff
 	d->mainwin->setWindowOpts(PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool(), (PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool()));
 	d->mainwin->setUseDock(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool());
@@ -1282,6 +1304,22 @@ void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 		e->account()->cpUpdate(*u);
 		if(ft) {
 			FileRequestDlg *w = new FileRequestDlg(fe->timeStamp(), ft, e->account());
+			bringToFront(w);
+		}
+		return;
+	}
+
+	if(e->type() == PsiEvent::AvCall) {
+		AvCallEvent *ae = (AvCallEvent *)e;
+		JingleRtpSession *sess = ae->takeJingleRtpSession();
+		e->account()->eventQueue()->dequeue(e);
+		e->account()->queueChanged();
+		e->account()->cpUpdate(*u);
+		if(sess) {
+			//FileRequestDlg *w = new FileRequestDlg(fe->timeStamp(), ft, e->account());
+			CallDlg *w = new CallDlg(e->account(), 0);
+			w->setAttribute(Qt::WA_DeleteOnClose);
+			w->setIncoming(sess);
 			bringToFront(w);
 		}
 		return;

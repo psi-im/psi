@@ -67,6 +67,15 @@ bool AtomicXmlFile::saveDocument(const QDomDocument& doc) const
 	return true;
 }
 
+
+QStringList AtomicXmlFile::loadCandidateList() const {
+	QStringList fileNames;
+	fileNames << fileName_
+	          << tempFileName()
+	          << backupFileName();
+	return fileNames;
+}
+
 /**
  * Tries to load \a doc from config file, or if that fails, from a back up.
  */
@@ -74,14 +83,12 @@ bool AtomicXmlFile::loadDocument(QDomDocument* doc) const
 {
 	Q_ASSERT(doc);
 
-	QStringList fileNames;
-	fileNames << fileName_
-	          << tempFileName()
-	          << backupFileName();
 
-	foreach(QString fileName, fileNames)
-		if (loadDocument(doc, fileName))
+	foreach(QString fileName, loadCandidateList()) {
+		if (loadDocument(doc, fileName)) {
 			return true;
+		}
+	}
 
 	return false;
 }
@@ -143,3 +150,21 @@ bool AtomicXmlFile::loadDocument(QDomDocument* doc, QString fileName) const
 	file.close();
 	return true;
 }
+
+/**
+ * Check if an AtomicXmlFile exists.
+ * returns true if any of the files loadDocument tries to read exists,
+ * it *doesn't* check that there is at least one uncorupted file.
+ */
+bool AtomicXmlFile::exists(QString fileName) {
+	AtomicXmlFile tmp(fileName);
+
+	foreach(QString fileName, tmp.loadCandidateList()) {
+		if (QFile::exists(fileName)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+

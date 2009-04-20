@@ -99,6 +99,11 @@
 	</icon>
 
 	<icon>
+		<x xmlns='name'>psi/call</x>
+		<object mime='image/png'>call.png</object>
+	</icon>
+
+	<icon>
 		<x xmlns='name'>psi/connect</x>
 		<x xmlns='type'>animation</x>
 		<object mime='image/png'>online.dimming.png</object>

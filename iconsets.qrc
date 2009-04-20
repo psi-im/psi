@@ -3,6 +3,7 @@
 	<qresource>
 		<file>iconsets/roster/default/ask.png</file>
 		<file>iconsets/roster/default/away.png</file>
+		<file>iconsets/roster/default/call.png</file>
 		<file>iconsets/roster/default/chat.fading.png</file>
 		<file>iconsets/roster/default/online.dimming.png</file>
 		<file>iconsets/roster/default/dnd.png</file>

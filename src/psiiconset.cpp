@@ -491,6 +491,9 @@ PsiIcon *PsiIconset::event2icon(PsiEvent *e)
 	else if(e->type() == PsiEvent::File) {
 		icon = "psi/file";
 	}
+	else if(e->type() == PsiEvent::AvCall) {
+		icon = "psi/call";
+	}
 	else {
 		icon = "psi/system";
 	}

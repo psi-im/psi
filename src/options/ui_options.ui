@@ -77,25 +77,8 @@
         </widget>
        </item>
        <item>
-        <widget class="Q3WidgetStack" name="ws_tabs" >
-         <property name="sizePolicy" >
-          <sizepolicy>
-           <hsizetype>7</hsizetype>
-           <vsizetype>3</vsizetype>
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <widget class="QWidget" name="WStackPage" >
-          <property name="geometry" >
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>268</width>
-            <height>201</height>
-           </rect>
-          </property>
-         </widget>
+        <widget class="QStackedWidget" name="ws_tabs">
+         <widget class="QWidget" name="WStackPage"/>
         </widget>
        </item>
       </layout>
@@ -177,9 +160,6 @@
  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
  <customwidgets>
   <customwidget>
-   <class>Q3WidgetStack</class>
-   <extends>Q3WidgetStack</extends>
-   <header>q3widgetstack.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

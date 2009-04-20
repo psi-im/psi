@@ -1251,11 +1251,8 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		}
 
 		// Voice call
-#ifdef AVCALL
-		if(!isAgent) {
-#else
-		if(d->pa->voiceCaller() && !isAgent) {
-#endif
+		if(d->pa->jingleRtpManager() && !isAgent) {
+		//if(d->pa->voiceCaller() && !isAgent) {
 			pm.insertItem(IconsetFactory::icon("psi/voice").icon(), tr("Voice Call"), 24);
 			if(!online) {
 				pm.setItemEnabled(24, false);
@@ -3259,13 +3256,13 @@ void ContactViewItem::setOpen(bool o)
 	Q3ListViewItem::setOpen(o);
 	drawGroupIcon();
 
-	// save state
-	UserAccount::GroupData gd = d->groupData();
-	gd.open = o;
-	d->groupState()->insert(d->getGroupName(), gd);
-
 	if (!((ContactView *)listView())->isApplyingFilter()) {
 		d->prefilterOpen = o;
+
+		// save state
+		UserAccount::GroupData gd = d->groupData();
+		gd.open = o;
+		d->groupState()->insert(d->getGroupName(), gd);
 	}
 }
 
