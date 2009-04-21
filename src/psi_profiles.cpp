@@ -265,6 +265,11 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 
 	stunHost = o->getOption(base + ".stun-host").toString();
 	stunPort = o->getOption(base + ".stun-port").toInt();
+	// oops, everyone is getting 0 as a stun port for the first run.
+	//   this code should fix that.  had i done this right the first
+	//   time, i'd instead want to check for the existence of the option
+	if(stunPort <= 0)
+		stunPort = 3478;
 }
 
 void UserAccount::toOptions(OptionsTree *o, QString base)
