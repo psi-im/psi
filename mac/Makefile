@@ -26,7 +26,7 @@ PSI_DIR=..
 
 NAME=Barracuda_IM_Client
 #VERSION=0.11-devel_$(shell date +"%Y%m%d")_debug
-VERSION=3.4.0
+VERSION=4.0.0
 FILES=Barracuda.app 
 DISK_DIR=disk
 ifneq ($(BUILD),no)

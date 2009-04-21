@@ -1,6 +1,6 @@
-Barracuda IM Client 3.4.0
+Barracuda IM Client 4.0.0
 -------------------------
-Date: February 17th, 2008
+Date: April 21st, 2009
 
 Barracuda Networks - http://www.barracudanetworks.com/
 
@@ -14,7 +14,7 @@ Barracuda Networks - http://www.barracudanetworks.com/
 
 Changes
 -------
-  New in 3.4.0
+  New in 4.0.0
   - Add upgrade notifications to Mac and Linux versions
 
   New in 3.3.2
@@ -51,25 +51,6 @@ Changes
   - Upgrade to Psi 0.11 client base
   - Brand new theme and UI
   - Too many fixes and features to name
-
-  New in 2.2.5
-  - Typing notifications
-  - Tabbed chatting
-  - Chat window grows vertically as you type
-  - Redesigned preferences window
-  - Other small bugfixes and features
-
-  New in 2.1.1
-  - Support for new Barracuda IM server firmware
-  - Fix random crash during regular usage that some users experienced.
-
-  New in 2.1.0
-  - User search in contact view list.
-  - Enhanced look(Icons in menu items, different icon modes).
-  - Replaced add user tool with a wizard.
-  - Multi-language support.
-  - Fix for "invisible" icon under windows in 16bit graphics mode.
-  - Fix for opening multiple pages when a link is clicked in a chat.
 
 
 Description
