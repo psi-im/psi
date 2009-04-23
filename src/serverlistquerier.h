@@ -42,6 +42,7 @@ protected slots:
 
 private:
 	QHttp* http_;
+	int redirectCount_;
 };
 
 #endif
