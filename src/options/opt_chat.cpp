@@ -43,7 +43,6 @@ QWidget *OptionsTabChat::widget()
 		return 0;
 
 	w = new OptChatUI();
-	connect(w, SIGNAL(useTabbedChat_stateChanged_relay(int)), SLOT(useTabbedChat_stateChanged(int)));
 	OptChatUI *d = (OptChatUI *)w;
 
 	bg_defAct = new QButtonGroup;
