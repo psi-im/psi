@@ -254,14 +254,14 @@ void PsiMain::bail()
 
 int main(int argc, char *argv[])
 {
-	PsiApplication app(argc, argv);
-	// it must be initialized first in order for ApplicationInfo::resourcesDir() to work
 	QCA::Initializer init;
 
 #ifdef Q_WS_MAC
 	CocoaInitializer cocoaInitializer;
 #endif
 
+	// it must be initialized first in order for ApplicationInfo::resourcesDir() to work
+	PsiApplication app(argc, argv);
 	QApplication::addLibraryPath(ApplicationInfo::resourcesDir());
 	QApplication::addLibraryPath(ApplicationInfo::homeDir());
 	QApplication::setQuitOnLastWindowClosed(false);
