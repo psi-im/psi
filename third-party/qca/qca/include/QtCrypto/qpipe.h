@@ -38,7 +38,7 @@
 #endif
 
 #ifdef QPIPE_SECURE
-# include <QtCrypto>
+# include "QtCrypto"
 #else
 # define QCA_EXPORT
 #endif

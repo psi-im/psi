@@ -61,6 +61,7 @@ class Global
 public:
 	int refs;
 	bool secmem;
+	bool loaded;
 	bool first_scan;
 	QString app_name;
 	QMutex name_mutex;
@@ -79,6 +80,7 @@ public:
 	{
 		refs = 0;
 		secmem = false;
+		loaded = false;
 		first_scan = false;
 		rng = 0;
 		logger = 0;
@@ -94,6 +96,17 @@ public:
 		manager = 0;
 		delete logger;
 		logger = 0;
+	}
+
+	void ensure_loaded()
+	{
+		// probably we shouldn't overload scan mutex, or else rename it
+		QMutexLocker locker(&scan_mutex);
+		if(!loaded)
+		{
+			loaded = true;
+			manager->setDefault(create_default_provider()); // manager owns it
+		}
 	}
 
 	bool ensure_first_scan()
@@ -213,8 +226,6 @@ void init(MemoryMode mode, int prealloc)
 	// plugins that have active objects (notably KeyStore).  we'll use a
 	// post routine to force qca to deinit first.
 	qAddPostRoutine(deinit);
-
-	global->manager->setDefault(create_default_provider()); // manager owns it
 }
 
 void init()
@@ -244,6 +255,15 @@ static bool global_check()
 	return true;
 }
 
+static bool global_check_load()
+{
+	Q_ASSERT(global);
+	if(!global)
+		return false;
+	global->ensure_loaded();
+	return true;
+}
+
 QMutex *global_random_mutex()
 {
 	return &global->rng_mutex;
@@ -266,7 +286,7 @@ bool haveSecureMemory()
 
 bool haveSecureRandom()
 {
-	if(!global_check())
+	if(!global_check_load())
 		return false;
 
 	QMutexLocker locker(global_random_mutex());
@@ -278,7 +298,7 @@ bool haveSecureRandom()
 
 bool isSupported(const QStringList &features, const QString &provider)
 {
-	if(!global_check())
+	if(!global_check_load())
 		return false;
 
 	// single
@@ -319,7 +339,7 @@ bool isSupported(const char *features, const QString &provider)
 
 QStringList supportedFeatures()
 {
-	if(!global_check())
+	if(!global_check_load())
 		return QStringList();
 
 	// query all features
@@ -329,7 +349,7 @@ QStringList supportedFeatures()
 
 QStringList defaultFeatures()
 {
-	if(!global_check())
+	if(!global_check_load())
 		return QStringList();
 
 	return global->manager->find("default")->features();
@@ -337,7 +357,7 @@ QStringList defaultFeatures()
 
 ProviderList providers()
 {
-	if(!global_check())
+	if(!global_check_load())
 		return ProviderList();
 
 	global->ensure_first_scan();
@@ -347,7 +367,7 @@ ProviderList providers()
 
 bool insertProvider(Provider *p, int priority)
 {
-	if(!global_check())
+	if(!global_check_load())
 		return false;
 
 	global->ensure_first_scan();
@@ -357,7 +377,7 @@ bool insertProvider(Provider *p, int priority)
 
 void setProviderPriority(const QString &name, int priority)
 {
-	if(!global_check())
+	if(!global_check_load())
 		return;
 
 	global->ensure_first_scan();
@@ -367,7 +387,7 @@ void setProviderPriority(const QString &name, int priority)
 
 int providerPriority(const QString &name)
 {
-	if(!global_check())
+	if(!global_check_load())
 		return -1;
 
 	global->ensure_first_scan();
@@ -377,7 +397,7 @@ int providerPriority(const QString &name)
 
 Provider *findProvider(const QString &name)
 {
-	if(!global_check())
+	if(!global_check_load())
 		return 0;
 
 	global->ensure_first_scan();
@@ -387,7 +407,7 @@ Provider *findProvider(const QString &name)
 
 Provider *defaultProvider()
 {
-	if(!global_check())
+	if(!global_check_load())
 		return 0;
 
 	return global->manager->find("default");
@@ -395,7 +415,7 @@ Provider *defaultProvider()
 
 void scanForPlugins()
 {
-	if(!global_check())
+	if(!global_check_load())
 		return;
 
 	global->scan();
@@ -404,7 +424,7 @@ void scanForPlugins()
 
 void unloadAllPlugins()
 {
-	if(!global_check())
+	if(!global_check_load())
 		return;
 
 	global->unloadAllPlugins();
@@ -412,7 +432,7 @@ void unloadAllPlugins()
 
 QString pluginDiagnosticText()
 {
-	if(!global_check())
+	if(!global_check_load())
 		return QString();
 
 	return global->manager->diagnosticText();
@@ -420,7 +440,7 @@ QString pluginDiagnosticText()
 
 void clearPluginDiagnosticText()
 {
-	if(!global_check())
+	if(!global_check_load())
 		return;
 
 	global->manager->clearDiagnosticText();
@@ -428,7 +448,7 @@ void clearPluginDiagnosticText()
 
 void appendPluginDiagnosticText(const QString &text)
 {
-	if(!global_check())
+	if(!global_check_load())
 		return;
 
 	global->manager->appendDiagnosticText(text);
@@ -436,7 +456,7 @@ void appendPluginDiagnosticText(const QString &text)
 
 void setProperty(const QString &name, const QVariant &value)
 {
-	if(!global_check())
+	if(!global_check_load())
 		return;
 
 	QMutexLocker locker(&global->prop_mutex);
@@ -446,7 +466,7 @@ void setProperty(const QString &name, const QVariant &value)
 
 QVariant getProperty(const QString &name)
 {
-	if(!global_check())
+	if(!global_check_load())
 		return QVariant();
 
 	QMutexLocker locker(&global->prop_mutex);
@@ -519,7 +539,7 @@ static bool writeConfig(const QString &name, const QVariantMap &config, bool sys
 
 void setProviderConfig(const QString &name, const QVariantMap &config)
 {
-	if(!global_check())
+	if(!global_check_load())
 		return;
 
 	if(!configIsValid(config))
@@ -536,7 +556,7 @@ void setProviderConfig(const QString &name, const QVariantMap &config)
 
 QVariantMap getProviderConfig(const QString &name)
 {
-	if(!global_check())
+	if(!global_check_load())
 		return QVariantMap();
 
 	QVariantMap conf;
@@ -576,7 +596,7 @@ QVariantMap getProviderConfig(const QString &name)
 
 void saveProviderConfig(const QString &name)
 {
-	if(!global_check())
+	if(!global_check_load())
 		return;
 
 	QMutexLocker locker(&global->config_mutex);
@@ -769,7 +789,7 @@ static inline Provider::Context *doCreateContext(Provider *p, const QString &typ
 
 Provider::Context *getContext(const QString &type, const QString &provider)
 {
-	if(!global_check())
+	if(!global_check_load())
 		return 0;
 
 	Provider *p;
@@ -784,7 +804,7 @@ Provider::Context *getContext(const QString &type, const QString &provider)
 
 Provider::Context *getContext(const QString &type, Provider *_p)
 {
-	if(!global_check())
+	if(!global_check_load())
 		return 0;
 
 	Provider *p;

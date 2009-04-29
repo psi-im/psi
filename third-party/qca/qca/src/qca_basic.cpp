@@ -212,17 +212,17 @@ void Hash::update(const MemoryRegion &a)
 
 void Hash::update(const QByteArray &a)
 {
-	update( SecureArray( a ) );
+	update(MemoryRegion(a));
 }
 
 void Hash::update(const char *data, int len)
 {
-	if ( len < 0 )
-		len = qstrlen( data );
-	if ( 0 == len )
+	if(len < 0)
+		len = qstrlen(data);
+	if(len == 0)
 		return;
 
-	update(QByteArray::fromRawData(data, len));
+	update(MemoryRegion(QByteArray::fromRawData(data, len)));
 }
 
 // Reworked from KMD5, from KDE's kdelibs

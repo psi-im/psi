@@ -308,7 +308,8 @@ ProviderManager::ProviderManager()
 
 ProviderManager::~ProviderManager()
 {
-	def->deinit();
+	if(def)
+		def->deinit();
 	unloadAll();
 	delete def;
 	g_pluginman = 0;
