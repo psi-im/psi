@@ -32,6 +32,7 @@ public:
 	PsiAccount *pa;
 	bool incoming;
 	bool active;
+	bool activated;
 	JingleRtpSession *sess;
 	PsiMedia::VideoWidget *vw_remote;
 
@@ -39,31 +40,56 @@ public:
 		QObject(_q),
 		q(_q),
 		active(false),
+		activated(false),
 		sess(0)
 	{
 		ui.setupUi(q);
-		q->setWindowTitle("Voice Call");
+		q->setWindowTitle(tr("Voice Call"));
+
+		ui.lb_bandwidth->setEnabled(false);
+		ui.cb_bandwidth->setEnabled(false);
+		connect(ui.ck_useVideo, SIGNAL(toggled(bool)), ui.lb_bandwidth, SLOT(setEnabled(bool)));
+		connect(ui.ck_useVideo, SIGNAL(toggled(bool)), ui.cb_bandwidth, SLOT(setEnabled(bool)));
+
+		ui.cb_bandwidth->addItem(tr("High (1Mbps)"), 1000);
+		ui.cb_bandwidth->addItem(tr("Average (400Kbps)"), 400);
+		ui.cb_bandwidth->addItem(tr("Low (160Kbps)"), 160);
+		ui.cb_bandwidth->setCurrentItem(1);
+
+		if(!JingleRtpManager::isVideoSupported())
+		{
+			ui.ck_useVideo->hide();
+			ui.lb_bandwidth->hide();
+			ui.cb_bandwidth->hide();
+		}
 
 		connect(ui.pb_accept, SIGNAL(clicked()), SLOT(ok_clicked()));
 		connect(ui.pb_reject, SIGNAL(clicked()), SLOT(cancel_clicked()));
+
+		ui.pb_accept->setDefault(true);
+		ui.pb_accept->setFocus();
+
+		q->resize(q->minimumSize());
 	}
 
 	~Private()
 	{
-		sess->setIncomingVideo(0);
-		sess->deleteLater();
+		if(sess)
+		{
+			sess->setIncomingVideo(0);
+			sess->deleteLater();
+		}
 	}
 
 	void setOutgoing(const XMPP::Jid &jid)
 	{
 		incoming = false;
-		ui.pb_accept->hide();
-		ui.pb_reject->setText("&Cancel");
-		ui.lb_status->setText(QString("Calling %1 ...").arg(jid.full()));
-		sess = pa->jingleRtpManager()->createOutgoing();
-		connect(sess, SIGNAL(activated()), SLOT(sess_activated()));
-		connect(sess, SIGNAL(rejected()), SLOT(sess_rejected()));
-		sess->connectToJid(jid);
+
+		ui.le_to->setText(jid.full());
+
+		ui.pb_reject->setText(tr("&Close"));
+		ui.pb_accept->setText(tr("C&all"));
+		ui.lb_status->setText(tr("Ready"));
 	}
 
 	void setIncoming(JingleRtpSession *_sess)
@@ -72,41 +98,107 @@ public:
 		sess = _sess;
 		connect(sess, SIGNAL(activated()), SLOT(sess_activated()));
 		connect(sess, SIGNAL(rejected()), SLOT(sess_rejected()));
-		ui.lb_status->setText(QString("Accept call from %1 ?").arg(sess->jid().full()));
+
+		ui.lb_to->setText(tr("From:"));
+		ui.le_to->setText(sess->jid().full());
+		ui.le_to->setReadOnly(true);
+
+		if(sess->mode() == JingleRtpSession::Video || sess->mode() == JingleRtpSession::Both)
+		{
+			ui.ck_useVideo->setChecked(true);
+
+			// video-only session, don't allow deselecting video
+			if(sess->mode() == JingleRtpSession::Video)
+				ui.ck_useVideo->setEnabled(false);
+		}
+
+		ui.lb_status->setText(tr("Accept call?"));
 	}
 
 private slots:
 	void ok_clicked()
 	{
-		sess->accept();
-		ui.pb_accept->setEnabled(false);
+		JingleRtpSession::Mode mode = JingleRtpSession::Audio;
+		int kbps = -1;
+		if(ui.ck_useVideo->isChecked())
+		{
+			mode = JingleRtpSession::Both;
+			kbps = ui.cb_bandwidth->itemData(ui.cb_bandwidth->currentIndex()).toInt();
+		}
+
+		if(!incoming)
+		{
+			ui.le_to->setReadOnly(true);
+			ui.le_to->setEnabled(false);
+			ui.ck_useVideo->setEnabled(false);
+			ui.cb_bandwidth->setEnabled(false);
+
+			ui.pb_accept->setEnabled(false);
+			ui.pb_reject->setText(tr("&Cancel"));
+			ui.pb_reject->setFocus();
+			ui.busy->start();
+			ui.lb_status->setText(tr("Calling..."));
+
+			sess = pa->jingleRtpManager()->createOutgoing();
+			connect(sess, SIGNAL(activated()), SLOT(sess_activated()));
+			connect(sess, SIGNAL(rejected()), SLOT(sess_rejected()));
+
+			active = true;
+			sess->connectToJid(ui.le_to->text(), mode, kbps);
+		}
+		else
+		{
+			ui.le_to->setEnabled(false);
+			ui.ck_useVideo->setEnabled(false);
+			ui.cb_bandwidth->setEnabled(false);
+
+			ui.pb_accept->setEnabled(false);
+			ui.pb_reject->setText(tr("&Cancel"));
+			ui.pb_reject->setFocus();
+			ui.busy->start();
+			ui.lb_status->setText(tr("Accepting..."));
+
+			active = true;
+			sess->accept(mode, kbps);
+		}
 	}
 
 	void cancel_clicked()
 	{
-		//if(incoming && !active)
+		if(sess)
 			sess->reject();
 		q->close();
 	}
 
 	void sess_activated()
 	{
-		ui.lb_status->setText("Call active!");
-		if(incoming)
-			ui.pb_accept->hide();
+		ui.le_to->setEnabled(true);
+		ui.lb_bandwidth->hide();
+		ui.cb_bandwidth->hide();
 
-		ui.pb_reject->setText("&Hang up");
-		active = true;
+		if(sess->mode() == JingleRtpSession::Video || sess->mode() == JingleRtpSession::Both)
+		{
+			vw_remote = new PsiMedia::VideoWidget(q);
+			replaceWidget(ui.ck_useVideo, vw_remote);
+			sess->setIncomingVideo(vw_remote);
+			vw_remote->setMinimumSize(320, 240);
+		}
+		else
+			ui.ck_useVideo->hide();
 
-		vw_remote = new PsiMedia::VideoWidget(q);
-		replaceWidget(ui.lb_status, vw_remote);
-		sess->setIncomingVideo(vw_remote);
-		vw_remote->setMinimumSize(320, 240);
+		ui.busy->stop();
+		ui.busy->hide();
+		ui.pb_accept->hide();
+		ui.pb_reject->setText(tr("&Hang up"));
+		ui.lb_status->setText(tr("Call active"));
+		activated = true;
 	}
 
 	void sess_rejected()
 	{
-		QMessageBox::information(q, "Call ended", "Call was rejected or terminated");
+		ui.busy->stop();
+
+		QMessageBox::information(q, tr("Call ended"), tr("Call was rejected or terminated"));
 		q->close();
 	}
 };

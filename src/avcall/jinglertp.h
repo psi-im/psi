@@ -25,12 +25,21 @@ class JingleRtpSession : public QObject
 	Q_OBJECT
 
 public:
+	enum Mode
+	{
+		Audio,
+		Video,
+		Both
+	};
+
 	JingleRtpSession(const JingleRtpSession &from);
 	~JingleRtpSession();
 
 	XMPP::Jid jid() const;
-	void connectToJid(const XMPP::Jid &jid);
-	void accept();
+	Mode mode() const;
+
+	void connectToJid(const XMPP::Jid &jid, Mode mode, int kbps = -1);
+	void accept(Mode mode, int kbps = -1);
 	void reject();
 
 	void setIncomingVideo(PsiMedia::VideoWidget *widget);
@@ -55,8 +64,6 @@ class JingleRtpManager : public QObject
 public:
 	JingleRtpManager(PsiAccount *pa);
 	~JingleRtpManager();
-
-	//static JingleRtpManager *instance();
 
 	JingleRtpSession *createOutgoing();
 	JingleRtpSession *takeIncoming();

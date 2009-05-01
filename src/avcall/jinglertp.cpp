@@ -1583,7 +1583,13 @@ XMPP::Jid JingleRtpSession::jid() const
 	return d->jid;
 }
 
-void JingleRtpSession::connectToJid(const XMPP::Jid &jid)
+JingleRtpSession::Mode JingleRtpSession::mode() const
+{
+	// TODO
+	return Audio;
+}
+
+void JingleRtpSession::connectToJid(const XMPP::Jid &jid, Mode mode, int kbps)
 {
 	d->jid = jid;
 	d->init_jid = d->manager->d->pa->client()->jid();
@@ -1591,8 +1597,9 @@ void JingleRtpSession::connectToJid(const XMPP::Jid &jid)
 	d->start_send();
 }
 
-void JingleRtpSession::accept()
+void JingleRtpSession::accept(Mode mode, int kbps)
 {
+	// TODO
 	d->manager->d->accept();
 }
 
@@ -1820,11 +1827,6 @@ JingleRtpManager::~JingleRtpManager()
 	//g_manager = 0;
 }
 
-/*JingleRtpManager *JingleRtpManager::instance()
-{
-	return g_manager;
-}*/
-
 JingleRtpSession *JingleRtpManager::createOutgoing()
 {
 	// only one session allowed at a time
@@ -1859,7 +1861,10 @@ bool JingleRtpManager::isSupported()
 
 bool JingleRtpManager::isVideoSupported()
 {
-	return false;
+	if(!QString::fromLatin1(qgetenv("PSI_ENABLE_VIDEO")).isEmpty())
+		return true;
+	else
+		return false;
 }
 
 void JingleRtpManager::setSelfAddress(const QHostAddress &addr)

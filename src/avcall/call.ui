@@ -6,13 +6,48 @@
     <x>0</x>
     <y>0</y>
     <width>354</width>
-    <height>77</height>
+    <height>180</height>
    </rect>
   </property>
   <property name="windowTitle" >
    <string>Dialog</string>
   </property>
   <layout class="QVBoxLayout" >
+   <item>
+    <layout class="QHBoxLayout" >
+     <item>
+      <widget class="QLabel" name="lb_to" >
+       <property name="text" >
+        <string>To:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="le_to" />
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="ck_useVideo" >
+     <property name="text" >
+      <string>Use video</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" >
+     <item>
+      <widget class="QLabel" name="lb_bandwidth" >
+       <property name="text" >
+        <string>Sending bandwidth:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="cb_bandwidth" />
+     </item>
+    </layout>
+   </item>
    <item>
     <widget class="QLabel" name="lb_status" >
      <property name="text" >
@@ -27,14 +62,24 @@
      </property>
      <property name="sizeHint" >
       <size>
-       <width>20</width>
-       <height>40</height>
+       <width>336</width>
+       <height>16</height>
       </size>
      </property>
     </spacer>
    </item>
    <item>
+    <widget class="Line" name="line" >
+     <property name="orientation" >
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
     <layout class="QHBoxLayout" >
+     <item>
+      <widget class="BusyWidget" native="1" name="busy" />
+     </item>
      <item>
       <spacer>
        <property name="orientation" >
@@ -42,18 +87,11 @@
        </property>
        <property name="sizeHint" >
         <size>
-         <width>40</width>
-         <height>20</height>
+         <width>111</width>
+         <height>28</height>
         </size>
        </property>
       </spacer>
-     </item>
-     <item>
-      <widget class="QPushButton" name="pb_accept" >
-       <property name="text" >
-        <string>&amp;Accept</string>
-       </property>
-      </widget>
      </item>
      <item>
       <widget class="QPushButton" name="pb_reject" >
@@ -62,13 +100,31 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QPushButton" name="pb_accept" >
+       <property name="text" >
+        <string>&amp;Accept</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>BusyWidget</class>
+   <extends>QWidget</extends>
+   <header>busywidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <tabstops>
-  <tabstop>pb_accept</tabstop>
+  <tabstop>le_to</tabstop>
+  <tabstop>ck_useVideo</tabstop>
+  <tabstop>cb_bandwidth</tabstop>
   <tabstop>pb_reject</tabstop>
+  <tabstop>pb_accept</tabstop>
  </tabstops>
  <resources/>
  <connections/>
