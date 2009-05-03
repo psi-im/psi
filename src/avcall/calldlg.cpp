@@ -227,11 +227,13 @@ CallDlg::CallDlg(PsiAccount *pa, QWidget *parent) :
 {
 	d = new Private(this);
 	d->pa = pa;
+	d->pa->dialogRegister(this);
 	prep_device_opts();
 }
 
 CallDlg::~CallDlg()
 {
+	d->pa->dialogUnregister(this);
 	delete d;
 }
 

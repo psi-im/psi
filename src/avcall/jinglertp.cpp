@@ -331,6 +331,7 @@ public:
 		local_media_ready = true;
 
 		tryAccept();
+		tryActivated();
 	}
 
 	void writeRtp(const JingleRtp::RtpPacket &packet)
@@ -837,7 +838,10 @@ private:
 	void tryActivated()
 	{
 		if(session_accepted && ice_connected)
+		{
+			printf("activating!\n");
 			emit q->activated();
+		}
 	}
 
 private slots:
@@ -1166,7 +1170,7 @@ void JingleRtpManagerPrivate::push_task_incomingRequest(const XMPP::Jid &from, c
 }
 
 JingleRtpManager::JingleRtpManager(XMPP::Client *client) :
-	QObject(client)
+	QObject(0)
 {
 	d = new JingleRtpManagerPrivate(client, this);
 }

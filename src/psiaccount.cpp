@@ -918,6 +918,8 @@ PsiAccount::~PsiAccount()
 
 	d->psi->ftdlg()->killTransfers(this);
 
+	delete d->avCallManager;
+
 	if (d->voiceCaller)
 		delete d->voiceCaller;
 
