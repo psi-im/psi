@@ -32,7 +32,7 @@
 #include "psicontactlist.h"
 #include "atomicxmlfile.h"
 #include "psioptions.h"
-#include "avcall/jinglertp.h"
+#include "avcall/avcall.h"
 
 // FIXME renames those
 const int eventPriorityHeadline = 0;
@@ -613,7 +613,7 @@ void StatusEvent::setStatus(const XMPP::Status& s)
 //----------------------------------------------------------------------------
 // AvCallEvent
 //----------------------------------------------------------------------------
-AvCallEvent::AvCallEvent(const XMPP::Jid &j, JingleRtpSession *_sess, PsiAccount *acc)
+AvCallEvent::AvCallEvent(const XMPP::Jid &j, AvCall *_sess, PsiAccount *acc)
 :PsiEvent(acc)
 {
 	v_from = j;
@@ -624,7 +624,7 @@ AvCallEvent::AvCallEvent(const AvCallEvent &from)
 :PsiEvent(from.account())
 {
 	v_from = from.v_from;
-	sess = new JingleRtpSession(*from.sess);
+	sess = new AvCall(*from.sess);
 }
 
 AvCallEvent::~AvCallEvent()
@@ -642,9 +642,9 @@ void AvCallEvent::setFrom(const XMPP::Jid &j)
 	v_from = j;
 }
 
-JingleRtpSession *AvCallEvent::takeJingleRtpSession()
+AvCall *AvCallEvent::takeAvCall()
 {
-	JingleRtpSession *_sess = sess;
+	AvCall *_sess = sess;
 	sess = 0;
 	return _sess;
 }

@@ -1,22 +1,30 @@
+/*
+ * Copyright (C) 2009  Barracuda Networks, Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 #include "jinglertp.h"
 
-#include <QtCore>
-#include <QtNetwork>
-#include <QtGui>
+#include <stdio.h>
+#include <stdlib.h>
 #include <QtCrypto>
-#include "../psimedia/psimedia.h"
-#include "ui_config.h"
-#include "xmpp_client.h"
-#include "xmpp_task.h"
-#include "xmpp_xmlcommon.h"
-#include "psiaccount.h"
 #include "iris/netnames.h"
-#include "iris/ice176.h"
+#include "xmpp_client.h"
 
-/*
-
-private slots:
-*/
+// TODO: reject offers that don't contain at least one of audio or video
 
 static QChar randomPrintableChar()
 {
@@ -41,932 +49,115 @@ static QString randomCredential(int len)
 	return out;
 }
 
-static QDomElement candidateToElement(QDomDocument *doc, const XMPP::Ice176::Candidate &c)
-{
-	QDomElement e = doc->createElement("candidate");
-	e.setAttribute("component", QString::number(c.component));
-	e.setAttribute("foundation", c.foundation);
-	e.setAttribute("generation", QString::number(c.generation));
-	if(!c.id.isEmpty())
-		e.setAttribute("id", c.id);
-	e.setAttribute("ip", c.ip.toString());
-	if(c.network != -1)
-		e.setAttribute("network", QString::number(c.network));
-	else // weird?
-		e.setAttribute("network", QString::number(0));
-	e.setAttribute("port", QString::number(c.port));
-	e.setAttribute("priority", QString::number(c.priority));
-	e.setAttribute("protocol", c.protocol);
-	if(!c.rel_addr.isNull())
-		e.setAttribute("rel-addr", c.rel_addr.toString());
-	if(c.rel_port != -1)
-		e.setAttribute("rel-port", QString::number(c.rel_port));
-	if(!c.rem_addr.isNull())
-		e.setAttribute("rem-addr", c.rem_addr.toString());
-	if(c.rem_port != -1)
-		e.setAttribute("rem-port", QString::number(c.rem_port));
-	e.setAttribute("type", c.type);
-	return e;
-}
-
-static XMPP::Ice176::Candidate elementToCandidate(const QDomElement &e)
-{
-	if(e.tagName() != "candidate")
-		return XMPP::Ice176::Candidate();
-
-	XMPP::Ice176::Candidate c;
-	c.component = e.attribute("component").toInt();
-	c.foundation = e.attribute("foundation");
-	c.generation = e.attribute("generation").toInt();
-	c.id = e.attribute("id");
-	c.ip = QHostAddress(e.attribute("ip"));
-	c.network = e.attribute("network").toInt();
-	c.port = e.attribute("port").toInt();
-	c.priority = e.attribute("priority").toInt();
-	c.protocol = e.attribute("protocol");
-	c.rel_addr = QHostAddress(e.attribute("rel-addr"));
-	c.rel_port = e.attribute("rel-port").toInt();
-	c.rem_addr = QHostAddress(e.attribute("rem-addr"));
-	c.rem_port = e.attribute("rem-port").toInt();
-	c.type = e.attribute("type");
-	return c;
-}
-
-static QDomElement payloadInfoToElement(QDomDocument *doc, const PsiMedia::PayloadInfo &info)
-{
-	QDomElement e = doc->createElement("payload-type");
-	e.setAttribute("id", QString::number(info.id()));
-	if(!info.name().isEmpty())
-		e.setAttribute("name", info.name());
-	e.setAttribute("clockrate", QString::number(info.clockrate()));
-	if(info.channels() > 1)
-		e.setAttribute("channels", QString::number(info.channels()));
-	if(info.ptime() != -1)
-		e.setAttribute("ptime", QString::number(info.ptime()));
-	if(info.maxptime() != -1)
-		e.setAttribute("maxptime", QString::number(info.maxptime()));
-	foreach(const PsiMedia::PayloadInfo::Parameter &p, info.parameters())
-	{
-		QDomElement pe = doc->createElement("parameter");
-		pe.setAttribute("name", p.name);
-		pe.setAttribute("value", p.value);
-		e.appendChild(pe);
-	}
-	return e;
-}
-
-static PsiMedia::PayloadInfo elementToPayloadInfo(const QDomElement &e)
-{
-	if(e.tagName() != "payload-type")
-		return PsiMedia::PayloadInfo();
-
-	PsiMedia::PayloadInfo out;
-	bool ok;
-	int x;
-
-	x = e.attribute("id").toInt(&ok);
-	if(!ok)
-		return PsiMedia::PayloadInfo();
-	out.setId(x);
-
-	out.setName(e.attribute("name"));
-
-	x = e.attribute("clockrate").toInt(&ok);
-	if(!ok)
-		return PsiMedia::PayloadInfo();
-	out.setClockrate(x);
-
-	x = e.attribute("channels").toInt(&ok);
-	if(ok)
-		out.setChannels(x);
-
-	x = e.attribute("ptime").toInt(&ok);
-	if(ok)
-		out.setPtime(x);
-
-	x = e.attribute("maxptime").toInt(&ok);
-	if(ok)
-		out.setMaxptime(x);
-
-	QList<PsiMedia::PayloadInfo::Parameter> plist;
-	for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling())
-	{
-		if(!n.isElement())
-			continue;
-
-		QDomElement pe = n.toElement();
-		if(pe.tagName() == "parameter")
-		{
-			PsiMedia::PayloadInfo::Parameter p;
-			p.name = pe.attribute("name");
-			p.value = pe.attribute("value");
-			plist += p;
-		}
-	}
-	out.setParameters(plist);
-
-	return out;
-}
-
-Q_DECLARE_METATYPE(PsiMedia::AudioParams);
-Q_DECLARE_METATYPE(PsiMedia::VideoParams);
-
-class Configuration
-{
-public:
-	bool liveInput;
-	QString audioOutDeviceId, audioInDeviceId, videoInDeviceId;
-	QString file;
-	bool loopFile;
-	PsiMedia::AudioParams audioParams;
-	PsiMedia::VideoParams videoParams;
-
-	Configuration() :
-		liveInput(false),
-		loopFile(false)
-	{
-	}
-};
-
-static Configuration *g_config = 0;
-
-class PsiMediaFeaturesSnapshot
-{
-public:
-	QList<PsiMedia::Device> audioOutputDevices;
-	QList<PsiMedia::Device> audioInputDevices;
-	QList<PsiMedia::Device> videoInputDevices;
-	QList<PsiMedia::AudioParams> supportedAudioModes;
-	QList<PsiMedia::VideoParams> supportedVideoModes;
-
-	PsiMediaFeaturesSnapshot()
-	{
-		PsiMedia::Features f;
-		f.lookup();
-		f.waitForFinished();
-
-		audioOutputDevices = f.audioOutputDevices();
-		audioInputDevices = f.audioInputDevices();
-		videoInputDevices = f.videoInputDevices();
-		supportedAudioModes = f.supportedAudioModes();
-		supportedVideoModes = f.supportedVideoModes();
-	}
-};
-
-// get default settings
-static Configuration getDefaultConfiguration()
-{
-	Configuration config;
-	config.liveInput = true;
-	config.loopFile = true;
-
-	/*PsiMediaFeaturesSnapshot snap;
-
-	QList<PsiMedia::Device> devs;
-
-	devs = snap.audioOutputDevices;
-	if(!devs.isEmpty())
-		config.audioOutDeviceId = devs.first().id();
-
-	devs = snap.audioInputDevices;
-	if(!devs.isEmpty())
-		config.audioInDeviceId = devs.first().id();
-
-	devs = snap.videoInputDevices;
-	if(!devs.isEmpty())
-		config.videoInDeviceId = devs.first().id();
-
-	config.audioParams = snap.supportedAudioModes.first();
-	config.videoParams = snap.supportedVideoModes.first();*/
-
-	return config;
-}
-
-// adjust any invalid settings to nearby valid ones
-static Configuration adjustConfiguration(const Configuration &in, const PsiMediaFeaturesSnapshot &snap)
-{
-	Configuration out = in;
-	bool found;
-
-	if(!out.audioOutDeviceId.isEmpty())
-	{
-		found = false;
-		foreach(const PsiMedia::Device &dev, snap.audioOutputDevices)
-		{
-			if(out.audioOutDeviceId == dev.id())
-			{
-				found = true;
-				break;
-			}
-		}
-		if(!found)
-		{
-			if(!snap.audioOutputDevices.isEmpty())
-				out.audioOutDeviceId = snap.audioOutputDevices.first().id();
-			else
-				out.audioOutDeviceId.clear();
-		}
-	}
-
-	if(!out.audioInDeviceId.isEmpty())
-	{
-		found = false;
-		foreach(const PsiMedia::Device &dev, snap.audioInputDevices)
-		{
-			if(out.audioInDeviceId == dev.id())
-			{
-				found = true;
-				break;
-			}
-		}
-		if(!found)
-		{
-			if(!snap.audioInputDevices.isEmpty())
-				out.audioInDeviceId = snap.audioInputDevices.first().id();
-			else
-				out.audioInDeviceId.clear();
-		}
-	}
-
-	if(!out.videoInDeviceId.isEmpty())
-	{
-		found = false;
-		foreach(const PsiMedia::Device &dev, snap.videoInputDevices)
-		{
-			if(out.videoInDeviceId == dev.id())
-			{
-				found = true;
-				break;
-			}
-		}
-		if(!found)
-		{
-			if(!snap.videoInputDevices.isEmpty())
-				out.videoInDeviceId = snap.videoInputDevices.first().id();
-			else
-				out.videoInDeviceId.clear();
-		}
-	}
-
-	found = false;
-	foreach(const PsiMedia::AudioParams &params, snap.supportedAudioModes)
-	{
-		if(out.audioParams == params)
-		{
-			found = true;
-			break;
-		}
-	}
-	if(!found)
-		out.audioParams = snap.supportedAudioModes.first();
-
-	found = false;
-	foreach(const PsiMedia::VideoParams &params, snap.supportedVideoModes)
-	{
-		if(out.videoParams == params)
-		{
-			found = true;
-			break;
-		}
-	}
-	if(!found)
-		out.videoParams = snap.supportedVideoModes.first();
-
-	return out;
-}
-
-static void ensureConfig()
-{
-	if(!g_config)
-	{
-		g_config = new Configuration;
-		*g_config = getDefaultConfiguration();
-	}
-}
-
-class ConfigDlg : public QDialog
+// resolve external address and stun server
+// FIXME: when/if our ICE engine supports adding these dynamically, we should
+//   not have the lookups block on each other
+class Resolver : public QObject
 {
 	Q_OBJECT
 
+private:
+	XMPP::NameResolver dnsA;
+	XMPP::NameResolver dnsB;
+	QString extHost;
+	QString stunHost;
+	bool extDone;
+	bool stunDone;
+
 public:
-	Ui::Config ui;
-	Configuration config;
+	QHostAddress extAddr;
+	QHostAddress stunAddr;
 
-	ConfigDlg(const Configuration &_config, QWidget *parent = 0) :
-		QDialog(parent),
-		config(_config)
+	Resolver(QObject *parent = 0) :
+		QObject(parent),
+		dnsA(parent),
+		dnsB(parent)
 	{
-		ui.setupUi(this);
-		setWindowTitle(tr("Configure Audio/Video"));
+		connect(&dnsA, SIGNAL(resultsReady(const QList<XMPP::NameRecord> &)), SLOT(dns_resultsReady(const QList<XMPP::NameRecord> &)));
+		connect(&dnsA, SIGNAL(error(XMPP::NameResolver::Error)), SLOT(dns_error(XMPP::NameResolver::Error)));
 
-		ui.lb_audioInDevice->setEnabled(false);
-		ui.cb_audioInDevice->setEnabled(false);
-		ui.lb_videoInDevice->setEnabled(false);
-		ui.cb_videoInDevice->setEnabled(false);
-		ui.lb_file->setEnabled(false);
-		ui.le_file->setEnabled(false);
-		ui.tb_file->setEnabled(false);
-		ui.ck_loop->setEnabled(false);
+		connect(&dnsB, SIGNAL(resultsReady(const QList<XMPP::NameRecord> &)), SLOT(dns_resultsReady(const QList<XMPP::NameRecord> &)));
+		connect(&dnsB, SIGNAL(error(XMPP::NameResolver::Error)), SLOT(dns_error(XMPP::NameResolver::Error)));
+	}
 
-		connect(ui.rb_sendLive, SIGNAL(toggled(bool)), SLOT(live_toggled(bool)));
-		connect(ui.rb_sendFile, SIGNAL(toggled(bool)), SLOT(file_toggled(bool)));
-		connect(ui.tb_file, SIGNAL(clicked()), SLOT(file_choose()));
+	void start(const QString &_extHost, const QString &_stunHost)
+	{
+		extHost = _extHost;
+		stunHost = _stunHost;
 
-		PsiMediaFeaturesSnapshot snap;
-
-		ui.cb_audioOutDevice->addItem("<None>", QString());
-		foreach(const PsiMedia::Device &dev, snap.audioOutputDevices)
-			ui.cb_audioOutDevice->addItem(dev.name(), dev.id());
-
-		ui.cb_audioInDevice->addItem("<None>", QString());
-		foreach(const PsiMedia::Device &dev, snap.audioInputDevices)
-			ui.cb_audioInDevice->addItem(dev.name(), dev.id());
-
-		ui.cb_videoInDevice->addItem("<None>", QString());
-		foreach(const PsiMedia::Device &dev, snap.videoInputDevices)
-			ui.cb_videoInDevice->addItem(dev.name(), dev.id());
-
-		foreach(const PsiMedia::AudioParams &params, snap.supportedAudioModes)
+		if(!extHost.isEmpty())
 		{
-			QString codec = params.codec();
-			if(codec == "vorbis" || codec == "speex")
-				codec[0] = codec[0].toUpper();
-			else
-				codec = codec.toUpper();
-			QString hz = QString::number(params.sampleRate() / 1000);
-			QString chanstr;
-			if(params.channels() == 1)
-				chanstr = "Mono";
-			else if(params.channels() == 2)
-				chanstr = "Stereo";
-			else
-				chanstr = QString("Channels: %1").arg(params.channels());
-			QString str = QString("%1, %2KHz, %3-bit, %4").arg(codec).arg(hz).arg(params.sampleSize()).arg(chanstr);
-
-			ui.cb_audioMode->addItem(str, qVariantFromValue<PsiMedia::AudioParams>(params));
+			extDone = false;
+			dnsA.start(extHost.toLatin1());
 		}
-
-		foreach(const PsiMedia::VideoParams &params, snap.supportedVideoModes)
-		{
-			QString codec = params.codec();
-			if(codec == "theora")
-				codec[0] = codec[0].toUpper();
-			else
-				codec = codec.toUpper();
-			QString sizestr = QString("%1x%2").arg(params.size().width()).arg(params.size().height());
-			QString str = QString("%1, %2 @ %3fps").arg(codec).arg(sizestr).arg(params.fps());
-
-			ui.cb_videoMode->addItem(str, qVariantFromValue<PsiMedia::VideoParams>(params));
-		}
-
-		// the following lookups are guaranteed, since the config is
-		//   adjusted to all valid values as necessary
-		config = adjustConfiguration(config, snap);
-		ui.cb_audioOutDevice->setCurrentIndex(ui.cb_audioOutDevice->findData(config.audioOutDeviceId));
-		ui.cb_audioInDevice->setCurrentIndex(ui.cb_audioInDevice->findData(config.audioInDeviceId));
-		ui.cb_videoInDevice->setCurrentIndex(ui.cb_videoInDevice->findData(config.videoInDeviceId));
-		ui.cb_audioMode->setCurrentIndex(findAudioParamsData(ui.cb_audioMode, config.audioParams));
-		ui.cb_videoMode->setCurrentIndex(findVideoParamsData(ui.cb_videoMode, config.videoParams));
-		if(config.liveInput)
-			ui.rb_sendLive->setChecked(true);
 		else
-			ui.rb_sendFile->setChecked(true);
-		ui.le_file->setText(config.file);
-		ui.ck_loop->setChecked(config.loopFile);
-	}
+			extDone = true;
 
-	// apparently custom QVariants can't be compared, so we have to
-	//   make our own find functions for the comboboxes
-	int findAudioParamsData(QComboBox *cb, const PsiMedia::AudioParams &params)
-	{
-		for(int n = 0; n < cb->count(); ++n)
+		if(!stunHost.isEmpty())
 		{
-			if(qVariantValue<PsiMedia::AudioParams>(cb->itemData(n)) == params)
-				return n;
+			stunDone = false;
+			dnsB.start(stunHost.toLatin1());
 		}
-
-		return -1;
-	}
-
-	int findVideoParamsData(QComboBox *cb, const PsiMedia::VideoParams &params)
-	{
-		for(int n = 0; n < cb->count(); ++n)
-		{
-			if(qVariantValue<PsiMedia::VideoParams>(cb->itemData(n)) == params)
-				return n;
-		}
-
-		return -1;
-	}
-
-protected:
-	virtual void accept()
-	{
-		config.audioOutDeviceId = ui.cb_audioOutDevice->itemData(ui.cb_audioOutDevice->currentIndex()).toString();
-		config.audioInDeviceId = ui.cb_audioInDevice->itemData(ui.cb_audioInDevice->currentIndex()).toString();
-		config.audioParams = qVariantValue<PsiMedia::AudioParams>(ui.cb_audioMode->itemData(ui.cb_audioMode->currentIndex()));
-		config.videoInDeviceId = ui.cb_videoInDevice->itemData(ui.cb_videoInDevice->currentIndex()).toString();
-		config.videoParams = qVariantValue<PsiMedia::VideoParams>(ui.cb_videoMode->itemData(ui.cb_videoMode->currentIndex()));
-		config.liveInput = ui.rb_sendLive->isChecked();
-		config.file = ui.le_file->text();
-		config.loopFile = ui.ck_loop->isChecked();
-
-		QDialog::accept();
-	}
-
-private slots:
-	void live_toggled(bool on)
-	{
-		ui.lb_audioInDevice->setEnabled(on);
-		ui.cb_audioInDevice->setEnabled(on);
-		ui.lb_videoInDevice->setEnabled(on);
-		ui.cb_videoInDevice->setEnabled(on);
-	}
-
-	void file_toggled(bool on)
-	{
-		ui.lb_file->setEnabled(on);
-		ui.le_file->setEnabled(on);
-		ui.tb_file->setEnabled(on);
-		ui.ck_loop->setEnabled(on);
-	}
-
-	void file_choose()
-	{
-		QString fileName = QFileDialog::getOpenFileName(this,
-			tr("Open File"),
-			QCoreApplication::applicationDirPath(),
-			tr("Ogg Audio/Video (*.oga *.ogv *.ogg)"));
-		if(!fileName.isEmpty())
-			ui.le_file->setText(fileName);
-	}
-};
-
-using namespace XMPP;
-
-class RtpDesc
-{
-public:
-	QString media;
-	QList<PsiMedia::PayloadInfo> info;
-};
-
-class RtpTrans
-{
-public:
-	QString user;
-	QString pass;
-
-	// for transport-info and session-accept
-	QList<Ice176::Candidate> candidates;
-};
-
-class RtpContent
-{
-public:
-	QString name;
-	RtpDesc desc;
-	RtpTrans trans;
-};
-
-class JT_JingleRtp : public Task
-{
-	Q_OBJECT
-
-public:
-	QDomElement iq;
-	Jid to;
-
-	JT_JingleRtp(Task *parent) :
-		Task(parent)
-	{
-	}
-
-	~JT_JingleRtp()
-	{
-	}
-
-	void initiate(const Jid &_to, const QString &sid, const QList<RtpContent> &contentList)
-	{
-/*
-<iq from='romeo@montague.lit/orchard'
-    id='jingle1'
-    to='juliet@capulet.lit/balcony'
-    type='set'>
-  <jingle xmlns='urn:xmpp:jingle:0'
-          action='session-initiate'
-          initiator='romeo@montague.lit/orchard'
-          sid='a73sjjvkla37jfea'>
-    <content creator='initiator' name='voice'>
-      <description xmlns='urn:xmpp:jingle:apps:rtp:1' media='audio'>
-        <payload-type id='96' name='speex' clockrate='16000'/>
-      </description>
-      <transport xmlns='urn:xmpp:jingle:transports:ice-udp:0'
-                 pwd='asd88fgpdd777uzjYhagZg'
-                 ufrag='8hhy'/>
-    </content>
-  </jingle>
-</iq>
-*/
-		to = _to;
-		iq = createIQ(doc(), "set", to.full(), id());
-		QDomElement query = doc()->createElement("jingle");
-		query.setAttribute("xmlns", "urn:xmpp:jingle:1");
-		query.setAttribute("action", "session-initiate");
-		query.setAttribute("initiator", client()->jid().full());
-		query.setAttribute("sid", sid);
-		foreach(const RtpContent &c, contentList)
-		{
-			QDomElement content = doc()->createElement("content");
-			content.setAttribute("creator", "initiator");
-			content.setAttribute("name", c.name);
-
-			QDomElement description = doc()->createElement("description");
-			description.setAttribute("xmlns", "urn:xmpp:jingle:apps:rtp:1");
-			description.setAttribute("media", c.desc.media);
-			foreach(const PsiMedia::PayloadInfo &pi, c.desc.info)
-			{
-				QDomElement p = payloadInfoToElement(doc(), pi);
-				if(!p.isNull())
-					description.appendChild(p);
-			}
-			content.appendChild(description);
-
-			QDomElement transport = doc()->createElement("transport");
-			transport.setAttribute("xmlns", "urn:xmpp:jingle:transports:ice-udp:1");
-			transport.setAttribute("ufrag", c.trans.user);
-			transport.setAttribute("pwd", c.trans.pass);
-			content.appendChild(transport);
-
-			query.appendChild(content);
-		}
-		iq.appendChild(query);
-	}
-
-	void transportInfo(const Jid &_to, const Jid &initiator, const QString &sid, const QList<RtpContent> &contentList)
-	{
-/*
-<iq from='romeo@montague.lit/orchard'
-    id='info1'
-    to='juliet@capulet.lit/balcony'
-    type='set'>
-  <jingle xmlns='urn:xmpp:jingle:0'
-          action='transport-info'
-          initiator='romeo@montague.lit/orchard'
-          sid='a73sjjvkla37jfea'>
-    <content creator='initiator' name='voice'>
-      <transport xmlns='urn:xmpp:jingle:transports:ice-udp:0'
-                 pwd='asd88fgpdd777uzjYhagZg'
-                 ufrag='8hhy'>
-        <candidate component='1'
-                   foundation='1'
-                   generation='0'
-                   id='el0747fg11'
-                   ip='10.0.1.1'
-                   network='1'
-                   port='8998'
-                   priority='2130706431'
-                   protocol='udp'
-                   type='host'/>
-      </transport>
-    </content>
-  </jingle>
-</iq>
-*/
-		to = _to;
-		iq = createIQ(doc(), "set", to.full(), id());
-		QDomElement query = doc()->createElement("jingle");
-		query.setAttribute("xmlns", "urn:xmpp:jingle:1");
-		query.setAttribute("action", "transport-info");
-		query.setAttribute("initiator", initiator.full());
-		query.setAttribute("sid", sid);
-		foreach(const RtpContent &c, contentList)
-		{
-			QDomElement content = doc()->createElement("content");
-			content.setAttribute("creator", "initiator");
-			content.setAttribute("name", c.name);
-
-			QDomElement transport = doc()->createElement("transport");
-			transport.setAttribute("xmlns", "urn:xmpp:jingle:transports:ice-udp:1");
-			transport.setAttribute("ufrag", c.trans.user);
-			transport.setAttribute("pwd", c.trans.pass);
-
-			foreach(const Ice176::Candidate &ic, c.trans.candidates)
-			{
-				QDomElement e = candidateToElement(doc(), ic);
-				if(!e.isNull())
-					transport.appendChild(e);
-			}
-
-			content.appendChild(transport);
-
-			query.appendChild(content);
-		}
-		iq.appendChild(query);
-	}
-
-	void accept(const Jid &_to, const Jid &initiator, const QString &sid, const QList<RtpContent> &contentList)
-	{
-/*
-<iq from='juliet@capulet.lit/balcony'
-    id='accept1'
-    to='romeo@montague.lit/orchard'
-    type='set'>
-  <jingle xmlns='urn:xmpp:jingle:0'
-          action='session-accept'
-          initiator='romeo@montague.lit/orchard'
-          responder='juliet@capulet.lit/balcony'
-          sid='a73sjjvkla37jfea'>
-    <content creator='initiator' name='voice'>
-      <description xmlns='urn:xmpp:jingle:apps:rtp:1' media='audio'>
-        <payload-type id='96' name='speex' clockrate='16000'/>
-      </description>
-      <transport xmlns='urn:xmpp:jingle:transports:ice-udp:0'>
-        <candidate component='1'
-                   foundation='1'
-                   generation='0'
-                   ip='192.0.2.3'
-                   network='1'
-                   port='45664'
-                   priority='1694498815'
-                   protocol='udp'
-                   pwd='asd88fgpdd777uzjYhagZg'
-                   rel-addr='10.0.1.1'
-                   rel-port='8998'
-                   rem-addr='192.0.2.1'
-                   rem-port='3478'
-                   type='srflx'
-                   ufrag='8hhy'/>
-      </transport>
-    </content>
-  </jingle>
-</iq>
-*/
-		to = _to;
-		iq = createIQ(doc(), "set", to.full(), id());
-		QDomElement query = doc()->createElement("jingle");
-		query.setAttribute("xmlns", "urn:xmpp:jingle:1");
-		query.setAttribute("action", "session-accept");
-		query.setAttribute("initiator", initiator.full());
-		query.setAttribute("sid", sid);
-		foreach(const RtpContent &c, contentList)
-		{
-			QDomElement content = doc()->createElement("content");
-			content.setAttribute("creator", "initiator");
-			content.setAttribute("name", c.name);
-
-			QDomElement description = doc()->createElement("description");
-			description.setAttribute("xmlns", "urn:xmpp:jingle:apps:rtp:1");
-			description.setAttribute("media", c.desc.media);
-			foreach(const PsiMedia::PayloadInfo &pi, c.desc.info)
-			{
-				QDomElement p = payloadInfoToElement(doc(), pi);
-				if(!p.isNull())
-					description.appendChild(p);
-			}
-			content.appendChild(description);
-
-			QDomElement transport = doc()->createElement("transport");
-			transport.setAttribute("xmlns", "urn:xmpp:jingle:transports:ice-udp:1");
-			transport.setAttribute("ufrag", c.trans.user);
-			transport.setAttribute("pwd", c.trans.pass);
-
-			foreach(const Ice176::Candidate &ic, c.trans.candidates)
-			{
-				QDomElement e = candidateToElement(doc(), ic);
-				if(!e.isNull())
-					transport.appendChild(e);
-			}
-
-			content.appendChild(transport);
-
-			query.appendChild(content);
-		}
-		iq.appendChild(query);
-	}
-
-	void terminate(const Jid &_to, const Jid &initiator, const QString &sid)
-	{
-/*
-<iq from='juliet@capulet.lit/balcony'
-    id='term1'
-    to='romeo@montague.lit/orchard'
-    type='set'>
-  <jingle xmlns='urn:xmpp:jingle:0'
-          action='session-terminate'
-          initiator='romeo@montague.lit/orchard'
-          sid='a73sjjvkla37jfea'>
-    <reason>
-      <success/>
-      <text>Sorry, gotta go!</text>
-    </reason>
-  </jingle>
-</iq>
-*/
-		to = _to;
-		iq = createIQ(doc(), "set", to.full(), id());
-		QDomElement query = doc()->createElement("jingle");
-		query.setAttribute("xmlns", "urn:xmpp:jingle:1");
-		query.setAttribute("action", "session-terminate");
-		query.setAttribute("initiator", initiator.full());
-		query.setAttribute("sid", sid);
-		QDomElement reason = doc()->createElement("reason");
-		QDomElement success = doc()->createElement("success");
-		reason.appendChild(success);
-		reason.appendChild(textTag(doc(), "text", "Sorry, gotta go!"));
-		query.appendChild(reason);
-		iq.appendChild(query);
-	}
-
-	void onGo()
-	{
-		send(iq);
-	}
-
-	bool take(const QDomElement &x)
-	{
-		if(!iqVerify(x, to, id()))
-			return false;
-
-		if(x.attribute("type") == "result")
-			setSuccess();
 		else
-			setError(x);
+			stunDone = true;
 
-		return true;
-	}
-};
-
-class RtpPush
-{
-public:
-	Jid from;
-	QString sid;
-	QList<RtpContent> contentList;
-	QString iq_id;
-};
-
-class JT_PushJingleRtp : public Task
-{
-	Q_OBJECT
-
-public:
-	JT_PushJingleRtp(Task *parent) :
-		Task(parent)
-	{
-	}
-
-	~JT_PushJingleRtp()
-	{
-	}
-
-	void respondSuccess(const Jid &to, const QString &id)
-	{
-		QDomElement iq = createIQ(doc(), "result", to.full(), id);
-		send(iq);
-	}
-
-	void respondError(const Jid &to, const QString &id, int code, const QString &str)
-	{
-		QDomElement iq = createIQ(doc(), "error", to.full(), id);
-		QDomElement err = textTag(doc(), "error", str);
-		err.setAttribute("code", QString::number(code));
-		iq.appendChild(err);
-		send(iq);
-	}
-
-	bool take(const QDomElement &e)
-	{
-		// must be an iq-set tag
-		if(e.tagName() != "iq")
-			return false;
-		if(e.attribute("type") != "set")
-			return false;
-
-		QDomElement je;
-		for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling())
-		{
-			if(!n.isElement())
-				continue;
-
-			QDomElement e = n.toElement();
-			if(e.tagName() == "jingle" && e.attribute("xmlns") == "urn:xmpp:jingle:1")
-			{
-				je = e;
-				break;
-			}
-		}
-
-		if(je.isNull())
-			return false;
-
-		Jid from = e.attribute("from");
-		QString iq_id = e.attribute("id");
-
-		QString action = je.attribute("action");
-		if(action != "session-initiate" && action != "transport-info" && action != "session-accept" && action != "session-terminate")
-		{
-			respondError(from, iq_id, 400, QString());
-			return true;
-		}
-
-		RtpPush push;
-		push.from = from;
-		push.iq_id = iq_id;
-		push.sid = je.attribute("sid");
-
-		if(action == "session-terminate")
-		{
-			emit incomingTerminate(push);
-			return true;
-		}
-
-		for(QDomNode n = je.firstChild(); !n.isNull(); n = n.nextSibling())
-		{
-			if(!n.isElement())
-				continue;
-
-			QDomElement e = n.toElement();
-			printf("child: [%s]\n", qPrintable(e.tagName()));
-			if(e.tagName() != "content")
-				continue;
-
-			RtpContent c;
-			c.name = e.attribute("name");
-
-			for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling())
-			{
-				if(!n.isElement())
-					continue;
-
-				QDomElement e = n.toElement();
-				printf("  child: [%s]\n", qPrintable(e.tagName()));
-				if(e.tagName() == "description" && e.attribute("xmlns") == "urn:xmpp:jingle:apps:rtp:1")
-				{
-					c.desc.media = e.attribute("media");
-
-					for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling())
-					{
-						if(!n.isElement())
-							continue;
-
-						QDomElement e = n.toElement();
-						printf("    child: [%s]\n", qPrintable(e.tagName()));
-						PsiMedia::PayloadInfo pi = elementToPayloadInfo(e);
-						if(!pi.isNull())
-							c.desc.info += pi;
-						else
-							printf("error processing element as <payload-type>\n");
-					}
-
-					printf("got %d codecs from remote\n", c.desc.info.count());
-				}
-				else if(e.tagName() == "transport" && e.attribute("xmlns") == "urn:xmpp:jingle:transports:ice-udp:1")
-				{
-					c.trans.user = e.attribute("ufrag");
-					c.trans.pass = e.attribute("pwd");
-
-					for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling())
-					{
-						if(!n.isElement())
-							continue;
-
-						QDomElement e = n.toElement();
-						printf("    child: [%s]\n", qPrintable(e.tagName()));
-						Ice176::Candidate ic = elementToCandidate(e);
-						if(!ic.type.isEmpty())
-							c.trans.candidates += ic;
-					}
-				}
-				else
-				{
-					respondError(from, iq_id, 400, QString());
-					return true;
-				}
-			}
-
-			push.contentList += c;
-		}
-
-		if(action == "session-initiate")
-			emit incomingInitiate(push);
-		else if(action == "transport-info")
-			emit incomingTransportInfo(push);
-		else // session-accept
-			emit incomingAccept(push);
-
-		return true;
+		if(extDone && stunDone)
+			QMetaObject::invokeMethod(this, "finished", Qt::QueuedConnection);
 	}
 
 signals:
-	void incomingInitiate(const RtpPush &push);
-	void incomingTransportInfo(const RtpPush &push);
-	void incomingAccept(const RtpPush &push);
-	void incomingTerminate(const RtpPush &push);
+	void finished();
+
+private slots:
+	void dns_resultsReady(const QList<XMPP::NameRecord> &results)
+	{
+		XMPP::NameResolver *dns = (XMPP::NameResolver *)sender();
+
+		// FIXME: support more than one address?
+		QHostAddress addr = results.first().address();
+
+		if(dns == &dnsA)
+		{
+			extAddr = addr;
+			extDone = true;
+			tryFinish();
+		}
+		else // dnsB
+		{
+			stunAddr = addr;
+			stunDone = true;
+			tryFinish();
+		}
+	}
+
+	void dns_error(XMPP::NameResolver::Error e)
+	{
+		Q_UNUSED(e);
+
+		XMPP::NameResolver *dns = (XMPP::NameResolver *)sender();
+
+		if(dns == &dnsA)
+		{
+			extDone = true;
+			tryFinish();
+		}
+		else // dnsB
+		{
+			stunDone = true;
+			tryFinish();
+		}
+	}
+
+private:
+	void tryFinish()
+	{
+		if(extDone && stunDone)
+			emit finished();
+	}
 };
 
 //----------------------------------------------------------------------------
-// JingleRtpSession
+// JingleRtp
 //----------------------------------------------------------------------------
 class JingleRtpManagerPrivate : public QObject
 {
@@ -975,427 +166,449 @@ class JingleRtpManagerPrivate : public QObject
 public:
 	JingleRtpManager *q;
 
-	PsiAccount *pa;
-	QHostAddress self_addr;
+	XMPP::Client *client;
+	QHostAddress selfAddr;
+	QString extHost;
 	QString stunHost;
 	int stunPort;
-	JingleRtpSession *sess_out, *sess_in;
-	//Configuration config;
+	int basePort;
+	QList<JingleRtp*> sessions;
+	QList<JingleRtp*> pending;
 	JT_PushJingleRtp *push_task;
-	JT_JingleRtp *task;
 
-	JingleRtpManagerPrivate(PsiAccount *_pa, JingleRtpManager *_q);
+	JingleRtpManagerPrivate(XMPP::Client *_client, JingleRtpManager *_q);
 	~JingleRtpManagerPrivate();
 
-	void connectToJid(const Jid &jid, const QString &sid, const QList<RtpContent> &contentList);
-	void accept();
-	void reject_in();
-	void reject_out();
+	QString createSid(const XMPP::Jid &peer) const;
+
+	void unlink(JingleRtp *sess);
 
 private slots:
-	void task_finished();
-	void push_task_incomingInitiate(const RtpPush &push);
-	void push_task_incomingTransportInfo(const RtpPush &push);
-	void push_task_incomingAccept(const RtpPush &push);
-	void push_task_incomingTerminate(const RtpPush &push);
+	void push_task_incomingRequest(const XMPP::Jid &from, const QString &iq_id, const JingleRtpEnvelope &envelope);
 };
 
-class JingleRtpSessionPrivate : public QObject
+class JingleRtpPrivate : public QObject
 {
 	Q_OBJECT
 
 public:
-	JingleRtpSession *q;
+	JingleRtp *q;
 
+	JingleRtpManagerPrivate *manager;
 	bool incoming;
-	JingleRtpManager *manager;
-	XMPP::Jid jid, init_jid;
-	QString iq_id;
-	Ice176 *ice;
-	PsiMedia::RtpSession producer;
-	PsiMedia::RtpSession receiver;
+	XMPP::Jid peer;
 	QString sid;
-	QList<RtpContent> contentList;
-	bool prov_accepted;
-	bool sent_local_candidates;
-	QList<Ice176::Candidate> localCandidates;
-	QString remoteUser, remotePass;
-	QList<Ice176::Candidate> remoteCandidates;
-	bool transmitAudio, transmitVideo, transmitting;
-	bool receiveAudio, receiveVideo;
-	QList<RtpContent> initTrans;
-	XMPP::NameResolver dns;
-	QHostAddress stunAddr;
 
-	class Channel
+	int types;
+	QList<JingleRtpPayloadType> localAudioPayloadTypes;
+	QList<JingleRtpPayloadType> localVideoPayloadTypes;
+	QList<JingleRtpPayloadType> remoteAudioPayloadTypes;
+	QList<JingleRtpPayloadType> remoteVideoPayloadTypes;
+	int localMaximumBitrate;
+	int remoteMaximumBitrate;
+	QString audioName;
+	QString videoName;
+	QList<JingleRtp::RtpPacket> in_rtp;
+
+	QString init_iq_id;
+
+	Resolver resolver;
+	QHostAddress extAddr;
+	QHostAddress stunAddr;
+	int stunPort;
+	XMPP::Ice176 *iceA;
+	XMPP::Ice176 *iceV;
+
+	class IceStatus
 	{
 	public:
-		bool ready;
-	};
-	QList<Channel> channels;
+		bool started;
 
-	JingleRtpSessionPrivate(JingleRtpSession *_q) :
+		QString remoteUfrag;
+		QString remotePassword;
+
+		// for queuing up candidates before using them
+		QList<XMPP::Ice176::Candidate> localCandidates;
+		QList<XMPP::Ice176::Candidate> remoteCandidates;
+
+		QVector<bool> channelsReady;
+	};
+	IceStatus iceA_status;
+	IceStatus iceV_status;
+
+	bool local_media_ready;
+	bool prov_accepted;
+	bool ice_connected;
+	bool session_accepted;
+
+	JingleRtpPrivate(JingleRtp *_q) :
 		QObject(_q),
 		q(_q),
-		producer(this),
-		receiver(this),
+		manager(0),
+		localMaximumBitrate(-1),
+		remoteMaximumBitrate(-1),
+		resolver(this),
+		iceA(0),
+		iceV(0),
+		local_media_ready(false),
 		prov_accepted(false),
-		sent_local_candidates(false),
-		transmitAudio(false),
-		transmitVideo(false),
-		transmitting(false),
-		receiveAudio(false),
-		receiveVideo(false)
+		ice_connected(false),
+		session_accepted(false)
 	{
-		connect(&producer, SIGNAL(started()), SLOT(producer_started()));
-		connect(&producer, SIGNAL(stopped()), SLOT(producer_stopped()));
-		connect(&producer, SIGNAL(error()), SLOT(producer_error()));
-		connect(&receiver, SIGNAL(started()), SLOT(receiver_started()));
-		connect(&receiver, SIGNAL(stopped()), SLOT(receiver_stopped()));
-		connect(&receiver, SIGNAL(error()), SLOT(receiver_error()));
+		connect(&resolver, SIGNAL(finished()), SLOT(resolver_finished()));
+	}
 
-		connect(&dns, SIGNAL(resultsReady(const QList<XMPP::NameRecord> &)), SLOT(dns_resultsReady(const QList<XMPP::NameRecord> &)));
-		connect(&dns, SIGNAL(error(XMPP::NameResolver::Error)), SLOT(dns_error(XMPP::NameResolver::Error)));
+	~JingleRtpPrivate()
+	{
+		cleanup();
+		manager->unlink(q);
+	}
 
-		ice = new Ice176(this);
+	void startOutgoing()
+	{
+		local_media_ready = true;
+
+		types = 0;
+		if(!localAudioPayloadTypes.isEmpty())
+			types |= JingleRtp::Audio;
+		if(!localVideoPayloadTypes.isEmpty())
+			types |= JingleRtp::Video;
+
+		resolver.start(manager->extHost, manager->stunHost);
+	}
+
+	void accept(int _types)
+	{
+		types = _types;
+
+		// TODO: cancel away whatever media type is not used
+
+		resolver.start(manager->extHost, manager->stunHost);
+	}
+
+	void reject()
+	{
+		if(!incoming)
+		{
+			bool ok = true;
+			if((types & JingleRtp::Audio) && !iceA_status.started)
+				ok = false;
+			if((types & JingleRtp::Video) && !iceV_status.started)
+				ok = false;
+
+			// we haven't even sent session-initiate
+			if(!ok)
+			{
+				cleanup();
+				return;
+			}
+		}
+		else
+		{
+			// send iq-result if we haven't done so yet
+			if(!prov_accepted)
+			{
+				prov_accepted = true;
+				manager->push_task->respondSuccess(peer, init_iq_id);
+			}
+		}
+
+		JingleRtpEnvelope envelope;
+		envelope.action = "session-terminate";
+		envelope.sid = sid;
+		envelope.reason.condition = JingleRtpReason::Gone;
+
+		JT_JingleRtp *task = new JT_JingleRtp(manager->client->rootTask());
+		connect(task, SIGNAL(finished()), SLOT(task_finished()));
+		task->request(peer, envelope);
+		task->go(true);
+
+		cleanup();
+	}
+
+	void localMediaUpdate()
+	{
+		local_media_ready = true;
+
+		tryAccept();
+	}
+
+	void writeRtp(const JingleRtp::RtpPacket &packet)
+	{
+		if(packet.type == JingleRtp::Audio)
+			iceA->writeDatagram(packet.portOffset, packet.value);
+		else if(packet.type == JingleRtp::Video)
+			iceV->writeDatagram(packet.portOffset, packet.value);
+	}
+
+	// called by manager when request is received, including
+	//   session-initiate.
+	// note: manager will never send session-initiate twice.
+	void incomingRequest(const QString &iq_id, const JingleRtpEnvelope &envelope)
+	{
+		// TODO: jingle has a lot of fields, and we kind of skip over
+		//   most of them just to grab what we need.  perhaps in the
+		//   future we could do more integrity checking.
+
+		if(envelope.action == "session-initiate")
+		{
+			// initially flag both types, so we don't drop any
+			//   transport-info before we accept (at which point
+			//   we specify what types we actually want)
+			types = JingleRtp::Audio | JingleRtp::Video;
+
+			init_iq_id = iq_id;
+
+			const JingleRtpContent *audioContent = 0;
+			const JingleRtpContent *videoContent = 0;
+
+			// find content
+			foreach(const JingleRtpContent &c, envelope.contentList)
+			{
+				if((types & JingleRtp::Audio) && c.desc.media == "audio" && !audioContent)
+				{
+					audioContent = &c;
+					break;
+				}
+				else if((types & JingleRtp::Video) && c.desc.media == "video" && !videoContent)
+				{
+					videoContent = &c;
+					break;
+				}
+			}
+
+			if(audioContent)
+			{
+				audioName = audioContent->name;
+				remoteAudioPayloadTypes = audioContent->desc.payloadTypes;
+				if(!audioContent->trans.user.isEmpty())
+				{
+					iceA_status.remoteUfrag = audioContent->trans.user;
+					iceA_status.remotePassword = audioContent->trans.pass;
+				}
+				iceA_status.remoteCandidates += audioContent->trans.candidates;
+			}
+			if(videoContent)
+			{
+				videoName = videoContent->name;
+				remoteVideoPayloadTypes = videoContent->desc.payloadTypes;
+				if(!videoContent->trans.user.isEmpty())
+				{
+					iceV_status.remoteUfrag = videoContent->trans.user;
+					iceV_status.remotePassword = videoContent->trans.pass;
+				}
+				iceV_status.remoteCandidates += videoContent->trans.candidates;
+			}
+		}
+		else if(envelope.action == "session-accept")
+		{
+			const JingleRtpContent *audioContent = 0;
+			const JingleRtpContent *videoContent = 0;
+
+			// find content
+			foreach(const JingleRtpContent &c, envelope.contentList)
+			{
+				if((types & JingleRtp::Audio) && c.desc.media == "audio" && c.name == audioName && !audioContent)
+				{
+					audioContent = &c;
+					break;
+				}
+				else if((types & JingleRtp::Video) && c.desc.media == "video" && c.name == videoName && !videoContent)
+				{
+					videoContent = &c;
+					break;
+				}
+			}
+
+			// we support audio, peer doesn't
+			if((types & JingleRtp::Audio) && !audioContent)
+				types &= ~JingleRtp::Audio;
+
+			// we support video, peer doesn't
+			if((types & JingleRtp::Video) && !videoContent)
+				types &= ~JingleRtp::Video;
+
+			if(types == 0)
+			{
+				reject();
+				emit q->rejected();
+				return;
+			}
+
+			if(audioContent)
+			{
+				remoteAudioPayloadTypes = audioContent->desc.payloadTypes;
+				if(!audioContent->trans.user.isEmpty())
+				{
+					iceA_status.remoteUfrag = audioContent->trans.user;
+					iceA_status.remotePassword = audioContent->trans.pass;
+				}
+				iceA_status.remoteCandidates += audioContent->trans.candidates;
+			}
+			if(videoContent)
+			{
+				remoteVideoPayloadTypes = videoContent->desc.payloadTypes;
+				if(!videoContent->trans.user.isEmpty())
+				{
+					iceV_status.remoteUfrag = videoContent->trans.user;
+					iceV_status.remotePassword = videoContent->trans.pass;
+				}
+				iceV_status.remoteCandidates += videoContent->trans.candidates;
+			}
+
+			flushRemoteCandidates();
+
+			session_accepted = true;
+			QMetaObject::invokeMethod(this, "after_session_accept", Qt::QueuedConnection);
+			emit q->remoteMediaUpdated();
+		}
+		else if(envelope.action == "session-terminate")
+		{
+			cleanup();
+			emit q->rejected();
+		}
+		else if(envelope.action == "transport-info")
+		{
+			const JingleRtpContent *audioContent = 0;
+			const JingleRtpContent *videoContent = 0;
+
+			// find content
+			foreach(const JingleRtpContent &c, envelope.contentList)
+			{
+				if((types & JingleRtp::Audio) && c.name == audioName && !audioContent)
+				{
+					audioContent = &c;
+					break;
+				}
+				else if((types & JingleRtp::Video) && c.name == videoName && !videoContent)
+				{
+					videoContent = &c;
+					break;
+				}
+			}
+
+			if(audioContent)
+			{
+				if(!audioContent->trans.user.isEmpty())
+				{
+					iceA_status.remoteUfrag = audioContent->trans.user;
+					iceA_status.remotePassword = audioContent->trans.pass;
+				}
+
+				printf("audio candidates=%d\n", audioContent->trans.candidates.count());
+				iceA_status.remoteCandidates += audioContent->trans.candidates;
+			}
+			if(videoContent)
+			{
+				if(!videoContent->trans.user.isEmpty())
+				{
+					iceV_status.remoteUfrag = videoContent->trans.user;
+					iceV_status.remotePassword = videoContent->trans.pass;
+				}
+
+				printf("video candidates=%d\n", videoContent->trans.candidates.count());
+				iceV_status.remoteCandidates += videoContent->trans.candidates;
+			}
+
+			// don't process the candidates unless our ICE engine
+			//   is started
+			if(prov_accepted)
+				flushRemoteCandidates();
+		}
+		else
+			manager->push_task->respondError(peer, iq_id, 400, QString());
+	}
+
+private:
+	void cleanup()
+	{
+		resolver.disconnect(this);
+
+		if(iceA)
+		{
+			iceA->disconnect(this);
+			iceA->setParent(0);
+			iceA->deleteLater();
+			iceA = 0;
+		}
+
+		if(iceV)
+		{
+			iceV->disconnect(this);
+			iceV->setParent(0);
+			iceV->deleteLater();
+			iceV = 0;
+		}
+
+		// prevent delivery of events by manager
+		peer = XMPP::Jid();
+		sid.clear();
+	}
+
+	void start_ice()
+	{
+		int stunPort = manager->stunPort;
+		if(!stunAddr.isNull() && stunPort > 0)
+			printf("STUN service: %s:%d\n", qPrintable(stunAddr.toString()), stunPort);
+
+		if(types & JingleRtp::Audio)
+		{
+			iceA = new XMPP::Ice176(this);
+			setup_ice(iceA);
+			if(manager->basePort != -1)
+				iceA->setBasePort(manager->basePort);
+
+			iceA_status.started = false;
+			iceA_status.channelsReady.resize(2);
+			iceA_status.channelsReady[0] = false;
+			iceA_status.channelsReady[1] = false;
+		}
+
+		if(types & JingleRtp::Video)
+		{
+			iceV = new XMPP::Ice176(this);
+			setup_ice(iceV);
+			if(manager->basePort != -1)
+				iceV->setBasePort(manager->basePort + 2);
+
+			iceV_status.started = false;
+			iceV_status.channelsReady.resize(2);
+			iceV_status.channelsReady[0] = false;
+			iceV_status.channelsReady[1] = false;
+		}
+
+		XMPP::Ice176::Mode m;
+		if(!incoming)
+			m = XMPP::Ice176::Initiator;
+		else
+			m = XMPP::Ice176::Responder;
+
+		if(iceA)
+			iceA->start(m);
+		if(iceV)
+			iceV->start(m);
+	}
+
+	void setup_ice(XMPP::Ice176 *ice)
+	{
 		connect(ice, SIGNAL(started()), SLOT(ice_started()));
 		connect(ice, SIGNAL(localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)), SLOT(ice_localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)));
 		connect(ice, SIGNAL(componentReady(int)), SLOT(ice_componentReady(int)));
 		connect(ice, SIGNAL(readyRead(int)), SLOT(ice_readyRead(int)));
 		connect(ice, SIGNAL(datagramsWritten(int, int)), SLOT(ice_datagramsWritten(int, int)));
-	}
 
-	~JingleRtpSessionPrivate()
-	{
-		printf("~JingleRtpSessionPrivate\n");
-		//producer.stop();
-		//receiver.stop();
+		// RTP+RTCP
+		ice->setComponentCount(2);
 
-		ice->disconnect(this);
-		ice->setParent(0);
-		ice->deleteLater();
-	}
-
-	static QString rtpSessionErrorToString(PsiMedia::RtpSession::Error e)
-	{
-		QString str;
-		switch(e)
-		{
-			case PsiMedia::RtpSession::ErrorSystem:
-				str = tr("System error"); break;
-			case PsiMedia::RtpSession::ErrorCodec:
-				str = tr("Codec error"); break;
-			default: // generic
-				str = tr("Generic error"); break;
-		}
-		return str;
-	}
-
-	void prov_accept()
-	{
-		prov_accepted = true;
-
-		if(!initTrans.isEmpty())
-			getTransportInfo(initTrans);
-
-		if(!localCandidates.isEmpty())
-		{
-			RtpContent c;
-			c.name = contentList[0].name;
-			c.trans.user = ice->localUfrag();
-			c.trans.pass = ice->localPassword();
-			c.trans.candidates = localCandidates;
-			localCandidates.clear();
-			sendTransportInfo(c);
-
-			applyPendingRemoteCandidates();
-		}
-
-		transmit();
-		QTimer::singleShot(1000, this, SLOT(start_receive()));
-	}
-
-	void sendTransportInfo(const RtpContent &content)
-	{
-		sent_local_candidates = true;
-
-		JT_JingleRtp *jt = new JT_JingleRtp(manager->d->pa->client()->rootTask());
-		jt->transportInfo(jid, init_jid, sid, QList<RtpContent>() << content);
-		jt->go(true);
-	}
-
-	void getTransportInfo(const QList<RtpContent> &contentList)
-	{
-		printf("getTransportInfo: %d\n", contentList.count());
-
-		if(contentList.isEmpty())
-			return;
-
-		if(sent_local_candidates)
-		{
-			ice->setPeerUfrag(contentList[0].trans.user);
-			ice->setPeerPassword(contentList[0].trans.pass);
-			ice->addRemoteCandidates(contentList[0].trans.candidates);
-		}
-		else
-		{
-			printf("got transport-info before we initialized our ice engine, queuing for later.\n");
-			remoteUser = contentList[0].trans.user;
-			remotePass = contentList[0].trans.pass;
-			remoteCandidates += contentList[0].trans.candidates;
-		}
-	}
-
-	void incomingAccept(const QList<RtpContent> &contentList)
-	{
-		Q_UNUSED(contentList);
-		emit q->activated();
-	}
-
-	void applyPendingRemoteCandidates()
-	{
-		if(!remoteUser.isEmpty())
-		{
-			ice->setPeerUfrag(remoteUser);
-			remoteUser.clear();
-		}
-
-		if(!remotePass.isEmpty())
-		{
-			ice->setPeerPassword(remotePass);
-			remotePass.clear();
-		}
-
-		if(!remoteCandidates.isEmpty())
-		{
-			printf("applying queued remote candidates.\n");
-			ice->addRemoteCandidates(remoteCandidates);
-			remoteCandidates.clear();
-		}
-	}
-
-public slots:
-	void start_send()
-	{
-		if(!manager->d->stunHost.isEmpty())
-			dns.start(manager->d->stunHost.toLatin1(), XMPP::NameRecord::A);
-		else
-			cont_send();
-	}
-
-	void cont_send()
-	{
-		//*g_config = adjustConfiguration(*g_config, PsiMediaFeaturesSnapshot());
-		(*g_config).videoInDeviceId.clear(); // ### disabling video
-		Configuration &config = *g_config;
-
-		transmitAudio = false;
-		transmitVideo = false;
-
-		if(config.liveInput)
-		{
-			if(config.audioInDeviceId.isEmpty() && config.videoInDeviceId.isEmpty())
-			{
-				QMessageBox::information(0, tr("Error"), tr(
-					"Cannot send live without at least one audio "
-					"input or video input device selected."
-					));
-				return;
-			}
-
-			if(!config.audioInDeviceId.isEmpty())
-			{
-				producer.setAudioInputDevice(config.audioInDeviceId);
-				transmitAudio = true;
-			}
-			else
-				producer.setAudioInputDevice(QString());
-
-			if(!config.videoInDeviceId.isEmpty())
-			{
-				producer.setVideoInputDevice(config.videoInDeviceId);
-				transmitVideo = true;
-			}
-			else
-				producer.setVideoInputDevice(QString());
-		}
-		else // non-live (file) input
-		{
-			producer.setFileInput(config.file);
-			producer.setFileLoopEnabled(config.loopFile);
-
-			// we just assume the file has both audio and video.
-			//   if it doesn't, no big deal, it'll still work.
-			//   update: after producer is started, we can correct
-			//   these variables.
-			transmitAudio = true;
-			transmitVideo = true;
-		}
-
-		QList<PsiMedia::AudioParams> audioParamsList;
-		if(transmitAudio)
-			audioParamsList += config.audioParams;
-		producer.setLocalAudioPreferences(audioParamsList);
-		if(incoming && !contentList.isEmpty())
-			producer.setRemoteAudioPreferences(contentList[0].desc.info);
-
-		QList<PsiMedia::VideoParams> videoParamsList;
-		if(transmitVideo)
-			videoParamsList += config.videoParams;
-		producer.setLocalVideoPreferences(videoParamsList);
-
-		transmitting = false;
-		producer.start();
-	}
-
-	void transmit()
-	{
-		if(transmitAudio)
-			producer.transmitAudio();
-		if(transmitVideo)
-			producer.transmitVideo();
-
-		transmitting = true;
-	}
-
-	void stop_send()
-	{
-		producer.stop();
-	}
-
-	void start_receive()
-	{
-		Configuration &config = *g_config;
-
-		PsiMedia::PayloadInfo audio;
-		PsiMedia::PayloadInfo video;
-
-		for(int n = 0; n < contentList.count(); ++n)
-		{
-			if(contentList[n].desc.media == "audio")
-				audio = contentList[n].desc.info.first();
-			else if(contentList[n].desc.media == "video")
-				video = contentList[n].desc.info.first();
-		}
-
-		receiveAudio = !audio.isNull();
-		receiveVideo = !video.isNull();
-
-		if(receiveAudio && !config.audioOutDeviceId.isEmpty())
-		{
-			receiver.setAudioOutputDevice(config.audioOutDeviceId);
-
-			QList<PsiMedia::AudioParams> audioParamsList;
-			audioParamsList += config.audioParams;
-			receiver.setLocalAudioPreferences(audioParamsList);
-
-			QList<PsiMedia::PayloadInfo> payloadInfoList;
-			payloadInfoList += audio;
-			receiver.setRemoteAudioPreferences(payloadInfoList);
-		}
-
-		if(receiveVideo)
-		{
-			QList<PsiMedia::VideoParams> videoParamsList;
-			videoParamsList += config.videoParams;
-			receiver.setLocalVideoPreferences(videoParamsList);
-
-			QList<PsiMedia::PayloadInfo> payloadInfoList;
-			payloadInfoList += video;
-			receiver.setRemoteVideoPreferences(payloadInfoList);
-		}
-
-		receiver.start();
-	}
-
-	void stop_receive()
-	{
-		receiver.stop();
-	}
-
-	void producer_started()
-	{
-		printf("producer_started\n");
-
-		PsiMedia::PayloadInfo audio, *pAudio;
-		PsiMedia::PayloadInfo video, *pVideo;
-
-		pAudio = 0;
-		pVideo = 0;
-		if(transmitAudio)
-		{
-			// confirm transmitting of audio is actually possible,
-			//   in the case that a file is used as input
-			if(producer.canTransmitAudio())
-			{
-				audio = producer.localAudioPayloadInfo().first();
-				pAudio = &audio;
-			}
-			else
-				transmitAudio = false;
-		}
-		if(transmitVideo)
-		{
-			// same for video
-			if(producer.canTransmitVideo())
-			{
-				video = producer.localVideoPayloadInfo().first();
-				pVideo = &video;
-			}
-			else
-				transmitVideo = false;
-		}
-
-		connect(producer.audioRtpChannel(), SIGNAL(readyRead()), SLOT(rtp_audio_readyRead()));
-
-		QString a_name, v_name;
-		if(incoming)
-		{
-			// FIXME
-			a_name = contentList[0].name;
-		}
-		else
-		{
-			a_name = "A";
-			v_name = "V";
-		}
-
-		contentList.clear();
-		if(pAudio)
-		{
-			RtpContent c;
-			c.name = a_name;
-			c.desc.media = "audio";
-			c.desc.info += *pAudio;
-			contentList += c;
-		}
-		if(pVideo)
-		{
-			RtpContent c;
-			c.name = v_name;
-			c.desc.media = "video";
-			c.desc.info += *pVideo;
-			contentList += c;
-		}
-		printf("contentList.count = %d\n", contentList.count());
-
-		QList<Ice176::LocalAddress> localAddrs;
-		Ice176::LocalAddress addr;
-		addr.addr = manager->d->self_addr;
+		QList<XMPP::Ice176::LocalAddress> localAddrs;
+		XMPP::Ice176::LocalAddress addr;
+		addr.addr = manager->selfAddr;
 		localAddrs += addr;
 		ice->setLocalAddresses(localAddrs);
 
-		for(int n = 0; n < 2; ++n)
-		{
-			Channel c;
-			c.ready = false;
-			channels += c;
-		}
-		ice->setComponentCount(2);
-
-		int stunPort = manager->d->stunPort;
 		if(!stunAddr.isNull() && stunPort > 0)
 		{
+			// TODO: relay support
 			XMPP::Ice176::StunServiceType stunType;
 			//if(opt_is_relay)
 			//	stunType = XMPP::Ice176::Relay;
@@ -1407,287 +620,460 @@ public slots:
 				ice->setStunUsername(opt_user);
 				ice->setStunPassword(opt_pass.toUtf8());
 			}*/
+		}
+	}
 
-			printf("STUN service: %s\n", qPrintable(stunAddr.toString()));
+	// called when all ICE objects are started
+	void after_ice_started()
+	{
+		// for outbound, send the session-initiate
+		if(!incoming)
+		{
+			sid = manager->createSid(peer);
+
+			JingleRtpEnvelope envelope;
+			envelope.action = "session-initiate";
+			envelope.initiator = manager->client->jid().full();
+			envelope.sid = sid;
+
+			if(types & JingleRtp::Audio)
+			{
+				audioName = "A";
+
+				JingleRtpContent content;
+				content.creator = "initiator";
+				content.name = audioName;
+				content.senders = "both";
+
+				content.desc.media = "audio";
+				content.desc.payloadTypes = localAudioPayloadTypes;
+				content.trans.user = iceA->localUfrag();
+				content.trans.pass = iceA->localPassword();
+
+				envelope.contentList += content;
+			}
+
+			if(types & JingleRtp::Video)
+			{
+				videoName = "V";
+
+				JingleRtpContent content;
+				content.creator = "initiator";
+				content.name = videoName;
+				content.senders = "both";
+
+				content.desc.media = "video";
+				content.desc.payloadTypes = localVideoPayloadTypes;
+				content.trans.user = iceV->localUfrag();
+				content.trans.pass = iceV->localPassword();
+
+				envelope.contentList += content;
+			}
+
+			JT_JingleRtp *task = new JT_JingleRtp(manager->client->rootTask());
+			connect(task, SIGNAL(finished()), SLOT(task_finished()));
+			task->request(peer, envelope);
+			task->go(true);
+		}
+		else
+		{
+			prov_accepted = true;
+			manager->push_task->respondSuccess(peer, init_iq_id);
+
+			flushRemoteCandidates();
+		}
+	}
+
+	// received iq-result to session-initiate
+	void prov_accept()
+	{
+		prov_accepted = true;
+
+		flushLocalCandidates();
+	}
+
+	// received iq-error to session-initiate
+	void prov_reject()
+	{
+		cleanup();
+		emit q->rejected();
+	}
+
+	void flushLocalCandidates()
+	{
+		printf("flushing local candidates\n");
+
+		QList<JingleRtpContent> contentList;
+
+		if((types & JingleRtp::Audio) && !iceA_status.localCandidates.isEmpty())
+		{
+			JingleRtpContent content;
+			if(!incoming)
+				content.creator = "initiator";
+			else
+				content.creator = "responder";
+			content.name = audioName;
+
+			content.trans.user = iceA->localUfrag();
+			content.trans.pass = iceA->localPassword();
+			content.trans.candidates = iceA_status.localCandidates;
+			iceA_status.localCandidates.clear();
+
+			contentList += content;
 		}
 
-		if(!incoming)
-			ice->start(Ice176::Initiator);
-		else
-			ice->start(Ice176::Responder);
+		if((types & JingleRtp::Video) && !iceV_status.localCandidates.isEmpty())
+		{
+			JingleRtpContent content;
+			if(!incoming)
+				content.creator = "initiator";
+			else
+				content.creator = "responder";
+			content.name = videoName;
+
+			content.trans.user = iceV->localUfrag();
+			content.trans.pass = iceV->localPassword();
+			content.trans.candidates = iceV_status.localCandidates;
+			iceV_status.localCandidates.clear();
+
+			contentList += content;
+		}
+
+		if(!contentList.isEmpty())
+		{
+			JingleRtpEnvelope envelope;
+			envelope.action = "transport-info";
+			envelope.sid = sid;
+			envelope.contentList = contentList;
+
+			JT_JingleRtp *task = new JT_JingleRtp(manager->client->rootTask());
+			task->request(peer, envelope);
+			task->go(true);
+		}
 	}
 
-	void producer_stopped()
+	void flushRemoteCandidates()
 	{
+		if(types & JingleRtp::Audio)
+		{
+			iceA->setPeerUfrag(iceA_status.remoteUfrag);
+			iceA->setPeerPassword(iceA_status.remotePassword);
+			if(!iceA_status.remoteCandidates.isEmpty())
+			{
+				iceA->addRemoteCandidates(iceA_status.remoteCandidates);
+				iceA_status.remoteCandidates.clear();
+			}
+		}
+
+		if(types & JingleRtp::Video)
+		{
+			iceV->setPeerUfrag(iceV_status.remoteUfrag);
+			iceV->setPeerPassword(iceV_status.remotePassword);
+			if(!iceV_status.remoteCandidates.isEmpty())
+			{
+				iceV->addRemoteCandidates(iceV_status.remoteCandidates);
+				iceV_status.remoteCandidates.clear();
+			}
+		}
 	}
 
-	void producer_error()
+	// called when all ICE components are established
+	void after_ice_connected()
 	{
-		QMessageBox::critical(0, tr("Error"), tr(
-			"An error occurred while trying to send:\n%1."
-			).arg(rtpSessionErrorToString(producer.errorCode())
-			));
+		if(incoming)
+			tryAccept();
+
+		tryActivated();
 	}
 
-	void receiver_started()
+	void tryAccept()
 	{
+		if(local_media_ready && ice_connected && !session_accepted)
+		{
+			JingleRtpEnvelope envelope;
+			envelope.action = "session-accept";
+			envelope.responder = manager->client->jid().full();
+			envelope.sid = sid;
+
+			if(types & JingleRtp::Audio)
+			{
+				JingleRtpContent content;
+				content.creator = "initiator";
+				content.name = audioName;
+				content.senders = "both";
+
+				content.desc.media = "audio";
+				content.desc.payloadTypes = localAudioPayloadTypes;
+				content.trans.user = iceA->localUfrag();
+				content.trans.pass = iceA->localPassword();
+
+				envelope.contentList += content;
+			}
+
+			if(types & JingleRtp::Video)
+			{
+				JingleRtpContent content;
+				content.creator = "initiator";
+				content.name = videoName;
+				content.senders = "both";
+
+				content.desc.media = "video";
+				content.desc.payloadTypes = localVideoPayloadTypes;
+				content.trans.user = iceV->localUfrag();
+				content.trans.pass = iceV->localPassword();
+
+				envelope.contentList += content;
+			}
+
+			session_accepted = true;
+
+			JT_JingleRtp *task = new JT_JingleRtp(manager->client->rootTask());
+			connect(task, SIGNAL(finished()), SLOT(task_finished()));
+			task->request(peer, envelope);
+			task->go(true);
+		}
 	}
 
-	void receiver_stopped()
+	void tryActivated()
 	{
+		if(session_accepted && ice_connected)
+			emit q->activated();
 	}
 
-	void receiver_error()
+private slots:
+	void resolver_finished()
 	{
-		QMessageBox::critical(0, tr("Error"), tr(
-			"An error occurred while trying to receive:\n%1."
-			).arg(rtpSessionErrorToString(receiver.errorCode())
-			));
+		extAddr = resolver.extAddr;
+		stunAddr = resolver.stunAddr;
+
+		start_ice();
 	}
 
 	void ice_started()
 	{
-		printf("ice_started\n");
+		XMPP::Ice176 *ice = (XMPP::Ice176 *)sender();
 
-		// outbound?
-		if(!incoming)
-		{
-			contentList[0].trans.user = ice->localUfrag();
-			contentList[0].trans.pass = ice->localPassword();
+		if(ice == iceA)
+			iceA_status.started = true;
+		else // iceV
+			iceV_status.started = true;
 
-			// start the request
-			manager->d->connectToJid(jid, sid, contentList);
-		}
-		// inbound?
-		else
-		{
-			// accept
-			manager->d->push_task->respondSuccess(jid, iq_id);
+		bool ok = true;
+		if((types & JingleRtp::Audio) && !iceA_status.started)
+			ok = false;
+		if((types & JingleRtp::Video) && !iceV_status.started)
+			ok = false;
 
-			prov_accept();
-		}
+		if(ok)
+			after_ice_started();
 	}
 
 	void ice_localCandidatesReady(const QList<XMPP::Ice176::Candidate> &list)
 	{
-		if(prov_accepted)
-		{
-			RtpContent c;
-			c.name = contentList[0].name;
-			c.trans.user = ice->localUfrag();
-			c.trans.pass = ice->localPassword();
-			c.trans.candidates = list;
-			sendTransportInfo(c);
+		XMPP::Ice176 *ice = (XMPP::Ice176 *)sender();
 
-			applyPendingRemoteCandidates();
-		}
-		else
-			localCandidates += list;
+		if(ice == iceA)
+			iceA_status.localCandidates += list;
+		else // iceV
+			iceV_status.localCandidates += list;
+
+		printf("local candidate ready\n");
+
+		if(prov_accepted)
+			flushLocalCandidates();
 	}
 
 	void ice_componentReady(int index)
 	{
-		// do we need this check?
-		if(channels[index].ready)
-			return;
+		XMPP::Ice176 *ice = (XMPP::Ice176 *)sender();
 
-		channels[index].ready = true;
+		if(ice == iceA)
+		{
+			Q_ASSERT(!iceA_status.channelsReady[index]);
+			iceA_status.channelsReady[index] = true;
+		}
+		else // iceV
+		{
+			Q_ASSERT(!iceV_status.channelsReady[index]);
+			iceV_status.channelsReady[index] = true;
+		}
 
 		bool allReady = true;
-		foreach(const Channel &c, channels)
+
+		if(types & JingleRtp::Audio)
 		{
-			if(!c.ready)
+			for(int n = 0; n < iceA_status.channelsReady.count(); ++n)
 			{
-				allReady = false;
-				break;
+				if(!iceA_status.channelsReady[n])
+				{
+					allReady = false;
+					break;
+				}
 			}
 		}
 
-		if(allReady && incoming)
+		if(types & JingleRtp::Video)
 		{
-			QList<RtpContent> list = contentList;
-			list[0].trans.user = ice->localUfrag();
-			list[0].trans.pass = ice->localPassword();
-			// FIXME: add the used candidates for each component
-
-			JT_JingleRtp *jt = new JT_JingleRtp(manager->d->pa->client()->rootTask());
-			jt->accept(jid, init_jid, sid, list);
-			jt->go(true);
-
-			emit q->activated();
+			for(int n = 0; n < iceV_status.channelsReady.count(); ++n)
+			{
+				if(!iceV_status.channelsReady[n])
+				{
+					allReady = false;
+					break;
+				}
+			}
 		}
+
+		ice_connected = true;
+		after_ice_connected();
 	}
 
 	void ice_readyRead(int componentIndex)
 	{
-		QByteArray buf = ice->readDatagram(componentIndex);
-		receiver.audioRtpChannel()->write(PsiMedia::RtpPacket(buf, componentIndex));
+		XMPP::Ice176 *ice = (XMPP::Ice176 *)sender();
+
+		if(ice == iceA)
+		{
+			while(iceA->hasPendingDatagrams(componentIndex))
+			{
+				JingleRtp::RtpPacket packet;
+				packet.type = JingleRtp::Audio;
+				packet.portOffset = componentIndex;
+				packet.value = iceA->readDatagram(componentIndex);
+				in_rtp += packet;
+			}
+		}
+		else // iceV
+		{
+			while(iceV->hasPendingDatagrams(componentIndex))
+			{
+				JingleRtp::RtpPacket packet;
+				packet.type = JingleRtp::Video;
+				packet.portOffset = componentIndex;
+				packet.value = iceV->readDatagram(componentIndex);
+				in_rtp += packet;
+			}
+		}
+
+		emit q->readyReadRtp();
 	}
 
 	void ice_datagramsWritten(int componentIndex, int count)
 	{
-		// nothing?
 		Q_UNUSED(componentIndex);
-		Q_UNUSED(count);
+
+		emit q->rtpWritten(count);
 	}
 
-	void rtp_audio_readyRead()
+	void task_finished()
 	{
-		while(producer.audioRtpChannel()->packetsAvailable() > 0)
-		{
-			PsiMedia::RtpPacket packet = producer.audioRtpChannel()->read();
-			ice->writeDatagram(packet.portOffset(), packet.rawValue());
-		}
+		JT_JingleRtp *task = (JT_JingleRtp *)sender();
+
+		if(task->success())
+			prov_accept();
+		else
+			prov_reject();
 	}
 
-	void dns_resultsReady(const QList<XMPP::NameRecord> &results)
+	void after_session_accept()
 	{
-		stunAddr = results.first().address();
-		cont_send();
-	}
-
-	void dns_error(XMPP::NameResolver::Error e)
-	{
-		Q_UNUSED(e);
-		printf("Unable to resolve stun host.\n");
-		cont_send();
+		tryActivated();
 	}
 };
 
-JingleRtpSession::JingleRtpSession() :
-	QObject(0)
+JingleRtp::JingleRtp()
 {
-	d = new JingleRtpSessionPrivate(this);
+	d = new JingleRtpPrivate(this);
 }
 
-JingleRtpSession::JingleRtpSession(const JingleRtpSession &from) :
-	QObject(0)
+JingleRtp::~JingleRtp()
 {
-	// TODO
-	fprintf(stderr, "JingleRtpSession copy not supported\n");
-	abort();
-}
-
-JingleRtpSession::~JingleRtpSession()
-{
-	if(d->incoming)
-		d->manager->d->sess_in = 0;
-	else
-		d->manager->d->sess_out = 0;
-
 	delete d;
 }
 
-XMPP::Jid JingleRtpSession::jid() const
+XMPP::Jid JingleRtp::jid() const
 {
-	return d->jid;
+	return d->peer;
 }
 
-JingleRtpSession::Mode JingleRtpSession::mode() const
+QList<JingleRtpPayloadType> JingleRtp::remoteAudioPayloadTypes() const
 {
-	// TODO
-	return Audio;
+	return d->remoteAudioPayloadTypes;
 }
 
-void JingleRtpSession::connectToJid(const XMPP::Jid &jid, Mode mode, int kbps)
+QList<JingleRtpPayloadType> JingleRtp::remoteVideoPayloadTypes() const
 {
-	d->jid = jid;
-	d->init_jid = d->manager->d->pa->client()->jid();
-	d->sid = randomCredential(16);
-	d->start_send();
+	return d->remoteVideoPayloadTypes;
 }
 
-void JingleRtpSession::accept(Mode mode, int kbps)
+int JingleRtp::remoteMaximumBitrate() const
 {
-	// TODO
-	d->manager->d->accept();
+	return d->remoteMaximumBitrate;
 }
 
-void JingleRtpSession::reject()
+void JingleRtp::setLocalAudioPayloadTypes(const QList<JingleRtpPayloadType> &types)
 {
-	if(d->incoming)
-	{
-		if(!d->prov_accepted)
-			d->manager->d->push_task->respondError(d->jid, d->iq_id, 400, QString());
-		else
-			d->manager->d->reject_in();
-	}
-	else
-		d->manager->d->reject_out();
+	d->localAudioPayloadTypes = types;
 }
 
-void JingleRtpSession::setIncomingVideo(PsiMedia::VideoWidget *widget)
+void JingleRtp::setLocalVideoPayloadTypes(const QList<JingleRtpPayloadType> &types)
 {
-	d->receiver.setVideoOutputWidget(widget);
+	d->localVideoPayloadTypes = types;
+}
+
+void JingleRtp::setLocalMaximumBitrate(int kbps)
+{
+	d->localMaximumBitrate = kbps;
+}
+
+void JingleRtp::connectToJid(const XMPP::Jid &jid)
+{
+	d->peer = jid;
+	d->startOutgoing();
+}
+
+void JingleRtp::accept(int types)
+{
+	d->accept(types);
+}
+
+void JingleRtp::reject()
+{
+	d->reject();
+}
+
+void JingleRtp::localMediaUpdate()
+{
+	d->localMediaUpdate();
+}
+
+bool JingleRtp::rtpAvailable() const
+{
+	return !d->in_rtp.isEmpty();
+}
+
+JingleRtp::RtpPacket JingleRtp::readRtp()
+{
+	return d->in_rtp.takeFirst();
+}
+
+void JingleRtp::writeRtp(const RtpPacket &packet)
+{
+	d->writeRtp(packet);
 }
 
 //----------------------------------------------------------------------------
 // JingleRtpManager
 //----------------------------------------------------------------------------
-//static JingleRtpManager *g_manager = 0;
-
-#ifdef GSTPROVIDER_STATIC
-Q_IMPORT_PLUGIN(gstprovider)
-#endif
-
-/*#ifndef GSTPROVIDER_STATIC
-static QString findPlugin(const QString &relpath, const QString &basename)
-{
-	QDir dir(QCoreApplication::applicationDirPath());
-	if(!dir.cd(relpath))
-		return QString();
-	foreach(const QString &fileName, dir.entryList())
-	{
-		if(fileName.contains(basename))
-		{
-			QString filePath = dir.filePath(fileName);
-			if(QLibrary::isLibrary(filePath))
-				return filePath;
-		}
-	}
-	return QString();
-}
-#endif
-*/
-
-static bool g_loaded = false;
-
-static void ensureLoaded()
-{
-	if(!g_loaded)
-	{
-#ifndef GSTPROVIDER_STATIC
-		//QString pluginFile = findPlugin(".", "gstprovider");
-		QString pluginFile = qgetenv("PSI_MEDIA_PLUGIN");
-# ifdef GSTBUNDLE_PATH
-		PsiMedia::PluginResult r = PsiMedia::loadPlugin(pluginFile, GSTBUNDLE_PATH);
-# else
-		PsiMedia::PluginResult r = PsiMedia::loadPlugin(pluginFile, QString());
-# endif
-		if(r == PsiMedia::PluginSuccess)
-			g_loaded = true;
-#else
-		g_loaded = true;
-#endif
-		if(g_loaded)
-			ensureConfig();
-	}
-}
-
-JingleRtpManagerPrivate::JingleRtpManagerPrivate(PsiAccount *_pa, JingleRtpManager *_q) :
+JingleRtpManagerPrivate::JingleRtpManagerPrivate(XMPP::Client *_client, JingleRtpManager *_q) :
 	QObject(_q),
 	q(_q),
-	pa(_pa),
+	client(_client),
 	stunPort(-1),
-	sess_out(0),
-	sess_in(0),
-	task(0)
+	basePort(-1)
 {
-	push_task = new JT_PushJingleRtp(pa->client()->rootTask());
-	connect(push_task, SIGNAL(incomingInitiate(const RtpPush &)), SLOT(push_task_incomingInitiate(const RtpPush &)));
-	connect(push_task, SIGNAL(incomingTransportInfo(const RtpPush &)), SLOT(push_task_incomingTransportInfo(const RtpPush &)));
-	connect(push_task, SIGNAL(incomingAccept(const RtpPush &)), SLOT(push_task_incomingAccept(const RtpPush &)));
-	connect(push_task, SIGNAL(incomingTerminate(const RtpPush &)), SLOT(push_task_incomingTerminate(const RtpPush &)));
+	push_task = new JT_PushJingleRtp(client->rootTask());
+	connect(push_task, SIGNAL(incomingRequest(const XMPP::Jid &, const QString &, const JingleRtpEnvelope &)), SLOT(push_task_incomingRequest(const XMPP::Jid &, const QString &, const JingleRtpEnvelope &)));
 }
 
 JingleRtpManagerPrivate::~JingleRtpManagerPrivate()
@@ -1695,181 +1081,123 @@ JingleRtpManagerPrivate::~JingleRtpManagerPrivate()
 	delete push_task;
 }
 
-void JingleRtpManagerPrivate::connectToJid(const Jid &jid, const QString &sid, const QList<RtpContent> &contentList)
+QString JingleRtpManagerPrivate::createSid(const XMPP::Jid &peer) const
 {
-	printf("sending initiate\n");
-	task = new JT_JingleRtp(pa->client()->rootTask());
-	connect(task, SIGNAL(finished()), SLOT(task_finished()));
-	task->initiate(jid, sid, contentList);
-	task->go(true);
-}
-
-void JingleRtpManagerPrivate::accept()
-{
-	sess_in->d->start_send();
-}
-
-void JingleRtpManagerPrivate::reject_in()
-{
-	// terminate active session, if any
-	JT_JingleRtp *jt = new JT_JingleRtp(pa->client()->rootTask());
-	jt->terminate(sess_in->d->jid, sess_in->d->init_jid, sess_in->d->sid);
-	jt->go(true);
-}
-
-void JingleRtpManagerPrivate::reject_out()
-{
-	// terminate active session, if any
-	JT_JingleRtp *jt = new JT_JingleRtp(pa->client()->rootTask());
-	jt->terminate(sess_out->d->jid, sess_out->d->init_jid, sess_out->d->sid);
-	jt->go(true);
-}
-
-void JingleRtpManagerPrivate::task_finished()
-{
-	JT_JingleRtp *jt = task;
-	task = 0;
-
-	if(!sess_out)
-		return;
-
-	if(jt->success())
-		sess_out->d->prov_accept();
-	else
-		emit sess_out->rejected();
-}
-
-void JingleRtpManagerPrivate::push_task_incomingInitiate(const RtpPush &push)
-{
-	printf("incomingInitiate\n");
-
-	if(sess_in)
+	while(1)
 	{
-		printf("rejecting, only one session allowed at a time.\n");
-		push_task->respondError(push.from, push.iq_id, 400, QString());
-		return;
+		QString out = randomCredential(16);
+
+		bool found = false;
+		for(int n = 0; n < sessions.count(); ++n)
+		{
+			if(sessions[n]->d->peer == peer && sessions[n]->d->sid == out)
+			{
+				found = true;
+				break;
+			}
+		}
+
+		if(!found)
+			return out;
 	}
-
-	sess_in = new JingleRtpSession;
-	sess_in->d->manager = q;
-	sess_in->d->incoming = true;
-	sess_in->d->jid = push.from;
-	sess_in->d->init_jid = push.from;
-	sess_in->d->sid = push.sid;
-	sess_in->d->contentList = push.contentList;
-	sess_in->d->initTrans = push.contentList;
-	sess_in->d->iq_id = push.iq_id;
-	emit q->incomingReady();
 }
 
-void JingleRtpManagerPrivate::push_task_incomingTransportInfo(const RtpPush &push)
+void JingleRtpManagerPrivate::unlink(JingleRtp *sess)
 {
-	printf("incomingTransportInfo\n");
+	sessions.removeAll(sess);
+}
 
-	if(sess_in && push.from.compare(sess_in->d->jid) && push.sid == sess_in->d->sid)
+void JingleRtpManagerPrivate::push_task_incomingRequest(const XMPP::Jid &from, const QString &iq_id, const JingleRtpEnvelope &envelope)
+{
+	printf("incoming request: [%s]\n", qPrintable(envelope.action));
+
+	if(envelope.action == "session-initiate")
 	{
-		sess_in->d->getTransportInfo(push.contentList);
-		push_task->respondSuccess(push.from, push.iq_id);
-	}
-	else if(sess_out && push.from.compare(sess_out->d->jid) && push.sid == sess_out->d->sid)
-	{
-		sess_out->d->getTransportInfo(push.contentList);
-		push_task->respondSuccess(push.from, push.iq_id);
+		int at = -1;
+		for(int n = 0; n < sessions.count(); ++n)
+		{
+			if(sessions[n]->d->peer == from && sessions[n]->d->sid == envelope.sid)
+			{
+				at = n;
+				break;
+			}
+		}
+
+		// duplicate session
+		if(at != -1)
+		{
+			push_task->respondError(from, iq_id, 400, QString());
+			return;
+		}
+
+		JingleRtp *sess = new JingleRtp;
+		sess->d->manager = this;
+		sess->d->incoming = true;
+		sess->d->peer = from;
+		sess->d->sid = envelope.sid;
+		sessions += sess;
+		pending += sess;
+		printf("new initiate, from=[%s] sid=[%s]\n", qPrintable(from.full()), qPrintable(envelope.sid));
+		sess->d->incomingRequest(iq_id, envelope);
+		emit q->incomingReady();
 	}
 	else
-		push_task->respondError(push.from, push.iq_id, 400, QString());
+	{
+		int at = -1;
+		for(int n = 0; n < sessions.count(); ++n)
+		{
+			if(sessions[n]->d->peer == from && sessions[n]->d->sid == envelope.sid)
+			{
+				at = n;
+				break;
+			}
+		}
+
+		// session not found
+		if(at == -1)
+		{
+			push_task->respondError(from, iq_id, 400, QString());
+			return;
+		}
+
+		push_task->respondSuccess(from, iq_id);
+		sessions[at]->d->incomingRequest(iq_id, envelope);
+	}
 }
 
-void JingleRtpManagerPrivate::push_task_incomingAccept(const RtpPush &push)
+JingleRtpManager::JingleRtpManager(XMPP::Client *client) :
+	QObject(client)
 {
-	printf("incomingAccept\n");
-
-	if(sess_in && push.from.compare(sess_in->d->jid) && push.sid == sess_in->d->sid)
-	{
-		sess_in->d->incomingAccept(push.contentList);
-		push_task->respondSuccess(push.from, push.iq_id);
-	}
-	else if(sess_out && push.from.compare(sess_out->d->jid) && push.sid == sess_out->d->sid)
-	{
-		sess_out->d->incomingAccept(push.contentList);
-		push_task->respondSuccess(push.from, push.iq_id);
-	}
-	else
-		push_task->respondError(push.from, push.iq_id, 400, QString());
-}
-
-void JingleRtpManagerPrivate::push_task_incomingTerminate(const RtpPush &push)
-{
-	printf("incomingTerminate\n");
-
-	if(sess_in && push.from.compare(sess_in->d->jid) && push.sid == sess_in->d->sid)
-	{
-		emit sess_in->rejected();
-	}
-	else if(sess_out && push.from.compare(sess_out->d->jid) && push.sid == sess_out->d->sid)
-	{
-		emit sess_out->rejected();
-	}
-	else
-		push_task->respondError(push.from, push.iq_id, 400, QString());
-}
-
-JingleRtpManager::JingleRtpManager(PsiAccount *pa) :
-	QObject(0)
-{
-	//g_manager = this;
-	d = new JingleRtpManagerPrivate(pa, this);
+	d = new JingleRtpManagerPrivate(client, this);
 }
 
 JingleRtpManager::~JingleRtpManager()
 {
 	delete d;
-	//g_manager = 0;
 }
 
-JingleRtpSession *JingleRtpManager::createOutgoing()
+JingleRtp *JingleRtpManager::createOutgoing()
 {
-	// only one session allowed at a time
-	Q_ASSERT(!d->sess_out);
-
-	JingleRtpSession *sess = new JingleRtpSession;
-	d->sess_out = sess;
-	sess->d->manager = this;
+	JingleRtp *sess = new JingleRtp;
+	sess->d->manager = d;
 	sess->d->incoming = false;
+	d->sessions += sess;
 	return sess;
 }
 
-JingleRtpSession *JingleRtpManager::takeIncoming()
+JingleRtp *JingleRtpManager::takeIncoming()
 {
-	return d->sess_in;
-}
-
-void JingleRtpManager::config()
-{
-	ensureConfig();
-
-	ConfigDlg w(*g_config, 0);
-	w.exec();
-	*g_config = w.config;
-}
-
-bool JingleRtpManager::isSupported()
-{
-	ensureLoaded();
-	return PsiMedia::isSupported();
-}
-
-bool JingleRtpManager::isVideoSupported()
-{
-	if(!QString::fromLatin1(qgetenv("PSI_ENABLE_VIDEO")).isEmpty())
-		return true;
-	else
-		return false;
+	return d->pending.takeFirst();
 }
 
 void JingleRtpManager::setSelfAddress(const QHostAddress &addr)
 {
-	d->self_addr = addr;
+	d->selfAddr = addr;
+}
+
+void JingleRtpManager::setExternalAddress(const QString &host)
+{
+	d->extHost = host;
 }
 
 void JingleRtpManager::setStunHost(const QString &host, int port)
@@ -1880,29 +1208,7 @@ void JingleRtpManager::setStunHost(const QString &host, int port)
 
 void JingleRtpManager::setBasePort(int port)
 {
-	// TODO
-	Q_UNUSED(port);
-}
-
-void JingleRtpManager::setExternalAddress(const QString &host)
-{
-	// TODO
-	Q_UNUSED(host);
-}
-
-void JingleRtpManager::setAudioOutDevice(const QString &id)
-{
-	g_config->audioOutDeviceId = id;
-}
-
-void JingleRtpManager::setAudioInDevice(const QString &id)
-{
-	g_config->audioInDeviceId = id;
-}
-
-void JingleRtpManager::setVideoInDevice(const QString &id)
-{
-	g_config->videoInDeviceId = id;
+	d->basePort = port;
 }
 
 #include "jinglertp.moc"

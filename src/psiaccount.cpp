@@ -128,7 +128,7 @@
 #include "Certificates/CertificateDisplayDialog.h"
 
 #include "../psimedia/psimedia.h"
-#include "avcall/jinglertp.h"
+#include "avcall/avcall.h"
 #include "avcall/calldlg.h"
 
 #ifdef PSI_PLUGINS
@@ -274,7 +274,7 @@ public:
 		, rcForwardServer(0)
 		, avatarFactory(0)
 		, voiceCaller(0)
-		, jingleRtpManager(0)
+		, avCallManager(0)
 		, tabManager(0)
 #ifdef GOOGLE_FT
 		, googleFTManager(0)
@@ -337,7 +337,7 @@ public:
 	// Voice Call
 	VoiceCaller* voiceCaller;
 
-	JingleRtpManager *jingleRtpManager;
+	AvCallManager *avCallManager;
 
 	TabManager *tabManager;
 
@@ -563,7 +563,7 @@ private slots:
 
         void incoming_call()
         {
-		JingleRtpSession *sess = jingleRtpManager->takeIncoming();
+		AvCall *sess = avCallManager->takeIncoming();
 		AvCallEvent *ae = new AvCallEvent(sess->jid().full(), sess, account);
 		ae->setTimeStamp(QDateTime::currentDateTime());
 		account->handleEvent(ae, IncomingStanza);
@@ -865,9 +865,9 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	connect(d->googleFTManager,SIGNAL(incomingFileTransfer(GoogleFileTransfer*)),SLOT(incomingGoogleFileTransfer(GoogleFileTransfer*)));
 #endif
 
-	if(JingleRtpManager::isSupported()) {
-		d->jingleRtpManager = new JingleRtpManager(this);
-		connect(d->jingleRtpManager, SIGNAL(incomingReady()), d, SLOT(incoming_call()));
+	if(AvCallManager::isSupported()) {
+		d->avCallManager = new AvCallManager(this);
+		connect(d->avCallManager, SIGNAL(incomingReady()), d, SLOT(incoming_call()));
 		QStringList features;
 		features << "urn:xmpp:jingle:1";
 		features << "urn:xmpp:jingle:transports:ice-udp:1";
@@ -875,13 +875,13 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 		features << "urn:xmpp:jingle:apps:rtp:audio";
 		d->client->addExtension("ca", Features(features));
 
-		if(JingleRtpManager::isVideoSupported()) {
+		if(AvCallManager::isVideoSupported()) {
 			features.clear();
 			features << "urn:xmpp:jingle:apps:rtp:video";
 			d->client->addExtension("cv", Features(features));
 		}
 
-		d->jingleRtpManager->setStunHost(acc.stunHost, acc.stunPort);
+		d->avCallManager->setStunHost(acc.stunHost, acc.stunPort);
 	}
 
 	// Extended presence
@@ -1147,8 +1147,8 @@ void PsiAccount::setUserAccount(const UserAccount &acc)
 		}
 	}
 
-	if(d->jingleRtpManager)
-		d->jingleRtpManager->setStunHost(d->acc.stunHost, d->acc.stunPort);
+	if(d->avCallManager)
+		d->avCallManager->setStunHost(d->acc.stunHost, d->acc.stunPort);
 
 	cpUpdate(d->self);
 	updatedAccount();
@@ -1387,8 +1387,8 @@ void PsiAccount::cs_connected()
 	if(bs->inherits("BSocket") || bs->inherits("XMPP::BSocket")) {
 		d->localAddress = ((BSocket *)bs)->address();
 
-		if(d->jingleRtpManager)
-			d->jingleRtpManager->setSelfAddress(d->localAddress);
+		if(d->avCallManager)
+			d->avCallManager->setSelfAddress(d->localAddress);
 	}
 }
 
@@ -3994,7 +3994,7 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 		doPopup = true;
 		popupType = PsiPopup::AlertFile;
 	}
-	else if(e->type() == PsiEvent::AvCall) {
+	else if(e->type() == PsiEvent::AvCallType) {
 		playSound(PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-file-transfer").toString());
 		doPopup = true;
 		popupType = PsiPopup::AlertAvCall;
@@ -5057,9 +5057,9 @@ BookmarkManager* PsiAccount::bookmarkManager()
 	return d->bookmarkManager;
 }
 
-JingleRtpManager *PsiAccount::jingleRtpManager()
+AvCallManager *PsiAccount::avCallManager()
 {
-	return d->jingleRtpManager;
+	return d->avCallManager;
 }
 
 /**

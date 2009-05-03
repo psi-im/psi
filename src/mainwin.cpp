@@ -63,7 +63,7 @@
 
 #include "mainwin_p.h"
 
-#include "avcall/jinglertp.h"
+#include "avcall/avcall.h"
 
 using namespace XMPP;
 
@@ -1396,8 +1396,8 @@ void MainWin::showNoFocus()
 
 void MainWin::avcallConfig()
 {
-	if (JingleRtpManager::isSupported())
-		JingleRtpManager::config();
+	if (AvCallManager::isSupported())
+		AvCallManager::config();
 }
 
 //#endif

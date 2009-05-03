@@ -1,8 +1,26 @@
+/*
+ * Copyright (C) 2009  Barracuda Networks, Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 #include "calldlg.h"
 
 #include <QtGui>
 #include "ui_call.h"
-#include "jinglertp.h"
+#include "avcall.h"
 #include "xmpp_client.h"
 #include "../psimedia/psimedia.h"
 #include "common.h"
@@ -17,9 +35,9 @@ extern void options_avcall_update();
 static void prep_device_opts()
 {
 	options_avcall_update();
-	JingleRtpManager::setAudioOutDevice(PsiOptions::instance()->getOption("options.media.devices.audio-output").toString());
-	JingleRtpManager::setAudioInDevice(PsiOptions::instance()->getOption("options.media.devices.audio-input").toString());
-	JingleRtpManager::setVideoInDevice(PsiOptions::instance()->getOption("options.media.devices.video-input").toString());
+	AvCallManager::setAudioOutDevice(PsiOptions::instance()->getOption("options.media.devices.audio-output").toString());
+	AvCallManager::setAudioInDevice(PsiOptions::instance()->getOption("options.media.devices.audio-input").toString());
+	AvCallManager::setVideoInDevice(PsiOptions::instance()->getOption("options.media.devices.video-input").toString());
 }
 
 class CallDlg::Private : public QObject
@@ -33,7 +51,7 @@ public:
 	bool incoming;
 	bool active;
 	bool activated;
-	JingleRtpSession *sess;
+	AvCall *sess;
 	PsiMedia::VideoWidget *vw_remote;
 
 	Private(CallDlg *_q) :
@@ -56,7 +74,7 @@ public:
 		ui.cb_bandwidth->addItem(tr("Low (160Kbps)"), 160);
 		ui.cb_bandwidth->setCurrentItem(1);
 
-		if(!JingleRtpManager::isVideoSupported())
+		if(!AvCallManager::isVideoSupported())
 		{
 			ui.ck_useVideo->hide();
 			ui.lb_bandwidth->hide();
@@ -92,23 +110,23 @@ public:
 		ui.lb_status->setText(tr("Ready"));
 	}
 
-	void setIncoming(JingleRtpSession *_sess)
+	void setIncoming(AvCall *_sess)
 	{
 		incoming = true;
 		sess = _sess;
 		connect(sess, SIGNAL(activated()), SLOT(sess_activated()));
-		connect(sess, SIGNAL(rejected()), SLOT(sess_rejected()));
+		connect(sess, SIGNAL(error()), SLOT(sess_error()));
 
 		ui.lb_to->setText(tr("From:"));
 		ui.le_to->setText(sess->jid().full());
 		ui.le_to->setReadOnly(true);
 
-		if(sess->mode() == JingleRtpSession::Video || sess->mode() == JingleRtpSession::Both)
+		if(sess->mode() == AvCall::Video || sess->mode() == AvCall::Both)
 		{
 			ui.ck_useVideo->setChecked(true);
 
 			// video-only session, don't allow deselecting video
-			if(sess->mode() == JingleRtpSession::Video)
+			if(sess->mode() == AvCall::Video)
 				ui.ck_useVideo->setEnabled(false);
 		}
 
@@ -118,11 +136,11 @@ public:
 private slots:
 	void ok_clicked()
 	{
-		JingleRtpSession::Mode mode = JingleRtpSession::Audio;
+		AvCall::Mode mode = AvCall::Audio;
 		int kbps = -1;
 		if(ui.ck_useVideo->isChecked())
 		{
-			mode = JingleRtpSession::Both;
+			mode = AvCall::Both;
 			kbps = ui.cb_bandwidth->itemData(ui.cb_bandwidth->currentIndex()).toInt();
 		}
 
@@ -139,9 +157,9 @@ private slots:
 			ui.busy->start();
 			ui.lb_status->setText(tr("Calling..."));
 
-			sess = pa->jingleRtpManager()->createOutgoing();
+			sess = pa->avCallManager()->createOutgoing();
 			connect(sess, SIGNAL(activated()), SLOT(sess_activated()));
-			connect(sess, SIGNAL(rejected()), SLOT(sess_rejected()));
+			connect(sess, SIGNAL(error()), SLOT(sess_error()));
 
 			active = true;
 			sess->connectToJid(ui.le_to->text(), mode, kbps);
@@ -176,7 +194,7 @@ private slots:
 		ui.lb_bandwidth->hide();
 		ui.cb_bandwidth->hide();
 
-		if(sess->mode() == JingleRtpSession::Video || sess->mode() == JingleRtpSession::Both)
+		if(sess->mode() == AvCall::Video || sess->mode() == AvCall::Both)
 		{
 			vw_remote = new PsiMedia::VideoWidget(q);
 			replaceWidget(ui.ck_useVideo, vw_remote);
@@ -194,11 +212,12 @@ private slots:
 		activated = true;
 	}
 
-	void sess_rejected()
+	void sess_error()
 	{
-		ui.busy->stop();
+		if(!activated)
+			ui.busy->stop();
 
-		QMessageBox::information(q, tr("Call ended"), tr("Call was rejected or terminated"));
+		QMessageBox::information(q, tr("Call ended"), sess->errorString());
 		q->close();
 	}
 };
@@ -221,7 +240,7 @@ void CallDlg::setOutgoing(const XMPP::Jid &jid)
 	d->setOutgoing(jid);
 }
 
-void CallDlg::setIncoming(JingleRtpSession *sess)
+void CallDlg::setIncoming(AvCall *sess)
 {
 	d->setIncoming(sess);
 }

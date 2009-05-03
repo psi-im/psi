@@ -1251,7 +1251,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		}
 
 		// Voice call
-		if(d->pa->jingleRtpManager() && !isAgent) {
+		if(d->pa->avCallManager() && !isAgent) {
 		//if(d->pa->voiceCaller() && !isAgent) {
 			pm.insertItem(IconsetFactory::icon("psi/voice").icon(), tr("Voice Call"), 24);
 			if(!online) {

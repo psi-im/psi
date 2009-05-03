@@ -1,60 +1,97 @@
+/*
+ * Copyright (C) 2009  Barracuda Networks, Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 #ifndef JINGLERTP_H
 #define JINGLERTP_H
 
-#include <QObject>
+#include "jinglertptasks.h"
 
-class QHostAddress;
-
-namespace XMPP
-{
-	class Jid;
-}
-
-namespace PsiMedia
-{
-	class VideoWidget;
-}
-
-class PsiAccount;
-
-class JingleRtpSessionPrivate;
+class JingleRtpPrivate;
 class JingleRtpManagerPrivate;
 
-class JingleRtpSession : public QObject
+class JingleRtp : public QObject
 {
 	Q_OBJECT
 
 public:
-	enum Mode
+	enum Type
 	{
-		Audio,
-		Video,
-		Both
+		Audio = 0x01,
+		Video = 0x02
 	};
 
-	JingleRtpSession(const JingleRtpSession &from);
-	~JingleRtpSession();
+	class RtpPacket
+	{
+	public:
+		Type type;
+		int portOffset;
+		QByteArray value;
+	};
+
+	~JingleRtp();
 
 	XMPP::Jid jid() const;
-	Mode mode() const;
+	QList<JingleRtpPayloadType> remoteAudioPayloadTypes() const;
+	QList<JingleRtpPayloadType> remoteVideoPayloadTypes() const;
+	int remoteMaximumBitrate() const;
 
-	void connectToJid(const XMPP::Jid &jid, Mode mode, int kbps = -1);
-	void accept(Mode mode, int kbps = -1);
+	void setLocalAudioPayloadTypes(const QList<JingleRtpPayloadType> &types);
+	void setLocalVideoPayloadTypes(const QList<JingleRtpPayloadType> &types);
+	void setLocalMaximumBitrate(int kbps);
+
+	void connectToJid(const XMPP::Jid &jid);
+	void accept(int types); // intended types, so ICE knows what to do
 	void reject();
 
-	void setIncomingVideo(PsiMedia::VideoWidget *widget);
+	// indicates that local media settings have changed.  note that for
+	//   incoming sessions, this MUST be called.  local media settings
+	//   are not assumed to be ready when accept() is called (basically
+	//   this allows ICE negotiation to run in parallel to the RTP engine
+	//   initialization).
+	void localMediaUpdate();
+
+	bool rtpAvailable() const;
+	RtpPacket readRtp();
+	void writeRtp(const RtpPacket &packet);
 
 signals:
 	void rejected();
 	void activated();
 
+	// indicates that remote media settings have changed.  note that for
+	//   outgoing sessions, this must be listened to in order to get the
+	//   initial values.
+	void remoteMediaUpdated();
+
+	void readyReadRtp();
+
+	// note: this says nothing about the order packets were written
+	void rtpWritten(int count);
+
 private:
-	friend class JingleRtpSessionPrivate;
+	Q_DISABLE_COPY(JingleRtp);
+
+	friend class JingleRtpPrivate;
 	friend class JingleRtpManager;
 	friend class JingleRtpManagerPrivate;
-	JingleRtpSession();
+	JingleRtp();
 
-	JingleRtpSessionPrivate *d;
+	JingleRtpPrivate *d;
 };
 
 class JingleRtpManager : public QObject
@@ -62,32 +99,26 @@ class JingleRtpManager : public QObject
 	Q_OBJECT
 
 public:
-	JingleRtpManager(PsiAccount *pa);
+	JingleRtpManager(XMPP::Client *client);
 	~JingleRtpManager();
 
-	JingleRtpSession *createOutgoing();
-	JingleRtpSession *takeIncoming();
-
-	static void config();
-	static bool isSupported();
-	static bool isVideoSupported();
+	JingleRtp *createOutgoing();
+	JingleRtp *takeIncoming();
 
 	void setSelfAddress(const QHostAddress &addr);
+	void setExternalAddress(const QString &host); // resolved locally
 	void setStunHost(const QString &host, int port);
-
-	static void setBasePort(int port);
-	static void setExternalAddress(const QString &host);
-	static void setAudioOutDevice(const QString &id);
-	static void setAudioInDevice(const QString &id);
-	static void setVideoInDevice(const QString &id);
+	void setBasePort(int port);
 
 signals:
 	void incomingReady();
 
 private:
+	Q_DISABLE_COPY(JingleRtpManager);
+
 	friend class JingleRtpManagerPrivate;
-	friend class JingleRtpSession;
-	friend class JingleRtpSessionPrivate;
+	friend class JingleRtp;
+	friend class JingleRtpPrivate;
 
 	JingleRtpManagerPrivate *d;
 };

@@ -3,7 +3,7 @@
 #include "iconwidget.h"
 #include "psioptions.h"
 #include "../psimedia/psimedia.h"
-#include "../avcall/jinglertp.h"
+#include "../avcall/avcall.h"
 
 #include <qcombobox.h>
 #include <qlineedit.h>
@@ -37,7 +37,7 @@ public:
 		int types = 0;
 		types |= PsiMedia::Features::AudioOut;
 		types |= PsiMedia::Features::AudioIn;
-		if(JingleRtpManager::isVideoSupported())
+		if(AvCallManager::isVideoSupported())
 			types |= PsiMedia::Features::VideoIn;
 		f.lookup(types);
 		f.waitForFinished();
@@ -166,7 +166,7 @@ void options_avcall_update()
 //----------------------------------------------------------------------------
 
 OptionsTabAvCall::OptionsTabAvCall(QObject *parent)
-: OptionsTab(parent, "avcall", "", tr("Voice Calling"), JingleRtpManager::isVideoSupported() ? tr("Audio and video device configuration") : tr("Audio device configuration"), "psi/voice")
+: OptionsTab(parent, "avcall", "", tr("Voice Calling"), AvCallManager::isVideoSupported() ? tr("Audio and video device configuration") : tr("Audio device configuration"), "psi/voice")
 {
 	w = 0;
 }
@@ -183,7 +183,7 @@ QWidget *OptionsTabAvCall::widget()
 	w = new OptAvCallUI();
 	OptAvCallUI *d = (OptAvCallUI *)w;
 
-	if(!JingleRtpManager::isVideoSupported()) {
+	if(!AvCallManager::isVideoSupported()) {
 		d->lb_videoInDevice->hide();
 		d->cb_videoInDevice->hide();
 	}

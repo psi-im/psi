@@ -36,7 +36,7 @@
 #include "opt_plugins.h"
 #endif
 
-#include "../avcall/jinglertp.h"
+#include "../avcall/avcall.h"
 
 //----------------------------------------------------------------------------
 // FancyItem
@@ -325,7 +325,7 @@ void OptionsDlg::Private::createTabs()
 	//tabs.append( new OptionsTabIconsetEmoticons(this) );
 	tabs.append( new OptionsTabGroupchat(this) );
 	tabs.append( new OptionsTabSound(this) );
-	if(JingleRtpManager::isSupported())
+	if(AvCallManager::isSupported())
 		tabs.append( new OptionsTabAvCall(this) );
 	tabs.append( new OptionsTabToolbars(this) );
 #ifdef PSI_PLUGINS

@@ -90,7 +90,7 @@
 #include "desktoputil.h"
 #include "tabmanager.h"
 #include "capsmanager.h"
-#include "avcall/jinglertp.h"
+#include "avcall/avcall.h"
 #include "avcall/calldlg.h"
 
 
@@ -584,13 +584,13 @@ bool PsiCon::init()
 
 	DesktopUtil::setUrlHandler("xmpp", this, "doOpenUri");
 
-	if(JingleRtpManager::isSupported()) {
+	if(AvCallManager::isSupported()) {
 		options_avcall_update();
-		JingleRtpManager::setAudioOutDevice(PsiOptions::instance()->getOption("options.media.devices.audio-output").toString());
-		JingleRtpManager::setAudioInDevice(PsiOptions::instance()->getOption("options.media.devices.audio-input").toString());
-		JingleRtpManager::setVideoInDevice(PsiOptions::instance()->getOption("options.media.devices.video-input").toString());
-		JingleRtpManager::setBasePort(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt());
-		JingleRtpManager::setExternalAddress(PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString());
+		AvCallManager::setAudioOutDevice(PsiOptions::instance()->getOption("options.media.devices.audio-output").toString());
+		AvCallManager::setAudioInDevice(PsiOptions::instance()->getOption("options.media.devices.audio-input").toString());
+		AvCallManager::setVideoInDevice(PsiOptions::instance()->getOption("options.media.devices.video-input").toString());
+		AvCallManager::setBasePort(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt());
+		AvCallManager::setExternalAddress(PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString());
 	}
 
 	return true;
@@ -1107,12 +1107,12 @@ void PsiCon::slotApplyOptions()
 
 	updateS5BServerAddresses();
 
-	if(JingleRtpManager::isSupported()) {
-		JingleRtpManager::setAudioOutDevice(PsiOptions::instance()->getOption("options.media.devices.audio-output").toString());
-		JingleRtpManager::setAudioInDevice(PsiOptions::instance()->getOption("options.media.devices.audio-input").toString());
-		JingleRtpManager::setVideoInDevice(PsiOptions::instance()->getOption("options.media.devices.video-input").toString());
-		JingleRtpManager::setBasePort(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt());
-		JingleRtpManager::setExternalAddress(PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString());
+	if(AvCallManager::isSupported()) {
+		AvCallManager::setAudioOutDevice(PsiOptions::instance()->getOption("options.media.devices.audio-output").toString());
+		AvCallManager::setAudioInDevice(PsiOptions::instance()->getOption("options.media.devices.audio-input").toString());
+		AvCallManager::setVideoInDevice(PsiOptions::instance()->getOption("options.media.devices.video-input").toString());
+		AvCallManager::setBasePort(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt());
+		AvCallManager::setExternalAddress(PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString());
 	}
 
 	// mainwin stuff
@@ -1309,9 +1309,9 @@ void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 		return;
 	}
 
-	if(e->type() == PsiEvent::AvCall) {
+	if(e->type() == PsiEvent::AvCallType) {
 		AvCallEvent *ae = (AvCallEvent *)e;
-		JingleRtpSession *sess = ae->takeJingleRtpSession();
+		AvCall *sess = ae->takeAvCall();
 		e->account()->eventQueue()->dequeue(e);
 		e->account()->queueChanged();
 		e->account()->cpUpdate(*u);
