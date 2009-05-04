@@ -808,7 +808,7 @@ void OptionsMigration::reset()
 	LEGOPTP.serviceRosterIconset.clear();
 	LEGOPTP.serviceRosterIconset["transport"]	= "crystal-service.jisp";
 	LEGOPTP.serviceRosterIconset["aim"]	= "crystal-aim.jisp";
-	LEGOPTP.serviceRosterIconset["gadugadu"]	= "crystal-gadugadu.jisp";
+	LEGOPTP.serviceRosterIconset["gadugadu"]	= "crystal-gadu.jisp";
 	LEGOPTP.serviceRosterIconset["icq"]	= "crystal-icq.jisp";
 	LEGOPTP.serviceRosterIconset["msn"]	= "crystal-msn.jisp";
 	LEGOPTP.serviceRosterIconset["yahoo"]	= "crystal-yahoo.jisp";
