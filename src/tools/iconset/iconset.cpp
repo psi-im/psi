@@ -258,8 +258,9 @@ public:
 		impix = from.impix;
 		anim = from.anim ? new Anim ( *from.anim ) : 0;
 		icon = 0;
+		activatedCount = from.activatedCount;
 	}
-	
+
 	void unloadAnim()
 	{
 		if ( anim )
