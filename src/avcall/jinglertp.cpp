@@ -607,6 +607,16 @@ private:
 		localAddrs += addr;
 		ice->setLocalAddresses(localAddrs);
 
+		if(!extAddr.isNull())
+		{
+			QList<XMPP::Ice176::ExternalAddress> extAddrs;
+			XMPP::Ice176::ExternalAddress eaddr;
+			eaddr.base = addr;
+			eaddr.addr = extAddr;
+			extAddrs += eaddr;
+			ice->setExternalAddresses(extAddrs);
+		}
+
 		if(!stunAddr.isNull() && stunPort > 0)
 		{
 			// TODO: relay support
