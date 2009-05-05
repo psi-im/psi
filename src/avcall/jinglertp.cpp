@@ -211,6 +211,7 @@ public:
 	QList<JingleRtp::RtpPacket> in_rtp;
 
 	QString init_iq_id;
+	JT_JingleRtp *jt;
 
 	Resolver resolver;
 	QHostAddress extAddr;
@@ -240,6 +241,8 @@ public:
 	bool prov_accepted;
 	bool ice_connected;
 	bool session_accepted;
+	QTimer *handshakeTimer;
+	JingleRtp::Error errorCode;
 
 	JingleRtpPrivate(JingleRtp *_q) :
 		QObject(_q),
@@ -247,6 +250,7 @@ public:
 		manager(0),
 		localMaximumBitrate(-1),
 		remoteMaximumBitrate(-1),
+		jt(0),
 		resolver(this),
 		iceA(0),
 		iceV(0),
@@ -256,12 +260,20 @@ public:
 		session_accepted(false)
 	{
 		connect(&resolver, SIGNAL(finished()), SLOT(resolver_finished()));
+
+		handshakeTimer = new QTimer(this);
+		connect(handshakeTimer, SIGNAL(timeout()), SLOT(handshake_timeout()));
+		handshakeTimer->setSingleShot(true);
 	}
 
 	~JingleRtpPrivate()
 	{
 		cleanup();
 		manager->unlink(q);
+
+		handshakeTimer->setParent(0);
+		handshakeTimer->disconnect(this);
+		handshakeTimer->deleteLater();
 	}
 
 	void startOutgoing()
@@ -319,7 +331,6 @@ public:
 		envelope.reason.condition = JingleRtpReason::Gone;
 
 		JT_JingleRtp *task = new JT_JingleRtp(manager->client->rootTask());
-		connect(task, SIGNAL(finished()), SLOT(task_finished()));
 		task->request(peer, envelope);
 		task->go(true);
 
@@ -457,6 +468,8 @@ public:
 				iceV_status.remoteCandidates += videoContent->trans.candidates;
 			}
 
+			restartHandshakeTimer();
+
 			flushRemoteCandidates();
 
 			session_accepted = true;
@@ -524,6 +537,10 @@ private:
 	void cleanup()
 	{
 		resolver.disconnect(this);
+		handshakeTimer->stop();
+
+		delete jt;
+		jt = 0;
 
 		if(iceA)
 		{
@@ -593,6 +610,7 @@ private:
 	void setup_ice(XMPP::Ice176 *ice)
 	{
 		connect(ice, SIGNAL(started()), SLOT(ice_started()));
+		connect(ice, SIGNAL(error()), SLOT(ice_error()));
 		connect(ice, SIGNAL(localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)), SLOT(ice_localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)));
 		connect(ice, SIGNAL(componentReady(int)), SLOT(ice_componentReady(int)));
 		connect(ice, SIGNAL(readyRead(int)), SLOT(ice_readyRead(int)));
@@ -681,13 +699,15 @@ private:
 				envelope.contentList += content;
 			}
 
-			JT_JingleRtp *task = new JT_JingleRtp(manager->client->rootTask());
-			connect(task, SIGNAL(finished()), SLOT(task_finished()));
-			task->request(peer, envelope);
-			task->go(true);
+			jt = new JT_JingleRtp(manager->client->rootTask());
+			connect(jt, SIGNAL(finished()), SLOT(task_finished()));
+			jt->request(peer, envelope);
+			jt->go(true);
 		}
 		else
 		{
+			restartHandshakeTimer();
+
 			prov_accepted = true;
 			manager->push_task->respondSuccess(peer, init_iq_id);
 
@@ -839,7 +859,6 @@ private:
 			session_accepted = true;
 
 			JT_JingleRtp *task = new JT_JingleRtp(manager->client->rootTask());
-			connect(task, SIGNAL(finished()), SLOT(task_finished()));
 			task->request(peer, envelope);
 			task->go(true);
 		}
@@ -850,8 +869,15 @@ private:
 		if(session_accepted && ice_connected)
 		{
 			printf("activating!\n");
+			handshakeTimer->stop();
 			emit q->activated();
 		}
+	}
+
+	void restartHandshakeTimer()
+	{
+		// there better be some activity in 10 seconds
+		handshakeTimer->start(10000);
 	}
 
 private slots:
@@ -861,6 +887,13 @@ private slots:
 		stunAddr = resolver.stunAddr;
 
 		start_ice();
+	}
+
+	void handshake_timeout()
+	{
+		reject();
+		errorCode = JingleRtp::ErrorTimeout;
+		emit q->error();
 	}
 
 	void ice_started()
@@ -880,6 +913,12 @@ private slots:
 
 		if(ok)
 			after_ice_started();
+	}
+
+	void ice_error()
+	{
+		errorCode = JingleRtp::ErrorICE;
+		emit q->error();
 	}
 
 	void ice_localCandidatesReady(const QList<XMPP::Ice176::Candidate> &list)
@@ -981,7 +1020,11 @@ private slots:
 
 	void task_finished()
 	{
-		JT_JingleRtp *task = (JT_JingleRtp *)sender();
+		if(!jt)
+			return;
+
+		JT_JingleRtp *task = jt;
+		jt = 0;
 
 		if(task->success())
 			prov_accept();
@@ -1074,6 +1117,11 @@ JingleRtp::RtpPacket JingleRtp::readRtp()
 void JingleRtp::writeRtp(const RtpPacket &packet)
 {
 	d->writeRtp(packet);
+}
+
+JingleRtp::Error JingleRtp::errorCode() const
+{
+	return d->errorCode;
 }
 
 //----------------------------------------------------------------------------

@@ -376,6 +376,7 @@ private:
 	void setup_sess()
 	{
 		connect(sess, SIGNAL(rejected()), SLOT(sess_rejected()));
+		connect(sess, SIGNAL(error()), SLOT(sess_error()));
 		connect(sess, SIGNAL(activated()), SLOT(sess_activated()));
 		connect(sess, SIGNAL(remoteMediaUpdated()), SLOT(sess_remoteMediaUpdated()));
 		connect(sess, SIGNAL(readyReadRtp()), SLOT(sess_readyReadRtp()));
@@ -532,6 +533,19 @@ private slots:
 	void sess_rejected()
 	{
 		errorString = tr("Call was rejected or terminated.");
+		cleanup();
+		emit q->error();
+	}
+
+	void sess_error()
+	{
+		JingleRtp::Error e = sess->errorCode();
+		if(e == JingleRtp::ErrorTimeout)
+			errorString = tr("Call negotiation timed out.");
+		else if(e == JingleRtp::ErrorICE)
+			errorString = tr("Unable to establish peer-to-peer connection.");
+		else
+			errorString = tr("Call negotiation failed.");
 		cleanup();
 		emit q->error();
 	}

@@ -29,6 +29,13 @@ class JingleRtp : public QObject
 	Q_OBJECT
 
 public:
+	enum Error
+	{
+		ErrorGeneric,
+		ErrorTimeout,
+		ErrorICE
+	};
+
 	enum Type
 	{
 		Audio = 0x01,
@@ -69,8 +76,11 @@ public:
 	RtpPacket readRtp();
 	void writeRtp(const RtpPacket &packet);
 
+	Error errorCode() const;
+
 signals:
 	void rejected();
+	void error();
 	void activated();
 
 	// indicates that remote media settings have changed.  note that for
