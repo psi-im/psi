@@ -15,7 +15,7 @@ class QPushButton;
 class CertificateErrorDialog
 {
 	public:
-		CertificateErrorDialog(const QString& title, const QString& host, const QCA::Certificate& cert, int result, QCA::Validity validity, const QString& certsSaveDir);
+		CertificateErrorDialog(const QString& title, const QString& host, const QCA::Certificate& cert, int result, QCA::Validity validity, const QString &domainOverride, QString &tlsOverrideDomain, QByteArray &tlsOverrideCert);
 
 		QMessageBox* getMessageBox() {
 			return messageBox_;
@@ -32,7 +32,9 @@ class CertificateErrorDialog
 		QCA::Certificate certificate_;
 		int result_;
 		QCA::Validity validity_;
-		QString certsSaveDir_;
+		QString &tlsOverrideDomain_;
+		QByteArray &tlsOverrideCert_;
+		QString domainOverride_;
 		QString host_;
 };
 

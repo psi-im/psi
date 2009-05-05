@@ -85,7 +85,7 @@ public:
 
 	QMenuBar* defaultMenuBar() const;
 
-	void createAccount(const QString &name, const Jid &j="", const QString &pass="", bool opt_host=false, const QString &host="", int port=5222, bool legacy_ssl_probe = true, UserAccount::SSLFlag ssl=UserAccount::SSL_Auto, QString proxy="");
+	void createAccount(const QString &name, const Jid &j="", const QString &pass="", bool opt_host=false, const QString &host="", int port=5222, bool legacy_ssl_probe = true, UserAccount::SSLFlag ssl=UserAccount::SSL_Auto, QString proxy="", const QString &tlsOverrideDomain="", const QByteArray &tlsOverrideCert=QByteArray());
 	PsiAccount *createAccount(const UserAccount &);
 	//void createAccount(const QString &, const QString &host="", int port=5222, bool ssl=false, const QString &user="", const QString &pass="");
 	void removeAccount(PsiAccount *);
