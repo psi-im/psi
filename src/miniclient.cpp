@@ -159,28 +159,13 @@ void MiniClient::setErrorOnDisconnect(bool b)
 
 void MiniClient::tls_handshaken()
 {
-	QCA::Certificate cert = tls->peerCertificateChain().primary();
-	int r = tls->peerIdentityResult();
-	if (r == QCA::TLS::Valid && !tlsHandler->certMatchesHostname()) r = QCA::TLS::HostMismatch;
-	if(r != QCA::TLS::Valid) {
-		QCA::Validity validity =  tls->peerCertificateValidity();
-		CertificateErrorDialog errorDialog(
-			tr("Server Authentication"),
-			j.domain(),
-			cert,
-			r,
-			validity,
-			ApplicationInfo::getCertificateStoreSaveDir());
-		if (errorDialog.exec() == QDialog::Accepted) {
-			tlsHandler->continueAfterHandshake();
-		}
-		else {
-			close();
-			error();
-		}
-	}
-	else {
+	if (CertificateHelpers::checkCertificate(tls, tlsHandler, tlsOverrideDomain, tlsOverrideCert, 0,
+										 tr("Server Authentication"),
+										 j.domain())) {
 		tlsHandler->continueAfterHandshake();
+	} else {
+		close();
+		error();
 	}
 }
 

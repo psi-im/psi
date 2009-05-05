@@ -11,8 +11,11 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QMessageBox>
 
 #include "Certificates/CertificateHelpers.h"
+#include "xmpp.h"
+#include "Certificates/CertificateErrorDialog.h"
 
 using namespace QCA;
 
@@ -152,4 +155,48 @@ QString CertificateHelpers::resultToString(int result, QCA::Validity validity)
 			break;
 	}
 	return s;
+}
+
+// shared by PsiAccount and MiniClient
+bool CertificateHelpers::checkCertificate(QCA::TLS* tls, XMPP::QCATLSHandler *tlsHandler, QString &tlsOverrideDomain, QByteArray &tlsOverrideCert, QObject * canceler, const QString &title, const QString &host) {
+	QCA::Certificate cert = tls->peerCertificateChain().primary();
+	int result = tls->peerIdentityResult();
+	QString hostnameOverrideable;
+
+	if (result == QCA::TLS::Valid && !tlsHandler->certMatchesHostname()) {
+		QList<QString> lst = cert.subjectInfo().values(QCA::CommonName);
+		if (lst.size() == 1) {
+			hostnameOverrideable = lst[0];
+		}
+		if (lst.size() != 1 || lst[0].isEmpty() || lst[0] != tlsOverrideDomain) {
+			result = QCA::TLS::HostMismatch;
+		}
+	}
+
+	// if this cert equals the user trusted certificate, just trust the user's choice.
+	if (result != QCA::TLS::Valid && !tlsOverrideCert.isEmpty()) {
+		if (cert.toDER() == tlsOverrideCert) {
+			result = QCA::TLS::Valid;
+		}
+	}
+
+	if (result != QCA::TLS::Valid) {
+		CertificateErrorDialog errorDialog(
+				title, host, cert,
+				result, tls->peerCertificateValidity(),
+				hostnameOverrideable, tlsOverrideDomain, tlsOverrideCert);
+		if (canceler) {
+			QObject::connect(canceler, SIGNAL(disconnected()), errorDialog.getMessageBox(), SLOT(reject()), Qt::AutoConnection);
+			QObject::connect(canceler, SIGNAL(reconnecting()), errorDialog.getMessageBox(), SLOT(reject()), Qt::AutoConnection);
+		}
+		if (errorDialog.exec() == QDialog::Accepted) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	else {
+		return true;
+	}
 }

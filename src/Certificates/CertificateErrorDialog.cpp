@@ -12,14 +12,18 @@
 #include "Certificates/CertificateErrorDialog.h"
 #include "Certificates/CertificateDisplayDialog.h"
 
-CertificateErrorDialog::CertificateErrorDialog(const QString& title, const QString& host, const QCA::Certificate& cert, int result, QCA::Validity validity, const QString& certsSaveDir) : certificate_(cert), result_(result), validity_(validity), certsSaveDir_(certsSaveDir), host_(host)
+CertificateErrorDialog::CertificateErrorDialog(const QString& title, const QString& host, const QCA::Certificate& cert, int result, QCA::Validity validity, const QString &domainOverride, QString &tlsOverrideDomain, QByteArray &tlsOverrideCert) : certificate_(cert), result_(result), validity_(validity), tlsOverrideDomain_(tlsOverrideDomain), tlsOverrideCert_(tlsOverrideCert), domainOverride_(domainOverride), host_(host)
 {
 	messageBox_ = new QMessageBox(QMessageBox::Warning, title, QObject::tr("The %1 certificate failed the authenticity test.").arg(host));
 	messageBox_->setInformativeText(CertificateHelpers::resultToString(result, validity));
 
 	detailsButton_ = messageBox_->addButton(QObject::tr("&Details..."), QMessageBox::ActionRole);
 	continueButton_ = messageBox_->addButton(QObject::tr("&Connect anyway"), QMessageBox::AcceptRole);
-	saveButton_ = messageBox_->addButton(QObject::tr("&Trust this certificate"), QMessageBox::AcceptRole);
+	if (domainOverride.isEmpty()) {
+		saveButton_ = messageBox_->addButton(QObject::tr("&Trust this certificate"), QMessageBox::AcceptRole);
+	} else {
+		saveButton_ = messageBox_->addButton(QObject::tr("&Trust this domain"), QMessageBox::AcceptRole);
+	}
 	cancelButton_ = messageBox_->addButton(QMessageBox::Cancel);
 
 	messageBox_->setDefaultButton(detailsButton_);
@@ -44,13 +48,11 @@ int CertificateErrorDialog::exec()
 		}
 		else if (messageBox_->clickedButton() == saveButton_) {
 			messageBox_->setResult(QDialog::Accepted);
-			QString fileName = certsSaveDir_ + "/" + host_ + ".crt";
-			int i = 0;
-			while (QFile(fileName).exists()) {
-				fileName = certsSaveDir_ + "/" + host_ + "_" + QString::number(i) + ".crt";
-				++i;
+			if (domainOverride_.isEmpty()) {
+				tlsOverrideCert_ = certificate_.toDER();
+			} else {
+				tlsOverrideDomain_ = domainOverride_;
 			}
-			certificate_.toPEMFile(fileName);
 			break;
 		}
 	}

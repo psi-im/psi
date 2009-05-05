@@ -1339,31 +1339,12 @@ bool PsiAccount::loggedIn() const
 
 void PsiAccount::tls_handshaken()
 {
-	QCA::Certificate cert = d->tls->peerCertificateChain().primary();
-	int result = d->tls->peerIdentityResult();
-	if (result == QCA::TLS::Valid && !d->tlsHandler->certMatchesHostname()) {
-		result = QCA::TLS::HostMismatch;
-	}
-
-	if (result != QCA::TLS::Valid && !CertificateHelpers::allCertificates(ApplicationInfo::getCertificateStoreDirs()).certificates().contains(cert)) {
-		CertificateErrorDialog errorDialog(
-				(d->psi->contactList()->enabledAccounts().count() > 1 ?  QString("%1: ").arg(name()) : "") + tr("Server Authentication"),
-				d->jid.domain(),
-				cert,
-				result, 
-				d->tls->peerCertificateValidity(),
-				ApplicationInfo::getCertificateStoreSaveDir());
-		connect(this, SIGNAL(disconnected()), errorDialog.getMessageBox(), SLOT(reject()));
-		connect(this, SIGNAL(reconnecting()), errorDialog.getMessageBox(), SLOT(reject()));
-		if (errorDialog.exec() == QDialog::Accepted) {
-			d->tlsHandler->continueAfterHandshake();
-		}
-		else {
-			logout();
-		}
-	}
-	else {
+	if (CertificateHelpers::checkCertificate(d->tls, d->tlsHandler, d->acc.tlsOverrideDomain, d->acc.tlsOverrideCert, this,
+										 (d->psi->contactList()->enabledAccounts().count() > 1 ?  QString("%1: ").arg(name()) : "") + tr("Server Authentication"),
+										 d->jid.domain())) {
 		d->tlsHandler->continueAfterHandshake();
+	} else {
+		logout();
 	}
 }
 

@@ -165,7 +165,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 
 	reset();
 
-	QStringList allSetOptions = o->getChildOptionNames(base, true, false);
+	QStringList allSetOptions = o->getChildOptionNames(base, true, true);
 
 	opt_enabled = o->getOption(base + ".enabled").toBool();
 	opt_auto = o->getOption(base + ".auto").toBool();
@@ -279,6 +279,11 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 		// 0 as port when first adding this option. Ignore 0 for now
 		// and use default
 		if (tmpPort != 0) stunPort = tmpPort;
+	}
+
+	if (allSetOptions.contains(base + ".tls")) {
+		tlsOverrideCert = o->getOption(base + ".tls.override-certificate").toByteArray();
+		tlsOverrideDomain = o->getOption(base + ".tls.override-domain").toString();
 	}
 }
 
@@ -397,7 +402,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 		o->setOption(groupBase + ".open", groupState[group].open);
 		o->setOption(groupBase + ".rank", groupState[group].rank);
 	}
-		
+
 	o->setOption(base + ".proxy-id", proxyID);
 
 	keybind.toOptions(o, base + ".pgp-key-bindings");
@@ -405,6 +410,9 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 
 	o->setOption(base + ".stun-host", stunHost);
 	o->setOption(base + ".stun-port", QString::number(stunPort));
+
+	o->setOption(base + ".tls.override-certificate", tlsOverrideCert);
+	o->setOption(base + ".tls.override-domain", tlsOverrideDomain);
 }
 
 void UserAccount::fromXml(const QDomElement &a)

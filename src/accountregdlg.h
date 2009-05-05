@@ -36,6 +36,7 @@ class QStringList;
 class MiniClient;
 class XDataWidget;
 class ServerListQuerier;
+class QByteArray;
 namespace XMPP {
 	class Form;
 	class XData;
@@ -56,6 +57,8 @@ public:
 	bool legacySSLProbe() { return legacy_ssl_probe_; }
 	UserAccount::SSLFlag ssl() const { return ssl_; }
 	QString proxy() const { return proxy_; }
+	QString tlsOverrideDomain() { return tlsOverrideDomain_; };
+	QByteArray tlsOverrideCert() { return tlsOverrideCert_; };
 
 public slots:
 	void done(int);
@@ -72,7 +75,7 @@ protected slots:
 	void hostToggled(bool);
 	void sslActivated(int);
 	void next();
-	
+
 	void selectServer();
 	void serverListReceived(const QStringList&);
 	void serverListError(const QString&);
@@ -101,6 +104,8 @@ private:
 	int port_;
 	QString pass_;
 	QString proxy_;
+	QString tlsOverrideDomain_;
+	QByteArray tlsOverrideCert_;
 };
 
 #endif

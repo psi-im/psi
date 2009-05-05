@@ -37,6 +37,7 @@ namespace QCA {
 }
 class ProxyManager;
 class QString;
+class QByteArray;
 
 class MiniClient : public QObject
 {
@@ -51,6 +52,8 @@ public:
 	XMPP::Client *client();
 	void setErrorOnDisconnect(bool);
 
+	QString tlsOverrideDomain;
+	QByteArray tlsOverrideCert;
 signals:
 	void handshaken();
 	void error();

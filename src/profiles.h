@@ -25,6 +25,7 @@
 #include <qstringlist.h>
 #include <QList>
 #include <QtCrypto>
+#include <QByteArray>
 
 #include "varlist.h"
 #include "proxy.h"
@@ -43,7 +44,6 @@ public:
 
 	void reset();
 
-	QDomElement toXml(QDomDocument &, const QString &tagName);
 	void fromXml(const QDomElement &);
 	
 	void fromOptions(OptionsTree *o, QString base);
@@ -81,6 +81,9 @@ public:
 
 	QString stunHost;
 	int stunPort;
+
+	QByteArray tlsOverrideCert;
+	QString tlsOverrideDomain;
 
 	/* migration only */
 	int proxy_index;
