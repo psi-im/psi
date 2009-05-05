@@ -847,6 +847,7 @@ void MainWin::actAboutPsiMediaActivated ()
 	QString gstVersion = extract_gst_version(creditText);
 
 	QString str;
+	QPixmap pix;
 	if(!gstVersion.isEmpty())
 	{
 		str = tr(
@@ -854,11 +855,40 @@ void MainWin::actAboutPsiMediaActivated ()
 			"open-source and cross-platform multimedia framework."
 			"  For more information, see "
 			"<a href=\"http://www.gstreamer.net/\">http://www.gstreamer.net/</a>").arg(gstVersion);
+		pix = IconsetFactory::icon("psi/gst_logo").pixmap();
 	}
 	else
 		str = creditText;
 
-	QMessageBox::about(this, tr("About GStreamer"), str);
+	QDialog aboutGst;
+	QVBoxLayout *vb = new QVBoxLayout(&aboutGst);
+	aboutGst.setWindowTitle(tr("About GStreamer"));
+	QHBoxLayout *hb = new QHBoxLayout;
+	vb->addLayout(hb);
+	if(!pix.isNull())
+	{
+		QLabel *la = new QLabel(&aboutGst);
+		la->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
+		la->setPixmap(pix);
+		hb->addWidget(la);
+	}
+	QLabel *lb = new QLabel(&aboutGst);
+	lb->setText(str);
+	lb->setTextFormat(Qt::RichText);
+	lb->setWordWrap(true);
+	lb->setOpenExternalLinks(true);
+	hb->addWidget(lb);
+	QDialogButtonBox *buttonBox = new QDialogButtonBox(&aboutGst);
+	buttonBox->addButton(QDialogButtonBox::Ok);
+	aboutGst.connect(buttonBox, SIGNAL(accepted()), SLOT(accept()));
+	vb->addWidget(buttonBox);
+	if(!pix.isNull())
+	{
+		int w = pix.width() * 4;
+		aboutGst.resize(w, aboutGst.heightForWidth(w));
+	}
+	aboutGst.exec();
+	//QMessageBox::about(this, tr("About GStreamer"), str);
 }
 
 void MainWin::actDiagQCAPluginActivated()

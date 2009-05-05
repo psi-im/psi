@@ -258,7 +258,12 @@
 	<icon>
 		<x xmlns='name'>psi/psiLogo</x>
 		<object mime='image/png'>psilogo.png</object>
-	</icon>	
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/gst_logo</x>
+		<object mime='image/png'>gstreamer-logo-50.png</object>
+	</icon>
 
 	<icon>
 		<x xmlns='name'>psi/smile</x>
