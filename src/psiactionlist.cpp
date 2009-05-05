@@ -346,6 +346,9 @@ void PsiActionList::Private::createMainWin()
 		IconAction *actAboutQt = new IconAction (tr("About Qt"), tr("About &Qt"), 0, this);
 		actAboutQt->setMenuRole(QAction::AboutQtRole);
 
+		IconAction *actAboutPsiMedia = new IconAction (tr("About GStreamer"), tr("About &GStreamer"), 0, this);
+		actAboutPsiMedia->setMenuRole(QAction::AboutRole);
+
 		IconAction *actDiagQCAPlugin = new IconAction (tr("Security Plugins"), tr("Security &Plugins"), 0, this);
 
 		IconAction *actDiagQCAKeyStore = new IconAction (tr("Key Storage"), tr("&Key Storage"), 0, this);
@@ -361,7 +364,8 @@ void PsiActionList::Private::createMainWin()
 			{ "help_report_bug",       actBugReport       },
 			{ "help_about",            actAbout           },
 			{ "help_about_qt",         actAboutQt         },
-			{ "help_diag_qcaplugin",   actDiagQCAPlugin  },
+			{ "help_about_psimedia",   actAboutPsiMedia   },
+			{ "help_diag_qcaplugin",   actDiagQCAPlugin   },
 			{ "help_diag_qcakeystore", actDiagQCAKeyStore },
 			{ "", 0 }
 		};

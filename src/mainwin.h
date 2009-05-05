@@ -121,6 +121,7 @@ private slots:
 	void actBugReportActivated ();
 	void actAboutActivated ();
 	void actAboutQtActivated ();
+	void actAboutPsiMediaActivated ();
 	void actPlaySoundsActivated (bool);
 	void actPublishTuneActivated (bool);
 	void actTipActivated();

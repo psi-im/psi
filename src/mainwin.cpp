@@ -63,10 +63,23 @@
 
 #include "mainwin_p.h"
 
+#include "psimedia/psimedia.h"
 #include "avcall/avcall.h"
 
 using namespace XMPP;
 
+// FIXME: this is a really corny way of getting the GStreamer version...
+QString extract_gst_version(const QString &in)
+{
+	int start = in.indexOf("GStreamer ");
+	if(start == -1)
+		return QString();
+	start += 10;
+	int end = in.indexOf(",", start);
+	if(end == -1)
+		return QString();
+	return in.mid(start, end - start);
+}
 
 //----------------------------------------------------------------------------
 // MainWin::Private
@@ -341,6 +354,8 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 	d->getAction("menu_quit")->addTo(mainMenu);
 	d->getAction("help_about")->addTo(mainMenu);
 	d->getAction("help_about_qt")->addTo(mainMenu);
+	if(PsiMedia::isSupported())
+		d->getAction("help_about_psimedia")->addTo(mainMenu);
 
 	d->mainMenu = new QMenu(this);
 	mainMenuBar()->insertItem(tr("General"), d->mainMenu);
@@ -470,6 +485,7 @@ void MainWin::registerAction( IconAction* action )
 		{ "help_report_bug",  activated, this, SLOT( actBugReportActivated() ) },
 		{ "help_about",       activated, this, SLOT( actAboutActivated() ) },
 		{ "help_about_qt",    activated, this, SLOT( actAboutQtActivated() ) },
+		{ "help_about_psimedia",   activated, this, SLOT( actAboutPsiMediaActivated() ) },
 		{ "help_diag_qcaplugin",   activated, this, SLOT( actDiagQCAPluginActivated() ) },
 		{ "help_diag_qcakeystore", activated, this, SLOT( actDiagQCAKeyStoreActivated() ) },
 
@@ -703,6 +719,9 @@ void MainWin::buildOptionsMenu()
 	        << "help_about"
 	        << "help_about_qt";
 
+	if(PsiMedia::isSupported())
+		actions << "help_about_psimedia";
+
 	d->updateMenu(actions, helpMenu);
 
 	buildGeneralMenu( d->optionsMenu );
@@ -820,6 +839,26 @@ void MainWin::actTipActivated ()
 void MainWin::actAboutQtActivated ()
 {
 	QMessageBox::aboutQt(this);
+}
+
+void MainWin::actAboutPsiMediaActivated ()
+{
+	QString creditText = PsiMedia::creditText();
+	QString gstVersion = extract_gst_version(creditText);
+
+	QString str;
+	if(!gstVersion.isEmpty())
+	{
+		str = tr(
+			"This application uses GStreamer %1, a comprehensive "
+			"open-source and cross-platform multimedia framework."
+			"  For more information, see "
+			"<a href=\"http://www.gstreamer.net/\">http://www.gstreamer.net/</a>").arg(gstVersion);
+	}
+	else
+		str = creditText;
+
+	QMessageBox::about(this, tr("About GStreamer"), str);
 }
 
 void MainWin::actDiagQCAPluginActivated()
