@@ -548,7 +548,7 @@ private:
 
 	void start_ice()
 	{
-		int stunPort = manager->stunPort;
+		stunPort = manager->stunPort;
 		if(!stunAddr.isNull() && stunPort > 0)
 			printf("STUN service: %s:%d\n", qPrintable(stunAddr.toString()), stunPort);
 
