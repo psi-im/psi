@@ -157,9 +157,15 @@ UserAccount::~UserAccount()
 
 void UserAccount::fromOptions(OptionsTree *o, QString base)
 {
+	// WARNING: If you add any new option here, only read the option if
+	// allSetOptions (defined below) contains the new option. If not
+	// the code should just leave the default value from the reset()
+	// call in place.
 	optionsBase = base;
-	
+
 	reset();
+
+	QStringList allSetOptions = o->getChildOptionNames(base, true, false);
 
 	opt_enabled = o->getOption(base + ".enabled").toBool();
 	opt_auto = o->getOption(base + ".auto").toBool();
@@ -263,13 +269,17 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 
 	dtProxy = o->getOption(base + ".bytestreams-proxy").toString();
 
-	stunHost = o->getOption(base + ".stun-host").toString();
-	stunPort = o->getOption(base + ".stun-port").toInt();
-	// oops, everyone is getting 0 as a stun port for the first run.
-	//   this code should fix that.  had i done this right the first
-	//   time, i'd instead want to check for the existence of the option
-	if(stunPort <= 0)
-		stunPort = 3478;
+
+	if (allSetOptions.contains("stun-host")) {
+		stunHost = o->getOption(base + ".stun-host").toString();
+	}
+	if (allSetOptions.contains("stun-port")) {
+		int tmpPort = o->getOption(base + ".stun-port").toInt();
+		// a few days in the 0.13-dev development cycle the code set
+		// 0 as port when first adding this option. Ignore 0 for now
+		// and use default
+		if (tmpPort != 0) stunPort = tmpPort;
+	}
 }
 
 void UserAccount::toOptions(OptionsTree *o, QString base)
