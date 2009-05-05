@@ -270,10 +270,10 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	dtProxy = o->getOption(base + ".bytestreams-proxy").toString();
 
 
-	if (allSetOptions.contains("stun-host")) {
+	if (allSetOptions.contains(base + ".stun-host")) {
 		stunHost = o->getOption(base + ".stun-host").toString();
 	}
-	if (allSetOptions.contains("stun-port")) {
+	if (allSetOptions.contains(base + ".stun-port")) {
 		int tmpPort = o->getOption(base + ".stun-port").toInt();
 		// a few days in the 0.13-dev development cycle the code set
 		// 0 as port when first adding this option. Ignore 0 for now
