@@ -153,6 +153,14 @@ QString ApplicationInfo::resourcesDir()
 #endif
 }
 
+QString ApplicationInfo::libDir()
+{
+#if defined(Q_OS_UNIX)
+	return PSI_LIBDIR;
+#else
+	return QString();
+#endif
+}
 
 /** \brief return psi's private read write data directory
   * unix+mac: $HOME/.psi

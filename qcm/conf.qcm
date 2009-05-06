@@ -16,16 +16,18 @@ public:
 	QString checkString() const { return QString(); }
 	bool exec()
 	{
+		conf->addExtra(QString("PSI_LIBDIR=%1/psi").arg(conf->getenv("LIBDIR")));
 		conf->addExtra(QString("PSI_DATADIR=%1/psi").arg(conf->getenv("DATADIR")));
 
 		QFile file("src/config.h");
 		if ( file.open(QIODevice::WriteOnly | QIODevice::Text) ) {
 			QTextStream stream( &file );
+			stream << "#define PSI_LIBDIR \"" << conf->getenv("LIBDIR") << "/psi\"" << endl;
 			stream << "#define PSI_DATADIR \"" << conf->getenv("DATADIR") << "/psi\"" << endl;
 		}
-		
+
 		conf->addDefine("HAVE_CONFIG");
-		
+
 		return true;
 	}
 };

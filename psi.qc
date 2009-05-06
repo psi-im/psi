@@ -3,6 +3,7 @@
   <profile>psi.pro</profile>
   <sharename>psi</sharename>
   <moddir>qcm</moddir>
+  <libdir/>
   <datadir/>
   <dep type='qt4'>
     <required/>

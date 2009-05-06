@@ -12,6 +12,7 @@ This script creates necessary configuration files to build/install.
 Main options:
   --prefix=[path]     Base path for build/install.  Default: /usr/local
   --bindir=[path]     Directory for binaries.  Default: PREFIX/bin
+  --libdir=[path]     Directory for libraries.  Default: PREFIX/lib
   --datadir=[path]    Directory for data.  Default: PREFIX/share
   --qtdir=[path]      Directory where Qt is installed.
   --verbose           Show extra configure output.
@@ -146,6 +147,11 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
+		--libdir=*)
+			LIBDIR=$optarg
+			shift
+			;;
+
 		--datadir=*)
 			DATADIR=$optarg
 			shift
@@ -252,6 +258,7 @@ done
 
 PREFIX=${PREFIX:-/usr/local}
 BINDIR=${BINDIR:-$PREFIX/bin}
+LIBDIR=${LIBDIR:-$PREFIX/lib}
 DATADIR=${DATADIR:-$PREFIX/share}
 
 echo "Configuring Psi ..."
@@ -260,6 +267,7 @@ if [ "$QC_VERBOSE" = "Y" ]; then
 echo
 echo PREFIX=$PREFIX
 echo BINDIR=$BINDIR
+echo LIBDIR=$LIBDIR
 echo DATADIR=$DATADIR
 echo EX_QTDIR=$EX_QTDIR
 echo QC_CERTSTORE_PATH=$QC_CERTSTORE_PATH
@@ -1101,16 +1109,18 @@ public:
 	QString checkString() const { return QString(); }
 	bool exec()
 	{
+		conf->addExtra(QString("PSI_LIBDIR=%1/psi").arg(conf->getenv("LIBDIR")));
 		conf->addExtra(QString("PSI_DATADIR=%1/psi").arg(conf->getenv("DATADIR")));
 
 		QFile file("src/config.h");
 		if ( file.open(QIODevice::WriteOnly | QIODevice::Text) ) {
 			QTextStream stream( &file );
+			stream << "#define PSI_LIBDIR \"" << conf->getenv("LIBDIR") << "/psi\"" << endl;
 			stream << "#define PSI_DATADIR \"" << conf->getenv("DATADIR") << "/psi\"" << endl;
 		}
-		
+
 		conf->addDefine("HAVE_CONFIG");
-		
+
 		return true;
 	}
 };
@@ -2152,6 +2162,7 @@ EOT
 
 export PREFIX
 export BINDIR
+export LIBDIR
 export DATADIR
 export EX_QTDIR
 export QC_CERTSTORE_PATH
