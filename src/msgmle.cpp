@@ -208,7 +208,7 @@ QSize ChatEdit::sizeHint() const
 
 bool ChatEdit::checkSpellingGloballyEnabled()
 {
-	return PsiOptions::instance()->getOption("options.ui.spell-check.enabled").toBool();
+	return (SpellChecker::instance()->available() && PsiOptions::instance()->getOption("options.ui.spell-check.enabled").toBool());
 }
 
 void ChatEdit::setCheckSpelling(bool b)
