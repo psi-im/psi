@@ -34,15 +34,11 @@ Dependency options:
   --disable-qdbus              Disable use of QDBUS
   --disable-growl              Disable use of Growl
   --with-growl=[path]          Path to the Growl framework
-  --disable-sparkle            Disable use of Sparkle
-  --with-sparkle=[path]        Path to the Sparkle framework
   --disable-xss                Disable use of the XScreenSaver extension
   --disable-ghbnr              Disable use of gethostbyname_r()
   --disable-aspell             Disable use of ASPELL
   --with-aspell-inc=[path]     Path to Aspell include files
   --with-aspell-lib=[path]     Path to Aspell library files
-  --disable-plugins            Disable use of Plugins
-  --enable-plugins             Enable Psi Plugin support
   --enable-debug               Enable debugging support
 
 EOT
@@ -215,16 +211,6 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
-		--disable-sparkle)
-			QC_DISABLE_sparkle="Y"
-			shift
-			;;
-
-		--with-sparkle=*)
-			QC_WITH_SPARKLE=$optarg
-			shift
-			;;
-
 		--disable-xss)
 			QC_DISABLE_xss="Y"
 			shift
@@ -247,16 +233,6 @@ while [ $# -gt 0 ]; do
 
 		--with-aspell-lib=*)
 			QC_WITH_ASPELL_LIB=$optarg
-			shift
-			;;
-
-		--disable-plugins)
-			QC_DISABLE_plugins="Y"
-			shift
-			;;
-
-		--enable-plugins)
-			QC_ENABLE_PLUGINS="Y"
 			shift
 			;;
 
@@ -297,15 +273,11 @@ echo QC_ENABLE_universal=$QC_ENABLE_universal
 echo QC_DISABLE_qdbus=$QC_DISABLE_qdbus
 echo QC_DISABLE_growl=$QC_DISABLE_growl
 echo QC_WITH_GROWL=$QC_WITH_GROWL
-echo QC_DISABLE_sparkle=$QC_DISABLE_sparkle
-echo QC_WITH_SPARKLE=$QC_WITH_SPARKLE
 echo QC_DISABLE_xss=$QC_DISABLE_xss
 echo QC_DISABLE_ghbnr=$QC_DISABLE_ghbnr
 echo QC_DISABLE_aspell=$QC_DISABLE_aspell
 echo QC_WITH_ASPELL_INC=$QC_WITH_ASPELL_INC
 echo QC_WITH_ASPELL_LIB=$QC_WITH_ASPELL_LIB
-echo QC_DISABLE_plugins=$QC_DISABLE_plugins
-echo QC_ENABLE_PLUGINS=$QC_ENABLE_PLUGINS
 echo QC_ENABLE_DEBUG=$QC_ENABLE_DEBUG
 echo
 fi
@@ -941,71 +913,6 @@ public:
 #endif
 	}
 };
-#line 1 "sparkle.qcm"
-/*
------BEGIN QCMOD-----
-name: Sparkle
-arg: with-sparkle=[path],Path to the Sparkle framework
------END QCMOD-----
-*/
-
-//----------------------------------------------------------------------------
-// qc_sparkle
-//----------------------------------------------------------------------------
-
-class qc_sparkle : public ConfObj
-{
-	public:
-		qc_sparkle(Conf *c) : ConfObj(c) {}
-
-		QString name() const { return "Sparkle"; }
-		QString shortname() const { return "sparkle"; }
-#ifndef Q_WS_MAC
-		QString checkString() const { return QString(); }
-#endif
-
-		// TODO: This should go into ConfObj
-		bool checkFramework(const QString &path, const QString &name)
-		{
-				QString str = "int main() { return 0; }";
-
-				QString extra;
-				if(!path.isEmpty()) {
-						extra += QString("-F") + path + ' ';
-				}
-				extra += QString("-framework ") + name;
-				if(!conf->doCompileAndLink(str, QStringList(), extra, "", NULL)) {
-						return false;
-				}
-				return true;
-		}
-		
-		// TODO: This should go into ConfObj
-		void addFrameworkPath(const QString& str)
-		{
-			conf->addExtra("QMAKE_CXXFLAGS += -F" + str);
-			conf->addLib("-F" + str);
-		}
-
-		bool exec()
-		{
-#ifdef Q_WS_MAC
-			QString sparkle_path = conf->getenv("QC_WITH_SPARKLE");
-			if(!checkFramework(sparkle_path, "Sparkle"))
-				return false;
-
-			if(!sparkle_path.isEmpty()) {
-				addFrameworkPath(sparkle_path);
-			}
-			conf->addExtra("CONFIG += Sparkle");
-			conf->addDefine("HAVE_SPARKLE");
-
-			return true;
-#else
-			return false;
-#endif
-		}
-};
 #line 1 "xss.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -1147,48 +1054,6 @@ public:
 		return true;
 	}
 };
-#line 1 "plugins.qcm"
-/*
------BEGIN QCMOD-----
-name: Plugins
-arg: enable-plugins,Enable Psi Plugin support
-
------END QCMOD-----
-*/
-
-//----------------------------------------------------------------------------
-// qc_plugins
-//----------------------------------------------------------------------------
-class qc_plugins : public ConfObj
-{
-public:
-	qc_plugins(Conf *c) : ConfObj(c) {}
-	QString name() const { return "Plugins"; }
-	QString shortname() const { return "Plugins"; }
-	bool exec()
-	{
-		QString s;
-		
-		// Check if Jingle was enabled explicitly
-		s = conf->getenv("QC_ENABLE_PLUGINS");
-		if(s.isEmpty())
-			return false;
-		
-		conf->addDefine("PSI_PLUGINS");
-		
-		// Finish
-		conf->addExtra("CONFIG += psi_plugins");                              
-
-		qWarning("");
-		qWarning("");
-		qWarning("        !!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!");
-		qWarning("        PLUGIN SUPPORT IS STILL UNFINISHED !!!");
-		qWarning("        THE PLUGIN INTERFACE /WILL/ CHANGE !!!");
-		qWarning("        USE AT YOUR OWN RISK !!!");
-
-		return true;
-	}
-};
 #line 1 "debug.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -1279,9 +1144,6 @@ cat >$1/modules_new.cpp <<EOT
     o = new qc_growl(conf);
     o->required = false;
     o->disabled = false;
-    o = new qc_sparkle(conf);
-    o->required = false;
-    o->disabled = false;
     o = new qc_xss(conf);
     o->required = false;
     o->disabled = false;
@@ -1289,9 +1151,6 @@ cat >$1/modules_new.cpp <<EOT
     o->required = false;
     o->disabled = false;
     o = new qc_aspell(conf);
-    o->required = false;
-    o->disabled = false;
-    o = new qc_plugins(conf);
     o->required = false;
     o->disabled = false;
     o = new qc_debug(conf);
@@ -1449,7 +1308,16 @@ QStringList qc_pathlist()
 	QStringList list;
 	QString path = qc_getenv("PATH");
 	if(!path.isEmpty())
+	{
+#ifdef Q_OS_WIN
+		list = path.split(';', QString::SkipEmptyParts);
+#else
 		list = path.split(':', QString::SkipEmptyParts);
+#endif
+	}
+#ifdef Q_OS_WIN
+	list.prepend(".");
+#endif
 	return list;
 }
 
@@ -1465,13 +1333,30 @@ QString qc_findprogram(const QString &prog)
 			out = fi.filePath();
 			break;
 		}
+
+#ifdef Q_OS_WIN
+		// on windows, be sure to look for .exe
+		if(prog.right(4).toLower() != ".exe")
+		{
+			fi = QFileInfo(list[n] + '/' + prog + ".exe");
+			if(fi.exists() && fi.isExecutable())
+			{
+				out = fi.filePath();
+				break;
+			}
+		}
+#endif
 	}
 	return out;
 }
 
 QString qc_findself(const QString &argv0)
 {
+#ifdef Q_OS_WIN
+	if(argv0.contains('\\'))
+#else
 	if(argv0.contains('/'))
+#endif
 		return argv0;
 	else
 		return qc_findprogram(argv0);
@@ -2254,6 +2139,7 @@ CONFIG  += console
 CONFIG  -= app_bundle
 QT      -= gui
 TARGET   = conf
+DESTDIR  = \$\$PWD
 
 HEADERS += conf4.h
 SOURCES += conf4.cpp
@@ -2279,15 +2165,11 @@ export QC_ENABLE_universal
 export QC_DISABLE_qdbus
 export QC_DISABLE_growl
 export QC_WITH_GROWL
-export QC_DISABLE_sparkle
-export QC_WITH_SPARKLE
 export QC_DISABLE_xss
 export QC_DISABLE_ghbnr
 export QC_DISABLE_aspell
 export QC_WITH_ASPELL_INC
 export QC_WITH_ASPELL_LIB
-export QC_DISABLE_plugins
-export QC_ENABLE_PLUGINS
 export QC_ENABLE_DEBUG
 export QC_VERBOSE
 rm -rf .qconftemp
