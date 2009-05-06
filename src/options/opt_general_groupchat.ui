@@ -40,7 +40,7 @@
         <string>Highlight lines and alert the user if this text is included in chat</string>
        </property>
        <property name="title" >
-        <string>Word Highlighting</string>
+        <string>Word highlighting</string>
        </property>
        <layout class="QVBoxLayout" >
         <property name="margin" >
@@ -153,14 +153,14 @@
      <item>
       <widget class="QCheckBox" name="ck_gcNickColoring" >
        <property name="text" >
-        <string>Enable Nick Coloring</string>
+        <string>Enable nick coloring</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QGroupBox" name="ncGroupBox" >
        <property name="title" >
-        <string>Nick Coloring</string>
+        <string>Nick coloring</string>
        </property>
        <layout class="QVBoxLayout" >
         <property name="margin" >

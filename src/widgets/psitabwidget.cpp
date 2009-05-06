@@ -28,7 +28,6 @@
 #include <QStyle>
 #include <QApplication>
 #include <QMenu>
-#include <QDebug>
 
 /**
  * Constructor

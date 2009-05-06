@@ -44,22 +44,22 @@ QString PrivacyListItem::toString() const
 {
 	QString act;
 	if (action() == PrivacyListItem::Deny) 
-		act = "Deny";
+		act = QObject::tr("Deny");
 	else 
-		act = "Allow";
+		act = QObject::tr("Allow");
 	
 	QString what;
 	if (all()) 
-		what = "All";
+		what = QObject::tr("All");
 	else {
 		if (message()) 
-			what += "Messages,";
+			what += QObject::tr("Messages,");
 		if (presenceIn()) 
-			what += "Presence-In,";
+			what += QObject::tr("Presence-In,");
 		if (presenceOut()) 
-			what += "Presence-Out,";
+			what += QObject::tr("Presence-Out,");
 		if (iq()) 
-			what += "Queries,";
+			what += QObject::tr("Queries,");
 		what.truncate(what.length()-1);
 	}
 	

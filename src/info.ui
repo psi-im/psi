@@ -66,7 +66,7 @@
        <item row="5" column="0" >
         <widget class="QLabel" name="TextLabel1_2_2_2_2" >
          <property name="text" >
-          <string>E-Mail</string>
+          <string>E-Mail:</string>
          </property>
         </widget>
        </item>
@@ -76,7 +76,7 @@
        <item row="2" column="0" >
         <widget class="QLabel" name="TextLabel1_3_2_3_2" >
          <property name="text" >
-          <string>Birthday</string>
+          <string>Birthday:</string>
          </property>
         </widget>
        </item>
@@ -190,28 +190,28 @@
        <item row="0" column="0" >
         <widget class="QLabel" name="TextLabel1_2_2" >
          <property name="text" >
-          <string>Full Name</string>
+          <string>Full Name:</string>
          </property>
         </widget>
        </item>
        <item row="3" column="0" >
         <widget class="QLabel" name="TextLabel1_3_2_2_2_2" >
          <property name="text" >
-          <string>Phone #</string>
+          <string>Phone #:</string>
          </property>
         </widget>
        </item>
        <item row="4" column="0" >
         <widget class="QLabel" name="TextLabel1_2_3_2" >
          <property name="text" >
-          <string>Homepage</string>
+          <string>Homepage:</string>
          </property>
         </widget>
        </item>
        <item row="1" column="0" >
         <widget class="QLabel" name="TextLabel1_2" >
          <property name="text" >
-          <string>Nickname</string>
+          <string>Nickname:</string>
          </property>
         </widget>
        </item>
@@ -254,14 +254,14 @@
          <item row="0" column="0" >
           <widget class="QLabel" name="TextLabel1_2_2_2_3" >
            <property name="text" >
-            <string>Company</string>
+            <string>Company:</string>
            </property>
           </widget>
          </item>
          <item row="2" column="0" >
           <widget class="QLabel" name="TextLabel1_3_2_2_2_3_2" >
            <property name="text" >
-            <string>Position</string>
+            <string>Position:</string>
            </property>
           </widget>
          </item>
@@ -271,7 +271,7 @@
          <item row="1" column="0" >
           <widget class="QLabel" name="TextLabel1_2_3_3" >
            <property name="text" >
-            <string>Department</string>
+            <string>Department:</string>
            </property>
           </widget>
          </item>
@@ -284,7 +284,7 @@
          <item row="3" column="0" >
           <widget class="QLabel" name="TextLabel1_3_2_2_2_4" >
            <property name="text" >
-            <string>Role</string>
+            <string>Role:</string>
            </property>
           </widget>
          </item>
@@ -330,14 +330,14 @@
          <item row="5" column="0" >
           <widget class="QLabel" name="TextLabel1_3_2_2_2" >
            <property name="text" >
-            <string>Country</string>
+            <string>Country:</string>
            </property>
           </widget>
          </item>
          <item row="4" column="0" >
           <widget class="QLabel" name="TextLabel1_3_2_2_2_3" >
            <property name="text" >
-            <string>Postal Code</string>
+            <string>Postal Code:</string>
            </property>
           </widget>
          </item>
@@ -353,14 +353,14 @@
          <item row="3" column="0" >
           <widget class="QLabel" name="TextLabel1_2_3" >
            <property name="text" >
-            <string>State</string>
+            <string>State:</string>
            </property>
           </widget>
          </item>
          <item row="2" column="0" >
           <widget class="QLabel" name="TextLabel1_2_2_2" >
            <property name="text" >
-            <string>City</string>
+            <string>City:</string>
            </property>
           </widget>
          </item>
@@ -370,7 +370,7 @@
          <item row="0" column="0" >
           <widget class="QLabel" name="TextLabel1_3_2_3" >
            <property name="text" >
-            <string>Street</string>
+            <string>Street:</string>
            </property>
           </widget>
          </item>

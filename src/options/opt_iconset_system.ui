@@ -39,7 +39,7 @@
    <item row="2" column="1" >
     <widget class="IconButton" name="pb_sysDetails" >
      <property name="text" >
-      <string>&amp;Show Details</string>
+      <string>&amp;Show details</string>
      </property>
      <property name="shortcut" >
       <string>Alt+S</string>

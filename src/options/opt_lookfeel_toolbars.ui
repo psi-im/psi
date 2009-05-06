@@ -283,7 +283,7 @@
      <item row="0" column="0" >
       <widget class="QLabel" name="textLabel25" >
        <property name="text" >
-        <string>A&amp;vailable Actions:</string>
+        <string>A&amp;vailable actions:</string>
        </property>
        <property name="buddy" >
         <cstring>tw_availActions</cstring>
@@ -332,7 +332,7 @@
      <item row="0" column="2" >
       <widget class="QLabel" name="textLabel24" >
        <property name="text" >
-        <string>Curr&amp;ent Actions:</string>
+        <string>Curr&amp;ent actions:</string>
        </property>
        <property name="buddy" >
         <cstring>lw_selectedActions</cstring>

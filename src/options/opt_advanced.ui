@@ -22,14 +22,14 @@
    <item>
     <widget class="QCheckBox" name="ck_messageevents" >
      <property name="text" >
-      <string>Enable 'Contact is typing ...' events</string>
+      <string>Enable "Contact is typing ..." events</string>
      </property>
     </widget>
    </item>
    <item>
     <widget class="QCheckBox" name="ck_inactiveevents" >
      <property name="text" >
-      <string>Enable 'inactivity' events (end/suspend conversation)</string>
+      <string>Enable "Inactivity" events (end/suspend conversation)</string>
      </property>
     </widget>
    </item>

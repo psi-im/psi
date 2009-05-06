@@ -27,7 +27,7 @@ QWidget *OptionsTabTree::widget()
 	layout->setMargin(0);
 	
 	QLabel *lb = new QLabel(w, tr("Please note: This editor will change the options "
-								 "directly. Pressing cancel will not revert these changes."));
+								 "directly. Pressing Cancel will not revert these changes."));
 	lb->setWordWrap(true);
 	layout->addWidget(lb);
 

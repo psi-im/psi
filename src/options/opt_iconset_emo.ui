@@ -89,7 +89,7 @@
       <item row="1" column="3" >
        <widget class="IconButton" name="pb_emoDetails" >
         <property name="text" >
-         <string>&amp;Show Details</string>
+         <string>&amp;Show details</string>
         </property>
        </widget>
       </item>

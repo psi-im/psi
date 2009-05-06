@@ -156,16 +156,16 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
 	buttonLine->addStretch(1);
 
 	if (1) { // FIXME
-		pb_delete = new QPushButton(tr("delete"), this);
+		pb_delete = new QPushButton(tr("Delete"), this);
 		buttonLine->addWidget(pb_delete);
 		connect(pb_delete, SIGNAL(clicked()), SLOT(deleteit()));
 	}
 	
-	pb_edit = new QPushButton(tr("edit..."), this);
+	pb_edit = new QPushButton(tr("Edit..."), this);
 	buttonLine->addWidget(pb_edit);
 	connect(pb_edit, SIGNAL(clicked()), SLOT(edit()));
 	
-	pb_new = new QPushButton(tr("add..."), this);
+	pb_new = new QPushButton(tr("Add..."), this);
 	buttonLine->addWidget(pb_new);
 	connect(pb_new, SIGNAL(clicked()), SLOT(add()));
 
@@ -174,7 +174,7 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
 		pb_detach = new QToolButton(this);
 		pb_detach->setIcon(IconsetFactory::iconPixmap("psi/advanced"));
 		pb_detach->setIconSize(QSize(16,16));
-		pb_detach->setToolTip(tr("open a detached option editor window."));
+		pb_detach->setToolTip(tr("Open a detached option editor window."));
 		buttonLine->addWidget(pb_detach);
 		connect(pb_detach, SIGNAL(clicked()), SLOT(detach()));
 	}

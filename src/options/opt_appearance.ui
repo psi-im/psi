@@ -37,28 +37,28 @@
       <item row="0" column="3" >
        <widget class="QLabel" name="tl_cOnline" >
         <property name="text" >
-         <string>Online contacts</string>
+         <string>Online contacts:</string>
         </property>
        </widget>
       </item>
       <item row="1" column="3" >
        <widget class="QLabel" name="TextLabel1_2" >
         <property name="text" >
-         <string>Away contacts</string>
+         <string>Away contacts:</string>
         </property>
        </widget>
       </item>
       <item row="2" column="3" >
        <widget class="QLabel" name="tl_cDND" >
         <property name="text" >
-         <string>DND contacts</string>
+         <string>DND contacts:</string>
         </property>
        </widget>
       </item>
       <item row="3" column="3" >
        <widget class="QLabel" name="tl_cOffline" >
         <property name="text" >
-         <string>Offline contacts</string>
+         <string>Offline contacts:</string>
         </property>
        </widget>
       </item>
@@ -78,14 +78,14 @@
       <item row="4" column="3" >
        <widget class="QLabel" name="tl_cListBack" >
         <property name="text" >
-         <string>Contact list background</string>
+         <string>Contact list background:</string>
         </property>
        </widget>
       </item>
       <item row="5" column="3" >
        <widget class="QLabel" name="tl_cStatus" >
         <property name="text" >
-         <string>Status messages</string>
+         <string>Status messages:</string>
         </property>
        </widget>
       </item>
@@ -134,14 +134,14 @@
       <item row="1" column="0" >
        <widget class="QLabel" name="tl_cProfileBack" >
         <property name="text" >
-         <string>Account heading background</string>
+         <string>Account heading background:</string>
         </property>
        </widget>
       </item>
       <item row="3" column="0" >
        <widget class="QLabel" name="tl_cGroupBack" >
         <property name="text" >
-         <string>Group heading background</string>
+         <string>Group heading background:</string>
         </property>
        </widget>
       </item>
@@ -274,28 +274,28 @@
       <item row="4" column="0" >
        <widget class="QLabel" name="tl_cAnimFront" >
         <property name="text" >
-         <string>Nick animation foreground</string>
+         <string>Nick animation foreground:</string>
         </property>
        </widget>
       </item>
       <item row="5" column="0" >
        <widget class="QLabel" name="tl_cAnimBack" >
         <property name="text" >
-         <string>Nick animation background</string>
+         <string>Nick animation background:</string>
         </property>
        </widget>
       </item>
       <item row="0" column="0" >
        <widget class="QLabel" name="tl_cProfileFore" >
         <property name="text" >
-         <string>Account heading foreground</string>
+         <string>Account heading foreground:</string>
         </property>
        </widget>
       </item>
       <item row="2" column="0" >
        <widget class="QLabel" name="tl_cGroupFore" >
         <property name="text" >
-         <string>Group heading foreground</string>
+         <string>Group heading foreground:</string>
         </property>
        </widget>
       </item>
@@ -407,21 +407,21 @@
          <bool>true</bool>
         </property>
         <property name="text" >
-         <string>Chat</string>
+         <string>Chat:</string>
         </property>
        </widget>
       </item>
       <item row="1" column="0" >
        <widget class="QLabel" name="tl_fMessage" >
         <property name="text" >
-         <string>Message</string>
+         <string>Message:</string>
         </property>
        </widget>
       </item>
       <item row="1" column="4" >
        <widget class="QPushButton" name="pb_fMessage" >
         <property name="text" >
-         <string>Choose</string>
+         <string>Choose...</string>
         </property>
        </widget>
       </item>
@@ -431,7 +431,7 @@
          <bool>true</bool>
         </property>
         <property name="text" >
-         <string>Choose</string>
+         <string>Choose...</string>
         </property>
        </widget>
       </item>
@@ -441,28 +441,28 @@
          <bool>true</bool>
         </property>
         <property name="text" >
-         <string>Choose</string>
+         <string>Choose...</string>
         </property>
        </widget>
       </item>
       <item row="0" column="4" >
        <widget class="QPushButton" name="pb_fRoster" >
         <property name="text" >
-         <string>Choose</string>
+         <string>Choose...</string>
         </property>
        </widget>
       </item>
       <item row="0" column="0" >
        <widget class="QLabel" name="tl_fRoster" >
         <property name="text" >
-         <string>Roster</string>
+         <string>Roster:</string>
         </property>
        </widget>
       </item>
       <item row="3" column="0" >
        <widget class="QLabel" name="tl_fPopup" >
         <property name="text" >
-         <string>Popup</string>
+         <string>Popup:</string>
         </property>
        </widget>
       </item>

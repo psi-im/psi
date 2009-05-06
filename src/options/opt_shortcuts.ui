@@ -65,7 +65,7 @@
      <item>
       <widget class="QPushButton" name="add" >
        <property name="text" >
-        <string>Add</string>
+        <string>Add...</string>
        </property>
       </widget>
      </item>
@@ -79,7 +79,7 @@
      <item>
       <widget class="QPushButton" name="edit" >
        <property name="text" >
-        <string>Edit</string>
+        <string>Edit...</string>
        </property>
       </widget>
      </item>

@@ -45,7 +45,7 @@
        <item row="2" column="1" >
         <widget class="IconButton" name="pb_defRosterDetails" >
          <property name="text" >
-          <string>&amp;Show Details</string>
+          <string>&amp;Show details</string>
          </property>
         </widget>
        </item>
@@ -177,7 +177,7 @@
              <item>
               <widget class="IconButton" name="pb_servicesDetails" >
                <property name="text" >
-                <string>&amp;Show Details</string>
+                <string>&amp;Show details</string>
                </property>
               </widget>
              </item>
@@ -254,7 +254,7 @@
          <item row="4" column="1" >
           <widget class="IconButton" name="pb_customRosterDetails" >
            <property name="text" >
-            <string>&amp;Show Details</string>
+            <string>&amp;Show details</string>
            </property>
           </widget>
          </item>

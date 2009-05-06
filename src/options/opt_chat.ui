@@ -89,7 +89,7 @@
        </item>
        <item>
         <property name="text" >
-         <string>for mucs and chats in one window.</string>
+         <string>for mucs and chats in one window</string>
         </property>
        </item>
        <item>
@@ -124,7 +124,7 @@
    <item>
     <widget class="QGroupBox" name="groupBox18" >
      <property name="title" >
-      <string>Default Action</string>
+      <string>Default action</string>
      </property>
      <layout class="QHBoxLayout" >
       <property name="margin" >
