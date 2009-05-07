@@ -20,9 +20,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <QCoreApplication>
+#include <QLibrary>
+#include <QDir>
 #include "xmpp_jid.h"
 #include "jinglertp.h"
 #include "../psimedia/psimedia.h"
+#include "applicationinfo.h"
 #include "psiaccount.h"
 
 class Configuration
@@ -70,7 +74,7 @@ static void ensureConfig()
 Q_IMPORT_PLUGIN(gstprovider)
 #endif
 
-/*#ifndef GSTPROVIDER_STATIC
+#ifndef GSTPROVIDER_STATIC
 static QString findPlugin(const QString &relpath, const QString &basename)
 {
 	QDir dir(QCoreApplication::applicationDirPath());
@@ -88,7 +92,6 @@ static QString findPlugin(const QString &relpath, const QString &basename)
 	return QString();
 }
 #endif
-*/
 
 static bool g_loaded = false;
 
@@ -97,13 +100,24 @@ static void ensureLoaded()
 	if(!g_loaded)
 	{
 #ifndef GSTPROVIDER_STATIC
-		//QString pluginFile = findPlugin(".", "gstprovider");
-		QString pluginFile = qgetenv("PSI_MEDIA_PLUGIN");
-# ifdef GSTBUNDLE_PATH
-		PsiMedia::PluginResult r = PsiMedia::loadPlugin(pluginFile, GSTBUNDLE_PATH);
-# else
-		PsiMedia::PluginResult r = PsiMedia::loadPlugin(pluginFile, QString());
-# endif
+		QString pluginFile;
+		QString resourcePath;
+
+		pluginFile = qgetenv("PSI_MEDIA_PLUGIN");
+		if(pluginFile.isEmpty())
+		{
+#if defined(Q_OS_WIN)
+			pluginFile = findPlugin(".", "gstprovider");
+			resourcePath = QCoreApplication::applicationDirPath() + "/gstreamer-0.10";
+#elif defined(Q_OS_MAC)
+			pluginFile = findPlugin("../plugins", "gstprovider");
+			resourcePath = QCoreApplication::applicationDirPath() + "/../Frameworks/gstreamer-0.10";
+#else
+			pluginFile = findPlugin(ApplicationInfo::libDir() + "/psi/plugins", "gstprovider");
+#endif
+		}
+
+		PsiMedia::PluginResult r = PsiMedia::loadPlugin(pluginFile, resourcePath);
 		if(r == PsiMedia::PluginSuccess)
 			g_loaded = true;
 #else
