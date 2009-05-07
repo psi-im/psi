@@ -1316,11 +1316,16 @@ void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 		e->account()->queueChanged();
 		e->account()->cpUpdate(*u);
 		if(sess) {
-			//FileRequestDlg *w = new FileRequestDlg(fe->timeStamp(), ft, e->account());
-			CallDlg *w = new CallDlg(e->account(), 0);
-			w->setAttribute(Qt::WA_DeleteOnClose);
-			w->setIncoming(sess);
-			bringToFront(w);
+			if(!sess->jid().isEmpty()) {
+				CallDlg *w = new CallDlg(e->account(), 0);
+				w->setAttribute(Qt::WA_DeleteOnClose);
+				w->setIncoming(sess);
+				bringToFront(w);
+			}
+			else {
+				QMessageBox::information(0, tr("Call ended"), tr("Other party canceled call."));
+				delete sess;
+			}
 		}
 		return;
 	}

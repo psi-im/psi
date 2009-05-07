@@ -1173,6 +1173,13 @@ void JingleRtpManagerPrivate::push_task_incomingRequest(const XMPP::Jid &from, c
 {
 	printf("incoming request: [%s]\n", qPrintable(envelope.action));
 
+	// don't allow empty sid
+	if(envelope.sid.isEmpty())
+	{
+		push_task->respondError(from, iq_id, 400, QString());
+		return;
+	}
+
 	if(envelope.action == "session-initiate")
 	{
 		int at = -1;
