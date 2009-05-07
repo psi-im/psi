@@ -11,10 +11,6 @@ qca-static {
 	SUBDIRS += third-party/qca
 }
 
-!isEmpty(PSIMEDIA_DIR) {
-	SUBDIRS += $$PSIMEDIA_DIR/gstprovider/gstelements/static
-}
-
 SUBDIRS += \
 	iris \
 	src
