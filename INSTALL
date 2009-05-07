@@ -30,9 +30,9 @@ Requirements:
         - QCA OpenSSL (optional): third-party/qca/qca-openssl
         - QCA GnuPG (optional): third-party/qca/qca-gnupg
 
-You can obtain Qt at http://www.trolltech.com/
+You can obtain Qt at http://www.qtsoftware.com/
 
-You can obtain QCA at http://delta.affinix.com/qca/2.0/beta4
+You can obtain QCA at http://delta.affinix.com/qca/
 
 For information about building Psi on Unix, see doc/build-unix.txt.
 For information about building Psi on Mac OS X, see doc/build-mac.txt.
