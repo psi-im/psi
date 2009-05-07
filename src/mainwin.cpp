@@ -354,8 +354,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 	d->getAction("menu_quit")->addTo(mainMenu);
 	d->getAction("help_about")->addTo(mainMenu);
 	d->getAction("help_about_qt")->addTo(mainMenu);
-	if(PsiMedia::isSupported())
-		d->getAction("help_about_psimedia")->addTo(mainMenu);
 
 	d->mainMenu = new QMenu(this);
 	mainMenuBar()->insertItem(tr("General"), d->mainMenu);
@@ -399,6 +397,10 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 	helpMenu->insertItem(tr("Diagnostics"), diagMenu);
 	d->getAction("help_diag_qcaplugin")->addTo (diagMenu);
 	d->getAction("help_diag_qcakeystore")->addTo (diagMenu);
+	if(AvCallManager::isSupported()) {
+		helpMenu->insertSeparator();
+		d->getAction("help_about_psimedia")->addTo (helpMenu);
+	}
 #else
 	if (!PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool())  {
 		mainMenuBar()->hide();
@@ -719,7 +721,7 @@ void MainWin::buildOptionsMenu()
 	        << "help_about"
 	        << "help_about_qt";
 
-	if(PsiMedia::isSupported())
+	if(AvCallManager::isSupported())
 		actions << "help_about_psimedia";
 
 	d->updateMenu(actions, helpMenu);

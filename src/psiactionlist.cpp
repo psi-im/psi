@@ -347,7 +347,8 @@ void PsiActionList::Private::createMainWin()
 		actAboutQt->setMenuRole(QAction::AboutQtRole);
 
 		IconAction *actAboutPsiMedia = new IconAction (tr("About GStreamer"), tr("About &GStreamer"), 0, this);
-		actAboutPsiMedia->setMenuRole(QAction::AboutRole);
+		// no role otherwise it may conflict with About Psi
+		actAboutPsiMedia->setMenuRole(QAction::NoRole);
 
 		IconAction *actDiagQCAPlugin = new IconAction (tr("Security Plugins"), tr("Security &Plugins"), 0, this);
 
