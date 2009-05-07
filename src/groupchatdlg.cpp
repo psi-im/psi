@@ -887,7 +887,7 @@ void GCMainDlg::action_error(MUCManager::Action, int, const QString& err)
 
 
 void MiniCommand_Depreciation_Message(const QString &old,const QString &newCmd, QString &line1, QString &line2) {
-	line1 = QObject::tr("Warning: %1 is depricated and will be removed in the future").arg(old);
+	line1 = QObject::tr("Warning: %1 is deprecated and will be removed in the future").arg(old);
 	QList<QKeySequence> keys = ShortcutManager::instance()->shortcuts("chat.quick-command");
 	if (keys.isEmpty()) {
 		line2 = QObject::tr("Please set a shortcut for 'Change to quick command mode', use that shortcut and enter '%1'.").arg(newCmd);
