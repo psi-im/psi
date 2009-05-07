@@ -918,7 +918,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 
 		Q3PopupMenu *am = new Q3PopupMenu(&pm);
 		am->insertItem(IconsetFactory::icon("psi/disco").icon(), tr("Online Users"), 5);
-		am->insertItem(IconsetFactory::icon("psi/sendMessage").icon(), tr("Send server message"), 1);
+		am->insertItem(IconsetFactory::icon("psi/sendMessage").icon(), tr("Send Server Message"), 1);
 		am->insertSeparator();
 		am->insertItem(/*IconsetFactory::iconPixmap("psi/edit"),*/ tr("Set MOTD"), 2);
 		am->insertItem(/*IconsetFactory::iconPixmap("psi/edit/clear"),*/ tr("Update MOTD"), 3);
@@ -969,10 +969,10 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		pm.insertItem(tr("Bookmarks"), bookmarks);
 
 		pm.insertSeparator();
-		pm.insertItem(IconsetFactory::icon("psi/addContact").icon(), tr("&Add a contact"), 7);
+		pm.insertItem(IconsetFactory::icon("psi/addContact").icon(), tr("&Add a Contact"), 7);
 		pm.insertItem(IconsetFactory::icon("psi/disco").icon(), tr("Service &Discovery"), 9);
 		if (PsiOptions::instance()->getOption("options.ui.message.enabled").toBool())
-			pm.insertItem(IconsetFactory::icon("psi/sendMessage").icon(), tr("New &blank message"), 6);
+			pm.insertItem(IconsetFactory::icon("psi/sendMessage").icon(), tr("New &Blank Message"), 6);
 		pm.insertSeparator();
 		pm.insertItem(IconsetFactory::icon("psi/xml").icon(), tr("&XML Console"), 10);
 		pm.insertSeparator();
@@ -1058,7 +1058,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		Q3PopupMenu pm;
 
 		if (PsiOptions::instance()->getOption("options.ui.message.enabled").toBool())
-			pm.insertItem(IconsetFactory::icon("psi/sendMessage").icon(), tr("Send message to group"), 0);
+			pm.insertItem(IconsetFactory::icon("psi/sendMessage").icon(), tr("Send Message to Group"), 0);
 		if(!PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool()) {
 			// disable if it's not a user group
 			if(!online || i->groupType() != ContactViewItem::gUser || gname == ContactView::tr("Hidden")) {
@@ -1071,8 +1071,8 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 
 			d->cv->qa_ren->addTo(&pm);
 			pm.insertSeparator();
-			pm.insertItem(IconsetFactory::icon("psi/remove").icon(), tr("Remove group"), 2);
-			pm.insertItem(IconsetFactory::icon("psi/remove").icon(), tr("Remove group and contacts"), 3);
+			pm.insertItem(IconsetFactory::icon("psi/remove").icon(), tr("Remove Group"), 2);
+			pm.insertItem(IconsetFactory::icon("psi/remove").icon(), tr("Remove Group and Contacts"), 3);
 		}
 
 		if(i->groupType() == ContactViewItem::gAgents) {
@@ -1155,7 +1155,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		Q3PopupMenu pm;
 
 		if(!self && !inList && !isPrivate && !PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool()) {
-			pm.insertItem(IconsetFactory::icon("psi/addContact").icon(), tr("Add/Authorize to contact list"), 10);
+			pm.insertItem(IconsetFactory::icon("psi/addContact").icon(), tr("Add/Authorize to Contact List"), 10);
 			if(!online)
 				pm.setItemEnabled(10, false);
 			pm.insertSeparator();
@@ -1196,20 +1196,20 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		}
 
 		if(!isPrivate && PsiOptions::instance()->getOption("options.ui.message.enabled").toBool())
-			pm.insertItem(tr("Send message to"), s2m, 17);
+			pm.insertItem(tr("Send Message To"), s2m, 17);
 
 		d->cv->qa_chat->setIconSet(IconsetFactory::iconPixmap("psi/start-chat"));
 		d->cv->qa_chat->addTo(&pm);
 
 		if(!isPrivate)
-			pm.insertItem(tr("Open chat to"), c2m, 18);
+			pm.insertItem(tr("Open Chat To"), c2m, 18);
 
 #ifdef WHITEBOARDING
 		d->cv->qa_wb->setIconSet(IconsetFactory::iconPixmap("psi/whiteboard"));
 		d->cv->qa_wb->addTo(&pm);
 
 		if(!isPrivate)
-			pm.insertItem(tr("Open a whiteboard to"), wb2m, 19);
+			pm.insertItem(tr("Open a Whiteboard To"), wb2m, 19);
 #endif
 		
 		if(!isPrivate) {
@@ -1224,7 +1224,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		
 		// TODO: Add executeCommand() thing
 		if(!isPrivate) {
-			pm.insertItem(tr("E&xecute command"), rc2m, 25);
+			pm.insertItem(tr("E&xecute Command"), rc2m, 25);
 			pm.setItemEnabled(25, !rl.isEmpty());
 		}
 
@@ -1245,7 +1245,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 					status = STATUS_OFFLINE;
 				cm->addResource(status, *it, base_hidden+at_hidden++);
 			}
-			pm.insertItem(tr("Active chats"), cm, 7);
+			pm.insertItem(tr("Active Chats"), cm, 7);
 			if(hc.isEmpty())
 				pm.setItemEnabled(7, false);
 		}
@@ -1269,7 +1269,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		
 		if(!isAgent) {
 			pm.insertSeparator();
-			pm.insertItem(IconsetFactory::icon("psi/upload").icon(), tr("Send &file"), 23);
+			pm.insertItem(IconsetFactory::icon("psi/upload").icon(), tr("Send &File"), 23);
 			if(!online)
 				pm.setItemEnabled(23, false);
 		}
@@ -1286,7 +1286,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 				if(!online)
 					gm->setItemEnabled(id, false);
 			}
-			pm.insertItem(IconsetFactory::iconPixmap("psi/groupChat"), tr("Invite to"), gm, 14);
+			pm.insertItem(IconsetFactory::iconPixmap("psi/groupChat"), tr("Invite To"), gm, 14);
 			if(groupchats.isEmpty())
 				pm.setItemEnabled(14, false);
 		}
@@ -1339,7 +1339,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 					if(g == ContactView::tr("Hidden"))
 						gm->setItemChecked(n+base_group, true);
 					gm->insertSeparator();
-					gm->insertItem(/*IconsetFactory::iconPixmap("psi/edit/clear"),*/ tr("&Create new..."), 9);
+					gm->insertItem(/*IconsetFactory::iconPixmap("psi/edit/clear"),*/ tr("&Create New..."), 9);
 					pm.insertItem(tr("&Group"), gm, 5);
 
 					if(!online)
@@ -1354,7 +1354,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 				d->cv->qa_logon->setIcon(PsiIconset::instance()->status(e->u.jid(), STATUS_ONLINE).icon());
 				d->cv->qa_logon->addTo(&pm);
 
-				pm.insertItem(PsiIconset::instance()->status(e->u.jid(), STATUS_OFFLINE).icon(), tr("Log off"), 16);
+				pm.insertItem(PsiIconset::instance()->status(e->u.jid(), STATUS_OFFLINE).icon(), tr("Log Off"), 16);
 				if(!avail || !online)
 					pm.setItemEnabled(16, false);
 				pm.insertSeparator();
@@ -1364,9 +1364,9 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		if(inList && !PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool()) {
 			Q3PopupMenu *authm = new Q3PopupMenu (&pm);
 
-			authm->insertItem(tr("Resend authorization to"), 6);
-			authm->insertItem(tr("Rerequest authorization from"), 11);
-			authm->insertItem(/*IconsetFactory::iconPixmap("psi/edit/delete"),*/ tr("Remove authorization from"), 15);
+			authm->insertItem(tr("Resend Authorization To"), 6);
+			authm->insertItem(tr("Rerequest Authorization From"), 11);
+			authm->insertItem(/*IconsetFactory::iconPixmap("psi/edit/delete"),*/ tr("Remove Authorization From"), 15);
 
 			pm.insertItem (IconsetFactory::iconPixmap("psi/register"), tr("Authorization"), authm, 20);
 			if(!online)
@@ -1396,9 +1396,9 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 
 		if(PGPUtil::instance().pgpAvailable() && PsiOptions::instance()->getOption("options.ui.menu.contact.custom-pgp-key").toBool()) {
 			if(u->publicKeyID().isEmpty())
-				pm.insertItem(IconsetFactory::icon("psi/gpg-yes").icon(), tr("Assign Open&PGP key"), 21);
+				pm.insertItem(IconsetFactory::icon("psi/gpg-yes").icon(), tr("Assign Open&PGP Key"), 21);
 			else
-				pm.insertItem(IconsetFactory::icon("psi/gpg-no").icon(), tr("Unassign Open&PGP key"), 22);
+				pm.insertItem(IconsetFactory::icon("psi/gpg-no").icon(), tr("Unassign Open&PGP Key"), 22);
 		}
 
 		d->cv->qa_vcard->addTo( &pm );
@@ -1457,7 +1457,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 			if(online) {
 				while(1) {
 					bool ok = false;
-					QString newgroup = QInputDialog::getText(tr("Create New Group"), tr("Enter the new Group name:"), QLineEdit::Normal, QString::null, &ok, d->cv);
+					QString newgroup = QInputDialog::getText(tr("Create New Group"), tr("Enter the new group name:"), QLineEdit::Normal, QString::null, &ok, d->cv);
 					if(!ok)
 						break;
 					if(newgroup.isEmpty())
@@ -1751,7 +1751,7 @@ void ContactProfile::doItemRenamed(ContactViewItem *i, const QString &text)
 		//	return;
 		if(text.isEmpty()) {
 			i->resetName();
-			QMessageBox::information(d->cv, tr("Error"), tr("You can't set a blank name."));
+			QMessageBox::information(d->cv, tr("Error"), tr("You cannot set a blank name."));
 			return;
 		}
 
@@ -1768,7 +1768,7 @@ void ContactProfile::doItemRenamed(ContactViewItem *i, const QString &text)
 		}
 		if(text.isEmpty()) {
 			i->resetGroupName();
-			QMessageBox::information(d->cv, tr("Error"), tr("You can't set a blank group name."));
+			QMessageBox::information(d->cv, tr("Error"), tr("You cannot set a blank group name."));
 			return;
 		}
 
@@ -2023,7 +2023,7 @@ ContactView::ContactView(QWidget *parent, const char *name)
 	connect(d->recalculateSizeTimer, SIGNAL(timeout()), d, SLOT(recalculateSize()));
 
 	// actions
-	qa_send = new IconAction("", "psi/sendMessage", tr("Send &message"), 0, this);
+	qa_send = new IconAction("", "psi/sendMessage", tr("Send &Message"), 0, this);
 	connect(qa_send, SIGNAL(activated()), SLOT(doSendMessage()));
 	qa_ren = new IconAction("", /*"psi/edit/clear",*/ tr("Re&name"), 0, this);
 	connect(qa_ren, SIGNAL(activated()), SLOT(doRename()));
@@ -2031,17 +2031,17 @@ ContactView::ContactView(QWidget *parent, const char *name)
 	connect(qa_assignAvatar, SIGNAL(activated()), SLOT(doAssignAvatar()));
 	qa_clearAvatar = new IconAction("", tr("&Clear Custom Picture"), 0, this);
 	connect(qa_clearAvatar, SIGNAL(activated()), SLOT(doClearAvatar()));
-	qa_chat = new IconAction("", "psi/start-chat", tr("Open &chat window"), 0, this);
+	qa_chat = new IconAction("", "psi/start-chat", tr("Open &Chat Window"), 0, this);
 	connect(qa_chat, SIGNAL(activated()), SLOT(doOpenChat()));
 #ifdef WHITEBOARDING
-	qa_wb = new IconAction("", "psi/whiteboard", tr("Open a &whiteboard"), Qt::CTRL+Qt::Key_W, this);
+	qa_wb = new IconAction("", "psi/whiteboard", tr("Open a &Whiteboard"), Qt::CTRL+Qt::Key_W, this);
 	connect(qa_wb, SIGNAL(activated()), SLOT(doOpenWhiteboard()));
 #endif
 	qa_hist = new IconAction("", "psi/history", tr("&History"), 0, this);
 	connect(qa_hist, SIGNAL(activated()), SLOT(doHistory()));
 	qa_logon = new IconAction("", tr("&Log on"), 0, this);
 	connect(qa_logon, SIGNAL(activated()), SLOT(doLogon()));
-	qa_recv = new IconAction("", tr("&Receive incoming event"), 0, this);
+	qa_recv = new IconAction("", tr("&Receive Incoming Event"), 0, this);
 	connect(qa_recv, SIGNAL(activated()), SLOT(doRecvEvent()));
 	qa_rem = new IconAction("", "psi/remove", tr("Rem&ove"), 0, this);
 	connect(qa_rem, SIGNAL(activated()), SLOT(doRemove()));
@@ -2526,7 +2526,7 @@ void ContactView::doRename()
 void ContactView::doAssignAvatar()
 {
 	// FIXME: Should check the supported filetypes dynamically
-	QString file = QFileDialog::getOpenFileName(this, tr("Choose an image"), "", tr("All files (*.png *.jpg *.gif)"));
+	QString file = QFileDialog::getOpenFileName(this, tr("Choose an Image"), "", tr("All files (*.png *.jpg *.gif)"));
 	if (!file.isNull()) {
 		ContactViewItem *i = (ContactViewItem *)selectedItem();
 		i->contactProfile()->psiAccount()->avatarFactory()->importManualAvatar(i->u()->jid(),file);

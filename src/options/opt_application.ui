@@ -85,7 +85,7 @@
       <item>
        <widget class="QCheckBox" name="ck_dockDCstyle" >
         <property name="text" >
-         <string>Use "double-click" style (like Mirabilis ICQ)</string>
+         <string>Use "double-click" style (like ICQ)</string>
         </property>
        </widget>
       </item>
@@ -99,7 +99,7 @@
       <item>
        <widget class="QCheckBox" name="ck_dockToolMW" >
         <property name="text" >
-         <string>Make roster window a "tool-window"</string>
+         <string>Make roster window a "tool window"</string>
         </property>
        </widget>
       </item>

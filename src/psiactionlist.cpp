@@ -182,7 +182,7 @@ void PsiActionList::Private::createMainWin()
 	{
 		IconAction *add_act = 0;
 		if (!PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool())
-			add_act = new MAction(IconsetFactory::icon("psi/addContact"), tr("&Add a contact"), 0, psi, this);
+			add_act = new MAction(IconsetFactory::icon("psi/addContact"), tr("&Add a Contact"), 0, psi, this);
 
 		IconAction *lw_act = new MAction(IconsetFactory::icon("psi/xml"), tr("&XML Console"), 2, psi, this);
 
@@ -191,7 +191,7 @@ void PsiActionList::Private::createMainWin()
 			actDisco = new MAction(IconsetFactory::icon("psi/disco"), tr("Service &Discovery"), 3, psi, this);
 
 //		IconAction *actReadme = new IconAction (tr("ReadMe"), tr("&ReadMe"), 0, this);
-//		actReadme->setWhatsThis (tr("Show Read Me file"));
+//		actReadme->setWhatsThis (tr("Show ReadMe file"));
 //
 //		IconAction *actOnlineHelp = new IconAction (tr("User Guide (Online)"), tr("User Guide (Online)"), 0, this);
 //		actOnlineHelp->setWhatsThis (tr("User Guide (Online)"));
@@ -205,7 +205,7 @@ void PsiActionList::Private::createMainWin()
 //		IconAction *actBugReport = new IconAction (tr("Report a Bug"), tr("Report a &Bug"), 0, this);
 //		actBugReport->setWhatsThis (tr("Report a Bug"));
 
-		IconAction *actNewMessage = new IconAction (tr("New blank message"), "psi/sendMessage", tr("New &blank message"), 0, this);
+		IconAction *actNewMessage = new IconAction (tr("New Blank Message"), "psi/sendMessage", tr("New &Blank Message"), 0, this);
 		IconAction *actJoinGroupchat = new IconAction (tr("Join Groupchat"), "psi/groupChat", tr("Join &Groupchat"), 0, this);
 		IconAction *actAccountSetup = new IconAction (tr("Account Setup"), "psi/account", tr("Acc&ount Setup"), 0, this);
 
@@ -213,9 +213,9 @@ void PsiActionList::Private::createMainWin()
 		actOptions->setMenuRole(QAction::PreferencesRole);
 
 		IconAction *actToolbars = new IconAction(tr("Configure Toolbars"), "psi/toolbars", tr("Configure Tool&bars"), 0, this);
-		IconAction *actChangeProfile = new IconAction (tr("Change Profile"), "psi/profile", tr("&Change profile"), 0, this);
+		IconAction *actChangeProfile = new IconAction (tr("Change Profile"), "psi/profile", tr("&Change Profile"), 0, this);
 
-		IconAction *actPlaySounds = new IconAction (tr("Play sounds"), "psi/playSounds", tr("Play &sounds"), 0, this, 0, true);
+		IconAction *actPlaySounds = new IconAction (tr("Play Sounds"), "psi/playSounds", tr("Play &Sounds"), 0, this, 0, true);
 		actPlaySounds->setWhatsThis (tr("Toggles whether sound should be played or not"));
 		
 		IconAction *actQuit = new IconAction (tr("Quit"), "psi/quit", tr("&Quit"), 0, this);
@@ -227,7 +227,7 @@ void PsiActionList::Private::createMainWin()
 
 		// TODO: probably we want to lock down filetransfer, right?
 		IconAction *actFileTrans = new IconAction (tr("Transfer Manager"), "psi/filemanager", tr("Trans&fer Manager"), 0, this);
-		actFileTrans->setWhatsThis (tr("Opens the Transfer Manager dialog"));
+		actFileTrans->setWhatsThis (tr("Opens the transfer manager dialog"));
 
 		ActionNames actions[] = {
 			{ "menu_disco",           actDisco         },
@@ -250,8 +250,8 @@ void PsiActionList::Private::createMainWin()
 
 #ifdef USE_PEP
 	{
-		IconAction *actPublishTune = new IconAction (tr("Publish tune"), "psi/publishTune", tr("Publish &tune"), 0, this, 0, true);
-		actPublishTune->setWhatsThis (tr("Toggles whether the currently playing tune should be published or not."));
+		IconAction *actPublishTune = new IconAction (tr("Publish Tune"), "psi/publishTune", tr("Publish &Tune"), 0, this, 0, true);
+		actPublishTune->setWhatsThis (tr("Toggles whether the currently playing tune should be published or not"));
 
 		ActionNames actions[] = {
 			{ "publish_tune", actPublishTune },
@@ -265,8 +265,8 @@ void PsiActionList::Private::createMainWin()
 	{
 		// status actions
 		IconActionGroup *statusGroup = new IconActionGroup ( this );
-		statusGroup->setMenuText (tr("Set status"));
-		statusGroup->setWhatsThis (tr("Smaller alternative to the Status Button"));
+		statusGroup->setMenuText (tr("Set Status"));
+		statusGroup->setWhatsThis (tr("Smaller alternative to the Status button"));
 		statusGroup->setExclusive(false);
 		statusGroup->setUsesDropDown (true);
 
@@ -317,7 +317,7 @@ void PsiActionList::Private::createMainWin()
 
 	{
 		IconAction *actReadme = new IconAction (tr("ReadMe"), tr("&ReadMe"), 0, this);
-		actReadme->setWhatsThis (tr("Show Read Me file"));
+		actReadme->setWhatsThis (tr("Show ReadMe file"));
 
 		IconAction *actTip = new IconAction (tr("Tip of the Day"), "psi/tip", tr("&Tip of the Day"), 0, this);
 		actTip->setWhatsThis (tr("See many useful tips"));

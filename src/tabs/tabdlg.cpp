@@ -231,7 +231,7 @@ void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent * event)
 		QMap<QAction*, TabDlg*> sentTos;
 		if(userManagement_) {
 			QMenu* sendTo = new QMenu(tabMenu_);
-			sendTo->setTitle(tr("Send Tab to"));
+			sendTo->setTitle(tr("Send Tab To"));
 			foreach(TabDlg* tabSet, tabManager_->tabSets()) {
 				QAction *act = sendTo->addAction(tabSet->desiredCaption());
 				if (tabSet == this)
@@ -265,7 +265,7 @@ void TabDlg::tab_aboutToShowMenu(QMenu *menu)
 	menu->addAction(tr("Close Current Tab"), this, SLOT(closeCurrentTab()));
 
 	QMenu* sendTo = new QMenu(menu);
-	sendTo->setTitle(tr("Send Current Tab to"));
+	sendTo->setTitle(tr("Send Current Tab To"));
 	int tabDlgMetaType = qRegisterMetaType<TabDlg*>("TabDlg*");
 	foreach(TabDlg* tabSet, tabManager_->tabSets()) {
 		QAction *act = sendTo->addAction(tabSet->desiredCaption());
@@ -277,10 +277,10 @@ void TabDlg::tab_aboutToShowMenu(QMenu *menu)
 	menu->addSeparator();
 	
 	QAction *act;
-	act = menu->addAction(tr("Use for new chats"), this, SLOT(setAsDefaultForChat()));
+	act = menu->addAction(tr("Use for New Chats"), this, SLOT(setAsDefaultForChat()));
 	act->setCheckable(true);
 	act->setChecked(tabManager_->preferredTabsForKind('C') == this); 
-	act = menu->addAction(tr("Use for new mucs"), this, SLOT(setAsDefaultForMuc()));
+	act = menu->addAction(tr("Use for New Mucs"), this, SLOT(setAsDefaultForMuc()));
 	act->setCheckable(true);
 	act->setChecked(tabManager_->preferredTabsForKind('M') == this); 
 }

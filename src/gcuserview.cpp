@@ -331,8 +331,8 @@ void GCUserView::qlv_contextMenuRequested(Q3ListViewItem *i, const QPoint &pos, 
 		return;
 	}
 	Q3PopupMenu *pm = new Q3PopupMenu;
-	pm->insertItem(IconsetFactory::icon("psi/sendMessage").icon(), tr("Send &message"), 0);
-	pm->insertItem(IconsetFactory::icon("psi/start-chat").icon(), tr("Open &chat window"), 1);
+	pm->insertItem(IconsetFactory::icon("psi/sendMessage").icon(), tr("Send &Message"), 0);
+	pm->insertItem(IconsetFactory::icon("psi/start-chat").icon(), tr("Open &Chat Window"), 1);
 	pm->insertSeparator();
 	pm->insertItem(tr("&Kick"),10);
 	pm->setItemEnabled(10, MUCManager::canKick(c->s.mucItem(),lvi->s.mucItem()));
@@ -349,7 +349,7 @@ void GCUserView::qlv_contextMenuRequested(Q3ListViewItem *i, const QPoint &pos, 
 	rm->insertItem(tr("Moderator"),14);
 	rm->setItemChecked(14, lvi->s.mucItem().role() == MUCItem::Moderator);
 	rm->setItemEnabled(14, (!self || lvi->s.mucItem().role() == MUCItem::Moderator) && MUCManager::canSetRole(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Moderator));
-	pm->insertItem(tr("Change role"),rm);
+	pm->insertItem(tr("Change Role"),rm);
 
 	/*Q3PopupMenu* am = new Q3PopupMenu(pm);
 	am->insertItem(tr("Unaffiliated"),15);
@@ -364,9 +364,9 @@ void GCUserView::qlv_contextMenuRequested(Q3ListViewItem *i, const QPoint &pos, 
 	am->insertItem(tr("Owner"),18);
 	am->setItemChecked(18, lvi->s.mucItem().affiliation() == MUCItem::Owner);
 	am->setItemEnabled(18,  (!self || lvi->s.mucItem().affiliation() == MUCItem::Owner) && MUCManager::canSetAffiliation(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Owner));
-	pm->insertItem(tr("Change affiliation"),am);*/
+	pm->insertItem(tr("Change Affiliation"),am);*/
 	pm->insertSeparator();
-	//pm->insertItem(tr("Send &file"), 4);
+	//pm->insertItem(tr("Send &File"), 4);
 	//pm->insertSeparator();
 	pm->insertItem(tr("Check &Status"), 2);
 	pm->insertItem(IconsetFactory::icon("psi/vCard").icon(), tr("User &Info"), 3);

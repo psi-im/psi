@@ -191,7 +191,7 @@ void PsiChatDlg::initUi()
 	smallChat_ = PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool();
 
 	act_mini_cmd_ = new QAction(this);
-	act_mini_cmd_->setText("Input command...");
+	act_mini_cmd_->setText(tr("Input command..."));
 	connect(act_mini_cmd_, SIGNAL(activated()), SLOT(doMiniCmd()));
 	addAction(act_mini_cmd_);
 
@@ -275,11 +275,11 @@ void PsiChatDlg::updateIdentityVisibility()
 
 void PsiChatDlg::initToolButtons()
 {
-	act_clear_ = new IconAction(tr("Clear chat window"), "psi/clearChat", tr("Clear chat window"), 0, this);
+	act_clear_ = new IconAction(tr("Clear Chat Window"), "psi/clearChat", tr("Clear Chat Window"), 0, this);
 	connect(act_clear_, SIGNAL(activated()), SLOT(doClearButton()));
 
 	connect(account()->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), this, SLOT(addEmoticon(QString)));
-	act_icon_ = new IconAction(tr("Select icon"), "psi/smile", tr("Select icon"), 0, this);
+	act_icon_ = new IconAction(tr("Select Icon"), "psi/smile", tr("Select Icon"), 0, this);
 	act_icon_->setMenu(account()->psi()->iconSelectPopup());
 	ui_.tb_emoticons->setMenu(account()->psi()->iconSelectPopup());
 
@@ -287,25 +287,25 @@ void PsiChatDlg::initToolButtons()
 	connect(act_voice_, SIGNAL(activated()), SLOT(doVoice()));
 	act_voice_->setEnabled(false);
 
-	act_file_ = new IconAction(tr("Send file"), "psi/upload", tr("Send file"), 0, this);
+	act_file_ = new IconAction(tr("Send File"), "psi/upload", tr("Send File"), 0, this);
 	connect(act_file_, SIGNAL(activated()), SLOT(doFile()));
 
-	act_pgp_ = new IconAction(tr("Toggle encryption"), "psi/cryptoNo", tr("Toggle encryption"), 0, this, 0, true);
+	act_pgp_ = new IconAction(tr("Toggle Encryption"), "psi/cryptoNo", tr("Toggle Encryption"), 0, this, 0, true);
 	ui_.tb_pgp->setDefaultAction(act_pgp_);
 
-	act_info_ = new IconAction(tr("User info"), "psi/vCard", tr("User info"), 0, this);
+	act_info_ = new IconAction(tr("User Info"), "psi/vCard", tr("User Info"), 0, this);
 	connect(act_info_, SIGNAL(activated()), SLOT(doInfo()));
 
-	act_history_ = new IconAction(tr("Message history"), "psi/history", tr("Message history"), 0, this);
+	act_history_ = new IconAction(tr("Message History"), "psi/history", tr("Message History"), 0, this);
 	connect(act_history_, SIGNAL(activated()), SLOT(doHistory()));
 
-	act_compact_ = new IconAction(tr("Toggle Compact/Full size"), "psi/compact", tr("Toggle Compact/Full size"), 0, this);
+	act_compact_ = new IconAction(tr("Toggle Compact/Full Size"), "psi/compact", tr("Toggle Compact/Full Size"), 0, this);
 	connect(act_compact_, SIGNAL(activated()), SLOT(toggleSmallChat()));
 }
 
 void PsiChatDlg::initToolBar()
 {
-	ui_.toolbar->setWindowTitle(tr("Chat toolbar"));
+	ui_.toolbar->setWindowTitle(tr("Chat Toolbar"));
 	ui_.toolbar->setIconSize(QSize(16, 16));
 	ui_.toolbar->addAction(act_clear_);
 	ui_.toolbar->addWidget(new StretchWidget(ui_.toolbar));
@@ -595,7 +595,7 @@ void PsiChatDlg::updateLastMsgTime(QDateTime t)
 
 void PsiChatDlg::doMiniCmd()
 {
-	mCmdManager_.open(new MCmdSimpleState(MCMDCHAT, "Command>"), QStringList() );
+	mCmdManager_.open(new MCmdSimpleState(MCMDCHAT, tr("Command>")), QStringList() );
 }
 
 

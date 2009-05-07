@@ -666,28 +666,28 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	connect(ui_.lv_users, SIGNAL(action(const QString &, const Status &, int)), SLOT(lv_action(const QString &, const Status &, int)));
 	connect(ui_.lv_users, SIGNAL(insertNick(const QString&)), d, SLOT(insertNick(const QString&)));
 
-	d->act_clear = new IconAction (tr("Clear chat window"), "psi/clearChat", tr("Clear chat window"), 0, this);
+	d->act_clear = new IconAction (tr("Clear Chat Window"), "psi/clearChat", tr("Clear Chat Window"), 0, this);
 	connect( d->act_clear, SIGNAL( activated() ), SLOT( doClearButton() ) );
 	
 	d->act_configure = new IconAction(tr("Configure Room"), "psi/configure-room", tr("&Configure Room"), 0, this);
 	connect(d->act_configure, SIGNAL(activated()), SLOT(configureRoom()));
 
 #ifdef WHITEBOARDING
-	d->act_whiteboard = new IconAction(tr("Open a whiteboard"), "psi/whiteboard", tr("Open a &whiteboard"), 0, this);
+	d->act_whiteboard = new IconAction(tr("Open a Whiteboard"), "psi/whiteboard", tr("Open a &Whiteboard"), 0, this);
 	connect(d->act_whiteboard, SIGNAL(activated()), SLOT(openWhiteboard()));
 #endif
 
 	connect(pa->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
-	d->act_icon = new IconAction( tr( "Select icon" ), "psi/smile", tr( "Select icon" ), 0, this );
+	d->act_icon = new IconAction( tr( "Select Icon" ), "psi/smile", tr( "Select Icon" ), 0, this );
 	d->act_icon->setMenu( pa->psi()->iconSelectPopup() );
 	ui_.tb_emoticons->setMenu(pa->psi()->iconSelectPopup());
 
 	d->act_nick = new QAction(this);
-	d->act_nick->setText("Change nickname...");
+	d->act_nick->setText("Change Nickname...");
 	connect(d->act_nick, SIGNAL(activated()), d, SLOT(doNick()));
 
 	d->act_mini_cmd = new QAction(this);
-	d->act_mini_cmd->setText("Input command...");
+	d->act_mini_cmd->setText("Input Command...");
 	connect(d->act_mini_cmd, SIGNAL(activated()), d, SLOT(doMiniCmd()));
 	addAction(d->act_mini_cmd);
 
@@ -904,7 +904,7 @@ void GCMainDlg::mle_returnPressed()
 
 	if (d->mCmdSite.isActive()) {
 		if (!d->mCmdManager.processCommand(str)) {
-			appendSysMsg(tr("Error: Can not parse command: ") + str, false);
+			appendSysMsg(tr("Error: Cannot parse command: ") + str, false);
 		}
 		return;
 	}
@@ -1282,7 +1282,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 			}
 			if (!s.mucDestroy().jid().isEmpty()) {
 				message += "\n";
-				message += tr("Do you want to join the alternate venue '%1' ?").arg(s.mucDestroy().jid().full());
+				message += tr("Do you want to join the alternate venue '%1'?").arg(s.mucDestroy().jid().full());
 				int ret = QMessageBox::information(this, tr("Room Destroyed"), message, QMessageBox::Yes, QMessageBox::No);
 				if (ret == QMessageBox::Yes) {
 					account()->actionJoin(s.mucDestroy().jid().full());
@@ -1326,7 +1326,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 			// Remove due to affiliation change
 			mucKickMsgHelper(nick, s, nickJid, tr("Removed"),
 						 tr("You have been removed from the room due to an affiliation change"),
-						 tr("You have been removed from the room due to an affiliation change by %1"),
+						 tr("You have been removed from the room by %1 due to an affiliation change"),
 						 tr("%1 has been removed from the room due to an affilliation change"),
 						 tr("%1 has been removed from the room by %2 due to an affilliation change"));
 			suppressDefault = true;
@@ -1334,7 +1334,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 		if (s.getMUCStatuses().contains(322)) {
 			mucKickMsgHelper(nick, s, nickJid, tr("Removed"),
 						 tr("You have been removed from the room because the room was made members only"),
-						 tr("You have been removed from the room because the room was made members only by %1"),
+						 tr("You have been removed from the room by %1 because the room was made members only"),
 						 tr("%1 has been removed from the room because the room was made members-only"),
 						 tr("%1 has been removed from the room by %2 because the room was made members-only"));
 			suppressDefault = true;
