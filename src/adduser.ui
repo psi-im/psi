@@ -193,7 +193,7 @@ To add a contact from a &lt;b>non-Jabber&lt;/b> service, make sure you are regis
               <item row="2" column="0" >
                 <widget class="QLabel" name="TextLabel8" >
                   <property name="text" >
-                    <string>Group</string>
+                    <string>Group:</string>
                   </property>
                 </widget>
               </item>
@@ -220,14 +220,14 @@ To add a contact from a &lt;b>non-Jabber&lt;/b> service, make sure you are regis
               <item row="1" column="0" >
                 <widget class="QLabel" name="TextLabel7" >
                   <property name="text" >
-                    <string>Nickname (optional)</string>
+                    <string>Nickname (optional):</string>
                   </property>
                 </widget>
               </item>
               <item row="0" column="0" >
                 <widget class="QLabel" name="TextLabel6" >
                   <property name="text" >
-                    <string>Jabber ID</string>
+                    <string>Jabber ID:</string>
                   </property>
                 </widget>
               </item>
