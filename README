@@ -1,22 +1,22 @@
-Psi 0.13-devel
----------
-Date: July 25th, 2008
+Psi 0.13-dev
+------------
+Date: May 6th, 2009
 
-Project Lead/Maintainer (2004-current):
-  Kevin Smith
-  kismith@psi-im.org
-  http://www.kismith.co.uk/
-
-Original Author (2001-2004):
-  Justin Karneges
+Maintainers:
+  Justin Karneges (2001-2004, 2009-current)
   justin@affinix.com
   http://psi-im.org/
+
+  Kevin Smith (2004-2009)
+  kismith@psi-im.org
+  http://www.kismith.co.uk/
 
 
   For installation or compiling instructions, see the INSTALL file.
 
   This program is licensed under the GNU General Public License.  See
   the COPYING file for more information.
+
 
 Known Issues
 ------------
@@ -27,13 +27,23 @@ Issues with Qt 4.3.(0|1): On X11 Qt 4.3 seems to have problems with some
 window managers that result in windows not beeing displayed or displayed 
 with a broken layout.
 Issues with Qt 4.3.3: On Windows, qmake has a bug which prevents compilation with mingw, using an earlier Qt or qmake should work.
+Issues with Qt 4.5.0: Hang on exit, hang when using GnuPG.
+
 
 Notes
 -----
   - QCA --
-    * QCA2 is required to build Psi: a version is bundled with Psi.
+    * QCA 2.x is required to build Psi: a version is bundled with Psi.
     * The qca-ossl and qca-gnupg plugins are desirable for full 
       functionality of Psi.
+
+  - Voice Calling --
+    * The PsiMedia 1.0.x plugin is needed to activate the voice calling
+      feature.  Source and builds can be found at:
+        http://delta.affinix.com/psimedia/
+      On Windows, place gstprovider.dll into the base directory.
+      On Mac, place libgstprovider.dylib into Psi.app/Contents/plugins
+      On Linux, place libgstprovider.so into $LIBDIR/psi/plugins
 
   - Upgrading to 0.12 --
     * During the upgrade process, the old config.xml configuration file will
@@ -53,7 +63,11 @@ Notes
 Changes
 -------
   New in 0.13
+  - Voice calls (Jingle RTP).
   - Basic XMPP URI handler.
+  - Ability to permanantly trust certificates at connect time.
+  - Mini command system (Ctrl+7 in chat window).
+  - Various bugfixes.
 
   New in 0.12.1
   - Bugfix for DOS vulnerability in the file transfer code.
@@ -186,41 +200,6 @@ Changes
   - Show dates in local format
   - Use the gnome-open utility for opening URLs with GNOME2
   - Fixed "broken pipe" crash when receiving GnuPG errors
-
-  New in 0.9.1
-  - Service Discovery browser (XEP-0030)
-  - Popup notifications
-  - Redesigned Iconset & Emoticons system, based on XEP-0038
-  - Now possible to use service/transport icons for individual contacts
-  - Ability to use custom roster icons for contacts via RegExps
-  - Emoticon popup menu in chat window, for quick access
-  - Reorganized Options window
-  - Toolbar Editor
-  - GnuPG 1.2.3 compatibility
-  - New XMPP/Jabber engine (partially complete, XMPP 1.0 support deferred)
-  - SOCKS5 proxy support
-  - HTTP polling proxy support (XEP-0025)
-  - Roster groups open/closed state saved
-  - 'Free for Chat' status
-  - Character counter
-  - Selectable colors for roster 'blink' animation
-  - Copy Location in URL attachment context menu
-  - X11: WindowMaker docklet
-  - Windows: fixed idle detection on Windows 9x
-  - Mac: ability to hide/restore main window
-  - Option: ignore messages from addresses not in your roster
-  - Option: enter key sends chat messages
-  - Option: raise chat window on receiving new messages
-  - Option: auto-authorize contacts
-  - Option: 'small' group headings
-  - Option: treat incoming chats as messages unless chatting
-  - Option: show/hide subject line
-  - Option: enable/disable vCard check during login
-  - Account dialogs ensure the JID is a valid user-JID before accepting
-  - Bugfix: crash after using the Jabber browser
-  - Bugfix: crash when resolving DNS
-  - Bugfix: busy indicator sometimes stopped when it should still be running
-  - Fixed many other bugs
 
 
 Description
