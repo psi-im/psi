@@ -219,6 +219,7 @@ public:
 	int stunPort;
 	XMPP::Ice176 *iceA;
 	XMPP::Ice176 *iceV;
+	QTimer *rtpActivityTimer;
 
 	class IceStatus
 	{
@@ -264,6 +265,9 @@ public:
 		handshakeTimer = new QTimer(this);
 		connect(handshakeTimer, SIGNAL(timeout()), SLOT(handshake_timeout()));
 		handshakeTimer->setSingleShot(true);
+
+		rtpActivityTimer = new QTimer(this);
+		connect(rtpActivityTimer, SIGNAL(timeout()), SLOT(rtpActivity_timeout()));
 	}
 
 	~JingleRtpPrivate()
@@ -274,6 +278,10 @@ public:
 		handshakeTimer->setParent(0);
 		handshakeTimer->disconnect(this);
 		handshakeTimer->deleteLater();
+
+		rtpActivityTimer->setParent(0);
+		rtpActivityTimer->disconnect(this);
+		rtpActivityTimer->deleteLater();
 	}
 
 	void startOutgoing()
@@ -870,6 +878,7 @@ private:
 		{
 			printf("activating!\n");
 			handshakeTimer->stop();
+			restartRtpActivityTimer();
 			emit q->activated();
 		}
 	}
@@ -878,6 +887,13 @@ private:
 	{
 		// there better be some activity in 10 seconds
 		handshakeTimer->start(10000);
+	}
+
+	void restartRtpActivityTimer()
+	{
+		// if we go 5 seconds without an RTP packet, then that's
+		//   pretty bad
+		rtpActivityTimer->start(5000);
 	}
 
 private slots:
@@ -894,6 +910,11 @@ private slots:
 		reject();
 		errorCode = JingleRtp::ErrorTimeout;
 		emit q->error();
+	}
+
+	void rtpActivity_timeout()
+	{
+		printf("warning: 5 seconds passed without receiving audio RTP\n");
 	}
 
 	void ice_started()
@@ -984,6 +1005,9 @@ private slots:
 	void ice_readyRead(int componentIndex)
 	{
 		XMPP::Ice176 *ice = (XMPP::Ice176 *)sender();
+
+		if(ice == iceA && componentIndex == 0)
+			restartRtpActivityTimer();
 
 		if(ice == iceA)
 		{
