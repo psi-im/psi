@@ -687,7 +687,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	connect(d->act_nick, SIGNAL(activated()), d, SLOT(doNick()));
 
 	d->act_mini_cmd = new QAction(this);
-	d->act_mini_cmd->setText("Input Command...");
+	d->act_mini_cmd->setText(tr("Enter Command..."));
 	connect(d->act_mini_cmd, SIGNAL(activated()), d, SLOT(doMiniCmd()));
 	addAction(d->act_mini_cmd);
 
