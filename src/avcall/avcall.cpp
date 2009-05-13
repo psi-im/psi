@@ -424,6 +424,8 @@ private:
 private slots:
 	void rtp_started()
 	{
+		printf("rtp_started\n");
+
 		PsiMedia::PayloadInfo audio, *pAudio;
 		PsiMedia::PayloadInfo video, *pVideo;
 

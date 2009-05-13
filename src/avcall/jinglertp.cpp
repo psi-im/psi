@@ -290,10 +290,17 @@ public:
 
 		types = 0;
 		if(!localAudioPayloadTypes.isEmpty())
+		{
+			printf("there are audio payload types\n");
 			types |= JingleRtp::Audio;
+		}
 		if(!localVideoPayloadTypes.isEmpty())
+		{
+			printf("there are video payload types\n");
 			types |= JingleRtp::Video;
+		}
 
+		printf("types=%d\n", types);
 		resolver.start(manager->extHost, manager->stunHost);
 	}
 
@@ -663,6 +670,8 @@ private:
 	// called when all ICE objects are started
 	void after_ice_started()
 	{
+		printf("after_ice_started\n");
+
 		// for outbound, send the session-initiate
 		if(!incoming)
 		{
@@ -902,6 +911,8 @@ private slots:
 		extAddr = resolver.extAddr;
 		stunAddr = resolver.stunAddr;
 
+		printf("resolver finished\n");
+
 		start_ice();
 	}
 
@@ -920,6 +931,8 @@ private slots:
 	void ice_started()
 	{
 		XMPP::Ice176 *ice = (XMPP::Ice176 *)sender();
+
+		printf("ice_started\n");
 
 		if(ice == iceA)
 			iceA_status.started = true;
