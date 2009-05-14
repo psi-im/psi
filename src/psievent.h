@@ -41,6 +41,7 @@ class PsiCon;
 class PsiAccount;
 class QDomElement;
 
+class AvCall;
 
 class PsiEvent : public QObject
 {
@@ -57,7 +58,8 @@ public:
 		File,
 		RosterExchange,
 		//Status
-		HttpAuth
+		HttpAuth,
+		AvCallType
 	};
 	virtual int type() const = 0;
 
@@ -263,6 +265,31 @@ public:
 private:
 	PsiHttpAuthRequest v_req;
 
+};
+
+// incoming avcall
+class AvCallEvent : public PsiEvent
+{
+	Q_OBJECT
+public:
+	AvCallEvent(const XMPP::Jid &j, AvCall *sess, PsiAccount *acc);
+	AvCallEvent(const AvCallEvent &from);
+	~AvCallEvent();
+
+	int type() const { return AvCallType; }
+	XMPP::Jid from() const;
+	void setFrom(const XMPP::Jid &);
+	AvCall *takeAvCall();
+
+	virtual int priority() const;
+
+	virtual QString description() const;
+
+	virtual PsiEvent *copy() const;
+
+private:
+	XMPP::Jid v_from;
+	QPointer<AvCall> sess;
 };
 
 class EventItem

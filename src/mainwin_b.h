@@ -178,7 +178,6 @@ public slots:
 
 	void showXmlConsole();
 	void checkUpgrade();
-	void voipConfig();
 
 private:
 	void buildGeneralMenu(QMenu *);

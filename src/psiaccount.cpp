@@ -131,10 +131,9 @@
 #include "desktoputil.h"
 #include "cudaskin.h"
 
-#ifdef QUICKVOIP
-#include "quickvoip/jinglertp.h"
-#include "quickvoip/calldlg.h"
-#endif
+#include "psimedia/psimedia.h"
+#include "avcall/avcall.h"
+#include "avcall/calldlg.h"
 
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
@@ -398,6 +397,7 @@ public:
 		, rcForwardServer(0)
 		, avatarFactory(0)
 		, voiceCaller(0)
+		, avCallManager(0)
 		, tabManager(0)
 #ifdef GOOGLE_FT
 		, googleFTManager(0)
@@ -461,9 +461,7 @@ public:
 	// Voice Call
 	VoiceCaller* voiceCaller;
 
-#ifdef QUICKVOIP
-	JingleRtpManager *jingleRtpManager;
-#endif
+	AvCallManager *avCallManager;
 
 	TabManager *tabManager;
 
@@ -839,6 +837,14 @@ private slots:
 		dialogUnregister(static_cast<QWidget*>(obj));
 	}
 
+	void incoming_call()
+	{
+		AvCall *sess = avCallManager->takeIncoming();
+		AvCallEvent *ae = new AvCallEvent(sess->jid().full(), sess, account);
+		ae->setTimeStamp(QDateTime::currentDateTime());
+		account->handleEvent(ae, IncomingStanza);
+	}
+
 	// ###cuda
 	void newClientAvailable()
 	{
@@ -993,17 +999,6 @@ private slots:
 		if(j->success()) {
 			DesktopUtil::openUrl( j->url() );
 		}
-	}
-
-	void incoming_call()
-	{
-#ifdef QUICKVOIP
-		JingleRtpSession *sess = jingleRtpManager->takeIncoming();
-		CallDlg *w = new CallDlg(0);
-		w->setAttribute(Qt::WA_DeleteOnClose);
-		w->setIncoming(sess);
-		w->show();
-#endif
 	}
 
 	void push_newVersion(const QString &version, const QList<JT_PushGetClientVersion::Url> &urls)
@@ -1418,10 +1413,24 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	connect(d->googleFTManager,SIGNAL(incomingFileTransfer(GoogleFileTransfer*)),SLOT(incomingGoogleFileTransfer(GoogleFileTransfer*)));
 #endif
 
-#ifdef QUICKVOIP
-	d->jingleRtpManager = new JingleRtpManager(this);
-	connect(d->jingleRtpManager, SIGNAL(incomingReady()), d, SLOT(incoming_call()));
-#endif
+	if(AvCallManager::isSupported()) {
+		d->avCallManager = new AvCallManager(this);
+		connect(d->avCallManager, SIGNAL(incomingReady()), d, SLOT(incoming_call()));
+		QStringList features;
+		features << "urn:xmpp:jingle:1";
+		features << "urn:xmpp:jingle:transports:ice-udp:1";
+		features << "urn:xmpp:jingle:apps:rtp:1";
+		features << "urn:xmpp:jingle:apps:rtp:audio";
+		d->client->addExtension("ca", Features(features));
+
+		if(AvCallManager::isVideoSupported()) {
+			features.clear();
+			features << "urn:xmpp:jingle:apps:rtp:video";
+			d->client->addExtension("cv", Features(features));
+		}
+
+		d->avCallManager->setStunHost(acc.stunHost, acc.stunPort);
+	}
 
 	// Extended presence
 	if (d->options->getOption("options.extended-presence.notify").toBool()) {
@@ -1463,6 +1472,8 @@ PsiAccount::~PsiAccount()
 		delete d->messageQueue.takeFirst();
 
 	d->psi->ftdlg()->killTransfers(this);
+
+	delete d->avCallManager;
 
 	if (d->voiceCaller)
 		delete d->voiceCaller;
@@ -1714,6 +1725,9 @@ void PsiAccount::setUserAccount(const UserAccount &acc)
 			setStatusDirect(d->loginStatus);
 		}
 	}
+
+	if(d->avCallManager)
+		d->avCallManager->setStunHost(d->acc.stunHost, d->acc.stunPort);
 
 	cpUpdate(d->self);
 	updatedAccount();
@@ -1985,9 +1999,9 @@ void PsiAccount::cs_connected()
 
 	if(bs->inherits("BSocket") || bs->inherits("XMPP::BSocket")) {
 		d->localAddress = ((BSocket *)bs)->address();
-#ifdef QUICKVOIP
-		d->jingleRtpManager->setSelfAddress(d->localAddress);
-#endif
+
+		if(d->avCallManager)
+			d->avCallManager->setSelfAddress(d->localAddress);
 	}
 }
 
@@ -3705,7 +3719,6 @@ void PsiAccount::changeStatus(int x)
 
 void PsiAccount::actionVoice(const Jid &j)
 {
-#ifdef QUICKVOIP
 	Jid j2 = j;
 	if(j.resource().isEmpty()) {
 		UserListItem *u = find(j);
@@ -3717,7 +3730,7 @@ void PsiAccount::actionVoice(const Jid &j)
 	w->setAttribute(Qt::WA_DeleteOnClose);
 	w->setOutgoing(j2);
 	w->show();
-#else
+/*
 	Q_ASSERT(voiceCaller() != NULL);
 
 	Jid jid;
@@ -3744,7 +3757,7 @@ void PsiAccount::actionVoice(const Jid &j)
 	VoiceCallDlg* vc = new VoiceCallDlg(jid,voiceCaller());
 	vc->show();
 	vc->call();
-#endif
+*/
 }
 
 void PsiAccount::sendFiles(const Jid& j, const QStringList& l, bool direct)
@@ -4589,6 +4602,11 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 		doPopup = true;
 		popupType = PsiPopup::AlertFile;
 	}
+	else if(e->type() == PsiEvent::AvCallType) {
+		playSound(PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-file-transfer").toString());
+		doPopup = true;
+		popupType = PsiPopup::AlertAvCall;
+	}
 	else if(e->type() == PsiEvent::RosterExchange) {
 		RosterExchangeEvent* re = (RosterExchangeEvent*) e;
 		RosterExchangeItems items;
@@ -4663,7 +4681,8 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 		if ((popupType == PsiPopup::AlertChat     && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-chat").toBool())     ||
 		    (popupType == PsiPopup::AlertMessage  && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool())  ||
 		    (popupType == PsiPopup::AlertHeadline && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-headline").toBool()) ||
-		    (popupType == PsiPopup::AlertFile     && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-file-transfer").toBool()))
+		    (popupType == PsiPopup::AlertFile     && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-file-transfer").toBool()) ||
+		    (popupType == PsiPopup::AlertAvCall   && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool())))
 		{
 			PsiPopup *popup = new PsiPopup(popupType, this);
 			popup->setData(j, r, u, e);
@@ -5656,6 +5675,11 @@ PEPManager* PsiAccount::pepManager()
 BookmarkManager* PsiAccount::bookmarkManager()
 {
 	return d->bookmarkManager;
+}
+
+AvCallManager *PsiAccount::avCallManager()
+{
+	return d->avCallManager;
 }
 
 /**

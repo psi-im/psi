@@ -148,6 +148,9 @@ void UserAccount::reset()
 	proxy_user = "";
 	proxy_pass = "";
 
+	stunHost = "stun.barracuda.com";
+	stunPort = 3478;
+
 	keybind.clear();
 
 	roster.clear();
@@ -197,9 +200,15 @@ void version_parse(const QString &str, int *_vmaj, int *_vmin, int *_vbug)
 
 void UserAccount::fromOptions(OptionsTree *o, QString base)
 {
+	// WARNING: If you add any new option here, only read the option if
+	// allSetOptions (defined below) contains the new option. If not
+	// the code should just leave the default value from the reset()
+	// call in place.
 	optionsBase = base;
 	
 	reset();
+
+	QStringList allSetOptions = o->getChildOptionNames(base, true, true);
 
 	int vmaj, vmin, vbug;
 	version_parse(o->getOption("progver").toString(), &vmaj, &vmin, &vbug);
@@ -331,6 +340,18 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	keybind.fromOptions(o, base + ".pgp-key-bindings");
 
 	dtProxy = o->getOption(base + ".bytestreams-proxy").toString();
+
+
+	if (allSetOptions.contains(base + ".stun-host")) {
+		stunHost = o->getOption(base + ".stun-host").toString();
+	}
+	if (allSetOptions.contains(base + ".stun-port")) {
+		int tmpPort = o->getOption(base + ".stun-port").toInt();
+		// a few days in the 0.13-dev development cycle the code set
+		// 0 as port when first adding this option. Ignore 0 for now
+		// and use default
+		if (tmpPort != 0) stunPort = tmpPort;
+	}
 }
 
 void UserAccount::toOptions(OptionsTree *o, QString base)
@@ -458,7 +479,9 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 
 	keybind.toOptions(o, base + ".pgp-key-bindings");
 	o->setOption(base + ".bytestreams-proxy", dtProxy.full());
-	
+
+	o->setOption(base + ".stun-host", stunHost);
+	o->setOption(base + ".stun-port", QString::number(stunPort));
 }
 
 void UserAccount::fromXml(const QDomElement &a)

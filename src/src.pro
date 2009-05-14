@@ -12,7 +12,7 @@ CONFIG  += qt thread x11
 CONFIG += pep
 DEFINES += QT_STATICPLUGIN
 
-#CONFIG += qt-static
+CONFIG += qt-static
 
 qt-static {
 	DEFINES += IMPORT_QT_PLUGINS

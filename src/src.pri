@@ -24,11 +24,11 @@ include($$PSIDIR_SRC/tools/contactlist/contactlist.pri)
 include($$PSIDIR_SRC/tools/grepshortcutkeydlg/grepshortcutkeydlg.pri)
 include($$PSIDIR_SRC/tools/atomicxmlfile/atomicxmlfile.pri)
 
-quickvoip {
-	DEFINES += QUICKVOIP
-	include($$PWD/quickvoip/psimedia.pri)
-	include($$PWD/quickvoip/quickvoip.pri)
-}
+# psimedia
+include($$PWD/psimedia/psimedia.pri)
+
+# audio/video calls
+include($$PWD/avcall/avcall.pri)
 
 # Growl
 mac {

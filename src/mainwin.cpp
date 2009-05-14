@@ -70,10 +70,6 @@
 
 #include "mainwin_p_b.h"
 
-#ifdef QUICKVOIP
-#include "quickvoip/jinglertp.h"
-#endif
-
 using namespace XMPP;
 
 QImage makeAvatarImage(const QImage &_in)
@@ -717,9 +713,6 @@ MainWinB::MainWinB(bool _onTop, bool _asTool, PsiCon *psi, const char *name)
 	connect(sp_ss, SIGNAL(activated()), SLOT(showXmlConsole()));
 	sp_ss = new QShortcut(QKeySequence(tr("Ctrl+Shift+U")), this);
 	connect(sp_ss, SIGNAL(activated()), SLOT(checkUpgrade()));
-
-	sp_ss = new QShortcut(QKeySequence(tr("Ctrl+Shift+N")), this);
-	connect(sp_ss, SIGNAL(activated()), SLOT(voipConfig()));
 }
 	
 
@@ -738,9 +731,9 @@ MainWinB::~MainWinB()
 
 void MainWinB::registerAction( IconAction *action )
 {
-	char activated[] = SIGNAL( activated() );
-	char toggled[]   = SIGNAL( toggled(bool) );
-	char setChecked[]     = SLOT( setChecked(bool) );
+	const char *activated  = SIGNAL( activated() );
+	const char *toggled    = SIGNAL( toggled(bool) );
+	const char *setChecked = SLOT( setChecked(bool) );
 
 	struct {
 		const char *name;
@@ -1925,11 +1918,4 @@ void MainWinB::checkUpgrade()
 {
 	PsiAccount *account = d->psi->contactList()->defaultAccount();
 	account->checkUpgrade();
-}
-
-void MainWinB::voipConfig()
-{
-#ifdef QUICKVOIP
-	JingleRtpManager::instance()->config();
-#endif
 }

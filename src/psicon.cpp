@@ -91,10 +91,15 @@
 #include "cudaskin.h"
 #include "iconaction.h"
 #include "conferencebookmark.h"
+#include "avcall/avcall.h"
+#include "avcall/calldlg.h"
 
 #ifdef Q_WS_MAC
 #include "mac_dock.h"
 #endif
+
+// from opt_avcall.cpp
+extern void options_avcall_update();
 
 // ###cuda from psioptions.cpp
 void ensureStatusPresets(PsiOptions *o);
@@ -682,6 +687,15 @@ bool PsiCon::init()
 
 	connect(ActiveProfiles::instance(), SIGNAL(raiseMainWindow()), SLOT(raiseMainwin()));
 
+	if(AvCallManager::isSupported()) {
+		options_avcall_update();
+		AvCallManager::setAudioOutDevice(PsiOptions::instance()->getOption("options.media.devices.audio-output").toString());
+		AvCallManager::setAudioInDevice(PsiOptions::instance()->getOption("options.media.devices.audio-input").toString());
+		AvCallManager::setVideoInDevice(PsiOptions::instance()->getOption("options.media.devices.video-input").toString());
+		AvCallManager::setBasePort(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt());
+		AvCallManager::setExternalAddress(PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString());
+	}
+
 	d->tabChatsAction = new IconAction(tr("Tab chats"), tr("Tab chats"), 0, this);
 	d->tabChatsAction->setCheckable(true);
 	d->tabChatsAction->setChecked(isTabsModeEnabled());
@@ -1011,6 +1025,14 @@ void PsiCon::pa_updatedActivity()
 
 	// update s5b server
 	updateS5BServerAddresses();
+
+	if(AvCallManager::isSupported()) {
+		AvCallManager::setAudioOutDevice(PsiOptions::instance()->getOption("options.media.devices.audio-output").toString());
+		AvCallManager::setAudioInDevice(PsiOptions::instance()->getOption("options.media.devices.audio-input").toString());
+		AvCallManager::setVideoInDevice(PsiOptions::instance()->getOption("options.media.devices.video-input").toString());
+		AvCallManager::setBasePort(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt());
+		AvCallManager::setExternalAddress(PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString());
+	}
 
 	updateMainwinStatus();
 }
@@ -1420,6 +1442,27 @@ void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 		if(ft) {
 			FileRequestDlg *w = new FileRequestDlg(fe->timeStamp(), ft, e->account());
 			bringToFront(w);
+		}
+		return;
+	}
+
+	if(e->type() == PsiEvent::AvCallType) {
+		AvCallEvent *ae = (AvCallEvent *)e;
+		AvCall *sess = ae->takeAvCall();
+		e->account()->eventQueue()->dequeue(e);
+		e->account()->queueChanged();
+		e->account()->cpUpdate(*u);
+		if(sess) {
+			if(!sess->jid().isEmpty()) {
+				CallDlg *w = new CallDlg(e->account(), 0);
+				w->setAttribute(Qt::WA_DeleteOnClose);
+				w->setIncoming(sess);
+				bringToFront(w);
+			}
+			else {
+				QMessageBox::information(0, tr("Call ended"), tr("Other party canceled call."));
+				delete sess;
+			}
 		}
 		return;
 	}

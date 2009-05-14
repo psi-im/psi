@@ -21,6 +21,7 @@ HEADERS += \
 	$$PSIDIR_OPT/opt_iconset.h \
 	$$PSIDIR_OPT/opt_groupchat.h \
 	$$PSIDIR_OPT/opt_sound.h \
+	$$PSIDIR_OPT/opt_avcall.h \
 	$$PSIDIR_OPT/opt_toolbars.h \
 	$$PSIDIR_OPT/opt_advanced.h \
 	$$PSIDIR_OPT/opt_shortcuts.h \
@@ -35,6 +36,7 @@ SOURCES += \
 	$$PWD/opt_iconset.cpp \
 	$$PSIDIR_OPT/opt_groupchat.cpp \
 	$$PWD/opt_sound.cpp \
+	$$PSIDIR_OPT/opt_avcall.cpp \
 	$$PSIDIR_OPT/opt_toolbars.cpp \
 	$$PSIDIR_OPT/opt_advanced.cpp \
 	$$PSIDIR_OPT/opt_shortcuts.cpp \
@@ -49,6 +51,7 @@ INTERFACES += \
 	$$PSIDIR_OPT/opt_appearance.ui \
 	$$PSIDIR_OPT/opt_appearance_misc.ui \
 	$$PSIDIR_OPT/opt_sound.ui \
+	$$PSIDIR_OPT/opt_avcall.ui \
 	$$PSIDIR_OPT/opt_advanced.ui \
 	$$PSIDIR_OPT/opt_lookfeel_toolbars.ui \
 	$$PSIDIR_OPT/ui_isdetails.ui \

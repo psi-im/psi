@@ -161,7 +161,7 @@ void PsiPopup::Private::popupClicked(int button)
 		else if ( account ) {
 			// FIXME: it should work in most cases, but
 			// maybe it's better to fix UserList::find()?
-			Jid j( jid.userHost() );
+			Jid j( jid.bare() );
 			account->actionDefault( j );
 		}
 	}
@@ -276,6 +276,11 @@ PsiPopup::PsiPopup(PopupType type, PsiAccount *acc)
 		icon= (PsiIcon *)IconsetFactory::iconPtr("psi/file");
 		doAlertIcon = true;
 		break;
+	case AlertAvCall:
+		text += PsiPopup::tr("Incoming call");
+		icon= (PsiIcon *)IconsetFactory::iconPtr("psi/call");
+		doAlertIcon = true;
+		break;
 	default:
 		break;
 	}
@@ -370,6 +375,7 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
 		}
 	}
 
+	// ###cuda
 	// show popup
 	if ( d->popupType != AlertHeadline && d->popupType != AlertChat && d->popupType != AlertMessage && (d->popupType != AlertFile || !PsiOptions::instance()->getOption("options.ui.file-transfer.auto-popup").toBool()) )
 		setData(icon, contactText);

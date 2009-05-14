@@ -1322,11 +1322,8 @@ void ContactProfile::doContextMenu(ContactViewItemB *i, const QPoint &pos)
 		}*/
 
 		// Voice call
-#ifdef QUICKVOIP
-		if(!isAgent) {
-#else
-		if(d->pa->voiceCaller() && !isAgent) {
-#endif
+		if(d->pa->avCallManager() && !isAgent) {
+		//if(d->pa->voiceCaller() && !isAgent) {
 			//pm.insertItem(IconsetFactory::icon("psi/voice").icon(), tr("Voice Call"), 24);
 			pm.insertItem(tr("Voice Call"), 24);
 			if(!online) {

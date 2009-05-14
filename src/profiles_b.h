@@ -78,6 +78,8 @@ public:
 
 	QString optionsBase;
 
+	QString stunHost;
+	int stunPort;
 
 	/* migration only */
 	int proxy_index;
