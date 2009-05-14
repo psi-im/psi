@@ -127,7 +127,7 @@
 #include "Certificates/CertificateErrorDialog.h"
 #include "Certificates/CertificateDisplayDialog.h"
 
-#include "../psimedia/psimedia.h"
+#include "psimedia/psimedia.h"
 #include "avcall/avcall.h"
 #include "avcall/calldlg.h"
 
