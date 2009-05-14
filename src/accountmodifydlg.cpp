@@ -33,7 +33,6 @@
 #include "privacydlg.h"
 #include "pgpkeydlg.h"
 #include "psicontactlist.h"
-#include "avcall/jinglertp.h"
 
 AccountModifyDlg::AccountModifyDlg(PsiCon *_psi, QWidget *parent)
 :QDialog(parent)
