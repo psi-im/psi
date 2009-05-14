@@ -1,5 +1,0 @@
-qt42, buildmode, and universal modules are all copied from qca.
-do not modify them here.
-
-the qca module is copied from qca, but modified here.  we should consider
-pushing the changes back.
