@@ -3726,7 +3726,7 @@ void PsiAccount::actionVoice(const Jid &j)
 			j2.setResource((*u->userResourceList().priority()).name());
         }
 
-	CallDlg *w = new CallDlg(0);
+	CallDlg *w = new CallDlg(this, 0);
 	w->setAttribute(Qt::WA_DeleteOnClose);
 	w->setOutgoing(j2);
 	w->show();
