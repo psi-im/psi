@@ -444,6 +444,13 @@
 		<xml-console>
 			<enable-at-login type="bool">false</enable-at-login>
 		</xml-console>
+		<media>
+			<devices>
+				<audio-output type="QString"/>
+				<audio-input type="QString"/>
+				<video-input type="QString"/>
+			</devices>
+		</media>
 	</options>
 	<accounts comment="Account definitions and options"/>
 	<plugins comment="Plugin options"/>

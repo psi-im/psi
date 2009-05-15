@@ -16,6 +16,7 @@ public:
 	// Directories
 	static QString homeDir();
 	static QString resourcesDir();
+	static QString libDir();
 	static QString profilesDir();
 	static QString historyDir();
 	static QString vCardDir();

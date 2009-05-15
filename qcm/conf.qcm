@@ -16,17 +16,19 @@ public:
 	QString checkString() const { return QString(); }
 	bool exec()
 	{
+		conf->addExtra(QString("PSI_LIBDIR=%1/barracuda").arg(conf->getenv("LIBDIR")));
 		conf->addExtra(QString("PSI_DATADIR=%1/barracuda").arg(conf->getenv("DATADIR")));
 		conf->addDefine("IRIS_SASLCONNECTHOST");
 
 		QFile file("src/config.h");
 		if ( file.open(QIODevice::WriteOnly | QIODevice::Text) ) {
 			QTextStream stream( &file );
+			stream << "#define PSI_LIBDIR \"" << conf->getenv("LIBDIR") << "/barracuda\"" << endl;
 			stream << "#define PSI_DATADIR \"" << conf->getenv("DATADIR") << "/barracuda\"" << endl;
 		}
-		
+
 		conf->addDefine("HAVE_CONFIG");
-		
+
 		return true;
 	}
 };

@@ -27,6 +27,7 @@
 #include "opt_iconset.h"
 #include "opt_groupchat.h"
 #include "opt_sound.h"
+#include "opt_avcall.h"
 #include "opt_advanced.h"
 #include "opt_shortcuts.h"
 #include "opt_tree.h"

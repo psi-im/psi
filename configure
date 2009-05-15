@@ -12,6 +12,7 @@ This script creates necessary configuration files to build/install.
 Main options:
   --prefix=[path]     Base path for build/install.  Default: /usr/local
   --bindir=[path]     Directory for binaries.  Default: PREFIX/bin
+  --libdir=[path]     Directory for libraries.  Default: PREFIX/lib
   --datadir=[path]    Directory for data.  Default: PREFIX/share
   --qtdir=[path]      Directory where Qt is installed.
   --verbose           Show extra configure output.
@@ -147,6 +148,11 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
+		--libdir=*)
+			LIBDIR=$optarg
+			shift
+			;;
+
 		--datadir=*)
 			DATADIR=$optarg
 			shift
@@ -258,6 +264,7 @@ done
 
 PREFIX=${PREFIX:-/usr/local}
 BINDIR=${BINDIR:-$PREFIX/bin}
+LIBDIR=${LIBDIR:-$PREFIX/lib}
 DATADIR=${DATADIR:-$PREFIX/share}
 
 echo "Configuring Barracuda ..."
@@ -266,6 +273,7 @@ if [ "$QC_VERBOSE" = "Y" ]; then
 echo
 echo PREFIX=$PREFIX
 echo BINDIR=$BINDIR
+echo LIBDIR=$LIBDIR
 echo DATADIR=$DATADIR
 echo EX_QTDIR=$EX_QTDIR
 echo QC_CERTSTORE_PATH=$QC_CERTSTORE_PATH
@@ -1101,17 +1109,19 @@ public:
 	QString checkString() const { return QString(); }
 	bool exec()
 	{
+		conf->addExtra(QString("PSI_LIBDIR=%1/barracuda").arg(conf->getenv("LIBDIR")));
 		conf->addExtra(QString("PSI_DATADIR=%1/barracuda").arg(conf->getenv("DATADIR")));
 		conf->addDefine("IRIS_SASLCONNECTHOST");
 
 		QFile file("src/config.h");
 		if ( file.open(QIODevice::WriteOnly | QIODevice::Text) ) {
 			QTextStream stream( &file );
+			stream << "#define PSI_LIBDIR \"" << conf->getenv("LIBDIR") << "/barracuda\"" << endl;
 			stream << "#define PSI_DATADIR \"" << conf->getenv("DATADIR") << "/barracuda\"" << endl;
 		}
-		
+
 		conf->addDefine("HAVE_CONFIG");
-		
+
 		return true;
 	}
 };
@@ -1309,7 +1319,16 @@ QStringList qc_pathlist()
 	QStringList list;
 	QString path = qc_getenv("PATH");
 	if(!path.isEmpty())
+	{
+#ifdef Q_OS_WIN
+		list = path.split(';', QString::SkipEmptyParts);
+#else
 		list = path.split(':', QString::SkipEmptyParts);
+#endif
+	}
+#ifdef Q_OS_WIN
+	list.prepend(".");
+#endif
 	return list;
 }
 
@@ -1325,13 +1344,30 @@ QString qc_findprogram(const QString &prog)
 			out = fi.filePath();
 			break;
 		}
+
+#ifdef Q_OS_WIN
+		// on windows, be sure to look for .exe
+		if(prog.right(4).toLower() != ".exe")
+		{
+			fi = QFileInfo(list[n] + '/' + prog + ".exe");
+			if(fi.exists() && fi.isExecutable())
+			{
+				out = fi.filePath();
+				break;
+			}
+		}
+#endif
 	}
 	return out;
 }
 
 QString qc_findself(const QString &argv0)
 {
+#ifdef Q_OS_WIN
+	if(argv0.contains('\\'))
+#else
 	if(argv0.contains('/'))
+#endif
 		return argv0;
 	else
 		return qc_findprogram(argv0);
@@ -1341,8 +1377,19 @@ int qc_runcommand(const QString &command, QByteArray *out, bool showOutput)
 {
 	QString fullcmd = command;
 	if(!showOutput)
+	{
+#ifdef Q_OS_WIN
+		fullcmd += " 2>NUL";
+#else
 		fullcmd += " 2>/dev/null";
+#endif
+	}
+
+#ifdef Q_OS_WIN
+	FILE *f = _popen(fullcmd.toLatin1().data(), "r");
+#else
 	FILE *f = popen(fullcmd.toLatin1().data(), "r");
+#endif
 	if(!f)
 		return -1;
 	if(out)
@@ -1357,7 +1404,11 @@ int qc_runcommand(const QString &command, QByteArray *out, bool showOutput)
 		if(showOutput)
 			fputc(c, stdout);
 	}
+#ifdef Q_OS_WIN
+	int ret = _pclose(f);
+#else
 	int ret = pclose(f);
+#endif
 	if(ret == -1)
 		return -1;
 	return ret;
@@ -1644,7 +1695,12 @@ int Conf::doCommand(const QString &prog, const QStringList &args, QByteArray *ou
 
 bool Conf::doCompileAndLink(const QString &filedata, const QStringList &incs, const QString &libs, const QString &proextra, int *retcode)
 {
+#ifdef Q_OS_WIN
+	QDir tmp("qconftemp");
+#else
 	QDir tmp(".qconftemp");
+#endif
+
 	if(!tmp.mkdir("atest"))
 	{
 		debug("unable to create atest dir");
@@ -1677,6 +1733,7 @@ bool Conf::doCompileAndLink(const QString &filedata, const QStringList &incs, co
 	QString pro = QString(
 		"CONFIG  += console\n"
 		"CONFIG  -= qt app_bundle\n"
+		"DESTDIR  = \$\$PWD\n"
 		"SOURCES += atest.cpp\n");
 	QString inc = incs.join(" ");
 	if(!inc.isEmpty())
@@ -1713,7 +1770,13 @@ bool Conf::doCompileAndLink(const QString &filedata, const QStringList &incs, co
 		{
 			ok = true;
 			if(retcode)
-				*retcode = doCommand(QString("./") + out, QStringList());
+			{
+				QString runatest = out;
+#ifdef Q_OS_UNIX
+				runatest.prepend("./");
+#endif
+				*retcode = doCommand(runatest, QStringList());
+			}
 		}
 		r = doCommand(maketool, QStringList() << "distclean");
 		if(r != 0)
@@ -2114,6 +2177,7 @@ CONFIG  += console
 CONFIG  -= app_bundle
 QT      -= gui
 TARGET   = conf
+DESTDIR  = \$\$PWD
 
 HEADERS += conf4.h
 SOURCES += conf4.cpp
@@ -2126,6 +2190,7 @@ EOT
 
 export PREFIX
 export BINDIR
+export LIBDIR
 export DATADIR
 export EX_QTDIR
 export QC_CERTSTORE_PATH

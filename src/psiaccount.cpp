@@ -4682,7 +4682,7 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 		    (popupType == PsiPopup::AlertMessage  && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool())  ||
 		    (popupType == PsiPopup::AlertHeadline && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-headline").toBool()) ||
 		    (popupType == PsiPopup::AlertFile     && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-file-transfer").toBool()) ||
-		    (popupType == PsiPopup::AlertAvCall   && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool())))
+		    (popupType == PsiPopup::AlertAvCall   && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool()))
 		{
 			PsiPopup *popup = new PsiPopup(popupType, this);
 			popup->setData(j, r, u, e);

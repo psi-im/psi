@@ -8,11 +8,6 @@
 
 static const QString BLOCKED_LIST_NAME = "blocked";
 
-static bool operator==(const Jid &a, const Jid &b)
-{
-	return a.compare(b);
-}
-
 static XMPP::Jid processJid(const XMPP::Jid& jid)
 {
 	return jid.userHost();
