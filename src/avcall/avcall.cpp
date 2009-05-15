@@ -311,6 +311,8 @@ private:
 
 	void cleanup()
 	{
+		rtp.reset();
+
 		delete sess;
 		sess = 0;
 	}
@@ -510,7 +512,7 @@ private slots:
 	void rtp_error()
 	{
 		errorString = tr("An error occurred while trying to send:\n%1.").arg(rtpSessionErrorToString(rtp.errorCode()));
-		cleanup();
+		reject();
 		emit q->error();
 	}
 
@@ -557,12 +559,21 @@ private slots:
 	{
 		JingleRtp::Error e = sess->errorCode();
 		if(e == JingleRtp::ErrorTimeout)
+		{
 			errorString = tr("Call negotiation timed out.");
+			cleanup();
+		}
 		else if(e == JingleRtp::ErrorICE)
+		{
 			errorString = tr("Unable to establish peer-to-peer connection.");
+			reject();
+		}
 		else
+		{
 			errorString = tr("Call negotiation failed.");
-		cleanup();
+			cleanup();
+		}
+
 		emit q->error();
 	}
 
