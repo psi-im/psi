@@ -40,10 +40,10 @@ static PtrShell_NotifyIcon ptrShell_NotifyIcon = 0;
 static void resolveLibs()
 {
 	QLibrary lib("shell32");
-	lib.setAutoUnload( FALSE );
-	static bool triedResolve = FALSE;
+	lib.setAutoUnload( false );
+	static bool triedResolve = false;
 	if ( !ptrShell_NotifyIcon && !triedResolve ) {
-		triedResolve = TRUE;
+		triedResolve = true;
 		ptrShell_NotifyIcon = (PtrShell_NotifyIcon) lib.resolve( "Shell_NotifyIconW" );
 	}
 }
@@ -118,7 +118,7 @@ public:
 				// Tip is limited to 63 + NULL; lstrcpyn appends a NULL terminator.
 				QString tip = iconObject->toolTip().left( 63 ) + QChar();
 				lstrcpynW(tnd.szTip, (TCHAR*)tip.unicode(), QMIN( tip.length()+1, 64 ) );
-				//		lstrcpynW(tnd.szTip, (TCHAR*)qt_winTchar( tip, FALSE ), QMIN( tip.length()+1, 64 ) );
+				//		lstrcpynW(tnd.szTip, (TCHAR*)qt_winTchar( tip, false ), QMIN( tip.length()+1, 64 ) );
 			}
 		}
 		return ptrShell_NotifyIcon(msg, &tnd);
@@ -137,10 +137,10 @@ public:
     bool iconDrawItem(LPDRAWITEMSTRUCT lpdi)
     {
 		if (!hIcon)
-			return FALSE;
+			return false;
 
 		DrawIconEx(lpdi->hDC, lpdi->rcItem.left, lpdi->rcItem.top, hIcon, 0, 0, 0, NULL, DI_NORMAL );
-		return TRUE;
+		return true;
     }
 
     bool winEvent( MSG *m, long *result )

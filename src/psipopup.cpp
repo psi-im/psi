@@ -387,7 +387,7 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
 		const Message *jmessage = &((MessageEvent *)event)->message();
 		QString message;
 		if ( !jmessage->subject().isEmpty() )
-			message += "<font color=\"red\"><b>" + tr("Subject:") + " " + jmessage->subject() + "</b></font><br>";
+			message += "<font color=\"red\"><b>" + tr("Subject:") + ' ' + jmessage->subject() + "</b></font><br>";
 		message += TextUtil::plain2rich( jmessage->body() );
 
 		QLabel *messageLabel = new QLabel(d->popup);

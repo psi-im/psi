@@ -193,7 +193,7 @@ QString PGPUtil::addHeaderFooter(const QString &str, int type)
 	QString s;
 	s += QString("-----BEGIN PGP %1-----\n").arg(stype);
 	s += "Version: PGP\n";
-	s += "\n";
+	s += '\n';
 	s += str + '\n';
 	s += QString("-----END PGP %1-----\n").arg(stype);
 	return s;

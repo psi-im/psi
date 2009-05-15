@@ -163,13 +163,13 @@ QString OptionsTree::mapLookup(const QString &basename, const QVariant &key) con
 }
 
 QVariant OptionsTree::mapGet(const QString &basename, const QVariant &key, const QString &node) const {
-	return getOption(mapLookup(basename, key) + "." + node);
+	return getOption(mapLookup(basename, key) + '.' + node);
 }
 
 QVariant OptionsTree::mapGet(const QString &basename, const QVariant &key, const QString &node, const QVariant &def) const {
 	QVariantList keys = mapKeyList(basename);
 	if (keys.contains(key)) {
-		return getOption(mapLookup(basename, key) + "." + node);
+		return getOption(mapLookup(basename, key) + '.' + node);
 	} else {
 		return def;
 	}
@@ -198,7 +198,7 @@ QString OptionsTree::mapPut(const QString &basename, const QVariant &key)
 }
 
 void OptionsTree::mapPut(const QString &basename, const QVariant &key, const QString &node, const QVariant &value) {
-	setOption(mapPut(basename, key) + "." + node, value);
+	setOption(mapPut(basename, key) + '.' + node, value);
 }
 
 QVariantList OptionsTree::mapKeyList(const QString &basename) const

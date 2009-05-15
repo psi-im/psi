@@ -314,7 +314,7 @@ void PsiOptions::autoSave(bool autoSave, QString autoFile)
  */
 void PsiOptions::saveToAutoFile()
 {
-	if (autoFile_ != "") {
+	if (!autoFile_.isEmpty()) {
 		save(autoFile_);
 	}
 }

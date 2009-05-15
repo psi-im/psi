@@ -181,16 +181,16 @@ void PopupActionButton::paintEvent(QPaintEvent *p)
 		if(w1 > w2) {
 			if( !hasToolTip ) {
 				setToolTip(label);
-				hasToolTip = TRUE;
+				hasToolTip = true;
 			}
 
 			// make a string that fits
-			bool found = FALSE;
+			bool found = false;
 			QString newtext;
 			int n;
 			for(n = oldtext.length(); n > 0; --n) {
 				if(fm.width(oldtext, n) < w2) {
-					found = TRUE;
+					found = true;
 					break;
 				}
 			}

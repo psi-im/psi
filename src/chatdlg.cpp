@@ -130,7 +130,7 @@ void ChatDlg::init()
 	QTimer::singleShot(10, this, SLOT(initComposing()));
 	connect(this, SIGNAL(composing(bool)), SLOT(updateIsComposing(bool)));
 
-	setAcceptDrops(TRUE);
+	setAcceptDrops(true);
 	updateContact(jid(), true);
 
 	X11WM_CLASS("chat");
@@ -978,7 +978,7 @@ void ChatDlg::addEmoticon(QString text)
 	if (!isActiveTab())
 		return;
 
-	chatEdit()->insert(text + " ");
+	chatEdit()->insert(text + ' ');
 }
 
 /**

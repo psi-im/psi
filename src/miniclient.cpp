@@ -79,7 +79,7 @@ void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool leg
 	}
 
 	AdvancedConnector::Proxy p;
-	if(proxy != "") {
+	if(!proxy.isEmpty()) {
 		const ProxyItem &pi = pm->getItem(proxy);
 		if(pi.type == "http") // HTTP Connect
 			p.setHttpConnect(pi.settings.host, pi.settings.port);

@@ -1862,7 +1862,7 @@ void EventDlg::updateEvent(PsiEvent *e)
 		QString txt = xhtml ? m.html().toString("div") : TextUtil::plain2rich(m.body());
 
 		// show subject line if the incoming message has one
-		if(m.subject() != "" && !PsiOptions::instance()->getOption("options.ui.message.show-subjects").toBool())
+		if(!m.subject().isEmpty() && !PsiOptions::instance()->getOption("options.ui.message.show-subjects").toBool())
 			txt = "<p><font color=\"red\"><b>" + tr("Subject:") + " " + TextUtil::plain2rich(m.subject()) + "</b></font></p>" + (xhtml? "" : "<br>") + txt;
 
 		if (!xhtml) {

@@ -128,8 +128,8 @@ void ProfileOpenDlg::reload(const QString &choose)
 	cb_profile->clear();
 
 	if(list.count() == 0) {
-		gb_open->setEnabled(FALSE);
-		pb_open->setEnabled(FALSE);
+		gb_open->setEnabled(false);
+		pb_open->setEnabled(false);
 		pb_profiles->setFocus();
 	}
 	else {
@@ -142,8 +142,8 @@ void ProfileOpenDlg::reload(const QString &choose)
 			++x;
 		}
 
-		gb_open->setEnabled(TRUE);
-		pb_open->setEnabled(TRUE);
+		gb_open->setEnabled(true);
+		pb_open->setEnabled(true);
 		pb_open->setFocus();
 	}
 }
@@ -226,7 +226,7 @@ void ProfileManageDlg::slotProfileRename()
 	QString name;
 
 	while(1) {
-		bool ok = FALSE;
+		bool ok = false;
 		name = QInputDialog::getText(CAP(tr("Rename Profile")), tr("Please enter a new name for the profile.  Keep it simple.\nOnly use letters or numbers.  No punctuation or spaces."), QLineEdit::Normal, name, &ok, this);
 		if(!ok)
 			return;
@@ -292,12 +292,12 @@ void ProfileManageDlg::updateSelection()
 	int x = lbx_profiles->currentItem();
 
 	if(x == -1) {
-		pb_rename->setEnabled(FALSE);
-		pb_delete->setEnabled(FALSE);
+		pb_rename->setEnabled(false);
+		pb_delete->setEnabled(false);
 	}
 	else {
-		pb_rename->setEnabled(TRUE);
-		pb_delete->setEnabled(TRUE);
+		pb_rename->setEnabled(true);
+		pb_delete->setEnabled(true);
 	}
 }
 

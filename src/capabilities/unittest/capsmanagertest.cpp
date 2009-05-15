@@ -123,14 +123,14 @@ class CapsManagerTest : public QObject
 		void addContact(const QString& jid, const QString& client, const QString& version, const QStringList& capabilities) {
 			XMPP::DiscoItem i;
 			i.setFeatures(XMPP::Features(version + "_f1"));
-			querier_->addInfo(jid, client + "#" + version, i);
+			querier_->addInfo(jid, client + '#' + version, i);
 
 			foreach(QString s, capabilities) {
 				XMPP::DiscoItem i2;
 				QStringList f;
 				f << s + "_f1" << s + "_f2";
 				i2.setFeatures(XMPP::Features(f));
-				querier_->addInfo(jid, client + "#" + s, i2);
+				querier_->addInfo(jid, client + '#' + s, i2);
 			}
 		}
 

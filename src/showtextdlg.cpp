@@ -45,7 +45,7 @@ ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent)
 
 	QVBoxLayout *vb1 = new QVBoxLayout(this, 8);
 	QTextEdit *te = new QTextEdit(this);
-	te->setReadOnly(TRUE);
+	te->setReadOnly(true);
 	te->setTextFormat(rich ? Qt::RichText : Qt::PlainText);
 	te->setText(text);
 
@@ -70,7 +70,7 @@ ShowTextDlg::ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *
 
 	QVBoxLayout *vb1 = new QVBoxLayout(this, 8);
 	QTextEdit *te = new QTextEdit(this);
-	te->setReadOnly(TRUE);
+	te->setReadOnly(true);
 	te->setTextFormat(rich ? Qt::RichText : Qt::PlainText);
 	te->setText(text);
 

@@ -47,7 +47,7 @@ MainWindow::MainWindow(QWidget *parent, const char *name)
 		this, SLOT(newGame()), Qt::CTRL + Qt::Key_N);
 	id = game->insertItem(xpm, tr("Save image"), this,
 		SLOT(saveImage()), Qt::CTRL + Qt::Key_S);
-	game->setItemEnabled(id, FALSE);
+	game->setItemEnabled(id, false);
 	game->insertSeparator();
 	game->insertItem(QPixmap((const char **)quit_xpm), tr("Quit"), qApp,
 		SLOT(quit()), Qt::CTRL + Qt::Key_Q);
@@ -118,7 +118,7 @@ MainWindow::newGame(int sock)
 	QObject::connect(brd, SIGNAL(showStatus(const QString&)),
 		this, SLOT(showStatus(const QString&)));
 	brd->show();
-	game->setItemEnabled(id, TRUE);
+	game->setItemEnabled(id, true);
 }
 
 
@@ -166,7 +166,7 @@ SelectGame::SelectGame(QWidget *parent, const char *name)
 
 	setCaption(tr("New game with..."));
 	l1 = new QLabel(tr("To play with "), this);
-	hst = new QComboBox(TRUE, this);
+	hst = new QComboBox(true, this);
 	hst->setValidator(new QRegExpValidator(
 		QRegExp("([a-zA-Z0-9]*\\.)*[a-zA-Z]"), hst));
 	btn = new Q3ButtonGroup(tr("Choose your game"), this);

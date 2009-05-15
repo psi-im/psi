@@ -92,7 +92,7 @@ public:
 				}
 				dlg_->setLooks();
 				newstate = 0;
-			} else if (cmd != "") {
+			} else if (!cmd.isEmpty()) {
 				return false;
 			}
 			return true;

@@ -1222,7 +1222,7 @@ void PsiAccount::login()
 	}
 
 	AdvancedConnector::Proxy p;
-	if(d->acc.proxyID != "") {
+	if(!d->acc.proxyID.isEmpty()) {
 		const ProxyItem &pi = d->psi->proxy()->getItem(d->acc.proxyID);
 		if(pi.type == "http") // HTTP Connect
 			p.setHttpConnect(pi.settings.host, pi.settings.port);
@@ -3954,9 +3954,9 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 			doPopup = true;
 			popupType = PsiPopup::AlertHeadline;
 		} // /headline
-		else if (m.type() == "") {
+		else if (m.type().isEmpty()) {
 			playSound(PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-message").toString());
-			if (m.type() == "") {
+			if (m.type().isEmpty()) {
 				doPopup = true;
 				popupType = PsiPopup::AlertMessage;
 			}

@@ -1013,7 +1013,7 @@ public:
 
 		QFileInfo fi(dir);
 		if ( fi.isDir() ) {
-			QFile file ( dir + "/" + fileName );
+			QFile file ( dir + '/' + fileName );
 			if (!file.open(IO_ReadOnly))
 				return ba;
 
@@ -1025,7 +1025,7 @@ public:
 			if ( !z.open() )
 				return ba;
 
-			QString n = fi.baseName(true) + "/" + fileName;
+			QString n = fi.baseName(true) + '/' + fileName;
 			if ( !z.readFile(n, &ba) ) {
 				n = "/" + fileName;
 				z.readFile(n, &ba);
@@ -1220,7 +1220,7 @@ public:
 							break;
 
 						QFileInfo ext(sound[*it]);
-						path += "/" + QCA::Hash("sha1").hashToString(QString(fi.absFilePath() + "/" + *sound[*it]).utf8()) + "." + ext.extension();
+						path += "/" + QCA::Hash("sha1").hashToString(QString(fi.absFilePath() + '/' + *sound[*it]).utf8()) + '.' + ext.extension();
 
 						QFile file ( path );
 						file.open ( IO_WriteOnly );
@@ -1234,7 +1234,7 @@ public:
 #endif
 					}
 					else {
-						icon.setSound ( fi.absFilePath() + "/" + *sound[*it] );
+						icon.setSound ( fi.absFilePath() + '/' + *sound[*it] );
 						break;
 					}
 				}

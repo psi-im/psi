@@ -159,7 +159,7 @@ private:
 			QFileInfo info(d, *it);
 			if(info.isDir()) {
 				if(!folderRemove(QDir(info.filePath())))
-					return FALSE;
+					return false;
 			}
 			else {
 				//printf("deleting [%s]\n", info.filePath().latin1());
@@ -168,11 +168,11 @@ private:
 		}
 		QString name = d.dirName();
 		if(!d.cdUp())
-			return FALSE;
+			return false;
 		//printf("removing folder [%s]\n", d.filePath(name).latin1());
 		d.rmdir(name);
 
-		return TRUE;
+		return true;
 	}
 };
 

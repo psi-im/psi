@@ -383,7 +383,7 @@ join <channel>{,<channel>} [pass{,<pass>}
 				preset = command;
 				newstate = oldstate;
 				return true;
-			} else if (cmd != "") {
+			} else if (!cmd.isEmpty()) {
 				return false;
 			}
 		} else {
@@ -1178,7 +1178,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 		return;
 	}
 
-	if ((nick == "") && (s.getMUCStatuses().contains(100))) {
+	if ((nick.isEmpty()) && (s.getMUCStatuses().contains(100))) {
 		d->nonAnonymous = true;
 	}
 

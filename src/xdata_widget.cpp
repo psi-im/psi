@@ -70,7 +70,7 @@ public:
 			req = "*";
 		if ( !_field.desc().isEmpty() ) {
 			if ( !req.isEmpty() )
-				req += " ";
+				req += ' ';
 			req += "(?)";
 		}
 		return req;
@@ -386,7 +386,7 @@ public:
 		QStringList::Iterator it = val.begin();
 		for ( ; it != val.end(); ++it) {
 			if ( !text.isEmpty() )
-				text += "\n";
+				text += '\n';
 			text += *it;
 		}
 		edit->setText(text);

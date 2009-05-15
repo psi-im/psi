@@ -209,9 +209,9 @@ bool fileCopy(const QString &src, const QString &dest)
 	QFile out(dest);
 
 	if(!in.open(QIODevice::ReadOnly))
-		return FALSE;
+		return false;
 	if(!out.open(QIODevice::WriteOnly))
-		return FALSE;
+		return false;
 
 	char *dat = new char[16384];
 	int n = 0;
@@ -219,7 +219,7 @@ bool fileCopy(const QString &src, const QString &dest)
 		n = in.readBlock(dat, 16384);
 		if(n == -1) {
 			delete dat;
-			return FALSE;
+			return false;
 		}
 		out.writeBlock(dat, n);
 	}
@@ -228,7 +228,7 @@ bool fileCopy(const QString &src, const QString &dest)
 	out.close();
 	in.close();
 
-	return TRUE;
+	return true;
 }
 
 
@@ -254,7 +254,7 @@ void soundPlay(const QString &s)
 	}
 	
 	if (QDir::isRelativePath(str)) {
-		str = ApplicationInfo::resourcesDir() + "/" + str;
+		str = ApplicationInfo::resourcesDir() + '/' + str;
 	}
 
 	if(!QFile::exists(str))

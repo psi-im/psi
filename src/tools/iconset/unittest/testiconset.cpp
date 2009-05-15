@@ -145,7 +145,7 @@ private slots:
 		QListIterator<PsiIcon*> it = is->iterator();
 		while (it.hasNext()) {
 			PsiIcon *icon = new PsiIcon(*it.next());
-			icon->setName(icon->name() + "2");
+			icon->setName(icon->name() + '2');
 			combined->setIcon(icon->name(), *icon);
 			delete icon;
 		}

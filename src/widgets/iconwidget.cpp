@@ -597,7 +597,7 @@ public:
 public slots:
 	void iconUpdated()
 	{
-		button->setUpdatesEnabled(FALSE);
+		button->setUpdatesEnabled(false);
 #ifndef WIDGET_PLUGIN
 		button->setIcon(icon ? icon->pixmap() : QPixmap());
 #else
@@ -608,7 +608,7 @@ public slots:
 		}
 		button->setIcon(pix);
 #endif
-		button->setUpdatesEnabled(TRUE);
+		button->setUpdatesEnabled(true);
 		button->update();
 	}
 };
@@ -763,7 +763,7 @@ public:
 private slots:
 	void iconUpdated()
 	{
-		button->setUpdatesEnabled(FALSE);
+		button->setUpdatesEnabled(false);
 #ifndef WIDGET_PLUGIN
 		QPixmap pix = icon ? icon->pixmap() : QPixmap();
 		if (pix.isNull())
@@ -774,7 +774,7 @@ private slots:
 #else
 		button->setIcon(QPixmap());
 #endif
-		button->setUpdatesEnabled(TRUE);
+		button->setUpdatesEnabled(true);
 		button->update();
 	}
 };

@@ -163,24 +163,24 @@ QString resolveEntities(const QString &in)
 static bool linkify_pmatch(const QString &str1, int at, const QString &str2)
 {
 	if(str2.length() > (str1.length()-at))
-		return FALSE;
+		return false;
 
 	for(int n = 0; n < (int)str2.length(); ++n) {
 		if(str1.at(n+at).toLower() != str2.at(n).toLower())
-			return FALSE;
+			return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool linkify_isOneOf(const QChar &c, const QString &charlist)
 {
 	for(int i = 0; i < (int)charlist.length(); ++i) {
 		if(c == charlist.at(i))
-			return TRUE;
+			return true;
 	}
 
-	return FALSE;
+	return false;
 }
 
 // encodes a few dangerous html characters
@@ -206,9 +206,9 @@ static QString linkify_htmlsafe(const QString &in)
 static bool linkify_okUrl(const QString &url)
 {
 	if(url.at(url.length()-1) == '.')
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
 static bool linkify_okEmail(const QString &addy)
@@ -217,16 +217,16 @@ static bool linkify_okEmail(const QString &addy)
 	// at least one char for each of the three sections
 	int n = addy.indexOf('@');
 	if(n == -1 || n == 0)
-		return FALSE;
+		return false;
 	int d = addy.indexOf('.', n+1);
 	if(d == -1 || d == 0)
-		return FALSE;
+		return false;
 	if((addy.length()-1) - d <= 0)
-		return FALSE;
+		return false;
 	if(addy.indexOf("..") != -1)
 		return false;
 
-	return TRUE;
+	return true;
 }
 
 bool URLWatcherPlugin::processEvent(int account, const QDomElement& e)
@@ -249,45 +249,45 @@ bool URLWatcherPlugin::processMessage(int account, const QString& fromJid, const
 	QString linked, link, href;
 
 	for(int n = 0; n < (int)out.length(); ++n) {
-		isUrl = FALSE;
-		isEmail = FALSE;
+		isUrl = false;
+		isEmail = false;
 		x1 = n;
 
 		if(linkify_pmatch(out, n, "http://")) {
 			n += 7;
-			isUrl = TRUE;
+			isUrl = true;
 			href = "";
 		}
 		else if(linkify_pmatch(out, n, "https://")) {
 			n += 8;
-			isUrl = TRUE;
+			isUrl = true;
 			href = "";
 		}
 		else if(linkify_pmatch(out, n, "ftp://")) {
 			n += 6;
-			isUrl = TRUE;
+			isUrl = true;
 			href = "";
 		}
 		else if(linkify_pmatch(out, n, "news://")) {
 			n += 7;
-			isUrl = TRUE;
+			isUrl = true;
 			href = "";
 		}
 		else if (linkify_pmatch(out, n, "ed2k://")) {
 			n += 7;
-			isUrl = TRUE;
+			isUrl = true;
 			href = "";
 		}
 		else if(linkify_pmatch(out, n, "www.")) {
-			isUrl = TRUE;
+			isUrl = true;
 			href = "http://";
 		}
 		else if(linkify_pmatch(out, n, "ftp.")) {
-			isUrl = TRUE;
+			isUrl = true;
 			href = "ftp://";
 		}
 		else if(linkify_pmatch(out, n, "@")) {
-			isEmail = TRUE;
+			isEmail = true;
 			href = "mailto:";
 		}
 

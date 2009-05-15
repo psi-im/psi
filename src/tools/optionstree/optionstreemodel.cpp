@@ -85,7 +85,7 @@ QString OptionsTreeModel::getParentName(const QString &option) const
  */
 QModelIndex OptionsTreeModel::index(const QString &option, Section sec) const
 {
-	if (option == "") {
+	if (option.isEmpty()) {
 		return QModelIndex();
 	}
 	

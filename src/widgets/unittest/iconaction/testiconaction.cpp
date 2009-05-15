@@ -74,3 +74,4 @@ private slots:
 
 QTEST_MAIN(TestIconAction)
 #include "testiconaction.moc"
+

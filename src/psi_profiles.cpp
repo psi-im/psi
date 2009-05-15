@@ -108,32 +108,32 @@ UserAccount::UserAccount()
 void UserAccount::reset()
 {
 	name = "Default";
-	opt_enabled = TRUE;
-	opt_auto = FALSE;
-	tog_offline = TRUE;
-	tog_away = TRUE;
-	tog_hidden = FALSE;
-	tog_agents = TRUE;
-	tog_self = FALSE;
-	customAuth = FALSE;
-	req_mutual_auth = FALSE;
-	legacy_ssl_probe = TRUE;
+	opt_enabled = true;
+	opt_auto = false;
+	tog_offline = true;
+	tog_away = true;
+	tog_hidden = false;
+	tog_agents = true;
+	tog_self = false;
+	customAuth = false;
+	req_mutual_auth = false;
+	legacy_ssl_probe = true;
 	security_level = QCA::SL_None;
 	ssl = SSL_Auto;
 	jid = "";
 	pass = "";
-	opt_pass = FALSE;
+	opt_pass = false;
 	port = 5222;
-	opt_host = FALSE;
+	opt_host = false;
 	host = "";
-	opt_automatic_resource = TRUE;
+	opt_automatic_resource = true;
 	resource = "Psi";
 	priority = 5;
-	opt_keepAlive = TRUE;
+	opt_keepAlive = true;
 	allow_plain = XMPP::ClientStream::AllowPlainOverTLS;
-	opt_compress = FALSE;
-	opt_log = TRUE;
-	opt_reconn = FALSE;
+	opt_compress = false;
+	opt_log = true;
+	opt_reconn = false;
 	opt_connectAfterSleep = false;
 	opt_ignoreSSLWarnings = false;
 
@@ -196,7 +196,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	// read password (we must do this after reading the jid, to decode properly)
 	QString tmp = o->getOption(base + ".password").toString();
 	if(!tmp.isEmpty()) {
-		opt_pass = TRUE;
+		opt_pass = true;
 		pass = decodePassword(tmp, jid);
 	}
 	
@@ -490,7 +490,7 @@ void UserAccount::fromXml(const QDomElement &a)
 	// read password (we must do this after reading the jid, to decode properly)
 	readEntry(a, "password", &pass);
 	if(!pass.isEmpty()) {
-		opt_pass = TRUE;
+		opt_pass = true;
 		pass = decodePassword(pass, jid);
 	}
 
@@ -623,10 +623,10 @@ bool OptionsMigration::fromFile(const QString &fname)
 
 	QDomElement base = doc.documentElement();
 	if(base.tagName() != "psiconf")
-		return FALSE;
+		return false;
 	confver = base.attribute("version");
 	if(confver != "1.0")
-		return FALSE;
+		return false;
 
 	readEntry(base, "progver", &progver);
 
@@ -1248,7 +1248,7 @@ bool OptionsMigration::fromFile(const QString &fname)
 		}
 	}
 
-	return TRUE;
+	return true;
 }
 
 void OptionsMigration::lateMigration()
@@ -1342,36 +1342,36 @@ bool profileExists(const QString &_name)
 	QStringList list = getProfilesList();
 	for(QStringList::ConstIterator it = list.begin(); it != list.end(); ++it) {
 		if((*it).lower() == name)
-			return TRUE;
+			return true;
 	}
-	return FALSE;
+	return false;
 }
 
 bool profileNew(const QString &name)
 {
 	if(name.isEmpty())
-		return FALSE;
+		return false;
 
 	// verify the string is sane
 	for(int n = 0; n < (int)name.length(); ++n) {
 		if(!name.at(n).isLetterOrNumber())
-			return FALSE;
+			return false;
 	}
 
 	// make it
 	QDir d(ApplicationInfo::profilesDir());
 	if(!d.exists())
-		return FALSE;
+		return false;
 	QDir p(ApplicationInfo::profilesDir() + "/" + name);
 	if(!p.exists()) {
 	        if (!d.mkdir(name))
-			return FALSE;
+			return false;
 	}
 
 	p.mkdir("history");
 	p.mkdir("vcard");
 
-	return TRUE;
+	return true;
 }
 
 bool profileRename(const QString &oldname, const QString &name)
@@ -1379,17 +1379,17 @@ bool profileRename(const QString &oldname, const QString &name)
 	// verify the string is sane
 	for(int n = 0; n < (int)name.length(); ++n) {
 		if(!name.at(n).isLetterOrNumber())
-			return FALSE;
+			return false;
 	}
 
 	// locate the folder
 	QDir d(ApplicationInfo::profilesDir());
 	if(!d.exists())
-		return FALSE;
+		return false;
 	if(!d.rename(oldname, name))
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
 static bool folderRemove(const QDir &_d)
@@ -1403,7 +1403,7 @@ static bool folderRemove(const QDir &_d)
 		QFileInfo info(d, *it);
 		if(info.isDir()) {
 			if(!folderRemove(QDir(info.filePath())))
-				return FALSE;
+				return false;
 		}
 		else {
 			//printf("deleting [%s]\n", info.filePath().latin1());
@@ -1412,18 +1412,18 @@ static bool folderRemove(const QDir &_d)
 	}
 	QString name = d.dirName();
 	if(!d.cdUp())
-		return FALSE;
+		return false;
 	//printf("removing folder [%s]\n", d.filePath(name).latin1());
 	d.rmdir(name);
 
-	return TRUE;
+	return true;
 }
 
 bool profileDelete(const QString &path)
 {
 	QDir d(path);
 	if(!d.exists())
-		return TRUE;
+		return true;
 
 	return folderRemove(QDir(path));
 }

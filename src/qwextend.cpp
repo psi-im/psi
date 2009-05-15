@@ -32,7 +32,7 @@ void reparent_good(QWidget *that, Qt::WFlags f, bool showIt)
 
     // dnd unregister (we will register again below)
     bool accept_drops = that->acceptDrops();
-    that->setAcceptDrops( FALSE );
+    that->setAcceptDrops( false );
 
     // clear mouse tracking, re-enabled below
     bool mouse_tracking = that->hasMouseTracking();
@@ -130,7 +130,7 @@ void reparent_good(QWidget *that, Qt::WFlags f, bool showIt)
 	oldparent->checkChildrenDnd();
 
     if ( accept_drops )
-	that->setAcceptDrops( TRUE );
+	that->setAcceptDrops( true );
     else {
 	that->checkChildrenDnd();
 	that->topData()->dnd = 0;

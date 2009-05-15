@@ -144,7 +144,7 @@ private:
 
 			QString n = name;
 			if (!children.isEmpty())
-				n += "." + children.join(".");
+				n += '.' + children.join('.');
 			n += ".value";
 			result[n] = QVariant(i);
 		}

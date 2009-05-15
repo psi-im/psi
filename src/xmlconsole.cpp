@@ -187,7 +187,7 @@ XmlPrompt::XmlPrompt(QWidget *parent, const char *name)
 	QPushButton *pb;
 
 	pb = new QPushButton(tr("&Transmit"), this);
-	pb->setDefault(TRUE);
+	pb->setDefault(true);
 	connect(pb, SIGNAL(clicked()), SLOT(doTransmit()));
 	hb1->addWidget(pb);
 	hb1->addStretch(1);

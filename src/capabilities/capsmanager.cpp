@@ -121,7 +121,7 @@ void CapsManager::updateCaps(const Jid& jid, const QString& node, const QString&
 				foreach(CapsSpec s, caps) {
 					if (!registry_->isRegistered(s) && capsJids_[s].count() == 1) {
 						//qDebug() << QString("caps.cpp: Sending disco request to %1, node=%2").arg(QString(jid.full()).replace('%',"%%")).arg(node + "#" + s.extensions());
-						discoInfoQuerier_->getDiscoInfo(jid,node + "#" + s.extensions());
+						discoInfoQuerier_->getDiscoInfo(jid,node + '#' + s.extensions());
 					}
 				}
 			}

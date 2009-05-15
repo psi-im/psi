@@ -570,7 +570,7 @@ void MainWin::setWindowOpts(bool _onTop, bool _asTool)
 	}
 
 	QPoint p = pos();
-	reparent(parentWidget(), flags, p, FALSE);
+	reparent(parentWidget(), flags, p, false);
 	move(p);
 	show();
 }
@@ -1007,7 +1007,7 @@ void MainWin::decorateButton(int status)
 
 bool MainWin::askQuit()
 {
-	return TRUE;
+	return true;
 }
 
 void MainWin::try2tryCloseProgram()

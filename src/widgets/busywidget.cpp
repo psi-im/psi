@@ -191,7 +191,7 @@ public slots:
 		if ( stopInProgress ) {
 			stopInProgress = false;
 
-			isActive = FALSE;
+			isActive = false;
 			if( !ocountdown )
 				ocountdown = SPINOFFSET * 4 + 1;
 		}
@@ -206,7 +206,7 @@ BusyWidget::BusyWidget(QWidget *parent)
 {
 	d = new Private(this);
 
-	d->isActive = FALSE;
+	d->isActive = false;
 	d->frame = 0;
 	d->at = 0;
 
@@ -258,7 +258,7 @@ void BusyWidget::start()
 	if(d->isActive)
 		return;
 
-	d->isActive = TRUE;
+	d->isActive = true;
 
 	if(!d->pcountdown)
 		d->pcountdown = SPINOFFSET * 4 + 1;

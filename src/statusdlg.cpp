@@ -209,7 +209,7 @@ void StatusSetDlg::doButton()
 		QString text;
 		while(1) {
 			// Get preset
-			bool ok = FALSE;
+			bool ok = false;
 			text = QInputDialog::getText(
 				CAP(tr("New Status Preset")),
 					tr("Please enter a name for the new status preset:"),

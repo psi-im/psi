@@ -157,11 +157,11 @@ void OptionsTabStatus::restoreOptions()
 	d->sb_asOffline->setMaxValue(INT_MAX);
 	d->sb_asOffline->setValue( PsiOptions::instance()->getOption("options.status.auto-away.offline-after").toInt() );
 	/*if (PsiOptions::instance()->getOption("options.status.auto-away.away-after").toInt() <= 0 )
-		PsiOptions::instance()->getOption("options.status.auto-away.use-away").toBool() = FALSE;
+		PsiOptions::instance()->getOption("options.status.auto-away.use-away").toBool() = false;
 	if (PsiOptions::instance()->getOption("options.status.auto-away.not-availible-after").toInt() <= 0 )
-		PsiOptions::instance()->getOption("options.status.auto-away.use-not-availible").toBool() = FALSE;
+		PsiOptions::instance()->getOption("options.status.auto-away.use-not-availible").toBool() = false;
 	if(d->opt.asOffline <= 0)
-		PsiOptions::instance()->getOption("options.status.auto-away.use-offline").toBool() = FALSE;*/
+		PsiOptions::instance()->getOption("options.status.auto-away.use-offline").toBool() = false;*/
 	d->ck_asAway->setChecked( PsiOptions::instance()->getOption("options.status.auto-away.use-away").toBool() );
 	d->ck_asXa->setChecked( PsiOptions::instance()->getOption("options.status.auto-away.use-not-availible").toBool() );
 	d->ck_asOffline->setChecked( PsiOptions::instance()->getOption("options.status.auto-away.use-offline").toBool() );
@@ -208,7 +208,7 @@ void OptionsTabStatus::selectStatusPreset(int x)
 {
 	OptStatusUI *d = (OptStatusUI *)w;
 
-	//noDirty = TRUE;
+	//noDirty = true;
 	disconnect(d->te_sp, SIGNAL(textChanged()), 0, 0);
 	disconnect(d->le_sp_priority, SIGNAL(textChanged(const QString&)), 0, 0);
 	if ( x == -1 ) {
@@ -216,7 +216,7 @@ void OptionsTabStatus::selectStatusPreset(int x)
 		d->te_sp->setText("");
 		d->le_sp_priority->clear();
 
-		//noDirty = FALSE;
+		//noDirty = false;
 		connect(d->te_sp, SIGNAL(textChanged()), SLOT(changeStatusPreset()));
 		connect(d->le_sp_priority, SIGNAL(textChanged(const QString&)), SLOT(changeStatusPreset()));
 		return;
@@ -238,7 +238,7 @@ void OptionsTabStatus::selectStatusPreset(int x)
 		d->le_sp_priority->clear();
 	d->cb_sp_status->setStatus(preset.status());
 	
-	//noDirty = FALSE;
+	//noDirty = false;
 	connect(d->te_sp, SIGNAL(textChanged()), SLOT(changeStatusPreset()));
 	connect(d->le_sp_priority, SIGNAL(textChanged(const QString&)), SLOT(changeStatusPreset()));
 	
@@ -252,7 +252,7 @@ void OptionsTabStatus::newStatusPreset()
 	QString text;
 
 	while(1) {
-		bool ok = FALSE;
+		bool ok = false;
 		text = QInputDialog::getText(
 			CAP(tr("New Status Preset")),
 			tr("Please enter a name for the new status preset:"),

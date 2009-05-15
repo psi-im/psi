@@ -68,10 +68,10 @@ bool Figure::hasMyFigure(GameBoard::GameType gt, GameBoard::FigureType *map,
 			case GameBoard::WHITE_KING:
 			case GameBoard::WHITE_QUEEN:
 			case GameBoard::WHITE_KNIGHT:
-				res = TRUE;
+				res = true;
 				break;
 			default:
-				res = FALSE;
+				res = false;
 		}
 	else if (gt == GameBoard::BLACK)
 		switch (map[n]) {
@@ -82,13 +82,13 @@ bool Figure::hasMyFigure(GameBoard::GameType gt, GameBoard::FigureType *map,
 			case GameBoard::BLACK_KING:
 			case GameBoard::BLACK_QUEEN:
 			case GameBoard::BLACK_KNIGHT:
-				res = TRUE;
+				res = true;
 				break;
 			default:
-				res = FALSE;
+				res = false;
 		}
 	else
-		res = FALSE;
+		res = false;
 
 	return (res);
 }
@@ -214,7 +214,7 @@ Figure::validMove(GameBoard::GameType gt, GameBoard::FigureType *map,
 		map[f] = GameBoard::NONE;
 		if (mirror) {
 			vl.resize(0);
-			t = checkKing(gt, map, mirror, vl, FALSE);
+			t = checkKing(gt, map, mirror, vl, false);
 			switch (t) {
 				case 1:
 					res |= 0x10;
@@ -296,7 +296,7 @@ Figure::checkKing(GameBoard::GameType gt, GameBoard::FigureType *map,
 				if (p != pk)
 					map1[p] = GameBoard::DUMMY;
 			}
-			if (checkKing(gt, map1, mirror, vl, TRUE) != 0) {
+			if (checkKing(gt, map1, mirror, vl, true) != 0) {
 				vl.resize(0);
 				moveListKing(vl, mytype, map, xk, yk, !mirror);
 				memmove(map1, map, sizeof(map1));
@@ -306,7 +306,7 @@ Figure::checkKing(GameBoard::GameType gt, GameBoard::FigureType *map,
 					map1[p] = myking;
 					map1[pk] = GameBoard::NONE;
 					if (checkKing(gt, map1, mirror,
-						tmp, TRUE) == 1)
+						tmp, true) == 1)
 						++y;
 					map1[pk] = map[pk];
 					map1[p] = map[p];
@@ -587,7 +587,7 @@ Figure::hasKingsMeeting(GameBoard::GameType gt, GameBoard::FigureType *map,
 
 	x1 = x - 1; x2 = x + 1;
 	y1 = y - 1; y2 = y + 1;
-	res = FALSE;
+	res = false;
 
 	if (validPoint(gt, map, x1, y2, mirror))
 		res = (hasEnemyFigure(gt, map, x1, y2, mirror) == 2);
@@ -614,13 +614,13 @@ bool
 Figure::hasPoint(const Q3PointArray &vl, int x, int y)
 {
 	int	i, xp, yp, cnt;
-	bool	res = FALSE;
+	bool	res = false;
 
 	cnt = vl.count();
 	for (i = 0; i < cnt; ++i) {
 		vl.point(i, &xp, &yp);
 		if ((xp == x) && (yp == y)) {
-			res = TRUE;
+			res = true;
 			break;
 		}
 	}
@@ -668,7 +668,7 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 
 	sock = new Q3Socket(this);
 	drw = new Drawer(map, &gt, this);
-	drw->setEnabled(FALSE);
+	drw->setEnabled(false);
 	drw->setFocusPolicy(Qt::NoFocus);
 	box = new Q3GroupBox(tr("Game chat"), this);
 	lst = new Q3ListBox(box);
@@ -676,7 +676,7 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 	lst->setVScrollBarMode(Q3ScrollView::AlwaysOff);
 	lst->setSelectionMode(Q3ListBox::NoSelection);
 	edt = new QLineEdit(box);
-	edt->setEnabled(FALSE);
+	edt->setEnabled(false);
 	setFocusProxy(edt);
 	hist = new Q3GroupBox(tr("History"), this);
 	hist->setAlignment(Qt::AlignHCenter);
@@ -744,7 +744,7 @@ GameBoard::GameBoard(int sfd, QWidget *parent, const char *name)
 	connect(protocol,SIGNAL(sendData(const QString&)), this, SIGNAL(sendData(const QString&)));
 	sock = new Q3Socket(this);
 	drw = new Drawer(map, &gt, this);
-	drw->setEnabled(FALSE);
+	drw->setEnabled(false);
 	drw->setFocusPolicy(Qt::NoFocus);
 	box = new Q3GroupBox(tr("Game chat"), this);
 	lst = new Q3ListBox(box);
@@ -950,7 +950,7 @@ GameBoard::sockConnected()
 	my_stat = tr("Connected to the host");
 	emit showStatus(my_stat);
 	protocol->setGameType(sock, gt);
-	edt->setEnabled(TRUE);
+	edt->setEnabled(true);
 	qDebug("sockConnected");
 }
 
@@ -995,7 +995,7 @@ GameBoard::parseString(const QString &str)
 	if (s == "game") {
 		s = lst[1].lower();
 		if (s == "mate") {
-			updateHistory(GAMEOVER_TXT, TRUE);
+			updateHistory(GAMEOVER_TXT, true);
 			gt = NOGAME;
 			gameover(0);
 			close();
@@ -1010,7 +1010,7 @@ GameBoard::parseString(const QString &str)
 			} else if (s == "black") {
 				gt = WHITE;
 				s = tr("Black");
-				drw->setEnabled(TRUE);
+				drw->setEnabled(true);
 				setCursor(QCursor(Qt::ArrowCursor));
 			}
 			s += ' ' + tr("game from") + ' ';
@@ -1020,20 +1020,20 @@ GameBoard::parseString(const QString &str)
 				hst = sock->peerAddress().toString() + ':' +
 					QString::number(sock->peerPort());
 			initMap();
-			drw->repaint(TRUE);
+			drw->repaint(true);
 			protocol->acceptGame(sock);
 			setCaption(s + hst);
 			my_stat += hst;
 			emit showStatus(my_stat);
 		} else if (gt == WHITE) {
-			drw->setEnabled(TRUE);
+			drw->setEnabled(true);
 			setCursor(QCursor(Qt::ArrowCursor));
 		}
 	} else if (s == "move") {
 		if (!drw->isEnabled()) {
-			drw->setEnabled(TRUE);
+			drw->setEnabled(true);
 			s = lst[1].lower();
-			updateHistory(s, TRUE);
+			updateHistory(s, true);
 			drw->makeMove(s);
 			setCursor(QCursor(Qt::ArrowCursor));
 			my_stat = tr("Your move...");
@@ -1049,7 +1049,7 @@ GameBoard::parseString(const QString &str)
 		s = lst[1].lower();
 		id = lst[2].toInt();
 		drw->newFigure(s, id);
-		updateHistory(id, TRUE);
+		updateHistory(id, true);
 	}
 }
 
@@ -1059,9 +1059,9 @@ void GameBoard::sendMove(const QString &str)
 
 	protocol->sendMove(sock, str);
 	emit sendData(str);
-	drw->setEnabled(FALSE);
+	drw->setEnabled(false);
 	setCursor(QCursor(Qt::WaitCursor));
-	updateHistory(str, FALSE);
+	updateHistory(str, false);
 	sock_tout = SOCK_WAIT;
 	my_stat = tr("Waiting a move...");
 	emit showStatus(my_stat);
@@ -1211,7 +1211,7 @@ GameBoard::sendFigure(const QString &coo, GameBoard::FigureType ft)
 	}
 	if (id != -1) {
 		protocol->sendFigure(sock, coo, id);
-		updateHistory(id, FALSE);
+		updateHistory(id, false);
 	}
 }
 
@@ -1256,7 +1256,7 @@ GameBoard::saveImage()
 void
 GameBoard::gameover(int type)
 {
-	bool	save = FALSE;
+	bool	save = false;
 	QString	s('\n' + tr("Do you want to save the image?")),
 		yes(tr("Yes, save")),
 		no(tr("No, don't save")),
@@ -1266,7 +1266,7 @@ GameBoard::gameover(int type)
 		save = (QMessageBox::question(this, go,
 			tr("You scored the game") + s, yes, no) == 0);
 	} else if (type == 2) {
-		updateHistory(GAMEOVER_TXT, FALSE);
+		updateHistory(GAMEOVER_TXT, false);
 		protocol->sendGameover(sock, "MATE");
 		save = (QMessageBox::question(this, go,
 			tr("You have a mate.\nYou lost the game.") + s,
@@ -1291,7 +1291,7 @@ Drawer::Drawer(GameBoard::FigureType *ft, GameBoard::GameType *g,
 	int		i;
 
 	map = ft; gt = g;
-	kk = rcm = lcm = km = FALSE;
+	kk = rcm = lcm = km = false;
 	cs = cell_size * 8;
 	top_margin = 5;
 	for (left_margin = 0, i = 0; i < 8; i++)
@@ -1461,9 +1461,9 @@ Drawer::mousePressEvent(QMouseEvent *e)
 		if (hasTakenFigure()) {
 			if ((tfx == x) && (tfy == y)) {
 				tfx = tfy = -1;
-				repaint(FALSE);
+				repaint(false);
 			} else
-				makeMove(*gt, tfx, tfy, x, y, FALSE, FALSE);
+				makeMove(*gt, tfx, tfy, x, y, false, false);
 		} else if (canTake(x, y)) {
 			takeFigure(x, y);
 			emit touchFigure(x, y);
@@ -1476,7 +1476,7 @@ bool
 Drawer::canTake(int x, int y)
 {
 
-	return (Figure::hasMyFigure(*gt, map, x, y, FALSE));
+	return (Figure::hasMyFigure(*gt, map, x, y, false));
 }
 
 
@@ -1523,7 +1523,7 @@ Drawer::takeFigure(int x, int y)
 		tfx = x;
 		tfy = y;
 	}
-	repaint(FALSE);
+	repaint(false);
 }
 
 
@@ -1544,7 +1544,7 @@ Drawer::newFigure(const QString &coo, int id)
 	ft = GameBoard::NONE; n = -1;
 	Figure::str2map(coo, &x, &y);
 	if (*gt == GameBoard::WHITE) {
-		n = Figure::map2map(GameBoard::BLACK, x, y, TRUE);
+		n = Figure::map2map(GameBoard::BLACK, x, y, true);
 		switch (id) {
 			case 3:
 				ft = GameBoard::BLACK_BISHOP;
@@ -1562,7 +1562,7 @@ Drawer::newFigure(const QString &coo, int id)
 				ft = GameBoard::NONE;
 		}
 	} else if (*gt == GameBoard::BLACK) {
-		n = Figure::map2map(GameBoard::WHITE, x, y, TRUE);
+		n = Figure::map2map(GameBoard::WHITE, x, y, true);
 		switch (id) {
 			case 3:
 				ft = GameBoard::WHITE_BISHOP;
@@ -1583,7 +1583,7 @@ Drawer::newFigure(const QString &coo, int id)
 
 	if (ft != GameBoard::NONE) {
 		map[n] = ft;
-		repaint(FALSE);
+		repaint(false);
 	}
 }
 
@@ -1602,18 +1602,18 @@ Drawer::makeMove(const QString &txt)
 		et = GameBoard::NOGAME;
 	if (txt == LONG_XCHG) {
 		if (et == GameBoard::BLACK)
-			makeMove(et, 1, 8, 4, 8, TRUE, TRUE);
+			makeMove(et, 1, 8, 4, 8, true, true);
 		else if (et == GameBoard::WHITE)
-			makeMove(et, 1, 1, 4, 1, TRUE, TRUE);
+			makeMove(et, 1, 1, 4, 1, true, true);
 	} else if (txt == SHORT_XCHG) {
 		if (et == GameBoard::BLACK)
-			makeMove(et, 8, 8, 6, 8, TRUE, TRUE);
+			makeMove(et, 8, 8, 6, 8, true, true);
 		else if (et == GameBoard::WHITE)
-			makeMove(et, 8, 1, 6, 1, TRUE, TRUE);
+			makeMove(et, 8, 1, 6, 1, true, true);
 	} else {
 		Figure::str2map(txt.left(2), &fx, &fy);
 		Figure::str2map(txt.right(2), &tx, &ty);
-		makeMove(et, fx, fy, tx, ty, TRUE, FALSE);
+		makeMove(et, fx, fy, tx, ty, true, false);
 	}
 }
 
@@ -1637,12 +1637,12 @@ Drawer::makeMove(GameBoard::GameType gt, int fx, int fy, int tx, int ty,
 	res = Figure::validMove(gt, map, fx, fy, tx, ty, mirror);
 	if (res) {
 		if (!mirror) {
-			x = FALSE;
+			x = false;
 			if (gt == GameBoard::WHITE)
 				et = GameBoard::BLACK;
 			else if (gt == GameBoard::BLACK)
 				et = GameBoard::WHITE;
-			if (Figure::checkKing(et, map, mirror, vl, TRUE) !=
+			if (Figure::checkKing(et, map, mirror, vl, true) !=
 				0) {
 				map[nf] = map[nt];
 				map[nt] = old;
@@ -1653,11 +1653,11 @@ Drawer::makeMove(GameBoard::GameType gt, int fx, int fy, int tx, int ty,
 					"is in check") + '.');
 				goto HAXEP;
 			} else
-				kk = FALSE;
+				kk = false;
 			if (!km && (!lcm || !rcm) && !kk)
 				x = xchg(fo, map[nt], fx, fy, tx, ty);
 			else
-				x = TRUE;
+				x = true;
 			if (x)
 				emit moved(Figure::map2str(fx, fy) +
 					Figure::map2str(tx, ty));
@@ -1672,23 +1672,23 @@ Drawer::makeMove(GameBoard::GameType gt, int fx, int fy, int tx, int ty,
 			tfx = tfy = -1;
 		} else if (xc) {
 			if (gt == GameBoard::BLACK)
-				checkBlackCastle(fx, fy, tx, ty, TRUE);
+				checkBlackCastle(fx, fy, tx, ty, true);
 			else if (gt == GameBoard::WHITE)
-				checkWhiteCastle(fx, fy, tx, ty, TRUE);
+				checkWhiteCastle(fx, fy, tx, ty, true);
 		}
 		if (mirror && (res & 0x10)) {
-			kk = TRUE;
+			kk = true;
 		} else if (res & 0x20) {
-			repaint(FALSE);
+			repaint(false);
 			emit gameover(2);
 			return;
 		} else if (res & 0x40) {
-			repaint(FALSE);
+			repaint(false);
 			emit gameover(3);
 			return;
 		}
 		HAXEP:
-		repaint(FALSE);
+		repaint(false);
 	}
 }
 
@@ -1697,16 +1697,16 @@ bool
 Drawer::xchg(GameBoard::FigureType o, GameBoard::FigureType n,
 	int fx, int fy, int tx, int ty)
 {
-	bool	ret = TRUE;
+	bool	ret = true;
 
 	if (*gt == GameBoard::WHITE) {
 		km = ((o == n) && (o == GameBoard::WHITE_KING));
 		if (!km && ((o == n) && (o == GameBoard::WHITE_CASTLE)))
-			ret = checkWhiteCastle(fx, fy, tx, ty, FALSE);
+			ret = checkWhiteCastle(fx, fy, tx, ty, false);
 	} else if (*gt == GameBoard::BLACK) {
 		km = ((o == n) && (o == GameBoard::BLACK_KING));
 		if (!km && ((o == n) && (o == GameBoard::BLACK_CASTLE)))
-			ret = checkBlackCastle(fx, fy, tx, ty, FALSE);
+			ret = checkBlackCastle(fx, fy, tx, ty, false);
 	}
 
 	return (ret);
@@ -1717,38 +1717,38 @@ bool
 Drawer::checkWhiteCastle(int fx, int fy, int tx, int ty, bool mirror)
 {
 	int	n1, n2;
-	bool	ret = TRUE;
+	bool	ret = true;
 
 	n1 = n2 = -1;
 	if ((fx == 1) && (fy == 1)) {
 		if ((tx == 4) && (ty == 1))
 			if (mirror) {
-				n1 = Figure::map2map(*gt, 5, 1, FALSE);
-				n2 = Figure::map2map(*gt, 3, 1, FALSE);
+				n1 = Figure::map2map(*gt, 5, 1, false);
+				n2 = Figure::map2map(*gt, 3, 1, false);
 			} else if (!lcm) {
 				if (makeXchg()) {
-					n1 = Figure::map2map(*gt, 5, 1, FALSE);
-					n2 = Figure::map2map(*gt, 3, 1, FALSE);
+					n1 = Figure::map2map(*gt, 5, 1, false);
+					n2 = Figure::map2map(*gt, 3, 1, false);
 					emit moved(LONG_XCHG);
-					ret = FALSE;
-					rcm = TRUE;
+					ret = false;
+					rcm = true;
 				}
-				lcm = TRUE;
+				lcm = true;
 			}
 	} else if ((fx == 8) && (fy == 1)) {
 		if ((tx == 6) && (ty == 1))
 			if (mirror) {
-				n1 = Figure::map2map(*gt, 5, 1, FALSE);
-				n2 = Figure::map2map(*gt, 7, 1, FALSE);
+				n1 = Figure::map2map(*gt, 5, 1, false);
+				n2 = Figure::map2map(*gt, 7, 1, false);
 			} else if (!rcm) {
 				if (makeXchg()) {
-					n1 = Figure::map2map(*gt, 5, 1, FALSE);
-					n2 = Figure::map2map(*gt, 7, 1, FALSE);
+					n1 = Figure::map2map(*gt, 5, 1, false);
+					n2 = Figure::map2map(*gt, 7, 1, false);
 					emit moved(SHORT_XCHG);
-					ret = FALSE;
-					lcm = TRUE;
+					ret = false;
+					lcm = true;
 				}
-				rcm = TRUE;
+				rcm = true;
 			}
 	}
 	if (n1 != n2) {
@@ -1764,37 +1764,37 @@ bool
 Drawer::checkBlackCastle(int fx, int fy, int tx, int ty, bool mirror)
 {
 	int	n1, n2;
-	bool	ret = TRUE;
+	bool	ret = true;
 
 	n1 = n2 = -1;
 	if ((fx == 1) && (fy == 8)) {
 		if ((tx == 4) && (ty == 8)) {
 			if (mirror) {
-				n1 = Figure::map2map(*gt, 5, 8, FALSE);
-				n2 = Figure::map2map(*gt, 3, 8, FALSE);
+				n1 = Figure::map2map(*gt, 5, 8, false);
+				n2 = Figure::map2map(*gt, 3, 8, false);
 			} else if (!rcm) {
 				if (makeXchg()) {
-					n1 = Figure::map2map(*gt, 5, 8, FALSE);
-					n2 = Figure::map2map(*gt, 3, 8, FALSE);
+					n1 = Figure::map2map(*gt, 5, 8, false);
+					n2 = Figure::map2map(*gt, 3, 8, false);
 					emit moved(LONG_XCHG);
-					ret = FALSE;
+					ret = false;
 				}
-				rcm = TRUE;
+				rcm = true;
 			}
 		}
 	} else if ((fx == 8) && (fy == 8)) {
 		if ((tx == 6) && (ty == 8))
 			if (mirror) {
-				n1 = Figure::map2map(*gt, 5, 8, FALSE);
-				n2 = Figure::map2map(*gt, 7, 8, FALSE);
+				n1 = Figure::map2map(*gt, 5, 8, false);
+				n2 = Figure::map2map(*gt, 7, 8, false);
 			} else if (!lcm) {
 				if (makeXchg()) {
-					n1 = Figure::map2map(*gt, 5, 8, FALSE);
-					n2 = Figure::map2map(*gt, 7, 8, FALSE);
+					n1 = Figure::map2map(*gt, 5, 8, false);
+					n2 = Figure::map2map(*gt, 7, 8, false);
 					emit moved(SHORT_XCHG);
-					ret = FALSE;
+					ret = false;
 				}
-				lcm = TRUE;
+				lcm = true;
 			}
 	}
 	if (n1 != n2) {

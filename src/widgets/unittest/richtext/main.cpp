@@ -34,3 +34,4 @@ private slots:
 
 QTEST_MAIN(TestRichText)
 #include "main.moc"
+

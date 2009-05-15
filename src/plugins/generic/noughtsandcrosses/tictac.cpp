@@ -71,7 +71,7 @@ TicTacGameBoard::TicTacGameBoard( bool meFirst, int n, QWidget *parent, const ch
     st = Init;                                  // initial state
     nBoard = n;
     n *= n;                                     // make square
-    comp_starts = FALSE;                        // human starts
+    comp_starts = false;                        // human starts
     buttons = new TicTacButtons(n);             // create real buttons
     btArray = new TicTacArray(n);               // create button model
     Q3GridLayout * grid = new Q3GridLayout( this, nBoard, nBoard, 4 );
@@ -80,7 +80,7 @@ TicTacGameBoard::TicTacGameBoard( bool meFirst, int n, QWidget *parent, const ch
     for ( int i=0; i<n; i++ ) {                 // create and connect buttons
         TicTacButton *ttb = new TicTacButton( this );
         ttb->setPalette( p );
-        ttb->setEnabled( FALSE );
+        ttb->setEnabled( false );
         connect( ttb, SIGNAL(clicked()), SLOT(buttonClicked()) );
         grid->addWidget( ttb, i%nBoard, i/nBoard );
         buttons->insert( i, ttb );
@@ -214,7 +214,7 @@ int TicTacGameBoard::checkBoard( TicTacArray *a )
 {
     int  t = 0;
     int  row, col;
-    bool won = FALSE;
+    bool won = false;
     for ( row=0; row<nBoard && !won; row++ ) {  // check horizontal
         t = a->at(row*nBoard);
         if ( t == TicTacButton::Blank )
@@ -223,7 +223,7 @@ int TicTacGameBoard::checkBoard( TicTacArray *a )
         while ( col<nBoard && a->at(row*nBoard+col) == t )
             col++;
         if ( col == nBoard )
-            won = TRUE;
+            won = true;
     }
     for ( col=0; col<nBoard && !won; col++ ) {  // check vertical
         t = a->at(col);
@@ -233,7 +233,7 @@ int TicTacGameBoard::checkBoard( TicTacArray *a )
         while ( row<nBoard && a->at(row*nBoard+col) == t )
             row++;
         if ( row == nBoard )
-            won = TRUE;
+            won = true;
     }
     if ( !won ) {                               // check diagonal top left
         t = a->at(0);                           //   to bottom right
@@ -242,7 +242,7 @@ int TicTacGameBoard::checkBoard( TicTacArray *a )
             while ( i<nBoard && a->at(i*nBoard+i) == t )
                 i++;
             if ( i == nBoard )
-                won = TRUE;
+                won = true;
         }
     }
     if ( !won ) {                               // check diagonal bottom left
@@ -255,7 +255,7 @@ int TicTacGameBoard::checkBoard( TicTacArray *a )
                 i++; j--;
             }
             if ( i == nBoard )
-                won = TRUE;
+                won = true;
         }
     }
     if ( !won )                                 // no winner

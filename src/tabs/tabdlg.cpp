@@ -152,7 +152,7 @@ TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 	QVBoxLayout *vert1 = new QVBoxLayout( this, 1);
 	vert1->addWidget(tabWidget_);
 
-	setAcceptDrops(TRUE);
+	setAcceptDrops(true);
 
 	X11WM_CLASS("tabs");
 	setLooks();
