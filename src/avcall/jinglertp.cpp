@@ -617,9 +617,15 @@ private:
 			m = XMPP::Ice176::Responder;
 
 		if(iceA)
+		{
+			printf("starting ice for audio\n");
 			iceA->start(m);
+		}
 		if(iceV)
+		{
+			printf("starting ice for video\n");
 			iceV->start(m);
+		}
 	}
 
 	void setup_ice(XMPP::Ice176 *ice)
