@@ -371,7 +371,8 @@ public:
 	// called by manager when request is received, including
 	//   session-initiate.
 	// note: manager will never send session-initiate twice.
-	void incomingRequest(const QString &iq_id, const JingleRtpEnvelope &envelope)
+	// return value only matters for session-initiate
+	bool incomingRequest(const QString &iq_id, const JingleRtpEnvelope &envelope)
 	{
 		// TODO: jingle has a lot of fields, and we kind of skip over
 		//   most of them just to grab what we need.  perhaps in the
@@ -426,6 +427,10 @@ public:
 				}
 				iceV_status.remoteCandidates += videoContent->trans.candidates;
 			}
+
+			// must offer at least one audio or video payload
+			if(remoteAudioPayloadTypes.isEmpty() && remoteVideoPayloadTypes.isEmpty())
+				return false;
 		}
 		else if(envelope.action == "session-accept")
 		{
@@ -459,7 +464,7 @@ public:
 			{
 				reject();
 				emit q->rejected();
-				return;
+				return false;
 			}
 
 			if(audioContent)
@@ -546,6 +551,8 @@ public:
 		}
 		else
 			manager->push_task->respondError(peer, iq_id, 400, QString());
+
+		return true;
 	}
 
 private:
@@ -1248,9 +1255,15 @@ void JingleRtpManagerPrivate::push_task_incomingRequest(const XMPP::Jid &from, c
 		sess->d->peer = from;
 		sess->d->sid = envelope.sid;
 		sessions += sess;
-		pending += sess;
 		printf("new initiate, from=[%s] sid=[%s]\n", qPrintable(from.full()), qPrintable(envelope.sid));
-		sess->d->incomingRequest(iq_id, envelope);
+		if(!sess->d->incomingRequest(iq_id, envelope))
+		{
+			delete sess;
+			push_task->respondError(from, iq_id, 400, QString());
+			return;
+		}
+
+		pending += sess;
 		emit q->incomingReady();
 	}
 	else

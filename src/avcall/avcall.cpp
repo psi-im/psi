@@ -242,10 +242,11 @@ public:
 		start_rtp();
 	}
 
-	void initIncoming()
+	bool initIncoming()
 	{
 		setup_sess();
 
+		// JingleRtp guarantees there will be at least one of audio or video
 		bool offeredAudio = false;
 		bool offeredVideo = false;
 		if(!sess->remoteAudioPayloadTypes().isEmpty())
@@ -261,8 +262,12 @@ public:
 			mode = AvCall::Video;
 		else
 		{
-			Q_ASSERT(0);
+			// this could happen if only video is offered but
+			//   we don't allow it
+			return false;
 		}
+
+		return true;
 	}
 
 	void accept()
@@ -705,8 +710,16 @@ void AvCallManagerPrivate::rtp_incomingReady()
 	call->d->incoming = true;
 	call->d->sess = rtpManager->takeIncoming();
 	sessions += call;
+	if(!call->d->initIncoming())
+	{
+		call->d->sess->reject();
+		delete call->d->sess;
+		call->d->sess = 0;
+		delete call;
+		return;
+	}
+
 	pending += call;
-	call->d->initIncoming();
 	emit q->incomingReady();
 }
 
