@@ -649,6 +649,17 @@ private:
 
 		QList<XMPP::Ice176::LocalAddress> localAddrs;
 		XMPP::Ice176::LocalAddress addr;
+
+		// a local address is required to use ice.  however, if
+		//   we don't have a local address, we won't handle it as
+		//   an error here.  instead, we'll start Ice176 anyway,
+		//   which should immediately error back at us.
+		if(manager->selfAddr.isNull())
+		{
+			printf("no self address to use.  this will fail.\n");
+			return;
+		}
+
 		addr.addr = manager->selfAddr;
 		localAddrs += addr;
 		ice->setLocalAddresses(localAddrs);
