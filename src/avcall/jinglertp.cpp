@@ -777,13 +777,17 @@ private:
 
 		QList<JingleRtpContent> contentList;
 
+		// according to xep-166, creator is always whoever added
+		//   the content type, which in our case is always the
+		//   initiator
+
 		if((types & JingleRtp::Audio) && !iceA_status.localCandidates.isEmpty())
 		{
 			JingleRtpContent content;
-			if(!incoming)
+			//if(!incoming)
 				content.creator = "initiator";
-			else
-				content.creator = "responder";
+			//else
+			//	content.creator = "responder";
 			content.name = audioName;
 
 			content.trans.user = iceA->localUfrag();
@@ -797,10 +801,10 @@ private:
 		if((types & JingleRtp::Video) && !iceV_status.localCandidates.isEmpty())
 		{
 			JingleRtpContent content;
-			if(!incoming)
+			//if(!incoming)
 				content.creator = "initiator";
-			else
-				content.creator = "responder";
+			//else
+			//	content.creator = "responder";
 			content.name = videoName;
 
 			content.trans.user = iceV->localUfrag();
