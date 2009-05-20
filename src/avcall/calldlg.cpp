@@ -87,6 +87,9 @@ public:
 		ui.pb_accept->setDefault(true);
 		ui.pb_accept->setFocus();
 
+		// ###cuda
+		ui.busy->hide();
+
 		q->resize(q->minimumSize());
 	}
 
