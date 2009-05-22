@@ -306,7 +306,7 @@ public slots:
 
 	void doNick()
 	{
-		MCmdSimpleState *state = new MCmdSimpleState(MCMDMUCNICK, "new nick=", MCMDSTATE_UNPARSED);
+		MCmdSimpleState *state = new MCmdSimpleState(MCMDMUCNICK, tr("new nick") + '=', MCMDSTATE_UNPARSED);
 		connect(state, SIGNAL(unhandled(QStringList)), SLOT(NickComplete(QStringList)));
 		mCmdManager.open(state, QStringList() << self);
 	}
@@ -326,7 +326,7 @@ public slots:
 
 	void doMiniCmd()
 	{
-		mCmdManager.open(new MCmdSimpleState(MCMDMUC, "Command>"), QStringList() );
+		mCmdManager.open(new MCmdSimpleState(MCMDMUC, tr("Command") + '>'), QStringList() );
 	}
 
 public:
@@ -362,7 +362,7 @@ join <channel>{,<channel>} [pass{,<pass>}
 					newstate = 0;
 				} else {
 					// FIXME DRY with doNick
-					MCmdSimpleState *state = new MCmdSimpleState("nick", "new nick=", MCMDSTATE_UNPARSED);
+					MCmdSimpleState *state = new MCmdSimpleState("nick", tr("new nick") + '=', MCMDSTATE_UNPARSED);
 					connect(state, SIGNAL(unhandled(QStringList)), SLOT(NickComplete(QStringList)));
 					newstate = state;
 					preset = QStringList() << self;
@@ -683,7 +683,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	ui_.tb_emoticons->setMenu(pa->psi()->iconSelectPopup());
 
 	d->act_nick = new QAction(this);
-	d->act_nick->setText("Change Nickname...");
+	d->act_nick->setText(tr("Change Nickname..."));
 	connect(d->act_nick, SIGNAL(activated()), d, SLOT(doNick()));
 
 	d->act_mini_cmd = new QAction(this);
