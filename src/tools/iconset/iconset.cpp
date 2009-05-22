@@ -50,7 +50,7 @@
 #endif
 
 #ifdef ICONSET_ZIP
-#	include "zip.h"
+#	include "../zip/zip.h"
 #endif
 
 #include <QApplication>
