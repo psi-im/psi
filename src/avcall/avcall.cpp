@@ -110,7 +110,7 @@ static void ensureLoaded()
 			pluginFile = findPlugin(".", "gstprovider");
 			resourcePath = QCoreApplication::applicationDirPath() + "/gstreamer-0.10";
 #elif defined(Q_OS_MAC)
-			pluginFile = findPlugin("../plugins", "gstprovider");
+			pluginFile = findPlugin("../Plugins", "gstprovider");
 			resourcePath = QCoreApplication::applicationDirPath() + "/../Frameworks/gstreamer-0.10";
 #else
 			pluginFile = findPlugin(ApplicationInfo::libDir() + "/plugins", "gstprovider");
