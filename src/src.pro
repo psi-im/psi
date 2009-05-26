@@ -79,29 +79,41 @@ LANG_PATH = ../lang
 
 TRANSLATIONS = \
 	$$LANG_PATH/psi_ar.ts \
+	$$LANG_PATH/psi_bg.ts \
+	$$LANG_PATH/psi_br.ts \
 	$$LANG_PATH/psi_ca.ts \
 	$$LANG_PATH/psi_cs.ts \
 	$$LANG_PATH/psi_da.ts \
 	$$LANG_PATH/psi_de.ts \
+	$$LANG_PATH/psi_ee.ts \
 	$$LANG_PATH/psi_el.ts \
 	$$LANG_PATH/psi_eo.ts \
 	$$LANG_PATH/psi_es.ts \
+	$$LANG_PATH/psi_et.ts \
 	$$LANG_PATH/psi_fi.ts \
 	$$LANG_PATH/psi_fr.ts \
+	$$LANG_PATH/psi_hr.ts \
+	$$LANG_PATH/psi_hu.ts \
 	$$LANG_PATH/psi_it.ts \
-	$$LANG_PATH/psi_jp.ts \
+	$$LANG_PATH/psi_ja.ts \
 	$$LANG_PATH/psi_mk.ts \
 	$$LANG_PATH/psi_nl.ts \
 	$$LANG_PATH/psi_pl.ts \
 	$$LANG_PATH/psi_pt.ts \
-	$$LANG_PATH/psi_pt_br.ts \
+	$$LANG_PATH/psi_pt_BR.ts \
 	$$LANG_PATH/psi_ru.ts \
 	$$LANG_PATH/psi_se.ts \
 	$$LANG_PATH/psi_sk.ts \
+	$$LANG_PATH/psi_sl.ts \
 	$$LANG_PATH/psi_sr.ts \
+	$$LANG_PATH/psi_sr@latin.ts \
+	$$LANG_PATH/psi_sv.ts \
+	$$LANG_PATH/psi_sw.ts \
 	$$LANG_PATH/psi_uk.ts \
-	$$LANG_PATH/psi_zh.ts \
-	$$LANG_PATH/psi_zh_tw.ts
+	$$LANG_PATH/psi_ur_PK.ts \
+	$$LANG_PATH/psi_vi.ts \
+	$$LANG_PATH/psi_zh_CN.ts \
+	$$LANG_PATH/psi_zh_TW.ts
 
 OPTIONS_TRANSLATIONS_FILE=$$PWD/option_translations.cpp
 
