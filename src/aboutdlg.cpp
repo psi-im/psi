@@ -45,10 +45,10 @@ AboutDlg::AboutDlg(QWidget* parent)
 	QString authors;
 	authors += details(QString::fromUtf8("Justin Karneges"),
 			   "justin@affinix.com", "", "",
-			   tr("Founder and Original Author"));
+			   tr("Current Maintainer and Original Author"));
 	authors += details(QString::fromUtf8("Kevin Smith"),
 			   "kismith@psi-im.org", "", "",
-			   tr("Project Lead/Maintainer"));
+			   tr("Lead Developer and Past Maintainer"));
 	authors += details(QString::fromUtf8("Remko Tronçon"),
 			   "", "", "http://el-tramo.be",
 			   tr("Lead Developer"));
