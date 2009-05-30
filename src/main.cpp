@@ -254,7 +254,11 @@ void PsiMain::bail()
 
 int main(int argc, char *argv[])
 {
+	// NOTE: Qt 4.5 compatibility note: please don't move this call.
+	//   instead, upgrade to QCA 2.0.2, which fixes the bug in the right
+	//   place.
 	QCA::Initializer init;
+	// END NOTE
 
 #ifdef Q_WS_MAC
 	CocoaInitializer cocoaInitializer;
