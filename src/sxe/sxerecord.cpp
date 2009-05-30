@@ -50,7 +50,7 @@ void SxeRecord::apply(QDomDocument &doc, SxeEdit* edit) {
         else if (edit->type() == SxeEdit::Record)
             applySxeRecordEdit(dynamic_cast<SxeRecordEdit*>(edit));
     } else {
-        qDebug(QString("Tried to apply an edit meant for %1 to %2.").arg(edit->rid()).arg(rid()).toAscii());
+        qDebug() << QString("Tried to apply an edit meant for %1 to %2.").arg(edit->rid()).arg(rid()).toAscii();
     }
 }
 
@@ -115,7 +115,7 @@ bool SxeRecord::applySxeNewEdit(QDomDocument &doc, SxeNewEdit* edit) {
 void SxeRecord::revertToZero() {
 #ifndef NDEBUG
     if (edits_[0]->type() != SxeEdit::New)
-        qDebug(QString("First edit is of type %1!").arg(edits_[0]->type()));
+        qDebug() << QString("First edit is of type %1!").arg(edits_[0]->type());
 #endif
 
     const SxeNewEdit* edit = dynamic_cast<const SxeNewEdit*>(edits_[0]);
@@ -216,15 +216,15 @@ void SxeRecord::processInOrderRecordEdit(const SxeRecordEdit* edit) {
 
                 } else {
                     if(!ok1)
-                        qDebug(QString("Could not convert 'replacefrom' = '%1' to int.").arg(edit->value(SxeRecordEdit::ReplaceFrom)));
+                        qDebug() << QString("Could not convert 'replacefrom' = '%1' to int.").arg(edit->value(SxeRecordEdit::ReplaceFrom));
                     if(!ok2)
-                        qDebug(QString("Could not convert 'replacen' = '%1' to int.").arg(edit->value(SxeRecordEdit::ReplaceN)));
+                        qDebug() << QString("Could not convert 'replacen' = '%1' to int.").arg(edit->value(SxeRecordEdit::ReplaceN));
                     if(from < 0)
-                        qDebug(QString("'replacefrom' = '%1' is negative.").arg(edit->value(SxeRecordEdit::ReplaceFrom)));
+                        qDebug() << QString("'replacefrom' = '%1' is negative.").arg(edit->value(SxeRecordEdit::ReplaceFrom));
                     if(n < 0)
-                        qDebug(QString("'replacen' = '%1' is negative.").arg(edit->value(SxeRecordEdit::ReplaceN)));
+                        qDebug() << QString("'replacen' = '%1' is negative.").arg(edit->value(SxeRecordEdit::ReplaceN));
                     if(from + n > data_.length())
-                        qDebug(QString("from (%1) + n (%2) > data_.length() (%3).").arg(from).arg(n).arg(data_.length()));
+                        qDebug() << QString("from (%1) + n (%2) > data_.length() (%3).").arg(from).arg(n).arg(data_.length());
                 }
 
             } else {
@@ -256,7 +256,7 @@ void SxeRecord::reorderEdits() {
                 edit->nullify();  // There's no way the edit could be applied anymore
 
         } else {
-            qDebug(QString("Edit of type %1 at %2!").arg(edits_[i]->type()).arg(i).toAscii());
+            qDebug() << QString("Edit of type %1 at %2!").arg(edits_[i]->type()).arg(i).toAscii();
         }
 
     }
@@ -287,7 +287,7 @@ void SxeRecord::updateNode(bool remote) {
 
     if(data_ != lastData_) {
 
-        // qDebug(QString("Setting '%1' to \"%2\"").arg(node_.nodeName()).arg(data_).toAscii());
+        // qDebug() << QString("Setting '%1' to \"%2\"").arg(node_.nodeName()).arg(data_).toAscii();
 
         if((node_.isText() || node_.isAttr() || node_.isComment())) {
 

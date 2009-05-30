@@ -66,7 +66,7 @@ WbItem::WbItem(SxeSession* session, QSvgRenderer* renderer, QDomElement node, Wb
     widget_ = widget;
     node_ = node;
 
-    // qDebug(QString("constructing %1.").arg(id()).toAscii());
+    // qDebug() << QString("constructing %1.").arg(id()).toAscii();
 
     if(node.isNull()) {
         qDebug("Trying to create a WbItem from a null QDomNode.");
@@ -92,7 +92,7 @@ WbItem::WbItem(SxeSession* session, QSvgRenderer* renderer, QDomElement node, Wb
 }
 
 WbItem::~WbItem() {
-    // qDebug(QString("destructing %1.").arg(id()).toAscii());
+    // qDebug() << QString("destructing %1.").arg(id()).toAscii();
 }
 
 QString WbItem::id() {
@@ -118,7 +118,7 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent * event) {
                 if (!graphicsitem->parentItem() || !graphicsitem->parentItem()->isSelected()) {
                     QPointF d = graphicsitem->mapFromScene(event->scenePos()) - graphicsitem->mapFromScene(event->lastScenePos());
                     graphicsitem->translate(d.x(), d.y());
-                    // qDebug(QString("Translated %1 by %2 %3").arg((unsigned int) graphicsitem).arg(d.x()).arg(d.y()).toAscii());
+                    // qDebug() QString("Translated %1 by %2 %3").arg((unsigned int) graphicsitem).arg(d.x()).arg(d.y()).toAscii();
 
                     // Regenerate the SVG transformation matrix later
                     WbItem* wbitem = dynamic_cast<WbItem*>(graphicsitem);
@@ -241,7 +241,7 @@ void WbItem::regenerateTransform() {
 }
 
 void WbItem::addToScene() {
-    // qDebug(QString("adding %1 to scene.").arg(id()).toAscii());
+    // qDebug() << QString("adding %1 to scene.").arg(id()).toAscii();
     
     // Do nothing if already added and id matches
     if(scene_ == scene()
@@ -255,7 +255,7 @@ void WbItem::addToScene() {
         id = node_.attribute("id");
     else {
         id = "e" + SxeSession::generateUUID();
-        // qDebug(QString("Setting new id to %1").arg(id).toAscii());
+        // qDebug() << QString("Setting new id to %1").arg(id).toAscii();
         session_->setAttribute(node_, "id", id);
         session_->flush();
     }
@@ -270,7 +270,7 @@ void WbItem::addToScene() {
 }
 
 void WbItem::removeFromScene() {
-    // qDebug(QString("removing %1 from scene.").arg(id()).toAscii());
+    // qDebug() << QString("removing %1 from scene.").arg(id()).toAscii();
 
     scene_->removeItem(this);
 

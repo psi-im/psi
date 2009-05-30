@@ -575,7 +575,7 @@ void SxeManager::startNewSession(const Jid &target, const Jid &ownJid, bool grou
 
     // check that the target supports SXE and all specified features
     if(!checkSupport(target, features)) {
-        qDebug(QString("Tried to start an SXE session with %1 but the client doesn't support all features.").arg(target.full()).toAscii());
+        qDebug() << QString("Tried to start an SXE session with %1 but the client doesn't support all features.").arg(target.full()).toAscii();
         return;
     }
 

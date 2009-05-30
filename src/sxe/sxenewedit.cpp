@@ -65,7 +65,7 @@ SxeNewEdit::SxeNewEdit(const QString rid, const QDomNode &node, const QString pa
         //     break;
 
         default:
-            qDebug(QString("unknown QDomNode::NodeType encountered in SxeNewEdit::SxeNewEdit(). nodeType: %1.").arg(node.nodeType()).toAscii());
+            qDebug() << QString("unknown QDomNode::NodeType encountered in SxeNewEdit::SxeNewEdit(). nodeType: %1.").arg(node.nodeType()).toAscii();
             break;
     }
 }

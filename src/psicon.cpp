@@ -990,7 +990,7 @@ void PsiCon::checkAccountsEmpty()
 
 void PsiCon::doOpenUri(const QUrl &uri)
 {
-	qDebug("uri:  " + uri.toString());
+	qDebug() << "uri:  " << uri.toString();
 
 	// scheme
 	if (uri.scheme() != "xmpp") {
@@ -1010,7 +1010,7 @@ void PsiCon::doOpenUri(const QUrl &uri)
 	// TODO: finish authority component handling
 	//
 	//} else {
-	//	qDebug("uri auth: [" + uri.authority() + "]");
+	//	qDebug() << "uri auth: [" << uri.authority() << "]");
 
 	//	// is there such account ready to use?
 	//	Jid authJid = JIDUtil::fromString(uri.authority());
