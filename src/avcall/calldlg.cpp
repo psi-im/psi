@@ -94,7 +94,11 @@ public:
 	{
 		if(sess)
 		{
+			if(active)
+				sess->reject();
+
 			sess->setIncomingVideo(0);
+			sess->disconnect(this);
 			sess->deleteLater();
 		}
 	}
@@ -183,7 +187,7 @@ private slots:
 
 	void cancel_clicked()
 	{
-		if(sess)
+		if(sess && incoming && !active)
 			sess->reject();
 		q->close();
 	}
