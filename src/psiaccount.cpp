@@ -3956,10 +3956,8 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 		} // /headline
 		else if (m.type().isEmpty()) {
 			playSound(PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-message").toString());
-			if (m.type().isEmpty()) {
-				doPopup = true;
-				popupType = PsiPopup::AlertMessage;
-			}
+			doPopup = true;
+			popupType = PsiPopup::AlertMessage;
 		} // /""
 		else
 			playSound(PsiOptions::instance()->getOption("options.ui.notifications.sounds.system-message").toString());
