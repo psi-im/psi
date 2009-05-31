@@ -27,7 +27,6 @@
 #include <QBitmap>
 #include <QCursor>
 #include <QLibrary>
-#include <QPainter>
 
 #include <qt_windows.h>
 

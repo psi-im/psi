@@ -39,7 +39,6 @@ class PsiAccount;
 class PsiOptions;
 class QRect;
 class GCMainDlg;
-class QPainter;
 class QColorGroup;
 class Q3DragObject;
 namespace XMPP {

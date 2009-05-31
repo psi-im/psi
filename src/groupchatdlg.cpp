@@ -28,7 +28,6 @@
 #include <qpushbutton.h>
 #include <QToolBar>
 #include <qmessagebox.h>
-#include <QPainter>
 #include <QColorGroup>
 #include <qsplitter.h>
 #include <qtimer.h>
