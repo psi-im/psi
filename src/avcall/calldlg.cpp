@@ -87,7 +87,7 @@ public:
 		ui.pb_accept->setDefault(true);
 		ui.pb_accept->setFocus();
 
-		q->resize(q->minimumSize());
+		q->resize(q->minimumSizeHint());
 	}
 
 	~Private()
