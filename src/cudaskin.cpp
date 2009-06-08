@@ -292,7 +292,7 @@ public:
 	QColor buttonText, windowText, base, highlight, highlightedText;
 	QColor selectBg, contactOnline, expansionLine, expansionText;
 
-	QPixmap button_icon_im, button_icon_file, button_up;
+	QPixmap button_icon_im, button_icon_file, button_icon_call, button_up;
 
 	QImage defaultAvatar;
 
@@ -352,6 +352,9 @@ bool cuda_loadTheme(const QString &path)
 	QPixmap button_icon_file(path + "/Barracuda_IM_Button_Icon_Send_File.png");
 	if(button_icon_file.isNull())
 		return false;
+	QPixmap button_icon_call(path + "/Barracuda_IM_Button_Icon_Call.png");
+	if(button_icon_call.isNull())
+		return false;
 	QPixmap button_up(path + "/Barracuda_IM_Button_Up.png");
 	if(button_up.isNull())
 		return false;
@@ -378,6 +381,7 @@ bool cuda_loadTheme(const QString &path)
 	g_skin->panel = panel;
 	g_skin->button_icon_im = button_icon_im;
 	g_skin->button_icon_file = button_icon_file;
+	g_skin->button_icon_call = button_icon_call;
 	g_skin->button_up = button_up;
 	g_skin->defaultAvatar = defaultAvatar;
 
@@ -1521,6 +1525,11 @@ QPixmap get_icon_im()
 QPixmap get_icon_file()
 {
 	return g_skin->button_icon_file;
+}
+
+QPixmap get_icon_call()
+{
+	return g_skin->button_icon_call;
 }
 
 QImage get_button_up()

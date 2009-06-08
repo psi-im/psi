@@ -132,6 +132,7 @@ void cuda_applyThemeAll(QWidget *w);
 
 QPixmap get_icon_im();
 QPixmap get_icon_file();
+QPixmap get_icon_call();
 QImage get_button_up();
 QColor get_frameCol1();
 QColor get_windowText();

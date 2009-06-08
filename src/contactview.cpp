@@ -1322,6 +1322,8 @@ void ContactProfile::doContextMenu(ContactViewItemB *i, const QPoint &pos)
 		}*/
 
 		// Voice call
+		// ###cuda: this is handled now as a button
+#if 0
 		if(d->pa->avCallManager() && !isAgent) {
 		//if(d->pa->voiceCaller() && !isAgent) {
 			//pm.insertItem(IconsetFactory::icon("psi/voice").icon(), tr("Voice Call"), 24);
@@ -1338,7 +1340,8 @@ void ContactProfile::doContextMenu(ContactViewItemB *i, const QPoint &pos)
 				pm.setItemEnabled(24,!psiAccount()->capsManager()->isEnabled() || hasVoice);
 			}*/
 		}
-		
+#endif
+
 		if(!asMoreMenu) {
 		if(!isAgent) {
 			pm.insertSeparator();
@@ -3285,7 +3288,7 @@ public:
 	PsiIcon *icon, *lastIcon;
 	int animateNickX, animateNickColor; // nick animation
 
-	QRect chatRect, fileRect, moreRect;
+	QRect chatRect, fileRect, callRect, moreRect;
 };
 
 ContactViewItemB::ContactViewItemB(const QString &profileName, ContactProfile *cp, ContactView *parent)
@@ -3630,6 +3633,8 @@ void ContactViewItemB::paintCell(QPainter *p, const QColorGroup & cg, int column
 		if(!isSelected() || d->cp->d->rename_item == this || height() <= 25)
 			return;
 
+		bool isAgent = d->u ? d->u->isTransport() : false;
+
 		x = 0;
 		int y = h;
 
@@ -3748,6 +3753,21 @@ void ContactViewItemB::paintCell(QPainter *p, const QColorGroup & cg, int column
 		}
 		p->drawImage(x, y, bg);
 		d->fileRect = QRect(x, y, bg.width(), bg.height());
+		}
+		x += bg.width() + 2;
+
+		d->callRect = QRect();
+		// TODO: check if contact actually supports calling
+		if(pa->avCallManager() && !isAgent)
+		{
+		icon = get_icon_call();
+		bg = get_button_up().scaled(icon.width() + 16, 20);
+		{
+			QPainter p2(&bg);
+			p2.drawPixmap(8, (bg.height() - icon.height()) / 2, icon);
+		}
+		p->drawImage(x, y, bg);
+		d->callRect = QRect(x, y, bg.width(), bg.height());
 		}
 		x += bg.width() + 2;
 
@@ -4337,6 +4357,11 @@ void ContactViewItemB::clicked(const QPoint &p, const QPoint &glob)
 	{
 		//printf("  *file\n");
 		d->cp->actionSendFile(d->u->jid());
+	}
+	else if(d->callRect.contains(p))
+	{
+		//printf("  *call\n");
+		d->cp->actionVoice(d->u->jid());
 	}
 	else if(d->moreRect.contains(p))
 	{
