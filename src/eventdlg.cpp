@@ -1507,10 +1507,7 @@ void EventDlg::doChat()
 	if(list.isEmpty())
 		return;
 
-	// FIXME: Maybe it's better without bare(), but then PsiAccount::actionChat
-	// doesn't find the UserListItem to chat with :-(
-	Jid jf(list[0]);
-	Jid j(jf.bare());
+	Jid j(list[0]);
 	aChat(j);
 }
 

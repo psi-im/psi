@@ -260,6 +260,7 @@ public slots:
 	void actionGroupRename(const QString &, const QString &);
 	void actionHistory(const Jid &);
 	void actionOpenChat(const Jid &);
+	void actionOpenChat2(const Jid &);
 	void actionOpenChatSpecific(const Jid &);
 #ifdef WHITEBOARDING
 	void actionOpenWhiteboard(const Jid &);

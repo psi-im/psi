@@ -2954,7 +2954,7 @@ EventDlg *PsiAccount::ensureEventDlg(const Jid &j)
 	if(!w) {
 		w = new EventDlg(j, this, true);
 		connect(w, SIGNAL(aReadNext(const Jid &)), SLOT(processReadNext(const Jid &)));
-		connect(w, SIGNAL(aChat(const Jid &)), SLOT(actionOpenChat(const Jid&)));
+		connect(w, SIGNAL(aChat(const Jid &)), SLOT(actionOpenChat2(const Jid&)));
 		connect(w, SIGNAL(aReply(const Jid &, const QString &, const QString &, const QString &)), SLOT(dj_replyMessage(const Jid &, const QString &, const QString &, const QString &)));
 		connect(w, SIGNAL(aAuth(const Jid &)), SLOT(dj_addAuth(const Jid &)));
 		connect(w, SIGNAL(aDeny(const Jid &)), SLOT(dj_deny(const Jid &)));
@@ -3043,7 +3043,7 @@ void PsiAccount::actionVoice(const Jid &j)
 	if(j.resource().isEmpty()) {
 		UserListItem *u = find(j);
 		if(u && u->isAvailable())
-			j2.setResource((*u->userResourceList().priority()).name());
+			j2 = j2.withResource((*u->userResourceList().priority()).name());
 	}
 
 	CallDlg *w = new CallDlg(this, 0);
@@ -3265,7 +3265,7 @@ void PsiAccount::actionHistory(const Jid &j)
 void PsiAccount::actionHistoryBox(PsiEvent *e)
 {
 	EventDlg *w = new EventDlg(e->from(), this, false);
-	connect(w, SIGNAL(aChat(const Jid &)), SLOT(actionOpenChat(const Jid&)));
+	connect(w, SIGNAL(aChat(const Jid &)), SLOT(actionOpenChat2(const Jid&)));
 	connect(w, SIGNAL(aReply(const Jid &, const QString &, const QString &, const QString &)), SLOT(dj_replyMessage(const Jid &, const QString &, const QString &, const QString &)));
 	connect(w, SIGNAL(aAuth(const Jid &)), SLOT(dj_addAuth(const Jid &)));
 	connect(w, SIGNAL(aDeny(const Jid &)), SLOT(dj_deny(const Jid &)));
@@ -3280,7 +3280,10 @@ void PsiAccount::actionOpenChat(const Jid &j)
 {
 	UserListItem *u = find(j);
 	if(!u)
+	{
+		printf("[%s] not in userlist\n", qPrintable(j.full()));
 		return;
+	}
 
 	// if 'j' is bare, we might want to switch to a specific resource
 	QString res;
@@ -3311,6 +3314,39 @@ void PsiAccount::actionOpenChat(const Jid &j)
 		openChat(j.withResource(res), UserAction);
 	else
 		openChat(j, UserAction);
+}
+
+// unlike actionOpenChat(), this function will work on jids that aren't
+//   necessarily in the userlist.
+void PsiAccount::actionOpenChat2(const Jid &_j)
+{
+	Jid j = _j;
+	UserListItem *u = findFirstRelevant(j);
+	if(u) {
+		j = u->jid();
+	}
+	else {
+		// this can happen if the contact is not in the roster at all
+
+		GCContact *c = findGCContact(j);
+		if(c) {
+			// if the contact is from a groupchat, use invokeGCChat
+			invokeGCChat(j);
+			return;
+		}
+		else {
+			// otherwise, make an item
+			u = new UserListItem;
+			// HACK: reverting to bare jid is probably "wrong", but
+			//   i think in almost every case it's what you'd want
+			j = j.withResource(QString());
+			u->setJid(j);
+			u->setInList(false);
+			d->userList.append(u);
+			cpUpdate(*u);
+		}
+	}
+	actionOpenChat(j);
 }
 
 void PsiAccount::actionOpenChatSpecific(const Jid &j)
@@ -4901,6 +4937,7 @@ void PsiAccount::invokeGCChat(const Jid &j)
 		return;
 
 	// create dummy item, open chat, then destroy item.  HORRIBLE HACK!
+	// note: we no longer destroy the item (commented out below)
 	UserListItem *u = new UserListItem;
 	u->setJid(j);
 	u->setInList(false);
