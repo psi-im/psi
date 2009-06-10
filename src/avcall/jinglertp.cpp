@@ -25,6 +25,8 @@
 #include "xmpp_client.h"
 
 // TODO: reject offers that don't contain at least one of audio or video
+// TODO: support candidate negotiations over the JingleRtpChannel thread
+//   boundary, so we can change candidates after the stream is active
 
 static QChar randomPrintableChar()
 {
@@ -159,6 +161,32 @@ private:
 //----------------------------------------------------------------------------
 // JingleRtp
 //----------------------------------------------------------------------------
+class JingleRtpChannelPrivate : public QObject
+{
+	Q_OBJECT
+
+public:
+	JingleRtpChannel *q;
+
+	QMutex m;
+	XMPP::Ice176 *iceA;
+	XMPP::Ice176 *iceV;
+	QTimer *rtpActivityTimer;
+	QList<JingleRtp::RtpPacket> in;
+
+	JingleRtpChannelPrivate(JingleRtpChannel *_q);
+	~JingleRtpChannelPrivate();
+
+	void setIceObjects(XMPP::Ice176 *_iceA, XMPP::Ice176 *_iceV);
+	void restartRtpActivityTimer();
+
+private slots:
+	void start();
+	void ice_readyRead(int componentIndex);
+	void ice_datagramsWritten(int componentIndex, int count);
+	void rtpActivity_timeout();
+};
+
 class JingleRtpManagerPrivate : public QObject
 {
 	Q_OBJECT
@@ -208,7 +236,6 @@ public:
 	int remoteMaximumBitrate;
 	QString audioName;
 	QString videoName;
-	QList<JingleRtp::RtpPacket> in_rtp;
 
 	QString init_iq_id;
 	JT_JingleRtp *jt;
@@ -219,7 +246,7 @@ public:
 	int stunPort;
 	XMPP::Ice176 *iceA;
 	XMPP::Ice176 *iceV;
-	QTimer *rtpActivityTimer;
+	JingleRtpChannel *rtpChannel;
 
 	class IceStatus
 	{
@@ -266,8 +293,7 @@ public:
 		connect(handshakeTimer, SIGNAL(timeout()), SLOT(handshake_timeout()));
 		handshakeTimer->setSingleShot(true);
 
-		rtpActivityTimer = new QTimer(this);
-		connect(rtpActivityTimer, SIGNAL(timeout()), SLOT(rtpActivity_timeout()));
+		rtpChannel = new JingleRtpChannel;
 	}
 
 	~JingleRtpPrivate()
@@ -279,9 +305,7 @@ public:
 		handshakeTimer->disconnect(this);
 		handshakeTimer->deleteLater();
 
-		rtpActivityTimer->setParent(0);
-		rtpActivityTimer->disconnect(this);
-		rtpActivityTimer->deleteLater();
+		delete rtpChannel;
 	}
 
 	void startOutgoing()
@@ -358,14 +382,6 @@ public:
 
 		tryAccept();
 		tryActivated();
-	}
-
-	void writeRtp(const JingleRtp::RtpPacket &packet)
-	{
-		if(packet.type == JingleRtp::Audio)
-			iceA->writeDatagram(packet.portOffset, packet.value);
-		else if(packet.type == JingleRtp::Video)
-			iceV->writeDatagram(packet.portOffset, packet.value);
 	}
 
 	// called by manager when request is received, including
@@ -641,8 +657,6 @@ private:
 		connect(ice, SIGNAL(error()), SLOT(ice_error()));
 		connect(ice, SIGNAL(localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)), SLOT(ice_localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)));
 		connect(ice, SIGNAL(componentReady(int)), SLOT(ice_componentReady(int)));
-		connect(ice, SIGNAL(readyRead(int)), SLOT(ice_readyRead(int)));
-		connect(ice, SIGNAL(datagramsWritten(int, int)), SLOT(ice_datagramsWritten(int, int)));
 
 		// RTP+RTCP
 		ice->setComponentCount(2);
@@ -830,7 +844,13 @@ private:
 
 	void flushRemoteCandidates()
 	{
-		if(types & JingleRtp::Audio)
+		// FIXME: currently, new candidates are ignored after the
+		//   session is activated (iceA/iceV are passed to
+		//   JingleRtpChannel and our local pointers are nulled).
+		//   unfortunately this means we can't upgrade to better
+		//   candidates on the fly.
+
+		if(types & JingleRtp::Audio && iceA)
 		{
 			iceA->setPeerUfrag(iceA_status.remoteUfrag);
 			iceA->setPeerPassword(iceA_status.remotePassword);
@@ -841,7 +861,7 @@ private:
 			}
 		}
 
-		if(types & JingleRtp::Video)
+		if(types & JingleRtp::Video && iceV)
 		{
 			iceV->setPeerUfrag(iceV_status.remoteUfrag);
 			iceV->setPeerPassword(iceV_status.remotePassword);
@@ -915,7 +935,17 @@ private:
 		{
 			printf("activating!\n");
 			handshakeTimer->stop();
-			restartRtpActivityTimer();
+
+			if(iceA)
+				iceA->disconnect(this);
+			if(iceV)
+				iceV->disconnect(this);
+
+			rtpChannel->d->setIceObjects(iceA, iceV);
+
+			iceA = 0;
+			iceV = 0;
+
 			emit q->activated();
 		}
 	}
@@ -924,13 +954,6 @@ private:
 	{
 		// there better be some activity in 10 seconds
 		handshakeTimer->start(10000);
-	}
-
-	void restartRtpActivityTimer()
-	{
-		// if we go 5 seconds without an RTP packet, then that's
-		//   pretty bad
-		rtpActivityTimer->start(5000);
 	}
 
 private slots:
@@ -949,11 +972,6 @@ private slots:
 		reject();
 		errorCode = JingleRtp::ErrorTimeout;
 		emit q->error();
-	}
-
-	void rtpActivity_timeout()
-	{
-		printf("warning: 5 seconds passed without receiving audio RTP\n");
 	}
 
 	void ice_started()
@@ -1043,46 +1061,6 @@ private slots:
 		after_ice_connected();
 	}
 
-	void ice_readyRead(int componentIndex)
-	{
-		XMPP::Ice176 *ice = (XMPP::Ice176 *)sender();
-
-		if(ice == iceA && componentIndex == 0)
-			restartRtpActivityTimer();
-
-		if(ice == iceA)
-		{
-			while(iceA->hasPendingDatagrams(componentIndex))
-			{
-				JingleRtp::RtpPacket packet;
-				packet.type = JingleRtp::Audio;
-				packet.portOffset = componentIndex;
-				packet.value = iceA->readDatagram(componentIndex);
-				in_rtp += packet;
-			}
-		}
-		else // iceV
-		{
-			while(iceV->hasPendingDatagrams(componentIndex))
-			{
-				JingleRtp::RtpPacket packet;
-				packet.type = JingleRtp::Video;
-				packet.portOffset = componentIndex;
-				packet.value = iceV->readDatagram(componentIndex);
-				in_rtp += packet;
-			}
-		}
-
-		emit q->readyReadRtp();
-	}
-
-	void ice_datagramsWritten(int componentIndex, int count)
-	{
-		Q_UNUSED(componentIndex);
-
-		emit q->rtpWritten(count);
-	}
-
 	void task_finished()
 	{
 		if(!jt)
@@ -1169,24 +1147,182 @@ void JingleRtp::localMediaUpdate()
 	d->localMediaUpdate();
 }
 
-bool JingleRtp::rtpAvailable() const
-{
-	return !d->in_rtp.isEmpty();
-}
-
-JingleRtp::RtpPacket JingleRtp::readRtp()
-{
-	return d->in_rtp.takeFirst();
-}
-
-void JingleRtp::writeRtp(const RtpPacket &packet)
-{
-	d->writeRtp(packet);
-}
-
 JingleRtp::Error JingleRtp::errorCode() const
 {
 	return d->errorCode;
+}
+
+JingleRtpChannel *JingleRtp::rtpChannel()
+{
+	return d->rtpChannel;
+}
+
+//----------------------------------------------------------------------------
+// JingleRtpChannel
+//----------------------------------------------------------------------------
+JingleRtpChannelPrivate::JingleRtpChannelPrivate(JingleRtpChannel *_q) :
+	QObject(_q),
+	q(_q),
+	iceA(0),
+	iceV(0)
+{
+	rtpActivityTimer = new QTimer(this);
+	connect(rtpActivityTimer, SIGNAL(timeout()), SLOT(rtpActivity_timeout()));
+}
+
+JingleRtpChannelPrivate::~JingleRtpChannelPrivate()
+{
+	if(iceA)
+	{
+		iceA->disconnect(this);
+		iceA->setParent(0);
+		iceA->deleteLater();
+	}
+
+	if(iceV)
+	{
+		iceV->disconnect(this);
+		iceV->setParent(0);
+		iceV->deleteLater();
+	}
+
+	rtpActivityTimer->setParent(0);
+	rtpActivityTimer->disconnect(this);
+	rtpActivityTimer->deleteLater();
+}
+
+void JingleRtpChannelPrivate::setIceObjects(XMPP::Ice176 *_iceA, XMPP::Ice176 *_iceV)
+{
+	if(QThread::currentThread() != thread())
+	{
+		// if called from another thread, safely change ownership
+		QMutexLocker locker(&m);
+
+		iceA = _iceA;
+		iceV = _iceV;
+
+		if(iceA)
+		{
+			iceA->moveToThread(thread());
+			connect(iceA, SIGNAL(readyRead(int)), SLOT(ice_readyRead(int)));
+			connect(iceA, SIGNAL(datagramsWritten(int, int)), SLOT(ice_datagramsWritten(int, int)));
+		}
+
+		if(iceV)
+		{
+			iceV->moveToThread(thread());
+			connect(iceV, SIGNAL(readyRead(int)), SLOT(ice_readyRead(int)));
+			connect(iceV, SIGNAL(datagramsWritten(int, int)), SLOT(ice_datagramsWritten(int, int)));
+		}
+
+		QMetaObject::invokeMethod(this, "start", Qt::QueuedConnection);
+	}
+	else
+	{
+		iceA = _iceA;
+		iceV = _iceV;
+
+		if(iceA)
+		{
+			connect(iceA, SIGNAL(readyRead(int)), SLOT(ice_readyRead(int)));
+			connect(iceA, SIGNAL(datagramsWritten(int, int)), SLOT(ice_datagramsWritten(int, int)));
+		}
+
+		if(iceV)
+		{
+			connect(iceV, SIGNAL(readyRead(int)), SLOT(ice_readyRead(int)));
+			connect(iceV, SIGNAL(datagramsWritten(int, int)), SLOT(ice_datagramsWritten(int, int)));
+		}
+
+		start();
+	}
+}
+
+void JingleRtpChannelPrivate::restartRtpActivityTimer()
+{
+	// if we go 5 seconds without an RTP packet, then that's
+	//   pretty bad
+	rtpActivityTimer->start(5000);
+}
+
+void JingleRtpChannelPrivate::start()
+{
+	restartRtpActivityTimer();
+}
+
+void JingleRtpChannelPrivate::ice_readyRead(int componentIndex)
+{
+	XMPP::Ice176 *ice = (XMPP::Ice176 *)sender();
+
+	if(ice == iceA && componentIndex == 0)
+		restartRtpActivityTimer();
+
+	if(ice == iceA)
+	{
+		while(iceA->hasPendingDatagrams(componentIndex))
+		{
+			JingleRtp::RtpPacket packet;
+			packet.type = JingleRtp::Audio;
+			packet.portOffset = componentIndex;
+			packet.value = iceA->readDatagram(componentIndex);
+			in += packet;
+		}
+	}
+	else // iceV
+	{
+		while(iceV->hasPendingDatagrams(componentIndex))
+		{
+			JingleRtp::RtpPacket packet;
+			packet.type = JingleRtp::Video;
+			packet.portOffset = componentIndex;
+			packet.value = iceV->readDatagram(componentIndex);
+			in += packet;
+		}
+	}
+
+	emit q->readyRead();
+}
+
+void JingleRtpChannelPrivate::ice_datagramsWritten(int componentIndex, int count)
+{
+	Q_UNUSED(componentIndex);
+
+	emit q->packetsWritten(count);
+}
+
+void JingleRtpChannelPrivate::rtpActivity_timeout()
+{
+	printf("warning: 5 seconds passed without receiving audio RTP\n");
+}
+
+JingleRtpChannel::JingleRtpChannel()
+{
+	d = new JingleRtpChannelPrivate(this);
+}
+
+JingleRtpChannel::~JingleRtpChannel()
+{
+	delete d;
+}
+
+bool JingleRtpChannel::packetsAvailable() const
+{
+	return !d->in.isEmpty();
+}
+
+JingleRtp::RtpPacket JingleRtpChannel::read()
+{
+	return d->in.takeFirst();
+}
+
+void JingleRtpChannel::write(const JingleRtp::RtpPacket &packet)
+{
+	QMutexLocker locker(&d->m);
+
+	if(packet.type == JingleRtp::Audio && d->iceA)
+		d->iceA->writeDatagram(packet.portOffset, packet.value);
+	else if(packet.type == JingleRtp::Video && d->iceV)
+		d->iceV->writeDatagram(packet.portOffset, packet.value);
 }
 
 //----------------------------------------------------------------------------

@@ -21,7 +21,9 @@
 
 #include "jinglertptasks.h"
 
+class JingleRtpChannel;
 class JingleRtpPrivate;
+class JingleRtpChannelPrivate;
 class JingleRtpManagerPrivate;
 
 class JingleRtp : public QObject
@@ -72,11 +74,13 @@ public:
 	//   initialization).
 	void localMediaUpdate();
 
-	bool rtpAvailable() const;
-	RtpPacket readRtp();
-	void writeRtp(const RtpPacket &packet);
-
 	Error errorCode() const;
+
+	// this object is valid at construction time and initially lives in
+	//   JingleRtp's thread.  it can be moved to another thread as long
+	//   it is moved back to JingleRtp's thread before destructing
+	//   JingleRtp.
+	JingleRtpChannel *rtpChannel();
 
 signals:
 	void rejected();
@@ -88,11 +92,6 @@ signals:
 	//   initial values.
 	void remoteMediaUpdated();
 
-	void readyReadRtp();
-
-	// note: this says nothing about the order packets were written
-	void rtpWritten(int count);
-
 private:
 	Q_DISABLE_COPY(JingleRtp);
 
@@ -102,6 +101,32 @@ private:
 	JingleRtp();
 
 	JingleRtpPrivate *d;
+};
+
+class JingleRtpChannel : public QObject
+{
+	Q_OBJECT
+
+public:
+	bool packetsAvailable() const;
+	JingleRtp::RtpPacket read();
+	void write(const JingleRtp::RtpPacket &packet);
+
+signals:
+	void readyRead();
+
+	// note: this says nothing about the order packets were written
+	void packetsWritten(int count);
+
+private:
+	Q_DISABLE_COPY(JingleRtpChannel);
+
+	friend class JingleRtpChannelPrivate;
+	friend class JingleRtpPrivate;
+	JingleRtpChannel();
+	~JingleRtpChannel();
+
+	JingleRtpChannelPrivate *d;
 };
 
 class JingleRtpManager : public QObject
