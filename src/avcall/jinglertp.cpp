@@ -937,9 +937,15 @@ private:
 			handshakeTimer->stop();
 
 			if(iceA)
+			{
 				iceA->disconnect(this);
+				iceA->setParent(0);
+			}
 			if(iceV)
+			{
 				iceV->disconnect(this);
+				iceV->setParent(0);
+			}
 
 			rtpChannel->d->setIceObjects(iceA, iceV);
 
@@ -1247,6 +1253,10 @@ void JingleRtpChannelPrivate::restartRtpActivityTimer()
 
 void JingleRtpChannelPrivate::start()
 {
+	if(iceA)
+		iceA->setParent(this);
+	if(iceV)
+		iceV->setParent(this);
 	restartRtpActivityTimer();
 }
 
