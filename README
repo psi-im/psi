@@ -58,7 +58,7 @@ Notes
 Changes
 -------
   New in 0.13
-  - Voice calls for Mac OS X and Linux (Jingle RTP).
+  - Voice calls (Jingle RTP).
   - Basic XMPP URI handler.
   - Ability to permanantly trust certificates at connect time.
   - Mini command system (Ctrl+7 in chat window).
