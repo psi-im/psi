@@ -106,6 +106,10 @@ $(DISK_DIR)/$(APPFILE_NAME): $(PSI_DIR)/src/$(EXECUTABLE_NAME).app
 	done; \
 	#
 	@echo
+	@echo Writing qt.conf ...
+	echo "[Paths]\nPlugins = Plugins" > "$@/Contents/Resources/qt.conf"
+	#
+	@echo
 	@echo Installing Qt Frameworks ...
 	for f in $(QT_FRAMEWORKS); do \
 		ditto -rsrc "$(QTDIR)/lib/$$f.framework" "$@/Contents/Frameworks/$$f.framework"; \
