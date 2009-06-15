@@ -99,6 +99,10 @@ $(DISK_DIR)/Barracuda.app: $(PSI_DIR)/src/Barracuda.app
 	cp -f "$(QTDIR)/plugins/imageformats/libqjpeg.dylib" "$@/Contents/Resources/imageformats/"
 	#
 	@echo
+	@echo Writing qt.conf ...
+	echo "[Paths]\nPlugins = Plugins" > "$@/Contents/Resources/qt.conf"
+	#
+	@echo
 	@echo Installing Qt Frameworks ...
 	for f in $(QT_FRAMEWORKS); do \
 		ditto -rsrc "$(QTDIR)/lib/$$f.framework" "$@/Contents/Frameworks/$$f.framework"; \
