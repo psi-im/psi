@@ -87,17 +87,18 @@ public:
 		ui.pb_accept->setDefault(true);
 		ui.pb_accept->setFocus();
 
-		// ###cuda
-		ui.busy->hide();
-
-		q->resize(q->minimumSize());
+		q->resize(q->minimumSizeHint());
 	}
 
 	~Private()
 	{
 		if(sess)
 		{
+			if(active)
+				sess->reject();
+
 			sess->setIncomingVideo(0);
+			sess->disconnect(this);
 			sess->deleteLater();
 		}
 	}
@@ -186,7 +187,7 @@ private slots:
 
 	void cancel_clicked()
 	{
-		if(sess)
+		if(sess && incoming && !active)
 			sess->reject();
 		q->close();
 	}

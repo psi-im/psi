@@ -23,11 +23,14 @@
 #include <QCoreApplication>
 #include <QLibrary>
 #include <QDir>
+#include <QtCrypto>
 #include "xmpp_jid.h"
 #include "jinglertp.h"
 #include "../psimedia/psimedia.h"
 #include "applicationinfo.h"
 #include "psiaccount.h"
+
+#define USE_THREAD
 
 class Configuration
 {
@@ -110,7 +113,7 @@ static void ensureLoaded()
 			pluginFile = findPlugin(".", "gstprovider");
 			resourcePath = QCoreApplication::applicationDirPath() + "/gstreamer-0.10";
 #elif defined(Q_OS_MAC)
-			pluginFile = findPlugin("../plugins", "gstprovider");
+			pluginFile = findPlugin("../Plugins", "gstprovider");
 			resourcePath = QCoreApplication::applicationDirPath() + "/../Frameworks/gstreamer-0.10";
 #else
 			pluginFile = findPlugin(ApplicationInfo::libDir() + "/plugins", "gstprovider");
@@ -168,6 +171,166 @@ static PsiMedia::PayloadInfo payloadTypeToPayloadInfo(const JingleRtpPayloadType
 	return out;
 }
 
+class AvTransmit : public QObject
+{
+	Q_OBJECT
+
+public:
+	PsiMedia::RtpChannel *audio, *video;
+	JingleRtpChannel *transport;
+
+	AvTransmit(PsiMedia::RtpChannel *_audio, PsiMedia::RtpChannel *_video, JingleRtpChannel *_transport, QObject *parent = 0) :
+		QObject(parent),
+		audio(_audio),
+		video(_video),
+		transport(_transport)
+	{
+		if(audio)
+		{
+			audio->setParent(this);
+			connect(audio, SIGNAL(readyRead()), SLOT(audio_readyRead()));
+		}
+
+		if(video)
+		{
+			video->setParent(this);
+			connect(video, SIGNAL(readyRead()), SLOT(video_readyRead()));
+		}
+
+		transport->setParent(this);
+		connect(transport, SIGNAL(readyRead()), SLOT(transport_readyRead()));
+		connect(transport, SIGNAL(packetsWritten(int)), SLOT(transport_packetsWritten(int)));
+	}
+
+	~AvTransmit()
+	{
+		if(audio)
+			audio->setParent(0);
+		if(video)
+			video->setParent(0);
+		transport->setParent(0);
+	}
+
+private slots:
+	void audio_readyRead()
+	{
+		while(audio->packetsAvailable() > 0)
+		{
+			PsiMedia::RtpPacket packet = audio->read();
+
+			JingleRtp::RtpPacket jpacket;
+			jpacket.type = JingleRtp::Audio;
+			jpacket.portOffset = packet.portOffset();
+			jpacket.value = packet.rawValue();
+
+			transport->write(jpacket);
+		}
+	}
+
+	void video_readyRead()
+	{
+		while(video->packetsAvailable() > 0)
+		{
+			PsiMedia::RtpPacket packet = video->read();
+
+			JingleRtp::RtpPacket jpacket;
+			jpacket.type = JingleRtp::Video;
+			jpacket.portOffset = packet.portOffset();
+			jpacket.value = packet.rawValue();
+
+			transport->write(jpacket);
+		}
+	}
+
+	void transport_readyRead()
+	{
+		while(transport->packetsAvailable())
+		{
+			JingleRtp::RtpPacket jpacket = transport->read();
+
+			if(jpacket.type == JingleRtp::Audio)
+				audio->write(PsiMedia::RtpPacket(jpacket.value, jpacket.portOffset));
+			else if(jpacket.type == JingleRtp::Video)
+				video->write(PsiMedia::RtpPacket(jpacket.value, jpacket.portOffset));
+		}
+	}
+
+	void transport_packetsWritten(int count)
+	{
+		Q_UNUSED(count);
+
+		// nothing
+	}
+};
+
+class AvTransmitHandler : public QObject
+{
+	Q_OBJECT
+
+public:
+	AvTransmit *avTransmit;
+	QThread *previousThread;
+
+	AvTransmitHandler(QObject *parent = 0) :
+		QObject(parent),
+		avTransmit(0)
+	{
+	}
+
+	~AvTransmitHandler()
+	{
+		if(avTransmit)
+			releaseAvTransmit();
+	}
+
+	// NOTE: the handler never touches these variables except here
+	//   and on destruction, so it's safe to call this function from
+	//   another thread if you know what you're doing.
+	void setAvTransmit(AvTransmit *_avTransmit)
+	{
+		avTransmit = _avTransmit;
+		previousThread = avTransmit->thread();
+		avTransmit->moveToThread(thread());
+	}
+
+	void releaseAvTransmit()
+	{
+		Q_ASSERT(avTransmit);
+		avTransmit->moveToThread(previousThread);
+		avTransmit = 0;
+	}
+};
+
+class AvTransmitThread : public QCA::SyncThread
+{
+	Q_OBJECT
+
+public:
+	AvTransmitHandler *handler;
+
+	AvTransmitThread(QObject *parent = 0) :
+		QCA::SyncThread(parent),
+		handler(0)
+	{
+	}
+
+	~AvTransmitThread()
+	{
+		stop();
+	}
+
+protected:
+	virtual void atStart()
+	{
+		handler = new AvTransmitHandler;
+	}
+
+	virtual void atEnd()
+	{
+		delete handler;
+	}
+};
+
 //----------------------------------------------------------------------------
 // AvCall
 //----------------------------------------------------------------------------
@@ -209,6 +372,8 @@ public:
 	bool transmitAudio;
 	bool transmitVideo;
 	bool transmitting;
+	AvTransmit *avTransmit;
+	AvTransmitThread *avTransmitThread;
 
 	AvCallPrivate(AvCall *_q) :
 		QObject(_q),
@@ -217,7 +382,9 @@ public:
 		sess(0),
 		transmitAudio(false),
 		transmitVideo(false),
-		transmitting(false)
+		transmitting(false),
+		avTransmit(0),
+		avTransmitThread(0)
 	{
 		allowVideo = AvCallManager::isVideoSupported();
 
@@ -242,10 +409,11 @@ public:
 		start_rtp();
 	}
 
-	void initIncoming()
+	bool initIncoming()
 	{
 		setup_sess();
 
+		// JingleRtp guarantees there will be at least one of audio or video
 		bool offeredAudio = false;
 		bool offeredVideo = false;
 		if(!sess->remoteAudioPayloadTypes().isEmpty())
@@ -261,8 +429,12 @@ public:
 			mode = AvCall::Video;
 		else
 		{
-			Q_ASSERT(0);
+			// this could happen if only video is offered but
+			//   we don't allow it
+			return false;
 		}
+
+		return true;
 	}
 
 	void accept()
@@ -311,6 +483,15 @@ private:
 
 	void cleanup()
 	{
+		// if we had a thread, this will move the object back
+		delete avTransmitThread;
+		avTransmitThread = 0;
+
+		delete avTransmit;
+		avTransmit = 0;
+
+		rtp.reset();
+
 		delete sess;
 		sess = 0;
 	}
@@ -393,8 +574,6 @@ private:
 		connect(sess, SIGNAL(error()), SLOT(sess_error()));
 		connect(sess, SIGNAL(activated()), SLOT(sess_activated()));
 		connect(sess, SIGNAL(remoteMediaUpdated()), SLOT(sess_remoteMediaUpdated()));
-		connect(sess, SIGNAL(readyReadRtp()), SLOT(sess_readyReadRtp()));
-		connect(sess, SIGNAL(rtpWritten(int)), SLOT(sess_rtpWritten(int)));
 	}
 
 	void setup_remote_media()
@@ -455,12 +634,6 @@ private slots:
 				transmitVideo = false;
 		}
 
-		if(transmitAudio)
-			connect(rtp.audioRtpChannel(), SIGNAL(readyRead()), SLOT(rtp_audio_readyRead()));
-
-		if(transmitVideo)
-			connect(rtp.videoRtpChannel(), SIGNAL(readyRead()), SLOT(rtp_video_readyRead()));
-
 		if(transmitAudio && transmitVideo)
 			mode = AvCall::Both;
 		else if(transmitAudio && !transmitVideo)
@@ -510,40 +683,8 @@ private slots:
 	void rtp_error()
 	{
 		errorString = tr("An error occurred while trying to send:\n%1.").arg(rtpSessionErrorToString(rtp.errorCode()));
-		cleanup();
+		reject();
 		emit q->error();
-	}
-
-	void rtp_audio_readyRead()
-	{
-		while(rtp.audioRtpChannel()->packetsAvailable() > 0)
-		{
-			PsiMedia::RtpPacket packet = rtp.audioRtpChannel()->read();
-
-			JingleRtp::RtpPacket jpacket;
-			jpacket.type = JingleRtp::Audio;
-			jpacket.portOffset = packet.portOffset();
-			jpacket.value = packet.rawValue();
-
-			if(sess)
-				sess->writeRtp(jpacket);
-		}
-	}
-
-	void rtp_video_readyRead()
-	{
-		while(rtp.videoRtpChannel()->packetsAvailable() > 0)
-		{
-			PsiMedia::RtpPacket packet = rtp.videoRtpChannel()->read();
-
-			JingleRtp::RtpPacket jpacket;
-			jpacket.type = JingleRtp::Video;
-			jpacket.portOffset = packet.portOffset();
-			jpacket.value = packet.rawValue();
-
-			if(sess)
-				sess->writeRtp(jpacket);
-		}
 	}
 
 	void sess_rejected()
@@ -557,17 +698,41 @@ private slots:
 	{
 		JingleRtp::Error e = sess->errorCode();
 		if(e == JingleRtp::ErrorTimeout)
+		{
 			errorString = tr("Call negotiation timed out.");
+			cleanup();
+		}
 		else if(e == JingleRtp::ErrorICE)
+		{
 			errorString = tr("Unable to establish peer-to-peer connection.");
+			reject();
+		}
 		else
+		{
 			errorString = tr("Call negotiation failed.");
-		cleanup();
+			cleanup();
+		}
+
 		emit q->error();
 	}
 
 	void sess_activated()
 	{
+		PsiMedia::RtpChannel *audio = 0;
+		PsiMedia::RtpChannel *video = 0;
+
+		if(transmitAudio)
+			audio = rtp.audioRtpChannel();
+		if(transmitVideo)
+			video = rtp.videoRtpChannel();
+
+		avTransmit = new AvTransmit(audio, video, sess->rtpChannel());
+#ifdef USE_THREAD
+		avTransmitThread = new AvTransmitThread(this);
+		avTransmitThread->start();
+		avTransmitThread->handler->setAvTransmit(avTransmit);
+#endif
+
 		if(transmitAudio)
 			rtp.transmitAudio();
 		if(transmitVideo)
@@ -581,26 +746,6 @@ private slots:
 	{
 		setup_remote_media();
 		rtp.updatePreferences();
-	}
-
-	void sess_readyReadRtp()
-	{
-		while(sess->rtpAvailable())
-		{
-			JingleRtp::RtpPacket jpacket = sess->readRtp();
-
-			if(jpacket.type == JingleRtp::Audio)
-				rtp.audioRtpChannel()->write(PsiMedia::RtpPacket(jpacket.value, jpacket.portOffset));
-			else if(jpacket.type == JingleRtp::Video)
-				rtp.videoRtpChannel()->write(PsiMedia::RtpPacket(jpacket.value, jpacket.portOffset));
-		}
-	}
-
-	void sess_rtpWritten(int count)
-	{
-		Q_UNUSED(count);
-
-		// nothing
 	}
 };
 
@@ -694,8 +839,16 @@ void AvCallManagerPrivate::rtp_incomingReady()
 	call->d->incoming = true;
 	call->d->sess = rtpManager->takeIncoming();
 	sessions += call;
+	if(!call->d->initIncoming())
+	{
+		call->d->sess->reject();
+		delete call->d->sess;
+		call->d->sess = 0;
+		delete call;
+		return;
+	}
+
 	pending += call;
-	call->d->initIncoming();
 	emit q->incomingReady();
 }
 
