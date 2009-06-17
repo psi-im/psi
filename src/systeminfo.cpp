@@ -201,6 +201,8 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 		os_str_ = "Mac OS X 10.4";
 	else if(v == QSysInfo::MV_10_5)
 		os_str_ = "Mac OS X 10.5";
+	else if(v == QSysInfo::MV_10_6)
+		os_str_ = "Mac OS X 10.6";
 	else
 		os_str_ = "Mac OS X";
 #endif
@@ -242,6 +244,8 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 		os_str_ = "Windows Server 2003";
 	else if(v == QSysInfo::WV_VISTA)
 		os_str_ = "Windows Vista";
+	else if(v == QSysInfo::WV_WINDOWS7)
+		os_str_ = "Windows 7";
 	else if(v == QSysInfo::WV_NT_based)
 		os_str_ = "Windows NT";
 #endif
