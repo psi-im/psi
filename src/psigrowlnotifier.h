@@ -33,6 +33,8 @@
 class GrowlNotifier;
 class PsiAccount;
 
+class NotificationContext;
+
 /**
  * An interface for Psi to Growl.
  * This class uses GrowlNotifier to interface with Growl.
@@ -53,11 +55,16 @@ public slots:
 	void notificationClicked(void*);
 	void notificationTimedOut(void*);
 
+private slots:
+	void cleanup();
+
 private:
 	PsiGrowlNotifier();
+	void tryDeleteContext(NotificationContext* context);
 
 	static PsiGrowlNotifier* instance_;
 	GrowlNotifier* gn_;
+	QList<NotificationContext*> contexts_;
 };
 
 #endif

@@ -41,14 +41,16 @@
 class NotificationContext
 {
 public:
-	NotificationContext(PsiAccount* a, Jid j) : account_(a), jid_(j) { }
+	NotificationContext(PsiAccount* a, Jid j) : account_(a), jid_(j), deleteCount_(0) { }
 	PsiAccount* account() { return account_; }
 	Jid jid() { return jid_; }
-
 
 private:
 	PsiAccount* account_;
 	Jid jid_;
+
+public:
+	int deleteCount_;
 };
 
 
@@ -184,17 +186,40 @@ void PsiGrowlNotifier::popup(PsiAccount* account, PsiPopup::PopupType type, cons
 	gn_->notify(name, title, desc, icon, false, this, SLOT(notificationClicked(void*)), SLOT(notificationTimedOut(void*)), context);
 }
 
+void PsiGrowlNotifier::cleanup()
+{
+	// try to keep the garbage bin no larger than 50 entries
+	while (contexts_.count() > 50) {
+		delete contexts_.takeFirst();
+	}
+}
+
+void PsiGrowlNotifier::tryDeleteContext(NotificationContext* context)
+{
+	// instead of deleting the context right away, let's put it in a list
+	//   to be garbage collected, and bump the delete counter
+	if (context->deleteCount_ == 0) {
+		contexts_ += context;
+	}
+	++(context->deleteCount_);
+
+	// perform routine cleanup
+	cleanup();
+}
+
 void PsiGrowlNotifier::notificationClicked(void* c)
 {
 	NotificationContext* context = (NotificationContext*) c;
 	context->account()->actionDefault(context->jid());
-	delete context;
+	//delete context;
+	tryDeleteContext(context);
 }
 
 void PsiGrowlNotifier::notificationTimedOut(void* c)
 {
 	NotificationContext* context = (NotificationContext*) c;
-	delete context;
+	//delete context;
+	tryDeleteContext(context);
 }
 
 PsiGrowlNotifier* PsiGrowlNotifier::instance_ = 0;
