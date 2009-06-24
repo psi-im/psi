@@ -398,11 +398,25 @@ public:
 	{
 		rtp.disconnect(this);
 		cleanup();
-		manager->unlink(q);
+		unlink();
+	}
+
+	void unlink()
+	{
+		if(manager)
+		{
+			// note that the object remains active, just
+			//   dissociated from the manager
+			manager->unlink(q);
+			manager = 0;
+		}
 	}
 
 	void startOutgoing()
 	{
+		if(!manager)
+			return;
+
 		manager->rtpManager->setBasePort(g_config->basePort);
 		manager->rtpManager->setExternalAddress(g_config->extHost);
 
@@ -439,6 +453,9 @@ public:
 
 	void accept()
 	{
+		if(!manager)
+			return;
+
 		manager->rtpManager->setBasePort(g_config->basePort);
 		manager->rtpManager->setExternalAddress(g_config->extHost);
 
@@ -603,6 +620,9 @@ private:
 private slots:
 	void rtp_started()
 	{
+		if(!manager)
+			return;
+
 		printf("rtp_started\n");
 
 		PsiMedia::PayloadInfo audio, *pAudio;
@@ -808,6 +828,11 @@ void AvCall::setIncomingVideo(PsiMedia::VideoWidget *widget)
 QString AvCall::errorString() const
 {
 	return d->errorString;
+}
+
+void AvCall::unlink()
+{
+	d->unlink();
 }
 
 //----------------------------------------------------------------------------

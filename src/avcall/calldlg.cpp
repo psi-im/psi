@@ -99,6 +99,7 @@ public:
 
 			sess->setIncomingVideo(0);
 			sess->disconnect(this);
+			sess->unlink();
 			sess->deleteLater();
 		}
 	}
