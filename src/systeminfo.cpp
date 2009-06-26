@@ -246,8 +246,10 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 		os_str_ = "Windows Server 2003";
 	else if(v == QSysInfo::WV_VISTA)
 		os_str_ = "Windows Vista";
+#if QT_VERSION >= 0x040500
 	else if(v == QSysInfo::WV_WINDOWS7)
 		os_str_ = "Windows 7";
+#endif
 	else if(v == QSysInfo::WV_NT_based)
 		os_str_ = "Windows NT";
 #endif
