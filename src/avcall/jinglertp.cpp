@@ -656,7 +656,7 @@ private:
 		connect(ice, SIGNAL(started()), SLOT(ice_started()));
 		connect(ice, SIGNAL(error()), SLOT(ice_error()));
 		connect(ice, SIGNAL(localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)), SLOT(ice_localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)));
-		connect(ice, SIGNAL(componentReady(int)), SLOT(ice_componentReady(int)));
+		connect(ice, SIGNAL(componentReady(int)), SLOT(ice_componentReady(int)), Qt::QueuedConnection); // signal is not DOR-SS
 
 		// RTP+RTCP
 		ice->setComponentCount(2);
