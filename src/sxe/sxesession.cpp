@@ -420,7 +420,7 @@ void SxeSession::setNodeValue(const QDomNode &node, const QString &value, int fr
     }
 
     if(!(node.isAttr() || node.isText())) {
-        qDebug() << "Trying to set value of a non-attr/text node " << node.nodeName());
+        qDebug() << "Trying to set value of a non-attr/text node " << node.nodeName();
         return;
     }
 
