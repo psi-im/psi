@@ -262,10 +262,10 @@ int main(int argc, char *argv[])
 	// see http://www.mozilla.org/security/announce/2007/mfsa2007-23.html
 	// for how this problem affected firefox on windows.
 
-	QString uri;
+	QByteArray uriBA;
 	for (int i=1; i<argc; i++) {
-		QString str = QString::fromLocal8Bit(argv[i]);
-		QString var, val;
+		QByteArray str = QByteArray(argv[i]);
+		QByteArray var, val;
 		int x = str.find('=');
 		if(x == -1) {
 			var = str;
@@ -276,14 +276,14 @@ int main(int argc, char *argv[])
 		}
 
 		if (var == "--uri") {
-			uri = val;
+			uriBA = val;
 #ifdef Q_WS_WIN
 			// FIXME think about handling of quirks on the windows platform.
 #endif
-			if (uri.isEmpty() && i+1 < argc) {
-				uri = QString::fromLocal8Bit(argv[i+1]);
+			if (uriBA.isEmpty() && i+1 < argc) {
+				uriBA = QByteArray(argv[i+1]);
 			}
-			
+
 			// terminate args here. Everything that follow mustn't be availible
 			// in later commandline scanning.
 			argc = i;
@@ -340,6 +340,7 @@ int main(int argc, char *argv[])
 
 	//dtcp_port = 8000;
 
+	QString uri = QString::fromLocal8Bit(uriBA);
 	for(int n = 1; n < argc; ++n) {
 		QString str = argv[n];
 		QString var, val;
