@@ -173,7 +173,9 @@ bool ActiveProfiles::Private::winEvent(MSG *msg, long *result)
 			}
 
 			if (list[0] == "openUri") {
-				emit ap->openUri(list[1]);
+				QUrl uri;
+				uri.setEncodedUrl(list[1].toLatin1());
+				emit ap->openUri(uri);
 				*result = 0;	// ok
 			}
 		}

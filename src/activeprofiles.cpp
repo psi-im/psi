@@ -88,7 +88,7 @@ ActiveProfiles* ActiveProfiles::instance()
  */
 bool ActiveProfiles::sendOpenUri(const QUrl &uri, const QString &profile) const
 {
-	return sendOpenUri(uri.toString(), profile);
+	return sendOpenUri(QString::fromLatin1(uri.toEncoded()), profile);
 }
 
 /**

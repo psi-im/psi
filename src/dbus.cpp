@@ -46,7 +46,9 @@ PsiConAdapter::~PsiConAdapter()
 
 void PsiConAdapter::openURI(QString uri)
 {
-	psicon->doOpenUri(uri);
+	QUrl real_uri;
+	real_uri.setEncodedUrl(uri.toLatin1());
+	psicon->doOpenUri(real_uri);
 }
 
 // FIXME libguniqueapp uses activate
