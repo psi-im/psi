@@ -333,7 +333,15 @@ static int restart_process(int argc, char **argv, const QByteArray &uri)
 	// re-run ourself, with encoded uri
 	QCoreApplication qapp(argc, argv);
 	QString selfExe = QCoreApplication::applicationFilePath();
-	QStringList args = QCoreApplication::arguments();
+
+	// don't use QCoreApplication::arguments(), because that calls
+	//   GetCommandLine which is not clipped.  instead, use the provided
+	//   argc/argv.
+	QStringList args;
+	for(int n = 1; n < argc; ++n) {
+		args += QString::fromLocal8Bit(argv[n]);
+	}
+
 	if(!uri.isEmpty()) {
 		args += QString("--encuri=") + QString::fromLatin1(encodeUri(uri));
 	}
