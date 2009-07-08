@@ -258,7 +258,8 @@ void PsiMain::bail()
 }
 
 #ifdef URI_RESTART
-// all printable chars except for space and dash are backslash-escaped.
+// all printable chars except for space, dash, and double-quote are
+//   backslash-escaped.
 static QByteArray encodeUri(const QByteArray &in)
 {
 	QByteArray out;
@@ -267,7 +268,7 @@ static QByteArray encodeUri(const QByteArray &in)
 		if(c == '\\') {
 			out += "\\\\";
 		}
-		else if(c >= 0x21 && c < 0x7f && c != '-') {
+		else if(c >= 0x21 && c < 0x7f && c != '-' && c != '\"') {
 			out += in[n];
 		}
 		else {
