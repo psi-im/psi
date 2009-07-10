@@ -450,7 +450,7 @@ public:
 			if(remoteAudioPayloadTypes.isEmpty() && remoteVideoPayloadTypes.isEmpty())
 				return false;
 		}
-		else if(envelope.action == "session-accept")
+		else if(envelope.action == "session-accept" && !incoming)
 		{
 			const JingleRtpContent *audioContent = 0;
 			const JingleRtpContent *videoContent = 0;
@@ -933,8 +933,14 @@ private:
 
 	void tryActivated()
 	{
-		if(session_accepted && ice_connected && !session_activated)
+		if(session_accepted && ice_connected)
 		{
+			if(session_activated)
+			{
+				printf("warning: attempting to activate an already active session\n");
+				return;
+			}
+
 			printf("activating!\n");
 			session_activated = true;
 			handshakeTimer->stop();
@@ -1066,8 +1072,11 @@ private slots:
 			}
 		}
 
-		ice_connected = true;
-		after_ice_connected();
+		if(allReady)
+		{
+			ice_connected = true;
+			after_ice_connected();
+		}
 	}
 
 	void task_finished()
