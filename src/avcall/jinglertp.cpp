@@ -269,6 +269,7 @@ public:
 	bool prov_accepted;
 	bool ice_connected;
 	bool session_accepted;
+	bool session_activated;
 	QTimer *handshakeTimer;
 	JingleRtp::Error errorCode;
 
@@ -285,7 +286,8 @@ public:
 		local_media_ready(false),
 		prov_accepted(false),
 		ice_connected(false),
-		session_accepted(false)
+		session_accepted(false),
+		session_activated(false)
 	{
 		connect(&resolver, SIGNAL(finished()), SLOT(resolver_finished()));
 
@@ -931,9 +933,10 @@ private:
 
 	void tryActivated()
 	{
-		if(session_accepted && ice_connected)
+		if(session_accepted && ice_connected && !session_activated)
 		{
 			printf("activating!\n");
+			session_activated = true;
 			handshakeTimer->stop();
 
 			if(iceA)
