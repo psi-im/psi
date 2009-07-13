@@ -29,7 +29,7 @@
 #include <QStringList>
 #include <QTimer>
 #include <QPair>
-#include <QDebug>
+#include <QtDebug>
 
 #include "capsregistry.h"
 #include "capsmanager.h"
@@ -128,7 +128,7 @@ void CapsManager::updateCaps(const Jid& jid, const QString& node, const QString&
 		}
 		else {
 			// Remove all caps specifications
-			qWarning(QString("caps.cpp: Illegal caps info from %1: node=%2, ver=%3").arg(QString(jid.full()).replace('%',"%%")).arg(node).arg(ver).toAscii());
+			qWarning() << QString("caps.cpp: Illegal caps info from %1: node=%2, ver=%3").arg(QString(jid.full()).replace('%',"%%")).arg(node).arg(ver);
 			capsSpecs_.remove(jid.full());
 		}
 	}
@@ -180,7 +180,7 @@ void CapsManager::getDiscoInfo_success(const XMPP::Jid& jid, const QString& node
 
 void CapsManager::getDiscoInfo_error(const XMPP::Jid& jid, const QString& node, int, const QString&)
 {
-	qWarning(QString("capsmanager.cpp: Disco to '%1' at node '%2' failed.").arg(jid.full()).arg(node).toAscii());
+	qWarning() << QString("capsmanager.cpp: Disco to '%1' at node '%2' failed.").arg(jid.full()).arg(node);
 }
 
 

@@ -27,6 +27,7 @@
 
 #include <QDir>
 #include <QCoreApplication>
+#include <QtDebug>
 
 #include "aspell.h"
 #include "aspellchecker.h"
@@ -47,7 +48,7 @@ ASpellChecker::ASpellChecker()
 		speller_ = to_aspell_speller(ret);
 	}
 	else {
-		qWarning(QString("Aspell error: %1").arg(aspell_error_message(ret)).toAscii());
+		qWarning() << QString("Aspell error: %1").arg(aspell_error_message(ret));
 	}
 }
 
