@@ -1,6 +1,6 @@
 Psi 0.13-dev
 ------------
-Date: May 18th, 2009
+Date: Jul 9th, 2009
 
 Maintainers:
   Justin Karneges (2001-2004, 2009-current)
@@ -23,6 +23,7 @@ Known Issues
 The following are known issues with this release:
 Issues with Qt 4.5.0: Hang on exit, hang when using GnuPG.
 Issues with QCA <2.0.2 + Qt 4.5: Hang on exit.
+Issues with qca-gnupg <2.0.0-beta3 + Qt 4.5: Hang when using GnuPG.
 
 
 Notes
@@ -33,12 +34,12 @@ Notes
       functionality of Psi.
 
   - Voice Calling --
-    * The PsiMedia 1.0.x plugin is needed to activate the voice calling
-      feature.  Source and builds can be found at:
+    * The PsiMedia 1.0.x plugin and the qca-ossl plugin are needed to activate
+      the voice calling feature.  Source and builds of PsiMedia be found at:
         http://delta.affinix.com/psimedia/
       On Windows, place gstprovider.dll into the base directory.
       On Mac, place libgstprovider.dylib into Psi.app/Contents/plugins
-      On Linux, place libgstprovider.so into $LIBDIR/psi/plugins
+      On Linux, place libgstprovider.so into LIBDIR/psi/plugins
 
   - Upgrading to 0.12 --
     * During the upgrade process, the old config.xml configuration file will

@@ -909,6 +909,11 @@ void AvCallManager::config()
 bool AvCallManager::isSupported()
 {
 	ensureLoaded();
+	if(!QCA::isSupported("hmac(sha1)"))
+	{
+		printf("hmac support missing for voice calls, install qca-ossl\n");
+		return false;
+	}
 	return PsiMedia::isSupported();
 }
 
