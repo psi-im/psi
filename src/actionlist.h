@@ -21,14 +21,16 @@
 #ifndef ACTIONLIST_H
 #define ACTIONLIST_H
 
+#include <QObject>
 #include <QList>
 
 class QString;
 class QStringList;
 class IconAction;
 
-class ActionList
+class ActionList : public QObject
 {
+	Q_OBJECT
 public:
 	ActionList(QString name, int id, bool autoDelete = true);
 	ActionList(const ActionList &);
@@ -50,8 +52,9 @@ private:
 	Private *d;
 };
 
-class MetaActionList
+class MetaActionList : public QObject
 {
+	Q_OBJECT
 public:
 	MetaActionList();
 	~MetaActionList();

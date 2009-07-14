@@ -19,10 +19,12 @@
  */
 
 #include "psiactionlist.h"
+
+#include <QObject>
+#include <QPointer>
+
 #include "iconset.h"
 #include "psioptions.h"
-
-#include <qobject.h>
 
 #include "mainwin_p.h"
 
@@ -40,6 +42,7 @@ public:
 private:
 	PsiActionList *list;
 	PsiCon *psi;
+	QPointer<ActionList> statusActionList;
 
 	void createCommon();
 	void createMainWin();
@@ -55,7 +58,7 @@ private:
 		IconAction *action;
 	};
 
-	void createActionList( QString name, int id, ActionNames * );
+	ActionList* createActionList( QString name, int id, ActionNames * );
 
 private slots:
 	void optionsChanged();
@@ -85,7 +88,7 @@ PsiActionList::Private::~Private()
 	list->clear();
 }
 
-void PsiActionList::Private::createActionList( QString name, int id, ActionNames *actionlist )
+ActionList* PsiActionList::Private::createActionList( QString name, int id, ActionNames *actionlist )
 {
 	ActionList *actions = new ActionList( name, id, false );
 
@@ -97,6 +100,7 @@ void PsiActionList::Private::createActionList( QString name, int id, ActionNames
 	}
 
 	list->addList( actions );
+	return actions;
 }
 
 void PsiActionList::Private::createCommon()
@@ -312,7 +316,7 @@ void PsiActionList::Private::createMainWin()
 			{ "", 0 }
 		};
 
-		createActionList( tr( "Status" ), Actions_MainWin, actions );
+		statusActionList = createActionList( tr( "Status" ), Actions_MainWin, actions );
 	}
 
 	{
@@ -401,10 +405,12 @@ void PsiActionList::Private::createGroupchat()
 
 void PsiActionList::Private::optionsChanged()
 {
-	ActionList *statusList = list->actionList(tr("Status"));
-	statusList->action("status_chat")->setVisible(PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool());
-	statusList->action("status_xa")->setVisible(PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool());
-	statusList->action("status_invisible")->setVisible(PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool());
+	Q_ASSERT(!statusActionList.isNull());
+	if (statusActionList.isNull())
+		return;
+	statusActionList->action("status_chat")->setVisible(PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool());
+	statusActionList->action("status_xa")->setVisible(PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool());
+	statusActionList->action("status_invisible")->setVisible(PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool());
 }
 
 //----------------------------------------------------------------------------

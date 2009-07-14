@@ -48,6 +48,7 @@ public slots:
 };
 
 ActionList::ActionList( QString name, int id, bool autoDelete )
+	: QObject()
 {
 	d = new Private();
 	d->actions.setAutoDelete( autoDelete );
@@ -137,6 +138,7 @@ public:
 };
 
 MetaActionList::MetaActionList()
+	: QObject()
 {
 	d = new Private();
 }
