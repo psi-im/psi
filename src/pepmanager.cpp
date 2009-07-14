@@ -19,6 +19,8 @@
  */
  
 #include "pepmanager.h"
+
+#include <QtDebug>
 #include "xmpp_xmlcommon.h"
 #include "xmpp_tasks.h"
 #include "serverinfomanager.h"
@@ -581,7 +583,7 @@ void PEPManager::publishFinished()
 		emit publish_success(task->node(),task->item());
 	}
 	else {
-		qWarning(QString("[%3] PEP Publish failed: '%1' (%2)").arg(task->statusString()).arg(QString::number(task->statusCode())).arg(client_->jid().full()));
+		qWarning() << QString("[%3] PEP Publish failed: '%1' (%2)").arg(task->statusString()).arg(QString::number(task->statusCode())).arg(client_->jid().full());
 		emit publish_error(task->node(),task->item());
 	}
 }
@@ -627,7 +629,7 @@ void PEPManager::getFinished()
 		}
 	}
 	else {
-		qWarning(QString("[%3] PEP Get failed: '%1' (%2)").arg(task->statusString()).arg(QString::number(task->statusCode())).arg(client_->jid().full()));
+		qWarning() << QString("[%3] PEP Get failed: '%1' (%2)").arg(task->statusString()).arg(QString::number(task->statusCode())).arg(client_->jid().full());
 	}
 }
 

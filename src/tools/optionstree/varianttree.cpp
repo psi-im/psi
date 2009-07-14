@@ -27,6 +27,7 @@
 #include <QDomDocumentFragment>
 #include <QKeySequence>
 #include <QStringList>
+#include <QtDebug>
 #include "xmpp/base64/base64.h"
 
 using namespace XMPP;
@@ -114,7 +115,7 @@ void VariantTree::setValue(QString node, QVariant value)
 		{
 			if (values_.contains(key))
 			{
-				qWarning(qPrintable(QString("Error: Trying to add option node %1 but it already exists as a value").arg(key)));
+				qWarning() << QString("Error: Trying to add option node %1 but it already exists as a value").arg(key);
 				return;
 			}
 			//create a new tier
@@ -127,7 +128,7 @@ void VariantTree::setValue(QString node, QVariant value)
 		Q_ASSERT(isValidNodeName(node));
 		if (trees_.contains(node))
 		{
-			qWarning(qPrintable(QString("Error: Trying to add option value %1 but it already exists as a subtree").arg(node)));
+			qWarning() << QString("Error: Trying to add option value %1 but it already exists as a subtree").arg(node);
 			return;
 		}
 		values_[node]=value;
@@ -214,7 +215,7 @@ void VariantTree::setComment(QString node, QString comment)
 		{
 			if (values_.contains(key))
 			{
-				qWarning(qPrintable(QString("Error: Trying to add option node %1 but it already exists as a value").arg(key)));
+				qWarning() << QString("Error: Trying to add option node %1 but it already exists as a value").arg(key);
 				return;
 			}
 			//create a new tier

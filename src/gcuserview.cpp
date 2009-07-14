@@ -24,6 +24,7 @@
 #include <Q3Header>
 #include <Q3TextDrag>
 #include <Q3PopupMenu>
+#include <QtDebug>
 
 #include "capsmanager.h"
 #include "psitooltip.h"
@@ -327,7 +328,7 @@ void GCUserView::qlv_contextMenuRequested(Q3ListViewItem *i, const QPoint &pos, 
 	bool self = gcDlg_->nick() == i->text(0);
 	GCUserViewItem* c = (GCUserViewItem*) findEntry(gcDlg_->nick());
 	if (!c) {
-		qWarning(QString("groupchatdlg.cpp: Self ('%1') not found in contactlist").arg(gcDlg_->nick()));
+		qWarning() << QString("groupchatdlg.cpp: Self ('%1') not found in contactlist").arg(gcDlg_->nick());
 		return;
 	}
 	Q3PopupMenu *pm = new Q3PopupMenu;
