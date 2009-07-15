@@ -1090,6 +1090,33 @@ public:
 		return true;
 	}
 };
+#line 1 "recursiveprl.qcm"
+/*
+-----BEGIN QCMOD-----
+name: recursively generate prl files
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_recursiveprl
+//----------------------------------------------------------------------------
+class qc_recursiveprl : public ConfObj
+{
+public:
+	qc_recursiveprl(Conf *c) : ConfObj(c) {}
+	QString name() const { return "recursively generate prl files"; }
+	QString shortname() const { return "recursiveprl"; }
+	QString checkString() const { return QString(); }
+	bool exec()
+	{
+		QStringList args;
+		args += "-prl";
+		args += "-r";
+		args += qc_getenv("QC_PROFILE");
+		conf->doCommand(conf->qmake_path, args);
+		return true;
+	}
+};
 #line 1 "conf.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -1164,6 +1191,9 @@ cat >$1/modules_new.cpp <<EOT
     o->required = false;
     o->disabled = false;
     o = new qc_debug(conf);
+    o->required = true;
+    o->disabled = false;
+    o = new qc_recursiveprl(conf);
     o->required = true;
     o->disabled = false;
     o = new qc_conf(conf);

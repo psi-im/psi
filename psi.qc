@@ -32,6 +32,9 @@
   <dep type='debug'>
     <required/>
   </dep>
+  <dep type='recursiveprl'>
+    <required/>
+  </dep>
   <dep type='conf'>
     <required/>
   </dep>
