@@ -1,4 +1,4 @@
-Psi 0.13-dev
+Psi 0.14-dev
 ------------
 Date: Jul 9th, 2009
 
@@ -61,7 +61,7 @@ Changes
   New in 0.13
   - Voice calls (Jingle RTP).
   - Basic XMPP URI handler.
-  - Ability to permanantly trust certificates at connect time.
+  - Ability to permanently trust certificates at connect time.
   - Mini command system (Ctrl+7 in chat window).
   - Various bugfixes.
 

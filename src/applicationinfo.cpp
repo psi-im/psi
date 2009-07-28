@@ -26,8 +26,8 @@
 // Should also be overridable through an optional file.
 
 #define PROG_NAME "Psi"
-#define PROG_VERSION "0.13-dev" " (" __DATE__ ")"; //CVS Builds are dated
-//#define PROG_VERSION "0.12";
+#define PROG_VERSION "0.14-dev" " (" __DATE__ ")"; //CVS Builds are dated
+//#define PROG_VERSION "0.14";
 #define PROG_CAPS_NODE "http://psi-im.org/caps";
 #define PROG_CAPS_VERSION "0.13-dev-rev2";
 #define PROG_IPC_NAME "org.psi-im.Psi"	// must not contain '\\' character on Windows
