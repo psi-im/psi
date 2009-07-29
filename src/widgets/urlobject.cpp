@@ -66,7 +66,7 @@ public:
 		act_add_to_roster = new IconAction(tr, "psi/addContact", tr, 0, this);
 		connectXmppAction(act_add_to_roster, "roster");
 
-		tr = qApp->translate("URLLabel", "Send massage to");
+		tr = qApp->translate("URLLabel", "Send message to");
 		act_send_message = new IconAction(tr, "psi/message", tr, 0, this);
 		connectXmppAction(act_send_message, "message");
 		
