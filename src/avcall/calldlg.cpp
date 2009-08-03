@@ -53,6 +53,8 @@ public:
 	bool activated;
 	AvCall *sess;
 	PsiMedia::VideoWidget *vw_remote;
+	QTime duration;
+	QTimer *durationTimer;
 
 	Private(CallDlg *_q) :
 		QObject(_q),
@@ -63,6 +65,9 @@ public:
 	{
 		ui.setupUi(q);
 		q->setWindowTitle(tr("Voice Call"));
+
+		// ###cuda
+		ui.busy->hide();
 
 		ui.lb_bandwidth->setEnabled(false);
 		ui.cb_bandwidth->setEnabled(false);
@@ -87,6 +92,10 @@ public:
 		ui.pb_accept->setDefault(true);
 		ui.pb_accept->setFocus();
 
+		durationTimer = new QTimer(this);
+		connect(durationTimer, SIGNAL(timeout()), SLOT(duration_timeout()));
+		durationTimer->setInterval(1000);
+
 		q->resize(q->minimumSizeHint());
 	}
 
@@ -99,6 +108,7 @@ public:
 
 			sess->setIncomingVideo(0);
 			sess->disconnect(this);
+			sess->unlink();
 			sess->deleteLater();
 		}
 	}
@@ -212,7 +222,9 @@ private slots:
 		ui.busy->hide();
 		ui.pb_accept->hide();
 		ui.pb_reject->setText(tr("&Hang up"));
-		ui.lb_status->setText(tr("Call active"));
+		duration.start();
+		duration_timeout();
+		durationTimer->start();
 		activated = true;
 	}
 
@@ -221,8 +233,17 @@ private slots:
 		if(!activated)
 			ui.busy->stop();
 
+		durationTimer->stop();
+
 		QMessageBox::information(q, tr("Call ended"), sess->errorString());
 		q->close();
+	}
+
+	void duration_timeout()
+	{
+		QTime cur(0, 0);
+		cur = cur.addMSecs(duration.elapsed());
+		ui.lb_status->setText(tr("Call active") + ": " + cur.toString());
 	}
 };
 
@@ -241,14 +262,24 @@ CallDlg::~CallDlg()
 	delete d;
 }
 
-void CallDlg::setOutgoing(const XMPP::Jid &jid)
+void CallDlg::setOutgoing(const XMPP::Jid &jid, bool autoCall)
 {
 	d->setOutgoing(jid);
+	if(autoCall)
+	{
+		d->ui.pb_accept->hide();
+		QMetaObject::invokeMethod(d, "ok_clicked", Qt::QueuedConnection);
+	}
 }
 
-void CallDlg::setIncoming(AvCall *sess)
+void CallDlg::setIncoming(AvCall *sess, bool autoAccept)
 {
 	d->setIncoming(sess);
+	if(autoAccept)
+	{
+		d->ui.pb_accept->hide();
+		QMetaObject::invokeMethod(d, "ok_clicked", Qt::QueuedConnection);
+	}
 }
 
 #include "calldlg.moc"

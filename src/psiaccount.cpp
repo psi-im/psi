@@ -3728,7 +3728,7 @@ void PsiAccount::actionVoice(const Jid &j)
 
 	CallDlg *w = new CallDlg(this, 0);
 	w->setAttribute(Qt::WA_DeleteOnClose);
-	w->setOutgoing(j2);
+	w->setOutgoing(j2, true);
 	w->show();
 /*
 	Q_ASSERT(voiceCaller() != NULL);
@@ -4678,17 +4678,22 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 			r = *(u->priority());
 		}
 
+		// ###cuda: here we make it so AlertAvCall is always used
+		//   as a psi popup (it's not optional), and make sure it is
+		//   never used as a growl
+
 		if ((popupType == PsiPopup::AlertChat     && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-chat").toBool())     ||
 		    (popupType == PsiPopup::AlertMessage  && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool())  ||
 		    (popupType == PsiPopup::AlertHeadline && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-headline").toBool()) ||
 		    (popupType == PsiPopup::AlertFile     && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-file-transfer").toBool()) ||
-		    (popupType == PsiPopup::AlertAvCall   && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool()))
+		    (popupType == PsiPopup::AlertAvCall   /*&& PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool()*/))
 		{
 			PsiPopup *popup = new PsiPopup(popupType, this);
 			popup->setData(j, r, u, e);
 		}
 #if defined(Q_WS_MAC) && defined(HAVE_GROWL)
-		PsiGrowlNotifier::instance()->popup(this, popupType, j, r, u, e);
+		if (popupType != PsiPopup::AlertAvCall)
+			PsiGrowlNotifier::instance()->popup(this, popupType, j, r, u, e);
 #endif
 		emit startBounce();
 	}

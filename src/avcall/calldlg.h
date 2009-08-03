@@ -37,8 +37,8 @@ public:
 	CallDlg(PsiAccount *pa, QWidget *parent = 0);
 	~CallDlg();
 
-	void setOutgoing(const XMPP::Jid &jid);
-	void setIncoming(AvCall *sess);
+	void setOutgoing(const XMPP::Jid &jid, bool autoCall);
+	void setIncoming(AvCall *sess, bool autoAccept);
 
 private:
 	class Private;

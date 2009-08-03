@@ -496,8 +496,17 @@ bool PsiCon::init()
 	}
 
 #ifdef Q_OS_MAC
-	// force disable on mac, where we have growl instead
-	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.enabled", false);
+	// for mac, we want to force disable all popups except for avcall.
+	//   the way to do this to enable popups, and then disable every other
+	//   type
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.enabled", true);
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.incoming-chat", false);
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.incoming-file-transfer", false);
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.incoming-headline", false);
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.incoming-message", false);
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.status.online", false);
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.status.offline", false);
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.status.other-changes", false);
 #endif
 
 	// chat.auto-popup, message.auto-popup-headlines, file-transfer.auto-popup = message.auto-popup
@@ -1443,20 +1452,40 @@ void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 			FileRequestDlg *w = new FileRequestDlg(fe->timeStamp(), ft, e->account());
 			bringToFront(w);
 		}
+		delete e;
 		return;
 	}
 
 	if(e->type() == PsiEvent::AvCallType) {
-		AvCallEvent *ae = (AvCallEvent *)e;
-		AvCall *sess = ae->takeAvCall();
+		bool rejected, autoAccept;
+		AvCall *sess;
+		PsiAccount *pa;
+
+		// take what we need from the event, and remove it
+		{
+			AvCallEvent *ae = (AvCallEvent *)e;
+			rejected = ae->rejected();
+			autoAccept = ae->autoAcceptEnabled();
+			sess = ae->takeAvCall();
+			pa = e->account();
+		}
 		e->account()->eventQueue()->dequeue(e);
 		e->account()->queueChanged();
 		e->account()->cpUpdate(*u);
+		delete e;
+
 		if(sess) {
+			if(rejected) {
+				if(!sess->jid().isEmpty())
+					sess->reject();
+				delete sess;
+				return;
+			}
+
 			if(!sess->jid().isEmpty()) {
-				CallDlg *w = new CallDlg(e->account(), 0);
+				CallDlg *w = new CallDlg(pa, 0);
 				w->setAttribute(Qt::WA_DeleteOnClose);
-				w->setIncoming(sess);
+				w->setIncoming(sess, autoAccept);
 				bringToFront(w);
 			}
 			else {
