@@ -120,7 +120,18 @@ void PsiChatDlgB::initUi()
 	replaceWidget(ui_.avatar, bf);
 	//w_vb->addWidget(bf);
 	ui_.mle->setParent(bf);
-	hb = new QHBoxLayout(bf);
+	QVBoxLayout *bfvb = new QVBoxLayout(bf);
+	hb = new QHBoxLayout;
+	bfvb->addLayout(hb);
+	QToolButton *tb_act_file = new QToolButton(bf);
+	QToolButton *tb_act_call = new QToolButton(bf);
+	tb_act_file->setIcon(get_icon_file());
+	tb_act_call->setIcon(get_icon_call());
+	hb->addWidget(tb_act_file);
+	hb->addWidget(tb_act_call);
+	hb->addStretch();
+	hb = new QHBoxLayout;
+	bfvb->addLayout(hb);
 	hb->addWidget(ui_.mle);
 	vb = new QVBoxLayout;
 	hb->addLayout(vb);
@@ -154,6 +165,9 @@ void PsiChatDlgB::initUi()
 	initToolBar();
 	updateAvatar();
 
+	connect(tb_act_file, SIGNAL(clicked()), act_file_, SLOT(trigger()));
+	connect(tb_act_call, SIGNAL(clicked()), act_voice_, SLOT(trigger()));
+
 	UserListItem* u = account()->findFirstRelevant(jid());
 	if (u && u->isSecure(jid().resource())) {
 		setPGPEnabled(true);
@@ -173,6 +187,8 @@ void PsiChatDlgB::initUi()
 	cuda_applyTheme(ui_.log);
 	cuda_applyTheme(ui_.mle);
 	cuda_applyTheme(ui_.tb_actions);
+	cuda_applyTheme(tb_act_file);
+	cuda_applyTheme(tb_act_call);
 
 	QList<int> list;
 	list << 324;
@@ -270,7 +286,7 @@ void PsiChatDlgB::initToolButtons()
 	//act_voice_ = new IconAction(tr("Voice Call"), "psi/voice", tr("Voice Call"), 0, this);
 	act_voice_ = new IconAction(tr("Voice Call"), tr("Voice Call"), 0, this);
 	connect(act_voice_, SIGNAL(activated()), SLOT(doVoice()));
-	act_voice_->setEnabled(false);
+	//act_voice_->setEnabled(false);
 
 	//act_file_ = new IconAction(tr("Send file"), "psi/upload", tr("Send file"), 0, this);
 	act_file_ = new IconAction(tr("Send file"), tr("Send file"), 0, this);
