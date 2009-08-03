@@ -33,6 +33,9 @@ public:
 	FancyPopup(QString title, const PsiIcon *icon = 0, FancyPopup *prev = 0, bool copyIcon = true);
 	~FancyPopup();
 
+	// default true, set to false for avcall
+	void setAutoHideEnabled(bool enabled);
+
 	void addLayout(QLayout *layout, int stretch = 0);
 
 	static void setHideTimeout(int);

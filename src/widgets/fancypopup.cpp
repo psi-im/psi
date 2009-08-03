@@ -118,6 +118,7 @@ public:
 	QList<FancyPopup *> prevPopups;
 	QBoxLayout *layout;
 	FancyPopup *popup;
+	bool autoHide;
 	QTimer *hideTimer;
 };
 
@@ -129,6 +130,7 @@ FancyPopup::Private::Private(FancyPopup *p)
 {
 	popup = p;
 
+	autoHide = true;
 	hideTimer = new QTimer(this);
 	connect(hideTimer, SIGNAL(timeout()), popup, SLOT(hide()));
 }
@@ -323,7 +325,11 @@ bool FancyPopup::Private::eventFilter(QObject *o, QEvent *e)
 //----------------------------------------------------------------------------
 
 static const QFlags<Qt::WindowType> 
+#ifdef Q_WS_MAC
+POPUP_FLAGS = Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint;
+#else
 POPUP_FLAGS = Qt::ToolTip | Qt::WindowStaysOnTopHint; // | Qt::X11BypassWindowManagerHint | Qt::FramelessWindowHint;
+#endif
 
 FancyPopup::FancyPopup(QString title, const PsiIcon *icon, FancyPopup *prev, bool copyIcon)
 : QFrame( 0, POPUP_FLAGS )
@@ -349,6 +355,11 @@ FancyPopup::~FancyPopup()
 {
 }
 
+void FancyPopup::setAutoHideEnabled(bool enabled)
+{
+	d->autoHide = enabled;
+}
+
 void FancyPopup::addLayout(QLayout *layout, int stretch)
 {
 	d->layout->addLayout(layout, stretch);
@@ -369,7 +380,8 @@ void FancyPopup::show()
 	move ( d->position() );
 
 	// display popup
-	restartHideTimer();
+	if(d->autoHide)
+		restartHideTimer();
 	QFrame::show();
 }
 
@@ -387,7 +399,8 @@ void FancyPopup::mouseReleaseEvent(QMouseEvent *e)
 		return;
 
 	emit clicked((int)e->button());
-	hide();
+	if(d->autoHide) // hackish, since this is not really an auto hide
+		hide();
 }
 
 void FancyPopup::restartHideTimer()
