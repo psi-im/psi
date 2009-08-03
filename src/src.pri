@@ -238,7 +238,8 @@ HEADERS += \
 	$$PWD/cudatasks.h \
 	$$PWD/simplesearch.h \
 	$$PWD/simpleprivacymanager.h \
-	$$PWD/invitedlg.h
+	$$PWD/invitedlg.h \
+	$$PWD/ringsound.h
 
 # Source files
 SOURCES += \
@@ -366,7 +367,8 @@ SOURCES += \
 	$$PWD/cudatasks.cpp \
 	$$PWD/simplesearch.cpp \
 	$$PWD/simpleprivacymanager.cpp \
-	$$PWD/invitedlg.cpp
+	$$PWD/invitedlg.cpp \
+	$$PWD/ringsound.cpp
 
 whiteboarding {
 	# Whiteboarding support. Still experimental.
