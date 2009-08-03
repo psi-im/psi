@@ -12,12 +12,12 @@
 #include "common.h"
 
 // adapted from common.h
-static void soundPlay2(const QString &s, QSound *sound)
+static QSound *soundPlay2(const QString &s, QObject *parent)
 {
 	QString str = s;
 	if(str == "!beep") {
 		QApplication::beep();
-		return;
+		return 0;
 	}
 
 	if (!QDir::isRelativePath(str)) {
@@ -25,13 +25,14 @@ static void soundPlay2(const QString &s, QSound *sound)
 	}
 
 	if(!QFile::exists(str))
-		return;
+		return 0;
 
 #if defined(Q_WS_WIN) || defined(Q_WS_MAC)
-	if(sound)
-		sound->play(str);
+	QSound *sound = new QSound(str, parent);
+	sound->play();
+	return sound;
 #else
-	Q_UNUSED(sound);
+	Q_UNUSED(parent);
 	QString player = PsiOptions::instance()->getOption("options.ui.notifications.sounds.unix-sound-player").toString();
 	if (player == "") player = soundDetectPlayer();
 	QStringList args;
@@ -39,6 +40,7 @@ static void soundPlay2(const QString &s, QSound *sound)
 	args += str;
 	QString prog = args.takeFirst();
 	QProcess::startDetached(prog, args);
+	return 0;
 #endif
 }
 
@@ -63,10 +65,6 @@ public:
 
 		t = new QTimer(this);
 		connect(t, SIGNAL(timeout()), SLOT(t_timeout()));
-
-#if defined(Q_WS_WIN) || defined(Q_WS_MAC)
-		sound = new QSound(this);
-#endif
 	}
 
 	void start()
@@ -92,7 +90,12 @@ public:
 		// if there's a sound playing, stop it immediately.
 		// FIXME: make sound stopping work on linux
 		if(sound)
+		{
 			sound->stop();
+			sound->setParent(0);
+			sound->deleteLater();
+			sound = 0;
+		}
 		t->stop();
 	}
 
@@ -108,12 +111,12 @@ private slots:
 		if(mode == RingSound::Outgoing)
 		{
 			//printf("...ring...\n");
-			soundPlay2("sound/ring_outgoing.wav", sound);
+			sound = soundPlay2("sound/ring_outgoing.wav", this);
 		}
 		else
 		{
 			//printf("*burrriiinngg*\n");
-			soundPlay2("sound/ring_incoming.wav", sound);
+			sound = soundPlay2("sound/ring_incoming.wav", this);
 		}
 
 		if(ringCount == 0 && mode == RingSound::Outgoing)
