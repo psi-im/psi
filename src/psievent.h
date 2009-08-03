@@ -287,9 +287,17 @@ public:
 
 	virtual PsiEvent *copy() const;
 
+	bool autoAcceptEnabled() const;
+	void setAutoAcceptEnabled(bool enabled);
+
+	bool rejected() const;
+	void setRejected(bool b);
+
 private:
 	XMPP::Jid v_from;
 	QPointer<AvCall> sess;
+	bool autoAccept;
+	bool rejected_;
 };
 
 class EventItem

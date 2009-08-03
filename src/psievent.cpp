@@ -618,6 +618,8 @@ AvCallEvent::AvCallEvent(const XMPP::Jid &j, AvCall *_sess, PsiAccount *acc)
 {
 	v_from = j;
 	sess = _sess;
+	autoAccept = false;
+	rejected_ = false;
 }
 
 AvCallEvent::AvCallEvent(const AvCallEvent &from)
@@ -662,6 +664,26 @@ QString AvCallEvent::description() const
 PsiEvent *AvCallEvent::copy() const
 {
 	return new AvCallEvent(*this);
+}
+
+bool AvCallEvent::autoAcceptEnabled() const
+{
+	return autoAccept;
+}
+
+void AvCallEvent::setAutoAcceptEnabled(bool enabled)
+{
+	autoAccept = enabled;
+}
+
+bool AvCallEvent::rejected() const
+{
+	return rejected_;
+}
+
+void AvCallEvent::setRejected(bool b)
+{
+	rejected_ = b;
 }
 
 //----------------------------------------------------------------------------

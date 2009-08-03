@@ -74,6 +74,8 @@ private slots:
 	void popupDestroyed();
 	void popupClicked(int);
 	void eventDestroyed();
+	void call_accept();
+	void call_reject();
 
 public:
 	PsiCon *psi;
@@ -155,6 +157,9 @@ void PsiPopup::Private::popupDestroyed()
 
 void PsiPopup::Private::popupClicked(int button)
 {
+	if (popupType == AlertAvCall)
+		return;
+
 	if ( button == (int)Qt::LeftButton ) {
 		if ( event )
 			psi->processEvent(event, UserAction);
@@ -217,6 +222,29 @@ QBoxLayout *PsiPopup::Private::createContactInfo(const PsiIcon *icon, QString te
 	dataBox->addWidget(textLabel);
 
 	return dataBox;
+}
+
+void PsiPopup::Private::call_accept()
+{
+	AvCallEvent *avevent = (AvCallEvent *)event;
+	// set this flag so that calldlg will immediately accept call after
+	//   opening the event, so the user doesn't have to click accept a
+	//   second time
+	avevent->setAutoAcceptEnabled(true);
+	psi->processEvent(event, UserAction);
+	popup->hide();
+}
+
+void PsiPopup::Private::call_reject()
+{
+	AvCallEvent *avevent = (AvCallEvent *)event;
+	// since we don't really have the concept of rejecting events, we'll
+	//   flag the event as "rejected" and then open the event normally.
+	//   the event handler can then inspect the flag and simply do nothing
+	//   with the event if it is marked as rejected.
+	avevent->setRejected(true);
+	psi->processEvent(event, UserAction);
+	popup->hide();
 }
 
 //----------------------------------------------------------------------------
@@ -377,7 +405,7 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
 
 	// ###cuda
 	// show popup
-	if ( d->popupType != AlertHeadline && d->popupType != AlertChat && d->popupType != AlertMessage && (d->popupType != AlertFile || !PsiOptions::instance()->getOption("options.ui.file-transfer.auto-popup").toBool()) )
+	if ( d->popupType != AlertAvCall && d->popupType != AlertHeadline && d->popupType != AlertChat && d->popupType != AlertMessage && (d->popupType != AlertFile || !PsiOptions::instance()->getOption("options.ui.file-transfer.auto-popup").toBool()) )
 		setData(icon, contactText);
 	else if ( d->popupType == AlertHeadline || d->popupType == AlertChat || d->popupType == AlertMessage ) {
 		QVBoxLayout *vbox = new QVBoxLayout(0);
@@ -411,6 +439,37 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
 		d->popup->addLayout( vbox );
 		show();
 	}
+	else if ( d->popupType == AlertAvCall ) {
+		QVBoxLayout *vbox = new QVBoxLayout(0);
+		vbox->addLayout( d->createContactInfo(icon, contactText) );
+
+		vbox->addSpacing(5);
+
+		QLabel *messageLabel = new QLabel(d->popup);
+		messageLabel->setText(tr("Accept incoming call?"));
+		vbox->addWidget(messageLabel);
+
+		const AvCallEvent *avevent = (const AvCallEvent *)event;
+
+		QHBoxLayout *hb = new QHBoxLayout;
+		vbox->addLayout(hb);
+		QPushButton *pb_accept = new QPushButton(tr("Accept"), d->popup);
+		connect(pb_accept, SIGNAL(clicked()), d, SLOT(call_accept()));
+		QPushButton *pb_reject = new QPushButton(tr("Reject"), d->popup);
+		connect(pb_reject, SIGNAL(clicked()), d, SLOT(call_reject()));
+		hb->addWidget(pb_accept);
+		hb->addStretch();
+		hb->addWidget(pb_reject);
+
+		// update id
+		if ( icon )
+			d->id += icon->name();
+		d->id += contactText;
+		d->id += avevent->from().full();
+
+		d->popup->addLayout( vbox );
+		show();
+	}
 }
 
 void PsiPopup::show()
@@ -433,6 +492,8 @@ void PsiPopup::show()
 
 	if ( d->display ) {
 		psiPopupList->append( this );
+		if(d->popupType == AlertAvCall)
+			d->popup->setAutoHideEnabled(false);
 		d->popup->show();
 	}
 	else {
