@@ -785,6 +785,7 @@ public:
 		if(c)
 		{
 			c->qobject()->disconnect(this);
+			c->qobject()->setParent(0);
 			enabled = false;
 			c = 0;
 		}
@@ -793,6 +794,7 @@ public:
 			return;
 
 		c = _c;
+		c->qobject()->setParent(this);
 		connect(c->qobject(), SIGNAL(readyRead()), SLOT(c_readyRead()));
 		connect(c->qobject(), SIGNAL(packetsWritten(int)), SLOT(c_packetsWritten(int)));
 		connect(c->qobject(), SIGNAL(destroyed()), SLOT(c_destroyed()));

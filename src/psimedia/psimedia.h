@@ -242,7 +242,6 @@ private:
 	~RtpChannel();
 	Q_DISABLE_COPY(RtpChannel);
 
-	friend class Private;
 	friend class RtpSession;
 	friend class RtpSessionPrivate;
 	friend class RtpChannelPrivate;
