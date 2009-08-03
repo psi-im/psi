@@ -64,6 +64,11 @@ public:
 
 	QString errorString() const;
 
+	// if we use deleteLater() on a call, then it won't detach from the
+	//   manager until the deletion resolves.  use unlink() to immediately
+	//   detach, and then call deleteLater().
+	void unlink();
+
 signals:
 	void activated();
 	void error();

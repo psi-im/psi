@@ -269,6 +269,7 @@ public:
 	bool prov_accepted;
 	bool ice_connected;
 	bool session_accepted;
+	bool session_activated;
 	QTimer *handshakeTimer;
 	JingleRtp::Error errorCode;
 
@@ -285,7 +286,8 @@ public:
 		local_media_ready(false),
 		prov_accepted(false),
 		ice_connected(false),
-		session_accepted(false)
+		session_accepted(false),
+		session_activated(false)
 	{
 		connect(&resolver, SIGNAL(finished()), SLOT(resolver_finished()));
 
@@ -448,7 +450,7 @@ public:
 			if(remoteAudioPayloadTypes.isEmpty() && remoteVideoPayloadTypes.isEmpty())
 				return false;
 		}
-		else if(envelope.action == "session-accept")
+		else if(envelope.action == "session-accept" && !incoming)
 		{
 			const JingleRtpContent *audioContent = 0;
 			const JingleRtpContent *videoContent = 0;
@@ -656,7 +658,7 @@ private:
 		connect(ice, SIGNAL(started()), SLOT(ice_started()));
 		connect(ice, SIGNAL(error()), SLOT(ice_error()));
 		connect(ice, SIGNAL(localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)), SLOT(ice_localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)));
-		connect(ice, SIGNAL(componentReady(int)), SLOT(ice_componentReady(int)));
+		connect(ice, SIGNAL(componentReady(int)), SLOT(ice_componentReady(int)), Qt::QueuedConnection); // signal is not DOR-SS
 
 		// RTP+RTCP
 		ice->setComponentCount(2);
@@ -933,7 +935,14 @@ private:
 	{
 		if(session_accepted && ice_connected)
 		{
+			if(session_activated)
+			{
+				printf("warning: attempting to activate an already active session\n");
+				return;
+			}
+
 			printf("activating!\n");
+			session_activated = true;
 			handshakeTimer->stop();
 
 			if(iceA)
@@ -1063,8 +1072,11 @@ private slots:
 			}
 		}
 
-		ice_connected = true;
-		after_ice_connected();
+		if(allReady)
+		{
+			ice_connected = true;
+			after_ice_connected();
+		}
 	}
 
 	void task_finished()

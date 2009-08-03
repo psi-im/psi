@@ -29,6 +29,7 @@
 #include "../psimedia/psimedia.h"
 #include "applicationinfo.h"
 #include "psiaccount.h"
+#include "ringsound.h"
 
 #define USE_THREAD
 
@@ -374,6 +375,7 @@ public:
 	bool transmitting;
 	AvTransmit *avTransmit;
 	AvTransmitThread *avTransmitThread;
+	RingSound *ringSound;
 
 	AvCallPrivate(AvCall *_q) :
 		QObject(_q),
@@ -392,17 +394,33 @@ public:
 		connect(&rtp, SIGNAL(preferencesUpdated()), SLOT(rtp_preferencesUpdated()));
 		connect(&rtp, SIGNAL(stopped()), SLOT(rtp_stopped()));
 		connect(&rtp, SIGNAL(error()), SLOT(rtp_error()));
+
+		ringSound = new RingSound(this);
 	}
 
 	~AvCallPrivate()
 	{
 		rtp.disconnect(this);
 		cleanup();
-		manager->unlink(q);
+		unlink();
+	}
+
+	void unlink()
+	{
+		if(manager)
+		{
+			// note that the object remains active, just
+			//   dissociated from the manager
+			manager->unlink(q);
+			manager = 0;
+		}
 	}
 
 	void startOutgoing()
 	{
+		if(!manager)
+			return;
+
 		manager->rtpManager->setBasePort(g_config->basePort);
 		manager->rtpManager->setExternalAddress(g_config->extHost);
 
@@ -434,11 +452,20 @@ public:
 			return false;
 		}
 
+		// 20 ring max, in case caller never terminates (could happen
+		//   if caller crashes or something)
+		ringSound->setMode(RingSound::Incoming);
+		ringSound->start(20);
 		return true;
 	}
 
 	void accept()
 	{
+		if(!manager)
+			return;
+
+		ringSound->stop();
+
 		manager->rtpManager->setBasePort(g_config->basePort);
 		manager->rtpManager->setExternalAddress(g_config->extHost);
 
@@ -483,6 +510,8 @@ private:
 
 	void cleanup()
 	{
+		ringSound->stop();
+
 		// if we had a thread, this will move the object back
 		delete avTransmitThread;
 		avTransmitThread = 0;
@@ -603,6 +632,9 @@ private:
 private slots:
 	void rtp_started()
 	{
+		if(!manager)
+			return;
+
 		printf("rtp_started\n");
 
 		PsiMedia::PayloadInfo audio, *pAudio;
@@ -650,6 +682,9 @@ private slots:
 		{
 			sess = manager->rtpManager->createOutgoing();
 			setup_sess();
+
+			ringSound->setMode(RingSound::Outgoing);
+			ringSound->start();
 		}
 
 		if(pAudio)
@@ -718,6 +753,11 @@ private slots:
 
 	void sess_activated()
 	{
+		// FIXME: probably we should stop ringing as soon as we get
+		//   any stanza from the peer, instead of requiring complete
+		//   negotiation?
+		ringSound->stop();
+
 		PsiMedia::RtpChannel *audio = 0;
 		PsiMedia::RtpChannel *video = 0;
 
@@ -810,6 +850,11 @@ QString AvCall::errorString() const
 	return d->errorString;
 }
 
+void AvCall::unlink()
+{
+	d->unlink();
+}
+
 //----------------------------------------------------------------------------
 // AvCallManager
 //----------------------------------------------------------------------------
@@ -884,6 +929,11 @@ void AvCallManager::config()
 bool AvCallManager::isSupported()
 {
 	ensureLoaded();
+	if(!QCA::isSupported("hmac(sha1)"))
+	{
+		printf("hmac support missing for voice calls, install qca-ossl\n");
+		return false;
+	}
 	return PsiMedia::isSupported();
 }
 
