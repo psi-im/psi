@@ -5,7 +5,7 @@
 #
 
 [Meta]
-RootName: @barracuda.com/imclient:4.1.1
+RootName: @barracuda.com/imclient:4.1.2
 DisplayName: Barracuda IM Client
 ShortName: barracudaim
 Maintainer: Justin Karneges <jkarneges@barracuda.com>
@@ -13,7 +13,7 @@ Packager: Justin Karneges <jkarneges@barracuda.com>
 Summary: Barracuda IM Client for the Barracuda IM Firewall
 URL: http://www.barracuda.com/
 License: GNU General Public License, Version 2
-SoftwareVersion: 4.1.1
+SoftwareVersion: 4.1.2
 # SoftwareVersion: @VERSION@
 #Repository: http://www.mysite.org/downloads/myproject.xml
 
