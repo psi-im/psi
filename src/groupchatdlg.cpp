@@ -76,6 +76,7 @@
 #include "psicontactlist.h"
 #include "accountlabel.h"
 #include "gcuserview.h"
+#include "mucreasonseditor.h"
 #include "mcmdmanager.h"
 
 #include "mcmdsimplesite.h"
@@ -1711,6 +1712,32 @@ void GCMainDlg::lv_action(const QString &nick, const Status &s, int x)
 		GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
 		if (contact->s.mucItem().role() != MUCItem::Moderator)
 			d->mucManager->setRole(nick, MUCItem::Moderator);
+	}
+	else if(x >= 100 && x<300) {
+		// Kick || Ban with reason
+		QString reason;
+		QStringList reasons = PsiOptions::instance()->getOption("options.muc.reasons").toStringList();
+		if (x==100 || x==200) {
+			// Show custom reason dialog
+			MUCReasonsEditor *editor=new MUCReasonsEditor(this);
+			if (editor->exec())
+				reason=editor->reason();
+			delete editor;
+		} else {
+			int idx = (x<200) ? x-101 : x-201;
+			if (idx<reasons.count())
+				reason=reasons[idx];
+		}
+		if (!reason.isEmpty()) {
+			if (x<200)
+				d->mucManager->kick(nick, reason);
+			else {
+				GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
+				if (!contact) return;
+				d->mucManager->ban(contact->s.mucItem().jid(), reason);
+			}
+		}
+
 	}
 	/*else if(x == 15) {
 		GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);

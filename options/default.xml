@@ -51,6 +51,7 @@
 				<jids type="QStringList" />
 				<maximum comment="The maximum number of recently joined rooms that should be remembered" type="int">10</maximum>
 			</recent-joins>
+			<reasons type="QStringList" />
 		</muc> 
 		<pgp comment="PGP encryption options">
 			<enable comment="Enable PGP globally" type="bool">true</enable>

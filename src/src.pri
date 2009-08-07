@@ -190,6 +190,7 @@ HEADERS += \
 	$$PWD/mucaffiliationsmodel.h \
 	$$PWD/mucaffiliationsproxymodel.h \
 	$$PWD/mucaffiliationsview.h \
+	$$PWD/mucreasonseditor.h \
 	$$PWD/rosteritemexchangetask.h \
 	$$PWD/mood.h \
 	$$PWD/moodcatalog.h \
@@ -308,6 +309,7 @@ SOURCES += \
 	$$PWD/mucaffiliationsmodel.cpp \
 	$$PWD/mucaffiliationsproxymodel.cpp \
 	$$PWD/mucaffiliationsview.cpp \
+	$$PWD/mucreasonseditor.cpp \
 	$$PWD/rosteritemexchangetask.cpp \
 	$$PWD/mood.cpp \
 	$$PWD/moodcatalog.cpp \
@@ -411,6 +413,7 @@ INTERFACES += \
 	$$PWD/optioneditor.ui \
 	$$PWD/passphrase.ui \
 	$$PWD/mucconfig.ui \
+	$$PWD/mucreasonseditor.ui \
 	$$PWD/xmlconsole.ui \
 	$$PWD/disco.ui \
 	$$PWD/tip.ui \

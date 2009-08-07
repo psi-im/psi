@@ -335,10 +335,34 @@ void GCUserView::qlv_contextMenuRequested(Q3ListViewItem *i, const QPoint &pos, 
 	pm->insertItem(IconsetFactory::icon("psi/sendMessage").icon(), tr("Send &Message"), 0);
 	pm->insertItem(IconsetFactory::icon("psi/start-chat").icon(), tr("Open &Chat Window"), 1);
 	pm->insertSeparator();
-	pm->insertItem(tr("&Kick"),10);
-	pm->setItemEnabled(10, MUCManager::canKick(c->s.mucItem(),lvi->s.mucItem()));
-	pm->insertItem(tr("&Ban"),11);
-	pm->setItemEnabled(11, MUCManager::canBan(c->s.mucItem(),lvi->s.mucItem()));
+
+	// Kick and Ban submenus
+	QStringList reasons = PsiOptions::instance()->getOption("options.muc.reasons").toStringList();
+	int cntReasons=reasons.count();
+	if (cntReasons>99) cntReasons=99; // Only first 99 reasons
+	
+	Q3PopupMenu *kickMenu = new Q3PopupMenu(pm);
+	kickMenu->insertItem(tr("No reason"),10);
+	kickMenu->insertItem(tr("Custom reason"),100);
+	kickMenu->insertSeparator();
+	bool canKick=MUCManager::canKick(c->s.mucItem(),lvi->s.mucItem());
+	for (int i=0; i<cntReasons; ++i)
+		kickMenu->insertItem(reasons[i], 101+i);
+	kickMenu->setEnabled(canKick);
+	
+	Q3PopupMenu *banMenu = new Q3PopupMenu(pm);
+        banMenu->insertItem(tr("No reason"),11);
+	banMenu->insertItem(tr("Custom reason"),200);
+	banMenu->insertSeparator();
+	bool canBan=MUCManager::canBan(c->s.mucItem(),lvi->s.mucItem());
+	for (int i=0; i<cntReasons; ++i)
+		banMenu->insertItem(reasons[i], 201+i);
+	banMenu->setEnabled(canBan);
+
+	pm->insertItem(tr("&Kick"), kickMenu);
+	pm->setItemEnabled(10, canKick);
+	pm->insertItem(tr("&Ban"), banMenu);
+	pm->setItemEnabled(11, canBan);
 
 	Q3PopupMenu* rm = new Q3PopupMenu(pm);
 	rm->insertItem(tr("Visitor"),12);
@@ -372,7 +396,7 @@ void GCUserView::qlv_contextMenuRequested(Q3ListViewItem *i, const QPoint &pos, 
 	pm->insertItem(tr("Check &Status"), 2);
 	pm->insertItem(IconsetFactory::icon("psi/vCard").icon(), tr("User &Info"), 3);
 	int x = pm->exec(pos);
-	bool enabled = pm->isItemEnabled(x) || rm->isItemEnabled(x);
+	bool enabled = pm->isItemEnabled(x) || rm->isItemEnabled(x) || kickMenu->isItemEnabled(x) || banMenu->isItemEnabled(x);
 	delete pm;
 
 	if(x == -1 || !enabled || lvi.isNull())
