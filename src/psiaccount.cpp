@@ -130,6 +130,7 @@
 #include "httppoll.h"
 #include "desktoputil.h"
 #include "cudaskin.h"
+#include "whatismyip.h"
 
 #include "psimedia/psimedia.h"
 #include "avcall/avcall.h"
@@ -417,6 +418,7 @@ public:
 		, xmlRingbufWrite(0)
 		, doPopups_(true)
 		, upgrade_prompting(false)
+		, myip(0)
 	{
 	}
 
@@ -513,6 +515,7 @@ public:
 	bool keep_file;
 	DisclaimerManager disclaimer_manager;
 	bool upgrade_prompting;
+	WhatIsMyIp *myip;
 
 	QString pathToProfileEvents()
 	{
@@ -1077,6 +1080,17 @@ private slots:
 		}
 
 		promptForClientUpgrade(update_message_title, update_message, QString(), -1, QString(), false, upgradeUrl);
+	}
+
+	void myip_addressReady(const QHostAddress &addr)
+	{
+		myip->setParent(0);
+		myip->disconnect(this);
+		myip->deleteLater();
+		myip = 0;
+
+		if(!addr.isNull())
+			PsiOptions::instance()->setOption("options.p2p.bytestreams.external-address", addr.toString());
 	}
 
 public:
@@ -3100,6 +3114,12 @@ void PsiAccount::setStatusActual(const Status &_s)
 			} else {
 				setNick(vcard->fullName());
 			}
+		}
+
+		if(!d->myip && !d->acc.stunHost.isEmpty() && d->acc.stunPort != -1) {
+			d->myip = new WhatIsMyIp(d);
+			connect(d->myip, SIGNAL(addressReady(const QHostAddress &)), d, SLOT(myip_addressReady(const QHostAddress &)));
+			d->myip->start(d->acc.stunHost, d->acc.stunPort);
 		}
 	}
 }

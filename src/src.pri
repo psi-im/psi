@@ -239,7 +239,8 @@ HEADERS += \
 	$$PWD/simplesearch.h \
 	$$PWD/simpleprivacymanager.h \
 	$$PWD/invitedlg.h \
-	$$PWD/ringsound.h
+	$$PWD/ringsound.h \
+	$$PWD/whatismyip.h
 
 # Source files
 SOURCES += \
@@ -368,7 +369,8 @@ SOURCES += \
 	$$PWD/simplesearch.cpp \
 	$$PWD/simpleprivacymanager.cpp \
 	$$PWD/invitedlg.cpp \
-	$$PWD/ringsound.cpp
+	$$PWD/ringsound.cpp \
+	$$PWD/whatismyip.cpp
 
 whiteboarding {
 	# Whiteboarding support. Still experimental.
