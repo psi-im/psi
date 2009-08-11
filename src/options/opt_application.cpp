@@ -132,6 +132,9 @@ void OptionsTabApplication::applyOptions()
 
 	PsiOptions::instance()->setOption("options.ui.look.font.message", d->le_fChat->fontName());
 	PsiOptions::instance()->setOption("options.ui.look.font.chat", d->le_fChat->fontName());
+
+	// data transfer
+	PsiOptions::instance()->setOption("options.p2p.bytestreams.listen-port", d->le_dtPort->text().toInt());
 }
 
 void OptionsTabApplication::restoreOptions()
@@ -156,6 +159,9 @@ void OptionsTabApplication::restoreOptions()
 	d->ck_ignoreHeadline->setChecked( PsiOptions::instance()->getOption("options.messages.ignore-headlines").toBool() );
 
 	d->le_fChat->setFont(PsiOptions::instance()->getOption("options.ui.look.font.chat").toString());
+
+	// data transfer
+	d->le_dtPort->setText( QString::number(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt()) );
 }
 
 #include "opt_application.moc"
