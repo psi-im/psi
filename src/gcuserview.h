@@ -21,7 +21,7 @@
 #ifndef GCUSERVIEW_H
 #define GCUSERVIEW_H
 
-#include <Q3ListView>
+#include <QListWidget>
 
 #include "xmpp_status.h"
 
@@ -35,29 +35,29 @@ namespace XMPP {
 	class Jid;
 }
 
-class GCUserViewItem : public QObject, public Q3ListViewItem
+class GCUserViewItem : public QObject, public QListWidgetItem
 {
 public:
 	GCUserViewItem(GCUserViewGroupItem *);
-	void paintFocus(QPainter *, const QColorGroup &, const QRect &);
-	void paintBranches(QPainter *p, const QColorGroup &cg, int w, int, int h);
+	// void paintFocus(QPainter *, const QColorGroup &, const QRect &);
+	// void paintBranches(QPainter *p, const QColorGroup &cg, int w, int, int h);
 
 	Status s;
 };
 
-class GCUserViewGroupItem : public Q3ListViewItem
+class GCUserViewGroupItem : public QListWidgetItem
 {
 public:
 	GCUserViewGroupItem(GCUserView *, const QString&, int);
-	void paintFocus(QPainter *, const QColorGroup &, const QRect &);
-	void paintBranches(QPainter *p, const QColorGroup &cg, int w, int, int h);
-	void paintCell(QPainter *p, const QColorGroup & cg, int column, int width, int alignment);
-	int compare(Q3ListViewItem *i, int col, bool ascending ) const;
+	// void paintFocus(QPainter *, const QColorGroup &, const QRect &);
+	// void paintBranches(QPainter *p, const QColorGroup &cg, int w, int, int h);
+	// void paintCell(QPainter *p, const QColorGroup & cg, int column, int width, int alignment);
+	int compare(QListWidgetItem *i, int col, bool ascending ) const;
 private:
 	int key_;
 };
 
-class GCUserView : public Q3ListView
+class GCUserView : public QListWidget
 {
 	Q_OBJECT
 public:
@@ -65,11 +65,11 @@ public:
 	~GCUserView();
 
 	void setMainDlg(GCMainDlg* mainDlg);
-	Q3DragObject* dragObject();
+	// Q3DragObject* dragObject();
 	void clear();
 	void updateAll();
 	bool hasJid(const Jid&);
-	Q3ListViewItem *findEntry(const QString &);
+	QListWidgetItem *findEntry(const QString &);
 	void updateEntry(const QString &, const Status &);
 	void removeEntry(const QString &);
 	QStringList nickList() const;
@@ -86,9 +86,9 @@ signals:
 	void insertNick(const QString& nick);
 
 private slots:
-	void qlv_doubleClicked(Q3ListViewItem *);
-	void qlv_contextMenuRequested(Q3ListViewItem *, const QPoint &, int);
-	void qlv_mouseButtonClicked(int button, Q3ListViewItem* item, const QPoint& pos, int c);
+	void qlv_doubleClicked(QListWidgetItem *);
+	void qlv_contextMenuRequested(QListWidgetItem *, const QPoint &, int);
+	void qlv_mouseButtonClicked(int button, QListWidgetItem* item, const QPoint& pos, int c);
 
 private:
 	GCMainDlg* gcDlg_;

@@ -21,10 +21,6 @@
 #include "gcuserview.h"
 
 #include <QPainter>
-#include <Q3Header>
-#include <Q3TextDrag>
-#include <Q3PopupMenu>
-#include <QtDebug>
 
 #include "capsmanager.h"
 #include "psitooltip.h"
@@ -46,32 +42,42 @@ static bool caseInsensitiveLessThan(const QString &s1, const QString &s2)
 
 GCUserViewItem::GCUserViewItem(GCUserViewGroupItem *par)
 	: QObject()
-	, Q3ListViewItem(par)
+	, QListWidgetItem(0)
 {
+#if 0
 	setDragEnabled(true);
+#endif
 }
 
+#if 0
 void GCUserViewItem::paintFocus(QPainter *, const QColorGroup &, const QRect &)
 {
 	// re-implimented to do nothing.  selection is enough of a focus
 }
+#endif
 
+#if 0
 void GCUserViewItem::paintBranches(QPainter *p, const QColorGroup &cg, int w, int, int h)
 {
 	// paint a square of nothing
 	p->fillRect(0, 0, w, h, cg.base());
 }
+#endif
 
 //----------------------------------------------------------------------------
 // GCUserViewGroupItem
 //----------------------------------------------------------------------------
 
 GCUserViewGroupItem::GCUserViewGroupItem(GCUserView *par, const QString& t, int k)
-:Q3ListViewItem(par,t), key_(k)
+:QListWidgetItem(0)
+, key_(k)
 {
+#if 0
 	setDragEnabled(false);
+#endif
 }
 
+#if 0
 void GCUserViewGroupItem::paintCell(QPainter *p, const QColorGroup & cg, int column, int width, int alignment)
 {
 	QColorGroup xcg = cg;
@@ -86,7 +92,7 @@ void GCUserViewGroupItem::paintCell(QPainter *p, const QColorGroup & cg, int col
 			xcg.setColor(QColorGroup::Base, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-background").value<QColor>());
 		#endif
 	}
-	Q3ListViewItem::paintCell(p, xcg, column, width, alignment);
+	QListWidgetItem::paintCell(p, xcg, column, width, alignment);
 	if (PsiOptions::instance()->getOption("options.ui.look.contactlist.use-slim-group-headings").toBool() && !isSelected()) {
 		QFontMetrics fm(p->font());
 		int x = fm.width(text(column)) + 8;
@@ -111,16 +117,19 @@ void GCUserViewGroupItem::paintBranches(QPainter *p, const QColorGroup &cg, int 
 	// paint a square of nothing
 	p->fillRect(0, 0, w, h, cg.base());
 }
+#endif
 
-int GCUserViewGroupItem::compare(Q3ListViewItem *i, int col, bool ascending) const
+int GCUserViewGroupItem::compare(QListWidgetItem *i, int col, bool ascending) const
 {
+#if 0
 	Q_UNUSED(ascending);	// Qt docs say: "your code can safely ignore it"
 
 	if (col == 0)
 		// groups are never compared to users, so static_cast is safe
 		return this->key_ - static_cast<GCUserViewGroupItem*>(i)->key_;
 	else
-		return Q3ListViewItem::compare(i, col, ascending);
+		return QListWidgetItem::compare(i, col, ascending);
+#endif
 }
 
 //----------------------------------------------------------------------------
@@ -128,16 +137,17 @@ int GCUserViewGroupItem::compare(Q3ListViewItem *i, int col, bool ascending) con
 //----------------------------------------------------------------------------
 
 GCUserView::GCUserView(QWidget* parent)
-	: Q3ListView(parent)
+	: QListWidget(parent)
 	, gcDlg_(0)
 {
-	setResizeMode(Q3ListView::AllColumns);
+#if 0
+	setResizeMode(QListWidget::AllColumns);
 	setTreeStepSize(0);
 	setShowToolTips(false);
 	header()->hide();
 	addColumn("");
 	setSortColumn(0);
-	Q3ListViewItem* i;
+	QListWidgetItem* i;
 	i = new GCUserViewGroupItem(this, tr("Visitors"), 3);
 	i->setOpen(true);
 	i = new GCUserViewGroupItem(this, tr("Participants"), 2);
@@ -145,9 +155,10 @@ GCUserView::GCUserView(QWidget* parent)
 	i = new GCUserViewGroupItem(this, tr("Moderators"), 1);
 	i->setOpen(true);
 
-	connect(this, SIGNAL(doubleClicked(Q3ListViewItem *)), SLOT(qlv_doubleClicked(Q3ListViewItem *)));
-	connect(this, SIGNAL(contextMenuRequested(Q3ListViewItem *, const QPoint &, int)), SLOT(qlv_contextMenuRequested(Q3ListViewItem *, const QPoint &, int)));
-	connect(this, SIGNAL(mouseButtonClicked(int, Q3ListViewItem*, const QPoint&, int)), SLOT(qlv_mouseButtonClicked(int, Q3ListViewItem*, const QPoint&, int)));
+	connect(this, SIGNAL(doubleClicked(QListWidgetItem *)), SLOT(qlv_doubleClicked(QListWidgetItem *)));
+	connect(this, SIGNAL(contextMenuRequested(QListWidgetItem *, const QPoint &, int)), SLOT(qlv_contextMenuRequested(QListWidgetItem *, const QPoint &, int)));
+	connect(this, SIGNAL(mouseButtonClicked(int, QListWidgetItem*, const QPoint&, int)), SLOT(qlv_mouseButtonClicked(int, QListWidgetItem*, const QPoint&, int)));
+#endif
 }
 
 GCUserView::~GCUserView()
@@ -159,9 +170,10 @@ void GCUserView::setMainDlg(GCMainDlg* mainDlg)
 	gcDlg_ = mainDlg;
 }
 
+#if 0
 Q3DragObject* GCUserView::dragObject()
 {
-	Q3ListViewItem* it = currentItem();
+	QListWidgetItem* it = currentItem();
 	if (it) {
 		// WARNING: We are assuming that group items can never be dragged
 		GCUserViewItem* u = (GCUserViewItem*) it;
@@ -170,56 +182,68 @@ Q3DragObject* GCUserView::dragObject()
 	}
 	return NULL;
 }
+#endif
 
 void GCUserView::clear()
 {
-	for (Q3ListViewItem *j = firstChild(); j; j = j->nextSibling())
+#if 0
+	for (QListWidgetItem *j = firstChild(); j; j = j->nextSibling())
 		while (GCUserViewItem* i = (GCUserViewItem*) j->firstChild()) {
 			delete i;
 		}
+#endif
 }
 
 void GCUserView::updateAll()
 {
-	for (Q3ListViewItem *j = firstChild(); j; j = j->nextSibling())
+#if 0
+	for (QListWidgetItem *j = firstChild(); j; j = j->nextSibling())
 		for(GCUserViewItem *i = (GCUserViewItem *)j->firstChild(); i; i = (GCUserViewItem *)i->nextSibling())
 			i->setPixmap(0, PsiIconset::instance()->status(i->s).impix());
+#endif
 }
 
 QStringList GCUserView::nickList() const
 {
+#if 0
 	QStringList list;
 
-	for (Q3ListViewItem *j = firstChild(); j; j = j->nextSibling())
-		for(Q3ListViewItem *lvi = j->firstChild(); lvi; lvi = lvi->nextSibling())
+	for (QListWidgetItem *j = firstChild(); j; j = j->nextSibling())
+		for(QListWidgetItem *lvi = j->firstChild(); lvi; lvi = lvi->nextSibling())
 			list << lvi->text(0);
 
 	qSort(list.begin(), list.end(), caseInsensitiveLessThan);
 	return list;
+#endif
 }
 
 bool GCUserView::hasJid(const Jid& jid)
 {
-	for (Q3ListViewItem *j = firstChild(); j; j = j->nextSibling())
+#if 0
+	for (QListWidgetItem *j = firstChild(); j; j = j->nextSibling())
 		for(GCUserViewItem *lvi = (GCUserViewItem*) j->firstChild(); lvi; lvi = (GCUserViewItem*) lvi->nextSibling()) {
 			if(!lvi->s.mucItem().jid().isEmpty() && lvi->s.mucItem().jid().compare(jid,false))
 				return true;
 		}
 	return false;
+#endif
 }
 
-Q3ListViewItem *GCUserView::findEntry(const QString &nick)
+QListWidgetItem *GCUserView::findEntry(const QString &nick)
 {
-	for (Q3ListViewItem *j = firstChild(); j; j = j->nextSibling())
-		for(Q3ListViewItem *lvi = j->firstChild(); lvi; lvi = lvi->nextSibling()) {
+#if 0
+	for (QListWidgetItem *j = firstChild(); j; j = j->nextSibling())
+		for(QListWidgetItem *lvi = j->firstChild(); lvi; lvi = lvi->nextSibling()) {
 			if(lvi->text(0) == nick)
 				return lvi;
 		}
 	return 0;
+#endif
 }
 
 void GCUserView::updateEntry(const QString &nick, const Status &s)
 {
+#if 0
 	GCUserViewItem *lvi = (GCUserViewItem *)findEntry(nick);
 	if (lvi && lvi->s.mucItem().role() != s.mucItem().role()) {
 		delete lvi;
@@ -233,10 +257,12 @@ void GCUserView::updateEntry(const QString &nick, const Status &s)
 
 	lvi->s = s;
 	lvi->setPixmap(0, PsiIconset::instance()->status(lvi->s).impix());
+#endif
 }
 
 GCUserViewGroupItem* GCUserView::findGroup(MUCItem::Role a) const
 {
+#if 0
 	Role r = Visitor;
 	if (a == MUCItem::Moderator)
 		r = Moderator;
@@ -244,25 +270,29 @@ GCUserViewGroupItem* GCUserView::findGroup(MUCItem::Role a) const
 		r = Participant;
 
 	int i = 0;
-	for (Q3ListViewItem *j = firstChild(); j; j = j->nextSibling()) {
+	for (QListWidgetItem *j = firstChild(); j; j = j->nextSibling()) {
 		if (i == (int) r)
 			return (GCUserViewGroupItem*) j;
 		i++;
 	}
 
 	return NULL;
+#endif
 }
 
 void GCUserView::removeEntry(const QString &nick)
 {
-	Q3ListViewItem *lvi = findEntry(nick);
+#if 0
+	QListWidgetItem *lvi = findEntry(nick);
 	if(lvi)
 		delete lvi;
+#endif
 }
 
 bool GCUserView::maybeTip(const QPoint &pos)
 {
-	Q3ListViewItem *qlvi = itemAt(pos);
+#if 0
+	QListWidgetItem *qlvi = itemAt(pos);
 	if(!qlvi || !qlvi->parent())
 		return false;
 
@@ -295,20 +325,24 @@ bool GCUserView::maybeTip(const QPoint &pos)
 
 	PsiToolTip::showText(mapToGlobal(pos), u.makeTip(), this);
 	return true;
+#endif
 }
 
 bool GCUserView::event(QEvent* e)
 {
+#if 0
 	if (e->type() == QEvent::ToolTip) {
 		QPoint pos = ((QHelpEvent*) e)->pos();
 		e->setAccepted(maybeTip(pos));
 		return true;
 	}
-	return Q3ListView::event(e);
+	return QListWidget::event(e);
+#endif
 }
 
-void GCUserView::qlv_doubleClicked(Q3ListViewItem *i)
+void GCUserView::qlv_doubleClicked(QListWidgetItem *i)
 {
+#if 0
 	if(!i || !i->parent())
 		return;
 
@@ -317,10 +351,12 @@ void GCUserView::qlv_doubleClicked(Q3ListViewItem *i)
 		action(lvi->text(0), lvi->s, 0);
 	else
 		action(lvi->text(0), lvi->s, 1);
+#endif
 }
 
-void GCUserView::qlv_contextMenuRequested(Q3ListViewItem *i, const QPoint &pos, int)
+void GCUserView::qlv_contextMenuRequested(QListWidgetItem *i, const QPoint &pos, int)
 {
+#if 0
 	if(!i || !i->parent() || !gcDlg_)
 		return;
 
@@ -378,10 +414,12 @@ void GCUserView::qlv_contextMenuRequested(Q3ListViewItem *i, const QPoint &pos, 
 	if(x == -1 || !enabled || lvi.isNull())
 		return;
 	action(lvi->text(0), lvi->s, x);
+#endif
 }
 
-void GCUserView::qlv_mouseButtonClicked(int button, Q3ListViewItem* item, const QPoint& pos, int c)
+void GCUserView::qlv_mouseButtonClicked(int button, QListWidgetItem* item, const QPoint& pos, int c)
 {
+#if 0
 	Q_UNUSED(pos);
 	Q_UNUSED(c);
 	if (!item || !item->parent() || !gcDlg_)
@@ -390,4 +428,5 @@ void GCUserView::qlv_mouseButtonClicked(int button, Q3ListViewItem* item, const 
 		return;
 
 	emit insertNick(item->text(0));
+#endif
 }

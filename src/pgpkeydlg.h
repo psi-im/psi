@@ -41,7 +41,7 @@ public:
 	const QCA::KeyStoreEntry& keyStoreEntry() const;
 
 private slots:
-	void qlv_doubleClicked(Q3ListViewItem *);
+	void qlv_doubleClicked(QListWidgetItem *);
 	void do_accept();
 	void show_ksm_dtext();
 
