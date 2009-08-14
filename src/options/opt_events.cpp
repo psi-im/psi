@@ -36,38 +36,38 @@ QWidget *OptionsTabEvents::widget()
 	w = new OptEventsUI();
 	OptEventsUI *d = (OptEventsUI *)w;
 
-	QWhatsThis::add(d->ck_popupMsgs,
+	d->ck_popupMsgs->setWhatsThis(
 		tr("Makes new incoming message windows pop up automatically when received."));
-	QWhatsThis::add(d->ck_popupHeadlines,
+	d->ck_popupHeadlines->setWhatsThis(
 		tr("Makes new incoming headlines pop up automatically when received."));
-	QWhatsThis::add(d->ck_popupFiles,
+	d->ck_popupFiles->setWhatsThis(
 		tr("Makes new incoming file requests pop up automatically when received."));
-	QWhatsThis::add(d->ck_allowAwayPopup,
+	d->ck_allowAwayPopup->setWhatsThis(
 		tr("Normally, Psi will not autopopup events when you are away.  "
 		"Set this option if you want them to popup anyway."));
-	QWhatsThis::add(d->ck_allowUnlistedPopup,
+	d->ck_allowUnlistedPopup->setWhatsThis(
 		tr("Normally, Psi will not autopopup events from users not in your roster.  "
 		"Set this option if you want them to popup anyway."));
-	QWhatsThis::add(d->ck_raise,
+	d->ck_raise->setWhatsThis(
 		tr("Makes new incoming events bring the main window to the foreground."));
-	QWhatsThis::add(d->ck_ignoreNonRoster,
+	d->ck_ignoreNonRoster->setWhatsThis(
 		tr("Makes Psi ignore all incoming events from contacts"
 		" not already in your list of contacts."));
-	QWhatsThis::add(d->cb_animation,
+	d->cb_animation->setWhatsThis(
 		tr("What kind of animation should psi use for incoming event icons on the main window?"));
 	
 	d->cb_animation->setItemData ( 0, "no");
 	d->cb_animation->setItemData ( 1, "blink");
 	d->cb_animation->setItemData ( 2, "animate");
-/*	QWhatsThis::add(d->rb_aSolid,
+/*	d->rb_aSolid->setWhatsThis(
 		tr("Does not animate or blink incoming event icons on the main window as they are received."));
-	QWhatsThis::add(d->rb_aBlink,
+	d->rb_aBlink->setWhatsThis(
 		tr("Makes all incoming event icons blink on the main window as events are received."));
-	QWhatsThis::add(d->rb_aAnimate,
+	d->rb_aAnimate->setWhatsThis(
 		tr("Animates incoming event icons on the main window as events are recieved."));*/
-	QWhatsThis::add(d->ck_autoAuth,
+	d->ck_autoAuth->setWhatsThis(
 		tr("Makes Psi automatically accept all authorization requests from <b>anyone</b>."));
-	QWhatsThis::add(d->ck_notifyAuth,
+	d->ck_notifyAuth->setWhatsThis(
 		tr("Makes Psi notify you when your authorization request was approved."));
 
 	
@@ -104,7 +104,7 @@ void OptionsTabEvents::applyOptions()
 	PsiOptions::instance()->setOption("options.ui.notifications.alert-style", d->cb_animation->itemData(d->cb_animation->currentIndex()));
 	PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorization", d->ck_autoAuth->isChecked());
 	PsiOptions::instance()->setOption("options.ui.notifications.successful-subscription", d->ck_notifyAuth->isChecked());
-	PsiOptions::instance()->setOption("options.ui.notifications.bounce-dock", d->cb_bounce->itemData( d->cb_bounce->currentItem()));
+	PsiOptions::instance()->setOption("options.ui.notifications.bounce-dock", d->cb_bounce->itemData( d->cb_bounce->currentIndex()));
 
 	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.enabled", d->ck_popupOn->isChecked());
 	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.incoming-message", d->ck_popupOnMessage->isChecked());
@@ -129,10 +129,10 @@ void OptionsTabEvents::restoreOptions()
 	d->ck_allowUnlistedPopup->setChecked( !PsiOptions::instance()->getOption("options.ui.notifications.popup-dialogs.suppress-when-not-on-roster").toBool() );
 	d->ck_raise->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.raise-on-new-event").toBool() );
 	d->ck_ignoreNonRoster->setChecked( PsiOptions::instance()->getOption("options.messages.ignore-non-roster-contacts").toBool() );
-	d->cb_animation->setCurrentItem(d->cb_animation->findData(PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString()));
+	d->cb_animation->setCurrentIndex(d->cb_animation->findData(PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString()));
 	d->ck_autoAuth->setChecked( PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorization").toBool() );
 	d->ck_notifyAuth->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.successful-subscription").toBool() );
-	d->cb_bounce->setCurrentItem( d->cb_bounce->findData(PsiOptions::instance()->getOption("options.ui.notifications.bounce-dock").toString()) );
+	d->cb_bounce->setCurrentIndex( d->cb_bounce->findData(PsiOptions::instance()->getOption("options.ui.notifications.bounce-dock").toString()) );
 
 	d->ck_popupOn->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.enabled").toBool() );
 	d->ck_popupOnMessage->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool() || PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-chat").toBool() );

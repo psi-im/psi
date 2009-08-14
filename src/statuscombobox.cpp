@@ -64,7 +64,7 @@ void StatusComboBox::setStatus(XMPP::Status::Type type)
 
 	for (int i = 0; i < count(); ++i) {
 		if (static_cast<XMPP::Status::Type>(itemData(i).toInt()) == type) {
-			setCurrentItem(i);
+			setCurrentIndex(i);
 			break;
 		}
 	}

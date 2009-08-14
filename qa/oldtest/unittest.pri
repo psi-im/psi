@@ -39,7 +39,7 @@ unix {
 	gdb.depends = $$EXEC_TARGET
 	mac {
 		QT_FRAMEWORK_VERSION = 4
-		QT_FRAMEWORKS = QtCore QtXml QtNetwork QtGui QtSql Qt3Support
+		QT_FRAMEWORKS = QtCore QtXml QtNetwork QtGui QtSql
 		FRAMEWORK = \$(QTDIR)/lib/\$\${f}.framework/Versions/$$QT_FRAMEWORK_VERSION/\$\${f}
 		gdb.commands += \
 			for f in $$QT_FRAMEWORKS; do \

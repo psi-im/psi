@@ -38,10 +38,14 @@ public:
 //----------------------------------------------------------------------------
 
 FontLabel::FontLabel(QWidget *parent, const char *name)
-	: QLineEdit(parent, name)
+	: QLineEdit(parent)
 {
+	setObjectName(name);
 	setReadOnly(true);
-	setPaletteBackgroundColor(parent->paletteBackgroundColor());
+
+	QPalette palette = this->palette();
+	palette.setColor(backgroundRole(), parent->palette().color(parent->backgroundRole()));
+	setPalette(palette);
 
 	m_defaultHeight = QLineEdit::sizeHint().height();
 }
@@ -181,62 +185,62 @@ QWidget *OptionsTabAppearanceGeneral::widget()
 	le_font[3] = d->le_fPopup;
 
 	bg_font = new QButtonGroup;
-	bg_font->insert(d->pb_fRoster);
-	bg_font->insert(d->pb_fMessage);
-	bg_font->insert(d->pb_fChat);
-	bg_font->insert(d->pb_fPopup);
+	bg_font->addButton(d->pb_fRoster);
+	bg_font->addButton(d->pb_fMessage);
+	bg_font->addButton(d->pb_fChat);
+	bg_font->addButton(d->pb_fPopup);
 	connect(bg_font, SIGNAL(buttonClicked(QAbstractButton*)), SLOT(chooseFont(QAbstractButton*)));
 
-	QWhatsThis::add(le_font[0],
+	le_font[0]->setWhatsThis(
 		tr("Specifies the font style for the main window."));
-	QWhatsThis::add(le_font[1],
+	le_font[1]->setWhatsThis(
 		tr("Specifies the font style for message windows."));
-	QWhatsThis::add(le_font[2],
+	le_font[2]->setWhatsThis(
 		tr("Specifies the font style for chat windows."));
-	QWhatsThis::add(le_font[3],
+	le_font[3]->setWhatsThis(
 		tr("Specifies the font style for popup windows."));
-	QWhatsThis::add(d->pb_fRoster,
+	d->pb_fRoster->setWhatsThis(
 		tr("Selects a font for the roster window using the font selection dialog."));
-	QWhatsThis::add(d->pb_fMessage,
+	d->pb_fMessage->setWhatsThis(
 		tr("Selects a font for message windows using the font selection dialog."));
-	QWhatsThis::add(d->pb_fChat,
+	d->pb_fChat->setWhatsThis(
 		tr("Selects a font for chat windows using the font selection dialog."));
 
 	bg_color = new QButtonGroup;
-	bg_color->insert(d->pb_cOnline);
-	bg_color->insert(d->pb_cOffline);
-	bg_color->insert(d->pb_cAway);
-	bg_color->insert(d->pb_cDND);
-	bg_color->insert(d->pb_cProfileFore);
-	bg_color->insert(d->pb_cProfileBack);
-	bg_color->insert(d->pb_cGroupFore);
-	bg_color->insert(d->pb_cGroupBack);
-	bg_color->insert(d->pb_cListBack);
-	bg_color->insert(d->pb_cAnimFront);
-	bg_color->insert(d->pb_cAnimBack);
-	bg_color->insert(d->pb_cStatus);
+	bg_color->addButton(d->pb_cOnline);
+	bg_color->addButton(d->pb_cOffline);
+	bg_color->addButton(d->pb_cAway);
+	bg_color->addButton(d->pb_cDND);
+	bg_color->addButton(d->pb_cProfileFore);
+	bg_color->addButton(d->pb_cProfileBack);
+	bg_color->addButton(d->pb_cGroupFore);
+	bg_color->addButton(d->pb_cGroupBack);
+	bg_color->addButton(d->pb_cListBack);
+	bg_color->addButton(d->pb_cAnimFront);
+	bg_color->addButton(d->pb_cAnimBack);
+	bg_color->addButton(d->pb_cStatus);
 	connect(bg_color, SIGNAL(buttonClicked(QAbstractButton*)), SLOT(chooseColor(QAbstractButton*)));
 
 	QString s = tr("Specifies the text color for a contact name in the main window when that user is \"%1\".");
-	QWhatsThis::add(d->pb_cOnline,
+	d->pb_cOnline->setWhatsThis(
 		s.arg(tr("online")));
-	QWhatsThis::add(d->pb_cOffline,
+	d->pb_cOffline->setWhatsThis(
 		s.arg(tr("offline")));
-	QWhatsThis::add(d->pb_cAway,
+	d->pb_cAway->setWhatsThis(
 		s.arg(tr("away")));
-	QWhatsThis::add(d->pb_cDND,
+	d->pb_cDND->setWhatsThis(
 		s.arg(tr("do not disturb")));
-	QWhatsThis::add(d->pb_cStatus,
+	d->pb_cStatus->setWhatsThis(
 		s.arg(tr("Status message")));
-	QWhatsThis::add(d->pb_cProfileBack,
+	d->pb_cProfileBack->setWhatsThis(
 		tr("Specifies the background color for an account name in the main window."));
-	QWhatsThis::add(d->pb_cGroupBack,
+	d->pb_cGroupBack->setWhatsThis(
 		tr("Specifies the background color for a group name in the main window."));
-	QWhatsThis::add(d->pb_cListBack,
+	d->pb_cListBack->setWhatsThis(
 		tr("Specifies the background color for the main window."));
-	QWhatsThis::add(d->pb_cAnimFront,
+	d->pb_cAnimFront->setWhatsThis(
 		tr("Specifies the foreground animation color for nicks."));
-	QWhatsThis::add(d->pb_cAnimBack,
+	d->pb_cAnimBack->setWhatsThis(
 		tr("Specifies the background animation color for nicks."));
 
 	// Avatars
@@ -287,7 +291,7 @@ void OptionsTabAppearanceGeneral::applyOptions()
 static void restoreColor(QToolButton *button, QColor c)
 {
 	button->setProperty("psi_color", c);
-	button->setPixmap(color2pixmap(c));
+	button->setIcon(color2pixmap(c));
 }
 
 void OptionsTabAppearanceGeneral::restoreOptions()
@@ -352,8 +356,8 @@ void OptionsTabAppearanceGeneral::chooseColor(QAbstractButton* button)
 	c = QColorDialog::getColor(c, parentWidget);
 	if(c.isValid()) {
 		button->setProperty("psi_color", c);
-		//((QPushButton*) bg_color->buttons()[x])->setPixmap(name2color(o->color[x].name()));
-		button->setPixmap(color2pixmap(c));
+		//((QPushButton*) bg_color->buttons()[x])->setIcon(name2color(o->color[x].name()));
+		button->setIcon(color2pixmap(c));
 
 		emit dataChanged();
 	}

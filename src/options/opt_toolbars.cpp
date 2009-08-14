@@ -174,7 +174,7 @@ void OptionsTabToolbars::applyOptions()
 	o->removeOption("options.ui.contactlist.toolbars", true);
 	QMap<QString, ToolbarPrefs>::Iterator it = p->toolbars.begin();
 	for (; it != p->toolbars.end(); ++it) {
-		PsiToolBar::structToOptions(o, it.data());
+		PsiToolBar::structToOptions(o, it.value());
 	}
 }
 
@@ -196,7 +196,7 @@ void OptionsTabToolbars::restoreOptions()
 		tb.on = o->getOption(base + ".visible").toBool();
 		tb.locked = o->getOption(base + ".locked").toBool();
 		// tb.stretchable = o->getOption(base + ".stretchable").toBool();
-		tb.dock = (Qt::Dock)o->getOption(base + ".dock.position").toInt(); //FIXME
+		tb.dock = (Qt3Dock)o->getOption(base + ".dock.position").toInt(); //FIXME
 		// tb.index = o->getOption(base + ".dock.index").toInt();
 		tb.nl = o->getOption(base + ".dock.nl").toBool();
 		// tb.extraOffset = o->getOption(base + ".dock.extra-offset").toInt();
@@ -240,7 +240,7 @@ void OptionsTabToolbars::toolbarAdd()
 	// tb.stretchable = false;
 	tb.keys.clear();
 
-	tb.dock = Qt::DockTop;
+	tb.dock = Qt3Dock_Top;
 	// tb.index = i;
 	tb.nl = true;
 	// tb.extraOffset = 0;
@@ -301,7 +301,7 @@ void OptionsTabToolbars::addToolbarAction(QListWidget *parent, const QAction *ac
 		n += " - " + action->whatsThis();
 	item->setText(n);
 	item->setData(Qt::UserRole, name);
-	item->setIcon(action->iconSet());
+	item->setIcon(action->icon());
 	item->setHidden(!action->isVisible());
 }
 
@@ -380,8 +380,8 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 					n += " - " + action->whatsThis();
 				}
 				item->setText(0, n);
-				item->setIcon(0, action->iconSet());
-				item->setData(0, Qt::UserRole, action->name());
+				item->setIcon(0, action->icon());
+				item->setData(0, Qt::UserRole, action->objectName());
 			}
 		}
 		tw->resizeColumnToContents(0);
@@ -566,7 +566,7 @@ void OptionsTabToolbars::toolbarDataChanged()
 
 QString OptionsTabToolbars::actionName(const QAction *a)
 {
-	QString n = a->menuText(), n2;
+	QString n = a->text(), n2;
 	for (int i = 0; i < (int)n.length(); i++) {
 		if (n[i] == '&' && n[i+1] != '&')
 			continue;

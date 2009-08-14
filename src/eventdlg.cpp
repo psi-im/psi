@@ -28,7 +28,6 @@
 #include <qstringlist.h>
 #include <qtimer.h>
 #include <qcursor.h>
-#include <q3popupmenu.h>
 #include <qicon.h>
 #include <qdatetime.h>
 #include <qapplication.h>
@@ -153,14 +152,18 @@ static QString findJid(const QString &s, int x, int *p1, int *p2)
 //};
 
 ELineEdit::ELineEdit(EventDlg *parent, const char *name)
-:QLineEdit(parent, name)
+:QLineEdit(parent)
 {
+	setObjectName(name);
 	setAcceptDrops(true);
 }
 
 void ELineEdit::dragEnterEvent(QDragEnterEvent *e)
 {
-	e->accept(e->mimeData()->hasText());
+	if (e->mimeData()->hasText())
+		e->accept();
+	else
+		e->ignore();
 }
 
 void ELineEdit::dropEvent(QDropEvent *e)
@@ -203,7 +206,7 @@ void ELineEdit::dropEvent(QDropEvent *e)
 void ELineEdit::keyPressEvent(QKeyEvent *e)
 {
 	QLineEdit::keyPressEvent(e);
-	if(e->ascii() >= 32 && e->ascii() < 127)
+	if(e->text().length() == 1 && e->text()[0].isLetterOrNumber())
 		tryComplete();
 }
 
@@ -237,7 +240,7 @@ void ELineEdit::keyPressEvent(QKeyEvent *e)
 //	rm->insertItem(tr("Recipient Default"), n++);
 //
 //	if(!list.isEmpty()) {
-//		rm->insertSeparator();
+//		rm->addSeparator();
 //
 //		for(UserResourceList::ConstIterator it = url.begin(); it != url.end(); ++it) {
 //			const UserResource &r = *it;
@@ -284,29 +287,29 @@ void ELineEdit::resourceMenuActivated(int x)
 //----------------------------------------------------------------------------
 // AttachView
 //----------------------------------------------------------------------------
-class AttachViewItem : public Q3ListViewItem
+class AttachViewItem : public QListWidgetItem
 {
 public:
 	AttachViewItem(const QString &_url, const QString &_desc, AttachView *par)
-	:Q3ListViewItem(par)
+	:QListWidgetItem(par)
 	{
 		type = 0;
 		url = _url;
 		desc = _desc;
 
-		setPixmap(0, IconsetFactory::icon("psi/www").impix());
-		setText(0, url + " (" + desc + ')');
-		setMultiLinesEnabled(true);
+		setIcon(IconsetFactory::icon("psi/www").icon());
+		setText(url + " (" + desc + ')');
+		// setMultiLinesEnabled(true);
 	}
 
 	AttachViewItem(const QString &_gc, const QString& from, const QString& reason, const QString& _password, AttachView *par)
-	:Q3ListViewItem(par)
+	:QListWidgetItem(par)
 	{
 		type = 1;
 		gc = _gc;
 		password = _password;
 
-		setPixmap(0, IconsetFactory::icon("psi/groupChat").impix());
+		setIcon(IconsetFactory::icon("psi/groupChat").icon());
 		QString text;
 		if (!from.isEmpty())
 			text = QObject::tr("Invitation to %1 from %2").arg(gc).arg(from);
@@ -315,8 +318,8 @@ public:
 		if (!reason.isEmpty()) {
 			text += QString(" (%1)").arg(reason);
 		}
-		setText(0, text);
-		setMultiLinesEnabled(true);
+		setText(text);
+		// setMultiLinesEnabled(true);
 	}
 
 	int rtti() const
@@ -330,14 +333,14 @@ public:
 };
 
 AttachView::AttachView(QWidget *parent, const char *name)
-:Q3ListView(parent, name)
+:QListWidget(parent)
 {
 	v_readOnly = false;
-	addColumn(tr("Attachments"));
-	setResizeMode(Q3ListView::AllColumns);
+	// addColumn(tr("Attachments"));
+	// setResizeMode(QListWidget::AllColumns);
 
-	connect(this, SIGNAL(contextMenuRequested(Q3ListViewItem *, const QPoint &, int)), SLOT(qlv_context(Q3ListViewItem *, const QPoint &, int)));
-	connect(this, SIGNAL(doubleClicked(Q3ListViewItem *)), SLOT(qlv_doubleClicked(Q3ListViewItem *)));
+	connect(this, SIGNAL(contextMenuRequested(QListWidgetItem *, const QPoint &, int)), SLOT(qlv_context(QListWidgetItem *, const QPoint &, int)));
+	connect(this, SIGNAL(doubleClicked(QListWidgetItem *)), SLOT(qlv_doubleClicked(QListWidgetItem *)));
 };
 
 AttachView::~AttachView()
@@ -361,47 +364,54 @@ void AttachView::gcAdd(const QString &gc, const QString& from, const QString& re
 	childCountChanged();
 }
 
-void AttachView::qlv_context(Q3ListViewItem *lvi, const QPoint &pos, int)
+void AttachView::qlv_context(QListWidgetItem *lvi, const QPoint &pos, int)
 {
 	AttachViewItem *i = (AttachViewItem *)lvi;
 	if(!i)
 		return;
 
-	Q3PopupMenu pm(this);
+	QAction* goToUrlAction = 0;
+	QAction* copyLocationAction = 0;
+	QAction* joinGroupChatAction = 0;
+	QAction* removeAction = 0;
+
+	QMenu pm(this);
 	if(i->type == 0) {
-		pm.insertItem(tr("Go to &URL..."), 0);
-		pm.insertItem(tr("Copy location"), 1);
+		goToUrlAction = pm.addAction(tr("Go to &URL..."));
+		copyLocationAction = pm.addAction(tr("Copy location"));
 	}
-	else
-		pm.insertItem(tr("Join &Groupchat..."), 0);
-	pm.insertSeparator();
-	pm.insertItem(tr("Remove"), 2);
+	else {
+		joinGroupChatAction = pm.addAction(tr("Join &Groupchat..."));
+	}
+	pm.addSeparator();
+	removeAction = pm.addAction(tr("Remove"));
 
-	if(v_readOnly)
-		pm.setItemEnabled(2, false);
+	if(v_readOnly) {
+		removeAction->setEnabled(false);
+	}
 
-	int n = pm.exec(pos);
-	if(n == -1)
+	QAction* n = pm.exec(pos);
+	if(!n)
 		return;
 
-	if(n == 0) {
-		if(i->type == 0)
-			goURL(i->url);
-		else
-			actionGCJoin(i->gc, i->password);
+	if(n == goToUrlAction) {
+		goURL(i->url);
 	}
-	else if(n == 1) {
+	else if(n == joinGroupChatAction) {
+		actionGCJoin(i->gc, i->password);
+	}
+	else if(copyLocationAction) {
 		QApplication::clipboard()->setText(i->url, QClipboard::Clipboard);
 		if(QApplication::clipboard()->supportsSelection())
 			QApplication::clipboard()->setText(i->url, QClipboard::Selection);
 	}
-	else if(n == 2) {
+	else if(removeAction) {
 		delete i;
 		childCountChanged();
 	}
 }
 
-void AttachView::qlv_doubleClicked(Q3ListViewItem *lvi)
+void AttachView::qlv_doubleClicked(QListWidgetItem *lvi)
 {
 	AttachViewItem *i = (AttachViewItem *)lvi;
 	if(!i)
@@ -419,7 +429,7 @@ void AttachView::goURL(const QString &_url)
 		return;
 
 	QString url = _url;
-	if(url.find("://") == -1)
+	if(url.indexOf("://") == -1)
 		url.insert(0, "http://");
 
 	DesktopUtil::openUrl(url);
@@ -429,8 +439,10 @@ UrlList AttachView::urlList() const
 {
 	UrlList list;
 
-	for(AttachViewItem *i = (AttachViewItem *)firstChild(); i; i = (AttachViewItem *)i->nextSibling())
+	for (int index = 0; index < count(); ++index) {
+		AttachViewItem* i = static_cast<AttachViewItem*>(item(index));
 		list += Url(i->url, i->desc);
+	}
 
 	return list;
 }
@@ -560,7 +572,7 @@ public slots:
 		QString text = icon->defaultText();
 
 		if ( !text.isEmpty() ) {
-			mle->insert( text + " " );
+			mle->appendText( text + " " );
 		}
 	}
 
@@ -568,11 +580,11 @@ public slots:
 		if ( !dlg->isActiveWindow() )
 		     return;
 
-		mle->insert( text + " " );
+		mle->appendText( text + " " );
 	}
 
 	void updateCounter() {
-		lb_count->setNum(mle->text().length());
+		lb_count->setNum(mle->getPlainText().length());
 	}
 };
 
@@ -687,10 +699,12 @@ EventDlg::~EventDlg()
 
 void EventDlg::init()
 {
-	QVBoxLayout *vb1 = new QVBoxLayout(this, 4);
+	QVBoxLayout *vb1 = new QVBoxLayout(this);
+	vb1->setMargin(4);
 
 	// first row
-	QHBoxLayout *hb1 = new QHBoxLayout(vb1);
+	QHBoxLayout *hb1 = new QHBoxLayout(0);
+	vb1->addLayout(hb1);
 	d->lb_identity = new QLabel(tr("Identity:"), this);
 	hb1->addWidget(d->lb_identity);
 
@@ -714,7 +728,8 @@ void EventDlg::init()
 	updateIdentityVisibility();
 
 	// second row
-	QHBoxLayout *hb2 = new QHBoxLayout(vb1);
+	QHBoxLayout *hb2 = new QHBoxLayout(0);
+	vb1->addLayout(hb2);
 
 	d->lb_status = new IconLabel(this);
 	PsiToolTip::install(d->lb_status);
@@ -744,8 +759,8 @@ void EventDlg::init()
 		l = new QLabel(tr("Type:"), this);
 		hb2->addWidget(l);
 		d->cb_type = new QComboBox(this);
-		d->cb_type->insertItem(tr("Normal"));
-		d->cb_type->insertItem(tr("Chat"));
+		d->cb_type->addItem(tr("Normal"));
+		d->cb_type->addItem(tr("Chat"));
 		hb2->addWidget(d->cb_type);
 	}
 	else {
@@ -764,7 +779,7 @@ void EventDlg::init()
 	d->tb_icon->setPsiIcon(IconsetFactory::iconPtr("psi/smile"));
 	d->tb_icon->setMenu(d->psi->iconSelectPopup());
 	d->tb_icon->setPopupMode(QToolButton::InstantPopup);
-	d->tb_icon->setPopupDelay(1);
+	// d->tb_icon->setPopupDelay(1);
 	d->tb_icon->setToolTip(tr("Select icon"));
 	if ( !d->composing )
 		d->tb_icon->setEnabled(false);
@@ -781,7 +796,7 @@ void EventDlg::init()
 
 	if(d->composing) {
 		d->tb_pgp = new IconToolButton(this);
-		d->tb_pgp->setToggleButton(true);
+		d->tb_pgp->setCheckable(true);
 		d->tb_pgp->setToolTip(tr("Toggle encryption"));
 		d->lb_pgp = 0;
 	}
@@ -810,7 +825,8 @@ void EventDlg::init()
 		if (toolButton)
 			toolButton->setFocusPolicy(Qt::NoFocus);
 
-	QHBoxLayout *hb3 = new QHBoxLayout(vb1);
+	QHBoxLayout *hb3 = new QHBoxLayout(0);
+	vb1->addLayout(hb3);
 
 //	if(d->composing /* && config->showsubject */) {
 	if(PsiOptions::instance()->getOption("options.ui.message.show-subjects").toBool()) {
@@ -899,7 +915,8 @@ void EventDlg::init()
 	d->xdata_form->hide();
 
 	// bottom row
-	QHBoxLayout *hb4 = new QHBoxLayout(vb1);
+	QHBoxLayout *hb4 = new QHBoxLayout(0);
+	vb1->addLayout(hb4);
 	d->pb_close = new IconButton(this);
 	d->pb_close->setText(tr("&Close"));
 	connect(d->pb_close, SIGNAL(clicked()), SLOT(close()));
@@ -1043,7 +1060,7 @@ void EventDlg::accountUpdatedActivity()
 
 QString EventDlg::text() const
 {
-	return d->mle->text();
+	return d->mle->getPlainText();
 }
 
 void EventDlg::setHtml(const QString &s)
@@ -1101,7 +1118,7 @@ QStringList EventDlg::stringToList(const QString &s, bool enc) const
 		if(j.isEmpty())
 			j = c;
 
-		j = j.stripWhiteSpace();
+		j = j.trimmed();
 		//printf("j=[%s]\n", j.latin1());
 		if(!j.isEmpty())
 			list += j;
@@ -1116,10 +1133,10 @@ QStringList EventDlg::stringToList(const QString &s, bool enc) const
 
 QString EventDlg::findJidInString(const QString &s) const
 {
-	int a = s.find('<');
+	int a = s.indexOf('<');
 	if(a != -1) {
 		++a;
-		int b = s.find('>', a);
+		int b = s.indexOf('>', a);
 		if(b != -1)
 			return JIDUtil::decode822(s.mid(a, b-a));
 	}
@@ -1171,8 +1188,9 @@ void EventDlg::to_textChanged(const QString &)
 void EventDlg::to_changeResource(const QString &r)
 {
 	QString str = d->le_to->text();
-	int start, len;
-	if(!d->le_to->getSelection(&start, &len)) {
+	int start = d->le_to->selectionStart();
+	int len = d->le_to->selectedText().length();
+	if(start == -1) {
 		//printf("bad selection\n");
 		return;
 	}
@@ -1222,7 +1240,7 @@ void EventDlg::to_tryComplete()
 		bool ok = true;
 		int n;
 		for(n = 0; n < (int)s.length(); ++n) {
-			if(s.at(n).lower() != name.at(n).lower()) {
+			if(s.at(n).toLower() != name.at(n).toLower()) {
 				ok = false;
 				break;
 			}
@@ -1243,8 +1261,7 @@ void EventDlg::buildCompletionList()
 
 	d->completionList += d->pa->jid().full();
 
-	UserListIt it(*d->pa->userList());
-	for(UserListItem *u; (u = it.current()); ++it) {
+	foreach(UserListItem* u, *d->pa->userList()) {
 		QString j = u->jid().full();
 		if(!u->name().isEmpty())
 			d->completionList += u->name() + " <"+j+'>';
@@ -1362,8 +1379,9 @@ void EventDlg::optionsUpdate()
 	d->tb_history->setPsiIcon(IconsetFactory::iconPtr("psi/history"));
 	if(d->tb_pgp) {
 		QIcon i;
-		i.setPixmap(IconsetFactory::icon("psi/cryptoNo").impix(),  QIcon::Automatic, QIcon::Normal, QIcon::Off);
-		i.setPixmap(IconsetFactory::icon("psi/cryptoYes").impix(), QIcon::Automatic, QIcon::Normal, QIcon::On);
+		// FIXME
+		// i.setPixmap(IconsetFactory::icon("psi/cryptoNo").impix(),  QIcon::Automatic, QIcon::Normal, QIcon::Off);
+		// i.setPixmap(IconsetFactory::icon("psi/cryptoYes").impix(), QIcon::Automatic, QIcon::Normal, QIcon::On);
 		d->tb_pgp->setIcon(i);
 	}
 	if(d->lb_pgp)
@@ -1438,7 +1456,7 @@ void EventDlg::doSend()
 	if(!d->pa->checkConnected(this))
 		return;
 
-	if(d->mle->text().isEmpty() && d->attachView->childCount() == 0) {
+	if(d->mle->getPlainText().isEmpty() && d->attachView->count() == 0) {
 		QMessageBox::information(this, tr("Warning"), tr("Please type in a message first."));
 		return;
 	}
@@ -1450,12 +1468,12 @@ void EventDlg::doSend()
 	}
 
 	Message m;
-	if(d->cb_type->currentItem() == 0)
+	if(d->cb_type->currentIndex() == 0)
 		m.setType("");
 	else
 		m.setType("chat");
 
-	m.setBody(d->mle->text());
+	m.setBody(d->mle->getPlainText());
 	m.setSubject(d->le_subj->text());
 	m.setUrlList(d->attachView->urlList());
 	m.setTimeStamp(QDateTime::currentDateTime());
@@ -1704,7 +1722,7 @@ void EventDlg::addUrl()
 
 void EventDlg::showHideAttachView()
 {
-	if(d->attachView->childCount() > 0) {
+	if(d->attachView->count()) {
 		if(d->attachView->isHidden())
 			d->attachView->show();
 	}
@@ -2109,9 +2127,7 @@ void EventDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
 	d->transid = -1;
 	if(b) {
 		// remove the item
-		QStringList::Iterator it = d->sendLeft.begin();
-		Jid j(*it);
-		d->sendLeft.remove(it);
+		Jid j(d->sendLeft.takeFirst());
 
 		//d->pa->toggleSecurity(j, d->enc);
 

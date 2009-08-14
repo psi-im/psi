@@ -24,13 +24,7 @@
         </widget>
       </item>
       <item>
-        <widget class="Q3ListView" name="lv_keys" >
-          <property name="allColumnsShowFocus" >
-            <bool>true</bool>
-          </property>
-          <property name="resizeMode" >
-            <enum>Q3ListView::LastColumn</enum>
-          </property>
+        <widget class="QListWidget" name="lv_keys" >
           <column>
             <property name="text" >
               <string>Key ID</string>

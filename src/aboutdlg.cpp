@@ -39,7 +39,7 @@ AboutDlg::AboutDlg(QWidget* parent)
 
 	QString lang_name = qApp->translate( "@default", "language_name" );
 	if ( lang_name == "language_name" ) // remove the translation tab, if no translation is used
-		ui_.tw_tabs->removePage ( ui_.tw_tabs->page(3) );
+		ui_.tw_tabs->removeTab ( 3 );
 
 	// fill in Authors tab...
 	QString authors;
@@ -132,7 +132,7 @@ QString AboutDlg::loadText( const QString & fileName )
 	QString text;
 
 	QFile f(fileName);
-	if(f.open(IO_ReadOnly)) {
+	if(f.open(QIODevice::ReadOnly)) {
 		QTextStream t(&f);
 		while(!t.atEnd())
 			text += t.readLine() + '\n';

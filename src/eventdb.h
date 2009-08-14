@@ -24,7 +24,6 @@
 #include <qobject.h>
 #include <qtimer.h>
 #include <qfile.h>
-#include <q3ptrlist.h>
 
 #include "xmpp_jid.h"
 
@@ -46,10 +45,27 @@ private:
 	PsiEvent *e;
 };
 
-class EDBResult : public Q3PtrList<EDBItem>
+class EDBResult : public QList<EDBItem*>
 {
 public:
-	EDBResult() {}
+	EDBResult()
+		: autoDelete_(false)
+	{}
+
+	~EDBResult()
+	{
+		if (autoDelete_) {
+			qDeleteAll(*this);
+		}
+	}
+
+	void setAutoDelete(bool autoDelete)
+	{
+		autoDelete_ = autoDelete;
+	}
+
+private:
+	bool autoDelete_;
 };
 
 class EDB;

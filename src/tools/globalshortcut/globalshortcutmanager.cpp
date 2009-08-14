@@ -63,7 +63,7 @@ void GlobalShortcutManager::connect(const QKeySequence& key, QObject* receiver, 
 		instance()->triggers_.insert(key, t);
 	}
 
-	QObject::connect(t, SIGNAL(activated()), receiver, slot);
+	QObject::connect(t, SIGNAL(triggered()), receiver, slot);
 }
 
 /**
@@ -79,7 +79,7 @@ void GlobalShortcutManager::disconnect(const QKeySequence& key, QObject* receive
 		return;
 	}
 
-	QObject::disconnect(t, SIGNAL(activated()), receiver, slot);
+	QObject::disconnect(t, SIGNAL(triggered()), receiver, slot);
 
 	if (!t->isUsed()) {
 		delete instance()->triggers_.take(key);

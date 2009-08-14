@@ -37,7 +37,7 @@ BookmarkManageDlg::BookmarkManageDlg(PsiAccount* account)
 	account_->dialogRegister(this);
 
 	QAction* removeBookmarkAction = new QAction(this);
-	connect(removeBookmarkAction, SIGNAL(activated()), SLOT(removeBookmark()));
+	connect(removeBookmarkAction, SIGNAL(triggered()), SLOT(removeBookmark()));
 	removeBookmarkAction->setShortcuts(QKeySequence::Delete);
 	ui_.listView->addAction(removeBookmarkAction);
 

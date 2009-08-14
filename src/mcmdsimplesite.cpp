@@ -27,7 +27,7 @@
 
 void MCmdSimpleSite::mCmdReady(const QString prompt, const QString def)
 {
-	if (!open) mini_msg_swap = inputWidget->text();
+	if (!open) mini_msg_swap = inputWidget->toPlainText();
 	open = true;
 	promptWidget->setText(prompt);
     inputWidget->setText(def);

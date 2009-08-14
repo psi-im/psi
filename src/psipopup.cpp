@@ -38,7 +38,6 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <Q3PtrList>
 #include <QBoxLayout>
 #include <QList>
 #include <QTextDocument>

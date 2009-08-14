@@ -62,7 +62,7 @@ static QByteArray scaleAvatar(const QByteArray& b)
 {
 	//int maxSize = (LEGOPTS.avatarsSize > MAX_AVATAR_SIZE ? MAX_AVATAR_SIZE : LEGOPTS.avatarsSize);
 	int maxSize = AvatarFactory::maxAvatarSize();
-	QImage i(b);
+	QImage i = QImage::fromData(b);
 	if (i.isNull()) {
 		qWarning("AvatarFactory::scaleAvatar(): Null image (unrecognized format?)");
 		return QByteArray();
@@ -99,15 +99,15 @@ Avatar::~Avatar()
 void Avatar::setImage(const QImage& i)
 {
 	if (i.width() > MAX_AVATAR_DISPLAY_SIZE || i.height() > MAX_AVATAR_DISPLAY_SIZE)
-		pixmap_.convertFromImage(i.scaled(MAX_AVATAR_DISPLAY_SIZE,MAX_AVATAR_DISPLAY_SIZE,Qt::KeepAspectRatio,Qt::SmoothTransformation));
+		pixmap_ = QPixmap::fromImage(i.scaled(MAX_AVATAR_DISPLAY_SIZE,MAX_AVATAR_DISPLAY_SIZE,Qt::KeepAspectRatio,Qt::SmoothTransformation));
 	else
-		pixmap_.convertFromImage(i);
+		pixmap_ = QPixmap::fromImage(i);
 
 }
 
 void Avatar::setImage(const QByteArray& ba)
 {
-	setImage(QImage(ba));
+	setImage(QImage::fromData(ba));
 }
 
 void Avatar::setImage(const QPixmap& p)
@@ -196,12 +196,12 @@ void CachedAvatar::saveToCache(const QByteArray& data)
 	// printf("Saving %s to cache.\n",hash.latin1());
 	QString fn = QDir(AvatarFactory::getCacheDir()).filePath(hash);
 	QFile f(fn);
-	if (f.open(IO_WriteOnly)) {
-		f.writeBlock(data);
+	if (f.open(QIODevice::WriteOnly)) {
+		f.write(data);
 		f.close();
 	}
 	else
-		printf("Error opening %s for writing.\n",f.name().latin1());
+		printf("Error opening %s for writing.\n", qPrintable(f.fileName()));
 	
 }
 
@@ -552,7 +552,7 @@ void AvatarFactory::setSelfAvatar(const QString& fileName)
 			return;
 		
 		QByteArray avatar_data = scaleAvatar(avatar_file.readAll());
-		QImage avatar_image(avatar_data);
+		QImage avatar_image = QImage::fromData(avatar_data);
 		if(!avatar_image.isNull()) {
 			// Publish data
 			QDomDocument* doc = account()->client()->doc();
@@ -672,7 +672,7 @@ void AvatarFactory::publish_success(const QString& n, const PubSubItem& item)
 	if (n == "http://www.xmpp.org/extensions/xep-0084.html#ns-data" && item.id() == selfAvatarHash_) {
 		// Publish metadata
 		QDomDocument* doc = account()->client()->doc();
-		QImage avatar_image(selfAvatarData_);
+		QImage avatar_image = QImage::fromData(selfAvatarData_);
 		QDomElement meta_el = doc->createElement("metadata");
 		meta_el.setAttribute("xmlns","http://www.xmpp.org/extensions/xep-0084.html#ns-metadata");
 		QDomElement info_el = doc->createElement("info");

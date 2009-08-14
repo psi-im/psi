@@ -54,5 +54,6 @@ void ResourceMenu::addResource(int status, QString name, int id)
 
 	//rname += " (" + status2txt(status) + ")";
 
-	insertItem(PsiIconset::instance()->status(status).icon(), rname, id);
+	// FIXME
+	// insertItem(PsiIconset::instance()->status(status).icon(), rname, id);
 }

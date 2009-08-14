@@ -98,7 +98,7 @@ PsiMain::PsiMain(const QString& uriToOpen, QObject *par)
 
 
 	if(lastLang.isEmpty()) {
-		lastLang = QTextCodec::locale();
+		lastLang = QLocale::languageToString(QLocale::system().language());
 		//printf("guessing locale: [%s]\n", lastLang.latin1());
 	}
 
@@ -372,7 +372,7 @@ int main(int argc, char *argv[])
 	for (int i=1; i<argc; i++) {
 		QByteArray str = QByteArray(argv[i]);
 		QByteArray var, val;
-		int x = str.find('=');
+		int x = str.indexOf('=');
 		if(x == -1) {
 			var = str;
 			val = "";
@@ -454,7 +454,7 @@ int main(int argc, char *argv[])
 	for(int n = 1; n < argc; ++n) {
 		QString str = argv[n];
 		QString var, val;
-		int x = str.find('=');
+		int x = str.indexOf('=');
 		if(x == -1) {
 			var = str;
 			val = "";

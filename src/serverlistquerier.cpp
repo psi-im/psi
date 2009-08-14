@@ -82,9 +82,9 @@ void ServerListQuerier::get_finished(int, bool err)
 			QString newUrl = response.value("Location");
 
 			QUrl url = newUrl;
-			if (!url.protocol().isEmpty()) {
-				if (url.protocol() != "http") {
-					emit error(tr("Redirect to protocol '%1' not supported").arg(url.protocol()));
+			if (!url.scheme().isEmpty()) {
+				if (url.scheme() != "http") {
+					emit error(tr("Redirect to protocol '%1' not supported").arg(url.scheme()));
 					return;
 				}
 

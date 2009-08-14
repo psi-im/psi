@@ -33,7 +33,7 @@ AccountAddDlg::AccountAddDlg(PsiCon *_psi, QWidget *parent)
 	psi = _psi;
 	psi->dialogRegister(this);
 
-	setWindowTitle(CAP(caption()));
+	setWindowTitle(CAP(windowTitle()));
 
 	connect(pb_close, SIGNAL(clicked()), SLOT(close()));
 	connect(pb_add, SIGNAL(clicked()), SLOT(add()));

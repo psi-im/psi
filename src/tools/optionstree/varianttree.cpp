@@ -442,6 +442,10 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
 				}
 			}
 		}
+		qWarning("read QRect (%s) %d %d %d %d", qPrintable(e.tagName()), x, y, width, height);
+		if (width > 10000) {
+			int a = 0;
+		}
 		value = QVariant(QRect(x,y,width,height));
 	}
 	else if (type == "QByteArray") {

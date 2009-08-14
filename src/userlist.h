@@ -25,7 +25,6 @@
 #include <qdatetime.h>
 #include <QList>
 #include <QPixmap>
-#include <Q3PtrList>
 #include "xmpp_resource.h"
 #include "xmpp_liverosteritem.h"
 #include "mood.h"
@@ -161,9 +160,9 @@ private:
 	AvatarFactory* v_avatarFactory;
 };
 
-typedef Q3PtrListIterator<UserListItem> UserListIt;
+typedef QListIterator<UserListItem*> UserListIt;
 
-class UserList : public Q3PtrList<UserListItem>
+class UserList : public QList<UserListItem*>
 {
 public:
 	UserList();

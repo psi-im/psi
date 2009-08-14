@@ -121,7 +121,7 @@ void PsiActionList::Private::createMainWin()
 {
 	{
 		IconActionGroup *viewGroups = new IconActionGroup(this);
-		viewGroups->setMenuText(tr("View Groups"));
+		viewGroups->setText(tr("View Groups"));
 		viewGroups->setWhatsThis(tr("Toggle visibility of special roster groups"));
 		viewGroups->setUsesDropDown(true);
 		viewGroups->setExclusive(false);
@@ -269,7 +269,7 @@ void PsiActionList::Private::createMainWin()
 	{
 		// status actions
 		IconActionGroup *statusGroup = new IconActionGroup ( this );
-		statusGroup->setMenuText (tr("Set Status"));
+		statusGroup->setText (tr("Set Status"));
 		statusGroup->setWhatsThis (tr("Smaller alternative to the Status button"));
 		statusGroup->setExclusive(false);
 		statusGroup->setUsesDropDown (true);

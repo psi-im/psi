@@ -22,31 +22,14 @@
 #define PROXYDLG_H
 
 #include <QList>
-#include <q3groupbox.h>
+#include <QGroupBox>
 
 #include "ui_proxy.h"
+#include "ui_proxyedit.h"
 
 class OptionsTree;
 class QDomElement;
 class QDomDocument;
-
-class HostPortEdit : public QWidget
-{
-	Q_OBJECT
-public:
-	HostPortEdit(QWidget *parent=0, const char *name=0);
-	~HostPortEdit();
-
-	QString host() const;
-	int port() const;
-	void setHost(const QString &);
-	void setPort(int);
-	void fixTabbing(QWidget *a, QWidget *b);
-
-private:
-	class Private;
-	Private *d;
-};
 
 class ProxyItem;
 class ProxyManager;
@@ -69,25 +52,20 @@ public:
 	bool fromXml(const QDomElement &);
 };
 
-class ProxyEdit : public Q3GroupBox
+class ProxyEdit : public QWidget
 {
 	Q_OBJECT
 public:
-	ProxyEdit(QWidget *parent=0, const char *name=0);
+	ProxyEdit(QWidget* parent);
 	~ProxyEdit();
 
 	void reset();
 	void setType(const QString &s);
 	ProxySettings proxySettings() const;
 	void setProxySettings(const ProxySettings &);
-	void fixTabbing(QWidget *a, QWidget *b);
-
-private slots:
-	void ck_toggled(bool);
 
 private:
-	class Private;
-	Private *d;
+	Ui::ProxyEdit ui_;
 };
 
 class ProxyDlg : public QDialog, public Ui::Proxy
@@ -128,7 +106,6 @@ public:
 
 	QString currentItem() const;
 	void setCurrentItem(const QString &item);
-	void fixTabbing(QWidget *a, QWidget *b);
 
 private slots:
 	void pm_settingsChanged();

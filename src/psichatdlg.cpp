@@ -55,7 +55,7 @@ public:
 		Q_UNUSED(preset);
 		if (oldstate->getName() == MCMDCHAT) {
 			QString cmd;
-			if (command.count() > 0) cmd = command[0].lower();
+			if (command.count() > 0) cmd = command[0].toLower();
 			if (cmd == "version") {
 				JT_ClientVersion *version = new JT_ClientVersion(dlg_->account()->client()->rootTask());
 				connect(version, SIGNAL(finished()), SLOT(version_finished()));
@@ -72,14 +72,14 @@ public:
 				newstate = 0;
 			} else if (cmd == "auth") {
 				if (command.count() == 2) {
-					if (command[1].lower() == "request") {
+					if (command[1].toLower() == "request") {
 						// FIXME
 					}
 				}
 				newstate = 0;
 			} else if (cmd == "compact") {
 				if (command.count() == 2) {
-					QString sub = command[1].lower();
+					QString sub = command[1].toLower();
 					if ("on" == sub) {
 						dlg_->smallChat_ = true;
 					} else if ("off" == sub) {
@@ -192,7 +192,7 @@ void PsiChatDlg::initUi()
 
 	act_mini_cmd_ = new QAction(this);
 	act_mini_cmd_->setText(tr("Input command..."));
-	connect(act_mini_cmd_, SIGNAL(activated()), SLOT(doMiniCmd()));
+	connect(act_mini_cmd_, SIGNAL(triggered()), SLOT(doMiniCmd()));
 	addAction(act_mini_cmd_);
 
 	ui_.mini_prompt->hide();
@@ -244,8 +244,9 @@ void PsiChatDlg::setLooks()
 
 	// toolbuttons
 	QIcon i;
-	i.setPixmap(IconsetFactory::icon("psi/cryptoNo").impix(),  QIcon::Automatic, QIcon::Normal, QIcon::Off);
-	i.setPixmap(IconsetFactory::icon("psi/cryptoYes").impix(), QIcon::Automatic, QIcon::Normal, QIcon::On);
+	// FIXME: unite with EventDlg
+	// i.setPixmap(IconsetFactory::icon("psi/cryptoNo").impix(),  QIcon::Automatic, QIcon::Normal, QIcon::Off);
+	// i.setPixmap(IconsetFactory::icon("psi/cryptoYes").impix(), QIcon::Automatic, QIcon::Normal, QIcon::On);
 	act_pgp_->setPsiIcon(0);
 	act_pgp_->setIcon(i);
 }
@@ -276,7 +277,7 @@ void PsiChatDlg::updateIdentityVisibility()
 void PsiChatDlg::initToolButtons()
 {
 	act_clear_ = new IconAction(tr("Clear Chat Window"), "psi/clearChat", tr("Clear Chat Window"), 0, this);
-	connect(act_clear_, SIGNAL(activated()), SLOT(doClearButton()));
+	connect(act_clear_, SIGNAL(triggered()), SLOT(doClearButton()));
 
 	connect(account()->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), this, SLOT(addEmoticon(QString)));
 	act_icon_ = new IconAction(tr("Select Icon"), "psi/smile", tr("Select Icon"), 0, this);
@@ -284,23 +285,23 @@ void PsiChatDlg::initToolButtons()
 	ui_.tb_emoticons->setMenu(account()->psi()->iconSelectPopup());
 
 	act_voice_ = new IconAction(tr("Voice Call"), "psi/voice", tr("Voice Call"), 0, this);
-	connect(act_voice_, SIGNAL(activated()), SLOT(doVoice()));
+	connect(act_voice_, SIGNAL(triggered()), SLOT(doVoice()));
 	act_voice_->setEnabled(false);
 
 	act_file_ = new IconAction(tr("Send File"), "psi/upload", tr("Send File"), 0, this);
-	connect(act_file_, SIGNAL(activated()), SLOT(doFile()));
+	connect(act_file_, SIGNAL(triggered()), SLOT(doFile()));
 
 	act_pgp_ = new IconAction(tr("Toggle Encryption"), "psi/cryptoNo", tr("Toggle Encryption"), 0, this, 0, true);
 	ui_.tb_pgp->setDefaultAction(act_pgp_);
 
 	act_info_ = new IconAction(tr("User Info"), "psi/vCard", tr("User Info"), 0, this);
-	connect(act_info_, SIGNAL(activated()), SLOT(doInfo()));
+	connect(act_info_, SIGNAL(triggered()), SLOT(doInfo()));
 
 	act_history_ = new IconAction(tr("Message History"), "psi/history", tr("Message History"), 0, this);
-	connect(act_history_, SIGNAL(activated()), SLOT(doHistory()));
+	connect(act_history_, SIGNAL(triggered()), SLOT(doHistory()));
 
 	act_compact_ = new IconAction(tr("Toggle Compact/Full Size"), "psi/compact", tr("Toggle Compact/Full Size"), 0, this);
-	connect(act_compact_, SIGNAL(activated()), SLOT(toggleSmallChat()));
+	connect(act_compact_, SIGNAL(triggered()), SLOT(toggleSmallChat()));
 }
 
 void PsiChatDlg::initToolBar()
@@ -465,14 +466,14 @@ void PsiChatDlg::buildMenu()
 	pm_settings_->clear();
 	pm_settings_->addAction(act_compact_);
 	pm_settings_->addAction(act_clear_);
-	pm_settings_->insertSeparator();
+	pm_settings_->addSeparator();
 
 	pm_settings_->addAction(act_icon_);
 	pm_settings_->addAction(act_file_);
 	if (account()->voiceCaller())
 		act_voice_->addTo(pm_settings_);
 	pm_settings_->addAction(act_pgp_);
-	pm_settings_->insertSeparator();
+	pm_settings_->addSeparator();
 
 	pm_settings_->addAction(act_info_);
 	pm_settings_->addAction(act_history_);
@@ -480,7 +481,7 @@ void PsiChatDlg::buildMenu()
 
 void PsiChatDlg::updateCounter()
 {
-	ui_.lb_count->setNum(chatEdit()->text().length());
+	ui_.lb_count->setNum(chatEdit()->toPlainText().length());
 }
 
 void PsiChatDlg::appendEmoteMessage(SpooledType spooled, const QDateTime& time, bool local, QString txt)
@@ -574,7 +575,7 @@ void PsiChatDlg::chatEditCreated()
 void PsiChatDlg::doSend() {
 	tabCompletion.reset();
 	if (mCmdSite_.isActive()) {
-		QString str = chatEdit()->text();
+		QString str = chatEdit()->toPlainText();
 		if (!mCmdManager_.processCommand(str)) {
 			appendSysMsg(tr("Error: Can not parse command: ") + str);
 		}

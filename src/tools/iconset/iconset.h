@@ -33,7 +33,6 @@
 #include <QImage>
 
 class QIcon;
-class Q3MimeSourceFactory;
 class Anim;
 
 class Impix
@@ -175,7 +174,7 @@ public slots:
 public:
 	class Private;
 private:
-	Private *d;
+	QSharedDataPointer<Private> d;
 };
 
 class Iconset
@@ -214,8 +213,6 @@ public:
 
 	QListIterator<PsiIcon *> iterator() const;
 
-	Q3MimeSourceFactory *createMimeSourceFactory() const;
-
 	void addToFactory() const;
 	void removeFromFactory() const;
 
@@ -226,7 +223,7 @@ public:
 
 private:
 	class Private;
-	Private *d;
+	QSharedDataPointer<Private> d;
 };
 
 class IconsetFactory

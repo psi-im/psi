@@ -1,4 +1,4 @@
-QT += xml network qt3support
+QT += xml network
 
 # modules
 include($$PWD/protocol/protocol.pri)
@@ -10,7 +10,7 @@ include($$PWD/tabs/tabs.pri)
 include($$PWD/Certificates/Certificates.pri)
 
 # tools
-include($$PWD/tools/trayicon/trayicon.pri)
+# include($$PWD/tools/trayicon/trayicon.pri)
 include($$PWD/tools/iconset/iconset.pri)
 include($$PWD/tools/idle/idle.pri)
 include($$PWD/tools/systemwatch/systemwatch.pri)
@@ -395,6 +395,7 @@ INTERFACES += \
 	$$PWD/profilemanage.ui \
 	$$PWD/profilenew.ui \
 	$$PWD/proxy.ui \
+	$$PWD/proxyedit.ui \
 	$$PWD/pgpkey.ui \
 	$$PWD/accountmanage.ui \
 	$$PWD/accountadd.ui \

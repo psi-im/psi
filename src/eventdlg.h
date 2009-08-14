@@ -22,7 +22,7 @@
 #define EVENTDLG_H
 
 #include <QLineEdit>
-#include <q3listview.h>
+#include <QListWidget>
 
 #include "xmpp_url.h"
 #include "xmpp_rosterx.h"
@@ -70,7 +70,7 @@ private:
 	UserResourceList url;
 };
 
-class AttachView : public Q3ListView
+class AttachView : public QListWidget
 {
 	Q_OBJECT
 public:
@@ -89,8 +89,8 @@ signals:
 	void actionGCJoin(const QString &, const QString&);
 
 private slots:
-	void qlv_context(Q3ListViewItem *, const QPoint &, int);
-	void qlv_doubleClicked(Q3ListViewItem *);
+	void qlv_context(QListWidgetItem *, const QPoint &, int);
+	void qlv_doubleClicked(QListWidgetItem *);
 
 private:
 	bool v_readOnly;

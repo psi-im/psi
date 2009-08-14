@@ -28,7 +28,7 @@
             <number>0</number>
           </property>
           <item>
-            <widget class="Q3ListView" name="lv_accs" >
+            <widget class="QListWidget" name="lv_accs" >
               <column>
                 <property name="text" >
                   <string>Name</string>

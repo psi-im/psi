@@ -98,7 +98,7 @@ void AccountsComboBox::updateAccounts()
 	clear();
 
 	foreach(PsiAccount* account, accounts())
-		insertItem(account->nameWithJid());
+		addItem(account->nameWithJid());
 
 	if (accounts().indexOf(account_) == -1) {
 		account_ = accounts().isEmpty() ? 0 : accounts().first();

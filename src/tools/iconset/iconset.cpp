@@ -27,11 +27,10 @@
 
 #include <QIcon>
 #include <QRegExp>
-#include <Q3MimeSourceFactory>
 #include <QDomDocument>
 #include <QThread>
 #include <QCoreApplication>
-#include <QTextCodec>
+#include <QLocale>
 
 #include "anim.h"
 
@@ -54,7 +53,8 @@
 #endif
 
 #include <QApplication>
-#include <Q3Shared> // TODO FIXME: port all Q3Shared classes to QSharedData
+#include <QSharedData>
+#include <QSharedDataPointer>
 
 static void moveToMainThread(QObject *obj)
 {
@@ -145,7 +145,7 @@ const QPixmap & Impix::pixmap() const
 	if (!d->pixmap) {
 		d->pixmap = new QPixmap();
 		if (!d->image.isNull())
-			d->pixmap->convertFromImage(d->image);
+			d->pixmap->fromImage(d->image);
 	}
 	return *d->pixmap;
 }
@@ -153,7 +153,7 @@ const QPixmap & Impix::pixmap() const
 const QImage & Impix::image() const
 {
 	if (d->image.isNull() && d->pixmap)
-		d->image = d->pixmap->convertToImage();
+		d->image = d->pixmap->toImage();
 	return d->image;
 }
 
@@ -192,9 +192,11 @@ class IconSharedObject : public QObject
 public:
 	IconSharedObject()
 #ifdef ICONSET_SOUND
-	: QObject(qApp, "IconSharedObject")
+	: QObject(qApp)
 #endif
-	{ }
+	{
+		setObjectName("IconSharedObject");
+	}
 
 	QString unpackPath;
 
@@ -225,7 +227,7 @@ static IconSharedObject *iconSharedObject = 0;
  */
 
 //! \if _hide_doc_
-class PsiIcon::Private : public QObject, public Q3Shared
+class PsiIcon::Private : public QObject, public QSharedData
 {
 	Q_OBJECT
 public:
@@ -247,7 +249,7 @@ public:
 
 	// copy all stuff, this constructor is called when detaching
 	Private(const Private &from)
-	: QObject(), Q3Shared()
+	: QObject()
 	{
 		moveToMainThread(this);
 
@@ -303,7 +305,7 @@ public:
 
 	Impix impix;
 	Anim *anim;
-	QIconSet *icon;
+	QIcon *icon;
 
 	int activatedCount;
 	friend class PsiIcon;
@@ -327,8 +329,6 @@ PsiIcon::PsiIcon()
  */
 PsiIcon::~PsiIcon()
 {
-	if ( d->deref() )
-		delete d;
 }
 
 /**
@@ -336,12 +336,11 @@ PsiIcon::~PsiIcon()
  * other will be changed as well. (that's because image data is shared)
  */
 PsiIcon::PsiIcon(const PsiIcon &from)
-: QObject(0, 0)
+: QObject(0)
+, d(from.d)
 {
 	moveToMainThread(this);
 
-	d = from.d;
-	d->ref();
 	d->connectInstance(this);
 }
 
@@ -352,11 +351,7 @@ PsiIcon::PsiIcon(const PsiIcon &from)
 PsiIcon & PsiIcon::operator= (const PsiIcon &from)
 {
 	d->disconnectInstance(this);
-	if ( d->deref() )
-		delete d;
-
 	d = from.d;
-	d->ref();
 	d->connectInstance(this);
 
 	return *this;
@@ -365,8 +360,7 @@ PsiIcon & PsiIcon::operator= (const PsiIcon &from)
 PsiIcon *PsiIcon::copy() const
 {
 	PsiIcon *icon = new PsiIcon;
-	delete icon->d;
-	icon->d = new Private( *this->d );
+	icon->d = new Private( *this->d.data() );
 	icon->d->connectInstance(icon);
 
 	return icon;
@@ -374,11 +368,7 @@ PsiIcon *PsiIcon::copy() const
 
 void PsiIcon::detach()
 {
-	if ( d->count != 1 ) { // only if >1 reference
-		PsiIcon *i = copy();
-		*this = *i;
-		delete i;
-	}
+	d.detach();
 }
 
 /**
@@ -428,7 +418,7 @@ const Impix &PsiIcon::frameImpix() const
 }
 
 /**
- * Returns QIconSet of first animation frame.
+ * Returns QIcon of first animation frame.
  * TODO: Add automatic greyscale icon generation.
  */
 const QIcon &PsiIcon::icon() const
@@ -436,7 +426,7 @@ const QIcon &PsiIcon::icon() const
 	if ( d->icon )
 		return *d->icon;
 
-	d->icon = new QIcon( d->impix.pixmap() );
+	const_cast<Private*>(d.data())->icon = new QIcon( d->impix.pixmap() );
 	return *d->icon;
 }
 
@@ -604,7 +594,7 @@ QString PsiIcon::defaultText() const
 
 	// first, try to get the text by priorities
 	QStringList lang;
-	lang << QString(QTextCodec::locale()).left(2); // most prioritent, is the local language
+	lang << QLocale::languageToString(QLocale::system().language()); // most prioritent, is the local language
 	lang << "";                                    // and then the language without name goes (international?)
 	lang << "en";                                  // then real English
 
@@ -878,7 +868,7 @@ const PsiIcon *IconsetFactory::iconPtr(const QString &name)
 {
 	const PsiIcon *i = IconsetFactoryPrivate::instance()->icon(name);
 	if ( !i ) {
-		qDebug("WARNING: IconsetFactory::icon(\"%s\"): icon not found", name.latin1());
+		qDebug("WARNING: IconsetFactory::icon(\"%s\"): icon not found", qPrintable(name));
 	}
 	return i;
 }
@@ -935,7 +925,7 @@ const QStringList IconsetFactory::icons()
  */
 
 //! \if _hide_doc_
-class Iconset::Private : public Q3Shared
+class Iconset::Private : public QSharedData
 {
 private:
 	void init()
@@ -962,7 +952,6 @@ public:
 	}
 
 	Private(const Private &from)
-	: Q3Shared()
 	{
 		init();
 
@@ -1014,18 +1003,18 @@ public:
 		QFileInfo fi(dir);
 		if ( fi.isDir() ) {
 			QFile file ( dir + '/' + fileName );
-			if (!file.open(IO_ReadOnly))
+			if (!file.open(QIODevice::ReadOnly))
 				return ba;
 
 			ba = file.readAll();
 		}
 #ifdef ICONSET_ZIP
-		else if ( fi.extension(false) == "jisp" || fi.extension(false) == "zip" ) {
+		else if ( fi.suffix() == "jisp" || fi.suffix() == "zip" ) {
 			UnZip z(dir);
 			if ( !z.open() )
 				return ba;
 
-			QString n = fi.baseName(true) + '/' + fileName;
+			QString n = fi.completeBaseName() + '/' + fileName;
 			if ( !z.readFile(n, &ba) ) {
 				n = "/" + fileName;
 				z.readFile(n, &ba);
@@ -1198,7 +1187,7 @@ public:
 						break;
 					}
 					else {
-						qDebug("Iconset::load(): Couldn't load %s (%s) graphic for the %s icon for the %s iconset", (*it).toLatin1().data(), graphic[*it].toLatin1().data(), name.toLatin1().data(), this->name.latin1());
+						qDebug("Iconset::load(): Couldn't load %s (%s) graphic for the %s icon for the %s iconset", qPrintable(*it), qPrintable(graphic[*it]), qPrintable(name), qPrintable(this->name));
 						loadSuccess = false;
 					}
 				}
@@ -1220,21 +1209,21 @@ public:
 							break;
 
 						QFileInfo ext(sound[*it]);
-						path += "/" + QCA::Hash("sha1").hashToString(QString(fi.absFilePath() + '/' + *sound[*it]).utf8()) + '.' + ext.extension();
+						path += "/" + QCA::Hash("sha1").hashToString(QString(fi.absoluteFilePath() + '/' + sound[*it]).toUtf8()) + '.' + ext.suffix();
 
 						QFile file ( path );
-						file.open ( IO_WriteOnly );
+						file.open ( QIODevice::WriteOnly );
 						QDataStream out ( &file );
 
 						QByteArray data = loadData(sound[*it], dir);
-						out.writeRawBytes (data, data.size());
+						out.writeRawData (data, data.size());
 
 						icon.setSound ( path );
 						break;
 #endif
 					}
 					else {
-						icon.setSound ( fi.absFilePath() + '/' + *sound[*it] );
+						icon.setSound ( fi.absoluteFilePath() + '/' + sound[*it] );
 						break;
 					}
 				}
@@ -1332,7 +1321,6 @@ Iconset::Iconset(const Iconset &from)
 	//iconset_counter++;
 
 	d = from.d;
-	d->ref();
 }
 
 /**
@@ -1341,9 +1329,6 @@ Iconset::Iconset(const Iconset &from)
 Iconset::~Iconset()
 {
 	IconsetFactoryPrivate::instance()->unregisterIconset(this);
-
-	if ( d->deref() )
-		delete d;
 }
 
 /**
@@ -1351,11 +1336,7 @@ Iconset::~Iconset()
  */
 Iconset &Iconset::operator=(const Iconset &from)
 {
-	if ( d->deref() )
-		delete d;
-
 	d = from.d;
-	d->ref();
 
 	return *this;
 }
@@ -1363,16 +1344,14 @@ Iconset &Iconset::operator=(const Iconset &from)
 Iconset Iconset::copy() const
 {
 	Iconset is;
-	delete is.d;
-	is.d = new Private( *this->d );
+	is.d = new Private( *this->d.data() );
 
 	return is;
 }
 
 void Iconset::detach()
 {
-	if ( d->count > 1 )
-		*this = copy();
+	d.detach();
 }
 
 /**
@@ -1573,20 +1552,6 @@ const QHash<QString, QString> Iconset::info() const
 void Iconset::setInfo(const QHash<QString, QString> &i)
 {
 	d->info = i;
-}
-
-/**
- * Created Q3MimeSourceFactory with names of icons and their images.
- */
-Q3MimeSourceFactory *Iconset::createMimeSourceFactory() const
-{
-	Q3MimeSourceFactory *m = new Q3MimeSourceFactory;
-
-	PsiIcon *icon;
-	foreach (icon, d->list)
-		m->setImage(icon->name(), icon->image());
-
-	return m;
 }
 
 /**

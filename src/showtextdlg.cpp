@@ -28,7 +28,7 @@
 
 #include "showtextdlg.h"
 
-
+// FIXME: combine to common init function
 ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent)
 	: QDialog(parent)
 {
@@ -43,15 +43,17 @@ ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent)
 		f.close();
 	}
 
-	QVBoxLayout *vb1 = new QVBoxLayout(this, 8);
+	QVBoxLayout *vb1 = new QVBoxLayout(this);
+	vb1->setMargin(8);
 	QTextEdit *te = new QTextEdit(this);
 	te->setReadOnly(true);
-	te->setTextFormat(rich ? Qt::RichText : Qt::PlainText);
+	te->setAcceptRichText(rich);
 	te->setText(text);
 
 	vb1->addWidget(te);
 
-	QHBoxLayout *hb1 = new QHBoxLayout(vb1);
+	QHBoxLayout *hb1 = new QHBoxLayout(0);
+	vb1->addLayout(hb1);
 	hb1->addStretch(1);
 	QPushButton *pb = new QPushButton(tr("&OK"), this);
 	connect(pb, SIGNAL(clicked()), SLOT(accept()));
@@ -68,15 +70,17 @@ ShowTextDlg::ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *
 
 	setAttribute(Qt::WA_DeleteOnClose);
 
-	QVBoxLayout *vb1 = new QVBoxLayout(this, 8);
+	QVBoxLayout *vb1 = new QVBoxLayout(this);
+	vb1->setMargin(8);
 	QTextEdit *te = new QTextEdit(this);
 	te->setReadOnly(true);
-	te->setTextFormat(rich ? Qt::RichText : Qt::PlainText);
+	te->setAcceptRichText(rich);
 	te->setText(text);
 
 	vb1->addWidget(te);
 
-	QHBoxLayout *hb1 = new QHBoxLayout(vb1);
+	QHBoxLayout *hb1 = new QHBoxLayout(0);
+	vb1->addLayout(hb1);
 	hb1->addStretch(1);
 	QPushButton *pb = new QPushButton(tr("&OK"), this);
 	connect(pb, SIGNAL(clicked()), SLOT(accept()));

@@ -31,14 +31,11 @@
 #include <QColorGroup>
 #include <qsplitter.h>
 #include <qtimer.h>
-#include <q3header.h>
 #include <qtoolbutton.h>
 #include <qinputdialog.h>
 #include <qpointer.h>
 #include <qaction.h>
 #include <qobject.h>
-#include <q3popupmenu.h>
-#include <Q3TextDrag>
 #include <qcursor.h>
 #include <QCloseEvent>
 #include <QEvent>
@@ -52,6 +49,7 @@
 #include <QTextCursor>
 #include <QTextDocument> // for Qt::escape()
 #include <QToolTip>
+#include <QScrollBar>
 
 #include "psicon.h"
 #include "psiaccount.h"
@@ -210,7 +208,7 @@ public:
 
 	QString nickSeparator; // equals ":"
 
-	Q3PopupMenu *pm_settings;
+	QMenu *pm_settings;
 	int pending;
 	bool connecting;
 
@@ -240,7 +238,7 @@ public slots:
 		QString text = icon->defaultText();
 
 		if (!text.isEmpty()) {
-			mle()->insert(text + " ");
+			mle()->append(text + " ");
 		}
 	}
 
@@ -249,7 +247,7 @@ public slots:
 			return;
 		}
 
-		mle()->insert( text + " " );
+		mle()->append( text + " " );
 	}
 
 	void deferredScroll() {
@@ -313,7 +311,7 @@ public slots:
 	bool NickComplete(QStringList command)
 	{
 		if (command.count() > 0) {
-			QString nick = command[0].stripWhiteSpace();
+			QString nick = command[0].trimmed();
 			if ( !nick.isEmpty() ) {
 				prev_self = self;
 				self = nick;
@@ -332,7 +330,7 @@ public:
 	virtual bool mCmdTryStateTransit(MCmdStateIface *oldstate, QStringList command, MCmdStateIface *&newstate, QStringList &preset) {
 		if (oldstate->getName() == MCMDMUC) {
 			QString cmd;
-			if (command.count() > 0) cmd = command[0].lower();
+			if (command.count() > 0) cmd = command[0].toLower();
 	/*
 TODO:
 topic <topic>
@@ -353,7 +351,7 @@ join <channel>{,<channel>} [pass{,<pass>}
 				newstate = 0;
 			} else if(cmd == "nick") {
 				if (command.count() > 1) {
-					QString nick = command[1].stripWhiteSpace();
+					QString nick = command[1].trimmed();
 					// FIXME nick can't be empty....
 					prev_self = self;
 					self = nick;
@@ -370,7 +368,7 @@ join <channel>{,<channel>} [pass{,<pass>}
 				doSPing();
 				newstate = 0;
 			} else if (cmd == "version" && command.count() > 1) {
-				QString nick = command[1].stripWhiteSpace();
+				QString nick = command[1].trimmed();
 				Jid target = dlg->jid().withResource(nick);
 				JT_ClientVersion *version = new JT_ClientVersion(dlg->account()->client()->rootTask());
 				connect(version, SIGNAL(finished()), SLOT(version_finished()));
@@ -569,7 +567,7 @@ public:
 			QString postAdd = atStart_ ? nickSeparator + " " : "";
 
 			foreach(QString nick, nicks) {
-				if (nick.left(toComplete_.length()).lower() == toComplete_.lower()) {
+				if (nick.left(toComplete_.length()).toLower() == toComplete_.toLower()) {
 					suggestedNicks << nick + postAdd;
 				}
 			}
@@ -652,7 +650,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	updateIdentityVisibility();
 
 	d->act_find = new IconAction(tr("Find"), "psi/search", tr("&Find"), 0, this);
-	connect(d->act_find, SIGNAL(activated()), SLOT(openFind()));
+	connect(d->act_find, SIGNAL(triggered()), SLOT(openFind()));
 	ui_.tb_find->setDefaultAction(d->act_find);
 
 	ui_.tb_emoticons->setIcon(IconsetFactory::icon("psi/smile").icon());
@@ -669,11 +667,11 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	connect( d->act_clear, SIGNAL( activated() ), SLOT( doClearButton() ) );
 	
 	d->act_configure = new IconAction(tr("Configure Room"), "psi/configure-room", tr("&Configure Room"), 0, this);
-	connect(d->act_configure, SIGNAL(activated()), SLOT(configureRoom()));
+	connect(d->act_configure, SIGNAL(triggered()), SLOT(configureRoom()));
 
 #ifdef WHITEBOARDING
 	d->act_whiteboard = new IconAction(tr("Open a Whiteboard"), "psi/whiteboard", tr("Open a &Whiteboard"), 0, this);
-	connect(d->act_whiteboard, SIGNAL(activated()), SLOT(openWhiteboard()));
+	connect(d->act_whiteboard, SIGNAL(triggered()), SLOT(openWhiteboard()));
 #endif
 
 	connect(pa->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
@@ -683,11 +681,11 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 
 	d->act_nick = new QAction(this);
 	d->act_nick->setText(tr("Change Nickname..."));
-	connect(d->act_nick, SIGNAL(activated()), d, SLOT(doNick()));
+	connect(d->act_nick, SIGNAL(triggered()), d, SLOT(doNick()));
 
 	d->act_mini_cmd = new QAction(this);
 	d->act_mini_cmd->setText(tr("Enter Command..."));
-	connect(d->act_mini_cmd, SIGNAL(activated()), d, SLOT(doMiniCmd()));
+	connect(d->act_mini_cmd, SIGNAL(triggered()), d, SLOT(doMiniCmd()));
 	addAction(d->act_mini_cmd);
 
 	ui_.toolbar->setIconSize(QSize(16,16));
@@ -703,22 +701,22 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	// Common actions
 	d->act_send = new QAction(this);
 	addAction(d->act_send);
-	connect(d->act_send,SIGNAL(activated()), SLOT(mle_returnPressed()));
+	connect(d->act_send,SIGNAL(triggered()), SLOT(mle_returnPressed()));
 	d->act_close = new QAction(this);
 	addAction(d->act_close);
-	connect(d->act_close,SIGNAL(activated()), SLOT(close()));
+	connect(d->act_close,SIGNAL(triggered()), SLOT(close()));
 	d->act_scrollup = new QAction(this);
 	addAction(d->act_scrollup);
-	connect(d->act_scrollup,SIGNAL(activated()), SLOT(scrollUp()));
+	connect(d->act_scrollup,SIGNAL(triggered()), SLOT(scrollUp()));
 	d->act_scrolldown = new QAction(this);
 	addAction(d->act_scrolldown);
-	connect(d->act_scrolldown,SIGNAL(activated()), SLOT(scrollDown()));
+	connect(d->act_scrolldown,SIGNAL(triggered()), SLOT(scrollDown()));
 
 	ui_.mini_prompt->hide();
 	connect(ui_.mle, SIGNAL(textEditCreated(QTextEdit*)), SLOT(chatEditCreated()));
 	chatEditCreated();
 
-	d->pm_settings = new Q3PopupMenu(this);
+	d->pm_settings = new QMenu(this);
 	connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));
 	ui_.tb_actions->setMenu(d->pm_settings);
 
@@ -840,7 +838,8 @@ void GCMainDlg::mucInfoDialog(const QString& title, const QString& message, cons
 		m += tr("\nReason: %1").arg(reason);
 
 	// FIXME maybe this should be queued in the future?
-	QMessageBox* msg = new QMessageBox(QMessageBox::Information, title, m, QMessageBox::Ok, this, Qt::WDestructiveClose);
+	QMessageBox* msg = new QMessageBox(QMessageBox::Information, title, m, QMessageBox::Ok, this);
+	msg->setAttribute(Qt::WA_DeleteOnClose, true);
 	msg->setModal(false);
 	msg->show();
 }
@@ -849,7 +848,7 @@ void GCMainDlg::logSelectionChanged()
 {
 #ifdef Q_WS_MAC
 	// A hack to only give the message log focus when text is selected
-	if (ui_.log->hasSelectedText()) 
+	if (ui_.log->textCursor().hasSelection()) 
 		ui_.log->setFocus();
 	else 
 		ui_.mle->chatEdit()->setFocus();
@@ -899,7 +898,7 @@ void MiniCommand_Depreciation_Message(const QString &old,const QString &newCmd, 
 void GCMainDlg::mle_returnPressed()
 {
 	d->tabCompletion.reset();
-	QString str = d->mle()->text();
+	QString str = d->mle()->toPlainText();
 
 	if (d->mCmdSite.isActive()) {
 		if (!d->mCmdManager.processCommand(str)) {
@@ -925,8 +924,8 @@ void GCMainDlg::mle_returnPressed()
 		return;
 	}
 
-	if(str.lower().startsWith("/nick ")) {
-		QString nick = str.mid(6).stripWhiteSpace();
+	if(str.toLower().startsWith("/nick ")) {
+		QString nick = str.mid(6).trimmed();
     XMPP::Jid newJid = jid().withResource(nick);
 		if (!nick.isEmpty() && newJid.isValid()) {
 			d->prev_self = d->self;
@@ -978,10 +977,10 @@ void GCMainDlg::le_downPressed()
 void GCMainDlg::doTopic()
 {
 	bool ok = false;
-	QString str = QInputDialog::getText(
+	QString str = QInputDialog::getText(this,
 		tr("Set Groupchat Topic"),
 		tr("Enter a topic:"),
-		QLineEdit::Normal, ui_.le_topic->text(), &ok, this);
+		QLineEdit::Normal, ui_.le_topic->text(), &ok);
 
 	if(ok) {
 		Message m(jid());
@@ -1086,7 +1085,8 @@ void GCMainDlg::goConn()
 
 void GCMainDlg::dragEnterEvent(QDragEnterEvent *e)
 {
-	e->accept(e->mimeData()->hasText());
+	if (e->mimeData()->hasText())
+		e->accept();
 }
 
 void GCMainDlg::dropEvent(QDropEvent *e)
@@ -1528,7 +1528,7 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
 		color = "#0000FF";
 	}*/
 	nickcolor = getNickColor(who);
-	textcolor = ui_.log->palette().active().text().name();
+	textcolor = ui_.log->palette().windowText().color().name();
 	if(alert) {
 		textcolor = "#FF0000";
 		alerttagso = "<b>";
@@ -1628,7 +1628,7 @@ void GCMainDlg::setLooks()
 	ui_.mle->chatEdit()->setFont(f);
 
 	f.fromString(PsiOptions::instance()->getOption("options.ui.look.font.contactlist").toString());
-	ui_.lv_users->Q3ListView::setFont(f);
+	ui_.lv_users->QListWidget::setFont(f);
 
 	if (PsiOptions::instance()->getOption("options.ui.chat.central-toolbar").toBool()) {
 		ui_.toolbar->show();
@@ -1749,10 +1749,10 @@ void GCMainDlg::buildMenu()
 #ifdef WHITEBOARDING
 	d->act_whiteboard->addTo( d->pm_settings );
 #endif
-	d->pm_settings->insertSeparator();
+	d->pm_settings->addSeparator();
 
-	d->act_icon->addTo( d->pm_settings );
-	d->act_nick->addTo( d->pm_settings );
+	d->pm_settings->addAction(d->act_icon);
+	d->pm_settings->addAction(d->act_nick);
 }
 
 void GCMainDlg::chatEditCreated()
@@ -1782,12 +1782,14 @@ int GCMainDlg::unreadMessageCount() const
 // GCFindDlg
 //----------------------------------------------------------------------------
 GCFindDlg::GCFindDlg(const QString &str, QWidget *parent, const char *name)
-	: QDialog(parent, name, false)
+	: QDialog(parent)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
 	setWindowTitle(tr("Find"));
-	QVBoxLayout *vb = new QVBoxLayout(this, 4);
-	QHBoxLayout *hb = new QHBoxLayout(vb);
+	QVBoxLayout *vb = new QVBoxLayout(this);
+	vb->setMargin(4);
+	QHBoxLayout *hb = new QHBoxLayout(0);
+	vb->addLayout(hb);
 	QLabel *l = new QLabel(tr("Find:"), this);
 	hb->addWidget(l);
 	le_input = new QLineEdit(this);
@@ -1800,7 +1802,8 @@ GCFindDlg::GCFindDlg(const QString &str, QWidget *parent, const char *name)
 	Line1->setFrameShape( QFrame::HLine );
 	vb->addWidget(Line1);
 
-	hb = new QHBoxLayout(vb);
+	hb = new QHBoxLayout(0);
+	vb->addLayout(hb);
 	hb->addStretch(1);
 	QPushButton *pb_close = new QPushButton(tr("&Close"), this);
 	connect(pb_close, SIGNAL(clicked()), SLOT(close()));

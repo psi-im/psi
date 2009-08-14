@@ -17,13 +17,17 @@ class CocoaInitializer::Private
 
 CocoaInitializer::CocoaInitializer()
 {
+#if 0
 	d = new CocoaInitializer::Private();
 	NSApplicationLoad();
 	d->autoReleasePool_ = [[NSAutoreleasePool alloc] init];
+#endif
 }
 
 CocoaInitializer::~CocoaInitializer()
 {
+#if 0
 	[d->autoReleasePool_ release];
 	delete d;
+#endif
 }

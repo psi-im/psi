@@ -79,12 +79,12 @@ void TabCompletion::moveCursorToOffset(QTextCursor &cur, int offset, QTextCursor
 /** Find longest common (case insensitive) prefix of \a list.
 	*/
 QString TabCompletion::longestCommonPrefix(QStringList list) {
-	QString candidate = list.first().lower();
+	QString candidate = list.first().toLower();
 	int len = candidate.length();
 	while (len > 0) {
 		bool found = true;
 		foreach(QString str, list) {
-			if (str.left(len).lower() != candidate) {
+			if (str.left(len).toLower() != candidate) {
 				found = false;
 				break;
 			}
@@ -192,7 +192,7 @@ void TabCompletion::tryComplete() {
 		}
 	} else {
 		QTextCursor cursor = textEdit_->textCursor();
-		QString wholeText = textEdit_->text();
+		QString wholeText = textEdit_->toPlainText();
 		
 		int begin, end;
 		setup(wholeText, cursor.position(), begin, end);

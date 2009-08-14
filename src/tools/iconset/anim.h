@@ -22,6 +22,7 @@
 #define ANIM_H
 
 #include <QByteArray>
+#include <QSharedDataPointer>
 
 class QObject;
 class QPixmap;
@@ -66,7 +67,7 @@ public:
 
 	class Private;
 private:
-	Private *d;
+	QSharedDataPointer<Private> d;
 };
 
 #endif

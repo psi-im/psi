@@ -45,7 +45,7 @@ QString RTParse::next()
 	// if we're at a tag, append it to the output
 	if(in.at(v_at) == '<') {
 		QString s;
-		int n = in.find('>', v_at);
+		int n = in.indexOf('>', v_at);
 		if(n == -1) {
 			s = in.mid(v_at);
 		}
@@ -59,7 +59,7 @@ QString RTParse::next()
 
 	// now find the next tag, and grab the text in between
 	QString s;
-	int x = in.find('<', v_at);
+	int x = in.indexOf('<', v_at);
 	if(x == -1) {
 		s = in.mid(v_at);
 		v_atEnd = true;

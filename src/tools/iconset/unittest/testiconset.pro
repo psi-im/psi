@@ -4,7 +4,7 @@ CONFIG += unittest
 TESTBASEDIR = ../../../../unittest
 include($$TESTBASEDIR/unittest.pri)
 
-QT += gui xml qt3support
+QT += gui xml
 RESOURCES +=  ../../../../iconsets.qrc
 SOURCES += testiconset.cpp
 

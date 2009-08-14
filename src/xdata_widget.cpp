@@ -159,7 +159,7 @@ public:
 		}
 
 		QLabel *fixed = new QLabel("<qt>" + text + "</qt>", parent);
-		grid->addMultiCellWidget(fixed, row, row, 0, 2);
+		grid->addWidget(fixed, row, row, 0, 2);
 
 		if ( !f.desc().isEmpty() ) {
 			fixed->setToolTip(f.desc());
@@ -246,7 +246,7 @@ public:
 
 		combo = new QComboBox(parent);
 		grid->addWidget(combo, row, 1);
-		combo->setInsertionPolicy(QComboBox::NoInsertion);
+		combo->setInsertPolicy(QComboBox::NoInsert);
 
 		QString sel;
 		if ( !f.value().isEmpty() )
@@ -259,9 +259,9 @@ public:
 			if ( lbl.isEmpty() )
 				lbl = (*it).value;
 
-			combo->insertItem(lbl);
+			combo->addItem(lbl);
 			if ( (*it).value == sel )
-				combo->setCurrentText( lbl );
+				combo->setItemText( combo->currentIndex(), lbl );
 		}
 
 		QLabel *req = new QLabel(reqText(), parent);
@@ -404,7 +404,7 @@ public:
 	XData::Field field() const
 	{
 		XData::Field f = XDataField::field();
-		f.setValue( QStringList::split("\n", edit->text(), true) );
+		f.setValue( edit->toPlainText().split("\n") );
 		return f;
 	}
 
@@ -429,8 +429,9 @@ public:
 //----------------------------------------------------------------------------
 
 XDataWidget::XDataWidget(QWidget *parent, const char *name)
-: QWidget(parent, name)
+: QWidget(parent)
 {
+	setObjectName(name);
 	layout_ = new QVBoxLayout(this);
 }
 
@@ -481,7 +482,8 @@ void XDataWidget::setFields(const XData::FieldList &f)
 	QWidget *fields = new QWidget(this);
 	layout_->addWidget(fields);
 	if ( f.count() ) {
-		QGridLayout *grid = new QGridLayout(fields, 3, f.count(), 0, 3);
+		// FIXME
+		QGridLayout *grid = new QGridLayout(fields);
 
 		int row = 0;
 		XData::FieldList::ConstIterator it = f.begin();

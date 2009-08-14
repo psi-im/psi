@@ -45,7 +45,7 @@ ChangePasswordDlg::ChangePasswordDlg(PsiAccount *_pa, QWidget *parent)
 
 	connect(pa, SIGNAL(disconnected()), SLOT(disc()));
 
-	setWindowTitle(CAP(caption()));
+	setWindowTitle(CAP(windowTitle()));
 
 	connect(pb_close, SIGNAL(clicked()), SLOT(close()));
 	connect(pb_apply, SIGNAL(clicked()), SLOT(apply()));

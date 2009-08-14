@@ -33,21 +33,21 @@
 #include "options/opt_toolbars.h"
 #include "common.h"
 
-Qt::ToolBarArea dockPositionToToolBarArea(Qt::Dock dock)
+Qt::ToolBarArea dockPositionToToolBarArea(Qt3Dock dock)
 {
 	switch (dock) {
-	case Qt::DockTop:
+	case Qt3Dock_Top:
 		return Qt::TopToolBarArea;
-	case Qt::DockBottom:
+	case Qt3Dock_Bottom:
 		return Qt::BottomToolBarArea;
-	case Qt::DockRight:
+	case Qt3Dock_Right:
 		return Qt::RightToolBarArea;
-	case Qt::DockLeft:
+	case Qt3Dock_Left:
 		return Qt::LeftToolBarArea;
 
-	case Qt::DockUnmanaged:
-	case Qt::DockTornOff:
-	case Qt::DockMinimized:
+	case Qt3Dock_Unmanaged:
+	case Qt3Dock_TornOff:
+	case Qt3Dock_Minimized:
 		;
 	}
 
@@ -65,7 +65,7 @@ PsiToolBar::PsiToolBar(const QString& base, QMainWindow* mainWindow, MetaActionL
 	setIconSize(QSize(16, 16));
 
 	customizeAction_ = new QAction(tr("Configure& Toolbar..."), this);
-	connect(customizeAction_, SIGNAL(activated()), this, SIGNAL(customize()));
+	connect(customizeAction_, SIGNAL(triggered()), this, SIGNAL(customize()));
 }
 
 PsiToolBar::~PsiToolBar()
@@ -109,7 +109,7 @@ void PsiToolBar::initialize()
 	}
 
 	QMainWindow* mainWindow = dynamic_cast<QMainWindow*>(parentWidget());
-	mainWindow->addToolBar(dockPositionToToolBarArea((Qt::Dock)o->getOption(base_ + ".dock.position").toInt()),
+	mainWindow->addToolBar(dockPositionToToolBarArea((Qt3Dock)o->getOption(base_ + ".dock.position").toInt()),
 	                       this);
 	if (mainWindow && o->getOption(base_ + ".dock.nl").toBool()) {
 		mainWindow->insertToolBarBreak(this);

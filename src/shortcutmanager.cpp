@@ -108,7 +108,7 @@ void ShortcutManager::connect(const QString& path, QObject* parent, const char* 
 				act->setShortcut(sequence);
 				if (parent->isWidgetType())
 					((QWidget*) parent)->addAction(act);
-				parent->connect(act, SIGNAL(activated()), slot);
+				parent->connect(act, SIGNAL(triggered()), slot);
 			}
 		}
 	}

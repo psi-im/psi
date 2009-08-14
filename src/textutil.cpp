@@ -1,5 +1,4 @@
 #include <QTextDocument> // for escape()
-#include <Q3PtrList>
 
 #include "textutil.h"
 #include "psiiconset.h"
@@ -60,7 +59,7 @@ QString TextUtil::quote(const QString &toquote, int width, bool quoteEmpty)
 		col++;
 		if (atstart && quoted[i] == '>') ql++; else atstart=0;
 
-		switch(quoted[i].latin1())
+		switch(quoted[i].toLatin1())
 		{
 			case '\n': ql = col = 0; atstart = 1; break;
 			case ' ':
@@ -133,14 +132,14 @@ QString TextUtil::rich2plain(const QString &in)
 		if(in[i] == '<') {
 			// find end of tag
 			++i;
-			int n = in.find('>', i);
+			int n = in.indexOf('>', i);
 			if(n == -1)
 				break;
 			QString str = in.mid(i, (n-i));
 			i = n;
 
 			QString tagName;
-			n = str.find(' ');
+			n = str.indexOf(' ');
 			if(n != -1)
 				tagName = str.mid(0, n);
 			else
@@ -157,7 +156,7 @@ QString TextUtil::rich2plain(const QString &in)
 		else if(in[i] == '&') {
 			// find a semicolon
 			++i;
-			int n = in.find(';', i);
+			int n = in.indexOf(';', i);
 			if(n == -1)
 				break;
 			QString type = in.mid(i, (n-i));
@@ -175,7 +174,7 @@ QString TextUtil::rich2plain(const QString &in)
 				out += '\'';
 		}
 		else if(in[i].isSpace()) {
-			if(in[i] == QChar::nbsp)
+			if(in[i] == QChar::Nbsp)
 				out += ' ';
 			else if(in[i] != '\n') {
 				if(i == 0 || out.length() == 0)
@@ -206,7 +205,7 @@ QString TextUtil::resolveEntities(const QString &in)
 		if(in[i] == '&') {
 			// find a semicolon
 			++i;
-			int n = in.find(';', i);
+			int n = in.indexOf(';', i);
 			if(n == -1)
 				break;
 			QString type = in.mid(i, (n-i));
@@ -238,7 +237,7 @@ static bool linkify_pmatch(const QString &str1, int at, const QString &str2)
 		return false;
 
 	for(int n = 0; n < (int)str2.length(); ++n) {
-		if(str1.at(n+at).lower() != str2.at(n).lower())
+		if(str1.at(n+at).toLower() != str2.at(n).toLower())
 			return false;
 	}
 
@@ -264,7 +263,7 @@ static QString linkify_htmlsafe(const QString &in)
 		if(linkify_isOneOf(in.at(n), "\"\'`<>")) {
 			// hex encode
 			QString hex;
-			hex.sprintf("%%%02X", in.at(n).latin1());
+			hex.sprintf("%%%02X", in.at(n).toLatin1());
 			out.append(hex);
 		}
 		else {
@@ -287,15 +286,15 @@ static bool linkify_okEmail(const QString &addy)
 {
 	// this makes sure that there is an '@' and a '.' after it, and that there is
 	// at least one char for each of the three sections
-	int n = addy.find('@');
+	int n = addy.indexOf('@');
 	if(n == -1 || n == 0)
 		return false;
-	int d = addy.find('.', n+1);
+	int d = addy.indexOf('.', n+1);
 	if(d == -1 || d == 0)
 		return false;
 	if((addy.length()-1) - d <= 0)
 		return false;
-	if(addy.find("..") != -1)
+	if(addy.indexOf("..") != -1)
 		return false;
 
 	return true;
@@ -450,9 +449,7 @@ QString TextUtil::emoticonify(const QString &in)
 
 			int foundPos = -1, foundLen = -1;
 
-			Q3PtrListIterator<Iconset> iconsets(PsiIconset::instance()->emoticons);
-			Iconset *iconset;
-			while ( (iconset = iconsets.current()) != 0 ) {
+			foreach(const Iconset* iconset, PsiIconset::instance()->emoticons) {
 				QListIterator<PsiIcon*> it = iconset->iterator();
 				while ( it.hasNext()) {
 					PsiIcon *icon = it.next();
@@ -468,7 +465,7 @@ QString TextUtil::emoticonify(const QString &in)
 
 						// find the closest match
 						const QRegExp &rx = icon->regExp();
-						int n = rx.search(str, iii);
+						int n = rx.indexIn(str, iii);
 						if ( n == -1 )
 							continue;
 
@@ -491,8 +488,6 @@ QString TextUtil::emoticonify(const QString &in)
 						iii = n + rx.matchedLength();
 					} while ( searchAgain );
 				}
-
-				++iconsets;
 			}
 
 			QString s;

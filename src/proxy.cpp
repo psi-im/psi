@@ -24,12 +24,8 @@
 #include <qlineedit.h>
 #include <qcheckbox.h>
 #include <qlayout.h>
-#include <q3grid.h>
-#include <q3hbox.h>
-#include <q3vbox.h>
 #include <qcombobox.h>
 #include <qpushbutton.h>
-#include <q3listbox.h>
 #include <qdom.h>
 #include <qpointer.h>
 #include <qapplication.h>
@@ -71,70 +67,6 @@ static QDomElement findSubTag(const QDomElement &e, const QString &name)
 
 	return QDomElement();
 }
-
-//----------------------------------------------------------------------------
-// HostPortEdit
-//----------------------------------------------------------------------------
-class HostPortEdit::Private
-{
-public:
-	Private() {}
-
-	QLineEdit *le_host, *le_port;
-};
-
-HostPortEdit::HostPortEdit(QWidget *parent, const char *name)
-:QWidget(parent, name)
-{
-	d = new Private;
-
-	QLabel *l;
-	QHBoxLayout *hb = new QHBoxLayout(this, 0, 4);
-	l = new QLabel(tr("Host:"), this);
-	hb->addWidget(l);
-	d->le_host = new QLineEdit(this);
-	d->le_host->setMinimumWidth(128);
-	hb->addWidget(d->le_host);
-	l = new QLabel(tr("Port:"), this);
-	hb->addWidget(l);
-	d->le_port = new QLineEdit(this);
-	d->le_port->setFixedWidth(64);
-	hb->addWidget(d->le_port);
-	setPort(0);
-}
-
-HostPortEdit::~HostPortEdit()
-{
-	delete d;
-}
-
-QString HostPortEdit::host() const
-{
-	return d->le_host->text();
-}
-
-int HostPortEdit::port() const
-{
-	return d->le_port->text().toInt();
-}
-
-void HostPortEdit::setHost(const QString &s)
-{
-	d->le_host->setText(s);
-}
-
-void HostPortEdit::setPort(int x)
-{
-	d->le_port->setText(QString::number(x));
-}
-
-void HostPortEdit::fixTabbing(QWidget *a, QWidget *b)
-{
-	setTabOrder(a, d->le_host);
-	setTabOrder(d->le_host, d->le_port);
-	setTabOrder(d->le_port, b);
-}
-
 
 //----------------------------------------------------------------------------
 // ProxySettings
@@ -195,56 +127,20 @@ bool ProxySettings::fromXml(const QDomElement &e)
 //----------------------------------------------------------------------------
 // ProxyEdit
 //----------------------------------------------------------------------------
-class ProxyEdit::Private
+ProxyEdit::ProxyEdit(QWidget* parent)
+	: QWidget(parent)
 {
-public:
-	Private() {}
+	ui_.setupUi(this);
 
-	HostPortEdit *hp_host;
-	QCheckBox *ck_auth;
-	QLabel *lb_url;
-	QLineEdit *le_url, *le_user, *le_pass;
-	Q3Grid *gr_auth;
-};
-
-ProxyEdit::ProxyEdit(QWidget *parent, const char *name)
-:Q3GroupBox(1, Qt::Horizontal, tr("Settings"), parent, name)
-{
-	d = new Private;
-
-	//QVBoxLayout *vb = new QVBoxLayout(this);
-	//QVBox *gb = new QVBox(this);
-	//gb->setSpacing(4);
-	//vb->addWidget(gb);
-
-	QLabel *l;
-
-	d->hp_host = new HostPortEdit(this);
-
-	Q3HBox *hb = new Q3HBox(this);
-	d->lb_url = new QLabel(tr("Polling URL:"), hb);
-	d->le_url = new QLineEdit(hb);
-
-	d->ck_auth = new QCheckBox(tr("Use authentication"), this);
-	connect(d->ck_auth, SIGNAL(toggled(bool)), SLOT(ck_toggled(bool)));
-
-	d->gr_auth = new Q3Grid(2, Qt::Horizontal, this);
-	d->gr_auth->setSpacing(4);
-	l = new QLabel(tr("Username:"), d->gr_auth);
-	d->le_user = new QLineEdit(d->gr_auth);
-	l = new QLabel(tr("Password:"), d->gr_auth);
-	d->le_pass = new QLineEdit(d->gr_auth);
-	d->le_pass->setEchoMode(QLineEdit::Password);
-	d->gr_auth->setEnabled(false);
-
-	d->hp_host->setWhatsThis(
+	ui_.le_host->setWhatsThis(
 		tr("Enter the hostname and port of your proxy server.") + "  " +
 		tr("Consult your network administrator if necessary."));
-	d->le_user->setWhatsThis(
+	ui_.le_port->setWhatsThis(ui_.le_host->whatsThis());
+	ui_.le_user->setWhatsThis(
 		tr("Enter your proxy server login (username) "
 		"or leave this field blank if the proxy server does not require it.") + "  " +
 		tr("Consult your network administrator if necessary."));
-	d->le_pass->setWhatsThis(
+	ui_.le_pass->setWhatsThis(
 		tr("Enter your proxy server password "
 		"or leave this field blank if the proxy server does not require it.") + "  " +
 		tr("Consult your network administrator if necessary."));
@@ -252,68 +148,46 @@ ProxyEdit::ProxyEdit(QWidget *parent, const char *name)
 
 ProxyEdit::~ProxyEdit()
 {
-	delete d;
 }
 
 void ProxyEdit::reset()
 {
-	d->hp_host->setHost("");
-	d->hp_host->setPort(0);
-	d->le_url->setText("");
-	d->ck_auth->setChecked(false);
-	d->le_user->setText("");
-	d->le_pass->setText("");
+	ui_.le_host->setText(QString());
+	ui_.le_port->setText(QString());
+	ui_.le_url->setText(QString());
+	ui_.gr_auth->setChecked(false);
+	ui_.le_user->setText(QString());
+	ui_.le_pass->setText(QString());
 }
 
 void ProxyEdit::setType(const QString &s)
 {
-	if(s == "poll") {
-		d->lb_url->setEnabled(true);
-		d->le_url->setEnabled(true);
-	}
-	else {
-		d->lb_url->setEnabled(false);
-		d->le_url->setEnabled(false);
-	}
+	ui_.lb_url->setEnabled(s == "poll");
+	ui_.le_url->setEnabled(s == "poll");
 }
 
 ProxySettings ProxyEdit::proxySettings() const
 {
 	ProxySettings s;
-	s.host = d->hp_host->host();
-	s.port = d->hp_host->port();
-	if(d->le_url->isEnabled())
-		s.url = d->le_url->text();
-	s.useAuth = d->ck_auth->isChecked();
-	s.user = d->le_user->text();
-	s.pass = d->le_pass->text();
+	s.host = ui_.le_host->text();
+	s.port = ui_.le_port->text().toInt();
+	if(ui_.le_url->isEnabled())
+		s.url = ui_.le_url->text();
+	s.useAuth = ui_.gr_auth->isChecked();
+	s.user = ui_.le_user->text();
+	s.pass = ui_.le_pass->text();
 	return s;
 }
 
 void ProxyEdit::setProxySettings(const ProxySettings &s)
 {
-	d->hp_host->setHost(s.host);
-	d->hp_host->setPort(s.port);
-	d->le_url->setText(s.url);
-	d->ck_auth->setChecked(s.useAuth);
-	d->le_user->setText(s.user);
-	d->le_pass->setText(s.pass);
+	ui_.le_host->setText(s.host);
+	ui_.le_host->setText(QString::number(s.port));
+	ui_.le_url->setText(s.url);
+	ui_.gr_auth->setChecked(s.useAuth);
+	ui_.le_user->setText(s.user);
+	ui_.le_pass->setText(s.pass);
 }
-
-void ProxyEdit::ck_toggled(bool b)
-{
-	d->gr_auth->setEnabled(b);
-}
-
-void ProxyEdit::fixTabbing(QWidget *a, QWidget *b)
-{
-	d->hp_host->fixTabbing(a, d->le_url);
-	setTabOrder(d->le_url, d->ck_auth);
-	setTabOrder(d->ck_auth, d->le_user);
-	setTabOrder(d->le_user, d->le_pass);
-	setTabOrder(d->le_pass, b);
-}
-
 
 //----------------------------------------------------------------------------
 // ProxyDlg
@@ -334,14 +208,13 @@ ProxyDlg::ProxyDlg(const ProxyItemList &list, const QStringList &methods, const 
 	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private;
 	setupUi(this);
-	setWindowTitle(CAP(caption()));
+	setWindowTitle(CAP(windowTitle()));
 	setModal(QApplication::activeModalWidget() ? true: false);
 
 	d->list = list;
 	d->last = -1;
 	d->pe_settings = new ProxyEdit(gb_prop);
 	replaceWidget(lb_proxyedit, d->pe_settings);
-	d->pe_settings->fixTabbing(cb_type, pb_close);
 
 	hookEdit();
 
@@ -353,20 +226,20 @@ ProxyDlg::ProxyDlg(const ProxyItemList &list, const QStringList &methods, const 
 	pb_remove->setEnabled(false);
 	pb_save->setDefault(true);
 
-	cb_type->insertStringList(methods);
+	cb_type->addItems(methods);
 	connect(cb_type, SIGNAL(activated(int)), SLOT(cb_activated(int)));
 
 	int defIdx = -1;
 	int i = 0;
 	for(ProxyItemList::ConstIterator it = d->list.begin(); it != d->list.end(); ++it) {
-		lbx_proxy->insertItem((*it).name);
+		lbx_proxy->addItem((*it).name);
 		if ((*it).id == def) defIdx= i;
 		++i;
 	}
 	if(!list.isEmpty()) {
 		if(defIdx < 0)
 			defIdx = 0;
-		lbx_proxy->setCurrentItem(defIdx);
+		lbx_proxy->setCurrentRow(defIdx);
 		selectCurrent();
 	}
 
@@ -388,22 +261,23 @@ void ProxyDlg::proxy_new()
 	s.name = getUniqueName();
 	d->list += s;
 
-	lbx_proxy->insertItem(s.name);
-	lbx_proxy->setCurrentItem(lbx_proxy->count()-1);
+	lbx_proxy->addItem(s.name);
+	lbx_proxy->setCurrentRow(lbx_proxy->count()-1);
 	selectCurrent();
 }
 
 void ProxyDlg::proxy_remove()
 {
-	int x = lbx_proxy->currentItem();
+	int x = lbx_proxy->currentRow();
 	if(x != -1) {
 		ProxyItemList::Iterator it = d->list.begin();
 		for(int n = 0; n < x; ++n)
 			++it;
-		d->list.remove(it);
+		d->list.erase(it);
 
 		d->last = -1;
-		lbx_proxy->removeItem(x);
+		// FIXME
+		delete lbx_proxy->item(x);
 		selectCurrent();
 	}
 }
@@ -420,9 +294,9 @@ void ProxyDlg::cb_activated(int x)
 
 void ProxyDlg::selectCurrent()
 {
-	int x = lbx_proxy->currentItem();
+	int x = lbx_proxy->currentRow();
 	if(x != -1)
-		lbx_proxy->setSelected(x, true);
+		lbx_proxy->setCurrentRow(x);
 }
 
 QString ProxyDlg::getUniqueName() const
@@ -447,7 +321,7 @@ void ProxyDlg::saveIntoItem(int x)
 {
 	ProxyItem &s = d->list[x];
 	s.name = le_name->text();
-	int i = cb_type->currentItem();
+	int i = cb_type->currentIndex();
 	s.type = "http";
 	if(i == 0)
 		s.type = "http";
@@ -468,7 +342,7 @@ void ProxyDlg::qlbx_highlighted(int x)
 	// display the new item's content
 	if(x == -1) {
 		le_name->setText("");
-		cb_type->setCurrentItem(0);
+		cb_type->setCurrentIndex(0);
 		d->pe_settings->reset();
 		gb_prop->setEnabled(false);
 		pb_remove->setEnabled(false);
@@ -483,7 +357,7 @@ void ProxyDlg::qlbx_highlighted(int x)
 			i = 1;
 		else if(s.type == "poll")
 			i = 2;
-		cb_type->setCurrentItem(i);
+		cb_type->setCurrentIndex(i);
 		d->pe_settings->setProxySettings(s.settings);
 		cb_activated(i);
 		gb_prop->setEnabled(true);
@@ -493,10 +367,10 @@ void ProxyDlg::qlbx_highlighted(int x)
 
 void ProxyDlg::qle_textChanged(const QString &s)
 {
-	int x = lbx_proxy->currentItem();
+	int x = lbx_proxy->currentRow();
 	if(x != -1) {
 		unhookEdit();
-		lbx_proxy->changeItem(s, x);
+		lbx_proxy->item(x)->setText(s);
 		hookEdit();
 	}
 }
@@ -516,7 +390,7 @@ void ProxyDlg::unhookEdit()
 
 void ProxyDlg::doSave()
 {
-	int x = lbx_proxy->currentItem();
+	int x = lbx_proxy->currentRow();
 	if(x != -1)
 		saveIntoItem(x);
 	applyList(d->list, x);
@@ -538,15 +412,17 @@ public:
 };
 
 ProxyChooser::ProxyChooser(ProxyManager *m, QWidget *parent, const char *name)
-:QWidget(parent, name)
+:QWidget(parent)
 {
 	d = new Private;
 	d->m = m;
 	connect(m, SIGNAL(settingsChanged()), SLOT(pm_settingsChanged()));
-	QHBoxLayout *hb = new QHBoxLayout(this, 0, 4);
+	QHBoxLayout *hb = new QHBoxLayout(this);
+	hb->setMargin(0);
+	hb->setSpacing(4);
 	d->cb_proxy = new QComboBox(this);
 	QSizePolicy sp = d->cb_proxy->sizePolicy();
-	d->cb_proxy->setSizePolicy( QSizePolicy(QSizePolicy::Expanding, sp.verData()) );
+	d->cb_proxy->setSizePolicy( QSizePolicy(QSizePolicy::Expanding, d->cb_proxy->sizePolicy().verticalPolicy()) );
 	hb->addWidget(d->cb_proxy);
 	d->pb_edit = new QPushButton(tr("Edit..."), this);
 	connect(d->pb_edit, SIGNAL(clicked()), SLOT(doOpen()));
@@ -562,12 +438,12 @@ ProxyChooser::~ProxyChooser()
 
 QString ProxyChooser::currentItem() const
 {
-	return d->cb_proxy->itemData(d->cb_proxy->currentItem()).toString();
+	return d->cb_proxy->itemText(d->cb_proxy->currentIndex());
 }
 
 void ProxyChooser::setCurrentItem(const QString &id)
 {
-	d->cb_proxy->setCurrentItem(d->cb_proxy->findData(id));
+	d->cb_proxy->setCurrentIndex(d->cb_proxy->findText(id));
 }
 
 void ProxyChooser::pm_settingsChangedApply()
@@ -578,9 +454,9 @@ void ProxyChooser::pm_settingsChangedApply()
 	prev = d->m->lastEdited();
 	int x = d->cb_proxy->findData(prev);
 	if(x == -1) {
-		d->cb_proxy->setCurrentItem(0);
+		d->cb_proxy->setCurrentIndex(0);
 	} else {
-		d->cb_proxy->setCurrentItem(x);
+		d->cb_proxy->setCurrentIndex(x);
 	}
 }
 
@@ -591,9 +467,9 @@ void ProxyChooser::pm_settingsChanged()
 	buildComboBox();
 	int x = d->cb_proxy->findData(prev);
 	if(x == -1) {
-		d->cb_proxy->setCurrentItem(0);
+		d->cb_proxy->setCurrentIndex(0);
 	} else {
-		d->cb_proxy->setCurrentItem(x);
+		d->cb_proxy->setCurrentIndex(x);
 	}
 }
 
@@ -609,18 +485,10 @@ void ProxyChooser::buildComboBox()
 
 void ProxyChooser::doOpen()
 {
-	QString x = d->cb_proxy->itemData(d->cb_proxy->currentItem()).toString();
+	QString x = d->cb_proxy->itemText(d->cb_proxy->currentIndex());
 	connect(d->m, SIGNAL(settingsChanged()), SLOT(pm_settingsChangedApply()));
 	d->m->openDialog(x);
 }
-
-void ProxyChooser::fixTabbing(QWidget *a, QWidget *b)
-{
-	setTabOrder(a, d->cb_proxy);
-	setTabOrder(d->cb_proxy, d->pb_edit);
-	setTabOrder(d->pb_edit, b);
-}
-
 
 //----------------------------------------------------------------------------
 // ProxyManager

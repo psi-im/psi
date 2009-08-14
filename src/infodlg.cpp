@@ -85,7 +85,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	d->cacheVCard = cacheVCard;
 	d->busy = ui_.busy;
 
-	ui_.te_desc->setTextFormat(Qt::PlainText);
+	ui_.te_desc->setAcceptRichText(false);
 
 	setWindowTitle(d->jid.full());
 #ifndef Q_WS_MAC
@@ -115,7 +115,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	connect(d->pa->client(), SIGNAL(resourceUnavailable(const Jid &, const Resource &)), SLOT(contactUnavailable(const Jid &, const Resource &)));
 	connect(d->pa,SIGNAL(updateContact(const Jid&)),SLOT(contactUpdated(const Jid&)));
 	ui_.te_status->setReadOnly(true);
-	ui_.te_status->setTextFormat(Qt::RichText);
+	ui_.te_status->setAcceptRichText(true);
 	PsiRichText::install(ui_.te_status->document());
 	updateStatus();
 	foreach(UserListItem* u, d->pa->findRelevant(j)) {
@@ -265,7 +265,7 @@ void InfoDlg::updatePhoto()
 	int max_width  = ui_.label_photo->width() - 20; // FIXME: Ugly magic number
 	int max_height = ui_.label_photo->height() - 20; // FIXME: Ugly magic number
 	
-	QImage img(d->photo);
+	QImage img = QImage::fromData(d->photo);
 	QImage img_scaled;
 	if (img.width() > max_width || img.height() > max_height) {
 		img_scaled = img.scaled(max_width, max_height,Qt::KeepAspectRatio);
@@ -273,7 +273,7 @@ void InfoDlg::updatePhoto()
 	else {
 		img_scaled = img;
 	}
-	ui_.label_photo->setPixmap(QPixmap(img_scaled));
+	ui_.label_photo->setPixmap(QPixmap::fromImage(img_scaled));
 }
 
 void InfoDlg::fieldsEnable(bool x)
@@ -305,22 +305,22 @@ void InfoDlg::fieldsEnable(bool x)
 
 void InfoDlg::setEdited(bool x)
 {
-	ui_.le_fullname->setEdited(x);
-	ui_.le_nickname->setEdited(x);
-	ui_.le_bday->setEdited(x);
-	ui_.le_email->setEdited(x);
-	ui_.le_homepage->setEdited(x);
-	ui_.le_phone->setEdited(x);
-	ui_.le_street->setEdited(x);
-	ui_.le_ext->setEdited(x);
-	ui_.le_city->setEdited(x);
-	ui_.le_state->setEdited(x);
-	ui_.le_pcode->setEdited(x);
-	ui_.le_country->setEdited(x);
-	ui_.le_orgName->setEdited(x);
-	ui_.le_orgUnit->setEdited(x);
-	ui_.le_title->setEdited(x);
-	ui_.le_role->setEdited(x);
+	ui_.le_fullname->setModified(x);
+	ui_.le_nickname->setModified(x);
+	ui_.le_bday->setModified(x);
+	ui_.le_email->setModified(x);
+	ui_.le_homepage->setModified(x);
+	ui_.le_phone->setModified(x);
+	ui_.le_street->setModified(x);
+	ui_.le_ext->setModified(x);
+	ui_.le_city->setModified(x);
+	ui_.le_state->setModified(x);
+	ui_.le_pcode->setModified(x);
+	ui_.le_country->setModified(x);
+	ui_.le_orgName->setModified(x);
+	ui_.le_orgUnit->setModified(x);
+	ui_.le_title->setModified(x);
+	ui_.le_role->setModified(x);
 
 	d->te_edited = x;
 }
@@ -329,22 +329,22 @@ bool InfoDlg::edited()
 {
 	bool x = false;
 
-	if(ui_.le_fullname->edited()) x = true;
-	if(ui_.le_nickname->edited()) x = true;
-	if(ui_.le_bday->edited()) x = true;
-	if(ui_.le_email->edited()) x = true;
-	if(ui_.le_homepage->edited()) x = true;
-	if(ui_.le_phone->edited()) x = true;
-	if(ui_.le_street->edited()) x = true;
-	if(ui_.le_ext->edited()) x = true;
-	if(ui_.le_city->edited()) x = true;
-	if(ui_.le_state->edited()) x = true;
-	if(ui_.le_pcode->edited()) x = true;
-	if(ui_.le_country->edited()) x = true;
-	if(ui_.le_orgName->edited()) x = true;
-	if(ui_.le_orgUnit->edited()) x = true;
-	if(ui_.le_title->edited()) x = true;
-	if(ui_.le_role->edited()) x = true;
+	if(ui_.le_fullname->isModified()) x = true;
+	if(ui_.le_nickname->isModified()) x = true;
+	if(ui_.le_bday->isModified()) x = true;
+	if(ui_.le_email->isModified()) x = true;
+	if(ui_.le_homepage->isModified()) x = true;
+	if(ui_.le_phone->isModified()) x = true;
+	if(ui_.le_street->isModified()) x = true;
+	if(ui_.le_ext->isModified()) x = true;
+	if(ui_.le_city->isModified()) x = true;
+	if(ui_.le_state->isModified()) x = true;
+	if(ui_.le_pcode->isModified()) x = true;
+	if(ui_.le_country->isModified()) x = true;
+	if(ui_.le_orgName->isModified()) x = true;
+	if(ui_.le_orgUnit->isModified()) x = true;
+	if(ui_.le_title->isModified()) x = true;
+	if(ui_.le_role->isModified()) x = true;
 	if(d->te_edited) x = true;
 
 	return x;
@@ -480,7 +480,7 @@ VCard InfoDlg::makeVCard()
 
 	v.setTitle( ui_.le_title->text() );
 	v.setRole( ui_.le_role->text() );
-	v.setDesc( ui_.te_desc->text() );
+	v.setDesc( ui_.te_desc->toPlainText() );
 
 	return v;
 }
@@ -513,7 +513,7 @@ void InfoDlg::setPreviewPhoto(const QString& path)
 		return;
 	
 	QByteArray photo_data = photo_file.readAll();
-	QImage photo_image(photo_data);
+	QImage photo_image = QImage::fromData(photo_data);
 	if(!photo_image.isNull()) {
 		d->photo = photo_data;
 		updatePhoto();
@@ -622,7 +622,7 @@ void InfoDlg::contactAvailable(const Jid &j, const Resource &r)
 void InfoDlg::contactUnavailable(const Jid &j, const Resource &r)
 {
 	if (d->jid.compare(j,false)) {
-		d->infoRequested.remove(j.withResource(r.name()).full());
+		d->infoRequested.removeAll(j.withResource(r.name()).full());
 	}
 }
 

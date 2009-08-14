@@ -36,6 +36,15 @@
 
 enum { dcClose, dcHour, dcDay, dcNever };
 
+enum Qt3Dock {
+	Qt3Dock_Unmanaged = 0,
+	Qt3Dock_TornOff = 1,
+	Qt3Dock_Top = 2,
+	Qt3Dock_Bottom = 3,
+	Qt3Dock_Right = 4,
+	Qt3Dock_Left = 5,
+	Qt3Dock_Minimized = 6
+};
 
 class ToolbarPrefs
 {
@@ -45,7 +54,7 @@ public:
 	QString id;
 	QString name;
 	QStringList keys;
-	Qt::Dock dock;
+	Qt3Dock dock;
 
 	bool dirty;
 	bool on;

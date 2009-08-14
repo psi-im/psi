@@ -63,7 +63,7 @@ signals:
 private slots:
 	void popupDestroyed(QObject *p)
 	{
-		remove((FancyPopup *)p);
+		removeAll((FancyPopup *)p);
 
 		if ( isEmpty() )
 			emit finished();

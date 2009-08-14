@@ -83,16 +83,16 @@ static bool registerBusname(QDBusConnectionInterface *dbusIface, QString name, b
 	if (reply.isValid()) {
 		switch (reply.value()) {
 			case QDBusConnectionInterface::ServiceNotRegistered:
-				qWarning("failed to register dbus name %s:", (const char*)name); 
+				qWarning("failed to register dbus name %s:", qPrintable(name)); 
 				break;
 			case QDBusConnectionInterface::ServiceQueued:
-				qDebug("dbus name %s already taken, queueing", (const char*)name);
+				qDebug("dbus name %s already taken, queueing", qPrintable(name));
 				break;
 			case QDBusConnectionInterface::ServiceRegistered:
 				ok = true;
 		}
 	} else {
-		qWarning("failed to register dbus name %s: %s", (const char*)name,  (const char*)reply.error().message());
+		qWarning("failed to register dbus name %s: %s", qPrintable(name), qPrintable(reply.error().message()));
 	}
 	return ok;
 }

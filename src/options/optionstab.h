@@ -3,7 +3,6 @@
 
 #include <qstring.h>
 #include <qobject.h>
-#include <q3ptrlist.h>
 #include <QByteArray>
 
 class PsiIcon;
@@ -69,7 +68,7 @@ public:
 private:
 	void init();
 	QWidget *w;
-	Q3PtrList<OptionsTab> tabs;
+	QList<OptionsTab*> tabs;
 };
 
 #endif

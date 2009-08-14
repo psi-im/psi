@@ -121,7 +121,9 @@ AHCommandDlg::AHCommandDlg(PsiAccount* pa, const Jid& receiver)
 	: QDialog(0), pa_(pa), receiver_(receiver)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
-	QVBoxLayout *vb = new QVBoxLayout(this, 11, 6);
+	QVBoxLayout *vb = new QVBoxLayout(this);
+	vb->setMargin(11);
+	vb->setSpacing(6);
 
 	// Command list + Buttons
 	QLabel* lb_commands = new QLabel(tr("Command:"),this);
@@ -139,7 +141,8 @@ AHCommandDlg::AHCommandDlg(PsiAccount* pa, const Jid& receiver)
 	vb->addStretch(1);
 
 	// Bottom row
-	QHBoxLayout *hb2 = new QHBoxLayout(vb);
+	QHBoxLayout *hb2 = new QHBoxLayout(0);
+	vb->addLayout(hb2);
 	busy_ = new BusyWidget(this);
 	hb2->addWidget(busy_);
 	hb2->addItem(new QSpacerItem(20,0,QSizePolicy::Expanding));
@@ -152,7 +155,7 @@ AHCommandDlg::AHCommandDlg(PsiAccount* pa, const Jid& receiver)
 	pb_close->setDefault(true);
 	pb_close->setFocus();
 
-	setCaption(QString("Execute Command (%1)").arg(receiver.full()));
+	setWindowTitle(QString("Execute Command (%1)").arg(receiver.full()));
 
 	// Load commands
 	refreshCommands();
@@ -175,7 +178,7 @@ void AHCommandDlg::listReceived()
 {
 	JT_AHCGetList* task_list = (JT_AHCGetList*) sender();
 	foreach(AHCommandItem i, task_list->commands()) {
-		cb_commands->insertItem(i.name);	
+		cb_commands->addItem(i.name);	
 		commands_.append(i);
 	}
 	pb_execute->setEnabled(cb_commands->count()>0);
@@ -186,8 +189,8 @@ void AHCommandDlg::executeCommand()
 {
 	if (cb_commands->count() > 0) {
 		busy_->start();
-		Jid to(commands_[cb_commands->currentItem()].jid);
-		QString node = commands_[cb_commands->currentItem()].node;
+		Jid to(commands_[cb_commands->currentIndex()].jid);
+		QString node = commands_[cb_commands->currentIndex()].node;
 		AHCExecuteTask* t = new AHCExecuteTask(to,AHCommand(node),pa_->client()->rootTask());
 		connect(t,SIGNAL(finished()),SLOT(commandExecuted()));
 		t->go(true);

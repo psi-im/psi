@@ -60,7 +60,7 @@ QString FileUtil::getOpenFileName(QWidget* parent, const QString& caption, const
 {
 	while (1) {
 		if (lastUsedOpenPath().isEmpty()) {
-			setLastUsedOpenPath(QDir::homeDirPath());
+			setLastUsedOpenPath(QDir::homePath());
 		}
 		QString fileName = QFileDialog::getOpenFileName(parent, caption, lastUsedOpenPath(), filter, selectedFilter);
 		if (!fileName.isEmpty()) {
@@ -70,7 +70,7 @@ QString FileUtil::getOpenFileName(QWidget* parent, const QString& caption, const
 				continue;
 			}
 
-			setLastUsedOpenPath(fi.dirPath());
+			setLastUsedOpenPath(fi.path());
 			return fileName;
 		}
 		break;
@@ -86,7 +86,7 @@ QString FileUtil::getSaveFileName(QWidget* parent, const QString& caption, const
 			setLastUsedSavePath(lastUsedOpenPath());
 		}
 		else {
-			setLastUsedSavePath(QDir::homeDirPath());
+			setLastUsedSavePath(QDir::homePath());
 		}
 	}
 
@@ -94,8 +94,8 @@ QString FileUtil::getSaveFileName(QWidget* parent, const QString& caption, const
 	QString fileName = QFileDialog::getSaveFileName(parent, caption, dir, filter, selectedFilter);
 	if (!fileName.isEmpty()) {
 		QFileInfo fi(fileName);
-		if (QDir(fi.dirPath()).exists()) {
-			setLastUsedSavePath(fi.dirPath());
+		if (QDir(fi.path()).exists()) {
+			setLastUsedSavePath(fi.path());
 			return fileName;
 		}
 	}

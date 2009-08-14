@@ -9,7 +9,7 @@ INCLUDEPATH += $$PSI_CPP
 RESOURCES += $$PSI_CPP/../iconsets.qrc
 
 CONFIG += unittest crypto
-QT += gui network xml qt3support
+QT += gui network xml
 
 DEFINES += UNIT_TEST
 

@@ -20,7 +20,6 @@
 
 #include "psicon.h"
 
-#include <q3ptrlist.h>
 #include <qapplication.h>
 #include <qdesktopwidget.h>
 #include <QMenuBar>
@@ -114,13 +113,13 @@ class PsiConObject : public QObject
 	Q_OBJECT
 public:
 	PsiConObject(QObject *parent)
-	: QObject(parent, "PsiConObject")
+	: QObject(parent)
 	{
 		QDir p(ApplicationInfo::homeDir());
 		QDir v(ApplicationInfo::homeDir() + "/tmp-sounds");
 		if(!v.exists())
 			p.mkdir("tmp-sounds");
-		Iconset::setSoundPrefs(v.absPath(), this, SLOT(playSound(QString)));
+		Iconset::setSoundPrefs(v.absolutePath(), this, SLOT(playSound(QString)));
 		connect(URLObject::getInstance(), SIGNAL(openURL(QString)), SLOT(openURL(QString)));
 	}
 
@@ -235,12 +234,8 @@ private slots:
 	void updateIconSelect()
 	{
 		Iconset iss;
-		Q3PtrListIterator<Iconset> iconsets(PsiIconset::instance()->emoticons);
-		Iconset *iconset;
-		while ( (iconset = iconsets.current()) != 0 ) {
+		foreach(Iconset* iconset, PsiIconset::instance()->emoticons) {
 			iss += *iconset;
-
-			++iconsets;
 		}
 
 		iconSelect->setIconset(iss);
@@ -443,7 +438,7 @@ bool PsiCon::init()
 	Anim::setMainThread(QThread::currentThread());
 
 	// setup the main window
-	d->mainwin = new MainWin(PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool(), (PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool()), this, "psimain"); 
+	d->mainwin = new MainWin(PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool(), (PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool()), this); 
 	d->mainwin->setUseDock(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool());
 
 	connect(d->mainwin, SIGNAL(closeProgram()), SLOT(closeProgram()));
@@ -796,7 +791,7 @@ void PsiCon::dialogRegister(QWidget *w)
 {
 	item_dialog *i = new item_dialog;
 	i->widget = w;
-	i->className = w->className();
+	i->className = w->metaObject()->className();
 	d->dialogList.append(i);
 }
 
@@ -1081,10 +1076,10 @@ void PsiCon::optionChanged(const QString& option)
 
 void PsiCon::slotApplyOptions()
 {
-	PsiOptions *o = PsiOptions::instance();
 	PsiIconset::instance()->reloadRoster();
 
 #ifndef Q_WS_MAC
+	PsiOptions *o = PsiOptions::instance();
 	if (!PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool()) {
 		// check if all toolbars are disabled
 		bool toolbarsVisible = false;
@@ -1197,11 +1192,10 @@ QStringList PsiCon::recentGCList() const
 void PsiCon::recentGCAdd(const QString &str)
 {
 	QStringList recentList = recentGCList();
-	
 	// remove it if we have it
-	for(QStringList::Iterator it = recentList.begin(); it != recentList.end(); ++it) {
-		if(*it == str) {
-			recentList.remove(it);
+	foreach(const QString& s, recentList) {
+		if(s == str) {
+			recentList.removeAll(s);
 			break;
 		}
 	}
@@ -1211,7 +1205,7 @@ void PsiCon::recentGCAdd(const QString &str)
 
 	// trim the list if bigger than 10
 	while(recentList.count() > PsiOptions::instance()->getOption("options.muc.recent-joins.maximum").toInt()) {
-		recentList.remove(recentList.fromLast());
+		recentList.takeLast();
 	}
 	
 	PsiOptions::instance()->setOption("options.muc.recent-joins.jids", recentList);
@@ -1226,9 +1220,9 @@ void PsiCon::recentBrowseAdd(const QString &str)
 {
 	QStringList recentList = recentBrowseList();
 	// remove it if we have it
-	for(QStringList::Iterator it = recentList.begin(); it != recentList.end(); ++it) {
-		if(*it == str) {
-			recentList.remove(it);
+	foreach(const QString& s, recentList) {
+		if(s == str) {
+			recentList.removeAll(s);
 			break;
 		}
 	}
@@ -1238,7 +1232,7 @@ void PsiCon::recentBrowseAdd(const QString &str)
 
 	// trim the list if bigger than 10
 	while(recentList.count() > 10) {
-		recentList.remove(recentList.fromLast());
+		recentList.takeLast();
 	}
 	
 	PsiOptions::instance()->setOption("options.ui.service-discovery.recent-jids", recentList);
@@ -1252,9 +1246,9 @@ const QStringList & PsiCon::recentNodeList() const
 void PsiCon::recentNodeAdd(const QString &str)
 {
 	// remove it if we have it
-	for(QStringList::Iterator it = d->recentNodeList.begin(); it != d->recentNodeList.end(); ++it) {
-		if(*it == str) {
-			d->recentNodeList.remove(it);
+	foreach(const QString& s, d->recentNodeList) {
+		if(s == str) {
+			d->recentNodeList.removeAll(s);
 			break;
 		}
 	}
@@ -1264,7 +1258,7 @@ void PsiCon::recentNodeAdd(const QString &str)
 
 	// trim the list if bigger than 10
 	while(d->recentNodeList.count() > 10)
-		d->recentNodeList.remove(d->recentNodeList.fromLast());
+		d->recentNodeList.takeLast();
 }
 
 void PsiCon::proxy_settingsChanged()

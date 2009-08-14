@@ -25,7 +25,6 @@
 #include <QMenu>
 #include <QLayout>
 #include <QLabel>
-#include <Q3PtrVector>
 #include <QAction>
 #include <QMouseEvent>
 

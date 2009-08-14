@@ -110,7 +110,7 @@ void VarList::unset(const QString &key)
 	VarList::Iterator it = findByKey(key);
 	if(it == end())
 		return;
-	remove(it);
+	erase(it);
 }
 
 const QString & VarList::get(const QString &key)

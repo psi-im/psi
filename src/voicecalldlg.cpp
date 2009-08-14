@@ -30,15 +30,15 @@ VoiceCallDlg::VoiceCallDlg(const Jid& jid, VoiceCaller* voiceCaller)
 	setAttribute(Qt::WA_DeleteOnClose);
 	ui_.setupUi(this);
 	setModal(false);
-	
-	setCaption(QString(tr("Voice Call (%1)")).arg(jid.full()));
-	
+
+	setWindowTitle(QString(tr("Voice Call (%1)")).arg(jid.full()));
+
 	// Voice Caller signals
 	connect(voiceCaller_,SIGNAL(accepted(const Jid&)),SLOT(accepted(const Jid&)));
 	connect(voiceCaller_,SIGNAL(rejected(const Jid&)),SLOT(rejected(const Jid&)));
 	connect(voiceCaller_,SIGNAL(in_progress(const Jid&)),SLOT(in_progress(const Jid&)));
 	connect(voiceCaller_,SIGNAL(terminated(const Jid&)),SLOT(terminated(const Jid&)));
-	
+
 	// Buttons
 	ui_.pb_hangup->setEnabled(false);
 	ui_.pb_accept->setEnabled(false);

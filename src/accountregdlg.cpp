@@ -76,7 +76,6 @@ AccountRegDlg::AccountRegDlg(ProxyManager *pm, QWidget *parent) : QDialog(parent
 	proxy_manager_ = pm;
 	proxy_chooser_ = proxy_manager_->createProxyChooser(ui_.gb_connection);
 	replaceWidget(ui_.lb_proxychooser, proxy_chooser_);
-	proxy_chooser_->fixTabbing(ui_.ck_legacy_ssl_probe, ui_.pb_cancel);
 	proxy_chooser_->setCurrentItem(0);
 
 	// Fields pane

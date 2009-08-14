@@ -25,7 +25,6 @@
 #include <QVector>
 #include <QFileInfo>
 #include <QDir>
-#include <q3ptrlist.h>
 #include <qtimer.h>
 #include <qtextstream.h>
 
@@ -209,7 +208,7 @@ class EDB::Private
 public:
 	Private() {}
 
-	Q3PtrList<EDBHandle> list;
+	QList<EDBHandle*> list;
 	int reqid_base;
 };
 
@@ -221,7 +220,7 @@ EDB::EDB()
 
 EDB::~EDB()
 {
-	d->list.setAutoDelete(true);
+	qDeleteAll(d->list);
 	d->list.clear();
 	delete d;
 }
@@ -238,7 +237,7 @@ void EDB::reg(EDBHandle *h)
 
 void EDB::unreg(EDBHandle *h)
 {
-	d->list.removeRef(h);
+	d->list.removeAll(h);
 }
 
 int EDB::op_getLatest(const Jid &j, int len)
@@ -274,8 +273,7 @@ int EDB::op_erase(const Jid &j)
 void EDB::resultReady(int req, EDBResult *r)
 {
 	// deliver
-	Q3PtrListIterator<EDBHandle> it(d->list);
-	for(EDBHandle *h; (h = it.current()); ++it) {
+	foreach(EDBHandle* h, d->list) {
 		if(h->listeningFor() == req) {
 			h->edb_resultReady(r);
 			return;
@@ -287,8 +285,7 @@ void EDB::resultReady(int req, EDBResult *r)
 void EDB::writeFinished(int req, bool b)
 {
 	// deliver
-	Q3PtrListIterator<EDBHandle> it(d->list);
-	for(EDBHandle *h; (h = it.current()); ++it) {
+	foreach(EDBHandle* h, d->list) {
 		if(h->listeningFor() == req) {
 			h->edb_writeFinished(b);
 			return;
@@ -326,8 +323,8 @@ class EDBFlatFile::Private
 public:
 	Private() {}
 
-	Q3PtrList<File> flist;
-	Q3PtrList<item_file_req> rlist;
+	QList<File*> flist;
+	QList<item_file_req*> rlist;
 };
 
 EDBFlatFile::EDBFlatFile()
@@ -338,8 +335,8 @@ EDBFlatFile::EDBFlatFile()
 
 EDBFlatFile::~EDBFlatFile()
 {
-	d->rlist.setAutoDelete(true);
-	d->flist.setAutoDelete(true);
+	qDeleteAll(d->rlist);
+	qDeleteAll(d->flist);
 	d->flist.clear();
 
 	delete d;
@@ -435,8 +432,7 @@ int EDBFlatFile::erase(const Jid &j)
 
 EDBFlatFile::File *EDBFlatFile::findFile(const Jid &j) const
 {
-	Q3PtrListIterator<File> it(d->flist);
-	for(File *i; (i = it.current()); ++it) {
+	foreach(File* i, d->flist) {
 		if(i->j.compare(j, false))
 			return i;
 	}
@@ -462,7 +458,7 @@ bool EDBFlatFile::deleteFile(const Jid &j)
 
 	if (i) {
 		fname = i->fname;
-		d->flist.remove(i);
+		d->flist.removeAll(i);
 		delete i;
 	}
 	else {
@@ -483,8 +479,7 @@ void EDBFlatFile::performRequests()
 	if(d->rlist.isEmpty())
 		return;
 
-	item_file_req *r = d->rlist.first();
-	d->rlist.removeRef(r);
+	item_file_req *r = d->rlist.takeFirst();
 
 	File *f = ensureFile(r->j);
 	int type = r->type;
@@ -565,7 +560,7 @@ void EDBFlatFile::performRequests()
 			if(e->type() == PsiEvent::Message) {
 				MessageEvent *me = (MessageEvent *)e;
 				const Message &m = me->message();
-				if(m.body().find(r->findStr, 0, false) != -1) {
+				if(m.body().indexOf(r->findStr, 0, Qt::CaseInsensitive) != -1) {
 					EDBItem *ei = new EDBItem(e, QString::number(id), prevId, nextId);
 					result->append(ei);
 					break;
@@ -589,7 +584,7 @@ void EDBFlatFile::performRequests()
 void EDBFlatFile::file_timeout()
 {
 	File *i = (File *)sender();
-	d->flist.remove(i);
+	d->flist.removeAll(i);
 	i->deleteLater();
 }
 
@@ -618,7 +613,8 @@ EDBFlatFile::File::File(const Jid &_j)
 
 	//printf("[EDB opening -- %s]\n", j.full().latin1());
 	fname = jidToFileName(_j);
-	f.setName(fname);
+	// FIXME
+	f.setObjectName(fname);
 	valid = f.open(QIODevice::ReadWrite);
 
 	touch();
@@ -712,7 +708,7 @@ PsiEvent *EDBFlatFile::File::get(int id)
 
 	QTextStream t;
 	t.setDevice(&f);
-	t.setEncoding(QTextStream::UnicodeUTF8);
+	t.setCodec("UTF-8");
 	QString line = t.readLine();
 
 	return lineToEvent(line);
@@ -734,7 +730,7 @@ bool EDBFlatFile::File::append(PsiEvent *e)
 
 	QTextStream t;
 	t.setDevice(&f);
-	t.setEncoding(QTextStream::UnicodeUTF8);
+	t.setCodec("UTF-8");
 	t << line << endl;
 	f.flush();
 
@@ -752,21 +748,21 @@ PsiEvent *EDBFlatFile::File::lineToEvent(const QString &line)
 	// -- read the line --
 	QString sTime, sType, sOrigin, sFlags, sText, sSubj, sUrl, sUrlDesc;
 	int x1, x2;
-	x1 = line.find('|') + 1;
+	x1 = line.indexOf('|') + 1;
 
-	x2 = line.find('|', x1);
+	x2 = line.indexOf('|', x1);
 	sTime = line.mid(x1, x2-x1);
 	x1 = x2 + 1;
 
-	x2 = line.find('|', x1);
+	x2 = line.indexOf('|', x1);
 	sType = line.mid(x1, x2-x1);
 	x1 = x2 + 1;
 
-	x2 = line.find('|', x1);
+	x2 = line.indexOf('|', x1);
 	sOrigin = line.mid(x1, x2-x1);
 	x1 = x2 + 1;
 
-	x2 = line.find('|', x1);
+	x2 = line.indexOf('|', x1);
 	sFlags = line.mid(x1, x2-x1);
 	x1 = x2 + 1;
 
@@ -776,16 +772,16 @@ PsiEvent *EDBFlatFile::File::lineToEvent(const QString &line)
 
 		// have subject?
 		if(subflags & 1) {
-			x2 = line.find('|', x1);
+			x2 = line.indexOf('|', x1);
 			sSubj = line.mid(x1, x2-x1);
 			x1 = x2 + 1;
 		}
 		// have url?
 		if(subflags & 2) {
-			x2 = line.find('|', x1);
+			x2 = line.indexOf('|', x1);
 			sUrl = line.mid(x1, x2-x1);
 			x1 = x2 + 1;
-			x2 = line.find('|', x1);
+			x2 = line.indexOf('|', x1);
 			sUrlDesc = line.mid(x1, x2-x1);
 			x1 = x2 + 1;
 		}
@@ -814,7 +810,7 @@ PsiEvent *EDBFlatFile::File::lineToEvent(const QString &line)
 		if(sFlags[0] == 'N')
 			m.setBody(logdecode(sText));
 		else
-			m.setBody(logdecode(QString::fromUtf8(sText)));
+			m.setBody(logdecode(QString::fromUtf8(sText.toLatin1())));
 		m.setSubject(logdecode(sSubj));
 
 		QString url = logdecode(sUrl);

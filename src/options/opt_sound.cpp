@@ -54,48 +54,48 @@ QWidget *OptionsTabSound::widget()
 	sounds_ << d->le_oeMessage << d->le_oeChat1 << d->le_oeChat2 << d->le_oeHeadline << d->le_oeSystem << d->le_oeOnline << d->le_oeOffline << d->le_oeSend << d->le_oeIncomingFT << d->le_oeFTComplete;
 
 	bg_se = new QButtonGroup;
-	bg_se->insert(d->tb_seMessage);
+	bg_se->addButton(d->tb_seMessage);
 	modify_buttons_[d->tb_seMessage] = d->le_oeMessage;
-	bg_se->insert(d->tb_seChat1);
+	bg_se->addButton(d->tb_seChat1);
 	modify_buttons_[d->tb_seChat1] = d->le_oeChat1;
-	bg_se->insert(d->tb_seChat2);
+	bg_se->addButton(d->tb_seChat2);
 	modify_buttons_[d->tb_seChat2] = d->le_oeChat2;
-	bg_se->insert(d->tb_seHeadline);
+	bg_se->addButton(d->tb_seHeadline);
 	modify_buttons_[d->tb_seHeadline] = d->le_oeHeadline;
-	bg_se->insert(d->tb_seSystem);
+	bg_se->addButton(d->tb_seSystem);
 	modify_buttons_[d->tb_seSystem] = d->le_oeSystem;
-	bg_se->insert(d->tb_seOnline);
+	bg_se->addButton(d->tb_seOnline);
 	modify_buttons_[d->tb_seOnline] = d->le_oeOnline;
-	bg_se->insert(d->tb_seOffline);
+	bg_se->addButton(d->tb_seOffline);
 	modify_buttons_[d->tb_seOffline] = d->le_oeOffline;
-	bg_se->insert(d->tb_seSend);
+	bg_se->addButton(d->tb_seSend);
 	modify_buttons_[d->tb_seSend] = d->le_oeSend;
-	bg_se->insert(d->tb_seIncomingFT);
+	bg_se->addButton(d->tb_seIncomingFT);
 	modify_buttons_[d->tb_seIncomingFT] = d->le_oeIncomingFT;
-	bg_se->insert(d->tb_seFTComplete);
+	bg_se->addButton(d->tb_seFTComplete);
 	modify_buttons_[d->tb_seFTComplete] = d->le_oeFTComplete;
 	connect(bg_se, SIGNAL(buttonClicked(QAbstractButton*)), SLOT(chooseSoundEvent(QAbstractButton*)));
 
 	bg_sePlay = new QButtonGroup;
-	bg_sePlay->insert(d->tb_seMessagePlay);
+	bg_sePlay->addButton(d->tb_seMessagePlay);
 	play_buttons_[d->tb_seMessagePlay] = d->le_oeMessage;
-	bg_sePlay->insert(d->tb_seChat1Play);
+	bg_sePlay->addButton(d->tb_seChat1Play);
 	play_buttons_[d->tb_seChat1Play] = d->le_oeChat1;
-	bg_sePlay->insert(d->tb_seChat2Play);
+	bg_sePlay->addButton(d->tb_seChat2Play);
 	play_buttons_[d->tb_seChat2Play] = d->le_oeChat2;
-	bg_sePlay->insert(d->tb_seHeadlinePlay);
+	bg_sePlay->addButton(d->tb_seHeadlinePlay);
 	play_buttons_[d->tb_seHeadlinePlay] = d->le_oeHeadline;
-	bg_sePlay->insert(d->tb_seSystemPlay);
+	bg_sePlay->addButton(d->tb_seSystemPlay);
 	play_buttons_[d->tb_seSystemPlay] = d->le_oeSystem;
-	bg_sePlay->insert(d->tb_seOnlinePlay);
+	bg_sePlay->addButton(d->tb_seOnlinePlay);
 	play_buttons_[d->tb_seOnlinePlay] = d->le_oeOnline;
-	bg_sePlay->insert(d->tb_seOfflinePlay);
+	bg_sePlay->addButton(d->tb_seOfflinePlay);
 	play_buttons_[d->tb_seOfflinePlay] = d->le_oeOffline;
-	bg_sePlay->insert(d->tb_seSendPlay);
+	bg_sePlay->addButton(d->tb_seSendPlay);
 	play_buttons_[d->tb_seSendPlay] = d->le_oeSend;
-	bg_sePlay->insert(d->tb_seIncomingFTPlay);
+	bg_sePlay->addButton(d->tb_seIncomingFTPlay);
 	play_buttons_[d->tb_seIncomingFTPlay] = d->le_oeIncomingFT;
-	bg_sePlay->insert(d->tb_seFTCompletePlay);
+	bg_sePlay->addButton(d->tb_seFTCompletePlay);
 	play_buttons_[d->tb_seFTCompletePlay] = d->le_oeFTComplete;
 	connect(bg_sePlay, SIGNAL(buttonClicked(QAbstractButton*)), SLOT(previewSoundEvent(QAbstractButton*)));
 
@@ -112,12 +112,12 @@ QWidget *OptionsTabSound::widget()
 
 	// TODO: add QWhatsThis for all widgets
 
-	QWhatsThis::add(d->le_player,
+	d->le_player->setWhatsThis(
 		tr("If your system supports multiple sound players, you may"
 		" choose your preferred sound player application here."));
-	QWhatsThis::add(d->ck_awaySound,
+	d->ck_awaySound->setWhatsThis(
 		tr("Enable this option if you wish to hear sound alerts when your status is \"away\" or \"extended away\"."));
-	QWhatsThis::add(d->ck_gcSound,
+	d->ck_gcSound->setWhatsThis(
 		tr("Play sounds for all events in groupchat, not only for mentioning of your nick."));
 
 #if defined(Q_WS_WIN)

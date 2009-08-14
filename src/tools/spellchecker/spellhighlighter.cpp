@@ -1,4 +1,5 @@
 #include "spellhighlighter.h"
+
 #include "spellchecker.h"
 #include "common.h"
 
@@ -10,7 +11,7 @@ void SpellHighlighter::highlightBlock(const QString& text)
 {
 	// Underline 
 	QTextCharFormat tcf;
-	tcf.setUnderlineColor(QBrush(QColor(255,0,0)));
+	tcf.setUnderlineColor(QColor(255,0,0));
 	if(qVersionInt() >= 0x040400 && qVersionInt() < 0x040402) {
 		tcf.setUnderlineStyle(QTextCharFormat::DotLine);
 	}

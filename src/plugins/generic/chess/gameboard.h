@@ -18,12 +18,8 @@
 #include <qwidget.h>
 #include <qpainter.h>
 #include <qpixmap.h>
-#include <q3pointarray.h>
 #include <qdialog.h>
-#include <q3socket.h>
-#include <q3groupbox.h>
 #include <qlineedit.h>
-#include <q3listbox.h>
 #include <qtimer.h>
 //Added by qt3to4:
 #include <QCloseEvent>
@@ -93,7 +89,7 @@ private:
 	QString		hst, my_stat;
 	Q3Socket		*sock;
 	Q3GroupBox	*box, *hist;
-	Q3ListBox	*lst, *hw, *hb;
+	QListWidget	*lst, *hw, *hb;
 	QLineEdit	*edt;
 	QTimer		*tmr, *tmr2;
 	int		sock_tout;

@@ -28,6 +28,8 @@
 #include "ui_profilenew.h"
 #include "varlist.h"
 
+class QButtonGroup;
+
 class ProfileOpenDlg : public QDialog, public Ui::ProfileOpen
 {
 	Q_OBJECT
@@ -72,6 +74,9 @@ public:
 private slots:
 	void slotCreate();
 	void nameModified();
+
+private:
+	QButtonGroup* buttonGroup_;
 };
 
 #endif
