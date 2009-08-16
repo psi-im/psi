@@ -755,9 +755,13 @@ void HistoryViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
 {
 	QColorGroup mycg = cg;
 	if(e->originLocal())
-		mycg.setColor(QColorGroup::Text, Qt::red);
+{
+		mycg.setColor(QColorGroup::Text, PsiOptions::instance()->getOption("options.ui.look.colors.messages.sent").toString() );
+}
 	else
-		mycg.setColor(QColorGroup::Text, Qt::blue);
+{
+		mycg.setColor(QColorGroup::Text,PsiOptions::instance()->getOption("options.ui.look.colors.messages.received").toString() );
+}
 
 	if(column == 3) {
 		QBrush br;

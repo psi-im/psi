@@ -215,6 +215,9 @@ QWidget *OptionsTabAppearanceGeneral::widget()
 	bg_color->insert(d->pb_cAnimFront);
 	bg_color->insert(d->pb_cAnimBack);
 	bg_color->insert(d->pb_cStatus);
+	bg_color->insert(d->pb_cMessageSent);
+	bg_color->insert(d->pb_cMessageReceived);
+	bg_color->insert(d->pb_cSysMsg);
 	connect(bg_color, SIGNAL(buttonClicked(QAbstractButton*)), SLOT(chooseColor(QAbstractButton*)));
 
 	QString s = tr("Specifies the text color for a contact name in the main window when that user is \"%1\".");
@@ -238,6 +241,12 @@ QWidget *OptionsTabAppearanceGeneral::widget()
 		tr("Specifies the foreground animation color for nicks."));
 	QWhatsThis::add(d->pb_cAnimBack,
 		tr("Specifies the background animation color for nicks."));
+	QWhatsThis::add(d->pb_cMessageSent,
+		tr("Specifies the color for sent messages in chat and history windows."));
+	QWhatsThis::add(d->pb_cMessageReceived,
+		tr("Specifies the color for received messages in chat and history windows."));
+	QWhatsThis::add(d->pb_cSysMsg,
+		tr("Specifies the color for informational Messages in chat windows, like status changes and offline messages."));
 
 	// Avatars
 	//QWhatsThis::add(d->ck_avatarsChatdlg,
@@ -282,6 +291,9 @@ void OptionsTabAppearanceGeneral::applyOptions()
 	PsiOptions::instance()->setOption("options.ui.look.contactlist.status-change-animation.color1", getColor(d->pb_cAnimFront));
 	PsiOptions::instance()->setOption("options.ui.look.contactlist.status-change-animation.color2", getColor(d->pb_cAnimBack));
 	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.status-messages", getColor(d->pb_cStatus));
+	PsiOptions::instance()->setOption("options.ui.look.colors.messages.received", getColor(d->pb_cMessageReceived));
+	PsiOptions::instance()->setOption("options.ui.look.colors.messages.sent", getColor(d->pb_cMessageSent));
+	PsiOptions::instance()->setOption("options.ui.look.colors.messages.informational", getColor(d->pb_cSysMsg));
 }
 
 static void restoreColor(QToolButton *button, QColor c)
@@ -315,6 +327,9 @@ void OptionsTabAppearanceGeneral::restoreOptions()
 	restoreColor(d->pb_cAnimFront, PsiOptions::instance()->getOption("options.ui.look.contactlist.status-change-animation.color1").value<QColor>());
 	restoreColor(d->pb_cAnimBack, PsiOptions::instance()->getOption("options.ui.look.contactlist.status-change-animation.color2").value<QColor>());
 	restoreColor(d->pb_cStatus, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-messages").value<QColor>());
+	restoreColor(d->pb_cMessageReceived, PsiOptions::instance()->getOption("options.ui.look.colors.messages.received").value<QColor>());
+	restoreColor(d->pb_cMessageSent, PsiOptions::instance()->getOption("options.ui.look.colors.messages.sent").value<QColor>());
+	restoreColor(d->pb_cSysMsg, PsiOptions::instance()->getOption("options.ui.look.colors.messages.informational").value<QColor>());
 }
 
 void OptionsTabAppearanceGeneral::setData(PsiCon *, QWidget *parentDialog)

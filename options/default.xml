@@ -244,6 +244,11 @@
 							<item>Red</item>
 						</nick-colors>
 					</muc>
+					<messages comment="Message coloring.">
+						<received type="QColor" comment="Color used to indicate received messages.">#0000ff</received>
+						<sent type="QColor" comment="Color used to indicate sent messages.">#ff0000</sent>
+						<informational type="QColor" comment="Color used to indicate informational (status change, spooled) messages.">#008000</informational>
+					</messages>
 					<passive-popup>
 						<border type="QColor">#5297f9</border>
 					</passive-popup>

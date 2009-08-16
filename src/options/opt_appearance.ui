@@ -165,6 +165,69 @@
          <string/>
         </property>
        </widget>
+       </item>
+       <item row="6" column="1" >
+       <widget class="QToolButton" name="pb_cMessageSent" >
+        <property name="sizePolicy" >
+         <sizepolicy>
+          <hsizetype>0</hsizetype>
+          <vsizetype>0</vsizetype>
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="maximumSize" >
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="text" >
+         <string/>
+        </property>
+       </widget>
+      </item>
+	<item row="7" column="1">
+       <widget class="QToolButton" name="pb_cMessageReceived" >
+        <property name="sizePolicy" >
+         <sizepolicy>
+          <hsizetype>0</hsizetype>
+          <vsizetype>0</vsizetype>
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="maximumSize" >
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="text" >
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="1">
+       <widget class="QToolButton" name="pb_cSysMsg">
+        <property name="sizePolicy" >
+         <sizepolicy>
+          <hsizetype>0</hsizetype>
+          <vsizetype>0</vsizetype>
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="maximumSize" >
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="text" >
+         <string/>
+        </property>
+       </widget>
       </item>
       <item row="1" column="1" >
        <widget class="QToolButton" name="pb_cProfileBack" >
@@ -282,6 +345,27 @@
        <widget class="QLabel" name="tl_cAnimBack" >
         <property name="text" >
          <string>Nick animation background:</string>
+        </property>
+       </widget>
+	</item>
+      <item row="6" column="0">
+       <widget class="QLabel" name="tl_cMessageSent" >
+        <property name="text" >
+         <string>Sent message foreground:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0">
+       <widget class="QLabel" name="tl_cMessageReceived" >
+        <property name="text" >
+         <string>Received message foreground:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="0">
+       <widget class="QLabel" name="tl_cSysMsg">
+        <property name="text">
+         <string>Informational messages in chats:</string>
         </property>
        </widget>
       </item>
@@ -498,6 +582,9 @@
   <tabstop>pb_cGroupBack</tabstop>
   <tabstop>pb_cAnimFront</tabstop>
   <tabstop>pb_cAnimBack</tabstop>
+  <tabstop>pb_cMessageSent</tabstop>
+  <tabstop>pb_cMessageReceived</tabstop>
+  <tabstop>pb_cSysMsg</tabstop>
   <tabstop>pb_cOnline</tabstop>
   <tabstop>pb_cAway</tabstop>
   <tabstop>pb_cDND</tabstop>

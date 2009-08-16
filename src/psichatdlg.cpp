@@ -532,20 +532,22 @@ void PsiChatDlg::appendSysMsg(const QString &str)
 	QDateTime t = QDateTime::currentDateTime();
 	updateLastMsgTime(t);
 	QString timestr = chatView()->formatTimeStamp(t);
-	QString color = "#00A000";
+	QString color = PsiOptions::instance()->getOption("options.ui.look.colors.messages.informational").toString();
 
 	chatView()->appendText(QString("<font color=\"%1\">[%2]").arg(color, timestr) + QString(" *** %1</font>").arg(str));
 }
 
 QString PsiChatDlg::colorString(bool local, ChatDlg::SpooledType spooled) const
 {
-	if (spooled == ChatDlg::Spooled_OfflineStorage)
-		return "#008000";
+	if (spooled == ChatDlg::Spooled_OfflineStorage) {
+		return PsiOptions::instance()->getOption("options.ui.look.colors.messages.informational").toString();
+	}
 
-	if (local)
-		return "#FF0000";
+	if (local) {
+		return PsiOptions::instance()->getOption("options.ui.look.colors.messages.sent").toString();
+	}
 
-	return "#0000FF";
+	return PsiOptions::instance()->getOption("options.ui.look.colors.messages.received").toString();
 }
 
 ChatView* PsiChatDlg::chatView() const
