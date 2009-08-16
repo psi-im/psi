@@ -261,7 +261,7 @@ QWidget *OptionsTabAppearanceGeneral::widget()
 }
 
 
-static QColor getColor(QToolButton *button)
+static QColor getColor(QAbstractButton *button)
 {
 	return button->property("psi_color").value<QColor>();
 }
@@ -362,7 +362,7 @@ void OptionsTabAppearanceGeneral::chooseColor(QAbstractButton* button)
 	QColor c;
 	//int x = (bg_color->buttons()).indexOf(button);
 
-	c = button->property("psi_color").value<QColor>();
+	c = getColor(button);
 
 	c = QColorDialog::getColor(c, parentWidget);
 	if(c.isValid()) {
