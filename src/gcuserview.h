@@ -53,8 +53,10 @@ public:
 	void paintBranches(QPainter *p, const QColorGroup &cg, int w, int, int h);
 	void paintCell(QPainter *p, const QColorGroup & cg, int column, int width, int alignment);
 	int compare(Q3ListViewItem *i, int col, bool ascending ) const;
+	void updateText();
 private:
 	int key_;
+	QString baseText;
 };
 
 class GCUserView : public Q3ListView

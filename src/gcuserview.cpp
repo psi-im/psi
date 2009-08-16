@@ -67,9 +67,10 @@ void GCUserViewItem::paintBranches(QPainter *p, const QColorGroup &cg, int w, in
 //----------------------------------------------------------------------------
 
 GCUserViewGroupItem::GCUserViewGroupItem(GCUserView *par, const QString& t, int k)
-:Q3ListViewItem(par,t), key_(k)
+:Q3ListViewItem(par,t), key_(k), baseText(t)
 {
 	setDragEnabled(false);
+	updateText();
 }
 
 void GCUserViewGroupItem::paintCell(QPainter *p, const QColorGroup & cg, int column, int width, int alignment)
@@ -121,6 +122,12 @@ int GCUserViewGroupItem::compare(Q3ListViewItem *i, int col, bool ascending) con
 		return this->key_ - static_cast<GCUserViewGroupItem*>(i)->key_;
 	else
 		return Q3ListViewItem::compare(i, col, ascending);
+}
+
+void GCUserViewGroupItem::updateText()
+{
+	int c = childCount();
+	setText(0, baseText+(c?QString("  (%1)").arg(c):""));
 }
 
 //----------------------------------------------------------------------------
@@ -220,15 +227,20 @@ Q3ListViewItem *GCUserView::findEntry(const QString &nick)
 
 void GCUserView::updateEntry(const QString &nick, const Status &s)
 {
+	GCUserViewGroupItem* gr;
 	GCUserViewItem *lvi = (GCUserViewItem *)findEntry(nick);
 	if (lvi && lvi->s.mucItem().role() != s.mucItem().role()) {
+		gr = findGroup(lvi->s.mucItem().role());
 		delete lvi;
+		gr->updateText();
 		lvi = NULL;
 	}
 
 	if(!lvi) {
-		lvi = new GCUserViewItem(findGroup(s.mucItem().role()));
+		gr = findGroup(s.mucItem().role());
+		lvi = new GCUserViewItem(gr);
 		lvi->setText(0, nick);
+		gr->updateText();
 	}
 
 	lvi->s = s;
@@ -255,9 +267,12 @@ GCUserViewGroupItem* GCUserView::findGroup(MUCItem::Role a) const
 
 void GCUserView::removeEntry(const QString &nick)
 {
-	Q3ListViewItem *lvi = findEntry(nick);
-	if(lvi)
+	GCUserViewItem *lvi = (GCUserViewItem *)findEntry(nick);
+	if(lvi) {
+		GCUserViewGroupItem* gr = findGroup(lvi->s.mucItem().role());
 		delete lvi;
+		gr->updateText();
+	}
 }
 
 bool GCUserView::maybeTip(const QPoint &pos)
