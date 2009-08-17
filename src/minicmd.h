@@ -151,7 +151,7 @@ public:
 	 *  commandline and \a item indicates which part contains the cursor.
 	 *
 	 * \return a QStringList of all possible completions. If a completion ends with a null char,
-	 *           an unquoted/unescaped space will be added at the end of the completion.
+	 *           an unquoted/unescaped space will be added at the end of the completion. Ordering is irrelevant.
 	 */
 	virtual QStringList mCmdTryCompleteCommand(MCmdStateIface *state, QString query, QStringList partcommand, int item)=0;
 
