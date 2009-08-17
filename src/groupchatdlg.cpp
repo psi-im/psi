@@ -289,7 +289,7 @@ public slots:
 	{
 		JT_ClientVersion *version = qobject_cast<JT_ClientVersion*>(sender());
 		if (!version) {
-			dlg->appendSysMsg("Error in version getter!", false);
+			dlg->appendSysMsg(QString("No version information available for %1.").arg(version->jid().resource()) , false);
 			return;
 		}
 		dlg->appendSysMsg(QString("Version response from %1: N: %2 V: %3 OS: %4")
