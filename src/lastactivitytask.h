@@ -35,6 +35,7 @@ public:
 
 	void onGo();
 	bool take(const QDomElement &);
+	const XMPP::Jid & jid() const;
 
 	const QString& status() const;
 	const QDateTime& time() const;

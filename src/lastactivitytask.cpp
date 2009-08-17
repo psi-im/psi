@@ -33,6 +33,14 @@ LastActivityTask::LastActivityTask(const Jid& jid, Task* parent) : Task(parent),
 	iq_.appendChild(query);
 }
 
+/**
+ * \brief Queried entity's JID.
+ */
+const Jid & LastActivityTask::jid() const
+{
+	return jid_;
+}
+
 void LastActivityTask::onGo()
 {
 	send(iq_);

@@ -40,6 +40,7 @@
 #include "jidutil.h"
 #include "textutil.h"
 #include "xmpp_tasks.h"
+#include "lastactivitytask.h"
 
 
 #define MCMDCHAT		"http://psi-im.org/ids/mcmd#chatmain"
@@ -63,6 +64,11 @@ public:
 				//qDebug() << "querying: " << dlg_->jid().full();
 				version->get(dlg_->jid());
 				version->go();
+				newstate = 0;
+			} else if (cmd == "idle") {
+				LastActivityTask *idle = new LastActivityTask(dlg_->jid(), dlg_->account()->client()->rootTask());
+				connect(idle, SIGNAL(finished()), SLOT(lastactivity_finished()));
+				idle->go();
 				newstate = 0;
 			} else if (cmd == "clear") {
 				dlg_->doClear();
@@ -106,7 +112,7 @@ public:
 		QStringList all;
 		if (state->getName() == MCMDCHAT) {
 			if (item == 0) {
-				all << "version" << "clear" << "vcard" << "auth" << "compact";
+				all << "version" << "idle" << "clear" << "vcard" << "auth" << "compact";
 			}
 		}
 		QStringList res;
@@ -132,6 +138,24 @@ public slots:
 		dlg_->appendSysMsg(QString("Version response: N: %2 V: %3 OS: %4")
 			.arg(version->name(), version->version(), version->os()));
 	};
+
+	void lastactivity_finished()
+	{
+		LastActivityTask *idle = (LastActivityTask *)sender();
+
+		if (!idle->success()) {
+			dlg_->appendSysMsg("Could not determine time of last activity.");
+			return;
+		}
+
+		if (idle->status().isEmpty()) {
+			dlg_->appendSysMsg(QString("Last activity at %1")
+				.arg(idle->time().toString()));
+		} else {
+			dlg_->appendSysMsg(QString("Last activity at %1 (%2)")
+				.arg(idle->time().toString(), idle->status()));
+		}
+	}
 
 private:
 	PsiChatDlg *dlg_;

@@ -78,6 +78,7 @@
 #include "gcuserview.h"
 #include "mucreasonseditor.h"
 #include "mcmdmanager.h"
+#include "lastactivitytask.h"
 
 #include "mcmdsimplesite.h"
 
@@ -295,6 +296,24 @@ public slots:
 			.arg(version->jid().resource(), version->name(), version->version(), version->os()), false);
 	}
 
+	void lastactivity_finished()
+	{
+		LastActivityTask *idle = (LastActivityTask *)sender();
+
+		if (!idle->success()) {
+			dlg->appendSysMsg(QString("Can't determine last activity time for %1.").arg(idle->jid().resource()), false);
+			return;
+		}
+
+		if (idle->status().isEmpty()) {
+			dlg->appendSysMsg(QString("Last activity from %1 at %2")
+				.arg(idle->jid().resource(), idle->time().toString()), false);
+		} else {
+			dlg->appendSysMsg(QString("Last activity from %1 at %2 (%3)")
+				.arg(idle->jid().resource(), idle->time().toString(), idle->status()), false);
+		}
+	}
+
 	void doSPing()
 	{
 		Jid full = dlg->jid().withResource(self);
@@ -378,6 +397,13 @@ join <channel>{,<channel>} [pass{,<pass>}
 				version->get(target);
 				version->go();
 				newstate = 0;
+			} else if (cmd == "idle" && command.count() > 1) {
+				QString nick = command[1].stripWhiteSpace();
+				Jid target = dlg->jid().withResource(nick);
+				LastActivityTask *idle = new LastActivityTask(target, dlg->account()->client()->rootTask());
+				connect(idle, SIGNAL(finished()), SLOT(lastactivity_finished()));
+				idle->go();
+				newstate = 0;
 			} else if (cmd == "quote") {
 				dlg->appendSysMsg(command.join("|"), false);
 				preset = command;
@@ -399,8 +425,8 @@ join <channel>{,<channel>} [pass{,<pass>}
 		if (state->getName() == MCMDMUC) {
 			QString spaceAtEnd = QString(QChar(0));
 			if (item == 0) {
-				all << "clear" + spaceAtEnd << "nick" + spaceAtEnd << "sping" + spaceAtEnd << "version" + spaceAtEnd << "quote" + spaceAtEnd;
-			} else if (item == 1 && partcommand[0] == "version") {
+				all << "clear" + spaceAtEnd << "nick" + spaceAtEnd << "sping" + spaceAtEnd << "version" + spaceAtEnd << "idle" + spaceAtEnd << "quote" + spaceAtEnd;
+			} else if (item == 1 && (partcommand[0] == "version" || partcommand[0] == "idle")) {
 				all = dlg->ui_.lv_users->nickList();
 			}
 		}
