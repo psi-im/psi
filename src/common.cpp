@@ -252,7 +252,7 @@ void soundPlay(const QString &s)
 		return;
 	}
 
-	if (!QDir::isRelativePath(str)) {
+	if (QDir::isRelativePath(str)) {
 		str = ApplicationInfo::resourcesDir() + "/" + str;
 	}
 

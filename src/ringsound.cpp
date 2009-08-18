@@ -20,7 +20,7 @@ static QSound *soundPlay2(const QString &s, QObject *parent)
 		return 0;
 	}
 
-	if (!QDir::isRelativePath(str)) {
+	if (QDir::isRelativePath(str)) {
 		str = ApplicationInfo::resourcesDir() + "/" + str;
 	}
 
