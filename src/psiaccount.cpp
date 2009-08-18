@@ -4623,7 +4623,8 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 		popupType = PsiPopup::AlertFile;
 	}
 	else if(e->type() == PsiEvent::AvCallType) {
-		playSound(PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-file-transfer").toString());
+		//no regular event sound.  instead the RingSound class is used
+		//playSound(PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-file-transfer").toString());
 		doPopup = true;
 		popupType = PsiPopup::AlertAvCall;
 	}
