@@ -1,8 +1,7 @@
 # unittest helpers
 TARGET = testiconset
 CONFIG += unittest
-TESTBASEDIR = ../../../../unittest
-include($$TESTBASEDIR/unittest.pri)
+include($$PWD/../../../../qa/oldtest/unittest.pri)
 
 QT += gui xml
 RESOURCES +=  ../../../../iconsets.qrc

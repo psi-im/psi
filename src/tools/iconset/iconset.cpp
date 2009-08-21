@@ -144,8 +144,9 @@ const QPixmap & Impix::pixmap() const
 {
 	if (!d->pixmap) {
 		d->pixmap = new QPixmap();
-		if (!d->image.isNull())
-			d->pixmap->fromImage(d->image);
+		if (!d->image.isNull()) {
+			*d->pixmap = QPixmap::fromImage(d->image);
+		}
 	}
 	return *d->pixmap;
 }
@@ -173,12 +174,18 @@ bool Impix::loadFromData(const QByteArray &ba)
 {
 	bool ret = false;
 
+	delete d->pixmap;
+	d->pixmap = 0;
+
 	QImage img;
 	if ( img.loadFromData(ba) ) {
+		Q_ASSERT(img.width() > 0);
+		Q_ASSERT(img.height() > 0);
 		setImage( img );
 		ret = true;
 	}
 
+	Q_ASSERT(ret);
 	return ret;
 }
 
@@ -676,6 +683,7 @@ bool PsiIcon::loadFromData(const QByteArray &ba, bool isAnim)
 		emit d->iconModified();
 	}
 
+	Q_ASSERT(ret);
 	return ret;
 }
 
@@ -1394,6 +1402,11 @@ int Iconset::count() const
  */
 bool Iconset::load(const QString &dir)
 {
+	if (dir.isEmpty()) {
+		return false;
+	}
+	Q_ASSERT(!dir.isEmpty());
+
 	detach();
 
 	// make it run okay on windows 9.x (where the pixmap memory is limited)
@@ -1412,10 +1425,11 @@ bool Iconset::load(const QString &dir)
 				ret = true;
 			}
 		}
-		else
-			qWarning("Iconset::load(): Failed to load iconset: icondef.xml is invalid XML");
+		else {
+			qWarning("Iconset::load(\"%s\"): Failed to load iconset: icondef.xml is invalid XML", qPrintable(dir));
+		}
 	} else {
-		qWarning("Iconset::load(): Failed to load iconset.xml");
+		qWarning("Iconset::load(\"%s\"): Failed to load iconset.xml", qPrintable(dir));
 	}
 
 	//QPixmap::setDefaultOptimization( optimization );

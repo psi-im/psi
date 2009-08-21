@@ -68,7 +68,8 @@ public:
 				return fileName;
 		}
 
-		return QString::null;
+		qWarning("PsiIconset::Private::iconsetPath(\"%s\"): not found", qPrintable(name));
+		return QString();
 	}
 
 	void stripFirstAnimFrame(Iconset &is) {
