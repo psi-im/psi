@@ -387,6 +387,11 @@
 		<object mime='image/png'>publish_tune.png</object>
 	</icon>
 
+	<icon>
+		<x xmlns='name'>psi/save</x>
+		<object mime='image/png'>filemanager.png</object>
+	</icon>
+
 	<!-- Whiteboarding -->
 	<icon>
 		<x xmlns='name'>psi/whiteboard</x>
@@ -394,7 +399,7 @@
 	</icon>
 
 	<icon>
-		<x xmlns='name'>psi/save</x>
+		<x xmlns='name'>psi/saveBoard</x>
 		<object mime='image/png'>whiteboarding/save.png</object>
 	</icon>
 

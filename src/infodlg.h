@@ -45,7 +45,8 @@ public:
 protected:
 	// reimplemented
 	//void closeEvent(QCloseEvent *);
-	void updatePhoto();
+	void showEvent ( QShowEvent * event );
+	bool updatePhoto();
 
 public slots:
 	void doRefresh();
@@ -61,9 +62,13 @@ private slots:
 	void requestLastActivityFinished();
 	void jt_finished();
 	void doSubmit();
+	void doDisco();
+	void doUpdateFromCalendar();
+	void doBDCheck();
 	void textChanged();
 	void selectPhoto();
 	void clearPhoto();
+	void showPhoto();
 
 private:
 	class Private;

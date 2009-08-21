@@ -8,15 +8,9 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>455</width>
+    <width>477</width>
     <height>337</height>
    </rect>
-  </property>
-  <property name="minimumSize" >
-   <size>
-    <width>129</width>
-    <height>129</height>
-   </size>
   </property>
   <property name="windowTitle" >
    <string>User Info</string>
@@ -45,7 +39,14 @@
         <number>6</number>
        </property>
        <item row="1" column="1" >
-        <widget class="QLineEdit" name="le_nickname" />
+        <widget class="QLineEdit" name="le_nickname" >
+         <property name="minimumSize" >
+          <size>
+           <width>120</width>
+           <height>0</height>
+          </size>
+         </property>
+        </widget>
        </item>
        <item row="7" column="1" >
         <spacer>
@@ -71,7 +72,7 @@
         </widget>
        </item>
        <item row="0" column="1" colspan="2" >
-        <widget class="QLineEdit" name="le_fullname" />
+        <widget class="ActionLineEdit" name="le_fullname" />
        </item>
        <item row="2" column="0" >
         <widget class="QLabel" name="TextLabel1_3_2_3_2" >
@@ -89,11 +90,18 @@
           <number>6</number>
          </property>
          <item>
-          <widget class="QLabel" name="label_photo" >
+          <widget class="QToolButton" name="tb_photo" native="true">
+	   <property name="shortcut" >
+            <string>Alt+V</string>
+           </property>
+	   <property name="toolTip" >
+            <string>View in real size</string>
+           </property>
+	   <property name="autoRaise" >
+            <bool>true</bool>
+           </property>
            <property name="sizePolicy" >
-            <sizepolicy>
-             <hsizetype>1</hsizetype>
-             <vsizetype>4</vsizetype>
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -103,27 +111,6 @@
              <width>129</width>
              <height>129</height>
             </size>
-           </property>
-           <property name="maximumSize" >
-            <size>
-             <width>32767</width>
-             <height>129</height>
-            </size>
-           </property>
-           <property name="frameShadow" >
-            <enum>QFrame::Raised</enum>
-           </property>
-           <property name="lineWidth" >
-            <number>1</number>
-           </property>
-           <property name="scaledContents" >
-            <bool>false</bool>
-           </property>
-           <property name="alignment" >
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="margin" >
-            <number>2</number>
            </property>
           </widget>
          </item>
@@ -219,7 +206,11 @@
         <widget class="QLineEdit" name="le_phone" />
        </item>
        <item row="2" column="1" >
-        <widget class="QLineEdit" name="le_bday" />
+        <widget class="ActionLineEdit" name="le_bday">
+	 <property name="readOnly">
+	  <bool>true</bool>
+	 </property>
+	</widget>
        </item>
        <item row="4" column="1" >
         <widget class="QLineEdit" name="le_homepage" />
@@ -462,6 +453,16 @@
       </spacer>
      </item>
      <item>
+      <widget class="IconButton" name="pb_disco" >
+       <property name="shortcut" >
+        <string>Alt+D</string>
+       </property>
+       <property name="psiIconName" stdset="0" >
+        <string>psi/disco</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="IconButton" name="pb_submit" >
        <property name="text" >
         <string>&amp;Publish</string>
@@ -502,8 +503,10 @@
   <tabstop>le_phone</tabstop>
   <tabstop>le_homepage</tabstop>
   <tabstop>le_email</tabstop>
+  <tabstop>tb_photo</tabstop>
   <tabstop>pb_open</tabstop>
   <tabstop>pb_clear</tabstop>
+  <tabstop>pb_disco</tabstop>
   <tabstop>pb_submit</tabstop>
   <tabstop>pb_refresh</tabstop>
   <tabstop>pb_close</tabstop>
@@ -520,6 +523,13 @@
   <tabstop>te_desc</tabstop>
  </tabstops>
  <includes/>
+ <customwidgets>
+  <customwidget>
+   <class>ActionLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>actionlineedit.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

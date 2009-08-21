@@ -222,7 +222,8 @@ HEADERS += \
 	$$PWD/psicontactlist.h \
 	$$PWD/accountlabel.h \
 	$$PWD/psiactions.h \
-	$$PWD/bookmarkmanagedlg.h
+	$$PWD/bookmarkmanagedlg.h \
+	$$PWD/vcardphotodlg.h
 
 
 HEADERS += tabcompletion.h
@@ -340,7 +341,8 @@ SOURCES += \
 	$$PWD/psicon.cpp \
 	$$PWD/psiaccount.cpp \
 	$$PWD/accountlabel.cpp \
-	$$PWD/bookmarkmanagedlg.cpp
+	$$PWD/bookmarkmanagedlg.cpp \
+	$$PWD/vcardphotodlg.cpp
 
 whiteboarding {
 	# Whiteboarding support. Still experimental.

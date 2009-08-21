@@ -22,14 +22,18 @@
 
 #include "infodlg.h"
 
-#include <qlayout.h>
-#include <qlabel.h>
-#include <qtabwidget.h>
-#include <qpushbutton.h>
-#include <qlineedit.h>
-#include <qmessagebox.h>
-#include <qbuffer.h>
+#include <QPointer>
+#include "vcardphotodlg.h"
+#include <QLayout>
+#include <QLabel>
+#include <QTabWidget>
+#include <QLineEdit>
+#include <QMessageBox>
 #include <QPixmap>
+#include <QCalendarWidget>
+#include <QFormLayout>
+#include <QDialogButtonBox>
+#include <QAction>
 #include "msgmle.h"
 #include "userlist.h"
 #include "xmpp_vcard.h"
@@ -45,6 +49,7 @@
 #include "psirichtext.h"
 #include "psioptions.h"
 #include "fileutil.h"
+#include "discodlg.h"
 
 using namespace XMPP;
 		
@@ -64,6 +69,13 @@ public:
 	bool cacheVCard;
 	QByteArray photo;
 	QList<QString> infoRequested;
+	QPointer<QDialog> showPhotoDlg;
+	QPointer<QWidget> namesDlg;
+	QPointer<QCalendarWidget> calendar;
+	QString bdayDateFormat;
+	QLineEdit *le_givenname;
+	QLineEdit *le_middlename;
+	QLineEdit *le_familyname;
 };
 
 InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWidget *parent, bool cacheVCard)
@@ -84,13 +96,30 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	d->pa->dialogRegister(this, j);
 	d->cacheVCard = cacheVCard;
 	d->busy = ui_.busy;
+	d->bdayDateFormat = "yyyy-MM-dd"; //FIXME make settings for custom date format, but its ISO now
 
 	ui_.te_desc->setTextFormat(Qt::PlainText);
+
 
 	setWindowTitle(d->jid.full());
 #ifndef Q_WS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/vCard").icon());
 #endif
+	// names editing dialog
+	d->namesDlg = new QDialog(this);
+	QFormLayout *fl = new QFormLayout;
+	d->le_givenname = new QLineEdit(d->namesDlg);
+	d->le_middlename = new QLineEdit(d->namesDlg);
+	d->le_familyname = new QLineEdit(d->namesDlg);
+	fl->addRow(tr("First Name:"), d->le_givenname);
+	fl->addRow(tr("Middle Name:"), d->le_middlename);
+	fl->addRow(tr("Last Name:"), d->le_familyname);
+	d->namesDlg->setLayout(fl);
+	// end names editing dialog
+
+	QAction *editnames = new QAction(IconsetFactory::icon(d->type == Self?"psi/options":"psi/info").icon(), "", this);
+	ui_.le_fullname->addAction(editnames);
+	ui_.le_fullname->widgetForAction(editnames)->setPopup(d->namesDlg);
 
 	connect(ui_.pb_refresh, SIGNAL(clicked()), this, SLOT(doRefresh()));
 	connect(ui_.pb_refresh, SIGNAL(clicked()), this, SLOT(updateStatus()));
@@ -98,9 +127,20 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	connect(ui_.pb_open, SIGNAL(clicked()), this, SLOT(selectPhoto()));
 	connect(ui_.pb_clear, SIGNAL(clicked()), this, SLOT(clearPhoto()));
 	connect(ui_.pb_close, SIGNAL(clicked()), this, SLOT(close()));
+	connect(ui_.tb_photo, SIGNAL(clicked()), SLOT(showPhoto()));
+	connect(ui_.pb_disco, SIGNAL(clicked()), this, SLOT(doDisco()));
+	//connect(editnames, SIGNAL(triggered()), d->namesDlg, SLOT(show()));
 
 	if(d->type == Self) {
+		d->calendar = new QCalendarWidget(this);
+		d->calendar->setVerticalHeaderFormat(QCalendarWidget::NoVerticalHeader);
+		QAction *showcal = new QAction(IconsetFactory::icon("psi/options").icon(), "", this);
+		ui_.le_bday->addAction(showcal);
+		ui_.le_bday->widgetForAction(showcal)->setPopup(d->calendar);
 		connect(ui_.pb_submit, SIGNAL(clicked()), this, SLOT(doSubmit()));
+		connect(ui_.le_bday, SIGNAL(textChanged(QString)), this, SLOT(doBDCheck()));
+		connect(d->calendar, SIGNAL(selectionChanged()), this, SLOT(doUpdateFromCalendar()));
+		ui_.pb_disco->hide();
 	}
 	else {
 		// Hide buttons
@@ -212,9 +252,25 @@ void InfoDlg::jt_finished()
 
 void InfoDlg::setData(const VCard &i)
 {
-	ui_.le_fullname->setText( i.fullName() );
+	d->le_givenname->setText( i.givenName() );
+	d->le_middlename->setText( i.middleName() );
+	d->le_familyname->setText( i.familyName() );
 	ui_.le_nickname->setText( i.nickName() );
 	ui_.le_bday->setText( i.bdayStr() );
+	const QString fullName = i.fullName();
+	if (d->type != Self && fullName.isEmpty()) {
+		ui_.le_fullname->setText( QString("%1 %2 %3")
+			.arg(i.givenName())
+			.arg(i.middleName())
+			.arg(i.familyName()) );
+	} else {
+		ui_.le_fullname->setText( fullName );
+	}
+
+	ui_.le_fullname->setToolTip(
+		QString("<b>")+tr("First Name:")+"</b> "+d->vcard.givenName()+"<br>"+
+			"<b>"+tr("Middle Name:")+"</b> "+d->vcard.middleName()+"<br>"+
+			"<b>"+tr("Last Name:")+"</b> "+d->vcard.familyName() );
 
 	QString email;
 	if ( !i.emailList().isEmpty() )
@@ -252,33 +308,49 @@ void InfoDlg::setData(const VCard &i)
 	if ( !i.photo().isEmpty() ) {
 		//printf("There is a picture...\n");
 		d->photo = i.photo();
-		updatePhoto();
+		if (!updatePhoto()) {
+			clearPhoto();
+		}
 	}
 	else
 		clearPhoto();
+	if (d->type == Self) {
+		doBDCheck();
+	}
 
 	setEdited(false);
 }
 
-void InfoDlg::updatePhoto() 
+void InfoDlg::showEvent( QShowEvent * event )
 {
-	int max_width  = ui_.label_photo->width() - 20; // FIXME: Ugly magic number
-	int max_height = ui_.label_photo->height() - 20; // FIXME: Ugly magic number
-	
-	QImage img(d->photo);
-	QImage img_scaled;
-	if (img.width() > max_width || img.height() > max_height) {
-		img_scaled = img.scaled(max_width, max_height,Qt::KeepAspectRatio);
+	QDialog::showEvent(event);
+	if ( !d->vcard.photo().isEmpty() ) {
+		//printf("There is a picture...\n");
+		d->photo = d->vcard.photo();
+		updatePhoto();
 	}
-	else {
-		img_scaled = img;
+}
+
+bool InfoDlg::updatePhoto()
+{
+	const QImage img(d->photo);
+	if (img.isNull()) {
+		return false;
 	}
-	ui_.label_photo->setPixmap(QPixmap(img_scaled));
+	int max_width  = ui_.tb_photo->width() - 10; // FIXME: Ugly magic number
+	int max_height = ui_.tb_photo->height() - 10; // FIXME: Ugly magic number
+
+	ui_.tb_photo->setIcon(QPixmap(img));
+	ui_.tb_photo->setIconSize(QSize(max_width, max_height));
+	return true;
 }
 
 void InfoDlg::fieldsEnable(bool x)
 {
 	ui_.le_fullname->setEnabled(x);
+	d->le_givenname->setEnabled(x);
+	d->le_middlename->setEnabled(x);
+	d->le_familyname->setEnabled(x);
 	ui_.le_nickname->setEnabled(x);
 	ui_.le_bday->setEnabled(x);
 	ui_.le_email->setEnabled(x);
@@ -305,21 +377,24 @@ void InfoDlg::fieldsEnable(bool x)
 
 void InfoDlg::setEdited(bool x)
 {
-	ui_.le_fullname->setEdited(x);
-	ui_.le_nickname->setEdited(x);
-	ui_.le_bday->setEdited(x);
-	ui_.le_email->setEdited(x);
-	ui_.le_homepage->setEdited(x);
-	ui_.le_phone->setEdited(x);
-	ui_.le_street->setEdited(x);
-	ui_.le_ext->setEdited(x);
-	ui_.le_city->setEdited(x);
-	ui_.le_state->setEdited(x);
-	ui_.le_pcode->setEdited(x);
-	ui_.le_country->setEdited(x);
-	ui_.le_orgName->setEdited(x);
-	ui_.le_orgUnit->setEdited(x);
-	ui_.le_title->setEdited(x);
+	ui_.le_fullname->setModified(x);
+	d->le_givenname->setModified(x);
+	d->le_middlename->setModified(x);
+	d->le_familyname->setModified(x);
+	ui_.le_nickname->setModified(x);
+	ui_.le_bday->setModified(x);
+	ui_.le_email->setModified(x);
+	ui_.le_homepage->setModified(x);
+	ui_.le_phone->setModified(x);
+	ui_.le_street->setModified(x);
+	ui_.le_ext->setModified(x);
+	ui_.le_city->setModified(x);
+	ui_.le_state->setModified(x);
+	ui_.le_pcode->setModified(x);
+	ui_.le_country->setModified(x);
+	ui_.le_orgName->setModified(x);
+	ui_.le_orgUnit->setModified(x);
+	ui_.le_title->setModified(x);
 	ui_.le_role->setEdited(x);
 
 	d->te_edited = x;
@@ -329,22 +404,25 @@ bool InfoDlg::edited()
 {
 	bool x = false;
 
-	if(ui_.le_fullname->edited()) x = true;
-	if(ui_.le_nickname->edited()) x = true;
-	if(ui_.le_bday->edited()) x = true;
-	if(ui_.le_email->edited()) x = true;
-	if(ui_.le_homepage->edited()) x = true;
-	if(ui_.le_phone->edited()) x = true;
-	if(ui_.le_street->edited()) x = true;
-	if(ui_.le_ext->edited()) x = true;
-	if(ui_.le_city->edited()) x = true;
-	if(ui_.le_state->edited()) x = true;
-	if(ui_.le_pcode->edited()) x = true;
-	if(ui_.le_country->edited()) x = true;
-	if(ui_.le_orgName->edited()) x = true;
-	if(ui_.le_orgUnit->edited()) x = true;
-	if(ui_.le_title->edited()) x = true;
-	if(ui_.le_role->edited()) x = true;
+	if(ui_.le_fullname->isModified()) x = true;
+	if(d->le_givenname->isModified()) x = true;
+	if(d->le_middlename->isModified()) x = true;
+	if(d->le_familyname->isModified()) x = true;
+	if(ui_.le_nickname->isModified()) x = true;
+	if(ui_.le_bday->isModified()) x = true;
+	if(ui_.le_email->isModified()) x = true;
+	if(ui_.le_homepage->isModified()) x = true;
+	if(ui_.le_phone->isModified()) x = true;
+	if(ui_.le_street->isModified()) x = true;
+	if(ui_.le_ext->isModified()) x = true;
+	if(ui_.le_city->isModified()) x = true;
+	if(ui_.le_state->isModified()) x = true;
+	if(ui_.le_pcode->isModified()) x = true;
+	if(ui_.le_country->isModified()) x = true;
+	if(ui_.le_orgName->isModified()) x = true;
+	if(ui_.le_orgUnit->isModified()) x = true;
+	if(ui_.le_title->isModified()) x = true;
+	if(ui_.le_role->isModified()) x = true;
 	if(d->te_edited) x = true;
 
 	return x;
@@ -353,8 +431,11 @@ bool InfoDlg::edited()
 void InfoDlg::setReadOnly(bool x)
 {
 	ui_.le_fullname->setReadOnly(x);
+	d->le_givenname->setReadOnly(x);
+	d->le_middlename->setReadOnly(x);
+	d->le_familyname->setReadOnly(x);
 	ui_.le_nickname->setReadOnly(x);
-	ui_.le_bday->setReadOnly(x);
+	//ui_.le_bday->setReadOnly(x); //always read only. use calendar
 	ui_.le_email->setReadOnly(x);
 	ui_.le_homepage->setReadOnly(x);
 	ui_.le_phone->setReadOnly(x);
@@ -412,11 +493,40 @@ void InfoDlg::doSubmit()
 	VCardFactory::instance()->setVCard(d->pa, submit_vcard, this, SLOT(jt_finished()));
 }
 
+void InfoDlg::doDisco()
+{
+	DiscoDlg* w=new DiscoDlg(d->pa, d->jid, "");
+	connect(w, SIGNAL(featureActivated(QString, Jid, QString)), d->pa, SLOT(featureActivated(QString, Jid, QString)));
+	w->show();
+}
+
+void InfoDlg::doUpdateFromCalendar()
+{
+	const QString textWas = ui_.le_bday->text();
+	ui_.le_bday->setText(d->calendar->selectedDate().toString(d->bdayDateFormat));
+	bool changed = textWas != ui_.le_bday->text();
+	ui_.le_bday->setModified(changed);
+	if (changed) {
+		d->calendar->hide();
+	}
+}
+
+void InfoDlg::doBDCheck()
+{
+	const QString bday = ui_.le_bday->text();
+	const QString bg = (bday.isEmpty() || QDate::fromString(bday, d->bdayDateFormat).isValid())?
+					  "none":QColor(255,128,128,255).name();
+	ui_.le_bday->setStyleSheet("background-color:" + bg);
+}
+
 VCard InfoDlg::makeVCard()
 {
 	VCard v;
 
 	v.setFullName( ui_.le_fullname->text() );
+	v.setGivenName( d->le_givenname->text() );
+	v.setMiddleName( d->le_middlename->text() );
+	v.setFamilyName( d->le_familyname->text() );
 	v.setNickName( ui_.le_nickname->text() );
 	v.setBdayStr( ui_.le_bday->text() );
 
@@ -526,8 +636,8 @@ void InfoDlg::setPreviewPhoto(const QString& path)
 */
 void InfoDlg::clearPhoto()
 {
-	// this will cause the pixmap disappear
-	ui_.label_photo->setText(tr("Picture not\navailable"));
+	ui_.tb_photo->setIcon(QIcon());
+	ui_.tb_photo->setText(tr("Picture not\navailable"));
 	d->photo = QByteArray();
 	
 	// the picture changed, so notify there are some changes done
@@ -631,4 +741,20 @@ void InfoDlg::contactUpdated(const XMPP::Jid & j)
 	if (d->jid.compare(j,false)) {
 		updateStatus();
 	}
+}
+
+void InfoDlg::showPhoto()
+{
+	 if (!d->photo.isEmpty()) {
+		QPixmap pixmap;
+		if (!d->showPhotoDlg) {
+			if (pixmap.loadFromData(d->photo)) {
+				d->showPhotoDlg=new ShowPhotoDlg(this, pixmap);
+				d->showPhotoDlg->show();
+			}
+		}
+		else {
+			::bringToFront(d->showPhotoDlg);
+		}
+	 }
 }

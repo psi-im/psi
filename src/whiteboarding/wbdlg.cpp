@@ -70,7 +70,7 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
 	vb1->addWidget(wbWidget_);
 
 	// Bottom (tool) area
-	act_save_ = new IconAction(tr("Save session"), "psi/save", tr("Save the contents of the whiteboard"), 0, this );
+	act_save_ = new IconAction(tr("Save session"), "psi/saveBoard", tr("Save the contents of the whiteboard"), 0, this );
 	act_geometry_ = new IconAction(tr("Change the geometry"), "psi/whiteboard", tr("Change the geometry"), 0, this );
 	act_clear_ = new IconAction(tr("End session"), "psi/clearChat", tr("Clear the whiteboard"), 0, this );
 	act_end_ = new IconAction(tr("End session"), "psi/closetab", tr("End session"), 0, this );
