@@ -21,23 +21,24 @@
 #ifndef HISTORYDLG_H
 #define HISTORYDLG_H
 
-#include <QListWidget>
+#include <q3listview.h>
 
 class PsiEvent;
 class PsiAccount;
 class EDBItem;
 class EDBResult;
+class Q3SimpleRichText;
 namespace XMPP {
 	class Jid;
 }
 
-class HistoryViewItem : public QListWidgetItem
+class HistoryViewItem : public Q3ListViewItem
 {
 public:
-	HistoryViewItem(PsiEvent *, const QString &, int id, QListWidget *);
+	HistoryViewItem(PsiEvent *, const QString &, int id, Q3ListView *);
 	~HistoryViewItem();
 
-	// Q3SimpleRichText *rt;
+	Q3SimpleRichText *rt;
 	QString text;
 	int id;
 	PsiEvent *e;
@@ -45,12 +46,12 @@ public:
 
 	// reimplemented
 	int rtti() const;
-	// void paintCell(QPainter *p, const QColorGroup & cg, int column, int width, int alignment);
+	void paintCell(QPainter *p, const QColorGroup & cg, int column, int width, int alignment);
 	void setup();
-	int compare(QListWidgetItem *, int column, bool ascending) const;
+	int compare(Q3ListViewItem *, int column, bool ascending) const;
 };
 
-class HistoryView : public QListWidget
+class HistoryView : public Q3ListView
 {
 	Q_OBJECT
 public:
@@ -69,8 +70,8 @@ signals:
 private slots:
 	void doOpenEvent();
 
-	void qlv_doubleclick(QListWidgetItem *);
-	void qlv_contextPopup(QListWidgetItem *, const QPoint &, int);
+	void qlv_doubleclick(Q3ListViewItem *);
+	void qlv_contextPopup(Q3ListViewItem *, const QPoint &, int);
 
 private:
 	int at_id;

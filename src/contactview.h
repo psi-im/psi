@@ -22,7 +22,7 @@
 #define CONTACTVIEW_H
 
 #include <QObject>
-#include <QListWidget>
+#include <Q3ListView>
 #include <QList>
 #include <QPixmap>
 #include <QKeyEvent>
@@ -189,7 +189,7 @@ private:
 };
 
 // ContactView: the actual widget
-class ContactView : public QListWidget
+class ContactView : public Q3ListView
 {
 	Q_OBJECT
 public:
@@ -227,7 +227,7 @@ protected:
 	// reimplemented
 	void keyPressEvent(QKeyEvent *);
 	bool eventFilter( QObject *, QEvent * );
-	// Q3DragObject *dragObject();
+	Q3DragObject *dragObject();
 
 signals:
 	void showOffline(bool);
@@ -249,11 +249,11 @@ public slots:
 	void recalculateSize();
 
 private slots:
-	void qlv_singleclick(int, QListWidgetItem *, const QPoint &, int);
-	void qlv_doubleclick(QListWidgetItem *);
-	void qlv_contextPopup(QListWidgetItem *, const QPoint &, int);
-	void qlv_contextMenuRequested(QListWidgetItem *, const QPoint &, int);
-	void qlv_itemRenamed(QListWidgetItem *, int, const QString &);
+	void qlv_singleclick(int, Q3ListViewItem *, const QPoint &, int);
+	void qlv_doubleclick(Q3ListViewItem *);
+	void qlv_contextPopup(Q3ListViewItem *, const QPoint &, int);
+	void qlv_contextMenuRequested(Q3ListViewItem *, const QPoint &, int);
+	void qlv_itemRenamed(Q3ListViewItem *, int, const QString &);
 	void leftClickTimeOut();
 
 	void doRecvEvent();
@@ -283,7 +283,7 @@ private:
 	bool v_showOffline, v_showAgents, v_showAway, v_showHidden, v_showSelf, v_showStatusMsg;
 	bool lcto_active; // double click active?
 	QPoint lcto_pos;
-	QListWidgetItem *lcto_item;
+	Q3ListViewItem *lcto_item;
 	QSize lastSize;
 	QString filterString_;
 	bool applyingFilter;
@@ -300,7 +300,8 @@ private:
 // RichListViewItem: A RichText listview item
 //------------------------------------------------------------------------------
 
-#if 0
+#include <Q3StyleSheet>
+
 class RichListViewStyleSheet : public Q3StyleSheet
 {
 public:
@@ -311,26 +312,26 @@ private:
 	RichListViewStyleSheet(QObject* parent=0, const char * name=0);
 	static RichListViewStyleSheet* instance_;
 };
-#endif
 
-class RichListViewItem : public QListWidgetItem
+class Q3SimpleRichText;
+class RichListViewItem : public Q3ListViewItem
 {
 public:
-	RichListViewItem( QListWidget * parent );
-	RichListViewItem( QListWidgetItem * parent );
+	RichListViewItem( Q3ListView * parent );
+	RichListViewItem( Q3ListViewItem * parent );
 	virtual void setText(int column, const QString& text);
 	virtual void setup();
 	virtual ~RichListViewItem();
 	int widthUsed();
 
 protected:
-	// virtual void paintCell( QPainter * p, const QColorGroup & cg, int column
-// , int width, int align );
+	virtual void paintCell( QPainter * p, const QColorGroup & cg, int column
+, int width, int align );
 private:
 	int v_widthUsed;
 	bool v_selected, v_active;
 	bool v_rich;
-	// Q3SimpleRichText* v_rt;
+	Q3SimpleRichText* v_rt;
 };
 
 // ContactViewItem: an entry in the ContactView (profile, group, or contact)
@@ -381,13 +382,13 @@ public:
 
 	// reimplemented functions
 	int rtti() const;
-	// void paintFocus(QPainter *, const QColorGroup &, const QRect &);
-	// void paintBranches(QPainter *, const QColorGroup &, int, int, int);
-	// void paintCell(QPainter *, const QColorGroup & cg, int column, int width, int alignment);
+	void paintFocus(QPainter *, const QColorGroup &, const QRect &);
+	void paintBranches(QPainter *, const QColorGroup &, int, int, int);
+	void paintCell(QPainter *, const QColorGroup & cg, int column, int width, int alignment);
 	void setOpen(bool o);
-	void insertItem(QListWidgetItem * newChild);
-	void takeItem(QListWidgetItem * item);
-	int compare(QListWidgetItem *, int, bool) const;
+	void insertItem(Q3ListViewItem * newChild);
+	void takeItem(Q3ListViewItem * item);
+	int compare(Q3ListViewItem *, int, bool) const;
 	bool acceptDrop(const QMimeSource *) const;
 
 public slots:

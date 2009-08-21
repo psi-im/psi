@@ -23,7 +23,7 @@
  *
  */
 
-#include <QListWidgetItem>
+#include <Q3ListViewItem>
 #include <QString>
 #include <QMessageBox>
 
@@ -32,10 +32,10 @@
 #include "common.h"
 #include "showtextdlg.h"
 
-class KeyViewItem : public QListWidgetItem
+class KeyViewItem : public Q3ListViewItem
 {
 public:
-	KeyViewItem(const QCA::KeyStoreEntry& entry, QListWidget *par) : QListWidgetItem(par)
+	KeyViewItem(const QCA::KeyStoreEntry& entry, Q3ListView *par) : Q3ListViewItem(par)
 	{
 		entry_ = entry;
 	}
@@ -46,26 +46,23 @@ public:
 
 PGPKeyDlg::PGPKeyDlg(Type t, const QString& defaultKeyID, QWidget *parent) : QDialog(parent)
 {
-#if 0
 	ui_.setupUi(this);
 	setModal(true);
 
-	connect(ui_.lv_keys, SIGNAL(doubleClicked(QListWidgetItem *)), SLOT(qlv_doubleClicked(QListWidgetItem *)));
+	connect(ui_.lv_keys, SIGNAL(doubleClicked(Q3ListViewItem *)), SLOT(qlv_doubleClicked(Q3ListViewItem *)));
 	connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(do_accept()));
 	connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(reject()));
 	connect(ui_.pb_dtext, SIGNAL(clicked()), SLOT(show_ksm_dtext()));
 
-	QListWidgetItem *isel = 0;
+	Q3ListViewItem *isel = 0;
 
 	foreach(QCA::KeyStore *ks, PGPUtil::instance().keystores_) {
 		if (ks->type() == QCA::KeyStore::PGPKeyring && ks->holdsIdentities()) {
 			foreach(QCA::KeyStoreEntry ke, ks->entryList()) {
 				if ((t == Public && ke.type() == QCA::KeyStoreEntry::TypePGPPublicKey) || (ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey)) {
 					KeyViewItem *i = new KeyViewItem(ke, ui_.lv_keys);
-					// i->setText(0, ke.id().right(8));
-					// i->setText(1, ke.name());
-					i->setText(QString("%1 %2").arg(ke.id().right(8))
-					           .arg(ke.name());
+					i->setText(0, ke.id().right(8));
+					i->setText(1, ke.name());
 					if(!defaultKeyID.isEmpty() && ke.pgpPublicKey().keyId() == defaultKeyID) {
 						ui_.lv_keys->setSelected(i, true);
 						isel = i;
@@ -88,7 +85,6 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString& defaultKeyID, QWidget *parent) : QDi
 		ui_.lv_keys->setSelected(ui_.lv_keys->firstChild(), true);
 	else if(isel)
 		ui_.lv_keys->ensureItemVisible(isel);
-#endif
 }
 
 const QCA::KeyStoreEntry& PGPKeyDlg::keyStoreEntry() const
@@ -96,17 +92,14 @@ const QCA::KeyStoreEntry& PGPKeyDlg::keyStoreEntry() const
 	return entry_;
 }
 
-void PGPKeyDlg::qlv_doubleClicked(QListWidgetItem *i)
+void PGPKeyDlg::qlv_doubleClicked(Q3ListViewItem *i)
 {
-#if 0
 	ui_.lv_keys->setSelected(i, true);
 	do_accept();
-#endif
 }
 
 void PGPKeyDlg::do_accept()
 {
-#if 0
 	KeyViewItem *i = (KeyViewItem *)ui_.lv_keys->selectedItem();
 	if(!i) {
 		QMessageBox::information(this, tr("Error"), tr("Please select a key."));
@@ -114,7 +107,6 @@ void PGPKeyDlg::do_accept()
 	}
 	entry_ = i->entry_;
 	accept();
-#endif
 }
 
 void PGPKeyDlg::show_ksm_dtext()

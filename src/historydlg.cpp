@@ -20,11 +20,14 @@
 
 #include "historydlg.h"
 
+#include <q3popupmenu.h>
+#include <q3header.h>
 #include <qlayout.h>
 #include <qlabel.h>
 #include <qlineedit.h>
 #include <qpushbutton.h>
 #include <QFileDialog>
+#include <Q3SimpleRichText>
 #include <qmessagebox.h>
 #include <QFrame>
 #include <qapplication.h>
@@ -128,7 +131,6 @@ public:
 HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 	: QWidget(0, 0)
 {
-#if 0
 	setAttribute(Qt::WA_DeleteOnClose);
   	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
 		setAttribute(Qt::WA_MacMetalStyle);
@@ -224,89 +226,69 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 
 	setButtons();
 	doLatest();
-#endif
 }
 
 HistoryDlg::~HistoryDlg()
 {
-#if 0
 	delete d->exp;
 	d->pa->dialogUnregister(this);
 	delete d;
-#endif
 }
 
 void HistoryDlg::keyPressEvent(QKeyEvent *e)
 {
-#if 0
 	if(e->key() == Qt::Key_Escape)
 		close();
 	else {
 		e->ignore();
 	}
-#endif
 }
 
 void HistoryDlg::closeEvent(QCloseEvent *e)
 {
-#if 0
 	if(d->exp)
 		return;
 
 	e->accept();
-#endif
 }
 
 void HistoryDlg::show()
 {
-#if 0
 	QWidget::show();
 	d->lv->doResize();
-#endif
 }
 
 void HistoryDlg::le_textChanged(const QString &s)
 {
-#if 0
 	if(s.isEmpty() && d->pb_find->isEnabled())
 		d->pb_find->setEnabled(false);
 	else if(!s.isEmpty() && !d->pb_find->isEnabled())
 		d->pb_find->setEnabled(true);
-#endif
 }
 
 void HistoryDlg::setButtons()
 {
-#if 0
 	d->pb_prev->setEnabled(!d->id_prev.isEmpty());
 	d->pb_next->setEnabled(!d->id_next.isEmpty());
-#endif
 }
 
 void HistoryDlg::doLatest()
 {
-#if 0
 	loadPage(0);
-#endif
 }
 
 void HistoryDlg::doPrev()
 {
-#if 0
 	loadPage(1);
-#endif
 }
 
 void HistoryDlg::doNext()
 {
-#if 0
 	loadPage(2);
-#endif
 }
 
 void HistoryDlg::doSave()
 {
-#if 0
 	UserListItem *u = d->pa->findFirstRelevant(d->jid);
 	QString them = JIDUtil::nickOrJid(u->name(), u->jid().full());
 	QString s = JIDUtil::encode(them).toLower();
@@ -319,22 +301,18 @@ void HistoryDlg::doSave()
 	if (!str.isEmpty()) {
 		exportHistory(str);
 	}
-#endif
 }
 
 void HistoryDlg::doErase()
 {
-#if 0
 	int x = QMessageBox::information(this, tr("Confirm erase all"), tr("This will erase all message history for this contact!\nAre you sure you want to do this?"), tr("&Yes"), tr("&No"), QString::null, 1);
 	if (x == 0) {
 		d->h->erase(d->jid);
 	}
-#endif
 }
 
 void HistoryDlg::loadPage(int type)
 {
-#if 0
 	d->reqtype = type;
 	if(type == 0) {
 		d->pb_refresh->setEnabled(false);
@@ -353,12 +331,10 @@ void HistoryDlg::loadPage(int type)
 	}
 
 	//d->busy->start();
-#endif
 }
 
 void HistoryDlg::displayResult(const EDBResult *r, int direction, int max)
 {
-#if 0
 	//d->lv->setUpdatesEnabled(false);
 	d->lv->clear();
 	Q3PtrListIterator<EDBItem> it(*r);
@@ -395,12 +371,10 @@ printf("\n");*/
 	}
 	//d->lv->setUpdatesEnabled(true);
 	//d->lv->repaint(true);
-#endif
 }
 
 void HistoryDlg::edb_finished()
 {
-#if 0
 	const EDBResult *r = d->h->result();
 	if(d->h->lastRequestType() == EDBHandle::Read && r) {
 		//printf("EDB: retrieved %d events:\n", r->count());
@@ -469,19 +443,15 @@ void HistoryDlg::edb_finished()
 	//d->busy->stop();
 	d->pb_refresh->setEnabled(true);
 	setButtons();
-#endif
 }
 
 void HistoryDlg::actionOpenEvent(PsiEvent *e)
 {
-#if 0
 	openEvent(e);
-#endif
 }
 
 void HistoryDlg::doFind()
 {
-#if 0
 	QString str = d->le_find->text();
 	if(str.isEmpty())
 		return;
@@ -502,12 +472,10 @@ void HistoryDlg::doFind()
 	d->reqtype = 3;
 	d->findStr = str;
 	d->h->find(str, d->jid, id, EDB::Backward);
-#endif
 }
 
 void HistoryDlg::exportHistory(const QString &fname)
 {
-#if 0
 	QFile f(fname);
 	if(!f.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
 		QMessageBox::information(this, tr("Error"), tr("Error writing to file."));
@@ -586,19 +554,17 @@ void HistoryDlg::exportHistory(const QString &fname)
 	delete d->exp;
 	d->exp = 0;
 	f.close();
-#endif
 }
 
 //----------------------------------------------------------------------------
 // HistoryView
 //----------------------------------------------------------------------------
 HistoryView::HistoryView(QWidget *parent, const char *name)
-:QListWidget(parent)
+:Q3ListView(parent, name)
 {
-#if 0
 	at_id = 0;
-	connect(this, SIGNAL(doubleClicked(QListWidgetItem *)), SLOT(qlv_doubleclick(QListWidgetItem *)));
-	connect(this, SIGNAL(rightButtonPressed(QListWidgetItem *, const QPoint &, int)), SLOT(qlv_contextPopup(QListWidgetItem *, const QPoint &, int)));
+	connect(this, SIGNAL(doubleClicked(Q3ListViewItem *)), SLOT(qlv_doubleclick(Q3ListViewItem *)));
+	connect(this, SIGNAL(rightButtonPressed(Q3ListViewItem *, const QPoint &, int)), SLOT(qlv_contextPopup(Q3ListViewItem *, const QPoint &, int)));
 
 	setAllColumnsShowFocus(true);
 	addColumn(tr("Type"));
@@ -606,76 +572,62 @@ HistoryView::HistoryView(QWidget *parent, const char *name)
 	addColumn(tr("Date"));
 	addColumn(tr("Text"));
 	setSorting(2);
-	setResizeMode(QListWidget::LastColumn);
+	setResizeMode(Q3ListView::LastColumn);
 	setShowToolTips(false);
 	header()->setClickEnabled(false);
 	header()->setMovingEnabled(false);
 	header()->setResizeEnabled(false);
-#endif
 }
 
 void HistoryView::resizeEvent(QResizeEvent *e)
 {
-#if 0
-	QListWidget::resizeEvent(e);
+	Q3ListView::resizeEvent(e);
 
 	if(e->oldSize().width() != e->size().width())
 		doResize();
-#endif
 }
 
 void HistoryView::keyPressEvent(QKeyEvent *e)
 {
-#if 0
 	if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return)
 		doOpenEvent();
 	else
-		QListWidget::keyPressEvent(e);
-#endif
+		Q3ListView::keyPressEvent(e);
 }
 
 void HistoryView::doResize()
 {
-#if 0
-	QListWidgetItemIterator it(this);
+	Q3ListViewItemIterator it(this);
 	HistoryViewItem *item;
 	for(; it.current() ; ++it) {
 		item = (HistoryViewItem *)it.current();
 		item->setup();
 	}
-#endif
 }
 
 void HistoryView::addEvent(PsiEvent *e, const QString &eid)
 {
-#if 0
 	new HistoryViewItem(e, eid, at_id++, this);
-#endif
 }
 
 void HistoryView::doOpenEvent()
 {
-#if 0
 	HistoryViewItem *i = (HistoryViewItem *)selectedItem();
 	if(!i)
 		return;
 	aOpenEvent(i->e);
-#endif
 }
 
-void HistoryView::qlv_doubleclick(QListWidgetItem *xi)
+void HistoryView::qlv_doubleclick(Q3ListViewItem *xi)
 {
-#if 0
 	HistoryViewItem *i = (HistoryViewItem *)xi;
 
 	setSelected(i, true);
 	doOpenEvent();
-#endif
 }
 
-void HistoryView::qlv_contextPopup(QListWidgetItem *ix, const QPoint &pos, int)
+void HistoryView::qlv_contextPopup(Q3ListViewItem *ix, const QPoint &pos, int)
 {
-#if 0
 	HistoryViewItem *i = (HistoryViewItem *)ix;
 	if(!i)
 		return;
@@ -702,17 +654,15 @@ void HistoryView::qlv_contextPopup(QListWidgetItem *ix, const QPoint &pos, int)
 		if(QApplication::clipboard()->supportsSelection())
 			QApplication::clipboard()->setText(me->message().body(), QClipboard::Selection);
 	}
-#endif
 }
 
 
 //----------------------------------------------------------------------------
 // HistoryViewItem
 //----------------------------------------------------------------------------
-HistoryViewItem::HistoryViewItem(PsiEvent *_e, const QString &eid, int xid, QListWidget *parent)
-:QListWidgetItem(parent)
+HistoryViewItem::HistoryViewItem(PsiEvent *_e, const QString &eid, int xid, Q3ListView *parent)
+:Q3ListViewItem(parent)
 {
-#if 0
 	rt = 0;
 	id = xid;
 	eventId = eid;
@@ -765,24 +715,20 @@ HistoryViewItem::HistoryViewItem(PsiEvent *_e, const QString &eid, int xid, QLis
 	setText(2, date);
 
 	rt = new Q3SimpleRichText(text, listView()->font());
-#endif
 }
 
 HistoryViewItem::~HistoryViewItem()
 {
-#if 0
 	delete rt;
 	delete e;
-#endif
 }
 
 // reimplemented from QListViewItem.  setup() and paintCell() are tricky stuff
 void HistoryViewItem::setup()
 {
-#if 0
 	widthChanged();
 
-	QListWidget *lv = listView();
+	Q3ListView *lv = listView();
 
 	if(rt) {
 		int w = lv->columnWidth(3);
@@ -803,10 +749,8 @@ void HistoryViewItem::setup()
 		++y;
 
 	setHeight(y);
-#endif
 }
 
-#if 0
 void HistoryViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column, int width, int alignment)
 {
 	QColorGroup mycg = cg;
@@ -835,23 +779,18 @@ void HistoryViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
 	else {
 		alignment = Qt::AlignTop;
 
-		QListWidgetItem::paintCell(p, mycg, column, width, alignment);
+		Q3ListViewItem::paintCell(p, mycg, column, width, alignment);
 	}
 }
-#endif
 
-int HistoryViewItem::compare(QListWidgetItem *xi, int, bool) const
+int HistoryViewItem::compare(Q3ListViewItem *xi, int, bool) const
 {
-#if 0
 	HistoryViewItem *i = (HistoryViewItem *)xi;
 	return id - i->id;
-#endif
 }
 
 int HistoryViewItem::rtti() const
 {
-#if 0
 	return 7105;
-#endif
 }
 

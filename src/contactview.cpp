@@ -22,11 +22,15 @@
 
 #include <QFileDialog>
 #include <qapplication.h>
+#include <q3ptrlist.h>
+#include <q3header.h>
 #include <qtimer.h>
 #include <qpainter.h>
+#include <q3popupmenu.h>
 #include <qmessagebox.h>
 #include <qinputdialog.h>
 #include <qicon.h>
+#include <q3dragobject.h>
 #include <qlayout.h>
 #include <QKeyEvent>
 #include <QEvent>
@@ -86,14 +90,14 @@ public:
 	Entry()
 	{
 		alerting = false;
-		// cvi.setAutoDelete(true);
+		cvi.setAutoDelete(true);
 	}
 	~Entry()
 	{
 	}
 
 	UserListItem u;
-	QList<ContactViewItem*> cvi;
+	Q3PtrList<ContactViewItem> cvi;
 	bool alerting;
 	PsiIcon anim;
 };
@@ -109,8 +113,8 @@ public:
 	ContactViewItem *cvi;
 	ContactViewItem *self;
 	UserListItem su;
-	QList<Entry*> roster;
-	QList<ContactViewItem*> groups;
+	Q3PtrList<Entry> roster;
+	Q3PtrList<ContactViewItem> groups;
 	int oldstate;
 	QTimer *t;
 	PsiAccount *pa;
@@ -140,7 +144,7 @@ ContactProfile::ContactProfile(PsiAccount *pa, const QString &name, ContactView 
 	connect(d->t, SIGNAL(timeout()), SLOT(updateGroups()));
 	connect(pa->psi(), SIGNAL(accountCountChanged()), d, SLOT(numAccountsChanged()));
 
-	// d->roster.setAutoDelete(true);
+	d->roster.setAutoDelete(true);
 
 	d->self = 0;
 
@@ -220,7 +224,7 @@ void ContactProfile::setName(const QString &name)
 
 void ContactProfile::setName(const char *s)
 {
-	// QObject::setName(s);
+	QObject::setName(s);
 }
 
 void ContactProfile::setState(int state)
@@ -281,7 +285,6 @@ ContactViewItem *ContactProfile::addGroup(const QString &name)
 // check for special group
 ContactViewItem *ContactProfile::checkGroup(int type)
 {
-#if 0
 	ContactViewItem *item;
 	if(d->cvi)
 		item = (ContactViewItem *)d->cvi->firstChild();
@@ -292,7 +295,6 @@ ContactViewItem *ContactProfile::checkGroup(int type)
 		if(item->type() == ContactViewItem::Group && item->groupType() == type)
 			return item;
 	}
-#endif
 
 	return 0;
 }
@@ -300,19 +302,16 @@ ContactViewItem *ContactProfile::checkGroup(int type)
 // make a tooltip with account information
 QString ContactProfile::makeTip(bool trim, bool doLinkify) const
 {
-#if 0
 	if (d->cvi)
 		return "<qt> <center> <b>" + d->cvi->text(0) + " " + d->cvi->groupInfo() + "</b> </center> " + d->su.makeBareTip(trim,doLinkify) + "</qt>";
 	else
 		return d->su.makeTip(trim,doLinkify);
-#endif
 }
 
 // check for user group
 ContactViewItem *ContactProfile::checkGroup(const QString &name)
 {
 	ContactViewItem *item;
-#if 0
 	if(d->cvi)
 		item = (ContactViewItem *)d->cvi->firstChild();
 	else
@@ -322,7 +321,6 @@ ContactViewItem *ContactProfile::checkGroup(const QString &name)
 		if(item->type() == ContactViewItem::Group && item->groupType() == ContactViewItem::gUser && item->groupName() == name)
 				return item;
 	}
-#endif
 
 	return 0;
 }
@@ -330,47 +328,38 @@ ContactViewItem *ContactProfile::checkGroup(const QString &name)
 ContactViewItem *ContactProfile::ensureGroup(int type)
 {
 	ContactViewItem *group_item = checkGroup(type);
-#if 0
 	if(!group_item)
 		group_item = addGroup(type);
 
-#endif
 	return group_item;
 }
 
 ContactViewItem *ContactProfile::ensureGroup(const QString &name)
 {
 	ContactViewItem *group_item = checkGroup(name);
-#if 0
 	if(!group_item)
 		group_item = addGroup(name);
-#endif
 
 	return group_item;
 }
 
 void ContactProfile::checkDestroyGroup(const QString &group)
 {
-#if 0
 	ContactViewItem *group_item = checkGroup(group);
 	if(group_item)
 		checkDestroyGroup(group_item);
-#endif
 }
 
 void ContactProfile::checkDestroyGroup(ContactViewItem *group)
 {
-#if 0
 	if(group->childCount() == 0) {
 		d->groups.remove(group);
 		delete group;
 	}
-#endif
 }
 
 void ContactProfile::updateEntry(const UserListItem &u)
 {
-#if 0
 	if (u.isSelf()) {
 		// Update the self item
 		d->su = u;
@@ -400,7 +389,8 @@ void ContactProfile::updateEntry(const UserListItem &u)
 			removeUnneededContactItems(e);
 
 			// update remaining items
-			foreach(const ContactViewItem* i, e->cvi) {
+			Q3PtrListIterator<ContactViewItem> it(e->cvi);
+			for(ContactViewItem *i; (i = it.current()); ++it) {
 				i->setContact(&e->u);
 				if(!u.isAvailable())
 					i->stopAnimateNick();
@@ -410,51 +400,42 @@ void ContactProfile::updateEntry(const UserListItem &u)
 		deferredUpdateGroups();
 		addNeededContactItems(e);
 	}
-#endif
 }
 
 void ContactProfile::updateSelf()
 {
-#if 0
 	if (d->self) {
 		d->self->setContact(&d->su);
 		if(!d->su.isAvailable())
 			d->self->stopAnimateNick();
 	}
-#endif
 }
 
 void ContactProfile::addSelf()
 {
-#if 0
 	if(!d->self) {
 		if(!d->cvi)
 			return;
 		d->self = new ContactViewItem(&d->su, this, d->cvi);
 	}
-#endif
 }
 
 void ContactProfile::removeSelf()
 {
-#if 0
 	if (d->self) {
 		delete d->self;
 		d->self = 0;
 	}
-#endif
 }
 
 ContactViewItem *ContactProfile::addContactItem(Entry *e, ContactViewItem *group_item)
 {
 	ContactViewItem *i = new ContactViewItem(&e->u, this, group_item);
-#if 0
 	e->cvi.append(i);
 	if(e->alerting)
 		i->setAlert(&e->anim);
 	deferredUpdateGroups();
 	//printf("ContactProfile: adding [%s] to group [%s]\n", e->u.jid().full().latin1(), group_item->groupName().latin1());
-#endif
 	return i;
 }
 
@@ -466,15 +447,14 @@ ContactViewItem *ContactProfile::addContactItem(Entry *e, ContactViewItem *group
  */
 ContactViewItem *ContactProfile::ensureContactItem(Entry *e, ContactViewItem *group_item)
 {
-#if 0
 	d->cv->recalculateSize();
 
-	foreach(const ContactViewItem* i, e->cvi) {
-		ContactViewItem *g = (ContactViewItem *)static_cast<QListWidgetItem *>(i)->parent();
+	Q3PtrListIterator<ContactViewItem> it(e->cvi);
+	for(ContactViewItem *i; (i = it.current()); ++it) {
+		ContactViewItem *g = (ContactViewItem *)static_cast<Q3ListViewItem *>(i)->parent();
 		if(g == group_item)
 			return i;
 	}
-#endif
 	return addContactItem(e, group_item);
 }
 
@@ -486,20 +466,17 @@ ContactViewItem *ContactProfile::ensureContactItem(Entry *e, ContactViewItem *gr
  */
 void ContactProfile::removeContactItem(Entry *e, ContactViewItem *i)
 {
-#if 0
 	d->cv->recalculateSize();
 
-	ContactViewItem *group_item = (ContactViewItem *)static_cast<QListWidgetItem *>(i)->parent();
+	ContactViewItem *group_item = (ContactViewItem *)static_cast<Q3ListViewItem *>(i)->parent();
 	//printf("ContactProfile: removing [%s] from group [%s]\n", e->u.jid().full().latin1(), group_item->groupName().latin1());
 	e->cvi.removeRef(i);
 	deferredUpdateGroups();
 	checkDestroyGroup(group_item);
-#endif
 }
 
 void ContactProfile::addNeededContactItems(Entry *e)
 {
-#if 0
 	if(!d->v_enabled)
 		return;
 
@@ -534,12 +511,10 @@ void ContactProfile::addNeededContactItems(Entry *e)
 		for(QStringList::ConstIterator git = groups.begin(); git != groups.end(); ++git)
 			ensureContactItem(e, ensureGroup(*git));
 	}
-#endif
 }
 
 void ContactProfile::removeUnneededContactItems(Entry *e)
 {
-#if 0
 	const UserListItem &u = e->u;
 	
 	if(u.inList()) {
@@ -561,9 +536,10 @@ void ContactProfile::removeUnneededContactItems(Entry *e)
 		}
 	}
 
-	foreach(const ContactViewItem* i, e->cvi) {
+	Q3PtrListIterator<ContactViewItem> it(e->cvi);
+	for(ContactViewItem *i; (i = it.current());) {
 		bool del = false;
-		ContactViewItem *g = (ContactViewItem *)static_cast<QListWidgetItem *>(i)->parent();
+		ContactViewItem *g = (ContactViewItem *)static_cast<Q3ListViewItem *>(i)->parent();
 
 		if(g->groupType() == ContactViewItem::gNotInList && u.inList())
 			del = true;
@@ -601,66 +577,57 @@ void ContactProfile::removeUnneededContactItems(Entry *e)
 		else
 			++it;
 	}
-#endif
 }
 
 void ContactProfile::clearContactItems(Entry *e)
 {
-#if 0
-	foreach(const ContactViewItem* i, e->cvi)
+	Q3PtrListIterator<ContactViewItem> it(e->cvi);
+	for(ContactViewItem *i; (i = it.current());)
 		removeContactItem(e, i);
-#endif
 }
 
 void ContactProfile::addAllNeededContactItems()
 {
-#if 0
-	foreach(const Entry* e, d->roster)
+	Q3PtrListIterator<Entry> it(d->roster);
+	for(Entry *e; (e = it.current()); ++it)
 		addNeededContactItems(e);
-#endif
 }
 
 void ContactProfile::removeAllUnneededContactItems()
 {
-#if 0
-	foreach(const Entry* e, d->roster)
+	Q3PtrListIterator<Entry> it(d->roster);
+	for(Entry *e; (e = it.current()); ++it)
 		removeUnneededContactItems(e);
-#endif
 }
 
 void ContactProfile::resetAllContactItemNames()
 {
-#if 0
-	foreach(const Entry* e, d->roster) {
-		foreach(const ContactViewItem* i, e->cvi) {
+	Q3PtrListIterator<Entry> it(d->roster);
+	for(Entry *e; (e = it.current()); ++it) {
+		Q3PtrListIterator<ContactViewItem> cvi_it(e->cvi);
+		for(ContactViewItem *i; (i = cvi_it.current()); ++cvi_it) {
 			i->resetName();
 			contactView()->filterContact(i);
 		}
 	}
-#endif
 }
 
 void ContactProfile::removeEntry(const Jid &j)
 {
-#if 0
 	Entry *e = findEntry(j);
 	if(e)
 		removeEntry(e);
-#endif
 }
 
 void ContactProfile::removeEntry(Entry *e)
 {
-#if 0
 	e->alerting = false;
 	clearContactItems(e);
 	d->roster.remove(e);
-#endif
 }
 
 void ContactProfile::setAlert(const Jid &j, const PsiIcon *anim)
 {
-#if 0
 	if(d->su.jid().compare(j)) {
 		if(d->self)
 			d->self->setAlert(anim);
@@ -673,18 +640,17 @@ void ContactProfile::setAlert(const Jid &j, const PsiIcon *anim)
 		e->alerting = true;
 		e->anim = *anim;
 		addNeededContactItems(e);
-		foreach(const ContactViewItem* i, e->cvi)
+		Q3PtrListIterator<ContactViewItem> it(e->cvi);
+		for(ContactViewItem *i; (i = it.current()); ++it)
 			i->setAlert(anim);
 
 		if(PsiOptions::instance()->getOption("options.ui.contactlist.ensure-contact-visible-on-event").toBool())
 			ensureVisible(e);
 	}
-#endif
 }
 
 void ContactProfile::clearAlert(const Jid &j)
 {
-#if 0
 	if(d->su.jid().compare(j)) {
 		if(d->self)
 			d->self->clearAlert();
@@ -695,42 +661,40 @@ void ContactProfile::clearAlert(const Jid &j)
 			return;
 
 		e->alerting = false;
-		foreach(const ContactViewItem* i, e->cvi)
+		Q3PtrListIterator<ContactViewItem> it(e->cvi);
+		for(ContactViewItem *i; (i = it.current()); ++it)
 			i->clearAlert();
 		removeUnneededContactItems(e);
 	}
-#endif
 }
 
 void ContactProfile::clear()
 {
-#if 0
-	foreach(const Entry* e, d->roster)
+	Q3PtrListIterator<Entry> it(d->roster);
+	for(Entry *e; (e = it.current());)
 		removeEntry(e);
-#endif
 }
 
 ContactProfile::Entry *ContactProfile::findEntry(const Jid &jid) const
 {
-#if 0
-	foreach(const Entry* e, d->roster) {
+	Q3PtrListIterator<Entry> it(d->roster);
+	for(Entry *e; (e = it.current()); ++it) {
 		if(e->u.jid().compare(jid))
 			return e;
 	}
-#endif
 	return 0;
 }
 
 ContactProfile::Entry *ContactProfile::findEntry(ContactViewItem *i) const
 {
-#if 0
-	foreach(const Entry* e, d->roster) {
-		foreach(const ContactViewItem* cvi, e->cvi) {
+	Q3PtrListIterator<Entry> it(d->roster);
+	for(Entry *e; (e = it.current()); ++it) {
+		Q3PtrListIterator<ContactViewItem> ci(e->cvi);
+		for(ContactViewItem *cvi; (cvi = ci.current()); ++ci) {
 			if(cvi == i)
 				return e;
 		}
 	}
-#endif
 	return 0;
 }
 
@@ -738,7 +702,6 @@ ContactProfile::Entry *ContactProfile::findEntry(ContactViewItem *i) const
 QList<XMPP::Jid> ContactProfile::contactListFromCVGroup(ContactViewItem *group) const
 {
 	QList<XMPP::Jid> list;
-#if 0
 
 	for(ContactViewItem *item = (ContactViewItem *)group->firstChild(); item ; item = (ContactViewItem *)item->nextSibling()) {
 		if(item->type() != ContactViewItem::Contact)
@@ -746,7 +709,6 @@ QList<XMPP::Jid> ContactProfile::contactListFromCVGroup(ContactViewItem *group) 
 
 		list.append(item->u()->jid());
 	}
-#endif
 
 	return list;
 }
@@ -755,7 +717,6 @@ QList<XMPP::Jid> ContactProfile::contactListFromCVGroup(ContactViewItem *group) 
 int ContactProfile::contactSizeFromCVGroup(ContactViewItem *group) const
 {
 	int total = 0;
-#if 0
 
 	for(ContactViewItem *item = (ContactViewItem *)group->firstChild(); item ; item = (ContactViewItem *)item->nextSibling()) {
 		if(item->type() != ContactViewItem::Contact)
@@ -763,7 +724,6 @@ int ContactProfile::contactSizeFromCVGroup(ContactViewItem *group) const
 
 		++total;
 	}
-#endif
 
 	return total;
 }
@@ -772,13 +732,11 @@ int ContactProfile::contactSizeFromCVGroup(ContactViewItem *group) const
 int ContactProfile::contactsOnlineFromCVGroup(ContactViewItem *group) const
 {
 	int total = 0;
-#if 0
 
 	for(ContactViewItem *item = (ContactViewItem *)group->firstChild(); item ; item = (ContactViewItem *)item->nextSibling()) {
 		if(item->type() == ContactViewItem::Contact && item->u()->isAvailable())
 			++total;
 	}
-#endif
 
 	return total;
 }
@@ -787,9 +745,9 @@ int ContactProfile::contactsOnlineFromCVGroup(ContactViewItem *group) const
 QList<XMPP::Jid> ContactProfile::contactListFromGroup(const QString &groupName) const
 {
 	QList<XMPP::Jid> list;
-#if 0
 
-	foreach(const Entry* e, d->roster) {
+	Q3PtrListIterator<Entry> it(d->roster);
+	for(Entry *e; (e = it.current()); ++it) {
 		const UserListItem &u = e->u;
 		if(u.isTransport())
 			continue;
@@ -807,7 +765,6 @@ QList<XMPP::Jid> ContactProfile::contactListFromGroup(const QString &groupName) 
 			}
 		}
 	}
-#endif
 
 	return list;
 }
@@ -816,7 +773,7 @@ QList<XMPP::Jid> ContactProfile::contactListFromGroup(const QString &groupName) 
 int ContactProfile::contactSizeFromGroup(const QString &groupName) const
 {
 	int total = 0;
-#if 0
+
 	Q3PtrListIterator<Entry> it(d->roster);
 	for(Entry *e; (e = it.current()); ++it) {
 		const UserListItem &u = e->u;
@@ -836,14 +793,12 @@ int ContactProfile::contactSizeFromGroup(const QString &groupName) const
 			}
 		}
 	}
-#endif
 
 	return total;
 }
 
 void ContactProfile::updateGroupInfo(ContactViewItem *group)
 {
-#if 0
 	int type = group->groupType();
 	if(type == ContactViewItem::gGeneral || type == ContactViewItem::gAgents || type == ContactViewItem::gPrivate || type == ContactViewItem::gUser) {
 		int online = contactsOnlineFromCVGroup(group);
@@ -866,13 +821,12 @@ void ContactProfile::updateGroupInfo(ContactViewItem *group)
 		int inGroup = contactSizeFromCVGroup(group);
 		group->setGroupInfo(QString("(%1)").arg(inGroup));
 	}
-#endif
 }
 
 QStringList ContactProfile::groupList() const
 {
 	QStringList groupList;
-#if 0
+
 	Q3PtrListIterator<Entry> it(d->roster);
 	for(Entry *e; (e = it.current()); ++it) {
 		foreach(QString group, e->u.groups()) {
@@ -880,7 +834,6 @@ QStringList ContactProfile::groupList() const
 				groupList.append(group);
 		}
 	}
-#endif
 
 	groupList.sort();
 	return groupList;
@@ -888,7 +841,6 @@ QStringList ContactProfile::groupList() const
 
 void ContactProfile::animateNick(const Jid &j)
 {
-#if 0
 	if(d->su.jid().compare(j)) {
 		if(d->self)
 			d->self->setAnimateNick();
@@ -900,18 +852,16 @@ void ContactProfile::animateNick(const Jid &j)
 	Q3PtrListIterator<ContactViewItem> it(e->cvi);
 	for(ContactViewItem *i; (i = it.current()); ++it)
 		i->setAnimateNick();
-#endif
 }
 
 void ContactProfile::deferredUpdateGroups()
 {
-	// d->t->start(250, true);
+	d->t->start(250, true);
 }
 
 void ContactProfile::updateGroups()
 {
 	int totalOnline = 0;
-#if 0
 	{
 		Q3PtrListIterator<Entry> it(d->roster);
 		for(Entry *e; (e = it.current()); ++it) {
@@ -930,22 +880,18 @@ void ContactProfile::updateGroups()
 			contactView()->filterGroup(g);
 		}
 	}
-#endif
 }
 
 void ContactProfile::ensureVisible(const Jid &j)
 {
-#if 0
 	Entry *e = findEntry(j);
 	if(!e)
 		return;
 	ensureVisible(e);
-#endif
 }
 
 void ContactProfile::ensureVisible(Entry *e)
 {
-#if 0
 	if(!e->alerting) {
 		if(!d->cv->isShowAgents() && e->u.isTransport())
 			d->cv->setShowAgents(true);
@@ -961,13 +907,12 @@ void ContactProfile::ensureVisible(Entry *e)
 	if(!i)
 		return;
 	d->cv->ensureItemVisible(i);
-#endif
 }
 
 void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 {
 	bool online = d->pa->loggedIn();
-#if 0
+
 	if(i->type() == ContactViewItem::Profile) {
 		Q3PopupMenu pm;
 
@@ -1205,7 +1150,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		bool isPrivate = e ? e->u.isPrivate(): false;
 		bool isAgent = e ? e->u.isTransport() : false;
 		bool avail = e ? e->u.isAvailable() : false;
-		QString groupNameCache = ((ContactViewItem *)static_cast<QListWidgetItem *>(i)->parent())->groupName();
+		QString groupNameCache = ((ContactViewItem *)static_cast<Q3ListViewItem *>(i)->parent())->groupName();
 
 		Q3PopupMenu pm;
 
@@ -1682,36 +1627,28 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 			}
 		}
 	}
-#endif
 }
 
 void ContactProfile::scActionDefault(ContactViewItem *i)
 {
-#if 0
 	if(i->type() == ContactViewItem::Contact)
 		actionDefault(i->u()->jid());
-#endif
 }
 
 void ContactProfile::scRecvEvent(ContactViewItem *i)
 {
-#if 0
 	if(i->type() == ContactViewItem::Contact)
 		actionRecvEvent(i->u()->jid());
-#endif
 }
 
 void ContactProfile::scSendMessage(ContactViewItem *i)
 {
-#if 0
 	if(i->type() == ContactViewItem::Contact)
 		actionSendMessage(i->u()->jid());
-#endif
 }
 
 void ContactProfile::scRename(ContactViewItem *i)
 {
-#if 0
 	if(!d->pa->loggedIn())
 		return;
 
@@ -1722,46 +1659,36 @@ void ContactProfile::scRename(ContactViewItem *i)
 		i->startRename(0);
 		i->setRenameEnabled(0, false);
 	}
-#endif
 }
 
 void ContactProfile::scVCard(ContactViewItem *i)
 {
-#if 0
 	if(i->type() == ContactViewItem::Contact)
 		actionInfo(i->u()->jid());
-#endif
 }
 
 void ContactProfile::scHistory(ContactViewItem *i)
 {
-#if 0
 	if(i->type() == ContactViewItem::Contact)
 		actionHistory(i->u()->jid());
-#endif
 }
 
 void ContactProfile::scOpenChat(ContactViewItem *i)
 {
-#if 0
 	if(i->type() == ContactViewItem::Contact)
 		actionOpenChat(i->u()->jid());
-#endif
 }
 
 #ifdef WHITEBOARDING
 void ContactProfile::scOpenWhiteboard(ContactViewItem *i)
 {
-#if 0
 	if(i->type() == ContactViewItem::Contact)
 		actionOpenWhiteboard(i->u()->jid());
-#endif
 }
 #endif
 
 void ContactProfile::scAgentSetStatus(ContactViewItem *i, Status &s)
 {
-#if 0
 	if(i->type() != ContactViewItem::Contact)
 		return;
 	if(!i->isAgent())
@@ -1771,12 +1698,10 @@ void ContactProfile::scAgentSetStatus(ContactViewItem *i, Status &s)
 		return;
 
 	actionAgentSetStatus(i->u()->jid(), s);
-#endif
 }
 
 void ContactProfile::scRemove(ContactViewItem *i)
 {
-#if 0
 	if(i->type() != ContactViewItem::Contact)
 		return;
 
@@ -1812,12 +1737,10 @@ void ContactProfile::scRemove(ContactViewItem *i)
 			actionRemove(j);
 		}
 	}
-#endif
 }
 
 void ContactProfile::doItemRenamed(ContactViewItem *i, const QString &text)
 {
-#if 0
 	if(i->type() == ContactViewItem::Contact) {
 		Entry *e = findEntry(i);
 		if(!e)
@@ -1872,12 +1795,10 @@ void ContactProfile::doItemRenamed(ContactViewItem *i, const QString &text)
 		// send signal
 		actionGroupRename(oldName, text);
 	}
-#endif
 }
 
 void ContactProfile::dragDrop(const QString &text, ContactViewItem *i)
 {
-#if 0
 	if(!d->pa->loggedIn())
 		return;
 
@@ -1886,7 +1807,7 @@ void ContactProfile::dragDrop(const QString &text, ContactViewItem *i)
 	if(i->type() == ContactViewItem::Group)
 		gr = i;
 	else
-		gr = (ContactViewItem *)static_cast<QListWidgetItem *>(i)->parent();
+		gr = (ContactViewItem *)static_cast<Q3ListViewItem *>(i)->parent();
 
 	Jid j(text);
 	if(!j.isValid())
@@ -1914,12 +1835,10 @@ void ContactProfile::dragDrop(const QString &text, ContactViewItem *i)
 		// add the new group
 		actionGroupAdd(u.jid(), gr->groupName());
 	}
-#endif
 }
 
 void ContactProfile::dragDropFiles(const QStringList &files, ContactViewItem *i)
 {
-#if 0
 	if(files.isEmpty() || !d->pa->loggedIn() || i->type() != ContactViewItem::Contact)
 		return;
 
@@ -1928,7 +1847,6 @@ void ContactProfile::dragDropFiles(const QStringList &files, ContactViewItem *i)
 		return;
 
 	actionSendFiles(e->u.jid(),files);
-#endif
 }
 
 //----------------------------------------------------------------------------
@@ -1936,7 +1854,6 @@ void ContactProfile::dragDropFiles(const QStringList &files, ContactViewItem *i)
 //----------------------------------------------------------------------------
 class ContactView::Private : public QObject
 {
-#if 0
 	Q_OBJECT
 public:
 	Private(ContactView *_cv)
@@ -1949,7 +1866,7 @@ public:
 
 	ContactView *cv;
 	QTimer *animTimer, *recalculateSizeTimer;
-	// Q3PtrList<ContactProfile> profiles;
+	Q3PtrList<ContactProfile> profiles;
 	QSize lastSize;
 	bool autoRosterResizeInProgress;
 
@@ -2057,13 +1974,11 @@ private slots:
 		autoRosterResizeInProgress = false;
 	}
 
-#endif
 };
 
 ContactView::ContactView(QWidget *parent, const char *name)
-:QListWidget(parent)
+:Q3ListView(parent, name, Qt::WNoAutoErase | Qt::WResizeNoErase)
 {
-#if 0
 	d = new Private(this);
 
 	// setup the QListView
@@ -2080,15 +1995,15 @@ ContactView::ContactView(QWidget *parent, const char *name)
 	addColumn("");
 	header()->hide();
 
-	setResizeMode(QListWidget::LastColumn);
-	setDefaultRenameAction(QListWidget::Accept);
+	setResizeMode(Q3ListView::LastColumn);
+	setDefaultRenameAction(Q3ListView::Accept);
 
 	// catch signals
 	lcto_active = false;
-	connect(this, SIGNAL(itemRenamed(QListWidgetItem *, int, const QString &)), SLOT(qlv_itemRenamed(QListWidgetItem *, int, const QString &)));
-	connect(this, SIGNAL(mouseButtonPressed(int, QListWidgetItem *, const QPoint &, int)),SLOT(qlv_singleclick(int, QListWidgetItem *, const QPoint &, int)) );
-	connect(this, SIGNAL(doubleClicked(QListWidgetItem *)),SLOT(qlv_doubleclick(QListWidgetItem *)) );
-	connect(this, SIGNAL(contextMenuRequested(QListWidgetItem *, const QPoint &, int)), SLOT(qlv_contextMenuRequested(QListWidgetItem *, const QPoint &, int)));
+	connect(this, SIGNAL(itemRenamed(Q3ListViewItem *, int, const QString &)), SLOT(qlv_itemRenamed(Q3ListViewItem *, int, const QString &)));
+	connect(this, SIGNAL(mouseButtonPressed(int, Q3ListViewItem *, const QPoint &, int)),SLOT(qlv_singleclick(int, Q3ListViewItem *, const QPoint &, int)) );
+	connect(this, SIGNAL(doubleClicked(Q3ListViewItem *)),SLOT(qlv_doubleclick(Q3ListViewItem *)) );
+	connect(this, SIGNAL(contextMenuRequested(Q3ListViewItem *, const QPoint &, int)), SLOT(qlv_contextMenuRequested(Q3ListViewItem *, const QPoint &, int)));
 
 	v_showOffline = PsiOptions::instance()->getOption("options.ui.contactlist.show.offline-contacts").toBool();
 	v_showAway = PsiOptions::instance()->getOption("options.ui.contactlist.show.away-contacts").toBool();
@@ -2109,29 +2024,29 @@ ContactView::ContactView(QWidget *parent, const char *name)
 
 	// actions
 	qa_send = new IconAction("", "psi/sendMessage", tr("Send &Message"), 0, this);
-	connect(qa_send, SIGNAL(triggered()), SLOT(doSendMessage()));
+	connect(qa_send, SIGNAL(activated()), SLOT(doSendMessage()));
 	qa_ren = new IconAction("", /*"psi/edit/clear",*/ tr("Re&name"), 0, this);
-	connect(qa_ren, SIGNAL(triggered()), SLOT(doRename()));
+	connect(qa_ren, SIGNAL(activated()), SLOT(doRename()));
 	qa_assignAvatar = new IconAction("", tr("&Assign Custom Picture"), 0, this);
-	connect(qa_assignAvatar, SIGNAL(triggered()), SLOT(doAssignAvatar()));
+	connect(qa_assignAvatar, SIGNAL(activated()), SLOT(doAssignAvatar()));
 	qa_clearAvatar = new IconAction("", tr("&Clear Custom Picture"), 0, this);
-	connect(qa_clearAvatar, SIGNAL(triggered()), SLOT(doClearAvatar()));
+	connect(qa_clearAvatar, SIGNAL(activated()), SLOT(doClearAvatar()));
 	qa_chat = new IconAction("", "psi/start-chat", tr("Open &Chat Window"), 0, this);
-	connect(qa_chat, SIGNAL(triggered()), SLOT(doOpenChat()));
+	connect(qa_chat, SIGNAL(activated()), SLOT(doOpenChat()));
 #ifdef WHITEBOARDING
 	qa_wb = new IconAction("", "psi/whiteboard", tr("Open a &Whiteboard"), Qt::CTRL+Qt::Key_W, this);
-	connect(qa_wb, SIGNAL(triggered()), SLOT(doOpenWhiteboard()));
+	connect(qa_wb, SIGNAL(activated()), SLOT(doOpenWhiteboard()));
 #endif
 	qa_hist = new IconAction("", "psi/history", tr("&History"), 0, this);
-	connect(qa_hist, SIGNAL(triggered()), SLOT(doHistory()));
+	connect(qa_hist, SIGNAL(activated()), SLOT(doHistory()));
 	qa_logon = new IconAction("", tr("&Log on"), 0, this);
-	connect(qa_logon, SIGNAL(triggered()), SLOT(doLogon()));
+	connect(qa_logon, SIGNAL(activated()), SLOT(doLogon()));
 	qa_recv = new IconAction("", tr("&Receive Incoming Event"), 0, this);
-	connect(qa_recv, SIGNAL(triggered()), SLOT(doRecvEvent()));
+	connect(qa_recv, SIGNAL(activated()), SLOT(doRecvEvent()));
 	qa_rem = new IconAction("", "psi/remove", tr("Rem&ove"), 0, this);
-	connect(qa_rem, SIGNAL(triggered()), SLOT(doRemove()));
+	connect(qa_rem, SIGNAL(activated()), SLOT(doRemove()));
 	qa_vcard = new IconAction("", "psi/vCard", tr("User &Info"), 0, this);
-	connect(qa_vcard, SIGNAL(triggered()), SLOT(doVCard()));
+	connect(qa_vcard, SIGNAL(activated()), SLOT(doVCard()));
 
 	if(PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool()) {
 		qa_ren->setEnabled(false);
@@ -2144,20 +2059,16 @@ ContactView::ContactView(QWidget *parent, const char *name)
 	
 	filterString_ = QString();
 	applyingFilter = false;
-#endif
 }
 
 ContactView::~ContactView()
 {
-#if 0
 	clear();
 	delete d;
-#endif
 }
 
 bool ContactView::filterContact(ContactViewItem *item, bool refineSearch)
 {
-#if 0
 	if (!item) {
 		return false;
 	}
@@ -2183,12 +2094,10 @@ bool ContactView::filterContact(ContactViewItem *item, bool refineSearch)
 	}
 	item->repaint();	
 	return item->isVisible();
-#endif
 }
 
 bool ContactView::filterGroup(ContactViewItem *group, bool refineSearch)
 {
-#if 0
 	if (!group) {
 		return false;	
 	} else if (group->type() != ContactViewItem::Group) {
@@ -2203,7 +2112,7 @@ bool ContactView::filterGroup(ContactViewItem *group, bool refineSearch)
 	group->setVisible(true); //if not refined search
 	
 	//iterate over children
-	QListWidgetItemIterator it(group);
+	Q3ListViewItemIterator it(group);
 	bool groupContainsAFinding = false;
 	ContactViewItem *item = static_cast<ContactViewItem*>(group->firstChild());
 	while(item) {
@@ -2216,17 +2125,15 @@ bool ContactView::filterGroup(ContactViewItem *group, bool refineSearch)
 	}
 	group->repaint();
 	return groupContainsAFinding;
-#endif
 }
 
 void ContactView::setFilter(QString const &text)
 {
-#if 0
 	bool refineSearch = text.startsWith(filterString_);
 	filterString_ = text;
 	
 	applyingFilter = true;
-	QListWidgetItemIterator it(d->cv);
+	Q3ListViewItemIterator it(d->cv);
 	for (ContactViewItem *item; (item = (ContactViewItem *)it.current()); ++it)
 	{	
 		if (item->type() == ContactViewItem::Group) {
@@ -2234,14 +2141,12 @@ void ContactView::setFilter(QString const &text)
 		}
 	}
 	applyingFilter = false;
-#endif
 }
 
 void ContactView::clearFilter()
 {
-#if 0
 	filterString_=QString();
-	QListWidgetItemIterator it(d->cv);
+	Q3ListViewItemIterator it(d->cv);
 	for (ContactViewItem *item; (item = (ContactViewItem *)it.current()); ++it) 
 	{
 		item->setVisible(true);
@@ -2249,43 +2154,33 @@ void ContactView::clearFilter()
 		item->optionsUpdate();
 		item->repaint();
 	}	
-#endif
 }
 
 
 QTimer *ContactView::animTimer() const
 {
-#if 0
 	return d->animTimer;
-#endif
 }
 
 void ContactView::clear()
 {
-#if 0
-	// d->profiles.setAutoDelete(true);
+	d->profiles.setAutoDelete(true);
 	d->profiles.clear();
-	// d->profiles.setAutoDelete(false);
-#endif
+	d->profiles.setAutoDelete(false);
 }
 
 void ContactView::link(ContactProfile *cp)
 {
-#if 0
 	d->profiles.append(cp);
-#endif
 }
 
 void ContactView::unlink(ContactProfile *cp)
 {
-#if 0
 	d->profiles.removeRef(cp);
-#endif
 }
 
 void ContactView::keyPressEvent(QKeyEvent *e)
 {
-#if 0
 	int key = e->key();
 	if(key == Qt::Key_Enter || key == Qt::Key_Return) {
 		doEnter();
@@ -2297,21 +2192,21 @@ void ContactView::keyPressEvent(QKeyEvent *e)
 		 key == Qt::Key_Left   || key == Qt::Key_Right) {
 
 		//d->typeAhead = QString::null;
-		QListWidget::keyPressEvent(e);
+		Q3ListView::keyPressEvent(e);
 #ifdef Q_WS_MAC
 	} else if (e->modifiers() == Qt::ControlModifier) {
-		QListWidget::keyPressEvent(e);
+		Q3ListView::keyPressEvent(e);
 #endif 
 	} else {
 		QString text = e->text().lower();
 		if (text.isEmpty()) {
-			QListWidget::keyPressEvent(e);
+			Q3ListView::keyPressEvent(e);
 		}
 		else {
 			bool printable = true;
 			foreach (QChar ch, text) {
 				if (!ch.isPrint()) {
-					QListWidget::keyPressEvent(e);
+					Q3ListView::keyPressEvent(e);
 					printable = false;
 					break;
 				}
@@ -2321,12 +2216,10 @@ void ContactView::keyPressEvent(QKeyEvent *e)
 			}
 		}
 	}
-#endif
 }
 
 void ContactView::setShowOffline(bool x)
 {
-#if 0
 	bool oldstate = v_showOffline;
 	v_showOffline = x;
 	PsiOptions::instance()->setOption("options.ui.contactlist.show.offline-contacts", x);
@@ -2334,7 +2227,6 @@ void ContactView::setShowOffline(bool x)
 
 	if(v_showOffline != oldstate) {
 		showOffline(v_showOffline);
-#if 0
 
 		Q3PtrListIterator<ContactProfile> it(d->profiles);
 		for(ContactProfile *cp; (cp = it.current()); ++it) {
@@ -2343,14 +2235,11 @@ void ContactView::setShowOffline(bool x)
 			else
 				cp->addAllNeededContactItems();
 		}
-#endif
 	}
-#endif
 }
 
 void ContactView::setShowAway(bool x)
 {
-#if 0
 	bool oldstate = v_showAway;
 	v_showAway = x;
 	PsiOptions::instance()->setOption("options.ui.contactlist.show.away-contacts", x);
@@ -2358,7 +2247,6 @@ void ContactView::setShowAway(bool x)
 	if(v_showAway != oldstate) {
 		showAway(v_showAway);
 
-#if 0
 		Q3PtrListIterator<ContactProfile> it(d->profiles);
 		for(ContactProfile *cp; (cp = it.current()); ++it) {
 			if(!v_showAway)
@@ -2366,14 +2254,11 @@ void ContactView::setShowAway(bool x)
 			else
 				cp->addAllNeededContactItems();
 		}
-#endif
 	}
-#endif
 }
 
 void ContactView::setShowHidden(bool x)
 {
-#if 0
 	bool oldstate = v_showHidden;
 	v_showHidden = x;
 	PsiOptions::instance()->setOption("options.ui.contactlist.show.hidden-contacts-group", x);
@@ -2381,7 +2266,6 @@ void ContactView::setShowHidden(bool x)
 	if(v_showHidden != oldstate) {
 		showHidden(v_showHidden);
 
-#if 0
 		Q3PtrListIterator<ContactProfile> it(d->profiles);
 		for(ContactProfile *cp; (cp = it.current()); ++it) {
 			if(!v_showHidden)
@@ -2389,29 +2273,23 @@ void ContactView::setShowHidden(bool x)
 			else
 				cp->addAllNeededContactItems();
 		}
-#endif
 	}
-#endif
 }
 
 void ContactView::setShowStatusMsg(bool x)
 {
-#if 0
 	if (v_showStatusMsg != x) {
 		v_showStatusMsg = x;
 		PsiOptions::instance()->setOption("options.ui.contactlist.status-messages.show",x);
 		emit showStatusMsg(v_showStatusMsg);
 		
-#if 0
 		Q3PtrListIterator<ContactProfile> it(d->profiles);
 		for(ContactProfile *cp; (cp = it.current()); ++it) {
 			cp->resetAllContactItemNames();
 		}
-#endif
 		
 		recalculateSize();
 	}
-#endif
 }
 
 /*
@@ -2421,13 +2299,11 @@ void ContactView::setShowStatusMsg(bool x)
  */
 void ContactView::setShowSelf(bool x)
 {
-#if 0
 	if (v_showSelf != x) {
 		v_showSelf = x;
 		PsiOptions::instance()->setOption("options.ui.contactlist.show.self-contact", x);
 		showSelf(v_showSelf);
 
-#if 0
 		Q3PtrListIterator<ContactProfile> it(d->profiles);
 		for(ContactProfile *cp; (cp = it.current()); ++it) {
 			if (v_showSelf && ! cp->self()) {
@@ -2437,11 +2313,9 @@ void ContactView::setShowSelf(bool x)
 				cp->removeSelf();
 			}
 		}
-#endif
 
 		recalculateSize();
 	}
-#endif
 }
 
 /*
@@ -2449,7 +2323,6 @@ void ContactView::setShowSelf(bool x)
  */
 bool ContactView::eventFilter( QObject *obj, QEvent *event )
 {
-#if 0
 	if ( event->type() == QEvent::Move )
 		d->determineAutoRosterSizeGrowSide();
 	else if (event->type() == QEvent::ToolTip && obj == viewport()) {
@@ -2459,14 +2332,12 @@ bool ContactView::eventFilter( QObject *obj, QEvent *event )
 		}
 	}
 
-	return QListWidget::eventFilter( obj, event );
-#endif
+	return Q3ListView::eventFilter( obj, event );
 }
 
 
 void ContactView::setShowAgents(bool x)
 {
-#if 0
 	bool oldstate = v_showAgents;
 	v_showAgents = x;
 	PsiOptions::instance()->setOption("options.ui.contactlist.show.agent-contacts", x);
@@ -2474,7 +2345,6 @@ void ContactView::setShowAgents(bool x)
 	if(v_showAgents != oldstate) {
 		showAgents(v_showAgents);
 
-#if 0
 		Q3PtrListIterator<ContactProfile> it(d->profiles);
 		for(ContactProfile *cp; (cp = it.current()); ++it) {
 			if(!v_showAgents)
@@ -2482,36 +2352,29 @@ void ContactView::setShowAgents(bool x)
 			else
 				cp->addAllNeededContactItems();
 		}
-#endif
 	}
-#endif
 }
 
 // right-click context menu
-void ContactView::qlv_contextMenuRequested(QListWidgetItem *lvi, const QPoint &pos, int c)
+void ContactView::qlv_contextMenuRequested(Q3ListViewItem *lvi, const QPoint &pos, int c)
 {
-#if 0
 	if(PsiOptions::instance()->getOption("options.ui.contactlist.use-left-click").toBool())
 		return;
 
 	qlv_contextPopup(lvi, pos, c);
-#endif
 }
 
-void ContactView::qlv_contextPopup(QListWidgetItem *lvi, const QPoint &pos, int)
+void ContactView::qlv_contextPopup(Q3ListViewItem *lvi, const QPoint &pos, int)
 {
-#if 0
 	ContactViewItem *i = (ContactViewItem *)lvi;
 	if(!i)
 		return;
 
 	i->contactProfile()->doContextMenu(i, pos);
-#endif
 }
 
-void ContactView::qlv_singleclick(int button, QListWidgetItem *i, const QPoint &pos, int c)
+void ContactView::qlv_singleclick(int button, Q3ListViewItem *i, const QPoint &pos, int c)
 {
-#if 0
 	lcto_active = false;
 
 	if(!i)
@@ -2558,12 +2421,10 @@ void ContactView::qlv_singleclick(int button, QListWidgetItem *i, const QPoint &
 	}
 
 	//d->typeAhead = "";
-#endif
 }
 
-void ContactView::qlv_doubleclick(QListWidgetItem *i)
+void ContactView::qlv_doubleclick(Q3ListViewItem *i)
 {
-#if 0
 	lcto_active = false;
 
 	if(!i)
@@ -2576,43 +2437,37 @@ void ContactView::qlv_doubleclick(QListWidgetItem *i)
 	item->contactProfile()->scActionDefault(item);
 
 	//d->typeAhead = "";
-#endif
 }
 
-void ContactView::qlv_itemRenamed(QListWidgetItem *lvi, int, const QString &text)
+void ContactView::qlv_itemRenamed(Q3ListViewItem *lvi, int, const QString &text)
 {
-#if 0
 	ContactViewItem *i = (ContactViewItem *)lvi;
 	i->contactProfile()->doItemRenamed(i, text);
-#endif
 }
 
 void ContactView::leftClickTimeOut()
 {
-#if 0
 	if(lcto_active) {
 		qlv_contextPopup(lcto_item, lcto_pos, 0);
 		lcto_active = false;
 	}
-#endif
 }
 
 void ContactView::optionsUpdate()
 {
-#if 0
 	// set the font
 	QFont f;
 	f.fromString(PsiOptions::instance()->getOption("options.ui.look.font.contactlist").toString());
-	QListWidget::setFont(f);
+	Q3ListView::setFont(f);
 
 	// set the text and background colors
-	QPalette mypal = QListWidget::palette();
-	// mypal.setColor(QColorGroup::Text, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.online").value<QColor>());
-	// mypal.setColor(QColorGroup::Base, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.background").value<QColor>());
-	QListWidget::setPalette(mypal);
+	QPalette mypal = Q3ListView::palette();
+	mypal.setColor(QColorGroup::Text, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.online").value<QColor>());
+	mypal.setColor(QColorGroup::Base, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.background").value<QColor>());
+	Q3ListView::setPalette(mypal);
 
 	// reload the icons
-	QListWidgetItemIterator it(this);
+	Q3ListViewItemIterator it(this);
 	ContactViewItem *item;
 	for(; it.current() ; ++it) {
 		item = (ContactViewItem *)it.current();
@@ -2627,12 +2482,10 @@ void ContactView::optionsUpdate()
 		recalculateSize();
 
 	update();
-#endif
 }
 
 void ContactView::setShortcuts()
 {
-#if 0
 	qa_send->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.message"));
 	qa_ren->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.rename"));
 	qa_assignAvatar->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.assign-custom-avatar"));
@@ -2643,73 +2496,59 @@ void ContactView::setShortcuts()
 	qa_recv->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.event"));
 	qa_rem->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.delete"));
 	qa_vcard->setShortcuts(ShortcutManager::instance()->shortcuts("common.user-info"));
-#endif
 }
 
 void ContactView::resetAnim()
 {
-#if 0
-	for(QListWidgetItemIterator it(this); it.current() ; ++it) {
+	for(Q3ListViewItemIterator it(this); it.current() ; ++it) {
 		ContactViewItem *item = (ContactViewItem *)it.current();
 		if(item->isAlerting())
 			item->resetAnim();
 	}
-#endif
 }
 
 void ContactView::doRecvEvent()
 {
-#if 0
 	ContactViewItem *i = (ContactViewItem *)selectedItem();
 	if(!i)
 		return;
 	i->contactProfile()->scRecvEvent(i);
-#endif
 }
 
 void ContactView::doRename()
 {
-#if 0
 	ContactViewItem *i = (ContactViewItem *)selectedItem();
 	if(!i)
 		return;
 	i->contactProfile()->scRename(i);
-#endif
 }
 
 void ContactView::doAssignAvatar()
 {
-#if 0
 	// FIXME: Should check the supported filetypes dynamically
 	QString file = QFileDialog::getOpenFileName(this, tr("Choose an Image"), "", tr("All files (*.png *.jpg *.gif)"));
 	if (!file.isNull()) {
 		ContactViewItem *i = (ContactViewItem *)selectedItem();
 		i->contactProfile()->psiAccount()->avatarFactory()->importManualAvatar(i->u()->jid(),file);
 	}
-#endif
 }
 
 void ContactView::doClearAvatar()
 {
-#if 0
 	ContactViewItem *i = (ContactViewItem *)selectedItem();
 	i->contactProfile()->psiAccount()->avatarFactory()->removeManualAvatar(i->u()->jid());
-#endif
 }
 
 void ContactView::doEnter()
 {
-#if 0
 	ContactViewItem *i = (ContactViewItem *)selectedItem();
 	if(!i)
 		return;
 	i->contactProfile()->scActionDefault(i);
-#endif
 }
 
 void ContactView::doContext()
 {
-#if 0
 	ContactViewItem *i = (ContactViewItem *)selectedItem();
 	if(!i)
 		return;
@@ -2719,98 +2558,82 @@ void ContactView::doContext()
 		setOpen(i, !i->isOpen());
 	else
 		qlv_contextPopup(i, viewport()->mapToGlobal(QPoint(32, itemPos(i))), 0);
-#endif
 }
 
 void ContactView::doSendMessage()
 {
-#if 0
 	ContactViewItem *i = (ContactViewItem *)selectedItem();
 	if(!i)
 		return;
 	i->contactProfile()->scSendMessage(i);
-#endif
 }
 
 void ContactView::doOpenChat()
 {
-#if 0
 	ContactViewItem *i = (ContactViewItem *)selectedItem();
 	if(!i)
 		return;
 	i->contactProfile()->scOpenChat(i);
-#endif
 }
 
 #ifdef WHITEBOARDING
 void ContactView::doOpenWhiteboard()
 {
-#if 0
 	ContactViewItem *i = (ContactViewItem *)selectedItem();
 	if(!i)
 		return;
 	i->contactProfile()->scOpenWhiteboard(i);
-#endif
 }
 #endif
 
 void ContactView::doHistory()
 {
-#if 0
 	ContactViewItem *i = (ContactViewItem *)selectedItem();
 	if(!i)
 		return;
 	i->contactProfile()->scHistory(i);
-#endif
 }
 
 void ContactView::doVCard()
 {
-#if 0
 	ContactViewItem *i = (ContactViewItem *)selectedItem();
 	if(!i)
 		return;
 	i->contactProfile()->scVCard(i);
-#endif
 }
 
 void ContactView::doLogon()
 {
-#if 0
 	ContactViewItem *i = (ContactViewItem *)selectedItem();
 	if(!i)
 		return;
 	Status s=i->contactProfile()->psiAccount()->status();
 	i->contactProfile()->scAgentSetStatus(i, s);
-#endif
 }
 
 void ContactView::doRemove()
 {
-#if 0
 	ContactViewItem *i = (ContactViewItem *)selectedItem();
 	if(!i)
 		return;
 	i->contactProfile()->scRemove(i);
-#endif
 }
 
-// Q3DragObject *ContactView::dragObject()
-// {
-// 	ContactViewItem *i = (ContactViewItem *)selectedItem();
-// 	if(!i)
-// 		return 0;
-// 	if(i->type() != ContactViewItem::Contact)
-// 		return 0;
-// 
-// 	Q3DragObject *d = new Q3TextDrag(i->u()->jid().full(), this);
-// 	d->setPixmap(IconsetFactory::iconPixmap("status/online"), QPoint(8,8));
-// 	return d;
-// }
+Q3DragObject *ContactView::dragObject()
+{
+	ContactViewItem *i = (ContactViewItem *)selectedItem();
+	if(!i)
+		return 0;
+	if(i->type() != ContactViewItem::Contact)
+		return 0;
+
+	Q3DragObject *d = new Q3TextDrag(i->u()->jid().full(), this);
+	d->setPixmap(IconsetFactory::iconPixmap("status/online"), QPoint(8,8));
+	return d;
+}
 
 bool ContactView::allowResize() const
 {
-#if 0
 	if ( !PsiOptions::instance()->getOption("options.ui.contactlist.automatically-resize-roster").toBool() )
 		return false;
 
@@ -2818,34 +2641,30 @@ bool ContactView::allowResize() const
 		return false;
 
 	return true;
-#endif
 }
 
 QSize ContactView::minimumSizeHint() const
 {
-#if 0
 	return QSize( minimumWidth(), minimumHeight() );
-#endif
 }
 
 QSize ContactView::sizeHint() const
 {
-#if 0
 	// save some CPU
 	if ( !allowResize() )
 		return minimumSizeHint();
 
-	QSize s( QListWidget::sizeHint().width(), 0 );
+	QSize s( Q3ListView::sizeHint().width(), 0 );
 	int border = 5;
 	int h = border;
 
-	QListWidget *listView = (QListWidget *)this;
-	QListWidgetItemIterator it( listView );
+	Q3ListView *listView = (Q3ListView *)this;
+	Q3ListViewItemIterator it( listView );
 	while ( it.current() ) {
 		if ( it.current()->isVisible() ) {
 			// also we need to check whether the group is open or closed
 			bool show = true;
-			QListWidgetItem *item = it.current()->parent();
+			Q3ListViewItem *item = it.current()->parent();
 			while ( item ) {
 				if ( !item->isOpen() ) {
 					show = false;
@@ -2875,7 +2694,6 @@ QSize ContactView::sizeHint() const
 		h = minH + border;
 	s.setHeight( h );
 	return s;
-#endif
 }
 
 /*
@@ -2883,53 +2701,70 @@ QSize ContactView::sizeHint() const
  */
 void ContactView::recalculateSize()
 {
-#if 0
 	d->recalculateSizeTimer->start( 0, true );
-#endif
 }
 
 //------------------------------------------------------------------------------
 // RichListViewItem: A RichText listview item
 //------------------------------------------------------------------------------
 
-RichListViewItem::RichListViewItem( QListWidget * parent ) : QListWidgetItem(parent)
+#include <q3simplerichtext.h>
+#include <qpainter.h>
+
+static const int icon_vpadding = 2;
+
+RichListViewStyleSheet::RichListViewStyleSheet(QObject* parent, const char * name) : Q3StyleSheet(parent, name)
 {
-#if 0
-	v_rt = 0;
-	v_active = v_selected = false;
-	v_rich = !PsiOptions::instance()->getOption("options.ui.contactlist.status-messages.single-line").toBool();
-#endif
 }
 
-RichListViewItem::RichListViewItem( QListWidgetItem * parent )
-: QListWidgetItem()
+
+RichListViewStyleSheet* RichListViewStyleSheet::instance()
 {
-#if 0
+	if (!instance_)
+		instance_ = new RichListViewStyleSheet();
+	return instance_;
+}
+
+void RichListViewStyleSheet::scaleFont(QFont& font, int logicalSize) const
+{
+	int size = font.pointSize() + (logicalSize - 3)*2;
+	if (size > 0)
+		font.setPointSize(size);
+	else
+		font.setPointSize(1);
+}
+
+RichListViewStyleSheet* RichListViewStyleSheet::instance_ = 0;
+
+
+RichListViewItem::RichListViewItem( Q3ListView * parent ) : Q3ListViewItem(parent)
+{
 	v_rt = 0;
 	v_active = v_selected = false;
 	v_rich = !PsiOptions::instance()->getOption("options.ui.contactlist.status-messages.single-line").toBool();
-#endif
+}
+
+RichListViewItem::RichListViewItem( Q3ListViewItem * parent ) : Q3ListViewItem(parent)
+{
+	v_rt = 0;
+	v_active = v_selected = false;
+	v_rich = !PsiOptions::instance()->getOption("options.ui.contactlist.status-messages.single-line").toBool();
 }
 
 RichListViewItem::~RichListViewItem()
 {
-#if 0
 	delete v_rt;
-#endif
 }
 	
 void RichListViewItem::setText(int column, const QString& text)
 {
-#if 0
-	QListWidgetItem::setText(column, text);
+	Q3ListViewItem::setText(column, text);
 	setup();
-#endif
 }
 
 void RichListViewItem::setup()
 {
-#if 0
-	QListWidgetItem::setup();
+	Q3ListViewItem::setup();
 	if (v_rich) {
 		int h = height();
 		QString txt = text(0);
@@ -2939,7 +2774,7 @@ void RichListViewItem::setup()
 			return;
 		}
 		
-		const QListWidget* lv = listView();
+		const Q3ListView* lv = listView();
 		const QPixmap* px = pixmap(0);
 		int left =  lv->itemMargin() + ((px)?(px->width() + lv->itemMargin()):0);
 
@@ -2947,12 +2782,12 @@ void RichListViewItem::setup()
 		v_selected = isSelected();
 
 		if ( v_selected  ) {
-			// txt = QString("<font color=\"%1\">").arg(listView()->colorGroup().color( QColorGroup::HighlightedText ).name()) + txt + "</font>";
+			txt = QString("<font color=\"%1\">").arg(listView()->colorGroup().color( QColorGroup::HighlightedText ).name()) + txt + "</font>";
 		}
 		
 		if(v_rt)
 			delete v_rt;
-		// v_rt = new Q3SimpleRichText(txt, lv->font(), QString::null, RichListViewStyleSheet::instance());
+		v_rt = new Q3SimpleRichText(txt, lv->font(), QString::null, RichListViewStyleSheet::instance());
 		
 		v_rt->setWidth(lv->columnWidth(0) - left - depth() * lv->treeStepSize());
 
@@ -2965,21 +2800,18 @@ void RichListViewItem::setup()
 
 		setHeight( h );
 	}
-#endif
 }
 
-#if 0
 void RichListViewItem::paintCell(QPainter *p, const QColorGroup &cg, int column, int width, int align)
 {
-#if 0
 	if(!v_rt){
-		QListWidgetItem::paintCell(p, cg, column, width, align);
+		Q3ListViewItem::paintCell(p, cg, column, width, align);
 		return;
 	}
 
 	p->save();
 
-	QListWidget* lv = listView();
+	Q3ListView* lv = listView();
 
 	if ( isSelected() != v_selected || lv->isActiveWindow() != v_active) 
 		setup();
@@ -3027,15 +2859,11 @@ void RichListViewItem::paintCell(QPainter *p, const QColorGroup &cg, int column,
 
 	p->restore();
 	delete paper;
-#endif
 }
-#endif
 
 int RichListViewItem::widthUsed()
 {
-#if 0
 	return v_widthUsed;
-#endif
 }
 
 //----------------------------------------------------------------------------
@@ -3043,7 +2871,6 @@ int RichListViewItem::widthUsed()
 //----------------------------------------------------------------------------
 class ContactViewItem::Private
 {
-#if 0
 private:
 	ContactViewItem *cvi;
 
@@ -3118,13 +2945,11 @@ public:
 	int animateNickX, animateNickColor; // nick animation
 
 	bool prefilterOpen;
-#endif
 };
 
 ContactViewItem::ContactViewItem(const QString &profileName, ContactProfile *cp, ContactView *parent)
 :RichListViewItem(parent)
 {
-#if 0
 	type_ = Profile;
 	d = new Private(this, cp);
 	d->profileName = profileName;
@@ -3137,13 +2962,11 @@ ContactViewItem::ContactViewItem(const QString &profileName, ContactProfile *cp,
 		setText(0, profileName);
 
 	d->initGroupState();
-#endif
 }
 
 ContactViewItem::ContactViewItem(const QString &groupName, int groupType, ContactProfile *cp, ContactView *parent)
 :RichListViewItem(parent)
 {
-#if 0
 	type_ = Group;
 	d = new Private(this, cp);
 	d->groupName = groupName;
@@ -3156,13 +2979,11 @@ ContactViewItem::ContactViewItem(const QString &groupName, int groupType, Contac
 	setDropEnabled(true);
 
 	d->initGroupState();
-#endif
 }
 
 ContactViewItem::ContactViewItem(const QString &groupName, int groupType, ContactProfile *cp, ContactViewItem *parent)
 :RichListViewItem(parent)
 {
-#if 0
 	type_ = Group;
 	d = new Private(this, cp);
 	d->groupName = groupName;
@@ -3178,13 +2999,11 @@ ContactViewItem::ContactViewItem(const QString &groupName, int groupType, Contac
 		setVisible(false);
 
 	d->initGroupState();
-#endif
 }
 
 ContactViewItem::ContactViewItem(UserListItem *u, ContactProfile *cp, ContactViewItem *parent)
 :RichListViewItem(parent)
 {
-#if 0
 	type_ = Contact;
 	d = new Private(this, cp);
 	d->cp = cp;
@@ -3205,20 +3024,16 @@ ContactViewItem::ContactViewItem(UserListItem *u, ContactProfile *cp, ContactVie
 		setVisible(false);
 	else
 		setup();
-#endif
 }
 
 ContactViewItem::~ContactViewItem()
 {
-#if 0
 	setIcon( 0 );
 	delete d;
-#endif
 }
 
 void ContactViewItem::cacheValues()
 {
-#if 0
 	if ( d->u ) {
 		if( !d->u->isAvailable() )
 			d->status = STATUS_OFFLINE;
@@ -3226,90 +3041,66 @@ void ContactViewItem::cacheValues()
 			d->status = makeSTATUS((*d->u->priority()).status());
 		d->isAgent = d->u->isTransport();
 	}
-#endif
 }
 
 ContactProfile *ContactViewItem::contactProfile() const
 {
-#if 0
 	return d->cp;
-#endif
 }
 
 int ContactViewItem::type() const
 {
-#if 0
 	return type_;
-#endif
 }
 
 const QString & ContactViewItem::groupName() const
 {
-#if 0
 	return d->groupName;
-#endif
 }
 
 const QString & ContactViewItem::groupInfo() const
 {
-#if 0
 	return d->groupInfo;
-#endif
 }
 
 int ContactViewItem::groupType() const
 {
-#if 0
 	return d->groupType;
-#endif
 }
 
 UserListItem *ContactViewItem::u() const
 {
-#if 0
 	return d->u;
-#endif
 }
 
 int ContactViewItem::status() const
 {
-#if 0
 	return d->status;
-#endif
 }
 
 bool ContactViewItem::isAgent() const
 {
-#if 0
 	return d->isAgent;
-#endif
 }
 
 bool ContactViewItem::isAlerting() const
 {
-#if 0
 	return d->alerting;
-#endif
 }
 
 bool ContactViewItem::isAnimatingNick() const
 {
-#if 0
 	return d->animatingNick;
-#endif
 }
 
 int ContactViewItem::parentGroupType() const
 {
-#if 0
-	ContactViewItem *item = (ContactViewItem *)QListWidgetItem::parent();
+	ContactViewItem *item = (ContactViewItem *)Q3ListViewItem::parent();
 	return item->groupType();
-#endif
 }
 
 void ContactViewItem::drawGroupIcon()
 {
-#if 0
 	if ( type_ == Group ) {
 		if ( childCount() == 0 )
 			setIcon(IconsetFactory::iconPtr("psi/groupEmpty"));
@@ -3322,28 +3113,21 @@ void ContactViewItem::drawGroupIcon()
 		if ( !d->alerting )
 			setProfileState(d->status);
 	}
-#endif
 }
 
-#if 0
 void ContactViewItem::paintFocus(QPainter *, const QColorGroup &, const QRect &)
 {
-#if 0
 	// re-implimented to do nothing.  selection is enough of a focus
-#endif
 }
 
 void ContactViewItem::paintBranches(QPainter *p, const QColorGroup &cg, int w, int, int h)
 {
-#if 0
 	// paint a square of nothing
 	p->fillRect(0, 0, w, h, cg.base());
-#endif
 }
 
 void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column, int width, int alignment)
 {
-#if 0
 	if ( type_ == Contact ) {
 		QColorGroup xcg = cg;
 
@@ -3408,7 +3192,7 @@ void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
 			}
 		} 
 
-		QListWidgetItem::paintCell(p, xcg, column, width, alignment);
+		Q3ListViewItem::paintCell(p, xcg, column, width, alignment);
 
 		QFontMetrics fm(p->font());
 		const QPixmap *pix = pixmap(column);
@@ -3456,9 +3240,7 @@ void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
 			}
 		}
 	}
-#endif
 }
-#endif
 
 /*
  * \brief "Opens" or "closes the ContactViewItem
@@ -3469,10 +3251,9 @@ void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
  */
 void ContactViewItem::setOpen(bool o)
 {
-#if 0
 	((ContactView *)listView())->recalculateSize();
 
-	QListWidgetItem::setOpen(o);
+	Q3ListViewItem::setOpen(o);
 	drawGroupIcon();
 
 	if (!((ContactView *)listView())->isApplyingFilter()) {
@@ -3483,28 +3264,22 @@ void ContactViewItem::setOpen(bool o)
 		gd.open = o;
 		d->groupState()->insert(d->getGroupName(), gd);
 	}
-#endif
 }
 
-void ContactViewItem::insertItem(QListWidgetItem *i)
+void ContactViewItem::insertItem(Q3ListViewItem *i)
 {
-#if 0
-	QListWidgetItem::insertItem(i);
+	Q3ListViewItem::insertItem(i);
 	drawGroupIcon();
-#endif
 }
 
-void ContactViewItem::takeItem(QListWidgetItem *i)
+void ContactViewItem::takeItem(Q3ListViewItem *i)
 {
-#if 0
-	QListWidgetItem::takeItem(i);
+	Q3ListViewItem::takeItem(i);
 	drawGroupIcon();
-#endif
 }
 
 int ContactViewItem::rankGroup(int groupType) const
 {
-#if 0
 	static int rankgroups[5] = {
 		gGeneral,
 		gUser,
@@ -3522,12 +3297,10 @@ int ContactViewItem::rankGroup(int groupType) const
 		return sizeof(rankgroups)-1;
 
 	return n;
-#endif
 }
 
-int ContactViewItem::compare(QListWidgetItem *lvi, int, bool) const
+int ContactViewItem::compare(Q3ListViewItem *lvi, int, bool) const
 {
-#if 0
 	ContactViewItem *i = (ContactViewItem *)lvi;
 	int ret = 0;
 
@@ -3576,23 +3349,19 @@ int ContactViewItem::compare(QListWidgetItem *lvi, int, bool) const
 	}
 
 	return ret;
-#endif
 }
 
 void ContactViewItem::setProfileName(const QString &name)
 {
-#if 0
 	d->profileName = name;
 	if (!PsiOptions::instance()->getOption("options.ui.account.single").toBool())
 		setText(0, d->profileName);
 	else
 		setText(0, "");
-#endif
 }
 
 void ContactViewItem::setProfileState(int status)
 {
-#if 0
 	if ( status == -1 ) {
 		setAlert( IconsetFactory::iconPtr("psi/connect") );
 	}
@@ -3602,51 +3371,41 @@ void ContactViewItem::setProfileState(int status)
 		clearAlert();
 		setIcon(PsiIconset::instance()->statusPtr(status));
 	}
-#endif
 }
 
 void ContactViewItem::setProfileSSL(bool on)
 {
-#if 0
 	d->ssl = on;
 	repaint();
-#endif
 }
 
 void ContactViewItem::setGroupName(const QString &name)
 {
-#if 0
 	d->groupName = name;
 	resetGroupName();
 
 	updatePosition();
-#endif
 }
 
 void ContactViewItem::setGroupInfo(const QString &info)
 {
-#if 0
 	d->groupInfo = info;
 	repaint();
-#endif
 }
 
 void ContactViewItem::resetStatus()
 {
-#if 0
 	if ( !d->alerting && d->u ) {
 		setIcon(PsiIconset::instance()->statusPtr(d->u));
 	}
 
 	// If the status is shown, update the text of the item too
-	if (static_cast<ContactView*>(QListWidgetItem::listView())->isShowStatusMsg())
+	if (static_cast<ContactView*>(Q3ListViewItem::listView())->isShowStatusMsg())
 		resetName();
-#endif
 }
 
 void ContactViewItem::resetName(bool forceNoStatusMsg)
 {
-#if 0
 	if ( d->u ) {
 		QString s = JIDUtil::nickOrJid(d->u->name(), d->u->jid().full());
 			
@@ -3655,7 +3414,7 @@ void ContactViewItem::resetName(bool forceNoStatusMsg)
 		}
 
 		// Add the status message if wanted 
-		if (!forceNoStatusMsg && static_cast<ContactView*>(QListWidgetItem::listView())->isShowStatusMsg()) {
+		if (!forceNoStatusMsg && static_cast<ContactView*>(Q3ListViewItem::listView())->isShowStatusMsg()) {
 			QString statusMsg;
 			if (d->u->priority() != d->u->userResourceList().end()) {
 				statusMsg = (*d->u->priority()).status().status();
@@ -3681,29 +3440,23 @@ void ContactViewItem::resetName(bool forceNoStatusMsg)
 			setText(0, s);
 		}
 	}
-#endif
 }
 
 void ContactViewItem::resetGroupName()
 {
-#if 0
 	if ( d->groupName != text(0) )
 		setText(0, d->groupName);
-#endif
 }
 
 void ContactViewItem::resetAnim()
 {
-#if 0
 	if ( d->alerting ) {
 		// TODO: think of how to reset animation frame
 	}
-#endif
 }
 
 void ContactViewItem::setAlert(const PsiIcon *icon)
 {
-#if 0
 	bool reset = false;
 
 	if ( !d->alerting ) {
@@ -3717,23 +3470,19 @@ void ContactViewItem::setAlert(const PsiIcon *icon)
 
 	if ( reset )
 		setIcon(icon, true);
-#endif
 }
 
 void ContactViewItem::clearAlert()
 {
-#if 0
 	if ( d->alerting ) {
 		d->alerting = false;
 		//disconnect(static_cast<ContactView*>(QListViewItem::listView())->animTimer(), SIGNAL(timeout()), this, SLOT(animate()));
 		resetStatus();
 	}
-#endif
 }
 
 void ContactViewItem::setIcon(const PsiIcon *icon, bool alert)
 {
-#if 0
 	if ( d->lastIcon == icon ) {
 		return; // cause less flicker. but still have to run calltree valgring skin on psi while online (mblsha).
 	}
@@ -3764,62 +3513,52 @@ void ContactViewItem::setIcon(const PsiIcon *icon, bool alert)
 	}
 
 	setPixmap(0, pix);
-#endif
 }
 
 void ContactViewItem::iconUpdated()
 {
-#if 0
 	setPixmap(0, d->icon ? d->icon->pixmap() : QPixmap());
-#endif
 }
 
 void ContactViewItem::animateNick()
 {
-#if 0
 	d->animateNickColor = !d->animateNickColor;
 	repaint();
 
 	if(++d->animateNickX >= 16)
 		stopAnimateNick();
-#endif
 }
 
 void ContactViewItem::stopAnimateNick()
 {
-#if 0
 	if ( !d->animatingNick )
 		return;
 
-	disconnect(static_cast<ContactView*>(QListWidgetItem::listView())->animTimer(), SIGNAL(timeout()), this, SLOT(animateNick()));
+	disconnect(static_cast<ContactView*>(Q3ListViewItem::listView())->animTimer(), SIGNAL(timeout()), this, SLOT(animateNick()));
 
 	d->animatingNick = false;
 	repaint();
-#endif
 }
 
 void ContactViewItem::setAnimateNick()
 {
-#if 0
 	stopAnimateNick();
 
-	connect(static_cast<ContactView*>(QListWidgetItem::listView())->animTimer(), SIGNAL(timeout()), SLOT(animateNick()));
+	connect(static_cast<ContactView*>(Q3ListViewItem::listView())->animTimer(), SIGNAL(timeout()), SLOT(animateNick()));
 
 	d->animatingNick = true;
 	d->animateNickX = 0;
 	animateNick();
-#endif
 }
 
 void ContactViewItem::updatePosition()
 {
-#if 0
-	ContactViewItem *par = (ContactViewItem *)QListWidgetItem::parent();
+	ContactViewItem *par = (ContactViewItem *)Q3ListViewItem::parent();
 	if(!par)
 		return;
 
 	ContactViewItem *after = 0;
-	for(QListWidgetItem *i = par->firstChild(); i; i = i->nextSibling()) {
+	for(Q3ListViewItem *i = par->firstChild(); i; i = i->nextSibling()) {
 		ContactViewItem *item = (ContactViewItem *)i;
 		// skip self
 		if(item == this)
@@ -3835,16 +3574,14 @@ void ContactViewItem::updatePosition()
 	if(after)
 		moveItem(after);
 	else {
-		QListWidgetItem *i = par->firstChild();
+		Q3ListViewItem *i = par->firstChild();
 		moveItem(i);
 		i->moveItem(this);
 	}
-#endif
 }
 
 void ContactViewItem::optionsUpdate()
 {
-#if 0
 	if(type_ == Group || type_ == Profile) {
 		drawGroupIcon();
 	}
@@ -3854,12 +3591,10 @@ void ContactViewItem::optionsUpdate()
 		else
 			resetAnim();
 	}
-#endif
 }
 
 void ContactViewItem::setContact(UserListItem *u)
 {
-#if 0
 	int oldStatus = d->status;
 	QString oldName = text(0);
 	bool wasAgent = d->isAgent;
@@ -3887,12 +3622,10 @@ void ContactViewItem::setContact(UserListItem *u)
 
 	repaint();
 	setup();
-#endif
 }
 
 bool ContactViewItem::acceptDrop(const QMimeSource *m) const
 {
-#if 0
 	if ( type_ == Profile )
 		return false;
 	else if ( type_ == Group ) {
@@ -3902,85 +3635,75 @@ bool ContactViewItem::acceptDrop(const QMimeSource *m) const
 	else if ( type_ == Contact ) {
 		if ( d->u && d->u->isSelf() )
 			return false;
-		ContactViewItem *par = (ContactViewItem *)QListWidgetItem::parent();
+		ContactViewItem *par = (ContactViewItem *)Q3ListViewItem::parent();
 		if(par->groupType() != gGeneral && par->groupType() != gUser)
 			return false;
 	}
 
 	// Files. Note that the QTextDrag test has to come after QUriDrag.
-	// if (type_ == Contact && Q3UriDrag::canDecode(m)) {
-	// 	QStringList l;
-	// 	if (Q3UriDrag::decodeLocalFiles(m,l) && !l.isEmpty())
-	// 		return true;
-	// }
+	if (type_ == Contact && Q3UriDrag::canDecode(m)) {
+		QStringList l;
+		if (Q3UriDrag::decodeLocalFiles(m,l) && !l.isEmpty())
+			return true;
+	}
 
-	// if(!Q3TextDrag::canDecode(m))
-	// 	return false;
+	if(!Q3TextDrag::canDecode(m))
+		return false;
 
 	QString str;
-	// if(!Q3TextDrag::decode(m, str))
-	// 	return false;
+	if(!Q3TextDrag::decode(m, str))
+		return false;
 
 	return true;
-#endif
 }
 
 void ContactViewItem::dragEntered()
 {
-#if 0
 	//printf("entered\n");
-#endif
 }
 
 void ContactViewItem::dragLeft()
 {
-#if 0
 	//printf("left\n");
-#endif
 }
 
 void ContactViewItem::dropped(QDropEvent *i)
 {
-#if 0
 	if(!acceptDrop(i))
 		return;
 
 	// Files
-	// if (Q3UriDrag::canDecode(i)) {
-	// 	QStringList l;
-	// 	if (Q3UriDrag::decodeLocalFiles(i,l) && !l.isEmpty()) {
-	// 		d->cp->dragDropFiles(l, this);
-	// 		return;
-	// 	}
-	// }
+	if (Q3UriDrag::canDecode(i)) {
+		QStringList l;
+		if (Q3UriDrag::decodeLocalFiles(i,l) && !l.isEmpty()) {
+			d->cp->dragDropFiles(l, this);
+			return;
+		}
+	}
 
 	// Text
-	// if(Q3TextDrag::canDecode(i)) {
-	// 	QString text;
-	// 	if(Q3TextDrag::decode(i, text))
-	// 		d->cp->dragDrop(text, this);
-	// }
-#endif
+	if(Q3TextDrag::canDecode(i)) {
+		QString text;
+		if(Q3TextDrag::decode(i, text))
+			d->cp->dragDrop(text, this);
+	}
 }
 
 void ContactViewItem::cancelRename (int i)
 {
-#if 0
-	QListWidgetItem::cancelRename(i);
+	Q3ListViewItem::cancelRename(i);
 	resetName();
-#endif
 }
 
 void ContactViewItem::clearFilter()
 {
-#if 0
 	if (d->prefilterOpen != isOpen()) {
 		setOpen(d->prefilterOpen);
 
 		// if closing group that contains selected subitem, select this group
 		if (d->prefilterOpen == false) {
 			bool containsSelection = false;
-			QListWidgetItem* i = listView()->selectedItem();
+			Q3ListViewItem* i = listView()->selectedItem();
 			while (i) {
 				if (i == this) {
 					containsSelection = true;
@@ -3993,14 +3716,11 @@ void ContactViewItem::clearFilter()
 			}
 		}
 	}
-#endif
 }
 
 int ContactViewItem::rtti() const
 {
-#if 0
 	return 5103;
-#endif
 }
 
 #include "contactview.moc"
