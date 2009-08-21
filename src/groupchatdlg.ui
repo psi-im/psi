@@ -278,13 +278,13 @@
    <header>accountlabel.h</header>
   </customwidget>
   <customwidget>
-   <class>QListWidget</class>
+   <class>Q3ListView</class>
    <extends>Q3Frame</extends>
    <header>q3listview.h</header>
   </customwidget>
   <customwidget>
    <class>GCUserView</class>
-   <extends>QListWidget</extends>
+   <extends>Q3ListView</extends>
    <header>gcuserview.h</header>
   </customwidget>
   <customwidget>

@@ -1628,7 +1628,7 @@ void GCMainDlg::setLooks()
 	ui_.mle->chatEdit()->setFont(f);
 
 	f.fromString(PsiOptions::instance()->getOption("options.ui.look.font.contactlist").toString());
-	ui_.lv_users->QListWidget::setFont(f);
+	ui_.lv_users->setFont(f);
 
 	if (PsiOptions::instance()->getOption("options.ui.chat.central-toolbar").toBool()) {
 		ui_.toolbar->show();
