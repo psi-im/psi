@@ -47,7 +47,6 @@ private slots:
 	void modify(QTreeWidgetItem *);
 	void remove();
 	void accountAdded(PsiAccount *);
-	void accountUpdated(PsiAccount *);
 	void accountRemoved(PsiAccount *);
 
 private:

@@ -24,6 +24,9 @@
 #include <QPushButton>
 #include <QLineEdit>
 #include <QLabel>
+#include <QPointer>
+#include <QTimer>
+
 #include "psicon.h"
 #include "psiaccount.h"
 #include "common.h"
@@ -228,39 +231,44 @@ void AccountRemoveDlg::client_disconnected()
 //----------------------------------------------------------------------------
 // AccountManageDlg
 //----------------------------------------------------------------------------
-class AccountManageItem : public QTreeWidgetItem
+class AccountManageItem : public QObject, public QTreeWidgetItem
 {
+	Q_OBJECT
+public:
+	QPointer<PsiAccount> pa;
+
 public:
 	AccountManageItem(QTreeWidget *par, PsiAccount *_pa)
 	:QTreeWidgetItem(par)
 	{
 		pa = _pa;
+		Q_ASSERT(!pa.isNull());
+		connect(pa, SIGNAL(updatedActivity()), SLOT(updateInfo()));
+		connect(pa, SIGNAL(updatedAccount()), SLOT(updateInfo()));
 		updateInfo();
 	}
 
+	void setData (int column, int role, const QVariant& value)
+	{
+		QTreeWidgetItem::setData(column, role, value);
+		if (role == Qt::CheckStateRole) {
+			bool checked = checkState(0) == Qt::Checked;
+			if (pa->enabled() != checked)
+				pa->setEnabled(checked);
+			QTimer::singleShot(0, this, SLOT(updateInfo()));
+		}
+	}
+
+private slots:
 	void updateInfo()
 	{
-		const UserAccount &acc = pa->userAccount();
+		UserAccount acc = pa->accountOptions();
 		Jid j = acc.jid;
 		setText(0, pa->name());
 		setText(1, acc.opt_host && acc.host.length() ? acc.host : j.domain());
 		setText(2, pa->isActive() ? AccountManageDlg::tr("Active") : AccountManageDlg::tr("Not active"));
 		setCheckState(0, pa->enabled() ? Qt::Checked : Qt::Unchecked);
 	}
-
-	void stateChange( bool s)
-	{
-		if (pa->enabled()!=s)
-			pa->setEnabled(s);
-		updateInfo();
-	}
-
-	int rtti() const
-	{
-		return 8109;
-	}
-
-	PsiAccount *pa;
 };
 
 AccountManageDlg::AccountManageDlg(PsiCon *_psi)
@@ -282,7 +290,6 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi)
 	connect(lv_accs, SIGNAL(itemDoubleClicked(QTreeWidgetItem *, int)), SLOT(modify(QTreeWidgetItem *)));
 	connect(lv_accs, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)), SLOT(qlv_selectionChanged(QTreeWidgetItem *, QTreeWidgetItem *)));
 	connect(psi, SIGNAL(accountAdded(PsiAccount *)), SLOT(accountAdded(PsiAccount *)));
-	connect(psi, SIGNAL(accountUpdated(PsiAccount *)), SLOT(accountUpdated(PsiAccount *)));
 	connect(psi, SIGNAL(accountRemoved(PsiAccount *)), SLOT(accountRemoved(PsiAccount *)));
 
 	lv_accs->header()->setResizeMode(QHeaderView::ResizeToContents);
@@ -290,10 +297,8 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi)
 	foreach(PsiAccount* pa, psi->contactList()->accounts())
 		new AccountManageItem(lv_accs, pa);
 
-	// if(lv_accs->count() > 0)
-	// 	lv_accs->setCurrentItem(lv_accs->firstChild(), true);
-	// else
-	// 	qlv_selectionChanged(0);
+	if (lv_accs->topLevelItemCount())
+		lv_accs->setCurrentItem(lv_accs->topLevelItem(0));
 }
 
 AccountManageDlg::~AccountManageDlg()
@@ -356,17 +361,6 @@ void AccountManageDlg::accountAdded(PsiAccount *pa)
 	new AccountManageItem(lv_accs, pa);
 }
 
-void AccountManageDlg::accountUpdated(PsiAccount *pa)
-{
-	for (int index = 0; index < lv_accs->topLevelItemCount(); ++index) {
-		AccountManageItem* i = static_cast<AccountManageItem*>(lv_accs->topLevelItem(index));
-		if(i->pa == pa) {
-			i->updateInfo();
-			break;
-		}
-	}
-}
-
 void AccountManageDlg::accountRemoved(PsiAccount *pa)
 {
 	AccountManageItem *i;
@@ -381,4 +375,3 @@ void AccountManageDlg::accountRemoved(PsiAccount *pa)
 }
 
 #include "accountmanagedlg.moc"
-

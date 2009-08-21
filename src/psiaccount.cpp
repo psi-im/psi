@@ -1016,6 +1016,7 @@ const QString & PsiAccount::name() const
 	return d->acc.name;
 }
 
+// FIXME: we should move all PsiAccount::userAccount() users to PsiAccount::accountOptions()
 const UserAccount & PsiAccount::userAccount() const
 {
 	// save the roster and pgp key bindings
@@ -1029,6 +1030,11 @@ const UserAccount & PsiAccount::userAccount() const
 			d->acc.keybind.set(u->jid().full(), u->publicKeyID());
 	}
 
+	return d->acc;
+}
+
+UserAccount PsiAccount::accountOptions() const
+{
 	return d->acc;
 }
 

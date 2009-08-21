@@ -106,6 +106,7 @@ public:
 	const QString &name() const;
 
 	const UserAccount & userAccount() const;
+	UserAccount accountOptions() const;
 	void setUserAccount(const UserAccount &);
 	const Jid & jid() const;
 	QString nameWithJid() const;
