@@ -1,4 +1,4 @@
-QT += xml network
+QT += xml network qt3support
 
 # modules
 include($$PWD/protocol/protocol.pri)

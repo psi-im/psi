@@ -247,11 +247,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 :AdvancedWidget<QMainWindow>(0, (_onTop ? Qt::WindowStaysOnTopHint : Qt::Widget) | (_asTool ? (Qt::Tool |TOOLW_FLAGS) : Qt::Widget))
 {
 	setAttribute(Qt::WA_AlwaysShowToolTips);
-#if 0
-  	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() ) {
-		setAttribute(Qt::WA_MacMetalStyle);
-	}
-#endif
 	d = new Private(psi, this);
 
 	setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).impix());
@@ -286,7 +281,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 	d->vb_main->setMargin(layoutMargin);
 	d->vb_main->setSpacing(layoutMargin);
 
-#if 0
 	// create search bar
 	d->searchWidget = new QWidget(centralWidget());
 	d->vb_main->addWidget(d->searchWidget);
@@ -417,7 +411,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 
         /*QShortcut *sp_ss = new QShortcut(QKeySequence(tr("Ctrl+Shift+N")), this);
         connect(sp_ss, SIGNAL(triggered()), SLOT(avcallConfig()));*/
-#endif
 }
 
 MainWin::~MainWin()

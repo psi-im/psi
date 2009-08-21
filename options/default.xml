@@ -262,9 +262,6 @@
 					<passive-popup type="QString">Sans Serif,7,-1,5,50,0,0,0,0,0</passive-popup>
 				</font>
 			</look>
-			<mac>
-				<use-brushed-metal-windows type="bool">false</use-brushed-metal-windows>
-			</mac>
 			<notifications>
 				<alert-style type="QString">animate</alert-style>
 				<bounce-dock type="QString">forever</bounce-dock>

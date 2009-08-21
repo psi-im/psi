@@ -1,6 +1,6 @@
 /*
  * accountmanagedlg.cpp - dialogs for manipulating PsiAccounts
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2009  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -228,11 +228,11 @@ void AccountRemoveDlg::client_disconnected()
 //----------------------------------------------------------------------------
 // AccountManageDlg
 //----------------------------------------------------------------------------
-class AccountManageItem : public QListWidgetItem
+class AccountManageItem : public QTreeWidgetItem
 {
 public:
-	AccountManageItem(QListWidget *par, PsiAccount *_pa)
-	:QListWidgetItem(par)
+	AccountManageItem(QTreeWidget *par, PsiAccount *_pa)
+	:QTreeWidgetItem(par)
 	{
 		pa = _pa;
 		updateInfo();
@@ -242,11 +242,10 @@ public:
 	{
 		const UserAccount &acc = pa->userAccount();
 		Jid j = acc.jid;
-		QString t = QString("%1 %2 %3")
-		            .arg(pa->name())
-		            .arg(acc.opt_host && acc.host.length() ? acc.host : j.domain())
-		            .arg(pa->isActive() ? AccountManageDlg::tr("Active") : AccountManageDlg::tr("Not active"));
-		setCheckState(pa->enabled() ? Qt::Checked : Qt::Unchecked);
+		setText(0, pa->name());
+		setText(1, acc.opt_host && acc.host.length() ? acc.host : j.domain());
+		setText(2, pa->isActive() ? AccountManageDlg::tr("Active") : AccountManageDlg::tr("Not active"));
+		setCheckState(0, pa->enabled() ? Qt::Checked : Qt::Unchecked);
 	}
 
 	void stateChange( bool s)
@@ -280,14 +279,13 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi)
 	connect(pb_remove, SIGNAL(clicked()), SLOT(remove()));
 	connect(pb_close, SIGNAL(clicked()), SLOT(close()));
 
-	connect(lv_accs, SIGNAL(doubleClicked(QListWidgetItem *)), SLOT(modify(QListWidgetItem *)));
-	connect(lv_accs, SIGNAL(selectionChanged(QListWidgetItem *)), SLOT(qlv_selectionChanged(QListWidgetItem *)));
+	connect(lv_accs, SIGNAL(itemDoubleClicked(QTreeWidgetItem *, int)), SLOT(modify(QTreeWidgetItem *)));
+	connect(lv_accs, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)), SLOT(qlv_selectionChanged(QTreeWidgetItem *, QTreeWidgetItem *)));
 	connect(psi, SIGNAL(accountAdded(PsiAccount *)), SLOT(accountAdded(PsiAccount *)));
 	connect(psi, SIGNAL(accountUpdated(PsiAccount *)), SLOT(accountUpdated(PsiAccount *)));
 	connect(psi, SIGNAL(accountRemoved(PsiAccount *)), SLOT(accountRemoved(PsiAccount *)));
 
-	// lv_accs->setAllColumnsShowFocus(true);
-	// lv_accs->setResizeMode(QListWidget::LastColumn);
+	lv_accs->header()->setResizeMode(QHeaderView::ResizeToContents);
 
 	foreach(PsiAccount* pa, psi->contactList()->accounts())
 		new AccountManageItem(lv_accs, pa);
@@ -303,7 +301,7 @@ AccountManageDlg::~AccountManageDlg()
 	psi->dialogUnregister(this);
 }
 
-void AccountManageDlg::qlv_selectionChanged(QListWidgetItem *lvi)
+void AccountManageDlg::qlv_selectionChanged(QTreeWidgetItem *lvi, QTreeWidgetItem *)
 {
 	AccountManageItem *i = (AccountManageItem *)lvi;
 	bool ok = i ? true: false;
@@ -323,7 +321,7 @@ void AccountManageDlg::modify()
 	modify(lv_accs->currentItem());
 }
 
-void AccountManageDlg::modify(QListWidgetItem *lvi)
+void AccountManageDlg::modify(QTreeWidgetItem *lvi)
 {
 	AccountManageItem *i = (AccountManageItem *)lvi;
 	if(!i)
@@ -360,8 +358,8 @@ void AccountManageDlg::accountAdded(PsiAccount *pa)
 
 void AccountManageDlg::accountUpdated(PsiAccount *pa)
 {
-	for (int index = 0; index < lv_accs->count(); ++index) {
-		AccountManageItem* i = static_cast<AccountManageItem*>(lv_accs->item(index));
+	for (int index = 0; index < lv_accs->topLevelItemCount(); ++index) {
+		AccountManageItem* i = static_cast<AccountManageItem*>(lv_accs->topLevelItem(index));
 		if(i->pa == pa) {
 			i->updateInfo();
 			break;
@@ -372,11 +370,11 @@ void AccountManageDlg::accountUpdated(PsiAccount *pa)
 void AccountManageDlg::accountRemoved(PsiAccount *pa)
 {
 	AccountManageItem *i;
-	for (int index = 0; index < lv_accs->count(); ++index) {
-		AccountManageItem* i = static_cast<AccountManageItem*>(lv_accs->item(index));
+	for (int index = 0; index < lv_accs->topLevelItemCount(); ++index) {
+		AccountManageItem* i = static_cast<AccountManageItem*>(lv_accs->topLevelItem(index));
 		if(i->pa == pa) {
 			delete i;
-			qlv_selectionChanged(lv_accs->currentItem());
+			qlv_selectionChanged(lv_accs->currentItem(), 0);
 			break;
 		}
 	}

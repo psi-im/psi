@@ -1,6 +1,6 @@
 /*
  * accountmanagedlg.h - dialogs for manipulating PsiAccounts
- * Copyright (C) 2001, 2002  Justin Karneges
+ * Copyright (C) 2001-2009  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,7 +21,6 @@
 #ifndef ACCOUNTMANAGEDLG_H
 #define ACCOUNTMANAGEDLG_H
 
-
 #include "ui_accountmanage.h"
 
 namespace XMPP
@@ -32,7 +31,7 @@ namespace XMPP
 
 class PsiCon;
 class PsiAccount;
-class QListWidgetItem;
+class QTreeWidgetItem;
 
 class AccountManageDlg : public QDialog, public Ui::AccountManage
 {
@@ -42,10 +41,10 @@ public:
 	~AccountManageDlg();
 
 private slots:
-	void qlv_selectionChanged(QListWidgetItem *);
+	void qlv_selectionChanged(QTreeWidgetItem *, QTreeWidgetItem *);
 	void add();
 	void modify();
-	void modify(QListWidgetItem *);
+	void modify(QTreeWidgetItem *);
 	void remove();
 	void accountAdded(PsiAccount *);
 	void accountUpdated(PsiAccount *);
