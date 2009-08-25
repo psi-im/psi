@@ -39,6 +39,9 @@ AutopackageTarget: 1.4
 [BuildPrepare]
 # For ./configure based systems this is a good default
 export INSTALL_ROOT=$build_root
+if [[ "$(uname -m)" != "x86_64" ]]; then
+	export HYBRID_PACKAGE=/home/jkarneges/work/dist/client64.package
+fi
 #prepareBuild --qtdir=/home/jkarneges/work/qt/4.3 --disable-aspell --with-zlib-inc=/home/jkarneges/work/local/include --with-zlib-lib=/home/jkarneges/work/local/lib --with-openssl-inc=/home/jkarneges/work/local/include --with-openssl-lib=/home/jkarneges/work/local/lib --certstore-path=$PWD
 #prepareBuild --qtdir=/home/jkarneges/work/qt/4.3 --disable-aspell --certstore-internal --with-openssl-inc=/home/jkarneges/work/local/include --with-openssl-lib=/home/jkarneges/work/local/lib
 prepareBuild --qtdir=/home/jkarneges/work/ap/qt45 --disable-aspell --certstore-internal --with-openssl-inc=/home/jkarneges/work/local/include --with-openssl-lib=/home/jkarneges/work/local/lib
