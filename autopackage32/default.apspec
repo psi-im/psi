@@ -40,7 +40,8 @@ AutopackageTarget: 1.4
 # For ./configure based systems this is a good default
 export INSTALL_ROOT=$build_root
 #prepareBuild --qtdir=/home/jkarneges/work/qt/4.3 --disable-aspell --with-zlib-inc=/home/jkarneges/work/local/include --with-zlib-lib=/home/jkarneges/work/local/lib --with-openssl-inc=/home/jkarneges/work/local/include --with-openssl-lib=/home/jkarneges/work/local/lib --certstore-path=$PWD
-prepareBuild --qtdir=/home/jkarneges/work/qt/4.3 --disable-aspell --certstore-internal --with-openssl-inc=/home/jkarneges/work/local/include --with-openssl-lib=/home/jkarneges/work/local/lib
+#prepareBuild --qtdir=/home/jkarneges/work/qt/4.3 --disable-aspell --certstore-internal --with-openssl-inc=/home/jkarneges/work/local/include --with-openssl-lib=/home/jkarneges/work/local/lib
+prepareBuild --qtdir=/home/jkarneges/work/ap/qt45 --disable-aspell --certstore-internal --with-openssl-inc=/home/jkarneges/work/local/include --with-openssl-lib=/home/jkarneges/work/local/lib
 
 [BuildUnprepare]
 unprepareBuild
@@ -57,6 +58,8 @@ unprepareBuild
 
 # rm -r include
 # rm libs/*.la
+
+chrpath -r "\${ORIGIN}/../lib/barracuda:\${ORIGIN}/../lib:\${ORIGIN}/../lib/autopackage\${ORIGIN}/../lib/barracuda" bin/barracuda
 
 # This imports every file in 
 # (ie, that is installed by "make install")
@@ -89,6 +92,7 @@ echo '*' | import
 # the website for an API cheat-sheet
 installExe bin/*
 #installLib lib/*
+copyFiles lib/* "$PREFIX/lib"
 installData share/*
 
 [Uninstall]

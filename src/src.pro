@@ -34,6 +34,10 @@ exists(../conf.pri) {
 	target.path = $$BINDIR
 	INSTALLS += target
 
+	mylibfiles.path = $$LIBDIR
+	mylibfiles.files = ../lib/barracuda
+	INSTALLS += mylibfiles
+
 	# Shared files
 	sharedfiles.path  = $$PSI_DATADIR
 	sharedfiles.files = ../README ../COPYING ../iconsets ../sound ../certs ../gfx

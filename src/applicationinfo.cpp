@@ -142,6 +142,18 @@ QString ApplicationInfo::resourcesDir()
 QString ApplicationInfo::libDir()
 {
 #if defined(Q_OS_UNIX)
+	QString appDirPath = QCoreApplication::applicationDirPath();
+	if(!appDirPath.isEmpty())
+	{
+		QDir appDir(appDirPath);
+		if(appDir.exists()
+			&& appDir.cdUp()
+			&& appDir.cd("lib")
+			&& appDir.cd("barracuda"))
+		{
+			return appDir.path();
+		}
+	}
 	return PSI_LIBDIR;
 #else
 	return QString();

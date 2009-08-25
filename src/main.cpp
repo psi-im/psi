@@ -268,6 +268,7 @@ int main(int argc, char *argv[])
 	PsiApplication app(argc, argv);
 	QApplication::addLibraryPath(ApplicationInfo::homeDir());
 	QApplication::addLibraryPath(ApplicationInfo::resourcesDir());
+	QApplication::addLibraryPath(ApplicationInfo::libDir() + "/plugins");
 	QApplication::setQuitOnLastWindowClosed(false);
 	QFont font = QApplication::font();
 #ifdef Q_OS_WIN
