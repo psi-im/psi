@@ -84,7 +84,7 @@ static CFStringRef qString2CFString(const QString& s)
 		s.length()*sizeof(ushort),
 		kCFStringEncodingUnicode, false);
 
-	delete buffer;
+	delete[] buffer;
 	return result;
 }
 

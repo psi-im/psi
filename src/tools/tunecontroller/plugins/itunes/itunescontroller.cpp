@@ -45,7 +45,7 @@ static QString CFStringToQString(CFStringRef s)
 		else {
 			qWarning("itunesplayer.cpp: CFString conversion failed.");
 		}
-		delete buffer;
+		delete[] buffer;
 	} 
     return result;
 }                         

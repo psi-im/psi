@@ -218,12 +218,12 @@ bool fileCopy(const QString &src, const QString &dest)
 	while(!in.atEnd()) {
 		n = in.readBlock(dat, 16384);
 		if(n == -1) {
-			delete dat;
+			delete[] dat;
 			return false;
 		}
 		out.writeBlock(dat, n);
 	}
-	delete dat;
+	delete[] dat;
 
 	out.close();
 	in.close();

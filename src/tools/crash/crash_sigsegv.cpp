@@ -120,7 +120,7 @@ static int dump_pid_son(pid_t pid, const char *binary, int full_bt,
 
 				(*myprint)("%s%s", buff,needs_cr ? "\n" : "");
 			}
-			fclose(fp);
+			pclose(fp);
 		}
 		if( remove(tmp) == -1 )
 			(*myprint)("removing `%s` (@;@)%s", tmp,
