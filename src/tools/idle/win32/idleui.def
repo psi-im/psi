@@ -1,7 +1,0 @@
-LIBRARY      "IdleUI"
-DESCRIPTION  'IdleUI DLL by Paul DiLascia'
-SECTIONS     .IdleUI READ WRITE SHARED
-
-EXPORTS
-IdleUIGetLastInputTime
-

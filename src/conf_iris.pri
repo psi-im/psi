@@ -15,7 +15,7 @@ else {
 
 # use zlib from psi if necessary
 psi-zip {
-	INCLUDEPATH += $$PWD/tools/zip/minizip/win32
+	INCLUDEPATH += $$PWD/libpsi/tools/zip/minizip/win32
 }
 
 mac {

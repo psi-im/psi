@@ -22,7 +22,7 @@ all:
 	copy $(QTDIR)\bin\Qt3Support4.dll $(TARGET_DIR)
 	copy $(QTDIR)\bin\QtSql4.dll $(TARGET_DIR)
 	copy $(MINGWDIR)\bin\mingwm10.dll $(TARGET_DIR)
-	copy ..\src\tools\idle\win32\idleui.dll $(TARGET_DIR)
+	copy ..\src\libpsi\tools\idle\win32\idleui.dll $(TARGET_DIR)
 	xcopy /i /e /q /y ..\certs $(TARGET_DIR)\certs
 	xcopy /i /e /q /y ..\iconsets $(TARGET_DIR)\iconsets
 	xcopy /i /e /q /y ..\sound $(TARGET_DIR)\sound
