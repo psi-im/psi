@@ -148,5 +148,16 @@ void OptionsTabApplication::updatePortLabel()
 		return;
 	}
 
-	d->label->setText(tr("(TCP: %1, UDP: %1-%2)").arg( d->le_dtPort->text() ).arg( d->le_dtPort->text().toInt()+3 ));
+	int port = d->le_dtPort->text().toInt();
+	if ( port < 0 || port > 65532 ) {
+		d->label->clear();
+		return;
+	}
+
+	if ( port == 0 ) {
+		d->label->setText(tr("(TCP: Disabled, UDP: Auto)"));
+	}
+	else {
+		d->label->setText(tr("(TCP: %1, UDP: %1-%2)").arg( port ).arg( port + 3 ));
+	}
 }
