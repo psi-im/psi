@@ -133,6 +133,12 @@
          <height>0</height>
         </size>
        </property>
+       <property name="inputMask">
+        <string>99999; </string>
+       </property>
+       <property name="maxLength">
+        <number>5</number>
+       </property>
        <property name="maximumSize" >
         <size>
          <width>56</width>

@@ -74,6 +74,8 @@ QWidget *OptionsTabApplication::widget()
 		d->ck_autoUpdate->hide();
 	}
 
+	connect(d->le_dtPort, SIGNAL(textChanged(QString)), this, SLOT(updatePortLabel()));
+
 	return w;
 }
 
@@ -132,4 +134,19 @@ void OptionsTabApplication::restoreOptions()
 	// data transfer
 	d->le_dtPort->setText( QString::number(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt()) );
 	d->le_dtExternal->setText( PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString() );
+}
+
+void OptionsTabApplication::updatePortLabel()
+{
+	if ( !w )
+		return;
+
+	OptApplicationUI *d = (OptApplicationUI *)w;
+
+	if ( d->le_dtPort->text().isEmpty() ) {
+		d->label->clear();
+		return;
+	}
+
+	d->label->setText(tr("(TCP: %1, UDP: %1-%2)").arg( d->le_dtPort->text() ).arg( d->le_dtPort->text().toInt()+3 ));
 }
