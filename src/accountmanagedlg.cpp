@@ -250,9 +250,10 @@ public:
 
 	void setData (int column, int role, const QVariant& value)
 	{
+		bool oldChecked = checkState(0) == Qt::Checked;
 		QTreeWidgetItem::setData(column, role, value);
-		if (role == Qt::CheckStateRole) {
-			bool checked = checkState(0) == Qt::Checked;
+		bool checked = checkState(0) == Qt::Checked;
+		if (oldChecked != checked && role == Qt::CheckStateRole) {
 			if (pa->enabled() != checked)
 				pa->setEnabled(checked);
 			QTimer::singleShot(0, this, SLOT(updateInfo()));
