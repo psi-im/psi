@@ -246,7 +246,7 @@ QWidget *OptionsTabAppearanceGeneral::widget()
 	QWhatsThis::add(d->pb_cMessageReceived,
 		tr("Specifies the color for received messages in chat and history windows."));
 	QWhatsThis::add(d->pb_cSysMsg,
-		tr("Specifies the color for informational Messages in chat windows, like status changes and offline messages."));
+		tr("Specifies the color for informational messages in chat windows, like status changes and offline messages."));
 
 	// Avatars
 	//QWhatsThis::add(d->ck_avatarsChatdlg,
