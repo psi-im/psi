@@ -37,9 +37,11 @@ Dependency options:
   --with-growl=[path]          Path to the Growl framework
   --disable-xss                Disable use of the XScreenSaver extension
   --disable-ghbnr              Disable use of gethostbyname_r()
-  --disable-aspell             Disable use of ASPELL
+  --disable-aspell             Disable use of aspell
   --with-aspell-inc=[path]     Path to Aspell include files
   --with-aspell-lib=[path]     Path to Aspell library files
+  --disable-enchant            Disable use of enchant
+  --disable-spell              Disable use of spellcheck engine
   --enable-debug               Enable debugging support
 
 EOT
@@ -242,6 +244,16 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
+		--disable-enchant)
+			QC_DISABLE_enchant="Y"
+			shift
+			;;
+
+		--disable-spell)
+			QC_DISABLE_spell="Y"
+			shift
+			;;
+
 		--enable-debug)
 			QC_ENABLE_DEBUG="Y"
 			shift
@@ -286,6 +298,8 @@ echo QC_DISABLE_ghbnr=$QC_DISABLE_ghbnr
 echo QC_DISABLE_aspell=$QC_DISABLE_aspell
 echo QC_WITH_ASPELL_INC=$QC_WITH_ASPELL_INC
 echo QC_WITH_ASPELL_LIB=$QC_WITH_ASPELL_LIB
+echo QC_DISABLE_enchant=$QC_DISABLE_enchant
+echo QC_DISABLE_spell=$QC_DISABLE_spell
 echo QC_ENABLE_DEBUG=$QC_ENABLE_DEBUG
 echo
 fi
@@ -1000,23 +1014,43 @@ public:
 #line 1 "aspell.qcm"
 /*
 -----BEGIN QCMOD-----
-name: ASPELL
+name: aspell
 arg: with-aspell-inc=[path],Path to Aspell include files
 arg: with-aspell-lib=[path],Path to Aspell library files
 -----END QCMOD-----
 */
 
+#define QC_ASPELL
+bool qc_aspell_have = false;
+QStringList qc_aspell_defs;
+QStringList qc_aspell_incs;
+QStringList qc_aspell_libs;
+
 //----------------------------------------------------------------------------
-// qc_spell
+// qc_aspell
 //----------------------------------------------------------------------------
 class qc_aspell : public ConfObj
 {
 public:
 	qc_aspell(Conf *c) : ConfObj(c) {}
-	QString name() const { return "Aspell support"; }
+	QString name() const { return "aspell"; }
 	QString shortname() const { return "aspell"; }
+
+	// no output
+	QString checkString() const { return QString(); }
+
 	bool exec()
 	{
+		// on mac, always use built-in spell check
+#ifdef Q_OS_MAC
+		return false;
+#endif
+
+		qc_aspell_have = false;
+		qc_aspell_defs.clear();
+		qc_aspell_incs.clear();
+		qc_aspell_libs.clear();
+
 		QString s;
 
 		s = conf->getenv("QC_WITH_ASPELL_INC");
@@ -1025,7 +1059,7 @@ public:
 				conf->debug("Aspell includes not found!");
 				return false;
 			}
-			conf->addIncludePath(s);
+			qc_aspell_incs += s;
 		}
 		else {
 			QStringList sl;
@@ -1036,7 +1070,7 @@ public:
 				conf->debug("Aspell includes not found!");
 				return false;
 			}
-			conf->addIncludePath(s);
+			qc_aspell_incs += s;
 		}
 
 		s = conf->getenv("QC_WITH_ASPELL_LIB");
@@ -1045,7 +1079,7 @@ public:
 				conf->debug("Aspell libraries not found!");
 				return false;
 			}
-			conf->addLib(QString("-L") + s);
+			qc_aspell_libs += QString("-L") + s;
 		}
 		else {
 			if(!conf->findLibrary("aspell", &s)) {
@@ -1053,13 +1087,137 @@ public:
 				return false;
 			}
 			if (!s.isEmpty())
-				conf->addLib(QString("-L") + s);
+				qc_aspell_libs += QString("-L") + s;
 		}
 
-		conf->addLib("-laspell");
-		conf->addDefine("HAVE_ASPELL");
+		qc_aspell_defs += "HAVE_ASPELL";
+		qc_aspell_libs += "-laspell";
+		qc_aspell_have = true;
 
 		return true;
+	}
+};
+#line 1 "enchant.qcm"
+/*
+-----BEGIN QCMOD-----
+name: enchant
+-----END QCMOD-----
+*/
+
+#define QC_ENCHANT
+bool qc_enchant_have = false;
+QStringList qc_enchant_defs;
+QStringList qc_enchant_incs;
+QStringList qc_enchant_libs;
+
+//----------------------------------------------------------------------------
+// qc_enchant
+//----------------------------------------------------------------------------
+class qc_enchant : public ConfObj
+{
+public:
+	qc_enchant(Conf *c) : ConfObj(c) {}
+	QString name() const { return "enchant"; }
+	QString shortname() const { return "enchant"; }
+
+	// no output
+	QString checkString() const { return QString(); }
+
+	bool exec()
+	{
+                // on mac, always use built-in spell check
+#ifdef Q_OS_MAC
+		return false;
+#endif
+
+		qc_enchant_have = false;
+		qc_enchant_defs.clear();
+		qc_enchant_incs.clear();
+		qc_enchant_libs.clear();
+
+		QStringList incs;
+		QString version, libs, other;
+		if(!conf->findPkgConfig("enchant", VersionMin, "1.3.0", &version, &incs, &libs, &other))
+                        return false;
+
+		qc_enchant_defs += "HAVE_ENCHANT";
+		qc_enchant_incs += incs;
+		qc_enchant_libs += libs;
+		qc_enchant_have = true;
+
+		return true;
+	}
+};
+#line 1 "spell.qcm"
+/*
+-----BEGIN QCMOD-----
+name: spellcheck engine
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_spell
+//----------------------------------------------------------------------------
+class qc_spell : public ConfObj
+{
+public:
+	QString engine;
+
+	qc_spell(Conf *c) : ConfObj(c) {}
+	QString name() const { return "spellcheck engine"; }
+	QString shortname() const { return "spell"; }
+
+	bool exec()
+	{
+		// on mac, always use built-in spell check
+#ifdef Q_OS_MAC
+		engine = "using Mac built-in";
+		return true;
+#endif
+
+		bool have = false;
+		QStringList defs, incs, libs;
+
+#ifdef QC_ENCHANT
+		if(!have && qc_enchant_have)
+		{
+			defs = qc_enchant_defs;
+			incs = qc_enchant_incs;
+			libs = qc_enchant_libs;
+			engine = "enchant";
+			have = true;
+		}
+#endif
+#ifdef QC_ASPELL
+		if(!have && qc_aspell_have)
+		{
+			defs = qc_aspell_defs;
+			incs = qc_aspell_incs;
+			libs = qc_aspell_libs;
+			engine = "aspell";
+			have = true;
+		}
+#endif
+
+		if(!have)
+			return false;
+
+		for(int n = 0; n < defs.count(); ++n)
+			conf->addDefine(defs[n]);
+		for(int n = 0; n < incs.count(); ++n)
+			conf->addIncludePath(incs[n]);
+		for(int n = 0; n < libs.count(); ++n)
+			conf->addLib(libs[n]);
+
+		return true;
+	}
+
+	QString resultString() const
+	{
+		if(!engine.isEmpty())
+			return engine;
+		else
+			return ConfObj::resultString();
 	}
 };
 #line 1 "debug.qcm"
@@ -1188,6 +1346,12 @@ cat >$1/modules_new.cpp <<EOT
     o->required = false;
     o->disabled = false;
     o = new qc_aspell(conf);
+    o->required = false;
+    o->disabled = false;
+    o = new qc_enchant(conf);
+    o->required = false;
+    o->disabled = false;
+    o = new qc_spell(conf);
     o->required = false;
     o->disabled = false;
     o = new qc_debug(conf);
@@ -1393,7 +1557,7 @@ QString qc_findprogram(const QString &prog)
 QString qc_findself(const QString &argv0)
 {
 #ifdef Q_OS_WIN
-	if(argv0.contains('\\'))
+	if(argv0.contains('\\\\'))
 #else
 	if(argv0.contains('/'))
 #endif
@@ -1406,8 +1570,19 @@ int qc_runcommand(const QString &command, QByteArray *out, bool showOutput)
 {
 	QString fullcmd = command;
 	if(!showOutput)
+	{
+#ifdef Q_OS_WIN
+		fullcmd += " 2>NUL";
+#else
 		fullcmd += " 2>/dev/null";
+#endif
+	}
+
+#ifdef Q_OS_WIN
+	FILE *f = _popen(fullcmd.toLatin1().data(), "r");
+#else
 	FILE *f = popen(fullcmd.toLatin1().data(), "r");
+#endif
 	if(!f)
 		return -1;
 	if(out)
@@ -1422,7 +1597,11 @@ int qc_runcommand(const QString &command, QByteArray *out, bool showOutput)
 		if(showOutput)
 			fputc(c, stdout);
 	}
+#ifdef Q_OS_WIN
+	int ret = _pclose(f);
+#else
 	int ret = pclose(f);
+#endif
 	if(ret == -1)
 		return -1;
 	return ret;
@@ -1709,7 +1888,12 @@ int Conf::doCommand(const QString &prog, const QStringList &args, QByteArray *ou
 
 bool Conf::doCompileAndLink(const QString &filedata, const QStringList &incs, const QString &libs, const QString &proextra, int *retcode)
 {
+#ifdef Q_OS_WIN
+	QDir tmp("qconftemp");
+#else
 	QDir tmp(".qconftemp");
+#endif
+
 	if(!tmp.mkdir("atest"))
 	{
 		debug("unable to create atest dir");
@@ -1742,6 +1926,7 @@ bool Conf::doCompileAndLink(const QString &filedata, const QStringList &incs, co
 	QString pro = QString(
 		"CONFIG  += console\n"
 		"CONFIG  -= qt app_bundle\n"
+		"DESTDIR  = \$\$PWD\n"
 		"SOURCES += atest.cpp\n");
 	QString inc = incs.join(" ");
 	if(!inc.isEmpty())
@@ -1778,7 +1963,13 @@ bool Conf::doCompileAndLink(const QString &filedata, const QStringList &incs, co
 		{
 			ok = true;
 			if(retcode)
-				*retcode = doCommand(QString("./") + out, QStringList());
+			{
+				QString runatest = out;
+#ifdef Q_OS_UNIX
+				runatest.prepend("./");
+#endif
+				*retcode = doCommand(runatest, QStringList());
+			}
 		}
 		r = doCommand(maketool, QStringList() << "distclean");
 		if(r != 0)
@@ -2211,6 +2402,8 @@ export QC_DISABLE_ghbnr
 export QC_DISABLE_aspell
 export QC_WITH_ASPELL_INC
 export QC_WITH_ASPELL_LIB
+export QC_DISABLE_enchant
+export QC_DISABLE_spell
 export QC_ENABLE_DEBUG
 export QC_VERBOSE
 rm -rf .qconftemp

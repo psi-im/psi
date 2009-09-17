@@ -30,6 +30,8 @@
 
 #if defined(Q_WS_MAC)
 #include "macspellchecker.h"
+#elif defined(HAVE_ENCHANT)
+#include "enchantchecker.h"
 #elif defined(HAVE_ASPELL)
 #include "aspellchecker.h"
 #endif
@@ -39,6 +41,8 @@ SpellChecker* SpellChecker::instance()
 	if (!instance_) {
 #ifdef Q_WS_MAC
 		instance_ = new MacSpellChecker();
+#elif defined(HAVE_ENCHANT)
+		instance_ = new EnchantChecker();
 #elif defined(HAVE_ASPELL)
 		instance_ = new ASpellChecker();
 #else

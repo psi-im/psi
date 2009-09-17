@@ -13,3 +13,8 @@ mac {
 	HEADERS += $$PWD/aspellchecker.h
 	SOURCES += $$PWD/aspellchecker.cpp
 }
+
+!mac:contains(DEFINES, HAVE_ENCHANT) {
+	HEADERS += $$PWD/enchantchecker.h
+	SOURCES += $$PWD/enchantchecker.cpp
+}
