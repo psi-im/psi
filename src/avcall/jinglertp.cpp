@@ -389,7 +389,6 @@ public:
 	// called by manager when request is received, including
 	//   session-initiate.
 	// note: manager will never send session-initiate twice.
-	// return value only matters for session-initiate
 	bool incomingRequest(const QString &iq_id, const JingleRtpEnvelope &envelope)
 	{
 		// TODO: jingle has a lot of fields, and we kind of skip over
@@ -452,6 +451,8 @@ public:
 		}
 		else if(envelope.action == "session-accept" && !incoming)
 		{
+			manager->push_task->respondSuccess(peer, iq_id);
+
 			const JingleRtpContent *audioContent = 0;
 			const JingleRtpContent *videoContent = 0;
 
@@ -516,11 +517,15 @@ public:
 		}
 		else if(envelope.action == "session-terminate")
 		{
+			manager->push_task->respondSuccess(peer, iq_id);
+
 			cleanup();
 			emit q->rejected();
 		}
 		else if(envelope.action == "transport-info")
 		{
+			manager->push_task->respondSuccess(peer, iq_id);
+
 			const JingleRtpContent *audioContent = 0;
 			const JingleRtpContent *videoContent = 0;
 
@@ -568,7 +573,10 @@ public:
 				flushRemoteCandidates();
 		}
 		else
+		{
 			manager->push_task->respondError(peer, iq_id, 400, QString());
+			return false;
+		}
 
 		return true;
 	}
@@ -1458,7 +1466,6 @@ void JingleRtpManagerPrivate::push_task_incomingRequest(const XMPP::Jid &from, c
 			return;
 		}
 
-		push_task->respondSuccess(from, iq_id);
 		sessions[at]->d->incomingRequest(iq_id, envelope);
 	}
 }
