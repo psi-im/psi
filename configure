@@ -41,7 +41,6 @@ Dependency options:
   --with-aspell-inc=[path]     Path to Aspell include files
   --with-aspell-lib=[path]     Path to Aspell library files
   --disable-enchant            Disable use of enchant
-  --disable-spell              Disable use of spellcheck engine
   --enable-debug               Enable debugging support
 
 EOT
@@ -249,11 +248,6 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
-		--disable-spell)
-			QC_DISABLE_spell="Y"
-			shift
-			;;
-
 		--enable-debug)
 			QC_ENABLE_DEBUG="Y"
 			shift
@@ -299,7 +293,6 @@ echo QC_DISABLE_aspell=$QC_DISABLE_aspell
 echo QC_WITH_ASPELL_INC=$QC_WITH_ASPELL_INC
 echo QC_WITH_ASPELL_LIB=$QC_WITH_ASPELL_LIB
 echo QC_DISABLE_enchant=$QC_DISABLE_enchant
-echo QC_DISABLE_spell=$QC_DISABLE_spell
 echo QC_ENABLE_DEBUG=$QC_ENABLE_DEBUG
 echo
 fi
@@ -1352,7 +1345,7 @@ cat >$1/modules_new.cpp <<EOT
     o->required = false;
     o->disabled = false;
     o = new qc_spell(conf);
-    o->required = false;
+    o->required = true;
     o->disabled = false;
     o = new qc_debug(conf);
     o->required = true;
@@ -2403,7 +2396,6 @@ export QC_DISABLE_aspell
 export QC_WITH_ASPELL_INC
 export QC_WITH_ASPELL_LIB
 export QC_DISABLE_enchant
-export QC_DISABLE_spell
 export QC_ENABLE_DEBUG
 export QC_VERBOSE
 rm -rf .qconftemp

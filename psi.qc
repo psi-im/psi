@@ -29,7 +29,9 @@
   <dep type='ghbnr'/>
   <dep type='aspell'/>
   <dep type='enchant'/>
-  <dep type='spell'/>
+  <dep type='spell'>
+    <required/>
+  </dep>
   <!--<dep type='plugins'/>-->
   <dep type='debug'>
     <required/>
