@@ -1193,7 +1193,7 @@ public:
 #endif
 
 		if(!have)
-			return false;
+			return true;
 
 		for(int n = 0; n < defs.count(); ++n)
 			conf->addDefine(defs[n]);
@@ -1210,7 +1210,7 @@ public:
 		if(!engine.isEmpty())
 			return engine;
 		else
-			return ConfObj::resultString();
+			return "no";
 	}
 };
 #line 1 "debug.qcm"
