@@ -92,19 +92,23 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	setWindowIcon(IconsetFactory::icon("psi/vCard").icon());
 #endif
 
-	connect(ui_.pb_refresh, SIGNAL(clicked()), this, SLOT(doRefresh()));
-	connect(ui_.pb_refresh, SIGNAL(clicked()), this, SLOT(updateStatus()));
+	pb_close_ = ui_.buttonBox->button(QDialogButtonBox::Close);
+	pb_refresh_ = ui_.buttonBox->addButton(tr("&Retrieve"), QDialogButtonBox::ActionRole);
+	pb_submit_ = ui_.buttonBox->addButton(tr("&Publish"), QDialogButtonBox::ApplyRole);
+
+	connect(pb_refresh_, SIGNAL(clicked()), this, SLOT(doRefresh()));
+	connect(pb_refresh_, SIGNAL(clicked()), this, SLOT(updateStatus()));
 	connect(ui_.te_desc, SIGNAL(textChanged()), this, SLOT(textChanged()));
 	connect(ui_.pb_open, SIGNAL(clicked()), this, SLOT(selectPhoto()));
 	connect(ui_.pb_clear, SIGNAL(clicked()), this, SLOT(clearPhoto()));
-	connect(ui_.pb_close, SIGNAL(clicked()), this, SLOT(close()));
+	connect(pb_close_, SIGNAL(clicked()), this, SLOT(close()));
 
 	if(d->type == Self) {
-		connect(ui_.pb_submit, SIGNAL(clicked()), this, SLOT(doSubmit()));
+		connect(pb_submit_, SIGNAL(clicked()), this, SLOT(doSubmit()));
 	}
 	else {
 		// Hide buttons
-		ui_.pb_submit->hide();
+		pb_submit_->hide();
 		ui_.pb_open->hide();
 		ui_.pb_clear->hide();
 		setReadOnly(true);
@@ -128,6 +132,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	}
 
 	setData(d->vcard);
+	adjustSize();
 }
 
 InfoDlg::~InfoDlg()
@@ -170,9 +175,9 @@ void InfoDlg::jt_finished()
 	JT_VCard* jtVCard = static_cast<JT_VCard*> (sender());
 
 	d->busy->stop();
-	ui_.pb_refresh->setEnabled(true);
-	ui_.pb_submit->setEnabled(true);
-	ui_.pb_close->setEnabled(true);
+	pb_refresh_->setEnabled(true);
+	pb_submit_->setEnabled(true);
+	pb_close_->setEnabled(true);
 	fieldsEnable(true);
 
 	if(jtVCard->success()) {
@@ -278,49 +283,25 @@ void InfoDlg::updatePhoto()
 
 void InfoDlg::fieldsEnable(bool x)
 {
-	ui_.le_fullname->setEnabled(x);
-	ui_.le_nickname->setEnabled(x);
-	ui_.le_bday->setEnabled(x);
-	ui_.le_email->setEnabled(x);
-	ui_.le_homepage->setEnabled(x);
-	ui_.le_phone->setEnabled(x);
+	foreach(QLineEdit* le, findChildren<QLineEdit*>()) {
+		le->setEnabled(x);
+	}
+
+	foreach(QTextEdit* le, findChildren<QTextEdit*>()) {
+		le->setEnabled(x);
+	}
+
 	ui_.pb_open->setEnabled(x);
 	ui_.pb_clear->setEnabled(x);
-
-	ui_.le_street->setEnabled(x);
-	ui_.le_ext->setEnabled(x);
-	ui_.le_city->setEnabled(x);
-	ui_.le_state->setEnabled(x);
-	ui_.le_pcode->setEnabled(x);
-	ui_.le_country->setEnabled(x);
-
-	ui_.le_orgName->setEnabled(x);
-	ui_.le_orgUnit->setEnabled(x);
-	ui_.le_title->setEnabled(x);
-	ui_.le_role->setEnabled(x);
-	ui_.te_desc->setEnabled(x);
 
 	setEdited(false);
 }
 
 void InfoDlg::setEdited(bool x)
 {
-	ui_.le_fullname->setModified(x);
-	ui_.le_nickname->setModified(x);
-	ui_.le_bday->setModified(x);
-	ui_.le_email->setModified(x);
-	ui_.le_homepage->setModified(x);
-	ui_.le_phone->setModified(x);
-	ui_.le_street->setModified(x);
-	ui_.le_ext->setModified(x);
-	ui_.le_city->setModified(x);
-	ui_.le_state->setModified(x);
-	ui_.le_pcode->setModified(x);
-	ui_.le_country->setModified(x);
-	ui_.le_orgName->setModified(x);
-	ui_.le_orgUnit->setModified(x);
-	ui_.le_title->setModified(x);
-	ui_.le_role->setModified(x);
+	foreach(QLineEdit* le, findChildren<QLineEdit*>()) {
+		le->setModified(x);
+	}
 
 	d->te_edited = x;
 }
@@ -329,22 +310,13 @@ bool InfoDlg::edited()
 {
 	bool x = false;
 
-	if(ui_.le_fullname->isModified()) x = true;
-	if(ui_.le_nickname->isModified()) x = true;
-	if(ui_.le_bday->isModified()) x = true;
-	if(ui_.le_email->isModified()) x = true;
-	if(ui_.le_homepage->isModified()) x = true;
-	if(ui_.le_phone->isModified()) x = true;
-	if(ui_.le_street->isModified()) x = true;
-	if(ui_.le_ext->isModified()) x = true;
-	if(ui_.le_city->isModified()) x = true;
-	if(ui_.le_state->isModified()) x = true;
-	if(ui_.le_pcode->isModified()) x = true;
-	if(ui_.le_country->isModified()) x = true;
-	if(ui_.le_orgName->isModified()) x = true;
-	if(ui_.le_orgUnit->isModified()) x = true;
-	if(ui_.le_title->isModified()) x = true;
-	if(ui_.le_role->isModified()) x = true;
+	foreach(QLineEdit* le, findChildren<QLineEdit*>()) {
+		if (le->isModified()) {
+			x = true;
+			break;
+		}
+	}
+
 	if(d->te_edited) x = true;
 
 	return x;
@@ -352,36 +324,26 @@ bool InfoDlg::edited()
 
 void InfoDlg::setReadOnly(bool x)
 {
-	ui_.le_fullname->setReadOnly(x);
-	ui_.le_nickname->setReadOnly(x);
-	ui_.le_bday->setReadOnly(x);
-	ui_.le_email->setReadOnly(x);
-	ui_.le_homepage->setReadOnly(x);
-	ui_.le_phone->setReadOnly(x);
-	ui_.le_street->setReadOnly(x);
-	ui_.le_ext->setReadOnly(x);
-	ui_.le_city->setReadOnly(x);
-	ui_.le_state->setReadOnly(x);
-	ui_.le_pcode->setReadOnly(x);
-	ui_.le_country->setReadOnly(x);
-	ui_.le_orgName->setReadOnly(x);
-	ui_.le_orgUnit->setReadOnly(x);
-	ui_.le_title->setReadOnly(x);
-	ui_.le_role->setReadOnly(x);
-	ui_.te_desc->setReadOnly(x);
+	foreach(QLineEdit* le, findChildren<QLineEdit*>()) {
+		le->setReadOnly(x);
+	}
+
+	foreach(QTextEdit* le, findChildren<QTextEdit*>()) {
+		le->setReadOnly(x);
+	}
 }
 
 void InfoDlg::doRefresh()
 {
 	if(!d->pa->checkConnected(this))
 		return;
-	if(!ui_.pb_refresh->isEnabled())
+	if(!pb_refresh_->isEnabled())
 		return;
 	if(d->busy->isActive())
 		return;
 
-	ui_.pb_submit->setEnabled(false);
-	ui_.pb_refresh->setEnabled(false);
+	pb_submit_->setEnabled(false);
+	pb_refresh_->setEnabled(false);
 	fieldsEnable(false);
 
 	d->actionType = 0;
@@ -394,16 +356,16 @@ void InfoDlg::doSubmit()
 {
 	if(!d->pa->checkConnected(this))
 		return;
-	if(!ui_.pb_submit->isEnabled())
+	if(!pb_submit_->isEnabled())
 		return;
 	if(d->busy->isActive())
 		return;
 
 	VCard submit_vcard = makeVCard();
 
-	ui_.pb_submit->setEnabled(false);
-	ui_.pb_refresh->setEnabled(false);
-	ui_.pb_close->setEnabled(false);
+	pb_submit_->setEnabled(false);
+	pb_refresh_->setEnabled(false);
+	pb_close_->setEnabled(false);
 	fieldsEnable(false);
 
 	d->actionType = 1;

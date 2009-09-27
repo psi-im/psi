@@ -69,6 +69,9 @@ private:
 	class Private;
 	Private *d;
 	Ui::Info ui_;
+	QPushButton* pb_refresh_;
+	QPushButton* pb_close_;
+	QPushButton* pb_submit_;
 
 	void setData(const XMPP::VCard &);
 	XMPP::VCard makeVCard();
