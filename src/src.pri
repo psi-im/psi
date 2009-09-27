@@ -420,7 +420,9 @@ INTERFACES += \
 	$$PWD/voicecall.ui \
 	$$PWD/chatdlg.ui \
 	$$PWD/groupchatdlg.ui \
-	$$PWD/bookmarkmanage.ui
+	$$PWD/bookmarkmanage.ui \
+	$$PWD/ahcommanddlg.ui \
+	$$PWD/ahcformdlg.ui
 
 # options dialog
 include($$PWD/options/options.pri)

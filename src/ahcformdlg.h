@@ -36,6 +36,8 @@ namespace XMPP {
 	class Client;
 }
 
+#include "ui_ahcformdlg.h"
+
 class AHCFormDlg : public QDialog
 {
 	Q_OBJECT
@@ -55,13 +57,17 @@ protected slots:
 	void commandExecuted();
 
 private:
-	QPushButton *pb_prev, *pb_next, *pb_complete, *pb_cancel;
-	XDataWidget *xdata_;
+	Ui::AHCFormDlg ui_;
+	QPushButton* pb_prev_;
+	QPushButton* pb_next_;
+	QPushButton* pb_complete_;
+	QPushButton* pb_cancel_;
+	XDataWidget* xdata_;
+
 	XMPP::Jid receiver_;
 	QString node_;
 	XMPP::Client* client_;
 	QString sessionId_;
-	BusyWidget* busy_;
 };
 
 #endif

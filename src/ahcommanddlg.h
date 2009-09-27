@@ -38,6 +38,8 @@ class BusyWidget;
 
 typedef struct { QString jid, node, name; } AHCommandItem;
 
+#include "ui_ahcommanddlg.h"
+
 class AHCommandDlg : public QDialog
 {
 	Q_OBJECT
@@ -53,12 +55,12 @@ protected slots:
 	void commandExecuted();
 
 private:
+	Ui::AHCommandDlg ui_;
 	PsiAccount* pa_;
-	QPushButton *pb_execute, *pb_close, *pb_refresh /*,*pb_info*/;
 	XMPP::Jid receiver_;
-	QComboBox* cb_commands;
 	QList<AHCommandItem> commands_;
-	BusyWidget* busy_;
+	QPushButton* pb_close;
+	QPushButton* pb_execute;
 };
 
 #endif
