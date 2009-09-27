@@ -74,6 +74,8 @@ private:
 	Private *d;
 
 	MiniClient *client;
+	QPushButton* pb_close_;
+	QPushButton* pb_remove_;
 };
 
 class AccountRemoveDlg::Private
@@ -89,7 +91,7 @@ public:
 AccountRemoveDlg::AccountRemoveDlg(ProxyManager *proxyman, const UserAccount &acc, QWidget *parent)
 :QDialog(parent)
 {
-  	setupUi(this);
+	setupUi(this);
 	setModal(false);
 	d = new Private;
 	d->acc = acc;
@@ -97,8 +99,12 @@ AccountRemoveDlg::AccountRemoveDlg(ProxyManager *proxyman, const UserAccount &ac
 
 	setWindowTitle(CAP(windowTitle()));
 
-	connect(pb_close, SIGNAL(clicked()), SLOT(close()));
-	connect(pb_remove, SIGNAL(clicked()), SLOT(remove()));
+	pb_close_ = buttonBox->button(QDialogButtonBox::Cancel);
+	pb_close_->setDefault(true);
+	pb_remove_ = buttonBox->addButton(tr("&Remove"), QDialogButtonBox::DestructiveRole);
+
+	connect(pb_close_, SIGNAL(clicked()), SLOT(close()));
+	connect(pb_remove_, SIGNAL(clicked()), SLOT(remove()));
 
 	d->bg = new QButtonGroup(0);
 	d->bg->addButton(rb_remove, 0);
@@ -107,12 +113,11 @@ AccountRemoveDlg::AccountRemoveDlg(ProxyManager *proxyman, const UserAccount &ac
 	rb_remove->setChecked(true);
 	bg_clicked(0);
 
-	pb_close->setFocus();
-
 	client = new MiniClient;
 	connect(client, SIGNAL(handshaken()), SLOT(client_handshaken()));
 	connect(client, SIGNAL(error()), SLOT(client_error()));
 	connect(client, SIGNAL(disconnected()), SLOT(client_disconnected()));
+	adjustSize();
 }
 
 AccountRemoveDlg::~AccountRemoveDlg()
@@ -175,7 +180,7 @@ void AccountRemoveDlg::remove()
 
 	busy->start();
 	gb_account->setEnabled(false);
-	pb_remove->setEnabled(false);
+	pb_remove_->setEnabled(false);
 
 	QString pass = le_pass->text();
 	Jid j(Jid(d->acc.jid).withResource(d->acc.resource));
@@ -198,7 +203,7 @@ void AccountRemoveDlg::client_error()
 {
 	busy->stop();
 	gb_account->setEnabled(true);
-	pb_remove->setEnabled(true);
+	pb_remove_->setEnabled(true);
 }
 
 void AccountRemoveDlg::unreg_finished()
@@ -215,7 +220,7 @@ void AccountRemoveDlg::unreg_finished()
 	}
 	else if(reg->statusCode() != Task::ErrDisc) {
 		gb_account->setEnabled(true);
-		pb_remove->setEnabled(true);
+		pb_remove_->setEnabled(true);
 		QMessageBox::critical(this, tr("Error"), QString(tr("There was an error unregistering the account.\nReason: %1")).arg(reg->statusString()));
 	}
 }
@@ -286,7 +291,6 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi)
 	connect(pb_add, SIGNAL(clicked()), SLOT(add()));
 	connect(pb_modify, SIGNAL(clicked()), SLOT(modify()));
 	connect(pb_remove, SIGNAL(clicked()), SLOT(remove()));
-	connect(pb_close, SIGNAL(clicked()), SLOT(close()));
 
 	connect(lv_accs, SIGNAL(itemDoubleClicked(QTreeWidgetItem *, int)), SLOT(modify(QTreeWidgetItem *)));
 	connect(lv_accs, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)), SLOT(qlv_selectionChanged(QTreeWidgetItem *, QTreeWidgetItem *)));
@@ -300,6 +304,8 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi)
 
 	if (lv_accs->topLevelItemCount())
 		lv_accs->setCurrentItem(lv_accs->topLevelItem(0));
+
+	adjustSize();
 }
 
 AccountManageDlg::~AccountManageDlg()

@@ -6,17 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>481</width>
-    <height>282</height>
+    <width>472</width>
+    <height>227</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Jabber Accounts</string>
   </property>
-  <layout class="QVBoxLayout">
-   <property name="margin">
-    <number>11</number>
-   </property>
+  <layout class="QVBoxLayout" name="_2">
    <item>
     <layout class="QHBoxLayout">
      <item>
@@ -36,12 +33,6 @@
        <property name="allColumnsShowFocus">
         <bool>true</bool>
        </property>
-       <attribute name="headerCascadingSectionResizes">
-        <bool>true</bool>
-       </attribute>
-       <attribute name="headerStretchLastSection">
-        <bool>true</bool>
-       </attribute>
        <attribute name="headerCascadingSectionResizes">
         <bool>true</bool>
        </attribute>
@@ -115,47 +106,11 @@
     </layout>
    </item>
    <item>
-    <widget class="Line" name="Line1">
-     <property name="frameShape">
-      <enum>QFrame::HLine</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Sunken</enum>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Close</set>
      </property>
     </widget>
-   </item>
-   <item>
-    <layout class="QHBoxLayout">
-     <item>
-      <spacer name="Spacer11">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Expanding</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>395</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="IconButton" name="pb_close" native="true">
-       <property name="text" stdset="0">
-        <string>&amp;Close</string>
-       </property>
-       <property name="shortcut" stdset="0">
-        <string>Alt+C</string>
-       </property>
-       <property name="default" stdset="0">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-    </layout>
    </item>
   </layout>
  </widget>
@@ -169,5 +124,22 @@
   </customwidget>
  </customwidgets>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>AccountManage</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>372</x>
+     <y>265</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>474</x>
+     <y>210</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
