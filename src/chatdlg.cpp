@@ -345,18 +345,33 @@ void ChatDlg::activated()
 
 void ChatDlg::dropEvent(QDropEvent* event)
 {
-	QStringList l;
-	// FIXME
-	// if (account()->loggedIn() && Q3UriDrag::decodeLocalFiles(event, l) && !l.isEmpty()) {
-	// 	account()->actionSendFiles(jid(), l);
-	// }
+	QStringList files;
+	if (account()->loggedIn() && event->mimeData()->hasUrls()) {
+		foreach(QUrl url, event->mimeData()->urls()) {
+			if (!url.toLocalFile().isEmpty()) {
+				files << url.toLocalFile();
+			}
+		}
+	}
+
+	if (!files.isEmpty()) {
+		account()->actionSendFiles(jid(), files);
+	}
 }
 
 void ChatDlg::dragEnterEvent(QDragEnterEvent* event)
 {
-	QStringList l;
-	// FIXME
-	// event->accept(account()->loggedIn() && Q3UriDrag::canDecode(event) && Q3UriDrag::decodeLocalFiles(event, l) && !l.isEmpty());
+	Q_ASSERT(event);
+	bool accept = false;
+	if (account()->loggedIn() && event->mimeData()->hasUrls()) {
+		foreach(QUrl url, event->mimeData()->urls()) {
+			if (!url.toLocalFile().isEmpty()) {
+				accept = true;
+				break;
+			}
+		}
+	}
+	event->accept(accept);
 }
 
 void ChatDlg::setJid(const Jid &j)
