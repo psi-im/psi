@@ -17,7 +17,7 @@
    <item>
     <layout class="QHBoxLayout">
      <item>
-      <widget class="Q3ListView" name="lv_tabs">
+      <widget class="QListWidget" name="lv_tabs">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -30,20 +30,9 @@
          <height>0</height>
         </size>
        </property>
-       <property name="resizeMode">
-        <enum>Q3ListView::LastColumn</enum>
+       <property name="horizontalScrollBarPolicy">
+        <enum>Qt::ScrollBarAlwaysOff</enum>
        </property>
-       <column>
-        <property name="text">
-         <string>1</string>
-        </property>
-        <property name="clickable">
-         <bool>true</bool>
-        </property>
-        <property name="resizable">
-         <bool>true</bool>
-        </property>
-       </column>
       </widget>
      </item>
      <item>
@@ -102,17 +91,6 @@
  <layoutdefault spacing="6" margin="11"/>
  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
  <customwidgets>
-  <customwidget>
-   <class>Q3Frame</class>
-   <extends>QFrame</extends>
-   <header>Qt3Support/Q3Frame</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>Q3ListView</class>
-   <extends>Q3Frame</extends>
-   <header>q3listview.h</header>
-  </customwidget>
   <customwidget>
    <class>FancyLabel</class>
    <extends>QWidget</extends>
