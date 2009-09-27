@@ -53,9 +53,14 @@ public:
 	Private(IconAction *act, QObject *parent) {
 		icon = 0;
 		action = act;
+		Q_ASSERT(action);
 
 		if (parent->isWidgetType())
 			((QWidget *)parent)->addAction(action);
+
+#ifdef Q_WS_MAC
+		action->setIconVisibleInMenu(false);
+#endif
 	}
 		
 	~Private()
