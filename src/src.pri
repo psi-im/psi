@@ -459,7 +459,7 @@ unix:!dbus {
 }
 
 mac {
-	QMAKE_LFLAGS += -framework Carbon -framework IOKit
+	QMAKE_LFLAGS += -framework Carbon -framework IOKit -framework AppKit
 }
 
 INCLUDEPATH += $$PWD
