@@ -613,8 +613,7 @@ EDBFlatFile::File::File(const Jid &_j)
 
 	//printf("[EDB opening -- %s]\n", j.full().latin1());
 	fname = jidToFileName(_j);
-	// FIXME
-	f.setObjectName(fname);
+	f.setFileName(fname);
 	valid = f.open(QIODevice::ReadWrite);
 
 	touch();

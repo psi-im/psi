@@ -50,7 +50,7 @@ ChangePasswordDlg::ChangePasswordDlg(PsiAccount *_pa, QWidget *parent)
 	setWindowTitle(CAP(windowTitle()));
 
 	connect(ui_.buttonBox->button(QDialogButtonBox::Cancel), SIGNAL(clicked()), SLOT(close()));
-	connect(ui_.buttonBox->button(QDialogButtonBox::Apply), SIGNAL(clicked()), SLOT(apply()));
+	connect(ui_.buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), SLOT(apply()));
 	adjustSize();
 }
 

@@ -72,7 +72,7 @@ MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
 	}
 
 	setWidgetsEnabled(true);
-	resize(sizeHint());
+	adjustSize();
 }
 
 MUCJoinDlg::~MUCJoinDlg()

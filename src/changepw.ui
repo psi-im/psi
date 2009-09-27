@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>331</width>
-    <height>167</height>
+    <height>179</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -92,25 +92,9 @@
       <widget class="BusyWidget" name="busy" native="true"/>
      </item>
      <item>
-      <spacer name="Spacer1">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Expanding</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>110</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
       <widget class="QDialogButtonBox" name="buttonBox">
        <property name="standardButtons">
-        <set>QDialogButtonBox::Apply|QDialogButtonBox::Cancel</set>
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
        </property>
       </widget>
      </item>
@@ -125,6 +109,7 @@
    <class>BusyWidget</class>
    <extends>QWidget</extends>
    <header>busywidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <tabstops>
