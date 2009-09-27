@@ -12,9 +12,7 @@
 #include <QStackedWidget>
 #include <qpen.h>
 #include <qpainter.h>
-#include <Q3Dict>
 #include <QPixmap>
-#include <Q3PtrList>
 #include <QVBoxLayout>
 
 // tabs
@@ -185,8 +183,8 @@ public:
 	OptionsDlg *dlg;
 	PsiCon *psi;
 	bool dirty, noDirty;
-	Q3Dict<QWidget> id2widget;
-	Q3PtrList<OptionsTab> tabs;
+	QHash<QString, QWidget*> id2widget;
+	QList<OptionsTab*> tabs;
 
 	QMap<QString, QByteArray> changedMap;
 };
@@ -208,10 +206,7 @@ OptionsDlg::Private::Private(OptionsDlg *d, PsiCon *_psi)
 	createChangedMap();
 
 	// fill the QListView
-	Q3PtrListIterator<OptionsTab> it ( tabs );
-	OptionsTab *opttab;
-	for ( ; it.current(); ++it) {
-		opttab = it.current();
+	foreach(OptionsTab* opttab, tabs) {
 		//qWarning("Adding tab %s...", (const char *)opttab->id());
 		opttab->setData(psi, dlg);
 		connect(opttab, SIGNAL(dataChanged()), SLOT(dataChanged()));
@@ -231,10 +226,7 @@ OptionsDlg::Private::Private(OptionsDlg *d, PsiCon *_psi)
 					parent = it2.current();
 
 					// notify the parent about the child
-					Q3PtrListIterator<OptionsTab> it3 ( tabs );
-					OptionsTab *opttab2;
-					for ( ; it3.current(); ++it3) {
-						opttab2 = it3.current();
+					foreach(OptionsTab* opttab2, tabs) {
 						//qWarning("Searching tabs %s...", (const char *)opttab2->id());
 						if ( opttab2->id() == opttab->parentId() ) {
 							//qWarning("...done");
@@ -405,11 +397,7 @@ void OptionsDlg::Private::openTab(QString id)
 	QWidget *tab = id2widget[id];
 	if ( !tab ) {
 		bool found = false;
-		Q3PtrListIterator<OptionsTab> it ( tabs );
-		OptionsTab *opttab;
-		for ( ; it.current(); ++it) {
-			opttab = it.current();
-
+		foreach(OptionsTab* opttab, tabs) {
 			if ( opttab->id() == id.latin1() ) {
 				tab = opttab->widget(); // create the widget
 				if ( !tab )
@@ -435,7 +423,7 @@ void OptionsDlg::Private::openTab(QString id)
 					vbox->addStretch();
 
 				dlg->ws_tabs->addWidget(w);
-				id2widget.insert( id, w );
+				id2widget[id] = w;
 				connectDataChanged( tab ); // no need to connect to dataChanged() slot by hands anymore
 
 				bool d = dirty;
@@ -457,19 +445,13 @@ void OptionsDlg::Private::openTab(QString id)
 		}
 	}
 
-	{
-		Q3PtrListIterator<OptionsTab> it ( tabs );
-		OptionsTab *opttab;
-		for ( ; it.current(); ++it) {
-			opttab = it.current();
+	foreach(OptionsTab* opttab, tabs) {
+		if ( opttab->id() == id.latin1() ) {
+			dlg->lb_pageTitle->setText( opttab->name() );
+			dlg->lb_pageTitle->setHelp( opttab->desc() );
+			dlg->lb_pageTitle->setPsiIcon( opttab->psiIcon() );
 
-			if ( opttab->id() == id.latin1() ) {
-				dlg->lb_pageTitle->setText( opttab->name() );
-				dlg->lb_pageTitle->setHelp( opttab->desc() );
-				dlg->lb_pageTitle->setPsiIcon( opttab->psiIcon() );
-
-				break;
-			}
+			break;
 		}
 	}
 
@@ -529,11 +511,7 @@ void OptionsDlg::Private::doApply()
 	if ( !dirty )
 		return;
 
-	Q3PtrListIterator<OptionsTab> it ( tabs );
-	OptionsTab *opttab;
-	for ( ; it.current(); ++it) {
-		opttab = it.current();
-
+	foreach(OptionsTab* opttab, tabs) {
 		opttab->applyOptions();
 	}
 
@@ -550,8 +528,10 @@ void OptionsDlg::Private::doApply()
 OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent)
 	: QDialog(parent)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
 	setupUi(this);
+	pb_apply = buttonBox->button(QDialogButtonBox::Apply);
+
+	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private(this, psi);
 	setModal(false);
 	d->psi->dialogRegister(this);
@@ -559,9 +539,9 @@ OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent)
 	setWindowTitle(CAP(caption()));
 	resize(640, 480);
 
-	connect(pb_ok, SIGNAL(clicked()), SLOT(doOk()));
+	connect(buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), SLOT(doOk()));
 	connect(pb_apply,SIGNAL(clicked()),SLOT(doApply()));
-	connect(pb_cancel, SIGNAL(clicked()), SLOT(reject()));
+	connect(buttonBox->button(QDialogButtonBox::Cancel), SIGNAL(clicked()), SLOT(reject()));
 
 }
 

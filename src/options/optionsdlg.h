@@ -27,6 +27,8 @@ public:
 private:
 	Private *d;
 	friend class Private;
+
+	QPushButton* pb_apply;
 };
 
 #endif

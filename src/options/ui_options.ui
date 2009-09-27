@@ -1,7 +1,8 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>OptionsUI</class>
- <widget class="QDialog" name="OptionsUI" >
-  <property name="geometry" >
+ <widget class="QDialog" name="OptionsUI">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
@@ -9,69 +10,56 @@
     <height>293</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>Options</string>
   </property>
-  <layout class="QVBoxLayout" >
-   <property name="margin" >
-    <number>9</number>
-   </property>
-   <property name="spacing" >
-    <number>6</number>
-   </property>
+  <layout class="QVBoxLayout">
    <item>
-    <layout class="QHBoxLayout" >
-     <property name="margin" >
-      <number>0</number>
-     </property>
-     <property name="spacing" >
-      <number>6</number>
-     </property>
+    <layout class="QHBoxLayout">
      <item>
-      <widget class="Q3ListView" name="lv_tabs" >
-       <property name="sizePolicy" >
-        <sizepolicy>
-         <hsizetype>4</hsizetype>
-         <vsizetype>7</vsizetype>
+      <widget class="Q3ListView" name="lv_tabs">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <property name="minimumSize" >
+       <property name="minimumSize">
         <size>
          <width>50</width>
          <height>0</height>
         </size>
        </property>
-       <property name="resizeMode" >
+       <property name="resizeMode">
         <enum>Q3ListView::LastColumn</enum>
        </property>
        <column>
-        <property name="text" >
+        <property name="text">
          <string>1</string>
+        </property>
+        <property name="clickable">
+         <bool>true</bool>
+        </property>
+        <property name="resizable">
+         <bool>true</bool>
         </property>
        </column>
       </widget>
      </item>
      <item>
-      <layout class="QVBoxLayout" >
-       <property name="margin" >
-        <number>0</number>
-       </property>
-       <property name="spacing" >
+      <layout class="QVBoxLayout">
+       <property name="spacing">
         <number>3</number>
        </property>
        <item>
-        <widget class="FancyLabel" name="lb_pageTitle" >
-         <property name="sizePolicy" >
-          <sizepolicy>
-           <hsizetype>5</hsizetype>
-           <vsizetype>4</vsizetype>
+        <widget class="FancyLabel" name="lb_pageTitle" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
-         <property name="text" >
+         <property name="text" stdset="0">
           <string/>
          </property>
         </widget>
@@ -86,69 +74,24 @@
     </layout>
    </item>
    <item>
-    <widget class="Line" name="line1" >
-     <property name="frameShape" >
+    <widget class="Line" name="line1">
+     <property name="frameShape">
       <enum>QFrame::HLine</enum>
      </property>
-     <property name="frameShadow" >
+     <property name="frameShadow">
       <enum>QFrame::Sunken</enum>
      </property>
-     <property name="orientation" >
+     <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" >
-     <property name="margin" >
-      <number>0</number>
-     </property>
-     <property name="spacing" >
-      <number>6</number>
-     </property>
+    <layout class="QHBoxLayout">
      <item>
-      <spacer>
-       <property name="orientation" >
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType" >
-        <enum>QSizePolicy::Expanding</enum>
-       </property>
-       <property name="sizeHint" >
-        <size>
-         <width>69</width>
-         <height>28</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="IconButton" name="pb_ok" >
-       <property name="text" >
-        <string>&amp;OK</string>
-       </property>
-       <property name="shortcut" >
-        <string>Alt+O</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="IconButton" name="pb_apply" >
-       <property name="text" >
-        <string>&amp;Apply</string>
-       </property>
-       <property name="shortcut" >
-        <string>Alt+A</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="IconButton" name="pb_cancel" >
-       <property name="text" >
-        <string>&amp;Cancel</string>
-       </property>
-       <property name="shortcut" >
-        <string>Alt+C</string>
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Apply|QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
        </property>
       </widget>
      </item>
@@ -156,16 +99,14 @@
    </item>
   </layout>
  </widget>
- <layoutdefault spacing="6" margin="11" />
+ <layoutdefault spacing="6" margin="11"/>
  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
  <customwidgets>
   <customwidget>
+   <class>Q3Frame</class>
+   <extends>QFrame</extends>
+   <header>Qt3Support/Q3Frame</header>
    <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>IconButton</class>
-   <extends>QPushButton</extends>
-   <header>iconbutton.h</header>
   </customwidget>
   <customwidget>
    <class>Q3ListView</class>
