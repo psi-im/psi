@@ -73,7 +73,7 @@ public:
 			} else if (cmd == "auth") {
 				if (command.count() == 2) {
 					if (command[1].toLower() == "request") {
-						// FIXME
+						dlg_->account()->actionAuthRequest(dlg_->jid());
 					}
 				}
 				newstate = 0;
