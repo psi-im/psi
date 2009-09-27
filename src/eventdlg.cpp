@@ -701,9 +701,11 @@ void EventDlg::init()
 {
 	QVBoxLayout *vb1 = new QVBoxLayout(this);
 	vb1->setMargin(4);
+	vb1->setSpacing(4);
 
 	// first row
 	QHBoxLayout *hb1 = new QHBoxLayout(0);
+	hb1->setSpacing(4);
 	vb1->addLayout(hb1);
 	d->lb_identity = new QLabel(tr("Identity:"), this);
 	hb1->addWidget(d->lb_identity);
@@ -729,6 +731,7 @@ void EventDlg::init()
 
 	// second row
 	QHBoxLayout *hb2 = new QHBoxLayout(0);
+	hb2->setSpacing(4);
 	vb1->addLayout(hb2);
 
 	d->lb_status = new IconLabel(this);
@@ -792,7 +795,6 @@ void EventDlg::init()
 	d->lb_count->setFrameStyle(QFrame::Panel | QFrame::Sunken);
 	d->lb_count->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
 	d->lb_count->setNum(0);
-	 
 
 	if(d->composing) {
 		d->tb_pgp = new IconToolButton(this);
@@ -826,6 +828,7 @@ void EventDlg::init()
 			toolButton->setFocusPolicy(Qt::NoFocus);
 
 	QHBoxLayout *hb3 = new QHBoxLayout(0);
+	hb3->setSpacing(4);
 	vb1->addLayout(hb3);
 
 //	if(d->composing /* && config->showsubject */) {
@@ -895,6 +898,7 @@ void EventDlg::init()
 	d->w_http_id = new QWidget(this);
 	QHBoxLayout *hb_http_id = new QHBoxLayout(d->w_http_id);
 	hb_http_id->setMargin(0);
+	hb_http_id->setSpacing(4);
 	d->le_http_id = new QLineEdit(d->w_http_id);
 	l = new QLabel(tr("Transaction &identifier:"), d->w_http_id);
 	l->setBuddy(d->le_http_id);
@@ -1379,9 +1383,9 @@ void EventDlg::optionsUpdate()
 	d->tb_history->setPsiIcon(IconsetFactory::iconPtr("psi/history"));
 	if(d->tb_pgp) {
 		QIcon i;
-		// FIXME
-		// i.setPixmap(IconsetFactory::icon("psi/cryptoNo").impix(),  QIcon::Automatic, QIcon::Normal, QIcon::Off);
-		// i.setPixmap(IconsetFactory::icon("psi/cryptoYes").impix(), QIcon::Automatic, QIcon::Normal, QIcon::On);
+		i.setPixmap(IconsetFactory::icon("psi/cryptoNo").impix(),  QIcon::Automatic, QIcon::Normal, QIcon::Off);
+		i.setPixmap(IconsetFactory::icon("psi/cryptoYes").impix(), QIcon::Automatic, QIcon::Normal, QIcon::On);
+		d->tb_pgp->setPsiIcon(0);
 		d->tb_pgp->setIcon(i);
 	}
 	if(d->lb_pgp)
@@ -2093,12 +2097,9 @@ void EventDlg::actionGCJoin(const QString &gc, const QString&)
 void EventDlg::updatePGP()
 {
 	if(d->tb_pgp) {
-		if(d->pa->hasPGP()) {
-			d->tb_pgp->setEnabled(true);
-		}
-		else {
+		d->tb_pgp->setEnabled(d->pa->hasPGP());
+		if(!d->pa->hasPGP()) {
 			d->tb_pgp->setChecked(false);
-			d->tb_pgp->setEnabled(false);
 		}
 	}
 }

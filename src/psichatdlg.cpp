@@ -244,9 +244,8 @@ void PsiChatDlg::setLooks()
 
 	// toolbuttons
 	QIcon i;
-	// FIXME: unite with EventDlg
-	// i.setPixmap(IconsetFactory::icon("psi/cryptoNo").impix(),  QIcon::Automatic, QIcon::Normal, QIcon::Off);
-	// i.setPixmap(IconsetFactory::icon("psi/cryptoYes").impix(), QIcon::Automatic, QIcon::Normal, QIcon::On);
+	i.setPixmap(IconsetFactory::icon("psi/cryptoNo").impix(),  QIcon::Automatic, QIcon::Normal, QIcon::Off);
+	i.setPixmap(IconsetFactory::icon("psi/cryptoYes").impix(), QIcon::Automatic, QIcon::Normal, QIcon::On);
 	act_pgp_->setPsiIcon(0);
 	act_pgp_->setIcon(i);
 }
@@ -291,7 +290,7 @@ void PsiChatDlg::initToolButtons()
 	act_file_ = new IconAction(tr("Send File"), "psi/upload", tr("Send File"), 0, this);
 	connect(act_file_, SIGNAL(triggered()), SLOT(doFile()));
 
-	act_pgp_ = new IconAction(tr("Toggle Encryption"), "psi/cryptoNo", tr("Toggle Encryption"), 0, this, 0, true);
+	act_pgp_ = new IconAction(tr("Toggle Encryption"), "", tr("Toggle Encryption"), 0, this, 0, true);
 	ui_.tb_pgp->setDefaultAction(act_pgp_);
 
 	act_info_ = new IconAction(tr("User Info"), "psi/vCard", tr("User Info"), 0, this);
