@@ -124,8 +124,9 @@ void replaceWidget(QWidget *, QWidget *);
 void closeDialogs(QWidget *);
 #ifdef Q_WS_X11
 #include <QWidget>
+#include <QX11Info>
 void x11wmClass(Display *dsp, WId wid, QString resName);
-#define X11WM_CLASS(x)	x11wmClass(x11Display(), winId(), (x));
+#define X11WM_CLASS(x)	x11wmClass(QX11Info::display(), winId(), (x));
 #else
 #define X11WM_CLASS(x)	/* dummy */
 #endif
