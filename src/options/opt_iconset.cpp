@@ -432,14 +432,8 @@ void OptionsTabIconsetSystem::restoreOptions()
 
 	d->setCursor(Qt::WaitCursor);
 
-	QPalette customPal = d->palette();
-	// FIXME
-	// customPal.setDisabled(customPal.inactive());
 	d->iss_system->setEnabled(false);
-	d->iss_system->setPalette(customPal);
-
 	d->pb_sysDetails->setEnabled(false);
-	d->pb_sysDetails->setPalette(customPal);
 
 	d->progress->show();
 	d->progress->setValue( 0 );
@@ -482,11 +476,7 @@ bool OptionsTabIconsetSystem::event(QEvent *e)
 	}
 	else if ( e->type() == QEvent::User + 1 ) { // finish event
 		d->iss_system->setEnabled(true);
-		// FIXME
-		// d->iss_system->unsetPalette();
-
 		d->pb_sysDetails->setEnabled(true);
-		// d->pb_sysDetails->unsetPalette();
 
 		connect(d->iss_system, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SIGNAL(dataChanged()));
 
@@ -620,13 +610,8 @@ void OptionsTabIconsetEmoticons::restoreOptions()
 
 		d->setCursor(Qt::WaitCursor);
 
-		QPalette customPal = d->palette();
-		// customPal.setDisabled(customPal.inactive());
 		d->ck_useEmoticons->setEnabled(false);
-		d->ck_useEmoticons->setPalette(customPal);
-
 		d->groupBox9->setEnabled(false);
-		d->groupBox9->setPalette(customPal);
 
 		d->progress->show();
 		d->progress->setValue( 0 );
@@ -666,10 +651,7 @@ bool OptionsTabIconsetEmoticons::event(QEvent *e)
 	}
 	else if ( e->type() == QEvent::User + 1 ) { // finish event
 		d->ck_useEmoticons->setEnabled(true);
-		// d->ck_useEmoticons->unsetPalette();
-
 		d->groupBox9->setEnabled(true);
-		// d->groupBox9->unsetPalette();
 
 		connect(d->iss_emoticons, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SIGNAL(dataChanged()));
 
