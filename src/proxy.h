@@ -52,56 +52,29 @@ public:
 	bool fromXml(const QDomElement &);
 };
 
-class ProxyEdit : public QWidget
+class ProxyDlg : public QDialog
 {
 	Q_OBJECT
 public:
-	ProxyEdit(QWidget* parent);
-	~ProxyEdit();
-
-	void reset();
-	void setType(const QString &s);
-	ProxySettings proxySettings() const;
-	void setProxySettings(const ProxySettings &);
-
-private:
-	Ui::ProxyEdit ui_;
-};
-
-class ProxyDlg : public QDialog, public Ui::Proxy
-{
-	Q_OBJECT
-public:
-	ProxyDlg(const ProxyItemList &, const QStringList &, const QString &def, QWidget *parent=0);
+	ProxyDlg(const ProxyItemList &, const QString &def, QWidget *parent=0);
 	~ProxyDlg();
 
 signals:
 	void applyList(const ProxyItemList &, int cur);
 
-private slots:
-	void proxy_new();
-	void proxy_remove();
-	void cb_activated(int);
-	void qlbx_highlighted(int);
-	void qle_textChanged(const QString &);
-	void doSave();
-
-private:
+public:
 	class Private;
+	friend class Private;
+private:
 	Private *d;
-
-	void selectCurrent();
-	QString getUniqueName() const;
-	void hookEdit();
-	void unhookEdit();
-	void saveIntoItem(int);
+	Ui::Proxy ui_;
 };
 
 class ProxyChooser : public QWidget
 {
 	Q_OBJECT
 public:
-	ProxyChooser(ProxyManager *, QWidget *parent=0, const char *name=0);
+	ProxyChooser(ProxyManager*, QWidget* parent);
 	~ProxyChooser();
 
 	QString currentItem() const;
@@ -142,7 +115,6 @@ public:
 	ProxyItem getItem(const QString &id) const;
 	QString lastEdited() const;
 	void migrateItemList(const ProxyItemList &);
-	QStringList methodList() const;
 //	int findOldIndex(int) const;
 
 signals:

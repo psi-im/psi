@@ -154,7 +154,7 @@ void AccountModifyDlg::init()
 	pc = psi->proxy()->createProxyChooser(tab_connection);
 	replaceWidget(lb_proxychooser, pc);
 	pc->setCurrentItem(acc.proxyID);
-	
+
 	// Security level
 	cb_security_level->addItem(tr("None"),QCA::SL_None);
 	cb_security_level->addItem(tr("Integrity"),QCA::SL_Integrity);

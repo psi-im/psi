@@ -395,7 +395,6 @@ INTERFACES += \
 	$$PWD/profilemanage.ui \
 	$$PWD/profilenew.ui \
 	$$PWD/proxy.ui \
-	$$PWD/proxyedit.ui \
 	$$PWD/pgpkey.ui \
 	$$PWD/accountmanage.ui \
 	$$PWD/accountadd.ui \
