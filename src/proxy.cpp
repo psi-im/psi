@@ -207,6 +207,7 @@ public slots:
 
 	void currentItemChanged(QListWidgetItem* current, QListWidgetItem* previous)
 	{
+		Q_UNUSED(previous);
 		q->ui_.pb_remove->setEnabled(current);
 
 		QList<QWidget*> editors = QList<QWidget*>()

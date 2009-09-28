@@ -370,7 +370,6 @@ void AccountManageDlg::accountAdded(PsiAccount *pa)
 
 void AccountManageDlg::accountRemoved(PsiAccount *pa)
 {
-	AccountManageItem *i;
 	for (int index = 0; index < lv_accs->topLevelItemCount(); ++index) {
 		AccountManageItem* i = static_cast<AccountManageItem*>(lv_accs->topLevelItem(index));
 		if(i->pa == pa) {

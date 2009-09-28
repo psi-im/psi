@@ -58,6 +58,7 @@ ActionList::ActionList( QString name, int id, bool autoDelete )
 }
 
 ActionList::ActionList( const ActionList &from )
+	: QObject()
 {
 	d = new Private( *from.d );
 }

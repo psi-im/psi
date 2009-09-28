@@ -283,6 +283,10 @@ void PsiContactList::accountEnabledChanged()
 		enabledAccounts_.append(account);
 }
 
+#ifdef NEWCONTACTLIST
+#error "Don't forget to ditch PsiContactList::beginBulkOperation() and PsiContactList::endBulkOperation()"
+#endif
+
 static int sortColumn = -1;
 static int operationCount = 0;
 /**
@@ -291,7 +295,6 @@ static int operationCount = 0;
  */
 void PsiContactList::beginBulkOperation()
 {
-#if 0
 	operationCount++;
 	if (operationCount == 1) {
 		Q_ASSERT(psi());
@@ -300,7 +303,6 @@ void PsiContactList::beginBulkOperation()
 		Q_ASSERT(sortColumn != -1);
 		psi()->contactView()->setSorting(-1, true);
 	}
-#endif
 }
 
 /**
@@ -309,7 +311,6 @@ void PsiContactList::beginBulkOperation()
  */
 void PsiContactList::endBulkOperation()
 {
-#if 0
 	operationCount--;
 	if (operationCount <= 0) {
 		Q_ASSERT(psi());
@@ -318,5 +319,4 @@ void PsiContactList::endBulkOperation()
 		psi()->contactView()->setSorting(sortColumn, true);
 		sortColumn = -1;
 	}
-#endif
 }

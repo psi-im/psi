@@ -900,11 +900,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 
 PsiAccount::~PsiAccount()
 {
-#ifdef __GNUC__
-#warning "Uncomment these"
-#endif
 #ifdef PSI_PLUGINS
-	// PluginManager::instance()->removeClient(this);
+	PluginManager::instance()->removeClient(this);
 #endif
 	// nuke all related dialogs
 	deleteAllDialogs();

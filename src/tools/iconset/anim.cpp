@@ -90,7 +90,7 @@ public:
 	}
 
 	Private(const Private &from)
-	: QObject()
+		: QObject(), QSharedData()
 	{
 		init();
 

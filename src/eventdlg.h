@@ -74,7 +74,7 @@ class AttachView : public QListWidget
 {
 	Q_OBJECT
 public:
-	AttachView(QWidget *parent=0, const char *name=0);
+	AttachView(QWidget* parent);
 	~AttachView();
 
 	void setReadOnly(bool);

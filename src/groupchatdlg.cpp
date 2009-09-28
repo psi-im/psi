@@ -1781,7 +1781,7 @@ int GCMainDlg::unreadMessageCount() const
 //----------------------------------------------------------------------------
 // GCFindDlg
 //----------------------------------------------------------------------------
-GCFindDlg::GCFindDlg(const QString &str, QWidget *parent, const char *name)
+GCFindDlg::GCFindDlg(const QString& str, QWidget* parent)
 	: QDialog(parent)
 {
 	setAttribute(Qt::WA_DeleteOnClose);

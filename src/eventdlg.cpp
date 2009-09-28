@@ -332,8 +332,8 @@ public:
 	int type;
 };
 
-AttachView::AttachView(QWidget *parent, const char *name)
-:QListWidget(parent)
+AttachView::AttachView(QWidget* parent)
+	: QListWidget(parent)
 {
 	v_readOnly = false;
 	// addColumn(tr("Attachments"));
@@ -1193,7 +1193,7 @@ void EventDlg::to_changeResource(const QString &r)
 {
 	QString str = d->le_to->text();
 	int start = d->le_to->selectionStart();
-	int len = d->le_to->selectedText().length();
+	// int len = d->le_to->selectedText().length();
 	if(start == -1) {
 		//printf("bad selection\n");
 		return;
@@ -1383,8 +1383,8 @@ void EventDlg::optionsUpdate()
 	d->tb_history->setPsiIcon(IconsetFactory::iconPtr("psi/history"));
 	if(d->tb_pgp) {
 		QIcon i;
-		i.setPixmap(IconsetFactory::icon("psi/cryptoNo").impix(),  QIcon::Automatic, QIcon::Normal, QIcon::Off);
-		i.setPixmap(IconsetFactory::icon("psi/cryptoYes").impix(), QIcon::Automatic, QIcon::Normal, QIcon::On);
+		i.addPixmap(IconsetFactory::icon("psi/cryptoNo").impix(),  QIcon::Normal, QIcon::Off);
+		i.addPixmap(IconsetFactory::icon("psi/cryptoYes").impix(), QIcon::Normal, QIcon::On);
 		d->tb_pgp->setPsiIcon(0);
 		d->tb_pgp->setIcon(i);
 	}

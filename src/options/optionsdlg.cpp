@@ -333,7 +333,7 @@ void OptionsDlg::Private::openTab(QString id)
 	if ( !tab ) {
 		bool found = false;
 		foreach(OptionsTab* opttab, tabs) {
-			if ( opttab->id() == id.latin1() ) {
+			if ( opttab->id() == id ) {
 				tab = opttab->widget(); // create the widget
 				if ( !tab )
 					continue;
@@ -345,7 +345,7 @@ void OptionsDlg::Private::openTab(QString id)
 				vbox->setSpacing(0);
 				vbox->setMargin(0);
 
-				tab->reparent(w, 0, QPoint(0, 0));
+				tab->setParent(w);
 				vbox->addWidget(tab);
 				if ( !opttab->stretchable() )
 					vbox->addStretch();
@@ -368,13 +368,13 @@ void OptionsDlg::Private::openTab(QString id)
 		}
 
 		if ( !found ) {
-			qWarning("OptionsDlg::Private::itemSelected(): could not create widget for id '%s'", id.latin1());
+			qWarning("OptionsDlg::Private::itemSelected(): could not create widget for id '%s'", qPrintable(id));
 			return;
 		}
 	}
 
 	foreach(OptionsTab* opttab, tabs) {
-		if ( opttab->id() == id.latin1() ) {
+		if ( opttab->id() == id ) {
 			dlg->lb_pageTitle->setText( opttab->name() );
 			dlg->lb_pageTitle->setHelp( opttab->desc() );
 			dlg->lb_pageTitle->setPsiIcon( opttab->psiIcon() );
@@ -396,23 +396,22 @@ void OptionsDlg::Private::openTab(QString id)
 
 void OptionsDlg::Private::connectDataChanged(QWidget *widget)
 {
-	QObjectList l = widget->queryList( "QWidget", 0, false, true ); // search for all QWidget children of widget
-	for ( QObjectList::Iterator it = l.begin(); it != l.end(); ++it) {
-		QVariant isOption = (*it)->property("isOption");
+	foreach(QWidget* w, widget->findChildren<QWidget*>()) {
+		QVariant isOption = w->property("isOption");
 		if (isOption.isValid() && !isOption.toBool()) {
-			continue;	// skip controls that only change Options dialog look
+			continue;
 		}
-		QWidget *w = (QWidget*) (*it);
-		QMap<QString, QByteArray>::Iterator it2 = changedMap.find( w->className() );
+		QMap<QString, QByteArray>::Iterator it2 = changedMap.find( w->metaObject()->className() );
 		if ( it2 != changedMap.end() ) {
-			disconnect(w, changedMap[w->className()], this, SLOT(dataChanged()));
-			connect(w, changedMap[w->className()], SLOT(dataChanged()));
+			disconnect(w, changedMap[w->metaObject()->className()], this, SLOT(dataChanged()));
+			connect(w, changedMap[w->metaObject()->className()], SLOT(dataChanged()));
 		}
 	}
 }
 
 void OptionsDlg::Private::currentItemChanged(QListWidgetItem* current, QListWidgetItem* previous)
 {
+	Q_UNUSED(previous);
 	if (!current)
 		return;
 
@@ -465,7 +464,7 @@ OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent)
 	setModal(false);
 	d->psi->dialogRegister(this);
 
-	setWindowTitle(CAP(caption()));
+	setWindowTitle(CAP(windowTitle()));
 	resize(640, 480);
 
 	connect(buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), SLOT(doOk()));

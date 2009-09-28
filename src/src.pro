@@ -12,6 +12,7 @@ CONFIG += pep
 #CONFIG += whiteboarding
 #CONFIG += psi_plugins
 DEFINES += QT_STATICPLUGIN
+DEFINES += QT3_SUPPORT_WARNINGS
 
 # Import several very useful Makefile targets 
 # as well as set up default directories for 

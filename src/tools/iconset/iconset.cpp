@@ -256,7 +256,7 @@ public:
 
 	// copy all stuff, this constructor is called when detaching
 	Private(const Private &from)
-	: QObject()
+		: QObject(), QSharedData()
 	{
 		moveToMainThread(this);
 
@@ -960,6 +960,7 @@ public:
 	}
 
 	Private(const Private &from)
+		: QSharedData()
 	{
 		init();
 

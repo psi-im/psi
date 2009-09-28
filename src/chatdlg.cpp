@@ -366,12 +366,11 @@ void ChatDlg::dragEnterEvent(QDragEnterEvent* event)
 	if (account()->loggedIn() && event->mimeData()->hasUrls()) {
 		foreach(QUrl url, event->mimeData()->urls()) {
 			if (!url.toLocalFile().isEmpty()) {
-				accept = true;
+				event->accept();
 				break;
 			}
 		}
 	}
-	event->accept(accept);
 }
 
 void ChatDlg::setJid(const Jid &j)
