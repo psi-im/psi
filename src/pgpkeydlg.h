@@ -48,6 +48,7 @@ private slots:
 private:
 	Ui::PGPKey ui_;
 	QCA::KeyStoreEntry entry_;
+	QPushButton* pb_dtext_;
 };
 
 #endif

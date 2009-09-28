@@ -1,109 +1,79 @@
-<ui version="4.0" stdsetdef="1" >
-  <author></author>
-  <comment></comment>
-  <exportmacro></exportmacro>
-  <class>PGPKey</class>
-  <widget class="QDialog" name="PGPKey" >
-    <property name="geometry" >
-      <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>454</width>
-        <height>251</height>
-      </rect>
-    </property>
-    <property name="windowTitle" >
-      <string>Form1</string>
-    </property>
-    <layout class="QVBoxLayout" >
-      <item>
-        <widget class="QLabel" name="textLabel1" >
-          <property name="text" >
-            <string>Please select the key to use for security:</string>
-          </property>
-        </widget>
-      </item>
-      <item>
-        <widget class="Q3ListView" name="lv_keys" >
-          <property name="allColumnsShowFocus" >
-            <bool>true</bool>
-          </property>
-          <property name="resizeMode" >
-            <enum>Q3ListView::LastColumn</enum>
-          </property>
-          <column>
-            <property name="text" >
-              <string>Key ID</string>
-            </property>
-            <property name="clickable" >
-              <bool>true</bool>
-            </property>
-            <property name="resizable" >
-              <bool>true</bool>
-            </property>
-          </column>
-          <column>
-            <property name="text" >
-              <string>User ID</string>
-            </property>
-            <property name="clickable" >
-              <bool>true</bool>
-            </property>
-            <property name="resizable" >
-              <bool>true</bool>
-            </property>
-          </column>
-        </widget>
-      </item>
-      <item>
-        <layout class="QHBoxLayout" >
-          <property name="margin" >
-            <number>0</number>
-          </property>
-          <item>
-            <widget class="IconButton" name="pb_dtext" >
-              <property name="text" >
-                <string>&amp;Diagnostics</string>
-              </property>
-            </widget>
-          </item>
-          <item>
-            <spacer name="spacer1" >
-              <property name="sizeHint" >
-                <size>
-                  <width>312</width>
-                  <height>20</height>
-                </size>
-              </property>
-              <property name="sizeType" >
-                <enum>Expanding</enum>
-              </property>
-              <property name="orientation" >
-                <enum>Horizontal</enum>
-              </property>
-            </spacer>
-          </item>
-          <item>
-            <widget class="IconButton" name="pb_cancel" >
-              <property name="text" >
-                <string>&amp;Cancel</string>
-              </property>
-            </widget>
-          </item>
-          <item>
-            <widget class="IconButton" name="pb_ok" >
-              <property name="text" >
-                <string>&amp;OK</string>
-              </property>
-              <property name="default" >
-                <bool>true</bool>
-              </property>
-            </widget>
-          </item>
-        </layout>
-      </item>
-    </layout>
-  </widget>
-  <layoutdefault spacing="6" margin="11" />
-  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>PGPKey</class>
+ <widget class="QDialog" name="PGPKey">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>490</width>
+    <height>291</height>
+   </rect>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QLabel" name="textLabel1">
+     <property name="text">
+      <string>Please select the key to use for security:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="Q3ListView" name="lv_keys">
+     <property name="allColumnsShowFocus">
+      <bool>true</bool>
+     </property>
+     <property name="resizeMode">
+      <enum>Q3ListView::LastColumn</enum>
+     </property>
+     <column>
+      <property name="text">
+       <string>Key ID</string>
+      </property>
+      <property name="clickable">
+       <bool>true</bool>
+      </property>
+      <property name="resizable">
+       <bool>true</bool>
+      </property>
+     </column>
+     <column>
+      <property name="text">
+       <string>User ID</string>
+      </property>
+      <property name="clickable">
+       <bool>true</bool>
+      </property>
+      <property name="resizable">
+       <bool>true</bool>
+      </property>
+     </column>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+ <customwidgets>
+  <customwidget>
+   <class>Q3Frame</class>
+   <extends>QFrame</extends>
+   <header>Qt3Support/Q3Frame</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Q3ListView</class>
+   <extends>Q3Frame</extends>
+   <header>q3listview.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
 </ui>

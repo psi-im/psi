@@ -23,12 +23,14 @@
  *
  */
 
+#include "pgpkeydlg.h"
+
 #include <Q3ListViewItem>
 #include <QString>
 #include <QMessageBox>
+#include <QPushButton>
 
 #include <pgputil.h>
-#include "pgpkeydlg.h"
 #include "common.h"
 #include "showtextdlg.h"
 
@@ -49,10 +51,12 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString& defaultKeyID, QWidget *parent) : QDi
 	ui_.setupUi(this);
 	setModal(true);
 
+	pb_dtext_ = ui_.buttonBox->addButton(tr("&Diagnostics"), QDialogButtonBox::ActionRole);
+
 	connect(ui_.lv_keys, SIGNAL(doubleClicked(Q3ListViewItem *)), SLOT(qlv_doubleClicked(Q3ListViewItem *)));
-	connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(do_accept()));
-	connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(reject()));
-	connect(ui_.pb_dtext, SIGNAL(clicked()), SLOT(show_ksm_dtext()));
+	connect(ui_.buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), SLOT(do_accept()));
+	connect(ui_.buttonBox->button(QDialogButtonBox::Cancel), SIGNAL(clicked()), SLOT(reject()));
+	connect(pb_dtext_, SIGNAL(clicked()), SLOT(show_ksm_dtext()));
 
 	Q3ListViewItem *isel = 0;
 
@@ -85,6 +89,8 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString& defaultKeyID, QWidget *parent) : QDi
 		ui_.lv_keys->setSelected(ui_.lv_keys->firstChild(), true);
 	else if(isel)
 		ui_.lv_keys->ensureItemVisible(isel);
+
+	// adjustSize();
 }
 
 const QCA::KeyStoreEntry& PGPKeyDlg::keyStoreEntry() const
