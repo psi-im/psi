@@ -19,33 +19,39 @@
     </widget>
    </item>
    <item row="1" column="0">
-    <widget class="Q3ListView" name="lv_keys">
+    <widget class="QTreeWidget" name="lv_keys">
+     <property name="indentation">
+      <number>0</number>
+     </property>
+     <property name="rootIsDecorated">
+      <bool>false</bool>
+     </property>
+     <property name="uniformRowHeights">
+      <bool>true</bool>
+     </property>
+     <property name="itemsExpandable">
+      <bool>false</bool>
+     </property>
+     <property name="sortingEnabled">
+      <bool>true</bool>
+     </property>
      <property name="allColumnsShowFocus">
       <bool>true</bool>
      </property>
-     <property name="resizeMode">
-      <enum>Q3ListView::LastColumn</enum>
-     </property>
+     <attribute name="headerCascadingSectionResizes">
+      <bool>true</bool>
+     </attribute>
+     <attribute name="headerCascadingSectionResizes">
+      <bool>true</bool>
+     </attribute>
      <column>
       <property name="text">
        <string>Key ID</string>
-      </property>
-      <property name="clickable">
-       <bool>true</bool>
-      </property>
-      <property name="resizable">
-       <bool>true</bool>
       </property>
      </column>
      <column>
       <property name="text">
        <string>User ID</string>
-      </property>
-      <property name="clickable">
-       <bool>true</bool>
-      </property>
-      <property name="resizable">
-       <bool>true</bool>
       </property>
      </column>
     </widget>
@@ -61,19 +67,6 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
- <customwidgets>
-  <customwidget>
-   <class>Q3Frame</class>
-   <extends>QFrame</extends>
-   <header>Qt3Support/Q3Frame</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>Q3ListView</class>
-   <extends>Q3Frame</extends>
-   <header>q3listview.h</header>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

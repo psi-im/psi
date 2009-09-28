@@ -34,14 +34,23 @@
 #include "common.h"
 #include "showtextdlg.h"
 
-class KeyViewItem : public Q3ListViewItem
+class KeyViewItem : public QTreeWidgetItem
 {
 public:
-	KeyViewItem(const QCA::KeyStoreEntry& entry, Q3ListView *par) : Q3ListViewItem(par)
+	KeyViewItem(const QCA::KeyStoreEntry& entry, QTreeWidget* parent)
+		: QTreeWidgetItem(parent)
+		, entry_(entry)
 	{
-		entry_ = entry;
+		setText(0, entry_.id().right(8));
+		setText(1, entry_.name());
 	}
 
+	QCA::KeyStoreEntry entry() const
+	{
+		return entry_;
+	}
+
+private:
 	QCA::KeyStoreEntry entry_;
 };
 
@@ -53,42 +62,51 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString& defaultKeyID, QWidget *parent) : QDi
 
 	pb_dtext_ = ui_.buttonBox->addButton(tr("&Diagnostics"), QDialogButtonBox::ActionRole);
 
-	connect(ui_.lv_keys, SIGNAL(doubleClicked(Q3ListViewItem *)), SLOT(qlv_doubleClicked(Q3ListViewItem *)));
+	ui_.lv_keys->header()->setResizeMode(QHeaderView::ResizeToContents);
+	connect(ui_.lv_keys, SIGNAL(itemDoubleClicked(QTreeWidgetItem *, int)), SLOT(qlv_doubleClicked(QTreeWidgetItem *)));
+
 	connect(ui_.buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), SLOT(do_accept()));
 	connect(ui_.buttonBox->button(QDialogButtonBox::Cancel), SIGNAL(clicked()), SLOT(reject()));
 	connect(pb_dtext_, SIGNAL(clicked()), SLOT(show_ksm_dtext()));
 
-	Q3ListViewItem *isel = 0;
+	KeyViewItem* firstItem = 0;
+	KeyViewItem* selectedItem = 0;
 
 	foreach(QCA::KeyStore *ks, PGPUtil::instance().keystores_) {
 		if (ks->type() == QCA::KeyStore::PGPKeyring && ks->holdsIdentities()) {
 			foreach(QCA::KeyStoreEntry ke, ks->entryList()) {
-				if ((t == Public && ke.type() == QCA::KeyStoreEntry::TypePGPPublicKey) || (ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey)) {
+				bool publicKey = (t == Public && ke.type() == QCA::KeyStoreEntry::TypePGPPublicKey) ||
+				    (ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey);
+				bool secretKey = t == Secret && ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey;
+				if (publicKey || secretKey) {
 					KeyViewItem *i = new KeyViewItem(ke, ui_.lv_keys);
-					i->setText(0, ke.id().right(8));
-					i->setText(1, ke.name());
-					if(!defaultKeyID.isEmpty() && ke.pgpPublicKey().keyId() == defaultKeyID) {
-						ui_.lv_keys->setSelected(i, true);
-						isel = i;
+
+					QString keyId;
+					if (publicKey)
+						keyId = ke.pgpPublicKey().keyId();
+					else
+						keyId = ke.pgpSecretKey().keyId();
+
+					if (!defaultKeyID.isEmpty() && keyId == defaultKeyID) {
+						selectedItem = i;
 					}
-				}
-				else if (t == Secret && ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey) {
-					KeyViewItem *i = new KeyViewItem(ke, ui_.lv_keys);
-					i->setText(0, ke.id().right(8));
-					i->setText(1, ke.name());
-					if(!defaultKeyID.isEmpty() && ke.pgpSecretKey().keyId() == defaultKeyID) {
-						ui_.lv_keys->setSelected(i, true);
-						isel = i;
+
+					if (!firstItem) {
+						firstItem = i;
 					}
 				}
 			}
 		}
 	}
 
-	if(ui_.lv_keys->childCount() > 0 && !isel)
-		ui_.lv_keys->setSelected(ui_.lv_keys->firstChild(), true);
-	else if(isel)
-		ui_.lv_keys->ensureItemVisible(isel);
+	if (selectedItem) {
+		firstItem = selectedItem;
+	}
+
+	if (firstItem) {
+		ui_.lv_keys->setCurrentItem(firstItem);
+		ui_.lv_keys->scrollToItem(firstItem);
+	}
 
 	// adjustSize();
 }
@@ -98,20 +116,20 @@ const QCA::KeyStoreEntry& PGPKeyDlg::keyStoreEntry() const
 	return entry_;
 }
 
-void PGPKeyDlg::qlv_doubleClicked(Q3ListViewItem *i)
+void PGPKeyDlg::qlv_doubleClicked(QTreeWidgetItem* i)
 {
-	ui_.lv_keys->setSelected(i, true);
+	ui_.lv_keys->setCurrentItem(i);
 	do_accept();
 }
 
 void PGPKeyDlg::do_accept()
 {
-	KeyViewItem *i = (KeyViewItem *)ui_.lv_keys->selectedItem();
+	KeyViewItem *i = static_cast<KeyViewItem*>(ui_.lv_keys->currentItem());
 	if(!i) {
 		QMessageBox::information(this, tr("Error"), tr("Please select a key."));
 		return;
 	}
-	entry_ = i->entry_;
+	entry_ = i->entry();
 	accept();
 }
 
