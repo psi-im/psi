@@ -1,6 +1,6 @@
 /*
  * pgpkeydlg.h 
- * Copyright (C) 2001-2005  Justin Karneges
+ * Copyright (C) 2001-2009  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,24 +25,25 @@
 
 #include "pgpkeydlg.h"
 
-#include <Q3ListViewItem>
 #include <QString>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QStandardItemModel>
+#include <QSortFilterProxyModel>
+#include <QKeyEvent>
 
 #include <pgputil.h>
 #include "common.h"
 #include "showtextdlg.h"
 
-class KeyViewItem : public QTreeWidgetItem
+class KeyViewItem : public QStandardItem
 {
 public:
-	KeyViewItem(const QCA::KeyStoreEntry& entry, QTreeWidget* parent)
-		: QTreeWidgetItem(parent)
+	KeyViewItem(const QCA::KeyStoreEntry& entry, const QString& name)
+		: QStandardItem()
 		, entry_(entry)
 	{
-		setText(0, entry_.id().right(8));
-		setText(1, entry_.name());
+		setText(name);
 	}
 
 	QCA::KeyStoreEntry entry() const
@@ -54,23 +55,57 @@ private:
 	QCA::KeyStoreEntry entry_;
 };
 
+class KeyViewProxyModel : public QSortFilterProxyModel
+{
+public:
+	KeyViewProxyModel(QObject* parent)
+		: QSortFilterProxyModel(parent)
+	{
+		setFilterCaseSensitivity(Qt::CaseInsensitive);
+	}
 
-PGPKeyDlg::PGPKeyDlg(Type t, const QString& defaultKeyID, QWidget *parent) : QDialog(parent)
+	virtual bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const
+	{
+		for (int column = 0; column <= 1; ++column) {
+			QModelIndex index = sourceModel()->index(sourceRow, column, sourceParent);
+			if (index.data(Qt::DisplayRole).toString().contains(filterRegExp()))
+				return true;
+		}
+		return false;
+	}
+};
+
+PGPKeyDlg::PGPKeyDlg(Type t, const QString& defaultKeyID, QWidget *parent)
+	: QDialog(parent)
+	, model_(0)
 {
 	ui_.setupUi(this);
 	setModal(true);
 
 	pb_dtext_ = ui_.buttonBox->addButton(tr("&Diagnostics"), QDialogButtonBox::ActionRole);
 
-	ui_.lv_keys->header()->setResizeMode(QHeaderView::ResizeToContents);
-	connect(ui_.lv_keys, SIGNAL(itemDoubleClicked(QTreeWidgetItem *, int)), SLOT(qlv_doubleClicked(QTreeWidgetItem *)));
+	model_ = new QStandardItemModel(this);
+	model_->setHorizontalHeaderLabels(QStringList()
+	                                  << tr("Key ID")
+	                                  << tr("User ID")
+	                                 );
+	proxy_ = new KeyViewProxyModel(this);
+	proxy_->setSourceModel(model_);
+	ui_.lv_keys->setModel(proxy_);
 
+	ui_.lv_keys->header()->setResizeMode(QHeaderView::ResizeToContents);
+
+	connect(ui_.lv_keys, SIGNAL(doubleClicked(const QModelIndex&)), SLOT(doubleClicked(const QModelIndex&)));
 	connect(ui_.buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), SLOT(do_accept()));
 	connect(ui_.buttonBox->button(QDialogButtonBox::Cancel), SIGNAL(clicked()), SLOT(reject()));
 	connect(pb_dtext_, SIGNAL(clicked()), SLOT(show_ksm_dtext()));
+	connect(ui_.le_filter, SIGNAL(textChanged(const QString&)), this, SLOT(filterTextChanged()));
+
+	ui_.le_filter->installEventFilter(this);
 
 	KeyViewItem* firstItem = 0;
 	KeyViewItem* selectedItem = 0;
+	int row = 0;
 
 	foreach(QCA::KeyStore *ks, PGPUtil::instance().keystores_) {
 		if (ks->type() == QCA::KeyStore::PGPKeyring && ks->holdsIdentities()) {
@@ -79,7 +114,12 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString& defaultKeyID, QWidget *parent) : QDi
 				    (ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey);
 				bool secretKey = t == Secret && ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey;
 				if (publicKey || secretKey) {
-					KeyViewItem *i = new KeyViewItem(ke, ui_.lv_keys);
+					KeyViewItem *i = new KeyViewItem(ke,  ke.id().right(8));
+					KeyViewItem *i2 = new KeyViewItem(ke, ke.name());
+					QStandardItem* root = model_->invisibleRootItem();
+					root->setChild(row, 0, i);
+					root->setChild(row, 1, i2);
+					++row;
 
 					QString keyId;
 					if (publicKey)
@@ -104,8 +144,10 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString& defaultKeyID, QWidget *parent) : QDi
 	}
 
 	if (firstItem) {
-		ui_.lv_keys->setCurrentItem(firstItem);
-		ui_.lv_keys->scrollToItem(firstItem);
+		QModelIndex realIndex = model_->indexFromItem(firstItem);
+		QModelIndex fakeIndex = proxy_->mapFromSource(realIndex);
+		ui_.lv_keys->setCurrentIndex(fakeIndex);
+		ui_.lv_keys->scrollTo(fakeIndex);
 	}
 
 	// adjustSize();
@@ -116,15 +158,42 @@ const QCA::KeyStoreEntry& PGPKeyDlg::keyStoreEntry() const
 	return entry_;
 }
 
-void PGPKeyDlg::qlv_doubleClicked(QTreeWidgetItem* i)
+bool PGPKeyDlg::eventFilter(QObject* watched, QEvent* event)
 {
-	ui_.lv_keys->setCurrentItem(i);
+	if (watched == ui_.le_filter && event->type() == QEvent::KeyPress) {
+		QKeyEvent* ke = static_cast<QKeyEvent*>(event);
+		if (ke->key() == Qt::Key_Up ||
+		    ke->key() == Qt::Key_Down ||
+		    ke->key() == Qt::Key_PageUp ||
+		    ke->key() == Qt::Key_PageDown ||
+		    ke->key() == Qt::Key_Home ||
+		    ke->key() == Qt::Key_End)
+		{
+			QCoreApplication::instance()->sendEvent(ui_.lv_keys, event);
+			return true;
+		}
+	}
+	return QDialog::eventFilter(watched, event);
+}
+
+void PGPKeyDlg::filterTextChanged()
+{
+	proxy_->setFilterWildcard(ui_.le_filter->text());
+}
+
+void PGPKeyDlg::doubleClicked(const QModelIndex& index)
+{
+	ui_.lv_keys->setCurrentIndex(index);
 	do_accept();
 }
 
 void PGPKeyDlg::do_accept()
 {
-	KeyViewItem *i = static_cast<KeyViewItem*>(ui_.lv_keys->currentItem());
+	QModelIndex fakeIndex = ui_.lv_keys->currentIndex();
+	QModelIndex realIndex = proxy_->mapToSource(fakeIndex);
+
+	QStandardItem* item = model_->itemFromIndex(realIndex);
+	KeyViewItem *i = dynamic_cast<KeyViewItem*>(item);
 	if(!i) {
 		QMessageBox::information(this, tr("Error"), tr("Please select a key."));
 		return;
