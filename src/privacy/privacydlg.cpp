@@ -62,7 +62,7 @@ PrivacyDlg::PrivacyDlg(const QString& account_name, PrivacyManager* manager, QWi
 	connect(ui_.pb_down,SIGNAL(clicked()),SLOT(moveCurrentRuleDown()));
 	connect(ui_.pb_apply,SIGNAL(clicked()),SLOT(applyList()));
 
-	connect(ui_.pb_close,SIGNAL(clicked()),SLOT(close()));
+	connect(ui_.buttonBox->button(QDialogButtonBox::Close),SIGNAL(clicked()),SLOT(close()));
 	setWidgetsEnabled(false);
 
 	// Disable all buttons
@@ -137,6 +137,7 @@ void PrivacyDlg::applyList()
 
 void PrivacyDlg::close()
 {
+	// FIXME: Warn about unsaved changes
 	done(0);
 }
 
