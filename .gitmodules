@@ -1,3 +1,6 @@
 [submodule "iris"]
 	path = iris
 	url = git://git.psi-im.org/iris.git
+[submodule "src/libpsi"]
+	path = src/libpsi
+	url = git://git.psi-im.org/libpsi.git
