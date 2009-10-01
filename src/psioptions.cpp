@@ -189,7 +189,7 @@ bool PsiOptions::newProfile()
 		buttons.on = true;
 #endif
 		buttons.keys << "button_options" << "button_status";
-		buttons.dock = Qt::DockBottom;
+		buttons.dock = Qt3Dock_Bottom;
 
 		ToolbarPrefs showContacts;
 		showContacts.name = tr("Show contacts");
@@ -198,7 +198,7 @@ bool PsiOptions::newProfile()
 		ToolbarPrefs eventNotifier;
 		eventNotifier.name = tr("Event notifier");
 		eventNotifier.keys << "event_notifier";
-		eventNotifier.dock = Qt::DockBottom;
+		eventNotifier.dock = Qt3Dock_Bottom;
 
 		QList<ToolbarPrefs> toolbars;
 		toolbars << buttons

@@ -216,9 +216,9 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
 				QString v =  fl[i].value().first();
 				IconAction* soundact = psiCon_->actionList()->suitableActions(PsiActionList::ActionsType( PsiActionList::Actions_MainWin | PsiActionList::Actions_Common)).action("menu_play_sounds");
 				if (v == "1") 
-					soundact->setOn(true);
+					soundact->setChecked(true);
 				else if (v == "0") 
-					soundact->setOn(false);
+					soundact->setChecked(false);
 			}
 			else if (fl[i].var() == "auto-offline") {
 				QString v =  fl[i].value().first();

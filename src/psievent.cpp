@@ -144,7 +144,7 @@ void PsiEvent::setTimeStamp(const QDateTime &t)
 QDomElement PsiEvent::toXml(QDomDocument *doc) const
 {
 	QDomElement e = doc->createElement("event");
-	e.setAttribute("type", className());
+	e.setAttribute("type", metaObject()->className());
 
 	e.appendChild( textTag(*doc, "originLocal",	v_originLocal) );
 	e.appendChild( textTag(*doc, "late",		v_late) );
@@ -162,7 +162,7 @@ bool PsiEvent::fromXml(PsiCon *psi, PsiAccount *account, const QDomElement *e)
 {
 	if ( e->tagName() != "event" )
 		return false;
-	if ( e->attribute("type") != className() )
+	if ( e->attribute("type") != metaObject()->className() )
 		return false;
 
 	readBoolEntry(*e, "originLocal", &v_originLocal);
@@ -766,7 +766,7 @@ void EventQueue::enqueue(PsiEvent *e)
 	// skip all with higher or equal priority
 	foreach(EventItem *ei, d->list) {
 		if (ei && ei->event()->priority() < prior ) {
-			d->list.insert(d->list.find(ei), i);
+			d->list.insert(d->list.indexOf(ei), i);
 			found = true;
 			break;
 		}
@@ -786,7 +786,7 @@ void EventQueue::dequeue(PsiEvent *e)
 
 	foreach(EventItem *i, d->list) {
 		if ( e == i->event() ) {
-			d->list.remove(i);
+			d->list.removeAll(i);
 			emit queueChanged();
 			delete i;
 			return;
@@ -800,7 +800,7 @@ PsiEvent *EventQueue::dequeue(const Jid &j, bool compareRes)
 		PsiEvent *e = i->event();
 		Jid j2(e->jid());
 		if(j.compare(j2, compareRes)) {
-			d->list.remove(i);
+			d->list.removeAll(i);
 			emit queueChanged();
 			delete i;
 			return e;
@@ -832,7 +832,7 @@ PsiEvent *EventQueue::dequeueNext()
 	if(!i)
 		return 0;
 	PsiEvent *e = i->event();
-	d->list.remove(i);
+	d->list.removeAll(i);
 	emit queueChanged();
 	delete i;
 	return e;
@@ -919,7 +919,7 @@ void EventQueue::printContent() const
 {
 	foreach(EventItem *i, d->list) {
 		PsiEvent *e = i->event();
-		printf("  %d: (%d) from=[%s] jid=[%s]\n", i->id(), e->type(), e->from().full().latin1(), e->jid().full().latin1());
+		printf("  %d: (%d) from=[%s] jid=[%s]\n", i->id(), e->type(), qPrintable(e->from().full()), qPrintable(e->jid().full()));
 	}
 }
 

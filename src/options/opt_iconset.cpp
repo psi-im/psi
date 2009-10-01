@@ -74,8 +74,8 @@ public:
 			}
 		}
 		
-		setName(name); 
-		setModal(modal); 
+		setObjectName(name);
+		setModal(modal);
 	}
 
 	~IconsetDetailsDlg()
@@ -84,7 +84,7 @@ public:
 	}
 	
 	void setIconset( const Iconset &is ) {
-		setWindowTitle(caption().arg(is.name()));
+		setWindowTitle(windowTitle().arg(is.name()));
 		
 		lb_name->setText(is.name());
 		lb_version->setText(is.version());
@@ -156,7 +156,7 @@ static int countIconsets(QString addDir, QStringList excludeList)
 		QString fileName = *it + "/iconsets" + addDir;
 		QDir dir (fileName);
 
-		QStringList list = dir.entryList("*");
+		QStringList list = dir.entryList(QStringList() << "*");
 		QStringList::Iterator it2 = list.begin();
 		for ( ; it2 != list.end(); ++it2) {
 			if ( *it2 == "." || *it2 == ".." )
@@ -304,7 +304,7 @@ void IconsetLoadThread::run()
 		QString fileName = *it + "/iconsets" + addPath;
 		QDir dir (fileName);
 
-		QStringList list = dir.entryList("*");
+		QStringList list = dir.entryList(QStringList() << "*");
 		QStringList::Iterator it2 = list.begin();
 		for ( ; it2 != list.end(); ++it2) {
 			if ( *it2 == "." || *it2 == ".." )
@@ -432,13 +432,8 @@ void OptionsTabIconsetSystem::restoreOptions()
 
 	d->setCursor(Qt::WaitCursor);
 
-	QPalette customPal = d->palette();
-	customPal.setDisabled(customPal.inactive());
 	d->iss_system->setEnabled(false);
-	d->iss_system->setPalette(customPal);
-
 	d->pb_sysDetails->setEnabled(false);
-	d->pb_sysDetails->setPalette(customPal);
 
 	d->progress->show();
 	d->progress->setValue( 0 );
@@ -481,10 +476,7 @@ bool OptionsTabIconsetSystem::event(QEvent *e)
 	}
 	else if ( e->type() == QEvent::User + 1 ) { // finish event
 		d->iss_system->setEnabled(true);
-		d->iss_system->unsetPalette();
-
 		d->pb_sysDetails->setEnabled(true);
-		d->pb_sysDetails->unsetPalette();
 
 		connect(d->iss_system, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SIGNAL(dataChanged()));
 
@@ -600,9 +592,7 @@ void OptionsTabIconsetEmoticons::restoreOptions()
 	d->iss_emoticons->clear();
 
 	{
-		Q3PtrListIterator<Iconset> it ( PsiIconset::instance()->emoticons );
-		Iconset *is;
-		for ( ; (is = it.current()); ++it) {
+		foreach(Iconset* is, PsiIconset::instance()->emoticons) {
 			d->iss_emoticons->insert(*is);
 			d->iss_emoticons->setItemSelected(d->iss_emoticons->lastItem(), true);
 		}
@@ -612,9 +602,7 @@ void OptionsTabIconsetEmoticons::restoreOptions()
 	{
 		QStringList loaded;
 		{
-			Q3PtrListIterator<Iconset> it( PsiIconset::instance()->emoticons );
-			Iconset *tmp;
-			for ( ; (tmp = it.current()); ++it) {
+			foreach(Iconset* tmp, PsiIconset::instance()->emoticons) {
 				QFileInfo fi ( tmp->fileName() );
 				loaded << fi.fileName();
 			}
@@ -622,13 +610,8 @@ void OptionsTabIconsetEmoticons::restoreOptions()
 
 		d->setCursor(Qt::WaitCursor);
 
-		QPalette customPal = d->palette();
-		customPal.setDisabled(customPal.inactive());
 		d->ck_useEmoticons->setEnabled(false);
-		d->ck_useEmoticons->setPalette(customPal);
-
 		d->groupBox9->setEnabled(false);
-		d->groupBox9->setPalette(customPal);
 
 		d->progress->show();
 		d->progress->setValue( 0 );
@@ -668,10 +651,7 @@ bool OptionsTabIconsetEmoticons::event(QEvent *e)
 	}
 	else if ( e->type() == QEvent::User + 1 ) { // finish event
 		d->ck_useEmoticons->setEnabled(true);
-		d->ck_useEmoticons->unsetPalette();
-
 		d->groupBox9->setEnabled(true);
-		d->groupBox9->unsetPalette();
 
 		connect(d->iss_emoticons, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SIGNAL(dataChanged()));
 
@@ -846,7 +826,7 @@ void OptionsTabIconsetRoster::restoreOptions()
 	d->setCursor(Qt::WaitCursor);
 
 	QPalette customPal = d->palette();
-	customPal.setDisabled(customPal.inactive());
+	// customPal.setDisabled(customPal.inactive());
 	d->tabWidget3->setEnabled(false);
 	d->tabWidget3->setPalette(customPal);
 
@@ -944,7 +924,7 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
 		}
 
 		d->tabWidget3->setEnabled(true);
-		d->tabWidget3->unsetPalette();
+		// d->tabWidget3->unsetPalette();
 
 		connect(d->iss_defRoster, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SIGNAL(dataChanged()));
 		connect(d->iss_servicesRoster, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SIGNAL(dataChanged()));

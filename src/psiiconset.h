@@ -21,9 +21,7 @@
 #ifndef PSIICONSET_H
 #define PSIICONSET_H
 
-#include <q3ptrlist.h>
-#include <qmap.h>
-#include <q3dict.h>
+#include <QMap>
 
 #include "iconset.h"
 
@@ -44,8 +42,8 @@ public:
 	void reloadRoster();
 	bool loadAll();
 
-	Q3Dict<Iconset> roster;
-	Q3PtrList<Iconset> emoticons;
+	QHash<QString, Iconset*> roster;
+	QList<Iconset*> emoticons;
 	const Iconset &system() const;
 	void stripFirstAnimFrame(Iconset *);
 	static void removeAnimation(Iconset *);

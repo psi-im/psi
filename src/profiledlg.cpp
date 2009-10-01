@@ -28,14 +28,12 @@
 #include <QMessageBox>
 #include <QCheckBox>
 #include <QPushButton>
-#include <Q3Button>
-#include <Q3GroupBox>
-#include <Q3ListBox>
 #include <QInputDialog>
 #include <QFile>
 #include <QFileInfo>
-#include <Q3ButtonGroup>
 #include <QPixmap>
+#include <QButtonGroup>
+
 #include "profiles.h"
 #include "common.h"
 #include "iconwidget.h"
@@ -44,50 +42,57 @@
 class StretchLogoLabel : public QLabel
 {
 public:
-	StretchLogoLabel(QPixmap pix, QWidget *label, const char *name = 0)
-	: QLabel((QWidget*)label->parent(), name)
+	StretchLogoLabel(QPixmap pix, QWidget *label)
+		: QLabel(label->parentWidget())
+		, pixmap_(pix)
 	{
-		setPixmap(pix);
-		setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed));
 		replaceWidget(label, this);
+		setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum));
+	}
+
+	// reimplemented
+	QSize sizeHint() const
+	{
+		QSize sh = QLabel::sizeHint();
+		sh.setHeight(pixmap_.height());
+		return sh;
 	}
 
 	void paintEvent(QPaintEvent *event)
 	{
-		QPainter *p = new QPainter(this);
-		p->drawTiledPixmap(0, 0, width(), height(), *pixmap());
-		delete p;
-		QLabel::paintEvent(event);
+		QPainter p(this);
+		p.fillRect(rect(), Qt::red);
+		p.drawTiledPixmap(0, 0, width(), height(), pixmap_);
 	}
+
+private:
+	QPixmap pixmap_;
 };
+
+//----------------------------------------------------------------------------
+// ProfileOpenDlg
+//----------------------------------------------------------------------------
 
 ProfileOpenDlg::ProfileOpenDlg(const QString &def, const VarList &_langs, const QString &curLang, QWidget *parent)
 :QDialog(parent)
 {
 	setupUi(this);
 	setModal(true);
-	setWindowTitle(CAP(caption()));
+	setWindowTitle(CAP(windowTitle()));
 	pb_open->setDefault(true);
 
 	langs = _langs;
 
-	// insert the logo
 	QPixmap logo = (QPixmap)IconsetFactory::icon("psi/psiLogo").pixmap();
 	lb_logo->setPixmap(logo);
 	lb_logo->setFixedSize(logo.width(), logo.height());
 	lb_logo->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
 	//setFixedWidth(logo->width());
 
-	QImage logoImg = logo.convertToImage();
+	QImage logoImg = logo.toImage();
+	new StretchLogoLabel(QPixmap::fromImage( logoImg.copy(0, 0, 1, logoImg.height()) ), lb_left);
+	new StretchLogoLabel(QPixmap::fromImage( logoImg.copy(logoImg.width()-1, 0, 1, logoImg.height()) ), lb_right);
 
-	QPixmap tmp;
-	tmp.convertFromImage( logoImg.copy(0, 0, 1, logoImg.height()) );
-	StretchLogoLabel *stretch = new StretchLogoLabel(tmp, lb_left);
-
-	tmp.convertFromImage( logoImg.copy(logoImg.width()-1, 0, 1, logoImg.height()) );
-	stretch = new StretchLogoLabel(tmp, lb_right);
-
-	// setup signals
 	connect(pb_open, SIGNAL(clicked()), SLOT(accept()));
 	connect(pb_close, SIGNAL(clicked()), SLOT(reject()));
 	connect(pb_profiles, SIGNAL(clicked()), SLOT(manageProfiles()));
@@ -96,15 +101,14 @@ ProfileOpenDlg::ProfileOpenDlg(const QString &def, const VarList &_langs, const 
 	int x = 0;
 	langSel = x;
 	for(VarList::ConstIterator it = langs.begin(); it != langs.end(); ++it) {
-		cb_lang->insertItem((*it).data());
+		cb_lang->addItem((*it).data());
 		if((curLang.isEmpty() && x == 0) || (curLang == (*it).key())) {
-			cb_lang->setCurrentItem(x);
+			cb_lang->setCurrentIndex(x);
 			langSel = x;
 		}
 		++x;
 	}
 
-	// QWhatsThis helpers
 	cb_profile->setWhatsThis(
 		tr("Select a profile to open from this list."));
 	cb_lang->setWhatsThis(
@@ -135,9 +139,9 @@ void ProfileOpenDlg::reload(const QString &choose)
 	else {
 		int x = 0;
 		for(QStringList::ConstIterator it = list.begin(); it != list.end(); ++it) {
-			cb_profile->insertItem(*it);
+			cb_profile->addItem(*it);
 			if((choose.isEmpty() && x == 0) || (choose == *it)) {
-				cb_profile->setCurrentItem(x);
+				cb_profile->setCurrentIndex(x);
 			}
 			++x;
 		}
@@ -152,7 +156,7 @@ void ProfileOpenDlg::manageProfiles()
 {
 	ProfileManageDlg *w = new ProfileManageDlg(cb_profile->currentText(), this);
 	w->exec();
-	QString last = w->lbx_profiles->text(w->lbx_profiles->currentItem());
+	QString last = w->lbx_profiles->currentItem()->text();
 	delete w;
 
 	reload(last);
@@ -169,28 +173,30 @@ void ProfileOpenDlg::langChange(int x)
 	done(10);
 }
 
+//----------------------------------------------------------------------------
+// ProfileManageDlg
+//----------------------------------------------------------------------------
 
 ProfileManageDlg::ProfileManageDlg(const QString &choose, QWidget *parent)
 :QDialog(parent)
 {
 	setupUi(this);
 	setModal(true);
-	setWindowTitle(CAP(caption()));
+	setWindowTitle(CAP(windowTitle()));
 
 	// setup signals
 	connect(pb_new, SIGNAL(clicked()), SLOT(slotProfileNew()));
-	connect(pb_rename, SIGNAL(clicked()), SLOT(slotProfileRename()));
+	// connect(pb_rename, SIGNAL(clicked()), SLOT(slotProfileRename()));
 	connect(pb_delete, SIGNAL(clicked()), SLOT(slotProfileDelete()));
-	connect(pb_close, SIGNAL(clicked()), SLOT(reject()));
 	connect(lbx_profiles, SIGNAL(highlighted(int)), SLOT(updateSelection()));
 
 	// load the listing
 	QStringList list = getProfilesList();
 	int x = 0;
 	for(QStringList::ConstIterator it = list.begin(); it != list.end(); ++it) {
-		lbx_profiles->insertItem(*it);
+		lbx_profiles->addItem(*it);
 		if(*it == choose)
-			lbx_profiles->setCurrentItem(x);
+			lbx_profiles->setCurrentRow(x);
 		++x;
 	}
 
@@ -206,8 +212,8 @@ void ProfileManageDlg::slotProfileNew()
 	if(r == QDialog::Accepted) {
 		name = w->name;
 
-		lbx_profiles->insertItem(name);
-		lbx_profiles->setCurrentItem(lbx_profiles->count()-1);
+		lbx_profiles->addItem(name);
+		lbx_profiles->setCurrentRow(lbx_profiles->count()-1);
 	}
 	delete w;
 
@@ -218,16 +224,16 @@ void ProfileManageDlg::slotProfileNew()
 
 void ProfileManageDlg::slotProfileRename()
 {
-	int x = lbx_profiles->currentItem();
+	int x = lbx_profiles->currentRow();
 	if(x == -1)
 		return;
 
-	QString oldname = lbx_profiles->text(x);
+	QString oldname = lbx_profiles->item(x)->text();
 	QString name;
 
 	while(1) {
 		bool ok = false;
-		name = QInputDialog::getText(CAP(tr("Rename Profile")), tr("Please enter a new name for the profile.  Keep it simple.\nOnly use letters or numbers.  No punctuation or spaces."), QLineEdit::Normal, name, &ok, this);
+		name = QInputDialog::getText(this, CAP(tr("Rename Profile")), tr("Please enter a new name for the profile.  Keep it simple.\nOnly use letters or numbers.  No punctuation or spaces."), QLineEdit::Normal, name, &ok);
 		if(!ok)
 			return;
 
@@ -242,15 +248,15 @@ void ProfileManageDlg::slotProfileRename()
 		break;
 	}
 
-	lbx_profiles->changeItem(name, x);
+	lbx_profiles->item(x)->setText(name);
 }
 
 void ProfileManageDlg::slotProfileDelete()
 {
-	int x = lbx_profiles->currentItem();
+	int x = lbx_profiles->currentRow();
 	if(x == -1)
 		return;
-	QString name = lbx_profiles->text(x);
+	QString name = lbx_profiles->item(x)->text();
 	QString path = ApplicationInfo::profilesDir() + "/" + name;
 
 	// prompt first
@@ -283,33 +289,41 @@ void ProfileManageDlg::slotProfileDelete()
 			return;
 		}
 
-		lbx_profiles->removeItem(x);
+		// FIXME
+		delete lbx_profiles->item(x);
 	}
 }
 
 void ProfileManageDlg::updateSelection()
 {
-	int x = lbx_profiles->currentItem();
+	int x = lbx_profiles->currentRow();
 
 	if(x == -1) {
-		pb_rename->setEnabled(false);
+		// pb_rename->setEnabled(false);
 		pb_delete->setEnabled(false);
 	}
 	else {
-		pb_rename->setEnabled(true);
+		// pb_rename->setEnabled(true);
 		pb_delete->setEnabled(true);
 	}
 }
 
+//----------------------------------------------------------------------------
+// ProfileNewDlg
+//----------------------------------------------------------------------------
 
 ProfileNewDlg::ProfileNewDlg(QWidget *parent)
 :QDialog(parent)
 {
 	setupUi(this);
 	setModal(true);
-	setWindowTitle(CAP(caption()));
+	setWindowTitle(CAP(windowTitle()));
 
-	bg_defAct->setButton(bg_defAct->id((Q3Button *)rb_chat));
+	buttonGroup_ = new QButtonGroup(this);
+	buttonGroup_->addButton(rb_message, 0);
+	buttonGroup_->addButton(rb_chat, 1);
+	rb_chat->setChecked(true);
+
 	le_name->setFocus();
 
 	connect(pb_create, SIGNAL(clicked()), SLOT(slotCreate()));
@@ -341,7 +355,7 @@ void ProfileNewDlg::slotCreate()
 	}
 	
 	
-	o.setOption("options.messages.default-outgoing-message-type" ,bg_defAct->selected() == (Q3Button *)rb_message ? "message": "chat");
+	o.setOption("options.messages.default-outgoing-message-type" ,rb_message->isChecked() ? "message": "chat");
 	o.setOption("options.ui.emoticons.use-emoticons" ,ck_useEmoticons->isChecked());
 	o.save(pathToProfile(name) + "/options.xml");
 	

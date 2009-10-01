@@ -21,8 +21,6 @@
 #include <QDomElement>
 #include <QLineEdit>
 #include <QMessageBox>
-#include <Q3Grid>
-#include <Q3PtrList>
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QPointer>
@@ -136,16 +134,17 @@ public:
 	int type;
 	BusyWidget *busy;
 	QLabel *lb_top;
-	Q3Grid *gr_form;
+	QWidget *gr_form;
+	QGridLayout *gr_form_layout;
 	Form form;
 
-	Q3PtrList<QLabel> lb_field;
-	Q3PtrList<QLineEdit> le_field;
+	QList<QLabel*> lb_field;
+	QList<QLineEdit*> le_field;
 	XDataWidget *xdata;
 };
 
 RegistrationDlg::RegistrationDlg(const Jid &jid, PsiAccount *pa)
-	: QDialog(0, 0, false)
+	: QDialog(0)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private;
@@ -155,19 +154,18 @@ RegistrationDlg::RegistrationDlg(const Jid &jid, PsiAccount *pa)
 	d->jt = 0;
 	d->xdata = 0;
 
-	d->lb_field.setAutoDelete(true);
-	d->le_field.setAutoDelete(true);
-
 	setWindowTitle(tr("Registration: %1").arg(d->jid.full()));
 
-	QVBoxLayout *vb1 = new QVBoxLayout(this, 4);
+	QVBoxLayout *vb1 = new QVBoxLayout(this);
+	vb1->setMargin(4);
 	d->lb_top = new QLabel(this);
 	d->lb_top->setFrameStyle( QFrame::Panel | QFrame::Sunken );
 	d->lb_top->hide();
 	vb1->addWidget(d->lb_top);
 
-	d->gr_form = new Q3Grid(2, Qt::Horizontal, this);
-	d->gr_form->setSpacing(4);
+	d->gr_form = new QWidget(this);
+	d->gr_form_layout = new QGridLayout(d->gr_form);
+	d->gr_form_layout->setSpacing(4);
 	vb1->addWidget(d->gr_form);
 	d->gr_form->hide();
 
@@ -176,7 +174,8 @@ RegistrationDlg::RegistrationDlg(const Jid &jid, PsiAccount *pa)
 	line->setFrameStyle(QFrame::HLine | QFrame::Sunken);
 	vb1->addWidget(line);
 
-	QHBoxLayout *hb1 = new QHBoxLayout(vb1);
+	QHBoxLayout *hb1 = new QHBoxLayout(0);
+	vb1->addLayout(hb1);
 	d->busy = new BusyWidget(this);
 	hb1->addWidget(d->busy);
 	hb1->addStretch(1);
@@ -239,14 +238,11 @@ void RegistrationDlg::doRegSet()
 	if ( !d->xdata ) {
 		Form submitForm = d->form;
 
+		Q_ASSERT(d->le_field.length() == submitForm.length());
 		// import the changes back into the form.
 		// the QPtrList of QLineEdits should be in the same order
-		Q3PtrListIterator<QLineEdit> lit(d->le_field);
-		for(Form::Iterator it = submitForm.begin(); it != submitForm.end(); ++it) {
-			FormField &f = *it;
-			QLineEdit *le = lit.current();
-			f.setValue(le->text());
-			++lit;
+		for (int i = 0; i < submitForm.length(); ++i) {
+			submitForm[i].setValue(d->le_field[i]->text());
 		}
 
 		d->jt->setForm(submitForm);
@@ -292,6 +288,7 @@ bool RegistrationDlg::processXData(const QDomElement& iq)
 			delete d->xdata;
 
 		d->xdata = new XDataWidget(d->gr_form);
+		d->gr_form_layout->addWidget(d->xdata); // FIXME
 		d->xdata->setFields(form.fields());
 
 		d->xdata->show();
@@ -313,6 +310,8 @@ void RegistrationDlg::processLegacyForm(const XMPP::Form& form)
 
 		QLabel *lb = new QLabel(f.fieldName(), d->gr_form);
 		QLineEdit *le = new QLineEdit(d->gr_form);
+		d->gr_form_layout->addWidget(lb); // FIXME
+		d->gr_form_layout->addWidget(le); // FIXME
 		if (f.isSecret())
 			le->setEchoMode(QLineEdit::Password);
 		le->setText(f.value());

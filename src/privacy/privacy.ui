@@ -1,45 +1,28 @@
-<ui version="4.0" >
- <author></author>
- <comment></comment>
- <exportmacro></exportmacro>
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>Privacy</class>
- <widget class="QWidget" name="Privacy" >
-  <property name="geometry" >
+ <widget class="QWidget" name="Privacy">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>732</width>
-    <height>572</height>
+    <width>733</width>
+    <height>562</height>
    </rect>
   </property>
-  <property name="windowTitle" >
-   <string>Form</string>
-  </property>
-  <layout class="QVBoxLayout" >
-   <property name="margin" >
-    <number>9</number>
-   </property>
-   <property name="spacing" >
-    <number>6</number>
-   </property>
+  <layout class="QVBoxLayout">
    <item>
-    <widget class="QGroupBox" name="gb_settings" >
-     <property name="title" >
+    <widget class="QGroupBox" name="gb_settings">
+     <property name="title">
       <string>Settings</string>
      </property>
-     <layout class="QGridLayout" >
-      <property name="margin" >
-       <number>9</number>
-      </property>
-      <property name="spacing" >
-       <number>6</number>
-      </property>
-      <item row="1" column="2" >
+     <layout class="QGridLayout">
+      <item row="1" column="2">
        <spacer>
-        <property name="orientation" >
+        <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
-        <property name="sizeHint" >
+        <property name="sizeHint" stdset="0">
          <size>
           <width>40</width>
           <height>20</height>
@@ -47,12 +30,12 @@
         </property>
        </spacer>
       </item>
-      <item row="0" column="2" >
+      <item row="0" column="2">
        <spacer>
-        <property name="orientation" >
+        <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
-        <property name="sizeHint" >
+        <property name="sizeHint" stdset="0">
          <size>
           <width>40</width>
           <height>20</height>
@@ -60,30 +43,30 @@
         </property>
        </spacer>
       </item>
-      <item row="1" column="1" >
-       <widget class="QComboBox" name="cb_default" >
-        <property name="sizeAdjustPolicy" >
+      <item row="1" column="1">
+       <widget class="QComboBox" name="cb_default">
+        <property name="sizeAdjustPolicy">
          <enum>QComboBox::AdjustToContents</enum>
         </property>
        </widget>
       </item>
-      <item row="1" column="0" >
-       <widget class="QLabel" name="label_2" >
-        <property name="text" >
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
          <string>Default List (all sessions):</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="0" >
-       <widget class="QLabel" name="label" >
-        <property name="text" >
+      <item row="0" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
          <string>Active List (current session):</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="1" >
-       <widget class="QComboBox" name="cb_active" >
-        <property name="sizeAdjustPolicy" >
+      <item row="0" column="1">
+       <widget class="QComboBox" name="cb_active">
+        <property name="sizeAdjustPolicy">
          <enum>QComboBox::AdjustToContents</enum>
         </property>
        </widget>
@@ -92,45 +75,33 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="gb_listSettings" >
-     <property name="title" >
+    <widget class="QGroupBox" name="gb_listSettings">
+     <property name="title">
       <string>List Editor</string>
      </property>
-     <layout class="QVBoxLayout" >
-      <property name="margin" >
-       <number>9</number>
-      </property>
-      <property name="spacing" >
-       <number>6</number>
-      </property>
+     <layout class="QVBoxLayout">
       <item>
-       <layout class="QHBoxLayout" >
-        <property name="margin" >
-         <number>0</number>
-        </property>
-        <property name="spacing" >
-         <number>6</number>
-        </property>
+       <layout class="QHBoxLayout">
         <item>
-         <widget class="QLabel" name="label_3" >
-          <property name="text" >
+         <widget class="QLabel" name="label_3">
+          <property name="text">
            <string>List:</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="cb_lists" >
-          <property name="sizeAdjustPolicy" >
+         <widget class="QComboBox" name="cb_lists">
+          <property name="sizeAdjustPolicy">
            <enum>QComboBox::AdjustToContents</enum>
           </property>
          </widget>
         </item>
         <item>
          <spacer>
-          <property name="orientation" >
+          <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
-          <property name="sizeHint" >
+          <property name="sizeHint" stdset="0">
            <size>
             <width>40</width>
             <height>20</height>
@@ -139,15 +110,15 @@
          </spacer>
         </item>
         <item>
-         <widget class="QPushButton" name="pb_newList" >
-          <property name="text" >
+         <widget class="QPushButton" name="pb_newList">
+          <property name="text">
            <string>New List</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pb_deleteList" >
-          <property name="text" >
+         <widget class="QPushButton" name="pb_deleteList">
+          <property name="text">
            <string>Delete List</string>
           </property>
          </widget>
@@ -155,76 +126,64 @@
        </layout>
       </item>
       <item>
-       <widget class="QCheckBox" name="ck_autoActivate" >
-        <property name="text" >
+       <widget class="QCheckBox" name="ck_autoActivate">
+        <property name="text">
          <string>Automatically activate this list on connect</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QGroupBox" name="gb_rules" >
-        <property name="title" >
+       <widget class="QGroupBox" name="gb_rules">
+        <property name="title">
          <string>Rules</string>
         </property>
-        <layout class="QVBoxLayout" >
-         <property name="margin" >
-          <number>9</number>
-         </property>
-         <property name="spacing" >
-          <number>6</number>
-         </property>
+        <layout class="QVBoxLayout">
          <item>
-          <widget class="QListView" name="lv_rules" />
+          <widget class="QListView" name="lv_rules"/>
          </item>
          <item>
-          <layout class="QHBoxLayout" >
-           <property name="margin" >
-            <number>0</number>
-           </property>
-           <property name="spacing" >
-            <number>6</number>
-           </property>
+          <layout class="QHBoxLayout">
            <item>
-            <widget class="QPushButton" name="pb_add" >
-             <property name="text" >
+            <widget class="QPushButton" name="pb_add">
+             <property name="text">
               <string>Add</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pb_remove" >
-             <property name="text" >
+            <widget class="QPushButton" name="pb_remove">
+             <property name="text">
               <string>Remove</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pb_up" >
-             <property name="text" >
+            <widget class="QPushButton" name="pb_up">
+             <property name="text">
               <string>Up</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pb_down" >
-             <property name="text" >
+            <widget class="QPushButton" name="pb_down">
+             <property name="text">
               <string>Down</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QPushButton" name="pb_edit" >
-             <property name="text" >
+            <widget class="QPushButton" name="pb_edit">
+             <property name="text">
               <string>Edit ...</string>
              </property>
             </widget>
            </item>
            <item>
             <spacer>
-             <property name="orientation" >
+             <property name="orientation">
               <enum>Qt::Horizontal</enum>
              </property>
-             <property name="sizeHint" >
+             <property name="sizeHint" stdset="0">
               <size>
                <width>111</width>
                <height>20</height>
@@ -233,8 +192,8 @@
             </spacer>
            </item>
            <item>
-            <widget class="QPushButton" name="pb_apply" >
-             <property name="text" >
+            <widget class="QPushButton" name="pb_apply">
+             <property name="text">
               <string>Apply</string>
              </property>
             </widget>
@@ -248,34 +207,11 @@
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" >
-     <property name="margin" >
-      <number>0</number>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Close</set>
      </property>
-     <property name="spacing" >
-      <number>6</number>
-     </property>
-     <item>
-      <spacer>
-       <property name="orientation" >
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" >
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <widget class="QPushButton" name="pb_close" >
-       <property name="text" >
-        <string>Close</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
+    </widget>
    </item>
   </layout>
  </widget>
@@ -293,9 +229,7 @@
   <tabstop>pb_down</tabstop>
   <tabstop>pb_edit</tabstop>
   <tabstop>pb_apply</tabstop>
-  <tabstop>pb_close</tabstop>
  </tabstops>
- <pixmapfunction></pixmapfunction>
  <resources/>
  <connections/>
 </ui>

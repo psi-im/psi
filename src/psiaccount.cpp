@@ -645,7 +645,6 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	connect(d->eventQueue, SIGNAL(queueChanged()), SIGNAL(queueChanged()));
 	connect(d->eventQueue, SIGNAL(queueChanged()), d, SLOT(queueChanged()));
 	connect(d->eventQueue, SIGNAL(eventFromXml(PsiEvent *)), SLOT(eventFromXml(PsiEvent *)));
-	d->userList.setAutoDelete(true);
 	d->self = UserListItem(true);
 	d->self.setSubscription(Subscription::Both);
 	d->nickFromVCard = false;
@@ -901,11 +900,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 
 PsiAccount::~PsiAccount()
 {
-#ifdef __GNUC__
-#warning "Uncomment these"
-#endif
 #ifdef PSI_PLUGINS
-	// PluginManager::instance()->removeClient(this);
+	PluginManager::instance()->removeClient(this);
 #endif
 	// nuke all related dialogs
 	deleteAllDialogs();
@@ -1017,13 +1013,13 @@ const QString & PsiAccount::name() const
 	return d->acc.name;
 }
 
+// FIXME: we should move all PsiAccount::userAccount() users to PsiAccount::accountOptions()
 const UserAccount & PsiAccount::userAccount() const
 {
 	// save the roster and pgp key bindings
 	d->acc.roster.clear();
 	d->acc.keybind.clear();
-	UserListIt it(d->userList);
-	for(UserListItem *u; (u = it.current()); ++it) {
+	foreach(UserListItem* u, d->userList) {
 		if(u->inList())
 			d->acc.roster += *u;
 
@@ -1031,6 +1027,11 @@ const UserAccount & PsiAccount::userAccount() const
 			d->acc.keybind.set(u->jid().full(), u->publicKeyID());
 	}
 
+	return d->acc;
+}
+
+UserAccount PsiAccount::accountOptions() const
+{
 	return d->acc;
 }
 
@@ -1456,8 +1457,7 @@ void PsiAccount::sessionStarted()
 		d->voiceCaller->initialize();
 
 	// flag roster for delete
-	UserListIt it(d->userList);
-	for(UserListItem *u; (u = it.current()); ++it) {
+	foreach(UserListItem* u, d->userList) {
 		if(u->inList())
 			u->setFlagForDelete(true);
 	}
@@ -1491,7 +1491,8 @@ void PsiAccount::cs_warning(int w)
 	}
 
 	if (showNoTlsWarning) {
-		QMessageBox* m = new QMessageBox(QMessageBox::Critical, (d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Error"), tr("The server does not support TLS encryption."), QMessageBox::Ok, 0, Qt::WDestructiveClose);
+		QMessageBox* m = new QMessageBox(QMessageBox::Critical, (d->psi->contactList()->enabledAccounts().count() > 1 ? QString("%1: ").arg(name()) : "") + tr("Server Error"), tr("The server does not support TLS encryption."), QMessageBox::Ok, 0);
+		m->setAttribute(Qt::WA_DeleteOnClose, true);
 		m->setModal(true);
 		m->show();
 	}
@@ -1685,7 +1686,8 @@ void PsiAccount::cs_error(int err)
 	QMessageBox* m = new QMessageBox(QMessageBox::Critical,
 	                                 (printAccountName ? QString("%1: ").arg(name()) : "") + tr("Server Error"),
 	                                 tr("There was an error communicating with the server.\nDetails: %1").arg(str),
-	                                 QMessageBox::Ok, 0, Qt::WDestructiveClose);
+	                                 QMessageBox::Ok, 0);
+	m->setAttribute(Qt::WA_DeleteOnClose, true);
 	m->setModal(true);
 	m->show();
 }
@@ -1697,8 +1699,7 @@ void PsiAccount::client_rosterRequestFinished(bool success, int, const QString &
 		psi()->contactList()->beginBulkOperation();
 
 		// delete flagged items
-		UserListIt it(d->userList);
-		for(UserListItem *u; (u = it.current());) {
+		foreach(UserListItem* u, d->userList) {
 			if(u->flagForDelete()) {
 				//QMessageBox::information(0, "blah", QString("deleting: [%1]").arg(u->jid().full()));
 
@@ -1706,10 +1707,9 @@ void PsiAccount::client_rosterRequestFinished(bool success, int, const QString &
 				updateReadNext(u->jid());
 
 				d->cp->removeEntry(u->jid());
-				d->userList.removeRef(u);
+				d->userList.removeAll(u);
+				delete u;
 			}
-			else
-				++it;
 		}
 
 		psi()->contactList()->endBulkOperation();
@@ -1846,7 +1846,8 @@ void PsiAccount::client_rosterItemRemoved(const RosterItem &r)
 	// else remove them for good!
 	else {
 		d->cp->removeEntry(u->jid());
-		d->userList.removeRef(u);
+		d->userList.removeAll(u);
+		delete u;
 	}
 }
 
@@ -1994,7 +1995,7 @@ void PsiAccount::client_resourceUnavailable(const Jid &j, const Resource &r)
 		bool found = (rit == u->userResourceList().end()) ? false: true;
 		if(found) {
 			u->setLastUnavailableStatus(r.status());
-			u->userResourceList().remove(rit);
+			u->userResourceList().removeAll(*rit);
 
 			if(!u->isAvailable())
 				u->setLastAvailable(QDateTime::currentDateTime());
@@ -2308,12 +2309,12 @@ void PsiAccount::setStatus(const Status &_s,  bool withPriority)
 			}
 			if(!d->acc.opt_pass) {
 				bool ok = false;
-				QString text = QInputDialog::getText(
+				QString text = QInputDialog::getText(0,
 					tr("Need Password"),
 					( d->psi->contactList()->enabledAccounts().count() > 1 ?
 					  tr("Please enter the password for %1:").arg(JIDUtil::toString(j,true))
 					  : tr("Please enter your password:") ),
-					QLineEdit::Password, QString::null, &ok, 0);
+					QLineEdit::Password, QString::null, &ok);
 				if(ok && !text.isEmpty()) {
 					d->acc.pass = text;
 				} else {
@@ -2631,7 +2632,7 @@ void PsiAccount::openAddUserDlg(const Jid &jid, const QString &nick, const QStri
 {
 	QStringList gl, services, names;
 	UserListIt it(d->userList);
-	for(UserListItem *u; (u = it.current()); ++it) {
+	foreach(UserListItem* u, d->userList) {
 		if(u->isTransport()) {
 			services += u->jid().full();
 			names += JIDUtil::nickOrJid(u->name(), u->jid().full());
@@ -2751,8 +2752,7 @@ void PsiAccount::simulateContactOffline(UserListItem *u)
 
 void PsiAccount::simulateRosterOffline()
 {
-	UserListIt it(d->userList);
-	for(UserListItem *u; (u = it.current()); ++it)
+	foreach(UserListItem* u, d->userList)
 		simulateContactOffline(u);
 
 	// self
@@ -3822,7 +3822,8 @@ void PsiAccount::dj_remove(const Jid &j)
 	// TODO: delete the item immediately (to simulate local change)
 	if(!u->inList()) {
 		//simulateContactOffline(u);
-		d->userList.removeRef(u);
+		d->userList.removeAll(u);
+		delete u;
 	}
 	else {
 		JT_Roster *r = new JT_Roster(d->client->rootTask());
@@ -4425,7 +4426,7 @@ void PsiAccount::groupChatSetStatus(const QString &host, const QString &room, co
 
 void PsiAccount::groupChatLeave(const QString &host, const QString &room)
 {
-	d->groupchats.remove(room + '@' + host);
+	d->groupchats.removeAll(room + '@' + host);
 	d->client->groupChatLeave(host, room);
 }
 
@@ -4617,7 +4618,7 @@ void PsiAccount::trySignPresence()
 {
 	QCA::SecureMessageKey skey;
 	skey.setPGPSecretKey(d->cur_pgpSecretKey);
-	QByteArray plain = d->loginStatus.status().utf8();
+	QByteArray plain = d->loginStatus.status().toUtf8();
 
 	PGPTransaction *t = new PGPTransaction(new QCA::OpenPGP());
 	connect(t, SIGNAL(finished()), SLOT(pgp_signFinished()));
@@ -4660,8 +4661,8 @@ void PsiAccount::verifyStatus(const Jid &j, const Status &s)
 	PGPTransaction *t = new PGPTransaction(new QCA::OpenPGP());
 	t->setJid(j);
 	connect(t, SIGNAL(finished()), SLOT(pgp_verifyFinished()));
-	t->startVerify(PGPUtil::instance().addHeaderFooter(s.xsigned(),1).utf8());
-	t->update(s.status().utf8());
+	t->startVerify(PGPUtil::instance().addHeaderFooter(s.xsigned(),1).toUtf8());
+	t->update(s.status().toUtf8());
 	t->end();
 }
 
@@ -4717,7 +4718,7 @@ int PsiAccount::sendMessageEncrypted(const Message &_m)
 	t->setFormat(QCA::SecureMessage::Ascii);
 	t->setRecipient(key);
 	t->startEncrypt();
-	t->update(_m.body().utf8());
+	t->update(_m.body().toUtf8());
 	t->end();
 
 	return t->id();
@@ -4767,7 +4768,7 @@ void PsiAccount::processEncryptedMessage(const Message &m)
 	connect(t, SIGNAL(finished()), SLOT(pgp_decryptFinished()));
 	t->setFormat(QCA::SecureMessage::Ascii);
 	t->startDecrypt();
-	t->update(PGPUtil::instance().addHeaderFooter(m.xencrypted(),0).utf8());
+	t->update(PGPUtil::instance().addHeaderFooter(m.xencrypted(),0).toUtf8());
 	t->end();
 }
 
@@ -4821,7 +4822,7 @@ void PsiAccount::processMessageQueue()
 		}
 
 		processIncomingMessage(*mp);
-		d->messageQueue.remove(mp);
+		d->messageQueue.removeAll(mp);
 		delete mp;
 	}
 }
@@ -4927,7 +4928,8 @@ void PsiAccount::invokeGCMessage(const Jid &j)
 
 	d->userList.append(u);
 	actionSendMessage(j);
-	d->userList.remove(u);
+	d->userList.removeAll(u);
+	delete u;
 }
 
 void PsiAccount::invokeGCChat(const Jid &j)
@@ -4953,7 +4955,8 @@ void PsiAccount::invokeGCChat(const Jid &j)
 	d->userList.append(u);
 	actionOpenChat(j);
 	cpUpdate(*u);
-	//d->userList.remove(u);
+	//d->userList.removeAll(u);
+	//delete u;
 }
 
 void PsiAccount::invokeGCInfo(const Jid &j)

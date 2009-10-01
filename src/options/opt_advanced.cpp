@@ -46,28 +46,28 @@ QWidget *OptionsTabAdvanced::widget()
 
 	d->ck_spell->setEnabled(SpellChecker::instance()->available());
 
-	QWhatsThis::add(d->ck_messageevents,
+	d->ck_messageevents->setWhatsThis(
 		tr("Enables the sending and requesting of message events such as "
 		"'Contact is Typing', ..."));
-	QWhatsThis::add(d->ck_inactiveevents,
+	d->ck_inactiveevents->setWhatsThis(
 		tr("Enables the sending of events when you end or suspend a "
 		"conversation"));
-	QWhatsThis::add(d->ck_rc,
+	d->ck_rc->setWhatsThis(
 		tr("Enables remote controlling your client from other locations"));
-	QWhatsThis::add(d->ck_spell,
+	d->ck_spell->setWhatsThis(
 		tr("Check this option if you want your spelling to be checked"));
-	QWhatsThis::add(d->ck_contactsMessageFormatting,
+	d->ck_contactsMessageFormatting->setWhatsThis(
 		tr("If enabled, Psi will display incoming messages formatted in the style specified by the contact"));
-	QWhatsThis::add(d->ck_autocopy,
+	d->ck_autocopy->setWhatsThis(
 		tr("Check this option if you want the selected text in incoming messages and chat log to be automatically copied to clipboard"));
-	QWhatsThis::add(d->ck_singleclick,
+	d->ck_singleclick->setWhatsThis(
 		tr("Normally, a double-click on a contact will invoke the default action."
 		"  Check this option if you'd rather invoke with a single-click."));
-	QWhatsThis::add(d->ck_jidComplete,
+	d->ck_jidComplete->setWhatsThis(
 		tr("Enables as-you-type JID autocompletion in message dialog."));
-	QWhatsThis::add(d->ck_grabUrls,
+	d->ck_grabUrls->setWhatsThis(
 		tr("Automatically attaches URLs from clipboard to the messages when enabled"));
-	QWhatsThis::add(d->cb_incomingAs,
+	d->cb_incomingAs->setWhatsThis(
 		tr("<P>Specifies how to treat incoming events:</P>"
 		"<P><B>Normal</B> - messages come as messages, chats come as chats.</P>"
 		"<P><B>Messages</B> - All messages/chats come as messages, no matter what their original form was.</P>"
@@ -77,17 +77,17 @@ QWidget *OptionsTabAdvanced::widget()
 	d->cb_incomingAs->setItemData(1, "message");
 	d->cb_incomingAs->setItemData(2, "chat");
 	d->cb_incomingAs->setItemData(3, "current-open");
-	QWhatsThis::add(d->ck_showSubjects,
+	d->ck_showSubjects->setWhatsThis(
 		tr("Makes Psi show separate subject line in messages. Uncheck this if you want to save some screen space."));
-	QWhatsThis::add(d->ck_showCounter,
+	d->ck_showCounter->setWhatsThis(
 		tr("Makes Psi show message length counter. Check this if you want to know how long is your message. Can be useful when you're using SMS transport."));
-	QWhatsThis::add(d->ck_autoVCardOnLogin,
+	d->ck_autoVCardOnLogin->setWhatsThis(
 		tr("By default, Psi always checks your vCard on login. If you want to save some traffic, you can uncheck this option."));
-	QWhatsThis::add(d->ck_rosterAnim,
+	d->ck_rosterAnim->setWhatsThis(
 		tr("Makes Psi animate contact names in the main window when they come online."));
-	QWhatsThis::add(d->ck_scrollTo,
+	d->ck_scrollTo->setWhatsThis(
 		tr("Makes Psi scroll the main window automatically so you can see new incoming events."));
-	QWhatsThis::add(d->ck_ignoreHeadline,
+	d->ck_ignoreHeadline->setWhatsThis(
 		tr("Makes Psi ignore all incoming \"headline\" events,"
 		" like system-wide news on MSN, announcements, etc."));
 
@@ -114,7 +114,7 @@ void OptionsTabAdvanced::applyOptions()
 	PsiOptions::instance()->setOption("options.ui.contactlist.use-single-click", d->ck_singleclick->isChecked());
 	PsiOptions::instance()->setOption("options.ui.message.use-jid-auto-completion", d->ck_jidComplete->isChecked());
 	PsiOptions::instance()->setOption("options.ui.message.auto-grab-urls-from-clipboard", d->ck_grabUrls->isChecked());
-	PsiOptions::instance()->setOption("options.messages.force-incoming-message-type", d->cb_incomingAs->itemData(d->cb_incomingAs->currentItem()));
+	PsiOptions::instance()->setOption("options.messages.force-incoming-message-type", d->cb_incomingAs->itemData(d->cb_incomingAs->currentIndex()));
 	PsiOptions::instance()->setOption("options.ui.message.show-subjects", d->ck_showSubjects->isChecked());
 	PsiOptions::instance()->setOption("options.ui.message.show-character-count", d->ck_showCounter->isChecked());
 	PsiOptions::instance()->setOption("options.vcard.query-own-vcard-on-login", d->ck_autoVCardOnLogin->isChecked());
@@ -142,7 +142,7 @@ void OptionsTabAdvanced::restoreOptions()
 	d->ck_singleclick->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.use-single-click").toBool() );
 	d->ck_jidComplete->setChecked( PsiOptions::instance()->getOption("options.ui.message.use-jid-auto-completion").toBool() );
 	d->ck_grabUrls->setChecked( PsiOptions::instance()->getOption("options.ui.message.auto-grab-urls-from-clipboard").toBool() );
-	d->cb_incomingAs->setCurrentItem(d->cb_incomingAs->findData( PsiOptions::instance()->getOption("options.messages.force-incoming-message-type").toString()));
+	d->cb_incomingAs->setCurrentIndex(d->cb_incomingAs->findData( PsiOptions::instance()->getOption("options.messages.force-incoming-message-type").toString()));
 	d->ck_showSubjects->setChecked( PsiOptions::instance()->getOption("options.ui.message.show-subjects").toBool() );
 	d->ck_showCounter->setChecked( PsiOptions::instance()->getOption("options.ui.message.show-character-count").toBool() );
 	d->ck_autoVCardOnLogin->setChecked( PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool() );

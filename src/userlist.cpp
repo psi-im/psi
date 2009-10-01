@@ -321,7 +321,7 @@ void UserListItem::setJid(const Jid &j)
 {
 	LiveRosterItem::setJid(j);
 
-	int n = jid().full().find('@');
+	int n = jid().full().indexOf('@');
 	if(n == -1)
 		v_isTransport = true;
 	else
@@ -654,10 +654,10 @@ bool UserListItem::isSecure(const QString &rname) const
 
 void UserListItem::setSecure(const QString &rname, bool b)
 {
-	for(QStringList::Iterator it = secList.begin(); it != secList.end(); ++it) {
-		if(*it == rname) {
+	foreach(const QString s, secList) {
+		if(s == rname) {
 			if(!b)
-				secList.remove(it);
+				secList.removeAll(s);
 			return;
 		}
 	}
@@ -689,8 +689,7 @@ UserList::~UserList()
 
 UserListItem *UserList::find(const XMPP::Jid &j)
 {
-	UserListIt it(*this);
-	for(UserListItem *i; (i = it.current()); ++it) {
+	foreach(UserListItem* i, *this) {
 		if(i->jid().compare(j))
 			return i;
 	}

@@ -1,8 +1,5 @@
 include(../../psiplugin.pri)
 
-QT +=  qt3support 
-
-
 # Input
 HEADERS += gameboard.h \
            gamesocket.h \

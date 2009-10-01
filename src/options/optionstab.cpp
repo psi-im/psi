@@ -11,13 +11,15 @@
 //----------------------------------------------------------------------------
 
 OptionsTab::OptionsTab(QObject *parent, const char *name)
-: QObject(parent, name)
+: QObject(parent)
 {
+	setObjectName(name);
 }
 
 OptionsTab::OptionsTab(QObject *parent, QByteArray _id, QByteArray _parentId, QString _name, QString _desc, QString _tabIconName, QString _iconName)
-: QObject(parent, _name.latin1())
+: QObject(parent)
 {
+	setObjectName(_name);
 	v_id = _id;
 	v_parentId = _parentId;
 	v_name = _name;
@@ -138,10 +140,11 @@ void OptionsTabWidget::addTab(OptionsTab *tab)
 
 	// the widget will have no parent; it will be reparented
 	// when inserting it with "addTab"
-	QWidget *w = new QWidget(NULL, tab->name().latin1());
+	QWidget *w = new QWidget(0);
+	w->setObjectName(tab->name());
 
 	if ( !tab->desc().isEmpty() )
-		setTabToolTip(w, tab->desc());
+		setTabToolTip(indexOf(w), tab->desc());
 
 	w2tab[w] = TabData(tab);
 	
@@ -160,14 +163,15 @@ void OptionsTabWidget::addTab(OptionsTab *tab)
 void OptionsTabWidget::updateCurrent(QWidget *w)
 {
 	if ( !w2tab[w].initialized ) {
-		QVBoxLayout *vbox = new QVBoxLayout(w, 5);
+		QVBoxLayout *vbox = new QVBoxLayout(w);
+		vbox->setMargin(5);
 		OptionsTab *opttab = w2tab[w].tab;
 
 		QWidget *tab = opttab->widget();
 		if ( !tab )
 			return;
 
-		tab->reparent(w, 0, QPoint(0, 0));
+		tab->setParent(w);
 		vbox->addWidget(tab);
 		if ( !opttab->stretchable() )
 			vbox->addStretch();
@@ -186,7 +190,7 @@ void OptionsTabWidget::updateCurrent(QWidget *w)
 void OptionsTabWidget::restoreOptions()
 {
 	emit noDirty(true);
-	w2tab[currentPage()].tab->restoreOptions();
+	w2tab[currentWidget()].tab->restoreOptions();
 	emit noDirty(false);
 }
 
@@ -208,6 +212,8 @@ MetaOptionsTab::MetaOptionsTab(QObject *parent, QByteArray id, QByteArray parent
 
 MetaOptionsTab::~MetaOptionsTab()
 {
+	qDeleteAll(tabs);
+
 	if ( w )
 		delete w;
 }
@@ -215,7 +221,6 @@ MetaOptionsTab::~MetaOptionsTab()
 void MetaOptionsTab::init()
 {
 	w = 0;
-	tabs.setAutoDelete(true);
 }
 
 void MetaOptionsTab::addTab(OptionsTab *tab)
@@ -239,9 +244,9 @@ QWidget *MetaOptionsTab::widget()
 	connect(w, SIGNAL(connectDataChanged(QWidget *)), SIGNAL(connectDataChanged(QWidget *)));
 	connect(w, SIGNAL(noDirty(bool)), SIGNAL(noDirty(bool)));
 
-	Q3PtrListIterator<OptionsTab> it(tabs);
-	for ( ; it.current(); ++it)
-		t->addTab(it.current());
+	foreach(OptionsTab* tab, tabs) {
+		t->addTab(tab);
+	}
 
 	// set the current widget to 0, otherwise qt4 will show no widget
 	t->setCurrentIndex(0);
@@ -251,9 +256,8 @@ QWidget *MetaOptionsTab::widget()
 
 void MetaOptionsTab::applyOptions()
 {
-	Q3PtrListIterator<OptionsTab> it(tabs);
-	for ( ; it.current(); ++it) {
-		it.current()->applyOptions();
+	foreach(OptionsTab* tab, tabs) {
+		tab->applyOptions();
 	}
 }
 
@@ -264,17 +268,16 @@ void MetaOptionsTab::restoreOptions()
 		d->restoreOptions();
 	}
 
-	Q3PtrListIterator<OptionsTab> it(tabs);
-	for ( ; it.current(); ++it) {
-		it.current()->restoreOptions();
+	foreach(OptionsTab* tab, tabs) {
+		tab->restoreOptions();
 	}
 }
 
 void MetaOptionsTab::setData(PsiCon *psi, QWidget *w)
 {
-	Q3PtrListIterator<OptionsTab> it(tabs);
-	for ( ; it.current(); ++it)
-		it.current()->setData(psi, w);
+	foreach(OptionsTab* tab, tabs) {
+		tab->setData(psi, w);
+	}
 }
 
 #include "optionstab.moc"

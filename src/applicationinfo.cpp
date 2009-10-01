@@ -109,7 +109,7 @@ QString ApplicationInfo::resourcesDir()
 #if defined(Q_WS_X11)
 	return PSI_DATADIR;
 #elif defined(Q_WS_WIN)
-	return qApp->applicationDirPath();
+	return qApp->applicationPath();
 #elif defined(Q_WS_MAC)
 	// FIXME: Clean this up (remko)
   // System routine locates resource files. We "know" that Psi.icns is
@@ -129,7 +129,7 @@ QString ApplicationInfo::resourcesDir()
     const char* resourcePathCString =
       CFStringGetCStringPtr( resourcePathStringRef, kCFStringEncodingASCII );
     if ( resourcePathCString ) {
-      resourcePath.setLatin1( resourcePathCString );
+      resourcePath = resourcePathCString;
     } else { // CFStringGetCStringPtr failed; use fallback conversion
       CFIndex bufferLength = CFStringGetLength( resourcePathStringRef ) + 1;
       char* resourcePathCString = new char[ bufferLength ];
@@ -147,7 +147,7 @@ QString ApplicationInfo::resourcesDir()
   // Remove the tail component of the path
   if ( ! resourcePath.isNull() ) {
     QFileInfo fileInfo( resourcePath );
-    resourcePath = fileInfo.dirPath( true );
+    resourcePath = fileInfo.absolutePath();
   }
   return resourcePath;
 #endif
@@ -174,7 +174,7 @@ QString ApplicationInfo::homeDir()
 		return p;
 
 #if defined(Q_WS_X11)
-	QDir proghome(QDir::homeDirPath() + "/.psi");
+	QDir proghome(QDir::homePath() + "/.psi");
 	if(!proghome.exists()) {
 		QDir home = QDir::home();
 		home.mkdir(".psi");
@@ -185,11 +185,11 @@ QString ApplicationInfo::homeDir()
 	QString base;
 
 	// Windows 9x
-	if(QDir::homeDirPath() == QDir::rootDirPath())
+	if(QDir::homePath() == QDir::rootPath())
 		base = ".";
 	// Windows NT/2K/XP variant
 	else
-		base = QDir::homeDirPath();
+		base = QDir::homePath();
 
 	// no trailing slash
 	if(base.at(base.length()-1) == '/')
@@ -203,7 +203,7 @@ QString ApplicationInfo::homeDir()
 
 	return proghome.path();
 #elif defined(Q_WS_MAC)
-	QDir proghome(QDir::homeDirPath() + "/.psi");
+	QDir proghome(QDir::homePath() + "/.psi");
 	if(!proghome.exists()) {
 		QDir home = QDir::home();
 		home.mkdir(".psi");

@@ -275,10 +275,11 @@ public:
 			icon->activated(false); // start animation
 		}
 
-		QMap<PsiIcon*, QRect>::Iterator it2;
-		for (it2 = iconRects.begin(); it2 != iconRects.end(); it2++) {
-			QRect r = it2.data();
-			it2.data() = QRect( r.x(), (h - r.height())/2, r.width(), r.height() );
+		QMutableMapIterator<PsiIcon*, QRect> it2(iconRects);
+		while (it2.hasNext()) {
+			it2.next();
+			QRect r = it2.value();
+			it2.setValue(QRect(r.x(), (h - r.height()) / 2, r.width(), r.height()));
 		}
 #else
 		Q_UNUSED( _iconset );
@@ -324,7 +325,7 @@ public:
 		QMap<PsiIcon*, QRect>::ConstIterator it;
 		for (it = iconRects.begin(); it != iconRects.end(); it++) {
 			PsiIcon *icon = it.key();
-			QRect r = it.data();
+			QRect r = it.value();
 			painter->drawPixmap(QPoint(10 + r.left(), fm.lineSpacing() + 2 + r.top()), icon->pixmap());
 		}
 #else

@@ -47,46 +47,46 @@ QWidget *OptionsTabChat::widget()
 
 	bg_defAct = new QButtonGroup;
 	bg_defAct->setExclusive( true );
-	bg_defAct->insert( d->rb_defActMsg);
-	bg_defAct->insert( d->rb_defActChat);
+	bg_defAct->addButton( d->rb_defActMsg);
+	bg_defAct->addButton( d->rb_defActChat);
 
 	bg_delChats = new QButtonGroup;
 	bg_delChats->setExclusive( true );
-	bg_delChats->insert( d->rb_delChatsClose);
-	bg_delChats->insert( d->rb_delChatsHour);
-	bg_delChats->insert( d->rb_delChatsDay);
-	bg_delChats->insert( d->rb_delChatsNever);
+	bg_delChats->addButton( d->rb_delChatsClose);
+	bg_delChats->addButton( d->rb_delChatsHour);
+	bg_delChats->addButton( d->rb_delChatsDay);
+	bg_delChats->addButton( d->rb_delChatsNever);
 	
 	connect(d->ck_tabChats, SIGNAL(toggled(bool)), d->cb_tabGrouping, SLOT(setEnabled(bool)));
 
-	QWhatsThis::add(d->rb_defActMsg,
+	d->rb_defActMsg->setWhatsThis(
 		tr("Make the default action open a normal message window."));
-	QWhatsThis::add(d->rb_defActChat,
+	d->rb_defActChat->setWhatsThis(
 		tr("Make the default action open a chat window."));
-	QWhatsThis::add(d->ck_chatSoftReturn,
+	d->ck_chatSoftReturn->setWhatsThis(
 		tr("<P>When checked, pressing Enter in a chat window will send your message."
 		   "  You must use Shift+Enter in order to create a newline in the chat message."
 		   "  If unchecked, messages are sent by pressing Alt-S or Control-Enter, just as they are with regular messages.</P>"));
-	QWhatsThis::add(d->ck_alertOpenChats,
+	d->ck_alertOpenChats->setWhatsThis(
 		tr("Normally, Psi will not alert you when a new chat message"
 		" is received in a chat window that is already open."
 		"  Check this option if you want to receive these alerts anyway."));
-	QWhatsThis::add(d->ck_raiseChatWindow,
+	d->ck_raiseChatWindow->setWhatsThis(
 		tr("Makes Psi bring an open chat window to the front of your screen when you receive a new message."
 		" It does not take the keyboard focus, so it will not interfere with your work."));
-	QWhatsThis::add(d->ck_smallChats,
+	d->ck_smallChats->setWhatsThis(
 		tr("Makes Psi open chat windows in compact mode."));
-	QWhatsThis::add(d->ck_tabChats,
+	d->ck_tabChats->setWhatsThis(
 		tr("Makes Psi open chats in a tabbed window."));
 	QString s = tr("<P>Controls how long the chat log will be kept in memory after the"
 		" chat window is closed.</P>");
-	QWhatsThis::add(d->rb_delChatsClose, s +
+	d->rb_delChatsClose->setWhatsThis(s +
 		tr("<P>This option does not keep the chat log in memory.</P>"));
-	QWhatsThis::add(d->rb_delChatsHour, s +
+	d->rb_delChatsHour->setWhatsThis(s +
 		tr("<P>This option keeps the chat log for 1 hour before deleting it.</P>"));
-	QWhatsThis::add(d->rb_delChatsDay, s +
+	d->rb_delChatsDay->setWhatsThis(s +
 		tr("<P>This option keeps the chat log for 1 day before deleting it.</P>"));
-	QWhatsThis::add(d->rb_delChatsNever, s +
+	d->rb_delChatsNever->setWhatsThis(s +
 		tr("<P>This options keeps the chat log forever.</P>"));
 
 	return w;

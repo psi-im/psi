@@ -216,12 +216,12 @@ bool fileCopy(const QString &src, const QString &dest)
 	char *dat = new char[16384];
 	int n = 0;
 	while(!in.atEnd()) {
-		n = in.readBlock(dat, 16384);
+		n = in.read(dat, 16384);
 		if(n == -1) {
 			delete[] dat;
 			return false;
 		}
-		out.writeBlock(dat, n);
+		out.write(dat, n);
 	}
 	delete[] dat;
 
@@ -299,8 +299,8 @@ XMPP::Status::Type makeSTATUS(const XMPP::Status &s)
 QLayout *rw_recurseFindLayout(QLayout *lo, QWidget *w)
 {
 	//printf("scanning layout: %p\n", lo);
-	QLayoutIterator it = lo->iterator();
-	for(QLayoutItem *i; (i = it.current()); ++it) {
+	for (int index = 0; index < lo->count(); ++index) {
+		QLayoutItem* i = lo->itemAt(index);
 		//printf("found: %p,%p\n", i->layout(), i->widget());
 		QLayout *slo = i->layout();
 		if(slo) {
@@ -331,7 +331,7 @@ void replaceWidget(QWidget *a, QWidget *b)
 
 	if(lo->inherits("QBoxLayout")) {
 		QBoxLayout *bo = (QBoxLayout *)lo;
-		int n = bo->findWidget(a);
+		int n = bo->indexOf(a);
 		bo->insertWidget(n+1, b);
 		delete a;
 	}
@@ -463,7 +463,7 @@ void bringToFront(QWidget *widget, bool)
 	//if(grabFocus)
 	//	w->setActiveWindow();
 	w->raise();
-	w->setActiveWindow();
+	w->activateWindow();
 }
 
 bool operator!=(const QMap<QString, QString> &m1, const QMap<QString, QString> &m2)
@@ -476,7 +476,7 @@ bool operator!=(const QMap<QString, QString> &m1, const QMap<QString, QString> &
 		it2 = m2.find( it.key() );
 		if ( it2 == m2.end() )
 			return true;
-		if ( it.data() != it2.data() )
+		if ( it.value() != it2.value() )
 			return true;
 	}
 
@@ -488,7 +488,7 @@ bool operator!=(const QMap<QString, QString> &m1, const QMap<QString, QString> &
 //----------------------------------------------------------------------------
 
 ToolbarPrefs::ToolbarPrefs()
-	: dock(Qt::DockTop)
+	: dock(Qt3Dock_Top)
 	// , dirty(true)
 	, on(false)
 	, locked(false)

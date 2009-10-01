@@ -37,6 +37,7 @@ public:
 	virtual void appendText(const QString &text);	
 
 	QString getHtml() const;
+	QString getPlainText() const;
 	
 	struct Selection {
 		int start, end;
@@ -67,6 +68,8 @@ protected:
 	void mouseReleaseEvent(QMouseEvent *e);
 	QMimeData *createMimeDataFromSelection() const;
 	void resizeEvent(QResizeEvent *);
+
+	QString getTextHelper(bool html) const;
 
 	class Private;
 private:

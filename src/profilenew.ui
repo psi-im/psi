@@ -82,7 +82,7 @@ Check the &lt;i>Enable Emoticons&lt;/i> checkbox if you'd like text such as &lt;
             </layout>
           </item>
           <item>
-            <widget class="Q3ButtonGroup" name="bg_defAct" >
+            <widget class="QGroupBox" name="bg_defAct" >
               <property name="title" >
                 <string>Default Action</string>
               </property>

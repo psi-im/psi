@@ -48,7 +48,7 @@ void PGPUtil::handleEvent(int id, const QCA::Event& event)
 	if (event.type() == QCA::Event::Password) {
 		QCA::KeyStoreEntry entry = event.keyStoreEntry();
 		if(!entry.isNull() && passphrases_.contains(entry.id())) {
-			qcaEventHandler_->submitPassword(id,QCA::SecureArray(passphrases_[entry.id()].utf8()));
+			qcaEventHandler_->submitPassword(id, QCA::SecureArray(passphrases_[entry.id()].toUtf8()));
 		}
 		else if (passphraseDlg_) {
 			EventItem i;
@@ -110,7 +110,7 @@ void PGPUtil::passphraseDone(int result)
 			eventItem = pendingEvents_.takeFirst();
 			QCA::KeyStoreEntry entry = eventItem.event.keyStoreEntry();
 			if(!entry.isNull() && passphrases_.contains(entry.id())) {
-				qcaEventHandler_->submitPassword(eventItem.id,QCA::SecureArray(passphrases_[entry.id()].utf8()));
+				qcaEventHandler_->submitPassword(eventItem.id, QCA::SecureArray(passphrases_[entry.id()].toUtf8()));
 			}
 			else {
 				handlePendingEvent = true;
@@ -150,7 +150,7 @@ QString PGPUtil::stripHeaderFooter(const QString &str)
 	}
 	if(str.at(0) != '-')
 		return str;
-	QStringList lines = QStringList::split('\n', str, true);
+	QStringList lines = str.split('\n');
 	QStringList::ConstIterator it = lines.begin();
 	// skip the first line
 	++it;

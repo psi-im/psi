@@ -1,187 +1,228 @@
-<ui version="4.0" stdsetdef="1" >
-  <author></author>
-  <comment></comment>
-  <exportmacro></exportmacro>
-  <class>Proxy</class>
-  <widget class="QDialog" name="Proxy" >
-    <property name="geometry" >
-      <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>307</width>
-        <height>174</height>
-      </rect>
-    </property>
-    <property name="windowTitle" >
-      <string>Proxy Profiles</string>
-    </property>
-    <layout class="QVBoxLayout" >
-      <item>
-        <layout class="QHBoxLayout" >
-          <property name="margin" >
-            <number>0</number>
-          </property>
-          <item>
-            <layout class="QVBoxLayout" >
-              <property name="margin" >
-                <number>0</number>
-              </property>
-              <item>
-                <widget class="Q3ListBox" name="lbx_proxy" >
-                  <property name="sizePolicy" >
-                    <sizepolicy>
-                      <hsizetype>1</hsizetype>
-                      <vsizetype>7</vsizetype>
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                    </sizepolicy>
-                  </property>
-                </widget>
-              </item>
-              <item>
-                <layout class="QHBoxLayout" >
-                  <property name="margin" >
-                    <number>0</number>
-                  </property>
-                  <item>
-                    <widget class="IconButton" name="pb_new" >
-                      <property name="text" >
-                        <string>&amp;New</string>
-                      </property>
-                      <property name="psiIconName" stdset="0" >
-                        <string>psi/addContact</string>
-                      </property>
-                    </widget>
-                  </item>
-                  <item>
-                    <widget class="IconButton" name="pb_remove" >
-                      <property name="text" >
-                        <string>Rem&amp;ove</string>
-                      </property>
-                      <property name="psiIconName" stdset="0" >
-                        <string>psi/remove</string>
-                      </property>
-                    </widget>
-                  </item>
-                </layout>
-              </item>
-            </layout>
-          </item>
-          <item>
-            <widget class="QGroupBox" name="gb_prop" >
-              <property name="title" >
-                <string>Properties</string>
-              </property>
-              <layout class="QVBoxLayout" >
-                <item>
-                  <layout class="QHBoxLayout" >
-                    <property name="margin" >
-                      <number>0</number>
-                    </property>
-                    <item>
-                      <widget class="QLabel" name="textLabel1" >
-                        <property name="text" >
-                          <string>Name:</string>
-                        </property>
-                      </widget>
-                    </item>
-                    <item>
-                      <widget class="QLineEdit" name="le_name" />
-                    </item>
-                  </layout>
-                </item>
-                <item>
-                  <layout class="QHBoxLayout" >
-                    <property name="margin" >
-                      <number>0</number>
-                    </property>
-                    <item>
-                      <widget class="QLabel" name="textLabel2" >
-                        <property name="text" >
-                          <string>Type:</string>
-                        </property>
-                      </widget>
-                    </item>
-                    <item>
-                      <widget class="QComboBox" name="cb_type" >
-                        <property name="sizePolicy" >
-                          <sizepolicy>
-                            <hsizetype>7</hsizetype>
-                            <vsizetype>0</vsizetype>
-                            <horstretch>0</horstretch>
-                            <verstretch>0</verstretch>
-                          </sizepolicy>
-                        </property>
-                      </widget>
-                    </item>
-                  </layout>
-                </item>
-                <item>
-                  <widget class="QLabel" name="lb_proxyedit" >
-                    <property name="text" >
-                      <string>proxyedit</string>
-                    </property>
-                  </widget>
-                </item>
-              </layout>
-            </widget>
-          </item>
-        </layout>
-      </item>
-      <item>
-        <widget class="Line" name="line2" >
-          <property name="frameShape" >
-            <enum>QFrame::HLine</enum>
-          </property>
-          <property name="frameShadow" >
-            <enum>QFrame::Sunken</enum>
-          </property>
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Proxy</class>
+ <widget class="QDialog" name="Proxy">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>622</width>
+    <height>346</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Proxy Profiles</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_3">
+   <item row="0" column="0">
+    <layout class="QVBoxLayout">
+     <item>
+      <widget class="QListWidget" name="lbx_proxy">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <layout class="QHBoxLayout">
+       <item>
+        <widget class="IconButton" name="pb_new" native="true">
+         <property name="text" stdset="0">
+          <string>&amp;New</string>
+         </property>
+         <property name="psiIconName" stdset="0">
+          <string>psi/addContact</string>
+         </property>
         </widget>
-      </item>
-      <item>
-        <layout class="QHBoxLayout" >
-          <property name="margin" >
-            <number>0</number>
-          </property>
-          <item>
-            <spacer name="spacer11" >
-              <property name="sizeHint" >
-                <size>
-                  <width>125</width>
-                  <height>20</height>
-                </size>
-              </property>
-              <property name="sizeType" >
-                <enum>Expanding</enum>
-              </property>
-              <property name="orientation" >
-                <enum>Horizontal</enum>
-              </property>
-            </spacer>
-          </item>
-          <item>
-            <widget class="IconButton" name="pb_close" >
-              <property name="text" >
-                <string>&amp;Close</string>
-              </property>
-            </widget>
-          </item>
-          <item>
-            <widget class="IconButton" name="pb_save" >
-              <property name="text" >
-                <string>&amp;Save</string>
-              </property>
-            </widget>
-          </item>
-        </layout>
-      </item>
+       </item>
+       <item>
+        <widget class="IconButton" name="pb_remove" native="true">
+         <property name="text" stdset="0">
+          <string>Rem&amp;ove</string>
+         </property>
+         <property name="psiIconName" stdset="0">
+          <string>psi/remove</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
     </layout>
-  </widget>
-  <layoutdefault spacing="6" margin="11" />
-  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
-  <tabstops>
-    <tabstop>lbx_proxy</tabstop>
-    <tabstop>le_name</tabstop>
-    <tabstop>cb_type</tabstop>
-  </tabstops>
+   </item>
+   <item row="0" column="1">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <layout class="QHBoxLayout">
+       <item>
+        <widget class="QLabel" name="textLabel2">
+         <property name="text">
+          <string>Type:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="cb_type">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupBox">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="title">
+        <string/>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Host:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1" colspan="2">
+         <widget class="QLineEdit" name="le_host"/>
+        </item>
+        <item row="0" column="3">
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>Port:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="4">
+         <widget class="QLineEdit" name="le_port">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>64</width>
+            <height>16777215</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0" colspan="2">
+         <widget class="QLabel" name="lb_url">
+          <property name="text">
+           <string>Polling URL:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2" colspan="3">
+         <widget class="QLineEdit" name="le_url"/>
+        </item>
+        <item row="2" column="0" colspan="5">
+         <widget class="QGroupBox" name="gr_auth">
+          <property name="title">
+           <string>Use authentication</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <layout class="QGridLayout" name="gridLayout">
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_4">
+             <property name="text">
+              <string>Username:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="le_user"/>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_5">
+             <property name="text">
+              <string>Password:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLineEdit" name="le_pass">
+             <property name="echoMode">
+              <enum>QLineEdit::Password</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>20</width>
+         <height>13</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item row="1" column="0" colspan="2">
+    <widget class="Line" name="line2">
+     <property name="frameShape">
+      <enum>QFrame::HLine</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Sunken</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Save</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+ <customwidgets>
+  <customwidget>
+   <class>IconButton</class>
+   <extends>QWidget</extends>
+   <header>iconbutton.h</header>
+  </customwidget>
+ </customwidgets>
+ <tabstops>
+  <tabstop>cb_type</tabstop>
+  <tabstop>le_host</tabstop>
+  <tabstop>le_port</tabstop>
+  <tabstop>le_url</tabstop>
+  <tabstop>gr_auth</tabstop>
+  <tabstop>le_user</tabstop>
+  <tabstop>le_pass</tabstop>
+  <tabstop>buttonBox</tabstop>
+  <tabstop>lbx_proxy</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
 </ui>

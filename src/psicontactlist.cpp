@@ -283,6 +283,10 @@ void PsiContactList::accountEnabledChanged()
 		enabledAccounts_.append(account);
 }
 
+#ifdef NEWCONTACTLIST
+#error "Don't forget to ditch PsiContactList::beginBulkOperation() and PsiContactList::endBulkOperation()"
+#endif
+
 static int sortColumn = -1;
 static int operationCount = 0;
 /**

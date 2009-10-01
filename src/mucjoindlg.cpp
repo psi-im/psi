@@ -61,7 +61,7 @@ MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
 		ui_.cb_recent->setItemData(ui_.cb_recent->count()-1, QVariant(j));
 	}
 
-	setWindowTitle(CAP(caption()));
+	setWindowTitle(CAP(windowTitle()));
 	connect(ui_.cb_recent, SIGNAL(activated(int)), SLOT(recent_activated(int)));
 	if (!ui_.cb_recent->count()) {
 		ui_.cb_recent->setEnabled(false);
@@ -72,7 +72,7 @@ MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
 	}
 
 	setWidgetsEnabled(true);
-	resize(sizeHint());
+	adjustSize();
 }
 
 MUCJoinDlg::~MUCJoinDlg()
@@ -205,7 +205,8 @@ void MUCJoinDlg::error(int, const QString &str)
 	account_->dialogUnregister(this);
 	controller_->dialogRegister(this);
 
-	QMessageBox* msg = new QMessageBox(QMessageBox::Information, tr("Error"), tr("Unable to join groupchat.\nReason: %1").arg(str), QMessageBox::Ok, this, Qt::WDestructiveClose);
+	QMessageBox* msg = new QMessageBox(QMessageBox::Information, tr("Error"), tr("Unable to join groupchat.\nReason: %1").arg(str), QMessageBox::Ok, this);
+	msg->setAttribute(Qt::WA_DeleteOnClose, true);
 	msg->setModal(false);
 	msg->show();
 }

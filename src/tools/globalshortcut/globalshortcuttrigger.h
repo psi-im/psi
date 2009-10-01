@@ -33,7 +33,7 @@ public:
 	 */
 	bool isUsed() const
 	{
-		return QObject::receivers(SIGNAL(activated())) > 0;
+		return QObject::receivers(SIGNAL(triggered())) > 0;
 	}
 
 signals:

@@ -40,7 +40,7 @@ public:
 
 	void connectXmppAction(QAction* action, const QString& query)
 	{
-		connect(action, SIGNAL(activated()), &xmppActionMapper, SLOT(map()));
+		connect(action, SIGNAL(triggered()), &xmppActionMapper, SLOT(map()));
 		xmppActionMapper.setMapping(action, query);
 	}
 
@@ -52,15 +52,15 @@ public:
 		
 		tr = qApp->translate("URLLabel", "Open");
 		act_xmpp = new IconAction(tr, "psi/jabber", tr, 0, this);
-		connect(act_xmpp, SIGNAL(activated()), SLOT(popupAction()));
+		connect(act_xmpp, SIGNAL(triggered()), SLOT(popupAction()));
 
 		tr = qApp->translate("URLLabel", "Open mail composer");
 		act_mailto = new IconAction(tr, "psi/email", tr, 0, this);
-		connect(act_mailto, SIGNAL(activated()), SLOT(popupAction()));
+		connect(act_mailto, SIGNAL(triggered()), SLOT(popupAction()));
 	
 		tr = qApp->translate("URLLabel", "Open web browser");
 		act_browser = new IconAction(tr, "psi/www", tr, 0, this);
-		connect(act_browser, SIGNAL(activated()), SLOT(popupAction()));
+		connect(act_browser, SIGNAL(triggered()), SLOT(popupAction()));
 
 		tr = qApp->translate("URLLabel", "Add to Roster");
 		act_add_to_roster = new IconAction(tr, "psi/addContact", tr, 0, this);
@@ -80,7 +80,7 @@ public:
 
 		tr = qApp->translate("URLLabel", "Copy location");
 		act_copy = new IconAction(tr, tr, 0, this);
-		connect(act_copy, SIGNAL(activated()), SLOT(popupCopy()));
+		connect(act_copy, SIGNAL(triggered()), SLOT(popupCopy()));
 
 		connect(&xmppActionMapper, SIGNAL(mapped(const QString&)), SLOT(xmppAction(const QString&)));
 	}
@@ -89,7 +89,7 @@ public:
 	{
 		QString l = from;
 
-		int colon = l.find(':');
+		int colon = l.indexOf(':');
 		if ( colon == -1 )
 			colon = 0;
 		QString service = l.left( colon );
@@ -131,7 +131,7 @@ public slots:
 		if (uri.queryItems().value(0).first != queryType) {
 			uri.setEncodedQuery(query.toAscii());
 		}
-		emit urlObject->openURL(uri);
+		emit urlObject->openURL(uri.toString());
 	}
 
 	void xmppAction(const QString& query) {
@@ -175,7 +175,7 @@ QMenu *URLObject::createPopupMenu(const QString &lnk)
 	if ( d->link.isEmpty() )
 		return 0;
 
-	int colon = d->link.find(':');
+	int colon = d->link.indexOf(':');
 	if ( colon == -1 )
 		colon = 0;
 	QString service = d->link.left( colon );

@@ -21,7 +21,6 @@
 #ifndef PSICON_H
 #define PSICON_H
 
-#include <Q3PtrList>
 #include <QList>
 
 #include "profiles.h"

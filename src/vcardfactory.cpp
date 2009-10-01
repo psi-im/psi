@@ -69,7 +69,7 @@ VCardFactory* VCardFactory::instance()
 void VCardFactory::checkLimit(QString jid, VCard *vcard)
 {
 	if (vcardList_.contains(jid)) {
-		vcardList_.remove(jid);
+		vcardList_.removeAll(jid);
 		delete vcardDict_.take(jid);
 	}
 	else if (vcardList_.size() > dictSize_) {
@@ -106,10 +106,10 @@ void VCardFactory::saveVCard(const Jid& j, const VCard& _vcard)
 	if(!v.exists())
 		p.mkdir("vcard");
 
-	QFile file ( ApplicationInfo::vCardDir() + '/' + JIDUtil::encode(j.bare()).lower() + ".xml" );
+	QFile file ( ApplicationInfo::vCardDir() + '/' + JIDUtil::encode(j.bare()).toLower() + ".xml" );
 	file.open ( QIODevice::WriteOnly );
 	QTextStream out ( &file );
-	out.setEncoding ( QTextStream::UnicodeUTF8 );
+	out.setCodec("UTF-8");
 	QDomDocument doc;
 	doc.appendChild( vcard->toXml ( &doc ) );
 	out << doc.toString(4);
@@ -129,7 +129,7 @@ const VCard* VCardFactory::vcard(const Jid &j)
 	}
 	
 	// then try to load from cache on disk
-	QFile file ( ApplicationInfo::vCardDir() + '/' + JIDUtil::encode(j.bare()).lower() + ".xml" );
+	QFile file ( ApplicationInfo::vCardDir() + '/' + JIDUtil::encode(j.bare()).toLower() + ".xml" );
 	file.open (QIODevice::ReadOnly);
 	QDomDocument doc;
 	VCard *vcard = new VCard;

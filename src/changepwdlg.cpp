@@ -25,6 +25,8 @@
 #include <qpushbutton.h>
 #include <qlineedit.h>
 #include <qmessagebox.h>
+#include <QFormLayout>
+
 #include "profiles.h"
 #include "psiaccount.h"
 #include "busywidget.h"
@@ -38,17 +40,18 @@ ChangePasswordDlg::ChangePasswordDlg(PsiAccount *_pa, QWidget *parent)
 	: QDialog(parent)
 {
 	setAttribute(Qt::WA_DeleteOnClose, true);
-	setupUi(this);
-	setModal(false);
-  	pa = _pa;
+	ui_.setupUi(this);
+
+	pa = _pa;
 	pa->dialogRegister(this);
 
 	connect(pa, SIGNAL(disconnected()), SLOT(disc()));
 
-	setWindowTitle(CAP(caption()));
+	setWindowTitle(CAP(windowTitle()));
 
-	connect(pb_close, SIGNAL(clicked()), SLOT(close()));
-	connect(pb_apply, SIGNAL(clicked()), SLOT(apply()));
+	connect(ui_.buttonBox->button(QDialogButtonBox::Cancel), SIGNAL(clicked()), SLOT(close()));
+	connect(ui_.buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), SLOT(apply()));
+	adjustSize();
 }
 
 ChangePasswordDlg::~ChangePasswordDlg()
@@ -64,7 +67,7 @@ ChangePasswordDlg::~ChangePasswordDlg()
 
 void ChangePasswordDlg::done(int r)
 {
-	if(busy->isActive())
+	if(ui_.busy->isActive())
 		return;
 	QDialog::done(r);
 }
@@ -72,39 +75,39 @@ void ChangePasswordDlg::done(int r)
 void ChangePasswordDlg::apply()
 {
 	// sanity check
-	if(le_pwcur->text().isEmpty() || le_pwnew->text().isEmpty() || le_pwver->text().isEmpty()) {
+	if(ui_.le_pwcur->text().isEmpty() || ui_.le_pwnew->text().isEmpty() || ui_.le_pwver->text().isEmpty()) {
 		QMessageBox::information(this, tr("Error"), tr("You must fill out the fields properly before you can proceed."));
 		return;
 	}
 
-	if(le_pwcur->text() != pa->userAccount().pass) {
+	if(ui_.le_pwcur->text() != pa->userAccount().pass) {
 		QMessageBox::information(this, tr("Error"), tr("You entered your old password incorrectly.  Try again."));
-		le_pwcur->setText("");
-		le_pwcur->setFocus();
+		ui_.le_pwcur->setText("");
+		ui_.le_pwcur->setFocus();
 		return;
 	}
 
-	if(le_pwnew->text() != le_pwver->text()) {
+	if(ui_.le_pwnew->text() != ui_.le_pwver->text()) {
 		QMessageBox::information(this, tr("Error"), tr("New password and confirmation do not match.  Please enter them again."));
-		le_pwnew->setText("");
-		le_pwver->setText("");
-		le_pwnew->setFocus();
+		ui_.le_pwnew->setText("");
+		ui_.le_pwver->setText("");
+		ui_.le_pwnew->setFocus();
 		return;
 	}
 
-	busy->start();
+	ui_.busy->start();
 	blockWidgets();
 
 	JT_Register *reg = new JT_Register(pa->client()->rootTask());
 	connect(reg, SIGNAL(finished()), SLOT(finished()));
 	Jid j = pa->userAccount().jid;
-	reg->reg(j.node(), le_pwnew->text());
+	reg->reg(j.node(), ui_.le_pwnew->text());
 	reg->go(true);
 }
 
 void ChangePasswordDlg::finished()
 {
-	busy->stop();
+	ui_.busy->stop();
 
 	JT_Register *reg = (JT_Register *)sender();
 	QString err = reg->statusString();
@@ -112,7 +115,7 @@ void ChangePasswordDlg::finished()
 	bool ok = reg->success();
 	if(ok) {
 		UserAccount acc = pa->userAccount();
-		acc.pass = le_pwnew->text();
+		acc.pass = ui_.le_pwnew->text();
 		pa->setUserAccount(acc);
 		AccountModifyDlg *amd = pa->findDialog<AccountModifyDlg*>();
 		if(amd)
@@ -133,7 +136,7 @@ void ChangePasswordDlg::finished()
 
 void ChangePasswordDlg::disc()
 {
-	busy->stop();
+	ui_.busy->stop();
 	close();
 }
 
@@ -149,12 +152,7 @@ void ChangePasswordDlg::restoreWidgets()
 
 void ChangePasswordDlg::setWidgetsEnabled(bool enabled)
 {
-	lb_pwcur->setEnabled(enabled);
-	lb_pwnew->setEnabled(enabled);
-	lb_pwver->setEnabled(enabled);
-	le_pwcur->setEnabled(enabled);
-	le_pwnew->setEnabled(enabled);
-	le_pwver->setEnabled(enabled);
-	pb_close->setEnabled(enabled);
-	pb_apply->setEnabled(enabled);
+	foreach(QWidget* w, findChildren<QWidget*>()) {
+		w->setEnabled(enabled);
+	}
 }

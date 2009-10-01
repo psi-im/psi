@@ -140,7 +140,7 @@ FancyPopup::Private::~Private()
 void FancyPopup::Private::popupDestroyed(QObject *obj)
 {
 	if ( prevPopups.contains((FancyPopup *)obj) ) {
-		prevPopups.remove((FancyPopup *)obj);
+		prevPopups.removeAll((FancyPopup *)obj);
 		popup->move( position() );
 	}
 }
@@ -181,25 +181,30 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
 	QPixmap back(1, 1);
 	back.fill(backgroundColor);
 	
-	QVBoxLayout *vbox = new QVBoxLayout(popup, 0, 0);
+	QVBoxLayout *vbox = new QVBoxLayout(popup);
+	vbox->setMargin(0);
+	vbox->setSpacing(0);
 
 	// top row
-	QHBoxLayout *tophbox = new QHBoxLayout(vbox);
+	QHBoxLayout *tophbox = new QHBoxLayout(0);
+	vbox->addLayout(tophbox);
 	QLabel *top1 = new QLabel(popup);
 	top1->setAutoFillBackground(true);
 	top1->setFixedWidth(3);
 	top1->setPalette(backgroundPalette);
 	tophbox->addWidget(top1);
 
-	QVBoxLayout *topvbox = new QVBoxLayout(tophbox);
+	QVBoxLayout *topvbox = new QVBoxLayout(0);
+	tophbox->addLayout(topvbox);
 	QLabel *top2 = new QLabel(popup);
 	top2->setAutoFillBackground(true);
 	top2->setFixedHeight(1);
 	top2->setPalette(backgroundPalette);
 	topvbox->addWidget(top2);
 
-	QHBoxLayout *tophbox2 = new QHBoxLayout(topvbox);
-	
+	QHBoxLayout *tophbox2 = new QHBoxLayout(0);
+	topvbox->addLayout(tophbox2);
+
 	IconLabel *titleIcon = new IconLabel(popup);
 	titleIcon->setAutoFillBackground(true);
 	titleIcon->setPsiIcon(icon, copyIcon);
@@ -271,7 +276,8 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
 	tophbox->addWidget(top4);
 
 	// middle row
-	QHBoxLayout *middlehbox = new QHBoxLayout(vbox);
+	QHBoxLayout *middlehbox = new QHBoxLayout(0);
+	vbox->addLayout(middlehbox);
 	QLabel *middle1 = new QLabel(popup);
 	middle1->setAutoFillBackground(true);
 	middle1->setFixedWidth(4);
@@ -279,7 +285,8 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
 	middlehbox->addWidget(middle1);
 
 	middlehbox->addSpacing(5);
-	QVBoxLayout *middlevbox = new QVBoxLayout(middlehbox);
+	QVBoxLayout *middlevbox = new QVBoxLayout(0);
+	middlehbox->addLayout(middlevbox);
 	middlevbox->addSpacing(5);
 	layout = middlevbox; // we'll add more items later in addLayout()
 	middlehbox->addSpacing(5);
@@ -291,7 +298,8 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
 	middlehbox->addWidget(middle3);
 
 	// bottom row
-	QHBoxLayout *bottomhbox = new QHBoxLayout(vbox);
+	QHBoxLayout *bottomhbox = new QHBoxLayout(0);
+	vbox->addLayout(bottomhbox);
 	QLabel *bottom1 = new QLabel(popup);
 	bottom1->setAutoFillBackground(true);
 	bottom1->setFixedSize( 4, 4 );

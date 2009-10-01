@@ -10,7 +10,7 @@ include($$PWD/tabs/tabs.pri)
 include($$PWD/Certificates/Certificates.pri)
 
 # tools
-include($$PWD/tools/trayicon/trayicon.pri)
+# include($$PWD/tools/trayicon/trayicon.pri)
 include($$PWD/tools/iconset/iconset.pri)
 include($$PWD/libpsi/tools/idle/idle.pri)
 include($$PWD/tools/systemwatch/systemwatch.pri)
@@ -424,7 +424,9 @@ INTERFACES += \
 	$$PWD/voicecall.ui \
 	$$PWD/chatdlg.ui \
 	$$PWD/groupchatdlg.ui \
-	$$PWD/bookmarkmanage.ui
+	$$PWD/bookmarkmanage.ui \
+	$$PWD/ahcommanddlg.ui \
+	$$PWD/ahcformdlg.ui
 
 # options dialog
 include($$PWD/options/options.pri)
@@ -463,7 +465,7 @@ unix:!dbus {
 }
 
 mac {
-	QMAKE_LFLAGS += -framework Carbon -framework IOKit
+	QMAKE_LFLAGS += -framework Carbon -framework IOKit -framework AppKit
 }
 
 INCLUDEPATH += $$PWD

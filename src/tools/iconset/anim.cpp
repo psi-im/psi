@@ -25,7 +25,6 @@
 #include <QImageReader>
 #include <QTimer>
 //#include <QApplication>
-#include <Q3Shared>
 #include <QBuffer>
 #include <QImage>
 #include <QThread>
@@ -43,7 +42,7 @@
 static QThread *animMainThread = 0;
 
 //! \if _hide_doc_
-class Anim::Private : public QObject, public Q3Shared
+class Anim::Private : public QObject, public QSharedData
 {
 	Q_OBJECT
 public:
@@ -91,7 +90,7 @@ public:
 	}
 
 	Private(const Private &from)
-	: QObject(), Q3Shared()
+		: QObject(), QSharedData()
 	{
 		init();
 
@@ -242,7 +241,6 @@ Anim::Anim(const QByteArray &data)
 Anim::Anim(const Anim &anim)
 {
 	d = anim.d;
-	d->ref();
 }
 
 /**
@@ -250,8 +248,6 @@ Anim::Anim(const Anim &anim)
  */
 Anim::~Anim()
 {
-	if ( d->deref() )
-		delete d;
 }
 
 /**
@@ -382,28 +378,22 @@ void Anim::disconnectUpdate(QObject *receiver, const char *member)
 
 Anim & Anim::operator= (const Anim &from)
 {
-	if ( d->deref() )
-		delete d;
-
 	d = from.d;
-	d->ref();
 
 	return *this;
 }
 
 Anim Anim::copy() const
 {
-	Anim anim( *this ); // careful, this calls d->ref()
-	d->deref();
-	anim.d = new Private( *this->d );
+	Anim anim( *this );
+	anim.d = new Private( *this->d.data() );
 
 	return anim;
 }
 
 void Anim::detach()
 {
-	if ( d->count > 1 )
-		*this = copy();
+	d.detach();
 }
 
 /**

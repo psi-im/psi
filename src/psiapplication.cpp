@@ -121,10 +121,11 @@ class PsiMacStyle : public QMacStyle
 public:
 	PsiMacStyle() 
 	{
-		extern void qt_mac_set_menubar_icons(bool b); // qmenu_mac.cpp
-		qt_mac_set_menubar_icons(false);
+		// Since Qt 4.6, it's better to use QAction::setIconVisibleInMenu()
+		// extern void qt_mac_set_menubar_icons(bool b); // qmenu_mac.cpp
+		// qt_mac_set_menubar_icons(false);
 	}
-	
+
 	void drawControl(ControlElement ce, const QStyleOption *opt, QPainter *p, const QWidget *w) const
 	{
 		if (disableIconsForMenu(w) && ce == QStyle::CE_MenuItem) {
@@ -139,7 +140,7 @@ public:
 
 		QMacStyle::drawControl(ce, opt, p, w);
 	}
-	
+
 	QSize sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &csz, const QWidget *widget) const
 	{
 		if (disableIconsForMenu(widget) && ct == QStyle::CT_MenuItem) {

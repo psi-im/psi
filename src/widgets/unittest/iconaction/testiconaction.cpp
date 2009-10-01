@@ -45,7 +45,7 @@ private slots:
 	void testToolButtonClick() {
 		QToolBar toolBar;
 		action->addTo(&toolBar);
-		QSignalSpy spy(action, SIGNAL(activated()));
+		QSignalSpy spy(action, SIGNAL(triggered()));
 		
 		IconToolButton *button = findToolButton(&toolBar);
 		QCOMPARE(button->isCheckable(), false);

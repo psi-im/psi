@@ -47,12 +47,12 @@ QWidget *OptionsTabStatus::widget()
 
 	QString s = tr("Makes Psi automatically set your status to \"away\" if your"
 		" computer is idle for the specified amount of time.");
-	QWhatsThis::add(d->ck_asAway, s);
-	QWhatsThis::add(d->sb_asAway, s);
+	d->ck_asAway->setWhatsThis(s);
+	d->sb_asAway->setWhatsThis(s);
 	s = tr("Makes Psi automatically set your status to \"extended away\" if your"
 		" computer is idle for the specified amount of time.");
-	QWhatsThis::add(d->ck_asXa, s);
-	QWhatsThis::add(d->sb_asXa, s);
+	d->ck_asXa->setWhatsThis(s);
+	d->sb_asXa->setWhatsThis(s);
 	s = tr("Makes Psi automatically set your status to \"offline\" if your"
 		" computer is idle for the specified amount of time."
 		"  This will disconnect you from the Jabber server.");
@@ -61,10 +61,10 @@ QWidget *OptionsTabStatus::widget()
 		d->sb_asXa->hide();
 		d->lb_asXa->hide();
 	}
-	QWhatsThis::add(d->ck_asOffline, s);
-	QWhatsThis::add(d->sb_asOffline, s);
+	d->ck_asOffline->setWhatsThis( s);
+	d->sb_asOffline->setWhatsThis( s);
 
-	QWhatsThis::add(d->te_asMessage,
+	d->te_asMessage->setWhatsThis(
 		tr("Specifies an extended message to use if you allow Psi"
 		" to set your status automatically.  See options above."));
 
@@ -76,23 +76,23 @@ QWidget *OptionsTabStatus::widget()
 	connect(d->le_sp_priority, SIGNAL(textChanged(const QString&)), SLOT(changeStatusPreset()));
 	connect(d->cb_sp_status, SIGNAL(activated(int)), SLOT(changeStatusPreset()));
 	
-	QWhatsThis::add(d->pb_spNew,
+	d->pb_spNew->setWhatsThis(
 		tr("Press this button to create a new status message preset."));
-	QWhatsThis::add(d->pb_spDelete,
+	d->pb_spDelete->setWhatsThis(
 		tr("Press this button to delete a status message preset."));
-	QWhatsThis::add(d->cb_preset,
+	d->cb_preset->setWhatsThis(
 		tr("Use this list to select a status message preset"
 		" to view or edit in the box to the bottom."));
-	QWhatsThis::add(d->te_sp,
+	d->te_sp->setWhatsThis(
 		tr("You may edit the message here for the currently selected"
 		" status message preset in the list to the above."));
-	QWhatsThis::add(d->cb_sp_status,
+	d->cb_sp_status->setWhatsThis(
 		tr("Use this to choose the status that will be assigned to this preset"));
-	QWhatsThis::add(d->le_sp_priority,
+	d->le_sp_priority->setWhatsThis(
 		tr("Fill in the priority that will be assigned to this preset."
 		   " If no priority is given, the default account priority will be used."));
 
-	QWhatsThis::add(d->ck_askOnline,
+	d->ck_askOnline->setWhatsThis(
 		tr("Jabber allows you to put extended status messages on"
 		" all status types.  Normally, Psi does not prompt you for"
 		" an extended message when you set your status to \"online\"."
@@ -114,7 +114,7 @@ void OptionsTabStatus::applyOptions()
 	PsiOptions::instance()->setOption("options.status.auto-away.use-away", d->ck_asAway->isChecked());
 	PsiOptions::instance()->setOption("options.status.auto-away.use-not-availible", d->ck_asXa->isChecked());
 	PsiOptions::instance()->setOption("options.status.auto-away.use-offline", d->ck_asOffline->isChecked());
-	PsiOptions::instance()->setOption("options.status.auto-away.message", d->te_asMessage->text());
+	PsiOptions::instance()->setOption("options.status.auto-away.message", d->te_asMessage->toPlainText());
 
 	
 	foreach (QString name, deletedPresets) {
@@ -147,14 +147,14 @@ void OptionsTabStatus::restoreOptions()
 
 	OptStatusUI *d = (OptStatusUI *)w;
 
-	d->sb_asAway->setMinValue(0);
-	d->sb_asAway->setMaxValue(INT_MAX);
+	d->sb_asAway->setMinimum(0);
+	d->sb_asAway->setMaximum(INT_MAX);
 	d->sb_asAway->setValue( PsiOptions::instance()->getOption("options.status.auto-away.away-after").toInt() );
-	d->sb_asXa->setMinValue(0);
-	d->sb_asXa->setMaxValue(INT_MAX);
+	d->sb_asXa->setMinimum(0);
+	d->sb_asXa->setMaximum(INT_MAX);
 	d->sb_asXa->setValue( PsiOptions::instance()->getOption("options.status.auto-away.not-availible-after").toInt() );
-	d->sb_asOffline->setMinValue(0);
-	d->sb_asOffline->setMaxValue(INT_MAX);
+	d->sb_asOffline->setMinimum(0);
+	d->sb_asOffline->setMaximum(INT_MAX);
 	d->sb_asOffline->setValue( PsiOptions::instance()->getOption("options.status.auto-away.offline-after").toInt() );
 	/*if (PsiOptions::instance()->getOption("options.status.auto-away.away-after").toInt() <= 0 )
 		PsiOptions::instance()->getOption("options.status.auto-away.use-away").toBool() = false;
@@ -188,7 +188,7 @@ void OptionsTabStatus::restoreOptions()
 	}
 	
 	
-	d->cb_preset->insertStringList(presetNames);
+	d->cb_preset->addItems(presetNames);
 
 	if(d->cb_preset->count() >= 1) {
 		d->cb_preset->setCurrentIndex(0);
@@ -223,7 +223,7 @@ void OptionsTabStatus::selectStatusPreset(int x)
 	}
 
 	StatusPreset preset;
-	QString name = d->cb_preset->text(x);
+	QString name = d->cb_preset->itemText(x);
 	
 	if (newPresets.contains(name)) {
 		preset = newPresets[name];
@@ -253,10 +253,10 @@ void OptionsTabStatus::newStatusPreset()
 
 	while(1) {
 		bool ok = false;
-		text = QInputDialog::getText(
+		text = QInputDialog::getText(parentWidget,
 			CAP(tr("New Status Preset")),
 			tr("Please enter a name for the new status preset:"),
-			QLineEdit::Normal, text, &ok, parentWidget);
+			QLineEdit::Normal, text, &ok);
 		if(!ok) {
 			return;
 		}
@@ -271,8 +271,8 @@ void OptionsTabStatus::newStatusPreset()
 	}
 
 	newPresets[text].setName(text);
-	d->cb_preset->insertItem(text);
-	d->cb_preset->setCurrentItem(d->cb_preset->count()-1);
+	d->cb_preset->addItem(text);
+	d->cb_preset->setCurrentIndex(d->cb_preset->count()-1);
 	selectStatusPreset(d->cb_preset->count()-1);
 	d->te_sp->setFocus();
 
@@ -282,19 +282,19 @@ void OptionsTabStatus::newStatusPreset()
 void OptionsTabStatus::removeStatusPreset()
 {
 	OptStatusUI *d = (OptStatusUI *)w;
-	int id = d->cb_preset->currentItem();
+	int id = d->cb_preset->currentIndex();
 	if(id == -1)
 		return;
 
 	emit dataChanged();
 
-	QString name = d->cb_preset->text(id);
+	QString name = d->cb_preset->itemText(id);
 	
 	if (newPresets.contains(name)) {
 		newPresets.remove(name);
 	} else {
-		deletedPresets += d->cb_preset->text(id);
-		presets.remove(d->cb_preset->text(id));
+		deletedPresets += d->cb_preset->itemText(id);
+		presets.remove(d->cb_preset->itemText(id));
 	}
 	d->cb_preset->removeItem(id);
 
@@ -314,19 +314,19 @@ void OptionsTabStatus::removeStatusPreset()
 void OptionsTabStatus::changeStatusPreset()
 {
 	OptStatusUI *d = (OptStatusUI *)w;
-	int id = d->cb_preset->currentItem();
+	int id = d->cb_preset->currentIndex();
 	if(id == -1)
 		return;
 
 	StatusPreset sp;
-	sp.setMessage(d->te_sp->text());
+	sp.setMessage(d->te_sp->toPlainText());
 	if (d->le_sp_priority->text().isEmpty())
 		sp.clearPriority();
 	else
 		sp.setPriority(d->le_sp_priority->text().toInt());
 	sp.setStatus(d->cb_sp_status->status());
 
-	QString name = d->cb_preset->text(id);
+	QString name = d->cb_preset->itemText(id);
 	
 	sp.setName(name);
 	if (newPresets.contains(name)) {

@@ -4,7 +4,6 @@
 #include <QSystemTrayIcon>
 
 #include "psitrayicon.h"
-#include "trayicon.h"
 #include "iconset.h"
 #include "alerticon.h"
 #include "psioptions.h"
@@ -12,49 +11,31 @@
 // TODO: remove the QPoint parameter from the signals when we finally move
 // to the new system.
 
-PsiTrayIcon::PsiTrayIcon(const QString &tip, QMenu *popup, bool old, QObject *parent) : QObject(parent), old_(old)
+PsiTrayIcon::PsiTrayIcon(const QString &tip, QMenu *popup, QObject *parent)
+	: QObject(parent)
 {
 	icon_ = NULL;
 	trayicon_ = NULL;
-	old_trayicon_ = NULL;
-	if (old_) {
-		old_trayicon_ = new TrayIcon(makeIcon(), tip, popup);
-		connect(old_trayicon_, SIGNAL(clicked(const QPoint &, int)), SIGNAL(clicked(const QPoint &, int)));
-		connect(old_trayicon_, SIGNAL(doubleClicked(const QPoint &)), SIGNAL(doubleClicked(const QPoint &)));
-		connect(old_trayicon_, SIGNAL(closed()), SIGNAL(closed()));
-		connect(qApp, SIGNAL(newTrayOwner()), old_trayicon_, SLOT(newTrayOwner()));
-		connect(qApp, SIGNAL(trayOwnerDied()), old_trayicon_, SLOT(hide()));
-		old_trayicon_->show();
-	}
-	else {
-		trayicon_ = new QSystemTrayIcon();
-		trayicon_->setContextMenu(popup);
-		setToolTip(tip);
-		connect(trayicon_,SIGNAL(activated(QSystemTrayIcon::ActivationReason)),SLOT(trayicon_activated(QSystemTrayIcon::ActivationReason)));
-	}
+	trayicon_ = new QSystemTrayIcon();
+	trayicon_->setContextMenu(popup);
+	setToolTip(tip);
+	connect(trayicon_,SIGNAL(activated(QSystemTrayIcon::ActivationReason)),SLOT(trayicon_activated(QSystemTrayIcon::ActivationReason)));
 }
 
 PsiTrayIcon::~PsiTrayIcon()
 {
-	delete old_trayicon_;
 	delete trayicon_;
 	delete icon_;
 }
 
 void PsiTrayIcon::setContextMenu(QMenu* menu)
 {
-	if (old_)
-		old_trayicon_->setPopup(menu);
-	else
-		trayicon_->setContextMenu(menu);
+	trayicon_->setContextMenu(menu);
 }
 
 void PsiTrayIcon::setToolTip(const QString &str)
 {
-	if (old_)
-		old_trayicon_->setToolTip(str);
-	else
-		trayicon_->setToolTip(str);
+	trayicon_->setToolTip(str);
 }
 
 void PsiTrayIcon::setIcon(const PsiIcon *icon, bool alert)
@@ -94,26 +75,17 @@ bool PsiTrayIcon::isAnimating() const
 
 bool PsiTrayIcon::isWMDock()
 {
-	if (old_)
-		return old_trayicon_->isWMDock();
-	else
-		return false;
+	return false;
 }
 
 void PsiTrayIcon::show()
 {
-	if (old_)
-		old_trayicon_->show();
-	else
-		trayicon_->show();
+	trayicon_->show();
 }
 
 void PsiTrayIcon::hide()
 {
-	if (old_)
-		old_trayicon_->hide();
-	else
-		trayicon_->hide();
+	trayicon_->hide();
 }
 
 
@@ -207,35 +179,15 @@ void PsiTrayIcon::trayicon_activated(QSystemTrayIcon::ActivationReason reason)
 
 void PsiTrayIcon::animate()
 {
-	if (old_) {
-#ifdef Q_WS_X11
-		if ( !icon_ )
-			return;
+	if ( !icon_ )
+		return;
 
-		QString cachedName = "PsiTray/" + PsiOptions::instance()->getOption("options.iconsets.status").toString() + "/" + icon_->name() + "/" + QString::number( icon_->frameNumber() );
+	QString cachedName = "PsiTray/" + PsiOptions::instance()->getOption("options.iconsets.status").toString() + "/" + icon_->name() + "/" + QString::number( icon_->frameNumber() );
 
-		QPixmap p;
-		if ( !QPixmapCache::find(cachedName, p) ) {
-			p = makeIcon();
-			QPixmapCache::insert( cachedName, p );
-		}
-
-		old_trayicon_->setIcon(p);
-#else
-		old_trayicon_->setIcon( makeIcon() );
-#endif
+	QPixmap p;
+	if ( !QPixmapCache::find(cachedName, p) ) {
+		p = makeIcon();
+		QPixmapCache::insert( cachedName, p );
 	}
-	else {
-		if ( !icon_ )
-			return;
-
-		QString cachedName = "PsiTray/" + PsiOptions::instance()->getOption("options.iconsets.status").toString() + "/" + icon_->name() + "/" + QString::number( icon_->frameNumber() );
-
-		QPixmap p;
-		if ( !QPixmapCache::find(cachedName, p) ) {
-			p = makeIcon();
-			QPixmapCache::insert( cachedName, p );
-		}
-		trayicon_->setIcon(p);
-	}
+	trayicon_->setIcon(p);
 }

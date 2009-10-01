@@ -245,7 +245,7 @@ void IconSelect::noIcons()
 	grid = new QGridLayout(this);
 
 	QLabel *lbl = new QLabel(this);
-	grid->addWidget(lbl);
+	grid->addWidget(lbl, 0, 0);
 	lbl->setText( tr("No icons available") );
 }
 
@@ -283,10 +283,10 @@ void IconSelect::setIconset(const Iconset &iconset)
 	h /= count;
 
 	const int margin = 2;
-	int tileSize = (int)QMAX(w, h) + 2*margin;
+	int tileSize = (int)qMax(w, h) + 2*margin;
 
 	QRect r = QApplication::desktop()->availableGeometry( menu );
-	int maxSize = QMIN(r.width(), r.height())*3/4;
+	int maxSize = qMin(r.width(), r.height())*3/4;
 
 	int size = (int)ceil( sqrt( count ) );
 
@@ -298,17 +298,19 @@ void IconSelect::setIconset(const Iconset &iconset)
 	}
 
 	// now, fill grid with elements
-	grid = new QGridLayout(this, size, size);
+	grid = new QGridLayout(this);
 
 	count = 0;
 
+	int row = 0;
+	int column = 0;
 	it = is.iterator();
 	while ( it.hasNext() ) {
 		if ( ++count > size*size )
 			break;
 
 		IconSelectButton *b = new IconSelectButton(this);
-		grid->addWidget(b);
+		grid->addWidget(b, row, column);
 		b->setIcon( it.next() );
 		b->setSizeHint( QSize(tileSize, tileSize) );
 		connect (b, SIGNAL(iconSelected(const PsiIcon *)), menu, SIGNAL(iconSelected(const PsiIcon *)));
@@ -316,6 +318,11 @@ void IconSelect::setIconset(const Iconset &iconset)
 
 		connect (menu, SIGNAL(aboutToShow()), b, SLOT(aboutToShow()));
 		connect (menu, SIGNAL(aboutToHide()), b, SLOT(aboutToHide()));
+
+		if (++column >= size) {
+			++row;
+			column = 0;
+		}
 	}
 }
 
@@ -345,7 +352,6 @@ IconSelectPopup::IconSelectPopup(QWidget *parent)
 {
 	QGridLayout *grid = new QGridLayout(this);
 	grid->setMargin(style()->pixelMetric(QStyle::PM_MenuPanelWidth, 0, this));
-	grid->setAutoAdd(true);
 	
 	d = new Private(this);
 }

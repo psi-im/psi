@@ -1,7 +1,8 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>MUCJoin</class>
- <widget class="QDialog" name="MUCJoin" >
-  <property name="geometry" >
+ <widget class="QDialog" name="MUCJoin">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
@@ -9,108 +10,108 @@
     <height>362</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>Join Groupchat</string>
   </property>
-  <layout class="QGridLayout" >
-   <item row="0" column="0" >
-    <widget class="QLabel" name="lb_identity" >
-     <property name="text" >
+  <layout class="QGridLayout" name="_2">
+   <item row="0" column="0">
+    <widget class="QLabel" name="lb_identity">
+     <property name="text">
       <string>Identity:</string>
      </property>
-     <property name="alignment" >
+     <property name="alignment">
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
    </item>
-   <item row="0" column="1" >
-    <widget class="AccountsComboBox" name="cb_ident" />
+   <item row="0" column="1">
+    <widget class="AccountsComboBox" name="cb_ident"/>
    </item>
-   <item row="1" column="0" >
-    <widget class="QLabel" name="TextLabel1_2" >
-     <property name="text" >
+   <item row="1" column="0">
+    <widget class="QLabel" name="TextLabel1_2">
+     <property name="text">
       <string>Recent:</string>
      </property>
-     <property name="alignment" >
+     <property name="alignment">
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
    </item>
-   <item row="1" column="1" >
-    <widget class="QComboBox" name="cb_recent" >
-     <property name="sizePolicy" >
-      <sizepolicy vsizetype="Fixed" hsizetype="Expanding" >
+   <item row="1" column="1">
+    <widget class="QComboBox" name="cb_recent">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
     </widget>
    </item>
-   <item row="2" column="0" colspan="2" >
-    <widget class="QGroupBox" name="gb_info" >
-     <property name="title" >
+   <item row="2" column="0" colspan="2">
+    <widget class="QGroupBox" name="gb_info">
+     <property name="title">
       <string>Room information</string>
      </property>
-     <layout class="QGridLayout" >
-      <item row="0" column="0" >
-       <widget class="QLabel" name="TextLabel2" >
-        <property name="text" >
+     <layout class="QGridLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="TextLabel2">
+        <property name="text">
          <string>Host:</string>
         </property>
-        <property name="alignment" >
+        <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
-      <item row="0" column="1" >
-       <widget class="QLineEdit" name="le_host" />
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="le_host"/>
       </item>
-      <item row="1" column="0" >
-       <widget class="QLabel" name="TextLabel3" >
-        <property name="text" >
+      <item row="1" column="0">
+       <widget class="QLabel" name="TextLabel3">
+        <property name="text">
          <string>Room:</string>
         </property>
-        <property name="alignment" >
+        <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
-      <item row="1" column="1" >
-       <widget class="QLineEdit" name="le_room" />
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="le_room"/>
       </item>
-      <item row="2" column="0" >
-       <widget class="QLabel" name="TextLabel4" >
-        <property name="text" >
+      <item row="2" column="0">
+       <widget class="QLabel" name="TextLabel4">
+        <property name="text">
          <string>Nickname:</string>
         </property>
-        <property name="alignment" >
+        <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
-      <item row="2" column="1" >
-       <widget class="QLineEdit" name="le_nick" />
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="le_nick"/>
       </item>
-      <item row="3" column="0" >
-       <widget class="QLabel" name="TextLabel5" >
-        <property name="text" >
+      <item row="3" column="0">
+       <widget class="QLabel" name="TextLabel5">
+        <property name="text">
          <string>Password:</string>
         </property>
-        <property name="alignment" >
+        <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
-      <item row="3" column="1" >
-       <widget class="QLineEdit" name="le_pass" >
-        <property name="echoMode" >
+      <item row="3" column="1">
+       <widget class="QLineEdit" name="le_pass">
+        <property name="echoMode">
          <enum>QLineEdit::Password</enum>
         </property>
        </widget>
       </item>
-      <item row="4" column="1" >
-       <widget class="QCheckBox" name="ck_history" >
-        <property name="text" >
+      <item row="4" column="1">
+       <widget class="QCheckBox" name="ck_history">
+        <property name="text">
          <string>Request chat history</string>
         </property>
        </widget>
@@ -118,15 +119,15 @@
      </layout>
     </widget>
    </item>
-   <item row="3" column="0" colspan="2" >
+   <item row="3" column="0" colspan="2">
     <spacer>
-     <property name="orientation" >
+     <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
-     <property name="sizeType" >
+     <property name="sizeType">
       <enum>QSizePolicy::Expanding</enum>
      </property>
-     <property name="sizeHint" >
+     <property name="sizeHint" stdset="0">
       <size>
        <width>331</width>
        <height>0</height>
@@ -134,32 +135,32 @@
      </property>
     </spacer>
    </item>
-   <item row="4" column="0" colspan="2" >
-    <widget class="Line" name="Line1" >
-     <property name="frameShape" >
+   <item row="4" column="0" colspan="2">
+    <widget class="Line" name="Line1">
+     <property name="frameShape">
       <enum>QFrame::HLine</enum>
      </property>
-     <property name="frameShadow" >
+     <property name="frameShadow">
       <enum>QFrame::Sunken</enum>
      </property>
-     <property name="orientation" >
+     <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
     </widget>
    </item>
-   <item row="5" column="0" >
-    <widget class="BusyWidget" name="busy" />
+   <item row="5" column="0">
+    <widget class="BusyWidget" name="busy" native="true"/>
    </item>
-   <item row="5" column="1" >
-    <widget class="QDialogButtonBox" name="buttonBox" >
-     <property name="standardButtons" >
+   <item row="5" column="1">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
       <set>QDialogButtonBox::Cancel</set>
      </property>
     </widget>
    </item>
   </layout>
  </widget>
- <layoutdefault spacing="6" margin="11" />
+ <layoutdefault spacing="6" margin="11"/>
  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
  <customwidgets>
   <customwidget>
@@ -190,11 +191,11 @@
    <receiver>MUCJoin</receiver>
    <slot>reject()</slot>
    <hints>
-    <hint type="sourcelabel" >
+    <hint type="sourcelabel">
      <x>362</x>
      <y>348</y>
     </hint>
-    <hint type="destinationlabel" >
+    <hint type="destinationlabel">
      <x>406</x>
      <y>316</y>
     </hint>
@@ -206,11 +207,11 @@
    <receiver>MUCJoin</receiver>
    <slot>accept()</slot>
    <hints>
-    <hint type="sourcelabel" >
+    <hint type="sourcelabel">
      <x>312</x>
      <y>343</y>
     </hint>
-    <hint type="destinationlabel" >
+    <hint type="destinationlabel">
      <x>336</x>
      <y>316</y>
     </hint>

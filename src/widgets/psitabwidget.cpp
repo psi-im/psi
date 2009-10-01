@@ -40,7 +40,8 @@ PsiTabWidget::PsiTabWidget(QWidget *parent)
 	layout_ = new QVBoxLayout(this);
 	layout_->setMargin(0);
 	layout_->setSpacing(0);
-	barLayout_ = new QHBoxLayout(layout_);
+	barLayout_ = new QHBoxLayout(0);
+	layout_->addLayout(barLayout_);
 	barLayout_->setMargin(0);
 	barLayout_->setSpacing(0);
 	barLayout_->addWidget(tabBar_, 2);
@@ -57,19 +58,19 @@ PsiTabWidget::PsiTabWidget(QWidget *parent)
 	downButton_->setMenu(menu_);
 	connect(menu_, SIGNAL(aboutToShow()), SLOT(menu_aboutToShow()));
 	connect(menu_, SIGNAL(triggered(QAction*)), SLOT(menu_triggered(QAction*)));
-	barLayout_->add(downButton_);
+	barLayout_->addWidget(downButton_);
 
 	closeButton_ = new QToolButton(this);
 	closeButton_->setMinimumSize(3,3);
 	closeButton_->setFixedWidth(buttonwidth);
 	closeButton_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Minimum);
-	barLayout_->add(closeButton_);
+	barLayout_->addWidget(closeButton_);
 	closeButton_->setText("x");
 	downButton_->setArrowType(Qt::DownArrow);
 	downButton_->setPopupMode(QToolButton::InstantPopup);
 	stacked_ = new QStackedLayout(layout_);
-	
-	setTabPosition(QTabWidget::Top);
+
+	setTabPosition(QTabWidget::North);
 
 	connect( tabBar_, SIGNAL(mouseDoubleClickTab(int)), SLOT(mouseDoubleClickTab(int)));
 	connect( tabBar_, SIGNAL( currentChanged(int)), SLOT(tab_currentChanged(int)));
@@ -237,7 +238,7 @@ void PsiTabWidget::setTabPosition(QTabWidget::TabPosition pos) {
 	}
 
 	tabsPosition_ = pos;
-	tabBar_->setShape(tabsPosition_ == QTabWidget::Top ? QTabBar::RoundedNorth : QTabBar::RoundedSouth);
+	tabBar_->setShape(tabsPosition_ == QTabWidget::North ? QTabBar::RoundedNorth : QTabBar::RoundedSouth);
 
 	layout_->removeItem(barLayout_);
 	layout_->removeItem(stacked_);
@@ -245,7 +246,7 @@ void PsiTabWidget::setTabPosition(QTabWidget::TabPosition pos) {
 	// addLayout sets parent and complains if it's already set
 	barLayout_->setParent(0);
 	stacked_->setParent(0);
-	if (tabsPosition_ == QTabWidget::Top) {
+	if (tabsPosition_ == QTabWidget::North) {
 		layout_->addLayout(barLayout_);
 		layout_->addLayout(stacked_);
 	} else {

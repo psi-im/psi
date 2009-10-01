@@ -118,7 +118,6 @@ public:
 	QMap<QAction *, int> statusActions;
 
 	int lastStatus;
-	bool old_trayicon;
 	bool filterActive, prefilterShowOffline, prefilterShowAway;
 
 	void registerActions();
@@ -135,7 +134,7 @@ MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) : psi(_psi), mainWin(
 	optionsButton = (PopupAction *)getAction("button_options");
 	statusButton  = (PopupAction *)getAction("button_status");
 
-	statusMapper = new QSignalMapper(mainWin, "statusMapper");
+	statusMapper = new QSignalMapper(mainWin);
 	mainWin->connect(statusMapper, SIGNAL(mapped(int)), mainWin, SLOT(activatedStatusAction(int)));
   
 	filterActive = false;
@@ -167,7 +166,7 @@ void MainWin::Private::registerActions()
 	QString aName;
 	for ( i = 0; !(aName = QString(statuslist[i].name)).isEmpty(); i++ ) {
 		IconAction* action = getAction( aName );
-		connect (action, SIGNAL(activated()), statusMapper, SLOT(map()));
+		connect (action, SIGNAL(triggered()), statusMapper, SLOT(map()));
 
 		statusMapper->setMapping(action, statuslist[i].id);
 		statusActions[action] = statuslist[i].id;
@@ -193,7 +192,7 @@ IconAction* MainWin::Private::getAction( QString name )
 	IconAction* action = actions.action( name );
 
 	if ( !action ) {
-		qWarning("MainWin::Private::getAction(): action %s not found!", name.latin1());
+		qWarning("MainWin::Private::getAction(): action %s not found!", qPrintable(name));
 	}
 	//else
 	//	mainWin->registerAction( action );
@@ -210,15 +209,15 @@ void MainWin::Private::updateMenu(QStringList actions, QMenu* menu)
 		// workind around Qt/X11 bug, which displays
 		// actions's text and the separator bar in Qt 4.1.1
 		if ( name == "separator" ) {
-			menu->insertSeparator();
+			menu->addSeparator();
 			continue;
 		}
 
 		if ( name == "diagnostics" ) {
-			QMenu* diagMenu = new QMenu(mainWin);
-			menu->insertItem(tr("Diagnostics"), diagMenu);
+			QMenu* diagMenu = new QMenu(tr("Diagnostics"), mainWin);
 			getAction("help_diag_qcaplugin")->addTo(diagMenu);
 			getAction("help_diag_qcakeystore")->addTo(diagMenu);
+			menu->addMenu(diagMenu);
 			continue;
 		}
 
@@ -244,14 +243,10 @@ void MainWin::Private::updateMenu(QStringList actions, QMenu* menu)
 #define TOOLW_FLAGS ((Qt::WFlags) 0)
 #endif
 
-MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
-:AdvancedWidget<QMainWindow>(0, (_onTop ? Qt::WStyle_StaysOnTop : Qt::Widget) | (_asTool ? (Qt::WStyle_Tool |TOOLW_FLAGS) : Qt::Widget))
+MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
+:AdvancedWidget<QMainWindow>(0, (_onTop ? Qt::WindowStaysOnTopHint : Qt::Widget) | (_asTool ? (Qt::Tool |TOOLW_FLAGS) : Qt::Widget))
 {
-	setObjectName(name);
 	setAttribute(Qt::WA_AlwaysShowToolTips);
-  	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() ) {
-		setAttribute(Qt::WA_MacMetalStyle);
-	}
 	d = new Private(psi, this);
 
 	setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).impix());
@@ -271,13 +266,8 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 	d->trayMenu = 0;
 	d->statusTip = "";
 	d->nickname = "";
-#ifdef Q_WS_MAC
-	d->old_trayicon = false;
-#else
-	d->old_trayicon = PsiOptions::instance()->getOption("options.ui.systemtray.use-old").toBool();
-#endif
 
-	QWidget* center = new QWidget (this, "Central widget");
+	QWidget* center = new QWidget (this);
 	setCentralWidget ( center );
 
 	d->vb_main = new QVBoxLayout(center);
@@ -316,8 +306,8 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 	d->vb_main->addSpacing(4);
 #endif
 
-	d->statusMenu = new QMenu(this);
-	d->optionsMenu = new QMenu(this);
+	d->statusMenu = new QMenu(tr("Status"), this);
+	d->optionsMenu = new QMenu(tr("General"), this);
 #ifdef Q_WS_MAC
 	d->trayMenu = d->statusMenu;
 #else
@@ -348,24 +338,24 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 
 	// Mac-only menus
 #ifdef Q_WS_MAC
-	QMenu* mainMenu = new QMenu(this);
-	mainMenuBar()->insertItem(tr("Menu"), mainMenu);
+	QMenu* mainMenu = new QMenu(tr("Menu"), this);
+	mainMenuBar()->addMenu(mainMenu);
 	d->getAction("menu_options")->addTo(mainMenu);
 	d->getAction("menu_quit")->addTo(mainMenu);
 	d->getAction("help_about")->addTo(mainMenu);
 	d->getAction("help_about_qt")->addTo(mainMenu);
 
-	d->mainMenu = new QMenu(this);
-	mainMenuBar()->insertItem(tr("General"), d->mainMenu);
+	d->mainMenu = new QMenu(tr("General"), this);
+	mainMenuBar()->addMenu(d->mainMenu);
 	connect(d->mainMenu, SIGNAL(aboutToShow()), SLOT(buildMainMenu()));
 #else
-	mainMenuBar()->insertItem(tr("General"), d->optionsMenu);
+	mainMenuBar()->addMenu(d->optionsMenu);
 #endif
 
-	mainMenuBar()->insertItem(tr("Status"), d->statusMenu);
+	mainMenuBar()->addMenu(d->statusMenu);
 
-	QMenu* viewMenu = new QMenu(this);
-	mainMenuBar()->insertItem(tr("View"), viewMenu);
+	QMenu* viewMenu = new QMenu(tr("View"), this);
+	mainMenuBar()->addMenu(viewMenu);
 	d->getAction("show_offline")->addTo(viewMenu);
 	if (PsiOptions::instance()->getOption("options.ui.menu.view.show-away").toBool()) {
 		d->getAction("show_away")->addTo(viewMenu);
@@ -373,32 +363,32 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 	d->getAction("show_hidden")->addTo(viewMenu);
 	d->getAction("show_agents")->addTo(viewMenu);
 	d->getAction("show_self")->addTo(viewMenu);
-	viewMenu->insertSeparator();
+	viewMenu->addSeparator();
 	d->getAction("show_statusmsg")->addTo(viewMenu);
 
 	// Mac-only menus
 #ifdef Q_WS_MAC
-	d->toolsMenu = new QMenu(this);
-	mainMenuBar()->insertItem(tr("Tools"), d->toolsMenu);
+	d->toolsMenu = new QMenu(tr("Tools"), this);
+	mainMenuBar()->addMenu(d->toolsMenu);
 	connect(d->toolsMenu, SIGNAL(aboutToShow()), SLOT(buildToolsMenu()));
 
-	QMenu* helpMenu = new QMenu(this);
-	mainMenuBar()->insertItem(tr("Help"), helpMenu);
+	QMenu* helpMenu = new QMenu(tr("Help"), this);
+	mainMenuBar()->addMenu(helpMenu);
 	d->getAction("help_readme")->addTo (helpMenu);
 	d->getAction("help_tip")->addTo (helpMenu);
-	helpMenu->insertSeparator();
+	helpMenu->addSeparator();
 	d->getAction("help_online_help")->addTo (helpMenu);
 	d->getAction("help_online_wiki")->addTo (helpMenu);
 	d->getAction("help_online_home")->addTo (helpMenu);
 	d->getAction("help_online_forum")->addTo (helpMenu);
 	d->getAction("help_psi_muc")->addTo (helpMenu);
 	d->getAction("help_report_bug")->addTo (helpMenu);
-	QMenu* diagMenu = new QMenu(this);
-	helpMenu->insertItem(tr("Diagnostics"), diagMenu);
+	QMenu* diagMenu = new QMenu(tr("Diagnostics"), this);
+	helpMenu->addMenu(diagMenu);
 	d->getAction("help_diag_qcaplugin")->addTo (diagMenu);
 	d->getAction("help_diag_qcakeystore")->addTo (diagMenu);
 	if(AvCallManager::isSupported()) {
-		helpMenu->insertSeparator();
+		helpMenu->addSeparator();
 		d->getAction("help_about_psimedia")->addTo (helpMenu);
 	}
 #else
@@ -420,7 +410,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi, const char* name)
 	optionsUpdate();
 
         /*QShortcut *sp_ss = new QShortcut(QKeySequence(tr("Ctrl+Shift+N")), this);
-        connect(sp_ss, SIGNAL(activated()), SLOT(avcallConfig()));*/
+        connect(sp_ss, SIGNAL(triggered()), SLOT(avcallConfig()));*/
 }
 
 MainWin::~MainWin()
@@ -438,7 +428,7 @@ MainWin::~MainWin()
 
 void MainWin::registerAction( IconAction* action )
 {
-	const char *activated  = SIGNAL( activated() );
+	const char *activated  = SIGNAL( triggered() );
 	const char *toggled    = SIGNAL( toggled(bool) );
 	const char *setChecked = SLOT( setChecked(bool) );
 
@@ -497,7 +487,7 @@ void MainWin::registerAction( IconAction* action )
 	int i;
 	QString aName;
 	for ( i = 0; !(aName = QString(actionlist[i].name)).isEmpty(); i++ ) {
-		if ( aName == action->name() ) {
+		if ( aName == action->objectName() ) {
 #ifdef USE_PEP
 			// Check before connecting, otherwise we get a loop
 			if ( aName == "publish_tune") {
@@ -534,7 +524,7 @@ void MainWin::registerAction( IconAction* action )
 	};
 
 	for ( i = 0; !(aName = QString(reverseactionlist[i].name)).isEmpty(); i++ ) {
-		if ( aName == action->name() ) {
+		if ( aName == action->objectName() ) {
 			disconnect( reverseactionlist[i].sender, reverseactionlist[i].signal, action, reverseactionlist[i].slot ); // for safety
 			connect( reverseactionlist[i].sender, reverseactionlist[i].signal, action, reverseactionlist[i].slot );
 
@@ -563,15 +553,13 @@ void MainWin::setWindowOpts(bool _onTop, bool _asTool)
 
 	Qt::WFlags flags = 0;
 	if(d->onTop) {
-		flags |= Qt::WStyle_StaysOnTop;
+		flags |= Qt::WindowStaysOnTopHint;
 	}
 	if(d->asTool) {
-		flags |= Qt::WStyle_Tool | TOOLW_FLAGS;
+		flags |= Qt::Tool | TOOLW_FLAGS;
 	}
 
-	QPoint p = pos();
-	reparent(parentWidget(), flags, p, false);
-	move(p);
+	setWindowFlags(flags);
 	show();
 }
 
@@ -588,11 +576,7 @@ void MainWin::setUseDock(bool use)
 
 	Q_ASSERT(!d->tray);
 	if (use) {
-		d->tray = new PsiTrayIcon("Psi", d->trayMenu, d->old_trayicon);
-		if (d->old_trayicon) {
-			connect(d->tray, SIGNAL(closed()), SLOT(dockActivated()));
-			connect(qApp, SIGNAL(trayOwnerDied()), SLOT(dockActivated()));
-		}
+		d->tray = new PsiTrayIcon("Psi", d->trayMenu);
 		connect(d->tray, SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
 		connect(d->tray, SIGNAL(doubleClicked(const QPoint &)), SLOT(trayDoubleClicked()));
 		d->tray->setIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
@@ -611,29 +595,28 @@ void MainWin::buildStatusMenu()
 	if (PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool()) {
 		d->getAction("status_chat")->addTo(d->statusMenu);
 	}
-	d->statusMenu->insertSeparator();
+	d->statusMenu->addSeparator();
 	d->getAction("status_away")->addTo(d->statusMenu);
 	if (PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool()) {
 		d->getAction("status_xa")->addTo(d->statusMenu);
 	}
 	d->getAction("status_dnd")->addTo(d->statusMenu);
 	if (PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool()) {
-		d->statusMenu->insertSeparator();
+		d->statusMenu->addSeparator();
 		d->getAction("status_invisible")->addTo(d->statusMenu);
 	}
-	d->statusMenu->insertSeparator();
+	d->statusMenu->addSeparator();
 	d->getAction("status_offline")->addTo(d->statusMenu);
 #ifdef USE_PEP
-	d->statusMenu->insertSeparator();
+	d->statusMenu->addSeparator();
 	d->getAction("publish_tune")->addTo(d->statusMenu);
 #endif
 }
 
 void MainWin::activatedStatusAction(int id)
 {
-	QObjectList l = d->statusGroup->queryList( "IconAction" );
-	for (QObjectList::Iterator it = l.begin() ; it != l.end(); ++it) {
-		IconAction* action = (IconAction *)(*it);
+	QList<IconAction*> l = d->statusGroup->findChildren<IconAction*>();
+	foreach(IconAction* action, l) {
 		action->setChecked ( d->statusActions[action] == id );
 	}
 
@@ -704,7 +687,8 @@ bool MainWin::showDockMenu(const QPoint &)
 void MainWin::buildOptionsMenu()
 {
 	// help menu
-	QMenu* helpMenu = new QMenu(d->optionsMenu);
+	QMenu* helpMenu = new QMenu(tr("&Help"), d->optionsMenu);
+	helpMenu->setIcon(IconsetFactory::icon("psi/help").icon());
 
 	QStringList actions;
 	actions << "help_readme"
@@ -728,8 +712,8 @@ void MainWin::buildOptionsMenu()
 
 	buildGeneralMenu( d->optionsMenu );
 
-	d->optionsMenu->insertSeparator();
-	d->optionsMenu->insertItem(IconsetFactory::icon("psi/help").icon(), tr("&Help"), helpMenu);
+	d->optionsMenu->addSeparator();
+	d->optionsMenu->addMenu(helpMenu);
 	d->getAction("menu_quit")->addTo( d->optionsMenu );
 
 }
@@ -941,7 +925,7 @@ void MainWin::buildTrayMenu()
 
 	if(d->nextAmount > 0) {
 		d->trayMenu->insertItem(tr("Receive next event"), this, SLOT(doRecvNextEvent()));
-		d->trayMenu->insertSeparator();
+		d->trayMenu->addSeparator();
 	}
 
 	if(isHidden()) {
@@ -953,7 +937,7 @@ void MainWin::buildTrayMenu()
 	d->optionsButton->addTo(d->trayMenu);
 	d->trayMenu->insertItem(tr("Status"), d->statusMenu);
 	
-	d->trayMenu->insertSeparator();
+	d->trayMenu->addSeparator();
 	// TODO!
 	d->getAction("menu_quit")->addTo(d->trayMenu);
 #endif
@@ -970,9 +954,8 @@ void MainWin::setTrayToolTip(int status)
 void MainWin::decorateButton(int status)
 {
 	// update the 'change status' buttons
-	QObjectList l = d->statusGroup->queryList( "IconAction" );
-	for (QObjectList::Iterator it = l.begin() ; it != l.end(); ++it) {
-		IconAction* action = (IconAction *)(*it);
+	QList<IconAction*> l = d->statusGroup->findChildren<IconAction*>();
+	foreach(IconAction* action, l) {
 		action->setChecked ( d->statusActions[action] == status );
 	}
 
@@ -1104,7 +1087,7 @@ void MainWin::updateCaption()
 		str += d->nickname;
 	}
 
-	if(str == caption()) {
+	if(str == windowTitle()) {
 		return;
 	}
 
@@ -1152,7 +1135,7 @@ void MainWin::setTrayToolTip(const Status& status, bool)
 
  	QString show = status.show();
 	if(!show.isEmpty()) {
-		show[0] = show[0].upper();
+		show[0] = show[0].toUpper();
 		s += " - "+show;
 	}
 

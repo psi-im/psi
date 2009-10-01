@@ -18,12 +18,13 @@
  *
  */
 
+#include "ahcformdlg.h"
+
 #include <QLayout>
 #include <QPushButton>
 #include <QLabel>
 #include <QScrollArea>
 
-#include "ahcformdlg.h"
 #include "ahcommand.h"
 #include "ahcexecutetask.h"
 #include "xdata_widget.h"
@@ -32,120 +33,111 @@
 #include "busywidget.h"
 
 AHCFormDlg::AHCFormDlg(const AHCommand& r, const Jid& receiver, XMPP::Client* client, bool final)
-	: QDialog(NULL), receiver_(receiver), client_(client)
+	: QDialog(0)
+	, pb_prev_(0)
+	, pb_next_(0)
+	, pb_complete_(0)
+	, pb_cancel_(0)
+	, xdata_(0)
+	, receiver_(receiver)
+	, client_(client)
 {
+	ui_.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
 
 	// Save node
 	node_ = r.node();
 	sessionId_ = r.sessionId();
 
-	QVBoxLayout *vb = new QVBoxLayout(this, 11, 6);
+	ui_.lb_instructions->setText(r.data().instructions());
+	ui_.lb_instructions->setVisible(!r.data().instructions().isEmpty());
 
-	// Instructions
-	if (!r.data().instructions().isEmpty()) {
-		QLabel* lb_instructions = new QLabel(r.data().instructions(),this);
-		vb->addWidget(lb_instructions);
-	}
-	
 	// XData form
 	xdata_ = new XDataWidget(this);
 	xdata_->setFields(r.data().fields());
-	QScrollArea* scrollArea = new QScrollArea(this);
-	scrollArea->setWidget(xdata_);
-	vb->addWidget(scrollArea);
+	ui_.scrollArea->setWidget(xdata_);
 
-	vb->addStretch(1);
+	ui_.busy->setVisible(!final);
 
-	// Buttons
-	QHBoxLayout *hb = new QHBoxLayout(vb);
-	pb_complete = pb_cancel = pb_prev = pb_next = 0;
 	if (!final) {
-
-		busy_ = new BusyWidget(this);
-		hb->addWidget(busy_);
-		hb->addItem(new QSpacerItem(20,0,QSizePolicy::Expanding));
-
 		if (r.actions().empty()) {
 			// Single stage dialog
-			pb_complete = new QPushButton(tr("Finish"),this);
-			connect(pb_complete,SIGNAL(clicked()),SLOT(doExecute()));
-			hb->addWidget(pb_complete);
+			pb_complete_ = ui_.buttonBox->addButton(tr("Finish"), QDialogButtonBox::AcceptRole);
+			connect(pb_complete_,SIGNAL(clicked()),SLOT(doExecute()));
 		}
 		else {
 			// Multi-stage dialog
 
 			// Previous
-			pb_prev = new QPushButton(tr("Previous"),this);
+			pb_prev_ = ui_.buttonBox->addButton(tr("Previous"), QDialogButtonBox::ActionRole);
 			if (r.actions().contains(AHCommand::Prev)) {
 				if (r.defaultAction() == AHCommand::Prev) {
-					pb_prev->setDefault(true);
-					pb_prev->setFocus();
+					pb_prev_->setDefault(true);
+					pb_prev_->setFocus();
 				}
-				connect(pb_prev,SIGNAL(clicked()),SLOT(doPrev()));
-				pb_prev->setEnabled(true);
+				connect(pb_prev_,SIGNAL(clicked()),SLOT(doPrev()));
+				pb_prev_->setEnabled(true);
 			}
-			else 
-				pb_prev->setEnabled(false);
-			hb->addWidget(pb_prev);
+			else {
+				pb_prev_->setEnabled(false);
+			}
 
 			// Next
-			pb_next = new QPushButton(tr("Next"),this);
+			pb_next_ = ui_.buttonBox->addButton(tr("Next"), QDialogButtonBox::ActionRole);
 			if (r.actions().contains(AHCommand::Next)) {
 				if (r.defaultAction() == AHCommand::Next) {
-					connect(pb_next,SIGNAL(clicked()),SLOT(doExecute()));
-					pb_next->setDefault(true);
-					pb_next->setFocus();
+					connect(pb_next_,SIGNAL(clicked()),SLOT(doExecute()));
+					pb_next_->setDefault(true);
+					pb_next_->setFocus();
 				}
-				else
-					connect(pb_next,SIGNAL(clicked()),SLOT(doNext()));
-				pb_next->setEnabled(true);
+				else {
+					connect(pb_next_,SIGNAL(clicked()),SLOT(doNext()));
+				}
+				pb_next_->setEnabled(true);
 			}
 			else {
-				pb_next->setEnabled(false);
+				pb_next_->setEnabled(false);
 			}
-			hb->addWidget(pb_next);
-			
+
 			// Complete
-			pb_complete = new QPushButton(tr("Finish"),this);
+			pb_complete_ = ui_.buttonBox->addButton(tr("Finish"), QDialogButtonBox::AcceptRole);
 			if (r.actions().contains(AHCommand::Complete)) {
 				if (r.defaultAction() == AHCommand::Complete) {
-					connect(pb_complete,SIGNAL(clicked()),SLOT(doExecute()));
-					pb_complete->setDefault(true);
-					pb_complete->setFocus();
+					connect(pb_complete_,SIGNAL(clicked()),SLOT(doExecute()));
+					pb_complete_->setDefault(true);
+					pb_complete_->setFocus();
 				}
-				else
-					connect(pb_complete,SIGNAL(clicked()),SLOT(doComplete()));
-				pb_complete->setEnabled(true);
+				else {
+					connect(pb_complete_,SIGNAL(clicked()),SLOT(doComplete()));
+				}
+				pb_complete_->setEnabled(true);
 			}
 			else {
-				pb_complete->setEnabled(false);
+				pb_complete_->setEnabled(false);
 			}
-			hb->addWidget(pb_complete);
 		}
-		pb_cancel = new QPushButton(tr("Cancel"), this);
-		connect(pb_cancel, SIGNAL(clicked()),SLOT(doCancel()));
-		hb->addWidget(pb_cancel);
+
+		pb_cancel_ = ui_.buttonBox->addButton(QDialogButtonBox::Cancel);
+		connect(pb_cancel_, SIGNAL(clicked()),SLOT(doCancel()));
 	}
 	else {
-		hb->addItem(new QSpacerItem(20,0,QSizePolicy::Expanding));
-		
-		pb_complete = new QPushButton(tr("Ok"),this);
-		connect(pb_complete,SIGNAL(clicked()),SLOT(close()));
-		hb->addWidget(pb_complete);
+		pb_complete_ = ui_.buttonBox->addButton(QDialogButtonBox::Ok);
+		connect(pb_complete_,SIGNAL(clicked()),SLOT(close()));
 	}
 
 	if (!r.data().title().isEmpty()) {
-		setCaption(QString("%1 (%2)").arg(r.data().title()).arg(receiver.full()));
+		setWindowTitle(QString("%1 (%2)").arg(r.data().title()).arg(receiver.full()));
 	}
 	else {
-		setCaption(QString("%1").arg(receiver.full()));
+		setWindowTitle(QString("%1").arg(receiver.full()));
 	}
+
+	adjustSize();
 }
 
 void AHCFormDlg::doPrev()
 {
-	busy_->start();
+	ui_.busy->start();
 	AHCExecuteTask* t = new AHCExecuteTask(receiver_,AHCommand(node_,data(),sessionId_,AHCommand::Prev), client_->rootTask());
 	connect(t,SIGNAL(finished()),SLOT(commandExecuted()));
 	t->go(true);
@@ -153,7 +145,7 @@ void AHCFormDlg::doPrev()
 
 void AHCFormDlg::doNext()
 {
-	busy_->start();
+	ui_.busy->start();
 	AHCExecuteTask* t = new AHCExecuteTask(receiver_,AHCommand(node_,data(),sessionId_,AHCommand::Next),client_->rootTask());
 	connect(t,SIGNAL(finished()),SLOT(commandExecuted()));
 	t->go(true);
@@ -161,7 +153,7 @@ void AHCFormDlg::doNext()
 
 void AHCFormDlg::doExecute()
 {
-	busy_->start();
+	ui_.busy->start();
 	AHCExecuteTask* t = new AHCExecuteTask(receiver_,AHCommand(node_,data(),sessionId_),client_->rootTask());
 	connect(t,SIGNAL(finished()),SLOT(commandExecuted()));
 	t->go(true);
@@ -169,7 +161,7 @@ void AHCFormDlg::doExecute()
 
 void AHCFormDlg::doComplete()
 {
-	busy_->start();
+	ui_.busy->start();
 	AHCExecuteTask* t = new AHCExecuteTask(receiver_,AHCommand(node_,data(),sessionId_,AHCommand::Complete), client_->rootTask());
 	connect(t,SIGNAL(finished()),SLOT(commandExecuted()));
 	t->go(true);
@@ -177,7 +169,7 @@ void AHCFormDlg::doComplete()
 
 void AHCFormDlg::doCancel()
 {
-	busy_->start();
+	ui_.busy->start();
 	AHCExecuteTask* t = new AHCExecuteTask(receiver_,AHCommand(node_,sessionId_,AHCommand::Cancel), client_->rootTask());
 	connect(t,SIGNAL(finished()),SLOT(commandExecuted()));
 	t->go(true);
@@ -185,7 +177,7 @@ void AHCFormDlg::doCancel()
 
 void AHCFormDlg::commandExecuted()
 {
-	busy_->stop();
+	ui_.busy->stop();
 	close();
 }
 

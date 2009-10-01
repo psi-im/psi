@@ -57,8 +57,8 @@ public:
 	QVariantList mapKeyList(const QString &basename) const;
 
 
-	bool saveOptions(const QString& fileName, const QString& configName, const QString& configNS, const QString& configVersion) const;
-	bool loadOptions(const QString& fileName, const QString& configName, const QString& configNS = "", const QString& configVersion = "");
+	bool saveOptions(const QString& fileName, const QString& configName, const QString& configNS, const QString& configVersion, bool streamWriter = false) const;
+	bool loadOptions(const QString& fileName, const QString& configName, const QString& configNS = "", const QString& configVersion = "", bool streamReader = false);
 	bool loadOptions(const QDomElement& name, const QString& configName, const QString& configNS = "", const QString& configVersion = "");
 	static bool exists(QString fileName);
 
@@ -71,6 +71,8 @@ signals:
 
 private:
 	VariantTree tree_;
+	friend class OptionsTreeReader;
+	friend class OptionsTreeWriter;
 };
 
 #endif

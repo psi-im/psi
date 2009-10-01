@@ -25,7 +25,7 @@
 
 class PsiAccount;
 
-class ChangePasswordDlg : public QDialog, public Ui::ChangePassword
+class ChangePasswordDlg : public QDialog
 {
 	Q_OBJECT
 public:
@@ -48,7 +48,8 @@ private:
 	void restoreWidgets();
 	void setWidgetsEnabled(bool enabled);
 
-	PsiAccount *pa;
+	Ui::ChangePassword ui_;
+	PsiAccount* pa;
 };
 
 #endif

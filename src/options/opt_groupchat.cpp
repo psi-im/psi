@@ -199,5 +199,5 @@ void OptionsTabGroupchat::selectedGCNickColor(QListWidgetItem * item)
 void OptionsTabGroupchat::displayGCNickColor()
 {
 	GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
-	d->pb_nickColor->setPixmap( name2color(d->le_newNickColor->text()) );
+	d->pb_nickColor->setIcon( name2color(d->le_newNickColor->text()) );
 }

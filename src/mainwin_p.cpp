@@ -28,8 +28,6 @@
 #include <qobject.h>
 #include <qpixmapcache.h>
 #include <QPixmap>
-#include <Q3Button>
-#include <Q3PtrList>
 #include <QFrame>
 #include <QLabel>
 #include <QMenu>
@@ -74,8 +72,9 @@ private:
 };
 
 PopupActionButton::PopupActionButton(QWidget *parent, const char *name)
-: QPushButton(parent, name), hasToolTip(false), icon(0), showText(true)
+: QPushButton(parent), hasToolTip(false), icon(0), showText(true)
 {
+	setObjectName(name);
 }
 
 PopupActionButton::~PopupActionButton()
@@ -162,10 +161,10 @@ void PopupActionButton::paintEvent(QPaintEvent *p)
 		style_option.init(this);
 		QRect r = style()->subElementRect(QStyle::SE_PushButtonContents, &style_option, this);
 
-		if(isMenuButton())
+		if(menu())
 			r.setWidth(r.width() - style()->pixelMetric(QStyle::PM_MenuButtonIndicator, &style_option, this));
-		if(iconSet() && !iconSet()->isNull())
-			r.setWidth(r.width() - (iconSet()->pixmap(QIcon::Small, QIcon::Normal, QIcon::Off).width()));
+		// if(!QPushButton::icon().isNull())
+		// 	r.setWidth(r.width() - (QPushButton::icon().pixmap(QIcon::Small, QIcon::Normal, QIcon::Off).width()));
 
 		// font metrics
 		QFontMetrics fm(font());
@@ -231,7 +230,7 @@ class PopupAction::Private : public QObject
 {
 public:
 	QSizePolicy size;
-	Q3PtrList<PopupActionButton> buttons;
+	QList<PopupActionButton*> buttons;
 	PsiIcon *icon;
 	bool showText;
 
@@ -244,6 +243,7 @@ public:
 
 	~Private()
 	{
+		qDeleteAll(buttons);
 		buttons.clear();
 		if (icon)
 			delete icon;
@@ -290,8 +290,7 @@ void PopupAction::setIcon (const PsiIcon *icon, bool showText, bool alert)
 		IconAction::setIcon(QIcon());
 	}
 
-	for ( Q3PtrListIterator<PopupActionButton> it(d->buttons); it.current(); ++it ) {
-		PopupActionButton *btn = it.current();
+	foreach(PopupActionButton* btn, d->buttons) {
 		btn->setIcon (d->icon, showText);
 	}
 
@@ -303,8 +302,7 @@ void PopupAction::setIcon (const PsiIcon *icon, bool showText, bool alert)
 void PopupAction::setText (const QString &text)
 {
 	IconAction::setText (text);
-	for ( Q3PtrListIterator<PopupActionButton> it(d->buttons); it.current(); ++it ) {
-		PopupActionButton *btn = it.current();
+	foreach(PopupActionButton* btn, d->buttons) {
 		btn->setLabel (text);
 	}
 }
@@ -313,8 +311,8 @@ bool PopupAction::addTo(QWidget *w)
 {
 	QToolBar* toolbar = dynamic_cast<QToolBar*>(w);
 	if (toolbar) {
-		QByteArray bname((const char*)(QString(name()) + QString("_action_button")));
-		PopupActionButton *btn = new PopupActionButton(w, bname);
+		PopupActionButton *btn = new PopupActionButton(w);
+		btn->setObjectName(objectName() + QString("_action_button"));
 		d->buttons.append(btn);
 		btn->setMenu(menu());
 		btn->setLabel(text());
@@ -335,21 +333,20 @@ bool PopupAction::addTo(QWidget *w)
 void PopupAction::objectDestroyed ()
 {
 	const QObject *obj = sender();
-	d->buttons.removeRef( (PopupActionButton *) obj );
+	d->buttons.removeAll( (PopupActionButton *) obj );
 }
 
 void PopupAction::setEnabled (bool e)
 {
 	IconAction::setEnabled (e);
-	for ( Q3PtrListIterator<PopupActionButton> it(d->buttons); it.current(); ++it ) {
-		PopupActionButton *btn = it.current();
+	foreach(PopupActionButton* btn, d->buttons) {
 		btn->setEnabled (e);
 	}
 }
 
 IconAction *PopupAction::copy() const
 {
-	PopupAction *act = new PopupAction(text(), menu(), 0, name());
+	PopupAction *act = new PopupAction(text(), menu(), 0, objectName().toLatin1());
 
 	*act = *this;
 
@@ -372,8 +369,9 @@ PopupAction &PopupAction::operator=( const PopupAction &from )
 //----------------------------------------------------------------------------
 
 MLabel::MLabel(QWidget *parent, const char *name)
-:QLabel(parent, name)
+:QLabel(parent)
 {
+	setObjectName(name);
 	setMinimumWidth(48);
 	setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 	setFrameStyle(QFrame::Panel | QFrame::Sunken);
@@ -420,7 +418,7 @@ void MAction::init(const QString& name, PsiIcon i, int id, PsiCon* psi)
 	setPsiIcon(&i);
 
 	connect(controller_, SIGNAL(accountCountChanged()), SLOT(numAccountsChanged()));
-	connect(this, SIGNAL(activated()), SLOT(slotActivated()));
+	connect(this, SIGNAL(triggered()), SLOT(slotActivated()));
 	numAccountsChanged();
 }
 
@@ -460,7 +458,7 @@ void MAction::numAccountsChanged()
 	foreach(PsiAccount* account, accounts()) {
 		QAction* act = new QAction(account->name(), this);
 		act->setProperty("id", accounts().indexOf(account));
-		connect(act, SIGNAL(activated()), SLOT(actionActivated()));
+		connect(act, SIGNAL(triggered()), SLOT(actionActivated()));
 	}
 }
 
@@ -490,10 +488,11 @@ void MAction::doSetMenu(QMenu* menu)
 //----------------------------------------------------------------------------
 
 SpacerAction::SpacerAction(QObject *parent, const char *name)
-: IconAction(parent, name)
+: IconAction(parent)
 {
+	setObjectName(name);
 	setText(tr("<Spacer>"));
-	setMenuText(tr("<Spacer>"));
+	setText(tr("<Spacer>"));
 	setWhatsThis(tr("Spacer provides spacing to separate actions"));
 }
 
@@ -555,7 +554,7 @@ class EventNotifierAction::Private
 public:
 	Private() { }
 
-	Q3PtrList<MLabel> labels;
+	QList<MLabel*> labels;
 	bool hide;
 	QString message;
 };
@@ -580,7 +579,7 @@ bool EventNotifierAction::addTo(QWidget *w)
 		label->setText(d->message);
 		d->labels.append(label);
 		connect(label, SIGNAL(destroyed()), SLOT(objectDestroyed()));
-		connect(label, SIGNAL(doubleClicked()), SIGNAL(activated()));
+		connect(label, SIGNAL(doubleClicked()), SIGNAL(triggered()));
 		connect(label, SIGNAL(clicked(int)), SIGNAL(clicked(int)));
 
 		QToolBar* toolbar = dynamic_cast<QToolBar*>(w);
@@ -606,9 +605,7 @@ void EventNotifierAction::setMessage(const QString &m)
 {
 	d->message = m;
 
-	Q3PtrListIterator<MLabel> it ( d->labels );
-	for ( ; it.current(); ++it) {
-		MLabel *label = it.current();
+	foreach(MLabel* label, d->labels) {
 		label->setText(d->message);
 	}
 }
@@ -616,16 +613,14 @@ void EventNotifierAction::setMessage(const QString &m)
 void EventNotifierAction::objectDestroyed()
 {
 	MLabel *label = (MLabel *)sender();
-	d->labels.removeRef(label);
+	d->labels.removeAll(label);
 }
 
 void EventNotifierAction::hide()
 {
 	d->hide = true;
 
-	Q3PtrListIterator<MLabel> it(d->labels);
-	for (; it.current(); ++it) {
-		MLabel *label = it.current();
+	foreach(MLabel* label, d->labels) {
 		label->hide();
 		QToolBar *toolBar = dynamic_cast<QToolBar*>(label->parent());
 		if (toolBar) {
@@ -648,9 +643,7 @@ void EventNotifierAction::show()
 {
 	d->hide = false;
 
-	Q3PtrListIterator<MLabel> it ( d->labels );
-	for ( ; it.current(); ++it) {
-		MLabel *label = it.current();
+	foreach(MLabel* label, d->labels) {
 		label->show();
 		QToolBar *toolBar = dynamic_cast<QToolBar*>(label->parent());
 		if (toolBar)

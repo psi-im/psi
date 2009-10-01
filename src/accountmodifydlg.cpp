@@ -38,7 +38,7 @@ AccountModifyDlg::AccountModifyDlg(PsiCon *_psi, QWidget *parent)
 :QDialog(parent)
 {
 	acc.name = "";
-  	setupUi(this);
+	setupUi(this);
 	setModal(true);
 	pa = NULL;
 	psi = _psi;
@@ -63,7 +63,7 @@ void AccountModifyDlg::init()
 	if (pa)
 		pa->dialogRegister(this);
 
-	setWindowTitle(CAP(caption()));
+	setWindowTitle(CAP(windowTitle()));
 #ifndef Q_WS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/account").icon());
 #endif
@@ -79,11 +79,10 @@ void AccountModifyDlg::init()
 	cb_security_level->hide();
 	lb_security_level->hide();
 
-	connect(pb_close, SIGNAL(clicked()), SLOT(reject()));
 	connect(ck_host, SIGNAL(toggled(bool)), SLOT(hostToggled(bool)));
 	connect(pb_key, SIGNAL(clicked()), SLOT(chooseKey()));
 	connect(pb_keyclear, SIGNAL(clicked()), SLOT(clearKey()));
-	connect(pb_save, SIGNAL(clicked()), SLOT(save()));
+	connect(buttonBox->button(QDialogButtonBox::Save), SIGNAL(clicked()), SLOT(save()));
 	connect(ck_automatic_resource, SIGNAL(toggled(bool)), le_resource, SLOT(setDisabled(bool)));
 	connect(ck_automatic_resource, SIGNAL(toggled(bool)), lb_resource, SLOT(setDisabled(bool)));
 
@@ -155,7 +154,7 @@ void AccountModifyDlg::init()
 	pc = psi->proxy()->createProxyChooser(tab_connection);
 	replaceWidget(lb_proxychooser, pc);
 	pc->setCurrentItem(acc.proxyID);
-	
+
 	// Security level
 	cb_security_level->addItem(tr("None"),QCA::SL_None);
 	cb_security_level->addItem(tr("Integrity"),QCA::SL_Integrity);
@@ -170,7 +169,7 @@ void AccountModifyDlg::init()
 	else if(le_jid->text().isEmpty())
 		le_jid->setFocus();
 	else
-		pb_save->setFocus();
+		buttonBox->button(QDialogButtonBox::Save)->setFocus();
 
 	// Privacy
 	privacyInitialized = false;

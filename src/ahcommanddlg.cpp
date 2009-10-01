@@ -18,6 +18,8 @@
  *
  */
 
+#include "ahcommanddlg.h"
+
 #include <QComboBox>
 #include <QMessageBox>
 #include <QPushButton>
@@ -25,7 +27,6 @@
 #include <QLabel>
 
 #include "ahcexecutetask.h" 
-#include "ahcommanddlg.h"
 #include "busywidget.h"
 #include "psiaccount.h"
 #include "xmpp_xmlcommon.h"
@@ -120,52 +121,27 @@ bool JT_AHCGetList::take(const QDomElement& e)
 AHCommandDlg::AHCommandDlg(PsiAccount* pa, const Jid& receiver)
 	: QDialog(0), pa_(pa), receiver_(receiver)
 {
+	ui_.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
-	QVBoxLayout *vb = new QVBoxLayout(this, 11, 6);
 
-	// Command list + Buttons
-	QLabel* lb_commands = new QLabel(tr("Command:"),this);
-	vb->addWidget(lb_commands);
-	cb_commands = new QComboBox(this);
-	vb->addWidget(cb_commands);
-	/*pb_info = new QPushButton(tr("Info"), this);
-	hb1->addWidget(pb_info);*/
-
-	// Refresh button
-	//pb_refresh = new QPushButton(tr("Refresh"), this);
-	//hb2->addWidget(pb_refresh);
-	//connect(pb_refresh, SIGNAL(clicked()), SLOT(refreshCommands()));
-
-	vb->addStretch(1);
-
-	// Bottom row
-	QHBoxLayout *hb2 = new QHBoxLayout(vb);
-	busy_ = new BusyWidget(this);
-	hb2->addWidget(busy_);
-	hb2->addItem(new QSpacerItem(20,0,QSizePolicy::Expanding));
-	pb_execute = new QPushButton(tr("Execute"), this);
-	hb2->addWidget(pb_execute);
+	pb_close = ui_.buttonBox->button(QDialogButtonBox::Cancel);
+	pb_execute = ui_.buttonBox->addButton(tr("Execute"), QDialogButtonBox::AcceptRole);
 	connect(pb_execute, SIGNAL(clicked()), SLOT(executeCommand()));
-	pb_close = new QPushButton(tr("Close"), this);
-	hb2->addWidget(pb_close);
 	connect(pb_close, SIGNAL(clicked()), SLOT(close()));
-	pb_close->setDefault(true);
-	pb_close->setFocus();
+	pb_execute->setDefault(true);
 
-	setCaption(QString("Execute Command (%1)").arg(receiver.full()));
+	setWindowTitle(QString("Execute Command (%1)").arg(receiver.full()));
 
-	// Load commands
 	refreshCommands();
+	adjustSize();
 }
-
 
 void AHCommandDlg::refreshCommands()
 {
-	cb_commands->clear();
+	ui_.cb_commands->clear();
 	pb_execute->setEnabled(false);
-	//pb_info->setEnabled(false);
 
-	busy_->start();
+	ui_.busy->start();
 	JT_AHCGetList* t= new JT_AHCGetList(pa_->client()->rootTask(),receiver_);
 	connect(t,SIGNAL(finished()),SLOT(listReceived()));
 	t->go(true);
@@ -175,19 +151,19 @@ void AHCommandDlg::listReceived()
 {
 	JT_AHCGetList* task_list = (JT_AHCGetList*) sender();
 	foreach(AHCommandItem i, task_list->commands()) {
-		cb_commands->insertItem(i.name);	
+		ui_.cb_commands->addItem(i.name);
 		commands_.append(i);
 	}
-	pb_execute->setEnabled(cb_commands->count()>0);
-	busy_->stop();
+	pb_execute->setEnabled(ui_.cb_commands->count()>0);
+	ui_.busy->stop();
 }
 
 void AHCommandDlg::executeCommand()
 {
-	if (cb_commands->count() > 0) {
-		busy_->start();
-		Jid to(commands_[cb_commands->currentItem()].jid);
-		QString node = commands_[cb_commands->currentItem()].node;
+	if (ui_.cb_commands->count() > 0) {
+		ui_.busy->start();
+		Jid to(commands_[ui_.cb_commands->currentIndex()].jid);
+		QString node = commands_[ui_.cb_commands->currentIndex()].node;
 		AHCExecuteTask* t = new AHCExecuteTask(to,AHCommand(node),pa_->client()->rootTask());
 		connect(t,SIGNAL(finished()),SLOT(commandExecuted()));
 		t->go(true);
@@ -196,7 +172,7 @@ void AHCommandDlg::executeCommand()
 
 void AHCommandDlg::commandExecuted()
 {
-	busy_->stop();
+	ui_.busy->stop();
 	close();
 }
 

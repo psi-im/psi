@@ -36,6 +36,15 @@
 
 enum { dcClose, dcHour, dcDay, dcNever };
 
+enum Qt3Dock {
+	Qt3Dock_Unmanaged = 0,
+	Qt3Dock_TornOff = 1,
+	Qt3Dock_Top = 2,
+	Qt3Dock_Bottom = 3,
+	Qt3Dock_Right = 4,
+	Qt3Dock_Left = 5,
+	Qt3Dock_Minimized = 6
+};
 
 class ToolbarPrefs
 {
@@ -45,7 +54,7 @@ public:
 	QString id;
 	QString name;
 	QStringList keys;
-	Qt::Dock dock;
+	Qt3Dock dock;
 
 	bool dirty;
 	bool on;
@@ -115,8 +124,9 @@ void replaceWidget(QWidget *, QWidget *);
 void closeDialogs(QWidget *);
 #ifdef Q_WS_X11
 #include <QWidget>
+#include <QX11Info>
 void x11wmClass(Display *dsp, WId wid, QString resName);
-#define X11WM_CLASS(x)	x11wmClass(x11Display(), winId(), (x));
+#define X11WM_CLASS(x)	x11wmClass(QX11Info::display(), winId(), (x));
 #else
 #define X11WM_CLASS(x)	/* dummy */
 #endif

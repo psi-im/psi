@@ -336,7 +336,6 @@ void GAdvancedWidget::Private::restoreGeometry()
 	PsiOptions *o = PsiOptions::instance();
 	QVariant v(o->getOption(geometryOptionPath_));
 
-
 	if (v.type() == QVariant::ByteArray) {
 		// migrate options back from format used for a short time before
 		// 0.12-RC2. This can be removed later.
@@ -349,18 +348,20 @@ void GAdvancedWidget::Private::restoreGeometry()
 		// and this way we are sure no Qt version the user happens to have installed writes some
 		// newer version of the format that older Qts can't restore from.
 
-
 		QByteArray array;
 		QDataStream stream(&array, QIODevice::WriteOnly);
 		stream.setVersion(QDataStream::Qt_4_0);
 		const quint32 magicNumber = 0x1D9D0CB;
 		quint16 majorVersion = 1;
 		quint16 minorVersion = 0;
+		QRect restoredFrameGeometry = o->getOption(geometryOptionPath_ + "-frame").toRect();
+		QRect restoredNormalGeometry = o->getOption(geometryOptionPath_).toRect();
+
 		stream << magicNumber
 			<< majorVersion
 			<< minorVersion
-			<< o->getOption(geometryOptionPath_ + "-frame").toRect()
-			<< o->getOption(geometryOptionPath_).toRect()
+			<< restoredFrameGeometry
+			<< restoredNormalGeometry
 			<< qint32(o->getOption(geometryOptionPath_ + "-screen").toInt())
 			<< quint8(o->getOption(geometryOptionPath_ + "-maximized").toBool())
 			<< quint8(o->getOption(geometryOptionPath_ + "-fullscreen").toBool());

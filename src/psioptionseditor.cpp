@@ -119,7 +119,8 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
 	tv_->resizeColumnToContents(0);
 	tv_colWidth = tv_->columnWidth(0);
 	
-	QHBoxLayout *infoLine = new QHBoxLayout(layout);
+	QHBoxLayout *infoLine = new QHBoxLayout(0);
+	layout->addLayout(infoLine);
 	lb_path = new QLabel(this);
 	lb_path->setTextInteractionFlags(Qt::TextSelectableByMouse);
 	lb_path->setToolTip(tr("Full name of the currently selected option."));
@@ -142,9 +143,9 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
 	lb_comment->setTextFormat(Qt::PlainText);
 
 	layout->addWidget(lb_comment);
-	
-	
-	QHBoxLayout* buttonLine = new QHBoxLayout(layout);
+
+	QHBoxLayout* buttonLine = new QHBoxLayout(0);
+	layout->addLayout(buttonLine);
 
 	cb_ = new QCheckBox(this);
 	cb_->setText(tr("Flat"));

@@ -36,7 +36,6 @@ class ChatDlg;
 class QPushButton;
 class QMenu;
 class QString;
-class Q3DragObject;
 class QContextMenuEvent;
 class PsiTabWidget;
 class TabManager;

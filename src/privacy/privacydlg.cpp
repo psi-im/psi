@@ -62,7 +62,7 @@ PrivacyDlg::PrivacyDlg(const QString& account_name, PrivacyManager* manager, QWi
 	connect(ui_.pb_down,SIGNAL(clicked()),SLOT(moveCurrentRuleDown()));
 	connect(ui_.pb_apply,SIGNAL(clicked()),SLOT(applyList()));
 
-	connect(ui_.pb_close,SIGNAL(clicked()),SLOT(close()));
+	connect(ui_.buttonBox->button(QDialogButtonBox::Close),SIGNAL(clicked()),SLOT(close()));
 	setWidgetsEnabled(false);
 
 	// Disable all buttons
@@ -137,6 +137,7 @@ void PrivacyDlg::applyList()
 
 void PrivacyDlg::close()
 {
+	// FIXME: Warn about unsaved changes
 	done(0);
 }
 
@@ -144,40 +145,40 @@ void PrivacyDlg::updateLists(const QString& defaultList, const QString& activeLi
 {
 	// Active list
 	ui_.cb_active->clear();
-	ui_.cb_active->insertItem(tr("<None>"));
-	ui_.cb_active->insertStringList(names);
+	ui_.cb_active->addItem(tr("<None>"));
+	ui_.cb_active->addItems(names);
 	if (!activeList.isEmpty()) {
-		ui_.cb_active->setCurrentItem(names.findIndex(activeList)+1);
+		ui_.cb_active->setCurrentIndex(names.indexOf(activeList)+1);
 	}
 	else {
-		ui_.cb_active->setCurrentItem(0);
+		ui_.cb_active->setCurrentIndex(0);
 	}
-	previousActive_ = ui_.cb_active->currentItem();
+	previousActive_ = ui_.cb_active->currentIndex();
 	
 	// Default list
 	ui_.cb_default->clear();
-	ui_.cb_default->insertItem(tr("<None>"));
-	ui_.cb_default->insertStringList(names);
+	ui_.cb_default->addItem(tr("<None>"));
+	ui_.cb_default->addItems(names);
 	if (!defaultList.isEmpty()) {
-		ui_.cb_default->setCurrentItem(names.findIndex(defaultList)+1);
+		ui_.cb_default->setCurrentIndex(names.indexOf(defaultList)+1);
 	}
 	else {
-		ui_.cb_default->setCurrentItem(0);
+		ui_.cb_default->setCurrentIndex(0);
 	}
-	previousDefault_ = ui_.cb_default->currentItem();
+	previousDefault_ = ui_.cb_default->currentIndex();
 	
 	// All lists
 	QString previousList = ui_.cb_lists->currentText();
 	ui_.cb_lists->clear();
-	ui_.cb_lists->insertStringList(names);
+	ui_.cb_lists->addItems(names);
 	if (ui_.cb_lists->count() > 0) {
 		if (!previousList.isEmpty() && ui_.cb_lists->findText(previousList) != -1) {
-			ui_.cb_lists->setCurrentItem(ui_.cb_lists->findText(previousList));
+			ui_.cb_lists->setCurrentIndex(ui_.cb_lists->findText(previousList));
 		}
 		else {
 			QString currentList = (activeList.isEmpty() ? activeList : defaultList);
 			if (!currentList.isEmpty()) {
-				ui_.cb_lists->setCurrentItem(names.findIndex(currentList));
+				ui_.cb_lists->setCurrentIndex(names.indexOf(currentList));
 			}
 		}
 		manager_->requestList(ui_.cb_lists->currentText());
@@ -212,7 +213,7 @@ void PrivacyDlg::active_selected(int i)
 {
 	if (i != previousActive_) {
 		setWidgetsEnabled(false);
-		manager_->changeActiveList((i == 0 ? "" : ui_.cb_active->text(i)));
+		manager_->changeActiveList((i == 0 ? "" : ui_.cb_active->itemText(i)));
 	}
 }
 
@@ -220,7 +221,7 @@ void PrivacyDlg::default_selected(int i)
 {
 	if (i != previousDefault_) {
 		setWidgetsEnabled(false);
-		manager_->changeDefaultList((i == 0 ? "" : ui_.cb_active->text(i)));
+		manager_->changeDefaultList((i == 0 ? "" : ui_.cb_active->itemText(i)));
 	}
 }
 
@@ -280,16 +281,16 @@ void PrivacyDlg::change_failed()
 
 void PrivacyDlg::rememberSettings()
 {
-	previousDefault_ = ui_.cb_default->currentItem();
-	previousActive_ = ui_.cb_active->currentItem();
-	previousList_ = ui_.cb_lists->currentItem();
+	previousDefault_ = ui_.cb_default->currentIndex();
+	previousActive_ = ui_.cb_active->currentIndex();
+	previousList_ = ui_.cb_lists->currentIndex();
 }
 
 void PrivacyDlg::revertSettings()
 {
-	ui_.cb_default->setCurrentItem(previousDefault_);
-	ui_.cb_active->setCurrentItem(previousActive_);
-	ui_.cb_lists->setCurrentItem(previousList_);
+	ui_.cb_default->setCurrentIndex(previousDefault_);
+	ui_.cb_active->setCurrentIndex(previousActive_);
+	ui_.cb_lists->setCurrentIndex(previousList_);
 }
 
 
@@ -316,7 +317,7 @@ void PrivacyDlg::newList()
 			ui_.cb_lists->removeItem(ui_.cb_lists->currentIndex());
 		}
 		ui_.cb_lists->addItem(name);
-		ui_.cb_lists->setCurrentItem(ui_.cb_lists->findText(name));
+		ui_.cb_lists->setCurrentIndex(ui_.cb_lists->findText(name));
 		model_.setList(PrivacyList(name));
 		newList_ = true;
 		rememberSettings();

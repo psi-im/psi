@@ -7,7 +7,7 @@ include(unittest.pri)
 include($$IRIS_XMPP_JID_MODULE)
 include($$PSI_TOOLS_OPTIONSTREE_MODULE)
 include($$PSI_TOOLS_ATOMICXMLFILE_MODULE)
-QT += gui xml qt3support
+QT += gui xml
 INCLUDEPATH += .. ../../iris/src/xmpp/xmpp-im
 DEPENDPATH += ..
 SOURCES += \

@@ -49,7 +49,7 @@ class MainWin : public AdvancedWidget<QMainWindow>
 {
 	Q_OBJECT
 public:
-	MainWin(bool onTop, bool asTool, PsiCon *, const char *name=0);
+	MainWin(bool onTop, bool asTool, PsiCon *);
 	~MainWin();
 
 	void setWindowOpts(bool onTop, bool asTool);

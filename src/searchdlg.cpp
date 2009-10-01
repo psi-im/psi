@@ -22,8 +22,6 @@
 #include <QPointer>
 #include <QLineEdit>
 #include <QMessageBox>
-#include <Q3Grid>
-#include <Q3PtrList>
 
 #include "jidutil.h"
 #include "psiaccount.h"
@@ -154,11 +152,12 @@ public:
 	Form form;
 	BusyWidget *busy;
 	QPointer<JT_XSearch> jt;
-	Q3Grid *gr_form;
+	QWidget *gr_form;
+	QGridLayout *gr_form_layout;
 	int type;
 
-	Q3PtrList<QLabel> lb_field;
-	Q3PtrList<QLineEdit> le_field;
+	QList<QLabel*> lb_field;
+	QList<QLineEdit*> le_field;
 	XDataWidget *xdata;
 	XData xdata_form;
 };
@@ -176,12 +175,13 @@ SearchDlg::SearchDlg(const Jid &jid, PsiAccount *pa)
 	d->jt = 0;
 	d->xdata = 0;
 
-	setWindowTitle(caption().arg(d->jid.full()));
+	setWindowTitle(windowTitle().arg(d->jid.full()));
 
 	d->busy = busy;
 
-	d->gr_form = new Q3Grid(2, Qt::Horizontal, gb_search);
-	d->gr_form->setSpacing(4);
+	d->gr_form = new QWidget(gb_search);
+	d->gr_form_layout = new QGridLayout(d->gr_form);
+	d->gr_form_layout->setSpacing(4);
 	replaceWidget(lb_form, d->gr_form);
 	d->gr_form->hide();
 
@@ -268,14 +268,11 @@ void SearchDlg::doSearchSet()
 	if ( !d->xdata ) {
 		Form submitForm = d->form;
 
+		Q_ASSERT(submitForm.length() == d->le_field.length());
 		// import the changes back into the form.
 		// the QPtrList of QLineEdits should be in the same order
-		Q3PtrListIterator<QLineEdit> lit(d->le_field);
-		for(Form::Iterator it = submitForm.begin(); it != submitForm.end(); ++it) {
-			FormField &f = *it;
-			QLineEdit *le = lit.current();
-			f.setValue(le->text());
-			++lit;
+		for (int i = 0; i < submitForm.length(); ++i) {
+			submitForm[i].setValue(d->le_field[i]->text());
 		}
 
 		d->jt->set(submitForm);
@@ -336,6 +333,7 @@ void SearchDlg::jt_finished()
 						lb_instructions->setText(str);
 
 						d->xdata = new XDataWidget( d->gr_form );
+						d->gr_form_layout->addWidget(d->xdata); // FIXME
 						d->xdata->setFields( form.fields() );
 
 						d->xdata->show();
@@ -354,6 +352,8 @@ void SearchDlg::jt_finished()
 
 					QLabel *lb = new QLabel(f.fieldName(), d->gr_form);
 					QLineEdit *le = new QLineEdit(d->gr_form);
+					d->gr_form_layout->addWidget(lb); // FIXME
+					d->gr_form_layout->addWidget(le); // FIXME
 					if(f.isSecret())
 						le->setEchoMode(QLineEdit::Password);
 					le->setText(f.value());

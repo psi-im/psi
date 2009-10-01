@@ -23,16 +23,16 @@
 #include "iconwidget.h"
 #include "iconset.h"
 #include "psicon.h"
+
 #include <qmenubar.h>
 #include <qcursor.h>
-#include <q3dragobject.h>
 #include <QVBoxLayout>
 #include <QDragMoveEvent>
 #include <QResizeEvent>
 #include <QKeyEvent>
-#include <Q3PopupMenu>
 #include <QDropEvent>
 #include <QCloseEvent>
+
 #include "psitabwidget.h"
 #include "psioptions.h"
 #include "shortcutmanager.h"
@@ -149,7 +149,8 @@ TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 	if(delegate_)
 		delegate_->tabWidgetCreated(this, tabWidget_);
 
-	QVBoxLayout *vert1 = new QVBoxLayout( this, 1);
+	QVBoxLayout *vert1 = new QVBoxLayout(this);
+	vert1->setMargin(1);
 	vert1->addWidget(tabWidget_);
 
 	setAcceptDrops(true);
@@ -159,13 +160,13 @@ TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 
 	act_close_ = new QAction(this);
 	addAction(act_close_);
-	connect(act_close_,SIGNAL(activated()), SLOT(closeCurrentTab()));
+	connect(act_close_,SIGNAL(triggered()), SLOT(closeCurrentTab()));
 	act_prev_ = new QAction(this);
 	addAction(act_prev_);
-	connect(act_prev_,SIGNAL(activated()), SLOT(previousTab()));
+	connect(act_prev_,SIGNAL(triggered()), SLOT(previousTab()));
 	act_next_ = new QAction(this);
 	addAction(act_next_);
-	connect(act_next_,SIGNAL(activated()), SLOT(nextTab()));
+	connect(act_next_,SIGNAL(triggered()), SLOT(nextTab()));
 
 	setShortcuts();
 
@@ -325,9 +326,9 @@ void TabDlg::setLooks()
 #ifndef Q_WS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/start-chat").icon());
 #endif
-	tabWidget_->setTabPosition(QTabWidget::Top);
+	tabWidget_->setTabPosition(QTabWidget::North);
 	if (PsiOptions::instance()->getOption("options.ui.tabs.put-tabs-at-bottom").toBool())
-		tabWidget_->setTabPosition(QTabWidget::Bottom);
+		tabWidget_->setTabPosition(QTabWidget::South);
 
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt()))/100);
 }
@@ -421,7 +422,7 @@ void TabDlg::closeTab(TabbableWidget* chat, bool doclose)
 	setUpdatesEnabled(false);
 	chat->hide();
 	removeTabWithNoChecks(chat);
-	chat->reparent(0,QPoint());
+	chat->setParent(0);
 	if (tabWidget_->count() > 0) {
 		updateCaption();
 	}
@@ -553,7 +554,7 @@ void TabDlg::updateTab(TabbableWidget* chat)
 		tabWidget_->setTabTextColor(chat, Qt::red);
 	}
 	else {
-		tabWidget_->setTabTextColor(chat, colorGroup().foreground());
+		tabWidget_->setTabTextColor(chat, palette().windowText().color());
 	}
 	updateCaption();
 }

@@ -22,31 +22,14 @@
 #define PROXYDLG_H
 
 #include <QList>
-#include <q3groupbox.h>
+#include <QGroupBox>
 
 #include "ui_proxy.h"
+#include "ui_proxyedit.h"
 
 class OptionsTree;
 class QDomElement;
 class QDomDocument;
-
-class HostPortEdit : public QWidget
-{
-	Q_OBJECT
-public:
-	HostPortEdit(QWidget *parent=0, const char *name=0);
-	~HostPortEdit();
-
-	QString host() const;
-	int port() const;
-	void setHost(const QString &);
-	void setPort(int);
-	void fixTabbing(QWidget *a, QWidget *b);
-
-private:
-	class Private;
-	Private *d;
-};
 
 class ProxyItem;
 class ProxyManager;
@@ -69,66 +52,33 @@ public:
 	bool fromXml(const QDomElement &);
 };
 
-class ProxyEdit : public Q3GroupBox
+class ProxyDlg : public QDialog
 {
 	Q_OBJECT
 public:
-	ProxyEdit(QWidget *parent=0, const char *name=0);
-	~ProxyEdit();
-
-	void reset();
-	void setType(const QString &s);
-	ProxySettings proxySettings() const;
-	void setProxySettings(const ProxySettings &);
-	void fixTabbing(QWidget *a, QWidget *b);
-
-private slots:
-	void ck_toggled(bool);
-
-private:
-	class Private;
-	Private *d;
-};
-
-class ProxyDlg : public QDialog, public Ui::Proxy
-{
-	Q_OBJECT
-public:
-	ProxyDlg(const ProxyItemList &, const QStringList &, const QString &def, QWidget *parent=0);
+	ProxyDlg(const ProxyItemList &, const QString &def, QWidget *parent=0);
 	~ProxyDlg();
 
 signals:
 	void applyList(const ProxyItemList &, int cur);
 
-private slots:
-	void proxy_new();
-	void proxy_remove();
-	void cb_activated(int);
-	void qlbx_highlighted(int);
-	void qle_textChanged(const QString &);
-	void doSave();
-
-private:
+public:
 	class Private;
+	friend class Private;
+private:
 	Private *d;
-
-	void selectCurrent();
-	QString getUniqueName() const;
-	void hookEdit();
-	void unhookEdit();
-	void saveIntoItem(int);
+	Ui::Proxy ui_;
 };
 
 class ProxyChooser : public QWidget
 {
 	Q_OBJECT
 public:
-	ProxyChooser(ProxyManager *, QWidget *parent=0, const char *name=0);
+	ProxyChooser(ProxyManager*, QWidget* parent);
 	~ProxyChooser();
 
 	QString currentItem() const;
 	void setCurrentItem(const QString &item);
-	void fixTabbing(QWidget *a, QWidget *b);
 
 private slots:
 	void pm_settingsChanged();
@@ -165,7 +115,6 @@ public:
 	ProxyItem getItem(const QString &id) const;
 	QString lastEdited() const;
 	void migrateItemList(const ProxyItemList &);
-	QStringList methodList() const;
 //	int findOldIndex(int) const;
 
 signals:

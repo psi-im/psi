@@ -72,7 +72,7 @@ public:
 		ui.cb_bandwidth->addItem(tr("High (1Mbps)"), 1000);
 		ui.cb_bandwidth->addItem(tr("Average (400Kbps)"), 400);
 		ui.cb_bandwidth->addItem(tr("Low (160Kbps)"), 160);
-		ui.cb_bandwidth->setCurrentItem(1);
+		ui.cb_bandwidth->setCurrentIndex(1);
 
 		if(!AvCallManager::isVideoSupported())
 		{

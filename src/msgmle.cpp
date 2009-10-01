@@ -94,7 +94,7 @@ void ChatView::keyPressEvent(QKeyEvent *e)
 	else if(e->key() == Qt::Key_I && (e->modifiers() & Qt::ControlModifier))
 		e->ignore(); */
 	/*else*/ if(e->key() == Qt::Key_M && (e->modifiers() & Qt::ControlModifier) && !isReadOnly()) // newline 
-		insert("\n");
+		append("\n");
 /*	else if(e->key() == Qt::Key_U && (e->modifiers() & Qt::ControlModifier) && !isReadOnly())
 		setText(""); */
 	else if ((e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter) && ((e->modifiers() & Qt::ControlModifier) || (e->modifiers() & Qt::AltModifier))) {

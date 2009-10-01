@@ -46,7 +46,7 @@ void PrivacyRuleDlg::setRule(const PrivacyListItem& item)
 		ui_.cb_value->setCurrentIndex(ui_.cb_value->findData(item.value()));
 	} else {
 		ui_.cb_type->setCurrentIndex(ui_.cb_type->findData(item.type()));
-		ui_.cb_value->setCurrentText(item.value());
+		ui_.cb_value->setItemText(ui_.cb_value->currentIndex(), item.value());
 	}
 
 	// Action
@@ -89,7 +89,7 @@ PrivacyListItem PrivacyRuleDlg::rule() const
 void PrivacyRuleDlg::type_selected(const QString& type)
 {
 	ui_.cb_value->clear();
-	ui_.cb_value->setCurrentText("");
+	ui_.cb_value->setItemText(ui_.cb_value->currentIndex(), "");
 	PrivacyListItem::Type t = (PrivacyListItem::Type)ui_.cb_type->itemData(ui_.cb_type->currentIndex()).toInt();
 	if (t == PrivacyListItem::SubscriptionType) {
 		ui_.cb_value->addItem(tr("None"), "none");

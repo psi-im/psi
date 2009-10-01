@@ -1,3 +1,23 @@
+/*
+ * optionsdlg.cpp
+ * Copyright (C) 2003-2009  Michail Pishchagin
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+
 #include "optionsdlg.h"
 #include "optionstab.h"
 #include "common.h"
@@ -8,14 +28,13 @@
 
 #include <qlayout.h>
 #include <qlabel.h>
-#include <q3listview.h>
 #include <QStackedWidget>
 #include <qpen.h>
 #include <qpainter.h>
-#include <Q3Dict>
 #include <QPixmap>
-#include <Q3PtrList>
 #include <QVBoxLayout>
+#include <QItemDelegate>
+#include <QScrollBar>
 
 // tabs
 #include "opt_toolbars.h"
@@ -39,123 +58,82 @@
 #include "../avcall/avcall.h"
 
 //----------------------------------------------------------------------------
-// FancyItem
+// OptionsTabsDelegate
 //----------------------------------------------------------------------------
 
-class FancyItem : public Q3ListViewItem
+class OptionsTabsDelegate : public QItemDelegate
 {
 public:
-	FancyItem(Q3ListView *, Q3ListViewItem *after);
+	OptionsTabsDelegate(QObject* parent)
+		: QItemDelegate(parent)
+	{}
 
-	void setup();
-	int width(const QFontMetrics &, const Q3ListView *lv, int c) const;
-	void paintFocus(QPainter *, const QColorGroup &, const QRect &);
-	void paintCell(QPainter *p, const QColorGroup &, int c, int width, int align);
+	// reimplemented
+	virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
+	{
+		painter->save();
+		painter->setClipRect(option.rect.adjusted(0, 0, 0, -1));
+		drawBackground(painter, option, index);
+		painter->restore();
+
+		QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
+		QSize iconSize;
+		if (icon.availableSizes().isEmpty())
+			iconSize = icon.availableSizes().first();
+		else
+			iconSize = QSize(16, 16);
+		QRect iconRect = option.rect;
+		iconRect.setLeft(4);
+		iconRect.setWidth(iconSize.width());
+		icon.paint(painter, iconRect, Qt::AlignCenter, QIcon::Normal, QIcon::On);
+
+		QRect textRect = option.rect;
+		textRect.setLeft(iconRect.right() + 8);
+		QPalette::ColorGroup cg = option.state & QStyle::State_Enabled
+		                          ? QPalette::Normal : QPalette::Disabled;
+		if (cg == QPalette::Normal && !(option.state & QStyle::State_Active))
+			cg = QPalette::Inactive;
+		if (option.state & QStyle::State_Selected) {
+			painter->setPen(option.palette.color(cg, QPalette::HighlightedText));
+		}
+		else {
+			painter->setPen(option.palette.color(cg, QPalette::Text));
+		}
+		painter->drawText(textRect, index.data(Qt::DisplayRole).toString(), Qt::AlignLeft | Qt::AlignVCenter);
+
+		painter->save();
+		QPen pen(QColor(0xE0, 0xE0, 0xE0));
+		QVector<qreal> dashes;
+		dashes << 1.0 << 1.0;
+		pen.setDashPattern(dashes);
+
+		painter->setPen(pen);
+		painter->drawLine(option.rect.left(), option.rect.bottom(), option.rect.right(), option.rect.bottom());
+		painter->restore();
+	}
+
+	// reimplemented
+	virtual QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const
+	{
+		QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
+		QSize iconSize;
+		if (!icon.availableSizes().isEmpty())
+			iconSize = icon.availableSizes().first();
+		else
+			iconSize = QSize(16, 16);
+
+		int width = iconSize.width();
+		width += 8;
+		width += option.fontMetrics.width(index.data(Qt::DisplayRole).toString());
+		width += 8;
+
+		int height = iconSize.height();
+		height = qMax(height, option.fontMetrics.height());
+		height += 8;
+
+		return QSize(width, height);
+	}
 };
-
-FancyItem::FancyItem(Q3ListView *lv, Q3ListViewItem *after)
-: Q3ListViewItem(lv, after)
-{
-}
-
-void FancyItem::setup()
-{
-	Q3ListView *lv = listView();
-	int ph = 0;
-	for(int i = 0; i < lv->columns(); ++i) {
-		if(pixmap(i))
-			ph = QMAX(ph, pixmap(i)->height());
-	}
-	int y = QMAX(ph, lv->fontMetrics().height());
-	y += 8;
-	setHeight(y);
-}
-
-int FancyItem::width(const QFontMetrics &fm, const Q3ListView *, int c) const
-{
-	int x = 0;
-	const QPixmap *pix = pixmap(c);
-	if(pix)
-		x += pix->width();
-	else
-		x += 16;
-	x += 8;
-	x += fm.width(text(c));
-	x += 8;
-	return x;
-}
-
-void FancyItem::paintFocus(QPainter *, const QColorGroup &, const QRect &)
-{
-	// re-implimented to do nothing.  selection is enough of a focus
-}
-
-void FancyItem::paintCell(QPainter *p, const QColorGroup &cg, int c, int w, int)
-{
-	int h = height();
-	QFontMetrics fm(p->font());
-	if(isSelected())
-		p->fillRect(0, 0, w, h-1, cg.highlight());
-	else
-		p->fillRect(0, 0, w, h, cg.base());
-
-	int x = 0;
-	const QPixmap *pix = pixmap(c);
-	if(pix) {
-		p->drawPixmap(4, (h - pix->height()) / 2, *pix);
-		x += pix->width();
-	}
-	else
-		x += 16;
-	x += 8;
-	int y = ((h - fm.height()) / 2) + fm.ascent();
-	p->setPen(isSelected() ? cg.highlightedText() : cg.text());
-	p->drawText(x, y, text(c));
-
-	p->setPen(QPen(QColor(0xE0, 0xE0, 0xE0), 0, Qt::DotLine));
-	p->drawLine(0, h-1, w-1, h-1);
-}
-
-//----------------------------------------------------------------------------
-// OptionsTabBase
-//----------------------------------------------------------------------------
-
-//class OptionsTabBase : public OptionsTab
-//{
-//	Q_OBJECT
-//public:
-//	OptionsTabBase(QObject *parent, QCString id, QCString parentId, QString iconName, QString name, QString desc)
-//		: OptionsTab(parent, id, parentId, name, desc, iconName)
-//	{
-//		w = new QWidget();
-//		QGridLayout *layout = new QGridLayout(w, 0, 2, 0, 5);
-//		layout->setAutoAdd(true);
-//	}
-//	~OptionsTabBase()
-//	{
-//		w->deleteLater();
-//	}
-//
-//	QWidget *widget() { return w; }
-//
-//public slots:
-//	void tabAdded(OptionsTab *tab);
-//
-//private:
-//	QWidget *w;
-//};
-//
-//void OptionsTabBase::tabAdded(OptionsTab *tab)
-//{
-//	//qWarning("OptionsTabBase::tabAdded(): id = %s, tab_id = %s", (const char *)id(), (const char *)tab->id());
-//	QLabel *name = new QLabel(w);
-//	name->setText("<b>" + tab->name() + "</b>");
-//	name->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
-//
-//	IconLabel *desc = new IconLabel(w);
-//	desc->setText(tab->desc());
-//	desc->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-//}
 
 //----------------------------------------------------------------------------
 // OptionsDlg::Private
@@ -172,7 +150,7 @@ public slots:
 	void openTab(QString id);
 
 private slots:
-	void itemSelected(Q3ListViewItem *);
+	void currentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
 	void dataChanged();
 	void noDirtySlot(bool);
 	void createTabs();
@@ -185,8 +163,8 @@ public:
 	OptionsDlg *dlg;
 	PsiCon *psi;
 	bool dirty, noDirty;
-	Q3Dict<QWidget> id2widget;
-	Q3PtrList<OptionsTab> tabs;
+	QHash<QString, QWidget*> id2widget;
+	QList<OptionsTab*> tabs;
 
 	QMap<QString, QByteArray> changedMap;
 };
@@ -200,18 +178,20 @@ OptionsDlg::Private::Private(OptionsDlg *d, PsiCon *_psi)
 
 	dlg->lb_pageTitle->setScaledContents(32, 32);
 
-	dlg->lv_tabs->setSorting( -1 );
-	dlg->lv_tabs->header()->hide();
-	connect(dlg->lv_tabs, SIGNAL(selectionChanged(Q3ListViewItem *)), SLOT(itemSelected(Q3ListViewItem *)));
+	// FancyLabel stinks
+	dlg->lb_pageTitle->hide();
+
+	QAbstractItemDelegate* previousDelegate = dlg->lv_tabs->itemDelegate();
+	delete previousDelegate;
+	dlg->lv_tabs->setItemDelegate(new OptionsTabsDelegate(dlg->lv_tabs));
 
 	createTabs();
 	createChangedMap();
 
-	// fill the QListView
-	Q3PtrListIterator<OptionsTab> it ( tabs );
-	OptionsTab *opttab;
-	for ( ; it.current(); ++it) {
-		opttab = it.current();
+	QStyleOptionViewItem option;
+	option.fontMetrics = dlg->lv_tabs->fontMetrics();
+	int maxWidth = 0;
+	foreach(OptionsTab* opttab, tabs) {
 		//qWarning("Adding tab %s...", (const char *)opttab->id());
 		opttab->setData(psi, dlg);
 		connect(opttab, SIGNAL(dataChanged()), SLOT(dataChanged()));
@@ -219,79 +199,26 @@ OptionsDlg::Private::Private(OptionsDlg *d, PsiCon *_psi)
 		connect(opttab, SIGNAL(noDirty(bool)), SLOT(noDirtySlot(bool)));
 		connect(opttab, SIGNAL(connectDataChanged(QWidget *)), SLOT(connectDataChanged(QWidget *)));
 
-		// search for parent
-		Q3ListViewItem *parent = 0, *prev = 0;
-		QString parentId = opttab->parentId();
-		if ( !parentId.isEmpty() ) {
-			Q3ListViewItemIterator it2( dlg->lv_tabs );
-			for ( ; it2.current(); ++it2) {
-				//qWarning("Searching the QListView %s...", it2.current()->text(1).latin1());
-				if ( it2.current()->text(1) == parentId ) {
-					//qWarning("...done");
-					parent = it2.current();
-
-					// notify the parent about the child
-					Q3PtrListIterator<OptionsTab> it3 ( tabs );
-					OptionsTab *opttab2;
-					for ( ; it3.current(); ++it3) {
-						opttab2 = it3.current();
-						//qWarning("Searching tabs %s...", (const char *)opttab2->id());
-						if ( opttab2->id() == opttab->parentId() ) {
-							//qWarning("...done");
-							opttab2->tabAdded( opttab );
-							break;
-						}
-					}
-
-					parent->setOpen( true );
-					break;
-				}
-			}
-		}
-		//qWarning("****************");
-
-		// search for previous item
-		Q3ListViewItem *top;
-		if ( parent )
-			top = parent->firstChild();
-		else
-			top = dlg->lv_tabs->firstChild();
-		prev = top;
-		while ( prev ) {
-			if ( !prev->nextSibling() )
-				break;
-			prev = prev->nextSibling();
-		}
-
 		if ( opttab->id().isEmpty() )
 			continue;
 
-		// create tab
-		Q3ListViewItem *item;
-		//if ( parent )
-		//	item = new FancyItem(parent, prev);
-		//else
-			item = new FancyItem(dlg->lv_tabs, prev);
+		dlg->lv_tabs->addItem(opttab->tabName());
+		QListWidgetItem* item = dlg->lv_tabs->item(dlg->lv_tabs->count() - 1);
+		dlg->lv_tabs->setCurrentItem(item);
+		QModelIndex index = dlg->lv_tabs->currentIndex();
+		if (opttab->tabIcon())
+			item->setData(Qt::DecorationRole, opttab->tabIcon()->icon());
+		item->setData(Qt::UserRole, opttab->id());
 
-		item->setText(0, opttab->tabName());
-		if ( opttab->tabIcon() )
-			item->setPixmap(0, opttab->tabIcon()->impix().pixmap());
-		item->setText(1, opttab->id());
-
-		// create separator
-		//if ( !parent ) {
-		//	new ListItemSeparator(dlg->lv_tabs, item);
-		//}
+		int width = dlg->lv_tabs->itemDelegate()->sizeHint(option, index).width() +
+		            dlg->lv_tabs->verticalScrollBar()->sizeHint().width();
+		maxWidth = qMax(width, maxWidth);
 	}
 
-	// fix the width of the listview based on the largest item
-	int largestWidth = 0;
-	QFontMetrics fm(dlg->lv_tabs->font());
-	for(Q3ListViewItem *i = dlg->lv_tabs->firstChild(); i; i = i->nextSibling())
-		largestWidth = QMAX(largestWidth, i->width(fm, dlg->lv_tabs, 0));
-	dlg->lv_tabs->setFixedWidth(largestWidth + 32);
+	dlg->lv_tabs->setFixedWidth(maxWidth);
 
 	openTab( "application" );
+	connect(dlg->lv_tabs, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SLOT(currentItemChanged(QListWidgetItem*, QListWidgetItem*)));
 
 	dirty = false;
 	dlg->pb_apply->setEnabled(false);
@@ -405,12 +332,8 @@ void OptionsDlg::Private::openTab(QString id)
 	QWidget *tab = id2widget[id];
 	if ( !tab ) {
 		bool found = false;
-		Q3PtrListIterator<OptionsTab> it ( tabs );
-		OptionsTab *opttab;
-		for ( ; it.current(); ++it) {
-			opttab = it.current();
-
-			if ( opttab->id() == id.latin1() ) {
+		foreach(OptionsTab* opttab, tabs) {
+			if ( opttab->id() == id ) {
 				tab = opttab->widget(); // create the widget
 				if ( !tab )
 					continue;
@@ -422,20 +345,13 @@ void OptionsDlg::Private::openTab(QString id)
 				vbox->setSpacing(0);
 				vbox->setMargin(0);
 
-				/*FancyLabel *toplbl = new FancyLabel(w, "QWidgetStack/tab/FancyLabel");
-				toplbl->setText( opttab->name() );
-				toplbl->setHelp( opttab->desc() );
-				toplbl->setIcon( opttab->icon() );
-				vbox->addWidget( toplbl );
-				vbox->addSpacing( 5 );*/
-
-				tab->reparent(w, 0, QPoint(0, 0));
+				tab->setParent(w);
 				vbox->addWidget(tab);
 				if ( !opttab->stretchable() )
 					vbox->addStretch();
 
 				dlg->ws_tabs->addWidget(w);
-				id2widget.insert( id, w );
+				id2widget[id] = w;
 				connectDataChanged( tab ); // no need to connect to dataChanged() slot by hands anymore
 
 				bool d = dirty;
@@ -452,60 +368,54 @@ void OptionsDlg::Private::openTab(QString id)
 		}
 
 		if ( !found ) {
-			qWarning("OptionsDlg::Private::itemSelected(): could not create widget for id '%s'", id.latin1());
+			qWarning("OptionsDlg::Private::itemSelected(): could not create widget for id '%s'", qPrintable(id));
 			return;
 		}
 	}
 
-	{
-		Q3PtrListIterator<OptionsTab> it ( tabs );
-		OptionsTab *opttab;
-		for ( ; it.current(); ++it) {
-			opttab = it.current();
+	foreach(OptionsTab* opttab, tabs) {
+		if ( opttab->id() == id ) {
+			dlg->lb_pageTitle->setText( opttab->name() );
+			dlg->lb_pageTitle->setHelp( opttab->desc() );
+			dlg->lb_pageTitle->setPsiIcon( opttab->psiIcon() );
 
-			if ( opttab->id() == id.latin1() ) {
-				dlg->lb_pageTitle->setText( opttab->name() );
-				dlg->lb_pageTitle->setHelp( opttab->desc() );
-				dlg->lb_pageTitle->setPsiIcon( opttab->psiIcon() );
-
-				break;
-			}
+			break;
 		}
 	}
 
 	dlg->ws_tabs->setCurrentWidget( tab );
 
-	// and select item in lv_tabs...
-	Q3ListViewItemIterator it( dlg->lv_tabs );
-	while ( it.current() ) {
-		it.current()->setSelected( it.current()->text(1) == id );
-		++it;
+	for (int i = 0; i < dlg->lv_tabs->count(); ++i) {
+		QListWidgetItem* item = dlg->lv_tabs->item(i);
+		if (item->data(Qt::UserRole).toString() == id) {
+			dlg->lv_tabs->setCurrentItem(item);
+			break;
+		}
 	}
 }
 
 void OptionsDlg::Private::connectDataChanged(QWidget *widget)
 {
-	QObjectList l = widget->queryList( "QWidget", 0, false, true ); // search for all QWidget children of widget
-	for ( QObjectList::Iterator it = l.begin(); it != l.end(); ++it) {
-		QVariant isOption = (*it)->property("isOption");
+	foreach(QWidget* w, widget->findChildren<QWidget*>()) {
+		QVariant isOption = w->property("isOption");
 		if (isOption.isValid() && !isOption.toBool()) {
-			continue;	// skip controls that only change Options dialog look
+			continue;
 		}
-		QWidget *w = (QWidget*) (*it);
-		QMap<QString, QByteArray>::Iterator it2 = changedMap.find( w->className() );
+		QMap<QString, QByteArray>::Iterator it2 = changedMap.find( w->metaObject()->className() );
 		if ( it2 != changedMap.end() ) {
-			disconnect(w, changedMap[w->className()], this, SLOT(dataChanged()));
-			connect(w, changedMap[w->className()], SLOT(dataChanged()));
+			disconnect(w, changedMap[w->metaObject()->className()], this, SLOT(dataChanged()));
+			connect(w, changedMap[w->metaObject()->className()], SLOT(dataChanged()));
 		}
 	}
 }
 
-void OptionsDlg::Private::itemSelected(Q3ListViewItem *item)
+void OptionsDlg::Private::currentItemChanged(QListWidgetItem* current, QListWidgetItem* previous)
 {
-	if ( !item )
+	Q_UNUSED(previous);
+	if (!current)
 		return;
 
-	openTab( item->text(1) );
+	openTab(current->data(Qt::UserRole).toString());
 }
 
 void OptionsDlg::Private::dataChanged()
@@ -529,11 +439,7 @@ void OptionsDlg::Private::doApply()
 	if ( !dirty )
 		return;
 
-	Q3PtrListIterator<OptionsTab> it ( tabs );
-	OptionsTab *opttab;
-	for ( ; it.current(); ++it) {
-		opttab = it.current();
-
+	foreach(OptionsTab* opttab, tabs) {
 		opttab->applyOptions();
 	}
 
@@ -550,18 +456,20 @@ void OptionsDlg::Private::doApply()
 OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent)
 	: QDialog(parent)
 {
-	setAttribute(Qt::WA_DeleteOnClose);
 	setupUi(this);
+	pb_apply = buttonBox->button(QDialogButtonBox::Apply);
+
+	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private(this, psi);
 	setModal(false);
 	d->psi->dialogRegister(this);
 
-	setWindowTitle(CAP(caption()));
+	setWindowTitle(CAP(windowTitle()));
 	resize(640, 480);
 
-	connect(pb_ok, SIGNAL(clicked()), SLOT(doOk()));
+	connect(buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), SLOT(doOk()));
 	connect(pb_apply,SIGNAL(clicked()),SLOT(doApply()));
-	connect(pb_cancel, SIGNAL(clicked()), SLOT(reject()));
+	connect(buttonBox->button(QDialogButtonBox::Cancel), SIGNAL(clicked()), SLOT(reject()));
 
 }
 

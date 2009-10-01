@@ -85,10 +85,12 @@ private:
 	QHash<QString, QVariant> values_;
 	QHash<QString, QString> comments_;
 	QHash<QString, QDomDocumentFragment> unknowns_;		// unknown types preservation
+	QHash<QString, QString> unknowns2_;		// unknown types preservation
 	
 	// needed to have a document for the fragments.
 	static QDomDocument *unknownsDoc;
-	
-}; 
+	friend class OptionsTreeReader;
+	friend class OptionsTreeWriter;
+};
 
 #endif /* _VARIANTTREE_H_ */

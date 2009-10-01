@@ -59,6 +59,12 @@ private slots:
 		QCOMPARE(messageHeadline->isAnimated(),  false);
 		QCOMPARE(messageHeadline->frameNumber(), 0);
 		QCOMPARE(messageHeadline->anim(),        (const Anim *)0);
+		QVERIFY(!messageHeadline->impix().isNull());
+		QVERIFY(!messageHeadline->pixmap().isNull());
+		QCOMPARE(messageHeadline->impix().image().width(), 16);
+		QCOMPARE(messageHeadline->impix().image().height(), 16);
+		QCOMPARE(messageHeadline->impix().pixmap().width(), 16);
+		QCOMPARE(messageHeadline->impix().pixmap().height(), 16);
 		QCOMPARE(messageHeadline->pixmap().width(),  16);
 		QCOMPARE(messageHeadline->pixmap().height(), 16);
 	}
@@ -177,7 +183,7 @@ private slots:
 		
 		QListIterator<PsiIcon*> it = is->iterator();
 		while (it.hasNext()) {
-			const QHash<QString, QString> text = it.next()->text();
+			const QList<PsiIcon::IconText> text = it.next()->text();
 			QVERIFY(text.count() > 1);
 		}
 		
@@ -189,7 +195,7 @@ private slots:
 		const PsiIcon *chat = IconsetFactory::iconPtr("psi/chat");
 		QVERIFY(chat != 0);
 		
-		QIcon icon = chat->iconSet();
+		QIcon icon = chat->icon();
 		QVERIFY(!icon.isNull());
 	}
 };

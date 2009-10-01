@@ -452,5 +452,5 @@ void OptionsTabShortcuts::onNewShortcutKey(QKeySequence key) {
  */
 QString OptionsTabShortcuts::translateShortcut(QString comment)
 {
-	return QCoreApplication::translate("Shortcuts", comment);
+	return QCoreApplication::translate("Shortcuts", comment.toLatin1());
 }

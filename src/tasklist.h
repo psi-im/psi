@@ -22,7 +22,6 @@
 #define TASKLIST_H
 
 #include <qobject.h>
-#include <q3ptrlist.h>
 
 #include "xmpp_task.h"
 
@@ -32,23 +31,27 @@ using namespace XMPP;
 // TaskList -- read some comments inline
 //----------------------------------------------------------------------------
 
-class TaskList : public QObject, public Q3PtrList<Task>
+class TaskList : public QObject, public QList<Task*>
 {
 	Q_OBJECT
 
 public:
 	TaskList()
 	{
-		setAutoDelete(true);
 	}
 
-	void append(const Task *d)
+	~TaskList()
+	{
+		qDeleteAll(*this);
+	}
+
+	void append(Task *d)
 	{
 		if ( isEmpty() )
 			emit started();
 
 		connect(d, SIGNAL(destroyed(QObject *)), SLOT(taskDestroyed(QObject *)));
-		Q3PtrList<Task>::append(d);
+		QList<Task*>::append(d);
 	}
 
 signals:
@@ -64,9 +67,7 @@ signals:
 private slots:
 	void taskDestroyed(QObject *p)
 	{
-		setAutoDelete(false);
-		remove((Task *)p);
-		setAutoDelete(true);
+		removeAll(static_cast<Task*>(p));
 
 		if ( isEmpty() )
 			emit finished();

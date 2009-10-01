@@ -22,7 +22,6 @@
 
 #include <QLabel>
 #include <QCursor>
-#include <Q3DragObject>
 #include <QLineEdit>
 #include <QToolButton>
 #include <QLayout>
@@ -47,6 +46,7 @@
 #include <QMenu>
 #include <QDragEnterEvent>
 #include <QTextDocument> // for Qt::escape()
+#include <QScrollBar>
 
 #include "psiaccount.h"
 #include "userlist.h"
@@ -169,19 +169,19 @@ void ChatDlg::initActions()
 {
 	act_send_ = new QAction(this);
 	addAction(act_send_);
-	connect(act_send_, SIGNAL(activated()), SLOT(doSend()));
+	connect(act_send_, SIGNAL(triggered()), SLOT(doSend()));
 
 	act_close_ = new QAction(this);
 	addAction(act_close_);
-	connect(act_close_, SIGNAL(activated()), SLOT(close()));
+	connect(act_close_, SIGNAL(triggered()), SLOT(close()));
 
 	act_scrollup_ = new QAction(this);
 	addAction(act_scrollup_);
-	connect(act_scrollup_, SIGNAL(activated()), SLOT(scrollUp()));
+	connect(act_scrollup_, SIGNAL(triggered()), SLOT(scrollUp()));
 
 	act_scrolldown_ = new QAction(this);
 	addAction(act_scrolldown_);
-	connect(act_scrolldown_, SIGNAL(activated()), SLOT(scrollDown()));
+	connect(act_scrolldown_, SIGNAL(triggered()), SLOT(scrollDown()));
 }
 
 void ChatDlg::ensureTabbedCorrectly() {
@@ -315,7 +315,7 @@ void ChatDlg::logSelectionChanged()
 {
 #ifdef Q_WS_MAC
 	// A hack to only give the message log focus when text is selected
-	if (chatView()->hasSelectedText()) {
+	if (chatView()->textCursor().hasSelection()) {
 		chatView()->setFocus();
 	}
 	else {
@@ -345,16 +345,32 @@ void ChatDlg::activated()
 
 void ChatDlg::dropEvent(QDropEvent* event)
 {
-	QStringList l;
-	if (account()->loggedIn() && Q3UriDrag::decodeLocalFiles(event, l) && !l.isEmpty()) {
-		account()->actionSendFiles(jid(), l);
+	QStringList files;
+	if (account()->loggedIn() && event->mimeData()->hasUrls()) {
+		foreach(QUrl url, event->mimeData()->urls()) {
+			if (!url.toLocalFile().isEmpty()) {
+				files << url.toLocalFile();
+			}
+		}
+	}
+
+	if (!files.isEmpty()) {
+		account()->actionSendFiles(jid(), files);
 	}
 }
 
 void ChatDlg::dragEnterEvent(QDragEnterEvent* event)
 {
-	QStringList l;
-	event->accept(account()->loggedIn() && Q3UriDrag::canDecode(event) && Q3UriDrag::decodeLocalFiles(event, l) && !l.isEmpty());
+	Q_ASSERT(event);
+	bool accept = false;
+	if (account()->loggedIn() && event->mimeData()->hasUrls()) {
+		foreach(QUrl url, event->mimeData()->urls()) {
+			if (!url.toLocalFile().isEmpty()) {
+				event->accept();
+				break;
+			}
+		}
+	}
 }
 
 void ChatDlg::setJid(const Jid &j)
@@ -635,11 +651,11 @@ void ChatDlg::doSend()
 		return;
 	}
 
-	if (chatEdit()->text().isEmpty()) {
+	if (chatEdit()->toPlainText().isEmpty()) {
 		return;
 	}
 
-	if (chatEdit()->text() == "/clear") {
+	if (chatEdit()->toPlainText() == "/clear") {
 		chatEdit()->clear();
 		doClear();
 		QString line1,line2;
@@ -666,7 +682,7 @@ void ChatDlg::doSend()
 
 	Message m(jid());
 	m.setType("chat");
-	m.setBody(chatEdit()->text());
+	m.setBody(chatEdit()->toPlainText());
 	m.setTimeStamp(QDateTime::currentDateTime());
 	if (isEncryptionEnabled()) {
 		m.setWasEncrypted(true);
@@ -978,7 +994,7 @@ void ChatDlg::addEmoticon(QString text)
 	if (!isActiveTab())
 		return;
 
-	chatEdit()->insert(text + ' ');
+	chatEdit()->append(text + ' ');
 }
 
 /**

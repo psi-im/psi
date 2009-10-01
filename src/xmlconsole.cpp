@@ -25,6 +25,7 @@
 #include <QTextEdit>
 #include <QHBoxLayout>
 #include <QMessageBox>
+#include <QTextFrame>
 
 #include "xmpp_client.h"
 #include "xmlconsole.h"
@@ -52,7 +53,7 @@ XmlConsole::XmlConsole(PsiAccount *_pa)
 
 	ui_.te->setUndoRedoEnabled(false);
 	ui_.te->setReadOnly(true);
-	ui_.te->setTextFormat(Qt::PlainText);
+	ui_.te->setAcceptRichText(false);
 
 	QTextFrameFormat f = ui_.te->document()->rootFrame()->frameFormat();
 	f.setBackground(QBrush(Qt::black));
@@ -138,7 +139,7 @@ void XmlConsole::dumpRingbuf()
 void XmlConsole::client_xmlIncoming(const QString &str)
 {
 	if (!filtered(str)) {
-		ui_.te->setColor(Qt::yellow);
+		ui_.te->setTextColor(Qt::yellow);
 		ui_.te->append(str + '\n');
 	}
 }
@@ -146,7 +147,7 @@ void XmlConsole::client_xmlIncoming(const QString &str)
 void XmlConsole::client_xmlOutgoing(const QString &str)
 {
 	if(!filtered(str)) {
-		ui_.te->setColor(Qt::red);
+		ui_.te->setTextColor(Qt::red);
 		ui_.te->append(str + '\n');
 	}
 }
@@ -171,19 +172,21 @@ void XmlConsole::xml_textReady(const QString &str)
 //----------------------------------------------------------------------------
 // XmlPrompt
 //----------------------------------------------------------------------------
-XmlPrompt::XmlPrompt(QWidget *parent, const char *name)
-	: QDialog(parent, name, false)
+XmlPrompt::XmlPrompt(QWidget *parent)
+	: QDialog(parent)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
 	setWindowTitle(tr("XML Input"));
 
-	QVBoxLayout *vb1 = new QVBoxLayout(this, 8);
+	QVBoxLayout *vb1 = new QVBoxLayout(this);
+	vb1->setMargin(8);
 
 	te = new QTextEdit(this);
 	te->setAcceptRichText(false);
 	vb1->addWidget(te);
 
-	QHBoxLayout *hb1 = new QHBoxLayout(vb1);
+	QHBoxLayout *hb1 = new QHBoxLayout(0);
+	vb1->addLayout(hb1);
 	QPushButton *pb;
 
 	pb = new QPushButton(tr("&Transmit"), this);
@@ -205,7 +208,7 @@ XmlPrompt::~XmlPrompt()
 
 void XmlPrompt::doTransmit()
 {
-	QString str = te->text();
+	QString str = te->toPlainText();
 
 	// Validate input
 	QDomDocument doc;

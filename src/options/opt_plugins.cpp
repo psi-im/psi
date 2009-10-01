@@ -43,7 +43,7 @@ QWidget *OptionsTabPlugins::widget()
 	listPlugins();
 
 	
-	/*QWhatsThis::add(d->ck_messageevents,
+	/*d->ck_messageevents->setWhatsThis(
 		tr("Enables the sending and requesting of message events such as "
 		"'Contact is Typing', ..."));*/
 

@@ -28,7 +28,7 @@
             <number>0</number>
           </property>
           <item>
-            <widget class="Q3ListBox" name="lbx_profiles" />
+            <widget class="QListWidget" name="lbx_profiles" />
           </item>
           <item>
             <layout class="QVBoxLayout" >

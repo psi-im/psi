@@ -23,6 +23,7 @@
 #include <q3listview.h>
 #include <q3popupmenu.h>
 #include <Q3PtrList>
+#include <Q3Dict>
 
 #include <QComboBox>
 #include <QCheckBox>
