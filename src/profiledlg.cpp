@@ -43,21 +43,35 @@ class StretchLogoLabel : public QLabel
 {
 public:
 	StretchLogoLabel(QPixmap pix, QWidget *label)
-	: QLabel((QWidget*)label->parent())
+		: QLabel(label->parentWidget())
+		, pixmap_(pix)
 	{
-		setPixmap(pix);
-		setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed));
 		replaceWidget(label, this);
+		setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Maximum));
+	}
+
+	// reimplemented
+	QSize sizeHint() const
+	{
+		QSize sh = QLabel::sizeHint();
+		sh.setHeight(pixmap_.height());
+		return sh;
 	}
 
 	void paintEvent(QPaintEvent *event)
 	{
-		QPainter *p = new QPainter(this);
-		p->drawTiledPixmap(0, 0, width(), height(), *pixmap());
-		delete p;
-		QLabel::paintEvent(event);
+		QPainter p(this);
+		p.fillRect(rect(), Qt::red);
+		p.drawTiledPixmap(0, 0, width(), height(), pixmap_);
 	}
+
+private:
+	QPixmap pixmap_;
 };
+
+//----------------------------------------------------------------------------
+// ProfileOpenDlg
+//----------------------------------------------------------------------------
 
 ProfileOpenDlg::ProfileOpenDlg(const QString &def, const VarList &_langs, const QString &curLang, QWidget *parent)
 :QDialog(parent)
@@ -69,7 +83,6 @@ ProfileOpenDlg::ProfileOpenDlg(const QString &def, const VarList &_langs, const 
 
 	langs = _langs;
 
-	// insert the logo
 	QPixmap logo = (QPixmap)IconsetFactory::icon("psi/psiLogo").pixmap();
 	lb_logo->setPixmap(logo);
 	lb_logo->setFixedSize(logo.width(), logo.height());
@@ -77,15 +90,9 @@ ProfileOpenDlg::ProfileOpenDlg(const QString &def, const VarList &_langs, const 
 	//setFixedWidth(logo->width());
 
 	QImage logoImg = logo.toImage();
+	new StretchLogoLabel(QPixmap::fromImage( logoImg.copy(0, 0, 1, logoImg.height()) ), lb_left);
+	new StretchLogoLabel(QPixmap::fromImage( logoImg.copy(logoImg.width()-1, 0, 1, logoImg.height()) ), lb_right);
 
-	QPixmap tmp;
-	tmp.fromImage( logoImg.copy(0, 0, 1, logoImg.height()) );
-	StretchLogoLabel *stretch = new StretchLogoLabel(tmp, lb_left);
-
-	tmp.fromImage( logoImg.copy(logoImg.width()-1, 0, 1, logoImg.height()) );
-	stretch = new StretchLogoLabel(tmp, lb_right);
-
-	// setup signals
 	connect(pb_open, SIGNAL(clicked()), SLOT(accept()));
 	connect(pb_close, SIGNAL(clicked()), SLOT(reject()));
 	connect(pb_profiles, SIGNAL(clicked()), SLOT(manageProfiles()));
@@ -102,7 +109,6 @@ ProfileOpenDlg::ProfileOpenDlg(const QString &def, const VarList &_langs, const 
 		++x;
 	}
 
-	// QWhatsThis helpers
 	cb_profile->setWhatsThis(
 		tr("Select a profile to open from this list."));
 	cb_lang->setWhatsThis(
@@ -167,6 +173,9 @@ void ProfileOpenDlg::langChange(int x)
 	done(10);
 }
 
+//----------------------------------------------------------------------------
+// ProfileManageDlg
+//----------------------------------------------------------------------------
 
 ProfileManageDlg::ProfileManageDlg(const QString &choose, QWidget *parent)
 :QDialog(parent)
@@ -177,9 +186,8 @@ ProfileManageDlg::ProfileManageDlg(const QString &choose, QWidget *parent)
 
 	// setup signals
 	connect(pb_new, SIGNAL(clicked()), SLOT(slotProfileNew()));
-	connect(pb_rename, SIGNAL(clicked()), SLOT(slotProfileRename()));
+	// connect(pb_rename, SIGNAL(clicked()), SLOT(slotProfileRename()));
 	connect(pb_delete, SIGNAL(clicked()), SLOT(slotProfileDelete()));
-	connect(pb_close, SIGNAL(clicked()), SLOT(reject()));
 	connect(lbx_profiles, SIGNAL(highlighted(int)), SLOT(updateSelection()));
 
 	// load the listing
@@ -291,15 +299,18 @@ void ProfileManageDlg::updateSelection()
 	int x = lbx_profiles->currentRow();
 
 	if(x == -1) {
-		pb_rename->setEnabled(false);
+		// pb_rename->setEnabled(false);
 		pb_delete->setEnabled(false);
 	}
 	else {
-		pb_rename->setEnabled(true);
+		// pb_rename->setEnabled(true);
 		pb_delete->setEnabled(true);
 	}
 }
 
+//----------------------------------------------------------------------------
+// ProfileNewDlg
+//----------------------------------------------------------------------------
 
 ProfileNewDlg::ProfileNewDlg(QWidget *parent)
 :QDialog(parent)
