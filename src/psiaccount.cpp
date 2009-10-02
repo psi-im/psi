@@ -900,9 +900,6 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 
 PsiAccount::~PsiAccount()
 {
-#ifdef PSI_PLUGINS
-	PluginManager::instance()->removeClient(this);
-#endif
 	// nuke all related dialogs
 	deleteAllDialogs();
 
