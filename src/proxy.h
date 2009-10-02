@@ -25,7 +25,7 @@
 #include <QGroupBox>
 
 #include "ui_proxy.h"
-#include "ui_proxyedit.h"
+//#include "ui_proxyedit.h"
 
 class OptionsTree;
 class QDomElement;
