@@ -109,7 +109,7 @@ QString ApplicationInfo::resourcesDir()
 #if defined(Q_WS_X11)
 	return PSI_DATADIR;
 #elif defined(Q_WS_WIN)
-	return qApp->applicationPath();
+	return qApp->applicationDirPath();
 #elif defined(Q_WS_MAC)
 	// FIXME: Clean this up (remko)
   // System routine locates resource files. We "know" that Psi.icns is
