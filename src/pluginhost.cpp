@@ -150,7 +150,7 @@ bool PluginHost::load()
 			delete loader_;
 		}
 		else if (plugin) {
-			qDebug(qPrintable(QString("Trying to load plugin")));
+			qDebug("Trying to load plugin");
 			//Check it's the right sort of plugin
 			PsiPlugin* psiPlugin = qobject_cast<PsiPlugin*>(plugin);
 			if (psiPlugin) {
@@ -162,7 +162,7 @@ bool PluginHost::load()
 				shortName_ = psiPlugin->shortName();
 				version_ = psiPlugin->version();
 			} else  {
-				qWarning(qPrintable(QString("Attempted to load %1, but it is not a valid plugin.").arg(file_)));
+				qWarning("Attempted to load %s, but it is not a valid plugin.", qPrintable(file_));
 				if (loader_->isLoaded()) {
 			  		qWarning("File is a plugin but not for Psi");
 					loader_->unload();
@@ -192,7 +192,7 @@ bool PluginHost::unload()
 
 	if (plugin_ && disable()) {
 		if (!loader_) {
-	 		qWarning(qPrintable(QString("Plugin %1's loader wasn't found when trying to unload").arg(name_)));
+			qWarning("Plugin %s's loader wasn't found when trying to unload", qPrintable(name_));
 			return false;
 		}
 		else if (loader_->unload()) {	

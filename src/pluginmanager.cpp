@@ -98,7 +98,7 @@ void PluginManager::updatePluginsList()
 		QDir dir(d);
 		foreach (QString file, dir.entryList()) {
 			file = dir.absoluteFilePath(file);
-			qWarning(qPrintable(QString("Found plugin: %1").arg(file)));
+			qWarning("Found plugin: %s", qPrintable(file));
 			if (!pluginByFile_.contains(file)) {
 				PluginHost* host = new PluginHost(this, file);
 				if (host->isValid()) {
@@ -133,7 +133,7 @@ void PluginManager::loadEnabledPlugins()
 	foreach (PluginHost* plugin, hosts_.values()) {
 		QString option = QString("%1.%2").arg(loadOptionPrefix).arg(plugin->shortName());
 		if (PsiOptions::instance()->getOption(option).toBool()) {
-			qWarning(qPrintable(QString("Plugin %1 is enabled in config: loading").arg(plugin->shortName())));
+			qWarning("Plugin %s is enabled in config: loading", qPrintable(plugin->shortName()));
 			plugin->load();
 			plugin->enable();
 		}
@@ -239,7 +239,7 @@ QWidget* PluginManager::optionsWidget(const QString& plugin)
 	if (hosts_.contains(plugin)) {
 		widget = hosts_[plugin]->optionsWidget();
 	} else {
-		qWarning(qPrintable(QString("Attempting to get options for %1 which doesn't exist").arg(plugin)));
+		qWarning("Attempting to get options for %s which doesn't exist", qPrintable(plugin));
 	}
 	return widget;
 }
