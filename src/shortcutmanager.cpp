@@ -45,11 +45,25 @@ ShortcutManager* ShortcutManager::instance()
 QKeySequence ShortcutManager::shortcut(const QString& name) 
 {
 	QVariant variant = PsiOptions::instance()->getOption(QString("options.shortcuts.%1").arg(name));
-	QString type = variant.typeName();
-	if (type == "QVariantList")
-		variant = variant.toList().first();
-	//qDebug() << "shortcut: " << name << variant.value<QKeySequence>().toString();
+	QList<QKeySequence> list = shortcuts(name);
+	if (!list.isEmpty())
+		return list.first();
 	return variant.value<QKeySequence>();
+}
+
+/**
+ * Users tend to get really confused when they see 'Return' in menu
+ * shortcuts. 'Enter' is much more common, so we'd better use it.
+ *
+ * Examples:
+ * 'Enter' should be preferred over 'Return' and 'Ctrl+Enter' should be
+ * preferred over 'Ctrl+Return'.
+ */
+static bool shortcutManagerKeySequenceLessThan(const QKeySequence& k1, const QKeySequence& k2)
+{
+	bool e1 = k1.toString(QKeySequence::PortableText).contains("Enter");
+	bool e2 = k2.toString(QKeySequence::PortableText).contains("Enter");
+	return e1 && !e2;
 }
 
 /**
@@ -77,7 +91,9 @@ QList<QKeySequence> ShortcutManager::readShortcutsFromOptions(const QString& nam
 	QString type = variant.typeName();
 	if (type == "QVariantList") {
 		foreach(QVariant variant, variant.toList()) {
-			list += variant.value<QKeySequence>();
+			QKeySequence k = variant.value<QKeySequence>();
+			if (!k.isEmpty() && !list.contains(k))
+				list += k;
 		}
 	}
 	else {
@@ -85,6 +101,7 @@ QList<QKeySequence> ShortcutManager::readShortcutsFromOptions(const QString& nam
 		if (!k.isEmpty())
 			list += k;
 	}
+	qStableSort(list.begin(), list.end(), shortcutManagerKeySequenceLessThan);
 	return list;
 }
 
@@ -94,7 +111,7 @@ QList<QKeySequence> ShortcutManager::readShortcutsFromOptions(const QString& nam
  * \param path, the shortcut name e.g. "misc.sendmessage" which is in the options xml then
  *        mirrored as options.shortcuts.misc.sendmessage 
  * \param parent, the widget to which the new QAction should be connected to
- * \param slot, the SLOT() of the parent which should be triggerd if the KeySequence is activated
+ * \param slot, the SLOT() of the parent which should be triggered if the KeySequence is activated
  */
 void ShortcutManager::connect(const QString& path, QObject* parent, const char* slot)
 {
@@ -102,14 +119,17 @@ void ShortcutManager::connect(const QString& path, QObject* parent, const char* 
 		return;
 
 	if (!path.startsWith("global.")) {
-		foreach(QKeySequence sequence, ShortcutManager::instance()->shortcuts(path)) {
-			if (!sequence.isEmpty()) {
-				QAction* act = new QAction(parent);
-				act->setShortcut(sequence);
-				if (parent->isWidgetType())
-					((QWidget*) parent)->addAction(act);
-				parent->connect(act, SIGNAL(triggered()), slot);
-			}
+		QList<QKeySequence> shortcuts = ShortcutManager::instance()->shortcuts(path);
+
+		if (!shortcuts.isEmpty()) {
+			bool appWide = path.startsWith("appwide.");
+			QAction* act = new QAction(parent);
+			act->setShortcuts(shortcuts);
+			act->setShortcutContext(appWide ?
+			                        Qt::ApplicationShortcut : Qt::WindowShortcut);
+			if (parent->isWidgetType())
+				((QWidget*) parent)->addAction(act);
+			parent->connect(act, SIGNAL(activated()), slot);
 		}
 	}
 	else {
