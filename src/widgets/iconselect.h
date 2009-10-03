@@ -37,7 +37,7 @@ public:
 	void setIconset(const Iconset &);
 	const Iconset &iconset() const;
 
-	QSize sizeHint() const;
+	// reimplemented
 	void mousePressEvent(QMouseEvent *e);
 
 signals:

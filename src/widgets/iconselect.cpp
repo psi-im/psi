@@ -32,6 +32,7 @@
 #include <QMenuItem>
 #include <QEvent>
 #include <QMouseEvent>
+#include <QWidgetAction>
 
 #include <math.h>
 
@@ -165,6 +166,7 @@ private slots:
 	}
 
 private:
+	// reimplemented
 	void paintEvent(QPaintEvent *)
 	{
 		QPainter p(this);
@@ -172,12 +174,12 @@ private:
 
 		if ( hasFocus() )
 			flags |= QStyle::State_Selected;
-		
+
 		QStyleOptionMenuItem opt;
 		opt.palette = palette();
 		opt.state = flags;
 		opt.font = font();
-		opt.rect = rect();		
+		opt.rect = rect();
 		style()->drawControl(QStyle::CE_MenuItem, &opt, &p, this);
 
 		if ( ic ) {
@@ -202,6 +204,9 @@ private:
 	QGridLayout *grid;
 	bool shown;
 
+signals:
+	void updatedGeometry();
+
 public:
 	IconSelect(IconSelectPopup *parentMenu);
 	~IconSelect();
@@ -211,6 +216,17 @@ public:
 
 protected:
 	void noIcons();
+	void createLayout();
+
+	void paintEvent(QPaintEvent *)
+	{
+		QPainter p(this);
+
+		QStyleOptionMenuItem opt;
+		opt.palette = palette();
+		opt.rect = rect();
+		style()->drawControl(QStyle::CE_MenuEmptyArea, &opt, &p, this);
+	}
 
 protected slots:
 	void closeMenu();
@@ -235,18 +251,26 @@ void IconSelect::closeMenu()
 	// this way all parent menus (if any) would be closed too
 	QMouseEvent me(QEvent::MouseButtonPress, menu->pos() - QPoint(5, 5), Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
 	menu->mousePressEvent(&me);
-	
+
 	// just in case
 	menu->close();
 }
 
+void IconSelect::createLayout()
+{
+	Q_ASSERT(!grid);
+	grid = new QGridLayout(this);
+	grid->setMargin(style()->pixelMetric(QStyle::PM_MenuPanelWidth, 0, this));
+	grid->setSpacing(1);
+}
+
 void IconSelect::noIcons()
 {
-	grid = new QGridLayout(this);
-
+	createLayout();
 	QLabel *lbl = new QLabel(this);
 	grid->addWidget(lbl, 0, 0);
 	lbl->setText( tr("No icons available") );
+	emit updatedGeometry();
 }
 
 void IconSelect::setIconset(const Iconset &iconset)
@@ -256,11 +280,10 @@ void IconSelect::setIconset(const Iconset &iconset)
 	// delete all children
 	if (grid) {
 		delete grid;
+		grid = 0;
 
 		QList<QWidget *> list = findChildren<QWidget *>();
-		QObject *object;
-		foreach (object, list)
-			delete object;
+		qDeleteAll(list);
 	}
 
 	if ( !is.count() ) {
@@ -298,8 +321,7 @@ void IconSelect::setIconset(const Iconset &iconset)
 	}
 
 	// now, fill grid with elements
-	grid = new QGridLayout(this);
-
+	createLayout();
 	count = 0;
 
 	int row = 0;
@@ -324,6 +346,7 @@ void IconSelect::setIconset(const Iconset &iconset)
 			column = 0;
 		}
 	}
+	emit updatedGeometry();
 }
 
 const Iconset &IconSelect::iconset() const
@@ -337,23 +360,34 @@ const Iconset &IconSelect::iconset() const
 
 class IconSelectPopup::Private : public QObject
 {
+	Q_OBJECT
 public:
 	Private(IconSelectPopup *parent)
-	: QObject(parent)
+		: QObject(parent)
+		, parent_(parent)
+	{}
+
+	IconSelectPopup* parent_;
+	IconSelect *icsel_;
+	QWidgetAction* widgetAction_;
+
+public slots:
+	void updatedGeometry()
 	{
-		icsel = new IconSelect(parent);
+		widgetAction_->setDefaultWidget(icsel_);
+		parent_->removeAction(widgetAction_);
+		parent_->addAction(widgetAction_);
 	}
-	
-	IconSelect *icsel;
 };
 
 IconSelectPopup::IconSelectPopup(QWidget *parent)
 : QMenu(parent)
 {
-	QGridLayout *grid = new QGridLayout(this);
-	grid->setMargin(style()->pixelMetric(QStyle::PM_MenuPanelWidth, 0, this));
-	
 	d = new Private(this);
+	d->icsel_ = new IconSelect(this);
+	d->widgetAction_ = new QWidgetAction(this);
+	connect(d->icsel_, SIGNAL(updatedGeometry()), d, SLOT(updatedGeometry()));
+	d->updatedGeometry();
 }
 
 IconSelectPopup::~IconSelectPopup()
@@ -362,12 +396,12 @@ IconSelectPopup::~IconSelectPopup()
 
 void IconSelectPopup::setIconset(const Iconset &i)
 {
-	d->icsel->setIconset(i);
+	d->icsel_->setIconset(i);
 }
 
 const Iconset &IconSelectPopup::iconset() const
 {
-	return d->icsel->iconset();
+	return d->icsel_->iconset();
 }
 
 /**
@@ -378,15 +412,6 @@ const Iconset &IconSelectPopup::iconset() const
 void IconSelectPopup::mousePressEvent(QMouseEvent *e)
 {
 	QMenu::mousePressEvent(e);
-}
-
-/**
-	Override QMenu's nasty sizeHint() and use standard QWidget one
-	which honors layouts and child widgets.
-*/
-QSize IconSelectPopup::sizeHint() const
-{
-	return QWidget::sizeHint();
 }
 
 #include "iconselect.moc"
