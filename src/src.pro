@@ -80,6 +80,7 @@ LANG_PATH = ../lang
 
 TRANSLATIONS = \
 	$$LANG_PATH/psi_ar.ts \
+	$$LANG_PATH/psi_be.ts \
 	$$LANG_PATH/psi_bg.ts \
 	$$LANG_PATH/psi_br.ts \
 	$$LANG_PATH/psi_ca.ts \
