@@ -337,39 +337,14 @@ void HistoryDlg::displayResult(const EDBResult *r, int direction, int max)
 {
 	//d->lv->setUpdatesEnabled(false);
 	d->lv->clear();
-	QList<EDBItem*>::const_iterator it;
-	if(direction == EDB::Forward)
-		it = r->end();
-	else
-		it = r->begin();
+	int i = (direction == EDB::Forward) ? r->count()-1 : 0;
 	int at = 0;
-	for(EDBItem *i; (i = *it) && (max == -1 ? true : at < max);) {
-		PsiEvent *e = i->event();
-/*printf(" id=%s", i->id().latin1());
-if(i->prevId())
-	printf(", prevId=%s", i->prevId().latin1());
-if(i->nextId())
-	printf(", nextId=%s", i->nextId().latin1());
-printf("\n");
-if(e->type() == PsiEvent::Message) {
-	MessageEvent *me = (MessageEvent *)e;
-	printf(" body: [%s]\n", me->message().body().latin1());
-}
-else if(e->type() == PsiEvent::Auth) {
-	AuthEvent *ae = (AuthEvent *)e;
-	printf(" authType: [%s]\n", ae->authType().latin1());
-}
-else {
-	printf(" unknown event type\n");
-}
-printf("\n");*/
-
-		d->lv->addEvent(e, i->prevId());
+	while (i >= 0 && i <= r->count()-1 && (max == -1 ? true : at < max)) {
+		EDBItem* item = r->value(i);
+		PsiEvent* e = item->event();
+		d->lv->addEvent(e, item->prevId());
 		++at;
-		if(direction == EDB::Backward)
-			++it;
-		else
-			--it;
+		i += (direction == EDB::Forward) ? -1 : +1;
 	}
 	//d->lv->setUpdatesEnabled(true);
 	//d->lv->repaint(true);
@@ -384,32 +359,31 @@ void HistoryDlg::edb_finished()
 			if(d->reqtype == 0 || d->reqtype == 1) {
 				// events are in backward order
 				// first entry is the end event
-				QList<EDBItem*>::const_iterator it = r->begin();
-				d->id_end = (*it)->id();
-				d->id_next = (*it)->nextId();
+				EDBItem* it = r->first();
+				d->id_end = it->id();
+				d->id_next = it->nextId();
 				// last entry is the begin event
-				it = r->end();
-				d->id_begin = (*it)->id();
-				d->id_prev = (*it)->prevId();
+				it = r->last();
+				d->id_begin = it->id();
+				d->id_prev = it->prevId();
 				displayResult(r, EDB::Backward);
 				//printf("[%s],[%s],[%s],[%s]\n", d->id_prev.latin1(), d->id_begin.latin1(), d->id_end.latin1(), d->id_next.latin1());
 			}
 			else if(d->reqtype == 2) {
 				// events are in forward order
 				// last entry is the end event
-				QList<EDBItem*>::const_iterator it = r->end();
-				d->id_end = (*it)->id();
-				d->id_next = (*it)->nextId();
+				EDBItem* it = r->last();
+				d->id_end = it->id();
+				d->id_next = it->nextId();
 				// first entry is the begin event
-				it = r->begin();
-				d->id_begin = (*it)->id();
-				d->id_prev = (*it)->prevId();
+				it = r->first();
+				d->id_begin = it->id();
+				d->id_prev = it->prevId();
 				displayResult(r, EDB::Forward);
 			}
 			else if(d->reqtype == 3) {
 				// should only be one entry
-				QList<EDBItem*>::const_iterator it = r->begin();
-				EDBItem *ei = (*it);
+				EDBItem *ei = r->first();
 				d->reqtype = 1;
 				d->h->get(d->jid, ei->id(), EDB::Backward, 50);
 				//printf("EDB: requesting 50 events backward, starting at %s\n", d->id_prev.latin1());
@@ -510,10 +484,10 @@ void HistoryDlg::exportHistory(const QString &fname)
 		}
 
 		// events are in forward order
-		QList<EDBItem*>::const_iterator it = r->begin();
-		for(EDBItem *i; (i = *it); ++it) {
-			id = (*it)->nextId();
-			PsiEvent *e = i->event();
+		for(int i = 0; i < r->count(); ++i) {
+			EDBItem* item = r->value(i);
+			id = item->nextId();
+			PsiEvent *e = item->event();
 			QString txt;
 
 			QDateTime dt = e->timeStamp();
@@ -534,10 +508,10 @@ void HistoryDlg::exportHistory(const QString &fname)
 				stream << heading << endl;
 
 				QStringList lines = QStringList::split('\n', me->message().body(), true);
-				for(QStringList::ConstIterator lit = lines.begin(); lit != lines.end(); ++lit) {
-					QStringList sub = wrapString(*lit, 72);
-					for(QStringList::ConstIterator lit2 = sub.begin(); lit2 != sub.end(); ++lit2) {
-						txt += QString("    ") + *lit2 + '\n';
+				foreach(const QString& str, lines) {
+					QStringList sub = wrapString(str, 72);
+					foreach(const QString& str2, sub) {
+						txt += QString("    ") + str2 + '\n';
 					}
 				}
 			}
