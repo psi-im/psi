@@ -51,12 +51,12 @@ public:
 	}
 
 	/**
-	 * Triggers activated() signal when the hotkey is activated.
+	 * Triggers triggered() signal when the hotkey is activated.
 	 */
 	bool winEvent(MSG* m, long* result)
 	{
 		if (m->message == WM_HOTKEY && m->wParam == id_) {
-			emit trigger_->activated();
+			emit trigger_->triggered();
 			return true;
 		}
 		return QWidget::winEvent(m, result);

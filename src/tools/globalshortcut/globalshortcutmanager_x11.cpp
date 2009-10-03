@@ -324,7 +324,7 @@ public:
 
 	void activate()
 	{
-		emit trigger_->activated();
+		emit trigger_->triggered();
 	}
 
 	bool isAccepted(int qkey) const

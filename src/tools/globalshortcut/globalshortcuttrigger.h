@@ -37,7 +37,7 @@ public:
 	}
 
 signals:
-	void activated();
+	void triggered();
 
 private:
 	/**
