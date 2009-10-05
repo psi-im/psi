@@ -994,7 +994,7 @@ void ChatDlg::addEmoticon(QString text)
 	if (!isActiveTab())
 		return;
 
-	chatEdit()->append(text + ' ');
+	chatEdit()->insertPlainText(text + ' ');
 }
 
 /**
