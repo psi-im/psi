@@ -238,10 +238,10 @@ void RegistrationDlg::doRegSet()
 	if ( !d->xdata ) {
 		Form submitForm = d->form;
 
-		Q_ASSERT(d->le_field.length() == submitForm.length());
+		Q_ASSERT(d->le_field.count() == submitForm.count());
 		// import the changes back into the form.
 		// the QPtrList of QLineEdits should be in the same order
-		for (int i = 0; i < submitForm.length(); ++i) {
+		for (int i = 0; i < submitForm.count(); ++i) {
 			submitForm[i].setValue(d->le_field[i]->text());
 		}
 

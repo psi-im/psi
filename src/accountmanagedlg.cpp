@@ -26,6 +26,7 @@
 #include <QLabel>
 #include <QPointer>
 #include <QTimer>
+#include <QHeaderView>
 
 #include "psicon.h"
 #include "psiaccount.h"

@@ -22,7 +22,7 @@
 
 #include "actionlist.h"
 
-#include <qobject.h>
+#include <QHash>
 
 #include "iconaction.h"
 

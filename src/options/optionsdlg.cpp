@@ -78,9 +78,11 @@ public:
 
 		QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
 		QSize iconSize;
+#if 0
 		if (icon.availableSizes().isEmpty())
 			iconSize = icon.availableSizes().first();
 		else
+#endif
 			iconSize = QSize(16, 16);
 		QRect iconRect = option.rect;
 		iconRect.setLeft(4);
@@ -117,9 +119,11 @@ public:
 	{
 		QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
 		QSize iconSize;
+#if 0
 		if (!icon.availableSizes().isEmpty())
 			iconSize = icon.availableSizes().first();
 		else
+#endif
 			iconSize = QSize(16, 16);
 
 		int width = iconSize.width();

@@ -31,6 +31,7 @@
 #include <QStandardItemModel>
 #include <QSortFilterProxyModel>
 #include <QKeyEvent>
+#include <QHeaderView>
 
 #include <pgputil.h>
 #include "common.h"
