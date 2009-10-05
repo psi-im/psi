@@ -240,7 +240,7 @@ public slots:
 		QString text = icon->defaultText();
 
 		if (!text.isEmpty()) {
-			mle()->append(text + " ");
+			mle()->insertPlainText(text + " ");
 		}
 	}
 
@@ -249,7 +249,7 @@ public slots:
 			return;
 		}
 
-		mle()->append( text + " " );
+		mle()->insertPlainText( text + " " );
 	}
 
 	void deferredScroll() {
