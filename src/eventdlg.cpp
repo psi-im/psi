@@ -339,8 +339,7 @@ AttachView::AttachView(QWidget* parent)
 	// addColumn(tr("Attachments"));
 	// setResizeMode(QListWidget::AllColumns);
 
-	connect(this, SIGNAL(contextMenuRequested(QListWidgetItem *, const QPoint &, int)), SLOT(qlv_context(QListWidgetItem *, const QPoint &, int)));
-	connect(this, SIGNAL(doubleClicked(QListWidgetItem *)), SLOT(qlv_doubleClicked(QListWidgetItem *)));
+	connect(this, SIGNAL(itemDoubleClicked(QListWidgetItem *)), SLOT(qlv_doubleClicked(QListWidgetItem *)));
 };
 
 AttachView::~AttachView()
@@ -364,9 +363,9 @@ void AttachView::gcAdd(const QString &gc, const QString& from, const QString& re
 	childCountChanged();
 }
 
-void AttachView::qlv_context(QListWidgetItem *lvi, const QPoint &pos, int)
+void AttachView::contextMenuEvent(QContextMenuEvent* e)
 {
-	AttachViewItem *i = (AttachViewItem *)lvi;
+	AttachViewItem* i = !selectedItems().isEmpty() ? static_cast<AttachViewItem*>(selectedItems().first()) : 0;
 	if(!i)
 		return;
 
@@ -390,7 +389,7 @@ void AttachView::qlv_context(QListWidgetItem *lvi, const QPoint &pos, int)
 		removeAction->setEnabled(false);
 	}
 
-	QAction* n = pm.exec(pos);
+	QAction* n = pm.exec(e->globalPos());
 	if(!n)
 		return;
 
@@ -400,12 +399,13 @@ void AttachView::qlv_context(QListWidgetItem *lvi, const QPoint &pos, int)
 	else if(n == joinGroupChatAction) {
 		actionGCJoin(i->gc, i->password);
 	}
-	else if(copyLocationAction) {
+	else if(n == copyLocationAction) {
 		QApplication::clipboard()->setText(i->url, QClipboard::Clipboard);
 		if(QApplication::clipboard()->supportsSelection())
 			QApplication::clipboard()->setText(i->url, QClipboard::Selection);
 	}
-	else if(removeAction) {
+	else if(n == removeAction) {
+		takeItem(row(i));
 		delete i;
 		childCountChanged();
 	}

@@ -88,8 +88,11 @@ signals:
 	void childCountChanged();
 	void actionGCJoin(const QString &, const QString&);
 
+protected:
+	// reimplemented
+	void contextMenuEvent(QContextMenuEvent* e);
+
 private slots:
-	void qlv_context(QListWidgetItem *, const QPoint &, int);
 	void qlv_doubleClicked(QListWidgetItem *);
 
 private:
