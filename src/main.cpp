@@ -98,7 +98,7 @@ PsiMain::PsiMain(const QString& uriToOpen, QObject *par)
 
 
 	if(lastLang.isEmpty()) {
-		lastLang = QLocale::languageToString(QLocale::system().language());
+		lastLang = QLocale::system().name().section('_', 0, 0);
 		//printf("guessing locale: [%s]\n", lastLang.latin1());
 	}
 
