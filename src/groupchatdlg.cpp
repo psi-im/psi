@@ -77,6 +77,7 @@
 #include "mucreasonseditor.h"
 #include "mcmdmanager.h"
 #include "lastactivitytask.h"
+#include "psirichtext.h"
 
 #include "mcmdsimplesite.h"
 
@@ -233,23 +234,14 @@ public:
 
 public slots:
 	void addEmoticon(const PsiIcon *icon) {
-		if ( !dlg->isActiveTab() ) {
-			return;
-		}
-
-		QString text = icon->defaultText();
-
-		if (!text.isEmpty()) {
-			mle()->insertPlainText(text + " ");
-		}
+		addEmoticon(icon->defaultText());
 	}
 
 	void addEmoticon(QString text) {
-		if ( !dlg->isActiveTab() ) {
+		if ( !dlg->isActiveTab() )
 			return;
-		}
 
-		mle()->insertPlainText( text + " " );
+		PsiRichText::addEmoticon(mle(), text);
 	}
 
 	void deferredScroll() {
@@ -500,12 +492,12 @@ public:
 
 		QTextCursor cursor = te_log()->textCursor();
 		cursor.beginEditBlock();
-		PsiTextView::Selection selection = te_log()->saveSelection(cursor);
+		PsiRichText::Selection selection = PsiRichText::saveSelection(te_log(), cursor);
 
 		removeTrackBar(cursor);
 		addTrackBar(cursor);
 
-		te_log()->restoreSelection(cursor, selection);
+		PsiRichText::restoreSelection(te_log(), cursor, selection);
 		cursor.endEditBlock();
 		te_log()->setTextCursor(cursor);
 

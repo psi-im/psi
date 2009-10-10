@@ -111,39 +111,12 @@ void PsiTextView::scrollToTop()
 void PsiTextView::appendText(const QString &text)
 {
 	QTextCursor cursor = textCursor();
-	Selection selection = saveSelection(cursor);
+	PsiRichText::Selection selection = PsiRichText::saveSelection(this, cursor);
 	
 	PsiRichText::appendText(document(), cursor, text);
 	
-	restoreSelection(cursor, selection);
+	PsiRichText::restoreSelection(this, cursor, selection);
 	setTextCursor(cursor);
-}
-
-/**
- * Saves current Selection in a structure, so it could be restored at later time.
- */
-PsiTextView::Selection PsiTextView::saveSelection(QTextCursor &cursor)
-{
-	Selection selection;
-	selection.start = selection.end = -1;
-
-	if (cursor.hasSelection()) {
-		selection.start = cursor.selectionStart();
-		selection.end   = cursor.selectionEnd();
-	}
-	
-	return selection;
-}
-
-/**
- * Restores a Selection that was previously saved by call to saveSelection().
- */
-void PsiTextView::restoreSelection(QTextCursor &cursor, Selection selection)
-{
-	if (selection.start != -1 && selection.end != -1) {
-		cursor.setPosition(selection.start, QTextCursor::MoveAnchor);
-		cursor.setPosition(selection.end,   QTextCursor::KeepAnchor);
-	}
 }
 
 QString PsiTextView::getTextHelper(bool html) const

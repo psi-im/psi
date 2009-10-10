@@ -31,6 +31,8 @@
 #include <QList>
 #include <QQueue>
 #include <QTextFrame>
+#include <QTextEdit>
+#include <QTextCursor>
 
 #include "textutil.h"
 
@@ -365,6 +367,55 @@ QString PsiRichText::convertToPlainText(const QTextDocument *doc)
 		result += parts.at(i);
 	}
 	return result;
+}
+
+/**
+ * Adds \a emoticon to \a textEdit.
+ */
+void PsiRichText::addEmoticon(QTextEdit *textEdit, const QString &emoticon)
+{
+	Q_ASSERT(textEdit);
+	if (!textEdit || emoticon.isEmpty())
+		return;
+
+	QString text = emoticon + ' ';
+	QTextCursor cursor = textEdit->textCursor();
+	PsiRichText::Selection selection = PsiRichText::saveSelection(textEdit, cursor);
+
+	cursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor, 1);
+	if (!cursor.selectedText().isEmpty() && !cursor.selectedText().at(0).isSpace())
+		text = " " + text;
+
+	textEdit->insertPlainText(text);
+
+	PsiRichText::restoreSelection(textEdit, cursor, selection);
+}
+
+/**
+ * Saves current Selection in a structure, so it could be restored at later time.
+ */
+PsiRichText::Selection PsiRichText::saveSelection(QTextEdit *textEdit, QTextCursor &cursor)
+{
+	Selection selection;
+	selection.start = selection.end = -1;
+
+	if (cursor.hasSelection()) {
+		selection.start = cursor.selectionStart();
+		selection.end   = cursor.selectionEnd();
+	}
+
+	return selection;
+}
+
+/**
+ * Restores a Selection that was previously saved by call to saveSelection().
+ */
+void PsiRichText::restoreSelection(QTextEdit *textEdit, QTextCursor &cursor, PsiRichText::Selection selection)
+{
+	if (selection.start != -1 && selection.end != -1) {
+		cursor.setPosition(selection.start, QTextCursor::MoveAnchor);
+		cursor.setPosition(selection.end,   QTextCursor::KeepAnchor);
+	}
 }
 
 #ifndef WIDGET_PLUGIN

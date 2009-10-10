@@ -73,6 +73,7 @@
 #include "accountlabel.h"
 #include "xdata_widget.h"
 #include "desktoputil.h"
+#include "psirichtext.h"
 
 static QString findJid(const QString &s, int x, int *p1, int *p2)
 {
@@ -566,21 +567,14 @@ private slots:
 
 public slots:
 	void addEmoticon(const PsiIcon *icon) {
-		if ( !dlg->isActiveWindow() )
-		     return;
-
-		QString text = icon->defaultText();
-
-		if ( !text.isEmpty() ) {
-			mle->appendText( text + " " );
-		}
+		addEmoticon(icon->defaultText());
 	}
 
 	void addEmoticon(QString text) {
 		if ( !dlg->isActiveWindow() )
 		     return;
 
-		mle->appendText( text + " " );
+		PsiRichText::addEmoticon(mle, text);
 	}
 
 	void updateCounter() {

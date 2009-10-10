@@ -21,6 +21,8 @@
 #include <QTextDocument>
 #include <QTextCursor>
 
+class QTextEdit;
+
 class PsiRichText
 {
 public:
@@ -30,4 +32,11 @@ public:
 	static void insertIcon(QTextCursor &cursor, const QString &iconName, const QString &iconText);
 	static void appendText(QTextDocument *doc, QTextCursor &cursor, const QString &text);
 	static QString convertToPlainText(const QTextDocument *doc);
+	static void addEmoticon(QTextEdit *textEdit, const QString &emoticon);
+
+	struct Selection {
+		int start, end;
+	};
+	static Selection saveSelection(QTextEdit *textEdit, QTextCursor &cursor);
+	static void restoreSelection(QTextEdit *textEdit, QTextCursor &cursor, Selection selection);
 };

@@ -72,6 +72,7 @@
 #include "shortcutmanager.h"
 #include "psicontactlist.h"
 #include "accountlabel.h"
+#include "psirichtext.h"
 
 #ifdef Q_WS_WIN
 #include <windows.h>
@@ -994,7 +995,7 @@ void ChatDlg::addEmoticon(QString text)
 	if (!isActiveTab())
 		return;
 
-	chatEdit()->insertPlainText(text + ' ');
+	PsiRichText::addEmoticon(chatEdit(), text);
 }
 
 /**

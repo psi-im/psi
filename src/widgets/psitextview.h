@@ -39,12 +39,6 @@ public:
 	QString getHtml() const;
 	QString getPlainText() const;
 	
-	struct Selection {
-		int start, end;
-	};
-	Selection saveSelection(QTextCursor &cursor);
-	void restoreSelection(QTextCursor &cursor, Selection selection);
-	
 public slots:
 	void scrollToBottom();
 	void scrollToTop();
