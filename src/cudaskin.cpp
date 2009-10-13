@@ -1480,6 +1480,8 @@ static void cuda_applyTheme(QWidget *w, int depth)
 	for(int n = 0; n < depth; ++n)
 		printf("  ");
 	printf("%s\n", w->className());
+#else
+	Q_UNUSED(depth);
 #endif
 
 	if(!cudaStyle)
@@ -1570,6 +1572,74 @@ QColor get_expansionText()
 CudaTabDlgDelegate *get_tab_delegate()
 {
 	return g_skin->tabdeleg;
+}
+
+#define H_PAD 8
+
+QSize cuda_verticaltabbar_sizehint(const QString &text, QWidget *widget)
+{
+	QFontMetrics fm(widget->font());
+	int w = fm.width(text) + 24;
+	int h = fm.height() + H_PAD;
+	return QSize(qMax(w, 144), h);
+}
+
+QPixmap cuda_verticaltabbar_render(const QString &text, bool selected, VerticalTabBar::IndicateMode mode, int width, QWidget *widget)
+{
+	QFontMetrics fm(widget->font());
+	int height = fm.height() + H_PAD;
+	int yoff = H_PAD/2;
+
+	QImage img(width, height, QImage::Format_ARGB32);
+	img.fill(0);
+	QPainter painter(&img);
+	if(selected)
+	{
+		g_skin->ccTabFore.draw(&painter, width, height);
+	}
+	else
+	{
+		painter.setOpacity(0.75);
+		g_skin->ccTabBack.draw(&painter, width, height);
+		painter.setOpacity(1.0);
+	}
+
+	QColor c;
+	if(mode == VerticalTabBar::Attention)
+		c = Qt::red;
+	else if(mode == VerticalTabBar::Busy)
+		c = Qt::darkGreen;
+	else
+		c = Qt::white; // FIXME: widget->colorGroup().foreground();
+
+	painter.setPen(c);
+
+	// FIXME: optimize?
+	int tlen = -1;
+	int tw;
+	for(int n = text.length(); n > 0; --n)
+	{
+		int w = fm.width(text.mid(0, n));
+		if(w <= (width + 24))
+		{
+			tlen = n;
+			tw = w;
+			break;
+		}
+	}
+
+	if(tlen != -1)
+	{
+		int xoff = (width - tw) / 2;
+
+		if(!selected)
+			++yoff;
+
+		// TODO: render with elipsis
+		painter.drawText(xoff, yoff + fm.ascent(), text.mid(0, tlen));
+	}
+
+	return QPixmap::fromImage(img);
 }
 
 #include "cudaskin.moc"

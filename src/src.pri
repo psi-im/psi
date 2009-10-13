@@ -240,7 +240,8 @@ HEADERS += \
 	$$PWD/simpleprivacymanager.h \
 	$$PWD/invitedlg.h \
 	$$PWD/ringsound.h \
-	$$PWD/whatismyip.h
+	$$PWD/whatismyip.h \
+	$$PWD/verticaltabbar.h
 
 # Source files
 SOURCES += \
@@ -370,7 +371,8 @@ SOURCES += \
 	$$PWD/simpleprivacymanager.cpp \
 	$$PWD/invitedlg.cpp \
 	$$PWD/ringsound.cpp \
-	$$PWD/whatismyip.cpp
+	$$PWD/whatismyip.cpp \
+	$$PWD/verticaltabbar.cpp
 
 whiteboarding {
 	# Whiteboarding support. Still experimental.

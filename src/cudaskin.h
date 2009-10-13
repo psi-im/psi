@@ -28,6 +28,7 @@
 #include <QtGui>
 #include "tabdlg.h"
 #include "psitabwidget.h"
+#include "verticaltabbar.h"
 
 class CudaSkin;
 
@@ -141,5 +142,7 @@ QColor get_contactOnline();
 QColor get_expansionLine();
 QColor get_expansionText();
 CudaTabDlgDelegate *get_tab_delegate();
+QSize cuda_verticaltabbar_sizehint(const QString &text, QWidget *widget);
+QPixmap cuda_verticaltabbar_render(const QString &text, bool selected, VerticalTabBar::IndicateMode mode, int width, QWidget *widget);
 
 #endif
