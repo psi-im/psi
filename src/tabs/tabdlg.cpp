@@ -125,7 +125,8 @@ TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 		, tabManager_(tabManager)
 		, userManagement_(true)
 		, tabBarSingles_(true)
-		, simplifiedCaption_(false) {
+		, simplifiedCaption_(false)
+		, verticalTabs_(false) {
 	if (delegate_) {
 		delegate_->create(this);
 	}
@@ -146,11 +147,22 @@ TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 	connect(tabWidget_, SIGNAL(closeButtonClicked()), SLOT(closeCurrentTab()));
 	connect(tabWidget_, SIGNAL(currentChanged(QWidget*)), SLOT(tabSelected(QWidget*)));
 
+	tabBar_ = new VerticalTabBar(this);
+	connect(tabBar_, SIGNAL(tabClicked(int)), SLOT(vt_tabClicked(int)));
+	connect(tabBar_, SIGNAL(tabMenuActivated(int, const QPoint &)), SLOT(vt_tabMenuActivated(int, const QPoint &)));
+	tabBar_->hide();
+
 	if(delegate_)
 		delegate_->tabWidgetCreated(this, tabWidget_);
 
 	QVBoxLayout *vert1 = new QVBoxLayout( this, 1);
-	vert1->addWidget(tabWidget_);
+	QHBoxLayout *hor1 = new QHBoxLayout;
+	hor1->setContentsMargins(0, 0, 0, 0);
+	hor1->setSpacing(0);
+	vert1->addLayout(hor1);
+	//vert1->addWidget(tabWidget_);
+	hor1->addWidget(tabBar_);
+	hor1->addWidget(tabWidget_);
 
 	setAcceptDrops(TRUE);
 
@@ -228,6 +240,12 @@ void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent * event)
 	
 		QAction *c = tabMenu_->addAction(tr("Close Tab"));
 
+		QAction *t;
+		if(verticalTabs_)
+			t = tabMenu_->addAction(tr("Use Horizontal Tabs"));
+		else
+			t = tabMenu_->addAction(tr("Use Vertical Tabs"));
+
 		QMap<QAction*, TabDlg*> sentTos;
 		if(userManagement_) {
 			QMenu* sendTo = new QMenu(tabMenu_);
@@ -249,6 +267,9 @@ void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent * event)
 		}
 		else if (act == d) {
 			detachTab(getTab(tab));
+		}
+		else if (act == t) {
+			toggleTabsPosition();
 		}
 		else {
 			TabDlg* target = sentTos[act];
@@ -345,6 +366,9 @@ void TabDlg::tabSelected(QWidget* _selected)
 		selected->activated();
 	}
 
+	int index = tabWidget_->getIndex(_selected);
+	tabBar_->setSelected(index);
+
 	updateCaption();
 }
 
@@ -363,6 +387,7 @@ void TabDlg::addTab(TabbableWidget* tab)
 	setUpdatesEnabled(false);
 	tabs_.append(tab);
 	tabWidget_->addTab(tab, captionForTab(tab));
+	tabBar_->addTab(tabs_.count() - 1, captionForTab(tab));
 
 	connect(tab, SIGNAL(invalidateTabInfo()), SLOT(updateTab()));
 	connect(tab, SIGNAL(updateFlashState()), SLOT(updateFlashState()));
@@ -402,7 +427,9 @@ void TabDlg::removeTabWithNoChecks(TabbableWidget *tab)
 	disconnect(tab, SIGNAL(updateFlashState()), this, SLOT(updateFlashState()));
 
 	tabs_.removeAll(tab);
+	int index = tabWidget_->getIndex(tab);
 	tabWidget_->removePage(tab);
+	tabBar_->removeTab(index);
 	checkHasChats();
 }
 
@@ -543,17 +570,23 @@ QString TabDlg::captionForTab(TabbableWidget* tab) const
 
 void TabDlg::updateTab(TabbableWidget* chat)
 {
-	tabWidget_->setTabText(chat, captionForTab(chat));
+	QString caption = captionForTab(chat);
+	int index = tabWidget_->getIndex(chat);
+
+	tabWidget_->setTabText(chat, caption);
 	//now set text colour based upon whether there are new messages/composing etc
 
 	if (chat->state() == TabbableWidget::StateComposing) {
 		tabWidget_->setTabTextColor(chat, Qt::darkGreen);
+		tabBar_->updateTab(index, caption, VerticalTabBar::Busy);
 	}
 	else if (chat->unreadMessageCount()) {
 		tabWidget_->setTabTextColor(chat, Qt::red);
+		tabBar_->updateTab(index, caption, VerticalTabBar::Attention);
 	}
 	else {
 		tabWidget_->setTabTextColor(chat, colorGroup().foreground());
+		tabBar_->updateTab(index, caption, VerticalTabBar::None);
 	}
 	updateCaption();
 }
@@ -737,13 +770,27 @@ void TabDlg::setTabBarShownForSingles(bool enabled) {
 }
 
 void TabDlg::updateTabBar() {
+	bool showTabs = false;
+
 	if (tabBarSingles_) {
-		tabWidget_->setTabBarShown(true);
+		showTabs = true;
 	} else {
-		if (tabWidget_->count() > 1)
-			tabWidget_->setTabBarShown(true);
-		else
+		if (tabWidget_->count() > 1) {
+			showTabs = true;
+		}
+	}
+
+	if(showTabs) {
+		if(verticalTabs_) {
+			tabBar_->setVisible(true);
 			tabWidget_->setTabBarShown(false);
+		} else {
+			tabBar_->setVisible(false);
+			tabWidget_->setTabBarShown(true);
+		}
+	} else {
+		tabBar_->setVisible(false);
+		tabWidget_->setTabBarShown(false);
 	}
 }
 
@@ -754,4 +801,26 @@ void TabDlg::setSimplifiedCaptionEnabled(bool enabled) {
 
 	simplifiedCaption_ = enabled;
 	updateCaption();
+}
+
+void TabDlg::setVerticalTabsEnabled(bool enabled) {
+	verticalTabs_ = enabled;
+	updateTabBar();
+}
+
+void TabDlg::vt_tabClicked(int num)
+{
+	tabWidget_->setCurrentPage(num);
+}
+
+void TabDlg::vt_tabMenuActivated(int num, const QPoint &pos)
+{
+	// FIXME: at this time, last arg is not used/required, but this may
+	//  not be guaranteed in the future
+	showTabMenu(num, tabBar_->mapToGlobal(pos), 0);
+}
+
+void TabDlg::toggleTabsPosition()
+{
+	setVerticalTabsEnabled(!verticalTabs_);
 }

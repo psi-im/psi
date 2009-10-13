@@ -27,8 +27,8 @@
 #include <QPointer>
 
 #include "advwidget.h"
-
 #include "tabbablewidget.h"
+#include "verticaltabbar.h"
 
 class PsiCon;
 class ChatTabs;
@@ -84,6 +84,7 @@ public:
 	void setUserManagementEnabled(bool enabled); // default enabled
 	void setTabBarShownForSingles(bool enabled); // default enabled
 	void setSimplifiedCaptionEnabled(bool enabled); // default disabled
+	void setVerticalTabsEnabled(bool enabled); // default disabled
 
 protected:
 	void setShortcuts();
@@ -135,6 +136,9 @@ private slots:
 	void menu_sendTabTo(QAction *act);
 	void queuedSendTabTo(TabbableWidget* chat, TabDlg *dest);
 	void showTabMenu(int tab, QPoint pos, QContextMenuEvent * event);
+	void vt_tabClicked(int num);
+	void vt_tabMenuActivated(int num, const QPoint &pos);
+	void toggleTabsPosition();
 
 private:
 	TabDlgDelegate *delegate_;
@@ -152,6 +156,8 @@ private:
 	bool userManagement_;
 	bool tabBarSingles_;
 	bool simplifiedCaption_;
+	bool verticalTabs_;
+	VerticalTabBar *tabBar_;
 
 	QSize chatSize_;
 
