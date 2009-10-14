@@ -319,6 +319,7 @@
 				<grouping type="QString" comment="A ':' seperated list of groups of kinds of tabs to keep in the same tabset. 'C' for chat and 'M' for mucs">CM</grouping>
 				<group-state comment="saved state data of the tabsets defined by options.ui.tabs.grouping"/>
 				<tab-singles type="QString" comment="Tab types that would have been untabbed are given their own tabset. 'C' for chat and 'M' for mucs">CM</tab-singles>
+				<vertical type="bool">false</vertical>
 			</tabs>
 		</ui>
 		<shortcuts comment="Shortcuts">

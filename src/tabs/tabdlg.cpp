@@ -180,6 +180,7 @@ TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 	connect(act_next_,SIGNAL(activated()), SLOT(nextTab()));
 
 	setShortcuts();
+	setVerticalTabsEnabled(PsiOptions::instance()->getOption("options.ui.tabs.vertical").toBool());
 
 	if (size.isValid()) {
 		resize(size);
@@ -338,6 +339,7 @@ void TabDlg::queuedSendTabTo(TabbableWidget* tab, TabDlg *dest)
 void TabDlg::optionsUpdate()
 {
 	setShortcuts();
+	//setVerticalTabsEnabled(PsiOptions::instance()->getOption("options.ui.tabs.vertical").toBool());
 }
 
 void TabDlg::setLooks()
@@ -822,5 +824,6 @@ void TabDlg::vt_tabMenuActivated(int num, const QPoint &pos)
 
 void TabDlg::toggleTabsPosition()
 {
+	PsiOptions::instance()->setOption("options.ui.tabs.vertical", !verticalTabs_);
 	setVerticalTabsEnabled(!verticalTabs_);
 }
