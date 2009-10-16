@@ -1,145 +1,121 @@
-<ui version="4.0" stdsetdef="1" >
-  <author></author>
-  <comment></comment>
-  <exportmacro></exportmacro>
-  <class>ProfileManage</class>
-  <widget class="QDialog" name="ProfileManage" >
-    <property name="geometry" >
-      <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>330</width>
-        <height>254</height>
-      </rect>
-    </property>
-    <property name="windowTitle" >
-      <string>Manage Profiles</string>
-    </property>
-    <layout class="QVBoxLayout" >
-      <property name="margin" >
-        <number>11</number>
-      </property>
-      <property name="spacing" >
-        <number>6</number>
-      </property>
-      <item>
-        <layout class="QHBoxLayout" >
-          <property name="margin" >
-            <number>0</number>
-          </property>
-          <item>
-            <widget class="QListWidget" name="lbx_profiles" />
-          </item>
-          <item>
-            <layout class="QVBoxLayout" >
-              <property name="margin" >
-                <number>0</number>
-              </property>
-              <item>
-                <widget class="IconButton" name="pb_new" >
-                  <property name="text" >
-                    <string>&amp;New</string>
-                  </property>
-                  <property name="psiIconName" stdset="0" >
-                    <string>psi/addContact</string>
-                  </property>
-                </widget>
-              </item>
-              <item>
-                <widget class="IconButton" name="pb_rename" >
-                  <property name="text" >
-                    <string>&amp;Rename</string>
-                  </property>
-                </widget>
-              </item>
-              <item>
-                <spacer name="Spacer1" >
-                  <property name="sizeHint" >
-                    <size>
-                      <width>20</width>
-                      <height>48</height>
-                    </size>
-                  </property>
-                  <property name="sizeType" >
-                    <enum>Expanding</enum>
-                  </property>
-                  <property name="orientation" >
-                    <enum>Vertical</enum>
-                  </property>
-                </spacer>
-              </item>
-              <item>
-                <widget class="IconButton" name="pb_delete" >
-                  <property name="text" >
-                    <string>&amp;Delete</string>
-                  </property>
-                  <property name="psiIconName" stdset="0" >
-                    <string>psi/remove</string>
-                  </property>
-                </widget>
-              </item>
-              <item>
-                <spacer name="Spacer3" >
-                  <property name="sizeHint" >
-                    <size>
-                      <width>20</width>
-                      <height>47</height>
-                    </size>
-                  </property>
-                  <property name="sizeType" >
-                    <enum>Expanding</enum>
-                  </property>
-                  <property name="orientation" >
-                    <enum>Vertical</enum>
-                  </property>
-                </spacer>
-              </item>
-            </layout>
-          </item>
-        </layout>
-      </item>
-      <item>
-        <widget class="Line" name="Line1" >
-          <property name="frameShape" >
-            <enum>QFrame::HLine</enum>
-          </property>
-          <property name="frameShadow" >
-            <enum>QFrame::Sunken</enum>
-          </property>
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ProfileManage</class>
+ <widget class="QDialog" name="ProfileManage">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>330</width>
+    <height>254</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Manage Profiles</string>
+  </property>
+  <layout class="QVBoxLayout">
+   <property name="margin">
+    <number>11</number>
+   </property>
+   <item>
+    <layout class="QHBoxLayout">
+     <item>
+      <widget class="QListWidget" name="lbx_profiles"/>
+     </item>
+     <item>
+      <layout class="QVBoxLayout">
+       <item>
+        <widget class="IconButton" name="pb_new" native="true">
+         <property name="text" stdset="0">
+          <string>&amp;Add</string>
+         </property>
+         <property name="psiIconName" stdset="0">
+          <string>psi/addContact</string>
+         </property>
         </widget>
-      </item>
-      <item>
-        <layout class="QHBoxLayout" >
-          <property name="margin" >
-            <number>0</number>
-          </property>
-          <item>
-            <spacer name="Spacer2" >
-              <property name="sizeHint" >
-                <size>
-                  <width>244</width>
-                  <height>20</height>
-                </size>
-              </property>
-              <property name="sizeType" >
-                <enum>Expanding</enum>
-              </property>
-              <property name="orientation" >
-                <enum>Horizontal</enum>
-              </property>
-            </spacer>
-          </item>
-          <item>
-            <widget class="IconButton" name="pb_close" >
-              <property name="text" >
-                <string>&amp;Close</string>
-              </property>
-            </widget>
-          </item>
-        </layout>
-      </item>
+       </item>
+       <item>
+        <widget class="IconButton" name="pb_rename" native="true">
+         <property name="text" stdset="0">
+          <string>&amp;Rename</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="IconButton" name="pb_delete" native="true">
+         <property name="text" stdset="0">
+          <string>Rem&amp;ove</string>
+         </property>
+         <property name="psiIconName" stdset="0">
+          <string>psi/remove</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="Spacer3">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::Expanding</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>47</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
     </layout>
-  </widget>
-  <layoutdefault spacing="6" margin="11" />
-  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+   </item>
+   <item>
+    <widget class="Line" name="Line1">
+     <property name="frameShape">
+      <enum>QFrame::HLine</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Sunken</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Close</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
+ <customwidgets>
+  <customwidget>
+   <class>IconButton</class>
+   <extends>QWidget</extends>
+   <header>iconbutton.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>ProfileManage</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>286</x>
+     <y>229</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>229</x>
+     <y>211</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
