@@ -528,14 +528,28 @@ void AccountModifyDlg::save()
 
 	acc.proxyID = pc->currentItem();
 
-	if(pa && pa->isActive()) {
-		QMessageBox::information(this, tr("Warning"), tr("This account is currently active, so certain changes may not take effect until the next login."));
-	}
-
-	if (pa)
+	if (pa) {
 		pa->setUserAccount(acc);
-	else 
+
+		if (pa->isActive()) {
+			QMessageBox messageBox(QMessageBox::Information, tr("Warning"),
+			                       tr("This account is currently active, so certain changes may not take effect until the next login."),
+			                       QMessageBox::NoButton, this);
+			QPushButton* cancel = messageBox.addButton(tr("Reconnect &Later"), QMessageBox::RejectRole);
+			QPushButton* reconnect = messageBox.addButton(tr("Reconnect &Now"), QMessageBox::AcceptRole);
+			messageBox.setDefaultButton(reconnect);
+			messageBox.exec();
+			Q_UNUSED(cancel);
+			if (messageBox.clickedButton() == reconnect) {
+				XMPP::Status status = pa->status();
+				pa->setStatus(XMPP::Status::Offline);
+				pa->setStatus(status);
+			}
+		}
+	}
+	else {
 		psi->contactList()->createAccount(acc);
+	}
 
 	accept();
 }

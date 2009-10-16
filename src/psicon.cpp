@@ -699,8 +699,15 @@ void PsiCon::changeProfile()
 {
 	ActiveProfiles::instance()->unsetThisProfile();
 	if(d->contactList->haveActiveAccounts()) {
-		QMessageBox::information(0, CAP(tr("Error")), tr("Please disconnect before changing the profile."));
-		return;
+		QMessageBox messageBox(QMessageBox::Information, CAP(tr("Error")), tr("Please disconnect before changing the profile."));
+		QPushButton* cancel = messageBox.addButton(QMessageBox::Cancel);
+		QPushButton* disconnect = messageBox.addButton(tr("&Disconnect"), QMessageBox::AcceptRole);
+		messageBox.setDefaultButton(disconnect);
+		messageBox.exec();
+		if (messageBox.clickedButton() == cancel)
+			return;
+
+		setStatusFromDialog(XMPP::Status::Offline, false);
 	}
 
 	quit(QuitProfile);
