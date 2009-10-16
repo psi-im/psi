@@ -186,8 +186,8 @@ bool CertificateHelpers::checkCertificate(QCA::TLS* tls, XMPP::QCATLSHandler *tl
 				result, tls->peerCertificateValidity(),
 				hostnameOverrideable, tlsOverrideDomain, tlsOverrideCert);
 		if (canceler) {
-			QObject::connect(canceler, SIGNAL(disconnected()), errorDialog.getMessageBox(), SLOT(reject()), Qt::AutoConnection);
-			QObject::connect(canceler, SIGNAL(reconnecting()), errorDialog.getMessageBox(), SLOT(reject()), Qt::AutoConnection);
+			QObject::connect(canceler, SIGNAL(disconnected()), &errorDialog, SLOT(reject()), Qt::AutoConnection);
+			QObject::connect(canceler, SIGNAL(reconnecting()), &errorDialog, SLOT(reject()), Qt::AutoConnection);
 		}
 		if (errorDialog.exec() == QDialog::Accepted) {
 			return true;
