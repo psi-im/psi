@@ -39,6 +39,7 @@
 #include <time.h>
 #include "profiledlg.h"
 #include "activeprofiles.h"
+#include "simplecli.h"
 #include "psioptions.h"
 
 #include "eventdlg.h"
@@ -79,9 +80,65 @@
 
 using namespace XMPP;
 
-PsiMain::PsiMain(const QString& uriToOpen, QObject *par)
+class PsiCli : public SimpleCli
+{
+public:
+	PsiCli() {
+		defineParam("profile", tr("PROFILE"), tr("Activate program instance running specified profile. "
+							 "Otherwise, open new instance using this profile "
+							 "(unless used together with --remote)."));
+		defineSwitch("remote", tr("Force remote-control mode. "
+					  "If there is no running instance, "
+					  "or --profile was specified but there is no instance using it, "
+					  "exit without doing anything."));
+		defineParam("uri", tr("URI"), tr("Open XMPP URI. (e.g. xmpp:someone@example.org?chat) "
+						 "For security reasons, this must be the last option."));
+		defineParam("status", tr("SHOW"), tr("Set status. SHOW must be one of `online', `chat', `away', `xa', `dnd', `offline'.",
+						     "Please do not translate `online', `chat', etc."));
+		defineParam("status-message", tr("MSG"), tr("Set status message. Must be used together with --status."));
+		defineSwitch("help", tr("Show this help message and exit."));
+		defineAlias("h", "help");
+		defineAlias("?", "help");
+		defineSwitch("version", tr("Show version information and exit."));
+		defineAlias("v", "version");
+	}
+
+	void showHelp(int textWidth = 78) {
+		QString output;
+		QString u = tr("Usage:") + " " + QFileInfo(QApplication::applicationFilePath()).fileName();
+		output += wrap(u + " [--profile=PROFILE] [--remote] [--status=SHOW\t[--status-message=MSG]] [--uri=URI]",
+			       textWidth, u.length() + 1, 0).replace('\t', ' '); // non-breakable space ;)
+		output += '\n';
+		output += tr("Psi - The Cross-Platform Jabber/XMPP Client For Power Users");
+		output += "\n\n";
+		output += tr("Options:");
+		output += '\n';
+		output += optionsHelp(textWidth);
+		output += '\n';
+		output += tr("Go to <http://psi-im.org/> for more information about Psi.");
+		show(output);
+	}
+
+	void showVersion() {
+		show(QString("%1 %2\nQt %3\n")
+			.arg(ApplicationInfo::name()).arg(ApplicationInfo::version())
+			.arg(qVersion())
+			+QString(tr("Compiled with Qt %1", "%1 will contain Qt version number"))
+			.arg(QT_VERSION_STR));
+	}
+
+	void show(const QString& text) {
+#ifdef Q_WS_WIN
+		QMessageBox::information(0, ApplicationInfo::name(), text);
+#else
+		puts(qPrintable(text));
+#endif
+	}
+};
+
+PsiMain::PsiMain(const QMap<QString, QString>& commandline, QObject *par)
 	: QObject(par)
-	, uri(uriToOpen)
+	, cmdline(commandline)
 {
 	pcon = 0;
 
@@ -104,7 +161,20 @@ PsiMain::PsiMain(const QString& uriToOpen, QObject *par)
 
 	TranslationManager::instance()->loadTranslation(lastLang);
 
-	if(autoOpen && !lastProfile.isEmpty() && profileExists(lastProfile)) {
+	if (cmdline.contains("help")) {
+		PsiCli().showHelp();
+		QTimer::singleShot(0, this, SLOT(bail()));
+	}
+	else if(cmdline.contains("version")) {
+		PsiCli().showVersion();
+		QTimer::singleShot(0, this, SLOT(bail()));
+	}
+	else if(cmdline.contains("profile") && profileExists(cmdline["profile"])) {
+		// Open profile from commandline
+		activeProfile = lastProfile = cmdline["profile"];
+		QTimer::singleShot(0, this, SLOT(sessionStart()));
+	}
+	else if(autoOpen && !lastProfile.isEmpty() && profileExists(lastProfile)) {
 		// Auto-open the last profile
 		activeProfile = lastProfile;
 		QTimer::singleShot(0, this, SLOT(sessionStart()));
@@ -184,7 +254,7 @@ void PsiMain::chooseProfile()
 					QPushButton *activate = mb.addButton(tr("Activate"), QMessageBox::AcceptRole);
 					mb.exec();
 					if (mb.clickedButton() == activate) {
-						ActiveProfiles::instance()->raiseOther(str, true);
+						ActiveProfiles::instance()->raise(str, true);
 						quit();
 						return;
 					}
@@ -214,7 +284,7 @@ void PsiMain::chooseProfile()
 void PsiMain::sessionStart()
 {
 	if (!ActiveProfiles::instance()->setThisProfile(activeProfile)) { // already running
-		if (!ActiveProfiles::instance()->raiseOther(activeProfile, true)) {
+		if (!ActiveProfiles::instance()->raise(activeProfile, true)) {
 			QMessageBox::critical(0, tr("Error"), tr("Cannot open this profile - it is already running, but not responding"));
 		}
 		quit();
@@ -232,9 +302,15 @@ void PsiMain::sessionStart()
 		return;
 	}
 	connect(pcon, SIGNAL(quit(int)), SLOT(sessionQuit(int)));
-	if (!uri.isEmpty()) {
-		pcon->doOpenUri(uri);
-		uri.clear();
+
+	if (cmdline.contains("uri")) {
+		ActiveProfiles::instance()->openUriRequested(cmdline.value("uri"));
+		cmdline.remove("uri");
+	}
+	if (cmdline.contains("status") || cmdline.contains("status-message")) {
+		ActiveProfiles::instance()->setStatusRequested(cmdline.value("status"), cmdline.value("status-message"));
+		cmdline.remove("status");
+		cmdline.remove("status-message");
 	}
 }
 
@@ -356,6 +432,8 @@ static int restart_process(int argc, char **argv, const QByteArray &uri)
 }
 #endif
 
+
+
 int main(int argc, char *argv[])
 {
 	// If Psi runs as uri handler the commandline might contain
@@ -368,39 +446,18 @@ int main(int argc, char *argv[])
 	// see http://www.mozilla.org/security/announce/2007/mfsa2007-23.html
 	// for how this problem affected firefox on windows.
 
-	QByteArray uriBA;
-	for (int i=1; i<argc; i++) {
-		QByteArray str = QByteArray(argv[i]);
-		QByteArray var, val;
-		int x = str.indexOf('=');
-		if(x == -1) {
-			var = str;
-			val = "";
-		} else {
-			var = str.mid(0,x);
-			val = str.mid(x+1);
-		}
+	PsiCli cli;
 
-		if (var == "--uri") {
-			uriBA = val;
-			if (uriBA.isEmpty() && i+1 < argc) {
-				uriBA = QByteArray(argv[i+1]);
-			}
+	QMap<QString, QString> cmdline = cli.parse(argc, argv, QStringList() << "uri", &argc);
 
-			// terminate args here. Everything that follows mustn't
-			// be availible in later commandline scanning.
+	if (cmdline.contains("uri")) {
 #ifdef URI_RESTART
-			// for windows, we have to do this by restarting the
-			// process
-			return restart_process(i, argv, uriBA);
+		// for windows, we have to restart the process
+		return restart_process(argc, argv, cmdline["uri"].toLocal8Bit());
 #else
-			// otherwise, it should enough to modify argc/argv
-			argc = i;
-			argv[i] = 0;
-			break;
+		// otherwise, it should enough to modify argc/argv
+		argv[argc] = 0;
 #endif
-		}
-		
 	}
 
 	// NOTE: Qt 4.5 compatibility note: please don't move this call.
@@ -433,13 +490,7 @@ int main(int argc, char *argv[])
 	keystoremgr.waitForBusyFinished(); // FIXME get rid of this
 
 #ifdef USE_CRASH
-	int useCrash = true;
-	int i;
-	for(i = 1; i < argc; ++i) {
-		QString str = argv[i];
-		if ( str == "--nocrash" )
-			useCrash = false;
-	}
+	int useCrash = !cmdline.contains("nocrash");
 
 	if ( useCrash )
 		Crash::registerSigsegvHandler(argv[0]);
@@ -450,37 +501,38 @@ int main(int argc, char *argv[])
 
 	//dtcp_port = 8000;
 
-	QString uri = QString::fromLocal8Bit(uriBA);
-	for(int n = 1; n < argc; ++n) {
-		QString str = argv[n];
-		QString var, val;
-		int x = str.indexOf('=');
-		if(x == -1) {
-			var = str;
-			val = "";
-		}
-		else {
-			var = str.mid(0,x);
-			val = str.mid(x+1);
-		}
-
 #ifdef URI_RESTART
-		if(var == "--encuri")
-			uri = decodeUri(val);
+	if (cmdline.contains("encuri")) {
+		cmdline["uri"] = decodeUri(cmdline["encuri"].toLocal8Bit());
+		cmdline.remove("encuri");
+	}
 #endif
-		//if(var == "--no-gpg")
-		//	use_gpg = false;
-		//else if(var == "--no-gpg-agent")
-		//	no_gpg_agent = true;
-		//else if(var == "--linktest")
-		//	link_test = true;
+
+	// check if we want to remote-control other psi instance
+	if (!cmdline.contains("help") && !cmdline.contains("version")
+		&& ActiveProfiles::instance()->isAnyActive()
+		&& ((cmdline.contains("profile") && ActiveProfiles::instance()->isActive(cmdline["profile"])) || !cmdline.contains("profile"))) {
+
+		bool raise = true;
+		if (cmdline.contains("uri")) {
+			ActiveProfiles::instance()->openUri(cmdline.value("profile"), cmdline.value("uri"));
+			raise = false;
+		}
+		if (cmdline.contains("status")) {
+			ActiveProfiles::instance()->setStatus(cmdline.value("profile"), cmdline.value("status"), cmdline.value("status-message"));
+			raise = false;
+		}
+
+		if (raise) {
+			ActiveProfiles::instance()->raise(cmdline.value("profile"), true);
+		}
+		return 0;
 	}
 
-	if (!uri.isEmpty()) {
-		if (ActiveProfiles::instance()->sendOpenUri(uri)) {
-			return 0;
-		}
+	if (cmdline.contains("remote")) {
+		return 0;
 	}
+
 
 	//if(link_test)
 	//	printf("Link test enabled\n");
@@ -496,7 +548,7 @@ int main(int argc, char *argv[])
 	//if(!QCA::isSupported(QCA::CAP_SHA1))
 	//	QCA::insertProvider(XMPP::createProviderHash());
 
-	PsiMain *psi = new PsiMain(uri);
+	PsiMain *psi = new PsiMain(cmdline);
 	QObject::connect(psi, SIGNAL(quit()), &app, SLOT(quit()));
 	int returnValue = app.exec();
 	delete psi;

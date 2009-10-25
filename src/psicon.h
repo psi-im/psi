@@ -141,9 +141,11 @@ public slots:
 	void queueChanged();
 	void recvNextEvent();
 	void setStatusFromDialog(const XMPP::Status &, bool withPriority);
+	void setStatusFromCommandline(const QString &status, const QString &message);
 	void proxy_settingsChanged();
 	void updateMainwinStatus();
-	void doOpenUri(const QUrl &uri);
+	void openUri(const QString &uri);
+	void openUri(const QUrl &uri);
 	void raiseMainwin();
 
 private slots:

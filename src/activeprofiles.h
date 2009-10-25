@@ -22,7 +22,6 @@
 #ifndef ACTIVEPSIPROFILES_H
 #define ACTIVEPSIPROFILES_H
 
-#include <QUrl>
 #include <QStringList>
 
 class ActiveProfiles: public QObject
@@ -33,22 +32,21 @@ public:
 
 	bool setThisProfile(const QString &profile);
 	void unsetThisProfile();
-
 	QString thisProfile() const;
+
 	bool isActive(const QString &profile) const;
+	bool isAnyActive() const;
 
-	QString pickProfile() const;
-
-	bool raiseOther(QString profile, bool withUI) const;
-
-	bool sendOpenUri(const QUrl &uri, const QString &profile = QString::null) const;
-	bool sendOpenUri(const QString &uri, const QString &profile = QString::null) const;
+	bool setStatus(const QString &profile, const QString &status, const QString &message) const;
+	bool openUri(const QString &profile, const QString &uri) const;
+	bool raise(const QString &profile, bool withUI) const;
 
 	~ActiveProfiles();
 
 signals:
-	void openUri(const QUrl &uri);
-	void raiseMainWindow();
+	void setStatusRequested(const QString &status, const QString &message);
+	void openUriRequested(const QString &uri);
+	void raiseRequested();
 
 protected:
 	static ActiveProfiles *instance_;
@@ -58,6 +56,9 @@ private:
 	Private *d;
 
 	ActiveProfiles();
+
+	friend class PsiConAdapter;
+	friend class PsiMain;
 };
 
 #endif

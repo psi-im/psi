@@ -574,10 +574,12 @@ bool PsiCon::init()
 	addPsiConAdapter(this);
 #endif
 
-	connect(ActiveProfiles::instance(), SIGNAL(raiseMainWindow()), SLOT(raiseMainwin()));
-	connect(ActiveProfiles::instance(), SIGNAL(openUri(const QUrl &)), SLOT(doOpenUri(const QUrl &)));
+	connect(ActiveProfiles::instance(), SIGNAL(setStatusRequested(const QString &, const QString &)), SLOT(setStatusFromCommandline(const QString &, const QString &)));
+	connect(ActiveProfiles::instance(), SIGNAL(openUriRequested(const QString &)), SLOT(openUri(const QString &)));
+	connect(ActiveProfiles::instance(), SIGNAL(raiseRequested()), SLOT(raiseMainwin()));
 
-	DesktopUtil::setUrlHandler("xmpp", this, "doOpenUri");
+
+	DesktopUtil::setUrlHandler("xmpp", this, "openUri");
 
 	if(AvCallManager::isSupported()) {
 		options_avcall_update();
@@ -888,6 +890,15 @@ void PsiCon::setStatusFromDialog(const Status &s, bool withPriority)
 	setGlobalStatus(s, withPriority);
 }
 
+void PsiCon::setStatusFromCommandline(const QString &status, const QString &message)
+{
+	PsiOptions::instance()->setOption("options.status.last-message", message);
+	XMPP::Status s;
+	s.setType(status);
+	s.setStatus(message);	// yes, a bit different naming convention..
+	setGlobalStatus(s, false);
+}
+
 void PsiCon::setGlobalStatus(const Status &s,  bool withPriority)
 {
 	// Check whether all accounts are logged off
@@ -983,9 +994,16 @@ void PsiCon::checkAccountsEmpty()
 	}
 }
 
-void PsiCon::doOpenUri(const QUrl &uri)
+void PsiCon::openUri(const QString &uri)
 {
-	qDebug() << "uri:  " << uri.toString();
+	QUrl url;
+	url.setEncodedUrl(uri.toLatin1());
+	openUri(url);
+}
+
+void PsiCon::openUri(const QUrl &uri)
+{
+	//qDebug() << "uri:  " << uri.toString();
 
 	// scheme
 	if (uri.scheme() != "xmpp") {

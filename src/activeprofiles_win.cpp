@@ -105,13 +105,34 @@ public:
 	bool winEvent(MSG *msg, long *result);
 
 	bool sendStringList(const QString &to, const QStringList &list) const;
+
+	QString pickProfile() const;
 };
 
 UINT ActiveProfiles::Private::psiIpcCommand = 0;
 WPARAM ActiveProfiles::Private::raiseCommand = 1;
 
+QString ActiveProfiles::Private::pickProfile() const
+{
+	QStringList profiles = getProfilesList();
+	foreach (QString p, profiles) {
+		if (ap->isActive(p)) {
+			return p;
+		}
+	}
+	return QString();
+}
+
 bool ActiveProfiles::Private::sendMessage(const QString &to, UINT message, WPARAM wParam, LPARAM lParam) const
 {
+	QString profile = to;
+	if (profile.isEmpty()) {
+		profile = pickProfile();
+	}
+	if (profile.isEmpty()) {
+		return false;
+	}
+
 	HWND hwnd;
 	QT_WA(
 		hwnd = FindWindowW(0, (LPCWSTR)windowName(to).utf16());
@@ -151,9 +172,8 @@ bool ActiveProfiles::Private::sendStringList(const QString &to, const QStringLis
 
 bool ActiveProfiles::Private::winEvent(MSG *msg, long *result)
 {
-	*result = 1;	// by default - not ok
-
 	if (msg->message == WM_COPYDATA) {
+		*result = FALSE;
 		COPYDATASTRUCT *cd = (COPYDATASTRUCT *)msg->lParam;
 		if (cd->dwData == stringListMessage) {
 			char *data = (char*)cd->lpData;
@@ -172,19 +192,23 @@ bool ActiveProfiles::Private::winEvent(MSG *msg, long *result)
 				data += strlen(data) + 1;
 			}
 
-			if (list[0] == "openUri") {
-				QUrl uri;
-				uri.setEncodedUrl(list[1].toLatin1());
-				emit ap->openUri(uri);
-				*result = 0;	// ok
+			if (list.count() > 1) {
+				if (list[0] == "openUri") {
+					emit ap->openUriRequested(list.value(1));
+					*result = TRUE;
+				} else if (list[0] == "setStatus") {
+					emit ap->setStatusRequested(list.value(1), list.value(2));
+					*result = TRUE;
+				}
 			}
 		}
 		return true;
 	}
 	else if (msg->message == psiIpcCommand) {
+		*result = FALSE;
 		if (msg->wParam == raiseCommand) {
-			emit ap->raiseMainWindow();
-			*result = 0; // ok
+			emit ap->raiseRequested();
+			*result = TRUE;
 		}
 		return true;
 	}
@@ -273,7 +297,13 @@ bool ActiveProfiles::isActive(const QString &profile) const
 	}
 }
 
-bool ActiveProfiles::raiseOther(QString profile, bool withUI) const
+bool ActiveProfiles::isAnyActive() const
+{
+	return !d->pickProfile().isEmpty();
+}
+
+
+bool ActiveProfiles::raise(const QString &profile, bool withUI) const
 {
 	QLabel *lab = 0;
 	if (withUI) {
@@ -291,9 +321,16 @@ bool ActiveProfiles::raiseOther(QString profile, bool withUI) const
 	return res;
 }
 
-bool ActiveProfiles::sendOpenUri(const QString &uri, const QString &profile) const
+bool ActiveProfiles::openUri(const QString &profile, const QString &uri) const
 {
 	QStringList list;
 	list << "openUri" << uri;
-	return d->sendStringList(isActive(profile)? profile : pickProfile(), list);
+	return d->sendStringList(profile, list);
+}
+
+bool ActiveProfiles::setStatus(const QString &profile, const QString &status, const QString &message) const
+{
+	QStringList list;
+	list << "setStatus" << status << message;
+	return d->sendStringList(profile, list);
 }

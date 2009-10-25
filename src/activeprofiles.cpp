@@ -33,7 +33,12 @@ ActiveProfiles* ActiveProfiles::instance_ = 0;
 
 /**
  * \fn bool ActiveProfiles::isActive(const QString &profile) const;
- * \brief Returns true is \a profile is running.
+ * \brief Returns true if \a profile is running.
+ */
+
+/**
+ * \fn bool ActiveProfiles::isAnyActive() const;
+ * \brief Returns true if there is at least one running Psi instance.
  */
 
 /**
@@ -75,45 +80,37 @@ ActiveProfiles* ActiveProfiles::instance()
  * \brief Creates new object.
  */
 
-
 /**
- * \fn bool ActiveProfiles::raiseOther(QString profile, bool withUI) const
- * \brief raises the main windows of another psi instance.
- */
-
-/**
- * \brief Requests other Psi instance to open \a uri.
- * If \a profile is not running, other active instance is selected.
- * If the request cannot be sent, function returns false.
- */
-bool ActiveProfiles::sendOpenUri(const QUrl &uri, const QString &profile) const
-{
-	return sendOpenUri(QString::fromLatin1(uri.toEncoded()), profile);
-}
-
-/**
- * \fn bool ActiveProfiles::sendOpenUri(const QString &uri, const QString &profile) const
- * \brief Requests other Psi instance to open \a uri.
- * If \a profile is not running, other active instance is selected.
+ * \fn bool ActiveProfiles::setStatus(const QString &profile, const QString &status, const QString &message) const
+ * \brief Requests Psi instance running \a profile to change status.
+ * If \a profile is empty, other running instance is selected.
  * If the request cannot be sent, function returns false.
  */
 
+/**
+ * \fn bool ActiveProfiles::openUri(const QString &profile, const QString &uri) const
+ * \brief Requests Psi instance running \a profile to open \a uri.
+ * If \a profile is empty, other running instance is selected.
+ * If the request cannot be sent, function returns false.
+ */
 
 /**
- * \fn void ActiveProfiles::openUri(const QUrl &uri);
+ * \fn bool ActiveProfiles::raise(QString profile, bool withUI) const
+ * \brief Raises the main windows of Psi instance running \a profile.
+ * If \a profile is empty, other running instance is selected.
+ */
+
+/**
+ * \fn void setStatusRequested(const QString &status, const QString &message)
+ * \brief Signal emitted when other Psi instance requested to change status.
+ */
+
+/**
+ * \fn void ActiveProfiles::openUriRequested(const QUrl &uri)
  * \brief Signal emitted when other Psi instance requested to open \a uri.
  */
 
 /**
- * \brief Picks one of running Psi instances and returns its profile name.
+ * \fn void ActiveProfiles::raiseRequested()
+ * \brief Signal emitted when other Psi instance requested to raise main window.
  */
-QString ActiveProfiles::pickProfile() const
-{
-	QStringList profiles = getProfilesList();
-	foreach (QString p, profiles) {
-		if (isActive(p)) {
-			return p;
-		}
-	}
-	return "";
-}

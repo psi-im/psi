@@ -152,6 +152,12 @@ bool ActiveProfiles::isActive(const QString &profile) const
 	return dbusIface->isServiceRegistered(d->dbusName(profile));
 }
 
+bool ActiveProfiles::isAnyActive() const
+{
+	return isActive("");
+}
+
+
 bool ActiveProfiles::setThisProfile(const QString &profile)
 {
 	if (profile == d->profile)
@@ -197,22 +203,21 @@ ActiveProfiles::~ActiveProfiles()
 	d = 0;
 }
 
+bool ActiveProfiles::setStatus(const QString &profile, const QString &status, const QString &message) const
+{
+	QDBusInterface(d->dbusName(profile), "/Main", PSIDBUSMAINIF).call(QDBus::NoBlock,
+			"setStatus", status, message);
+	return true;
+}
 
-
-
-bool ActiveProfiles::sendOpenUri(const QString &uri, const QString &profile) const
+bool ActiveProfiles::openUri(const QString &profile, const QString &uri) const
 {
 	QDBusInterface(d->dbusName(profile), "/Main", PSIDBUSMAINIF).call(QDBus::NoBlock, 
 			"openURI", uri);
 	return true;
-	
-	// FIXME
-	return false; //  isActive(profile)? profile : pickProfile();
 }
 
-
-
-bool ActiveProfiles::raiseOther(QString profile, bool withUI) const
+bool ActiveProfiles::raise(const QString &profile, bool withUI) const
 {
 	QLabel *lab=0;
 	QDBusMessage msg = QDBusMessage::createMethodCall ( d->dbusName(profile), "/Main", PSIDBUSMAINIF, "raise" );
