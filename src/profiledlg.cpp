@@ -186,9 +186,9 @@ ProfileManageDlg::ProfileManageDlg(const QString &choose, QWidget *parent)
 
 	// setup signals
 	connect(pb_new, SIGNAL(clicked()), SLOT(slotProfileNew()));
-	// connect(pb_rename, SIGNAL(clicked()), SLOT(slotProfileRename()));
+	connect(pb_rename, SIGNAL(clicked()), SLOT(slotProfileRename()));
 	connect(pb_delete, SIGNAL(clicked()), SLOT(slotProfileDelete()));
-	connect(lbx_profiles, SIGNAL(highlighted(int)), SLOT(updateSelection()));
+	connect(lbx_profiles, SIGNAL(currentRowChanged(int)), SLOT(updateSelection()));
 
 	// load the listing
 	QStringList list = getProfilesList();

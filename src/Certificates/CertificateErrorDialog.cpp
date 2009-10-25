@@ -29,6 +29,11 @@ CertificateErrorDialog::CertificateErrorDialog(const QString& title, const QStri
 	messageBox_->setDefaultButton(detailsButton_);
 }
 
+CertificateErrorDialog::~CertificateErrorDialog()
+{
+	delete messageBox_;
+}
+
 int CertificateErrorDialog::exec()
 {
 	while (true) {
@@ -57,4 +62,9 @@ int CertificateErrorDialog::exec()
 		}
 	}
 	return messageBox_->result();
+}
+
+void CertificateErrorDialog::reject()
+{
+	messageBox_->reject();
 }
