@@ -76,6 +76,8 @@ public:
 	void setPassword(const QString&);
 	const QString& nick() const;
 
+	void setAutoJoin(bool enabled);
+
 	// reimplemented
 	virtual TabbableWidget::State state() const;
 	virtual int unreadMessageCount() const;

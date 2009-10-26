@@ -30,6 +30,10 @@ include($$PWD/psimedia/psimedia.pri)
 # audio/video calls
 include($$PWD/avcall/avcall.pri)
 
+INCLUDEPATH += $$PWD/libpsi/widgets
+HEADERS += $$PWD/libpsi/widgets/groupchatbrowsewindow.h
+SOURCES += $$PWD/libpsi/widgets/groupchatbrowsewindow.cpp
+
 # Growl
 mac {
 	contains(DEFINES, HAVE_GROWL) {
@@ -241,7 +245,8 @@ HEADERS += \
 	$$PWD/invitedlg.h \
 	$$PWD/ringsound.h \
 	$$PWD/whatismyip.h \
-	$$PWD/verticaltabbar.h
+	$$PWD/verticaltabbar.h \
+	$$PWD/groupchatbrowsecontroller.h
 
 # Source files
 SOURCES += \
@@ -372,7 +377,8 @@ SOURCES += \
 	$$PWD/invitedlg.cpp \
 	$$PWD/ringsound.cpp \
 	$$PWD/whatismyip.cpp \
-	$$PWD/verticaltabbar.cpp
+	$$PWD/verticaltabbar.cpp \
+	$$PWD/groupchatbrowsecontroller.cpp
 
 whiteboarding {
 	# Whiteboarding support. Still experimental.
@@ -438,7 +444,8 @@ INTERFACES += \
 	$$PSIDIR_SRC/groupchatdlg.ui \
 	$$PSIDIR_SRC/bookmarkmanage.ui \
 	$$PWD/transportsetup.ui \
-	$$PWD/invite.ui
+	$$PWD/invite.ui \
+	$$PWD/libpsi/widgets/groupchatbrowsewindow.ui
 
 # options dialog
 include($$PWD/options/options.pri)

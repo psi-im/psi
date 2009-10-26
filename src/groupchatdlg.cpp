@@ -54,7 +54,7 @@
 #include <QTextDocument> // for Qt::escape()
 
 #include "psicon_b.h"
-#include "psiaccount.h"
+#include "psiaccount_b.h"
 #include "capsmanager.h"
 #include "userlist.h"
 #include "mucconfigdlg.h"
@@ -108,6 +108,7 @@ public:
 	bool nonAnonymous;     // got status code 100 ?
 	IconAction *act_find, *act_clear, *act_icon, *act_configure;
 	IconAction *act_invite;
+	IconAction *act_autojoin;
 #ifdef WHITEBOARDING
 	IconAction *act_whiteboard;
 #endif
@@ -172,6 +173,11 @@ public slots:
 		inviteDlg = new InviteDlg(true, dlg->jid(), dlg->account(), dlg);
 		inviteDlg->setAttribute(Qt::WA_DeleteOnClose);
 		inviteDlg->show();
+	}
+
+	void toggleAutoJoin(bool enabled)
+	{
+		dlg->account()->setAutoJoined(Jid(dlg->jid().bare()), enabled);
 	}
 
 protected slots:
@@ -576,6 +582,11 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 
 	d->act_invite = new IconAction (tr("Invite..."), /*"psi/clearChat",*/ tr("Invite..."), 0, this);
 	connect( d->act_invite, SIGNAL( activated() ), d, SLOT( doInvite() ) );
+
+	d->act_autojoin = new IconAction (tr("Auto-join chat"), tr("Auto-join chat"), 0, this);
+	d->act_autojoin->setCheckable(true);
+	d->act_autojoin->setChecked(account()->isAutoJoined(Jid(j.bare())));
+	connect(d->act_autojoin, SIGNAL(toggled(bool)), d, SLOT(toggleAutoJoin(bool)));
 
 	connect(pa->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
 	d->act_icon = new IconAction( tr( "Select icon" ), /*"psi/smile",*/ tr( "Select icon" ), 0, this );
@@ -1566,6 +1577,8 @@ void GCMainDlg::buildMenu()
 	account()->psi()->tabChatsAction()->addTo( d->pm_settings );
 
 	d->act_invite->addTo( d->pm_settings );
+
+	d->act_autojoin->addTo ( d->pm_settings );
 }
 
 void GCMainDlg::chatEditCreated()
@@ -1593,6 +1606,11 @@ const QString& GCMainDlg::getDisplayName()
 	else
 		d->dispName = jid().full();
 	return d->dispName;
+}
+
+void GCMainDlg::setAutoJoin(bool enabled)
+{
+	d->act_autojoin->setChecked(enabled);
 }
 
 //----------------------------------------------------------------------------

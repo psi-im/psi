@@ -75,7 +75,7 @@
 #ifdef USE_PEP
 #include "tunecontroller.h"
 #endif
-#include "groupchatdlg.h"
+#include "groupchatdlg_b.h"
 #include "statusdlg.h"
 #include "infodlg.h"
 //#include "adduserdlg.h"
@@ -131,6 +131,8 @@
 #include "desktoputil.h"
 #include "cudaskin.h"
 #include "whatismyip.h"
+#include "groupchatbrowsewindow.h"
+#include "groupchatbrowsecontroller.h"
 
 #include "psimedia/psimedia.h"
 #include "avcall/avcall.h"
@@ -5029,6 +5031,14 @@ void PsiAccount::openGroupChat(const Jid &j, ActivationType activationType)
 	w->ensureTabbedCorrectly();
 	if (activationType == UserAction)
 		w->bringToFront();
+
+	Jid roomJid(str);
+	if(!isAutoJoined(roomJid)) {
+		int n = QMessageBox::information(w, tr("Auto-join groupchat?"),
+			tr("Would you like to automatically join this groupchat everytime you log on?"), tr("&Yes, auto-join this room"), tr("&No"));
+		if(n == 0)
+			w->setAutoJoin(true);
+	}
 }
 
 bool PsiAccount::groupChatJoin(const QString &host, const QString &room, const QString &nick, const QString& pass, bool nohistory)
@@ -5082,13 +5092,26 @@ void PsiAccount::client_groupChatJoined(const Jid &j)
 		m->joined();
 		return;
 	}
-	MUCJoinDlg *w = findDialog<MUCJoinDlg*>(j);
-	if(!w)
-		return;
-	w->joined();
 
-	// TODO: Correctly handle auto-join groupchats
-	openGroupChat(j, UserAction);
+	MUCJoinDlg *w = findDialog<MUCJoinDlg*>(j);
+	if(w) {
+		w->joined();
+
+		// TODO: Correctly handle auto-join groupchats
+		openGroupChat(j, UserAction);
+		return;
+	}
+
+	GroupChatBrowseWindow *bw = findDialog<GroupChatBrowseWindow*>(j);
+	if(bw) {
+		// get controller, which is the grandparent of the window
+		GroupChatBrowseController *c = (GroupChatBrowseController *)(bw->controller());
+		c->joined();
+
+		// TODO: Correctly handle auto-join groupchats
+		openGroupChat(j, UserAction);
+		return;
+	}
 }
 
 void PsiAccount::client_groupChatLeft(const Jid &j)
@@ -5151,6 +5174,15 @@ void PsiAccount::client_groupChatError(const Jid &j, int code, const QString &st
 		MUCJoinDlg *w = findDialog<MUCJoinDlg*>(j);
 		if(w) {
 			w->error(code, str);
+			return;
+		}
+
+		GroupChatBrowseWindow *bw = findDialog<GroupChatBrowseWindow*>(j);
+		if(bw) {
+			// get controller, which is the grandparent of the window
+			GroupChatBrowseController *c = (GroupChatBrowseController *)(bw->controller());
+			c->error(code, str);
+			return;
 		}
 	}
 }
@@ -5839,6 +5871,51 @@ void PsiAccount::doMultiInvite(const QList<Jid> &list, bool groupchat, const Jid
 	// for regular chat or groupchat, invite the list
 	foreach(const Jid &jid, list)
 		actionInvite(jid, room);
+}
+
+bool PsiAccount::isAutoJoined(const Jid &roomJid) const
+{
+	foreach(const ConferenceBookmark &cb, d->bookmarkManager->conferences()) {
+		if(cb.jid() == roomJid && cb.autoJoin())
+			return true;
+	}
+	return false;
+}
+
+void PsiAccount::setAutoJoined(const Jid &roomJid, bool enabled)
+{
+	QList<URLBookmark> urllist = d->bookmarkManager->urls();
+	QList<ConferenceBookmark> cblist = d->bookmarkManager->conferences();
+
+	// first see if we have a bookmark at all for this jid
+	int at = -1;
+	for(int n = 0; n < cblist.count(); ++n) {
+		if(cblist[n].jid() == roomJid) {
+			at = n;
+			break;
+		}
+	}
+
+	if(enabled) {
+		// enabling?
+		if(at != -1) {
+			// if we have one, then make sure it is set to auto-join
+			if(!cblist[at].autoJoin()) {
+				cblist[at] = ConferenceBookmark(cblist[at].name(), cblist[at].jid(), true, cblist[at].nick(), cblist[at].password());
+				d->bookmarkManager->setBookmarks(urllist, cblist);
+			}
+		}
+		else {
+			// if we don't have one, make it
+			cblist += ConferenceBookmark(roomJid.full(), roomJid, true);
+			d->bookmarkManager->setBookmarks(urllist, cblist);
+		}
+	}
+	else {
+		// disabling?  just remove it from the list
+		cblist.removeAt(at);
+		d->bookmarkManager->setBookmarks(urllist, cblist);
+	}
 }
 
 #include "psiaccount.moc"

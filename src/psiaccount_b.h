@@ -206,6 +206,9 @@ public:
 	class xmlRingElem { public: int type; QDateTime time; QString xml; };
 	QList< xmlRingElem > dumpRingbuf();
 
+	bool isAutoJoined(const Jid &roomJid) const;
+	void setAutoJoined(const Jid &roomJid, bool enabled);
+
 signals:
 	void disconnected();
 	void reconnecting();

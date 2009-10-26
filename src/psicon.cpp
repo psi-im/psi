@@ -98,6 +98,8 @@
 #include "mac_dock.h"
 #endif
 
+#include "groupchatbrowsecontroller.h"
+
 // from opt_avcall.cpp
 extern void options_avcall_update();
 
@@ -856,8 +858,9 @@ void PsiCon::doGroupChat()
 	if(!account)
 		return;
 
-	MUCJoinDlg *w = new MUCJoinDlg(this, account);
-	w->show();
+	GroupChatBrowseController *c = new GroupChatBrowseController(account, 0);
+	//MUCJoinDlg *w = new MUCJoinDlg(this, account);
+	//w->show();
 }
 
 void PsiCon::doNewBlankMessage()

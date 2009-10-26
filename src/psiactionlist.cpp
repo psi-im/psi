@@ -214,8 +214,8 @@ void PsiActionList::Private::createMainWin()
 
 		//IconAction *actNewMessage = new IconAction (tr("New Multi Message"), "psi/sendMessage", tr("New &Multi Message"), 0, this);
 		IconAction *actNewMessage = new IconAction (tr("New Multi Message"), tr("New &Multi Message"), 0, this);
-		//IconAction *actJoinGroupchat = new IconAction (tr("Join/Create Group Chat"), "psi/groupChat", tr("Join/Create &Group Chat"), 0, this);
-		IconAction *actJoinGroupchat = new IconAction (tr("Join/Create Group Chat"), tr("Join/Create &Group Chat"), 0, this);
+		//IconAction *actJoinGroupchat = new IconAction (tr("Groupchat"), "psi/groupChat", tr("&Groupchat"), 0, this);
+		IconAction *actJoinGroupchat = new IconAction (tr("Groupchat"), tr("&Groupchat"), 0, this);
 		IconAction *actAccountSetup = 0;
 		//actAccountSetup = new IconAction (tr("Account Setup"), "psi/account", tr("Acc&ount Setup"), 0, this);
 		actAccountSetup = new IconAction (tr("Account Setup"), tr("Acc&ount Setup"), 0, this);
