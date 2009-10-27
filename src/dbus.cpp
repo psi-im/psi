@@ -29,6 +29,8 @@ public Q_SLOTS:
 	void openURI(QString uri);
 	void setStatus(QString status, QString message);
 	void raise();
+	void sleep();
+	void wake();
 /*Q_SIGNALS:
 	void psi_pong();
 */
@@ -62,7 +64,15 @@ void PsiConAdapter::raise()
 	emit ActiveProfiles::instance()->raiseRequested();
 }
 
+void PsiConAdapter::sleep()
+{
+	psicon->doSleep();
+}
 
+void PsiConAdapter::wake()
+{
+	psicon->doWakeup();
+}
 
 
 void addPsiConAdapter(PsiCon *psicon)
