@@ -39,7 +39,7 @@
 #include <time.h>
 #include "profiledlg.h"
 #include "activeprofiles.h"
-#include "simplecli.h"
+#include "psicli.h"
 #include "psioptions.h"
 
 #include "eventdlg.h"
@@ -80,61 +80,6 @@
 
 using namespace XMPP;
 
-class PsiCli : public SimpleCli
-{
-public:
-	PsiCli() {
-		defineParam("profile", tr("PROFILE"), tr("Activate program instance running specified profile. "
-							 "Otherwise, open new instance using this profile "
-							 "(unless used together with --remote)."));
-		defineSwitch("remote", tr("Force remote-control mode. "
-					  "If there is no running instance, "
-					  "or --profile was specified but there is no instance using it, "
-					  "exit without doing anything."));
-		defineParam("uri", tr("URI"), tr("Open XMPP URI. (e.g. xmpp:someone@example.org?chat) "
-						 "For security reasons, this must be the last option."));
-		defineParam("status", tr("SHOW"), tr("Set status. SHOW must be one of `online', `chat', `away', `xa', `dnd', `offline'.",
-						     "Please do not translate `online', `chat', etc."));
-		defineParam("status-message", tr("MSG"), tr("Set status message. Must be used together with --status."));
-		defineSwitch("help", tr("Show this help message and exit."));
-		defineAlias("h", "help");
-		defineAlias("?", "help");
-		defineSwitch("version", tr("Show version information and exit."));
-		defineAlias("v", "version");
-	}
-
-	void showHelp(int textWidth = 78) {
-		QString output;
-		QString u = tr("Usage:") + " " + QFileInfo(QApplication::applicationFilePath()).fileName();
-		output += wrap(u + " [--profile=PROFILE] [--remote] [--status=SHOW\t[--status-message=MSG]] [--uri=URI]",
-			       textWidth, u.length() + 1, 0).replace('\t', ' '); // non-breakable space ;)
-		output += '\n';
-		output += tr("Psi - The Cross-Platform Jabber/XMPP Client For Power Users");
-		output += "\n\n";
-		output += tr("Options:");
-		output += '\n';
-		output += optionsHelp(textWidth);
-		output += '\n';
-		output += tr("Go to <http://psi-im.org/> for more information about Psi.");
-		show(output);
-	}
-
-	void showVersion() {
-		show(QString("%1 %2\nQt %3\n")
-			.arg(ApplicationInfo::name()).arg(ApplicationInfo::version())
-			.arg(qVersion())
-			+QString(tr("Compiled with Qt %1", "%1 will contain Qt version number"))
-			.arg(QT_VERSION_STR));
-	}
-
-	void show(const QString& text) {
-#ifdef Q_WS_WIN
-		QMessageBox::information(0, ApplicationInfo::name(), text);
-#else
-		puts(qPrintable(text));
-#endif
-	}
-};
 
 PsiMain::PsiMain(const QMap<QString, QString>& commandline, QObject *par)
 	: QObject(par)
@@ -168,6 +113,10 @@ PsiMain::PsiMain(const QMap<QString, QString>& commandline, QObject *par)
 	else if(cmdline.contains("version")) {
 		PsiCli().showVersion();
 		QTimer::singleShot(0, this, SLOT(bail()));
+	}
+	else if(cmdline.contains("choose-profile")) {
+		// Select a profile
+		QTimer::singleShot(0, this, SLOT(chooseProfile()));
 	}
 	else if(cmdline.contains("profile") && profileExists(cmdline["profile"])) {
 		// Open profile from commandline
@@ -509,7 +458,7 @@ int main(int argc, char *argv[])
 #endif
 
 	// check if we want to remote-control other psi instance
-	if (!cmdline.contains("help") && !cmdline.contains("version")
+	if (!cmdline.contains("help") && !cmdline.contains("version") && !cmdline.contains("choose-profile")
 		&& ActiveProfiles::instance()->isAnyActive()
 		&& ((cmdline.contains("profile") && ActiveProfiles::instance()->isActive(cmdline["profile"])) || !cmdline.contains("profile"))) {
 

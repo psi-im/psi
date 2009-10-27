@@ -224,7 +224,8 @@ HEADERS += \
 	$$PWD/accountlabel.h \
 	$$PWD/psiactions.h \
 	$$PWD/bookmarkmanagedlg.h \
-	$$PWD/vcardphotodlg.h
+	$$PWD/vcardphotodlg.h \
+	$$PWD/psicli.h
 
 
 HEADERS += tabcompletion.h
