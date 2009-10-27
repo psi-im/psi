@@ -62,7 +62,8 @@ unprepareBuild
 # rm -r include
 # rm libs/*.la
 
-chrpath -r "\${ORIGIN}/../lib/barracuda:\${ORIGIN}/../lib:\${ORIGIN}/../lib/autopackage\${ORIGIN}/../lib/barracuda" bin/barracuda
+#chrpath -r "\${ORIGIN}/../lib/barracuda:\${ORIGIN}/../lib:\${ORIGIN}/../lib/autopackage\${ORIGIN}/../lib/barracuda" bin/barracuda
+chrpath -r "\${ORIGIN}/../lib/barracuda:\${ORIGIN}/../lib" bin/barracuda
 
 # This imports every file in 
 # (ie, that is installed by "make install")
