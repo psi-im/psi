@@ -4,6 +4,7 @@
 #include "simplecli.h"
 #include "applicationinfo.h"
 #include <QApplication>
+#include <QMessageBox>
 #include <QFileInfo>
 
 class PsiCli : public SimpleCli
