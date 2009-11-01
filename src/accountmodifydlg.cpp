@@ -275,7 +275,7 @@ void AccountModifyDlg::init()
 	
 	if (!PsiOptions::instance()->getOption("options.ui.account.proxy.show").toBool()) {
 		lb_proxy->hide();
-		lb_proxychooser->hide();
+		pc->hide();
 	}
 
 	if (!PsiOptions::instance()->getOption("options.ui.account.manual-host").toBool()) {
