@@ -25,7 +25,7 @@
 #include "common.h"
 #include "psioptions.h"
 #include "shortcutmanager.h"
-#include "grepshortcutkeydlg.h"
+#include "grepshortcutkeydialog.h"
 
 #include "ui_opt_shortcuts.h"
 
@@ -359,8 +359,8 @@ void OptionsTabShortcuts::onRestoreDefaults() {
  */
 void OptionsTabShortcuts::grep()
 {
-	GrepShortcutKeyDlg* grep = new GrepShortcutKeyDlg();
-	connect(grep, SIGNAL(newShortcutKey(QKeySequence)), this, SLOT(onNewShortcutKey(QKeySequence)));
+	GrepShortcutKeyDialog* grep = new GrepShortcutKeyDialog();
+	connect(grep, SIGNAL(newShortcutKey(const QKeySequence&)), this, SLOT(onNewShortcutKey(const QKeySequence&)));
 	grep->show();
 }
 
@@ -405,7 +405,7 @@ void OptionsTabShortcuts::onItemSelectionChanged() {
 }
 
 /**
- * \brief	an item of the treeview is double clicked, if it is a Keyitem, the GrepShortcutKeyDlg is shown
+ * \brief	an item of the treeview is double clicked, if it is a Keyitem, the GrepShortcutKeyDialog is shown
  */
 void OptionsTabShortcuts::onItemDoubleClicked(QTreeWidgetItem *item, int column)
 {
@@ -422,11 +422,11 @@ void OptionsTabShortcuts::onItemDoubleClicked(QTreeWidgetItem *item, int column)
 }
 
 /**
- * \brief	slot onNewShortcutKey is called when the grepShortcutKeyDlg has captured a KeySequence,
+ * \brief	slot onNewShortcutKey is called when the grepShortcutKeyDialog has captured a KeySequence,
  *			so the new KeySequence can be set to the KeyItem
  * \param	the new KeySequence for the keyitem
  */
-void OptionsTabShortcuts::onNewShortcutKey(QKeySequence key) {
+void OptionsTabShortcuts::onNewShortcutKey(const QKeySequence& key) {
 	OptShortcutsUI *d = (OptShortcutsUI *)w;
 	QTreeWidgetItem	*keyItem;
 	QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();

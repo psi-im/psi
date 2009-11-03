@@ -20,7 +20,7 @@ include($$PWD/tools/globalshortcut/globalshortcut.pri)
 include($$PWD/tools/advwidget/advwidget.pri)
 include($$PWD/tools/spellchecker/spellchecker.pri)
 include($$PWD/tools/contactlist/contactlist.pri)
-include($$PWD/tools/grepshortcutkeydlg/grepshortcutkeydlg.pri)
+include($$PWD/libpsi/dialogs/grepshortcutkeydialog.pri)
 include($$PWD/libpsi/tools/atomicxmlfile/atomicxmlfile.pri)
 include($$PWD/tools/simplecli/simplecli.pri)
 
@@ -33,12 +33,12 @@ include($$PWD/avcall/avcall.pri)
 # Growl
 mac {
 	contains(DEFINES, HAVE_GROWL) {
-		include($$PWD/tools/growlnotifier/growlnotifier.pri)
+		include($$PWD/libpsi/tools/growlnotifier/growlnotifier.pri)
 	}
 }
 
 # Mac dock
-mac { include($$PWD/tools/mac_dock/mac_dock.pri) }
+mac { include($$PWD/libpsi/tools/mac_dock/mac_dock.pri) }
 
 # Tune
 pep {

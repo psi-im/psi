@@ -56,7 +56,7 @@ private slots:
 	void onRestoreDefaults();
 	void onItemDoubleClicked(QTreeWidgetItem *item, int column);
 	void onItemSelectionChanged();
-	void onNewShortcutKey(QKeySequence key);
+	void onNewShortcutKey(const QKeySequence& key);
 
 private:
 	void addTo(QTreeWidgetItem *shortcutItem);
