@@ -29,7 +29,8 @@
 /**
  * Constructs new PsiContactList. \param psi will not be PsiContactList's parent though.
  */
-PsiContactList::PsiContactList(PsiCon* psi) : ContactList(), psi_(psi)
+PsiContactList::PsiContactList(PsiCon* psi)
+	: psi_(psi)
 {
 }
 

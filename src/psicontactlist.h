@@ -23,7 +23,6 @@
 
 #include <QList>
 
-#include "contactlist.h"
 #include "profiles.h"
 
 using namespace XMPP;
@@ -32,7 +31,7 @@ class PsiCon;
 class PsiAccount;
 namespace XMPP { class Jid; }
 
-class PsiContactList : public ContactList
+class PsiContactList : public QObject
 {
 	Q_OBJECT
 public:
