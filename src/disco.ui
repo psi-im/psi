@@ -117,7 +117,7 @@
       </layout>
      </item>
      <item>
-      <widget class="Q3ListView" name="lv_disco" />
+      <widget class="QTreeWidget" name="lv_disco" />
      </item>
      <item>
       <widget class="QCheckBox" name="ck_autoItems" >
@@ -203,13 +203,6 @@
    <class>IconButton</class>
    <extends></extends>
    <header>iconbutton.h</header>
-   <container>0</container>
-   <pixmap></pixmap>
-  </customwidget>
-  <customwidget>
-   <class>Q3ListView</class>
-   <extends></extends>
-   <header>q3listview.h</header>
    <container>0</container>
    <pixmap></pixmap>
   </customwidget>
