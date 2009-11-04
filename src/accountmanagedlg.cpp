@@ -306,7 +306,7 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi)
 	if (lv_accs->topLevelItemCount())
 		lv_accs->setCurrentItem(lv_accs->topLevelItem(0));
 
-	adjustSize();
+	//adjustSize();
 }
 
 AccountManageDlg::~AccountManageDlg()
