@@ -304,6 +304,8 @@ bool PsiIconset::loadRoster()
 	foreach(QVariant service, PsiOptions::instance()->mapKeyList("options.iconsets.service-status")) {
 		QString val = PsiOptions::instance()->getOption(
 		                  PsiOptions::instance()->mapLookup("options.iconsets.service-status", service) + ".iconset").toString();
+		if (val.isEmpty())
+			continue;
 		rosterIconsets << val;
 		d->cur_service_status.insert(service.toString(), val);
 	}
@@ -402,6 +404,8 @@ void PsiIconset::reloadRoster()
 	foreach(QVariant service, PsiOptions::instance()->mapKeyList("options.iconsets.service-status")) {
 		QString val = PsiOptions::instance()->getOption(
 		                  PsiOptions::instance()->mapLookup("options.iconsets.service-status", service) + ".iconset").toString();
+		if (val.isEmpty())
+			continue;
 		cur_service_status.insert(service.toString(), val);
 	}
 
