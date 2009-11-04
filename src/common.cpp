@@ -265,8 +265,7 @@ void soundPlay(const QString &s)
 #else
 	QString player = PsiOptions::instance()->getOption("options.ui.notifications.sounds.unix-sound-player").toString();
 	if (player == "") player = soundDetectPlayer();
-	QStringList args;
-	args = QStringList::split(' ', player);
+	QStringList args = player.split(' ');
 	args += str;
 	QString prog = args.takeFirst();
 	QProcess::startDetached(prog, args);
@@ -362,7 +361,8 @@ void x11wmClass(Display *dsp, WId wid, QString resName)
 	//Display *dsp = x11Display();                 // get the display
 	//WId win = winId();                           // get the window
 	XClassHint classhint;                          // class hints
-	classhint.res_name = (char *)resName.latin1(); // res_name
+	const QByteArray latinResName = resName.toLatin1();
+	classhint.res_name = (char *)latinResName.data(); // res_name
 	classhint.res_class = app_name;                // res_class
 	XSetClassHint(dsp, wid, &classhint);           // set the class hints
 }

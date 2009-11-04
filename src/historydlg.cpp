@@ -129,7 +129,6 @@ public:
 };
 
 HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
-	: QWidget(0, 0)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
   	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
@@ -148,19 +147,23 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 	d->h = new EDBHandle(d->pa->edb());
 	connect(d->h, SIGNAL(finished()), SLOT(edb_finished()));
 
-	QVBoxLayout *vb1 = new QVBoxLayout(this, 8);
+	QVBoxLayout *vb1 = new QVBoxLayout(this);
 	d->lv = new HistoryView(this);
 	d->lv->setVScrollBarMode(Q3ScrollView::AlwaysOn);
 	connect(d->lv, SIGNAL(aOpenEvent(PsiEvent *)), SLOT(actionOpenEvent(PsiEvent *)));
 	QSizePolicy sp = d->lv->sizePolicy();
-	sp.setVerStretch(1);
+	sp.setVerticalStretch(1);
 	d->lv->setSizePolicy(sp);
 	vb1->addWidget(d->lv);
 
-	QHBoxLayout *hb1 = new QHBoxLayout(vb1);
+	QHBoxLayout *hb1 = new QHBoxLayout;
+	vb1->addLayout(hb1);
 
-	QVBoxLayout *vb2 = new QVBoxLayout(hb1);
-	QHBoxLayout *hb2 = new QHBoxLayout(vb2);
+	QVBoxLayout *vb2 = new QVBoxLayout;
+	hb1->addLayout(vb2);
+
+	QHBoxLayout *hb2 = new QHBoxLayout;
+	vb2->addLayout(hb2);
 
 	//d->busy = new BusyWidget(this);
 	//hb1->addWidget(d->busy);
@@ -180,7 +183,8 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 	connect(d->pb_next, SIGNAL(clicked()), SLOT(doNext()));
 	hb2->addWidget(d->pb_next);
 
-	QHBoxLayout *hb3 = new QHBoxLayout(vb2);
+	QHBoxLayout *hb3 = new QHBoxLayout;
+	vb2->addLayout(hb3);
 
 	d->le_find = new QLineEdit(this);
 	connect(d->le_find, SIGNAL(textChanged(const QString &)), SLOT(le_textChanged(const QString &)));
@@ -196,7 +200,9 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 	sep->setFrameShape(QFrame::VLine);
 	hb1->addWidget(sep);
 
-	QVBoxLayout *vb3 = new QVBoxLayout(hb1);
+	QVBoxLayout *vb3 = new QVBoxLayout;
+	hb1->addLayout(vb3);
+
 	QPushButton *pb_save = new QPushButton(tr("&Export..."), this);
 	connect(pb_save, SIGNAL(clicked()), SLOT(doSave()));
 	vb3->addWidget(pb_save);
@@ -210,7 +216,8 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 
 	hb1->addStretch(1);
 
-	QVBoxLayout *vb4 = new QVBoxLayout(hb1);
+	QVBoxLayout *vb4 = new QVBoxLayout;
+	hb1->addLayout(vb4);
 	vb4->addStretch(1);
 
 	QPushButton *pb_close = new QPushButton(tr("&Close"), this);
@@ -507,7 +514,7 @@ void HistoryDlg::exportHistory(const QString &fname)
 				MessageEvent *me = (MessageEvent *)e;
 				stream << heading << endl;
 
-				QStringList lines = QStringList::split('\n', me->message().body(), true);
+				QStringList lines = me->message().body().split('\n', QString::KeepEmptyParts);
 				foreach(const QString& str, lines) {
 					QStringList sub = wrapString(str, 72);
 					foreach(const QString& str2, sub) {

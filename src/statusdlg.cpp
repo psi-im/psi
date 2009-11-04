@@ -56,7 +56,7 @@ StatusShowDlg::StatusShowDlg(const UserListItem &u)
 	vb->setMargin(8);
 	PsiTextView *te = new PsiTextView(this);
 	vb->addWidget(te);
-	QHBoxLayout *hb = new QHBoxLayout(0);
+	QHBoxLayout *hb = new QHBoxLayout;
 	vb->addLayout(hb);
 	QPushButton *pb = new QPushButton(tr("&Close"), this);
 	connect(pb, SIGNAL(clicked()), SLOT(close()));
@@ -130,7 +130,7 @@ void StatusSetDlg::init()
 	// build the dialog
 	QVBoxLayout *vb = new QVBoxLayout(this);
 	vb->setMargin(8);
-	QHBoxLayout *hb1 = new QHBoxLayout(0);
+	QHBoxLayout *hb1 = new QHBoxLayout;
 	vb->addLayout(hb1);
 
 	// Status
@@ -167,7 +167,7 @@ void StatusSetDlg::init()
 	d->te->setAcceptRichText(false);
 	d->te->setMinimumHeight(50);
 	vb->addWidget(d->te);
-	QHBoxLayout *hb = new QHBoxLayout(0);
+	QHBoxLayout *hb = new QHBoxLayout;
 	vb->addLayout(hb);
 	QPushButton *pb1 = new QPushButton(tr("&Set"), this);
 	QPushButton *pb2 = new QPushButton(tr("&Cancel"), this);

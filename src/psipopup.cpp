@@ -378,7 +378,7 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
 	if ( d->popupType != AlertHeadline && (d->popupType != AlertFile || !PsiOptions::instance()->getOption("options.ui.file-transfer.auto-popup").toBool()) )
 		setData(icon, contactText);
 	else if ( d->popupType == AlertHeadline ) {
-		QVBoxLayout *vbox = new QVBoxLayout(0);
+		QVBoxLayout *vbox = new QVBoxLayout;
 		vbox->addLayout( d->createContactInfo(icon, contactText) );
 
 		vbox->addSpacing(5);

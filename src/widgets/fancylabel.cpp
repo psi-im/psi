@@ -260,7 +260,7 @@ public:
 		QHBoxLayout *frameLayout = new QHBoxLayout(frame);
 		frameLayout->setMargin(0);
 		frameLayout->setSpacing(0);
-		QVBoxLayout *layout = new QVBoxLayout(0);
+		QVBoxLayout *layout = new QVBoxLayout;
 		layout->setMargin(0);
 		layout->setSpacing(0);
 		frameLayout->addLayout( layout );

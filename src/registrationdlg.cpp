@@ -174,7 +174,7 @@ RegistrationDlg::RegistrationDlg(const Jid &jid, PsiAccount *pa)
 	line->setFrameStyle(QFrame::HLine | QFrame::Sunken);
 	vb1->addWidget(line);
 
-	QHBoxLayout *hb1 = new QHBoxLayout(0);
+	QHBoxLayout *hb1 = new QHBoxLayout;
 	vb1->addLayout(hb1);
 	d->busy = new BusyWidget(this);
 	hb1->addWidget(d->busy);

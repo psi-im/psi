@@ -185,7 +185,7 @@ XmlPrompt::XmlPrompt(QWidget *parent)
 	te->setAcceptRichText(false);
 	vb1->addWidget(te);
 
-	QHBoxLayout *hb1 = new QHBoxLayout(0);
+	QHBoxLayout *hb1 = new QHBoxLayout;
 	vb1->addLayout(hb1);
 	QPushButton *pb;
 

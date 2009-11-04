@@ -924,18 +924,18 @@ void MainWin::buildTrayMenu()
 	d->trayMenu->clear();
 
 	if(d->nextAmount > 0) {
-		d->trayMenu->insertItem(tr("Receive next event"), this, SLOT(doRecvNextEvent()));
+		d->trayMenu->addAction(tr("Receive next event"), this, SLOT(doRecvNextEvent()));
 		d->trayMenu->addSeparator();
 	}
 
 	if(isHidden()) {
-		d->trayMenu->insertItem(tr("Un&hide"), this, SLOT(trayShow()));
+		d->trayMenu->addAction(tr("Un&hide"), this, SLOT(trayShow()));
 	}
 	else {
-		d->trayMenu->insertItem(tr("&Hide"), this, SLOT(trayHide()));
+		d->trayMenu->addAction(tr("&Hide"), this, SLOT(trayHide()));
 	}
 	d->optionsButton->addTo(d->trayMenu);
-	d->trayMenu->insertItem(tr("Status"), d->statusMenu);
+	d->trayMenu->addMenu(d->statusMenu);
 	
 	d->trayMenu->addSeparator();
 	// TODO!

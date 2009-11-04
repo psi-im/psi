@@ -24,18 +24,19 @@
  */
 
 #include <QFileDialog>
-#include <qinputdialog.h>
-#include <qtimer.h>
-#include <qmessagebox.h>
-#include <qpointer.h>
-#include <qapplication.h>
-#include <qpushbutton.h>
-#include <qlayout.h>
+#include <QInputDialog>
+#include <QTimer>
+#include <QMessageBox>
+#include <QPointer>
+#include <QApplication>
+#include <QPushButton>
+#include <QLayout>
 #include <QUrl>
-#include <qobject.h>
-#include <qmap.h>
+#include <QObject>
+#include <QMap>
 #include <qca.h>
-#include <qfileinfo.h>
+#include <QFileInfo>
+#include <QIcon>
 #include <QPixmap>
 #include <QFrame>
 #include <QList>
@@ -2994,16 +2995,16 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
 		if ( PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool() )
 			window = d->tabManager->getManagingTabs(c);
 		if(window && window->isHidden()) {
-			const QPixmap *pp = c->icon();
+			QPixmap pp = c->windowIcon().pixmap(16,16); // FIXME: 16x16 is just a guess of what size old QWidget::icon() used
 			QPixmap p;
-			if(pp)
-				p = *pp;
+			if(!pp.isNull())
+				p = pp;
 #ifdef __GNUC__
 #warning "Removed reparenting call from qwextend"
 #endif
 			//reparent_good(window, 0, false);
 			if(!p.isNull())
-				c->setIcon(p);
+				c->setWindowIcon(p);
 		}
 #endif
 	}

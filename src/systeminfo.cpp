@@ -135,7 +135,7 @@ static QString unixHeuristicDetect() {
 			f.readLine( buffer, 128 );
 			QString desc(buffer);
 
-			desc = desc.stripWhiteSpace ();
+			desc = desc.trimmed();
 
 			switch ( osInfo[i].flags ) {
 				case OsUseFile:

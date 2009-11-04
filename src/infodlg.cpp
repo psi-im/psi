@@ -98,8 +98,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	d->busy = ui_.busy;
 	d->bdayDateFormat = "yyyy-MM-dd"; //FIXME make settings for custom date format, but its ISO now
 
-	ui_.te_desc->setTextFormat(Qt::PlainText);
-
+	ui_.te_desc->setAcceptRichText(false);
 
 	setWindowTitle(d->jid.full());
 #ifndef Q_WS_MAC
@@ -155,7 +154,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	connect(d->pa->client(), SIGNAL(resourceUnavailable(const Jid &, const Resource &)), SLOT(contactUnavailable(const Jid &, const Resource &)));
 	connect(d->pa,SIGNAL(updateContact(const Jid&)),SLOT(contactUpdated(const Jid&)));
 	ui_.te_status->setReadOnly(true);
-	ui_.te_status->setTextFormat(Qt::RichText);
+	ui_.te_status->setAcceptRichText(true);
 	PsiRichText::install(ui_.te_status->document());
 	updateStatus();
 	foreach(UserListItem* u, d->pa->findRelevant(j)) {
@@ -395,7 +394,7 @@ void InfoDlg::setEdited(bool x)
 	ui_.le_orgName->setModified(x);
 	ui_.le_orgUnit->setModified(x);
 	ui_.le_title->setModified(x);
-	ui_.le_role->setEdited(x);
+	ui_.le_role->setModified(x);
 
 	d->te_edited = x;
 }
@@ -590,7 +589,7 @@ VCard InfoDlg::makeVCard()
 
 	v.setTitle( ui_.le_title->text() );
 	v.setRole( ui_.le_role->text() );
-	v.setDesc( ui_.te_desc->text() );
+	v.setDesc( ui_.te_desc->toPlainText() );
 
 	return v;
 }
@@ -732,7 +731,7 @@ void InfoDlg::contactAvailable(const Jid &j, const Resource &r)
 void InfoDlg::contactUnavailable(const Jid &j, const Resource &r)
 {
 	if (d->jid.compare(j,false)) {
-		d->infoRequested.remove(j.withResource(r.name()).full());
+		d->infoRequested.removeAll(j.withResource(r.name()).full());
 	}
 }
 

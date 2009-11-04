@@ -52,7 +52,7 @@ ShowTextDlg::ShowTextDlg(const QString &fname, bool rich, QWidget *parent)
 
 	vb1->addWidget(te);
 
-	QHBoxLayout *hb1 = new QHBoxLayout(0);
+	QHBoxLayout *hb1 = new QHBoxLayout;
 	vb1->addLayout(hb1);
 	hb1->addStretch(1);
 	QPushButton *pb = new QPushButton(tr("&OK"), this);
@@ -79,7 +79,7 @@ ShowTextDlg::ShowTextDlg(const QString &text, bool nonfile, bool rich, QWidget *
 
 	vb1->addWidget(te);
 
-	QHBoxLayout *hb1 = new QHBoxLayout(0);
+	QHBoxLayout *hb1 = new QHBoxLayout;
 	vb1->addLayout(hb1);
 	hb1->addStretch(1);
 	QPushButton *pb = new QPushButton(tr("&OK"), this);

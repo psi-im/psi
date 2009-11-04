@@ -698,7 +698,7 @@ void EventDlg::init()
 	vb1->setSpacing(4);
 
 	// first row
-	QHBoxLayout *hb1 = new QHBoxLayout(0);
+	QHBoxLayout *hb1 = new QHBoxLayout;
 	hb1->setSpacing(4);
 	vb1->addLayout(hb1);
 	d->lb_identity = new QLabel(tr("Identity:"), this);
@@ -724,7 +724,7 @@ void EventDlg::init()
 	updateIdentityVisibility();
 
 	// second row
-	QHBoxLayout *hb2 = new QHBoxLayout(0);
+	QHBoxLayout *hb2 = new QHBoxLayout;
 	hb2->setSpacing(4);
 	vb1->addLayout(hb2);
 
@@ -821,7 +821,7 @@ void EventDlg::init()
 		if (toolButton)
 			toolButton->setFocusPolicy(Qt::NoFocus);
 
-	QHBoxLayout *hb3 = new QHBoxLayout(0);
+	QHBoxLayout *hb3 = new QHBoxLayout;
 	hb3->setSpacing(4);
 	vb1->addLayout(hb3);
 
@@ -913,7 +913,7 @@ void EventDlg::init()
 	d->xdata_form->hide();
 
 	// bottom row
-	QHBoxLayout *hb4 = new QHBoxLayout(0);
+	QHBoxLayout *hb4 = new QHBoxLayout;
 	vb1->addLayout(hb4);
 	d->pb_close = new IconButton(this);
 	d->pb_close->setText(tr("&Close"));

@@ -40,7 +40,7 @@ PsiTabWidget::PsiTabWidget(QWidget *parent)
 	layout_ = new QVBoxLayout(this);
 	layout_->setMargin(0);
 	layout_->setSpacing(0);
-	barLayout_ = new QHBoxLayout(0);
+	barLayout_ = new QHBoxLayout;
 	layout_->addLayout(barLayout_);
 	barLayout_->setMargin(0);
 	barLayout_->setSpacing(0);

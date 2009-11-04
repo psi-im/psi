@@ -5,7 +5,7 @@
 #include <QKeySequence>
 #include <QBuffer>
 
-#include "optionstree.h";
+#include "optionstree.h"
 #include "varianttree.h"
 #include "xmpp/base64/base64.h"
 

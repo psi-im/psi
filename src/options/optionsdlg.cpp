@@ -344,7 +344,8 @@ void OptionsDlg::Private::openTab(QString id)
 
 				// TODO: how about QScrollView for large tabs?
 				// idea: maybe do it only for those, whose sizeHint is bigger than ws_tabs'
-				QWidget *w = new QWidget(dlg->ws_tabs, "QWidgetStack/tab");
+				QWidget *w = new QWidget(dlg->ws_tabs);
+				w->setObjectName("QWidgetStack/tab");
 				QVBoxLayout *vbox = new QVBoxLayout(w);
 				vbox->setSpacing(0);
 				vbox->setMargin(0);

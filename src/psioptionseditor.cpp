@@ -119,7 +119,7 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
 	tv_->resizeColumnToContents(0);
 	tv_colWidth = tv_->columnWidth(0);
 	
-	QHBoxLayout *infoLine = new QHBoxLayout(0);
+	QHBoxLayout *infoLine = new QHBoxLayout;
 	layout->addLayout(infoLine);
 	lb_path = new QLabel(this);
 	lb_path->setTextInteractionFlags(Qt::TextSelectableByMouse);
@@ -144,7 +144,7 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
 
 	layout->addWidget(lb_comment);
 
-	QHBoxLayout* buttonLine = new QHBoxLayout(0);
+	QHBoxLayout* buttonLine = new QHBoxLayout;
 	layout->addLayout(buttonLine);
 
 	cb_ = new QCheckBox(this);

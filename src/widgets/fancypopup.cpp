@@ -186,7 +186,7 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
 	vbox->setSpacing(0);
 
 	// top row
-	QHBoxLayout *tophbox = new QHBoxLayout(0);
+	QHBoxLayout *tophbox = new QHBoxLayout;
 	vbox->addLayout(tophbox);
 	QLabel *top1 = new QLabel(popup);
 	top1->setAutoFillBackground(true);
@@ -194,7 +194,7 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
 	top1->setPalette(backgroundPalette);
 	tophbox->addWidget(top1);
 
-	QVBoxLayout *topvbox = new QVBoxLayout(0);
+	QVBoxLayout *topvbox = new QVBoxLayout;
 	tophbox->addLayout(topvbox);
 	QLabel *top2 = new QLabel(popup);
 	top2->setAutoFillBackground(true);
@@ -202,7 +202,7 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
 	top2->setPalette(backgroundPalette);
 	topvbox->addWidget(top2);
 
-	QHBoxLayout *tophbox2 = new QHBoxLayout(0);
+	QHBoxLayout *tophbox2 = new QHBoxLayout;
 	topvbox->addLayout(tophbox2);
 
 	IconLabel *titleIcon = new IconLabel(popup);
@@ -276,7 +276,7 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
 	tophbox->addWidget(top4);
 
 	// middle row
-	QHBoxLayout *middlehbox = new QHBoxLayout(0);
+	QHBoxLayout *middlehbox = new QHBoxLayout;
 	vbox->addLayout(middlehbox);
 	QLabel *middle1 = new QLabel(popup);
 	middle1->setAutoFillBackground(true);
@@ -285,7 +285,7 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
 	middlehbox->addWidget(middle1);
 
 	middlehbox->addSpacing(5);
-	QVBoxLayout *middlevbox = new QVBoxLayout(0);
+	QVBoxLayout *middlevbox = new QVBoxLayout;
 	middlehbox->addLayout(middlevbox);
 	middlevbox->addSpacing(5);
 	layout = middlevbox; // we'll add more items later in addLayout()
@@ -298,7 +298,7 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
 	middlehbox->addWidget(middle3);
 
 	// bottom row
-	QHBoxLayout *bottomhbox = new QHBoxLayout(0);
+	QHBoxLayout *bottomhbox = new QHBoxLayout;
 	vbox->addLayout(bottomhbox);
 	QLabel *bottom1 = new QLabel(popup);
 	bottom1->setAutoFillBackground(true);

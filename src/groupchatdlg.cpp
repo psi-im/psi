@@ -388,7 +388,7 @@ join <channel>{,<channel>} [pass{,<pass>}
 				version->go();
 				newstate = 0;
 			} else if (cmd == "idle" && command.count() > 1) {
-				QString nick = command[1].stripWhiteSpace();
+				QString nick = command[1].trimmed();
 				Jid target = dlg->jid().withResource(nick);
 				LastActivityTask *idle = new LastActivityTask(target, dlg->account()->client()->rootTask());
 				connect(idle, SIGNAL(finished()), SLOT(lastactivity_finished()));
@@ -1835,7 +1835,7 @@ GCFindDlg::GCFindDlg(const QString& str, QWidget* parent)
 	setWindowTitle(tr("Find"));
 	QVBoxLayout *vb = new QVBoxLayout(this);
 	vb->setMargin(4);
-	QHBoxLayout *hb = new QHBoxLayout(0);
+	QHBoxLayout *hb = new QHBoxLayout;
 	vb->addLayout(hb);
 	QLabel *l = new QLabel(tr("Find:"), this);
 	hb->addWidget(l);
@@ -1849,7 +1849,7 @@ GCFindDlg::GCFindDlg(const QString& str, QWidget* parent)
 	Line1->setFrameShape( QFrame::HLine );
 	vb->addWidget(Line1);
 
-	hb = new QHBoxLayout(0);
+	hb = new QHBoxLayout;
 	vb->addLayout(hb);
 	hb->addStretch(1);
 	QPushButton *pb_close = new QPushButton(tr("&Close"), this);
