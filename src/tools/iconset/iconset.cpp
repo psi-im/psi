@@ -876,6 +876,9 @@ const PsiIcon *IconsetFactoryPrivate::icon(const QString &name) const
  */
 const PsiIcon *IconsetFactory::iconPtr(const QString &name)
 {
+	if (name.isEmpty())
+		return 0;
+
 	const PsiIcon *i = IconsetFactoryPrivate::instance()->icon(name);
 	if ( !i ) {
 		qDebug("WARNING: IconsetFactory::icon(\"%s\"): icon not found", qPrintable(name));
