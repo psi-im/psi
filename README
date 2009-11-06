@@ -1,6 +1,6 @@
-Barracuda IM Client 4.2.0
+Barracuda IM Client 4.2.1
 -------------------------
-Date: October 26th, 2009
+Date: November 5th, 2009
 
 Barracuda Networks - http://www.barracudanetworks.com/
 
@@ -14,7 +14,7 @@ Barracuda Networks - http://www.barracudanetworks.com/
 
 Changes
 -------
-  New in 4.2.0
+  New in 4.2.1
   - New groupchat browser, with ability to create, join, and destroy groupchats
   - Easily set groupchats to be automatically joined on login
 
