@@ -139,26 +139,27 @@ SectionIn 1 RO
     File QtOpenGL4.dll
     File Qt3Support4.dll
     File libeay32.dll
-    File ssleay32.dll
+    File libssl32.dll
     File qca2.dll
     ;File msvcr71d.dll
     ;File msvcp71d.dll
     ;File msvcrtd.dll
+    File mingwm10.dll
     File Readme.txt
     File Copying.txt
     ;File *.qm
-    SetOutPath "$INSTDIR\Microsoft.VC80.CRT\"
-    File Microsoft.VC80.CRT\Microsoft.VC80.CRT.manifest
-    File Microsoft.VC80.CRT\msvcm80.dll
-    File Microsoft.VC80.CRT\msvcp80.dll
-    File Microsoft.VC80.CRT\msvcr80.dll
+    ;SetOutPath "$INSTDIR\Microsoft.VC80.CRT\"
+    ;File Microsoft.VC80.CRT\Microsoft.VC80.CRT.manifest
+    ;File Microsoft.VC80.CRT\msvcm80.dll
+    ;File Microsoft.VC80.CRT\msvcp80.dll
+    ;File Microsoft.VC80.CRT\msvcr80.dll
     SetOutPath "$INSTDIR\imageformats\"
     File imageformats\qjpeg4.dll
     File imageformats\qgif4.dll
     SetOutPath "$INSTDIR\crypto\"
-    File crypto\qca-logger2.dll
+    ;File crypto\qca-logger2.dll
     File crypto\qca-ossl2.dll
-    File crypto\qca-wingss2.dll
+    ;File crypto\qca-wingss2.dll
     SetOutPath "$INSTDIR\certs\"
     File certs\README
     ;File certs\*.pem
@@ -186,6 +187,37 @@ SectionIn 1 RO
     ;File docs\*
     SetOutPath "$INSTDIR\gfx\"
     File gfx\*.png
+    SetOutPath "$INSTDIR"
+    File gstprovider.dll
+    File libgio-2.0-0.dll
+    File libglib-2.0-0.dll
+    File libgmodule-2.0-0.dll
+    File libgobject-2.0-0.dll
+    File libgstaudio-0.10-0.dll
+    File libgstbase-0.10-0.dll
+    File libgstcontroller-0.10-0.dll
+    File libgstinterfaces-0.10-0.dll
+    File libgstnetbuffer-0.10-0.dll
+    File libgstpbutils-0.10-0.dll
+    File libgstreamer-0.10-0.dll
+    File libgstriff-0.10-0.dll
+    File libgstrtp-0.10-0.dll
+    File libgsttag-0.10-0.dll
+    File libgstvideo-0.10-0.dll
+    File libgthread-2.0-0.dll
+    File libltdl-7.dll
+    File libogg-0.dll
+    File liboil-0.3-0.dll
+    File libspeex-1.dll
+    File libspeexdsp-1.dll
+    File libtheora-0.dll
+    File libtheoradec-1.dll
+    File libtheoraenc-1.dll
+    File libvorbis-0.dll
+    File libvorbisenc-2.dll
+    File libvorbisfile-3.dll
+    SetOutPath "$INSTDIR\gstreamer-0.10\"
+    File gstreamer-0.10\*.dll
     WriteUninstaller "$INSTDIR\uninst.exe"
 SectionEnd
 
@@ -244,11 +276,12 @@ Section "Uninstall"
     Delete $INSTDIR\QtOpenGL4.dll
     Delete $INSTDIR\Qt3Support4.dll
     Delete $INSTDIR\libeay32.dll
-    Delete $INSTDIR\ssleay32.dll
+    Delete $INSTDIR\libssl32.dll
     Delete $INSTDIR\qca2.dll
     ;Delete $INSTDIR\msvcr71d.dll
     ;Delete $INSTDIR\msvcp71d.dll
     ;Delete $INSTDIR\msvcrtd.dll
+    Delete $INSTDIR\mingwm10.dll
     Delete $INSTDIR\Microsoft.VC80.CRT\Microsoft.VC80.CRT.manifest
     Delete $INSTDIR\Microsoft.VC80.CRT\msvcm80.dll
     Delete $INSTDIR\Microsoft.VC80.CRT\msvcp80.dll
@@ -290,6 +323,35 @@ Section "Uninstall"
     Delete $INSTDIR\crypto\*
     ;Delete $INSTDIR\docs\*
     Delete $INSTDIR\gfx\*
+    Delete $INSTDIR\gstreamer-0.10\*
+    Delete $INSTDIR\gstprovider.dll
+    Delete $INSTDIR\libgio-2.0-0.dll
+    Delete $INSTDIR\libglib-2.0-0.dll
+    Delete $INSTDIR\libgmodule-2.0-0.dll
+    Delete $INSTDIR\libgobject-2.0-0.dll
+    Delete $INSTDIR\libgstaudio-0.10-0.dll
+    Delete $INSTDIR\libgstbase-0.10-0.dll
+    Delete $INSTDIR\libgstcontroller-0.10-0.dll
+    Delete $INSTDIR\libgstinterfaces-0.10-0.dll
+    Delete $INSTDIR\libgstnetbuffer-0.10-0.dll
+    Delete $INSTDIR\libgstpbutils-0.10-0.dll
+    Delete $INSTDIR\libgstreamer-0.10-0.dll
+    Delete $INSTDIR\libgstriff-0.10-0.dll
+    Delete $INSTDIR\libgstrtp-0.10-0.dll
+    Delete $INSTDIR\libgsttag-0.10-0.dll
+    Delete $INSTDIR\libgstvideo-0.10-0.dll
+    Delete $INSTDIR\libgthread-2.0-0.dll
+    Delete $INSTDIR\libltdl-7.dll
+    Delete $INSTDIR\libogg-0.dll
+    Delete $INSTDIR\liboil-0.3-0.dll
+    Delete $INSTDIR\libspeex-1.dll
+    Delete $INSTDIR\libspeexdsp-1.dll
+    Delete $INSTDIR\libtheora-0.dll
+    Delete $INSTDIR\libtheoradec-1.dll
+    Delete $INSTDIR\libtheoraenc-1.dll
+    Delete $INSTDIR\libvorbis-0.dll
+    Delete $INSTDIR\libvorbisenc-2.dll
+    Delete $INSTDIR\libvorbisfile-3.dll
     RMDir $INSTDIR\certs
     RMDir $INSTDIR\iconsets\emoticons\default
     RMDir $INSTDIR\iconsets\emoticons
@@ -323,8 +385,9 @@ Section "Uninstall"
     RMDir $INSTDIR\crypto
     ;RMDir $INSTDIR\docs
     RMDir $INSTDIR\gfx
+    RMDir $INSTDIR\gstreamer-0.10
     RMDir $INSTDIR\imageformats
-    RMDir $INSTDIR\Microsoft.VC80.CRT
+    ;RMDir $INSTDIR\Microsoft.VC80.CRT
     RMDir $INSTDIR
     Delete "$SMPROGRAMS\Barracuda IM Client.lnk"
     Delete "$SMSTARTUP\Barracuda IM Client.lnk"
