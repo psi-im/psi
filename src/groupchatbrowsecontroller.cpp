@@ -19,10 +19,11 @@
 #include "groupchatbrowsecontroller.h"
 
 #include "groupchatbrowsewindow.h"
-#include "psiaccount.h"
+#include "psiaccount_b.h"
 #include "xmpp_tasks.h"
 #include "xmpp_discoinfotask.h"
 #include "xmpp_xmlcommon.h"
+#include "psiiconset.h"
 
 Q_DECLARE_METATYPE(GroupChatBrowseWindow::RoomOptions)
 
@@ -97,6 +98,7 @@ public:
 		bw = new PsiGroupChatBrowseWindow(parent);
 		bw->setController(q);
 		bw->setAttribute(Qt::WA_DeleteOnClose);
+		//bw->setGroupChatIcon(IconsetFactory::icon("psi/start-chat").pixmap());
 		connect(bw, SIGNAL(onBrowse(const XMPP::Jid &)), SLOT(bw_onBrowse(const XMPP::Jid &)));
 		connect(bw, SIGNAL(onJoin(const XMPP::Jid &)), SLOT(bw_onJoin(const XMPP::Jid &)));
 		connect(bw, SIGNAL(onCreate(const XMPP::Jid &)), SLOT(bw_onCreate(const XMPP::Jid &)));
@@ -104,6 +106,7 @@ public:
 		connect(bw, SIGNAL(onCreateCancel(const XMPP::Jid &)), SLOT(bw_onCreateCancel(const XMPP::Jid &)));
 		connect(bw, SIGNAL(onCreateFinalize(const XMPP::Jid &, bool)), SLOT(bw_onCreateFinalize(const XMPP::Jid &, bool)));
 		connect(bw, SIGNAL(onDestroy(const XMPP::Jid &)), SLOT(bw_onDestroy(const XMPP::Jid &)));
+		connect(bw, SIGNAL(onSetAutoJoin(const QList<XMPP::Jid> &, bool)), SLOT(bw_onSetAutoJoin(const QList<XMPP::Jid> &, bool)));
 		connect(bw, SIGNAL(destroyed(QObject *)), SLOT(bw_destroyed()));
 
 		account->dialogRegister(bw);
@@ -266,6 +269,12 @@ public slots:
 		jt_destroy->go(true);
 	}
 
+	void bw_onSetAutoJoin(const QList<XMPP::Jid> &rooms, bool enabled)
+	{
+		foreach(const XMPP::Jid &room, rooms)
+			account->setAutoJoined(room, enabled);
+	}
+
 	void jt_browse_finished()
 	{
 		XMPP::JT_DiscoItems *jt_browse = (XMPP::JT_DiscoItems *)sender();
@@ -278,6 +287,8 @@ public slots:
 			ri.jid = i.jid();
 			ri.roomName = i.name();
 			ri.participants = -2; // means undisco'd
+			// FIXME: make sure bookmarks have been fetched
+			ri.autoJoin = account->isAutoJoined(ri.jid);
 			rooms += ri;
 		}
 
