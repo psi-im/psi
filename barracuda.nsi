@@ -34,7 +34,7 @@ ComponentText "Ready to install the Barracuda IM Client on your computer."
 DirText "You may specify your install folder."
 
 ;InstallDir $INSTDIR
-InstallDir "C:\Program Files\Barracuda\"
+InstallDir "C:\Program Files\Barracuda\IM Firewall\Client\"
 
 ; Automatically close the installer when done.
 AutoCloseWindow true
@@ -192,7 +192,7 @@ SectionEnd
 Section "Start Menu Items"
 SectionIn 1
     SetOutPath $INSTDIR
-    CreateShortCut "$SMPROGRAMS\Barracuda IM Client.lnk"\
+    CreateShortCut "$SMPROGRAMS\Barracuda\IM Firewall\Barracuda IM Client.lnk"\
                    "$INSTDIR\barracuda.exe"
 SectionEnd
 
