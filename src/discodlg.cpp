@@ -218,6 +218,8 @@ private:
 	// helper functions
 	void init(DiscoItem it, DiscoData *dd);
 
+	void hideChildIndicator();
+
 	bool autoItemsEnabled() const;
 	bool autoInfoEnabled() const;
 	DiscoDlg *dlg() const;
@@ -564,6 +566,18 @@ QString DiscoListItem::computeHash( QString jid, QString node )
 	return ret;
 }
 
+void DiscoListItem::hideChildIndicator()
+{
+	setChildIndicatorPolicy(DontShowIndicator);
+#if QT_VERSION >= 0x040500
+	emitDataChanged();
+#else
+	Qt::ItemFlags tmp = flags();
+	setFlags(0);
+	setFlags(tmp);
+#endif
+}
+
 void DiscoListItem::updateItemsFinished(const DiscoList &list)
 {
 	QHash<QString, DiscoListItem*> children;
@@ -597,10 +611,8 @@ void DiscoListItem::updateItemsFinished(const DiscoList &list)
 	if ( autoItems && isExpanded() )
 		autoItemsChildren();
 
-	if (list.isEmpty())
-	{
-		setChildIndicatorPolicy(DontShowIndicator);
-		emitDataChanged();
+	if (list.isEmpty()) {
+		hideChildIndicator();
 	}
 
 	// root item is initially hidden
@@ -643,7 +655,7 @@ void DiscoListItem::discoInfoFinished()
 	else {
 		QString error_str = jt->statusString();
 		int error_code = jt->statusCode();
-		setChildIndicatorPolicy(DontShowIndicator);
+		hideChildIndicator();
 
 		// we change the icon for the items with disco#info returning type=="cancel" || type=="wait" error codes
 		// based on http://www.jabber.org/jeps/jep-0086.html
@@ -665,8 +677,6 @@ void DiscoListItem::discoInfoFinished()
 			}
 			if ( !iconOk )
 				setIcon(0, PsiIconset::instance()->status(di.jid(), STATUS_ERROR).icon());
-		} else {
-			emitDataChanged(); // Remove child indicator
 		}
 
 		errorInfo=QString("%1").arg(QString(error_str).replace('\n', "<br>"));
