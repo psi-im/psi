@@ -1,6 +1,6 @@
 Psi 0.14-dev
 ------------
-Date: Jul 9th, 2009
+Date: November 7th, 2009
 
 Maintainers:
   Justin Karneges (2001-2004, 2009-current)
@@ -58,6 +58,16 @@ Notes
 
 Changes
 -------
+  New in 0.14
+  - Added color options to the chat window.
+  - Can now specify a reason for kick/ban in groupchat.
+  - Improved User Info window, to show more fields and photo view/save.
+  - Support for Enchant as an alternative to Aspell.
+  - Commandline interface now supports choosing profile and setting status.
+  - D-BUS interface now supports setting status and indicating sleep/wake.
+  - Fixed voice calling compatibility bugs with Pidgin and Empathy.
+  - Various other minor improvements and bugfixes.
+
   New in 0.13
   - Voice calls (Jingle RTP).
   - Basic XMPP URI handler.
@@ -110,7 +120,7 @@ Changes
     messages to multiple users. Use option.enable-multicasting to enable it.
   - Added 'Show status message' toggle. There is a hidden option to put 
     status messages under the nickname (at the cost of 2 extra pixels
-	  when no status message is shown)
+    when no status message is shown)
   - Support for Bookmark Storage (XEP-0048), where bookmarked conferences are
     auto-joined. No UI is provided for creating bookmarks (yet).
   - Better error messages, including error condition mappings (XEP-0086)
@@ -118,7 +128,7 @@ Changes
   - Improved PGP error messages
   - Hiding the deprecated protocol selector for service discovery by default.
     Use option.ui.show-deprecated.service-discovery.protocol-selector to
-	  re-enable it.
+    re-enable it.
   - New options system (see options.xml)
   - Receiving support for vCard-Based Avatars (XEP-0153)
   - Support for Multi-User-Chat (XEP-0045)
@@ -148,54 +158,6 @@ Changes
   - Moving tooltips
   - MingW32 compiler support (Coupled with the open source Qt4 Windows library
     this now allows completely free building of Psi on Windows)
-
-  New in 0.10
-  - Psi will now sign out before Windows or Mac OS X machines go to 'sleep'
-  - The default text input line in the chat dialogs starts at one line tall, and grows as necessary.
-  - The Roster can now be automatically resized to fit all contacts.
-  - The Roster now has a menu bar available on Windows and Linux
-  - Chat windows can be collected together using tabs
-  - On Windows and Mac OS X, selected text may be automatically copied to the clipboard.
-  - Mac OS X builds now enjoy Growl(.info) support
-  - Photos are now available in the VCard dialog
-  - New default colour scheme
-  - New default iconsets
-  - Roster and chat dialog opacity is now configurable on Windows and Mac OS X
-  - The colour scheme is now slightly more configurable
-  - Assorted minor feature additions and bug fixes
-
-  New in 0.9.3
-  - Notification when a user is typing
-  - Advanced Data Forms capability (x:data)
-  - Mac version uses the menu bar and also has a new color scheme
-  - Slightly improved new user dialog
-  - Drag and drop File Transfer
-  - Ability to specify a status messages when going offline
-  - The tray icon under X11 should now be more beautiful
-  - Show self-contact is now a toolbar button instead of a normal option
-  - There is now an option for all chat windows to be compact by default
-  - Bugfix: file transfer sometimes wouldn't send the whole file
-  - Fixed many other small bugs
-
-  New in 0.9.2
-  - File transfer
-  - Event queue is saved to disk at all times for fault protection
-  - Enable/disable accounts
-  - Groupchat nickname tab-completion
-  - Groupchat trackbar to mark last read text when unfocused
-  - *bold*, /italic/, _underline_
-  - Fixed bug where the roster window could get lost on Windows
-  - 'Compact' mode for chat window
-  - Tip of the day
-  - Hidden roster group
-  - Ability to export history as readable text
-  - Event queue sorting by type
-  - Type-ahead search in the roster
-  - External programs can now have parameters
-  - Toolbar configuration is now accessed from the right-click menu
-  - Show dates in local format
-  - Use the gnome-open utility for opening URLs with GNOME2
-  - Fixed "broken pipe" crash when receiving GnuPG errors
 
 
 Description
