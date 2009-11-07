@@ -1968,7 +1968,8 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
 		foreach(UserListItem* u, findRelevant(j)) {
 			UserResourceList::Iterator rit = u->userResourceList().find(j.resource());
 			if (rit != u->userResourceList().end()) {
-				(*rit).setClient(capsManager()->clientName(j),capsManager()->clientVersion(j),"");
+				//(*rit).setClient(capsManager()->clientName(j),capsManager()->clientVersion(j),"");
+				(*rit).setClient(QString(),QString(),"");
 				cpUpdate(*u,(*rit).name());
 			}
 		}
@@ -2436,7 +2437,8 @@ void PsiAccount::capsChanged(const Jid& j)
 		bool found = (rit == u->userResourceList().end()) ? false: true;
 		if(!found)
 			continue;
-		(*rit).setClient(name,version,"");
+		//(*rit).setClient(name,version,"");
+		(*rit).setClient(QString(),QString(),"");
 		cpUpdate(*u);
 	}
 }
