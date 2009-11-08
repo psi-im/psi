@@ -295,7 +295,7 @@ bool MessageEvent::fromXml(PsiCon *psi, PsiAccount *account, const QDomElement *
 	if ( found ) {
 		DummyStream stream;
 		Stanza s = stream.createStanza(addCorrectNS(msg));
-		v_m.fromStanza(s, 0); // FIXME: fix tzoffset?
+		v_m.fromStanza(s);
 
 		// if message was not spooled, it will be initialized with the
 		// current datetime. we want to reset it back to the original
@@ -504,7 +504,7 @@ HttpAuthEvent::HttpAuthEvent(const PsiHttpAuthRequest &req, PsiAccount *acc)
 	XMPP::Message m;
 
 	if ( s.kind() == XMPP::Stanza::Message ) {
-		m.fromStanza(s, acc->client()->timeZoneOffset());
+		m.fromStanza(s);
 	}
 	else {
 		m.setFrom(s.from());

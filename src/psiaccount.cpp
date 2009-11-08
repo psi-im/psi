@@ -663,7 +663,6 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	// create Jabber::Client
 	d->client = new Client;
 	d->client->setOSName(SystemInfo::instance()->os());
-	d->client->setTimeZone(SystemInfo::instance()->timezoneString(), SystemInfo::instance()->timezoneOffset());
 	d->client->setClientName(ApplicationInfo::name());
 	d->client->setClientVersion(ApplicationInfo::version());
 	d->client->setCapsNode(ApplicationInfo::capsNode());
