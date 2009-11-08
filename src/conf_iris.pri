@@ -1,4 +1,4 @@
-unix:include(../conf.pri)
+include(../conf.pri)
 windows:include(../conf_windows.pri)
 
 # don't build iris apps
