@@ -19,11 +19,19 @@ Main options:
   --help              This help text.
 
 Project options:
-  --certstore-path=[path]    Path to the SSL/X509 Certificate store file
-                             (bundled QCA only)
+  --release                   Build with debugging turned off (default).
+  --debug                     Build with debugging turned on.
+  --no-separate-debug-info    Do not store debug information in a separate
+                              file (default for mac).
+  --separate-debug-info       Strip debug information into a separate .debug
+                              file (default for non-mac).
+  --certstore-path=[path]     Path to the SSL/X509 Certificate store file
+                              (bundled QCA only)
 
 Dependency options:
   --disable-bundled-qca        Disable use of Use bundled QCA
+  --with-qca=[path]            Specify path to QCA tree, mainly for building
+                               against an uninstalled QCA.
   --disable-openssl            Disable use of OpenSSL (bundled QCA only)
   --with-openssl-inc=[path]    Path to OpenSSL include files (bundled QCA
                                only)
@@ -40,7 +48,6 @@ Dependency options:
   --with-aspell-inc=[path]     Path to Aspell include files
   --with-aspell-lib=[path]     Path to Aspell library files
   --disable-enchant            Disable use of enchant
-  --enable-debug               Enable debugging support
 
 EOT
 }
@@ -162,6 +169,26 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
+		--release)
+			QC_RELEASE="Y"
+			shift
+			;;
+
+		--debug)
+			QC_DEBUG="Y"
+			shift
+			;;
+
+		--no-separate-debug-info)
+			QC_NO_SEPARATE_DEBUG_INFO="Y"
+			shift
+			;;
+
+		--separate-debug-info)
+			QC_SEPARATE_DEBUG_INFO="Y"
+			shift
+			;;
+
 		--certstore-path=*)
 			QC_CERTSTORE_PATH=$optarg
 			shift
@@ -169,6 +196,11 @@ while [ $# -gt 0 ]; do
 
 		--disable-bundled-qca)
 			QC_DISABLE_bundled_qca="Y"
+			shift
+			;;
+
+		--with-qca=*)
+			QC_WITH_QCA=$optarg
 			shift
 			;;
 
@@ -242,11 +274,6 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
-		--enable-debug)
-			QC_ENABLE_DEBUG="Y"
-			shift
-			;;
-
 		--verbose)
 			QC_VERBOSE="Y"
 			shift
@@ -270,8 +297,13 @@ echo BINDIR=$BINDIR
 echo LIBDIR=$LIBDIR
 echo DATADIR=$DATADIR
 echo EX_QTDIR=$EX_QTDIR
+echo QC_RELEASE=$QC_RELEASE
+echo QC_DEBUG=$QC_DEBUG
+echo QC_NO_SEPARATE_DEBUG_INFO=$QC_NO_SEPARATE_DEBUG_INFO
+echo QC_SEPARATE_DEBUG_INFO=$QC_SEPARATE_DEBUG_INFO
 echo QC_CERTSTORE_PATH=$QC_CERTSTORE_PATH
 echo QC_DISABLE_bundled_qca=$QC_DISABLE_bundled_qca
+echo QC_WITH_QCA=$QC_WITH_QCA
 echo QC_DISABLE_openssl=$QC_DISABLE_openssl
 echo QC_WITH_OPENSSL_INC=$QC_WITH_OPENSSL_INC
 echo QC_WITH_OPENSSL_LIB=$QC_WITH_OPENSSL_LIB
@@ -286,7 +318,6 @@ echo QC_DISABLE_aspell=$QC_DISABLE_aspell
 echo QC_WITH_ASPELL_INC=$QC_WITH_ASPELL_INC
 echo QC_WITH_ASPELL_LIB=$QC_WITH_ASPELL_LIB
 echo QC_DISABLE_enchant=$QC_DISABLE_enchant
-echo QC_ENABLE_DEBUG=$QC_ENABLE_DEBUG
 echo
 fi
 
@@ -434,6 +465,152 @@ public:
 		return(QT_VERSION >= 0x040400);
 	}
 };
+#line 1 "buildmodeapp.qcm"
+/*
+-----BEGIN QCMOD-----
+name: buildmodeapp
+section: project
+arg: release,Build with debugging turned off (default).
+arg: debug,Build with debugging turned on.
+arg: no-separate-debug-info,Do not store debug information in a separate file (default for mac).
+arg: separate-debug-info,Strip debug information into a separate .debug file (default for non-mac).
+-----END QCMOD-----
+arg: debug-and-release,Build two versions, with and without debugging turned on (mac only).
+*/
+
+#define QC_BUILDMODE
+bool qc_buildmode_release = false;
+bool qc_buildmode_debug = false;
+bool qc_buildmode_separate_debug_info = false;
+
+class qc_buildmodeapp : public ConfObj
+{
+public:
+	qc_buildmodeapp(Conf *c) : ConfObj(c) {}
+	QString name() const { return "buildmodeapp"; }
+	QString shortname() const { return "buildmodeapp"; }
+
+	// no output
+	QString checkString() const { return QString(); }
+
+	bool exec()
+	{
+		// first, parse out the options
+		bool opt_release = false;
+		bool opt_debug = false;
+		bool opt_debug_and_release = false;
+		bool opt_no_separate_debug_info = false;
+		bool opt_separate_debug_info = false;
+
+		if(conf->getenv("QC_RELEASE") == "Y")
+			opt_release = true;
+		if(conf->getenv("QC_DEBUG") == "Y")
+			opt_debug = true;
+		if(conf->getenv("QC_DEBUG_AND_RELEASE") == "Y")
+			opt_debug_and_release = true;
+		if(conf->getenv("QC_NO_SEPARATE_DEBUG_INFO") == "Y")
+			opt_no_separate_debug_info = true;
+		if(conf->getenv("QC_SEPARATE_DEBUG_INFO") == "Y")
+			opt_separate_debug_info = true;
+
+		bool staticmode = false;
+		if(conf->getenv("QC_STATIC") == "Y")
+			staticmode = true;
+
+#ifndef Q_OS_MAC
+		if(opt_debug_and_release)
+		{
+			printf("\nError: The --debug-and-release option is for mac only.\n");
+			exit(1);
+		}
+#endif
+
+		// sanity check exclusive options
+		int x;
+
+		// build mode
+		x = 0;
+		if(opt_release)
+			++x;
+		if(opt_debug)
+			++x;
+		if(opt_debug_and_release)
+			++x;
+		if(x > 1)
+		{
+			printf("\nError: Use only one of --release, --debug, or --debug-and-release.\n");
+			exit(1);
+		}
+
+		// debug info
+		x = 0;
+		if(opt_no_separate_debug_info)
+			++x;
+		if(opt_separate_debug_info)
+			++x;
+		if(x > 1)
+		{
+			printf("\nError: Use only one of --separate-debug-info or --no-separate-debug-info\n");
+			exit(1);
+		}
+
+		// now process the options
+
+		if(opt_release)
+			qc_buildmode_release = true;
+		else if(opt_debug)
+			qc_buildmode_debug = true;
+		else if(opt_debug_and_release)
+		{
+			qc_buildmode_release = true;
+			qc_buildmode_debug = true;
+		}
+		else // default
+			qc_buildmode_release = true;
+
+		if(opt_separate_debug_info)
+			qc_buildmode_separate_debug_info = true;
+		else if(opt_no_separate_debug_info)
+		{
+			// nothing to do
+		}
+		else // default
+		{
+#ifndef Q_OS_MAC
+			qc_buildmode_separate_debug_info = true;
+#endif
+		}
+
+		// make the string
+		QStringList opts;
+		QString other;
+
+		if(qc_buildmode_release && qc_buildmode_debug)
+		{
+			opts += "debug_and_release";
+			opts += "build_all";
+		}
+		else if(qc_buildmode_release)
+			opts += "release";
+		else // qc_buildmode_debug
+			opts += "debug";
+
+		if(qc_buildmode_separate_debug_info)
+		{
+			opts += "separate_debug_info";
+			other += "*-g++*:QMAKE_CFLAGS += -g\n";
+			other += "*-g++*:QMAKE_CXXFLAGS += -g\n";
+		}
+
+		QString str = QString("CONFIG += ") + opts.join(" ") + '\n';
+		conf->addExtra(str);
+
+		if(!other.isEmpty())
+			conf->addExtra(other);
+
+		return true;
+	}
+};
 #line 1 "bundled-qca.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -467,9 +644,48 @@ public:
 #line 1 "qca.qcm"
 /*
 -----BEGIN QCMOD-----
-name: external QCA 2.0
+name: QCA >= 2.0
+arg: with-qca=[path],Specify path to QCA tree, mainly for building against an uninstalled QCA.
 -----END QCMOD-----
 */
+
+// based on crypto.prf. any changes made to that file need to be tracked here.
+static QString internal_crypto_prf(const QString &incdir, const QString &libdir)
+{
+	QString out = QString(
+"QCA_INCDIR = %1\n"
+"QCA_LIBDIR = %2\n"
+"\n"
+"CONFIG *= qt\n"
+"\n"
+"LINKAGE =\n"
+"\n"
+"# on mac, if qca was built as a framework, link against it\n"
+"mac: {\n"
+"	framework_dir = \$\$QCA_LIBDIR\n"
+"	exists(\$\$framework_dir/qca.framework) {\n"
+"		#QMAKE_FRAMEWORKPATH *= \$\$framework_dir\n"
+"		LIBS += -F\$\$framework_dir\n"
+"		INCLUDEPATH += \$\$framework_dir/qca.framework/Headers\n"
+"		LINKAGE = -framework qca\n"
+"	}\n"
+"}\n"
+"\n"
+"# else, link normally\n"
+"isEmpty(LINKAGE) {\n"
+"	INCLUDEPATH += \$\$QCA_INCDIR/QtCrypto\n"
+"	LIBS += -L\$\$QCA_LIBDIR\n"
+"	LINKAGE = -lqca\n"
+"	CONFIG(debug, debug|release) {\n"
+"		windows:LINKAGE = -lqcad\n"
+"		mac:LINKAGE = -lqca_debug\n"
+"	}\n"
+"}\n"
+"\n"
+"LIBS += \$\$LINKAGE\n"
+	).arg(incdir, libdir);
+	return out;
+}
 
 //----------------------------------------------------------------------------
 // qc_qca
@@ -478,27 +694,55 @@ class qc_qca : public ConfObj
 {
 public:
 	qc_qca(Conf *c) : ConfObj(c) {}
-	QString name() const { return "QCA 2.0"; }
+	QString name() const { return "QCA >= 2.0"; }
 	QString shortname() const { return "qca"; }
 
-	QString checkString() const {
-		if (QFile::exists("third-party/qca/qca") && conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
+// BEGIN PSI
+	QString checkString() const
+	{
+		if(QFile::exists("third-party/qca/qca") && conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
 			return "";
 		else
 			return ConfObj::checkString();
 	}
+// END PSI
 
 	bool exec()
 	{
-		// Check if we have a bundnled version
-		if (QFile::exists("third-party/qca/qca") && conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
+// BEGIN PSI
+		// Check if we have a bundled version
+		if(QFile::exists("third-party/qca/qca") && conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
 			return true;
+// END PSI
+
+		// get the build mode
+#ifdef QC_BUILDMODE
+		bool release = qc_buildmode_release;
+		bool debug = qc_buildmode_debug;
+#else
+		// else, default to just release mode
+		bool release = true;
+		bool debug = false;
+#endif
 
 		// test for "crypto" feature and check qca version number
+		QString qca_prefix, qca_incdir, qca_libdir, qca_crypto_prf;
+		qca_prefix = conf->getenv("QC_WITH_QCA");
 
-		QString proextra =
-		"CONFIG += qt crypto\n"
-		"QT -= gui\n";
+		QString proextra;
+		if(!qca_prefix.isEmpty()) {
+			qca_incdir = qca_prefix + "/include";
+			qca_libdir = qca_prefix + "/lib";
+			qca_crypto_prf = internal_crypto_prf(qca_incdir, qca_libdir);
+			proextra =
+			"CONFIG += qt\n"
+			"QT -= gui\n";
+			proextra += qca_crypto_prf;
+		} else {
+			proextra =
+			"CONFIG += qt crypto\n"
+			"QT -= gui\n";
+		}
 
 		QString str =
 		"#include <QtCrypto>\n"
@@ -509,11 +753,28 @@ public:
 		"	if(x >= 0x020000 && x < 0x030000) return 0; else return 1;\n"
 		"}\n";
 
-		int ret;
-		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
-			return false;
-		if(ret != 0)
-			return false;
+		if(release)
+		{
+			int ret;
+			if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra + "CONFIG += release\n", &ret))
+				return false;
+			if(ret != 0)
+				return false;
+		}
+
+		if(debug)
+		{
+			int ret;
+			if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra + "CONFIG += debug\n", &ret))
+				return false;
+			if(ret != 0)
+				return false;
+		}
+
+		if(!qca_prefix.isEmpty())
+			conf->addExtra(qca_crypto_prf);
+		else
+			conf->addExtra("CONFIG += crypto\n");
 
 		return true;
 	}
@@ -554,26 +815,42 @@ public:
 		if(ossl_lib.isEmpty())
 			return false;
 
-		QString str =
-			"#include<openssl/opensslv.h>\n"
-			"int main()\n"
-			"{\n"
-			"  unsigned long x = OPENSSL_VERSION_NUMBER;\n"
-			"  if(x >= 0x00907000) return 0; else return 1;\n"
-			"}\n";
-		QString ext;
-		QStringList incs;
-		incs += ossl_inc;
-		ext += QString("-L") + ossl_lib + " -llibeay32 -lssleay32";
-		int ret;
-		if(!conf->doCompileAndLink(str, incs, ext, QString(), &ret))
+		QStringList libnames;
+		libnames += "-llibeay32 -lssleay32";
+		libnames += "-leay32 -lssl32";
+
+		bool success = false;
+		QString libname_success;
+		foreach(const QString &libname, libnames)
+		{
+			QString str =
+				"#include<openssl/opensslv.h>\n"
+				"int main()\n"
+				"{\n"
+				"  unsigned long x = OPENSSL_VERSION_NUMBER;\n"
+				"  if(x >= 0x00907000) return 0; else return 1;\n"
+				"}\n";
+			QString ext;
+			QStringList incs;
+			incs += ossl_inc;
+			ext += QString("-L") + ossl_lib + " " + libname;
+			int ret;
+			if(conf->doCompileAndLink(str, incs, ext, QString(), &ret))
+			{
+				success = true;
+				libname_success = libname;
+				if(ret == 0)
+					conf->addDefine("OSSL_097");
+				break;
+			}
+		}
+
+		if(!success)
 			return false;
-		if(ret == 0)
-			conf->addDefine("OSSL_097");
 
 		conf->addIncludePath(ossl_inc);
 		conf->addLib(QString("-L") + ossl_lib);
-		conf->addLib("-llibeay32 -lssleay32");
+		conf->addLib(libname_success);
 
 		conf->addDefine("HAVE_OPENSSL");
 
@@ -678,6 +955,7 @@ public:
 #ifdef Q_OS_WIN
 		// HACK: on windows, always use psi's bundled zlib
 		conf->addExtra("CONFIG += psi-zip");
+		return true;
 #else
 		QString inc, lib;
 		QString s;
@@ -1258,34 +1536,6 @@ public:
 			return "no";
 	}
 };
-#line 1 "debug.qcm"
-/*
------BEGIN QCMOD-----
-name: Debugging support
-arg: enable-debug,Enable debugging support
------END QCMOD-----
-*/
-
-//----------------------------------------------------------------------------
-// qc_debug
-//----------------------------------------------------------------------------
-class qc_debug : public ConfObj
-{
-public:
-	qc_debug(Conf *c) : ConfObj(c) {}
-	QString name() const { return "debugging support"; }
-	QString shortname() const { return "debug"; }
-	QString checkString() const { return QString(); }
-
-	bool exec()
-	{
-		if (conf->getenv("QC_ENABLE_DEBUG").isEmpty())
-			conf->addExtra("CONFIG += release");
-		else
-			conf->addExtra("CONFIG += debug");
-		return true;
-	}
-};
 #line 1 "recursiveprl.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -1332,6 +1582,9 @@ public:
 	QString checkString() const { return QString(); }
 	bool exec()
 	{
+#ifdef Q_OS_WIN
+		return true;
+#else
 		conf->addExtra(QString("PSI_LIBDIR=%1/psi").arg(conf->getenv("LIBDIR")));
 		conf->addExtra(QString("PSI_DATADIR=%1/psi").arg(conf->getenv("DATADIR")));
 
@@ -1345,12 +1598,16 @@ public:
 		conf->addDefine("HAVE_CONFIG");
 
 		return true;
+#endif
 	}
 };
 
 EOT
 cat >$1/modules_new.cpp <<EOT
     o = new qc_qt4(conf);
+    o->required = true;
+    o->disabled = false;
+    o = new qc_buildmodeapp(conf);
     o->required = true;
     o->disabled = false;
     o = new qc_bundled_qca(conf);
@@ -1387,9 +1644,6 @@ cat >$1/modules_new.cpp <<EOT
     o->required = false;
     o->disabled = false;
     o = new qc_spell(conf);
-    o->required = true;
-    o->disabled = false;
-    o = new qc_debug(conf);
     o->required = true;
     o->disabled = false;
     o = new qc_recursiveprl(conf);
@@ -2421,8 +2675,13 @@ export BINDIR
 export LIBDIR
 export DATADIR
 export EX_QTDIR
+export QC_RELEASE
+export QC_DEBUG
+export QC_NO_SEPARATE_DEBUG_INFO
+export QC_SEPARATE_DEBUG_INFO
 export QC_CERTSTORE_PATH
 export QC_DISABLE_bundled_qca
+export QC_WITH_QCA
 export QC_DISABLE_openssl
 export QC_WITH_OPENSSL_INC
 export QC_WITH_OPENSSL_LIB
@@ -2437,7 +2696,6 @@ export QC_DISABLE_aspell
 export QC_WITH_ASPELL_INC
 export QC_WITH_ASPELL_LIB
 export QC_DISABLE_enchant
-export QC_ENABLE_DEBUG
 export QC_VERBOSE
 rm -rf .qconftemp
 (

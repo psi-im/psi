@@ -22,9 +22,9 @@ include(../qa/oldtest/unittest.pri)
 
 # qconf
 
-exists(../conf.pri) {
-	include(../conf.pri)
+include(../conf.pri)
 
+unix {
 	# Target
 	target.path = $$BINDIR
 	INSTALLS += target
