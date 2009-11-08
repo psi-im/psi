@@ -33,26 +33,42 @@ public:
 		if(ossl_lib.isEmpty())
 			return false;
 
-		QString str =
-			"#include<openssl/opensslv.h>\n"
-			"int main()\n"
-			"{\n"
-			"  unsigned long x = OPENSSL_VERSION_NUMBER;\n"
-			"  if(x >= 0x00907000) return 0; else return 1;\n"
-			"}\n";
-		QString ext;
-		QStringList incs;
-		incs += ossl_inc;
-		ext += QString("-L") + ossl_lib + " -llibeay32 -lssleay32";
-		int ret;
-		if(!conf->doCompileAndLink(str, incs, ext, QString(), &ret))
+		QStringList libnames;
+		libnames += "-llibeay32 -lssleay32";
+		libnames += "-leay32 -lssl32";
+
+		bool success = false;
+		QString libname_success;
+		foreach(const QString &libname, libnames)
+		{
+			QString str =
+				"#include<openssl/opensslv.h>\n"
+				"int main()\n"
+				"{\n"
+				"  unsigned long x = OPENSSL_VERSION_NUMBER;\n"
+				"  if(x >= 0x00907000) return 0; else return 1;\n"
+				"}\n";
+			QString ext;
+			QStringList incs;
+			incs += ossl_inc;
+			ext += QString("-L") + ossl_lib + " " + libname;
+			int ret;
+			if(conf->doCompileAndLink(str, incs, ext, QString(), &ret))
+			{
+				success = true;
+				libname_success = libname;
+				if(ret == 0)
+					conf->addDefine("OSSL_097");
+				break;
+			}
+		}
+
+		if(!success)
 			return false;
-		if(ret == 0)
-			conf->addDefine("OSSL_097");
 
 		conf->addIncludePath(ossl_inc);
 		conf->addLib(QString("-L") + ossl_lib);
-		conf->addLib("-llibeay32 -lssleay32");
+		conf->addLib(libname_success);
 
 		conf->addDefine("HAVE_OPENSSL");
 

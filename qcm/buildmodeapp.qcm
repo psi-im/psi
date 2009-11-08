@@ -130,8 +130,8 @@ public:
 		if(qc_buildmode_separate_debug_info)
 		{
 			opts += "separate_debug_info";
-			other += "QMAKE_CFLAGS += -g\n";
-			other += "QMAKE_CXXFLAGS += -g\n";
+			other += "*-g++*:QMAKE_CFLAGS += -g\n";
+			other += "*-g++*:QMAKE_CXXFLAGS += -g\n";
 		}
 
 		QString str = QString("CONFIG += ") + opts.join(" ") + '\n';
