@@ -26,7 +26,6 @@
   <dep type='growl'/>
   <!--<dep type='sparkle'/>-->
   <dep type='xss'/>
-  <dep type='ghbnr'/>
   <dep type='aspell'/>
   <dep type='enchant'/>
   <dep type='spell'>
