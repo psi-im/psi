@@ -21,6 +21,7 @@
 #include "discodlg.h"
 
 #include <QTreeWidget>
+#include <QHeaderView>
 #include <QMenu>
 
 #include <QComboBox>
