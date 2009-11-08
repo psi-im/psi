@@ -27,6 +27,7 @@ public:
 #ifdef Q_OS_WIN
 		// HACK: on windows, always use psi's bundled zlib
 		conf->addExtra("CONFIG += psi-zip");
+		return true;
 #else
 		QString inc, lib;
 		QString s;

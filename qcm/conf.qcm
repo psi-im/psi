@@ -16,6 +16,9 @@ public:
 	QString checkString() const { return QString(); }
 	bool exec()
 	{
+#ifdef Q_OS_WIN
+		return true;
+#else
 		conf->addExtra(QString("PSI_LIBDIR=%1/psi").arg(conf->getenv("LIBDIR")));
 		conf->addExtra(QString("PSI_DATADIR=%1/psi").arg(conf->getenv("DATADIR")));
 
@@ -29,5 +32,6 @@ public:
 		conf->addDefine("HAVE_CONFIG");
 
 		return true;
+#endif
 	}
 };

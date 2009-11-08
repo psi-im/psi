@@ -8,6 +8,9 @@
   <dep type='qt4'>
     <required/>
   </dep>
+  <dep type='buildmodeapp'>
+    <required/>
+  </dep>
   <dep type='bundled-qca' />
   <dep type='qca'>
     <required/>
@@ -32,9 +35,6 @@
     <required/>
   </dep>
   <!--<dep type='plugins'/>-->
-  <dep type='debug'>
-    <required/>
-  </dep>
   <dep type='recursiveprl'>
     <required/>
   </dep>
