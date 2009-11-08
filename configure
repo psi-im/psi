@@ -818,6 +818,7 @@ public:
 		QStringList libnames;
 		libnames += "-llibeay32 -lssleay32";
 		libnames += "-leay32 -lssl32";
+		libnames += "-leay32 " + ossl_lib + "/ssleay32.a";
 
 		bool success = false;
 		QString libname_success;
@@ -1352,19 +1353,31 @@ public:
 		else
 			return false;
 
-		s = conf->getenv("QC_WITH_ASPELL_LIB");
-		if(!s.isEmpty()) {
-			if(!conf->checkLibrary(s, "aspell-15")) {
-				conf->debug("Aspell libraries not found!");
-				return false;
+		QString a_lib = conf->getenv("QC_WITH_ASPELL_LIB");
+		if(a_lib.isEmpty())
+			return false;
+
+		QStringList libnames;
+		libnames += "aspell-15";
+		libnames += "aspell";
+
+		bool success;
+		QString libname_success;
+		foreach(const QString &libname, libnames) {
+			conf->debug(QString("Trying %1").arg(libname));
+			if(conf->checkLibrary(a_lib, libname)) {
+				success = true;
+				libname_success = libname;
+				break;
 			}
-			qc_aspell_libs += QString("-L") + s;
 		}
-		else
+
+		if(!success)
 			return false;
 
 		qc_aspell_defs += "HAVE_ASPELL";
-		qc_aspell_libs += "-laspell-15";
+		qc_aspell_libs += QString("-L") + a_lib;
+		qc_aspell_libs += QString("-l") + libname_success;
 		qc_aspell_have = true;
 #else
 		s = conf->getenv("QC_WITH_ASPELL_INC");
