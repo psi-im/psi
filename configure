@@ -36,7 +36,6 @@ Dependency options:
   --disable-growl              Disable use of Growl
   --with-growl=[path]          Path to the Growl framework
   --disable-xss                Disable use of the XScreenSaver extension
-  --disable-ghbnr              Disable use of gethostbyname_r()
   --disable-aspell             Disable use of aspell
   --with-aspell-inc=[path]     Path to Aspell include files
   --with-aspell-lib=[path]     Path to Aspell library files
@@ -223,11 +222,6 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
-		--disable-ghbnr)
-			QC_DISABLE_ghbnr="Y"
-			shift
-			;;
-
 		--disable-aspell)
 			QC_DISABLE_aspell="Y"
 			shift
@@ -288,7 +282,6 @@ echo QC_DISABLE_qdbus=$QC_DISABLE_qdbus
 echo QC_DISABLE_growl=$QC_DISABLE_growl
 echo QC_WITH_GROWL=$QC_WITH_GROWL
 echo QC_DISABLE_xss=$QC_DISABLE_xss
-echo QC_DISABLE_ghbnr=$QC_DISABLE_ghbnr
 echo QC_DISABLE_aspell=$QC_DISABLE_aspell
 echo QC_WITH_ASPELL_INC=$QC_WITH_ASPELL_INC
 echo QC_WITH_ASPELL_LIB=$QC_WITH_ASPELL_LIB
@@ -552,6 +545,40 @@ public:
 		if (!QFile::exists("third-party/qca/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty() || !QFile::exists("third-party/qca/qca-ossl"))
 			return false;
 
+#ifdef Q_OS_WIN
+		QString ossl_inc = conf->getenv("QC_WITH_OPENSSL_INC");
+		if(ossl_inc.isEmpty())
+			return false;
+
+		QString ossl_lib = conf->getenv("QC_WITH_OPENSSL_LIB");
+		if(ossl_lib.isEmpty())
+			return false;
+
+		QString str =
+			"#include<openssl/opensslv.h>\n"
+			"int main()\n"
+			"{\n"
+			"  unsigned long x = OPENSSL_VERSION_NUMBER;\n"
+			"  if(x >= 0x00907000) return 0; else return 1;\n"
+			"}\n";
+		QString ext;
+		QStringList incs;
+		incs += ossl_inc;
+		ext += QString("-L") + ossl_lib + " -llibeay32 -lssleay32";
+		int ret;
+		if(!conf->doCompileAndLink(str, incs, ext, QString(), &ret))
+			return false;
+		if(ret == 0)
+			conf->addDefine("OSSL_097");
+
+		conf->addIncludePath(ossl_inc);
+		conf->addLib(QString("-L") + ossl_lib);
+		conf->addLib("-llibeay32 -lssleay32");
+
+		conf->addDefine("HAVE_OPENSSL");
+
+		return true;
+#else
 		QString inc, lib;
 		QString s;
 		bool kb = false;
@@ -614,10 +641,11 @@ public:
 		if(!lib.isEmpty())
 			conf->addLib(QString("-L") + s);
 		conf->addLib("-lssl -lcrypto");
-		
+
 		conf->addDefine("HAVE_OPENSSL");
 
 		return true;
+#endif
 	}
 };
 #line 1 "zlib.qcm"
@@ -638,8 +666,19 @@ public:
 	qc_zlib(Conf *c) : ConfObj(c) {}
 	QString name() const { return "zlib"; }
 	QString shortname() const { return "zlib"; }
+#ifdef Q_OS_WIN
+	QString resultString() const
+	{
+		return "using bundled";
+	}
+#endif
+
 	bool exec()
 	{
+#ifdef Q_OS_WIN
+		// HACK: on windows, always use psi's bundled zlib
+		conf->addExtra("CONFIG += psi-zip");
+#else
 		QString inc, lib;
 		QString s;
 
@@ -674,6 +713,7 @@ public:
 		conf->addLib("-lz");
 
 		return true;
+#endif
 	}
 };
 #line 1 "universal.qcm"
@@ -881,27 +921,27 @@ public:
 	qc_growl(Conf *c) : ConfObj(c) {}
 	QString name() const { return "Growl"; }
 	QString shortname() const { return "growl"; }
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
 	QString checkString() const { return QString(); }
 #endif
 
 	// TODO: This should go into ConfObj
-    bool checkFramework(const QString &path, const QString &name)
-    {
-        QString str =
-            "int main()\n"
-            "{\n"
-            "    return 0;\n"
-            "}\n";
+	bool checkFramework(const QString &path, const QString &name)
+	{
+		QString str =
+		"int main()\n"
+		"{\n"
+		"    return 0;\n"
+		"}\n";
 
-        QString extra;
-        if(!path.isEmpty())
-            extra += QString("-F") + path + ' ';
-        extra += QString("-framework ") + name;
-        if(!conf->doCompileAndLink(str, QStringList(), extra, "", NULL))
-            return false;
-        return true;
-    }
+		QString extra;
+		if(!path.isEmpty())
+			extra += QString("-F") + path + ' ';
+		extra += QString("-framework ") + name;
+		if(!conf->doCompileAndLink(str, QStringList(), extra, "", NULL))
+			return false;
+		return true;
+	}
 	
 	// TODO: This should go into ConfObj
 	void addFrameworkPath(const QString& str)
@@ -912,7 +952,7 @@ public:
 
 	bool exec()
 	{
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 		QString growl_path = conf->getenv("QC_WITH_GROWL");
 		if(!checkFramework(growl_path, "Growl"))
 			return false;
@@ -945,9 +985,16 @@ public:
 
 	QString name() const { return "the XScreenSaver extension"; }
 	QString shortname() const { return "xss"; }
+#ifdef Q_OS_WIN
+	QString checkString() const { return QString(); }
+#endif
 
 	bool exec()
 	{
+#ifdef Q_OS_WIN
+		// skip XSS support on windows
+		return false;
+#else
 		QString str =
 			"#include<X11/Xlib.h>\n"
 			"#include<X11/Xutil.h>\n"
@@ -971,37 +1018,7 @@ public:
 		
 		conf->addDefine("HAVE_XSS");
 		return true;
-	}
-};
-#line 1 "ghbnr.qcm"
-/*
------BEGIN QCMOD-----
-name: gethostbyname_r()
------END QCMOD-----
-*/
-class qc_ghbnr : public ConfObj
-{
-public:
-	qc_ghbnr(Conf *c) : ConfObj(c) { }
-
-	QString name() const { return "gethostbyname_r()"; }
-	QString shortname() const { return "ghbnr"; }
-
-	bool exec()
-	{
-		QString str =
-			"#include<netdb.h>\n"
-			"\n"
-			"int main()\n"
-			"{\n"
-			"    gethostbyname_r(\"\", 0, 0, 0, 0, 0);\n"
-			"    return 0;\n"
-			"}\n";
-		if (!conf->doCompileAndLink(str, QStringList(), QString(), QString(), NULL))
-			return false;
-			
-		conf->addDefine("HAVE_GETHOSTBYNAME_R");
-		return true;
+#endif
 	}
 };
 #line 1 "aspell.qcm"
@@ -1037,8 +1054,7 @@ public:
 		// on mac, always use built-in spell check
 #ifdef Q_OS_MAC
 		return false;
-#endif
-
+#else
 		qc_aspell_have = false;
 		qc_aspell_defs.clear();
 		qc_aspell_incs.clear();
@@ -1046,6 +1062,33 @@ public:
 
 		QString s;
 
+#ifdef Q_OS_WIN
+		s = conf->getenv("QC_WITH_ASPELL_INC");
+		if(!s.isEmpty()) {
+			if(!conf->checkHeader(s, "aspell.h")) {
+				conf->debug("Aspell includes not found!");
+				return false;
+			}
+			qc_aspell_incs += s;
+		}
+		else
+			return false;
+
+		s = conf->getenv("QC_WITH_ASPELL_LIB");
+		if(!s.isEmpty()) {
+			if(!conf->checkLibrary(s, "aspell-15")) {
+				conf->debug("Aspell libraries not found!");
+				return false;
+			}
+			qc_aspell_libs += QString("-L") + s;
+		}
+		else
+			return false;
+
+		qc_aspell_defs += "HAVE_ASPELL";
+		qc_aspell_libs += "-laspell-15";
+		qc_aspell_have = true;
+#else
 		s = conf->getenv("QC_WITH_ASPELL_INC");
 		if(!s.isEmpty()) {
 			if(!conf->checkHeader(s, "aspell.h")) {
@@ -1086,8 +1129,10 @@ public:
 		qc_aspell_defs += "HAVE_ASPELL";
 		qc_aspell_libs += "-laspell";
 		qc_aspell_have = true;
+#endif
 
 		return true;
+#endif
 	}
 };
 #line 1 "enchant.qcm"
@@ -1333,9 +1378,6 @@ cat >$1/modules_new.cpp <<EOT
     o->required = false;
     o->disabled = false;
     o = new qc_xss(conf);
-    o->required = false;
-    o->disabled = false;
-    o = new qc_ghbnr(conf);
     o->required = false;
     o->disabled = false;
     o = new qc_aspell(conf);
@@ -2391,7 +2433,6 @@ export QC_DISABLE_qdbus
 export QC_DISABLE_growl
 export QC_WITH_GROWL
 export QC_DISABLE_xss
-export QC_DISABLE_ghbnr
 export QC_DISABLE_aspell
 export QC_WITH_ASPELL_INC
 export QC_WITH_ASPELL_LIB

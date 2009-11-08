@@ -1,3 +1,5 @@
+!exists(conf.pri) {
+
 # Windows build settings
 CONFIG += release
 #CONFIG += qca-static
@@ -28,4 +30,6 @@ contains(DEFINES, HAVE_ASPELL) {
 	INCLUDEPATH += "$$ASPELL_PREFIX/include"
 	LIBS += -L"$$ASPELL_PREFIX/lib"
 	LIBS += -laspell-15
+}
+
 }

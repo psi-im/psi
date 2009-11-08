@@ -14,27 +14,27 @@ public:
 	qc_growl(Conf *c) : ConfObj(c) {}
 	QString name() const { return "Growl"; }
 	QString shortname() const { return "growl"; }
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
 	QString checkString() const { return QString(); }
 #endif
 
 	// TODO: This should go into ConfObj
-    bool checkFramework(const QString &path, const QString &name)
-    {
-        QString str =
-            "int main()\n"
-            "{\n"
-            "    return 0;\n"
-            "}\n";
+	bool checkFramework(const QString &path, const QString &name)
+	{
+		QString str =
+		"int main()\n"
+		"{\n"
+		"    return 0;\n"
+		"}\n";
 
-        QString extra;
-        if(!path.isEmpty())
-            extra += QString("-F") + path + ' ';
-        extra += QString("-framework ") + name;
-        if(!conf->doCompileAndLink(str, QStringList(), extra, "", NULL))
-            return false;
-        return true;
-    }
+		QString extra;
+		if(!path.isEmpty())
+			extra += QString("-F") + path + ' ';
+		extra += QString("-framework ") + name;
+		if(!conf->doCompileAndLink(str, QStringList(), extra, "", NULL))
+			return false;
+		return true;
+	}
 	
 	// TODO: This should go into ConfObj
 	void addFrameworkPath(const QString& str)
@@ -45,7 +45,7 @@ public:
 
 	bool exec()
 	{
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 		QString growl_path = conf->getenv("QC_WITH_GROWL");
 		if(!checkFramework(growl_path, "Growl"))
 			return false;

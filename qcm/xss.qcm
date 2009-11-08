@@ -14,9 +14,16 @@ public:
 
 	QString name() const { return "the XScreenSaver extension"; }
 	QString shortname() const { return "xss"; }
+#ifdef Q_OS_WIN
+	QString checkString() const { return QString(); }
+#endif
 
 	bool exec()
 	{
+#ifdef Q_OS_WIN
+		// skip XSS support on windows
+		return false;
+#else
 		QString str =
 			"#include<X11/Xlib.h>\n"
 			"#include<X11/Xutil.h>\n"
@@ -40,5 +47,6 @@ public:
 		
 		conf->addDefine("HAVE_XSS");
 		return true;
+#endif
 	}
 };
