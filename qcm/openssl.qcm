@@ -36,6 +36,7 @@ public:
 		QStringList libnames;
 		libnames += "-llibeay32 -lssleay32";
 		libnames += "-leay32 -lssl32";
+		libnames += "-leay32 " + ossl_lib + "/ssleay32.a";
 
 		bool success = false;
 		QString libname_success;
