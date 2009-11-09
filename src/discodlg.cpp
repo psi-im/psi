@@ -1402,7 +1402,7 @@ DiscoDlg::DiscoDlg(PsiAccount *pa, const Jid &jid, const QString &node)
 	cb_address->addItems(pa->psi()->recentBrowseList()); // FIXME
 	cb_address->setFocus();
 	connect(cb_address, SIGNAL(activated(const QString &)), d, SLOT(doDisco()));
-	cb_address->setCurrentIndex(cb_address->findText(d->jid.full()));
+	cb_address->setEditText(d->jid.full());
 
 	cb_node->addItems(pa->psi()->recentNodeList());
 	connect(cb_node, SIGNAL(activated(const QString &)), d, SLOT(doDisco()));
