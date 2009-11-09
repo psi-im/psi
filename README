@@ -35,7 +35,8 @@ Notes
 
   - Voice Calling --
     * The PsiMedia 1.0.x plugin and the qca-ossl plugin are needed to activate
-      the voice calling feature.  Source and builds of PsiMedia be found at:
+      the voice calling feature.  Source and builds of PsiMedia can be found
+      at:
         http://delta.affinix.com/psimedia/
       On Windows, place gstprovider.dll into the base directory.
       On Mac, place libgstprovider.dylib into Psi.app/Contents/plugins
