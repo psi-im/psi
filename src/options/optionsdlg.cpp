@@ -96,7 +96,7 @@ public:
 		if (cg == QPalette::Normal && !(option.state & QStyle::State_Active))
 			cg = QPalette::Inactive;
 		if (option.state & QStyle::State_Selected) {
-			painter->setPen(option.palette.color(cg, QPalette::HighlightedText));
+			painter->setPen(option.palette.color(cg, QPalette::Highlight));
 		}
 		else {
 			painter->setPen(option.palette.color(cg, QPalette::Text));
