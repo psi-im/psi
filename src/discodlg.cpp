@@ -722,7 +722,6 @@ DiscoListView::DiscoListView(QWidget *parent)
 {
 	installEventFilter(this);
 	setHeaderLabels( QStringList() << tr( "Name" ) << tr( "JID" ) << tr( "Node" ) );
-	header()->setResizeMode(0, QHeaderView::Stretch);
 	setRootIsDecorated(false);
 }
 
