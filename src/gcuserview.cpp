@@ -305,7 +305,8 @@ bool GCUserView::maybeTip(const QPoint &pos)
 	UserResource ur;
 	ur.setName(nick);
 	ur.setStatus(s);
-	ur.setClient(client_name,client_version,"");
+	//ur.setClient(client_name,client_version,"");
+	ur.setClient(QString(),QString(),"");
 	u.userResourceList().append(ur);
 
 	PsiToolTip::showText(mapToGlobal(pos), u.makeTip(), this);
