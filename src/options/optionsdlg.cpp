@@ -71,10 +71,13 @@ public:
 	// reimplemented
 	virtual void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 	{
+		QStyleOptionViewItemV4 opt(option);
+		opt.showDecorationSelected = true;
+		opt.rect.adjust(0, 0, 0, -1);
+
 		painter->save();
-		painter->setClipRect(option.rect.adjusted(0, 0, 0, -1));
-		drawBackground(painter, option, index);
-		painter->restore();
+		QStyle *style = opt.widget ? opt.widget->style() : QApplication::style();
+		style->drawPrimitive(QStyle::PE_PanelItemViewItem, &opt, painter, opt.widget);
 
 		QIcon icon = index.data(Qt::DecorationRole).value<QIcon>();
 		QSize iconSize;
@@ -84,24 +87,26 @@ public:
 		else
 #endif
 			iconSize = QSize(16, 16);
-		QRect iconRect = option.rect;
+		QRect iconRect = opt.rect;
 		iconRect.setLeft(4);
 		iconRect.setWidth(iconSize.width());
 		icon.paint(painter, iconRect, Qt::AlignCenter, QIcon::Normal, QIcon::On);
 
-		QRect textRect = option.rect;
+		QRect textRect = opt.rect;
 		textRect.setLeft(iconRect.right() + 8);
 		QPalette::ColorGroup cg = option.state & QStyle::State_Enabled
 		                          ? QPalette::Normal : QPalette::Disabled;
 		if (cg == QPalette::Normal && !(option.state & QStyle::State_Active))
 			cg = QPalette::Inactive;
 		if (option.state & QStyle::State_Selected) {
-			painter->setPen(option.palette.color(cg, QPalette::Highlight));
+			painter->setPen(option.palette.color(cg, QPalette::HighlightedText));
 		}
 		else {
 			painter->setPen(option.palette.color(cg, QPalette::Text));
 		}
 		painter->drawText(textRect, index.data(Qt::DisplayRole).toString(), Qt::AlignLeft | Qt::AlignVCenter);
+		drawFocus(painter, option, option.rect); // not opt, because drawFocus() expects normal rect
+		painter->restore();
 
 		painter->save();
 		QPen pen(QColor(0xE0, 0xE0, 0xE0));
@@ -112,6 +117,21 @@ public:
 		painter->setPen(pen);
 		painter->drawLine(option.rect.left(), option.rect.bottom(), option.rect.right(), option.rect.bottom());
 		painter->restore();
+	}
+
+	// reimplemented
+	void drawFocus(QPainter* painter, const QStyleOptionViewItem& option, const QRect& rect) const
+	{
+		if (option.state & QStyle::State_HasFocus && rect.isValid()) {
+			QStyleOptionFocusRect o;
+			o.QStyleOption::operator=(option);
+			o.rect = rect.adjusted(0, 0, 0, -1);
+			QPalette::ColorGroup cg = (option.state & QStyle::State_Enabled)
+				? QPalette::Normal : QPalette::Disabled;
+			o.backgroundColor = option.palette.color(cg, (option.state & QStyle::State_Selected)
+				? QPalette::Highlight : QPalette::Window);
+			QApplication::style()->drawPrimitive(QStyle::PE_FrameFocusRect, &o, painter);
+		}
 	}
 
 	// reimplemented
