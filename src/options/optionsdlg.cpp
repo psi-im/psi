@@ -60,7 +60,7 @@
 //----------------------------------------------------------------------------
 // OptionsTabsDelegate
 //----------------------------------------------------------------------------
-#include <QMessageBox>
+
 class OptionsTabsDelegate : public QItemDelegate
 {
 public:
