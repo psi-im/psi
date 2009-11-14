@@ -60,7 +60,7 @@
 //----------------------------------------------------------------------------
 // OptionsTabsDelegate
 //----------------------------------------------------------------------------
-
+#include <QMessageBox>
 class OptionsTabsDelegate : public QItemDelegate
 {
 public:
@@ -112,6 +112,7 @@ public:
 		QPen pen(QColor(0xE0, 0xE0, 0xE0));
 		QVector<qreal> dashes;
 		dashes << 1.0 << 1.0;
+		pen.setCapStyle(Qt::FlatCap);
 		pen.setDashPattern(dashes);
 
 		painter->setPen(pen);
