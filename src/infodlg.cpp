@@ -339,7 +339,7 @@ bool InfoDlg::updatePhoto()
 	int max_width  = ui_.tb_photo->width() - 10; // FIXME: Ugly magic number
 	int max_height = ui_.tb_photo->height() - 10; // FIXME: Ugly magic number
 
-	ui_.tb_photo->setIcon(QPixmap(img));
+	ui_.tb_photo->setIcon(QPixmap::fromImage(img));
 	ui_.tb_photo->setIconSize(QSize(max_width, max_height));
 	return true;
 }
