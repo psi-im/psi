@@ -148,6 +148,11 @@ bool ActiveProfiles::Private::registerBusnames(QString prof)
 
 bool ActiveProfiles::isActive(const QString &profile) const
 {
+	if (!QDBusConnection::sessionBus().isConnected()) {
+		qWarning("can't connect to dbus");
+		return false;
+	}
+
 	QDBusConnectionInterface *dbusIface = QDBusConnection::sessionBus().interface ();
 	return dbusIface->isServiceRegistered(d->dbusName(profile));
 }
