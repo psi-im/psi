@@ -425,6 +425,9 @@ QString UserListItem::makeTip(bool trim, bool doLinkify) const
 
 QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 {
+	// NOTE: If you add something to the tooltip,
+	// you most probably want to wrap it with Qt::escape()
+
 	QString str;
 	bool useAvatar = false;
 	if (v_avatarFactory && !v_avatarFactory->getAvatar(jid().bare()).isNull() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.avatar").toBool())
@@ -455,17 +458,17 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 	if (!mood().isNull()) {
 		str += QString("<div style='white-space:pre'>") + QObject::tr("Mood") + ": " + mood().typeText();
 		if (!mood().text().isEmpty())
-			str += QString(" (") + mood().text() + QString(")");
+			str += QString(" (") + Qt::escape(mood().text()) + QString(")");
 		str += "</div>";
 	}
 	
 	// User Tune
 	if (!tune().isEmpty())
-		str += QString("<div style='white-space:pre'>") + QObject::tr("Listening to") + ": " + tune() + "</div>";
+		str += QString("<div style='white-space:pre'>") + QObject::tr("Listening to") + ": " + Qt::escape(tune()) + "</div>";
 
 	// User Physical Location
 	if (!physicalLocation().isNull())
-		str += QString("<div style='white-space:pre'>") + QObject::tr("Location") + ": " + physicalLocation().toString() + "</div>";
+		str += QString("<div style='white-space:pre'>") + QObject::tr("Location") + ": " + Qt::escape(physicalLocation().toString()) + "</div>";
 
 	// User Geolocation
 	if (!geoLocation().isNull())
@@ -552,11 +555,11 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 			
 			// User Tune
 			if (!r.tune().isEmpty())
-				str += QString("<div style='white-space:pre'>") + QObject::tr("Listening to") + ": " + r.tune() + "</div>";
+				str += QString("<div style='white-space:pre'>") + QObject::tr("Listening to") + ": " + Qt::escape(r.tune()) + "</div>";
 
 			// User Physical Location
 			if (!r.physicalLocation().isNull())
-				str += QString("<div style='white-space:pre'>") + QObject::tr("Location") + ": " + r.physicalLocation().toString() + "</div>";
+				str += QString("<div style='white-space:pre'>") + QObject::tr("Location") + ": " + Qt::escape(r.physicalLocation().toString()) + "</div>";
 
 			// User Geolocation
 			if (!r.geoLocation().isNull())
