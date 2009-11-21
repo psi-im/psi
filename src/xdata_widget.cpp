@@ -159,7 +159,7 @@ public:
 		}
 
 		QLabel *fixed = new QLabel("<qt>" + text + "</qt>", parent);
-		grid->addWidget(fixed, row, row, 0, 2);
+		grid->addWidget(fixed, row, 0, 2, 0);
 
 		if ( !f.desc().isEmpty() ) {
 			fixed->setToolTip(f.desc());
@@ -261,7 +261,7 @@ public:
 
 			combo->addItem(lbl);
 			if ( (*it).value == sel )
-				combo->setItemText( combo->currentIndex(), lbl );
+				combo->setCurrentIndex(combo->count()-1);
 		}
 
 		QLabel *req = new QLabel(reqText(), parent);
