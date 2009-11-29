@@ -184,17 +184,17 @@ public slots:
 		for (int i = 0; i < q->ui_.lbx_proxy->count(); ++i) {
 			QListWidgetItem* item = q->ui_.lbx_proxy->item(i);
 
-			ProxyItem i;
-			i.name             = item->data(Qt::DisplayRole).toString();
-			i.id               = item->data(IdRole).toString();
-			i.type             = item->data(TypeRole).toString();
-			i.settings.host    = item->data(HostRole).toString();
-			i.settings.port    = item->data(PortRole).toInt();
-			i.settings.user    = item->data(UserRole).toString();
-			i.settings.pass    = item->data(PassRole).toString();
-			i.settings.useAuth = item->data(AuthRole).toBool();
-			i.settings.url     = item->data(UrlRole).toString();
-			list << i;
+			ProxyItem pi;
+			pi.name             = item->data(Qt::DisplayRole).toString();
+			pi.id               = item->data(IdRole).toString();
+			pi.type             = item->data(TypeRole).toString();
+			pi.settings.host    = item->data(HostRole).toString();
+			pi.settings.port    = item->data(PortRole).toInt();
+			pi.settings.user    = item->data(UserRole).toString();
+			pi.settings.pass    = item->data(PassRole).toString();
+			pi.settings.useAuth = item->data(AuthRole).toBool();
+			pi.settings.url     = item->data(UrlRole).toString();
+			list << pi;
 		}
 	}
 
