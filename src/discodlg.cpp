@@ -718,7 +718,7 @@ protected:
 
 	// reimplemented
 	bool eventFilter(QObject* o, QEvent* e);
-	//void resizeEvent(QResizeEvent*);
+	void resizeEvent(QResizeEvent*);
 };
 
 DiscoListView::DiscoListView(QWidget *parent)
@@ -726,24 +726,25 @@ DiscoListView::DiscoListView(QWidget *parent)
 {
 	installEventFilter(this);
 	setHeaderLabels( QStringList() << tr( "Name" ) << tr( "JID" ) << tr( "Node" ) );
-	header()->setResizeMode(0, QHeaderView::Stretch);
-	header()->setResizeMode(1, QHeaderView::ResizeToContents);
-	header()->setResizeMode(2, QHeaderView::ResizeToContents);
+//	header()->setResizeMode(0, QHeaderView::Stretch);
+//	header()->setResizeMode(1, QHeaderView::ResizeToContents);
+//	header()->setResizeMode(2, QHeaderView::ResizeToContents);
 	header()->setStretchLastSection(false);
 	setRootIsDecorated(false);
 }
 
-/*void DiscoListView::resizeEvent(QResizeEvent* e)
+void DiscoListView::resizeEvent(QResizeEvent* e)
 {
 	QTreeWidget::resizeEvent(e);
 
 	QHeaderView* h = header();
-	h->resizeSection(2, h->fontMetrics().width(columnText(2)) * 2);
-	float remainingWidth = visibleWidth() - h->columnWidth(2);
+	h->resizeSection(2, h->fontMetrics().width(headerItem()->text(2)) * 2);
+	float remainingWidth = viewport()->width() - h->sectionSize(2);
 	h->resizeSection(1, int(remainingWidth * 0.3));
+	h->resizeSection(0, int(remainingWidth * 0.7));
 
-	h->adjustHeaderSize();
-}*/
+	//h->adjustHeaderSize();
+}
 
 /**
  * \param pos should be in global coordinate system.
