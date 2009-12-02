@@ -1,9 +1,9 @@
 Requirements
 ------------
 
-* You need Qt 4.2 or higher to build Psi. If a packaged version of Qt is not
+* You need Qt 4.4 or higher to build Psi. If a packaged version of Qt is not
 available for your OS (or if you want debug symbols in your Qt libraries), you
-will need to build and install Qt 4.2 yourself. See the Qt instructions to find
+will need to build and install Qt 4.4 yourself. See the Qt instructions to find
 out how to do this.
 
 * You need QCA 2.0 and the QCA OpenSSL plugin, which you can get at

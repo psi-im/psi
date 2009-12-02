@@ -1,7 +1,7 @@
 Requirements
 ------------
 
-* You need Qt 4.2 or higher to build Psi. Just download and install the
+* You need Qt 4.4 or higher to build Psi. Just download and install the
 MingW32 self-installer. All the instructions below are performed from within
 the Qt command prompt (found in the Start menu)
 
