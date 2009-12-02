@@ -581,6 +581,8 @@ void DiscoListItem::hideChildIndicator()
 
 void DiscoListItem::updateItemsFinished(const DiscoList &list)
 {
+	treeWidget()->setUpdatesEnabled(false);
+
 	QHash<QString, DiscoListItem*> children;
 	DiscoListItem *child = (DiscoListItem *)QTreeWidgetItem::child(0);
 	for ( int i = 1; child; ++i ) {
@@ -619,6 +621,8 @@ void DiscoListItem::updateItemsFinished(const DiscoList &list)
 	// root item is initially hidden
 	if ( isRoot && isHidden() )
 		setHidden(false);
+
+	treeWidget()->setUpdatesEnabled(true);
 }
 
 void DiscoListItem::autoItemsChildren() const
@@ -722,6 +726,10 @@ DiscoListView::DiscoListView(QWidget *parent)
 {
 	installEventFilter(this);
 	setHeaderLabels( QStringList() << tr( "Name" ) << tr( "JID" ) << tr( "Node" ) );
+	header()->setResizeMode(0, QHeaderView::Stretch);
+	header()->setResizeMode(1, QHeaderView::ResizeToContents);
+	header()->setResizeMode(2, QHeaderView::ResizeToContents);
+	header()->setStretchLastSection(false);
 	setRootIsDecorated(false);
 }
 
