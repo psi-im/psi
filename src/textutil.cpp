@@ -308,16 +308,21 @@ QString TextUtil::linkify(const QString &in)
 {
 	QString out = in;
 	int x1, x2;
-	bool isUrl, isEmail;
+	bool isUrl, isAtStyle;
 	QString linked, link, href;
 
 	for(int n = 0; n < (int)out.length(); ++n) {
 		isUrl = false;
-		isEmail = false;
+		isAtStyle = false;
 		x1 = n;
 
 		if(linkify_pmatch(out, n, "xmpp:")) {
 			n += 5;
+			isUrl = true;
+			href = "";
+		}
+		else if(linkify_pmatch(out, n, "mailto:")) {
+			n += 7;
 			isUrl = true;
 			href = "";
 		}
@@ -355,8 +360,8 @@ QString TextUtil::linkify(const QString &in)
 			href = "ftp://";
 		}
 		else if(linkify_pmatch(out, n, "@")) {
-			isEmail = true;
-			href = "mailto:";
+			isAtStyle = true;
+			href = "x-psi-atstyle:";
 		}
 
 		if(isUrl) {
@@ -415,7 +420,7 @@ QString TextUtil::linkify(const QString &in)
 			out.replace(x1, len, linked);
 			n = x1 + linked.length() - 1;
 		}
-		else if(isEmail) {
+		else if(isAtStyle) {
 			// go backward till we find the beginning
 			if(x1 == 0)
 				continue;

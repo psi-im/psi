@@ -146,6 +146,7 @@ public slots:
 	void updateMainwinStatus();
 	void openUri(const QString &uri);
 	void openUri(const QUrl &uri);
+	void openAtStyleUri(const QUrl &uri);
 	void raiseMainwin();
 
 private slots:

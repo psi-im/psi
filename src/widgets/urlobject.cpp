@@ -52,7 +52,7 @@ public:
 		
 		tr = qApp->translate("URLLabel", "Open");
 		act_xmpp = new IconAction(tr, "psi/jabber", tr, 0, this);
-		connect(act_xmpp, SIGNAL(triggered()), SLOT(popupAction()));
+		connectXmppAction(act_xmpp, "");
 
 		tr = qApp->translate("URLLabel", "Open mail composer");
 		act_mailto = new IconAction(tr, "psi/email", tr, 0, this);
@@ -94,7 +94,7 @@ public:
 			colon = 0;
 		QString service = l.left( colon );
 
-		if ( service == "mailto" || service == "jabber" || service == "jid" || service == "xmpp" || service == "atstyle") {
+		if ( service == "mailto" || service == "jabber" || service == "jid" || service == "xmpp" || service == "x-psi-atstyle") {
 			if ( colon > -1 )
 				l = l.mid( colon + 1 );
 
@@ -107,6 +107,9 @@ public:
 
 public slots:
 	void popupAction(QString lnk) {
+		if (lnk.startsWith("x-psi-atstyle:")) {
+			lnk.replace(0, 13, "mailto");
+		}
 		emit urlObject->openURL(lnk);
 	}
 
@@ -126,11 +129,14 @@ public slots:
 
 	void xmppAction(const QString& lnk, const QString& query) {
 		QUrl uri(lnk);
-		QString queryType = query.left(query.indexOf(';'));
-		uri.setQueryDelimiters('=', ';');
-		if (uri.queryItems().value(0).first != queryType) {
-			uri.setEncodedQuery(query.toAscii());
+		if (!query.isEmpty()) {
+			QString queryType = query.left(query.indexOf(';'));
+			uri.setQueryDelimiters('=', ';');
+			if (uri.queryItems().value(0).first != queryType) {
+				uri.setEncodedQuery(query.toAscii());
+			}
 		}
+		uri.setScheme("xmpp");
 		emit urlObject->openURL(uri.toString());
 	}
 
@@ -182,19 +188,24 @@ QMenu *URLObject::createPopupMenu(const QString &lnk)
 
 	QMenu *m = new QMenu;
 	
-	// FIXME: atstyle doesn't work. it's always mailto.
 	bool needGenericOpen = true;
-	if (service == "mailto" || service == "atstyle") {
+	if (service == "mailto" || service == "x-psi-atstyle") {
 		needGenericOpen = false;
 		m->addAction(d->act_mailto);
 	}
-	if (service == "jabber" || service == "jid" || service == "xmpp" || service == "atstyle") {
+	if (service == "jabber" || service == "jid" || service == "xmpp" || service == "x-psi-atstyle") {		
 		needGenericOpen = false;
+		if (service == "x-psi-atstyle") {
+			m->addSeparator();
+		}
 		m->addAction(d->act_xmpp);
 		m->addAction(d->act_chat);
 		m->addAction(d->act_send_message);
 		m->addAction(d->act_join_groupchat);
 		//m->addAction(d->act_add_to_roster);
+		if (service == "x-psi-atstyle") {
+			m->addSeparator();
+		}
 	}
 	if (needGenericOpen) {
 		m->addAction(d->act_browser);

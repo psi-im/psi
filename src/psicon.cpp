@@ -580,6 +580,7 @@ bool PsiCon::init()
 
 
 	DesktopUtil::setUrlHandler("xmpp", this, "openUri");
+	DesktopUtil::setUrlHandler("x-psi-atstyle", this, "openAtStyleUri");
 
 	if(AvCallManager::isSupported()) {
 		options_avcall_update();
@@ -1060,6 +1061,13 @@ void PsiCon::openUri(const QUrl &uri)
 	pa->openUri(uri);
 
 
+}
+
+void PsiCon::openAtStyleUri(const QUrl &uri)
+{
+	QUrl u(uri);
+	u.setScheme("mailto");
+	DesktopUtil::openUrl(u);
 }
 
 void PsiCon::doToolbars()
