@@ -141,6 +141,7 @@ TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 	tabWidget_ = new PsiTabWidget(this);
 	tabWidget_->setCloseIcon(IconsetFactory::icon("psi/closetab").icon());
 	connect(tabWidget_, SIGNAL(mouseDoubleClickTab(QWidget*)), SLOT(mouseDoubleClickTab(QWidget*)));
+	connect(tabWidget_, SIGNAL(mouseMiddleClickTab(QWidget*)), SLOT(mouseMiddleClickTab(QWidget*)));
 	connect(tabWidget_, SIGNAL(aboutToShowMenu(QMenu*)), SLOT(tab_aboutToShowMenu(QMenu*)));
 	connect(tabWidget_, SIGNAL(tabContextMenu(int, QPoint, QContextMenuEvent*)), SLOT(showTabMenu(int, QPoint, QContextMenuEvent*)));
 	connect(tabWidget_, SIGNAL(closeButtonClicked()), SLOT(closeCurrentTab()));
@@ -382,6 +383,10 @@ void TabDlg::mouseDoubleClickTab(QWidget* widget)
 {
 	if(userManagement_)
 		detachTab(static_cast<TabbableWidget*>(widget));
+}
+
+void TabDlg::mouseMiddleClickTab(QWidget* widget) {
+	closeTab(static_cast<TabbableWidget*>(widget));
 }
 
 void TabDlg::detachTab(TabbableWidget* tab)

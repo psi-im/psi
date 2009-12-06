@@ -69,6 +69,7 @@ public slots:
 
 signals:
 	void mouseDoubleClickTab(QWidget *tab);
+	void mouseMiddleClickTab(QWidget *tab);
 	void currentChanged(QWidget *selected);
 	void closeButtonClicked();
 	void aboutToShowMenu(QMenu *);
@@ -78,6 +79,7 @@ signals:
 
 private slots:
 	void mouseDoubleClickTab(int tab);
+	void mouseMiddleClickTab(int tab);
 	void tab_currentChanged(int tab);
 	void tab_contextMenu(QContextMenuEvent *event, int tab);
 	void menu_aboutToShow();

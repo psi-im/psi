@@ -39,6 +39,7 @@ public:
 
 signals:
 	void mouseDoubleClickTab(int tab);
+	void mouseMiddleClickTab(int tab);
 	void tabDropped(int tab, PsiTabBar *source);
 	// context menu on the blank space will have tab==-1
 	void contextMenu(QContextMenuEvent *event, int tab);

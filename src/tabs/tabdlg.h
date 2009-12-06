@@ -105,6 +105,7 @@ protected:
 protected slots:
 	void detachCurrentTab();
 	void mouseDoubleClickTab(QWidget*);
+	void mouseMiddleClickTab(QWidget*);
 
 public slots:
 	void addTab(TabbableWidget *tab);

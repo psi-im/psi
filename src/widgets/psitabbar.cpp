@@ -69,12 +69,16 @@ int PsiTabBar::findTabUnder(const QPoint &pos) {
 } 
 
 void PsiTabBar::mousePressEvent(QMouseEvent *event) {
+	int tabno = findTabUnder(event->pos());
 	if (event->button() == Qt::LeftButton) {
-		int tabno = findTabUnder(event->pos());
 		dragStartPosition_ = event->pos();
 		dragTab_ = tabno;
 		if (tabno != -1) {
 			setCurrentIndex(tabno);
+		}
+	} else if (event->button() == Qt::MidButton) {
+		if (tabno != -1) {
+			emit mouseMiddleClickTab(tabno);
 		}
 	}
 	event->accept();

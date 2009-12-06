@@ -74,6 +74,7 @@ PsiTabWidget::PsiTabWidget(QWidget *parent)
 	setTabPosition(QTabWidget::North);
 
 	connect( tabBar_, SIGNAL(mouseDoubleClickTab(int)), SLOT(mouseDoubleClickTab(int)));
+	connect( tabBar_, SIGNAL(mouseMiddleClickTab(int)), SLOT(mouseMiddleClickTab(int)));
 	connect( tabBar_, SIGNAL( currentChanged(int)), SLOT(tab_currentChanged(int)));
 	connect( tabBar_, SIGNAL( contextMenu(QContextMenuEvent*,int)), SLOT( tab_contextMenu(QContextMenuEvent*,int)));
 	connect( closeButton_, SIGNAL(clicked()), SIGNAL(closeButtonClicked()));
@@ -114,6 +115,10 @@ QWidget *PsiTabWidget::widget(int index) {
 
 void PsiTabWidget::mouseDoubleClickTab(int tab) {
 	emit mouseDoubleClickTab(widget(tab));
+}
+
+void PsiTabWidget::mouseMiddleClickTab(int tab) {
+	emit mouseMiddleClickTab(widget(tab));
 }
 
 /**
