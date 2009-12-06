@@ -738,6 +738,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	d->pm_settings = new QMenu(this);
 	connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));
 	ui_.tb_actions->setMenu(d->pm_settings);
+	ui_.tb_actions->setStyleSheet(" QToolButton::menu-indicator { image:none } ");
 
 	// resize the horizontal splitter
 	QList<int> list;

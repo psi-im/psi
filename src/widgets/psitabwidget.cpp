@@ -56,6 +56,7 @@ PsiTabWidget::PsiTabWidget(QWidget *parent)
 	downButton_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Minimum);
 	menu_ = new QMenu(this);
 	downButton_->setMenu(menu_);
+	downButton_->setStyleSheet(" QToolButton::menu-indicator { image:none } ");
 	connect(menu_, SIGNAL(aboutToShow()), SLOT(menu_aboutToShow()));
 	connect(menu_, SIGNAL(triggered(QAction*)), SLOT(menu_triggered(QAction*)));
 	barLayout_->addWidget(downButton_);
