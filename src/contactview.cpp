@@ -862,7 +862,8 @@ void ContactProfile::animateNick(const Jid &j)
 
 void ContactProfile::deferredUpdateGroups()
 {
-	d->t->start(250, true);
+	d->t->setSingleShot(true);
+	d->t->start(250);
 }
 
 void ContactProfile::updateGroups()
@@ -2204,7 +2205,7 @@ void ContactView::keyPressEvent(QKeyEvent *e)
 		Q3ListView::keyPressEvent(e);
 #endif 
 	} else {
-		QString text = e->text().lower();
+		QString text = e->text().toLower();
 		if (text.isEmpty()) {
 			Q3ListView::keyPressEvent(e);
 		}
@@ -2707,7 +2708,8 @@ QSize ContactView::sizeHint() const
  */
 void ContactView::recalculateSize()
 {
-	d->recalculateSizeTimer->start( 0, true );
+	d->recalculateSizeTimer->setSingleShot(true);
+	d->recalculateSizeTimer->start(0);
 }
 
 //------------------------------------------------------------------------------
@@ -3318,10 +3320,10 @@ int ContactViewItem::compare(Q3ListViewItem *lvi, int, bool) const
 			if ( PsiOptions::instance()->getOption("options.ui.contactlist.contact-sort-style").toString() == "status" ) {
 				ret = rankStatus(d->status) - rankStatus(i->status());
 				if(ret == 0)
-					ret = text(0).lower().localeAwareCompare(i->text(0).lower());
+					ret = text(0).toLower().localeAwareCompare(i->text(0).toLower());
 			}
 			else { // ContactSortStyle_Alpha
-				ret = text(0).lower().localeAwareCompare(i->text(0).lower());
+				ret = text(0).toLower().localeAwareCompare(i->text(0).toLower());
 			}
 		}
 	}
@@ -3339,7 +3341,7 @@ int ContactViewItem::compare(Q3ListViewItem *lvi, int, bool) const
 			else { // GroupSortStyle_Alpha
 				ret = rankGroup(d->groupType) - rankGroup(i->groupType());
 				if(ret == 0)
-					ret = text(0).lower().localeAwareCompare(i->text(0).lower());
+					ret = text(0).toLower().localeAwareCompare(i->text(0).toLower());
 			}
 		}
 		else if(i->type() == Profile) {
@@ -3350,7 +3352,7 @@ int ContactViewItem::compare(Q3ListViewItem *lvi, int, bool) const
 				ret = ourRank - theirRank;
 			}
 			else // AccountSortStyle_Alpha
-				ret = text(0).lower().localeAwareCompare(i->text(0).lower());
+				ret = text(0).toLower().localeAwareCompare(i->text(0).toLower());
 		}
 	}
 
@@ -3429,7 +3431,7 @@ void ContactViewItem::resetName(bool forceNoStatusMsg)
 			}
 
 			if (d->status_single) {
-				statusMsg = statusMsg.simplifyWhiteSpace();
+				statusMsg = statusMsg.simplified();
 				if (!statusMsg.isEmpty()) {
 					s += "<br><font size=-1 color='" + PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-messages").value<QColor>().name() + "'><nobr>" + TextUtil::plain2rich(statusMsg) + "</nobr></font>";
 				}
