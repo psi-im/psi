@@ -922,7 +922,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 	if(i->type() == ContactViewItem::Profile) {
 		Q3PopupMenu pm;
 
-		Q3PopupMenu *am = new Q3PopupMenu(&pm);
+		QMenu *am = new QMenu(&pm);
 		am->insertItem(IconsetFactory::icon("psi/disco").icon(), tr("Online Users"), 5);
 		am->insertItem(IconsetFactory::icon("psi/sendMessage").icon(), tr("Send Server Message"), 1);
 		am->insertSeparator();
@@ -931,7 +931,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		am->insertItem(IconsetFactory::icon("psi/remove").icon(), tr("Delete MOTD"), 4);
 
 		const int status_start = 15;
-		Q3PopupMenu *sm = new Q3PopupMenu(&pm);
+		QMenu *sm = new QMenu(&pm);
 		sm->insertItem(PsiIconset::instance()->status(STATUS_ONLINE).icon(),	status2txt(STATUS_ONLINE),	STATUS_ONLINE		+ status_start);
 		if (PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool())
 			sm->insertItem(PsiIconset::instance()->status(STATUS_CHAT).icon(),		status2txt(STATUS_CHAT),	STATUS_CHAT		+ status_start);
@@ -951,7 +951,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		pm.insertItem(tr("Mood"), 11);
 		pm.setItemEnabled(11, d->pa->serverInfoManager()->hasPEP());
 
-		Q3PopupMenu *avatarm = new Q3PopupMenu (&pm);
+		QMenu *avatarm = new QMenu (&pm);
 		avatarm->insertItem(tr("Set Avatar"), 12);
 		avatarm->insertItem(tr("Unset Avatar"), 13);
 		pm.insertItem(tr("Avatar"), avatarm, 14);
@@ -1285,7 +1285,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		int at_gc = 0;
 		QStringList groupchats;
 		if(!isPrivate && !isAgent) {
-			Q3PopupMenu *gm = new Q3PopupMenu(&pm);
+			QMenu *gm = new QMenu(&pm);
 			groupchats = d->pa->groupchats();
 			for(QStringList::ConstIterator it = groupchats.begin(); it != groupchats.end(); ++it) {
 				int id = gm->insertItem(*it, base_gc+at_gc++);
@@ -1313,7 +1313,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 
 			if(!isAgent) {
 				if(inList && !PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool()) {
-					Q3PopupMenu *gm = new Q3PopupMenu(&pm);
+					QMenu *gm = new QMenu(&pm);
 
 					gm->setCheckable(true);
 					gm->insertItem(tr("&None"), 8);
@@ -1368,7 +1368,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		}
 
 		if(inList && !PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool()) {
-			Q3PopupMenu *authm = new Q3PopupMenu (&pm);
+			QMenu *authm = new QMenu (&pm);
 
 			authm->insertItem(tr("Resend Authorization To"), 6);
 			authm->insertItem(tr("Rerequest Authorization From"), 11);
@@ -1393,7 +1393,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 
 		// Avatars
 		if (PsiOptions::instance()->getOption("options.ui.menu.contact.custom-picture").toBool()) {
-			Q3PopupMenu *avpm = new Q3PopupMenu(&pm);
+			QMenu *avpm = new QMenu(&pm);
 			d->cv->qa_assignAvatar->addTo(avpm);
 			d->cv->qa_clearAvatar->setEnabled(d->pa->avatarFactory()->hasManualAvatar(u->jid()));
 			d->cv->qa_clearAvatar->addTo(avpm);
