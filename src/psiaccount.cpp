@@ -853,6 +853,11 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 		d->xmlConsole->enable();
 	}
 
+	// TIP OF THE DAY: You cannot change content of caps extension.
+	// You have to rename it. If you just change what's inside, some people
+	// will cache one set of features and some people will cache other set.
+	// And this of course is a Bad Thing.
+
 	// Voice Calling
 #ifdef HAVE_JINGLE
 	d->voiceCaller = new JingleVoiceCaller(this);
@@ -894,8 +899,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 		pepNodes += "http://jabber.org/protocol/tune+notify";
 		pepNodes += "http://jabber.org/protocol/physloc+notify";
 		pepNodes += "http://jabber.org/protocol/geoloc+notify";
-		pepNodes += "http://www.xmpp.org/extensions/xep-0084.html#ns-metadata+notify";
-		d->client->addExtension("ep-notify",Features(pepNodes));
+		pepNodes += "urn:xmpp:avatar:metadata+notify";
+		d->client->addExtension("ep-notify-2",Features(pepNodes));
 	}
 
 	// load event queue from disk
@@ -1776,8 +1781,8 @@ void PsiAccount::setPEPAvailable(bool b)
 		pepNodes += "http://jabber.org/protocol/tune";
 		pepNodes += "http://jabber.org/protocol/physloc";
 		pepNodes += "http://jabber.org/protocol/geoloc";
-		pepNodes += "http://www.xmpp.org/extensions/xep-0084.html#ns-data";
-		pepNodes += "http://www.xmpp.org/extensions/xep-0084.html#ns-metadata";
+		pepNodes += "urn:xmpp:avatar:data";
+		pepNodes += "urn:xmpp:avatar:metadata";
 		d->client->addExtension("ep",Features(pepNodes));
 		setStatusActual(d->loginStatus);
 	}

@@ -508,7 +508,7 @@ void PEPManager::createFinished()
 			qWarning(QString("[%1] PEP Node already exists. Ignoring.").arg(client_->jid().full()));
 
 		// Subscribe to our own nodes
-		if (task->node() != "http://www.xmpp.org/extensions/xep-0084.html#ns-data")
+		if (task->node() != "urn:xmpp:avatar:data")
 			subscribe(client_->jid().bare(),task->node());
 		
 		// Notify
@@ -653,7 +653,7 @@ void PEPManager::getSelfSubscriptionsTaskFinished()
 				emit ready(s.node());
 
 				// Subscribe to our own nodes
-				if (s.state() == PubSubSubscription::None && s.node() != "http://www.xmpp.org/extensions/xep-0084.html#ns-data") {
+				if (s.state() == PubSubSubscription::None && s.node() != "urn:xmpp:avatar:data") {
 					subscribe(client_->jid().bare(),s.node());
 				}
 			}

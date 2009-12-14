@@ -505,16 +505,16 @@ bool PsiCon::init()
 	             << "http://jabber.org/protocol/tune"
 	             << "http://jabber.org/protocol/physloc"
 	             << "http://jabber.org/protocol/geoloc"
-	             << "http://www.xmpp.org/extensions/xep-0084.html#ns-data"
-	             << "http://www.xmpp.org/extensions/xep-0084.html#ns-metadata"
+		     << "urn:xmpp:avatar:data"
+		     << "urn:xmpp:avatar:metadata"
 	            );
 
-	registerCaps("ep-notify", QStringList()
+	registerCaps("ep-notify-2", QStringList()
 	             << "http://jabber.org/protocol/mood+notify"
 	             << "http://jabber.org/protocol/tune+notify"
 	             << "http://jabber.org/protocol/physloc+notify"
 	             << "http://jabber.org/protocol/geoloc+notify"
-	             << "http://www.xmpp.org/extensions/xep-0084.html#ns-metadata+notify"
+		     << "urn:xmpp:avatar:metadata+notify"
 	            );
 
 	registerCaps("html", QStringList("http://jabber.org/protocol/xhtml-im"));
