@@ -1,6 +1,6 @@
 /*
 -----BEGIN QCMOD-----
-name: recursively generate prl files
+name: Generate .prl files
 -----END QCMOD-----
 */
 
@@ -10,17 +10,98 @@ name: recursively generate prl files
 class qc_recursiveprl : public ConfObj
 {
 public:
+	bool success;
+
 	qc_recursiveprl(Conf *c) : ConfObj(c) {}
-	QString name() const { return "recursively generate prl files"; }
+	QString name() const { return "Generate .prl files"; }
 	QString shortname() const { return "recursiveprl"; }
-	QString checkString() const { return QString(); }
+
+	QString checkString() const
+	{
+		return "Generating .prl files ...";
+	}
+
+	QString resultString() const
+	{
+		if(success)
+			return "ok";
+		else
+			return "fail";
+	}
+
 	bool exec()
 	{
+		success = true;
+
+		if(!writeConf())
+		{
+			success = false;
+			return false;
+		}
+
 		QStringList args;
 		args += "-prl";
 		args += "-r";
 		args += qc_getenv("QC_PROFILE");
-		conf->doCommand(conf->qmake_path, args);
+		if(conf->doCommand(conf->qmake_path, args) != 0)
+		{
+			success = false;
+			return false;
+		}
+
+		return true;
+	}
+
+	bool writeConf()
+	{
+		// adapted from conf4.cpp.  probably a future version of qconf
+		//   should just have a function to do this so we don't have
+		//   to copy code
+		QFile f("conf.pri");
+		if(!f.open(QFile::WriteOnly | QFile::Truncate))
+		{
+			conf->debug(QString("Error writing %1").arg(f.fileName()));
+			return false;
+                }
+
+		QString str;
+		str += "# qconf\n\n";
+
+		QString var;
+		var = qc_getenv("PREFIX");
+		if(!var.isEmpty())
+			str += QString("PREFIX = %1\n").arg(var);
+		var = qc_getenv("BINDIR");
+		if(!var.isEmpty())
+			str += QString("BINDIR = %1\n").arg(var);
+		var = qc_getenv("INCDIR");
+		if(!var.isEmpty())
+			str += QString("INCDIR = %1\n").arg(var);
+		var = qc_getenv("LIBDIR");
+		if(!var.isEmpty())
+			str += QString("LIBDIR = %1\n").arg(var);
+		var = qc_getenv("DATADIR");
+		if(!var.isEmpty())
+			str += QString("DATADIR = %1\n").arg(var);
+		str += '\n';
+
+		if(qc_getenv("QC_STATIC") == "Y")
+			str += "CONFIG += staticlib\n";
+
+		if(!conf->DEFINES.isEmpty())
+			str += "DEFINES += " + conf->DEFINES + '\n';
+		if(!conf->INCLUDEPATH.isEmpty())
+			str += "INCLUDEPATH += " + conf->INCLUDEPATH + '\n';
+		if(!conf->LIBS.isEmpty())
+			str += "LIBS += " + conf->LIBS + '\n';
+		if(!conf->extra.isEmpty())
+			str += conf->extra;
+		str += '\n';
+
+                QByteArray cs = str.toLatin1();
+                f.write(cs);
+                f.close();
+
 		return true;
 	}
 };

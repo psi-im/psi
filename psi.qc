@@ -35,10 +35,10 @@
     <required/>
   </dep>
   <!--<dep type='plugins'/>-->
-  <dep type='recursiveprl'>
+  <dep type='conf'>
     <required/>
   </dep>
-  <dep type='conf'>
+  <dep type='recursiveprl'>
     <required/>
   </dep>
 </qconf>
