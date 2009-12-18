@@ -332,7 +332,7 @@ void InfoDlg::showEvent( QShowEvent * event )
 
 bool InfoDlg::updatePhoto()
 {
-	const QImage img(d->photo);
+	const QImage img = QImage::fromData(d->photo);
 	if (img.isNull()) {
 		return false;
 	}
@@ -622,7 +622,7 @@ void InfoDlg::setPreviewPhoto(const QString& path)
 		return;
 	
 	QByteArray photo_data = photo_file.readAll();
-	QImage photo_image(photo_data);
+	QImage photo_image = QImage::fromData(photo_data);
 	if(!photo_image.isNull()) {
 		d->photo = photo_data;
 		updatePhoto();

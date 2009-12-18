@@ -126,7 +126,7 @@ QSize PsiTipLabel::sizeHint() const
 	doc->adjustSize();
 	// br = QRect(QPoint(0, 0), doc->size().toSize());
 	// this way helps to fight empty space on the right:
-	QSize docSize = QSize(doc->idealWidth(), doc->size().toSize().height());
+	QSize docSize = QSize(static_cast<int>(doc->idealWidth()), doc->size().toSize().height());
 
 	QFontMetrics fm(font());
 	QSize extra(2*margin + 2, 2*margin + 1);	// "+" for tip's frame

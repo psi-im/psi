@@ -91,6 +91,11 @@ bool DesktopUtil::openUrl(const QString& url)
 		return doOpenUrl(QUrl(url, QUrl::TolerantMode));
 }
 
+bool DesktopUtil::openUrl(const QUrl& url)
+{
+	return doOpenUrl(url);
+}
+
 /**
  * \brief Sets the handler for the given \a scheme to be the \a handler method provided by the \a receiver object.
  *

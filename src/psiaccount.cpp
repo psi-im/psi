@@ -1957,28 +1957,32 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
 
 #if !defined(Q_WS_MAC) || !defined(HAVE_GROWL)
 	// Do the popup test earlier (to avoid needless JID lookups)
-	if ((popupType == PopupOnline && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.online").toBool()) || (popupType == PopupStatusChange && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.other-changes").toBool()))
+	if ((popupType == PopupOnline && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.online").toBool()) || (popupType == PopupStatusChange && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.other-changes").toBool())) {
 #endif
-	if(notifyOnlineOk && doPopup && !d->blockTransportPopupList->find(j, popupType == PopupOnline) && !d->noPopup(IncomingStanza)) {
-		QString name;
-		UserListItem *u = findFirstRelevant(j);
+		if(notifyOnlineOk && doPopup && !d->blockTransportPopupList->find(j, popupType == PopupOnline) && !d->noPopup(IncomingStanza)) {
+			QString name;
+			UserListItem *u = findFirstRelevant(j);
 
-		PsiPopup::PopupType pt = PsiPopup::AlertNone;
-		if ( popupType == PopupOnline )
-			pt = PsiPopup::AlertOnline;
-		else if ( popupType == PopupStatusChange )
-			pt = PsiPopup::AlertStatusChange;
+			PsiPopup::PopupType pt = PsiPopup::AlertNone;
+			if ( popupType == PopupOnline )
+				pt = PsiPopup::AlertOnline;
+			else if ( popupType == PopupStatusChange )
+				pt = PsiPopup::AlertStatusChange;
 
-		if ((popupType == PopupOnline && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.online").toBool()) || (popupType == PopupStatusChange && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.other-changes").toBool())) {
-			PsiPopup *popup = new PsiPopup(pt, this);
-			popup->setData(j, r, u);
-		}
+			if ((popupType == PopupOnline && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.online").toBool()) || (popupType == PopupStatusChange && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.other-changes").toBool())) {
+				PsiPopup *popup = new PsiPopup(pt, this);
+				popup->setData(j, r, u);
+			}
 #if defined(Q_WS_MAC) && defined(HAVE_GROWL)
-		PsiGrowlNotifier::instance()->popup(this, pt, j, r, u);
+			PsiGrowlNotifier::instance()->popup(this, pt, j, r, u);
 #endif
+		}
+		else if ( !notifyOnlineOk ) {
+			d->userCounter++;
+		}
+#if !defined(Q_WS_MAC) || !defined(HAVE_GROWL)
 	}
-	else if ( !notifyOnlineOk )
-		d->userCounter++;
+#endif
 
 	// Update entity capabilities.
 	// This has to happen after the userlist item has been created.
