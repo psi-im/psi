@@ -363,7 +363,7 @@ void ChatDlg::dropEvent(QDropEvent* event)
 void ChatDlg::dragEnterEvent(QDragEnterEvent* event)
 {
 	Q_ASSERT(event);
-	bool accept = false;
+	//bool accept = false;
 	if (account()->loggedIn() && event->mimeData()->hasUrls()) {
 		foreach(QUrl url, event->mimeData()->urls()) {
 			if (!url.toLocalFile().isEmpty()) {

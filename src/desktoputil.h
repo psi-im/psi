@@ -23,13 +23,15 @@
 
 class QString;
 class QObject;
+class QUrl;
 
 namespace DesktopUtil
 {
 	bool openUrl(const QString& url);
+	bool openUrl(const QUrl& url);
 
 	void setUrlHandler(const QString& scheme, QObject* receiver, const char* method);
 	void unsetUrlHandler(const QString& scheme);
-};
+}
 
 #endif

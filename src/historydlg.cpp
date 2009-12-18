@@ -18,6 +18,11 @@
  *
  */
 
+#ifdef __GNUC__
+#warning "historydlg is still full of qt3support usage"
+#endif
+#undef QT3_SUPPORT_WARNINGS
+
 #include "historydlg.h"
 
 #include <q3popupmenu.h>
