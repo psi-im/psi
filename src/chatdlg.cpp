@@ -676,6 +676,7 @@ void ChatDlg::doSend()
 	//   but I don't know how with the new chatdlg, and it doesn't
 	//   matter anyway since it doesn't get used
 	QString disclaimer_text = PsiChatDlgB_getDisclaimer(this, Jid());
+	disclaimer_text.remove('\r');
 	if(!disclaimer_text.isEmpty())
 		m.setBody("\n" + disclaimer_text + "\n" + inputText);
 	else
@@ -1073,9 +1074,54 @@ QString ChatDlg::messageText(const XMPP::Message& m)
 		if (emote)
 			txt = txt.mid(me_cmd.length());
 
-		txt = TextUtil::plain2rich(txt);
-		txt = TextUtil::linkify(txt);
-		// qWarning("regular body:\n%s\n",qPrintable(txt));
+		QString plainA;
+		QString plainB;
+		QString richdisc;
+		{
+			QString div = "----------------------------------------";
+			int dstart = txt.indexOf(div);
+			int dend = -1;
+			if(dstart != -1)
+			{
+				dend = txt.indexOf(div, dstart + div.length());
+				if(dend != -1)
+					dend += div.length();
+			}
+
+			if(dend != -1)
+			{
+				int dlen = dend - dstart;
+
+				plainA = txt.mid(0, dstart);
+				QString plaindisc = txt.mid(dstart, dlen);
+				richdisc = QString("<strong>") + TextUtil::plain2rich(plaindisc) + "</strong>";
+				plainB = txt.mid(dend);
+			}
+			else
+			{
+				plainA = txt;
+			}
+		}
+
+		QString richA, richB;
+
+		if(!plainA.isEmpty())
+		{
+			richA = TextUtil::plain2rich(plainA);
+			richA = TextUtil::linkify(richA);
+		}
+
+		if(!plainB.isEmpty())
+		{
+			richB = TextUtil::plain2rich(plainB);
+			richB = TextUtil::linkify(richB);
+		}
+
+		txt = richA + richdisc + richB;
+
+		//txt = TextUtil::plain2rich(txt);
+		//txt = TextUtil::linkify(txt);
+		//qWarning("regular body:\n%s\n", qPrintable(txt));
 	}
 
 	if (PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool())
