@@ -325,12 +325,12 @@ bool ActiveProfiles::openUri(const QString &profile, const QString &uri) const
 {
 	QStringList list;
 	list << "openUri" << uri;
-	return d->sendStringList(profile, list);
+	return d->sendStringList(profile.isEmpty()? d->pickProfile() : profile, list);
 }
 
 bool ActiveProfiles::setStatus(const QString &profile, const QString &status, const QString &message) const
 {
 	QStringList list;
 	list << "setStatus" << status << message;
-	return d->sendStringList(profile, list);
+	return d->sendStringList(profile.isEmpty()? d->pickProfile() : profile, list);
 }
