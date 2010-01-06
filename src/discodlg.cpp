@@ -731,6 +731,9 @@ DiscoListView::DiscoListView(QWidget *parent)
 //	header()->setResizeMode(2, QHeaderView::ResizeToContents);
 	header()->setStretchLastSection(false);
 	setRootIsDecorated(false);
+	setSortingEnabled(true);
+	sortByColumn(0, Qt::AscendingOrder);
+
 }
 
 void DiscoListView::resizeEvent(QResizeEvent* e)
