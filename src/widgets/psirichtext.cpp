@@ -396,6 +396,8 @@ void PsiRichText::addEmoticon(QTextEdit *textEdit, const QString &emoticon)
  */
 PsiRichText::Selection PsiRichText::saveSelection(QTextEdit *textEdit, QTextCursor &cursor)
 {
+	Q_UNUSED(textEdit)
+
 	Selection selection;
 	selection.start = selection.end = -1;
 
@@ -412,6 +414,8 @@ PsiRichText::Selection PsiRichText::saveSelection(QTextEdit *textEdit, QTextCurs
  */
 void PsiRichText::restoreSelection(QTextEdit *textEdit, QTextCursor &cursor, PsiRichText::Selection selection)
 {
+	Q_UNUSED(textEdit)
+
 	if (selection.start != -1 && selection.end != -1) {
 		cursor.setPosition(selection.start, QTextCursor::MoveAnchor);
 		cursor.setPosition(selection.end,   QTextCursor::KeepAnchor);

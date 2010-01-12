@@ -60,6 +60,8 @@ public:
 
 	void paintEvent(QPaintEvent *event)
 	{
+		Q_UNUSED(event)
+
 		QPainter p(this);
 		p.fillRect(rect(), Qt::red);
 		p.drawTiledPixmap(0, 0, width(), height(), pixmap_);
