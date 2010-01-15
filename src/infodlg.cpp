@@ -76,13 +76,47 @@ public:
 	QLineEdit *le_givenname;
 	QLineEdit *le_middlename;
 	QLineEdit *le_familyname;
+
+	// Fake UserListItem for groupchat contacts.
+	// One day this dialog should be rewritten not to talk directly to psiaccount,
+	// but for now this will somehow work...
+
+	UserListItem *userListItem;
+
+	// use instead of pa->findRelevant(j)
+	QList<UserListItem*> findRelevant(const Jid &j) const
+	{
+		if (userListItem) {
+			return QList<UserListItem*>() << userListItem;
+		} else {
+			return pa->findRelevant(j);
+		}
+	}
+
+	// use instead of pa->find(j)
+	UserListItem *find(const Jid &j) const
+	{
+		if (userListItem) {
+			return userListItem;
+		} else {
+			return pa->find(j);
+		}
+	}
+
+	// use instead of pa->contactProfile()->updateEntry(u)
+	void updateEntry(const UserListItem &u)
+	{
+		if (!userListItem) {
+			pa->contactProfile()->updateEntry(u);
+		}
+	}
 };
 
 InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWidget *parent, bool cacheVCard)
 	: QDialog(parent)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
-  	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
+	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
 		setAttribute(Qt::WA_MacMetalStyle);
 	ui_.setupUi(this);
 	d = new Private;
@@ -149,6 +183,21 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 		setReadOnly(true);
 	}
 
+	// fake UserListItem used when displaying groupchat contact
+	GCContact *gcc = pa->findGCContact(j);
+	if (gcc) {
+		d->userListItem = new UserListItem(false);
+		d->userListItem->setJid(j);
+		d->userListItem->setName(j.resource());
+
+		UserResource ur;
+		ur.setName(j.resource());
+		ur.setStatus(pa->gcContactStatus(j));
+		d->userListItem->userResourceList().append(ur);
+	} else {
+		d->userListItem = 0;
+	}
+
 	// Add a status tab
 	connect(d->pa->client(), SIGNAL(resourceAvailable(const Jid &, const Resource &)), SLOT(contactAvailable(const Jid &, const Resource &)));
 	connect(d->pa->client(), SIGNAL(resourceUnavailable(const Jid &, const Resource &)), SLOT(contactUnavailable(const Jid &, const Resource &)));
@@ -157,7 +206,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	ui_.te_status->setAcceptRichText(true);
 	PsiRichText::install(ui_.te_status->document());
 	updateStatus();
-	foreach(UserListItem* u, d->pa->findRelevant(j)) {
+	foreach(UserListItem* u, d->findRelevant(j)) {
 		foreach(UserResource r, u->userResourceList()) {
 			requestClientVersion(d->jid.withResource(r.name()));
 		}
@@ -172,6 +221,8 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 InfoDlg::~InfoDlg()
 {
 	d->pa->dialogUnregister(this);
+	delete d->userListItem;
+	d->userListItem = 0;
 	delete d;
 }
 
@@ -648,7 +699,7 @@ void InfoDlg::clearPhoto()
  */
 void InfoDlg::updateStatus()
 {
-	UserListItem *u = d->pa->find(d->jid);
+	UserListItem *u = d->find(d->jid);
 	if(u) {
 		PsiRichText::setText(ui_.te_status->document(), u->makeDesc());
 	}
@@ -686,14 +737,14 @@ void InfoDlg::clientVersionFinished()
 {
 	JT_ClientVersion *j = (JT_ClientVersion *)sender();
 	if(j->success()) {
-		foreach(UserListItem* u, d->pa->findRelevant(j->jid())) {
+		foreach(UserListItem* u, d->findRelevant(j->jid())) {
 			UserResourceList::Iterator rit = u->userResourceList().find(j->jid().resource());
 			bool found = (rit == u->userResourceList().end()) ? false: true;
 			if(!found)
 				continue;
 
 			(*rit).setClient(j->name(),j->version(),j->os());
-			d->pa->contactProfile()->updateEntry(*u);
+			d->updateEntry(*u);
 			updateStatus();
 		}
 	}
@@ -710,10 +761,10 @@ void InfoDlg::requestLastActivityFinished()
 {
 	LastActivityTask *j = (LastActivityTask *)sender();
 	if(j->success()) {
-		foreach(UserListItem* u, d->pa->findRelevant(d->jid)) {
+		foreach(UserListItem* u, d->findRelevant(d->jid)) {
 			u->setLastUnavailableStatus(makeStatus(STATUS_OFFLINE,j->status()));
 			u->setLastAvailable(j->time());
-			d->pa->contactProfile()->updateEntry(*u);
+			d->updateEntry(*u);
 			updateStatus();
 		}
 	}

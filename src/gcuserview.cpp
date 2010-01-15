@@ -414,7 +414,7 @@ void GCUserView::qlv_contextMenuRequested(Q3ListViewItem *i, const QPoint &pos, 
 	pm->insertSeparator();
 	//pm->insertItem(tr("Send &File"), 4);
 	//pm->insertSeparator();
-	pm->insertItem(tr("Check &Status"), 2);
+	//pm->insertItem(tr("Check &Status"), 2);
 	pm->insertItem(IconsetFactory::icon("psi/vCard").icon(), tr("User &Info"), 3);
 	int x = pm->exec(pos);
 	bool enabled = pm->isItemEnabled(x) || rm->isItemEnabled(x) || kickMenu->isItemEnabled(x) || banMenu->isItemEnabled(x);

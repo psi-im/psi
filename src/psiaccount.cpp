@@ -4450,6 +4450,16 @@ GCContact *PsiAccount::findGCContact(const Jid &j)
 	return 0;
 }
 
+Status PsiAccount::gcContactStatus(const Jid &j)
+{
+	GCContact *c = findGCContact(j);
+	if (c) {
+		return c->status;
+	} else {
+		return Status();
+	}
+}
+
 QStringList PsiAccount::groupchats() const
 {
 	return d->groupchats;
