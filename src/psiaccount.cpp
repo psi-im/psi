@@ -590,7 +590,8 @@ public:
 		if (status.type() != loginStatus.type() ||
 		    status.status() != loginStatus.status())
 		{
-			account->setStatusDirect(status);
+			bool withPriority = autoAway == AutoAway_Away || autoAway == AutoAway_XA;
+			account->setStatusDirect(status, withPriority);
 		}
 	}
 
@@ -605,13 +606,20 @@ private:
 	XMPP::Status autoAwayStatus(AutoAway autoAway)
 	{
 		if (!lastManualStatus_.isAway() && !lastManualStatus_.isInvisible()) {
+			int priority;
+			if (PsiOptions::instance()->getOption("options.status.auto-away.force-priority").toBool()) {
+				priority = PsiOptions::instance()->getOption("options.status.auto-away.priority").toInt();
+			} else {
+				priority = acc.priority;
+			}
+
 			switch (autoAway) {
 			case AutoAway_Away:
-				return Status(XMPP::Status::Away, PsiOptions::instance()->getOption("options.status.auto-away.message").toString(), acc.priority);
+				return Status(XMPP::Status::Away, PsiOptions::instance()->getOption("options.status.auto-away.message").toString(), priority);
 			case AutoAway_XA:
-				return Status(XMPP::Status::XA, PsiOptions::instance()->getOption("options.status.auto-away.message").toString(), acc.priority);
+				return Status(XMPP::Status::XA, PsiOptions::instance()->getOption("options.status.auto-away.message").toString(), priority);
 			case AutoAway_Offline:
-				return Status(Status::Offline, loginStatus.status(), acc.priority);
+				return Status(Status::Offline, loginStatus.status(), priority);
 			default:
 				;
 			}
