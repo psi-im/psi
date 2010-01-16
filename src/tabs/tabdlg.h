@@ -25,7 +25,6 @@
 #include <QSize>
 #include <QMap>
 #include <QPointer>
-#include <QActionGroup>
 
 #include "advwidget.h"
 
@@ -38,6 +37,7 @@ class QPushButton;
 class QMenu;
 class QString;
 class QContextMenuEvent;
+class QActionGroup;
 class PsiTabWidget;
 class TabManager;
 
