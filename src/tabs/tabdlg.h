@@ -25,6 +25,7 @@
 #include <QSize>
 #include <QMap>
 #include <QPointer>
+#include <QActionGroup>
 
 #include "advwidget.h"
 
@@ -117,6 +118,7 @@ public slots:
 	void optionsUpdate();
 	void detachTab(TabbableWidget*);
 	void sendTabTo(TabbableWidget*, TabDlg *);
+	void switchTab(QAction *act);
 
 signals:
 	void resized(QSize size);
@@ -147,6 +149,7 @@ private:
 	QAction *act_close_;
 	QAction *act_next_;
 	QAction *act_prev_;
+	QActionGroup *tabSwitcher_;
 	TabManager *tabManager_;
 	QPointer<TabbableWidget> selectedTab_;
 	bool userManagement_;
