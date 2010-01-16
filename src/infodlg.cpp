@@ -132,8 +132,6 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	d->busy = ui_.busy;
 	d->bdayDateFormat = "yyyy-MM-dd"; //FIXME make settings for custom date format, but its ISO now
 
-	ui_.te_desc->setAcceptRichText(false);
-
 	setWindowTitle(d->jid.full());
 #ifndef Q_WS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/vCard").icon());
@@ -318,9 +316,9 @@ void InfoDlg::setData(const VCard &i)
 	}
 
 	ui_.le_fullname->setToolTip(
-		QString("<b>")+tr("First Name:")+"</b> "+d->vcard.givenName()+"<br>"+
-			"<b>"+tr("Middle Name:")+"</b> "+d->vcard.middleName()+"<br>"+
-			"<b>"+tr("Last Name:")+"</b> "+d->vcard.familyName() );
+		QString("<b>")+tr("First Name:")+"</b> "+Qt::escape(d->vcard.givenName())+"<br>"+
+			"<b>"+tr("Middle Name:")+"</b> "+Qt::escape(d->vcard.middleName())+"<br>"+
+			"<b>"+tr("Last Name:")+"</b> "+Qt::escape(d->vcard.familyName()) );
 
 	QString email;
 	if ( !i.emailList().isEmpty() )
@@ -353,7 +351,7 @@ void InfoDlg::setData(const VCard &i)
 
 	ui_.le_title->setText( i.title() );
 	ui_.le_role->setText( i.role() );
-	ui_.te_desc->setText( i.desc() );
+	ui_.te_desc->setPlainText( i.desc() );
 	
 	if ( !i.photo().isEmpty() ) {
 		//printf("There is a picture...\n");
