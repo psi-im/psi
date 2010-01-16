@@ -53,7 +53,6 @@ class ChatDlg;
 class AlertManager;
 class TuneController;
 class PsiContactList;
-class Q3DockWindow;
 namespace OpenPGP {
 	class Engine;
 }

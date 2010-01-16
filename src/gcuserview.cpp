@@ -26,7 +26,6 @@
 #include "gcuserview.h"
 
 #include <QPainter>
-#include <Q3Header>
 #include <Q3TextDrag>
 #include <Q3PopupMenu>
 #include <QtDebug>

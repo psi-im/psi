@@ -12,7 +12,6 @@
 #include <qpushbutton.h>
 #include <qtimer.h>
 #include <qfile.h>
-#include <q3progressbar.h>
 #include <qdir.h>
 #include <q3listview.h>
 #include <qlayout.h>

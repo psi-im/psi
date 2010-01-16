@@ -25,7 +25,7 @@
 
 #include "historydlg.h"
 
-#include <q3popupmenu.h>
+#include <QMenu>
 #include <q3header.h>
 #include <qlayout.h>
 #include <qlabel.h>
@@ -606,6 +606,18 @@ void HistoryView::doOpenEvent()
 	aOpenEvent(i->e);
 }
 
+void HistoryView::doCopyEvent()
+{
+	HistoryViewItem *i = (HistoryViewItem *)selectedItem();
+	if(!i)
+		return;
+
+	MessageEvent *me = (MessageEvent *)i->e;
+	QApplication::clipboard()->setText(me->message().body(), QClipboard::Clipboard);
+	if(QApplication::clipboard()->supportsSelection())
+		QApplication::clipboard()->setText(me->message().body(), QClipboard::Selection);
+}
+
 void HistoryView::qlv_doubleclick(Q3ListViewItem *xi)
 {
 	HistoryViewItem *i = (HistoryViewItem *)xi;
@@ -620,28 +632,16 @@ void HistoryView::qlv_contextPopup(Q3ListViewItem *ix, const QPoint &pos, int)
 	if(!i)
 		return;
 
-	Q3PopupMenu popup;
-	popup.insertItem(tr("Open"), 1);
-	popup.insertSeparator();
-	popup.insertItem(tr("Copy"), 2);
+	QMenu popup;
+	popup.addAction(tr("Open"), this, SLOT(doOpenEvent()));
+	popup.addSeparator();
+	QAction *copyAction = popup.addAction(tr("Copy"), this, SLOT(doCopyEvent()));
 
-	if(i->e->type() != PsiEvent::Message)
-		popup.setItemEnabled(2, false);
-
-	int x = popup.exec(pos);
-
-	if(x == 1)
-		doOpenEvent();
-	else if(x == 2) {
-		HistoryViewItem *i = (HistoryViewItem *)selectedItem();
-		if(!i)
-			return;
-
-		MessageEvent *me = (MessageEvent *)i->e;
-		QApplication::clipboard()->setText(me->message().body(), QClipboard::Clipboard);
-		if(QApplication::clipboard()->supportsSelection())
-			QApplication::clipboard()->setText(me->message().body(), QClipboard::Selection);
+	if(i->e->type() != PsiEvent::Message) {
+		copyAction->setEnabled(false);
 	}
+
+	popup.exec(pos);
 }
 
 
