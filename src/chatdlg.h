@@ -151,6 +151,7 @@ protected:
 	void deferredScroll();
 	bool isEmoteMessage(const XMPP::Message& m);
 	QString messageText(const XMPP::Message& m);
+	QString messageSubject(const XMPP::Message& m);
 	virtual void chatEditCreated();
 
 	enum SpooledType {
@@ -166,8 +167,8 @@ protected:
 	void appendMessage(const Message &, bool local = false);
 	virtual bool isEncryptionEnabled() const;
 	virtual void appendSysMsg(const QString& txt) = 0;
-	virtual void appendEmoteMessage(SpooledType spooled, const QDateTime& time, bool local, QString txt) = 0;
-	virtual void appendNormalMessage(SpooledType spooled, const QDateTime& time, bool local, QString txt) = 0;
+	virtual void appendEmoteMessage(SpooledType spooled, const QDateTime& time, bool local, const QString& txt, const QString& subject) = 0;
+	virtual void appendNormalMessage(SpooledType spooled, const QDateTime& time, bool local, const QString& txt, const QString& subject) = 0;
 	virtual void appendMessageFields(const Message& m) = 0;
 	virtual void nicksChanged();
 

@@ -508,34 +508,56 @@ void PsiChatDlg::updateCounter()
 	ui_.lb_count->setNum(chatEdit()->toPlainText().length());
 }
 
-void PsiChatDlg::appendEmoteMessage(SpooledType spooled, const QDateTime& time, bool local, QString txt)
+void PsiChatDlg::appendEmoteMessage(SpooledType spooled, const QDateTime& time, bool local, const QString& txt, const QString& subject)
 {
 	updateLastMsgTime(time);
 	QString color = colorString(local, spooled);
 	QString timestr = chatView()->formatTimeStamp(time);
 
-	chatView()->appendText(QString("<span style=\"color: %1\">").arg(color) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(whoNick(local)) + txt + "</span>");
+	if (subject.isEmpty()) {
+		chatView()->appendText(QString("<span style=\"color: %1\">").arg(color) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(whoNick(local)) + txt + "</span>");
+	} else {
+		chatView()->appendText(QString("<span style=\"color: %1\">").arg(color) + QString("[%1]").arg(timestr) + "</span><br><b>" + tr("Subject:") + "</b> " + subject);
+		chatView()->appendText(QString("<span style=\"color: %1\">").arg(color) + QString(" *%1 ").arg(whoNick(local)) + txt + "</span>");
+	}
+
 }
 
-void PsiChatDlg::appendNormalMessage(SpooledType spooled, const QDateTime& time, bool local, QString txt)
+void PsiChatDlg::appendNormalMessage(SpooledType spooled, const QDateTime& time, bool local, const QString& txt, const QString& subject)
 {
 	updateLastMsgTime(time);
 	QString color = colorString(local, spooled);
 	QString timestr = chatView()->formatTimeStamp(time);
+	QString subjectLine;
+	if (!subject.isEmpty()) {
+		subjectLine = "<b>" + tr("Subject:") + "</b> " + subject;
+	}
 
 	if (PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
-		chatView()->appendText(QString("<p style=\"color: %1\">").arg(color) + QString("[%1] ").arg(timestr) + tr("%1 says:").arg(whoNick(local)) + "</p>" + txt);
+		chatView()->appendText(QString("<span style=\"color: %1\">").arg(color) + QString("[%1] ").arg(timestr) + tr("%1 says:").arg(whoNick(local)) + "</span>");
+		if (!subjectLine.isEmpty()) {
+			chatView()->appendText(subjectLine);
+		}
+		chatView()->appendText(txt);
 	}
 	else {
-		chatView()->appendText(QString("<span style=\"color: %1\">").arg(color) + QString("[%1] &lt;").arg(timestr) + whoNick(local) + QString("&gt;</span> ") + txt);
+		QString intro = QString("<span style=\"color: %1\">").arg(color) + QString("[%1] &lt;").arg(timestr) + whoNick(local) + QString("&gt;</span>");
+		if (subjectLine.isEmpty()) {
+			chatView()->appendText(intro + " " + txt);
+		} else {
+			chatView()->appendText(intro);
+			chatView()->appendText(subjectLine);
+			chatView()->appendText(txt);
+		}
+
 	}
 }
 
 void PsiChatDlg::appendMessageFields(const Message& m)
 {
-	if (!m.subject().isEmpty()) {
-		chatView()->appendText(QString("<b>") + tr("Subject:") + "</b> " + QString("%1").arg(Qt::escape(m.subject())));
-	}
+//	if (!m.subject().isEmpty()) {
+//		chatView()->appendText(QString("<b>") + tr("Subject:") + "</b> " + QString("%1").arg(Qt::escape(m.subject())));
+//	}
 	if (!m.urlList().isEmpty()) {
 		UrlList urls = m.urlList();
 		chatView()->appendText(QString("<i>") + tr("-- Attached URL(s) --") + "</i>");
