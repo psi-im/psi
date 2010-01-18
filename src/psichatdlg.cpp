@@ -636,7 +636,6 @@ bool PsiChatDlg::eventFilter( QObject *obj, QEvent *ev ) {
 		}
 
 		tabCompletion.reset();
-		return false;
 	}
 
 	return ChatDlg::eventFilter( obj, ev );
