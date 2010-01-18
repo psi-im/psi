@@ -749,7 +749,7 @@ void ChatDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
 
 void ChatDlg::incomingMessage(const Message &m)
 {
-	if (m.body().isEmpty()) {
+	if (m.body().isEmpty() && m.subject().isEmpty() && m.urlList().isEmpty()) {
 		// Event message
 		if (m.containsEvent(CancelEvent)) {
 			setContactChatState(XMPP::StatePaused);
