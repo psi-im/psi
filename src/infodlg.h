@@ -64,6 +64,7 @@ private slots:
 	void doSubmit();
 	void doDisco();
 	void doUpdateFromCalendar();
+	void doClearBirthDate();
 	void doBDCheck();
 	void textChanged();
 	void selectPhoto();

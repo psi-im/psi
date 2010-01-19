@@ -168,6 +168,9 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 		QAction *showcal = new QAction(IconsetFactory::icon("psi/options").icon(), "", this);
 		ui_.le_bday->addAction(showcal);
 		ui_.le_bday->widgetForAction(showcal)->setPopup(d->calendar);
+		QAction* clearBDate = new QAction(IconsetFactory::icon("psi/cancel").icon(), "", this);
+		connect(clearBDate, SIGNAL(triggered()), SLOT(doClearBirthDate()));
+		ui_.le_bday->addAction(clearBDate);
 		connect(ui_.pb_submit, SIGNAL(clicked()), this, SLOT(doSubmit()));
 		connect(ui_.le_bday, SIGNAL(textChanged(QString)), this, SLOT(doBDCheck()));
 		connect(d->calendar, SIGNAL(selectionChanged()), this, SLOT(doUpdateFromCalendar()));
@@ -556,6 +559,14 @@ void InfoDlg::doUpdateFromCalendar()
 	ui_.le_bday->setModified(changed);
 	if (changed) {
 		d->calendar->hide();
+	}
+}
+
+void InfoDlg::doClearBirthDate()
+{
+	if (ui_.le_bday->text() != "") {
+		ui_.le_bday->setText("");
+		ui_.le_bday->setModified(true);
 	}
 }
 
