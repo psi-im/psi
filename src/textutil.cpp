@@ -3,6 +3,7 @@
 #include "textutil.h"
 #include "psiiconset.h"
 #include "rtparse.h"
+#include "psioptions.h"
 
 // Qt::escape() doesn't escape " to &quot; -- it sucks
 QString TextUtil::escape(const QString& plain)
@@ -552,3 +553,37 @@ QString TextUtil::legacyFormat(const QString& in)
 	return out;
 }
 
+/**
+ * Creates linkified and optionally emoticonified and legacy-formatted rich text.
+ * \a text, text to modify (either plain or rich, depending on \a isHtml
+ * \a isEmote, if true, remove "/me " part
+ * \a isHtml, if false, \a text is first converted to rich text.
+ */
+QString TextUtil::prepareMessageText(const QString& text, bool isEmote, bool isHtml)
+{
+	static const QString me_cmd = "/me ";
+
+	QString txt = text;
+
+	if (isHtml) {
+		if (isEmote) {
+			int cmd = txt.indexOf(me_cmd);
+			txt = txt.remove(cmd, me_cmd.length());
+		}
+	}
+	else {
+		if (isEmote) {
+			txt = txt.mid(me_cmd.length());
+		}
+
+		txt = TextUtil::plain2rich(txt);
+		txt = TextUtil::linkify(txt);
+	}
+
+	if (PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool())
+		txt = TextUtil::emoticonify(txt);
+	if (PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
+		txt = TextUtil::legacyFormat(txt);
+
+	return txt;
+}

@@ -1445,7 +1445,7 @@ void GCMainDlg::message(const Message &_m)
 	}
 
 	if(from.isEmpty())
-		appendSysMsg(m.body(), alert, m.timeStamp());
+		appendSysMsg(TextUtil::prepareMessageText(m.body()), alert, m.timeStamp());
 	else
 		appendMessage(m, alert);
 }
