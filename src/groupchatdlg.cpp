@@ -1497,16 +1497,7 @@ void GCMainDlg::appendSysMsg(const QString &str, bool alert, const QDateTime &ts
 	updateLastMsgTime(time);
 	QString timestr = ui_.log->formatTimeStamp(time);
 	QString color = PsiOptions::instance()->getOption("options.ui.look.colors.messages.informational").toString();
-
-	QString txt = TextUtil::plain2rich(str);
-	txt = TextUtil::linkify(txt);
-
-	if(PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool())
-		txt = TextUtil::emoticonify(txt);
-	if(PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
-		txt = TextUtil::legacyFormat(txt);
-
-	ui_.log->appendText(QString("<font color=\"%1\">[%2]").arg(color, timestr) + QString(" *** %1</font>").arg(txt));
+	ui_.log->appendText(QString("<font color=\"%1\">[%2]").arg(color, timestr) + QString(" *** %1</font>").arg(Qt::escape(str)));
 
 	if(alert)
 		doAlert();
