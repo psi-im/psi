@@ -1497,7 +1497,7 @@ void GCMainDlg::appendSysMsg(const QString &str, bool alert, const QDateTime &ts
 	updateLastMsgTime(time);
 	QString timestr = ui_.log->formatTimeStamp(time);
 	QString color = PsiOptions::instance()->getOption("options.ui.look.colors.messages.informational").toString();
-	ui_.log->appendText(QString("<font color=\"%1\">[%2]").arg(color, timestr) + QString(" *** %1</font>").arg(Qt::escape(str)));
+	ui_.log->appendText(QString("<font color=\"%1\">[%2]").arg(color, timestr) + QString(" *** %1</font>").arg(str));
 
 	if(alert)
 		doAlert();
