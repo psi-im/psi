@@ -468,9 +468,26 @@ void PsiChatDlg::updatePGP()
 
 void PsiChatDlg::doClearButton()
 {
-	int n = QMessageBox::information(this, tr("Warning"), tr("Are you sure you want to clear the chat window?\n(note: does not affect saved history)"), tr("&Yes"), tr("&No"));
-	if (n == 0)
+	if (PsiOptions::instance()->getOption("options.ui.chat.warn-before-clear").toBool()) {
+		switch (
+			QMessageBox::warning(
+				this,
+				tr("Warning"),
+				tr("Are you sure you want to clear the chat window?\n(note: does not affect saved history)"),
+				QMessageBox::Yes, QMessageBox::YesAll, QMessageBox::No
+			)
+		) {
+		case QMessageBox::No:
+			break;
+		case QMessageBox::YesAll:
+			PsiOptions::instance()->setOption("options.ui.chat.warn-before-clear", false);
+			// fall-through
+		case QMessageBox::Yes:
+			doClear();
+		}
+	} else {
 		doClear();
+	}
 }
 
 void PsiChatDlg::setPGPEnabled(bool enabled)
