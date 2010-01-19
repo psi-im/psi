@@ -1445,7 +1445,7 @@ void GCMainDlg::message(const Message &_m)
 	}
 
 	if(from.isEmpty())
-		appendSysMsg(TextUtil::prepareMessageText(m.body()), alert, m.timeStamp());
+		appendSysMsg(m.body(), alert, m.timeStamp(), true);
 	else
 		appendMessage(m, alert);
 }
@@ -1482,8 +1482,17 @@ void GCMainDlg::updateLastMsgTime(QDateTime t)
 	}
 }
 
-void GCMainDlg::appendSysMsg(const QString &str, bool alert, const QDateTime &ts)
+void GCMainDlg::appendSysMsg(const QString &str, bool alert, const QDateTime &ts, bool prepareAsChatMessage)
 {
+	// FIXME:
+	//  prepareAsChatMessage was added to linkify server-generated topic informations.
+	//  First idea was to linkify, etc, every SysMsg, but that leads to problems,
+	//  such as parsing full JIDs of participants joining a non-anonymous room as
+	//  emails and looking ugly.
+	//  Possibly a better way would be to change this function to something like
+	//  appendSysMsg(nick, jid, message, alert, ts)
+	//  or maybe even separate functions for different types of system messages.
+
 	if (d->trackBar)
 		d->doTrackBar();
 
@@ -1497,7 +1506,8 @@ void GCMainDlg::appendSysMsg(const QString &str, bool alert, const QDateTime &ts
 	updateLastMsgTime(time);
 	QString timestr = ui_.log->formatTimeStamp(time);
 	QString color = PsiOptions::instance()->getOption("options.ui.look.colors.messages.informational").toString();
-	ui_.log->appendText(QString("<font color=\"%1\">[%2]").arg(color, timestr) + QString(" *** %1</font>").arg(str));
+	ui_.log->appendText(QString("<font color=\"%1\">[%2]").arg(color, timestr) +
+		QString(" *** %1</font>").arg(prepareAsChatMessage ? TextUtil::prepareMessageText(str) : Qt::escape(str)));
 
 	if(alert)
 		doAlert();
