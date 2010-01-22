@@ -165,12 +165,12 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	if(d->type == Self) {
 		d->calendar = new QCalendarWidget(this);
 		d->calendar->setVerticalHeaderFormat(QCalendarWidget::NoVerticalHeader);
-		QAction *showcal = new QAction(IconsetFactory::icon("psi/options").icon(), "", this);
-		ui_.le_bday->addAction(showcal);
-		ui_.le_bday->widgetForAction(showcal)->setPopup(d->calendar);
 		QAction* clearBDate = new QAction(IconsetFactory::icon("psi/cancel").icon(), "", this);
 		connect(clearBDate, SIGNAL(triggered()), SLOT(doClearBirthDate()));
 		ui_.le_bday->addAction(clearBDate);
+		QAction *showcal = new QAction(IconsetFactory::icon("psi/options").icon(), "", this);
+		ui_.le_bday->addAction(showcal);
+		ui_.le_bday->widgetForAction(showcal)->setPopup(d->calendar);
 		connect(ui_.pb_submit, SIGNAL(clicked()), this, SLOT(doSubmit()));
 		connect(ui_.le_bday, SIGNAL(textChanged(QString)), this, SLOT(doBDCheck()));
 		connect(d->calendar, SIGNAL(selectionChanged()), this, SLOT(doUpdateFromCalendar()));
