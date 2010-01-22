@@ -97,8 +97,63 @@ PsiMain::PsiMain(const QMap<QString, QString>& commandline, QObject *par)
 	lastProfile = s.value("last_profile", lastProfile).toString();
 	lastLang = s.value("last_lang", lastLang).toString();
 	autoOpen = s.value("auto_open", autoOpen).toBool();
+}
 
+PsiMain::~PsiMain()
+{
+	delete pcon;
 
+	QSettings s(ApplicationInfo::homeDir() + "/psirc", QSettings::IniFormat);
+	s.setValue("last_profile", lastProfile);
+	s.setValue("last_lang", lastLang);
+	s.setValue("auto_open", autoOpen);
+}
+
+/**
+  * \brief Try to use already existing Psi instance to handle given commandline
+  * Don't call after useLocalInstance()
+  * \returns true if this instance is no longer needed and should terminate
+  */
+bool PsiMain::useActiveInstance()
+{
+	if (!autoOpen && cmdline.isEmpty()) {
+		return false;
+	}
+	else if (!cmdline.contains("help") && !cmdline.contains("version") && !cmdline.contains("choose-profile")
+		&& ActiveProfiles::instance()->isAnyActive()
+		&& ((cmdline.contains("profile") && ActiveProfiles::instance()->isActive(cmdline["profile"])) || !cmdline.contains("profile"))) {
+
+		bool raise = true;
+		if (cmdline.contains("uri")) {
+			ActiveProfiles::instance()->openUri(cmdline.value("profile"), cmdline.value("uri"));
+			raise = false;
+		}
+		if (cmdline.contains("status")) {
+			ActiveProfiles::instance()->setStatus(cmdline.value("profile"), cmdline.value("status"), cmdline.value("status-message"));
+			raise = false;
+		}
+
+		if (raise) {
+			ActiveProfiles::instance()->raise(cmdline.value("profile"), true);
+		}
+
+		return true;
+	}
+	else if (cmdline.contains("remote")) {
+		// there was no active instance to satisfy the request
+		// but user doesn't want to start new instance
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+/**
+  * \brief Initialize this Psi instance
+  */
+void PsiMain::useLocalInstance()
+{
 	if(lastLang.isEmpty()) {
 		lastLang = QLocale::system().name().section('_', 0, 0);
 		//printf("guessing locale: [%s]\n", lastLang.latin1());
@@ -144,7 +199,7 @@ PsiMain::PsiMain(const QMap<QString, QString>& commandline, QObject *par)
 	else {
 		// Create & open the default profile
 		if (!profileExists("default") && !profileNew("default")) {
-			QMessageBox::critical(0, tr("Error"), 
+			QMessageBox::critical(0, tr("Error"),
 				tr("There was an error creating the default profile."));
 			QTimer::singleShot(0, this, SLOT(bail()));
 		} else {
@@ -154,16 +209,6 @@ PsiMain::PsiMain(const QMap<QString, QString>& commandline, QObject *par)
 			QTimer::singleShot(0, this, SLOT(sessionStart()));
 		}
 	}
-}
-
-PsiMain::~PsiMain()
-{
-	delete pcon;
-
-	QSettings s(ApplicationInfo::homeDir() + "/psirc", QSettings::IniFormat);
-	s.setValue("last_profile", lastProfile);
-	s.setValue("last_lang", lastLang);
-	s.setValue("auto_open", autoOpen);
 }
 
 void PsiMain::chooseProfile()
@@ -457,31 +502,12 @@ int main(int argc, char *argv[])
 	}
 #endif
 
+	PsiMain *psi = new PsiMain(cmdline);
 	// check if we want to remote-control other psi instance
-	if (!cmdline.contains("help") && !cmdline.contains("version") && !cmdline.contains("choose-profile")
-		&& ActiveProfiles::instance()->isAnyActive()
-		&& ((cmdline.contains("profile") && ActiveProfiles::instance()->isActive(cmdline["profile"])) || !cmdline.contains("profile"))) {
-
-		bool raise = true;
-		if (cmdline.contains("uri")) {
-			ActiveProfiles::instance()->openUri(cmdline.value("profile"), cmdline.value("uri"));
-			raise = false;
-		}
-		if (cmdline.contains("status")) {
-			ActiveProfiles::instance()->setStatus(cmdline.value("profile"), cmdline.value("status"), cmdline.value("status-message"));
-			raise = false;
-		}
-
-		if (raise) {
-			ActiveProfiles::instance()->raise(cmdline.value("profile"), true);
-		}
+	if (psi->useActiveInstance()) {
+		delete psi;
 		return 0;
 	}
-
-	if (cmdline.contains("remote")) {
-		return 0;
-	}
-
 
 	//if(link_test)
 	//	printf("Link test enabled\n");
@@ -497,8 +523,8 @@ int main(int argc, char *argv[])
 	//if(!QCA::isSupported(QCA::CAP_SHA1))
 	//	QCA::insertProvider(XMPP::createProviderHash());
 
-	PsiMain *psi = new PsiMain(cmdline);
 	QObject::connect(psi, SIGNAL(quit()), &app, SLOT(quit()));
+	psi->useLocalInstance();
 	int returnValue = app.exec();
 	delete psi;
 

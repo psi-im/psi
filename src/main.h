@@ -34,6 +34,9 @@ public:
 	PsiMain(const QMap<QString, QString>& commandline, QObject *parent=0);
 	~PsiMain();
 
+	bool useActiveInstance();
+	void useLocalInstance();
+
 signals:
 	void quit();
 
