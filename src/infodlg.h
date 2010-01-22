@@ -63,9 +63,10 @@ private slots:
 	void jt_finished();
 	void doSubmit();
 	void doDisco();
-	void doUpdateFromCalendar();
+	void doShowCal();
+	void doUpdateFromCalendar(const QDate &);
 	void doClearBirthDate();
-	void doBDCheck();
+	void doBdayCheck();
 	void textChanged();
 	void selectPhoto();
 	void clearPhoto();
