@@ -22,11 +22,81 @@
 #include <stdlib.h>
 #include <QtCrypto>
 #include "iris/netnames.h"
+#include "iris/udpportreserver.h"
 #include "xmpp_client.h"
 
 // TODO: reject offers that don't contain at least one of audio or video
 // TODO: support candidate negotiations over the JingleRtpChannel thread
 //   boundary, so we can change candidates after the stream is active
+
+// scope values: 0 = local, 1 = link-local, 2 = private, 3 = public
+static int getAddressScope(const QHostAddress &a)
+{
+	if(a.protocol() == QAbstractSocket::IPv6Protocol)
+	{
+		if(a == QHostAddress(QHostAddress::LocalHostIPv6))
+			return 0;
+		else if(XMPP::Ice176::isIPv6LinkLocalAddress(a))
+			return 1;
+	}
+	else if(a.protocol() == QAbstractSocket::IPv4Protocol)
+	{
+		quint32 v4 = a.toIPv4Address();
+		quint8 a0 = v4 >> 24;
+		quint8 a1 = (v4 >> 16) & 0xff;
+		if(a0 == 127)
+			return 0;
+		else if(a0 == 169 && a1 == 254)
+			return 1;
+		else if(a0 == 10)
+			return 2;
+		else if(a0 == 172 && a1 >= 16 && a1 <= 31)
+			return 2;
+		else if(a0 == 192 && a1 == 168)
+			return 2;
+	}
+
+	return 3;
+}
+
+// -1 = a is higher priority, 1 = b is higher priority, 0 = equal
+static int comparePriority(const QHostAddress &a, const QHostAddress &b)
+{
+	// prefer closer scope
+	int a_scope = getAddressScope(a);
+	int b_scope = getAddressScope(b);
+	if(a_scope < b_scope)
+		return -1;
+	else if(a_scope > b_scope)
+		return 1;
+
+	// prefer ipv6
+	if(a.protocol() == QAbstractSocket::IPv6Protocol && b.protocol() != QAbstractSocket::IPv6Protocol)
+		return -1;
+	else if(b.protocol() == QAbstractSocket::IPv6Protocol && a.protocol() != QAbstractSocket::IPv6Protocol)
+		return 1;
+
+	return 0;
+}
+
+static QList<QHostAddress> sortAddrs(const QList<QHostAddress> &in)
+{
+	QList<QHostAddress> out;
+
+	foreach(const QHostAddress &a, in)
+	{
+		int at;
+		for(at = 0; at < out.count(); ++at)
+		{
+			if(comparePriority(a, out[at]) < 0)
+				break;
+		}
+
+		out.insert(at, a);
+	}
+
+	return out;
+}
 
 static QChar randomPrintableChar()
 {
@@ -52,6 +122,7 @@ static QString randomCredential(int len)
 }
 
 // resolve external address and stun server
+// TODO: resolve hosts and start ice engine simultaneously
 // FIXME: when/if our ICE engine supports adding these dynamically, we should
 //   not have the lookups block on each other
 class Resolver : public QObject
@@ -158,6 +229,74 @@ private:
 	}
 };
 
+class IceStopper : public QObject
+{
+	Q_OBJECT
+
+public:
+	QTimer t;
+	XMPP::UdpPortReserver *portReserver;
+	QList<XMPP::Ice176*> left;
+
+	IceStopper(QObject *parent = 0) :
+		QObject(parent),
+		t(this)
+	{
+		connect(&t, SIGNAL(timeout()), SLOT(t_timeout()));
+		t.setSingleShot(true);
+	}
+
+	~IceStopper()
+	{
+		qDeleteAll(left);
+		delete portReserver;
+		printf("IceStopper done\n");
+	}
+
+	void start(XMPP::UdpPortReserver *_portReserver, const QList<XMPP::Ice176*> iceList)
+	{
+		portReserver = _portReserver;
+		portReserver->setParent(this);
+		left = iceList;
+
+		foreach(XMPP::Ice176 *ice, left)
+		{
+			ice->setParent(this);
+
+			// TODO: error() also?
+			connect(ice, SIGNAL(stopped()), SLOT(ice_stopped()));
+			connect(ice, SIGNAL(error(XMPP::Ice176::Error)), SLOT(ice_error(XMPP::Ice176::Error)));
+			ice->stop();
+		}
+
+		t.start(3000);
+	}
+
+private slots:
+	void ice_stopped()
+	{
+		XMPP::Ice176 *ice = (XMPP::Ice176 *)sender();
+		ice->disconnect(this);
+		ice->setParent(0);
+		ice->deleteLater();
+		left.removeAll(ice);
+		if(left.isEmpty())
+			deleteLater();
+	}
+
+	void ice_error(XMPP::Ice176::Error e)
+	{
+		Q_UNUSED(e);
+
+		ice_stopped();
+	}
+
+	void t_timeout()
+	{
+		deleteLater();
+	}
+};
+
 //----------------------------------------------------------------------------
 // JingleRtp
 //----------------------------------------------------------------------------
@@ -169,6 +308,7 @@ public:
 	JingleRtpChannel *q;
 
 	QMutex m;
+	XMPP::UdpPortReserver *portReserver;
 	XMPP::Ice176 *iceA;
 	XMPP::Ice176 *iceV;
 	QTimer *rtpActivityTimer;
@@ -177,7 +317,7 @@ public:
 	JingleRtpChannelPrivate(JingleRtpChannel *_q);
 	~JingleRtpChannelPrivate();
 
-	void setIceObjects(XMPP::Ice176 *_iceA, XMPP::Ice176 *_iceV);
+	void setIceObjects(XMPP::UdpPortReserver *_portReserver, XMPP::Ice176 *_iceA, XMPP::Ice176 *_iceV);
 	void restartRtpActivityTimer();
 
 private slots:
@@ -272,6 +412,7 @@ public:
 	bool session_activated;
 	QTimer *handshakeTimer;
 	JingleRtp::Error errorCode;
+	XMPP::UdpPortReserver *portReserver;
 
 	JingleRtpPrivate(JingleRtp *_q) :
 		QObject(_q),
@@ -287,7 +428,8 @@ public:
 		prov_accepted(false),
 		ice_connected(false),
 		session_accepted(false),
-		session_activated(false)
+		session_activated(false),
+		portReserver(0)
 	{
 		connect(&resolver, SIGNAL(finished()), SLOT(resolver_finished()));
 
@@ -590,20 +732,54 @@ private:
 		delete jt;
 		jt = 0;
 
-		if(iceA)
+		if(portReserver)
 		{
-			iceA->disconnect(this);
-			iceA->setParent(0);
-			iceA->deleteLater();
-			iceA = 0;
-		}
+			portReserver->setParent(0);
 
-		if(iceV)
+			QList<XMPP::Ice176*> list;
+
+			if(iceA)
+			{
+				iceA->disconnect(this);
+				iceA->setParent(0);
+				list += iceA;
+				iceA = 0;
+			}
+
+			if(iceV)
+			{
+				iceV->disconnect(this);
+				iceV->setParent(0);
+				list += iceV;
+				iceV = 0;
+			}
+
+			// pass ownership of portReserver, iceA, and iceV
+			IceStopper *iceStopper = new IceStopper;
+			iceStopper->start(portReserver, list);
+
+			portReserver = 0;
+		}
+		else
 		{
-			iceV->disconnect(this);
-			iceV->setParent(0);
-			iceV->deleteLater();
-			iceV = 0;
+			if(iceA)
+			{
+				iceA->disconnect(this);
+				iceA->setParent(0);
+				iceA->deleteLater();
+				iceA = 0;
+			}
+
+			if(iceV)
+			{
+				iceV->disconnect(this);
+				iceV->setParent(0);
+				iceV->deleteLater();
+				iceV = 0;
+			}
+
+			delete portReserver;
+			portReserver = 0;
 		}
 
 		// prevent delivery of events by manager
@@ -617,12 +793,56 @@ private:
 		if(!stunAddr.isNull() && stunPort > 0)
 			printf("STUN service: %s:%d\n", qPrintable(stunAddr.toString()), stunPort);
 
+		QList<QHostAddress> listenAddrs;
+		foreach(const QNetworkInterface &ni, QNetworkInterface::allInterfaces())
+		{
+			QList<QNetworkAddressEntry> entries = ni.addressEntries();
+			foreach(const QNetworkAddressEntry &na, entries)
+			{
+				QHostAddress h = na.ip();
+
+				// don't put the same address in twice.
+				//   this also means that if there are
+				//   two link-local ipv6 interfaces
+				//   with the exact same address, we
+				//   only use the first one
+				if(!listenAddrs.contains(h))
+				{
+					if(h.protocol() == QAbstractSocket::IPv6Protocol && XMPP::Ice176::isIPv6LinkLocalAddress(h))
+						h.setScopeId(ni.name());
+					listenAddrs += h;
+				}
+			}
+		}
+
+		listenAddrs = sortAddrs(listenAddrs);
+
+		QList<XMPP::Ice176::LocalAddress> localAddrs;
+
+		QStringList strList;
+		foreach(const QHostAddress &h, listenAddrs)
+		{
+			XMPP::Ice176::LocalAddress addr;
+			addr.addr = h;
+			localAddrs += addr;
+			strList += h.toString();
+		}
+
+		portReserver = new XMPP::UdpPortReserver(this);
+		portReserver->setAddresses(listenAddrs);
+		portReserver->setPorts(manager->basePort, 4);
+
+		if(!strList.isEmpty())
+		{
+			printf("Host addresses:\n");
+			foreach(const QString &s, strList)
+				printf("  %s\n", qPrintable(s));
+		}
+
 		if(types & JingleRtp::Audio)
 		{
 			iceA = new XMPP::Ice176(this);
-			setup_ice(iceA);
-			if(manager->basePort != -1)
-				iceA->setBasePort(manager->basePort);
+			setup_ice(iceA, localAddrs);
 
 			iceA_status.started = false;
 			iceA_status.channelsReady.resize(2);
@@ -633,9 +853,7 @@ private:
 		if(types & JingleRtp::Video)
 		{
 			iceV = new XMPP::Ice176(this);
-			setup_ice(iceV);
-			if(manager->basePort != -1)
-				iceV->setBasePort(manager->basePort + 2);
+			setup_ice(iceV, localAddrs);
 
 			iceV_status.started = false;
 			iceV_status.channelsReady.resize(2);
@@ -661,58 +879,70 @@ private:
 		}
 	}
 
-	void setup_ice(XMPP::Ice176 *ice)
+	void setup_ice(XMPP::Ice176 *ice, const QList<XMPP::Ice176::LocalAddress> &localAddrs)
 	{
 		connect(ice, SIGNAL(started()), SLOT(ice_started()));
-		connect(ice, SIGNAL(error()), SLOT(ice_error()));
+		connect(ice, SIGNAL(error(XMPP::Ice176::Error)), SLOT(ice_error(XMPP::Ice176::Error)));
 		connect(ice, SIGNAL(localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)), SLOT(ice_localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)));
 		connect(ice, SIGNAL(componentReady(int)), SLOT(ice_componentReady(int)), Qt::QueuedConnection); // signal is not DOR-SS
 
-		// RTP+RTCP
-		ice->setComponentCount(2);
+		ice->setPortReserver(portReserver);
 
-		QList<XMPP::Ice176::LocalAddress> localAddrs;
-		XMPP::Ice176::LocalAddress addr;
+		//QList<XMPP::Ice176::LocalAddress> localAddrs;
+		//XMPP::Ice176::LocalAddress addr;
+
+		// FIXME: the following is not true, a local address is not
+		//   required, for example if you use TURN with TCP only
 
 		// a local address is required to use ice.  however, if
 		//   we don't have a local address, we won't handle it as
 		//   an error here.  instead, we'll start Ice176 anyway,
 		//   which should immediately error back at us.
-		if(manager->selfAddr.isNull())
+		/*if(manager->selfAddr.isNull())
 		{
 			printf("no self address to use.  this will fail.\n");
 			return;
 		}
 
 		addr.addr = manager->selfAddr;
-		localAddrs += addr;
+		localAddrs += addr;*/
 		ice->setLocalAddresses(localAddrs);
 
+		// if an external address is manually provided, then apply
+		//   it only to the selfAddr.  FIXME: maybe we should apply
+		//   it to all local addresses?
 		if(!extAddr.isNull())
 		{
 			QList<XMPP::Ice176::ExternalAddress> extAddrs;
-			XMPP::Ice176::ExternalAddress eaddr;
+			/*XMPP::Ice176::ExternalAddress eaddr;
 			eaddr.base = addr;
 			eaddr.addr = extAddr;
-			extAddrs += eaddr;
+			extAddrs += eaddr;*/
+			foreach(const XMPP::Ice176::LocalAddress &la, localAddrs)
+			{
+				XMPP::Ice176::ExternalAddress ea;
+				ea.base = la;
+				ea.addr = extAddr;
+				extAddrs += ea;
+			}
 			ice->setExternalAddresses(extAddrs);
 		}
 
 		if(!stunAddr.isNull() && stunPort > 0)
 		{
-			// TODO: relay support
-			XMPP::Ice176::StunServiceType stunType;
-			//if(opt_is_relay)
-			//	stunType = XMPP::Ice176::Relay;
-			//else
-				stunType = XMPP::Ice176::Basic;
-			ice->setStunService(stunAddr, stunPort, stunType);
+			ice->setStunService(stunAddr, stunPort, XMPP::Ice176::Auto);
+			// FIXME: support user/pass, to enable TURN
 			/*if(!opt_user.isEmpty())
 			{
 				ice->setStunUsername(opt_user);
 				ice->setStunPassword(opt_pass.toUtf8());
 			}*/
 		}
+
+		// RTP+RTCP
+		ice->setComponentCount(2);
+
+		ice->setLocalCandidateTrickle(true);
 	}
 
 	// called when all ICE objects are started
@@ -953,6 +1183,8 @@ private:
 			session_activated = true;
 			handshakeTimer->stop();
 
+			portReserver->setParent(0);
+
 			if(iceA)
 			{
 				iceA->disconnect(this);
@@ -964,8 +1196,9 @@ private:
 				iceV->setParent(0);
 			}
 
-			rtpChannel->d->setIceObjects(iceA, iceV);
+			rtpChannel->d->setIceObjects(portReserver, iceA, iceV);
 
+			portReserver = 0;
 			iceA = 0;
 			iceV = 0;
 
@@ -1018,8 +1251,10 @@ private slots:
 			after_ice_started();
 	}
 
-	void ice_error()
+	void ice_error(XMPP::Ice176::Error e)
 	{
+		Q_UNUSED(e);
+
 		errorCode = JingleRtp::ErrorICE;
 		emit q->error();
 	}
@@ -1189,6 +1424,7 @@ JingleRtpChannel *JingleRtp::rtpChannel()
 JingleRtpChannelPrivate::JingleRtpChannelPrivate(JingleRtpChannel *_q) :
 	QObject(_q),
 	q(_q),
+	portReserver(0),
 	iceA(0),
 	iceV(0)
 {
@@ -1198,18 +1434,31 @@ JingleRtpChannelPrivate::JingleRtpChannelPrivate(JingleRtpChannel *_q) :
 
 JingleRtpChannelPrivate::~JingleRtpChannelPrivate()
 {
-	if(iceA)
+	if(portReserver)
 	{
-		iceA->disconnect(this);
-		iceA->setParent(0);
-		iceA->deleteLater();
-	}
+		QList<XMPP::Ice176*> list;
 
-	if(iceV)
-	{
-		iceV->disconnect(this);
-		iceV->setParent(0);
-		iceV->deleteLater();
+		portReserver->setParent(0);
+
+		if(iceA)
+		{
+			iceA->disconnect(this);
+			iceA->setParent(0);
+			//iceA->deleteLater();
+			list += iceA;
+		}
+
+		if(iceV)
+		{
+			iceV->disconnect(this);
+			iceV->setParent(0);
+			//iceV->deleteLater();
+			list += iceV;
+		}
+
+		// pass ownership of portReserver, iceA, and iceV
+		IceStopper *iceStopper = new IceStopper;
+		iceStopper->start(portReserver, list);
 	}
 
 	rtpActivityTimer->setParent(0);
@@ -1217,15 +1466,18 @@ JingleRtpChannelPrivate::~JingleRtpChannelPrivate()
 	rtpActivityTimer->deleteLater();
 }
 
-void JingleRtpChannelPrivate::setIceObjects(XMPP::Ice176 *_iceA, XMPP::Ice176 *_iceV)
+void JingleRtpChannelPrivate::setIceObjects(XMPP::UdpPortReserver *_portReserver, XMPP::Ice176 *_iceA, XMPP::Ice176 *_iceV)
 {
 	if(QThread::currentThread() != thread())
 	{
 		// if called from another thread, safely change ownership
 		QMutexLocker locker(&m);
 
+		portReserver = _portReserver;
 		iceA = _iceA;
 		iceV = _iceV;
+
+		portReserver->moveToThread(thread());
 
 		if(iceA)
 		{
@@ -1245,6 +1497,7 @@ void JingleRtpChannelPrivate::setIceObjects(XMPP::Ice176 *_iceA, XMPP::Ice176 *_
 	}
 	else
 	{
+		portReserver = _portReserver;
 		iceA = _iceA;
 		iceV = _iceV;
 
@@ -1273,6 +1526,7 @@ void JingleRtpChannelPrivate::restartRtpActivityTimer()
 
 void JingleRtpChannelPrivate::start()
 {
+	portReserver->setParent(this);
 	if(iceA)
 		iceA->setParent(this);
 	if(iceV)
