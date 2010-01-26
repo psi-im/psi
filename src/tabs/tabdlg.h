@@ -37,6 +37,7 @@ class QPushButton;
 class QMenu;
 class QString;
 class QContextMenuEvent;
+class QActionGroup;
 class PsiTabWidget;
 class TabManager;
 
@@ -117,6 +118,7 @@ public slots:
 	void optionsUpdate();
 	void detachTab(TabbableWidget*);
 	void sendTabTo(TabbableWidget*, TabDlg *);
+	void switchTab(QAction *act);
 
 signals:
 	void resized(QSize size);
@@ -147,6 +149,7 @@ private:
 	QAction *act_close_;
 	QAction *act_next_;
 	QAction *act_prev_;
+	QActionGroup *tabSwitcher_;
 	TabManager *tabManager_;
 	QPointer<TabbableWidget> selectedTab_;
 	bool userManagement_;

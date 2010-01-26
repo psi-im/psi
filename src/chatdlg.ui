@@ -72,9 +72,6 @@
          </item>
          <item>
           <widget class="QLineEdit" name="le_jid" >
-           <property name="focusPolicy" >
-            <enum>Qt::NoFocus</enum>
-           </property>
            <property name="readOnly" >
             <bool>true</bool>
            </property>

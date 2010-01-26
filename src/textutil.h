@@ -15,6 +15,8 @@ namespace TextUtil
 	QString linkify(const QString &);
 	QString legacyFormat(const QString &);
 	QString emoticonify(const QString &in);
+
+	QString prepareMessageText(const QString& text, bool isEmote=false, bool isHtml=false);
 };
 
 #endif

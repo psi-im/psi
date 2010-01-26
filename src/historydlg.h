@@ -69,6 +69,7 @@ signals:
 
 private slots:
 	void doOpenEvent();
+	void doCopyEvent();
 
 	void qlv_doubleclick(Q3ListViewItem *);
 	void qlv_contextPopup(Q3ListViewItem *, const QPoint &, int);

@@ -33,6 +33,7 @@
 #include <QCalendarWidget>
 #include <QFormLayout>
 #include <QDialogButtonBox>
+#include <QVBoxLayout>
 #include <QAction>
 #include "msgmle.h"
 #include "userlist.h"
@@ -70,19 +71,55 @@ public:
 	QByteArray photo;
 	QList<QString> infoRequested;
 	QPointer<QDialog> showPhotoDlg;
-	QPointer<QWidget> namesDlg;
+	QPointer<QFrame> namesDlg;
+	QPointer<QPushButton> noBdayButton;
+	QPointer<QFrame> bdayPopup;
 	QPointer<QCalendarWidget> calendar;
 	QString bdayDateFormat;
 	QLineEdit *le_givenname;
 	QLineEdit *le_middlename;
 	QLineEdit *le_familyname;
+
+	// Fake UserListItem for groupchat contacts.
+	// One day this dialog should be rewritten not to talk directly to psiaccount,
+	// but for now this will somehow work...
+
+	UserListItem *userListItem;
+
+	// use instead of pa->findRelevant(j)
+	QList<UserListItem*> findRelevant(const Jid &j) const
+	{
+		if (userListItem) {
+			return QList<UserListItem*>() << userListItem;
+		} else {
+			return pa->findRelevant(j);
+		}
+	}
+
+	// use instead of pa->find(j)
+	UserListItem *find(const Jid &j) const
+	{
+		if (userListItem) {
+			return userListItem;
+		} else {
+			return pa->find(j);
+		}
+	}
+
+	// use instead of pa->contactProfile()->updateEntry(u)
+	void updateEntry(const UserListItem &u)
+	{
+		if (!userListItem) {
+			pa->contactProfile()->updateEntry(u);
+		}
+	}
 };
 
 InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWidget *parent, bool cacheVCard)
 	: QDialog(parent)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
-  	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
+	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
 		setAttribute(Qt::WA_MacMetalStyle);
 	ui_.setupUi(this);
 	d = new Private;
@@ -98,14 +135,13 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	d->busy = ui_.busy;
 	d->bdayDateFormat = "yyyy-MM-dd"; //FIXME make settings for custom date format, but its ISO now
 
-	ui_.te_desc->setAcceptRichText(false);
-
 	setWindowTitle(d->jid.full());
 #ifndef Q_WS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/vCard").icon());
 #endif
 	// names editing dialog
-	d->namesDlg = new QDialog(this);
+	d->namesDlg = new QFrame(this);
+	d->namesDlg->setFrameShape(QFrame::StyledPanel);
 	QFormLayout *fl = new QFormLayout;
 	d->le_givenname = new QLineEdit(d->namesDlg);
 	d->le_middlename = new QLineEdit(d->namesDlg);
@@ -131,14 +167,35 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	//connect(editnames, SIGNAL(triggered()), d->namesDlg, SLOT(show()));
 
 	if(d->type == Self) {
-		d->calendar = new QCalendarWidget(this);
+		d->bdayPopup = new QFrame(this);
+		d->bdayPopup->setFrameShape(QFrame::StyledPanel);
+		QVBoxLayout* vbox = new QVBoxLayout(d->bdayPopup);
+
+		d->calendar = new QCalendarWidget(d->bdayPopup);
 		d->calendar->setVerticalHeaderFormat(QCalendarWidget::NoVerticalHeader);
+		vbox->addWidget(d->calendar);
+
+		QFrame* line = new QFrame(d->bdayPopup);
+		line->setFrameShape(QFrame::HLine);
+		line->setFrameShadow(QFrame::Sunken);
+		vbox->addWidget(line);
+
+		d->noBdayButton = new QPushButton(IconsetFactory::icon("psi/cancel").icon(), tr("No date"), d->bdayPopup);
+		d->noBdayButton->setCheckable(true);
+		vbox->addWidget(d->noBdayButton);
+
+		d->bdayPopup->setLayout(vbox);
+
 		QAction *showcal = new QAction(IconsetFactory::icon("psi/options").icon(), "", this);
 		ui_.le_bday->addAction(showcal);
-		ui_.le_bday->widgetForAction(showcal)->setPopup(d->calendar);
+		ui_.le_bday->widgetForAction(showcal)->setPopup(d->bdayPopup);
 		connect(ui_.pb_submit, SIGNAL(clicked()), this, SLOT(doSubmit()));
-		connect(ui_.le_bday, SIGNAL(textChanged(QString)), this, SLOT(doBDCheck()));
-		connect(d->calendar, SIGNAL(selectionChanged()), this, SLOT(doUpdateFromCalendar()));
+		connect(ui_.le_bday, SIGNAL(textChanged(QString)), this, SLOT(doBdayCheck()));
+		connect(showcal, SIGNAL(triggered()), this, SLOT(doShowCal()));
+		connect(d->calendar, SIGNAL(clicked(QDate)), this, SLOT(doUpdateFromCalendar(QDate)));
+		connect(d->calendar, SIGNAL(activated(QDate)), this, SLOT(doUpdateFromCalendar(QDate)));
+		connect(d->noBdayButton, SIGNAL(clicked()), SLOT(doClearBirthDate()));
+
 		ui_.pb_disco->hide();
 	}
 	else {
@@ -149,6 +206,21 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 		setReadOnly(true);
 	}
 
+	// fake UserListItem used when displaying groupchat contact
+	GCContact *gcc = pa->findGCContact(j);
+	if (gcc) {
+		d->userListItem = new UserListItem(false);
+		d->userListItem->setJid(j);
+		d->userListItem->setName(j.resource());
+
+		UserResource ur;
+		ur.setName(j.resource());
+		ur.setStatus(pa->gcContactStatus(j));
+		d->userListItem->userResourceList().append(ur);
+	} else {
+		d->userListItem = 0;
+	}
+
 	// Add a status tab
 	connect(d->pa->client(), SIGNAL(resourceAvailable(const Jid &, const Resource &)), SLOT(contactAvailable(const Jid &, const Resource &)));
 	connect(d->pa->client(), SIGNAL(resourceUnavailable(const Jid &, const Resource &)), SLOT(contactUnavailable(const Jid &, const Resource &)));
@@ -157,7 +229,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	ui_.te_status->setAcceptRichText(true);
 	PsiRichText::install(ui_.te_status->document());
 	updateStatus();
-	foreach(UserListItem* u, d->pa->findRelevant(j)) {
+	foreach(UserListItem* u, d->findRelevant(j)) {
 		foreach(UserResource r, u->userResourceList()) {
 			requestClientVersion(d->jid.withResource(r.name()));
 		}
@@ -172,6 +244,8 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 InfoDlg::~InfoDlg()
 {
 	d->pa->dialogUnregister(this);
+	delete d->userListItem;
+	d->userListItem = 0;
 	delete d;
 }
 
@@ -267,9 +341,9 @@ void InfoDlg::setData(const VCard &i)
 	}
 
 	ui_.le_fullname->setToolTip(
-		QString("<b>")+tr("First Name:")+"</b> "+d->vcard.givenName()+"<br>"+
-			"<b>"+tr("Middle Name:")+"</b> "+d->vcard.middleName()+"<br>"+
-			"<b>"+tr("Last Name:")+"</b> "+d->vcard.familyName() );
+		QString("<b>")+tr("First Name:")+"</b> "+Qt::escape(d->vcard.givenName())+"<br>"+
+			"<b>"+tr("Middle Name:")+"</b> "+Qt::escape(d->vcard.middleName())+"<br>"+
+			"<b>"+tr("Last Name:")+"</b> "+Qt::escape(d->vcard.familyName()) );
 
 	QString email;
 	if ( !i.emailList().isEmpty() )
@@ -302,7 +376,7 @@ void InfoDlg::setData(const VCard &i)
 
 	ui_.le_title->setText( i.title() );
 	ui_.le_role->setText( i.role() );
-	ui_.te_desc->setText( i.desc() );
+	ui_.te_desc->setPlainText( i.desc() );
 	
 	if ( !i.photo().isEmpty() ) {
 		//printf("There is a picture...\n");
@@ -314,7 +388,7 @@ void InfoDlg::setData(const VCard &i)
 	else
 		clearPhoto();
 	if (d->type == Self) {
-		doBDCheck();
+		doBdayCheck();
 	}
 
 	setEdited(false);
@@ -492,6 +566,14 @@ void InfoDlg::doSubmit()
 	VCardFactory::instance()->setVCard(d->pa, submit_vcard, this, SLOT(jt_finished()));
 }
 
+void InfoDlg::doShowCal()
+{
+	d->noBdayButton->setChecked(ui_.le_bday->text().isEmpty());
+	if (!ui_.le_bday->text().isEmpty()) {
+		d->calendar->setSelectedDate(QDate::fromString(ui_.le_bday->text(), d->bdayDateFormat));
+	}
+}
+
 void InfoDlg::doDisco()
 {
 	DiscoDlg* w=new DiscoDlg(d->pa, d->jid, "");
@@ -499,23 +581,36 @@ void InfoDlg::doDisco()
 	w->show();
 }
 
-void InfoDlg::doUpdateFromCalendar()
+void InfoDlg::doUpdateFromCalendar(const QDate& date)
 {
-	const QString textWas = ui_.le_bday->text();
-	ui_.le_bday->setText(d->calendar->selectedDate().toString(d->bdayDateFormat));
-	bool changed = textWas != ui_.le_bday->text();
-	ui_.le_bday->setModified(changed);
-	if (changed) {
-		d->calendar->hide();
+	const QString newText = date.toString(d->bdayDateFormat);
+	if (newText != ui_.le_bday->text()) {
+		ui_.le_bday->setText(newText);
+		ui_.le_bday->setModified(true);
 	}
+	d->bdayPopup->hide();
 }
 
-void InfoDlg::doBDCheck()
+void InfoDlg::doClearBirthDate()
 {
+	if (!ui_.le_bday->text().isEmpty()) {
+		ui_.le_bday->setText("");
+		ui_.le_bday->setModified(true);
+	}
+	d->bdayPopup->hide();
+}
+
+void InfoDlg::doBdayCheck()
+{
+	static const QString errorStyle =
+		QString("color: white; background-color: %1").arg(QColor(255,128,128,255).name());
+
 	const QString bday = ui_.le_bday->text();
-	const QString bg = (bday.isEmpty() || QDate::fromString(bday, d->bdayDateFormat).isValid())?
-					  "none":QColor(255,128,128,255).name();
-	ui_.le_bday->setStyleSheet("background-color:" + bg);
+	if (!bday.isEmpty() && !QDate::fromString(bday, d->bdayDateFormat).isValid()) {
+		ui_.le_bday->setStyleSheet(errorStyle);
+	} else {
+		ui_.le_bday->setStyleSheet(QString());
+	}
 }
 
 VCard InfoDlg::makeVCard()
@@ -648,7 +743,7 @@ void InfoDlg::clearPhoto()
  */
 void InfoDlg::updateStatus()
 {
-	UserListItem *u = d->pa->find(d->jid);
+	UserListItem *u = d->find(d->jid);
 	if(u) {
 		PsiRichText::setText(ui_.te_status->document(), u->makeDesc());
 	}
@@ -686,14 +781,14 @@ void InfoDlg::clientVersionFinished()
 {
 	JT_ClientVersion *j = (JT_ClientVersion *)sender();
 	if(j->success()) {
-		foreach(UserListItem* u, d->pa->findRelevant(j->jid())) {
+		foreach(UserListItem* u, d->findRelevant(j->jid())) {
 			UserResourceList::Iterator rit = u->userResourceList().find(j->jid().resource());
 			bool found = (rit == u->userResourceList().end()) ? false: true;
 			if(!found)
 				continue;
 
 			(*rit).setClient(j->name(),j->version(),j->os());
-			d->pa->contactProfile()->updateEntry(*u);
+			d->updateEntry(*u);
 			updateStatus();
 		}
 	}
@@ -710,10 +805,10 @@ void InfoDlg::requestLastActivityFinished()
 {
 	LastActivityTask *j = (LastActivityTask *)sender();
 	if(j->success()) {
-		foreach(UserListItem* u, d->pa->findRelevant(d->jid)) {
+		foreach(UserListItem* u, d->findRelevant(d->jid)) {
 			u->setLastUnavailableStatus(makeStatus(STATUS_OFFLINE,j->status()));
 			u->setLastAvailable(j->time());
-			d->pa->contactProfile()->updateEntry(*u);
+			d->updateEntry(*u);
 			updateStatus();
 		}
 	}

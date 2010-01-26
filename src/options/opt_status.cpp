@@ -67,6 +67,9 @@ QWidget *OptionsTabStatus::widget()
 	d->te_asMessage->setWhatsThis(
 		tr("Specifies an extended message to use if you allow Psi"
 		" to set your status automatically.  See options above."));
+	d->le_asPriority->setWhatsThis(
+		tr("Specifies priority of auto-away status. "
+		"If empty, Psi will use account's default priority."));
 
 	setStatusPresetWidgetsEnabled(false);
 	connect(d->pb_spNew, SIGNAL(clicked()), SLOT(newStatusPreset()));
@@ -115,7 +118,9 @@ void OptionsTabStatus::applyOptions()
 	PsiOptions::instance()->setOption("options.status.auto-away.use-not-availible", d->ck_asXa->isChecked());
 	PsiOptions::instance()->setOption("options.status.auto-away.use-offline", d->ck_asOffline->isChecked());
 	PsiOptions::instance()->setOption("options.status.auto-away.message", d->te_asMessage->toPlainText());
-
+	bool forcePriority = false;
+	PsiOptions::instance()->setOption("options.status.auto-away.priority", d->le_asPriority->text().toInt(&forcePriority));
+	PsiOptions::instance()->setOption("options.status.auto-away.force-priority", forcePriority);
 	
 	foreach (QString name, deletedPresets) {
 		QString base = PsiOptions::instance()->mapLookup("options.status.presets", name);
@@ -166,6 +171,11 @@ void OptionsTabStatus::restoreOptions()
 	d->ck_asXa->setChecked( PsiOptions::instance()->getOption("options.status.auto-away.use-not-availible").toBool() );
 	d->ck_asOffline->setChecked( PsiOptions::instance()->getOption("options.status.auto-away.use-offline").toBool() );
 	d->te_asMessage->setText( PsiOptions::instance()->getOption("options.status.auto-away.message").toString() );
+	if (PsiOptions::instance()->getOption("options.status.auto-away.force-priority").toBool()) {
+		d->le_asPriority->setText(QString::number(PsiOptions::instance()->getOption("options.status.auto-away.priority").toInt()));
+	} else {
+		d->le_asPriority->clear();
+	}
 
 	
 	QStringList presetNames;

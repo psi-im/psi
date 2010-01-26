@@ -1018,9 +1018,26 @@ void GCMainDlg::doClear()
 
 void GCMainDlg::doClearButton()
 {
-	int n = QMessageBox::information(this, tr("Warning"), tr("Are you sure you want to clear the chat window?\n(note: does not affect saved history)"), tr("&Yes"), tr("&No"));
-	if(n == 0)
+	if (PsiOptions::instance()->getOption("options.ui.chat.warn-before-clear").toBool()) {
+		switch (
+			QMessageBox::warning(
+				this,
+				tr("Warning"),
+				tr("Are you sure you want to clear the chat window?\n(note: does not affect saved history)"),
+				QMessageBox::Yes, QMessageBox::YesAll, QMessageBox::No
+			)
+		) {
+		case QMessageBox::No:
+			break;
+		case QMessageBox::YesAll:
+			PsiOptions::instance()->setOption("options.ui.chat.warn-before-clear", false);
+			// fall-through
+		case QMessageBox::Yes:
+			doClear();
+		}
+	} else {
 		doClear();
+	}
 }
 
 void GCMainDlg::openFind()
@@ -1445,7 +1462,7 @@ void GCMainDlg::message(const Message &_m)
 	}
 
 	if(from.isEmpty())
-		appendSysMsg(m.body(), alert, m.timeStamp());
+		appendSysMsg(m.body(), alert, m.timeStamp(), true);
 	else
 		appendMessage(m, alert);
 }
@@ -1482,8 +1499,17 @@ void GCMainDlg::updateLastMsgTime(QDateTime t)
 	}
 }
 
-void GCMainDlg::appendSysMsg(const QString &str, bool alert, const QDateTime &ts)
+void GCMainDlg::appendSysMsg(const QString &str, bool alert, const QDateTime &ts, bool prepareAsChatMessage)
 {
+	// FIXME:
+	//  prepareAsChatMessage was added to linkify server-generated topic informations.
+	//  First idea was to linkify, etc, every SysMsg, but that leads to problems,
+	//  such as parsing full JIDs of participants joining a non-anonymous room as
+	//  emails and looking ugly.
+	//  Possibly a better way would be to change this function to something like
+	//  appendSysMsg(nick, jid, message, alert, ts)
+	//  or maybe even separate functions for different types of system messages.
+
 	if (d->trackBar)
 		d->doTrackBar();
 
@@ -1497,7 +1523,8 @@ void GCMainDlg::appendSysMsg(const QString &str, bool alert, const QDateTime &ts
 	updateLastMsgTime(time);
 	QString timestr = ui_.log->formatTimeStamp(time);
 	QString color = PsiOptions::instance()->getOption("options.ui.look.colors.messages.informational").toString();
-	ui_.log->appendText(QString("<font color=\"%1\">[%2]").arg(color, timestr) + QString(" *** %1</font>").arg(Qt::escape(str)));
+	ui_.log->appendText(QString("<font color=\"%1\">[%2]").arg(color, timestr) +
+		QString(" *** %1</font>").arg(prepareAsChatMessage ? TextUtil::prepareMessageText(str) : Qt::escape(str)));
 
 	if(alert)
 		doAlert();

@@ -749,7 +749,7 @@ void ChatDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
 
 void ChatDlg::incomingMessage(const Message &m)
 {
-	if (m.body().isEmpty()) {
+	if (m.body().isEmpty() && m.subject().isEmpty() && m.urlList().isEmpty()) {
 		// Event message
 		if (m.containsEvent(CancelEvent)) {
 			setContactChatState(XMPP::StatePaused);
@@ -829,14 +829,15 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 	}
 
 	QString txt = messageText(m);
+	QString subject = messageSubject(m);
 
 	ChatDlg::SpooledType spooledType = m.spooled() ?
 	                                   ChatDlg::Spooled_OfflineStorage :
 	                                   ChatDlg::Spooled_None;
 	if (isEmoteMessage(m))
-		appendEmoteMessage(spooledType, m.timeStamp(), local, txt);
+		appendEmoteMessage(spooledType, m.timeStamp(), local, txt, subject);
 	else
-		appendNormalMessage(spooledType, m.timeStamp(), local, txt);
+		appendNormalMessage(spooledType, m.timeStamp(), local, txt, subject);
 
 	appendMessageFields(m);
 
@@ -1086,6 +1087,21 @@ QString ChatDlg::messageText(const XMPP::Message& m)
 	if (PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
 		txt = TextUtil::legacyFormat(txt);
 
+	return txt;
+}
+
+QString ChatDlg::messageSubject(const XMPP::Message& m)
+{
+	QString txt = m.subject();
+
+	if (!txt.isEmpty()) {
+		txt = TextUtil::plain2rich(txt);
+		txt = TextUtil::linkify(txt);
+		if (PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool())
+			txt = TextUtil::emoticonify(txt);
+		if (PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
+			txt = TextUtil::legacyFormat(txt);
+	}
 	return txt;
 }
 

@@ -103,6 +103,7 @@
 				<use-chat-says-style type="bool">false</use-chat-says-style>
 				<use-expanding-line-edit type="bool">true</use-expanding-line-edit>
 				<use-small-chats type="bool">false</use-small-chats>
+				<warn-before-clear type="bool">true</warn-before-clear>
 			</chat>
 			<contactlist comment="Contact list options">
 				<auto-delete-unlisted comment="Automatically remove an unlisted contact from the contact list if it does not have any pending messages anymore" type="bool">false</auto-delete-unlisted>
@@ -428,6 +429,7 @@
 			<ask-for-message-on-online type="bool">false</ask-for-message-on-online>
 			<auto-away>
 				<away-after type="int">10</away-after>
+				<force-priority type="bool">false</force-priority>
 				<not-availible-after type="int">30</not-availible-after>
 				<offline-after type="int">0</offline-after>
 				<use-away type="bool">true</use-away>

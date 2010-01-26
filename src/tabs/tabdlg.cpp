@@ -171,6 +171,16 @@ TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 
 	setShortcuts();
 
+	tabSwitcher_ = new QActionGroup(this);
+	for (int i = 0 ; i <= 9; ++i) {
+		QAction *act = new QAction(tabSwitcher_);
+		act->setShortcut(QKeySequence(Qt::ALT + (Qt::Key_0 + i)));
+		act->setData(i);
+		tabSwitcher_->addAction(act);
+		addAction(act);
+	}
+	connect(tabSwitcher_, SIGNAL(triggered(QAction *)), SLOT(switchTab(QAction *)));
+
 	if (size.isValid()) {
 		resize(size);
 	} else {
@@ -761,4 +771,17 @@ void TabDlg::setSimplifiedCaptionEnabled(bool enabled) {
 
 	simplifiedCaption_ = enabled;
 	updateCaption();
+}
+
+void TabDlg::switchTab(QAction *act)
+{
+	// data is in 0..9, 0 means 10th tab, but index starts from 0...
+	int page = act->data().toInt() - 1;
+	if (page == -1) {
+		page = 9;
+	}
+
+	if (page < tabWidget_->count()) {
+		tabWidget_->setCurrentPage(page);
+	}
 }
