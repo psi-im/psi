@@ -280,6 +280,12 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 		// and use default
 		if (tmpPort != 0) stunPort = tmpPort;
 	}
+	if (allSetOptions.contains(base + ".stun-username")) {
+		stunUser = o->getOption(base + ".stun-username").toString();
+	}
+	if (allSetOptions.contains(base + ".stun-password")) {
+		stunPass = o->getOption(base + ".stun-password").toString();
+	}
 
 	if (allSetOptions.contains(base + ".tls")) {
 		tlsOverrideCert = o->getOption(base + ".tls.override-certificate").toByteArray();
@@ -410,6 +416,8 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 
 	o->setOption(base + ".stun-host", stunHost);
 	o->setOption(base + ".stun-port", QString::number(stunPort));
+	o->setOption(base + ".stun-username", stunUser);
+	o->setOption(base + ".stun-password", stunPass);
 
 	o->setOption(base + ".tls.override-certificate", tlsOverrideCert);
 	o->setOption(base + ".tls.override-domain", tlsOverrideDomain);

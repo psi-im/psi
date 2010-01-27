@@ -76,11 +76,13 @@ public:
 	VarList keybind;
 
 	XMPP::Jid dtProxy;
-	
+
 	QString optionsBase;
 
 	QString stunHost;
 	int stunPort;
+	QString stunUser;
+	QString stunPass;
 
 	QByteArray tlsOverrideCert;
 	QString tlsOverrideDomain;

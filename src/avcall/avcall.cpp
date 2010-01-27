@@ -938,6 +938,16 @@ void AvCallManager::setStunHost(const QString &host, int port)
 	d->rtpManager->setStunHost(host, port);
 }
 
+void AvCallManager::setStunUserPass(const QString &user, const QString &pass)
+{
+	d->rtpManager->setStunUserPass(user, pass);
+}
+
+void AvCallManager::setStunProxy(const XMPP::AdvancedConnector::Proxy &proxy)
+{
+	d->rtpManager->setStunProxy(proxy);
+}
+
 void AvCallManager::setBasePort(int port)
 {
 	if(port == 0)

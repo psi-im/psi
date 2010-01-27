@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <QtCrypto>
 #include "iris/netnames.h"
+#include "iris/turnclient.h"
 #include "iris/udpportreserver.h"
 #include "xmpp_client.h"
 
@@ -339,6 +340,9 @@ public:
 	QString extHost;
 	QString stunHost;
 	int stunPort;
+	QString stunUser;
+	QString stunPass;
+	XMPP::TurnClient::Proxy stunProxy;
 	int basePort;
 	QList<JingleRtp*> sessions;
 	QList<JingleRtp*> pending;
@@ -886,6 +890,7 @@ private:
 		connect(ice, SIGNAL(localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)), SLOT(ice_localCandidatesReady(const QList<XMPP::Ice176::Candidate> &)));
 		connect(ice, SIGNAL(componentReady(int)), SLOT(ice_componentReady(int)), Qt::QueuedConnection); // signal is not DOR-SS
 
+		ice->setProxy(manager->stunProxy);
 		ice->setPortReserver(portReserver);
 
 		//QList<XMPP::Ice176::LocalAddress> localAddrs;
@@ -931,12 +936,11 @@ private:
 		if(!stunAddr.isNull() && stunPort > 0)
 		{
 			ice->setStunService(stunAddr, stunPort, XMPP::Ice176::Auto);
-			// FIXME: support user/pass, to enable TURN
-			/*if(!opt_user.isEmpty())
+			if(!manager->stunUser.isEmpty())
 			{
-				ice->setStunUsername(opt_user);
-				ice->setStunPassword(opt_pass.toUtf8());
-			}*/
+				ice->setStunUsername(manager->stunUser);
+				ice->setStunPassword(manager->stunPass.toUtf8());
+			}
 		}
 
 		// RTP+RTCP
@@ -1763,6 +1767,30 @@ void JingleRtpManager::setStunHost(const QString &host, int port)
 {
 	d->stunHost = host;
 	d->stunPort = port;
+}
+
+void JingleRtpManager::setStunUserPass(const QString &user, const QString &pass)
+{
+	d->stunUser = user;
+	d->stunPass = pass;
+}
+
+void JingleRtpManager::setStunProxy(const XMPP::AdvancedConnector::Proxy &proxy)
+{
+	XMPP::TurnClient::Proxy tproxy;
+
+	if(proxy.type() == XMPP::AdvancedConnector::Proxy::HttpConnect)
+	{
+		tproxy.setHttpConnect(proxy.host(), proxy.port());
+		tproxy.setUserPass(proxy.user(), proxy.pass());
+	}
+	else if(proxy.type() == XMPP::AdvancedConnector::Proxy::Socks)
+	{
+		tproxy.setSocks(proxy.host(), proxy.port());
+		tproxy.setUserPass(proxy.user(), proxy.pass());
+	}
+
+	d->stunProxy = tproxy;
 }
 
 void JingleRtpManager::setBasePort(int port)

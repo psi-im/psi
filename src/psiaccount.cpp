@@ -155,6 +155,45 @@ typedef int socklen_t;
 
 using namespace XMPP;
 
+static AdvancedConnector::Proxy convert_proxy(const UserAccount &acc, const PsiCon *psi, const Jid &jid)
+{
+	bool useHost = false;
+	QString host;
+	int port = -1;
+	if(acc.opt_host) {
+		useHost = true;
+		host = acc.host;
+		if (host.isEmpty()) {
+			host = jid.domain();
+		}
+		port = acc.port;
+	}
+
+	AdvancedConnector::Proxy p;
+	if(!acc.proxyID.isEmpty()) {
+		const ProxyItem &pi = psi->proxy()->getItem(acc.proxyID);
+		if(pi.type == "http") // HTTP Connect
+			p.setHttpConnect(pi.settings.host, pi.settings.port);
+		else if(pi.type == "socks") // SOCKS
+			p.setSocks(pi.settings.host, pi.settings.port);
+		else if(pi.type == "poll") { // HTTP Poll
+			QUrl u = pi.settings.url;
+			if(u.queryItems().isEmpty()) {
+				if (useHost)
+					u.addQueryItem("server",host + ':' + QString::number(port));
+				else
+					u.addQueryItem("server",jid.domain());
+			}
+			p.setHttpPoll(pi.settings.host, pi.settings.port, u.toString());
+			p.setPollInterval(2);
+		}
+
+		if(pi.settings.useAuth)
+			p.setUserPass(pi.settings.user, pi.settings.pass);
+	}
+	return p;
+}
+
 struct GCContact
 {
 	Jid jid;
@@ -898,6 +937,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 		}
 
 		d->avCallManager->setStunHost(acc.stunHost, acc.stunPort);
+		d->avCallManager->setStunUserPass(acc.stunUser, acc.stunPass);
+		d->avCallManager->setStunProxy(convert_proxy(acc, d->psi, d->jid));
 	}
 
 	// Extended presence
@@ -1165,7 +1206,11 @@ void PsiAccount::setUserAccount(const UserAccount &acc)
 	}
 
 	if(d->avCallManager)
+	{
 		d->avCallManager->setStunHost(d->acc.stunHost, d->acc.stunPort);
+		d->avCallManager->setStunUserPass(d->acc.stunUser, d->acc.stunPass);
+		d->avCallManager->setStunProxy(convert_proxy(acc, d->psi, d->jid));
+	}
 
 	cpUpdate(d->self);
 	updatedAccount();
@@ -1244,28 +1289,7 @@ void PsiAccount::login()
 		port = d->acc.port;
 	}
 
-	AdvancedConnector::Proxy p;
-	if(!d->acc.proxyID.isEmpty()) {
-		const ProxyItem &pi = d->psi->proxy()->getItem(d->acc.proxyID);
-		if(pi.type == "http") // HTTP Connect
-			p.setHttpConnect(pi.settings.host, pi.settings.port);
-		else if(pi.type == "socks") // SOCKS
-			p.setSocks(pi.settings.host, pi.settings.port);
-		else if(pi.type == "poll") { // HTTP Poll
-			QUrl u = pi.settings.url;
-			if(u.queryItems().isEmpty()) {
-				if (useHost)
-					u.addQueryItem("server",host + ':' + QString::number(port));
-				else
-					u.addQueryItem("server",d->jid.domain());
-			}
-			p.setHttpPoll(pi.settings.host, pi.settings.port, u.toString());
-			p.setPollInterval(2);
-		}
-
-		if(pi.settings.useAuth)
-			p.setUserPass(pi.settings.user, pi.settings.pass);
-	}
+	AdvancedConnector::Proxy p = convert_proxy(d->acc, d->psi, d->jid);
 
 	// stream
 	d->conn = new AdvancedConnector;

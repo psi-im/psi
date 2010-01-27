@@ -20,6 +20,7 @@
 #define AVCALL_H
 
 #include <QObject>
+#include "xmpp.h"
 
 class QHostAddress;
 
@@ -99,6 +100,8 @@ public:
 
 	void setSelfAddress(const QHostAddress &addr);
 	void setStunHost(const QString &host, int port);
+	void setStunUserPass(const QString &user, const QString &pass);
+	void setStunProxy(const XMPP::AdvancedConnector::Proxy &proxy);
 
 	static void setBasePort(int port);
 	static void setExternalAddress(const QString &host);

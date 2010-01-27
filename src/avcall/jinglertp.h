@@ -19,6 +19,7 @@
 #ifndef JINGLERTP_H
 #define JINGLERTP_H
 
+#include "xmpp.h"
 #include "jinglertptasks.h"
 
 class JingleRtpChannel;
@@ -143,6 +144,8 @@ public:
 	void setSelfAddress(const QHostAddress &addr);
 	void setExternalAddress(const QString &host); // resolved locally
 	void setStunHost(const QString &host, int port);
+	void setStunUserPass(const QString &user, const QString &pass);
+	void setStunProxy(const XMPP::AdvancedConnector::Proxy &proxy);
 	void setBasePort(int port);
 
 signals:

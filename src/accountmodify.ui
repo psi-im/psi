@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>528</width>
-    <height>386</height>
+    <width>500</width>
+    <height>457</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -796,7 +796,7 @@
       <attribute name="title">
        <string>Misc.</string>
       </attribute>
-      <layout class="QVBoxLayout">
+      <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
         <widget class="QCheckBox" name="ck_automatic_resource">
          <property name="text">
@@ -881,41 +881,95 @@
         </layout>
        </item>
        <item>
-        <layout class="QHBoxLayout">
-         <item>
-          <widget class="QLabel" name="lb_stunHost">
-           <property name="text">
-            <string>STUN Host:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="le_stunHost"/>
-         </item>
-         <item>
-          <widget class="QLabel" name="lb_stunPort">
-           <property name="text">
-            <string>Port:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="le_stunPort">
-           <property name="minimumSize">
-            <size>
-             <width>56</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>56</width>
-             <height>16777215</height>
-            </size>
-           </property>
-          </widget>
-         </item>
-        </layout>
+        <widget class="QGroupBox" name="groupBox_2">
+         <property name="title">
+          <string>STUN/TURN</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <layout class="QHBoxLayout">
+            <item>
+             <widget class="QLabel" name="lb_stunHost">
+              <property name="text">
+               <string>Host:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="le_stunHost"/>
+            </item>
+            <item>
+             <widget class="QLabel" name="lb_stunPort">
+              <property name="text">
+               <string>Port:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="le_stunPort">
+              <property name="minimumSize">
+               <size>
+                <width>56</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>56</width>
+                <height>16777215</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <widget class="QLabel" name="label">
+              <property name="text">
+               <string>Username:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="le_stunUser">
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_2">
+              <property name="text">
+               <string>Password:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="le_stunPass">
+              <property name="echoMode">
+               <enum>QLineEdit::Password</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
        </item>
        <item>
         <widget class="QCheckBox" name="ck_custom_auth">
@@ -938,7 +992,7 @@
             <bool>false</bool>
            </property>
            <property name="text">
-            <string>User:</string>
+            <string>Username:</string>
            </property>
           </widget>
          </item>
@@ -1052,9 +1106,12 @@
   <tabstop>le_dtProxy</tabstop>
   <tabstop>le_stunHost</tabstop>
   <tabstop>le_stunPort</tabstop>
+  <tabstop>le_stunUser</tabstop>
+  <tabstop>le_stunPass</tabstop>
   <tabstop>ck_custom_auth</tabstop>
   <tabstop>le_authid</tabstop>
   <tabstop>le_realm</tabstop>
+  <tabstop>buttonBox</tabstop>
  </tabstops>
  <resources/>
  <connections>

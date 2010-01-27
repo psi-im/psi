@@ -143,6 +143,8 @@ void AccountModifyDlg::init()
 	le_dtProxy->setText(acc.dtProxy.full());
 	le_stunHost->setText(acc.stunHost);
 	le_stunPort->setText(QString::number(acc.stunPort));
+	le_stunUser->setText(acc.stunUser);
+	le_stunPass->setText(acc.stunPass);
 
 	key = acc.pgpSecretKey;
 	updateUserID();
@@ -523,6 +525,8 @@ void AccountModifyDlg::save()
 	acc.dtProxy = le_dtProxy->text();
 	acc.stunHost = le_stunHost->text();
 	acc.stunPort = le_stunPort->text().toInt();
+	acc.stunUser = le_stunUser->text();
+	acc.stunPass = le_stunPass->text();
 
 	acc.pgpSecretKey = key;
 
