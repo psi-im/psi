@@ -805,17 +805,21 @@ private:
 			{
 				QHostAddress h = na.ip();
 
+				// skip localhost
+				if(getAddressScope(h) == 0)
+					continue;
+
 				// don't put the same address in twice.
 				//   this also means that if there are
 				//   two link-local ipv6 interfaces
 				//   with the exact same address, we
 				//   only use the first one
-				if(!listenAddrs.contains(h))
-				{
-					if(h.protocol() == QAbstractSocket::IPv6Protocol && XMPP::Ice176::isIPv6LinkLocalAddress(h))
-						h.setScopeId(ni.name());
-					listenAddrs += h;
-				}
+				if(listenAddrs.contains(h))
+					continue;
+
+				if(h.protocol() == QAbstractSocket::IPv6Protocol && XMPP::Ice176::isIPv6LinkLocalAddress(h))
+					h.setScopeId(ni.name());
+				listenAddrs += h;
 			}
 		}
 
