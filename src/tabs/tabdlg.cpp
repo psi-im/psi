@@ -32,6 +32,7 @@
 #include <QKeyEvent>
 #include <QDropEvent>
 #include <QCloseEvent>
+#include <QSignalMapper>
 
 #include "psitabwidget.h"
 #include "psioptions.h"
@@ -171,15 +172,16 @@ TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 
 	setShortcuts();
 
-	tabSwitcher_ = new QActionGroup(this);
-	for (int i = 0 ; i <= 9; ++i) {
-		QAction *act = new QAction(tabSwitcher_);
-		act->setShortcut(QKeySequence(Qt::ALT + (Qt::Key_0 + i)));
-		act->setData(i);
-		tabSwitcher_->addAction(act);
-		addAction(act);
+	QSignalMapper* activateTabMapper_ = new QSignalMapper(this);
+	connect(activateTabMapper_, SIGNAL(mapped(int)), tabWidget_, SLOT(setCurrentPage(int)));
+	for (int i = 0; i < 10; ++i) {
+		QAction* action = new QAction(this);
+		connect(action, SIGNAL(triggered()), activateTabMapper_, SLOT(map()));
+		action->setShortcuts(QList<QKeySequence>() << QKeySequence(QString("Ctrl+%1").arg(i))
+		                                           << QKeySequence(QString("Alt+%1").arg(i)));
+		activateTabMapper_->setMapping(action, (i > 0 ? i : 10) - 1);
+		addAction(action);
 	}
-	connect(tabSwitcher_, SIGNAL(triggered(QAction *)), SLOT(switchTab(QAction *)));
 
 	if (size.isValid()) {
 		resize(size);
@@ -771,17 +773,4 @@ void TabDlg::setSimplifiedCaptionEnabled(bool enabled) {
 
 	simplifiedCaption_ = enabled;
 	updateCaption();
-}
-
-void TabDlg::switchTab(QAction *act)
-{
-	// data is in 0..9, 0 means 10th tab, but index starts from 0...
-	int page = act->data().toInt() - 1;
-	if (page == -1) {
-		page = 9;
-	}
-
-	if (page < tabWidget_->count()) {
-		tabWidget_->setCurrentPage(page);
-	}
 }
