@@ -136,8 +136,6 @@ public:
 HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
-  	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
-		setAttribute(Qt::WA_MacMetalStyle);
 	d = new Private;
 	d->pa = pa;
 	d->jid = jid;

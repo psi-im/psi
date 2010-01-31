@@ -632,8 +632,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	: TabbableWidget(j.bare(), pa, tabManager)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
-		if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
-		setAttribute(Qt::WA_MacMetalStyle);
 	nicknumber=0;
 	d = new Private(this);
 	d->self = d->prev_self = j.resource();

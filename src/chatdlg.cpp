@@ -91,10 +91,6 @@ ChatDlg::ChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
 	: TabbableWidget(jid, pa, tabManager)
 	, highlightersInstalled_(false)
 {
-	if (PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool()) {
-		setAttribute(Qt::WA_MacMetalStyle);
-	}
-
 	pending_ = 0;
 	keepOpen_ = false;
 	warnSend_ = false;

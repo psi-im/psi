@@ -812,7 +812,6 @@ bool OptionsMigration::fromFile(const QString &fname)
 				migrateBoolEntry(tag, "jidComplete", "options.ui.message.use-jid-auto-completion");
 				migrateBoolEntry(tag, "grabUrls", "options.ui.message.auto-grab-urls-from-clipboard");
 				migrateBoolEntry(tag, "smallChats", "options.ui.chat.use-small-chats");
-				migrateBoolEntry(tag, "brushedMetal", "options.ui.mac.use-brushed-metal-windows");
 				migrateBoolEntry(tag, "chatLineEdit", "options.ui.chat.use-expanding-line-edit");
 				migrateBoolEntry(tag, "useTabs", "options.ui.tabs.use-tabs");
 				migrateBoolEntry(tag, "putTabsAtBottom", "options.ui.tabs.put-tabs-at-bottom");

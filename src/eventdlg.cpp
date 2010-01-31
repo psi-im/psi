@@ -463,8 +463,6 @@ void AttachView::addUrlList(const UrlList &list)
 AddUrlDlg::AddUrlDlg(QWidget *parent)
 :QDialog(parent)
 {
-	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
-		setAttribute(Qt::WA_MacMetalStyle);
 	setupUi(this);
 #ifndef Q_WS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/www").icon());
@@ -586,8 +584,6 @@ EventDlg::EventDlg(const QString &to, PsiCon *psi, PsiAccount *pa)
 	: AdvancedWidget<QWidget>(0)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
-  	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
-		setAttribute(Qt::WA_MacMetalStyle);	
 	d = new Private(this);
 	d->composing = true;
 	d->psi = psi;

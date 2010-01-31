@@ -119,8 +119,6 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	: QDialog(parent)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
-	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
-		setAttribute(Qt::WA_MacMetalStyle);
 	ui_.setupUi(this);
 	d = new Private;
 	setModal(false);

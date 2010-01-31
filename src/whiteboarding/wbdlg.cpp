@@ -38,9 +38,6 @@
 //----------------------------------------------------------------------------
 
 WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
-	if ( PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool() )
-		setAttribute(Qt::WA_MacMetalStyle);
-
 	groupChat_ = session->groupChat();
 	pending_ = 0;
 	keepOpen_ = false;

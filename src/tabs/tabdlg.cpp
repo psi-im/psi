@@ -131,10 +131,6 @@ TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 		delegate_->create(this);
 	}
 
-	if (PsiOptions::instance()->getOption("options.ui.mac.use-brushed-metal-windows").toBool()) {
-		setAttribute(Qt::WA_MacMetalStyle);
-	}
-
 	// FIXME
 	qRegisterMetaType<TabDlg*>("TabDlg*");
 	qRegisterMetaType<TabbableWidget*>("TabbableWidget*");
