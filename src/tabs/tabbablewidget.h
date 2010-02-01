@@ -41,6 +41,8 @@ public:
 	TabbableWidget(const Jid &, PsiAccount *, TabManager *tabManager);
 	~TabbableWidget();
 
+	PsiAccount* account() const;
+
 	virtual Jid jid() const; 
 	virtual const QString & getDisplayName();
 
@@ -71,12 +73,11 @@ signals:
 public slots:
 	virtual void deactivated();
 	virtual void activated();
-	void bringToFront();
+	void bringToFront(bool raiseWindow = true);
 	virtual void ensureTabbedCorrectly();
 
 protected:
 	virtual void setJid(const Jid&);
-	PsiAccount* account() const;
 
 	// reimplemented
 	void changeEvent(QEvent* e);

@@ -37,7 +37,10 @@ class IconAction : public QAction
 public:
 	IconAction(QObject *parent, const QString &name = QString());
 	IconAction(const QString &statusTip, const QString &icon, const QString &text, QKeySequence accel, QObject *parent, const QString &name = QString(), bool checkable = FALSE);
+	IconAction(const QString &statusTip, const QString &icon, const QString &text, QList<QKeySequence> accel, QObject *parent, const QString &name = QString(), bool checkable = FALSE);
 	IconAction(const QString &statusTip, const QString &text, QKeySequence accel, QObject *parent, const QString &name = QString(), bool checkable = FALSE);
+	IconAction(const QString &statusTip, const QString &text, QList<QKeySequence> accel, QObject *parent, const QString &name = QString(), bool checkable = FALSE);
+	IconAction(const QString &text, QObject *parent, const QString &icon);
 	~IconAction();
 
 	virtual bool addTo(QWidget *);

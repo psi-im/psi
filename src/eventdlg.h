@@ -119,6 +119,8 @@ public:
 	EventDlg(const Jid &, PsiAccount *, bool unique);
 	~EventDlg();
 
+	static bool messagingEnabled();
+
 	QString text() const;
 	void setHtml(const QString &);
 	void setSubject(const QString &);

@@ -130,8 +130,6 @@ HEADERS += \
 	$$PWD/contactview.h \
 	$$PWD/psiiconset.h \
 	$$PWD/applicationinfo.h \
-	$$PWD/pgpkeydlg.h \
-	$$PWD/pgputil.h \
 	$$PWD/pgptransaction.h \
 	$$PWD/userlist.h \
 	$$PWD/mainwin.h \
@@ -156,10 +154,8 @@ HEADERS += \
 	$$PWD/chatsplitter.h \
 	$$PWD/chateditproxy.h \
 	$$PWD/adduserdlg.h \
-	$$PWD/groupchatdlg.h \
 	$$PWD/minicmd.h \
 	$$PWD/mcmdmanager.h \
-	$$PWD/gcuserview.h \
 	$$PWD/infodlg.h \
 	$$PWD/translationmanager.h \
 	$$PWD/eventdb.h \
@@ -176,7 +172,6 @@ HEADERS += \
 	$$PWD/alertable.h \
 	$$PWD/psipopup.h \
 	$$PWD/psiapplication.h \
-	$$PWD/filetransdlg.h \
 	$$PWD/avatars.h \
 	$$PWD/actionlist.h \
 	$$PWD/serverinfomanager.h \
@@ -185,7 +180,6 @@ HEADERS += \
 	$$PWD/statuspreset.h \
 	$$PWD/lastactivitytask.h \
 	$$PWD/mucmanager.h \
-	$$PWD/mucjoindlg.h \
 	$$PWD/mucconfigdlg.h \
 	$$PWD/mucaffiliationsmodel.h \
 	$$PWD/mucaffiliationsproxymodel.h \
@@ -258,8 +252,6 @@ SOURCES += \
 	$$PWD/contactview.cpp \
 	$$PWD/psiiconset.cpp \
 	$$PWD/applicationinfo.cpp \
-	$$PWD/pgpkeydlg.cpp \
-	$$PWD/pgputil.cpp \
 	$$PWD/pgptransaction.cpp \
 	$$PWD/serverinfomanager.cpp \
 	$$PWD/userlist.cpp \
@@ -286,10 +278,8 @@ SOURCES += \
 	$$PWD/chateditproxy.cpp \
 	$$PWD/tipdlg.cpp \
 	$$PWD/adduserdlg.cpp \
-	$$PWD/groupchatdlg.cpp \
 	$$PWD/mcmdmanager.cpp \
 	$$PWD/mcmdsimplesite.cpp \
-	$$PWD/gcuserview.cpp \
 	$$PWD/infodlg.cpp \
 	$$PWD/translationmanager.cpp \
 	$$PWD/eventdb.cpp \
@@ -304,7 +294,6 @@ SOURCES += \
 	$$PWD/alertable.cpp \
 	$$PWD/psipopup.cpp \
 	$$PWD/psiapplication.cpp \
-	$$PWD/filetransdlg.cpp \
 	$$PWD/avatars.cpp \
 	$$PWD/actionlist.cpp \
 	$$PWD/psiactionlist.cpp \
@@ -312,7 +301,6 @@ SOURCES += \
 	$$PWD/lastactivitytask.cpp \
 	$$PWD/statuspreset.cpp \
 	$$PWD/mucmanager.cpp \
-	$$PWD/mucjoindlg.cpp \
 	$$PWD/mucconfigdlg.cpp \
 	$$PWD/mucaffiliationsmodel.cpp \
 	$$PWD/mucaffiliationsproxymodel.cpp \
@@ -350,6 +338,39 @@ SOURCES += \
 	$$PWD/accountlabel.cpp \
 	$$PWD/bookmarkmanagedlg.cpp \
 	$$PWD/vcardphotodlg.cpp
+
+CONFIG += filetransfer
+filetransfer {
+	DEFINES += FILETRANSFER
+
+	HEADERS += \
+		$$PWD/filetransdlg.h
+
+	SOURCES += \
+		$$PWD/filetransdlg.cpp
+
+	INTERFACES += \
+		$$PWD/filetrans.ui
+}
+
+CONFIG += groupchat
+groupchat {
+	DEFINES += GROUPCHAT
+
+	HEADERS += \
+		$$PWD/groupchatdlg.h \
+		$$PWD/gcuserview.h \
+		$$PWD/mucjoindlg.h
+
+	SOURCES += \
+		$$PWD/groupchatdlg.cpp \
+		$$PWD/gcuserview.cpp \
+		$$PWD/mucjoindlg.cpp
+
+	INTERFACES += \
+		$$PWD/groupchatdlg.ui \
+		$$PWD/mucjoin.ui
+}
 
 whiteboarding {
 	# Whiteboarding support. Still experimental.
@@ -400,13 +421,118 @@ mac {
 	include($$PWD/CocoaUtilities/CocoaUtilities.pri)
 }
 
+CONFIG += newcontactlist
+newcontactlist {
+	DEFINES += NEWCONTACTLIST
+	DEFINES += USE_GENERAL_CONTACT_GROUP
+	# DEFINES += CONTACTLIST_NESTED_GROUPS
+	HEADERS += \
+		$$PWD/contactlistview.h \
+		$$PWD/contactlistdragview.h \
+		$$PWD/hoverabletreeview.h \
+		$$PWD/contactlistmodel.h \
+		$$PWD/contactlistmodelselection.h \
+		$$PWD/contactlistdragmodel.h \
+		$$PWD/contactlistviewdelegate.h \
+		$$PWD/contactlistmodelupdater.h \
+		$$PWD/contactlistproxymodel.h \
+		$$PWD/psicontact.h \
+		$$PWD/psiselfcontact.h \
+		$$PWD/psicontactmenu.h \
+		$$PWD/contactlistgroupstate.h \
+		$$PWD/contactlistgroupcache.h \
+		$$PWD/contactlistgroup.h \
+		$$PWD/contactlistnestedgroup.h \
+		$$PWD/contactlistaccountgroup.h \
+		$$PWD/contactlistspecialgroup.h \
+		$$PWD/contactlistgroupmenu.h \
+		$$PWD/contactlistaccountmenu.h \
+		$$PWD/contactlistitem.h \
+		$$PWD/contactlistitemmenu.h \
+		$$PWD/contactlistutil.h \
+		$$PWD/contactlistitemproxy.h \
+		$$PWD/contactupdatesmanager.h \
+		$$PWD/statusmenu.h
+
+	SOURCES += \
+		$$PWD/contactlistview.cpp \
+		$$PWD/contactlistdragview.cpp \
+		$$PWD/hoverabletreeview.cpp \
+		$$PWD/contactlistmodel.cpp \
+		$$PWD/contactlistmodelselection.cpp \
+		$$PWD/contactlistdragmodel.cpp \
+		$$PWD/contactlistviewdelegate.cpp \
+		$$PWD/contactlistmodelupdater.cpp \
+		$$PWD/contactlistproxymodel.cpp \
+		$$PWD/psicontact.cpp \
+		$$PWD/psiselfcontact.cpp \
+		$$PWD/psicontactmenu.cpp \
+		$$PWD/contactlistgroupstate.cpp \
+		$$PWD/contactlistgroupcache.cpp \
+		$$PWD/contactlistgroup.cpp \
+		$$PWD/contactlistnestedgroup.cpp \
+		$$PWD/contactlistaccountgroup.cpp \
+		$$PWD/contactlistspecialgroup.cpp \
+		$$PWD/contactlistgroupmenu.cpp \
+		$$PWD/contactlistaccountmenu.cpp \
+		$$PWD/contactlistitem.cpp \
+		$$PWD/contactlistitemmenu.cpp \
+		$$PWD/contactlistutil.cpp \
+		$$PWD/contactlistitemproxy.cpp \
+		$$PWD/contactupdatesmanager.cpp \
+		$$PWD/statusmenu.cpp
+
+	!yapsi {
+		HEADERS += \
+			$$PWD/psicontactlistview.h \
+			$$PWD/psicontactlistviewdelegate.h \
+			$$PWD/psicontactlistmodel.h
+
+		SOURCES += \
+			$$PWD/psicontactlistview.cpp \
+			$$PWD/psicontactlistviewdelegate.cpp \
+			$$PWD/psicontactlistmodel.cpp
+	}
+}
+!newcontactlist {
+	HEADERS += \
+		$$PWD/legacypsiaccount.h
+
+	SOURCES += \
+		$$PWD/legacypsiaccount.cpp
+}
+
+CONFIG += pgputil
+pgputil {
+	DEFINES += HAVE_PGPUTIL
+	HEADERS += \
+		$$PWD/pgputil.h \
+		$$PWD/pgpkeydlg.h
+
+	SOURCES += \
+		$$PWD/pgputil.cpp \
+		$$PWD/pgpkeydlg.cpp
+
+	INTERFACES += \
+		$$PWD/pgpkey.ui
+}
+
+HEADERS += \
+	$$PWD/removeconfirmationmessagebox.h \
+	$$PWD/globaleventqueue.h \
+	$$PWD/dummystream.h
+
+SOURCES += \
+	$$PWD/removeconfirmationmessagebox.cpp \
+	$$PWD/globaleventqueue.cpp \
+	$$PWD/dummystream.cpp
+
 # Qt Designer interfaces
 INTERFACES += \
 	$$PWD/profileopen.ui \
 	$$PWD/profilemanage.ui \
 	$$PWD/profilenew.ui \
 	$$PWD/proxy.ui \
-	$$PWD/pgpkey.ui \
 	$$PWD/accountmanage.ui \
 	$$PWD/accountadd.ui \
 	$$PWD/accountreg.ui \
@@ -415,7 +541,6 @@ INTERFACES += \
 	$$PWD/changepw.ui \
 	$$PWD/addurl.ui \
 	$$PWD/adduser.ui \
-	$$PWD/mucjoin.ui \
 	$$PWD/info.ui \
 	$$PWD/search.ui \
 	$$PWD/about.ui \
@@ -426,11 +551,9 @@ INTERFACES += \
 	$$PWD/xmlconsole.ui \
 	$$PWD/disco.ui \
 	$$PWD/tip.ui \
-	$$PWD/filetrans.ui \
 	$$PWD/mood.ui \
 	$$PWD/voicecall.ui \
 	$$PWD/chatdlg.ui \
-	$$PWD/groupchatdlg.ui \
 	$$PWD/bookmarkmanage.ui \
 	$$PWD/ahcommanddlg.ui \
 	$$PWD/ahcformdlg.ui

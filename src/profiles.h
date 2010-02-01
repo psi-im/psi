@@ -49,6 +49,7 @@ public:
 	void fromOptions(OptionsTree *o, QString base);
 	void toOptions(OptionsTree *o, QString base=QString());
 
+	QString id;
 	QString name;
 	QString jid, pass, host, resource, authid, realm;
 	bool customAuth;

@@ -85,12 +85,14 @@ void TabbableWidget::ensureTabbedCorrectly()
 	}
 }
 
-void TabbableWidget::bringToFront()
+void TabbableWidget::bringToFront(bool raiseWindow)
 {
 	if (isTabbed()) {
 		getManagingTabDlg()->selectTab(this);
 	}
-	::bringToFront(this);
+	if (raiseWindow) {
+		::bringToFront(this);
+	}
 }
 
 TabbableWidget::~TabbableWidget()

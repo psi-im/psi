@@ -1452,11 +1452,11 @@ void GCMainDlg::message(const Message &_m)
 	// play sound?
 	if(from == d->self) {
 		if(!m.spooled())
-			account()->playSound(PsiOptions::instance()->getOption("options.ui.notifications.sounds.outgoing-chat").toString());
+			account()->playSound(PsiAccount::eSend);
 	}
 	else {
 		if(alert || (PsiOptions::instance()->getOption("options.ui.notifications.sounds.notify-every-muc-message").toBool() && !m.spooled() && !from.isEmpty()) )
-			account()->playSound(PsiOptions::instance()->getOption("options.ui.notifications.sounds.chat-message").toString());
+			account()->playSound(PsiAccount::eChat2);
 	}
 
 	if(from.isEmpty())

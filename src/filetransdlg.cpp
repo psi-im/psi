@@ -1547,7 +1547,7 @@ public:
 				}
 			}
 
-			pa->playSound(PsiOptions::instance()->getOption("options.ui.notifications.sounds.completed-file-transfer").toString());
+			pa->playSound(PsiAccount::eFTComplete);
 		}
 	}
 };

@@ -75,7 +75,7 @@ public:
 	TabbableWidget *getTab(int i) const;
 	void removeTabWithNoChecks(TabbableWidget *tab);
 
-	TabbableWidget* getTabPointer(QString fullJid);
+	TabbableWidget* getTabPointer(PsiAccount* account, QString fullJid);
 
 	virtual QString desiredCaption() const;
 	QString captionForTab(TabbableWidget* tab) const;

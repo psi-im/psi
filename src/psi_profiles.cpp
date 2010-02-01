@@ -30,10 +30,11 @@
 #include <QTextStream>
 #include <QtCrypto>
 #include <QList>
+#include <QUuid>
+#include <QDesktopWidget>
 
 #include "eventdlg.h"
 #include "chatdlg.h"
-#include "pgputil.h"
 #include "xmpp_xmlcommon.h"
 #include "fancylabel.h"
 #include "advwidget.h"
@@ -42,6 +43,9 @@
 #include "atomicxmlfile.h"
 #include "psitoolbar.h"
 #include "optionstree.h"
+#ifdef HAVE_PGPUTIL
+#include "pgputil.h"
+#endif
 
 using namespace XMPP;
 using namespace XMLHelper;
@@ -107,6 +111,7 @@ UserAccount::UserAccount()
 
 void UserAccount::reset()
 {
+	id = QUuid::createUuid().toString();
 	name = "Default";
 	opt_enabled = true;
 	opt_auto = false;
@@ -185,7 +190,11 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	else {
 		o->setOption(base + ".connect-after-sleep", opt_connectAfterSleep);
 	}
-	
+
+	QString tmpId = o->getOption(base + ".id").toString();
+	if (!tmpId.isEmpty()) {
+		id = tmpId;
+	}
 	name = o->getOption(base + ".name").toString();
 	jid = o->getOption(base + ".jid").toString();
 
@@ -221,14 +230,16 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	
 	resource = o->getOption(base + ".resource").toString();
 	priority = o->getOption(base + ".priority").toInt();
-	
+
+#ifdef HAVE_PGPUTIL
 	QString pgpSecretKeyID = o->getOption(base + ".pgp-secret-key-id").toString();
 	if (!pgpSecretKeyID.isEmpty()) {
 		QCA::KeyStoreEntry e = PGPUtil::instance().getSecretKeyStoreEntry(pgpSecretKeyID);
 		if (!e.isNull())
 			pgpSecretKey = e.pgpSecretKey();
 	}
-	
+#endif
+
 	tmp = o->getOption(base + ".allow-plain").toString();
 	if (tmp == "never") {
 		allow_plain = XMPP::ClientStream::NoAllowPlain;
@@ -429,6 +440,7 @@ void UserAccount::fromXml(const QDomElement &a)
 
 	bool found;
 
+	readEntry(a, "id", &id);
 	readEntry(a, "name", &name);
 	readBoolAttribute(a, "enabled", &opt_enabled);
 	readBoolAttribute(a, "auto", &opt_auto);
@@ -517,11 +529,13 @@ void UserAccount::fromXml(const QDomElement &a)
 	readNumEntry(a, "priority", &priority);
 	QString pgpSecretKeyID;
 	readEntry(a, "pgpSecretKeyID", &pgpSecretKeyID);
+#ifdef HAVE_PGPUTIL
 	if (!pgpSecretKeyID.isEmpty()) {
 		QCA::KeyStoreEntry e = PGPUtil::instance().getSecretKeyStoreEntry(pgpSecretKeyID);
 		if (!e.isNull())
 			pgpSecretKey = e.pgpSecretKey();
 	}
+#endif
 
 	QDomElement r = findSubTag(a, "roster", &found);
 	if(found) {
@@ -876,7 +890,7 @@ bool OptionsMigration::fromFile(const QString &fname)
 				migrateBoolEntry(tag, "noAwayPopup", "options.ui.notifications.popup-dialogs.suppress-while-away");
 				migrateBoolEntry(tag, "noUnlistedPopup", "options.ui.notifications.popup-dialogs.suppress-when-not-on-roster");
 				migrateBoolEntry(tag, "raise", "options.ui.contactlist.raise-on-new-event");
-				int force;
+				int force = 0;
 				readNumEntry(tag, "incomingAs", &force);
 				QString fe[4] = {"no", "message", "chat", "current-open"};
 				PsiOptions::instance()->setOption("options.messages.force-incoming-message-type", fe[force]);

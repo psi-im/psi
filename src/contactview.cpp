@@ -52,7 +52,6 @@
 #include "jidutil.h"
 #include "psioptions.h"
 #include "iconaction.h"
-#include "pgputil.h"
 #include "alerticon.h"
 #include "avatars.h"
 #include "psiiconset.h"
@@ -64,8 +63,10 @@
 #include "shortcutmanager.h"
 #include "xmpp_message.h"
 #include "textutil.h"
-#include "bookmarkmanagedlg.h"
 #include "bookmarkmanager.h"
+#ifdef HAVE_PGPUTIL
+#include "pgputil.h"
+#endif
 
 static inline int rankStatus(int status) 
 {
@@ -1047,13 +1048,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 			d->pa->changeStatus(status);
 		}
 		else if(x == bookmarks_start) {
-			BookmarkManageDlg *dlg = d->pa->findDialog<BookmarkManageDlg*>();
-			if(dlg) {
-				bringToFront(dlg);
-			} else {
-				dlg = new BookmarkManageDlg(d->pa);
-				dlg->show();
-			}
+			psiAccount()->actionManageBookmarks();
 		}
 		else if (x > bookmarks_start) {
 			ConferenceBookmark c = psiAccount()->bookmarkManager()->conferences()[x - bookmarks_start - 1];
@@ -1192,6 +1187,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 
 		if(!rl.isEmpty()) {
 			for(UserResourceList::ConstIterator it = rl.begin(); it != rl.end(); ++it) {
+#ifndef NEWCONTACTLIST
 				const UserResource &r = *it;
 				s2m->addResource(r,  base_sendto+at_sendto++);
 				c2m->addResource(r,  base_sendto+at_sendto++);
@@ -1199,6 +1195,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 				wb2m->addResource(r,  base_sendto+at_sendto++);
 #endif
 				rc2m->addResource(r, base_sendto+at_sendto++);
+#endif
 			}
 		}
 
@@ -1250,7 +1247,9 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 					status = makeSTATUS((*uit).status());
 				else
 					status = STATUS_OFFLINE;
+#ifndef NEWCONTACTLIST
 				cm->addResource(status, *it, base_hidden+at_hidden++);
+#endif
 			}
 			pm.insertItem(tr("Active Chats"), cm, 7);
 			if(hc.isEmpty())
@@ -1401,12 +1400,14 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 			pm.insertItem(tr("&Picture"), avpm);
 		}
 
+#ifdef HAVE_PGPUTIL
 		if(PGPUtil::instance().pgpAvailable() && PsiOptions::instance()->getOption("options.ui.menu.contact.custom-pgp-key").toBool()) {
 			if(u->publicKeyID().isEmpty())
 				pm.insertItem(IconsetFactory::icon("psi/gpg-yes").icon(), tr("Assign Open&PGP Key"), 21);
 			else
 				pm.insertItem(IconsetFactory::icon("psi/gpg-no").icon(), tr("Unassign Open&PGP Key"), 22);
 		}
+#endif
 
 		d->cv->qa_vcard->addTo( &pm );
 

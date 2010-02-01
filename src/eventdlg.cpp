@@ -55,7 +55,6 @@
 #include "msgmle.h"
 #include "accountscombobox.h"
 #include "common.h"
-#include "pgputil.h"
 #include "xmpp_htmlelement.h"
 #include "userlist.h"
 #include "iconwidget.h"
@@ -73,6 +72,9 @@
 #include "accountlabel.h"
 #include "xdata_widget.h"
 #include "desktoputil.h"
+#ifdef HAVE_PGPUTIL
+#include "pgputil.h"
+#endif
 #include "psirichtext.h"
 
 static QString findJid(const QString &s, int x, int *p1, int *p2)
@@ -1015,6 +1017,11 @@ void EventDlg::init()
 	//ShortcutManager::connect("message.send", this, SLOT(doSend()));
 }
 
+bool EventDlg::messagingEnabled()
+{
+	return PsiOptions::instance()->getOption("options.ui.message.enabled").toBool();
+}
+
 void EventDlg::setAccount(PsiAccount *pa)
 {
 	if(d->pa)
@@ -1491,12 +1498,12 @@ void EventDlg::doSend()
 				foreach(QString recipient, list) {
 					m.addAddress(Address(XMPP::Address::To, Jid(recipient)));
 				}
-				d->pa->dj_sendMessage(m);
+				d->pa->dj_sendMessage(m, false);
 		}
 		else {
 			for(QStringList::ConstIterator it = list.begin(); it != list.end(); ++it) {
 				m.setTo(Jid(*it));
-				d->pa->dj_sendMessage(m);
+				d->pa->dj_sendMessage(m, false);
 			}
 		}
 		doneSend();
@@ -1875,11 +1882,9 @@ void EventDlg::updateEvent(PsiEvent *e)
 			txt = "<p><font color=\"red\"><b>" + tr("Subject:") + " " + TextUtil::plain2rich(m.subject()) + "</b></font></p>" + (xhtml? "" : "<br>") + txt;
 
 		if (!xhtml) {
-			if(PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool())
-				txt = TextUtil::emoticonify(txt);
-			if( PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool() )
-				txt = TextUtil::legacyFormat(txt);
 			txt = TextUtil::linkify(txt);
+			txt = TextUtil::emoticonify(txt);
+			txt = TextUtil::legacyFormat(txt);
 		}
 
 		if ( e->type() == PsiEvent::HttpAuth )
@@ -2111,6 +2116,7 @@ void EventDlg::trySendEncryptedNext()
 
 void EventDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
 {
+#ifdef HAVE_PGPUTIL
 	if(d->transid == -1)
 		return;
 	if(d->transid != x)
@@ -2139,6 +2145,9 @@ void EventDlg::encryptedMessageSent(int x, bool b, int e, const QString &dtext)
 	d->le_to->setEnabled(true);
 	d->mle->setEnabled(true);
 	d->mle->setFocus();
+#else
+	Q_ASSERT(false);
+#endif
 }
 
 #include "eventdlg.moc"

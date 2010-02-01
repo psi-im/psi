@@ -520,10 +520,10 @@ TabbableWidget *TabDlg::getTab(int i) const
 	return static_cast<TabbableWidget*>(tabWidget_->page(i));
 }
 
-TabbableWidget* TabDlg::getTabPointer(QString fullJid)
+TabbableWidget* TabDlg::getTabPointer(PsiAccount* account, QString fullJid)
 {
 	foreach(TabbableWidget* tab, tabs_) {
-		if (tab->jid().full() == fullJid) {
+		if (tab->jid().full() == fullJid && tab->account() == account) {
 			return tab;
 		}
 	}

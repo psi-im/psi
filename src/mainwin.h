@@ -34,6 +34,7 @@ class QAction;
 class QPixmap;
 class QPoint;
 class QMenu;
+class QMimeData;
 
 class PsiCon;
 class PsiToolBar;
@@ -61,7 +62,9 @@ public:
 	QStringList actionList;
 	QMap<QString, QAction*> actions;
 
+#ifndef NEWCONTACTLIST
 	ContactView *cvlist;
+#endif
 
 	PsiCon *psiCon() const;
 
@@ -137,6 +140,19 @@ private slots:
 
 	void registerAction( IconAction * );
 
+#ifdef NEWCONTACTLIST
+	void removeSelection(QMimeData* selection);
+	void removeGroupWithoutContacts(QMimeData* selection);
+	void optionChanged(const QString& option);
+	void showAgentsChanged(bool);
+	void showHiddenChanged(bool);
+	void showSelfChanged(bool);
+	void showOfflineChanged(bool);
+	void setShowStatusMsg(bool);
+
+	void removeContactConfirmation(const QString& id, bool confirmed);
+#endif
+
 public slots:
 	void setWindowIcon(const QPixmap&);
 	void showNoFocus();
@@ -145,7 +161,7 @@ public slots:
 	void updateReadNext(PsiIcon *nextAnim, int nextAmount);
 
 	void optionsUpdate();
-	void setTrayToolTip(const XMPP::Status &, bool usePriority = false);
+	void setTrayToolTip(const XMPP::Status &, bool usePriority = false, bool isManualStatus = false);
 
 	void toggleVisible();
 

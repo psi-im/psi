@@ -52,6 +52,7 @@ namespace XMPP
 using namespace XMPP;
 
 class PsiCon;
+class PsiContact;
 class PsiContactList;
 class PsiAccount;
 class PsiEvent;
@@ -84,6 +85,8 @@ class TabManager;
 #ifdef GOOGLE_FT
 class GoogleFileTransfer;
 #endif
+class PsiIcon;
+class QIcon;
 
 // sick sick remove this someday please!
 struct GCContact;
@@ -93,9 +96,13 @@ class AvCallManager;
 class PsiAccount : public QObject
 {
 	Q_OBJECT
-public:
+protected:
 	PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegistry* capsRegistry, TabManager *tabManager);
-	~PsiAccount();
+	virtual void init();
+
+public:
+	static PsiAccount* create(const UserAccount &acc, PsiContactList *parent, CapsRegistry* capsRegistry, TabManager *tabManager);
+	virtual ~PsiAccount();
 
 	bool enabled() const;
 	void setEnabled(bool e = TRUE);
@@ -104,15 +111,19 @@ public:
 	bool isActive() const;
 	bool isConnected() const;
 	const QString &name() const;
+	const QString &id() const;
+
+	bool alerting() const;
+	QIcon alertPicture() const;
 
 	const UserAccount & userAccount() const;
 	UserAccount accountOptions() const;
-	void setUserAccount(const UserAccount &);
+	virtual void setUserAccount(const UserAccount &);
 	const Jid & jid() const;
 	QString nameWithJid() const;
 
 	XMPP::Client *client() const;
-	ContactProfile *contactProfile() const;
+	virtual ContactProfile *contactProfile() const;
 	EventQueue *eventQueue() const;
 	EDB *edb() const;
 	PsiCon *psi() const;
@@ -121,13 +132,13 @@ public:
 	CapsManager* capsManager() const;
 	VoiceCaller* voiceCaller() const;
 	Status status() const;
-	void setStatusDirect(const Status &, bool withPriority = false);
-	void setStatusActual(const Status &);
-	void login();
-	void logout(bool fast=false, const Status &s = Status("", "Logged out", 0, false));
+	static Status loggedOutStatus();
+	void setStatusDirect(const XMPP::Status &, bool withPriority = false);
+	void setStatusActual(const XMPP::Status &);
 	bool loggedIn() const;
 	void setNick(const QString &);
 	QString nick() const;
+	void forceDisconnect(bool fast, const XMPP::Status &s);
 	bool hasPGP() const;
 	QHostAddress *localAddress() const;
 	void passwordReady(QString password);
@@ -146,9 +157,18 @@ public:
 		            reinterpret_cast<QList<void*>*>(&list));
 		return list;
 	}
+	template<typename T>
+	inline QList<T> findAllDialogs() const {
+		QList<T> list;
+		findDialogs(((T)0)->staticMetaObject,
+		            reinterpret_cast<QList<void*>*>(&list));
+		return list;
+	}
 
 	void dialogRegister(QWidget* w, const Jid& jid = Jid());
 	void dialogUnregister(QWidget* w);
+
+	bool notifyOnline() const;
 
 	void modify();
 	void changeVCard();
@@ -165,20 +185,44 @@ public:
 	void groupChatChangeNick(const QString &host, const QString &room, const QString& nick, const Status &);
 	void groupChatLeave(const QString &host, const QString &room);
 
+	PsiContact* selfContact() const;
+	const QList<PsiContact*>& contactList() const;
+	PsiContact* findContact(const Jid& jid) const;
 	UserListItem *find(const Jid &) const;
 	QList<UserListItem*> findRelevant(const Jid &) const;
 	UserListItem *findFirstRelevant(const Jid &) const;
 	UserList *userList() const;
+	bool usingSSL() const;
 
 	bool checkConnected(QWidget *parent=0);
-	void playSound(const QString &);
+
+	enum SoundType {
+		eNone = -1,
+
+		eMessage = 0,
+		eChat1,
+		eChat2,
+		eHeadline,
+		eSystem,
+		eOnline,
+		eOffline,
+		eSend,
+		eIncomingFT,
+		eFTComplete,
+#ifdef YAPSI
+		eSubscribe,
+		eUnsubscribe,
+#endif
+		eSoundLast
+	};
+	void playSound(SoundType onevent);
 
 	QStringList hiddenChats(const Jid &) const;
 
 	int sendMessageEncrypted(const Message &);
 
 	// sucks sucks sucks sucks sucks sucks sucks
-	GCContact *findGCContact(const Jid &j);
+	GCContact *findGCContact(const Jid &j) const;
 	XMPP::Status gcContactStatus(const Jid &j);
 	QStringList groupchats() const;
 
@@ -186,7 +230,7 @@ public:
 	bool ensureKey(const Jid &);
 	void tryVerify(UserListItem *, UserResource *);
 
-	static void getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, QCATLSHandler *tlsHandler, QString *_str, bool *_reconn);
+	static void getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, QCATLSHandler *tlsHandler, QString *_str, bool *_reconn, bool *_disableAutoConnect, bool *_isAuthError, bool *_isTemporaryAuthFailure);
 
 	void deleteQueueFile();
 	void sendFiles(const Jid&, const QStringList&, bool direct = false);
@@ -196,11 +240,18 @@ public:
 	BookmarkManager* bookmarkManager();
 	AvCallManager *avCallManager();
 
+	void clearCurrentConnectionError();
+	QString currentConnectionError() const;
+	int currentConnectionErrorCondition() const;
+
 	enum xmlRingType {RingXmlIn, RingXmlOut, RingSysMsg};
 	class xmlRingElem { public: int type; QDateTime time; QString xml; };
 	QList< xmlRingElem > dumpRingbuf();
+	void clearRingbuf();
 
 signals:
+	void accountDestroyed();
+	void connectionError(const QString& errorInfo);
 	void disconnected();
 	void reconnecting();
 	void updatedActivity();
@@ -209,6 +260,7 @@ signals:
 	void updateContact(const UserListItem &);
 	void updateContact(const Jid &);
 	void updateContact(const Jid &, bool);
+	void removeContact(const Jid &);
 	void nickChanged();
 	void pgpKeyChanged();
 	void encryptedMessageSent(int, bool, int, const QString &);
@@ -216,7 +268,7 @@ signals:
 	void startBounce();
 
 public slots:
-	void setStatus(const XMPP::Status &, bool withStatus = false);
+	void setStatus(const XMPP::Status &, bool withPriority = false, bool isManualStatus = false);
 
 	void capsChanged(const Jid&);
 	void tuneStopped();
@@ -263,13 +315,15 @@ public slots:
 	void actionGroupRename(const QString &, const QString &);
 	void actionHistory(const Jid &);
 	void actionOpenChat(const Jid &);
+	void actionOpenSavedChat(const Jid &);
 	void actionOpenChat2(const Jid &);
 	void actionOpenChatSpecific(const Jid &);
+	void actionOpenPassiveChatSpecific(const Jid &);
 #ifdef WHITEBOARDING
 	void actionOpenWhiteboard(const Jid &);
 	void actionOpenWhiteboardSpecific(const Jid &, Jid = Jid(), bool = false);
 #endif
-	void actionAgentSetStatus(const Jid &, Status &s);
+	void actionAgentSetStatus(const Jid &, const Status &s);
 	void actionInfo(const Jid &, bool showStatusInfo=true);
 	void actionAuth(const Jid &);
 	void actionAuthRequest(const Jid &);
@@ -277,9 +331,11 @@ public slots:
 	void actionAdd(const Jid &);
 	void actionGroupAdd(const Jid &, const QString &);
 	void actionGroupRemove(const Jid &, const QString &);
+	void actionGroupsSet(const Jid &, const QStringList &);
 	void actionHistoryBox(PsiEvent *);
 	void actionRegister(const Jid &);
 	void actionSearch(const Jid &);
+	void actionManageBookmarks();
 	void actionJoin(const Jid& mucJid, const QString& password = QString());
 	void actionJoin(const ConferenceBookmark& bookmark, bool connectImmediately);
 	void actionDisco(const Jid &, const QString &);
@@ -374,19 +430,43 @@ protected:
 	void setRCEnabled(bool);
 	void sessionStarted();
 
+	virtual void stateChanged();
+	virtual void profileUpdateEntry(const UserListItem& u);
+	virtual void profileRemoveEntry(const Jid& jid);
+	virtual void profileAnimateNick(const Jid& jid);
+	virtual void profileSetAlert(const Jid& jid, const PsiIcon* icon);
+	virtual void profileClearAlert(const Jid& jid);
+
 private slots:
 	void eventFromXml(PsiEvent* e);
+	void simulateContactOffline(const XMPP::Jid& contact);
 
 private:
 	void handleEvent(PsiEvent* e, ActivationType activationType);
+
+public:
+	QStringList groupList() const;
+	void updateEntry(const UserListItem& u);
+
+	void resetLastManualStatusSafeGuard();
+
+signals:
+	void addedContact(PsiContact*);
+	void removedContact(PsiContact*);
+
+	void beginBulkContactUpdate();
+	void endBulkContactUpdate();
+	void rosterRequestFinished();
 
 public:
 	class Private;
 private:
 	Private *d;
 
+	void login();
+	void logout(bool fast, const Status &s);
+
 	void deleteAllDialogs();
-	void stateChanged();
 	void simulateContactOffline(UserListItem *);
 	void simulateRosterOffline();
 	void cpUpdate(const UserListItem &, const QString &rname="", bool fromPresence=false);
@@ -403,7 +483,10 @@ private:
 	void processEncryptedMessageNext();
 	void processEncryptedMessageDone();
 	void verifyStatus(const Jid &j, const Status &s);
+	void sentInitialPresence();
+	void requestAvatarsForAllContacts();
 
+	void processChatsHelper(const Jid& jid, bool removeEvents);
 	void processChats(const Jid &);
 	void openChat(const Jid &, ActivationType activationType);
 	EventDlg *ensureEventDlg(const Jid &);
@@ -414,6 +497,7 @@ private:
 
 	QWidget* findDialog(const QMetaObject& mo, const Jid& jid, bool compareResource) const;
 	void findDialogs(const QMetaObject& mo, const Jid& jid, bool compareResource, QList<void*>* list) const;
+	void findDialogs(const QMetaObject& mo, QList<void*>* list) const;
 
 	friend class Private;
 };

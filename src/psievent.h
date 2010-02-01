@@ -78,6 +78,7 @@ public:
 	void setTimeStamp(const QDateTime &t);
 
 	PsiAccount *account() const;
+	void setAccount(PsiAccount* account);
 
 	virtual QDomElement toXml(QDomDocument *) const;
 	virtual bool fromXml(PsiCon *, PsiAccount *, const QDomElement *);
@@ -86,6 +87,11 @@ public:
 
 	virtual QString description() const;
 
+#ifdef YAPSI
+	int id() const;
+	void setId(int id);
+#endif
+
 	virtual PsiEvent *copy() const;
 
 private:
@@ -93,6 +99,9 @@ private:
 	QDateTime v_ts;
 	XMPP::Jid v_jid;
 	PsiAccount *v_account;
+#ifdef YAPSI
+	int v_id;
+#endif
 };
 
 // normal, chat, error, headline, etc
@@ -295,7 +304,7 @@ private:
 class EventItem
 {
 public:
-	EventItem(PsiEvent *_e, int i);
+	EventItem(PsiEvent *_e);
 	EventItem(const EventItem &from);
 	~EventItem();
 	int id() const;
@@ -317,6 +326,9 @@ public:
 
 	EventQueue &operator= (const EventQueue &);
 
+	bool enabled() const;
+	void setEnabled(bool enabled);
+
 	int nextId() const;
 	int count() const;
 	int count(const XMPP::Jid &, bool compareRes=true) const;
@@ -329,10 +341,12 @@ public:
 	bool hasChats(const XMPP::Jid &, bool compareRes=true) const;
 	PsiEvent *peekFirstChat(const XMPP::Jid &, bool compareRes=true) const;
 	void extractMessages(QList<PsiEvent*> *list);
-	void extractChats(QList<PsiEvent*> *list, const XMPP::Jid &, bool compareRes=true);
+	void extractChats(QList<PsiEvent*> *list, const XMPP::Jid &, bool compareRes, bool removeEvents);
 	void printContent() const;
 	void clear();
 	void clear(const XMPP::Jid &, bool compareRes=true);
+	typedef QPair<int, PsiEvent*> PsiEventId;
+	QList<PsiEventId> eventsFor(const XMPP::Jid& jid, bool compareRes=true);
 
 	QDomElement toXml(QDomDocument *) const; // these work with pointers, to save inclusion of qdom.h, which is pretty large
 	bool fromXml(const QDomElement *);
@@ -345,8 +359,10 @@ signals:
 	void queueChanged();
 
 private:
-	class Private;
-	Private *d;
+	QList<EventItem*> list_;
+	PsiCon* psi_;
+	PsiAccount* account_;
+	bool enabled_;
 };
 
 

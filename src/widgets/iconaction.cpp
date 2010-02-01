@@ -97,11 +97,38 @@ IconAction::IconAction(const QString &statusTip, const QString &icon, const QStr
 	setPsiIcon(icon);
 }
 
+IconAction::IconAction(const QString &statusTip, const QString &icon, const QString &text, QList<QKeySequence> accel, QObject *parent, const QString &name, bool checkable)
+: QAction(text, parent)
+{
+	d = new Private(this, parent);
+	d->init(name, statusTip, accel.first(), checkable);
+	setShortcuts(accel);
+
+	setPsiIcon(icon);
+}
+
 IconAction::IconAction(const QString &statusTip, const QString &text, QKeySequence accel, QObject *parent, const QString &name, bool checkable)
 : QAction(text, parent)
 {
 	d = new Private(this, parent);
 	d->init(name, statusTip, accel, checkable);
+}
+
+IconAction::IconAction(const QString &statusTip, const QString &text, QList<QKeySequence> accel, QObject *parent, const QString &name, bool checkable)
+: QAction(text, parent)
+{
+	d = new Private(this, parent);
+	d->init(name, statusTip, accel.first(), checkable);
+	setShortcuts(accel);
+}
+
+IconAction::IconAction(const QString &text, QObject *parent, const QString &icon)
+	: QAction(text, parent)
+{
+	d = new Private(this, parent);
+	d->init(QString(), QString(), QKeySequence(), false);
+
+	setPsiIcon(icon);
 }
 
 IconAction::~IconAction()
@@ -154,6 +181,10 @@ void IconAction::setPsiIcon(const QString &name)
 #ifdef WIDGET_PLUGIN
 	d->iconName = name;
 #else
+	if (name.isEmpty()) {
+		setPsiIcon( 0 );
+		return;
+	}
 	setPsiIcon( IconsetFactory::iconPtr(name) );
 #endif
 }

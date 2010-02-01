@@ -55,7 +55,9 @@
 #include "mucjoindlg.h"
 #include "userlist.h"
 #include "eventdlg.h"
+#ifdef HAVE_PGPUTIL
 #include "pgputil.h"
+#endif
 #include "eventdb.h"
 #include "proxy.h"
 #ifdef PSIMNG
@@ -64,8 +66,10 @@
 #include "alerticon.h"
 #include "iconselect.h"
 #include "psitoolbar.h"
+#ifdef FILETRANSFER
 #include "filetransfer.h"
 #include "filetransdlg.h"
+#endif
 #include "accountmodifydlg.h"
 #include "psiactionlist.h"
 #include "applicationinfo.h"
@@ -88,11 +92,13 @@
 #include "globalshortcutmanager.h"
 #include "desktoputil.h"
 #include "tabmanager.h"
+#include "xmpp_xmlcommon.h"
+#include "psicontact.h"
+#include "contactupdatesmanager.h"
 #include "capsmanager.h"
 #include "avcall/avcall.h"
 #include "avcall/calldlg.h"
 #include "alertmanager.h"
-
 
 #include "AutoUpdater/AutoUpdater.h"
 #ifdef HAVE_SPARKLE
@@ -191,7 +197,11 @@ class PsiCon::Private : public QObject
 	Q_OBJECT
 public:
 	Private(PsiCon *parent)
-		: contactList(0), iconSelect(0), alertManager(parent)
+		: QObject(parent)
+		, contactList(0)
+		, iconSelect(0)
+		, quitting(false)
+		, alertManager(parent)
 	{
 		psi = parent;
 	}
@@ -257,13 +267,17 @@ public:
 	S5BServer *s5bServer;
 	ProxyManager *proxy;
 	IconSelectPopup *iconSelect;
+#ifdef FILETRANSFER
 	FileTransDlg *ftwin;
+#endif
 	PsiActionList *actionList;
 	//GlobalAccelManager *globalAccelManager;
 	TuneController* tuneController;
 	QMenuBar* defaultMenuBar;
 	CapsRegistry* capsRegistry;
 	TabManager *tabManager;
+	bool quitting;
+	QTimer* updatedAccountTimer_;
 	AutoUpdater *autoUpdater;
 	AlertManager alertManager;
 };
@@ -273,17 +287,19 @@ public:
 //----------------------------------------------------------------------------
 
 PsiCon::PsiCon()
-:QObject(0)
+	: QObject(0)
 {
 	//pdb(DEBUG_JABCON, QString("%1 v%2\n By Justin Karneges\n    infiniti@affinix.com\n\n").arg(PROG_NAME).arg(PROG_VERSION));
-
 	d = new Private(this);
 	d->tabManager = new TabManager(this);
+	connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()), SLOT(aboutToQuit()));
+
 
 	d->mainwin = 0;
+#ifdef FILETRANSFER
 	d->ftwin = 0;
+#endif
 
-	d->eventId = 0;
 	d->edb = new EDBFlatFile;
 
 	d->s5bServer = 0;
@@ -293,6 +309,7 @@ PsiCon::PsiCon()
 
 	d->actionList = 0;
 	d->defaultMenuBar = new QMenuBar(0);
+
 	d->capsRegistry = new CapsRegistry();
 	connect(d->capsRegistry, SIGNAL(registered(const CapsSpec&)), SLOT(saveCapabilities()));
 }
@@ -320,8 +337,10 @@ bool PsiCon::init()
 
 	connect(qApp, SIGNAL(forceSavePreferences()), SLOT(forceSavePreferences()));
 
+#ifdef HAVE_PGPUTIL
 	// PGP initialization (needs to be before any gpg usage!)
 	PGPUtil::instance();
+#endif
 
 	d->contactList = new PsiContactList(this);
 
@@ -330,6 +349,12 @@ bool PsiCon::init()
 	connect(d->contactList, SIGNAL(accountCountChanged()), SIGNAL(accountCountChanged()));
 	connect(d->contactList, SIGNAL(accountActivityChanged()), SIGNAL(accountActivityChanged()));
 	connect(d->contactList, SIGNAL(saveAccounts()), SLOT(saveAccounts()));
+	connect(d->contactList, SIGNAL(queueChanged()), SLOT(queueChanged()));
+
+	d->updatedAccountTimer_ = new QTimer(this);
+	d->updatedAccountTimer_->setSingleShot(true);
+	d->updatedAccountTimer_->setInterval(1000);
+	connect(d->updatedAccountTimer_, SIGNAL(timeout()), SLOT(saveAccounts()));
 
 	// do some backuping in case we are about to start migration from config.xml+options.xml
 	// to options.xml only.
@@ -386,8 +411,8 @@ bool PsiCon::init()
 	d->optionsMigration.fromFile(pathToProfileConfig(activeProfile));
 	
 	//load the new profile
-	//Save every time an option is changed
 	options->load(optionsFile());
+	//Save every time an option is changed
 	options->autoSave(true, optionsFile());
 
 	//just set a dummy option to trigger saving
@@ -417,6 +442,9 @@ bool PsiCon::init()
 	
 	connect(options, SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
 	
+
+	contactUpdatesManager_ = new ContactUpdatesManager(this);
+
 	QDir profileDir( pathToProfile( activeProfile ) );
 	profileDir.rmdir( "info" ); // remove unused dir
 
@@ -435,13 +463,15 @@ bool PsiCon::init()
 	if ( !d->actionList )
 		d->actionList = new PsiActionList( this );
 
-	new PsiConObject(this);
+	PsiConObject* psiConObject = new PsiConObject(this);
 		
 	Anim::setMainThread(QThread::currentThread());
 
 	// setup the main window
-	d->mainwin = new MainWin(PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool(), (PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool()), this); 
+	d->mainwin = new MainWin(PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool(), (PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool()), this);
 	d->mainwin->setUseDock(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool());
+
+	Q_UNUSED(psiConObject);
 
 	connect(d->mainwin, SIGNAL(closeProgram()), SLOT(closeProgram()));
 	connect(d->mainwin, SIGNAL(changeProfile()), SLOT(changeProfile()));
@@ -455,14 +485,19 @@ bool PsiCon::init()
 	connect(d->mainwin, SIGNAL(recvNextEvent()), SLOT(recvNextEvent()));
 	connect(this, SIGNAL(emitOptionsUpdate()), d->mainwin, SLOT(optionsUpdate()));
 
+#ifndef NEWCONTACTLIST
 	connect(this, SIGNAL(emitOptionsUpdate()), d->mainwin->cvlist, SLOT(optionsUpdate()));
+#endif
+
 
 	d->mainwin->setGeometryOptionPath("options.ui.contactlist.saved-window-geometry");
 	
 	if(!(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.hide-on-start").toBool()))
 		d->mainwin->show();
 
+#ifdef FILETRANSFER
 	d->ftwin = new FileTransDlg(this);
+#endif
 
 	d->idle.start();
 
@@ -482,7 +517,7 @@ bool PsiCon::init()
 
 	// Global shortcuts
 	setShortcuts();
-	
+
 	// FIXME
 #ifdef __GNUC__
 #warning "Temporary hard-coding caps registration of own version"
@@ -490,13 +525,17 @@ bool PsiCon::init()
 	// client()->identity()
 
 	registerCaps(ApplicationInfo::capsVersion(), QStringList()
+#ifdef FILETRANSFER
 	             << "http://jabber.org/protocol/bytestreams"
 	             << "http://jabber.org/protocol/si"
 	             << "http://jabber.org/protocol/si/profile/file-transfer"
+#endif
 	             << "http://jabber.org/protocol/disco#info"
 	             << "http://jabber.org/protocol/commands"
 	             << "http://jabber.org/protocol/rosterx"
+#ifdef GROUPCHAT
 	             << "http://jabber.org/protocol/muc"
+#endif
 	             << "jabber:x:data"
 	            );
 
@@ -505,8 +544,8 @@ bool PsiCon::init()
 	             << "http://jabber.org/protocol/tune"
 	             << "http://jabber.org/protocol/physloc"
 	             << "http://jabber.org/protocol/geoloc"
-		     << "urn:xmpp:avatar:data"
-		     << "urn:xmpp:avatar:metadata"
+	             << "urn:xmpp:avatar:data"
+	             << "urn:xmpp:avatar:metadata"
 	            );
 
 	registerCaps("ep-notify-2", QStringList()
@@ -514,13 +553,14 @@ bool PsiCon::init()
 	             << "http://jabber.org/protocol/tune+notify"
 	             << "http://jabber.org/protocol/physloc+notify"
 	             << "http://jabber.org/protocol/geoloc+notify"
-		     << "urn:xmpp:avatar:metadata+notify"
+	             << "urn:xmpp:avatar:metadata+notify"
 	            );
 
 	registerCaps("html", QStringList("http://jabber.org/protocol/xhtml-im"));
 	registerCaps("cs", QStringList("http://jabber.org/protocol/chatstates"));
-	//I've commented out the automatic replies, so commenting out support as well - KIS
+#ifdef YAPSI
 	registerCaps("mr", QStringList("urn:xmpp:receipts"));
+#endif
 
 	// load accounts
 	{
@@ -561,12 +601,11 @@ bool PsiCon::init()
 	
 	checkAccountsEmpty();
 	
-	
 	// try autologin if needed
 	foreach(PsiAccount* account, d->contactList->accounts()) {
 		account->autoLogin();
 	}
-	
+
 	// show tip of the day
 	if ( PsiOptions::instance()->getOption("options.ui.tip.show").toBool() ) {
 		TipDlg::show(this);
@@ -630,7 +669,9 @@ void PsiCon::deinit()
 	// delete s5b server
 	delete d->s5bServer;
 
+#ifdef FILETRANSFER
 	delete d->ftwin;
+#endif
 
 	if(d->mainwin) {
 		delete d->mainwin;
@@ -659,15 +700,9 @@ void PsiCon::setShortcuts()
 	ShortcutManager::connect("global.toggle-visibility", d->mainwin, SLOT(toggleVisible()));
 	ShortcutManager::connect("global.bring-to-front", d->mainwin, SLOT(trayShow()));
 	ShortcutManager::connect("global.new-blank-message", this, SLOT(doNewBlankMessage()));
-
-}
-
-ContactView *PsiCon::contactView() const
-{
-	if(d->mainwin)
-		return d->mainwin->cvlist;
-	else
-		return 0;
+#ifdef YAPSI
+	ShortcutManager::connect("global.filter-contacts", d->mainwin, SLOT(filterContacts()));
+#endif
 }
 
 PsiContactList* PsiCon::contactList() const
@@ -687,7 +722,16 @@ ProxyManager *PsiCon::proxy() const
 
 FileTransDlg *PsiCon::ftdlg() const
 {
+#ifdef FILETRANSFER
 	return d->ftwin;
+#else
+	return 0;
+#endif
+}
+
+TabManager *PsiCon::tabManager() const
+{
+	return d->tabManager;
 }
 
 TuneController *PsiCon::tuneController() const
@@ -702,7 +746,7 @@ AlertManager *PsiCon::alertManager() const {
 
 void PsiCon::closeProgram()
 {
-	quit(QuitProgram);
+	doQuit(QuitProgram);
 }
 
 void PsiCon::changeProfile()
@@ -717,10 +761,10 @@ void PsiCon::changeProfile()
 		if (messageBox.clickedButton() == cancel)
 			return;
 
-		setStatusFromDialog(XMPP::Status::Offline, false);
+		setStatusFromDialog(XMPP::Status::Offline, false, true);
 	}
 
-	quit(QuitProfile);
+	doQuit(QuitProfile);
 }
 
 void PsiCon::doManageAccounts()
@@ -747,12 +791,14 @@ void PsiCon::doManageAccounts()
 
 void PsiCon::doGroupChat()
 {
+#ifdef GROUPCHAT
 	PsiAccount *account = d->contactList->defaultAccount();
 	if(!account)
 		return;
 
 	MUCJoinDlg *w = new MUCJoinDlg(this, account);
 	w->show();
+#endif
 }
 
 void PsiCon::doNewBlankMessage()
@@ -762,6 +808,9 @@ void PsiCon::doNewBlankMessage()
 		return;
 
 	EventDlg *w = createEventDlg("", account);
+	if (!w)
+		return;
+
 	w->show();
 }
 
@@ -769,6 +818,9 @@ void PsiCon::doNewBlankMessage()
 // call optionsUpdate() automatically.
 EventDlg *PsiCon::createEventDlg(const QString &to, PsiAccount *pa)
 {
+	if (!EventDlg::messagingEnabled())
+		return 0;
+
 	EventDlg *w = new EventDlg(to, this, pa);
 	connect(this, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));
 	return w;
@@ -802,7 +854,6 @@ QMenuBar* PsiCon::defaultMenuBar() const
 {
 	return d->defaultMenuBar;
 }
-
 
 void PsiCon::dialogRegister(QWidget *w)
 {
@@ -843,13 +894,14 @@ AccountsComboBox *PsiCon::accountsComboBox(QWidget *parent, bool online_only)
 	return acb;
 }
 
-void PsiCon::createAccount(const QString &name, const Jid &j, const QString &pass, bool opt_host, const QString &host, int port, bool legacy_ssl_probe, UserAccount::SSLFlag ssl, QString proxy, const QString &tlsOverrideDomain, const QByteArray &tlsOverrideCert)
+PsiAccount* PsiCon::createAccount(const QString &name, const Jid &j, const QString &pass, bool opt_host, const QString &host, int port, bool legacy_ssl_probe, UserAccount::SSLFlag ssl, QString proxy, const QString &tlsOverrideDomain, const QByteArray &tlsOverrideCert)
 {
-	d->contactList->createAccount(name, j, pass, opt_host, host, port, legacy_ssl_probe, ssl, proxy, tlsOverrideDomain, tlsOverrideCert);
+	return d->contactList->createAccount(name, j, pass, opt_host, host, port, legacy_ssl_probe, ssl, proxy, tlsOverrideDomain, tlsOverrideCert);
 }
 
-PsiAccount *PsiCon::createAccount(const UserAccount& acc)
+PsiAccount *PsiCon::createAccount(const UserAccount& _acc)
 {
+	UserAccount acc = _acc;
 	PsiAccount *pa = new PsiAccount(acc, d->contactList, d->capsRegistry, d->tabManager);
 	connect(&d->idle, SIGNAL(secondsIdle(int)), pa, SLOT(secondsIdle(int)));
 	connect(pa, SIGNAL(updatedActivity()), SLOT(pa_updatedActivity()));
@@ -869,66 +921,125 @@ void PsiCon::removeAccount(PsiAccount *pa)
 
 void PsiCon::statusMenuChanged(int x)
 {
+#ifndef YAPSI
 	if(x == STATUS_OFFLINE && !PsiOptions::instance()->getOption("options.status.ask-for-message-on-offline").toBool()) {
-		setGlobalStatus(Status(Status::Offline, "Logged out", 0));
+		setGlobalStatus(PsiAccount::loggedOutStatus(), false, true);
 		if(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() == true)
 			d->mainwin->setTrayToolTip(Status(Status::Offline, "", 0));
 	}
 	else {
 		if(x == STATUS_ONLINE && !PsiOptions::instance()->getOption("options.status.ask-for-message-on-online").toBool()) {
-			setGlobalStatus(Status());
+			setGlobalStatus(Status(), false, true);
 			if(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() == true)
 				d->mainwin->setTrayToolTip(Status());
 		}
 		else if(x == STATUS_INVISIBLE){
 			Status s("","",0,true);
 			s.setIsInvisible(true);
-			setGlobalStatus(s);
+			setGlobalStatus(s, false, true);
 			if(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() == true)
 				d->mainwin->setTrayToolTip(s);
 		}
 		else {
 			// Create a dialog with the last status message
-			StatusSetDlg *w = new StatusSetDlg(this, makeStatus(x, PsiOptions::instance()->getOption("options.status.last-message").toString()));
-			connect(w, SIGNAL(set(const XMPP::Status &, bool)), SLOT(setStatusFromDialog(const XMPP::Status &, bool)));
+			StatusSetDlg *w = new StatusSetDlg(this, makeStatus(x, currentStatusMessage()));
+			connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), SLOT(setStatusFromDialog(const XMPP::Status &, bool, bool)));
 			connect(w, SIGNAL(cancelled()), SLOT(updateMainwinStatus()));
 			if(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() == true)
-				connect(w, SIGNAL(set(const XMPP::Status &, bool)), d->mainwin, SLOT(setTrayToolTip(const XMPP::Status &, bool)));
+				connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), d->mainwin, SLOT(setTrayToolTip(const XMPP::Status &, bool, bool)));
 			w->show();
 		}
 	}
+#else
+	setGlobalStatus(makeStatus(x, currentStatusMessage()), false, true);
+#endif
 }
 
-void PsiCon::setStatusFromDialog(const Status &s, bool withPriority)
+XMPP::Status::Type PsiCon::currentStatusType() const
 {
-	PsiOptions::instance()->setOption("options.status.last-message", s.status());
-	setGlobalStatus(s, withPriority);
+#ifdef YAPSI
+	if (!d->mainwin)
+		return XMPP::Status::Offline;
+	return d->mainwin->statusType();
+#else
+	bool active = false;
+	bool loggedIn = false;
+	XMPP::Status::Type state = XMPP::Status::Online;
+	foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
+		if(account->isActive())
+			active = true;
+		if(account->loggedIn()) {
+			loggedIn = true;
+			state = account->status().type();
+		}
+	}
+
+	if (!loggedIn) {
+		state = XMPP::Status::Offline;
+	}
+
+	return state;
+#endif
+}
+
+XMPP::Status::Type PsiCon::lastLoggedInStatusType() const
+{
+#ifdef YAPSI
+	return d->mainwin->lastLoggedInStatusType();
+#else
+// FIXME: Has to use status type from global status type selector
+	return XMPP::Status::Online;
+#endif
+}
+
+QString PsiCon::currentStatusMessage() const
+{
+#ifdef YAPSI
+	if (!d->mainwin)
+		return QString();
+	return d->mainwin->statusMessage();
+#else
+	return PsiOptions::instance()->getOption("options.status.last-message").toString();
+#endif
+}
+
+void PsiCon::setStatusFromDialog(const XMPP::Status &s, bool withPriority, bool isManualStatus)
+{
+	if (isManualStatus) {
+		PsiOptions::instance()->setOption("options.status.last-message", s.status());
+	}
+	setGlobalStatus(s, withPriority, isManualStatus);
 }
 
 void PsiCon::setStatusFromCommandline(const QString &status, const QString &message)
 {
-	PsiOptions::instance()->setOption("options.status.last-message", message);
+	bool isManualStatus = true; // presume that this will always be a manual user action
+	if (isManualStatus) {
+		PsiOptions::instance()->setOption("options.status.last-message", message);
+	}
 	XMPP::Status s;
 	s.setType(status);
 	s.setStatus(message);	// yes, a bit different naming convention..
-	setGlobalStatus(s, false);
+	setGlobalStatus(s, false, isManualStatus);
 }
 
-void PsiCon::setGlobalStatus(const Status &s,  bool withPriority)
+void PsiCon::setGlobalStatus(const Status &s, bool withPriority, bool isManualStatus)
 {
 	// Check whether all accounts are logged off
 	bool allOffline = true;
+#ifndef YAPSI
 	foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
 		if ( account->isActive() ) {
 			allOffline = false;
 			break;
 		}
 	}
+#endif
 
 	// globally set each account which is logged in
 	foreach(PsiAccount* account, d->contactList->enabledAccounts())
 		if (allOffline || account->isActive())
-			account->setStatus(s, withPriority);
+			account->setStatus(s, withPriority, isManualStatus);
 }
 
 void PsiCon::pa_updatedActivity()
@@ -947,11 +1058,13 @@ void PsiCon::pa_updatedAccount()
 	PsiAccount *pa = (PsiAccount *)sender();
 	emit accountUpdated(pa);
 
-	saveAccounts();
+	d->updatedAccountTimer_->start();
 }
 
 void PsiCon::saveAccounts()
 {
+	d->updatedAccountTimer_->stop();
+
 	UserAccountList acc = d->contactList->getUserAccountList();
 	d->saveProfile(acc);
 }
@@ -999,13 +1112,17 @@ void PsiCon::doOptions()
 
 void PsiCon::doFileTransDlg()
 {
+#ifdef FILETRANSFER
 	bringToFront(d->ftwin);
+#endif
 }
 
 void PsiCon::checkAccountsEmpty()
 {
 	if (d->contactList->accounts().count() == 0) {
+#ifndef YAPSI
 		promptUserToCreateAccount();
+#endif
 	}
 }
 
@@ -1159,11 +1276,6 @@ void PsiCon::slotApplyOptions()
 	emit emitOptionsUpdate();
 }
 
-int PsiCon::getId()
-{
-	return d->eventId++;
-}
-
 void PsiCon::queueChanged()
 {
 	PsiIcon *nextAnim = 0;
@@ -1222,6 +1334,11 @@ void PsiCon::playSound(const QString &str)
 void PsiCon::raiseMainwin()
 {
 	d->mainwin->showNoFocus();
+}
+
+bool PsiCon::mainWinVisible() const
+{
+	return d->mainwin->isVisible();
 }
 
 QStringList PsiCon::recentGCList() const
@@ -1311,6 +1428,13 @@ IconSelectPopup *PsiCon::iconSelectPopup() const
 	return d->iconSelect;
 }
 
+bool PsiCon::filterEvent(const PsiAccount* acc, const PsiEvent* e) const
+{
+	Q_UNUSED(acc);
+	Q_UNUSED(e);
+	return false;
+}
+
 void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 {
 	if ( e->type() == PsiEvent::PGP ) {
@@ -1330,6 +1454,7 @@ void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 		return;
 	}
 
+#ifdef FILETRANSFER
 	if( e->type() == PsiEvent::File ) {
 		FileEvent *fe = (FileEvent *)e;
 		FileTransfer *ft = fe->takeFileTransfer();
@@ -1342,6 +1467,7 @@ void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 		}
 		return;
 	}
+#endif
 
 	if(e->type() == PsiEvent::AvCallType) {
 		AvCallEvent *ae = (AvCallEvent *)e;
@@ -1370,10 +1496,26 @@ void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 		MessageEvent *me = (MessageEvent *)e;
 		const Message &m = me->message();
 		bool emptyForm = m.getForm().fields().empty();
-		if ( m.type() == "chat" && emptyForm ) {
+		// FIXME: Refactor this, PsiAccount and PsiEvent out
+		if ((m.type() == "chat" && emptyForm)
+		    || !EventDlg::messagingEnabled()) {
 			isChat = true;
 			sentToChatWindow = me->sentToChatWindow();
 		}
+	}
+
+	if (e->type() == PsiEvent::Auth && !EventDlg::messagingEnabled()) {
+		if (dynamic_cast<AuthEvent*>(e)->authType() == "subscribe") {
+#ifdef YAPSI
+			bringToFront(d->mainwin);
+			return;
+#else
+			e->account()->dj_addAuth(e->jid());
+#endif
+		}
+		e->account()->eventQueue()->dequeue(e);
+		delete e;
+		return;
 	}
 
 	if ( isChat ) {
@@ -1407,7 +1549,8 @@ void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 			e->account()->processReadNext(*u);
 		}
 
-		bringToFront(w);
+		if (w)
+			bringToFront(w);
 	}
 }
 
@@ -1513,7 +1656,7 @@ void PsiCon::promptUserToCreateAccount()
 		AccountRegDlg w(proxy());
 		int n = w.exec();
 		if (n == QDialog::Accepted) {
-			contactList()->createAccount(w.jid().node(),w.jid(),w.pass(),w.useHost(),w.host(),w.port(),w.legacySSLProbe(),w.ssl(),w.proxy(),w.tlsOverrideDomain(), w.tlsOverrideCert(), false);
+			contactList()->createAccount(w.jid().node(),w.jid(),w.pass(),w.useHost(),w.host(),w.port(),w.legacySSLProbe(),w.ssl(),w.proxy(),w.tlsOverrideDomain(), w.tlsOverrideCert());
 		}
 	}
 }
@@ -1527,5 +1670,31 @@ void PsiCon::forceSavePreferences()
 {
 	PsiOptions::instance()->save(optionsFile());
 }
- 
+
+void PsiCon::doQuit(int quitCode)
+{
+	d->quitting = true;
+	emit quit(quitCode);
+}
+
+void PsiCon::aboutToQuit()
+{
+	doQuit(QuitProgram);
+}
+
+ContactUpdatesManager* PsiCon::contactUpdatesManager() const
+{
+	return contactUpdatesManager_;
+}
+
+#ifndef NEWCONTACTLIST
+ContactView* PsiCon::contactView() const
+{
+	if(d->mainwin)
+		return d->mainwin->cvlist;
+	else
+		return 0;
+}
+#endif
+
 #include "psicon.moc"

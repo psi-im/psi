@@ -25,9 +25,8 @@
 
 #include "profiles.h"
 #include "psiactions.h"
-
+#include "psievent.h"
 #include "tabbablewidget.h"
-
 
 using namespace XMPP;
 
@@ -53,6 +52,9 @@ class ChatDlg;
 class AlertManager;
 class TuneController;
 class PsiContactList;
+class TabManager;
+class ContactUpdatesManager;
+
 namespace OpenPGP {
 	class Engine;
 }
@@ -72,11 +74,14 @@ public:
 	void deinit();
 
 	PsiContactList* contactList() const;
-	ContactView *contactView() const;
+#ifndef NEWCONTACTLIST
+	ContactView* contactView() const;
+#endif
 	EDB *edb() const;
 	TuneController* tuneController() const;
 	ProxyManager *proxy() const;
 	FileTransDlg *ftdlg() const;
+	TabManager *tabManager() const;
 
 	AlertManager *alertManager() const;
 
@@ -86,12 +91,15 @@ public:
 
 	QMenuBar* defaultMenuBar() const;
 
-	void createAccount(const QString &name, const Jid &j="", const QString &pass="", bool opt_host=false, const QString &host="", int port=5222, bool legacy_ssl_probe = true, UserAccount::SSLFlag ssl=UserAccount::SSL_Auto, QString proxy="", const QString &tlsOverrideDomain="", const QByteArray &tlsOverrideCert=QByteArray());
+	ContactUpdatesManager* contactUpdatesManager() const;
+
+	PsiAccount* createAccount(const QString &name, const Jid &j="", const QString &pass="", bool opt_host=false, const QString &host="", int port=5222, bool legacy_ssl_probe = true, UserAccount::SSLFlag ssl=UserAccount::SSL_Auto, QString proxy="", const QString &tlsOverrideDomain="", const QByteArray &tlsOverrideCert=QByteArray());
 	PsiAccount *createAccount(const UserAccount &);
 	//void createAccount(const QString &, const QString &host="", int port=5222, bool ssl=false, const QString &user="", const QString &pass="");
 	void removeAccount(PsiAccount *);
 
 	void playSound(const QString &);
+	bool mainWinVisible() const;
 
 	AccountsComboBox *accountsComboBox(QWidget *parent=0, bool online_only = false);
 
@@ -102,13 +110,18 @@ public:
 	const QStringList & recentNodeList() const;
 	void recentNodeAdd(const QString &);
 
-	EventDlg *createEventDlg(const QString &, PsiAccount *);
+	EventDlg *createEventDlg(const QString &, PsiAccount*);
 	void updateContactGlobal(PsiAccount *, const Jid &);
 
 	PsiActionList *actionList() const;
 
 	IconSelectPopup *iconSelectPopup() const;
+	bool filterEvent(const PsiAccount*, const PsiEvent*) const;
 	void processEvent(PsiEvent*, ActivationType activationType);
+
+	Status::Type currentStatusType() const;
+	Status::Type lastLoggedInStatusType() const;
+	QString currentStatusMessage() const;
 
 	bool haveAutoUpdater() const;
 
@@ -120,9 +133,10 @@ signals:
 	void accountCountChanged();
 	void accountActivityChanged();
 	void emitOptionsUpdate();
+	void restoringSavedChatsChanged();
 
 public slots:
-	void setGlobalStatus(const Status &, bool withPriority = false);
+	void setGlobalStatus(const Status &, bool withPriority = false, bool isManualStatus = false);
 	void doToolbars();
 	void checkAccountsEmpty();
 
@@ -142,7 +156,7 @@ public slots:
 	void slotApplyOptions();
 	void queueChanged();
 	void recvNextEvent();
-	void setStatusFromDialog(const XMPP::Status &, bool withPriority);
+	void setStatusFromDialog(const XMPP::Status &, bool withPriority, bool isManualStatus);
 	void setStatusFromCommandline(const QString &status, const QString &message);
 	void proxy_settingsChanged();
 	void updateMainwinStatus();
@@ -157,10 +171,13 @@ private slots:
 	void optionChanged(const QString& option);
 	void forceSavePreferences();
 	void startBounce();
+	void aboutToQuit();
 
 private:
 	class Private;
 	Private *d;
+	friend class Private;
+	ContactUpdatesManager* contactUpdatesManager_;
 
 	void deleteAllDialogs();
 	void s5b_init();
@@ -170,11 +187,9 @@ private:
 	friend class PsiAccount; // FIXME
 	void promptUserToCreateAccount();
 	QString optionsFile() const;
+	void doQuit(int);
 
 	void registerCaps(const QString& ext, const QStringList& features);
-
-	friend class EventQueue;
-	int getId();
 };
 
 #endif
