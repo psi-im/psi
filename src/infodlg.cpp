@@ -110,7 +110,7 @@ public:
 	void updateEntry(const UserListItem &u)
 	{
 		if (!userListItem) {
-			pa->contactProfile()->updateEntry(u);
+			pa->updateEntry(u);
 		}
 	}
 };
