@@ -241,7 +241,8 @@ public:
 
 	IceStopper(QObject *parent = 0) :
 		QObject(parent),
-		t(this)
+		t(this),
+		portReserver(0)
 	{
 		connect(&t, SIGNAL(timeout()), SLOT(t_timeout()));
 		t.setSingleShot(true);
@@ -256,8 +257,11 @@ public:
 
 	void start(XMPP::UdpPortReserver *_portReserver, const QList<XMPP::Ice176*> iceList)
 	{
-		portReserver = _portReserver;
-		portReserver->setParent(this);
+		if(_portReserver)
+		{
+			portReserver = _portReserver;
+			portReserver->setParent(this);
+		}
 		left = iceList;
 
 		foreach(XMPP::Ice176 *ice, left)
@@ -836,9 +840,12 @@ private:
 			strList += h.toString();
 		}
 
-		portReserver = new XMPP::UdpPortReserver(this);
-		portReserver->setAddresses(listenAddrs);
-		portReserver->setPorts(manager->basePort, 4);
+		if(manager->basePort != -1)
+		{
+			portReserver = new XMPP::UdpPortReserver(this);
+			portReserver->setAddresses(listenAddrs);
+			portReserver->setPorts(manager->basePort, 4);
+		}
 
 		if(!strList.isEmpty())
 		{
@@ -895,7 +902,8 @@ private:
 		connect(ice, SIGNAL(componentReady(int)), SLOT(ice_componentReady(int)), Qt::QueuedConnection); // signal is not DOR-SS
 
 		ice->setProxy(manager->stunProxy);
-		ice->setPortReserver(portReserver);
+		if(portReserver)
+			ice->setPortReserver(portReserver);
 
 		//QList<XMPP::Ice176::LocalAddress> localAddrs;
 		//XMPP::Ice176::LocalAddress addr;
@@ -1191,7 +1199,8 @@ private:
 			session_activated = true;
 			handshakeTimer->stop();
 
-			portReserver->setParent(0);
+			if(portReserver)
+				portReserver->setParent(0);
 
 			if(iceA)
 			{
@@ -1485,7 +1494,8 @@ void JingleRtpChannelPrivate::setIceObjects(XMPP::UdpPortReserver *_portReserver
 		iceA = _iceA;
 		iceV = _iceV;
 
-		portReserver->moveToThread(thread());
+		if(portReserver)
+			portReserver->moveToThread(thread());
 
 		if(iceA)
 		{
@@ -1534,7 +1544,8 @@ void JingleRtpChannelPrivate::restartRtpActivityTimer()
 
 void JingleRtpChannelPrivate::start()
 {
-	portReserver->setParent(this);
+	if(portReserver)
+		portReserver->setParent(this);
 	if(iceA)
 		iceA->setParent(this);
 	if(iceV)
