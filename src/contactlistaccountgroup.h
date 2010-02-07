@@ -40,6 +40,7 @@ public:
 	// reimplemented
 	virtual ContactListModel::Type type() const;
 	virtual const QString& displayName() const;
+	virtual QString comparisonName() const;
 	virtual QString internalGroupName() const;
 	virtual ContactListItemMenu* contextMenu(ContactListModel* model);
 	virtual bool isEditable() const;

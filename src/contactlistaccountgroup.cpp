@@ -156,6 +156,11 @@ const QString& ContactListAccountGroup::displayName() const
 	return emptyName;
 }
 
+QString ContactListAccountGroup::comparisonName() const
+{
+	return displayName();
+}
+
 QString ContactListAccountGroup::internalGroupName() const
 {
 	if (account_) {
