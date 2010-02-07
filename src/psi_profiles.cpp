@@ -311,7 +311,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 	}
 	// clear old data away
 	o->removeOption(base, true);
-	
+
 	o->setOption(base + ".enabled", opt_enabled);
 	o->setOption(base + ".auto", opt_auto);
 	o->setOption(base + ".keep-alive", opt_keepAlive);
@@ -324,9 +324,10 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 	o->setOption(base + ".connect-after-sleep", opt_connectAfterSleep);
 	o->setOption(base + ".ignore-SSL-warnings", opt_ignoreSSLWarnings);
 
+	o->setOption(base + ".id", id);
 	o->setOption(base + ".name", name);
 	o->setOption(base + ".jid", jid);
-	
+
 	o->setOption(base + ".custom-auth.use", customAuth);
 	o->setOption(base + ".custom-auth.authid", authid);
 	o->setOption(base + ".custom-auth.realm", realm);
