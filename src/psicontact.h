@@ -61,6 +61,7 @@ public:
 	virtual bool askingForAuth() const;
 	virtual bool isOnline() const;
 	virtual bool isHidden() const;
+	virtual bool isValid() const;
 
 	void activate();
 

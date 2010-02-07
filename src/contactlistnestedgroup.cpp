@@ -278,6 +278,10 @@ bool ContactListNestedGroup::canContainSpecialGroups() const
 
 ContactListGroup* ContactListNestedGroup::specialGroupFor(PsiContact* contact)
 {
+	if (!contact->isValid()) {
+		return 0;
+	}
+
 	ContactListGroup::SpecialType type = ContactListGroup::SpecialType_None;
 	if (!contact->inList()) {
 		type = ContactListGroup::SpecialType_NotInList;

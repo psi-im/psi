@@ -62,6 +62,7 @@ public:
 		: account_(0)
 		, statusTimer_(0)
 		, contact_(contact)
+		, isValid_(true)
 #ifdef YAPSI
 		, gender_(XMPP::VCard::UnknownGender)
 		, genderCached_(false)
@@ -94,6 +95,7 @@ public:
 	QString name_;
 	Status status_;
 	Status oldStatus_;
+	bool isValid_;
 #ifdef YAPSI
 	bool showOnlineTemporarily_;
 	bool reconnecting_;
@@ -180,6 +182,7 @@ PsiContact::PsiContact()
  */
 PsiContact::~PsiContact()
 {
+	d->isValid_ = false;
 	emit destroyed(this);
 	delete d;
 }
@@ -951,6 +954,11 @@ bool PsiContact::isAgent() const
 bool PsiContact::inList() const
 {
 	return userListItem().inList();
+}
+
+bool PsiContact::isValid() const
+{
+	return d->isValid_;
 }
 
 bool PsiContact::isPrivate() const
