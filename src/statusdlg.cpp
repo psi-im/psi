@@ -248,9 +248,9 @@ void StatusSetDlg::doButton()
 	QString str = d->te->getPlainText();
 
  	if (d->le_priority->text().isEmpty())
- 		emit set(makeStatus(type, str), false);
+ 		emit set(makeStatus(type, str), false, true);
  	else 
- 		emit set(makeStatus(type, str, d->le_priority->text().toInt()), true);
+ 		emit set(makeStatus(type, str, d->le_priority->text().toInt()), true, true);
 
 	close();
 }
