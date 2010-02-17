@@ -25,16 +25,7 @@
 #include <QTimer>
 #include <QStyle>
 
-#ifdef YAPSI
-#include "yastyle.h"
-#endif
-
 #include "applicationinfo.h"
-
-#ifdef YAPSI_ACTIVEX_SERVER
-#include "yaonline.h"
-#include "yapreferences.h"
-#endif
 
 //----------------------------------------------------------------------------
 // RemoveConfirmationMessageBoxManager
@@ -71,25 +62,7 @@ void RemoveConfirmationMessageBoxManager::processData(const QString& id, const Q
 	}
 
 	data_ << data;
-#ifndef YAPSI_ACTIVEX_SERVER
 	QTimer::singleShot(0, this, SLOT(update()));
-#else
-	QString parentString = "0";
-	if (parent) {
-		parentString = QString::number((int)parent->window()->winId());
-
-		if (dynamic_cast<YaPreferences*>(parent->window())) {
-			parentString = "settings";
-		}
-	}
-
-	YaOnlineHelper::instance()->messageBox(parentString,
-	                                       QString::number(data.onlineId),
-	                                       RemoveConfirmationMessageBox::tr("Ya.Online"),
-	                                       RemoveConfirmationMessageBox::processInformativeText(data.informativeText),
-	                                       data.buttons,
-	                                       data.icon);
-#endif
 }
 
 void RemoveConfirmationMessageBoxManager::showInformation(const QString& id, const QString& title, const QString& informativeText, QWidget* parent)
@@ -133,82 +106,11 @@ void RemoveConfirmationMessageBoxManager::removeConfirmation(const QString& id, 
 
 void RemoveConfirmationMessageBoxManager::update()
 {
-#ifndef YAPSI_ACTIVEX_SERVER
-	while (!data_.isEmpty()) {
-		Data data = data_.takeFirst();
-
-		Q_ASSERT(data.buttons.count() >= 1 && data.buttons.count() <= 3);
-		RemoveConfirmationMessageBox msgBox(data.title, data.informativeText, data.parent);
-		msgBox.setIcon(data.icon);
-
-		QStringList buttons = data.buttons;
-		if (data.icon == QMessageBox::Warning) {
-			buttons.takeLast(); // Cancel
-			Q_ASSERT(!buttons.isEmpty());
-			msgBox.setDestructiveActionName(buttons.takeFirst());
-			if (!buttons.isEmpty()) {
-				msgBox.setComplimentaryActionName(buttons.takeFirst());
-			}
-		}
-		else {
-			msgBox.setInfoActionName(buttons.takeFirst());
-		}
-
-		msgBox.doExec();
-
-		QList<bool> callbackData;
-		for (int i = 0; i < data.callbacks.count(); ++i) {
-			if (i == 0)
-				callbackData << msgBox.removeAction();
-			else if (i == 1)
-				callbackData << msgBox.complimentaryAction();
-			else
-				callbackData << false;
-		}
-
-		for (int i = 0; i < data.callbacks.count(); ++i) {
-			QMetaObject::invokeMethod(data.callbacks[i].obj, data.callbacks[i].slot, Qt::DirectConnection,
-			                           QGenericReturnArgument(),
-			                           Q_ARG(QString, data.id),
-			                           Q_ARG(bool, callbackData[i]));
-		}
-	}
-#endif
 }
-
-#ifdef YAPSI_ACTIVEX_SERVER
-void RemoveConfirmationMessageBoxManager::onlineCallback(const QString& id, int button)
-{
-	if (id.isEmpty())
-		return;
-	int intId = id.toInt();
-	Q_ASSERT(intId > 0);
-	if (intId <= 0)
-		return;
-
-	for (int i = 0; i < data_.count(); ++i) {
-		if (data_[i].onlineId == intId) {
-			Data data = data_[i];
-
-			for (int j = 0; j < data.callbacks.count(); ++j) {
-				QMetaObject::invokeMethod(data.callbacks[j].obj, data.callbacks[j].slot, Qt::DirectConnection,
-				                           QGenericReturnArgument(),
-				                           Q_ARG(QString, data.id),
-				                           Q_ARG(bool, (button - 1) == j));
-			}
-			data_.removeAt(i);
-			break;
-		}
-	}
-}
-#endif
 
 RemoveConfirmationMessageBoxManager::RemoveConfirmationMessageBoxManager()
 	: QObject(QCoreApplication::instance())
 {
-#ifdef YAPSI_ACTIVEX_SERVER
-	connect(YaOnlineHelper::instance(), SIGNAL(messageBoxClosed(const QString&, int)), this, SLOT(onlineCallback(const QString&, int)));
-#endif
 }
 
 RemoveConfirmationMessageBoxManager::~RemoveConfirmationMessageBoxManager()
@@ -225,13 +127,7 @@ RemoveConfirmationMessageBox::RemoveConfirmationMessageBox(const QString& title,
 	, cancelButton_(0)
 	, infoButton_(0)
 {
-#ifdef YAPSI
-	setStyle(YaStyle::defaultStyle());
-
-	setWindowTitle(tr("Ya.Online"));
-#else
 	setWindowTitle(ApplicationInfo::name());
-#endif
 
 	setText(title);
 	setInformativeText(informativeText);
@@ -297,9 +193,6 @@ void RemoveConfirmationMessageBox::doExec()
 	setInformativeText(QString());
 
 	Q_ASSERT((removeButton_ && cancelButton_) || infoButton_);
-#ifdef YAPSI
-	YaStyle::makeMeNativeLooking(this);
-#endif
 	exec();
 }
 
