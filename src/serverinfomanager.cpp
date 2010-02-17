@@ -19,9 +19,118 @@
  */
 
 #include "serverinfomanager_b.h"
+#include "xmpp_xmlcommon.h"
 #include "xmpp_tasks.h"
 
 using namespace XMPP;
+
+class JT_ExDisco : public XMPP::Task
+{
+	Q_OBJECT
+
+public:
+	class Service
+	{
+	public:
+		QString type;
+		QString name;
+
+		QString host;
+		int port;
+		QString transport;
+
+		QString username;
+		QString password;
+	};
+
+	JT_ExDisco(XMPP::Task *parent) :
+		XMPP::Task(parent)
+	{
+	}
+
+	~JT_ExDisco()
+	{
+	}
+
+	void get(const XMPP::Jid &to, const QString &type = QString())
+	{
+		services_.clear();
+		to_ = to;
+		iq_ = createIQ(doc(), "get", to.full(), id());
+		QDomElement query = doc()->createElement("services");
+		query.setAttribute("xmlns", "urn:xmpp:extdisco:0");
+		if(!type.isEmpty())
+			query.setAttribute("type", type);
+		iq_.appendChild(query);
+	}
+
+	QList<Service> services() const
+	{
+		return services_;
+	}
+
+	virtual void onGo()
+	{
+		send(iq_);
+	}
+
+	virtual bool take(const QDomElement &x)
+	{
+		if(!iqVerify(x, to_, id()))
+			return false;
+
+		if(x.attribute("type") == "result")
+		{
+			QDomElement se;
+			for(QDomNode n = x.firstChild(); !n.isNull(); n = n.nextSibling())
+			{
+				if(!n.isElement())
+					continue;
+
+				QDomElement e = n.toElement();
+				if(e.tagName() == "services" && e.attribute("xmlns") == "urn:xmpp:extdisco:0")
+				{
+					se = e;
+					break;
+				}
+			}
+
+			if(se.isNull())
+				return true;
+
+			for(QDomNode n = se.firstChild(); !n.isNull(); n = n.nextSibling())
+			{
+				if(!n.isElement())
+					continue;
+
+				QDomElement e = n.toElement();
+				if(e.tagName() == "service")
+				{
+					Service s;
+					s.type = e.attribute("type");
+					s.name = e.attribute("name");
+					s.host = e.attribute("host");
+					s.port = e.attribute("port").toInt();
+					s.transport = e.attribute("transport");
+					s.username = e.attribute("username");
+					s.password = e.attribute("password");
+					services_ += s;
+				}
+			}
+
+			setSuccess();
+		}
+		else
+			setError(x);
+
+		return true;
+	}
+
+private:
+	QDomElement iq_;
+	XMPP::Jid to_;
+	QList<Service> services_;
+};
 
 // use qobject for the private object so we can destruct it without having to
 //   define ~ServerInfoManager
@@ -35,9 +144,18 @@ public:
 	Client *client_;
 	QStringList items;
 	QString muc;
+	QString stunHost, udpTurnHost, tcpTurnHost;
+	int stunPort, udpTurnPort, tcpTurnPort;
+	QString udpTurnUser, udpTurnPass, tcpTurnUser, tcpTurnPass;
 	JT_DiscoInfo *curDisco;
 
-	Private(ServerInfoManager *parent = 0) : QObject(parent), q(parent), curDisco(0)
+	Private(ServerInfoManager *parent = 0) :
+		QObject(parent),
+		q(parent),
+		stunPort(-1),
+		udpTurnPort(-1),
+		tcpTurnPort(-1),
+		curDisco(0)
 	{
 	}
 
@@ -52,6 +170,38 @@ public:
 		connect(curDisco, SIGNAL(finished()), q, SLOT(disco_finished()));
 		curDisco->get(jid);
 		curDisco->go(true);
+	}
+
+private slots:
+	void exdisco_finished()
+	{
+		JT_ExDisco *jt = (JT_ExDisco *)sender();
+
+		QList<JT_ExDisco::Service> list = jt->services();
+		foreach(const JT_ExDisco::Service &s, list)
+		{
+			if(s.type == "stun" && s.transport == "udp" && stunHost.isEmpty())
+			{
+				stunHost = s.host;
+				stunPort = s.port;
+			}
+			else if(s.type == "turn" && s.transport == "udp" && udpTurnHost.isEmpty())
+			{
+				udpTurnHost = s.host;
+				udpTurnPort = s.port;
+				udpTurnUser = s.username;
+				udpTurnPass = s.password;
+			}
+			else if(s.type == "turn" && s.transport == "tcp" && tcpTurnHost.isEmpty())
+			{
+				tcpTurnHost = s.host;
+				tcpTurnPort = s.port;
+				tcpTurnUser = s.username;
+				tcpTurnPass = s.password;
+			}
+		}
+
+		emit q->featuresChanged();
 	}
 };
 
@@ -69,6 +219,17 @@ void ServerInfoManager::reset()
 {
 	hasPEP_ = false;
 	multicastService_ = QString();
+
+	d->stunHost.clear();
+	d->stunPort = -1;
+	d->udpTurnHost.clear();
+	d->udpTurnPort = -1;
+	d->udpTurnUser.clear();
+	d->udpTurnPass.clear();
+	d->tcpTurnHost.clear();
+	d->tcpTurnPort = -1;
+	d->tcpTurnUser.clear();
+	d->tcpTurnPass.clear();
 }
 
 void ServerInfoManager::initialize()
@@ -82,6 +243,11 @@ void ServerInfoManager::initialize()
 	connect(jti, SIGNAL(finished()), SLOT(disco_finished()));
 	jti->get(d->client_->jid().domain());
 	jti->go(true);
+
+	JT_ExDisco *jte = new JT_ExDisco(d->client_->rootTask());
+	connect(jte, SIGNAL(finished()), d, SLOT(exdisco_finished()));
+	jte->get(d->client_->jid().domain());
+	jte->go(true);
 }
 
 void ServerInfoManager::deinitialize()
@@ -103,6 +269,56 @@ bool ServerInfoManager::hasPEP() const
 QString ServerInfoManager::mucService() const
 {
 	return d->muc;
+}
+
+QString ServerInfoManager::stunHost() const
+{
+	return d->stunHost;
+}
+
+int ServerInfoManager::stunPort() const
+{
+	return d->stunPort;
+}
+
+QString ServerInfoManager::udpTurnHost() const
+{
+	return d->udpTurnHost;
+}
+
+int ServerInfoManager::udpTurnPort() const
+{
+	return d->udpTurnPort;
+}
+
+QString ServerInfoManager::udpTurnUser() const
+{
+	return d->udpTurnUser;
+}
+
+QString ServerInfoManager::udpTurnPass() const
+{
+	return d->udpTurnPass;
+}
+
+QString ServerInfoManager::tcpTurnHost() const
+{
+	return d->tcpTurnHost;
+}
+
+int ServerInfoManager::tcpTurnPort() const
+{
+	return d->tcpTurnPort;
+}
+
+QString ServerInfoManager::tcpTurnUser() const
+{
+	return d->tcpTurnUser;
+}
+
+QString ServerInfoManager::tcpTurnPass() const
+{
+	return d->tcpTurnPass;
 }
 
 void ServerInfoManager::disco_finished()

@@ -1159,11 +1159,30 @@ public:
 		lastManualStatus_ = status;
 	}
 
-	void updateAvCallSettings(const UserAccount &acc)
+	void updateAvCallSettings()
 	{
-		avCallManager->setStunBindService(acc.stunHost, acc.stunPort);
-		//avCallManager->setStunRelayUdpService(acc.stunHost, acc.stunPort, acc.stunUser, acc.stunPass);
-		//avCallManager->setStunRelayTcpService(acc.stunHost, acc.stunPort, convert_proxy(acc, psi, jid), acc.stunUser, acc.stunPass);
+		if(!serverInfoManager->stunHost().isEmpty())
+		{
+			printf("stun: %s;%d\n", qPrintable(serverInfoManager->stunHost()), serverInfoManager->stunPort());
+			avCallManager->setStunBindService(serverInfoManager->stunHost(), serverInfoManager->stunPort());
+
+			if(!myip)
+			{
+				myip = new WhatIsMyIp(this);
+				connect(myip, SIGNAL(addressReady(const QHostAddress &)), SLOT(myip_addressReady(const QHostAddress &)));
+				myip->start(serverInfoManager->stunHost(), serverInfoManager->stunPort());
+			}
+		}
+		if(!serverInfoManager->udpTurnHost().isEmpty())
+		{
+			printf("turn(udp): %s;%d\n", qPrintable(serverInfoManager->udpTurnHost()), serverInfoManager->udpTurnPort());
+			avCallManager->setStunRelayUdpService(serverInfoManager->udpTurnHost(), serverInfoManager->udpTurnPort(), serverInfoManager->udpTurnUser(), serverInfoManager->udpTurnPass());
+		}
+		if(!serverInfoManager->tcpTurnHost().isEmpty())
+		{
+			printf("turn(tcp): %s;%d\n", qPrintable(serverInfoManager->tcpTurnHost()), serverInfoManager->tcpTurnPort());
+			avCallManager->setStunRelayTcpService(serverInfoManager->tcpTurnHost(), serverInfoManager->tcpTurnPort(), XMPP::AdvancedConnector::Proxy(), serverInfoManager->tcpTurnUser(), serverInfoManager->tcpTurnPass());
+		}
 	}
 
 	// ###cuda
@@ -1491,7 +1510,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 			d->client->addExtension("cv", Features(features));
 		}
 
-		d->updateAvCallSettings(acc);
+		//d->updateAvCallSettings(acc);
 	}
 
 	// Extended presence
@@ -1788,8 +1807,8 @@ void PsiAccount::setUserAccount(const UserAccount &acc)
 		}
 	}
 
-	if(d->avCallManager)
-		d->updateAvCallSettings(d->acc);
+	//if(d->avCallManager)
+	//	d->updateAvCallSettings(d->acc);
 
 	cpUpdate(d->self);
 	updatedAccount();
@@ -2461,6 +2480,8 @@ void PsiAccount::resolveContactName()
 void PsiAccount::serverFeaturesChanged()
 {
 	setPEPAvailable(d->serverInfoManager->hasPEP());
+
+	d->updateAvCallSettings();
 }
 
 void PsiAccount::setPEPAvailable(bool b)
@@ -3162,12 +3183,6 @@ void PsiAccount::setStatusActual(const Status &_s)
 			} else {
 				setNick(vcard->fullName());
 			}
-		}
-
-		if(!d->myip && !d->acc.stunHost.isEmpty() && d->acc.stunPort != -1) {
-			d->myip = new WhatIsMyIp(d);
-			connect(d->myip, SIGNAL(addressReady(const QHostAddress &)), d, SLOT(myip_addressReady(const QHostAddress &)));
-			d->myip->start(d->acc.stunHost, d->acc.stunPort);
 		}
 	}
 }

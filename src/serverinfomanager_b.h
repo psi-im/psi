@@ -40,6 +40,19 @@ public:
 
 	QString mucService() const;
 
+	QString stunHost() const;
+	int stunPort() const;
+
+	QString udpTurnHost() const;
+	int udpTurnPort() const;
+	QString udpTurnUser() const;
+	QString udpTurnPass() const;
+
+	QString tcpTurnHost() const;
+	int tcpTurnPort() const;
+	QString tcpTurnUser() const;
+	QString tcpTurnPass() const;
+
 signals:
 	void featuresChanged();
 
@@ -51,6 +64,7 @@ private slots:
 
 private:
 	class Private;
+	friend class Private;
 	Private *d;
 	//XMPP::Client* client_;
 	QString multicastService_;
