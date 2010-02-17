@@ -611,8 +611,8 @@ private:
 		{
 			QList<JingleRtpPayloadType> payloadTypes = sess->remoteAudioPayloadTypes();
 			QList<PsiMedia::PayloadInfo> list;
-			if(!payloadTypes.isEmpty())
-				list += payloadTypeToPayloadInfo(payloadTypes.first());
+			foreach(const JingleRtpPayloadType &pt, payloadTypes)
+				list += payloadTypeToPayloadInfo(pt);
 			rtp.setRemoteAudioPreferences(list);
 		}
 
@@ -620,8 +620,8 @@ private:
 		{
 			QList<JingleRtpPayloadType> payloadTypes = sess->remoteVideoPayloadTypes();
 			QList<PsiMedia::PayloadInfo> list;
-			if(!payloadTypes.isEmpty())
-				list += payloadTypeToPayloadInfo(payloadTypes.first());
+			foreach(const JingleRtpPayloadType &pt, payloadTypes)
+				list += payloadTypeToPayloadInfo(pt);
 			rtp.setRemoteVideoPreferences(list);
 		}
 
@@ -953,9 +953,19 @@ void AvCallManager::setSelfAddress(const QHostAddress &addr)
 	d->rtpManager->setSelfAddress(addr);
 }
 
-void AvCallManager::setStunHost(const QString &host, int port)
+void AvCallManager::setStunBindService(const QString &host, int port)
 {
-	d->rtpManager->setStunHost(host, port);
+	d->rtpManager->setStunBindService(host, port);
+}
+
+void AvCallManager::setStunRelayUdpService(const QString &host, int port, const QString &user, const QString &pass)
+{
+	d->rtpManager->setStunRelayUdpService(host, port, user, pass);
+}
+
+void AvCallManager::setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy, const QString &user, const QString &pass)
+{
+	d->rtpManager->setStunRelayTcpService(host, port, proxy, user, pass);
 }
 
 void AvCallManager::setBasePort(int port)

@@ -20,6 +20,7 @@
 #define AVCALL_H
 
 #include <QObject>
+#include "xmpp.h"
 
 class QHostAddress;
 
@@ -98,7 +99,9 @@ public:
 	static bool isVideoSupported();
 
 	void setSelfAddress(const QHostAddress &addr);
-	void setStunHost(const QString &host, int port);
+	void setStunBindService(const QString &host, int port);
+	void setStunRelayUdpService(const QString &host, int port, const QString &user, const QString &pass);
+	void setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy, const QString &user, const QString &pass);
 
 	static void setBasePort(int port);
 	static void setExternalAddress(const QString &host);

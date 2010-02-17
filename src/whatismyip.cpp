@@ -50,7 +50,7 @@ public:
 		connect(sock, SIGNAL(readyRead()), SLOT(sock_readyRead()));
 
 		pool = new XMPP::StunTransactionPool(XMPP::StunTransaction::Udp, this);
-		connect(pool, SIGNAL(retransmit(XMPP::StunTransaction *)), SLOT(pool_retransmit(XMPP::StunTransaction *)));
+		connect(pool, SIGNAL(outgoingMessage(const QByteArray &, const QHostAddress &, int)), SLOT(pool_outgoingMessage(const QByteArray &, const QHostAddress &, int)));
 
 		if(!sock->bind(localPort != -1 ? localPort : 0))
 		{
@@ -104,9 +104,12 @@ private slots:
 		}
 	}
 
-	void pool_retransmit(XMPP::StunTransaction *trans)
+	void pool_outgoingMessage(const QByteArray &packet, const QHostAddress &toAddr, int toPort)
 	{
-		sock->writeDatagram(trans->packet(), addr, port);
+		Q_UNUSED(toAddr);
+		Q_UNUSED(toPort);
+	
+		sock->writeDatagram(packet, addr, port);
 	}
 
 	void binding_success()
