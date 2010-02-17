@@ -1,6 +1,6 @@
-Barracuda IM Client 4.2.2
+Barracuda IM Client 4.3.0
 -------------------------
-Date: January 4th, 2010
+Date: February 16th, 2010
 
 Barracuda Networks - http://www.barracudanetworks.com/
 
@@ -14,6 +14,9 @@ Barracuda Networks - http://www.barracudanetworks.com/
 
 Changes
 -------
+  New in 4.3.0
+  - Route voice calls through the IM Firewall to improve call connectivity
+
   New in 4.2.2
   - New groupchat browser, with ability to create, join, and destroy groupchats
   - Easily set groupchats to be automatically joined on login
