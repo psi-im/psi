@@ -133,31 +133,45 @@ class Resolver : public QObject
 private:
 	XMPP::NameResolver dnsA;
 	XMPP::NameResolver dnsB;
+	XMPP::NameResolver dnsC;
+	XMPP::NameResolver dnsD;
 	QString extHost;
-	QString stunHost;
+	QString stunBindHost, stunRelayUdpHost, stunRelayTcpHost;
 	bool extDone;
-	bool stunDone;
+	bool stunBindDone;
+	bool stunRelayUdpDone;
+	bool stunRelayTcpDone;
 
 public:
 	QHostAddress extAddr;
-	QHostAddress stunAddr;
+	QHostAddress stunBindAddr, stunRelayUdpAddr, stunRelayTcpAddr;
 
 	Resolver(QObject *parent = 0) :
 		QObject(parent),
 		dnsA(parent),
-		dnsB(parent)
+		dnsB(parent),
+		dnsC(parent),
+		dnsD(parent)
 	{
 		connect(&dnsA, SIGNAL(resultsReady(const QList<XMPP::NameRecord> &)), SLOT(dns_resultsReady(const QList<XMPP::NameRecord> &)));
 		connect(&dnsA, SIGNAL(error(XMPP::NameResolver::Error)), SLOT(dns_error(XMPP::NameResolver::Error)));
 
 		connect(&dnsB, SIGNAL(resultsReady(const QList<XMPP::NameRecord> &)), SLOT(dns_resultsReady(const QList<XMPP::NameRecord> &)));
 		connect(&dnsB, SIGNAL(error(XMPP::NameResolver::Error)), SLOT(dns_error(XMPP::NameResolver::Error)));
+
+		connect(&dnsC, SIGNAL(resultsReady(const QList<XMPP::NameRecord> &)), SLOT(dns_resultsReady(const QList<XMPP::NameRecord> &)));
+		connect(&dnsC, SIGNAL(error(XMPP::NameResolver::Error)), SLOT(dns_error(XMPP::NameResolver::Error)));
+
+		connect(&dnsD, SIGNAL(resultsReady(const QList<XMPP::NameRecord> &)), SLOT(dns_resultsReady(const QList<XMPP::NameRecord> &)));
+		connect(&dnsD, SIGNAL(error(XMPP::NameResolver::Error)), SLOT(dns_error(XMPP::NameResolver::Error)));
 	}
 
-	void start(const QString &_extHost, const QString &_stunHost)
+	void start(const QString &_extHost, const QString &_stunBindHost, const QString &_stunRelayUdpHost, const QString &_stunRelayTcpHost)
 	{
 		extHost = _extHost;
-		stunHost = _stunHost;
+		stunBindHost = _stunBindHost;
+		stunRelayUdpHost = _stunRelayUdpHost;
+		stunRelayTcpHost = _stunRelayTcpHost;
 
 		if(!extHost.isEmpty())
 		{
@@ -167,15 +181,31 @@ public:
 		else
 			extDone = true;
 
-		if(!stunHost.isEmpty())
+		if(!stunBindHost.isEmpty())
 		{
-			stunDone = false;
-			dnsB.start(stunHost.toLatin1());
+			stunBindDone = false;
+			dnsB.start(stunBindHost.toLatin1());
 		}
 		else
-			stunDone = true;
+			stunBindDone = true;
 
-		if(extDone && stunDone)
+		if(!stunRelayUdpHost.isEmpty())
+		{
+			stunRelayUdpDone = false;
+			dnsC.start(stunRelayUdpHost.toLatin1());
+		}
+		else
+			stunRelayUdpDone = true;
+
+		if(!stunRelayTcpHost.isEmpty())
+		{
+			stunRelayTcpDone = false;
+			dnsD.start(stunRelayTcpHost.toLatin1());
+		}
+		else
+			stunRelayTcpDone = true;
+
+		if(extDone && stunBindDone && stunRelayUdpDone && stunRelayTcpDone)
 			QMetaObject::invokeMethod(this, "finished", Qt::QueuedConnection);
 	}
 
@@ -196,10 +226,22 @@ private slots:
 			extDone = true;
 			tryFinish();
 		}
-		else // dnsB
+		else if(dns == &dnsB)
 		{
-			stunAddr = addr;
-			stunDone = true;
+			stunBindAddr = addr;
+			stunBindDone = true;
+			tryFinish();
+		}
+		else if(dns == &dnsC)
+		{
+			stunRelayUdpAddr = addr;
+			stunRelayUdpDone = true;
+			tryFinish();
+		}
+		else // dnsD
+		{
+			stunRelayTcpAddr = addr;
+			stunRelayTcpDone = true;
 			tryFinish();
 		}
 	}
@@ -215,9 +257,19 @@ private slots:
 			extDone = true;
 			tryFinish();
 		}
-		else // dnsB
+		else if(dns == &dnsB)
 		{
-			stunDone = true;
+			stunBindDone = true;
+			tryFinish();
+		}
+		else if(dns == &dnsC)
+		{
+			stunRelayUdpDone = true;
+			tryFinish();
+		}
+		else // dnsD
+		{
+			stunRelayTcpDone = true;
 			tryFinish();
 		}
 	}
@@ -225,7 +277,7 @@ private slots:
 private:
 	void tryFinish()
 	{
-		if(extDone && stunDone)
+		if(extDone && stunBindDone && stunRelayUdpDone && stunRelayTcpDone)
 			emit finished();
 	}
 };
@@ -342,10 +394,16 @@ public:
 	XMPP::Client *client;
 	QHostAddress selfAddr;
 	QString extHost;
-	QString stunHost;
-	int stunPort;
-	QString stunUser;
-	QString stunPass;
+	QString stunBindHost;
+	int stunBindPort;
+	QString stunRelayUdpHost;
+	int stunRelayUdpPort;
+	QString stunRelayUdpUser;
+	QString stunRelayUdpPass;
+	QString stunRelayTcpHost;
+	int stunRelayTcpPort;
+	QString stunRelayTcpUser;
+	QString stunRelayTcpPass;
 	XMPP::TurnClient::Proxy stunProxy;
 	int basePort;
 	QList<JingleRtp*> sessions;
@@ -390,8 +448,8 @@ public:
 
 	Resolver resolver;
 	QHostAddress extAddr;
-	QHostAddress stunAddr;
-	int stunPort;
+	QHostAddress stunBindAddr, stunRelayUdpAddr, stunRelayTcpAddr;
+	int stunBindPort, stunRelayUdpPort, stunRelayTcpPort;
 	XMPP::Ice176 *iceA;
 	XMPP::Ice176 *iceV;
 	JingleRtpChannel *rtpChannel;
@@ -477,7 +535,7 @@ public:
 		}
 
 		printf("types=%d\n", types);
-		resolver.start(manager->extHost, manager->stunHost);
+		resolver.start(manager->extHost, manager->stunBindHost, manager->stunRelayUdpHost, manager->stunRelayTcpHost);
 	}
 
 	void accept(int _types)
@@ -486,7 +544,7 @@ public:
 
 		// TODO: cancel away whatever media type is not used
 
-		resolver.start(manager->extHost, manager->stunHost);
+		resolver.start(manager->extHost, manager->stunBindHost, manager->stunRelayUdpHost, manager->stunRelayTcpHost);
 	}
 
 	void reject()
@@ -797,9 +855,15 @@ private:
 
 	void start_ice()
 	{
-		stunPort = manager->stunPort;
-		if(!stunAddr.isNull() && stunPort > 0)
-			printf("STUN service: %s:%d\n", qPrintable(stunAddr.toString()), stunPort);
+		stunBindPort = manager->stunBindPort;
+		stunRelayUdpPort = manager->stunRelayUdpPort;
+		stunRelayTcpPort = manager->stunRelayTcpPort;
+		if(!stunBindAddr.isNull() && stunBindPort > 0)
+			printf("STUN service: %s;%d\n", qPrintable(stunBindAddr.toString()), stunBindPort);
+		if(!stunRelayUdpAddr.isNull() && stunRelayUdpPort > 0 && !manager->stunRelayUdpUser.isEmpty())
+			printf("TURN w/ UDP service: %s;%d\n", qPrintable(stunRelayUdpAddr.toString()), stunRelayUdpPort);
+		if(!stunRelayTcpAddr.isNull() && stunRelayTcpPort > 0 && !manager->stunRelayTcpUser.isEmpty())
+			printf("TURN w/ TCP service: %s;%d\n", qPrintable(stunRelayTcpAddr.toString()), stunRelayTcpPort);
 
 		QList<QHostAddress> listenAddrs;
 		foreach(const QNetworkInterface &ni, QNetworkInterface::allInterfaces())
@@ -945,15 +1009,12 @@ private:
 			ice->setExternalAddresses(extAddrs);
 		}
 
-		if(!stunAddr.isNull() && stunPort > 0)
-		{
-			ice->setStunService(stunAddr, stunPort, XMPP::Ice176::Auto);
-			if(!manager->stunUser.isEmpty())
-			{
-				ice->setStunUsername(manager->stunUser);
-				ice->setStunPassword(manager->stunPass.toUtf8());
-			}
-		}
+		if(!stunBindAddr.isNull() && stunBindPort > 0)
+			ice->setStunBindService(stunBindAddr, stunBindPort);
+		if(!stunRelayUdpAddr.isNull() && !manager->stunRelayUdpUser.isEmpty())
+			ice->setStunRelayUdpService(stunRelayUdpAddr, stunRelayUdpPort, manager->stunRelayUdpUser, manager->stunRelayUdpPass.toUtf8());
+		if(!stunRelayTcpAddr.isNull() && !manager->stunRelayTcpUser.isEmpty())
+			ice->setStunRelayTcpService(stunRelayTcpAddr, stunRelayTcpPort, manager->stunRelayTcpUser, manager->stunRelayTcpPass.toUtf8());
 
 		// RTP+RTCP
 		ice->setComponentCount(2);
@@ -1233,7 +1294,9 @@ private slots:
 	void resolver_finished()
 	{
 		extAddr = resolver.extAddr;
-		stunAddr = resolver.stunAddr;
+		stunBindAddr = resolver.stunBindAddr;
+		stunRelayUdpAddr = resolver.stunRelayUdpAddr;
+		stunRelayTcpAddr = resolver.stunRelayTcpAddr;
 
 		printf("resolver finished\n");
 
@@ -1254,9 +1317,20 @@ private slots:
 		printf("ice_started\n");
 
 		if(ice == iceA)
+		{
 			iceA_status.started = true;
+
+			// audio rtp/rtcp expected to have small packets
+			iceA->flagComponentAsLowOverhead(0);
+			iceA->flagComponentAsLowOverhead(1);
+		}
 		else // iceV
+		{
 			iceV_status.started = true;
+
+			// video rtcp expected to have small packets
+			iceV->flagComponentAsLowOverhead(1);
+		}
 
 		bool ok = true;
 		if((types & JingleRtp::Audio) && !iceA_status.started)
@@ -1635,7 +1709,9 @@ JingleRtpManagerPrivate::JingleRtpManagerPrivate(XMPP::Client *_client, JingleRt
 	QObject(_q),
 	q(_q),
 	client(_client),
-	stunPort(-1),
+	stunBindPort(-1),
+	stunRelayUdpPort(-1),
+	stunRelayTcpPort(-1),
 	basePort(-1)
 {
 	push_task = new JT_PushJingleRtp(client->rootTask());
@@ -1778,20 +1854,27 @@ void JingleRtpManager::setExternalAddress(const QString &host)
 	d->extHost = host;
 }
 
-void JingleRtpManager::setStunHost(const QString &host, int port)
+void JingleRtpManager::setStunBindService(const QString &host, int port)
 {
-	d->stunHost = host;
-	d->stunPort = port;
+	d->stunBindHost = host;
+	d->stunBindPort = port;
 }
 
-void JingleRtpManager::setStunUserPass(const QString &user, const QString &pass)
+void JingleRtpManager::setStunRelayUdpService(const QString &host, int port, const QString &user, const QString &pass)
 {
-	d->stunUser = user;
-	d->stunPass = pass;
+	d->stunRelayUdpHost = host;
+	d->stunRelayUdpPort = port;
+	d->stunRelayUdpUser = user;
+	d->stunRelayUdpPass = pass;
 }
 
-void JingleRtpManager::setStunProxy(const XMPP::AdvancedConnector::Proxy &proxy)
+void JingleRtpManager::setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy, const QString &user, const QString &pass)
 {
+	d->stunRelayTcpHost = host;
+	d->stunRelayTcpPort = port;
+	d->stunRelayTcpUser = user;
+	d->stunRelayTcpPass = pass;
+
 	XMPP::TurnClient::Proxy tproxy;
 
 	if(proxy.type() == XMPP::AdvancedConnector::Proxy::HttpConnect)

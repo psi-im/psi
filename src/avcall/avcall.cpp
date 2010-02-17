@@ -933,19 +933,19 @@ void AvCallManager::setSelfAddress(const QHostAddress &addr)
 	d->rtpManager->setSelfAddress(addr);
 }
 
-void AvCallManager::setStunHost(const QString &host, int port)
+void AvCallManager::setStunBindService(const QString &host, int port)
 {
-	d->rtpManager->setStunHost(host, port);
+	d->rtpManager->setStunBindService(host, port);
 }
 
-void AvCallManager::setStunUserPass(const QString &user, const QString &pass)
+void AvCallManager::setStunRelayUdpService(const QString &host, int port, const QString &user, const QString &pass)
 {
-	d->rtpManager->setStunUserPass(user, pass);
+	d->rtpManager->setStunRelayUdpService(host, port, user, pass);
 }
 
-void AvCallManager::setStunProxy(const XMPP::AdvancedConnector::Proxy &proxy)
+void AvCallManager::setStunRelayTcpService(const QString &host, int port, const XMPP::AdvancedConnector::Proxy &proxy, const QString &user, const QString &pass)
 {
-	d->rtpManager->setStunProxy(proxy);
+	d->rtpManager->setStunRelayTcpService(host, port, proxy, user, pass);
 }
 
 void AvCallManager::setBasePort(int port)

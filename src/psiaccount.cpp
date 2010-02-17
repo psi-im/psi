@@ -843,6 +843,13 @@ public:
 		return lastManualStatus_;
 	}
 
+	void updateAvCallSettings(const UserAccount &acc)
+	{
+		avCallManager->setStunBindService(acc.stunHost, acc.stunPort);
+		avCallManager->setStunRelayUdpService(acc.stunHost, acc.stunPort, acc.stunUser, acc.stunPass);
+		avCallManager->setStunRelayTcpService(acc.stunHost, acc.stunPort, convert_proxy(acc, psi, jid), acc.stunUser, acc.stunPass);
+	}
+
 private:
 	Status lastManualStatus_;
 
@@ -1179,9 +1186,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 			d->client->addExtension("cv", Features(features));
 		}
 
-		d->avCallManager->setStunHost(acc.stunHost, acc.stunPort);
-		d->avCallManager->setStunUserPass(acc.stunUser, acc.stunPass);
-		d->avCallManager->setStunProxy(convert_proxy(acc, d->psi, d->jid));
+		d->updateAvCallSettings(acc);
 	}
 
 	// Extended presence
@@ -1462,11 +1467,7 @@ void PsiAccount::setUserAccount(const UserAccount &_acc)
 #endif
 
 	if(d->avCallManager)
-	{
-		d->avCallManager->setStunHost(d->acc.stunHost, d->acc.stunPort);
-		d->avCallManager->setStunUserPass(d->acc.stunUser, d->acc.stunPass);
-		d->avCallManager->setStunProxy(convert_proxy(acc, d->psi, d->jid));
-	}
+		d->updateAvCallSettings(d->acc);
 
 	cpUpdate(d->self);
 	updatedAccount();
