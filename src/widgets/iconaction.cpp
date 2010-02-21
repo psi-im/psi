@@ -101,7 +101,7 @@ IconAction::IconAction(const QString &statusTip, const QString &icon, const QStr
 : QAction(text, parent)
 {
 	d = new Private(this, parent);
-	d->init(name, statusTip, accel.first(), checkable);
+	d->init(name, statusTip, QKeySequence(), checkable);
 	setShortcuts(accel);
 
 	setPsiIcon(icon);
@@ -118,7 +118,7 @@ IconAction::IconAction(const QString &statusTip, const QString &text, QList<QKey
 : QAction(text, parent)
 {
 	d = new Private(this, parent);
-	d->init(name, statusTip, accel.first(), checkable);
+	d->init(name, statusTip, QKeySequence(), checkable);
 	setShortcuts(accel);
 }
 
