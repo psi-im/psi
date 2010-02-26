@@ -38,22 +38,11 @@ unix {
 	QMAKE_EXTRA_TARGETS += gdb
 	gdb.depends = $$EXEC_TARGET
 	mac {
-		QT_FRAMEWORK_VERSION = 4
-		QT_FRAMEWORKS = QtCore QtXml QtNetwork QtGui QtSql
-		FRAMEWORK = \$(QTDIR)/lib/\$\${f}.framework/Versions/$$QT_FRAMEWORK_VERSION/\$\${f}
-		gdb.commands += \
-			for f in $$QT_FRAMEWORKS; do \
-				install_name_tool -id "$$FRAMEWORK" "$$FRAMEWORK""_debug"; \
-				install_name_tool -change "$$FRAMEWORK" "$$FRAMEWORK""_debug" "./$$EXEC_TARGET"; \
-			done;
+		gdb.commands += $$PWD/mac_qt_debug.rb true $$EXEC_TARGET;
 	}
-	gdb.commands += PSIDATADIR=~/.psi-test gdb ./$$EXEC_TARGET
+	gdb.commands += PSIDATADIR=~/.psi-test gdb ./$$EXEC_TARGET;
 	mac {
-		gdb.commands += ; \
-			for f in $$QT_FRAMEWORKS; do \
-				install_name_tool -id "$$FRAMEWORK""_debug" "$$FRAMEWORK""_debug"; \
-				install_name_tool -change "$$FRAMEWORK""_debug" "$$FRAMEWORK" "./$$EXEC_TARGET"; \
-			done;
+		gdb.commands += $$PWD/mac_qt_debug.rb false $$EXEC_TARGET;
 	}
 }
 
