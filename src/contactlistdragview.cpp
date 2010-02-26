@@ -187,7 +187,8 @@ void ContactListDragView::updateCursorMouseHover()
 
 bool ContactListDragView::updateCursor(const QModelIndex& index, UpdateCursorOrigin origin, bool force)
 {
-	if (isContextMenuVisible()     ||
+	if (backedUpVerticalScrollBarValue_ != -1 ||
+	    isContextMenuVisible()     ||
 	    extendedSelectionAllowed() ||
 	    state() != NoState)
 	{
@@ -785,10 +786,10 @@ void ContactListDragView::restoreBackedUpSelection()
 {
 	restoreSelection(backedUpSelection_);
 
-	// if (backedUpSelection_) {
-	// 	delete backedUpSelection_;
-	// 	backedUpSelection_ = 0;
-	// }
+	if (backedUpSelection_) {
+		delete backedUpSelection_;
+		backedUpSelection_ = 0;
+	}
 }
 
 void ContactListDragView::modelChanged()
@@ -827,6 +828,7 @@ void ContactListDragView::doItemsLayoutFinish()
 {
 	if (backedUpVerticalScrollBarValue_ != -1) {
 		verticalScrollBar()->setValue(backedUpVerticalScrollBarValue_);
+		backedUpVerticalScrollBarValue_ = -1;
 	}
 }
 
@@ -853,9 +855,8 @@ void ContactListDragView::doItemsLayout()
 			model->groupState()->restoreGroupExpandedState(groupExpandedState);
 			updateGroupExpandedState();
 
-			doItemsLayoutFinish();
-
 			restoreBackedUpSelection();
+			doItemsLayoutFinish();
 
 			if (!backedUpEditorValue_.isNull()) {
 				// QSortFilterProxyModel* proxyModel = dynamic_cast<QSortFilterProxyModel*>(model);
