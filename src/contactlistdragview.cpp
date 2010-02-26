@@ -829,7 +829,16 @@ void ContactListDragView::doItemsLayoutFinish()
 	if (backedUpVerticalScrollBarValue_ != -1) {
 		verticalScrollBar()->setValue(backedUpVerticalScrollBarValue_);
 		backedUpVerticalScrollBarValue_ = -1;
+		updateGeometries();
 	}
+}
+
+void ContactListDragView::updateGeometries()
+{
+	if (backedUpVerticalScrollBarValue_ != -1)
+		return;
+
+	ContactListView::updateGeometries();
 }
 
 void ContactListDragView::doItemsLayout()

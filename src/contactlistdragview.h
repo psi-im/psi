@@ -104,6 +104,7 @@ protected:
 	virtual ContactListItemMenu* createContextMenuFor(ContactListItem* item) const;
 	virtual void addContextMenuAction(QAction* action);
 	virtual void mouseReleaseEvent(QMouseEvent* event);
+	virtual void updateGeometries();
 
 	virtual void doItemsLayoutStart();
 	virtual void doItemsLayoutFinish();
