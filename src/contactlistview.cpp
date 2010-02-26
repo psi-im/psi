@@ -25,6 +25,7 @@
 #include <QLineEdit>
 #include <QPainter>
 #include <QLinearGradient>
+#include <QScrollBar>
 
 #include "contactlistitem.h"
 #include "contactlistitemmenu.h"
@@ -84,6 +85,8 @@ ContactListView::ContactListView(QWidget* parent)
 	setIndentation(5);
 	header()->hide();
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+	verticalScrollBar()->setSingleStep(1);
 
 	// setItemDelegate(new PsiContactListViewDelegate(this));
 
