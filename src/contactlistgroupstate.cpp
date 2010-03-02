@@ -29,7 +29,7 @@
 #include "psioptions.h"
 #include "xmpp_xmlcommon.h"
 
-static const QString groupStateOptionPath = "options.ya.main-window.contact-list.group-state.%1";
+static const QString groupStateOptionPath = "options.main-window.contact-list.group-state.%1";
 
 ContactListGroupState::ContactListGroupState(QObject* parent)
 	: QObject(parent)

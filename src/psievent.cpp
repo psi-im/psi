@@ -646,7 +646,7 @@ EventIdGenerator* EventIdGenerator::instance()
 	return instance_;
 }
 
-static const QString idGeneratorOptionPath = "options.ya.last-event-id";
+static const QString idGeneratorOptionPath = "options.last-event-id";
 
 EventIdGenerator::EventIdGenerator()
 	: QObject(QCoreApplication::instance())
