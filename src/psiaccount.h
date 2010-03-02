@@ -187,6 +187,7 @@ public:
 
 	PsiContact* selfContact() const;
 	const QList<PsiContact*>& contactList() const;
+	int onlineContactsCount() const;
 	PsiContact* findContact(const Jid& jid) const;
 	UserListItem *find(const Jid &) const;
 	QList<UserListItem*> findRelevant(const Jid &) const;

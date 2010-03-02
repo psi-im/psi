@@ -384,6 +384,7 @@ public:
 		, tlsHandler(0)
 		, xmlRingbuf(1000)
 		, xmlRingbufWrite(0)
+		, onlineContactsCount(0)
 		, doPopups_(true)
 		, reconnectTimeoutTimer_(0)
 		, reconnectData_(-1)
@@ -478,6 +479,7 @@ public:
 	QHostAddress localAddress;
 
 	QList<PsiContact*> contacts;
+	int onlineContactsCount;
 
 private:
 	bool doPopups_;
@@ -563,6 +565,23 @@ public:
 		return pathToProfile(activeProfile) + "/events-" + JIDUtil::encode(acc.id).toLower() + ".xml";
 	}
 
+	void updateOnlineContactsCount()
+	{
+		int newOnlineContactsCount = 0;
+		foreach(const PsiContact* c, contacts) {
+			if (c->inList() && c->isOnline() && !c->isSelf()) {
+				++newOnlineContactsCount;
+			}
+		}
+
+		if (newOnlineContactsCount != onlineContactsCount) {
+			onlineContactsCount = newOnlineContactsCount;
+
+			// FIXME
+			// account->updateData();
+		}
+	}
+
 	// FIXME: Rename updateEntry -> updateContact
 	void updateEntry(const UserListItem& u)
 	{
@@ -578,6 +597,8 @@ public:
 				contact->update(u);
 			}
 		}
+
+		updateOnlineContactsCount();
 	}
 
 	// FIXME: Rename removeEntry -> removeContact
@@ -587,6 +608,8 @@ public:
 		Q_ASSERT(contact);
 		delete contact;
 		emit account->removeContact(jid);
+
+		updateOnlineContactsCount();
 	}
 
 	void setState(int state)
@@ -3416,6 +3439,11 @@ PsiContact* PsiAccount::selfContact() const
 const QList<PsiContact*>& PsiAccount::contactList() const
 {
 	return d->contacts;
+}
+
+int PsiAccount::onlineContactsCount() const
+{
+	return d->onlineContactsCount;
 }
 
 PsiContact* PsiAccount::findContact(const Jid& jid) const
