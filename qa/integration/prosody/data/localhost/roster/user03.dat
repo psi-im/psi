@@ -1,0 +1,31 @@
+return {
+	[false] = {
+		["version"] = 7,
+	},
+	["user04@localhost"] = {
+		["subscription"] = "both",
+		["groups"] = {
+		},
+		["name"] = "user04",
+	},
+	["user01@localhost"] = {
+		["subscription"] = "both",
+		["groups"] = {
+		},
+		["name"] = "user01",
+	},
+	["user02@localhost"] = {
+		["subscription"] = "both",
+		["groups"] = {
+		},
+		["name"] = "user02",
+	},
+	["pending"] = {
+	},
+	["user05@localhost"] = {
+		["subscription"] = "both",
+		["groups"] = {
+		},
+		["name"] = "user05",
+	},
+}

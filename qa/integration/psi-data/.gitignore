@@ -1,0 +1,8 @@
+caps.xml
+*.backup
+events-*.xml
+/profiles/*/history/*.history
+/profiles/*/vcard/*.xml
+/profiles/*/pictures/*
+/profiles/tmp-sounds
+

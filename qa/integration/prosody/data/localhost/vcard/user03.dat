@@ -1,0 +1,15 @@
+return {
+	[1] = "\n",
+	[2] = {
+		[1] = "user03",
+		["attr"] = {
+			["xmlns"] = "vcard-temp",
+		},
+		["name"] = "NICKNAME",
+	},
+	[3] = "\n",
+	["attr"] = {
+		["xmlns"] = "vcard-temp",
+	},
+	["name"] = "vCard",
+}

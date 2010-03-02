@@ -1,0 +1,587 @@
+<!DOCTYPE options>
+<options version="0.15-dev (Feb  3 2010)" xmlns="http://psi-im.org/options">
+ <accounts comment="Account definitions and options"/>
+ <options comment="Client options">
+  <status>
+   <auto-away>
+    <use-not-availible type="bool">true</use-not-availible>
+    <message type="QString">Auto Status (idle)</message>
+    <use-away type="bool">true</use-away>
+    <offline-after type="int">0</offline-after>
+    <force-priority type="bool">false</force-priority>
+    <not-availible-after type="int">30</not-availible-after>
+    <use-offline type="bool">false</use-offline>
+    <away-after type="int">10</away-after>
+   </auto-away>
+   <presets>
+    <m0>
+     <message type="QString">I am away from my desk.  Leave a message.</message>
+     <status type="QString">away</status>
+     <key type="QString">Away from desk</key>
+     <force-priority type="bool">false</force-priority>
+    </m0>
+    <m1>
+     <message type="QString">I'm in the shower.  You'll have to wait for me to get out.</message>
+     <status type="QString">away</status>
+     <key type="QString">Showering</key>
+     <force-priority type="bool">false</force-priority>
+    </m1>
+    <m2>
+     <message type="QString">Out eating.  Mmmm.. food.</message>
+     <status type="QString">away</status>
+     <key type="QString">Eating</key>
+     <force-priority type="bool">false</force-priority>
+    </m2>
+    <m3>
+     <message type="QString">Sleep is good.  Zzzzz</message>
+     <status type="QString">dnd</status>
+     <key type="QString">Sleep</key>
+     <force-priority type="bool">false</force-priority>
+    </m3>
+    <m4>
+     <message type="QString">Can't chat.  Gotta work.</message>
+     <status type="QString">dnd</status>
+     <key type="QString">Work</key>
+     <force-priority type="bool">false</force-priority>
+    </m4>
+    <m5>
+     <message type="QString">Stepping out to get some fresh air.</message>
+     <status type="QString">away</status>
+     <key type="QString">Air</key>
+     <force-priority type="bool">false</force-priority>
+    </m5>
+    <m6>
+     <message type="QString">Out to a movie.  Is that OK with you?</message>
+     <status type="QString">away</status>
+     <key type="QString">Movie</key>
+     <force-priority type="bool">false</force-priority>
+    </m6>
+    <m7>
+     <message type="QString">I'm not available right now and that's all you need to know.</message>
+     <status type="QString">xa</status>
+     <key type="QString">Secret</key>
+     <force-priority type="bool">false</force-priority>
+    </m7>
+    <m8>
+     <message type="QString">Out for the night.</message>
+     <status type="QString">away</status>
+     <key type="QString">Out for the night</key>
+     <force-priority type="bool">false</force-priority>
+    </m8>
+    <m9>
+     <message type="QString">I have gone to a far away place.  I will be back someday!</message>
+     <status type="QString">xa</status>
+     <key type="QString">Greece</key>
+     <force-priority type="bool">false</force-priority>
+    </m9>
+   </presets>
+   <ask-for-message-on-offline type="bool">false</ask-for-message-on-offline>
+   <last-message type="QString"></last-message>
+   <ask-for-message-on-online type="bool">false</ask-for-message-on-online>
+  </status>
+  <vcard>
+   <query-own-vcard-on-login type="bool">true</query-own-vcard-on-login>
+  </vcard>
+  <media>
+   <devices>
+    <video-input type="QString"></video-input>
+    <audio-output type="QString"></audio-output>
+    <audio-input type="QString"></audio-input>
+   </devices>
+  </media>
+  <messages>
+   <force-incoming-message-type type="QString">no</force-incoming-message-type>
+   <ignore-headlines type="bool">false</ignore-headlines>
+   <default-outgoing-message-type type="QString">chat</default-outgoing-message-type>
+   <exclude-muc-from-ignore type="bool">true</exclude-muc-from-ignore>
+   <ignore-non-roster-contacts type="bool">false</ignore-non-roster-contacts>
+   <send-composing-events type="bool">true</send-composing-events>
+   <send-inactivity-events type="bool">false</send-inactivity-events>
+  </messages>
+  <ui comment="User interface options">
+   <message comment="Message options">
+    <auto-grab-urls-from-clipboard type="bool">false</auto-grab-urls-from-clipboard>
+    <show-subjects type="bool">true</show-subjects>
+    <size type="QString"></size>
+    <show-character-count type="bool">false</show-character-count>
+    <enabled type="bool" comment="Enable message (i.e. non-chat) functionality">true</enabled>
+    <auto-popup type="bool">false</auto-popup>
+    <use-jid-auto-completion type="bool">true</use-jid-auto-completion>
+    <auto-popup-headlines type="bool">false</auto-popup-headlines>
+   </message>
+   <contactlist comment="Contact list options">
+    <tooltip comment="Display options for the contact list tooltips">
+     <pgp type="bool" comment="Display PGP information">true</pgp>
+     <last-status type="bool" comment="Display the last status">true</last-status>
+     <avatar type="bool" comment="Display avatar">true</avatar>
+     <client-version type="bool" comment="Display client version information">true</client-version>
+    </tooltip>
+    <status-messages comment="Status messages for contacts">
+     <single-line type="bool" comment="Show status messages on the same line as the nickname">true</single-line>
+     <show type="bool" comment="Show status messages">false</show>
+    </status-messages>
+    <toolbars>
+     <m0>
+      <dock>
+       <position type="int">3</position>
+       <nl type="bool">true</nl>
+      </dock>
+      <key type="QString">{9727caab-0466-4a3d-8ee2-5ef51350a925}</key>
+      <actions type="QStringList">
+       <item>button_options</item>
+       <item>button_status</item>
+      </actions>
+      <visible type="bool">false</visible>
+      <locked type="bool">true</locked>
+      <name type="QString">Buttons</name>
+     </m0>
+     <m1>
+      <dock>
+       <position type="int">2</position>
+       <nl type="bool">true</nl>
+      </dock>
+      <key type="QString">{ac4a43d4-e55e-42bf-9b0c-8d3d80435eee}</key>
+      <actions type="QStringList">
+       <item>show_offline</item>
+       <item>show_hidden</item>
+       <item>show_agents</item>
+       <item>show_self</item>
+       <item>show_statusmsg</item>
+      </actions>
+      <visible type="bool">false</visible>
+      <locked type="bool">true</locked>
+      <name type="QString">Show contacts</name>
+     </m1>
+     <m2>
+      <dock>
+       <position type="int">3</position>
+       <nl type="bool">true</nl>
+      </dock>
+      <key type="QString">{90c6e63d-23a5-4872-bd5c-91d09c4b53fe}</key>
+      <actions type="QStringList">
+       <item>event_notifier</item>
+      </actions>
+      <visible type="bool">false</visible>
+      <locked type="bool">true</locked>
+      <name type="QString">Event notifier</name>
+     </m2>
+    </toolbars>
+    <show>
+     <hidden-contacts-group type="bool">true</hidden-contacts-group>
+     <offline-contacts type="bool">true</offline-contacts>
+     <agent-contacts type="bool">true</agent-contacts>
+     <self-contact type="bool">true</self-contact>
+     <away-contacts type="bool">true</away-contacts>
+    </show>
+    <group-sort-style type="QString">alpha</group-sort-style>
+    <show-menubar type="bool">true</show-menubar>
+    <saved-window-geometry-frame type="QRect">
+     <x>64</x>
+     <y>64</y>
+     <width>202</width>
+     <height>690</height>
+    </saved-window-geometry-frame>
+    <opacity type="int" comment="Opacity percentage of the contact list">100</opacity>
+    <auto-delete-unlisted type="bool" comment="Automatically remove an unlisted contact from the contact list if it does not have any pending messages anymore">false</auto-delete-unlisted>
+    <saved-window-geometry-fullscreen type="bool">false</saved-window-geometry-fullscreen>
+    <lockdown-roster type="bool">false</lockdown-roster>
+    <saved-window-geometry-screen type="int">0</saved-window-geometry-screen>
+    <use-status-change-animation type="bool">true</use-status-change-animation>
+    <account-sort-style type="QString">alpha</account-sort-style>
+    <grow-roster-upwards type="bool">true</grow-roster-upwards>
+    <automatically-resize-roster type="bool">false</automatically-resize-roster>
+    <saved-window-geometry-maximized type="bool">false</saved-window-geometry-maximized>
+    <always-on-top type="bool">false</always-on-top>
+    <raise-on-new-event type="bool">false</raise-on-new-event>
+    <contact-sort-style type="QString">status</contact-sort-style>
+    <use-left-click type="bool">false</use-left-click>
+    <saved-window-geometry type="QRect">
+     <x>64</x>
+     <y>86</y>
+     <width>202</width>
+     <height>668</height>
+    </saved-window-geometry>
+    <show-group-counts type="bool">true</show-group-counts>
+    <toolbars-state type="QByteArray"></toolbars-state>
+    <temp-no-roster-animation type="bool" comment="Disable animated icons. This option will be removed as soon as the contactlist code is optimized enough">false</temp-no-roster-animation>
+    <use-single-click type="bool">false</use-single-click>
+    <use-transport-icons type="bool">false</use-transport-icons>
+    <ensure-contact-visible-on-event type="bool">true</ensure-contact-visible-on-event>
+    <disable-service-discovery type="bool">false</disable-service-discovery>
+   </contactlist>
+   <show-deprecated comment="Deprecated functionality or protocols">
+    <service-discovery comment="Service discovery dialog">
+     <protocol-selector type="bool" comment="Show the iq:browse and iq:agents service discovery protocol selector.">false</protocol-selector>
+    </service-discovery>
+   </show-deprecated>
+   <systemtray comment="Options related to the system tray">
+    <enable type="bool">true</enable>
+    <use-old type="bool" comment="Use the old system tray code (deprecated)">false</use-old>
+    <use-double-click type="bool">false</use-double-click>
+   </systemtray>
+   <notifications>
+    <popup-dialogs>
+     <suppress-when-not-on-roster type="bool">false</suppress-when-not-on-roster>
+     <suppress-while-away type="bool">false</suppress-while-away>
+    </popup-dialogs>
+    <sounds>
+     <new-chat type="QString">sound/chat1.wav</new-chat>
+     <contact-online type="QString">sound/online.wav</contact-online>
+     <enable type="bool">true</enable>
+     <outgoing-chat type="QString">sound/send.wav</outgoing-chat>
+     <notify-every-muc-message type="bool">false</notify-every-muc-message>
+     <unix-sound-player type="QString"></unix-sound-player>
+     <chat-message type="QString">sound/chat2.wav</chat-message>
+     <contact-offline type="QString">sound/offline.wav</contact-offline>
+     <completed-file-transfer type="QString">sound/ft_complete.wav</completed-file-transfer>
+     <incoming-message type="QString">sound/chat2.wav</incoming-message>
+     <incoming-file-transfer type="QString">sound/ft_incoming.wav</incoming-file-transfer>
+     <silent-while-away type="bool">false</silent-while-away>
+     <system-message type="QString">sound/chat2.wav</system-message>
+     <incoming-headline type="QString">sound/chat2.wav</incoming-headline>
+    </sounds>
+    <passive-popups>
+     <status>
+      <online type="bool">true</online>
+      <other-changes type="bool">false</other-changes>
+      <offline type="bool">true</offline>
+     </status>
+     <duration type="int">10000</duration>
+     <incoming-chat type="bool">true</incoming-chat>
+     <maximum-status-length type="int">-1</maximum-status-length>
+     <enabled type="bool">false</enabled>
+     <maximum-jid-length type="int">25</maximum-jid-length>
+     <incoming-message type="bool">true</incoming-message>
+     <incoming-file-transfer type="bool">true</incoming-file-transfer>
+     <maximum-text-length type="int">300</maximum-text-length>
+     <incoming-headline type="bool">true</incoming-headline>
+    </passive-popups>
+    <alert-style type="QString">animate</alert-style>
+    <successful-subscription type="bool">false</successful-subscription>
+    <bounce-dock type="QString">forever</bounce-dock>
+   </notifications>
+   <tip comment="Tip of the day options">
+    <number type="int" comment="The next tip to show">1</number>
+    <show type="bool" comment="Show the tip of the day upon startup">false</show>
+   </tip>
+   <muc comment="Multi-User Chat options">
+    <use-highlighting type="bool">true</use-highlighting>
+    <size type="QSize" comment="Remembered window size">
+     <width>580</width>
+     <height>420</height>
+    </size>
+    <use-nick-coloring type="bool">true</use-nick-coloring>
+    <highlight-words type="QStringList"/>
+   </muc>
+   <chat comment="Chat dialog options">
+    <avatars comment="Avatar options">
+     <size type="int" comment="Maximum size of the avatar">32</size>
+     <show type="bool" comment="Show avatars in the chat dialog">true</show>
+    </avatars>
+    <use-small-chats type="bool">false</use-small-chats>
+    <opacity type="int" comment="Opacity percentage of chat dialogs">100</opacity>
+    <legacy-formatting type="bool" comment="This enables legacy usenet-style formatting (// ** __)">true</legacy-formatting>
+    <use-chat-says-style type="bool">false</use-chat-says-style>
+    <size type="QSize" comment="Remembered window size">
+     <width>0</width>
+     <height>0</height>
+    </size>
+    <alert-for-already-open-chats type="bool">true</alert-for-already-open-chats>
+    <auto-popup type="bool">false</auto-popup>
+    <delete-contents-after type="QString">hour</delete-contents-after>
+    <use-expanding-line-edit type="bool">true</use-expanding-line-edit>
+    <raise-chat-windows-on-new-messages type="bool">false</raise-chat-windows-on-new-messages>
+    <central-toolbar type="bool" comment="Have a central toolbar">false</central-toolbar>
+    <warn-before-clear type="bool">true</warn-before-clear>
+   </chat>
+   <emoticons>
+    <use-emoticons type="bool">true</use-emoticons>
+   </emoticons>
+   <file-transfer>
+    <auto-popup type="bool">false</auto-popup>
+   </file-transfer>
+   <account comment="Account options">
+    <security comment="Options related to the seciruty UI">
+     <show type="bool" comment="Show the security UI">true</show>
+    </security>
+    <proxy comment="Options related to the proxy UI">
+     <show type="bool" comment="Show the proxy UI">true</show>
+    </proxy>
+    <privacy comment="Options related to the privacy UI">
+     <show type="bool" comment="Show the privacy UI">true</show>
+    </privacy>
+    <manual-host type="bool" comment="Enable manual host configuration">true</manual-host>
+    <data-proxy type="bool" comment="Allow changing the data transfer proxy">true</data-proxy>
+    <custom-authid type="bool" comment="Allow changing the authentication identity">true</custom-authid>
+    <legacy-ssl-probe type="bool" comment="Show legacy SSL probe option">true</legacy-ssl-probe>
+    <priority type="bool" comment="Allow changing the priority">true</priority>
+    <single type="bool" comment="Limit the client to a single account">false</single>
+    <keepalive type="bool" comment="Show the keepalive option">true</keepalive>
+    <resource type="bool" comment="Allow changing the resource">true</resource>
+   </account>
+   <service-discovery>
+    <automatically-get-info type="bool">true</automatically-get-info>
+    <automatically-get-items type="bool">false</automatically-get-items>
+    <recent-jids type="QStringList"/>
+   </service-discovery>
+   <spell-check comment="Options related to the spell checker">
+    <enabled type="bool" comment="Whether the spell checker is enabled">true</enabled>
+   </spell-check>
+   <tabs>
+    <group-state comment="Saved state data of the tabsets defined by options.ui.tabs.grouping"/>
+    <size type="QString"></size>
+    <use-tabs type="bool">false</use-tabs>
+    <tab-singles type="QString" comment="Tab types that would have been untabbed are given their own tabset. 'C' for chat and 'M' for mucs"></tab-singles>
+    <put-tabs-at-bottom type="bool">false</put-tabs-at-bottom>
+    <grouping type="QString" comment="A ':' seperated list of groups of kinds of tabs to keep in the same tabset. 'C' for chat and 'M' for mucs">C:M</grouping>
+   </tabs>
+   <menu comment="Options for the menu">
+    <status comment="Options for the status menu">
+     <chat type="bool" comment="Enable free for chat">true</chat>
+     <invisible type="bool" comment="Enable invisibility">false</invisible>
+     <xa type="bool" comment="Enable extended away/not available">true</xa>
+    </status>
+    <contact comment="Options for the contact-specific menu">
+     <custom-picture type="bool" comment="Show the 'picture' menu">true</custom-picture>
+     <custom-pgp-key type="bool" comment="Show the 'assign pgp key' menu">true</custom-pgp-key>
+     <active-chats type="bool" comment="Show the 'active chats' menu">true</active-chats>
+    </contact>
+    <view comment="Options for the view menu">
+     <show-away type="bool" comment="Show the 'show away/xa' toggle">false</show-away>
+    </view>
+    <account comment="Options for the account-specific menu">
+     <admin type="bool" comment="Show the 'admin' menu">true</admin>
+    </account>
+    <main comment="Options for the main menu">
+     <change-profile type="bool" comment="Show the 'change profile' menu">true</change-profile>
+    </main>
+   </menu>
+   <look>
+    <contactlist>
+     <status-change-animation>
+      <color1 type="QColor">#000000</color1>
+      <color2 type="QColor">#969696</color2>
+     </status-change-animation>
+     <use-outlined-group-headings type="bool">false</use-outlined-group-headings>
+     <use-slim-group-headings type="bool">false</use-slim-group-headings>
+    </contactlist>
+    <font>
+     <contactlist type="QString">Sans Serif,9,-1,5,50,0,0,0,0,0</contactlist>
+     <message type="QString">Sans Serif,9,-1,5,50,0,0,0,0,0</message>
+     <chat type="QString">Sans Serif,9,-1,5,50,0,0,0,0,0</chat>
+     <passive-popup type="QString">Sans Serif,7,-1,5,50,0,0,0,0,0</passive-popup>
+    </font>
+    <colors>
+     <messages comment="Message coloring.">
+      <informational type="QColor" comment="Color used to indicate informational (status change, spooled) messages.">#008000</informational>
+      <sent type="QColor" comment="Color used to indicate sent messages.">#ff0000</sent>
+      <received type="QColor" comment="Color used to indicate received messages.">#0000ff</received>
+     </messages>
+     <contactlist>
+      <profile>
+       <header-foreground type="QColor">#ffffff</header-foreground>
+       <header-background type="QColor">#969696</header-background>
+      </profile>
+      <status>
+       <online type="QColor">#000000</online>
+       <do-not-disturb type="QColor">#7e0000</do-not-disturb>
+       <away type="QColor">#004bb4</away>
+       <offline type="QColor">#646464</offline>
+      </status>
+      <grouping>
+       <header-foreground type="QColor">#5a5a5a</header-foreground>
+       <header-background type="QColor">#f0f0f0</header-background>
+      </grouping>
+      <status-messages type="QColor">#808080</status-messages>
+      <background type="QColor">#ffffff</background>
+     </contactlist>
+     <muc>
+      <nick-colors type="QStringList">
+       <item>Blue</item>
+       <item>Green</item>
+       <item>Orange</item>
+       <item>Purple</item>
+       <item>Red</item>
+      </nick-colors>
+     </muc>
+     <passive-popup>
+      <border type="QColor">#5297f9</border>
+     </passive-popup>
+    </colors>
+   </look>
+   <flash-windows type="bool" comment="Allow windows to flash upon activity">true</flash-windows>
+   <automatically-copy-selected-text type="bool">false</automatically-copy-selected-text>
+   <last-used-save-path type="QString"></last-used-save-path>
+   <remember-window-sizes type="bool">true</remember-window-sizes>
+   <last-used-open-path type="QString"></last-used-open-path>
+  </ui>
+  <muc comment="Multi-User Chat options">
+   <bookmarks comment="Options for bookmarked conference rooms">
+    <auto-join type="bool" comment="Automatically join bookmarked conference rooms that are configured for auto-joining.">true</auto-join>
+   </bookmarks>
+   <context comment="Options regarding the context being sent when joining a room">
+    <maxchars type="int" comment="The maximum number of characters of context that should be sent when entering a room. Use a negative number for an unlimited amount.">-1</maxchars>
+    <maxstanzas type="int" comment="The maximum number of context items that should be sent when entering a room. Use a negative number for an unlimited amount.">-1</maxstanzas>
+    <seconds type="int" comment="The maximum number of context seconds that should be sent when entering a room. Use a negative number for an unlimited amount.">-1</seconds>
+   </context>
+   <recent-joins>
+    <maximum type="int" comment="The maximum number of recently joined rooms that should be remembered">10</maximum>
+    <jids type="QStringList"/>
+   </recent-joins>
+   <accept-defaults type="bool" comment="Automatically accept the default room configuration when a new room is created.">true</accept-defaults>
+   <auto-configure type="bool" comment="Automatically open the configuration dialog when a new room is created. This option only has effect if accept-defaults is false.">true</auto-configure>
+   <show-status-changes type="bool" comment="Show status changes in groupchat window">false</show-status-changes>
+   <show-joins type="bool" comment="Display notices of users joining and leaving conferences">true</show-joins>
+   <reasons type="QStringList"/>
+   <show-role-affiliation type="bool" comment="Include role and affiliation changes in join messages, and display notices of changes">true</show-role-affiliation>
+  </muc>
+  <pgp comment="PGP encryption options">
+   <enable type="bool" comment="Enable PGP globally">true</enable>
+  </pgp>
+  <p2p>
+   <bytestreams>
+    <external-address type="QString"></external-address>
+    <listen-port type="int">8010</listen-port>
+   </bytestreams>
+  </p2p>
+  <contactlist>
+   <resolve-nicks-on-contact-add type="bool">false</resolve-nicks-on-contact-add>
+   <use-toolwindow type="bool">false</use-toolwindow>
+   <hide-on-start type="bool">false</hide-on-start>
+  </contactlist>
+  <account comment="Default account options">
+   <domain type="QString" comment="Always use the same domain to register with. Leave this empty to allow the user to choose his server."></domain>
+  </account>
+  <shortcuts comment="Shortcuts">
+   <contactlist comment="Shortcuts in the contactlist">
+    <rename type="QKeySequence" comment="Rename the selected contact">F2</rename>
+    <clear-custom-avatar type="QKeySequence" comment="Remove custom avatar from the selected contact"></clear-custom-avatar>
+    <message type="QKeySequence" comment="Send a message to the selected contact">Ctrl+M</message>
+    <event type="QKeySequence" comment="Receive incoming event">Ctrl+R</event>
+    <chat type="QKeySequence" comment="Open a chat to the selected contact">Ctrl+C</chat>
+    <assign-custom-avatar type="QKeySequence" comment="Assign a custom avatar to the selected contact"></assign-custom-avatar>
+    <delete type="QKeySequence" comment="Delete the selected contact">Del</delete>
+    <login-transport type="QKeySequence" comment="Log on to the selected transport">Ctrl+L</login-transport>
+   </contactlist>
+   <message comment="Shortcuts in the message dialog">
+    <send type="QVariantList" comment="Send the message">
+     <item type="QKeySequence">Ctrl+Return</item>
+     <item type="QKeySequence">Ctrl+Enter</item>
+     <item type="QKeySequence">Alt+Return</item>
+     <item type="QKeySequence">Alt+Enter</item>
+    </send>
+   </message>
+   <status comment="Shortcuts in the status dialog">
+    <set type="QVariantList" comment="Set the status message">
+     <item type="QKeySequence">Ctrl+Return</item>
+     <item type="QKeySequence">Ctrl+Enter</item>
+     <item type="QKeySequence">Alt+Return</item>
+     <item type="QKeySequence">Alt+Enter</item>
+    </set>
+   </status>
+   <global comment="Shortcuts available from outside of the application">
+    <bring-to-front type="QKeySequence" comment="Bring the application to front"></bring-to-front>
+    <event type="QKeySequence" comment="Receive incoming event"></event>
+    <new-blank-message type="QKeySequence" comment="Send new message"></new-blank-message>
+    <toggle-visibility type="QKeySequence" comment="Show/hide the application"></toggle-visibility>
+   </global>
+   <chat comment="Shortcuts in the chat dialog">
+    <clear type="QKeySequence" comment="Clear the text"></clear>
+    <next-tab type="QVariantList" comment="Switch to the next tab">
+     <item type="QKeySequence">Ctrl+PgDown</item>
+     <item type="QKeySequence">Ctrl+Tab</item>
+    </next-tab>
+    <quick-command type="QKeySequence" comment="Change to quick command mode">Ctrl+7</quick-command>
+    <find type="QKeySequence" comment="Find text">Ctrl+F</find>
+    <send type="QVariantList" comment="Sends the message">
+     <item type="QKeySequence">Return</item>
+     <item type="QKeySequence">Enter</item>
+    </send>
+    <previous-tab type="QVariantList" comment="Switch to the previous tab">
+     <item type="QKeySequence">Ctrl+PgUp</item>
+     <item type="QKeySequence">Ctrl+Shift+Tab</item>
+    </previous-tab>
+   </chat>
+   <common comment="Common actions">
+    <close type="QVariantList" comment="Close the current window/tab">
+     <item type="QKeySequence">Esc</item>
+     <item type="QKeySequence">Ctrl+W</item>
+    </close>
+    <scroll-up type="QKeySequence" comment="Scroll up">Shift+PgUp</scroll-up>
+    <user-info type="QKeySequence" comment="Show the user info of the contact">Ctrl+I</user-info>
+    <scroll-down type="QKeySequence" comment="Scroll down">Shift+PgDown</scroll-down>
+    <history type="QKeySequence" comment="Open the message history">Ctrl+Shift+H</history>
+   </common>
+   <service-discovery comment="Shortcuts in the service discovery dialog"/>
+  </shortcuts>
+  <external-control>
+   <adhoc-remote-control>
+    <enable type="bool">false</enable>
+   </adhoc-remote-control>
+  </external-control>
+  <service-discovery>
+   <enable-entity-capabilities type="bool">true</enable-entity-capabilities>
+  </service-discovery>
+  <extended-presence comment="Extended presence options">
+   <tune comment="Tune options">
+    <publish type="bool" comment="Publish user tune information">false</publish>
+   </tune>
+   <notify type="bool" comment="Get notified of extended presence changes">true</notify>
+  </extended-presence>
+  <html comment="Hypertext markup options">
+   <chat comment="HTML in chats">
+    <render type="bool" comment="Display received HTML">true</render>
+   </chat>
+  </html>
+  <iconsets>
+   <service-status>
+    <m0>
+     <iconset type="QString">crystal-aim.jisp</iconset>
+     <key type="QString">aim</key>
+    </m0>
+    <m1>
+     <iconset type="QString">crystal-gadu.jisp</iconset>
+     <key type="QString">gadugadu</key>
+    </m1>
+    <m2>
+     <iconset type="QString">crystal-icq.jisp</iconset>
+     <key type="QString">icq</key>
+    </m2>
+    <m3>
+     <iconset type="QString">crystal-msn.jisp</iconset>
+     <key type="QString">msn</key>
+    </m3>
+    <m4>
+     <iconset type="QString">crystal-sms.jisp</iconset>
+     <key type="QString">sms</key>
+    </m4>
+    <m5>
+     <iconset type="QString">crystal-service.jisp</iconset>
+     <key type="QString">transport</key>
+    </m5>
+    <m6>
+     <iconset type="QString">crystal-yahoo.jisp</iconset>
+     <key type="QString">yahoo</key>
+    </m6>
+   </service-status>
+   <custom-status/>
+   <status type="QString">default</status>
+   <emoticons type="QStringList">
+    <item>default</item>
+   </emoticons>
+   <system type="QString">default</system>
+  </iconsets>
+  <xml-console>
+   <enable-at-login type="bool">false</enable-at-login>
+  </xml-console>
+  <auto-update comment="Auto updater">
+   <check-on-startup type="bool" comment="Check for available updates on startup">true</check-on-startup>
+  </auto-update>
+  <subscriptions>
+   <automatically-allow-authorization type="bool">false</automatically-allow-authorization>
+  </subscriptions>
+  <enable-multicast type="bool" comment="Enable multicasting messages to multiple recipients">false</enable-multicast>
+ </options>
+ <plugins comment="Plugin options"/>
+ <trigger-save type="bool">true</trigger-save>
+</options>

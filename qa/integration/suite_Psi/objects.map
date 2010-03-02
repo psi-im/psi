@@ -1,0 +1,3 @@
+:Psi_MainWin	{type='MainWin' unnamed='1' visible='1' windowTitle='Psi'}
+:Psi_PsiApplication	{name='Psi' type='PsiApplication'}
+:Psi_PsiContactListView	{type='PsiContactListView' unnamed='1' visible='1' window=':Psi_MainWin'}

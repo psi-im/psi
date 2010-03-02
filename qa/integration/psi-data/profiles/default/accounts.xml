@@ -1,0 +1,128 @@
+<!DOCTYPE accounts>
+<accounts version="0.15-dev (Feb  3 2010)" xmlns="http://psi-im.org/options">
+ <accounts>
+  <a0>
+   <tls>
+    <override-certificate type="QByteArray">MIIDkDCCAvmgAwIBAgIJAO6CeZTVrfDwMA0GCSqGSIb3DQEBBQUAMIGNMQswCQYDVQQGEwJHQjETMBEGA1UECBMKU29tZS1TdGF0ZTETMBEGA1UEBxMKSmFiYmVybGFuZDETMBEGA1UEChMKUHJvc29keSBJTTEcMBoGA1UEAxMTRXhhbXBsZSBjZXJ0aWZpY2F0ZTEhMB8GCSqGSIb3DQEJARYScHJvc29keUBwcm9zb2R5LmltMB4XDTA4MTEyOTE3MTQyNFoXDTA5MTEyOTE3MTQyNFowgY0xCzAJBgNVBAYTAkdCMRMwEQYDVQQIEwpTb21lLVN0YXRlMRMwEQYDVQQHEwpKYWJiZXJsYW5kMRMwEQYDVQQKEwpQcm9zb2R5IElNMRwwGgYDVQQDExNFeGFtcGxlIGNlcnRpZmljYXRlMSEwHwYJKoZIhvcNAQkBFhJwcm9zb2R5QHByb3NvZHkuaW0wgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALVAPZ/hONuU5P1okNPNfE/bSDj3AsOrRb+Kj4a7MPyRzVCARAm5KvCkPwI3zfDoemp6PpjVk+K8buYTKD+FT3ZxHu8mVHOnnDid/Z3KjxXOh0q1fnzKCCWH49LuhKz7AtAXxvyGvTqTrfquxYVu3U4jxNIVdy//8K0+qPt69aJTAgMBAAGjgfUwgfIwHQYDVR0OBBYEFA7Ehhe9zSpASafg6MXFXjAA5jTcMIHCBgNVHSMEgbowgbeAFA7Ehhe9zSpASafg6MXFXjAA5jTcoYGTpIGQMIGNMQswCQYDVQQGEwJHQjETMBEGA1UECBMKU29tZS1TdGF0ZTETMBEGA1UEBxMKSmFiYmVybGFuZDETMBEGA1UEChMKUHJvc29keSBJTTEcMBoGA1UEAxMTRXhhbXBsZSBjZXJ0aWZpY2F0ZTEhMB8GCSqGSIb3DQEJARYScHJvc29keUBwcm9zb2R5LmltggkA7oJ5lNWt8PAwDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQUFAAOBgQBCYiXpGULtMCsIi/yo3NxdeC7SjgsY8KKxxkB9VynZpC+R6+BMtEloOgl0uvjnGy1cu7l2ddQBN4NxpZjezo9KQjRjJxXSBgMKglXHybsPjB5b61zmCnr/uvjuthRCVuHfcVD0wptoHkb1VDd+lQT1/+QQCm1hlDbgb8NInfxA7A==</override-certificate>
+    <override-domain type="QString"></override-domain>
+   </tls>
+   <custom-auth>
+    <use type="bool">false</use>
+    <authid type="QString"></authid>
+    <realm type="QString"></realm>
+   </custom-auth>
+   <log type="bool">true</log>
+   <stun-password type="QString"></stun-password>
+   <use-host type="bool">false</use-host>
+   <stun-port type="QString">3478</stun-port>
+   <id type="QString">{488396e1-b741-4d85-8bd1-42a2d49e13b2}</id>
+   <security-level type="int">0</security-level>
+   <port type="int">5222</port>
+   <ignore-SSL-warnings type="bool">false</ignore-SSL-warnings>
+   <keep-alive type="bool">true</keep-alive>
+   <connect-after-sleep type="bool">false</connect-after-sleep>
+   <pgp-secret-key-id type="QString"></pgp-secret-key-id>
+   <name type="QString">user01</name>
+   <ssl type="QString">auto</ssl>
+   <reconn type="bool">false</reconn>
+   <proxy-id type="QString"></proxy-id>
+   <bytestreams-proxy type="QString"></bytestreams-proxy>
+   <priority type="int">5</priority>
+   <jid type="QString">user01@localhost</jid>
+   <resource type="QString">Psi</resource>
+   <stun-username type="QString"></stun-username>
+   <password type="QString">000000000000000000000000</password>
+   <compress type="bool">false</compress>
+   <automatic-resource type="bool">true</automatic-resource>
+   <legacy-ssl-probe type="bool">true</legacy-ssl-probe>
+   <require-mutual-auth type="bool">false</require-mutual-auth>
+   <enabled type="bool">true</enabled>
+   <auto type="bool">false</auto>
+   <allow-plain type="QString">over encryped</allow-plain>
+   <stun-host type="QString"></stun-host>
+   <host type="QString"></host>
+  </a0>
+  <a1>
+   <tls>
+    <override-certificate type="QByteArray">MIIDkDCCAvmgAwIBAgIJAO6CeZTVrfDwMA0GCSqGSIb3DQEBBQUAMIGNMQswCQYDVQQGEwJHQjETMBEGA1UECBMKU29tZS1TdGF0ZTETMBEGA1UEBxMKSmFiYmVybGFuZDETMBEGA1UEChMKUHJvc29keSBJTTEcMBoGA1UEAxMTRXhhbXBsZSBjZXJ0aWZpY2F0ZTEhMB8GCSqGSIb3DQEJARYScHJvc29keUBwcm9zb2R5LmltMB4XDTA4MTEyOTE3MTQyNFoXDTA5MTEyOTE3MTQyNFowgY0xCzAJBgNVBAYTAkdCMRMwEQYDVQQIEwpTb21lLVN0YXRlMRMwEQYDVQQHEwpKYWJiZXJsYW5kMRMwEQYDVQQKEwpQcm9zb2R5IElNMRwwGgYDVQQDExNFeGFtcGxlIGNlcnRpZmljYXRlMSEwHwYJKoZIhvcNAQkBFhJwcm9zb2R5QHByb3NvZHkuaW0wgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALVAPZ/hONuU5P1okNPNfE/bSDj3AsOrRb+Kj4a7MPyRzVCARAm5KvCkPwI3zfDoemp6PpjVk+K8buYTKD+FT3ZxHu8mVHOnnDid/Z3KjxXOh0q1fnzKCCWH49LuhKz7AtAXxvyGvTqTrfquxYVu3U4jxNIVdy//8K0+qPt69aJTAgMBAAGjgfUwgfIwHQYDVR0OBBYEFA7Ehhe9zSpASafg6MXFXjAA5jTcMIHCBgNVHSMEgbowgbeAFA7Ehhe9zSpASafg6MXFXjAA5jTcoYGTpIGQMIGNMQswCQYDVQQGEwJHQjETMBEGA1UECBMKU29tZS1TdGF0ZTETMBEGA1UEBxMKSmFiYmVybGFuZDETMBEGA1UEChMKUHJvc29keSBJTTEcMBoGA1UEAxMTRXhhbXBsZSBjZXJ0aWZpY2F0ZTEhMB8GCSqGSIb3DQEJARYScHJvc29keUBwcm9zb2R5LmltggkA7oJ5lNWt8PAwDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQUFAAOBgQBCYiXpGULtMCsIi/yo3NxdeC7SjgsY8KKxxkB9VynZpC+R6+BMtEloOgl0uvjnGy1cu7l2ddQBN4NxpZjezo9KQjRjJxXSBgMKglXHybsPjB5b61zmCnr/uvjuthRCVuHfcVD0wptoHkb1VDd+lQT1/+QQCm1hlDbgb8NInfxA7A==</override-certificate>
+    <override-domain type="QString"></override-domain>
+   </tls>
+   <custom-auth>
+    <use type="bool">false</use>
+    <authid type="QString"></authid>
+    <realm type="QString"></realm>
+   </custom-auth>
+   <log type="bool">true</log>
+   <stun-password type="QString"></stun-password>
+   <use-host type="bool">false</use-host>
+   <stun-port type="QString">3478</stun-port>
+   <id type="QString">{bd7f5271-75f1-43ab-a910-b427fb26db60}</id>
+   <security-level type="int">0</security-level>
+   <port type="int">5222</port>
+   <ignore-SSL-warnings type="bool">false</ignore-SSL-warnings>
+   <keep-alive type="bool">true</keep-alive>
+   <connect-after-sleep type="bool">false</connect-after-sleep>
+   <pgp-secret-key-id type="QString"></pgp-secret-key-id>
+   <name type="QString">user02</name>
+   <ssl type="QString">auto</ssl>
+   <reconn type="bool">false</reconn>
+   <proxy-id type="QString"></proxy-id>
+   <bytestreams-proxy type="QString"></bytestreams-proxy>
+   <priority type="int">5</priority>
+   <jid type="QString">user02@localhost</jid>
+   <resource type="QString">Psi</resource>
+   <stun-username type="QString"></stun-username>
+   <password type="QString">000000000000000000000000</password>
+   <compress type="bool">false</compress>
+   <automatic-resource type="bool">true</automatic-resource>
+   <legacy-ssl-probe type="bool">true</legacy-ssl-probe>
+   <require-mutual-auth type="bool">false</require-mutual-auth>
+   <enabled type="bool">true</enabled>
+   <auto type="bool">false</auto>
+   <allow-plain type="QString">over encryped</allow-plain>
+   <stun-host type="QString"></stun-host>
+   <host type="QString"></host>
+  </a1>
+  <a2>
+   <tls>
+    <override-certificate type="QByteArray">MIIDkDCCAvmgAwIBAgIJAO6CeZTVrfDwMA0GCSqGSIb3DQEBBQUAMIGNMQswCQYDVQQGEwJHQjETMBEGA1UECBMKU29tZS1TdGF0ZTETMBEGA1UEBxMKSmFiYmVybGFuZDETMBEGA1UEChMKUHJvc29keSBJTTEcMBoGA1UEAxMTRXhhbXBsZSBjZXJ0aWZpY2F0ZTEhMB8GCSqGSIb3DQEJARYScHJvc29keUBwcm9zb2R5LmltMB4XDTA4MTEyOTE3MTQyNFoXDTA5MTEyOTE3MTQyNFowgY0xCzAJBgNVBAYTAkdCMRMwEQYDVQQIEwpTb21lLVN0YXRlMRMwEQYDVQQHEwpKYWJiZXJsYW5kMRMwEQYDVQQKEwpQcm9zb2R5IElNMRwwGgYDVQQDExNFeGFtcGxlIGNlcnRpZmljYXRlMSEwHwYJKoZIhvcNAQkBFhJwcm9zb2R5QHByb3NvZHkuaW0wgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALVAPZ/hONuU5P1okNPNfE/bSDj3AsOrRb+Kj4a7MPyRzVCARAm5KvCkPwI3zfDoemp6PpjVk+K8buYTKD+FT3ZxHu8mVHOnnDid/Z3KjxXOh0q1fnzKCCWH49LuhKz7AtAXxvyGvTqTrfquxYVu3U4jxNIVdy//8K0+qPt69aJTAgMBAAGjgfUwgfIwHQYDVR0OBBYEFA7Ehhe9zSpASafg6MXFXjAA5jTcMIHCBgNVHSMEgbowgbeAFA7Ehhe9zSpASafg6MXFXjAA5jTcoYGTpIGQMIGNMQswCQYDVQQGEwJHQjETMBEGA1UECBMKU29tZS1TdGF0ZTETMBEGA1UEBxMKSmFiYmVybGFuZDETMBEGA1UEChMKUHJvc29keSBJTTEcMBoGA1UEAxMTRXhhbXBsZSBjZXJ0aWZpY2F0ZTEhMB8GCSqGSIb3DQEJARYScHJvc29keUBwcm9zb2R5LmltggkA7oJ5lNWt8PAwDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQUFAAOBgQBCYiXpGULtMCsIi/yo3NxdeC7SjgsY8KKxxkB9VynZpC+R6+BMtEloOgl0uvjnGy1cu7l2ddQBN4NxpZjezo9KQjRjJxXSBgMKglXHybsPjB5b61zmCnr/uvjuthRCVuHfcVD0wptoHkb1VDd+lQT1/+QQCm1hlDbgb8NInfxA7A==</override-certificate>
+    <override-domain type="QString"></override-domain>
+   </tls>
+   <custom-auth>
+    <use type="bool">false</use>
+    <authid type="QString"></authid>
+    <realm type="QString"></realm>
+   </custom-auth>
+   <log type="bool">true</log>
+   <stun-password type="QString"></stun-password>
+   <use-host type="bool">false</use-host>
+   <stun-port type="QString">3478</stun-port>
+   <id type="QString">{a11661f7-ba67-43b9-9b32-46f3d5bb748d}</id>
+   <security-level type="int">0</security-level>
+   <port type="int">5222</port>
+   <ignore-SSL-warnings type="bool">false</ignore-SSL-warnings>
+   <keep-alive type="bool">true</keep-alive>
+   <connect-after-sleep type="bool">false</connect-after-sleep>
+   <pgp-secret-key-id type="QString"></pgp-secret-key-id>
+   <name type="QString">user03</name>
+   <ssl type="QString">auto</ssl>
+   <reconn type="bool">false</reconn>
+   <proxy-id type="QString"></proxy-id>
+   <bytestreams-proxy type="QString"></bytestreams-proxy>
+   <priority type="int">5</priority>
+   <jid type="QString">user03@localhost</jid>
+   <resource type="QString">Psi</resource>
+   <stun-username type="QString"></stun-username>
+   <password type="QString">000000000000000000000000</password>
+   <compress type="bool">false</compress>
+   <automatic-resource type="bool">true</automatic-resource>
+   <legacy-ssl-probe type="bool">true</legacy-ssl-probe>
+   <require-mutual-auth type="bool">false</require-mutual-auth>
+   <enabled type="bool">true</enabled>
+   <auto type="bool">false</auto>
+   <allow-plain type="QString">over encryped</allow-plain>
+   <stun-host type="QString"></stun-host>
+   <host type="QString"></host>
+  </a2>
+ </accounts>
+</accounts>
