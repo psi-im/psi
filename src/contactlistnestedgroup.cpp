@@ -41,7 +41,7 @@ void ContactListNestedGroup::clearGroup()
 {
 	quietSetName(QString());
 	foreach(ContactListGroup* group, groups_) {
-// qWarning("~ContactListNextedGroup(%x): %s", this, qPrintable(group->fullName()));
+CL_DEBUG("~ContactListNextedGroup(%x): %s", this, qPrintable(group->fullName()));
 		removeItem(ContactListGroup::findGroup(group));
 	}
 	qDeleteAll(groups_);
@@ -82,7 +82,7 @@ void ContactListNestedGroup::addContact(PsiContact* contact, QStringList contact
 			if (!group) {
 				group = new ContactListNestedGroup(model(), this, nestedGroups.first());
 				addGroup(group);
-// qWarning("ContactListNextedGroup(%x)::addContact: %s", this, qPrintable(group->fullName()));
+CL_DEBUG("ContactListNextedGroup(%x)::addContact: %s", this, qPrintable(group->fullName()));
 			}
 
 			QStringList moreGroups;
@@ -196,7 +196,7 @@ void ContactListNestedGroup::contactGroupsChanged(PsiContact* contact, QStringLi
 
 	// remove empty groups afterwards
 	foreach(ContactListGroup* group, emptyGroups) {
-// qWarning("ContactListNextedGroup(%x)::contactGroupsChanged: removing empty group: %s", this, qPrintable(group->fullName()));
+CL_DEBUG("ContactListNextedGroup(%x)::contactGroupsChanged: removing empty group: %s", this, qPrintable(group->fullName()));
 		removeItem(ContactListGroup::findGroup(group));
 		groups_.remove(groups_.indexOf(group));
 		delete group;
@@ -247,7 +247,7 @@ void ContactListNestedGroup::contactGroupsChanged(PsiContact* contact, QStringLi
 	foreach(ContactListGroup* child, groups_) {
 		child->contactGroupsChanged(contact, newNestedGroups);
 		if (!child->itemsCount()) {
-// qWarning("ContactListNextedGroup(%x)::contactGroupsChanged: removing empty group2: %s", this, qPrintable(child->fullName()));
+CL_DEBUG("ContactListNextedGroup(%x)::contactGroupsChanged: removing empty group2: %s", this, qPrintable(child->fullName()));
 			removeItem(ContactListGroup::findGroup(child));
 			groups_.removeAll(groups_.indexOf(child));
 			delete group;

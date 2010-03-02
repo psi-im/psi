@@ -383,13 +383,15 @@ bool ContactListDragModel::dropMimeData(const QMimeData* data, Qt::DropAction ac
 	if (selection.isMultiSelection())
 		operations.removeAccidentalContactMoveOperations();
 
-	// qWarning("*** dropMimeData: New operation list: ***");
-	// foreach(ContactListModelOperationList::ContactOperation contactOperation, operations.operations()) {
-	// 	QStringList groups;
-	// 	foreach(ContactListModelOperationList::Operation op, contactOperation.operations)
-	// 		groups += QString("'%1' -> '%2'").arg(op.groupFrom, op.groupTo);
-	// 	qWarning("\t'%s' (%s)", qPrintable(contactOperation.contact->jid().full()), qPrintable(groups.join(";")));
-	// }
+#ifdef ENABLE_CL_DEBUG
+	qWarning("*** dropMimeData: New operation list: ***");
+	foreach(ContactListModelOperationList::ContactOperation contactOperation, operations.operations()) {
+		QStringList groups;
+		foreach(ContactListModelOperationList::Operation op, contactOperation.operations)
+			groups += QString("'%1' -> '%2'").arg(op.groupFrom, op.groupTo);
+		qWarning("\t'%s' (%s)", qPrintable(contactOperation.contact->jid().full()), qPrintable(groups.join(";")));
+	}
+#endif
 
 	performContactOperations(operations, Operation_DragNDrop);
 
@@ -612,13 +614,15 @@ ContactListModelOperationList ContactListDragModel::removeOperationsFor(const QM
 		addOperationsForGroupRename(processContactSetGroupName(group.fullName), QString(), &operations);
 	}
 
-	// qWarning("*** removeOperationsFor: New operation list: ***");
-	// foreach(ContactListModelOperationList::ContactOperation contactOperation, operations.operations()) {
-	// 	QStringList groups;
-	// 	foreach(ContactListModelOperationList::Operation op, contactOperation.operations)
-	// 		groups += QString("'%1' -> '%2'").arg(op.groupFrom, op.groupTo);
-	// 	qWarning("\t'%s' (%s)", qPrintable(contactOperation.contact->jid().full()), qPrintable(groups.join(";")));
-	// }
+#ifdef ENABLE_CL_DEBUG
+	qWarning("*** removeOperationsFor: New operation list: ***");
+	foreach(ContactListModelOperationList::ContactOperation contactOperation, operations.operations()) {
+		QStringList groups;
+		foreach(ContactListModelOperationList::Operation op, contactOperation.operations)
+			groups += QString("'%1' -> '%2'").arg(op.groupFrom, op.groupTo);
+		qWarning("\t'%s' (%s)", qPrintable(contactOperation.contact->jid().full()), qPrintable(groups.join(";")));
+	}
+#endif
 
 	return operations;
 }
