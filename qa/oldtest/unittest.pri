@@ -44,6 +44,17 @@ unix {
 	mac {
 		gdb.commands += $$PWD/mac_qt_debug.rb false $$EXEC_TARGET;
 	}
+
+	# gdb target
+	QMAKE_EXTRA_TARGETS += gdb_qa
+	gdb_qa.depends = $$EXEC_TARGET
+	mac {
+		gdb_qa.commands += $$PWD/mac_qt_debug.rb true $$EXEC_TARGET;
+	}
+	gdb_qa.commands += PSIDATADIR=$$PWD/../integration/psi-data/ gdb ./$$EXEC_TARGET;
+	mac {
+		gdb_qa.commands += $$PWD/mac_qt_debug.rb false $$EXEC_TARGET;
+	}
 }
 
 mac {

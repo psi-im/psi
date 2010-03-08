@@ -239,7 +239,8 @@ QModelIndexList ContactListDragModel::indexesFor(const QMimeData* data) const
 
 	foreach(ContactListModelSelection::Account account, selection.accounts()) {
 		PsiAccount* acc = contactList()->getAccount(account.id);
-		Q_ASSERT(acc);
+		if (!acc)
+			continue;
 		ContactListAccountGroup* rootGroup = dynamic_cast<ContactListAccountGroup*>(this->rootGroup());
 		Q_ASSERT(rootGroup);
 		ContactListGroup* accountGroup = rootGroup->findAccount(acc);
