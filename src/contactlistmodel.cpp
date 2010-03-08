@@ -440,7 +440,7 @@ QVariant ContactListModel::accountData(const ContactListAccountGroup* account, i
 		return QVariant(account->account()->status().type());
 	}
 	else if (role == OnlineContactsRole) {
-		return QVariant(account->onlineContactsCount());
+		return QVariant(account->account()->onlineContactsCount());
 	}
 	else if (role == TotalContactsRole) {
 		return QVariant(account->account()->contactList().count());

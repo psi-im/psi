@@ -52,8 +52,8 @@ public:
 
 	bool isFake() const;
 	bool haveOnlineContacts() const;
-	int onlineContactsCount() const;
-	int totalContactsCount() const;
+	virtual int onlineContactsCount() const;
+	virtual int totalContactsCount() const;
 	int contactsCount() const;
 
 	QList<PsiContact*> contacts() const;

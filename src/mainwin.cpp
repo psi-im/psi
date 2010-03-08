@@ -333,6 +333,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 #endif
 
 	d->contactListView_ = new PsiContactListView(center);
+	d->contactListView_->setObjectName("contactListView");
 	d->contactListView_->setModel(contactListProxyModel);
 	connect(d->contactListView_, SIGNAL(removeSelection(QMimeData*)), SLOT(removeSelection(QMimeData*)));
 	connect(d->contactListView_, SIGNAL(removeGroupWithoutContacts(QMimeData*)), SLOT(removeGroupWithoutContacts(QMimeData*)));

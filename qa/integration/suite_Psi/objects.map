@@ -14,7 +14,7 @@
 :Psi: Remove Account_AccountRemoveDlg	{name='AccountRemove' type='AccountRemoveDlg' visible='1' windowTitle='Psi: Remove Account'}
 :Psi_MainWin	{type='MainWin' visible='1' windowTitle='Psi'}
 :Psi_PsiApplication	{name='Psi' type='PsiApplication'}
-:Psi_PsiContactListView	{type='PsiContactListView' unnamed='1' visible='1' window=':Psi_MainWin'}
+:Psi_PsiContactListView	{type='PsiContactListView' window=':Psi_MainWin' name='contactListView'}
 :Psi_QMenuBar	{type='QMenuBar' window=':Psi_MainWin'}
 :Status_StatusMenu	{title='Status' type='StatusMenu' unnamed='1' visible='1'}
 :Trust this certificate_QPushButton	{text='Trust this certificate' type='QPushButton' unnamed='1' visible='1' window=':_QMessageBox'}

@@ -576,9 +576,7 @@ public:
 
 		if (newOnlineContactsCount != onlineContactsCount) {
 			onlineContactsCount = newOnlineContactsCount;
-
-			// FIXME
-			// account->updateData();
+			emit account->updatedAccount();
 		}
 	}
 
@@ -675,8 +673,8 @@ public slots:
 		eventQueue->setEnabled(e);
 
 		// signals
-		account->enabledChanged();
-		account->updatedAccount();
+		emit account->enabledChanged();
+		emit account->updatedAccount();
 	}
 
 	void client_xmlIncoming(const QString &s)
@@ -1493,7 +1491,7 @@ void PsiAccount::setUserAccount(const UserAccount &_acc)
 		d->updateAvCallSettings(d->acc);
 
 	cpUpdate(d->self);
-	updatedAccount();
+	emit updatedAccount();
 }
 
 void PsiAccount::deleteQueueFile()
@@ -1739,7 +1737,7 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
 			d->stream->setUsername(d->acc.authid);
 		else
 			d->stream->setUsername(d->jid.node());
-    }
+	}
 	else if (d->acc.customAuth && !d->acc.authid.isEmpty())
 		qWarning("Custom authentication user not used");
 
