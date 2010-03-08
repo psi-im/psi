@@ -88,6 +88,7 @@ void AccountAddDlg::add()
 	QString aname = createNewAccountName(le_name->text());
 	le_name->setText( aname );
 
+	PsiAccount* newAccount = 0;
 	if(ck_reg->isChecked()) {
 		AccountRegDlg *w = new AccountRegDlg(psi->proxy(), this);
 		int n = w->exec();
@@ -109,13 +110,16 @@ void AccountAddDlg::add()
 
 		delete w;
 
-		psi->createAccount(le_name->text(), jid, pass, opt_host, host, port, legacy_ssl_probe, ssl, proxy, tlsOverrideDomain, tlsOverrideCert);
+		newAccount = psi->createAccount(le_name->text(), jid, pass, opt_host, host, port, legacy_ssl_probe, ssl, proxy, tlsOverrideDomain, tlsOverrideCert);
 	}
 	else {
-		psi->createAccount(le_name->text());
+		newAccount = psi->createAccount(le_name->text());
 	}
 
 	close();
+	if (newAccount) {
+		newAccount->modify();
+	}
 }
 
 void AccountAddDlg::setAddButton(const QString &s)

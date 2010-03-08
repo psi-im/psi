@@ -1,3 +1,24 @@
-:Psi_MainWin	{type='MainWin' unnamed='1' visible='1' windowTitle='Psi'}
+:Account.le_jid_QLineEdit	{container=':tab_account.Account_QGroupBox' name='le_jid' type='QLineEdit' visible='1'}
+:Account.le_pass_QLineEdit	{container=':tab_account.Account_QGroupBox' name='le_pass' type='QLineEdit' visible='1'}
+:Psi.General_QMenu	{name='mainMenu' title='General' type='QMenu' visible='1' window=':Psi_MainWin'}
+:Psi.Status_QMenu	{name='statusMenu' type='QMenu' window=':Psi_MainWin'}
+:Psi: Account Properties.qt_tabwidget_stackedwidget_QStackedWidget	{name='qt_tabwidget_stackedwidget' type='QStackedWidget' visible='1' window=':Psi: Account Properties_AccountModifyDlg'}
+:Psi: Account Properties_AccountModifyDlg	{name='AccountModify' type='AccountModifyDlg' visible='1' windowTitle='Psi: Account Properties'}
+:Psi: Add Account.le_name_QLineEdit	{name='le_name' type='QLineEdit' visible='1' window=':Psi: Add Account_AccountAddDlg'}
+:Psi: Add Account_AccountAddDlg	{name='AccountAdd' type='AccountAddDlg' visible='1' windowTitle='Psi: Add Account'}
+:Psi: Jabber Accounts.Add_IconButton	{name='pb_add' text='Add' type='IconButton' visible='1' window=':Psi: Jabber Accounts_AccountManageDlg'}
+:Psi: Jabber Accounts.Remove_IconButton	{name='pb_remove' text='Remove' type='IconButton' visible='1' window=':Psi: Jabber Accounts_AccountManageDlg'}
+:Psi: Jabber Accounts.lv_accs_QTreeWidget	{name='lv_accs' type='QTreeWidget' visible='1' window=':Psi: Jabber Accounts_AccountManageDlg'}
+:Psi: Jabber Accounts_AccountManageDlg	{name='AccountManage' type='AccountManageDlg' visible='1' windowTitle='Psi: Jabber Accounts'}
+:Psi: Remove Account.Remove_QPushButton	{text='Remove' type='QPushButton' unnamed='1' visible='1' window=':Psi: Remove Account_AccountRemoveDlg'}
+:Psi: Remove Account_AccountRemoveDlg	{name='AccountRemove' type='AccountRemoveDlg' visible='1' windowTitle='Psi: Remove Account'}
+:Psi_MainWin	{type='MainWin' visible='1' windowTitle='Psi'}
 :Psi_PsiApplication	{name='Psi' type='PsiApplication'}
 :Psi_PsiContactListView	{type='PsiContactListView' unnamed='1' visible='1' window=':Psi_MainWin'}
+:Psi_QMenuBar	{type='QMenuBar' window=':Psi_MainWin'}
+:Status_StatusMenu	{title='Status' type='StatusMenu' unnamed='1' visible='1'}
+:Trust this certificate_QPushButton	{text='Trust this certificate' type='QPushButton' unnamed='1' visible='1' window=':_QMessageBox'}
+:_ContactListAccountMenu	{type='ContactListAccountMenu' unnamed='1' visible='1'}
+:_QMessageBox	{type='QMessageBox' unnamed='1' visible='1'}
+:qt_tabwidget_stackedwidget.tab_account_QWidget	{container=':Psi: Account Properties.qt_tabwidget_stackedwidget_QStackedWidget' name='tab_account' type='QWidget' visible='1'}
+:tab_account.Account_QGroupBox	{container=':qt_tabwidget_stackedwidget.tab_account_QWidget' name='gb_account' title='Account' type='QGroupBox' visible='1'}

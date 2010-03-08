@@ -141,6 +141,7 @@ public:
 
 	int lastStatus;
 	bool filterActive, prefilterShowOffline, prefilterShowAway;
+	bool squishEnabled;
 
 #ifdef NEWCONTACTLIST
 	PsiContactListView* contactListView_;
@@ -167,6 +168,9 @@ MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) : psi(_psi), mainWin(
 	filterActive = false;
 	prefilterShowOffline = false;
 	prefilterShowAway = false;  
+
+	char* squishStr = getenv("SQUISH_ENABLED");
+	squishEnabled = squishStr != 0;
 }
 
 MainWin::Private::~Private()
@@ -273,6 +277,7 @@ void MainWin::Private::updateMenu(QStringList actions, QMenu* menu)
 MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 :AdvancedWidget<QMainWindow>(0, (_onTop ? Qt::WindowStaysOnTopHint : Qt::Widget) | (_asTool ? (Qt::Tool |TOOLW_FLAGS) : Qt::Widget))
 {
+	setObjectName("MainWin");
 	setAttribute(Qt::WA_AlwaysShowToolTips);
 	d = new Private(psi, this);
 
@@ -377,7 +382,9 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 #endif
 
 	d->statusMenu = new QMenu(tr("Status"), this);
+	d->statusMenu->setObjectName("statusMenu");
 	d->optionsMenu = new QMenu(tr("General"), this);
+	d->optionsMenu->setObjectName("optionsMenu");
 #ifdef Q_WS_MAC
 	d->trayMenu = d->statusMenu;
 #else
@@ -409,6 +416,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 	// Mac-only menus
 #ifdef Q_WS_MAC
 	QMenu* mainMenu = new QMenu(tr("Menu"), this);
+	mainMenu->setObjectName("macMainMenu");
 	mainMenuBar()->addMenu(mainMenu);
 	d->getAction("menu_options")->addTo(mainMenu);
 	d->getAction("menu_quit")->addTo(mainMenu);
@@ -416,6 +424,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 	d->getAction("help_about_qt")->addTo(mainMenu);
 
 	d->mainMenu = new QMenu(tr("General"), this);
+	d->mainMenu->setObjectName("mainMenu");
 	mainMenuBar()->addMenu(d->mainMenu);
 	connect(d->mainMenu, SIGNAL(aboutToShow()), SLOT(buildMainMenu()));
 #else
@@ -718,10 +727,11 @@ void MainWin::activatedStatusAction(int id)
 QMenuBar* MainWin::mainMenuBar() const
 {
 #ifdef Q_WS_MAC
-	return psiCon()->defaultMenuBar();
-#else
-	return menuBar();
+	if (!d->squishEnabled) {
+		return psiCon()->defaultMenuBar();
+	}
 #endif
+	return menuBar();
 }
 
 const QString toolbarsStateOptionPath = "options.ui.contactlist.toolbars-state";
