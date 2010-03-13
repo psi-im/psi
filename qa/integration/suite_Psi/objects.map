@@ -1,3 +1,4 @@
+:* Psi.<b>1 event received</b>_MLabel	{name='EventNotifierAction::MLabel' text='<b>1 event received</b>' type='MLabel' visible='1' window=':* Psi_MainWin'}
 :* Psi.contactListView_PsiContactListView	{name='contactListView' type='PsiContactListView' visible='1' window=':* Psi_MainWin'}
 :* Psi_MainWin	{name='MainWin' type='MainWin' visible='1' windowTitle='* Psi'}
 :Account.le_jid_QLineEdit	{container=':tab_account.Account_QGroupBox' name='le_jid' type='QLineEdit' visible='1'}
@@ -15,7 +16,11 @@
 :Psi: Account Properties_AccountModifyDlg	{name='AccountModify' type='AccountModifyDlg' visible='1' windowTitle='Psi: Account Properties'}
 :Psi: Add Account.le_name_QLineEdit	{name='le_name' type='QLineEdit' visible='1' window=':Psi: Add Account_AccountAddDlg'}
 :Psi: Add Account_AccountAddDlg	{name='AccountAdd' type='AccountAddDlg' visible='1' windowTitle='Psi: Add Account'}
+:Psi: Add Contact.Add_IconButton	{name='pb_add' text='Add' type='IconButton' visible='1' window=':Psi: Add Contact_AddUserDlg'}
+:Psi: Add Contact.Request authorization when adding_QCheckBox	{name='ck_authreq' text='Request authorization when adding' type='QCheckBox' visible='1' window=':Psi: Add Contact_AddUserDlg'}
+:Psi: Add Contact.cb_group_QComboBox	{name='cb_group' type='QComboBox' visible='1' window=':Psi: Add Contact_AddUserDlg'}
 :Psi: Add Contact.le_jid_QLineEdit	{name='le_jid' type='QLineEdit' visible='1' window=':Psi: Add Contact_AddUserDlg'}
+:Psi: Add Contact.le_nick_QLineEdit	{name='le_nick' type='QLineEdit' visible='1' window=':Psi: Add Contact_AddUserDlg'}
 :Psi: Add Contact_AddUserDlg	{name='AddUser' type='AddUserDlg' visible='1' windowTitle='Psi: Add Contact'}
 :Psi: Jabber Accounts.Add_IconButton	{name='pb_add' text='Add' type='IconButton' visible='1' window=':Psi: Jabber Accounts_AccountManageDlg'}
 :Psi: Jabber Accounts.Close_QPushButton	{text='Close' type='QPushButton' unnamed='1' visible='1' window=':Psi: Jabber Accounts_AccountManageDlg'}
@@ -32,14 +37,20 @@
 :Trust this certificate_QPushButton	{text='Trust this certificate' type='QPushButton' unnamed='1' visible='1' window=':_QMessageBox'}
 :Yes_QPushButton	{text='Yes' type='QPushButton' unnamed='1' visible='1' window=':_QMessageBox_2'}
 :_ContactListAccountMenu	{type='ContactListAccountMenu' unnamed='1' visible='1'}
+:_ContactListGroupMenu	{type='ContactListGroupMenu' unnamed='1' visible='1'}
 :_PsiContactMenu	{type='PsiContactMenu' unnamed='1' visible='1'}
 :_QMessageBox	{type='QMessageBox' visible='1'}
 :_QMessageBox_2	{type='QMessageBox' unnamed='1' visible='1'}
 :_RemoveConfirmationMessageBox	{type='RemoveConfirmationMessageBox' unnamed='1' visible='1'}
 :bottomFrame_LineEdit	{container=':user01.bottomFrame_QFrame' type='LineEdit' unnamed='1' visible='1'}
+:cb_group_QLineEdit	{parentWidget=':Psi: Add Contact.cb_group_QComboBox' type='QLineEdit' unnamed='1' visible='1'}
 :le_name.OK_QPushButton	{text='OK' type='QPushButton' unnamed='1' visible='1' window=':le_name_QMessageBox'}
 :le_name_QMessageBox	{aboveWidget=':Psi: Account Properties.le_name_QLineEdit' type='QMessageBox' unnamed='1' visible='1'}
 :qt_tabwidget_stackedwidget.tab_account_QWidget	{container=':Psi: Account Properties.qt_tabwidget_stackedwidget_QStackedWidget' name='tab_account' type='QWidget' visible='1'}
 :tab_account.Account_QGroupBox	{container=':qt_tabwidget_stackedwidget.tab_account_QWidget' name='gb_account' title='Account' type='QGroupBox' visible='1'}
+:user-66.Add/Auth_IconButton	{text='Add/Auth' type='IconButton' unnamed='1' visible='1' window=':user-66_EventDlg'}
+:user-66_EventDlg	{type='EventDlg' unnamed='1' visible='1' windowTitle='user-66'}
 :user01.bottomFrame_QFrame	{name='bottomFrame' type='QFrame' visible='1' window=':user01_PsiChatDlg'}
 :user01_PsiChatDlg	{name='ChatDlg' type='PsiChatDlg' visible='1' windowTitle='user01'}
+:user02@localhost.Add/Auth_IconButton	{text='Add/Auth' type='IconButton' unnamed='1' visible='1' window=':user02@localhost_EventDlg'}
+:user02@localhost_EventDlg	{type='EventDlg' unnamed='1' visible='1' windowTitle='user02@localhost'}

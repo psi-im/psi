@@ -93,16 +93,40 @@ function tst_account_contact_counter()
 
 function add_contact(account_name, contact_jid)
 {
-    waitForObject(":Psi_PsiContactListView");
-    openItemContextMenu(":Psi_PsiContactListView", account_name, 155, 13, 2);
+    add_contact_to_group(account_name, contact_jid, '', '', true);
+}
+
+function add_contact_to_group(account_name, contact_jid, contact_name, group_name, request_auth)
+{
+    waitForObjectItem(":Psi_PsiContactListView", account_name);
+    openItemContextMenu(":Psi_PsiContactListView", account_name, 102, 6, 2);
+
     waitForObjectItem(":_ContactListAccountMenu", "Add a Contact");
     activateItem(":_ContactListAccountMenu", "Add a Contact");
     waitForObject(":Psi: Add Contact.le_jid_QLineEdit");
     type(":Psi: Add Contact.le_jid_QLineEdit", contact_jid);
     waitForObject(":Psi: Add Contact.le_jid_QLineEdit");
-    type(":Psi: Add Contact.le_jid_QLineEdit", "<Enter>");
+    type(":Psi: Add Contact.le_jid_QLineEdit", "<Tab>");
+    if (contact_name.length) {
+        waitForObject(":Psi: Add Contact.le_nick_QLineEdit");
+        type(":Psi: Add Contact.le_nick_QLineEdit", contact_name);
+    }
+    waitForObject(":Psi: Add Contact.le_nick_QLineEdit");
+    type(":Psi: Add Contact.le_nick_QLineEdit", "<Tab>");
+    if (group_name.length) {
+        waitForObject(":Psi: Add Contact.cb_group_QComboBox");
+        type(":Psi: Add Contact.cb_group_QComboBox", group_name);
+    }
+    waitForObject(":Psi: Add Contact.cb_group_QComboBox");
+    type(":Psi: Add Contact.cb_group_QComboBox", "<Tab>");
+    if (!request_auth) {
+        waitForObject(":Psi: Add Contact.Request authorization when adding_QCheckBox");
+        type(":Psi: Add Contact.Request authorization when adding_QCheckBox", " ");
+    }
+    waitForObject(":Psi: Add Contact.Request authorization when adding_QCheckBox");
+    type(":Psi: Add Contact.Request authorization when adding_QCheckBox", "<Return>");
     waitForObject(":OK_QPushButton");
-    type(":OK_QPushButton", "<Enter>");
+    type(":OK_QPushButton", "<Return>");
 }
 
 function remove_contact(contact_list_item)
@@ -114,6 +138,30 @@ function remove_contact(contact_list_item)
     waitForObject(":Delete_QPushButton");
     type(":Delete_QPushButton", "<Return>");
     // FIXME: ensure that the item actually disappeared
+}
+
+function remove_group(contact_list_item)
+{
+    waitForObjectItem(":Psi_PsiContactListView", contact_list_item);
+    openItemContextMenu(":Psi_PsiContactListView", contact_list_item, 102, 6, 2);
+    waitForObjectItem(":_ContactListGroupMenu", "Remove Group");
+    activateItem(":_ContactListGroupMenu", "Remove Group");
+    waitForObject(":_QMessageBox_2");
+    sendEvent("QMoveEvent", ":_QMessageBox_2", 0, 323, 253, 250);
+    waitForObject(":Yes_QPushButton");
+    type(":Yes_QPushButton", "<Enter>");
+    // FIXME: ensure that the group was actually deleted
+}
+
+function remove_group_and_contacts(contact_list_item)
+{
+    waitForObjectItem(":Psi_PsiContactListView", contact_list_item);
+    openItemContextMenu(":Psi_PsiContactListView", contact_list_item, 102, 6, 2);
+    waitForObjectItem(":_ContactListGroupMenu", "Remove Group and Contacts");
+    activateItem(":_ContactListGroupMenu", "Remove Group and Contacts");
+    waitForObject(":Delete_QPushButton");
+    type(":Delete_QPushButton", "<Return>");
+    // FIXME: ensure that the group was actually deleted
 }
 
 function send_chat_message(contact_list_item, message)
@@ -137,6 +185,19 @@ function tst_remove_not_in_list()
 {
     send_chat_message("user-66.General.user01", "hi");
     remove_contact("user01.Not in List.user-66");
+
+    send_chat_message("user-66.General.user01", "hi");
+    remove_group_and_contacts("user01.Not in List");
+}
+
+function tst_remove_groups()
+{
+    add_contact_to_group('user-66', 'user02@localhost', 'user02', 'Test', false);
+    remove_group('user-66.Test');
+    remove_contact("user-66.General.user02");
+
+    add_contact_to_group('user-66', 'user02@localhost', 'user02', 'Test', false);
+    remove_contact("user-66.Test.user02");
 }
 
 function tst_remove_items()
@@ -148,6 +209,7 @@ function tst_remove_items()
 
     tst_remove_transport();
     tst_remove_not_in_list();
+    tst_remove_groups();
 
     set_global_status("Offline");
     snooze(1.0);

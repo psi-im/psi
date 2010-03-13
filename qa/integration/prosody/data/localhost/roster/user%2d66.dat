@@ -1,0 +1,11 @@
+return {
+	[false] = {
+		["version"] = 21,
+	},
+	["user01@localhost"] = {
+		["subscription"] = "none",
+		["groups"] = {
+		},
+		["name"] = "user01",
+	},
+}

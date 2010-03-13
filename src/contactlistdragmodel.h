@@ -114,8 +114,7 @@ protected:
 
 	QString processContactSetGroupName(const QString& groupName) const;
 	QStringList processContactSetGroupNames(const QStringList& groups) const;
-	bool isSpecialGroup(const QString& groupName) const;
-	QStringList removeOperationsForSpecialGroupContact(const QString& groupName, PsiContact* contact) const;
+	QStringList removeOperationsForContactGroup(const QString& groupName, PsiContact* contact) const;
 
 private:
 	QList<PsiContact*> removeIndexesHelper(const QMimeData* data, bool performRemove);

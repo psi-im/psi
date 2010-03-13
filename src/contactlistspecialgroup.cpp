@@ -104,7 +104,8 @@ bool ContactListSpecialGroup::isEditable() const
 
 bool ContactListSpecialGroup::isRemovable() const
 {
-	return false;
+	return specialType_ == SpecialType_NotInList ||
+	       specialType_ == SpecialType_MUCPrivateChats;
 }
 
 void ContactListSpecialGroup::addContact(PsiContact* contact, QStringList contactGroups)

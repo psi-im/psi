@@ -336,7 +336,9 @@ void ContactListDragModel::addOperationsForGroupRename(const QString& currentGro
 			PsiContact* contact = 0;
 			ContactListGroup* childGroup = 0;
 			if ((contact = dynamic_cast<PsiContact*>(itemProxy->item()))) {
-				operations->addOperation(contact, currentGroupName, newGroupName);
+				foreach(const QString& g, removeOperationsForContactGroup(currentGroupName, contact)) {
+					operations->addOperation(contact, g, QString());
+				}
 			}
 			else if ((childGroup = dynamic_cast<ContactListGroup*>(itemProxy->item()))) {
 				QString theName = childGroup->fullName().split(ContactListGroup::groupDelimiter()).last();
@@ -437,22 +439,6 @@ QStringList ContactListDragModel::processContactSetGroupNames(const QStringList&
 		result << processContactSetGroupName(g);
 	}
 	return result;
-}
-
-bool ContactListDragModel::isSpecialGroup(const QString& groupName) const
-{
-	ContactListGroup* contactGroup = groupCache()->findGroup(groupName);
-	return contactGroup && contactGroup->isSpecial();
-}
-
-QStringList ContactListDragModel::removeOperationsForSpecialGroupContact(const QString& groupName, PsiContact* contact) const
-{
-	ContactListGroup* contactGroup = groupCache()->findGroup(groupName);
-	ContactListSpecialGroup* specialGroup = contactGroup ? dynamic_cast<ContactListSpecialGroup*>(contactGroup) : 0;
-	if (specialGroup) {
-		return specialGroup->removeOperationsForSpecialGroupContact(contact);
-	}
-	return QStringList();
 }
 
 void ContactListDragModel::performContactOperations(const ContactListModelOperationList& operations, OperationType operationType)
@@ -615,6 +601,16 @@ QString ContactListDragModel::getDropGroupName(const QModelIndex& parent) const
 	return QString();
 }
 
+QStringList ContactListDragModel::removeOperationsForContactGroup(const QString& groupName, PsiContact* contact) const
+{
+	ContactListGroup* contactGroup = groupCache()->findGroup(groupName);
+	ContactListSpecialGroup* specialGroup = contactGroup ? dynamic_cast<ContactListSpecialGroup*>(contactGroup) : 0;
+	if (specialGroup) {
+		return specialGroup->removeOperationsForSpecialGroupContact(contact);
+	}
+	return QStringList() << processContactSetGroupName(groupName);
+}
+
 ContactListModelOperationList ContactListDragModel::removeOperationsFor(const QMimeData* data) const
 {
 	ContactListModelOperationList operations(ContactListModelOperationList::Remove);
@@ -627,23 +623,13 @@ ContactListModelOperationList ContactListDragModel::removeOperationsFor(const QM
 		PsiAccount* account = contactList()->getAccount(contact.account);
 		PsiContact* psiContact = account ? account->findContact(contact.jid) : 0;
 
-		QStringList groups;
-		if (isSpecialGroup(contact.group)) {
-			groups = removeOperationsForSpecialGroupContact(contact.group, psiContact);
-		}
-		else {
-			groups << processContactSetGroupName(contact.group);
-		}
-
-		foreach(const QString& g, groups) {
-			operations.addOperation(psiContact,
-			                        g,
-			                        QString());
+		foreach(const QString& g, removeOperationsForContactGroup(contact.group, psiContact)) {
+			operations.addOperation(psiContact, g, QString());
 		}
 	}
 
 	foreach(ContactListModelSelection::Group group, selection.groups()) {
-		addOperationsForGroupRename(processContactSetGroupName(group.fullName), QString(), &operations);
+		addOperationsForGroupRename(group.fullName, QString(), &operations);
 	}
 
 #ifdef ENABLE_CL_DEBUG
