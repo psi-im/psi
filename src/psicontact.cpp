@@ -61,8 +61,8 @@ public:
 	Private(PsiContact* contact)
 		: account_(0)
 		, statusTimer_(0)
-		, contact_(contact)
 		, isValid_(true)
+		, contact_(contact)
 #ifdef YAPSI
 		, gender_(XMPP::VCard::UnknownGender)
 		, genderCached_(false)
@@ -351,15 +351,6 @@ bool PsiContact::isEditable() const
 {
 	if (!account())
 		return false;
-#ifdef YAPSI_ACTIVEX_SERVER
-	if (account()->psi() &&
-	    account()->psi()->contactList() &&
-	    account()->psi()->contactList()->onlineAccount() &&
-	    !account()->psi()->contactList()->onlineAccount()->isAvailable())
-	{
-		return false;
-	}
-#endif
 	return account()->isAvailable() && inList();
 }
 
@@ -405,17 +396,10 @@ QStringList PsiContact::groups() const
 	if (!account())
 		return result;
 
-	// if (d->u_.isPrivate()) {
-	// 	result << tr("Private messages");
-	// 	return result;
-	// }
-
-	// if (!d->u_.inList()) {
-	// 	result << notInListGroupName();
-	// 	return result;
-	// }
-
-	if (d->u_.groups().isEmpty()) {
+	if (!inList()) {
+		result << QString();
+	}
+	else if (d->u_.groups().isEmpty()) {
 		// empty group name means that the contact should be added
 		// to the 'General' group or no group at all
 #ifdef USE_GENERAL_CONTACT_GROUP
@@ -481,16 +465,10 @@ bool PsiContact::isRemovable() const
 		if (!groupOperationPermitted(group, QString()))
 			return false;
 	}
-#ifdef YAPSI_ACTIVEX_SERVER
-	if (account()->psi() &&
-	    account()->psi()->contactList() &&
-	    account()->psi()->contactList()->onlineAccount() &&
-	    !account()->psi()->contactList()->onlineAccount()->isAvailable())
-	{
-		return false;
+	if (!inList()) {
+		return true;
 	}
-#endif
-	return true;
+	return account()->isAvailable();
 }
 
 /**
@@ -800,11 +778,12 @@ void PsiContact::addRemoveAuthBlockAvailable(bool* addButton, bool* deleteButton
 	*authButton   = false;
 	*blockButton  = false;
 
+	*deleteButton = isRemovable();
+
 	if (account() && account()->isAvailable() && !userListItem().isSelf()) {
 		UserListItem* u = account()->findFirstRelevant(jid());
 
 		*blockButton = isEditable();
-		*deleteButton = isEditable();
 
 		if (!u || !u->inList()) {
 			*addButton   = isEditable();
@@ -814,8 +793,6 @@ void PsiContact::addRemoveAuthBlockAvailable(bool* addButton, bool* deleteButton
 				*authButton = isEditable();
 			}
 		}
-
-		*deleteButton = *deleteButton && isEditable() && isRemovable();
 
 // FIXME
 #ifdef YAPSI

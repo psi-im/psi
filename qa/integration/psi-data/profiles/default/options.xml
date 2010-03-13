@@ -256,7 +256,7 @@
      <maximum-text-length type="int">300</maximum-text-length>
      <incoming-headline type="bool">true</incoming-headline>
     </passive-popups>
-    <alert-style type="QString">animate</alert-style>
+    <alert-style type="QString">no</alert-style>
     <successful-subscription type="bool">false</successful-subscription>
     <bounce-dock type="QString">forever</bounce-dock>
    </notifications>

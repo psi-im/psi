@@ -48,3 +48,6 @@ src/AutoUpdater/guitest/testapp/Makefile
 src/AutoUpdater/guitest/testapp/testapp.app
 src/plugins/*/*/Makefile
 checker
+*.user
+*.user.*
+

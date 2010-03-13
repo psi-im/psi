@@ -33,6 +33,12 @@ QMAKE_EXTRA_TARGETS += run
 run.depends = $$EXEC_TARGET
 run.commands = PSIDATADIR=~/.psi-test ./$$EXEC_TARGET
 
+# run_qa target
+QA_DIR = $$PWD/../integration/psi-data/
+QMAKE_EXTRA_TARGETS += run_qa
+run_qa.depends = $$EXEC_TARGET
+run_qa.commands = PSIDATADIR=$$QA_DIR ./$$EXEC_TARGET
+
 unix {
 	# gdb target
 	QMAKE_EXTRA_TARGETS += gdb
@@ -45,13 +51,13 @@ unix {
 		gdb.commands += $$PWD/mac_qt_debug.rb false $$EXEC_TARGET;
 	}
 
-	# gdb target
+	# gdb_qa target
 	QMAKE_EXTRA_TARGETS += gdb_qa
 	gdb_qa.depends = $$EXEC_TARGET
 	mac {
 		gdb_qa.commands += $$PWD/mac_qt_debug.rb true $$EXEC_TARGET;
 	}
-	gdb_qa.commands += PSIDATADIR=$$PWD/../integration/psi-data/ gdb ./$$EXEC_TARGET;
+	gdb_qa.commands += PSIDATADIR=$$QA_DIR gdb ./$$EXEC_TARGET;
 	mac {
 		gdb_qa.commands += $$PWD/mac_qt_debug.rb false $$EXEC_TARGET;
 	}

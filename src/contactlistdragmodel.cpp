@@ -36,6 +36,7 @@
 #include "contactlistgroupcache.h"
 #include "contactlistmodelupdater.h"
 #include "contactlistgroup.h"
+#include "contactlistspecialgroup.h"
 
 //----------------------------------------------------------------------------
 // ContactListModelOperationList
@@ -70,8 +71,11 @@ void ContactListModelOperationList::addOperation(PsiContact* contact, const QStr
 	}
 
 	if (!contact->isEditable()) {
-		qWarning("ContactListModelOperationList::addOperation(): contact is not editable '%s'", qPrintable(contact->jid().full()));
-		return;
+		bool deleteOperation = contact->isRemovable() && groupTo.isEmpty();
+		if (!deleteOperation) {
+			qWarning("ContactListModelOperationList::addOperation(): contact is not editable '%s'", qPrintable(contact->jid().full()));
+			return;
+		}
 	}
 
 	if (!contact->groupOperationPermitted(groupFrom, groupTo)) {
@@ -435,6 +439,22 @@ QStringList ContactListDragModel::processContactSetGroupNames(const QStringList&
 	return result;
 }
 
+bool ContactListDragModel::isSpecialGroup(const QString& groupName) const
+{
+	ContactListGroup* contactGroup = groupCache()->findGroup(groupName);
+	return contactGroup && contactGroup->isSpecial();
+}
+
+QStringList ContactListDragModel::removeOperationsForSpecialGroupContact(const QString& groupName, PsiContact* contact) const
+{
+	ContactListGroup* contactGroup = groupCache()->findGroup(groupName);
+	ContactListSpecialGroup* specialGroup = contactGroup ? dynamic_cast<ContactListSpecialGroup*>(contactGroup) : 0;
+	if (specialGroup) {
+		return specialGroup->removeOperationsForSpecialGroupContact(contact);
+	}
+	return QStringList();
+}
+
 void ContactListDragModel::performContactOperations(const ContactListModelOperationList& operations, OperationType operationType)
 {
 	QHash<ContactListGroup*, int> groupContactCount;
@@ -606,9 +626,20 @@ ContactListModelOperationList ContactListDragModel::removeOperationsFor(const QM
 	foreach(ContactListModelSelection::Contact contact, selection.contacts()) {
 		PsiAccount* account = contactList()->getAccount(contact.account);
 		PsiContact* psiContact = account ? account->findContact(contact.jid) : 0;
-		operations.addOperation(psiContact,
-		                        processContactSetGroupName(contact.group),
-		                        QString());
+
+		QStringList groups;
+		if (isSpecialGroup(contact.group)) {
+			groups = removeOperationsForSpecialGroupContact(contact.group, psiContact);
+		}
+		else {
+			groups << processContactSetGroupName(contact.group);
+		}
+
+		foreach(const QString& g, groups) {
+			operations.addOperation(psiContact,
+			                        g,
+			                        QString());
+		}
 	}
 
 	foreach(ContactListModelSelection::Group group, selection.groups()) {

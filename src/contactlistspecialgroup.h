@@ -29,6 +29,8 @@ class ContactListSpecialGroup : public ContactListNestedGroup
 public:
 	ContactListSpecialGroup(ContactListModel* model, ContactListGroup* parent, ContactListGroup::SpecialType type);
 
+	QStringList removeOperationsForSpecialGroupContact(PsiContact* contact) const;
+
 	// reimplemented
 	virtual bool isEditable() const;
 	virtual bool isRemovable() const;

@@ -106,6 +106,45 @@ void RemoveConfirmationMessageBoxManager::removeConfirmation(const QString& id, 
 
 void RemoveConfirmationMessageBoxManager::update()
 {
+	while (!data_.isEmpty()) {
+		Data data = data_.takeFirst();
+
+		Q_ASSERT(data.buttons.count() >= 1 && data.buttons.count() <= 3);
+		RemoveConfirmationMessageBox msgBox(data.title, data.informativeText, data.parent);
+		msgBox.setIcon(data.icon);
+
+		QStringList buttons = data.buttons;
+		if (data.icon == QMessageBox::Warning) {
+			buttons.takeLast(); // Cancel
+			Q_ASSERT(!buttons.isEmpty());
+			msgBox.setDestructiveActionName(buttons.takeFirst());
+			if (!buttons.isEmpty()) {
+				msgBox.setComplimentaryActionName(buttons.takeFirst());
+			}
+		}
+		else {
+			msgBox.setInfoActionName(buttons.takeFirst());
+		}
+
+		msgBox.doExec();
+
+		QList<bool> callbackData;
+		for (int i = 0; i < data.callbacks.count(); ++i) {
+			if (i == 0)
+				callbackData << msgBox.removeAction();
+			else if (i == 1)
+				callbackData << msgBox.complimentaryAction();
+			else
+				callbackData << false;
+		}
+
+		for (int i = 0; i < data.callbacks.count(); ++i) {
+			QMetaObject::invokeMethod(data.callbacks[i].obj, data.callbacks[i].slot, Qt::DirectConnection,
+			                          QGenericReturnArgument(),
+			                          Q_ARG(QString, data.id),
+			                          Q_ARG(bool, callbackData[i]));
+		}
+	}
 }
 
 RemoveConfirmationMessageBoxManager::RemoveConfirmationMessageBoxManager()

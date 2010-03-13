@@ -19,6 +19,7 @@
  */
 
 #include "contactlistspecialgroup.h"
+#include "psicontact.h"
 
 #include <QStringList>
 
@@ -47,6 +48,11 @@ ContactListSpecialGroup::ContactListSpecialGroup(ContactListModel* model, Contac
 		Q_ASSERT(false);
 	}
 	quietSetName(name_);
+}
+
+QStringList ContactListSpecialGroup::removeOperationsForSpecialGroupContact(PsiContact* contact) const
+{
+	return contact->groups();
 }
 
 bool ContactListSpecialGroup::isSpecial() const
