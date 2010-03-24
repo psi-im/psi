@@ -30,9 +30,9 @@
 //#define PROG_VERSION "0.11-RC2";
 //#define PROG_CAPS_NODE "http://psi-im.org/caps";
 //#define PROG_CAPS_VERSION "0.11-dev-rev8";
-#define PROG_VERSION "4.3.0";
+#define PROG_VERSION "4.3.1";
 #define PROG_CAPS_NODE "http://barracuda.com/caps";
-#define PROG_CAPS_VERSION "4.3.0";
+#define PROG_CAPS_VERSION "4.3.1";
 #define PROG_IPC_NAME "com.barracuda/im/client"  // must not contain '\\' character on Windows
 #define PROG_OPTIONS_NS "http://psi-im.org/options";
 #define PROG_STORAGE_NS "http://psi-im.org/storage";
