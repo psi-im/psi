@@ -108,6 +108,7 @@ void ContactListModelUpdater::addContact(PsiContact* contact)
 	connect(contact, SIGNAL(destroyed(PsiContact*)), SLOT(removeContact(PsiContact*)));
 	connect(contact, SIGNAL(updated()), SLOT(contactUpdated()));
 	connect(contact, SIGNAL(groupsChanged()), SLOT(contactGroupsChanged()));
+	connect(contact, SIGNAL(alert()), SLOT(contactAlert()));
 }
 
 /*!
@@ -124,6 +125,12 @@ void ContactListModelUpdater::removeContact(PsiContact* contact)
 	disconnect(contact, 0, this, 0);
 	emit removedContact(contact);
 	operationQueue_.remove(contact);
+}
+
+void ContactListModelUpdater::contactAlert()
+{
+	PsiContact* contact = static_cast<PsiContact*>(sender());
+	emit contactAlert(contact);
 }
 
 void ContactListModelUpdater::contactUpdated()

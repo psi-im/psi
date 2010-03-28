@@ -537,3 +537,8 @@ void ContactListView::commitData(QWidget* editor)
 	setFocus();
 	updateContextMenu();
 }
+
+void ContactListView::ensureVisible(const QModelIndex& index)
+{
+	scrollTo(index, QAbstractItemView::EnsureVisible);
+}

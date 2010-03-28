@@ -32,6 +32,12 @@ class PsiContactListView : public ContactListDragView
 public:
 	PsiContactListView(QWidget* parent);
 
+	// reimplemented
+	void setModel(QAbstractItemModel* model);
+
+protected slots:
+	void contactAlert(const QModelIndex&);
+
 protected:
 	// reimplemented
 	virtual void showToolTip(const QModelIndex& index, const QPoint& globalPos) const;

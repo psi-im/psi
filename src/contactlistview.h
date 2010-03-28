@@ -48,6 +48,7 @@ public:
 
 	void activate(const QModelIndex& index);
 	void toggleExpandedState(const QModelIndex& index);
+	void ensureVisible(const QModelIndex& index);
 
 	// reimplemented
 	void setModel(QAbstractItemModel* model);

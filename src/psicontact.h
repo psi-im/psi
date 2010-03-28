@@ -164,6 +164,7 @@ private slots:
 	void blockContactConfirmationHelper(bool block);
 
 signals:
+	void alert();
 	void updated();
 	void groupsChanged();
 #ifdef YAPSI

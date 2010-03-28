@@ -173,6 +173,8 @@ signals:
 	void showTransportsChanged();
 	void inPlaceRename();
 
+	void contactAlert(const QModelIndex&);
+
 public slots:
 	void expanded(const QModelIndex&);
 	void collapsed(const QModelIndex&);
@@ -181,6 +183,7 @@ protected slots:
 	void addContact(PsiContact*);
 	void removeContact(PsiContact*);
 
+	void contactAlert(PsiContact*);
 	void contactUpdated(PsiContact*);
 	void contactGroupsChanged(PsiContact*);
 

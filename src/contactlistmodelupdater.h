@@ -47,6 +47,7 @@ public slots:
 signals:
 	void addedContact(PsiContact*);
 	void removedContact(PsiContact*);
+	void contactAlert(PsiContact*);
 	void contactUpdated(PsiContact*);
 	void contactGroupsChanged(PsiContact*);
 
@@ -59,6 +60,7 @@ public slots:
 private slots:
 	void removeContact(PsiContact*);
 
+	void contactAlert();
 	void contactUpdated();
 	void contactGroupsChanged();
 

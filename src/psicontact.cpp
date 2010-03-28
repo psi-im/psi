@@ -496,6 +496,9 @@ void PsiContact::setAlert(const PsiIcon* icon)
 	d->setAlert(icon);
 	// updateParent();
 #endif
+	if (icon) {
+		emit alert();
+	}
 }
 
 /**

@@ -24,6 +24,8 @@
 
 #include "psicontactlistviewdelegate.h"
 #include "psitooltip.h"
+#include "psioptions.h"
+#include "contactlistmodel.h"
 
 PsiContactListView::PsiContactListView(QWidget* parent)
 	: ContactListDragView(parent)
@@ -37,4 +39,20 @@ void PsiContactListView::showToolTip(const QModelIndex& index, const QPoint& glo
 	Q_UNUSED(globalPos);
 	QString text = index.data(Qt::ToolTipRole).toString();
 	PsiToolTip::showText(globalPos, text, this);
+}
+
+void PsiContactListView::setModel(QAbstractItemModel* model)
+{
+	ContactListDragView::setModel(model);
+	QAbstractItemModel* connectToModel = realModel();
+	if (dynamic_cast<ContactListModel*>(connectToModel)) {
+		connect(connectToModel, SIGNAL(contactAlert(const QModelIndex&)), SLOT(contactAlert(const QModelIndex&)));
+	}
+}
+
+void PsiContactListView::contactAlert(const QModelIndex& realIndex)
+{
+	if (PsiOptions::instance()->getOption("options.ui.contactlist.ensure-contact-visible-on-event").toBool()) {
+		ensureVisible(proxyIndex(realIndex));
+	}
 }

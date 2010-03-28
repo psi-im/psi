@@ -61,6 +61,7 @@ ContactListModel::ContactListModel(PsiContactList* contactList)
 	connect(groupState_, SIGNAL(orderChanged()), SLOT(orderChanged()));
 	connect(updater_, SIGNAL(addedContact(PsiContact*)), SLOT(addContact(PsiContact*)));
 	connect(updater_, SIGNAL(removedContact(PsiContact*)), SLOT(removeContact(PsiContact*)));
+	connect(updater_, SIGNAL(contactAlert(PsiContact*)), SLOT(contactAlert(PsiContact*)));
 	connect(updater_, SIGNAL(contactUpdated(PsiContact*)), SLOT(contactUpdated(PsiContact*)));
 	connect(updater_, SIGNAL(contactGroupsChanged(PsiContact*)), SLOT(contactGroupsChanged(PsiContact*)));
 	connect(updater_, SIGNAL(beginBulkContactUpdate()), SLOT(beginBulkUpdate()));
@@ -292,6 +293,14 @@ QModelIndexList ContactListModel::indexesFor(PsiContact* contact) const
 		result += index(group->indexOf(contact), 0, group->toModelIndex());
 	}
 	return result;
+}
+
+void ContactListModel::contactAlert(PsiContact* contact)
+{
+	QModelIndexList indexes = indexesFor(contact);
+	if (!indexes.isEmpty()) {
+		emit contactAlert(indexes.first());
+	}
 }
 
 void ContactListModel::contactUpdated(PsiContact* contact)
