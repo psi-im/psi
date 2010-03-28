@@ -38,7 +38,7 @@ class ContactListGroupState;
 class ContactListGroupCache;
 class ContactListModelUpdater;
 
-#define ENABLE_CL_DEBUG
+// #define ENABLE_CL_DEBUG
 #ifdef ENABLE_CL_DEBUG
 #	define CL_DEBUG(...) qWarning(__VA_ARGS__)
 #else
