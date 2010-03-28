@@ -869,12 +869,21 @@ void PsiContact::vcardChanged(const Jid& j)
 static inline int rankStatus(int status)
 {
 	switch (status) {
-		case XMPP::Status::FFC:       return 0; // YAPSI original: 0;
-		case XMPP::Status::Online:    return 0; // YAPSI original: 1;
-		case XMPP::Status::Away:      return 1; // YAPSI original: 2;
-		case XMPP::Status::XA:        return 1; // YAPSI original: 3;
-		case XMPP::Status::DND:       return 0; // YAPSI original: 4;
-		case XMPP::Status::Invisible: return 5; // YAPSI original: 5;
+#ifdef YAPSI
+		case XMPP::Status::FFC:       return 0;
+		case XMPP::Status::Online:    return 0;
+		case XMPP::Status::Away:      return 1;
+		case XMPP::Status::XA:        return 1;
+		case XMPP::Status::DND:       return 0;
+		case XMPP::Status::Invisible: return 5;
+#else
+		case XMPP::Status::FFC:       return 0;
+		case XMPP::Status::Online:    return 1;
+		case XMPP::Status::Away:      return 2;
+		case XMPP::Status::XA:        return 3;
+		case XMPP::Status::DND:       return 4;
+		case XMPP::Status::Invisible: return 5;
+#endif
 		default:
 			return 6;
 	}
