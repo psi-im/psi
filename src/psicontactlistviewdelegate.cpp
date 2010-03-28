@@ -28,6 +28,7 @@
 #include "common.h"
 
 static const QString contactListFontOptionPath = "options.ui.look.font.contactlist";
+static const QString contactListBackgroundOptionPath = "options.ui.look.colors.contactlist.background";
 static const QString showStatusMessagesOptionPath = "options.ui.contactlist.status-messages.show";
 
 PsiContactListViewDelegate::PsiContactListViewDelegate(ContactListView* parent)
@@ -37,6 +38,7 @@ PsiContactListViewDelegate::PsiContactListViewDelegate(ContactListView* parent)
 {
 	connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
 	optionChanged(contactListFontOptionPath);
+	optionChanged(contactListBackgroundOptionPath);
 	optionChanged(showStatusMessagesOptionPath);
 }
 
@@ -99,7 +101,7 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 
 	r.setLeft(avatarRect.right() + 3);
 
-	QColor textColor = Qt::black;
+	QColor textColor = PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.online").value<QColor>();
 	if (statusType(index) == XMPP::Status::Away || statusType(index) == XMPP::Status::XA)
 		textColor = PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.away").value<QColor>();
 	else if (statusType(index) == XMPP::Status::DND)
@@ -252,6 +254,11 @@ void PsiContactListViewDelegate::optionChanged(const QString& option)
 		font_->fromString(PsiOptions::instance()->getOption(contactListFontOptionPath).toString());
 		fontMetrics_ = new QFontMetrics(*font_);
 		contactList()->viewport()->update();
+	}
+	else if (option == contactListBackgroundOptionPath) {
+		QPalette p = contactList()->palette();
+		p.setColor(QPalette::Base, PsiOptions::instance()->getOption(contactListBackgroundOptionPath).value<QColor>());
+		const_cast<ContactListView*>(contactList())->setPalette(p);
 	}
 	else if (option == showStatusMessagesOptionPath) {
 		showStatusMessages_ = PsiOptions::instance()->getOption(showStatusMessagesOptionPath).toBool();
