@@ -3248,7 +3248,7 @@ void PsiAccount::simulateContactOffline(UserListItem *u)
 			Jid j = u->jid();
 			if(u->jid().resource().isEmpty()) {
 				j = j.withResource(r.name());
-      }
+			}
 			client_resourceUnavailable(j, r);
 		}
 	}
@@ -3261,6 +3261,7 @@ void PsiAccount::simulateRosterOffline()
 {
 	emit beginBulkContactUpdate();
 
+	notifyOnlineOk = false;
 	foreach(UserListItem* u, d->userList)
 		simulateContactOffline(u);
 
