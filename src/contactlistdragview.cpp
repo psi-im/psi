@@ -125,8 +125,7 @@ void ContactListDragView::mouseDoubleClickEvent(QMouseEvent* e)
 		QModelIndexList indexes = model->indexesFor(0, pressedIndex_);
 		if (e->button() == Qt::LeftButton &&
 		    indexes.count() == 1 &&
-		    (ContactListModel::indexType(indexes.first()) == ContactListModel::GroupType ||
-		     ContactListModel::indexType(indexes.first()) == ContactListModel::AccountType))
+		    ContactListModel::isGroupType(indexes.first()))
 		{
 			return;
 		}
@@ -139,11 +138,10 @@ void ContactListDragView::mouseDoubleClickEvent(QMouseEvent* e)
 
 void ContactListDragView::itemActivated(const QModelIndex& index)
 {
-	if ((ContactListModel::indexType(index) == ContactListModel::GroupType ||
-	     ContactListModel::indexType(index) == ContactListModel::AccountType) &&
+	if (ContactListModel::isGroupType(index) &&
 	    activateItemsOnSingleClick())
 	{
-		setExpanded(index, !index.data(ContactListModel::ExpandedRole).toBool());
+		toggleExpandedState(index);
 		return;
 	}
 
@@ -480,9 +478,7 @@ void ContactListDragView::reorderGroups(QDropEvent* e, const QModelIndex& index)
 	QModelIndexList groups;
 	for (int row = 0; row < this->model()->rowCount(groupParent); ++row) {
 		QModelIndex i = this->model()->index(row, selectedGroup.column(), groupParent);
-		if (ContactListModel::indexType(i) == ContactListModel::GroupType ||
-		    ContactListModel::indexType(i) == ContactListModel::AccountType)
-		{
+		if (ContactListModel::isGroupType(i)) {
 			groups << i;
 		}
 	}
@@ -565,9 +561,7 @@ QRect ContactListDragView::onItemDropRect(const QModelIndex& index) const
 		return viewport()->rect().adjusted(0, 0, -1, -1);
 	}
 
-	if (ContactListModel::indexType(index) != ContactListModel::GroupType &&
-	    ContactListModel::indexType(index) != ContactListModel::AccountType)
-	{
+	if (ContactListModel::isGroupType(index)) {
 		return onItemDropRect(index.parent());
 	}
 
@@ -576,7 +570,7 @@ QRect ContactListDragView::onItemDropRect(const QModelIndex& index) const
 
 QRect ContactListDragView::groupVisualRect(const QModelIndex& index) const
 {
-	Q_ASSERT(ContactListModel::indexType(index) == ContactListModel::GroupType || ContactListModel::indexType(index) == ContactListModel::AccountType);
+	Q_ASSERT(ContactListModel::isGroupType(index));
 
 	QRect result;
 	combineVisualRects(index, &result);
@@ -666,8 +660,6 @@ bool ContactListDragView::activateItemsOnSingleClick() const
 // #endif
 	return false;
 	// return style()->styleHint(QStyle::SH_ItemView_ActivateItemOnSingleClick, 0, this);
-	// return !extendedSelectionAllowed() &&
-	//        state() != QAbstractItemView::EditingState;
 }
 
 void ContactListDragView::updateKeyboardModifiers(const QEvent* e)
@@ -893,12 +885,11 @@ void ContactListDragView::mouseReleaseEvent(QMouseEvent* event)
 		if (event->button() == Qt::LeftButton &&
 		    index.isValid() &&
 		    keyboardModifiers() == 0 &&
-		    (ContactListModel::indexType(index) == ContactListModel::GroupType ||
-		     ContactListModel::indexType(index) == ContactListModel::AccountType))
+		    ContactListModel::isGroupType(index))
 		{
 			if ((pressPosition_ - event->pos()).manhattanLength() < QApplication::startDragDistance()) {
 				QStyleOptionViewItem option;
-				setExpanded(index, !index.data(ContactListModel::ExpandedRole).toBool());
+				toggleExpandedState(index);
 				event->accept();
 				filter = true;
 			}

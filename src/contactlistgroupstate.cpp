@@ -119,9 +119,7 @@ QStringList ContactListGroupState::groupNames(const ContactListModel* model, con
 
 	for (int row = 0; row < model->rowCount(parent); ++row) {
 		QModelIndex index = model->index(row, 0, parent);
-		if (model->indexType(index) == ContactListModel::GroupType ||
-		    model->indexType(index) == ContactListModel::AccountType)
-		{
+		if (model->isGroupType(index)) {
 			QStringList groupName = parentName;
 			groupName << index.data(ContactListModel::InternalGroupNameRole).toString();
 			foreach(QString name, groupNames(model, index, groupName)) {

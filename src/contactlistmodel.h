@@ -58,6 +58,7 @@ public:
 	};
 
 	static ContactListModel::Type indexType(const QModelIndex& index);
+	static bool isGroupType(const QModelIndex& index);
 
 	enum {
 		// generic

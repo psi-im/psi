@@ -47,6 +47,7 @@ public:
 	void setEditingIndex(const QModelIndex& index, bool editing) const;
 
 	void activate(const QModelIndex& index);
+	void toggleExpandedState(const QModelIndex& index);
 
 	// reimplemented
 	void setModel(QAbstractItemModel* model);

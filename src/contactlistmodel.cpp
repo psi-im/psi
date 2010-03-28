@@ -749,6 +749,12 @@ ContactListModel::Type ContactListModel::indexType(const QModelIndex& index)
 	return ContactListModel::InvalidType;
 }
 
+bool ContactListModel::isGroupType(const QModelIndex& index)
+{
+	return indexType(index) == ContactListModel::GroupType ||
+	       indexType(index) == ContactListModel::AccountType;
+}
+
 ContactListItemProxy* ContactListModel::itemProxy(const QModelIndex& index) const
 {
 	if ((index.row() < 0) || (index.column() < 0) || (index.model() != this))

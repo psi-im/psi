@@ -26,6 +26,7 @@
 #include <QPainter>
 #include <QLinearGradient>
 #include <QScrollBar>
+#include <QCoreApplication>
 
 #include "contactlistitem.h"
 #include "contactlistitemmenu.h"
@@ -260,6 +261,11 @@ void ContactListView::drawBranches(QPainter*, const QRect&, const QModelIndex&) 
 {
 }
 
+void ContactListView::toggleExpandedState(const QModelIndex& index)
+{
+	setExpanded(index, !index.data(ContactListModel::ExpandedRole).toBool());
+}
+
 /**
  * Make Enter/Return/F2 to not trigger editing, and make Enter/Return call activated().
  */
@@ -279,15 +285,27 @@ void ContactListView::keyPressEvent(QKeyEvent* event)
 			event->ignore();
 		}
 		break;
+	case Qt::Key_Space:
+		if (state() != EditingState) {
+			if (ContactListModel::isGroupType(currentIndex())) {
+				toggleExpandedState(currentIndex());
+			}
+			else {
+				QContextMenuEvent e(QContextMenuEvent::Keyboard,
+						    visualRect(currentIndex()).center(),
+				                    Qt::NoModifier);
+				QCoreApplication::sendEvent(this, &e);
+			}
+		}
+		else {
+			event->ignore();
+		}
+	break;
 	default:
 		HoverableTreeView::keyPressEvent(event);
 	}
 }
 
-
-/**
- * TODO
- */
 void ContactListView::rename()
 {
 	if (!hasFocus())
