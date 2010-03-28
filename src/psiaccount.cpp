@@ -324,18 +324,19 @@ static const int RECONNECT_TIMEOUT_ERROR = -10;
 static QList<ReconnectData> reconnectData()
 {
 	static QList<ReconnectData> data;
+	static const int max_timeout = 5*60;
 	if (data.isEmpty()) {
-		data << ReconnectData(15, 10);
-		data << ReconnectData(15, 11);
-		data << ReconnectData(15, 20);
-		data << ReconnectData(15, 30);
+		data << ReconnectData(15, max_timeout);
+		data << ReconnectData(15, max_timeout);
+		data << ReconnectData(15, max_timeout);
+		data << ReconnectData(15, max_timeout);
 
-		data << ReconnectData(15, 30);
-		data << ReconnectData(15, 30);
-		data << ReconnectData(15, 30);
-		data << ReconnectData(15, 30);
+		data << ReconnectData(15, max_timeout);
+		data << ReconnectData(15, max_timeout);
+		data << ReconnectData(15, max_timeout);
+		data << ReconnectData(15, max_timeout);
 
-		data << ReconnectData(2*60, 30);
+		data << ReconnectData(2*60, max_timeout);
 	}
 
 	return data;
