@@ -34,8 +34,8 @@ function remove_account(account_name)
     clickButton(":Psi: Jabber Accounts.Remove_IconButton");
     waitForObject(":Psi: Remove Account.Remove_QPushButton");
     clickButton(":Psi: Remove Account.Remove_QPushButton");
-    waitForObject(":Yes_QPushButton");
-    clickButton(":Yes_QPushButton");
+    waitForObject(":Remove_QPushButton");
+    clickButton(":Remove_QPushButton");
 }
 
 function dismiss_ssl_error()
@@ -70,6 +70,7 @@ function tst_1080_account_removing()
     snooze(1.0);
 
     remove_account("user04");
+    set_global_status("Offline");
 }
 
 function tst_account_contact_counter()

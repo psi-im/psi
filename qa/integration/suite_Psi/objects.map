@@ -1,6 +1,8 @@
 :* Psi.<b>1 event received</b>_MLabel	{name='EventNotifierAction::MLabel' text='<b>1 event received</b>' type='MLabel' visible='1' window=':* Psi_MainWin'}
 :* Psi.contactListView_PsiContactListView	{name='contactListView' type='PsiContactListView' visible='1' window=':* Psi_MainWin'}
 :* Psi_MainWin	{name='MainWin' type='MainWin' visible='1' windowTitle='* Psi'}
+:About Psi.Close_IconButton	{name='pb_close' text='Close' type='IconButton' visible='1' window=':About Psi_AboutDlg'}
+:About Psi_AboutDlg	{name='AboutDlg' type='AboutDlg' visible='1' windowTitle='About Psi'}
 :Account.le_jid_QLineEdit	{container=':tab_account.Account_QGroupBox' name='le_jid' type='QLineEdit' visible='1'}
 :Account.le_pass_QLineEdit	{container=':tab_account.Account_QGroupBox' name='le_pass' type='QLineEdit' visible='1'}
 :Delete_QPushButton	{text='Delete' type='QPushButton' unnamed='1' visible='1' window=':_RemoveConfirmationMessageBox'}
@@ -33,6 +35,7 @@
 :Psi_PsiApplication	{name='Psi' type='PsiApplication'}
 :Psi_PsiContactListView	{name='contactListView' type='PsiContactListView' window=':Psi_MainWin'}
 :Psi_QMenuBar	{type='QMenuBar' window=':Psi_MainWin'}
+:Remove_QPushButton	{text='Remove' type='QPushButton' unnamed='1' visible='1' window=':_QMessageBox_2'}
 :Status_StatusMenu	{title='Status' type='StatusMenu' unnamed='1' visible='1'}
 :Trust this certificate_QPushButton	{text='Trust this certificate' type='QPushButton' unnamed='1' visible='1' window=':_QMessageBox'}
 :Yes_QPushButton	{text='Yes' type='QPushButton' unnamed='1' visible='1' window=':_QMessageBox_2'}

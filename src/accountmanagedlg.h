@@ -51,6 +51,7 @@ private slots:
 
 private:
 	PsiCon *psi;
+	QAction* removeAction_;
 };
 
 #endif

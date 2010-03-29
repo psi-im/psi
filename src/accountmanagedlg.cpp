@@ -39,6 +39,8 @@
 #include "accountmanagedlg.h"
 #include "ui_accountremove.h"
 #include "psicontactlist.h"
+#include "iconaction.h"
+#include "shortcutmanager.h"
 
 using namespace XMPP;
 
@@ -138,8 +140,12 @@ AccountRemoveDlg::~AccountRemoveDlg()
 void AccountRemoveDlg::done(int r)
 {
 	if(busy->isActive()) {
-		int n = QMessageBox::information(this, tr("Warning"), tr("Are you sure you want to cancel the unregistration?"), tr("&Yes"), tr("&No"));
-		if(n != 0)
+		QMessageBox messageBox(QMessageBox::Information, CAP(tr("Warning")), tr("Are you sure you want to cancel the unregistration?"));
+		QPushButton* cancel = messageBox.addButton(tr("&No"), QMessageBox::RejectRole);
+		QPushButton* accept = messageBox.addButton(tr("&Yes"), QMessageBox::AcceptRole);
+		messageBox.setDefaultButton(accept);
+		messageBox.exec();
+		if (messageBox.clickedButton() == cancel)
 			return;
 	}
 	QDialog::done(r);
@@ -170,8 +176,12 @@ void AccountRemoveDlg::remove()
 		}
 	}
 
-	int n = QMessageBox::information(this, tr("Warning"), tr("Are you sure you want to remove <b>%1</b> ?").arg(d->acc.name), tr("&Yes"), tr("&No"));
-	if(n != 0)
+	QMessageBox messageBox(QMessageBox::Information, CAP(tr("Warning")), tr("Are you sure you want to remove <b>%1</b> ?").arg(d->acc.name));
+	QPushButton* cancel = messageBox.addButton(QMessageBox::Cancel);
+	QPushButton* remove = messageBox.addButton(tr("&Remove"), QMessageBox::AcceptRole);
+	messageBox.setDefaultButton(remove);
+	messageBox.exec();
+	if (messageBox.clickedButton() == cancel)
 		return;
 
 	if(!unreg) {
@@ -288,6 +298,10 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi)
 
 	setWindowTitle(CAP(windowTitle()));
 
+	removeAction_ = new IconAction("", "psi/remove", QString(), ShortcutManager::instance()->shortcuts("contactlist.delete"), this, "act_remove");
+	connect(removeAction_, SIGNAL(activated()), SLOT(remove()));
+	lv_accs->addAction(removeAction_);
+
 	// setup signals
 	connect(pb_add, SIGNAL(clicked()), SLOT(add()));
 	connect(pb_modify, SIGNAL(clicked()), SLOT(modify()));
@@ -321,6 +335,7 @@ void AccountManageDlg::qlv_selectionChanged(QTreeWidgetItem *lvi, QTreeWidgetIte
 
 	pb_modify->setEnabled(ok);
 	pb_remove->setEnabled(ok);
+	removeAction_->setEnabled(ok);
 }
 
 void AccountManageDlg::add()
@@ -350,8 +365,15 @@ void AccountManageDlg::remove()
 		return;
 
 	if(i->pa->isActive()) {
-		QMessageBox::information(this, tr("Error"), tr("Unable to remove the account, as it is currently active."));
-		return;
+		QMessageBox messageBox(QMessageBox::Information, CAP(tr("Error")), tr("Please disconnect before removing the account."));
+		QPushButton* cancel = messageBox.addButton(QMessageBox::Cancel);
+		QPushButton* disconnect = messageBox.addButton(tr("&Disconnect"), QMessageBox::AcceptRole);
+		messageBox.setDefaultButton(disconnect);
+		messageBox.exec();
+		if (messageBox.clickedButton() == cancel)
+			return;
+
+		i->pa->setStatus(XMPP::Status::Offline);
 	}
 
 	AccountRemoveDlg *w = new AccountRemoveDlg(psi->proxy(), i->pa->userAccount());
@@ -362,6 +384,9 @@ void AccountManageDlg::remove()
 	}
 	delete w;
 	psi->removeAccount(i->pa);
+
+	activateWindow();
+	lv_accs->setFocus();
 }
 
 void AccountManageDlg::accountAdded(PsiAccount *pa)
