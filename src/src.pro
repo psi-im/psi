@@ -4,8 +4,8 @@
 
 # Configuration
 TEMPLATE = app
-TARGET    = barracuda
-mac:TARGET = Barracuda
+TARGET    = barracudaim
+mac:TARGET = BarracudaIM
 CONFIG  += qt thread x11 
 
 #CONFIG += use_crash
@@ -138,7 +138,7 @@ RESOURCES += ../psi.qrc ../iconsets.qrc
 
 # Platform specifics
 unix:!mac {
-	QMAKE_POST_LINK = rm -f ../barracuda ; ln -s src/barracuda ../barracuda
+	QMAKE_POST_LINK = rm -f ../barracudaim ; ln -s src/barracudaim ../barracudaim
 }
 win32 {
 	RC_FILE = ../win32/psi_win32.rc

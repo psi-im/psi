@@ -8,7 +8,7 @@ call make
 if errorlevel 1 goto ERROR2
 
 mkdir barracudawin
-copy src\release\barracuda.exe barracudawin\Barracuda.exe
+copy src\release\barracudaim.exe barracudawin\BarracudaIM.exe
 rem copy \windows\system32\msvcr71.dll barracudawin
 rem copy \windows\system32\msvcp71.dll barracudawin
 rem copy "c:\program files\microsoft visual studio 8\vc\redist\x86\microsoft.vc80.crt\msvcr80.dll" barracudawin

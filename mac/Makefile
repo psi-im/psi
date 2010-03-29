@@ -119,7 +119,7 @@ $(DISK_DIR)/Barracuda.app: $(PSI_DIR)/src/Barracuda.app
 		\# install_name_tool -change "$(QTDIR)/lib/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "@executable_path/../Frameworks/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "$@/Contents/Frameworks/libqca.2.dylib"; \
 		\# install_name_tool -change "$(QTDIR)/lib/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "@executable_path/../Frameworks/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "$@/Contents/Resources/crypto/libqca-openssl.dylib"; \
 		install_name_tool -change "$(QTDIR)/lib/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "@executable_path/../Frameworks/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "$@/Contents/Resources/imageformats/libqjpeg.dylib"; \
-		install_name_tool -change "$(QTDIR)/lib/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "@executable_path/../Frameworks/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "$@/Contents/MacOS/Barracuda"; \
+		install_name_tool -change "$(QTDIR)/lib/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "@executable_path/../Frameworks/$$f.framework/Versions/$(QT_FRAMEWORK_VERSION)/$$f" "$@/Contents/MacOS/BarracudaIM"; \
 	done
 
 # The rest
