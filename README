@@ -1,6 +1,6 @@
-Barracuda IM Client 4.3.1
+Barracuda IM Client 4.3.2
 -------------------------
-Date: March 24th, 2010
+Date: March 30th, 2010
 
 Barracuda Networks - http://www.barracudanetworks.com/
 
@@ -14,7 +14,7 @@ Barracuda Networks - http://www.barracudanetworks.com/
 
 Changes
 -------
-  New in 4.3.1
+  New in 4.3.2
   - Route voice calls through the IM Firewall to improve call connectivity
   - IPv6 connections to the XMPP server
   - Allow the XMPP server to have a real hostname ending in .local
