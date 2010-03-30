@@ -77,7 +77,11 @@ void TabbableWidget::ensureTabbedCorrectly()
 			//   platforms where both calls can be made in
 			//   succession.
 #ifdef Q_WS_WIN
-			showWithoutActivation();
+			if (PsiOptions::instance()->getOption("options.ui.message.auto-popup").toBool() && PsiOptions::instance()->getOption("options.ui.message.steal-focus").toBool()) {
+				show();
+			} else {
+				showWithoutActivation();
+			}
 #else
 			show();
 #endif

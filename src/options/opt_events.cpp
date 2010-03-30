@@ -81,6 +81,7 @@ void OptionsTabEvents::applyOptions()
 
 	OptEventsUI *d = (OptEventsUI *)w;
 	PsiOptions::instance()->setOption("options.ui.message.auto-popup", d->ck_popupMsgs->isChecked());
+	PsiOptions::instance()->setOption("options.ui.message.steal-focus", d->ck_stealFocus->isChecked());
 	PsiOptions::instance()->setOption("options.ui.chat.auto-popup", d->ck_popupMsgs->isChecked());
 	PsiOptions::instance()->setOption("options.ui.message.auto-popup-headlines", d->ck_popupMsgs->isChecked());
 	PsiOptions::instance()->setOption("options.ui.file-transfer.auto-popup", d->ck_popupMsgs->isChecked());
@@ -111,6 +112,7 @@ void OptionsTabEvents::restoreOptions()
 
 	OptEventsUI *d = (OptEventsUI *)w;
 	d->ck_popupMsgs->setChecked( PsiOptions::instance()->getOption("options.ui.message.auto-popup").toBool() || PsiOptions::instance()->getOption("options.ui.chat.auto-popup").toBool() );
+	d->ck_stealFocus->setChecked( PsiOptions::instance()->getOption("options.ui.message.steal-focus").toBool() );
 	d->ck_allowNonRoster->setChecked( !PsiOptions::instance()->getOption("options.messages.ignore-non-roster-contacts").toBool() );
 	d->ck_autoAuth->setChecked( PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorization").toBool() );
 	d->ck_notifyAuth->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.successful-subscription").toBool() );

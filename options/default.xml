@@ -82,6 +82,7 @@
 				<show-subjects type="bool">true</show-subjects>
 				<use-jid-auto-completion type="bool">true</use-jid-auto-completion>
 				<size type="QString"></size> <!-- will be invalid when converted to QSize so we can detect first load -->
+				<steal-focus type="bool">false</steal-focus>
 			</message>
 			<chat comment="Chat dialog options">
 				<central-toolbar comment="Have a central toolbar" type="bool">false</central-toolbar>

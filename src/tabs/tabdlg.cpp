@@ -394,7 +394,11 @@ void TabDlg::addTab(TabbableWidget* tab)
 	connect(tab, SIGNAL(invalidateTabInfo()), SLOT(updateTab()));
 	connect(tab, SIGNAL(updateFlashState()), SLOT(updateFlashState()));
 
-	this->showWithoutActivation();
+	if (PsiOptions::instance()->getOption("options.ui.message.auto-popup").toBool() && PsiOptions::instance()->getOption("options.ui.message.steal-focus").toBool()) {
+		this->show();
+	} else {
+		this->showWithoutActivation();
+	}
 	updateTab(tab);
 	setUpdatesEnabled(true);
 }
