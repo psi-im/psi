@@ -58,7 +58,7 @@ LangString TEXT_IO_TITLE ${LANG_ENGLISH} "InstallOptions page"
 LangString TEXT_IO_SUBTITLE ${LANG_ENGLISH} "This is a page created using the InstallOptions plug-in."
 
 Function .onInit
-    FindProcDLL::FindProc "barracuda.exe"
+    FindProcDLL::FindProc "barracudaim.exe"
         StrCmp $R0 0 0 error
     Goto end
     error:
@@ -71,7 +71,7 @@ Function .onInit
 FunctionEnd
 
 Function un.onInit
-    FindProcDLL::FindProc "barracuda.exe"
+    FindProcDLL::FindProc "barracudaim.exe"
         StrCmp $R0 0 0 error
     Goto end
     error:
@@ -110,7 +110,7 @@ Function .onInstSuccess
     Goto Finish2
     Finish1:
     SetOutPath $INSTDIR
-    Exec "$INSTDIR\Barracuda.exe"
+    Exec "$INSTDIR\BarracudaIM.exe"
     Finish2:
 
 FunctionEnd
@@ -126,7 +126,7 @@ FunctionEnd
 Section "Barracuda Base"
 SectionIn 1 RO
     SetOutPath "$INSTDIR"
-    File barracuda.exe
+    File barracudaim.exe
     File barracuda.ico
     ;File msvcr80.dll
     ;File msvcp80.dll
@@ -225,20 +225,20 @@ Section "Start Menu Items"
 SectionIn 1
     SetOutPath $INSTDIR
     CreateShortCut "$SMPROGRAMS\Barracuda\IM Firewall\Barracuda IM Client.lnk"\
-                   "$INSTDIR\barracuda.exe"
+                   "$INSTDIR\barracudaim.exe"
 SectionEnd
 
 Section "Desktop Shortcuts"
 SectionIn 1
     SetOutPath $INSTDIR
     CreateShortCut "$DESKTOP\Barracuda IM Client.lnk" \
-                   "$INSTDIR\barracuda.exe"
+                   "$INSTDIR\barracudaim.exe"
 SectionEnd
 
 Section "Run Barracuda IM Client at boot"
 SectionIn 1
     CreateShortCut "$SMSTARTUP\Barracuda IM Client.lnk"\
-                   "$INSTDIR\barracuda.exe"
+                   "$INSTDIR\barracudaim.exe"
 SectionEnd
 
 Section "Run Barracuda IM Client after install"
@@ -261,7 +261,7 @@ UninstallText "Please click on the 'Uninstall' button to remove the Barracuda IM
 Section "Uninstall"
     ;Delete $INSTDIR\*.qm
     Delete $INSTDIR\uninst.exe
-    Delete $INSTDIR\barracuda.exe
+    Delete $INSTDIR\barracudaim.exe
     Delete $INSTDIR\barracuda.ico
     Delete $INSTDIR\tmp-config.xml
     Delete $INSTDIR\Readme.txt
