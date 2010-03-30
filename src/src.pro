@@ -50,17 +50,17 @@ exists(../conf.pri) {
 
 	# icons and desktop files
 	dt.path=$$PREFIX/share/applications/
-	dt.files = ../barracuda.desktop 
+	dt.files = ../barracudaim.desktop 
 	icon1.path=$$PREFIX/share/icons/hicolor/16x16/apps
-	icon1.extra = cp -f ../iconsets/system/default/logo_16.png $(INSTALL_ROOT)$$icon1.path/barracuda.png
+	icon1.extra = cp -f ../iconsets/system/default/logo_16.png $(INSTALL_ROOT)$$icon1.path/barracudaim.png
 	icon2.path=$$PREFIX/share/icons/hicolor/32x32/apps
-	icon2.extra = cp -f ../iconsets/system/default/logo_32.png $(INSTALL_ROOT)$$icon2.path/barracuda.png
+	icon2.extra = cp -f ../iconsets/system/default/logo_32.png $(INSTALL_ROOT)$$icon2.path/barracudaim.png
 	icon3.path=$$PREFIX/share/icons/hicolor/48x48/apps
-	icon3.extra = cp -f ../iconsets/system/default/logo_48.png $(INSTALL_ROOT)$$icon3.path/barracuda.png
+	icon3.extra = cp -f ../iconsets/system/default/logo_48.png $(INSTALL_ROOT)$$icon3.path/barracudaim.png
 	icon4.path=$$PREFIX/share/icons/hicolor/64x64/apps
-	icon4.extra = cp -f ../iconsets/system/default/logo_64.png $(INSTALL_ROOT)$$icon4.path/barracuda.png
+	icon4.extra = cp -f ../iconsets/system/default/logo_64.png $(INSTALL_ROOT)$$icon4.path/barracudaim.png
 	icon5.path=$$PREFIX/share/icons/hicolor/128x128/apps
-	icon5.extra = cp -f ../iconsets/system/default/logo_128.png $(INSTALL_ROOT)$$icon5.path/barracuda.png
+	icon5.extra = cp -f ../iconsets/system/default/logo_128.png $(INSTALL_ROOT)$$icon5.path/barracudaim.png
 	INSTALLS += icon1 icon2 icon3 icon4 icon5 dt
 }
 

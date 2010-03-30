@@ -5,8 +5,8 @@ Type=Application
 Name=Barracuda IM Client
 GenericName=Jabber Client
 Comment=Communicate over the Jabber network
-Icon=barracuda
-Exec=barracuda
+Icon=barracudaim
+Exec=barracudaim
 Terminal=false
 Categories=Network;InstantMessaging;Qt;
 
