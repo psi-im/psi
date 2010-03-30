@@ -40,6 +40,8 @@ public:
 
 	QString mucService() const;
 
+	void refreshExDisco();
+
 	QString stunHost() const;
 	int stunPort() const;
 

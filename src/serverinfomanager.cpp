@@ -148,6 +148,7 @@ public:
 	int stunPort, udpTurnPort, tcpTurnPort;
 	QString udpTurnUser, udpTurnPass, tcpTurnUser, tcpTurnPass;
 	JT_DiscoInfo *curDisco;
+	JT_ExDisco *jte;
 
 	Private(ServerInfoManager *parent = 0) :
 		QObject(parent),
@@ -155,7 +156,8 @@ public:
 		stunPort(-1),
 		udpTurnPort(-1),
 		tcpTurnPort(-1),
-		curDisco(0)
+		curDisco(0),
+		jte(0)
 	{
 	}
 
@@ -175,7 +177,8 @@ public:
 private slots:
 	void exdisco_finished()
 	{
-		JT_ExDisco *jt = (JT_ExDisco *)sender();
+		JT_ExDisco *jt = jte;
+		jte = 0;
 
 		QList<JT_ExDisco::Service> list = jt->services();
 		foreach(const JT_ExDisco::Service &s, list)
@@ -244,10 +247,7 @@ void ServerInfoManager::initialize()
 	jti->get(d->client_->jid().domain());
 	jti->go(true);
 
-	JT_ExDisco *jte = new JT_ExDisco(d->client_->rootTask());
-	connect(jte, SIGNAL(finished()), d, SLOT(exdisco_finished()));
-	jte->get(d->client_->jid().domain());
-	jte->go(true);
+	refreshExDisco();
 }
 
 void ServerInfoManager::deinitialize()
@@ -269,6 +269,16 @@ bool ServerInfoManager::hasPEP() const
 QString ServerInfoManager::mucService() const
 {
 	return d->muc;
+}
+
+void ServerInfoManager::refreshExDisco()
+{
+	delete d->jte;
+
+	d->jte = new JT_ExDisco(d->client_->rootTask());
+	connect(d->jte, SIGNAL(finished()), d, SLOT(exdisco_finished()));
+	d->jte->get(d->client_->jid().domain());
+	d->jte->go(true);
 }
 
 QString ServerInfoManager::stunHost() const

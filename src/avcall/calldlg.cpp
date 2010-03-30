@@ -26,6 +26,7 @@
 #include "common.h"
 #include "psiaccount.h"
 #include "psioptions.h"
+#include "serverinfomanager_b.h"
 
 // from opt_avcall.cpp
 extern void options_avcall_update();
@@ -150,14 +151,6 @@ public:
 private slots:
 	void ok_clicked()
 	{
-		AvCall::Mode mode = AvCall::Audio;
-		int kbps = -1;
-		if(ui.ck_useVideo->isChecked())
-		{
-			mode = AvCall::Both;
-			kbps = ui.cb_bandwidth->itemData(ui.cb_bandwidth->currentIndex()).toInt();
-		}
-
 		if(!incoming)
 		{
 			ui.le_to->setReadOnly(true);
@@ -170,13 +163,6 @@ private slots:
 			ui.pb_reject->setFocus();
 			ui.busy->start();
 			ui.lb_status->setText(tr("Calling..."));
-
-			sess = pa->avCallManager()->createOutgoing();
-			connect(sess, SIGNAL(activated()), SLOT(sess_activated()));
-			connect(sess, SIGNAL(error()), SLOT(sess_error()));
-
-			active = true;
-			sess->connectToJid(ui.le_to->text(), mode, kbps);
 		}
 		else
 		{
@@ -189,8 +175,33 @@ private slots:
 			ui.pb_reject->setFocus();
 			ui.busy->start();
 			ui.lb_status->setText(tr("Accepting..."));
+		}
 
-			active = true;
+		active = true;
+		connect(pa->serverInfoManager(), SIGNAL(featuresChanged()), SLOT(serverFeaturesChanged()));
+		pa->serverInfoManager()->refreshExDisco();
+	}
+
+	void serverFeaturesChanged()
+	{
+		AvCall::Mode mode = AvCall::Audio;
+		int kbps = -1;
+		if(ui.ck_useVideo->isChecked())
+		{
+			mode = AvCall::Both;
+			kbps = ui.cb_bandwidth->itemData(ui.cb_bandwidth->currentIndex()).toInt();
+		}
+
+		if(!incoming)
+		{
+			sess = pa->avCallManager()->createOutgoing();
+			connect(sess, SIGNAL(activated()), SLOT(sess_activated()));
+			connect(sess, SIGNAL(error()), SLOT(sess_error()));
+
+			sess->connectToJid(ui.le_to->text(), mode, kbps);
+		}
+		else
+		{
 			sess->accept(mode, kbps);
 		}
 	}
