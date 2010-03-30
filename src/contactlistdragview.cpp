@@ -561,7 +561,7 @@ QRect ContactListDragView::onItemDropRect(const QModelIndex& index) const
 		return viewport()->rect().adjusted(0, 0, -1, -1);
 	}
 
-	if (ContactListModel::isGroupType(index)) {
+	if (!ContactListModel::isGroupType(index)) {
 		return onItemDropRect(index.parent());
 	}
 

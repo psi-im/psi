@@ -337,7 +337,7 @@ void ContactListDragModel::addOperationsForGroupRename(const QString& currentGro
 			ContactListGroup* childGroup = 0;
 			if ((contact = dynamic_cast<PsiContact*>(itemProxy->item()))) {
 				foreach(const QString& g, removeOperationsForContactGroup(currentGroupName, contact)) {
-					operations->addOperation(contact, g, QString());
+					operations->addOperation(contact, g, newGroupName);
 				}
 			}
 			else if ((childGroup = dynamic_cast<ContactListGroup*>(itemProxy->item()))) {

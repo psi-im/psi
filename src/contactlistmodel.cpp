@@ -577,10 +577,10 @@ bool ContactListModel::setData(const QModelIndex& index, const QVariant& data, i
 			}
 		}
 		else if ((group = dynamic_cast<ContactListGroup*>(item->item()))) {
-			// if (name.isEmpty()) {
-			// 	QMessageBox::information(0, tr("Error"), tr("You can't set a blank group name."));
-			// 	return false;
-			// }
+			if (name.isEmpty()) {
+				QMessageBox::information(0, tr("Error"), tr("You can't set a blank group name."));
+				return false;
+			}
 			// else {
 				// // make sure we don't have it already
 				// if (group->account()->groupList().contains(name)) {
