@@ -2481,7 +2481,8 @@ void PsiAccount::serverFeaturesChanged()
 {
 	setPEPAvailable(d->serverInfoManager->hasPEP());
 
-	d->updateAvCallSettings();
+	if(d->avCallManager)
+		d->updateAvCallSettings();
 }
 
 void PsiAccount::setPEPAvailable(bool b)
