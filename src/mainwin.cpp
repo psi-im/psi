@@ -388,6 +388,8 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 	d->optionsMenu->setObjectName("optionsMenu");
 #ifdef Q_WS_MAC
 	d->trayMenu = d->statusMenu;
+	extern void qt_mac_set_dock_menu(QMenu *);
+	qt_mac_set_dock_menu(d->statusMenu);
 #else
 	d->trayMenu = new QMenu(this);
 	buildTrayMenu();
