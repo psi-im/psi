@@ -2,6 +2,12 @@
 <psi version="defaults" >
 	<options comment="Client options">
 		<shortcuts comment="Shortcuts">
+			<contactlist comment="Shortcuts in the contactlist">
+				<delete type="QVariantList" comment="Delete the selected contact">
+					<item type="QKeySequence">Backspace</item>
+					<item type="QKeySequence">Del</item>
+				</delete>
+			</contactlist>
 			<common comment="Common actions" >
 				<history type="QKeySequence" comment="Open the message history">Ctrl+Shift+H</history>
 			</common>
