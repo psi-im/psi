@@ -113,6 +113,7 @@ void ContactListNestedGroup::contactUpdated(PsiContact* contact)
 
 void ContactListNestedGroup::contactGroupsChanged(PsiContact* contact, QStringList contactGroups)
 {
+	bool restrictContactAdd = false;
 	if (canContainSpecialGroups()) {
 		ContactListGroup* specialGroup = specialGroupFor(contact);
 		QHashIterator<ContactListGroup::SpecialType, QPointer<ContactListGroup> > it(specialGroups_);
@@ -124,9 +125,7 @@ void ContactListNestedGroup::contactGroupsChanged(PsiContact* contact, QStringLi
 			}
 		}
 
-		if (specialGroup) {
-			return;
-		}
+		restrictContactAdd = specialGroup != 0;
 	}
 
 #ifdef CONTACTLISTNESTEDGROUP_OLD_CONTACTGROUPSCHANGED
@@ -188,6 +187,9 @@ void ContactListNestedGroup::contactGroupsChanged(PsiContact* contact, QStringLi
 
 	// remove the contact from the unnotified groups
 	foreach(ContactListGroup* group, unnotifiedGroups) {
+		if (group->isSpecial() && group->itemsCount())
+			continue;
+
 		group->contactGroupsChanged(contact, QStringList());
 		if (!group->itemsCount()) {
 			emptyGroups << group;
@@ -200,6 +202,10 @@ CL_DEBUG("ContactListNextedGroup(%x)::contactGroupsChanged: removing empty group
 		removeItem(ContactListGroup::findGroup(group));
 		groups_.remove(groups_.indexOf(group));
 		delete group;
+	}
+
+	if (restrictContactAdd) {
+		return;
 	}
 
 	// create new groups, if required
@@ -292,9 +298,9 @@ ContactListGroup* ContactListNestedGroup::specialGroupFor(PsiContact* contact)
 	else if (contact->isAgent()) {
 		type = ContactListGroup::SpecialType_Transports;
 	}
-	// else if (contact->noGroups()) {
-	// 	type = ContactListGroup::SpecialType_General;
-	// }
+	else if (contact->noGroups()) {
+		type = ContactListGroup::SpecialType_General;
+	}
 	else {
 		return 0;
 	}

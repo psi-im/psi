@@ -29,10 +29,10 @@ ContactListSpecialGroup::ContactListSpecialGroup(ContactListModel* model, Contac
 {
 	name_ = QString::fromUtf8("☣special_group_");
 	switch (specialType_) {
-	// case SpecialType_General:
-	// 	name_ += "general";
-	// 	displayName_ = tr("General");
-	// 	break;
+	case SpecialType_General:
+		name_ += "general";
+		displayName_ = tr("General");
+		break;
 	case SpecialType_NotInList:
 		name_ += "notinlist";
 		displayName_ = tr("Not in List");
@@ -50,9 +50,24 @@ ContactListSpecialGroup::ContactListSpecialGroup(ContactListModel* model, Contac
 	quietSetName(name_);
 }
 
-QStringList ContactListSpecialGroup::removeOperationsForSpecialGroupContact(PsiContact* contact) const
+QString ContactListSpecialGroup::sourceOperationsForSpecialGroupContact(PsiContact* contact) const
 {
-	return contact->groups();
+	return QString();
+}
+
+QString ContactListSpecialGroup::destinationOperationsForSpecialGroupContact(PsiContact* contact) const
+{
+	return QString();
+}
+
+QStringList ContactListSpecialGroup::moveOperationsForSpecialGroupContact(PsiContact* contact) const
+{
+	Q_ASSERT(isEditable());
+	QStringList result;
+	if (specialType_ == SpecialType_General) {
+		result << QString();
+	}
+	return result;
 }
 
 bool ContactListSpecialGroup::isSpecial() const
@@ -79,32 +94,34 @@ bool ContactListSpecialGroup::compare(const ContactListItem* other) const
 {
 	const ContactListGroup* group = dynamic_cast<const ContactListGroup*>(other);
 	if (group) {
-		if (!group->isSpecial())
-			return false;
-
-		const ContactListSpecialGroup* specialGroup = dynamic_cast<const ContactListSpecialGroup*>(other);
-		Q_ASSERT(specialGroup);
-
 		QMap<ContactListGroup::SpecialType, int> rank;
-		rank[SpecialType_MUCPrivateChats] = 0;
-		rank[SpecialType_Transports]      = 1;
-		rank[SpecialType_NotInList]       = 2;
+		rank[SpecialType_General]         = 0;
+		rank[SpecialType_None]            = 1;
+		rank[SpecialType_MUCPrivateChats] = 2;
+		rank[SpecialType_Transports]      = 3;
+		rank[SpecialType_NotInList]       = 4;
 		Q_ASSERT(rank.contains(specialGroupType()));
-		Q_ASSERT(rank.contains(specialGroup->specialGroupType()));
-		return rank[specialGroupType()] > rank[specialGroup->specialGroupType()];
+		Q_ASSERT(rank.contains(group->specialGroupType()));
+		return rank[specialGroupType()] < rank[group->specialGroupType()];
 	}
 
 	return ContactListGroup::compare(other);
 }
 
-bool ContactListSpecialGroup::isEditable() const
+bool ContactListSpecialGroup::isDragEnabled() const
 {
 	return false;
 }
 
+bool ContactListSpecialGroup::isEditable() const
+{
+	return specialType_ == SpecialType_General;
+}
+
 bool ContactListSpecialGroup::isRemovable() const
 {
-	return specialType_ == SpecialType_NotInList ||
+	return specialType_ == SpecialType_General ||
+	       specialType_ == SpecialType_NotInList ||
 	       specialType_ == SpecialType_MUCPrivateChats;
 }
 

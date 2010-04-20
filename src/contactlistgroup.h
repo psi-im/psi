@@ -89,7 +89,7 @@ public:
 	enum SpecialType {
 		SpecialType_None = 0,
 
-		// SpecialType_General,
+		SpecialType_General,
 		SpecialType_NotInList,
 		SpecialType_Transports,
 		SpecialType_MUCPrivateChats

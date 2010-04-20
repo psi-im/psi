@@ -424,7 +424,6 @@ mac {
 CONFIG += newcontactlist
 newcontactlist {
 	DEFINES += NEWCONTACTLIST
-	DEFINES += USE_GENERAL_CONTACT_GROUP
 	# DEFINES += CONTACTLIST_NESTED_GROUPS
 	HEADERS += \
 		$$PWD/contactlistview.h \

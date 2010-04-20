@@ -402,20 +402,20 @@ QStringList PsiContact::groups() const
 	else if (d->u_.groups().isEmpty()) {
 		// empty group name means that the contact should be added
 		// to the 'General' group or no group at all
-#ifdef USE_GENERAL_CONTACT_GROUP
-		result << generalGroupName();
-#else
+// #ifdef USE_GENERAL_CONTACT_GROUP
+// 		result << generalGroupName();
+// #else
 		result << QString();
-#endif
+// #endif
 	}
 	else {
 		foreach(QString group, d->u_.groups()) {
 			QString groupName = group.split(accountGroupDelimiter).join(globalGroupDelimiter);
-#ifdef USE_GENERAL_CONTACT_GROUP
-			if (groupName.isEmpty()) {
-				groupName = generalGroupName();
-			}
-#endif
+// #ifdef USE_GENERAL_CONTACT_GROUP
+// 			if (groupName.isEmpty()) {
+// 				groupName = generalGroupName();
+// 			}
+// #endif
 			if (!result.contains(groupName)) {
 				result << groupName;
 			}
@@ -438,11 +438,11 @@ void PsiContact::setGroups(QStringList newGroups)
 	QStringList newAccountGroups;
 	foreach(QString group, newGroups) {
 		QString groupName = group.split(globalGroupDelimiter).join(accountGroupDelimiter);
-#ifdef USE_GENERAL_CONTACT_GROUP
-		if (groupName == generalGroupName()) {
-			groupName = QString();
-		}
-#endif
+// #ifdef USE_GENERAL_CONTACT_GROUP
+// 		if (groupName == generalGroupName()) {
+// 			groupName = QString();
+// 		}
+// #endif
 		newAccountGroups << groupName;
 	}
 

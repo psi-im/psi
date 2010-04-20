@@ -262,8 +262,10 @@ bool ContactListDragModel::supportsMimeDataOnIndex(const QMimeData* data, const 
 		return false;
 	}
 
-#ifdef USE_GENERAL_CONTACT_GROUP
-	if (!parent.isValid()) {
+#if defined(YAPSI) and defined(USE_GENERAL_CONTACT_GROUP)
+	// in YaPsi there's no accounts in roster, and when General group is disabled,
+	// contacts could be placed directly at the top level
+	if (!accountsEnabled() && !parent.isValid()) {
 		return false;
 	}
 #endif
@@ -274,7 +276,7 @@ bool ContactListDragModel::supportsMimeDataOnIndex(const QMimeData* data, const 
 		ContactListGroup* group = dynamic_cast<ContactListGroup*>(item ? item->item() : 0);
 		if (!group)
 			group = item ? item->parent() : 0;
-		if (group && group->isSpecial())
+		if (group && !group->isEditable())
 			return false;
 	}
 
@@ -336,15 +338,18 @@ void ContactListDragModel::addOperationsForGroupRename(const QString& currentGro
 			PsiContact* contact = 0;
 			ContactListGroup* childGroup = 0;
 			if ((contact = dynamic_cast<PsiContact*>(itemProxy->item()))) {
-				foreach(const QString& g, removeOperationsForContactGroup(currentGroupName, contact)) {
-					operations->addOperation(contact, g, newGroupName);
-				}
+				operations->addOperation(contact,
+				                         sourceOperationsForContactGroup(currentGroupName, contact),
+				                         destinationOperationsForContactGroup(newGroupName, contact));
 			}
+#ifdef CONTACTLIST_NESTED_GROUPS
+#error needs testing
 			else if ((childGroup = dynamic_cast<ContactListGroup*>(itemProxy->item()))) {
 				QString theName = childGroup->fullName().split(ContactListGroup::groupDelimiter()).last();
 				QString newName = (newGroupName.isEmpty() ? "" : newGroupName + ContactListGroup::groupDelimiter()) + theName;
 				addOperationsForGroupRename(childGroup->fullName(), newName, operations);
 			}
+#endif
 		}
 	}
 }
@@ -363,9 +368,10 @@ bool ContactListDragModel::dropMimeData(const QMimeData* data, Qt::DropAction ac
 	foreach(ContactListModelSelection::Contact contact, selection.contacts()) {
 		PsiAccount* account = contactList()->getAccount(contact.account);
 		PsiContact* psiContact = account ? account->findContact(contact.jid) : 0;
+		QString toGroup = getDropGroupName(parent);
 		operations.addOperation(psiContact,
 		                        contact.group,
-		                        getDropGroupName(parent));
+		                        destinationOperationsForContactGroup(toGroup, psiContact));
 	}
 
 	foreach(ContactListModelSelection::Group group, selection.groups()) {
@@ -601,14 +607,24 @@ QString ContactListDragModel::getDropGroupName(const QModelIndex& parent) const
 	return QString();
 }
 
-QStringList ContactListDragModel::removeOperationsForContactGroup(const QString& groupName, PsiContact* contact) const
+QString ContactListDragModel::sourceOperationsForContactGroup(const QString& groupName, PsiContact* contact) const
 {
 	ContactListGroup* contactGroup = groupCache()->findGroup(groupName);
 	ContactListSpecialGroup* specialGroup = contactGroup ? dynamic_cast<ContactListSpecialGroup*>(contactGroup) : 0;
 	if (specialGroup) {
-		return specialGroup->removeOperationsForSpecialGroupContact(contact);
+		return specialGroup->sourceOperationsForSpecialGroupContact(contact);
 	}
-	return QStringList() << processContactSetGroupName(groupName);
+	return processContactSetGroupName(groupName);
+}
+
+QString ContactListDragModel::destinationOperationsForContactGroup(const QString& groupName, PsiContact* contact) const
+{
+	ContactListGroup* contactGroup = groupCache()->findGroup(groupName);
+	ContactListSpecialGroup* specialGroup = contactGroup ? dynamic_cast<ContactListSpecialGroup*>(contactGroup) : 0;
+	if (specialGroup) {
+		return specialGroup->destinationOperationsForSpecialGroupContact(contact);
+	}
+	return groupName;
 }
 
 ContactListModelOperationList ContactListDragModel::removeOperationsFor(const QMimeData* data) const
@@ -623,9 +639,9 @@ ContactListModelOperationList ContactListDragModel::removeOperationsFor(const QM
 		PsiAccount* account = contactList()->getAccount(contact.account);
 		PsiContact* psiContact = account ? account->findContact(contact.jid) : 0;
 
-		foreach(const QString& g, removeOperationsForContactGroup(contact.group, psiContact)) {
-			operations.addOperation(psiContact, g, QString());
-		}
+		operations.addOperation(psiContact,
+		                        sourceOperationsForContactGroup(contact.group, psiContact),
+		                        QString());
 	}
 
 	foreach(ContactListModelSelection::Group group, selection.groups()) {

@@ -534,7 +534,7 @@ void ContactListView::commitData(QWidget* editor)
 			}
 		}
 	}
-	setFocus();
+	// setFocus(); // commented out in order to avoid deep recursion
 	updateContextMenu();
 }
 

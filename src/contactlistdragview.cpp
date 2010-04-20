@@ -38,6 +38,7 @@
 #include "contactlistmodelselection.h"
 #include "contactlistitemmenu.h"
 #include "contactlistgroupstate.h"
+#include "contactlistgroup.h"
 
 ContactListDragView::ContactListDragView(QWidget* parent)
 	: ContactListView(parent)
@@ -521,6 +522,8 @@ QModelIndex ContactListDragView::itemToReorderGroup(const ContactListModelSelect
 		indexParent = indexParent.parent();
 	}
 	if (indexParent.parent() != groupParent || indexParent == selectedGroup)
+		return QModelIndex();
+	if (static_cast<ContactListGroup::SpecialType>(indexParent.data(ContactListModel::SpecialGroupTypeRole).toInt()) != ContactListGroup::SpecialType_None)
 		return QModelIndex();
 
 	// this code is necessary if we allow contacts on the same level as group items

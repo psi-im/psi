@@ -29,9 +29,12 @@ class ContactListSpecialGroup : public ContactListNestedGroup
 public:
 	ContactListSpecialGroup(ContactListModel* model, ContactListGroup* parent, ContactListGroup::SpecialType type);
 
-	QStringList removeOperationsForSpecialGroupContact(PsiContact* contact) const;
+	QString sourceOperationsForSpecialGroupContact(PsiContact* contact) const;
+	QString destinationOperationsForSpecialGroupContact(PsiContact* contact) const;
+	QStringList moveOperationsForSpecialGroupContact(PsiContact* contact) const;
 
 	// reimplemented
+	virtual bool isDragEnabled() const;
 	virtual bool isEditable() const;
 	virtual bool isRemovable() const;
 	virtual bool isSpecial() const;
