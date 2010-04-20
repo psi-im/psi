@@ -50,4 +50,6 @@ src/plugins/*/*/Makefile
 checker
 *.user
 *.user.*
+/mac/*.dmg
+/mac/disk
 
