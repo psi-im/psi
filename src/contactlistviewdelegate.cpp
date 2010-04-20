@@ -71,7 +71,7 @@ const HoverableStyleOptionViewItem& ContactListViewDelegate::opt() const
 	return d->opt;
 }
 
-const ContactListView* ContactListViewDelegate::contactList() const
+ContactListView* ContactListViewDelegate::contactList() const
 {
 	return d->contactList;
 }

@@ -21,6 +21,7 @@
 #include "psicontactlistviewdelegate.h"
 
 #include <QPainter>
+#include <QTimer>
 
 #include "psiiconset.h"
 #include "psioptions.h"
@@ -36,6 +37,11 @@ PsiContactListViewDelegate::PsiContactListViewDelegate(ContactListView* parent)
 	, font_(0)
 	, fontMetrics_(0)
 {
+	alertTimer_ = new QTimer(this);
+	alertTimer_->setInterval(100);
+	alertTimer_->setSingleShot(false);
+	connect(alertTimer_, SIGNAL(timeout()), SLOT(updateAlerts()));
+
 	connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
 	optionChanged(contactListFontOptionPath);
 	optionChanged(contactListBackgroundOptionPath);
@@ -61,6 +67,11 @@ QPixmap PsiContactListViewDelegate::statusPixmap(const QModelIndex& index) const
 	    type == ContactListModel::AccountType)
 	{
 		if (index.data(ContactListModel::IsAlertingRole).toBool()) {
+			if (!alertingIndexes_.contains(index)) {
+				alertingIndexes_[index] = true;
+				alertTimer_->start();
+			}
+
 			QVariant alertData = index.data(ContactListModel::AlertPictureRole);
 			QIcon alert;
 			if (alertData.isValid()) {
@@ -272,4 +283,39 @@ void PsiContactListViewDelegate::drawText(QPainter* painter, const QStyleOptionV
 	r.moveTop(r.top() + (r.height() - o.fontMetrics.height()) / 2);
 	rect.adjusted(0, 2, 0, 0);
 	ContactListViewDelegate::drawText(painter, o, r, text, index);
+}
+
+void PsiContactListViewDelegate::contactAlert(const QModelIndex& index)
+{
+	bool alerting = index.data(ContactListModel::IsAlertingRole).toBool();
+	if (alerting)
+		alertingIndexes_[index] = true;
+	else
+		alertingIndexes_.remove(index);
+
+	if (alertingIndexes_.isEmpty())
+		alertTimer_->stop();
+	else
+		alertTimer_->start();
+}
+
+void PsiContactListViewDelegate::clearAlerts()
+{
+	alertingIndexes_.clear();
+	alertTimer_->stop();
+}
+
+void PsiContactListViewDelegate::updateAlerts()
+{
+	Q_ASSERT(!alertingIndexes_.isEmpty());
+
+	QRect contactListRect = contactList()->rect();
+	QHashIterator<QModelIndex, bool> it(alertingIndexes_);
+	while (it.hasNext()) {
+		it.next();
+		QRect r = contactList()->visualRect(it.key());
+		if (contactListRect.intersects(r)) {
+			contactList()->dataChanged(it.key(), it.key());
+		}
+	}
 }

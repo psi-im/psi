@@ -30,6 +30,9 @@ public:
 	PsiContactListViewDelegate(ContactListView* parent);
 	~PsiContactListViewDelegate();
 
+	void contactAlert(const QModelIndex& index);
+	void clearAlerts();
+
 	// reimplemented
 	virtual int avatarSize() const;
 
@@ -51,11 +54,14 @@ protected:
 
 private slots:
 	void optionChanged(const QString& option);
+	void updateAlerts();
 
 private:
+	QTimer* alertTimer_;
 	QFont* font_;
 	QFontMetrics* fontMetrics_;
 	bool showStatusMessages_;
+	mutable QHash<QModelIndex, bool> alertingIndexes_;
 };
 
 #endif

@@ -639,12 +639,6 @@ public:
 		Q_UNUSED(jid);
 	}
 
-private:
-	void alertFrameUpdated()
-	{
-		// account->emitDataUpdated();
-	}
-
 public slots:
 	void queueChanged()
 	{

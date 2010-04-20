@@ -39,9 +39,6 @@ public:
 
 	void setAlert(const PsiIcon* icon);
 
-private slots:
-	virtual void alertFrameUpdated() = 0;
-
 private:
 	AlertIcon* alert_;
 };

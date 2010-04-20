@@ -34,6 +34,11 @@ PsiContactListView::PsiContactListView(QWidget* parent)
 	setItemDelegate(new PsiContactListViewDelegate(this));
 }
 
+PsiContactListViewDelegate* PsiContactListView::itemDelegate() const
+{
+	return static_cast<PsiContactListViewDelegate*>(ContactListDragView::itemDelegate());
+}
+
 void PsiContactListView::showToolTip(const QModelIndex& index, const QPoint& globalPos) const
 {
 	Q_UNUSED(globalPos);
@@ -52,7 +57,17 @@ void PsiContactListView::setModel(QAbstractItemModel* model)
 
 void PsiContactListView::contactAlert(const QModelIndex& realIndex)
 {
-	if (PsiOptions::instance()->getOption("options.ui.contactlist.ensure-contact-visible-on-event").toBool()) {
-		ensureVisible(proxyIndex(realIndex));
+	QModelIndex index = proxyIndex(realIndex);
+	itemDelegate()->contactAlert(index);
+
+	bool alerting = index.data(ContactListModel::IsAlertingRole).toBool();
+	if (alerting && PsiOptions::instance()->getOption("options.ui.contactlist.ensure-contact-visible-on-event").toBool()) {
+		ensureVisible(index);
 	}
+}
+
+void PsiContactListView::doItemsLayoutStart()
+{
+	ContactListDragView::doItemsLayoutStart();
+	itemDelegate()->clearAlerts();
 }

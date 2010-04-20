@@ -144,13 +144,6 @@ private slots:
 
 private:
 	PsiContact* contact_;
-
-	void alertFrameUpdated()
-	{
-#ifndef YAPSI
-		emit contact_->updated();
-#endif
-	}
 };
 
 /**
@@ -496,9 +489,7 @@ void PsiContact::setAlert(const PsiIcon* icon)
 	d->setAlert(icon);
 	// updateParent();
 #endif
-	if (icon) {
-		emit alert();
-	}
+	emit alert();
 }
 
 /**

@@ -42,7 +42,7 @@ public:
 	virtual ~ContactListViewDelegate();
 
 	virtual int avatarSize() const;
-	virtual const ContactListView* contactList() const;
+	virtual ContactListView* contactList() const;
 
 	// reimplemented
 	void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const;

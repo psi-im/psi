@@ -24,6 +24,7 @@
 #include "contactlistdragview.h"
 
 class QAbstractItemModel;
+class PsiContactListViewDelegate;
 
 class PsiContactListView : public ContactListDragView
 {
@@ -41,6 +42,9 @@ protected slots:
 protected:
 	// reimplemented
 	virtual void showToolTip(const QModelIndex& index, const QPoint& globalPos) const;
+	virtual void doItemsLayoutStart();
+
+	PsiContactListViewDelegate* itemDelegate() const;
 };
 
 #endif
