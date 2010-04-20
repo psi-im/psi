@@ -230,8 +230,9 @@ void PsiTabWidget::setTabText(QWidget* widget, const QString& label) {
 } 
 
 void PsiTabWidget::setCurrentPage(int index) {
-	Q_ASSERT(index >=0 && index < count());
-	showPage(widgets_[index]);
+	if (index >= 0 && index < count()) {
+		showPage(widgets_[index]);
+	}
 }
 
 void PsiTabWidget::removeCurrentPage() {
