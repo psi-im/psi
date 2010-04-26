@@ -308,6 +308,8 @@ void PsiContactListViewDelegate::clearAlerts()
 void PsiContactListViewDelegate::updateAlerts()
 {
 	Q_ASSERT(!alertingIndexes_.isEmpty());
+	if (!contactList()->isVisible())
+		return; // needed?
 
 	QRect contactListRect = contactList()->rect();
 	QHashIterator<QModelIndex, bool> it(alertingIndexes_);

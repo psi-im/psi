@@ -451,7 +451,8 @@ newcontactlist {
 		$$PWD/contactlistutil.h \
 		$$PWD/contactlistitemproxy.h \
 		$$PWD/contactupdatesmanager.h \
-		$$PWD/statusmenu.h
+		$$PWD/statusmenu.h \
+		$$PWD/psirosterwidget.h
 
 	SOURCES += \
 		$$PWD/contactlistview.cpp \
@@ -479,7 +480,8 @@ newcontactlist {
 		$$PWD/contactlistutil.cpp \
 		$$PWD/contactlistitemproxy.cpp \
 		$$PWD/contactupdatesmanager.cpp \
-		$$PWD/statusmenu.cpp
+		$$PWD/statusmenu.cpp \
+		$$PWD/psirosterwidget.cpp
 
 	!yapsi {
 		HEADERS += \

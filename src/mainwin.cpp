@@ -63,17 +63,8 @@
 #include "psicontactlist.h"
 #include "desktoputil.h"
 #ifdef NEWCONTACTLIST
-#include "psicontactlistmodel.h"
-#include "psicontactlistview.h"
-#include "contactlistproxymodel.h"
-#include "psicontact.h"
-#include "contactlistitemproxy.h"
-#include "contactlistgroup.h"
-#ifdef MODELTEST
-#include "modeltest.h"
+#include "psirosterwidget.h"
 #endif
-#endif
-#include "contactlistutil.h"
 
 #include "mainwin_p.h"
 
@@ -82,12 +73,6 @@
 
 using namespace XMPP;
 
-#ifdef NEWCONTACTLIST
-static const QString showOfflineOptionPath = "options.ui.contactlist.show.offline-contacts";
-static const QString showHiddenOptionPath = "options.ui.contactlist.show.hidden-contacts-group";
-static const QString showAgentsOptionPath = "options.ui.contactlist.show.agent-contacts";
-static const QString showSelfOptionPath = "options.ui.contactlist.show.self-contact";
-#endif
 static const QString showStatusMessagesOptionPath = "options.ui.contactlist.status-messages.show";
 
 // FIXME: this is a really corny way of getting the GStreamer version...
@@ -144,8 +129,7 @@ public:
 	bool squishEnabled;
 
 #ifdef NEWCONTACTLIST
-	PsiContactListView* contactListView_;
-	PsiContactListModel* contactListModel_;
+	PsiRosterWidget* rosterWidget_;
 #endif
 
 	void registerActions();
@@ -306,37 +290,8 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 #ifndef NEWCONTACTLIST
 	cvlist = new ContactView(center);
 #else
-	connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
-
-	connect(psiCon()->contactList(), SIGNAL(showAgentsChanged(bool)), SLOT(showAgentsChanged(bool)));
-	connect(psiCon()->contactList(), SIGNAL(showHiddenChanged(bool)), SLOT(showHiddenChanged(bool)));
-	connect(psiCon()->contactList(), SIGNAL(showSelfChanged(bool)), SLOT(showSelfChanged(bool)));
-	connect(psiCon()->contactList(), SIGNAL(showOfflineChanged(bool)), SLOT(showOfflineChanged(bool)));
-	optionChanged(showAgentsOptionPath);
-	optionChanged(showHiddenOptionPath);
-	optionChanged(showSelfOptionPath);
-	optionChanged(showOfflineOptionPath);
-
-	d->contactListModel_ = new PsiContactListModel(psiCon()->contactList());
-	d->contactListModel_->invalidateLayout();
-	d->contactListModel_->setGroupsEnabled(true);
-	d->contactListModel_->setAccountsEnabled(true);
-	d->contactListModel_->storeGroupState("contacts");
-#ifdef MODELTEST
-	new ModelTest(d->contactListModel_, this);
-#endif
-
-	ContactListProxyModel* contactListProxyModel = new ContactListProxyModel(this);
-	contactListProxyModel->setSourceModel(d->contactListModel_);
-#ifdef MODELTEST
-	new ModelTest(contactListProxyModel, this);
-#endif
-
-	d->contactListView_ = new PsiContactListView(center);
-	d->contactListView_->setObjectName("contactListView");
-	d->contactListView_->setModel(contactListProxyModel);
-	connect(d->contactListView_, SIGNAL(removeSelection(QMimeData*)), SLOT(removeSelection(QMimeData*)));
-	connect(d->contactListView_, SIGNAL(removeGroupWithoutContacts(QMimeData*)), SLOT(removeGroupWithoutContacts(QMimeData*)));
+	d->rosterWidget_ = new PsiRosterWidget(center);
+	d->rosterWidget_->setContactList(psi->contactList());
 #endif
 
 	int layoutMargin = 2;
@@ -345,12 +300,14 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 #ifndef NEWCONTACTLIST
 	cvlist->setFrameShape(QFrame::NoFrame);
 #else
-	d->contactListView_->setFrameShape(QFrame::NoFrame);
+	// FIXME
+	// d->contactListView_->setFrameShape(QFrame::NoFrame);
 #endif
 #endif
 	d->vb_main->setMargin(layoutMargin);
 	d->vb_main->setSpacing(layoutMargin);
 
+#ifndef NEWCONTACTLIST
 	// create search bar
 	d->searchWidget = new QWidget(centralWidget());
 	d->vb_main->addWidget(d->searchWidget);
@@ -363,16 +320,16 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 	d->searchPb = new QToolButton(d->searchWidget);
 	d->searchPb->setText("X");
 	connect(d->searchPb,SIGNAL(clicked()),SLOT(searchClearClicked()));
-#ifndef NEWCONTACTLIST
 	connect(cvlist, SIGNAL(searchInput(const QString&)), SLOT(searchTextStarted(const QString&)));
-#endif
 	searchLayout->addWidget(d->searchPb);
 	d->searchWidget->setVisible(false);
+#endif
+
 	//add contact view
 #ifndef NEWCONTACTLIST
 	d->vb_main->addWidget(cvlist);
 #else
-	d->vb_main->addWidget(d->contactListView_);
+	d->vb_main->addWidget(d->rosterWidget_);
 #endif
 
 #ifdef Q_WS_MAC
@@ -1467,86 +1424,6 @@ void MainWin::setWindowIcon(const QPixmap&)
 void MainWin::setWindowIcon(const QPixmap& p)
 {
 	QMainWindow::setWindowIcon(p);
-}
-#endif
-
-#ifdef NEWCONTACTLIST
-void MainWin::removeSelection(QMimeData* selection)
-{
-	ContactListUtil::removeContact(0, selection, d->contactListModel_, this, this);
-}
-
-void MainWin::removeContactConfirmation(const QString& id, bool confirmed)
-{
-	ContactListUtil::removeContactConfirmation(id, confirmed, d->contactListModel_, d->contactListView_);
-}
-
-void MainWin::removeGroupWithoutContacts(QMimeData* selection)
-{
-	int n = QMessageBox::information(d->contactListView_, tr("Remove Group"),
-	                                 tr("This will cause all contacts in this group to be disassociated with it.\n"
-	                                    "\n"
-	                                    "Proceed?"),
-	                                 tr("&Yes"), tr("&No"));
-
-	if (n == 0) {
-		QModelIndexList indexes = d->contactListModel_->indexesFor(0, selection);
-		Q_ASSERT(indexes.count() == 1);
-		Q_ASSERT(d->contactListModel_->indexType(indexes.first()) == ContactListModel::GroupType);
-		if (indexes.count() != 1)
-			return;
-		ContactListItemProxy* proxy = d->contactListModel_->modelIndexToItemProxy(indexes.first());
-		ContactListGroup* group = proxy ? dynamic_cast<ContactListGroup*>(proxy->item()) : 0;
-		if (!group)
-			return;
-
-		QList<PsiContact*> contacts = group->contacts();
-		foreach(PsiContact* c, group->contacts()) {
-			c->account()->actionGroupRemove(c->jid(), group->name());
-		}
-	}
-}
-
-void MainWin::optionChanged(const QString& option)
-{
-	PsiContactList* contactList = psiCon()->contactList();
-	if (option == showAgentsOptionPath && contactList) {
-		contactList->setShowAgents(PsiOptions::instance()->getOption(showAgentsOptionPath).toBool());
-	}
-	else if (option == showHiddenOptionPath && contactList) {
-		contactList->setShowHidden(PsiOptions::instance()->getOption(showHiddenOptionPath).toBool());
-	}
-	else if (option == showSelfOptionPath && contactList) {
-		contactList->setShowSelf(PsiOptions::instance()->getOption(showSelfOptionPath).toBool());
-	}
-	else if (option == showOfflineOptionPath && contactList) {
-		contactList->setShowOffline(PsiOptions::instance()->getOption(showOfflineOptionPath).toBool());
-	}
-}
-
-void MainWin::showAgentsChanged(bool enabled)
-{
-	PsiOptions::instance()->setOption(showAgentsOptionPath, enabled);
-}
-
-void MainWin::showHiddenChanged(bool enabled)
-{
-	PsiOptions::instance()->setOption(showHiddenOptionPath, enabled);
-}
-
-void MainWin::showSelfChanged(bool enabled)
-{
-	PsiOptions::instance()->setOption(showSelfOptionPath, enabled);
-}
-
-void MainWin::showOfflineChanged(bool enabled)
-{
-	PsiOptions::instance()->setOption(showOfflineOptionPath, enabled);
-}
-
-void MainWin::setShowStatusMsg(bool enabled)
-{
-	PsiOptions::instance()->setOption(showStatusMessagesOptionPath, enabled);
 }
 #endif
 

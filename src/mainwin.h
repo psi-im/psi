@@ -140,19 +140,6 @@ private slots:
 
 	void registerAction( IconAction * );
 
-#ifdef NEWCONTACTLIST
-	void removeSelection(QMimeData* selection);
-	void removeGroupWithoutContacts(QMimeData* selection);
-	void optionChanged(const QString& option);
-	void showAgentsChanged(bool);
-	void showHiddenChanged(bool);
-	void showSelfChanged(bool);
-	void showOfflineChanged(bool);
-	void setShowStatusMsg(bool);
-
-	void removeContactConfirmation(const QString& id, bool confirmed);
-#endif
-
 public slots:
 	void setWindowIcon(const QPixmap&);
 	void showNoFocus();
