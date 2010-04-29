@@ -1095,6 +1095,7 @@ void MainWin::closeEvent(QCloseEvent* e)
 
 void MainWin::keyPressEvent(QKeyEvent* e)
 {
+#ifndef NEWCONTACTLIST
 #ifdef Q_WS_MAC
 	bool allowed = true;
 #else
@@ -1120,7 +1121,7 @@ void MainWin::keyPressEvent(QKeyEvent* e)
 		e->accept();
 		return;
 	}
-
+#endif
 	QWidget::keyPressEvent(e);
 }
 

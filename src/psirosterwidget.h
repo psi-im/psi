@@ -30,6 +30,8 @@ class QStackedWidget;
 class PsiContactListView;
 class QStackedWidget;
 class QMimeData;
+class QLineEdit;
+class QSortFilterProxyModel;
 
 class PsiRosterWidget : public QWidget
 {
@@ -39,6 +41,12 @@ public:
 	~PsiRosterWidget();
 
 	void setContactList(PsiContactList* contactList);
+
+public slots:
+	void filterEditTextChanged(const QString&);
+	void quitFilteringMode();
+	void updateFilterMode();
+	void setFilterModeEnabled(bool enabled);
 
 private slots:
 	void removeSelection(QMimeData* selection);
@@ -52,6 +60,9 @@ private slots:
 
 	void removeContactConfirmation(const QString& id, bool confirmed);
 
+protected:
+	bool eventFilter(QObject* obj, QEvent* e);
+
 private:
 	QPointer<PsiContactList> contactList_;
 	QStackedWidget* stackedWidget_;
@@ -59,9 +70,10 @@ private:
 	QWidget* filterPage_;
 	PsiContactListView* contactListPageView_;
 	PsiContactListView* filterPageView_;
+	QLineEdit* filterEdit_;
 
 	PsiContactListModel* contactListModel_;
-	PsiContactListModel* filterModel_;
+	QSortFilterProxyModel* filterModel_;
 };
 
 #endif

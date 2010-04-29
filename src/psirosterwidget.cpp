@@ -23,6 +23,9 @@
 #include <QVBoxLayout>
 #include <QStackedWidget>
 #include <QMessageBox>
+#include <QLineEdit>
+#include <QSortFilterProxyModel>
+#include <QKeyEvent>
 
 #include "psicontactlistmodel.h"
 #include "psicontactlistview.h"
@@ -42,6 +45,60 @@ static const QString showHiddenOptionPath = "options.ui.contactlist.show.hidden-
 static const QString showAgentsOptionPath = "options.ui.contactlist.show.agent-contacts";
 static const QString showSelfOptionPath = "options.ui.contactlist.show.self-contact";
 static const QString showStatusMessagesOptionPath = "options.ui.contactlist.status-messages.show";
+
+//----------------------------------------------------------------------------
+// PsiRosterFilterProxyModel
+//----------------------------------------------------------------------------
+
+class PsiRosterFilterProxyModel : public QSortFilterProxyModel
+{
+	Q_OBJECT
+public:
+	PsiRosterFilterProxyModel(QObject* parent)
+		: QSortFilterProxyModel(parent)
+	{
+		sort(0, Qt::AscendingOrder);
+		setDynamicSortFilter(true);
+		setFilterCaseSensitivity(Qt::CaseInsensitive);
+		setSortLocaleAware(true);
+	}
+
+protected:
+	// reimplemented
+	bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const
+	{
+		QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
+
+		QStringList data;
+		if (index.isValid()) {
+			// TODO: also check for vCard value
+			data
+				<< index.data(Qt::DisplayRole).toString()
+				<< index.data(ContactListModel::JidRole).toString();
+		}
+
+		foreach(QString str, data) {
+			if (str.contains(filterRegExp()))
+				return true;
+		}
+
+		return false;
+	}
+
+	// reimplemented
+	bool lessThan(const QModelIndex& left, const QModelIndex& right) const
+	{
+		ContactListItemProxy* item1 = static_cast<ContactListItemProxy*>(left.internalPointer());
+		ContactListItemProxy* item2 = static_cast<ContactListItemProxy*>(right.internalPointer());
+		if (!item1 || !item2)
+			return false;
+		return item1->item()->compare(item2->item());
+	}
+};
+
+//----------------------------------------------------------------------------
+// PsiRosterWidget
+//----------------------------------------------------------------------------
 
 PsiRosterWidget::PsiRosterWidget(QWidget* parent)
 	: QWidget(parent)
@@ -69,6 +126,7 @@ PsiRosterWidget::PsiRosterWidget(QWidget* parent)
 	QVBoxLayout* contactListPageLayout = new QVBoxLayout(contactListPage_);
 	contactListPageLayout->setMargin(0);
 	contactListPageView_ = new PsiContactListView(contactListPage_);
+	contactListPageView_->installEventFilter(this);
 	contactListPageView_->setObjectName("contactListView");
 	contactListPageLayout->addWidget(contactListPageView_);
 
@@ -79,7 +137,14 @@ PsiRosterWidget::PsiRosterWidget(QWidget* parent)
 
 	QVBoxLayout* filterPageLayout = new QVBoxLayout(filterPage_);
 	filterPageLayout->setMargin(0);
+
+	filterEdit_ = new QLineEdit(filterPage_);
+	connect(filterEdit_, SIGNAL(textChanged(const QString&)), SLOT(filterEditTextChanged(const QString&)));
+	filterPage_->installEventFilter(this);
+	filterPageLayout->addWidget(filterEdit_);
+
 	filterPageView_ = new PsiContactListView(filterPage_);
+	filterPageView_->installEventFilter(this);
 	filterPageLayout->addWidget(filterPageView_);
 }
 
@@ -121,6 +186,16 @@ void PsiRosterWidget::setContactList(PsiContactList* contactList)
 	contactListPageView_->setModel(contactListProxyModel);
 	connect(contactListPageView_, SIGNAL(removeSelection(QMimeData*)), SLOT(removeSelection(QMimeData*)));
 	connect(contactListPageView_, SIGNAL(removeGroupWithoutContacts(QMimeData*)), SLOT(removeGroupWithoutContacts(QMimeData*)));
+
+	{
+		filterModel_ = new PsiRosterFilterProxyModel(this);
+
+		ContactListModel* clone = contactListModel_->clone();
+		clone->invalidateLayout();
+
+		filterModel_->setSourceModel(clone);
+		filterPageView_->setModel(filterModel_);
+	}
 }
 
 void PsiRosterWidget::optionChanged(const QString& option)
@@ -202,3 +277,101 @@ void PsiRosterWidget::setShowStatusMsg(bool enabled)
 {
 	PsiOptions::instance()->setOption(showStatusMessagesOptionPath, enabled);
 }
+
+void PsiRosterWidget::filterEditTextChanged(const QString& text)
+{
+	updateFilterMode();
+	filterModel_->setFilterRegExp(QString("^%1|[@]%1|\\s%1").arg(QRegExp::escape(text)));
+}
+
+void PsiRosterWidget::quitFilteringMode()
+{
+	setFilterModeEnabled(false);
+}
+
+void PsiRosterWidget::updateFilterMode()
+{
+	setFilterModeEnabled(!filterEdit_->text().isEmpty());
+}
+
+void PsiRosterWidget::setFilterModeEnabled(bool enabled)
+{
+	bool currentlyEnabled = stackedWidget_->currentWidget() == filterPage_;
+	if (enabled == currentlyEnabled)
+		return;
+
+	PsiContactListView* selectionSource = 0;
+	PsiContactListView* selectionDestination = 0;
+
+	if (enabled) {
+		selectionSource = contactListPageView_;
+		selectionDestination = filterPageView_;
+
+		stackedWidget_->setCurrentWidget(filterPage_);
+
+		filterEdit_->selectAll();
+		filterEdit_->setFocus();
+	}
+	else {
+		selectionSource = filterPageView_;
+		selectionDestination = contactListPageView_;
+
+		stackedWidget_->setCurrentWidget(contactListPage_);
+		contactListPageView_->setFocus();
+	}
+
+	QMimeData* selection = selectionSource->selection();
+	selectionDestination->restoreSelection(selection);
+	delete selection;
+}
+
+bool PsiRosterWidget::eventFilter(QObject* obj, QEvent* e)
+{
+	if (e->type() == QEvent::DeferredDelete || e->type() == QEvent::Destroy) {
+		return false;
+	}
+
+#if 0
+	// we probably don't want this behavior in Psi
+	if (e->type() == QEvent::WindowDeactivate) {
+		setFilterModeEnabled(false);
+	}
+#endif
+
+	if (!isActiveWindow())
+		return false;
+
+	if (e->type() == QEvent::KeyPress) {
+		QKeyEvent* ke = static_cast<QKeyEvent*>(e);
+		QString text = ke->text().trimmed();
+		if (!text.isEmpty() && (obj == contactListPageView_ || obj == contactListPage_)) {
+			bool correctChar = (text[0].isLetterOrNumber() || text[0].isPunct()) &&
+			                   (ke->modifiers() == Qt::NoModifier);
+			if (correctChar && !contactListPageView_->textInputInProgress()) {
+				setFilterModeEnabled(true);
+				filterEdit_->setText(text);
+				return true;
+			}
+		}
+
+		if (obj == filterEdit_ || obj == filterPageView_ || obj == filterPage_) {
+			if (ke->key() == Qt::Key_Escape) {
+				setFilterModeEnabled(false);
+				return true;
+			}
+
+			if (ke->key() == Qt::Key_Backspace && filterEdit_->text().isEmpty()) {
+				setFilterModeEnabled(false);
+				return true;
+			}
+
+			if (filterPageView_->handleKeyPressEvent(ke)) {
+				return true;
+			}
+		}
+	}
+
+	return QObject::eventFilter(obj, e);
+}
+
+#include "psirosterwidget.moc"
