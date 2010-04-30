@@ -29,6 +29,7 @@
 
 #include "psicontactlistmodel.h"
 #include "psicontactlistview.h"
+#include "psifilteredcontactlistview.h"
 #include "contactlistproxymodel.h"
 #include "psicontact.h"
 #include "contactlistitemproxy.h"
@@ -140,10 +141,11 @@ PsiRosterWidget::PsiRosterWidget(QWidget* parent)
 
 	filterEdit_ = new QLineEdit(filterPage_);
 	connect(filterEdit_, SIGNAL(textChanged(const QString&)), SLOT(filterEditTextChanged(const QString&)));
-	filterPage_->installEventFilter(this);
+	filterEdit_->installEventFilter(this);
 	filterPageLayout->addWidget(filterEdit_);
 
-	filterPageView_ = new PsiContactListView(filterPage_);
+	filterPageView_ = new PsiFilteredContactListView(filterPage_);
+	connect(filterPageView_, SIGNAL(quitFilteringMode()), SLOT(quitFilteringMode()));
 	filterPageView_->installEventFilter(this);
 	filterPageLayout->addWidget(filterPageView_);
 }
@@ -191,6 +193,8 @@ void PsiRosterWidget::setContactList(PsiContactList* contactList)
 		filterModel_ = new PsiRosterFilterProxyModel(this);
 
 		ContactListModel* clone = contactListModel_->clone();
+		clone->setGroupsEnabled(false);
+		clone->setAccountsEnabled(false);
 		clone->invalidateLayout();
 
 		filterModel_->setSourceModel(clone);

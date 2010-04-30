@@ -32,6 +32,7 @@ class QStackedWidget;
 class QMimeData;
 class QLineEdit;
 class QSortFilterProxyModel;
+class PsiFilteredContactListView;
 
 class PsiRosterWidget : public QWidget
 {
@@ -69,7 +70,7 @@ private:
 	QWidget* contactListPage_;
 	QWidget* filterPage_;
 	PsiContactListView* contactListPageView_;
-	PsiContactListView* filterPageView_;
+	PsiFilteredContactListView* filterPageView_;
 	QLineEdit* filterEdit_;
 
 	PsiContactListModel* contactListModel_;
