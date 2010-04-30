@@ -303,6 +303,14 @@ Status PsiContact::status() const
 	return d->status_;
 }
 
+QString PsiContact::statusText() const
+{
+	if (d->u_.priority() == d->u_.userResourceList().end()) {
+		return d->u_.lastUnavailableStatus().status();
+	}
+	return d->status_.status();
+}
+
 /**
  * Returns tool tip text for contact in HTML format.
  */

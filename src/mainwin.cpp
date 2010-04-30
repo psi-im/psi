@@ -492,7 +492,7 @@ void MainWin::registerAction( IconAction* action )
 		{ "show_hidden",    toggled, contactList, SLOT( setShowHidden(bool) ) },
 		{ "show_agents",    toggled, contactList, SLOT( setShowAgents(bool) ) },
 		{ "show_self",      toggled, contactList, SLOT( setShowSelf(bool) ) },
-		{ "show_statusmsg", toggled, this, SLOT( setShowStatusMsg(bool) ) },
+		{ "show_statusmsg", toggled, d->rosterWidget_, SLOT( setShowStatusMsg(bool) ) },
 #endif
 
 		{ "button_options", activated, this, SIGNAL( doOptions() ) },
@@ -579,15 +579,17 @@ void MainWin::registerAction( IconAction* action )
 		{ "show_offline",   contactList, SIGNAL(showOfflineChanged(bool)), setChecked, contactList->showOffline()},
 		{ "show_self",      contactList, SIGNAL(showSelfChanged(bool)), setChecked, contactList->showSelf()},
 		{ "show_agents",    contactList, SIGNAL(showAgentsChanged(bool)), setChecked, contactList->showAgents()},
-		// { "show_statusmsg", contactList, SIGNAL(showStatusMsgChanged(bool)), setChecked, contactList->showStatusMsg()},
+		{ "show_statusmsg", 0, 0, 0, false},
 #endif
 		{ "", 0, 0, 0, false }
 	};
 
 	for ( i = 0; !(aName = QString(reverseactionlist[i].name)).isEmpty(); i++ ) {
 		if ( aName == action->objectName() ) {
-			disconnect( reverseactionlist[i].sender, reverseactionlist[i].signal, action, reverseactionlist[i].slot ); // for safety
-			connect( reverseactionlist[i].sender, reverseactionlist[i].signal, action, reverseactionlist[i].slot );
+			if (reverseactionlist[i].sender) {
+				disconnect( reverseactionlist[i].sender, reverseactionlist[i].signal, action, reverseactionlist[i].slot ); // for safety
+				connect( reverseactionlist[i].sender, reverseactionlist[i].signal, action, reverseactionlist[i].slot );
+			}
 
 			if (aName == "show_statusmsg") {
 				action->setChecked( PsiOptions::instance()->getOption(showStatusMessagesOptionPath).toBool() );

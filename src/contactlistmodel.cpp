@@ -478,7 +478,7 @@ QVariant ContactListModel::contactData(const PsiContact* contact, int role) cons
 		return QVariant(contact->picture());
 	}
 	else if (role == StatusTextRole) {
-		return QVariant(contact->status().status().simplified());
+		return QVariant(contact->statusText().simplified());
 	}
 	else if (role == StatusTypeRole) {
 		return QVariant(contact->status().type());

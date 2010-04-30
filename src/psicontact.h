@@ -100,6 +100,7 @@ public:
 
 	virtual XMPP::Jid jid() const;
 	virtual XMPP::Status status() const;
+	virtual QString statusText() const;
 	virtual QString toolTip() const;
 	virtual QIcon picture() const;
 	virtual QIcon alertPicture() const;
