@@ -138,6 +138,7 @@ PsiRosterWidget::PsiRosterWidget(QWidget* parent)
 
 	QVBoxLayout* filterPageLayout = new QVBoxLayout(filterPage_);
 	filterPageLayout->setMargin(0);
+	filterPageLayout->setSpacing(0);
 
 	filterEdit_ = new QLineEdit(filterPage_);
 	connect(filterEdit_, SIGNAL(textChanged(const QString&)), SLOT(filterEditTextChanged(const QString&)));

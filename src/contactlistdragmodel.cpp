@@ -246,7 +246,8 @@ QModelIndexList ContactListDragModel::indexesFor(const QMimeData* data) const
 		if (!acc)
 			continue;
 		ContactListAccountGroup* rootGroup = dynamic_cast<ContactListAccountGroup*>(this->rootGroup());
-		Q_ASSERT(rootGroup);
+		if (!rootGroup)
+			continue;
 		ContactListGroup* accountGroup = rootGroup->findAccount(acc);
 		QModelIndex index = groupToIndex(accountGroup);
 		if (!result.contains(index))
