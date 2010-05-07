@@ -1097,7 +1097,6 @@ void MainWin::closeEvent(QCloseEvent* e)
 
 void MainWin::keyPressEvent(QKeyEvent* e)
 {
-#ifndef NEWCONTACTLIST
 #ifdef Q_WS_MAC
 	bool allowed = true;
 #else
@@ -1106,11 +1105,15 @@ void MainWin::keyPressEvent(QKeyEvent* e)
 
 	bool closekey = false;
 	if(e->key() == Qt::Key_Escape) {
+#ifndef NEWCONTACTLIST
 		if (d->searchWidget->isVisible()) {
 			searchClearClicked();
 		} else {
 			closekey = true;
 		}
+#else
+		closekey = true;
+#endif
 	}
 #ifdef Q_WS_MAC
 	else if(e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier) {
@@ -1123,7 +1126,6 @@ void MainWin::keyPressEvent(QKeyEvent* e)
 		e->accept();
 		return;
 	}
-#endif
 	QWidget::keyPressEvent(e);
 }
 
