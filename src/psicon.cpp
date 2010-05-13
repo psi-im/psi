@@ -452,11 +452,12 @@ bool PsiCon::init()
 	connect(PsiIconset::instance(), SIGNAL(emoticonsChanged()), d, SLOT(updateIconSelect()));
 
 	// first thing, try to load the iconset
+	bool result = true;;
 	if( !PsiIconset::instance()->loadAll() ) {
 		//LEGOPTS.iconset = "stellar";
 		//if(!is.load(LEGOPTS.iconset)) {
 			QMessageBox::critical(0, tr("Error"), tr("Unable to load iconset!  Please make sure Psi is properly installed."));
-			return false;
+			result = false;
 		//}
 	}
 
@@ -632,7 +633,7 @@ bool PsiCon::init()
 		AvCallManager::setExternalAddress(PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString());
 	}
 
-	return true;
+	return result;
 }
 
 bool PsiCon::haveAutoUpdater() const
