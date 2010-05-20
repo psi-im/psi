@@ -1004,7 +1004,8 @@ void EventDlg::init()
 	connect(d->pa, SIGNAL(pgpKeyChanged()), SLOT(updatePGP()));
 	connect(d->pa, SIGNAL(encryptedMessageSent(int, bool, int, const QString &)), SLOT(encryptedMessageSent(int, bool, int, const QString &)));
 
-	if (PsiOptions::instance()->getOption("options.ui.message.size").toSize().isValid()) {
+	bool use = PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool();
+	if (PsiOptions::instance()->getOption("options.ui.message.size").toSize().isValid() && use) {
 		resize(PsiOptions::instance()->getOption("options.ui.message.size").toSize());
 	} else {
 		resize(defaultSize());
@@ -1421,8 +1422,9 @@ void EventDlg::showEvent(QShowEvent *e)
 
 void EventDlg::resizeEvent(QResizeEvent *e)
 {
-	if(PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool())
-		PsiOptions::instance()->getOption("options.ui.message.size").toSize() = e->size();
+	if(PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool()) {
+		PsiOptions::instance()->setOption("options.ui.message.size", e->size());
+	}
 }
 
 void EventDlg::keyPressEvent(QKeyEvent *e)
