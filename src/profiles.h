@@ -54,6 +54,8 @@ public:
 	QString name;
 	QString jid, pass, host, resource, authid, realm;
 	bool customAuth;
+	bool storeSaltedHashedPassword;
+	QString scramSaltedHashPassword;
 	int port, priority;
  	bool opt_enabled, opt_pass, opt_host, opt_auto, opt_keepAlive, opt_log, opt_connectAfterSleep, opt_reconn, opt_ignoreSSLWarnings, opt_compress;
 	XMPP::ClientStream::AllowPlainType allow_plain;

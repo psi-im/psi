@@ -1764,9 +1764,10 @@ void PsiAccount::cs_needAuthParams(bool user, bool pass, bool realm)
 	else if (d->acc.customAuth && !d->acc.authid.isEmpty())
 		qWarning("Custom authentication user not used");
 
-	if(pass)
+	if(pass) {
 		d->stream->setPassword(d->acc.pass);
-
+		if (d->acc.storeSaltedHashedPassword) d->stream->setSCRAMStoredSaltedHash(d->acc.scramSaltedHashPassword);
+	}
 	if (realm) {
 		if (d->acc.customAuth && !d->acc.realm.isEmpty()) {
 			d->stream->setRealm(d->acc.realm);
@@ -1788,6 +1789,11 @@ void PsiAccount::cs_authenticated()
 	if (d->conn.isNull() || d->stream.isNull()) {
 		cs_error(RECONNECT_TIMEOUT_ERROR);
 		return;
+	}
+
+	if (d->acc.storeSaltedHashedPassword) {
+		d->acc.scramSaltedHashPassword = d->stream->getSCRAMStoredSaltedHash();
+		d->acc.pass = "";
 	}
 
 	//printf("PsiAccount: [%s] authenticated\n", name().latin1());
@@ -2791,7 +2797,7 @@ void PsiAccount::setStatus(const Status &_s,  bool withPriority, bool isManualSt
 				return;
 			}
 
-			if(!d->acc.opt_pass) {
+			if(!d->acc.opt_pass && !d->acc.storeSaltedHashedPassword) {
 				// will call back to us later
 				new AccountLoginPassword(this);
 			} else {

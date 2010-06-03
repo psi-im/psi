@@ -120,12 +120,14 @@ void UserAccount::reset()
 	tog_agents = true;
 	tog_self = false;
 	customAuth = false;
+	storeSaltedHashedPassword = false;
 	req_mutual_auth = false;
 	legacy_ssl_probe = false;
 	security_level = QCA::SL_None;
 	ssl = SSL_Auto;
 	jid = "";
 	pass = "";
+	scramSaltedHashPassword = "";
 	opt_pass = false;
 	port = 5222;
 	opt_host = false;
@@ -201,6 +203,10 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	customAuth = o->getOption(base + ".custom-auth.use").toBool();
 	authid = o->getOption(base + ".custom-auth.authid").toString();
 	realm = o->getOption(base + ".custom-auth.realm").toString();
+
+	// read scram salted password options
+	storeSaltedHashedPassword = o->getOption(base + ".scram.store-salted-password").toBool();
+	scramSaltedHashPassword = o->getOption(base + ".scram.salted-password").toString();
 
 	// read password (we must do this after reading the jid, to decode properly)
 	QString tmp = o->getOption(base + ".password").toString();
@@ -332,6 +338,9 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 	o->setOption(base + ".custom-auth.use", customAuth);
 	o->setOption(base + ".custom-auth.authid", authid);
 	o->setOption(base + ".custom-auth.realm", realm);
+
+	o->setOption(base + ".scram.store-salted-password", storeSaltedHashedPassword);
+	o->setOption(base + ".scram.salted-password", scramSaltedHashPassword);
 
 	if(opt_pass) {
 		o->setOption(base + ".password", encodePassword(pass, jid));
