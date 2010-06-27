@@ -2555,6 +2555,11 @@ void PsiAccount::client_messageReceived(const Message &m)
 #endif
 
 	processIncomingMessage(_m);
+
+	XMPP::ClientStream *cs = qobject_cast<XMPP::ClientStream*>(&(d->client->stream()));
+	if (cs) {
+		cs->ackLastMessageStanza();
+	}
 }
 
 /**
