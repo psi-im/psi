@@ -34,7 +34,7 @@ public:
 	void close() { }
 	bool stanzaAvailable() const { return false; }
 	XMPP::Stanza read() { return XMPP::Stanza(); }
-	void write(const XMPP::Stanza &) { }
+	void write(const XMPP::Stanza &, bool notify = false) { }
 
 	int errorCondition() const { return 0; }
 	QString errorText() const { return QString::null; }

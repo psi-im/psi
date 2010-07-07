@@ -434,6 +434,7 @@ private slots:
 	void processReadNext(const UserListItem &);
 	void processReadNext(const Jid &);
 
+	void messageStanzasAcked(int n);
 protected:
 	bool validRosterExchangeItem(const RosterExchangeItem&);
 	QString localHostName();
