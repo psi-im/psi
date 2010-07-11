@@ -18,6 +18,7 @@
 #include <QDragEnterEvent>
 #include <QMessageBox>
 #include <QDebug>
+#include <QMovie>
 
 #include "psicon.h"
 #include "psiaccount.h"
@@ -47,7 +48,7 @@
 
 #define MCMDCHAT		"http://psi-im.org/ids/mcmd#chatmain"
 
-
+QMovie *PsiChatDlg::throbber_movie = 0;
 
 class PsiChatDlg::ChatDlgMCmdProvider : public QObject, public MCmdProviderIface {
 	Q_OBJECT
@@ -224,6 +225,12 @@ void PsiChatDlg::initUi()
 
 	ui_.mini_prompt->hide();
 
+	if (throbber_movie == 0) {
+		throbber_movie = new QMovie(ApplicationInfo::resourcesDir() + "/iconsets/system/default/tango-throbber.mng");
+		throbber_movie->start();
+		qDebug() << "Movie valid: " << throbber_movie->isValid();
+	}
+	unacked_messages = 0;
 }
 
 void PsiChatDlg::updateCountVisibility()
@@ -374,7 +381,12 @@ void PsiChatDlg::activated()
 
 void PsiChatDlg::setContactToolTip(QString text)
 {
-	ui_.lb_status->setToolTip(text);
+	last_contact_tooltip = text;
+	QString sm_info;
+	if (unacked_messages > 0) {
+		sm_info = QString().sprintf("\nUnacked messages: %d", unacked_messages);
+	}
+	ui_.lb_status->setToolTip(text + sm_info);
 	ui_.avatar->setToolTip(text);
 }
 
@@ -383,10 +395,20 @@ void PsiChatDlg::contactUpdated(UserListItem* u, int status, const QString& stat
 	Q_UNUSED(statusString);
 
 	if (status == -1 || !u) {
-		ui_.lb_status->setPsiIcon(IconsetFactory::iconPtr("status/noauth"));
+		current_status_icon = IconsetFactory::iconPtr("status/noauth");
 	}
 	else {
-		ui_.lb_status->setPsiIcon(PsiIconset::instance()->statusPtr(jid(), status));
+		current_status_icon = PsiIconset::instance()->statusPtr(jid(), status);
+		if (status == 0 && unacked_messages != 0) {
+			appendSysMsg(QString().sprintf("The last %d message/messages hasn't/haven't been acked by the server and may have been lost!", unacked_messages));
+			unacked_messages = 0;
+		}
+	}
+
+	if (unacked_messages == 0) {
+		ui_.lb_status->setPsiIcon(current_status_icon);
+	} else {
+		ui_.lb_status->setMovie(throbber_movie);
 	}
 
 	if (u) {
@@ -569,6 +591,20 @@ void PsiChatDlg::doSend() {
 		}
 	} else {
 		ChatDlg::doSend();
+	}
+	unacked_messages++;
+	qDebug("Show throbber instead of status icon.");
+	ui_.lb_status->setMovie(throbber_movie);
+	setContactToolTip(last_contact_tooltip);
+}
+
+void PsiChatDlg::ackLastMessages(int msgs) {
+	unacked_messages = unacked_messages - msgs;
+	unacked_messages = unacked_messages < 0 ? 0 : unacked_messages;
+	if (unacked_messages == 0) {
+		qDebug("Show status icon instead of throbber.");
+		ui_.lb_status->setPsiIcon(current_status_icon);
+		setContactToolTip(last_contact_tooltip);
 	}
 }
 

@@ -191,6 +191,10 @@ void ChatDlg::ensureTabbedCorrectly()
 	}
 }
 
+void ChatDlg::ackLastMessages(int a) {
+
+}
+
 
 void ChatDlg::setShortcuts()
 {

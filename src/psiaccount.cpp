@@ -1640,6 +1640,7 @@ void PsiAccount::login()
 	connect(d->stream, SIGNAL(delayedCloseFinished()), SLOT(cs_delayedCloseFinished()));
 	connect(d->stream, SIGNAL(warning(int)), SLOT(cs_warning(int)));
 	connect(d->stream, SIGNAL(error(int)), SLOT(cs_error(int)), Qt::QueuedConnection);
+	connect(d->stream, SIGNAL(stanzasAcked(int)), SLOT(messageStanzasAcked(int)));
 
 	Jid j = d->jid.withResource((d->acc.opt_automatic_resource ? localHostName() : d->acc.resource ));
 	d->client->connectToServer(d->stream, j);
@@ -5170,6 +5171,7 @@ void PsiAccount::processReadNext(const UserListItem &u)
 void PsiAccount::messageStanzasAcked(int n) {
 	for (int i=0; i < n; i++) {
 		ChatDlg *chatdlg = d->chatdlg_ack_interest.dequeue();
+		chatdlg->ackLastMessages(1);
 		qWarning() << "Inform chat dialog that message has been acked by the server.";
 	}
 }

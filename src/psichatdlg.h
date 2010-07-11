@@ -6,6 +6,7 @@
 #include "mcmdmanager.h"
 #include "chatdlg.h"
 #include "mcmdcompletion.h"
+#include "applicationinfo.h"
 
 #include "ui_chatdlg.h"
 
@@ -22,7 +23,7 @@ protected:
 	void contextMenuEvent(QContextMenuEvent *);
 	void doSend();
 	bool eventFilter(QObject *obj, QEvent *event);
-
+	void ackLastMessages(int msgs);
 
 private:
 	void setContactToolTip(QString text);
@@ -82,6 +83,12 @@ private:
 
 	bool smallChat_;
 	class ChatDlgMCmdProvider;
+
+	const PsiIcon *current_status_icon;
+	QString last_contact_tooltip;
+	int unacked_messages;
+
+	static QMovie *throbber_movie;
 };
 
 #endif
