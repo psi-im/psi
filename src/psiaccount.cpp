@@ -157,6 +157,8 @@
 #include "pluginmanager.h"
 #endif
 
+#include "../iris/src/xmpp/xmpp-core/protocol.h"
+
 #include <QtCrypto>
 
 #include "bsocket.h"
@@ -488,6 +490,7 @@ public:
 
 	// Stream management
 	QQueue<ChatDlg*> chatdlg_ack_interest;
+	CoreProtocol::SMState smState;
 private:
 	bool doPopups_;
 
@@ -1245,7 +1248,6 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 PsiAccount::~PsiAccount()
 {
 	logout(true, loggedOutStatus());
-
 	emit accountDestroyed();
 	// nuke all related dialogs
 	deleteAllDialogs();
@@ -1290,6 +1292,9 @@ PsiAccount::~PsiAccount()
 
 void PsiAccount::cleanupStream()
 {
+	// GSOC: Get SM state out of stream
+	fprintf(stderr, "\tPsiAccount::cleanupStream\n");
+	d->smState = d->stream->getSMState();
 	delete d->stream;
 	d->stream = 0;
 
@@ -1643,6 +1648,7 @@ void PsiAccount::login()
 	connect(d->stream, SIGNAL(stanzasAcked(int)), SLOT(messageStanzasAcked(int)));
 
 	Jid j = d->jid.withResource((d->acc.opt_automatic_resource ? localHostName() : d->acc.resource ));
+	d->stream->setSMState(d->smState);
 	d->client->connectToServer(d->stream, j);
 }
 
