@@ -490,7 +490,7 @@ public:
 
 	// Stream management
 	QQueue<ChatDlg*> chatdlg_ack_interest;
-	CoreProtocol::SMState smState;
+	ClientStream::SMState smState;
 private:
 	bool doPopups_;
 
@@ -1023,6 +1023,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	d->tlsHandler = 0;
 	d->stream = 0;
 	d->usingSSL = false;
+
+	d->smState.sm_resumtion_supported = false;
 
 	// create XMPP::Client
 	d->client = new Client;
@@ -1648,7 +1650,8 @@ void PsiAccount::login()
 	connect(d->stream, SIGNAL(stanzasAcked(int)), SLOT(messageStanzasAcked(int)));
 
 	Jid j = d->jid.withResource((d->acc.opt_automatic_resource ? localHostName() : d->acc.resource ));
-	d->stream->setSMState(d->smState);
+	fprintf(stderr, "\td->smState.sm_resumption_supported: %i\n", d->smState.sm_resumtion_supported);
+	if (d->smState.sm_resumtion_supported) d->stream->setSMState(d->smState);
 	d->client->connectToServer(d->stream, j);
 }
 
