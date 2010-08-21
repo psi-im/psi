@@ -118,6 +118,7 @@ HEADERS += \
 	$$PWD/activeprofiles.h \
 	$$PWD/profiledlg.h \
 	$$PWD/aboutdlg.h \
+	$$PWD/historydlg.h \
 	$$PWD/desktoputil.h \
 	$$PWD/fileutil.h \
 	$$PWD/textutil.h \
@@ -547,6 +548,7 @@ INTERFACES += \
 	$$PWD/info.ui \
 	$$PWD/search.ui \
 	$$PWD/about.ui \
+	$$PWD/history.ui \
 	$$PWD/optioneditor.ui \
 	$$PWD/passphrase.ui \
 	$$PWD/mucconfig.ui \
