@@ -43,6 +43,7 @@ private slots:
         void getLatest();
         void getPrevious();
         void getNext();
+        void findMessages();
         void edb_finished();
 	
 private:

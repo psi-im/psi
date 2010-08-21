@@ -105,7 +105,7 @@
      <item>
       <widget class="QLineEdit" name="searchField">
        <property name="text">
-        <string>Type text to search...</string>
+        <string/>
        </property>
       </widget>
      </item>

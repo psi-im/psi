@@ -58,6 +58,7 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
         d->exp = 0;
         d->h = new EDBHandle(d->pa->edb());
         connect(d->h, SIGNAL(finished()), SLOT(edb_finished()));
+        connect(ui_.searchField,SIGNAL(returnPressed()),SLOT(findMessages()));
         connect(ui_.buttonPrevious,SIGNAL(clicked()),SLOT(getPrevious()));
         connect(ui_.buttonNext,SIGNAL(clicked()),SLOT(getNext()));
         connect(ui_.buttonRefresh,SIGNAL(clicked()),SLOT(getLatest()));
@@ -100,15 +101,42 @@ void HistoryDlg::openSelectedContact(){
     d->jid = u->jid();
     getLatest();
 }
+void HistoryDlg::findMessages()
+{
+        QString str = ui_.searchField->text();
 
+        if(str.isEmpty())
+                return;
+
+        //if(d->h->children().count() < 1)
+        //        return;
+
+        //HistoryViewItem *i = (HistoryViewItem *)d->lv->selectedItem();
+        //if(!i)
+        //        i = (HistoryViewItem *)d->lv->firstChild();
+        if(d->id_begin.isEmpty()) {
+                QMessageBox::information(this, tr("Find"), tr("Already at beginning of message history."));
+                return;
+        }
+
+        //printf("searching for: [%s], starting at id=[%s]\n", str.latin1(), id.latin1());
+        d->reqtype = 3;
+        //d->findStr = str;
+        d->h->find(str, d->jid, d->id_begin, EDB::Backward);
+}
 void HistoryDlg::doSomething(){
 	ui_.msgLog->appendText("test msg!");
 }
 void HistoryDlg::edb_finished()
 {
+
         const EDBResult *r = d->h->result();
         if(d->h->lastRequestType() == EDBHandle::Read && r) {
+            QMessageBox::information(this,"edb-finished","finished");
                 //printf("EDB: retrieved %d events:\n", r->count());
+            if(r->count() > 0) {
+
+                QMessageBox::information(this,"edb-finished",tr("%1").arg(r->count()));
             if(d->reqtype == 0 || d->reqtype == 1) {
                     // events are in backward order
                     // first entry is the end event
@@ -135,12 +163,16 @@ void HistoryDlg::edb_finished()
                     displayResult(r, EDB::Forward);
             }
             else if(d->reqtype == 3) {
-                    // should only be one entry
-                    EDBItem *ei = r->first();
-                    d->reqtype = 1;
-                    d->h->get(d->jid, ei->id(), EDB::Backward, 50);
+                    QMessageBox::information(this,"edb-finished","finished reqtype3");
+                    displayResult(r, EDB::Backward);
                     //printf("EDB: requesting 50 events backward, starting at %s\n", d->id_prev.latin1());
                     return;
+            }
+         }  else {
+                if(d->reqtype == 3) {
+                    QMessageBox::information(this, tr("Find"), tr("Search string '%1' not found."));
+                    return;
+                }
             }
         }
         setButtons();
