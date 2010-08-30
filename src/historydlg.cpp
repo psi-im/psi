@@ -42,9 +42,10 @@ public:
 
         Jid jid;
         PsiAccount *pa;
-        EDBHandle *h, *exp;
+        EDBHandle *h;
         QString id_prev, id_begin, id_end, id_next;
         int reqtype;
+        QString findStr;
 };
 
 HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
@@ -52,26 +53,24 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 	ui_.setupUi(this);
         setAttribute(Qt::WA_DeleteOnClose);
         d = new Private;
+        d->reqtype = 99;
         d->pa = pa;
         d->jid = jid;
         d->pa->dialogRegister(this, d->jid);
-        d->exp = 0;
         d->h = new EDBHandle(d->pa->edb());
         connect(d->h, SIGNAL(finished()), SLOT(edb_finished()));
         connect(ui_.searchField,SIGNAL(returnPressed()),SLOT(findMessages()));
+        connect(ui_.searchField,SIGNAL(textChanged()),SLOT(findMessages()));
         connect(ui_.buttonPrevious,SIGNAL(clicked()),SLOT(getPrevious()));
         connect(ui_.buttonNext,SIGNAL(clicked()),SLOT(getNext()));
-        connect(ui_.buttonRefresh,SIGNAL(clicked()),SLOT(getLatest()));
+        //connect(ui_.buttonRefresh,SIGNAL(released()),SLOT(getLatest()));
         connect(ui_.jidList, SIGNAL(itemSelectionChanged()), SLOT(openSelectedContact()));
 #ifndef Q_WS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/history").icon());
 #endif
-       // ui_.jidList->addItem(QString("test"));
-
         ReadMessages();
 }
 void HistoryDlg::ReadMessages(){
- //ApplicationInfo::historyDir()
     QDir historyDir(ApplicationInfo::historyDir());
     QFileInfoList list = historyDir.entryInfoList("*.history");
     for (int i = 0; i < list.size(); ++i) {
@@ -105,38 +104,36 @@ void HistoryDlg::findMessages()
 {
         QString str = ui_.searchField->text();
 
-        if(str.isEmpty())
-                return;
+        if(str.isEmpty()){
+            getLatest();
+            return;
+        }
+
 
         //if(d->h->children().count() < 1)
         //        return;
 
-        //HistoryViewItem *i = (HistoryViewItem *)d->lv->selectedItem();
-        //if(!i)
-        //        i = (HistoryViewItem *)d->lv->firstChild();
         if(d->id_begin.isEmpty()) {
                 QMessageBox::information(this, tr("Find"), tr("Already at beginning of message history."));
                 return;
         }
 
-        //printf("searching for: [%s], starting at id=[%s]\n", str.latin1(), id.latin1());
+        printf("searching for: [%s], starting at id=[%s]\n", str.latin1(), d->id_begin.latin1());
         d->reqtype = 3;
-        //d->findStr = str;
-        d->h->find(str, d->jid, d->id_begin, EDB::Backward);
+        d->findStr = str;
+        d->h->find(str, d->jid, d->id_begin, EDB::Forward);
 }
 void HistoryDlg::doSomething(){
+
 	ui_.msgLog->appendText("test msg!");
 }
 void HistoryDlg::edb_finished()
 {
-
         const EDBResult *r = d->h->result();
         if(d->h->lastRequestType() == EDBHandle::Read && r) {
-            QMessageBox::information(this,"edb-finished","finished");
-                //printf("EDB: retrieved %d events:\n", r->count());
             if(r->count() > 0) {
 
-                QMessageBox::information(this,"edb-finished",tr("%1").arg(r->count()));
+
             if(d->reqtype == 0 || d->reqtype == 1) {
                     // events are in backward order
                     // first entry is the end event
@@ -148,7 +145,6 @@ void HistoryDlg::edb_finished()
                     d->id_begin = it->id();
                     d->id_prev = it->prevId();
                     displayResult(r, EDB::Backward);
-                    //printf("[%s],[%s],[%s],[%s]\n", d->id_prev.latin1(), d->id_begin.latin1(), d->id_end.latin1(), d->id_next.latin1());
             }
             else if(d->reqtype == 2) {
                     // events are in forward order
@@ -163,14 +159,12 @@ void HistoryDlg::edb_finished()
                     displayResult(r, EDB::Forward);
             }
             else if(d->reqtype == 3) {
-                    QMessageBox::information(this,"edb-finished","finished reqtype3");
-                    displayResult(r, EDB::Backward);
-                    //printf("EDB: requesting 50 events backward, starting at %s\n", d->id_prev.latin1());
+                    displayResult(r, EDB::Forward);
                     return;
             }
          }  else {
                 if(d->reqtype == 3) {
-                    QMessageBox::information(this, tr("Find"), tr("Search string '%1' not found."));
+                    QMessageBox::information(this, tr("Find"), tr("Search string '%1' not found.").arg(d->findStr));
                     return;
                 }
             }
@@ -183,14 +177,17 @@ void HistoryDlg::setButtons()
         ui_.buttonNext->setEnabled(!d->id_next.isEmpty());
 }
 void HistoryDlg::getLatest(){
+    //QMessageBox::information(this,"edb-finished","getLatest");
     d->reqtype = 0;
     d->h->getLatest(d->jid, 50);
+
 }
 
 void HistoryDlg::getPrevious(){
     d->reqtype = 1;
     ui_.buttonPrevious->setEnabled(false);
     d->h->get(d->jid, d->id_prev, EDB::Backward, 50);
+
 }
 void HistoryDlg::getNext(){
     d->reqtype = 2;
@@ -205,7 +202,6 @@ void HistoryDlg::displayResult(const EDBResult *r, int direction, int max){
         while (i >= 0 && i <= r->count()-1 && (max == -1 ? true : at < max)) {
                 EDBItem* item = r->value(i);
                 PsiEvent* e = item->event();
-                //d->lv->addEvent(e, item->prevId());
                 UserListItem *u = d->pa->findFirstRelevant(e->from().full());
                 QString from = JIDUtil::nickOrJid(u->name(), u->jid().full());
                 if(e->type() == PsiEvent::Message) {

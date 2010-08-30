@@ -563,7 +563,8 @@ void EDBFlatFile::performRequests()
 				if(m.body().indexOf(r->findStr, 0, Qt::CaseInsensitive) != -1) {
 					EDBItem *ei = new EDBItem(e, QString::number(id), prevId, nextId);
 					result->append(ei);
-					break;
+                                        //commented line below to return ALL(instead of just first) messages that contain findStr
+                                        //break;
 				}
 			}
 
