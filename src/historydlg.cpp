@@ -64,11 +64,11 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
         d->h = new EDBHandle(d->pa->edb());
         connect(d->h, SIGNAL(finished()), SLOT(edb_finished()));
         connect(ui_.searchField,SIGNAL(returnPressed()),SLOT(findMessages()));
-        //connect(ui_.searchField,SIGNAL(textChanged(const QString)),SLOT(findMessages()));
+        //remove search results and refresh when search field is cleared
+        connect(ui_.searchField,SIGNAL(textChanged(const QString)),SLOT(refreshWhenEmpty()));
         connect(ui_.buttonPrevious,SIGNAL(clicked()),SLOT(getPrevious()));
         connect(ui_.buttonNext,SIGNAL(clicked()),SLOT(getNext()));
-
-        //connect(ui_.buttonRefresh,SIGNAL(released()),SLOT(getLatest()));
+        connect(ui_.buttonRefresh,SIGNAL(released()),SLOT(getLatest()));
         connect(ui_.jidList, SIGNAL(itemSelectionChanged()), SLOT(openSelectedContact()));
 #ifndef Q_WS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/history").icon());
@@ -140,6 +140,12 @@ void HistoryDlg::highlightBlocks(const QString text)
     }
     ui_.msgLog->setExtraSelections( extras );
  }
+
+void HistoryDlg::refreshWhenEmpty(){
+    if (ui_.searchField->text().isEmpty())
+        getLatest();
+}
+
 void HistoryDlg::findMessages()
 {
     d->reqtype = 3;
@@ -149,6 +155,7 @@ void HistoryDlg::findMessages()
 void HistoryDlg::edb_finished()
 {
         const EDBResult *r = d->h->result();
+        QMessageBox::information(this,"",QString("%1").arg(d->reqtype));
         if(d->h->lastRequestType() == EDBHandle::Read && r) {
             if(r->count() > 0) {
             if(d->reqtype == 0 || d->reqtype == 1) {

@@ -43,6 +43,7 @@ private slots:
         void getPrevious();
         void getNext();
         void findMessages();
+        void refreshWhenEmpty();
         void edb_finished();
         void changeAccount(const QString accountName);
 	
