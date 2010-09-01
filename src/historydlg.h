@@ -38,7 +38,6 @@ public:
 
 	
 private slots:
-	void doSomething();
         void openSelectedContact();
         void getLatest();
         void getPrevious();

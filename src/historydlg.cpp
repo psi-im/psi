@@ -78,7 +78,6 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
         ReadMessages();
 }
 void HistoryDlg::changeAccount(const QString accountName){
-    QMessageBox::information(this,accountName,accountName);
     d->pa = d->psi->contactList()->getAccountByJid(accountName);
     d->h = new EDBHandle(d->pa->edb()); //set handle to new EDB
     connect(d->h, SIGNAL(finished()), SLOT(edb_finished()));
@@ -146,18 +145,11 @@ void HistoryDlg::findMessages()
     d->h->getOldest(d->jid, 1);
 
 }
-void HistoryDlg::doSomething(){
-
-	ui_.msgLog->appendText("test msg!");
-}
 void HistoryDlg::edb_finished()
 {
         const EDBResult *r = d->h->result();
         if(d->h->lastRequestType() == EDBHandle::Read && r) {
-            //QMessageBox::information(this,"", QString("%1").arg(r->count()));
             if(r->count() > 0) {
-
-
             if(d->reqtype == 0 || d->reqtype == 1) {
                     // events are in backward order
                     // first entry is the end event
@@ -193,7 +185,6 @@ void HistoryDlg::edb_finished()
                 d->findStr = str;
                 EDBItem *ei = r->first();
                 MessageEvent *me = (MessageEvent *)ei->event();
-                QMessageBox::information(this,"",me->message().body());
                 d->h->find(str, d->jid, ei->id(), EDB::Forward);
             }
             else if(d->reqtype == 4) {
@@ -204,8 +195,6 @@ void HistoryDlg::edb_finished()
                 //clear message log to remove previous results if no results found
                 ui_.msgLog->clear();
                 if(d->reqtype == 4) {
-
-                    //QMessageBox::information(this, tr("Find"), tr("Search string '%1' not found.").arg(d->findStr));
                     return;
                 }
             }
@@ -219,7 +208,6 @@ void HistoryDlg::setButtons()
         ui_.buttonNext->setEnabled(!d->id_next.isEmpty());
 }
 void HistoryDlg::getLatest(){
-    //QMessageBox::information(this,"edb-finished","getLatest");
     d->reqtype = 0;
     d->h->getLatest(d->jid, 50);
 
