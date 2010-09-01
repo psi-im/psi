@@ -101,6 +101,7 @@ void HistoryDlg::ReadMessages(){
     foreach(PsiContact* contact,d->pa->contactList()){
         QListWidgetItem *item = new QListWidgetItem(contact->name(),ui_.jidList);
         item->setToolTip(contact->jid().full());
+        item->setIcon(PsiIconset::instance()->status(contact->status()).icon());
         ui_.jidList->addItem(item);
     }
     //set contact in jidList to selected jid
@@ -133,7 +134,7 @@ void HistoryDlg::highlightBlocks(const QString text)
     while (index >= 0){
         highlight.cursor.movePosition(QTextCursor::Start,QTextCursor::MoveAnchor); //jump to beginning
         highlight.cursor.movePosition(QTextCursor::NextCharacter,QTextCursor::MoveAnchor,index); // and then jump "index" characters to the word that needs highlighting
-        highlight.cursor.select(QTextCursor::WordUnderCursor); //does not highlight multiple words, needs improving
+        highlight.cursor.select(QTextCursor::WordUnderCursor); //TODO: does not highlight multiple words, needs improving
         extras << highlight;
         index = plainText.indexOf(text,index+length,Qt::CaseInsensitive);
     }
@@ -176,7 +177,6 @@ void HistoryDlg::edb_finished()
             }
             else if(d->reqtype == 3) {
                 QString str = ui_.searchField->text();
-
                 if(str.isEmpty()){
                     getLatest();
                     return;
