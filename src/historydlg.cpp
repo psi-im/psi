@@ -184,7 +184,6 @@ void HistoryDlg::edb_finished()
                 d->reqtype = 4;
                 d->findStr = str;
                 EDBItem *ei = r->first();
-                MessageEvent *me = (MessageEvent *)ei->event();
                 d->h->find(str, d->jid, ei->id(), EDB::Forward);
             }
             else if(d->reqtype == 4) {
@@ -236,16 +235,16 @@ void HistoryDlg::displayResult(const EDBResult *r, int direction, int max){
                 QString from = JIDUtil::nickOrJid(u->name(), u->jid().full());
                 if(e->type() == PsiEvent::Message) {
                         MessageEvent *me = (MessageEvent *)e;
-
                         QString msg = me->message().body();
                         msg = TextUtil::linkify(TextUtil::plain2rich(msg));
+
                         if (PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool())
                             msg = TextUtil::emoticonify(msg);
                         if (PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
                             msg = TextUtil::legacyFormat(msg);
 
                         if (me->originLocal())
-                            ui_.msgLog->appendText("<span style='color:red'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]")+" &lt;"+ tr("You") +"&gt; " + msg + "</span>");
+                            ui_.msgLog->appendText("<span style='color:red'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]")+" &lt;"+ d->pa->nick() +"&gt; " + msg + "</span>");
                         else
                             ui_.msgLog->appendText("<span style='color:blue'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]") + " &lt;" +  from + "&gt; " + msg + "</span>");
                 }
