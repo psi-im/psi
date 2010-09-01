@@ -45,12 +45,15 @@ private slots:
         void getNext();
         void findMessages();
         void edb_finished();
+        void changeAccount(const QString accountName);
 	
 private:
 	Ui::HistoryDlg ui_;
         void setButtons();
         void ReadMessages();
         void displayResult(const EDBResult *, int, int max=-1);
+        void highlightBlocks(const QString text);
+        void listAccounts();
         class Private;
         Private *d;
 };
