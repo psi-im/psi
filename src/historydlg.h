@@ -45,6 +45,7 @@ private slots:
         void findMessages();
         void refreshWhenEmpty();
         void edb_finished();
+        void highlightBlocks(const QString text);
         void changeAccount(const QString accountName);
 	
 private:
@@ -52,7 +53,7 @@ private:
         void setButtons();
         void ReadMessages();
         void displayResult(const EDBResult *, int, int max=-1);
-        void highlightBlocks(const QString text);
+
         void listAccounts();
         class Private;
         Private *d;

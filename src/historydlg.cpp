@@ -65,7 +65,8 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
         connect(d->h, SIGNAL(finished()), SLOT(edb_finished()));
         connect(ui_.searchField,SIGNAL(returnPressed()),SLOT(findMessages()));
         //remove search results and refresh when search field is cleared
-        connect(ui_.searchField,SIGNAL(textChanged(const QString)),SLOT(refreshWhenEmpty()));
+        //connect(ui_.searchField,SIGNAL(textChanged(const QString)),SLOT(refreshWhenEmpty()));
+        connect(ui_.searchField,SIGNAL(textChanged(const QString)),SLOT(higlightBlocks(const QString)));
         connect(ui_.buttonPrevious,SIGNAL(clicked()),SLOT(getPrevious()));
         connect(ui_.buttonNext,SIGNAL(clicked()),SLOT(getNext()));
         connect(ui_.buttonRefresh,SIGNAL(released()),SLOT(getLatest()));
@@ -122,7 +123,7 @@ void HistoryDlg::openSelectedContact(){
 }
 void HistoryDlg::highlightBlocks(const QString text)
 {
-    if (text.isEmpty())
+    if (text.isEmpty() || text.length() <= 1)
         return;
     QTextEdit::ExtraSelection highlight;
     highlight.format.setBackground(QColor(220,220,220)); // gray
@@ -155,7 +156,6 @@ void HistoryDlg::findMessages()
 void HistoryDlg::edb_finished()
 {
         const EDBResult *r = d->h->result();
-        QMessageBox::information(this,"",QString("%1").arg(d->reqtype));
         if(d->h->lastRequestType() == EDBHandle::Read && r) {
             if(r->count() > 0) {
             if(d->reqtype == 0 || d->reqtype == 1) {
@@ -180,7 +180,7 @@ void HistoryDlg::edb_finished()
                     it = r->first();
                     d->id_begin = it->id();
                     d->id_prev = it->prevId();
-                    displayResult(r, EDB::Forward);
+                    displayResult(r, EDB::Backward);
             }
             else if(d->reqtype == 3) {
                 QString str = ui_.searchField->text();
@@ -195,6 +195,7 @@ void HistoryDlg::edb_finished()
             }
             else if(d->reqtype == 4) {
                     displayResult(r, EDB::Forward);
+                    highlightBlocks(ui_.searchField->text());
                     return;
             }
          }  else {
@@ -259,6 +260,5 @@ void HistoryDlg::displayResult(const EDBResult *r, int direction, int max){
                 ++at;
                 i += (direction == EDB::Forward) ? -1 : +1;
         }
-        highlightBlocks(ui_.searchField->text());
         ui_.msgLog->verticalScrollBar()->setValue(0); //scroll to top
 }
