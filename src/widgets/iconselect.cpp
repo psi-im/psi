@@ -282,7 +282,7 @@ void IconSelect::setIconset(const Iconset &iconset)
 		delete grid;
 		grid = 0;
 
-		QList<QObject *> list = children<QWidget *>();
+		QObjectList list = children();
 		qDeleteAll(list);
 	}
 
