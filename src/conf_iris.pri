@@ -22,10 +22,7 @@ mac {
 	# Universal binaries
 	qc_universal:contains(QT_CONFIG,x86):contains(QT_CONFIG,ppc) {
 		CONFIG += x86 ppc
-		QMAKE_MAC_SDK=/Developer/SDKs/MacOSX10.4u.sdk
-
-		# comment this out, iris already specifies 10.3, and i don't
-		# think this has anything to do with universal, does it?
-		#QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.4
+		QMAKE_MAC_SDK=/Developer/SDKs/MacOSX10.5.sdk
+		QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
 	}
 }

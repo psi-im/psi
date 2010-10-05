@@ -151,8 +151,8 @@ mac {
 	# Universal binaries
 	qc_universal:contains(QT_CONFIG,x86):contains(QT_CONFIG,ppc) {
 		CONFIG += x86 ppc
-		QMAKE_MAC_SDK=/Developer/SDKs/MacOSX10.4u.sdk
-		QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.4
+		QMAKE_MAC_SDK=/Developer/SDKs/MacOSX10.5.sdk
+		QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5
 	}
 
 	# Frameworks are specified in src.pri
