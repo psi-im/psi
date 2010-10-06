@@ -142,7 +142,11 @@ unix:!mac {
 	QMAKE_POST_LINK = rm -f ../psi ; ln -s src/psi ../psi
 }
 win32 {
-	RC_FILE = ../win32/psi_win32.rc
+	contains(QMAKE_HOST.arch, x86_64):{
+		RC_FILE = ../win32/psi_win64.rc
+	} else {
+		RC_FILE = ../win32/psi_win32.rc
+	}
 
 	# buggy MSVC workaround
 	win32-msvc|win32-msvc.net|win32-msvc2005: QMAKE_LFLAGS += /FORCE:MULTIPLE
