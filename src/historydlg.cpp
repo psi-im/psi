@@ -125,20 +125,19 @@ void HistoryDlg::highlightBlocks(const QString text)
 {
     if (text.isEmpty() || text.length() <= 1)
         return;
+    
     QTextEdit::ExtraSelection highlight;
     highlight.format.setBackground(QColor(220,220,220)); // gray
     highlight.cursor = ui_.msgLog->textCursor();
     QList<QTextEdit::ExtraSelection> extras;
-    QString plainText = ui_.msgLog->getPlainText();
-    int index = plainText.indexOf(text,0,Qt::CaseInsensitive);
-    int length = text.length();
-    while (index >= 0){
-        highlight.cursor.movePosition(QTextCursor::Start,QTextCursor::MoveAnchor); //jump to beginning
-        highlight.cursor.movePosition(QTextCursor::NextCharacter,QTextCursor::MoveAnchor,index); // and then jump "index" characters to the word that needs highlighting
-        highlight.cursor.select(QTextCursor::WordUnderCursor); //TODO: does not highlight multiple words, needs improving
+    bool found = ui_.msgLog->find(text);
+
+    while (found){
+        highlight.cursor = ui_.msgLog->textCursor();
         extras << highlight;
-        index = plainText.indexOf(text,index+length,Qt::CaseInsensitive);
+        found = ui_.msgLog->find(text,QTextDocument::FindBackward);
     }
+    ui_.msgLog->textCursor().clearSelection();
     ui_.msgLog->setExtraSelections( extras );
  }
 
@@ -149,6 +148,7 @@ void HistoryDlg::refreshWhenEmpty(){
 
 void HistoryDlg::findMessages()
 {
+    //get the oldest event as a starting point
     d->reqtype = 3;
     d->h->getOldest(d->jid, 1);
 
