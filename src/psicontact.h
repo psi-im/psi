@@ -120,6 +120,7 @@ public:
 
 	static QString generalGroupName();
 	static QString notInListGroupName();
+	static QString hiddenGroupName();
 
 protected:
 	virtual bool shouldBeVisible() const;

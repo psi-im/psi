@@ -40,8 +40,8 @@ void ContactListProxyModel::setSourceModel(QAbstractItemModel* model)
 	QSortFilterProxyModel::setSourceModel(model);
 	connect(model, SIGNAL(showOfflineChanged()), SLOT(filterParametersChanged()));
 	connect(model, SIGNAL(showSelfChanged()), SLOT(filterParametersChanged()));
-	connect(model, SIGNAL(showSelfChanged()), SLOT(filterParametersChanged()));
 	connect(model, SIGNAL(showTransportsChanged()), SLOT(filterParametersChanged()));
+	connect(model, SIGNAL(showHiddenChanged()), SLOT(filterParametersChanged()));
 }
 
 bool ContactListProxyModel::showOffline() const
@@ -57,6 +57,11 @@ bool ContactListProxyModel::showSelf() const
 bool ContactListProxyModel::showTransports() const
 {
 	return static_cast<ContactListModel*>(sourceModel())->showTransports();
+}
+
+bool ContactListProxyModel::showHidden() const
+{
+	return static_cast<ContactListModel*>(sourceModel())->showHidden();
 }
 
 bool ContactListProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const
@@ -80,10 +85,6 @@ bool ContactListProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& s
 	case ContactListModel::ContactType: {
 		PsiContact* psiContact = dynamic_cast<PsiContact*>(item);
 
-		if (psiContact->isHidden()) {
-			return false;
-		}
-
 		if (psiContact->isSelf()) {
 			return showSelf();
 		}
@@ -91,11 +92,16 @@ bool ContactListProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& s
 			return showTransports();
 		}
 
+		bool show = true;
+		if (psiContact->isHidden()) {
+			show = showHidden();
+		}
+
 		if (!showOffline()) {
-			return psiContact->isOnline();
+			return show && psiContact->isOnline();
 		}
 		else {
-			return true;
+			return show;
 		}
 	}
 	case ContactListModel::GroupType:
@@ -106,12 +112,17 @@ bool ContactListProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& s
 					return showTransports();
 			}
 
+			bool show = true;
+			if (index.data(Qt::DisplayRole) == PsiContact::hiddenGroupName()) {
+				show = showHidden();
+			}
+
 			if (!showOffline()) {
 				ContactListGroup* group = dynamic_cast<ContactListGroup*>(item);
-				return group->haveOnlineContacts();
+				return show && group->haveOnlineContacts();
 			}
 			else {
-				return true;
+				return show;
 			}
 		}
 	case ContactListModel::AccountType:

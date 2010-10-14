@@ -122,6 +122,7 @@ public:
 	bool showOffline() const;
 	bool showSelf() const;
 	bool showTransports() const;
+	bool showHidden() const;
 	bool hasContacts(bool onlineOnly) const;
 
 	int groupOrder(const QString& groupFullName) const;
@@ -171,6 +172,7 @@ signals:
 	void showOfflineChanged();
 	void showSelfChanged();
 	void showTransportsChanged();
+	void showHiddenChanged();
 	void inPlaceRename();
 
 	void contactAlert(const QModelIndex&);

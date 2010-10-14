@@ -383,6 +383,11 @@ QString PsiContact::notInListGroupName()
 	return tr("Not in list");
 }
 
+QString PsiContact::hiddenGroupName()
+{
+	return tr("Hidden");
+}
+
 static const QString globalGroupDelimiter = "::";
 static const QString accountGroupDelimiter = "::";
 
@@ -1001,7 +1006,7 @@ bool PsiContact::isOnline() const
 
 bool PsiContact::isHidden() const
 {
-	return false;
+	return userListItem().isHidden();
 }
 
 #ifdef YAPSI

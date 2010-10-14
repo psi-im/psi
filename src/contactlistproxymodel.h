@@ -42,6 +42,7 @@ protected:
 	bool showOffline() const;
 	bool showSelf() const;
 	bool showTransports() const;
+	bool showHidden() const;
 
 private slots:
 	void filterParametersChanged();

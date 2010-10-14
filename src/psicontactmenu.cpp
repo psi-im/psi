@@ -70,11 +70,11 @@ public:
 
 		int n = 0;
 		QStringList groupList = contact->account()->groupList();
-		// groupList.removeAll(tr("Hidden"));
+		groupList.removeAll(PsiContact::hiddenGroupName());
 		foreach(QString groupName, groupList) {
 			QString displayName = groupName;
 			if (displayName.isEmpty())
-				displayName = tr("General");
+				displayName = PsiContact::generalGroupName();
 
 			QString accelerator;
 			if (n++ < 9)
@@ -84,6 +84,9 @@ public:
 		}
 
 		addSeparator();
+		addGroup(tr("&Hidden"), PsiContact::hiddenGroupName(), contact->isHidden());
+		addSeparator();
+
 		QAction* createNewGroupAction = new QAction(tr("&Create New..."), this);
 		connect(createNewGroupAction, SIGNAL(triggered()), SLOT(createNewGroup()));
 		addAction(createNewGroupAction);

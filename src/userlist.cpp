@@ -340,7 +340,7 @@ bool UserListItem::isAvailable() const
 
 bool UserListItem::isHidden() const
 {
-	return groups().contains(qApp->translate("ContactView", "Hidden"));
+	return groups().contains(qApp->translate("PsiContact", "Hidden"));
 }
 
 bool UserListItem::isAway() const
