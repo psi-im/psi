@@ -492,9 +492,13 @@ bool PsiCon::init()
 
 
 	d->mainwin->setGeometryOptionPath("options.ui.contactlist.saved-window-geometry");
-	
-	if(!(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.hide-on-start").toBool()))
+
+	if (result &&
+	    !(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() &&
+	      PsiOptions::instance()->getOption("options.contactlist.hide-on-start").toBool()))
+	{
 		d->mainwin->show();
+	}
 
 #ifdef FILETRANSFER
 	d->ftwin = new FileTransDlg(this);
