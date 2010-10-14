@@ -349,7 +349,7 @@ filetransfer {
 	SOURCES += \
 		$$PWD/filetransdlg.cpp
 
-	INTERFACES += \
+	FORMS += \
 		$$PWD/filetrans.ui
 }
 
@@ -367,7 +367,7 @@ groupchat {
 		$$PWD/gcuserview.cpp \
 		$$PWD/mucjoindlg.cpp
 
-	INTERFACES += \
+	FORMS += \
 		$$PWD/groupchatdlg.ui \
 		$$PWD/mucjoin.ui
 }
@@ -516,7 +516,7 @@ pgputil {
 		$$PWD/pgputil.cpp \
 		$$PWD/pgpkeydlg.cpp
 
-	INTERFACES += \
+	FORMS += \
 		$$PWD/pgpkey.ui
 }
 
@@ -530,8 +530,8 @@ SOURCES += \
 	$$PWD/globaleventqueue.cpp \
 	$$PWD/dummystream.cpp
 
-# Qt Designer interfaces
-INTERFACES += \
+# Qt Designer forms
+FORMS += \
 	$$PWD/profileopen.ui \
 	$$PWD/profilemanage.ui \
 	$$PWD/profilenew.ui \
