@@ -66,7 +66,7 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
         connect(ui_.searchField,SIGNAL(returnPressed()),SLOT(findMessages()));
         //remove search results and refresh when search field is cleared
         //connect(ui_.searchField,SIGNAL(textChanged(const QString)),SLOT(refreshWhenEmpty()));
-        connect(ui_.searchField,SIGNAL(textChanged(const QString)),SLOT(higlightBlocks(const QString)));
+        connect(ui_.searchField,SIGNAL(textChanged(const QString)),SLOT(highlightBlocks(const QString)));
         connect(ui_.buttonPrevious,SIGNAL(clicked()),SLOT(getPrevious()));
         connect(ui_.buttonNext,SIGNAL(clicked()),SLOT(getNext()));
         connect(ui_.buttonRefresh,SIGNAL(released()),SLOT(getLatest()));
@@ -79,7 +79,7 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
         ReadMessages();
 }
 void HistoryDlg::changeAccount(const QString accountName){
-    d->pa = d->psi->contactList()->getAccountByJid(accountName);
+    d->pa = d->psi->contactList()->getAccountByJid(ui_.accountsBox->itemData(ui_.accountsBox->currentIndex()).toString());
     d->h = new EDBHandle(d->pa->edb()); //set handle to new EDB
     connect(d->h, SIGNAL(finished()), SLOT(edb_finished()));
     ReadMessages();
@@ -89,10 +89,11 @@ void HistoryDlg::listAccounts()
 {
         if (d->psi) {
             foreach(PsiAccount* account, d->psi->contactList()->enabledAccounts())
-                ui_.accountsBox->addItem(IconsetFactory::icon("psi/account").icon(),account->jid().full());
+                ui_.accountsBox->addItem(IconsetFactory::icon("psi/account").icon(),account->nameWithJid(),QVariant(account->jid().full()));
+
         }
         //select active account
-        ui_.accountsBox->setCurrentIndex(ui_.accountsBox->findText(d->pa->jid().full()));
+        ui_.accountsBox->setCurrentIndex(ui_.accountsBox->findData(d->pa->jid().full()));
         //connect signal after the list is populated to prevent execution in the middle of the loop
         connect(ui_.accountsBox,SIGNAL(currentIndexChanged (const QString)),SLOT(changeAccount(const QString)));
 }
@@ -130,8 +131,8 @@ void HistoryDlg::highlightBlocks(const QString text)
     highlight.format.setBackground(QColor(220,220,220)); // gray
     highlight.cursor = ui_.msgLog->textCursor();
     QList<QTextEdit::ExtraSelection> extras;
-    bool found = ui_.msgLog->find(text);
 
+    bool found = ui_.msgLog->find(text);
     while (found){
         highlight.cursor = ui_.msgLog->textCursor();
         extras << highlight;
