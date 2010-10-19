@@ -150,15 +150,18 @@ void MUCAffiliationsModel::resetAffiliationLists()
 
 void MUCAffiliationsModel::resetAffiliationList(MUCItem::Affiliation a)
 {
+	emit layoutAboutToBeChanged();
 	enabled_[(AffiliationListIndex) affiliationToIndex(a)] = false;
 	QModelIndex index = affiliationListIndex(a);
 	if (hasChildren(index)) {
 		removeRows(0,rowCount(index),index);
 	}
+	emit layoutChanged();
 }
 
 void MUCAffiliationsModel::setAffiliationListEnabled(MUCItem::Affiliation a, bool b)
 {
+	emit layoutAboutToBeChanged();
 	QModelIndex index = affiliationListIndex(a);
 	enabled_[(AffiliationListIndex) index.row()] = b;
 	emit layoutChanged();
@@ -208,6 +211,9 @@ void MUCAffiliationsModel::addItems(const QList<MUCItem>& items)
 	foreach(MUCItem item, items) {
 		QModelIndex list = affiliationListIndex(item.affiliation());
 		if (list.isValid() && !item.jid().isEmpty()) {
+			if (!dirty) {
+				emit layoutAboutToBeChanged();
+			}
 			int row = rowCount(list);
 			if (row == 0) {
 				enabled_[(AffiliationListIndex) list.row()] = true;
