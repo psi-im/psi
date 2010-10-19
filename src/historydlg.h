@@ -51,7 +51,7 @@ private slots:
 private:
 	Ui::HistoryDlg ui_;
         void setButtons();
-        void ReadMessages();
+        void loadContacts();
         void displayResult(const EDBResult *, int, int max=-1);
 
         void listAccounts();
