@@ -43,13 +43,13 @@ public:
 Private()
 {
 }
-Jid        jid;
-PsiAccount *pa;
-PsiCon     *psi;
-EDBHandle  *h;
-QString    id_prev, id_begin, id_end, id_next;
-int        reqtype;
-QString    findStr;
+  Jid        jid;
+  PsiAccount *pa;
+  PsiCon     *psi;
+  EDBHandle  *h;
+  QString    id_prev, id_begin, id_end, id_next;
+  int        reqtype;
+  QString    findStr;
 };
 
 HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
