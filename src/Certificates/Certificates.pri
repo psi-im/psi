@@ -1,7 +1,7 @@
 INCLUDEPATH *= $$PWD/..
 DEPENDPATH *= $$PWD/.. $$PWD
 
-INTERFACES += \
+FORMS += \
 	$$PWD/CertificateDisplay.ui
 
 HEADERS += \

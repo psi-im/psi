@@ -20,6 +20,6 @@ SOURCES += \
  	$$PWD/privacydlg.cpp \
  	$$PWD/privacyruledlg.cpp
 
-INTERFACES += \
+FORMS += \
 	$$PWD/privacy.ui \
 	$$PWD/privacyrule.ui

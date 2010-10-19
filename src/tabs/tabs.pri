@@ -9,4 +9,4 @@ SOURCES += $$PWD/tabdlg.cpp
 SOURCES += $$PWD/tabmanager.cpp
 SOURCES += $$PWD/tabbablewidget.cpp
 
-#INTERFACES += $$PWD/.ui
+#FORMS += $$PWD/.ui
