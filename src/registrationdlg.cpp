@@ -273,29 +273,21 @@ void RegistrationDlg::setInstructions(const QString& jid, const QString& instruc
 /**
  * Returns true if the function was able to successfully process XData.
  */
-bool RegistrationDlg::processXData(const QDomElement& iq)
+void RegistrationDlg::processXData(const XData& form)
 {
-	if (!iq.isNull()) {
-		XData form;
-		form.fromXml(iq);
+	if (!form.title().isEmpty())
+		setWindowTitle(form.title());
 
-		if (!form.title().isEmpty())
-			setWindowTitle(form.title());
+	setInstructions(d->jid.full(), form.instructions());
 
-		setInstructions(d->jid.full(), form.instructions());
+	if (d->xdata)
+		delete d->xdata;
 
-		if (d->xdata)
-			delete d->xdata;
+	d->xdata = new XDataWidget(d->gr_form);
+	d->gr_form_layout->addWidget(d->xdata); // FIXME
+	d->xdata->setFields(form.fields());
 
-		d->xdata = new XDataWidget(d->gr_form);
-		d->gr_form_layout->addWidget(d->xdata); // FIXME
-		d->xdata->setFields(form.fields());
-
-		d->xdata->show();
-		return true;
-	}
-
-	return false;
+	d->xdata->show();
 }
 
 /**
@@ -327,9 +319,11 @@ void RegistrationDlg::processLegacyForm(const XMPP::Form& form)
 void RegistrationDlg::setData(JT_XRegister* jt)
 {
 	d->form = jt->form();
-
-	if (!processXData(jt->xdataElement()))
+	if (jt->hasXData()) {
+		processXData(jt->xdata());
+	} else {
 		processLegacyForm(jt->form());
+	}
 }
 
 void RegistrationDlg::updateData(JT_XRegister* jt)

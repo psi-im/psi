@@ -29,6 +29,7 @@ class PsiAccount;
 namespace XMPP {
 	class Jid;
 	class Form;
+	class XData;
 }
 
 class RegistrationDlg : public QDialog
@@ -54,7 +55,7 @@ private:
 	void setData(JT_XRegister* jt);
 	void updateData(JT_XRegister* jt);
 	void setInstructions(const QString& jid, const QString& instructions);
-	bool processXData(const QDomElement& iq);
+	void processXData(const XMPP::XData& form);
 	void processLegacyForm(const XMPP::Form& form);
 };
 
