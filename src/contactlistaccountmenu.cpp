@@ -126,7 +126,7 @@ public:
 		menu->addAction(xmlConsoleAction_);
 		menu->addSeparator();
 		menu->addAction(modifyAccountAction_);
-		adminMenu_ = menu->addMenu("&Admin");
+		adminMenu_ = menu->addMenu(tr("&Admin"));
 		adminMenu_->addAction(adminOnlineUsersAction_);
 		adminMenu_->addAction(adminSendServerMessageAction_);
 		adminMenu_->addAction(adminSetMotdAction_);
