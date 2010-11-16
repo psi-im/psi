@@ -187,8 +187,6 @@ void PsiRosterWidget::setContactList(PsiContactList* contactList)
 #endif
 
 	contactListPageView_->setModel(contactListProxyModel);
-	connect(contactListPageView_, SIGNAL(removeSelection(QMimeData*)), SLOT(removeSelection(QMimeData*)));
-	connect(contactListPageView_, SIGNAL(removeGroupWithoutContacts(QMimeData*)), SLOT(removeGroupWithoutContacts(QMimeData*)));
 
 	{
 		filterModel_ = new PsiRosterFilterProxyModel(this);
@@ -200,6 +198,14 @@ void PsiRosterWidget::setContactList(PsiContactList* contactList)
 
 		filterModel_->setSourceModel(clone);
 		filterPageView_->setModel(filterModel_);
+	}
+
+	QList<PsiContactListView*> contactListViews;
+	contactListViews << contactListPageView_;
+	contactListViews << filterPageView_;
+	foreach(PsiContactListView* clv, contactListViews) {
+		connect(clv, SIGNAL(removeSelection(QMimeData*)), SLOT(removeSelection(QMimeData*)));
+		connect(clv, SIGNAL(removeGroupWithoutContacts(QMimeData*)), SLOT(removeGroupWithoutContacts(QMimeData*)));
 	}
 }
 
