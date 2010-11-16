@@ -267,7 +267,7 @@ void OptionsDlg::Private::createTabs()
 
 	OptionsTabApplication* applicationTab = new OptionsTabApplication(this);
 	applicationTab->setHaveAutoUpdater(psi->haveAutoUpdater());
-	tabs.append( new OptionsTabApplication(this) );
+	tabs.append( applicationTab );
 	tabs.append( new OptionsTabChat(this) );
 	tabs.append( new OptionsTabEvents(this) );
 	tabs.append( new OptionsTabStatus(this) );
