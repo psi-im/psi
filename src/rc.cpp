@@ -138,7 +138,7 @@ AHCommand RCSetStatusServer::execute(const AHCommand& c, const Jid&)
 			}
 		}
 		if (foundStatus) {
-			manager()->account()->setStatus(s,true);
+			manager()->account()->setStatus(s, true, true);
 		}
 		return AHCommand::completedReply(c);
 	}
