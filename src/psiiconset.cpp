@@ -266,6 +266,13 @@ PsiIconset::~PsiIconset()
 	delete d;
 }
 
+void PsiIconset::reset()
+{
+	delete instance_;
+	instance_ = 0;
+	IconsetFactory::reset();
+}
+
 bool PsiIconset::loadSystem()
 {
 	bool ok = true;

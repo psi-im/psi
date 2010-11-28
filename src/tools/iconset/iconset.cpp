@@ -833,6 +833,13 @@ public:
 	}
 
 	const PsiIcon *icon(const QString &name) const;
+
+
+	static void reset()
+	{
+		delete instance_;
+		instance_ = 0;
+	}
 };
 //! \endif
 
@@ -868,6 +875,11 @@ const PsiIcon *IconsetFactoryPrivate::icon(const QString &name) const
 			break;
 	}
 	return i;
+}
+
+void IconsetFactory::reset()
+{
+	IconsetFactoryPrivate::reset();
 }
 
 /**

@@ -127,8 +127,8 @@ const PsiOptions* PsiOptions::defaults()
  * this delete the old instance so be sure no references are there anymore
  */
 void PsiOptions::reset() {
-	instance_ = 0;
 	delete instance_;
+	instance_ = 0;
 }
 
 

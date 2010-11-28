@@ -229,6 +229,8 @@ private:
 class IconsetFactory
 {
 public:
+	static void reset();
+
 	static PsiIcon icon(const QString &name);
 	static const QPixmap &iconPixmap(const QString &name);
 
