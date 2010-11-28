@@ -77,6 +77,10 @@ void BookmarkManageDlg::reject()
 
 void BookmarkManageDlg::accept()
 {
+	QStandardItem* item = model_->item(ui_.listView->currentIndex().row());
+	if(item && item->data(Qt::DisplayRole).toString().isEmpty())
+		item->setData(QVariant(item->data(JidRole)), Qt::DisplayRole);
+
 	if (account_->checkConnected(this)) {
 		saveBookmarks();
 		QDialog::accept();
@@ -149,11 +153,15 @@ void BookmarkManageDlg::closeEditor(QWidget* editor, QAbstractItemDelegate::EndE
 
 void BookmarkManageDlg::selectionChanged(const QItemSelection& selected, const QItemSelection& deselected)
 {
-	Q_UNUSED(deselected);
-
 	QModelIndex current;
 	if (!selected.indexes().isEmpty())
 		current = selected.indexes().first();
+
+	if(!deselected.isEmpty()) {
+		QStandardItem* item = model_->item(deselected.indexes().first().row());
+		if(item && item->data(Qt::DisplayRole).toString().isEmpty())
+			item->setData(QVariant(item->data(JidRole)), Qt::DisplayRole);
+	}
 
 	XMPP::Jid jid = XMPP::Jid(current.data(JidRole).toString());
 	ui_.host->setText(jid.domain());
