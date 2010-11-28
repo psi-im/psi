@@ -479,17 +479,18 @@ private slots:
 		receiveIncomingEventAction_->setVisible(contact_->alerting());
 		if (!PsiOptions::instance()->getOption("options.ui.message.enabled").toBool()) {
 			sendMessageAction_->setVisible(false);
-			sendMessageToMenu_->setVisible(false);
+			sendMessageToMenu_->menuAction()->setVisible(false);
 		}
 		sendMessageToMenu_->setEnabled(!sendMessageToMenu_->isEmpty());
 		openChatToMenu_->setEnabled(!openChatToMenu_->isEmpty());
 		openWhiteboardToMenu_->setEnabled(!openWhiteboardToMenu_->isEmpty());
 #ifndef WHITEBOARDING
 		openWhiteboardAction_->setVisible(false);
-		openWhiteboardToMenu_->setVisible(false);
+		openWhiteboardToMenu_->menuAction()->setVisible(false);
 #endif
 		executeCommandMenu_->setEnabled(!executeCommandMenu_->isEmpty());
 		activeChatsMenu_->setEnabled(!activeChatsMenu_->isEmpty());
+		activeChatsMenu_->menuAction()->setVisible(PsiOptions::instance()->getOption("options.ui.menu.contact.active-chats").toBool());
 		// FIXME
 		// voiceCallAction_->setVisible(contact_->account()->avCallManager() && !contact_->isAgent());
 		voiceCallAction_->setEnabled(contact_->account()->isAvailable());
@@ -499,7 +500,7 @@ private slots:
 		renameAction_->setVisible(!PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool());
 		renameAction_->setEnabled(contact_->isEditable());
 		if (contact_->isAgent()) {
-			groupMenu_->setVisible(false);
+			groupMenu_->menuAction()->setVisible(false);
 		}
 		groupMenu_->setEnabled(contact_->isEditable() && contact_->isDragEnabled());
 		transportLogonAction_->setVisible(contact_->isAgent());
@@ -507,13 +508,13 @@ private slots:
 		transportLogoffAction_->setVisible(contact_->isAgent());
 		transportLogoffAction_->setEnabled(contact_->account()->isAvailable() && contact_->status().type() != XMPP::Status::Offline);
 		if (PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool() || !contact_->inList()) {
-			authMenu_->setVisible(false);
+			authMenu_->menuAction()->setVisible(false);
 		}
 		authMenu_->setEnabled(contact_->account()->isAvailable());
 		removeAction_->setVisible(!PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool());
 		// removeAction_->setEnabled(contact_->account()->isAvailable() || !contact_->inList());
 		if (!PsiOptions::instance()->getOption("options.ui.menu.contact.custom-picture").toBool()) {
-			pictureMenu_->setVisible(false);
+			pictureMenu_->menuAction()->setVisible(false);
 		}
 #ifdef HAVE_PGPUTIL
 		gpgAssignKeyAction_->setVisible(PGPUtil::instance().pgpAvailable() && PsiOptions::instance()->getOption("options.ui.menu.contact.custom-pgp-key").toBool() && contact_->userListItem().publicKeyID().isEmpty());

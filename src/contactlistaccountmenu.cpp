@@ -176,7 +176,7 @@ private slots:
 
 		newMessageAction_->setVisible(PsiOptions::instance()->getOption("options.ui.message.enabled").toBool());
 		if (!PsiOptions::instance()->getOption("options.ui.menu.account.admin").toBool()) {
-			adminMenu_->setVisible(false);
+			adminMenu_->menuAction()->setVisible(false);
 		}
 		adminMenu_->setEnabled(account->account()->isAvailable());
 		adminSendServerMessageAction_->setVisible(newMessageAction_->isVisible());
