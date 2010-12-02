@@ -2419,12 +2419,11 @@ void PsiAccount::client_resourceUnavailable(const Jid &j, const Resource &r)
 		if(found) {
 			u->setLastUnavailableStatus(r.status());
 			//u->userResourceList().removeAll(*rit);//we cant use it since operator== is used for other purpose
-			for(int i = 0; i < u->userResourceList().size();) {
-				if(u->userResourceList().at(i).name() == j.resource()) {
-					u->userResourceList().removeAt(i);
-					continue;
+			QMutableListIterator<UserResource> i(u->userResourceList());
+			while (i.hasNext()) {
+				if (i.next().name() == j.resource()) {
+					i.remove();
 				}
-				i++;
 			}
 
 			if(!u->isAvailable())
