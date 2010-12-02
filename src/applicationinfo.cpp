@@ -26,17 +26,17 @@
 // Should also be overridable through an optional file.
 
 #define PROG_NAME "Psi"
-#define PROG_VERSION "0.15-dev" " (" __DATE__ ")"; //CVS Builds are dated
+#define PROG_VERSION "0.15-dev" " (" __DATE__ ")" //CVS Builds are dated
 //#define PROG_VERSION "0.15";
-#define PROG_CAPS_NODE "http://psi-im.org/caps";
-#define PROG_CAPS_VERSION "caps-b75d8d2b25";
+#define PROG_CAPS_NODE "http://psi-im.org/caps"
+#define PROG_CAPS_VERSION "caps-b75d8d2b25"
 #define PROG_IPC_NAME "org.psi-im.Psi"	// must not contain '\\' character on Windows
-#define PROG_OPTIONS_NS "http://psi-im.org/options";
-#define PROG_STORAGE_NS "http://psi-im.org/storage";
+#define PROG_OPTIONS_NS "http://psi-im.org/options"
+#define PROG_STORAGE_NS "http://psi-im.org/storage"
 #ifdef Q_WS_MAC
-#define PROG_APPCAST_URL "http://psi-im.org/appcast/psi-mac.xml";
+#define PROG_APPCAST_URL "http://psi-im.org/appcast/psi-mac.xml"
 #else
-#define PROG_APPCAST_URL "";
+#define PROG_APPCAST_URL ""
 #endif
 
 #if defined(Q_WS_X11) && !defined(PSI_DATADIR)

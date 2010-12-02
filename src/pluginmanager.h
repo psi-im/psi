@@ -29,7 +29,7 @@ namespace QCA {
 
 class PluginManager : public QObject
 {
-	Q_OBJECT;
+	Q_OBJECT
 
 public:
 	static PluginManager* instance();

@@ -13,7 +13,7 @@
 
 class AntiEvilPlugin: public QObject, public PsiPlugin, public StanzaFilter, public StanzaSender
 {
-	Q_OBJECT;
+	Q_OBJECT
 	Q_INTERFACES(PsiPlugin StanzaFilter StanzaSender);
 
 public:

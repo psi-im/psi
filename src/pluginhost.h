@@ -23,7 +23,7 @@ class IqNamespaceFilter;
 
 class PluginHost: public QObject, public StanzaSendingHost, public IqFilteringHost, public OptionAccessingHost
 {
-	Q_OBJECT;
+	Q_OBJECT
 	Q_INTERFACES(StanzaSendingHost IqFilteringHost OptionAccessingHost);
 
 public:
