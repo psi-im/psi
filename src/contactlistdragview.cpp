@@ -410,8 +410,8 @@ void ContactListDragView::dropEvent(QDropEvent* e)
 	if (dropIndicatorPosition_ == OnItem) {
 		if (model()->dropMimeData(e->mimeData(),
 		                          e->dropAction(), -1, -1, index)) {
+			acceptDropAction(e);
 		}
-		acceptDropAction(e);
 	}
 	else if (dropIndicatorPosition_ == AboveItem || dropIndicatorPosition_ == BelowItem) {
 		reorderGroups(e, index);

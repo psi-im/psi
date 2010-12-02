@@ -302,7 +302,7 @@ bool ContactListDragModel::supportsMimeDataOnIndex(const QMimeData* data, const 
 		if (contact && accountsEnabled()) {
 			// disable dragging to self contacts
 			ContactListItemProxy* selfContactItem = itemProxy(parent);
-			PsiContact* selfContact = dynamic_cast<PsiContact*>(selfContactItem->item());
+			PsiContact* selfContact = selfContactItem? dynamic_cast<PsiContact*>(selfContactItem->item()) : 0;
 			if (selfContact && selfContact->isSelf())
 				return false;
 
@@ -448,6 +448,20 @@ QStringList ContactListDragModel::processContactSetGroupNames(const QStringList&
 	return result;
 }
 
+QStringList ContactListDragModel::processContactGetGroupNames(PsiContact* contact) const
+{
+	QStringList groups;
+
+	if (contact) {
+		QList<ContactListGroup*> list = groupCache()->groupsFor(contact);
+		foreach(ContactListGroup* clg, list) {
+			groups << clg->fullName();
+		}
+	}
+
+	return groups;
+}
+
 void ContactListDragModel::performContactOperations(const ContactListModelOperationList& operations, OperationType operationType)
 {
 	QHash<ContactListGroup*, int> groupContactCount;
@@ -465,7 +479,7 @@ void ContactListDragModel::performContactOperations(const ContactListModelOperat
 		// 	return;
 		// }
 
-		QStringList groups = psiContact->groups();
+		QStringList groups = processContactGetGroupNames(psiContact);
 
 		foreach(ContactListModelOperationList::Operation op, contactOperation.operations) {
 			if (operations.action() == ContactListModelOperationList::Move) {
@@ -510,7 +524,7 @@ QList<PsiContact*> ContactListDragModel::removeIndexesHelper(const QMimeData* da
 		if (!psiContact)
 			continue;
 
-		QStringList groups = psiContact->groups();
+		QStringList groups = processContactGetGroupNames(psiContact);
 
 		foreach(ContactListModelOperationList::Operation op, contactOperation.operations) {
 			groups.removeAll(op.groupFrom);
