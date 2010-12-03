@@ -33,30 +33,6 @@ MUCAffiliationsView::MUCAffiliationsView(QWidget* parent) : QTreeView(parent)
 	setDropIndicatorShown(true);
 }
 
-bool MUCAffiliationsView::addToCurrent(const QString& j)
-{	
-	QModelIndex index = currentIndex();
-	if (!index.isValid())
-		return false;
-
-	if (index.parent().isValid())
-		index = index.parent();
-		
-	if (!index.parent().isValid()) {
-		XMPP::Jid jid(j);
-		if (!jid.isValid())
-			return false;
-
-		// TODO: Check if the user is already in the list
-		
-		int row = model()->rowCount(index);
-		model()->insertRows(row,1,index);
-		model()->setData(model()->index(row,0,index),QVariant(jid.bare()));
-		return true;
-	}
-	return false;
-}
-
 void MUCAffiliationsView::removeCurrent()
 {
 	QModelIndex index = currentIndex();

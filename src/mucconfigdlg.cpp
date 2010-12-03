@@ -158,9 +158,31 @@ void MUCConfigDlg::add()
 {
 	bool ok;
 	QString text = QInputDialog::getText(this, tr("Add affiliation"), tr("Enter the JID of the user:"), QLineEdit::Normal, "", &ok);
-	if (ok) {
-	   if (text.isEmpty() || !ui_.tv_affiliations->addToCurrent(text))
-		   QMessageBox::critical(this, tr("Error"), tr("You have entered an invalid JID."));
+	if (ok && ui_.tv_affiliations->currentIndex().isValid()) {
+		if (!text.isEmpty()) {
+
+			QModelIndex index = affiliations_proxy_model_->mapToSource(ui_.tv_affiliations->currentIndex());
+
+			if (index.parent().isValid())
+				index = index.parent();
+
+			if (!index.parent().isValid()) {
+				XMPP::Jid jid(text);
+				if (jid.isValid()) {
+
+					// TODO: Check if the user is already in the list
+
+					int row = affiliations_model_->rowCount(index);
+					affiliations_model_->insertRows(row,1,index);
+					QModelIndex newIndex = affiliations_model_->index(row,0,index);
+					affiliations_model_->setData(newIndex, QVariant(jid.bare()));
+					ui_.tv_affiliations->setCurrentIndex(affiliations_proxy_model_->mapFromSource(newIndex));
+					return;
+				}
+			}
+		}
+
+		QMessageBox::critical(this, tr("Error"), tr("You have entered an invalid JID."));
 	}
 }
 

@@ -32,7 +32,6 @@ public:
 
 public slots:
 	void removeCurrent();
-	bool addToCurrent(const QString&);
 
 signals:
 	void addEnabled(bool);
