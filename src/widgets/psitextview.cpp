@@ -127,6 +127,7 @@ QString PsiTextView::getTextHelper(bool html) const
 
 	bool unselectAll = false;
 	if (!textCursor().hasSelection()) {
+		ptv->setTextCursor(QTextCursor()); // workaround for crash when deleting last character with backspace in message dialog (qt-4.7.1)
 		ptv->selectAll();
 		unselectAll = true;
 	}
