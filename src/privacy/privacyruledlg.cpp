@@ -45,8 +45,8 @@ void PrivacyRuleDlg::setRule(const PrivacyListItem& item)
 		ui_.cb_type->setCurrentIndex(ui_.cb_type->findData(item.type()));
 		ui_.cb_value->setCurrentIndex(ui_.cb_value->findData(item.value()));
 	} else {
-		ui_.cb_type->setCurrentIndex(ui_.cb_type->findData(item.type()));
-		ui_.cb_value->setItemText(ui_.cb_value->currentIndex(), item.value());
+		ui_.cb_type->setCurrentIndex(ui_.cb_type->findData(item.type())); // clears combo as well
+		ui_.cb_value->insertItem(0, item.value());
 	}
 
 	// Action
