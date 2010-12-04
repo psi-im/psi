@@ -188,6 +188,7 @@ void PrivacyDlg::updateLists(const QString& defaultList, const QString& activeLi
 	}
 	
 	ui_.lv_rules->setModel(&model_);
+	connect(ui_.lv_rules, SIGNAL(doubleClicked(QModelIndex)), SLOT(editCurrentRule()));
 }
 
 void PrivacyDlg::listChanged()
