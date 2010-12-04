@@ -379,28 +379,6 @@ bool PsiCon::init()
 	//qWarning(qPrintable(QString("Loading system defaults from %1").arg(systemDefaults)));
 	options->load(systemDefaults);
 
-#ifdef USE_PEP
-	// Create the tune controller
-	d->tuneController = new CombinedTuneController();
-#endif
-
-	// Auto updater initialization
-#ifdef HAVE_SPARKLE
-	d->autoUpdater = new SparkleAutoUpdater(ApplicationInfo::getAppCastURL());
-#endif
-	if (d->autoUpdater && PsiOptions::instance()->getOption("options.auto-update.check-on-startup").toBool()) {
-		d->autoUpdater->checkForUpdates();
-	}
-
-	// calculate the small font size
-	const int minimumFontSize = 7;
-	common_smallFontSize = qApp->font().pointSize();
-	common_smallFontSize -= 2;
-	if ( common_smallFontSize < minimumFontSize )
-		common_smallFontSize = minimumFontSize;
-	FancyLabel::setSmallFontSize( common_smallFontSize );
-	
-	
 	if (!PsiOptions::exists(optionsFile())) {
 		if (!options->newProfile()) {
 			qWarning("ERROR: Failed to new profile default options");
@@ -421,6 +399,27 @@ bool PsiCon::init()
 	
 	// do some late migration work
 	d->optionsMigration.lateMigration();
+
+#ifdef USE_PEP
+	// Create the tune controller
+	d->tuneController = new CombinedTuneController();
+#endif
+
+	// Auto updater initialization
+#ifdef HAVE_SPARKLE
+	d->autoUpdater = new SparkleAutoUpdater(ApplicationInfo::getAppCastURL());
+#endif
+	if (d->autoUpdater && PsiOptions::instance()->getOption("options.auto-update.check-on-startup").toBool()) {
+		d->autoUpdater->checkForUpdates();
+	}
+
+	// calculate the small font size
+	const int minimumFontSize = 7;
+	common_smallFontSize = qApp->font().pointSize();
+	common_smallFontSize -= 2;
+	if ( common_smallFontSize < minimumFontSize )
+		common_smallFontSize = minimumFontSize;
+	FancyLabel::setSmallFontSize( common_smallFontSize );
 	
 	QFile accountsFile(pathToProfile( activeProfile ) + "/accounts.xml");
 	bool accountMigration = false;	
