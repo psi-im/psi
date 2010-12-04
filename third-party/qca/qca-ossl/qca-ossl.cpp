@@ -1771,8 +1771,10 @@ public:
 			md = EVP_sha1();
 		else if(alg == EMSA3_MD5)
 			md = EVP_md5();
+#ifndef OPENSSL_NO_MD2
 		else if(alg == EMSA3_MD2)
 			md = EVP_md2();
+#endif
 		else if(alg == EMSA3_RIPEMD160)
 			md = EVP_ripemd160();
 		else if(alg == EMSA3_Raw)
@@ -1789,8 +1791,10 @@ public:
 			md = EVP_sha1();
 		else if(alg == EMSA3_MD5)
 			md = EVP_md5();
+#ifndef OPENSSL_NO_MD2
 		else if(alg == EMSA3_MD2)
 			md = EVP_md2();
+#endif
 		else if(alg == EMSA3_RIPEMD160)
 			md = EVP_ripemd160();
 		else if(alg == EMSA3_Raw)
@@ -6843,8 +6847,10 @@ public:
 			return new opensslHashContext( EVP_sha(), this, type);
 		else if ( type == "ripemd160" )
 			return new opensslHashContext( EVP_ripemd160(), this, type);
+#ifndef OPENSSL_NO_MD2
 		else if ( type == "md2" )
 			return new opensslHashContext( EVP_md2(), this, type);
+#endif
 		else if ( type == "md4" )
 			return new opensslHashContext( EVP_md4(), this, type);
 		else if ( type == "md5" )
@@ -6873,8 +6879,10 @@ public:
 */
 		else if ( type == "pbkdf1(sha1)" )
 			return new opensslPbkdf1Context( EVP_sha1(), this, type );
+#ifndef OPENSSL_NO_MD2
 		else if ( type == "pbkdf1(md2)" )
 			return new opensslPbkdf1Context( EVP_md2(), this, type );
+#endif
 		else if ( type == "pbkdf2(sha1)" )
 			return new opensslPbkdf2Context( this, type );
 		else if ( type == "hmac(md5)" )
