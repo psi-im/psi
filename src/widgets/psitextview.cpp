@@ -127,12 +127,13 @@ QString PsiTextView::getTextHelper(bool html) const
 
 	bool unselectAll = false;
 	if (!textCursor().hasSelection()) {
+#if QT_VERSION == 0x040701
 		// workaround for crash when deleting last character with backspace (qt-4.7.1)
 		// http://bugreports.qt.nokia.com/browse/QTBUG-15857
 		QTextCursor tempCursor = QTextCursor(ptv->document());
 		tempCursor.movePosition(QTextCursor::Start);
 		ptv->setTextCursor(tempCursor);
-
+#endif
 		ptv->selectAll();
 		unselectAll = true;
 	}
