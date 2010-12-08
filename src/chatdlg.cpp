@@ -539,7 +539,7 @@ void ChatDlg::optionsUpdate()
 	setLooks();
 	setShortcuts();
 
-	if (isHidden()) {
+	if (!isTabbed() && isHidden()) {
 		if (PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString() == "instant") {
 			deleteLater();
 			return;
