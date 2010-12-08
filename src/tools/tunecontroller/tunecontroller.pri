@@ -82,3 +82,17 @@ tc_psifile {
 		$$PSIFILE_PLUGIN_PATH/psifilecontroller.cpp \
 		$$PSIFILE_PLUGIN_PATH/psifileplugin.cpp
 }
+
+#MPRIS
+tc_mpris {
+	DEFINES += TC_MPRIS
+	MPRIS_PLUGIN_PATH = $$PWD/plugins/mpris
+	INCLUDEPATH += $$MPRIS_PLUGIN_PATH
+
+	HEADERS += \
+		$$PWD/mpristunecontroller.h
+
+	SOURCES += \
+		$$PWD/mpristunecontroller.cpp \
+		$$MPRIS_PLUGIN_PATH/mprisplugin.cpp
+}

@@ -119,3 +119,7 @@ Q_IMPORT_PLUGIN(winampplugin);
 #ifdef TC_PSIFILE
 Q_IMPORT_PLUGIN(psifileplugin);
 #endif
+
+#if defined(TC_MPRIS) && defined(USE_DBUS)
+Q_IMPORT_PLUGIN(mprisplugin);
+#endif

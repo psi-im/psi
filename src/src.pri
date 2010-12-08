@@ -45,6 +45,7 @@ pep {
 	CONFIG += tc_psifile
 	mac { CONFIG += tc_itunes }
 	windows { CONFIG += tc_winamp }
+	unix:dbus:!mac { CONFIG += tc_mpris }
 }
 include($$PWD/tools/tunecontroller/tunecontroller.pri)
 
