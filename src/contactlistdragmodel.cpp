@@ -524,7 +524,7 @@ QList<PsiContact*> ContactListDragModel::removeIndexesHelper(const QMimeData* da
 		if (!psiContact)
 			continue;
 
-		QStringList groups = processContactGetGroupNames(psiContact);
+		QStringList groups = psiContact->groups();
 
 		foreach(ContactListModelOperationList::Operation op, contactOperation.operations) {
 			groups.removeAll(op.groupFrom);
