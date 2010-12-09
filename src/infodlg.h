@@ -71,6 +71,7 @@ private slots:
 	void selectPhoto();
 	void clearPhoto();
 	void showPhoto();
+	void goHomepage();
 
 private:
 	class Private;

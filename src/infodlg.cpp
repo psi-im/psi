@@ -51,6 +51,7 @@
 #include "psioptions.h"
 #include "fileutil.h"
 #include "discodlg.h"
+#include "desktoputil.h"
 
 using namespace XMPP;
 		
@@ -79,6 +80,7 @@ public:
 	QLineEdit *le_givenname;
 	QLineEdit *le_middlename;
 	QLineEdit *le_familyname;
+	QAction *homepageAction;
 
 	// Fake UserListItem for groupchat contacts.
 	// One day this dialog should be rewritten not to talk directly to psiaccount,
@@ -153,6 +155,10 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	QAction *editnames = new QAction(IconsetFactory::icon(d->type == Self?"psi/options":"psi/info").icon(), "", this);
 	ui_.le_fullname->addAction(editnames);
 	ui_.le_fullname->widgetForAction(editnames)->setPopup(d->namesDlg);
+	d->homepageAction = new QAction(IconsetFactory::icon("psi/arrowRight").icon(), "", this);
+	d->homepageAction->setVisible(false);
+	ui_.le_homepage->addAction(d->homepageAction);
+	connect(d->homepageAction, SIGNAL(triggered()), SLOT(goHomepage()));
 
 	connect(ui_.pb_refresh, SIGNAL(clicked()), this, SLOT(doRefresh()));
 	connect(ui_.pb_refresh, SIGNAL(clicked()), this, SLOT(updateStatus()));
@@ -349,6 +355,7 @@ void InfoDlg::setData(const VCard &i)
 	ui_.le_email->setText( email );
 
 	ui_.le_homepage->setText( i.url() );
+	d->homepageAction->setVisible(!i.url().isEmpty());
 
 	QString phone;
 	if ( !i.phoneList().isEmpty() )
@@ -849,4 +856,15 @@ void InfoDlg::showPhoto()
 			::bringToFront(d->showPhotoDlg);
 		}
 	 }
+}
+
+void InfoDlg::goHomepage()
+{
+	QString homepage = ui_.le_homepage->text();
+	if (!homepage.isEmpty()) {
+		if (homepage.indexOf("://") == -1) {
+			homepage = "http://" + homepage;
+		}
+		DesktopUtil::openUrl(homepage);
+	}
 }
