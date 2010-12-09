@@ -33,6 +33,8 @@
 #include <QTextFrame>
 #include <QTextEdit>
 #include <QTextCursor>
+#include <QCryptographicHash>
+#include <QUrl>
 
 #include "textutil.h"
 
@@ -286,6 +288,44 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
 	// we need to save this to start searching from 
 	// here when applying format to icons
 	int initialpos = cursor.position();
+	
+	// prepare images and remove insecure images
+	QRegExp re("<img[^>]+src\\s*=\\s*(\"[^\"]*\"|'[^']*')[^>]*>");
+	QString replace;
+	for (int pos = 0; (pos = re.indexIn(text, pos)) != -1; ) {
+		replace.clear();
+		QString imgSrc = re.cap(1).mid(1, re.cap(1).size() - 2);
+		QUrl imgSrcUrl = QUrl::fromEncoded(imgSrc.toAscii());
+		if (imgSrcUrl.isValid()) {
+			if (imgSrcUrl.scheme() == "data") {
+				QRegExp dataRe("^[a-zA-Z]+/[a-zA-Z]+;base64,([a-zA-Z0-9/=+%]+)$");
+				if (dataRe.indexIn(imgSrcUrl.path()) != -1) {
+					const QByteArray ba = QByteArray::fromBase64(dataRe.cap(1).toAscii());
+					if (!ba.isNull()) {
+						QImage image;
+						if (image.loadFromData(ba)) {
+							replace = "srcdata" + QCryptographicHash::hash(ba, QCryptographicHash::Sha1).toHex();
+							doc->addResource(QTextDocument::ImageResource, QUrl(replace), image);
+						}
+					}
+				}
+			} else if (imgSrcUrl.scheme().isEmpty()) {
+				if (imgSrc.startsWith(":/")) { //resource
+					pos += re.matchedLength();
+					continue;
+				} else { // TODO check for local files. allow loading from psi profile and psi data dir
+
+				}
+			}
+		}
+		if (replace.isEmpty()) {
+			text.remove(pos, re.matchedLength());
+		} else {
+			text.replace(re.pos(1)+1, imgSrc.size(), replace);
+			pos += replace.size() + 1;
+		}
+	}
+	
 	cursor.insertFragment(QTextDocumentFragment::fromHtml(convertIconsToObjectReplacementCharacters(text, &queue)));
 	cursor.setPosition(initialpos);
 	
