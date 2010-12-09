@@ -552,12 +552,15 @@ void InfoDlg::doRefresh()
 
 void InfoDlg::doSubmit()
 {
-	if(!d->pa->checkConnected(this))
+	if(!d->pa->checkConnected(this)) {
 		return;
-	if(!ui_.pb_submit->isEnabled())
+	}
+	if(!ui_.pb_submit->isEnabled()) {
 		return;
-	if(d->busy->isActive())
+	}
+	if(d->busy->isActive()) {
 		return;
+	}
 
 	VCard submit_vcard = makeVCard();
 
@@ -683,8 +686,9 @@ VCard InfoDlg::makeVCard()
 
 	org.name = ui_.le_orgName->text();
 
-	if ( !ui_.le_orgUnit->text().isEmpty() )
+	if ( !ui_.le_orgUnit->text().isEmpty() ) {
 		org.unit << ui_.le_orgUnit->text();
+	}
 
 	v.setOrg( org );
 
@@ -790,8 +794,9 @@ void InfoDlg::clientVersionFinished()
 		foreach(UserListItem* u, d->findRelevant(j->jid())) {
 			UserResourceList::Iterator rit = u->userResourceList().find(j->jid().resource());
 			bool found = (rit == u->userResourceList().end()) ? false: true;
-			if(!found)
+			if(!found) {
 				continue;
+			}
 
 			(*rit).setClient(j->name(),j->version(),j->os());
 			d->updateEntry(*u);
@@ -824,8 +829,9 @@ void InfoDlg::requestLastActivityFinished()
 void InfoDlg::contactAvailable(const Jid &j, const Resource &r)
 {
 	if (d->jid.compare(j,false)) {
-		if (!d->infoRequested.contains(j.withResource(r.name()).full()))
+		if (!d->infoRequested.contains(j.withResource(r.name()).full())) {
 			requestClientVersion(j.withResource(r.name()));
+		}
 	}
 }
 

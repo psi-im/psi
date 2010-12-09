@@ -292,8 +292,7 @@ void ContactListView::keyPressEvent(QKeyEvent* event)
 			}
 			else {
 				QContextMenuEvent e(QContextMenuEvent::Keyboard,
-						    visualRect(currentIndex()).center(),
-				                    Qt::NoModifier);
+							visualRect(currentIndex()).center());
 				QCoreApplication::sendEvent(this, &e);
 			}
 		}

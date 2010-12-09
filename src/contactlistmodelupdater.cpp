@@ -196,7 +196,7 @@ bool ContactListModelUpdater::updatesEnabled() const
 
 void ContactListModelUpdater::setUpdatesEnabled(bool updatesEnabled)
 {
-	if (updatesEnabled_ = updatesEnabled) {
+	if (updatesEnabled_ != updatesEnabled) {
 		updatesEnabled_ = updatesEnabled;
 		if (updatesEnabled_) {
 			commitTimer_->start();

@@ -899,8 +899,9 @@ void ContactListDragView::mouseReleaseEvent(QMouseEvent* event)
 		}
 	}
 
-	if (!filter && event->button() & Qt::LeftButton || !activateItemsOnSingleClick())
+	if ((!filter && event->button() & Qt::LeftButton) || !activateItemsOnSingleClick()) {
 		ContactListView::mouseReleaseEvent(event);
+	}
 
 	pressPosition_ = QPoint();
 	delete pressedIndex_;

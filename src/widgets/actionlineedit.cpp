@@ -71,7 +71,8 @@ void ActionLineEditButton::showPopup()
 			const QPoint pos = mapToGlobal(QPoint(width()-popup_->width(), height()));
 			popup_->move(pos);
 			popup_->show();
-		} else {
+		}
+		else {
 			popup_->hide();
 		}
 	}
@@ -175,11 +176,13 @@ void ActionLineEdit::actionEvent ( QActionEvent * event )
 		int beforeInd;
 		if (before && (beforeInd = actions().indexOf(before)) >= 0) { //TODO test it
 			lo->insertWidget(beforeInd + 1, btn); //1 - first item is spacer. skip it
-		} else {
+		}
+		else {
 			lo->addWidget(btn);
 		}
 		btn->setDefaultAction(act);
-	} else if (event->type() == QEvent::ActionRemoved) {
+	}
+	else if (event->type() == QEvent::ActionRemoved) {
 		for (int i=1, count=lo->count(); i<count; i++) {
 			btn = (ActionLineEditButton *)lo->itemAt(i)->widget();
 			if (btn->defaultAction() == act) {

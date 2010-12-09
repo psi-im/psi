@@ -603,7 +603,7 @@ QString PsiIcon::defaultText() const
 
 	// first, try to get the text by priorities
 	QStringList lang;
-	lang << QLocale::system().name().section('_', 0, 0); // most prioritent, is the local language
+	lang << QLocale::languageToString(QLocale::system().language()); // most prioritent, is the local language
 	lang << "";                                    // and then the language without name goes (international?)
 	lang << "en";                                  // then real English
 

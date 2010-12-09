@@ -130,8 +130,9 @@ void PsiRichText::install(QTextDocument *doc)
 	Q_ASSERT(doc);
 #ifndef WIDGET_PLUGIN
 	static TextIconHandler *handler = 0;
-	if (!handler)
+	if (!handler) {
 		handler = new TextIconHandler(qApp);
+	}
 	
 	doc->documentLayout()->registerHandler(IconFormatType, handler);
 #endif
@@ -204,8 +205,9 @@ static QString preserveOriginalObjectReplacementCharacters(QString text, TextIco
 	// 0x20 is used immediately after tag opening, this could
 	// create a hole. ejabberd protects us from it though.
 	objReplChars += text.count("<img ");
-	for (int i = objReplChars; i; i--)
+	for (int i = objReplChars; i; i--) {
 		queue->enqueue(0);
+	}
 
 	return text;
 }
@@ -238,8 +240,9 @@ static QString convertIconsToObjectReplacementCharacters(QString text, TextIconF
 		if (rxName.indexIn(fragment) != -1) {
 			QString iconName = TextUtil::unescape(rxName.capturedTexts()[1]);
 			QString iconText;
-			if (rxText.indexIn(fragment) != -1)
+			if (rxText.indexIn(fragment) != -1) {
 				iconText = TextUtil::unescape(rxText.capturedTexts()[1]);
+			}
 			
 			queue->enqueue(new TextIconFormat(iconName, iconText));
 			result += QChar::ObjectReplacementCharacter;
@@ -260,8 +263,9 @@ static void applyFormatToIcons(QTextDocument *doc, TextIconFormatQueue *queue, Q
 	QTextCursor searchCursor = cursor;
 	forever {
 		searchCursor = doc->find(QString(QChar::ObjectReplacementCharacter), searchCursor);
-		if (searchCursor.isNull())
+		if (searchCursor.isNull()) {
 			break;
+		}
 		
 		Q_ASSERT(!queue->isEmpty());
 		TextIconFormat *format = queue->dequeue();
@@ -309,18 +313,21 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
 						}
 					}
 				}
-			} else if (imgSrcUrl.scheme().isEmpty()) {
+			}
+			else if (imgSrcUrl.scheme().isEmpty()) {
 				if (imgSrc.startsWith(":/")) { //resource
 					pos += re.matchedLength();
 					continue;
-				} else { // TODO check for local files. allow loading from psi profile and psi data dir
+				}
+				else { // TODO check for local files. allow loading from psi profile and psi data dir
 
 				}
 			}
 		}
 		if (replace.isEmpty()) {
 			text.remove(pos, re.matchedLength());
-		} else {
+		}
+		else {
 			text.replace(re.pos(1)+1, imgSrc.size(), replace);
 			pos += replace.size() + 1;
 		}
@@ -423,8 +430,9 @@ void PsiRichText::addEmoticon(QTextEdit *textEdit, const QString &emoticon)
 	PsiRichText::Selection selection = PsiRichText::saveSelection(textEdit, cursor);
 
 	cursor.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor, 1);
-	if (!cursor.selectedText().isEmpty() && !cursor.selectedText().at(0).isSpace())
+	if (!cursor.selectedText().isEmpty() && !cursor.selectedText().at(0).isSpace()) {
 		text = " " + text;
+	}
 
 	textEdit->insertPlainText(text);
 
