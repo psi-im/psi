@@ -156,6 +156,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	ui_.le_fullname->addAction(editnames);
 	ui_.le_fullname->widgetForAction(editnames)->setPopup(d->namesDlg);
 	d->homepageAction = new QAction(IconsetFactory::icon("psi/arrowRight").icon(), "", this);
+	d->homepageAction->setToolTip(tr("Open web browser"));
 	d->homepageAction->setVisible(false);
 	ui_.le_homepage->addAction(d->homepageAction);
 	connect(d->homepageAction, SIGNAL(triggered()), SLOT(goHomepage()));

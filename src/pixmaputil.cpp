@@ -10,10 +10,11 @@ QPixmap PixmapUtil::createTransparentPixmap(int width, int height)
 	// p.fillRect(pixmap.rect(), Qt::transparent);
 #if 1
 	QPixmap pix(width, height);
-	QBitmap mask(width, height);
+	pix.fill(Qt::transparent);
+/*	QBitmap mask(width, height);
 	pix.fill();
 	mask.clear();
-	pix.setMask(mask);
+	pix.setMask(mask);*/
 #else
 	QImage img(width, height, QImage::Format_ARGB32);
 	img.fill(0x00000000);
