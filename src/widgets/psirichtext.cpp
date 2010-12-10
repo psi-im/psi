@@ -314,14 +314,12 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
 					}
 				}
 			}
-			else if (imgSrcUrl.scheme().isEmpty()) {
-				if (imgSrc.startsWith(":/")) { //resource
-					pos += re.matchedLength();
-					continue;
-				}
-				else { // TODO check for local files. allow loading from psi profile and psi data dir
-
-				}
+			else if (imgSrc.startsWith(":/") || (!imgSrcUrl.scheme().isEmpty() && imgSrcUrl.scheme() != "file")) {
+				pos += re.matchedLength();
+				continue;
+			}
+			else { // TODO check for local files. allow loading from psi profile and psi data dir
+				// go here when  sheme not in ["", "data", "file"] and its not a resource
 			}
 		}
 		if (replace.isEmpty()) {
