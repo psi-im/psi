@@ -155,7 +155,7 @@ bool PsiMain::useActiveInstance()
 void PsiMain::useLocalInstance()
 {
 	if(lastLang.isEmpty()) {
-		lastLang = QLocale::languageToString(QLocale::system().language());
+		lastLang = QLocale().name().section('_', 0, 0);
 		//printf("guessing locale: [%s]\n", lastLang.latin1());
 	}
 
