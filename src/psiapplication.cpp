@@ -135,7 +135,7 @@ public:
 				newopt.icon = QIcon();
 				QMacStyle::drawControl(ce, &newopt, p, w);
 				return;
-		        }
+			}
 		}
 
 		QMacStyle::drawControl(ce, opt, p, w);

@@ -29,8 +29,8 @@ class TabCompletion : public QObject
 {
 Q_OBJECT
 public:
-    TabCompletion(QObject *parent = 0);
-    ~TabCompletion();
+	TabCompletion(QObject *parent = 0);
+	~TabCompletion();
 
 	void setTextEdit(QTextEdit* mle);
 	QTextEdit* getTextEdit();

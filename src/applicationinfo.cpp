@@ -112,44 +112,41 @@ QString ApplicationInfo::resourcesDir()
 	return qApp->applicationDirPath();
 #elif defined(Q_WS_MAC)
 	// FIXME: Clean this up (remko)
-  // System routine locates resource files. We "know" that Psi.icns is
-  // in the Resources directory.
-  QString resourcePath;
-  CFBundleRef mainBundle = CFBundleGetMainBundle();
-  CFStringRef resourceCFStringRef
-      = CFStringCreateWithCString( NULL, "application.icns",
-                                   kCFStringEncodingASCII );
-  CFURLRef resourceURLRef = CFBundleCopyResourceURL( mainBundle,
-                                                     resourceCFStringRef,
-                                                     NULL,
-                                                     NULL );
-  if ( resourceURLRef ) {
-    CFStringRef resourcePathStringRef =
-    CFURLCopyFileSystemPath( resourceURLRef, kCFURLPOSIXPathStyle );
-    const char* resourcePathCString =
-      CFStringGetCStringPtr( resourcePathStringRef, kCFStringEncodingASCII );
-    if ( resourcePathCString ) {
-      resourcePath = resourcePathCString;
-    } else { // CFStringGetCStringPtr failed; use fallback conversion
-      CFIndex bufferLength = CFStringGetLength( resourcePathStringRef ) + 1;
-      char* resourcePathCString = new char[ bufferLength ];
-      Boolean conversionSuccess =
-        CFStringGetCString( resourcePathStringRef,
-                            resourcePathCString, bufferLength,
-                            kCFStringEncodingASCII );
-      if ( conversionSuccess ) {
-        resourcePath = resourcePathCString;
-      }
-      delete [] resourcePathCString;  // I own this
-    }
-    CFRelease( resourcePathStringRef ); // I own this
-  }
-  // Remove the tail component of the path
-  if ( ! resourcePath.isNull() ) {
-    QFileInfo fileInfo( resourcePath );
-    resourcePath = fileInfo.absolutePath();
-  }
-  return resourcePath;
+	// System routine locates resource files. We "know" that Psi.icns is
+	// in the Resources directory.
+	QString resourcePath;
+	CFBundleRef mainBundle = CFBundleGetMainBundle();
+	CFStringRef resourceCFStringRef = CFStringCreateWithCString(NULL,
+									"application.icns", kCFStringEncodingASCII);
+	CFURLRef resourceURLRef = CFBundleCopyResourceURL(mainBundle,
+											resourceCFStringRef, NULL, NULL);
+	if (resourceURLRef) {
+		CFStringRef resourcePathStringRef = CFURLCopyFileSystemPath(
+					resourceURLRef, kCFURLPOSIXPathStyle);
+		const char* resourcePathCString = CFStringGetCStringPtr(
+					resourcePathStringRef, kCFStringEncodingASCII);
+		if (resourcePathCString) {
+			resourcePath = resourcePathCString;
+		}
+		else { // CFStringGetCStringPtr failed; use fallback conversion
+			CFIndex bufferLength = CFStringGetLength(resourcePathStringRef) + 1;
+			char* resourcePathCString = new char[ bufferLength ];
+			Boolean conversionSuccess = CFStringGetCString(
+						resourcePathStringRef, resourcePathCString,
+						bufferLength, kCFStringEncodingASCII);
+			if (conversionSuccess) {
+				resourcePath = resourcePathCString;
+			}
+			delete [] resourcePathCString;  // I own this
+		}
+		CFRelease( resourcePathStringRef ); // I own this
+	}
+	// Remove the tail component of the path
+	if (! resourcePath.isNull()) {
+		QFileInfo fileInfo(resourcePath);
+		resourcePath = fileInfo.absolutePath();
+	}
+	return resourcePath;
 #endif
 }
 
@@ -170,8 +167,9 @@ QString ApplicationInfo::homeDir()
 {
 	// Try the environment override first
 	char *p = getenv("PSIDATADIR");
-	if(p)
+	if(p) {
 		return p;
+	}
 
 #if defined(Q_WS_X11)
 	QDir proghome(QDir::homePath() + "/.psi");
@@ -185,15 +183,17 @@ QString ApplicationInfo::homeDir()
 	QString base;
 
 	// Windows 9x
-	if(QDir::homePath() == QDir::rootPath())
+	if(QDir::homePath() == QDir::rootPath()) {
 		base = ".";
+	}
 	// Windows NT/2K/XP variant
-	else
+	else {
 		base = QDir::homePath();
-
+	}
 	// no trailing slash
-	if(base.at(base.length()-1) == '/')
+	if(base.at(base.length()-1) == '/') {
 		base.truncate(base.length()-1);
+	}
 
 	QDir proghome(base + "/PsiData");
 	if(!proghome.exists()) {

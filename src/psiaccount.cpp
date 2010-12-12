@@ -820,13 +820,13 @@ public slots:
 		bringToFront(w);
 	}
 
-        void incoming_call()
-        {
+	void incoming_call()
+	{
 		AvCall *sess = avCallManager->takeIncoming();
 		AvCallEvent *ae = new AvCallEvent(sess->jid().full(), sess, account);
 		ae->setTimeStamp(QDateTime::currentDateTime());
 		account->handleEvent(ae, IncomingStanza);
-        }
+	}
 
 public:
 	enum AutoAway {
@@ -2832,7 +2832,7 @@ void PsiAccount::setStatusActual(const Status &_s)
 		simulateRosterOffline();
 	}
 
-        // Add vcard photo hash if available
+	// Add vcard photo hash if available
 	if(!d->photoHash.isEmpty()) {
 		s.setPhotoHash(d->photoHash);
 	}
@@ -3033,9 +3033,7 @@ bool PsiAccount::validRosterExchangeItem(const RosterExchangeItem& item)
 
 ChatDlg* PsiAccount::findChatDialog(const Jid& jid) const
 {
-	return findDialog<ChatDlg*>(jid,
-	                            true
-	                           );
+	return findDialog<ChatDlg*>(jid, true);
 }
 
 QWidget* PsiAccount::findDialog(const QMetaObject& mo, const Jid& jid, bool compareResource) const
@@ -3788,17 +3786,17 @@ void PsiAccount::actionGroupRename(const QString &oldname, const QString &newnam
 			u->removeGroup(oldname);
 			u->addGroup(newname);
 			cpUpdate(*u);
-                        if(u->inList()) {
-                                nu.append(u);
-                        }
+			if(u->inList()) {
+				nu.append(u);
+			}
 		}
 	}
 
 	if(!nu.isEmpty()) {
-                foreach(UserListItem* u, nu) {
-                        JT_Roster *r = new JT_Roster(d->client->rootTask());
-                        r->set(u->jid(), u->name(), u->groups());
-                        r->go(true);
+		foreach(UserListItem* u, nu) {
+			JT_Roster *r = new JT_Roster(d->client->rootTask());
+			r->set(u->jid(), u->name(), u->groups());
+			r->go(true);
 		}
 	}
 }

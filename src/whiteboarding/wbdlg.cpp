@@ -110,19 +110,19 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
 	widthaction->setData(QVariant(6));
 	widthaction->setCheckable(true);
 
-    IconAction* action;
-    action = new IconAction(tr("Select"), "psi/select", tr("Select"), 0, group_modes_ );
-    action->setData(QVariant(WbWidget::Select));
-    action->setCheckable(true);
+	IconAction* action;
+	action = new IconAction(tr("Select"), "psi/select", tr("Select"), 0, group_modes_ );
+	action->setData(QVariant(WbWidget::Select));
+	action->setCheckable(true);
 	action = new IconAction(tr( "Translate"), "psi/translate", tr("Translate"), 0, group_modes_ );
 	action->setData(QVariant(WbWidget::Translate));
 	action->setCheckable(true);
-    action = new IconAction(tr( "Rotate"), "psi/rotate", tr("Rotate"), 0, group_modes_ );
-    action->setData(QVariant(WbWidget::Rotate));
-    action->setCheckable(true);
-    action = new IconAction(tr( "Scale"), "psi/scale", tr("Scale"), 0, group_modes_ );
-    action->setData(QVariant(WbWidget::Scale));
-    action->setCheckable(true);
+	action = new IconAction(tr( "Rotate"), "psi/rotate", tr("Rotate"), 0, group_modes_ );
+	action->setData(QVariant(WbWidget::Rotate));
+	action->setCheckable(true);
+	action = new IconAction(tr( "Scale"), "psi/scale", tr("Scale"), 0, group_modes_ );
+	action->setData(QVariant(WbWidget::Scale));
+	action->setCheckable(true);
 	action = new IconAction(tr( "Erase"), "psi/erase", tr("Erase"), 0, group_modes_ );
 	action->setData(QVariant(WbWidget::Erase));
 	action->setCheckable(true);
@@ -137,24 +137,24 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
 	action->setData(QVariant(WbWidget::DrawPath));
 	action->setCheckable(true);
 	action->trigger();
-    // action = new IconAction(tr( "Draw lines"), "psi/drawLines", tr("Draw lines"), 0, group_modes_ );
-    // action->setData(QVariant(WbWidget::DrawLine));
-    // action->setCheckable(true);
-    // action = new IconAction(tr( "Draw ellipses"), "psi/drawEllipses", tr("Draw ellipses"), 0, group_modes_ );
-    // action->setData(QVariant(WbWidget::DrawEllipse));
-    // action->setCheckable(true);
-    // action = new IconAction(tr( "Draw circles"), "psi/drawCircles", tr("Draw circles"), 0, group_modes_ );
-    // action->setData(QVariant(WbWidget::DrawCircle));
-    // action->setCheckable(true);
-    // action = new IconAction(tr( "Draw rectangles"), "psi/drawRectangles", tr("Draw rectangles"), 0, group_modes_ );
-    // action->setData(QVariant(WbWidget::DrawRectangle));
-    // action->setCheckable(true);
-// 	action = new IconAction(tr( "Add text"), "psi/addText", tr("Add text"), 0, group_modes_ );
-// 	action->setData(QVariant(WbWidget::DrawText));
-// 	action->setCheckable(true);
-    action = new IconAction(tr( "Add images"), "psi/addImage", tr("Add images"), 0, group_modes_ );
-    action->setData(QVariant(WbWidget::DrawImage));
-    action->setCheckable(true);
+	// action = new IconAction(tr( "Draw lines"), "psi/drawLines", tr("Draw lines"), 0, group_modes_ );
+	// action->setData(QVariant(WbWidget::DrawLine));
+	// action->setCheckable(true);
+	// action = new IconAction(tr( "Draw ellipses"), "psi/drawEllipses", tr("Draw ellipses"), 0, group_modes_ );
+	// action->setData(QVariant(WbWidget::DrawEllipse));
+	// action->setCheckable(true);
+	// action = new IconAction(tr( "Draw circles"), "psi/drawCircles", tr("Draw circles"), 0, group_modes_ );
+	// action->setData(QVariant(WbWidget::DrawCircle));
+	// action->setCheckable(true);
+	// action = new IconAction(tr( "Draw rectangles"), "psi/drawRectangles", tr("Draw rectangles"), 0, group_modes_ );
+	// action->setData(QVariant(WbWidget::DrawRectangle));
+	// action->setCheckable(true);
+	// 	action = new IconAction(tr( "Add text"), "psi/addText", tr("Add text"), 0, group_modes_ );
+	// 	action->setData(QVariant(WbWidget::DrawText));
+	// 	action->setCheckable(true);
+	action = new IconAction(tr( "Add images"), "psi/addImage", tr("Add images"), 0, group_modes_ );
+	action->setData(QVariant(WbWidget::DrawImage));
+	action->setCheckable(true);
 
 	menu_widths_ = new QMenu(this);
 	menu_widths_->addActions(group_widths_->actions());
@@ -170,7 +170,7 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
 	toolbar_->addAction(act_end_);
 	toolbar_->addAction(act_clear_);
 	toolbar_->addAction(act_save_);
-    toolbar_->addAction(act_geometry_);
+	toolbar_->addAction(act_geometry_);
 	toolbar_->addWidget(new StretchWidget(this));
 	toolbar_->addAction(act_fill_);
 	toolbar_->addAction(act_color_);
@@ -196,18 +196,18 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
 	
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY, PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt())) / 100);
 
-    resize(PsiOptions::instance()->getOption("options.ui.chat.size").toSize());
+	resize(PsiOptions::instance()->getOption("options.ui.chat.size").toSize());
 }
 
 WbDlg::~WbDlg() {
-    // terminate the underlying SXE session
-    session()->endSession();
+	// terminate the underlying SXE session
+	session()->endSession();
 
-    emit sessionEnded(this);
+	emit sessionEnded(this);
 }
 
 SxeSession* WbDlg::session() const {
-     return wbWidget_->session();
+	 return wbWidget_->session();
 }
 
 bool WbDlg::allowEdits() const {
@@ -339,37 +339,38 @@ void WbDlg::buildMenu()
 }
 
 void WbDlg::setGeometry() {
-    // TODO: make a proper dialog
-    QSize size;
+	// TODO: make a proper dialog
+	QSize size;
 
-    bool ok;
-    size.setWidth(QInputDialog::getInteger(this, tr("Set new width:"), tr("Width:"), static_cast<int>(wbWidget_->scene()->sceneRect().width()), 10, 100000, 10, &ok));
-    if(!ok)
-        return;
+	bool ok;
+	size.setWidth(QInputDialog::getInteger(this, tr("Set new width:"), tr("Width:"), static_cast<int>(wbWidget_->scene()->sceneRect().width()), 10, 100000, 10, &ok));
+	if(!ok) {
+		return;
+	}
 
-    size.setHeight(QInputDialog::getInteger(this, tr("Set new height:"), tr("Height:"), static_cast<int>(wbWidget_->scene()->sceneRect().height()), 10, 100000, 10, &ok));
-    if(!ok)
-        return;
+	size.setHeight(QInputDialog::getInteger(this, tr("Set new height:"), tr("Height:"), static_cast<int>(wbWidget_->scene()->sceneRect().height()), 10, 100000, 10, &ok));
+	if(!ok)
+		return;
 
-    wbWidget_->setSize(size);
+	wbWidget_->setSize(size);
 }
 
 void WbDlg::save() {
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Whitebaord"),
-                                QDir::homePath(),
-                                tr("Scalable Vector Graphics (*.svg)"));
-    fileName = fileName.trimmed();
-    if(!fileName.endsWith(".svg", Qt::CaseInsensitive))
-        fileName += ".svg";
+	QString fileName = QFileDialog::getSaveFileName(this, tr("Save Whitebaord"),
+								QDir::homePath(),
+								tr("Scalable Vector Graphics (*.svg)"));
+	fileName = fileName.trimmed();
+	if(!fileName.endsWith(".svg", Qt::CaseInsensitive))
+		fileName += ".svg";
 
-    QFile file(fileName);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
-        return;
+	QFile file(fileName);
+	if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+		return;
 
-    QTextStream stream(&file);
-    wbWidget_->session()->document().save(stream, 2);
+	QTextStream stream(&file);
+	wbWidget_->session()->document().save(stream, 2);
 
-    file.close();
+	file.close();
 }
 
 void WbDlg::contextMenuEvent(QContextMenuEvent * e) {

@@ -566,7 +566,7 @@ void UserAccount::fromXml(const QDomElement &a)
 				GroupData gd;
 				gd.open = i.attribute("open") == "true";
 				gd.rank = i.attribute("rank").toInt();
-                		groupState.insert(i.attribute("name"), gd);
+				groupState.insert(i.attribute("name"), gd);
 			}
 		}
 	}
@@ -1386,8 +1386,8 @@ bool profileNew(const QString &name)
 		return false;
 	QDir p(ApplicationInfo::profilesDir() + "/" + name);
 	if(!p.exists()) {
-	        if (!d.mkdir(name))
-			return false;
+		if (!d.mkdir(name))
+		return false;
 	}
 
 	p.mkdir("history");

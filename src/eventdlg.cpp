@@ -571,8 +571,9 @@ public slots:
 	}
 
 	void addEmoticon(QString text) {
-		if ( !dlg->isActiveWindow() )
-		     return;
+		if (!dlg->isActiveWindow()) {
+			return;
+		}
 
 		PsiRichText::addEmoticon(mle, text);
 	}

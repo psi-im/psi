@@ -1,6 +1,6 @@
 /*
  * wbnewpath.h - a class used for representing a path on the whiteboard 
- *              while it's being drawn.
+ *			  while it's being drawn.
  * Copyright (C) 2008  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -25,18 +25,18 @@
 #include "wbnewitem.h"
 
 class WbNewPath : public WbNewItem {
-    public:
-        WbNewPath(QGraphicsScene* s, QPointF startPos, int strokeWidth, const QColor &strokeColor, const QColor &fillColor);
-        ~WbNewPath();
-        void parseCursorMove(QPointF newPos);
-        QDomNode serializeToSvg();
+	public:
+		WbNewPath(QGraphicsScene* s, QPointF startPos, int strokeWidth, const QColor &strokeColor, const QColor &fillColor);
+		~WbNewPath();
+		void parseCursorMove(QPointF newPos);
+		QDomNode serializeToSvg();
 
-    protected:
-        QGraphicsItem* graphicsItem();
+	protected:
+		QGraphicsItem* graphicsItem();
 
-    private:
-        QGraphicsPathItem graphicsitem_;
-        QPointF* controlPoint_;
+	private:
+		QGraphicsPathItem graphicsitem_;
+		QPointF* controlPoint_;
 };
 
 #endif

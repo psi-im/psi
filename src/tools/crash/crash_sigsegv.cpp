@@ -97,7 +97,7 @@ static int dump_pid_son(pid_t pid, const char *binary, int full_bt,
 		sprintf(cmd, "gdb -nw -n -batch -x \"%s\" %s %d", tmp, binary,
 			pid);
 		(*myprint)("trying to dump pid: %d (%s)...%s", pid, binary,
-                           needs_cr ? "\n" : "");
+				   needs_cr ? "\n" : "");
 
 		fflush(NULL);
 		fp = popen(cmd, "r");
@@ -218,10 +218,10 @@ static void sigsegv_handler_generic(int signal, int full_bt)
 	int (* myprint)(const char *format, ...);
 
 	myprint = print ? print : printf;
-	if( get_path_from_pid(binary, sizeof(binary), pid) == NULL)
+	if( get_path_from_pid(binary, sizeof(binary), pid) == NULL) {
 		(*myprint)("pid %d does not seems to exist", pid);
-        else
-	{
+	}
+	else {
 		(*myprint)("Segmentation Violation Detected.%s",
 			   needs_cr ? "\n" : "");
 		dump_pid(pid, binary, full_bt);

@@ -74,7 +74,7 @@ QSize FontLabel::sizeHint() const
 // OptionsTabAppearance
 //----------------------------------------------------------------------------
 OptionsTabAppearance::OptionsTabAppearance(QObject *parent) : MetaOptionsTab(parent, "appearance", "", tr("Appearance"), tr("Psi's appearance"), "psi/appearance")
-{    
+{
 	addTab( new OptionsTabAppearanceGeneral(this) );
 	addTab( new OptionsTabIconsetEmoticons(this) );
 	addTab( new OptionsTabIconsetRoster(this) );

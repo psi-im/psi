@@ -797,7 +797,7 @@ void MainWin::buildMainMenu()
 	        << "separator"
 	        << "menu_account_setup";
 	if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
-	        actions << "menu_change_profile";
+		actions << "menu_change_profile";
 	}
 	actions << "menu_play_sounds";
 
@@ -830,7 +830,7 @@ void MainWin::buildGeneralMenu(QMenu* menu)
 	        << "menu_options"
 	        << "menu_file_transfer";
 	if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
-	        actions << "menu_change_profile";
+		actions << "menu_change_profile";
 	}
 	actions << "menu_play_sounds";
 

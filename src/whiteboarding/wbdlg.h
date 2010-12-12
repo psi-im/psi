@@ -74,9 +74,9 @@ public:
 	~WbDlg();
 
 	/*! \brief Returns the session identifier.*/
-    SxeSession* session() const;
+	SxeSession* session() const;
 	/*! \brief Returns whether further edits to the session are allowed.*/
-        bool allowEdits() const;
+		bool allowEdits() const;
 	/*! \brief Sets whether further edits to the session are allowed.*/
 	void setAllowEdits(bool);
 

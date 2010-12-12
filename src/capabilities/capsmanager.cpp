@@ -188,9 +188,9 @@ CapsSpec CapsManager::getCapsSpecForNode(const XMPP::Jid& jid, const QString& di
 {
     int hash_index = disco_node.indexOf('#');
     if (hash_index == -1) {
-        qWarning() << "CapsManager: Node" << disco_node << "invalid";
-        ok = false;
-        return CapsSpec();
+		qWarning() << "CapsManager: Node" << disco_node << "invalid";
+		ok = false;
+		return CapsSpec();
     }
 	QString node = disco_node.left(hash_index);
 	QString ext = disco_node.right(disco_node.length() - hash_index - 1);

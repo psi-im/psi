@@ -669,9 +669,9 @@ void ChatDlg::doSend()
 	if (warnSend_) {
 		warnSend_ = false;
 		int n = QMessageBox::information(this, tr("Warning"), tr(
-		                                     "<p>Encryption was recently disabled by the remote contact.  "
-		                                     "Are you sure you want to send this message without encryption?</p>"
-		                                 ), tr("&Yes"), tr("&No"));
+				"<p>Encryption was recently disabled by the remote contact.  "
+				"Are you sure you want to send this message without encryption?</p>"
+				), tr("&Yes"), tr("&No"));
 		if (n != 0) {
 			return;
 		}

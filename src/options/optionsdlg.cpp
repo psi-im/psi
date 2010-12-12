@@ -96,8 +96,9 @@ public:
 		textRect.setLeft(iconRect.right() + 8);
 		QPalette::ColorGroup cg = option.state & QStyle::State_Enabled
 		                          ? QPalette::Normal : QPalette::Disabled;
-		if (cg == QPalette::Normal && !(option.state & QStyle::State_Active))
+		if (cg == QPalette::Normal && !(option.state & QStyle::State_Active)) {
 			cg = QPalette::Inactive;
+		}
 		if (option.state & QStyle::State_Selected) {
 			painter->setPen(option.palette.color(cg, QPalette::HighlightedText));
 		}

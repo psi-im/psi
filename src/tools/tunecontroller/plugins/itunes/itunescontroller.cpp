@@ -48,7 +48,7 @@ static QString CFStringToQString(CFStringRef s)
 		delete[] buffer;
 	} 
     return result;
-}                         
+}
 
 
 ITunesController::ITunesController()

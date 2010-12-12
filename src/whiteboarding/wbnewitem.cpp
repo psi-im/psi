@@ -1,6 +1,6 @@
 /*
  * wbnewitem.cpp - a class used for representing items on the whiteboard 
- *              while they're being drawn.
+ *			  while they're being drawn.
  * Copyright (C) 2008  Joonas Govenius
  *
  * This program is free software; you can redistribute it and/or
@@ -28,48 +28,49 @@
 #include <QBuffer>
 
 WbNewItem::WbNewItem(QGraphicsScene* s) {
-    scene = s;
+	scene = s;
 }
 
 WbNewItem::~WbNewItem() {
 }
 
 QDomNode WbNewItem::serializeToSvg() {
-    if(!graphicsItem())
-        return QDomDocumentFragment();
+	if(!graphicsItem()) {
+		return QDomDocumentFragment();
+	}
 
-    // Generate the SVG using QSvgGenerator
-    QBuffer buffer;
+	// Generate the SVG using QSvgGenerator
+	QBuffer buffer;
 
-    QSvgGenerator generator;
-    generator.setOutputDevice(&buffer);
+	QSvgGenerator generator;
+	generator.setOutputDevice(&buffer);
 
-    QPainter painter;
-    QStyleOptionGraphicsItem options;
-    painter.begin(&generator);
-    graphicsItem()->paint(&painter, &options);
-    painter.end();
+	QPainter painter;
+	QStyleOptionGraphicsItem options;
+	painter.begin(&generator);
+	graphicsItem()->paint(&painter, &options);
+	painter.end();
 
-    // qDebug("Serialized SVG doc:");
-    // qDebug(buffer.buffer());
+	// qDebug("Serialized SVG doc:");
+	// qDebug(buffer.buffer());
 
-    // Parse the children of the new root <svg/> from the buffer to a document fragment
-    // also add an 'id' attribute to each of the children
-    QDomDocument tempDoc;
-    tempDoc.setContent(buffer.buffer());
-    QDomDocumentFragment fragment = tempDoc.createDocumentFragment();
-    
-    QDomNodeList children = tempDoc.documentElement().childNodes();
-    for(int i = children.length() - 1; i >= 0; i--) {
-        // skip <title/>, <desc/>, and <defs/>
-        if(children.at(i).isElement() &&
-            !(children.at(i).nodeName() == "title"
-                || children.at(i).nodeName() == "desc"
-                || children.at(i).nodeName() == "defs")) {
-            children.at(i).toElement().setAttribute("id", "e" + SxeSession::generateUUID());
-            fragment.insertBefore(children.at(i), QDomNode());
-        }
-    }
+	// Parse the children of the new root <svg/> from the buffer to a document fragment
+	// also add an 'id' attribute to each of the children
+	QDomDocument tempDoc;
+	tempDoc.setContent(buffer.buffer());
+	QDomDocumentFragment fragment = tempDoc.createDocumentFragment();
 
-    return fragment;
+	QDomNodeList children = tempDoc.documentElement().childNodes();
+	for(int i = children.length() - 1; i >= 0; i--) {
+		// skip <title/>, <desc/>, and <defs/>
+		if(children.at(i).isElement() &&
+			!(children.at(i).nodeName() == "title"
+				|| children.at(i).nodeName() == "desc"
+				|| children.at(i).nodeName() == "defs")) {
+			children.at(i).toElement().setAttribute("id", "e" + SxeSession::generateUUID());
+			fragment.insertBefore(children.at(i), QDomNode());
+		}
+	}
+
+	return fragment;
 }

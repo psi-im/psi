@@ -39,7 +39,7 @@
 TuneControllerManager::TuneControllerManager() : QObject(QCoreApplication::instance())
 {
 	foreach(QObject* plugin,QPluginLoader::staticInstances()) {
-		loadPlugin(plugin);        
+		loadPlugin(plugin);
 	}
 }
 

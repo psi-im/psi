@@ -100,11 +100,13 @@ QString clipStatus(const QString &str, int width, int height)
 			line += "...";
 		}
 		out += line;
-		if(hasNewline)
+		if(hasNewline) {
 			out += '\n';
+		}
 
-		if(at >= len)
+		if(at >= len) {
 			break;
+		}
 	}
 
 	return out;
@@ -161,53 +163,53 @@ QString decodePassword(const QString &pass, const QString &key)
 QString status2txt(int status)
 {
 	switch(status) {
-		case STATUS_OFFLINE:    return QObject::tr("Offline");
-		case STATUS_AWAY:       return QObject::tr("Away");
-		case STATUS_XA:         return QObject::tr("Not Available");
-		case STATUS_DND:        return QObject::tr("Do not Disturb");
-		case STATUS_CHAT:       return QObject::tr("Free for Chat");
+		case STATUS_OFFLINE:	return QObject::tr("Offline");
+		case STATUS_AWAY:	   return QObject::tr("Away");
+		case STATUS_XA:		 return QObject::tr("Not Available");
+		case STATUS_DND:		return QObject::tr("Do not Disturb");
+		case STATUS_CHAT:	   return QObject::tr("Free for Chat");
 		case STATUS_INVISIBLE:  return QObject::tr("Invisible");
 
 		case STATUS_ONLINE:
-		default:                return QObject::tr("Online");
+		default:				return QObject::tr("Online");
 	}
 }
 
 
 QString logencode(QString str)
 {
-        str.replace(QRegExp("\\\\"), "\\\\");   // backslash to double-backslash
-        str.replace(QRegExp("\\|"), "\\p");     // pipe to \p
-        str.replace(QRegExp("\n"), "\\n");      // newline to \n
-        return str;
+	str.replace(QRegExp("\\\\"), "\\\\");   // backslash to double-backslash
+	str.replace(QRegExp("\\|"), "\\p");	 // pipe to \p
+	str.replace(QRegExp("\n"), "\\n");	  // newline to \n
+	return str;
 }
 
 QString logdecode(const QString &str)
 {
-        QString ret;
+	QString ret;
 
-        for(int n = 0; n < str.length(); ++n) {
-                if(str.at(n) == '\\') {
-                        ++n;
-						if(n >= str.length()) {
-                                break;
-						}
-						if(str.at(n) == 'n') {
-                                ret.append('\n');
-						}
-						if(str.at(n) == 'p') {
-                                ret.append('|');
-						}
-						if(str.at(n) == '\\') {
-                                ret.append('\\');
-						}
-                }
-                else {
-                        ret.append(str.at(n));
-                }
-        }
+	for(int n = 0; n < str.length(); ++n) {
+		if(str.at(n) == '\\') {
+			++n;
+			if(n >= str.length()) {
+				break;
+			}
+			if(str.at(n) == 'n') {
+				ret.append('\n');
+			}
+			if(str.at(n) == 'p') {
+				ret.append('|');
+			}
+			if(str.at(n) == '\\') {
+				ret.append('\\');
+			}
+		}
+		else {
+			ret.append(str.at(n));
+		}
+	}
 
-        return ret;
+	return ret;
 }
 
 
@@ -377,13 +379,13 @@ void x11wmClass(Display *dsp, WId wid, QString resName)
 {
 	char app_name[] = "psi";
 
-	//Display *dsp = x11Display();                 // get the display
-	//WId win = winId();                           // get the window
-	XClassHint classhint;                          // class hints
+	//Display *dsp = x11Display();				 // get the display
+	//WId win = winId();						   // get the window
+	XClassHint classhint;						  // class hints
 	const QByteArray latinResName = resName.toLatin1();
 	classhint.res_name = (char *)latinResName.data(); // res_name
-	classhint.res_class = app_name;                // res_class
-	XSetClassHint(dsp, wid, &classhint);           // set the class hints
+	classhint.res_class = app_name;				// res_class
+	XSetClassHint(dsp, wid, &classhint);		   // set the class hints
 }
 
 //>>>-- Nathaniel Gray -- Caltech Computer Science ------>
@@ -526,16 +528,16 @@ ToolbarPrefs::ToolbarPrefs()
 bool ToolbarPrefs::operator==(const ToolbarPrefs& other)
 {
 	return id == other.id &&
-	       name == other.name &&
-	       keys == other.keys &&
-	       dock == other.dock &&
-	       // dirty == other.dirty &&
-	       on == other.on &&
-	       locked == other.locked &&
-	       // stretchable == other.stretchable &&
-	       // index == other.index &&
-	       nl == other.nl;
-	       // extraOffset == other.extraOffset;
+		   name == other.name &&
+		   keys == other.keys &&
+		   dock == other.dock &&
+		   // dirty == other.dirty &&
+		   on == other.on &&
+		   locked == other.locked &&
+		   // stretchable == other.stretchable &&
+		   // index == other.index &&
+		   nl == other.nl;
+		   // extraOffset == other.extraOffset;
 }
 
 
