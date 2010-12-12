@@ -1500,7 +1500,7 @@ void GCMainDlg::updateLastMsgTime(QDateTime t)
 void GCMainDlg::appendSysMsg(const QString &str, bool alert, const QDateTime &ts, bool prepareAsChatMessage)
 {
 	// FIXME:
-	//  prepareAsChatMessage was added to linkify server-generated topic informations.
+	//  prepareAsChatMessage was added to linkify server-generated topic information.
 	//  First idea was to linkify, etc, every SysMsg, but that leads to problems,
 	//  such as parsing full JIDs of participants joining a non-anonymous room as
 	//  emails and looking ugly.

@@ -66,7 +66,6 @@ private slots:
 	void doShowCal();
 	void doUpdateFromCalendar(const QDate &);
 	void doClearBirthDate();
-	void doBdayCheck();
 	void textChanged();
 	void selectPhoto();
 	void clearPhoto();

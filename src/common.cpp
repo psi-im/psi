@@ -115,16 +115,18 @@ QString encodePassword(const QString &pass, const QString &key)
 	QString result;
 	int n1, n2;
 
-	if(key.length() == 0)
+	if (key.length() == 0) {
 		return pass;
+	}
 
-	for(n1 = 0, n2 = 0; n1 < pass.length(); ++n1) {
+	for (n1 = 0, n2 = 0; n1 < pass.length(); ++n1) {
 		ushort x = pass.at(n1).unicode() ^ key.at(n2++).unicode();
 		QString hex;
 		hex.sprintf("%04x", x);
 		result += hex;
-		if(n2 >= key.length())
+		if(n2 >= key.length()) {
 			n2 = 0;
+		}
 	}
 	return result;
 }
@@ -134,21 +136,24 @@ QString decodePassword(const QString &pass, const QString &key)
 	QString result;
 	int n1, n2;
 
-	if(key.length() == 0)
+	if (key.length() == 0) {
 		return pass;
+	}
 
 	for(n1 = 0, n2 = 0; n1 < pass.length(); n1 += 4) {
 		ushort x = 0;
-		if(n1 + 4 > pass.length())
+		if(n1 + 4 > pass.length()) {
 			break;
+		}
 		x += QString(pass.at(n1)).toInt(NULL,16)*4096;
 		x += QString(pass.at(n1+1)).toInt(NULL,16)*256;
 		x += QString(pass.at(n1+2)).toInt(NULL,16)*16;
 		x += QString(pass.at(n1+3)).toInt(NULL,16);
 		QChar c(x ^ key.at(n2++).unicode());
 		result += c;
-		if(n2 >= key.length())
+		if(n2 >= key.length()) {
 			n2 = 0;
+		}
 	}
 	return result;
 }
@@ -184,15 +189,18 @@ QString logdecode(const QString &str)
         for(int n = 0; n < str.length(); ++n) {
                 if(str.at(n) == '\\') {
                         ++n;
-                        if(n >= str.length())
+						if(n >= str.length()) {
                                 break;
-
-                        if(str.at(n) == 'n')
+						}
+						if(str.at(n) == 'n') {
                                 ret.append('\n');
-                        if(str.at(n) == 'p')
+						}
+						if(str.at(n) == 'p') {
                                 ret.append('|');
-                        if(str.at(n) == '\\')
+						}
+						if(str.at(n) == '\\') {
                                 ret.append('\\');
+						}
                 }
                 else {
                         ret.append(str.at(n));
@@ -208,16 +216,18 @@ bool fileCopy(const QString &src, const QString &dest)
 	QFile in(src);
 	QFile out(dest);
 
-	if(!in.open(QIODevice::ReadOnly))
+	if (!in.open(QIODevice::ReadOnly)) {
 		return false;
-	if(!out.open(QIODevice::WriteOnly))
+	}
+	if (!out.open(QIODevice::WriteOnly)) {
 		return false;
+	}
 
 	char *dat = new char[16384];
 	int n = 0;
-	while(!in.atEnd()) {
+	while (!in.atEnd()) {
 		n = in.read(dat, 16384);
-		if(n == -1) {
+		if (n == -1) {
 			delete[] dat;
 			return false;
 		}
@@ -248,7 +258,7 @@ QString soundDetectPlayer()
 void soundPlay(const QString &s)
 {
 	QString str = s;
-	if(str == "!beep") {
+	if (str == "!beep") {
 		QApplication::beep();
 		return;
 	}
@@ -257,8 +267,9 @@ void soundPlay(const QString &s)
 		str = ApplicationInfo::resourcesDir() + '/' + str;
 	}
 
-	if(!QFile::exists(str))
+	if (!QFile::exists(str)) {
 		return;
+	}
 
 #if defined(Q_WS_WIN) || defined(Q_WS_MAC)
 	QSound::play(str);
@@ -275,12 +286,15 @@ void soundPlay(const QString &s)
 XMPP::Status makeStatus(int x, const QString &str, int priority)
 {
 	XMPP::Status s = makeStatus(x,str);
-	if (priority > 127)
+	if (priority > 127) {
 		s.setPriority(127);
-	else if (priority < -128)
+	}
+	else if (priority < -128) {
 		s.setPriority(-128);
-	else
+	}
+	else {
 		s.setPriority(priority);
+	}
 	return s;
 }
 
@@ -294,7 +308,7 @@ XMPP::Status::Type makeSTATUS(const XMPP::Status &s)
 	return s.type();
 }
 
-#include <qlayout.h>
+#include <QLayout>
 QLayout *rw_recurseFindLayout(QLayout *lo, QWidget *w)
 {
 	//printf("scanning layout: %p\n", lo);
@@ -304,11 +318,13 @@ QLayout *rw_recurseFindLayout(QLayout *lo, QWidget *w)
 		QLayout *slo = i->layout();
 		if(slo) {
 			QLayout *tlo = rw_recurseFindLayout(slo, w);
-			if(tlo)
+			if(tlo) {
 				return tlo;
+			}
 		}
-		else if(i->widget() == w)
+		else if(i->widget() == w) {
 			return lo;
+		}
 	}
 	return 0;
 }
@@ -320,12 +336,14 @@ QLayout *rw_findLayoutOf(QWidget *w)
 
 void replaceWidget(QWidget *a, QWidget *b)
 {
-	if(!a)
+	if(!a) {
 		return;
+	}
 
 	QLayout *lo = rw_findLayoutOf(a);
-	if(!lo)
+	if(!lo) {
 		return;
+	}
 	//printf("decided on this: %p\n", lo);
 
 	if(lo->inherits("QBoxLayout")) {
@@ -341,12 +359,13 @@ void closeDialogs(QWidget *w)
 	// close qmessagebox?
 	QList<QDialog*> dialogs;
 	QObjectList list = w->children();
-	for(QObjectList::Iterator it = list.begin() ; it != list.end(); ++it) {
-		if((*it)->inherits("QDialog"))
+	for (QObjectList::Iterator it = list.begin() ; it != list.end(); ++it) {
+		if((*it)->inherits("QDialog")) {
 			dialogs.append((QDialog *)(*it));
+		}
 	}
-	for(QList<QDialog*>::Iterator w = dialogs.begin(); w != dialogs.end(); ++w) {
-		(*w)->close();
+	foreach (QDialog *w, dialogs) {
+		w->close();
 	}
 }
 
@@ -455,10 +474,12 @@ void bringToFront(QWidget *widget, bool)
 	// FIXME: multi-desktop hacks for Win and Mac required
 #endif
 
-	if(w->isMaximized())
+	if(w->isMaximized()) {
 		w->showMaximized();
-	else
+	}
+	else {
 		w->showNormal();
+	}
 
 	//if(grabFocus)
 	//	w->setActiveWindow();
@@ -474,10 +495,12 @@ bool operator!=(const QMap<QString, QString> &m1, const QMap<QString, QString> &
 	QMap<QString, QString>::ConstIterator it = m1.begin(), it2;
 	for ( ; it != m1.end(); ++it) {
 		it2 = m2.find( it.key() );
-		if ( it2 == m2.end() )
+		if ( it2 == m2.end() ) {
 			return true;
-		if ( it.value() != it2.value() )
+		}
+		if ( it.value() != it2.value() ) {
 			return true;
+		}
 	}
 
 	return false;
@@ -545,4 +568,33 @@ int qVersionInt()
 		out = versionStringToInt(qVersion());
 	}
 	return out;
+}
+
+Qt::DayOfWeek firstDayOfWeekFromLocale()
+{
+	int firstDay;
+	bool ok = false;
+#ifdef Q_OS_WIN
+	WCHAR wsDay[4];
+# if WINVER >= _WIN32_WINNT_VISTA && defined(LOCALE_NAME_USER_DEFAULT)
+	if (GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK, wsDay, 4)) {
+# else
+	if (GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK, wsDay, 4)) {
+# endif
+		firstDay = QString::fromWCharArray(wsDay).toInt(&ok) + 1;
+	}
+#elif defined(Q_OS_LINUX)
+	QProcess *myProcess = new QProcess(QApplication::instance());
+	myProcess->start("locale", QStringList()<<"first_weekday");
+	if (myProcess->waitForFinished()) {
+		firstDay = myProcess->readAll().trimmed().toInt(&ok) - 1;
+		if (ok && !firstDay) {
+			firstDay = 7;
+		}
+	}
+#endif
+	if (ok) {
+		return (Qt::DayOfWeek)(unsigned char)firstDay;
+	}
+	return Qt::Monday;
 }

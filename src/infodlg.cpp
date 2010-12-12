@@ -23,7 +23,6 @@
 #include "infodlg.h"
 
 #include <QPointer>
-#include "vcardphotodlg.h"
 #include <QLayout>
 #include <QLabel>
 #include <QTabWidget>
@@ -35,6 +34,7 @@
 #include <QDialogButtonBox>
 #include <QVBoxLayout>
 #include <QAction>
+#include "vcardphotodlg.h"
 #include "msgmle.h"
 #include "userlist.h"
 #include "xmpp_vcard.h"
@@ -70,13 +70,14 @@ public:
 	JT_VCard *jt;
 	bool cacheVCard;
 	QByteArray photo;
+	QDate bday;
+	QString dateTextFormat;
 	QList<QString> infoRequested;
 	QPointer<QDialog> showPhotoDlg;
 	QPointer<QFrame> namesDlg;
 	QPointer<QPushButton> noBdayButton;
 	QPointer<QFrame> bdayPopup;
 	QPointer<QCalendarWidget> calendar;
-	QString bdayDateFormat;
 	QLineEdit *le_givenname;
 	QLineEdit *le_middlename;
 	QLineEdit *le_familyname;
@@ -133,7 +134,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	d->pa->dialogRegister(this, j);
 	d->cacheVCard = cacheVCard;
 	d->busy = ui_.busy;
-	d->bdayDateFormat = "yyyy-MM-dd"; //FIXME make settings for custom date format, but its ISO now
+	d->dateTextFormat = "d MMM yyyy";
 
 	setWindowTitle(d->jid.full());
 #ifndef Q_WS_MAC
@@ -177,6 +178,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 		QVBoxLayout* vbox = new QVBoxLayout(d->bdayPopup);
 
 		d->calendar = new QCalendarWidget(d->bdayPopup);
+		d->calendar->setFirstDayOfWeek(firstDayOfWeekFromLocale());
 		d->calendar->setVerticalHeaderFormat(QCalendarWidget::NoVerticalHeader);
 		vbox->addWidget(d->calendar);
 
@@ -195,7 +197,6 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 		ui_.le_bday->addAction(showcal);
 		ui_.le_bday->widgetForAction(showcal)->setPopup(d->bdayPopup);
 		connect(ui_.pb_submit, SIGNAL(clicked()), this, SLOT(doSubmit()));
-		connect(ui_.le_bday, SIGNAL(textChanged(QString)), this, SLOT(doBdayCheck()));
 		connect(showcal, SIGNAL(triggered()), this, SLOT(doShowCal()));
 		connect(d->calendar, SIGNAL(clicked(QDate)), this, SLOT(doUpdateFromCalendar(QDate)));
 		connect(d->calendar, SIGNAL(activated(QDate)), this, SLOT(doUpdateFromCalendar(QDate)));
@@ -334,7 +335,13 @@ void InfoDlg::setData(const VCard &i)
 	d->le_middlename->setText( i.middleName() );
 	d->le_familyname->setText( i.familyName() );
 	ui_.le_nickname->setText( i.nickName() );
-	ui_.le_bday->setText( i.bdayStr() );
+	d->bday = QDate::fromString(i.bdayStr(), Qt::ISODate);
+	if (d->bday.isValid()) {
+		ui_.le_bday->setText( d->bday.toString(d->dateTextFormat) );
+	}
+	else {
+		ui_.le_bday->setText( i.bdayStr() );
+	}
 	const QString fullName = i.fullName();
 	if (d->type != Self && fullName.isEmpty()) {
 		ui_.le_fullname->setText( QString("%1 %2 %3")
@@ -391,10 +398,8 @@ void InfoDlg::setData(const VCard &i)
 			clearPhoto();
 		}
 	}
-	else
+	else {
 		clearPhoto();
-	if (d->type == Self) {
-		doBdayCheck();
 	}
 
 	setEdited(false);
@@ -578,8 +583,8 @@ void InfoDlg::doSubmit()
 void InfoDlg::doShowCal()
 {
 	d->noBdayButton->setChecked(ui_.le_bday->text().isEmpty());
-	if (!ui_.le_bday->text().isEmpty()) {
-		d->calendar->setSelectedDate(QDate::fromString(ui_.le_bday->text(), d->bdayDateFormat));
+	if (d->bday.isValid()) {
+		d->calendar->setSelectedDate(d->bday);
 	}
 }
 
@@ -592,9 +597,9 @@ void InfoDlg::doDisco()
 
 void InfoDlg::doUpdateFromCalendar(const QDate& date)
 {
-	const QString newText = date.toString(d->bdayDateFormat);
-	if (newText != ui_.le_bday->text()) {
-		ui_.le_bday->setText(newText);
+	if (d->bday != date) {
+		d->bday = date;
+		ui_.le_bday->setText(date.toString(d->dateTextFormat));
 		ui_.le_bday->setModified(true);
 	}
 	d->bdayPopup->hide();
@@ -603,23 +608,11 @@ void InfoDlg::doUpdateFromCalendar(const QDate& date)
 void InfoDlg::doClearBirthDate()
 {
 	if (!ui_.le_bday->text().isEmpty()) {
+		d->bday = QDate();
 		ui_.le_bday->setText("");
 		ui_.le_bday->setModified(true);
 	}
 	d->bdayPopup->hide();
-}
-
-void InfoDlg::doBdayCheck()
-{
-	static const QString errorStyle =
-		QString("color: white; background-color: %1").arg(QColor(255,128,128,255).name());
-
-	const QString bday = ui_.le_bday->text();
-	if (!bday.isEmpty() && !QDate::fromString(bday, d->bdayDateFormat).isValid()) {
-		ui_.le_bday->setStyleSheet(errorStyle);
-	} else {
-		ui_.le_bday->setStyleSheet(QString());
-	}
 }
 
 VCard InfoDlg::makeVCard()
@@ -631,7 +624,7 @@ VCard InfoDlg::makeVCard()
 	v.setMiddleName( d->le_middlename->text() );
 	v.setFamilyName( d->le_familyname->text() );
 	v.setNickName( ui_.le_nickname->text() );
-	v.setBdayStr( ui_.le_bday->text() );
+	v.setBdayStr( d->bday.isValid()? d->bday.toString(Qt::ISODate) : ui_.le_bday->text() );
 
 	if ( !ui_.le_email->text().isEmpty() ) {
 		VCard::Email email;
