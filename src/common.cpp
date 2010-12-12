@@ -164,11 +164,11 @@ QString status2txt(int status)
 {
 	switch(status) {
 		case STATUS_OFFLINE:	return QObject::tr("Offline");
-		case STATUS_AWAY:	   return QObject::tr("Away");
-		case STATUS_XA:		 return QObject::tr("Not Available");
+		case STATUS_AWAY:		return QObject::tr("Away");
+		case STATUS_XA:			return QObject::tr("Not Available");
 		case STATUS_DND:		return QObject::tr("Do not Disturb");
-		case STATUS_CHAT:	   return QObject::tr("Free for Chat");
-		case STATUS_INVISIBLE:  return QObject::tr("Invisible");
+		case STATUS_CHAT:		return QObject::tr("Free for Chat");
+		case STATUS_INVISIBLE:	return QObject::tr("Invisible");
 
 		case STATUS_ONLINE:
 		default:				return QObject::tr("Online");
