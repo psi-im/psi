@@ -55,6 +55,7 @@
 #include <sys/stat.h>
 #include <Carbon/Carbon.h> // for HIToolbox/InternetConfig
 #include <CoreServices/CoreServices.h>
+#include "CocoaUtilities/cocoacommon.h"
 #endif
 
 Qt::WFlags psi_dialog_flags = (Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint);
@@ -589,11 +590,11 @@ Qt::DayOfWeek firstDayOfWeekFromLocale()
 	QProcess *myProcess = new QProcess(QApplication::instance());
 	myProcess->start("locale", QStringList()<<"first_weekday");
 	if (myProcess->waitForFinished()) {
-		firstDay = myProcess->readAll().trimmed().toInt(&ok) - 1;
-		if (ok && !firstDay) {
-			firstDay = 7;
-		}
+		firstDay = (myProcess->readAll().trimmed().toInt(&ok) + 5) % 7 + 1;
 	}
+#elif defined(Q_OS_MAC)
+	firstDay = macosCommonFirstWeekday();
+	ok = true;
 #endif
 	if (ok) {
 		return (Qt::DayOfWeek)(unsigned char)firstDay;
