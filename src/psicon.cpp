@@ -20,14 +20,14 @@
 
 #include "psicon.h"
 
-#include <qapplication.h>
-#include <qdesktopwidget.h>
+#include <QApplication>
+#include <QDesktopWidget>
 #include <QMenuBar>
-#include <qpointer.h>
-#include <qicon.h>
-#include <qcolor.h>
-#include <qimage.h>
-#include <qpixmapcache.h>
+#include <QPointer>
+#include <QIcon>
+#include <QColor>
+#include <QImage>
+#include <QPixmapCache>
 #include <QFile>
 #include <QPixmap>
 #include <QList>
@@ -82,6 +82,7 @@
 #include "urlobject.h"
 #include "anim.h"
 #include "psioptions.h"
+#include "psirichtext.h"
 #ifdef PSI_PLUGINS
 #include "pluginmanager.h"
 #endif
@@ -370,6 +371,9 @@ bool PsiCon::init()
 	GAdvancedWidget::setStickToWindows( false ); //again
 	GAdvancedWidget::setStickAt( 5 );
 	
+	PsiRichText::setAllowedImageDirs(QStringList()
+									 << ApplicationInfo::resourcesDir()
+									 << ApplicationInfo::homeDir());
 	
 	// To allow us to upgrade from old hardcoded options gracefully, be careful about the order here
 	PsiOptions *options=PsiOptions::instance();

@@ -33,6 +33,7 @@ public:
 	static void appendText(QTextDocument *doc, QTextCursor &cursor, const QString &text);
 	static QString convertToPlainText(const QTextDocument *doc);
 	static void addEmoticon(QTextEdit *textEdit, const QString &emoticon);
+	static void setAllowedImageDirs(const QStringList &);
 
 	struct Selection {
 		int start, end;

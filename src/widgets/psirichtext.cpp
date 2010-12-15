@@ -35,6 +35,7 @@
 #include <QTextCursor>
 #include <QCryptographicHash>
 #include <QUrl>
+#include <QFileInfo>
 
 #include "textutil.h"
 
@@ -46,6 +47,7 @@ class Iconset;
 #endif
 
 static const int IconFormatType = 0x1000;
+static QStringList allowedImageDirs;
 
 //----------------------------------------------------------------------------
 // TextIconFormat
@@ -318,8 +320,21 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
 				pos += re.matchedLength();
 				continue;
 			}
-			else { // TODO check for local files. allow loading from psi profile and psi data dir
-				// go here when  sheme not in ["", "data", "file"] and its not a resource
+			else {
+				// go here when  scheme in ["", "file"] and its not resource
+				QString path = QFileInfo(imgSrcUrl.scheme() == "file"?
+							   imgSrcUrl.toLocalFile() : imgSrc).canonicalFilePath();
+				bool baseDirFound = false;
+				foreach (const QString &baseDir, allowedImageDirs) {
+					if (path.startsWith(baseDir)) {
+						baseDirFound = true;
+						break;
+					}
+				}
+				if (baseDirFound) {
+					pos += re.matchedLength();
+					continue;
+				}
 			}
 		}
 		if (replace.isEmpty()) {
@@ -435,6 +450,11 @@ void PsiRichText::addEmoticon(QTextEdit *textEdit, const QString &emoticon)
 	textEdit->insertPlainText(text);
 
 	PsiRichText::restoreSelection(textEdit, cursor, selection);
+}
+
+void PsiRichText::setAllowedImageDirs(const QStringList &dirs)
+{
+	allowedImageDirs = dirs;
 }
 
 /**

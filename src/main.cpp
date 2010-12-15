@@ -21,15 +21,15 @@
 #include "main.h"
 
 #include "psiapplication.h"
-#include <qtimer.h>
+#include <QTimer>
 
-#include <qimage.h>
-#include <qbitmap.h>
-#include <qtextcodec.h>
-#include <qsettings.h>
-#include <qcombobox.h>
-#include <qcheckbox.h>
-#include <qmessagebox.h>
+#include <QImage>
+#include <QBitmap>
+#include <QTextCodec>
+#include <QSettings>
+#include <QComboBox>
+#include <QCheckBox>
+#include <QMessageBox>
 #include <QtCrypto>
 #include <QTranslator>
 #include <QDir>
