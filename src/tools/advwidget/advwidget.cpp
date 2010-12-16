@@ -18,6 +18,7 @@
  *
  */
 
+#include <QtGlobal> // required to make mingw32 happy
 #ifdef Q_OS_WIN
 #if __GNUC__ >= 3
 #	define WINVER 0x0500
