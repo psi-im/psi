@@ -18,10 +18,10 @@
  *
  */
 
-#include <qcombobox.h>
-#include <qmessagebox.h>
-#include <qpushbutton.h>
-#include <qlayout.h>
+#include <QComboBox>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QLayout>
 
 #include "ahcservermanager.h"
 #include "ahcommandserver.h"

@@ -21,9 +21,9 @@
 #ifndef EVENTDB_H
 #define EVENTDB_H
 
-#include <qobject.h>
-#include <qtimer.h>
-#include <qfile.h>
+#include <QObject>
+#include <QTimer>
+#include <QFile>
 
 #include "xmpp_jid.h"
 

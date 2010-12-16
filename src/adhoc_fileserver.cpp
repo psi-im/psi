@@ -18,8 +18,8 @@
  *
  */
 
-#include <qdir.h>
-#include <qfileinfo.h>
+#include <QDir>
+#include <QFileInfo>
 
 #include "psiaccount.h"
 #include "adhoc_fileserver.h"

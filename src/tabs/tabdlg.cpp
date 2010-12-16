@@ -24,8 +24,8 @@
 #include "iconset.h"
 #include "psicon.h"
 
-#include <qmenubar.h>
-#include <qcursor.h>
+#include <QMenuBar>
+#include <QCursor>
 #include <QVBoxLayout>
 #include <QDragMoveEvent>
 #include <QResizeEvent>

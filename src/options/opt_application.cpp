@@ -3,9 +3,9 @@
 #include "iconwidget.h"
 #include "psioptions.h"
 
-#include <qcheckbox.h>
-#include <qcombobox.h>
-#include <qlineedit.h>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QLineEdit>
 #include <QList>
 
 #include "ui_opt_application.h"

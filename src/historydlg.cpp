@@ -26,17 +26,17 @@
 #include "historydlg.h"
 
 #include <QMenu>
-#include <q3header.h>
-#include <qlayout.h>
-#include <qlabel.h>
-#include <qlineedit.h>
-#include <qpushbutton.h>
+#include <Q3Header>
+#include <QLayout>
+#include <QLabel>
+#include <QLineEdit>
+#include <QPushButton>
 #include <QFileDialog>
 #include <Q3SimpleRichText>
-#include <qmessagebox.h>
+#include <QMessageBox>
 #include <QFrame>
-#include <qapplication.h>
-#include <qclipboard.h>
+#include <QApplication>
+#include <QClipboard>
 #include <QTextStream>
 #include <QCloseEvent>
 #include <QKeyEvent>

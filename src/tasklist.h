@@ -21,7 +21,7 @@
 #ifndef TASKLIST_H
 #define TASKLIST_H
 
-#include <qobject.h>
+#include <QObject>
 
 #include "xmpp_task.h"
 

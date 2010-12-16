@@ -21,7 +21,7 @@
 #ifndef ADVWIDGET_H
 #define ADVWIDGET_H
 
-#include <qwidget.h>
+#include <QWidget>
 
 class GAdvancedWidget : public QObject
 {

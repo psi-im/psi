@@ -20,15 +20,15 @@
 
 #include "proxy.h"
 
-#include <qlabel.h>
-#include <qlineedit.h>
-#include <qcheckbox.h>
-#include <qlayout.h>
-#include <qcombobox.h>
-#include <qpushbutton.h>
-#include <qdom.h>
-#include <qpointer.h>
-#include <qapplication.h>
+#include <QLabel>
+#include <QLineEdit>
+#include <QCheckBox>
+#include <QLayout>
+#include <QComboBox>
+#include <QPushButton>
+#include <QDomElement>
+#include <QPointer>
+#include <QApplication>
 //Added by qt3to4:
 #include <QHBoxLayout>
 #include <QList>

@@ -18,8 +18,8 @@
  *
  */
 
-#include <qlabel.h>
-#include <qpushbutton.h>
+#include <QLabel>
+#include <QPushButton>
 
 #include "voicecalldlg.h"
 #include "voicecaller.h"

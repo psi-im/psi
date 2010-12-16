@@ -13,11 +13,11 @@
  *	Fixed the mate checker (big thanks to knyaz@RusNet)
  */
 
-#include <qpainter.h>
-#include <qfontmetrics.h>
-#include <qmessagebox.h>
-#include <qcursor.h>
-#include <q3filedialog.h>
+#include <QPainter>
+#include <QFontMetrics>
+#include <QMessageBox>
+#include <QCursor>
+#include <Q3FileDialog>
 //Added by qt3to4:
 #include <Q3PointArray>
 #include <QPixmap>

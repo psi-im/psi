@@ -15,12 +15,12 @@
 #ifndef	__GAME_BOARD_H__
 #define	__GAME_BOARD_H__
 
-#include <qwidget.h>
-#include <qpainter.h>
-#include <qpixmap.h>
-#include <qdialog.h>
-#include <qlineedit.h>
-#include <qtimer.h>
+#include <QWidget>
+#include <QPainter>
+#include <QPixmap>
+#include <QDialog>
+#include <QLineEdit>
+#include <QTimer>
 //Added by qt3to4:
 #include <QCloseEvent>
 #include <QPaintEvent>

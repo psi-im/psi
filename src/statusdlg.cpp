@@ -20,13 +20,13 @@
 
 #include "statusdlg.h"
 
-#include <qpushbutton.h>
+#include <QPushButton>
 #include <QMessageBox>
-#include <qlayout.h>
-#include <qlabel.h>
-#include <qcombobox.h>
-#include <qinputdialog.h>
-#include <qcheckbox.h>
+#include <QLayout>
+#include <QLabel>
+#include <QComboBox>
+#include <QInputDialog>
+#include <QCheckBox>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QKeyEvent>

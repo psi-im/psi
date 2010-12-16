@@ -21,7 +21,7 @@
 #ifndef HISTORYDLG_H
 #define HISTORYDLG_H
 
-#include <q3listview.h>
+#include <Q3ListView>
 
 class PsiEvent;
 class PsiAccount;

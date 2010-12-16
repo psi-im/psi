@@ -9,13 +9,13 @@
 *****************************************************************************/
 
 #include "tictac.h"
-#include <qapplication.h>
-#include <qpainter.h>
+#include <QApplication>
+#include <QPainter>
 #include <qdrawutil.h>
-#include <qcombobox.h>
-#include <qcheckbox.h>
-#include <qlabel.h>
-#include <qlayout.h>
+#include <QComboBox>
+#include <QCheckBox>
+#include <QLabel>
+#include <QLayout>
 //Added by qt3to4:
 #include <Q3HBoxLayout>
 #include <Q3GridLayout>
@@ -23,7 +23,7 @@
 #include <Q3VBoxLayout>
 #include <QDebug>
 #include <stdlib.h>                             // rand() function
-#include <qdatetime.h>                          // seed for rand()
+#include <QDateTime>                          // seed for rand()
 
 
 //***************************************************************************

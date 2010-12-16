@@ -20,8 +20,8 @@
 
 #include "alerticon.h"
 #include "psioptions.h"
-#include <qtimer.h>
-#include <qapplication.h>
+#include <QTimer>
+#include <QApplication>
 //Added by qt3to4:
 #include <QPixmap>
 

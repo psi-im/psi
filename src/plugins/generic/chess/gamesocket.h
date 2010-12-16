@@ -15,7 +15,7 @@
 #ifndef	__GAME_SOCKET_H__
 #define	__GAME_SOCKET_H__
 
-#include <q3serversocket.h>
+#include <Q3ServerSocket>
 #include <stdlib.h>
 
 #define	GAME_PORT	1345

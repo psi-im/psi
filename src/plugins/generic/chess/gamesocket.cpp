@@ -12,7 +12,7 @@
  * Hacked by:
  */
 
-#include <q3socket.h>
+#include <Q3Socket>
 
 #include "gamesocket.h"
 

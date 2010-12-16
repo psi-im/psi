@@ -1,8 +1,8 @@
 #ifndef OPTIONSTAB_H
 #define OPTIONSTAB_H
 
-#include <qstring.h>
-#include <qobject.h>
+#include <QString>
+#include <QObject>
 #include <QByteArray>
 
 class PsiIcon;

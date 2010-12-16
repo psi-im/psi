@@ -23,20 +23,20 @@
 
 #include "groupchatdlg.h"
 
-#include <qlabel.h>
-#include <qlayout.h>
-#include <qpushbutton.h>
+#include <QLabel>
+#include <QLayout>
+#include <QPushButton>
 #include <QToolBar>
-#include <qmessagebox.h>
+#include <QMessageBox>
 #include <QColorGroup>
-#include <qsplitter.h>
-#include <qtimer.h>
-#include <qtoolbutton.h>
-#include <qinputdialog.h>
-#include <qpointer.h>
-#include <qaction.h>
-#include <qobject.h>
-#include <qcursor.h>
+#include <QSplitter>
+#include <QTimer>
+#include <QToolButton>
+#include <QInputDialog>
+#include <QPointer>
+#include <QAction>
+#include <QObject>
+#include <QCursor>
 #include <QCloseEvent>
 #include <QEvent>
 #include <QKeyEvent>

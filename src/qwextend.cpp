@@ -4,13 +4,13 @@
 
 #define protected public
 #define private public
-#include <qwidget.h>
+#include <QWidget>
 #undef protected
 #undef private
 
-#include <qcursor.h>
-#include <qobject.h>
-#include <qpixmap.h>
+#include <QCursor>
+#include <QObject>
+#include <QPixmap>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 

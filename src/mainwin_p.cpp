@@ -20,13 +20,13 @@
 
 #include "mainwin_p.h"
 
-#include <qapplication.h>
-#include <qstyle.h>
+#include <QApplication>
+#include <QStyle>
 #include <QToolBar>
-#include <qtimer.h>
-#include <qsignalmapper.h>
-#include <qobject.h>
-#include <qpixmapcache.h>
+#include <QTimer>
+#include <QSignalMapper>
+#include <QObject>
+#include <QPixmapCache>
 #include <QPixmap>
 #include <QFrame>
 #include <QLabel>

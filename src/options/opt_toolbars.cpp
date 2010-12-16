@@ -10,13 +10,13 @@
 
 #include "ui_opt_lookfeel_toolbars.h"
 
-#include <qlayout.h>
-#include <qpushbutton.h>
-#include <qcombobox.h>
-#include <qaction.h>
-#include <qlineedit.h>
-#include <qcheckbox.h>
-#include <qspinbox.h>
+#include <QLayout>
+#include <QPushButton>
+#include <QComboBox>
+#include <QAction>
+#include <QLineEdit>
+#include <QCheckBox>
+#include <QSpinBox>
 #include <QHeaderView>
 //Added by qt3to4:
 #include <QEvent>

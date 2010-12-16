@@ -20,7 +20,7 @@
 
 #include "psievent.h"
 
-#include <qdom.h>
+#include <QDomElement>
 #include <QTextStream>
 #include <QList>
 #include <QCoreApplication>

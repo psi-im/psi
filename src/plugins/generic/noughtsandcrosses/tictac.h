@@ -13,8 +13,8 @@
 #define TICTAC_H
 
 
-#include <qpushbutton.h>
-#include <q3ptrvector.h>
+#include <QPushButton>
+#include <Q3PtrVector>
 //Added by qt3to4:
 #include <Q3MemArray>
 #include <QLabel>

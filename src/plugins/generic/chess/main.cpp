@@ -12,9 +12,9 @@
  * Hacked by:
  */
 
-#include <qapplication.h>
-#include <qmessagebox.h>
-#include <qtextcodec.h>
+#include <QApplication>
+#include <QMessageBox>
+#include <QTextCodec>
 //Added by qt3to4:
 #include <QTranslator>
 

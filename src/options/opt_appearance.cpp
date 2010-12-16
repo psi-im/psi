@@ -3,18 +3,18 @@
 #include "common.h"
 #include "iconwidget.h"
 
-#include <qwhatsthis.h>
-#include <qcheckbox.h>
-#include <qslider.h>
-#include <qlabel.h>
-#include <qcombobox.h>
-#include <qbuttongroup.h>
-#include <qradiobutton.h>
-#include <qpainter.h>
-#include <qpixmap.h>
-#include <qcolordialog.h>
-#include <qfontdialog.h>
-#include <qlineedit.h>
+#include <QWhatsThis>
+#include <QCheckBox>
+#include <QSlider>
+#include <QLabel>
+#include <QComboBox>
+#include <QButtonGroup>
+#include <QRadioButton>
+#include <QPainter>
+#include <QPixmap>
+#include <QColorDialog>
+#include <QFontDialog>
+#include <QLineEdit>
 
 #include "ui_opt_appearance.h"
 #include "ui_opt_appearance_misc.h"

@@ -21,7 +21,7 @@
 #ifndef RTPARSE_H
 #define RTPARSE_H
 
-#include <qstring.h>
+#include <QString>
 
 class RTParse
 {

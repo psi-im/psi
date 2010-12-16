@@ -1,9 +1,9 @@
 #include "optionstab.h"
 #include "iconset.h"
 
-#include <qtabwidget.h>
-#include <qlayout.h>
-#include <qmap.h>
+#include <QTabWidget>
+#include <QLayout>
+#include <QMap>
 #include <QVBoxLayout>
 
 //----------------------------------------------------------------------------

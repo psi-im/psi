@@ -38,7 +38,7 @@
 #include "common.h"
 #include "iconwidget.h"
 
-#include <qpainter.h>
+#include <QPainter>
 class StretchLogoLabel : public QLabel
 {
 public:

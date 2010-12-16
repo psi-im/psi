@@ -27,17 +27,17 @@
 #include "contactview.h"
 
 #include <QFileDialog>
-#include <qapplication.h>
-#include <q3ptrlist.h>
-#include <q3header.h>
-#include <qtimer.h>
-#include <qpainter.h>
-#include <q3popupmenu.h>
-#include <qmessagebox.h>
-#include <qinputdialog.h>
-#include <qicon.h>
-#include <q3dragobject.h>
-#include <qlayout.h>
+#include <QApplication>
+#include <Q3PtrList>
+#include <Q3Header>
+#include <QTimer>
+#include <QPainter>
+#include <Q3PopupMenu>
+#include <QMessageBox>
+#include <QInputDialog>
+#include <QIcon>
+#include <Q3DragObject>
+#include <QLayout>
 #include <QKeyEvent>
 #include <QEvent>
 #include <QList>
@@ -2717,8 +2717,8 @@ void ContactView::recalculateSize()
 // RichListViewItem: A RichText listview item
 //------------------------------------------------------------------------------
 
-#include <q3simplerichtext.h>
-#include <qpainter.h>
+#include <Q3SimpleRichText>
+#include <QPainter>
 
 static const int icon_vpadding = 2;
 

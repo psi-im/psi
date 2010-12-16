@@ -38,8 +38,8 @@
 #include "talk/base/socketaddress.h"
 #include "talk/session/fileshare/fileshare.h"
 
-#include <qstring.h>
-#include <qdom.h>
+#include <QString>
+#include <QDomElement>
 #include <QDir>
 
 #include "xmpp_xmlcommon.h"

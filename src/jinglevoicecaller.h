@@ -21,7 +21,7 @@
 #ifndef JINGLEVOICECALLER_H
 #define JINGLEVOICECALLER_H
 
-#include <qmap.h>
+#include <QMap>
 
 #include "voicecaller.h"
 

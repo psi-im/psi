@@ -19,7 +19,6 @@
  */
 
 #include <windows.h>
-#include <qglobal.h>
 #include <QTimer>
 
 #ifdef Q_CC_MSVC

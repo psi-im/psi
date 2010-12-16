@@ -18,7 +18,6 @@
  *
  */
 
-#include <qglobal.h>
 #ifdef Q_OS_WIN
 #if __GNUC__ >= 3
 #	define WINVER 0x0500

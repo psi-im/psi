@@ -4,16 +4,16 @@
 #include "psioptions.h"
 
 #include <limits.h>
-#include <qbuttongroup.h>
+#include <QButtonGroup>
 #include <QMessageBox>
-#include <qwhatsthis.h>
-#include <qcheckbox.h>
-#include <qradiobutton.h>
-#include <qcombobox.h>
-#include <qlineedit.h>
-#include <qspinbox.h>
-#include <qtextedit.h>
-#include <qinputdialog.h>
+#include <QWhatsThis>
+#include <QCheckBox>
+#include <QRadioButton>
+#include <QComboBox>
+#include <QLineEdit>
+#include <QSpinBox>
+#include <QTextEdit>
+#include <QInputDialog>
 
 #include "ui_opt_status.h"
 

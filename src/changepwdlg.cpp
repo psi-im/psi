@@ -20,11 +20,11 @@
 
 #include "changepwdlg.h"
 
-#include <qlayout.h>
-#include <qlabel.h>
-#include <qpushbutton.h>
-#include <qlineedit.h>
-#include <qmessagebox.h>
+#include <QLayout>
+#include <QLabel>
+#include <QPushButton>
+#include <QLineEdit>
+#include <QMessageBox>
 #include <QFormLayout>
 
 #include "profiles.h"

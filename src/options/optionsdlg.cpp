@@ -26,11 +26,11 @@
 #include "iconset.h"
 #include "iconwidget.h"
 
-#include <qlayout.h>
-#include <qlabel.h>
+#include <QLayout>
+#include <QLabel>
 #include <QStackedWidget>
-#include <qpen.h>
-#include <qpainter.h>
+#include <QPen>
+#include <QPainter>
 #include <QPixmap>
 #include <QVBoxLayout>
 #include <QItemDelegate>

@@ -21,8 +21,8 @@
 #ifndef PROFILES_H
 #define PROFILES_H
 
-#include <qstring.h>
-#include <qstringlist.h>
+#include <QString>
+#include <QStringList>
 #include <QList>
 #include <QtCrypto>
 #include <QByteArray>

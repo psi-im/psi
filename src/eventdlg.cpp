@@ -20,18 +20,18 @@
 
 #include "eventdlg.h"
 
-#include <qlabel.h>
-#include <qcombobox.h>
-#include <qlayout.h>
-#include <qpushbutton.h>
-#include <qmessagebox.h>
-#include <qstringlist.h>
-#include <qtimer.h>
-#include <qcursor.h>
-#include <qicon.h>
-#include <qdatetime.h>
-#include <qapplication.h>
-#include <qclipboard.h>
+#include <QLabel>
+#include <QComboBox>
+#include <QLayout>
+#include <QPushButton>
+#include <QMessageBox>
+#include <QStringList>
+#include <QTimer>
+#include <QCursor>
+#include <QIcon>
+#include <QDateTime>
+#include <QApplication>
+#include <QClipboard>
 #include <QResizeEvent>
 #include <QShowEvent>
 #include <QFrame>

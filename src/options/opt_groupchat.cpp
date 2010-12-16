@@ -3,16 +3,16 @@
 #include "iconwidget.h"
 #include "psioptions.h"
 
-#include <qbuttongroup.h>
-#include <qwhatsthis.h>
-#include <qcheckbox.h>
-#include <qradiobutton.h>
-#include <qcombobox.h>
-#include <qlineedit.h>
-#include <qsignalmapper.h>
-#include <qpixmap.h>
-#include <qpainter.h>
-#include <qcolordialog.h>
+#include <QButtonGroup>
+#include <QWhatsThis>
+#include <QCheckBox>
+#include <QRadioButton>
+#include <QComboBox>
+#include <QLineEdit>
+#include <QSignalMapper>
+#include <QPixmap>
+#include <QPainter>
+#include <QColorDialog>
 
 #include "ui_opt_general_groupchat.h"
 

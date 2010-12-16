@@ -2,11 +2,11 @@
 #include "common.h"
 #include "iconwidget.h"
 
-#include <qwhatsthis.h>
-#include <qcheckbox.h>
-#include <qcombobox.h>
-#include <qbuttongroup.h>
-#include <qradiobutton.h>
+#include <QWhatsThis>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QButtonGroup>
+#include <QRadioButton>
 
 #include "ui_opt_chat.h"
 #include "shortcutmanager.h"

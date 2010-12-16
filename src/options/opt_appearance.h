@@ -3,8 +3,8 @@
 
 #include "optionstab.h"
 
-#include <qlineedit.h>
-#include <qabstractbutton.h>
+#include <QLineEdit>
+#include <QAbstractButton>
 
 class FontLabel : public QLineEdit
 {

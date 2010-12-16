@@ -2,12 +2,12 @@
 #include "common.h"
 #include "iconwidget.h"
 
-#include <qwhatsthis.h>
-#include <qcheckbox.h>
-#include <qradiobutton.h>
-#include <qlabel.h>
-#include <qcombobox.h>
-#include <qlineedit.h>
+#include <QWhatsThis>
+#include <QCheckBox>
+#include <QRadioButton>
+#include <QLabel>
+#include <QComboBox>
+#include <QLineEdit>
 #include "psioptions.h"
 
 #include "ui_opt_events.h"

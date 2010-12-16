@@ -20,14 +20,14 @@
 
 #include "adduserdlg.h"
 
-#include <qlabel.h>
-#include <qlayout.h>
-#include <qpushbutton.h>
-#include <qmessagebox.h>
-#include <qcombobox.h>
-#include <qstringlist.h>
-#include <qlineedit.h>
-#include <qcheckbox.h>
+#include <QLabel>
+#include <QLayout>
+#include <QPushButton>
+#include <QMessageBox>
+#include <QComboBox>
+#include <QStringList>
+#include <QLineEdit>
+#include <QCheckBox>
 #include "xmpp_tasks.h"
 #include "psiaccount.h"
 #include "psiiconset.h"

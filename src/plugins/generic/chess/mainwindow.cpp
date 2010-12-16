@@ -12,12 +12,12 @@
  * Hacked by:
  */
 
-#include <qapplication.h>
-#include <qmenubar.h>
-#include <qstatusbar.h>
-#include <qpixmap.h>
-#include <qvalidator.h>
-#include <qmessagebox.h>
+#include <QApplication>
+#include <QMenuBar>
+#include <QStatusBar>
+#include <QPixmap>
+#include <QValidator>
+#include <QMessageBox>
 //Added by qt3to4:
 #include <QResizeEvent>
 #include <QLabel>

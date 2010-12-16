@@ -1,13 +1,13 @@
 #include "opt_sound.h"
 
-#include <qbuttongroup.h>
-#include <qwhatsthis.h>
-#include <qcheckbox.h>
-#include <qradiobutton.h>
-#include <qcombobox.h>
-#include <qlineedit.h>
-#include <qfiledialog.h>
-#include <qlabel.h>
+#include <QButtonGroup>
+#include <QWhatsThis>
+#include <QCheckBox>
+#include <QRadioButton>
+#include <QComboBox>
+#include <QLineEdit>
+#include <QFileDialog>
+#include <QLabel>
 
 #include "common.h"
 #include "iconwidget.h"

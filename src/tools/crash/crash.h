@@ -1,7 +1,7 @@
 #ifndef CRASH_H
 #define CRASH_H
 
-#include <qstring.h>
+#include <QString>
 
 namespace Crash {
 

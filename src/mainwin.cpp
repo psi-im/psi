@@ -20,14 +20,14 @@
 
 #include "mainwin.h"
 
-#include <qmessagebox.h>
-#include <qicon.h>
-#include <qapplication.h>
-#include <qtimer.h>
-#include <qobject.h>
-#include <qpainter.h>
-#include <qsignalmapper.h>
-#include <qmenubar.h>
+#include <QMessageBox>
+#include <QIcon>
+#include <QApplication>
+#include <QTimer>
+#include <QObject>
+#include <QPainter>
+#include <QSignalMapper>
+#include <QMenuBar>
 #include <QPixmap>
 #include <QCloseEvent>
 #include <QKeyEvent>

@@ -21,11 +21,11 @@
 #include "profiles.h"
 #include "common.h"
 #include "applicationinfo.h"
-#include <qdir.h>
-#include <qfileinfo.h>
-#include <qdom.h>
+#include <QDir>
+#include <QFileInfo>
+#include <QDomElement>
 
-#include <qapplication.h>
+#include <QApplication>
 //Added by qt3to4:
 #include <QTextStream>
 #include <QtCrypto>

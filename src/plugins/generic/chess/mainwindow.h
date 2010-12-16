@@ -15,16 +15,16 @@
 #ifndef	__MAIN_WINDOW_H__
 #define	__MAIN_WINDOW_H__
 
-#include <q3mainwindow.h>
-#include <q3popupmenu.h>
-#include <qworkspace.h>
-#include <qdialog.h>
-#include <qlabel.h>
-#include <qcombobox.h>
-#include <q3buttongroup.h>
-#include <qradiobutton.h>
-#include <q3groupbox.h>
-#include <qpushbutton.h>
+#include <Q3MainWindow>
+#include <Q3PopupMenu>
+#include <QWorkspace>
+#include <QDialog>
+#include <QLabel>
+#include <QComboBox>
+#include <Q3ButtonGroup>
+#include <QRadioButton>
+#include <Q3GroupBox>
+#include <QPushButton>
 //Added by qt3to4:
 #include <QResizeEvent>
 #include <stdlib.h>

@@ -21,8 +21,8 @@
 #ifndef USERLIST_H
 #define USERLIST_H
 
-#include <qstring.h>
-#include <qdatetime.h>
+#include <QString>
+#include <QDateTime>
 #include <QList>
 #include <QPixmap>
 #include "xmpp_resource.h"

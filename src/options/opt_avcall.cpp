@@ -5,8 +5,8 @@
 #include "../psimedia/psimedia.h"
 #include "../avcall/avcall.h"
 
-#include <qcombobox.h>
-#include <qlineedit.h>
+#include <QComboBox>
+#include <QLineEdit>
 #include <QList>
 
 #include "ui_opt_avcall.h"

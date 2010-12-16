@@ -18,8 +18,8 @@
  *
  */
  
-#include <qstring.h>
-#include <qdom.h>
+#include <QString>
+#include <QDomElement>
 #include <QDebug>
 
 #include "talk/xmpp/constants.h"

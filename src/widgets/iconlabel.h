@@ -21,8 +21,8 @@
 #ifndef ICONLABEL_H
 #define ICONLABEL_H
 
-#include <qwidget.h>
-#include <qlabel.h>
+#include <QWidget>
+#include <QLabel>
 
 class PsiIcon;
 

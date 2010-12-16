@@ -7,18 +7,18 @@
 #include "psioptions.h"
 
 #include <QDir>
-#include <qcheckbox.h>
-#include <qradiobutton.h>
-#include <qcombobox.h>
-#include <qlineedit.h>
-#include <qfileinfo.h>
-#include <qapplication.h>
-#include <qthread.h>
-#include <qmutex.h>
-#include <qevent.h>
-#include <qcursor.h>
-#include <qpalette.h>
-#include <qtabwidget.h>
+#include <QCheckBox>
+#include <QRadioButton>
+#include <QComboBox>
+#include <QLineEdit>
+#include <QFileInfo>
+#include <QApplication>
+#include <QThread>
+#include <QMutex>
+#include <QEvent>
+#include <QCursor>
+#include <QPalette>
+#include <QTabWidget>
 #include <QFont>
 #include <QTreeWidget>
 

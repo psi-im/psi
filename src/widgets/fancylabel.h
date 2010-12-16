@@ -21,8 +21,8 @@
 #ifndef FANCYLABEL_H
 #define FANCYLABEL_H
 
-#include <qwidget.h>
-#include <qlabel.h>
+#include <QWidget>
+#include <QLabel>
 
 class QPixmap;
 class QColor;

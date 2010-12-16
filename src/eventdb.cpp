@@ -25,8 +25,8 @@
 #include <QVector>
 #include <QFileInfo>
 #include <QDir>
-#include <qtimer.h>
-#include <qtextstream.h>
+#include <QTimer>
+#include <QTextStream>
 
 #include "common.h"
 #include "applicationinfo.h"
