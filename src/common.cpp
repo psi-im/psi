@@ -58,6 +58,10 @@
 #include "CocoaUtilities/cocoacommon.h"
 #endif
 
+#ifdef __GLIBC__
+#include <langinfo.h>
+#endif
+
 Qt::WFlags psi_dialog_flags = (Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint);
 
 // used to be part of the global options struct. 
@@ -575,8 +579,7 @@ int qVersionInt()
 
 Qt::DayOfWeek firstDayOfWeekFromLocale()
 {
-	int firstDay;
-	bool ok = false;
+	Qt::DayOfWeek firstDay = Qt::Monday;
 #ifdef Q_OS_WIN
 	WCHAR wsDay[4];
 # if WINVER >= _WIN32_WINNT_VISTA && defined(LOCALE_NAME_USER_DEFAULT)
@@ -584,20 +587,15 @@ Qt::DayOfWeek firstDayOfWeekFromLocale()
 # else
 	if (GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK, wsDay, 4)) {
 # endif
-		firstDay = QString::fromWCharArray(wsDay).toInt(&ok) + 1;
+		int wfd = QString::fromWCharArray(wsDay).toInt(&ok) + 1;
+		if (ok) {
+			firstDay = (Qt::DayOfWeek)(unsigned char)wfd;
+		}
 	}
-#elif defined(Q_OS_LINUX)
-	QProcess *myProcess = new QProcess(QApplication::instance());
-	myProcess->start("locale", QStringList()<<"first_weekday");
-	if (myProcess->waitForFinished()) {
-		firstDay = (myProcess->readAll().trimmed().toInt(&ok) + 5) % 7 + 1;
-	}
+#elif defined(__GLIBC__)
+	firstDay = (Qt::DayOfWeek)(unsigned char)((*nl_langinfo(_NL_TIME_FIRST_WEEKDAY) + 5) % 7 + 1);
 #elif defined(Q_OS_MAC)
-	firstDay = macosCommonFirstWeekday();
-	ok = true;
+	firstDay = (Qt::DayOfWeek)(unsigned char)macosCommonFirstWeekday();
 #endif
-	if (ok) {
-		return (Qt::DayOfWeek)(unsigned char)firstDay;
-	}
-	return Qt::Monday;
+	return firstDay;
 }
