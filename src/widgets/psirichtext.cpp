@@ -332,8 +332,13 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
 					}
 				}
 				if (baseDirFound) {
-					pos += re.matchedLength();
-					continue;
+					if (imgSrcUrl.scheme() == "file") {
+						replace = path;
+					}
+					else {
+						pos += re.matchedLength();
+						continue;
+					}
 				}
 			}
 		}
