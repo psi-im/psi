@@ -587,6 +587,7 @@ Qt::DayOfWeek firstDayOfWeekFromLocale()
 # else
 	if (GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK, wsDay, 4)) {
 # endif
+		bool ok;
 		int wfd = QString::fromWCharArray(wsDay).toInt(&ok) + 1;
 		if (ok) {
 			firstDay = (Qt::DayOfWeek)(unsigned char)wfd;
