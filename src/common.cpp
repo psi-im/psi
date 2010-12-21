@@ -255,7 +255,7 @@ QString soundDetectPlayer()
 {
 	// prefer ALSA on linux
 	if (QFile("/proc/asound").exists()) {
-		return "aplay";
+		return "aplay -q";
 	}
 	// fallback to "play"
 	return "play";
