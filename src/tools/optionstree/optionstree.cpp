@@ -50,12 +50,14 @@ OptionsTree::~OptionsTree()
  * \param name 'Path' to the option ("appearance.emoticons.useSmilies")
  * \return value of the option. Will be invalid if non-existant.
  */
-QVariant OptionsTree::getOption(const QString& name) const
+QVariant OptionsTree::getOption(const QString& name, const QVariant &defaultValue) const
 {
 	QVariant value=tree_.getValue(name);
 	if (value==VariantTree::missingValue) {
-		value=QVariant(QVariant::Invalid);
-		qWarning("Accessing missing option %s", qPrintable(name));
+		value = defaultValue;
+		if (!value.isValid()) {
+			qWarning("Accessing missing option %s", qPrintable(name));
+		}
 	}
 	return value;
 }

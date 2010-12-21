@@ -36,7 +36,7 @@ public:
 	OptionsTree(QObject *parent = 0);
 	~OptionsTree();
 
-	QVariant getOption(const QString& name) const;
+	QVariant getOption(const QString& name, const QVariant &defaultValue = QVariant::Invalid) const;
 	void setOption(const QString& name, const QVariant& value);
 	bool isInternalNode(const QString &node) const;
 	void setComment(const QString& name, const QString& comment);
