@@ -128,7 +128,7 @@ void OptionsTabPlugins::pluginSelected(int index)
 		QString option=QString("%1.%2")
 			.arg(PluginManager::loadOptionPrefix)
 			.arg(PluginManager::instance()->shortName(pluginName));
-		int value=PsiOptions::instance()->getOption(option).toBool();
+		int value=PsiOptions::instance()->getOption(option, false).toBool();
 		if (value)
 			value=Qt::Checked;
 		else
