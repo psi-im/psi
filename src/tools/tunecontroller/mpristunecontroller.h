@@ -54,7 +54,8 @@ class MPRISTuneController : public TuneController
 
 	enum PlayStatus {
 		StatusPlaying = 0,
-		StatusStopped = 1
+		StatusPaused = 1,
+		StatusStopped = 2
 	};
 
 public:
@@ -71,6 +72,7 @@ protected slots:
 private:
 	Tune getTune(const QVariantMap &map) const;
 	Tune getMpris2Tune(const QVariantMap &map) const;
+	int getMpris2Status(const QString &status) const;
 	int version(const QString &service_) const;
 	void connectToBus(const QString &service_);
 	void disconnectFromBus(const QString &service_);

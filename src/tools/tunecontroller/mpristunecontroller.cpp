@@ -171,6 +171,8 @@ void MPRISTuneController::onPlayerStatusChange(const PlayerStatus &ps)
 {
 	if (ps.playStatus != StatusPlaying) {
 		emit stopped();
+		if (ps.playStatus == StatusStopped)
+			currentTune_ = Tune();
 	}
 	else if (!currentTune_.isNull()) {
 		emit playing(currentTune_);
@@ -208,10 +210,20 @@ void MPRISTuneController::onPropertyChange(const QDBusMessage &msg)
 	v = map.value(QLatin1String("PlaybackStatus"));
 	if (v.isValid()) {
 		PlayerStatus status;
-		status.playStatus = bool(v.toString() == QLatin1String("Playing")) ?
-							StatusPlaying : StatusStopped;
+		status.playStatus = getMpris2Status(v.toString());
 		onPlayerStatusChange(status);
 	}
+}
+
+int MPRISTuneController::getMpris2Status(const QString &status) const
+{
+	if (status == QLatin1String("Playing")) {
+		return StatusPlaying;
+	}
+	else if (status == QLatin1String("Paused")) {
+		return StatusPaused;
+	}
+	return StatusStopped;
 }
 
 Tune MPRISTuneController::currentTune()
