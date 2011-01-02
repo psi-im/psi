@@ -29,7 +29,7 @@ Project options:
                               (bundled QCA only)
 
 Dependency options:
-  --disable-bundled-qca        Disable use of Use bundled QCA
+  --disable-bundled-qca        Disable use of bundled QCA
   --with-qca=[path]            Specify path to QCA tree, mainly for building
                                against an uninstalled QCA.
   --disable-openssl            Disable use of OpenSSL (bundled QCA only)
