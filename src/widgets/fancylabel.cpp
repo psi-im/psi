@@ -68,9 +68,15 @@ public:
 
 	void setIcon(const PsiIcon *i, bool _copyIcon)
 	{
+		stopIcon();
+
+		if (copyIcon && icon) {
+			delete icon;
+			icon = 0;
+		}
+
 		copyIcon = _copyIcon;
 
-		stopIcon();
 #ifndef WIDGET_PLUGIN
 		if ( i && copyIcon )
 			icon = new PsiIcon(*i);
