@@ -437,6 +437,7 @@ XDataWidget::XDataWidget(QWidget *parent, const char *name)
 
 XDataWidget::~XDataWidget()
 {
+	qDeleteAll(fields_);
 }
 
 void XDataWidget::setInstructions(const QString& instructions)
@@ -464,6 +465,7 @@ XData::FieldList XDataWidget::fields() const
 
 void XDataWidget::setFields(const XData::FieldList &f)
 {
+	qDeleteAll(fields_);
 	fields_.clear();
 
 	QLayoutItem *child;
