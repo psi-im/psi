@@ -96,6 +96,7 @@ void AddUserDlg::init(const QStringList &groups, PsiAccount *pa)
 {
   	setupUi(this);
 	setModal(false);
+	setAttribute(Qt::WA_DeleteOnClose);
 	d = new Private;
 	d->pa = pa;
 	d->pa->dialogRegister(this);
