@@ -81,7 +81,7 @@ public:
 	Private() {}
 
 	EDB *edb;
-	EDBResult *r;
+	EDBResult r;
 	bool busy;
 	bool writeSuccess;
 	int listeningFor;
@@ -93,7 +93,6 @@ EDBHandle::EDBHandle(EDB *edb)
 {
 	d = new Private;
 	d->edb = edb;
-	d->r = 0;
 	d->busy = false;
 	d->writeSuccess = false;
 	d->listeningFor = -1;
@@ -106,7 +105,6 @@ EDBHandle::~EDBHandle()
 {
 	d->edb->unreg(this);
 
-	delete d->r;
 	delete d;
 }
 
@@ -157,7 +155,7 @@ bool EDBHandle::busy() const
 	return d->busy;
 }
 
-const EDBResult *EDBHandle::result() const
+const EDBResult EDBHandle::result() const
 {
 	return d->r;
 }
@@ -167,16 +165,10 @@ bool EDBHandle::writeSuccess() const
 	return d->writeSuccess;
 }
 
-void EDBHandle::edb_resultReady(EDBResult *r)
+void EDBHandle::edb_resultReady(EDBResult r)
 {
 	d->busy = false;
-	if(r == 0) {
-		delete d->r;
-		d->r = 0;
-	}
-	else {
-		d->r = r;
-	}
+	d->r = r;
 	d->listeningFor = -1;
 	finished();
 }
@@ -270,7 +262,7 @@ int EDB::op_erase(const Jid &j)
 	return erase(j);
 }
 
-void EDB::resultReady(int req, EDBResult *r)
+void EDB::resultReady(int req, EDBResult r)
 {
 	// deliver
 	foreach(EDBHandle* h, d->list) {
@@ -279,7 +271,6 @@ void EDB::resultReady(int req, EDBResult *r)
 			return;
 		}
 	}
-	delete r;
 }
 
 void EDB::writeFinished(int req, bool b)
@@ -517,8 +508,7 @@ void EDBFlatFile::performRequests()
 				len = r->len;
 		}
 
-		EDBResult *result = new EDBResult;
-		result->setAutoDelete(true);
+		EDBResult result;
 		for(int n = 0; n < len; ++n) {
 			PsiEvent *e = f->get(id);
 			if(e) {
@@ -527,8 +517,8 @@ void EDBFlatFile::performRequests()
 					prevId = QString::number(id-1);
 				if(id < f->total()-1)
 					nextId = QString::number(id+1);
-				EDBItem *ei = new EDBItem(e, QString::number(id), prevId, nextId);
-				result->append(ei);
+				EDBItemPtr ei = EDBItemPtr(new EDBItem(e, QString::number(id), prevId, nextId));
+				result.append(ei);
 			}
 
 			if(direction == Forward)
@@ -544,8 +534,7 @@ void EDBFlatFile::performRequests()
 	}
 	else if(type == item_file_req::Type_find) {
 		int id = r->eventId;
-		EDBResult *result = new EDBResult;
-		result->setAutoDelete(true);
+		EDBResult result;
 		while(1) {
 			PsiEvent *e = f->get(id);
 			if(!e)
@@ -561,8 +550,8 @@ void EDBFlatFile::performRequests()
 				MessageEvent *me = (MessageEvent *)e;
 				const Message &m = me->message();
 				if(m.body().indexOf(r->findStr, 0, Qt::CaseInsensitive) != -1) {
-					EDBItem *ei = new EDBItem(e, QString::number(id), prevId, nextId);
-					result->append(ei);
+					EDBItemPtr ei = EDBItemPtr(new EDBItem(e, QString::number(id), prevId, nextId));
+					result.append(ei);
 					break;
 				}
 			}

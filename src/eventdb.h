@@ -24,6 +24,7 @@
 #include <QObject>
 #include <QTimer>
 #include <QFile>
+#include <QSharedPointer>
 
 #include "xmpp_jid.h"
 
@@ -45,28 +46,8 @@ private:
 	PsiEvent *e;
 };
 
-class EDBResult : public QList<EDBItem*>
-{
-public:
-	EDBResult()
-		: autoDelete_(false)
-	{}
-
-	~EDBResult()
-	{
-		if (autoDelete_) {
-			qDeleteAll(*this);
-		}
-	}
-
-	void setAutoDelete(bool autoDelete)
-	{
-		autoDelete_ = autoDelete;
-	}
-
-private:
-	bool autoDelete_;
-};
+typedef QSharedPointer<EDBItem> EDBItemPtr;
+typedef QList<EDBItemPtr> EDBResult;
 
 class EDB;
 class EDBHandle : public QObject
@@ -86,7 +67,7 @@ public:
 	void erase(const XMPP::Jid &);
 
 	bool busy() const;
-	const EDBResult *result() const;
+	const EDBResult result() const;
 	bool writeSuccess() const;
 	int lastRequestType() const;
 
@@ -98,7 +79,7 @@ private:
 	Private *d;
 
 	friend class EDB;
-	void edb_resultReady(EDBResult *);
+	void edb_resultReady(EDBResult);
 	void edb_writeFinished(bool);
 	int listeningFor() const;
 };
@@ -119,7 +100,7 @@ protected:
 	virtual int append(const XMPP::Jid &, PsiEvent *)=0;
 	virtual int find(const QString &, const XMPP::Jid &, const QString &id, int direction)=0;
 	virtual int erase(const XMPP::Jid &)=0;
-	void resultReady(int, EDBResult *);
+	void resultReady(int, EDBResult);
 	void writeFinished(int, bool);
 
 private:

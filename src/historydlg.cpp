@@ -343,14 +343,14 @@ void HistoryDlg::loadPage(int type)
 	//d->busy->start();
 }
 
-void HistoryDlg::displayResult(const EDBResult *r, int direction, int max)
+void HistoryDlg::displayResult(const EDBResult r, int direction, int max)
 {
 	//d->lv->setUpdatesEnabled(false);
 	d->lv->clear();
-	int i = (direction == EDB::Forward) ? r->count()-1 : 0;
+	int i = (direction == EDB::Forward) ? r.count()-1 : 0;
 	int at = 0;
-	while (i >= 0 && i <= r->count()-1 && (max == -1 ? true : at < max)) {
-		EDBItem* item = r->value(i);
+	while (i >= 0 && i <= r.count()-1 && (max == -1 ? true : at < max)) {
+		EDBItemPtr item = r.value(i);
 		PsiEvent* e = item->event();
 		d->lv->addEvent(e, item->prevId());
 		++at;
@@ -362,18 +362,18 @@ void HistoryDlg::displayResult(const EDBResult *r, int direction, int max)
 
 void HistoryDlg::edb_finished()
 {
-	const EDBResult *r = d->h->result();
-	if(d->h->lastRequestType() == EDBHandle::Read && r) {
+	const EDBResult r = d->h->result();
+	if(d->h->lastRequestType() == EDBHandle::Read) {
 		//printf("EDB: retrieved %d events:\n", r->count());
-		if(r->count() > 0) {
+		if(r.count() > 0) {
 			if(d->reqtype == 0 || d->reqtype == 1) {
 				// events are in backward order
 				// first entry is the end event
-				EDBItem* it = r->first();
+				EDBItemPtr it = r.first();
 				d->id_end = it->id();
 				d->id_next = it->nextId();
 				// last entry is the begin event
-				it = r->last();
+				it = r.last();
 				d->id_begin = it->id();
 				d->id_prev = it->prevId();
 				displayResult(r, EDB::Backward);
@@ -382,18 +382,18 @@ void HistoryDlg::edb_finished()
 			else if(d->reqtype == 2) {
 				// events are in forward order
 				// last entry is the end event
-				EDBItem* it = r->last();
+				EDBItemPtr it = r.last();
 				d->id_end = it->id();
 				d->id_next = it->nextId();
 				// first entry is the begin event
-				it = r->first();
+				it = r.first();
 				d->id_begin = it->id();
 				d->id_prev = it->prevId();
 				displayResult(r, EDB::Forward);
 			}
 			else if(d->reqtype == 3) {
 				// should only be one entry
-				EDBItem *ei = r->first();
+				EDBItemPtr ei = r.first();
 				d->reqtype = 1;
 				d->h->get(d->jid, ei->id(), EDB::Backward, 50);
 				//printf("EDB: requesting 50 events backward, starting at %s\n", d->id_prev.latin1());
@@ -462,6 +462,9 @@ void HistoryDlg::doFind()
 
 void HistoryDlg::exportHistory(const QString &fname)
 {
+	if (d->exp) { // already exporting
+		return;
+	}
 	QFile f(fname);
 	if(!f.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
 		QMessageBox::information(this, tr("Error"), tr("Error writing to file."));
@@ -485,17 +488,14 @@ void HistoryDlg::exportHistory(const QString &fname)
 			qApp->processEvents();
 		}
 
-		const EDBResult *r = d->exp->result();
-		if(!r) {
-			break;
-		}
-		if(r->count() <= 0) {
+		const EDBResult r = d->exp->result();
+		if(r.count() <= 0) {
 			break;
 		}
 
 		// events are in forward order
-		for(int i = 0; i < r->count(); ++i) {
-			EDBItem* item = r->value(i);
+		for(int i = 0; i < r.count(); ++i) {
+			EDBItemPtr item = r.value(i);
 			id = item->nextId();
 			PsiEvent *e = item->event();
 			QString txt;

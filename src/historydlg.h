@@ -22,11 +22,10 @@
 #define HISTORYDLG_H
 
 #include <Q3ListView>
+#include "eventdb.h"
 
 class PsiEvent;
 class PsiAccount;
-class EDBItem;
-class EDBResult;
 class Q3SimpleRichText;
 namespace XMPP {
 	class Jid;
@@ -114,7 +113,7 @@ private:
 	Private *d;
 
 	void loadPage(int);
-	void displayResult(const EDBResult *, int, int max=-1);
+	void displayResult(const EDBResult, int, int max=-1);
 	void exportHistory(const QString &fname);
 };
 
