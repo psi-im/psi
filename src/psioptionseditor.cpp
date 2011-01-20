@@ -44,6 +44,7 @@ OptionEditor::supportedType OptionEditor::supportedTypes[] = {
 OptionEditor::OptionEditor(bool new_, QString name_, QVariant value_)
 {
 	setupUi(this);
+	setAttribute(Qt::WA_DeleteOnClose);
 	
 	if (new_) {
 		setWindowTitle(tr("Psi: Option Editor"));
@@ -104,7 +105,7 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
 	setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 
 	o_ = PsiOptions::instance();
-	tm_ = new OptionsTreeModel(o_);
+	tm_ = new OptionsTreeModel(o_, this);
 	
 	QVBoxLayout* layout = new QVBoxLayout(this);
 	layout->setSpacing(0);
