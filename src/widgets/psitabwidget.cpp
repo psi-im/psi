@@ -20,6 +20,7 @@
 
 #include "psitabwidget.h"
 #include "psitabbar.h"
+#include "common.h"
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -263,7 +264,7 @@ void PsiTabWidget::setTabPosition(QTabWidget::TabPosition pos) {
 }
 
 void PsiTabWidget::menu_aboutToShow() {
-	menu_->clear();
+	clearMenu(menu_);
 	bool vis = false;
 	for (int i = 0; i < tabBar_->count(); i++) {
 		QRect r = tabBar_->tabRect(i);

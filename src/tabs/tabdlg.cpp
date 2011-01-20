@@ -228,7 +228,7 @@ void TabDlg::resizeEvent(QResizeEvent *e)
 void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent * event)
 {
 	Q_UNUSED(event);
-	tabMenu_->clear();
+	clearMenu(tabMenu_);
 
 	if (tab != -1) {
 		QAction *d = 0;

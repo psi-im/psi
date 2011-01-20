@@ -217,7 +217,7 @@ IconAction* MainWin::Private::getAction( QString name )
 
 void MainWin::Private::updateMenu(QStringList actions, QMenu* menu)
 {
-	menu->clear();
+	clearMenu(menu);
 
 	IconAction* action;
 	foreach (QString name, actions) {
@@ -229,7 +229,7 @@ void MainWin::Private::updateMenu(QStringList actions, QMenu* menu)
 		}
 
 		if ( name == "diagnostics" ) {
-			QMenu* diagMenu = new QMenu(tr("Diagnostics"), mainWin);
+			QMenu* diagMenu = new QMenu(tr("Diagnostics"), menu);
 			getAction("help_diag_qcaplugin")->addTo(diagMenu);
 			getAction("help_diag_qcakeystore")->addTo(diagMenu);
 			menu->addMenu(diagMenu);
@@ -750,6 +750,9 @@ bool MainWin::showDockMenu(const QPoint &)
 
 void MainWin::buildOptionsMenu()
 {
+	buildGeneralMenu( d->optionsMenu );
+	d->optionsMenu->addSeparator();
+
 	// help menu
 	QMenu* helpMenu = new QMenu(tr("&Help"), d->optionsMenu);
 	helpMenu->setIcon(IconsetFactory::icon("psi/help").icon());
@@ -773,10 +776,6 @@ void MainWin::buildOptionsMenu()
 		actions << "help_about_psimedia";
 
 	d->updateMenu(actions, helpMenu);
-
-	buildGeneralMenu( d->optionsMenu );
-
-	d->optionsMenu->addSeparator();
 	d->optionsMenu->addMenu(helpMenu);
 	d->getAction("menu_quit")->addTo( d->optionsMenu );
 

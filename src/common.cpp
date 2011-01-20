@@ -34,6 +34,7 @@
 #include <QApplication>
 #include <QSound>
 #include <QObject>
+#include <QMenu>
 #include <QMessageBox>
 #include <QUuid>
 #include <QDir>
@@ -461,6 +462,18 @@ bool currentDesktop(long *desktop)
 	return result;
 }
 #endif
+
+void clearMenu(QMenu *m)
+{
+	m->clear();
+	QObjectList l = m->children();
+	foreach(QObject* obj, l) {
+		QMenu* child = dynamic_cast<QMenu*>(obj);
+		if(child) {
+			delete child;
+		}
+	}
+}
 
 void bringToFront(QWidget *widget, bool)
 {

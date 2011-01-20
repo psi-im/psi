@@ -28,6 +28,8 @@
 #include <QList>
 #include <QColor>
 
+class QMenu;
+
 #include "statuspreset.h"
 
 // -----------------------------------------------------------------------------
@@ -119,6 +121,7 @@ QString clipStatus(const QString &str, int width, int height);
 // Widget tools
 // -----------------------------------------------------------------------------
 
+void clearMenu(QMenu *m); // deletes all items, including submenus, from given QMenu
 void bringToFront(QWidget *w, bool grabFocus = true);
 void replaceWidget(QWidget *, QWidget *);
 void closeDialogs(QWidget *);
