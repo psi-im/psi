@@ -76,6 +76,10 @@ public:
 		gAdvWidget = new GAdvancedWidget( this );
 	}
 
+	virtual ~AdvancedWidget()
+	{
+	}
+
 	void setWindowIcon(const QIcon& icon)
 	{
 #ifdef Q_WS_MAC
