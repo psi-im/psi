@@ -93,6 +93,13 @@ QStringList ApplicationInfo::getCertificateStoreDirs()
 	return l;
 }
 
+QStringList ApplicationInfo::dataDirs()
+{
+	const static QStringList dirs = QStringList() << ":" << "." << homeDir()
+												  << resourcesDir();
+	return  dirs;
+}
+
 QString ApplicationInfo::getCertificateStoreSaveDir()
 {
 	QDir certsave(homeDir() + "/certs");

@@ -53,19 +53,12 @@ public:
 	}
 
 	QString iconsetPath(QString name) {
-		QStringList dirs;
-		dirs << ":";
-		dirs << ".";
-		dirs << ApplicationInfo::homeDir();
-		dirs << ApplicationInfo::resourcesDir();
-
-		QStringList::Iterator it = dirs.begin();
-		for ( ; it != dirs.end(); ++it) {
-			QString fileName = *it + "/iconsets/" + name;
-
+		foreach (const QString &d, ApplicationInfo::dataDirs()) {
+			QString fileName = d + "/iconsets/" + name;
 			QFileInfo fi(fileName);
-			if ( fi.exists() )
+			if (fi.exists()) {
 				return fileName;
+			}
 		}
 
 		qWarning("PsiIconset::Private::iconsetPath(\"%s\"): not found", qPrintable(name));

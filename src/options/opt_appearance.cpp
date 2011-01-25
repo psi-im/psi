@@ -87,9 +87,9 @@ OptionsTabAppearance::OptionsTabAppearance(QObject *parent) : MetaOptionsTab(par
 //----------------------------------------------------------------------------
 
 OptionsTabAppearanceMisc::OptionsTabAppearanceMisc(QObject *parent)
-: OptionsTab(parent, "appearance_misc", "", tr("Misc."), tr("Miscellaneous Settings"))
+	: OptionsTab(parent, "appearance_misc", "", tr("Misc."), tr("Miscellaneous Settings"))
+	, w(0)
 {
-	w = 0;
 }
 
 OptionsTabAppearanceMisc::~OptionsTabAppearanceMisc()
@@ -143,11 +143,11 @@ void OptionsTabAppearanceMisc::setData(PsiCon *, QWidget *parentDialog)
 //----------------------------------------------------------------------------
 
 OptionsTabAppearanceGeneral::OptionsTabAppearanceGeneral(QObject *parent)
-: OptionsTab(parent, "appearance_general", "", tr("Fonts && Colors"), tr("Fonts && Color Settings"))
+	: OptionsTab(parent, "appearance_general", "", tr("Fonts && Colors"), tr("Fonts && Color Settings"))
+	, w(0)
+	, bg_color(0)
+	, bg_font(0)
 {
-	w = 0;
-	bg_font = 0;
-	bg_color = 0;
 }
 
 OptionsTabAppearanceGeneral::~OptionsTabAppearanceGeneral()

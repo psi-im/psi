@@ -2,6 +2,7 @@
 #define APPLICATIONINFO_H
 
 class QString;
+class QStringList;
 
 class ApplicationInfo
 {
@@ -25,6 +26,7 @@ public:
 	static QString vCardDir();
 	static QStringList getCertificateStoreDirs();
 	static QString getCertificateStoreSaveDir();
+	static QStringList dataDirs();
 
 	// Namespaces
 	static QString optionsNS();

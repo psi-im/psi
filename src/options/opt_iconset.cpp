@@ -50,11 +50,11 @@ class IconsetDetailsDlg : public QDialog, public Ui::IconsetDetailsDlg
 public:
 	IconsetDetailsDlg(PsiCon *psicon, QWidget* parent, const char* name, bool modal)
 		: QDialog(parent)
+		, psi(psicon)
 	{
 		setAttribute(Qt::WA_DeleteOnClose);
 		setupUi(this);
 
-		psi = psicon;
 		psi->dialogRegister(this);
 
 		QStringList bold_labels;
@@ -145,14 +145,13 @@ static void isDetails(const Iconset &is, QWidget *parent, PsiCon *psi)
 	isd->show();
 }
 
-static QStringList dirs;
-
 static int countIconsets(QString addDir, QStringList excludeList)
 {
 	int count = 0;
 
-	QStringList::Iterator it = dirs.begin();
-	for ( ; it != dirs.end(); ++it) {
+	const QStringList dirs = ApplicationInfo::dataDirs();
+	QStringList::ConstIterator it = dirs.constBegin();
+	for ( ; it != dirs.constEnd(); ++it) {
 		QString fileName = *it + "/iconsets" + addDir;
 		QDir dir (fileName);
 
@@ -190,10 +189,10 @@ class IconsetLoadEvent : public QEvent
 {
 public:
 	IconsetLoadEvent(IconsetLoadThread *par, Iconset *i)
-	: QEvent(QEvent::User)
+		: QEvent(QEvent::User)
+		, p(par)
+		, is(i)
 	{
-		p  = par;
-		is = i;
 	}
 
 	IconsetLoadThread *thread() const { return p; }
@@ -214,7 +213,7 @@ class IconsetFinishEvent : public QEvent
 {
 public:
 	IconsetFinishEvent()
-	: QEvent( (QEvent::Type)(QEvent::User + 1) )
+		: QEvent( (QEvent::Type)(QEvent::User + 1) )
 	{
 	}
 };
@@ -228,9 +227,9 @@ class IconsetLoadThreadDestroyEvent : public QEvent
 {
 public:
 	IconsetLoadThreadDestroyEvent(QThread *t)
-	: QEvent( (QEvent::Type)(QEvent::User + 2) )
+		: QEvent( (QEvent::Type)(QEvent::User + 2) )
+		, thread(t)
 	{
-		thread = t;
 	}
 
 	~IconsetLoadThreadDestroyEvent()
@@ -266,10 +265,10 @@ private:
 };
 
 IconsetLoadThread::IconsetLoadThread(QObject *p, QString path)
+	: cancelled(false)
+	, parent(p)
+	, addPath(path)
 {
-	cancelled = false;
-	parent  = p;
-	addPath = path;
 }
 
 void IconsetLoadThread::excludeIconsets(QStringList l)
@@ -296,7 +295,7 @@ void IconsetLoadThread::postEvent(QEvent *e)
 void IconsetLoadThread::run()
 {
 	threadMutex.lock();
-	QStringList dirs = ::dirs;
+	QStringList dirs = ApplicationInfo::dataDirs();
 	threadMutex.unlock();
 
 	QStringList::Iterator it = dirs.begin();
@@ -375,17 +374,10 @@ getout:
 //----------------------------------------------------------------------------
 
 OptionsTabIconsetSystem::OptionsTabIconsetSystem(QObject *parent)
-: OptionsTab(parent, "iconset_system", "", tr("System Icons"), tr("Select the system iconset"))
+	: OptionsTab(parent, "iconset_system", "", tr("System Icons"), tr("Select the system iconset"))
+	, w(0)
+	, thread(0)
 {
-	w = 0;
-	thread = 0;
-
-	if ( dirs.isEmpty() ) {
-		dirs << ":";
-		dirs << ".";
-		dirs << ApplicationInfo::homeDir();
-		dirs << ApplicationInfo::resourcesDir();
-	}
 }
 
 OptionsTabIconsetSystem::~OptionsTabIconsetSystem()
@@ -522,10 +514,10 @@ void OptionsTabIconsetSystem::cancelThread()
 //----------------------------------------------------------------------------
 
 OptionsTabIconsetEmoticons::OptionsTabIconsetEmoticons(QObject *parent)
-: OptionsTab(parent, "iconset_emoticons", "", tr("Emoticons"), tr("Select your emoticon iconsets"))
+	: OptionsTab(parent, "iconset_emoticons", "", tr("Emoticons"), tr("Select your emoticon iconsets"))
+	, w(0)
+	, thread(0)
 {
-	w = 0;
-	thread = 0;
 }
 
 OptionsTabIconsetEmoticons::~OptionsTabIconsetEmoticons()
@@ -701,10 +693,10 @@ void OptionsTabIconsetEmoticons::cancelThread()
 //----------------------------------------------------------------------------
 
 OptionsTabIconsetRoster::OptionsTabIconsetRoster(QObject *parent)
-: OptionsTab(parent, "iconset_roster", "", tr("Roster Icons"), tr("Select iconsets for your roster"))
+	: OptionsTab(parent, "iconset_roster", "", tr("Roster Icons"), tr("Select iconsets for your roster"))
+	, w(0)
+	, thread(0)
 {
-	w = 0;
-	thread = 0;
 }
 
 OptionsTabIconsetRoster::~OptionsTabIconsetRoster()
@@ -924,7 +916,7 @@ bool OptionsTabIconsetRoster::event(QEvent *e)
 		}
 
 		d->tabWidget3->setEnabled(true);
-		// d->tabWidget3->unsetPalette();
+		// d->tabWidget3->setPalette(QPalette());
 
 		connect(d->iss_defRoster, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SIGNAL(dataChanged()));
 		connect(d->iss_servicesRoster, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SIGNAL(dataChanged()));
