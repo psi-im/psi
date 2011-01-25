@@ -173,6 +173,7 @@ HEADERS += \
 	$$PWD/alertable.h \
 	$$PWD/psipopup.h \
 	$$PWD/psiapplication.h \
+	$$PWD/filecache.h \
 	$$PWD/avatars.h \
 	$$PWD/actionlist.h \
 	$$PWD/serverinfomanager.h \
@@ -180,6 +181,7 @@ HEADERS += \
 	$$PWD/xdata_widget.h \
 	$$PWD/statuspreset.h \
 	$$PWD/lastactivitytask.h \
+	$$PWD/bobfilecache.h \
 	$$PWD/mucmanager.h \
 	$$PWD/mucconfigdlg.h \
 	$$PWD/mucaffiliationsmodel.h \
@@ -295,11 +297,13 @@ SOURCES += \
 	$$PWD/alertable.cpp \
 	$$PWD/psipopup.cpp \
 	$$PWD/psiapplication.cpp \
+	$$PWD/filecache.cpp \
 	$$PWD/avatars.cpp \
 	$$PWD/actionlist.cpp \
 	$$PWD/psiactionlist.cpp \
 	$$PWD/xdata_widget.cpp \
 	$$PWD/lastactivitytask.cpp \
+	$$PWD/bobfilecache.cpp \
 	$$PWD/statuspreset.cpp \
 	$$PWD/mucmanager.cpp \
 	$$PWD/mucconfigdlg.cpp \

@@ -134,6 +134,7 @@
 #include "rc.h"
 #include "tabdlg.h"
 #include "proxy.h"
+#include "bobfilecache.h"
 #include "psicontactlist.h"
 #include "psicontact.h"
 #include "psiselfcontact.h"
@@ -1009,6 +1010,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	d->client->setClientVersion(ApplicationInfo::version());
 	d->client->setCapsNode(ApplicationInfo::capsNode());
 	d->client->setCapsVersion(ApplicationInfo::capsVersion());
+	d->client->bobManager()->setCache(BoBFileCache::instance()); // xep-0231
 
 	DiscoItem::Identity identity;
 	identity.category = "client";

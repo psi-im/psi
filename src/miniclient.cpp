@@ -28,6 +28,7 @@
 #include "Certificates/CertificateHelpers.h"
 #include "Certificates/CertificateErrorDialog.h"
 #include "psiaccount.h"
+#include "bobfilecache.h"
 #include "xmpp_tasks.h"
 
 using namespace XMPP;
@@ -36,6 +37,7 @@ MiniClient::MiniClient(QObject *parent)
 :QObject(parent)
 {
 	_client = new Client;
+	_client->bobManager()->setCache(BoBFileCache::instance());
 	conn = 0;
 	tls = 0;
 	tlsHandler = 0;

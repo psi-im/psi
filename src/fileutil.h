@@ -39,6 +39,8 @@ public:
 	static QString getImageFileName(QWidget* parent);
 	static QString getOpenFileName(QWidget* parent = 0, const QString& caption = QString(), const QString& filter = QString(), QString* selectedFilter = 0);
 	static QString getSaveFileName(QWidget* parent = 0, const QString& caption = QString(), const QString& defaultFileName = QString(), const QString& filter = QString(), QString* selectedFilter = 0);
+
+	static QString mimeToFileExt(const QString &mime);
 };
 
 #endif

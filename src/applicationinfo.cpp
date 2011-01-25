@@ -33,6 +33,7 @@
 #define PROG_IPC_NAME "org.psi-im.Psi"	// must not contain '\\' character on Windows
 #define PROG_OPTIONS_NS "http://psi-im.org/options"
 #define PROG_STORAGE_NS "http://psi-im.org/storage"
+#define PROG_FILECACHE_NS "http://psi-im.org/filecache"
 #ifdef Q_WS_MAC
 #define PROG_APPCAST_URL "http://psi-im.org/appcast/psi-mac.xml"
 #else
@@ -84,6 +85,11 @@ QString ApplicationInfo::storageNS()
 {
 	return PROG_STORAGE_NS;
 }	
+
+QString ApplicationInfo::fileCacheNS()
+{
+	return PROG_FILECACHE_NS;
+}
 
 QStringList ApplicationInfo::getCertificateStoreDirs()
 {
@@ -221,35 +227,46 @@ QString ApplicationInfo::homeDir()
 #endif
 }
 
+QString ApplicationInfo::makeSubhomePath(const QString &path)
+{
+	if (path.indexOf("..") == -1) { // ensure its in home dir
+		QDir dir(homeDir() + "/" + path);
+		if (!dir.exists()) {
+			dir.mkpath(".");
+		}
+		return dir.path();
+	}
+	return QString();
+}
+
+QString ApplicationInfo::makeSubprofilePath(const QString &path)
+{
+	if (path.indexOf("..") == -1) { // ensure its in profile dir
+		QDir dir(pathToProfile(activeProfile) + "/" + path);
+		if (!dir.exists()) {
+			dir.mkpath(".");
+		}
+		return dir.path();
+	}
+	return QString();
+}
+
 QString ApplicationInfo::historyDir()
 {
-	QDir history(pathToProfile(activeProfile) + "/history");
-	if (!history.exists()) {
-		QDir profile(pathToProfile(activeProfile));
-		profile.mkdir("history");
-	}
-
-	return history.path();
+	return makeSubprofilePath("history");
 }
 
 QString ApplicationInfo::vCardDir()
 {
-	QDir vcard(pathToProfile(activeProfile) + "/vcard");
-	if (!vcard.exists()) {
-		QDir profile(pathToProfile(activeProfile));
-		profile.mkdir("vcard");
-	}
+	return makeSubprofilePath("vcard");
+}
 
-	return vcard.path();
+QString ApplicationInfo::bobDir()
+{
+	return makeSubhomePath("bob");
 }
 
 QString ApplicationInfo::profilesDir()
 {
-	QString profiles_dir(homeDir() + "/profiles");
-	QDir d(profiles_dir);
-	if(!d.exists()) {
-		QDir d(homeDir());
-		d.mkdir("profiles");
-	}
-	return profiles_dir;
+	return makeSubhomePath("profiles");
 }

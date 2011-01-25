@@ -108,3 +108,21 @@ QString FileUtil::getImageFileName(QWidget* parent)
 	return FileUtil::getOpenFileName(parent, tr("Choose a file"),
 	                                 tr("Images (*.png *.xpm *.jpg *.PNG *.XPM *.JPG)"));
 }
+
+QString FileUtil::mimeToFileExt(const QString &mime)
+{
+	static QMap<QString, QString> mimes;
+	if (!mimes.size()) {
+		mimes["image/png"] = "png";
+		mimes["image/x-mng"] = "mng";
+		mimes["image/gif"] = "gif";
+		mimes["image/bmp"] = "bmp";
+		mimes["image/x-xpm"] = "xpm";
+		mimes["image/svg+xml"] = "svg";
+		mimes["image/jpeg"] = "jpg";
+
+		mimes["application/octet-stream"] = "bin";
+		// add more when needed
+	}
+	return mimes.value(mime);
+}
