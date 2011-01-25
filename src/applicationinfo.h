@@ -22,8 +22,11 @@ public:
 	static QString resourcesDir();
 	static QString libDir();
 	static QString profilesDir();
+	static QString makeSubhomePath(const QString &);
+	static QString makeSubprofilePath(const QString &);
 	static QString historyDir();
 	static QString vCardDir();
+	static QString bobDir();
 	static QStringList getCertificateStoreDirs();
 	static QString getCertificateStoreSaveDir();
 	static QStringList dataDirs();
@@ -31,6 +34,7 @@ public:
 	// Namespaces
 	static QString optionsNS();
 	static QString storageNS();
+	static QString fileCacheNS();
 };
 
 #endif
