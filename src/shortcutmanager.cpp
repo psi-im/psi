@@ -3,7 +3,7 @@
 
 #include "psioptions.h"
 #include "shortcutmanager.h"
-#include "globalshortcutmanager.h"
+#include "globalshortcut/globalshortcutmanager.h"
 
 
 /**

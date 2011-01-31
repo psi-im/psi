@@ -10,7 +10,7 @@
 
 #include "ui_opt_advanced.h"
 #include "psioptions.h"
-#include "spellchecker.h"
+#include "spellchecker/spellchecker.h"
 
 class OptAdvancedUI : public QWidget, public Ui::OptAdvanced
 {

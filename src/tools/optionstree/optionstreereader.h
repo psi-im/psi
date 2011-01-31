@@ -1,7 +1,7 @@
 #ifndef OPTIONSTREEREADER_H
 #define OPTIONSTREEREADER_H
 
-#include "atomicxmlfile.h"
+#include "atomicxmlfile/atomicxmlfile.h"
 
 #include <QVariant>
 

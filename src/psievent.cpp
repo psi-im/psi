@@ -32,7 +32,7 @@
 #include "filetransfer.h"
 #include "applicationinfo.h"
 #include "psicontactlist.h"
-#include "atomicxmlfile.h"
+#include "atomicxmlfile/atomicxmlfile.h"
 #include "globaleventqueue.h"
 #include "psioptions.h"
 #include "avcall/avcall.h"

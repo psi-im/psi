@@ -24,7 +24,7 @@
 #include <QDomDocument>
 #include <QStringList>
 
-#include "atomicxmlfile.h"
+#include "atomicxmlfile/atomicxmlfile.h"
 #include "optionstreereader.h"
 #include "optionstreewriter.h"
 

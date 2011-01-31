@@ -1,7 +1,7 @@
 #ifndef PSICLI_H
 #define PSICLI_H
 
-#include "simplecli.h"
+#include "simplecli/simplecli.h"
 #include "applicationinfo.h"
 #include <QApplication>
 #include <QMessageBox>

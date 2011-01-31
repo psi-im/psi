@@ -45,7 +45,7 @@
 #include "passphrasedlg.h"
 #include "common.h"
 #include "mainwin.h"
-#include "idle.h"
+#include "idle/idle.h"
 #include "accountmanagedlg.h"
 #include "statusdlg.h"
 #include "options/optionsdlg.h"
@@ -74,7 +74,7 @@
 #include "psiactionlist.h"
 #include "applicationinfo.h"
 #include "jidutil.h"
-#include "systemwatch.h"
+#include "systemwatch/systemwatch.h"
 #include "accountscombobox.h"
 #include "tabdlg.h"
 #include "chatdlg.h"
@@ -90,7 +90,7 @@
 #include "dbus.h"
 #include "tipdlg.h"
 #include "shortcutmanager.h"
-#include "globalshortcutmanager.h"
+#include "globalshortcut/globalshortcutmanager.h"
 #include "desktoputil.h"
 #include "tabmanager.h"
 #include "xmpp_xmlcommon.h"
@@ -107,7 +107,7 @@
 #endif
 
 #ifdef Q_WS_MAC
-#include "mac_dock.h"
+#include "mac_dock/mac_dock.h"
 #endif
 
 // from opt_avcall.cpp

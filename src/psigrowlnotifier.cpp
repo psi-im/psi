@@ -29,7 +29,7 @@
 #include "common.h"
 #include "psiaccount.h"
 #include "avatars.h"
-#include "growlnotifier.h"
+#include "growlnotifier/growlnotifier.h"
 #include "psigrowlnotifier.h"
 #include "psievent.h"
 #include "userlist.h"

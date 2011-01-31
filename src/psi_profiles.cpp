@@ -40,7 +40,7 @@
 #include "advwidget.h"
 #include "psioptions.h"
 #include "varlist.h"
-#include "atomicxmlfile.h"
+#include "atomicxmlfile/atomicxmlfile.h"
 #include "psitoolbar.h"
 #include "optionstree.h"
 #ifdef HAVE_PGPUTIL

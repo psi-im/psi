@@ -22,6 +22,7 @@ include($$PWD/libpsi/tools/spellchecker/spellchecker.pri)
 include($$PWD/libpsi/dialogs/grepshortcutkeydialog.pri)
 include($$PWD/libpsi/tools/atomicxmlfile/atomicxmlfile.pri)
 include($$PWD/libpsi/tools/simplecli/simplecli.pri)
+INCLUDEPATH += $$PWD/libpsi/tools
 
 # psimedia
 include($$PWD/psimedia/psimedia.pri)

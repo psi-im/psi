@@ -63,7 +63,7 @@ const int KeyPress = XKeyPress;
 #endif
 
 #ifdef Q_WS_WIN
-#include "systemwatch_win.h"
+#include "systemwatch/systemwatch_win.h"
 #endif
 
 // mblsha:

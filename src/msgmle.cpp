@@ -36,8 +36,8 @@
 #include <QDateTime>
 
 #include "shortcutmanager.h"
-#include "spellhighlighter.h"
-#include "spellchecker.h"
+#include "spellchecker/spellhighlighter.h"
+#include "spellchecker/spellchecker.h"
 #include "psioptions.h"
 
 //----------------------------------------------------------------------------

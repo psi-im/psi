@@ -1,4 +1,3 @@
-INCLUDEPATH *= $$PWD $$PWD/..
 DEPENDPATH *= $$PWD $$PWD/..
 
 HEADERS += \
