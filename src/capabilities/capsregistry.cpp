@@ -26,7 +26,7 @@
 
 #include "xmpp_features.h"
 #include "capsregistry.h"
-#include "utilities/iodeviceopener.h"
+#include "iodeviceopener.h"
 
 using namespace XMPP;
 

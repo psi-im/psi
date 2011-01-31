@@ -5,23 +5,16 @@ include($$PWD/protocol/protocol.pri)
 include($$PWD/irisprotocol/irisprotocol.pri)
 include($$PWD/privacy/privacy.pri)
 include($$PWD/capabilities/capabilities.pri)
-include($$PWD/utilities/utilities.pri)
 include($$PWD/tabs/tabs.pri)
 include($$PWD/Certificates/Certificates.pri)
 
 # tools
 # include($$PWD/tools/trayicon/trayicon.pri)
+include($$PWD/libpsi/tools/tools.pri)
 include($$PWD/tools/iconset/iconset.pri)
-include($$PWD/libpsi/tools/idle/idle.pri)
-include($$PWD/libpsi/tools/systemwatch/systemwatch.pri)
-include($$PWD/libpsi/tools/zip/zip.pri)
 include($$PWD/tools/optionstree/optionstree.pri)
-include($$PWD/libpsi/tools/globalshortcut/globalshortcut.pri)
 include($$PWD/tools/advwidget/advwidget.pri)
-include($$PWD/libpsi/tools/spellchecker/spellchecker.pri)
 include($$PWD/libpsi/dialogs/grepshortcutkeydialog.pri)
-include($$PWD/libpsi/tools/atomicxmlfile/atomicxmlfile.pri)
-include($$PWD/libpsi/tools/simplecli/simplecli.pri)
 INCLUDEPATH += $$PWD/libpsi/tools
 
 # psimedia
@@ -29,16 +22,6 @@ include($$PWD/psimedia/psimedia.pri)
 
 # audio/video calls
 include($$PWD/avcall/avcall.pri)
-
-# Growl
-mac {
-	contains(DEFINES, HAVE_GROWL) {
-		include($$PWD/libpsi/tools/growlnotifier/growlnotifier.pri)
-	}
-}
-
-# Mac dock
-mac { include($$PWD/libpsi/tools/mac_dock/mac_dock.pri) }
 
 # Tune
 pep {
