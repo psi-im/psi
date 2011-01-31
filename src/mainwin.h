@@ -42,6 +42,7 @@ class PsiAccount;
 class IconAction;
 class PsiIcon;
 class ContactView;
+class PsiTrayIcon;
 namespace XMPP {
 	class Status;
 }
@@ -57,6 +58,7 @@ public:
 	void setUseDock(bool);
 
 	void buildToolbars();
+	PsiTrayIcon *psiTrayIcon();
 
 	// evil stuff! remove ASAP!!
 	QStringList actionList;

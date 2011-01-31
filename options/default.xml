@@ -368,6 +368,7 @@
 				<toggle-visibility type="QKeySequence" comment="Show/hide the application"/>
 				<bring-to-front type="QKeySequence" comment="Bring the application to front"/>
 				<new-blank-message type="QKeySequence" comment="Send new message"/>
+				<boss-key type="QKeySequence" comment="Hide all active windows">Ctrl+Alt+B</boss-key>
 			</global>
 			<message comment="Shortcuts in the message dialog">
 				<send type="QVariantList" comment="Send the message">

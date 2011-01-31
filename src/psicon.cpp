@@ -100,6 +100,7 @@
 #include "avcall/avcall.h"
 #include "avcall/calldlg.h"
 #include "alertmanager.h"
+#include "bosskey.h"
 
 #include "AutoUpdater/AutoUpdater.h"
 #ifdef HAVE_SPARKLE
@@ -203,6 +204,7 @@ public:
 		, iconSelect(0)
 		, quitting(false)
 		, alertManager(parent)
+		, bossKey(0)
 	{
 		psi = parent;
 	}
@@ -281,6 +283,7 @@ public:
 	QTimer* updatedAccountTimer_;
 	AutoUpdater *autoUpdater;
 	AlertManager alertManager;
+	BossKey *bossKey;
 };
 
 //----------------------------------------------------------------------------
@@ -474,6 +477,7 @@ bool PsiCon::init()
 	// setup the main window
 	d->mainwin = new MainWin(PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool(), (PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool()), this);
 	d->mainwin->setUseDock(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool());
+	d->bossKey = new BossKey(d->mainwin);
 
 	Q_UNUSED(psiConObject);
 
@@ -708,6 +712,7 @@ void PsiCon::setShortcuts()
 	ShortcutManager::connect("global.toggle-visibility", d->mainwin, SLOT(toggleVisible()));
 	ShortcutManager::connect("global.bring-to-front", d->mainwin, SLOT(trayShow()));
 	ShortcutManager::connect("global.new-blank-message", this, SLOT(doNewBlankMessage()));
+	ShortcutManager::connect("global.boss-key", d->bossKey, SLOT(shortCutActivated()));
 #ifdef YAPSI
 	ShortcutManager::connect("global.filter-contacts", d->mainwin, SLOT(filterContacts()));
 #endif

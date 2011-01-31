@@ -200,6 +200,7 @@ HEADERS += \
 	$$PWD/voicecalldlg.h \
 	$$PWD/resourcemenu.h \
 	$$PWD/shortcutmanager.h \
+	$$PWD/bosskey.h \
 	$$PWD/psicontactlist.h \
 	$$PWD/accountlabel.h \
 	$$PWD/psiactions.h \
@@ -321,6 +322,7 @@ SOURCES += \
 	$$PWD/voicecalldlg.cpp \
 	$$PWD/resourcemenu.cpp \
 	$$PWD/shortcutmanager.cpp \
+	$$PWD/bosskey.cpp \
 	$$PWD/psicontactlist.cpp \
 	$$PWD/psicon.cpp \
 	$$PWD/psiaccount.cpp \

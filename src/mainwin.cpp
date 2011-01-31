@@ -1339,6 +1339,11 @@ void MainWin::statusClicked(int x)
 	}
 }
 
+PsiTrayIcon *MainWin::psiTrayIcon()
+{
+	return d->tray;
+}
+
 void MainWin::numAccountsChanged()
 {
 	d->statusButton->setEnabled(d->psi->contactList()->haveEnabledAccounts());
