@@ -166,12 +166,13 @@ bool VariantTree::remove(const QString &node, bool internal_nodes)
 			return trees_[key]->remove(subnode, internal_nodes);
 		}
 	} else {
+		VariantTree *tree;
 		//this tier
 		if (values_.contains(node)) {
 			values_.remove(node);
 			return true;
-		} else if (internal_nodes && trees_.contains(node)) {
-			trees_.remove(node);
+		} else if (internal_nodes && (tree = trees_.take(node))) {
+			delete tree;
 			return true;
 		}
 	}
