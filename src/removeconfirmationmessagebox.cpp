@@ -163,8 +163,8 @@ RemoveConfirmationMessageBox::RemoveConfirmationMessageBox(const QString& title,
 	: QMessageBox()
 	, removeButton_(0)
 	, complimentaryButton_(0)
-	, cancelButton_(0)
 	, infoButton_(0)
+	, cancelButton_(0)
 {
 	setWindowTitle(ApplicationInfo::name());
 

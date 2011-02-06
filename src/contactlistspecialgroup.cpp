@@ -52,16 +52,19 @@ ContactListSpecialGroup::ContactListSpecialGroup(ContactListModel* model, Contac
 
 QString ContactListSpecialGroup::sourceOperationsForSpecialGroupContact(PsiContact* contact) const
 {
+	Q_UNUSED(contact)
 	return QString();
 }
 
 QString ContactListSpecialGroup::destinationOperationsForSpecialGroupContact(PsiContact* contact) const
 {
+	Q_UNUSED(contact)
 	return QString();
 }
 
 QStringList ContactListSpecialGroup::moveOperationsForSpecialGroupContact(PsiContact* contact) const
 {
+	Q_UNUSED(contact)
 	Q_ASSERT(isEditable());
 	QStringList result;
 	if (specialType_ == SpecialType_General) {
