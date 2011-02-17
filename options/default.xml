@@ -219,7 +219,7 @@
 			<look>
 				<colors>
 					<contactlist>
-						<background type="QColor">#ffffff</background>
+						<background type="QColor"/>
 						<grouping>
 							<header-background type="QColor">#f0f0f0</header-background>
 							<header-foreground type="QColor">#5a5a5a</header-foreground>
@@ -232,8 +232,10 @@
 							<away type="QColor">#004bb4</away>
 							<do-not-disturb type="QColor">#7e0000</do-not-disturb>
 							<offline type="QColor">#646464</offline>
-							<online type="QColor">#000000</online>
+							<online type="QColor"/>
 						</status>
+						<status-change-animation1 type="QColor">#000000</status-change-animation1>
+						<status-change-animation2 type="QColor">#969696</status-change-animation2>
 						<status-messages type="QColor">#808080</status-messages>
 					</contactlist>
 					<muc>
@@ -255,10 +257,6 @@
 					</passive-popup>
 				</colors>
 				<contactlist>
-					<status-change-animation>
-						<color1 type="QColor">#000000</color1>
-						<color2 type="QColor">#969696</color2>
-					</status-change-animation>
 					<use-outlined-group-headings type="bool">false</use-outlined-group-headings>
 					<use-slim-group-headings type="bool">false</use-slim-group-headings>
 				</contactlist>
