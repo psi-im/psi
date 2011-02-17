@@ -51,6 +51,7 @@
 #include "psicon.h"
 #include "jidutil.h"
 #include "psioptions.h"
+#include "coloropt.h"
 #include "iconaction.h"
 #include "alerticon.h"
 #include "avatars.h"
@@ -2470,8 +2471,8 @@ void ContactView::optionsUpdate()
 
 	// set the text and background colors
 	QPalette mypal = Q3ListView::palette();
-	mypal.setColor(QColorGroup::Text, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.online").value<QColor>());
-	mypal.setColor(QColorGroup::Base, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.background").value<QColor>());
+	mypal.setColor(QColorGroup::Text, ColorOpt::instance()->color("options.ui.look.colors.contactlist.status.online"));
+	mypal.setColor(QColorGroup::Base, ColorOpt::instance()->color("options.ui.look.colors.contactlist.background"));
 	Q3ListView::setPalette(mypal);
 
 	// reload the icons
@@ -3148,8 +3149,8 @@ void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
 			xcg.setColor(QColorGroup::Text, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.offline").value<QColor>());
 
 		if(d->animatingNick) {
-			xcg.setColor(QColorGroup::Text, d->animateNickColor ? PsiOptions::instance()->getOption("options.ui.look.contactlist.status-change-animation.color1").value<QColor>() : PsiOptions::instance()->getOption("options.ui.look.contactlist.status-change-animation.color2").value<QColor>());
-			xcg.setColor(QColorGroup::HighlightedText, d->animateNickColor ? PsiOptions::instance()->getOption("options.ui.look.contactlist.status-change-animation.color1").value<QColor>() : PsiOptions::instance()->getOption("options.ui.look.contactlist.status-change-animation.color2").value<QColor>());
+			xcg.setColor(QColorGroup::Text, d->animateNickColor ? PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation1").value<QColor>() : PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation2").value<QColor>());
+			xcg.setColor(QColorGroup::HighlightedText, d->animateNickColor ? PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation1").value<QColor>() : PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation2").value<QColor>());
 		}
 
 		RichListViewItem::paintCell(p, xcg, column, width, alignment);

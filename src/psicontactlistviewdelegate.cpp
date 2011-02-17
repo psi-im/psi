@@ -25,6 +25,7 @@
 
 #include "psiiconset.h"
 #include "psioptions.h"
+#include "coloropt.h"
 #include "contactlistview.h"
 #include "common.h"
 
@@ -112,7 +113,7 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 
 	r.setLeft(avatarRect.right() + 3);
 
-	QColor textColor = PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.online").value<QColor>();
+	QColor textColor = ColorOpt::instance()->color("options.ui.look.colors.contactlist.status.online");
 	if (statusType(index) == XMPP::Status::Away || statusType(index) == XMPP::Status::XA)
 		textColor = PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.away").value<QColor>();
 	else if (statusType(index) == XMPP::Status::DND)
@@ -122,8 +123,8 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 
 #if 0
 	if (d->animatingNick) {
-		textColor = d->animateNickColor ? PsiOptions::instance()->getOption("options.ui.look.contactlist.status-change-animation.color1").value<QColor>() : PsiOptions::instance()->getOption("options.ui.look.contactlist.status-change-animation.color2").value<QColor>();
-		xcg.setColor(QColorGroup::HighlightedText, d->animateNickColor ? PsiOptions::instance()->getOption("options.ui.look.contactlist.status-change-animation.color1").value<QColor>() : PsiOptions::instance()->getOption("options.ui.look.contactlist.status-change-animation.color2").value<QColor>());
+		textColor = d->animateNickColor ? PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation1").value<QColor>() : PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation2").value<QColor>();
+		xcg.setColor(QColorGroup::HighlightedText, d->animateNickColor ? PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation1").value<QColor>() : PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation2").value<QColor>());
 	}
 #endif
 
@@ -268,7 +269,7 @@ void PsiContactListViewDelegate::optionChanged(const QString& option)
 	}
 	else if (option == contactListBackgroundOptionPath) {
 		QPalette p = contactList()->palette();
-		p.setColor(QPalette::Base, PsiOptions::instance()->getOption(contactListBackgroundOptionPath).value<QColor>());
+		p.setColor(QPalette::Base, ColorOpt::instance()->color(contactListBackgroundOptionPath));
 		const_cast<ContactListView*>(contactList())->setPalette(p);
 	}
 	else if (option == showStatusMessagesOptionPath) {

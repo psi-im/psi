@@ -287,7 +287,6 @@ void PsiMain::sessionStart()
 
 	// make sure we have clean PsiOptions and PsiIconset
 	PsiOptions::reset();
-	PsiIconset::reset();
 	// get a PsiCon
 	pcon = new PsiCon();
 	if (!pcon->init()) {

@@ -206,58 +206,41 @@ QWidget *OptionsTabAppearanceGeneral::widget()
 	d->pb_fChat->setWhatsThis(
 		tr("Selects a font for chat windows using the font selection dialog."));
 
-	bg_color = new QButtonGroup;
-	bg_color->addButton(d->pb_cOnline);
-	bg_color->addButton(d->pb_cOffline);
-	bg_color->addButton(d->pb_cAway);
-	bg_color->addButton(d->pb_cDND);
-	bg_color->addButton(d->pb_cProfileFore);
-	bg_color->addButton(d->pb_cProfileBack);
-	bg_color->addButton(d->pb_cGroupFore);
-	bg_color->addButton(d->pb_cGroupBack);
-	bg_color->addButton(d->pb_cListBack);
-	bg_color->addButton(d->pb_cAnimFront);
-	bg_color->addButton(d->pb_cAnimBack);
-	bg_color->addButton(d->pb_cStatus);
-	bg_color->addButton(d->pb_cMessageSent);
-	bg_color->addButton(d->pb_cMessageReceived);
-	bg_color->addButton(d->pb_cSysMsg);
-	connect(bg_color, SIGNAL(buttonClicked(QAbstractButton*)), SLOT(chooseColor(QAbstractButton*)));
+
 
 	QString s = tr("Specifies the text color for a contact name in the main window when that user is \"%1\".");
-	d->pb_cOnline->setWhatsThis(
-		s.arg(tr("online")));
-	d->pb_cOffline->setWhatsThis(
-		s.arg(tr("offline")));
-	d->pb_cAway->setWhatsThis(
-		s.arg(tr("away")));
-	d->pb_cDND->setWhatsThis(
-		s.arg(tr("do not disturb")));
-	d->pb_cStatus->setWhatsThis(
-		s.arg(tr("Status message")));
-	d->pb_cProfileBack->setWhatsThis(
-		tr("Specifies the background color for an account name in the main window."));
-	d->pb_cGroupBack->setWhatsThis(
-		tr("Specifies the background color for a group name in the main window."));
-	d->pb_cListBack->setWhatsThis(
-		tr("Specifies the background color for the main window."));
-	d->pb_cAnimFront->setWhatsThis(
-		tr("Specifies the foreground animation color for nicks."));
-	d->pb_cAnimBack->setWhatsThis(
-		tr("Specifies the background animation color for nicks."));
-	d->pb_cMessageSent->setWhatsThis(
-		tr("Specifies the color for sent messages in chat and history windows."));
-	d->pb_cMessageReceived->setWhatsThis(
-		tr("Specifies the color for received messages in chat and history windows."));
-	d->pb_cSysMsg->setWhatsThis(
-		tr("Specifies the color for informational messages in chat windows, like status changes and offline messages."));
+	typedef struct {QCheckBox *cbox; QToolButton *button; QString descr;} ColorWidgetData;
+	ColorWidgetData cwData[] = {
+		{d->ck_cOnline,          d->pb_cOnline,    s.arg(tr("online")) },
+		{d->ck_cOffline,         d->pb_cOffline,   s.arg(tr("offline")) },
+		{d->ck_cAway,            d->pb_cAway,      s.arg(tr("away")) },
+		{d->ck_cDND,             d->pb_cDND,       s.arg(tr("do not disturb")) },
+		{d->ck_cStatus,          d->pb_cStatus,    s.arg(tr("Status message"))},
+		{d->ck_cProfileFore,     d->pb_cProfileFore,  ""},
+		{d->ck_cProfileBack,     d->pb_cProfileBack,  tr("Specifies the background color for an account name in the main window.")},
+		{d->ck_cGroupFore,       d->pb_cGroupFore, ""},
+		{d->ck_cGroupBack,       d->pb_cGroupBack, tr("Specifies the background color for a group name in the main window.")},
+		{d->ck_cListBack,        d->pb_cListBack,  tr("Specifies the background color for the main window.")},
+		{d->ck_cAnimFront,       d->pb_cAnimFront, tr("Specifies the foreground animation color for nicks.")},
+		{d->ck_cAnimBack,        d->pb_cAnimBack,  tr("Specifies the background animation color for nicks.")},
+		{d->ck_cMessageSent,     d->pb_cMessageSent, tr("Specifies the color for sent messages in chat and history windows.")},
+		{d->ck_cMessageReceived, d->pb_cMessageReceived, tr("Specifies the color for received messages in chat and history windows.")},
+		{d->ck_cSysMsg,          d->pb_cSysMsg,    tr("Specifies the color for informational messages in chat windows, like status changes and offline messages.")}
+	};
+
+	bg_color = new QButtonGroup(this);
+	for (unsigned int i = 0; i < sizeof(cwData) / sizeof(ColorWidgetData); i++) {
+		bg_color->addButton(cwData[i].button);
+		cwData[i].button->setWhatsThis(cwData[i].descr);
+	}
+	connect(bg_color, SIGNAL(buttonClicked(QAbstractButton*)), SLOT(chooseColor(QAbstractButton*)));
 
 	// Avatars
 	//QWhatsThis::add(d->ck_avatarsChatdlg,
 	//	tr("Toggles displaying of avatars in the chat dialog"));
 
 	if (PsiOptions::instance()->getOption("options.ui.contactlist.status-messages.single-line").toBool()) {
-		d->tl_cStatus->hide();
+		d->ck_cStatus->hide();
 		d->pb_cStatus->hide();
 	}
 	
@@ -292,8 +275,8 @@ void OptionsTabAppearanceGeneral::applyOptions()
 	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.grouping.header-foreground", getColor(d->pb_cGroupFore));
 	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.grouping.header-background", getColor(d->pb_cGroupBack));
 	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.background", getColor(d->pb_cListBack));
-	PsiOptions::instance()->setOption("options.ui.look.contactlist.status-change-animation.color1", getColor(d->pb_cAnimFront));
-	PsiOptions::instance()->setOption("options.ui.look.contactlist.status-change-animation.color2", getColor(d->pb_cAnimBack));
+	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.status-change-animation1", getColor(d->pb_cAnimFront));
+	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.status-change-animation2", getColor(d->pb_cAnimBack));
 	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.status-messages", getColor(d->pb_cStatus));
 	PsiOptions::instance()->setOption("options.ui.look.colors.messages.received", getColor(d->pb_cMessageReceived));
 	PsiOptions::instance()->setOption("options.ui.look.colors.messages.sent", getColor(d->pb_cMessageSent));
@@ -328,8 +311,8 @@ void OptionsTabAppearanceGeneral::restoreOptions()
 	restoreColor(d->pb_cGroupFore, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-foreground").value<QColor>());
 	restoreColor(d->pb_cGroupBack, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-background").value<QColor>());
 	restoreColor(d->pb_cListBack, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.background").value<QColor>());
-	restoreColor(d->pb_cAnimFront, PsiOptions::instance()->getOption("options.ui.look.contactlist.status-change-animation.color1").value<QColor>());
-	restoreColor(d->pb_cAnimBack, PsiOptions::instance()->getOption("options.ui.look.contactlist.status-change-animation.color2").value<QColor>());
+	restoreColor(d->pb_cAnimFront, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation1").value<QColor>());
+	restoreColor(d->pb_cAnimBack, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation2").value<QColor>());
 	restoreColor(d->pb_cStatus, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-messages").value<QColor>());
 	restoreColor(d->pb_cMessageReceived, PsiOptions::instance()->getOption("options.ui.look.colors.messages.received").value<QColor>());
 	restoreColor(d->pb_cMessageSent, PsiOptions::instance()->getOption("options.ui.look.colors.messages.sent").value<QColor>());

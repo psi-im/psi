@@ -252,6 +252,7 @@ PsiIconset::PsiIconset()
 {
 	d = new Private(this);
 	connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
+	connect(PsiOptions::instance(), SIGNAL(destroyed()), SLOT(reset()));
 }
 
 PsiIconset::~PsiIconset()

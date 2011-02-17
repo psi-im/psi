@@ -42,8 +42,6 @@ public:
 	void reloadRoster();
 	bool loadAll();
 
-	static void reset();
-
 	QHash<QString, Iconset*> roster;
 	QList<Iconset*> emoticons;
 	const Iconset &system() const;
@@ -79,6 +77,9 @@ public:
 
 signals:
 	void emoticonsChanged();
+
+public slots:
+	static void reset();
 
 private slots:
 	void optionChanged(const QString& option);

@@ -27,7 +27,7 @@
 #include <QDomDocumentFragment>
 #include <QKeySequence>
 #include <QStringList>
-#include <QtDebug>
+#include <QColor>
 #include "xmpp/base64/base64.h"
 
 using namespace XMPP;
@@ -115,7 +115,7 @@ void VariantTree::setValue(QString node, QVariant value)
 		{
 			if (values_.contains(key))
 			{
-				qWarning() << QString("Error: Trying to add option node %1 but it already exists as a value").arg(key);
+				qWarning("Error: Trying to add option node %s but it already exists as a value", qPrintable(key));
 				return;
 			}
 			//create a new tier
@@ -128,7 +128,7 @@ void VariantTree::setValue(QString node, QVariant value)
 		Q_ASSERT(isValidNodeName(node));
 		if (trees_.contains(node))
 		{
-			qWarning() << QString("Error: Trying to add option value %1 but it already exists as a subtree").arg(node);
+			qWarning("Error: Trying to add option value %s but it already exists as a subtree", qPrintable(node));
 			return;
 		}
 		values_[node]=value;
@@ -216,7 +216,7 @@ void VariantTree::setComment(QString node, QString comment)
 		{
 			if (values_.contains(key))
 			{
-				qWarning() << QString("Error: Trying to add option node %1 but it already exists as a value").arg(key);
+				qWarning("Error: Trying to add option node %s but it already exists as a value", qPrintable(key));
 				return;
 			}
 			//create a new tier
@@ -496,6 +496,7 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
 void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
 {
 	QString type = var.typeName();
+	// TODO use switch from QVariant::type()
 	if (type == "QVariantList") {
 		foreach(QVariant v, var.toList()) {
 			QDomElement item_element = e.ownerDocument().createElement("item");
@@ -543,6 +544,12 @@ void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
 		QKeySequence k = var.value<QKeySequence>();
 		QDomText text = e.ownerDocument().createTextNode(k.toString());
 		e.appendChild(text);
+	}
+	else if (type == "QColor") { // save invalid colors as empty string
+		if (var.value<QColor>().isValid()) {
+			QDomText text = e.ownerDocument().createTextNode(var.toString());
+			e.appendChild(text);
+		}
 	}
 	else {
 		QDomText text = e.ownerDocument().createTextNode(var.toString());

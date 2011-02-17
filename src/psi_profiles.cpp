@@ -976,8 +976,8 @@ bool OptionsMigration::fromFile(const QString &fname)
 				migrateColorEntry(tag, "groupback", "options.ui.look.colors.contactlist.grouping.header-background");
 				migrateColorEntry(tag, "profilefore", "options.ui.look.colors.contactlist.profile.header-foreground");
 				migrateColorEntry(tag, "profileback", "options.ui.look.colors.contactlist.profile.header-background");
-				migrateColorEntry(tag, "animfront", "options.ui.look.contactlist.status-change-animation.color1");
-				migrateColorEntry(tag, "animback", "options.ui.look.contactlist.status-change-animation.color2");
+				migrateColorEntry(tag, "animfront", "options.ui.look.colors.contactlist.status-change-animation1");
+				migrateColorEntry(tag, "animback", "options.ui.look.colors.contactlist.status-change-animation2");
 			}
 
 			tag = findSubTag(p_lnf, "fonts", &found);

@@ -206,7 +206,8 @@ HEADERS += \
 	$$PWD/psiactions.h \
 	$$PWD/bookmarkmanagedlg.h \
 	$$PWD/vcardphotodlg.h \
-	$$PWD/psicli.h
+	$$PWD/psicli.h \
+	$$PWD/coloropt.h
 
 
 HEADERS += tabcompletion.h
@@ -328,7 +329,8 @@ SOURCES += \
 	$$PWD/psiaccount.cpp \
 	$$PWD/accountlabel.cpp \
 	$$PWD/bookmarkmanagedlg.cpp \
-	$$PWD/vcardphotodlg.cpp
+	$$PWD/vcardphotodlg.cpp \
+	$$PWD/coloropt.cpp
 
 CONFIG += filetransfer
 filetransfer {
