@@ -65,6 +65,11 @@ QColor ColorOpt::color(const QString &opt, const QColor &defaultColor) const
 	return QApplication::palette().color(cd.role);
 }
 
+QPalette::ColorRole ColorOpt::colorRole(const QString &opt) const
+{
+	return colors.value(opt).role;
+}
+
 void ColorOpt::optionChanged(const QString &opt)
 {
 	if (opt.startsWith("options.ui.look.colors") && colors.contains(opt)) {

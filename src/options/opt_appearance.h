@@ -3,8 +3,11 @@
 
 #include "optionstab.h"
 
+#include <QHash>
 #include <QLineEdit>
 #include <QAbstractButton>
+
+class QCheckBox;
 
 class FontLabel : public QLineEdit
 {
@@ -65,6 +68,7 @@ public:
 private slots:
 	void setData(PsiCon *, QWidget *);
 	void chooseColor(QAbstractButton* button);
+	void colorCheckBoxClicked(int);
 	void chooseFont(QAbstractButton* button);
 
 private:
@@ -72,6 +76,7 @@ private:
 	QButtonGroup *bg_color;
 	FontLabel *le_font[4];
 	QButtonGroup *bg_font;
+	QHash<QCheckBox*, QPair<QAbstractButton*,QString> > colorWidgetsMap;
 };
 
 #endif

@@ -15,10 +15,12 @@
 #include <QColorDialog>
 #include <QFontDialog>
 #include <QLineEdit>
+#include <QSignalMapper>
 
 #include "ui_opt_appearance.h"
 #include "ui_opt_appearance_misc.h"
 #include "psioptions.h"
+#include "coloropt.h"
 
 
 class OptAppearanceUI : public QWidget, public Ui::OptAppearance
@@ -209,29 +211,57 @@ QWidget *OptionsTabAppearanceGeneral::widget()
 
 
 	QString s = tr("Specifies the text color for a contact name in the main window when that user is \"%1\".");
-	typedef struct {QCheckBox *cbox; QToolButton *button; QString descr;} ColorWidgetData;
+	struct ColorWidgetData {
+		QCheckBox *cbox;
+		QToolButton *button;
+		QString option;
+		QString descr;
+	};
 	ColorWidgetData cwData[] = {
-		{d->ck_cOnline,          d->pb_cOnline,    s.arg(tr("online")) },
-		{d->ck_cOffline,         d->pb_cOffline,   s.arg(tr("offline")) },
-		{d->ck_cAway,            d->pb_cAway,      s.arg(tr("away")) },
-		{d->ck_cDND,             d->pb_cDND,       s.arg(tr("do not disturb")) },
-		{d->ck_cStatus,          d->pb_cStatus,    s.arg(tr("Status message"))},
-		{d->ck_cProfileFore,     d->pb_cProfileFore,  ""},
-		{d->ck_cProfileBack,     d->pb_cProfileBack,  tr("Specifies the background color for an account name in the main window.")},
-		{d->ck_cGroupFore,       d->pb_cGroupFore, ""},
-		{d->ck_cGroupBack,       d->pb_cGroupBack, tr("Specifies the background color for a group name in the main window.")},
-		{d->ck_cListBack,        d->pb_cListBack,  tr("Specifies the background color for the main window.")},
-		{d->ck_cAnimFront,       d->pb_cAnimFront, tr("Specifies the foreground animation color for nicks.")},
-		{d->ck_cAnimBack,        d->pb_cAnimBack,  tr("Specifies the background animation color for nicks.")},
-		{d->ck_cMessageSent,     d->pb_cMessageSent, tr("Specifies the color for sent messages in chat and history windows.")},
-		{d->ck_cMessageReceived, d->pb_cMessageReceived, tr("Specifies the color for received messages in chat and history windows.")},
-		{d->ck_cSysMsg,          d->pb_cSysMsg,    tr("Specifies the color for informational messages in chat windows, like status changes and offline messages.")}
+		{d->ck_cOnline,          d->pb_cOnline,
+		 "contactlist.status.online", s.arg(tr("online")) },
+		{d->ck_cOffline,         d->pb_cOffline,
+		 "contactlist.status.offline", s.arg(tr("offline")) },
+		{d->ck_cAway,            d->pb_cAway,
+		 "contactlist.status.away", s.arg(tr("away")) },
+		{d->ck_cDND,             d->pb_cDND,
+		 "contactlist.status.do-not-disturb", s.arg(tr("do not disturb")) },
+		{d->ck_cStatus,          d->pb_cStatus,
+		 "contactlist.status-messages", s.arg(tr("Status message"))},
+		{d->ck_cProfileFore,     d->pb_cProfileFore,
+		 "contactlist.profile.header-foreground", ""},
+		{d->ck_cProfileBack,     d->pb_cProfileBack,
+		 "contactlist.profile.header-background",
+		 tr("Specifies the background color for an account name in the main window.")},
+		{d->ck_cGroupFore,       d->pb_cGroupFore,
+		 "contactlist.grouping.header-foreground", ""},
+		{d->ck_cGroupBack,       d->pb_cGroupBack,
+		 "contactlist.grouping.header-background",
+		 tr("Specifies the background color for a group name in the main window.")},
+		{d->ck_cListBack,        d->pb_cListBack,
+		 "contactlist.background",
+		 tr("Specifies the background color for the main window.")},
+		{d->ck_cAnimFront,       d->pb_cAnimFront,
+		 "contactlist.status-change-animation1",
+		 tr("Specifies the foreground animation color for nicks.")},
+		{d->ck_cAnimBack,        d->pb_cAnimBack,
+		 "contactlist.status-change-animation2",
+		 tr("Specifies the background animation color for nicks.")},
+		{d->ck_cMessageSent,     d->pb_cMessageSent, "messages.sent",
+		 tr("Specifies the color for sent messages in chat and history windows.")},
+		{d->ck_cMessageReceived, d->pb_cMessageReceived, "messages.received",
+		 tr("Specifies the color for received messages in chat and history windows.")},
+		{d->ck_cSysMsg,          d->pb_cSysMsg,    "messages.informational",
+		 tr("Specifies the color for informational messages in chat windows, "
+		 "like status changes and offline messages.")}
 	};
 
 	bg_color = new QButtonGroup(this);
 	for (unsigned int i = 0; i < sizeof(cwData) / sizeof(ColorWidgetData); i++) {
 		bg_color->addButton(cwData[i].button);
 		cwData[i].button->setWhatsThis(cwData[i].descr);
+		connect(cwData[i].cbox, SIGNAL(stateChanged(int)), SLOT(colorCheckBoxClicked(int)));
+		colorWidgetsMap[cwData[i].cbox] = QPair<QAbstractButton*,QString>(cwData[i].button, cwData[i].option);
 	}
 	connect(bg_color, SIGNAL(buttonClicked(QAbstractButton*)), SLOT(chooseColor(QAbstractButton*)));
 
@@ -358,5 +388,19 @@ void OptionsTabAppearanceGeneral::chooseColor(QAbstractButton* button)
 		button->setIcon(color2pixmap(c));
 
 		emit dataChanged();
+	}
+}
+
+void OptionsTabAppearanceGeneral::colorCheckBoxClicked(int state)
+{
+	QPair<QAbstractButton*,QString> data = colorWidgetsMap[(QCheckBox*)sender()];
+	if (state) {
+		data.first->setDisabled(false);
+	}
+	else {
+		//data.first->setDisabled(true); // TODO disable color changing
+		QPalette::ColorRole role = ColorOpt::instance()->colorRole(
+					"options.ui.look.colors." + data.second);
+		data.first->setIcon(color2pixmap(QApplication::palette().color(role)));
 	}
 }
