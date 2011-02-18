@@ -3142,15 +3142,15 @@ void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
 		QColorGroup xcg = cg;
 
 		if(d->status == STATUS_AWAY || d->status == STATUS_XA)
-			xcg.setColor(QColorGroup::Text, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.away").value<QColor>());
+			xcg.setColor(QColorGroup::Text, ColorOpt::instance()->color("options.ui.look.colors.contactlist.status.away"));
 		else if(d->status == STATUS_DND)
-			xcg.setColor(QColorGroup::Text, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.do-not-disturb").value<QColor>());
+			xcg.setColor(QColorGroup::Text, ColorOpt::instance()->color("options.ui.look.colors.contactlist.status.do-not-disturb"));
 		else if(d->status == STATUS_OFFLINE)
-			xcg.setColor(QColorGroup::Text, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.offline").value<QColor>());
+			xcg.setColor(QColorGroup::Text, ColorOpt::instance()->color("options.ui.look.colors.contactlist.status.offline"));
 
 		if(d->animatingNick) {
-			xcg.setColor(QColorGroup::Text, d->animateNickColor ? PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation1").value<QColor>() : PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation2").value<QColor>());
-			xcg.setColor(QColorGroup::HighlightedText, d->animateNickColor ? PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation1").value<QColor>() : PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation2").value<QColor>());
+			xcg.setColor(QColorGroup::Text, d->animateNickColor ? ColorOpt::instance()->color("options.ui.look.colors.contactlist.status-change-animation1") : ColorOpt::instance()->color("options.ui.look.colors.contactlist.status-change-animation2"));
+			xcg.setColor(QColorGroup::HighlightedText, d->animateNickColor ? ColorOpt::instance()->color("options.ui.look.colors.contactlist.status-change-animation1") : ColorOpt::instance()->color("options.ui.look.colors.contactlist.status-change-animation2"));
 		}
 
 		RichListViewItem::paintCell(p, xcg, column, width, alignment);
@@ -3180,11 +3180,11 @@ void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
 		QColorGroup xcg = cg;
 
 		if(type_ == Profile) {
- 			xcg.setColor(QColorGroup::Text, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.profile.header-foreground").value<QColor>());
+			xcg.setColor(QColorGroup::Text, ColorOpt::instance()->color("options.ui.look.colors.contactlist.profile.header-foreground"));
 			#if QT_VERSION < 0x040301
-				xcg.setColor(QColorGroup::Background, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.profile.header-background").value<QColor>());
+				xcg.setColor(QColorGroup::Background, ColorOpt::instance()->color("options.ui.look.colors.contactlist.profile.header-background"));
 			#else
- 				xcg.setColor(QColorGroup::Base, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.profile.header-background").value<QColor>());
+				xcg.setColor(QColorGroup::Base, ColorOpt::instance()->color("options.ui.look.colors.contactlist.profile.header-background"));
  			#endif
 			
 		}
@@ -3192,12 +3192,12 @@ void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
 			QFont f = p->font();
 			f.setPointSize(common_smallFontSize);
 			p->setFont(f);
-			xcg.setColor(QColorGroup::Text, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-foreground").value<QColor>());
+			xcg.setColor(QColorGroup::Text, ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-foreground"));
 			if (!PsiOptions::instance()->getOption("options.ui.look.contactlist.use-slim-group-headings").toBool()) {
  				#if QT_VERSION < 0x040301
-					xcg.setColor(QColorGroup::Background, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-background").value<QColor>());
+					xcg.setColor(QColorGroup::Background, ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background"));
 				#else
- 					xcg.setColor(QColorGroup::Base, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-background").value<QColor>());
+					xcg.setColor(QColorGroup::Base, ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background"));
 				#endif
 			}
 		} 
@@ -3233,19 +3233,19 @@ void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
 			x += fm.width(d->groupInfo) + 8;
 			if(x < width - 8) {
 				int h = (height() / 2) - 1;
-				p->setPen(QPen(PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-background").value<QColor>()));
+				p->setPen(QPen(ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background")));
 				p->drawLine(x, h, width - 8, h);
 				h++;
-				p->setPen(QPen(PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-foreground").value<QColor>()));
+				p->setPen(QPen(ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-foreground")));
 				/*int h = height() / 2;
 
-				p->setPen(QPen(PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-background").value<QColor>(), 2));*/
+				p->setPen(QPen(ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background"), 2));*/
 				p->drawLine(x, h, width - 8, h);
 			}
 		} 
 		else {
 			if (PsiOptions::instance()->getOption("options.ui.look.contactlist.use-outlined-group-headings").toBool()) {
-				p->setPen(QPen(PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-foreground").value<QColor>()));
+				p->setPen(QPen(ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-foreground")));
 				p->drawRect(0, 0, width, height());
 			}
 		}
@@ -3435,7 +3435,7 @@ void ContactViewItem::resetName(bool forceNoStatusMsg)
 			if (d->status_single) {
 				statusMsg = statusMsg.simplified();
 				if (!statusMsg.isEmpty()) {
-					s += "<br><font size=-1 color='" + PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-messages").value<QColor>().name() + "'><nobr>" + TextUtil::plain2rich(statusMsg) + "</nobr></font>";
+					s += "<br><font size=-1 color='" + ColorOpt::instance()->color("options.ui.look.colors.contactlist.status-messages").name() + "'><nobr>" + TextUtil::plain2rich(statusMsg) + "</nobr></font>";
 				}
 			}
 			else {

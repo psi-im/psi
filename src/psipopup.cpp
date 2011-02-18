@@ -31,6 +31,7 @@
 #include "psiiconset.h"
 #include "iconlabel.h"
 #include "psioptions.h"
+#include "coloropt.h"
 
 #include <QApplication>
 #include <QLayout>
@@ -134,7 +135,7 @@ void PsiPopup::Private::init(const PsiIcon *_titleIcon, QString titleText, PsiAc
 		titleIcon = new PsiIcon(*_titleIcon);
 
 	FancyPopup::setHideTimeout( PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.duration").toInt() );
-	FancyPopup::setBorderColor( PsiOptions::instance()->getOption("options.ui.look.colors.passive-popup.border").value<QColor>() );
+	FancyPopup::setBorderColor( ColorOpt::instance()->color("options.ui.look.colors.passive-popup.border") );
 
 	popup = new FancyPopup(titleText, titleIcon, lastPopup, false);
 	connect(popup, SIGNAL(clicked(int)), SLOT(popupClicked(int)));

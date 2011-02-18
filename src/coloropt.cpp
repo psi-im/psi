@@ -31,21 +31,22 @@ ColorOpt::ColorOpt()
 
 	typedef struct {const char *opt; QPalette::ColorRole role;} SourceType;
 	SourceType source[] = {
-		{"contactlist.status.online", QPalette::WindowText},
-		{"contactlist.status.offline", QPalette::WindowText},
-		{"contactlist.status.away", QPalette::WindowText},
-		{"contactlist.status.do-not-disturb", QPalette::WindowText},
-		{"contactlist.profile.header-foreground", QPalette::WindowText},
-		{"contactlist.profile.header-background", QPalette::Window},
-		{"contactlist.grouping.header-foreground", QPalette::WindowText},
-		{"contactlist.grouping.header-background", QPalette::Window},
+		{"contactlist.status.online", QPalette::Text},
+		{"contactlist.status.offline", QPalette::Text},
+		{"contactlist.status.away", QPalette::Text},
+		{"contactlist.status.do-not-disturb", QPalette::Text},
+		{"contactlist.profile.header-foreground", QPalette::Text},
+		{"contactlist.profile.header-background", QPalette::Dark},
+		{"contactlist.grouping.header-foreground", QPalette::Text},
+		{"contactlist.grouping.header-background", QPalette::Base},
 		{"contactlist.background", QPalette::Base},
-		{"contactlist.status-change-animation1", QPalette::WindowText},
-		{"contactlist.status-change-animation2", QPalette::WindowText},
-		{"contactlist.status-messages", QPalette::WindowText},
-		{"messages.received", QPalette::WindowText},
-		{"messages.sent", QPalette::WindowText},
-		{"messages.informational", QPalette::WindowText}
+		{"contactlist.status-change-animation1", QPalette::Text},
+		{"contactlist.status-change-animation2", QPalette::Base},
+		{"contactlist.status-messages", QPalette::Text},
+		{"messages.received", QPalette::Text},
+		{"messages.sent", QPalette::Text},
+		{"messages.informational", QPalette::Text},
+		{"passive-popup.border", QPalette::Window}
 	};
 	for (unsigned int i = 0; i < sizeof(source) / sizeof(SourceType); i++) {
 		QString opt = QString("options.ui.look.colors.%1").arg(source[i].opt);
@@ -56,6 +57,7 @@ ColorOpt::ColorOpt()
 QColor ColorOpt::color(const QString &opt, const QColor &defaultColor) const
 {
 	ColorData cd = colors.value(opt);
+	//qDebug("get option: %s from data %s", qPrintable(opt), qPrintable(cd.color.isValid()? cd.color.name() : "Invalid " + cd.color.name()));
 	if (!cd.valid) {
 		return PsiOptions::instance()->getOption(opt, defaultColor).value<QColor>();
 	}
@@ -74,6 +76,7 @@ void ColorOpt::optionChanged(const QString &opt)
 {
 	if (opt.startsWith("options.ui.look.colors") && colors.contains(opt)) {
 		colors[opt].color = PsiOptions::instance()->getOption(opt).value<QColor>();
+		//qDebug("%s changed to %s", qPrintable(opt), qPrintable(colors[opt].color.isValid()? colors[opt].color.name() : "Invalid " + colors[opt].color.name()));
 	}
 }
 

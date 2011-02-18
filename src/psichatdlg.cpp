@@ -31,6 +31,7 @@
 #include "avatars.h"
 #include "psitooltip.h"
 #include "psioptions.h"
+#include "coloropt.h"
 #include "shortcutmanager.h"
 #include "accountlabel.h"
 #include "iconlabel.h"
@@ -596,7 +597,7 @@ void PsiChatDlg::appendSysMsg(const QString &str)
 	QDateTime t = QDateTime::currentDateTime();
 	updateLastMsgTime(t);
 	QString timestr = chatView()->formatTimeStamp(t);
-	QString color = PsiOptions::instance()->getOption("options.ui.look.colors.messages.informational").toString();
+	QString color = ColorOpt::instance()->color("options.ui.look.colors.messages.informational").name();
 
 	chatView()->appendText(QString("<font color=\"%1\">[%2]").arg(color, timestr) + QString(" *** %1</font>").arg(str));
 }
@@ -604,14 +605,14 @@ void PsiChatDlg::appendSysMsg(const QString &str)
 QString PsiChatDlg::colorString(bool local, ChatDlg::SpooledType spooled) const
 {
 	if (spooled == ChatDlg::Spooled_OfflineStorage) {
-		return PsiOptions::instance()->getOption("options.ui.look.colors.messages.informational").toString();
+		return ColorOpt::instance()->color("options.ui.look.colors.messages.informational").name();
 	}
 
 	if (local) {
-		return PsiOptions::instance()->getOption("options.ui.look.colors.messages.sent").toString();
+		return ColorOpt::instance()->color("options.ui.look.colors.messages.sent").name();
 	}
 
-	return PsiOptions::instance()->getOption("options.ui.look.colors.messages.received").toString();
+	return ColorOpt::instance()->color("options.ui.look.colors.messages.received").name();
 }
 
 ChatView* PsiChatDlg::chatView() const

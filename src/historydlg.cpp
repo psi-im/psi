@@ -54,6 +54,7 @@
 #include "jidutil.h"
 #include "userlist.h"
 #include "psioptions.h"
+#include "coloropt.h"
 #include "fileutil.h"
 
 static QString getNext(QString *str)
@@ -742,11 +743,11 @@ void HistoryViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
 	QColorGroup mycg = cg;
 	if(e->originLocal())
 {
-		mycg.setColor(QColorGroup::Text, PsiOptions::instance()->getOption("options.ui.look.colors.messages.sent").toString() );
+		mycg.setColor(QColorGroup::Text, ColorOpt::instance()->color("options.ui.look.colors.messages.sent").name() );
 }
 	else
 {
-		mycg.setColor(QColorGroup::Text,PsiOptions::instance()->getOption("options.ui.look.colors.messages.received").toString() );
+		mycg.setColor(QColorGroup::Text, ColorOpt::instance()->color("options.ui.look.colors.messages.received").name() );
 }
 
 	if(column == 3) {

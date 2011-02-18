@@ -115,16 +115,16 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 
 	QColor textColor = ColorOpt::instance()->color("options.ui.look.colors.contactlist.status.online");
 	if (statusType(index) == XMPP::Status::Away || statusType(index) == XMPP::Status::XA)
-		textColor = PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.away").value<QColor>();
+		textColor = ColorOpt::instance()->color("options.ui.look.colors.contactlist.status.away");
 	else if (statusType(index) == XMPP::Status::DND)
-		textColor = PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.do-not-disturb").value<QColor>();
+		textColor = ColorOpt::instance()->color("options.ui.look.colors.contactlist.status.do-not-disturb");
 	else if (statusType(index) == XMPP::Status::Offline)
-		textColor = PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.offline").value<QColor>();
+		textColor = ColorOpt::instance()->color("options.ui.look.colors.contactlist.status.offline");
 
 #if 0
 	if (d->animatingNick) {
-		textColor = d->animateNickColor ? PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation1").value<QColor>() : PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation2").value<QColor>();
-		xcg.setColor(QColorGroup::HighlightedText, d->animateNickColor ? PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation1").value<QColor>() : PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation2").value<QColor>());
+		textColor = d->animateNickColor ? ColorOpt::instance()->color("options.ui.look.colors.contactlist.status-change-animation1") : ColorOpt::instance()->color("options.ui.look.colors.contactlist.status-change-animation2");
+		xcg.setColor(QColorGroup::HighlightedText, d->animateNickColor ? ColorOpt::instance()->color("options.ui.look.colors.contactlist.status-change-animation1") : ColorOpt::instance()->color("options.ui.look.colors.contactlist.status-change-animation2"));
 	}
 #endif
 
@@ -172,8 +172,8 @@ void PsiContactListViewDelegate::drawGroup(QPainter* painter, const QStyleOption
 	o.font = *font_;
 	o.fontMetrics = *fontMetrics_;
 	QPalette palette = o.palette;
-	palette.setColor(QPalette::Base, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-background").value<QColor>());
-	palette.setColor(QPalette::Text, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-foreground").value<QColor>());
+	palette.setColor(QPalette::Base, ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background"));
+	palette.setColor(QPalette::Text, ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-foreground"));
 	o.palette = palette;
 
 	drawBackground(painter, o, index);
@@ -201,8 +201,8 @@ void PsiContactListViewDelegate::drawAccount(QPainter* painter, const QStyleOpti
 	o.font = *font_;
 	o.fontMetrics = *fontMetrics_;
 	QPalette palette = o.palette;
-	palette.setColor(QPalette::Base, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.profile.header-background").value<QColor>());
-	palette.setColor(QPalette::Text, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.profile.header-foreground").value<QColor>());
+	palette.setColor(QPalette::Base, ColorOpt::instance()->color("options.ui.look.colors.contactlist.profile.header-background"));
+	palette.setColor(QPalette::Text, ColorOpt::instance()->color("options.ui.look.colors.contactlist.profile.header-foreground"));
 	o.palette = palette;
 
 	drawBackground(painter, o, index);

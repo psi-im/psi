@@ -76,7 +76,9 @@ private:
 	QButtonGroup *bg_color;
 	FontLabel *le_font[4];
 	QButtonGroup *bg_font;
-	QHash<QCheckBox*, QPair<QAbstractButton*,QString> > colorWidgetsMap;
+
+	typedef QHash<QCheckBox*, QPair<QAbstractButton*,QString> > ColorWidgetsMap;
+	ColorWidgetsMap colorWidgetsMap;
 };
 
 #endif

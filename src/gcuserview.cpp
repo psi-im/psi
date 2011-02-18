@@ -38,6 +38,7 @@
 #include "groupchatdlg.h"
 #include "common.h"
 #include "psioptions.h"
+#include "coloropt.h"
 
 static bool caseInsensitiveLessThan(const QString &s1, const QString &s2)
 {
@@ -83,12 +84,12 @@ void GCUserViewGroupItem::paintCell(QPainter *p, const QColorGroup & cg, int col
 	QFont f = p->font();
 	f.setPointSize(common_smallFontSize);
 	p->setFont(f);
-	xcg.setColor(QColorGroup::Text, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-foreground").value<QColor>());
+	xcg.setColor(QColorGroup::Text, ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-foreground"));
 	if (!PsiOptions::instance()->getOption("options.ui.look.contactlist.use-slim-group-headings").toBool()) {
 		#if QT_VERSION < 0x040301
-			xcg.setColor(QColorGroup::Background, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-background").value<QColor>());
+			xcg.setColor(QColorGroup::Background, ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background"));
 		#else
-			xcg.setColor(QColorGroup::Base, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-background").value<QColor>());
+			xcg.setColor(QColorGroup::Base, ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background"));
 		#endif
 	}
 	Q3ListViewItem::paintCell(p, xcg, column, width, alignment);
@@ -97,10 +98,10 @@ void GCUserViewGroupItem::paintCell(QPainter *p, const QColorGroup & cg, int col
 		int x = fm.width(text(column)) + 8;
 		if(x < width - 8) {
 			int h = (height() / 2) - 1;
-			p->setPen(QPen(PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-background").value<QColor>()));
+			p->setPen(QPen(ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background")));
 			p->drawLine(x, h, width - 8, h);
 			h++;
-			p->setPen(QPen(PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-foreground").value<QColor>()));
+			p->setPen(QPen(ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-foreground")));
 			p->drawLine(x, h, width - 8, h);
 		}
 	}

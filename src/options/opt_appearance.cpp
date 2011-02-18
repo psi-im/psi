@@ -218,48 +218,29 @@ QWidget *OptionsTabAppearanceGeneral::widget()
 		QString descr;
 	};
 	ColorWidgetData cwData[] = {
-		{d->ck_cOnline,          d->pb_cOnline,
-		 "contactlist.status.online", s.arg(tr("online")) },
-		{d->ck_cOffline,         d->pb_cOffline,
-		 "contactlist.status.offline", s.arg(tr("offline")) },
-		{d->ck_cAway,            d->pb_cAway,
-		 "contactlist.status.away", s.arg(tr("away")) },
-		{d->ck_cDND,             d->pb_cDND,
-		 "contactlist.status.do-not-disturb", s.arg(tr("do not disturb")) },
-		{d->ck_cStatus,          d->pb_cStatus,
-		 "contactlist.status-messages", s.arg(tr("Status message"))},
-		{d->ck_cProfileFore,     d->pb_cProfileFore,
-		 "contactlist.profile.header-foreground", ""},
-		{d->ck_cProfileBack,     d->pb_cProfileBack,
-		 "contactlist.profile.header-background",
-		 tr("Specifies the background color for an account name in the main window.")},
-		{d->ck_cGroupFore,       d->pb_cGroupFore,
-		 "contactlist.grouping.header-foreground", ""},
-		{d->ck_cGroupBack,       d->pb_cGroupBack,
-		 "contactlist.grouping.header-background",
-		 tr("Specifies the background color for a group name in the main window.")},
-		{d->ck_cListBack,        d->pb_cListBack,
-		 "contactlist.background",
-		 tr("Specifies the background color for the main window.")},
-		{d->ck_cAnimFront,       d->pb_cAnimFront,
-		 "contactlist.status-change-animation1",
-		 tr("Specifies the foreground animation color for nicks.")},
-		{d->ck_cAnimBack,        d->pb_cAnimBack,
-		 "contactlist.status-change-animation2",
-		 tr("Specifies the background animation color for nicks.")},
-		{d->ck_cMessageSent,     d->pb_cMessageSent, "messages.sent",
-		 tr("Specifies the color for sent messages in chat and history windows.")},
-		{d->ck_cMessageReceived, d->pb_cMessageReceived, "messages.received",
-		 tr("Specifies the color for received messages in chat and history windows.")},
-		{d->ck_cSysMsg,          d->pb_cSysMsg,    "messages.informational",
-		 tr("Specifies the color for informational messages in chat windows, "
-		 "like status changes and offline messages.")}
+		{d->ck_cOnline,  d->pb_cOnline,  "contactlist.status.online", s.arg(tr("online")) },
+		{d->ck_cOffline, d->pb_cOffline, "contactlist.status.offline", s.arg(tr("offline")) },
+		{d->ck_cAway,    d->pb_cAway,    "contactlist.status.away", s.arg(tr("away")) },
+		{d->ck_cDND,     d->pb_cDND,     "contactlist.status.do-not-disturb", s.arg(tr("do not disturb")) },
+		{d->ck_cStatus,  d->pb_cStatus,  "contactlist.status-messages", s.arg(tr("Status message"))},
+		{d->ck_cProfileFore,     d->pb_cProfileFore, "contactlist.profile.header-foreground", ""},
+		{d->ck_cProfileBack,     d->pb_cProfileBack, "contactlist.profile.header-background", ""},
+		{d->ck_cGroupFore,       d->pb_cGroupFore,   "contactlist.grouping.header-foreground", ""},
+		{d->ck_cGroupBack,       d->pb_cGroupBack,   "contactlist.grouping.header-background", ""},
+		{d->ck_cListBack,        d->pb_cListBack,    "contactlist.background", ""},
+		{d->ck_cAnimFront,       d->pb_cAnimFront,   "contactlist.status-change-animation1", ""},
+		{d->ck_cAnimBack,        d->pb_cAnimBack,    "contactlist.status-change-animation2", ""},
+		{d->ck_cMessageSent,     d->pb_cMessageSent,     "messages.sent", ""},
+		{d->ck_cMessageReceived, d->pb_cMessageReceived, "messages.received", ""},
+		{d->ck_cSysMsg,          d->pb_cSysMsg,          "messages.informational", ""}
 	};
 
 	bg_color = new QButtonGroup(this);
 	for (unsigned int i = 0; i < sizeof(cwData) / sizeof(ColorWidgetData); i++) {
 		bg_color->addButton(cwData[i].button);
-		cwData[i].button->setWhatsThis(cwData[i].descr);
+		if (!cwData[i].descr.isEmpty()) {
+			cwData[i].cbox->setWhatsThis(cwData[i].descr);
+		}
 		connect(cwData[i].cbox, SIGNAL(stateChanged(int)), SLOT(colorCheckBoxClicked(int)));
 		colorWidgetsMap[cwData[i].cbox] = QPair<QAbstractButton*,QString>(cwData[i].button, cwData[i].option);
 	}
@@ -296,21 +277,12 @@ void OptionsTabAppearanceGeneral::applyOptions()
 	PsiOptions::instance()->setOption("options.ui.look.font.chat", d->le_fChat->fontName());
 	PsiOptions::instance()->setOption("options.ui.look.font.passive-popup", d->le_fPopup->fontName());
 
-	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.status.online", getColor(d->pb_cOnline));
-	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.status.offline", getColor(d->pb_cOffline));
-	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.status.away", getColor(d->pb_cAway));
-	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.status.do-not-disturb", getColor(d->pb_cDND));
-	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.profile.header-foreground", getColor(d->pb_cProfileFore));
-	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.profile.header-background", getColor(d->pb_cProfileBack));
-	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.grouping.header-foreground", getColor(d->pb_cGroupFore));
-	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.grouping.header-background", getColor(d->pb_cGroupBack));
-	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.background", getColor(d->pb_cListBack));
-	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.status-change-animation1", getColor(d->pb_cAnimFront));
-	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.status-change-animation2", getColor(d->pb_cAnimBack));
-	PsiOptions::instance()->setOption("options.ui.look.colors.contactlist.status-messages", getColor(d->pb_cStatus));
-	PsiOptions::instance()->setOption("options.ui.look.colors.messages.received", getColor(d->pb_cMessageReceived));
-	PsiOptions::instance()->setOption("options.ui.look.colors.messages.sent", getColor(d->pb_cMessageSent));
-	PsiOptions::instance()->setOption("options.ui.look.colors.messages.informational", getColor(d->pb_cSysMsg));
+	ColorWidgetsMap::ConstIterator i = colorWidgetsMap.constBegin();
+	while (i != colorWidgetsMap.constEnd()) {
+		PsiOptions::instance()->setOption("options.ui.look.colors." + i.value().second,
+										  i.key()->isChecked()? getColor((QToolButton*)i.value().first) : QColor());
+		++i;
+	}
 }
 
 static void restoreColor(QToolButton *button, QColor c)
@@ -332,21 +304,14 @@ void OptionsTabAppearanceGeneral::restoreOptions()
 	d->le_fChat->setFont(PsiOptions::instance()->getOption("options.ui.look.font.chat").toString());
 	d->le_fPopup->setFont(PsiOptions::instance()->getOption("options.ui.look.font.passive-popup").toString());
 
-	restoreColor(d->pb_cOnline, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.online").value<QColor>());
-	restoreColor(d->pb_cOffline, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.offline").value<QColor>());
-	restoreColor(d->pb_cAway, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.away").value<QColor>());
-	restoreColor(d->pb_cDND, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status.do-not-disturb").value<QColor>());
-	restoreColor(d->pb_cProfileFore, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.profile.header-foreground").value<QColor>());
-	restoreColor(d->pb_cProfileBack, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.profile.header-background").value<QColor>());
-	restoreColor(d->pb_cGroupFore, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-foreground").value<QColor>());
-	restoreColor(d->pb_cGroupBack, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.grouping.header-background").value<QColor>());
-	restoreColor(d->pb_cListBack, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.background").value<QColor>());
-	restoreColor(d->pb_cAnimFront, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation1").value<QColor>());
-	restoreColor(d->pb_cAnimBack, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-change-animation2").value<QColor>());
-	restoreColor(d->pb_cStatus, PsiOptions::instance()->getOption("options.ui.look.colors.contactlist.status-messages").value<QColor>());
-	restoreColor(d->pb_cMessageReceived, PsiOptions::instance()->getOption("options.ui.look.colors.messages.received").value<QColor>());
-	restoreColor(d->pb_cMessageSent, PsiOptions::instance()->getOption("options.ui.look.colors.messages.sent").value<QColor>());
-	restoreColor(d->pb_cSysMsg, PsiOptions::instance()->getOption("options.ui.look.colors.messages.informational").value<QColor>());
+	ColorWidgetsMap::ConstIterator i = colorWidgetsMap.constBegin();
+	while (i != colorWidgetsMap.constEnd()) {
+		QColor color = ColorOpt::instance()->color("options.ui.look.colors." + i.value().second);
+		QColor realColor = PsiOptions::instance()->getOption("options.ui.look.colors." + i.value().second).value<QColor>();
+		i.key()->setChecked(realColor.isValid());
+		restoreColor((QToolButton*)i.value().first, color);
+		++i;
+	}
 }
 
 void OptionsTabAppearanceGeneral::setData(PsiCon *, QWidget *parentDialog)
