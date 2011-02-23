@@ -139,7 +139,7 @@ class FileTransferHandler::Private
 public:
 	PsiAccount *pa;
 	FileTransfer *ft;
-	S5BConnection *c;
+	BSConnection *c;
 	Jid peer;
 	QString fileName, saveName;
 	qlonglong fileSize, sent, offset, length;
@@ -320,14 +320,17 @@ void FileTransferHandler::ft_accepted()
 	d->offset = d->ft->offset();
 	d->length = d->ft->length();
 
-	d->c = d->ft->s5bConnection();
-	connect(d->c, SIGNAL(proxyQuery()), SLOT(s5b_proxyQuery()));
-	connect(d->c, SIGNAL(proxyResult(bool)), SLOT(s5b_proxyResult(bool)));
-	connect(d->c, SIGNAL(requesting()), SLOT(s5b_requesting()));
-	connect(d->c, SIGNAL(accepted()), SLOT(s5b_accepted()));
-	connect(d->c, SIGNAL(tryingHosts(const StreamHostList &)), SLOT(s5b_tryingHosts(const StreamHostList &)));
-	connect(d->c, SIGNAL(proxyConnect()), SLOT(s5b_proxyConnect()));
-	connect(d->c, SIGNAL(waitingForActivation()), SLOT(s5b_waitingForActivation()));
+	d->c = d->ft->bsConnection();
+
+	if (dynamic_cast<S5BConnection*>(d->c)) {
+		connect(d->c, SIGNAL(proxyQuery()), SLOT(s5b_proxyQuery()));
+		connect(d->c, SIGNAL(proxyResult(bool)), SLOT(s5b_proxyResult(bool)));
+		connect(d->c, SIGNAL(requesting()), SLOT(s5b_requesting()));
+		connect(d->c, SIGNAL(accepted()), SLOT(s5b_accepted()));
+		connect(d->c, SIGNAL(tryingHosts(const StreamHostList &)), SLOT(s5b_tryingHosts(const StreamHostList &)));
+		connect(d->c, SIGNAL(proxyConnect()), SLOT(s5b_proxyConnect()));
+		connect(d->c, SIGNAL(waitingForActivation()), SLOT(s5b_waitingForActivation()));
+	}
 
 	if(d->sending)
 		accepted();
@@ -393,7 +396,7 @@ void FileTransferHandler::ft_connected()
 			QTimer::singleShot(0, this, SLOT(doFinish()));
 	}
 
-	connected();
+	emit connected();
 }
 
 void FileTransferHandler::ft_readyRead(const QByteArray &a)
@@ -464,7 +467,7 @@ void FileTransferHandler::trySend()
 	//   is internally active by checking if s5bConnection() is null.
 	//   FIXME: this probably breaks other file transfer methods, whenever
 	//   we get those.  Probably we need a real fix in Iris..
-	if(!d->ft->s5bConnection())
+	if(!d->ft->bsConnection())
 		return;
 
 	int blockSize = d->ft->dataSizeNeeded();

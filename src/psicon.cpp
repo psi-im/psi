@@ -539,6 +539,7 @@ bool PsiCon::init()
 	registerCaps(ApplicationInfo::capsVersion(), QStringList()
 #ifdef FILETRANSFER
 	             << "http://jabber.org/protocol/bytestreams"
+	             << "http://jabber.org/protocol/ibb"
 	             << "http://jabber.org/protocol/si"
 	             << "http://jabber.org/protocol/si/profile/file-transfer"
 #endif
