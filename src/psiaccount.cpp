@@ -1057,6 +1057,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	connect(d->client, SIGNAL(groupChatPresence(const Jid &, const Status &)), SLOT(client_groupChatPresence(const Jid &, const Status &)));
 	connect(d->client, SIGNAL(groupChatError(const Jid &, int, const QString &)), SLOT(client_groupChatError(const Jid &, int, const QString &)));
 #ifdef FILETRANSFER
+	reconfigureFTManager();
 	connect(d->client->fileTransferManager(), SIGNAL(incomingReady()), SLOT(client_incomingFileTransfer()));
 #endif
 	connect(d->client, SIGNAL(beginImportRoster()), SIGNAL(beginBulkContactUpdate()));
@@ -3084,6 +3085,13 @@ bool PsiAccount::checkConnected(QWidget *par)
 void PsiAccount::modify()
 {
 	d->doModify();
+}
+
+void PsiAccount::reconfigureFTManager()
+{
+#ifdef FILETRANSFER
+	d->client->fileTransferManager()->setDisabled(S5BManager::ns(), d->acc.ibbOnly); // TODO more stream types?
+#endif
 }
 
 void PsiAccount::changeVCard()

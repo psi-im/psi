@@ -171,6 +171,7 @@ public:
 	bool notifyOnline() const;
 
 	void modify();
+	void reconfigureFTManager();
 	void changeVCard();
 	void changePW();
 	void changeStatus(int);

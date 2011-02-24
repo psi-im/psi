@@ -140,11 +140,14 @@ void AccountModifyDlg::init()
 	ck_connectAfterSleep->setChecked(acc.opt_connectAfterSleep);
 	ck_log->setChecked(acc.opt_log);
 	ck_keepAlive->setChecked(acc.opt_keepAlive);
+	ck_ibbOnly->setChecked(acc.ibbOnly);
 	le_dtProxy->setText(acc.dtProxy.full());
 	le_stunHost->setText(acc.stunHost);
 	le_stunPort->setText(QString::number(acc.stunPort));
 	le_stunUser->setText(acc.stunUser);
 	le_stunPass->setText(acc.stunPass);
+	connect(ck_ibbOnly, SIGNAL(toggled(bool)), SLOT(ibbOnlyToggled(bool)));
+	ibbOnlyToggled(acc.ibbOnly);
 
 	key = acc.pgpSecretKey;
 	updateUserID();
@@ -420,6 +423,11 @@ void AccountModifyDlg::hostToggled(bool on)
 	}
 }
 
+void AccountModifyDlg::ibbOnlyToggled(bool state)
+{
+	le_dtProxy->setDisabled(state);
+}
+
 void AccountModifyDlg::chooseKey()
 {
 	// Show the key dialog
@@ -522,6 +530,7 @@ void AccountModifyDlg::save()
 	acc.opt_reconn = ck_reconn->isChecked();
 	acc.opt_log = ck_log->isChecked();
 	acc.opt_keepAlive = ck_keepAlive->isChecked();
+	acc.ibbOnly = ck_ibbOnly->isChecked();
 	acc.dtProxy = le_dtProxy->text();
 	acc.stunHost = le_stunHost->text();
 	acc.stunPort = le_stunPort->text().toInt();
@@ -550,6 +559,7 @@ void AccountModifyDlg::save()
 				pa->setStatus(status);
 			}
 		}
+		pa->reconfigureFTManager();
 	}
 	else {
 		psi->contactList()->createAccount(acc);

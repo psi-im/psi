@@ -77,6 +77,7 @@ public:
 	VarList keybind;
 
 	XMPP::Jid dtProxy;
+	bool ibbOnly;
 
 	QString optionsBase;
 

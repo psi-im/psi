@@ -279,6 +279,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	keybind.fromOptions(o, base + ".pgp-key-bindings");
 
 	dtProxy = o->getOption(base + ".bytestreams-proxy").toString();
+	ibbOnly = o->getOption(base + ".ibb-only").toBool();
 
 
 	if (allSetOptions.contains(base + ".stun-host")) {
@@ -425,6 +426,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 
 	keybind.toOptions(o, base + ".pgp-key-bindings");
 	o->setOption(base + ".bytestreams-proxy", dtProxy.full());
+	o->setOption(base + ".ibb-only", ibbOnly);
 
 	o->setOption(base + ".stun-host", stunHost);
 	o->setOption(base + ".stun-port", QString::number(stunPort));
@@ -587,6 +589,7 @@ void UserAccount::fromXml(const QDomElement &a)
 	QString str;
 	readEntry(a, "dtProxy", &str);
 	dtProxy = str;
+	readBoolEntry(a, "ibbOnly", &ibbOnly);
 }
 
 

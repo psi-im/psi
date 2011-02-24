@@ -50,6 +50,7 @@ protected:
 
 private slots:
 	void hostToggled(bool);
+	void ibbOnlyToggled(bool);
 	void sslActivated(int);
 
 	void detailsVCard();

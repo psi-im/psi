@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>500</width>
-    <height>457</height>
+    <width>498</width>
+    <height>455</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -861,24 +861,40 @@
         </layout>
        </item>
        <item>
-        <layout class="QHBoxLayout">
-         <property name="spacing">
-          <number>6</number>
+        <widget class="QGroupBox" name="groupBox_3">
+         <property name="title">
+          <string>Data Transfer</string>
          </property>
-         <property name="margin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QLabel" name="lb_dtProxy">
-           <property name="text">
-            <string>Data Transfer Proxy:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="le_dtProxy"/>
-         </item>
-        </layout>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QCheckBox" name="ck_ibbOnly">
+            <property name="text">
+             <string>In-Band only (slow)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout">
+            <property name="spacing">
+             <number>6</number>
+            </property>
+            <property name="margin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="lb_dtProxy">
+              <property name="text">
+               <string>Proxy:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="le_dtProxy"/>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
        </item>
        <item>
         <widget class="QGroupBox" name="groupBox_2">
