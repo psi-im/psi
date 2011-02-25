@@ -1418,7 +1418,7 @@ void GCMainDlg::message(const Message &_m)
 	}
 
 
-	if(!m.subject().isEmpty()) {
+	if(!m.subject().isNull()) {
 		ui_.le_topic->setText(m.subject());
 		ui_.le_topic->setCursorPosition(0);
 		ui_.le_topic->setToolTip(QString("<qt><p>%1</p></qt>").arg(m.subject()));
