@@ -257,8 +257,10 @@ void HistoryDlg::keyPressEvent(QKeyEvent *e)
 
 void HistoryDlg::closeEvent(QCloseEvent *e)
 {
-	if(d->exp)
+	if(d->exp) {
+		e->ignore();
 		return;
+	}
 
 	e->accept();
 }
