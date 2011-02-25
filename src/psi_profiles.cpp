@@ -134,6 +134,7 @@ void UserAccount::reset()
 	opt_automatic_resource = true;
 	resource = "Psi";
 	priority = 5;
+	ibbOnly = false;
 	opt_keepAlive = true;
 	allow_plain = XMPP::ClientStream::AllowPlainOverTLS;
 	opt_compress = false;
@@ -589,7 +590,6 @@ void UserAccount::fromXml(const QDomElement &a)
 	QString str;
 	readEntry(a, "dtProxy", &str);
 	dtProxy = str;
-	readBoolEntry(a, "ibbOnly", &ibbOnly);
 }
 
 
