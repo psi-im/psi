@@ -41,6 +41,8 @@ namespace XMPP {
 
 using namespace XMPP;
 
+class SxeManager;
+
 /*! \brief Class for storing the record and the XML document for an established SXE session.*/
 class SxeSession : public QObject {
 	Q_OBJECT
@@ -58,7 +60,7 @@ class SxeSession : public QObject {
 		/*! \brief Constructor.
 		*  Creates a new session for the specified jid and session identifier.
 		*/
-		SxeSession(const Jid &target, const QString &session, const Jid &ownJid, bool groupChat, bool serverSupport, const QList<QString> &features);
+		SxeSession(SxeManager *manager, const Jid &target, const QString &session, const Jid &ownJid, bool groupChat, bool serverSupport, const QList<QString> &features);
 		/*! \brief Destructor.
 		*  Emits sessionEnded()
 		*/
@@ -197,7 +199,7 @@ class SxeSession : public QObject {
 		SxeRecord* record(const QDomNode &node) const;
 		/*! \brief Generates SxeNewEdits for \a node and its children.
 		 *  Returns the created node. */
-		QDomNode generateNewNode(const QDomNode &node, const QString &parent, double primaryWeight);
+		QDomNode generateNewNode(const QDomNode node, const QString &parent, double primaryWeight);
 		/*! \brief Generates SxeRemoveEdits for \a node and its children. */
 		void generateRemoves(const QDomNode &node);
 		/*! \brief Recursive helper method for arranging edits for the snapshot. */

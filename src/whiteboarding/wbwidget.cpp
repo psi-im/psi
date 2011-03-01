@@ -257,7 +257,8 @@ void WbWidget::mousePressEvent(QMouseEvent * event) {
 		QString filename = QFileDialog::getOpenFileName(this, "Choose an image", QString(), "Images (*.png *.jpg)");
 		if(!filename.isEmpty()) {
 			newWbItem_ = new WbNewImage(scene_, startPoint, filename);
-			session_->insertNodeAfter(newWbItem_->serializeToSvg(), session_->document().documentElement());
+			QDomDocument tempDoc;
+			session_->insertNodeAfter(newWbItem_->serializeToSvg(&tempDoc), session_->document().documentElement());
 			session_->flush();
 			delete newWbItem_;
 			newWbItem_ = 0;
@@ -308,7 +309,8 @@ void WbWidget::mouseReleaseEvent(QMouseEvent * event) {
 		return;
 
 	if (newWbItem_ && mode_ >= DrawPath && mode_ != DrawImage) {
-		session_->insertNodeAfter(newWbItem_->serializeToSvg(), session_->document().documentElement());
+		QDomDocument tempDoc;
+		session_->insertNodeAfter(newWbItem_->serializeToSvg(&tempDoc), session_->document().documentElement());
 		session_->flush();
 		delete newWbItem_;
 		newWbItem_ = 0;
@@ -366,6 +368,7 @@ void WbWidget::removeWbItem(const QDomNode &node) {
 
 void WbWidget::removeWbItem(WbItem *wbitem) {
 	if(wbitem) {
+		qDebug("delete WbItem");
 		// Remove from the lookup table to avoid infinite loop of deletes
 		items_.removeAll(wbitem);
 		// items_.takeAt(items_.indexOf(wbitem));

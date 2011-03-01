@@ -31,7 +31,7 @@ public:
     virtual ~WbNewItem();
 
     virtual void parseCursorMove(QPointF newPos) = 0;
-    virtual QDomNode serializeToSvg();
+	virtual QDomNode serializeToSvg(QDomDocument *doc);
 
 protected:
     virtual QGraphicsItem* graphicsItem() = 0;

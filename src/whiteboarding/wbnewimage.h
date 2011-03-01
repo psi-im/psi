@@ -28,7 +28,7 @@ class WbNewImage : public WbNewItem {
 public:
     WbNewImage(QGraphicsScene* s, QPointF startPos, const QString &filename);
     void parseCursorMove(QPointF newPos);
-    QDomNode serializeToSvg();
+	QDomNode serializeToSvg(QDomDocument *doc);
 
 protected:
     QGraphicsItem* graphicsItem();

@@ -245,7 +245,7 @@ void WbDlg::activated() {
 void WbDlg::keyPressEvent(QKeyEvent *e) {
 	if(e->key() == Qt::Key_Escape && !PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool())
 		close();
-	else if(e->key() == Qt::Key_W && e->state() & Qt::ControlButton && !PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool())
+	else if(e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier && !PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool())
 		close();
 	else
 		e->ignore();
@@ -332,7 +332,7 @@ void WbDlg::buildMenu()
 	pm_settings_->addAction(act_modes_);
 	pm_settings_->addAction(act_widths_);
 	pm_settings_->addAction(act_color_);
-	pm_settings_->insertSeparator();
+	pm_settings_->addSeparator();
 	pm_settings_->addAction(act_save_);
 	pm_settings_->addAction(act_clear_);
 	pm_settings_->addAction(act_end_);

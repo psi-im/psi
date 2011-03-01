@@ -110,6 +110,8 @@ public:
 	/*! \brief Checks that \a jid supports SXE and \a features. */
 	bool checkSupport(const Jid &jid, const QList<QString> &features);
 
+	inline Client *client() { return client_; }
+
 signals:
 	/*! \brief Emitted when \a session has been established.*/
 	void sessionNegotiated(SxeSession* session);

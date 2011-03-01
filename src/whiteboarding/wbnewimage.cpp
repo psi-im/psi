@@ -35,7 +35,7 @@ WbNewImage::WbNewImage(QGraphicsScene* s, QPointF startPos, const QString &filen
 }
 
 
-QDomNode WbNewImage::serializeToSvg() {
+QDomNode WbNewImage::serializeToSvg(QDomDocument *doc) {
 	// TODO: Should we perhaps scale large images?
 
 	if(graphicsitem_.pixmap().isNull()) {

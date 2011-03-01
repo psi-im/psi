@@ -60,7 +60,7 @@ void WbNewPath::parseCursorMove(QPointF newPos) {
 	}
 }
 
-QDomNode WbNewPath::serializeToSvg() {
+QDomNode WbNewPath::serializeToSvg(QDomDocument *doc) {
 	if(controlPoint_) {
 		QPainterPath painterpath = graphicsitem_.path();
 		painterpath.lineTo(*controlPoint_);
@@ -73,16 +73,15 @@ QDomNode WbNewPath::serializeToSvg() {
 	// trim the generated SVG to remove unnecessary nested <g/>'s
 
 	// first find the <path/> element
-	QDomNode out = WbNewItem::serializeToSvg();
-	QDomNodeList children = out.childNodes();
+	QDomNode out = WbNewItem::serializeToSvg(doc);
 	QDomElement trimmed;
-	for(uint i = 0; i < children.length(); i++) {
-		if(children.at(i).isElement()) {
-			if(children.at(i).nodeName() == "path") {
-				trimmed = children.at(i).toElement();
+	for(QDomNode n = out.firstChild(); !n.isNull(); n = n.nextSibling()) {
+		if(n.isElement()) {
+			if(n.nodeName() == "path") {
+				trimmed = n.toElement();
 				break;
 			} else {
-				trimmed = children.at(i).toElement().elementsByTagName("path").at(0).toElement();
+				trimmed = n.toElement().elementsByTagName("path").at(0).toElement();
 				if(!trimmed.isNull())
 					break;
 			}
@@ -103,7 +102,8 @@ QDomNode WbNewPath::serializeToSvg() {
 	}
 
 	// add a unique 'id' attribute in anticipation of WbWidget's requirements
-	trimmed.setAttribute("id", "e" + SxeSession::generateUUID());
+	if (!trimmed.nodeName().isEmpty())
+		trimmed.setAttribute("id", "e" + SxeSession::generateUUID());
 
 	return trimmed;
 }

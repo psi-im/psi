@@ -125,7 +125,7 @@ void SxeManager::removeSession(SxeSession* session) {
 	sendSxe(sxe, session->target(), session->groupChat());
 
 	// delete the session
-	session->deleteLater();
+	//session->deleteLater();
 }
 
 bool SxeManager::processNegotiationAsParticipant(const QDomNode &negotiationElement, SxeNegotiation* negotiation, QDomNode response) {
@@ -185,7 +185,7 @@ bool SxeManager::processNegotiationAsParticipant(const QDomNode &negotiationElem
 		response.appendChild(documentBegin);
 		QString prolog = SxeSession::parseProlog(negotiation->session->document());
 		if(!prolog.isEmpty()) {
-			QUrl::encode(prolog);
+			QUrl::toPercentEncoding(prolog);
 			documentBegin.setAttribute("prolog", QString("data:text/xml,%1").arg(prolog));
 		}
 		if(!negotiation->groupChat) {
@@ -308,7 +308,7 @@ bool SxeManager::processNegotiationAsJoiner(const QDomNode &negotiationElement, 
 				if(prolog.startsWith("data:")) {
 					// Assuming non-base64
 					prolog = prolog.mid(prolog.indexOf(",") + 1);
-					QUrl::decode(prolog);
+					QUrl::toPercentEncoding(prolog);
 					doc.setContent(prolog);
 				}
 			}
@@ -645,7 +645,9 @@ void SxeManager::sendSxe(QDomElement sxe, const Jid & receiver, bool groupChat) 
 		sxe.setAttribute("id", SxeSession::generateUUID());
 
 	Message m(receiver);
-	m.setSxe(sxe);
+	QDomDocument *clientDoc = pa_->client()->doc();
+	//QDomElement el = sxe.ownerDocument() == *clientDoc ? sxe : clientDoc->importNode(sxe, true).toElement();
+	m.setSxe(clientDoc->importNode(sxe, true).toElement());
 	if(groupChat && receiver.resource().isEmpty())
 		m.setType("groupchat");
 
@@ -690,7 +692,7 @@ QPointer<SxeSession> SxeManager::createSxeSession(const Jid &target, QString ses
 	// FIXME: detect serverside support
 	bool serverSupport = false;
 	// create the SxeSession
-	QPointer<SxeSession> w = new SxeSession(target, session, ownJid, groupChat, serverSupport, features);
+	QPointer<SxeSession> w = new SxeSession(this, target, session, ownJid, groupChat, serverSupport, features);
 	// connect the signals
 	connect(w, SIGNAL(newSxeElement(QDomElement, Jid, bool)), SLOT(sendSxe(const QDomElement &, const Jid &, bool)));
 	connect(w, SIGNAL(sessionEnded(SxeSession*)), SLOT(removeSession(SxeSession*)));

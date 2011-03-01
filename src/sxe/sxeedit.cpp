@@ -69,7 +69,7 @@ bool SxeEdit::operator<(const SxeEdit &other) const {
 
 	// Can't compare edits to different records
 	if(rid() != other.rid())  {
-		qDebug() << QString("Comparing SxeEdits to %1 an %2.").arg(rid()).arg(other.rid()).toAscii();
+		qDebug("Comparing SxeEdits to %s an %s.", qPrintable(rid()), qPrintable(other.rid()));
 		return false;
 	}
 

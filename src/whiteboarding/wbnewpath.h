@@ -29,7 +29,7 @@ class WbNewPath : public WbNewItem {
 		WbNewPath(QGraphicsScene* s, QPointF startPos, int strokeWidth, const QColor &strokeColor, const QColor &fillColor);
 		~WbNewPath();
 		void parseCursorMove(QPointF newPos);
-		QDomNode serializeToSvg();
+		QDomNode serializeToSvg(QDomDocument *doc);
 
 	protected:
 		QGraphicsItem* graphicsItem();

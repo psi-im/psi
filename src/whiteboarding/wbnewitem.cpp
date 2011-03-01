@@ -34,7 +34,7 @@ WbNewItem::WbNewItem(QGraphicsScene* s) {
 WbNewItem::~WbNewItem() {
 }
 
-QDomNode WbNewItem::serializeToSvg() {
+QDomNode WbNewItem::serializeToSvg(QDomDocument *doc) {
 	if(!graphicsItem()) {
 		return QDomDocumentFragment();
 	}

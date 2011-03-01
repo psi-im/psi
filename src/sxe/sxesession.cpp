@@ -19,6 +19,7 @@
  */
  
 #include "sxesession.h"
+#include "sxemanager.h"
 
 #include "QTimer"
 #include "QUuid"
@@ -32,23 +33,25 @@ using namespace XMPP;
 // SxeSession
 //----------------------------------------------------------------------------
 
-SxeSession::SxeSession(const Jid &target, const QString &session, const Jid &ownJid,
-						bool groupChat, bool serverSupport, const QList<QString> &features) {
-	serverSupport_ = serverSupport;
-	groupChat_ = groupChat;
-	target_ = target;
-	ownJid_ = ownJid;
-	session_ = session;
-	features_ = features;
+SxeSession::SxeSession(SxeManager *manager, const Jid &target, const QString &session, const Jid &ownJid,
+						bool groupChat, bool serverSupport, const QList<QString> &features)
+	: QObject(manager)
+	, session_(session)
+	, target_(target)
+	, ownJid_(ownJid)
+	, groupChat_(groupChat)
+	, serverSupport_(serverSupport)
+	, queueing_(false)
+	, importing_(false)
+	, features_(features)
+	, uuidMaxPostfix_(0)
 
-	queueing_ = false;
-	importing_ = false;
-
-	uuidMaxPostfix_ = 0;
+{
 	setUUIDPrefix();
 }
 
 SxeSession::~SxeSession() {
+	qDebug("destruct session");
 	emit sessionEnded(this);
 }
 
@@ -117,16 +120,14 @@ bool SxeSession::processSxe(const QDomElement &sxe, const QString &id) {
 	}
 
 	// create an SxeEdit for each child of the <sxe/>
-	QDomNodeList children = sxe.childNodes();
-
 	QList<SxeEdit*> edits;
-	for(uint i=0; i < children.length(); i++) {
-		if(children.item(i).nodeName() == "new")
-			edits.append(new SxeNewEdit(children.item(i).toElement()));
-		else if(children.item(i).nodeName() == "set")
-			edits.append(new SxeRecordEdit(children.item(i).toElement()));
-		else if(children.item(i).nodeName() == "remove")
-			edits.append(new SxeRemoveEdit(children.item(i).toElement()));
+	for(QDomNode n = sxe.firstChild(); !n.isNull(); n = n.nextSibling()) {
+		if(n.nodeName() == "new")
+			edits.append(new SxeNewEdit(n.toElement()));
+		else if(n.nodeName() == "set")
+			edits.append(new SxeRecordEdit(n.toElement()));
+		else if(n.nodeName() == "remove")
+			edits.append(new SxeRemoveEdit(n.toElement()));
 	}
 
 	if (edits.size() == 0)  return false;
@@ -463,7 +464,8 @@ void SxeSession::flush() {
 		return;
 
 	// create the sxe element
-	QDomElement sxe = doc_.createElementNS(SXENS, "sxe");
+	QDomDocument *doc = ((SxeManager*)parent())->client()->doc();
+	QDomElement sxe = doc->createElementNS(SXENS, "sxe");
 	sxe.setAttribute("session", session_);
 
 	// append all queued edits
@@ -475,7 +477,7 @@ void SxeSession::flush() {
 	emit newSxeElement(sxe, target(), groupChat_);
 }
 
-QDomNode SxeSession::generateNewNode(const QDomNode &node, const QString &parent, double primaryWeight) {
+QDomNode SxeSession::generateNewNode(const QDomNode node, const QString &parent, double primaryWeight) {
 	if(!record(node)) {
 		// generate the appropriate edit(s) for the node
 		QString rid = generateUUIDForSession();
@@ -512,9 +514,9 @@ QDomNode SxeSession::generateNewNode(const QDomNode &node, const QString &parent
 				generateNewNode(attributes.item(i), rid, i);
 
 			// child nodes
-			QDomNodeList children = node.childNodes();
-			for(int i = 0; i < children.count(); i++)
-				generateNewNode(children.at(i), rid, i);
+			int i = 0;
+			for(QDomNode n = node.firstChild(); !n.isNull(); n = n.nextSibling())
+				generateNewNode(n, rid, i++);
 		}
 
 		return meta->node();
@@ -696,8 +698,10 @@ QList<QString> SxeSession::usedSxeIds() {
 }
 
 void SxeSession::queueOutgoingEdit(SxeEdit* edit) {
-	if(!importing_)
-		queuedOutgoingEdits_.append(edit->xml(doc_));
+	if(!importing_) {
+		QDomElement el = edit->xml(doc_);
+		queuedOutgoingEdits_.append(((SxeManager*)parent())->client()->doc()->importNode(el, true));
+	}
 }
 
 SxeRecord* SxeSession::createRecord(const QString &id) {
