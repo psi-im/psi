@@ -88,22 +88,23 @@ QDomNode WbNewPath::serializeToSvg(QDomDocument *doc) {
 		}
 	}
 
-	// copy relevant attributes from the parent <g/>
-	QDomNamedNodeMap parentAttr = trimmed.parentNode().toElement().attributes();
-	for(int i = parentAttr.length() - 1; i >= 0; i--) {
-		QString name = parentAttr.item(i).nodeName();
-		if((name == "stroke"
-			|| name == "stroke-width"
-			|| name == "stroke-linecap"
-			|| name == "fill"
-			|| name == "fill-opacity")
-			&& !trimmed.hasAttribute(name))
-			trimmed.setAttributeNode(parentAttr.item(i).toAttr());
-	}
+	if (!trimmed.isNull()) {
+		// copy relevant attributes from the parent <g/>
+		QDomNamedNodeMap parentAttr = trimmed.parentNode().toElement().attributes();
+		for(int i = parentAttr.length() - 1; i >= 0; i--) {
+			QString name = parentAttr.item(i).nodeName();
+			if((name == "stroke"
+				|| name == "stroke-width"
+				|| name == "stroke-linecap"
+				|| name == "fill"
+				|| name == "fill-opacity")
+				&& !trimmed.hasAttribute(name))
+				trimmed.setAttributeNode(parentAttr.item(i).toAttr());
+		}
 
-	// add a unique 'id' attribute in anticipation of WbWidget's requirements
-	if (!trimmed.nodeName().isEmpty())
+		// add a unique 'id' attribute in anticipation of WbWidget's requirements
 		trimmed.setAttribute("id", "e" + SxeSession::generateUUID());
+	}
 
 	return trimmed;
 }

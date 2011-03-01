@@ -56,19 +56,17 @@ QDomNode WbNewItem::serializeToSvg(QDomDocument *doc) {
 
 	// Parse the children of the new root <svg/> from the buffer to a document fragment
 	// also add an 'id' attribute to each of the children
-	QDomDocument tempDoc;
-	tempDoc.setContent(buffer.buffer());
-	QDomDocumentFragment fragment = tempDoc.createDocumentFragment();
+	doc->setContent(buffer.buffer());
+	QDomDocumentFragment fragment = doc->createDocumentFragment();
 
-	QDomNodeList children = tempDoc.documentElement().childNodes();
-	for(int i = children.length() - 1; i >= 0; i--) {
+	for(QDomNode n = doc->documentElement().lastChild(); !n.isNull(); n = n.previousSibling()) {
 		// skip <title/>, <desc/>, and <defs/>
-		if(children.at(i).isElement() &&
-			!(children.at(i).nodeName() == "title"
-				|| children.at(i).nodeName() == "desc"
-				|| children.at(i).nodeName() == "defs")) {
-			children.at(i).toElement().setAttribute("id", "e" + SxeSession::generateUUID());
-			fragment.insertBefore(children.at(i), QDomNode());
+		if(n.isElement() &&
+			!(n.nodeName() == "title"
+				|| n.nodeName() == "desc"
+				|| n.nodeName() == "defs")) {
+			n.toElement().setAttribute("id", "e" + SxeSession::generateUUID());
+			fragment.insertBefore(n, QDomNode());
 		}
 	}
 

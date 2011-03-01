@@ -51,7 +51,7 @@ SxeSession::SxeSession(SxeManager *manager, const Jid &target, const QString &se
 }
 
 SxeSession::~SxeSession() {
-	qDebug("destruct session");
+	qDebug("destruct SxeSession");
 	emit sessionEnded(this);
 }
 

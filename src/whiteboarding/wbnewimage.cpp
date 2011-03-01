@@ -44,8 +44,7 @@ QDomNode WbNewImage::serializeToSvg(QDomDocument *doc) {
 
 	QFile file(filename_);
 	if (file.open(QIODevice::ReadOnly)) {
-		QDomDocument d = QDomDocument();
-		QDomElement image = QDomDocument().createElement("image");
+		QDomElement image = doc->createElement("image");
 		image.setAttribute("id", "e" + SxeSession::generateUUID());
 		image.setAttribute("x", graphicsitem_.x());
 		image.setAttribute("y", graphicsitem_.y());
