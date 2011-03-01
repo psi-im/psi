@@ -115,7 +115,7 @@ private slots:
 	/*! \brief Popsup a color dialog and sets the selected color as the default stroke color for new items.*/
 	void setStrokeColor();
 	/*! \brief Popsup a color dialog and sets the selected color as the default fill color for new items.*/
-	void setFillColor();
+	void setFillColor(bool);
 	/*! \brief Sets the stroke width for new elements based on the invoker.*/
 	void setStrokeWidth(QAction *);
 	/*! \brief Sets the WbWidget's mode based on the invoker.*/

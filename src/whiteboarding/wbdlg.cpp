@@ -28,6 +28,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QColorDialog>
+#include <QToolButton>
 
 #include "accountlabel.h"
 #include "stretchwidget.h"
@@ -77,7 +78,9 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
 	pixmap.fill(QColor(Qt::black));
 	act_color_ = new QAction(QIcon(pixmap), tr("Stroke color"), this);
 	pixmap.fill(QColor(Qt::lightGray));
-	act_fill_ = new QAction(QIcon(pixmap), tr("Fill color"), this);
+	act_fill_ = new IconAction(tr("Fill color"), "psi/select", tr("Fill color"),0, this, 0, true);
+	act_fill_->setIcon(QIcon(pixmap));
+	act_fill_->setChecked(false);
 
 	act_widths_ = new IconAction(tr("Stroke width" ), "psi/drawPaths", tr("Stroke width"), 0, this );
 	act_modes_ = new IconAction(tr("Edit mode" ), "psi/select", tr("Edit mode"), 0, this );
@@ -85,7 +88,7 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
 	group_modes_ = new QActionGroup(this);
 
 	connect(act_color_, SIGNAL(triggered()), SLOT(setStrokeColor()));
-	connect(act_fill_, SIGNAL(triggered()), SLOT(setFillColor()));
+	connect(act_fill_, SIGNAL(triggered(bool)), SLOT(setFillColor(bool)));
 	connect(group_widths_, SIGNAL(triggered(QAction *)), SLOT(setStrokeWidth(QAction *)));
 	connect(group_modes_, SIGNAL(triggered(QAction *)), SLOT(setMode(QAction *)));
 	connect(act_save_, SIGNAL(triggered()), SLOT(save()));
@@ -174,8 +177,16 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
 	toolbar_->addWidget(new StretchWidget(this));
 	toolbar_->addAction(act_fill_);
 	toolbar_->addAction(act_color_);
-	toolbar_->addAction(act_widths_);
-	toolbar_->addAction(act_modes_);
+	QToolButton *bw = new QToolButton;
+	bw->setIcon(IconsetFactory::icon("psi/drawPaths").icon());
+	bw->setMenu(menu_widths_);
+	bw->setPopupMode(QToolButton::InstantPopup);
+	toolbar_->addWidget(bw);
+	QToolButton *bm = new QToolButton;
+	bm->setIcon(IconsetFactory::icon("psi/select").icon());
+	bm->setMenu(menu_modes_);
+	bm->setPopupMode(QToolButton::InstantPopup);
+	toolbar_->addWidget(bm);
 	vb1->addWidget(toolbar_);
 
 	// Context menu
@@ -301,14 +312,20 @@ void WbDlg::setStrokeColor() {
 	}
 }
 
-void WbDlg::setFillColor() {
-	QColor newColor = QColorDialog::getColor();
-	if(newColor.isValid()) {
-		QPixmap pixmap(16, 16);
-		pixmap.fill(newColor);
-		act_fill_->setIcon(QIcon(pixmap));
-		wbWidget_->setFillColor(newColor);
+void WbDlg::setFillColor(bool fill) {
+	QColor newColor;
+	if(fill) {
+		newColor = QColorDialog::getColor();
+		if(newColor.isValid()) {
+			QPixmap pixmap(16, 16);
+			pixmap.fill(newColor);
+			act_fill_->setIcon(QIcon(pixmap));
+		}
 	}
+	else {
+		newColor = Qt::transparent;
+	}
+	wbWidget_->setFillColor(newColor);
 }
 
 void WbDlg::setStrokeWidth(QAction *a) {

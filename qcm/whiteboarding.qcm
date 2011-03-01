@@ -1,0 +1,31 @@
+/*
+-----BEGIN QCMOD-----
+name: White Board support
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_whiteboarding
+//----------------------------------------------------------------------------
+class qc_whiteboarding : public ConfObj
+{
+public:
+	qc_whiteboarding(Conf *c) : ConfObj(c) {}
+	QString name() const { return "White Board support"; }
+	QString shortname() const { return "whiteboarding"; }
+	bool exec()
+	{
+		conf->addDefine("WHITEBOARDING");
+		
+		// Finish
+		conf->addExtra("CONFIG += whiteboarding");                              
+
+		qWarning("");
+		qWarning("");
+		qWarning("        !!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!");
+		qWarning("        WHITEBOARDING SUPPORT IS STILL UNFINISHED !!!");
+		qWarning("        USE AT YOUR OWN RISK !!!");
+
+		return true;
+	}
+};

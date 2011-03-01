@@ -27,6 +27,9 @@
   </dep>
   <dep type='qdbus'/>
   <dep type='growl'/>
+  <dep type='whiteboarding'>
+    <disabled/>
+  </dep>
   <!--<dep type='sparkle'/>-->
   <dep type='xss'/>
   <dep type='aspell'/>
