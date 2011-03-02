@@ -45,6 +45,7 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
 	allowEdits_ = true;
 
 	selfDestruct_ = 0;
+	setAttribute(Qt::WA_DeleteOnClose, false); // we want deferred endSession call and delete from manager
 
 	QVBoxLayout *vb1 = new QVBoxLayout(this);
 
@@ -211,10 +212,7 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
 }
 
 WbDlg::~WbDlg() {
-	// terminate the underlying SXE session
-	session()->endSession();
-
-	emit sessionEnded(this);
+	qDebug("destruct WbDlg");
 }
 
 SxeSession* WbDlg::session() const {
@@ -241,8 +239,10 @@ void WbDlg::endSession() {
 		if(n != 0)
 			return;
 	}
-	setAttribute(Qt::WA_DeleteOnClose);
-	close();
+	// terminate the underlying SXE session
+	session()->endSession();
+
+	emit sessionEnded(this);
 }
 
 void WbDlg::activated() {
@@ -264,8 +264,6 @@ void WbDlg::keyPressEvent(QKeyEvent *e) {
 
 void WbDlg::closeEvent(QCloseEvent *e) {
 	e->accept();
-	if(testAttribute(Qt::WA_DeleteOnClose))
-		return;
 	if(keepOpen_) {
 		int n = QMessageBox::information(this, tr("Warning"), tr("A new whiteboard message was just received.\nDo you still want to close the window?"), tr("&Yes"), tr("&No"));
 		if(n != 0) {

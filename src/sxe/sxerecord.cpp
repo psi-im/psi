@@ -33,7 +33,7 @@ SxeRecord::SxeRecord(QString rid) {
 };
 
 SxeRecord::~SxeRecord() {
-	qDebug("destroy record");
+	qDebug("destruct SxeRecord");
 	while(!edits_.isEmpty()) {
 		delete edits_.takeFirst();
 	}

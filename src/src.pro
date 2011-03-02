@@ -9,7 +9,7 @@ CONFIG  += qt thread x11
 
 #CONFIG += use_crash
 CONFIG += pep
-#CONFIG += whiteboarding
+CONFIG += whiteboarding
 #CONFIG += psi_plugins
 DEFINES += QT_STATICPLUGIN
 DEFINES += QT3_SUPPORT_WARNINGS

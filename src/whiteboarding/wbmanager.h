@@ -56,6 +56,7 @@ public:
 	 *  Creates a new manager for the specified Client and PsiAccount
 	 */
 	WbManager(XMPP::Client* client, PsiAccount* pa, SxeManager* sxemanager);
+	~WbManager();
 	/*! \brief Returns true if features contains WBNS and the user wishes to accept the invitation. */
     static bool checkInvitation(const Jid &peer, const QList<QString> &features);
 

@@ -44,6 +44,11 @@ WbManager::WbManager(XMPP::Client* client, PsiAccount* pa, SxeManager* sxemanage
 	sxemanager_->addInvitationCallback(WbManager::checkInvitation);
 }
 
+WbManager::~WbManager()
+{
+	qDeleteAll(dialogs_);
+}
+
 void WbManager::openWhiteboard(const Jid &target, const Jid &ownJid, bool groupChat, bool promptInitialDoc) {
 
 	// check that the target supports whiteboarding via SXE
@@ -101,7 +106,8 @@ void WbManager::openWhiteboard(const Jid &target, const Jid &ownJid, bool groupC
 
 void WbManager::removeDialog(WbDlg* dialog)
 {
-	dialogs_.takeAt(dialogs_.indexOf(dialog))->deleteLater();
+	dialogs_.removeAt(dialogs_.indexOf(dialog));
+	delete dialog;
 }
 
 WbDlg* WbManager::findWbDlg(const Jid &jid) {
