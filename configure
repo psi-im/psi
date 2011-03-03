@@ -43,6 +43,7 @@ Dependency options:
   --disable-qdbus              Disable use of QDBUS
   --disable-growl              Disable use of Growl
   --with-growl=[path]          Path to the Growl framework
+  --enable-whiteboarding       Enable use of White Board support
   --disable-xss                Disable use of the XScreenSaver extension
   --disable-aspell             Disable use of aspell
   --with-aspell-inc=[path]     Path to Aspell include files
@@ -249,6 +250,11 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
+		--enable-whiteboarding)
+			QC_ENABLE_whiteboarding="Y"
+			shift
+			;;
+
 		--disable-xss)
 			QC_DISABLE_xss="Y"
 			shift
@@ -313,6 +319,7 @@ echo QC_ENABLE_universal=$QC_ENABLE_universal
 echo QC_DISABLE_qdbus=$QC_DISABLE_qdbus
 echo QC_DISABLE_growl=$QC_DISABLE_growl
 echo QC_WITH_GROWL=$QC_WITH_GROWL
+echo QC_ENABLE_whiteboarding=$QC_ENABLE_whiteboarding
 echo QC_DISABLE_xss=$QC_DISABLE_xss
 echo QC_DISABLE_aspell=$QC_DISABLE_aspell
 echo QC_WITH_ASPELL_INC=$QC_WITH_ASPELL_INC
@@ -1247,6 +1254,38 @@ public:
 #endif
 	}
 };
+#line 1 "whiteboarding.qcm"
+/*
+-----BEGIN QCMOD-----
+name: White Board support
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_whiteboarding
+//----------------------------------------------------------------------------
+class qc_whiteboarding : public ConfObj
+{
+public:
+	qc_whiteboarding(Conf *c) : ConfObj(c) {}
+	QString name() const { return "White Board support"; }
+	QString shortname() const { return "whiteboarding"; }
+	bool exec()
+	{
+		conf->addDefine("WHITEBOARDING");
+
+		// Finish
+		conf->addExtra("CONFIG += whiteboarding");
+
+		qWarning("");
+		qWarning("");
+		qWarning("        !!!!!!!!!!!!!! WARNING !!!!!!!!!!!!!!!");
+		qWarning("        WHITEBOARDING SUPPORT IS STILL UNFINISHED !!!");
+		qWarning("        USE AT YOUR OWN RISK !!!");
+
+		return true;
+	}
+};
 #line 1 "xss.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -1728,6 +1767,9 @@ cat >$1/modules_new.cpp <<EOT
     o = new qc_growl(conf);
     o->required = false;
     o->disabled = false;
+    o = new qc_whiteboarding(conf);
+    o->required = false;
+    o->disabled = true;
     o = new qc_xss(conf);
     o->required = false;
     o->disabled = false;
@@ -2785,6 +2827,7 @@ export QC_ENABLE_universal
 export QC_DISABLE_qdbus
 export QC_DISABLE_growl
 export QC_WITH_GROWL
+export QC_ENABLE_whiteboarding
 export QC_DISABLE_xss
 export QC_DISABLE_aspell
 export QC_WITH_ASPELL_INC

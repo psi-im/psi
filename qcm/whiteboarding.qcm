@@ -16,9 +16,9 @@ public:
 	bool exec()
 	{
 		conf->addDefine("WHITEBOARDING");
-		
+
 		// Finish
-		conf->addExtra("CONFIG += whiteboarding");                              
+		conf->addExtra("CONFIG += whiteboarding");
 
 		qWarning("");
 		qWarning("");
