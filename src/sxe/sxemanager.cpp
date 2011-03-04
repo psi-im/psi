@@ -268,8 +268,13 @@ bool SxeManager::processNegotiationAsJoiner(const QDomNode &negotiationElement, 
 		}
 
 		// check if one of the invitation callbacks accepts the invitation.
+		const QString sessionId = negotiation->sessionId;
 		foreach(bool (*callback)(const Jid &peer, const QList<QString> &features), invitationCallbacks_) {
-			if(callback(negotiation->peer, negotiation->features)) {
+			bool result = callback(negotiation->peer, negotiation->features);
+			if (!negotiations_.contains(sessionId, negotiation)) { //FIXME that's wrong. negotiation can be replaced with new one with the same address
+				return false;
+			}
+			if(result) {
 				response.appendChild(doc.createElementNS(SXENS, "accept-invitation"));
 				negotiation->state = SxeNegotiation::InvitationAccepted;
 				return true;
