@@ -1,40 +1,20 @@
-#ifdef __GNUC__
-#warning "filetransdlg is still full of qt3support usage"
-#endif
-#undef QT3_SUPPORT_WARNINGS
-
 #include "filetransdlg.h"
 
 #include <QFileDialog>
-#include <QLabel>
-#include <QLineEdit>
 #include <QMessageBox>
-#include <QPushButton>
 #include <QTimer>
-#include <QFile>
-#include <QDir>
-#include <Q3ListView>
-#include <QLayout>
-#include <Q3HBox>
-#include <QDateTime>
 #include <QPainter>
-#include <Q3Header>
-#include <Q3PopupMenu>
-#include <QResizeEvent>
-#include <QKeyEvent>
-#include <QVBoxLayout>
-#include <Q3PtrList>
-#include <QHBoxLayout>
-#include <QPixmap>
+#include <QDesktopServices>
+#include <QFileIconProvider>
+#include <QProcess>
+#include <QMenu>
 
 #include "psicon.h"
 #include "psiaccount.h"
 #include "userlist.h"
-#include "iconwidget.h"
 #include "s5b.h"
 #include "busywidget.h"
 #include "filetransfer.h"
-#include "accountscombobox.h"
 #include "psiiconset.h"
 #include "msgmle.h"
 #include "jidutil.h"
@@ -142,6 +122,7 @@ public:
 	BSConnection *c;
 	Jid peer;
 	QString fileName, saveName;
+	QString filePath;
 	qlonglong fileSize, sent, offset, length;
 	QString desc;
 	bool sending;
@@ -196,6 +177,7 @@ void FileTransferHandler::send(const XMPP::Jid &to, const QString &fname, const 
 
 	d->peer = to;
 	QFileInfo fi(fname);
+	d->filePath = fname;
 	d->fileName = fi.fileName();
 	d->fileSize = fi.size(); // TODO: large file support
 	d->desc = desc;
@@ -232,9 +214,25 @@ QString FileTransferHandler::fileName() const
 	return d->fileName;
 }
 
+QString FileTransferHandler::filePath() const
+{
+	return d->filePath;
+}
+
 qlonglong FileTransferHandler::fileSize() const
 {
 	return d->fileSize;
+}
+
+QPixmap FileTransferHandler::fileIcon() const
+{
+	QPixmap icon;
+	QFileIconProvider provider;
+	QFileInfo file(d->filePath);
+	if (file.exists()){
+		icon = provider.icon(file).pixmap(32, 32);
+	}
+	return icon;
 }
 
 QString FileTransferHandler::description() const
@@ -271,6 +269,8 @@ void FileTransferHandler::accept(const QString &saveName, const QString &fileNam
 		return;
 	d->fileName = fileName;
 	d->saveName = saveName;
+	d->filePath = saveName;
+	d->filePath.chop(5);
 	d->offset = offset;
 	d->length = d->fileSize;
 	d->f.setFileName(saveName);
@@ -555,9 +555,13 @@ FileRequestDlg::FileRequestDlg(const Jid &jid, PsiCon *psi, PsiAccount *pa, cons
 	d->lb_ident = 0;
 	updateIdentity(pa);
 
-	Q3HBox *hb = new Q3HBox(this);
+	QFrame *hb = new QFrame(this);
+	QHBoxLayout *hbLayout = new QHBoxLayout(hb);
+	hbLayout->setMargin(0);
 	d->lb_identity = new QLabel(tr("Identity: "), hb);
+	hbLayout->addWidget(d->lb_identity);
 	d->cb_ident = d->psi->accountsComboBox(hb);
+	hbLayout->addWidget(d->cb_ident);
 	connect(d->cb_ident, SIGNAL(activated(PsiAccount *)), SLOT(updateIdentity(PsiAccount *)));
 	d->cb_ident->setAccount(pa);
 	replaceWidget(lb_accountlabel, hb);
@@ -638,14 +642,19 @@ FileRequestDlg::FileRequestDlg(const QDateTime &ts, FileTransfer *ft, PsiAccount
 	d->fileSize = ft->fileSize();
 
 	d->cb_ident = 0;
-	Q3HBox *hb = new Q3HBox(this);
+	QFrame *hb = new QFrame(this);
+	QHBoxLayout *hbLayout = new QHBoxLayout(hb);
+	hbLayout->setMargin(0);
 	d->lb_identity = new QLabel(tr("Identity: "), hb);
+	hbLayout->addWidget(d->lb_identity);
 	d->lb_ident = new AccountLabel(hb);
 	d->lb_ident->setAccount(d->pa);
 	d->lb_ident->setSizePolicy(QSizePolicy( QSizePolicy::MinimumExpanding, QSizePolicy::Fixed ));
-	new QLabel(tr("Time:"), hb);
+	hbLayout->addWidget(d->lb_ident);
+	hbLayout->addWidget(new QLabel(tr("Time:")));
 	d->lb_time = new QLabel(ts.time().toString(Qt::LocalDate), hb);
 	d->lb_time->setFrameStyle( QFrame::Panel | QFrame::Sunken );
+	hbLayout->addWidget(d->lb_time);
 	connect(d->pa->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
 	updateIdentityVisibility();
 
@@ -963,12 +972,13 @@ void FileRequestDlg::t_timeout()
 //----------------------------------------------------------------------------
 // FileTransDlg
 //----------------------------------------------------------------------------
-class FileTransItem : public Q3ListViewItem
+class FileTransItem : public QListWidgetItem
 {
 public:
-	QPixmap icon;
+	QPixmap icon, fileicon;
 	bool sending;
 	QString name;
+	QString path;
 	qlonglong size;
 	QString peer;
 	QString rate;
@@ -980,13 +990,15 @@ public:
 	int dist;
 	bool done;
 	QString error;
+	int height;
 
-	FileTransItem(Q3ListView *parent, const QString &_name, qlonglong _size, const QString &_peer, bool _sending)
-	:Q3ListViewItem(parent)
+	FileTransItem(QListWidget *parent, const QString &_name, const QString &_path, qlonglong _size, const QString &_peer, bool _sending)
+	:QListWidgetItem(parent)
 	{
 		done = false;
 		sending = _sending;
 		name = _name;
+		path = _path;
 		size = _size;
 		peer = _peer;
 		rate = FileTransDlg::tr("N/A");
@@ -1094,7 +1106,7 @@ public:
 	int progressBarWidth() const
 	{
 		int m = 4;
-		int w = listView()->columnWidth(0);
+		int w = listWidget()->visualItemRect(this).width();
 		//int pw = (w - (3 * m)) / 2;
 		int pw = (w - (3 * m)) * 2 / 3;
 		return pw;
@@ -1106,13 +1118,14 @@ public:
 		return (progress * xsize / 8192);
 	}
 
-	void drawProgressBar(QPainter *p, const QColorGroup &cg, int x, int y, int width, int height) const
+	void drawProgressBar(QPainter *p, /*const QColorGroup &cg,*/ int x, int y, int width, int height) const
 	{
 		p->save();
+		QPalette palette = listWidget()->palette();
 		if(isSelected())
-			p->setPen(cg.highlightedText());
+			p->setPen(palette.color(QPalette::HighlightedText));
 		else
-			p->setPen(cg.text());
+			p->setPen(palette.color(QPalette::Text));
 		p->drawRect(x, y, width, height);
 		int xoff = x + 1;
 		int yoff = y + 1;
@@ -1120,8 +1133,8 @@ public:
 		int ysize = height - 2;
 
 		int dist = progressBarDist(width);
-		p->fillRect(xoff, yoff, dist, ysize, cg.brush(QColorGroup::Highlight));
-		p->fillRect(xoff + dist, yoff, width - 2 - dist, ysize, cg.brush(QColorGroup::Base));
+		p->fillRect(xoff, yoff, dist, ysize, palette.brush(QPalette::Highlight));
+		p->fillRect(xoff + dist, yoff, width - 2 - dist, ysize, palette.brush(QPalette::Base));
 
 		int percent = progress * 100 / 8192;
 		QString s = QString::number(percent) + '%';
@@ -1132,13 +1145,13 @@ public:
 		int center = xoff + (xsize / 2);
 
 		p->save();
-		p->setPen(cg.highlightedText());
+		p->setPen(palette.color(QPalette::HighlightedText));
 		p->setClipRect(xoff, yoff, dist, ysize);
 		p->drawText(center - (textwidth / 2), ty, s);
 		p->restore();
 
 		p->save();
-		p->setPen(cg.text());
+		p->setPen(palette.color(QPalette::Text));
 		p->setClipRect(xoff + dist, yoff, width - 2 - dist, ysize);
 		p->drawText(center - (textwidth / 2), ty, s);
 		p->restore();
@@ -1147,8 +1160,8 @@ public:
 
 	void setup()
 	{
-		widthChanged();
-		Q3ListView *lv = listView();
+		//widthChanged();
+		QListWidget *lv = listWidget();
 
 		QFontMetrics fm = lv->fontMetrics();
 		int m = 4;
@@ -1156,13 +1169,13 @@ public:
 		int ph = fm.height() + 2 + (pm * 2);
 		int h = (ph * 2) + (m * 3);
 
-		h += lv->itemMargin() * 2;
+		h += 2; //lv->itemMargin() * 2;
 
 		// ensure an even number
 		if(h & 1)
 			++h;
 
-		setHeight(h);
+		height = h;
 	}
 
 	QString chopString(const QString &s, const QFontMetrics &fm, int len) const
@@ -1178,11 +1191,12 @@ public:
 		return str;
 	}
 
-	void paintCell(QPainter *mp, const QColorGroup &_cg, int, int width, int)
+	void paintCell(QPainter *mp, const QStyleOptionViewItem& option)
 	{
-		QColorGroup cg = _cg;
-		int w = width;
-		int h = height();
+		mp->save();
+		QRect rect = option.rect;
+		int w = rect.width();
+		int h = rect.height();
 
 		// tint the background
 		/*//QColor base = Qt::black; //cg.base();
@@ -1238,23 +1252,36 @@ public:
 		int tw = (w - (3 * m)) - pw;
 		int px = (m * 2) + tw;
 
+		QPalette palette = option.palette;
+
 		// clear out the background
-		if(isSelected())
-			br = cg.brush(QColorGroup::Highlight);
+		if(option.state & QStyle::State_Selected)
+			br = palette.brush(QPalette::Highlight);
 		else
-			br = cg.brush(QColorGroup::Base);
-		p->fillRect(0, 0, width, h, br);
+			br = palette.brush(QPalette::Base);
+		p->fillRect(0, 0, w, h, br);
 
 		// icon
-		p->drawPixmap(m, m + yoff, icon);
-		int tm = m + icon.width() + 4;
-		tw = tw - (icon.width() + 4);
+		int fullIconWidth;
+		if(!fileicon.isNull()) {
+			const QPixmap fIcon = fileicon.scaled(h-(m+1),h-(m+1), Qt::KeepAspectRatio, Qt::SmoothTransformation);
+			fullIconWidth = fIcon.width() + icon.width()/2;
+			p->drawPixmap(m, m + yoff, fIcon);
+			p->drawPixmap(m + fullIconWidth + 1 - icon.width(), m+yoff, icon);
+		}
+		else {
+			fullIconWidth = icon.width();
+			p->drawPixmap(m, m + yoff, icon);
+		}
+
+		int tm = m + fullIconWidth + 4;
+		tw = tw - (fullIconWidth + 4);
 
 		// filename / peer
-		if(isSelected())
-			p->setPen(cg.highlightedText());
+		if(option.state & QStyle::State_Selected)
+			p->setPen(palette.color(QPalette::HighlightedText));
 		else
-			p->setPen(cg.text());
+			p->setPen(palette.color(QPalette::Text));
 		p->setFont(boldFont);
 		QString s1 = FileTransDlg::tr("File") + ": ";
 		QString s2 = FileTransDlg::tr("To") + ": ";
@@ -1278,10 +1305,11 @@ public:
 		p->drawText(px + lw, tb, chopString(rate, fm, left));
 
 		// progress bar
-		drawProgressBar(p, cg, px, m, pw, ph);
+		drawProgressBar(p, px, m, pw, ph);
 
 		delete p;
-		mp->drawPixmap(0, 0, pix);
+		mp->drawPixmap(rect, pix);
+		mp->restore();
 	}
 
 	QString makeTip() const
@@ -1307,14 +1335,16 @@ public:
 	}
 };
 
-class FileTransView : public Q3ListView
+class FileTransView : public QListWidget
 {
 	Q_OBJECT
 public:
 	FileTransView(QWidget *parent=0, const char *name=0)
-	:Q3ListView(parent, name)
+	:QListWidget(parent)
 	{
-		connect(this, SIGNAL(contextMenuRequested(Q3ListViewItem *, const QPoint &, int)), this, SLOT(qlv_contextMenuRequested(Q3ListViewItem *, const QPoint &, int)));
+		Q_UNUSED(name)
+		//connect(this, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(qlv_contextMenuRequested(QPoint)));
+		setItemDelegate(new FileTransDelegate(this));
 	}
 
 	bool maybeTip(const QPoint &pos)
@@ -1322,14 +1352,14 @@ public:
 		FileTransItem *i = static_cast<FileTransItem*>(itemAt(pos));
 		if(!i)
 			return false;
-		QRect r(itemRect(i));
+		QRect r(visualItemRect(i));
 		PsiToolTip::showText(mapToGlobal(pos), i->makeTip(), this);
 		return true;
 	}
 
 	void resizeEvent(QResizeEvent *e)
 	{
-		Q3ListView::resizeEvent(e);
+		QListWidget::resizeEvent(e);
 
 		if(e->oldSize().width() != e->size().width())
 			doResize();
@@ -1342,7 +1372,7 @@ public:
 			e->setAccepted(maybeTip(pos));
 			return true;
 		}
-		return Q3ListView::event(e);
+		return QListWidget::event(e);
 	}
 
 signals:
@@ -1350,50 +1380,95 @@ signals:
 	void itemOpenDest(int id);
 	void itemClear(int id);
 
-private slots:
-	void qlv_contextMenuRequested(Q3ListViewItem *item, const QPoint &pos, int)
+
+protected:
+	void mousePressEvent(QMouseEvent *event)
 	{
-		if(!item)
+		if(event->button() == Qt::RightButton) {
+			event->accept();
+			qlv_contextMenuRequested(event->pos());
+			return;
+		}
+		QListWidget::mousePressEvent(event);
+	}
+
+private:
+	void qlv_contextMenuRequested(const QPoint &pos)
+	{
+		FileTransItem *i = static_cast<FileTransItem*>(itemAt(pos));
+
+		if(!i)
 			return;
 
-		FileTransItem *i = static_cast<FileTransItem*>(item);
-
-		Q3PopupMenu p;
-		p.insertItem(tr("&Cancel"), 0);
-		p.insertSeparator();
-		//p.insertItem(tr("&Open Destination Folder"), 1);
-		p.insertItem(tr("Cl&ear"), 2);
+		QMenu p;
+		p.addAction(tr("&Cancel"));			// index = 0
+		p.addSeparator();				// index = 1
+		p.addAction(tr("&Open Containing Folder"));	// index = 2
+		p.addAction(tr("Cl&ear"));			// index = 3
 
 		if(i->done) {
-			p.setItemEnabled(0, false);
+			p.actions().at(0)->setEnabled(false);
 		}
 		else {
-			//p.setItemEnabled(1, false);
-			p.setItemEnabled(2, false);
+			//p.actions().at(2)->setEnabled(false);
+			p.actions().at(3)->setEnabled(false);
 		}
 
-		int x = p.exec(pos);
+		QAction* act = p.exec(QCursor::pos());
+		int x;
+		if(act) {
+			x = p.actions().indexOf(act);
+		}
+		else {
+			return;
+		}
 
 		// TODO: what if item is deleted during exec?
 
 		if(x == 0) {
 			if(!i->done)
-				itemCancel(i->id);
+				emit itemCancel(i->id);
 		}
-		else if(x == 1)
-			itemOpenDest(i->id);
 		else if(x == 2)
-			itemClear(i->id);
+			emit itemOpenDest(i->id);
+		else if(x == 3)
+			emit itemClear(i->id);
 	}
 
-private:
 	void doResize()
 	{
-		Q3ListViewItemIterator it(this);
-		for(Q3ListViewItem *i; (i = it.current()); ++it)
-			i->setup();
+		for(int i = 0; i < count(); i++) {
+			static_cast<FileTransItem*>(item(i))->setup();
+		}
+		viewport()->update();
 	}
 };
+
+
+
+
+FileTransDelegate::FileTransDelegate(QObject* p)
+	: QItemDelegate(p)
+	, ftv(0)
+{
+	ftv = static_cast<FileTransView*>(p);
+}
+
+void FileTransDelegate::paint(QPainter* mp, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+	FileTransItem* fti = static_cast<FileTransItem*>(ftv->item(index.row()));
+	fti->paintCell(mp, option);
+}
+
+QSize FileTransDelegate::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
+{
+	QSize sz = QItemDelegate::sizeHint(option, index);
+	FileTransItem* fti = static_cast<FileTransItem*>(ftv->item(index.row()));
+	sz.setHeight(fti->height);
+	return sz;
+}
+
+
 
 class TransferMapping
 {
@@ -1435,13 +1510,17 @@ public:
 	FileTransDlg *parent;
 	PsiCon *psi;
 	FileTransView *lv;
-	Q3PtrList<TransferMapping> transferList;
+	QList<TransferMapping*> transferList;
 	QTimer t;
 
 	Private(FileTransDlg *_parent)
 	{
 		parent = _parent;
-		transferList.setAutoDelete(true);
+	}
+
+	~Private()
+	{
+		qDeleteAll(transferList);
 	}
 
 	int findFreeId()
@@ -1449,9 +1528,9 @@ public:
 		int n = 0;
 		while(1) {
 			bool found = false;
-			Q3ListViewItemIterator it(lv);
-			for(Q3ListViewItem *i; (i = it.current()); ++it) {
-				FileTransItem *fi = static_cast<FileTransItem*>(i);
+			for(int i = 0; i < lv->count(); i++) {
+				QListWidgetItem *it = lv->item(i);
+				FileTransItem *fi = static_cast<FileTransItem*>(it);
 				if(fi->id == n) {
 					found = true;
 					break;
@@ -1466,21 +1545,21 @@ public:
 
 	FileTransItem *findItem(int id)
 	{
-		Q3ListViewItemIterator it(lv);
-		for(Q3ListViewItem *i; (i = it.current()); ++it) {
-			FileTransItem *fi = static_cast<FileTransItem*>(i);
+		for(int i = 0; i < lv->count(); i++) {
+			QListWidgetItem *it = lv->item(i);
+			FileTransItem *fi = static_cast<FileTransItem*>(it);
 			if(fi->id == id)
 				return fi;
 		}
 		return 0;
 	}
 
-	Q3PtrList<FileTransItem> getFinished()
+	QList<FileTransItem*> getFinished()
 	{
-		Q3PtrList<FileTransItem> list;
-		Q3ListViewItemIterator it(lv);
-		for(Q3ListViewItem *i; (i = it.current()); ++it) {
-			FileTransItem *fi = static_cast<FileTransItem*>(i);
+		QList<FileTransItem*> list;
+		for(int i = 0; i < lv->count(); i++) {
+			QListWidgetItem *it = lv->item(i);
+			FileTransItem *fi = static_cast<FileTransItem*>(it);
 			if(fi->done)
 				list.append(fi);
 		}
@@ -1489,20 +1568,20 @@ public:
 
 	TransferMapping *findMapping(FileTransferHandler *h)
 	{
-		Q3PtrListIterator<TransferMapping> it(transferList);
-		for(TransferMapping *i; (i = it.current()); ++it) {
-			if(i->h == h)
-				return i;
+		QList<TransferMapping*>::iterator it = transferList.begin();
+		for(; it != transferList.end(); ++it) {
+			if((*it)->h == h)
+				return *it;
 		}
 		return 0;
 	}
 
 	TransferMapping *findMapping(int id)
 	{
-		Q3PtrListIterator<TransferMapping> it(transferList);
-		for(TransferMapping *i; (i = it.current()); ++it) {
-			if(i->id == id)
-				return i;
+		QList<TransferMapping*>::iterator it = transferList.begin();
+		for(; it != transferList.end(); ++it) {
+			if((*it)->id == id)
+				return *it;
 		}
 		return 0;
 	}
@@ -1524,7 +1603,6 @@ public:
 			fi->done = true;
 		}
 
-		parent->setProgress(i->id, i->p, i->h->totalSteps(), i->sent, bps, updateAll);
 
 		if(done) {
 			bool recv = (i->h->mode() == FileTransferHandler::Receiving);
@@ -1532,12 +1610,7 @@ public:
 			if(recv) {
 				fname = i->h->fileName();
 				savename = i->h->saveName();
-			}
 
-			PsiAccount *pa = i->h->account();
-			transferList.removeRef(i);
-
-			if(recv) {
 				//printf("fname: [%s], savename: [%s]\n", fname.latin1(), savename.latin1());
 
 				// rename .part to original filename
@@ -1548,9 +1621,18 @@ public:
 				if(!dir.rename(fi.fileName(), fname)) {
 					// TODO: display some error about renaming
 				}
+				findItem(i->id)->fileicon = i->h->fileIcon();
 			}
 
+			PsiAccount *pa = i->h->account();
 			pa->playSound(PsiAccount::eFTComplete);
+		}
+
+		parent->setProgress(i->id, i->p, i->h->totalSteps(), i->sent, bps, updateAll);
+
+		if(done) {
+			transferList.removeAll(i);
+			delete i;
 		}
 	}
 };
@@ -1575,6 +1657,7 @@ FileTransDlg::FileTransDlg(PsiCon *psi)
 	connect(d->lv, SIGNAL(itemCancel(int)), SLOT(itemCancel(int)));
 	connect(d->lv, SIGNAL(itemOpenDest(int)), SLOT(itemOpenDest(int)));
 	connect(d->lv, SIGNAL(itemClear(int)), SLOT(itemClear(int)));
+	connect(d->lv, SIGNAL(doubleClicked(QModelIndex)), SLOT(openFile(QModelIndex)));
 	vb->addWidget(d->lv);
 	QHBoxLayout *hb = new QHBoxLayout;
 	vb->addLayout(hb);
@@ -1589,12 +1672,12 @@ FileTransDlg::FileTransDlg(PsiCon *psi)
 	pb_close->setDefault(true);
 	pb_close->setFocus();
 
-	d->lv->addColumn("");
-	d->lv->header()->hide();
+//	d->lv->addColumn("");
+//	d->lv->header()->hide();
 
-	d->lv->setResizeMode(Q3ListView::LastColumn);
-	d->lv->setAllColumnsShowFocus(true);
-	d->lv->setSorting(-1);
+	d->lv->setResizeMode(QListWidget::Adjust);
+	//d->lv->setAllColumnsShowFocus(true);
+	d->lv->setSortingEnabled(false); //->setSorting(-1);
 
 	resize(560, 240);
 }
@@ -1605,15 +1688,19 @@ FileTransDlg::~FileTransDlg()
 	delete d;
 }
 
-int FileTransDlg::addItem(const QString &filename, qlonglong size, const QString &peer, bool sending)
+int FileTransDlg::addItem(const QString &filename, const QString &path, const QPixmap &fileicon, qlonglong size, const QString &peer, bool sending)
 {
 	int id = d->findFreeId();
-	FileTransItem *i = new FileTransItem(d->lv, filename, size, peer, sending);
+	FileTransItem *i = new FileTransItem(d->lv, filename, path, size, peer, sending);
 	if(sending)
 		i->icon = IconsetFactory::icon("psi/upload").impix().pixmap();
 	else
 		i->icon = IconsetFactory::icon("psi/download").impix().pixmap();
+		
+	i->fileicon = fileicon;
+		
 	i->id = id;
+	i->setup();
 	d->t.start(1000);
 	return id;
 }
@@ -1635,7 +1722,7 @@ void FileTransDlg::setProgress(int id, int step, int total, qlonglong sent, int 
 			do_repaint = true;
 		}
 		if(do_repaint)
-			i->repaint();
+			d->lv->viewport()->update();
 	}
 }
 
@@ -1644,7 +1731,7 @@ void FileTransDlg::removeItem(int id)
 	FileTransItem *i = d->findItem(id);
 	if(i)
 		delete i;
-	if(d->lv->childCount() == 0)
+	if(!d->lv->count())
 		d->t.stop();
 }
 
@@ -1655,9 +1742,9 @@ void FileTransDlg::setError(int id, const QString &reason)
 		i->done = true;
 		i->error = reason;
 		i->updateRate();
-		i->repaint();
+		d->lv->viewport()->update();
 		show();
-		d->lv->ensureItemVisible(i);
+		d->lv->scrollToItem(i);
 		QMessageBox::information(this, tr("Transfer Error"), tr("Transfer of %1 with %2 failed.\nReason: %3").arg(i->name).arg(i->peer).arg(reason));
 	}
 }
@@ -1673,13 +1760,13 @@ void FileTransDlg::takeTransfer(FileTransferHandler *h, int p, qlonglong sent)
 
 	TransferMapping *i = new TransferMapping;
 	i->h = h;
-	i->id = addItem(h->fileName(), h->fileSize(), peer, (h->mode() == FileTransferHandler::Sending));
+	i->id = addItem(h->fileName(), h->filePath(), h->fileIcon(), h->fileSize(), peer, (h->mode() == FileTransferHandler::Sending));
 	i->p = p;
 	i->sent = sent;
 	d->transferList.append(i);
 
 	FileTransItem *fi = d->findItem(i->id);
-	d->lv->ensureItemVisible(fi);
+	d->lv->scrollToItem(fi);
 
 	if(p == i->h->totalSteps()) {
 		d->updateProgress(i, true);
@@ -1692,17 +1779,18 @@ void FileTransDlg::takeTransfer(FileTransferHandler *h, int p, qlonglong sent)
 
 void FileTransDlg::clearFinished()
 {
-	Q3PtrList<FileTransItem> list = d->getFinished();
+	QList<FileTransItem*> list = d->getFinished();
 	{
 		// remove related transfer mappings
-		Q3PtrListIterator<FileTransItem> it(list);
-		for(FileTransItem *fi; (fi = it.current()); ++it) {
+		QList<FileTransItem*>::iterator it = list.begin();
+		for(; it != list.end(); ++it) {
+			FileTransItem *fi = *it;
 			TransferMapping *i = d->findMapping(fi->id);
-			d->transferList.removeRef(i);
+			d->transferList.removeAll(i);
+			delete i;
 		}
 	}
-	list.setAutoDelete(true);
-	list.clear();
+	qDeleteAll(list);
 }
 
 void FileTransDlg::ft_progress(int p, qlonglong sent)
@@ -1720,7 +1808,8 @@ void FileTransDlg::ft_error(int x, int, const QString &s)
 {
 	TransferMapping *i = d->findMapping((FileTransferHandler *)sender());
 	int id = i->id;
-	d->transferList.removeRef(i);
+	d->transferList.removeAll(i);
+	delete i;
 
 	QString str;
 	//if(x == FileTransferHandler::ErrReject)
@@ -1735,9 +1824,10 @@ void FileTransDlg::ft_error(int x, int, const QString &s)
 void FileTransDlg::updateItems()
 {
 	// operate on a copy so that we can delete items in updateProgress
-	Q3PtrList<TransferMapping> list = d->transferList;
-	Q3PtrListIterator<TransferMapping> it(list);
-	for(TransferMapping *i; (i = it.current()); ++it) {
+	//Q3PtrList<TransferMapping> list = d->transferList;
+	QList<TransferMapping*>::iterator it = d->transferList.begin();
+	for(; it != d->transferList.end(); ++it) {
+		TransferMapping *i = *it;
 		if(i->h) {
 			i->logSent();
 			d->updateProgress(i);
@@ -1749,21 +1839,30 @@ void FileTransDlg::itemCancel(int id)
 {
 	FileTransItem *fi = d->findItem(id);
 	TransferMapping *i = d->findMapping(id);
-	d->transferList.removeRef(i);
+	d->transferList.removeAll(i);
+	delete i;
 	delete fi;
 }
 
 void FileTransDlg::itemOpenDest(int id)
 {
-	TransferMapping *i = d->findMapping(id);
-
-	QString path;
-	bool recv = (i->h->mode() == FileTransferHandler::Receiving);
-	if(recv)
-		path = QFileInfo(i->h->saveName()).path();
-	else
-		path = QFileInfo(i->h->fileName()).path();
-
+	FileTransItem *i = d->findItem(id);
+		
+#if defined(Q_OS_WIN)
+	QProcess::startDetached("explorer.exe", QStringList(QLatin1String("/select,") + QDir::toNativeSeparators(i->path)));
+#elif defined(Q_OS_MAC)
+	QProcess::execute("/usr/bin/osascript", QStringList()
+						<< "-e"
+						<< QString("tell application \"Finder\" to reveal POSIX file \"%1\"")
+						.arg(i->path));
+	QProcess::execute("/usr/bin/osascript", QStringList()
+						<< "-e"
+						<< "tell application \"Finder\" to activate");
+#else
+	// we cannot select a file here, because no file browser really supports it...
+	const QFileInfo fileInfo(i->path);
+	QProcess::startDetached("xdg-open", QStringList(fileInfo.path()));
+#endif
 	//printf("item open dest: [%s]\n", path.latin1());
 }
 
@@ -1771,19 +1870,32 @@ void FileTransDlg::itemClear(int id)
 {
 	FileTransItem *fi = d->findItem(id);
 	TransferMapping *i = d->findMapping(id);
-	d->transferList.removeRef(i);
+	d->transferList.removeAll(i);
+	delete i;
 	delete fi;
+}
+
+void FileTransDlg::openFile(QModelIndex index)
+{	
+	FileTransItem *i = static_cast<FileTransItem*>(d->lv->item(index.row()));
+	if (i->done) {
+		QFileInfo fi(i->path);
+		if(fi.exists()){
+			QDesktopServices::openUrl(QUrl::fromLocalFile(i->path));
+		}
+	}
 }
 
 void FileTransDlg::killTransfers(PsiAccount *pa)
 {
-	Q3PtrList<TransferMapping> list = d->transferList;
-	Q3PtrListIterator<TransferMapping> it(list);
-	for(TransferMapping *i; (i = it.current()); ++it) {
+	QList<TransferMapping*> list = d->transferList;
+	QList<TransferMapping*>::iterator it = list.begin();
+	for(; it != list.end(); ++it) {
 		// this account?
-		if(i->h->account() == pa) {
-			FileTransItem *fi = d->findItem(i->id);
-			d->transferList.removeRef(i);
+		if((*it)->h->account() == pa) {
+			FileTransItem *fi = d->findItem((*it)->id);
+			d->transferList.removeAll(*it);
+			delete *it;
 			delete fi;
 		}
 	}

@@ -1,12 +1,15 @@
 #ifndef FILETRANSDLG_H
 #define FILETRANSDLG_H
 
+#include <QItemDelegate>
 #include "advwidget.h"
 #include "ui_filetrans.h"
 #include "s5b.h"
 
 class PsiCon;
 class PsiAccount;
+class QPixmap;
+class FileTransView;
 namespace XMPP {
 	class FileTransfer;
 	class Jid;
@@ -32,6 +35,9 @@ public:
 	int totalSteps() const;
 	bool resumeSupported() const;
 	QString saveName() const;
+	QString filePath() const;
+	QPixmap fileIcon() const;
+	
 
 	void send(const Jid &to, const QString &fname, const QString &desc);
 	void accept(const QString &saveName, const QString &fileName, qlonglong offset=0);
@@ -111,7 +117,7 @@ public:
 	FileTransDlg(PsiCon *);
 	~FileTransDlg();
 
-	int addItem(const QString &filename, qlonglong size, const QString &peer, bool sending);
+	int addItem(const QString &filename, const QString &path, const QPixmap &fileicon, qlonglong size, const QString &peer, bool sending);
 	void setProgress(int id, int step, int total, qlonglong sent, int bytesPerSecond, bool updateAll=false);
 	void setError(int id, const QString &reason);
 	void removeItem(int id);
@@ -128,10 +134,23 @@ private slots:
 	void itemCancel(int);
 	void itemOpenDest(int);
 	void itemClear(int);
+	void openFile(QModelIndex);
 
 private:
 	class Private;
 	Private *d;
+};
+
+class FileTransDelegate : public QItemDelegate
+{
+	Q_OBJECT
+public:
+	FileTransDelegate(QObject* p);
+	void paint(QPainter* mp, const QStyleOptionViewItem& option, const QModelIndex& index) const;
+	QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const;
+
+private:
+	FileTransView* ftv;
 };
 
 #endif
