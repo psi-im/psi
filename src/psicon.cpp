@@ -1479,6 +1479,7 @@ void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 			FileRequestDlg *w = new FileRequestDlg(fe->timeStamp(), ft, e->account());
 			bringToFront(w);
 		}
+		delete e;
 		return;
 	}
 #endif
