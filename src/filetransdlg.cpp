@@ -1232,7 +1232,7 @@ public:
 
 		QPixmap pix(w, h);
 		QPainter *p = new QPainter(&pix);
-		QFont font = mp->font();
+		QFont font = option.font;
 		QFont boldFont = font;
 		boldFont.setBold(true);
 		QFontMetrics fm(font);
