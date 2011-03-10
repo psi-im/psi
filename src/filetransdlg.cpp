@@ -20,6 +20,7 @@
 #include "jidutil.h"
 #include "psitooltip.h"
 #include "psicontactlist.h"
+#include "accountscombobox.h"
 #include "accountlabel.h"
 #include "psioptions.h"
 #include "fileutil.h"
