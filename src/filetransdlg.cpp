@@ -1850,7 +1850,8 @@ void FileTransDlg::itemOpenDest(int id)
 	FileTransItem *i = d->findItem(id);
 		
 #if defined(Q_OS_WIN)
-	QProcess::startDetached("explorer.exe", QStringList(QLatin1String("/select,") + QDir::toNativeSeparators(i->path)));
+	QProcess::startDetached("explorer.exe", QStringList() << QLatin1String("/select,")
+	                                                      << QDir::toNativeSeparators(i->path));
 #elif defined(Q_OS_MAC)
 	QProcess::execute("/usr/bin/osascript", QStringList()
 						<< "-e"
