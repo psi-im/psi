@@ -106,7 +106,7 @@ QString FileUtil::getSaveFileName(QWidget* parent, const QString& caption, const
 QString FileUtil::getImageFileName(QWidget* parent)
 {
 	return FileUtil::getOpenFileName(parent, tr("Choose a file"),
-	                                 tr("Images (*.png *.xpm *.jpg *.PNG *.XPM *.JPG)"));
+	                                 tr("Images (*.png *.xpm *.jpg *.jpeg *.PNG *.XPM *.JPG *.JPEG)"));
 }
 
 QString FileUtil::mimeToFileExt(const QString &mime)
