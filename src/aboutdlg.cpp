@@ -48,10 +48,10 @@ AboutDlg::AboutDlg(QWidget* parent)
 			   tr("Current Maintainer and Original Author"));
 	authors += details(QString::fromUtf8("Kevin Smith"),
 			   "kismith@psi-im.org", "", "",
-			   tr("Lead Developer and Past Maintainer"));
+			   tr("Past Lead Developer and Maintainer"));
 	authors += details(QString::fromUtf8("Remko Tronçon"),
 			   "", "", "http://el-tramo.be",
-			   tr("Lead Developer"));
+			   tr("Past Lead Developer"));
 	authors += details(QString::fromUtf8("Michail Pishchagin"),
 			   "mblsha@psi-im.org", "", "",
 			   tr("Lead Widget Developer"));
