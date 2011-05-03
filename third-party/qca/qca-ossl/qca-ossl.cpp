@@ -5147,9 +5147,11 @@ public:
 		OpenSSL_add_ssl_algorithms();
 		SSL_CTX *ctx = 0;
 		switch (version) {
+#ifndef OPENSSL_NO_SSL2
 		case TLS::SSL_v2:
 			ctx = SSL_CTX_new(SSLv2_client_method());
 			break;
+#endif
 		case TLS::SSL_v3:
 			ctx = SSL_CTX_new(SSLv3_client_method());
 			break;
