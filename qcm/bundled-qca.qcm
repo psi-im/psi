@@ -22,6 +22,7 @@ public:
 			conf->addDefine("QCA_NO_PLUGINS");
 #ifndef Q_OS_WIN
 			// HAVE_SYS_FILIO_H
+			QString str;
 			if(conf->findHeader("sys/filio.h", QStringList(), &str))
 			{
 				if(!str.isEmpty())
