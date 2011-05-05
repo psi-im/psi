@@ -20,6 +20,15 @@ public:
 		if (QFile::exists("third-party/qca/qca")) {
 			conf->addExtra("CONFIG += qca-static");
 			conf->addDefine("QCA_NO_PLUGINS");
+#ifndef Q_OS_WIN
+			// HAVE_SYS_FILIO_H
+			if(conf->findHeader("sys/filio.h", QStringList(), &str))
+			{
+				if(!str.isEmpty())
+					conf->addIncludePath(str);
+				conf->addDefine("HAVE_SYS_FILIO_H");
+			}
+#endif
 			return true;
 		}
 		else {
