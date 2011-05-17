@@ -4626,6 +4626,7 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 					c->incomingMessage(m);
 				}
 			}
+			delete e;
 			return;
 		}
 
