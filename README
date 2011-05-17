@@ -82,7 +82,7 @@ Changes
 
   New in 0.12
   - Multi-user chat windows now join one on one chat windows and can be opened
-    in tabbed form, either sharing a window, or seperately.
+    in tabbed form, either sharing a window, or separately.
   - The roster search has been updated, and now triggers a filter when typing
     into the roster window.
   - An XML ringbuffer is now used, allowing access to already received XML in

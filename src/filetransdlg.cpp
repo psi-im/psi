@@ -280,7 +280,7 @@ void FileTransferHandler::accept(const QString &saveName, const QString &fileNam
 
 void FileTransferHandler::s5b_proxyQuery()
 {
-	statusMessage(tr("Quering proxy..."));
+	statusMessage(tr("Querying proxy..."));
 }
 
 void FileTransferHandler::s5b_proxyResult(bool b)

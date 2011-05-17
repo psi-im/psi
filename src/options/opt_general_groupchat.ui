@@ -190,10 +190,10 @@
           <item>
            <widget class="QLineEdit" name="le_newNickColor" >
             <property name="toolTip" >
-             <string>Type a colourcode here, or press the pallette to the right</string>
+             <string>Type a colourcode here, or press the palette to the right</string>
             </property>
             <property name="whatsThis" >
-             <string>Type a colourcode here, or press the pallette to the right</string>
+             <string>Type a colourcode here, or press the palette to the right</string>
             </property>
            </widget>
           </item>
