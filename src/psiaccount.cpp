@@ -1639,6 +1639,7 @@ void PsiAccount::forceDisconnect(bool fast, const XMPP::Status &s)
 		d->client->removeExtension("pep");
 
 		// send logout status
+		d->client->groupChatLeaveAll();
 		d->client->setPresence(s);
 	}
 
