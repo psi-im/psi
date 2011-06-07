@@ -1,6 +1,6 @@
 /*
- * historydlg.h - a dialog to show event history
- * Copyright (C) 2001, 2002  Justin Karneges
+ * historydlg.h
+ * Copyright (C) 2001-2010  Justin Karneges, Michail Pishchagin, Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,100 +21,74 @@
 #ifndef HISTORYDLG_H
 #define HISTORYDLG_H
 
-#include <Q3ListView>
 #include "eventdb.h"
+#include "ui_history.h"
 
-class PsiEvent;
 class PsiAccount;
-class Q3SimpleRichText;
+class PsiContact;
+class UserListItem;
+
 namespace XMPP {
 	class Jid;
 }
 
-class HistoryViewItem : public Q3ListViewItem
-{
-public:
-	HistoryViewItem(PsiEvent *, const QString &, int id, Q3ListView *);
-	~HistoryViewItem();
-
-	Q3SimpleRichText *rt;
-	QString text;
-	int id;
-	PsiEvent *e;
-	QString eventId;
-
-	// reimplemented
-	int rtti() const;
-	void paintCell(QPainter *p, const QColorGroup & cg, int column, int width, int alignment);
-	void setup();
-	int compare(Q3ListViewItem *, int column, bool ascending) const;
-};
-
-class HistoryView : public Q3ListView
+class HistoryDlg : public QDialog
 {
 	Q_OBJECT
+
 public:
-	HistoryView(QWidget *parent=0, const char *name=0);
+	HistoryDlg(const XMPP::Jid&, PsiAccount*);
+	virtual ~HistoryDlg();
 
-	void doResize();
-	void addEvent(PsiEvent *, const QString &);
-
-	// reimplemented
-	void keyPressEvent(QKeyEvent *e);
-	void resizeEvent(QResizeEvent *e);
-
-signals:
-	void aOpenEvent(PsiEvent *);
+	enum RequestType {
+		TypeNone = 0,
+		TypeNext,
+		TypePrevious,
+		TypeLatest,
+		TypeEarliest,
+		TypeFind,
+		TypeFindOldest,
+		TypeDate
+	};
 
 private slots:
-	void doOpenEvent();
-	void doCopyEvent();
-
-	void qlv_doubleclick(Q3ListViewItem *);
-	void qlv_contextPopup(Q3ListViewItem *, const QPoint &, int);
-
-private:
-	int at_id;
-};
-
-class HistoryDlg : public QWidget
-{
-	Q_OBJECT
-public:
-	HistoryDlg(const XMPP::Jid &, PsiAccount *);
-	~HistoryDlg();
-
-	// reimplemented
-	void keyPressEvent(QKeyEvent *e);
-	void closeEvent(QCloseEvent *e);
-
-signals:
-	void openEvent(PsiEvent *);
-
-public slots:
-	// reimplemented
-	void show();
-
-private slots:
-	void doLatest();
-	void doPrev();
-	void doNext();
-	void doSave();
-	void doErase();
-	void setButtons();
-	void actionOpenEvent(PsiEvent *);
-	void doFind();
-
+	void openSelectedContact();
+	void getLatest();
+	void getEarliest();
+	void getPrevious();
+	void getNext();
+	void getDate();
+	void refresh();
+	void findMessages();
 	void edb_finished();
-	void le_textChanged(const QString &);
+	void highlightBlocks(const QString text);
+	void changeAccount(const QString accountName);
+	void removeHistory();
+	void exportHistory();
+	void openChat();
+	void doMenu();
+	void removedContact(PsiContact*);
+
+protected:
+	bool eventFilter(QObject *, QEvent *);
 
 private:
+	void setButtons();
+	void setButtons(bool act);
+	void loadContacts();
+	void displayResult(const EDBResult , int, int max=-1);
+	QFont fontForOption(const QString& option);
+	void listAccounts();
+	UserListItem* currentUserListItem();
+	void startRequest();
+	void stopRequest();
+
+	EDBHandle* getEDBHandle();
+
 	class Private;
 	Private *d;
-
-	void loadPage(int);
-	void displayResult(const EDBResult, int, int max=-1);
-	void exportHistory(const QString &fname);
+	Ui::HistoryDlg ui_;
+	QStringList jids_;
 };
 
 #endif

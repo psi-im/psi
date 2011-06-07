@@ -18,7 +18,6 @@
 #include <QCheckBox>
 #include <QSpinBox>
 #include <QHeaderView>
-//Added by qt3to4:
 #include <QEvent>
 #include <QHBoxLayout>
 #include <QList>

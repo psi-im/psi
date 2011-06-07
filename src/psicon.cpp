@@ -40,7 +40,9 @@
 #include "activeprofiles.h"
 #include "accountadddlg.h"
 #include "psiiconset.h"
-#include "contactview.h"
+#ifndef NEWCONTACTLIST
+# include "contactview.h"
+#endif
 #include "psievent.h"
 #include "passphrasedlg.h"
 #include "common.h"

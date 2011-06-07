@@ -1,4 +1,4 @@
-QT += xml network qt3support
+QT += xml network
 
 # modules
 include($$PWD/protocol/protocol.pri)
@@ -103,6 +103,7 @@ HEADERS += \
 	$$PWD/activeprofiles.h \
 	$$PWD/profiledlg.h \
 	$$PWD/aboutdlg.h \
+	$$PWD/historydlg.h \
 	$$PWD/desktoputil.h \
 	$$PWD/fileutil.h \
 	$$PWD/textutil.h \
@@ -112,7 +113,6 @@ HEADERS += \
 	$$PWD/accountscombobox.h \
 	$$PWD/psievent.h \
 	$$PWD/xmlconsole.h \
-	$$PWD/contactview.h \
 	$$PWD/psiiconset.h \
 	$$PWD/applicationinfo.h \
 	$$PWD/pgptransaction.h \
@@ -238,7 +238,6 @@ SOURCES += \
 	$$PWD/accountscombobox.cpp \
 	$$PWD/psievent.cpp \
 	$$PWD/xmlconsole.cpp \
-	$$PWD/contactview.cpp \
 	$$PWD/psiiconset.cpp \
 	$$PWD/applicationinfo.cpp \
 	$$PWD/pgptransaction.cpp \
@@ -491,11 +490,14 @@ newcontactlist {
 	}
 }
 !newcontactlist {
+	QT += qt3support
 	HEADERS += \
-		$$PWD/legacypsiaccount.h
+		$$PWD/legacypsiaccount.h \
+		$$PWD/contactview.h
 
 	SOURCES += \
-		$$PWD/legacypsiaccount.cpp
+		$$PWD/legacypsiaccount.cpp \
+		$$PWD/contactview.cpp
 }
 
 CONFIG += pgputil
@@ -540,6 +542,7 @@ FORMS += \
 	$$PWD/info.ui \
 	$$PWD/search.ui \
 	$$PWD/about.ui \
+	$$PWD/history.ui \
 	$$PWD/optioneditor.ui \
 	$$PWD/passphrase.ui \
 	$$PWD/mucconfig.ui \

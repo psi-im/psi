@@ -105,6 +105,12 @@
 				<use-small-chats type="bool">false</use-small-chats>
 				<warn-before-clear type="bool">true</warn-before-clear>
 			</chat>
+			<history comment="History dialog options">
+				<size comment="Remembered window size" type="QSize">
+					<width>640</width>
+					<height>480</height>
+				</size>
+			</history>
 			<contactlist comment="Contact list options">
 				<auto-delete-unlisted comment="Automatically remove an unlisted contact from the contact list if it does not have any pending messages anymore" type="bool">false</auto-delete-unlisted>
 				<opacity comment="Opacity percentage of the contact list" type="int">100</opacity>

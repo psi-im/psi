@@ -78,7 +78,9 @@
 #endif
 #include "rosteritemexchangetask.h"
 #include "chatdlg.h"
-#include "contactview.h"
+#ifndef NEWCONTACTLIST
+# include "contactview.h"
+#endif
 #include "mood.h"
 #include "tune.h"
 #ifdef USE_PEP
@@ -3819,7 +3821,7 @@ void PsiAccount::actionHistory(const Jid &j)
 		bringToFront(w);
 	else {
 		w = new HistoryDlg(j, this);
-		connect(w, SIGNAL(openEvent(PsiEvent *)), SLOT(actionHistoryBox(PsiEvent *)));
+		//connect(w, SIGNAL(openEvent(PsiEvent *)), SLOT(actionHistoryBox(PsiEvent *)));
 		w->show();
 	}
 }

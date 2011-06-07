@@ -31,7 +31,9 @@
 #include "xmpp_tasks.h"
 #include "psiaccount.h"
 #include "psiiconset.h"
-#include "contactview.h"
+#ifndef NEWCONTACTLIST
+# include "contactview.h"
+#endif
 #include "busywidget.h"
 #include "common.h"
 #include "iconwidget.h"
@@ -115,7 +117,7 @@ void AddUserDlg::init(const QStringList &groups, PsiAccount *pa)
 	QStringList temp=groups;
 	temp.sort();
 	cb_group->addItems(temp);
-	str = ContactView::tr("Hidden");
+	str = tr("Hidden");
 	if (!groups.contains(str)) {
 		cb_group->addItem(str);
 	}

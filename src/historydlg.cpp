@@ -1,6 +1,7 @@
 /*
- * historydlg.cpp - a dialog to show event history
- * Copyright (C) 2001, 2002  Justin Karneges
+ * historydlg.cpp
+ * Copyright (C) 2001-2010  Justin Karneges, Michail Pishchagin,
+ * Piotr Okonski, Evgeny Khryukin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,44 +19,23 @@
  *
  */
 
-#ifdef __GNUC__
-#warning "historydlg is still full of qt3support usage"
-#endif
-#undef QT3_SUPPORT_WARNINGS
+#include <QMessageBox>
+#include <QScrollBar>
+#include <QMenu>
+#include <QProgressDialog>
 
 #include "historydlg.h"
-
-#include <QMenu>
-#include <Q3Header>
-#include <QLayout>
-#include <QLabel>
-#include <QLineEdit>
-#include <QPushButton>
-#include <QFileDialog>
-#include <Q3SimpleRichText>
-#include <QMessageBox>
-#include <QFrame>
-#include <QApplication>
-#include <QClipboard>
-#include <QTextStream>
-#include <QCloseEvent>
-#include <QKeyEvent>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
-#include <QResizeEvent>
 #include "psiaccount.h"
-#include "psievent.h"
-#include "busywidget.h"
-#include "applicationinfo.h"
-#include "common.h"
-#include "eventdb.h"
+#include "psicon.h"
+#include "psicontact.h"
 #include "psiiconset.h"
-#include "textutil.h"
-#include "jidutil.h"
-#include "userlist.h"
 #include "psioptions.h"
 #include "coloropt.h"
+#include "textutil.h"
+#include "jidutil.h"
 #include "fileutil.h"
+#include "userlist.h"
+#include "common.h"
 
 static QString getNext(QString *str)
 {
@@ -112,362 +92,239 @@ static QStringList wrapString(const QString &str, int wid)
 	return lines;
 }
 
-//----------------------------------------------------------------------------
-// HistoryView
-//----------------------------------------------------------------------------
+
 class HistoryDlg::Private
 {
 public:
-	Private() {}
-
 	Jid jid;
 	PsiAccount *pa;
-	HistoryView *lv;
-	//BusyWidget *busy;
-	QPushButton *pb_prev, *pb_next, *pb_refresh, *pb_find;
-	QLineEdit *le_find;
-
+	PsiCon *psi;
 	QString id_prev, id_begin, id_end, id_next;
-	int reqtype;
+	HistoryDlg::RequestType reqType;
 	QString findStr;
-
-	EDBHandle *h, *exp;
+	QDate date;
 };
 
 HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
+	: QDialog(0, Qt::Window)
 {
+	ui_.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
+	setModal(false);
 	d = new Private;
+	d->reqType = TypeNone;
 	d->pa = pa;
+	d->psi = pa->psi();
 	d->jid = jid;
 	d->pa->dialogRegister(this, d->jid);
-	d->exp = 0;
 
-	setWindowTitle(d->jid.full());
 #ifndef Q_WS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/history").icon());
 #endif
+	ui_.tb_find->setIcon(IconsetFactory::icon("psi/search").icon());
 
-	d->h = new EDBHandle(d->pa->edb());
-	connect(d->h, SIGNAL(finished()), SLOT(edb_finished()));
+	ui_.msgLog->setFont(fontForOption("options.ui.look.font.chat"));
+	ui_.jidList->setFont(fontForOption("options.ui.look.font.contactlist"));
 
-	QVBoxLayout *vb1 = new QVBoxLayout(this);
-	d->lv = new HistoryView(this);
-	d->lv->setVScrollBarMode(Q3ScrollView::AlwaysOn);
-	connect(d->lv, SIGNAL(aOpenEvent(PsiEvent *)), SLOT(actionOpenEvent(PsiEvent *)));
-	QSizePolicy sp = d->lv->sizePolicy();
-	sp.setVerticalStretch(1);
-	d->lv->setSizePolicy(sp);
-	vb1->addWidget(d->lv);
+	ui_.calendar->setFirstDayOfWeek(firstDayOfWeekFromLocale());
 
-	QHBoxLayout *hb1 = new QHBoxLayout;
-	vb1->addLayout(hb1);
+	connect(ui_.searchField, SIGNAL(returnPressed()), SLOT(findMessages()));
+	connect(ui_.searchField, SIGNAL(textChanged(const QString)), SLOT(highlightBlocks(const QString)));
+	connect(ui_.buttonPrevious, SIGNAL(released()), SLOT(getPrevious()));
+	connect(ui_.buttonNext, SIGNAL(released()), SLOT(getNext()));
+	connect(ui_.buttonRefresh, SIGNAL(released()), SLOT(refresh()));
+	connect(ui_.jidList, SIGNAL(itemSelectionChanged()), SLOT(openSelectedContact()));
+	connect(ui_.tb_find, SIGNAL(clicked()), SLOT(findMessages()));
+	connect(ui_.buttonLastest, SIGNAL(released()), SLOT(getLatest()));
+	connect(ui_.buttonEarliest, SIGNAL(released()), SLOT(getEarliest()));
+	connect(ui_.calendar, SIGNAL(selectionChanged()), SLOT(getDate()));
+	connect(ui_.calendar, SIGNAL(activated(QDate)), SLOT(getDate()));
 
-	QVBoxLayout *vb2 = new QVBoxLayout;
-	hb1->addLayout(vb2);
+	connect(d->pa, SIGNAL(removedContact(PsiContact*)), SLOT(removedContact(PsiContact*)));
 
-	QHBoxLayout *hb2 = new QHBoxLayout;
-	vb2->addLayout(hb2);
+	ui_.jidList->installEventFilter(this);
 
-	//d->busy = new BusyWidget(this);
-	//hb1->addWidget(d->busy);
+	listAccounts();
+	loadContacts();
 
-	d->pb_refresh = new QPushButton(tr("&Latest"), this);
-	d->pb_refresh->setMinimumWidth(80);
-	connect(d->pb_refresh, SIGNAL(clicked()), SLOT(doLatest()));
-	hb2->addWidget(d->pb_refresh);
+	if (PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool()) {
+		QSize s = PsiOptions::instance()->getOption("options.ui.history.size").value<QSize>();
+		if (!s.isEmpty()) {
+			resize(s);
+		}
+	}
 
-	d->pb_prev = new QPushButton(tr("&Previous"), this);
-	d->pb_prev->setMinimumWidth(80);
-	connect(d->pb_prev, SIGNAL(clicked()), SLOT(doPrev()));
-	hb2->addWidget(d->pb_prev);
-
-	d->pb_next = new QPushButton(tr("&Next"), this);
-	d->pb_next->setMinimumWidth(80);
-	connect(d->pb_next, SIGNAL(clicked()), SLOT(doNext()));
-	hb2->addWidget(d->pb_next);
-
-	QHBoxLayout *hb3 = new QHBoxLayout;
-	vb2->addLayout(hb3);
-
-	d->le_find = new QLineEdit(this);
-	connect(d->le_find, SIGNAL(textChanged(const QString &)), SLOT(le_textChanged(const QString &)));
-	connect(d->le_find, SIGNAL(returnPressed()), SLOT(doFind()));
-	hb3->addWidget(d->le_find);
-	d->pb_find = new QPushButton(tr("Find"), this);
-	connect(d->pb_find, SIGNAL(clicked()), SLOT(doFind()));
-	d->pb_find->setEnabled(false);
-	hb3->addWidget(d->pb_find);
-
-	QFrame *sep;
-	sep = new QFrame(this);
-	sep->setFrameShape(QFrame::VLine);
-	hb1->addWidget(sep);
-
-	QVBoxLayout *vb3 = new QVBoxLayout;
-	hb1->addLayout(vb3);
-
-	QPushButton *pb_save = new QPushButton(tr("&Export..."), this);
-	connect(pb_save, SIGNAL(clicked()), SLOT(doSave()));
-	vb3->addWidget(pb_save);
-	QPushButton *pb_erase = new QPushButton(tr("Er&ase All"), this);
-	connect(pb_erase, SIGNAL(clicked()), SLOT(doErase()));
-	vb3->addWidget(pb_erase);
-
-	sep = new QFrame(this);
-	sep->setFrameShape(QFrame::VLine);
-	hb1->addWidget(sep);
-
-	hb1->addStretch(1);
-
-	QVBoxLayout *vb4 = new QVBoxLayout;
-	hb1->addLayout(vb4);
-	vb4->addStretch(1);
-
-	QPushButton *pb_close = new QPushButton(tr("&Close"), this);
-	pb_close->setMinimumWidth(80);
-	connect(pb_close, SIGNAL(clicked()), SLOT(close()));
-	vb4->addWidget(pb_close);
-
-	resize(520,320);
-
-	X11WM_CLASS("history");
-
-	d->le_find->setFocus();
-
-	setButtons();
-	doLatest();
+	ui_.jidList->setFocus();
 }
 
 HistoryDlg::~HistoryDlg()
 {
-	delete d->exp;
-	d->pa->dialogUnregister(this);
+	if (PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool()) {
+		PsiOptions::instance()->setOption("options.ui.history.size", size());
+	}
 	delete d;
 }
 
-void HistoryDlg::keyPressEvent(QKeyEvent *e)
+bool HistoryDlg::eventFilter(QObject *obj, QEvent *e)
 {
-	if(e->key() == Qt::Key_Escape)
-		close();
-	else {
-		e->ignore();
+	if(obj == ui_.jidList && e->type() == QEvent::ContextMenu) {
+		e->accept();
+		QTimer::singleShot(0, this, SLOT(doMenu()));
+		return true;
+	}
+
+	return QDialog::eventFilter(obj, e);
+}
+
+QFont HistoryDlg::fontForOption(const QString &option)
+{
+	QFont font;
+	font.fromString(PsiOptions::instance()->getOption(option).toString());
+	return font;
+}
+
+void HistoryDlg::changeAccount(const QString /*accountName*/)
+{
+	ui_.msgLog->clear();
+	setButtons(false);
+	d->jid = QString();
+	d->pa = d->psi->contactList()->getAccountByJid(ui_.accountsBox->itemData(ui_.accountsBox->currentIndex()).toString());
+	loadContacts();
+	ui_.jidList->setCurrentRow(0);
+	openSelectedContact();
+}
+
+void HistoryDlg::listAccounts()
+{
+	if (d->psi)
+	{
+		foreach (PsiAccount* account, d->psi->contactList()->enabledAccounts())
+			ui_.accountsBox->addItem(IconsetFactory::icon("psi/account").icon(), account->nameWithJid(), QVariant(account->jid().full()));
+	}
+	//select active account
+	ui_.accountsBox->setCurrentIndex(ui_.accountsBox->findData(d->pa->jid().full()));
+	//connect signal after the list is populated to prevent execution in the middle of the loop
+	connect(ui_.accountsBox, SIGNAL(currentIndexChanged(const QString)), SLOT(changeAccount(const QString)));
+}
+
+void HistoryDlg::loadContacts()
+{
+	jids_.clear();
+	ui_.jidList->clear();
+	ui_.msgLog->clear();
+	foreach (PsiContact* contact, d->pa->contactList())
+	{
+		if(contact->isPrivate()
+		|| jids_.contains(contact->jid().bare()))
+			continue;
+
+		QListWidgetItem *item = new QListWidgetItem(contact->name(), ui_.jidList);
+		item->setToolTip(contact->jid().bare());
+		item->setIcon(PsiIconset::instance()->statusPtr(contact->jid(),Status(Status::Online))->icon());
+		//item->setIcon(PsiIconset::instance()->status(contact->status()).icon());
+		ui_.jidList->addItem(item);
+		jids_.append(item->toolTip());
+	}
+	PsiContact* self = d->pa->selfContact();
+	if(!jids_.contains(self->jid().bare())) {
+		QListWidgetItem *item = new QListWidgetItem(self->name(), ui_.jidList);
+		item->setToolTip(self->jid().bare());
+		//item->setIcon(PsiIconset::instance()->status(self->status()).icon());
+		item->setIcon(PsiIconset::instance()->statusPtr(self->jid(),Status(Status::Online))->icon());
+		ui_.jidList->addItem(item);
+		jids_.append(item->toolTip());
+	}
+
+	ui_.jidList->sortItems();
+	//set contact in jidList to selected jid
+	for (int i = 0; i < ui_.jidList->count(); i++)
+	{
+		if (ui_.jidList->item(i)->toolTip() == d->jid.bare().toLower())
+			ui_.jidList->setCurrentRow(i);  //triggers openSelectedContact()
 	}
 }
 
-void HistoryDlg::closeEvent(QCloseEvent *e)
+void HistoryDlg::openSelectedContact()
 {
-	if(d->exp) {
-		e->ignore();
+	ui_.msgLog->clear();
+	UserListItem *u = currentUserListItem();
+	if (!u)
+		return;
+
+	setWindowTitle(u->name() + " (" + u->jid().full() + ")");
+	d->jid = u->jid();
+	getLatest();
+}
+
+void HistoryDlg::highlightBlocks(const QString text)
+{
+	QTextCursor cur = ui_.msgLog->textCursor();
+	cur.clearSelection();
+	cur.movePosition(QTextCursor::Start);
+	ui_.msgLog->setTextCursor(cur);	
+
+	if (text.isEmpty()) {
+		getLatest();
 		return;
 	}
 
-	e->accept();
+	QList<QTextEdit::ExtraSelection> extras;
+	QTextEdit::ExtraSelection highlight;
+	highlight.format.setBackground(Qt::yellow);
+	highlight.cursor = ui_.msgLog->textCursor();	
+
+	bool found = ui_.msgLog->find(text);
+	while (found)
+	{
+		highlight.cursor = ui_.msgLog->textCursor();
+		extras << highlight;
+		found = ui_.msgLog->find(text);
+	}
+
+	ui_.msgLog->setExtraSelections(extras);
 }
 
-void HistoryDlg::show()
+void HistoryDlg::findMessages()
 {
-	QWidget::show();
-	d->lv->doResize();
+	//get the oldest event as a starting point
+	startRequest();
+	d->reqType = TypeFindOldest;
+	getEDBHandle()->getOldest(d->jid, 1);
 }
 
-void HistoryDlg::le_textChanged(const QString &s)
+void HistoryDlg::removeHistory()
 {
-	if(s.isEmpty() && d->pb_find->isEnabled())
-		d->pb_find->setEnabled(false);
-	else if(!s.isEmpty() && !d->pb_find->isEnabled())
-		d->pb_find->setEnabled(true);
+	int res = QMessageBox::question(this, tr("Remove history"),
+					tr("Are you sure you want to completely remove history for a contact %1?").arg(d->jid.bare())
+					,QMessageBox::Ok | QMessageBox::Cancel);
+	if(res == QMessageBox::Ok) {
+		getEDBHandle()->erase(d->jid);
+		openSelectedContact();
+	}
 }
 
-void HistoryDlg::setButtons()
+void HistoryDlg::openChat()
 {
-	d->pb_prev->setEnabled(!d->id_prev.isEmpty());
-	d->pb_next->setEnabled(!d->id_next.isEmpty());
+	UserListItem *u = currentUserListItem();
+	if(u) {
+		d->pa->actionOpenChat2(u->jid().bare());
+	}
 }
 
-void HistoryDlg::doLatest()
+void HistoryDlg::exportHistory()
 {
-	loadPage(0);
-}
-
-void HistoryDlg::doPrev()
-{
-	loadPage(1);
-}
-
-void HistoryDlg::doNext()
-{
-	loadPage(2);
-}
-
-void HistoryDlg::doSave()
-{
-	UserListItem *u = d->pa->findFirstRelevant(d->jid);
+	UserListItem *u = currentUserListItem();
+	if(!u)
+		return;
 	QString them = JIDUtil::nickOrJid(u->name(), u->jid().full());
 	QString s = JIDUtil::encode(them).toLower();
-
-	QString str = FileUtil::getSaveFileName(this,
-	                                        tr("Export message history"),
-	                                        s + ".txt",
-	                                        tr("Text files (*.txt);;All files (*.*)"));
-
-	if (!str.isEmpty()) {
-		exportHistory(str);
-	}
-}
-
-void HistoryDlg::doErase()
-{
-	int x = QMessageBox::information(this, tr("Confirm erase all"), tr("This will erase all message history for this contact!\nAre you sure you want to do this?"), tr("&Yes"), tr("&No"), QString::null, 1);
-	if (x == 0) {
-		d->h->erase(d->jid);
-	}
-}
-
-void HistoryDlg::loadPage(int type)
-{
-	d->reqtype = type;
-	if(type == 0) {
-		d->pb_refresh->setEnabled(false);
-		d->h->getLatest(d->jid, 50);
-		//printf("EDB: requesting latest 50 events\n");
-	}
-	else if(type == 1) {
-		d->pb_prev->setEnabled(false);
-		d->h->get(d->jid, d->id_prev, EDB::Backward, 50);
-		//printf("EDB: requesting 50 events backward, starting at %s\n", d->id_prev.latin1());
-	}
-	else if(type == 2) {
-		d->pb_next->setEnabled(false);
-		d->h->get(d->jid, d->id_next, EDB::Forward, 50);
-		//printf("EDB: requesting 50 events forward, starting at %s\n", d->id_next.latin1());
-	}
-
-	//d->busy->start();
-}
-
-void HistoryDlg::displayResult(const EDBResult r, int direction, int max)
-{
-	//d->lv->setUpdatesEnabled(false);
-	d->lv->clear();
-	int i = (direction == EDB::Forward) ? r.count()-1 : 0;
-	int at = 0;
-	while (i >= 0 && i <= r.count()-1 && (max == -1 ? true : at < max)) {
-		EDBItemPtr item = r.value(i);
-		PsiEvent* e = item->event();
-		d->lv->addEvent(e, item->prevId());
-		++at;
-		i += (direction == EDB::Forward) ? -1 : +1;
-	}
-	//d->lv->setUpdatesEnabled(true);
-	//d->lv->repaint(true);
-}
-
-void HistoryDlg::edb_finished()
-{
-	const EDBResult r = d->h->result();
-	if(d->h->lastRequestType() == EDBHandle::Read) {
-		//printf("EDB: retrieved %d events:\n", r->count());
-		if(r.count() > 0) {
-			if(d->reqtype == 0 || d->reqtype == 1) {
-				// events are in backward order
-				// first entry is the end event
-				EDBItemPtr it = r.first();
-				d->id_end = it->id();
-				d->id_next = it->nextId();
-				// last entry is the begin event
-				it = r.last();
-				d->id_begin = it->id();
-				d->id_prev = it->prevId();
-				displayResult(r, EDB::Backward);
-				//printf("[%s],[%s],[%s],[%s]\n", d->id_prev.latin1(), d->id_begin.latin1(), d->id_end.latin1(), d->id_next.latin1());
-			}
-			else if(d->reqtype == 2) {
-				// events are in forward order
-				// last entry is the end event
-				EDBItemPtr it = r.last();
-				d->id_end = it->id();
-				d->id_next = it->nextId();
-				// first entry is the begin event
-				it = r.first();
-				d->id_begin = it->id();
-				d->id_prev = it->prevId();
-				displayResult(r, EDB::Forward);
-			}
-			else if(d->reqtype == 3) {
-				// should only be one entry
-				EDBItemPtr ei = r.first();
-				d->reqtype = 1;
-				d->h->get(d->jid, ei->id(), EDB::Backward, 50);
-				//printf("EDB: requesting 50 events backward, starting at %s\n", d->id_prev.latin1());
-				return;
-			}
-		}
-		else {
-			if(d->reqtype == 3) {
-				QMessageBox::information(this, tr("Find"), tr("Search string '%1' not found.").arg(d->findStr));
-				return;
-			}
-		}
-	}
-	else if (d->h->lastRequestType() == EDBHandle::Erase) {
-		if (d->h->writeSuccess()) {
-			d->lv->clear();
-			d->id_prev = "";
-			d->id_begin = "";
-			d->id_end = "";
-			d->id_next = "";
-		}
-		else {
-			QMessageBox::critical(this, tr("Error"), tr("Unable to delete history file."));
-		}
-	}
-	else {
-		//printf("EDB: error\n");
-	}
-
-	if(d->lv->firstChild())
-		d->lv->setSelected(d->lv->firstChild(), true);
-
-	//d->busy->stop();
-	d->pb_refresh->setEnabled(true);
-	setButtons();
-}
-
-void HistoryDlg::actionOpenEvent(PsiEvent *e)
-{
-	openEvent(e);
-}
-
-void HistoryDlg::doFind()
-{
-	QString str = d->le_find->text();
-	if(str.isEmpty())
+	QString fname = FileUtil::getSaveFileName(this,
+						  tr("Export message history"),
+						  s + ".txt",
+						  tr("Text files (*.txt);;All files (*.*)"));
+	if(fname.isEmpty())
 		return;
 
-	if(d->lv->childCount() < 1)
-		return;
-
-	HistoryViewItem *i = (HistoryViewItem *)d->lv->selectedItem();
-	if(!i)
-		i = (HistoryViewItem *)d->lv->firstChild();
-	QString id = i->eventId;
-	if(id.isEmpty()) {
-		QMessageBox::information(this, tr("Find"), tr("Already at beginning of message history."));
-		return;
-	}
-
-	//printf("searching for: [%s], starting at id=[%s]\n", str.latin1(), id.latin1());
-	d->reqtype = 3;
-	d->findStr = str;
-	d->h->find(str, d->jid, id, EDB::Backward);
-}
-
-void HistoryDlg::exportHistory(const QString &fname)
-{
-	if (d->exp) { // already exporting
-		return;
-	}
 	QFile f(fname);
 	if(!f.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
 		QMessageBox::information(this, tr("Error"), tr("Error writing to file."));
@@ -476,22 +333,23 @@ void HistoryDlg::exportHistory(const QString &fname)
 	QTextStream stream(&f);
 
 	QString us = d->pa->nick();
-	UserListItem *u = d->pa->findFirstRelevant(d->jid);
-	QString them = JIDUtil::nickOrJid(u->name(), u->jid().full());
 
-	d->exp = new EDBHandle(d->pa->edb());
+	EDBHandle* h;
 	QString id;
+	startRequest();
 	while(1) {
+		h = new EDBHandle(d->pa->edb());
 		if(id.isEmpty()) {
-			d->exp->getOldest(d->jid, 1000);
-		} else {
-			d->exp->get(d->jid, id, EDB::Forward, 1000);
+			h->getOldest(d->jid, 1000);
 		}
-		while(d->exp->busy()) {
+		else {
+			h->get(d->jid, id, EDB::Forward, 1000);
+		}
+		while(h->busy()) {
 			qApp->processEvents();
 		}
 
-		const EDBResult r = d->exp->result();
+		const EDBResult r = h->result();
 		if(r.count() <= 0) {
 			break;
 		}
@@ -503,28 +361,25 @@ void HistoryDlg::exportHistory(const QString &fname)
 			PsiEvent *e = item->event();
 			QString txt;
 
-			QDateTime dt = e->timeStamp();
-			QString ts;
-			//ts.sprintf("%04d/%02d/%02d %02d:%02d:%02d", dt.date().year(), dt.date().month(), dt.date().day(), dt.time().hour(), dt.time().minute(), dt.time().second());
-			ts = dt.toString(Qt::LocalDate);
+			QString ts = e->timeStamp().toString(Qt::LocalDate);
 
 			QString nick;
 			if(e->originLocal()) {
 				nick = us;
-			} else {
+			}
+			else {
 				nick = them;
 			}
 
-			QString heading = QString("(%1) ").arg(ts) + nick + ": ";
 			if(e->type() == PsiEvent::Message) {
 				MessageEvent *me = (MessageEvent *)e;
-				stream << heading << endl;
+				stream << QString("[%1] <%2>: ").arg(ts, nick)/* << endl*/;
 
 				QStringList lines = me->message().body().split('\n', QString::KeepEmptyParts);
 				foreach(const QString& str, lines) {
 					QStringList sub = wrapString(str, 72);
 					foreach(const QString& str2, sub) {
-						txt += QString("    ") + str2 + '\n';
+						txt += str2 + "\n" + QString("    ");
 					}
 				}
 			}
@@ -540,250 +395,237 @@ void HistoryDlg::exportHistory(const QString &fname)
 			break;
 		}
 	}
-	delete d->exp;
-	d->exp = 0;
 	f.close();
+	stopRequest();
 }
 
-//----------------------------------------------------------------------------
-// HistoryView
-//----------------------------------------------------------------------------
-HistoryView::HistoryView(QWidget *parent, const char *name)
-:Q3ListView(parent, name)
+void HistoryDlg::doMenu()
 {
-	at_id = 0;
-	connect(this, SIGNAL(doubleClicked(Q3ListViewItem *)), SLOT(qlv_doubleclick(Q3ListViewItem *)));
-	connect(this, SIGNAL(rightButtonPressed(Q3ListViewItem *, const QPoint &, int)), SLOT(qlv_contextPopup(Q3ListViewItem *, const QPoint &, int)));
-
-	setAllColumnsShowFocus(true);
-	addColumn(tr("Type"));
-	addColumn(tr("Origin"));
-	addColumn(tr("Date"));
-	addColumn(tr("Text"));
-	setSorting(2);
-	setResizeMode(Q3ListView::LastColumn);
-	setShowToolTips(false);
-	header()->setClickEnabled(false);
-	header()->setMovingEnabled(false);
-	header()->setResizeEnabled(false);
+	QMenu *m = new QMenu(ui_.jidList);
+	m->addAction(IconsetFactory::icon("psi/chat").icon(), tr("&Open chat"), this, SLOT(openChat()));
+	m->addAction(IconsetFactory::icon("psi/save").icon(), tr("&Export history"), this, SLOT(exportHistory()));
+	m->addAction(IconsetFactory::icon("psi/clearChat").icon(), tr("&Delete history"), this, SLOT(removeHistory()));
+	m->exec(QCursor::pos());
 }
 
-void HistoryView::resizeEvent(QResizeEvent *e)
+void HistoryDlg::edb_finished()
 {
-	Q3ListView::resizeEvent(e);
+	setButtons(false);
+	stopRequest();
 
-	if(e->oldSize().width() != e->size().width())
-		doResize();
-}
-
-void HistoryView::keyPressEvent(QKeyEvent *e)
-{
-	if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return)
-		doOpenEvent();
-	else
-		Q3ListView::keyPressEvent(e);
-}
-
-void HistoryView::doResize()
-{
-	Q3ListViewItemIterator it(this);
-	HistoryViewItem *item;
-	for(; it.current() ; ++it) {
-		item = (HistoryViewItem *)it.current();
-		item->setup();
-	}
-}
-
-void HistoryView::addEvent(PsiEvent *e, const QString &eid)
-{
-	new HistoryViewItem(e, eid, at_id++, this);
-}
-
-void HistoryView::doOpenEvent()
-{
-	HistoryViewItem *i = (HistoryViewItem *)selectedItem();
-	if(!i)
+	EDBHandle* h = qobject_cast<EDBHandle*>(sender());
+	if(!h) {
 		return;
-	aOpenEvent(i->e);
-}
-
-void HistoryView::doCopyEvent()
-{
-	HistoryViewItem *i = (HistoryViewItem *)selectedItem();
-	if(!i)
-		return;
-
-	MessageEvent *me = (MessageEvent *)i->e;
-	QApplication::clipboard()->setText(me->message().body(), QClipboard::Clipboard);
-	if(QApplication::clipboard()->supportsSelection())
-		QApplication::clipboard()->setText(me->message().body(), QClipboard::Selection);
-}
-
-void HistoryView::qlv_doubleclick(Q3ListViewItem *xi)
-{
-	HistoryViewItem *i = (HistoryViewItem *)xi;
-
-	setSelected(i, true);
-	doOpenEvent();
-}
-
-void HistoryView::qlv_contextPopup(Q3ListViewItem *ix, const QPoint &pos, int)
-{
-	HistoryViewItem *i = (HistoryViewItem *)ix;
-	if(!i)
-		return;
-
-	QMenu popup;
-	popup.addAction(tr("Open"), this, SLOT(doOpenEvent()));
-	popup.addSeparator();
-	QAction *copyAction = popup.addAction(tr("Copy"), this, SLOT(doCopyEvent()));
-
-	if(i->e->type() != PsiEvent::Message) {
-		copyAction->setEnabled(false);
 	}
 
-	popup.exec(pos);
-}
+	const EDBResult r = h->result();
+	if (h->lastRequestType() == EDBHandle::Read)
+	{
+		if (r.count() > 0)
+		{
+			if (d->reqType == TypeLatest || d->reqType == TypePrevious)
+			{
+				// events are in backward order
+				// first entry is the end event
+				EDBItemPtr it = r.first();
+				d->id_end = it->id();
+				d->id_next = it->nextId();
+				// last entry is the begin event
+				it = r.last();
+				d->id_begin = it->id();
+				d->id_prev = it->prevId();
+				displayResult(r, EDB::Forward);
+			}
+			else if (d->reqType == TypeEarliest || d->reqType == TypeNext || d->reqType == TypeDate)
+			{
+				// events are in forward order
+				// last entry is the end event
+				EDBItemPtr it = r.last();
+				d->id_end = it->id();
+				d->id_next = it->nextId();
+				// first entry is the begin event
+				it = r.first();
+				d->id_begin = it->id();
+				d->id_prev = it->prevId();
+				displayResult(r, EDB::Backward);
+			}
+			else if (d->reqType == TypeFindOldest)
+			{
+				QString str = ui_.searchField->text();
+				if (str.isEmpty())
+				{
+					getLatest();
+					return;
+				}
+				d->reqType = TypeFind;
+				d->findStr = str;
+				EDBItemPtr ei = r.first();
+				startRequest();
+				getEDBHandle()->find(str, d->jid, ei->id(), EDB::Forward);
+			}
+			else if (d->reqType == TypeFind)
+			{
+				displayResult(r, EDB::Forward);
+				highlightBlocks(ui_.searchField->text());
+				return;
+			}
 
-
-//----------------------------------------------------------------------------
-// HistoryViewItem
-//----------------------------------------------------------------------------
-HistoryViewItem::HistoryViewItem(PsiEvent *_e, const QString &eid, int xid, Q3ListView *parent)
-:Q3ListViewItem(parent)
-{
-	rt = 0;
-	id = xid;
-	eventId = eid;
-
-	if(_e->type() == PsiEvent::Message) {
-		MessageEvent *me = (MessageEvent *)_e;
-		e = new MessageEvent(*me);
-	}
-	else if(_e->type() == PsiEvent::Auth) {
-		AuthEvent *ae = (AuthEvent *)_e;
-		e = new AuthEvent(*ae);
-	}
-
-	PsiIcon *a = PsiIconset::instance()->event2icon(e);
-	if(e->type() == PsiEvent::Message) {
-		MessageEvent *me = (MessageEvent *)e;
-		const Message &m = me->message();
-		text = TextUtil::plain2rich(m.body());
-
-		if(!m.urlList().isEmpty())
-			setPixmap(0, IconsetFactory::icon("psi/www").impix());
-		else if(e->originLocal())
-			setPixmap(0, IconsetFactory::icon("psi/sendMessage").impix());
-		else if(a)
-			setPixmap(0, a->impix());
-	}
-	else if(e->type() == PsiEvent::Auth) {
-		AuthEvent *ae = (AuthEvent *)e;
-		text = ae->authType();
-		if (a)
-			setPixmap(0, a->impix());
-	}
-
-	if(e->originLocal())
-		setText(1, HistoryView::tr("To"));
-	else
-		setText(1, HistoryView::tr("From"));
-
-	QString date;
-	const QDateTime &ts = e->timeStamp();
-	/*date.sprintf("%02d/%02d/%02d %02d:%02d:%02d",
-		ts.date().month(),
-		ts.date().day(),
-		ts.date().year(),
-		ts.time().hour(),
-		ts.time().minute(),
-		ts.time().second());*/
-	date = ts.toString(Qt::LocalDate);
-
-	setText(2, date);
-
-	rt = new Q3SimpleRichText(text, listView()->font());
-}
-
-HistoryViewItem::~HistoryViewItem()
-{
-	delete rt;
-	delete e;
-}
-
-// reimplemented from QListViewItem.  setup() and paintCell() are tricky stuff
-void HistoryViewItem::setup()
-{
-	widthChanged();
-
-	Q3ListView *lv = listView();
-
-	if(rt) {
-		int w = lv->columnWidth(3);
-		rt->setWidth(w);
-	}
-
-	int y;
-	//y = lv->fontMetrics().size(AlignVCenter, displayStr).height();
-	if(!rt)
-		y = 22;
-	else
-		y = rt->height();
-
-	y += lv->itemMargin() * 2;
-
-	// ensure an even number
-	if(y & 1)
-		++y;
-
-	setHeight(y);
-}
-
-void HistoryViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column, int width, int alignment)
-{
-	QColorGroup mycg = cg;
-	if(e->originLocal())
-{
-		mycg.setColor(QColorGroup::Text, ColorOpt::instance()->color("options.ui.look.colors.messages.sent").name() );
-}
-	else
-{
-		mycg.setColor(QColorGroup::Text, ColorOpt::instance()->color("options.ui.look.colors.messages.received").name() );
-}
-
-	if(column == 3) {
-		QBrush br;
-		if(isSelected()) {
-			mycg.setColor(QColorGroup::Text, mycg.highlightedText());
-			br = cg.brush(QColorGroup::Highlight);
+			setButtons();
 		}
-		else {
-			br = cg.brush(QColorGroup::Base);
-		}
-
-		int h = height();
-		if(rt) {
-			Q3SimpleRichText tmp(QString("<qt><font color=\"%1\">" + text + "</font></qt>").arg(mycg.text().name()), listView()->font());
-			tmp.setWidth(rt->width());
-			tmp.draw(p, 0, 0, QRect(0, 0, width, h), mycg, &br);
+		else
+		{
+			ui_.msgLog->clear();
 		}
 	}
-	else {
-		alignment = Qt::AlignTop;
+}
 
-		Q3ListViewItem::paintCell(p, mycg, column, width, alignment);
+void HistoryDlg::setButtons()
+{
+	ui_.buttonPrevious->setEnabled(!d->id_prev.isEmpty());
+	ui_.buttonNext->setEnabled(!d->id_next.isEmpty());
+	ui_.buttonEarliest->setEnabled(!d->id_prev.isEmpty());
+	ui_.buttonLastest->setEnabled(!d->id_next.isEmpty());
+}
+
+void HistoryDlg::setButtons(bool act)
+{
+	ui_.buttonPrevious->setEnabled(act);
+	ui_.buttonNext->setEnabled(act);
+	ui_.buttonEarliest->setEnabled(act);
+	ui_.buttonLastest->setEnabled(act);
+}
+
+void HistoryDlg::refresh()
+{
+	ui_.calendar->setSelectedDate(QDate::currentDate());
+	ui_.searchField->clear();
+	getLatest();
+}
+
+void HistoryDlg::getLatest()
+{
+	d->reqType = TypeLatest;
+	startRequest();
+	getEDBHandle()->getLatest(d->jid, 50);
+}
+
+void HistoryDlg::getEarliest()
+{
+	d->reqType = TypeEarliest;
+	startRequest();
+	getEDBHandle()->getOldest(d->jid, 50);
+}
+
+void HistoryDlg::getPrevious()
+{
+	d->reqType = TypePrevious;
+	ui_.buttonPrevious->setEnabled(false);
+	getEDBHandle()->get(d->jid, d->id_prev, EDB::Backward, 50);
+}
+
+void HistoryDlg::getNext()
+{
+	d->reqType = TypeNext;
+	ui_.buttonNext->setEnabled(false);
+	getEDBHandle()->get(d->jid, d->id_next, EDB::Forward, 50);
+}
+
+void HistoryDlg::getDate()
+{
+	const QDate date = ui_.calendar->selectedDate();
+	d->reqType = TypeDate;
+	d->date = date;
+	QDateTime first (d->date);
+	QDateTime last = first.addDays(1);
+	startRequest();
+	getEDBHandle()->getByDate(d->jid, first, last);
+}
+
+void HistoryDlg::removedContact(PsiContact *pc)
+{
+	QString jid = pc->jid().bare().toLower();
+	QString curJid  = ui_.jidList->currentItem()->toolTip();
+	for(int i = 0; i < ui_.jidList->count(); i++) {
+		QListWidgetItem *it = ui_.jidList->item(i);
+		if(it && it->toolTip() == jid) {
+			ui_.jidList->removeItemWidget(it);
+			if(jid == curJid) {
+				ui_.jidList->setCurrentRow(0);
+				openSelectedContact();
+			}
+			break;
+		}
 	}
 }
 
-int HistoryViewItem::compare(Q3ListViewItem *xi, int, bool) const
+void HistoryDlg::displayResult(const EDBResult r, int direction, int max)
 {
-	HistoryViewItem *i = (HistoryViewItem *)xi;
-	return id - i->id;
+	int i  = (direction == EDB::Forward) ? r.count() - 1 : 0;
+	int at = 0;
+	ui_.msgLog->clear();
+	while (i >= 0 && i <= r.count() - 1 && (max == -1 ? true : at < max))
+	{
+		EDBItemPtr item = r.value(i);
+		PsiEvent* e = item->event();
+		UserListItem *u = d->pa->findFirstRelevant(e->from().full());
+		QString from = JIDUtil::nickOrJid(u->name(), u->jid().full());
+		if (e->type() == PsiEvent::Message)
+		{
+			MessageEvent *me = (MessageEvent *) e;
+			QString msg = me->message().body();
+			msg = TextUtil::linkify(TextUtil::plain2rich(msg));
+
+			if (PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool())
+				msg = TextUtil::emoticonify(msg);
+			if (PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
+				msg = TextUtil::legacyFormat(msg);
+
+			if (me->originLocal())
+				msg = "<span style='color:red'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]")+" &lt;"+ d->pa->nick() +"&gt; " + msg + "</span>";
+			else
+				msg = "<span style='color:blue'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]") + " &lt;" +  from + "&gt; " + msg + "</span>";
+
+			ui_.msgLog->appendText(msg);
+
+		}
+
+		++at;
+		i += (direction == EDB::Forward) ? -1 : +1;
+	}
+
+	ui_.msgLog->verticalScrollBar()->setValue(ui_.msgLog->verticalScrollBar()->maximum());
 }
 
-int HistoryViewItem::rtti() const
+UserListItem* HistoryDlg::currentUserListItem()
 {
-	return 7105;
+	UserListItem* u = 0;
+	QListWidgetItem *i = ui_.jidList->currentItem();
+	if(!i)
+		return u;
+
+	u = d->pa->findFirstRelevant(i->toolTip());
+	return u;
 }
 
+void HistoryDlg::startRequest()
+{
+	if(!ui_.busy->isActive()) {
+		ui_.busy->start();
+	}
+	setEnabled(false);
+}
+
+void HistoryDlg::stopRequest()
+{
+	if(ui_.busy->isActive()) {
+		ui_.busy->stop();		
+	}
+	setEnabled(true);
+}
+
+EDBHandle* HistoryDlg::getEDBHandle()
+{
+	EDBHandle* h = new EDBHandle(d->pa->edb());
+	connect(h, SIGNAL(finished()), SLOT(edb_finished()));
+	return h;
+}

@@ -35,7 +35,6 @@
 
 #include <QApplication>
 #include <QLayout>
-//Added by qt3to4:
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QHBoxLayout>

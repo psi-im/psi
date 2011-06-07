@@ -25,6 +25,7 @@
 #include <QTimer>
 #include <QFile>
 #include <QSharedPointer>
+#include <QDateTime>
 
 #include "xmpp_jid.h"
 
@@ -62,6 +63,7 @@ public:
 	void getLatest(const XMPP::Jid &, int len);
 	void getOldest(const XMPP::Jid &, int len);
 	void get(const XMPP::Jid &jid, const QString &id, int direction, int len);
+	void getByDate(const XMPP::Jid &jid, QDateTime first, QDateTime last);
 	void find(const QString &, const XMPP::Jid &, const QString &id, int direction);
 	void append(const XMPP::Jid &, PsiEvent *);
 	void erase(const XMPP::Jid &);
@@ -97,6 +99,7 @@ protected:
 	virtual int getLatest(const XMPP::Jid &, int len)=0;
 	virtual int getOldest(const XMPP::Jid &, int len)=0;
 	virtual int get(const XMPP::Jid &jid, const QString &id, int direction, int len)=0;
+	virtual int getByDate(const XMPP::Jid &jid, QDateTime first, QDateTime last) = 0;
 	virtual int append(const XMPP::Jid &, PsiEvent *)=0;
 	virtual int find(const QString &, const XMPP::Jid &, const QString &id, int direction)=0;
 	virtual int erase(const XMPP::Jid &)=0;
@@ -114,6 +117,7 @@ private:
 	int op_getLatest(const XMPP::Jid &, int len);
 	int op_getOldest(const XMPP::Jid &, int len);
 	int op_get(const XMPP::Jid &, const QString &id, int direction, int len);
+	int op_getByDate(const XMPP::Jid &jid, QDateTime first, QDateTime last);
 	int op_find(const QString &, const XMPP::Jid &, const QString &id, int direction);
 	int op_append(const XMPP::Jid &, PsiEvent *);
 	int op_erase(const XMPP::Jid &);
@@ -129,6 +133,7 @@ public:
 	int getLatest(const XMPP::Jid &, int len);
 	int getOldest(const XMPP::Jid &, int len);
 	int get(const XMPP::Jid &jid, const QString &id, int direction, int len);
+	int getByDate(const XMPP::Jid &jid, QDateTime first, QDateTime last);
 	int find(const QString &, const XMPP::Jid &, const QString &id, int direction);
 	int append(const XMPP::Jid &, PsiEvent *);
 	int erase(const XMPP::Jid &);

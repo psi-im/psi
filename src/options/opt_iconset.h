@@ -2,7 +2,6 @@
 #define OPT_ICONSET_H
 
 #include "optionstab.h"
-//Added by qt3to4:
 #include <QEvent>
 
 class QWidget;

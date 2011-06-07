@@ -25,7 +25,9 @@
 
 #include "avatars.h"
 #include "common.h"
-#include "contactview.h"
+#ifndef NEWCONTACTLIST
+# include "contactview.h"
+#endif
 #include "iconset.h"
 #include "jidutil.h"
 #include "profiles.h"

@@ -29,7 +29,6 @@
 #include <QDomElement>
 #include <QPointer>
 #include <QApplication>
-//Added by qt3to4:
 #include <QHBoxLayout>
 #include <QList>
 

@@ -27,6 +27,7 @@
 #include <QDir>
 #include <QTimer>
 #include <QTextStream>
+#include <QDateTime>
 
 #include "common.h"
 #include "applicationinfo.h"
@@ -127,6 +128,13 @@ void EDBHandle::get(const Jid &j, const QString &id, int direction, int len)
 	d->busy = true;
 	d->lastRequestType = Read;
 	d->listeningFor = d->edb->op_get(j, id, direction, len);
+}
+
+void EDBHandle::getByDate(const Jid &j, QDateTime first, QDateTime last)
+{
+	d->busy = true;
+	d->lastRequestType = Read;
+	d->listeningFor = d->edb->op_getByDate(j, first, last);
 }
 
 void EDBHandle::find(const QString &str, const Jid &j, const QString &id, int direction)
@@ -247,6 +255,11 @@ int EDB::op_get(const Jid &jid, const QString &id, int direction, int len)
 	return get(jid, id, direction, len);
 }
 
+int EDB::op_getByDate(const Jid &j, QDateTime first, QDateTime last)
+{
+	return getByDate(j, first, last);
+}
+
 int EDB::op_find(const QString &str, const Jid &j, const QString &id, int direction)
 {
 	return find(str, j, id, direction);
@@ -299,12 +312,14 @@ struct item_file_req
 	QString findStr;
 	PsiEvent *event;
 
+	QDateTime first, last;
 	enum Type {
 		Type_getLatest = 0,
 		Type_getOldest,
 		Type_get,
 		Type_append,
 		Type_find,
+		Type_getByDate,
 		Type_erase
 	};
 };
@@ -369,6 +384,22 @@ int EDBFlatFile::get(const Jid &j, const QString &id, int direction, int len)
 	r->eventId = id.toInt();
 	r->id = genUniqueId();
 	d->rlist.append(r);
+
+	QTimer::singleShot(FAKEDELAY, this, SLOT(performRequests()));
+	return r->id;
+}
+
+
+int EDBFlatFile::getByDate(const XMPP::Jid &jid, QDateTime first, QDateTime last)
+{
+	item_file_req *r = new item_file_req;
+	r->j = jid;
+	r->type = item_file_req::Type_getByDate;
+	r->len = 1;
+	r->id = genUniqueId();
+	d->rlist.append(r);
+	r->first = first;
+	r->last = last;
 
 	QTimer::singleShot(FAKEDELAY, this, SLOT(performRequests()));
 	return r->id;
@@ -552,7 +583,8 @@ void EDBFlatFile::performRequests()
 				if(m.body().indexOf(r->findStr, 0, Qt::CaseInsensitive) != -1) {
 					EDBItemPtr ei = EDBItemPtr(new EDBItem(e, QString::number(id), prevId, nextId));
 					result.append(ei);
-					break;
+					//commented line below to return ALL(instead of just first) messages that contain findStr
+					//break;
 				}
 			}
 
@@ -563,6 +595,33 @@ void EDBFlatFile::performRequests()
 		}
 		resultReady(r->id, result);
 	}
+	else if(type == item_file_req::Type_getByDate ) {
+		int id = 0;
+		EDBResult result;
+		for (int i=0; i < f->total(); ++i) {
+			PsiEvent *e = f->get(id);
+			if(!e)
+				continue;
+
+			QString prevId, nextId;
+			if(id > 0)
+				prevId = QString::number(id-1);
+			if(id < f->total()-1)
+				nextId = QString::number(id+1);
+
+			if(e->type() == PsiEvent::Message) {
+				MessageEvent *me = (MessageEvent *)e;
+				const Message &m = me->message();
+				if(m.timeStamp() > r->first && m.timeStamp() < r->last ) {
+					EDBItemPtr ei = EDBItemPtr(new EDBItem(e, QString::number(id), prevId, nextId));
+					result.append(ei);
+				}
+			}
+			++id;
+		}
+		resultReady(r->id, result);
+	}
+
 	else if(type == item_file_req::Type_erase) {
 		writeFinished(r->id, deleteFile(f->j));
 	}
@@ -689,7 +748,7 @@ PsiEvent *EDBFlatFile::File::get(int id)
 		return 0;
 
 	ensureIndex();
-	if(id < 0 || id > (int)d->index.size())
+	if(id < 0 || id >= (int)d->index.size())
 		return 0;
 
 	f.seek(d->index[id]);
