@@ -1,6 +1,7 @@
 /*
  * gcuserview.h - groupchat roster
  * Copyright (C) 2001, 2002  Justin Karneges
+ * 2011 Khryukin Evgeny
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,7 +22,7 @@
 #ifndef GCUSERVIEW_H
 #define GCUSERVIEW_H
 
-#include <Q3ListView>
+#include <QTreeWidget>
 
 #include "xmpp_status.h"
 
@@ -35,31 +36,32 @@ namespace XMPP {
 	class Jid;
 }
 
-class GCUserViewItem : public QObject, public Q3ListViewItem
+class GCUserViewItem : public QObject, public QTreeWidgetItem
 {
 public:
 	GCUserViewItem(GCUserViewGroupItem *);
-	void paintFocus(QPainter *, const QColorGroup &, const QRect &);
-	void paintBranches(QPainter *p, const QColorGroup &cg, int w, int, int h);
 
 	Status s;
+
+	bool operator <  (const GCUserViewItem& it) const;
+	bool operator >  (const GCUserViewItem& it) const;
+	bool operator == (const GCUserViewItem& it) const;
 };
 
-class GCUserViewGroupItem : public Q3ListViewItem
+class GCUserViewGroupItem : public QTreeWidgetItem
 {
 public:
 	GCUserViewGroupItem(GCUserView *, const QString&, int);
-	void paintFocus(QPainter *, const QColorGroup &, const QRect &);
-	void paintBranches(QPainter *p, const QColorGroup &cg, int w, int, int h);
-	void paintCell(QPainter *p, const QColorGroup & cg, int column, int width, int alignment);
-	int compare(Q3ListViewItem *i, int col, bool ascending ) const;
+
 	void updateText();
+	int key() const { return key_; };
+
 private:
 	int key_;
-	QString baseText;
+	QString baseText_;
 };
 
-class GCUserView : public Q3ListView
+class GCUserView : public QTreeWidget
 {
 	Q_OBJECT
 public:
@@ -67,11 +69,12 @@ public:
 	~GCUserView();
 
 	void setMainDlg(GCMainDlg* mainDlg);
-	Q3DragObject* dragObject();
+//	Q3DragObject* dragObject();
 	void clear();
 	void updateAll();
 	bool hasJid(const Jid&);
-	Q3ListViewItem *findEntry(const QString &);
+	QTreeWidgetItem *findEntry(const QString &);
+	QTreeWidgetItem *findEntry(const QModelIndex& index);
 	void updateEntry(const QString &, const Status &);
 	void removeEntry(const QString &);
 	QStringList nickList() const;
@@ -81,18 +84,19 @@ protected:
 
 	GCUserViewGroupItem* findGroup(XMPP::MUCItem::Role a) const;
 	bool maybeTip(const QPoint &);
-	bool event(QEvent* e);
+	bool event(QEvent* e);	
+	void mousePressEvent(QMouseEvent *event);
 
 signals:
 	void action(const QString &nick, const Status &, int actionType);
 	void insertNick(const QString& nick);
 
 private slots:
-	void qlv_doubleClicked(Q3ListViewItem *);
-	void qlv_contextMenuRequested(Q3ListViewItem *, const QPoint &, int);
-	void qlv_mouseButtonClicked(int button, Q3ListViewItem* item, const QPoint& pos, int c);
+	void qlv_doubleClicked(const QModelIndex& index);
 
 private:
+	void contextMenuRequested(const QPoint& p);
+
 	GCMainDlg* gcDlg_;
 };
 
