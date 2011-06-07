@@ -217,7 +217,7 @@ void ELineEdit::keyPressEvent(QKeyEvent *e)
 #warning "eventdlg.cpp: Disabled right click on JID"
 #endif
 
-//Q3PopupMenu *ELineEdit::createPopupMenu()
+//QMenu *ELineEdit::createPopupMenu()
 //{
 //	EventDlg *e = (EventDlg *)parent();
 //	int xoff = mapFromGlobal(QCursor::pos()).x();
@@ -237,10 +237,10 @@ void ELineEdit::keyPressEvent(QKeyEvent *e)
 //	url.sort();
 //
 //	int n = 100;
-//	Q3PopupMenu *rm = new Q3PopupMenu(this); //= new QPopupMenu(pm);
-//	connect(rm, SIGNAL(activated(int)), SLOT(resourceMenuActivated(int)));
+//	QMenu *rm = new QMenu(this);
+//	connect(rm, SIGNAL(triggered(QAction*)), SLOT(resourceMenuActivated(QAction*)));
 //
-//	rm->insertItem(tr("Recipient Default"), n++);
+//	rm->addAction(tr("Recipient Default"));
 //
 //	if(!list.isEmpty()) {
 //		rm->addSeparator();
@@ -248,12 +248,16 @@ void ELineEdit::keyPressEvent(QKeyEvent *e)
 //		for(UserResourceList::ConstIterator it = url.begin(); it != url.end(); ++it) {
 //			const UserResource &r = *it;
 //			QString name;
+//			QString data;
 //			if(r.name().isEmpty())
 //				name = QObject::tr("[blank]");
+//				data = "";
 //			else
 //				name = r.name();
+//				data = name;
 //
-//			rm->insertItem(PsiIconset::instance()->status(r.status()), name, n++);
+//			QAction *a = rm->addAction(PsiIconset::instance()->status(r.status()), name);
+//			a.setData(data);
 //		}
 //	}
 //
@@ -263,27 +267,13 @@ void ELineEdit::keyPressEvent(QKeyEvent *e)
 //	return rm;
 //}
 
-void ELineEdit::resourceMenuActivated(int x)
+void ELineEdit::resourceMenuActivated(QAction *x)
 {
-	if(x < 100)
+	if(x->data().toString().isNull())
 		return;
 
-	QString name;
-	if(x == 100)
-		name = "";
-	else {
-		int n = 101;
-		for(UserResourceList::ConstIterator it = url.begin(); it != url.end(); ++it) {
-			if(n == x) {
-				name = (*it).name();
-				break;
-			}
-			++n;
-		}
-	}
 	url.clear();
-
-	changeResource(name);
+	changeResource(x->data().toString());
 }
 
 

@@ -32,7 +32,6 @@
 
 class QDateTime;
 class QStringList;
-class Q3PopupMenu;
 class PsiEvent;
 class PsiCon;
 class PsiAccount;
@@ -61,10 +60,10 @@ protected:
 	void dragEnterEvent(QDragEnterEvent *);
 	void dropEvent(QDropEvent *);
 	void keyPressEvent(QKeyEvent *);
-	Q3PopupMenu *createPopupMenu();
+	//QMenu *createPopupMenu();
 
 private slots:
-	void resourceMenuActivated(int);
+	void resourceMenuActivated(QAction*);
 
 private:
 	UserResourceList url;

@@ -328,15 +328,14 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 	//add contact view
 #ifndef NEWCONTACTLIST
 	d->vb_main->addWidget(cvlist);
-#else
-	d->vb_main->addWidget(d->rosterWidget_);
-#endif
-
-#ifdef Q_WS_MAC
+# ifdef Q_WS_MAC
 	// Disable the empty vertical scrollbar:
 	// it's here because of weird code in q3scrollview.cpp
 	// Q3ScrollView::updateScrollBars() around line 877
 	d->vb_main->addSpacing(4);
+# endif
+#else
+	d->vb_main->addWidget(d->rosterWidget_);
 #endif
 
 	d->statusMenu = new QMenu(tr("Status"), this);

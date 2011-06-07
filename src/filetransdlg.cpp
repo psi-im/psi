@@ -1824,11 +1824,7 @@ void FileTransDlg::ft_error(int x, int, const QString &s)
 
 void FileTransDlg::updateItems()
 {
-	// operate on a copy so that we can delete items in updateProgress
-	//Q3PtrList<TransferMapping> list = d->transferList;
-	QList<TransferMapping*>::iterator it = d->transferList.begin();
-	for(; it != d->transferList.end(); ++it) {
-		TransferMapping *i = *it;
+	foreach (TransferMapping *i, d->transferList) {
 		if(i->h) {
 			i->logSent();
 			d->updateProgress(i);
