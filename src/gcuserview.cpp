@@ -484,20 +484,34 @@ void GCUserView::contextMenuRequested(const QPoint &p)
 	act->setEnabled( (!self || lvi->s.mucItem().role() == MUCItem::Moderator) && MUCManager::canSetRole(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Moderator));
 	pm->addMenu(rm);
 
-	/*Q3PopupMenu* am = new Q3PopupMenu(pm);
-	am->insertItem(tr("Unaffiliated"),15);
-	am->setItemChecked(15, lvi->s.mucItem().affiliation() == MUCItem::NoAffiliation);
-	am->setItemEnabled(15, (!self || lvi->s.mucItem().affiliation() == MUCItem::NoAffiliation) && MUCManager::canSetAffiliation(c->s.mucItem(),lvi->s.mucItem(),MUCItem::NoAffiliation));
-	am->insertItem(tr("Member"),16);
-	am->setItemChecked(16, lvi->s.mucItem().affiliation() == MUCItem::Member);
-	am->setItemEnabled(16,  (!self || lvi->s.mucItem().affiliation() == MUCItem::Member) && MUCManager::canSetAffiliation(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Member));
-	am->insertItem(tr("Administrator"),17);
-	am->setItemChecked(17, lvi->s.mucItem().affiliation() == MUCItem::Admin);
-	am->setItemEnabled(17,  (!self || lvi->s.mucItem().affiliation() == MUCItem::Admin) && MUCManager::canSetAffiliation(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Admin));
-	am->insertItem(tr("Owner"),18);
-	am->setItemChecked(18, lvi->s.mucItem().affiliation() == MUCItem::Owner);
-	am->setItemEnabled(18,  (!self || lvi->s.mucItem().affiliation() == MUCItem::Owner) && MUCManager::canSetAffiliation(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Owner));
-	pm->insertItem(tr("Change Affiliation"),am);*/
+	/*
+	QMenu* am = new QMenu(tr("Change Affiliation"), pm);
+	act = am->addAction(tr("Unaffiliated"));
+	act->setData(15);
+	act->setCheckable(true);
+	act->setChecked(lvi->s.mucItem().affiliation() == MUCItem::NoAffiliation);
+	act->setEnabled((!self || lvi->s.mucItem().affiliation() == MUCItem::NoAffiliation) && MUCManager::canSetAffiliation(c->s.mucItem(),lvi->s.mucItem(),MUCItem::NoAffiliation));
+
+	act = am->addAction(tr("Member"));
+	act->setData(16);
+	act->setCheckable(true);
+	act->setChecked(lvi->s.mucItem().affiliation() == MUCItem::Member);
+	act->setEnabled((!self || lvi->s.mucItem().affiliation() == MUCItem::Member) && MUCManager::canSetAffiliation(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Member));
+
+	act = am->addAction(tr("Administrator"));
+	act->setData(17);
+	act->setCheckable(true);
+	act->setChecked(lvi->s.mucItem().affiliation() == MUCItem::Admin);
+	act->setEnabled((!self || lvi->s.mucItem().affiliation() == MUCItem::Admin) && MUCManager::canSetAffiliation(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Admin));
+
+	act = am->addAction(tr("Owner"));
+	act->setData(18);
+	act->setCheckable(true);
+	act->setChecked(lvi->s.mucItem().affiliation() == MUCItem::Owner);
+	act->setEnabled((!self || lvi->s.mucItem().affiliation() == MUCItem::Owner) && MUCManager::canSetAffiliation(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Owner));
+
+	pm->addMenu(am);
+	*/
 	pm->addSeparator();
 	//pm->insertItem(tr("Send &File"), 4);
 	//pm->insertSeparator();
