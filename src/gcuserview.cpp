@@ -542,7 +542,9 @@ void GCUserView::mousePressEvent(QMouseEvent *event)
 
 	if (!item || !item->parent() || !gcDlg_)
 		return;
-	if (event->button() == Qt::MidButton)
+	if (event->button() == Qt::MidButton ||
+	    (button == Qt::LeftButton &&
+	    qApp->keyboardModifiers() == Qt::ShiftModifier))
 		emit insertNick(item->text(0));
 	else if (event->button() == Qt::RightButton)
 		contextMenuRequested(event->pos());
