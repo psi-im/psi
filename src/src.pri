@@ -103,7 +103,6 @@ HEADERS += \
 	$$PWD/activeprofiles.h \
 	$$PWD/profiledlg.h \
 	$$PWD/aboutdlg.h \
-	$$PWD/historydlg.h \
 	$$PWD/desktoputil.h \
 	$$PWD/fileutil.h \
 	$$PWD/textutil.h \

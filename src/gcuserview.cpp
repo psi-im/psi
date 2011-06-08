@@ -412,10 +412,10 @@ void GCUserView::contextMenuRequested(const QPoint &p)
 	QMenu *pm = new QMenu();
 	act = new QAction(IconsetFactory::icon("psi/sendMessage").icon(), tr("Send &Message"), pm);
 	pm->addAction(act);
-	act->setProperty("actionType", 0);
+	act->setData(0);
 	act = new QAction(IconsetFactory::icon("psi/start-chat").icon(), tr("Open &Chat Window"), pm);
 	pm->addAction(act);
-	act->setProperty("actionType", 1);
+	act->setData(1);
 	pm->addSeparator();
 
 	// Kick and Ban submenus
@@ -427,32 +427,32 @@ void GCUserView::contextMenuRequested(const QPoint &p)
 	QMenu *kickMenu = new QMenu(tr("&Kick"), pm);
 	act = new QAction(tr("No reason"), kickMenu);
 	kickMenu->addAction(act);
-	act->setProperty("actionType", 10);
+	act->setData(10);
 	act = new QAction(tr("Custom reason"), kickMenu);
 	kickMenu->addAction(act);
-	act->setProperty("actionType", 100);
+	act->setData(100);
 	kickMenu->addSeparator();
 	bool canKick = MUCManager::canKick(c->s.mucItem(), lvi->s.mucItem());
 	for (int i = 0; i < cntReasons; ++i) {
 		act = new QAction(reasons[i], kickMenu);
 		kickMenu->addAction(act);
-		act->setProperty("actionType", 101+i);
+		act->setData(101+i);
 	}
 	kickMenu->setEnabled(canKick);
 
 	QMenu *banMenu = new QMenu(tr("&Ban"), pm);
 	act = new QAction(tr("No reason"), banMenu);
 	banMenu->addAction(act);
-	act->setProperty("actionType", 11);
+	act->setData(11);
 	act = new QAction(tr("Custom reason"), banMenu);
 	banMenu->addAction(act);
-	act->setProperty("actionType", 200);
+	act->setData(200);
 	banMenu->addSeparator();
 	bool canBan = MUCManager::canBan(c->s.mucItem(), lvi->s.mucItem());
 	for (int i = 0; i < cntReasons; ++i) {
 		act = new QAction(reasons[i], banMenu);
 		banMenu->addAction(act);
-		act->setProperty("actionType", 101+i);
+		act->setData(101+i);
 	}
 	banMenu->setEnabled(canBan);
 
@@ -464,21 +464,21 @@ void GCUserView::contextMenuRequested(const QPoint &p)
 	QMenu* rm = new QMenu(tr("Change Role"), pm);
 	act = new QAction(tr("Visitor"), rm);
 	rm->addAction(act);
-	act->setProperty("actionType", 12);
+	act->setData(12);
 	act->setCheckable(true);
 	act->setChecked(lvi->s.mucItem().role() == MUCItem::Visitor);
 	act->setEnabled( (!self || lvi->s.mucItem().role() == MUCItem::Visitor) && MUCManager::canSetRole(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Visitor) );
 
 	act = new QAction(tr("Participant"), rm);
 	rm->addAction(act);
-	act->setProperty("actionType", 13);
+	act->setData(13);
 	act->setCheckable(true);
 	act->setChecked(lvi->s.mucItem().role() == MUCItem::Participant);
 	act->setEnabled( (!self || lvi->s.mucItem().role() == MUCItem::Participant) && MUCManager::canSetRole(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Participant));
 
 	act = new QAction(tr("Moderator"), rm);
 	rm->addAction(act);
-	act->setProperty("actionType", 14);
+	act->setData(14);
 	act->setCheckable(true);
 	act->setChecked( lvi->s.mucItem().role() == MUCItem::Moderator);
 	act->setEnabled( (!self || lvi->s.mucItem().role() == MUCItem::Moderator) && MUCManager::canSetRole(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Moderator));
@@ -505,13 +505,13 @@ void GCUserView::contextMenuRequested(const QPoint &p)
 
 	act = new QAction(IconsetFactory::icon("psi/vCard").icon(), tr("User &Info"), pm);
 	pm->addAction(act);
-	act->setProperty("actionType", 3);
+	act->setData(3);
 
 	int x = -1;
 	bool enabled = false;
 	act = pm->exec(QCursor::pos());
 	if(act) {
-		x = act->property("actionType").toInt();
+		x = act->data().toInt();
 		enabled = act->isEnabled();
 	}
 	delete pm;
