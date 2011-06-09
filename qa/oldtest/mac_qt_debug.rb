@@ -4,7 +4,7 @@ ENABLE_DEBUG = ARGV[0] == "true"
 EXEC_TARGET = ARGV[1]
 
 QT_FRAMEWORK_VERSION = 4
-QT_FRAMEWORKS = %w(QtCore QtXml QtNetwork QtGui QtSql Qt3Support)
+QT_FRAMEWORKS = %w(QtCore QtXml QtNetwork QtGui QtSql)
 
 QT_FRAMEWORKS.each do |f|
   framework = "$QTDIR/lib/#{f}.framework/Versions/#{QT_FRAMEWORK_VERSION}/#{f}"

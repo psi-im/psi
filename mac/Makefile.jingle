@@ -44,7 +44,7 @@ MASTER_DMG=$(NAME)-$(VERSION).dmg
 
 # Other variables
 QT_FRAMEWORK_VERSION=4.0
-QT_FRAMEWORKS=QtCore QtXml QtNetwork QtGui QtSql Qt3Support
+QT_FRAMEWORKS=QtCore QtXml QtNetwork QtGui QtSql
 
 # The rules
 .PHONY: buildall
