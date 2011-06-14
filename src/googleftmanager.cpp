@@ -230,7 +230,7 @@ GoogleFileTransfer::GoogleFileTransfer(cricket::FileShareSession* s, GoogleFTMan
 
 	// Temporary
 #ifdef Q_WS_MAC
-	QDir home(QDir::homeDirPath() + "/Desktop");
+	QDir home(QDir::homePath() + "/Desktop");
 #else
 	QDir home = QDir::home();
 #endif
