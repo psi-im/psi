@@ -259,7 +259,6 @@ Copyright © 2001-2010 The Psi Team.&lt;br>
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11" />
- <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
  <customwidgets>
   <customwidget>
    <class>IconButton</class>

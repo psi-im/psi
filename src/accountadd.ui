@@ -163,5 +163,4 @@ Click the &lt;b>Register New Account&lt;/b> checkbox if you want Psi to try and 
     </layout>
   </widget>
   <layoutdefault spacing="6" margin="11" />
-  <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
 </ui>

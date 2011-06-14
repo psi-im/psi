@@ -290,7 +290,6 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11" />
- <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
  <tabstops>
   <tabstop>ck_gcHighlights</tabstop>
   <tabstop>le_newHighlightWord</tabstop>
