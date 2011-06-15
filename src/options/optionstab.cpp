@@ -115,7 +115,7 @@ signals:
 	void noDirty(bool);
 
 private slots:
-	void updateCurrent(QWidget *);
+	void updateCurrent(int);
 
 private:
 	struct TabData {
@@ -130,7 +130,7 @@ private:
 OptionsTabWidget::OptionsTabWidget(QWidget *parent)
 : QTabWidget(parent)
 {
-	connect(this, SIGNAL(currentChanged(QWidget *)), SLOT(updateCurrent(QWidget *)));
+	connect(this, SIGNAL(currentChanged(int)), SLOT(updateCurrent(int)));
 }
 
 void OptionsTabWidget::addTab(OptionsTab *tab)
@@ -160,8 +160,9 @@ void OptionsTabWidget::addTab(OptionsTab *tab)
 	setCurrentIndex(0);
 }
 
-void OptionsTabWidget::updateCurrent(QWidget *w)
+void OptionsTabWidget::updateCurrent(int index)
 {
+	QWidget *w = currentWidget ();
 	if ( !w2tab[w].initialized ) {
 		QVBoxLayout *vbox = new QVBoxLayout(w);
 		vbox->setMargin(5);

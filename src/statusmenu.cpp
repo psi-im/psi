@@ -75,7 +75,7 @@ void StatusMenu::addStatus(XMPP::Status::Type type)
 	action->setChecked(currentStatus_ == type);
 	action->setIcon(PsiIconset::instance()->status(type).icon());
 	action->setProperty("type", QVariant(type));
-	connect(action, SIGNAL(activated()), SLOT(actionActivated()));
+	connect(action, SIGNAL(triggered()), SLOT(actionActivated()));
 	addAction(action);
 }
 

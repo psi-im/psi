@@ -682,7 +682,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	connect(ui_.lv_users, SIGNAL(insertNick(const QString&)), d, SLOT(insertNick(const QString&)));
 
 	d->act_clear = new IconAction (tr("Clear Chat Window"), "psi/clearChat", tr("Clear Chat Window"), 0, this);
-	connect( d->act_clear, SIGNAL( activated() ), SLOT( doClearButton() ) );
+	connect( d->act_clear, SIGNAL(triggered()), SLOT(doClearButton()));
 	
 	d->act_configure = new IconAction(tr("Configure Room"), "psi/configure-room", tr("&Configure Room"), 0, this);
 	connect(d->act_configure, SIGNAL(triggered()), SLOT(configureRoom()));

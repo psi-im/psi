@@ -111,7 +111,7 @@ private:
 		action->setCheckable(true);
 		action->setChecked(selected);
 		action->setProperty("groupName", QVariant(groupName));
-		connect(action, SIGNAL(activated()), SLOT(actionActivated()));
+		connect(action, SIGNAL(triggered()), SLOT(actionActivated()));
 	}
 
 private slots:
@@ -172,7 +172,7 @@ public:
 
 				action->setProperty("groupChat", QVariant(groupChat));
 				action->setProperty("account", QVariant(acc->id()));
-				connect(action, SIGNAL(activated()), SLOT(actionActivated()));
+				connect(action, SIGNAL(triggered()), SLOT(actionActivated()));
 			}
 		}
 	}
@@ -260,36 +260,36 @@ public:
 
 		renameAction_ = new QAction(tr("Re&name"), this);
 		renameAction_->setShortcuts(menu->shortcuts("contactlist.rename"));
-		connect(renameAction_, SIGNAL(activated()), this, SLOT(rename()));
+		connect(renameAction_, SIGNAL(triggered()), this, SLOT(rename()));
 
 		removeAction_ = new QAction(tr("&Remove"), this);
 		removeAction_->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.delete"));
-		connect(removeAction_, SIGNAL(activated()), SLOT(removeContact()));
+		connect(removeAction_, SIGNAL(triggered()), SLOT(removeContact()));
 
 #ifdef YAPSI
 		openChatAction_ = new QAction(tr("&Chat"), this);
-		connect(openChatAction_, SIGNAL(activated()), contact_, SLOT(openChat()));
+		connect(openChatAction_, SIGNAL(triggered()), contact_, SLOT(openChat()));
 
 		openHistoryAction_ = new QAction(tr("&History"), this);
-		connect(openHistoryAction_, SIGNAL(activated()), contact_, SLOT(history()));
+		connect(openHistoryAction_, SIGNAL(triggered()), contact_, SLOT(history()));
 
 		yaProfileAction_ = new QAction(tr("Pro&file"), this);
-		connect(yaProfileAction_, SIGNAL(activated()), contact_, SLOT(yaProfile()));
+		connect(yaProfileAction_, SIGNAL(triggered()), contact_, SLOT(yaProfile()));
 
 		yaPhotosAction_ = new QAction(tr("&Photos"), this);
-		connect(yaPhotosAction_, SIGNAL(activated()), contact_, SLOT(yaPhotos()));
+		connect(yaPhotosAction_, SIGNAL(triggered()), contact_, SLOT(yaPhotos()));
 
 		yaEmailAction_ = new QAction(tr("Send &E-mail"), this);
-		connect(yaEmailAction_, SIGNAL(activated()), contact_, SLOT(yaEmail()));
+		connect(yaEmailAction_, SIGNAL(triggered()), contact_, SLOT(yaEmail()));
 
 		addAction_ = new QAction(tr("&Add"), this);
-		connect(addAction_, SIGNAL(activated()), SLOT(addContact()));
+		connect(addAction_, SIGNAL(triggered()), SLOT(addContact()));
 
 		authAction_ = new QAction(tr("A&uth"), this);
-		connect(authAction_, SIGNAL(activated()), contact_, SLOT(rerequestAuthorizationFrom()));
+		connect(authAction_, SIGNAL(triggered()), contact_, SLOT(rerequestAuthorizationFrom()));
 
 		blockAction_ = new QAction(tr("&Block"), this);
-		connect(blockAction_, SIGNAL(activated()), contact_, SLOT(toggleBlockedState()));
+		connect(blockAction_, SIGNAL(triggered()), contact_, SLOT(toggleBlockedState()));
 
 		disableMoodNotificationsAction_ = new QAction(tr("Disable mood notifications"), this);
 		disableMoodNotificationsAction_->setCheckable(true);

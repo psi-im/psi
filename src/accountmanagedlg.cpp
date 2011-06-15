@@ -299,7 +299,7 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi)
 	setWindowTitle(CAP(windowTitle()));
 
 	removeAction_ = new IconAction("", "psi/remove", QString(), ShortcutManager::instance()->shortcuts("contactlist.delete"), this, "act_remove");
-	connect(removeAction_, SIGNAL(activated()), SLOT(remove()));
+	connect(removeAction_, SIGNAL(triggered()), SLOT(remove()));
 	lv_accs->addAction(removeAction_);
 
 	// setup signals

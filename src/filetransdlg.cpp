@@ -8,6 +8,7 @@
 #include <QFileIconProvider>
 #include <QProcess>
 #include <QMenu>
+#include <QKeyEvent>
 
 #include "psicon.h"
 #include "psiaccount.h"
@@ -25,7 +26,7 @@
 #include "psioptions.h"
 #include "fileutil.h"
 
-typedef Q_UINT64 LARGE_TYPE;
+typedef quint64 LARGE_TYPE;
 
 #define CSMAX (sizeof(LARGE_TYPE)*8)
 #define CSMIN 16
@@ -1288,7 +1289,7 @@ public:
 		QString s2 = FileTransDlg::tr("To") + ": ";
 		QString s3 = FileTransDlg::tr("From") + ": ";
 
-		int lw = QMAX(QMAX(fmbold.width(s1), fmbold.width(s2)), fmbold.width(s3));
+		int lw = qMax(qMax(fmbold.width(s1), fmbold.width(s2)), fmbold.width(s3));
 		int left = tw - lw;
 		p->drawText(tm, tt, s1);
 		p->drawText(tm, tb, sending ? s2 : s3);

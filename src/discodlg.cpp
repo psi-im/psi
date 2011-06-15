@@ -863,7 +863,7 @@ private:
 	
 			setCheckable(true);
 			setToolTip(toolTip);
-			connect(this, SIGNAL(activated()), sm, SLOT(map()));
+			connect(this, SIGNAL(triggered()), sm, SLOT(map()));
 			sm->setMapping(this, parm);
 		}
 	};
@@ -978,36 +978,36 @@ DiscoDlg::Private::Private(DiscoDlg *parent, PsiAccount *pa)
 
 	// create actions
 	actBrowse = new IconAction (tr("Browse"), "psi/jabber", tr("&Browse"), 0, dlg);
-	connect (actBrowse, SIGNAL(activated()), SLOT(actionBrowse()));
+	connect (actBrowse, SIGNAL(triggered()), SLOT(actionBrowse()));
 	actRefresh = new IconAction (tr("Refresh Item"), "psi/reload", tr("&Refresh Item"), 0, dlg);
-	connect (actRefresh, SIGNAL(activated()), SLOT(actionRefresh()));
+	connect (actRefresh, SIGNAL(triggered()), SLOT(actionRefresh()));
 	actStop = new IconAction (tr("Stop"), "psi/stop", tr("Sto&p"), 0, dlg);
-	connect (actStop, SIGNAL(activated()), SLOT(actionStop()));
+	connect (actStop, SIGNAL(triggered()), SLOT(actionStop()));
 	actBack = new IconAction (tr("Back"), "psi/arrowLeft", tr("&Back"), 0, dlg);
-	connect (actBack, SIGNAL(activated()), SLOT(actionBack()));
+	connect (actBack, SIGNAL(triggered()), SLOT(actionBack()));
 	actForward = new IconAction (tr("Forward"), "psi/arrowRight", tr("&Forward"), 0, dlg);
-	connect (actForward, SIGNAL(activated()), SLOT(actionForward()));
+	connect (actForward, SIGNAL(triggered()), SLOT(actionForward()));
 
 	// custom actions
 	QSignalMapper *sm = new QSignalMapper(this);
 	connect(sm, SIGNAL(mapped(int)), SLOT(actionActivated(int)));
 	actRegister = new IconAction (tr("Register"), "psi/register", tr("&Register"), 0, dlg);
-	connect (actRegister, SIGNAL(activated()), sm, SLOT(map()));
+	connect (actRegister, SIGNAL(triggered()), sm, SLOT(map()));
 	sm->setMapping(actRegister, Features::FID_Register);
 	actSearch = new IconAction (tr("Search"), "psi/search", tr("&Search"), 0, dlg);
-	connect (actSearch, SIGNAL(activated()), sm, SLOT(map()));
+	connect (actSearch, SIGNAL(triggered()), sm, SLOT(map()));
 	sm->setMapping(actSearch, Features::FID_Search);
 	actJoin = new IconAction (tr("Join"), "psi/groupChat", tr("&Join"), 0, dlg);
-	connect (actJoin, SIGNAL(activated()), sm, SLOT(map()));
+	connect (actJoin, SIGNAL(triggered()), sm, SLOT(map()));
 	sm->setMapping(actJoin, Features::FID_Groupchat);
 	actAHCommand = new IconAction (tr("Execute command"), "psi/command", tr("&Execute command"), 0, dlg);
-	connect (actAHCommand, SIGNAL(activated()), sm, SLOT(map()));
+	connect (actAHCommand, SIGNAL(triggered()), sm, SLOT(map()));
 	sm->setMapping(actAHCommand, Features::FID_AHCommand);
 	actVCard = new IconAction (tr("vCard"), "psi/vCard", tr("&vCard"), 0, dlg);
-	connect (actVCard, SIGNAL(activated()), sm, SLOT(map()));
+	connect (actVCard, SIGNAL(triggered()), sm, SLOT(map()));
 	sm->setMapping(actVCard, Features::FID_VCard);
 	actAdd = new IconAction (tr("Add to roster"), "psi/addContact", tr("&Add to roster"), 0, dlg);
-	connect (actAdd, SIGNAL(activated()), sm, SLOT(map()));
+	connect (actAdd, SIGNAL(triggered()), sm, SLOT(map()));
 	sm->setMapping(actAdd, Features::FID_Add);
 
 	// create toolbar

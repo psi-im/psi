@@ -113,7 +113,8 @@ bool AlertManager::raiseDialog(QWidget* w, int prio) {
 void AlertManager::raiseMessageBox(int prio, QMessageBox::Icon icon, const QString& title,
 								   const QString& text)
 {
-	QMessageBox* msgBox = new QMessageBox(icon, title, text, QMessageBox::Ok, 0, Qt::WDestructiveClose);
+	QMessageBox* msgBox = new QMessageBox(icon, title, text, QMessageBox::Ok);
+	msgBox->setAttribute(Qt::WA_DeleteOnClose);
 	msgBox->setModal(false);
 	
 	raiseDialog(msgBox, prio);

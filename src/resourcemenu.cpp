@@ -71,7 +71,7 @@ void ResourceMenu::addResource(int status, QString name)
 	QAction* action = new QAction(PsiIconset::instance()->status(status).icon(), rname, this);
 	addAction(action);
 	action->setProperty("resource", QVariant(name));
-	connect(action, SIGNAL(activated()), SLOT(actionActivated()));
+	connect(action, SIGNAL(triggered()), SLOT(actionActivated()));
 }
 
 void ResourceMenu::actionActivated()
