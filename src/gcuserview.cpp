@@ -452,7 +452,7 @@ void GCUserView::contextMenuRequested(const QPoint &p)
 	for (int i = 0; i < cntReasons; ++i) {
 		act = new QAction(reasons[i], banMenu);
 		banMenu->addAction(act);
-		act->setData(101+i);
+		act->setData(201+i);
 	}
 	banMenu->setEnabled(canBan);
 
