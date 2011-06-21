@@ -5,6 +5,7 @@
 #include <QVariant>
 #include <QMessageBox>
 #include <QTextDocument>
+#include <QColorDialog>
 
 #include "psioptionseditor.h"
 #include "psioptions.h"
@@ -37,6 +38,7 @@ OptionEditor::supportedType OptionEditor::supportedTypes[] = {
 	{"QKeySequence", QVariant::KeySequence},
 	{"QSize", QVariant::Size},
 	{"QString", QVariant::String},
+	{"QColor", QVariant::Color},
 //	{"QStringList", QVariant::StringList},  does't work
 	{0, QVariant::Invalid}};
 
@@ -201,6 +203,12 @@ void PsiOptionsEditor::tv_edit( const QModelIndex &idx)
 	QVariant value = PsiOptions::instance()->getOption(option);
 	if (value.type() == QVariant::Bool) {
 		PsiOptions::instance()->setOption(option, QVariant(!value.toBool()));
+	} else if (value.type() == QVariant::Color) {
+		QColorDialog cd(this);
+		cd.setCurrentColor(value.value<QColor>());
+		if (cd.exec() == QDialog::Accepted) {
+			PsiOptions::instance()->setOption(option, QVariant(cd.selectedColor()));
+		}
 	} else {
 		edit();
 	}
