@@ -4515,6 +4515,7 @@ static bool messageListContainsEvent(const QList<PsiEvent*>& messageList, const 
 #else
 	// FIXME
 	Q_UNUSED(messageList);
+	Q_UNUSED(me);
 #endif
 
 	return false;

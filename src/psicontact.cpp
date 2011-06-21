@@ -674,6 +674,7 @@ void PsiContact::blockContactConfirmationHelper(bool block)
 void PsiContact::blockContactConfirmation(const QString& id, bool confirmed)
 {
 	Q_ASSERT(id == "blockContact");
+	Q_UNUSED(id);
 	if (confirmed) {
 		blockContactConfirmationHelper(true);
 	}

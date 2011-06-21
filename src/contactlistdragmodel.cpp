@@ -337,7 +337,9 @@ void ContactListDragModel::addOperationsForGroupRename(const QString& currentGro
 		for (int i = 0; i < group->itemsCount(); ++i) {
 			ContactListItemProxy* itemProxy = group->item(i);
 			PsiContact* contact = 0;
+#ifdef CONTACTLIST_NESTED_GROUPS
 			ContactListGroup* childGroup = 0;
+#endif
 			if ((contact = dynamic_cast<PsiContact*>(itemProxy->item()))) {
 				operations->addOperation(contact,
 				                         sourceOperationsForContactGroup(currentGroupName, contact),
