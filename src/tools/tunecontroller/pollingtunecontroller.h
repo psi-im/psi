@@ -30,16 +30,20 @@ class PollingTuneController : public TuneController
 {
 	Q_OBJECT
 
+private:
+	static const int DefaultInterval = 10000;
+	QTimer _timer;
 public:
 	PollingTuneController();
-	void setInterval(int interval);
+	inline bool isPolling() const { return _timer.isActive(); }
+	inline void startPoll() { _timer.start(DefaultInterval); }
+	inline void stopPoll() { _timer.stop(); }
 
 protected slots:
-	void check();
+	virtual void check();
 
 private:
-	Tune prev_tune_;
-	QTimer timer_;
+	Tune _prevTune;
 };
 
 #endif

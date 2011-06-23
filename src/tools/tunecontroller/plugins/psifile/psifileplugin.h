@@ -30,7 +30,7 @@
 #include <QString>
 
 #include "tunecontrollerplugin.h"
-#include "psifilecontroller.h"
+#include "filetunecontroller.h"
 
 
 

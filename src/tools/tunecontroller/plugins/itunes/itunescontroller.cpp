@@ -64,7 +64,7 @@ ITunesController::~ITunesController()
 	CFNotificationCenterRemoveObserver(center, this, CFSTR("com.apple.iTunes.playerInfo"), NULL);
 }
 
-Tune ITunesController::currentTune() 
+Tune ITunesController::currentTune() const
 {
 	return currentTune_;
 }

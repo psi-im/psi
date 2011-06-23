@@ -34,8 +34,8 @@ class TuneController : public QObject
 	Q_OBJECT
 
 public:
-	virtual Tune currentTune() = 0;
-	
+	virtual Tune currentTune() const = 0;
+
 signals:
 	/**
 	 * This signal is emitted when the media player started playing a tune.

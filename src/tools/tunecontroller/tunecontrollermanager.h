@@ -24,28 +24,50 @@
 #include <QObject>
 #include <QMap>
 #include <QList>
+#include <QStringList>
+#include <QSharedPointer>
+
+#include "tune.h"
 
 class TuneControllerPlugin;
 class TuneController;
 
+typedef QSharedPointer<TuneController> TuneControllerPtr;
+typedef QSharedPointer<TuneControllerPlugin> TuneControllerPluginPtr;
+
+
 class TuneControllerManager : public QObject
 {
+	Q_OBJECT
 public:
-	static TuneControllerManager* instance();
-	
+	TuneControllerManager();
+	~TuneControllerManager();
+
 	QList<QString> controllerNames() const;
 	TuneController* createController(const QString&) const;
-
 	bool loadPlugin(const QString&);
+	Tune currentTune() const;
+	void setTuneFilters(const QStringList &filters, const QString &pattern);
+	void updateControllers(const QStringList &blacklist);
 	
+signals:
+	void playing(const Tune &tune);
+	void stopped();
+
+protected slots:
+	void sendTune(const Tune &tune);
+
 protected:
 	bool loadPlugin(QObject* plugin);
 	
 private:
-	TuneControllerManager();
+	bool checkTune(const Tune &tune) const;
 
-	static TuneControllerManager* instance_;
-	QMap<QString,TuneControllerPlugin*> plugins_;
+private:
+	QMap<QString,TuneControllerPluginPtr> plugins_;
+	QMap<QString,TuneControllerPtr> controllers_;
+	QStringList tuneUrlFilters_;
+	QString tuneTitleFilterPattern_;
 };
 
 #endif

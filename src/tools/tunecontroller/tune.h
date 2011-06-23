@@ -38,6 +38,7 @@ public:
 	const QString& artist() const { return artist_; }
 	const QString& album() const { return album_; }
 	const QString& track() const { return track_; }
+	const QString& url() const { return url_; }
 	
 	unsigned int time() const { return time_; }
 
@@ -52,14 +53,14 @@ public:
 	 * \brief Checks whether this is a null tune.
 	 */
 	bool isNull() const {
-		return name_.isEmpty() && artist_.isEmpty() && album_.isEmpty() && track_.isEmpty() && time_ == 0; 
+		return name_.isEmpty() && artist_.isEmpty() && album_.isEmpty() && track_.isEmpty() && url_.isEmpty() && time_ == 0;
 	}
 
 	/**
 	 * \brief Compares this tune with another tune for equality.
 	 */
 	bool operator==(const Tune& t) const {
-		return name_ == t.name_ && artist_ == t.artist_ && album_ == t.album_ && track_ == t.track_ && time_ == t.time_; 
+		return name_ == t.name_ && artist_ == t.artist_ && album_ == t.album_ && track_ == t.track_ && url_ == t.url_ && time_ == t.time_;
 	}
 
 	/**
@@ -73,10 +74,11 @@ public:
 	void setArtist(const QString& artist) { artist_ = artist; }
 	void setAlbum(const QString& album) { album_ = album; }
 	void setTrack(const QString& track) { track_ = track; }
+	void setURL(const QString& url) { url_ = url; }
 	void setTime(unsigned int time) { time_ = time; }
 
 private:
-	QString name_, artist_, album_, track_;
+	QString name_, artist_, album_, track_, url_;
 	unsigned int time_;
 };
 

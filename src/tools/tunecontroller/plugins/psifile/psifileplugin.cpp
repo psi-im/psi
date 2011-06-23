@@ -18,6 +18,7 @@
  *
  */
 
+#include "applicationinfo.h"
 #include "psifileplugin.h"
 
 
@@ -28,7 +29,7 @@ QString PsiFilePlugin::name()
 
 TuneController* PsiFilePlugin::createController() 
 {
-	return new PsiFileController();
+	return new FileTuneController(ApplicationInfo::homeDir() + "/tune");
 }
 
 Q_EXPORT_PLUGIN2(psifileplugin, PsiFilePlugin);

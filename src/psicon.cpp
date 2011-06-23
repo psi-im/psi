@@ -53,7 +53,7 @@
 #include "options/optionsdlg.h"
 #include "options/opt_toolbars.h"
 #include "accountregdlg.h"
-#include "combinedtunecontroller.h"
+#include "tunecontrollermanager.h"
 #include "mucjoindlg.h"
 #include "userlist.h"
 #include "eventdlg.h"
@@ -115,6 +115,11 @@
 
 // from opt_avcall.cpp
 extern void options_avcall_update();
+
+static const char *tunePublishOptionPath = "options.extended-presence.tune.publish";
+static const char *tuneUrlFilterOptionPath = "options.extended-presence.tune.url-filter";
+static const char *tuneTitleFilterOptionPath = "options.extended-presence.tune.title-filter";
+static const char *tuneControllerFilterOptionPath = "options.extended-presence.tune.controller-filter";
 
 //----------------------------------------------------------------------------
 // PsiConObject
@@ -277,7 +282,7 @@ public:
 #endif
 	PsiActionList *actionList;
 	//GlobalAccelManager *globalAccelManager;
-	TuneController* tuneController;
+	TuneControllerManager* tuneManager;
 	QMenuBar* defaultMenuBar;
 	CapsRegistry* capsRegistry;
 	TabManager *tabManager;
@@ -310,7 +315,7 @@ PsiCon::PsiCon()
 
 	d->s5bServer = 0;
 	d->proxy = 0;
-	d->tuneController = 0;
+	d->tuneManager = 0;
 	d->autoUpdater = 0;
 
 	d->actionList = 0;
@@ -411,7 +416,7 @@ bool PsiCon::init()
 
 #ifdef USE_PEP
 	// Create the tune controller
-	d->tuneController = new CombinedTuneController();
+	d->tuneManager = new TuneControllerManager();
 #endif
 
 	// Auto updater initialization
@@ -647,6 +652,12 @@ bool PsiCon::init()
 		AvCallManager::setExternalAddress(PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString());
 	}
 
+
+#ifdef USE_PEP
+	optionChanged(tuneControllerFilterOptionPath);
+	optionChanged(tuneUrlFilterOptionPath);
+#endif
+
 	return result;
 }
 
@@ -694,7 +705,7 @@ void PsiCon::deinit()
 	}
 
 	// TuneController
-	delete d->tuneController;
+	delete d->tuneManager;
 
 	// save profile
 	if(d->contactList)
@@ -750,9 +761,9 @@ TabManager *PsiCon::tabManager() const
 	return d->tabManager;
 }
 
-TuneController *PsiCon::tuneController() const
+TuneControllerManager *PsiCon::tuneManager() const
 {
-	return d->tuneController;
+	return d->tuneManager;
 }
 
 AlertManager *PsiCon::alertManager() const {
@@ -1245,6 +1256,20 @@ void PsiCon::optionChanged(const QString& option)
 	if (option == "options.p2p.bytestreams.listen-port") {
 		s5b_init();
 	}
+#ifdef USE_PEP
+	if (option == tuneUrlFilterOptionPath || option == tuneTitleFilterOptionPath) {
+		d->tuneManager->setTuneFilters(PsiOptions::instance()->getOption(tuneUrlFilterOptionPath).toString().split(QRegExp("\\W+")),
+							 PsiOptions::instance()->getOption(tuneTitleFilterOptionPath).toString());
+	}
+	if (option == tuneControllerFilterOptionPath || option == tunePublishOptionPath) {
+		if (PsiOptions::instance()->getOption(tunePublishOptionPath).toBool()) {
+			d->tuneManager->updateControllers(PsiOptions::instance()->getOption(tuneControllerFilterOptionPath).toString().split(QRegExp("[,]\\s*")));
+		}
+		else {
+			d->tuneManager->updateControllers(d->tuneManager->controllerNames());
+		}
+	}
+#endif
 }
 
 void PsiCon::slotApplyOptions()

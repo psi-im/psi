@@ -32,7 +32,7 @@ class WinAmpController : public TuneController
 	Q_OBJECT
 public:
 	WinAmpController();
-	virtual Tune currentTune();
+	virtual Tune currentTune() const;
 
 protected:
 	QPair<bool, QString> getTrackTitle(HWND waWnd);

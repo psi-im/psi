@@ -27,6 +27,7 @@
 #include "psiactions.h"
 #include "psievent.h"
 #include "tabbablewidget.h"
+#include "tunecontrollermanager.h"
 
 using namespace XMPP;
 
@@ -78,7 +79,7 @@ public:
 	ContactView* contactView() const;
 #endif
 	EDB *edb() const;
-	TuneController* tuneController() const;
+	TuneControllerManager* tuneManager() const;
 	ProxyManager *proxy() const;
 	FileTransDlg *ftdlg() const;
 	TabManager *tabManager() const;

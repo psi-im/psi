@@ -62,13 +62,14 @@ public:
 	MPRISTuneController();
 	~MPRISTuneController();
 
-	Tune currentTune();
+	virtual Tune currentTune() const;
 
 protected slots:
 	void checkMprisService(const QString &name, const QString &oldOwner, const QString &newOwner);
 	void onTrackChange(const QVariantMap &map);
 	void onPlayerStatusChange(const PlayerStatus &ps);
 	void onPropertyChange(const QDBusMessage &msg);
+
 private:
 	Tune getTune(const QVariantMap &map) const;
 	Tune getMpris2Tune(const QVariantMap &map) const;
@@ -79,8 +80,8 @@ private:
 
 private:
 	Tune currentTune_;
-	QStringList players;
-	int whatPlaying;
+	QStringList players_;
+	bool tuneSent_;
 };
 
 #endif

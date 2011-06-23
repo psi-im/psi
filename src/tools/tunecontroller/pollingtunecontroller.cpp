@@ -37,21 +37,8 @@
  */
 PollingTuneController::PollingTuneController()
 {
-	connect(&timer_, SIGNAL(timeout()), SLOT(check()));
-	timer_.start(3000);
-}
-
-
-/**
- * \brief Sets the polling interval. If interval is 0, no polling is
- * done.
- */
-void PollingTuneController::setInterval(int interval)
-{
-	if (interval > 0)
-		timer_.start(interval);
-	else
-		timer_.stop();
+	connect(&_timer, SIGNAL(timeout()), SLOT(check()));
+	_timer.setInterval(DefaultInterval);
 }
 
 /**
@@ -60,8 +47,8 @@ void PollingTuneController::setInterval(int interval)
 void PollingTuneController::check()
 {
 	Tune tune = currentTune();
-	if (prev_tune_ != tune) {
-		prev_tune_ = tune;
+	if (_prevTune != tune) {
+		_prevTune = tune;
 		if (tune.isNull()) {
 			emit stopped();
 		}

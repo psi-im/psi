@@ -6,7 +6,6 @@ HEADERS += \
 	$$PWD/tunecontroller.h \
 	$$PWD/pollingtunecontroller.h \
 	$$PWD/filetunecontroller.h \
-	$$PWD/combinedtunecontroller.h \
 	$$PWD/tunecontrollerplugin.h \
 	$$PWD/tunecontrollermanager.h \
 	$$PWD/tunecontrollerinterface.h 
@@ -16,22 +15,7 @@ HEADERS += \
 SOURCES += \
 	$$PWD/pollingtunecontroller.cpp \
 	$$PWD/filetunecontroller.cpp \
-	$$PWD/combinedtunecontroller.cpp \
 	$$PWD/tunecontrollermanager.cpp
-
-# XMMS
-tc_xmms {
-	DEFINES += TC_XMMS
-	XMMS_PLUGIN_PATH = $$PWD/plugins/xmms
-	INCLUDEPATH += $$XMMS_PLUGIN_PATH
-
-	HEADERS += \
-		$$XMMS_PLUGIN_PATH/xmmscontroller.h 
-		
-	SOURCES += \
-		$$XMMS_PLUGIN_PATH/xmmscontroller.cpp \
-		$$XMMS_PLUGIN_PATH/xmmsplugin.cpp
-}
 
 # iTunes
 tc_itunes {
@@ -75,11 +59,9 @@ tc_psifile {
 	INCLUDEPATH += $$PSIFILE_PLUGIN_PATH
 
 	HEADERS += \
-		$$PSIFILE_PLUGIN_PATH/psifilecontroller.h \
 		$$PSIFILE_PLUGIN_PATH/psifileplugin.h
-		
+
 	SOURCES += \
-		$$PSIFILE_PLUGIN_PATH/psifilecontroller.cpp \
 		$$PSIFILE_PLUGIN_PATH/psifileplugin.cpp
 }
 

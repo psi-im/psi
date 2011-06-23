@@ -24,9 +24,8 @@
 
 #include <QtCore>
 #include <QPluginLoader>
-#include <QCoreApplication>
-#include <QDebug>
 
+#include "tunecontroller.h"
 #include "tunecontrollermanager.h"
 #include "tunecontrollerplugin.h"
 
@@ -36,10 +35,51 @@
  */
 
 
-TuneControllerManager::TuneControllerManager() : QObject(QCoreApplication::instance())
+TuneControllerManager::TuneControllerManager()
 {
 	foreach(QObject* plugin,QPluginLoader::staticInstances()) {
 		loadPlugin(plugin);
+	}
+}
+
+TuneControllerManager::~TuneControllerManager()
+{
+}
+
+void TuneControllerManager::updateControllers(const QStringList &blacklist)
+{
+	bool isInBlacklist;
+	foreach(const QString &name, plugins_.keys()) {
+		TuneControllerPtr c = controllers_.value(name);
+		isInBlacklist = blacklist.contains(name);
+		if (!c && !isInBlacklist) {
+			c = TuneControllerPtr(plugins_[name]->createController());
+			connect(c.data(),SIGNAL(stopped()),SIGNAL(stopped()));
+			connect(c.data(),SIGNAL(playing(const Tune&)),SLOT(sendTune(const Tune&)));
+			controllers_.insert(name, c);
+		}
+		else if (c && isInBlacklist) {
+			emit stopped();
+			controllers_.remove(name);
+		}
+	}
+}
+
+Tune TuneControllerManager::currentTune() const
+{
+	foreach(const TuneControllerPtr &c, controllers_.values()) {
+		Tune t = c->currentTune();
+		if (!t.isNull()) {
+			return t;
+		}
+	}
+	return Tune();
+}
+
+void TuneControllerManager::sendTune(const Tune &tune)
+{
+	if (checkTune(tune)) {
+		emit playing(tune);
 	}
 }
 
@@ -77,7 +117,7 @@ bool TuneControllerManager::loadPlugin(QObject* plugin)
 	if (!plugin)
 		return false;
 
-	TuneControllerPlugin* tcplugin = qobject_cast<TuneControllerPlugin*>(plugin);
+	TuneControllerPluginPtr tcplugin = TuneControllerPluginPtr(qobject_cast<TuneControllerPlugin*>(plugin));
 	if (tcplugin) {
 		if(!plugins_.contains(tcplugin->name())) {
 			//qDebug() << "Registering plugin " << tcplugin->name();
@@ -85,22 +125,35 @@ bool TuneControllerManager::loadPlugin(QObject* plugin)
 		}
 		return true;
 	}
-
 	return false;
 }
-	
-/**
- * \brief Retrieves the global plugin manager.
- */
-TuneControllerManager* TuneControllerManager::instance()
-{
-	if (!instance_) 
-		instance_ = new TuneControllerManager();
-	return instance_;
-}
-	
-TuneControllerManager* TuneControllerManager::instance_ = 0;
 
+void TuneControllerManager::setTuneFilters(const QStringList &filters, const QString &pattern)
+{
+	tuneUrlFilters_ = filters;
+	tuneTitleFilterPattern_ = pattern;
+}
+
+bool TuneControllerManager::checkTune(const Tune &tune) const
+{
+	if (!tuneTitleFilterPattern_.isEmpty() && !tune.name().isEmpty()) {
+		QRegExp tuneTitleFilter(tuneTitleFilterPattern_);
+		if (tuneTitleFilter.isValid() && tuneTitleFilter.exactMatch(tune.name())) {
+			return false;
+		}
+	}
+	else {
+		QString extension;
+		int index = tune.url().lastIndexOf(".");
+		if (index != -1) {
+			extension = tune.url().right(tune.url().length() - (index+1)).toLower();
+		}
+		if (!extension.isEmpty() && tuneUrlFilters_.contains(extension)) {
+			return false;
+		}
+	}
+	return true;
+}
 
 // ---------------------------------------------------------------------------- 
 
@@ -108,18 +161,14 @@ TuneControllerManager* TuneControllerManager::instance_ = 0;
 Q_IMPORT_PLUGIN(itunesplugin)
 #endif
 
-#ifdef TC_XMMS
-Q_IMPORT_PLUGIN(xmmsplugin);
-#endif
-
 #ifdef TC_WINAMP
-Q_IMPORT_PLUGIN(winampplugin);
+Q_IMPORT_PLUGIN(winampplugin)
 #endif
 
 #ifdef TC_PSIFILE
-Q_IMPORT_PLUGIN(psifileplugin);
+Q_IMPORT_PLUGIN(psifileplugin)
 #endif
 
 #if defined(TC_MPRIS) && defined(USE_DBUS)
-Q_IMPORT_PLUGIN(mprisplugin);
+Q_IMPORT_PLUGIN(mprisplugin)
 #endif

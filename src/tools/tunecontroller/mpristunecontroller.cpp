@@ -55,11 +55,12 @@ const QDBusArgument &operator>>(const QDBusArgument& arg, PlayerStatus& ps)
 }
 
 MPRISTuneController::MPRISTuneController()
+:tuneSent_(false)
 {
 	qDBusRegisterMetaType<PlayerStatus>();
-	players = bus.interface()->registeredServiceNames().value()
+	players_ = bus.interface()->registeredServiceNames().value()
 													   .filter(MPRIS_PREFIX);
-	foreach(const QString &player, players){
+	foreach(const QString &player, players_){
 		connectToBus(player);
 	}
 	bus.connect(QLatin1String("org.freedesktop.DBus"),
@@ -72,7 +73,7 @@ MPRISTuneController::MPRISTuneController()
 
 MPRISTuneController::~MPRISTuneController()
 {
-	foreach(const QString &player, players) {
+	foreach(const QString &player, players_) {
 		disconnectFromBus(player);
 	}
 	bus.disconnect(QLatin1String("org.freedesktop.DBus"),
@@ -89,16 +90,16 @@ void MPRISTuneController::checkMprisService(const QString &name,
 {
 	Q_UNUSED(oldOwner);
 	if (name.startsWith(MPRIS_PREFIX)) {
-		int playerIndex = players.indexOf(name);
+		int playerIndex = players_.indexOf(name);
 		if (playerIndex == -1) {
 			if (!newOwner.isEmpty()) {
-				players.append(name);
+				players_.append(name);
 				connectToBus(name);
 			}
 		}
 		else if (newOwner.isEmpty()) {
 			disconnectFromBus(name);
-			players.removeAt(playerIndex);
+			players_.removeAt(playerIndex);
 		}
 	}
 }
@@ -161,33 +162,37 @@ void MPRISTuneController::disconnectFromBus(const QString &service_)
 			       QLatin1String("PropertiesChanged"),
 			       this,
 			       SLOT(onPropertyChange(QDBusMessage)));
-		if (whatPlaying == MPRIS_2) {
-			emit stopped();
-		}
+	}
+	if (!currentTune_.isNull()) {
+		emit stopped();
+		tuneSent_ = false;
+		currentTune_ = Tune();
 	}
 }
 
 void MPRISTuneController::onPlayerStatusChange(const PlayerStatus &ps)
 {
-	if (ps.playStatus != StatusPlaying) {
-		emit stopped();
-		if (ps.playStatus == StatusStopped)
-			currentTune_ = Tune();
-	}
-	else if (!currentTune_.isNull()) {
-		emit playing(currentTune_);
+	if (!currentTune_.isNull()) {
+		if (ps.playStatus != StatusPlaying) {
+			emit stopped();
+			tuneSent_ = false;
+			if (ps.playStatus == StatusStopped)
+				currentTune_ = Tune();
+		}
+		else if (!tuneSent_) {
+			emit playing(currentTune_);
+			tuneSent_ = true;
+		}
 	}
 }
 
 void MPRISTuneController::onTrackChange(const QVariantMap &map)
 {
-	whatPlaying = MPRIS_1;
 	Tune tune = getTune(map);
-	if (tune != currentTune_) {
+	if (tune != currentTune_ && !tune.isNull()) {
 		currentTune_ = tune;
-		if (!currentTune_.isNull()) {
-			emit playing(currentTune_);
-		}
+		emit playing(currentTune_);
+		tuneSent_ = true;
 	}
 }
 
@@ -197,14 +202,12 @@ void MPRISTuneController::onPropertyChange(const QDBusMessage &msg)
 	QVariantMap map = qdbus_cast<QVariantMap>(arg);
 	QVariant v = map.value(QLatin1String("Metadata"));
 	if (v.isValid()) {
-		whatPlaying = MPRIS_2;
 		arg = v.value<QDBusArgument>();
 		Tune tune = getMpris2Tune(qdbus_cast<QVariantMap>(arg));
-		if (tune != currentTune_) {
+		if (tune != currentTune_ && !tune.isNull()) {
 			currentTune_ = tune;
-			if (!currentTune_.isNull()) {
-				emit playing(currentTune_);
-			}
+			emit playing(currentTune_);
+			tuneSent_ = true;
 		}
 	}
 	v = map.value(QLatin1String("PlaybackStatus"));
@@ -226,7 +229,7 @@ int MPRISTuneController::getMpris2Status(const QString &status) const
 	return StatusStopped;
 }
 
-Tune MPRISTuneController::currentTune()
+Tune MPRISTuneController::currentTune() const
 {
 	return currentTune_;
 }
@@ -238,6 +241,7 @@ Tune MPRISTuneController::getTune(const QVariantMap &map) const
 	tune.setArtist(map.value("artist").toString());
 	tune.setAlbum(map.value("album").toString());
 	tune.setTrack(map.value("track").toString());
+	tune.setURL(map.value("location").toString());
 	tune.setTime(map.value("time").toUInt());
 	return tune;
 }
@@ -249,6 +253,7 @@ Tune MPRISTuneController::getMpris2Tune(const QVariantMap &map) const
 	tune.setArtist(map.value("xesam:artist").toString());
 	tune.setAlbum(map.value("xesam:album").toString());
 	tune.setTrack(QVariant(map.value("xesam:trackNumber").toUInt()).toString());
+	tune.setURL(map.value("xesam:url").toString());
 	tune.setTime(QVariant(map.value("mpris:length").toLongLong() / 1000000).toUInt());
 	return tune;
 }

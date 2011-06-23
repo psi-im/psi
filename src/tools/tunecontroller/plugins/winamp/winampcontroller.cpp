@@ -171,6 +171,7 @@ void WinAmpController::check()
 		}
 		antiscrollcounter_ = 0;
 		tune.setName(trackpair.second);
+		tune.setURL(trackpair.second);
 		tune.setTime(SendMessage(h,WM_WA_IPC,1,IPC_GETOUTPUTTIME));
 	}
 
@@ -189,7 +190,7 @@ void WinAmpController::check()
 }
 
 
-Tune WinAmpController::currentTune()
+Tune WinAmpController::currentTune() const
 {
 	return prev_tune_;
 }

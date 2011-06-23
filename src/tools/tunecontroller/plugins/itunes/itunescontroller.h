@@ -12,7 +12,7 @@ public:
 	ITunesController();
 	~ITunesController();
 
-	virtual Tune currentTune();
+	virtual Tune currentTune() const;
 
 private:
 	static void iTunesCallback(CFNotificationCenterRef,void*,CFStringRef,const void*, CFDictionaryRef info);

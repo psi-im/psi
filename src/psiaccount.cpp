@@ -1106,8 +1106,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 
 #ifdef USE_PEP
 	// Tune Controller
-	connect(d->psi->tuneController(), SIGNAL(stopped()), SLOT(tuneStopped()));
-	connect(d->psi->tuneController(), SIGNAL(playing(const Tune&)),SLOT(tunePlaying(const Tune&)));
+	connect(d->psi->tuneManager(), SIGNAL(stopped()), SLOT(tuneStopped()));
+	connect(d->psi->tuneManager(), SIGNAL(playing(const Tune&)),SLOT(tunePlaying(const Tune&)));
 #endif
 
 	// HttpAuth
@@ -2191,8 +2191,8 @@ void PsiAccount::setPEPAvailable(bool b)
 	}
 
 	// Publish current tune information
-	if (b && d->psi->tuneController() && d->options->getOption("options.extended-presence.tune.publish").toBool()) {
-		Tune current = d->psi->tuneController()->currentTune();
+	if (b && d->psi->tuneManager() && d->options->getOption("options.extended-presence.tune.publish").toBool()) {
+		Tune current = d->psi->tuneManager()->currentTune();
 		if (!current.isNull())
 			publishTune(current);
 	}
@@ -2898,7 +2898,7 @@ void PsiAccount::capsChanged(const Jid& j)
 
 void PsiAccount::tuneStopped()
 {
-	if (loggedIn() && d->options->getOption("options.extended-presence.tune.publish").toBool()) {
+	if (loggedIn()) {
 		publishTune(Tune());
 	}
 }
@@ -5697,13 +5697,13 @@ void PsiAccount::optionsUpdate()
 	profileUpdateEntry(d->self);
 
 	// Tune
-#ifdef USE_PEP
+#ifdef USE_PEP // Tune cleaning not working. It's implemented in psicon.cpp in PsiCon::optionChanged
 	bool publish = d->options->getOption("options.extended-presence.tune.publish").toBool();
 	if (!d->lastTune.isNull() && !publish) {
 		publishTune(Tune());
 	}
 	else if (d->lastTune.isNull() && publish) {
-		Tune current = d->psi->tuneController()->currentTune();
+		Tune current = d->psi->tuneManager()->currentTune();
 		if (!current.isNull())
 			publishTune(current);
 	}
