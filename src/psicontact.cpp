@@ -876,30 +876,6 @@ void PsiContact::vcardChanged(const Jid& j)
 	emit updated();
 }
 
-static inline int rankStatus(int status)
-{
-	switch (status) {
-#ifdef YAPSI
-		case XMPP::Status::FFC:       return 0;
-		case XMPP::Status::Online:    return 0;
-		case XMPP::Status::Away:      return 1;
-		case XMPP::Status::XA:        return 1;
-		case XMPP::Status::DND:       return 0;
-		case XMPP::Status::Invisible: return 5;
-#else
-		case XMPP::Status::FFC:       return 0;
-		case XMPP::Status::Online:    return 1;
-		case XMPP::Status::Away:      return 2;
-		case XMPP::Status::XA:        return 3;
-		case XMPP::Status::DND:       return 4;
-		case XMPP::Status::Invisible: return 5;
-#endif
-		default:
-			return 6;
-	}
-	return 0;
-}
-
 bool PsiContact::compare(const ContactListItem* other) const
 {
 	const ContactListGroup* group = dynamic_cast<const ContactListGroup*>(other);

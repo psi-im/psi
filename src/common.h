@@ -115,7 +115,29 @@ XMPP::Status makeStatus(int, const QString &);
 XMPP::Status makeStatus(int, const QString &, int);
 XMPP::Status::Type makeSTATUS(const XMPP::Status &);
 QString clipStatus(const QString &str, int width, int height);
-
+inline int rankStatus(int status)
+{
+	switch (status) {
+#ifdef YAPSI
+		case XMPP::Status::FFC:       return 0;
+		case XMPP::Status::Online:    return 0;
+		case XMPP::Status::Away:      return 1;
+		case XMPP::Status::XA:        return 1;
+		case XMPP::Status::DND:       return 0;
+		case XMPP::Status::Invisible: return 5;
+#else
+		case XMPP::Status::FFC:       return 0;
+		case XMPP::Status::Online:    return 1;
+		case XMPP::Status::Away:      return 2;
+		case XMPP::Status::XA:        return 3;
+		case XMPP::Status::DND:       return 4;
+		case XMPP::Status::Invisible: return 5;
+#endif
+		default:
+			return 6;
+	}
+	return 0;
+}
 
 // -----------------------------------------------------------------------------
 // Widget tools

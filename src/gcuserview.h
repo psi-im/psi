@@ -28,7 +28,6 @@
 
 using namespace XMPP;
 
-class QPainter;
 class GCMainDlg;
 class GCUserView;
 class GCUserViewGroupItem;
@@ -43,9 +42,7 @@ public:
 
 	Status s;
 
-	bool operator <  (const GCUserViewItem& it) const;
-	bool operator >  (const GCUserViewItem& it) const;
-	bool operator == (const GCUserViewItem& it) const;
+	virtual bool operator<  (const QTreeWidgetItem& it) const;
 };
 
 class GCUserViewGroupItem : public QTreeWidgetItem

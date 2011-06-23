@@ -122,19 +122,18 @@ GCUserViewItem::GCUserViewItem(GCUserViewGroupItem *par)
 {
 }
 
-bool GCUserViewItem::operator <(const GCUserViewItem& it) const
-{
-	return text(0) < it.text(0);
-}
-
-bool GCUserViewItem::operator >(const GCUserViewItem& it) const
-{
-	return text(0) > it.text(0);
-}
-
-bool GCUserViewItem::operator ==(const GCUserViewItem& it) const
-{
-	return text(0) == it.text(0);
+bool GCUserViewItem::operator<(const QTreeWidgetItem& it) const
+{	
+	GCUserViewItem *item = (GCUserViewItem*)(&it);
+	if(PsiOptions::instance()->getOption("options.ui.contactlist.contact-sort-style").toString() == "status") {
+		int rank = rankStatus(s.type()) - rankStatus(item->s.type());
+		if (rank == 0)
+			rank = QString::localeAwareCompare(text(0).toLower(), it.text(0).toLower());
+		return rank < 0;
+	}
+	else {
+		return text(0).toLower() < it.text(0).toLower();
+	}
 }
 
 
@@ -292,16 +291,16 @@ void GCUserView::updateEntry(const QString &nick, const Status &s)
 		lvi = NULL;
 	}
 
+	gr = findGroup(s.mucItem().role());
 	if(!lvi) {
-		gr = findGroup(s.mucItem().role());
 		lvi = new GCUserViewItem(gr);
 		lvi->setText(0, nick);
 		gr->updateText();
-		gr->sortChildren(0, Qt::AscendingOrder);
 	}
 
 	lvi->s = s;
 	lvi->setIcon(0, PsiIconset::instance()->status(lvi->s).icon());
+	gr->sortChildren(0, Qt::AscendingOrder);
 }
 
 GCUserViewGroupItem* GCUserView::findGroup(MUCItem::Role a) const
