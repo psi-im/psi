@@ -63,6 +63,10 @@ public:
 	Qt::ToolButtonStyle toolButtonStyle() const { return toolButtonStyle_; }
 	void setToolButtonStyle(const Qt::ToolButtonStyle newStyle) { toolButtonStyle_ = newStyle; }
 
+protected:
+	// reimplemented
+	void contextMenuEvent(QContextMenuEvent *e);
+
 private:
 	Qt::ToolButtonStyle toolButtonStyle_;
 };

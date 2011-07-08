@@ -25,6 +25,7 @@
 #include <QAction>
 #include <QActionEvent>
 #include <QIcon>
+#include <QMenu>
 #include "actionlineedit.h"
 
 ActionLineEditButton::ActionLineEditButton( QWidget *parent )
@@ -207,4 +208,19 @@ void ActionLineEdit::actionEvent ( QActionEvent * event )
 #else
 	setStyleSheet(QString("padding-right:%1px").arg(sumWidth)); //this breaks height of widget.. Qt bug?
 #endif
+}
+
+void ActionLineEdit::contextMenuEvent(QContextMenuEvent *e)
+{
+	QMenu *menu = createStandardContextMenu();
+	if (actions().count() > 0) {
+		QAction *before = NULL;
+		if (menu->actions().count() > 0) {
+			before = menu->actions().first();
+		}
+		menu->insertActions(before, actions());
+		menu->insertSeparator(before);
+	}
+	menu->exec(e->globalPos());
+	delete menu;
 }
