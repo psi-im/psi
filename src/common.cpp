@@ -595,7 +595,7 @@ Qt::DayOfWeek firstDayOfWeekFromLocale()
 	Qt::DayOfWeek firstDay = Qt::Monday;
 #ifdef Q_OS_WIN
 	WCHAR wsDay[4];
-# if WINVER >= _WIN32_WINNT_VISTA && defined(LOCALE_NAME_USER_DEFAULT)
+# if defined(_WIN32_WINNT_VISTA) && WINVER >= _WIN32_WINNT_VISTA && defined(LOCALE_NAME_USER_DEFAULT)
 	if (GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK, wsDay, 4)) {
 # else
 	if (GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK, wsDay, 4)) {
