@@ -158,7 +158,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	QAction *editnames = new QAction(IconsetFactory::icon(d->type == Self?"psi/options":"psi/info").icon(), "", this);
 	ui_.le_fullname->addAction(editnames);
 	ui_.le_fullname->widgetForAction(editnames)->setPopup(d->namesDlg);
-	d->homepageAction = new QAction(IconsetFactory::icon("psi/arrowRight").icon(), "", this);
+	d->homepageAction = new QAction(IconsetFactory::icon("psi/arrowRight").icon(), tr("Open web browser"), this);
 	d->homepageAction->setToolTip(tr("Open web browser"));
 	d->homepageAction->setVisible(false);
 	ui_.le_homepage->addAction(d->homepageAction);
@@ -195,7 +195,8 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 
 		d->bdayPopup->setLayout(vbox);
 
-		QAction *showcal = new QAction(IconsetFactory::icon("psi/options").icon(), "", this);
+		QAction *showcal = new QAction(IconsetFactory::icon("psi/options").icon(), tr("Edit birthday"), this);
+		showcal->setToolTip(tr("Edit birthday"));
 		ui_.le_bday->addAction(showcal);
 		ui_.le_bday->widgetForAction(showcal)->setPopup(d->bdayPopup);
 		connect(ui_.pb_submit, SIGNAL(clicked()), this, SLOT(doSubmit()));

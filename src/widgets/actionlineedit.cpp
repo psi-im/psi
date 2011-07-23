@@ -60,7 +60,7 @@ void ActionLineEditButton::setPopup(QWidget *widget)
 	if (widget) {
 		popup_ = widget;
 		popup_->setWindowFlags(Qt::Popup);
-		connect(this, SIGNAL(clicked()), this, SLOT(showPopup()));
+		connect(action_, SIGNAL(triggered()), this, SLOT(showPopup()));
 		popup_->adjustSize();
 	}
 }
