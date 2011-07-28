@@ -741,7 +741,7 @@ public:
 		xmlRingElem el;
 		QList< xmlRingElem > ret;
 		for(int i=0; i < xmlRingbuf.count(); i++) {
-			el = xmlRingbuf[(xmlRingbufWrite + 1 + i) % xmlRingbuf.count()];
+			el = xmlRingbuf[(xmlRingbufWrite + i) % xmlRingbuf.count()];
 			if (!el.xml.isEmpty()) {
 				ret += el;
 			}
