@@ -371,11 +371,11 @@ bool ContactListViewDelegate::eventFilter(QObject* object, QEvent* event)
 	QWidget* editor = ::qobject_cast<QWidget*>(object);
 	if (event->type() == QEvent::KeyPress) {
 		QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
-		if (keyEvent->key() == Qt::Key_Up || keyEvent->key() == Qt::Key_Home) {
+		if (keyEvent->key() == Qt::Key_Up) {
 			setEditorCursorPosition(editor, 0);
 			return true;
 		}
-		else if (keyEvent->key() == Qt::Key_Down || keyEvent->key() == Qt::Key_End) {
+		else if (keyEvent->key() == Qt::Key_Down) {
 			setEditorCursorPosition(editor, -1);
 			return true;
 		}
