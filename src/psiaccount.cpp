@@ -1229,11 +1229,12 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 
 PsiAccount::~PsiAccount()
 {
+	logout(true, loggedOutStatus());
+
 	emit accountDestroyed();
 	// nuke all related dialogs
 	deleteAllDialogs();
 
-	logout(true, loggedOutStatus());
 	QString str = name();
 
 	while (!d->messageQueue.isEmpty())
