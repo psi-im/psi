@@ -23,6 +23,7 @@
 
 #include <QList>
 #include <QGroupBox>
+#include <QPointer>
 
 #include "ui_proxy.h"
 //#include "ui_proxyedit.h"
@@ -85,6 +86,9 @@ private slots:
 	void pm_settingsChangedApply();
 	void doOpen();
 
+signals:
+	void itemChanged();
+
 private:
 	class Private;
 	Private *d;
@@ -103,11 +107,39 @@ public:
 	ProxySettings settings;
 };
 
+class ProxyForObject : public QObject
+{
+	Q_OBJECT
+
+public:
+	ProxyForObject(OptionsTree *o, QObject *parent = 0);
+	~ProxyForObject();
+
+	QString itemForObject(const QString& obj);
+	void save();
+	QComboBox* getComboBox(ProxyChooser* pc, QWidget* p = 0);
+
+private slots:
+	void currentItemChanged(int);
+	void updateCurrentItem();
+
+private:
+	void loadItem(const QString& obj);
+
+	OptionsTree* ot_;
+	ProxyChooser* pc_;
+	QPointer<QComboBox> cb_;
+	QMap<QString, QString> items_;
+	QMap<QString, QString> tmp_;
+};
+
 class ProxyManager : public QObject
 {
 	Q_OBJECT
 public:
-	ProxyManager(OptionsTree *o, QObject *parent=0);
+	static ProxyManager* instance();
+
+	void init(OptionsTree *o);
 	~ProxyManager();
 
 	ProxyChooser *createProxyChooser(QWidget *parent=0);
@@ -116,6 +148,8 @@ public:
 	QString lastEdited() const;
 	void migrateItemList(const ProxyItemList &);
 //	int findOldIndex(int) const;
+	ProxyForObject* proxyForObject();
+	ProxyItem getItemForObject(const QString& obj);
 
 signals:
 	void settingsChanged();
@@ -128,8 +162,11 @@ private slots:
 	void pd_applyList(const ProxyItemList &, int cur);
 
 private:
+	ProxyManager();
 	class Private;
 	Private *d;
+
+	static ProxyManager* instance_;
 };
 
 #endif

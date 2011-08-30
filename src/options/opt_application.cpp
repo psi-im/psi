@@ -2,6 +2,7 @@
 #include "common.h"
 #include "iconwidget.h"
 #include "psioptions.h"
+#include "proxy.h"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -73,6 +74,13 @@ QWidget *OptionsTabApplication::widget()
 		d->ck_autoUpdate->hide();
 	}
 
+	//Proxy
+
+	ProxyChooser *pc = ProxyManager::instance()->createProxyChooser(w);
+	d->gb_proxy->layout()->addWidget(ProxyManager::instance()->proxyForObject()->getComboBox(pc, w));
+	d->gb_proxy->layout()->addWidget(pc);
+
+
 	connect(d->le_dtPort, SIGNAL(textChanged(QString)), this, SLOT(updatePortLabel()));
 
 	return w;
@@ -108,6 +116,9 @@ void OptionsTabApplication::applyOptions()
 	// data transfer
 	PsiOptions::instance()->setOption("options.p2p.bytestreams.listen-port", d->le_dtPort->text().toInt());
 	PsiOptions::instance()->setOption("options.p2p.bytestreams.external-address", d->le_dtExternal->text().trimmed());
+
+	//Proxy
+	ProxyManager::instance()->proxyForObject()->save();
 }
 
 void OptionsTabApplication::restoreOptions()

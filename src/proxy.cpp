@@ -363,6 +363,7 @@ ProxyChooser::ProxyChooser(ProxyManager* m, QWidget* parent)
 	hb->addWidget(d->cb_proxy);
 	d->pb_edit = new QPushButton(tr("Edit..."), this);
 	connect(d->pb_edit, SIGNAL(clicked()), SLOT(doOpen()));
+	connect(d->cb_proxy, SIGNAL(activated(int)), SIGNAL(itemChanged()));
 	hb->addWidget(d->pb_edit);
 
 	buildComboBox();
@@ -423,18 +424,88 @@ void ProxyChooser::doOpen()
 	d->m->openDialog(x);
 }
 
+
+//----------------------------------------------------------------------------
+// ProxyForObject
+//----------------------------------------------------------------------------
+const QString defaultItemName = "Default";
+
+ProxyForObject::ProxyForObject(OptionsTree *o, QObject *parent)
+	: QObject(parent)
+	, ot_(o)
+{
+	loadItem(defaultItemName);
+}
+
+ProxyForObject::~ProxyForObject()
+{
+}
+
+QString ProxyForObject::itemForObject(const QString& obj)
+{
+	if(!items_.contains(obj))
+		loadItem(obj);
+
+	return items_.value(obj);
+}
+
+void ProxyForObject::save()
+{
+	items_ = tmp_;
+	QString base = "proxy.";
+	foreach(QString obj, items_.keys()) {
+		QString val = items_.value(obj);
+		ot_->setOption(base+obj, QVariant(val));
+	}
+}
+
+QComboBox* ProxyForObject::getComboBox(ProxyChooser* pc, QWidget* p)
+{
+	tmp_ = items_;
+	pc_ = pc;
+	cb_ = new QComboBox(p);
+	cb_->addItems(items_.keys());
+	cb_->setCurrentIndex(0);
+	currentItemChanged(0);
+
+	connect(cb_, SIGNAL(currentIndexChanged(int)), SLOT(currentItemChanged(int)));
+	connect(pc_, SIGNAL(itemChanged()), SLOT(updateCurrentItem()));
+
+	return cb_;
+}
+
+void ProxyForObject::currentItemChanged(int index)
+{
+	const QString data = cb_->itemText(index);
+	pc_->setCurrentItem(tmp_.value(data));
+}
+
+void ProxyForObject::loadItem(const QString& obj)
+{
+	QVariant v = ot_->getOption(("proxy." + obj));
+	if(!v.isValid())
+		v = ot_->getOption(("proxy." + defaultItemName));
+	items_[obj] = v.toString();
+}
+
+void ProxyForObject::updateCurrentItem()
+{
+	tmp_[cb_->currentText()] = pc_->currentItem();
+}
+
 //----------------------------------------------------------------------------
 // ProxyManager
 //----------------------------------------------------------------------------
 class ProxyManager::Private
 {
 public:
-	Private() {}
+	Private() : po(0) {}
 
 	QPointer<ProxyDlg> pd;
 	QList<int> prevMap;
 	QString lastEdited;
 	OptionsTree *o;
+	ProxyForObject* po;
 	
 	void itemToOptions(ProxyItem pi) {
 		QString base = "proxies." + pi.id;
@@ -444,16 +515,29 @@ public:
 	}
 };
 
-ProxyManager::ProxyManager(OptionsTree *opt, QObject *parent)
-		: QObject(parent)
+ProxyManager::ProxyManager()
+		: QObject(0)
 {
 	d = new Private;
-	d->o = opt;
+}
+
+void ProxyManager::init(OptionsTree *o)
+{
+	d->o = o;
+	delete d->po;
+	d->po = new ProxyForObject(o, this);
 }
 
 ProxyManager::~ProxyManager()
 {
 	delete d;
+}
+
+ProxyManager* ProxyManager::instance()
+{
+	if(!instance_)
+		instance_ = new ProxyManager();
+	return instance_;
 }
 
 ProxyChooser *ProxyManager::createProxyChooser(QWidget *parent)
@@ -539,5 +623,18 @@ void ProxyManager::pd_applyList(const ProxyItemList &list, int x)
 	
 	settingsChanged();
 }
+
+ProxyItem ProxyManager::getItemForObject(const QString& obj)
+{
+	QString str = obj;
+	return getItem(d->po->itemForObject(str.replace(QRegExp("\\s+"), "_")));
+}
+
+ProxyForObject* ProxyManager::proxyForObject()
+{
+	return d->po;
+}
+
+ProxyManager* ProxyManager::instance_ = NULL;
 
 #include "proxy.moc"

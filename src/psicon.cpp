@@ -449,7 +449,8 @@ bool PsiCon::init()
 	}
 
 	// proxy
-	d->proxy = new ProxyManager(&d->accountTree, this);
+	d->proxy = ProxyManager::instance();
+	d->proxy->init(&d->accountTree);
 	if (accountMigration) d->proxy->migrateItemList(d->optionsMigration.proxyMigration);
 	connect(d->proxy, SIGNAL(settingsChanged()), SLOT(proxy_settingsChanged()));
 	
