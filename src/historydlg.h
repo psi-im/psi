@@ -23,6 +23,7 @@
 
 #include "eventdb.h"
 #include "ui_history.h"
+#include "advwidget.h"
 
 class PsiAccount;
 class PsiContact;
@@ -32,7 +33,7 @@ namespace XMPP {
 	class Jid;
 }
 
-class HistoryDlg : public QDialog
+class HistoryDlg : public AdvancedWidget<QDialog>
 {
 	Q_OBJECT
 
