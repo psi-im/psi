@@ -49,54 +49,68 @@
 //----------------------------------------------------------------------------
 
 TabDlgDelegate::TabDlgDelegate(QObject *parent)
-		: QObject(parent) {
+	: QObject(parent)
+{
 }
 
-TabDlgDelegate::~TabDlgDelegate() {
+TabDlgDelegate::~TabDlgDelegate()
+{
 }
 
-Qt::WindowFlags TabDlgDelegate::initWindowFlags() const {
+Qt::WindowFlags TabDlgDelegate::initWindowFlags() const
+{
 	return (Qt::WindowFlags)0;
 }
 
-void TabDlgDelegate::create(QWidget *) {
+void TabDlgDelegate::create(QWidget *)
+{
 }
 
-void TabDlgDelegate::destroy(QWidget *) {
+void TabDlgDelegate::destroy(QWidget *)
+{
 }
 
-void TabDlgDelegate::tabWidgetCreated(QWidget *, PsiTabWidget *) {
+void TabDlgDelegate::tabWidgetCreated(QWidget *, PsiTabWidget *)
+{
 }
 
-bool TabDlgDelegate::paintEvent(QWidget *, QPaintEvent *) {
+bool TabDlgDelegate::paintEvent(QWidget *, QPaintEvent *)
+{
 	return false;
 }
 
-bool TabDlgDelegate::resizeEvent(QWidget *, QResizeEvent *) {
+bool TabDlgDelegate::resizeEvent(QWidget *, QResizeEvent *)
+{
 	return false;
 }
 
-bool TabDlgDelegate::mousePressEvent(QWidget *, QMouseEvent *) {
+bool TabDlgDelegate::mousePressEvent(QWidget *, QMouseEvent *)
+{
 	return false;
 }
 
-bool TabDlgDelegate::mouseMoveEvent(QWidget *, QMouseEvent *) {
+bool TabDlgDelegate::mouseMoveEvent(QWidget *, QMouseEvent *)
+{
 	return false;
 }
 
-bool TabDlgDelegate::mouseReleaseEvent(QWidget *, QMouseEvent *) {
+bool TabDlgDelegate::mouseReleaseEvent(QWidget *, QMouseEvent *)
+{
 	return false;
 }
 
-bool TabDlgDelegate::changeEvent(QWidget *, QEvent *) {
+bool TabDlgDelegate::changeEvent(QWidget *, QEvent *)
+{
 	return false;
 }
 
-bool TabDlgDelegate::event(QWidget *, QEvent *) {
+bool TabDlgDelegate::event(QWidget *, QEvent *)
+{
 	return false;
 }
 
-bool TabDlgDelegate::eventFilter(QWidget *, QObject *, QEvent *) {
+bool TabDlgDelegate::eventFilter(QWidget *, QObject *, QEvent *)
+{
 	return false;
 }
 
@@ -126,7 +140,8 @@ TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 		, tabManager_(tabManager)
 		, userManagement_(true)
 		, tabBarSingles_(true)
-		, simplifiedCaption_(false) {
+		, simplifiedCaption_(false)
+{
 	if (delegate_) {
 		delegate_->create(this);
 	}
@@ -651,7 +666,8 @@ void TabDlg::updateFlashState()
 	doFlash(flash);
 }
 
-void TabDlg::paintEvent(QPaintEvent *event) {
+void TabDlg::paintEvent(QPaintEvent *event)
+{
 	// delegate if possible, otherwise use default
 	if (delegate_ && delegate_->paintEvent(this, event)) {
 		return;
@@ -660,7 +676,8 @@ void TabDlg::paintEvent(QPaintEvent *event) {
 	}
 }
 
-void TabDlg::mousePressEvent(QMouseEvent *event) {
+void TabDlg::mousePressEvent(QMouseEvent *event)
+{
 	// delegate if possible, otherwise use default
 	if (delegate_ && delegate_->mousePressEvent(this, event)) {
 		return;
@@ -669,7 +686,8 @@ void TabDlg::mousePressEvent(QMouseEvent *event) {
 	}
 }
 
-void TabDlg::mouseMoveEvent(QMouseEvent *event) {
+void TabDlg::mouseMoveEvent(QMouseEvent *event)
+{
 	// delegate if possible, otherwise use default
 	if (delegate_ && delegate_->mouseMoveEvent(this, event)) {
 		return;
@@ -678,7 +696,8 @@ void TabDlg::mouseMoveEvent(QMouseEvent *event) {
 	}
 }
 
-void TabDlg::mouseReleaseEvent(QMouseEvent *event) {
+void TabDlg::mouseReleaseEvent(QMouseEvent *event)
+{
 	// delegate if possible, otherwise use default
 	if (delegate_ && delegate_->mouseReleaseEvent(this, event)) {
 		return;
@@ -710,7 +729,8 @@ void TabDlg::changeEvent(QEvent *event)
 	}
 }
 
-bool TabDlg::event(QEvent *event) {
+bool TabDlg::event(QEvent *event)
+{
 	// delegate if possible, otherwise use default
 	if (delegate_ && delegate_->event(this, event)) {
 		return true;
@@ -719,7 +739,8 @@ bool TabDlg::event(QEvent *event) {
 	}
 }
 
-bool TabDlg::eventFilter(QObject *obj, QEvent *event) {
+bool TabDlg::eventFilter(QObject *obj, QEvent *event)
+{
 	// delegate if possible, otherwise use default
 	if (delegate_ && delegate_->eventFilter(this, obj, event)) {
 		return true;
@@ -728,11 +749,13 @@ bool TabDlg::eventFilter(QObject *obj, QEvent *event) {
 	}
 }
 
-int TabDlg::tabCount() const {
+int TabDlg::tabCount() const
+{
 	return tabs_.count();
 }
 
-void TabDlg::setUserManagementEnabled(bool enabled) {
+void TabDlg::setUserManagementEnabled(bool enabled)
+{
 	if (userManagement_ == enabled) {
 		return;
 	}
@@ -742,7 +765,8 @@ void TabDlg::setUserManagementEnabled(bool enabled) {
 	tabWidget_->setDragsEnabled(enabled);
 }
 
-void TabDlg::setTabBarShownForSingles(bool enabled) {
+void TabDlg::setTabBarShownForSingles(bool enabled)
+{
 	if (tabBarSingles_ == enabled) {
 		return;
 	}
@@ -751,7 +775,8 @@ void TabDlg::setTabBarShownForSingles(bool enabled) {
 	updateTabBar();
 }
 
-void TabDlg::updateTabBar() {
+void TabDlg::updateTabBar()
+{
 	if (tabBarSingles_) {
 		tabWidget_->setTabBarShown(true);
 	} else {
@@ -762,7 +787,8 @@ void TabDlg::updateTabBar() {
 	}
 }
 
-void TabDlg::setSimplifiedCaptionEnabled(bool enabled) {
+void TabDlg::setSimplifiedCaptionEnabled(bool enabled)
+{
 	if (simplifiedCaption_ == enabled) {
 		return;
 	}
