@@ -275,7 +275,6 @@ public:
 	QStringList recentNodeList; // FIXME move this to options system?
 	EDB *edb;
 	S5BServer *s5bServer;
-	ProxyManager *proxy;
 	IconSelectPopup *iconSelect;
 #ifdef FILETRANSFER
 	FileTransDlg *ftwin;
@@ -314,7 +313,6 @@ PsiCon::PsiCon()
 	d->edb = new EDBFlatFile;
 
 	d->s5bServer = 0;
-	d->proxy = 0;
 	d->tuneManager = 0;
 	d->autoUpdater = 0;
 
@@ -449,10 +447,10 @@ bool PsiCon::init()
 	}
 
 	// proxy
-	d->proxy = ProxyManager::instance();
-	d->proxy->init(&d->accountTree);
-	if (accountMigration) d->proxy->migrateItemList(d->optionsMigration.proxyMigration);
-	connect(d->proxy, SIGNAL(settingsChanged()), SLOT(proxy_settingsChanged()));
+	ProxyManager *proxy = ProxyManager::instance();
+	proxy->init(&d->accountTree);
+	if (accountMigration) proxy->migrateItemList(d->optionsMigration.proxyMigration);
+	connect(proxy, SIGNAL(settingsChanged()), SLOT(proxy_settingsChanged()));
 	
 	connect(options, SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
 	
@@ -741,11 +739,6 @@ PsiContactList* PsiCon::contactList() const
 EDB *PsiCon::edb() const
 {
 	return d->edb;
-}
-
-ProxyManager *PsiCon::proxy() const
-{
-	return d->proxy;
 }
 
 FileTransDlg *PsiCon::ftdlg() const
@@ -1696,7 +1689,7 @@ void PsiCon::promptUserToCreateAccount()
 		w.exec();
 	}
 	else if (msgBox.clickedButton() ==  registerButton) {
-		AccountRegDlg w(proxy());
+		AccountRegDlg w;
 		int n = w.exec();
 		if (n == QDialog::Accepted) {
 			contactList()->createAccount(w.jid().node(),w.jid(),w.pass(),w.useHost(),w.host(),w.port(),w.legacySSLProbe(),w.ssl(),w.proxy(),w.tlsOverrideDomain(), w.tlsOverrideCert());

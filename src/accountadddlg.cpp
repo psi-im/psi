@@ -90,7 +90,7 @@ void AccountAddDlg::add()
 
 	PsiAccount* newAccount = 0;
 	if(ck_reg->isChecked()) {
-		AccountRegDlg *w = new AccountRegDlg(psi->proxy(), this);
+		AccountRegDlg *w = new AccountRegDlg(this);
 		int n = w->exec();
 		if(n != QDialog::Accepted) {
 			delete w;

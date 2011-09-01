@@ -80,7 +80,6 @@ public:
 #endif
 	EDB *edb() const;
 	TuneControllerManager* tuneManager() const;
-	ProxyManager *proxy() const;
 	FileTransDlg *ftdlg() const;
 	TabManager *tabManager() const;
 

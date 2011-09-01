@@ -53,7 +53,7 @@ class AccountRemoveDlg : public QDialog, public Ui::AccountRemove
 {
 	Q_OBJECT
 public:
-	AccountRemoveDlg(ProxyManager *, const UserAccount &, QWidget *parent=0);
+	AccountRemoveDlg(const UserAccount &, QWidget *parent=0);
 	~AccountRemoveDlg();
 
 protected:
@@ -88,17 +88,15 @@ public:
 
 	UserAccount acc;
 	QButtonGroup *bg;
-	ProxyManager *proxyman;
 };
 
-AccountRemoveDlg::AccountRemoveDlg(ProxyManager *proxyman, const UserAccount &acc, QWidget *parent)
+AccountRemoveDlg::AccountRemoveDlg(const UserAccount &acc, QWidget *parent)
 :QDialog(parent)
 {
 	setupUi(this);
 	setModal(false);
 	d = new Private;
 	d->acc = acc;
-	d->proxyman = proxyman;
 
 	setWindowTitle(CAP(windowTitle()));
 
@@ -195,7 +193,7 @@ void AccountRemoveDlg::remove()
 
 	QString pass = le_pass->text();
 	Jid j(Jid(d->acc.jid).withResource(d->acc.resource));
-	client->connectToServer(j, d->acc.legacy_ssl_probe, d->acc.ssl == UserAccount::SSL_Legacy, d->acc.ssl == UserAccount::SSL_Yes, d->acc.opt_host ? d->acc.host : QString(), d->acc.port, d->proxyman, d->acc.proxyID, &pass);
+	client->connectToServer(j, d->acc.legacy_ssl_probe, d->acc.ssl == UserAccount::SSL_Legacy, d->acc.ssl == UserAccount::SSL_Yes, d->acc.opt_host ? d->acc.host : QString(), d->acc.port, d->acc.proxyID, &pass);
 }
 
 void AccountRemoveDlg::client_handshaken()
@@ -376,7 +374,7 @@ void AccountManageDlg::remove()
 		i->pa->setStatus(XMPP::Status::Offline);
 	}
 
-	AccountRemoveDlg *w = new AccountRemoveDlg(psi->proxy(), i->pa->userAccount());
+	AccountRemoveDlg *w = new AccountRemoveDlg(i->pa->userAccount());
 	int n = w->exec();
 	if(n != QDialog::Accepted) {
 		delete w;

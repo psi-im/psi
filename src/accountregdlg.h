@@ -46,7 +46,7 @@ class AccountRegDlg : public QDialog
 {
 	Q_OBJECT
 public:
-	AccountRegDlg(ProxyManager*, QWidget *parent=0);
+	AccountRegDlg(QWidget *parent=0);
 	~AccountRegDlg();
 
 	const XMPP::Jid& jid() const { return jid_; }
@@ -90,7 +90,6 @@ private:
 	Ui::AccountReg ui_;
 	QScrollArea* fields_container_;
 	XDataWidget* fields_;
-	ProxyManager *proxy_manager_;
 	ProxyChooser *proxy_chooser_;
 	ServerListQuerier *serverlist_querier_;
 	MiniClient *client_;

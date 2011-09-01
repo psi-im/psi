@@ -156,7 +156,7 @@ void AccountModifyDlg::init()
 		gb_pgp->setEnabled(true);
 	}
 
-	pc = psi->proxy()->createProxyChooser(tab_connection);
+	pc = ProxyManager::instance()->createProxyChooser(tab_connection);
 	replaceWidget(lb_proxychooser, pc);
 	pc->setCurrentItem(acc.proxyID);
 

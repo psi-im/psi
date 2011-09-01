@@ -177,7 +177,7 @@ typedef int socklen_t;
 
 using namespace XMPP;
 
-static AdvancedConnector::Proxy convert_proxy(const UserAccount &acc, const PsiCon *psi, const Jid &jid)
+static AdvancedConnector::Proxy convert_proxy(const UserAccount &acc, const Jid &jid)
 {
 	bool useHost = false;
 	QString host;
@@ -193,7 +193,7 @@ static AdvancedConnector::Proxy convert_proxy(const UserAccount &acc, const PsiC
 
 	AdvancedConnector::Proxy p;
 	if(!acc.proxyID.isEmpty()) {
-		const ProxyItem &pi = psi->proxy()->getItem(acc.proxyID);
+		const ProxyItem &pi = ProxyManager::instance()->getItem(acc.proxyID);
 		if(pi.type == "http") // HTTP Connect
 			p.setHttpConnect(pi.settings.host, pi.settings.port);
 		else if(pi.type == "socks") // SOCKS
@@ -866,7 +866,7 @@ public:
 	{
 		avCallManager->setStunBindService(acc.stunHost, acc.stunPort);
 		avCallManager->setStunRelayUdpService(acc.stunHost, acc.stunPort, acc.stunUser, acc.stunPass);
-		avCallManager->setStunRelayTcpService(acc.stunHost, acc.stunPort, convert_proxy(acc, psi, jid), acc.stunUser, acc.stunPass);
+		avCallManager->setStunRelayTcpService(acc.stunHost, acc.stunPort, convert_proxy(acc, jid), acc.stunUser, acc.stunPass);
 	}
 
 private:
@@ -1147,7 +1147,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	}
 
 	setUserAccount(acc);
-	connect(d->psi->proxy(), SIGNAL(proxyRemoved(QString)), d, SLOT(pm_proxyRemoved(QString)));
+	connect(ProxyManager::instance(), SIGNAL(proxyRemoved(QString)),
+			d, SLOT(pm_proxyRemoved(QString)));
 
 	connect(d->psi, SIGNAL(emitOptionsUpdate()), SLOT(optionsUpdate()));
 	//connect(d->psi, SIGNAL(pgpToggled(bool)), SLOT(pgpToggled(bool)));
@@ -1571,7 +1572,7 @@ void PsiAccount::login()
 		port = d->acc.port;
 	}
 
-	AdvancedConnector::Proxy p = convert_proxy(d->acc, d->psi, d->jid);
+	AdvancedConnector::Proxy p = convert_proxy(d->acc, d->jid);
 
 	// stream
 	d->conn = new AdvancedConnector;

@@ -34,7 +34,7 @@
 
 using namespace XMPP;
 
-AccountRegDlg::AccountRegDlg(ProxyManager *pm, QWidget *parent) : QDialog(parent)
+AccountRegDlg::AccountRegDlg(QWidget *parent) : QDialog(parent)
 {
 	ui_.setupUi(this);
 	setModal(false);
@@ -73,8 +73,7 @@ AccountRegDlg::AccountRegDlg(ProxyManager *pm, QWidget *parent) : QDialog(parent
 	connect(ui_.pb_next, SIGNAL(clicked()), SLOT(next()));
 
 	// Proxy
-	proxy_manager_ = pm;
-	proxy_chooser_ = proxy_manager_->createProxyChooser(ui_.gb_connection);
+	proxy_chooser_ = ProxyManager::instance()->createProxyChooser(ui_.gb_connection);
 	replaceWidget(ui_.lb_proxychooser, proxy_chooser_);
 	proxy_chooser_->setCurrentItem(0);
 
@@ -200,7 +199,7 @@ void AccountRegDlg::next()
 		// Connect to the server
 		ui_.busy->start();
 		block();
-		client_->connectToServer(server_, legacy_ssl_probe_, ssl_ == UserAccount::SSL_Legacy, ssl_ == UserAccount::SSL_Yes, opt_host_ ? host_ : QString(), port_, proxy_manager_, proxy_);
+		client_->connectToServer(server_, legacy_ssl_probe_, ssl_ == UserAccount::SSL_Legacy, ssl_ == UserAccount::SSL_Yes, opt_host_ ? host_ : QString(), port_, proxy_);
 	}
 	else if (ui_.sw_register->currentWidget() == ui_.page_fields) {
 		// Initialize the form

@@ -66,7 +66,7 @@ void MiniClient::reset()
 	conn = 0;
 }
 
-void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool legacy_ssl, bool forcessl, const QString &_host, int _port, ProxyManager *pm, QString proxy, QString *_pass)
+void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool legacy_ssl, bool forcessl, const QString &_host, int _port, QString proxy, QString *_pass)
 {
 	j = jid;
 
@@ -82,7 +82,7 @@ void MiniClient::connectToServer(const Jid &jid, bool legacy_ssl_probe, bool leg
 
 	AdvancedConnector::Proxy p;
 	if(!proxy.isEmpty()) {
-		const ProxyItem &pi = pm->getItem(proxy);
+		const ProxyItem &pi = ProxyManager::instance()->getItem(proxy);
 		if(pi.type == "http") // HTTP Connect
 			p.setHttpConnect(pi.settings.host, pi.settings.port);
 		else if(pi.type == "socks") // SOCKS
