@@ -106,7 +106,7 @@ public:
 };
 
 HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
-	: QDialog(0, Qt::Window)
+	: AdvancedWidget<QDialog>(0, Qt::Window)
 {
 	ui_.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
