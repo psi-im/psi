@@ -1012,6 +1012,37 @@ public:
 #endif
 	}
 };
+#line 1 "x11.qcm"
+/*
+-----BEGIN QCMOD-----
+name: X11 Components
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_x11
+//----------------------------------------------------------------------------
+class qc_x11 : public ConfObj
+{
+public:
+	qc_x11(Conf *c) : ConfObj(c) {}
+
+	QString name() const { return "X11 Components"; }
+	QString shortname() const { return "x11"; }
+	QString checkString() const { return QString(); }
+
+	bool exec()
+	{
+		QString str =
+			"int main()\n"
+			"{\n"
+			"    return 0;\n"
+			"}\n";
+		QString proextra = "CONFIG += x11\n";
+
+		return conf->doCompileAndLink(str, QStringList(), QString(), proextra, NULL);
+	}
+};
 #line 1 "universal.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -1763,6 +1794,9 @@ cat >$1/modules_new.cpp <<EOT
     o->required = false;
     o->disabled = false;
     o = new qc_zlib(conf);
+    o->required = true;
+    o->disabled = false;
+    o = new qc_x11(conf);
     o->required = true;
     o->disabled = false;
     o = new qc_universal(conf);

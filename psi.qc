@@ -19,6 +19,9 @@
   <dep type='zlib'>
     <required/>
   </dep>
+  <dep type='x11'>
+    <required/>
+  </dep>
   <dep type='universal'>
     <disabled/>  
   </dep>
