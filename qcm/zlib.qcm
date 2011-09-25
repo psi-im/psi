@@ -26,41 +26,66 @@ public:
 	{
 #ifdef Q_OS_WIN
 		// HACK: on windows, always use psi's bundled zlib
-		conf->addExtra("CONFIG += psi-zip");
+		conf->addExtra("CONFIG += psi-winzlib psi-minizip");
 		return true;
 #else
-		QString inc, lib;
+		QStringList incs;
+		QString version, libs, other;
 		QString s;
 
-		s = conf->getenv("QC_WITH_ZLIB_INC");
-		if(!s.isEmpty()) {
-			if(!conf->checkHeader(s, "zlib.h"))
-				return false;
-			inc = s;
-		}
-		else {
-			if(!conf->findHeader("zlib.h", QStringList(), &s))
-				return false;
-			inc = s;
+		if(!conf->findPkgConfig("zlib", VersionAny, "", &version, &incs, &libs, &other)) {
+
+			s = conf->getenv("QC_WITH_ZLIB_INC");
+			if(!s.isEmpty()) {
+				if(!conf->checkHeader(s, "zlib.h"))
+					return false;
+			}
+			else {
+				if(!conf->findHeader("zlib.h", QStringList(), &s))
+					return false;
+			}
+			incs.append(s);
+
+			s = conf->getenv("QC_WITH_ZLIB_LIB");
+			if(!s.isEmpty()) {
+				if(!conf->checkLibrary(s, "z"))
+					return false;
+			}
+			else {
+				if(!conf->findLibrary("z", &s))
+					return false;
+			}
+			libs = QString("-L%1 -lz").arg(s);
 		}
 
-		s = conf->getenv("QC_WITH_ZLIB_LIB");
-		if(!s.isEmpty()) {
-			if(!conf->checkLibrary(s, "z"))
-				return false;
-			lib = s;
-		}
-		else {
-			if(!conf->findLibrary("z", &s))
-				return false;
-			lib = s;
-		}
-
-		if(!inc.isEmpty())
+		foreach(const QString &inc, incs) {
 			conf->addIncludePath(inc);
-		if(!lib.isEmpty())
-			conf->addLib(QString("-L") + s);
-		conf->addLib("-lz");
+		}
+		conf->addLib(libs);
+
+		if(!conf->findPkgConfig("minizip", VersionAny, "", &version, &incs, &libs, &other)) {
+
+			s = conf->getenv("QC_WITH_MINIZIP_INC");
+			if ((!s.isEmpty() && conf->checkHeader(s, "unzip.h")) ||
+			    (s.isEmpty() && conf->findHeader("unzip.h", QStringList(), &s))) {
+				incs.append(s);
+			}
+
+			s = conf->getenv("QC_WITH_MINIZIP_LIB");
+			if((!s.isEmpty() && conf->checkLibrary(s, "minizip")) ||
+			   (s.isEmpty() && conf->findLibrary("minizip", &s))) {
+				libs = QString("-L%1 -lminizip").arg(s);
+			}
+		}
+
+		if (!incs.isEmpty() && !libs.isEmpty()) {
+			foreach(const QString &inc, incs) {
+				conf->addIncludePath(inc);
+			}
+			conf->addLib(libs);
+		} else {
+			conf->addExtra("CONFIG += psi-minizip");
+		}
 
 		return true;
 #endif

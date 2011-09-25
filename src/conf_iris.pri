@@ -13,11 +13,6 @@ else {
 	CONFIG += crypto
 }
 
-# use zlib from psi if necessary
-psi-zip {
-	INCLUDEPATH += $$PWD/libpsi/tools/zip/minizip/win32
-}
-
 mac {
 	# Universal binaries
 	qc_universal:contains(QT_CONFIG,x86):contains(QT_CONFIG,ppc) {

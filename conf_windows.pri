@@ -5,7 +5,7 @@ CONFIG += release
 #CONFIG += qca-static
 
 # tell iris to use our internal libz
-CONFIG += psi-zip
+CONFIG += psi-winzlib
 
 # OpenSSL
 qca-static {
