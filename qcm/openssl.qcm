@@ -34,6 +34,7 @@ public:
 			return false;
 
 		QStringList libnames;
+		libnames += "-lssl.dll -lcrypto.dll";
 		libnames += "-llibeay32 -lssleay32";
 		libnames += "-leay32 -lssl32";
 		libnames += "-leay32 " + ossl_lib + "/ssleay32.a";

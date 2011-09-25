@@ -833,6 +833,7 @@ public:
 			return false;
 
 		QStringList libnames;
+		libnames += "-lssl.dll -lcrypto.dll";
 		libnames += "-llibeay32 -lssleay32";
 		libnames += "-leay32 -lssl32";
 		libnames += "-leay32 " + ossl_lib + "/ssleay32.a";
@@ -1015,7 +1016,7 @@ public:
 #line 1 "x11.qcm"
 /*
 -----BEGIN QCMOD-----
-name: X11 Components
+name: Xorg X11
 -----END QCMOD-----
 */
 
@@ -1027,7 +1028,7 @@ class qc_x11 : public ConfObj
 public:
 	qc_x11(Conf *c) : ConfObj(c) {}
 
-	QString name() const { return "X11 Components"; }
+	QString name() const { return "Xorg X11"; }
 	QString shortname() const { return "x11"; }
 	QString checkString() const { return QString(); }
 
