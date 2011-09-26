@@ -1010,6 +1010,8 @@ public:
 		}
 		conf->addLib(libs);
 
+		incs.clear();
+		libs.clear();
 		if(!conf->findPkgConfig("minizip", VersionAny, "", &version, &incs, &libs, &other)) {
 
 			s = conf->getenv("QC_WITH_MINIZIP_INC");
