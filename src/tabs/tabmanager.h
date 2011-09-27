@@ -117,7 +117,6 @@ public:
 
 public slots:
 	void tabDestroyed(QObject*);
-	void tabResized(QSize);
 
 private:
 	QMap<QChar, TabDlg*> preferedTabsetForKind_;

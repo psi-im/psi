@@ -63,8 +63,6 @@ public:
 	void setJid(const Jid &);
 	const QString & getDisplayName();
 
-	static QSize defaultSize();
-
 	// reimplemented
 	virtual bool readyToHide();
 	virtual TabbableWidget::State state() const;
@@ -93,7 +91,6 @@ protected:
 
 	// reimplemented
 	void closeEvent(QCloseEvent *);
-	void resizeEvent(QResizeEvent *);
 	void hideEvent(QHideEvent *);
 	void showEvent(QShowEvent *);
 	void dropEvent(QDropEvent* event);

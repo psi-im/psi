@@ -64,13 +64,6 @@ bool TabManager::shouldBeTabbed(QWidget *widget)
 	return false;
 }
 
-void TabManager::tabResized(QSize size) {
-	if (PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool()) {
-		PsiOptions::instance()->mapPut("options.ui.tabs.group-state", 
-					tabsetToKinds_[static_cast<TabDlg*>(sender())], "size", size);
-	}
-}
-
 TabDlg* TabManager::newTabs(QWidget *widget)
 {
 	QChar kind = tabKind(widget);
@@ -82,19 +75,9 @@ TabDlg* TabManager::newTabs(QWidget *widget)
 		}
 	}
 	
-	
-	QVariantList savedSizes = PsiOptions::instance()->mapKeyList("options.ui.tabs.group-state");
-	QSize size = PsiOptions::instance()->getOption("options.ui.tabs.size").toSize();
-	if (savedSizes.contains(group)) {
-		size = PsiOptions::instance()->mapGet("options.ui.tabs.group-state", group, "size").toSize();
-	} else {
-		foreach(QVariant v, savedSizes) {
-			if (v.toString().contains(kind)) {
-				size = PsiOptions::instance()->mapGet("options.ui.tabs.group-state", v.toString(), "size").toSize();
-			}
-		}
-	}
-	TabDlg *tab = new TabDlg(this, size, tabDlgDelegate_);
+	QString geometryOption = QString("options.ui.tabs.group-state.%1.size").arg(group);
+
+	TabDlg *tab = new TabDlg(this, geometryOption, tabDlgDelegate_);
 	tab->setUserManagementEnabled(userManagement_);
 	tab->setTabBarShownForSingles(tabSingles_);
 	tab->setSimplifiedCaptionEnabled(simplifiedCaption_);
@@ -107,7 +90,6 @@ TabDlg* TabManager::newTabs(QWidget *widget)
 	}
 	tabs_.append(tab);
 	connect(tab, SIGNAL(destroyed(QObject*)), SLOT(tabDestroyed(QObject*)));
-	connect(tab, SIGNAL(resized(QSize)), SLOT(tabResized(QSize)));
 	connect(psiCon_, SIGNAL(emitOptionsUpdate()), tab, SLOT(optionsUpdate()));
 	return tab;
 }

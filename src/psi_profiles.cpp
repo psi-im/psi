@@ -814,7 +814,6 @@ bool OptionsMigration::fromFile(const QString &fname)
 				}
 				PsiOptions::instance()->setOption("options.ui.chat.delete-contents-after", delafter);
 				migrateBoolEntry(tag, "alwaysOnTop", "options.ui.contactlist.always-on-top");
-				migrateBoolEntry(tag, "keepSizes", "options.ui.remember-window-sizes");
 				migrateBoolEntry(tag, "ignoreHeadline", "options.messages.ignore-headlines");
 				migrateBoolEntry(tag, "ignoreNonRoster", "options.messages.ignore-non-roster-contacts");
 				migrateBoolEntry(tag, "excludeGroupChatIgnore", "options.messages.exclude-muc-from-ignore");

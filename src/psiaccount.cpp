@@ -5156,7 +5156,7 @@ void PsiAccount::openChat(const Jid& j, ActivationType activationType)
 		chat->bringToFront(false);
 		TabDlg* dlg = chat->getManagingTabDlg();
 		if (dlg) {
-			QTimer::singleShot(1000, dlg, SLOT(showWithoutActivation()));
+			QTimer::singleShot(1000, dlg, SLOT(showTabWithoutActivation()));
 		}
 	}
 }

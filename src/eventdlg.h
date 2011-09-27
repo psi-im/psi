@@ -128,8 +128,6 @@ public:
 
 	PsiAccount *psiAccount();
 
-	static QSize defaultSize();
-
 signals:
 	void aChat(const Jid& jid);
 	void aReply(const Jid &jid, const QString &body, const QString &subject, const QString &thread);
@@ -145,7 +143,6 @@ signals:
 protected:
 	// reimplemented
 	void showEvent(QShowEvent *);
-	void resizeEvent(QResizeEvent *);
 	void keyPressEvent(QKeyEvent *);
 	void closeEvent(QCloseEvent *);
 

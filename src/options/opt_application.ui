@@ -28,13 +28,6 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_keepSizes" >
-     <property name="text" >
-      <string>Remember window sizes</string>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QCheckBox" name="ck_useleft" >
      <property name="enabled" >
       <bool>true</bool>

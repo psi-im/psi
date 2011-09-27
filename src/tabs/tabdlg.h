@@ -68,7 +68,7 @@ class TabDlg : public AdvancedWidget<QWidget>
 {
 	Q_OBJECT
 public:
-	TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate = 0);
+	TabDlg(TabManager* tabManager, const QString& geometryOption, TabDlgDelegate *delegate = 0);
 	~TabDlg();
 	bool managesTab(const TabbableWidget*) const;
 	bool tabOnTop(const TabbableWidget*) const;
@@ -128,6 +128,7 @@ private slots:
 	void checkHasChats();
 	void updateTab();
 	void updateTab(TabbableWidget*);
+	void showTabWithoutActivation();
 	void nextTab();
 	void previousTab();
 	void tab_aboutToShowMenu(QMenu *menu);

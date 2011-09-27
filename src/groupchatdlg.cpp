@@ -92,7 +92,7 @@
 #define MCMDMUC		"http://psi-im.org/ids/mcmd#mucmain"
 #define MCMDMUCNICK	"http://psi-im.org/ids/mcmd#mucnick"
 
-
+static const QString geometryOption = "options.ui.muc.size";
 
 
 //----------------------------------------------------------------------------
@@ -753,7 +753,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	X11WM_CLASS("groupchat");
 
 	ui_.mle->chatEdit()->setFocus();
-	resize(PsiOptions::instance()->getOption("options.ui.muc.size").toSize());
 
 	// Connect signals from MUC manager
 	connect(d->mucManager,SIGNAL(action_error(MUCManager::Action, int, const QString&)), SLOT(action_error(MUCManager::Action, int, const QString&)));
@@ -779,7 +778,8 @@ GCMainDlg::~GCMainDlg()
 	delete d;
 }
 
-void GCMainDlg::ensureTabbedCorrectly() {
+void GCMainDlg::ensureTabbedCorrectly()
+{
 	TabbableWidget::ensureTabbedCorrectly();
 	setShortcuts();
 	// QSplitter is broken again, force resize so that
@@ -788,6 +788,9 @@ void GCMainDlg::ensureTabbedCorrectly() {
 	QList<int> tmp = ui_.hsplitter->sizes();
 	ui_.hsplitter->setSizes(QList<int>() << 0);
 	ui_.hsplitter->setSizes(tmp);
+	if(!isTabbed() && geometryOptionPath().isEmpty()) {
+		setGeometryOptionPath(geometryOption);
+	}
 }
 
 void GCMainDlg::setShortcuts()
@@ -805,23 +808,19 @@ void GCMainDlg::setShortcuts()
 	d->act_mini_cmd->setShortcuts(ShortcutManager::instance()->shortcuts("chat.quick-command"));
 }
 
-void GCMainDlg::scrollUp() {
+void GCMainDlg::scrollUp()
+{
 	ui_.log->verticalScrollBar()->setValue(ui_.log->verticalScrollBar()->value() - ui_.log->verticalScrollBar()->pageStep()/2);
 }
 
-void GCMainDlg::scrollDown() {
+void GCMainDlg::scrollDown()
+{
 	ui_.log->verticalScrollBar()->setValue(ui_.log->verticalScrollBar()->value() + ui_.log->verticalScrollBar()->pageStep()/2);
 }
 
 void GCMainDlg::closeEvent(QCloseEvent *e)
 {
 	e->accept();
-}
-
-void GCMainDlg::resizeEvent(QResizeEvent* e)
-{
-	if (PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool())
-		PsiOptions::instance()->setOption("options.ui.muc.size", e->size());
 }
 
 void GCMainDlg::deactivated()

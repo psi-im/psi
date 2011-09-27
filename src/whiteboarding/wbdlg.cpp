@@ -34,6 +34,8 @@
 #include "stretchwidget.h"
 #include "iconset.h"
 
+static const QString geometryOption = "options.ui.chat.wb-size";
+
 //----------------------------------------------------------------------------
 // WbDlg
 //----------------------------------------------------------------------------
@@ -208,7 +210,7 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
 	
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY, PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt())) / 100);
 
-	resize(PsiOptions::instance()->getOption("options.ui.chat.size").toSize());
+	setGeometryOptionPath(geometryOption);
 }
 
 WbDlg::~WbDlg() {
@@ -280,12 +282,6 @@ void WbDlg::closeEvent(QCloseEvent *e) {
 			setSelfDestruct(60);
 		else if(PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString() == "day")
 			setSelfDestruct(60 * 24);
-	}
-}
-
-void WbDlg::resizeEvent(QResizeEvent *e) {
-	if (PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool()) {
-		PsiOptions::instance()->setOption("options.ui.chat.size", e->size());
 	}
 }
 

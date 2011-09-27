@@ -98,6 +98,7 @@ protected:
 private:
 	QTimer* saveGeometryTimer_;
 	QRect newGeometry_;
+	QRect normalGeometry_;
 
 public slots:
 	void saveGeometry();
@@ -120,8 +121,6 @@ GAdvancedWidget::Private::Private(QWidget *parent)
 {
 	if (!advancedWidgetShared)
 		advancedWidgetShared = new AdvancedWidgetShared();
-
-	parentWidget_ = parent;
 
 	saveGeometryTimer_ = new QTimer(this);
 	saveGeometryTimer_->setInterval(100);
@@ -326,11 +325,13 @@ void GAdvancedWidget::Private::updateGeometry()
 
 void GAdvancedWidget::Private::saveGeometry()
 {
-	PsiOptions::instance()->setOption(geometryOptionPath_, parentWidget_->normalGeometry());
+	bool isMaximized = parentWidget_->windowState() & Qt::WindowMaximized;
+	//if window is maximized normalGeometry() returns null rect. So in this case we use cached geometry
+	PsiOptions::instance()->setOption(geometryOptionPath_, isMaximized ? normalGeometry_ : parentWidget_->normalGeometry());
 	PsiOptions::instance()->setOption(geometryOptionPath_ + "-frame", parentWidget_->frameGeometry());
 	PsiOptions::instance()->setOption(geometryOptionPath_ + "-screen", QApplication::desktop()->screenNumber(parentWidget_));
-	PsiOptions::instance()->setOption(geometryOptionPath_ + "-maximized", (parentWidget_->windowState() & Qt::WindowMaximized) != 0);
-	PsiOptions::instance()->setOption(geometryOptionPath_ + "-fullscreen", (parentWidget_->windowState() & Qt::WindowFullScreen) != 0);
+	PsiOptions::instance()->setOption(geometryOptionPath_ + "-maximized", isMaximized);
+	PsiOptions::instance()->setOption(geometryOptionPath_ + "-fullscreen", bool(parentWidget_->windowState() & Qt::WindowFullScreen));
 }
 
 void GAdvancedWidget::Private::restoreGeometry()
@@ -357,13 +358,13 @@ void GAdvancedWidget::Private::restoreGeometry()
 		quint16 majorVersion = 1;
 		quint16 minorVersion = 0;
 		QRect restoredFrameGeometry = o->getOption(geometryOptionPath_ + "-frame").toRect();
-		QRect restoredNormalGeometry = o->getOption(geometryOptionPath_).toRect();
+		normalGeometry_ = o->getOption(geometryOptionPath_).toRect();
 
 		stream << magicNumber
 			<< majorVersion
 			<< minorVersion
 			<< restoredFrameGeometry
-			<< restoredNormalGeometry
+			<< normalGeometry_
 			<< qint32(o->getOption(geometryOptionPath_ + "-screen").toInt())
 			<< quint8(o->getOption(geometryOptionPath_ + "-maximized").toBool())
 			<< quint8(o->getOption(geometryOptionPath_ + "-fullscreen").toBool());
@@ -410,6 +411,10 @@ bool GAdvancedWidget::Private::eventFilter(QObject* obj, QEvent* e)
 {
 	if (obj == parentWidget_) {
 		if (e->type() == QEvent::Move || e->type() == QEvent::Resize) {
+			Qt::WindowStates ws = parentWidget_->windowState();
+			if( !(ws & Qt::WindowMaximized) && !(ws & Qt::WindowFullScreen) ) {
+				normalGeometry_ = parentWidget_->normalGeometry();
+			}
 			saveGeometryTimer_->start();
 		}
 

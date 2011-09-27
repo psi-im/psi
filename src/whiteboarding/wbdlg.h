@@ -100,8 +100,6 @@ protected:
 	void keyPressEvent(QKeyEvent *);
 	/*! \brief Sets the destruction times as specified by options.*/
 	void closeEvent(QCloseEvent *);
-	/*! \brief Saves the size of the dialog as default if so specified in options.*/
-	void resizeEvent(QResizeEvent *);
 	/*! \brief Removes the destruction timer.*/
 	void showEvent(QShowEvent *);
 	/*! \brief Invokes activated() if activated.*/

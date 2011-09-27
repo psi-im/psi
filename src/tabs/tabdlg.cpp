@@ -33,6 +33,7 @@
 #include <QDropEvent>
 #include <QCloseEvent>
 #include <QSignalMapper>
+#include <QTimer>
 
 #include "psitabwidget.h"
 #include "psioptions.h"
@@ -126,7 +127,7 @@ bool TabDlgDelegate::eventFilter(QWidget *, QObject *, QEvent *)
  *        will manage some aspects of the TabDlg behavior.  Ownership is not
  *        passed.
  */ 
-TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
+TabDlg::TabDlg(TabManager* tabManager, const QString& geometryOption, TabDlgDelegate *delegate)
 		: AdvancedWidget<QWidget>(0, delegate ? delegate->initWindowFlags() : (Qt::WindowFlags)0)
 		, delegate_(delegate)
 		, tabWidget_(0)
@@ -194,11 +195,7 @@ TabDlg::TabDlg(TabManager* tabManager, QSize size, TabDlgDelegate *delegate)
 		addAction(action);
 	}
 
-	if (size.isValid()) {
-		resize(size);
-	} else {
-		resize(ChatDlg::defaultSize()); //TODO: no!
-	}
+	setGeometryOptionPath(geometryOption);
 }
 
 TabDlg::~TabDlg()
@@ -392,9 +389,14 @@ void TabDlg::addTab(TabbableWidget* tab)
 	connect(tab, SIGNAL(invalidateTabInfo()), SLOT(updateTab()));
 	connect(tab, SIGNAL(updateFlashState()), SLOT(updateFlashState()));
 
-	this->showWithoutActivation();
 	updateTab(tab);
 	setUpdatesEnabled(true);
+	QTimer::singleShot(0, this, SLOT(showTabWithoutActivation()));
+}
+
+void TabDlg::showTabWithoutActivation()
+{
+	showWithoutActivation();
 }
 
 void TabDlg::detachCurrentTab()

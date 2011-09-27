@@ -43,9 +43,6 @@ QWidget *OptionsTabApplication::widget()
 		tr("Makes the main Psi window always be in front of other windows."));
 	d->ck_autoRosterSize->setWhatsThis(
 		tr("Makes the main Psi window resize automatically to fit all contacts."));
-	d->ck_keepSizes->setWhatsThis(
-		tr("Makes Psi remember window size and positions for chats and messages."
-		"  If disabled, the windows will always appear in their default positions and sizes."));
 	d->ck_useleft->setWhatsThis(
 		tr("Normally, right-clicking with the mouse on a contact will activate the context-menu."
 		"  Check this option if you'd rather use a left-click."));
@@ -100,7 +97,6 @@ void OptionsTabApplication::applyOptions()
 
 	PsiOptions::instance()->setOption("options.ui.contactlist.always-on-top", d->ck_alwaysOnTop->isChecked());
 	PsiOptions::instance()->setOption("options.ui.contactlist.automatically-resize-roster", d->ck_autoRosterSize->isChecked());
-	PsiOptions::instance()->setOption("options.ui.remember-window-sizes",d->ck_keepSizes->isChecked());
 	PsiOptions::instance()->setOption("options.ui.contactlist.use-left-click", d->ck_useleft->isChecked());
 	PsiOptions::instance()->setOption("options.ui.contactlist.show-menubar", d->ck_showMenubar->isChecked());
 
@@ -130,7 +126,6 @@ void OptionsTabApplication::restoreOptions()
 
 	d->ck_alwaysOnTop->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool() );
 	d->ck_autoRosterSize->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.automatically-resize-roster").toBool() );
-	d->ck_keepSizes->setChecked( PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool() );
 	d->ck_showMenubar->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool() );
 	d->ck_useleft->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.use-left-click").toBool() );
 	d->ck_autoUpdate->setChecked(PsiOptions::instance()->getOption("options.auto-update.check-on-startup").toBool());

@@ -80,6 +80,8 @@
 
 #include "psichatdlg.h"
 
+static const QString geometryOption = "options.ui.chat.size";
+
 ChatDlg* ChatDlg::create(const Jid& jid, PsiAccount* account, TabManager* tabManager)
 {
 	ChatDlg* chat = new PsiChatDlg(jid, account, tabManager);
@@ -141,14 +143,6 @@ void ChatDlg::init()
 
 	chatView()->setFocusPolicy(Qt::NoFocus);
 	chatEdit()->setFocus();
-
-	// TODO: port to restoreSavedSize() (and adapt it from restoreSavedGeometry())
-	QSize size = PsiOptions::instance()->getOption("options.ui.chat.size").toSize();
-	if (!size.isEmpty()) {
-		resize(size);
-	} else {
-		resize(defaultSize());
-	}
 }
 
 ChatDlg::~ChatDlg()
@@ -181,9 +175,13 @@ void ChatDlg::initActions()
 	connect(act_scrolldown_, SIGNAL(triggered()), SLOT(scrollDown()));
 }
 
-void ChatDlg::ensureTabbedCorrectly() {
+void ChatDlg::ensureTabbedCorrectly()
+{
 	TabbableWidget::ensureTabbedCorrectly();
 	setShortcuts();
+	if(!isTabbed() && geometryOptionPath().isEmpty()) {
+		setGeometryOptionPath(geometryOption);
+	}
 }
 
 
@@ -208,13 +206,6 @@ void ChatDlg::scrollUp()
 void ChatDlg::scrollDown()
 {
 	chatView()->verticalScrollBar()->setValue(chatView()->verticalScrollBar()->value() + chatView()->verticalScrollBar()->pageStep() / 2);
-}
-
-void ChatDlg::resizeEvent(QResizeEvent *e)
-{
-	if (PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool()) {
-		PsiOptions::instance()->setOption("options.ui.chat.size", e->size());
-	}
 }
 
 void ChatDlg::closeEvent(QCloseEvent *e)
@@ -383,11 +374,6 @@ void ChatDlg::setJid(const Jid &j)
 const QString& ChatDlg::getDisplayName()
 {
 	return dispNick_;
-}
-
-QSize ChatDlg::defaultSize()
-{
-	return QSize(320, 280);
 }
 
 struct UserStatus {

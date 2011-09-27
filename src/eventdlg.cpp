@@ -77,6 +77,8 @@
 #endif
 #include "psirichtext.h"
 
+static const QString geometryOption = "options.ui.message.size";
+
 static QString findJid(const QString &s, int x, int *p1, int *p2)
 {
 	// scan backward for the beginning of a Jid
@@ -995,12 +997,8 @@ void EventDlg::init()
 	connect(d->pa, SIGNAL(pgpKeyChanged()), SLOT(updatePGP()));
 	connect(d->pa, SIGNAL(encryptedMessageSent(int, bool, int, const QString &)), SLOT(encryptedMessageSent(int, bool, int, const QString &)));
 
-	bool use = PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool();
-	if (PsiOptions::instance()->getOption("options.ui.message.size").toSize().isValid() && use) {
-		resize(PsiOptions::instance()->getOption("options.ui.message.size").toSize());
-	} else {
-		resize(defaultSize());
-	}
+	setGeometryOptionPath(geometryOption);
+
 	optionsUpdate();
 
 	//ShortcutManager::connect("common.close", this, SLOT(close()));
@@ -1396,11 +1394,6 @@ void EventDlg::optionsUpdate()
 #endif
 }
 
-QSize EventDlg::defaultSize()
-{
-	return QSize(420, 280);
-}
-
 void EventDlg::showEvent(QShowEvent *e)
 {
 	QWidget::showEvent(e);
@@ -1408,13 +1401,6 @@ void EventDlg::showEvent(QShowEvent *e)
 	if(d->urlOnShow) {
 		d->urlOnShow = false;
 		QTimer::singleShot(1, this, SLOT(addUrl()));
-	}
-}
-
-void EventDlg::resizeEvent(QResizeEvent *e)
-{
-	if(PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool()) {
-		PsiOptions::instance()->setOption("options.ui.message.size", e->size());
 	}
 }
 

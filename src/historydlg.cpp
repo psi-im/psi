@@ -37,6 +37,8 @@
 #include "userlist.h"
 #include "common.h"
 
+static const QString geometryOption = "options.ui.history.size";
+
 static QString getNext(QString *str)
 {
 	int n = 0;
@@ -147,21 +149,13 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 	listAccounts();
 	loadContacts();
 
-	if (PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool()) {
-		QSize s = PsiOptions::instance()->getOption("options.ui.history.size").value<QSize>();
-		if (!s.isEmpty()) {
-			resize(s);
-		}
-	}
+	setGeometryOptionPath(geometryOption);
 
 	ui_.jidList->setFocus();
 }
 
 HistoryDlg::~HistoryDlg()
 {
-	if (PsiOptions::instance()->getOption("options.ui.remember-window-sizes").toBool()) {
-		PsiOptions::instance()->setOption("options.ui.history.size", size());
-	}
 	delete d;
 }
 
