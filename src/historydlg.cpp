@@ -562,25 +562,27 @@ void HistoryDlg::displayResult(const EDBResult r, int direction, int max)
 		EDBItemPtr item = r.value(i);
 		PsiEvent* e = item->event();
 		UserListItem *u = d->pa->findFirstRelevant(e->from().full());
-		QString from = JIDUtil::nickOrJid(u->name(), u->jid().full());
-		if (e->type() == PsiEvent::Message)
-		{
-			MessageEvent *me = (MessageEvent *) e;
-			QString msg = me->message().body();
-			msg = TextUtil::linkify(TextUtil::plain2rich(msg));
+		if(u) {
+			QString from = JIDUtil::nickOrJid(u->name(), u->jid().full());
+			if (e->type() == PsiEvent::Message)
+			{
+				MessageEvent *me = (MessageEvent *) e;
+				QString msg = me->message().body();
+				msg = TextUtil::linkify(TextUtil::plain2rich(msg));
 
-			if (PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool())
-				msg = TextUtil::emoticonify(msg);
-			if (PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
-				msg = TextUtil::legacyFormat(msg);
+				if (PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool())
+					msg = TextUtil::emoticonify(msg);
+				if (PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
+					msg = TextUtil::legacyFormat(msg);
 
-			if (me->originLocal())
-				msg = "<span style='color:red'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]")+" &lt;"+ d->pa->nick() +"&gt; " + msg + "</span>";
-			else
-				msg = "<span style='color:blue'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]") + " &lt;" +  from + "&gt; " + msg + "</span>";
+				if (me->originLocal())
+					msg = "<span style='color:red'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]")+" &lt;"+ d->pa->nick() +"&gt; " + msg + "</span>";
+				else
+					msg = "<span style='color:blue'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]") + " &lt;" +  from + "&gt; " + msg + "</span>";
 
-			ui_.msgLog->appendText(msg);
+				ui_.msgLog->appendText(msg);
 
+			}
 		}
 
 		++at;
