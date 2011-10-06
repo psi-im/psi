@@ -30,6 +30,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QKeyEvent>
+#include <QTextEdit>
 
 #include "jidutil.h"
 #include "psicon.h"
@@ -88,7 +89,7 @@ public:
 	PsiCon *psi;
 	PsiAccount *pa;
 	Status s;
-	PsiTextView *te;
+	QTextEdit *te;
 	StatusComboBox *cb_type;
 	QComboBox *cb_preset;
 	QLineEdit *le_priority;
@@ -161,8 +162,7 @@ void StatusSetDlg::init()
 	connect(d->cb_preset, SIGNAL(currentIndexChanged(int)), SLOT(chooseStatusPreset(int)));
 	hb1->addWidget(d->cb_preset,3);
 
-	d->te = new PsiTextView(this);
-	//d->te->setDialog(this);
+	d->te = new QTextEdit(this);
 	d->te->setReadOnly(false);
 	d->te->setAcceptRichText(false);
 	d->te->setMinimumHeight(50);
@@ -182,7 +182,7 @@ void StatusSetDlg::init()
 
 	// set the rest up
 	d->te->setAcceptRichText(false);
-	d->te->setText(d->s.status());
+	d->te->setPlainText(d->s.status());
 	d->te->selectAll();
 	connect(pb1, SIGNAL(clicked()), SLOT(doButton()));
 	connect(pb2, SIGNAL(clicked()), SLOT(cancel()));
@@ -206,7 +206,7 @@ StatusSetDlg::~StatusSetDlg()
 void StatusSetDlg::doButton()
 {
 	// Trim whitespace
-	d->te->setText(d->te->getPlainText().trimmed());
+	d->te->setPlainText(d->te->toPlainText().trimmed());
 
 	// Save preset
 	if (d->save->isChecked()) {
@@ -234,7 +234,7 @@ void StatusSetDlg::doButton()
 				break;
 		}
 		// Store preset
-		StatusPreset sp(text, d->te->getPlainText(), XMPP::Status(d->cb_type->status()).type());
+		StatusPreset sp(text, d->te->toPlainText(), XMPP::Status(d->cb_type->status()).type());
  		if (!d->le_priority->text().isEmpty()) {
 			sp.setPriority(d->le_priority->text().toInt());
 		}
@@ -245,7 +245,7 @@ void StatusSetDlg::doButton()
 
 	// Set status
 	int type = d->cb_type->status();
-	QString str = d->te->getPlainText();
+	QString str = d->te->toPlainText();
 
  	if (d->le_priority->text().isEmpty())
  		emit set(makeStatus(type, str), false, true);
@@ -261,7 +261,7 @@ void StatusSetDlg::chooseStatusPreset(int x)
 		return;
 
 	QString base = PsiOptions::instance()->mapLookup("options.status.presets", d->cb_preset->itemText(x));
-	d->te->setText(PsiOptions::instance()->getOption(base+".message").toString());
+	d->te->setPlainText(PsiOptions::instance()->getOption(base+".message").toString());
 	if (PsiOptions::instance()->getOption(base+".force-priority").toBool()) {
 		d->le_priority->setText(QString::number(PsiOptions::instance()->getOption(base+".priority").toInt()));
 	} else {
