@@ -361,6 +361,7 @@ void OptionsTabAppearanceGeneral::colorCheckBoxClicked(int state)
 	QPair<QAbstractButton*,QString> data = colorWidgetsMap[(QCheckBox*)sender()];
 	if (state) {
 		data.first->setDisabled(false);
+		restoreColor((QToolButton*)data.first, ColorOpt::instance()->color("options.ui.look.colors." + data.second));
 	}
 	else {
 		//data.first->setDisabled(true); // TODO disable color changing
