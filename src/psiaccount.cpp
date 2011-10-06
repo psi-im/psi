@@ -5199,7 +5199,7 @@ void PsiAccount::openGroupChat(const Jid &j, ActivationType activationType)
 		d->groupchats += str;
 
 	GCMainDlg *w = new GCMainDlg(this, j, d->tabManager);
-	w->setPassword(d->client->groupChatPassword(j.node(),j.domain()));
+	w->setPassword(d->client->groupChatPassword(j.domain(), j.node()));
 	connect(w, SIGNAL(aSend(const Message &)), SLOT(dj_sendMessage(const Message &)));
 	connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));
 	w->ensureTabbedCorrectly();
@@ -5266,7 +5266,7 @@ void PsiAccount::client_groupChatJoined(const Jid &j)
 
 	GCMainDlg *m = findDialog<GCMainDlg*>(Jid(j.bare()));
 	if(m) {
-		m->setPassword(d->client->groupChatPassword(j.node(), j.domain()));
+		m->setPassword(d->client->groupChatPassword(j.domain(), j.node()));
 		m->joined();
 		return;
 	}
