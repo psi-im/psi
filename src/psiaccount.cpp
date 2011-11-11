@@ -2773,6 +2773,10 @@ void PsiAccount::setStatus(const Status &_s,  bool withPriority, bool isManualSt
 		}
 		// change status
 		else {
+			if (!isConnected()) {
+				disconnect();
+				login();
+			}
 			if(rosterDone) {
 				setStatusDirect(s, withPriority);
 			}
