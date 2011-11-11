@@ -539,6 +539,11 @@ void GCUserView::mousePressEvent(QMouseEvent *event)
 	QTreeWidget::mousePressEvent(event);
 	QTreeWidgetItem *item = itemAt(event->pos());
 
+	if(!item && event->button() == Qt::LeftButton) {
+		setCurrentIndex(QModelIndex()); // Hack to reset current selection
+		return;
+	}
+
 	if (!item || !item->parent() || !gcDlg_)
 		return;
 	if (event->button() == Qt::MidButton ||
