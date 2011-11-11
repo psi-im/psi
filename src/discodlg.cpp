@@ -732,7 +732,7 @@ DiscoListView::DiscoListView(QWidget *parent)
 	header()->setStretchLastSection(false);
 	setRootIsDecorated(false);
 	setSortingEnabled(true);
-	sortByColumn(0, Qt::AscendingOrder);
+	sortByColumn(1, Qt::AscendingOrder);
 
 }
 
