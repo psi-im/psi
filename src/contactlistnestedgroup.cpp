@@ -289,11 +289,11 @@ ContactListGroup* ContactListNestedGroup::specialGroupFor(PsiContact* contact)
 	}
 
 	ContactListGroup::SpecialType type = ContactListGroup::SpecialType_None;
-	if (!contact->inList()) {
-		type = ContactListGroup::SpecialType_NotInList;
-	}
-	else if (contact->isPrivate()) {
+	if (contact->isPrivate()) {
 		type = ContactListGroup::SpecialType_MUCPrivateChats;
+	}
+	else if (!contact->inList()) {
+		type = ContactListGroup::SpecialType_NotInList;
 	}
 	else if (contact->isAgent()) {
 		type = ContactListGroup::SpecialType_Transports;
