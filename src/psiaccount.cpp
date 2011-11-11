@@ -573,7 +573,8 @@ public:
 	{
 		int newOnlineContactsCount = 0;
 		foreach(const PsiContact* c, contacts) {
-			if (c->inList() && c->isOnline() && !c->isSelf()) {
+			if ( (c->isPrivate() || (c->inList() && c->status().type() != XMPP::Status::Offline) )
+				&& !c->isSelf()) {
 				++newOnlineContactsCount;
 			}
 		}
