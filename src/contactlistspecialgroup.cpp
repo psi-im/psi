@@ -118,7 +118,7 @@ bool ContactListSpecialGroup::isDragEnabled() const
 
 bool ContactListSpecialGroup::isEditable() const
 {
-	return specialType_ == SpecialType_General;
+	return false;	//specialType_ == SpecialType_General;
 }
 
 bool ContactListSpecialGroup::isRemovable() const
