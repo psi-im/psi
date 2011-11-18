@@ -191,6 +191,9 @@
             <height>0</height>
            </size>
           </property>
+          <property name="horizontalScrollBarPolicy" >
+           <enum>Qt::ScrollBarAlwaysOff</enum>
+          </property>
          </widget>
         </widget>
        </item>
