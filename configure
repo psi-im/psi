@@ -1002,7 +1002,7 @@ public:
 				if(!conf->findLibrary("z", &s))
 					return false;
 			}
-			libs = QString("-L%1 -lz").arg(s);
+			libs = s.isEmpty()? "-lz" : QString("-L%1 -lz").arg(s);
 		}
 
 		foreach(const QString &inc, incs) {
@@ -1023,7 +1023,7 @@ public:
 			s = conf->getenv("QC_WITH_MINIZIP_LIB");
 			if((!s.isEmpty() && conf->checkLibrary(s, "minizip")) ||
 			   (s.isEmpty() && conf->findLibrary("minizip", &s))) {
-				libs = QString("-L%1 -lminizip").arg(s);
+				libs = s.isEmpty()? "-lminizip" : QString("-L%1 -lminizip").arg(s);
 			}
 		}
 
