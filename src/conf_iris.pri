@@ -13,6 +13,12 @@ else {
 	CONFIG += crypto
 }
 
+psi-winzlib {
+    INCLUDEPATH += $$PWD/libpsi/tools/zip/minizip/win32
+    DEPENDPATH  += $$PWD/libpsi/tools/zip/minizip/win32
+    LIBS += $$PWD/libpsi/tools/zip/minizip/win32/libz.a
+}
+
 mac {
 	# Universal binaries
 	qc_universal:contains(QT_CONFIG,x86):contains(QT_CONFIG,ppc) {
