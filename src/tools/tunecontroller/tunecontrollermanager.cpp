@@ -69,7 +69,7 @@ Tune TuneControllerManager::currentTune() const
 {
 	foreach(const TuneControllerPtr &c, controllers_.values()) {
 		Tune t = c->currentTune();
-		if (!t.isNull()) {
+		if (!t.isNull() && checkTune(t)) {
 			return t;
 		}
 	}
@@ -142,14 +142,13 @@ bool TuneControllerManager::checkTune(const Tune &tune) const
 			return false;
 		}
 	}
-	else {
-		QString extension;
+	if (!tune.url().isEmpty()) {
 		int index = tune.url().lastIndexOf(".");
 		if (index != -1) {
-			extension = tune.url().right(tune.url().length() - (index+1)).toLower();
-		}
-		if (!extension.isEmpty() && tuneUrlFilters_.contains(extension)) {
-			return false;
+			QString extension = tune.url().right(tune.url().length() - (index+1)).toLower();
+			if (!extension.isEmpty() && tuneUrlFilters_.contains(extension)) {
+				return false;
+			}
 		}
 	}
 	return true;

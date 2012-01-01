@@ -44,6 +44,7 @@ ContactListSpecialGroup::ContactListSpecialGroup(ContactListModel* model, Contac
 	case SpecialType_MUCPrivateChats:
 		name_ += "mucprivatechats";
 		displayName_ = tr("Private messages");
+		break;
 	default:
 		Q_ASSERT(false);
 	}

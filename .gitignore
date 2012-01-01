@@ -38,6 +38,7 @@ src/Makefile
 src/config.h
 src/psi.app
 src/psi
+src/psi.debug
 src/capabilities/unittest/Makefile
 src/unittest/Makefile
 src/utilities/unittest/Makefile

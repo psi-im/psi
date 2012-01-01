@@ -83,9 +83,6 @@
 #endif
 #include "mood.h"
 #include "tune.h"
-#ifdef USE_PEP
-#include "tunecontroller.h"
-#endif
 #ifdef GROUPCHAT
 #include "groupchatdlg.h"
 #endif

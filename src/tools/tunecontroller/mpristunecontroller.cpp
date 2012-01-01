@@ -30,7 +30,7 @@
  */
 
 const char *MPRISTuneController::MPRIS_PREFIX = "org.mpris";
-static QDBusConnection bus = QDBusConnection::sessionBus();
+static const QString busName = "SessionBus";
 
 QDBusArgument &operator<<(QDBusArgument& arg, const PlayerStatus& ps)
 {
@@ -58,8 +58,8 @@ MPRISTuneController::MPRISTuneController()
 :tuneSent_(false)
 {
 	qDBusRegisterMetaType<PlayerStatus>();
-	players_ = bus.interface()->registeredServiceNames().value()
-													   .filter(MPRIS_PREFIX);
+	QDBusConnection bus = QDBusConnection::connectToBus(QDBusConnection::SessionBus, busName);
+	players_ = bus.interface()->registeredServiceNames().value().filter(MPRIS_PREFIX);
 	foreach(const QString &player, players_){
 		connectToBus(player);
 	}
@@ -76,12 +76,13 @@ MPRISTuneController::~MPRISTuneController()
 	foreach(const QString &player, players_) {
 		disconnectFromBus(player);
 	}
-	bus.disconnect(QLatin1String("org.freedesktop.DBus"),
-		       QLatin1String("/org/freedesktop/DBus"),
-		       QLatin1String("org.freedesktop.DBus"),
-		       QLatin1String("NameOwnerChanged"),
-		       this,
-		       SLOT(checkMprisService(QString, QString, QString)));
+	QDBusConnection(busName).disconnect(QLatin1String("org.freedesktop.DBus"),
+					    QLatin1String("/org/freedesktop/DBus"),
+					    QLatin1String("org.freedesktop.DBus"),
+					    QLatin1String("NameOwnerChanged"),
+					    this,
+					    SLOT(checkMprisService(QString, QString, QString)));
+	QDBusConnection::disconnectFromBus(busName);
 }
 
 void MPRISTuneController::checkMprisService(const QString &name,
@@ -111,6 +112,7 @@ int MPRISTuneController::version(const QString &service_) const
 
 void MPRISTuneController::connectToBus(const QString &service_)
 {
+	QDBusConnection bus = QDBusConnection(busName);
 	if (version(service_) != MPRIS_2) {
 		bus.connect(service_,
 			    QLatin1String("/Player"),
@@ -139,6 +141,7 @@ void MPRISTuneController::connectToBus(const QString &service_)
 
 void MPRISTuneController::disconnectFromBus(const QString &service_)
 {
+	QDBusConnection bus = QDBusConnection(busName);
 	if (version(service_) != MPRIS_2) {
 		bus.disconnect(service_,
 			       QLatin1String("/Player"),
