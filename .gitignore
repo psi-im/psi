@@ -54,8 +54,4 @@ checker
 *.user.*
 /mac/*.dmg
 /mac/disk
-/Makefile
-/conf.log
-/conf.pri
-/psi.pro.user
-/src/config.h
+
