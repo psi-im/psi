@@ -149,32 +149,18 @@ static int countIconsets(QString addDir, QStringList excludeList)
 {
 	int count = 0;
 
-	const QStringList dirs = ApplicationInfo::dataDirs();
-	QStringList::ConstIterator it = dirs.constBegin();
-	for ( ; it != dirs.constEnd(); ++it) {
-		QString fileName = *it + "/iconsets" + addDir;
-		QDir dir (fileName);
+	foreach (const QString &dataDir,  ApplicationInfo::dataDirs()) {
+		QDir dir (dataDir + "/iconsets" + addDir);
 
-		QStringList list = dir.entryList(QStringList() << "*");
-		QStringList::Iterator it2 = list.begin();
-		for ( ; it2 != list.end(); ++it2) {
-			if ( *it2 == "." || *it2 == ".." )
-				continue;
-
-			bool found = false;
-			QStringList::Iterator it3 = excludeList.begin();
-			for ( ; it3 != excludeList.end(); ++it3) {
-				if ( *it2 == *it3 ) {
-					found = true;
-					break;
-				}
-			}
-
-			if ( found )
+		foreach (const QFileInfo &fi,
+				 dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries))
+		{
+			QString iconsetId = fi.absoluteFilePath().section('/', -2);
+			if ( excludeList.contains(iconsetId) || !Iconset::isSourceAllowed(fi))
 				continue;
 
 			count++;
-			excludeList << *it2;
+			excludeList << iconsetId;
 		}
 	}
 
@@ -298,15 +284,13 @@ void IconsetLoadThread::run()
 	QStringList dirs = ApplicationInfo::dataDirs();
 	threadMutex.unlock();
 
-	QStringList::Iterator it = dirs.begin();
-	for ( ; it != dirs.end(); ++it) {
-		QString fileName = *it + "/iconsets" + addPath;
-		QDir dir (fileName);
-
-		QStringList list = dir.entryList(QStringList() << "*");
-		QStringList::Iterator it2 = list.begin();
-		for ( ; it2 != list.end(); ++it2) {
-			if ( *it2 == "." || *it2 == ".." )
+	QStringList failedList;
+	foreach (const QString &dataDir, dirs) {
+		QDir dir(dataDir + "/iconsets" + addPath);
+		foreach (const QFileInfo &iconsetFI,
+				 dir.entryInfoList(QDir::NoDotAndDotDot | QDir::AllEntries))
+		{
+			if (!Iconset::isSourceAllowed(iconsetFI))
 				continue;
 
 			threadCancelled.lock();
@@ -316,52 +300,28 @@ void IconsetLoadThread::run()
 			if ( cancel )
 				goto getout;
 
-			bool found = false;
-			QStringList::Iterator it3 = excludeList.begin();
-			for ( ; it3 != excludeList.end(); ++it3) {
-				if ( *it2 == *it3 ) {
-					found = true;
-					break;
-				}
-			}
-
-			if ( found )
+			QString iconsetId = iconsetFI.absoluteFilePath().section('/', -2);
+			if (excludeList.contains(iconsetId))
 				continue;
 
-			IconsetLoadEvent *event = 0;
 			Iconset *is = new Iconset;
 
-			if ( is->load (fileName + "/" + *it2) ) {
-				excludeList << *it2;
+			if ( is->load (iconsetFI.absoluteFilePath()) ) {
+				failedList.removeOne(is->id());
+				excludeList << is->id();
 
 				// don't forget to delete iconset in ::event()!
-				event = new IconsetLoadEvent(this, is);
+				postEvent(new IconsetLoadEvent(this, is));
 			}
 			else {
 				delete is;
-				event = new IconsetLoadEvent(this, 0);
-
-				// without excluding corrupted iconset,
-				// counter will go nuts! read more comments
-				// about that...
-				excludeList << *it2;
-				// TODO: there is possibility,
-				// that there's a bunch of same-named
-				// iconsets, and some of them are corrupted.
-				// It is possible to write a hack that
-				// loads iconset even in that case.
-
-				// logic:
-				//   tried to load iconset --> unable to load
-				//   checking if there's same-named iconsets in
-				//   other directories
-				//   emit IconsetLoadEvent() only on success
-				//   or when last corrupted iconset was unable
-				//   to load
+				failedList << iconsetId;
 			}
-
-			postEvent(event);
 		}
+	}
+
+	for(int i = 0; i < failedList.size(); i++) {
+		postEvent(new IconsetLoadEvent(this, 0));
 	}
 
 getout:
@@ -595,8 +555,7 @@ void OptionsTabIconsetEmoticons::restoreOptions()
 		QStringList loaded;
 		{
 			foreach(Iconset* tmp, PsiIconset::instance()->emoticons) {
-				QFileInfo fi ( tmp->fileName() );
-				loaded << fi.fileName();
+				loaded << tmp->id();
 			}
 		}
 

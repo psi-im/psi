@@ -162,6 +162,7 @@ void OptionsTabWidget::addTab(OptionsTab *tab)
 
 void OptionsTabWidget::updateCurrent(int index)
 {
+	Q_UNUSED(index)
 	QWidget *w = currentWidget ();
 	if ( !w2tab[w].initialized ) {
 		QVBoxLayout *vbox = new QVBoxLayout(w);

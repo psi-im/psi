@@ -33,6 +33,7 @@
 #include <QImage>
 
 class QIcon;
+class QFileInfo;
 class Anim;
 
 class Impix
@@ -196,6 +197,7 @@ public:
 	void setIcon(const QString &, const PsiIcon &);
 	void removeIcon(const QString &);
 
+	const QString &id() const;
 	const QString &name() const;
 	const QString &version() const;
 	const QString &description() const;
@@ -216,6 +218,7 @@ public:
 	void addToFactory() const;
 	void removeFromFactory() const;
 
+	static bool isSourceAllowed(const QFileInfo &fi);
 	static void setSoundPrefs(QString unpackPath, QObject *receiver, const char *slot);
 
 	Iconset copy() const;

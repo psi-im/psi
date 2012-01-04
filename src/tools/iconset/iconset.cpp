@@ -992,7 +992,7 @@ private:
 	}
 
 public:
-	QString name, version, description, creation, homeUrl, filename;
+	QString id, name, version, description, creation, homeUrl, filename;
 	QStringList authors;
 	QHash<QString, PsiIcon *> dict; // unsorted hash for fast search
 	QList<PsiIcon *> list;          // sorted list
@@ -1057,6 +1057,9 @@ public:
 		QByteArray ba;
 
 		QFileInfo fi(dir);
+		if (!Iconset::isSourceAllowed(fi)) {
+			return ba;
+		}
 		if ( fi.isDir() ) {
 			QFile file ( dir + '/' + fileName );
 			if (!file.open(QIODevice::ReadOnly)) {
@@ -1066,7 +1069,7 @@ public:
 			ba = file.readAll();
 		}
 #ifdef ICONSET_ZIP
-		else if ( fi.suffix() == "jisp" || fi.suffix() == "zip" ) {
+		else { // else its zip or jisp file
 			UnZip z(dir);
 			if ( !z.open() ) {
 				return ba;
@@ -1479,6 +1482,7 @@ bool Iconset::load(const QString &dir)
 	//QPixmap::setDefaultOptimization( QPixmap::MemoryOptim );
 
 	bool ret = false;
+	d->id = dir.section('/', -2);
 
 	QByteArray ba;
 	ba = d->loadData ("icondef.xml", dir);
@@ -1537,6 +1541,14 @@ void Iconset::removeIcon(const QString &name)
 	detach();
 
 	d->remove(name);
+}
+
+/**
+ * Returns the Iconset unique identifier (ex: "system/default").
+ */
+const QString &Iconset::id() const
+{
+	return d->id;
 }
 
 /**
@@ -1649,6 +1661,19 @@ void Iconset::addToFactory() const
 void Iconset::removeFromFactory() const
 {
 	IconsetFactoryPrivate::instance()->unregisterIconset(this);
+}
+
+bool Iconset::isSourceAllowed(const QFileInfo &fi)
+{
+#ifdef ICONSET_ZIP
+	if (fi.isDir())
+		return true;
+	QString lower = fi.suffix().toLower();
+	return lower == "jisp" || lower == ".zip";
+#else
+	// files supported ony for zipped iconsets
+	return fi.isDir();
+#endif
 }
 
 /**
