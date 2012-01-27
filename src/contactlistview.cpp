@@ -320,7 +320,7 @@ void ContactListView::rename()
 	}
 
 	QModelIndex indexToEdit = indexes.first();
-	QModelIndex parent;
+	QModelIndex parent = indexToEdit.parent();
 	while (parent.isValid()) {
 		expand(parent);
 		parent = parent.parent();
