@@ -2866,17 +2866,22 @@ void PsiAccount::sentInitialPresence()
 {
 	QTimer::singleShot(15000, this, SLOT(enableNotifyOnline()));
 
-	// Get the vcard
-	const VCard *vcard = VCardFactory::instance()->vcard(d->jid);
-	if (PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool() || !vcard || vcard->isEmpty() || (vcard->nickName().isEmpty() && vcard->fullName().isEmpty()))
-		VCardFactory::instance()->getVCard(d->jid, d->client->rootTask(), this, SLOT(slotCheckVCard()));
-	else {
-		d->nickFromVCard = true;
-		// if we get here, one of these fields is non-empty
-		if (!vcard->nickName().isEmpty()) {
-			setNick(vcard->nickName());
-		} else {
-			setNick(vcard->fullName());
+	// Check if the vCard should be updated on login
+	if (PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool()) {
+
+		// Update vCard
+		const VCard *vcard = VCardFactory::instance()->vcard(d->jid);
+		if (!vcard || vcard->isEmpty() || (vcard->nickName().isEmpty() && vcard->fullName().isEmpty())) {
+			VCardFactory::instance()->getVCard(d->jid, d->client->rootTask(), this, SLOT(slotCheckVCard()));
+		}
+		else {
+			d->nickFromVCard = true;
+			// if we get here, one of these fields is non-empty
+			if (!vcard->nickName().isEmpty()) {
+				setNick(vcard->nickName());
+			} else {
+				setNick(vcard->fullName());
+			}
 		}
 	}
 }
