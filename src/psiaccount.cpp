@@ -5384,7 +5384,8 @@ void PsiAccount::slotCheckVCard()
 	}
 
 #ifndef YAPSI
-	if (j->vcard().isEmpty()) {
+	if (j->vcard().isEmpty() && PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool())
+	{
 		changeVCard();
 		return;
 	}
