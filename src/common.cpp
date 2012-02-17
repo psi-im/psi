@@ -265,6 +265,9 @@ QString soundDetectPlayer()
 
 void soundPlay(const QString &s)
 {
+	if(s.isEmpty())
+		return;
+
 	QString str = s;
 	if (str == "!beep") {
 		QApplication::beep();
