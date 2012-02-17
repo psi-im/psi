@@ -301,6 +301,7 @@
 				</popup-dialogs>
 				<sounds>
 					<chat-message type="QString">sound/chat2.wav</chat-message>
+					<groupchat-message type="QString">sound/chat2.wav</groupchat-message>
 					<completed-file-transfer type="QString">sound/ft_complete.wav</completed-file-transfer>
 					<contact-offline type="QString">sound/offline.wav</contact-offline>
 					<contact-online type="QString">sound/online.wav</contact-online>

@@ -2966,6 +2966,9 @@ void PsiAccount::playSound(PsiAccount::SoundType _onevent)
 	case eChat2:
 		str = PsiOptions::instance()->getOption("options.ui.notifications.sounds.chat-message").toString();
 		break;
+	case eGroupChat:
+		str = PsiOptions::instance()->getOption("options.ui.notifications.sounds.groupchat-message").toString();
+		break;
 	case eHeadline:
 		str = PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-headline").toString();
 		break;

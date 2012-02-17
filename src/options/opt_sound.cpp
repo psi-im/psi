@@ -51,7 +51,7 @@ QWidget *OptionsTabSound::widget()
 	w = new OptSoundUI();
 	OptSoundUI *d = (OptSoundUI *)w;
 
-	sounds_ << d->le_oeMessage << d->le_oeChat1 << d->le_oeChat2 << d->le_oeHeadline << d->le_oeSystem << d->le_oeOnline << d->le_oeOffline << d->le_oeSend << d->le_oeIncomingFT << d->le_oeFTComplete;
+	sounds_ << d->le_oeMessage << d->le_oeChat1 << d->le_oeChat2 << d->le_oeGroupChat << d->le_oeHeadline << d->le_oeSystem << d->le_oeOnline << d->le_oeOffline << d->le_oeSend << d->le_oeIncomingFT << d->le_oeFTComplete;
 
 	bg_se = new QButtonGroup;
 	bg_se->addButton(d->tb_seMessage);
@@ -60,6 +60,8 @@ QWidget *OptionsTabSound::widget()
 	modify_buttons_[d->tb_seChat1] = d->le_oeChat1;
 	bg_se->addButton(d->tb_seChat2);
 	modify_buttons_[d->tb_seChat2] = d->le_oeChat2;
+	bg_se->addButton(d->tb_seGroupChat);
+	modify_buttons_[d->tb_seGroupChat] = d->le_oeGroupChat;
 	bg_se->addButton(d->tb_seHeadline);
 	modify_buttons_[d->tb_seHeadline] = d->le_oeHeadline;
 	bg_se->addButton(d->tb_seSystem);
@@ -83,6 +85,8 @@ QWidget *OptionsTabSound::widget()
 	play_buttons_[d->tb_seChat1Play] = d->le_oeChat1;
 	bg_sePlay->addButton(d->tb_seChat2Play);
 	play_buttons_[d->tb_seChat2Play] = d->le_oeChat2;
+	bg_sePlay->addButton(d->tb_seGroupChatPlay);
+	play_buttons_[d->tb_seGroupChatPlay] = d->le_oeGroupChat;
 	bg_sePlay->addButton(d->tb_seHeadlinePlay);
 	play_buttons_[d->tb_seHeadlinePlay] = d->le_oeHeadline;
 	bg_sePlay->addButton(d->tb_seSystemPlay);
@@ -103,7 +107,7 @@ QWidget *OptionsTabSound::widget()
 
 	// set up proper tool button icons
 	int n;
-	for (n = 0; n < 10; n++) {
+	for (n = 0; n < 11; n++) {
 		IconToolButton *tb = (IconToolButton *)bg_se->buttons()[n];
 		tb->setPsiIcon( IconsetFactory::iconPtr("psi/browse") );
 		tb = (IconToolButton *)bg_sePlay->buttons()[n];
@@ -144,6 +148,7 @@ void OptionsTabSound::applyOptions()
 	PsiOptions::instance()->setOption("options.ui.notifications.sounds.incoming-message", d->le_oeMessage->text());
 	PsiOptions::instance()->setOption("options.ui.notifications.sounds.new-chat", d->le_oeChat1->text());
 	PsiOptions::instance()->setOption("options.ui.notifications.sounds.chat-message", d->le_oeChat2->text());
+	PsiOptions::instance()->setOption("options.ui.notifications.sounds.groupchat-message", d->le_oeGroupChat->text());
 	PsiOptions::instance()->setOption("options.ui.notifications.sounds.system-message", d->le_oeSystem->text());
 	PsiOptions::instance()->setOption("options.ui.notifications.sounds.incoming-headline", d->le_oeHeadline->text());
 	PsiOptions::instance()->setOption("options.ui.notifications.sounds.contact-online", d->le_oeOnline->text());
@@ -175,6 +180,7 @@ void OptionsTabSound::restoreOptions()
 	d->le_oeMessage->setText(PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-message").toString());
 	d->le_oeChat1->setText(PsiOptions::instance()->getOption("options.ui.notifications.sounds.new-chat").toString());
 	d->le_oeChat2->setText(PsiOptions::instance()->getOption("options.ui.notifications.sounds.chat-message").toString());
+	d->le_oeGroupChat->setText(PsiOptions::instance()->getOption("options.ui.notifications.sounds.groupchat-message").toString());
 	d->le_oeSystem->setText(PsiOptions::instance()->getOption("options.ui.notifications.sounds.system-message").toString());
 	d->le_oeHeadline->setText(PsiOptions::instance()->getOption("options.ui.notifications.sounds.incoming-headline").toString());
 	d->le_oeOnline->setText(PsiOptions::instance()->getOption("options.ui.notifications.sounds.contact-online").toString());
@@ -212,6 +218,7 @@ void OptionsTabSound::soundReset()
 	d->le_oeMessage->setText("sound/chat2.wav");
 	d->le_oeChat1->setText("sound/chat1.wav");
 	d->le_oeChat2->setText("sound/chat2.wav");
+	d->le_oeGroupChat->setText("sound/chat2.wav");
 	d->le_oeSystem->setText("sound/chat2.wav");
 	d->le_oeHeadline->setText("sound/chat2.wav");
 	d->le_oeOnline->setText("sound/online.wav");

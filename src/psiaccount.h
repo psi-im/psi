@@ -204,6 +204,7 @@ public:
 		eMessage = 0,
 		eChat1,
 		eChat2,
+		eGroupChat,
 		eHeadline,
 		eSystem,
 		eOnline,

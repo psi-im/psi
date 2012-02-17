@@ -1456,7 +1456,7 @@ void GCMainDlg::message(const Message &_m)
 	}
 	else {
 		if(alert || (PsiOptions::instance()->getOption("options.ui.notifications.sounds.notify-every-muc-message").toBool() && !m.spooled() && !from.isEmpty()) )
-			account()->playSound(PsiAccount::eChat2);
+			account()->playSound(PsiAccount::eGroupChat);
 	}
 
 	if(from.isEmpty())
