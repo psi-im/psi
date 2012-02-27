@@ -42,7 +42,9 @@ public:
 
 	~TaskList()
 	{
-		qDeleteAll(*this);
+		for(QList<Task*>::Iterator i = begin(); i != end(); i++) {
+			(*i)->safeDelete();
+		}
 	}
 
 	void append(Task *d)
