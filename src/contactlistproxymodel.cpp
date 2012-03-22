@@ -83,7 +83,7 @@ bool ContactListProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& s
 
 	switch (ContactListModel::indexType(index)) {
 	case ContactListModel::ContactType: {
-		PsiContact* psiContact = dynamic_cast<PsiContact*>(item);
+		PsiContact* psiContact = static_cast<PsiContact*>(item);
 
 		if (psiContact->isSelf()) {
 			return showSelf();
@@ -118,7 +118,7 @@ bool ContactListProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& s
 			}
 
 			if (!showOffline()) {
-				ContactListGroup* group = dynamic_cast<ContactListGroup*>(item);
+				ContactListGroup* group = static_cast<ContactListGroup*>(item);
 				return show && group->haveOnlineContacts();
 			}
 			else {
