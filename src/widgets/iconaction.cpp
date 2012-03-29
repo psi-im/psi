@@ -163,7 +163,8 @@ void IconAction::setPsiIcon(const PsiIcon *i)
 	if ( i ) {
 		d->icon = new PsiIcon(*i);
 		connect(d->icon, SIGNAL(iconModified()), SLOT(iconUpdated()));
-		d->icon->activated(true);
+		//We newer use animated iconactions
+		//d->icon->activated(true);
 
 		is = d->icon->icon();
 	}
