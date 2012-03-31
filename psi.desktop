@@ -6,7 +6,8 @@ Name=Psi
 GenericName=Jabber Client
 Comment=Communicate over the Jabber network
 Icon=psi
-Exec=psi
+Exec=psi %U
+MimeType=x-scheme-handler/xmpp;
 Terminal=false
 Categories=Network;InstantMessaging;Qt;
 
