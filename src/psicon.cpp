@@ -290,6 +290,29 @@ public:
 	AutoUpdater *autoUpdater;
 	AlertManager alertManager;
 	BossKey *bossKey;
+
+	struct IdleSettings
+	{
+		IdleSettings()
+		{}
+
+		void update()
+		{
+			PsiOptions *o = PsiOptions::instance();
+			useOffline = o->getOption("options.status.auto-away.use-offline").toBool();
+			useNotAvailable = o->getOption("options.status.auto-away.use-not-availible").toBool();
+			useAway = o->getOption("options.status.auto-away.use-away").toBool();
+			offlineAfter = o->getOption("options.status.auto-away.offline-after").toInt();
+			notAvailableAfter = o->getOption("options.status.auto-away.not-availible-after").toInt();
+			awayAfter = o->getOption("options.status.auto-away.away-after").toInt();
+			menuXA = o->getOption("options.ui.menu.status.xa").toBool();
+		}
+
+		bool useOffline, useNotAvailable, useAway, menuXA;
+		int offlineAfter, notAvailableAfter, awayAfter;
+	};
+
+	IdleSettings idleSettings_;
 };
 
 //----------------------------------------------------------------------------
@@ -517,7 +540,7 @@ bool PsiCon::init()
 	d->ftwin = new FileTransDlg(this);
 #endif
 
-	d->idle.start();
+	connect(&d->idle, SIGNAL(secondsIdle(int)), SLOT(secondsIdle(int)));
 
 	// S5B
 	d->s5bServer = new S5BServer;
@@ -924,7 +947,7 @@ PsiAccount *PsiCon::createAccount(const UserAccount& _acc)
 {
 	UserAccount acc = _acc;
 	PsiAccount *pa = new PsiAccount(acc, d->contactList, d->capsRegistry, d->tabManager);
-	connect(&d->idle, SIGNAL(secondsIdle(int)), pa, SLOT(secondsIdle(int)));
+//	connect(&d->idle, SIGNAL(secondsIdle(int)), pa, SLOT(secondsIdle(int)));
 	connect(pa, SIGNAL(updatedActivity()), SLOT(pa_updatedActivity()));
 	connect(pa, SIGNAL(updatedAccount()), SLOT(pa_updatedAccount()));
 	connect(pa, SIGNAL(queueChanged()), SLOT(queueChanged()));
@@ -1236,6 +1259,13 @@ void PsiCon::optionChanged(const QString& option)
 
 	// Global shortcuts
 	setShortcuts();
+
+	//Idle server
+	d->idleSettings_.update();
+	if(d->idleSettings_.useAway || d->idleSettings_.useNotAvailable || d->idleSettings_.useOffline)
+		d->idle.start();
+	else
+		d->idle.stop();
 
 	if (option == "options.ui.notifications.alert-style") {
 		alertIconUpdateAlertStyle();
@@ -1716,6 +1746,25 @@ void PsiCon::doQuit(int quitCode)
 void PsiCon::aboutToQuit()
 {
 	doQuit(QuitProgram);
+}
+
+void PsiCon::secondsIdle(int sec)
+{
+	int minutes = sec / 60;
+	PsiAccount::AutoAway aa;
+
+	if(d->idleSettings_.useOffline && d->idleSettings_.offlineAfter > 0 && minutes >= d->idleSettings_.offlineAfter)
+		aa = PsiAccount::AutoAway_Offline;
+	else if(d->idleSettings_.useNotAvailable && d->idleSettings_.menuXA && d->idleSettings_.notAvailableAfter > 0 && minutes >= d->idleSettings_.notAvailableAfter)
+		aa = PsiAccount::AutoAway_XA;
+	else if(d->idleSettings_.useAway && d->idleSettings_.awayAfter > 0 && minutes >= d->idleSettings_.awayAfter)
+		aa = PsiAccount::AutoAway_Away;
+	else
+		aa = PsiAccount::AutoAway_None;
+
+	foreach(PsiAccount* pa, d->contactList->enabledAccounts()) {
+		pa->setAutoAwayStatus(aa);
+	}
 }
 
 ContactUpdatesManager* PsiCon::contactUpdatesManager() const

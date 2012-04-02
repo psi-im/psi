@@ -172,6 +172,7 @@ private slots:
 	void forceSavePreferences();
 	void startBounce();
 	void aboutToQuit();
+	void secondsIdle(int);
 
 private:
 	class Private;
