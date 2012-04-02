@@ -41,6 +41,7 @@
 #include "contactlistutil.h"
 #include "psiaccount.h"
 
+static const QString contactSortStyleOptionPath = "options.ui.contactlist.contact-sort-style";
 static const QString showOfflineOptionPath = "options.ui.contactlist.show.offline-contacts";
 static const QString showHiddenOptionPath = "options.ui.contactlist.show.hidden-contacts-group";
 static const QString showAgentsOptionPath = "options.ui.contactlist.show.agent-contacts";
@@ -170,6 +171,7 @@ void PsiRosterWidget::setContactList(PsiContactList* contactList)
 	optionChanged(showHiddenOptionPath);
 	optionChanged(showSelfOptionPath);
 	optionChanged(showOfflineOptionPath);
+	optionChanged(contactSortStyleOptionPath);
 
 	contactListModel_ = new PsiContactListModel(contactList_);
 	contactListModel_->invalidateLayout();
@@ -213,8 +215,10 @@ void PsiRosterWidget::optionChanged(const QString& option)
 {
 	if (!contactList_)
 		return;
-
-	if (option == showAgentsOptionPath) {
+	if (option == contactSortStyleOptionPath) {
+		contactList_->setContactSortStyle(PsiOptions::instance()->getOption(contactSortStyleOptionPath).toString());
+	}
+	else if (option == showAgentsOptionPath) {
 		contactList_->setShowAgents(PsiOptions::instance()->getOption(showAgentsOptionPath).toBool());
 	}
 	else if (option == showHiddenOptionPath) {

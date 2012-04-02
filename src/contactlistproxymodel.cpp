@@ -42,6 +42,7 @@ void ContactListProxyModel::setSourceModel(QAbstractItemModel* model)
 	connect(model, SIGNAL(showSelfChanged()), SLOT(filterParametersChanged()));
 	connect(model, SIGNAL(showTransportsChanged()), SLOT(filterParametersChanged()));
 	connect(model, SIGNAL(showHiddenChanged()), SLOT(filterParametersChanged()));
+	connect(model, SIGNAL(contactSortStyleChanged()), SLOT(updateSorting()));
 }
 
 bool ContactListProxyModel::showOffline() const
@@ -142,7 +143,16 @@ bool ContactListProxyModel::lessThan(const QModelIndex& left, const QModelIndex&
 	ContactListItemProxy* item2 = static_cast<ContactListItemProxy*>(right.internalPointer());
 	if (!item1 || !item2)
 		return false;
-	return item1->item()->compare(item2->item());
+
+	ContactListModel *model = static_cast<ContactListModel*>(sourceModel());
+	if((model->contactSortStyle() == "status") ||
+	   !dynamic_cast<const PsiContact*>(item1->item()) ||
+	   !dynamic_cast<const PsiContact*>(item2->item()) ) {
+		return item1->item()->compare(item2->item());
+	}
+	else {
+		return item1->item()->name().toLower() < item2->item()->name().toLower();
+	}
 }
 
 void ContactListProxyModel::filterParametersChanged()

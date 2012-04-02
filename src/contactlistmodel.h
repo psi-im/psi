@@ -124,6 +124,7 @@ public:
 	bool showTransports() const;
 	bool showHidden() const;
 	bool hasContacts(bool onlineOnly) const;
+	QString contactSortStyle() const;
 
 	int groupOrder(const QString& groupFullName) const;
 	void setGroupOrder(const QString& groupFullName, int order);
@@ -174,6 +175,7 @@ signals:
 	void showTransportsChanged();
 	void showHiddenChanged();
 	void inPlaceRename();
+	void contactSortStyleChanged();
 
 	void contactAlert(const QModelIndex&);
 

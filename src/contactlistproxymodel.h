@@ -33,6 +33,7 @@ public:
 
 	void setSourceModel(QAbstractItemModel* model);
 
+public slots:
 	void updateSorting();
 
 protected:

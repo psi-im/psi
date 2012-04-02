@@ -72,6 +72,7 @@ ContactListModel::ContactListModel(PsiContactList* contactList)
 	connect(contactList_, SIGNAL(showSelfChanged(bool)), SIGNAL(showSelfChanged()));
 	connect(contactList_, SIGNAL(showAgentsChanged(bool)), SIGNAL(showTransportsChanged()));
 	connect(contactList_, SIGNAL(rosterRequestFinished()), SLOT(rosterRequestFinished()));
+	connect(contactList_, SIGNAL(contactSortStyleChanged(QString)), SIGNAL(contactSortStyleChanged()));
 }
 
 ContactListModel::~ContactListModel()
@@ -858,6 +859,13 @@ bool ContactListModel::showHidden() const
 	if (!contactList_)
 		return false;
 	return contactList_->showHidden();
+}
+
+QString ContactListModel::contactSortStyle() const
+{
+	if (!contactList_)
+		return QString("alpha");
+	return contactList_->contactSortStyle();
 }
 
 bool ContactListModel::updatesEnabled() const

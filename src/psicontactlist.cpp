@@ -39,6 +39,7 @@ PsiContactList::PsiContactList(PsiCon* psi)
 	, showSelf_(false)
 	, showOffline_(false)
 	, accountsLoaded_(false)
+	, contactSortStyle_("")
 {
 }
 
@@ -342,6 +343,11 @@ bool PsiContactList::showOffline() const
 	return showOffline_;
 }
 
+QString PsiContactList::contactSortStyle() const
+{
+	return contactSortStyle_;
+}
+
 /**
  * TODO
  */
@@ -380,6 +386,14 @@ void PsiContactList::setShowOffline(bool showOffline)
 	if (showOffline_ != showOffline) {
 		showOffline_ = showOffline;
 		emit showOfflineChanged(showOffline_);
+	}
+}
+
+void PsiContactList::setContactSortStyle(QString style)
+{
+	if (contactSortStyle_ != style) {
+		contactSortStyle_ = style;
+		emit contactSortStyleChanged(contactSortStyle_);
 	}
 }
 

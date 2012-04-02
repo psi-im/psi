@@ -45,6 +45,7 @@ public:
 	bool showHidden() const;
 	bool showSelf() const;
 	bool showOffline() const;
+	QString contactSortStyle() const;
 
 	bool accountsLoaded() const;
 
@@ -81,12 +82,14 @@ public slots:
 	void setShowHidden(bool);
 	void setShowSelf(bool);
 	void setShowOffline(bool);
+	void setContactSortStyle(QString);
 
 signals:
 	void showAgentsChanged(bool);
 	void showHiddenChanged(bool);
 	void showSelfChanged(bool);
 	void showOfflineChanged(bool);
+	void contactSortStyleChanged(QString);
 
 signals:
 	void addedContact(PsiContact*);
@@ -160,6 +163,7 @@ private:
 	bool showSelf_;
 	bool showOffline_;
 	bool accountsLoaded_;
+	QString contactSortStyle_;
 
 	void addEnabledAccount(PsiAccount* account);
 	void removeEnabledAccount(PsiAccount* account);
