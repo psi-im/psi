@@ -30,6 +30,8 @@
 #include "common.h"
 
 static const QString contactListFontOptionPath = "options.ui.look.font.contactlist";
+static const QString slimGroupsOptionPath = "options.ui.look.contactlist.use-slim-group-headings";
+static const QString outlinedGroupsOptionPath = "options.ui.look.contactlist.use-outlined-group-headings";
 static const QString contactListBackgroundOptionPath = "options.ui.look.colors.contactlist.background";
 static const QString showStatusMessagesOptionPath = "options.ui.contactlist.status-messages.show";
 
@@ -44,6 +46,8 @@ PsiContactListViewDelegate::PsiContactListViewDelegate(ContactListView* parent)
 	connect(alertTimer_, SIGNAL(timeout()), SLOT(updateAlerts()));
 
 	connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
+	optionChanged(slimGroupsOptionPath);
+	optionChanged(outlinedGroupsOptionPath);
 	optionChanged(contactListFontOptionPath);
 	optionChanged(contactListBackgroundOptionPath);
 	optionChanged(showStatusMessagesOptionPath);
@@ -172,13 +176,22 @@ void PsiContactListViewDelegate::drawGroup(QPainter* painter, const QStyleOption
 	o.font = *font_;
 	o.fontMetrics = *fontMetrics_;
 	QPalette palette = o.palette;
-	palette.setColor(QPalette::Base, ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background"));
-	palette.setColor(QPalette::Text, ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-foreground"));
+	QColor background = ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background");
+	QColor foreground = ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-foreground");
+	if (!slimGroup_)
+		palette.setColor(QPalette::Base, background);
+	palette.setColor(QPalette::Text, foreground);
 	o.palette = palette;
 
 	drawBackground(painter, o, index);
 
 	QRect r = option.rect;
+	if (!slimGroup_ && outlinedGroup_) {
+		painter->setPen(QPen(foreground));
+		QRect gr(r);
+		gr.setLeft(contactList()->x());
+		painter->drawRect(gr);
+	}
 
 	const QPixmap& pixmap = index.data(ContactListModel::ExpandedRole).toBool() ?
 	                        IconsetFactory::iconPtr("psi/groupOpen")->pixmap() :
@@ -193,6 +206,13 @@ void PsiContactListViewDelegate::drawGroup(QPainter* painter, const QStyleOption
 
 	QString text = index.data(Qt::ToolTipRole).toString();
 	drawText(painter, o, r, text, index);
+
+	if(slimGroup_ && !(option.state & QStyle::State_Selected)) {
+		int h = r.y() + (r.height() / 2);
+		int x = r.left() + fontMetrics_->width(text) + 1;
+		painter->setPen(QPen(background,2));
+		painter->drawLine(x, h, r.right(), h);
+	}
 }
 
 void PsiContactListViewDelegate::drawAccount(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
@@ -202,12 +222,17 @@ void PsiContactListViewDelegate::drawAccount(QPainter* painter, const QStyleOpti
 	o.fontMetrics = *fontMetrics_;
 	QPalette palette = o.palette;
 	palette.setColor(QPalette::Base, ColorOpt::instance()->color("options.ui.look.colors.contactlist.profile.header-background"));
-	palette.setColor(QPalette::Text, ColorOpt::instance()->color("options.ui.look.colors.contactlist.profile.header-foreground"));
+	QColor foreground = ColorOpt::instance()->color("options.ui.look.colors.contactlist.profile.header-foreground");
+	palette.setColor(QPalette::Text, foreground);
 	o.palette = palette;
 
 	drawBackground(painter, o, index);
 
 	QRect r = option.rect;
+	if (outlinedGroup_) {
+		painter->setPen(QPen(foreground));
+		painter->drawRect(r);
+	}
 
 	QRect avatarRect(r);
 	const QPixmap statusPixmap = this->statusPixmap(index);
@@ -274,6 +299,14 @@ void PsiContactListViewDelegate::optionChanged(const QString& option)
 	}
 	else if (option == showStatusMessagesOptionPath) {
 		showStatusMessages_ = PsiOptions::instance()->getOption(showStatusMessagesOptionPath).toBool();
+		contactList()->viewport()->update();
+	}
+	else if(option == slimGroupsOptionPath) {
+		slimGroup_ = PsiOptions::instance()->getOption(slimGroupsOptionPath).toBool();
+		contactList()->viewport()->update();
+	}
+	else if(option == outlinedGroupsOptionPath) {
+		outlinedGroup_ = PsiOptions::instance()->getOption(outlinedGroupsOptionPath).toBool();
 		contactList()->viewport()->update();
 	}
 }
