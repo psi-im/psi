@@ -175,7 +175,7 @@ QStringList TranslationManager::translationDirs() const
 	dirs += ".";
 	dirs += ApplicationInfo::homeDir();
 	dirs += ApplicationInfo::resourcesDir();
-	QString subdir = "translations";
+	QString subdir = "/translations";
 	dirs += "." + subdir;
 	dirs += ApplicationInfo::homeDir() + subdir;
 	dirs += ApplicationInfo::resourcesDir() + subdir;
