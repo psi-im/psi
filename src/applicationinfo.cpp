@@ -202,8 +202,8 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
 						"" : QCoreApplication::applicationDirPath();
 			if (base.isEmpty()) {
 				wchar_t path[MAX_PATH];
-				if (SHGetFolderPathW(NULL, CSIDL_APPDATA, NULL, 0, path)) {
-					configDir_ = QString::fromWCharArray(path) + "/" + name();
+				if (SHGetFolderPathW(NULL, CSIDL_APPDATA, NULL, 0, path) == S_OK) {
+					configDir_ = QString::fromWCharArray(path) + "\\" + name();
 				} else {
 					configDir_ = QDir::homePath() + "/" + name();
 				}
