@@ -1324,21 +1324,21 @@ void OptionsMigration::lateMigration()
 }
 
 
-QString pathToProfile(const QString &name)
+QString pathToProfile(const QString &name, ApplicationInfo::HomedirType type)
 {
-	return ApplicationInfo::profilesDir() + "/" + name;
+	return ApplicationInfo::profilesDir(type) + "/" + name;
 }
 
 QString pathToProfileConfig(const QString &name)
 {
-	return pathToProfile(name) + "/config.xml";
+	return pathToProfile(name, ApplicationInfo::ConfigLocation) + "/config.xml";
 }
 
 QStringList getProfilesList()
 {
 	QStringList list;
 
-	QDir d(ApplicationInfo::profilesDir());
+	QDir d(ApplicationInfo::profilesDir(ApplicationInfo::ConfigLocation));
 	if(!d.exists())
 		return list;
 
@@ -1382,17 +1382,34 @@ bool profileNew(const QString &name)
 	}
 
 	// make it
-	QDir d(ApplicationInfo::profilesDir());
-	if(!d.exists())
+	QDir configProfilesDir(ApplicationInfo::profilesDir(ApplicationInfo::ConfigLocation));
+	if(!configProfilesDir.exists())
 		return false;
-	QDir p(ApplicationInfo::profilesDir() + "/" + name);
-	if(!p.exists()) {
-		if (!d.mkdir(name))
+	QDir configCurrentProfileDir(configProfilesDir.path() + "/" + name);
+	if(!configCurrentProfileDir.exists()) {
+		if (!configProfilesDir.mkdir(name))
 		return false;
 	}
 
-	p.mkdir("history");
-	p.mkdir("vcard");
+	QDir dataProfilesDir(ApplicationInfo::profilesDir(ApplicationInfo::DataLocation));
+	if(!dataProfilesDir.exists())
+		return false;
+	QDir dataCurrentProfileDir(dataProfilesDir.path() + "/" + name);
+	if(!dataCurrentProfileDir.exists()) {
+		if (!dataProfilesDir.mkdir(name))
+		return false;
+	}
+	dataCurrentProfileDir.mkdir("history");
+
+	QDir cacheProfilesDir(ApplicationInfo::profilesDir(ApplicationInfo::CacheLocation));
+	if(!cacheProfilesDir.exists())
+		return false;
+	QDir cacheCurrentProfileDir(cacheProfilesDir.path() + "/" + name);
+	if(!cacheCurrentProfileDir.exists()) {
+		if (!cacheProfilesDir.mkdir(name))
+		return false;
+	}
+	cacheCurrentProfileDir.mkdir("vcard");
 
 	return true;
 }
@@ -1405,13 +1422,31 @@ bool profileRename(const QString &oldname, const QString &name)
 			return false;
 	}
 
-	// locate the folder
-	QDir d(ApplicationInfo::profilesDir());
-	if(!d.exists())
-		return false;
-	if(!d.rename(oldname, name))
+	// locate the folders
+	QStringList paths;
+	paths << ApplicationInfo::profilesDir(ApplicationInfo::ConfigLocation);
+	if(!paths.contains(ApplicationInfo::profilesDir(ApplicationInfo::DataLocation))) {
+		paths << ApplicationInfo::profilesDir(ApplicationInfo::DataLocation);
+	}
+	if(!paths.contains(ApplicationInfo::profilesDir(ApplicationInfo::CacheLocation))) {
+		paths << ApplicationInfo::profilesDir(ApplicationInfo::CacheLocation);
+	}
+
+
+	// First we need to check configDir for existing
+	QDir configDir(paths[0]);
+	if(!configDir.exists())
 		return false;
 
+	// and if all ok we may rename it.
+	foreach(QString path, paths) {
+		QDir d(path);
+		if(!d.exists())
+			continue;
+
+		if(!d.rename(oldname, name))
+			return false;
+	}
 	return true;
 }
 
@@ -1442,13 +1477,20 @@ static bool folderRemove(const QDir &_d)
 	return true;
 }
 
-bool profileDelete(const QString &path)
+bool profileDelete(const QStringList &paths)
 {
-	QDir d(path);
-	if(!d.exists())
-		return true;
+	bool ret = true;
+	foreach(QString path, paths) {
+		QDir d(path);
+		if(!d.exists())
+			continue;
 
-	return folderRemove(QDir(path));
+		ret = folderRemove(QDir(path));
+		if(!ret) {
+			break;
+		}
+	}
+	return ret;
 }
 
 QString activeProfile;

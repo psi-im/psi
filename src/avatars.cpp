@@ -615,9 +615,9 @@ void AvatarFactory::resourceAvailable(const Jid& jid, const Resource& r)
 
 QString AvatarFactory::getManualDir()
 {
-	QDir avatars(pathToProfile(activeProfile) + "/pictures");
+	QDir avatars(pathToProfile(activeProfile, ApplicationInfo::DataLocation) + "/pictures");
 	if (!avatars.exists()) {
-		QDir profile(pathToProfile(activeProfile));
+		QDir profile(pathToProfile(activeProfile, ApplicationInfo::DataLocation));
 		profile.mkdir("pictures");
 	}
 	return avatars.path();
@@ -625,9 +625,9 @@ QString AvatarFactory::getManualDir()
 
 QString AvatarFactory::getCacheDir()
 {
-	QDir avatars(ApplicationInfo::homeDir() + "/avatars");
+	QDir avatars(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/avatars");
 	if (!avatars.exists()) {
-		QDir home(ApplicationInfo::homeDir());
+		QDir home(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation));
 		home.mkdir("avatars");
 	}
 	return avatars.path();

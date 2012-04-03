@@ -33,6 +33,7 @@
 #include <QtCrypto>
 #include <QTranslator>
 #include <QDir>
+#include <QFileInfo>
 #include <QProcess>
 
 #include <stdlib.h>
@@ -93,7 +94,7 @@ PsiMain::PsiMain(const QMap<QString, QString>& commandline, QObject *par)
 	lastLang = sUser.value("last_lang").toString();
 	autoOpen = sUser.value("auto_open", QVariant(false)).toBool();
 
-	QSettings s(ApplicationInfo::homeDir() + "/psirc", QSettings::IniFormat);
+	QSettings s(ApplicationInfo::homeDir(ApplicationInfo::ConfigLocation) + "/psirc", QSettings::IniFormat);
 	lastProfile = s.value("last_profile", lastProfile).toString();
 	lastLang = s.value("last_lang", lastLang).toString();
 	autoOpen = s.value("auto_open", autoOpen).toBool();
@@ -103,7 +104,7 @@ PsiMain::~PsiMain()
 {
 	delete pcon;
 
-	QSettings s(ApplicationInfo::homeDir() + "/psirc", QSettings::IniFormat);
+	QSettings s(ApplicationInfo::homeDir(ApplicationInfo::ConfigLocation) + "/psirc", QSettings::IniFormat);
 	s.setValue("last_profile", lastProfile);
 	s.setValue("last_lang", lastLang);
 	s.setValue("auto_open", autoOpen);
@@ -466,8 +467,9 @@ int main(int argc, char *argv[])
 
 	// it must be initialized first in order for ApplicationInfo::resourcesDir() to work
 	PsiApplication app(argc, argv);
+	QApplication::setApplicationName(ApplicationInfo::name());
 	QApplication::addLibraryPath(ApplicationInfo::resourcesDir());
-	QApplication::addLibraryPath(ApplicationInfo::homeDir());
+	QApplication::addLibraryPath(ApplicationInfo::homeDir(ApplicationInfo::DataLocation));
 	QApplication::setQuitOnLastWindowClosed(false);
 
 #ifdef Q_WS_MAC

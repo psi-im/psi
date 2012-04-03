@@ -13,6 +13,7 @@ qrc_*
 *.o
 *.pdb
 *.orig
+*.rej
 ui_*
 moc_*
 mocinclude.tmp

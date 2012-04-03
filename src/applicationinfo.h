@@ -7,6 +7,12 @@ class QStringList;
 class ApplicationInfo
 {
 public:
+	enum HomedirType {
+		ConfigLocation,
+		DataLocation,
+		CacheLocation
+	};
+
 	// Version info
 	static QString name();
 	static QString version();
@@ -18,12 +24,13 @@ public:
 	static QString getAppCastURL();
 
 	// Directories
-	static QString homeDir();
+	static QString homeDir(HomedirType type);
 	static QString resourcesDir();
 	static QString libDir();
-	static QString profilesDir();
-	static QString makeSubhomePath(const QString &);
-	static QString makeSubprofilePath(const QString &);
+	static QString profilesDir(ApplicationInfo::HomedirType);
+	static QString currentProfileDir(HomedirType type);
+	static QString makeSubhomePath(const QString &, HomedirType type);
+	static QString makeSubprofilePath(const QString &, HomedirType type);
 	static QString historyDir();
 	static QString vCardDir();
 	static QString bobDir();

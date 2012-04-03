@@ -562,7 +562,7 @@ public:
 
 	QString pathToProfileEvents() const
 	{
-		return pathToProfile(activeProfile) + "/events-" + JIDUtil::encode(acc.id).toLower() + ".xml";
+		return pathToProfile(activeProfile, ApplicationInfo::DataLocation) + "/events-" + JIDUtil::encode(acc.id).toLower() + ".xml";
 	}
 
 	void updateOnlineContactsCount()

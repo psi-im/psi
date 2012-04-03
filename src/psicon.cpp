@@ -131,8 +131,8 @@ public:
 	PsiConObject(QObject *parent)
 	: QObject(parent)
 	{
-		QDir p(ApplicationInfo::homeDir());
-		QDir v(ApplicationInfo::homeDir() + "/tmp-sounds");
+		QDir p(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation));
+		QDir v(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/tmp-sounds");
 		if(!v.exists())
 			p.mkdir("tmp-sounds");
 		Iconset::setSoundPrefs(v.absolutePath(), this, SLOT(playSound(QString)));
@@ -142,8 +142,8 @@ public:
 	~PsiConObject()
 	{
 		// removing temp dirs
-		QDir p(ApplicationInfo::homeDir());
-		QDir v(ApplicationInfo::homeDir() + "/tmp-sounds");
+		QDir p(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation));
+		QDir v(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/tmp-sounds");
 		folderRemove(v);
 	}
 
@@ -246,7 +246,7 @@ public:
 				ua.toOptions(&accountTree, base);
 			}
 		}
-		QFile accountsFile(pathToProfile( activeProfile ) + "/accounts.xml");	
+		QFile accountsFile(pathToProfile(activeProfile, ApplicationInfo::ConfigLocation) + "/accounts.xml");
 		accountTree.saveOptions(accountsFile.fileName(), "accounts", ApplicationInfo::optionsNS(), ApplicationInfo::version());;
 		
 	}
@@ -404,7 +404,7 @@ bool PsiCon::init()
 	
 	PsiRichText::setAllowedImageDirs(QStringList()
 									 << ApplicationInfo::resourcesDir()
-									 << ApplicationInfo::homeDir());
+									 << ApplicationInfo::homeDir(ApplicationInfo::CacheLocation));
 	
 	// To allow us to upgrade from old hardcoded options gracefully, be careful about the order here
 	PsiOptions *options=PsiOptions::instance();
@@ -456,7 +456,7 @@ bool PsiCon::init()
 		common_smallFontSize = minimumFontSize;
 	FancyLabel::setSmallFontSize( common_smallFontSize );
 	
-	QFile accountsFile(pathToProfile( activeProfile ) + "/accounts.xml");
+	QFile accountsFile(pathToProfile(activeProfile, ApplicationInfo::ConfigLocation) + "/accounts.xml");
 	bool accountMigration = false;	
 	if (!accountsFile.exists()) {
 		accountMigration = true;
@@ -480,7 +480,7 @@ bool PsiCon::init()
 
 	contactUpdatesManager_ = new ContactUpdatesManager(this);
 
-	QDir profileDir( pathToProfile( activeProfile ) );
+	QDir profileDir( pathToProfile(activeProfile, ApplicationInfo::DataLocation) );
 	profileDir.rmdir( "info" ); // remove unused dir
 
 	d->iconSelect = new IconSelectPopup(0);
@@ -1115,7 +1115,7 @@ void PsiCon::saveAccounts()
 
 void PsiCon::saveCapabilities()
 {
-	QFile file(ApplicationInfo::homeDir() + "/caps.xml");
+	QFile file(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/caps.xml");
 	d->capsRegistry->save(file);
 }
 
@@ -1729,7 +1729,7 @@ void PsiCon::promptUserToCreateAccount()
 
 QString PsiCon::optionsFile() const
 {
-	return pathToProfile(activeProfile) + "/options.xml";
+	return pathToProfile(activeProfile, ApplicationInfo::ConfigLocation) + "/options.xml";
 }
 
 void PsiCon::forceSavePreferences()

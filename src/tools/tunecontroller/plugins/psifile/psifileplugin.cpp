@@ -29,7 +29,7 @@ QString PsiFilePlugin::name()
 
 TuneController* PsiFilePlugin::createController() 
 {
-	return new FileTuneController(ApplicationInfo::homeDir() + "/tune");
+	return new FileTuneController(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/tune");
 }
 
 Q_EXPORT_PLUGIN2(psifileplugin, PsiFilePlugin);

@@ -33,6 +33,7 @@
 #include "xmpp_clientstream.h"
 #include "xmpp_roster.h"
 #include "xmpp_jid.h"
+#include "applicationinfo.h"
 
 class OptionsTree;
 
@@ -115,13 +116,13 @@ private:
 	lateMigrationOptions lateMigrationData;
 };
 
-QString pathToProfile(const QString &);
+QString pathToProfile(const QString &, ApplicationInfo::HomedirType type);
 QString pathToProfileConfig(const QString &);
 QStringList getProfilesList();
 bool profileExists(const QString &);
 bool profileNew(const QString &);
 bool profileRename(const QString &, const QString &);
-bool profileDelete(const QString &);
+bool profileDelete(const QStringList &);
 
 extern QString activeProfile;
 

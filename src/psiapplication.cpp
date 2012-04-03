@@ -173,7 +173,7 @@ private:
 //----------------------------------------------------------------------------
 
 PsiApplication::PsiApplication(int &argc, char **argv, bool GUIenabled)
-: QApplication(argc, argv, GUIenabled)
+:	QApplication(argc, argv, GUIenabled)
 {
 	init(GUIenabled);
 }

@@ -56,7 +56,10 @@ static QStringList pluginDirs()
 {
 	QStringList l;
 	l += ApplicationInfo::resourcesDir() + "/plugins";
-	l += ApplicationInfo::homeDir() + "/plugins";
+	l += ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + "/plugins";
+#if defined(Q_OS_UNIX)
+	l += ApplicationInfo::libDir() + "/plugins";
+#endif
 	return l;
 }
 

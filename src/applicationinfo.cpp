@@ -1,6 +1,9 @@
 #include <QString>
 #include <QDir>
 #include <QFile>
+#include <QSettings>
+#include <QLocale>
+#include <QDesktopServices>
 
 #ifdef Q_WS_X11
 #include <sys/stat.h> // chmod
@@ -8,6 +11,7 @@
 
 #ifdef Q_WS_WIN
 #include <windows.h>
+#include <shellapi.h>
 #endif
 
 #ifdef Q_WS_MAC
@@ -15,8 +19,12 @@
 #include <CoreServices/CoreServices.h>
 #endif
 
+#include "psiapplication.h"
 #include "applicationinfo.h"
 #include "profiles.h"
+#include "homedirmigration.h"
+#include "activeprofiles.h"
+#include "translationmanager.h"
 #ifdef HAVE_CONFIG
 #include "config.h"
 #endif
@@ -95,22 +103,22 @@ QStringList ApplicationInfo::getCertificateStoreDirs()
 {
 	QStringList l;
 	l += ApplicationInfo::resourcesDir() + "/certs";
-	l += ApplicationInfo::homeDir() + "/certs";
+	l += ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + "/certs";
 	return l;
 }
 
 QStringList ApplicationInfo::dataDirs()
 {
-	const static QStringList dirs = QStringList() << ":" << "." << homeDir()
+	const static QStringList dirs = QStringList() << ":" << "." << homeDir(DataLocation)
 												  << resourcesDir();
 	return  dirs;
 }
 
 QString ApplicationInfo::getCertificateStoreSaveDir()
 {
-	QDir certsave(homeDir() + "/certs");
+	QDir certsave(homeDir(DataLocation) + "/certs");
 	if(!certsave.exists()) {
-		QDir home(homeDir());
+		QDir home(homeDir(DataLocation));
 		home.mkdir("certs");
 	}
 
@@ -176,61 +184,117 @@ QString ApplicationInfo::libDir()
   * unix+mac: $HOME/.psi
   * environment variable "PSIDATADIR" overrides
   */
-QString ApplicationInfo::homeDir()
+QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
 {
-	// Try the environment override first
-	char *p = getenv("PSIDATADIR");
-	if(p) {
-		return p;
-	}
+	static QString configDir_;
+	static QString dataDir_;
+	static QString cacheDir_;
 
-#if defined(Q_WS_X11)
-	QDir proghome(QDir::homePath() + "/.psi");
-	if(!proghome.exists()) {
-		QDir home = QDir::home();
-		home.mkdir(".psi");
-		chmod(QFile::encodeName(proghome.path()), 0700);
-	}
-	return proghome.path();
-#elif defined(Q_WS_WIN)
-	QString base;
+	if (configDir_.isEmpty()) {
+		// Try the environment override first
+		configDir_ = QString::fromLocal8Bit(getenv("PSIDATADIR"));
 
-	// Windows 9x
-	if(QDir::homePath() == QDir::rootPath()) {
-		base = ".";
-	}
-	// Windows NT/2K/XP variant
-	else {
-		base = QDir::homePath();
-	}
-	// no trailing slash
-	if(base.at(base.length()-1) == '/') {
-		base.truncate(base.length()-1);
-	}
-
-	QDir proghome(base + "/PsiData");
-	if(!proghome.exists()) {
-		QDir home(base);
-		home.mkdir("PsiData");
-	}
-
-	return proghome.path();
-#elif defined(Q_WS_MAC)
-	QDir proghome(QDir::homePath() + "/.psi");
-	if(!proghome.exists()) {
-		QDir home = QDir::home();
-		home.mkdir(".psi");
-		chmod(QFile::encodeName(proghome.path()), 0700);
-	}
-
-	return proghome.path();
+		if (configDir_.isEmpty()) {
+#if defined Q_WS_WIN
+			QString base = QFileInfo(QCoreApplication::applicationFilePath()).fileName()
+					.toLower().indexOf("portable") == -1?
+						"" : QCoreApplication::applicationDirPath();
+			if (base.isEmpty()) {
+				wchar_t path[MAX_PATH];
+				if (SHGetSpecialFolderPath(0, path, CSIDL_APPDATA, FALSE)) {
+					configDir_ = QString::fromWCharArray(path) + "/" + name();
+				} else {
+					configDir_ = QDir::homePath() + "/" + name();
+				}
+				dataDir_ = configDir_;
+				// prefer non-roaming data location for cache which is default for qds:DataLocation
+				cacheDir_ = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+			} else {
+				configDir_ = dataDir_ = cacheDir_ = base + "/" + name();
+			}
+			// temporary store for later processing
+			QDir configDir(configDir_);
+			QDir cacheDir(cacheDir_);
+			QDir dataDir(dataDir_);
+#elif defined Q_WS_MAC
+			QDir configDir(QDir::homePath() + "/Library/Application Support/" + name());
+			QDir cacheDir(QDir::homePath() + "/Library/Caches/" + name());
+			QDir dataDir(configDir);
+#elif defined Q_WS_X11
+			QString XdgConfigHome = QString::fromLocal8Bit(getenv("XDG_CONFIG_HOME"));
+			QString XdgDataHome = QString::fromLocal8Bit(getenv("XDG_DATA_HOME"));
+			QString XdgCacheHome = QString::fromLocal8Bit(getenv("XDG_CACHE_HOME"));
+			if (XdgConfigHome.isEmpty()) {
+				XdgConfigHome = QDir::homePath() + "/.config";
+			}
+			if (XdgDataHome.isEmpty()) {
+				XdgDataHome = QDir::homePath() + "/.local/share";
+			}
+			if (XdgCacheHome.isEmpty()) {
+				XdgCacheHome = QDir::homePath() + "/.cache";
+			}
+			QDir configDir(XdgConfigHome + "/" + name());
+			QDir dataDir(XdgDataHome + "/" + name());
+			QDir cacheDir(XdgCacheHome + "/" + name());
 #endif
+			configDir_ = configDir.path();
+			cacheDir_ = cacheDir.path();
+			dataDir_ = dataDir.path();
+
+			// To prevent from multiple startup of import  wizard
+			if (ActiveProfiles::instance()->isActive("import_wizard")) {
+				exit(0);
+			}
+
+			if (!configDir.exists() && !dataDir.exists() && !cacheDir.exists()) {
+				HomeDirMigration dlg;
+
+				if (dlg.checkOldHomeDir()) {
+					ActiveProfiles::instance()->setThisProfile("import_wizard");
+					QSettings s(dlg.oldHomeDir() + "/psirc", QSettings::IniFormat);
+					QString lastLang = s.value("last_lang", QString()).toString();
+					if(lastLang.isEmpty()) {
+						lastLang = QLocale().name().section('_', 0, 0);
+					}
+					TranslationManager::instance()->loadTranslation(lastLang);
+					dlg.exec();
+					ActiveProfiles::instance()->unsetThisProfile();
+				}
+			}
+			if (!dataDir.exists()) {
+				dataDir.mkpath(".");
+			}
+			if (!cacheDir.exists()) {
+				cacheDir.mkpath(".");
+			}
+		}
+		else {
+			cacheDir_ = configDir_;
+			dataDir_ = configDir_;
+		}
+	}
+
+	QString ret;
+	switch(type) {
+	case ApplicationInfo::ConfigLocation:
+		ret = configDir_;
+		break;
+
+	case ApplicationInfo::DataLocation:
+		ret = dataDir_;
+		break;
+
+	case ApplicationInfo::CacheLocation:
+		ret = cacheDir_;
+		break;
+	}
+	return ret;
 }
 
-QString ApplicationInfo::makeSubhomePath(const QString &path)
+QString ApplicationInfo::makeSubhomePath(const QString &path, ApplicationInfo::HomedirType type)
 {
 	if (path.indexOf("..") == -1) { // ensure its in home dir
-		QDir dir(homeDir() + "/" + path);
+		QDir dir(homeDir(type) + "/" + path);
 		if (!dir.exists()) {
 			dir.mkpath(".");
 		}
@@ -239,10 +303,10 @@ QString ApplicationInfo::makeSubhomePath(const QString &path)
 	return QString();
 }
 
-QString ApplicationInfo::makeSubprofilePath(const QString &path)
+QString ApplicationInfo::makeSubprofilePath(const QString &path, ApplicationInfo::HomedirType type)
 {
 	if (path.indexOf("..") == -1) { // ensure its in profile dir
-		QDir dir(pathToProfile(activeProfile) + "/" + path);
+		QDir dir(pathToProfile(activeProfile, type) + "/" + path);
 		if (!dir.exists()) {
 			dir.mkpath(".");
 		}
@@ -253,20 +317,25 @@ QString ApplicationInfo::makeSubprofilePath(const QString &path)
 
 QString ApplicationInfo::historyDir()
 {
-	return makeSubprofilePath("history");
+	return makeSubprofilePath("history", ApplicationInfo::DataLocation);
 }
 
 QString ApplicationInfo::vCardDir()
 {
-	return makeSubprofilePath("vcard");
+	return makeSubprofilePath("vcard", ApplicationInfo::CacheLocation);
 }
 
 QString ApplicationInfo::bobDir()
 {
-	return makeSubhomePath("bob");
+	return makeSubhomePath("bob", ApplicationInfo::CacheLocation);
 }
 
-QString ApplicationInfo::profilesDir()
+QString ApplicationInfo::profilesDir(ApplicationInfo::HomedirType type)
 {
-	return makeSubhomePath("profiles");
+	return makeSubhomePath("profiles", type);
+}
+
+QString ApplicationInfo::currentProfileDir(ApplicationInfo::HomedirType type)
+{
+	return pathToProfile(activeProfile, type);
 }

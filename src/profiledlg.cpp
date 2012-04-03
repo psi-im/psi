@@ -259,7 +259,15 @@ void ProfileManageDlg::slotProfileDelete()
 	if(x == -1)
 		return;
 	QString name = lbx_profiles->item(x)->text();
-	QString path = ApplicationInfo::profilesDir() + "/" + name;
+
+	QStringList paths;
+	paths << ApplicationInfo::profilesDir(ApplicationInfo::ConfigLocation) + "/" + name;
+	if(!paths.contains(ApplicationInfo::profilesDir(ApplicationInfo::DataLocation) + "/" + name)) {
+		paths << ApplicationInfo::profilesDir(ApplicationInfo::DataLocation) + "/" + name;
+	}
+	if(!paths.contains(ApplicationInfo::profilesDir(ApplicationInfo::CacheLocation) + "/" + name)) {
+		paths << ApplicationInfo::profilesDir(ApplicationInfo::CacheLocation) + "/" + name;
+	}
 
 	// prompt first
 	int r = QMessageBox::warning(this,
@@ -279,14 +287,14 @@ void ProfileManageDlg::slotProfileDelete()
 		tr(
 		"<qt>As a precaution, you are being asked one last time if this is what you really want.  "
 		"The following folder will be deleted!<br><br>\n"
-		"&nbsp;&nbsp;<b>%1</b><br><br>\n"
+		"<b>%1</b><br><br>\n"
 		"Proceed?"
-		).arg(path),
+		).arg(paths.join("\n")),
 		tr("&No"),
 		tr("&Yes"));
 
 	if(r == 1) {
-		if(!profileDelete(path)) {
+		if(!profileDelete(paths)) {
 			QMessageBox::critical(this, CAP("Error"), tr("Unable to delete the folder completely.  Ensure you have the proper permission."));
 			return;
 		}
@@ -359,7 +367,7 @@ void ProfileNewDlg::slotCreate()
 	
 	o.setOption("options.messages.default-outgoing-message-type" ,rb_message->isChecked() ? "message": "chat");
 	o.setOption("options.ui.emoticons.use-emoticons" ,ck_useEmoticons->isChecked());
-	o.save(pathToProfile(name) + "/options.xml");
+	o.save(pathToProfile(name, ApplicationInfo::ConfigLocation) + "/options.xml");
 	
 	accept();
 }
