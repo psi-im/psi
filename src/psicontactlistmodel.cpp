@@ -24,7 +24,6 @@
 
 #include "psicontact.h"
 #include "psiaccount.h"
-#include "userlist.h"
 #include "contactlistgroup.h"
 #include "contactlistaccountgroup.h"
 
@@ -49,10 +48,7 @@ bool PsiContactListModel::setData(const QModelIndex& index, const QVariant& data
 
 QVariant PsiContactListModel::contactData(const PsiContact* contact, int role) const
 {
-	if (role == Qt::ToolTipRole) {
-		return QVariant(contact->userListItem().makeTip(true, false));
-	}
-	else if (role == ContactListModel::PhaseRole) {
+	if (role == ContactListModel::PhaseRole) {
 		return QVariant(secondPhase_);
 	}
 

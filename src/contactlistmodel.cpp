@@ -481,6 +481,9 @@ QVariant ContactListModel::contactData(const PsiContact* contact, int role) cons
 	if (role == JidRole) {
 		return QVariant(contact->jid().full());
 	}
+	else if (role == Qt::ToolTipRole) {
+		return QVariant(contact->userListItem().makeTip(true, false));
+	}
 	else if (role == PictureRole) {
 		return QVariant(contact->picture());
 	}
