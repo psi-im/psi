@@ -25,12 +25,17 @@
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QTimer>
+#include <QFileInfo>
 
 #include "psicontactlistviewdelegate.h"
 #include "psitooltip.h"
 #include "psioptions.h"
 #include "contactlistmodel.h"
 #include "contactlistproxymodel.h"
+#include "contactlistgroup.h"
+#include "contactlistitemproxy.h"
+#include "psicontact.h"
+#include "psiaccount.h"
 
 static const int recalculateTimerTimeout = 2000;
 
@@ -170,6 +175,74 @@ void PsiContactListView::showToolTip(const QModelIndex& index, const QPoint& glo
 	Q_UNUSED(globalPos);
 	QString text = index.data(Qt::ToolTipRole).toString();
 	PsiToolTip::showText(globalPos, text, this);
+}
+
+bool PsiContactListView::acceptableDragOperation(QDropEvent *e)
+{
+	ContactListItemProxy* ip = itemProxy(indexAt(e->pos()));
+	if(ip) {
+		PsiContact *pc = dynamic_cast<PsiContact*>(ip->item());
+		if(pc) {
+			foreach(const QUrl& url, e->mimeData()->urls()) {
+				const QFileInfo fi(url.toLocalFile());
+				if (!fi.isDir() && fi.exists()) {
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
+void PsiContactListView::dragEnterEvent(QDragEnterEvent *e)
+{
+	if(acceptableDragOperation(e)) {
+		setCurrentIndex(indexAt(e->pos()));
+		e->acceptProposedAction();
+		return;
+	}
+
+	ContactListDragView::dragEnterEvent(e);
+}
+
+void PsiContactListView::dragMoveEvent(QDragMoveEvent *e)
+{
+	if(acceptableDragOperation(e)) {
+		setCurrentIndex(indexAt(e->pos()));
+		e->acceptProposedAction();
+		return;
+	}
+
+	ContactListDragView::dragMoveEvent(e);
+}
+
+void PsiContactListView::dropEvent(QDropEvent *e)
+{
+	ContactListItemProxy* ip = itemProxy(indexAt(e->pos()));
+	if(ip) {
+		PsiContact *pc = dynamic_cast<PsiContact*>(ip->item());
+		if(pc) {
+			QStringList files;
+			foreach(const QUrl& url, e->mimeData()->urls()) {
+				const QFileInfo fi(url.toLocalFile());
+				if (!fi.isDir() && fi.exists()) {
+					const QString fileName = QFileInfo(fi.isSymLink() ?
+									    fi.symLinkTarget() : fi.absoluteFilePath()
+									    ).canonicalFilePath();
+					files.append(fileName);
+				}
+			}
+
+			if(!files.isEmpty()) {
+				e->acceptProposedAction();
+				pc->account()->sendFiles(pc->jid(), files, true);
+				return;
+			}
+		}
+	}
+
+	ContactListDragView::dropEvent(e);
 }
 
 void PsiContactListView::setModel(QAbstractItemModel* model)

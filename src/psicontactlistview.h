@@ -49,7 +49,14 @@ protected:
 	virtual void showToolTip(const QModelIndex& index, const QPoint& globalPos) const;
 	virtual void doItemsLayoutStart();
 
+	virtual void dragEnterEvent(QDragEnterEvent *e);
+	virtual void dropEvent(QDropEvent *e);
+	virtual void dragMoveEvent(QDragMoveEvent *e);
+
 	PsiContactListViewDelegate* itemDelegate() const;
+
+private:
+	bool acceptableDragOperation(QDropEvent *e);
 
 private:
 	class Private;
