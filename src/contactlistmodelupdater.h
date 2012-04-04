@@ -48,6 +48,7 @@ signals:
 	void addedContact(PsiContact*);
 	void removedContact(PsiContact*);
 	void contactAlert(PsiContact*);
+	void contactAnim(PsiContact*);
 	void contactUpdated(PsiContact*);
 	void contactGroupsChanged(PsiContact*);
 
@@ -61,6 +62,7 @@ private slots:
 	void removeContact(PsiContact*);
 
 	void contactAlert();
+	void contactAnim();
 	void contactUpdated();
 	void contactGroupsChanged();
 
@@ -78,7 +80,8 @@ private:
 		AddContact           = 1 << 0,
 		RemoveContact        = 1 << 1,
 		UpdateContact        = 1 << 2,
-		ContactGroupsChanged = 1 << 3
+		ContactGroupsChanged = 1 << 3,
+		AnimateContact	     = 1 << 4
 	};
 	QHash<PsiContact*, int> operationQueue_;
 

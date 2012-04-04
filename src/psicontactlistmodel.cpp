@@ -18,6 +18,8 @@
  *
  */
 
+#include <QTimer>
+
 #include "psicontactlistmodel.h"
 
 #include "psicontact.h"
@@ -28,7 +30,11 @@
 
 PsiContactListModel::PsiContactListModel(PsiContactList* contactList)
 	: ContactListDragModel(contactList)
+	, secondPhase_(false)
 {
+	animTimer_ = new QTimer(this);
+	animTimer_->setInterval(300);
+	connect(animTimer_, SIGNAL(timeout()), SLOT(updateAnim()));
 }
 
 QVariant PsiContactListModel::data(const QModelIndex &index, int role) const
@@ -45,6 +51,9 @@ QVariant PsiContactListModel::contactData(const PsiContact* contact, int role) c
 {
 	if (role == Qt::ToolTipRole) {
 		return QVariant(contact->userListItem().makeTip(true, false));
+	}
+	else if (role == ContactListModel::PhaseRole) {
+		return QVariant(secondPhase_);
 	}
 
 	return ContactListDragModel::contactData(contact, role);
@@ -70,4 +79,35 @@ QVariant PsiContactListModel::accountData(const ContactListAccountGroup* account
 	}
 
 	return ContactListDragModel::accountData(account, role);
+}
+
+void PsiContactListModel::contactAnim(PsiContact* contact)
+{
+	QModelIndexList indexes = ContactListModel::indexesFor(contact);
+	if(!indexes.isEmpty()) {
+		foreach(const QModelIndex& i, indexes) {
+			bool anim = data(i, ContactListModel::IsAnimRole).toBool();
+			if (anim) {
+				animIndexes_.insert(i, true);
+			}
+			else {
+				animIndexes_.remove(i);
+			}
+		}
+	}
+
+	if (animIndexes_.isEmpty()) {
+		animTimer_->stop();
+	}
+	else if(!animTimer_->isActive()) {
+		animTimer_->start();
+	}
+}
+
+void PsiContactListModel::updateAnim()
+{
+	secondPhase_ = !secondPhase_;
+	foreach(const QModelIndex& index, animIndexes_.keys()) {
+		dataChanged(index, index);
+	}
 }

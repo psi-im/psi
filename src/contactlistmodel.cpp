@@ -62,6 +62,7 @@ ContactListModel::ContactListModel(PsiContactList* contactList)
 	connect(updater_, SIGNAL(addedContact(PsiContact*)), SLOT(addContact(PsiContact*)));
 	connect(updater_, SIGNAL(removedContact(PsiContact*)), SLOT(removeContact(PsiContact*)));
 	connect(updater_, SIGNAL(contactAlert(PsiContact*)), SLOT(contactAlert(PsiContact*)));
+	connect(updater_, SIGNAL(contactAnim(PsiContact*)), SLOT(contactAnim(PsiContact*)));
 	connect(updater_, SIGNAL(contactUpdated(PsiContact*)), SLOT(contactUpdated(PsiContact*)));
 	connect(updater_, SIGNAL(contactGroupsChanged(PsiContact*)), SLOT(contactGroupsChanged(PsiContact*)));
 	connect(updater_, SIGNAL(beginBulkContactUpdate()), SLOT(beginBulkUpdate()));
@@ -305,6 +306,10 @@ void ContactListModel::contactAlert(PsiContact* contact)
 	}
 }
 
+void ContactListModel::contactAnim(PsiContact* /*contact*/)
+{
+}
+
 void ContactListModel::contactUpdated(PsiContact* contact)
 {
 	Q_ASSERT(rootGroup_);
@@ -502,6 +507,12 @@ QVariant ContactListModel::contactData(const PsiContact* contact, int role) cons
 	}
 	else if (role == AlertPictureRole) {
 		return QVariant(contact->alertPicture());
+	}
+	else if (role == IsAnimRole) {
+		return QVariant(contact->isAnimated());
+	}
+	else if (role == PhaseRole) {
+		return QVariant(false);
 	}
 #ifdef YAPSI
 	else if (role == Qt::ForegroundRole) {

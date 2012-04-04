@@ -63,6 +63,8 @@ public:
 	virtual bool isHidden() const;
 	virtual bool isValid() const;
 
+	virtual bool isAnimated() const;
+
 	void activate();
 
 	virtual void setEditing(bool editing);
@@ -115,6 +117,7 @@ public:
 	virtual void setGroups(QStringList);
 	bool alerting() const;
 	void setAlert(const PsiIcon* icon);
+	void startAnim();
 	bool find(const Jid& jid) const;
 	// PsiContactList* contactList() const;
 
@@ -158,6 +161,8 @@ public slots:
 	void moodUpdate();
 #endif
 
+	void stopAnim();
+
 private slots:
 	void avatarChanged(const Jid&);
 	void vcardChanged(const Jid&);
@@ -167,6 +172,7 @@ private slots:
 
 signals:
 	void alert();
+	void anim();
 	void updated();
 	void groupsChanged();
 #ifdef YAPSI

@@ -635,8 +635,9 @@ public:
 
 	void animateNick(const Jid& jid)
 	{
-		// TODO
-		Q_UNUSED(jid);
+		PsiContact* contact = findContact(jid);
+		if (contact)
+			contact->startAnim();
 	}
 
 public slots:

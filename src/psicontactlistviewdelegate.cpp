@@ -117,20 +117,25 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 
 	r.setLeft(avatarRect.right() + 3);
 
-	QColor textColor = ColorOpt::instance()->color("options.ui.look.colors.contactlist.status.online");
-	if (statusType(index) == XMPP::Status::Away || statusType(index) == XMPP::Status::XA)
-		textColor = ColorOpt::instance()->color("options.ui.look.colors.contactlist.status.away");
-	else if (statusType(index) == XMPP::Status::DND)
-		textColor = ColorOpt::instance()->color("options.ui.look.colors.contactlist.status.do-not-disturb");
-	else if (statusType(index) == XMPP::Status::Offline)
-		textColor = ColorOpt::instance()->color("options.ui.look.colors.contactlist.status.offline");
-
-#if 0
-	if (d->animatingNick) {
-		textColor = d->animateNickColor ? ColorOpt::instance()->color("options.ui.look.colors.contactlist.status-change-animation1") : ColorOpt::instance()->color("options.ui.look.colors.contactlist.status-change-animation2");
-		xcg.setColor(QColorGroup::HighlightedText, d->animateNickColor ? ColorOpt::instance()->color("options.ui.look.colors.contactlist.status-change-animation1") : ColorOpt::instance()->color("options.ui.look.colors.contactlist.status-change-animation2"));
+	QColor textColor;
+	if(index.data(ContactListModel::IsAnimRole).toBool()) {
+		if(index.data(ContactListModel::PhaseRole).toBool()) {
+			textColor = ColorOpt::instance()->color("options.ui.look.colors.contactlist.status-change-animation2");
+		}
+		else {
+			textColor = ColorOpt::instance()->color("options.ui.look.colors.contactlist.status-change-animation1");
+		}
 	}
-#endif
+	else {
+		if (statusType(index) == XMPP::Status::Away || statusType(index) == XMPP::Status::XA)
+			textColor = ColorOpt::instance()->color("options.ui.look.colors.contactlist.status.away");
+		else if (statusType(index) == XMPP::Status::DND)
+			textColor = ColorOpt::instance()->color("options.ui.look.colors.contactlist.status.do-not-disturb");
+		else if (statusType(index) == XMPP::Status::Offline)
+			textColor = ColorOpt::instance()->color("options.ui.look.colors.contactlist.status.offline");
+		else
+			textColor = ColorOpt::instance()->color("options.ui.look.colors.contactlist.status.online");
+	}
 
 	QStyleOptionViewItemV2 o = option;
 	o.font = *font_;

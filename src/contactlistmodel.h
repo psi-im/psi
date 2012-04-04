@@ -76,6 +76,8 @@ public:
 		AskingForAuthRole = Qt::UserRole + 9,
 		IsAlertingRole = Qt::UserRole + 10,
 		AlertPictureRole = Qt::UserRole + 11,
+		IsAnimRole = Qt::UserRole + 21,
+		PhaseRole = Qt::UserRole + 22,
 
 		// groups
 		ExpandedRole = Qt::UserRole + 12,
@@ -188,6 +190,7 @@ protected slots:
 	void removeContact(PsiContact*);
 
 	void contactAlert(PsiContact*);
+	virtual void contactAnim(PsiContact*);
 	void contactUpdated(PsiContact*);
 	void contactGroupsChanged(PsiContact*);
 
