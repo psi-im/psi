@@ -36,6 +36,11 @@ public:
 	// reimplemented
 	void setModel(QAbstractItemModel* model);
 
+	virtual QSize minimumSizeHint() const;
+	virtual QSize sizeHint() const;
+
+	void setAutoResizeEnabled(bool enabled);
+
 protected slots:
 	void contactAlert(const QModelIndex&);
 
@@ -45,6 +50,10 @@ protected:
 	virtual void doItemsLayoutStart();
 
 	PsiContactListViewDelegate* itemDelegate() const;
+
+private:
+	class Private;
+	Private* d;
 };
 
 #endif

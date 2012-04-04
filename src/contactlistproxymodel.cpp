@@ -158,6 +158,7 @@ bool ContactListProxyModel::lessThan(const QModelIndex& left, const QModelIndex&
 void ContactListProxyModel::filterParametersChanged()
 {
 	invalidateFilter();
+	emit recalculateSize();
 }
 
 void ContactListProxyModel::updateSorting()
