@@ -214,7 +214,7 @@ void PsiContactListViewDelegate::drawGroup(QPainter* painter, const QStyleOption
 
 	if(slimGroup_ && !(option.state & QStyle::State_Selected)) {
 		int h = r.y() + (r.height() / 2);
-		int x = r.left() + fontMetrics_->width(text) + 1;
+		int x = r.left() + fontMetrics_->width(text) + 8;
 		painter->setPen(QPen(background,2));
 		painter->drawLine(x, h, r.right(), h);
 	}
@@ -301,6 +301,7 @@ void PsiContactListViewDelegate::optionChanged(const QString& option)
 		QPalette p = contactList()->palette();
 		p.setColor(QPalette::Base, ColorOpt::instance()->color(contactListBackgroundOptionPath));
 		const_cast<ContactListView*>(contactList())->setPalette(p);
+		contactList()->viewport()->update();
 	}
 	else if (option == showStatusMessagesOptionPath) {
 		showStatusMessages_ = PsiOptions::instance()->getOption(showStatusMessagesOptionPath).toBool();
