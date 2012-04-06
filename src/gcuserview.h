@@ -66,7 +66,7 @@ public:
 	~GCUserView();
 
 	void setMainDlg(GCMainDlg* mainDlg);
-//	Q3DragObject* dragObject();
+	virtual QMimeData* mimeData(const QList<QTreeWidgetItem*>items) const;
 	void clear();
 	void updateAll();
 	bool hasJid(const Jid&);
