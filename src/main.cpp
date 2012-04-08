@@ -35,6 +35,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QProcess>
+#include <QTime>
 
 #include <stdlib.h>
 #include <time.h>
@@ -427,7 +428,24 @@ static int restart_process(int argc, char **argv, const QByteArray &uri)
 }
 #endif
 
-
+void psiMessageOutput(QtMsgType type, const char *msg)
+{
+	QString time = QTime::currentTime().toString();
+	switch (type) {
+	case QtDebugMsg:
+		fprintf(stderr, "[%s] %s\n", qPrintable(time), msg);
+		break;
+	case QtWarningMsg:
+		fprintf(stderr, "[%s] W:%s\n", qPrintable(time), msg);
+		break;
+	case QtCriticalMsg:
+		fprintf(stderr, "[%s] C:%s\n", qPrintable(time), msg);
+		break;
+	case QtFatalMsg:
+		fprintf(stderr, "[%s] F:%s\n", qPrintable(time), msg);
+		abort();
+	}
+}
 
 int main(int argc, char *argv[])
 {
@@ -466,6 +484,7 @@ int main(int argc, char *argv[])
 #endif
 
 	// it must be initialized first in order for ApplicationInfo::resourcesDir() to work
+	qInstallMsgHandler(psiMessageOutput);
 	PsiApplication app(argc, argv);
 	QApplication::setApplicationName(ApplicationInfo::name());
 	QApplication::addLibraryPath(ApplicationInfo::resourcesDir());
