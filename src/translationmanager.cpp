@@ -172,7 +172,10 @@ VarList TranslationManager::availableTranslations()
 QStringList TranslationManager::translationDirs() const
 {
 	QStringList dirs;
-	QString subdir = "";
+	dirs += ".";
+	dirs += ApplicationInfo::homeDir();
+	dirs += ApplicationInfo::resourcesDir();
+	QString subdir = "/translations";
 	dirs += "." + subdir;
 	dirs += ApplicationInfo::homeDir(ApplicationInfo::DataLocation) + subdir;
 	dirs += ApplicationInfo::resourcesDir() + subdir;
