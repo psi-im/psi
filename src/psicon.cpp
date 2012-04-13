@@ -1571,7 +1571,7 @@ void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 	}
 
 	if (e->type() == PsiEvent::Auth && !EventDlg::messagingEnabled()) {
-		if (dynamic_cast<AuthEvent*>(e)->authType() == "subscribe") {
+		if (static_cast<AuthEvent*>(e)->authType() == "subscribe") {
 #ifdef YAPSI
 			bringToFront(d->mainwin);
 			return;
