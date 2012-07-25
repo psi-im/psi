@@ -4,9 +4,57 @@ name: Psi Configuration
 -----END QCMOD-----
 */
 
-//----------------------------------------------------------------------------
-// qc_conf
-//----------------------------------------------------------------------------
+#include <QDateTime>
+
+static bool psiGenerateFile(const QString &inFile, const QString &outFile, const QHash<QString,QString> &vars)
+{
+	QFile fin(inFile);
+	QFile fout(outFile);
+	if(!fin.open(QIODevice::ReadOnly | QIODevice::Text) || !fout.open(QIODevice::WriteOnly | QIODevice::Truncate))
+		return false;
+
+	QTextStream tin(&fin);
+	QTextStream tout(&fout);
+	while(!tin.atEnd())
+	{
+		QString line = tin.readLine();
+
+		QHashIterator<QString,QString> it(vars);
+		while(it.hasNext())
+		{
+			it.next();
+			line.replace("@@" + it.key() + "@@", it.value());
+		}
+
+		tout << line << endl;
+	}
+
+	return true;
+}
+
+static QString psiGetVersion()
+{
+	QString str;
+
+	{
+		QFile file("version");
+		if(file.open(QIODevice::ReadOnly | QIODevice::Text))
+		{
+			QTextStream ts(&file);
+			if(!ts.atEnd())
+				str = ts.readLine();
+		}
+
+		if(str.isEmpty())
+			str = "UnknownVersion";
+	}
+
+	QDateTime now = QDateTime::currentDateTime();
+	QString nowstr = QString().sprintf("%04d%02d%02d", now.date().year(), now.date().month(), now.date().day());
+	str.replace("@@DATE@@", nowstr);
+	return str;
+}
+
 class qc_conf : public ConfObj
 {
 public:
@@ -16,22 +64,29 @@ public:
 	QString checkString() const { return QString(); }
 	bool exec()
 	{
-#ifdef Q_OS_WIN
-		return true;
-#else
+		QString version = psiGetVersion();
+		QHash<QString,QString> vars;
+		vars["VERSION"] = version;
+
+		psiGenerateFile("mac/Info.plist.in", "mac/Info.plist", vars);
+
+#ifndef Q_OS_WIN
 		conf->addExtra(QString("PSI_LIBDIR=%1/psi").arg(conf->getenv("LIBDIR")));
 		conf->addExtra(QString("PSI_DATADIR=%1/psi").arg(conf->getenv("DATADIR")));
+#endif
 
 		QFile file("src/config.h");
 		if ( file.open(QIODevice::WriteOnly | QIODevice::Text) ) {
 			QTextStream stream( &file );
+#ifndef Q_OS_WIN
 			stream << "#define PSI_LIBDIR \"" << conf->getenv("LIBDIR") << "/psi\"" << endl;
 			stream << "#define PSI_DATADIR \"" << conf->getenv("DATADIR") << "/psi\"" << endl;
+#endif
+			stream << "#define PSI_VERSION \"" << version << "\"" << endl;
 		}
 
 		conf->addDefine("HAVE_CONFIG");
 
 		return true;
-#endif
 	}
 };
