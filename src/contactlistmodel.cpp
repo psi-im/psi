@@ -62,6 +62,7 @@ ContactListModel::ContactListModel(PsiContactList* contactList)
 	connect(updater_, SIGNAL(addedContact(PsiContact*)), SLOT(addContact(PsiContact*)));
 	connect(updater_, SIGNAL(removedContact(PsiContact*)), SLOT(removeContact(PsiContact*)));
 	connect(updater_, SIGNAL(contactAlert(PsiContact*)), SLOT(contactAlert(PsiContact*)));
+	connect(updater_, SIGNAL(contactAnim(PsiContact*)), SLOT(contactAnim(PsiContact*)));
 	connect(updater_, SIGNAL(contactUpdated(PsiContact*)), SLOT(contactUpdated(PsiContact*)));
 	connect(updater_, SIGNAL(contactGroupsChanged(PsiContact*)), SLOT(contactGroupsChanged(PsiContact*)));
 	connect(updater_, SIGNAL(beginBulkContactUpdate()), SLOT(beginBulkUpdate()));
@@ -72,6 +73,7 @@ ContactListModel::ContactListModel(PsiContactList* contactList)
 	connect(contactList_, SIGNAL(showSelfChanged(bool)), SIGNAL(showSelfChanged()));
 	connect(contactList_, SIGNAL(showAgentsChanged(bool)), SIGNAL(showTransportsChanged()));
 	connect(contactList_, SIGNAL(rosterRequestFinished()), SLOT(rosterRequestFinished()));
+	connect(contactList_, SIGNAL(contactSortStyleChanged(QString)), SIGNAL(contactSortStyleChanged()));
 }
 
 ContactListModel::~ContactListModel()
@@ -304,6 +306,10 @@ void ContactListModel::contactAlert(PsiContact* contact)
 	}
 }
 
+void ContactListModel::contactAnim(PsiContact* /*contact*/)
+{
+}
+
 void ContactListModel::contactUpdated(PsiContact* contact)
 {
 	Q_ASSERT(rootGroup_);
@@ -475,6 +481,9 @@ QVariant ContactListModel::contactData(const PsiContact* contact, int role) cons
 	if (role == JidRole) {
 		return QVariant(contact->jid().full());
 	}
+	else if (role == Qt::ToolTipRole) {
+		return QVariant(contact->userListItem().makeTip(true, false));
+	}
 	else if (role == PictureRole) {
 		return QVariant(contact->picture());
 	}
@@ -501,6 +510,12 @@ QVariant ContactListModel::contactData(const PsiContact* contact, int role) cons
 	}
 	else if (role == AlertPictureRole) {
 		return QVariant(contact->alertPicture());
+	}
+	else if (role == IsAnimRole) {
+		return QVariant(contact->isAnimated());
+	}
+	else if (role == PhaseRole) {
+		return QVariant(false);
 	}
 #ifdef YAPSI
 	else if (role == Qt::ForegroundRole) {
@@ -858,6 +873,13 @@ bool ContactListModel::showHidden() const
 	if (!contactList_)
 		return false;
 	return contactList_->showHidden();
+}
+
+QString ContactListModel::contactSortStyle() const
+{
+	if (!contactList_)
+		return QString("alpha");
+	return contactList_->contactSortStyle();
 }
 
 bool ContactListModel::updatesEnabled() const

@@ -41,11 +41,13 @@
 #include "contactlistutil.h"
 #include "psiaccount.h"
 
+static const QString contactSortStyleOptionPath = "options.ui.contactlist.contact-sort-style";
 static const QString showOfflineOptionPath = "options.ui.contactlist.show.offline-contacts";
 static const QString showHiddenOptionPath = "options.ui.contactlist.show.hidden-contacts-group";
 static const QString showAgentsOptionPath = "options.ui.contactlist.show.agent-contacts";
 static const QString showSelfOptionPath = "options.ui.contactlist.show.self-contact";
 static const QString showStatusMessagesOptionPath = "options.ui.contactlist.status-messages.show";
+static const QString allowAutoResizeOptionPath = "options.ui.contactlist.automatically-resize-roster";
 
 //----------------------------------------------------------------------------
 // PsiRosterFilterProxyModel
@@ -170,6 +172,8 @@ void PsiRosterWidget::setContactList(PsiContactList* contactList)
 	optionChanged(showHiddenOptionPath);
 	optionChanged(showSelfOptionPath);
 	optionChanged(showOfflineOptionPath);
+	optionChanged(contactSortStyleOptionPath);
+	optionChanged(allowAutoResizeOptionPath);
 
 	contactListModel_ = new PsiContactListModel(contactList_);
 	contactListModel_->invalidateLayout();
@@ -213,8 +217,10 @@ void PsiRosterWidget::optionChanged(const QString& option)
 {
 	if (!contactList_)
 		return;
-
-	if (option == showAgentsOptionPath) {
+	if (option == contactSortStyleOptionPath) {
+		contactList_->setContactSortStyle(PsiOptions::instance()->getOption(contactSortStyleOptionPath).toString());
+	}
+	else if (option == showAgentsOptionPath) {
 		contactList_->setShowAgents(PsiOptions::instance()->getOption(showAgentsOptionPath).toBool());
 	}
 	else if (option == showHiddenOptionPath) {
@@ -225,6 +231,9 @@ void PsiRosterWidget::optionChanged(const QString& option)
 	}
 	else if (option == showOfflineOptionPath) {
 		contactList_->setShowOffline(PsiOptions::instance()->getOption(showOfflineOptionPath).toBool());
+	}
+	else if (option == allowAutoResizeOptionPath) {
+		contactListPageView_->setAutoResizeEnabled(PsiOptions::instance()->getOption(allowAutoResizeOptionPath).toBool());
 	}
 }
 

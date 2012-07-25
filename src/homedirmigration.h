@@ -1,6 +1,6 @@
 /*
- * contactlistproxymodel.h - contact list model sorting and filtering
- * Copyright (C) 2008-2010  Yandex LLC (Michail Pishchagin)
+ * homedirmigration.h
+ * Copyright (C) 2011  Romanov Ivan aka taurus <drizt@land.ru>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,38 +18,53 @@
  *
  */
 
-#ifndef CONTACTLISTPROXYMODEL_H
-#define CONTACTLISTPROXYMODEL_H
+#ifndef HOMEDIRMIGRATION_H
+#define HOMEDIRMIGRATION_H
 
-#include <QSortFilterProxyModel>
+#include <QDialog>
+#include <QDir>
 
-class PsiContactList;
+namespace Ui { class HomeDirMigration; }
 
-class ContactListProxyModel : public QSortFilterProxyModel
+class Thread;
+
+class HomeDirMigration : public QDialog
 {
 	Q_OBJECT
-public:
-	ContactListProxyModel(QObject* parent);
 
-	void setSourceModel(QAbstractItemModel* model);
+public:
+	enum Choice {
+		Copy,
+		Move,
+		Nothing
+	};
+
+	explicit HomeDirMigration(QWidget *parent = 0);
+	~HomeDirMigration();
+
+	bool checkOldHomeDir();
+	QString oldHomeDir() const;
 
 public slots:
-	void updateSorting();
-
-signals:
-	void recalculateSize();
+	void threadFinish();
+	int exec();
 
 protected:
-	bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const;
-	bool lessThan(const QModelIndex& left, const QModelIndex& right) const;
-
-	bool showOffline() const;
-	bool showSelf() const;
-	bool showTransports() const;
-	bool showHidden() const;
+	void closeEvent(QCloseEvent *event);
 
 private slots:
-	void filterParametersChanged();
+	void accept();
+	void setChoice(int choose);
+
+private:
+	Ui::HomeDirMigration *ui;
+	QDir oldHomeDir_;
+	QDir configDir_;
+	QDir dataDir_;
+	QDir cacheDir_;
+
+	Choice choice_;
+	Thread *thread_;
 };
 
-#endif
+#endif // HOMEDIRMIGRATION_H

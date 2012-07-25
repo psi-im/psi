@@ -39,7 +39,7 @@
 class ActiveProfiles::Private : public QWidget
 {
 public:
-	Private(ActiveProfiles *aprof) : app(ApplicationInfo::IPCName()), home(ApplicationInfo::homeDir()), profile(""), ap(aprof), mutex(0), changesMutex(0) {
+	Private(ActiveProfiles *aprof) : app(ApplicationInfo::IPCName()), home(ApplicationInfo::homeDir(ApplicationInfo::ConfigLocation)), profile(""), ap(aprof), mutex(0), changesMutex(0) {
 
 		app.replace('\\', '/');	// '\\' has a special meaning in mutex name
 		home.replace('\\', '/');

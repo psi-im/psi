@@ -451,9 +451,6 @@ private slots:
 		if (!contact_)
 			return;
 
-		renameAction_->setEnabled(contact_->isEditable());
-		removeAction_->setEnabled(contact_->removeAvailable());
-
 #ifdef YAPSI
 		YaProfile* profile = YaProfile::create(contact_->account(), contact_->jid());
 		openHistoryAction_->setEnabled(contact_->historyAvailable());
@@ -511,8 +508,8 @@ private slots:
 			authMenu_->menuAction()->setVisible(false);
 		}
 		authMenu_->setEnabled(contact_->account()->isAvailable());
-		removeAction_->setVisible(!PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool());
-		// removeAction_->setEnabled(contact_->account()->isAvailable() || !contact_->inList());
+		removeAction_->setVisible(!PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool()  && !contact_->isSelf());
+		removeAction_->setEnabled(contact_->removeAvailable());
 		if (!PsiOptions::instance()->getOption("options.ui.menu.contact.custom-picture").toBool()) {
 			pictureMenu_->menuAction()->setVisible(false);
 		}

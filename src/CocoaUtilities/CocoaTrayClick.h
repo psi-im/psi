@@ -1,6 +1,6 @@
 /*
- * psifileplugin.cpp
- * Copyright (C) 2006  Remko Troncon
+ * CocoaTrayClick
+ * Copyright (C) 2012  Khryukin Evgeny
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -14,22 +14,29 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 
-#include "applicationinfo.h"
-#include "psifileplugin.h"
+#ifndef COCOATRAYCLICK_H
+#define COCOATRAYCLICK_H
 
-
-QString PsiFilePlugin::name()
+#include <QObject>
+class CocoaTrayClick : public QObject
 {
-	return "Psi File";
-}
+	Q_OBJECT
+public:
+	static CocoaTrayClick* instance();
+	~CocoaTrayClick();
 
-TuneController* PsiFilePlugin::createController() 
-{
-	return new FileTuneController(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/tune");
-}
+	void emitTrayClicked();
 
-Q_EXPORT_PLUGIN2(psifileplugin, PsiFilePlugin);
+signals:
+	void trayClicked();
+
+private:
+	CocoaTrayClick();
+	static CocoaTrayClick* instance_;
+};
+
+#endif // COCOATRAYCLICK_H

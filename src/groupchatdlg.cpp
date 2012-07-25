@@ -278,8 +278,8 @@ public slots:
 
 	void version_finished()
 	{
-		JT_ClientVersion *version = qobject_cast<JT_ClientVersion*>(sender());
-		if (!version) {
+		JT_ClientVersion *version = static_cast<JT_ClientVersion*>(sender());
+		if (!version->success()) {
 			dlg->appendSysMsg(QString("No version information available for %1.").arg(version->jid().resource()) , false);
 			return;
 		}

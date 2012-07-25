@@ -68,8 +68,8 @@ public:
 		if(!success)
 			return false;
 
-		conf->addIncludePath(ossl_inc);
-		conf->addLib(QString("-L") + ossl_lib);
+		conf->addIncludePath(ossl_inc.replace("\\\", "\\\\\\\"));
+		conf->addLib(QString("-L") + ossl_lib.replace("\\\", "\\\\\\\"));
 		conf->addLib(libname_success);
 
 		conf->addDefine("HAVE_OPENSSL");

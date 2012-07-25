@@ -147,6 +147,7 @@ GCUserViewGroupItem::GCUserViewGroupItem(GCUserView *par, const QString& t, int 
 	, baseText_(t)
 {
 	updateText();
+	setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 }
 
 void GCUserViewGroupItem::updateText()
@@ -168,6 +169,7 @@ GCUserView::GCUserView(QWidget* parent)
 	setIndentation(0);
 	setContextMenuPolicy(Qt::NoContextMenu);
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	setDragDropMode(QAbstractItemView::DragOnly);
 
 	setItemDelegate(new GCUserViewDelegate(this));
 	QTreeWidgetItem* i;
@@ -190,17 +192,16 @@ void GCUserView::setMainDlg(GCMainDlg* mainDlg)
 	gcDlg_ = mainDlg;
 }
 
-//Q3DragObject* GCUserView::dragObject()
-//{
-//	Q3ListViewItem* it = currentItem();
-//	if (it) {
-//		// WARNING: We are assuming that group items can never be dragged
-//		GCUserViewItem* u = (GCUserViewItem*) it;
-//		if (!u->s.mucItem().jid().isEmpty())
-//			return new Q3TextDrag(u->s.mucItem().jid().bare(),this);
-//	}
-//	return NULL;
-//}
+QMimeData* GCUserView::mimeData(QList<QTreeWidgetItem *>items) const
+{
+	QMimeData* data = 0;
+	if(!items.isEmpty()) {
+		data = new QMimeData();
+		data->setText(items.first()->text(0));
+	}
+
+	return data;
+}
 
 void GCUserView::clear()
 {

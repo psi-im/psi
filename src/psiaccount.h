@@ -135,6 +135,16 @@ public:
 	static Status loggedOutStatus();
 	void setStatusDirect(const XMPP::Status &, bool withPriority = false);
 	void setStatusActual(const XMPP::Status &);
+
+	enum AutoAway {
+		AutoAway_None = 0,
+		AutoAway_Away,
+		AutoAway_XA,
+		AutoAway_Offline
+	};
+
+	void setAutoAwayStatus(AutoAway status);
+
 	bool loggedIn() const;
 	void setNick(const QString &);
 	QString nick() const;
@@ -279,7 +289,6 @@ public slots:
 
 	void incomingVoiceCall(const Jid&);
 	
-	void secondsIdle(int);
 	void openNextEvent(ActivationType activationType);
 	int forwardPendingEvents(const Jid &jid);
 	void autoLogin();

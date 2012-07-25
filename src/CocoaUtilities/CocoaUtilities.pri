@@ -3,8 +3,10 @@ DEPENDPATH *= $$PWD $$PWD/..
 
 HEADERS += \
 	$$PWD/CocoaInitializer.h \
-	$$PWD/cocoacommon.h
+	$$PWD/cocoacommon.h \
+	$$PWD/CocoaTrayClick.h
 
 OBJECTIVE_SOURCES += \
 	$$PWD/CocoaInitializer.mm \
-	$$PWD/cocoacommon.mm
+	$$PWD/cocoacommon.mm \
+	$$PWD/CocoaTrayClick.mm

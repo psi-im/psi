@@ -25,6 +25,7 @@
 
 #ifdef Q_WS_MAC
 #include <Carbon/Carbon.h>
+#include "CocoaUtilities/CocoaTrayClick.h"
 #endif
 
 #ifdef Q_WS_X11
@@ -173,9 +174,12 @@ private:
 //----------------------------------------------------------------------------
 
 PsiApplication::PsiApplication(int &argc, char **argv, bool GUIenabled)
-: QApplication(argc, argv, GUIenabled)
+:	QApplication(argc, argv, GUIenabled)
 {
 	init(GUIenabled);
+#ifdef Q_WS_MAC
+	connect(CocoaTrayClick::instance(), SIGNAL(trayClicked()), this, SIGNAL(dockActivated()));
+#endif
 }
 
 PsiApplication::~PsiApplication()

@@ -88,6 +88,8 @@ void ContactListModelUpdater::commit()
 			emit contactUpdated(it.key());
 		if (operations & ContactGroupsChanged)
 			emit contactGroupsChanged(it.key());
+		if (operations & AnimateContact)
+			emit contactAnim(it.key());
 	}
 
 	if (doBulkUpdate)
@@ -109,6 +111,7 @@ void ContactListModelUpdater::addContact(PsiContact* contact)
 	connect(contact, SIGNAL(updated()), SLOT(contactUpdated()));
 	connect(contact, SIGNAL(groupsChanged()), SLOT(contactGroupsChanged()));
 	connect(contact, SIGNAL(alert()), SLOT(contactAlert()));
+	connect(contact, SIGNAL(anim()), SLOT(contactAnim()));
 }
 
 /*!
@@ -131,6 +134,14 @@ void ContactListModelUpdater::contactAlert()
 {
 	PsiContact* contact = static_cast<PsiContact*>(sender());
 	emit contactAlert(contact);
+}
+
+void ContactListModelUpdater::contactAnim()
+{
+	PsiContact* contact = static_cast<PsiContact*>(sender());
+	if (!monitoredContacts_.contains(contact))
+		return;
+	addOperation(contact, AnimateContact);
 }
 
 void ContactListModelUpdater::contactUpdated()

@@ -131,8 +131,8 @@ public:
 	PsiConObject(QObject *parent)
 	: QObject(parent)
 	{
-		QDir p(ApplicationInfo::homeDir());
-		QDir v(ApplicationInfo::homeDir() + "/tmp-sounds");
+		QDir p(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation));
+		QDir v(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/tmp-sounds");
 		if(!v.exists())
 			p.mkdir("tmp-sounds");
 		Iconset::setSoundPrefs(v.absolutePath(), this, SLOT(playSound(QString)));
@@ -142,8 +142,8 @@ public:
 	~PsiConObject()
 	{
 		// removing temp dirs
-		QDir p(ApplicationInfo::homeDir());
-		QDir v(ApplicationInfo::homeDir() + "/tmp-sounds");
+		QDir p(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation));
+		QDir v(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/tmp-sounds");
 		folderRemove(v);
 	}
 
@@ -246,7 +246,7 @@ public:
 				ua.toOptions(&accountTree, base);
 			}
 		}
-		QFile accountsFile(pathToProfile( activeProfile ) + "/accounts.xml");	
+		QFile accountsFile(pathToProfile(activeProfile, ApplicationInfo::ConfigLocation) + "/accounts.xml");
 		accountTree.saveOptions(accountsFile.fileName(), "accounts", ApplicationInfo::optionsNS(), ApplicationInfo::version());;
 		
 	}
@@ -290,6 +290,29 @@ public:
 	AutoUpdater *autoUpdater;
 	AlertManager alertManager;
 	BossKey *bossKey;
+
+	struct IdleSettings
+	{
+		IdleSettings()
+		{}
+
+		void update()
+		{
+			PsiOptions *o = PsiOptions::instance();
+			useOffline = o->getOption("options.status.auto-away.use-offline").toBool();
+			useNotAvailable = o->getOption("options.status.auto-away.use-not-availible").toBool();
+			useAway = o->getOption("options.status.auto-away.use-away").toBool();
+			offlineAfter = o->getOption("options.status.auto-away.offline-after").toInt();
+			notAvailableAfter = o->getOption("options.status.auto-away.not-availible-after").toInt();
+			awayAfter = o->getOption("options.status.auto-away.away-after").toInt();
+			menuXA = o->getOption("options.ui.menu.status.xa").toBool();
+		}
+
+		bool useOffline, useNotAvailable, useAway, menuXA;
+		int offlineAfter, notAvailableAfter, awayAfter;
+	};
+
+	IdleSettings idleSettings_;
 };
 
 //----------------------------------------------------------------------------
@@ -381,7 +404,7 @@ bool PsiCon::init()
 	
 	PsiRichText::setAllowedImageDirs(QStringList()
 									 << ApplicationInfo::resourcesDir()
-									 << ApplicationInfo::homeDir());
+									 << ApplicationInfo::homeDir(ApplicationInfo::CacheLocation));
 	
 	// To allow us to upgrade from old hardcoded options gracefully, be careful about the order here
 	PsiOptions *options=PsiOptions::instance();
@@ -433,7 +456,7 @@ bool PsiCon::init()
 		common_smallFontSize = minimumFontSize;
 	FancyLabel::setSmallFontSize( common_smallFontSize );
 	
-	QFile accountsFile(pathToProfile( activeProfile ) + "/accounts.xml");
+	QFile accountsFile(pathToProfile(activeProfile, ApplicationInfo::ConfigLocation) + "/accounts.xml");
 	bool accountMigration = false;	
 	if (!accountsFile.exists()) {
 		accountMigration = true;
@@ -457,7 +480,7 @@ bool PsiCon::init()
 
 	contactUpdatesManager_ = new ContactUpdatesManager(this);
 
-	QDir profileDir( pathToProfile( activeProfile ) );
+	QDir profileDir( pathToProfile(activeProfile, ApplicationInfo::DataLocation) );
 	profileDir.rmdir( "info" ); // remove unused dir
 
 	d->iconSelect = new IconSelectPopup(0);
@@ -517,7 +540,7 @@ bool PsiCon::init()
 	d->ftwin = new FileTransDlg(this);
 #endif
 
-	d->idle.start();
+	connect(&d->idle, SIGNAL(secondsIdle(int)), SLOT(secondsIdle(int)));
 
 	// S5B
 	d->s5bServer = new S5BServer;
@@ -924,7 +947,7 @@ PsiAccount *PsiCon::createAccount(const UserAccount& _acc)
 {
 	UserAccount acc = _acc;
 	PsiAccount *pa = new PsiAccount(acc, d->contactList, d->capsRegistry, d->tabManager);
-	connect(&d->idle, SIGNAL(secondsIdle(int)), pa, SLOT(secondsIdle(int)));
+//	connect(&d->idle, SIGNAL(secondsIdle(int)), pa, SLOT(secondsIdle(int)));
 	connect(pa, SIGNAL(updatedActivity()), SLOT(pa_updatedActivity()));
 	connect(pa, SIGNAL(updatedAccount()), SLOT(pa_updatedAccount()));
 	connect(pa, SIGNAL(queueChanged()), SLOT(queueChanged()));
@@ -1092,7 +1115,7 @@ void PsiCon::saveAccounts()
 
 void PsiCon::saveCapabilities()
 {
-	QFile file(ApplicationInfo::homeDir() + "/caps.xml");
+	QFile file(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/caps.xml");
 	d->capsRegistry->save(file);
 }
 
@@ -1236,6 +1259,13 @@ void PsiCon::optionChanged(const QString& option)
 
 	// Global shortcuts
 	setShortcuts();
+
+	//Idle server
+	d->idleSettings_.update();
+	if(d->idleSettings_.useAway || d->idleSettings_.useNotAvailable || d->idleSettings_.useOffline)
+		d->idle.start();
+	else
+		d->idle.stop();
 
 	if (option == "options.ui.notifications.alert-style") {
 		alertIconUpdateAlertStyle();
@@ -1541,7 +1571,7 @@ void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 	}
 
 	if (e->type() == PsiEvent::Auth && !EventDlg::messagingEnabled()) {
-		if (dynamic_cast<AuthEvent*>(e)->authType() == "subscribe") {
+		if (static_cast<AuthEvent*>(e)->authType() == "subscribe") {
 #ifdef YAPSI
 			bringToFront(d->mainwin);
 			return;
@@ -1699,7 +1729,7 @@ void PsiCon::promptUserToCreateAccount()
 
 QString PsiCon::optionsFile() const
 {
-	return pathToProfile(activeProfile) + "/options.xml";
+	return pathToProfile(activeProfile, ApplicationInfo::ConfigLocation) + "/options.xml";
 }
 
 void PsiCon::forceSavePreferences()
@@ -1716,6 +1746,25 @@ void PsiCon::doQuit(int quitCode)
 void PsiCon::aboutToQuit()
 {
 	doQuit(QuitProgram);
+}
+
+void PsiCon::secondsIdle(int sec)
+{
+	int minutes = sec / 60;
+	PsiAccount::AutoAway aa;
+
+	if(d->idleSettings_.useOffline && d->idleSettings_.offlineAfter > 0 && minutes >= d->idleSettings_.offlineAfter)
+		aa = PsiAccount::AutoAway_Offline;
+	else if(d->idleSettings_.useNotAvailable && d->idleSettings_.menuXA && d->idleSettings_.notAvailableAfter > 0 && minutes >= d->idleSettings_.notAvailableAfter)
+		aa = PsiAccount::AutoAway_XA;
+	else if(d->idleSettings_.useAway && d->idleSettings_.awayAfter > 0 && minutes >= d->idleSettings_.awayAfter)
+		aa = PsiAccount::AutoAway_Away;
+	else
+		aa = PsiAccount::AutoAway_None;
+
+	foreach(PsiAccount* pa, d->contactList->enabledAccounts()) {
+		pa->setAutoAwayStatus(aa);
+	}
 }
 
 ContactUpdatesManager* PsiCon::contactUpdatesManager() const

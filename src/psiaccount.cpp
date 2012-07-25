@@ -410,7 +410,6 @@ public:
 	XmlConsole *xmlConsole;
 	UserList userList;
 	UserListItem self;
-	int lastIdle;
 	bool nickFromVCard;
 	QCA::PGPKey cur_pgpSecretKey;
 	QList<Message*> messageQueue;
@@ -563,7 +562,7 @@ public:
 
 	QString pathToProfileEvents() const
 	{
-		return pathToProfile(activeProfile) + "/events-" + JIDUtil::encode(acc.id).toLower() + ".xml";
+		return pathToProfile(activeProfile, ApplicationInfo::DataLocation) + "/events-" + JIDUtil::encode(acc.id).toLower() + ".xml";
 	}
 
 	void updateOnlineContactsCount()
@@ -636,8 +635,9 @@ public:
 
 	void animateNick(const Jid& jid)
 	{
-		// TODO
-		Q_UNUSED(jid);
+		PsiContact* contact = findContact(jid);
+		if (contact)
+			contact->startAnim();
 	}
 
 public slots:
@@ -830,13 +830,6 @@ public slots:
 	}
 
 public:
-	enum AutoAway {
-		AutoAway_None = 0,
-		AutoAway_Away,
-		AutoAway_XA,
-		AutoAway_Offline
-	};
-
 	void setAutoAway(AutoAway autoAway)
 	{
 		if (!account->isAvailable())
@@ -982,7 +975,6 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 
 	d->loginStatus = Status(Status::Offline);
 	d->loginWithPriority = false;
-	d->lastIdle = 0;
 	d->setManualStatus(Status(Status::Offline, "", 0));
 
 	d->eventQueue = new EventQueue(this);
@@ -2934,18 +2926,9 @@ void PsiAccount::publishTune(const Tune& tune)
 	d->pepManager->publish("http://jabber.org/protocol/tune",PubSubItem("current",t));
 }
 
-void PsiAccount::secondsIdle(int seconds)
+void PsiAccount::setAutoAwayStatus(AutoAway status)
 {
-	int minutes = seconds / 60;
-
-	if(PsiOptions::instance()->getOption("options.status.auto-away.use-offline").toBool() && PsiOptions::instance()->getOption("options.status.auto-away.offline-after").toInt() > 0 && minutes >= PsiOptions::instance()->getOption("options.status.auto-away.offline-after").toInt())
-		d->setAutoAway(Private::AutoAway_Offline);
-	else if(PsiOptions::instance()->getOption("options.status.auto-away.use-not-availible").toBool() && PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool() && PsiOptions::instance()->getOption("options.status.auto-away.not-availible-after").toInt() > 0 && minutes >= PsiOptions::instance()->getOption("options.status.auto-away.not-availible-after").toInt())
-		d->setAutoAway(Private::AutoAway_XA);
-	else if(PsiOptions::instance()->getOption("options.status.auto-away.use-away").toBool() && PsiOptions::instance()->getOption("options.status.auto-away.away-after").toInt() > 0 && minutes >= PsiOptions::instance()->getOption("options.status.auto-away.away-after").toInt())
-		d->setAutoAway(Private::AutoAway_Away);
-	else
-		d->setAutoAway(Private::AutoAway_None);
+	d->setAutoAway(status);
 }
 
 void PsiAccount::playSound(PsiAccount::SoundType _onevent)

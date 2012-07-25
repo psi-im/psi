@@ -577,16 +577,20 @@ void EDBFlatFile::performRequests()
 			if(id < f->total()-1)
 				nextId = QString::number(id+1);
 
+			bool matched = false;
 			if(e->type() == PsiEvent::Message) {
 				MessageEvent *me = (MessageEvent *)e;
 				const Message &m = me->message();
 				if(m.body().indexOf(r->findStr, 0, Qt::CaseInsensitive) != -1) {
 					EDBItemPtr ei = EDBItemPtr(new EDBItem(e, QString::number(id), prevId, nextId));
 					result.append(ei);
+					matched = true;
 					//commented line below to return ALL(instead of just first) messages that contain findStr
 					//break;
 				}
 			}
+			if (!matched)
+				delete e;
 
 			if(r->dir == Forward)
 				++id;
@@ -609,14 +613,19 @@ void EDBFlatFile::performRequests()
 			if(id < f->total()-1)
 				nextId = QString::number(id+1);
 
+			bool matched = false;
 			if(e->type() == PsiEvent::Message) {
 				MessageEvent *me = (MessageEvent *)e;
 				const Message &m = me->message();
 				if(m.timeStamp() > r->first && m.timeStamp() < r->last ) {
 					EDBItemPtr ei = EDBItemPtr(new EDBItem(e, QString::number(id), prevId, nextId));
 					result.append(ei);
+					matched = true;
 				}
 			}
+			if (!matched)
+				delete e;
+
 			++id;
 		}
 		resultReady(r->id, result);

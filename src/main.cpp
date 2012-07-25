@@ -33,7 +33,9 @@
 #include <QtCrypto>
 #include <QTranslator>
 #include <QDir>
+#include <QFileInfo>
 #include <QProcess>
+#include <QTime>
 
 #include <stdlib.h>
 #include <time.h>
@@ -93,7 +95,7 @@ PsiMain::PsiMain(const QMap<QString, QString>& commandline, QObject *par)
 	lastLang = sUser.value("last_lang").toString();
 	autoOpen = sUser.value("auto_open", QVariant(false)).toBool();
 
-	QSettings s(ApplicationInfo::homeDir() + "/psirc", QSettings::IniFormat);
+	QSettings s(ApplicationInfo::homeDir(ApplicationInfo::ConfigLocation) + "/psirc", QSettings::IniFormat);
 	lastProfile = s.value("last_profile", lastProfile).toString();
 	lastLang = s.value("last_lang", lastLang).toString();
 	autoOpen = s.value("auto_open", autoOpen).toBool();
@@ -103,7 +105,7 @@ PsiMain::~PsiMain()
 {
 	delete pcon;
 
-	QSettings s(ApplicationInfo::homeDir() + "/psirc", QSettings::IniFormat);
+	QSettings s(ApplicationInfo::homeDir(ApplicationInfo::ConfigLocation) + "/psirc", QSettings::IniFormat);
 	s.setValue("last_profile", lastProfile);
 	s.setValue("last_lang", lastLang);
 	s.setValue("auto_open", autoOpen);
@@ -426,7 +428,24 @@ static int restart_process(int argc, char **argv, const QByteArray &uri)
 }
 #endif
 
-
+void psiMessageOutput(QtMsgType type, const char *msg)
+{
+	QString time = QTime::currentTime().toString();
+	switch (type) {
+	case QtDebugMsg:
+		fprintf(stderr, "[%s] %s\n", qPrintable(time), msg);
+		break;
+	case QtWarningMsg:
+		fprintf(stderr, "[%s] W:%s\n", qPrintable(time), msg);
+		break;
+	case QtCriticalMsg:
+		fprintf(stderr, "[%s] C:%s\n", qPrintable(time), msg);
+		break;
+	case QtFatalMsg:
+		fprintf(stderr, "[%s] F:%s\n", qPrintable(time), msg);
+		abort();
+	}
+}
 
 int main(int argc, char *argv[])
 {
@@ -465,9 +484,11 @@ int main(int argc, char *argv[])
 #endif
 
 	// it must be initialized first in order for ApplicationInfo::resourcesDir() to work
+	qInstallMsgHandler(psiMessageOutput);
 	PsiApplication app(argc, argv);
+	QApplication::setApplicationName(ApplicationInfo::name());
 	QApplication::addLibraryPath(ApplicationInfo::resourcesDir());
-	QApplication::addLibraryPath(ApplicationInfo::homeDir());
+	QApplication::addLibraryPath(ApplicationInfo::homeDir(ApplicationInfo::DataLocation));
 	QApplication::setQuitOnLastWindowClosed(false);
 
 #ifdef Q_WS_MAC

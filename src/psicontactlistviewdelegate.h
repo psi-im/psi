@@ -60,7 +60,7 @@ private:
 	QTimer* alertTimer_;
 	QFont* font_;
 	QFontMetrics* fontMetrics_;
-	bool showStatusMessages_;
+	bool showStatusMessages_, slimGroup_, outlinedGroup_;
 	mutable QHash<QModelIndex, bool> alertingIndexes_;
 };
 

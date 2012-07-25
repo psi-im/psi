@@ -24,6 +24,7 @@
 #include "contactlistdragmodel.h"
 
 class PsiContactList;
+class QTimer;
 
 class PsiContactListModel : public ContactListDragModel
 {
@@ -37,6 +38,17 @@ public:
 	virtual QVariant contactData(const PsiContact* contact, int role) const;
 	virtual QVariant contactGroupData(const ContactListGroup* group, int role) const;
 	virtual QVariant accountData(const ContactListAccountGroup* account, int role) const;
+
+protected slots:
+	virtual void contactAnim(PsiContact*);
+
+private slots:
+	void updateAnim();
+
+private:
+	QTimer* animTimer_;
+	QHash<QModelIndex, bool> animIndexes_;
+	bool secondPhase_;
 };
 
 #endif

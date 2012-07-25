@@ -15,20 +15,9 @@ public:
 	qc_zlib(Conf *c) : ConfObj(c) {}
 	QString name() const { return "zlib"; }
 	QString shortname() const { return "zlib"; }
-#ifdef Q_OS_WIN
-	QString resultString() const
-	{
-		return "using bundled";
-	}
-#endif
 
 	bool exec()
 	{
-#ifdef Q_OS_WIN
-		// HACK: on windows, always use psi's bundled zlib
-		conf->addExtra("CONFIG += psi-winzlib psi-minizip");
-		return true;
-#else
 		QStringList incs;
 		QString version, libs, other;
 		QString s;
@@ -44,7 +33,7 @@ public:
 				if(!conf->findHeader("zlib.h", QStringList(), &s))
 					return false;
 			}
-			incs.append(s);
+			incs.append(s.replace("\\\", "\\\\\\\"));
 
 			s = conf->getenv("QC_WITH_ZLIB_LIB");
 			if(!s.isEmpty()) {
@@ -55,7 +44,11 @@ public:
 				if(!conf->findLibrary("z", &s))
 					return false;
 			}
-			libs = s.isEmpty()? "-lz" : QString("-L%1 -lz").arg(s);
+			if (!s.isEmpty()) {
+				libs = QString("-L%1 -lz").arg(s.replace("\\\", "\\\\\\\"));
+			} else {
+				libs = s.isEmpty()? "-lz" : QString("-L%1 -lz").arg(s);
+			}
 		}
 
 		foreach(const QString &inc, incs) {
@@ -63,6 +56,11 @@ public:
 		}
 		conf->addLib(libs);
 
+#ifdef Q_OS_WIN
+		// HACK: on windows, always use psi's bundled minizip
+		conf->addExtra("CONFIG += psi-minizip");
+		return true;
+#else
 		incs.clear();
 		libs.clear();
 		if(!conf->findPkgConfig("minizip", VersionAny, "", &version, &incs, &libs, &other)) {

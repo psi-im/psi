@@ -101,8 +101,8 @@ void VCardFactory::saveVCard(const Jid& j, const VCard& _vcard)
 	// save vCard to disk
 
 	// ensure that there's a vcard directory to save into
-	QDir p(pathToProfile(activeProfile));
-	QDir v(pathToProfile(activeProfile) + "/vcard");
+	QDir p(pathToProfile(activeProfile, ApplicationInfo::CacheLocation));
+	QDir v(pathToProfile(activeProfile, ApplicationInfo::CacheLocation) + "/vcard");
 	if(!v.exists())
 		p.mkdir("vcard");
 

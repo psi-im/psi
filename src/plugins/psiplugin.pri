@@ -2,7 +2,7 @@ TEMPLATE = lib
 CONFIG += plugin
 QT += xml
 
-target.path = $$(HOME)/.psi/plugins
+target.path = $$(HOME)/.local/share/Psi/plugins
 INSTALLS += target
 
 include(plugins.pri)

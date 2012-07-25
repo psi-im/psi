@@ -64,6 +64,7 @@ public:
 		: account_(0)
 		, statusTimer_(0)
 		, isValid_(true)
+		, isAnimated_(false)
 		, contact_(contact)
 #ifdef YAPSI
 		, gender_(XMPP::VCard::UnknownGender)
@@ -85,6 +86,11 @@ public:
 		statusTimer_->setInterval(statusTimerInterval);
 		statusTimer_->setSingleShot(true);
 		connect(statusTimer_, SIGNAL(timeout()), SLOT(updateStatus()));
+
+		animTimer_ = new QTimer(this);
+		animTimer_->setInterval(5000);
+		animTimer_->setSingleShot(true);
+		connect(animTimer_, SIGNAL(timeout()), contact, SLOT(stopAnim()));
 	}
 
 	~Private()
@@ -93,11 +99,13 @@ public:
 
 	PsiAccount* account_;
 	QTimer* statusTimer_;
+	QTimer* animTimer_;
 	UserListItem u_;
 	QString name_;
 	Status status_;
 	Status oldStatus_;
 	bool isValid_;
+	bool isAnimated_;
 #ifdef YAPSI
 	bool showOnlineTemporarily_;
 	bool reconnecting_;
@@ -505,6 +513,25 @@ void PsiContact::setAlert(const PsiIcon* icon)
 	// updateParent();
 #endif
 	emit alert();
+}
+
+void PsiContact::startAnim()
+{
+	d->isAnimated_ = true;
+	d->animTimer_->start();
+
+	anim();
+}
+
+void PsiContact::stopAnim()
+{
+	d->isAnimated_ = false;
+	emit anim();
+}
+
+bool PsiContact::isAnimated() const
+{
+	return d->isAnimated_;
 }
 
 /**

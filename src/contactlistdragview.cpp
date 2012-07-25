@@ -39,6 +39,7 @@
 #include "contactlistitemmenu.h"
 #include "contactlistgroupstate.h"
 #include "contactlistgroup.h"
+#include "psioptions.h"
 
 ContactListDragView::ContactListDragView(QWidget* parent)
 	: ContactListView(parent)
@@ -658,10 +659,10 @@ bool ContactListDragView::extendedSelectionAllowed() const
 
 bool ContactListDragView::activateItemsOnSingleClick() const
 {
-// #ifndef YAPSI
+#ifndef YAPSI
 // 	return style()->styleHint(QStyle::SH_ItemView_ActivateItemOnSingleClick, 0, this);
-// 	return PsiOptions::instance()->getOption("options.ui.contactlist.use-single-click").toBool();
-// #endif
+	return PsiOptions::instance()->getOption("options.ui.contactlist.use-single-click").toBool();
+#endif
 	return false;
 }
 
@@ -730,7 +731,7 @@ void ContactListDragView::mouseMoveEvent(QMouseEvent* e)
 void ContactListDragView::itemClicked(const QModelIndex& index)
 {
 	if (activateItemsOnSingleClick())
-		return;
+		itemActivated(index);
 
 	// if clicked item was selected prior to mouse press event, activate it on release
 	// if (pressedIndexWasSelected_) {
@@ -888,7 +889,8 @@ void ContactListDragView::mouseReleaseEvent(QMouseEvent* event)
 		if (event->button() == Qt::LeftButton &&
 		    index.isValid() &&
 		    keyboardModifiers() == 0 &&
-		    ContactListModel::isGroupType(index))
+		    ContactListModel::isGroupType(index) &&
+		    activateItemsOnSingleClick())
 		{
 			if ((pressPosition_ - event->pos()).manhattanLength() < QApplication::startDragDistance()) {
 				QStyleOptionViewItem option;

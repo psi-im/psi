@@ -76,6 +76,8 @@ public:
 		AskingForAuthRole = Qt::UserRole + 9,
 		IsAlertingRole = Qt::UserRole + 10,
 		AlertPictureRole = Qt::UserRole + 11,
+		IsAnimRole = Qt::UserRole + 21,
+		PhaseRole = Qt::UserRole + 22,
 
 		// groups
 		ExpandedRole = Qt::UserRole + 12,
@@ -124,6 +126,7 @@ public:
 	bool showTransports() const;
 	bool showHidden() const;
 	bool hasContacts(bool onlineOnly) const;
+	QString contactSortStyle() const;
 
 	int groupOrder(const QString& groupFullName) const;
 	void setGroupOrder(const QString& groupFullName, int order);
@@ -174,6 +177,7 @@ signals:
 	void showTransportsChanged();
 	void showHiddenChanged();
 	void inPlaceRename();
+	void contactSortStyleChanged();
 
 	void contactAlert(const QModelIndex&);
 
@@ -186,6 +190,7 @@ protected slots:
 	void removeContact(PsiContact*);
 
 	void contactAlert(PsiContact*);
+	virtual void contactAnim(PsiContact*);
 	void contactUpdated(PsiContact*);
 	void contactGroupsChanged(PsiContact*);
 
