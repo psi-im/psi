@@ -79,8 +79,9 @@ build_package_psi() {
 		#cp -r lib $arch_prefix
 	else
 		cd $psi_base
-		./configure --disable-bundled-qca --with-qca=$deps_base/qca-2.0.3-mac
+		./configure --disable-bundled-qca --with-qca=$deps_base/$(qca_mac_dir)
 		cat $patchdir/mac_universal.pri >> conf.pri
+		echo "LIBS += -F$deps_base/$(growl_dir)/Framework -framework Growl" >> conf.pri
 		$QTDIR/bin/qmake
 		make
 	fi
