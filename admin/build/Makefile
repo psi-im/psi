@@ -19,7 +19,7 @@ default-mac: dist-mac
 default-mingw: dist-mingw
 
 clean:
-	rm -rf dist
+	rm -rf build dist
 
 distclean: clean
 	rm -rf packages
@@ -63,10 +63,20 @@ packages/$(growl_file):
 	../fetch.sh $(growl_url) packages/$(growl_file)
 	cd deps && unzip ../packages/$(growl_file) && cd ..
 
-apply-version:
-	./apply_version.sh $(VERSION)
+packages/$(gstbundle_mac_file):
+	mkdir -p packages deps
+	../fetch.sh $(gstbundle_mac_url) packages/$(gstbundle_mac_file)
+	cd deps && tar jxvf ../packages/$(gstbundle_mac_file) && cd ..
 
-build/uni/psi/ok: packages/$(qca_mac_file) packages/$(growl_file)
+packages/$(psimedia_mac_file):
+	mkdir -p packages deps
+	../fetch.sh $(psimedia_mac_url) packages/$(psimedia_mac_file)
+	cd deps && tar jxvf ../packages/$(psimedia_mac_file) && cd ..
+
+apply-version:
+	test "$(VERSION)" != "" && echo "$(VERSION)" > ../../version
+
+build/uni/psi/ok: packages/$(qca_mac_file) packages/$(growl_file) packages/$(gstbundle_mac_file) packages/$(psimedia_mac_file)
 	mkdir -p build
 	./build_package.sh psi "" ""
 	touch build/uni/psi/ok
@@ -91,7 +101,7 @@ dist/psi-$(VERSION)-win32: build/i386/psi/ok
 	./prep_dist.sh "" dist/psi-$(VERSION)-win32
 
 Psi-$(VERSION).dmg: dist/psi-$(VERSION)-mac
-	cd dist && ../pack_dmg.sh ../Psi-$(VERSION).dmg psi-$(VERSION)-mac
+	./pack_dmg.sh Psi-$(VERSION).dmg Psi dist/psi-$(VERSION)-mac
 
 psi-$(VERSION)-win64.zip: dist/psi-$(VERSION)-win64
 	rm -f psi-$(VERSION)-win64.zip

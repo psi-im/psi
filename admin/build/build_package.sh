@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-if [ $# != 4 ]; then
+if [ $# != 3 ]; then
 	echo "usage: $0 [package] [arch] [prefix]"
 	exit 1
 fi
@@ -16,7 +16,7 @@ else
 	exit 1
 fi
 
-source ./package_info
+. ./package_info
 
 package_name=$1
 target_arch=$2
@@ -35,10 +35,8 @@ arch_prefix=$base_prefix/$target_arch
 pkgdir=$PWD/packages
 patchdir=$PWD/patches
 
-# make the install dir and ensure we can write to it
-mkdir -p $arch_prefix
-touch $arch_prefix/test_writable
-rm $arch_prefix/test_writable
+psi_base=$PWD/../..
+deps_base=$PWD/deps
 
 get_msys_path() {
 	if [ `expr index $1 :` -gt 0 ]; then
@@ -64,9 +62,7 @@ build_package() {
 	fi
 }
 
-build_package_psimedia() {
-	tar jxvf $pkgdir/$psimedia_file
-	cd psimedia-*
+build_package_psi() {
 	if [ "$platform" == "win" ]; then
 		if [ "$target_arch" == "x86_64" ]; then
 			qtdir=$QTDIR64
@@ -74,21 +70,20 @@ build_package_psimedia() {
 			qtdir=$QTDIR32
 		fi
 		mqtdir=`get_msys_path $qtdir`
-		cp $patchdir/configure.exe .
-		patch -p0 < $patchdir/gcc_4.7_fix.diff
-		PATH=$mqtdir/bin:$PATH ./configure.exe --qtdir=$qtdir --release
-		mingw32-make
-		cp -r bin $arch_prefix
-		cp -r include $arch_prefix
-		cp -r lib $arch_prefix
+		#cp $patchdir/configure.exe .
+		#patch -p0 < $patchdir/gcc_4.7_fix.diff
+		#PATH=$mqtdir/bin:$PATH ./configure.exe --qtdir=$qtdir --release
+		#mingw32-make
+		#cp -r bin $arch_prefix
+		#cp -r include $arch_prefix
+		#cp -r lib $arch_prefix
 	else
-		./configure --prefix=$arch_prefix --release
+		cd $psi_base
+		./configure --disable-bundled-qca --with-qca=$deps_base/qca-2.0.3-mac
 		cat $patchdir/mac_universal.pri >> conf.pri
-		cat $patchdir/mac_universal.pri >> confapp.pri
 		$QTDIR/bin/qmake
 		make
-		make install
 	fi
 }
 
-build_package $package_name $target_arch
+build_package $package_name uni
