@@ -70,13 +70,9 @@ build_package_psi() {
 			qtdir=$QTDIR32
 		fi
 		mqtdir=`get_msys_path $qtdir`
-		#cp $patchdir/configure.exe .
-		#patch -p0 < $patchdir/gcc_4.7_fix.diff
-		#PATH=$mqtdir/bin:$PATH ./configure.exe --qtdir=$qtdir --release
-		#mingw32-make
-		#cp -r bin $arch_prefix
-		#cp -r include $arch_prefix
-		#cp -r lib $arch_prefix
+		PATH=$mqtdir/bin:$PATH ./configure.exe --qtdir=$qtdir --release --disable-bundled-qca --with-qca=$deps_base/$qca_win_dir/$target_arch --with-zlib-inc=$deps_base/$zlib_win_dir/$target_arch/include --with-zlib-lib=$deps_base/$zlib_win_dir/$target_arch/lib --with-aspell-inc=$deps_base/$aspell_win_dir/$target_arch/include --with-aspell-lib=$deps_base/$aspell_win_dir/$target_arch/lib
+		mingw32-make
+		cp src/release/psi.exe $arch_prefix/Psi.exe
 	else
 		cd $psi_base
 		export DYLD_FRAMEWORK_PATH=$QTDIR/lib:$deps_base/$qca_mac_dir/lib:$deps_base/$growl_dir/Framework
