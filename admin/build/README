@@ -1,0 +1,44 @@
+Psi Build Scripts
+-----------------
+
+First, prepare your environment according to the prereqs in psideps/README.
+
+To create packages for Windows, set QTDIR64 and QTDIR32, and pass VERSION to
+make. For example:
+
+  cd admin/build
+  QTDIR64=c:/qt/4.8.2-w64 QTDIR32=c:/qt/4.8.2 make VERSION=0.15-mybuild
+
+You must set both Qt paths. The scripts do not support packaging just for one
+arch.
+
+For Mac:
+
+  cd admin/build
+  QTDIR=/usr/local/Trolltech/Qt-4.8.2 make VERSION=0.15-mybuild
+
+It is also possible to prepare a dev environment using similar scripting:
+
+Configure for Windows 64-bit:
+
+  QTDIR64=c:/qt/4.8.2-w64 admin/build/devconfig.sh x86_64
+
+Configure for Windows 32-bit:
+
+  QTDIR32=c:/qt/4.8.2 admin/build/devconfig.sh i386
+
+Configure for Mac:
+
+  QTDIR=/usr/local/Trolltech/Qt-4.8.2 admin/build/devconfig.sh ""
+
+Executing one of these commands will cause all Psi dependencies to be
+downloaded, configure run against these dependencies, and a file named devenv
+generated with all necessary environment variables to build. Then you can
+proceed as follows:
+
+  . admin/build/devenv
+  make (or mingw32-make, if on Windows)
+
+You can then run the Psi executable from within the shell to test it and
+everything needed will be found, without having to create a full distribution
+directory.
