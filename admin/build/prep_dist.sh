@@ -144,13 +144,9 @@ if [ "$platform" == "mac" ]; then
 		install_name_tool -change $g.framework/Versions/4/$g @executable_path/../Frameworks/$g.framework/Versions/4/$g $contentsdir/Plugins/libgstprovider.dylib
 	done
 else
-	TARGET_ARCHES="i386 x86_64"
+	target_base=$destdir$base_prefix
+	target_dist_base=$dist_base
 
-	for target_arch in $TARGET_ARCHES; do
-		target_base=$destdir$base_prefix/$target_arch
-		target_dist_base=$dist_base/$target_arch
-
-		mkdir -p $target_dist_base
-		cp $target_base/Psi.exe $target_dist_base
-	done
+	mkdir -p $target_dist_base
+	cp -a $target_base/* $target_dist_base
 fi

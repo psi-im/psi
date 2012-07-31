@@ -7,11 +7,14 @@ include package_info
 ifeq ($(UNAME), Darwin)
 PLATFORM = mac
 all: default-mac
+deps: deps-mac
 else ifeq ($(UNAME), MINGW32_NT-6.1)
 PLATFORM = win
 all: default-mingw
+deps: deps-mingw
 else
 all: default-unknown
+deps: deps-unknown
 endif
 
 default-mac: dist-mac
@@ -19,7 +22,7 @@ default-mac: dist-mac
 default-mingw: dist-mingw
 
 clean:
-	rm -rf build dist
+	rm -rf build out dist
 
 distclean: clean
 	rm -rf packages
@@ -32,6 +35,10 @@ endif
 dist-mac: apply-version Psi-$(VERSION).dmg
 
 dist-mingw: apply-version psi-$(VERSION)-win64.zip psi-$(VERSION)-win32.zip
+
+deps-mac: packages/$(qca_mac_file) packages/$(growl_file) packages/$(gstbundle_mac_file) packages/$(psimedia_mac_file)
+
+deps-mingw: packages/$(zlib_win_file) packages/$(qca_win_file) packages/$(openssl_win_file) packages/$(aspell_win_file) packages/$(gstbundle_win_file) packages/$(psimedia_win_file)
 
 packages/$(zlib_win_file):
 	mkdir -p packages deps
@@ -52,6 +59,16 @@ packages/$(aspell_win_file):
 	mkdir -p packages deps
 	../fetch.sh $(aspell_win_url) packages/$(aspell_win_file)
 	cd deps && unzip ../packages/$(aspell_win_file) && cd ..
+
+packages/$(gstbundle_win_file):
+	mkdir -p packages deps
+	../fetch.sh $(gstbundle_win_url) packages/$(gstbundle_win_file)
+	cd deps && unzip ../packages/$(gstbundle_win_file) && cd ..
+
+packages/$(psimedia_win_file):
+	mkdir -p packages deps
+	../fetch.sh $(psimedia_win_url) packages/$(psimedia_win_file)
+	cd deps && unzip ../packages/$(psimedia_win_file) && cd ..
 
 packages/$(qca_mac_file):
 	mkdir -p packages deps
@@ -81,24 +98,24 @@ build/uni/psi/ok: packages/$(qca_mac_file) packages/$(growl_file) packages/$(gst
 	./build_package.sh psi "" ""
 	touch build/uni/psi/ok
 
-build/i386/psi/ok: packages/$(zlib_win_file) packages/$(qca_win_file) packages/$(openssl_win_file) packages/$(aspell_win_file)
+build/i386/psi/ok: packages/$(zlib_win_file) packages/$(qca_win_file) packages/$(openssl_win_file) packages/$(aspell_win_file) packages/$(gstbundle_win_file) packages/$(psimedia_win_file)
 	mkdir -p build
-	./build_package.sh psi i386 ""
+	./build_package.sh psi i386 $(PWD)/out
 	touch build/i386/psi/ok
 
-build/x86_64/psi/ok: packages/$(zlib_win_file) packages/$(qca_win_file) packages/$(openssl_win_file) packages/$(aspell_win_file)
+build/x86_64/psi/ok: packages/$(zlib_win_file) packages/$(qca_win_file) packages/$(openssl_win_file) packages/$(aspell_win_file) packages/$(gstbundle_win_file) packages/$(psimedia_win_file)
 	mkdir -p build
-	./build_package.sh psi x86_64 ""
+	./build_package.sh psi x86_64 $(PWD)/out
 	touch build/x86_64/psi/ok
 
 dist/psi-$(VERSION)-mac: build/uni/psi/ok
 	./prep_dist.sh "" dist/psi-$(VERSION)-mac
 
 dist/psi-$(VERSION)-win64: build/x86_64/psi/ok
-	./prep_dist.sh "" dist/psi-$(VERSION)-win64
+	./prep_dist.sh $(PWD)/out/x86_64 dist/psi-$(VERSION)-win64
 
 dist/psi-$(VERSION)-win32: build/i386/psi/ok
-	./prep_dist.sh "" dist/psi-$(VERSION)-win32
+	./prep_dist.sh $(PWD)/out/i386 dist/psi-$(VERSION)-win32
 
 Psi-$(VERSION).dmg: dist/psi-$(VERSION)-mac
 	./pack_dmg.sh Psi-$(VERSION).dmg Psi dist/psi-$(VERSION)-mac

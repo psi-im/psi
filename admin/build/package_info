@@ -24,9 +24,17 @@ growl_file=Growl-1.3.1-SDK.zip
 growl_url=http://growl.cachefly.net/Growl-1.3.1-SDK.zip
 growl_dir=Growl-1.3.1-SDK
 
+gstbundle_win_file=gstbundle-0.10.36-win.zip
+gstbundle_win_url=http://psi-im.org/files/deps/gstbundle-0.10.36-win.zip
+gstbundle_win_dir=gstbundle-0.10.36-win
+
 gstbundle_mac_file=gstbundle-0.10.36-mac.tar.bz2
 gstbundle_mac_url=http://psi-im.org/files/deps/gstbundle-0.10.36-mac.tar.bz2
 gstbundle_mac_dir=gstbundle-0.10.36-mac
+
+psimedia_win_file=psimedia-20120725-win.zip
+psimedia_win_url=http://psi-im.org/files/deps/psimedia-20120725-win.zip
+psimedia_win_dir=psimedia-20120725-win
 
 psimedia_mac_file=psimedia-20120725-mac.tar.bz2
 psimedia_mac_url=http://psi-im.org/files/deps/psimedia-20120725-mac.tar.bz2
