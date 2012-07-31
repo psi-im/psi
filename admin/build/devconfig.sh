@@ -67,8 +67,8 @@ if [ "$platform" == "win" ]; then
 	if [ "$target_arch" == "x86_64" ]; then
 		echo "export CC=/c/mingw64/bin/gcc" >> $build_base/devenv
 		echo "export CXX=/c/mingw64/bin/g++" >> $build_base/devenv
+		echo "export PATH=/c/mingw64/bin:\$PATH" >> $build_base/devenv
 	fi
-	echo "export PATH=/c/mingw64/bin:\$PATH" >> $build_base/devenv
 	echo "export PATH=$mqtdir/bin:$deps_base/$qca_win_dir/$target_arch/bin:$deps_base/$zlib_win_dir/$target_arch/bin:$deps_base/$aspell_win_dir/$target_arch/bin:$deps_base/$openssl_win_dir/$target_arch/bin:$deps_base/$gstbundle_win_dir/$target_arch/bin:\$PATH" >> $build_base/devenv
 	echo "export QT_PLUGIN_PATH=$deps_base/$qca_win_dir/$target_arch/plugins" >> $build_base/devenv
 	echo "export PSI_MEDIA_PLUGIN=$deps_base/$psimedia_win_dir/$target_arch/plugins/gstprovider.dll" >> $build_base/devenv
