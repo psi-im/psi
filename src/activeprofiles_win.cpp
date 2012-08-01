@@ -246,7 +246,13 @@ bool ActiveProfiles::setThisProfile(const QString &profile)
 		QByteArray a = d->mutexName(profile).toLocal8Bit();
 		m = CreateMutexA(0, TRUE, (LPCSTR)a.constData());
 	)	
-		
+
+	if (m == NULL)
+	{
+		d->endChanges();
+		return false;
+	}
+
 	if (GetLastError() == ERROR_ALREADY_EXISTS) {
 		CloseHandle(m);
 		d->endChanges();
@@ -283,17 +289,20 @@ bool ActiveProfiles::isActive(const QString &profile) const
 {	
 	HANDLE m;
 	QT_WA(
-		m = OpenMutexW(0, FALSE, (LPCWSTR)d->mutexName(profile).utf16());
+		m = OpenMutexW(SYNCHRONIZE, FALSE, (LPCWSTR)d->mutexName(profile).utf16());
 	,
 		QByteArray a = d->mutexName(profile).toLocal8Bit();
-		m = OpenMutexA(0, FALSE, (LPCSTR)a.constData());
+		m = OpenMutexA(SYNCHRONIZE, FALSE, (LPCSTR)a.constData());
 	)
-	if (GetLastError() == ERROR_FILE_NOT_FOUND) {
-		return false;
-	}
-	else {
+	if (m != NULL) {
 		CloseHandle(m);
 		return true;
+	}
+	else {
+		if (GetLastError() == ERROR_FILE_NOT_FOUND)
+			return false;
+		else // any other error means active
+			return true;
 	}
 }
 
