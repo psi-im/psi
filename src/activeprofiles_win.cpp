@@ -299,7 +299,13 @@ bool ActiveProfiles::isActive(const QString &profile) const
 		return true;
 	}
 	else {
-		if (GetLastError() == ERROR_FILE_NOT_FOUND)
+		DWORD e = GetLastError();
+
+		// strangely it seems possible for OpenMutex to return NULL and
+		//   yet GetLastError returns ERROR_SUCCESS (seen with
+		//   Windows 7 + MinGW 64). we'll assume this to mean "not
+		//   found"
+		if (e == ERROR_FILE_NOT_FOUND || e == ERROR_SUCCESS)
 			return false;
 		else // any other error means active
 			return true;
