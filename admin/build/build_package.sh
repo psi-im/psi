@@ -121,7 +121,7 @@ build_package_psi() {
 		./configure --disable-bundled-qca --with-qca=$deps_base/$qca_mac_dir
 		cat $patchdir/mac_universal.pri >> conf.pri
 		echo "LIBS += -F$deps_base/$growl_dir/Framework -framework Growl" >> conf.pri
-		$QTDIR/bin/qmake
+		$QTDIR/bin/qmake psi.pro
 		make
 	fi
 }
