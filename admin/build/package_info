@@ -1,8 +1,8 @@
 PACKAGES="zlib_win qca_win qca_mac openssl_win aspell_win growl gstbundle_mac psimedia_mac"
 
-zlib_win_file=zlib-1.2.6-win.zip
-zlib_win_url=http://psi-im.org/files/deps/zlib-1.2.6-win.zip
-zlib_win_dir=zlib-1.2.6-win
+zlib_win_file=zlib-1.2.7-win.zip
+zlib_win_url=http://psi-im.org/files/deps/zlib-1.2.7-win.zip
+zlib_win_dir=zlib-1.2.7-win
 
 qca_win_file=qca-2.0.3-win.zip
 qca_win_url=http://psi-im.org/files/deps/qca-2.0.3-win.zip
