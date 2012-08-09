@@ -1,27 +1,28 @@
 /*
 -----BEGIN QCMOD-----
 name: QCA >= 2.0
-arg: with-qca=[path],Specify path to QCA tree, mainly for building against an uninstalled QCA.
+arg: with-qca-inc=[path],Path to QCA include files
+arg: with-qca-lib=[path],Path to QCA library or framework files
 -----END QCMOD-----
 */
 
-// based on crypto.prf. any changes made to that file need to be tracked here.
-static QString internal_crypto_prf(const QString &incdir, const QString &libdir)
+// adapted from crypto.prf
+static QString internal_crypto_prf(const QString &incdir, const QString &libdir, const QString &frameworkdir)
 {
 	QString out = QString(
 "QCA_INCDIR = %1\n"
 "QCA_LIBDIR = %2\n"
+"QCA_FRAMEWORKDIR = %3\n"
 "\n"
 "CONFIG *= qt\n"
 "\n"
 "LINKAGE =\n"
 "\n"
-"# on mac, if qca was built as a framework, link against it\n"
-"mac: {\n"
-"	framework_dir = $$QCA_LIBDIR\n"
+"!isEmpty(QCA_FRAMEWORKDIR): {\n"
+"	framework_dir = $$QCA_FRAMEWORKDIR\n"
 "	exists($$framework_dir/qca.framework) {\n"
 "		#QMAKE_FRAMEWORKPATH *= $$framework_dir\n"
-"		LIBS += -F$$framework_dir\n"
+"		LIBS *= -F$$framework_dir\n"
 "		INCLUDEPATH += $$framework_dir/qca.framework/Headers\n"
 "		LINKAGE = -framework qca\n"
 "	}\n"
@@ -29,8 +30,8 @@ static QString internal_crypto_prf(const QString &incdir, const QString &libdir)
 "\n"
 "# else, link normally\n"
 "isEmpty(LINKAGE) {\n"
-"	INCLUDEPATH += $$QCA_INCDIR/QtCrypto\n"
-"	LIBS += -L$$QCA_LIBDIR\n"
+"	!isEmpty(QCA_INCDIR):INCLUDEPATH += $$QCA_INCDIR/QtCrypto\n"
+"	!isEmpty(QCA_LIBDIR):LIBS += -L$$QCA_LIBDIR\n"
 "	LINKAGE = -lqca\n"
 "	CONFIG(debug, debug|release) {\n"
 "		windows:LINKAGE = -lqcad\n"
@@ -39,8 +40,58 @@ static QString internal_crypto_prf(const QString &incdir, const QString &libdir)
 "}\n"
 "\n"
 "LIBS += $$LINKAGE\n"
-	).arg(incdir, libdir);
+	).arg(incdir, libdir, frameworkdir);
 	return out;
+}
+
+// set either libdir or frameworkdir, but not both
+static bool qca_try(Conf *conf, const QString &incdir, const QString &libdir, const QString &frameworkdir, bool release, bool debug, QString *_prf)
+{
+	QString proextra;
+	QString prf = internal_crypto_prf(incdir, libdir, frameworkdir);
+	proextra =
+	"CONFIG += qt\n"
+	"CONFIG -= debug_and_release debug release\n"
+	"QT -= gui\n";
+	proextra += prf;
+
+	QString str =
+	"#include <QtCrypto>\n"
+	"\n"
+	"int main()\n"
+	"{\n"
+	"	unsigned long x = QCA_VERSION;\n"
+	"	if(x >= 0x020000 && x < 0x030000) return 0; else return 1;\n"
+	"}\n";
+
+	// test desired versions, potentially both release and debug
+
+	if(release)
+	{
+		int ret;
+		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra + "CONFIG += release\n", &ret) || ret != 0)
+			return false;
+	}
+
+	if(debug)
+	{
+		int ret;
+		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra + "CONFIG += debug\n", &ret) || ret != 0)
+			return false;
+	}
+
+	*_prf = prf;
+	return true;
+}
+
+static bool qca_try_lib(Conf *conf, const QString &incdir, const QString &libdir, bool release, bool debug, QString *prf)
+{
+	return qca_try(conf, incdir, libdir, QString(), release, debug, prf);
+}
+
+static bool qca_try_framework(Conf *conf, const QString &frameworkdir, bool release, bool debug, QString *prf)
+{
+	return qca_try(conf, QString(), QString(), frameworkdir, release, debug, prf);
 }
 
 //----------------------------------------------------------------------------
@@ -52,25 +103,8 @@ public:
 	qc_qca(Conf *c) : ConfObj(c) {}
 	QString name() const { return "QCA >= 2.0"; }
 	QString shortname() const { return "qca"; }
-
-// BEGIN PSI
-	QString checkString() const
-	{
-		if(QFile::exists("third-party/qca/qca") && conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
-			return "";
-		else
-			return ConfObj::checkString();
-	}
-// END PSI
-
 	bool exec()
 	{
-// BEGIN PSI
-		// Check if we have a bundled version
-		if(QFile::exists("third-party/qca/qca") && conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
-			return true;
-// END PSI
-
 		// get the build mode
 #ifdef QC_BUILDMODE
 		bool release = qc_buildmode_release;
@@ -81,57 +115,38 @@ public:
 		bool debug = false;
 #endif
 
-		// test for "crypto" feature and check qca version number
-		QString qca_prefix, qca_incdir, qca_libdir, qca_crypto_prf;
-		qca_prefix = conf->getenv("QC_WITH_QCA");
+		QString qca_incdir, qca_libdir, qca_crypto_prf;
+		qca_incdir = conf->getenv("QC_WITH_QCA_INC");
+		qca_libdir = conf->getenv("QC_WITH_QCA_LIB");
 
-		QString proextra;
-		if(!qca_prefix.isEmpty()) {
-			qca_incdir = qca_prefix + "/include";
-			qca_libdir = qca_prefix + "/lib";
-			qca_crypto_prf = internal_crypto_prf(qca_incdir, qca_libdir);
-			proextra =
-			"CONFIG += qt\n"
-			"QT -= gui\n";
-			proextra += qca_crypto_prf;
-		} else {
-			proextra =
-			"CONFIG += qt crypto\n"
-			"QT -= gui\n";
-		}
-
-		QString str =
-		"#include <QtCrypto>\n"
-		"\n"
-		"int main()\n"
-		"{\n"
-		"	unsigned long x = QCA_VERSION;\n"
-		"	if(x >= 0x020000 && x < 0x030000) return 0; else return 1;\n"
-		"}\n";
-
-		if(release)
+#ifdef Q_OS_MAC
+		if(!qca_libdir.isEmpty() && qca_try_framework(conf, qca_libdir, release, debug, &qca_crypto_prf))
 		{
-			int ret;
-			if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra + "CONFIG += release\n", &ret))
-				return false;
-			if(ret != 0)
-				return false;
-		}
-
-		if(debug)
-		{
-			int ret;
-			if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra + "CONFIG += debug\n", &ret))
-				return false;
-			if(ret != 0)
-				return false;
-		}
-
-		if(!qca_prefix.isEmpty())
 			conf->addExtra(qca_crypto_prf);
-		else
-			conf->addExtra("CONFIG += crypto\n");
+			return true;
+		}
+#endif
 
-		return true;
+		if(!qca_incdir.isEmpty() && !qca_libdir.isEmpty() && qca_try_lib(conf, qca_incdir, qca_libdir, release, debug, &qca_crypto_prf))
+		{
+			conf->addExtra(qca_crypto_prf);
+			return true;
+		}
+
+		QStringList prefixes;
+		prefixes += "/usr";
+		prefixes += "/usr/local";
+
+		for(int n = 0; n < prefixes.count(); ++n)
+		{
+			const QString &prefix = prefixes[n];
+			if(qca_try_lib(conf, prefix + "/include", prefix + "/lib", release, debug, &qca_crypto_prf))
+			{
+				conf->addExtra(qca_crypto_prf);
+				return true;
+			}
+		}
+
+		return false;
 	}
 };

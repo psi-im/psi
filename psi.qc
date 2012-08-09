@@ -11,11 +11,9 @@
   <dep type='buildmodeapp'>
     <required/>
   </dep>
-  <dep type='bundled-qca' />
   <dep type='qca'>
     <required/>
   </dep>
-  <dep type='openssl' />
   <dep type='zlib'>
     <required/>
   </dep>
@@ -24,9 +22,6 @@
   </dep>
   <dep type='universal'>
     <disabled/>  
-  </dep>
-  <dep type='certstore'>
-    <required/>
   </dep>
   <dep type='qdbus'/>
   <dep type='growl'/>

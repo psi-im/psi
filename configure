@@ -25,30 +25,22 @@ Project options:
                               file (default for mac).
   --separate-debug-info       Strip debug information into a separate .debug
                               file (default for non-mac).
-  --certstore-path=[path]     Path to the SSL/X509 Certificate store file
-                              (bundled QCA only)
 
 Dependency options:
-  --disable-bundled-qca        Disable use of bundled QCA
-  --with-qca=[path]            Specify path to QCA tree, mainly for building
-                               against an uninstalled QCA.
-  --disable-openssl            Disable use of OpenSSL (bundled QCA only)
-  --with-openssl-inc=[path]    Path to OpenSSL include files (bundled QCA
-                               only)
-  --with-openssl-lib=[path]    Path to OpenSSL library files (bundled QCA
-                               only)
-  --with-zlib-inc=[path]       Path to zlib include files
-  --with-zlib-lib=[path]       Path to zlib library files
-  --enable-universal           Enable use of Mac OS X universal binary support
-  --disable-qdbus              Disable use of QDBUS
-  --disable-growl              Disable use of Growl
-  --with-growl=[path]          Path to the Growl framework
-  --enable-whiteboarding       Enable use of White Board support
-  --disable-xss                Disable use of the XScreenSaver extension
-  --disable-aspell             Disable use of aspell
-  --with-aspell-inc=[path]     Path to Aspell include files
-  --with-aspell-lib=[path]     Path to Aspell library files
-  --disable-enchant            Disable use of enchant
+  --with-qca-inc=[path]       Path to QCA include files
+  --with-qca-lib=[path]       Path to QCA library or framework files
+  --with-zlib-inc=[path]      Path to zlib include files
+  --with-zlib-lib=[path]      Path to zlib library files
+  --enable-universal          Enable use of Mac OS X universal binary support
+  --disable-qdbus             Disable use of QDBUS
+  --disable-growl             Disable use of Growl
+  --with-growl=[path]         Path to the Growl framework
+  --enable-whiteboarding      Enable use of White Board support
+  --disable-xss               Disable use of the XScreenSaver extension
+  --disable-aspell            Disable use of aspell
+  --with-aspell-inc=[path]    Path to Aspell include files
+  --with-aspell-lib=[path]    Path to Aspell library files
+  --disable-enchant           Disable use of enchant
 
 EOT
 }
@@ -190,33 +182,13 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
-		--certstore-path=*)
-			QC_CERTSTORE_PATH=$optarg
+		--with-qca-inc=*)
+			QC_WITH_QCA_INC=$optarg
 			shift
 			;;
 
-		--disable-bundled-qca)
-			QC_DISABLE_bundled_qca="Y"
-			shift
-			;;
-
-		--with-qca=*)
-			QC_WITH_QCA=$optarg
-			shift
-			;;
-
-		--disable-openssl)
-			QC_DISABLE_openssl="Y"
-			shift
-			;;
-
-		--with-openssl-inc=*)
-			QC_WITH_OPENSSL_INC=$optarg
-			shift
-			;;
-
-		--with-openssl-lib=*)
-			QC_WITH_OPENSSL_LIB=$optarg
+		--with-qca-lib=*)
+			QC_WITH_QCA_LIB=$optarg
 			shift
 			;;
 
@@ -307,12 +279,8 @@ echo QC_RELEASE=$QC_RELEASE
 echo QC_DEBUG=$QC_DEBUG
 echo QC_NO_SEPARATE_DEBUG_INFO=$QC_NO_SEPARATE_DEBUG_INFO
 echo QC_SEPARATE_DEBUG_INFO=$QC_SEPARATE_DEBUG_INFO
-echo QC_CERTSTORE_PATH=$QC_CERTSTORE_PATH
-echo QC_DISABLE_bundled_qca=$QC_DISABLE_bundled_qca
-echo QC_WITH_QCA=$QC_WITH_QCA
-echo QC_DISABLE_openssl=$QC_DISABLE_openssl
-echo QC_WITH_OPENSSL_INC=$QC_WITH_OPENSSL_INC
-echo QC_WITH_OPENSSL_LIB=$QC_WITH_OPENSSL_LIB
+echo QC_WITH_QCA_INC=$QC_WITH_QCA_INC
+echo QC_WITH_QCA_LIB=$QC_WITH_QCA_LIB
 echo QC_WITH_ZLIB_INC=$QC_WITH_ZLIB_INC
 echo QC_WITH_ZLIB_LIB=$QC_WITH_ZLIB_LIB
 echo QC_ENABLE_universal=$QC_ENABLE_universal
@@ -618,71 +586,32 @@ public:
 		return true;
 	}
 };
-#line 1 "bundled-qca.qcm"
-/*
------BEGIN QCMOD-----
-name: bundled QCA
------END QCMOD-----
-*/
-
-//----------------------------------------------------------------------------
-// qc_bundled_qca
-//----------------------------------------------------------------------------
-class qc_bundled_qca : public ConfObj
-{
-public:
-	qc_bundled_qca(Conf *c) : ConfObj(c) {}
-	QString name() const { return "bundled QCA 2.0"; }
-	QString shortname() const { return "bundled_qca"; }
-
-	bool exec()
-	{
-		// FIXME: Check QCA version number
-		if (QFile::exists("third-party/qca/qca")) {
-			conf->addExtra("CONFIG += qca-static");
-			conf->addDefine("QCA_NO_PLUGINS");
-#ifndef Q_OS_WIN
-			// HAVE_SYS_FILIO_H
-			QString str;
-			if(conf->findHeader("sys/filio.h", QStringList(), &str))
-			{
-				if(!str.isEmpty())
-					conf->addIncludePath(str);
-				conf->addDefine("HAVE_SYS_FILIO_H");
-			}
-#endif
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
-};
 #line 1 "qca.qcm"
 /*
 -----BEGIN QCMOD-----
 name: QCA >= 2.0
-arg: with-qca=[path],Specify path to QCA tree, mainly for building against an uninstalled QCA.
+arg: with-qca-inc=[path],Path to QCA include files
+arg: with-qca-lib=[path],Path to QCA library or framework files
 -----END QCMOD-----
 */
 
-// based on crypto.prf. any changes made to that file need to be tracked here.
-static QString internal_crypto_prf(const QString &incdir, const QString &libdir)
+// adapted from crypto.prf
+static QString internal_crypto_prf(const QString &incdir, const QString &libdir, const QString &frameworkdir)
 {
 	QString out = QString(
 "QCA_INCDIR = %1\n"
 "QCA_LIBDIR = %2\n"
+"QCA_FRAMEWORKDIR = %3\n"
 "\n"
 "CONFIG *= qt\n"
 "\n"
 "LINKAGE =\n"
 "\n"
-"# on mac, if qca was built as a framework, link against it\n"
-"mac: {\n"
-"	framework_dir = \$\$QCA_LIBDIR\n"
+"!isEmpty(QCA_FRAMEWORKDIR): {\n"
+"	framework_dir = \$\$QCA_FRAMEWORKDIR\n"
 "	exists(\$\$framework_dir/qca.framework) {\n"
 "		#QMAKE_FRAMEWORKPATH *= \$\$framework_dir\n"
-"		LIBS += -F\$\$framework_dir\n"
+"		LIBS *= -F\$\$framework_dir\n"
 "		INCLUDEPATH += \$\$framework_dir/qca.framework/Headers\n"
 "		LINKAGE = -framework qca\n"
 "	}\n"
@@ -690,8 +619,8 @@ static QString internal_crypto_prf(const QString &incdir, const QString &libdir)
 "\n"
 "# else, link normally\n"
 "isEmpty(LINKAGE) {\n"
-"	INCLUDEPATH += \$\$QCA_INCDIR/QtCrypto\n"
-"	LIBS += -L\$\$QCA_LIBDIR\n"
+"	!isEmpty(QCA_INCDIR):INCLUDEPATH += \$\$QCA_INCDIR/QtCrypto\n"
+"	!isEmpty(QCA_LIBDIR):LIBS += -L\$\$QCA_LIBDIR\n"
 "	LINKAGE = -lqca\n"
 "	CONFIG(debug, debug|release) {\n"
 "		windows:LINKAGE = -lqcad\n"
@@ -700,8 +629,58 @@ static QString internal_crypto_prf(const QString &incdir, const QString &libdir)
 "}\n"
 "\n"
 "LIBS += \$\$LINKAGE\n"
-	).arg(incdir, libdir);
+	).arg(incdir, libdir, frameworkdir);
 	return out;
+}
+
+// set either libdir or frameworkdir, but not both
+static bool qca_try(Conf *conf, const QString &incdir, const QString &libdir, const QString &frameworkdir, bool release, bool debug, QString *_prf)
+{
+	QString proextra;
+	QString prf = internal_crypto_prf(incdir, libdir, frameworkdir);
+	proextra =
+	"CONFIG += qt\n"
+	"CONFIG -= debug_and_release debug release\n"
+	"QT -= gui\n";
+	proextra += prf;
+
+	QString str =
+	"#include <QtCrypto>\n"
+	"\n"
+	"int main()\n"
+	"{\n"
+	"	unsigned long x = QCA_VERSION;\n"
+	"	if(x >= 0x020000 && x < 0x030000) return 0; else return 1;\n"
+	"}\n";
+
+	// test desired versions, potentially both release and debug
+
+	if(release)
+	{
+		int ret;
+		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra + "CONFIG += release\n", &ret) || ret != 0)
+			return false;
+	}
+
+	if(debug)
+	{
+		int ret;
+		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra + "CONFIG += debug\n", &ret) || ret != 0)
+			return false;
+	}
+
+	*_prf = prf;
+	return true;
+}
+
+static bool qca_try_lib(Conf *conf, const QString &incdir, const QString &libdir, bool release, bool debug, QString *prf)
+{
+	return qca_try(conf, incdir, libdir, QString(), release, debug, prf);
+}
+
+static bool qca_try_framework(Conf *conf, const QString &frameworkdir, bool release, bool debug, QString *prf)
+{
+	return qca_try(conf, QString(), QString(), frameworkdir, release, debug, prf);
 }
 
 //----------------------------------------------------------------------------
@@ -713,25 +692,8 @@ public:
 	qc_qca(Conf *c) : ConfObj(c) {}
 	QString name() const { return "QCA >= 2.0"; }
 	QString shortname() const { return "qca"; }
-
-// BEGIN PSI
-	QString checkString() const
-	{
-		if(QFile::exists("third-party/qca/qca") && conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
-			return "";
-		else
-			return ConfObj::checkString();
-	}
-// END PSI
-
 	bool exec()
 	{
-// BEGIN PSI
-		// Check if we have a bundled version
-		if(QFile::exists("third-party/qca/qca") && conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
-			return true;
-// END PSI
-
 		// get the build mode
 #ifdef QC_BUILDMODE
 		bool release = qc_buildmode_release;
@@ -742,206 +704,39 @@ public:
 		bool debug = false;
 #endif
 
-		// test for "crypto" feature and check qca version number
-		QString qca_prefix, qca_incdir, qca_libdir, qca_crypto_prf;
-		qca_prefix = conf->getenv("QC_WITH_QCA");
+		QString qca_incdir, qca_libdir, qca_crypto_prf;
+		qca_incdir = conf->getenv("QC_WITH_QCA_INC");
+		qca_libdir = conf->getenv("QC_WITH_QCA_LIB");
 
-		QString proextra;
-		if(!qca_prefix.isEmpty()) {
-			qca_incdir = qca_prefix + "/include";
-			qca_libdir = qca_prefix + "/lib";
-			qca_crypto_prf = internal_crypto_prf(qca_incdir, qca_libdir);
-			proextra =
-			"CONFIG += qt\n"
-			"QT -= gui\n";
-			proextra += qca_crypto_prf;
-		} else {
-			proextra =
-			"CONFIG += qt crypto\n"
-			"QT -= gui\n";
-		}
-
-		QString str =
-		"#include <QtCrypto>\n"
-		"\n"
-		"int main()\n"
-		"{\n"
-		"	unsigned long x = QCA_VERSION;\n"
-		"	if(x >= 0x020000 && x < 0x030000) return 0; else return 1;\n"
-		"}\n";
-
-		if(release)
+#ifdef Q_OS_MAC
+		if(!qca_libdir.isEmpty() && qca_try_framework(conf, qca_libdir, release, debug, &qca_crypto_prf))
 		{
-			int ret;
-			if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra + "CONFIG += release\n", &ret))
-				return false;
-			if(ret != 0)
-				return false;
-		}
-
-		if(debug)
-		{
-			int ret;
-			if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra + "CONFIG += debug\n", &ret))
-				return false;
-			if(ret != 0)
-				return false;
-		}
-
-		if(!qca_prefix.isEmpty())
 			conf->addExtra(qca_crypto_prf);
-		else
-			conf->addExtra("CONFIG += crypto\n");
+			return true;
+		}
+#endif
 
-		return true;
-	}
-};
-#line 1 "openssl.qcm"
-/*
------BEGIN QCMOD-----
-name: OpenSSL (bundled QCA only)
-arg: with-openssl-inc=[path],Path to OpenSSL include files (bundled QCA only)
-arg: with-openssl-lib=[path],Path to OpenSSL library files (bundled QCA only)
------END QCMOD-----
-*/
-class qc_openssl : public ConfObj
-{
-public:
-	qc_openssl(Conf *c) : ConfObj(c) {}
-	QString name() const { return "OpenSSL"; }
-	QString shortname() const { return "openssl"; }
-
-	QString checkString() const {
-		if (!QFile::exists("third-party/qca/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
-			return "";
-		else
-			return ConfObj::checkString();
-	}
-
-	bool exec()
-	{
-		if (!QFile::exists("third-party/qca/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty() || !QFile::exists("third-party/qca/qca-ossl"))
-			return false;
-
-#ifdef Q_OS_WIN
-		QString ossl_inc = conf->getenv("QC_WITH_OPENSSL_INC");
-		if(ossl_inc.isEmpty())
-			return false;
-
-		QString ossl_lib = conf->getenv("QC_WITH_OPENSSL_LIB");
-		if(ossl_lib.isEmpty())
-			return false;
-
-		QStringList libnames;
-		libnames += "-lssl.dll -lcrypto.dll";
-		libnames += "-llibeay32 -lssleay32";
-		libnames += "-leay32 -lssl32";
-		libnames += "-leay32 " + ossl_lib + "/ssleay32.a";
-
-		bool success = false;
-		QString libname_success;
-		foreach(const QString &libname, libnames)
+		if(!qca_incdir.isEmpty() && !qca_libdir.isEmpty() && qca_try_lib(conf, qca_incdir, qca_libdir, release, debug, &qca_crypto_prf))
 		{
-			QString str =
-				"#include<openssl/opensslv.h>\n"
-				"int main()\n"
-				"{\n"
-				"  unsigned long x = OPENSSL_VERSION_NUMBER;\n"
-				"  if(x >= 0x00907000) return 0; else return 1;\n"
-				"}\n";
-			QString ext;
-			QStringList incs;
-			incs += ossl_inc;
-			ext += QString("-L") + ossl_lib + " " + libname;
-			int ret;
-			if(conf->doCompileAndLink(str, incs, ext, QString(), &ret))
+			conf->addExtra(qca_crypto_prf);
+			return true;
+		}
+
+		QStringList prefixes;
+		prefixes += "/usr";
+		prefixes += "/usr/local";
+
+		for(int n = 0; n < prefixes.count(); ++n)
+		{
+			const QString &prefix = prefixes[n];
+			if(qca_try_lib(conf, prefix + "/include", prefix + "/lib", release, debug, &qca_crypto_prf))
 			{
-				success = true;
-				libname_success = libname;
-				if(ret == 0)
-					conf->addDefine("OSSL_097");
-				break;
+				conf->addExtra(qca_crypto_prf);
+				return true;
 			}
 		}
 
-		if(!success)
-			return false;
-
-		conf->addIncludePath(ossl_inc.replace("\\\", "\\\\\\\"));
-		conf->addLib(QString("-L") + ossl_lib.replace("\\\", "\\\\\\\"));
-		conf->addLib(libname_success);
-
-		conf->addDefine("HAVE_OPENSSL");
-
-		return true;
-#else
-		QString inc, lib;
-		QString s;
-		bool kb = false;
-		QString kbdir = "/usr/kerberos/include";
-
-		// Redhat 9?
-		if(QFileInfo(kbdir).exists())
-			kb = true;
-
-		s = conf->getenv("QC_WITH_OPENSSL_INC");
-		if(!s.isEmpty()) {
-			if(!conf->checkHeader(s, "openssl/ssl.h"))
-				return false;
-			inc = s;
-		}
-		else {
-			if(!conf->findHeader("openssl/ssl.h", QStringList(), &s))
-				return false;
-			inc = s;
-		}
-
-		s = conf->getenv("QC_WITH_OPENSSL_LIB");
-		if(!s.isEmpty()) {
-			if(!conf->checkLibrary(s, "ssl"))
-				return false;
-			lib = s;
-		}
-		else {
-			if(!conf->findLibrary("ssl", &s))
-				return false;
-			lib = s;
-		}
-
-		// is it at least openssl 0.9.7?
-		QString str =
-			"#include<openssl/opensslv.h>\n"
-			"int main()\n"
-			"{\n"
-			"  unsigned long x = OPENSSL_VERSION_NUMBER;\n"
-			"  if(x >= 0x00907000) return 0; else return 1;\n"
-			"}\n";
-		QString ext;
-		QStringList incs;
-		if(!inc.isEmpty())
-			incs += inc;
-		if(kb)
-			incs += kbdir;
-		if(!lib.isEmpty())
-			ext += QString("-L") + lib + " -lssl -lcrypto ";
-		int ret;
-		if(!conf->doCompileAndLink(str, incs, ext, QString(), &ret))
-			return false;
-		if(ret == 0)
-			conf->addDefine("OSSL_097");
-
-		if(!inc.isEmpty())
-			conf->addIncludePath(inc);
-		if(kb)
-			conf->addIncludePath(kbdir);
-		if(!lib.isEmpty())
-			conf->addLib(QString("-L") + s);
-		conf->addLib("-lssl -lcrypto");
-
-		conf->addDefine("HAVE_OPENSSL");
-
-		return true;
-#endif
+		return false;
 	}
 };
 #line 1 "zlib.qcm"
@@ -1094,124 +889,6 @@ public:
 #endif
 		return true;
 	}
-};
-#line 1 "certstore.qcm"
-/*
------BEGIN QCMOD-----
-name: certstore
-section: project
-arg: certstore-path=[path],Path to the SSL/X509 Certificate store file (bundled QCA only)
------END QCMOD-----
-*/
-
-class qc_certstore : public ConfObj
-{
-public:
-	qc_certstore(Conf *c) : ConfObj(c) {}
-	QString name() const { return "certstore"; }
-	QString shortname() const { return "certstore"; }
-
-	QString checkString() const {
-		if (!QFile::exists("third-party/qca/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty())
-			return "";
-		else
-			return ConfObj::checkString();
-	}
-
-	bool exec()
-	{
-		if (!QFile::exists("third-party/qca/qca") || !conf->getenv("QC_DISABLE_bundled_qca").isEmpty() || !QFile::exists("third-party/qca/qca-ossl")) {
-			return true;
-		}
-			
-		bundled = false;
-
-#if defined(Q_OS_WIN) || defined(Q_OS_MAC)
-		// use built-in
-		return true;
-#else
-		QStringList pathsToTry;
-
-		path = conf->getenv("QC_CERTSTORE_PATH");
-		if(!path.isEmpty())
-		{
-			if(QFile::exists(path))
-			{
-				QString certPathString = 
-					"QCA_SYSTEMSTORE_PATH=\\\\\\\\\\\\\"" + path + "\\\\\\\\\\\\\"";
-				conf->addDefine(certPathString);
-				return true;
-			}
-			return false;
-		}
-
-		// This is from Debian
-		pathsToTry.append( QString("/etc/ssl/certs/ca-certificates.crt") );
-
-		// Fedora Core 2 uses these
-		pathsToTry.append( QString("/usr/share/ssl/cert.pem") );
-		pathsToTry.append( QString("/usr/share/ssl/certs/ca-bundle.crt") );
-
-		// Fedora Core 5 changes to this
-		pathsToTry.append( QString("/etc/pki/tls/cert.pem") );
-
-		for(int n = 0; n < pathsToTry.count(); ++n)
-		{
-        		if(QFile::exists(pathsToTry[n]))
-			{
-				path = pathsToTry[n];
-				break;
-			}
-		}
-
-		// fall back to bundled
-		if(path.isEmpty())
-		{
-			// --prefix=\$pwd ?
-			if(QFile::exists(conf->getenv("PREFIX") + "/certs/rootcerts.pem"))
-				path = "\$\$PREFIX/certs/rootcerts.pem";
-			else
-				path = "\$\$DATADIR/psi/certs/rootcerts.pem";
-
-			QString extra =
-			"qcasharedfiles.path = \$\$DATADIR/psi\n"
-			"qcasharedfiles.files = third-party/qca/qca/certs\n"
-			"INSTALLS += qcasharedfiles\n";
-			conf->addExtra(extra);
-			bundled = true;
-		}
-
-		// Qt<4.2 workaround
-		QString certPathString = 
-			"QCA_SYSTEMSTORE_PATH=\\\\\\\\\\\\\"" + path + "\\\\\\\\\\\\\"";
-		conf->addDefine(certPathString);
-
-		return true;
-#endif
-	}
-
-	QString resultString() const
-	{
-#if defined(Q_OS_WIN)
-		return "using Windows built-in";
-#elif defined(Q_OS_MAC)
-		return "using Mac built-in";
-#else
-		if(success)
-		{
-			if(bundled)
-				return "using bundled";
-			else
-				return path;
-		}
-		else
-			return ConfObj::resultString();
-#endif
-	}
-
-private:
-	QString path;
-	bool bundled;
 };
 #line 1 "qdbus.qcm"
 /*
@@ -1865,14 +1542,8 @@ cat >$1/modules_new.cpp <<EOT
     o = new qc_buildmodeapp(conf);
     o->required = true;
     o->disabled = false;
-    o = new qc_bundled_qca(conf);
-    o->required = false;
-    o->disabled = false;
     o = new qc_qca(conf);
     o->required = true;
-    o->disabled = false;
-    o = new qc_openssl(conf);
-    o->required = false;
     o->disabled = false;
     o = new qc_zlib(conf);
     o->required = true;
@@ -1883,9 +1554,6 @@ cat >$1/modules_new.cpp <<EOT
     o = new qc_universal(conf);
     o->required = false;
     o->disabled = true;
-    o = new qc_certstore(conf);
-    o->required = true;
-    o->disabled = false;
     o = new qc_qdbus(conf);
     o->required = false;
     o->disabled = false;
@@ -2940,12 +2608,8 @@ export QC_RELEASE
 export QC_DEBUG
 export QC_NO_SEPARATE_DEBUG_INFO
 export QC_SEPARATE_DEBUG_INFO
-export QC_CERTSTORE_PATH
-export QC_DISABLE_bundled_qca
-export QC_WITH_QCA
-export QC_DISABLE_openssl
-export QC_WITH_OPENSSL_INC
-export QC_WITH_OPENSSL_LIB
+export QC_WITH_QCA_INC
+export QC_WITH_QCA_LIB
 export QC_WITH_ZLIB_INC
 export QC_WITH_ZLIB_LIB
 export QC_ENABLE_universal
