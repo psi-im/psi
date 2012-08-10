@@ -528,7 +528,7 @@ void DiscoListItem::agentsFinished()
 		// update info
 		DiscoItem root;
 		DiscoItem::Identity id;
-		id.name     = tr("Jabber Service");
+		id.name     = tr("XMPP Service");
 		id.category = "service";
 		id.type     = "jabber";
 		DiscoItem::Identities ids;
@@ -663,7 +663,7 @@ void DiscoListItem::discoInfoFinished()
 		hideChildIndicator();
 
 		// we change the icon for the items with disco#info returning type=="cancel" || type=="wait" error codes
-		// based on http://www.jabber.org/jeps/jep-0086.html
+		// based on XEP-0086
 
 		// FIXME: use another method for checking XMPP error-types when Iris will provide one
 		if ( error_code==400 || error_code==404 || error_code==405 || error_code==409 ||

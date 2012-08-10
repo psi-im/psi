@@ -93,7 +93,6 @@ Extra
   Ability to filter messages based on words (maybe even shell command filters)
   Ability to compose messages and send at a later specific date (or when you or the recipient go online)
   option to autohide main roster window after a set period of time
-  supporting BOLD and ITALIC in jabber msges by using * and / like you do in newsgroups ..
   Licq supports replacing some %<letter>s with information on the sender of the
     message and other things. (There's a list below) IT supports these in
     OnEvent, auto responses (check status), and utilities

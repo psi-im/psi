@@ -47,7 +47,7 @@
           <property name="text" >
             <string>&lt;qt>Please choose a friendly &lt;b>Name&lt;/b> that Psi can use to refer to this account.&lt;br>
 &lt;br>
-Click the &lt;b>Register New Account&lt;/b> checkbox if you want Psi to try and create an account for you on a remote server.  If you are adding an existing Jabber account then leave this box unchecked.</string>
+Click the &lt;b>Register New Account&lt;/b> checkbox if you want Psi to try and create an account for you on a remote server.  If you are adding an existing XMPP account then leave this box unchecked.</string>
           </property>
           <property name="readOnly" >
             <bool>true</bool>

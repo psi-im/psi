@@ -78,7 +78,7 @@
    <item>
     <widget class="QCheckBox" name="ck_jidComplete" >
      <property name="text" >
-      <string>Jabber ID completion</string>
+      <string>XMPP address completion</string>
      </property>
     </widget>
    </item>

@@ -289,7 +289,7 @@ void AccountRegDlg::setFields_finished()
 	JT_Register *reg = (JT_Register *)sender();
 	ui_.busy->stop();
 	if (reg->success()) {
-		QMessageBox::information(this, tr("Success"), QString(tr("You have successfully registered your account with Jabber ID '%1'")).arg(jid_.bare()));
+		QMessageBox::information(this, tr("Success"), QString(tr("You have successfully registered your account with XMPP address '%1'")).arg(jid_.bare()));
 		tlsOverrideCert_ = client_->tlsOverrideCert;
 		tlsOverrideDomain_ = client_->tlsOverrideDomain;
 		client_->close();

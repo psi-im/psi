@@ -166,11 +166,11 @@ void AddUserDlg::ok()
 	}
 
 	if(le_jid->text().isEmpty()) {
-		QMessageBox::information(this, tr("Add User: Error"), tr("Please fill in the Jabber ID of the person you wish to add."));
+		QMessageBox::information(this, tr("Add User: Error"), tr("Please fill in the XMPP address of the person you wish to add."));
 		return;
 	}
 	if(!jid().isValid()) {
-		QMessageBox::information(this, tr("Add User: Error"), tr("The Jabber ID you entered is not valid!\nMake sure you enter a fully qualified Jabber ID."));
+		QMessageBox::information(this, tr("Add User: Error"), tr("The XMPP address you entered is not valid!\nMake sure you enter a fully qualified XMPP address."));
 		return;
 	}
 
@@ -203,7 +203,7 @@ void AddUserDlg::serviceActivated(int x)
 	gb_trans->setEnabled(false);
 	le_transPrompt->setText("");
 
-	// Jabber entry
+	// XMPP entry
 	if(x == 0)
 		return;
 	--x;
@@ -287,14 +287,14 @@ void AddUserDlg::errorGateway(const QString &str, const QString &err)
 		"Reason: %2<br>"
 		"<br>"
 		"The service may not support this feature.  In this case you "
-		"will need to enter the Jabber ID manually for the contact you wish "
+		"will need to enter the XMPP address manually for the contact you wish "
 		"to add.  Examples:<br>"
 		"<br>"
-		"&nbsp;&nbsp;jabberuser@somehost.com<br>"
-		"&nbsp;&nbsp;aoluser@[Jabber ID of AIM Transport]<br>"
-		"&nbsp;&nbsp;1234567@[Jabber ID of ICQ Transport]<br>"
-		"&nbsp;&nbsp;joe%hotmail.com@[Jabber ID of MSN Transport]<br>"
-		"&nbsp;&nbsp;yahooUser@[Jabber ID of Yahoo Transport]<br>"
+		"&nbsp;&nbsp;xmppUser@somehost.com<br>"
+		"&nbsp;&nbsp;aolUser@[XMPP address of AIM Transport]<br>"
+		"&nbsp;&nbsp;1234567@[XMPP address of ICQ Transport]<br>"
+		"&nbsp;&nbsp;joe%hotmail.com@[XMPP address of MSN Transport]<br>"
+		"&nbsp;&nbsp;yahooUser@[XMPP address of Yahoo Transport]<br>"
 		"</qt>"
 		).arg(str).arg(QString(err).replace('\n', "<br>")));
 }

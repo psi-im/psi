@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Jabber Accounts</string>
+   <string>XMPP Accounts</string>
   </property>
   <layout class="QVBoxLayout" name="_2">
    <item>

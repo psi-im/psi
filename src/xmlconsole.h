@@ -1,5 +1,5 @@
 /*
- * xmlconsole.h - dialog for interacting manually with Jabber
+ * xmlconsole.h - dialog for interacting manually with XMPP
  * Copyright (C) 2001, 2002  Justin Karneges, Remko Troncon
  *
  * This program is free software; you can redistribute it and/or

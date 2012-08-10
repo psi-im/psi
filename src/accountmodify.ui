@@ -80,7 +80,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="lb_jid">
               <property name="text">
-               <string>Jabber ID:</string>
+               <string>XMPP Address:</string>
               </property>
              </widget>
             </item>

@@ -27,8 +27,8 @@ function add_account(account_name, account_jid, account_password)
     activateItem(":Psi_QMenuBar", "General");
     waitForObjectItem(":Psi.General_QMenu", "Account Setup");
     activateItem(":Psi.General_QMenu", "Account Setup");
-    waitForObject(":Psi: Jabber Accounts.Add_IconButton");
-    clickButton(":Psi: Jabber Accounts.Add_IconButton");
+    waitForObject(":Psi: XMPP Accounts.Add_IconButton");
+    clickButton(":Psi: XMPP Accounts.Add_IconButton");
     waitForObject(":Psi: Add Account.le_name_QLineEdit");
     type(":Psi: Add Account.le_name_QLineEdit", account_name);
     waitForObject(":Psi: Add Account.le_name_QLineEdit");
@@ -46,11 +46,11 @@ function add_account(account_name, account_jid, account_password)
 
 function remove_account(account_name)
 {
-    waitForObject(":Psi: Jabber Accounts.lv_accs_QTreeWidget");
-    clickItem(":Psi: Jabber Accounts.lv_accs_QTreeWidget", account_name, 31, 10, 1, Qt.LeftButton);
+    waitForObject(":Psi: XMPP Accounts.lv_accs_QTreeWidget");
+    clickItem(":Psi: XMPP Accounts.lv_accs_QTreeWidget", account_name, 31, 10, 1, Qt.LeftButton);
 
-    waitForObject(":Psi: Jabber Accounts.Remove_IconButton");
-    clickButton(":Psi: Jabber Accounts.Remove_IconButton");
+    waitForObject(":Psi: XMPP Accounts.Remove_IconButton");
+    clickButton(":Psi: XMPP Accounts.Remove_IconButton");
     waitForObject(":Psi: Remove Account.Remove_QPushButton");
     clickButton(":Psi: Remove Account.Remove_QPushButton");
     waitForObject(":Remove_QPushButton");

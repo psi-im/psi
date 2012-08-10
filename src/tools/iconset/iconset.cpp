@@ -1115,7 +1115,7 @@ public:
 				}
 				if ( !e.attribute("jid").isEmpty() ) {
 					QString s = e.attribute("jid");
-					n += tmp + QString("JID: <a href='jabber:%1'>%2</a>").arg( s ).arg( s );
+					n += tmp + QString("JID: <a href='xmpp:%1'>%2</a>").arg( s ).arg( s );
 				}
 				if ( !e.attribute("www").isEmpty() ) {
 					QString s = e.attribute("www");

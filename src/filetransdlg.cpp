@@ -806,7 +806,7 @@ void FileRequestDlg::doStart()
 	if(d->sending) {
 		Jid to = le_to->text();
 		if(!to.isValid()) {
-			QMessageBox::information(this, tr("Error"), tr("The Jabber ID specified is not valid.  Correct this and try again."));
+			QMessageBox::information(this, tr("Error"), tr("The XMPP address specified is not valid.  Correct this and try again."));
 			return;
 		}
 

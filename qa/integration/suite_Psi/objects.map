@@ -24,11 +24,11 @@
 :Psi: Add Contact.le_jid_QLineEdit	{name='le_jid' type='QLineEdit' visible='1' window=':Psi: Add Contact_AddUserDlg'}
 :Psi: Add Contact.le_nick_QLineEdit	{name='le_nick' type='QLineEdit' visible='1' window=':Psi: Add Contact_AddUserDlg'}
 :Psi: Add Contact_AddUserDlg	{name='AddUser' type='AddUserDlg' visible='1' windowTitle='Psi: Add Contact'}
-:Psi: Jabber Accounts.Add_IconButton	{name='pb_add' text='Add' type='IconButton' visible='1' window=':Psi: Jabber Accounts_AccountManageDlg'}
-:Psi: Jabber Accounts.Close_QPushButton	{text='Close' type='QPushButton' unnamed='1' visible='1' window=':Psi: Jabber Accounts_AccountManageDlg'}
-:Psi: Jabber Accounts.Remove_IconButton	{name='pb_remove' text='Remove' type='IconButton' visible='1' window=':Psi: Jabber Accounts_AccountManageDlg'}
-:Psi: Jabber Accounts.lv_accs_QTreeWidget	{name='lv_accs' type='QTreeWidget' visible='1' window=':Psi: Jabber Accounts_AccountManageDlg'}
-:Psi: Jabber Accounts_AccountManageDlg	{name='AccountManage' type='AccountManageDlg' visible='1' windowTitle='Psi: Jabber Accounts'}
+:Psi: XMPP Accounts.Add_IconButton	{name='pb_add' text='Add' type='IconButton' visible='1' window=':Psi: XMPP Accounts_AccountManageDlg'}
+:Psi: XMPP Accounts.Close_QPushButton	{text='Close' type='QPushButton' unnamed='1' visible='1' window=':Psi: XMPP Accounts_AccountManageDlg'}
+:Psi: XMPP Accounts.Remove_IconButton	{name='pb_remove' text='Remove' type='IconButton' visible='1' window=':Psi: XMPP Accounts_AccountManageDlg'}
+:Psi: XMPP Accounts.lv_accs_QTreeWidget	{name='lv_accs' type='QTreeWidget' visible='1' window=':Psi: XMPP Accounts_AccountManageDlg'}
+:Psi: XMPP Accounts_AccountManageDlg	{name='AccountManage' type='AccountManageDlg' visible='1' windowTitle='Psi: XMPP Accounts'}
 :Psi: Remove Account.Remove_QPushButton	{text='Remove' type='QPushButton' unnamed='1' visible='1' window=':Psi: Remove Account_AccountRemoveDlg'}
 :Psi: Remove Account_AccountRemoveDlg	{name='AccountRemove' type='AccountRemoveDlg' visible='1' windowTitle='Psi: Remove Account'}
 :Psi_MainWin	{type='MainWin' visible='1'}

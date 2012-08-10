@@ -55,7 +55,7 @@ QWidget *OptionsTabStatus::widget()
 	d->sb_asXa->setWhatsThis(s);
 	s = tr("Makes Psi automatically set your status to \"offline\" if your"
 		" computer is idle for the specified amount of time."
-		"  This will disconnect you from the Jabber server.");
+		"  This will disconnect you from the XMPP server.");
 	if (!PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool()) {
 		d->ck_asXa->hide();
 		d->sb_asXa->hide();
@@ -96,7 +96,7 @@ QWidget *OptionsTabStatus::widget()
 		   " If no priority is given, the default account priority will be used."));
 
 	d->ck_askOnline->setWhatsThis(
-		tr("Jabber allows you to put extended status messages on"
+		tr("XMPP allows you to put extended status messages on"
 		" all status types.  Normally, Psi does not prompt you for"
 		" an extended message when you set your status to \"online\"."
 		"  Check this option if you want to have this prompt."));

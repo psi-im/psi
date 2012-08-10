@@ -119,7 +119,7 @@ AboutDlg::AboutDlg(QWidget* parent)
 	QString translation = tr(
 		"I. M. Anonymous <note text=\"replace with your real name\"><br>\n"
 		"&nbsp;&nbsp;<a href=\"http://me.com\">http://me.com</a><br>\n"
-		"&nbsp;&nbsp;Jabber: <a href=\"xmpp:me@me.com\">me@me.com</a><br>\n"
+		"&nbsp;&nbsp;XMPP: <a href=\"xmpp:me@me.com\">me@me.com</a><br>\n"
 		"&nbsp;&nbsp;<a href=\"mailto:me@me.com\">me@me.com</a><br>\n"
 		"&nbsp;&nbsp;Translator<br>\n"
 		"<br>\n"
@@ -154,7 +154,7 @@ QString AboutDlg::details( QString name, QString email, QString jabber, QString 
 	if ( !email.isEmpty() )
 		ret += nbsp + "E-mail: " + "<a href=\"mailto:" + email + "\">" + email + "</a><br>\n";
 	if ( !jabber.isEmpty() )
-		ret += nbsp + "Jabber: " + "<a href=\"jabber:" + jabber + "\">" + jabber + "</a><br>\n";
+		ret += nbsp + "XMPP: " + "<a href=\"xmpp:" + jabber + "\">" + jabber + "</a><br>\n";
 	if ( !www.isEmpty() )
 		ret += nbsp + "WWW: " + "<a href=\"" + www + "\">" + www + "</a><br>\n";
 	if ( !desc.isEmpty() )

@@ -3,7 +3,7 @@ PsiWidgets README
 
   Introduction
   ~~~~~~~~~~~~
-  This is a package of widgets, that are used in Psi Jabber client. You may be
+  This is a package of widgets, that are used in Psi XMPP client. You may be
   interested in it, if you want to develop custom dialogs, or hack existing
   ones. Read below for installation instructions.
   

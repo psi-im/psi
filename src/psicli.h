@@ -58,7 +58,7 @@ public:
 				      textWidth, u1.length() + 1, 0).replace('\t', ' '); // non-breakable space ;)
 
 		output += '\n';
-		output += tr("Psi - The Cross-Platform Jabber/XMPP Client For Power Users");
+		output += tr("Psi - The Cross-Platform XMPP Client For Power Users");
 		output += "\n\n";
 		output += tr("Options:");
 		output += '\n';

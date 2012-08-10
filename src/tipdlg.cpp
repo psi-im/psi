@@ -83,25 +83,25 @@ TipDlg::TipDlg(PsiCon* psi)
 		   "<ul>\n"
 		   "<li>\"/nick &lt;new_nickname&gt;\" to change your nickname</li>\n"
 		   "</ul>"), "" );
-	addTip( tr("Did you know that you can register multiple Jabber accounts with Psi? If you like to separate your work from your personal account, you can.  If you are a power user who wants to test the latest Jabber features on an unstable server, you can do that -- without running a second client to connect to your stable server.  Just click Add in the Account Setup screen."),
+	addTip( tr("Did you know that you can register multiple XMPP accounts with Psi? If you like to separate your work from your personal account, you can.  If you are a power user who wants to test the latest XMPP features on an unstable server, you can do that -- without running a second client to connect to your stable server.  Just click Add in the Account Setup screen."),
 		"Hal Rottenberg" );
-	addTip( tr("Do you chat on third-party IM networks such as AIM and ICQ?  Try enabling the \"transport-specific icons\" option.  This will allow you to quickly see at a glance which network your buddy is using.  Then you can convince him to switch to Jabber. <icon name=\"psi/smile\">"),
+	addTip( tr("Do you chat on third-party IM networks such as AIM and ICQ?  Try enabling the \"transport-specific icons\" option.  This will allow you to quickly see at a glance which network your buddy is using.  Then you can convince him to switch to XMPP. <icon name=\"psi/smile\">"),
 		"Hal Rottenberg" );
 	addTip( tr("Did you know that you can use checkboxes in Account Setup dialog to enable/disable accounts? This may be useful in the case of an account that you use rarely, so it will not clutter your roster."),
 		"Iain MacDonnell" );
 	addTip( tr("Don't like the buttons where they are?  Want a shortcut button to change your status to Away?  Check out the Configure Toolbars window, it's available through toolbars' context menu.  You can even make a toolbar that floats!"),
 		"Hal Rottenberg" );
-	addTip( tr("Did you know that Psi is one of the only Jabber clients that allows you to connect to multiple servers at the same time?  You can be known as \"mrcool@jabber.org\" to your friends, and \"John.J.Smith_the_fourth@mycompany.com\" to business associates."),
+	addTip( tr("Did you know that Psi is one of the only XMPP clients that allows you to connect to multiple servers at the same time?  You can be known as \"mrcool@jabber.org\" to your friends, and \"John.J.Smith_the_fourth@mycompany.com\" to business associates."),
 		"Hal Rottenberg" );
 	addTip( tr("Have you converted over from Gadu-Gadu or Trillian and you miss the cool emoticons?  Fear not, we have you covered!  Check out <a href=\"http://jisp.netflint.net\">http://jisp.netflint.net</a> for tons of \"Iconsets\" that can be added to Psi to make it look the way you like!"),
 		"Hal Rottenberg" );
 	addTip( tr("Did you know that a middle-click (the middle mouse button on a 3-button mouse) will \"perform the default action\" on many objects within Psi?  Try middle-clicking on a contact or a popup."),
 		"Hal Rottenberg" );
-	addTip( tr("In order to add contacts from different IM networks, you need to add a corresponding agent from your Jabber server. Take a look at Psi Menu -> Service Discovery."),
+	addTip( tr("In order to add contacts from different IM networks, you need to add a corresponding agent from your XMPP server. Take a look at Psi Menu -> Service Discovery."),
 		"Philipp Droessler" );
 	addTip( tr("You can right-click on the server name in your roster to perform several different actions.  You can change status, modify account settings, perform administrative options (if you have permission), and more."),
 		"Hal Rottenberg" );
-	addTip( tr("Looking for a transport or chatroom, but your server provides nothing appropriate? Use Psi Menu -> Service Discovery to look on <i>any</i> Jabber Server for nice services by typing its domain in the address field.\n<br><br>\nNote: Some server may disable transport registration to users from different servers, but that's not common yet."),
+	addTip( tr("Looking for a transport or chatroom, but your server provides nothing appropriate? Use Psi Menu -> Service Discovery to look on <i>any</i> XMPP server for nice services by typing its domain in the address field.\n<br><br>\nNote: Some server may disable transport registration to users from different servers, but that's not common yet."),
 		"Patrick Hanft" );
 	addTip( tr("If you're chatting in groupchats quite frequently, nick completion is an invaluable feature. The most useful shortcut is <tt>Tab-Tab</tt>; when used on beginning of new line or after a step it inserts the nickname of the person who last addressed you directly. You can then continue to press <tt>Tab</tt> and it will loop on the nicks of all the people in the room.<br/><br/>For a more complicated scenario: <tt>mblsha</tt>, <tt>Monster</tt> and <tt>mbl-revolution</tt> are all sitting in same room. If you write <tt>m</tt> and press <tt>Tab</tt> it will not result in any noticeable action. This is because there are multiple nicks that start with <tt>m</tt>, and you can either continue to <tt>Tab</tt> to loop through all nicks that start with <tt>m</tt> or write more letters until there is a unique completion. When you press the <tt>b</tt> button, and then press <tt>Tab</tt> it would complete to <tt>mbl</tt>. The more you use this feature, the more you are likely to come to like it and rely upon it. Try nick completion on someone and you'll realise how powerful it is."),
 		"Michail Pishchagin and Kevin Smith" );

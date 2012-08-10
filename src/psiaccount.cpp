@@ -995,7 +995,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	d->stream = 0;
 	d->usingSSL = false;
 
-	// create Jabber::Client
+	// create XMPP::Client
 	d->client = new Client;
 	d->client->setOSName(SystemInfo::instance()->os());
 	d->client->setClientName(ApplicationInfo::name());
