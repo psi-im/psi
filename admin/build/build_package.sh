@@ -72,7 +72,7 @@ build_package_psi() {
 		mqtdir=`get_msys_path $qtdir`
 
 		cd $psi_base
-		PATH=$mqtdir/bin:$PATH ./configure.exe --qtdir=$qtdir --release --disable-bundled-qca --with-qca=$deps_base/$qca_win_dir/$target_arch --with-zlib-inc=$deps_base/$zlib_win_dir/$target_arch/include --with-zlib-lib=$deps_base/$zlib_win_dir/$target_arch/lib --with-aspell-inc=$deps_base/$aspell_win_dir/$target_arch/include --with-aspell-lib=$deps_base/$aspell_win_dir/$target_arch/lib
+		PATH=$mqtdir/bin:$PATH ./configure.exe --qtdir=$qtdir --release --with-qca-inc=$deps_base/$qca_win_dir/$target_arch/include --with-qca-lib=$deps_base/$qca_win_dir/$target_arch/lib --with-zlib-inc=$deps_base/$zlib_win_dir/$target_arch/include --with-zlib-lib=$deps_base/$zlib_win_dir/$target_arch/lib --with-aspell-inc=$deps_base/$aspell_win_dir/$target_arch/include --with-aspell-lib=$deps_base/$aspell_win_dir/$target_arch/lib
 		mingw32-make
 
 		mkdir -p $arch_prefix
@@ -118,7 +118,7 @@ build_package_psi() {
 	else
 		cd $psi_base
 		export DYLD_FRAMEWORK_PATH=$QTDIR/lib:$deps_base/$qca_mac_dir/lib:$deps_base/$growl_dir/Framework
-		./configure --disable-bundled-qca --with-qca=$deps_base/$qca_mac_dir
+		./configure --with-qca-inc=$deps_base/$qca_mac_dir/include --with-qca-lib=$deps_base/$qca_mac_dir/lib
 		cat $patchdir/mac_universal.pri >> conf.pri
 		echo "LIBS += -F$deps_base/$growl_dir/Framework -framework Growl" >> conf.pri
 		$QTDIR/bin/qmake psi.pro
