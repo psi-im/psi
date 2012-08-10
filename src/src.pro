@@ -4,8 +4,9 @@
 
 # Configuration
 TEMPLATE = app
-TARGET    = psi
-CONFIG  += qt thread x11 
+TARGET   = psi
+CONFIG  += qt thread x11
+DESTDIR  = $$PWD/..
 
 #CONFIG += use_crash
 CONFIG += pep
@@ -136,10 +137,7 @@ QMAKE_CLEAN += $$OPTIONS_TRANSLATIONS_FILE
 RESOURCES += ../psi.qrc ../iconsets.qrc
 
 # Platform specifics
-unix:!mac {
-	QMAKE_POST_LINK = rm -f ../psi ; ln -s src/psi ../psi
-}
-win32 {
+windows {
 	contains(QMAKE_HOST.arch, x86_64):{
 		RC_FILE = ../win32/psi_win64.rc
 	} else {
