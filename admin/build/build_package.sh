@@ -76,7 +76,7 @@ build_package_psi() {
 		mingw32-make
 
 		mkdir -p $arch_prefix
-		cp src/release/psi.exe $arch_prefix/Psi.exe
+		cp psi.exe $arch_prefix/Psi.exe
 		cp $mqtdir/bin/QtCore4.dll $arch_prefix
 		cp $mqtdir/bin/QtNetwork4.dll $arch_prefix
 		cp $mqtdir/bin/QtXml4.dll $arch_prefix

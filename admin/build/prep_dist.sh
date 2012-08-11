@@ -48,7 +48,7 @@ if [ "$platform" == "mac" ]; then
 	QT_PLUGINS="imageformats/libqjpeg.dylib imageformats/libqgif.dylib imageformats/libqmng.dylib"
 	QCA_PLUGINS="crypto/libqca-ossl.dylib crypto/libqca-gnupg.dylib"
 
-	cp -a $psi_base/src/psi.app $target_dist_base/Psi.app
+	cp -a $psi_base/psi.app $target_dist_base/Psi.app
 	contentsdir=$target_dist_base/Psi.app/Contents
 
 	for g in $QT_FRAMEWORKS; do
