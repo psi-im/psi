@@ -106,6 +106,7 @@ build_package_psi() {
 			cp /mingw/bin/libgcc_s_dw2-1.dll $arch_prefix
 			cp /mingw/bin/libstdc++-6.dll $arch_prefix
 			cp /mingw/bin/mingwm10.dll $arch_prefix
+			cp /mingw/bin/pthreadGC2.dll $arch_prefix
 		fi
 		cp -a certs $arch_prefix
 		cp -a iconsets $arch_prefix
