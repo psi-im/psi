@@ -134,7 +134,8 @@ public:
 			other += "*-g++*:QMAKE_CXXFLAGS += -g\n";
 		}
 
-		QString str = QString("CONFIG += ") + opts.join(" ") + '\n';
+		QString str = "CONFIG -= debug_and_release debug release\n";
+		str += QString("CONFIG += ") + opts.join(" ") + '\n';
 		conf->addExtra(str);
 
 		if(!other.isEmpty())
