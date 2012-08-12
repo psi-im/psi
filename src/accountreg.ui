@@ -179,13 +179,6 @@
            </layout>
           </item>
           <item>
-           <widget class="QCheckBox" name="ck_legacy_ssl_probe" >
-            <property name="text" >
-             <string>Probe legacy SSL port</string>
-            </property>
-           </widget>
-          </item>
-          <item>
            <layout class="QHBoxLayout" >
             <property name="margin" >
              <number>0</number>

@@ -1540,6 +1540,22 @@ void PsiAccount::login()
 		return;
 	}
 
+	if(d->acc.legacy_ssl_probe) {
+		// disable the feature and display a notice
+		d->acc.legacy_ssl_probe = false;
+		emit updatedAccount();
+
+		QString title;
+		if (d->psi->contactList()->enabledAccounts().count() > 1) {
+			title = QString("%1: ").arg(name());
+		}
+		title += tr("Feature Removed");
+		QString message = tr("This account was configured to use the \"Probe legacy SSL port\" feature, but this feature is no longer supported. Unless your XMPP server is very outdated, this change should not affect you. If you have trouble connecting, please review your account settings for correctness or contact your XMPP server administrator.");
+
+		psi()->alertManager()->raiseMessageBox(AlertManager::ConnectionError,
+			QMessageBox::Information, title, message);
+	}
+
 	d->jid = d->nextJid;
 
 	v_isActive = true;
@@ -1577,9 +1593,6 @@ void PsiAccount::login()
 	if (useHost) {
 		d->conn->setOptHostPort(host, port);
 		d->conn->setOptSSL(d->acc.ssl == UserAccount::SSL_Legacy);
-	}
-	else if (QCA::isSupported("tls")) {
-		d->conn->setOptProbe(d->acc.legacy_ssl_probe && d->acc.ssl != UserAccount::SSL_No);
 	}
 
 	d->stream = new ClientStream(d->conn, d->tlsHandler);

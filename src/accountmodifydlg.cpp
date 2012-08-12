@@ -120,7 +120,6 @@ void AccountModifyDlg::init()
 	le_host->setText(acc.host);
 	le_port->setText(QString::number(acc.port));
 	ck_req_mutual->setChecked(acc.req_mutual_auth);
-	ck_legacy_ssl_probe->setChecked(acc.legacy_ssl_probe);
 
 	ck_automatic_resource->setChecked(acc.opt_automatic_resource);
 	le_resource->setText(acc.resource);
@@ -294,9 +293,6 @@ void AccountModifyDlg::init()
 	if (!PsiOptions::instance()->getOption("options.ui.account.keepalive").toBool()) 
 		ck_keepAlive->hide();
 	
-	if (!PsiOptions::instance()->getOption("options.ui.account.legacy-ssl-probe").toBool()) 
-		ck_legacy_ssl_probe->hide();
-
 	if (!PsiOptions::instance()->getOption("options.ui.account.security.show").toBool()) {
 		lb_plain->hide();
 		cb_plain->hide();
@@ -305,7 +301,7 @@ void AccountModifyDlg::init()
 		cb_security_level->hide();
 	}
 
-	if (!PsiOptions::instance()->getOption("options.ui.account.security.show").toBool() && !PsiOptions::instance()->getOption("options.ui.account.legacy-ssl-probe").toBool() && !PsiOptions::instance()->getOption("options.ui.account.keepalive").toBool() && !PsiOptions::instance()->getOption("options.ui.account.manual-host").toBool() && !PsiOptions::instance()->getOption("options.ui.account.proxy.show").toBool()) {
+	if (!PsiOptions::instance()->getOption("options.ui.account.security.show").toBool() && !PsiOptions::instance()->getOption("options.ui.account.keepalive").toBool() && !PsiOptions::instance()->getOption("options.ui.account.manual-host").toBool() && !PsiOptions::instance()->getOption("options.ui.account.proxy.show").toBool()) {
 		tab_main->removeTab(tab_main->indexOf(tab_connection));
 	}
 	
@@ -416,8 +412,6 @@ void AccountModifyDlg::hostToggled(bool on)
 	lb_host->setEnabled(on);
 	le_port->setEnabled(on);
 	lb_port->setEnabled(on);
-	ck_legacy_ssl_probe->setEnabled(!on);
-	ck_legacy_ssl_probe->setChecked(on ? false : acc.legacy_ssl_probe);
 	if (!on && cb_ssl->currentIndex() == cb_ssl->findData(UserAccount::SSL_Legacy)) {
 		cb_ssl->setCurrentIndex(cb_ssl->findData(UserAccount::SSL_Auto));
 	}
@@ -512,8 +506,6 @@ void AccountModifyDlg::save()
 	acc.port = le_port->text().toInt();
 
 	acc.req_mutual_auth = ck_req_mutual->isChecked();
-	if (!ck_host->isChecked())
-		acc.legacy_ssl_probe = ck_legacy_ssl_probe->isChecked();
 	acc.security_level = cb_security_level->itemData(cb_security_level->currentIndex()).toInt();
 
 	acc.opt_automatic_resource = ck_automatic_resource->isChecked();

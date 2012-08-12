@@ -121,7 +121,7 @@ void UserAccount::reset()
 	tog_self = false;
 	customAuth = false;
 	req_mutual_auth = false;
-	legacy_ssl_probe = true;
+	legacy_ssl_probe = false;
 	security_level = QCA::SL_None;
 	ssl = SSL_Auto;
 	jid = "";

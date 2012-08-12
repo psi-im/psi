@@ -669,13 +669,6 @@
         </layout>
        </item>
        <item>
-        <widget class="QCheckBox" name="ck_legacy_ssl_probe">
-         <property name="text">
-          <string>Probe legacy SSL port</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <layout class="QHBoxLayout">
          <property name="spacing">
           <number>6</number>
@@ -1111,7 +1104,6 @@
   <tabstop>le_host</tabstop>
   <tabstop>le_port</tabstop>
   <tabstop>cb_ssl</tabstop>
-  <tabstop>ck_legacy_ssl_probe</tabstop>
   <tabstop>cb_plain</tabstop>
   <tabstop>ck_req_mutual</tabstop>
   <tabstop>cb_security_level</tabstop>

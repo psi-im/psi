@@ -44,7 +44,6 @@ AccountRegDlg::AccountRegDlg(QWidget *parent) : QDialog(parent)
 	
 	// Initialize settings
 	ssl_ = UserAccount::SSL_Auto;
-	legacy_ssl_probe_ = true;
 	port_ = 5222;
 	
 	// Server select button
@@ -66,7 +65,6 @@ AccountRegDlg::AccountRegDlg(QWidget *parent) : QDialog(parent)
 	ui_.cb_ssl->addItem(tr("Legacy SSL"), UserAccount::SSL_Legacy);
 	ui_.cb_ssl->setCurrentIndex(ui_.cb_ssl->findData(ssl_));
 	connect(ui_.cb_ssl, SIGNAL(activated(int)), SLOT(sslActivated(int)));
-	ui_.ck_legacy_ssl_probe->setChecked(legacy_ssl_probe_);
 
 	// Cancel and next buttons
 	connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(close()));
@@ -184,7 +182,6 @@ void AccountRegDlg::next()
 		// Update settings
 		server_ = JIDUtil::accountFromString(ui_.le_server->currentText().trimmed());
 		ssl_ =  (UserAccount::SSLFlag) ui_.cb_ssl->itemData(ui_.cb_ssl->currentIndex()).toInt();
-		legacy_ssl_probe_ = ui_.ck_legacy_ssl_probe->isChecked();
 		opt_host_ = ui_.ck_host->isChecked();
 		host_ = ui_.le_host->text();
 		port_ = ui_.le_port->text().toInt();
@@ -199,7 +196,7 @@ void AccountRegDlg::next()
 		// Connect to the server
 		ui_.busy->start();
 		block();
-		client_->connectToServer(server_, legacy_ssl_probe_, ssl_ == UserAccount::SSL_Legacy, ssl_ == UserAccount::SSL_Yes, opt_host_ ? host_ : QString(), port_, proxy_);
+		client_->connectToServer(server_, false, ssl_ == UserAccount::SSL_Legacy, ssl_ == UserAccount::SSL_Yes, opt_host_ ? host_ : QString(), port_, proxy_);
 	}
 	else if (ui_.sw_register->currentWidget() == ui_.page_fields) {
 		// Initialize the form
