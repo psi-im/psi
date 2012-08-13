@@ -978,6 +978,7 @@ public:
 	void addFrameworkPath(const QString& str)
 	{
 		conf->addExtra("QMAKE_CXXFLAGS += -F" + str);
+		conf->addExtra("QMAKE_OBJECTIVE_CFLAGS += -F" + str);
 		conf->addLib("-F" + str);
 	}
 
