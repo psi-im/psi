@@ -119,10 +119,7 @@ build_package_psi() {
 	else
 		cd $psi_base
 		export DYLD_FRAMEWORK_PATH=$QTDIR/lib:$deps_base/$qca_mac_dir/lib:$deps_base/$growl_dir/Framework
-		./configure --with-qca-inc=$deps_base/$qca_mac_dir/include --with-qca-lib=$deps_base/$qca_mac_dir/lib
-		cat $patchdir/mac_universal.pri >> conf.pri
-		echo "LIBS += -F$deps_base/$growl_dir/Framework -framework Growl" >> conf.pri
-		$QTDIR/bin/qmake psi.pro
+		./configure --with-qca-inc=$deps_base/$qca_mac_dir/include --with-qca-lib=$deps_base/$qca_mac_dir/lib --with-growl=$deps_base/$growl_dir/Framework --enable-universal
 		make
 	fi
 }

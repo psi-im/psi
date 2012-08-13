@@ -74,10 +74,7 @@ if [ "$platform" == "win" ]; then
 	echo "export PSI_MEDIA_PLUGIN=$deps_base/$psimedia_win_dir/$target_arch/plugins/gstprovider.dll" >> $build_base/devenv
 else
 	export DYLD_FRAMEWORK_PATH=$QTDIR/lib:$deps_base/$qca_mac_dir/lib:$deps_base/$growl_dir/Framework
-	./configure --with-qca-inc=$deps_base/$qca_mac_dir/include --with-qca-lib=$deps_base/$qca_mac_dir/lib
-	cat $patchdir/mac_universal.pri >> conf.pri
-	echo "LIBS += -F$deps_base/$growl_dir/Framework -framework Growl" >> conf.pri
-	$QTDIR/bin/qmake
+	./configure --with-qca-inc=$deps_base/$qca_mac_dir/include --with-qca-lib=$deps_base/$qca_mac_dir/lib --with-growl=$deps_base/$growl_dir/Framework --enable-universal
 
 	rm -f $build_base/devenv
 	touch $build_base/devenv
