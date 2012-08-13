@@ -60,7 +60,7 @@ if [ "$platform" == "win" ]; then
 	fi
 	mqtdir=`get_msys_path $qtdir`
 
-	PATH=$mqtdir/bin:$PATH ./configure.exe --qtdir=$qtdir --release --disable-bundled-qca --with-qca=$deps_base/$qca_win_dir/$target_arch --with-zlib-inc=$deps_base/$zlib_win_dir/$target_arch/include --with-zlib-lib=$deps_base/$zlib_win_dir/$target_arch/lib --with-aspell-inc=$deps_base/$aspell_win_dir/$target_arch/include --with-aspell-lib=$deps_base/$aspell_win_dir/$target_arch/lib
+	PATH=$mqtdir/bin:$PATH ./configure.exe --qtdir=$qtdir --release --with-qca-inc=$deps_base/$qca_win_dir/$target_arch/include --with-qca-lib=$deps_base/$qca_win_dir/$target_arch/lib --with-zlib-inc=$deps_base/$zlib_win_dir/$target_arch/include --with-zlib-lib=$deps_base/$zlib_win_dir/$target_arch/lib --with-aspell-inc=$deps_base/$aspell_win_dir/$target_arch/include --with-aspell-lib=$deps_base/$aspell_win_dir/$target_arch/lib
 
 	rm -f $build_base/devenv
 	touch $build_base/devenv
@@ -74,7 +74,7 @@ if [ "$platform" == "win" ]; then
 	echo "export PSI_MEDIA_PLUGIN=$deps_base/$psimedia_win_dir/$target_arch/plugins/gstprovider.dll" >> $build_base/devenv
 else
 	export DYLD_FRAMEWORK_PATH=$QTDIR/lib:$deps_base/$qca_mac_dir/lib:$deps_base/$growl_dir/Framework
-	./configure --disable-bundled-qca --with-qca=$deps_base/$qca_mac_dir
+	./configure --with-qca-inc=$deps_base/$qca_mac_dir/include --with-qca-lib=$deps_base/$qca_mac_dir/lib
 	cat $patchdir/mac_universal.pri >> conf.pri
 	echo "LIBS += -F$deps_base/$growl_dir/Framework -framework Growl" >> conf.pri
 	$QTDIR/bin/qmake
