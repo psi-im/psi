@@ -22,6 +22,7 @@ destdir=
 base_prefix=$1
 dist_base=$2
 
+build_base=$PWD
 psi_base=$PWD/../..
 deps_base=$PWD/deps
 
@@ -97,23 +98,29 @@ if [ "$platform" == "mac" ]; then
 	cleanup_framework $contentsdir/Frameworks/Growl.framework Growl A
 
 	GSTBUNDLE_LIB_FILES=
-	for l in `find $deps_base/$gstbundle_mac_dir/uni/lib -maxdepth 1 -type f -name \*.dylib`; do
-		base_l=`basename $l`
-		GSTBUNDLE_LIB_FILES="$GSTBUNDLE_LIB_FILES $base_l"
+	for n in `cat $build_base/gstbundle_libs_mac`; do
+		for l in `find $deps_base/$gstbundle_mac_dir/uni/lib -maxdepth 1 -type f -name $n`; do
+			base_l=`basename $l`
+			GSTBUNDLE_LIB_FILES="$GSTBUNDLE_LIB_FILES $base_l"
+		done
 	done
 
 	GSTBUNDLE_LIB_SUBS=
-	for l in `find $deps_base/$gstbundle_mac_dir/uni/lib -maxdepth 1 -name \*.dylib`; do
-		base_l=`basename $l`
-		GSTBUNDLE_LIB_SUBS="$GSTBUNDLE_LIB_SUBS $base_l"
+	for n in `cat $build_base/gstbundle_libs_mac`; do
+		for l in `find $deps_base/$gstbundle_mac_dir/uni/lib -maxdepth 1 -name $n`; do
+			base_l=`basename $l`
+			GSTBUNDLE_LIB_SUBS="$GSTBUNDLE_LIB_SUBS $base_l"
+		done
 	done
 
 	GSTBUNDLE_LIB_GST_FILES=
-	for l in `find $deps_base/$gstbundle_mac_dir/uni/lib/gstreamer-0.10 -type f -name \*.so`; do
-		base_l=`basename $l`
-		if [ "$base_l" != "libgstosxaudio.so" ]; then
-			GSTBUNDLE_LIB_GST_FILES="$GSTBUNDLE_LIB_GST_FILES $base_l"
-		fi
+	for n in `cat $build_base/gstbundle_gstplugins_mac`; do
+		for l in `find $deps_base/$gstbundle_mac_dir/uni/lib/gstreamer-0.10 -type f -name $n`; do
+			base_l=`basename $l`
+			if [ "$base_l" != "libgstosxaudio.so" ]; then
+				GSTBUNDLE_LIB_GST_FILES="$GSTBUNDLE_LIB_GST_FILES $base_l"
+			fi
+		done
 	done
 
 	# subs are files we need to copy, in addition to being what we attempt to substitute via install_name_tool

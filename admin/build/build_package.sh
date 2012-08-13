@@ -35,6 +35,7 @@ arch_prefix=$base_prefix/$target_arch
 pkgdir=$PWD/packages
 patchdir=$PWD/patches
 
+build_base=$PWD
 psi_base=$PWD/../..
 deps_base=$PWD/deps
 
@@ -94,9 +95,13 @@ build_package_psi() {
 		cp -a $deps_base/$aspell_win_dir/$target_arch/lib/aspell-0.60 $arch_prefix/aspell
 		cp $deps_base/$openssl_win_dir/$target_arch/bin/libeay32.dll $arch_prefix
 		cp $deps_base/$openssl_win_dir/$target_arch/bin/ssleay32.dll $arch_prefix
-		cp $deps_base/$gstbundle_win_dir/$target_arch/bin/*.dll $arch_prefix
+		for n in `cat $build_base/gstbundle_libs_win`; do
+			cp -a $deps_base/$gstbundle_win_dir/$target_arch/bin/$n $arch_prefix
+		done
 		mkdir -p $arch_prefix/gstreamer-0.10
-		cp $deps_base/$gstbundle_win_dir/$target_arch/lib/gstreamer-0.10/*.dll $arch_prefix/gstreamer-0.10
+		for n in `cat $build_base/gstbundle_gstplugins_win`; do
+			cp -a $deps_base/$gstbundle_win_dir/$target_arch/lib/gstreamer-0.10/$n $arch_prefix/gstreamer-0.10
+		done
 		cp $deps_base/$psimedia_win_dir/$target_arch/plugins/gstprovider.dll $arch_prefix
 		if [ "$target_arch" == "x86_64" ]; then
 			cp /c/mingw64/bin/libgcc_s_sjlj-1.dll $arch_prefix
