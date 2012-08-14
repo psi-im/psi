@@ -64,6 +64,9 @@ AboutDlg::AboutDlg(QWidget* parent)
 	authors += details(QString::fromUtf8("Sergey Il'inykh"),
 			   "rion4ik@gmail.com", "", "",
 			   tr("Developer"));
+	authors += details(QString::fromUtf8("Khryukin Evgeny"),
+			   "wadealer@gmail.com", "", "",
+			   tr("Developer"));
 	ui_.te_authors->setText( authors );
 
 	// fill in Thanks To tab...
