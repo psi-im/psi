@@ -61,6 +61,9 @@ AboutDlg::AboutDlg(QWidget* parent)
 	authors += details(QString::fromUtf8("Martin Hostettler"),
 			   "martin@psi-im.org", "", "",
 			   tr("Developer"));
+	authors += details(QString::fromUtf8("Sergey Il'inykh"),
+			   "rion4ik@gmail.com", "", "",
+			   tr("Developer"));
 	ui_.te_authors->setText( authors );
 
 	// fill in Thanks To tab...
@@ -101,6 +104,26 @@ AboutDlg::AboutDlg(QWidget* parent)
 	thanks += details(QString::fromUtf8("Jacek Tomasiak"),
 			 "", "", "",
 			 tr("Patches"));
+
+	// sponsor thanks
+	thanks += details(QString::fromUtf8("Barracuda Networks, Inc."),
+			 "", "", "",
+			 tr("Sponsor"));
+	thanks += details(QString::fromUtf8("Portugal Telecom"),
+			 "", "", "",
+			 tr("Sponsor"));
+	thanks += details(QString::fromUtf8("Deviant Technologies, Inc."),
+			 "", "", "",
+			 tr("Sponsor"));
+	thanks += details(QString::fromUtf8("RealNetworks, Inc."),
+			 "", "", "",
+			 tr("Sponsor"));
+	thanks += details(QString::fromUtf8("Trolltech AS"),
+			 "", "", "",
+			 tr("Sponsor"));
+	thanks += details(QString::fromUtf8("Google, Inc."),
+			 "", "", "",
+			 tr("Sponsor (Summer of Code)"));
 
 	foreach(QCA::Provider *p, QCA::providers()) {
 		QString credit = p->credit();
