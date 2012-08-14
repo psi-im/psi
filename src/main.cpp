@@ -36,6 +36,7 @@
 #include <QFileInfo>
 #include <QProcess>
 #include <QTime>
+#include <QLibraryInfo>
 
 #include <stdlib.h>
 #include <time.h>
@@ -447,6 +448,30 @@ void psiMessageOutput(QtMsgType type, const char *msg)
 	}
 }
 
+QStringList getQtPluginPathEnvVar()
+{
+	QStringList out;
+
+	QByteArray val = qgetenv("QT_PLUGIN_PATH");
+	if(!val.isEmpty())
+	{
+#if defined(Q_OS_WIN) || defined(Q_OS_SYMBIAN)
+		QLatin1Char pathSep(';');
+#else
+		QLatin1Char pathSep(':');
+#endif
+		QStringList paths = QString::fromLatin1(val).split(pathSep, QString::SkipEmptyParts);
+		foreach(const QString &path, paths)
+		{
+			QString canonicalPath = QDir(path).canonicalPath();
+			if(!canonicalPath.isEmpty() && !out.contains(canonicalPath))
+				out += canonicalPath;
+		}
+	}
+
+	return out;
+}
+
 int main(int argc, char *argv[])
 {
 	// If Psi runs as uri handler the commandline might contain
@@ -472,6 +497,14 @@ int main(int argc, char *argv[])
 		argv[argc] = 0;
 #endif
 	}
+
+#if defined(Q_OS_MAC) || defined(Q_OS_WIN)
+	// remove qt's own plugin path on these platforms, to enable safe
+	//   distribution
+	QString defaultPluginPath = QLibraryInfo::location(QLibraryInfo::PluginsPath);
+	if(!getQtPluginPathEnvVar().contains(defaultPluginPath))
+		QCoreApplication::removeLibraryPath(defaultPluginPath);
+#endif
 
 	// NOTE: Qt 4.5 compatibility note: please don't move this call.
 	//   instead, upgrade to QCA 2.0.2, which fixes the bug in the right
