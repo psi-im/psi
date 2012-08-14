@@ -4,6 +4,7 @@
 #include <QSettings>
 #include <QLocale>
 #include <QDesktopServices>
+#include <QMessageBox>
 
 #ifdef Q_WS_X11
 #include <sys/stat.h> // chmod
@@ -60,6 +61,10 @@ QString ApplicationInfo::name()
 	return PROG_NAME;
 }
 
+QString ApplicationInfo::shortName()
+{
+	return QString(PROG_NAME).toLower();
+}
 
 QString ApplicationInfo::version()
 {
@@ -235,9 +240,35 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
 			if (XdgCacheHome.isEmpty()) {
 				XdgCacheHome = QDir::homePath() + "/.cache";
 			}
-			QDir configDir(XdgConfigHome + "/" + name());
-			QDir dataDir(XdgDataHome + "/" + name());
-			QDir cacheDir(XdgCacheHome + "/" + name());
+			QDir configDir(XdgConfigHome + "/" + shortName());
+			QDir dataDir(XdgDataHome + "/" + shortName());
+			QDir cacheDir(XdgCacheHome + "/" + shortName());
+
+			// migrate mix-cased to lowercase, if needed
+
+			QDir configDirOld(XdgConfigHome + "/" + name());
+			QDir dataDirOld(XdgDataHome + "/" + name());
+			QDir cacheDirOld(XdgCacheHome + "/" + name());
+
+			bool ok = true;
+			if (ok && !configDir.exists() && configDirOld.exists()) {
+				configDirOld = QDir(XdgConfigHome);
+				ok = configDirOld.rename(name(), shortName());
+			}
+			if (ok && !dataDir.exists() && dataDirOld.exists()) {
+				dataDirOld = QDir(XdgDataHome);
+				ok = dataDirOld.rename(name(), shortName());
+			}
+			if (ok && !cacheDir.exists() && cacheDirOld.exists()) {
+				cacheDirOld = QDir(XdgCacheHome);
+				ok = cacheDirOld.rename(name(), shortName());
+			}
+
+			if(!ok)
+			{
+				QMessageBox::information(0, QObject::tr("Conversion Error"), QObject::tr("Configuration data for a previous version of Psi was found, but it was not possible to convert it to work with the current version. Ensure you have appropriate permission and that another copy of Psi is not running, and try again."));
+				exit(0);
+			}
 #endif
 			configDir_ = configDir.path();
 			cacheDir_ = cacheDir.path();

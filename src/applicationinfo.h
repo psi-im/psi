@@ -15,6 +15,7 @@ public:
 
 	// Version info
 	static QString name();
+	static QString shortName();
 	static QString version();
 	static QString capsNode();
 	static QString capsVersion();
