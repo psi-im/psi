@@ -122,8 +122,11 @@ build_package_psi() {
 
 		mingw32-make distclean
 	else
+		if [ "$QT_LIB_PATH" == "" ]; then
+			QT_LIB_PATH=$QTDIR/lib
+		fi
 		cd $psi_base
-		export DYLD_FRAMEWORK_PATH=$QTDIR/lib:$deps_base/$qca_mac_dir/lib:$deps_base/$growl_dir/Framework
+		export DYLD_FRAMEWORK_PATH=$QT_LIB_PATH:$deps_base/$qca_mac_dir/lib:$deps_base/$growl_dir/Framework
 		./configure --with-qca-inc=$deps_base/$qca_mac_dir/include --with-qca-lib=$deps_base/$qca_mac_dir/lib --with-growl=$deps_base/$growl_dir/Framework --enable-universal
 		make
 	fi

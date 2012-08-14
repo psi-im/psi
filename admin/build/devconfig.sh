@@ -73,13 +73,19 @@ if [ "$platform" == "win" ]; then
 	echo "export QT_PLUGIN_PATH=$mqtdir/plugins:$deps_base/$qca_win_dir/$target_arch/plugins" >> $build_base/devenv
 	echo "export PSI_MEDIA_PLUGIN=$deps_base/$psimedia_win_dir/$target_arch/plugins/gstprovider.dll" >> $build_base/devenv
 else
-	export DYLD_FRAMEWORK_PATH=$QTDIR/lib:$deps_base/$qca_mac_dir/lib:$deps_base/$growl_dir/Framework
+	if [ "$QT_LIB_PATH" == "" ]; then
+		QT_LIB_PATH=$QTDIR/lib
+	fi
+	if [ "$QT_PLUGIN_PATH" == "" ]; then
+		QT_PLUGIN_PATH=$QTDIR/plugins
+	fi
+	export DYLD_FRAMEWORK_PATH=$QT_LIB_PATH:$deps_base/$qca_mac_dir/lib:$deps_base/$growl_dir/Framework
 	./configure --with-qca-inc=$deps_base/$qca_mac_dir/include --with-qca-lib=$deps_base/$qca_mac_dir/lib --with-growl=$deps_base/$growl_dir/Framework --enable-universal
 
 	rm -f $build_base/devenv
 	touch $build_base/devenv
 	echo "export DYLD_LIBRARY_PATH=$deps_base/$gstbundle_mac_dir/$target_arch/lib:\$PATH" >> $build_base/devenv
-	echo "export DYLD_FRAMEWORK_PATH=$QTDIR/lib:$deps_base/$qca_mac_dir/lib:$deps_base/$growl_dir/Framework" >> $build_base/devenv
-	echo "export QT_PLUGIN_PATH=$QTDIR/plugins:$deps_base/$qca_mac_dir/$target_arch/plugins" >> $build_base/devenv
+	echo "export DYLD_FRAMEWORK_PATH=$QT_LIB_PATH:$deps_base/$qca_mac_dir/lib:$deps_base/$growl_dir/Framework" >> $build_base/devenv
+	echo "export QT_PLUGIN_PATH=$QT_PLUGIN_PATH:$deps_base/$qca_mac_dir/$target_arch/plugins" >> $build_base/devenv
 	echo "export PSI_MEDIA_PLUGIN=$deps_base/$psimedia_mac_dir/$target_arch/plugins/libgstprovider.dylib" >> $build_base/devenv
 fi
