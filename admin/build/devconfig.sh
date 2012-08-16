@@ -84,8 +84,8 @@ else
 
 	rm -f $build_base/devenv
 	touch $build_base/devenv
-	echo "export DYLD_LIBRARY_PATH=$deps_base/$gstbundle_mac_dir/uni/lib:\$PATH" >> $build_base/devenv
-	echo "export DYLD_FRAMEWORK_PATH=$QT_LIB_PATH:$deps_base/$qca_mac_dir/lib:$deps_base/$growl_dir/Framework" >> $build_base/devenv
+	echo "export DYLD_LIBRARY_PATH=$deps_base/$gstbundle_mac_dir/uni/lib:\$DYLD_LIBRARY_PATH" >> $build_base/devenv
+	echo "export DYLD_FRAMEWORK_PATH=$QT_LIB_PATH:$deps_base/$qca_mac_dir/lib:$deps_base/$growl_dir/Framework:\$DYLD_FRAMEWORK_PATH" >> $build_base/devenv
 	echo "export QT_PLUGIN_PATH=$QT_PLUGIN_PATH:$deps_base/$qca_mac_dir/plugins" >> $build_base/devenv
 	echo "export PSI_MEDIA_PLUGIN=$deps_base/$psimedia_mac_dir/plugins/libgstprovider.dylib" >> $build_base/devenv
 fi
