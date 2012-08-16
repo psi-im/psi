@@ -82,10 +82,18 @@ else
 	export DYLD_FRAMEWORK_PATH=$QT_LIB_PATH:$deps_base/$qca_mac_dir/lib:$deps_base/$growl_dir/Framework
 	./configure --with-qca-inc=$deps_base/$qca_mac_dir/include --with-qca-lib=$deps_base/$qca_mac_dir/lib --with-growl=$deps_base/$growl_dir/Framework --enable-universal
 
+	# remove some gstbundle problem files
+	rm -f $deps_base/$gstbundle_mac_dir/uni/lib/gstreamer-0.10/libgstximagesink.so
+	rm -f $deps_base/$gstbundle_mac_dir/uni/lib/gstreamer-0.10/libgstxvimagesink.so
+	rm -f $deps_base/$gstbundle_mac_dir/uni/lib/gstreamer-0.10/libgstximagesrc.so
+	rm -f $deps_base/$gstbundle_mac_dir/uni/lib/gstreamer-0.10/libgstosxaudio.so
+
 	rm -f $build_base/devenv
 	touch $build_base/devenv
 	echo "export DYLD_LIBRARY_PATH=$deps_base/$gstbundle_mac_dir/uni/lib:\$DYLD_LIBRARY_PATH" >> $build_base/devenv
 	echo "export DYLD_FRAMEWORK_PATH=$QT_LIB_PATH:$deps_base/$qca_mac_dir/lib:$deps_base/$growl_dir/Framework:\$DYLD_FRAMEWORK_PATH" >> $build_base/devenv
+	echo "export GST_PLUGIN_PATH=$deps_base/$gstbundle_mac_dir/uni/lib/gstreamer-0.10" >> $build_base/devenv
+	echo "export GST_REGISTRY_FORK=no" >> $build_base/devenv
 	echo "export QT_PLUGIN_PATH=$QT_PLUGIN_PATH:$deps_base/$qca_mac_dir/plugins" >> $build_base/devenv
 	echo "export PSI_MEDIA_PLUGIN=$deps_base/$psimedia_mac_dir/plugins/libgstprovider.dylib" >> $build_base/devenv
 fi
