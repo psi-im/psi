@@ -1,6 +1,16 @@
 <!DOCTYPE psi>
 <psi version="defaults" >
 	<options comment="Client options">
+		<ui>
+			<look>
+				<font>
+					<chat type="QString">Sans Serif,12,-1,5,50,0,0,0,0,0</chat>
+					<contactlist type="QString">Sans Serif,12,-1,5,50,0,0,0,0,0</contactlist>
+					<message type="QString">Sans Serif,12,-1,5,50,0,0,0,0,0</message>
+					<passive-popup type="QString">Sans Serif,9,-1,5,50,0,0,0,0,0</passive-popup>
+				</font>
+			</look>
+		</ui>
 		<shortcuts comment="Shortcuts">
 			<contactlist comment="Shortcuts in the contactlist">
 				<delete type="QVariantList" comment="Delete the selected contact">
