@@ -579,9 +579,9 @@ void HistoryDlg::displayResult(const EDBResult r, int direction, int max)
 					msg = TextUtil::legacyFormat(msg);
 
 				if (me->originLocal())
-					msg = "<span style='color:red'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]")+" &lt;"+ d->pa->nick() +"&gt; " + msg + "</span>";
+					msg = "<span style='color:red'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]")+" &lt;"+ TextUtil::plain2rich(d->pa->nick()) +"&gt; " + msg + "</span>";
 				else
-					msg = "<span style='color:blue'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]") + " &lt;" +  from + "&gt; " + msg + "</span>";
+					msg = "<span style='color:blue'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]") + " &lt;" +  TextUtil::plain2rich(from) + "&gt; " + msg + "</span>";
 
 				ui_.msgLog->appendText(msg);
 
