@@ -1,6 +1,6 @@
 Psi 0.15-dev
 ------------
-Date: November 7th, 2009
+Date: August 20th, 2012
 
 Maintainers:
   Justin Karneges (2001-2004, 2009-current)
@@ -18,35 +18,25 @@ Maintainers:
   the COPYING file for more information.
 
 
-Known Issues
-------------
-The following are known issues with this release:
-Issues with Qt 4.5.0: Hang on exit, hang when using GnuPG.
-Issues with QCA <2.0.2 + Qt 4.5: Hang on exit.
-Issues with qca-gnupg <2.0.0-beta3 + Qt 4.5: Hang when using GnuPG.
-
-
 Notes
 -----
   - QCA --
-    * QCA 2.x is required to build Psi: a version is bundled with Psi.
-    * The qca-ossl and qca-gnupg plugins are desirable for full 
-      functionality of Psi.
+    * QCA 2.x is required to build Psi.
+    * The qca-ossl and qca-gnupg plugins are desirable for full functionality
+      of Psi.
 
   - Voice Calling --
     * The PsiMedia 1.0.x plugin and the qca-ossl plugin are needed to activate
-      the voice calling feature.  Source and builds of PsiMedia can be found
-      at:
+      the voice calling feature. Source of PsiMedia can be found at:
         http://delta.affinix.com/psimedia/
       On Windows, place gstprovider.dll into the base directory.
       On Mac, place libgstprovider.dylib into Psi.app/Contents/plugins
       On Linux, place libgstprovider.so into LIBDIR/psi/plugins
 
-  - Upgrading to 0.12 --
-    * During the upgrade process, the old config.xml configuration file will
-      be imported into the new option.xml format. Neither file should now be
-      edited by hand, since all options are exposed in the options window. 
-      Config.xml can be safely removed once the upgrade is complete.
+  - Upgrading to 0.15 --
+    * During the upgrade process, any existing files will be copied to new
+      locations. You can opt to have the files in the original locations
+      removed or left intact.
 
   - GnuPG tips --
     * Always use the latest version of GnuPG.
@@ -59,6 +49,18 @@ Notes
 
 Changes
 -------
+  New in 0.15
+  - Merge many changes from Psi+.
+  - New message history browser.
+  - New, fast contact list window.
+  - TURN proxying for voice calls.
+  - Store data in more standardized locations based on the platform.
+  - No longer dependent on the Qt3Support library.
+  - Domains ending in .local now always work, whether via DNS server or mdns.
+  - Windows 64-bit and Mac 64-bit now supported. Mac PPC deprecated.
+  - Legacy SSL port probe feature removed.
+  - Various small features and bugfixes.
+
   New in 0.14
   - Added color options to the chat window.
   - Can now specify a reason for kick/ban in groupchat.
@@ -76,108 +78,24 @@ Changes
   - Mini command system (Ctrl+7 in chat window).
   - Various bugfixes.
 
-  New in 0.12.1
-  - Bugfix for DOS vulnerability in the file transfer code.
-    Thanks to Jesus Olmos (jolmos@isecauditors.com)
-
-  New in 0.12
-  - Multi-user chat windows now join one on one chat windows and can be opened
-    in tabbed form, either sharing a window, or separately.
-  - The roster search has been updated, and now triggers a filter when typing
-    into the roster window.
-  - An XML ringbuffer is now used, allowing access to already received XML in
-    the XML console.
-  - When resolving a name for new contacts, the full name is now used if the 
-    nick name is missing from the vcard.
-  - Auto-connect on wake is now an independent option.
-  - MUCs can now be bookmarked, and auto-joined.
-  - The old config.xml file has been dropped in favour of the new options.xml
-    format - all options in Psi can now be configured from the Advanced 
-    options pane (no more hand-editing of config files is required).
-  - Vcard avatars are now transmitted for the benefit of legacy clients and
-    servers not supporting PEP.
-  - A new diagnostics group is available in the help menu, to allow debugging
-    problems with the QCA security layer.
-  - Launching several instances of the same profile on Windows and Unices with
-    DBUS now behaves more sensibly.
-  - On X11, the taskbar should now flash on new messages for compliant
-    window managers.
-
-  New in 0.11
-  - Reworked account registration process (including proper support for
-    XEP-0077 (In-band registration))
-  - Finished support for XEP-0004 (Data Forms) by supporting forms in
-    messages. (thanks to Roelof Naude)
-  - Added support for XEP-0070 (Verifying HTTP Requests via XMPP).
-    Thanks to Maciej Niedzielski.
-  - Customizable shortcuts (thanks to Ephraim)
-  - System-wide shortcuts
-  - Added spell checking (thanks to Ephraim).
-    Currently only aspell is supported.
-  - Added option to automatically set the resource (using the hostname)
-  - Added new default Stellar3 iconset
-  - Added support for XEP-138 (Stream Compression)
-  - Added support for using XEP-33 (Extended Stanza Addressing) to multicast
-    messages to multiple users. Use option.enable-multicasting to enable it.
-  - Added 'Show status message' toggle. There is a hidden option to put 
-    status messages under the nickname (at the cost of 2 extra pixels
-    when no status message is shown)
-  - Support for Bookmark Storage (XEP-0048), where bookmarked conferences are
-    auto-joined. No UI is provided for creating bookmarks (yet).
-  - Better error messages, including error condition mappings (XEP-0086)
-  - Support dynamically changing priority
-  - Improved PGP error messages
-  - Hiding the deprecated protocol selector for service discovery by default.
-    Use option.ui.show-deprecated.service-discovery.protocol-selector to
-    re-enable it.
-  - New options system (see options.xml)
-  - Receiving support for vCard-Based Avatars (XEP-0153)
-  - Support for Multi-User-Chat (XEP-0045)
-  - Preliminary support for User Nickname (XEP-0172)
-  - Preliminary support for Roster Item Exchange (XEP-0144)
-  - Psi now uses the Qt4(>=4.3) and QCA2 libraries, replacing the Qt3 and QCA1 
-    requirements.
-  - "Privacy List" support in the account dialog.
-  - Support for XEP-0050 (Ad-hoc commands)
-  - Preliminary support for XEP-0163 (Personal Eventing Protocol)
-  - Preliminary support for XEP-0146 (Remote Controlling Clients)
-  - Large parts of the codebase have been restructured.
-  - Fixed a chat room bug where subject/topic changes were not shown.
-  - Mac OS X builds are now universal binaries, supporting the new Intel 
-    based Macs.
-  - Support for XEP-85 (Chat State Notifications).
-  - Support for XEP-0115 (Entity Capabilities).
-  - There is now a config.xml option to make some windows use the brushed
-    metal theme on Mac OS X.
-  - Window opacity support is now present for all three supported platforms.
-  - Fixed Unicode URL opening bug #510
-  - Auto-reconnect accounts on wakeup
-  - Copy-pasting with emoticons now works
-  - Fixed issue #263 where emoticons would disappear in a reply or quote
-  - History index is rebuilt faster
-  - Configure toolbars merged into main preferences dialog
-  - Moving tooltips
-  - MingW32 compiler support (Coupled with the open source Qt4 Windows library
-    this now allows completely free building of Psi on Windows)
-
 
 Description
 -----------
 
-  Psi is a capable XMPP client aimed at experienced users.  Its design
-  goals are simplicity and stability.  Psi is highly portable and runs on
-  Windows, Unix/X11, and Mac OS X.
+  Psi is a capable XMPP client aimed at experienced users. Its design goals
+  are simplicity and stability. Psi is highly portable and runs on Windows,
+  Unix/X11, and Mac OS X.
 
-  The interface is very ICQ-like.  Alerts appear in the contact list when
+  The interface is very ICQ-like. Alerts appear in the contact list when
   events are received, and things like subscriptions requests appear as
-  "system messages" (ICQ users know these well).  Even "Chats" are
-  queued in the contact list.  Also, chats are "remembered" by default,
-  so that you don't have to keep a bunch of windows open for each person.
-  Just close the chat window.  If you open it again it will all be there.
+  "system messages" (ICQ users know these well).  Even "Chats" are queued in
+  the contact list. Also, chats are "remembered" by default, so that you don't
+  have to keep a bunch of windows open for each person. Just close the
+  chat window. If you open it again it will all be there.
 
-  Psi is minimal but powerful.  There are keybindings for just about
+  Psi is minimal but powerful. There are keybindings for just about
   everything, Unicode is supported throughout, and contacts are cached
-  offline.  Security is also a major consideration, and Psi provides it for
+  offline. Security is also a major consideration, and Psi provides it for
   both client-to-server (SSL) and client-to-client (GnuPG).
 
 
@@ -190,26 +108,27 @@ How you can help
 
   Bug reports
   -----------
-  If you want to help us out, please file a bug report on our forum at 
-  http://forum.psi-im.org/forum/2 for release versions, or email us  a bug 
-  report to the development mailing list for development builds, details at:
-  http://lists.affinix.com/listinfo.cgi/psi-devel-affinix.com
+  If you want to help us out, please file a bug report on our tracker at:
+    https://github.com/psi-im/psi/issues
+  For development versions, please write to the development mailing list
+  instead:
+    http://lists.affinix.com/listinfo.cgi/psi-devel-affinix.com
   Please be as descriptive as possible and tell us what exactly you were doing 
-  at the time something went wrong.  If possible, send us a stack backtrace.
+  at the time something went wrong. If possible, send us a stack backtrace.
 
   Wishes
   ------
   We can't possibly know what everyone wants, so we appreciate all feature
-  requests. These can be submitted to http://forum.psi-im.org/forum/4
+  requests. These can be submitted to the issue tracker as well (see above).
 
   Porting
   -------
-  Psi should be very portable.  Please e-mail us first if you want to
-  port Psi to another platform.
+  Psi should be very portable. Please e-mail us first if you want to port Psi
+  to another platform.
 
   Graphics
   --------
-  There are many ways to contribute to the Psi project, if you think you can 
+  There are many ways to contribute to the Psi project, if you think you can
   do a better job with any of the Psi graphics, then go right ahead!
 
   Sound
@@ -218,8 +137,8 @@ How you can help
 
   Programming
   -----------
-  Patches are welcome.  External tools would be useful as well, like Licq
-  conversion utilities (iconsets, message history, etc).  Get to work!
+  Patches are welcome. External tools would be useful as well, like Licq
+  conversion utilities (iconsets, message history, etc). Get to work!
 
   Packaging
   ---------
@@ -232,4 +151,3 @@ How you can help
 
 Have fun,
 -The Psi team
-
