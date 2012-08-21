@@ -279,6 +279,7 @@
 			<notifications>
 				<alert-style type="QString">animate</alert-style>
 				<bounce-dock type="QString">forever</bounce-dock>
+				<enable-growl type="bool">true</enable-growl>
 				<passive-popups>
 					<duration type="int">10000</duration>
 					<enabled type="bool">false</enabled>
