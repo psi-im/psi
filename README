@@ -14,8 +14,8 @@ Maintainers:
 
   For installation or compiling instructions, see the INSTALL file.
 
-  This program is licensed under the GNU General Public License.  See
-  the COPYING file for more information.
+  This program is licensed under the GNU General Public License. See the
+  COPYING file for more information.
 
 
 Notes
@@ -43,7 +43,7 @@ Notes
     * On Windows, use a native build instead of one based on cygwin, and make
       sure it is properly installed in the registry.
     * Ensure 'gpg' actually works, by testing it from the command-line.
-    * You must have a public and secret keyring.  Psi cannot operate
+    * You must have a public and secret keyring. Psi cannot operate
       without them, and they must be there when you start it.
 
 
