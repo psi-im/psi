@@ -488,8 +488,7 @@ private slots:
 		executeCommandMenu_->setEnabled(!executeCommandMenu_->isEmpty());
 		activeChatsMenu_->setEnabled(!activeChatsMenu_->isEmpty());
 		activeChatsMenu_->menuAction()->setVisible(PsiOptions::instance()->getOption("options.ui.menu.contact.active-chats").toBool());
-		// FIXME
-		// voiceCallAction_->setVisible(contact_->account()->avCallManager() && !contact_->isAgent());
+		voiceCallAction_->setVisible(contact_->account()->avCallManager() && !contact_->isAgent());
 		voiceCallAction_->setEnabled(contact_->account()->isAvailable());
 		sendFileAction_->setVisible(!contact_->isAgent());
 		sendFileAction_->setEnabled(contact_->account()->isAvailable());
