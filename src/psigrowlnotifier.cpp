@@ -33,6 +33,7 @@
 #include "psigrowlnotifier.h"
 #include "psievent.h"
 #include "userlist.h"
+#include "psioptions.h"
 
 /**
  * A class representing the notification context, which will be passed to
