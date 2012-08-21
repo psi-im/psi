@@ -193,6 +193,16 @@
     </layout>
    </item>
    <item>
+    <widget class="QCheckBox" name="ck_growl" >
+     <property name="text" >
+      <string>Enable Growl notifications</string>
+     </property>
+     <property name="checked" >
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QCheckBox" name="ck_popupOn" >
      <property name="text" >
       <string>Enable popup notifications</string>
@@ -274,6 +284,7 @@
   <tabstop>ck_notifyAuth</tabstop>
   <tabstop>cb_bounce</tabstop>
   <tabstop>cb_animation</tabstop>
+  <tabstop>ck_growl</tabstop>
   <tabstop>ck_popupOn</tabstop>
   <tabstop>ck_popupOnMessage</tabstop>
   <tabstop>ck_popupOnHeadline</tabstop>
