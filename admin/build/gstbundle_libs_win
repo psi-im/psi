@@ -24,6 +24,7 @@ libiconv-2.dll
 libintl-8.dll
 libogg-0.dll
 liborc-0.4-0.dll
+liborc-test-0.4-0.dll
 libspeex-1.dll
 libspeexdsp-1.dll
 libtheora-0.dll
