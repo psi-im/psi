@@ -584,13 +584,13 @@ bool ContactListModel::setData(const QModelIndex& index, const QVariant& data, i
 	else if (role == Qt::EditRole) {
 		QString name = data.toString();
 		if ((contact = dynamic_cast<PsiContact*>(item->item()))) {
-			if (name.isEmpty()) {
+			//if (name.isEmpty()) {
 				// QMessageBox::information(0, tr("Error"), tr("You can't set a blank name."));
-				return false;
-			}
-			else {
+			//	return false;
+			//}
+			//else {
 				contact->setName(name);
-			}
+			//}
 		}
 		else if ((group = dynamic_cast<ContactListGroup*>(item->item()))) {
 			if (name.isEmpty()) {

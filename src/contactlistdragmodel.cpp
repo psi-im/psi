@@ -529,7 +529,7 @@ QList<PsiContact*> ContactListDragModel::removeIndexesHelper(const QMimeData* da
 		QStringList groups = psiContact->groups();
 
 		foreach(ContactListModelOperationList::Operation op, contactOperation.operations) {
-			groups.removeAll(op.groupFrom);
+			groups.removeAll(processContactSetGroupName(op.groupFrom));
 		}
 
 		if (!groupsEnabled()) {
@@ -631,7 +631,8 @@ QString ContactListDragModel::sourceOperationsForContactGroup(const QString& gro
 	if (specialGroup) {
 		return specialGroup->sourceOperationsForSpecialGroupContact(contact);
 	}
-	return processContactSetGroupName(groupName);
+	return groupName;
+	//return processContactSetGroupName(groupName);
 }
 
 QString ContactListDragModel::destinationOperationsForContactGroup(const QString& groupName, PsiContact* contact) const

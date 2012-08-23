@@ -61,6 +61,7 @@ public:
 	bool extendedSelectionAllowed() const;
 
 	virtual bool drawSelectionBackground() const;
+	virtual bool edit(const QModelIndex &index, EditTrigger trigger, QEvent *event);
 
 public:
 	virtual int suggestedItemHeight();
@@ -127,6 +128,7 @@ private slots:
 	void updateCursorMouseHover(const QModelIndex&);
 	void updateCursorMouseHover();
 	void removeSelection();
+	void finishedEditing();
 
 private:
 	QMimeData* backedUpSelection_;
@@ -141,6 +143,7 @@ private:
 	QPoint pressPosition_;
 	bool pressedIndexWasSelected_;
 	QMenu* viewportMenu_;
+	bool editing;
 
 	void backupCurrentSelection();
 	void restoreBackedUpSelection();
