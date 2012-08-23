@@ -53,6 +53,7 @@ ContactListDragView::ContactListDragView(QWidget* parent)
 	, pressedIndex_(0)
 	, pressedIndexWasSelected_(false)
 	, viewportMenu_(0)
+	, editing(false)
 {
 	removeAction_ = new IconAction("", "psi/remove", QString(), ShortcutManager::instance()->shortcuts("contactlist.delete"), this, "act_remove");
 	connect(removeAction_, SIGNAL(triggered()), SLOT(removeSelection()));
@@ -99,11 +100,32 @@ void ContactListDragView::addContextMenuAction(QAction* action)
 
 void ContactListDragView::setItemDelegate(QAbstractItemDelegate* delegate)
 {
-	if (delegate == itemDelegate())
+	QAbstractItemDelegate *oldDelegate = itemDelegate();
+	if (delegate == oldDelegate)
 		return;
+	if (delegate) {
+		connect(delegate, SIGNAL(commitData(QWidget*)), this, SLOT(finishedEditing()));
+		connect(delegate, SIGNAL(closeEditor(QWidget*)), this, SLOT(finishedEditing()));
+	}
 	ContactListView::setItemDelegate(delegate);
+	if (oldDelegate)
+		delete oldDelegate;
 	modelChanged();
 	doItemsLayout();
+}
+
+void ContactListDragView::finishedEditing()
+{
+	editing = false;
+}
+
+bool ContactListDragView::edit(const QModelIndex &index, EditTrigger trigger, QEvent *event)
+{
+	if (ContactListView::edit(index, trigger, event)) {
+		editing = true;
+		return true;
+	}
+	return false;
 }
 
 void ContactListDragView::leaveEvent(QEvent* e)
@@ -788,7 +810,7 @@ void ContactListDragView::modelChanged()
 	if (!dirty_) {
 		setUpdatesEnabled(false);
 		backedUpVerticalScrollBarValue_ = verticalScrollBar()->value();
-		if (currentEditor()) {
+		if (currentEditor() && editing) {
 			backedUpEditorValue_ = currentEditor()->text();
 			closeEditor(currentEditor(), QAbstractItemDelegate::NoHint);
 			setEditingIndex(currentIndex(), true);
