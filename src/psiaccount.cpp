@@ -5149,8 +5149,8 @@ void PsiAccount::openChat(const Jid& j, ActivationType activationType)
 	ChatDlg* chat = ensureChatDlg(j);
 	chat->ensureTabbedCorrectly();
 
+	processChats(j);
 	if (activationType == UserAction) {
-		processChats(j);
 		chat->bringToFront(true);
 	}
 	else if (activationType == UserPassiveAction) {
