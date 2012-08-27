@@ -55,6 +55,7 @@ public:
 	{
 		label = l;
 		icon = 0;
+		copyIcon = false;
 	}
 
 	~Private()
