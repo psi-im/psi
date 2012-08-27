@@ -45,12 +45,20 @@ void ContactListUtil::removeContact(PsiContact* contact, QMimeData* _selection, 
 		// all groups' contacts are marked for deletion too
 		QList<PsiContact*> contactsLost = model->contactsLostByRemove(selection);
 		bool removeConfirmed = contactsLost.isEmpty();
+		bool confirmWithoutPrompt = false;
 
 		if (!removeConfirmed) {
 			QStringList contactNames = contactNamesFor(contactsLost);
 
 			QString destructiveActionName;
 			QString msg;
+			bool doPrompt = true;
+
+			// don't prompt when removing single muc or not-in-list contacts
+			if(contactsLost.count() == 1 && (contactsLost[0]->isPrivate() || !contactsLost[0]->inList())) {
+				doPrompt = false;
+			}
+
 			if (!contactNames.isEmpty()) {
 				msg = tr("This will permanently remove<br>"
 				         "%1"
@@ -151,39 +159,51 @@ void ContactListUtil::removeContact(PsiContact* contact, QMimeData* _selection, 
 #endif
 
 			if (!msg.isEmpty()) {
+				if (doPrompt) {
 #ifdef YAPSI
-				if (complimentaryActionSlot) {
-					RemoveConfirmationMessageBoxManager::instance()->
-						removeConfirmation(selectionData,
-						                   obj, "removeContactConfirmation",
-						                   obj, complimentaryActionSlot,
-						                   tr("Deleting contacts"),
-						                   msg,
-						                   widget,
-						                   destructiveActionName,
-						                   complimentaryActionName);
-				}
+					if (complimentaryActionSlot) {
+						RemoveConfirmationMessageBoxManager::instance()->
+							removeConfirmation(selectionData,
+							                   obj, "removeContactConfirmation",
+							                   obj, complimentaryActionSlot,
+							                   tr("Deleting contacts"),
+							                   msg,
+							                   widget,
+							                   destructiveActionName,
+							                   complimentaryActionName);
+					}
 #else
-				if (false) {
-				}
+					if (false) {
+					}
 #endif
-				else {
-					RemoveConfirmationMessageBoxManager::instance()->
-						removeConfirmation(selectionData,
-						                   obj, "removeContactConfirmation",
-						                   tr("Deleting contacts"),
-						                   msg,
-						                   widget,
-						                   destructiveActionName);
-				}
+					else {
+						RemoveConfirmationMessageBoxManager::instance()->
+							removeConfirmation(selectionData,
+							                   obj, "removeContactConfirmation",
+							                   tr("Deleting contacts"),
+							                   msg,
+							                   widget,
+							                   destructiveActionName);
+					}
 
-				removeConfirmed = false;
+					removeConfirmed = false;
+				}
+				else {
+					confirmWithoutPrompt = true;
+				}
 			}
 		}
 
 		QMetaObject::invokeMethod(obj, "removeContactConfirmation", Qt::DirectConnection,
 		                          QGenericReturnArgument(),
 		                          Q_ARG(QString, selectionData), Q_ARG(bool, removeConfirmed));
+
+		if(confirmWithoutPrompt) {
+			QMetaObject::invokeMethod(obj, "removeContactConfirmation", Qt::QueuedConnection,
+		                          QGenericReturnArgument(),
+		                          Q_ARG(QString, selectionData), Q_ARG(bool, true));
+		}
+
 		delete selection;
 	}
 }
