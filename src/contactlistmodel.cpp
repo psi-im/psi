@@ -151,10 +151,12 @@ void ContactListModel::setAccountsEnabled(bool enabled)
 void ContactListModel::beginBulkUpdate()
 {
 	Q_ASSERT(bulkUpdateCount_ >= 0);
-	if (!bulkUpdateCount_) {
+	if (bulkUpdateCount_ == 0) {
 		emitDeltaSignals_ = false;
 		doResetAfterBulkUpdate_ = false;
 		doLayoutUpdateAfterBulkUpdate_ = false;
+
+		beginResetModel();
 
 		// blockSignals(true);
 		emit layoutAboutToBeChanged();
@@ -168,10 +170,12 @@ void ContactListModel::endBulkUpdate()
 	--bulkUpdateCount_;
 	Q_ASSERT(bulkUpdateCount_ >= 0);
 
-	if (!bulkUpdateCount_) {
+	if (bulkUpdateCount_ == 0) {
 		// blockSignals(false);
 		emitDeltaSignals_ = true;
-		if (doResetAfterBulkUpdate_) {
+
+		// using begin/endResetModel instead
+		/*if (doResetAfterBulkUpdate_) {
 			reset();
 
 			// in Qt 4.3.4 emitting modelReset() leads to QSortFilterProxyModel
@@ -183,10 +187,12 @@ void ContactListModel::endBulkUpdate()
 			emit layoutAboutToBeChanged();
 			emit layoutChanged();
 		}
-		else if (doLayoutUpdateAfterBulkUpdate_) {
+		else*/ if (doLayoutUpdateAfterBulkUpdate_) {
 			// emit layoutAboutToBeChanged();
 			emit layoutChanged();
 		}
+
+		endResetModel();
 	}
 }
 
