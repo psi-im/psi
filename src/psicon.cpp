@@ -1502,20 +1502,24 @@ bool PsiCon::filterEvent(const PsiAccount* acc, const PsiEvent* e) const
 
 void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 {
-	if ( e->type() == PsiEvent::PGP ) {
-		e->account()->eventQueue()->dequeue(e);
-		e->account()->queueChanged();
+	if ( !e->account() ) {
+		delete e;
 		return;
 	}
 
-	if ( !e->account() )
+	if ( e->type() == PsiEvent::PGP ) {
+		e->account()->eventQueue()->dequeue(e);
+		e->account()->queueChanged();
+		delete e;
 		return;
+	}
 
 	UserListItem *u = e->account()->find(e->jid());
 	if ( !u ) {
 		qWarning("SYSTEM MESSAGE: Bug #1. Contact the developers and tell them what you did to make this message appear. Thank you.");
 		e->account()->eventQueue()->dequeue(e);
 		e->account()->queueChanged();
+		delete e;
 		return;
 	}
 
@@ -1553,6 +1557,7 @@ void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 				delete sess;
 			}
 		}
+		delete e;
 		return;
 	}
 
