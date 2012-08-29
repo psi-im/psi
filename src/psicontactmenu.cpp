@@ -226,7 +226,7 @@ public:
 	QMenu* openChatToMenu_;
 	QAction* openWhiteboardAction_;
 	QMenu* openWhiteboardToMenu_;
-	QMenu* executeCommandMenu_;
+	ResourceMenu* executeCommandMenu_;
 	ResourceMenu* activeChatsMenu_;
 	QAction* voiceCallAction_;
 	QAction* sendFileAction_;
@@ -486,6 +486,10 @@ private slots:
 		openWhiteboardAction_->setVisible(false);
 		openWhiteboardToMenu_->menuAction()->setVisible(false);
 #endif
+		if(contact_->account()->isAvailable()
+			&& executeCommandMenu_->isEmpty()
+			&& contact_->status().type() == Status::Offline )
+			executeCommandMenu_->addResource(XMPP::Status::Offline, "");
 		executeCommandMenu_->setEnabled(!executeCommandMenu_->isEmpty());
 		activeChatsMenu_->setEnabled(!activeChatsMenu_->isEmpty());
 		activeChatsMenu_->menuAction()->setVisible(PsiOptions::instance()->getOption("options.ui.menu.contact.active-chats").toBool());
