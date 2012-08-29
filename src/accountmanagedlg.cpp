@@ -362,6 +362,11 @@ void AccountManageDlg::remove()
 	if(!i)
 		return;
 
+	if(i->pa->eventQueue()->count()) {
+		QMessageBox::information(0, tr("Error"), qApp->translate("PsiAccount", "Unable to disable the account, as it has pending events."));
+		return;
+	}
+
 	if(i->pa->isActive()) {
 		QMessageBox messageBox(QMessageBox::Information, CAP(tr("Error")), tr("Please disconnect before removing the account."));
 		QPushButton* cancel = messageBox.addButton(QMessageBox::Cancel);
