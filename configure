@@ -709,7 +709,7 @@ public:
 		qca_incdir = conf->getenv("QC_WITH_QCA_INC");
 		qca_libdir = conf->getenv("QC_WITH_QCA_LIB");
 
-#ifdef Q_OS_MAC
+#if defined(Q_OS_MAC)
 		if(!qca_libdir.isEmpty() && qca_try_framework(conf, qca_libdir, release, debug, &qca_crypto_prf))
 		{
 			conf->addExtra(qca_crypto_prf);
@@ -720,6 +720,17 @@ public:
 		if(!qca_incdir.isEmpty() && !qca_libdir.isEmpty() && qca_try_lib(conf, qca_incdir, qca_libdir, release, debug, &qca_crypto_prf))
 		{
 			conf->addExtra(qca_crypto_prf);
+			return true;
+		}
+
+		QStringList incs;
+		QString version, libs, other;
+		if(conf->findPkgConfig("qca2", VersionMin, "2.0.0", &version, &incs, &libs, &other))
+		{
+			for(int n = 0; n < incs.count(); ++n)
+				conf->addIncludePath(incs[n]);
+			if(!libs.isEmpty())
+				conf->addLib(libs);
 			return true;
 		}
 
