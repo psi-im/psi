@@ -1152,7 +1152,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	connect(capsManager(),SIGNAL(capsChanged(const Jid&)),SLOT(capsChanged(const Jid&)));
 
 	//printf("PsiAccount: [%s] loaded\n", name().latin1());
-	d->xmlConsole = new XmlConsole(this);
+
 	if(PsiOptions::instance()->getOption("options.xml-console.enable-at-login").toBool() && enabled()) {
 		this->showXmlConsole();
 		d->xmlConsole->enable();
@@ -1304,6 +1304,8 @@ void PsiAccount::setEnabled(bool e)
 				return;
 			}
 		}
+		delete d->xmlConsole;
+		d->xmlConsole = 0;
 	}
 
 	d->setEnabled( e );
@@ -3123,6 +3125,9 @@ void PsiAccount::changePW()
 
 void PsiAccount::showXmlConsole()
 {
+	if(!d->xmlConsole) {
+		d->xmlConsole = new XmlConsole(this);
+	}
 	bringToFront(d->xmlConsole);
 }
 
