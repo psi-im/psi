@@ -546,7 +546,9 @@ void AccountModifyDlg::save()
 			messageBox.exec();
 			Q_UNUSED(cancel);
 			if (messageBox.clickedButton() == reconnect) {
-				pa->reconnectOnce();
+				XMPP::Status status = pa->status();
+				pa->setStatus(XMPP::Status::Offline);
+				pa->setStatus(status);
 			}
 		}
 		pa->reconfigureFTManager();
