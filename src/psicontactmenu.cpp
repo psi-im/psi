@@ -478,6 +478,7 @@ private slots:
 			sendMessageAction_->setVisible(false);
 			sendMessageToMenu_->menuAction()->setVisible(false);
 		}
+		sendMessageAction_->setEnabled(contact_->account()->isAvailable());
 		sendMessageToMenu_->setEnabled(!sendMessageToMenu_->isEmpty());
 		openChatToMenu_->setEnabled(!openChatToMenu_->isEmpty());
 		openWhiteboardToMenu_->setEnabled(!openWhiteboardToMenu_->isEmpty());
@@ -492,7 +493,7 @@ private slots:
 		voiceCallAction_->setEnabled(contact_->account()->isAvailable());
 		sendFileAction_->setVisible(!contact_->isAgent());
 		sendFileAction_->setEnabled(contact_->account()->isAvailable());
-		inviteToGroupchatMenu_->setEnabled(!inviteToGroupchatMenu_->isEmpty());
+		inviteToGroupchatMenu_->setEnabled(!inviteToGroupchatMenu_->isEmpty() && contact_->account()->isAvailable());
 		renameAction_->setVisible(!PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool());
 		renameAction_->setEnabled(contact_->isEditable());
 		if (contact_->isAgent()) {

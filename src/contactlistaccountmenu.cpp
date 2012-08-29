@@ -175,6 +175,9 @@ private slots:
 		}
 
 		newMessageAction_->setVisible(PsiOptions::instance()->getOption("options.ui.message.enabled").toBool());
+		newMessageAction_->setEnabled(account->account()->isAvailable());
+		addContactAction_->setEnabled(account->account()->isAvailable());
+		serviceDiscoveryAction_->setEnabled(account->account()->isAvailable());
 		if (!PsiOptions::instance()->getOption("options.ui.menu.account.admin").toBool()) {
 			adminMenu_->menuAction()->setVisible(false);
 		}
