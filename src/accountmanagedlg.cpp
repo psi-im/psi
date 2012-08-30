@@ -107,14 +107,14 @@ AccountRemoveDlg::AccountRemoveDlg(const UserAccount &acc, QWidget *parent)
 	connect(pb_close_, SIGNAL(clicked()), SLOT(close()));
 	connect(pb_remove_, SIGNAL(clicked()), SLOT(remove()));
 
-	d->bg = new QButtonGroup(0);
+	d->bg = new QButtonGroup(this);
 	d->bg->addButton(rb_remove, 0);
 	d->bg->addButton(rb_removeAndUnreg, 1);
 	connect(d->bg, SIGNAL(buttonClicked(int)), SLOT(bg_clicked(int)));
 	rb_remove->setChecked(true);
 	bg_clicked(0);
 
-	client = new MiniClient;
+	client = new MiniClient(this);
 	connect(client, SIGNAL(handshaken()), SLOT(client_handshaken()));
 	connect(client, SIGNAL(error()), SLOT(client_error()));
 	connect(client, SIGNAL(disconnected()), SLOT(client_disconnected()));
@@ -123,9 +123,6 @@ AccountRemoveDlg::AccountRemoveDlg(const UserAccount &acc, QWidget *parent)
 
 AccountRemoveDlg::~AccountRemoveDlg()
 {
-	delete client;
-
-	delete d->bg;
 	delete d;
 }
 
