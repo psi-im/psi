@@ -1,5 +1,4 @@
 include(../conf.pri)
-windows:include(../conf_windows.pri)
 
 # don't build iris apps
 CONFIG += no_tests

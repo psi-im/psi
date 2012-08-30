@@ -55,8 +55,6 @@ unix {
 }
 
 windows {
-	include(../conf_windows.pri)
-
 	LIBS += -lWSock32 -lUser32 -lShell32 -lGdi32 -lAdvAPI32
 	DEFINES += QT_STATICPLUGIN
 	DEFINES += NOMINMAX # suppress min/max #defines in windows headers

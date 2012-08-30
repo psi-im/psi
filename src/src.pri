@@ -42,29 +42,6 @@ use_crash {
 # AutoUpdater
 include($$PWD/AutoUpdater/AutoUpdater.pri)
 
-# qca
-qca-static {
-	# QCA
-	DEFINES += QCA_STATIC
-	include($$PWD/../third-party/qca/qca.pri)
-
-	# QCA-OpenSSL
-	contains(DEFINES, HAVE_OPENSSL) {
-		include($$PWD/../third-party/qca/qca-ossl.pri)
-	}
-	
-	# QCA-SASL
-	contains(DEFINES, HAVE_CYRUSSASL) {
-		include($$PWD/../third-party/qca/qca-cyrus-sasl.pri)
-	}
-
-	# QCA-GnuPG
-	include($$PWD/../third-party/qca/qca-gnupg.pri)
-}
-else {
-	CONFIG += crypto	
-}
-
 # Widgets
 include($$PWD/widgets/widgets.pri)
 
