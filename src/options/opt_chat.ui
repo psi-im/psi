@@ -122,6 +122,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="ck_tabShortcuts" >
+     <property name="text" >
+      <string>Enable Alt-[0-9] tab shortcuts</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QGroupBox" name="groupBox18" >
      <property name="title" >
       <string>Default action</string>
