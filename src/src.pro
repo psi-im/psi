@@ -73,46 +73,49 @@ HEADERS += main.h
 # Translation
 ################################################################################
 
-LANG_PATH = ../lang
+# this assumes the translations repo is checked out next to psi
+LANG_PATH = ../../psi-translations
 
 TRANSLATIONS = \
-	$$LANG_PATH/psi_ar.ts \
-	$$LANG_PATH/psi_be.ts \
-	$$LANG_PATH/psi_bg.ts \
-	$$LANG_PATH/psi_br.ts \
-	$$LANG_PATH/psi_ca.ts \
-	$$LANG_PATH/psi_cs.ts \
-	$$LANG_PATH/psi_da.ts \
-	$$LANG_PATH/psi_de.ts \
-	$$LANG_PATH/psi_ee.ts \
-	$$LANG_PATH/psi_el.ts \
-	$$LANG_PATH/psi_eo.ts \
-	$$LANG_PATH/psi_es.ts \
-	$$LANG_PATH/psi_et.ts \
-	$$LANG_PATH/psi_fi.ts \
-	$$LANG_PATH/psi_fr.ts \
-	$$LANG_PATH/psi_hr.ts \
-	$$LANG_PATH/psi_hu.ts \
-	$$LANG_PATH/psi_it.ts \
-	$$LANG_PATH/psi_ja.ts \
-	$$LANG_PATH/psi_mk.ts \
-	$$LANG_PATH/psi_nl.ts \
-	$$LANG_PATH/psi_pl.ts \
-	$$LANG_PATH/psi_pt.ts \
-	$$LANG_PATH/psi_pt_BR.ts \
-	$$LANG_PATH/psi_ru.ts \
-	$$LANG_PATH/psi_se.ts \
-	$$LANG_PATH/psi_sk.ts \
-	$$LANG_PATH/psi_sl.ts \
-	$$LANG_PATH/psi_sr.ts \
-	$$LANG_PATH/psi_sr@latin.ts \
-	$$LANG_PATH/psi_sv.ts \
-	$$LANG_PATH/psi_sw.ts \
-	$$LANG_PATH/psi_uk.ts \
-	$$LANG_PATH/psi_ur_PK.ts \
-	$$LANG_PATH/psi_vi.ts \
-	$$LANG_PATH/psi_zh_CN.ts \
-	$$LANG_PATH/psi_zh_TW.ts
+        $$LANG_PATH/psi_xx.ts \
+	#$$LANG_PATH/ar/psi_ar.ts \
+	$$LANG_PATH/be/psi_be.ts \
+	#$$LANG_PATH/bg/psi_bg.ts \
+	#$$LANG_PATH/br/psi_br.ts \
+	#$$LANG_PATH/ca/psi_ca.ts \
+	$$LANG_PATH/cs/psi_cs.ts \
+	#$$LANG_PATH/da/psi_da.ts \
+	$$LANG_PATH/de/psi_de.ts \
+	#$$LANG_PATH/ee/psi_ee.ts \
+	#$$LANG_PATH/el/psi_el.ts \
+	#$$LANG_PATH/eo/psi_eo.ts \
+	$$LANG_PATH/es/psi_es.ts \
+	$$LANG_PATH/es_ES/psi_es_ES.ts \
+	#$$LANG_PATH/et/psi_et.ts \
+	#$$LANG_PATH/fi/psi_fi.ts \
+	$$LANG_PATH/fr/psi_fr.ts \
+	#$$LANG_PATH/hr/psi_hr.ts \
+	#$$LANG_PATH/hu/psi_hu.ts \
+	$$LANG_PATH/it/psi_it.ts \
+	$$LANG_PATH/ja/psi_ja.ts \
+	$$LANG_PATH/mk/psi_mk.ts \
+	#$$LANG_PATH/nl/psi_nl.ts \
+	$$LANG_PATH/pl/psi_pl.ts \
+	#$$LANG_PATH/pt/psi_pt.ts \
+	$$LANG_PATH/pt_BR/psi_pt_BR.ts \
+	$$LANG_PATH/ru/psi_ru.ts \
+	#$$LANG_PATH/se/psi_se.ts \
+	#$$LANG_PATH/sk/psi_sk.ts \
+	$$LANG_PATH/sl/psi_sl.ts \
+	#$$LANG_PATH/sr/psi_sr.ts \
+	#$$LANG_PATH/sr@latin/psi_sr@latin.ts \
+	$$LANG_PATH/sv/psi_sv.ts \
+	#$$LANG_PATH/sw/psi_sw.ts \
+	$$LANG_PATH/uk/psi_uk.ts \
+	$$LANG_PATH/ur_PK/psi_ur_PK.ts \
+	$$LANG_PATH/vi/psi_vi.ts \
+	$$LANG_PATH/zh_CN/psi_zh_CN.ts \
+	$$LANG_PATH/zh_TW/psi_zh_TW.ts
 
 OPTIONS_TRANSLATIONS_FILE=$$PWD/option_translations.cpp
 
