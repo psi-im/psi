@@ -146,7 +146,9 @@ void OptionsTabChat::applyOptions()
 	}
 	
 	PsiOptions::instance()->setOption("options.ui.chat.use-expanding-line-edit", d->ck_autoResize->isChecked());
-	
+
+	PsiOptions::instance()->setOption("options.ui.tabs.use-tab-shortcuts", d->ck_tabShortcuts->isChecked());
+
 	// Soft return.
 	// Only update this if the value actually changed, or else custom presets
 	// might go lost.
@@ -198,6 +200,7 @@ void OptionsTabChat::restoreOptions()
 		d->cb_tabGrouping->removeItem(4);
 	}
 	d->ck_autoResize->setChecked( PsiOptions::instance()->getOption("options.ui.chat.use-expanding-line-edit").toBool() );
+	d->ck_tabShortcuts->setChecked( PsiOptions::instance()->getOption("options.ui.tabs.use-tab-shortcuts").toBool() );
 	QString delafter = PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString();
 	if (delafter == "instant") {
 		d->rb_delChatsClose->setChecked(true);
