@@ -52,6 +52,8 @@ private:
 	QMap<QString, QString> cmdline;
 
 	PsiCon *pcon;
+
+	void saveSettings();
 };
 
 #endif
