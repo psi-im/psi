@@ -105,11 +105,6 @@ PsiMain::PsiMain(const QMap<QString, QString>& commandline, QObject *par)
 PsiMain::~PsiMain()
 {
 	delete pcon;
-
-	QSettings s(ApplicationInfo::homeDir(ApplicationInfo::ConfigLocation) + "/psirc", QSettings::IniFormat);
-	s.setValue("last_profile", lastProfile);
-	s.setValue("last_lang", lastLang);
-	s.setValue("auto_open", autoOpen);
 }
 
 /**
@@ -251,6 +246,8 @@ void PsiMain::chooseProfile()
 					QPushButton *activate = mb.addButton(tr("Activate"), QMessageBox::AcceptRole);
 					mb.exec();
 					if (mb.clickedButton() == activate) {
+						lastProfile = str;
+						saveSettings();
 						ActiveProfiles::instance()->raise(str, true);
 						quit();
 						return;
@@ -273,6 +270,7 @@ void PsiMain::chooseProfile()
 
 	// only set lastProfile if the user opened it
 	lastProfile = str;
+	saveSettings();
 
 	activeProfile = str;
 	sessionStart();
@@ -328,6 +326,14 @@ void PsiMain::bail()
 		pcon = 0;
 	}
 	quit();
+}
+
+void PsiMain::saveSettings()
+{
+	QSettings s(ApplicationInfo::homeDir(ApplicationInfo::ConfigLocation) + "/psirc", QSettings::IniFormat);
+	s.setValue("last_profile", lastProfile);
+	s.setValue("last_lang", lastLang);
+	s.setValue("auto_open", autoOpen);
 }
 
 #ifdef URI_RESTART
