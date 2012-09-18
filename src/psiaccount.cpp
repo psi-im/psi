@@ -2083,6 +2083,7 @@ void PsiAccount::cs_error(int err)
 
 	// Auto-Reconnect?
 	if(d->acc.opt_reconn && reconn) {
+		isDisconnecting = false;
 		d->startReconnect();
 		return;
 	}
@@ -2090,7 +2091,8 @@ void PsiAccount::cs_error(int err)
 	v_isActive = false;
 	d->loginStatus = Status(Status::Offline);
 	stateChanged();
-	disconnected();
+	emit disconnected();
+	isDisconnecting = false;
 
 	QString title;
 	if (d->psi->contactList()->enabledAccounts().count() > 1) {
