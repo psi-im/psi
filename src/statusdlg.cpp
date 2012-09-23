@@ -30,7 +30,6 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QKeyEvent>
-#include <QTextEdit>
 
 #include "jidutil.h"
 #include "psicon.h"
@@ -39,6 +38,7 @@
 #include "userlist.h"
 #include "common.h"
 #include "psitextview.h"
+#include "msgmle.h"
 #include "statuspreset.h"
 #include "statuscombobox.h"
 #include "shortcutmanager.h"
@@ -89,7 +89,7 @@ public:
 	PsiCon *psi;
 	PsiAccount *pa;
 	Status s;
-	QTextEdit *te;
+	ChatEdit *te;
 	StatusComboBox *cb_type;
 	QComboBox *cb_preset;
 	QLineEdit *le_priority;
@@ -162,8 +162,7 @@ void StatusSetDlg::init()
 	connect(d->cb_preset, SIGNAL(currentIndexChanged(int)), SLOT(chooseStatusPreset(int)));
 	hb1->addWidget(d->cb_preset,3);
 
-	d->te = new QTextEdit(this);
-	d->te->setReadOnly(false);
+	d->te = new ChatEdit(this);
 	d->te->setAcceptRichText(false);
 	d->te->setMinimumHeight(50);
 	vb->addWidget(d->te);
