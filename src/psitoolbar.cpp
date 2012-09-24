@@ -64,7 +64,7 @@ PsiToolBar::PsiToolBar(const QString& base, QMainWindow* mainWindow, MetaActionL
 
 	setIconSize(QSize(16, 16));
 
-	customizeAction_ = new QAction(tr("Configure& Toolbar..."), this);
+	customizeAction_ = new QAction(tr("&Configure Toolbar..."), this);
 	connect(customizeAction_, SIGNAL(triggered()), this, SIGNAL(customize()));
 }
 
