@@ -82,7 +82,7 @@ TRANSLATIONS = \
 	$$LANG_PATH/be/psi_be.ts \
 	#$$LANG_PATH/bg/psi_bg.ts \
 	#$$LANG_PATH/br/psi_br.ts \
-	#$$LANG_PATH/ca/psi_ca.ts \
+	$$LANG_PATH/ca/psi_ca.ts \
 	$$LANG_PATH/cs/psi_cs.ts \
 	#$$LANG_PATH/da/psi_da.ts \
 	$$LANG_PATH/de/psi_de.ts \
