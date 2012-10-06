@@ -49,8 +49,7 @@ static QString psiGetVersion()
 			str = "UnknownVersion";
 	}
 
-	QDateTime now = QDateTime::currentDateTime();
-	QString nowstr = QString().sprintf("%04d%02d%02d", now.date().year(), now.date().month(), now.date().day());
+	QString nowstr = QDateTime::currentDateTime().toString("yyyy-MM-dd");
 	str.replace("@@DATE@@", nowstr);
 	return str;
 }
