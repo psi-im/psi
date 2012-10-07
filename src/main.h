@@ -23,7 +23,7 @@
 
 #include <QString>
 #include <QObject>
-#include <QMap>
+#include <QHash>
 
 class PsiCon;
 
@@ -31,7 +31,7 @@ class PsiMain : public QObject
 {
 	Q_OBJECT
 public:
-	PsiMain(const QMap<QString, QString>& commandline, QObject *parent=0);
+	PsiMain(const QHash<QString, QString>& commandline, QObject *parent=0);
 	~PsiMain();
 
 	bool useActiveInstance();
@@ -49,7 +49,7 @@ private slots:
 private:
 	QString lastProfile, lastLang;
 	bool autoOpen;
-	QMap<QString, QString> cmdline;
+	QHash<QString, QString> cmdline;
 
 	PsiCon *pcon;
 

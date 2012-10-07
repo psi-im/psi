@@ -37,6 +37,7 @@
 #include <QProcess>
 #include <QTime>
 #include <QLibraryInfo>
+#include <QHashIterator>
 
 #include <stdlib.h>
 #include <time.h>
@@ -84,7 +85,7 @@
 using namespace XMPP;
 
 
-PsiMain::PsiMain(const QMap<QString, QString>& commandline, QObject *par)
+PsiMain::PsiMain(const QHash<QString, QString>& commandline, QObject *par)
 	: QObject(par)
 	, cmdline(commandline)
 {
@@ -492,7 +493,7 @@ int main(int argc, char *argv[])
 
 	PsiCli cli;
 
-	QMap<QString, QString> cmdline = cli.parse(argc, argv, QStringList() << "uri", &argc);
+	QHash<QByteArray, QByteArray> cmdline = cli.parse(argc, argv, QList<QByteArray>() << "uri", &argc);
 
 	if (cmdline.contains("uri")) {
 #ifdef URI_RESTART
@@ -562,7 +563,16 @@ int main(int argc, char *argv[])
 	}
 #endif
 
-	PsiMain *psi = new PsiMain(cmdline);
+	// now when QApplication created and text codecs initiaized we can convert
+	// command line arguments to strings
+	QHash<QString,QString> cmdlines;
+	QHashIterator<QByteArray,QByteArray> clIt(cmdline);
+	while (clIt.hasNext()) {
+		clIt.next();
+		cmdlines.insert(QString::fromLocal8Bit(clIt.key().constData()),
+						QString::fromLocal8Bit(clIt.value().constData()));
+	}
+	PsiMain *psi = new PsiMain(cmdlines);
 	// check if we want to remote-control other psi instance
 	if (psi->useActiveInstance()) {
 		delete psi;
