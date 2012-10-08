@@ -498,7 +498,7 @@ int main(int argc, char *argv[])
 	if (cmdline.contains("uri")) {
 #ifdef URI_RESTART
 		// for windows, we have to restart the process
-		return restart_process(argc, argv, cmdline["uri"].toLocal8Bit());
+		return restart_process(argc, argv, cmdline["uri"]);
 #else
 		// otherwise, it should enough to modify argc/argv
 		argv[argc] = 0;
@@ -558,7 +558,7 @@ int main(int argc, char *argv[])
 
 #ifdef URI_RESTART
 	if (cmdline.contains("encuri")) {
-		cmdline["uri"] = decodeUri(cmdline["encuri"].toLocal8Bit());
+		cmdline["uri"] = decodeUri(cmdline["encuri"]);
 		cmdline.remove("encuri");
 	}
 #endif
