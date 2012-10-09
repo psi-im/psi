@@ -71,26 +71,27 @@ public:
 
 	void paintGroup(QPainter* p, const QStyleOptionViewItem& o, GCUserViewGroupItem* gi) const
 	{
+		bool slimGroups = PsiOptions::instance()->getOption("options.ui.look.contactlist.use-slim-group-headings").toBool();
 		QRect rect = o.rect;
 		QFont f = o.font;
 		f.setPointSize(common_smallFontSize);
 		p->setFont(f);
 		QColor colorForeground = ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-foreground");
 		QColor colorBackground = ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background");
-		if (!PsiOptions::instance()->getOption("options.ui.look.contactlist.use-slim-group-headings").toBool()) {
+		if (!slimGroups || (o.state & QStyle::State_Selected) ) {
 			p->fillRect(rect, colorBackground);
 		}
 
 		p->setPen(QPen(colorForeground));
+		rect.translate(2, (rect.height() - o.fontMetrics.height())/2);
 		p->drawText(rect, gi->text(0));
-		if (PsiOptions::instance()->getOption("options.ui.look.contactlist.use-slim-group-headings").toBool()
-			&& (o.state & QStyle::State_Selected))
+		if (slimGroups	&& !(o.state & QStyle::State_Selected))
 		{
 			QFontMetrics fm(f);
 			int x = fm.width(gi->text(0)) + 8;
 			int width = rect.width();
 			if(x < width - 8) {
-				int h = (rect.height() / 2) - 1;
+				int h = rect.y() + (rect.height() / 2) - 1;
 				p->setPen(QPen(colorBackground));
 				p->drawLine(x, h, width - 8, h);
 				h++;
@@ -165,6 +166,7 @@ GCUserView::GCUserView(QWidget* parent)
 	, gcDlg_(0)
 {
 	header()->hide();
+	setRootIsDecorated(false);
 	sortByColumn(0);
 	setIndentation(0);
 	setContextMenuPolicy(Qt::NoContextMenu);
