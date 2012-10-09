@@ -736,6 +736,9 @@ void ContactListDragView::mousePressEvent(QMouseEvent* e)
 		// clear selection
 		updateCursor(index, UC_MouseClick, true);
 	}
+	if (e->button() == Qt::MiddleButton && index.isValid()) {
+		itemActivated(index);
+	}
 	ContactListView::mousePressEvent(e);
 }
 
