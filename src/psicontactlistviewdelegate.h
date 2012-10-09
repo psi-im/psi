@@ -35,6 +35,7 @@ public:
 
 	// reimplemented
 	virtual int avatarSize() const;
+	virtual QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const;
 
 protected:
 	// reimplemented
@@ -60,6 +61,8 @@ private:
 	QTimer* alertTimer_;
 	QFont* font_;
 	QFontMetrics* fontMetrics_;
+	bool statusSingle_;
+	int rowHeight_;
 	bool showStatusMessages_, slimGroup_, outlinedGroup_;
 	mutable QHash<QModelIndex, bool> alertingIndexes_;
 };

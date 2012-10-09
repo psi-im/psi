@@ -34,6 +34,7 @@ static const QString slimGroupsOptionPath = "options.ui.look.contactlist.use-sli
 static const QString outlinedGroupsOptionPath = "options.ui.look.contactlist.use-outlined-group-headings";
 static const QString contactListBackgroundOptionPath = "options.ui.look.colors.contactlist.background";
 static const QString showStatusMessagesOptionPath = "options.ui.contactlist.status-messages.show";
+static const QString statusSingleOptionPath = "options.ui.contactlist.status-messages.single-line";
 
 PsiContactListViewDelegate::PsiContactListViewDelegate(ContactListView* parent)
 	: ContactListViewDelegate(parent)
@@ -51,6 +52,7 @@ PsiContactListViewDelegate::PsiContactListViewDelegate(ContactListView* parent)
 	optionChanged(contactListFontOptionPath);
 	optionChanged(contactListBackgroundOptionPath);
 	optionChanged(showStatusMessagesOptionPath);
+	optionChanged(statusSingleOptionPath);
 }
 
 PsiContactListViewDelegate::~PsiContactListViewDelegate()
@@ -61,7 +63,7 @@ PsiContactListViewDelegate::~PsiContactListViewDelegate()
 
 int PsiContactListViewDelegate::avatarSize() const
 {
-	return 18;
+	return rowHeight_;
 }
 
 QPixmap PsiContactListViewDelegate::statusPixmap(const QModelIndex& index) const
@@ -101,6 +103,22 @@ QPixmap PsiContactListViewDelegate::statusPixmap(const QModelIndex& index) const
 	}
 
 	return PsiIconset::instance()->statusPtr(index.data(ContactListModel::JidRole).toString(), s)->pixmap();
+}
+
+QSize PsiContactListViewDelegate::sizeHint(const QStyleOptionViewItem& /*option*/, const QModelIndex& index) const
+{
+	if (index.isValid()) {
+		if(index.data(ContactListModel::TypeRole) == ContactListModel::ContactType) {
+			if(!statusSingle_ || !showStatusMessages_)
+				return QSize(16, avatarSize());
+			else
+				return QSize(16, qMax(avatarSize(), rowHeight_*3/2));
+		} else {
+			return QSize(16, rowHeight_);
+		}
+	}
+
+	return QSize(0, 0);
 }
 
 void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
@@ -146,10 +164,30 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 
 	QString text = nameText(o, index);
 	if (showStatusMessages_ && !statusText(index).isEmpty()) {
-		text = tr("%1 (%2)").arg(text).arg(statusText(index));
+		if(!statusSingle_) {
+			text = tr("%1 (%2)").arg(text).arg(statusText(index));
+			drawText(painter, o, r, text, index);
+		}
+		else {
+			QRect txtRect(r);
+			txtRect.setHeight(r.height()*2/3);
+			drawText(painter, o, txtRect, text, index);
+			QString statusMsg = statusText(index);
+			palette.setColor(QPalette::Text, ColorOpt::instance()->color("options.ui.look.colors.contactlist.status-messages"));
+			o.palette = palette;
+			txtRect.moveTopRight(txtRect.bottomRight());
+			txtRect.setHeight(r.height() - txtRect.height());
+			o.font.setPointSize(qMax(o.font.pointSize()-2, 7));
+			o.fontMetrics = QFontMetrics(o.font);
+			drawText(painter, o, txtRect, statusMsg, index);
+		}
 	}
+	else {
+		if(showStatusMessages_ && statusSingle_)
+			r.setHeight(r.height()*2/3);
 
-	drawText(painter, o, r, text, index);
+		drawText(painter, o, r, text, index);
+	}
 
 #if 0
 	int x;
@@ -295,6 +333,7 @@ void PsiContactListViewDelegate::optionChanged(const QString& option)
 		font_ = new QFont();
 		font_->fromString(PsiOptions::instance()->getOption(contactListFontOptionPath).toString());
 		fontMetrics_ = new QFontMetrics(*font_);
+		rowHeight_ = qMax(fontMetrics_->height()+2, 18); // 18 - default row height
 		contactList()->viewport()->update();
 	}
 	else if (option == contactListBackgroundOptionPath) {
@@ -313,6 +352,10 @@ void PsiContactListViewDelegate::optionChanged(const QString& option)
 	}
 	else if(option == outlinedGroupsOptionPath) {
 		outlinedGroup_ = PsiOptions::instance()->getOption(outlinedGroupsOptionPath).toBool();
+		contactList()->viewport()->update();
+	}
+	else if(option == statusSingleOptionPath) {
+		statusSingle_ = !PsiOptions::instance()->getOption(statusSingleOptionPath).toBool();
 		contactList()->viewport()->update();
 	}
 }
