@@ -592,6 +592,7 @@ EventDlg::EventDlg(const QString &to, PsiCon *psi, PsiAccount *pa)
 	setAccount(pa);
 
 	d->whois = new QTimer;
+	d->whois->setSingleShot(true);
 	connect(d->whois, SIGNAL(timeout()), SLOT(doWhois()));
 
 	init();
