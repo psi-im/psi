@@ -21,29 +21,28 @@
 #ifndef WINAMPCONTROLLER_H
 #define WINAMPCONTROLLER_H
 
-#include "tunecontrollerinterface.h"
 #include "pollingtunecontroller.h"
 
 #include <windows.h>
 #include <QPair>
 
-class WinAmpController : public TuneController
+class WinAmpController : public PollingTuneController
 {
 	Q_OBJECT
 public:
 	WinAmpController();
 	virtual Tune currentTune() const;
 
-protected:
-	QPair<bool, QString> getTrackTitle(HWND waWnd);
+private:
+	Tune getTune(const HWND &hWnd);
+	QPair<bool, QString> getTrackTitle(const HWND &waWnd) const;
+
 protected slots:
 	void check();
 
 private:
-	Tune prev_tune_;
-	QTimer timer_;
-	int norminterval_, antiscrollinterval_;
-	int antiscrollcounter_;
+	Tune prevTune_;
+	int antiscrollCounter_;
 };
 
 #endif

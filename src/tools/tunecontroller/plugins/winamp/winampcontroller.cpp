@@ -19,7 +19,6 @@
  */
 
 #include <windows.h>
-#include <QTimer>
 
 #ifdef Q_CC_MSVC
 #pragma warning(push)
@@ -41,17 +40,18 @@
  * \brief A controller for WinAmp.
  */
 
+static const int NormInterval = 3000;
+static const int AntiscrollInterval = 100;
 
 /**
  * \brief Constructs the controller.
  */
-WinAmpController::WinAmpController() : TuneController()
+WinAmpController::WinAmpController()
+: PollingTuneController(),
+  antiscrollCounter_(0)
 {
-	connect(&timer_, SIGNAL(timeout()), SLOT(check()));
-	norminterval_ = 3000;
-	antiscrollinterval_ = 100;
-	antiscrollcounter_ = 0;
-	timer_.start(norminterval_);
+	startPoll();
+	setInterval(NormInterval);
 }
 
 template <typename char_type> const size_t length (const char_type * begin)
@@ -62,7 +62,7 @@ template <typename char_type> const size_t length (const char_type * begin)
 }
 
 // Returns a title of a track currently being played by WinAmp with given HWND (passed in waWnd)
-QPair<bool, QString> WinAmpController::getTrackTitle(HWND waWnd)
+QPair<bool, QString> WinAmpController::getTrackTitle(const HWND &waWnd) const
 {
 	TCHAR waTitle[2048];
 	QString title;
@@ -156,41 +156,42 @@ void WinAmpController::check()
 #else
 	HWND h = FindWindow("Winamp v1.x", NULL);
 #endif
-
-	if (h && SendMessage(h,WM_WA_IPC,0,IPC_ISPLAYING) == 1) {
-		QPair<bool, QString> trackpair(getTrackTitle(h));
-		if (!trackpair.first) {
-			// getTrackTitle wants us to retry in a few ms...
-			int interval = antiscrollinterval_;
-			if (++antiscrollcounter_ > 10) {
-				antiscrollcounter_ = 0;
-				interval = norminterval_;
-			}
-			timer_.start(interval);
-			return;
-		}
-		antiscrollcounter_ = 0;
-		tune.setName(trackpair.second);
-		tune.setURL(trackpair.second);
-		tune.setTime(SendMessage(h,WM_WA_IPC,1,IPC_GETOUTPUTTIME));
+	if (h && SendMessage(h, WM_WA_IPC, 0, IPC_ISPLAYING) == 1) {
+		tune = getTune(h);
 	}
-
-
-
-	if (prev_tune_ != tune) {
-		prev_tune_ = tune;
-		if (tune.isNull()) {
-			emit stopped();
-		}
-		else {
-			emit playing(tune);
-		}
-	}
-	timer_.start(norminterval_);
+	prevTune_ = tune;
+	setInterval(NormInterval);
+	PollingTuneController::check();
 }
 
+Tune WinAmpController::getTune(const HWND &hWnd)
+{
+	Tune tune = Tune();
+	int position = (int)SendMessage(hWnd, WM_WA_IPC, 0, IPC_GETLISTPOS);
+	if (position != -1) {
+		if (hWnd && SendMessage(hWnd,WM_WA_IPC,0,IPC_ISPLAYING) == 1) {
+			QPair<bool, QString> trackpair(getTrackTitle(hWnd));
+			if (!trackpair.first) {
+				// getTrackTitle wants us to retry in a few ms...
+				int interval = AntiscrollInterval;
+				if (++antiscrollCounter_ > 10) {
+					antiscrollCounter_ = 0;
+					interval = NormInterval;
+				}
+				setInterval(interval);
+				return Tune();
+			}
+			antiscrollCounter_ = 0;
+			tune.setName(trackpair.second);
+			tune.setURL(trackpair.second);
+			tune.setTrack(QString::number(position + 1));
+			tune.setTime(SendMessage(hWnd, WM_WA_IPC, 1, IPC_GETOUTPUTTIME));
+		}
+	}
+	return tune;
+}
 
 Tune WinAmpController::currentTune() const
 {
-	return prev_tune_;
+	return prevTune_;
 }
