@@ -3232,7 +3232,7 @@ void PsiAccount::actionJoin(const ConferenceBookmark& bookmark, bool connectImme
 	MUCJoinDlg* w = new MUCJoinDlg(psi(), this);
 
 	w->setJid(bookmark.jid());
-	w->setNick(bookmark.nick().isEmpty() ? d->jid.node() : bookmark.nick());
+	w->setNick(bookmark.nick().isEmpty() ? JIDUtil::nickOrJid(this->nick(), d->jid.node()) : bookmark.nick());
 	w->setPassword(bookmark.password());
 
 	w->show();
