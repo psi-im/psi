@@ -1109,7 +1109,11 @@ void DiscoDlg::Private::doDisco(QString _host, QString _node, bool doHistory)
 
 	DiscoListItem *root = new DiscoListItem (di, &data, dlg->lv_disco);
 	root->setHidden (false); // don't confuse users with empty root
-	root->setExpanded(true); // begin browsing
+
+//	DiscoListItem::setExpanded(true); will be called from
+//	DiscoDlg::Private::itemExpanded(QTreeWidgetItem *item)
+//	So we preventing disco#items request sends twice
+	static_cast<QTreeWidgetItem*>(root)->setExpanded(true); // begin browsing;
 }
 
 void DiscoDlg::Private::updateComboBoxes(Jid j, QString n)
