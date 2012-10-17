@@ -49,6 +49,7 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
 	selfDestruct_ = 0;
 	setAttribute(Qt::WA_DeleteOnClose, false); // we want deferred endSession call and delete from manager
 
+	setWindowTitle(CAP(tr("Whiteboard (%1)").arg(pa->jid().bare())));
 	QVBoxLayout *vb1 = new QVBoxLayout(this);
 
 	// first row
