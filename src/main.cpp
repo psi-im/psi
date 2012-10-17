@@ -556,22 +556,22 @@ int main(int argc, char *argv[])
 
 	//dtcp_port = 8000;
 
-#ifdef URI_RESTART
-	if (cmdline.contains("encuri")) {
-		cmdline["uri"] = decodeUri(cmdline["encuri"]);
-		cmdline.remove("encuri");
-	}
-#endif
-
 	// now when QApplication created and text codecs initiaized we can convert
 	// command line arguments to strings
 	QHash<QString,QString> cmdlines;
 	QHashIterator<QByteArray,QByteArray> clIt(cmdline);
 	while (clIt.hasNext()) {
 		clIt.next();
+#ifdef URI_RESTART
+		if (clIt.key() == "encuri") {
+			cmdlines.insert("uri", decodeUri(QString::fromLatin1(clIt.value())));
+			continue;
+		}
+#endif
 		cmdlines.insert(QString::fromLocal8Bit(clIt.key().constData()),
 						QString::fromLocal8Bit(clIt.value().constData()));
 	}
+
 	PsiMain *psi = new PsiMain(cmdlines);
 	// check if we want to remote-control other psi instance
 	if (psi->useActiveInstance()) {
