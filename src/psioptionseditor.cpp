@@ -49,9 +49,9 @@ OptionEditor::OptionEditor(bool new_, QString name_, QVariant value_)
 	setAttribute(Qt::WA_DeleteOnClose);
 	
 	if (new_) {
-		setWindowTitle(tr("Psi: Option Editor"));
+		setWindowTitle(CAP(tr("Option Editor")));
 	} else {
-		setWindowTitle(tr("Psi: Edit Option %1").arg(name_));
+		setWindowTitle(CAP(tr("Edit Option %1").arg(name_)));
 	}
 	connect(buttonBox, SIGNAL(accepted()), this, SLOT(finished()));
 	for (int i=0; supportedTypes[i].name; i++) {
