@@ -221,6 +221,9 @@ void PsiActionList::Private::createMainWin()
 
 		IconAction *actPlaySounds = new IconAction (tr("Play Sounds"), "psi/playSounds", tr("Play &Sounds"), 0, this, 0, true);
 		actPlaySounds->setWhatsThis (tr("Toggles whether sound should be played or not"));
+    
+    IconAction *actShowPopups = new IconAction (tr("Show popups"), "psi/events", tr("Show &Popups"), 0, this, 0, true);
+		actShowPopups->setWhatsThis (tr("Toggles whether popups should be displayed or not"));
 		
 		IconAction *actQuit = new IconAction (tr("Quit"), "psi/quit", tr("&Quit"), 0, this);
 		actQuit->setMenuRole(QAction::QuitRole);
@@ -245,6 +248,7 @@ void PsiActionList::Private::createMainWin()
 			{ "menu_xml_console",     lw_act           },
 			{ "menu_change_profile",  actChangeProfile },
 			{ "menu_play_sounds",     actPlaySounds    },
+      { "menu_show_popups",     actShowPopups    },
 			{ "menu_quit",            actQuit          },
 			{ "", 0 }
 		};
