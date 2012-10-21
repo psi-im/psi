@@ -511,6 +511,7 @@ void MainWin::registerAction( IconAction* action )
 		{ "menu_change_profile", activated, this, SIGNAL( changeProfile() ) },
 		{ "menu_quit",           activated, this, SLOT( try2tryCloseProgram() ) },
 		{ "menu_play_sounds",    toggled,   this, SLOT( actPlaySoundsActivated(bool) ) },
+    { "menu_show_popups",    toggled,   this, SLOT( actShowPopupsActivated(bool) ) },
 #ifdef USE_PEP
 		{ "publish_tune",        toggled,   this, SLOT( actPublishTuneActivated(bool) ) },
 #endif
@@ -552,6 +553,9 @@ void MainWin::registerAction( IconAction* action )
 			// special cases
 			if ( aName == "menu_play_sounds" ) {
 				action->setChecked(PsiOptions::instance()->getOption("options.ui.notifications.sounds.enable").toBool());
+			}
+      if ( aName == "menu_show_popups" ) {
+				action->setChecked(PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.enabled").toBool());
 			}
 			//else if ( aName == "foobar" )
 			//	;
@@ -797,7 +801,7 @@ void MainWin::buildMainMenu()
 	if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
 		actions << "menu_change_profile";
 	}
-	actions << "menu_play_sounds";
+  actions << "menu_show_popups" << "menu_play_sounds";
 
 	d->updateMenu(actions, d->mainMenu);
 }
@@ -830,7 +834,7 @@ void MainWin::buildGeneralMenu(QMenu* menu)
 	if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
 		actions << "menu_change_profile";
 	}
-	actions << "menu_play_sounds";
+	actions << "menu_show_popups" << "menu_play_sounds";
 
 	d->updateMenu(actions, menu);
 }
@@ -964,6 +968,11 @@ void MainWin::actDiagQCAKeyStoreActivated()
 void MainWin::actPlaySoundsActivated (bool state)
 {
 	PsiOptions::instance()->setOption("options.ui.notifications.sounds.enable", state);
+}
+
+void MainWin::actShowPopupsActivated (bool state)
+{
+	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.enabled", state);
 }
 
 void MainWin::actPublishTuneActivated (bool state)
