@@ -554,6 +554,9 @@ void MainWin::registerAction( IconAction* action )
 			if ( aName == "menu_play_sounds" ) {
 				action->setChecked(PsiOptions::instance()->getOption("options.ui.notifications.sounds.enable").toBool());
 			}
+      if ( aName == "menu_show_popups" ) {
+				action->setChecked(PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.enabled").toBool());
+			}
 			//else if ( aName == "foobar" )
 			//	;
 		}
@@ -798,7 +801,7 @@ void MainWin::buildMainMenu()
 	if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
 		actions << "menu_change_profile";
 	}
-	actions << "menu_play_sounds";
+  actions << "menu_show_popups" << "menu_play_sounds";
 
 	d->updateMenu(actions, d->mainMenu);
 }
@@ -831,7 +834,7 @@ void MainWin::buildGeneralMenu(QMenu* menu)
 	if (PsiOptions::instance()->getOption("options.ui.menu.main.change-profile").toBool()) {
 		actions << "menu_change_profile";
 	}
-	actions << "menu_play_sounds";
+	actions << "menu_show_popups" << "menu_play_sounds";
 
 	d->updateMenu(actions, menu);
 }
