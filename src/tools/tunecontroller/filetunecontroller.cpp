@@ -75,6 +75,7 @@ void FileTuneController::onFileChanged() // this will never happen if _songFile'
 
 void FileTuneController::check()
 {
+	Tune existedTune = _currentTune;
 	_currentTune = Tune(); // just a reset
 	if (QFile::exists(_songFile)) {
 		if (_waitForCreated && _watchFunctional) {
@@ -95,7 +96,7 @@ void FileTuneController::check()
 			_currentTune.setTime(stream.readLine().toUInt());
 		}
 	}
-	else if (!_waitForCreated) {
+	else if (!_waitForCreated && existedTune.isNull()) {
 		_waitForCreated = true;
 		return; // we will return to this function when file created. just exit for now.
 	}
