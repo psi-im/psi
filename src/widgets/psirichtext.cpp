@@ -388,6 +388,8 @@ void PsiRichText::appendText(QTextDocument *doc, QTextCursor &cursor, const QStr
 		
 		// clear trackbar for new blocks
 		QTextBlockFormat blockFormat = cursor.blockFormat();
+		blockFormat.setTopMargin(0);
+		blockFormat.setBottomMargin(0);
 		blockFormat.clearProperty(QTextFormat::BlockTrailingHorizontalRulerWidth);
 		cursor.setBlockFormat(blockFormat);
 	}
