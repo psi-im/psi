@@ -605,7 +605,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 			str += QString("<div style='white-space:pre'>") + QObject::tr("Presence Error") + QString(": %1").arg(Qt::escape(err[0])) + "</div>";
 			err.pop_front();
 			foreach (QString line, err)
-				str += "<div>" + line + "</div>";
+				str += "<div>" + Qt::escape(line) + "</div>";
 		}
 
 		// status message
