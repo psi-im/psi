@@ -6,17 +6,17 @@
 #include <QDesktopServices>
 #include <QMessageBox>
 
-#ifdef Q_WS_X11
+#ifdef HAVE_X11
 #include <sys/stat.h> // chmod
 #endif
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 #include <windows.h>
 #include <shellapi.h>
 #include <shlobj.h>
 #endif
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 #include <sys/stat.h> // chmod
 #include <CoreServices/CoreServices.h>
 #endif
@@ -45,13 +45,13 @@
 #define PROG_OPTIONS_NS "http://psi-im.org/options"
 #define PROG_STORAGE_NS "http://psi-im.org/storage"
 #define PROG_FILECACHE_NS "http://psi-im.org/filecache"
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 #define PROG_APPCAST_URL "http://psi-im.org/appcast/psi-mac.xml"
 #else
 #define PROG_APPCAST_URL ""
 #endif
 
-#if defined(Q_WS_X11) && !defined(PSI_DATADIR)
+#if defined(HAVE_X11) && !defined(PSI_DATADIR)
 #define PSI_DATADIR "/usr/local/share/psi"
 #endif
 
@@ -134,11 +134,11 @@ QString ApplicationInfo::getCertificateStoreSaveDir()
 
 QString ApplicationInfo::resourcesDir()
 {
-#if defined(Q_WS_X11)
+#if defined(HAVE_X11)
 	return PSI_DATADIR;
-#elif defined(Q_WS_WIN)
+#elif defined(Q_OS_WIN)
 	return qApp->applicationDirPath();
-#elif defined(Q_WS_MAC)
+#elif defined(Q_OS_MAC)
 	// FIXME: Clean this up (remko)
 	// System routine locates resource files. We "know" that Psi.icns is
 	// in the Resources directory.
@@ -202,7 +202,7 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
 		configDir_ = QString::fromLocal8Bit(getenv("PSIDATADIR"));
 
 		if (configDir_.isEmpty()) {
-#if defined Q_WS_WIN
+#if defined Q_OS_WIN
 			QString base = QFileInfo(QCoreApplication::applicationFilePath()).fileName()
 					.toLower().indexOf("portable") == -1?
 						"" : QCoreApplication::applicationDirPath();
@@ -223,11 +223,11 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
 			QDir configDir(configDir_);
 			QDir cacheDir(cacheDir_);
 			QDir dataDir(dataDir_);
-#elif defined Q_WS_MAC
+#elif defined Q_OS_MAC
 			QDir configDir(QDir::homePath() + "/Library/Application Support/" + name());
 			QDir cacheDir(QDir::homePath() + "/Library/Caches/" + name());
 			QDir dataDir(configDir);
-#elif defined Q_WS_X11
+#elif defined HAVE_X11
 			QString XdgConfigHome = QString::fromLocal8Bit(getenv("XDG_CONFIG_HOME"));
 			QString XdgDataHome = QString::fromLocal8Bit(getenv("XDG_DATA_HOME"));
 			QString XdgCacheHome = QString::fromLocal8Bit(getenv("XDG_CACHE_HOME"));

@@ -24,6 +24,7 @@
 #define MINICMD_H
 
 #include <QHash>
+#include <QVariant>
 
 class QString;
 class QStringList;

@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
- 
+
 #ifndef PRIVACYLISTMODEL_H
 #define PRIVACYLISTMODEL_H
 
@@ -31,8 +31,8 @@ class PrivacyListModel : public QAbstractListModel
 {
 public:
 	enum { TextColumn = 0, ValueColumn };
-	enum { 
-		BlockedRole = Qt::UserRole + 0 
+	enum {
+		BlockedRole = Qt::UserRole + 0
 	};
 
 	PrivacyListModel(const PrivacyList& list = PrivacyList(""), QObject* parent = NULL);
@@ -42,7 +42,7 @@ public:
 	int columnCount(const QModelIndex &parent = QModelIndex()) const;
 	QVariant data(const QModelIndex &index, int role) const;
 	bool removeRows(int row, int count, const QModelIndex & parent = QModelIndex());
-	void reset() { QAbstractListModel::reset(); } // Not really clean
+	//void reset() { QAbstractListModel::reset(); } // Not really clean
 
 	// Own functions
 	PrivacyList& list() { return list_; }
@@ -51,6 +51,7 @@ public:
 	bool moveDown(const QModelIndex& index);
 	bool edit(const QModelIndex& index);
 	bool add();
+	void insertItem(int pos, const PrivacyListItem &item);
 
 private:
 	PrivacyList list_;

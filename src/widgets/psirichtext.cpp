@@ -114,7 +114,7 @@ void TextIconHandler::drawObject(QPainter *painter, const QRectF &rect, QTextDoc
 	const QTextCharFormat charFormat = format.toCharFormat();
 	const QPixmap pixmap = IconsetFactory::iconPixmap(charFormat.stringProperty(TextIconFormat::IconName));
 
-	painter->drawPixmap(rect, pixmap, pixmap.rect());	
+	painter->drawPixmap(rect, pixmap, pixmap.rect());
 }
 
 #endif // WIDGET_PLUGIN
@@ -124,7 +124,7 @@ void TextIconHandler::drawObject(QPainter *painter, const QRectF &rect, QTextDoc
 //----------------------------------------------------------------------------
 
 /**
- * You need to call this function on your QTextDocument to make it 
+ * You need to call this function on your QTextDocument to make it
  * capable of displaying inline Icons. Uninstaller ships separately.
  */
 void PsiRichText::install(QTextDocument *doc)
@@ -135,7 +135,7 @@ void PsiRichText::install(QTextDocument *doc)
 	if (!handler) {
 		handler = new TextIconHandler(qApp);
 	}
-	
+
 	doc->documentLayout()->registerHandler(IconFormatType, handler);
 #endif
 }
@@ -153,11 +153,11 @@ void PsiRichText::ensureTextLayouted(QTextDocument *doc, int documentWidth, Qt::
 	// bah, QTextDocumentLayout is private :-/
 	// QTextDocumentLayout *lout = qobject_cast<QTextDocumentLayout *>(doc->documentLayout());
 	// Q_ASSERT(lout);
-	// 
+	//
 	// int flags = (textWordWrap ? 0 : Qt::TextSingleLine) | align;
 	// flags |= (layoutDirection == Qt::RightToLeft) ? QTextDocumentLayout::RTL : QTextDocumentLayout::LTR;
 	// lout->setBlockTextFlags(flags);
-	// 
+	//
 	// if (textWordWrap) {
 	// 	// ensure that we break at words and not just about anywhere
 	// 	lout->setWordWrapMode(QTextOption::WordWrap);
@@ -183,10 +183,10 @@ void PsiRichText::insertIcon(QTextCursor &cursor, const QString &iconName, const
 	Q_UNUSED(iconText);
 #else
 	QTextCharFormat format = cursor.charFormat();
-	
+
 	TextIconFormat icon(iconName, iconText);
 	cursor.insertText(QString(QChar::ObjectReplacementCharacter), icon);
-	
+
 	cursor.setCharFormat(format);
 #endif
 }
@@ -216,7 +216,7 @@ static QString preserveOriginalObjectReplacementCharacters(QString text, TextIco
 
 /**
  * Replaces all <icon> tags with handy ObjectReplacementCharacters, and
- * adds appropriate format to the \param queue. Returns processed 
+ * adds appropriate format to the \param queue. Returns processed
  * \param text.
  */
 static QString convertIconsToObjectReplacementCharacters(QString text, TextIconFormatQueue *queue)
@@ -224,7 +224,7 @@ static QString convertIconsToObjectReplacementCharacters(QString text, TextIconF
 	// Format: <icon name="" text="">
 	static QRegExp rxName("name=\"([^\"]+)\"");
 	static QRegExp rxText("text=\"([^\"]+)\"");
-	
+
 	QString result;
 	QString work = text;
 
@@ -232,12 +232,12 @@ static QString convertIconsToObjectReplacementCharacters(QString text, TextIconF
 		int start = work.indexOf("<icon");
 		if (start == -1)
 			break;
-		
+
 		result += preserveOriginalObjectReplacementCharacters(work.left(start), queue);
-		
+
 		int end = work.indexOf(">", start);
 		Q_ASSERT(end != -1);
-		
+
 		QString fragment = work.mid(start, end - start);
 		if (rxName.indexIn(fragment) != -1) {
 			QString iconName = TextUtil::unescape(rxName.capturedTexts()[1]);
@@ -245,14 +245,14 @@ static QString convertIconsToObjectReplacementCharacters(QString text, TextIconF
 			if (rxText.indexIn(fragment) != -1) {
 				iconText = TextUtil::unescape(rxText.capturedTexts()[1]);
 			}
-			
+
 			queue->enqueue(new TextIconFormat(iconName, iconText));
 			result += QChar::ObjectReplacementCharacter;
 		}
-		
+
 		work = work.mid(end + 1);
 	}
-	
+
 	return result + preserveOriginalObjectReplacementCharacters(work, queue);
 }
 
@@ -268,18 +268,18 @@ static void applyFormatToIcons(QTextDocument *doc, TextIconFormatQueue *queue, Q
 		if (searchCursor.isNull()) {
 			break;
 		}
-		
+
 		Q_ASSERT(!queue->isEmpty());
 		TextIconFormat *format = queue->dequeue();
-		if (format) { 
+		if (format) {
 			searchCursor.setCharFormat(*format);
 			delete format;
 		}
 	}
-	
+
 	// if it's not true, there's a memleak
 	Q_ASSERT(queue->isEmpty());
-	
+
 	// clear the selection that's left after successful QTextDocument::find()
 	cursor.clearSelection();
 }
@@ -290,23 +290,23 @@ static void applyFormatToIcons(QTextDocument *doc, TextIconFormatQueue *queue, Q
 static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &cursor)
 {
 	TextIconFormatQueue queue;
-	
-	// we need to save this to start searching from 
+
+	// we need to save this to start searching from
 	// here when applying format to icons
 	int initialpos = cursor.position();
-	
+
 	// prepare images and remove insecure images
 	QRegExp re("<img[^>]+src\\s*=\\s*(\"[^\"]*\"|'[^']*')[^>]*>");
 	QString replace;
 	for (int pos = 0; (pos = re.indexIn(text, pos)) != -1; ) {
 		replace.clear();
 		QString imgSrc = re.cap(1).mid(1, re.cap(1).size() - 2);
-		QUrl imgSrcUrl = QUrl::fromEncoded(imgSrc.toAscii());
+		QUrl imgSrcUrl = QUrl::fromEncoded(imgSrc.toLatin1());
 		if (imgSrcUrl.isValid()) {
 			if (imgSrcUrl.scheme() == "data") {
 				QRegExp dataRe("^[a-zA-Z]+/[a-zA-Z]+;base64,([a-zA-Z0-9/=+%]+)$");
 				if (dataRe.indexIn(imgSrcUrl.path()) != -1) {
-					const QByteArray ba = QByteArray::fromBase64(dataRe.cap(1).toAscii());
+					const QByteArray ba = QByteArray::fromBase64(dataRe.cap(1).toLatin1());
 					if (!ba.isNull()) {
 						QImage image;
 						if (image.loadFromData(ba)) {
@@ -350,10 +350,10 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
 			pos += replace.size() + 1;
 		}
 	}
-	
+
 	cursor.insertFragment(QTextDocumentFragment::fromHtml(convertIconsToObjectReplacementCharacters(text, &queue)));
 	cursor.setPosition(initialpos);
-	
+
 	applyFormatToIcons(doc, &queue, cursor);
 }
 
@@ -385,7 +385,7 @@ void PsiRichText::appendText(QTextDocument *doc, QTextCursor &cursor, const QStr
 	cursor.clearSelection();
 	if (!cursor.atBlockStart()) {
 		cursor.insertBlock();
-		
+
 		// clear trackbar for new blocks
 		QTextBlockFormat blockFormat = cursor.blockFormat();
 		blockFormat.setTopMargin(0);
@@ -393,9 +393,9 @@ void PsiRichText::appendText(QTextDocument *doc, QTextCursor &cursor, const QStr
 		blockFormat.clearProperty(QTextFormat::BlockTrailingHorizontalRulerWidth);
 		cursor.setBlockFormat(blockFormat);
 	}
-	
+
 	appendTextHelper(doc, text, cursor);
-	
+
 	cursor.endEditBlock();
 }
 

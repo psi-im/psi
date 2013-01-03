@@ -154,20 +154,36 @@ bool TuneControllerManager::checkTune(const Tune &tune) const
 	return true;
 }
 
-// ---------------------------------------------------------------------------- 
+// ----------------------------------------------------------------------------
 
 #ifdef TC_ITUNES
+#ifdef HAVE_QT5
+Q_IMPORT_PLUGIN(ITunesPlugin)
+#else
 Q_IMPORT_PLUGIN(itunesplugin)
+#endif
 #endif
 
 #ifdef TC_WINAMP
+#ifdef HAVE_QT5
+Q_IMPORT_PLUGIN(WinAmpPlugin)
+#else
 Q_IMPORT_PLUGIN(winampplugin)
+#endif
 #endif
 
 #ifdef TC_PSIFILE
+#ifdef HAVE_QT5
+Q_IMPORT_PLUGIN(PsiFilePlugin)
+#else
 Q_IMPORT_PLUGIN(psifileplugin)
+#endif
 #endif
 
 #if defined(TC_MPRIS) && defined(USE_DBUS)
+#ifdef HAVE_QT5
+Q_IMPORT_PLUGIN(MPRISPlugin)
+#else
 Q_IMPORT_PLUGIN(mprisplugin)
+#endif
 #endif

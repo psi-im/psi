@@ -69,7 +69,7 @@
 #include "pgputil.h"
 #endif
 
-static inline int rankStatus(int status) 
+static inline int rankStatus(int status)
 {
 	switch (status) {
 		case STATUS_CHAT : return 0;
@@ -524,7 +524,7 @@ void ContactProfile::addNeededContactItems(Entry *e)
 void ContactProfile::removeUnneededContactItems(Entry *e)
 {
 	const UserListItem &u = e->u;
-	
+
 	if(u.inList()) {
 		bool delAll = !d->v_enabled;
 		if(u.isTransport()) {
@@ -986,7 +986,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		pm.insertItem(IconsetFactory::icon("psi/xml").icon(), tr("&XML Console"), 10);
 		pm.insertSeparator();
 		pm.insertItem(IconsetFactory::icon("psi/account").icon(), tr("&Modify Account..."), 0);
-		
+
 		if (PsiOptions::instance()->getOption("options.ui.menu.account.admin").toBool()) {
 			pm.insertSeparator();
 			pm.setItemEnabled(pm.insertItem(tr("&Admin"), am), online);
@@ -1165,7 +1165,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		}
 
 		if ( (self  && i->isAlerting()) ||
-		     (!self && e->alerting) ) {
+			 (!self && e->alerting) ) {
 			d->cv->qa_recv->addTo(&pm);
 			pm.insertSeparator();
 		}
@@ -1216,7 +1216,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		if(!isPrivate)
 			pm.insertItem(tr("Open a Whiteboard To"), wb2m, 19);
 #endif
-		
+
 		if(!isPrivate) {
 			if(rl.isEmpty()) {
 				pm.setItemEnabled(17, false);
@@ -1226,7 +1226,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 #endif
 			}
 		}
-		
+
 		// TODO: Add executeCommand() thing
 		if(!isPrivate) {
 			pm.insertItem(tr("E&xecute Command"), rc2m, 25);
@@ -1273,7 +1273,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 				pm.setItemEnabled(24,!psiAccount()->capsManager()->isEnabled() || hasVoice);
 			}*/
 		}
-		
+
 		if(!isAgent) {
 			pm.insertSeparator();
 			pm.insertItem(IconsetFactory::icon("psi/upload").icon(), tr("Send &File"), 23);
@@ -1955,7 +1955,7 @@ public slots:
 		PsiOptions::instance()->setOption("options.ui.contactlist.grow-roster-upwards", (bool) (bottom_offs < top_offs));
 		//qWarning("growTop = %d", PsiOptions::instance()->getOption("options.ui.contactlist.automatically-resize-roster").toBool()GrowTop);
 	}
-	
+
 	/*
 	 * \brief Display tool tip for item under cursor.
 	 */
@@ -2065,7 +2065,7 @@ ContactView::ContactView(QWidget *parent, const char *name)
 	optionsUpdate();
 	setAcceptDrops(true);
 	viewport()->setAcceptDrops(true);
-	
+
 	filterString_ = QString();
 	applyingFilter = false;
 }
@@ -2085,30 +2085,30 @@ bool ContactView::filterContact(ContactViewItem *item, bool refineSearch)
 		return false;
 	}
 	if (filterString_.isNull()) {
-		return true;	
+		return true;
 	}
 	//if refineSearch, only search still visible items
 	if (refineSearch && !item->isVisible()) {
-		return false;		
+		return false;
 	}
 	if (TextUtil::rich2plain(item->text(0)).contains(filterString_,Qt::CaseInsensitive))
 	{
 		ensureItemVisible(item);
 		item->setVisible(true);
-		item->optionsUpdate();			
+		item->optionsUpdate();
 	}
 	else
 	{
 		item->setVisible(false);
 	}
-	item->repaint();	
+	item->repaint();
 	return item->isVisible();
 }
 
 bool ContactView::filterGroup(ContactViewItem *group, bool refineSearch)
 {
 	if (!group) {
-		return false;	
+		return false;
 	} else if (group->type() != ContactViewItem::Group) {
 		return false;
 	} else if (filterString_.isNull()) {
@@ -2116,10 +2116,10 @@ bool ContactView::filterGroup(ContactViewItem *group, bool refineSearch)
 	}
 	//if refine_search, only search still visible items
 	if (refineSearch && !group->isVisible()) {
-		return false;	
+		return false;
 	}
 	group->setVisible(true); //if not refined search
-	
+
 	//iterate over children
 	Q3ListViewItemIterator it(group);
 	bool groupContainsAFinding = false;
@@ -2127,10 +2127,10 @@ bool ContactView::filterGroup(ContactViewItem *group, bool refineSearch)
 	while(item) {
 		if (filterContact(item,refineSearch))
 			groupContainsAFinding = true;
-        item = static_cast<ContactViewItem*>(item->nextSibling());
+		item = static_cast<ContactViewItem*>(item->nextSibling());
 	}
 	if (groupContainsAFinding == false) {
-		group->setVisible(false);		
+		group->setVisible(false);
 	}
 	group->repaint();
 	return groupContainsAFinding;
@@ -2140,11 +2140,11 @@ void ContactView::setFilter(QString const &text)
 {
 	bool refineSearch = text.startsWith(filterString_);
 	filterString_ = text;
-	
+
 	applyingFilter = true;
 	Q3ListViewItemIterator it(d->cv);
 	for (ContactViewItem *item; (item = (ContactViewItem *)it.current()); ++it)
-	{	
+	{
 		if (item->type() == ContactViewItem::Group) {
 			filterGroup(item, refineSearch);
 		}
@@ -2156,13 +2156,13 @@ void ContactView::clearFilter()
 {
 	filterString_=QString();
 	Q3ListViewItemIterator it(d->cv);
-	for (ContactViewItem *item; (item = (ContactViewItem *)it.current()); ++it) 
+	for (ContactViewItem *item; (item = (ContactViewItem *)it.current()); ++it)
 	{
 		item->setVisible(true);
 		item->clearFilter();
 		item->optionsUpdate();
 		item->repaint();
-	}	
+	}
 }
 
 
@@ -2202,10 +2202,10 @@ void ContactView::keyPressEvent(QKeyEvent *e)
 
 		//d->typeAhead = QString::null;
 		Q3ListView::keyPressEvent(e);
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	} else if (e->modifiers() == Qt::ControlModifier) {
 		Q3ListView::keyPressEvent(e);
-#endif 
+#endif
 	} else {
 		QString text = e->text().toLower();
 		if (text.isEmpty()) {
@@ -2252,7 +2252,7 @@ void ContactView::setShowAway(bool x)
 	bool oldstate = v_showAway;
 	v_showAway = x;
 	PsiOptions::instance()->setOption("options.ui.contactlist.show.away-contacts", x);
-		
+
 	if(v_showAway != oldstate) {
 		showAway(v_showAway);
 
@@ -2291,12 +2291,12 @@ void ContactView::setShowStatusMsg(bool x)
 		v_showStatusMsg = x;
 		PsiOptions::instance()->setOption("options.ui.contactlist.status-messages.show",x);
 		emit showStatusMsg(v_showStatusMsg);
-		
+
 		Q3PtrListIterator<ContactProfile> it(d->profiles);
 		for(ContactProfile *cp; (cp = it.current()); ++it) {
 			cp->resetAllContactItemNames();
 		}
-		
+
 		recalculateSize();
 	}
 }
@@ -2397,7 +2397,7 @@ void ContactView::qlv_singleclick(int button, Q3ListViewItem *i, const QPoint &p
 			item->contactProfile()->scActionDefault(item);
 	}
 	else {
-		const QPixmap * pix = item->pixmap(0);			
+		const QPixmap * pix = item->pixmap(0);
 		if (button == Qt::LeftButton && item->type() == ContactViewItem::Group && pix && viewport()->mapFromGlobal(pos).x() <= pix->width() + treeStepSize()) {
 			setOpen(item, !item->isOpen());
 		}
@@ -2765,7 +2765,7 @@ RichListViewItem::~RichListViewItem()
 {
 	delete v_rt;
 }
-	
+
 void RichListViewItem::setText(int column, const QString& text)
 {
 	Q3ListViewItem::setText(column, text);
@@ -2783,7 +2783,7 @@ void RichListViewItem::setup()
 			v_rt = 0;
 			return;
 		}
-		
+
 		const Q3ListView* lv = listView();
 		const QPixmap* px = pixmap(0);
 		int left =  lv->itemMargin() + ((px)?(px->width() + lv->itemMargin()):0);
@@ -2794,11 +2794,11 @@ void RichListViewItem::setup()
 		if ( v_selected  ) {
 			txt = QString("<font color=\"%1\">").arg(listView()->colorGroup().color( QColorGroup::HighlightedText ).name()) + txt + "</font>";
 		}
-		
+
 		if(v_rt)
 			delete v_rt;
 		v_rt = new Q3SimpleRichText(txt, lv->font(), QString::null, RichListViewStyleSheet::instance());
-		
+
 		v_rt->setWidth(lv->columnWidth(0) - left - depth() * lv->treeStepSize());
 
 		v_widthUsed = v_rt->widthUsed() + left;
@@ -2823,24 +2823,20 @@ void RichListViewItem::paintCell(QPainter *p, const QColorGroup &cg, int column,
 
 	Q3ListView* lv = listView();
 
-	if ( isSelected() != v_selected || lv->isActiveWindow() != v_active) 
+	if ( isSelected() != v_selected || lv->isActiveWindow() != v_active)
 		setup();
-	
+
 	int r = lv->itemMargin();
-	
+
 	const QBrush *paper;
 	// setup (colors, sizes, ...)
 	if ( isSelected() ) {
 		paper = new QBrush(cg.brush( QColorGroup::Highlight ));
 	}
 	else{
-#if QT_VERSION >= 0x040103 
 		paper = new QBrush(cg.background(), Qt::NoBrush);
-#else
-		paper = new QBrush(cg.brush( QColorGroup::WindowText ));
-#endif
 	}
-	
+
 	const QPixmap * px = pixmap( column );
 	QRect pxrect;
 	int pxw = 0;
@@ -2858,7 +2854,7 @@ void RichListViewItem::paintCell(QPainter *p, const QColorGroup &cg, int column,
 	// start drawing
 	QRect rtrect(r, (height() - v_rt->height())/2, v_widthUsed, v_rt->height());
 	v_rt->draw(p, rtrect.left(), rtrect.top(), rtrect, cg, paper);
-	
+
 	QRegion clip(0, 0, width, height());
 	clip -= rtrect;
 	p->setClipRegion(clip);
@@ -3181,12 +3177,7 @@ void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
 
 		if(type_ == Profile) {
 			xcg.setColor(QColorGroup::Text, ColorOpt::instance()->color("options.ui.look.colors.contactlist.profile.header-foreground"));
-			#if QT_VERSION < 0x040301
-				xcg.setColor(QColorGroup::Background, ColorOpt::instance()->color("options.ui.look.colors.contactlist.profile.header-background"));
-			#else
-				xcg.setColor(QColorGroup::Base, ColorOpt::instance()->color("options.ui.look.colors.contactlist.profile.header-background"));
- 			#endif
-			
+			xcg.setColor(QColorGroup::Base, ColorOpt::instance()->color("options.ui.look.colors.contactlist.profile.header-background"));
 		}
 		else if(type_ == Group) {
 			QFont f = p->font();
@@ -3194,13 +3185,9 @@ void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
 			p->setFont(f);
 			xcg.setColor(QColorGroup::Text, ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-foreground"));
 			if (!PsiOptions::instance()->getOption("options.ui.look.contactlist.use-slim-group-headings").toBool()) {
- 				#if QT_VERSION < 0x040301
-					xcg.setColor(QColorGroup::Background, ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background"));
-				#else
-					xcg.setColor(QColorGroup::Base, ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background"));
-				#endif
+				xcg.setColor(QColorGroup::Base, ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background"));
 			}
-		} 
+		}
 
 		Q3ListViewItem::paintCell(p, xcg, column, width, alignment);
 
@@ -3242,7 +3229,7 @@ void ContactViewItem::paintCell(QPainter *p, const QColorGroup & cg, int column,
 				p->setPen(QPen(ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-background"), 2));*/
 				p->drawLine(x, h, width - 8, h);
 			}
-		} 
+		}
 		else {
 			if (PsiOptions::instance()->getOption("options.ui.look.contactlist.use-outlined-group-headings").toBool()) {
 				p->setPen(QPen(ColorOpt::instance()->color("options.ui.look.colors.contactlist.grouping.header-foreground")));
@@ -3418,12 +3405,12 @@ void ContactViewItem::resetName(bool forceNoStatusMsg)
 {
 	if ( d->u ) {
 		QString s = JIDUtil::nickOrJid(d->u->name(), d->u->jid().full());
-			
+
 		if (d->status_single && !forceNoStatusMsg) {
 			s = "<nobr>" + TextUtil::plain2rich(s) + "</nobr>";
 		}
 
-		// Add the status message if wanted 
+		// Add the status message if wanted
 		if (!forceNoStatusMsg && static_cast<ContactView*>(Q3ListViewItem::listView())->isShowStatusMsg()) {
 			QString statusMsg;
 			if (d->u->priority() != d->u->userResourceList().end()) {

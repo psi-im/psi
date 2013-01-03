@@ -45,8 +45,9 @@
 #include <QResizeEvent>
 #include <QMenu>
 #include <QDragEnterEvent>
-#include <QTextDocument> // for Qt::escape()
+#include <QTextDocument> // for TextUtil::escape()
 #include <QScrollBar>
+#include <QMimeData>
 
 #include "psiaccount.h"
 #include "userlist.h"
@@ -74,7 +75,7 @@
 #include "accountlabel.h"
 #include "psirichtext.h"
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 #include <windows.h>
 #endif
 
@@ -301,7 +302,7 @@ void ChatDlg::showEvent(QShowEvent *)
 
 void ChatDlg::logSelectionChanged()
 {
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	// A hack to only give the message log focus when text is selected
 	if (chatView()->textCursor().hasSelection()) {
 		chatView()->setFocus();
@@ -450,7 +451,7 @@ void ChatDlg::updateContact(const Jid &j, bool fromPresence)
 			updatePGP();
 
 			if (fromPresence && statusChanged) {
-				QString msg = tr("%1 is %2").arg(Qt::escape(dispNick_)).arg(status2txt(status_));
+				QString msg = tr("%1 is %2").arg(TextUtil::escape(dispNick_)).arg(status2txt(status_));
 				if (!statusString_.isEmpty()) {
 					QString ss = TextUtil::linkify(TextUtil::plain2rich(statusString_));
 					if (PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool()) {
@@ -508,7 +509,7 @@ void ChatDlg::setLooks()
 	updateContact(jid(), false);
 
 	// update the widget icon
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/start-chat").icon());
 #endif
 
@@ -777,7 +778,7 @@ QString ChatDlg::whoNick(bool local) const
 		result = dispNick_;
 	}
 
-	return Qt::escape(result);
+	return TextUtil::escape(result);
 }
 
 void ChatDlg::appendMessage(const Message &m, bool local)
@@ -814,8 +815,8 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 	QString subject = messageSubject(m);
 
 	ChatDlg::SpooledType spooledType = m.spooled() ?
-	                                   ChatDlg::Spooled_OfflineStorage :
-	                                   ChatDlg::Spooled_None;
+									   ChatDlg::Spooled_OfflineStorage :
+									   ChatDlg::Spooled_None;
 	if (isEmoteMessage(m))
 		appendEmoteMessage(spooledType, m.timeStamp(), local, txt, subject);
 	else
@@ -948,7 +949,7 @@ void ChatDlg::setContactChatState(ChatState state)
 {
 	contactChatState_ = state;
 	if (state == XMPP::StateGone) {
-		appendSysMsg(tr("%1 ended the conversation").arg(Qt::escape(dispNick_)));
+		appendSysMsg(tr("%1 ended the conversation").arg(TextUtil::escape(dispNick_)));
 	}
 	else {
 		// Activate ourselves
@@ -1100,8 +1101,8 @@ void ChatDlg::chatEditCreated()
 TabbableWidget::State ChatDlg::state() const
 {
 	return contactChatState_ == XMPP::StateComposing ?
-	       TabbableWidget::StateComposing :
-	       TabbableWidget::StateNone;
+		   TabbableWidget::StateComposing :
+		   TabbableWidget::StateNone;
 }
 
 int ChatDlg::unreadMessageCount() const

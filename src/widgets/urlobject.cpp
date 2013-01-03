@@ -25,6 +25,9 @@
 #include <QMenu>
 #include <QSignalMapper>
 #include <QUrl>
+#ifdef HAVE_QT5
+# include <QUrlQuery>
+#endif
 
 #include "iconaction.h"
 
@@ -49,7 +52,7 @@ public:
 	{
 		urlObject = parent;
 		QString tr;
-		
+
 		tr = qApp->translate("URLLabel", "Open");
 		act_xmpp = new IconAction(tr, "psi/jabber", tr, 0, this);
 		connectXmppAction(act_xmpp, "");
@@ -57,7 +60,7 @@ public:
 		tr = qApp->translate("URLLabel", "Open mail composer");
 		act_mailto = new IconAction(tr, "psi/email", tr, 0, this);
 		connect(act_mailto, SIGNAL(triggered()), SLOT(popupAction()));
-	
+
 		tr = qApp->translate("URLLabel", "Open web browser");
 		act_browser = new IconAction(tr, "psi/www", tr, 0, this);
 		connect(act_browser, SIGNAL(triggered()), SLOT(popupAction()));
@@ -69,7 +72,7 @@ public:
 		tr = qApp->translate("URLLabel", "Send message to");
 		act_send_message = new IconAction(tr, "psi/message", tr, 0, this);
 		connectXmppAction(act_send_message, "message");
-		
+
 		tr = qApp->translate("URLLabel", "Chat with");
 		act_chat = new IconAction(tr, "psi/chat", tr, 0, this);
 		connectXmppAction(act_chat, "message;type=chat");
@@ -84,7 +87,7 @@ public:
 
 		connect(&xmppActionMapper, SIGNAL(mapped(const QString&)), SLOT(xmppAction(const QString&)));
 	}
-		
+
 	QString copyString(QString from)
 	{
 		QString l = from;
@@ -131,10 +134,19 @@ public slots:
 		QUrl uri(lnk);
 		if (!query.isEmpty()) {
 			QString queryType = query.left(query.indexOf(';'));
+#ifdef HAVE_QT5
+			QUrlQuery q = QUrlQuery(uri.query(QUrl::FullyEncoded));
+			q.setQueryDelimiters('=', ';');
+			if (q.queryItems().value(0).first != queryType) {
+				q.setQuery(query);
+			}
+			uri.setQuery(q);
+#else
 			uri.setQueryDelimiters('=', ';');
 			if (uri.queryItems().value(0).first != queryType) {
 				uri.setEncodedQuery(query.toAscii());
 			}
+#endif
 		}
 		uri.setScheme("xmpp");
 		emit urlObject->openURL(uri.toString());
@@ -187,13 +199,13 @@ QMenu *URLObject::createPopupMenu(const QString &lnk)
 	QString service = d->link.left( colon );
 
 	QMenu *m = new QMenu;
-	
+
 	bool needGenericOpen = true;
 	if (service == "mailto" || service == "x-psi-atstyle") {
 		needGenericOpen = false;
 		m->addAction(d->act_mailto);
 	}
-	if (service == "jabber" || service == "jid" || service == "xmpp" || service == "x-psi-atstyle") {		
+	if (service == "jabber" || service == "jid" || service == "xmpp" || service == "x-psi-atstyle") {
 		needGenericOpen = false;
 		if (service == "x-psi-atstyle") {
 			m->addSeparator();

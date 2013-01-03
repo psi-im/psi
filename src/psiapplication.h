@@ -22,7 +22,7 @@
 #define PSIAPPLICATION_H
 
 #include <QApplication>
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 #include <Carbon/Carbon.h>
 #endif
 
@@ -36,10 +36,14 @@ public:
 	~PsiApplication();
 
 	bool notify(QObject *receiver, QEvent *event);
-#ifdef Q_WS_X11
+#ifdef HAVE_X11
+# ifdef HAVE_QT5
+	bool xcbEventFilter(void *event);
+# else
 	bool x11EventFilter(XEvent *event);
+# endif
 #endif
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	bool macEventFilter(EventHandlerCallRef, EventRef);
 #endif
 

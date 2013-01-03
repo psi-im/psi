@@ -100,9 +100,9 @@ void ContactListViewDelegate::doSetOptions(const QStyleOptionViewItem& option, c
 
 	// see hoverabletreeview.cpp
 	if ((d->opt.displayAlignment & Qt::AlignLeft) &&
-	    (d->opt.displayAlignment & Qt::AlignRight) &&
-	    (d->opt.displayAlignment & Qt::AlignHCenter) &&
-	    (d->opt.displayAlignment & Qt::AlignJustify))
+		(d->opt.displayAlignment & Qt::AlignRight) &&
+		(d->opt.displayAlignment & Qt::AlignHCenter) &&
+		(d->opt.displayAlignment & Qt::AlignJustify))
 	{
 		d->opt.hovered = true;
 		d->opt.hoveredPosition = QPoint(d->opt.decorationSize.width(), d->opt.decorationSize.height());
@@ -181,7 +181,7 @@ void ContactListViewDelegate::drawText(QPainter* painter, const QStyleOptionView
 		return;
 
 	QPalette::ColorGroup cg = option.state & QStyle::State_Enabled
-	                          ? QPalette::Normal : QPalette::Disabled;
+							  ? QPalette::Normal : QPalette::Disabled;
 	if (cg == QPalette::Normal && !(option.state & QStyle::State_Active))
 		cg = QPalette::Inactive;
 	if (option.state & QStyle::State_Selected) {
@@ -233,7 +233,7 @@ QSize ContactListViewDelegate::sizeHint(const QStyleOptionViewItem& option, cons
 QColor ContactListViewDelegate::backgroundColor(const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
 	QPalette::ColorGroup cg = option.state & QStyle::State_Enabled
-	                          ? QPalette::Normal : QPalette::Disabled;
+							  ? QPalette::Normal : QPalette::Disabled;
 	if (cg == QPalette::Normal && !(option.state & QStyle::State_Active))
 		cg = QPalette::Inactive;
 
@@ -242,7 +242,11 @@ QColor ContactListViewDelegate::backgroundColor(const QStyleOptionViewItem& opti
 	}
 	else {
 		QVariant value = index.data(Qt::BackgroundRole);
+#ifdef HAVE_QT5
+		if (value.canConvert<QBrush>()) {
+#else
 		if (qVariantCanConvert<QBrush>(value)) {
+#endif
 			return qvariant_cast<QBrush>(value).color();
 		}
 		else {
@@ -380,12 +384,12 @@ bool ContactListViewDelegate::eventFilter(QObject* object, QEvent* event)
 			return true;
 		}
 		else if (keyEvent->key() == Qt::Key_PageUp ||
-		         keyEvent->key() == Qt::Key_PageDown)
+				 keyEvent->key() == Qt::Key_PageDown)
 		{
 			return true;
 		}
 		else if (keyEvent->key() == Qt::Key_Tab ||
-		         keyEvent->key() == Qt::Key_Backtab)
+				 keyEvent->key() == Qt::Key_Backtab)
 		{
 			return true;
 		}

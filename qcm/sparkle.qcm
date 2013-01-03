@@ -16,7 +16,7 @@ class qc_sparkle : public ConfObj
 
 		QString name() const { return "Sparkle"; }
 		QString shortname() const { return "sparkle"; }
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
 		QString checkString() const { return QString(); }
 #endif
 
@@ -45,7 +45,7 @@ class qc_sparkle : public ConfObj
 
 		bool exec()
 		{
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 			QString sparkle_path = conf->getenv("QC_WITH_SPARKLE");
 			if(!checkFramework(sparkle_path, "Sparkle"))
 				return false;

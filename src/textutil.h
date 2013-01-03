@@ -3,9 +3,9 @@
 
 class QString;
 
-namespace TextUtil 
+namespace TextUtil
 {
-	QString escape(const QString& unescaped);
+	QString escape(const QString &plain);
 	QString unescape(const QString& escaped);
 
 	QString quote(const QString &, int width=60, bool quoteEmpty=false);
@@ -17,6 +17,6 @@ namespace TextUtil
 	QString emoticonify(const QString &in);
 
 	QString prepareMessageText(const QString& text, bool isEmote=false, bool isHtml=false);
-};
+}
 
 #endif

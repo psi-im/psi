@@ -33,7 +33,6 @@ class ContactListItemProxy;
 class PsiContact;
 class ContactListGroup;
 class PsiAccount;
-class QStyleOptionViewItemV2;
 
 class ContactListViewDelegate : public QItemDelegate
 {

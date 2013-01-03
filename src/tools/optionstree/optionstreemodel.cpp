@@ -54,8 +54,9 @@ OptionsTreeModel::OptionsTreeModel(OptionsTree* tree, QObject* parent)
 void OptionsTreeModel::setFlat(bool b)
 {
 	if (flat_ != b) {
+		beginResetModel();
 		flat_ = b;
-		reset();
+		endResetModel();
 	}
 }
 

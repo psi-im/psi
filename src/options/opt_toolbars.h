@@ -18,7 +18,7 @@ public:
 	~OptionsTabToolbars();
 
 	bool stretchable() const {return true;};
-	
+
 	//void setCurrentToolbar(PsiToolBar *);
 	QWidget* widget();
 	void applyOptions();
@@ -44,9 +44,6 @@ private slots:
 	void avaAct_selectionChanged(QTreeWidgetItem *);
 
 	void toolbarPositionApply();
-
-signals:
-	void dataChanged();
 
 private:
 	void updateArrows();

@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
- 
+
 #include <QAbstractListModel>
 
 #include "privacylist.h"
@@ -47,40 +47,39 @@ QVariant PrivacyListModel::data(const QModelIndex &index, int role) const
 		return QVariant();
 
 	if (role == Qt::DisplayRole) {
-		if (index.column() == TextColumn) 
+		if (index.column() == TextColumn)
 			return list_.item(index.row()).toString();
-		else if (index.column() == ValueColumn) 
+		else if (index.column() == ValueColumn)
 			return list_.item(index.row()).value();
 	}
 	else if (role == BlockedRole) {
 		return list_.item(index.row()).isBlock();
 	}
-	
+
 	return QVariant();
 }
 
 void PrivacyListModel::setList(const PrivacyList& list)
 {
+	beginResetModel();
 	list_ = list;
-	reset();
+	endResetModel();
 }
 
 bool PrivacyListModel::moveUp(const QModelIndex& index)
 {
-	if (index.isValid() && list_.moveItemUp(index.row())) {
-		reset();
-		return true;
-	}
-	return false;
+	beginResetModel();
+	bool moved = index.isValid() && list_.moveItemUp(index.row());
+	endResetModel();
+	return moved;
 }
 
 bool PrivacyListModel::moveDown(const QModelIndex& index)
 {
-	if (index.isValid() && list_.moveItemDown(index.row())) {
-		reset();
-		return true;
-	}
-	return false;
+	beginResetModel();
+	bool moved = index.isValid() && list_.moveItemDown(index.row());
+	endResetModel();
+	return moved;
 }
 
 bool PrivacyListModel::removeRows(int row, int count, const QModelIndex&)
@@ -99,11 +98,19 @@ bool PrivacyListModel::add()
 {
 	PrivacyRuleDlg d;
 	if (d.exec() == QDialog::Accepted) {
+		beginResetModel();
 		list_.insertItem(0,d.rule());
-		reset();
+		endResetModel();
 		return true;
 	}
 	return false;
+}
+
+void PrivacyListModel::insertItem(int pos, const PrivacyListItem &item)
+{
+	beginResetModel();
+	list_.insertItem(pos, item);
+	endResetModel();
 }
 
 bool PrivacyListModel::edit(const QModelIndex& index)
@@ -113,7 +120,7 @@ bool PrivacyListModel::edit(const QModelIndex& index)
 		d.setRule(list_.item(index.row()));
 		if (d.exec() == QDialog::Accepted) {
 			list_.updateItem(index.row(),d.rule());
-			reset();
+			emit dataChanged(index, index);
 			return true;
 		}
 	}

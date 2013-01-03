@@ -201,13 +201,9 @@ void ActionLineEdit::actionEvent ( QActionEvent * event )
 		}
 	}
 	sumWidth += 4; //+4px padding between text and buttons. should looks better (magic number)
-#if QT_VERSION >= 0x040500
 	int mLeft, mTop, mRight, mBottom;
 	getTextMargins(&mLeft, &mTop, &mRight, &mBottom);
 	setTextMargins(mLeft, mTop, sumWidth, mBottom);
-#else
-	setStyleSheet(QString("padding-right:%1px").arg(sumWidth)); //this breaks height of widget.. Qt bug?
-#endif
 }
 
 void ActionLineEdit::contextMenuEvent(QContextMenuEvent *e)

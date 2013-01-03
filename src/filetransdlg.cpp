@@ -531,7 +531,7 @@ public:
 };
 
 
-FileRequestDlg::FileRequestDlg(const Jid &j, PsiCon *psi, PsiAccount *pa) 
+FileRequestDlg::FileRequestDlg(const Jid &j, PsiCon *psi, PsiAccount *pa)
 	: QDialog(0, psi_dialog_flags)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
@@ -579,7 +579,7 @@ FileRequestDlg::FileRequestDlg(const Jid &jid, PsiCon *psi, PsiAccount *pa, cons
 	setTabOrder(d->te, pb_stop);
 
 	setWindowTitle(tr("Send File"));
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/upload").icon());
 #endif
 
@@ -617,7 +617,7 @@ FileRequestDlg::FileRequestDlg(const Jid &jid, PsiCon *psi, PsiAccount *pa, cons
 		}
 
 		FileUtil::setLastUsedSavePath(fi.path());
-		le_fname->setText(QDir::convertSeparators(fi.filePath()));
+		le_fname->setText(QDir::toNativeSeparators(fi.filePath()));
 		lb_size->setText(tr("%1 byte(s)").arg(fi.size())); // TODO: large file support
 	}
 
@@ -670,7 +670,7 @@ FileRequestDlg::FileRequestDlg(const QDateTime &ts, FileTransfer *ft, PsiAccount
 
 	lb_to->setText(tr("From:"));
 	setWindowTitle(tr("Receive File"));
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/download").icon());
 #endif
 
@@ -749,7 +749,7 @@ void FileRequestDlg::updateIdentity(PsiAccount *pa)
 void FileRequestDlg::updateIdentityVisibility()
 {
 	bool visible = d->pa->psi()->contactList()->enabledAccounts().count() > 1;
-	if (d->cb_ident) 
+	if (d->cb_ident)
 		d->cb_ident->setVisible(visible);
 	if (d->lb_ident)
 		d->lb_ident->setVisible(visible);
@@ -789,11 +789,11 @@ void FileRequestDlg::unblockWidgets()
 void FileRequestDlg::chooseFile()
 {
 	QString str = FileUtil::getOpenFileName(this,
-	                                        tr("Choose a file"),
-	                                        tr("All files (*)"));
+											tr("Choose a file"),
+											tr("All files (*)"));
 	if (!str.isEmpty()) {
 		QFileInfo fi(str);
-		le_fname->setText(QDir::convertSeparators(fi.filePath()));
+		le_fname->setText(QDir::toNativeSeparators(fi.filePath()));
 		lb_size->setText(tr("%1 byte(s)").arg(fi.size())); // TODO: large file support
 	}
 }
@@ -836,9 +836,9 @@ void FileRequestDlg::doStart()
 	else {
 		QString fname, savename;
 		fname = FileUtil::getSaveFileName(this,
-		                                  tr("Save As"),
-		                                  d->fileName,
-		                                  tr("All files (*)"));
+										  tr("Save As"),
+										  d->fileName,
+										  tr("All files (*)"));
 		if(fname.isEmpty())
 			return;
 		QFileInfo fi(fname);
@@ -1366,7 +1366,7 @@ public:
 		if(e->oldSize().width() != e->size().width())
 			doResize();
 	}
-	
+
 	bool event(QEvent* e)
 	{
 		if (e->type() == QEvent::ToolTip) {
@@ -1649,7 +1649,7 @@ FileTransDlg::FileTransDlg(PsiCon *psi)
 	connect(&d->t, SIGNAL(timeout()), SLOT(updateItems()));
 
 	setWindowTitle(tr("Transfer Manager"));
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/filemanager").icon());
 #endif
 
@@ -1698,9 +1698,9 @@ int FileTransDlg::addItem(const QString &filename, const QString &path, const QP
 		i->icon = IconsetFactory::icon("psi/upload").impix().pixmap();
 	else
 		i->icon = IconsetFactory::icon("psi/download").impix().pixmap();
-		
+
 	i->fileicon = fileicon;
-		
+
 	i->id = id;
 	i->setup();
 	d->t.start(1000);
@@ -1845,10 +1845,10 @@ void FileTransDlg::itemCancel(int id)
 void FileTransDlg::itemOpenDest(int id)
 {
 	FileTransItem *i = d->findItem(id);
-		
+
 #if defined(Q_OS_WIN)
 	QProcess::startDetached("explorer.exe", QStringList() << QLatin1String("/select,")
-	                                                      << QDir::toNativeSeparators(i->path));
+														  << QDir::toNativeSeparators(i->path));
 #elif defined(Q_OS_MAC)
 	QProcess::execute("/usr/bin/osascript", QStringList()
 						<< "-e"
@@ -1875,7 +1875,7 @@ void FileTransDlg::itemClear(int id)
 }
 
 void FileTransDlg::openFile(QModelIndex index)
-{	
+{
 	FileTransItem *i = static_cast<FileTransItem*>(d->lv->item(index.row()));
 	if (i->done) {
 		QFileInfo fi(i->path);

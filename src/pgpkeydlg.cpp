@@ -1,5 +1,5 @@
 /*
- * pgpkeydlg.h 
+ * pgpkeydlg.h
  * Copyright (C) 2001-2009  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -87,14 +87,18 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString& defaultKeyID, QWidget *parent)
 
 	model_ = new QStandardItemModel(this);
 	model_->setHorizontalHeaderLabels(QStringList()
-	                                  << tr("Key ID")
-	                                  << tr("User ID")
-	                                 );
+									  << tr("Key ID")
+									  << tr("User ID")
+									 );
 	proxy_ = new KeyViewProxyModel(this);
 	proxy_->setSourceModel(model_);
 	ui_.lv_keys->setModel(proxy_);
 
+#ifdef HAVE_QT5
+	ui_.lv_keys->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
+#else
 	ui_.lv_keys->header()->setResizeMode(QHeaderView::ResizeToContents);
+#endif
 
 	connect(ui_.lv_keys, SIGNAL(doubleClicked(const QModelIndex&)), SLOT(doubleClicked(const QModelIndex&)));
 	connect(ui_.buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), SLOT(do_accept()));
@@ -112,7 +116,7 @@ PGPKeyDlg::PGPKeyDlg(Type t, const QString& defaultKeyID, QWidget *parent)
 		if (ks->type() == QCA::KeyStore::PGPKeyring && ks->holdsIdentities()) {
 			foreach(QCA::KeyStoreEntry ke, ks->entryList()) {
 				bool publicKey = (t == Public && ke.type() == QCA::KeyStoreEntry::TypePGPPublicKey) ||
-				    (ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey);
+					(ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey);
 				bool secretKey = t == Secret && ke.type() == QCA::KeyStoreEntry::TypePGPSecretKey;
 				if (publicKey || secretKey) {
 					KeyViewItem *i = new KeyViewItem(ke,  ke.id().right(8));
@@ -164,11 +168,11 @@ bool PGPKeyDlg::eventFilter(QObject* watched, QEvent* event)
 	if (watched == ui_.le_filter && event->type() == QEvent::KeyPress) {
 		QKeyEvent* ke = static_cast<QKeyEvent*>(event);
 		if (ke->key() == Qt::Key_Up ||
-		    ke->key() == Qt::Key_Down ||
-		    ke->key() == Qt::Key_PageUp ||
-		    ke->key() == Qt::Key_PageDown ||
-		    ke->key() == Qt::Key_Home ||
-		    ke->key() == Qt::Key_End)
+			ke->key() == Qt::Key_Down ||
+			ke->key() == Qt::Key_PageUp ||
+			ke->key() == Qt::Key_PageDown ||
+			ke->key() == Qt::Key_Home ||
+			ke->key() == Qt::Key_End)
 		{
 			QCoreApplication::instance()->sendEvent(ui_.lv_keys, event);
 			return true;

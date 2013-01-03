@@ -21,8 +21,9 @@ public:
 		// test for "qdbus" feature
 
 		QString proextra =
-		"CONFIG += qt qdbus\n"
+		"CONFIG += qt\n"
 		"QT -= gui\n";
+		"QT += dbus\n";
 
 		QString str =
 		"\n"

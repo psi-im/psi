@@ -61,7 +61,7 @@ QWidget *OptionsTabApplication::widget()
 		tr("Prevents Psi from taking up a slot on the taskbar and makes the main "
 		"window use a small titlebar."));
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	d->ck_alwaysOnTop->hide();
 	d->ck_showMenubar->hide();
 	d->gb_docklet->hide();

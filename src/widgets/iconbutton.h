@@ -25,7 +25,7 @@
 #include <QWidget>
 #include <QString>
 #include <QPixmap>
-#include <QIconSet>
+#include <QIcon>
 
 
 class PsiIcon;

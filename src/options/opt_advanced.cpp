@@ -40,7 +40,7 @@ QWidget *OptionsTabAdvanced::widget()
 	w = new OptAdvancedUI();
 	OptAdvancedUI *d = (OptAdvancedUI *)w;
 
-#ifdef Q_WS_X11	// auto-copy is a built-in feature on linux, we don't want user to use our own one
+#ifdef HAVE_X11	// auto-copy is a built-in feature on linux, we don't want user to use our own one
 	d->ck_autocopy->hide();
 #endif
 

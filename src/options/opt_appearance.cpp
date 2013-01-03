@@ -130,7 +130,7 @@ void OptionsTabAppearanceMisc::restoreOptions()
 
 	d->ck_newHeadings->setChecked(PsiOptions::instance()->getOption("options.ui.look.contactlist.use-slim-group-headings").toBool());
 	d->ck_outlineHeadings->setChecked(PsiOptions::instance()->getOption("options.ui.look.contactlist.use-outlined-group-headings").toBool());
-	
+
 	d->sl_rosterop->setValue(PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt());
 	d->sl_chatdlgop->setValue(PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt());
 }
@@ -254,7 +254,7 @@ QWidget *OptionsTabAppearanceGeneral::widget()
 		d->ck_cStatus->hide();
 		d->pb_cStatus->hide();
 	}
-	
+
 	return w;
 }
 
@@ -328,11 +328,7 @@ void OptionsTabAppearanceGeneral::chooseFont(QAbstractButton* button)
 
 	// ensure we don't use the new native font dialog on mac with Qt 4.5,
 	//   since it was broken last we checked (qt task #252000)
-#if QT_VERSION >= 0x040500
 	QString fnt = QFontDialog::getFont(&ok, font, parentWidget, QString(), QFontDialog::DontUseNativeDialog).toString();
-#else
-	QString fnt = QFontDialog::getFont(&ok, font, parentWidget).toString();
-#endif
 	le_font[x]->setFont(fnt);
 
 	if(ok)

@@ -120,7 +120,7 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 	d->jid = jid;
 	d->pa->dialogRegister(this, d->jid);
 
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/history").icon());
 #endif
 	ui_.tb_find->setIcon(IconsetFactory::icon("psi/search").icon());

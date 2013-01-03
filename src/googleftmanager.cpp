@@ -229,7 +229,7 @@ GoogleFileTransfer::GoogleFileTransfer(cricket::FileShareSession* s, GoogleFTMan
     session_->SignalResampleImage.connect(listener_, &GoogleFileTransferListener::resampleImage);
 
 	// Temporary
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	QDir home(QDir::homePath() + "/Desktop");
 #else
 	QDir home = QDir::home();

@@ -33,20 +33,25 @@ class ITunesPlugin : public QObject, public TuneControllerPlugin
 {
 	Q_OBJECT
 	Q_INTERFACES(TuneControllerPlugin)
+#ifdef HAVE_QT5
+	Q_PLUGIN_METADATA(IID "org.psi-im.Psi.TuneControllerPlugin")
+#endif
 
 public:
 	virtual QString name();
 	virtual TuneController* createController();
 };
 
+#ifndef HAVE_QT5
 Q_EXPORT_PLUGIN2(itunesplugin, ITunesPlugin);
+#endif
 
 QString ITunesPlugin::name()
 {
 	return "iTunes";
 }
 
-TuneController* ITunesPlugin::createController() 
+TuneController* ITunesPlugin::createController()
 {
 	return new ITunesController();
 }

@@ -56,7 +56,7 @@
 #	include"crash.h"
 #endif
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 #include "CocoaUtilities/CocoaInitializer.h"
 #endif
 
@@ -72,14 +72,14 @@
  *
  *	\section intro_sec Indroduction
  *		Let's write an introduction to go here
- *	
+ *
  *	\section Installation
  *		For installation details, please see the INSTALL file
  *
  *	\section Contact Details
  *		And here we might put our contact details
  */
-  
+
 
 
 using namespace XMPP;
@@ -436,6 +436,27 @@ static int restart_process(int argc, char **argv, const QByteArray &uri)
 }
 #endif
 
+#ifdef HAVE_QT5
+void psiMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+	QString time = QTime::currentTime().toString();
+	QByteArray localMsg = msg.toLocal8Bit();
+	switch (type) {
+	case QtDebugMsg:
+		fprintf(stderr, "[%s] %s (%s:%u, %s)\n", qPrintable(time), localMsg.constData(), context.file, context.line, context.function);
+		break;
+	case QtWarningMsg:
+		fprintf(stderr, "[%s] W:%s (%s:%u, %s)\n", qPrintable(time), localMsg.constData(), context.file, context.line, context.function);
+		break;
+	case QtCriticalMsg:
+		fprintf(stderr, "[%s] C:%s (%s:%u, %s)\n", qPrintable(time), localMsg.constData(), context.file, context.line, context.function);
+		break;
+	case QtFatalMsg:
+		fprintf(stderr, "[%s] F:%s (%s:%u, %s)\n", qPrintable(time), localMsg.constData(), context.file, context.line, context.function);
+		abort();
+	}
+}
+#else
 void psiMessageOutput(QtMsgType type, const char *msg)
 {
 	QString time = QTime::currentTime().toString();
@@ -454,6 +475,7 @@ void psiMessageOutput(QtMsgType type, const char *msg)
 		abort();
 	}
 }
+#endif
 
 QStringList getQtPluginPathEnvVar()
 {
@@ -519,19 +541,23 @@ int main(int argc, char *argv[])
 	QCA::Initializer init;
 	// END NOTE
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	CocoaInitializer cocoaInitializer;
 #endif
 
 	// it must be initialized first in order for ApplicationInfo::resourcesDir() to work
+#ifdef HAVE_QT5
+	qInstallMessageHandler(psiMessageOutput);
+#else
 	qInstallMsgHandler(psiMessageOutput);
+#endif
 	PsiApplication app(argc, argv);
 	QApplication::setApplicationName(ApplicationInfo::name());
 	QApplication::addLibraryPath(ApplicationInfo::resourcesDir());
 	QApplication::addLibraryPath(ApplicationInfo::homeDir(ApplicationInfo::DataLocation));
 	QApplication::setQuitOnLastWindowClosed(false);
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	QDir dir(QApplication::applicationDirPath());
 	dir.cdUp();
 	dir.cd("Plugins");
@@ -612,7 +638,7 @@ Q_IMPORT_PLUGIN(qca_cyrus_sasl)
 Q_IMPORT_PLUGIN(qca_gnupg)
 #endif
 
-//#if defined(Q_WS_WIN) && defined(QT_STATICPLUGIN)
+//#if defined(Q_OS_WIN) && defined(QT_STATICPLUGIN)
 //Q_IMPORT_PLUGIN(qjpeg)
 //Q_IMPORT_PLUGIN(qgif)
 //#endif

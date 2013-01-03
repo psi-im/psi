@@ -11,6 +11,7 @@
 #include "psioptions.h"
 #include "common.h"
 #include "iconset.h"
+#include "textutil.h"
 
 #include "ui_optioneditor.h"
 
@@ -47,7 +48,7 @@ OptionEditor::OptionEditor(bool new_, QString name_, QVariant value_)
 {
 	setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
-	
+
 	if (new_) {
 		setWindowTitle(CAP(tr("Option Editor")));
 	} else {
@@ -74,7 +75,7 @@ OptionEditor::OptionEditor(bool new_, QString name_, QVariant value_)
 		}
 		if (!ok) {
 			QMessageBox::critical(this, tr("Psi: Option Editor"),
-                   tr("Can't edit this type of setting, sorry."), QMessageBox::Close);
+				   tr("Can't edit this type of setting, sorry."), QMessageBox::Close);
 			deleteLater();
 		}
 	}
@@ -83,7 +84,7 @@ OptionEditor::OptionEditor(bool new_, QString name_, QVariant value_)
 }
 
 void OptionEditor::finished()
-{	
+{
 	QString option = le_option->text();
 	if (option.isEmpty() || option.endsWith(".") || option.contains("..") || !PsiOptions::isValidName(option)) {
 		QMessageBox::critical(this, tr("Psi: Option Editor"),
@@ -108,11 +109,11 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
 
 	o_ = PsiOptions::instance();
 	tm_ = new OptionsTreeModel(o_, this);
-	
+
 	QVBoxLayout* layout = new QVBoxLayout(this);
 	layout->setSpacing(0);
 	layout->setMargin(0);
-	
+
 	tv_ = new QTreeView(this);
 	tv_->setModel(tm_);
 	tv_->setAlternatingRowColors(true);
@@ -121,24 +122,24 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
 	tv_->setColumnHidden(3, true);
 	tv_->resizeColumnToContents(0);
 	tv_colWidth = tv_->columnWidth(0);
-	
+
 	QHBoxLayout *infoLine = new QHBoxLayout;
 	layout->addLayout(infoLine);
 	lb_path = new QLabel(this);
 	lb_path->setTextInteractionFlags(Qt::TextSelectableByMouse);
 	lb_path->setToolTip(tr("Full name of the currently selected option."));
 	infoLine->addWidget(lb_path);
-	
+
 	infoLine->addStretch(1);
-	
+
 	lb_type = new QLabel(this);
 	lb_type->setText(tr("(no selection)"));
 	lb_type->setTextFormat(Qt::RichText);
 
 	infoLine->addWidget(lb_type);
 
-	
-	
+
+
 	lb_comment = new QLabel(this);
 	lb_comment->setTextInteractionFlags(Qt::TextSelectableByMouse);
 	lb_comment->setText("   ");
@@ -164,16 +165,16 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
 		buttonLine->addWidget(pb_delete);
 		connect(pb_delete, SIGNAL(clicked()), SLOT(deleteit()));
 	}
-	
+
 	pb_edit = new QPushButton(tr("Edit..."), this);
 	buttonLine->addWidget(pb_edit);
 	connect(pb_edit, SIGNAL(clicked()), SLOT(edit()));
-	
+
 	pb_new = new QPushButton(tr("Add..."), this);
 	buttonLine->addWidget(pb_new);
 	connect(pb_new, SIGNAL(clicked()), SLOT(add()));
 
-	
+
 	if (parent) {
 		pb_detach = new QToolButton(this);
 		pb_detach->setIcon(IconsetFactory::iconPixmap("psi/advanced"));
@@ -183,14 +184,14 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
 		connect(pb_detach, SIGNAL(clicked()), SLOT(detach()));
 	}
 
-	
-	
+
+
 	connect(tv_->selectionModel(), SIGNAL(currentChanged(const QModelIndex &, const QModelIndex &)), SLOT(selectionChanged(const QModelIndex &)));
 	connect(tv_,SIGNAL(activated(const QModelIndex&)),SLOT(tv_edit(const QModelIndex&)));
 	connect(tv_,SIGNAL(expanded(const QModelIndex&)), SLOT(updateWidth()));
 	connect(tv_,SIGNAL(collapsed(const QModelIndex&)), SLOT(updateWidth()));
-	
-	
+
+
 	tv_->setCurrentIndex(tm_->index(0,0, QModelIndex()));
 
 	if (!parent) show();
@@ -226,7 +227,7 @@ void  PsiOptionsEditor::selectionChanged( const QModelIndex &idx)
 {
 	QString type = tm_->data(idx.sibling(idx.row(), 1), Qt::DisplayRole).toString();
 	QString comment = tm_->data(idx.sibling(idx.row(), 3), Qt::DisplayRole).toString();
-	lb_path->setText("<b>"+Qt::escape(tm_->indexToOptionName(idx))+"</b>");
+	lb_path->setText("<b>"+TextUtil::escape(tm_->indexToOptionName(idx))+"</b>");
 	lb_comment->setText(comment);
 	updateWidth();
 	QString option = tm_->indexToOptionName(idx);
@@ -235,7 +236,7 @@ void  PsiOptionsEditor::selectionChanged( const QModelIndex &idx)
 		typ = tr("(internal node)");
 		pb_edit->setEnabled(false);
 	} else {
-		typ = tr("Type:") + " <b>" + Qt::escape(type) + "</b>";
+		typ = tr("Type:") + " <b>" + TextUtil::escape(type) + "</b>";
 		pb_edit->setEnabled(true);
 	}
 	lb_type->setText("&nbsp;&nbsp;&nbsp;" + typ);
@@ -274,7 +275,7 @@ void PsiOptionsEditor::deleteit()
 		confirm = tr("Really delete all options starting with %1.?");
 	}
 	if (QMessageBox::Yes == QMessageBox::warning(this, tr("Psi: Option Editor"),
-                   confirm.arg(option), QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel)) {
+				   confirm.arg(option), QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel)) {
 		PsiOptions::instance()->removeOption( option, sub);
 	}
 }

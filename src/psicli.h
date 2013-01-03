@@ -77,7 +77,7 @@ public:
 	}
 
 	void show(const QString& text) {
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 		QMessageBox::information(0, ApplicationInfo::name(), text);
 #else
 		puts(qPrintable(text));

@@ -44,6 +44,7 @@
 #include <QHBoxLayout>
 #include <QCloseEvent>
 #include <QTextDocumentFragment>
+#include <QMimeData>
 
 #include "psievent.h"
 #include "psicon.h"
@@ -458,7 +459,7 @@ AddUrlDlg::AddUrlDlg(QWidget *parent)
 :QDialog(parent)
 {
 	setupUi(this);
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/www").icon());
 #endif
 	setModal(true);
@@ -806,7 +807,7 @@ void EventDlg::init()
 
 	QList<IconToolButton*> toolButtons;
 	toolButtons << d->tb_url << d->tb_info << d->tb_history;
-   	if (PsiOptions::instance()->getOption("options.pgp.enable").toBool())
+	if (PsiOptions::instance()->getOption("options.pgp.enable").toBool())
 		toolButtons << d->tb_pgp;
 	toolButtons << d->tb_icon;
 	foreach (IconToolButton *toolButton, toolButtons)
@@ -971,7 +972,7 @@ void EventDlg::init()
 	d->pb_http_deny->hide();
 	d->pb_http_deny->setMinimumWidth(96);
 	hb4->addWidget(d->pb_http_deny);
-	
+
 	// data form submit button
 	d->pb_form_submit = new IconButton(this);
 	d->pb_form_submit->setText(tr("&Submit"));
@@ -1384,7 +1385,7 @@ void EventDlg::optionsUpdate()
 		d->pb_next->forceSetPsiIcon(d->nextAnim());
 
 	// update the widget icon
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
 	if(d->composing) {
 		setWindowIcon(IconsetFactory::icon("psi/sendMessage").icon());
 	}
@@ -1627,7 +1628,7 @@ void EventDlg::doFormSubmit()
 	if(list.isEmpty())
 		return;
 	Jid j(list[0]);
-	
+
 	//populate the data fields
 	XData data;
 	data.setFields(d->xdata->fields());
@@ -1835,7 +1836,7 @@ void EventDlg::updateEvent(PsiEvent *e)
 	else {
 		d->w_http_id->hide();
 	}
-	
+
 	if(e->type() == PsiEvent::Message || e->type() == PsiEvent::HttpAuth) {
 		MessageEvent *me = (MessageEvent *)e;
 		const Message &m = me->message();
@@ -1894,11 +1895,11 @@ void EventDlg::updateEvent(PsiEvent *e)
 			const XData& form = m.getForm();
 			if ( !form.title().isEmpty() )
 				setWindowTitle( form.title() );
-			
+
 			//show data form
 			d->xdata->setFields( form.fields() );
 			d->xdata_form->show();
-			
+
 			//set instructions
 			QString str = TextUtil::plain2rich( form.instructions() );
 			d->xdata_instruction->setText(str);
@@ -1979,28 +1980,28 @@ void EventDlg::updateEvent(PsiEvent *e)
 		}
 		QString action;
 		if (additions > 0) {
-			if (additions > 1) 
+			if (additions > 1)
 				action += QString(tr("%1 additions")).arg(additions);
-			else 
+			else
 				action += QString(tr("1 addition"));
 			if (deletions > 0 || modifications > 0)
 				action += ", ";
 		}
 		if (deletions > 0) {
-			if (deletions > 1) 
+			if (deletions > 1)
 				action += QString(tr("%1 deletions")).arg(deletions);
-			else 
+			else
 				action += QString(tr("1 deletion"));
 			if (modifications > 0)
 				action += ", ";
 		}
 		if (modifications > 0) {
-			if (modifications > 1) 
+			if (modifications > 1)
 				action += QString(tr("%1 modifications")).arg(modifications);
-			else 
+			else
 				action += QString(tr("1 modification"));
 		}
-		
+
 		d->le_subj->setText("");
 		QString body = QString(tr("<big>[System Message]</big><br>This user wants to modify your roster (%1). Click the button labelled \"Add/Auth\" to authorize the modification.")).arg(action);
 		setHtml("<qt>" + body + "</qt>");

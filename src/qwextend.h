@@ -4,9 +4,9 @@
 #include <qglobal.h>
 #include <Qt>
 
-#ifdef Q_WS_X11
+#ifdef HAVE_X11
 class QWidget;
-void reparent_good(QWidget *that, Qt::WFlags f, bool showIt);
+void reparent_good(QWidget *that, Qt::WindowFlags f, bool showIt);
 #endif
 
 #endif

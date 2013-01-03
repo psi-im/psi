@@ -53,7 +53,7 @@ ChatView::ChatView(QWidget *parent)
 	setUndoRedoEnabled(false);
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-#ifndef Q_WS_X11	// linux has this feature built-in
+#ifndef HAVE_X11	// linux has this feature built-in
 	connect(this, SIGNAL(selectionChanged()), SLOT(autoCopy()));
 	connect(this, SIGNAL(cursorPositionChanged()), SLOT(autoCopy()));
 #endif
@@ -82,7 +82,7 @@ void ChatView::keyPressEvent(QKeyEvent *e)
 {
 /*	if(e->key() == Qt::Key_Escape)
 		e->ignore(); 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	else if(e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier)
 		e->ignore();
 	else
@@ -244,7 +244,7 @@ void ChatEdit::keyPressEvent(QKeyEvent *e)
 		e->ignore();
 	else if(e->key() == Qt::Key_Return && 
 	       ((e->modifiers() & Qt::ControlModifier) 
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
 	       || (e->modifiers() & Qt::AltModifier) 
 #endif
 	       ))
@@ -263,7 +263,7 @@ void ChatEdit::keyPressEvent(QKeyEvent *e)
 		e->ignore();
 	else if((e->key() == Qt::Key_PageUp || e->key() == Qt::Key_PageDown) && (e->modifiers() & Qt::ControlModifier))
 		e->ignore(); */
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	else if (e->key() == Qt::Key_QuoteLeft && e->modifiers() == Qt::ControlModifier) {
 		e->ignore();
 	}

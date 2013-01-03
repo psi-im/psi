@@ -132,13 +132,16 @@ void ContactListModelOperationList::removeAccidentalContactMoveOperations()
 
 ContactListDragModel::ContactListDragModel(PsiContactList* contactList)
 	: ContactListModel(contactList)
-{
-	setSupportedDragActions(Qt::MoveAction | Qt::CopyAction);
-}
+{ }
 
 ContactListModel* ContactListDragModel::clone() const
 {
 	return new ContactListDragModel(contactList());
+}
+
+Qt::DropActions ContactListDragModel::supportedDragActions() const
+{
+	return Qt::MoveAction | Qt::CopyAction;
 }
 
 Qt::DropActions ContactListDragModel::supportedDropActions() const
@@ -166,8 +169,8 @@ Qt::ItemFlags ContactListDragModel::flags(const QModelIndex& index) const
 QStringList ContactListDragModel::mimeTypes() const
 {
 	return QStringList()
-	       << ContactListModelSelection::mimeType()
-	       << "text/plain";
+		   << ContactListModelSelection::mimeType()
+		   << "text/plain";
 }
 
 QMimeData* ContactListDragModel::mimeData(const QModelIndexList& indexes) const
@@ -309,7 +312,7 @@ bool ContactListDragModel::supportsMimeDataOnIndex(const QMimeData* data, const 
 			// disable dragging to different accounts and to self account
 			QModelIndex accountIndex = parent;
 			while (accountIndex.isValid() &&
-			       ContactListModel::indexType(accountIndex) != ContactListModel::AccountType)
+				   ContactListModel::indexType(accountIndex) != ContactListModel::AccountType)
 			{
 				accountIndex = accountIndex.parent();
 			}
@@ -322,8 +325,8 @@ bool ContactListDragModel::supportsMimeDataOnIndex(const QMimeData* data, const 
 			ContactListAccountGroup* accountGroup = dynamic_cast<ContactListAccountGroup*>(accountItem->item());
 			Q_ASSERT(accountGroup);
 			return accountGroup &&
-			       parent != accountIndex &&
-			       accountGroup->account() == contact->account();
+				   parent != accountIndex &&
+				   accountGroup->account() == contact->account();
 		}
 	}
 
@@ -342,8 +345,8 @@ void ContactListDragModel::addOperationsForGroupRename(const QString& currentGro
 #endif
 			if ((contact = dynamic_cast<PsiContact*>(itemProxy->item()))) {
 				operations->addOperation(contact,
-				                         sourceOperationsForContactGroup(currentGroupName, contact),
-				                         destinationOperationsForContactGroup(newGroupName, contact));
+										 sourceOperationsForContactGroup(currentGroupName, contact),
+										 destinationOperationsForContactGroup(newGroupName, contact));
 			}
 #ifdef CONTACTLIST_NESTED_GROUPS
 #error needs testing
@@ -373,8 +376,8 @@ bool ContactListDragModel::dropMimeData(const QMimeData* data, Qt::DropAction ac
 		PsiContact* psiContact = account ? account->findContact(contact.jid) : 0;
 		QString toGroup = getDropGroupName(parent);
 		operations.addOperation(psiContact,
-		                        contact.group,
-		                        destinationOperationsForContactGroup(toGroup, psiContact));
+								contact.group,
+								destinationOperationsForContactGroup(toGroup, psiContact));
 	}
 
 	foreach(ContactListModelSelection::Group group, selection.groups()) {
@@ -658,8 +661,8 @@ ContactListModelOperationList ContactListDragModel::removeOperationsFor(const QM
 		PsiContact* psiContact = account ? account->findContact(contact.jid) : 0;
 
 		operations.addOperation(psiContact,
-		                        sourceOperationsForContactGroup(contact.group, psiContact),
-		                        QString());
+								sourceOperationsForContactGroup(contact.group, psiContact),
+								QString());
 	}
 
 	foreach(ContactListModelSelection::Group group, selection.groups()) {

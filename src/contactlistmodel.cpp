@@ -199,7 +199,8 @@ void ContactListModel::endBulkUpdate()
 void ContactListModel::rosterRequestFinished()
 {
 	if (rowCount(QModelIndex()) == 0) {
-		reset();
+		beginResetModel();
+		endResetModel();
 
 		emit layoutAboutToBeChanged();
 		emit layoutChanged();
@@ -532,9 +533,9 @@ QVariant ContactListModel::contactData(const PsiContact* contact, int role) cons
 	}
 	else if (role == Qt::DisplayRole || role == Qt::EditRole) {
 		return QVariant(Ya::contactName(
-		                    contactListItemData(contact, role).toString(),
-		                    contactData(contact, ContactListModel::JidRole).toString()
-		                ));
+							contactListItemData(contact, role).toString(),
+							contactData(contact, ContactListModel::JidRole).toString()
+						));
 	}
 #endif
 
@@ -578,7 +579,7 @@ bool ContactListModel::setData(const QModelIndex& index, const QVariant& data, i
 		return false;
 	ContactListGroup*     group   = 0;
 	PsiContact*           contact = 0;
-	
+
 	if (role == ActivateRole) {
 		PsiContact* contact = dynamic_cast<PsiContact*>(item->item());
 		if (!contact)
@@ -783,7 +784,7 @@ ContactListModel::Type ContactListModel::indexType(const QModelIndex& index)
 bool ContactListModel::isGroupType(const QModelIndex& index)
 {
 	return indexType(index) == ContactListModel::GroupType ||
-	       indexType(index) == ContactListModel::AccountType;
+		   indexType(index) == ContactListModel::AccountType;
 }
 
 ContactListItemProxy* ContactListModel::itemProxy(const QModelIndex& index) const

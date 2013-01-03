@@ -29,7 +29,6 @@
 #include <QAbstractButton>
 #include <QLabel>
 #include <QTextCodec>
-#include <QMenuItem>
 #include <QEvent>
 #include <QMouseEvent>
 #include <QWidgetAction>
@@ -46,7 +45,7 @@
 //! \if _hide_doc_
 /**
 	\class IconSelectButton
-	\brief This button is used by IconSelect and displays one PsiIcon 
+	\brief This button is used by IconSelect and displays one PsiIcon
 */
 class IconSelectButton : public QAbstractButton
 {

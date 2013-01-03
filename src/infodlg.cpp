@@ -34,6 +34,7 @@
 #include <QDialogButtonBox>
 #include <QVBoxLayout>
 #include <QAction>
+
 #include "vcardphotodlg.h"
 #include "msgmle.h"
 #include "userlist.h"
@@ -54,9 +55,10 @@
 #include "fileutil.h"
 #include "discodlg.h"
 #include "desktoputil.h"
+#include "textutil.h"
 
 using namespace XMPP;
-		
+
 class InfoDlg::Private
 {
 public:
@@ -139,7 +141,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	d->dateTextFormat = "d MMM yyyy";
 
 	setWindowTitle(d->jid.full());
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/vCard").icon());
 #endif
 	// names editing dialog
@@ -259,7 +261,7 @@ InfoDlg::~InfoDlg()
 }
 
 /**
- * Redefined so the window does not close when changes are not saved. 
+ * Redefined so the window does not close when changes are not saved.
  */
 void InfoDlg::closeEvent ( QCloseEvent * e ) {
 
@@ -356,9 +358,9 @@ void InfoDlg::setData(const VCard &i)
 	}
 
 	ui_.le_fullname->setToolTip(
-		QString("<b>")+tr("First Name:")+"</b> "+Qt::escape(d->vcard.givenName())+"<br>"+
-			"<b>"+tr("Middle Name:")+"</b> "+Qt::escape(d->vcard.middleName())+"<br>"+
-			"<b>"+tr("Last Name:")+"</b> "+Qt::escape(d->vcard.familyName()) );
+		QString("<b>")+tr("First Name:")+"</b> "+TextUtil::escape(d->vcard.givenName())+"<br>"+
+			"<b>"+tr("Middle Name:")+"</b> "+TextUtil::escape(d->vcard.middleName())+"<br>"+
+			"<b>"+tr("Last Name:")+"</b> "+TextUtil::escape(d->vcard.familyName()) );
 
 	QString email;
 	if ( !i.emailList().isEmpty() )
@@ -393,7 +395,7 @@ void InfoDlg::setData(const VCard &i)
 	ui_.le_title->setText( i.title() );
 	ui_.le_role->setText( i.role() );
 	ui_.te_desc->setPlainText( i.desc() );
-	
+
 	if ( !i.photo().isEmpty() ) {
 		//printf("There is a picture...\n");
 		d->photo = i.photo();
@@ -651,18 +653,18 @@ VCard InfoDlg::makeVCard()
 		list << p;
 		v.setPhoneList( list );
 	}
-	
+
 	if ( !d->photo.isEmpty() ) {
 		//printf("Adding a pixmap to the vCard...\n");
 		v.setPhoto( d->photo );
 	}
 
 	if ( !ui_.le_street->text().isEmpty() ||
-	     !ui_.le_ext->text().isEmpty()    ||
-	     !ui_.le_city->text().isEmpty()   ||
-	     !ui_.le_state->text().isEmpty()  ||
-	     !ui_.le_pcode->text().isEmpty()  ||
-	     !ui_.le_country->text().isEmpty() )
+		 !ui_.le_ext->text().isEmpty()    ||
+		 !ui_.le_city->text().isEmpty()   ||
+		 !ui_.le_state->text().isEmpty()  ||
+		 !ui_.le_pcode->text().isEmpty()  ||
+		 !ui_.le_country->text().isEmpty() )
 	{
 		VCard::Address addr;
 		addr.home     = true;
@@ -721,7 +723,7 @@ void InfoDlg::setPreviewPhoto(const QString& path)
 	QFile photo_file(path);
 	if (!photo_file.open(QIODevice::ReadOnly))
 		return;
-	
+
 	QByteArray photo_data = photo_file.readAll();
 	QImage photo_image = QImage::fromData(photo_data);
 	if(!photo_image.isNull()) {
@@ -739,7 +741,7 @@ void InfoDlg::clearPhoto()
 	ui_.tb_photo->setIcon(QIcon());
 	ui_.tb_photo->setText(tr("Picture not\navailable"));
 	d->photo = QByteArray();
-	
+
 	// the picture changed, so notify there are some changes done
 	d->te_edited = true;
 }

@@ -17,7 +17,7 @@ public:
 
 	bool exec()
 	{
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 		conf->addExtra("CONFIG += qc_universal");
 #endif
 		return true;

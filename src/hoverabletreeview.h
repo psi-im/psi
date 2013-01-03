@@ -24,11 +24,7 @@
 #include <QTreeView>
 #include <QStyleOption>
 
-#if QT_VERSION >= 0x040400
 typedef QStyleOptionViewItemV4 HoverableStyleOptionViewItemBaseClass;
-#else
-typedef QStyleOptionViewItemV3 HoverableStyleOptionViewItemBaseClass;
-#endif
 
 class HoverableStyleOptionViewItem : public HoverableStyleOptionViewItemBaseClass
 {

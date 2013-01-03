@@ -81,6 +81,7 @@ public:
 	ContactListDragModel(PsiContactList* contactList);
 
 	// reimplemented
+	Qt::DropActions supportedDragActions() const;
 	Qt::DropActions supportedDropActions() const;
 	Qt::ItemFlags flags(const QModelIndex& index) const;
 	QStringList mimeTypes() const;

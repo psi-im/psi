@@ -29,7 +29,7 @@
 #include "applicationinfo.h"
 #include "homedirmigration.h"
 #include "ui_homedirmigration.h"
-#if defined Q_WS_WIN
+#if defined Q_OS_WIN
 #include "psiapplication.h"
 #endif
 
@@ -65,10 +65,10 @@ protected:
 			result_ = copyFolder();
 			if (!result_) {
 				removeFolder(configDir_.path());
-#if defined Q_WS_X11
+#if defined HAVE_X11
 				removeFolder(dataDir_.path());
 #endif
-#if defined Q_WS_X11 || defined Q_WS_MAC
+#if defined HAVE_X11 || defined Q_OS_MAC
 				removeFolder(cacheDir_.path());
 #endif
 			}
@@ -81,10 +81,10 @@ protected:
 			}
 			else {
 				removeFolder(configDir_.path());
-#if defined Q_WS_X11
+#if defined HAVE_X11
 				removeFolder(dataDir_.path());
 #endif
-#if defined Q_WS_X11 || defined Q_WS_MAC
+#if defined HAVE_X11 || defined Q_OS_MAC
 				removeFolder(cacheDir_.path());
 #endif
 			}
@@ -230,7 +230,7 @@ HomeDirMigration::HomeDirMigration(QWidget *parent)
 
 bool HomeDirMigration::checkOldHomeDir()
 {
-#if defined Q_WS_X11 || defined Q_WS_MAC
+#if defined HAVE_X11 || defined Q_OS_MAC
 	QString base = QDir::homePath();
 	// First it need to check ~/.psi-plus folder for Fedora users.
 	oldHomeDir_.setPath(base + "/.psi-plus");
@@ -238,7 +238,7 @@ bool HomeDirMigration::checkOldHomeDir()
 	if (!oldHomeDir_.exists()) {
 		oldHomeDir_.setPath(base + "/.psi");
 	}
-#elif defined Q_WS_WIN
+#elif defined Q_OS_WIN
 	QString base = QFileInfo(QCoreApplication::applicationFilePath()).fileName()
 			.toLower().indexOf("portable") == -1?
 				"" : QCoreApplication::applicationDirPath();

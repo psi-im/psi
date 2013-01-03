@@ -5,24 +5,13 @@
 #include "rtparse.h"
 #include "psioptions.h"
 
-// Qt::escape() doesn't escape " to &quot; -- it sucks
-QString TextUtil::escape(const QString& plain)
+QString TextUtil::escape(const QString &plain)
 {
-	QString rich;
-	rich.reserve(int(plain.length() * 1.1));
-	for (int i = 0; i < plain.length(); ++i) {
-		if (plain.at(i) == QLatin1Char('<'))
-			rich += QLatin1String("&lt;");
-		else if (plain.at(i) == QLatin1Char('>'))
-			rich += QLatin1String("&gt;");
-		else if (plain.at(i) == QLatin1Char('"'))
-			rich += QLatin1String("&quot;");
-		else if (plain.at(i) == QLatin1Char('&'))
-			rich += QLatin1String("&amp;");
-		else
-			rich += plain.at(i);
-	}
-	return rich;
+#ifdef HAVE_QT5
+	return plain.toHtmlEscaped();
+#else
+	return Qt::escape(plain);
+#endif
 }
 
 QString TextUtil::unescape(const QString& escaped)
@@ -148,7 +137,7 @@ QString TextUtil::rich2plain(const QString &in)
 
 			if(tagName == "br")
 				out += '\n';
-			
+
 			// handle output of Qt::convertFromPlainText() correctly
 			if((tagName == "p" || tagName == "/p") && out.length() > 0)
 				out += '\n';
@@ -419,10 +408,10 @@ QString TextUtil::linkify(const QString &in)
 			}
 			href += link;
 			// attributes need to be encoded too.
-			href = Qt::escape(href);
+			href = escape(href);
 			href = linkify_htmlsafe(href);
 			//printf("link: [%s], href=[%s]\n", link.latin1(), href.latin1());
-			linked = QString("<a href=\"%1\">").arg(href) + Qt::escape(link) + "</a>" + Qt::escape(pre.mid(cutoff));
+			linked = QString("<a href=\"%1\">").arg(href) + escape(link) + "</a>" + escape(pre.mid(cutoff));
 			out.replace(x1, len, linked);
 			n = x1 + linked.length() - 1;
 		}

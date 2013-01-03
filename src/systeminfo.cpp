@@ -14,25 +14,25 @@
 #include <QProcess>
 #include <QTextStream>
 
-#if defined(Q_WS_X11) || defined(Q_WS_MAC)
+#if defined(HAVE_X11) || defined(Q_OS_MAC)
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/utsname.h>
 #endif
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 #include <windows.h>
 #endif
 
 #include "systeminfo.h"
 
-#if defined(Q_WS_X11)
+#if defined(HAVE_X11)
 static QString lsbRelease(const QStringList& args)
 {
 	QStringList path = QString(qgetenv("PATH")).split(':');
 	QString found;
-	
+
 	foreach(QString dirname, path) {
 		QDir dir(dirname);
 		QFileInfo cand(dir.filePath("lsb_release"));
@@ -52,7 +52,7 @@ static QString lsbRelease(const QStringList& args)
 	if(!process.waitForStarted())
 		return QString();   // process failed to start
 
-    QTextStream stream(&process);
+	QTextStream stream(&process);
 	QString ret;
 
 	while(process.waitForReadyRead())
@@ -64,9 +64,9 @@ static QString lsbRelease(const QStringList& args)
 
 
 static QString unixHeuristicDetect() {
-	
+
 	QString ret;
-	
+
 	struct utsname u;
 	uname(&u);
 	ret.sprintf("%s", u.sysname);
@@ -167,9 +167,9 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 	timezone_offset_ = 0;
 	timezone_str_ = "N/A";
 	os_str_ = "Unknown";
-	
+
 	// Detect
-#if defined(Q_WS_X11) || defined(Q_WS_MAC)
+#if defined(HAVE_X11) || defined(Q_OS_MAC)
 	time_t x;
 	time(&x);
 	char str[256];
@@ -188,7 +188,7 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 	if(strcmp(fmt, str))
 		timezone_str_ = str;
 #endif
-#if defined(Q_WS_X11)
+#if defined(HAVE_X11)
 	// attempt to get LSB version before trying the distro-specific approach
 	os_str_ = lsbRelease(QStringList() << "--description" << "--short");
 
@@ -196,7 +196,7 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 		os_str_ = unixHeuristicDetect();
 	}
 
-#elif defined(Q_WS_MAC)
+#elif defined(Q_OS_MAC)
 	QSysInfo::MacVersion v = QSysInfo::MacintoshVersion;
 	if(v == QSysInfo::MV_10_3)
 		os_str_ = "Mac OS X 10.3";
@@ -204,15 +204,13 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 		os_str_ = "Mac OS X 10.4";
 	else if(v == QSysInfo::MV_10_5)
 		os_str_ = "Mac OS X 10.5";
-#if QT_VERSION >= 0x040500
 	else if(v == QSysInfo::MV_10_6)
 		os_str_ = "Mac OS X 10.6";
-#endif
 	else
 		os_str_ = "Mac OS X";
 #endif
 
-#if defined(Q_WS_WIN)
+#if defined(Q_OS_WIN)
 	TIME_ZONE_INFORMATION i;
 	//GetTimeZoneInformation(&i);
 	//timezone_offset_ = (-i.Bias) / 60;
@@ -249,10 +247,8 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 		os_str_ = "Windows Server 2003";
 	else if(v == QSysInfo::WV_VISTA)
 		os_str_ = "Windows Vista";
-#if QT_VERSION >= 0x040500
 	else if(v == QSysInfo::WV_WINDOWS7)
 		os_str_ = "Windows 7";
-#endif
 	else if(v == QSysInfo::WV_NT_based)
 		os_str_ = "Windows NT";
 #endif
@@ -260,7 +256,7 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 
 SystemInfo* SystemInfo::instance()
 {
-	if (!instance_) 
+	if (!instance_)
 		instance_ = new SystemInfo();
 	return instance_;
 }

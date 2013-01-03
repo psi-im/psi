@@ -185,7 +185,7 @@ bool PsiOptions::newProfile()
 	{
 		ToolbarPrefs buttons;
 		buttons.name = tr("Buttons");
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
 		buttons.on = true;
 #endif
 		buttons.keys << "button_options" << "button_status";
@@ -271,11 +271,11 @@ PsiOptions::PsiOptions()
 
 	if (!load(":/options/default.xml"))
 		qWarning("ERROR: Failed to load default options");
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	if (!load(":/options/macosx.xml"))
 		qWarning("ERROR: Failed to load Mac OS X-specific options");
 #endif
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 	if (!load(":/options/windows.xml"))
 		qWarning("ERROR: Failed to load Windows-specific options");
 #endif

@@ -185,7 +185,7 @@ void PsiChatDlg::initUi()
 	connect(ui_.mle, SIGNAL(textEditCreated(QTextEdit*)), SLOT(chatEditCreated()));
 	chatEditCreated();
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	connect(chatView(), SIGNAL(selectionChanged()), SLOT(logSelectionChanged()));
 #endif
 
@@ -463,8 +463,8 @@ void PsiChatDlg::updatePGP()
 	}
 
 	ui_.tb_pgp->setVisible(account()->hasPGP() &&
-	                       !smallChat_ &&
-	                       !PsiOptions::instance()->getOption("options.ui.chat.central-toolbar").toBool());
+						   !smallChat_ &&
+						   !PsiOptions::instance()->getOption("options.ui.chat.central-toolbar").toBool());
 }
 
 void PsiChatDlg::doClearButton()
@@ -574,14 +574,14 @@ void PsiChatDlg::appendNormalMessage(SpooledType spooled, const QDateTime& time,
 void PsiChatDlg::appendMessageFields(const Message& m)
 {
 //	if (!m.subject().isEmpty()) {
-//		chatView()->appendText(QString("<b>") + tr("Subject:") + "</b> " + QString("%1").arg(Qt::escape(m.subject())));
+//		chatView()->appendText(QString("<b>") + tr("Subject:") + "</b> " + QString("%1").arg(TextUtil::escape(m.subject())));
 //	}
 	if (!m.urlList().isEmpty()) {
 		UrlList urls = m.urlList();
 		chatView()->appendText(QString("<i>") + tr("-- Attached URL(s) --") + "</i>");
 		for (QList<Url>::ConstIterator it = urls.begin(); it != urls.end(); ++it) {
 			const Url &u = *it;
-			chatView()->appendText(QString("<b>") + tr("URL:") + "</b> " + QString("%1").arg(TextUtil::linkify(Qt::escape(u.url()))));
+			chatView()->appendText(QString("<b>") + tr("URL:") + "</b> " + QString("%1").arg(TextUtil::linkify(TextUtil::escape(u.url()))));
 			chatView()->appendText(QString("<b>") + tr("Desc:") + "</b> " + QString("%1").arg(u.desc()));
 		}
 	}

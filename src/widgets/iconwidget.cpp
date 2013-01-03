@@ -639,7 +639,7 @@ void IconButton::forceSetPsiIcon(const PsiIcon *i, bool activate)
 
 void IconButton::setPsiIcon(const PsiIcon *i, bool activate)
 {
-#ifndef Q_WS_X11
+#ifndef HAVE_X11
 	if ( !text().isEmpty() )
 		return;
 #endif
@@ -671,7 +671,7 @@ QString IconButton::psiIconName() const
 
 void IconButton::setText(const QString &text)
 {
-#ifndef Q_WS_X11
+#ifndef HAVE_X11
 	if ( !d->forced )
 		setPsiIcon(0);
 #endif

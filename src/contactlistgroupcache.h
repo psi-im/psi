@@ -22,6 +22,7 @@
 #define CONTACTLISTGROUPCACHE_H
 
 #include <QHash>
+#include <QObject>
 
 class ContactListGroup;
 class PsiContact;

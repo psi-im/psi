@@ -37,10 +37,10 @@
 
 #include "psioptions.h"
 
-#ifdef Q_WS_X11
+#ifdef HAVE_X11
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <QX11Info>
+#include "x11info.h"
 #endif
 
 // TODO: Make use of KDE taskbar flashing support
@@ -131,17 +131,17 @@ GAdvancedWidget::Private::Private(QWidget *parent)
 void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *height)
 {
 	if ( stickAt <= 0                     ||
-	    !stickEnabled                     ||
-	    !parentWidget_->isTopLevel()      ||
-	     parentWidget_->isMaximized()     ||
-	    !parentWidget_->updatesEnabled() )
+		!stickEnabled                     ||
+		!parentWidget_->isTopLevel()      ||
+		 parentWidget_->isMaximized()     ||
+		!parentWidget_->updatesEnabled() )
 	{
 		return;
 	}
 
 	QWidget *p = parentWidget_;
 	if ( p->pos() == QPoint(*x, *y) &&
-	     p->frameSize() == QSize(*width, *height) )
+		 p->frameSize() == QSize(*width, *height) )
 		return;
 
 	bool resizing = p->frameSize() != QSize(*width, *height);
@@ -160,7 +160,7 @@ void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *heig
 			rect = ((QDesktopWidget *)w)->availableGeometry((QWidget *)parent());
 		else {
 			if ( w == p ||
-			     desktop->screenNumber(p) != desktop->screenNumber(w) )
+				 desktop->screenNumber(p) != desktop->screenNumber(w) )
 				continue;
 
 			if ( !w->isVisible() )
@@ -174,10 +174,10 @@ void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *heig
 
 		if ( *x != p->x() )
 		if ( *x <= rect.left() + stickAt &&
-		     *x >  rect.left() - stickAt ) {
+			 *x >  rect.left() - stickAt ) {
 			if ( !dockWidget ||
-			     (p->frameGeometry().bottom() >= rect.bottom() &&
-			      p->frameGeometry().top() <= rect.top()) ) {
+				 (p->frameGeometry().bottom() >= rect.bottom() &&
+				  p->frameGeometry().top() <= rect.top()) ) {
 				*x = rect.left();
 				if ( resizing )
 					*width = p->frameSize().width() + p->x() - *x;
@@ -185,10 +185,10 @@ void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *heig
 		}
 
 		if ( *x + *width >= rect.right() - stickAt &&
-		     *x + *width <= rect.right() + stickAt ) {
+			 *x + *width <= rect.right() + stickAt ) {
 			if ( !dockWidget ||
-			     (p->frameGeometry().bottom() >= rect.bottom() &&
-			      p->frameGeometry().top() <= rect.top()) ) {
+				 (p->frameGeometry().bottom() >= rect.bottom() &&
+				  p->frameGeometry().top() <= rect.top()) ) {
 				if ( resizing )
 					*width = rect.right() - *x + 1;
 				else
@@ -198,10 +198,10 @@ void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *heig
 
 		if ( *y != p->y() )
 		if ( *y <= rect.top() + stickAt &&
-		     *y >  rect.top() - stickAt ) {
+			 *y >  rect.top() - stickAt ) {
 			if ( !dockWidget ||
-			     (p->frameGeometry().right() >= rect.right() &&
-			      p->frameGeometry().left() <= rect.left()) ) {
+				 (p->frameGeometry().right() >= rect.right() &&
+				  p->frameGeometry().left() <= rect.left()) ) {
 				*y = rect.top();
 				if ( resizing )
 					*height = p->frameSize().height() + p->y() - *y;
@@ -209,10 +209,10 @@ void GAdvancedWidget::Private::posChanging(int *x, int *y, int *width, int *heig
 		}
 
 		if ( *y + *height >= rect.bottom() - stickAt &&
-		     *y + *height <= rect.bottom() + stickAt ) {
+			 *y + *height <= rect.bottom() + stickAt ) {
 			if ( !dockWidget ||
-			     (p->frameGeometry().right() >= rect.right() &&
-			      p->frameGeometry().left() <= rect.left()) ) {
+				 (p->frameGeometry().right() >= rect.right() &&
+				  p->frameGeometry().left() <= rect.left()) ) {
 				if ( resizing )
 					*height = rect.bottom() - *y + 1;
 				else
@@ -233,7 +233,7 @@ void GAdvancedWidget::Private::doFlash(bool yes)
 	if (parentWidget_->window() != parentWidget_)
 		return;
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 	FLASHWINFO fwi;
 	fwi.cbSize = sizeof(fwi);
 	fwi.hwnd = parentWidget_->winId();
@@ -248,19 +248,19 @@ void GAdvancedWidget::Private::doFlash(bool yes)
 	}
 	FlashWindowEx(&fwi);
 
-#elif defined( Q_WS_X11 )
+#elif defined( HAVE_X11 )
 	static Atom demandsAttention = None;
 	static Atom wmState = None;
 
 
-    /* Xlib-based solution */
+	/* Xlib-based solution */
 	// adopted from http://www.qtforum.org/article/12334/Taskbar-flashing.html
 	// public domain by Marcin Jakubowski
-    Display *xdisplay = QX11Info::display();
-    Window rootwin = QX11Info::appRootWindow();
+	Display *xdisplay = X11Info::display();
+	Window rootwin = X11Info::appRootWindow();
 
 	if (demandsAttention == None) {
-    	demandsAttention = XInternAtom(xdisplay, "_NET_WM_STATE_DEMANDS_ATTENTION", true);
+		demandsAttention = XInternAtom(xdisplay, "_NET_WM_STATE_DEMANDS_ATTENTION", true);
 	}
 	if (wmState == None) {
 		wmState = XInternAtom(xdisplay, "_NET_WM_STATE", true);
@@ -283,7 +283,7 @@ void GAdvancedWidget::Private::doFlash(bool yes)
 	else {
 		e.xclient.data.l[0] = 0;
 	}
-    XSendEvent(xdisplay, rootwin, False, (SubstructureRedirectMask | SubstructureNotifyMask), &e);
+	XSendEvent(xdisplay, rootwin, False, (SubstructureRedirectMask | SubstructureNotifyMask), &e);
 
 #else
 	Q_UNUSED(yes)
@@ -294,7 +294,7 @@ void GAdvancedWidget::Private::moveEvent(QMoveEvent *)
 {
 	if (!parentWidget_->isTopLevel())
 		return;
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	QRect r = qApp->desktop()->availableGeometry(parentWidget_);
 	QRect g = parentWidget_->frameGeometry();
 
@@ -474,7 +474,7 @@ void GAdvancedWidget::doFlash(bool on)
 	d->doFlash( on );
 }
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 // http://groups.google.ru/group/borland.public.cppbuilder.winapi/msg/6eb6f1832d68686d?hl=ru&
 bool ForceForegroundWindow(HWND hwnd)
 {
@@ -504,9 +504,9 @@ bool ForceForegroundWindow(HWND hwnd)
 		// Windows 98/2000 doesn't want to foreground a window when some other
 		// window has keyboard focus
 		if (((osvi.dwPlatformId == VER_PLATFORM_WIN32_NT) && (osvi.dwMajorVersion > 4))
-		    || ((osvi.dwPlatformId  == VER_PLATFORM_WIN32_WINDOWS)
-		        && ((osvi.dwMajorVersion  > 4) || ((osvi.dwMajorVersion == 4) &&
-		                                           (osvi.dwMinorVersion > 0))))) {
+			|| ((osvi.dwPlatformId  == VER_PLATFORM_WIN32_WINDOWS)
+				&& ((osvi.dwMajorVersion  > 4) || ((osvi.dwMajorVersion == 4) &&
+												   (osvi.dwMinorVersion > 0))))) {
 			// Code from Karl E. Peterson, www.mvps.org/vb/sample.htm
 			// Converted to Delphi by Ray Lischner
 			// Published in The Delphi Magazine 55, page 16
@@ -555,20 +555,16 @@ void GAdvancedWidget::showWithoutActivation()
 	// in Qt 4.4.0, maybe it'll provide a simpler alternative to this
 	// windows-specific code
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 	HWND foregroundWindow = GetForegroundWindow();
 #endif
 
-#if QT_VERSION >= 0x040400
 	bool showWithoutActivating = d->parentWidget_->testAttribute(Qt::WA_ShowWithoutActivating);
 	d->parentWidget_->setAttribute(Qt::WA_ShowWithoutActivating, true);
-#endif
 	d->parentWidget_->show();
-#if QT_VERSION >= 0x040400
 	d->parentWidget_->setAttribute(Qt::WA_ShowWithoutActivating, showWithoutActivating);
-#endif
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 	if (foregroundWindow) {
 		// the first step is to make sure we're the topmost window
 		// otherwise step two doesn't seem to have any effect at all
@@ -581,7 +577,7 @@ void GAdvancedWidget::showWithoutActivation()
 void GAdvancedWidget::changeEvent(QEvent *event)
 {
 	if (event->type() == QEvent::ActivationChange ||
-	    event->type() == QEvent::WindowStateChange)
+		event->type() == QEvent::WindowStateChange)
 	{
 		if (d->parentWidget_->isActiveWindow()) {
 			doFlash(false);

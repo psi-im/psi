@@ -21,13 +21,14 @@
 #include "contactlistutil.h"
 
 #include <QModelIndex>
-#include <QTextDocument> // for Qt::escape()
+#include <QTextDocument> // for TextUtil::escape()
 
 #include "psicontact.h"
 #include "contactlistdragmodel.h"
 #include "contactlistmodelselection.h"
 #include "removeconfirmationmessagebox.h"
 #include "contactlistdragview.h"
+#include "textutil.h"
 
 #ifdef YAPSI
 #include "fakegroupcontact.h"
@@ -61,9 +62,9 @@ void ContactListUtil::removeContact(PsiContact* contact, QMimeData* _selection, 
 
 			if (!contactNames.isEmpty()) {
 				msg = tr("This will permanently remove<br>"
-				         "%1"
-				         "<br>from your contact list."
-				        ).arg(contactNames.join(", "));
+						 "%1"
+						 "<br>from your contact list."
+						).arg(contactNames.join(", "));
 			}
 
 #ifdef YAPSI
@@ -84,45 +85,45 @@ void ContactListUtil::removeContact(PsiContact* contact, QMimeData* _selection, 
 				QString andNContacts;
 				if (!tmpContactNames.isEmpty()) {
 					andNContacts = tr("and %n contacts ", 0,
-					                  tmpContactNames.count());
+									  tmpContactNames.count());
 				}
 
 				if (contactListSelection.groups().count() > 1) {
 					msg = tr("This will permanently remove:<br>"
-					         "%1"
-					         "<br>%2and %n groups from your contact list.",
-					         0,
-					         contactListSelection.groups().count()
-					        ).arg(tmp.join("<br>"))
-					         .arg(andNContacts);
+							 "%1"
+							 "<br>%2and %n groups from your contact list.",
+							 0,
+							 contactListSelection.groups().count()
+							).arg(tmp.join("<br>"))
+							 .arg(andNContacts);
 				}
 				else if (contactListSelection.groups().count() == 1) {
 					msg = tr("This will permanently remove:<br>"
-					         "%1"
-					         "<br>%2and \"%3\" group from your contact list."
-					        ).arg(tmp.join("<br>"))
-					         .arg(andNContacts)
-					         .arg(contactListSelection.groups().first().fullName);
+							 "%1"
+							 "<br>%2and \"%3\" group from your contact list."
+							).arg(tmp.join("<br>"))
+							 .arg(andNContacts)
+							 .arg(contactListSelection.groups().first().fullName);
 				}
 				else {
 					msg = tr("This will permanently remove:<br>"
-					         "%1"
-					         "<br>%2from your contact list."
-					        ).arg(tmp.join("<br>"))
-					         .arg(andNContacts);
+							 "%1"
+							 "<br>%2from your contact list."
+							).arg(tmp.join("<br>"))
+							 .arg(andNContacts);
 				}
 			}
 
 			if (indexes.count() == 1 && model->indexType(indexes.first()) == ContactListModel::GroupType) {
 				if (YaContactListContactsModel::virtualUnremovableGroups().contains(contactListSelection.groups().first().fullName)) {
 					msg = tr("This is a system group and can't be removed. "
-					         "Permanently remove all its contacts from your contact list?");
+							 "Permanently remove all its contacts from your contact list?");
 					destructiveActionName = tr("Clear Group");
 				}
 				else {
 					msg = tr("This will permanently remove<br>"
-					         "%1"
-					         "<br>group and all its contacts from your contact list.").arg(Qt::escape(indexes.first().data().toString()));
+							 "%1"
+							 "<br>group and all its contacts from your contact list.").arg(TextUtil::escape(indexes.first().data().toString()));
 				}
 			}
 			else if (indexes.count() == 1 && model->indexType(indexes.first()) == ContactListModel::ContactType) {
@@ -138,8 +139,8 @@ void ContactListUtil::removeContact(PsiContact* contact, QMimeData* _selection, 
 
 				if (psiContact && !psiContact->inList() && psiContact->blockAvailable()) {
 					msg = tr("This will permanently remove %1 from your contact list. "
-					         "You could block it in order to avoid further messages.")
-					      .arg(contactNames.join(", "));
+							 "You could block it in order to avoid further messages.")
+						  .arg(contactNames.join(", "));
 					destructiveActionName = tr("Delete");
 					complimentaryActionName = tr("Block");
 					complimentaryActionSlot = "blockContactConfirmation";
@@ -147,9 +148,9 @@ void ContactListUtil::removeContact(PsiContact* contact, QMimeData* _selection, 
 				else if (psiContact && psiContact->groups().count() > 1 && contactGroupsLostByRemove.count() == 1) {
 					// TODO: needs to be translated
 					msg = tr("This will remove %1 from \"%2\" group. "
-					         "You could also remove it from all groups.")
-					      .arg(contactNames.join(", "))
-					      .arg(contactGroupsLostByRemove.first());
+							 "You could also remove it from all groups.")
+						  .arg(contactNames.join(", "))
+						  .arg(contactGroupsLostByRemove.first());
 					destructiveActionName = tr("Delete");
 					complimentaryActionName = tr("Delete From All Groups");
 					// TODO: needs to be implemented
@@ -164,13 +165,13 @@ void ContactListUtil::removeContact(PsiContact* contact, QMimeData* _selection, 
 					if (complimentaryActionSlot) {
 						RemoveConfirmationMessageBoxManager::instance()->
 							removeConfirmation(selectionData,
-							                   obj, "removeContactConfirmation",
-							                   obj, complimentaryActionSlot,
-							                   tr("Deleting contacts"),
-							                   msg,
-							                   widget,
-							                   destructiveActionName,
-							                   complimentaryActionName);
+											   obj, "removeContactConfirmation",
+											   obj, complimentaryActionSlot,
+											   tr("Deleting contacts"),
+											   msg,
+											   widget,
+											   destructiveActionName,
+											   complimentaryActionName);
 					}
 #else
 					if (false) {
@@ -179,11 +180,11 @@ void ContactListUtil::removeContact(PsiContact* contact, QMimeData* _selection, 
 					else {
 						RemoveConfirmationMessageBoxManager::instance()->
 							removeConfirmation(selectionData,
-							                   obj, "removeContactConfirmation",
-							                   tr("Deleting contacts"),
-							                   msg,
-							                   widget,
-							                   destructiveActionName);
+											   obj, "removeContactConfirmation",
+											   tr("Deleting contacts"),
+											   msg,
+											   widget,
+											   destructiveActionName);
 					}
 
 					removeConfirmed = false;
@@ -195,13 +196,13 @@ void ContactListUtil::removeContact(PsiContact* contact, QMimeData* _selection, 
 		}
 
 		QMetaObject::invokeMethod(obj, "removeContactConfirmation", Qt::DirectConnection,
-		                          QGenericReturnArgument(),
-		                          Q_ARG(QString, selectionData), Q_ARG(bool, removeConfirmed));
+								  QGenericReturnArgument(),
+								  Q_ARG(QString, selectionData), Q_ARG(bool, removeConfirmed));
 
 		if(confirmWithoutPrompt) {
 			QMetaObject::invokeMethod(obj, "removeContactConfirmation", Qt::QueuedConnection,
-		                          QGenericReturnArgument(),
-		                          Q_ARG(QString, selectionData), Q_ARG(bool, true));
+								  QGenericReturnArgument(),
+								  Q_ARG(QString, selectionData), Q_ARG(bool, true));
 		}
 
 		delete selection;
@@ -257,9 +258,9 @@ QStringList ContactListUtil::contactNamesFor(QList<PsiContact*> contacts)
 		if (name != contact->jid().full()) {
 			// TODO: ideally it should be wrapped in <nobr></nobr>,
 			// but it breaks layout in Qt 4.3.4
-			name = tr("%1 (%2)").arg(name, Qt::escape(contact->jid().full()));
+			name = tr("%1 (%2)").arg(name, TextUtil::escape(contact->jid().full()));
 		}
-		contactNames << QString("<b>%1</b>").arg(Qt::escape(name));
+		contactNames << QString("<b>%1</b>").arg(TextUtil::escape(name));
 	}
 	return contactNames;
 }

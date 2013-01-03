@@ -43,7 +43,7 @@
 #include <QTextDocument>
 
 /**
- * Limits number of popups that could be displayed 
+ * Limits number of popups that could be displayed
  * simultaneously on screen. Old popups momentally
  * disappear when new ones appear.
  */
@@ -342,15 +342,15 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
 	else if (event && event->type() == PsiEvent::Message) {
 		name = ((MessageEvent*) event)->nick();
 	}
-		
+
 	if (!name.isEmpty()) {
 		if ( !PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.maximum-jid-length").toInt() )
-			name = "<nobr>" + Qt::escape(name) + "</nobr>";
+			name = "<nobr>" + TextUtil::escape(name) + "</nobr>";
 		else
-			name = "<nobr>" + Qt::escape(name) + " &lt;" + Qt::escape(jid) + "&gt;" + "</nobr>";
+			name = "<nobr>" + TextUtil::escape(name) + " &lt;" + TextUtil::escape(jid) + "&gt;" + "</nobr>";
 	}
-	else 
-		name = "<nobr>&lt;" + Qt::escape(jid) + "&gt;</nobr>";
+	else
+		name = "<nobr>&lt;" + TextUtil::escape(jid) + "&gt;</nobr>";
 
 	QString statusString = TextUtil::plain2rich(status);
 	if ( PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool() )

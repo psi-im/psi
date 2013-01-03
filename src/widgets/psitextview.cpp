@@ -25,6 +25,7 @@
 #include <QAbstractTextDocumentLayout>
 #include <QTextDocumentFragment>
 #include <QTextFragment>
+#include <QMimeData>
 
 #include "urlobject.h"
 #include "psirichtext.h"
@@ -40,7 +41,7 @@ class PsiTextView::Private : public QObject
 
 public:
 	Private(QObject *parent)
-	: QObject(parent) 
+	: QObject(parent)
 	{
 		anchorOnMousePress = QString();
 		hadSelectionOnMousePress = false;
@@ -48,7 +49,7 @@ public:
 
 	QString anchorOnMousePress;
 	bool hadSelectionOnMousePress;
-		
+
 	QString fragmentToPlainText(const QTextFragment &fragment);
 	QString blockToPlainText(const QTextBlock &block);
 	QString documentFragmentToPlainText(const QTextDocument &doc, QTextFrame::Iterator frameIt);
@@ -79,7 +80,7 @@ PsiTextView::PsiTextView(QWidget *parent)
 }
 
 /**
- * This function returns true if vertical scroll bar is 
+ * This function returns true if vertical scroll bar is
  * at its maximum position.
  */
 bool PsiTextView::atBottom()
@@ -105,16 +106,16 @@ void PsiTextView::scrollToTop()
 }
 
 /**
- * This function is provided for convenience. Please see 
+ * This function is provided for convenience. Please see
  * PsiRichText::appendText() documentation for usage details.
  */
 void PsiTextView::appendText(const QString &text)
 {
 	QTextCursor cursor = textCursor();
 	PsiRichText::Selection selection = PsiRichText::saveSelection(this, cursor);
-	
+
 	PsiRichText::appendText(document(), cursor, text);
-	
+
 	PsiRichText::restoreSelection(this, cursor, selection);
 	setTextCursor(cursor);
 }
@@ -172,7 +173,7 @@ QString PsiTextView::getPlainText() const
 	return getTextHelper(false);
 }
 
-void PsiTextView::contextMenuEvent(QContextMenuEvent *e) 
+void PsiTextView::contextMenuEvent(QContextMenuEvent *e)
 {
 	QMenu *menu;
 	if (!anchorAt(e->pos()).isEmpty())
@@ -199,11 +200,11 @@ void PsiTextView::mousePressEvent(QMouseEvent *e)
 	d->anchorOnMousePress = anchorAt(e->pos());
 	if (!textCursor().hasSelection() && !d->anchorOnMousePress.isEmpty()) {
 		QTextCursor cursor = textCursor();
-		QPoint mapped = QPoint(e->pos().x() + horizontalScrollBar()->value(), 
-		                       e->pos().y() + verticalScrollBar()->value()); // from QTextEditPrivate::mapToContents
+		QPoint mapped = QPoint(e->pos().x() + horizontalScrollBar()->value(),
+							   e->pos().y() + verticalScrollBar()->value()); // from QTextEditPrivate::mapToContents
 		const int cursorPos = document()->documentLayout()->hitTest(mapped, Qt::FuzzyHit);
 		if (cursorPos != -1)
-			cursor.setPosition(cursorPos);	   
+			cursor.setPosition(cursorPos);
 		setTextCursor(cursor);
 	}
 
@@ -241,7 +242,7 @@ QMimeData *PsiTextView::createMimeDataFromSelection() const
 	cursor.insertFragment(textCursor().selection());
 	QString text = PsiRichText::convertToPlainText(doc);
 	delete doc;
-	
+
 	QMimeData *data = new QMimeData;
 	data->setText(text);
 	data->setHtml(Qt::convertFromPlainText(text));
@@ -255,13 +256,13 @@ QMimeData *PsiTextView::createMimeDataFromSelection() const
 void PsiTextView::resizeEvent(QResizeEvent *e)
 {
 	bool atEnd = verticalScrollBar()->value() ==
-	             verticalScrollBar()->maximum();
+				 verticalScrollBar()->maximum();
 	bool atStart = verticalScrollBar()->value() ==
-	               verticalScrollBar()->minimum();
+				   verticalScrollBar()->minimum();
 	double value = 0;
 	if (!atEnd && !atStart)
 		value = (double)verticalScrollBar()->maximum() /
-		        (double)verticalScrollBar()->value();
+				(double)verticalScrollBar()->value();
 
 	QTextEdit::resizeEvent(e);
 

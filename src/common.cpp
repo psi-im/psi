@@ -40,18 +40,18 @@
 #include <QDir>
 
 #include <stdio.h>
-#ifdef Q_WS_X11
-#include <QX11Info>
+#ifdef HAVE_X11
+#include "x11info.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #endif
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 #include <windows.h>
 #endif
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <Carbon/Carbon.h> // for HIToolbox/InternetConfig
@@ -63,9 +63,9 @@
 #include <langinfo.h>
 #endif
 
-Qt::WFlags psi_dialog_flags = (Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint);
+Qt::WindowFlags psi_dialog_flags = (Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint);
 
-// used to be part of the global options struct. 
+// used to be part of the global options struct.
 // FIXME find it a new home!
 int common_smallFontSize=0;
 
@@ -260,7 +260,7 @@ QString soundDetectPlayer()
 	}
 	// fallback to "play"
 	return "play";
-	
+
 }
 
 void soundPlay(const QString &s)
@@ -273,7 +273,7 @@ void soundPlay(const QString &s)
 		QApplication::beep();
 		return;
 	}
-	
+
 	if (QDir::isRelativePath(str)) {
 		str = ApplicationInfo::resourcesDir() + '/' + str;
 	}
@@ -282,7 +282,7 @@ void soundPlay(const QString &s)
 		return;
 	}
 
-#if defined(Q_WS_WIN) || defined(Q_WS_MAC)
+#if defined(Q_OS_WIN) || defined(Q_OS_MAC)
 	QSound::play(str);
 #else
 	QString player = PsiOptions::instance()->getOption("options.ui.notifications.sounds.unix-sound-player").toString();
@@ -380,7 +380,7 @@ void closeDialogs(QWidget *w)
 	}
 }
 
-#ifdef Q_WS_X11
+#ifdef HAVE_X11
 #include <X11/Xlib.h>
 #include <X11/Xutil.h> // needed for WM_CLASS hinting
 
@@ -443,7 +443,7 @@ bool getCardinal32Prop(Display *display, Window win, char *propName, long *value
 // Get the desktop number that a window is on
 bool desktopOfWindow(Window *window, long *desktop)
 {
-	Display *display = QX11Info::display();
+	Display *display = X11Info::display();
 	bool result = getCardinal32Prop(display, *window, (char *)"_NET_WM_DESKTOP", desktop);
 	//if( result )
 	//	qDebug("Desktop: " + QString::number(*desktop));
@@ -455,10 +455,10 @@ bool desktopOfWindow(Window *window, long *desktop)
 bool currentDesktop(long *desktop)
 {
 	Window rootWin;
-	Display *display = QX11Info::display();
+	Display *display = X11Info::display();
 	bool result;
 
-	rootWin = RootWindow(QX11Info::display(), XDefaultScreen(QX11Info::display()));
+	rootWin = RootWindow(X11Info::display(), XDefaultScreen(X11Info::display()));
 	result = getCardinal32Prop(display, rootWin, (char *)"_NET_CURRENT_DESKTOP", desktop);
 	//if( result )
 	//	qDebug("Current Desktop: " + QString::number(*desktop));
@@ -483,7 +483,7 @@ void bringToFront(QWidget *widget, bool)
 	Q_ASSERT(widget);
 	QWidget* w = widget->window();
 
-#ifdef Q_WS_X11
+#ifdef HAVE_X11
 	// If we're not on the current desktop, do the hide/show trick
 	long dsk, curr_dsk;
 	Window win = w->winId();
@@ -595,24 +595,28 @@ int qVersionInt()
 
 Qt::DayOfWeek firstDayOfWeekFromLocale()
 {
+#if QT_VERSION >= QT_VERSION_CHECK(4, 8, 0)
+	return QLocale().firstDayOfWeek();
+#else
 	Qt::DayOfWeek firstDay = Qt::Monday;
-#ifdef Q_OS_WIN
+# ifdef Q_OS_WIN
 	WCHAR wsDay[4];
-# if defined(_WIN32_WINNT_VISTA) && WINVER >= _WIN32_WINNT_VISTA && defined(LOCALE_NAME_USER_DEFAULT)
+#  if defined(_WIN32_WINNT_VISTA) && WINVER >= _WIN32_WINNT_VISTA && defined(LOCALE_NAME_USER_DEFAULT)
 	if (GetLocaleInfoEx(LOCALE_NAME_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK, wsDay, 4)) {
-# else
+#  else
 	if (GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK, wsDay, 4)) {
-# endif
+#  endif
 		bool ok;
 		int wfd = QString::fromWCharArray(wsDay).toInt(&ok) + 1;
 		if (ok) {
 			firstDay = (Qt::DayOfWeek)(unsigned char)wfd;
 		}
 	}
-#elif defined(__GLIBC__)
+# elif defined(__GLIBC__)
 	firstDay = (Qt::DayOfWeek)(unsigned char)((*nl_langinfo(_NL_TIME_FIRST_WEEKDAY) + 5) % 7 + 1);
-#elif defined(Q_OS_MAC)
+# elif defined(Q_OS_MAC)
 	firstDay = (Qt::DayOfWeek)(unsigned char)macosCommonFirstWeekday();
-#endif
+# endif
 	return firstDay;
+#endif
 }

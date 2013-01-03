@@ -205,7 +205,7 @@ WbDlg::WbDlg(SxeSession* session, PsiAccount* pa) {
 	le_jid_->setToolTip(session->target().full());
 
 	// update the widget icon
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/whiteboard").icon());
 #endif
 	

@@ -82,12 +82,12 @@ struct lateMigrationOptions
 	QMap< QString, QList<ToolbarPrefs> > toolbars;
 };
 
-// used to be part of the global options struct. 
+// used to be part of the global options struct.
 // do not modify or save/load this value! it is calculated at run time!
 // FIXME find it a new home!
 extern int common_smallFontSize;
 
-// used to be part of the global options struct. 
+// used to be part of the global options struct.
 // FIXME find it a new home!
 enum { EventPriorityDontCare = -1 };
 
@@ -147,11 +147,11 @@ void clearMenu(QMenu *m); // deletes all items, including submenus, from given Q
 void bringToFront(QWidget *w, bool grabFocus = true);
 void replaceWidget(QWidget *, QWidget *);
 void closeDialogs(QWidget *);
-#ifdef Q_WS_X11
+#ifdef HAVE_X11
 #include <QWidget>
-#include <QX11Info>
+#include "x11info.h"
 void x11wmClass(Display *dsp, WId wid, QString resName);
-#define X11WM_CLASS(x)	x11wmClass(QX11Info::display(), winId(), (x));
+#define X11WM_CLASS(x)	x11wmClass(X11Info::display(), winId(), (x));
 #else
 #define X11WM_CLASS(x)	/* dummy */
 #endif
@@ -182,7 +182,7 @@ bool fileCopy(const QString &src, const QString &dest);
 QString soundDetectPlayer();
 void soundPlay(const QString &);
 
-extern Qt::WFlags psi_dialog_flags;
+extern Qt::WindowFlags psi_dialog_flags;
 
 // like QT_VERSION, but runtime
 int qVersionInt();

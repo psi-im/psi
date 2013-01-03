@@ -18,43 +18,48 @@
  *
  */
 
-#include <QHttp>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
 #include <QUrl>
 #include <QDomDocument>
 #include <QDomElement>
 #include <QDomNodeList>
+#include <QStringList>
 
 #include "serverlistquerier.h"
 
 #define SERVERLIST_SERVER        "xmpp.org"
-#define SERVERLIST_PORT          80
+#define SERVERLIST_PORT          "80"
 #define SERVERLIST_PATH          "/services/services.xml"
 #define SERVERLIST_MAX_REDIRECT  5
 
 ServerListQuerier::ServerListQuerier(QObject* parent) : QObject(parent)
 {
-	http_ = new QHttp(SERVERLIST_SERVER, SERVERLIST_PORT, this);
-	connect(http_,SIGNAL(requestFinished(int,bool)),SLOT(get_finished(int,bool)));
+	http_ = new QNetworkAccessManager(this);
+	url_ = QUrl("http://" SERVERLIST_SERVER ":" SERVERLIST_PORT SERVERLIST_PATH);
 }
 
 void ServerListQuerier::getList()
 {
 	redirectCount_ = 0;
-	http_->get(SERVERLIST_PATH);
+	QNetworkReply *reply = http_->get(QNetworkRequest(url_));
+	connect(reply, SIGNAL(finished()), SLOT(get_finished()));
 }
 
-void ServerListQuerier::get_finished(int, bool err)
+void ServerListQuerier::get_finished()
 {
-	const QHttpResponseHeader response = http_->lastResponse();
+	QNetworkReply *reply = static_cast<QNetworkReply *>(sender());
 
-	if (err) {
-		emit error(http_->errorString());
+	if (reply->error()) {
+		emit error(reply->errorString());
 	}
 	else {
-		if(response.statusCode() == 200) {
+		int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+		if(status == 200) {
 			// Parse the XML file
 			QDomDocument doc;
-			if (!doc.setContent(http_->readAll())) {
+			if (!doc.setContent(reply->readAll())) {
 				emit error(tr("Unable to parse server list"));
 				return;
 			}
@@ -70,40 +75,25 @@ void ServerListQuerier::get_finished(int, bool err)
 			}
 			emit listReceived(servers);
 		}
-		else if(response.statusCode() == 301 || response.statusCode() == 302) {
-			// handle redirections:
-			// 301 = moved permanently
-			// 302 = found
+		else if(reply->attribute(QNetworkRequest::RedirectionTargetAttribute).isValid()) {
 			if (redirectCount_ >= SERVERLIST_MAX_REDIRECT) {
 				emit error(tr("Maximum redirect count reached"));
 				return;
 			}
 
-			QString newUrl = response.value("Location");
-
-			QUrl url = newUrl;
-			if (!url.scheme().isEmpty()) {
-				if (url.scheme() != "http") {
-					emit error(tr("Redirect to protocol '%1' not supported").arg(url.scheme()));
-					return;
-				}
-
-				if (url.host().isEmpty()) {
-					emit error(tr("Cannot redirect to empty host"));
-					return;
-				}
-
-				http_->disconnect(this);
-				http_->deleteLater();
-				http_ = new QHttp(url.host(), url.port(80), this);
-				connect(http_,SIGNAL(requestFinished(int,bool)),SLOT(get_finished(int,bool)));
+			url_ = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).value<QUrl>().resolved(url_);
+			if (url_.isValid()) {
+				QNetworkReply *newReply = http_->get(QNetworkRequest(url_));
+				connect(newReply, SIGNAL(finished()),SLOT(get_finished()));
+				++redirectCount_;
+			} else {
+				emit error(tr("Invalid redirect URL %1").arg(url_.toString()));
+				return;
 			}
-
-			++redirectCount_;
-			http_->get(newUrl);
 		}
 		else {
-			emit error(tr("Unexpected HTTP status code: %1").arg(response.statusCode()));
+			emit error(tr("Unexpected HTTP status code: %1").arg(status));
 		}
 	}
+	reply->deleteLater();
 }

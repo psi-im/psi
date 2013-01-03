@@ -18,7 +18,7 @@
 
 #include "calldlg.h"
 
-#include <QtGui>
+#include <QtWidgets>
 #include "ui_call.h"
 #include "avcall.h"
 #include "xmpp_client.h"

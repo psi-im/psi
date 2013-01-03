@@ -1,5 +1,11 @@
 QT += xml network
 
+greaterThan(QT_MAJOR_VERSION, 4) {
+  QT += widgets multimedia
+  DEFINES += HAVE_QT5
+  unix:!mac:DEFINES += HAVE_X11
+}
+
 # modules
 include($$PWD/protocol/protocol.pri)
 include($$PWD/irisprotocol/irisprotocol.pri)
@@ -73,9 +79,9 @@ include($$PWD/../iris/iris.pri)
 
 # Header files
 HEADERS += \
-	$$PWD/varlist.h \ 
+	$$PWD/varlist.h \
 	$$PWD/jidutil.h \
-	$$PWD/showtextdlg.h \ 
+	$$PWD/showtextdlg.h \
 	$$PWD/profiles.h \
 	$$PWD/activeprofiles.h \
 	$$PWD/profiledlg.h \
@@ -290,10 +296,10 @@ SOURCES += \
 	$$PWD/ahcommand.cpp \
 	$$PWD/pongserver.cpp \
 	$$PWD/ahcommandserver.cpp \
- 	$$PWD/ahcommanddlg.cpp \
+	$$PWD/ahcommanddlg.cpp \
 	$$PWD/ahcformdlg.cpp \
 	$$PWD/ahcexecutetask.cpp \
- 	$$PWD/ahcservermanager.cpp \
+	$$PWD/ahcservermanager.cpp \
 	$$PWD/serverlistquerier.cpp \
 	$$PWD/psioptions.cpp \
 	$$PWD/psioptionseditor.cpp \
@@ -354,7 +360,7 @@ whiteboarding {
 		$$PWD/sxe/sxenewedit.h \
 		$$PWD/sxe/sxeremoveedit.h \
 		$$PWD/sxe/sxerecordedit.h \
- 		$$PWD/sxe/sxerecord.h \
+		$$PWD/sxe/sxerecord.h \
 		$$PWD/whiteboarding/wbmanager.h \
 		$$PWD/whiteboarding/wbdlg.h \
 		$$PWD/whiteboarding/wbwidget.h \
@@ -363,7 +369,7 @@ whiteboarding {
 		$$PWD/whiteboarding/wbnewitem.h \
 		$$PWD/whiteboarding/wbnewpath.h \
 		$$PWD/whiteboarding/wbnewimage.h
-	
+
 	SOURCES += \
 		$$PWD/sxe/sxemanager.cpp \
 		$$PWD/sxe/sxesession.cpp \
@@ -384,8 +390,8 @@ whiteboarding {
 
 mac {
 	contains( DEFINES, HAVE_GROWL ) {
-		HEADERS += $$PWD/psigrowlnotifier.h 
-		SOURCES += $$PWD/psigrowlnotifier.cpp 
+		HEADERS += $$PWD/psigrowlnotifier.h
+		SOURCES += $$PWD/psigrowlnotifier.cpp
 	}
 
 	include($$PWD/CocoaUtilities/CocoaUtilities.pri)
@@ -559,7 +565,7 @@ dbus {
 	SOURCES += 	$$PWD/dbus.cpp
 	SOURCES += $$PWD/activeprofiles_dbus.cpp
 	DEFINES += USE_DBUS
-	CONFIG += qdbus
+	QT += dbus
 }
 
 win32:!dbus {

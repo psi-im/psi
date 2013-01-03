@@ -27,7 +27,7 @@
 #include <QTimer>
 
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 #include <windows.h>
 #endif
 
@@ -76,7 +76,7 @@ void TabbableWidget::ensureTabbedCorrectly()
 			//   will only call showWithoutActivation() on
 			//   platforms where both calls can be made in
 			//   succession.
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 			showWithoutActivation();
 #else
 			show();

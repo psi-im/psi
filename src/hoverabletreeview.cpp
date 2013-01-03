@@ -23,7 +23,7 @@
 #include <QMouseEvent>
 #include <QScrollBar>
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 #include <QLibrary>
 #include <windows.h>
 
@@ -32,10 +32,10 @@
 // This struct is defined in winuser.h if the _WIN32_WINNT >= 0x0400 -- in the
 // other cases we have to define it on our own.
 typedef struct tagTRACKMOUSEEVENT {
-    DWORD cbSize;
-    DWORD dwFlags;
-    HWND  hwndTrack;
-    DWORD dwHoverTime;
+	DWORD cbSize;
+	DWORD dwFlags;
+	HWND  hwndTrack;
+	DWORD dwHoverTime;
 } TRACKMOUSEEVENT, *LPTRACKMOUSEEVENT;
 #endif
 #endif
@@ -77,9 +77,7 @@ HoverableStyleOptionViewItem::HoverableStyleOptionViewItem(int version)
 HoverableTreeView::HoverableTreeView(QWidget* parent)
 	: QTreeView(parent)
 {
-#if QT_VERSION >= 0x040400
 	setAutoScrollMargin(50);
-#endif
 	setMouseTracking(true);
 	viewport()->setMouseTracking(true);
 }
@@ -108,10 +106,10 @@ void HoverableTreeView::drawRow(QPainter* painter, const QStyleOptionViewItem& o
 
 	opt.decorationSize = QSize();
 	if (underMouse() &&
-	    !mousePosition_.isNull() &&
-	    r.contains(mousePosition_) &&
-	    !verticalScrollBar()->underMouse() &&
-	    !verticalScrollBar()->isSliderDown())
+		!mousePosition_.isNull() &&
+		r.contains(mousePosition_) &&
+		!verticalScrollBar()->underMouse() &&
+		!verticalScrollBar()->isSliderDown())
 	{
 		// we're hacking our way through the QTreeView which casts HoverableStyleOptionViewItem
 		// down to HoverableStyleOptionViewItemBaseClass and loses the hovered flag
@@ -129,7 +127,7 @@ void HoverableTreeView::drawRow(QPainter* painter, const QStyleOptionViewItem& o
 
 void HoverableTreeView::repairMouseTracking()
 {
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 	// work-around for broken mouse event tracking after context menu gets hidden on Qt 4.3.5
 
 	// copied from qapplication_win.cpp

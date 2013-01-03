@@ -1,4 +1,4 @@
-INCLUDEPATH += $$PWD 
+INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 
 HEADERS += \
@@ -8,7 +8,7 @@ HEADERS += \
 	$$PWD/filetunecontroller.h \
 	$$PWD/tunecontrollerplugin.h \
 	$$PWD/tunecontrollermanager.h \
-	$$PWD/tunecontrollerinterface.h 
+	$$PWD/tunecontrollerinterface.h
 
 
 
@@ -25,8 +25,8 @@ tc_itunes {
 		INCLUDEPATH += $$ITUNES_PLUGIN_PATH
 
 		HEADERS += \
-			$$ITUNES_PLUGIN_PATH/itunescontroller.h 
-			
+			$$ITUNES_PLUGIN_PATH/itunescontroller.h
+
 		SOURCES += \
 			$$ITUNES_PLUGIN_PATH/itunescontroller.cpp \
 			$$ITUNES_PLUGIN_PATH/itunesplugin.cpp
@@ -43,12 +43,12 @@ tc_winamp {
 
 	HEADERS += \
 		$$WINAMP_PLUGIN_PATH/winampcontroller.h \
-		$$WINAMP_PLUGIN_PATH/winampplugin.h 
-		
+		$$WINAMP_PLUGIN_PATH/winampplugin.h
+
 	SOURCES += \
 		$$WINAMP_PLUGIN_PATH/winampcontroller.cpp \
 		$$WINAMP_PLUGIN_PATH/winampplugin.cpp
-	
+
 	LIBS += -lUser32
 }
 

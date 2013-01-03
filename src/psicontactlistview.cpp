@@ -26,6 +26,7 @@
 #include <QDesktopWidget>
 #include <QTimer>
 #include <QFileInfo>
+#include <QMimeData>
 
 #include "psicontactlistviewdelegate.h"
 #include "psitooltip.h"
@@ -113,8 +114,8 @@ private slots:
 				}
 			}
 			if ( determineAutoRosterSizeGrowSide()
-			     && topParentRect.top() > desktop.top()
-			     && topParentRect.bottom() < desktop.bottom() ) {
+				 && topParentRect.top() > desktop.top()
+				 && topParentRect.bottom() < desktop.bottom() ) {
 				topParent->move( topParent->x(), topParent->y() - dh );
 			}
 			if ( topParent->frameGeometry().top() < desktop.top() ) {
@@ -228,8 +229,8 @@ void PsiContactListView::dropEvent(QDropEvent *e)
 				const QFileInfo fi(url.toLocalFile());
 				if (!fi.isDir() && fi.exists()) {
 					const QString fileName = QFileInfo(fi.isSymLink() ?
-									    fi.symLinkTarget() : fi.absoluteFilePath()
-									    ).canonicalFilePath();
+										fi.symLinkTarget() : fi.absoluteFilePath()
+										).canonicalFilePath();
 					files.append(fileName);
 				}
 			}

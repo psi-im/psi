@@ -273,7 +273,7 @@ void DiscoListItem::copyItem(const DiscoItem &it)
 		di.setNode ( it.node() );
 	if ( !(!di.name().isEmpty() && it.name().isEmpty()) )
 		di.setName ( it.name() );
-	
+
 	if ( di.name().isEmpty() && !di.jid().full().isEmpty() ) // use JID in the Name column
 		di.setName ( di.jid().full() );
 
@@ -570,13 +570,7 @@ QString DiscoListItem::computeHash( QString jid, QString node )
 void DiscoListItem::hideChildIndicator()
 {
 	setChildIndicatorPolicy(DontShowIndicator);
-#if QT_VERSION >= 0x040500
 	emitDataChanged();
-#else
-	Qt::ItemFlags tmp = flags();
-	setFlags(0);
-	setFlags(tmp);
-#endif
 }
 
 void DiscoListItem::updateItemsFinished(const DiscoList &list)
@@ -667,7 +661,7 @@ void DiscoListItem::discoInfoFinished()
 
 		// FIXME: use another method for checking XMPP error-types when Iris will provide one
 		if ( error_code==400 || error_code==404 || error_code==405 || error_code==409 ||
-		     error_code==500 || error_code==501 || error_code==503 || error_code==504 ) {
+			 error_code==500 || error_code==501 || error_code==503 || error_code==504 ) {
 			bool iconOk = false;
 			if ( !di.identities().isEmpty() ) {
 				DiscoItem::Identity id = di.identities().first();
@@ -686,7 +680,7 @@ void DiscoListItem::discoInfoFinished()
 
 		errorInfo=QString("%1").arg(QString(error_str).replace('\n', "<br>"));
 
-		if ( !autoInfo && d->protocol != DiscoData::Auto ) {	
+		if ( !autoInfo && d->protocol != DiscoData::Auto ) {
 			QMessageBox::critical(dlg(), tr("Error"), tr("There was an error getting item's info for <b>%1</b>.<br>Reason: %2").arg(di.jid().full()).arg(QString(error_str).replace('\n', "<br>")));
 		}
 	}
@@ -860,7 +854,7 @@ private:
 		{
 			setText(text);
 			setIconText(text);
-	
+
 			setCheckable(true);
 			setToolTip(toolTip);
 			connect(this, SIGNAL(triggered()), sm, SLOT(map()));
