@@ -131,7 +131,7 @@ void UserAccount::reset()
 	opt_host = false;
 	host = "";
 	opt_automatic_resource = true;
-	resource = "Psi";
+	resource = ApplicationInfo::name();
 	priority = 5;
 	ibbOnly = false;
 	opt_keepAlive = true;
@@ -182,7 +182,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	opt_log = o->getOption(base + ".log").toBool();
 	opt_reconn = o->getOption(base + ".reconn").toBool();
 	opt_ignoreSSLWarnings = o->getOption(base + ".ignore-SSL-warnings").toBool();
-	
+
 	// FIX-ME: See FS#771
 	if (o->getChildOptionNames().contains(base + ".connect-after-sleep")) {
 		opt_connectAfterSleep = o->getOption(base + ".connect-after-sleep").toBool();
@@ -208,10 +208,10 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 		opt_pass = true;
 		pass = decodePassword(tmp, jid);
 	}
-	
+
 	opt_host = o->getOption(base + ".use-host").toBool();
 	security_level = o->getOption(base + ".security-level").toInt();
-	
+
 	tmp = o->getOption(base + ".ssl").toString();
 	if (tmp == "no") {
 		ssl = SSL_No;
@@ -224,10 +224,10 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	} else {
 		ssl = SSL_Yes;
 	}
-	
+
 	host = o->getOption(base + ".host").toString();
 	port = o->getOption(base + ".port").toInt();
-	
+
 	resource = o->getOption(base + ".resource").toString();
 	priority = o->getOption(base + ".priority").toInt();
 
@@ -248,9 +248,9 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	} else if (tmp == "over encryped") {
 		allow_plain = XMPP::ClientStream::AllowPlainOverTLS;
 	} else {
-		allow_plain = XMPP::ClientStream::NoAllowPlain;		
+		allow_plain = XMPP::ClientStream::NoAllowPlain;
 	}
-	
+
 	QStringList rosterCache = o->getChildOptionNames(base + ".roster-cache", true, true);
 	foreach(QString rbase, rosterCache) {
 		RosterItem ri;
@@ -273,7 +273,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 		gd.rank = o->getOption(sbase + ".rank").toInt();
 		groupState.insert(k.toString(), gd);
 	}
-	
+
 	proxyID = o->getOption(base + ".proxy-id").toString();
 
 	keybind.fromOptions(o, base + ".pgp-key-bindings");
@@ -378,7 +378,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 		default:
 			qFatal("unknown allow_plain enum value in UserAccount::toOptions");
 	}
-	
+
 	int idx = 0;
 	foreach(RosterItem ri, roster) {
 		QString rbase = base + ".roster-cache.a" + QString::number(idx++);
@@ -388,7 +388,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 		o->setOption(rbase + ".ask", ri.ask());
 		o->setOption(rbase + ".groups", ri.groups());
 	}
-	
+
 	// now we check for redundant entries
 	QStringList groupList;
 	QSet<QString> removeList;
@@ -466,13 +466,13 @@ void UserAccount::fromXml(const QDomElement &a)
 	else {
 		opt_automatic_resource = false;
 	}
-	
+
 	// Will be overwritten if there is a new option
 	bool opt_plain = false;
 	readBoolAttribute(a, "plain", &opt_plain);
 	allow_plain = (opt_plain ? XMPP::ClientStream::AllowPlain : XMPP::ClientStream::NoAllowPlain);
 	readNumEntry(a, "allow-plain", (int*) &allow_plain);
-	
+
 	// Will be overwritten if there is a new option
 	bool opt_ssl = true;
 	readBoolAttribute(a, "ssl", &opt_ssl);
@@ -723,15 +723,15 @@ bool OptionsMigration::fromFile(const QString &fname)
 			accMigration[i].proxyID = proxyMigration[accMigration[i].proxy_index-1].id;
 		}
 	}
-	
-	
-	
+
+
+
 	PsiOptions::instance()->setOption("options.ui.contactlist.show.offline-contacts", true);
 	PsiOptions::instance()->setOption("options.ui.contactlist.show.away-contacts", true);
 	PsiOptions::instance()->setOption("options.ui.contactlist.show.hidden-contacts-group", true);
 	PsiOptions::instance()->setOption("options.ui.contactlist.show.agent-contacts", true);
 	PsiOptions::instance()->setOption("options.ui.contactlist.show.self-contact", true);
-		
+
 	for (int i=0; i < accMigration.size(); i++) {
 		if (!accMigration[i].opt_enabled) continue;
 		PsiOptions::instance()->setOption("options.ui.contactlist.show.offline-contacts", accMigration[i].tog_offline);
@@ -742,7 +742,7 @@ bool OptionsMigration::fromFile(const QString &fname)
 		break;
 	}
 
-	
+
 	QDomElement p = findSubTag(base, "preferences", &found);
 	if(found) {
 		bool found;
@@ -770,7 +770,7 @@ bool OptionsMigration::fromFile(const QString &fname)
 					migrateStringEntry(sorting, "contact", "options.ui.contactlist.contact-sort-style");
 					migrateStringEntry(sorting, "group", "options.ui.contactlist.group-sort-style");
 					migrateStringEntry(sorting, "account", "options.ui.contactlist.account-sort-style");
-					
+
 					/* FIXME
 					readEntry(sorting, "contact", &name);
 					if ( name == "alpha" )
@@ -841,7 +841,7 @@ bool OptionsMigration::fromFile(const QString &fname)
 				migrateBoolEntry(tag, "autoCopy", "options.ui.automatically-copy-selected-text");
 				migrateBoolEntry(tag, "useCaps", "options.service-discovery.enable-entity-capabilities");
 				migrateBoolEntry(tag, "rc", "options.external-control.adhoc-remote-control.enable");
-				
+
 				// Migrating for soft return option
 				bool found;
 				findSubTag(tag, "chatSoftReturn", &found);
@@ -849,9 +849,9 @@ bool OptionsMigration::fromFile(const QString &fname)
 					bool soft;
 					readBoolEntry(tag, "chatSoftReturn", &soft);
 					QVariantList vl;
-					if (soft) 
+					if (soft)
 						vl << qVariantFromValue(QKeySequence(Qt::Key_Enter)) << qVariantFromValue(QKeySequence(Qt::Key_Return));
-					else 
+					else
 						vl << qVariantFromValue(QKeySequence(Qt::Key_Enter+Qt::CTRL)) << qVariantFromValue(QKeySequence(Qt::CTRL+Qt::Key_Return));
 					PsiOptions::instance()->setOption("options.shortcuts.chat.send",vl);
 				}
@@ -950,7 +950,7 @@ bool OptionsMigration::fromFile(const QString &fname)
 				lateMigrationData.sp.clear();
 				for(QDomNode n = tag.firstChild(); !n.isNull(); n = n.nextSibling()) {
 					StatusPreset preset(n.toElement());
-					if (!preset.name().isEmpty()) 
+					if (!preset.name().isEmpty())
 						lateMigrationData.sp[preset.name()] = preset;
 				}
 			}
@@ -1278,8 +1278,8 @@ void OptionsMigration::lateMigration()
 {
 	foreach(QString opt, PsiOptions::instance()->allOptionNames()) {
 		if (opt.startsWith("options.status.presets.") ||
-		    opt.startsWith("options.iconsets.service-status.") ||
-		    opt.startsWith("options.iconsets.custom-status."))
+			opt.startsWith("options.iconsets.service-status.") ||
+			opt.startsWith("options.iconsets.custom-status."))
 		{
 			return;
 		}

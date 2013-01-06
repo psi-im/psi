@@ -1006,12 +1006,12 @@ XMPP::Status::Type PsiCon::currentStatusType() const
 		return XMPP::Status::Offline;
 	return d->mainwin->statusType();
 #else
-	bool active = false;
+	//bool active = false;
 	bool loggedIn = false;
 	XMPP::Status::Type state = XMPP::Status::Online;
 	foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
-		if(account->isActive())
-			active = true;
+//		if(account->isActive())
+//			active = true;
 		if(account->loggedIn()) {
 			loggedIn = true;
 			state = account->status().type();
@@ -1259,7 +1259,7 @@ void PsiCon::doToolbars()
 
 void PsiCon::optionChanged(const QString& option)
 {
-	bool notifyRestart = true;
+	//bool notifyRestart = true;
 
 	// Global shortcuts
 	setShortcuts();
@@ -1277,7 +1277,7 @@ void PsiCon::optionChanged(const QString& option)
 
 	if (option == "options.ui.tabs.use-tabs") {
 		QMessageBox::information(0, tr("Information"), tr("Some of the options you changed will only have full effect upon restart."));
-		notifyRestart = false;
+		//notifyRestart = false;
 	}
 
 	// update s5b

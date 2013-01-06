@@ -418,7 +418,7 @@ void FileTransferHandler::ft_readyRead(const QByteArray &a)
 	}
 }
 
-void FileTransferHandler::ft_bytesWritten(int x)
+void FileTransferHandler::ft_bytesWritten(qint64 x)
 {
 	if(d->sending) {
 		//printf("%d bytes written\n", x);
@@ -504,7 +504,7 @@ void FileTransferHandler::mapSignals()
 	connect(d->ft, SIGNAL(accepted()), SLOT(ft_accepted()));
 	connect(d->ft, SIGNAL(connected()), SLOT(ft_connected()));
 	connect(d->ft, SIGNAL(readyRead(const QByteArray &)), SLOT(ft_readyRead(const QByteArray &)));
-	connect(d->ft, SIGNAL(bytesWritten(int)), SLOT(ft_bytesWritten(int)));
+	connect(d->ft, SIGNAL(bytesWritten(qint64)), SLOT(ft_bytesWritten(qint64)));
 	connect(d->ft, SIGNAL(error(int)), SLOT(ft_error(int)),Qt::QueuedConnection);
 }
 

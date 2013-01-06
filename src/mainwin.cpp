@@ -637,7 +637,7 @@ void MainWin::setUseDock(bool use)
 
 	Q_ASSERT(!d->tray);
 	if (use) {
-		d->tray = new PsiTrayIcon("Psi", d->trayMenu);
+		d->tray = new PsiTrayIcon(ApplicationInfo::name(), d->trayMenu);
 		connect(d->tray, SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
 		connect(d->tray, SIGNAL(doubleClicked(const QPoint &)), SLOT(trayDoubleClicked()));
 		d->tray->setIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
@@ -1199,7 +1199,7 @@ void MainWin::setTrayToolTip(const Status& status, bool, bool)
 	if (!d->tray) {
 		return;
 	}
-	QString s = "Psi";
+	QString s = ApplicationInfo::name();
 
 	QString show = status.show();
 	if(!show.isEmpty()) {

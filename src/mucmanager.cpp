@@ -257,6 +257,11 @@ void MUCManager::destroy(const QString& reason, const Jid& venue)
 	t->go(true);
 }
 
+XMPP::Client* MUCManager::client() const
+{
+	return client_;
+}
+
 void MUCManager::setItems(const QList<MUCItem>& items)
 {
 	MUCItemsTask* t = new MUCItemsTask(room_, client_->rootTask());

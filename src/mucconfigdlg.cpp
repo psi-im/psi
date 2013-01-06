@@ -232,8 +232,8 @@ void MUCConfigDlg::getConfiguration_success(const XData& d)
 	if (affiliation_ == MUCItem::Owner) {
 		ui_.busy->stop();
 		delete data_;
-		data_ = new XDataWidget(ui_.pg_general_data);
-		data_->setFields(d.fields());
+		data_ = new XDataWidget(ui_.pg_general_data, manager_->client(), manager_->room());
+		data_->setForm(d, false);
 		data_container_->setWidget(data_);
 		data_container_->updateGeometry();
 		ui_.sw_general->setCurrentWidget(ui_.pg_general_data);

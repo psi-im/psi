@@ -63,7 +63,7 @@ private slots:
 	void ft_accepted();
 	void ft_connected();
 	void ft_readyRead(const QByteArray &);
-	void ft_bytesWritten(int);
+	void ft_bytesWritten(qint64);
 	void ft_error(int);
 	void trySend();
 	void doFinish();

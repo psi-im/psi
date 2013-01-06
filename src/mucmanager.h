@@ -59,6 +59,7 @@ public:
 	void setItems(const QList<MUCItem>&);
 	void getItemsByAffiliation(MUCItem::Affiliation);
 	void destroy(const QString& reason = QString(), const Jid& venue = Jid());
+	XMPP::Client* client() const;
 
 	// Basic operations
 	void kick(const QString&, const QString& = QString());

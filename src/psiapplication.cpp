@@ -263,19 +263,43 @@ void PsiApplication::init(bool GUIenabled)
 
 #ifdef HAVE_X11
 	if ( GUIenabled ) {
+		const int max = 20;
+		char* names[max];
+		int n = 0;
 		char buf[32];
 		// make a note of the window handle for the root window
 		root_window = QApplication::desktop()->winId();
 
 #ifdef HAVE_QT5
+		xcb_atom_t atoms[max];
+		xcb_intern_atom_cookie_t cookies[max];
+
+
 		_xcbEventFilter = new XcbEventFiter(this);
 		// get the selection type we'll use to locate the notification tray
 		snprintf(buf, sizeof(buf), "_NET_SYSTEM_TRAY_S%d", X11Info::xcbPreferredScreen());
 		xcb_connection_t *xcb = X11Info::xcbConnection();
-		xcb_intern_atom_cookie_t ia_cookie = xcb_intern_atom(xcb, 0, strlen(buf), buf);
+
+		//atoms[n] = &atom_KdeNetUserTime;
+		//names[n++] = (char *) "_KDE_NET_USER_TIME";
+
+		atoms[n] = &kde_net_wm_user_time;
+		names[n++] = (char *) "_NET_WM_USER_TIME";
+		atoms[n] = &manager_atom;
+		names[n++] = (char *) "MANAGER";
+		atoms[n] = &tray_selection_atom;
+		names[n++] = buf;
+
+		for (int i = 0; i < n; i++ ) {
+			cookies[i] = xcb_intern_atom(xcb, 0, strlen(names[i]), names[i]);
+		}
+		for (int i = 0; i < n; i++ ) {
+			xcb_intern_atom_reply_t *reply = xcb_intern_atom_reply(xcb, cookies[i], 0);
+			*atoms[i] = reply? reply->atom : 0;
+		}
+
+
 		xcb_get_window_attributes_cookie_t wa_cookie = xcb_get_window_attributes(xcb, root_window);
-		xcb_intern_atom_reply_t *ia_reply = xcb_intern_atom_reply(xcb, ia_cookie, 0);
-		tray_selection_atom = ia_reply? ia_reply->atom : 0;
 		xcb_get_window_attributes_reply_t *wa_reply = xcb_get_window_attributes_reply(xcb, wa_cookie, 0);
 		if (wa_reply) {
 			uint32_t event_mask = wa_reply->your_event_mask;
@@ -285,11 +309,29 @@ void PsiApplication::init(bool GUIenabled)
 		}
 		setTrayOwnerWindow();
 #else
+		Atom* atoms[max];
+		Atom atoms_return[max];
+
+		Display *dsp = X11Info::display();
+
 		// get the selection type we'll use to locate the notification tray
 		snprintf(buf, sizeof(buf), "_NET_SYSTEM_TRAY_S%d", XScreenNumberOfScreen( XDefaultScreenOfDisplay(dsp) ));
 
-		Display *dsp = QX11Info::display();
-		tray_selection_atom = XInternAtom(dsp, buf, false);
+		//atoms[n] = &atom_KdeNetUserTime;
+		//names[n++] = (char *) "_KDE_NET_USER_TIME";
+
+		atoms[n] = &kde_net_wm_user_time;
+		names[n++] = (char *) "_NET_WM_USER_TIME";
+		atoms[n] = &manager_atom;
+		names[n++] = (char *) "MANAGER";
+		atoms[n] = &tray_selection_atom;
+		names[n++] = buf;
+
+		XInternAtoms( dsp, names, n, false, atoms_return );
+
+		for (int i = 0; i < n; i++ ) {
+			*atoms[i] = atoms_return[i];
+		}
 
 		XWindowAttributes attr;
 
@@ -315,7 +357,7 @@ bool PsiApplication::notify(QObject *receiver, QEvent *event)
 								w->winId(), kde_net_wm_user_time, XCB_ATOM_CARDINAL,
 								32, 1, (unsigned char*)&qt_x_last_input_time);
 #else
-			XChangeProperty( QX11Info::display(), w->winId(), kde_net_wm_user_time, XA_CARDINAL,
+			XChangeProperty( X11Info::display(), w->winId(), kde_net_wm_user_time, XA_CARDINAL,
 					 32, PropModeReplace, (unsigned char*)&qt_x_last_input_time, 1 );
 #endif
 	}
@@ -326,7 +368,7 @@ bool PsiApplication::notify(QObject *receiver, QEvent *event)
 #ifdef HAVE_QT5
 			xcb_delete_property(X11Info::xcbConnection(), w->winId(), kde_net_wm_user_time);
 #else
-			XDeleteProperty( QX11Info::display(), w->winId(), kde_net_wm_user_time );
+			XDeleteProperty( X11Info::display(), w->winId(), kde_net_wm_user_time );
 #endif
 	}
 #endif
@@ -434,7 +476,7 @@ bool PsiApplication::x11EventFilter( XEvent *_event )
 				qt_x_last_input_time = _event->xkey.time;
 			QWidget *w = activeWindow();
 			if( w ) {
-				XChangeProperty( QX11Info::display(), w->winId(), kde_net_wm_user_time, XA_CARDINAL,
+				XChangeProperty( X11Info::display(), w->winId(), kde_net_wm_user_time, XA_CARDINAL,
 						 32, PropModeReplace, (unsigned char*)&qt_x_last_input_time, 1 );
 				/*timeval tv;
 				gettimeofday( &tv, NULL );

@@ -332,9 +332,9 @@ void SearchDlg::jt_finished()
 						QString str = TextUtil::plain2rich( form.instructions() );
 						lb_instructions->setText(str);
 
-						d->xdata = new XDataWidget( d->gr_form );
+						d->xdata = new XDataWidget( d->gr_form, d->pa->client(), d->form.jid() );
 						d->gr_form_layout->addWidget(d->xdata); // FIXME
-						d->xdata->setFields( form.fields() );
+						d->xdata->setForm( form, false );
 
 						d->xdata->show();
 

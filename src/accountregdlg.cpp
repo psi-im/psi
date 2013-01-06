@@ -257,7 +257,7 @@ void AccountRegDlg::getFields_finished()
 	ui_.busy->stop();
 	if (reg->success()) {
 		unblock();
-		fields_ =  new XDataWidget(ui_.page_fields);
+		fields_ =  new XDataWidget(ui_.page_fields, client_->client(), reg->form().jid());
 		XData xdata;
 		if (reg->hasXData()) {
 			isOld_ = false;

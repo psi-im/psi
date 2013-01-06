@@ -3,6 +3,7 @@
 
 class QString;
 class QStringList;
+class QLatin1String;
 
 class ApplicationInfo
 {
@@ -15,7 +16,7 @@ public:
 
 	// Version info
 	static QString name();
-	static QString shortName();
+	static QLatin1String sname();
 	static QString version();
 	static QString capsNode();
 	static QString capsVersion();

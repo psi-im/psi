@@ -53,8 +53,8 @@ AHCFormDlg::AHCFormDlg(const AHCommand& r, const Jid& receiver, XMPP::Client* cl
 	ui_.lb_instructions->setVisible(!r.data().instructions().isEmpty());
 
 	// XData form
-	xdata_ = new XDataWidget(this);
-	xdata_->setFields(r.data().fields());
+	xdata_ = new XDataWidget(this, client_, receiver);
+	xdata_->setForm(r.data(), false);
 	ui_.scrollArea->setWidget(xdata_);
 
 	ui_.busy->setVisible(!final);

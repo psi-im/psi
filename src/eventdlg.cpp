@@ -896,7 +896,7 @@ void EventDlg::init()
 	d->w_http_id->hide();
 
 	// data form
-	d->xdata = new XDataWidget(this);
+	d->xdata = new XDataWidget(this, d->pa->client(), d->jid);
 	d->xdata_form = new QWidget(this);
 	QVBoxLayout *vb_xdata = new QVBoxLayout(d->xdata_form);
 	d->xdata_instruction = new QLabel(d->xdata_form);
@@ -1897,7 +1897,7 @@ void EventDlg::updateEvent(PsiEvent *e)
 				setWindowTitle( form.title() );
 
 			//show data form
-			d->xdata->setFields( form.fields() );
+			d->xdata->setForm( form, false );
 			d->xdata_form->show();
 
 			//set instructions

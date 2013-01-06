@@ -3,8 +3,8 @@ QT += xml network
 greaterThan(QT_MAJOR_VERSION, 4) {
   QT += widgets multimedia
   DEFINES += HAVE_QT5
-  unix:!mac:DEFINES += HAVE_X11
 }
+unix:!mac:DEFINES += HAVE_X11
 
 # modules
 include($$PWD/protocol/protocol.pri)

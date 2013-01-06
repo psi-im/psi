@@ -1,4 +1,5 @@
 #include <QString>
+#include <QLatin1String>
 #include <QDir>
 #include <QFile>
 #include <QSettings>
@@ -34,8 +35,11 @@
 // Constants. These should be moved to a more 'dynamically changeable'
 // place (like an external file loaded through the resources system)
 // Should also be overridable through an optional file.
+//
+// PROG_SNAME - read as small name, system name, soname, short name, fs name
 
 #define PROG_NAME "Psi"
+#define PROG_SNAME "psi"
 #define PROG_VERSION PSI_VERSION
 //#define PROG_VERSION "0.15-dev" " (" __DATE__ ")" //CVS Builds are dated
 //#define PROG_VERSION "0.15";
@@ -61,9 +65,9 @@ QString ApplicationInfo::name()
 	return PROG_NAME;
 }
 
-QString ApplicationInfo::shortName()
+QLatin1String ApplicationInfo::sname()
 {
-	return QString(PROG_NAME).toLower();
+	return QLatin1String(PROG_SNAME);
 }
 
 QString ApplicationInfo::version()
@@ -99,7 +103,7 @@ QString ApplicationInfo::optionsNS()
 QString ApplicationInfo::storageNS()
 {
 	return PROG_STORAGE_NS;
-}	
+}
 
 QString ApplicationInfo::fileCacheNS()
 {
@@ -240,9 +244,9 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
 			if (XdgCacheHome.isEmpty()) {
 				XdgCacheHome = QDir::homePath() + "/.cache";
 			}
-			QDir configDir(XdgConfigHome + "/" + shortName());
-			QDir dataDir(XdgDataHome + "/" + shortName());
-			QDir cacheDir(XdgCacheHome + "/" + shortName());
+			QDir configDir(XdgConfigHome + "/" + sname());
+			QDir dataDir(XdgDataHome + "/" + sname());
+			QDir cacheDir(XdgCacheHome + "/" + sname());
 
 			// migrate mix-cased to lowercase, if needed
 
@@ -253,15 +257,15 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
 			bool ok = true;
 			if (ok && !configDir.exists() && configDirOld.exists()) {
 				configDirOld = QDir(XdgConfigHome);
-				ok = configDirOld.rename(name(), shortName());
+				ok = configDirOld.rename(name(), sname());
 			}
 			if (ok && !dataDir.exists() && dataDirOld.exists()) {
 				dataDirOld = QDir(XdgDataHome);
-				ok = dataDirOld.rename(name(), shortName());
+				ok = dataDirOld.rename(name(), sname());
 			}
 			if (ok && !cacheDir.exists() && cacheDirOld.exists()) {
 				cacheDirOld = QDir(XdgCacheHome);
-				ok = cacheDirOld.rename(name(), shortName());
+				ok = cacheDirOld.rename(name(), sname());
 			}
 
 			if(!ok)

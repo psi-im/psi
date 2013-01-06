@@ -1126,7 +1126,7 @@ void GCMainDlg::dragEnterEvent(QDragEnterEvent *e)
 void GCMainDlg::dropEvent(QDropEvent *e)
 {
 	Jid jid(e->mimeData()->text());
-	if (jid.isValid() && !ui_.lv_users->hasJid(jid)) {
+	if (jid.isValid() && !jid.node().isEmpty() && !ui_.lv_users->hasJid(jid)) {
 		Message m;
 		m.setTo(this->jid());
 		m.addMUCInvite(MUCInvite(jid));
