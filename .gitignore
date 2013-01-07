@@ -55,4 +55,7 @@ checker
 *.user.*
 /mac/*.dmg
 /mac/disk
+/mac/Info.plist
+/psi.debug
+
 
