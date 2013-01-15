@@ -249,6 +249,8 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 		os_str_ = "Windows Vista";
 	else if(v == QSysInfo::WV_WINDOWS7)
 		os_str_ = "Windows 7";
+	else if(v == 0x00a0) // QSysInfo::WV_WINDOWS8 should not be used for compatibility reasons
+		os_str_ = "Windows 8";
 	else if(v == QSysInfo::WV_NT_based)
 		os_str_ = "Windows NT";
 #endif
