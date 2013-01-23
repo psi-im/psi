@@ -78,7 +78,7 @@ PsiGrowlNotifier::PsiGrowlNotifier() : QObject(QCoreApplication::instance())
 	defaults << QObject::tr("Incoming File");
 
 	// Register with Growl
-	gn_ = new GrowlNotifier(nots, defaults, ApplicationInfo::name());
+	gn_ = new GrowlNotifier(nots, defaults, QCoreApplication::applicationName());
 }
 
 
