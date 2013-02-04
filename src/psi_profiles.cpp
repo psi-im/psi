@@ -1441,7 +1441,7 @@ bool profileRename(const QString &oldname, const QString &name)
 	// and if all ok we may rename it.
 	foreach(QString path, paths) {
 		QDir d(path);
-		if(!d.exists())
+		if(!d.exists() || !d.exists(oldname))
 			continue;
 
 		if(!d.rename(oldname, name))
