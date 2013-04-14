@@ -1041,6 +1041,13 @@
            </property>
           </widget>
          </item>
+		 <item>
+           <widget class="QCheckBox" name="ck_scram_salted_password">
+            <property name="text">
+             <string>Store password as salted hash instead of plaintext when SCRAM-SHA-1 is available.</string>
+            </property>
+           </widget>
+          </item>
         </layout>
        </item>
        <item>
