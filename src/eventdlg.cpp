@@ -123,40 +123,6 @@ static QString findJid(const QString &s, int x, int *p1, int *p2)
 //----------------------------------------------------------------------------
 // ELineEdit - a line edit that handles advanced Jid entry
 //----------------------------------------------------------------------------
-// hack hack hack hack
-#ifdef __GNUC__
-#warning "Disabled QLineEditPrivate (see below)"
-#endif
-//struct QLineEditPrivate
-//{
-//	// qt 3.3.1
-//   /*QLineEdit *q;
-//   QString text;
-//   int cursor;
-//   int cursorTimer;
-//   QPoint tripleClick;
-//   int tripleClickTimer;
-//   uint frame : 1;
-//   uint cursorVisible : 1;
-//   uint separator : 1;
-//   uint readOnly : 1;
-//   uint modified : 1;
-//   uint direction : 5;
-//   uint dragEnabled : 1;
-//   uint alignment : 3;
-//   uint echoMode : 2;
-//   uint textDirty : 1;
-//   uint selDirty : 1;
-//   uint validInput : 1;
-//   int ascent;
-//   int maxLength;
-//   int menuId;
-//   int hscroll;*/
-//
-//	char pad[sizeof(QLineEdit *) + sizeof(QString) + (sizeof(int)*2) + sizeof(QPoint) + sizeof(int) + 3 + (sizeof(int)*3)];
-//	int hscroll;
-//};
-
 ELineEdit::ELineEdit(EventDlg *parent, const char *name)
 :QLineEdit(parent)
 {

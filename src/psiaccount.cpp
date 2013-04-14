@@ -903,7 +903,6 @@ public slots:
 	{
 		reconnectData_++;
 		Q_ASSERT(::reconnectData().count());
-		Q_ASSERT(reconnectData >= 0);
 		reconnectData_ = qMax(0, qMin(reconnectData_, ::reconnectData().count() - 1));
 		ReconnectData data = ::reconnectData()[reconnectData_];
 
