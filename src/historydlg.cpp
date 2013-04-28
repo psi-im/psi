@@ -620,9 +620,14 @@ void HistoryDlg::startRequest()
 void HistoryDlg::stopRequest()
 {
 	if(ui_.busy->isActive()) {
-		ui_.busy->stop();		
+		ui_.busy->stop();
 	}
 	setEnabled(true);
+#ifdef Q_OS_MAC
+	// To workaround a Qt bug
+	// https://bugreports.qt-project.org/browse/QTBUG-26351
+	setFocus();
+#endif
 }
 
 EDBHandle* HistoryDlg::getEDBHandle()
