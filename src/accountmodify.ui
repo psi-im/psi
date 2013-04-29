@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>498</width>
+    <width>761</width>
     <height>455</height>
    </rect>
   </property>
@@ -1041,14 +1041,19 @@
            </property>
           </widget>
          </item>
-		 <item>
-           <widget class="QCheckBox" name="ck_scram_salted_password">
-            <property name="text">
-             <string>Store password as salted hash instead of plaintext when SCRAM-SHA-1 is available.</string>
-            </property>
-           </widget>
-          </item>
         </layout>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="ck_scram_salted_password">
+         <property name="toolTip">
+          <string>&lt;b&gt;Attention!&lt;/b&gt;
+&lt;br/&gt;
+When you enable this option you will not be able to find your password in config files. Only hash text will be there. So if you forget your password, it will be lost if you have not make a backup somewhere else.</string>
+         </property>
+         <property name="text">
+          <string>Store hash instead of plaintext password if server supports this feature.</string>
+         </property>
+        </widget>
        </item>
        <item>
         <spacer>
