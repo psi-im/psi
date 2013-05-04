@@ -128,6 +128,7 @@ private slots:
 	void actAboutQtActivated ();
 	void actAboutPsiMediaActivated ();
 	void actPlaySoundsActivated (bool);
+  void actShowPopupsActivated (bool);
 	void actPublishTuneActivated (bool);
 	void actTipActivated();
 	void actDiagQCAPluginActivated();
