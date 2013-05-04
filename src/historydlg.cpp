@@ -563,6 +563,9 @@ void HistoryDlg::displayResult(const EDBResult r, int direction, int max)
 	QString sent_color,received_color;
 	sent_color=PsiOptions::instance()->getOption("options.ui.look.colors.messages.sent").toString();
 	received_color=PsiOptions::instance()->getOption("options.ui.look.colors.messages.received").toString();
+	bool emoticons  = PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool();
+	bool formatting = PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool();
+	QString nick    = TextUtil::plain2rich(d->pa->nick());
 	while (i >= 0 && i <= r.count() - 1 && (max == -1 ? true : at < max))
 	{
 		EDBItemPtr item = r.value(i);
@@ -576,13 +579,13 @@ void HistoryDlg::displayResult(const EDBResult r, int direction, int max)
 				QString msg = me->message().body();
 				msg = TextUtil::linkify(TextUtil::plain2rich(msg));
 
-				if (PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool())
+				if (emoticons)
 					msg = TextUtil::emoticonify(msg);
-				if (PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
+				if (formatting)
 					msg = TextUtil::legacyFormat(msg);
 
 				if (me->originLocal())
-					msg = "<span style='color:"+sent_color+"'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]")+" &lt;"+ TextUtil::plain2rich(d->pa->nick()) +"&gt; " + msg + "</span>";
+					msg = "<span style='color:"+sent_color+"'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]")+" &lt;"+ nick +"&gt; " + msg + "</span>";
 				else
 					msg = "<span style='color:"+received_color+"'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]") + " &lt;" +  TextUtil::plain2rich(from) + "&gt; " + msg + "</span>";
 				
