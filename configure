@@ -316,7 +316,7 @@ if [ "$QC_VERBOSE" = "Y" ]; then
 fi
 
 qm=""
-names="qmake-qt4 qmake4 qmake"
+names="qmake-qt5 qmake5 qmake-qt4 qmake4 qmake"
 
 # qt4 check: --qtdir
 if [ -z "$qm" ] && [ ! -z "$EX_QTDIR" ]; then
@@ -927,8 +927,9 @@ public:
 		// test for "qdbus" feature
 
 		QString proextra =
-		"CONFIG += qt qdbus\n"
+		"CONFIG += qt\n"
 		"QT -= gui\n";
+		"QT += dbus\n";
 
 		QString str =
 		"\n"
@@ -1480,10 +1481,11 @@ public:
 			return false;
 		}
 
+		QFileInfo fi(qc_getenv("QC_COMMAND"));
 		QStringList args;
 		args += "-prl";
 		args += "-r";
-		args += qc_getenv("QC_PROFILE");
+		args += fi.dir().filePath(qc_getenv("QC_PROFILE"));
 		if(conf->doCommand(conf->qmake_path, args) != 0)
 		{
 			success = false;

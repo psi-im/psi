@@ -39,10 +39,11 @@ public:
 			return false;
 		}
 
+		QFileInfo fi(qc_getenv("QC_COMMAND"));
 		QStringList args;
 		args += "-prl";
 		args += "-r";
-		args += qc_getenv("QC_PROFILE");
+		args += fi.dir().filePath(qc_getenv("QC_PROFILE"));
 		if(conf->doCommand(conf->qmake_path, args) != 0)
 		{
 			success = false;
