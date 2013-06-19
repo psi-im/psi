@@ -136,7 +136,7 @@ static QString unixHeuristicDetect() {
 			QFile f( osInfo[i].file );
 			f.open( QIODevice::ReadOnly );
 			f.readLine( buffer, 128 );
-			QString desc(buffer);
+			QString desc = QString::fromUtf8(buffer);
 
 			desc = desc.trimmed();
 
