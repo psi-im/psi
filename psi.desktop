@@ -9,7 +9,9 @@ Icon=psi
 Exec=psi %U
 MimeType=x-scheme-handler/xmpp;
 Terminal=false
+StartupWMClass=psi
 Categories=Network;InstantMessaging;Qt;
+Keywords=XMPP;Jabber;Chat;InstantMessaging;
 
 # Translations
 GenericName[be]=Кліент XMPP
