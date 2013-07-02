@@ -88,6 +88,7 @@ static QString unixHeuristicDetect() {
 
 		LinuxASP, // Russian Linux distros
 		LinuxALT,
+		LinuxRFRemix,
 
 		LinuxPLD, // Polish Linux distros
 		LinuxAurox,
@@ -116,6 +117,7 @@ static QString unixHeuristicDetect() {
 		{ LinuxAurox,		OsUseName,	"/etc/aurox-release",		"Aurox Linux"		},
 		{ LinuxArch,		OsUseFile,	"/etc/arch-release",		"Arch Linux"		},
 		{ LinuxLFS,		OsAppendFile,	"/etc/lfs-release",		"LFS Linux"		},
+		{ LinuxRFRemix,		OsUseFile,	"/etc/rfremix-release",		"RFRemix Linux"		},
 
 		// untested
 		{ LinuxSuSE,		OsUseFile,	"/etc/SuSE-release",		"SuSE Linux"		},
@@ -136,7 +138,7 @@ static QString unixHeuristicDetect() {
 			QFile f( osInfo[i].file );
 			f.open( QIODevice::ReadOnly );
 			f.readLine( buffer, 128 );
-			QString desc(buffer);
+			QString desc = QString::fromUtf8(buffer);
 
 			desc = desc.trimmed();
 
