@@ -49,7 +49,6 @@
 #include "profiles.h"
 #include "xmpp_tasks.h"
 #include "xmpp_xmlcommon.h"
-#include "pongserver.h"
 #include "s5b.h"
 #ifdef FILETRANSFER
 #include "filetransfer.h"
