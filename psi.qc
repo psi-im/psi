@@ -11,6 +11,9 @@
   <dep type='buildmodeapp'>
     <required/>
   </dep>
+  <dep type='idn'>
+    <required/>
+  </dep>
   <dep type='qca'>
     <required/>
   </dep>
