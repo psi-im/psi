@@ -4,14 +4,14 @@
 	CONVENTIONS / RULES
 	===================
 	Three top-level entries should be observed:
-	options : This is the catch-all for client options. 
+	options : This is the catch-all for client options.
 	accounts : This is used for account data in Psi.
 	plugins : This is reserved for plugin options and so there's not a terribly good reason to be defining anything in the default option file; it may be interesting for the system defaults file, however.
-	
+
 	Naming: All tags should use lower case throughout, please use dashes ("-") to seperate words.
-	
+
 	Comments: please add a "comment" attribute to every option you add, describing its use and, if appropriate, possible values.
-	
+
 	-->
 <psi version="defaults">
 	<options comment="Client options">
@@ -55,7 +55,7 @@
 				<maximum comment="The maximum number of recently joined rooms that should be remembered" type="int">10</maximum>
 			</recent-joins>
 			<reasons type="QStringList" />
-		</muc> 
+		</muc>
 		<pgp comment="PGP encryption options">
 			<enable comment="Enable PGP globally" type="bool">true</enable>
 		</pgp>
@@ -393,7 +393,7 @@
 					<item type="QKeySequence">Ctrl+Enter</item>
 					<item type="QKeySequence">Alt+Return</item>
 					<item type="QKeySequence">Alt+Enter</item>
-				</set>	
+				</set>
 			</status>
 			<service-discovery comment="Shortcuts in the service discovery dialog"/>
 		</shortcuts>
