@@ -24,7 +24,7 @@
     <required/>
   </dep>
   <dep type='universal'>
-    <disabled/>  
+    <disabled/>
   </dep>
   <dep type='qdbus'/>
   <dep type='growl'/>

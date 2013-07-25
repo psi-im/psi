@@ -23,7 +23,7 @@ public:
 			"}\n";
 		if (!conf->doCompileAndLink(str, QStringList(), QString(), QString(), NULL))
 			return false;
-			
+
 		conf->addDefine("HAVE_GETHOSTBYNAME_R");
 		return true;
 	}

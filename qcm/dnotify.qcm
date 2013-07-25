@@ -37,7 +37,7 @@ public:
 		int ret;
 		if (!conf->doCompileAndLink(str, QStringList(), QString(), QString(), &ret) || ret != 0)
 			return false;
-			
+
 		conf->addDefine("HAVE_DNOTIFY");
 		return true;
 	}

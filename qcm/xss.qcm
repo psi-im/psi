@@ -44,7 +44,7 @@ public:
 		else {
 			conf->addLib("-lXss");
 		}
-		
+
 		conf->addDefine("HAVE_XSS");
 		return true;
 #endif

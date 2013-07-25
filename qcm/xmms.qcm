@@ -34,7 +34,7 @@ public:
                         return false;
 		}
 		QString s;
-		
+
 		// XMMS
 		s = conf->getenv("QC_WITH_XMMS_INC");
 		if(!s.isEmpty()) {
@@ -72,7 +72,7 @@ public:
 			if (!s.isEmpty())
 				conf->addLib(QString("-L") + s);
 		}
-		
+
 		conf->addLib("-lxmms");
 
 
@@ -81,7 +81,7 @@ public:
 		if(!s.isEmpty()) {
 			if(conf->checkHeader(s, "glib.h")) {
 				conf->addIncludePath(s);
-			} 
+			}
 			else {
 				qWarning("GLib includes not found!");
 				return false;
@@ -122,15 +122,15 @@ public:
 				return false;
 			}
 		}
-		
+
 		conf->addLib("-lglib");
-		
+
 		// Glibconfig
 		s = conf->getenv("QC_WITH_GLIBCONFIG_INC");
 		if(!s.isEmpty()) {
 			if(conf->checkHeader(s, "glibconfig.h")) {
 				conf->addIncludePath(s);
-			} 
+			}
 			else {
 				qWarning("glibconfig.h includes not found!");
 				return false;

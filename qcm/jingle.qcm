@@ -32,12 +32,12 @@ public:
 	bool exec()
 	{
 		QString s;
-		
+
 		// Check if Jingle was enabled explicitly
 		s = conf->getenv("QC_ENABLE_JINGLE");
 		if(s.isEmpty())
 			return false;
-		
+
 		// Expat
 		s = conf->getenv("QC_WITH_EXPAT_INC");
 		if(!s.isEmpty()) {
@@ -71,7 +71,7 @@ public:
 			if (!s.isEmpty())
 				conf->addLib(QString("-L") + s);
 		}
-		
+
 		conf->addLib("-lexpat");
 
 
@@ -111,7 +111,7 @@ public:
 			if (!s.isEmpty())
 				conf->addLib(QString("-L") + s);
 		}
-		
+
 		conf->addDefine("HAVE_SPEEX");
 		conf->addLib("-lspeex");
 
@@ -122,7 +122,7 @@ public:
 		if(!s.isEmpty()) {
 			if(conf->checkHeader(s, "iLBC_encode.h")) {
 				ilbc_include = s;
-			} 
+			}
 		}
 		else {
 			QStringList sl;
@@ -144,7 +144,7 @@ public:
 				ilbc_lib = s;
 			}
 		}
-		
+
 		if (!ilbc_include.isEmpty() && !ilbc_lib.isEmpty()) {
 			conf->addIncludePath(ilbc_include);
 			conf->addLib(QString("-L") + ilbc_lib);
@@ -158,7 +158,7 @@ public:
 		if(!s.isEmpty()) {
 			if(conf->checkHeader(s, "ortp/ortp.h")) {
 				conf->addIncludePath(s);
-			} 
+			}
 			else {
 				qWarning("ORTP includes not found!");
 				return false;
@@ -197,7 +197,7 @@ public:
 				return false;
 			}
 		}
-		
+
 		conf->addLib("-lortp");
 		conf->addDefine("HAVE_ORTP");
 
@@ -207,7 +207,7 @@ public:
 		if(!s.isEmpty()) {
 			if(conf->checkHeader(s, "alsa/asoundlib.h")) {
 				conf->addIncludePath(s);
-			} 
+			}
 			else {
 				qWarning("Alsa includes not found!");
 				return false;
@@ -246,7 +246,7 @@ public:
 				return false;
 			}
 		}
-		
+
 		conf->addLib("-lasound");
 		conf->addDefine("HAVE_ALSA_ASOUNDLIB_H");
 		conf->addDefine("__ALSA_ENABLED__");
@@ -284,7 +284,7 @@ public:
 			if (!s.isEmpty())
 				conf->addLib(QString("-L") + s);
 		}
-		
+
 		conf->addLib("-lportaudio");
 		conf->addDefine("HAVE_PORTAUDIO");
 #endif
@@ -297,7 +297,7 @@ public:
 		if(!s.isEmpty()) {
 			if(conf->checkHeader(s, "glib.h")) {
 				conf->addIncludePath(s);
-			} 
+			}
 			else {
 				qWarning("GLib includes not found!");
 				return false;
@@ -337,16 +337,16 @@ public:
 				return false;
 			}
 		}
-		
+
 		conf->addLib("-lglib-2.0 -lgmodule-2.0 -lgthread-2.0");
 		conf->addDefine("HAVE_GLIB");
-		
+
 		// Glibconfig
 		s = conf->getenv("QC_WITH_GLIBCONFIG_INC");
 		if(!s.isEmpty()) {
 			if(conf->checkHeader(s, "glibconfig.h")) {
 				conf->addIncludePath(s);
-			} 
+			}
 			else {
 				qWarning("glibconfig.h includes not found!");
 				return false;
@@ -363,7 +363,7 @@ public:
 		}
 
 		// Finish
-		conf->addExtra("CONFIG += jingle");                              
+		conf->addExtra("CONFIG += jingle");
 
 		qWarning("");
 		qWarning("");

@@ -37,7 +37,7 @@ public:
 			return false;
 		if(ret != 0)
 			return false;
-		
+
 		conf->addExtra("CONFIG += dbus");
 		return true;
 	}

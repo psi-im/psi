@@ -35,7 +35,7 @@ class qc_sparkle : public ConfObj
 				}
 				return true;
 		}
-		
+
 		// TODO: This should go into ConfObj
 		void addFrameworkPath(const QString& str)
 		{

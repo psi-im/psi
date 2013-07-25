@@ -21,7 +21,7 @@ public:
 		QString s = conf->getenv("QC_ENABLE_GOOGLE_FT");
 		if(s.isEmpty())
 			return false;
-		
+
 		// Expat
 		s = conf->getenv("QC_WITH_EXPAT_INC");
 		if(!s.isEmpty()) {
@@ -55,11 +55,11 @@ public:
 			if (!s.isEmpty())
 				conf->addLib(QString("-L") + s);
 		}
-		
+
 		conf->addLib("-lexpat");
 
 		// Finish
-		conf->addExtra("CONFIG += google_ft");                              
+		conf->addExtra("CONFIG += google_ft");
 
 		return true;
 	}

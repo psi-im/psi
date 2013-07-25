@@ -18,16 +18,16 @@ public:
 	bool exec()
 	{
 		QString s;
-		
+
 		// Check if Jingle was enabled explicitly
 		s = conf->getenv("QC_ENABLE_PLUGINS");
 		if(s.isEmpty())
 			return false;
-		
+
 		conf->addDefine("PSI_PLUGINS");
-		
+
 		// Finish
-		conf->addExtra("CONFIG += psi_plugins");                              
+		conf->addExtra("CONFIG += psi_plugins");
 
 		qWarning("");
 		qWarning("");
