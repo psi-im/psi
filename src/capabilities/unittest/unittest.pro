@@ -10,9 +10,9 @@ QT += xml
 
 # FIXME
 INCLUDEPATH += \
-	$$PWD/../../../iris/src/xmpp/xmpp-im 
+	$$PWD/../../../iris/src/xmpp/xmpp-im
 DEPENDPATH += \
-	$$PWD/../../../iris/src/xmpp/xmpp-im 
+	$$PWD/../../../iris/src/xmpp/xmpp-im
 
 SOURCES += \
 	$$PWD/../../../iris/src/xmpp/xmpp-im/xmpp_features.cpp \

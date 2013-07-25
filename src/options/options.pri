@@ -1,10 +1,10 @@
 # base dialog stuff
 HEADERS += \
 	$$PWD/optionsdlg.h \
-	$$PWD/optionstab.h 
+	$$PWD/optionstab.h
 SOURCES += \
 	$$PWD/optionstab.cpp \
-	$$PWD/optionsdlg.cpp 
+	$$PWD/optionsdlg.cpp
 FORMS += \
 	$$PWD/ui_options.ui
 

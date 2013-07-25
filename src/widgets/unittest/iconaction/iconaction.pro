@@ -14,7 +14,7 @@ SOURCES += \
 	testiconaction.cpp \
 	../../iconaction.cpp \
 	../../iconwidget.cpp
-	
+
 HEADERS += \
 	../../iconaction.h \
 	../../iconwidget.h \

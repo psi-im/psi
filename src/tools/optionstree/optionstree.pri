@@ -11,7 +11,7 @@ SOURCES += $$PWD/optionstree.cpp \
 			$$PWD/optionstreewriter.cpp
 
 # Model/view classes
-HEADERS += $$PWD/optionstreemodel.h 
+HEADERS += $$PWD/optionstreemodel.h
 SOURCES += $$PWD/optionstreemodel.cpp
-			
+
 QT += xml

@@ -3,7 +3,7 @@ TARGET = tunecontroller
 DESTDIR = ../lib
 VERSION = 1
 QT -= gui
-CONFIG += dll 
+CONFIG += dll
 
 MOC_DIR = .moc
 OBJECTS_DIR = .obj

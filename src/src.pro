@@ -13,8 +13,8 @@ CONFIG += pep
 #CONFIG += psi_plugins
 DEFINES += QT_STATICPLUGIN
 
-# Import several very useful Makefile targets 
-# as well as set up default directories for 
+# Import several very useful Makefile targets
+# as well as set up default directories for
 # generated files
 include(../qa/valgrind/valgrind.pri)
 include(../qa/oldtest/unittest.pri)
@@ -40,7 +40,7 @@ unix {
 
 	# icons and desktop files
 	dt.path=$$PREFIX/share/applications/
-	dt.files = ../psi.desktop 
+	dt.files = ../psi.desktop
 	icon1.path=$$PREFIX/share/icons/hicolor/16x16/apps
 	icon1.extra = cp -f ../iconsets/system/default/logo_16.png $(INSTALL_ROOT)$$icon1.path/psi.png
 	icon2.path=$$PREFIX/share/icons/hicolor/32x32/apps

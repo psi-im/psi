@@ -11,4 +11,4 @@ QT += gui xml
 INCLUDEPATH += .. ../../iris/src/xmpp/xmpp-im
 DEPENDPATH += ..
 SOURCES += \
-	$$PWD/../common.cpp	
+	$$PWD/../common.cpp

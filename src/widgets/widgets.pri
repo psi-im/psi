@@ -5,7 +5,7 @@ SOURCES += \
 	$$PWD/busywidget.cpp \
 	$$PWD/fancylabel.cpp \
 	$$PWD/iconselect.cpp \
-	$$PWD/iconwidget.cpp \ 
+	$$PWD/iconwidget.cpp \
 	$$PWD/psitextview.cpp \
 	$$PWD/urllabel.cpp \
 	$$PWD/urlobject.cpp \
