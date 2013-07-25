@@ -506,7 +506,7 @@ public:
 	QString lastEdited;
 	OptionsTree *o;
 	ProxyForObject* po;
-	
+
 	void itemToOptions(ProxyItem pi) {
 		QString base = "proxies." + pi.id;
 		pi.settings.toOptions( o, base);
@@ -593,13 +593,13 @@ void ProxyManager::openDialog(QString def)
 void ProxyManager::pd_applyList(const ProxyItemList &list, int x)
 {
 	QSet<QString> current;
-	
+
 	QString opt = "proxies";
 	QStringList old = d->o->getChildOptionNames(opt, true, true);
 	for (int i=0; i < old.size(); i++) {
 		old[i] = old[i].mid(opt.length()+1);
 	}
-	
+
 	// Update all
 	int idx = 0;
 	int i = 0;
@@ -611,16 +611,16 @@ void ProxyManager::pd_applyList(const ProxyItemList &list, int x)
 		}
 		d->itemToOptions(pi);
 		current += pi.id;
-		
+
 		if (i++ == x) d->lastEdited = pi.id;
 	}
-	
+
 	// and remove removed
 	foreach(QString key, old.toSet() - current) {
 		d->o->removeOption("proxies." + key, true);
 		emit proxyRemoved(key);
-	}	
-	
+	}
+
 	settingsChanged();
 }
 

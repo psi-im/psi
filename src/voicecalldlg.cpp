@@ -47,7 +47,7 @@ VoiceCallDlg::VoiceCallDlg(const Jid& jid, VoiceCaller* voiceCaller)
 	connect(ui_.pb_hangup,SIGNAL(clicked()),SLOT(terminate_call()));
 	connect(ui_.pb_accept,SIGNAL(clicked()),SLOT(accept_call()));
 	connect(ui_.pb_reject,SIGNAL(clicked()),SLOT(reject_call()));
-	
+
 }
 
 void VoiceCallDlg::call()
@@ -69,7 +69,7 @@ void VoiceCallDlg::reject_call()
 	finalize();
 	close();
 }
-	
+
 void VoiceCallDlg::terminate_call()
 {
 	setStatus(Terminating);
@@ -84,7 +84,7 @@ void VoiceCallDlg::accepted(const Jid& j)
 		setStatus(Accepted);
 	}
 }
-	
+
 void VoiceCallDlg::rejected(const Jid& j)
 {
 	if (jid_.compare(j)) {
@@ -107,7 +107,7 @@ void VoiceCallDlg::terminated(const Jid& j)
 		finalize();
 	}
 }
-	
+
 
 void VoiceCallDlg::incoming()
 {
@@ -173,7 +173,7 @@ void VoiceCallDlg::setStatus(CallStatus s)
 			ui_.pb_reject->setEnabled(false);
 			ui_.pb_hangup->setEnabled(false);
 			break;
-			
+
 		case Incoming:
 			ui_.lb_status->setText(tr("Incoming Call"));
 			ui_.pb_accept->setEnabled(true);

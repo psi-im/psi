@@ -40,7 +40,7 @@ using namespace XMPP;
 class PEPManager : public QObject
 {
 	Q_OBJECT
-	
+
 public:
 	enum Access {
 		DefaultAccess,
@@ -53,7 +53,7 @@ public:
 	//void registerNode(const QString&);
 	//void registerNodes(const QStringList&);
 	//bool canPublish(const QString&) const;
-	
+
 	//void subscribe(const QString&, const QString&);
 	//void unsubscribe(const QString&, const QString&);
 
@@ -84,14 +84,14 @@ protected slots:
 	//void unsubscribeFinished();
 	//void createFinished();
 
-protected: 
+protected:
 	//void createNode(const QString& node);
 	//void saveSubscriptions();
 
 private:
 	XMPP::Client* client_;
 	ServerInfoManager* serverInfo_;
-	
+
 	//QStringList nodes_, ensured_nodes_;
 };
 

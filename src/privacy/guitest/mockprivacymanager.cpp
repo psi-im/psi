@@ -18,7 +18,7 @@
  */
 
 #include <QDebug>
- 
+
 #include "mockprivacymanager.h"
 #include "privacylist.h"
 #include "privacylistitem.h"

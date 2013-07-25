@@ -26,7 +26,7 @@
 PrivacyListBlockedModel::PrivacyListBlockedModel(QObject* parent) : QSortFilterProxyModel(parent)
 {
 }
-	
+
 bool PrivacyListBlockedModel::lessThan(const QModelIndex & left, const QModelIndex & right ) const
 {
 	return left.row() < right.row();

@@ -144,7 +144,7 @@ void OptionsTabSound::applyOptions()
 	PsiOptions::instance()->setOption("options.ui.notifications.sounds.unix-sound-player", d->le_player->text());
 	PsiOptions::instance()->setOption("options.ui.notifications.sounds.silent-while-away", !d->ck_awaySound->isChecked());
 	PsiOptions::instance()->setOption("options.ui.notifications.sounds.notify-every-muc-message", d->ck_gcSound->isChecked());
-	
+
 	PsiOptions::instance()->setOption("options.ui.notifications.sounds.incoming-message", d->le_oeMessage->text());
 	PsiOptions::instance()->setOption("options.ui.notifications.sounds.new-chat", d->le_oeChat1->text());
 	PsiOptions::instance()->setOption("options.ui.notifications.sounds.chat-message", d->le_oeChat2->text());
@@ -156,7 +156,7 @@ void OptionsTabSound::applyOptions()
 	PsiOptions::instance()->setOption("options.ui.notifications.sounds.outgoing-chat", d->le_oeSend->text());
 	PsiOptions::instance()->setOption("options.ui.notifications.sounds.incoming-file-transfer", d->le_oeIncomingFT->text());
 	PsiOptions::instance()->setOption("options.ui.notifications.sounds.completed-file-transfer", d->le_oeFTComplete->text());
-	
+
 }
 
 void OptionsTabSound::restoreOptions()
@@ -214,7 +214,7 @@ void OptionsTabSound::previewSoundEvent(QAbstractButton* b)
 void OptionsTabSound::soundReset()
 {
 	OptSoundUI *d = (OptSoundUI *)w;
-	
+
 	d->le_oeMessage->setText("sound/chat2.wav");
 	d->le_oeChat1->setText("sound/chat1.wav");
 	d->le_oeChat2->setText("sound/chat2.wav");

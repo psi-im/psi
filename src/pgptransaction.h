@@ -1,5 +1,5 @@
 /*
- * pgptransaction.h 
+ * pgptransaction.h
  * Copyright (C) 2001-2005  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or

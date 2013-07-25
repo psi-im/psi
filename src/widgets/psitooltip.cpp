@@ -43,7 +43,7 @@ public:
 		static PsiToolTipHandler *instance = 0;
 		if (!instance)
 			instance = new PsiToolTipHandler();
-			
+
 		return instance;
 	}
 

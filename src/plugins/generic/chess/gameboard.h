@@ -81,7 +81,7 @@ public:
 
 public slots:
 	void receiveData(const QString& data);
-	
+
 private:
 	Drawer		*drw;
 	GameType	gt;

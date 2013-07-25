@@ -81,7 +81,7 @@ protected:
 
 	GCUserViewGroupItem* findGroup(XMPP::MUCItem::Role a) const;
 	bool maybeTip(const QPoint &);
-	bool event(QEvent* e);	
+	bool event(QEvent* e);
 	void mousePressEvent(QMouseEvent *event);
 
 signals:

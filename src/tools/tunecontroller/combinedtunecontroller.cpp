@@ -1,5 +1,5 @@
 /*
- * combinedtunecontroller.cpp 
+ * combinedtunecontroller.cpp
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
  */
 
 
-CombinedTuneController::CombinedTuneController() 
+CombinedTuneController::CombinedTuneController()
 {
 	foreach(QString name, TuneControllerManager::instance()->controllerNames()) {
 		TuneController* c = TuneControllerManager::instance()->createController(name);
@@ -45,7 +45,7 @@ CombinedTuneController::~CombinedTuneController()
 	}
 }
 
-Tune CombinedTuneController::currentTune() 
+Tune CombinedTuneController::currentTune()
 {
 	foreach(TuneController* c, controllers_) {
 		Tune t = c->currentTune();

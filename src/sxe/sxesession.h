@@ -21,7 +21,7 @@
 #ifndef SXDESESSION_H
 #define SXDESESSION_H
 
-#define SXENS "http://jabber.org/protocol/sxe" 
+#define SXENS "http://jabber.org/protocol/sxe"
 /*  ^^^^ make sure corresponds to NS used for parsing in iris/src/xmpp/xmpp-im/types.cpp ^^^^ */
 
 #include <QObject>

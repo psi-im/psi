@@ -33,7 +33,7 @@ class TuneControllerPlugin
 {
 public:
 	virtual ~TuneControllerPlugin() { }
-	
+
 	/**
 	 * \brief Returns the name of the tune controller.
 	 */

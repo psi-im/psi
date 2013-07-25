@@ -38,28 +38,28 @@ class PsiAccount;
 class VCardFactory : public QObject
 {
 	Q_OBJECT
-	
+
 public:
 	static VCardFactory* instance();
 	const VCard *vcard(const Jid &);
 	void setVCard(const Jid &, const VCard &);
 	void setVCard(const PsiAccount* account, const VCard &v, QObject* obj = 0, const char* slot = 0);
 	JT_VCard *getVCard(const Jid &, Task *rootTask, const QObject *, const char *slot, bool cacheVCard = true);
-	
+
 signals:
 	void vcardChanged(const Jid&);
-	
+
 protected:
 	void checkLimit(QString jid, VCard *vcard);
-	
+
 private slots:
 	void updateVCardFinished();
 	void taskFinished();
-	
+
 private:
 	VCardFactory();
 	~VCardFactory();
-	
+
 	static VCardFactory* instance_;
 	const int dictSize_;
 	QStringList vcardList_;

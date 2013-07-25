@@ -90,7 +90,7 @@ AddUserDlg::AddUserDlg(const XMPP::Jid &jid, const QString &nick, const QString 
 	w_serviceTranslation->hide();
 	w_serviceTranslation->setEnabled(false);
 	te_info->hide();
-	
+
 	resize(size() - s);
 }
 

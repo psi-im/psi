@@ -974,6 +974,6 @@ QString EDBFlatFile::File::eventToLine(PsiEvent *e)
 
 		return line;
 	}
-	
+
 	return "";
 }

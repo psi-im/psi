@@ -35,12 +35,12 @@ private slots:
 		QCOMPARE(iconset->authors()[1],      QString("Michail Pishchagin (icondef.xml)<br>&nbsp;&nbsp;Email: <a href='mailto:mblsha@users.sourceforge.net'>mblsha@users.sourceforge.net</a><br>&nbsp;&nbsp;JID: <a href='jabber:mblsha@jabber.ru'>mblsha@jabber.ru</a><br>&nbsp;&nbsp;WWW: <a href='http://maz.sf.net'>http://maz.sf.net</a>"));
 		QCOMPARE(iconset->creation(),        QString("2003-07-08"));
 		QCOMPARE(iconset->description(),     QString("Default Psi 0.9.1 iconset"));
-		
+
 		// verify icons
 		QCOMPARE(iconset->count(), 19);
 	}
 
-	void testIterator() 
+	void testIterator()
 	{
 		QStringList iconNames;
 		QListIterator<PsiIcon *> it = iconset->iterator();
@@ -50,8 +50,8 @@ private slots:
 		}
 		QCOMPARE(iconNames.count(), iconset->count());
 	}
-	
-	void testHeadlineIcon() 
+
+	void testHeadlineIcon()
 	{
 		const PsiIcon *messageHeadline = IconsetFactory::iconPtr("psi/headline");
 		QVERIFY(messageHeadline != 0);
@@ -68,7 +68,7 @@ private slots:
 		QCOMPARE(messageHeadline->pixmap().width(),  16);
 		QCOMPARE(messageHeadline->pixmap().height(), 16);
 	}
-	
+
 	void testAnim()
 	{
 		const PsiIcon *chat = IconsetFactory::iconPtr("psi/chat");
@@ -78,16 +78,16 @@ private slots:
 		Anim *copy1 = new Anim(*anim);
 		Anim *copy2 = new Anim(*copy1);
 		Anim *copy3 = new Anim(*copy2);
-		
+
 		// at first, all animations should contain 15 frames
 		QCOMPARE(copy3->numFrames(), 15);
-		
+
 		copy3->stripFirstFrame();
 		QCOMPARE(copy3->numFrames(), 14);
 		QCOMPARE(copy2->numFrames(), 15);
 		QCOMPARE(copy1->numFrames(), 15);
 		QCOMPARE(anim->numFrames(),  15);
-		
+
 		int i;
 		for (i = 0; i < 2; i++)
 			copy2->stripFirstFrame();
@@ -102,12 +102,12 @@ private slots:
 		QCOMPARE(copy2->numFrames(), 13);
 		QCOMPARE(copy1->numFrames(), 10);
 		QCOMPARE(anim->numFrames(),  15);
-		
+
 		delete copy3;
 		delete copy2;
 		delete copy1;
 	}
-		
+
 	void testIconStripping()
 	{
 		const PsiIcon *chat = IconsetFactory::iconPtr("psi/chat");
@@ -115,7 +115,7 @@ private slots:
 
 		QVERIFY(chat->isAnimated() == true);
 		QCOMPARE(chat->anim()->numFrames(), 15);
-		
+
 		PsiIcon *stripping = new PsiIcon(*chat);
 		QCOMPARE(chat->name(),      QString("psi/chat"));
 		QCOMPARE(stripping->name(), QString("psi/chat"));
@@ -130,7 +130,7 @@ private slots:
 
 		delete stripping;
 	}
-	
+
 	void testIconsetFactory()
 	{
 		QCOMPARE(IconsetFactory::icons().count(), 19);
@@ -141,13 +141,13 @@ private slots:
 	{
 		Iconset *is = new Iconset();
 		QVERIFY(is->load("iconsets/roster/small.jisp"));
-		
+
 		Iconset *combined = new Iconset(*is);
 		QCOMPARE(combined->count(), is->count());
 
 		*combined += *is;
 		QCOMPARE(combined->count(), is->count());
-		
+
 		QListIterator<PsiIcon*> it = is->iterator();
 		while (it.hasNext()) {
 			PsiIcon *icon = new PsiIcon(*it.next());
@@ -156,15 +156,15 @@ private slots:
 			delete icon;
 		}
 		QCOMPARE(combined->count(), 4);
-		
+
 		combined->clear();
 		QCOMPARE(combined->count(), 0);
 		QCOMPARE(is->count(),       2);
-		
+
 		delete combined;
 		delete is;
 	}
-	
+
 	void testLoadGifIconset()
 	{
 		Iconset *is = new Iconset();
@@ -172,7 +172,7 @@ private slots:
 		QVERIFY(is->count() > 0);
 		delete is;
 	}
-		
+
 	void testMultipleIconTextStrings()
 	{
 		// all puz iconset icons contain multiple
@@ -180,21 +180,21 @@ private slots:
 		Iconset *is = new Iconset();
 		QVERIFY(is->load("iconsets/emoticons/puz.jisp"));
 		QVERIFY(is->count() > 0);
-		
+
 		QListIterator<PsiIcon*> it = is->iterator();
 		while (it.hasNext()) {
 			const QList<PsiIcon::IconText> text = it.next()->text();
 			QVERIFY(text.count() > 1);
 		}
-		
+
 		delete is;
 	}
-		
+
 	void testCreateQIcon()
 	{
 		const PsiIcon *chat = IconsetFactory::iconPtr("psi/chat");
 		QVERIFY(chat != 0);
-		
+
 		QIcon icon = chat->icon();
 		QVERIFY(!icon.isNull());
 	}

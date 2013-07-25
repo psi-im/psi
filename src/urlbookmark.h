@@ -31,7 +31,7 @@ class URLBookmark
 public:
 	URLBookmark(const QString& name, const QString& url);
 	URLBookmark(const QDomElement&);
-	
+
 	const QString& name() const;
 	const QString& url() const;
 	bool isNull() const;

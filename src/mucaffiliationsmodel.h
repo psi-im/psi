@@ -35,7 +35,7 @@ class MUCAffiliationsModel : public QStandardItemModel
 
 public:
 	MUCAffiliationsModel();
-	
+
 	virtual Qt::ItemFlags flags(const QModelIndex &index) const;
 	virtual Qt::DropActions supportedDropActions() const;
 	bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
@@ -47,11 +47,11 @@ public:
 	QModelIndex affiliationListIndex(XMPP::MUCItem::Affiliation);
 	void addItems(const QList<XMPP::MUCItem>&);
 	QList<XMPP::MUCItem> changes() const;
-	
+
 protected:
-	enum AffiliationListIndex { 
+	enum AffiliationListIndex {
 		Owners = 0, Admins = 1, Members = 2, Outcast = 3 , Unknown = 4 };
-	
+
 	void resetAffiliationList(XMPP::MUCItem::Affiliation);
 	static QString affiliationlistindexToString(AffiliationListIndex);
 	AffiliationListIndex affiliationToIndex(XMPP::MUCItem::Affiliation);

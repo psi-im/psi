@@ -56,7 +56,7 @@ QWidget *OptionsTabChat::widget()
 	bg_delChats->addButton( d->rb_delChatsHour);
 	bg_delChats->addButton( d->rb_delChatsDay);
 	bg_delChats->addButton( d->rb_delChatsNever);
-	
+
 	connect(d->ck_tabChats, SIGNAL(toggled(bool)), d->cb_tabGrouping, SLOT(setEnabled(bool)));
 
 	d->rb_defActMsg->setWhatsThis(
@@ -103,7 +103,7 @@ void OptionsTabChat::applyOptions()
 	PsiOptions::instance()->setOption("options.ui.chat.alert-for-already-open-chats", d->ck_alertOpenChats->isChecked());
 	PsiOptions::instance()->setOption("options.ui.chat.raise-chat-windows-on-new-messages", d->ck_raiseChatWindow->isChecked());
 	PsiOptions::instance()->setOption("options.ui.chat.use-small-chats", d->ck_smallChats->isChecked());
-	
+
 	QString delafter;
 	switch (bg_delChats->buttons().indexOf( bg_delChats->checkedButton() )) {
 		case 0:
@@ -144,7 +144,7 @@ void OptionsTabChat::applyOptions()
 			d->cb_tabGrouping->removeItem(4);
 		}
 	}
-	
+
 	PsiOptions::instance()->setOption("options.ui.chat.use-expanding-line-edit", d->ck_autoResize->isChecked());
 
 	PsiOptions::instance()->setOption("options.ui.tabs.use-tab-shortcuts", d->ck_tabShortcuts->isChecked());

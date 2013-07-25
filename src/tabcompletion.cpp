@@ -35,9 +35,9 @@ TabCompletion::~TabCompletion()
 
 void TabCompletion::setTextEdit(QTextEdit* textEdit) {
 	textEdit_ = textEdit;
-	
+
 	QColor mleBackground(textEdit_->palette().color(QPalette::Active, QPalette::Base));
-	
+
 	if (mleBackground.value() < 128) {
 		highlight_ = mleBackground.lighter(125);
 	} else {
@@ -153,13 +153,13 @@ QString TabCompletion::suggestCompletion(bool *replaced) {
 }
 
 
-	
+
 void TabCompletion::reset() {
 	typingStatus_ = Typing_Normal;
 	highlight(false);
 }
 
-/** Handle tab completion. 
+/** Handle tab completion.
 	* User interface uses a dual model, first tab completes upto the
 	* longest common (case insensitiv) match, further tabbing cycles through all
 	* possible completions. When doing a tab completion without something to complete
@@ -176,8 +176,8 @@ void TabCompletion::tryComplete() {
 		default:
 			break;
 	}
-	
-	
+
+
 	QString newText;
 	bool replaced = false;
 
@@ -193,19 +193,19 @@ void TabCompletion::tryComplete() {
 	} else {
 		QTextCursor cursor = textEdit_->textCursor();
 		QString wholeText = textEdit_->toPlainText();
-		
+
 		int begin, end;
 		setup(wholeText, cursor.position(), begin, end);
 		replacementCursor_ = QTextCursor(textEdit_->document());
 		moveCursorToOffset(replacementCursor_, begin);
 		moveCursorToOffset(replacementCursor_, end, QTextCursor::KeepAnchor);
-				
+
 		if (toComplete_.isEmpty() && typingStatus_ == Typing_TabbingCompletions) {
 			typingStatus_ = Typing_MultipleSuggestions;
-			
+
 			QString guess;
 			suggestedCompletion_ = allChoices(guess);
-			
+
 			if ( !guess.isEmpty() ) {
 				suggestedIndex_ = -1;
 				newText = guess;
@@ -222,22 +222,22 @@ void TabCompletion::tryComplete() {
 
 	if (replaced) {
 		textEdit_->setUpdatesEnabled(false);
-			
+
 		int start = qMin(replacementCursor_.anchor(), replacementCursor_.position());
-		
+
 		replacementCursor_.beginEditBlock();
 		replacementCursor_.insertText(newText);
 		replacementCursor_.endEditBlock();
-		
+
 		QTextCursor newPos(replacementCursor_);
-		
+
 		moveCursorToOffset(replacementCursor_, start, QTextCursor::KeepAnchor);
-		
-		
+
+
 		newPos.clearSelection();
 
 		textEdit_->setTextCursor(newPos);
-		
+
 		textEdit_->setUpdatesEnabled(true);
 		textEdit_->viewport()->update();
 	}

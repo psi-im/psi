@@ -18,7 +18,7 @@ namespace QCA {
 
 class PGPUtil : public QObject
 {
-	Q_OBJECT 
+	Q_OBJECT
 
 public:
 	static PGPUtil& instance();

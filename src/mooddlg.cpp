@@ -33,7 +33,7 @@ MoodDlg::MoodDlg(PsiAccount* pa)
 	ui_.setupUi(this);
 	setModal(false);
 	connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(close()));
-	connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(setMood()));	
+	connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(setMood()));
 
 	ui_.cb_type->addItem(tr("<unset>"));
 	foreach(MoodCatalog::Entry e, MoodCatalog::instance()->entries()) {

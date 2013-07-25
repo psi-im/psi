@@ -79,7 +79,7 @@ private:
 	ProxyChooser *pc;
 	QCA::PGPKey key;
 	UserAccount acc;
-	
+
 	// Privacy
  	PrivacyListModel privacyModel;
  	PrivacyListBlockedModel privacyBlockedModel;

@@ -55,7 +55,7 @@ using namespace XMPP;
  *
  *  Also provides controls for setting general properties of the session and
  *  a control for ending and saving the session.
- * 
+ *
  *  \sa WbManager
  *  \sa WbWidget
  */

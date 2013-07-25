@@ -119,7 +119,7 @@ public:
 					to->setIcon( icon->name(), *icon );
 			}
 		}
-		
+
 		to->setInformation(*from);
 	}
 
@@ -140,7 +140,7 @@ public:
 
 			bool found = false;
 
-			
+
 			foreach(QVariant serviceV, PsiOptions::instance()->mapKeyList("options.iconsets.service-status")) {
 				QString service = serviceV.toString();
 				if (services.contains(service)) {
@@ -159,14 +159,14 @@ public:
 					}
 				}
 			}
-			
+
 
 			// let's try the default transport iconset then...
 			if ( !found && jid.node().isEmpty() ) {
 				if (PsiOptions::instance()->mapKeyList("options.iconsets.service-status").contains("transport")) {
 					const Iconset *is = psi->roster.value(
 								PsiOptions::instance()->getOption(
-								PsiOptions::instance()->mapLookup("options.iconsets.service-status", "transport")+".iconset").toString());			  
+								PsiOptions::instance()->mapLookup("options.iconsets.service-status", "transport")+".iconset").toString());
 					if ( is ) {
 						PsiIcon *i = (PsiIcon *)is->icon(iconName);
 						if ( i )
@@ -177,7 +177,7 @@ public:
 		}
 
 		// third level -- custom icons
-		
+
 		QStringList customicons = PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true);
 		foreach(QString base, customicons) {
 			QRegExp rx = QRegExp(PsiOptions::instance()->getOption(base + ".regexp").toString());
@@ -420,27 +420,27 @@ void PsiIconset::reloadRoster()
 	// service&custom roster iconsets
 	if (operator!=(d->cur_service_status, cur_service_status) || operator!=(d->cur_custom_status, cur_custom_status)) {
 		QStringList rosterIconsets;
-	
+
 		QMap<QString, QString>::Iterator it = cur_service_status.begin();
 		for (; it != cur_service_status.end(); ++it)
 			if (!rosterIconsets.contains(it.value()))
 				rosterIconsets << it.value();
-	
+
 		it = cur_custom_status.begin();
 		for (; it != cur_custom_status.end(); ++it)
 			if (!rosterIconsets.contains(it.value()))
 				rosterIconsets << it.value();
-	
+
 		QStringList::Iterator it2 = rosterIconsets.begin();
 		for (; it2 != rosterIconsets.end(); ++it2) {
 			if (*it2 == PsiOptions::instance()->getOption("options.iconsets.status").toString())
 				continue;
-	
+
 			Iconset *is = new Iconset;
 			if (is->load(d->iconsetPath("roster/" + *it2))) {
 				d->stripFirstAnimFrame(*is);
 				Iconset *oldis = roster[*it2];
-	
+
 				if (oldis)
 					d->loadIconset(oldis, is);
 				else {
@@ -455,7 +455,7 @@ void PsiIconset::reloadRoster()
 		bool clear = false;
 		while (!clear) {
 			clear = true;
-	
+
 			QMutableHashIterator<QString, Iconset*> it3(roster);
 			while (it3.hasNext()) {
 				it3.next();
@@ -577,7 +577,7 @@ PsiIcon PsiIconset::status(const XMPP::Status &s)
 PsiIcon *PsiIconset::transportStatusPtr(QString name, int s)
 {
 	PsiIcon *icon = 0;
-	
+
 	QVariantList serviceicons = PsiOptions::instance()->mapKeyList("options.iconsets.service-status");
 	if (serviceicons.contains(name)) {
 		const Iconset *is = roster.value(
@@ -698,7 +698,7 @@ void PsiIconset::removeAnimation(Iconset *is)
 
 PsiIconset* PsiIconset::instance()
 {
-	if (!instance_) 
+	if (!instance_)
 		instance_ = new PsiIconset();
 	return instance_;
 }

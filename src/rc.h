@@ -25,11 +25,11 @@
 
 class PsiCon;
 
-class RCCommandServer : public AHCommandServer 
+class RCCommandServer : public AHCommandServer
 {
 public:
 	RCCommandServer(AHCServerManager* m) : AHCommandServer(m) { }
-	virtual QString node() const 
+	virtual QString node() const
 		{ return QString("http://jabber.org/protocol/rc#") + rcNode(); }
 	virtual QString rcNode() const = 0;
 	virtual bool isAllowed(const Jid&) const;

@@ -359,16 +359,16 @@ void ProfileNewDlg::slotCreate()
 
 	// save config
 	PsiOptions o;
-	
+
 	if (!o.newProfile()) {
 		qWarning("ERROR: Failed to new profile default options");
 	}
-	
-	
+
+
 	o.setOption("options.messages.default-outgoing-message-type" ,rb_message->isChecked() ? "message": "chat");
 	o.setOption("options.ui.emoticons.use-emoticons" ,ck_useEmoticons->isChecked());
 	o.save(pathToProfile(name, ApplicationInfo::ConfigLocation) + "/options.xml");
-	
+
 	accept();
 }
 

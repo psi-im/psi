@@ -54,7 +54,7 @@ public:
 	XMPP::Features features(const Jid& jid) const;
 	QString clientName(const Jid& jid) const;
 	QString clientVersion(const Jid& jid) const;
-	
+
 signals:
 	/**
 	 * This signal is emitted when the feature list of a given JID have changed.

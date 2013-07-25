@@ -33,7 +33,7 @@
 #include "alertmanager.h"
 
 
-AccountLoginPassword::AccountLoginPassword(PsiAccount *account) : 
+AccountLoginPassword::AccountLoginPassword(PsiAccount *account) :
 			account_(account),
 			le_(this) {
 
@@ -45,36 +45,36 @@ AccountLoginPassword::AccountLoginPassword(PsiAccount *account) :
 	} else {
 		message = tr("Please enter your password:");
 	}
-	
+
 	le_.setEchoMode(QLineEdit::Password);
 	le_.setFocus();
 
 	setWindowTitle(tr("Need Password"));
 	QVBoxLayout *vbox = new QVBoxLayout(this);
-	
-	
-	
+
+
+
 	QLabel *label = new QLabel(message, this);
 	vbox->addWidget(label);
 	vbox->addStretch(1);
-	
+
 	vbox->addWidget(&le_);
 	vbox->addStretch(1);
-	
+
 	label->setBuddy(&le_);
-	
-	
+
+
 	QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Cancel,
 														Qt::Horizontal, this);
 	QPushButton *okButton = static_cast<QPushButton *>(buttonBox->addButton(QDialogButtonBox::Ok));
 	okButton->setDefault(true);
 	vbox->addWidget(buttonBox);
-	
+
 	QObject::connect(buttonBox, SIGNAL(accepted()), SLOT(accept()));
 	QObject::connect(buttonBox, SIGNAL(rejected()), SLOT(reject()));
-	
+
 	setSizeGripEnabled(true);
-	
+
 	psi_->alertManager()->raiseDialog(this, AlertManager::AccountPassword);
 }
 

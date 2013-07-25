@@ -180,7 +180,7 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
 	backgroundPalette.setBrush(QPalette::Background, QBrush(backgroundColor));
 	QPixmap back(1, 1);
 	back.fill(backgroundColor);
-	
+
 	QVBoxLayout *vbox = new QVBoxLayout(popup);
 	vbox->setMargin(0);
 	vbox->setSpacing(0);
@@ -228,11 +228,11 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
 	QPalette titlePalette = backgroundPalette;
 	titlePalette.setBrush(QPalette::Text, titleFontColor);
 	titleText->setPalette(titlePalette);
-		
+
 	QFont titleFont = titleText->font();
 	titleFont.setBold(true);
 	titleText->setFont(titleFont);
-	
+
 	titleText->setText( title );
 	titleText->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	tophbox2->addWidget(titleText);
@@ -245,7 +245,7 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
 	spacingLayout->addSpacing(2);
 
 	// close button
-	Private::BackgroundWidget *closeButtonBack = new Private::BackgroundWidget(popup);	
+	Private::BackgroundWidget *closeButtonBack = new Private::BackgroundWidget(popup);
 	closeButtonBack->setBackground(back);
 	tophbox2->addWidget(closeButtonBack);
 
@@ -330,7 +330,7 @@ bool FancyPopup::Private::eventFilter(QObject *o, QEvent *e)
 // FancyPopup
 //----------------------------------------------------------------------------
 
-static const QFlags<Qt::WindowType> 
+static const QFlags<Qt::WindowType>
 POPUP_FLAGS = Qt::ToolTip | Qt::WindowStaysOnTopHint; // | Qt::X11BypassWindowManagerHint | Qt::FramelessWindowHint;
 
 FancyPopup::FancyPopup(QString title, const PsiIcon *icon, FancyPopup *prev, bool copyIcon)

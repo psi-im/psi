@@ -32,15 +32,15 @@ class CapsSpec
 	public:
 		CapsSpec();
 		CapsSpec(const QString&, const QString&, const QString&);
-		const QString& node() const; 
-		const QString& version() const; 
-		const QString& extensions() const; 
+		const QString& node() const;
+		const QString& version() const;
+		const QString& extensions() const;
 		CapsSpecs flatten() const;
 
 		bool operator==(const CapsSpec&) const;
 		bool operator!=(const CapsSpec&) const;
 		bool operator<(const CapsSpec&) const;
-		
+
 	private:
 		QString node_, ver_, ext_;
 };

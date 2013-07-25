@@ -255,7 +255,7 @@ void HistoryDlg::highlightBlocks(const QString text)
 	QTextCursor cur = ui_.msgLog->textCursor();
 	cur.clearSelection();
 	cur.movePosition(QTextCursor::Start);
-	ui_.msgLog->setTextCursor(cur);	
+	ui_.msgLog->setTextCursor(cur);
 
 	if (text.isEmpty()) {
 		getLatest();
@@ -265,7 +265,7 @@ void HistoryDlg::highlightBlocks(const QString text)
 	QList<QTextEdit::ExtraSelection> extras;
 	QTextEdit::ExtraSelection highlight;
 	highlight.format.setBackground(Qt::yellow);
-	highlight.cursor = ui_.msgLog->textCursor();	
+	highlight.cursor = ui_.msgLog->textCursor();
 
 	bool found = ui_.msgLog->find(text);
 	while (found)
@@ -588,7 +588,7 @@ void HistoryDlg::displayResult(const EDBResult r, int direction, int max)
 					msg = "<span style='color:"+sent_color+"'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]")+" &lt;"+ nick +"&gt; " + msg + "</span>";
 				else
 					msg = "<span style='color:"+received_color+"'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]") + " &lt;" +  TextUtil::plain2rich(from) + "&gt; " + msg + "</span>";
-				
+
 				ui_.msgLog->appendText(msg);
 
 			}

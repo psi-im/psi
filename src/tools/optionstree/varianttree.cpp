@@ -44,7 +44,7 @@ QDomDocument *VariantTree::unknownsDoc=0;
 VariantTree::VariantTree(QObject *parent)
 	: QObject(parent)
 {
-	
+
 }
 
 /**
@@ -61,10 +61,10 @@ VariantTree::~VariantTree()
 
 /**
  * Split a @a node into local key and rest
- * @param node 
+ * @param node
  * @param key part of the @a node before first dot
  * @param rest part of the @a node after first dot
- * @return 
+ * @return
  */
 bool VariantTree::getKeyRest(const QString& node, QString &key, QString &rest)
 {
@@ -84,9 +84,9 @@ bool VariantTree::isValidNodeName(const QString &name)
 [4]   	NameChar	   ::=   	 Letter | Digit | '.' | '-' | '_' | ':' | CombiningChar | Extender
 [5]   	Name	   ::=   	(Letter | '_' | ':') (NameChar)*
 but we don't want to have namespaces in the node names....
-	
+
 	but for now just allow ascii subset of this:
-	*/	
+	*/
 	if (name.isEmpty()) return false;
 	int len = name.length();
 	QString other(".-_");
@@ -120,7 +120,7 @@ void VariantTree::setValue(QString node, QVariant value)
 			}
 			//create a new tier
 			trees_[key]=new VariantTree(this);
-		} 
+		}
 		//pass it down a level
 		trees_[key]->setValue(subnode,value);
 	} else {
@@ -221,7 +221,7 @@ void VariantTree::setComment(QString node, QString comment)
 			}
 			//create a new tier
 			trees_[key]=new VariantTree(this);
-		} 
+		}
 		//pass it down a level
 		trees_[key]->setComment(subnode,comment);
 	} else {
@@ -281,16 +281,16 @@ QStringList VariantTree::nodeChildren(const QString& node, bool direct, bool int
 		foreach (QString subnode, trees_.keys()) {
 			if (internal_nodes)
 				children << subnode;
-				
-			if (!direct) 
+
+			if (!direct)
 				children += nodeChildren(subnode,direct,internal_nodes);
 		}
-		
+
 		foreach (QString child, values_.keys()) {
-			children << child;	
+			children << child;
 		}
 	}
-	
+
 	if (key.isEmpty()) {
 		return children;
 	}
@@ -306,7 +306,7 @@ QStringList VariantTree::nodeChildren(const QString& node, bool direct, bool int
 
 
 /**
- * 
+ *
  */
 void VariantTree::toXml(QDomDocument &doc, QDomElement& ele) const
 {
@@ -319,7 +319,7 @@ void VariantTree::toXml(QDomDocument &doc, QDomElement& ele) const
 			nodeEle.setAttribute("comment",comments_[node]);
 		ele.appendChild(nodeEle);
 	}
-	
+
 	// Values
 	foreach (QString child, values_.keys()) {
 		Q_ASSERT(!child.isEmpty());
@@ -330,16 +330,16 @@ void VariantTree::toXml(QDomDocument &doc, QDomElement& ele) const
 		if (comments_.contains(child))
 			valEle.setAttribute("comment",comments_[child]);
 	}
-	
+
 	// unknown types passthrough
 	foreach (QDomDocumentFragment df, unknowns_) {
 		ele.appendChild(doc.importNode(df, true));
 	}
-} 
+}
 
 /**
- * 
- * @param ele 
+ *
+ * @param ele
  */
 void VariantTree::fromXml(const QDomElement &ele)
 {
@@ -353,7 +353,7 @@ void VariantTree::fromXml(const QDomElement &ele)
 			if ( !trees_.contains(name) )
 				trees_[name] = new VariantTree(this);
 			trees_[name]->fromXml(child);
-		} 
+		}
 		else {
 			// Value
 			QVariant val;
@@ -379,7 +379,7 @@ void VariantTree::fromXml(const QDomElement &ele)
 }
 
 /**
- * Extracts a variant from an element. 
+ * Extracts a variant from an element.
  * The attribute of the element is used to determine the type.
  * The tagname of the element is ignored.
  */
@@ -457,7 +457,7 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
 	else { // Standard values
 		QVariant::Type varianttype;
 		bool known = true;
-		
+
 		if (type=="QString") {
 			varianttype = QVariant::String;
 		} else if (type=="bool") {
@@ -471,16 +471,16 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
 		} else {
 			known = false;
 		}
-		
+
 		if (known) {
 			for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
 				if ( node.isText() )
 					value=node.toText().data();
 			}
-		
+
 			if (!value.isValid())
 				value = QString("");
-	
+
 			value.convert(varianttype);
 		} else {
 			value = QVariant();

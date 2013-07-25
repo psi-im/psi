@@ -76,7 +76,7 @@ AHCommand AHFileServer::execute(const AHCommand& c, const Jid& requester)
 		}
 		files_field.setOptions(file_options);
 		fields += files_field;
-		
+
 		form.setFields(fields);
 
 		return AHCommand::formReply(c, form);

@@ -141,7 +141,7 @@ public:
 
 	const QString & publicKeyID() const;
 	void setPublicKeyID(const QString &);
-	
+
 private:
 	int lastmsgtype;
 	bool v_inList;

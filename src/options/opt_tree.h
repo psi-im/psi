@@ -13,7 +13,7 @@ public:
 	~OptionsTabTree();
 
 	QWidget *widget();
-	
+
 	bool stretchable() const {return true;};
 
 private:

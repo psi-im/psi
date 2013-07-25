@@ -79,7 +79,7 @@ class SimpleHTTPServer : public QObject
 				socket->write(responseData);
 			}
 		}
-	
+
 	private:
 		QTcpServer *tcpServer_;
 		QMap<QString,QByteArray> pages_;
@@ -153,7 +153,7 @@ class UpdaterWidget : public QWidget
 			appcast += " </channel>";
 			appcast += "</rss>";
 			return appcast.toUtf8();
-		} 
+		}
 
 
 	public slots:

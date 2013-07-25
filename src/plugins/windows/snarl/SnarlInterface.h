@@ -48,7 +48,7 @@ class SnarlInterface {
 
 	private:
 		std::string SNARL_GLOBAL_MESSAGE;
-		
+
 		long send(SNARLSTRUCT snarlStruct);
 
 };

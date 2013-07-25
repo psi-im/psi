@@ -1,5 +1,5 @@
 /*
- * mpristunecontroller.cpp 
+ * mpristunecontroller.cpp
  * Copyright (C) 2010 Vitaly Tonkacheyev
  *
  * This program is free software; you can redistribute it and/or

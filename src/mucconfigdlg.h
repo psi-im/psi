@@ -40,7 +40,7 @@ using namespace XMPP;
 class MUCConfigDlg : public QDialog
 {
 	Q_OBJECT
-		
+
 public:
 	MUCConfigDlg(MUCManager*, QWidget*);
 	~MUCConfigDlg();

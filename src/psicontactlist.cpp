@@ -158,7 +158,7 @@ PsiAccount* PsiContactList::createAccount(const QString& name, const Jid& j, con
 	acc.name = name;
 
 	acc.jid = j.full();
-	if(!pass.isEmpty()) { 
+	if(!pass.isEmpty()) {
 		acc.opt_pass = true;
 		acc.pass = pass;
 	}

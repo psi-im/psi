@@ -123,7 +123,7 @@ public slots:
 
 signals:
 	void resized(QSize size);
-	
+
 private slots:
 	void updateFlashState();
 	void tabSelected(QWidget* selected);

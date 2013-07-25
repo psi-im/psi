@@ -21,9 +21,9 @@
 #include "ahcommandserver.h"
 #include "ahcservermanager.h"
 
-// -------------------------------------------------------------------------- 
+// --------------------------------------------------------------------------
 // AHCommandServer: The server-side implementation of an Ad-hoc command.
-// -------------------------------------------------------------------------- 
+// --------------------------------------------------------------------------
 
 AHCommandServer::AHCommandServer(AHCServerManager* manager) : manager_(manager)
 {

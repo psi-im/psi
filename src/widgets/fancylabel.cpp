@@ -232,7 +232,7 @@ public:
 		from = _from;
 		to = _to;
 	}
-	
+
 	void repaintBackground()
 	{
 		QResizeEvent e(size(), size());

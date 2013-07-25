@@ -19,7 +19,7 @@ PrivacyDlgTest::PrivacyDlgTest()
 	GUITestManager::instance()->registerTest(this);
 }
 
-bool PrivacyDlgTest::run() 
+bool PrivacyDlgTest::run()
 {
 	PrivacyDlg* dlg = new PrivacyDlg("MyAccount", new MockPrivacyManager());
 	dlg->exec();

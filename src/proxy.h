@@ -46,7 +46,7 @@ public:
 	bool useAuth;
 	QString url;
 
-	
+
 	void toOptions(OptionsTree* o, QString base) const;
 	void fromOptions(OptionsTree* o, QString base);
 	QDomElement toXml(QDomDocument *) const;

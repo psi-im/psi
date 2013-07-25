@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
- 
+
 #ifndef GOOGLEFTMANAGER_H
 #define GOOGLEFTMANAGER_H
 
@@ -49,18 +49,18 @@ class GoogleFTManager;
 class GoogleFileTransfer : public QObject/*: public XMPP::AbstractFileTransfer*/
 {
 	Q_OBJECT
-	
+
 	friend class GoogleFileTransferListener;
 
-public: 
+public:
 	GoogleFileTransfer(cricket::FileShareSession*, GoogleFTManager* manager);
 	virtual ~GoogleFileTransfer() {};
-	
+
 	virtual XMPP::Jid peer() const;
 	virtual QString fileName() const;
 	virtual qlonglong fileSize() const;
 	virtual QString description() const;
-	
+
 	virtual void accept(qlonglong offset=0, qlonglong length=0);
 	virtual void reject();
 	virtual void cancel();
@@ -77,14 +77,14 @@ private:
 class GoogleFTManager : public QObject
 {
 	Q_OBJECT
-		
+
 	friend class GoogleSessionListener;
 	friend class GoogleFileTransferListener;
 
 public:
 	GoogleFTManager(XMPP::Client* client);
 	~GoogleFTManager();
-	
+
 signals:
 	void incomingFileTransfer(GoogleFileTransfer*);
 
@@ -116,7 +116,7 @@ class GoogleFileTransferProgressDialog : public QProgressDialog
 {
 	Q_OBJECT
 
-public: 
+public:
 	GoogleFileTransferProgressDialog(GoogleFileTransfer* ft) : QProgressDialog(NULL,Qt::WDestructiveClose), ft_(ft) {
 		connect(ft,SIGNAL(progressChanged(qlonglong, const QString&)),SLOT(update(qlonglong, const QString&)));
 		connect(this,SIGNAL(canceled()),SLOT(cancel()));

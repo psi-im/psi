@@ -7,7 +7,7 @@
 
 class GUITestManager
 {
-public: 
+public:
 	static GUITestManager* instance();
 
 	void registerTest(GUITest* test);

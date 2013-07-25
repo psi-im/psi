@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
- 
+
 #ifndef JINGLEVOICECALLER_H
 #define JINGLEVOICECALLER_H
 
@@ -55,9 +55,9 @@ class JingleVoiceCaller : public VoiceCaller
 public:
 	JingleVoiceCaller(PsiAccount* account);
 	~JingleVoiceCaller();
-	
+
 	virtual bool calling(const Jid&);
-	
+
 	virtual void initialize();
 	virtual void deinitialize();
 

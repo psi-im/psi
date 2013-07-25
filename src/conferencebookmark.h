@@ -39,7 +39,7 @@ public:
 	bool autoJoin() const;
 	const QString& nick() const;
 	const QString& password() const;
-	
+
 	bool isNull() const;
 
 	void fromXml(const QDomElement&);

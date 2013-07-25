@@ -17,7 +17,7 @@ namespace XMPP {
 	class QCATLSHandler;
 }
 
-class CertificateHelpers 
+class CertificateHelpers
 {
 	public:
 		static QCA::CertificateCollection allCertificates(const QStringList& dirs);

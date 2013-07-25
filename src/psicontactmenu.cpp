@@ -100,7 +100,7 @@ private:
 	QAction* createNewGroupAction_;
 
 	/**
-	 * \param text will be shown on screen, and \param groupName is the 
+	 * \param text will be shown on screen, and \param groupName is the
 	 * actual group name. Specify true as \param current when group is
 	 * currently selected for a contact.
 	 */

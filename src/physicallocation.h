@@ -31,7 +31,7 @@ class PhysicalLocation
 public:
 	PhysicalLocation();
 	PhysicalLocation(const QDomElement&);
-	
+
 	const QString& country() const;
 	const QString& region() const;
 	const QString& locality() const;
@@ -44,23 +44,23 @@ public:
 	const QString& text() const;
 	bool isNull() const;
 
-	void setCountry(const QString& s); 
-	void setRegion(const QString& s); 
-	void setLocality(const QString& s); 
-	void setArea(const QString& s); 
-	void setStreet(const QString& s); 
-	void setBuilding(const QString& s); 
-	void setFloor(const QString& s); 
-	void setRoom(const QString& s); 
+	void setCountry(const QString& s);
+	void setRegion(const QString& s);
+	void setLocality(const QString& s);
+	void setArea(const QString& s);
+	void setStreet(const QString& s);
+	void setBuilding(const QString& s);
+	void setFloor(const QString& s);
+	void setRoom(const QString& s);
 	void setPostalcode(const QString& s);
 	void setText(const QString& s);
 
 	QString toString() const;
 	QDomElement toXml(QDomDocument&);
-	
+
 	bool operator==(const PhysicalLocation&) const;
 	bool operator!=(const PhysicalLocation&) const;
-	
+
 protected:
 	void fromXml(const QDomElement&);
 

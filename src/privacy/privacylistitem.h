@@ -54,7 +54,7 @@ public:
 	void setAll() { iq_ = presenceIn_ = presenceOut_ = message_ = true; }
 	void setValue(const QString& value) { value_ = value; }
 	void setOrder(unsigned int order) { order_ = order; }
-	
+
 	bool isBlock() const;
 	QString toString() const;
 	QDomElement toXml(QDomDocument&) const;
@@ -64,7 +64,7 @@ public:
 	bool operator==(const PrivacyListItem& o) const { return type_ == o.type_ && action_ == o.action_ && message_ == o.message_ && presenceIn_ == o.presenceIn_ && presenceOut_ == o.presenceOut_ && iq_ == o.iq_ && order_ == o.order_ && value_ == o.value_; }
 
 	static PrivacyListItem blockItem(const QString& jid);
-	
+
 private:
 	Type type_;
 	Action action_;

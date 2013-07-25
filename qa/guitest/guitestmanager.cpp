@@ -14,7 +14,7 @@ GUITestManager* GUITestManager::instance()
 	return instance_;
 }
 
-void GUITestManager::registerTest(GUITest* test) 
+void GUITestManager::registerTest(GUITest* test)
 {
 	tests_ += test;
 }

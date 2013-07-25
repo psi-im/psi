@@ -25,7 +25,7 @@
 #include "xmpp_xmlcommon.h"
 
 ConferenceBookmark::ConferenceBookmark(const QString& name, const XMPP::Jid& jid, bool auto_join, const QString& nick, const QString& password) : name_(name), jid_(jid), auto_join_(auto_join), nick_(nick), password_(password)
-{ 
+{
 }
 
 ConferenceBookmark::ConferenceBookmark(const QDomElement& el) : auto_join_(false)
@@ -33,29 +33,29 @@ ConferenceBookmark::ConferenceBookmark(const QDomElement& el) : auto_join_(false
 	fromXml(el);
 }
 
-const QString& ConferenceBookmark::name() const 
-{ 
-	return name_; 
+const QString& ConferenceBookmark::name() const
+{
+	return name_;
 }
 
-const XMPP::Jid& ConferenceBookmark::jid() const 
-{ 
-	return jid_; 
+const XMPP::Jid& ConferenceBookmark::jid() const
+{
+	return jid_;
 }
 
-bool ConferenceBookmark::autoJoin() const 
-{ 
-	return auto_join_; 
+bool ConferenceBookmark::autoJoin() const
+{
+	return auto_join_;
 }
 
-const QString& ConferenceBookmark::nick() const 
-{ 
-	return nick_; 
+const QString& ConferenceBookmark::nick() const
+{
+	return nick_;
 }
 
-const QString& ConferenceBookmark::password() const 
-{ 
-	return password_; 
+const QString& ConferenceBookmark::password() const
+{
+	return password_;
 }
 
 bool ConferenceBookmark::isNull() const
@@ -69,7 +69,7 @@ void ConferenceBookmark::fromXml(const QDomElement& e)
 	name_ = e.attribute("name");
 	if (e.attribute("autojoin") == "true" || e.attribute("autojoin") == "1")
 		auto_join_ = true;
-	
+
 	for (QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling()) {
 		QDomElement i = n.toElement();
 		if (i.isNull())
@@ -88,7 +88,7 @@ QDomElement ConferenceBookmark::toXml(QDomDocument& doc) const
 	QDomElement e = doc.createElement("conference");
 	e.setAttribute("jid",jid_.full());
 	e.setAttribute("name",name_);
-	if (auto_join_) 
+	if (auto_join_)
 		e.setAttribute("autojoin","true");
 	if (!nick_.isEmpty())
 		e.appendChild(textTag(&doc,"nick",nick_));

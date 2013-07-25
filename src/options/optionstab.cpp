@@ -147,7 +147,7 @@ void OptionsTabWidget::addTab(OptionsTab *tab)
 		setTabToolTip(indexOf(w), tab->desc());
 
 	w2tab[w] = TabData(tab);
-	
+
 	if ( tab->tabIcon() )
 		QTabWidget::addTab(w, tab->tabIcon()->icon(), tab->tabName());
 	else
@@ -181,7 +181,7 @@ void OptionsTabWidget::updateCurrent(int index)
 		emit noDirty(true);
 		opttab->restoreOptions();
 		emit noDirty(false);
-		
+
 		emit connectDataChanged(tab);
 
 		tab->show();

@@ -43,13 +43,13 @@ public:
 
 	PsiAccount* account() const;
 
-	virtual Jid jid() const; 
+	virtual Jid jid() const;
 	virtual const QString & getDisplayName();
 
 	virtual bool readyToHide();
 	TabDlg* getManagingTabDlg();
 
-	bool isTabbed(); 
+	bool isTabbed();
 	bool isActiveTab();
 
 	// reimplemented

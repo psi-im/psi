@@ -41,7 +41,7 @@ bool AHCExecuteTask::take(const QDomElement& e)
 	if(!iqVerify(e, receiver_, id())) {
 		return false;
 	}
-	
+
 	// Result of a command
 	if (e.attribute("type") == "result") {
 		bool found;

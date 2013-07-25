@@ -49,7 +49,7 @@ public:
 protected:
 	virtual void contextMenuEvent(QContextMenuEvent *);
 	virtual void mouseReleaseEvent(QMouseEvent *);
-	
+
 	void updateText();
 
 public:

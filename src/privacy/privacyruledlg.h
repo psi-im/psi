@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
- 
+
 #ifndef PRIVACYRULEDLG_H
 #define PRIVACYRULEDLG_H
 
@@ -33,7 +33,7 @@ class PrivacyRuleDlg : public QDialog
 
 public:
 	PrivacyRuleDlg();
-	
+
 	void setRule(const PrivacyListItem&);
 	PrivacyListItem rule() const;
 

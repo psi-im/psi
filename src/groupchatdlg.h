@@ -101,7 +101,7 @@ public slots:
 	virtual void ensureTabbedCorrectly();
 
 	void optionsUpdate();
-	
+
 private slots:
 	void scrollUp();
 	void scrollDown();

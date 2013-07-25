@@ -33,7 +33,7 @@ public:
 	~CombinedTuneController();
 
 	virtual Tune currentTune();
-	
+
 private:
 	QList<TuneController*> controllers_;
 };

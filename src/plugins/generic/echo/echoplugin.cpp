@@ -140,7 +140,7 @@ bool EchoPlugin::processMessage(int account, const QString& fromJid, const QStri
 	}
 
 	return false;
-}	
+}
 
 //-- StanzaSender ---------------------------------------------------
 

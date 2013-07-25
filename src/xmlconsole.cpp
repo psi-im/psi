@@ -102,7 +102,7 @@ bool XmlConsole::filtered(const QString& str) const
 			QDomDocument doc;
 			if (!doc.setContent(str))
 				return true;
-			
+
 			QDomElement e = doc.documentElement();
 			if ((e.tagName() == "iq" && !ui_.ck_iq->isChecked()) || (e.tagName() == "message" && !ui_.ck_message->isChecked()) || ((e.tagName() == "presence" && !ui_.ck_presence->isChecked())))
 				return true;

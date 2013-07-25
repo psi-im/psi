@@ -36,12 +36,12 @@ class AccountLoginPassword : public QDialog {
 	Q_OBJECT
 public:
 	AccountLoginPassword(PsiAccount *account);
-	
-	
+
+
 private slots:
 	void accept();
 	void reject();
-	
+
 private:
 	QPointer<PsiAccount> account_;
 	PsiCon *psi_;

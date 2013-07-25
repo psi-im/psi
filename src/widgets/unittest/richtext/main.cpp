@@ -12,18 +12,18 @@ private:
 		int result = 0;
 		QTextCursor cursor(doc);
 		cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
-		
+
 		forever {
 			cursor = doc->find(text, cursor);
 			if (cursor.isNull())
 				break;
-			
+
 			result++;
 		}
-		
+
 		return result;
 	}
-	
+
 private slots:
 	void testSetText() {
 		QTextDocument doc;

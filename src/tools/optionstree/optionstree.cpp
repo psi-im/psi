@@ -34,7 +34,7 @@
 OptionsTree::OptionsTree(QObject *parent)
 	: QObject(parent)
 {
-	
+
 }
 
 /**
@@ -42,7 +42,7 @@ OptionsTree::OptionsTree(QObject *parent)
  */
 OptionsTree::~OptionsTree()
 {
-	
+
 }
 
 /**
@@ -64,7 +64,7 @@ QVariant OptionsTree::getOption(const QString& name, const QVariant &defaultValu
 
 /**
  * \brief Sets the value of the named option.
- * If the option or any parents in the 
+ * If the option or any parents in the
  * hierachy do not exist, they are created and optionAboutToBeInserted and
  * optionInserted will be emited.
  *
@@ -189,7 +189,7 @@ QString OptionsTree::mapPut(const QString &basename, const QVariant &key)
 		}
 	}
 	// FIXME performance?
-	
+
 	// allocate first unused index
 	QString path;
 	int i = 0;
@@ -198,7 +198,7 @@ QString OptionsTree::mapPut(const QString &basename, const QVariant &key)
 		++i;
 	} while (children.contains(path));
 	setOption(path + ".key", key);
-	return path;	
+	return path;
 }
 
 void OptionsTree::mapPut(const QString &basename, const QVariant &key, const QString &node, const QVariant &value) {
@@ -242,7 +242,7 @@ bool OptionsTree::saveOptions(const QString& fileName, const QString& configName
 	if (!configNS.isEmpty())
 		base.setAttribute("xmlns", configNS);
 	doc.appendChild(base);
-	
+
 	tree_.toXml(doc, base);
 	if (!f.saveDocument(doc))
 		return false;
@@ -294,7 +294,7 @@ bool OptionsTree::loadOptions(const QDomElement& base, const QString& configName
 	Q_UNUSED(configName);
 	Q_UNUSED(configNS);
 	Q_UNUSED(configVersion);
-	
+
 	// Version check
 	//if(base.tagName() != configName)
 	//	return false;

@@ -81,7 +81,7 @@ bool ChatView::focusNextPrevChild(bool next)
 void ChatView::keyPressEvent(QKeyEvent *e)
 {
 /*	if(e->key() == Qt::Key_Escape)
-		e->ignore(); 
+		e->ignore();
 #ifdef Q_OS_MAC
 	else if(e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier)
 		e->ignore();
@@ -93,7 +93,7 @@ void ChatView::keyPressEvent(QKeyEvent *e)
 		e->ignore();
 	else if(e->key() == Qt::Key_I && (e->modifiers() & Qt::ControlModifier))
 		e->ignore(); */
-	/*else*/ if(e->key() == Qt::Key_M && (e->modifiers() & Qt::ControlModifier) && !isReadOnly()) // newline 
+	/*else*/ if(e->key() == Qt::Key_M && (e->modifiers() & Qt::ControlModifier) && !isReadOnly()) // newline
 		append("\n");
 /*	else if(e->key() == Qt::Key_U && (e->modifiers() & Qt::ControlModifier) && !isReadOnly())
 		setText(""); */
@@ -131,27 +131,27 @@ bool ChatView::handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdi
 		    (e->key() == Qt::Key_Insert && (e->modifiers() & Qt::ControlModifier)))
 		{
 			if (!chatEdit->textCursor().hasSelection() &&
-			     this->textCursor().hasSelection()) 
+			     this->textCursor().hasSelection())
 			{
 				this->copy();
 				return true;
 			}
 		}
 	}
-	
+
 	return false;
 }
 
 void ChatView::appendText(const QString &text)
 {
 	bool doScrollToBottom = atBottom();
-	
-	// prevent scrolling back to selected text when 
+
+	// prevent scrolling back to selected text when
 	// restoring selection
 	int scrollbarValue = verticalScrollBar()->value();
-	
+
 	PsiTextView::appendText(text);
-	
+
 	if (doScrollToBottom)
 		scrollToBottom();
 	else
@@ -242,10 +242,10 @@ void ChatEdit::keyPressEvent(QKeyEvent *e)
 {
 /*	if(e->key() == Qt::Key_Escape || (e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier))
 		e->ignore();
-	else if(e->key() == Qt::Key_Return && 
-	       ((e->modifiers() & Qt::ControlModifier) 
+	else if(e->key() == Qt::Key_Return &&
+	       ((e->modifiers() & Qt::ControlModifier)
 #ifndef Q_OS_MAC
-	       || (e->modifiers() & Qt::AltModifier) 
+	       || (e->modifiers() & Qt::AltModifier)
 #endif
 	       ))
 		e->ignore();
@@ -275,11 +275,11 @@ void ChatEdit::keyPressEvent(QKeyEvent *e)
 }
 
 /**
- * Work around Qt bug, that QTextEdit doesn't accept() the 
+ * Work around Qt bug, that QTextEdit doesn't accept() the
  * event, so it could result in another context menu popping
  * out after the first one.
  */
-void ChatEdit::contextMenuEvent(QContextMenuEvent *e) 
+void ChatEdit::contextMenuEvent(QContextMenuEvent *e)
 {
 	last_click_ = e->pos();
 	if (check_spelling_ && textCursor().selectedText().isEmpty() && SpellChecker::instance()->available()) {
@@ -318,7 +318,7 @@ void ChatEdit::contextMenuEvent(QContextMenuEvent *e)
 /*!
  * \brief handles a click on a suggestion
  * \param the action is just the container which holds the suggestion.
- * 
+ *
  * This method is called by the framework whenever a user clicked on the child popupmenu
  * to select a suggestion for a missspelled word. It exchanges the missspelled word with the
  * suggestion which is the text of the QAction parameter.
@@ -327,7 +327,7 @@ void ChatEdit::applySuggestion()
 {
 	QAction* act_suggestion = (QAction*) sender();
 	int current_position = textCursor().position();
-	
+
 	// Replace the word
 	QTextCursor	tc = cursorForPosition(last_click_);
 	tc.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
@@ -345,7 +345,7 @@ void ChatEdit::applySuggestion()
 /*!
  * \brief handles a click on the add2dict action of the parent popupmenu
  * \param Never used bool parameter
- * 
+ *
  * The method sets the cursor to the last mouseclick position and looks for the word which is placed there.
  * This word is than added to the dictionary of aspell.
  */
@@ -358,7 +358,7 @@ void ChatEdit::addToDictionary()
 	tc.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
 	tc.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
 	SpellChecker::instance()->add(tc.selectedText());
-	
+
 	// Put the cursor where it belongs
 	tc.clearSelection();
 	tc.setPosition(current_position);

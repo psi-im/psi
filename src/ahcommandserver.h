@@ -17,10 +17,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
- 
+
 #ifndef AHCOMMANDSERVER_H
 #define AHCOMMANDSERVER_H
- 
+
 class AHCServerManager;
 class QString;
 class AHCommand;
@@ -34,8 +34,8 @@ public:
 	AHCommandServer(AHCServerManager*);
 	virtual ~AHCommandServer();
 
-	virtual QString name() const = 0; 
-	virtual QString node() const = 0; 
+	virtual QString name() const = 0;
+	virtual QString node() const = 0;
 	virtual bool isAllowed(const XMPP::Jid&) const { return true; }
 	virtual AHCommand execute(const AHCommand&, const XMPP::Jid& requester) = 0;
 	virtual void cancel(const AHCommand&) { }

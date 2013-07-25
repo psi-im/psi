@@ -28,7 +28,7 @@ ShortcutManager* ShortcutManager::instance_ = NULL;
 /**
  * \brief The Instantiator of the Shortcutmanager
  */
-ShortcutManager* ShortcutManager::instance() 
+ShortcutManager* ShortcutManager::instance()
 {
 	if(!instance_)
 		instance_ = new ShortcutManager();
@@ -42,7 +42,7 @@ ShortcutManager* ShortcutManager::instance()
  * \return QKeySequence, the Keysequence associated with the keyname, or
  *   the first key sequence if there are multiple
  */
-QKeySequence ShortcutManager::shortcut(const QString& name) 
+QKeySequence ShortcutManager::shortcut(const QString& name)
 {
 	QVariant variant = PsiOptions::instance()->getOption(QString("options.shortcuts.%1").arg(name));
 	QList<QKeySequence> list = shortcuts(name);
@@ -76,7 +76,7 @@ QList<QKeySequence> ShortcutManager::shortcuts(const QString& name)
 {
 	return readShortcutsFromOptions(name, PsiOptions::instance());
 }
- 
+
 /**
  * \brief read the QVariantList associated with the keyname "name" in given PsiOptions
  * \param name, the shortcut name e.g. "misc.sendmessage" which is in the options xml then
@@ -109,7 +109,7 @@ QList<QKeySequence> ShortcutManager::readShortcutsFromOptions(const QString& nam
  * \brief this function connects the Key or Keys associated with the keyname "path" with the slot "slot"
  *        of the Widget "parent"
  * \param path, the shortcut name e.g. "misc.sendmessage" which is in the options xml then
- *        mirrored as options.shortcuts.misc.sendmessage 
+ *        mirrored as options.shortcuts.misc.sendmessage
  * \param parent, the widget to which the new QAction should be connected to
  * \param slot, the SLOT() of the parent which should be triggered if the KeySequence is activated
  */

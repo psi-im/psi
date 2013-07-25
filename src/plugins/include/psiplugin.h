@@ -48,12 +48,12 @@ public:
 
 	/**
 	 * \brief Short name for the plugin
-	 * This is the short name of the plugin, used for options structures. 
+	 * This is the short name of the plugin, used for options structures.
 	 * It must consist of only alphanumerics (no spaces or punctuation).
 	 * \return Short plugin name
 	*/
 	virtual QString shortName() const = 0;
-	
+
 	/**
 	 * \brief Plugin version
 	 * Free-form string of the plugin version. Human readable

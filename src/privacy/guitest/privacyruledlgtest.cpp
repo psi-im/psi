@@ -17,7 +17,7 @@ PrivacyRuleDlgTest::PrivacyRuleDlgTest()
 	GUITestManager::instance()->registerTest(this);
 }
 
-bool PrivacyRuleDlgTest::run() 
+bool PrivacyRuleDlgTest::run()
 {
 	PrivacyRuleDlg dlg;
 	dlg.exec();

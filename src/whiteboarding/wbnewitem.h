@@ -1,5 +1,5 @@
 /*
- * wbnewitem.h - a class used for representing items on the whiteboard 
+ * wbnewitem.h - a class used for representing items on the whiteboard
  *              while they're being drawn.
  * Copyright (C) 2008  Joonas Govenius
  *

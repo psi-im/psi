@@ -38,9 +38,9 @@ class ChessPlugin : public PsiPlugin
 
 public:
 	ChessPlugin();
-	virtual QString name() const; 
+	virtual QString name() const;
 	virtual bool processEvent( const PsiAccount* account, QDomNode &event );
-	virtual void message( const PsiAccount* account, const QString& message, const QString& fromJid, const QString& fromDisplay); 
+	virtual void message( const PsiAccount* account, const QString& message, const QString& fromJid, const QString& fromDisplay);
 	virtual QString shortName() const;
 	virtual QString version() const;
 
@@ -48,13 +48,13 @@ private slots:
 	void sendData(const QString& data);
 	void receiveData(const QString& data);
 
-	
+
 private:
 	void startGame(const QString& jid, bool meWhite, const PsiAccount* account);
 	void stopGame();
-	
 
-	
+
+
 	GameBoard* game_;
 	QString playingWith_;
 	PsiAccount* account_;
@@ -131,7 +131,7 @@ void ChessPlugin::message( const PsiAccount* account, const QString& message, co
 	else if (command.startsWith("command"))
 	{
 		command.remove(0,8);
-		
+
 		qDebug() << (qPrintable(QString("chess command %1").arg(command)));
 		receiveData(command);
 	}
@@ -159,7 +159,7 @@ void ChessPlugin::startGame(const QString& jid, bool meFirst, const PsiAccount* 
 	} else {
 		game_ = new GameBoard(1);
 	}
-	
+
 	//showStatus(game_->status());
 	//QObject::connect(brd, SIGNAL(showStatus(const QString&)), this, SLOT(showStatus(const QString&)));
 	connect(game_, SIGNAL(sendData(const QString&)), this, SLOT(sendData(const QString &)));

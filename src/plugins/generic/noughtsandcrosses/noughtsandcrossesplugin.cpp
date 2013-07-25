@@ -58,12 +58,12 @@ private slots:
 	void myTurn(int space);
 	void theirTurn(int space);
 	void gameOver(TicTacGameBoard::State state);
-	
+
 private:
 	void startGame(QString jid, int size, bool meFirst, int account);
-	
 
-	
+
+
 	TicTacToe* game;
 	QString playingWith;
 	int account_;
@@ -180,13 +180,13 @@ bool NoughtsAndCrossesPlugin::processMessage(int account, const QString& fromJid
 	else if (command.startsWith("move"))
 	{
 		command.remove(0,5);
-		
+
 		int space=command.toInt();
 		qDebug() << (qPrintable(QString("noughtsandcrosses move to space %1").arg(space)));
 		theirTurn(space);
 	}
 	return true;
-}	
+}
 
 void NoughtsAndCrossesPlugin::startGame(QString jid, int size, bool meFirst, int account)
 {

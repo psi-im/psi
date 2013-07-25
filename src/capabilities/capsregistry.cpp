@@ -56,7 +56,7 @@ void CapsRegistry::CapsInfo::setFeatures(const XMPP::Features& f)
 {
 	features_ = f;
 }
-	
+
 void CapsRegistry::CapsInfo::updateLastSeen()
 {
 	lastSeen_ = QDateTime::currentDateTime();
@@ -92,7 +92,7 @@ void CapsRegistry::CapsInfo::fromXml(const QDomElement& e)
 		qWarning("caps.cpp: Invalid info element");
 		return;
 	}
-	
+
 	if (!e.attribute("last-seen").isEmpty()) {
 		QDateTime last = QDateTime::fromString(e.attribute("last-seen"),Qt::ISODate);
 		if (last.isValid())
@@ -133,7 +133,7 @@ void CapsRegistry::CapsInfo::fromXml(const QDomElement& e)
 /**
  * \brief Default constructor.
  */
-CapsRegistry::CapsRegistry() 
+CapsRegistry::CapsRegistry()
 {
 }
 
@@ -188,7 +188,7 @@ void CapsRegistry::load(QIODevice& in)
 		qWarning("caps.cpp: Invalid capabilities element");
 		return;
 	}
-		
+
 	for(QDomNode n = caps.firstChild(); !n.isNull(); n = n.nextSibling()) {
 		QDomElement i = n.toElement();
 		if(i.isNull()) {

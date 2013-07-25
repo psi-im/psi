@@ -16,13 +16,13 @@
 
 
 
-class PsiConAdapter : public QDBusAbstractAdaptor 
+class PsiConAdapter : public QDBusAbstractAdaptor
 {
 	Q_OBJECT
 	Q_CLASSINFO("D-Bus Interface", "org.psi_im.Psi.Main")
-//	Q_CLASSINFO("D-Bus Introspection", ...) 
+//	Q_CLASSINFO("D-Bus Introspection", ...)
 
-public: 
+public:
 	PsiConAdapter(PsiCon *psicon_);
 	~PsiConAdapter();
 public Q_SLOTS:
@@ -34,7 +34,7 @@ public Q_SLOTS:
 /*Q_SIGNALS:
 	void psi_pong();
 */
-private: 
+private:
 	PsiCon *psicon;
 };
 

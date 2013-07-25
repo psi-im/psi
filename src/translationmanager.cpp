@@ -49,13 +49,13 @@ TranslationManager::~TranslationManager()
 	QCoreApplication::instance()->removeTranslator(translator_);
 	delete translator_;
 	translator_ = 0;
-	
+
 	QCoreApplication::instance()->removeTranslator(qt_translator_);
 	delete qt_translator_;
 	qt_translator_ = 0;
 }
 
-TranslationManager* TranslationManager::instance() 
+TranslationManager* TranslationManager::instance()
 {
 	if (!instance_) {
 		instance_ = new TranslationManager();
@@ -106,7 +106,7 @@ void TranslationManager::loadTranslation(const QString& language)
 		QCoreApplication::instance()->removeTranslator(qt_translator_);
 		return;
 	}
-	
+
 	// Try loading the translation file
 	foreach(QString dir, translationDirs()) {
 		if(!QFile::exists(dir))
@@ -130,7 +130,7 @@ VarList TranslationManager::availableTranslations()
 
 	// We always support english
 	langs.set("en", "English");
-	
+
 	// Search the paths
 	foreach(QString dirName, translationDirs()) {
 		if(!QFile::exists(dirName))
@@ -165,7 +165,7 @@ VarList TranslationManager::availableTranslations()
 			langs.set(lang, name);
 		}
 	}
-	
+
 	return langs;
 }
 

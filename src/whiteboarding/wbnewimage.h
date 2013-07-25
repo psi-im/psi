@@ -1,5 +1,5 @@
 /*
- * wbnewimage.h - a class used for representing an image on the whiteboard 
+ * wbnewimage.h - a class used for representing an image on the whiteboard
  *              while it's being added.
  * Copyright (C) 2008  Joonas Govenius
  *

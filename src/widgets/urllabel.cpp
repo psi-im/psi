@@ -108,7 +108,7 @@ void URLLabel::contextMenuEvent(QContextMenuEvent *e)
 		m->exec( e->globalPos() );
 		delete m;
 	}
-	
+
 	e->accept();
 }
 
@@ -116,6 +116,6 @@ void URLLabel::mouseReleaseEvent(QMouseEvent *e)
 {
 	if (e->button() == Qt::LeftButton)
 		URLObject::getInstance()->popupAction(url());
-	
+
 	QLabel::mouseReleaseEvent(e);
 }

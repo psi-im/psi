@@ -24,7 +24,7 @@
 
 #include "mood.h"
 #include "moodcatalog.h"
-		
+
 MoodCatalog::Entry::Entry()
 {
 }
@@ -156,5 +156,5 @@ const QList<MoodCatalog::Entry>& MoodCatalog::entries() const
 {
 	return entries_;
 }
-	
+
 MoodCatalog* MoodCatalog::instance_ = 0;

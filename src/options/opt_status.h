@@ -32,7 +32,7 @@ private slots:
 
 private:
 	void setStatusPresetWidgetsEnabled(bool);
-	
+
 	QWidget *w, *parentWidget;
 	QMap<QString, StatusPreset> presets;
 	QSet<QString> dirtyPresets;

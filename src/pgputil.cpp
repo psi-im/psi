@@ -70,13 +70,13 @@ void PGPUtil::promptPassphrase(int id, const QCA::Event& event)
 	QCA::KeyStoreEntry entry = event.keyStoreEntry();
 	if(!entry.isNull()) {
 		name = entry.name();
-		currentEntryId_ = entry.id(); 
+		currentEntryId_ = entry.id();
 	}
 	else {
 		name = event.keyStoreInfo().name();
 		currentEntryId_ = QString();
 	}
-	
+
 	if (!passphraseDlg_) {
 		passphraseDlg_ = new PassphraseDlg();
 		connect(passphraseDlg_,SIGNAL(finished(int)),SLOT(passphraseDone(int)));
@@ -101,7 +101,7 @@ void PGPUtil::passphraseDone(int result)
 	else {
 		qWarning() << "PGPUtil: Unexpected passphrase dialog result";
 	}
-	
+
 	// Process the queue
 	if (!pendingEvents_.isEmpty()) {
 		EventItem eventItem;

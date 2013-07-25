@@ -41,11 +41,11 @@ AccountRegDlg::AccountRegDlg(QWidget *parent) : QDialog(parent)
 
 	// TODO: If the domain is fixed, and the connection settings are fixed, skip first
 	// step
-	
+
 	// Initialize settings
 	ssl_ = UserAccount::SSL_Auto;
 	port_ = 5222;
-	
+
 	// Server select button
 	connect(ui_.le_server,SIGNAL(popup()),SLOT(selectServer()));
 	serverlist_querier_ = new ServerListQuerier(this);
@@ -90,7 +90,7 @@ AccountRegDlg::AccountRegDlg(QWidget *parent) : QDialog(parent)
 	client_ = new MiniClient;
 	connect(client_, SIGNAL(handshaken()), SLOT(client_handshaken()));
 	connect(client_, SIGNAL(error()), SLOT(client_error()));
-	
+
 	if (!PsiOptions::instance()->getOption("options.account.domain").toString().isEmpty()) {
 		ui_.gb_server->hide();
 	}
@@ -186,13 +186,13 @@ void AccountRegDlg::next()
 		host_ = ui_.le_host->text();
 		port_ = ui_.le_port->text().toInt();
 		proxy_ = proxy_chooser_->currentItem();
-		
+
 		// Sanity check
 		if (server_.isNull() || !server_.node().isEmpty() || !server_.resource().isEmpty()) {
 			QMessageBox::critical(this, tr("Error"), tr("You have entered an invalid server name"));
 			return;
 		}
-		
+
 		// Connect to the server
 		ui_.busy->start();
 		block();
@@ -202,7 +202,7 @@ void AccountRegDlg::next()
 		// Initialize the form
 		XMPP::XData fields;
 		fields.setFields(fields_->fields());
-		
+
 		// Determine the username and password
 		foreach(XMPP::XData::Field field, fields.fields()) {
 			if (field.var() == "username" && !field.value().isEmpty()) {
@@ -261,13 +261,13 @@ void AccountRegDlg::getFields_finished()
 		XData xdata;
 		if (reg->hasXData()) {
 			isOld_ = false;
-			xdata = reg->xdata(); 
+			xdata = reg->xdata();
 		}
 		else {
 			isOld_ = true;
 			xdata = convertToXData(reg->form());
 		}
-		if (xdata.instructions().isEmpty()) 
+		if (xdata.instructions().isEmpty())
 			xdata.setInstructions(tr("Please provide the following information:"));
 		xdata.setInstructions(TextUtil::linkify(xdata.instructions()));
 		fields_->setForm(xdata);

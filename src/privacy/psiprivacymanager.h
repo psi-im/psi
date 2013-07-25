@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
- 
+
 #ifndef PSIPRIVACYMANAGER_H
 #define PSIPRIVACYMANAGER_H
 
@@ -67,7 +67,7 @@ protected slots:
 	void getDefault_listsError();
 	void getDefault_listReceived(const PrivacyList&);
 	void getDefault_listError();
-	
+
 	void block_getDefaultList_success(const PrivacyList&);
 	void block_getDefaultList_error();
 

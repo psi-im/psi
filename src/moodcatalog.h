@@ -45,18 +45,18 @@ public:
 			QString value_;
 			QString text_;
 	};
-	
+
 	static MoodCatalog* instance();
 
 	Entry findEntryByType(Mood::Type) const;
 	Entry findEntryByValue(const QString&) const;
 	Entry findEntryByText(const QString& text) const;
-	
+
 	const QList<Entry>& entries() const;
-	
+
 private:
 	MoodCatalog();
-	
+
 	QList<Entry> entries_;
 	static MoodCatalog* instance_;
 

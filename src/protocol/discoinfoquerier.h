@@ -26,7 +26,7 @@ public:
 signals:
 	/**
 	 * Signals that a disco information request was succesful.
-	 * 
+	 *
 	 * @param jid the jid on which the request was done
 	 * @param node the node on which the request was done
 	 * @param item the resulting disco item.
@@ -35,7 +35,7 @@ signals:
 
 	/**
 	 * Signals that a disco information request returned an error.
-	 * 
+	 *
 	 * @param jid the jid on which the request was done
 	 * @param node the node on which the request was done
 	 * @param error_code the error code of the error

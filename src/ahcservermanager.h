@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
- 
+
 #ifndef AHCSERVERMANAGER_H
 #define AHCSERVERMANAGER_H
 
@@ -32,13 +32,13 @@ namespace XMPP {
 	class Jid;
 }
 
-class AHCServerManager 
+class AHCServerManager
 {
 public:
 	AHCServerManager(PsiAccount* pa);
 	void addServer(AHCommandServer*);
 	void removeServer(AHCommandServer*);
-	
+
 	typedef QList<AHCommandServer*> ServerList;
 	ServerList commands(const XMPP::Jid&) const;
 	void execute(const AHCommand& command, const XMPP::Jid& requester, QString id);

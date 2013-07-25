@@ -29,16 +29,16 @@
 
 using namespace XMPP;
 
-// -------------------------------------------------------------------------- 
+// --------------------------------------------------------------------------
 // AHCommand: The class representing an Ad-Hoc command request or reply.
-// -------------------------------------------------------------------------- 
+// --------------------------------------------------------------------------
 
 AHCommand::AHCommand(const QString& node, const QString& sessionId, Action action) : node_(node), hasData_(false), status_(NoStatus), defaultAction_(NoAction), action_(action), sessionId_(sessionId)
-{ 
+{
 }
-	
+
 AHCommand::AHCommand(const QString& node, XData data, const QString& sessionId, Action action) : node_(node), hasData_(true), data_(data), status_(NoStatus), defaultAction_(NoAction), action_(action), sessionId_(sessionId)
-{ 
+{
 }
 
 AHCommand::AHCommand(const QDomElement& q) : hasData_(false), defaultAction_(NoAction)
@@ -67,7 +67,7 @@ AHCommand::AHCommand(const QDomElement& q) : hasData_(false), defaultAction_(NoA
 		// Actions
 		else if (tag == "actions") {
 			QString execute = e.attribute("execute");
-			if (!execute.isEmpty()) 
+			if (!execute.isEmpty())
 				setDefaultAction(string2action(execute));
 
 			for (QDomNode m = e.firstChild(); !m.isNull(); m = m.nextSibling()) {
@@ -83,16 +83,16 @@ QDomElement AHCommand::toXml(QDomDocument* doc, bool submit) const
 {
 	QDomElement command = doc->createElement("command");
 	command.setAttribute("xmlns", AHC_NS);
-	if (status_ != NoStatus) 
+	if (status_ != NoStatus)
 		command.setAttribute("status",status2string(status()));
-	if (hasData()) 
+	if (hasData())
 		command.appendChild(data().toXml(doc, submit));
-	if (action_ != Execute) 
+	if (action_ != Execute)
 		command.setAttribute("action",action2string(action_));
 	command.setAttribute("node", node_);
 	if (!sessionId_.isEmpty())
 		command.setAttribute("sessionid", sessionId_);
-		
+
 	return command;
 }
 
@@ -111,27 +111,27 @@ AHCommand AHCommand::formReply(const AHCommand& c, const XData& data, const QStr
 	return r;
 }
 
-AHCommand AHCommand::canceledReply(const AHCommand& c) 
+AHCommand AHCommand::canceledReply(const AHCommand& c)
 {
 	AHCommand r(c.node(), c.sessionId());
 	r.setStatus(Canceled);
 	return r;
 }
 
-AHCommand AHCommand::completedReply(const AHCommand& c) 
+AHCommand AHCommand::completedReply(const AHCommand& c)
 {
 	AHCommand r(c.node(), c.sessionId());
 	r.setStatus(Completed);
 	return r;
 }
 
-AHCommand AHCommand::completedReply(const AHCommand& c, const XData& d) 
+AHCommand AHCommand::completedReply(const AHCommand& c, const XData& d)
 {
 	AHCommand r(c.node(), d, c.sessionId());
 	r.setStatus(Completed);
 	return r;
 }
-	
+
 //AHCommand AHCommand::errorReply(const AHCommand& c, const AHCError& error)
 //{
 //	AHCommand r(c.node(), c.sessionId());
@@ -166,7 +166,7 @@ QString AHCommand::status2string(Status status)
 	return s;
 }
 
-QString AHCommand::action2string(Action action) 
+QString AHCommand::action2string(Action action)
 {
 	QString s;
 	switch (action) {
@@ -178,18 +178,18 @@ QString AHCommand::action2string(Action action)
 	}
 	return s;
 }
-	
+
 AHCommand::Action AHCommand::string2action(const QString& s)
 {
-	if (s == "prev") 
+	if (s == "prev")
 		return Prev;
-	else if (s == "next") 
+	else if (s == "next")
 		return Next;
-	else if (s == "complete") 
+	else if (s == "complete")
 		return Complete;
-	else if (s == "cancel") 
+	else if (s == "cancel")
 		return Cancel;
-	else 
+	else
 		return Execute;
 }
 
@@ -201,14 +201,14 @@ AHCommand::Status AHCommand::string2status(const QString& s)
 		return Completed;
 	else if (s == "executing")
 		return Executing;
-	else 
+	else
 		return NoStatus;
 }
 
 
-// -------------------------------------------------------------------------- 
+// --------------------------------------------------------------------------
 // AHCError: The class representing an Ad-Hoc command error
-// -------------------------------------------------------------------------- 
+// --------------------------------------------------------------------------
 
 AHCError::AHCError(ErrorType t) : type_(t)
 {
@@ -222,9 +222,9 @@ AHCError::AHCError(const QDomElement& e) : type_(None)
 		QDomElement i = n.toElement();
 		if(i.isNull())
 			continue;
-		
+
 		QString tag = i.tagName();
-		
+
 		if ((tag == "bad-request" || tag == "not-allowed" || tag == "forbidden" || tag == "forbidden" || tag == "item-not-found" || tag == "feature-not-implemented") && e.attribute("xmlns") == XMPPSTANZA_NS) {
 			errorGeneral = tag;
 		}
@@ -235,7 +235,7 @@ AHCError::AHCError(const QDomElement& e) : type_(None)
 
 	type_ = strings2error(errorGeneral, errorSpecific);
 }
-	
+
 QDomElement AHCError::toXml(QDomDocument* doc) const
 {
 	QDomElement err = doc->createElement("error");
@@ -285,7 +285,7 @@ QDomElement AHCError::toXml(QDomDocument* doc) const
 		QDomElement generalElement = doc->createElement(desc);
 		generalElement.setAttribute("xmlns", XMPPSTANZA_NS);
 		err.appendChild(generalElement);
-		
+
 		// Specific error condition
 		if (!specificCondition.isEmpty()) {
 			QDomElement generalElement = doc->createElement(specificCondition);

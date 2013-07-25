@@ -26,16 +26,16 @@
 class QDomElement;
 class QDomDocument;
 
-class PubSubSubscription 
+class PubSubSubscription
 {
 public:
 	enum State { None, Pending, Unconfigured, Subscribed };
-	
+
 	PubSubSubscription();
 	PubSubSubscription(const QDomElement& e);
 
-	const QString& jid() const; 
-	const QString& node() const; 
+	const QString& jid() const;
+	const QString& node() const;
 	State state() const;
 
 	bool isNull() const;

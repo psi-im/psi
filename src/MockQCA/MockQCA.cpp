@@ -4,7 +4,7 @@ namespace QCA {
 
 CertificateCollection gSystemStore;
 
-CertificateCollection systemStore() 
+CertificateCollection systemStore()
 {
 	return gSystemStore;
 }

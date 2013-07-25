@@ -72,7 +72,7 @@ QWidget *OptionsTabAdvanced::widget()
 		"<P><B>Normal</B> - messages come as messages, chats come as chats.</P>"
 		"<P><B>Messages</B> - All messages/chats come as messages, no matter what their original form was.</P>"
 		"<P><B>Chats</B> - All messages/chats come as chats, no matter what their original form was.</P>"));
-	
+
 	d->cb_incomingAs->setItemData(0, "no");
 	d->cb_incomingAs->setItemData(1, "message");
 	d->cb_incomingAs->setItemData(2, "chat");

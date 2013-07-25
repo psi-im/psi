@@ -78,7 +78,7 @@ QWidget *OptionsTabStatus::widget()
 	connect(d->te_sp, SIGNAL(textChanged()), SLOT(changeStatusPreset()));
 	connect(d->le_sp_priority, SIGNAL(textChanged(const QString&)), SLOT(changeStatusPreset()));
 	connect(d->cb_sp_status, SIGNAL(activated(int)), SLOT(changeStatusPreset()));
-	
+
 	d->pb_spNew->setWhatsThis(
 		tr("Press this button to create a new status message preset."));
 	d->pb_spDelete->setWhatsThis(
@@ -121,7 +121,7 @@ void OptionsTabStatus::applyOptions()
 	bool forcePriority = false;
 	PsiOptions::instance()->setOption("options.status.auto-away.priority", d->le_asPriority->text().toInt(&forcePriority));
 	PsiOptions::instance()->setOption("options.status.auto-away.force-priority", forcePriority);
-	
+
 	foreach (QString name, deletedPresets) {
 		QString base = PsiOptions::instance()->mapLookup("options.status.presets", name);
 		PsiOptions::instance()->removeOption(base , true);
@@ -140,7 +140,7 @@ void OptionsTabStatus::applyOptions()
 	dirtyPresets.clear();
 	presets.unite(newPresets);
 	newPresets.clear();
-	
+
 	PsiOptions::instance()->setOption("options.status.ask-for-message-on-online", d->ck_askOnline->isChecked());
 	PsiOptions::instance()->setOption("options.status.ask-for-message-on-offline", d->ck_askOffline->isChecked());
 }
@@ -177,9 +177,9 @@ void OptionsTabStatus::restoreOptions()
 		d->le_asPriority->clear();
 	}
 
-	
+
 	QStringList presetNames;
-	
+
 	foreach(QVariant name, PsiOptions::instance()->mapKeyList("options.status.presets")) {
 		QString base =  PsiOptions::instance()->mapLookup("options.status.presets", name.toString());
 		StatusPreset sp;
@@ -192,12 +192,12 @@ void OptionsTabStatus::restoreOptions()
 		XMPP::Status status;
 		status.setType(PsiOptions::instance()->getOption(base+".status").toString());
 		sp.setStatus(status.type());
-		
+
 		presets[name.toString()] = sp;
 		presetNames += name.toString();
 	}
-	
-	
+
+
 	d->cb_preset->addItems(presetNames);
 
 	if(d->cb_preset->count() >= 1) {
@@ -234,24 +234,24 @@ void OptionsTabStatus::selectStatusPreset(int x)
 
 	StatusPreset preset;
 	QString name = d->cb_preset->itemText(x);
-	
+
 	if (newPresets.contains(name)) {
 		preset = newPresets[name];
 	} else {
 		preset = presets[name];
 	}
-	
+
 	d->te_sp->setText(preset.message());
 	if (preset.priority().hasValue())
 		d->le_sp_priority->setText(QString::number(preset.priority().value()));
 	else
 		d->le_sp_priority->clear();
 	d->cb_sp_status->setStatus(preset.status());
-	
+
 	//noDirty = false;
 	connect(d->te_sp, SIGNAL(textChanged()), SLOT(changeStatusPreset()));
 	connect(d->le_sp_priority, SIGNAL(textChanged(const QString&)), SLOT(changeStatusPreset()));
-	
+
 	setStatusPresetWidgetsEnabled(true);
 }
 
@@ -299,7 +299,7 @@ void OptionsTabStatus::removeStatusPreset()
 	emit dataChanged();
 
 	QString name = d->cb_preset->itemText(id);
-	
+
 	if (newPresets.contains(name)) {
 		newPresets.remove(name);
 	} else {
@@ -337,7 +337,7 @@ void OptionsTabStatus::changeStatusPreset()
 	sp.setStatus(d->cb_sp_status->status());
 
 	QString name = d->cb_preset->itemText(id);
-	
+
 	sp.setName(name);
 	if (newPresets.contains(name)) {
 		newPresets[name] = sp;
@@ -345,7 +345,7 @@ void OptionsTabStatus::changeStatusPreset()
 		dirtyPresets += name;
 		presets[name] = sp;
 	}
-	
+
 	emit dataChanged();
 }
 

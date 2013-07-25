@@ -42,11 +42,11 @@ private slots:
 		// to show PsiPopups on screen
 // 		is = new PsiIconset();
 // 		QVERIFY(is->loadAll());
-		
+
 		qca_init = new QCA::Initializer();
 		QCA::keyStoreManager()->start();
 		QCA::keyStoreManager()->waitForBusyFinished();
-		
+
 		psi = new PsiCon();
 		psi->init();
 		UserAccount userAccount;
@@ -59,13 +59,13 @@ private slots:
 		QCA::unloadAllPlugins();
 		delete qca_init;
 	}
-	
+
 	void testPsiPopup()
 	{
 // 		Q3MainWindow window;
 // 		window.show();
 		delay(10000);
-		
+
 		option.ppHideTime = 10 * 1000; // 10 seconds
 		option.ppBorderColor = Qt::blue;
 		option.ppIsOn = true;
@@ -76,7 +76,7 @@ private slots:
 		UserListItem userListItem;
 		MessageEvent psiEvent(account);
 		popup->setData(jid, resource, &userListItem, &psiEvent);
-		
+
 		delay(15000);
 	}
 };

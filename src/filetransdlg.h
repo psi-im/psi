@@ -37,7 +37,7 @@ public:
 	QString saveName() const;
 	QString filePath() const;
 	QPixmap fileIcon() const;
-	
+
 
 	void send(const Jid &to, const QString &fname, const QString &desc);
 	void accept(const QString &saveName, const QString &fileName, qlonglong offset=0);

@@ -55,7 +55,7 @@ QWidget *OptionsTabEvents::widget()
 		" not already in your list of contacts."));
 	d->cb_animation->setWhatsThis(
 		tr("What kind of animation should psi use for incoming event icons on the main window?"));
-	
+
 	d->cb_animation->setItemData ( 0, "no");
 	d->cb_animation->setItemData ( 1, "blink");
 	d->cb_animation->setItemData ( 2, "animate");
@@ -70,11 +70,11 @@ QWidget *OptionsTabEvents::widget()
 	d->ck_notifyAuth->setWhatsThis(
 		tr("Makes Psi notify you when your authorization request was approved."));
 
-	
+
 	d->cb_bounce->setItemData(0, "never");
 	d->cb_bounce->setItemData(1, "once");
 	d->cb_bounce->setItemData(2, "forever");
-	
+
 #ifndef Q_OS_MAC
 	d->cb_bounce->hide();
 	d->lb_bounce->hide();

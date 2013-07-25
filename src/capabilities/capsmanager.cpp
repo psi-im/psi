@@ -18,7 +18,7 @@
  *
  */
 
-// TODO: 
+// TODO:
 //  - Fallback on another jid if a disco request should fail. This can be
 //    done by keeping a second list of candidate jids to query
 //  - Implement Server Optimization support (Section 5).
@@ -79,10 +79,10 @@ void CapsManager::setEnabled(bool b)
 
 /**
  * \brief Registers new incoming capabilities information of a JID.
- * If the features of the entity are unknown, discovery requests are sent to 
+ * If the features of the entity are unknown, discovery requests are sent to
  * retrieve the information.
  *
- * @param jid The entity's JID 
+ * @param jid The entity's JID
  * @param node The entity's caps node
  * @param ver The entity's caps version
  * @param ext The entity's caps extensions
@@ -96,7 +96,7 @@ void CapsManager::updateCaps(const Jid& jid, const QString& node, const QString&
 	CapsSpecs caps = c.flatten();
 	if (capsSpecs_[jid.full()] != c) {
 		//qDebug() << QString("caps.cpp: Updating caps for %1 (node=%2,ver=%3,ext=%4)").arg(QString(jid.full()).replace('%',"%%")).arg(node).arg(ver).arg(ext);
-		
+
 		// Unregister from all old caps nodes
 		CapsSpecs old_caps = capsSpecs_[jid.full()].flatten();
 		foreach(CapsSpec s, old_caps) {
@@ -113,8 +113,8 @@ void CapsManager::updateCaps(const Jid& jid, const QString& node, const QString&
 					capsJids_[s].push_back(jid.full());
 				}
 			}
-			
-			emit capsChanged(jid); 
+
+			emit capsChanged(jid);
 
 			// Register new caps and check if we need to discover features
 			if (isEnabled()) {
@@ -143,7 +143,7 @@ void CapsManager::updateCaps(const Jid& jid, const QString& node, const QString&
 /**
  * \brief Removes all feature information for a given JID.
  *
- * @param jid The entity's JID 
+ * @param jid The entity's JID
  */
 void CapsManager::disableCaps(const Jid& jid)
 {
@@ -209,7 +209,7 @@ CapsSpec CapsManager::getCapsSpecForNode(const XMPP::Jid& jid, const QString& di
  * \brief This slot is called whenever capabilities of a client were discovered.
  * All jids with the corresponding client are updated.
  */
-void CapsManager::capsRegistered(const CapsSpec& cs) 
+void CapsManager::capsRegistered(const CapsSpec& cs)
 {
 	// Notify affected jids.
 	foreach(QString s, capsJids_[cs]) {
@@ -243,7 +243,7 @@ XMPP::Features CapsManager::features(const Jid& jid) const
 	}
 	return Features(f);
 }
-	
+
 /**
  * \brief Returns the client name of a given jid.
  * \param jid the jid to retrieve the client name of
@@ -257,16 +257,16 @@ QString CapsManager::clientName(const Jid& jid) const
 		if (i.count() > 0) {
 			name = i.first().name;
 		}
-		
+
 		// Try to be intelligent about the name
 		if (name.isEmpty()) {
 			name = cs.node();
 			if (name.startsWith("http://"))
 				name = name.right(name.length() - 7);
-				
+
 			if (name.startsWith("www."))
 				name = name.right(name.length() - 4);
-			
+
 			int cut_pos = name.indexOf("/");
 			if (cut_pos != -1)
 				name = name.left(cut_pos);

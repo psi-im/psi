@@ -32,10 +32,10 @@ class BookmarkTask : public Task
 public:
 	BookmarkTask(Task* parent) : Task(parent) {
 	}
-	
+
 	void set(const QList<URLBookmark>& urls, const QList<ConferenceBookmark>& conferences) {
 		iq_ = createIQ(doc(), "set", "", id());
-		
+
 		QDomElement prvt = doc()->createElement("query");
 		prvt.setAttribute("xmlns", "jabber:iq:private");
 		iq_.appendChild(prvt);
@@ -43,16 +43,16 @@ public:
 		QDomElement storage = doc()->createElement("storage");
 		storage.setAttribute("xmlns", "storage:bookmarks");
 		prvt.appendChild(storage);
-		
+
 		foreach(URLBookmark u, urls)
 			storage.appendChild(u.toXml(*doc()));
 		foreach(ConferenceBookmark c, conferences)
 			storage.appendChild(c.toXml(*doc()));
 	}
-	
+
 	void get() {
 		iq_ = createIQ(doc(), "get", "", id());
-		
+
 		QDomElement prvt = doc()->createElement("query");
 		prvt.setAttribute("xmlns", "jabber:iq:private");
 		iq_.appendChild(prvt);
@@ -100,7 +100,7 @@ public:
 		}
 		return true;
 	}
-	
+
 	const QList<URLBookmark>& urls() const {
 		return urls_;
 	}

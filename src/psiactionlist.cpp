@@ -199,10 +199,10 @@ void PsiActionList::Private::createMainWin()
 //
 //		IconAction *actOnlineHelp = new IconAction (tr("User Guide (Online)"), tr("User Guide (Online)"), 0, this);
 //		actOnlineHelp->setWhatsThis (tr("User Guide (Online)"));
-//		
+//
 //		IconAction *actOnlineWiki = new IconAction (tr("Wiki (Online)"), tr("Wiki (Online)"), 0, this);
 //		actOnlineWiki->setWhatsThis (tr("Wiki (Online)"));
-//		
+//
 //		IconAction *actOnlineHome = new IconAction (tr("Home Page (Online)"), tr("Home Page (Online)"), 0, this);
 //		actOnlineHome->setWhatsThis (tr("Home Page (Online)"));
 //
@@ -221,7 +221,7 @@ void PsiActionList::Private::createMainWin()
 
 		IconAction *actPlaySounds = new IconAction (tr("Play Sounds"), "psi/playSounds", tr("Play &Sounds"), 0, this, 0, true);
 		actPlaySounds->setWhatsThis (tr("Toggles whether sound should be played or not"));
-		
+
 		IconAction *actQuit = new IconAction (tr("Quit"), "psi/quit", tr("&Quit"), 0, this);
 		actQuit->setMenuRole(QAction::QuitRole);
 		actQuit->setWhatsThis (tr("Quits Psi"));

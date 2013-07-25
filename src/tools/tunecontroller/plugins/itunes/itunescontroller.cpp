@@ -1,5 +1,5 @@
 /*
- * itunescontroller.cpp 
+ * itunescontroller.cpp
  * Copyright (C) 2006  Remko Troncon
  *
  * This program is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@ static QString CFStringToQString(CFStringRef s)
 			qWarning("itunesplayer.cpp: CFString conversion failed.");
 		}
 		delete[] buffer;
-	} 
+	}
     return result;
 }
 
@@ -73,7 +73,7 @@ void ITunesController::iTunesCallback(CFNotificationCenterRef,void* observer,CFS
 {
 	Tune tune;
 	ITunesController* controller = (ITunesController*) observer;
-	
+
 	CFStringRef cf_state = (CFStringRef) CFDictionaryGetValue(info, CFSTR("Player State"));
 	if (CFStringCompare(cf_state,CFSTR("Paused"),0) == kCFCompareEqualTo) {
 		//qDebug() << "itunesplayer.cpp: Paused";
@@ -88,7 +88,7 @@ void ITunesController::iTunesCallback(CFNotificationCenterRef,void* observer,CFS
 		tune.setArtist(CFStringToQString((CFStringRef) CFDictionaryGetValue(info, CFSTR("Artist"))));
 		tune.setName(CFStringToQString((CFStringRef) CFDictionaryGetValue(info, CFSTR("Name"))));
 		tune.setAlbum(CFStringToQString((CFStringRef) CFDictionaryGetValue(info, CFSTR("Album"))));
-		
+
 		CFNumberRef cf_track = (CFNumberRef) CFDictionaryGetValue(info, CFSTR("Track Number"));
 		if (cf_track) {
 			int tracknr;
@@ -97,7 +97,7 @@ void ITunesController::iTunesCallback(CFNotificationCenterRef,void* observer,CFS
 			}
 			tune.setTrack(QString::number(tracknr));
 		}
-		
+
 		CFNumberRef cf_time = (CFNumberRef) CFDictionaryGetValue(info, CFSTR("Total Time"));
 		int time = 0;
 		if (cf_time && !CFNumberGetValue(cf_time,kCFNumberIntType,&time)) {

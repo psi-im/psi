@@ -28,17 +28,17 @@
 class QDomElement;
 class QDomDocument;
 
-class AHCError 
+class AHCError
 {
 public:
-	enum ErrorType { 
-		None, MalformedAction, BadAction, BadLocale, 
-		BadPayload, BadSessionID, SessionExpired, Forbidden, ItemNotFound, 
-		FeatureNotImplemented 
+	enum ErrorType {
+		None, MalformedAction, BadAction, BadLocale,
+		BadPayload, BadSessionID, SessionExpired, Forbidden, ItemNotFound,
+		FeatureNotImplemented
 	};
 
 	AHCError(ErrorType = None);
-	AHCError(const QDomElement& e);	
+	AHCError(const QDomElement& e);
 
 	ErrorType type() const { return type_; }
 	static QString error2description(const AHCError&);
@@ -52,7 +52,7 @@ private:
 };
 
 
-class AHCommand 
+class AHCommand
 {
 public:
 	// Types
@@ -86,7 +86,7 @@ public:
 	static AHCommand completedReply(const AHCommand&);
 	static AHCommand completedReply(const AHCommand&, const XMPP::XData&);
 	//static AHCommand errorReply(const AHCommand&, const AHCError&);
-	
+
 protected:
 	void setStatus(Status s);
 	void setError(const AHCError& e);
@@ -97,7 +97,7 @@ protected:
 	static Action string2action(const QString&);
 	static Status string2status(const QString&);
 
-private: 
+private:
 	QString node_;
 	bool hasData_;
 	XMPP::XData data_;

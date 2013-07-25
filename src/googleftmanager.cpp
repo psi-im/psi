@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
- 
+
 // libjingle includes
 #define POSIX
 #include "talk/base/sigslot.h"
@@ -55,7 +55,7 @@ using namespace XMPP;
 
 /**
  * \class GoogleJingleInfoTask
- * A class for retrieving information from the server about Google's 
+ * A class for retrieving information from the server about Google's
  * Jingle support.
  */
 class GoogleJingleInfoTask : public Task
@@ -117,7 +117,7 @@ public:
  * \brief A class for handling signals from libjingle.
  */
 
-class GoogleSessionListener : public sigslot::has_slots<> 
+class GoogleSessionListener : public sigslot::has_slots<>
 {
 public:
 	GoogleSessionListener(GoogleFTManager* manager);
@@ -134,7 +134,7 @@ GoogleSessionListener::GoogleSessionListener(GoogleFTManager* manager) : manager
 {
 }
 
-void GoogleSessionListener::sendStanza(const buzz::XmlElement *stanza) 
+void GoogleSessionListener::sendStanza(const buzz::XmlElement *stanza)
 {
 	QString st(stanza->Str().c_str());
 	st.replace("<sta:","<");
@@ -161,7 +161,7 @@ void GoogleSessionListener::signalingReady()
 /**
  * \brief A class for handling signals from libjingle.
  */
-class GoogleFileTransferListener : public sigslot::has_slots<> 
+class GoogleFileTransferListener : public sigslot::has_slots<>
 {
 public:
 	GoogleFileTransferListener(GoogleFileTransfer*);
@@ -183,11 +183,11 @@ void GoogleFileTransferListener::stateChanged(cricket::FileShareState state)
 		case cricket::FS_OFFER:
 			emit session_->manager_->incomingFileTransfer(session_);
 			break;
-			
+
 		case cricket::FS_TRANSFER:
 			qDebug("Transfer started");
 			break;
-			
+
 		case cricket::FS_COMPLETE:
 			qDebug("Transfer complete");
 			break;
@@ -235,41 +235,41 @@ GoogleFileTransfer::GoogleFileTransfer(cricket::FileShareSession* s, GoogleFTMan
 	QDir home = QDir::home();
 #endif
 	QDir dir(home.path() + "/googletalk_files");
-	if(!dir.exists()) 
+	if(!dir.exists())
 		home.mkdir("googletalk_files");
     session_->SetLocalFolder(dir.path().toStdString());
 }
 
-XMPP::Jid GoogleFileTransfer::peer() const 
-{ 
+XMPP::Jid GoogleFileTransfer::peer() const
+{
 	return Jid(session_->jid().BareJid().Str().c_str());
 }
 
-QString GoogleFileTransfer::fileName() const 
+QString GoogleFileTransfer::fileName() const
 {
 	return description();
 }
 
-QString GoogleFileTransfer::description() const 
-{ 
+QString GoogleFileTransfer::description() const
+{
 	QString description;
 	if (session_->manifest()->size() == 1)
 		description = QString("'%1'").arg(session_->manifest()->item(0).name.c_str());
-	else if (session_->manifest()->GetFileCount() && session_->manifest()->GetFolderCount()) 
+	else if (session_->manifest()->GetFileCount() && session_->manifest()->GetFolderCount())
 		description = QString("%1 files and %2 directories").arg(session_->manifest()->GetFileCount()).arg(session_->manifest()->GetFolderCount());
 	else if (session_->manifest()->GetFileCount())
 		description = QString("%1 files").arg(session_->manifest()->GetFileCount());
 	else if (session_->manifest()->GetFolderCount())
 		description = QString("%1 directories").arg(session_->manifest()->GetFolderCount());
-	else 
+	else
 		description = "(Unknown)";
 	return description;
 }
 
-qlonglong GoogleFileTransfer::fileSize() const 
-{ 
+qlonglong GoogleFileTransfer::fileSize() const
+{
 	size_t filesize;
-	if (!session_->GetTotalSize(filesize)) 
+	if (!session_->GetTotalSize(filesize))
 		filesize = -1;
 	return filesize;
 }
@@ -291,7 +291,7 @@ void GoogleFileTransfer::cancel()
 
 // ----------------------------------------------------------------------------
 
-GoogleFTManager::GoogleFTManager(Client* client) : client_(client) 
+GoogleFTManager::GoogleFTManager(Client* client) : client_(client)
 {
 	initialized_ = false;
 	connect(client_, SIGNAL(rosterRequestFinished(bool, int, const QString &)), SLOT(initialize()));
@@ -322,7 +322,7 @@ void GoogleFTManager::initialize()
 		port_allocator_.reset(new cricket::HttpPortAllocator(network_manager_, "psi"));
 	}
 
-	listener_ = new GoogleSessionListener(this); 
+	listener_ = new GoogleSessionListener(this);
 	session_manager_.reset(new cricket::SessionManager(port_allocator_.get(), NULL));
 	session_manager_->SignalOutgoingMessage.connect(listener_, &GoogleSessionListener::sendStanza);
 	//session_manager_->SignalRequestSignaling.connect(session_manager_, &cricket::SessionManager::OnSignalingReady);
@@ -333,7 +333,7 @@ void GoogleFTManager::initialize()
 
 	// Listen to incoming packets
 	connect(client_,SIGNAL(xmlIncoming(const QString&)),SLOT(receiveStanza(const QString&)));
-	
+
 	// IQ Responder
 	new JingleIQResponder(client_->rootTask());
 
@@ -373,7 +373,7 @@ void GoogleFTManager::receiveStanza(const QString& sstanza)
 	buzz::XmlElement *e = buzz::XmlElement::ForStr(stanza.ascii());
 	if (!session_manager_.get()->IsSessionMessage(e))
 		return;*/
-	
+
 	QDomNode n = doc.documentElement().firstChild();
 	bool ok = false;
 	while (!n.isNull() && !ok) {
@@ -386,7 +386,7 @@ void GoogleFTManager::receiveStanza(const QString& sstanza)
 	if (!ok)
 		return;
 	buzz::XmlElement *e = buzz::XmlElement::ForStr(sstanza.ascii());
-	
+
 	session_manager_->OnIncomingMessage(e);
 }
 

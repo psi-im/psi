@@ -1,5 +1,5 @@
 /*
- * wbnewpath.h - a class used for representing a path on the whiteboard 
+ * wbnewpath.h - a class used for representing a path on the whiteboard
  *			  while it's being drawn.
  * Copyright (C) 2008  Joonas Govenius
  *

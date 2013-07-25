@@ -1,6 +1,6 @@
 /*
  * iconsetselect.h - contact list widget
- * Copyright (C) 2001-2005  Justin Karneges, Michail Pishchagin 
+ * Copyright (C) 2001-2005  Justin Karneges, Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -36,11 +36,11 @@ public:
 	void insert(const Iconset &); // iconsets must be inserted in following order: most prioritent first
 
 	const Iconset *iconset() const;
-	
+
 	QListWidgetItem *lastItem() const;
 
 	QStyleOptionViewItem viewOptions() const;
-	
+
 public slots:
 	void moveItemUp();
 	void moveItemDown();

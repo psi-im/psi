@@ -38,7 +38,7 @@ bool RCCommandServer::isAllowed(const Jid& j) const
 AHCommand RCSetStatusServer::execute(const AHCommand& c, const Jid&)
 {
 	// Check if the session ID is correct
-	//if (c.sessionId() != "") 
+	//if (c.sessionId() != "")
 	//	return AHCommand::errorReply(c,AHCError::AHCError(AHCError::BadSessionID));
 
 	if (!c.hasData()) {
@@ -55,7 +55,7 @@ AHCommand RCSetStatusServer::execute(const AHCommand& c, const Jid&)
 		type_field.setValue(QStringList("http://jabber.org/protocol/rc"));
 		type_field.setRequired(false);
 		fields += type_field;
-		
+
 		XData::Field status_field;
 		status_field.setType(XData::Field::Field_ListSingle);
 		status_field.setVar("status");
@@ -99,7 +99,7 @@ AHCommand RCSetStatusServer::execute(const AHCommand& c, const Jid&)
 		status_options += offline_option;
 		status_field.setOptions(status_options);
 		fields += status_field;
-		
+
 		XData::Field priority_field;
 		priority_field.setType(XData::Field::Field_TextSingle);
 		priority_field.setLabel(QObject::tr("Priority"));
@@ -117,7 +117,7 @@ AHCommand RCSetStatusServer::execute(const AHCommand& c, const Jid&)
 		fields += statusmsg_field;
 
 		form.setFields(fields);
-		
+
 		return AHCommand::formReply(c, form);
 	}
 	else {
@@ -171,7 +171,7 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
 		type_field.setValue(QStringList("http://jabber.org/protocol/rc"));
 		type_field.setRequired(false);
 		fields += type_field;
-		
+
 		XData::Field sounds_field;
 		sounds_field.setType(XData::Field::Field_Boolean);
 		sounds_field.setLabel(QObject::tr("Play sounds"));
@@ -179,7 +179,7 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
 		sounds_field.setValue(QStringList((PsiOptions::instance()->getOption("options.ui.notifications.sounds.enable").toBool() ? "1" : "0")));
 		sounds_field.setRequired(false);
 		fields += sounds_field;
-		
+
 		XData::Field auto_offline_field;
 		auto_offline_field.setType(XData::Field::Field_Boolean);
 		auto_offline_field.setLabel(QObject::tr("Automatically go offline when idle"));
@@ -187,7 +187,7 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
 		auto_offline_field.setValue(QStringList((PsiOptions::instance()->getOption("options.status.auto-away.use-offline").toBool() ? "1" : "0")));
 		auto_offline_field.setRequired(false);
 		fields += auto_offline_field;
-		
+
 		XData::Field auto_auth_field;
 		auto_auth_field.setType(XData::Field::Field_Boolean);
 		auto_auth_field.setLabel(QObject::tr("Auto-authorize contacts"));
@@ -195,7 +195,7 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
 		auto_auth_field.setValue(QStringList((PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorization").toBool() ? "1" : "0")));
 		auto_auth_field.setRequired(false);
 		fields += auto_auth_field;
-		
+
 		XData::Field auto_open_field;
 		auto_open_field.setType(XData::Field::Field_Boolean);
 		auto_open_field.setLabel(QObject::tr("Auto-open new messages"));
@@ -203,9 +203,9 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
 		auto_open_field.setValue(QStringList((PsiOptions::instance()->getOption("options.ui.message.auto-popup").toBool() ? "1" : "0")));
 		auto_open_field.setRequired(false);
 		fields += auto_open_field;
-		
+
 		form.setFields(fields);
-		
+
 		return AHCommand::formReply(c, form);
 	}
 	else {
@@ -215,30 +215,30 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
 			if (fl[i].var() == "sounds") {
 				QString v =  fl[i].value().first();
 				IconAction* soundact = psiCon_->actionList()->suitableActions(PsiActionList::ActionsType( PsiActionList::Actions_MainWin | PsiActionList::Actions_Common)).action("menu_play_sounds");
-				if (v == "1") 
+				if (v == "1")
 					soundact->setChecked(true);
-				else if (v == "0") 
+				else if (v == "0")
 					soundact->setChecked(false);
 			}
 			else if (fl[i].var() == "auto-offline") {
 				QString v =  fl[i].value().first();
-				if (v == "1") 
+				if (v == "1")
 					PsiOptions::instance()->setOption("options.status.auto-away.use-offline", (bool) true);
-				else if (v == "0") 
+				else if (v == "0")
 					PsiOptions::instance()->setOption("options.status.auto-away.use-offline", (bool) false);
 			}
 			else if (fl[i].var() == "auto-auth") {
 				QString v =  fl[i].value().first();
-				if (v == "1") 
+				if (v == "1")
 					PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorization", (bool) true);
-				else if (v == "0") 
+				else if (v == "0")
 					PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorization", (bool) false);
 			}
 			else if (fl[i].var() == "auto-open") {
 				QString v =  fl[i].value().first();
-				if (v == "1") 
+				if (v == "1")
 					PsiOptions::instance()->setOption("options.ui.message.auto-popup", (bool) true);
-				else if (v == "0") 
+				else if (v == "0")
 					PsiOptions::instance()->setOption("options.ui.message.auto-popup", (bool) false);
 			}
 		}

@@ -1,5 +1,5 @@
 /*
- * filetunecontroller.cpp 
+ * filetunecontroller.cpp
  * Copyright (C) 2006  Remko Troncon
  * 2011 Vitaly Tonkacheyev, rion
  *

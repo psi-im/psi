@@ -66,7 +66,7 @@ TicTacButton::TicTacButton( QWidget *parent ) : QPushButton( parent )
 //
 
 TicTacGameBoard::TicTacGameBoard( bool meFirst, int n, QWidget *parent, const char *name )
-    : QWidget( parent, name ) 
+    : QWidget( parent, name )
 {
     st = Init;                                  // initial state
     nBoard = n;
@@ -168,7 +168,7 @@ void TicTacGameBoard::theirMove(int space)
 	(*btArray)[space] = TicTacButton::Cross;
 	qDebug() << (qPrintable(QString("Set %1 to %2 in btArray").arg(space).arg((int)(btArray->at(space)))));
 	updateButtons();
-	
+
 	qDebug("buttons updated");
 	int s = checkBoard( btArray );
 	st = HumansTurn;
@@ -177,7 +177,7 @@ void TicTacGameBoard::theirMove(int space)
         st = s == TicTacButton::Circle ? HumanWon : ComputerWon;
         emit finished();
     }
-	
+
 	qDebug("thoir move finished");
 }
 
@@ -355,7 +355,7 @@ TicTacToe::TicTacToe( bool meFirst, int boardSize, QWidget *parent, const char *
     l->addWidget( whoStarts );
 
 	whoStarts->setEnabled(false);
-	whoStarts->setCurrentIndex(meFirst); 
+	whoStarts->setCurrentIndex(meFirst);
     // Create the push buttons and connect their clicked() signals
     // to this right slots.
 
@@ -416,7 +416,7 @@ void TicTacToe::gameOver()
 void TicTacToe::newState()
 {
     static const char *msg[] = {                // TicTacGameBoard::State texts
-        "Click Play to start", "Make your move", "Waiting for other player", 
+        "Click Play to start", "Make your move", "Waiting for other player",
         "You won!", "Opponent won!", "It's a draw" };
     message->setText( msg[board->state()] );
     return;

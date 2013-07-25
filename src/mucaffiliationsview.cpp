@@ -49,7 +49,7 @@ void MUCAffiliationsView::currentChanged(const QModelIndex& current, const QMode
 	//bool remove_before = previous.isValid() && previous.parent().isValid();
 	bool add_after = current.isValid() && (model()->flags(current) & Qt::ItemIsEnabled);
 	bool remove_after = current.isValid() && current.parent().isValid();
-	
+
 	//if (add_before != add_after)
 		emit addEnabled(add_after);
 	//if (remove_before != remove_after)

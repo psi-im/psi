@@ -133,7 +133,7 @@ class RealIconWidgetItem : public IconWidgetItem
 public:
 	RealIconWidgetItem(QListWidget *parent = 0)
 	: IconWidgetItem(parent) {}
-	
+
 	virtual void paint(QPainter *painter) const = 0;
 	virtual int height() const = 0;
 	virtual int width() const = 0;
@@ -183,11 +183,11 @@ public:
 	IconWidgetDelegate(QObject *parent)
 	: QAbstractItemDelegate(parent) {}
 
-	QSize sizeHint(const QStyleOptionViewItem &/*option*/, const QModelIndex &index) const 
+	QSize sizeHint(const QStyleOptionViewItem &/*option*/, const QModelIndex &index) const
 	{
 		return index.model()->data(index, Qt::SizeHintRole).toSize();
 	}
-	
+
 	void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
 	{
 		const QAbstractItemModel *model = index.model();
@@ -199,14 +199,14 @@ public:
 		if (option.showDecorationSelected && (option.state & QStyle::State_Selected)) {
 			painter->fillRect(option.rect, option.palette.brush(cg, QPalette::Highlight));
 			painter->setPen(option.palette.color(cg, QPalette::HighlightedText));
-		} 
+		}
 		else {
 			painter->setPen(option.palette.color(cg, QPalette::Text));
 			QVariant value = model->data(index, Qt::BackgroundRole);
 			if (value.isValid() && qvariant_cast<QColor>(value).isValid())
 				painter->fillRect(option.rect, qvariant_cast<QColor>(value));
 		}
-		
+
 		painter->drawPixmap(option.rect.topLeft(), model->data(index, Qt::DecorationRole).value<QPixmap>());
 
 		QVariant textPosition = model->data(index, RealIconWidgetItem::TextPositionRole);
@@ -303,7 +303,7 @@ public:
 		return 0;
 #endif
 	}
-	
+
 	int height() const
 	{
 		int hh = listWidget()->fontMetrics().lineSpacing() + h;
@@ -315,7 +315,7 @@ public:
 		int ww = qMax(listWidget()->fontMetrics().width( text() ) + 6 + 15, w + 10);
 		return qMax( ww, QApplication::globalStrut().width() );
 	}
-	
+
 
 	void paint(QPainter *painter) const
 	{

@@ -39,7 +39,7 @@ public:
 	XmlConsole(PsiAccount *);
 	~XmlConsole();
 	void enable();
-	
+
 private slots:
 	void clear();
 	void updateCaption();

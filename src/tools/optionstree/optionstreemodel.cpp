@@ -36,8 +36,8 @@
 
 OptionsTreeModel::OptionsTreeModel(OptionsTree* tree, QObject* parent)
 		: QAbstractItemModel(parent),
-		tree_(tree), 
-		flat_(false), 
+		tree_(tree),
+		flat_(false),
 		nextIdx(0)
 {
 	connect(tree_, SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
@@ -89,7 +89,7 @@ QModelIndex OptionsTreeModel::index(const QString &option, Section sec) const
 	if (option.isEmpty()) {
 		return QModelIndex();
 	}
-	
+
 	if (flat_) {
 		QStringList options = tree_->getChildOptionNames("",false,false);
 		options.sort();
@@ -97,11 +97,11 @@ QModelIndex OptionsTreeModel::index(const QString &option, Section sec) const
 		return createIndex(row, sec, nameToIndex(options.at(row)));
 	} else {
 		QString parentname(getParentName(option));
-		
+
 		QStringList children = tree_->getChildOptionNames(parentname,true,true);
 		children.sort();
 		int row = children.indexOf(option);
-		
+
 		return createIndex(row, sec, nameToIndex(option));
 	}
 }
@@ -134,7 +134,7 @@ int OptionsTreeModel::rowCount(const QModelIndex& parent) const
 	return 0;
 }
 
-int OptionsTreeModel::columnCount(const QModelIndex&) const 
+int OptionsTreeModel::columnCount(const QModelIndex&) const
 {
 	return 4;
 }
@@ -175,7 +175,7 @@ QVariant OptionsTreeModel::headerData(int s, Qt::Orientation, int role) const
 {
 	if (role != Qt::DisplayRole)
 		return QVariant();
-	
+
 	Section section = (Section) s;
 	switch (section) {
 		case Name: return tr("Name");
@@ -213,13 +213,13 @@ QModelIndex OptionsTreeModel::index(int row, int column, const QModelIndex & par
 
 QModelIndex OptionsTreeModel::parent(const QModelIndex& modelindex) const
 {
-	if (!modelindex.isValid() || flat_) 
+	if (!modelindex.isValid() || flat_)
 		return QModelIndex();
-	
+
 	QString option = indexToOptionName(modelindex);
-	
+
 	QString parent_option = getParentName(option);
-	
+
 	return index(parent_option);
 }
 
@@ -246,18 +246,18 @@ bool OptionsTreeModel::setData ( const QModelIndex & index, const QVariant & val
 void OptionsTreeModel::optionAboutToBeInserted(const QString& option)
 {
 	QString parentname(getParentName(option));
-	
+
 	// FIXME? handle cases when parent doesn't exist either.
-	
+
 	QModelIndex parent(index(parentname));
-	
+
 	QStringList children = tree_->getChildOptionNames(parentname,true,true);
 	children << option;
 	children.sort();
 	int row = children.indexOf(option);
-	
+
 	emit beginInsertRows(parent, row, row);
-	
+
 }
 
 void OptionsTreeModel::optionInserted(const QString& option)
@@ -269,13 +269,13 @@ void OptionsTreeModel::optionInserted(const QString& option)
 void OptionsTreeModel::optionAboutToBeRemoved(const QString& option)
 {
 	QString parentname(getParentName(option));
-	
+
 	QModelIndex parent(index(parentname));
-	
+
 	QStringList children = tree_->getChildOptionNames(parentname,true,true);
 	children.sort();
 	int row = children.indexOf(option);
-	
+
 	if (row != -1) {
 		realRemove.push(true);
 		emit beginRemoveRows(parent, row, row);

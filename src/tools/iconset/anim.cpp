@@ -101,7 +101,7 @@ public:
 		frame = from.frame;
 		paused = from.paused;
 		frames = from.frames;
-		
+
 		if ( !paused )
 			unpause();
 	}
@@ -113,7 +113,7 @@ public:
 		QBuffer buffer((QByteArray *)ba);
 		buffer.open(QBuffer::ReadOnly);
 		QImageReader reader(&buffer);
-		
+
 		while ( reader.canRead() ) {
 			QImage image = reader.read();
 			if ( !image.isNull() ) {
@@ -126,31 +126,31 @@ public:
 				break;
 			}
 		}
-		
+
 		looping = reader.loopCount();
-		
+
 		if ( !reader.supportsAnimation() && (frames.count() == 1) ) {
 			QImage frame = frames[0].impix.image();
-			
+
 			// we're gonna slice the single image we've got if we're absolutely sure
 			// that it's can be cut into multiple frames
 			if ((frame.width() / frame.height() > 0) && !(frame.width() % frame.height())) {
 				int h = frame.height();
 				QList<Frame> newFrames;
-				
+
 				for (int i = 0; i < frame.width() / frame.height(); i++) {
 					Frame newFrame;
 					newFrames.append( newFrame );
 					newFrames.last().impix  = Impix(frame.copy(i * h, 0, h, h));
 					newFrames.last().period = 120;
 				}
-				
+
 				frames  = newFrames;
 				looping = 0;
 			}
 		}
 	}
-	
+
 	~Private()
 	{
 		if ( frametimer )

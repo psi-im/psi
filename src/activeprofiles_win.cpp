@@ -29,10 +29,10 @@
 
 /*
 	Implementor notes:
-	
+
 	This file uses WinAPI a lot. It is important to remember that we still want to support Win9x family.
 	For that reason, we have to use QT_WA macro for functions that exist in two versions.
-	
+
 	Also note that writing QString("x").toLocal8Bit().constData() is a bad idea and must not be done.
 */
 
@@ -46,7 +46,7 @@ public:
 
 		const QString m = QString("%1 ChangesMutex {4F5AEDA9-7D3D-4ebe-8614-FB338146CE80}").arg(app);
 		const QString c = QString("%1 IPC Command {4F5AEDA9-7D3D-4ebe-8614-FB338146CE80}").arg(app);
-		
+
 		QT_WA(
 			changesMutex = CreateMutex(0, FALSE, (LPCWSTR)m.utf16());
 			psiIpcCommand = RegisterWindowMessage((LPCWSTR)c.utf16());
@@ -245,7 +245,7 @@ bool ActiveProfiles::setThisProfile(const QString &profile)
 	,
 		QByteArray a = d->mutexName(profile).toLocal8Bit();
 		m = CreateMutexA(0, TRUE, (LPCSTR)a.constData());
-	)	
+	)
 
 	if (m == NULL)
 	{
@@ -286,7 +286,7 @@ QString ActiveProfiles::thisProfile() const
 }
 
 bool ActiveProfiles::isActive(const QString &profile) const
-{	
+{
 	HANDLE m;
 	QT_WA(
 		m = OpenMutexW(SYNCHRONIZE, FALSE, (LPCWSTR)d->mutexName(profile).utf16());

@@ -45,11 +45,11 @@ public:
 	MUCItemsTask(const Jid& room, Task* parent) : Task(parent), room_(room)
 	{
 	}
-	
+
 	void set(const QList<MUCItem>& items, MUCManager::Action action = MUCManager::Unknown) {
 		action_ = action;
 		iq_ = createIQ(doc(), "set", room_.full(), id());
-		
+
 		QDomElement muc = doc()->createElement("query");
 		muc.setAttribute("xmlns", "http://jabber.org/protocol/muc#admin");
 		iq_.appendChild(muc);
@@ -62,13 +62,13 @@ public:
 	void getByAffiliation(MUCItem::Affiliation affiliation) {
 		affiliation_ = affiliation;
 		iq_ = createIQ(doc(), "get", room_.full(), id());
-		
+
 		QDomElement muc = doc()->createElement("query");
 		muc.setAttribute("xmlns", "http://jabber.org/protocol/muc#admin");
 		muc.appendChild(MUCItem(MUCItem::UnknownRole, affiliation).toXml(*doc()));
 		iq_.appendChild(muc);
 	}
-	
+
 	void onGo() {
 		send(iq_);
 	}
@@ -96,7 +96,7 @@ public:
 	const QList<MUCItem>& items() const {
 		return items_;
 	}
-	
+
 	MUCManager::Action action() const {
 		return action_;
 	}
@@ -121,20 +121,20 @@ public:
 	MUCConfigurationTask(const Jid& room, Task* parent) : Task(parent), room_(room)
 	{
 	}
-	
+
 	void set(const XData& data) {
 		iq_ = createIQ(doc(), "set", room_.full(), id());
-		
+
 		QDomElement muc = doc()->createElement("query");
 		muc.setAttribute("xmlns", "http://jabber.org/protocol/muc#owner");
 		iq_.appendChild(muc);
-		
+
 		muc.appendChild(data.toXml(doc()));
 	}
-	
+
 	void get() {
 		iq_ = createIQ(doc(), "get", room_.full(), id());
-		
+
 		QDomElement muc = doc()->createElement("query");
 		muc.setAttribute("xmlns", "http://jabber.org/protocol/muc#owner");
 		iq_.appendChild(muc);
@@ -167,7 +167,7 @@ public:
 	const XData& data() const {
 		return data_;
 	}
-	
+
 private:
 	QDomElement iq_;
 	Jid room_;
@@ -182,7 +182,7 @@ public:
 	MUCDestroyTask(const Jid& room, const QString& reason, const Jid& venue, Task* parent) : Task(parent), room_(room)
 	{
 		iq_ = createIQ(doc(), "set", room.full(), id());
-		
+
 		QDomElement muc = doc()->createElement("query");
 		muc.setAttribute("xmlns", "http://jabber.org/protocol/muc#owner");
 		iq_.appendChild(muc);
@@ -346,7 +346,7 @@ void MUCManager::setRole(const QString& nick, MUCItem::Role role, const QString&
 	if (!reason.isEmpty())
 		item.setReason(reason);
 	items.push_back(item);
-	
+
 	MUCItemsTask* t = new MUCItemsTask(room_, client_->rootTask());
 	connect(t,SIGNAL(finished()),SLOT(action_finished()));
 	t->set(items,action);
@@ -361,7 +361,7 @@ void MUCManager::setAffiliation(const Jid& user, MUCItem::Affiliation affiliatio
 	if (!reason.isEmpty())
 		item.setReason(reason);
 	items.push_back(item);
-	
+
 	MUCItemsTask* t = new MUCItemsTask(room_, client_->rootTask());
 	connect(t,SIGNAL(finished()),SLOT(action_finished()));
 	t->set(items,action);
@@ -391,16 +391,16 @@ QString MUCManager::affiliationToString(MUCItem::Affiliation a, bool p)
 {
 	QString s;
 	switch (a) {
-		case MUCItem::Owner: 
+		case MUCItem::Owner:
 			s = (p ? QObject::tr("an owner") : QObject::tr("owner"));
 			break;
-		case MUCItem::Admin: 
+		case MUCItem::Admin:
 			s = (p ? QObject::tr("an administrator") : QObject::tr("administrator"));
 			break;
-		case MUCItem::Member: 
+		case MUCItem::Member:
 			s = (p ? QObject::tr("a member") : QObject::tr("member"));
 			break;
-		case MUCItem::Outcast: 
+		case MUCItem::Outcast:
 			s = (p ? QObject::tr("an outcast") : QObject::tr("outcast"));
 			break;
 		case MUCItem::NoAffiliation:
@@ -504,7 +504,7 @@ bool MUCManager::canSetAffiliation(const XMPP::MUCItem& i1, const XMPP::MUCItem&
 {
 	if (i2.affiliation() == a)
 		return true;
-		
+
 	if (!i2.jid().isValid())
 		return false;
 
@@ -572,7 +572,7 @@ void MUCManager::action_finished()
 				text = tr("You are not allowed to grant ownership privileges to this user.");
 			else if (action == RevokeOwner)
 				text = tr("You are not allowed to revoke ownership privileges from this user.");
-			else 
+			else
 				text = tr("You are not allowed to perform this operation.");
 		}
 		else {

@@ -218,7 +218,7 @@ void MUCConfigDlg::currentTabChanged(int)
 	ui_.busy->stop();
 	if (ui_.tabs->currentWidget() == ui_.tab_affiliations)
 		refreshAffiliations();
-	else 
+	else
 		refreshGeneral();
 }
 

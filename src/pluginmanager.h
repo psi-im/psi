@@ -47,10 +47,10 @@ public:
 
 	bool processEvent(const PsiAccount* account, QDomElement& eventXml);
 	bool processMessage(const PsiAccount* account, const QString& jidFrom, const QString& body, const QString& subject);
-	
+
 	static const QString loadOptionPrefix;
 	static const QString pluginOptionPrefix;
-	
+
 private:
 	PluginManager();
 	void loadAllPlugins();
@@ -70,7 +70,7 @@ private:
 	//file, host
 	QHash<QString, PluginHost*> pluginByFile_;
 
-	
+
 	QList<QCA::DirWatch*> dirWatchers_;
 
 	class StreamWatcher;
@@ -79,7 +79,7 @@ private:
 	QString uniqueId(int account);
 
 	friend class PluginHost;
-	
+
 private slots:
 	void dirsChanged();
 	void optionChanged(const QString& option);

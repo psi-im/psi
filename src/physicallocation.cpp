@@ -37,7 +37,7 @@ QDomElement PhysicalLocation::toXml(QDomDocument& doc)
 {
 	QDomElement physloc = doc.createElement("physloc");
 	physloc.setAttribute("xmlns", "http://jabber.org/protocol/physloc");
-	
+
 	if (!country_.isEmpty()) {
 		QDomElement e = doc.createElement("country");
 		e.appendChild(doc.createTextNode(country_));
@@ -99,25 +99,25 @@ void PhysicalLocation::fromXml(const QDomElement& e)
 
 	for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling()) {
 		QDomElement m = n.toElement();
-		if (m.tagName() == "country") 
+		if (m.tagName() == "country")
 			country_ = m.text();
-		else if (m.tagName() == "region") 
+		else if (m.tagName() == "region")
 			region_ = m.text();
-		else if (m.tagName() == "locality") 
+		else if (m.tagName() == "locality")
 			locality_ = m.text();
-		else if (m.tagName() == "area") 
+		else if (m.tagName() == "area")
 			area_ = m.text();
-		else if (m.tagName() == "street") 
+		else if (m.tagName() == "street")
 			street_ = m.text();
-		else if (m.tagName() == "building") 
+		else if (m.tagName() == "building")
 			building_ = m.text();
-		else if (m.tagName() == "floor") 
+		else if (m.tagName() == "floor")
 			floor_ = m.text();
-		else if (m.tagName() == "room") 
+		else if (m.tagName() == "room")
 			room_ = m.text();
-		else if (m.tagName() == "postalcode") 
+		else if (m.tagName() == "postalcode")
 			postalcode_ = m.text();
-		else if (m.tagName() == "text") 
+		else if (m.tagName() == "text")
 			text_ = m.text();
 	}
 }
@@ -238,7 +238,7 @@ void PhysicalLocation::setText(const QString& s)
 	text_ = s;
 }
 
-QString PhysicalLocation::toString() const 
+QString PhysicalLocation::toString() const
 {
 	QStringList locs;
 	QString loc, str;
@@ -254,15 +254,15 @@ QString PhysicalLocation::toString() const
 	if (!locs.isEmpty()) {
 		loc = locs.join(", ");
 	}
-	 
+
 	if (!text().isEmpty()) {
-		str += text(); 
+		str += text();
 		if (!loc.isEmpty())
 			str += " (";
 	}
 
 	str += loc;
-		
+
 	if (!text().isEmpty() && !loc.isEmpty())
 		str += ")";
 

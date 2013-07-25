@@ -30,7 +30,7 @@
 class QDomDocument;
 class QDomElement;
 
-class StatusPreset 
+class StatusPreset
 {
 public:
 	StatusPreset();

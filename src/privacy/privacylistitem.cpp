@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
- 
+
 #include <QDomElement>
 #include <QObject>
 
@@ -27,10 +27,10 @@
 
 
 PrivacyListItem::PrivacyListItem() : message_(true), presenceIn_(true), presenceOut_(true), iq_(true)
-{ 
+{
 }
 
-PrivacyListItem::PrivacyListItem(const QDomElement& e) 
+PrivacyListItem::PrivacyListItem(const QDomElement& e)
 {
 	fromXml(e);
 }
@@ -39,30 +39,30 @@ bool PrivacyListItem::isBlock() const
 {
 	return (type() == JidType && action() == Deny && all());
 }
-	
+
 QString PrivacyListItem::toString() const
 {
 	QString act;
-	if (action() == PrivacyListItem::Deny) 
+	if (action() == PrivacyListItem::Deny)
 		act = QObject::tr("Deny");
-	else 
+	else
 		act = QObject::tr("Allow");
-	
+
 	QString what;
-	if (all()) 
+	if (all())
 		what = QObject::tr("All");
 	else {
-		if (message()) 
+		if (message())
 			what += QObject::tr("Messages,");
-		if (presenceIn()) 
+		if (presenceIn())
 			what += QObject::tr("Presence-In,");
-		if (presenceOut()) 
+		if (presenceOut())
 			what += QObject::tr("Presence-Out,");
-		if (iq()) 
+		if (iq())
 			what += QObject::tr("Queries,");
 		what.truncate(what.length()-1);
 	}
-	
+
 	QString txt;
 	if (type() == PrivacyListItem::FallthroughType) {
 		txt = QString(QObject::tr("Else %1 %2")).arg(act).arg(what);
@@ -85,24 +85,24 @@ QString PrivacyListItem::toString() const
 QDomElement PrivacyListItem::toXml(QDomDocument& doc) const
 {
 	QDomElement item = doc.createElement("item");
-	
-	if (type_ == JidType) 
+
+	if (type_ == JidType)
 		item.setAttribute("type","jid");
 	else if (type_ == GroupType)
 		item.setAttribute("type","group");
 	else if (type_ == SubscriptionType)
 		item.setAttribute("type","subscription");
-	
+
 	if (type_ != FallthroughType)
 		item.setAttribute("value",value_);
-	
-	if (action_ == Allow) 
+
+	if (action_ == Allow)
 		item.setAttribute("action","allow");
 	else
 		item.setAttribute("action","deny");
 
 	item.setAttribute("order", order_);
-	
+
 	if (!(message_ && presenceIn_ && presenceOut_ && iq_)) {
 		if (message_)
 			item.appendChild(doc.createElement("message"));
@@ -125,7 +125,7 @@ void PrivacyListItem::fromXml(const QDomElement& el)
 		return;
 	}
 
-	QString type = el.attribute("type"); 
+	QString type = el.attribute("type");
 	if (type == "jid")
 		type_ = JidType;
 	else if (type == "group")
@@ -134,20 +134,20 @@ void PrivacyListItem::fromXml(const QDomElement& el)
 		type_ = SubscriptionType;
 	else
 		type_ = FallthroughType;
-	
+
 	QString value = el.attribute("value");
 	value_ = value;
-	if (type_ == JidType && XMPP::Jid(value_).isEmpty()) 
+	if (type_ == JidType && XMPP::Jid(value_).isEmpty())
 		qWarning("privacy.cpp: Invalid value for item of type 'jid'.");
-	else if (type_ == GroupType && value_.isEmpty()) 
+	else if (type_ == GroupType && value_.isEmpty())
 		qWarning("privacy.cpp: Empty value for item of type 'group'.");
 	else if (type_ == SubscriptionType && value_ != "from" && value != "to" && value_ != "both" && value_ != "none")
 		qWarning("privacy.cpp: Invalid value for item of type 'subscription'.");
-	else if (type_ == FallthroughType && !value_.isEmpty()) 
+	else if (type_ == FallthroughType && !value_.isEmpty())
 		qWarning("privacy.cpp: Value given for item of fallthrough type.");
-		
+
 	QString action = el.attribute("action");
-	if (action == "allow") 
+	if (action == "allow")
 		action_ = Allow;
 	else if (action == "deny")
 		action_ = Deny;

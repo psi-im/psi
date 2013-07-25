@@ -1,5 +1,5 @@
 /*
- * tipdlg.h - handles tip of the day 
+ * tipdlg.h - handles tip of the day
  * Copyright (C) 2001-2006  Michail Pishchagin
  *
  * This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
  * along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
- */  
+ */
 
 
 #ifndef TIPDLG_H
@@ -44,7 +44,7 @@ public:
 private:
 	TipDlg(PsiCon* psi);
 	~TipDlg();
-	
+
 public slots:
 	void showTipsChanged(bool);
 	void next();

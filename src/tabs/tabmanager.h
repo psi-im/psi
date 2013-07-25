@@ -39,51 +39,51 @@ public:
 
 	/**
 	 * Get the default tabset for this widget (created if needed).
-	 */ 
+	 */
 	TabDlg* getTabs(QWidget *widget);
-	
+
 	/**
 	 * Return a new tabset (for this widget).
-	 */ 
+	 */
 	TabDlg*	newTabs(QWidget *widget=0);
-	
+
 	/**
 	 * Checks if a tabset manages this widget.
-	 */ 
+	 */
 	bool isChatTabbed(const TabbableWidget*) const;
-	
+
 	/**
 	 * Returns the tab dialog that owns the supplied widget.
 	 */
 	TabDlg* getManagingTabs(const TabbableWidget*) const;
-	
+
 	/**
 	 * Returns all active tabsets (could be empty).
-	 */ 
+	 */
 	const QList<TabDlg*>& tabSets();
-	
+
 	/**
-	 * Checks if a given widget should be in a tabset 
+	 * Checks if a given widget should be in a tabset
 	 * (depends on set options and widget type).
 	 */
-	bool shouldBeTabbed(QWidget *widget); 
+	bool shouldBeTabbed(QWidget *widget);
 
 	/**
 	 * removes and deletes all tabsets
 	 */
 	void deleteAll();
 
-	
+
 	/**
 	 * Returns the Kind of the given widget.
 	 */
 	QChar tabKind(QWidget *widget);
-	
+
 	/**
 	 * return the preferred tabset for a given kind of tabs(0 for none).
-	 */ 
+	 */
 	TabDlg *preferredTabsForKind(QChar kind);
-	
+
 	/**
 	 * set the preferred tabset for a given kind of tabs
 	 */

@@ -73,7 +73,7 @@ private:
 
     SxeSession* session_;
     QList< QPointer<WbItem> > pendingTranformations_;
-    
+
     QPointF selectionCenter_;
 };
 

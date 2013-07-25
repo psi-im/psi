@@ -34,7 +34,7 @@ public:
 
 	void onGo();
 	bool take(const QDomElement &x);
-	
+
 private:
 	XMPP::Jid receiver_;
 	AHCommand command_;

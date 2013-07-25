@@ -44,7 +44,7 @@ StatusComboBox::StatusComboBox(QWidget* parent, XMPP::Status::Type type)
 		addStatus(XMPP::Status::Invisible);
 	}
 	addStatus(XMPP::Status::Offline);
-	
+
 	connect(this, SIGNAL(currentIndexChanged(int)), SLOT(onCurrentIndexChanged(int)));
 
 	setStatus(type);

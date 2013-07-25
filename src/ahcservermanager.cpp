@@ -37,9 +37,9 @@ using namespace XMPP;
 
 #define AHC_NS "http://jabber.org/protocol/commands"
 
-// -------------------------------------------------------------------------- 
+// --------------------------------------------------------------------------
 // JT_AHCServer: Task to handle ad-hoc command requests
-// -------------------------------------------------------------------------- 
+// --------------------------------------------------------------------------
 
 class JT_AHCServer : public Task
 {
@@ -80,7 +80,7 @@ bool JT_AHCServer::commandListQuery(const QDomElement& e)
 		QDomElement q = findSubTag(e, "query", &found);
 		if (!found)
 			return false;
-			
+
 		// Disco replies to the AdHoc node
 		if (q.attribute("xmlns") == "http://jabber.org/protocol/disco#items" && q.attribute("node") == AHC_NS) {
 			sendCommandList(e.attribute("from"),e.attribute("to"),e.attribute("id"));
@@ -130,7 +130,7 @@ bool JT_AHCServer::commandListQuery(const QDomElement& e)
 		}
 
 	}
-	
+
 	return false;
 }
 
@@ -143,16 +143,16 @@ bool JT_AHCServer::commandExecuteQuery(const QDomElement& e)
 			AHCommand command(q);
 			manager_->execute(command, Jid(e.attribute("from")), e.attribute("id"));
 			return true;
-		} 
-		else 
+		}
+		else
 			return false;
 	}
 	return false;
 }
 
-void JT_AHCServer::sendCommandList(const QString& to, const QString& from, const QString& id) 
+void JT_AHCServer::sendCommandList(const QString& to, const QString& from, const QString& id)
 {
-	// Create query element 
+	// Create query element
 	QDomElement iq = createIQ(doc(), "result", to, id);
 	QDomElement query = doc()->createElement("query");
 	query.setAttribute("xmlns", "http://jabber.org/protocol/disco#items");
@@ -171,7 +171,7 @@ void JT_AHCServer::sendCommandList(const QString& to, const QString& from, const
 	// Send the message
 	send(iq);
 }
-	
+
 void JT_AHCServer::sendReply(const AHCommand& c, const Jid& to, const QString& id)
 {
 	// if (c.error().type() != AHCError::None) {
@@ -184,7 +184,7 @@ void JT_AHCServer::sendReply(const AHCommand& c, const Jid& to, const QString& i
 	// }
 }
 
-// -------------------------------------------------------------------------- 
+// --------------------------------------------------------------------------
 
 AHCServerManager::AHCServerManager(PsiAccount *pa) : pa_(pa)
 {
@@ -201,11 +201,11 @@ void AHCServerManager::removeServer(AHCommandServer* server)
 	servers_.removeAll(server);
 }
 
-AHCServerManager::ServerList AHCServerManager::commands(const Jid& j) const 
+AHCServerManager::ServerList AHCServerManager::commands(const Jid& j) const
 {
 	ServerList list;
 	for (ServerList::ConstIterator it = servers_.begin(); it != servers_.end(); ++it) {
-		if ((*it)->isAllowed(j)) 
+		if ((*it)->isAllowed(j))
 			list.append(*it);
 	}
 	return list;
@@ -248,7 +248,7 @@ bool AHCServerManager::hasServer(const QString& node, const Jid& requester) cons
 AHCommandServer* AHCServerManager::findServer(const QString& node) const
 {
 	for (ServerList::ConstIterator it = servers_.begin(); it != servers_.end(); ++it) {
-		if ((*it)->node() == node) 
+		if ((*it)->node() == node)
 			return (*it);
 	}
 	return 0;

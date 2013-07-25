@@ -44,10 +44,10 @@ public:
 	QMenu *createPopupMenu(const QString &lnk);
 
 	void popupAction(QString lnk);
-	
+
 signals:
 	void openURL(QString);
-	
+
 public:
 	class Private;
 private:

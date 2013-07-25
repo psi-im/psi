@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
- 
+
 #include "pepmanager.h"
 
 #include <QtDebug>
@@ -38,24 +38,24 @@ class PEPGetTask : public Task
 public:
 	PEPGetTask(Task* parent, const QString& jid, const QString& node, const QString& itemID) : Task(parent), jid_(jid), node_(node) {
 		iq_ = createIQ(doc(), "get", jid_, id());
-		
+
 		QDomElement pubsub = doc()->createElement("pubsub");
 		pubsub.setAttribute("xmlns", "http://jabber.org/protocol/pubsub");
 		iq_.appendChild(pubsub);
-		
+
 		QDomElement items = doc()->createElement("items");
 		items.setAttribute("node", node);
 		pubsub.appendChild(items);
-		
+
 		QDomElement item = doc()->createElement("item");
 		item.setAttribute("id", itemID);
 		items.appendChild(item);
 	}
-	
+
 	void onGo() {
 		send(iq_);
 	}
-	
+
 	bool take(const QDomElement &x) {
 		if(!iqVerify(x, jid_, id()))
 			return false;
@@ -88,7 +88,7 @@ public:
 			return true;
 		}
 	}
-		
+
 	const QList<PubSubItem>& items() const {
 		return items_;
 	}
@@ -96,7 +96,7 @@ public:
 	const QString& jid() const {
 		return jid_;
 	}
-	
+
 	const QString& node() const {
 		return node_;
 	}
@@ -117,11 +117,11 @@ class PEPUnsubscribeTask : public Task
 public:
 	PEPUnsubscribeTask(Task* parent, const QString& jid, const QString& node) : Task(parent), jid_(jid) {
 		iq_ = createIQ(doc(), "set", jid_, id());
-		
+
 		QDomElement pubsub = doc()->createElement("pubsub");
 		pubsub.setAttribute("xmlns", "http://jabber.org/protocol/pubsub");
 		iq_.appendChild(pubsub);
-		
+
 		QDomElement unsubscribe = doc()->createElement("unsubscribe");
 		unsubscribe.setAttribute("node", node);
 		unsubscribe.setAttribute("jid", client()->jid().bare());
@@ -157,11 +157,11 @@ class PEPSubscribeTask : public Task
 public:
 	PEPSubscribeTask(Task* parent, const QString& jid, const QString& node) : Task(parent), jid_(jid) {
 		iq_ = createIQ(doc(), "set", jid_, id());
-		
+
 		QDomElement pubsub = doc()->createElement("pubsub");
 		pubsub.setAttribute("xmlns", "http://jabber.org/protocol/pubsub");
 		iq_.appendChild(pubsub);
-		
+
 		QDomElement subscribe = doc()->createElement("subscribe");
 		subscribe.setAttribute("node", node);
 		subscribe.setAttribute("jid", client()->jid().bare());
@@ -199,11 +199,11 @@ public:
 	PEPCreateNodeTask(Task* parent, const QString& node) : Task(parent) {
 		node_ = node;
 		iq_ = createIQ(doc(), "set", "", id());
-		
+
 		QDomElement pubsub = doc()->createElement("pubsub");
 		pubsub.setAttribute("xmlns", "http://jabber.org/protocol/pubsub");
 		iq_.appendChild(pubsub);
-		
+
 		QDomElement subscribe = doc()->createElement("create");
 		subscribe.setAttribute("node", node);
 		pubsub.appendChild(subscribe);
@@ -215,7 +215,7 @@ public:
 	const QString& node() const {
 		return node_;
 	}
-	
+
 	void onGo() {
 		send(iq_);
 	}
@@ -245,15 +245,15 @@ class PEPPublishTask : public Task
 public:
 	PEPPublishTask(Task* parent, const QString& node, const PubSubItem& it, PEPManager::Access access) : Task(parent), node_(node), item_(it) {
 		iq_ = createIQ(doc(), "set", "", id());
-		
+
 		QDomElement pubsub = doc()->createElement("pubsub");
 		pubsub.setAttribute("xmlns", "http://jabber.org/protocol/pubsub");
 		iq_.appendChild(pubsub);
-		
+
 		QDomElement publish = doc()->createElement("publish");
 		publish.setAttribute("node", node);
 		pubsub.appendChild(publish);
-		
+
 		QDomElement item = doc()->createElement("item");
 		item.setAttribute("id", it.id());
 		publish.appendChild(item);
@@ -270,7 +270,7 @@ public:
 			conf_x_field_type_value.appendChild(doc()->createTextNode("http://jabber.org/protocol/pubsub#node_config"));
 			conf_x_field_type.appendChild(conf_x_field_type_value);
 			conf_x.appendChild(conf_x_field_type);
-			
+
 			// Access model
 			QDomElement access_model = doc()->createElement("field");
 			access_model.setAttribute("var","pubsub#access_model");
@@ -283,15 +283,15 @@ public:
 				access_model_value.appendChild(doc()->createTextNode("presence"));
 			}
 			conf_x.appendChild(access_model);
-			
-			
+
+
 			conf.appendChild(conf_x);
 			pubsub.appendChild(conf);
 		}
-		
+
 		item.appendChild(it.payload());
 	}
-	
+
 	bool take(const QDomElement& x) {
 		if(!iqVerify(x, "", id()))
 			return false;
@@ -304,7 +304,7 @@ public:
 		}
 		return true;
 	}
-	
+
 	void onGo() {
 		send(iq_);
 	}
@@ -331,21 +331,21 @@ class PEPRetractTask : public Task
 public:
 	PEPRetractTask(Task* parent, const QString& node, const QString& itemId) : Task(parent), node_(node), itemId_(itemId) {
 		iq_ = createIQ(doc(), "set", "", id());
-		
+
 		QDomElement pubsub = doc()->createElement("pubsub");
 		pubsub.setAttribute("xmlns", "http://jabber.org/protocol/pubsub");
 		iq_.appendChild(pubsub);
-		
+
 		QDomElement retract = doc()->createElement("retract");
 		retract.setAttribute("node", node);
 		retract.setAttribute("notify", "1");
 		pubsub.appendChild(retract);
-		
+
 		QDomElement item = doc()->createElement("item");
 		item.setAttribute("id", itemId);
 		retract.appendChild(item);
 	}
-	
+
 	bool take(const QDomElement& x) {
 		if(!iqVerify(x, "", id()))
 			return false;
@@ -358,7 +358,7 @@ public:
 		}
 		return true;
 	}
-	
+
 	void onGo() {
 		send(iq_);
 	}
@@ -382,15 +382,15 @@ class GetPubSubSubscriptionsTask : public Task
 public:
 	GetPubSubSubscriptionsTask(Task* parent, const Jid& jid) : Task(parent), jid_(jid) {
 		iq_ = createIQ(doc(), "get", jid_.bare(), id());
-		
+
 		QDomElement pubsub = doc()->createElement("pubsub");
 		pubsub.setAttribute("xmlns", "http://jabber.org/protocol/pubsub");
 		iq_.appendChild(pubsub);
-		
+
 		QDomElement subscriptions = doc()->createElement("subscriptions");
 		pubsub.appendChild(subscriptions);
 	}
-	
+
 	bool take(const QDomElement &x) {
 		if(!iqVerify(x, jid_.bare(), id()))
 			return false;
@@ -404,7 +404,7 @@ public:
 
 				for(QDomNode n = me.firstChild(); !n.isNull(); n = n.nextSibling()) {
 					QDomElement s = n.toElement();
-					if (s.tagName() != "subscriptions") 
+					if (s.tagName() != "subscriptions")
 						continue;
 
 					for(QDomNode sub_node = s.firstChild(); !sub_node.isNull(); sub_node = sub_node.nextSibling()) {
@@ -423,7 +423,7 @@ public:
 			return true;
 		}
 	}
-		
+
 	const Jid& jid() const {
 		return jid_;
 	}
@@ -461,7 +461,7 @@ void PEPManager::registerNode(const QString& node)
 {
 	if (nodes_.contains(node))
 		return;
-	
+
 	if (available_) {
 		createNode(node);
 	}
@@ -485,7 +485,7 @@ void PEPManager::saveSubscriptions()
 {
 }
 
-void PEPManager::createNode(const QString& node) 
+void PEPManager::createNode(const QString& node)
 {
 	PEPCreateNodeTask* t = new PEPCreateNodeTask(client_->rootTask(),node);
 	connect(t,SIGNAL(finished()),SLOT(createFinished()));
@@ -499,18 +499,18 @@ void PEPManager::subscribe(const QString& jid, const QString& ns)
 	connect(t,SIGNAL(finished()),SLOT(subscribeFinished()));
 	t->go(true);
 }
-		
+
 void PEPManager::createFinished()
 {
 	PEPCreateNodeTask* task = (PEPCreateNodeTask*) sender();
 	if (task->success() || task->statusCode() == 409) {
-		if (task->statusCode() == 409) 
+		if (task->statusCode() == 409)
 			qWarning(QString("[%1] PEP Node already exists. Ignoring.").arg(client_->jid().full()));
 
 		// Subscribe to our own nodes
 		if (task->node() != "urn:xmpp:avatar:data")
 			subscribe(client_->jid().bare(),task->node());
-		
+
 		// Notify
 		ensured_nodes_ += task->node();
 		emit ready(task->node());
@@ -519,7 +519,7 @@ void PEPManager::createFinished()
 		qWarning(QString("[%3] PEP Create failed: '%1' (%2)").arg(task->statusString()).arg(QString::number(task->statusCode())).arg(client_->jid().full()));
 	}
 }
-		
+
 void PEPManager::subscribeFinished()
 {
 	PEPSubscribeTask* task = (PEPSubscribeTask*) sender();
@@ -558,7 +558,7 @@ void PEPManager::publish(const QString& node, const PubSubItem& it, Access acces
 	//	return;
 	if (!serverInfo_->hasPEP())
 		return;
-	
+
 	PEPPublishTask* tp = new PEPPublishTask(client_->rootTask(),node,it,access);
 	connect(tp, SIGNAL(finished()), SLOT(publishFinished()));
 	tp->go(true);
@@ -569,7 +569,7 @@ void PEPManager::retract(const QString& node, const QString& id)
 {
 	if (!serverInfo_->hasPEP())
 		return;
-	
+
 	PEPRetractTask* tp = new PEPRetractTask(client_->rootTask(),node,id);
 	// FIXME: add notification of success/failure
 	tp->go(true);
@@ -588,7 +588,7 @@ void PEPManager::publishFinished()
 	}
 }
 
-void PEPManager::get(const Jid& jid, const QString& node, const QString& id) 
+void PEPManager::get(const Jid& jid, const QString& node, const QString& id)
 {
 	PEPGetTask* g = new PEPGetTask(client_->rootTask(),jid.bare(),node,id);
 	connect(g, SIGNAL(finished()), SLOT(getFinished()));
@@ -624,7 +624,7 @@ void PEPManager::getFinished()
 {
 	PEPGetTask* task = (PEPGetTask*) sender();
 	if (task->success()) {
-		// Act as if the item was published. This is a convenience 
+		// Act as if the item was published. This is a convenience
 		// implementation, probably should be changed later.
 		if (!task->items().isEmpty()) {
 			emit itemPublished(task->jid(),task->node(),task->items().first());

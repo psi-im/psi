@@ -33,13 +33,13 @@ public:
 	 * \brief Constructs an empty tune
 	 */
 	Tune() : time_(0) { }
-	
+
 	const QString& name() const { return name_; }
 	const QString& artist() const { return artist_; }
 	const QString& album() const { return album_; }
 	const QString& track() const { return track_; }
 	const QString& url() const { return url_; }
-	
+
 	unsigned int time() const { return time_; }
 
 	/**

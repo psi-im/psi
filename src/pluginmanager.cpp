@@ -51,7 +51,7 @@ public:
 /**
  * Function to obtain all the directories in which plugins can be stored
  * \return List of plugin directories
- */ 
+ */
 static QStringList pluginDirs()
 {
 	QStringList l;
@@ -77,9 +77,9 @@ PluginManager* PluginManager::instance()
 }
 
 /**
- * Default constructor. Locates all plugins, sets watchers on those directories to 
+ * Default constructor. Locates all plugins, sets watchers on those directories to
  * locate new ones and loads those enabled in the config.
- */ 
+ */
 PluginManager::PluginManager() : QObject(NULL)
 {
 	updatePluginsList();
@@ -120,7 +120,7 @@ void PluginManager::updatePluginsList()
  * It causes the available plugin list to be refreshed.
  *
  * TODO: it should also load the plugins if they're on the autoload list
- */ 
+ */
 void PluginManager::dirsChanged()
 {
 	updatePluginsList();
@@ -128,7 +128,7 @@ void PluginManager::dirsChanged()
 
 /**
  * This causes all plugins that are both set for auto-load, and available
- * to be loaded. 
+ * to be loaded.
  */
 void PluginManager::loadEnabledPlugins()
 {
@@ -144,7 +144,7 @@ void PluginManager::loadEnabledPlugins()
 }
 
 /**
- * Called when an option changes to load or unload a plugin if it's a plugin 
+ * Called when an option changes to load or unload a plugin if it's a plugin
  * option
  * \param option Option changed
  */
@@ -157,7 +157,7 @@ void PluginManager::optionChanged(const QString& option)
 
 /**
  * Loads all available plugins
- */ 
+ */
 void PluginManager::loadAllPlugins()
 {
 	qDebug("Loading all plugins");
@@ -174,10 +174,10 @@ void PluginManager::loadAllPlugins()
 }
 
 /**
- * Unloads all Psi plugins. 
- * \return Success of unloading all plugins; if any plugins couldn't be 
+ * Unloads all Psi plugins.
+ * \return Success of unloading all plugins; if any plugins couldn't be
  *         unloaded, false.
- */ 
+ */
 bool PluginManager::unloadAllPlugins()
 {
 	qDebug("Unloading all plugins");
@@ -197,7 +197,7 @@ bool PluginManager::unloadAllPlugins()
  * known, an empty string is provided.
  * \param plugin Name of the plugin.
  * \return Path to the plugin file.
- */ 
+ */
 QString PluginManager::pathToPlugin(const QString& plugin)
 {
 	QString path;
@@ -212,7 +212,7 @@ QString PluginManager::pathToPlugin(const QString& plugin)
  * known, an empty string is provided.
  * \param plugin Name of the plugin.
  * \return Path to the plugin file.
- */ 
+ */
 QString PluginManager::shortName(const QString& plugin)
 {
 	QString name;
@@ -231,7 +231,7 @@ QStringList PluginManager::availablePlugins()
 }
 
 /**
- * Provides a pointer to a QWidget providing the options dialog for the 
+ * Provides a pointer to a QWidget providing the options dialog for the
  * named plugin, if it exists, else NULL.
  * \param plugin Name of the plugin.
  * \return Pointer to the options widget for the named plugin.
@@ -271,10 +271,10 @@ bool PluginManager::processMessage(const PsiAccount* account, const QString& jid
 
 /**
  * \brief Give each plugin the opportunity to process the incoming event
- * 
+ *
  * Each plugin is passed the event in turn. Any plugin may then modify the event
  * and may cause the event to be silently discarded.
- * 
+ *
  * \param account Pointer to the PsiAccount responsible
  * \param event Incoming event
  * \return Continue processing the event; true if the event should be silently discarded.
@@ -298,7 +298,7 @@ bool PluginManager::processEvent(const PsiAccount* account, QDomElement& event)
  * (for example, see StanzaFilter or IqFilter).
  * Any plugin may then modify the xml and may cause the stanza to be
  * silently discarded.
- * 
+ *
  * \param account Identifier of the PsiAccount responsible
  * \param xml Incoming XML
  * \return Continue processing the event; true if the event should be silently discarded.

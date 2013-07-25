@@ -8,50 +8,50 @@
 namespace QCA {
 	enum Validity
 	{
-		ValidityGood,						 
-		ErrorRejected,					 
-		ErrorUntrusted,					 
-		ErrorSignatureFailed,		 
-		ErrorInvalidCA,					 
-		ErrorInvalidPurpose,		 
-		ErrorSelfSigned,				 
-		ErrorRevoked,						 
-		ErrorPathLengthExceeded, 
-		ErrorExpired,						 
-		ErrorExpiredCA,					 
+		ValidityGood,
+		ErrorRejected,
+		ErrorUntrusted,
+		ErrorSignatureFailed,
+		ErrorInvalidCA,
+		ErrorInvalidPurpose,
+		ErrorSelfSigned,
+		ErrorRevoked,
+		ErrorPathLengthExceeded,
+		ErrorExpired,
+		ErrorExpiredCA,
 		ErrorValidityUnknown = 64
 	};
 
 	enum ConvertResult { ConvertGood };
 
-	class Certificate 
+	class Certificate
 	{
 		public:
-			Certificate(const QString& id = "") { 
-				id_ = id; 
+			Certificate(const QString& id = "") {
+				id_ = id;
 			}
 
 			bool operator==(const Certificate& other) {
 				return other.id_ == id_;
 			}
 
-			static Certificate fromPEMFile(const QString&, ConvertResult* result) { 
-				*result = ConvertGood; 
-				return Certificate(); 
+			static Certificate fromPEMFile(const QString&, ConvertResult* result) {
+				*result = ConvertGood;
+				return Certificate();
 			}
 
-			static Certificate fromDER(const QString&, ConvertResult* result) { 
-				*result = ConvertGood; 
-				return Certificate(); 
+			static Certificate fromDER(const QString&, ConvertResult* result) {
+				*result = ConvertGood;
+				return Certificate();
 			}
 
 		private:
 			QString id_;
 	};
 
-	class CertificateCollection : public QList<Certificate> 
+	class CertificateCollection : public QList<Certificate>
 	{
-		public: 
+		public:
 			CertificateCollection() {}
 			void addCertificate(const Certificate& c) { *this += c; }
 			QList<Certificate> certificates() const { return *this; }

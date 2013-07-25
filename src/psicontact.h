@@ -180,7 +180,7 @@ signals:
 #endif
 
 	/**
-	 * This signal is emitted when PsiContact has entered its final 
+	 * This signal is emitted when PsiContact has entered its final
 	 * destruction stage.
 	 */
 	void destroyed(PsiContact*);

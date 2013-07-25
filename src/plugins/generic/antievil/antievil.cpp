@@ -91,10 +91,10 @@ public:
 
 		return blocked;
 	}
-	
+
 
 	//-- StanzaSender ----------------------------------------
-	
+
 	virtual void setStanzaSendingHost(StanzaSendingHost *host)
 	{
 		stanzaSender = host;

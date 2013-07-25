@@ -34,10 +34,10 @@ public:
     TicTacButton( QWidget *parent );
     enum Type { Blank, Circle, Cross };
     Type        type() const            { return t; }
-    void        setType( Type type )    
-	{ 
-		t = type; 
-		QString mark=""; 
+    void        setType( Type type )
+	{
+		t = type;
+		QString mark="";
 		if (t==Circle)
 			mark="0";
 		if (t==Cross)

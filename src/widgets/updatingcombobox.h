@@ -10,11 +10,11 @@ class UpdatingComboBox : public QComboBox
 public:
 	UpdatingComboBox(QWidget* parent) : QComboBox(parent) {}
 
-	virtual void showPopup() { 
+	virtual void showPopup() {
 		emit popup();
 		QComboBox::showPopup();
 	}
-	
+
 signals:
 	void popup();
 };

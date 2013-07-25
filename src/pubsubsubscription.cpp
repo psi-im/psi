@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
- 
+
 #include <QDomDocument>
 #include <QDomElement>
 #include <QString>
@@ -25,36 +25,36 @@
 #include "pubsubsubscription.h"
 
 
-PubSubSubscription::PubSubSubscription() 
-{ 
+PubSubSubscription::PubSubSubscription()
+{
 }
 
-PubSubSubscription::PubSubSubscription(const QDomElement& e) 
+PubSubSubscription::PubSubSubscription(const QDomElement& e)
 {
 	fromXml(e);
 }
 
-const QString& PubSubSubscription::jid() const 
-{ 
-	return jid_; 
+const QString& PubSubSubscription::jid() const
+{
+	return jid_;
 }
 
-const QString& PubSubSubscription::node() const 
-{ 
+const QString& PubSubSubscription::node() const
+{
 	return node_;
 }
 
-PubSubSubscription::State PubSubSubscription::state() const 
-{ 
-	return state_; 
+PubSubSubscription::State PubSubSubscription::state() const
+{
+	return state_;
 }
 
-bool PubSubSubscription::isNull() const 
+bool PubSubSubscription::isNull() const
 {
 	return jid_.isEmpty() && node_.isEmpty();
 }
 
-void PubSubSubscription::fromXml(const QDomElement& e) 
+void PubSubSubscription::fromXml(const QDomElement& e)
 {
 	if (e.tagName() != "subscription")
 		return;
@@ -73,7 +73,7 @@ void PubSubSubscription::fromXml(const QDomElement& e)
 		state_ = Subscribed;
 }
 
-QDomElement PubSubSubscription::toXml(QDomDocument& doc) const 
+QDomElement PubSubSubscription::toXml(QDomDocument& doc) const
 {
 	QDomElement s = doc.createElement("subscription");
 	s.setAttribute("node",node_);

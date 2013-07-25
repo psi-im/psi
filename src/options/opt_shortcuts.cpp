@@ -72,8 +72,8 @@ QWidget *OptionsTabShortcuts::widget()
 
 	w = new OptShortcutsUI();
 	OptShortcutsUI *d = (OptShortcutsUI *)w;
-	
-	d->treeShortcuts->setColumnWidth(0, 320);	
+
+	d->treeShortcuts->setColumnWidth(0, 320);
 
 	d->add->setEnabled(false);
 	d->remove->setEnabled(false);
@@ -119,7 +119,7 @@ void OptionsTabShortcuts::applyOptions() {
 		for(int shortcutItemIndex = 0; shortcutItemIndex < shortcutItemsCount; shortcutItemIndex++) {
 			shortcutItem = topLevelItem->child(shortcutItemIndex);
 			keyItemsCount = shortcutItem->childCount();
-			
+
 			/* get the Options Path of the Shortcut Item */
 			optionsPath = shortcutItem->data(0, OPTIONSTREEPATH).toString();
 
@@ -136,7 +136,7 @@ void OptionsTabShortcuts::applyOptions() {
 					keyItem = shortcutItem->child(keyItemIndex);
 					keySequences.append(QVariant(keyItem->text(1)));
 				}
-				
+
 				options->setOption(optionsPath, QVariant(keySequences));
 			}
 			else {
@@ -154,7 +154,7 @@ void OptionsTabShortcuts::restoreOptions()
 {
 	if ( !w )
 		return;
-	
+
 	readShortcuts(PsiOptions::instance());
 }
 
@@ -202,11 +202,11 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
 
 		/* if a optionsPath was saved in the toplevel item, we can get the shortcuts and the keys for the shortcuts */
 		if(!optionsPath.isEmpty()) {
-			
+
 			shortcuts = options->getChildOptionNames(optionsPath, true, true);
 			/* step through the shortcuts */
 			foreach(QString shortcut, shortcuts) {
-				
+
 				keys = ShortcutManager::readShortcutsFromOptions(shortcut.mid(QString("options.shortcuts").length() + 1), options);
 				comment = options->getComment(shortcut);
 				if (comment.isNull()) {
@@ -215,7 +215,7 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
 				else {
 					comment = translateShortcut(comment);
 				}
-				
+
 				/* create the TreeWidgetItem and set the Data the Kind and it's Optionspath and append it */
 				shortcutItem = new QTreeWidgetItem(topLevelItem);
 				shortcutItem->setText(0, comment);
@@ -242,7 +242,7 @@ void OptionsTabShortcuts::readShortcuts(const PsiOptions *options)
  */
 void OptionsTabShortcuts::onAdd() {
 	OptShortcutsUI *d = (OptShortcutsUI *)w;
-	
+
 	QTreeWidgetItem	*shortcutItem;
 
 	QList<QTreeWidgetItem *> selectedItems = d->treeShortcuts->selectedItems();
@@ -259,7 +259,7 @@ void OptionsTabShortcuts::onAdd() {
 		case OptionsTabShortcuts::KeyItem:
 			/* it was a keyItem, so get it's parent */
 			shortcutItem = shortcutItem->parent();
-			break;	
+			break;
 		case OptionsTabShortcuts::ShortcutItem:
 			break;
 		default:
@@ -303,7 +303,7 @@ void OptionsTabShortcuts::onRemove() {
 	QTreeWidgetItem	*shortcutItem;
 	QTreeWidgetItem	*keyItem;
 	int keyItemsCount;
-	
+
 	keyItem = selectedItems[0];
 
 	/* we need a Item with the Kind "KeyItem", else we could / should not remove it */
@@ -318,7 +318,7 @@ void OptionsTabShortcuts::onRemove() {
 			shortcutItem->child(keyItemIndex)->setText(0, QString(tr("Key %1")).arg(keyItemIndex + 1));
 
 		/* notify the options dlg that data was changed */
-		emit dataChanged();	
+		emit dataChanged();
 	}
 }
 
@@ -350,7 +350,7 @@ void OptionsTabShortcuts::onRestoreDefaults() {
 		OptShortcutsUI *d = (OptShortcutsUI *)w;
 		d->treeShortcuts->clear();
 		readShortcuts(PsiOptions::defaults());
-		emit dataChanged();	
+		emit dataChanged();
 	}
 }
 
@@ -442,7 +442,7 @@ void OptionsTabShortcuts::onNewShortcutKey(const QKeySequence& key) {
 	/* if we got a key item, set the new key sequence and notify the options dialog that data has changed */
 	if(itemKind == OptionsTabShortcuts::KeyItem) {
 		keyItem->setText(1, key.toString(QKeySequence::NativeText));
-		emit dataChanged();	
+		emit dataChanged();
 	}
 }
 

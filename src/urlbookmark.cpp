@@ -23,8 +23,8 @@
 
 #include "urlbookmark.h"
 
-URLBookmark::URLBookmark(const QString& name, const QString& url) : name_(name), url_(url) 
-{ 
+URLBookmark::URLBookmark(const QString& name, const QString& url) : name_(name), url_(url)
+{
 }
 
 URLBookmark::URLBookmark(const QDomElement& el)
@@ -32,14 +32,14 @@ URLBookmark::URLBookmark(const QDomElement& el)
 	fromXml(el);
 }
 
-const QString& URLBookmark::name() const 
-{ 
-	return name_; 
+const QString& URLBookmark::name() const
+{
+	return name_;
 }
 
-const QString& URLBookmark::url() const 
-{ 
-	return url_; 
+const QString& URLBookmark::url() const
+{
+	return url_;
 }
 
 bool URLBookmark::isNull() const

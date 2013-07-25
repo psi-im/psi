@@ -29,7 +29,7 @@ class QDomDocument;
 class Mood
 {
 public:
-	enum Type { 
+	enum Type {
 		Unknown,
 		Afraid, Amazed, Angry, Annoyed, Anxious, Aroused, Ashamed, Bored,
     	Brave, Calm, Cold, Confused, Contented, Cranky, Curious, Depressed,
@@ -54,7 +54,7 @@ public:
 
 protected:
 	void fromXml(const QDomElement&);
-	
+
 private:
 	Type type_;
 	QString text_;

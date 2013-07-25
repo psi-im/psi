@@ -46,7 +46,7 @@ public:
 	void reset();
 
 	void fromXml(const QDomElement &);
-	
+
 	void fromOptions(OptionsTree *o, QString base);
 	void toOptions(OptionsTree *o, QString base=QString());
 
@@ -106,14 +106,14 @@ class OptionsMigration
 {
 public:
 	bool fromFile(const QString &);
-	
+
 	void lateMigration();
 
 	//QString progver;
 	UserAccountList accMigration;
 
 	ProxyItemList proxyMigration;
-	
+
 private:
 	lateMigrationOptions lateMigrationData;
 };

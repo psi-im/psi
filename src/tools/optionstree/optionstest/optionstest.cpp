@@ -29,7 +29,7 @@ int main (int argc, char const* argv[])
 	l << QVariant(QString("item1")) << qVariantFromValue(QKeySequence("CTRL+L"));
 	QStringList sl;
 	sl << "String 1" << "String 2";
-	
+
 	tree.setOption("paris",QVariant(QString("sirap")));
 	tree.setOption("Benvolio",QVariant(QString("Benvolio")));
 	tree.setOption("Benvolio",QVariant(QString("Not benvolio!!")));
@@ -46,15 +46,15 @@ int main (int argc, char const* argv[])
 	tree.setComment("verona","Fair city");
 	tree.setComment("paris","Bloke or city?");
 	tree.setComment("verona.montague.romeo","Watch what this one drinks");
-	
+
 	foreach(QString name, tree.allOptionNames())
 	{
 		qWarning(qPrintable(name));
 		qWarning(qPrintable(tree.getOption(name).toString()));
 	}
-	
+
 	tree.saveOptions("options.xml","OptionsTest","http://psi-im.org/optionstest","0.1");
-	
+
 	OptionsTree tree2;
 	tree2.loadOptions("options.xml","OptionsTest","http://psi-im.org/optionstest","0.1");
 	foreach(QString name, tree2.allOptionNames())
@@ -63,7 +63,7 @@ int main (int argc, char const* argv[])
 		qWarning(qPrintable(tree2.getOption(name).toString()));
 	}
 	tree2.saveOptions("options2.xml","OptionsTest","http://psi-im.org/optionstest","0.1");
-	
+
 	OptionsTree tree3;
 	tree3.loadOptions("options.xml","OptionsTest","http://psi-im.org/optionstest","0.1");
 	tree3.saveOptions("options3.xml","OptionsTest","http://psi-im.org/optionstest","0.1");

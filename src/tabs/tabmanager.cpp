@@ -40,7 +40,7 @@ TabDlg* TabManager::getTabs(QWidget *widget)
 
 QChar TabManager::tabKind(QWidget *widget) {
 	QChar retval = 0;
-	
+
 	if (qobject_cast<ChatDlg*> (widget)) {
 		retval = 'C';
 	} else if (qobject_cast<GCMainDlg*> (widget)) {
@@ -56,7 +56,7 @@ bool TabManager::shouldBeTabbed(QWidget *widget)
 	if (!PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool()) {
 		return false;
 	}
-	
+
 	QString grouping = PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString();
 	if (grouping.contains(tabKind(widget))) {
 		return true;
@@ -74,7 +74,7 @@ TabDlg* TabManager::newTabs(QWidget *widget)
 			break;
 		}
 	}
-	
+
 	QString geometryOption = QString("options.ui.tabs.group-state.%1.size").arg(group);
 
 	TabDlg *tab = new TabDlg(this, geometryOption, tabDlgDelegate_);

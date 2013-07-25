@@ -33,7 +33,7 @@ public:
 	FancyPopupList()
 	{
 	}
-	
+
 	~FancyPopupList()
 	{
 		while ( !isEmpty() )

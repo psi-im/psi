@@ -27,7 +27,7 @@ RosterItemExchangeTask::RosterItemExchangeTask(Task* parent) : Task(parent), ign
 {
 }
 
-bool RosterItemExchangeTask::take(const QDomElement& e) 
+bool RosterItemExchangeTask::take(const QDomElement& e)
 {
 	for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling()) {
 		QDomElement i = n.toElement();

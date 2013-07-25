@@ -51,7 +51,7 @@ bool Alertable::alerting() const
 }
 
 /**
- * Returns current animation frame of alert, or null QIcon, if 
+ * Returns current animation frame of alert, or null QIcon, if
  * there is no alert.
  */
 QIcon Alertable::currentAlertFrame() const

@@ -59,7 +59,7 @@ public:
 	void importManualAvatar(const Jid& j, const QString& fileName);
 	void removeManualAvatar(const Jid& j);
 	bool hasManualAvatar(const Jid& j);
-	
+
 	static QString getManualDir();
 	static QString getCacheDir();
 	static int maxAvatarSize();
@@ -106,7 +106,7 @@ public:
 
 protected:
 	AvatarFactory* factory() const;
-	virtual const QPixmap& pixmap() const 
+	virtual const QPixmap& pixmap() const
 		{ return pixmap_; }
 
 	virtual void setImage(const QImage&);

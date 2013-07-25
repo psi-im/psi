@@ -40,10 +40,10 @@ class MUCManager : public QObject
 
 public:
 	enum Action {
-		Unknown, Kick, Ban, 
+		Unknown, Kick, Ban,
 		GrantVoice, RevokeVoice,
 		GrantMember, RevokeMember,
-		GrantModerator, RevokeModerator, 
+		GrantModerator, RevokeModerator,
 		GrantAdmin, RevokeAdmin,
 		GrantOwner, RevokeOwner,
 		SetRole, SetAffiliation
@@ -106,7 +106,7 @@ signals:
 	void setItems_error(int, const QString&);
 	void getItemsByAffiliation_success(MUCItem::Affiliation, const QList<MUCItem>&);
 	void getItemsByAffiliation_error(MUCItem::Affiliation, int, const QString&);
-	
+
 	void action_success(MUCManager::Action);
 	void action_error(MUCManager::Action, int, const QString&);
 

@@ -184,7 +184,7 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent * event) {
 					delta.scale(1 + difference.x()/50, 1 - difference.y()/50);
 					// set the matrix
 					setTransform(QTransform(translation * delta * translation.inverted()), true);
- 
+
 					// Regenerate the SVG transformation matrix later
 					scene_->queueTransformationRegeneration(dynamic_cast<WbItem*>(graphicsitem));
 
@@ -398,7 +398,7 @@ QPointF WbItem::center() {
 ** functionality provided by Qt Designer and its related libraries.
 **
 ** Trolltech reserves all rights not expressly granted herein.
-** 
+**
 ** Trolltech ASA (c) 2007
 **
 ** This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE

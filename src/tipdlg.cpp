@@ -21,7 +21,7 @@
  * along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
- */  
+ */
 
 #include "tipdlg.h"
 
@@ -125,9 +125,9 @@ void TipDlg::updateTip()
 		num = tips.count() - 1;
 	else if ( num >= (int)tips.count() )
 		num = 0;
-	
+
 	tv_psi->setText( tips[num] );
-	
+
 	PsiOptions::instance()->setOption("options.ui.tip.number", num+1);
 }
 

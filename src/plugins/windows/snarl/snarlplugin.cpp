@@ -39,7 +39,7 @@ public:
 	~SnarlPlugin();
 	virtual QString name() const;
 	virtual QString shortName() const;
-	virtual void message( const QString& message, const QString& fromJid, const QString& fromDisplay); 
+	virtual void message( const QString& message, const QString& fromJid, const QString& fromDisplay);
 private:
 	SnarlInterface* snarl_;
 
@@ -78,6 +78,6 @@ void SnarlPlugin::message( const QString& message, const QString& fromJid, const
 	QString caption=QString("Received message");
 	QString icon= "D:\\devel\\psi-plugins\\win32\\psi\\iconsets\\system\\default\\icon_48.png";
 	snarl_->snShowMessage(caption.toStdString(), text.toStdString(), 10, icon.toStdString(), 0, 0);
-}	
+}
 
 #include "snarlplugin.moc"

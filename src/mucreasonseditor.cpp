@@ -11,7 +11,7 @@ MUCReasonsEditor::MUCReasonsEditor(QWidget* parent)
 }
 
 MUCReasonsEditor::~MUCReasonsEditor()
-{	
+{
 }
 
 void MUCReasonsEditor::accept()

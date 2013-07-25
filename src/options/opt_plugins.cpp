@@ -42,14 +42,14 @@ QWidget *OptionsTabPlugins::widget()
 
 	listPlugins();
 
-	
+
 	/*d->ck_messageevents->setWhatsThis(
 		tr("Enables the sending and requesting of message events such as "
 		"'Contact is Typing', ..."));*/
 
 	connect(d->cb_plugins,SIGNAL(currentIndexChanged(int)),SLOT(pluginSelected(int)));
 	connect(d->cb_loadPlugin,SIGNAL(stateChanged(int)),SLOT(loadToggled(int)));
-	
+
 	return w;
 }
 
@@ -81,9 +81,9 @@ void OptionsTabPlugins::listPlugins()
 	OptPluginsUI *d = (OptPluginsUI *)w;
 
 	d->cb_plugins->clear();
-	
+
 	PluginManager *pm=PluginManager::instance();
-	
+
 	QStringList plugins=pm->availablePlugins();
 		foreach (QString plugin, plugins){
 		d->cb_plugins->addItem(plugin);
@@ -96,13 +96,13 @@ void OptionsTabPlugins::loadToggled(int state)
 	Q_UNUSED(state);
 	if ( !w )
 		return;
-	
+
 	OptPluginsUI *d = (OptPluginsUI *)w;
-	
+
 	QString option=QString("%1.%2")
 		.arg(PluginManager::loadOptionPrefix)
 		.arg(PluginManager::instance()->shortName(d->cb_plugins->currentText()));
-	bool value=d->cb_loadPlugin->isChecked(); 
+	bool value=d->cb_loadPlugin->isChecked();
 	PsiOptions::instance()->setOption(option, value);
 }
 
@@ -111,7 +111,7 @@ void OptionsTabPlugins::pluginSelected(int index)
 	Q_UNUSED(index);
   	if ( !w )
 		return;
-	
+
 	OptPluginsUI *d = (OptPluginsUI *)w;
 	d->le_location->setText(tr("No plugin selected."));
 	d->cb_loadPlugin->setEnabled(false);
@@ -124,7 +124,7 @@ void OptionsTabPlugins::pluginSelected(int index)
 		d->cb_loadPlugin->setEnabled(true);
 		QWidget* pluginOptions = PluginManager::instance()->optionsWidget( pluginName );
 		d->cb_plugins->setEnabled(true);
-	
+
 		QString option=QString("%1.%2")
 			.arg(PluginManager::loadOptionPrefix)
 			.arg(PluginManager::instance()->shortName(pluginName));
@@ -134,7 +134,7 @@ void OptionsTabPlugins::pluginSelected(int index)
 		else
 			value=Qt::Unchecked;
 		d->cb_loadPlugin->setChecked(value);
-	
+
 		d->vboxLayout1->remove(d->pluginOptions);
 		delete d->pluginOptions;
 		d->pluginOptions=NULL;
@@ -149,7 +149,7 @@ void OptionsTabPlugins::pluginSelected(int index)
 			d->pluginOptions = new QLabel(tr("This plugin has no user configurable options"),d);
 			qWarning("Plugin has no options");
 		}
-		
+
 		d->vboxLayout1->addWidget(d->pluginOptions);
 		//d->pluginOptions->show();
 		//d->updateGeometry();

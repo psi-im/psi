@@ -62,16 +62,16 @@ private:
 			CapsInfo();
 			const XMPP::Features& features() const;
 			const XMPP::DiscoItem::Identities& identities() const;
-			
+
 			void setIdentities(const XMPP::DiscoItem::Identities&);
 			void setFeatures(const XMPP::Features&);
-			
+
 			QDomElement toXml(QDomDocument *) const;
 			void fromXml(const QDomElement&);
 
 		protected:
 			void updateLastSeen();
-			
+
 		private:
 			XMPP::Features features_;
 			XMPP::DiscoItem::Identities identities_;

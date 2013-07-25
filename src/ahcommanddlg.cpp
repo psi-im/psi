@@ -26,7 +26,7 @@
 #include <QLayout>
 #include <QLabel>
 
-#include "ahcexecutetask.h" 
+#include "ahcexecutetask.h"
 #include "busywidget.h"
 #include "psiaccount.h"
 #include "xmpp_xmlcommon.h"
@@ -36,16 +36,16 @@ using namespace XMPP;
 
 #define AHC_NS "http://jabber.org/protocol/commands"
 
-// -------------------------------------------------------------------------- 
+// --------------------------------------------------------------------------
 
 static bool operator<(const AHCommandItem &ci1, const AHCommandItem &ci2)
 {
 	return ci1.name < ci2.name;
 }
 
-// -------------------------------------------------------------------------- 
+// --------------------------------------------------------------------------
 // JT_AHCGetList: A Task to retreive the available commands of a client
-// -------------------------------------------------------------------------- 
+// --------------------------------------------------------------------------
 
 class JT_AHCGetList : public Task
 {
@@ -54,7 +54,7 @@ public:
 
 	void onGo();
 	bool take(const QDomElement &x);
-	
+
 	const QList<AHCommandItem>& commands() const { return commands_; }
 
 private:
@@ -82,7 +82,7 @@ bool JT_AHCGetList::take(const QDomElement& e)
 	if(!iqVerify(e, receiver_, id())) {
 		return false;
 	}
-	
+
 	if (e.attribute("type") == "result") {
 		// Extract commands
 		commands_.clear();
@@ -114,9 +114,9 @@ bool JT_AHCGetList::take(const QDomElement& e)
 }
 
 
-// -------------------------------------------------------------------------- 
+// --------------------------------------------------------------------------
 // JT_AHCommandDlg: Initial command dialog
-// -------------------------------------------------------------------------- 
+// --------------------------------------------------------------------------
 
 AHCommandDlg::AHCommandDlg(PsiAccount* pa, const Jid& receiver)
 	: QDialog(0), pa_(pa), receiver_(receiver)

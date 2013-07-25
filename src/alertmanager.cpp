@@ -116,7 +116,7 @@ void AlertManager::raiseMessageBox(int prio, QMessageBox::Icon icon, const QStri
 	QMessageBox* msgBox = new QMessageBox(icon, title, text, QMessageBox::Ok);
 	msgBox->setAttribute(Qt::WA_DeleteOnClose);
 	msgBox->setModal(false);
-	
+
 	raiseDialog(msgBox, prio);
 }
 

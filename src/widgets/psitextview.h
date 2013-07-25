@@ -34,15 +34,15 @@ public:
 
 	bool atBottom();
 
-	virtual void appendText(const QString &text);	
+	virtual void appendText(const QString &text);
 
 	QString getHtml() const;
 	QString getPlainText() const;
-	
+
 public slots:
 	void scrollToBottom();
 	void scrollToTop();
-	
+
 protected:
 	// make these functions unusable, because they modify
 	// document structure and we can't override them to

@@ -35,7 +35,7 @@ extern int Py_VerboseFlag;
 /**
  * Function to obtain all the directories in which plugins can be stored
  * \return List of plugin directories
- */ 
+ */
 static QStringList scriptDirs()
 {
 	QStringList l;
@@ -51,11 +51,11 @@ class PythonPlugin : public PsiPlugin
 public:
 	PythonPlugin();
 	~PythonPlugin();
-	virtual QString name() const; 
+	virtual QString name() const;
 	virtual QString shortName() const;
 	virtual QString version() const;
 	virtual bool processEvent( const QString& account, QDomNode &event );
-	
+
 private:
 	QStringList scriptObjects_;
 	void loadScripts();
@@ -75,7 +75,7 @@ PythonPlugin::PythonPlugin()
 	QString command="print \"Python running\"";
 	PyRun_SimpleString(qPrintable(command));
 	loadScripts();
-	
+
 }
 
 PythonPlugin::~PythonPlugin()

@@ -33,17 +33,17 @@ class QDomDocumentFragment;
 /**
  * \class VariantTree
  * \brief A recursive structure for storing QVariants in trees, with comments
- * 
- * All the methods in this class are recursive, based on a hierachy delimited 
- * with dots in the node name. As such, the nodes "Paris" and "Benvolio" are 
- * top level elements (members of this layer), while "Capulet.Juliet" is a 
- * member of a deeper node ("Capulet") and "Verona.Montague.Romeo" represents 
+ *
+ * All the methods in this class are recursive, based on a hierachy delimited
+ * with dots in the node name. As such, the nodes "Paris" and "Benvolio" are
+ * top level elements (members of this layer), while "Capulet.Juliet" is a
+ * member of a deeper node ("Capulet") and "Verona.Montague.Romeo" represents
  * the node "Romeo" which is a member of "Montague", which is again a member
  * of "Verona" (which is a member of this layer).
- * 
- * As such, for each function, if the supplied node contains a dot ("."), 
- * the node name is split at the first (if there are several) dot, with the 
- * remainder passed to the same method of the member of this node with the 
+ *
+ * As such, for each function, if the supplied node contains a dot ("."),
+ * the node name is split at the first (if there are several) dot, with the
+ * remainder passed to the same method of the member of this node with the
  * name given by the primary component. For the set methods, multiple layers
  * in the hierachy may be created implicitly if the node is not found.
  */
@@ -56,28 +56,28 @@ public:
 
 	void setValue(QString node, QVariant value);
 	QVariant getValue(const QString& node) const;
-	
+
 	bool isInternalNode(QString node) const;
 
 	void setComment(QString node, QString comment);
 	QString getComment(QString node) const;
 
 	bool remove(const QString &node, bool internal_nodes = false);
-	
-	QStringList nodeChildren(const QString& node = "", bool direct = false, bool internal_nodes = false) const; 
+
+	QStringList nodeChildren(const QString& node = "", bool direct = false, bool internal_nodes = false) const;
 
 	void toXml(QDomDocument &doc, QDomElement& ele) const;
 	void fromXml(const QDomElement &ele);
 
 	static bool isValidNodeName(const QString &name);
-	
+
 	static const QVariant missingValue;
 	static const QString missingComment;
 
 protected:
 	static QVariant elementToVariant(const QDomElement&);
 	static void variantToElement(const QVariant&, QDomElement&);
-	
+
 	static bool getKeyRest(const QString& node, QString &key, QString &rest);
 
 private:
@@ -86,7 +86,7 @@ private:
 	QHash<QString, QString> comments_;
 	QHash<QString, QDomDocumentFragment> unknowns_;		// unknown types preservation
 	QHash<QString, QString> unknowns2_;		// unknown types preservation
-	
+
 	// needed to have a document for the fragments.
 	static QDomDocument *unknownsDoc;
 	friend class OptionsTreeReader;

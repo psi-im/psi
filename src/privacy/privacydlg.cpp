@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
- 
+
 #include <QListView>
 #include <QInputDialog>
 #include <QMessageBox>
@@ -54,7 +54,7 @@ PrivacyDlg::PrivacyDlg(const QString& account_name, PrivacyManager* manager, QWi
 
 	connect(ui_.pb_newList,SIGNAL(clicked()),SLOT(newList()));
 	connect(ui_.pb_deleteList,SIGNAL(clicked()),SLOT(removeList()));
-	
+
 	connect(ui_.pb_add,SIGNAL(clicked()),SLOT(addRule()));
 	connect(ui_.pb_edit,SIGNAL(clicked()),SLOT(editCurrentRule()));
 	connect(ui_.pb_remove,SIGNAL(clicked()),SLOT(removeCurrentRule()));
@@ -73,7 +73,7 @@ PrivacyDlg::PrivacyDlg(const QString& account_name, PrivacyManager* manager, QWi
 
 	// FIXME: Temporarily disabling auto-activate
 	ui_.ck_autoActivate->hide();
-	
+
 	manager_->requestListNames();
 }
 
@@ -154,7 +154,7 @@ void PrivacyDlg::updateLists(const QString& defaultList, const QString& activeLi
 		ui_.cb_active->setCurrentIndex(0);
 	}
 	previousActive_ = ui_.cb_active->currentIndex();
-	
+
 	// Default list
 	ui_.cb_default->clear();
 	ui_.cb_default->addItem(tr("<None>"));
@@ -166,7 +166,7 @@ void PrivacyDlg::updateLists(const QString& defaultList, const QString& activeLi
 		ui_.cb_default->setCurrentIndex(0);
 	}
 	previousDefault_ = ui_.cb_default->currentIndex();
-	
+
 	// All lists
 	QString previousList = ui_.cb_lists->currentText();
 	ui_.cb_lists->clear();
@@ -186,7 +186,7 @@ void PrivacyDlg::updateLists(const QString& defaultList, const QString& activeLi
 	else {
 		setWidgetsEnabled(true);
 	}
-	
+
 	ui_.lv_rules->setModel(&model_);
 	connect(ui_.lv_rules, SIGNAL(doubleClicked(QModelIndex)), SLOT(editCurrentRule()));
 }
@@ -263,7 +263,7 @@ void PrivacyDlg::changeList_succeeded()
 
 void PrivacyDlg::changeList_failed()
 {
-	QMessageBox::critical(0, QObject::tr("Error"), QObject::tr("There was an error changing the list.")); 
+	QMessageBox::critical(0, QObject::tr("Error"), QObject::tr("There was an error changing the list."));
 	setWidgetsEnabled(true);
 }
 
@@ -276,7 +276,7 @@ void PrivacyDlg::change_succeeded()
 void PrivacyDlg::change_failed()
 {
 	revertSettings();
-	QMessageBox::critical(0, QObject::tr("Error"), QObject::tr("There was an error processing your request.")); 
+	QMessageBox::critical(0, QObject::tr("Error"), QObject::tr("There was an error processing your request."));
 	setWidgetsEnabled(true);
 }
 
@@ -312,7 +312,7 @@ void PrivacyDlg::newList()
 			done = true;
 		}
 	}
-	
+
 	if (ok) {
 		if (ui_.cb_lists->currentIndex() != -1 && model_.list().isEmpty()) {
 			ui_.cb_lists->removeItem(ui_.cb_lists->currentIndex());

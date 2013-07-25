@@ -49,7 +49,7 @@ public:
 	Tune currentTune() const;
 	void setTuneFilters(const QStringList &filters, const QString &pattern);
 	void updateControllers(const QStringList &blacklist);
-	
+
 signals:
 	void playing(const Tune &tune);
 	void stopped();
@@ -59,7 +59,7 @@ protected slots:
 
 protected:
 	bool loadPlugin(QObject* plugin);
-	
+
 private:
 	bool checkTune(const Tune &tune) const;
 

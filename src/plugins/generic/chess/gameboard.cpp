@@ -700,8 +700,8 @@ GameBoard::GameBoard(GameType g, const QString &h, QWidget *parent,
 		this, SLOT(sockClosed()));
 	QObject::connect(sock, SIGNAL(error(int)),
 		this, SLOT(sockError(int)));*/
-	
-		
+
+
 	QObject::connect(drw, SIGNAL(moved(const QString&)),
 		this, SLOT(sendMove(const QString&)));
 	QObject::connect(drw, SIGNAL(newFigure(const QString&,
@@ -762,7 +762,7 @@ GameBoard::GameBoard(int sfd, QWidget *parent, const char *name)
 	hb = new QListWidget(hist);
 	hb->setSelectionMode(QListWidget::NoSelection);
 	hb->setPaletteBackgroundColor(cb);
-	
+
 	//sock->setSocket(sfd);
 	//sock_tout = SOCK_WAIT;
 	my_stat = tr("Accepted a new connection");
@@ -776,8 +776,8 @@ GameBoard::GameBoard(int sfd, QWidget *parent, const char *name)
 		this, SLOT(sockClosed()));
 	QObject::connect(sock, SIGNAL(error(int)),
 		this, SLOT(sockError(int)));*/
-		
-	
+
+
 	QObject::connect(drw, SIGNAL(moved(const QString&)),
 		this, SLOT(sendMove(const QString&)));
 	QObject::connect(drw, SIGNAL(newFigure(const QString&,
@@ -787,11 +787,11 @@ GameBoard::GameBoard(int sfd, QWidget *parent, const char *name)
 		this, SLOT(gameover(int)));
 	QObject::connect(edt, SIGNAL(returnPressed()),
 		this, SLOT(sendText()));
-	
+
 	resize(XSize, YSize);
 	setMinimumSize(size());
 	setMaximumSize(size());
-	
+
 
 	//hackyhackhack
 	tmr = new QTimer(this);
@@ -800,7 +800,7 @@ GameBoard::GameBoard(int sfd, QWidget *parent, const char *name)
 	tmr2 = new QTimer(this);
 	//connect(tmr2, SIGNAL(timeout()), this, SLOT(sockConnected()));
 	//tmr2->start(2000);
-	
+
 	qDebug("GameBoard initialised (type 2)");
 }
 

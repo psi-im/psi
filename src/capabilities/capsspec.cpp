@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
- 
+
 #include <QString>
 #include <QStringList>
 
@@ -44,7 +44,7 @@ CapsSpec::CapsSpec()
  * @param ven the version
  * @param ext the list of extensions (separated by spaces)
  */
-CapsSpec::CapsSpec(const QString& node, const QString& ver, const QString& ext) : node_(node), ver_(ver), ext_(ext) 
+CapsSpec::CapsSpec(const QString& node, const QString& ver, const QString& ext) : node_(node), ver_(ver), ext_(ext)
 {
 }
 
@@ -52,32 +52,32 @@ CapsSpec::CapsSpec(const QString& node, const QString& ver, const QString& ext) 
 /**
  * \brief Returns the node of the capabilities specification.
  */
-const QString& CapsSpec::node() const 
-{ 
-	return node_; 
+const QString& CapsSpec::node() const
+{
+	return node_;
 }
 
 
 /**
  * \brief Returns the version of the capabilities specification.
  */
-const QString& CapsSpec::version() const 
-{ 
-	return ver_; 
+const QString& CapsSpec::version() const
+{
+	return ver_;
 }
 
 
 /**
  * \brief Returns the extensions of the capabilities specification.
  */
-const QString& CapsSpec::extensions() const 
-{ 
-	return ext_; 
+const QString& CapsSpec::extensions() const
+{
+	return ext_;
 }
 
 
 /**
- * \brief Flattens the caps specification into the set of 'simple' 
+ * \brief Flattens the caps specification into the set of 'simple'
  * specifications.
  * A 'simple' specification is a specification with exactly one extension,
  * or with the version number as the extension.
@@ -88,7 +88,7 @@ const QString& CapsSpec::extensions() const
  *	node=http://psi-im.org, ver=0.10, ext=achat
  *	node=http://psi-im.org, ver=0.10, ext=vchat
  */
-CapsSpecs CapsSpec::flatten() const 
+CapsSpecs CapsSpec::flatten() const
 {
 	CapsSpecs l;
 	l.append(CapsSpec(node(),version(),version()));
@@ -99,20 +99,20 @@ CapsSpecs CapsSpec::flatten() const
 	return l;
 }
 
-bool CapsSpec::operator==(const CapsSpec& s) const 
+bool CapsSpec::operator==(const CapsSpec& s) const
 {
 	return (node() == s.node() && version() == s.version() && extensions() == s.extensions());
 }
 
-bool CapsSpec::operator!=(const CapsSpec& s) const 
+bool CapsSpec::operator!=(const CapsSpec& s) const
 {
 	return !((*this) == s);
 }
 
-bool CapsSpec::operator<(const CapsSpec& s) const 
+bool CapsSpec::operator<(const CapsSpec& s) const
 {
 	return (node() != s.node() ? node() < s.node() :
-			(version() != s.version() ? version() < s.version() : 
+			(version() != s.version() ? version() < s.version() :
 			 extensions() < s.extensions()));
 }
 

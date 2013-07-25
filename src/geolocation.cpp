@@ -36,7 +36,7 @@ QDomElement GeoLocation::toXml(QDomDocument& doc)
 {
 	QDomElement geoloc = doc.createElement("geoloc");
 	geoloc.setAttribute("xmlns", "http://jabber.org/protocol/geoloc");
-	
+
 	if (alt_.hasValue()) {
 		QDomElement e = doc.createElement("alt");
 		e.appendChild(doc.createTextNode(QString::number(alt_.value())));
@@ -83,19 +83,19 @@ void GeoLocation::fromXml(const QDomElement& e)
 
 	for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling()) {
 		QDomElement m = n.toElement();
-		if (m.tagName() == "alt") 
+		if (m.tagName() == "alt")
 			alt_ = Maybe<float>(m.text().toFloat());
-		if (m.tagName() == "bearing") 
+		if (m.tagName() == "bearing")
 			bearing_ = Maybe<float>(m.text().toFloat());
-		if (m.tagName() == "error") 
+		if (m.tagName() == "error")
 			error_ = Maybe<float>(m.text().toFloat());
-		if (m.tagName() == "lat") 
+		if (m.tagName() == "lat")
 			lat_ = Maybe<float>(m.text().toFloat());
-		if (m.tagName() == "lon") 
+		if (m.tagName() == "lon")
 			lon_ = Maybe<float>(m.text().toFloat());
-		if (m.tagName() == "datum") 
+		if (m.tagName() == "datum")
 			datum_ = m.text();
-		if (m.tagName() == "description") 
+		if (m.tagName() == "description")
 			description_ = m.text();
 	}
 }
@@ -169,7 +169,7 @@ const QString& GeoLocation::description() const
 	return description_;
 }
 
-bool GeoLocation::isNull() const 
+bool GeoLocation::isNull() const
 {
 	return !lat_.hasValue() || !lon_.hasValue();
 }

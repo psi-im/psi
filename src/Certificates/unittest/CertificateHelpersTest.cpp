@@ -17,7 +17,7 @@ using namespace QCA;
 class CertificateHelpersTest : public QObject
 {
 		 Q_OBJECT
-	
+
 	private slots:
 		void initTestCase() {
 		}

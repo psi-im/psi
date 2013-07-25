@@ -282,13 +282,13 @@ public:
 		}
 		anim = 0;
 	}
-	
+
 	void connectInstance(PsiIcon *icon)
 	{
 		connect(this, SIGNAL(pixmapChanged()), icon, SIGNAL(pixmapChanged()));
 		connect(this, SIGNAL(iconModified()),  icon, SIGNAL(iconModified()));
 	}
-	
+
 	void disconnectInstance(PsiIcon *icon)
 	{
 		disconnect(this, SIGNAL(pixmapChanged()), icon, SIGNAL(pixmapChanged()));
@@ -765,7 +765,7 @@ void PsiIcon::stop()
 void PsiIcon::stripFirstAnimFrame()
 {
 	detach();
-	
+
 	if ( d->anim ) {
 		d->anim->stripFirstFrame();
 	}
@@ -1029,7 +1029,7 @@ public:
 		if ( dict.contains(n) ) {
 			remove(n);
 		}
-			
+
 		dict[n] = icon;
 		list.append(icon);
 	}
@@ -1041,7 +1041,7 @@ public:
 			delete list.takeFirst();
 		}
 	}
-	
+
 	void remove(QString name)
 	{
 		if ( dict.contains(name) ) {
@@ -1361,7 +1361,7 @@ public:
 
 		return success;
 	}
-	
+
 	void setInformation(const Private &from) {
 		name = from.name;
 		version = from.version;
@@ -1528,7 +1528,7 @@ void Iconset::setIcon(const QString &name, const PsiIcon &icon)
 	detach();
 
 	PsiIcon *newIcon = new PsiIcon(icon);
-	
+
 	d->remove(name);
 	d->append( name, newIcon );
 }

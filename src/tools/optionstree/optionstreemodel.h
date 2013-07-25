@@ -58,14 +58,14 @@ protected:
 	int nameToIndex(QString name) const;
 	bool internalNode(QString name) const;
 
-	
+
 protected slots:
 	void optionChanged(const QString& option);
 	void optionAboutToBeInserted(const QString& option);
-	void optionInserted(const QString& option);	
+	void optionInserted(const QString& option);
 	void optionAboutToBeRemoved(const QString& option);
-	void optionRemoved(const QString& option);	
-	
+	void optionRemoved(const QString& option);
+
 
 private:
 	OptionsTree* tree_;

@@ -26,7 +26,7 @@
 /**
  * \class OptionsTree
  * \brief Dynamic hierachical options structure
- * OptionsTree allows the dynamic creation of options (of type QVariant) 
+ * OptionsTree allows the dynamic creation of options (of type QVariant)
  * and will save and load these to/from xml.
  */
 class OptionsTree : public QObject
@@ -65,7 +65,7 @@ public:
 signals:
 	void optionChanged(const QString& option);
 	void optionAboutToBeInserted(const QString& option);
-	void optionInserted(const QString& option);	
+	void optionInserted(const QString& option);
 	void optionAboutToBeRemoved(const QString& option);
 	void optionRemoved(const QString& option);
 

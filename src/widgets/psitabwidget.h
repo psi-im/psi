@@ -34,7 +34,7 @@ class QMenu;
 
 /**
  * \class PsiTabWidget
- * \brief 
+ * \brief
  */
 class PsiTabWidget : public QWidget //: public QTabWidget
 {
@@ -95,7 +95,7 @@ private:
 	QToolButton *downButton_;
 	QTabWidget::TabPosition tabsPosition_;
 	QMenu *menu_;
-}; 
+};
 
 
 #define PSITABDRAGMIMETYPE "x-drag-drop/x-psi-tab-drag"

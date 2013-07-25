@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *
  */
- 
+
 #ifndef PRIVACYDLG_H
 #define PRIVACYDLG_H
 
@@ -44,7 +44,7 @@ protected:
 	void rememberSettings();
 	void revertSettings();
 	void listChanged();
-	
+
 protected slots:
 	void setWidgetsEnabled(bool);
 	void setEditRuleEnabled(bool);

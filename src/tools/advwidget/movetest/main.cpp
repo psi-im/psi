@@ -18,7 +18,7 @@ public:
 		mouseDown = true;
 		oldPos = e->globalPos();
 	}
-	
+
 	void mouseReleaseEvent(QMouseEvent *)
 	{
 		mouseDown = false;

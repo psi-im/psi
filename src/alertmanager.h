@@ -41,7 +41,7 @@ public:
 
 	QWidget* findDialog(const QMetaObject& mo) const;
 	template<typename T>
-	inline T findDialog() const { 
+	inline T findDialog() const {
 		return static_cast<T>(findDialog(((T)0)->staticMetaObject));
 	}
 
@@ -53,9 +53,9 @@ public:
 		            reinterpret_cast<QList<void*>*>(&list));
 		return list;
 	}
-	
+
 	enum { AccountPassword = 100, ConnectionError=50 };
-	
+
 protected:
 	void deleteDialogList();
 

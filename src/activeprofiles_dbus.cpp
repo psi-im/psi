@@ -70,20 +70,20 @@ static QString encodeAlNumD(QString in)
 /** \brief DBus busname registration helper
  * \param dbusIface interface of bus
  * \param name busname to register
- * \param queue try queueing? 
+ * \param queue try queueing?
  * \return got dbus name?
  */
 static bool registerBusname(QDBusConnectionInterface *dbusIface, QString name, bool queue)
 {
 	bool ok = false;
 	QDBusReply<QDBusConnectionInterface::RegisterServiceReply> reply;
-	reply = dbusIface->registerService(name, 
+	reply = dbusIface->registerService(name,
 		queue ?	QDBusConnectionInterface::QueueService : QDBusConnectionInterface::DontQueueService,
 			QDBusConnectionInterface::AllowReplacement);
 	if (reply.isValid()) {
 		switch (reply.value()) {
 			case QDBusConnectionInterface::ServiceNotRegistered:
-				qWarning("failed to register dbus name %s:", qPrintable(name)); 
+				qWarning("failed to register dbus name %s:", qPrintable(name));
 				break;
 			case QDBusConnectionInterface::ServiceQueued:
 				qDebug("dbus name %s already taken, queueing", qPrintable(name));
@@ -217,7 +217,7 @@ bool ActiveProfiles::setStatus(const QString &profile, const QString &status, co
 
 bool ActiveProfiles::openUri(const QString &profile, const QString &uri) const
 {
-	QDBusInterface(d->dbusName(profile), "/Main", PSIDBUSMAINIF).call(QDBus::NoBlock, 
+	QDBusInterface(d->dbusName(profile), "/Main", PSIDBUSMAINIF).call(QDBus::NoBlock,
 			"openURI", uri);
 	return true;
 }

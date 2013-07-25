@@ -208,7 +208,7 @@ void MetaActionList::addList( ActionList *list )
 
 void MetaActionList::clear()
 {
-	
+
 	foreach(ActionList* l, d->lists) {
 		l->clear();
 	}
