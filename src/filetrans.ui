@@ -1,171 +1,190 @@
-<ui version="4.0" stdsetdef="1" >
-  <author></author>
-  <comment></comment>
-  <exportmacro></exportmacro>
-  <class>FileTrans</class>
-  <widget class="QDialog" name="FileTrans" >
-    <property name="geometry" >
-      <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>334</width>
-        <height>268</height>
-      </rect>
-    </property>
-    <property name="windowTitle" >
-      <string>Form1</string>
-    </property>
-    <layout class="QVBoxLayout" >
-      <item>
-        <widget class="QLabel" name="lb_accountlabel" >
-          <property name="text" >
-            <string>accountlabel</string>
-          </property>
-        </widget>
-      </item>
-      <item>
-        <layout class="QHBoxLayout" >
-          <property name="margin" >
-            <number>0</number>
-          </property>
-          <item>
-            <widget class="QLabel" name="lb_to" >
-              <property name="text" >
-                <string>To:</string>
-              </property>
-            </widget>
-          </item>
-          <item>
-            <widget class="QLineEdit" name="le_to" >
-              <property name="minimumSize" >
-                <size>
-                  <width>100</width>
-                  <height>0</height>
-                </size>
-              </property>
-              <property name="readOnly" >
-                <bool>true</bool>
-              </property>
-            </widget>
-          </item>
-        </layout>
-      </item>
-      <item>
-        <layout class="QGridLayout" >
-          <property name="margin" >
-            <number>0</number>
-          </property>
-          <item row="0" column="0" >
-            <widget class="QLabel" name="textLabel2" >
-              <property name="text" >
-                <string>File:</string>
-              </property>
-            </widget>
-          </item>
-          <item row="0" column="2" >
-            <widget class="IconToolButton" name="tb_browse" >
-              <property name="text" >
-                <string/>
-              </property>
-              <property name="psiIconName" stdset="0" >
-                <string>psi/browse</string>
-              </property>
-            </widget>
-          </item>
-          <item rowspan="1" row="1" column="1" colspan="2" >
-            <widget class="QLabel" name="lb_size" >
-              <property name="text" >
-                <string/>
-              </property>
-            </widget>
-          </item>
-          <item row="1" column="0" >
-            <widget class="QLabel" name="textLabel3" >
-              <property name="text" >
-                <string>Size:</string>
-              </property>
-            </widget>
-          </item>
-          <item row="0" column="1" >
-            <widget class="QLineEdit" name="le_fname" >
-              <property name="readOnly" >
-                <bool>true</bool>
-              </property>
-            </widget>
-          </item>
-        </layout>
-      </item>
-      <item>
-        <widget class="QLabel" name="textLabel1" >
-          <property name="text" >
-            <string>Description:</string>
-          </property>
-        </widget>
-      </item>
-      <item>
-        <widget class="QTextEdit" name="te_desc" />
-      </item>
-      <item>
-        <widget class="QLabel" name="lb_status" >
-          <property name="text" >
-            <string/>
-          </property>
-        </widget>
-      </item>
-      <item>
-        <widget class="Line" name="line1" >
-          <property name="frameShape" >
-            <enum>QFrame::HLine</enum>
-          </property>
-          <property name="frameShadow" >
-            <enum>QFrame::Sunken</enum>
-          </property>
-        </widget>
-      </item>
-      <item>
-        <layout class="QHBoxLayout" >
-          <property name="margin" >
-            <number>0</number>
-          </property>
-          <item>
-            <widget class="BusyWidget" name="busy" />
-          </item>
-          <item>
-            <spacer name="spacer1" >
-              <property name="sizeHint" >
-                <size>
-                  <width>40</width>
-                  <height>20</height>
-                </size>
-              </property>
-              <property name="sizeType" >
-                <enum>Expanding</enum>
-              </property>
-              <property name="orientation" >
-                <enum>Horizontal</enum>
-              </property>
-            </spacer>
-          </item>
-          <item>
-            <widget class="QPushButton" name="pb_stop" >
-              <property name="text" >
-                <string>stop</string>
-              </property>
-            </widget>
-          </item>
-          <item>
-            <widget class="QPushButton" name="pb_start" >
-              <property name="text" >
-                <string>start</string>
-              </property>
-              <property name="default" >
-                <bool>true</bool>
-              </property>
-            </widget>
-          </item>
-        </layout>
-      </item>
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>FileTrans</class>
+ <widget class="QDialog" name="FileTrans">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>334</width>
+    <height>289</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form1</string>
+  </property>
+  <layout class="QVBoxLayout">
+   <item>
+    <widget class="QLabel" name="lb_accountlabel">
+     <property name="text">
+      <string>accountlabel</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout">
+     <property name="margin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="lb_to">
+       <property name="text">
+        <string>To:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="le_to">
+       <property name="minimumSize">
+        <size>
+         <width>100</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
     </layout>
-  </widget>
-  <layoutdefault spacing="6" margin="11" />
+   </item>
+   <item>
+    <layout class="QGridLayout">
+     <property name="margin">
+      <number>0</number>
+     </property>
+     <item row="0" column="0">
+      <widget class="QLabel" name="textLabel2">
+       <property name="text">
+        <string>File:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="IconToolButton" name="tb_browse" native="true">
+       <property name="text" stdset="0">
+        <string/>
+       </property>
+       <property name="psiIconName" stdset="0">
+        <string>psi/browse</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1" colspan="2">
+      <widget class="QLabel" name="lb_size">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="textLabel3">
+       <property name="text">
+        <string>Size:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="le_fname">
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="textLabel1">
+     <property name="text">
+      <string>Description:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTextEdit" name="te_desc"/>
+   </item>
+   <item>
+    <widget class="QLabel" name="lb_thumbnail">
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="lb_status">
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="Line" name="line1">
+     <property name="frameShape">
+      <enum>QFrame::HLine</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Sunken</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout">
+     <property name="margin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="BusyWidget" name="busy" native="true"/>
+     </item>
+     <item>
+      <spacer name="spacer1">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Expanding</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pb_stop">
+       <property name="text">
+        <string>stop</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pb_start">
+       <property name="text">
+        <string>start</string>
+       </property>
+       <property name="default">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>IconToolButton</class>
+   <extends>QWidget</extends>
+   <header>icontoolbutton.h</header>
+  </customwidget>
+  <customwidget>
+   <class>BusyWidget</class>
+   <extends>QWidget</extends>
+   <header>busywidget.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
 </ui>

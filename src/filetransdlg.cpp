@@ -9,6 +9,7 @@
 #include <QProcess>
 #include <QMenu>
 #include <QKeyEvent>
+#include <QBuffer>
 
 #include "psicon.h"
 #include "psiaccount.h"
@@ -25,6 +26,7 @@
 #include "accountlabel.h"
 #include "psioptions.h"
 #include "fileutil.h"
+#include "xmpp_tasks.h"
 
 typedef quint64 LARGE_TYPE;
 
@@ -193,7 +195,20 @@ void FileTransferHandler::send(const XMPP::Jid &to, const QString &fname, const 
 	mapSignals();
 
 	d->f.setFileName(fname);
-	d->ft->sendFile(d->peer, d->fileName, d->fileSize, desc);
+
+	// try to make thumbnail
+	QImage img(fname);
+	XMPP::FTThumbnail thumb;
+	if (!img.isNull()) {
+		QByteArray ba;
+		QBuffer buffer(&ba);
+		buffer.open(QIODevice::WriteOnly);
+		img = img.scaled(64, 64, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+		img.save(&buffer, "PNG");
+		thumb = XMPP::FTThumbnail(ba, "image/png", img.width(), img.height());
+	}
+
+	d->ft->sendFile(d->peer, d->fileName, d->fileSize, desc, thumb);
 }
 
 PsiAccount *FileTransferHandler::account() const
@@ -583,6 +598,7 @@ FileRequestDlg::FileRequestDlg(const Jid &jid, PsiCon *psi, PsiAccount *pa, cons
 	setWindowIcon(IconsetFactory::icon("psi/upload").icon());
 #endif
 
+	lb_thumbnail->hide();
 	le_to->setText(d->jid.full());
 	le_to->setReadOnly(false);
 	pb_start->setText(tr("&Send"));
@@ -682,7 +698,16 @@ FileRequestDlg::FileRequestDlg(const QDateTime &ts, FileTransfer *ft, PsiAccount
 	pb_start->setText(tr("&Accept"));
 	pb_stop->setText(tr("&Reject"));
 
+	lb_thumbnail->hide();
 	tb_browse->hide();
+
+	if (!ft->thumbnail().isNull()) {
+		lb_thumbnail->resize(ft->thumbnail().width, ft->thumbnail().height);
+		JT_BitsOfBinary *task = new JT_BitsOfBinary(pa->client()->rootTask());
+		connect(task, SIGNAL(finished()), SLOT(thumbnailReceived()));
+		task->get(ft->peer(), QString(ft->thumbnail().data));
+		task->go(true);
+	}
 
 	connect(pb_start, SIGNAL(clicked()), SLOT(doStart()));
 	connect(pb_stop, SIGNAL(clicked()), SLOT(close()));
@@ -969,6 +994,18 @@ void FileRequestDlg::t_timeout()
 	QString str = tr("Unable to accept the file.  Perhaps the sender has cancelled the request.");
 	QMessageBox::information(this, tr("Error"), str);
 	close();
+}
+
+void FileRequestDlg::thumbnailReceived()
+{
+	JT_BitsOfBinary *task = static_cast<JT_BitsOfBinary *>(sender());
+	BoBData data = task->data();
+	if (!data.data().isNull()) {
+		lb_thumbnail->show();
+		QPixmap pix;
+		pix.loadFromData(data.data());
+		lb_thumbnail->setPixmap(pix);
+	}
 }
 
 //----------------------------------------------------------------------------

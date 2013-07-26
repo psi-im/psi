@@ -13,6 +13,7 @@ class FileTransView;
 namespace XMPP {
 	class FileTransfer;
 	class Jid;
+	class BoBData;
 }
 using namespace XMPP;
 
@@ -101,6 +102,7 @@ private slots:
 	void ft_connected();
 	void ft_error(int, int, const QString &);
 	void t_timeout();
+	void thumbnailReceived();
 
 private:
 	class Private;
