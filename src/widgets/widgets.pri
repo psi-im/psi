@@ -43,6 +43,8 @@ HEADERS += \
 	$$PWD/psitabbar.h \
 	$$PWD/actionlineedit.h
 
+FORMS += $$PWD/fancypopup.ui
+
 # to remove dependency on iconset and stuff
 #DEFINES += WIDGET_PLUGIN
 

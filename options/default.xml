@@ -278,18 +278,34 @@
 			</look>
 			<notifications>
 				<alert-style type="QString">animate</alert-style>
+				<typename type="QString">Classic</typename>
 				<bounce-dock type="QString">forever</bounce-dock>
-				<enable-growl type="bool">true</enable-growl>
 				<passive-popups>
-					<duration type="int">10000</duration>
+					<delays>
+						<chat type="int">5000</chat>
+						<file type="int">5000</file>
+						<message type="int">5000</message>
+						<gc-message type="int">5000</gc-message>
+						<status type="int">2000</status>
+					</delays>
 					<enabled type="bool">false</enabled>
+					<top-to-bottom type="bool">false</top-to-bottom>
+					<at-left-corner type="bool">false</at-left-corner>
 					<incoming-chat type="bool">true</incoming-chat>
+					<composing type="bool">true</composing>
 					<incoming-file-transfer type="bool">true</incoming-file-transfer>
 					<incoming-headline type="bool">true</incoming-headline>
 					<incoming-message type="bool">true</incoming-message>
+					<notify-every-muc-message type="bool">false</notify-every-muc-message>
 					<maximum-jid-length type="int">25</maximum-jid-length>
 					<maximum-text-length type="int">300</maximum-text-length>
 					<maximum-status-length type="int">-1</maximum-status-length>
+					<avatar-size type="int">48</avatar-size>
+					<suppress-while-away type="bool">false</suppress-while-away>
+					<suppress-while-dnd type="bool">true</suppress-while-dnd>
+					<dbus>
+						<transient-hint type="bool">false</transient-hint>
+					</dbus>
 					<status>
 						<offline type="bool">true</offline>
 						<online type="bool">true</online>

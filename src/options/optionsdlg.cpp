@@ -42,6 +42,7 @@
 #include "opt_appearance.h"
 #include "opt_chat.h"
 #include "opt_events.h"
+#include "opt_popups.h"
 #include "opt_status.h"
 #include "opt_iconset.h"
 #include "opt_groupchat.h"
@@ -271,6 +272,7 @@ void OptionsDlg::Private::createTabs()
 	tabs.append( applicationTab );
 	tabs.append( new OptionsTabChat(this) );
 	tabs.append( new OptionsTabEvents(this) );
+	tabs.append( new OptionsTabPopups(this) );
 	tabs.append( new OptionsTabStatus(this) );
 	tabs.append( new OptionsTabAppearance(this) );
 	//tabs.append( new OptionsTabIconsetSystem(this) );

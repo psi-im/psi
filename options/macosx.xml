@@ -10,6 +10,9 @@
 					<passive-popup type="QString">Sans Serif,9,-1,5,50,0,0,0,0,0</passive-popup>
 				</font>
 			</look>
+			<notifications>
+				<typename type="QString">Growl</typename>
+			</notifications>
 		</ui>
 		<shortcuts comment="Shortcuts">
 			<contactlist comment="Shortcuts in the contactlist">

@@ -145,6 +145,7 @@ public:
 
 	void setAutoAwayStatus(AutoAway status);
 
+	bool noPopup() const;
 	bool loggedIn() const;
 	void setNick(const QString &);
 	QString nick() const;

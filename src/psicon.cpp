@@ -103,6 +103,7 @@
 #include "avcall/calldlg.h"
 #include "alertmanager.h"
 #include "bosskey.h"
+#include "popupmanager.h"
 
 #include "AutoUpdater/AutoUpdater.h"
 #ifdef HAVE_SPARKLE
@@ -212,6 +213,7 @@ public:
 		, quitting(false)
 		, alertManager(parent)
 		, bossKey(0)
+		, popupManager(0)
 	{
 		psi = parent;
 	}
@@ -290,6 +292,7 @@ public:
 	AutoUpdater *autoUpdater;
 	AlertManager alertManager;
 	BossKey *bossKey;
+	PopupManager * popupManager;
 
 	struct IdleSettings
 	{
@@ -358,6 +361,7 @@ PsiCon::~PsiCon()
 	delete d->edb;
 	delete d->defaultMenuBar;
 	delete d->tabManager;
+	delete d->popupManager;
 	delete d;
 }
 
@@ -541,6 +545,9 @@ bool PsiCon::init()
 #endif
 
 	connect(&d->idle, SIGNAL(secondsIdle(int)), SLOT(secondsIdle(int)));
+
+	//PopupDurationsManager
+	d->popupManager = new PopupManager(this);
 
 	// S5B
 	d->s5bServer = new S5BServer;
@@ -771,6 +778,11 @@ FileTransDlg *PsiCon::ftdlg() const
 #else
 	return 0;
 #endif
+}
+
+PopupManager* PsiCon::popupManager() const
+{
+	return d->popupManager;
 }
 
 TabManager *PsiCon::tabManager() const
@@ -1627,6 +1639,18 @@ void PsiCon::processEvent(PsiEvent *e, ActivationType activationType)
 		if (w)
 			bringToFront(w);
 	}
+}
+
+void PsiCon::removeEvent(PsiEvent *e)
+{
+	PsiAccount* account = e->account();
+	if (!account)
+		return;
+	UserListItem *u = account->find(e->jid());
+	account->eventQueue()->dequeue(e);
+	account->queueChanged();
+	if(u)
+		account->cpUpdate(*u);
 }
 
 void PsiCon::updateS5BServerAddresses()

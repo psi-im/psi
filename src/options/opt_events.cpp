@@ -23,9 +23,9 @@ public:
 //----------------------------------------------------------------------------
 
 OptionsTabEvents::OptionsTabEvents(QObject *parent)
-: OptionsTab(parent, "events", "", tr("Events"), tr("The events behaviour"), "psi/events")
+	: OptionsTab(parent, "events", "", tr("Events"), tr("The events behaviour"), "psi/events")
+	, w(0)
 {
-	w = 0;
 }
 
 QWidget *OptionsTabEvents::widget()
@@ -79,11 +79,6 @@ QWidget *OptionsTabEvents::widget()
 	d->cb_bounce->hide();
 	d->lb_bounce->hide();
 #endif
-
-#if !defined(Q_OS_MAC) || !defined(HAVE_GROWL)
-	d->ck_growl->hide();
-#endif
-
 /*
 	list_alerts.insert(0,d->rb_aSolid);
 	list_alerts.insert(1,d->rb_aBlink);
@@ -110,16 +105,6 @@ void OptionsTabEvents::applyOptions()
 	PsiOptions::instance()->setOption("options.subscriptions.automatically-allow-authorization", d->ck_autoAuth->isChecked());
 	PsiOptions::instance()->setOption("options.ui.notifications.successful-subscription", d->ck_notifyAuth->isChecked());
 	PsiOptions::instance()->setOption("options.ui.notifications.bounce-dock", d->cb_bounce->itemData( d->cb_bounce->currentIndex()));
-
-	PsiOptions::instance()->setOption("options.ui.notifications.enable-growl", d->ck_growl->isChecked());
-	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.enabled", d->ck_popupOn->isChecked());
-	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.incoming-message", d->ck_popupOnMessage->isChecked());
-	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.incoming-chat", d->ck_popupOnMessage->isChecked());
-	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.incoming-headline", d->ck_popupOnHeadline->isChecked());
-	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.incoming-file-transfer", d->ck_popupOnFile->isChecked());
-	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.status.online", d->ck_popupOnOnline->isChecked());
-	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.status.offline", d->ck_popupOnOffline->isChecked());
-	PsiOptions::instance()->setOption("options.ui.notifications.passive-popups.status.other-changes", d->ck_popupOnStatus->isChecked());
 }
 
 void OptionsTabEvents::restoreOptions()
@@ -139,13 +124,4 @@ void OptionsTabEvents::restoreOptions()
 	d->ck_autoAuth->setChecked( PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorization").toBool() );
 	d->ck_notifyAuth->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.successful-subscription").toBool() );
 	d->cb_bounce->setCurrentIndex( d->cb_bounce->findData(PsiOptions::instance()->getOption("options.ui.notifications.bounce-dock").toString()) );
-
-	d->ck_growl->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.enable-growl").toBool() );
-	d->ck_popupOn->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.enabled").toBool() );
-	d->ck_popupOnMessage->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool() || PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-chat").toBool() );
-	d->ck_popupOnHeadline->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-headline").toBool() );
-	d->ck_popupOnFile->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-file-transfer").toBool() );
-	d->ck_popupOnOnline->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.online").toBool() );
-	d->ck_popupOnOffline->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.offline").toBool() );
-	d->ck_popupOnStatus->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.other-changes").toBool() );
 }

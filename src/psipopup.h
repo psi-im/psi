@@ -21,58 +21,51 @@
 #ifndef PSIPOPUP_H
 #define PSIPOPUP_H
 
-#include <QObject>
+#ifndef QT_STATICPLUGIN
+#define QT_STATICPLUGIN
+#endif
 
-class PsiCon;
-class PsiAccount;
-class UserListItem;
+#include "psipopupinterface.h"
+
 class FancyPopup;
-class PsiIcon;
-class PsiEvent;
-namespace XMPP {
-	class Jid;
-	class Resource;
-}
-using namespace XMPP;
 
-
-class PsiPopup : public QObject
+class PsiPopup : public QObject, public PsiPopupInterface
 {
 	Q_OBJECT
+
 public:
-	PsiPopup(const PsiIcon *titleIcon, QString titleText, PsiAccount *acc);
+	PsiPopup(QObject* parent = 0);
 	~PsiPopup();
 
-	enum PopupType {
-		AlertNone = 0,
-
-		AlertOnline,
-		AlertOffline,
-		AlertStatusChange,
-
-		AlertMessage,
-		AlertChat,
-		AlertHeadline,
-		AlertFile,
-		AlertAvCall
-	};
-	PsiPopup(PopupType type, PsiAccount *acc);
-
-	void setData(const PsiIcon *icon, QString text);
-	void setData(const Jid &, const Resource &, const UserListItem * = 0, const PsiEvent * = 0);
-
-	void show();
-
-	QString id() const;
-	FancyPopup *popup();
+	virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const Resource& r, const UserListItem* = 0, PsiEvent* = 0);
+	virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const PsiIcon* titleIcon, const QString& titleText,
+		   const QPixmap* avatar, const PsiIcon* icon, const QString& text);
 
 	static void deleteAll();
 
-public:
-	class Private;
 private:
+	void setData(const Jid &, const Resource &, const UserListItem * = 0, const PsiEvent * = 0);
+	void setData(const QPixmap *avatar, const PsiIcon *icon, const QString& text);
+	void setJid(const Jid &j);
+	QString id() const;
+	FancyPopup *popup() const;
+	void show();
+
+private:
+	class Private;
 	Private *d;
 	friend class Private;
+};
+
+class PsiPopupPlugin : public QObject, public PsiPopupPluginInterface
+{
+	Q_OBJECT
+	Q_INTERFACES(PsiPopupPluginInterface)
+
+public:
+	virtual ~PsiPopupPlugin() { PsiPopup::deleteAll(); }
+	virtual QString name() const { return "Classic"; }
+	virtual PsiPopupInterface* popup(QObject* p) { return new PsiPopup(p); }
 };
 
 #endif

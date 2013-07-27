@@ -19,15 +19,11 @@
  */
 
 #include "fancypopup.h"
+#include "ui_fancypopup.h"
 
-#include <QPixmap>
 #include <QApplication>
-#include <QLabel>
-#include <QLayout>
 #include <QTimer>
-#include <QPainter>
 #include <QList>
-#include <QToolButton>
 #include <QStyle>
 #include <QDesktopWidget>
 #include <QMouseEvent>
@@ -35,8 +31,9 @@
 
 #include "iconset.h"
 #include "fancylabel.h"
-#include "iconlabel.h"
+//#include "iconlabel.h"
 #include "psitooltip.h"
+#include "psioptions.h"
 
 #define BUTTON_WIDTH	16
 #define BUTTON_HEIGHT	14
@@ -72,7 +69,7 @@ public:
 
 	QPoint position();
 
-	class BackgroundWidget : public QWidget
+	/*class BackgroundWidget : public QWidget
 	{
 	public:
 		BackgroundWidget(QWidget *parent)
@@ -95,7 +92,7 @@ public:
 			p->drawTiledPixmap(0, 0, width(), height(), background);
 			delete p;
 		}
-	};
+	};*/
 
 	bool eventFilter(QObject *o, QEvent *e);
 
@@ -116,9 +113,10 @@ public:
 	PopupLayout popupLayout;
 
 	QList<FancyPopup *> prevPopups;
-	QBoxLayout *layout;
+	//QBoxLayout *layout;
 	FancyPopup *popup;
 	QTimer *hideTimer;
+	Ui::Frame ui_;
 };
 
 int  FancyPopup::Private::hideTimeout = 5 * 1000; // 5 seconds
@@ -148,12 +146,17 @@ void FancyPopup::Private::popupDestroyed(QObject *obj)
 QPoint FancyPopup::Private::position()
 {
 	QRect geom = qApp->desktop()->availableGeometry(popup);
-	QPoint destination(geom.x() + geom.width(), geom.y() + geom.height()); // in which corner popup should appear
+	bool topToBottom = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.top-to-bottom").toBool();
+	bool atLeft = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.at-left-corner").toBool();
+	QPoint destination(geom.x() + (atLeft ? 0 : geom.width()),
+			   geom.y() + (topToBottom ? 0 : geom.height()) ); // in which corner popup should appear
 
-	if ( destination.y() > (qApp->desktop()->screenGeometry().height()/2) )
+	/*if ( destination.y() > (qApp->desktop()->screenGeometry().height()/2) )
 		popupLayout = Private::BottomToTop;
 	else
-		popupLayout = Private::TopToBottom;
+		popupLayout = Private::TopToBottom;*/
+
+	popupLayout = topToBottom ? Private::TopToBottom : Private::BottomToTop;
 
 	if ( (destination.x() + popup->width()) > (geom.x() + geom.width()) )
 		destination.setX( geom.x() + geom.width() - popup->width() );
@@ -181,45 +184,14 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
 	QPixmap back(1, 1);
 	back.fill(backgroundColor);
 
-	QVBoxLayout *vbox = new QVBoxLayout(popup);
-	vbox->setMargin(0);
-	vbox->setSpacing(0);
+	ui_.setupUi(popup);
+	ui_.lb_bottom1->setPalette(backgroundPalette);
+	ui_.lb_icon->setPalette(backgroundPalette);
+	ui_.lb_mid1->setPalette(backgroundPalette);
+	ui_.lb_mid2->setPalette(backgroundPalette);
+	ui_.lb_top1->setPalette(backgroundPalette);
+	ui_.closeFrame->setPalette(backgroundPalette);
 
-	// top row
-	QHBoxLayout *tophbox = new QHBoxLayout;
-	vbox->addLayout(tophbox);
-	QLabel *top1 = new QLabel(popup);
-	top1->setAutoFillBackground(true);
-	top1->setFixedWidth(3);
-	top1->setPalette(backgroundPalette);
-	tophbox->addWidget(top1);
-
-	QVBoxLayout *topvbox = new QVBoxLayout;
-	tophbox->addLayout(topvbox);
-	QLabel *top2 = new QLabel(popup);
-	top2->setAutoFillBackground(true);
-	top2->setFixedHeight(1);
-	top2->setPalette(backgroundPalette);
-	topvbox->addWidget(top2);
-
-	QHBoxLayout *tophbox2 = new QHBoxLayout;
-	topvbox->addLayout(tophbox2);
-
-	IconLabel *titleIcon = new IconLabel(popup);
-	titleIcon->setAutoFillBackground(true);
-	titleIcon->setPsiIcon(icon, copyIcon);
-	titleIcon->setPalette(backgroundPalette);
-	tophbox2->addWidget(titleIcon);
-
-	QLabel *top5 = new QLabel(popup);
-	top5->setAutoFillBackground(true);
-	top5->setFixedWidth(3);
-	top5->setPalette(backgroundPalette);
-	tophbox2->addWidget(top5);
-
-	// title label
-	QLabel *titleText = new QLabel(popup);
-	titleText->setAutoFillBackground(true);
 	QBrush titleFontColor;
 	if ( (backgroundColor.red() + backgroundColor.green() + backgroundColor.blue())/3 > 128 )
 		titleFontColor = QBrush(Qt::white);
@@ -227,96 +199,20 @@ void FancyPopup::Private::initContents(QString title, const PsiIcon *icon, bool 
 		titleFontColor = QBrush(Qt::black);
 	QPalette titlePalette = backgroundPalette;
 	titlePalette.setBrush(QPalette::Text, titleFontColor);
-	titleText->setPalette(titlePalette);
-
-	QFont titleFont = titleText->font();
+	ui_.lb_title->setPalette(titlePalette);
+	QFont titleFont = ui_.lb_title->font();
 	titleFont.setBold(true);
-	titleText->setFont(titleFont);
+	ui_.lb_title->setFont(titleFont);
+	ui_.lb_title->setText( title );
 
-	titleText->setText( title );
-	titleText->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-	tophbox2->addWidget(titleText);
+	ui_.lb_icon->setPsiIcon(icon, copyIcon);
 
-	// 2-pixel space
-	Private::BackgroundWidget *spacing = new Private::BackgroundWidget(popup);
-	spacing->setBackground(back);
-	tophbox2->addWidget(spacing);
-	QVBoxLayout *spacingLayout = new QVBoxLayout(spacing);
-	spacingLayout->addSpacing(2);
-
-	// close button
-	Private::BackgroundWidget *closeButtonBack = new Private::BackgroundWidget(popup);
-	closeButtonBack->setBackground(back);
-	tophbox2->addWidget(closeButtonBack);
-
-	QVBoxLayout *closeButtonBackLayout = new QVBoxLayout(closeButtonBack);
-	closeButtonBackLayout->setMargin(0);
-	closeButtonBackLayout->addStretch();
-
-	QToolButton *closeButton = new QToolButton(closeButtonBack);
-	closeButton->setObjectName("closeButton");
-	closeButton->setToolTip(tr("Close"));
-	closeButtonBackLayout->addWidget( closeButton );
-	closeButtonBackLayout->addStretch();
-	closeButton->setFocusPolicy( Qt::NoFocus );
-	closeButton->setIcon( popup->style()->standardPixmap(QStyle::SP_TitleBarCloseButton) );
-	closeButton->setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT);
-	connect(closeButton, SIGNAL(clicked()), popup, SLOT(hide()));
-
-	QLabel *top3 = new QLabel(popup);
-	top3->setAutoFillBackground(true);
-	top3->setFixedHeight(1);
-	top3->setPalette(backgroundPalette);
-	topvbox->addWidget(top3);
-
-	QLabel *top4 = new QLabel(popup);
-	top4->setAutoFillBackground(true);
-	top4->setFixedWidth(3);
-	top4->setPalette(backgroundPalette);
-	tophbox->addWidget(top4);
-
-	// middle row
-	QHBoxLayout *middlehbox = new QHBoxLayout;
-	vbox->addLayout(middlehbox);
-	QLabel *middle1 = new QLabel(popup);
-	middle1->setAutoFillBackground(true);
-	middle1->setFixedWidth(4);
-	middle1->setPalette(backgroundPalette);
-	middlehbox->addWidget(middle1);
-
-	middlehbox->addSpacing(5);
-	QVBoxLayout *middlevbox = new QVBoxLayout;
-	middlehbox->addLayout(middlevbox);
-	middlevbox->addSpacing(5);
-	layout = middlevbox; // we'll add more items later in addLayout()
-	middlehbox->addSpacing(5);
-
-	QLabel *middle3 = new QLabel(popup);
-	middle3->setAutoFillBackground(true);
-	middle3->setFixedWidth(4);
-	middle3->setPalette(backgroundPalette);
-	middlehbox->addWidget(middle3);
-
-	// bottom row
-	QHBoxLayout *bottomhbox = new QHBoxLayout;
-	vbox->addLayout(bottomhbox);
-	QLabel *bottom1 = new QLabel(popup);
-	bottom1->setAutoFillBackground(true);
-	bottom1->setFixedSize( 4, 4 );
-	bottom1->setPalette(backgroundPalette);
-	bottomhbox->addWidget(bottom1);
-
-	QLabel *bottom2 = new QLabel(popup);
-	bottom2->setAutoFillBackground(true);
-	bottom2->setFixedHeight(4);
-	bottom2->setPalette(backgroundPalette);
-	bottomhbox->addWidget(bottom2);
-
-	QLabel *bottom3 = new QLabel(popup);
-	bottom3->setAutoFillBackground(true);
-	bottom3->setFixedSize( 4, 4 );
-	bottom3->setPalette(backgroundPalette);
-	bottomhbox->addWidget(bottom3);
+	ui_.closeButton->setObjectName("closeButton");
+	ui_.closeButton->setToolTip(tr("Close"));
+	ui_.closeButton->setFocusPolicy( Qt::NoFocus );
+	ui_.closeButton->setIcon( popup->style()->standardPixmap(QStyle::SP_TitleBarCloseButton) );
+	ui_.closeButton->setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT);
+	connect(ui_.closeButton, SIGNAL(clicked()), popup, SLOT(hide()));
 }
 
 bool FancyPopup::Private::eventFilter(QObject *o, QEvent *e)
@@ -359,8 +255,8 @@ FancyPopup::~FancyPopup()
 
 void FancyPopup::addLayout(QLayout *layout, int stretch)
 {
-	d->layout->addLayout(layout, stretch);
-	d->layout->addSpacing(5);
+	d->ui_.layout->addLayout(layout, stretch);
+	d->ui_.layout->addSpacing(5);
 }
 
 void FancyPopup::show()

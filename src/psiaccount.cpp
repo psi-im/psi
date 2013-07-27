@@ -117,7 +117,6 @@
 #include "qwextend.h"
 #include "geolocation.h"
 #include "physicallocation.h"
-#include "psipopup.h"
 #include "translationmanager.h"
 #include "irisprotocol/iris_discoinfoquerier.h"
 #include "iconwidget.h"
@@ -147,6 +146,7 @@
 #include "bookmarkmanagedlg.h"
 #include "accountloginpassword.h"
 #include "alertmanager.h"
+#include "popupmanager.h"
 
 #include "psimedia/psimedia.h"
 #include "avcall/avcall.h"
@@ -157,10 +157,6 @@
 #endif
 
 #include <QtCrypto>
-
-#if defined(Q_OS_MAC) && defined(HAVE_GROWL)
-#include "psigrowlnotifier.h"
-#endif
 
 #include "bsocket.h"
 /*#ifdef Q_OS_WIN
@@ -496,6 +492,27 @@ private:
 
 public:
 	bool noPopup(ActivationType activationType) const
+	{
+		if (activationType == FromXml || !doPopups_)
+			return true;
+
+		if (lastManualStatus().isAvailable()) {
+			if (lastManualStatus().type() == XMPP::Status::DND &&
+			    PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.suppress-while-dnd").toBool())
+			{
+				return true;
+			}
+			if ((lastManualStatus().type() == XMPP::Status::Away || lastManualStatus().type() == XMPP::Status::XA) &&
+			    PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.suppress-while-away").toBool())
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	bool noPopupDialogs(ActivationType activationType) const
 	{
 		if (activationType == FromXml || !doPopups_)
 			return true;
@@ -2385,34 +2402,24 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
 	if(doSound)
 		playSound(eOnline);
 
-#if !defined(Q_OS_MAC) || !defined(HAVE_GROWL)
 	// Do the popup test earlier (to avoid needless JID lookups)
 	if ((popupType == PopupOnline && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.online").toBool()) || (popupType == PopupStatusChange && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.other-changes").toBool())) {
-#endif
 		if(notifyOnlineOk && doPopup && !d->blockTransportPopupList->find(j, popupType == PopupOnline) && !d->noPopup(IncomingStanza)) {
-			QString name;
 			UserListItem *u = findFirstRelevant(j);
-
-			PsiPopup::PopupType pt = PsiPopup::AlertNone;
+			PopupManager::PopupType pt = PopupManager::AlertNone;
 			if ( popupType == PopupOnline )
-				pt = PsiPopup::AlertOnline;
+				pt = PopupManager::AlertOnline;
 			else if ( popupType == PopupStatusChange )
-				pt = PsiPopup::AlertStatusChange;
+				pt = PopupManager::AlertStatusChange;
 
 			if ((popupType == PopupOnline && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.online").toBool()) || (popupType == PopupStatusChange && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.other-changes").toBool())) {
-				PsiPopup *popup = new PsiPopup(pt, this);
-				popup->setData(j, r, u);
+				psi()->popupManager()->doPopup(this, pt, j, r, u, 0, false);
 			}
-#if defined(Q_OS_MAC) && defined(HAVE_GROWL)
-			PsiGrowlNotifier::instance()->popup(this, pt, j, r, u);
-#endif
 		}
 		else if ( !notifyOnlineOk ) {
 			d->userCounter++;
 		}
-#if !defined(Q_OS_MAC) || !defined(HAVE_GROWL)
 	}
-#endif
 
 	// Update entity capabilities.
 	// This has to happen after the userlist item has been created.
@@ -2489,21 +2496,14 @@ void PsiAccount::client_resourceUnavailable(const Jid &j, const Resource &r)
 	if(doSound)
 		playSound(eOffline);
 
-#if !defined(Q_OS_MAC) || !defined(HAVE_GROWL)
 	// Do the popup test earlier (to avoid needless JID lookups)
-	if (PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.offline").toBool())
-#endif
-	if(doPopup && !d->blockTransportPopupList->find(j) && !d->noPopup(IncomingStanza)) {
-		QString name;
+	if(PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.offline").toBool() &&
+	   doPopup && !d->blockTransportPopupList->find(j) && !d->noPopup(IncomingStanza)) {
 		UserListItem *u = findFirstRelevant(j);
 
 		if (PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.status.offline").toBool()) {
-			PsiPopup *popup = new PsiPopup(PsiPopup::AlertOffline, this);
-			popup->setData(j, r, u);
+			psi()->popupManager()->doPopup(this, PopupManager::AlertOffline, j, r, u, 0, false);
 		}
-#if defined(Q_OS_MAC) && defined(HAVE_GROWL)
-		PsiGrowlNotifier::instance()->popup(this, PsiPopup::AlertOffline, j, r, u);
-#endif
 	}
 }
 
@@ -2891,6 +2891,11 @@ void PsiAccount::setStatusActual(const Status &_s)
 
 		clearCurrentConnectionError();
 	}
+}
+
+bool PsiAccount::noPopup() const
+{
+	return d->noPopup(UserAction);
 }
 
 void PsiAccount::sentInitialPresence()
@@ -4566,7 +4571,7 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 
 	bool doPopup    = false;
 	bool putToQueue = true;
-	PsiPopup::PopupType popupType = PsiPopup::AlertNone;
+	PopupManager::PopupType popupType = PopupManager::AlertNone;
 	SoundType soundType = eNone;
 
 	// find someone to accept the event
@@ -4666,12 +4671,19 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 					c->incomingMessage(m);
 				}
 			}
-			delete e;
-			return;
+			if(m.chatState() == StateComposing) {
+				doPopup = true;
+				putToQueue = false;
+				popupType = PopupManager::AlertComposing;
+			}
+			else {
+				delete e;
+				return;
+			}
 		}
 
 		// pass chat messages directly to a chat window if possible (and deal with sound)
-		if(m.type() == "chat") {
+		else if(m.type() == "chat") {
 			ChatDlg *c = findChatDialog(e->from());
 			if(!c)
 				c = findChatDialog(e->jid());
@@ -4710,18 +4722,18 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 
 			if (putToQueue) {
 				doPopup = true;
-				popupType = PsiPopup::AlertChat;
+				popupType = PopupManager::AlertChat;
 			}
 		} // /chat
 		else if (m.type() == "headline") {
 			soundType = eHeadline;
 			doPopup = true;
-			popupType = PsiPopup::AlertHeadline;
+			popupType = PopupManager::AlertHeadline;
 		} // /headline
 		else if (m.type().isEmpty()) {
 			soundType = eMessage;
 			doPopup = true;
-			popupType = PsiPopup::AlertMessage;
+			popupType = PopupManager::AlertMessage;
 		} // /""
 		else {
 			soundType = eSystem;
@@ -4738,12 +4750,12 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 	else if(e->type() == PsiEvent::File) {
 		soundType = eIncomingFT;
 		doPopup = true;
-		popupType = PsiPopup::AlertFile;
+		popupType = PopupManager::AlertFile;
 	}
 	else if(e->type() == PsiEvent::AvCallType) {
 		soundType = eIncomingFT;
 		doPopup = true;
-		popupType = PsiPopup::AlertAvCall;
+		popupType = PopupManager::AlertAvCall;
 	}
 	else if(e->type() == PsiEvent::RosterExchange) {
 		RosterExchangeEvent* re = (RosterExchangeEvent*) e;
@@ -4818,18 +4830,15 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 			r = *(u->priority());
 		}
 
-		if ((popupType == PsiPopup::AlertChat     && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-chat").toBool())     ||
-			(popupType == PsiPopup::AlertMessage  && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool())  ||
-			(popupType == PsiPopup::AlertHeadline && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-headline").toBool()) ||
-			(popupType == PsiPopup::AlertFile     && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-file-transfer").toBool()) ||
-			(popupType == PsiPopup::AlertAvCall   && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool()))
+		if ((popupType == PopupManager::AlertChat      && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-chat").toBool())     ||
+		    (popupType == PopupManager::AlertMessage   && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool())  ||
+		    (popupType == PopupManager::AlertHeadline  && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-headline").toBool()) ||
+		    (popupType == PopupManager::AlertFile      && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-file-transfer").toBool()) ||
+		    (popupType == PopupManager::AlertAvCall    && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool()) ||
+		    (popupType == PopupManager::AlertComposing && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.composing").toBool()))
 		{
-			PsiPopup *popup = new PsiPopup(popupType, this);
-			popup->setData(j, r, u, e);
+			psi()->popupManager()->doPopup(this, popupType, j, r, u, e, false);
 		}
-#if defined(Q_OS_MAC) && defined(HAVE_GROWL)
-		PsiGrowlNotifier::instance()->popup(this, popupType, j, r, u, e);
-#endif
 		emit startBounce();
 	}
 
@@ -4953,7 +4962,7 @@ void PsiAccount::queueEvent(PsiEvent* e, ActivationType activationType)
 
 	// FIXME: We shouldn't be doing this kind of stuff here, because this
 	// function is named *queue*Event() not deleteThisMessageSometimes()
-	if (!d->noPopup(activationType)) {
+	if (!d->noPopupDialogs(activationType)) {
 		bool doPopup = false;
 
 		// Check to see if we need to popup

@@ -26,14 +26,16 @@
 #ifndef PSIGROWLNOTIFIER_H
 #define PSIGROWLNOTIFIER_H
 
-#include <QObject>
+#ifndef QT_STATICPLUGIN
+#define QT_STATICPLUGIN
+#endif
 
-#include "psipopup.h"
+#include "psipopupinterface.h"
 
 class GrowlNotifier;
-class PsiAccount;
-
 class NotificationContext;
+
+using namespace XMPP;
 
 /**
  * An interface for Psi to Growl.
@@ -43,13 +45,17 @@ class NotificationContext;
  *
  * \see GrowlNotifier
  */
-class PsiGrowlNotifier : public QObject
+class PsiGrowlNotifier : public QObject, public PsiPopupInterface
 {
 	Q_OBJECT
 
 public:
 	static PsiGrowlNotifier* instance();
-	void popup(PsiAccount* account, PsiPopup::PopupType type, const Jid& j, const Resource& r, const UserListItem* = 0, PsiEvent* = 0);
+	static bool isAvailable();
+
+	virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const Resource& r, const UserListItem* = 0, PsiEvent* = 0);
+	virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const PsiIcon* titleIcon, const QString& titleText,
+		   const QPixmap* avatar, const PsiIcon* icon, const QString& text);
 
 public slots:
 	void notificationClicked(void*);
@@ -65,6 +71,17 @@ private:
 	static PsiGrowlNotifier* instance_;
 	GrowlNotifier* gn_;
 	QList<NotificationContext*> contexts_;
+};
+
+class PsiGrowlNotifierPlugin : public QObject, public PsiPopupPluginInterface
+{
+	Q_OBJECT
+	Q_INTERFACES(PsiPopupPluginInterface)
+
+public:
+	virtual QString name() const { return "Growl"; }
+	virtual PsiPopupInterface* popup(QObject* ) { return PsiGrowlNotifier::instance(); }
+	virtual bool isAvailable() { return PsiGrowlNotifier::isAvailable(); }
 };
 
 #endif

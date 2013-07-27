@@ -55,6 +55,7 @@ class TuneController;
 class PsiContactList;
 class TabManager;
 class ContactUpdatesManager;
+class PopupManager;
 
 namespace OpenPGP {
 	class Engine;
@@ -118,12 +119,15 @@ public:
 	IconSelectPopup *iconSelectPopup() const;
 	bool filterEvent(const PsiAccount*, const PsiEvent*) const;
 	void processEvent(PsiEvent*, ActivationType activationType);
+	void removeEvent(PsiEvent* e);
 
 	Status::Type currentStatusType() const;
 	Status::Type lastLoggedInStatusType() const;
 	QString currentStatusMessage() const;
 
 	bool haveAutoUpdater() const;
+
+	PopupManager* popupManager() const;
 
 signals:
 	void quit(int);
