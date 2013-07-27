@@ -99,7 +99,7 @@ ContactListView::ContactListView(QWidget* parent)
 	setCornerWidget(new ContactListViewCorner());
 #endif
 
-	connect(this, SIGNAL(activated(const QModelIndex&)), SLOT(itemActivated(const QModelIndex&)));
+	connect(this, SIGNAL(doubleClicked(const QModelIndex&)), SLOT(itemActivated(const QModelIndex&)));
 	// showStatus_ = PsiOptions::instance()->getOption("options.ui.contactlist.status-messages.show").toBool();
 }
 
@@ -279,7 +279,7 @@ void ContactListView::keyPressEvent(QKeyEvent* event)
 	case Qt::Key_Return:
 		if (state() != EditingState || hasFocus()) {
 			if (currentIndex().isValid())
-				emit activated(currentIndex());
+				emit doubleClicked(currentIndex());
 		}
 		else {
 			event->ignore();
