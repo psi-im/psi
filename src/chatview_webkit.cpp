@@ -191,6 +191,14 @@ void ChatView::embedJsObject()
 	}
 }
 
+void ChatView::markReceived(QString id)
+{
+	QVariantMap m;
+	m["type"] = "receipt";
+	m["id"] = id;
+	sendJsObject(m);
+}
+
 QSize ChatView::sizeHint() const
 {
 	return minimumSizeHint();

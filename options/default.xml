@@ -110,6 +110,8 @@
 				<use-chat-says-style type="bool">false</use-chat-says-style>
 				<use-expanding-line-edit type="bool">true</use-expanding-line-edit>
 				<use-small-chats type="bool">false</use-small-chats>
+				<use-message-icons type="bool">true</use-message-icons>
+				<scaled-message-icons type="bool">false</scaled-message-icons>
 				<warn-before-clear type="bool">true</warn-before-clear>
 			</chat>
 			<history comment="History dialog options">
@@ -283,6 +285,8 @@
 				</font>
 			</look>
 			<notifications>
+				<send-receipts type="bool" >true</send-receipts>
+				<request-receipts type="bool" >true</request-receipts>
 				<alert-style type="QString">animate</alert-style>
 				<typename type="QString">Classic</typename>
 				<bounce-dock type="QString">forever</bounce-dock>

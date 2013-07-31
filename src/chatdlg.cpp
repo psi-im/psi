@@ -669,6 +669,20 @@ void ChatDlg::doSend()
 	}
 	QString id = account()->client()->genUniqueId();
 	m.setId(id); // we need id early for message manipulations in chatview
+
+	//xep-0184 Message Receipts
+	if (PsiOptions::instance()->getOption("options.ui.notifications.request-receipts").toBool()) {
+		QStringList sl;
+		sl<<"urn:xmpp:receipts";
+		//FIXME uncomment next lines when all bugs will be fixed
+		//if (!jid().resource().isEmpty() || (account()->capsManager()->isEnabled() &&
+		//    account()->capsManager()->features(jid()).test(sl))) {
+		if (true) {
+			m.setMessageReceipt(ReceiptRequest);
+			//rememberPosition(id);
+		}
+	}
+
 	m_ = m;
 
 	// Request events
@@ -741,6 +755,9 @@ void ChatDlg::incomingMessage(const Message &m)
 
 		if (m.chatState() != XMPP::StateNone) {
 			setContactChatState(m.chatState());
+		}
+		if (m.messageReceipt() == ReceiptReceived) {
+			chatView()->markReceived(m.messageReceiptId());
 		}
 	}
 	else {
@@ -822,6 +839,7 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 	mv.setUserId(local?account()->jid().bare():jid().bare());
 	mv.setDateTime(m.timeStamp());
 	mv.setSpooled(m.spooled());
+	mv.setAwaitingReceipt(local && m.messageReceipt() == ReceiptRequest);
 	chatView()->dispatchMessage(mv);
 
 	if (!m.urlList().isEmpty()) {

@@ -39,8 +39,12 @@ public:
 	ChatView(QWidget* parent);
 	~ChatView();
 
+	void addLogIconsResources();
+	void markReceived(QString id);
+
 	// reimplemented
 	QSize sizeHint() const;
+	void clear();
 
 	void init();
 	void setDialog(QWidget* dialog);
@@ -83,6 +87,13 @@ private:
 	QString name_;
 	int  oldTrackBarPosition;
 	QPointer<QWidget> dialog_;
+	bool useMessageIcons_;
+
+	QPixmap logIconSend;
+	QPixmap logIconReceive;
+	QPixmap logIconDelivered;
+	QPixmap logIconTime;
+	QPixmap logIconInfo;
 };
 
 #endif

@@ -33,6 +33,7 @@ MessageView::MessageView(Type t)
 	, _alert(false)
 	, _local(false)
 	, _spooled(false)
+	, _awaitingReceipt(false)
 	, _status(0)
 	, _dateTime(QDateTime::currentDateTime())
 {
@@ -158,6 +159,8 @@ QVariantMap MessageView::toVariantMap(bool isMuc, bool formatted) const
 			m["id"] = _messageId;
 			if (isMuc) { // maybe w/o conditions ?
 				m["alert"] = _alert;
+			} else {
+				m["awaitingReceipt"] = _awaitingReceipt;
 			}
 			break;
 		case Status:

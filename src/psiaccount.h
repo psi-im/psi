@@ -440,6 +440,7 @@ protected:
 
 	void publishTune(const Tune&);
 	void setSendChatState(bool);
+	void setReceipts(bool);
 	void setRCEnabled(bool);
 	void sessionStarted();
 

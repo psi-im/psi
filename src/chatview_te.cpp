@@ -27,12 +27,14 @@
 #include "textutil.h"
 #include "psirichtext.h"
 #include "common.h"
+#include "iconset.h"
 
 #include <QWidget>
 #include <QTextOption>
 #include <QScrollBar>
 #include <QTimer>
 #include <QKeyEvent>
+#include <QUrl>
 
 static const char *infomrationalColorOpt = "options.ui.look.colors.messages.informational";
 
@@ -56,6 +58,26 @@ ChatView::ChatView(QWidget *parent)
 	connect(this, SIGNAL(selectionChanged()), SLOT(autoCopy()));
 	connect(this, SIGNAL(cursorPositionChanged()), SLOT(autoCopy()));
 #endif
+
+	useMessageIcons_ = PsiOptions::instance()->getOption("options.ui.chat.use-message-icons").toBool();
+	if (useMessageIcons_) {
+		int logIconsSize = fontInfo().pixelSize()*0.93;
+		if (PsiOptions::instance()->getOption("options.ui.chat.scaled-message-icons").toBool()) {
+			logIconReceive = IconsetFactory::iconPixmap("psi/notification_chat_receive").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
+			logIconSend = IconsetFactory::iconPixmap("psi/notification_chat_send").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
+			logIconDelivered = IconsetFactory::iconPixmap("psi/notification_chat_delivery_ok").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
+			logIconTime = IconsetFactory::iconPixmap("psi/notification_chat_time").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
+			logIconInfo = IconsetFactory::iconPixmap("psi/notification_chat_info").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
+		} else {
+			logIconReceive = IconsetFactory::iconPixmap("psi/notification_chat_receive");
+			logIconSend = IconsetFactory::iconPixmap("psi/notification_chat_send");
+			logIconDelivered = IconsetFactory::iconPixmap("psi/notification_chat_delivery_ok");
+			logIconTime = IconsetFactory::iconPixmap("psi/notification_chat_time");
+			logIconInfo = IconsetFactory::iconPixmap("psi/notification_chat_info");
+		}
+		addLogIconsResources();
+	}
+
 }
 
 ChatView::~ChatView()
@@ -84,6 +106,29 @@ void ChatView::setSessionData(bool isMuc, const QString &jid, const QString name
 	isMuc_ = isMuc;
 	jid_ = jid;
 	name_ = name;
+}
+
+void ChatView::clear()
+{
+	PsiTextView::clear();
+	addLogIconsResources();
+}
+
+void ChatView::addLogIconsResources()
+{
+	document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_receive"), logIconReceive);
+	document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_send"), logIconSend);
+	document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_time"), logIconTime);
+	document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_info"), logIconInfo);
+	document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_delivered"), logIconDelivered);
+}
+
+void ChatView::markReceived(QString id)
+{
+	if (useMessageIcons_) {
+		document()->addResource(QTextDocument::ImageResource, QUrl(QString("icon:delivery") + id), logIconDelivered);
+		setLineWrapColumnOrWidth(lineWrapColumnOrWidth());
+	}
 }
 
 bool ChatView::focusNextPrevChild(bool next)
@@ -193,7 +238,8 @@ void ChatView::dispatchMessage(const MessageView &mv)
 			&& ChatViewCommon::updateLastMsgTime(mv.dateTime()))
 	{
 		QString color = ColorOpt::instance()->color(infomrationalColorOpt).name();
-		appendText(QString("<font color=\"%1\">*** %2</font>").arg(color).arg(mv.dateTime().date().toString(Qt::ISODate)));
+		appendText(QString(useMessageIcons_?"<img src=\"icon:log_icon_time\" />":"") +
+				   QString("<font color=\"%1\">*** %2</font>").arg(color).arg(mv.dateTime().date().toString(Qt::ISODate)));
 	}
 	switch (mv.type()) {
 		case MessageView::Message:
@@ -223,6 +269,8 @@ void ChatView::renderMucMessage(const MessageView &mv)
 	const QString timestr = formatTimeStamp(mv.dateTime());
 	QString alerttagso, alerttagsc, nickcolor;
 	QString textcolor = palette().color(QPalette::Active, QPalette::Text).name();
+	QString icon = useMessageIcons_?
+					(QString("<img src=\"%1\" />").arg(mv.isLocal()?"icon:log_icon_delivered":"icon:log_icon_receive")):"";
 	if(mv.isAlert()) {
 		textcolor = "#FF0000";
 		alerttagso = "<b>";
@@ -236,14 +284,14 @@ void ChatView::renderMucMessage(const MessageView &mv)
 	}
 
 	if(mv.isEmote()) {
-		appendText(QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(TextUtil::escape(mv.nick())) + alerttagso + mv.formattedText() + alerttagsc + "</font>");
+		appendText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(TextUtil::escape(mv.nick())) + alerttagso + mv.formattedText() + alerttagsc + "</font>");
 	}
 	else {
 		if(PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
-			appendText(QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] ").arg(timestr) + QString("%1 says:").arg(TextUtil::escape(mv.nick())) + "</font><br>" + QString("<font color=\"%1\">").arg(textcolor) + alerttagso + mv.formattedText() + alerttagsc + "</font>");
+			appendText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] ").arg(timestr) + QString("%1 says:").arg(TextUtil::escape(mv.nick())) + "</font><br>" + QString("<font color=\"%1\">").arg(textcolor) + alerttagso + mv.formattedText() + alerttagsc + "</font>");
 		}
 		else {
-			appendText(QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] &lt;").arg(timestr) + TextUtil::escape(mv.nick()) + QString("&gt;</font> ") + QString("<font color=\"%1\">").arg(textcolor) + alerttagso + mv.formattedText() + alerttagsc +"</font>");
+			appendText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] &lt;").arg(timestr) + TextUtil::escape(mv.nick()) + QString("&gt;</font> ") + QString("<font color=\"%1\">").arg(textcolor) + alerttagso + mv.formattedText() + alerttagsc +"</font>");
 		}
 	}
 
@@ -256,14 +304,20 @@ void ChatView::renderMessage(const MessageView &mv)
 {
 	QString timestr = formatTimeStamp(mv.dateTime());
 	QString color = colorString(mv.isLocal(), mv.isSpooled());
+	if (useMessageIcons_ && mv.isAwaitingReceipt()) {
+		document()->addResource(QTextDocument::ImageResource, QUrl(QString("icon:delivery") + mv.messageId()), logIconSend);
+	}
+	QString icon = useMessageIcons_?
+		(QString("<img src=\"%1\" />").arg(mv.isLocal()?
+		(mv.isAwaitingReceipt()?QString("icon:delivery") + mv.messageId():"icon:log_icon_send"):"icon:log_icon_receive")):"";
 	if (mv.isEmote()) {
-		appendText(QString("<span style=\"color: %1\">").arg(color) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(TextUtil::escape(mv.nick())) + mv.formattedText() + "</span>");
+		appendText(icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(TextUtil::escape(mv.nick())) + mv.formattedText() + "</span>");
 	} else {
 		if (PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
-			appendText(QString("<p style=\"color: %1\">").arg(color) + QString("[%1] ").arg(timestr) + tr("%1 says:").arg(TextUtil::escape(mv.nick())) + "</p>" + mv.formattedText());
+			appendText(icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1] ").arg(timestr) + tr("%1 says:").arg(TextUtil::escape(mv.nick())) + "</span><br>" + mv.formattedText());
 		}
 		else {
-			appendText(QString("<span style=\"color: %1\">").arg(color) + QString("[%1] &lt;").arg(timestr) + TextUtil::escape(mv.nick()) + QString("&gt;</span> ") + mv.formattedText());
+			appendText(icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1] &lt;").arg(timestr) + TextUtil::escape(mv.nick()) + QString("&gt;</span> ") + mv.formattedText());
 		}
 	}
 
@@ -278,14 +332,15 @@ void ChatView::renderSysMessage(const MessageView &mv)
 	QString ut = mv.formattedUserText();
 	QString color = ColorOpt::instance()->color(infomrationalColorOpt).name();
 	QString userTextColor = ColorOpt::instance()->color("options.ui.look.colors.messages.usertext").name();
-	appendText(QString("<font color=\"%1\">[%2] *** ").arg(color, timestr) + mv.formattedText() +
+	appendText(QString(useMessageIcons_?"<img src=\"icon:log_icon_info\" />":"") +
+			   QString("<font color=\"%1\">[%2] *** ").arg(color, timestr) + mv.formattedText() +
 						(ut.isEmpty()?"":":") + "</font>" +
 						(ut.isEmpty()?"":QString(" <span style=\"color:%1;\">%2</span>").arg(userTextColor, ut)));
 }
 
 void ChatView::renderSubject(const MessageView &mv)
 {
-	appendText(QString("<b>") + tr("Subject:") + "</b> " + QString("%1").arg(mv.formattedUserText()));
+	appendText(QString(useMessageIcons_?"<img src=\"icon:log_icon_info\" />":"") + "<b>" + tr("Subject:") + "</b> " + QString("%1").arg(mv.formattedUserText()));
 }
 
 void ChatView::renderMucSubject(const MessageView &mv)
@@ -294,7 +349,8 @@ void ChatView::renderMucSubject(const MessageView &mv)
 	QString ut = mv.formattedUserText();
 	QString color = ColorOpt::instance()->color(infomrationalColorOpt).name();
 	QString userTextColor = ColorOpt::instance()->color("options.ui.look.colors.messages.usertext").name();
-	appendText(QString("<font color=\"%1\">[%2] *** ").arg(color, timestr) + mv.formattedText() +
+	appendText(QString(useMessageIcons_?"<img src=\"icon:log_icon_info\" />":"") +
+			   QString("<font color=\"%1\">[%2] *** ").arg(color, timestr) + mv.formattedText() +
 						(ut.isEmpty()?"":":<br>") + "</font>" +
 						(ut.isEmpty()?"":QString(" <span style=\"color:%1;font-weight:bold\">%2</span>").arg(userTextColor, ut)));
 }

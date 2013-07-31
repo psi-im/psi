@@ -34,6 +34,20 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="ck_requestReceipts" >
+     <property name="text" >
+      <string>Request receipts</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="ck_sendReceipts" >
+     <property name="text" >
+      <string>Send receipts</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QCheckBox" name="ck_rc" >
      <property name="text" >
       <string>Enable remote controlling from other locations</string>

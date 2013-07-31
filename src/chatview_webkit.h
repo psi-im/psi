@@ -44,6 +44,8 @@ public:
 	ChatView(QWidget* parent);
 	~ChatView();
 
+	void markReceived(QString id);
+
 	// reimplemented
 	QSize sizeHint() const;
 

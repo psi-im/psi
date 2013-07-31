@@ -10,6 +10,7 @@ body > div {
 	overflow:hidden;
 }
 body > div img { vertical-align:bottom; }
+body > div > img:first-child { vertical-align:text-bottom; }
 .sent {}
 .received {}
 .infmsg {}
@@ -33,6 +34,7 @@ window[chatServer.jsNamespace()].theme = function() {
 	var cssInfMsg = chat.util.findStyleSheet(document.styleSheets[0], ".infmsg").style;
 	var cssUserText = chat.util.findStyleSheet(document.styleSheets[0], ".usertext").style;
 	var cssChatSays = chat.util.findStyleSheet(document.styleSheets[0], ".msg>span:first").style;
+	var useMessageIcons, messageIconsSize = 0;
 
 	var applyPsiSettings = function() {
 		chat.util.updateObject(cssBody, eval("["+shared.session.getFont()+"][0]"));
@@ -42,6 +44,17 @@ window[chatServer.jsNamespace()].theme = function() {
 		cssReceivedMsg.color = shared.colorOption("options.ui.look.colors.messages.received");
 		cssInfMsg.color = shared.colorOption("options.ui.look.colors.messages.informational");
 		cssUserText.color = shared.colorOption("options.ui.look.colors.messages.usertext");
+		useMessageIcons = shared.psiOption("options.ui.chat.use-message-icons");
+		if (shared.psiOption("options.ui.chat.scaled-message-icons")) {
+			var d = document.createElement("div");
+			d.style.position = "absolute";
+			d.style.top = "-1000;";
+			d.style.visibility = "hidden";
+			d.style.height = "1em";
+			shared.chatElement.appendChild(d);
+			messageIconsSize = parseInt(document.defaultView.getComputedStyle(d, null).height);
+			shared.chatElement.removeChild(d);
+		}
 	}
 
 	var shared = chat.adapter.initSession();
@@ -49,22 +62,22 @@ window[chatServer.jsNamespace()].theme = function() {
 		chatElement : document.body,
 		templates : {
 			message: shared.isMuc?
-				"<div class='msg'><span style='color:%nickcolor%'>[%time%] %sender%</span> %message%</div>"
-				: "<div class='msg'><span class='%sentrec%'>[%time%] %sender%</span> %message%</div>",
+				"<div class='msg'>%icon%<span style='color:%nickcolor%'>[%time%] %sender%</span> %message%</div>"
+				: "<div class='msg'>%icon%<span class='%sentrec%'>[%time%] %sender%</span> %message%</div>",
 			messageNC: shared.isMuc?
-                                "<div style='color:%nickcolor%'%alertedemote%>[%time%] %sender% %message%</div>"
-				: "<div class='%sentrec%'>[%time%] %sender% %message%</div>",
+				"<div style='color:%nickcolor%'%alertedemote%>%icon%[%time%] %sender% %message%</div>"
+				: "<div class='%sentrec%'>%icon%[%time%] %sender% %message%</div>",
 			receivedMessage: shared.isMuc?
-				"<div class='msg'><span style='color:%nickcolor%'>[%time%] %sender%</span> %alertedmessage%</div>"
+				"<div class='msg'>%icon%<span style='color:%nickcolor%'>[%time%] %sender%</span> %alertedmessage%</div>"
 				: null,
-			spooledMessage: "<div class='infmsg'>[%time%] %sender% %message%</div>",
-			sys: "<div class='infmsg'>%message%</div>",
-			sysMessage: "<div class='infmsg'>[%time%] *** %message%</div>",
-			sysMessageUT: "<div class='infmsg'>[%time%] *** %message%: <span class='usertext'>%usertext%</span></div>",
-			lastMsgDate: "<div class='infmsg'>*** %date%</div>",
+			spooledMessage: "<div class='infmsg'>%icon%[%time%] %sender% %message%</div>",
+			sys: "<div class='infmsg'>%icon%%message%</div>",
+			sysMessage: "<div class='infmsg'>%icon%[%time%] *** %message%</div>",
+			sysMessageUT: "<div class='infmsg'>%icon%[%time%] *** %message%: <span class='usertext'>%usertext%</span></div>",
+			lastMsgDate: "<div class='infmsg'>%icon%*** %date%</div>",
 			subject: shared.isMuc?
-				"<div class='infmsg'>[%time%] %message%<div class='usertext'><b>%usertext%</b></div></div>"
-				: "<div class='infmsg'><b>*** %usertext%</b></div>",
+				"<div class='infmsg'>%icon%[%time%] %message%<div class='usertext'><b>%usertext%</b></div></div>"
+				: "<div class='infmsg'>%icon%<b>*** %usertext%</b></div>",
 			trackbar: '<hr class="trackbar" />'
 		},
 		dateFormat : "hh:mm:ss",
@@ -72,6 +85,12 @@ window[chatServer.jsNamespace()].theme = function() {
 			if (shared.cdata.type == "settings") {
 				applyPsiSettings();
 				return false;
+			} else if (shared.cdata.type == "receipt") {
+				var img = document.getElementById("receipt"+shared.cdata.id);
+				if (img) {
+					var sizeUri = messageIconsSize?"?w="+messageIconsSize+"&h="+messageIconsSize:"";
+					img.src = "icon:psi/notification_chat_delivery_ok"+sizeUri;
+				}
 			}
 			if (shared.cdata.mtype == "message") {
 				var template = shared.cdata.emote && shared.templates.messageNC ||
@@ -98,7 +117,32 @@ window[chatServer.jsNamespace()].theme = function() {
 				(shared.cdata.local?"sent":"received");},
 			nickcolor : function() {
 				return shared.session.mucNickColor(shared.cdata.sender, shared.cdata.local);
-			}
+			},
+			icon : function() {
+				var icon = "";
+				if (useMessageIcons) {
+					switch (shared.cdata.mtype) {
+						case "message":
+							icon = shared.cdata.local?(shared.cdata.awaitingReceipt?
+								"psi/notification_chat_send":"psi/notification_chat_delivery_ok")
+								: "psi/notification_chat_receive";
+							break;
+						case "system":
+						case "subject":
+						case "urls":
+							icon = "psi/notification_chat_info";
+							break;
+						case "lastDate":
+							icon = "psi/notification_chat_time";
+							break;
+					}
+					var sizeStyle = messageIconsSize?" style='width:"+messageIconsSize+"px; height:"+messageIconsSize+"px'":"";
+					var sizeUri = messageIconsSize?"?w="+messageIconsSize+"&h="+messageIconsSize:"";
+					var id = shared.cdata.awaitingReceipt?" id='receipt"+shared.cdata.id+"'":"";
+					icon = icon?"<img src='icon:"+icon+sizeUri+"'"+sizeStyle+id+" />":"";
+				}
+				return icon;
+ 			}
 		}
 	});
 

@@ -1052,6 +1052,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 #endif
 
 	setSendChatState(PsiOptions::instance()->getOption("options.messages.send-composing-events").toBool());
+	setReceipts(PsiOptions::instance()->getOption("options.ui.notifications.send-receipts").toBool());
 
 	//connect(d->client, SIGNAL(connected()), SLOT(client_connected()));
 	//connect(d->client, SIGNAL(handshaken()), SLOT(client_handshaken()));
@@ -2570,7 +2571,7 @@ void PsiAccount::client_messageReceived(const Message &m)
 void PsiAccount::processIncomingMessage(const Message &_m)
 {
 	// skip empty messages, but not if the message contains a data form
-	if(_m.body().isEmpty() && _m.urlList().isEmpty() && _m.invite().isEmpty() && !_m.containsEvents() && _m.chatState() == StateNone && _m.subject().isNull() && _m.rosterExchangeItems().isEmpty() && _m.mucInvites().isEmpty() &&  _m.getForm().fields().empty())
+	if(_m.body().isEmpty() && _m.urlList().isEmpty() && _m.invite().isEmpty() && !_m.containsEvents() && _m.chatState() == StateNone && _m.subject().isNull() && _m.rosterExchangeItems().isEmpty() && _m.mucInvites().isEmpty() &&  _m.getForm().fields().empty() && _m.messageReceipt() == ReceiptNone)
 		return;
 
 	// skip headlines?
@@ -2669,6 +2670,17 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 	// urls or subject on a chat message?  convert back to regular message
 	//if(m.type() == "chat" && (!m.urlList().isEmpty() || !m.subject().isEmpty()))
 	//	m.setType("");
+
+	if( m.messageReceipt() == ReceiptRequest && !m.id().isEmpty() &&
+		PsiOptions::instance()->getOption("options.ui.notifications.send-receipts").toBool()) {
+		UserListItem *u;
+		if(j.compare(d->self.jid(), false) || groupchats().contains(j.bare()) || (!d->loginStatus.isInvisible() && (u = d->userList.find(j)) && (u->subscription().type() == Subscription::To || u->subscription().type() == Subscription::Both))) {
+			Message tm(m.from());
+			tm.setMessageReceiptId(m.id());
+			tm.setMessageReceipt(ReceiptReceived);
+			dj_sendMessage(tm, false);
+		}
+	}
 
 	MessageEvent *me = new MessageEvent(m, this);
 	me->setOriginLocal(false);
@@ -4658,6 +4670,19 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 			delete e;
 			return;
 		}
+		else if (m.messageReceipt() == ReceiptReceived) {
+			if (PsiOptions::instance()->getOption("options.ui.notifications.request-receipts").toBool()) {
+				ChatDlg *c = findChatDialog(e->from());
+				if (!c) {
+					c = findChatDialog(e->jid());
+				}
+				if (c) {
+					c->incomingMessage(m);
+				}
+			}
+			delete e;
+			return;
+		}
 
 		// Pass message events to chat window
 		if ((m.containsEvents() || m.chatState() != StateNone) && m.body().isEmpty()) {
@@ -5641,7 +5666,9 @@ void PsiAccount::pgp_encryptFinished()
 		if (m.containsEvent(DisplayedEvent)) mwrap.addEvent(DisplayedEvent);
 		if (m.containsEvent(ComposingEvent)) mwrap.addEvent(ComposingEvent);
 		if (m.containsEvent(CancelEvent)) mwrap.addEvent(CancelEvent);
+		if (m.messageReceipt() == ReceiptRequest) mwrap.setMessageReceipt(ReceiptRequest);
 		mwrap.setChatState(m.chatState());
+		mwrap.setId(m.id());
 		dj_sendMessage(mwrap);
 	}
 	emit encryptedMessageSent(x, pt->success(), pt->errorCode(), pt->diagnosticText());
@@ -5757,6 +5784,9 @@ void PsiAccount::optionsUpdate()
 	// Chat states
 	setSendChatState(PsiOptions::instance()->getOption("options.messages.send-composing-events").toBool());
 
+	//Receipts
+	setReceipts(PsiOptions::instance()->getOption("options.ui.notifications.send-receipts").toBool()); //FIXME second presence?
+
 	// Remote Controlling
 	setRCEnabled(PsiOptions::instance()->getOption("options.external-control.adhoc-remote-control.enable").toBool());
 
@@ -5801,6 +5831,19 @@ void PsiAccount::setSendChatState(bool b)
 	}
 }
 
+void PsiAccount::setReceipts(bool b)
+{
+	if (b && !d->client->extensions().contains("mr")) {
+		d->client->addExtension("mr",Features("urn:xmpp:receipts"));
+		if (isConnected())
+			setStatusActual(d->loginStatus);
+	}
+	else if (!b && d->client->extensions().contains("mr")) {
+		d->client->removeExtension("mr");
+		if (isConnected())
+			setStatusActual(d->loginStatus);
+	}
+}
 
 void PsiAccount::invokeGCMessage(const Jid &j)
 {
