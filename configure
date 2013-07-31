@@ -35,6 +35,7 @@ Dependency options:
   --with-zlib-lib=[path]      Path to zlib library files
   --enable-universal          Enable use of Mac OS X universal binary support
   --disable-qdbus             Disable use of QDBUS
+  --enable-webkit             Enable use of QtWebKit
   --disable-growl             Disable use of Growl
   --with-growl=[path]         Path to the Growl framework
   --enable-whiteboarding      Enable use of White Board support
@@ -224,6 +225,11 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
+		--enable-webkit)
+			QC_ENABLE_webkit="Y"
+			shift
+			;;
+
 		--disable-growl)
 			QC_DISABLE_growl="Y"
 			shift
@@ -299,6 +305,7 @@ echo QC_WITH_ZLIB_INC=$QC_WITH_ZLIB_INC
 echo QC_WITH_ZLIB_LIB=$QC_WITH_ZLIB_LIB
 echo QC_ENABLE_universal=$QC_ENABLE_universal
 echo QC_DISABLE_qdbus=$QC_DISABLE_qdbus
+echo QC_ENABLE_webkit=$QC_ENABLE_webkit
 echo QC_DISABLE_growl=$QC_DISABLE_growl
 echo QC_WITH_GROWL=$QC_WITH_GROWL
 echo QC_ENABLE_whiteboarding=$QC_ENABLE_whiteboarding
@@ -1014,8 +1021,47 @@ public:
 			return false;
 		if(ret != 0)
 			return false;
-		
+
 		conf->addExtra("CONFIG += dbus");
+		return true;
+	}
+};
+#line 1 "webkit.qcm"
+/*
+-----BEGIN QCMOD-----
+name: QtWebKit
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_webkit
+//----------------------------------------------------------------------------
+class qc_webkit : public ConfObj
+{
+public:
+	qc_webkit(Conf *c) : ConfObj(c) {}
+	QString name() const { return "QtWebKit"; }
+	QString shortname() const { return "webkit"; }
+	bool exec()
+	{
+		QString proextra =
+		"CONFIG += qt webkit\n"
+		"QT += webkit\n";
+
+		QString str =
+		"\n"
+		"int main()\n"
+		"{\n"
+		"	return 0;\n"
+		"}\n";
+
+		int ret;
+		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
+			return false;
+		if(ret != 0)
+			return false;
+
+		conf->addExtra("CONFIG += webkit");
 		return true;
 	}
 };
@@ -1057,7 +1103,7 @@ public:
 			return false;
 		return true;
 	}
-	
+
 	// TODO: This should go into ConfObj
 	void addFrameworkPath(const QString& str)
 	{
@@ -1073,7 +1119,7 @@ public:
 		if(!checkFramework(growl_path, "Growl"))
 			return false;
 
-		if(!growl_path.isEmpty()) 
+		if(!growl_path.isEmpty())
 			addFrameworkPath(growl_path);
 		conf->addLib("-framework Growl");
 		conf->addDefine("HAVE_GROWL");
@@ -1163,7 +1209,7 @@ public:
 		else {
 			conf->addLib("-lXss");
 		}
-		
+
 		conf->addDefine("HAVE_XSS");
 		return true;
 #endif
@@ -1646,6 +1692,9 @@ cat >$1/modules_new.cpp <<EOT
     o = new qc_qdbus(conf);
     o->required = false;
     o->disabled = false;
+    o = new qc_webkit(conf);
+    o->required = false;
+    o->disabled = true;
     o = new qc_growl(conf);
     o->required = false;
     o->disabled = false;
@@ -2705,6 +2754,7 @@ export QC_WITH_ZLIB_INC
 export QC_WITH_ZLIB_LIB
 export QC_ENABLE_universal
 export QC_DISABLE_qdbus
+export QC_ENABLE_webkit
 export QC_DISABLE_growl
 export QC_WITH_GROWL
 export QC_ENABLE_whiteboarding
