@@ -44,9 +44,8 @@ bool AHCExecuteTask::take(const QDomElement& e)
 
 	// Result of a command
 	if (e.attribute("type") == "result") {
-		bool found;
-		QDomElement i = findSubTag(e, "command", &found);
-		if (found) {
+		QDomElement i = e.firstChildElement("command");
+		if (!i.isNull()) {
 			AHCommand c(i);
 			if (c.status() == AHCommand::Executing) {
 				AHCFormDlg *w = new AHCFormDlg(c,receiver_,client());

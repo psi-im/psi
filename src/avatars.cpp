@@ -655,10 +655,8 @@ void AvatarFactory::itemPublished(const Jid& jid, const QString& n, const PubSub
 			pep_avatars_[jid.bare()] = new PEPAvatar(this, jid.bare());
 			connect(pep_avatars_[jid.bare()],SIGNAL(avatarChanged(const Jid&)),this, SLOT(updateAvatar(const Jid&)));
 		}
-		QDomElement e;
-		bool found;
-		e = findSubTag(item.payload(), "stop", &found);
-		if (found) {
+		QDomElement e = item.payload().firstChildElement("stop");
+		if (!e.isNull()) {
 			pep_avatars_[jid.bare()]->updateHash("");
 		}
 		else {

@@ -138,9 +138,8 @@ public:
 			emit result(LoggedIn, id());
 			setSuccess();
 		} else {
-			bool found;
-			QDomElement tag = findSubTag(x, "error", &found);
-			if(!found) {
+			QDomElement tag = x.firstChildElement("error");
+			if(tag.isNull()) {
 				emit result(OtherErr, id());
 			} else {
 				XMPP::Stanza::Error err;

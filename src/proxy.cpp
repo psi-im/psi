@@ -82,12 +82,12 @@ QDomElement ProxySettings::toXml(QDomDocument *doc) const
 
 bool ProxySettings::fromXml(const QDomElement &e)
 {
-	host = findSubTag(e, "host", 0).text();
-	port = findSubTag(e, "port", 0).text().toInt();
-	url = findSubTag(e, "url", 0).text();
-	useAuth = (findSubTag(e, "useAuth", 0).text() == "true") ? true: false;
-	user = findSubTag(e, "user", 0).text();
-	pass = findSubTag(e, "pass", 0).text();
+	host = XMLHelper::subTagText(e, "host");
+	port = XMLHelper::subTagText(e, "port").toInt();
+	url = XMLHelper::subTagText(e, "url");
+	useAuth = (XMLHelper::subTagText(e, "useAuth") == "true") ? true: false;
+	user = XMLHelper::subTagText(e, "user");
+	pass = XMLHelper::subTagText(e, "pass");
 	return true;
 }
 
@@ -358,7 +358,6 @@ ProxyChooser::ProxyChooser(ProxyManager* m, QWidget* parent)
 	hb->setMargin(0);
 	hb->setSpacing(4);
 	d->cb_proxy = new QComboBox(this);
-	QSizePolicy sp = d->cb_proxy->sizePolicy();
 	d->cb_proxy->setSizePolicy( QSizePolicy(QSizePolicy::Expanding, d->cb_proxy->sizePolicy().verticalPolicy()) );
 	hb->addWidget(d->cb_proxy);
 	d->pb_edit = new QPushButton(tr("Edit..."), this);

@@ -160,10 +160,10 @@ void PrivacyListItem::fromXml(const QDomElement& el)
 		qWarning("privacy.cpp: Invalid order value for item.");
 
 	if (el.hasChildNodes()) {
-		findSubTag(el, "message", &message_);
-		findSubTag(el, "presence-in", &presenceIn_);
-		findSubTag(el, "presence-out", &presenceOut_);
-		findSubTag(el, "iq", &iq_);
+		message_ = !el.firstChildElement("message").isNull();
+		presenceIn_ = !el.firstChildElement("presence-in").isNull();
+		presenceOut_ = !el.firstChildElement("presence-out").isNull();
+		iq_ = !el.firstChildElement("iq").isNull();
 	}
 	else {
 		message_ = presenceIn_ = presenceOut_ = iq_ = true;

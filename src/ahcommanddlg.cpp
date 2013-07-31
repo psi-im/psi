@@ -86,21 +86,15 @@ bool JT_AHCGetList::take(const QDomElement& e)
 	if (e.attribute("type") == "result") {
 		// Extract commands
 		commands_.clear();
-		bool found;
-		QDomElement commands = findSubTag(e, "query", &found);
-		if(found) {
-			for(QDomNode n = commands.firstChild(); !n.isNull(); n = n.nextSibling()) {
-				QDomElement i = n.toElement();
-				if(i.isNull())
-					continue;
-
-				if(i.tagName() == "item") {
-					AHCommandItem ci;
-					ci.node = i.attribute("node");
-					ci.name = i.attribute("name");
-					ci.jid = i.attribute("jid");
-					commands_ += ci;
-				}
+		QDomElement commands = e.firstChildElement("query");
+		if(!commands.isNull()) {
+			QString iname = "item";
+			for(QDomElement i = commands.firstChildElement(iname); !i.isNull(); i = i.nextSiblingElement(iname)) {
+				AHCommandItem ci;
+				ci.node = i.attribute("node");
+				ci.name = i.attribute("name");
+				ci.jid = i.attribute("jid");
+				commands_ += ci;
 			}
 			qSort(commands_);
 		}

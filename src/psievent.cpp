@@ -297,9 +297,8 @@ bool MessageEvent::fromXml(PsiCon *psi, PsiAccount *account, const QDomElement *
 	if ( !PsiEvent::fromXml(psi, account, e) )
 		return false;
 
-	bool found = false;
-	QDomElement msg = findSubTag(*e, "message", &found);
-	if ( found ) {
+	QDomElement msg = (*e).firstChildElement("message");
+	if (!msg.isNull()) {
 		DummyStream stream;
 		Stanza s = stream.createStanza(addCorrectNS(msg));
 		v_m.fromStanza(s);

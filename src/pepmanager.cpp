@@ -61,21 +61,15 @@ public:
 			return false;
 
 		if(x.attribute("type") == "result") {
-			bool found;
 			// FIXME Check namespace...
-			QDomElement e = findSubTag(x, "pubsub", &found);
-			if (found) {
-				QDomElement i = findSubTag(e, "items", &found);
-				if (found) {
-					for(QDomNode n1 = i.firstChild(); !n1.isNull(); n1 = n1.nextSibling()) {
-						QDomElement e1 = n1.toElement();
-						if (!e1.isNull() && e1.tagName() == "item") {
-							for(QDomNode n2 = e1.firstChild(); !n2.isNull(); n2 = n2.nextSibling()) {
-								QDomElement e2 = n2.toElement();
-								if (!e2.isNull()) {
-									items_ += PubSubItem(e1.attribute("id"),e2);
-								}
-							}
+			QDomElement e = x.firstChildElement("pubsub");
+			if (!e.isNull()) {
+				QDomElement i = e.firstChildElement("items");
+				if (!i.isNull()) {
+					QString iname = "item";
+					for(QDomElement e1 = i.firstChildElement(iname); !e1.isNull(); e1 = e1.nextSiblingElement(iname)) {
+						for(QDomElement e2 = e1.firstChildElement(); !e2.isNull(); e2 = e2.nextSiblingElement()) {
+							items_ += PubSubItem(e1.attribute("id"),e2);
 						}
 					}
 				}

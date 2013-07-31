@@ -155,7 +155,7 @@ void ContactListGroupState::load(const QString& id)
 		return;
 
 	{
-		QDomElement expanded = findSubTag(root, "expanded", 0);
+		QDomElement expanded = root.firstChildElement("expanded");
 		if (!expanded.isNull()) {
 			for (QDomNode n = expanded.firstChild(); !n.isNull(); n = n.nextSibling()) {
 				QDomElement e = n.toElement();
@@ -169,7 +169,7 @@ void ContactListGroupState::load(const QString& id)
 		}
 	}
 	{
-		QDomElement order = findSubTag(root, "order", 0);
+		QDomElement order = root.firstChildElement("order");
 		if (!order.isNull()) {
 			for (QDomNode n = order.firstChild(); !n.isNull(); n = n.nextSibling()) {
 				QDomElement e = n.toElement();

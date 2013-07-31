@@ -236,9 +236,8 @@ static JingleRtpReason elementToReason(const QDomElement &e)
 
 	JingleRtpReason out;
 	out.condition = (JingleRtpReason::Condition)x;
-	bool found;
-	QDomElement text = findSubTag(e, "text", &found);
-	if(found)
+	QDomElement text = e.firstChildElement("text");
+	if(!text.isNull())
 		out.text = tagContent(text);
 
 	return out;
@@ -405,9 +404,8 @@ bool JT_PushJingleRtp::take(const QDomElement &e)
 
 	if(envelope.action == "session-terminate")
 	{
-		bool found;
-		QDomElement re = findSubTag(je, "reason", &found);
-		if(!found)
+		QDomElement re = je.firstChildElement("reason");
+		if(re.isNull())
 		{
 			respondError(from, iq_id, 400, QString());
 			return true;

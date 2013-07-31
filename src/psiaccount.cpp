@@ -3396,14 +3396,13 @@ void PsiAccount::itemPublished(const Jid& j, const QString& n, const PubSubItem&
 		QDomElement element = item.payload();
 		QDomElement e;
 		QString tune;
-		bool found;
 
-		e = findSubTag(element, "artist", &found);
-		if (found)
+		e = element.firstChildElement("artist");
+		if (!e.isNull())
 			tune += e.text() + " - ";
 
-		e = findSubTag(element, "title", &found);
-		if (found)
+		e = element.firstChildElement("title");
+		if (!e.isNull())
 			tune += e.text();
 
 		foreach(UserListItem* u, findRelevant(j)) {

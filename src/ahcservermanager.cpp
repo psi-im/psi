@@ -76,9 +76,8 @@ bool JT_AHCServer::take(const QDomElement& e)
 bool JT_AHCServer::commandListQuery(const QDomElement& e)
 {
 	if (e.attribute("type") == "get") {
-		bool found;
-		QDomElement q = findSubTag(e, "query", &found);
-		if (!found)
+		QDomElement q = e.firstChildElement("query");
+		if (q.isNull())
 			return false;
 
 		// Disco replies to the AdHoc node
@@ -137,9 +136,8 @@ bool JT_AHCServer::commandListQuery(const QDomElement& e)
 bool JT_AHCServer::commandExecuteQuery(const QDomElement& e)
 {
 	if (e.attribute("type") == "set") {
-		bool found;
-		QDomElement q = findSubTag(e, "command", &found);
-		if (found && q.attribute("xmlns") == AHC_NS && manager_->hasServer(q.attribute("node"), Jid(e.attribute("from")))) {
+		QDomElement q = e.firstChildElement("command");
+		if (!q.isNull() && q.attribute("xmlns") == AHC_NS && manager_->hasServer(q.attribute("node"), Jid(e.attribute("from")))) {
 			AHCommand command(q);
 			manager_->execute(command, Jid(e.attribute("from")), e.attribute("id"));
 			return true;

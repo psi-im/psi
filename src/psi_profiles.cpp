@@ -57,9 +57,7 @@ using namespace XMLHelper;
 template<typename T, typename F>
 void migrateEntry(const QDomElement& element, const QString& entry, const QString& option, F f)
 {
-	bool found;
-	findSubTag(element, entry, &found);
-	if (found) {
+	if (!element.firstChildElement(entry).isNull()) {
 		T value;
 		f(element, entry, &value);
 		PsiOptions::instance()->setOption(option, value);
@@ -450,8 +448,6 @@ void UserAccount::fromXml(const QDomElement &a)
 {
 	reset();
 
-	bool found;
-
 	readEntry(a, "id", &id);
 	readEntry(a, "name", &name);
 	readBoolAttribute(a, "enabled", &opt_enabled);
@@ -494,8 +490,8 @@ void UserAccount::fromXml(const QDomElement &a)
 	readNumEntry(a, "port", &port);
 
 	// 0.8.6 and >= 0.9
-	QDomElement j = findSubTag(a, "jid", &found);
-	if(found) {
+	QDomElement j = a.firstChildElement("jid");
+	if(!j.isNull()) {
 		readBoolAttribute(j, "manual", &opt_host);
 		jid = tagContent(j);
 	}
@@ -503,8 +499,8 @@ void UserAccount::fromXml(const QDomElement &a)
 	else {
 		QString user, vhost;
 		readEntry(a, "username", &user);
-		QDomElement j = findSubTag(a, "vhost", &found);
-		if(found) {
+		QDomElement j = a.firstChildElement("vhost");
+		if(!j.isNull()) {
 			readBoolAttribute(j, "manual", &opt_host);
 			vhost = tagContent(j);
 		}
@@ -526,14 +522,14 @@ void UserAccount::fromXml(const QDomElement &a)
 		pass = decodePassword(pass, jid);
 	}
 
-	QDomElement ca = findSubTag(a, "custom-auth", &found);
-	if(found) {
+	QDomElement ca = a.firstChildElement("custom-auth");
+	if(!ca.isNull()) {
 		readBoolAttribute(ca, "use", &customAuth);
-		QDomElement authid_el = findSubTag(ca, "authid", &found);
-		if (found)
+		QDomElement authid_el = ca.firstChildElement("authid");
+		if (!authid_el.isNull())
 			authid = tagContent(authid_el);
-		QDomElement realm_el = findSubTag(ca, "realm", &found);
-		if (found)
+		QDomElement realm_el = ca.firstChildElement("realm");
+		if (!realm_el.isNull())
 			realm = tagContent(realm_el);
 	}
 
@@ -549,8 +545,8 @@ void UserAccount::fromXml(const QDomElement &a)
 	}
 #endif
 
-	QDomElement r = findSubTag(a, "roster", &found);
-	if(found) {
+	QDomElement r = a.firstChildElement("roster");
+	if(!r.isNull()) {
 		for(QDomNode n = r.firstChild(); !n.isNull(); n = n.nextSibling()) {
 			QDomElement i = n.toElement();
 			if(i.isNull())
@@ -566,8 +562,8 @@ void UserAccount::fromXml(const QDomElement &a)
 	}
 
 	groupState.clear();
-	QDomElement gs = findSubTag(a, "groupState", &found);
-	if (found) {
+	QDomElement gs = a.firstChildElement("groupState");
+	if (!gs.isNull()) {
 		for (QDomNode n = gs.firstChild(); !n.isNull(); n = n.nextSibling()) {
 			QDomElement i = n.toElement();
 			if (i.isNull())
@@ -591,8 +587,8 @@ void UserAccount::fromXml(const QDomElement &a)
 	if(!proxy_pass.isEmpty())
 		proxy_pass = decodePassword(proxy_pass, jid);
 
-	r = findSubTag(a, "pgpkeybindings", &found);
-	if(found)
+	r = a.firstChildElement("pgpkeybindings");
+	if(!r.isNull())
 		keybind.fromXml(r);
 
 	QString str;
@@ -612,9 +608,8 @@ static ToolbarPrefs loadToolbarData( const QDomElement &e )
 	// readBoolEntry(tb_prefs, "stretchable",	&tb.stretchable);
 	xmlToStringList(tb_prefs, "keys",	&tb.keys);
 
-	bool found3 = false;
-	QDomElement tb_position = findSubTag(tb_prefs, "position", &found3);
-	if (found3)
+	QDomElement tb_position = tb_prefs.firstChildElement("position");
+	if (!tb_position.isNull())
 	{
 		QString dockStr;
 		Qt3Dock dock = Qt3Dock_Top;
@@ -670,9 +665,8 @@ bool OptionsMigration::fromFile(const QString &fname)
 	migrateStringEntry(base, "lastStatusString", "options.status.last-message");
 	migrateBoolEntry(base, "useSound", "options.ui.notifications.sounds.enable");
 
-	bool found;
-	QDomElement accs = findSubTag(base, "accounts", &found);
-	if(found) {
+	QDomElement accs = base.firstChildElement("accounts");
+	if(!accs.isNull()) {
 		for(QDomNode n = accs.firstChild(); !n.isNull(); n = n.nextSibling()) {
 			QDomElement a = n.toElement();
 			if(a.isNull())
@@ -704,8 +698,8 @@ bool OptionsMigration::fromFile(const QString &fname)
 		}
 	}
 
-	QDomElement prox = findSubTag(base, "proxies", &found);
-	if(found) {
+	QDomElement prox = base.firstChildElement("proxies");
+	if(!prox.isNull()) {
 		QDomNodeList list = prox.elementsByTagName("proxy");
 		for(int n = 0; n < list.count(); ++n) {
 			QDomElement e = list.item(n).toElement();
@@ -752,16 +746,12 @@ bool OptionsMigration::fromFile(const QString &fname)
 	}
 
 
-	QDomElement p = findSubTag(base, "preferences", &found);
-	if(found) {
-		bool found;
-
-		QDomElement p_general = findSubTag(p, "general", &found);
-		if(found) {
-			bool found;
-
-			QDomElement p_roster = findSubTag(p_general, "roster", &found);
-			if(found) {
+	QDomElement p = base.firstChildElement("preferences");
+	if(!p.isNull()) {
+		QDomElement p_general = p.firstChildElement("general");
+		if(!p_general.isNull()) {
+			QDomElement p_roster = p_general.firstChildElement("roster");
+			if(!p_roster.isNull()) {
 				migrateBoolEntry(p_roster, "useleft", "options.ui.contactlist.use-left-click");
 				migrateBoolEntry(p_roster, "singleclick", "options.ui.contactlist.use-single-click");
 				bool hideMenu;
@@ -772,8 +762,8 @@ bool OptionsMigration::fromFile(const QString &fname)
 				PsiOptions::instance()->setOption("options.messages.default-outgoing-message-type", defaultAction == 0 ? "message" : "chat");
 				migrateBoolEntry(p_roster, "useTransportIconsForContacts", "options.ui.contactlist.use-transport-icons");
 
-				QDomElement sorting = findSubTag(p_roster, "sortStyle", &found);
-				if(found) {
+				QDomElement sorting = p_roster.firstChildElement("sortStyle");
+				if(!sorting.isNull()) {
 					QString name;
 
 					migrateStringEntry(sorting, "contact", "options.ui.contactlist.contact-sort-style");
@@ -802,8 +792,8 @@ bool OptionsMigration::fromFile(const QString &fname)
 				}
 			}
 
-			QDomElement tag = findSubTag(p_general, "misc", &found);
-			if(found) {
+			QDomElement tag = p_general.firstChildElement("misc");
+			if(!tag.isNull()) {
 				int delafterint;
 				readNumEntry(tag, "delChats", &delafterint);
 				QString delafter;
@@ -852,9 +842,8 @@ bool OptionsMigration::fromFile(const QString &fname)
 				migrateBoolEntry(tag, "rc", "options.external-control.adhoc-remote-control.enable");
 
 				// Migrating for soft return option
-				bool found;
-				findSubTag(tag, "chatSoftReturn", &found);
-				if (found) {
+				tag.firstChildElement("chatSoftReturn");
+				if (!tag.isNull()) {
 					bool soft;
 					readBoolEntry(tag, "chatSoftReturn", &soft);
 					QVariantList vl;
@@ -866,24 +855,23 @@ bool OptionsMigration::fromFile(const QString &fname)
 				}
 			}
 
-			tag = findSubTag(p_general, "dock", &found);
-			if(found) {
+			tag = p_general.firstChildElement("dock");
+			if(!tag.isNull()) {
 				migrateBoolEntry(tag, "useDock", "options.ui.systemtray.enable");
 				migrateBoolEntry(tag, "dockDCstyle", "options.ui.systemtray.use-double-click");
 				migrateBoolEntry(tag, "dockHideMW", "options.contactlist.hide-on-start");
 				migrateBoolEntry(tag, "dockToolMW", "options.contactlist.use-toolwindow");
 			}
 
-			/*tag = findSubTag(p_general, "security", &found);
-			if(found) {
+			/*tag = p_general.firstChildElement("security");
+			if(!tag.isNull()) {
 				readEntry(tag, "pgp", &prefs.pgp);
 			}*/
 		}
 
 
-		QDomElement p_events = findSubTag(p, "events", &found);
-		if(found) {
-			bool found;
+		QDomElement p_events = p.firstChildElement("events");
+		if(!p_events.isNull()) {
 
 			int alertstyle;
 			readNumEntry(p_events, "alertstyle", &alertstyle);
@@ -892,8 +880,8 @@ bool OptionsMigration::fromFile(const QString &fname)
 			migrateBoolEntry(p_events, "autoAuth", "options.subscriptions.automatically-allow-authorization");
 			migrateBoolEntry(p_events, "notifyAuth", "options.ui.notifications.successful-subscription");
 
-			QDomElement tag = findSubTag(p_events, "receive", &found);
-			if(found) {
+			QDomElement tag = p_events.firstChildElement("receive");
+			if(!tag.isNull()) {
 				migrateBoolEntry(tag, "popupMsgs", "options.ui.message.auto-popup");
 				migrateBoolEntry(tag, "popupChats", "options.ui.chat.auto-popup");
 				migrateBoolEntry(tag, "popupHeadlines", "options.ui.message.auto-popup-headlines");
@@ -909,12 +897,11 @@ bool OptionsMigration::fromFile(const QString &fname)
 
 		}
 
-		QDomElement p_pres = findSubTag(p, "presence", &found);
-		if(found) {
-			bool found;
+		QDomElement p_pres = p.firstChildElement("presence");
+		if(!p_pres.isNull()) {
 
-			QDomElement tag = findSubTag(p_pres, "misc", &found);
-			if(found) {
+			QDomElement tag = p_pres.firstChildElement("misc");
+			if(!tag.isNull()) {
 				migrateBoolEntry(tag, "askOnline", "options.status.ask-for-message-on-online");
 				migrateBoolEntry(tag, "askOffline", "options.status.ask-for-message-on-offline");
 				migrateBoolEntry(tag, "rosterAnim", "options.ui.contactlist.use-status-change-animation");
@@ -922,26 +909,25 @@ bool OptionsMigration::fromFile(const QString &fname)
 				migrateBoolEntry(tag, "xmlConsoleOnLogin", "options.xml-console.enable-at-login");
 			}
 
-			tag = findSubTag(p_pres, "autostatus", &found);
-			if(found) {
-				bool found;
+			tag = p_pres.firstChildElement("autostatus");
+			if(!tag.isNull()) {
 				bool use;
 				QDomElement e;
-				e = findSubTag(tag, "away", &found);
-				if(found) {
+				e = tag.firstChildElement("away");
+				if(!e.isNull()) {
 					if(e.hasAttribute("use")) {
 						readBoolAttribute(e, "use", &use);
 						PsiOptions::instance()->setOption("options.status.auto-away.use-away", use);
 					}
 				}
-				e = findSubTag(tag, "xa", &found);
-				if(found) {
+				e = tag.firstChildElement("xa");
+				if(!e.isNull()) {
 					if(e.hasAttribute("use"))
 						readBoolAttribute(e, "use", &use);
 					PsiOptions::instance()->setOption("options.status.auto-away.use-not-availible", use);
 				}
-				e = findSubTag(tag, "offline", &found);
-				if(found) {
+				e = tag.firstChildElement("offline");
+				if(!e.isNull()) {
 					if(e.hasAttribute("use"))
 						readBoolAttribute(e, "use", &use);
 					PsiOptions::instance()->setOption("options.status.auto-away.use-offline", use);
@@ -954,8 +940,8 @@ bool OptionsMigration::fromFile(const QString &fname)
 				migrateStringEntry(tag, "message", "options.status.auto-away.message");
 			}
 
-			tag = findSubTag(p_pres, "statuspresets", &found);
-			if(found) {
+			tag = p_pres.firstChildElement("statuspresets");
+			if(!tag.isNull()) {
 				lateMigrationData.sp.clear();
 				for(QDomNode n = tag.firstChild(); !n.isNull(); n = n.nextSibling()) {
 					StatusPreset preset(n.toElement());
@@ -965,17 +951,16 @@ bool OptionsMigration::fromFile(const QString &fname)
 			}
 		}
 
-		QDomElement p_lnf = findSubTag(p, "lookandfeel", &found);
-		if(found) {
-			bool found;
+		QDomElement p_lnf = p.firstChildElement("lookandfeel");
+		if(!p_lnf.isNull()) {
 
 			migrateBoolEntry(p_lnf, "newHeadings", "options.ui.look.contactlist.use-slim-group-headings");
 			migrateBoolEntry(p_lnf, "outline-headings", "options.ui.look.contactlist.use-outlined-group-headings");
 			migrateIntEntry(p_lnf, "chat-opacity", "options.ui.chat.opacity");
 			migrateIntEntry(p_lnf, "roster-opacity", "options.ui.contactlist.opacity");
 
-			QDomElement tag = findSubTag(p_lnf, "colors", &found);
-			if(found) {
+			QDomElement tag = p_lnf.firstChildElement("colors");
+			if(!tag.isNull()) {
 				migrateColorEntry(tag, "online", "options.ui.look.colors.contactlist.status.online");
 				migrateColorEntry(tag, "listback", "options.ui.look.colors.contactlist.background");
 				migrateColorEntry(tag, "away", "options.ui.look.colors.contactlist.status.away");
@@ -990,8 +975,8 @@ bool OptionsMigration::fromFile(const QString &fname)
 				migrateColorEntry(tag, "animback", "options.ui.look.colors.contactlist.status-change-animation2");
 			}
 
-			tag = findSubTag(p_lnf, "fonts", &found);
-			if(found) {
+			tag = p_lnf.firstChildElement("fonts");
+			if(!tag.isNull()) {
 				migrateStringEntry(tag, "roster", "options.ui.look.font.contactlist");
 				migrateStringEntry(tag, "message", "options.ui.look.font.message");
 				migrateStringEntry(tag, "chat", "options.ui.look.font.chat");
@@ -999,9 +984,8 @@ bool OptionsMigration::fromFile(const QString &fname)
 			}
 		}
 
-		QDomElement p_sound = findSubTag(p, "sound", &found);
-		if(found) {
-			bool found;
+		QDomElement p_sound = p.firstChildElement("sound");
+		if(!p_sound.isNull()) {
 
 			QString oldplayer;
 			readEntry(p_sound, "player", &oldplayer);
@@ -1018,8 +1002,8 @@ bool OptionsMigration::fromFile(const QString &fname)
 			readBoolEntry(p_sound, "noGCSound", &noGCSound);
 			PsiOptions::instance()->setOption("options.ui.notifications.sounds.notify-every-muc-message", !noGCSound);
 
-			QDomElement tag = findSubTag(p_sound, "onevent", &found);
-			if(found) {
+			QDomElement tag = p_sound.firstChildElement("onevent");
+			if(!tag.isNull()) {
 				migrateStringEntry(tag, "message", "options.ui.notifications.sounds.incoming-message");
 				migrateStringEntry(tag, "chat1", "options.ui.notifications.sounds.new-chat");
 				migrateStringEntry(tag, "chat2", "options.ui.notifications.sounds.chat-message");
@@ -1033,15 +1017,15 @@ bool OptionsMigration::fromFile(const QString &fname)
 			}
 		}
 
-		QDomElement p_sizes = findSubTag(p, "sizes", &found);
-		if(found) {
+		QDomElement p_sizes = p.firstChildElement("sizes");
+		if(!p_sizes.isNull()) {
 			migrateSizeEntry(p_sizes, "eventdlg", "options.ui.message.size");
 			migrateSizeEntry(p_sizes, "chatdlg", "options.ui.chat.size");
 			migrateSizeEntry(p_sizes, "tabdlg", "options.ui.tabs.size");
 		}
 
-		QDomElement p_toolbars = findSubTag(p, "toolbars", &found);
-		if (found) {
+		QDomElement p_toolbars = p.firstChildElement("toolbars");
+		if (!p_toolbars.isNull()) {
 			QStringList goodTags;
 			goodTags << "toolbar";
 			goodTags << "mainWin";
@@ -1128,8 +1112,8 @@ bool OptionsMigration::fromFile(const QString &fname)
 		}
 
 		//group chat
-		QDomElement p_groupchat = findSubTag(p, "groupchat", &found);
-		if (found) {
+		QDomElement p_groupchat = p.firstChildElement("groupchat");
+		if (!p_groupchat.isNull()) {
 			migrateBoolEntry(p_groupchat, "nickcoloring", "options.ui.muc.use-nick-coloring");
 			migrateBoolEntry(p_groupchat, "highlighting", "options.ui.muc.use-highlighting");
 			migrateStringList(p_groupchat, "highlightwords", "options.ui.muc.highlight-words");
@@ -1137,8 +1121,8 @@ bool OptionsMigration::fromFile(const QString &fname)
 		}
 
 		// Bouncing dock icon (Mac OS X)
-		QDomElement p_dock = findSubTag(p, "dock", &found);
-		if(found) {
+		QDomElement p_dock = p.firstChildElement("dock");
+		if(!p_dock.isNull()) {
 			PsiOptions::instance()->setOption("options.ui.notifications.bounce-dock", p_dock.attribute("bounce"));
 			/* FIXME convert back to some modern enum?
 			if (p_dock.attribute("bounce") == "once") {
@@ -1152,8 +1136,8 @@ bool OptionsMigration::fromFile(const QString &fname)
 			}*/
 		}
 
-		QDomElement p_popup = findSubTag(p, "popups", &found);
-		if(found) {
+		QDomElement p_popup = p.firstChildElement("popups");
+		if(!p_popup.isNull()) {
 			migrateBoolEntry(p_popup, "on", "options.ui.notifications.passive-popups.enabled");
 			migrateBoolEntry(p_popup, "online", "options.ui.notifications.passive-popups.status.online");
 			migrateBoolEntry(p_popup, "offline", "options.ui.notifications.passive-popups.status.offline");
@@ -1169,22 +1153,22 @@ bool OptionsMigration::fromFile(const QString &fname)
 			migrateColorEntry(p_popup, "borderColor", "options.ui.look.colors.passive-popup.border");
 		}
 
-		QDomElement p_lockdown = findSubTag(p, "lockdown", &found);
-		if(found) {
+		QDomElement p_lockdown = p.firstChildElement("lockdown");
+		if(!p_lockdown.isNull()) {
 			migrateBoolEntry(p_lockdown, "roster", "options.ui.contactlist.lockdown-roster");
 			migrateBoolEntry(p_lockdown, "services", "options.ui.contactlist.disable-service-discovery");
 		}
 
-		QDomElement p_iconset = findSubTag(p, "iconset", &found);
-		if(found) {
+		QDomElement p_iconset = p.firstChildElement("iconset");
+		if(!p_iconset.isNull()) {
 			migrateStringEntry(p_iconset, "system", "options.iconsets.system");
 
-			QDomElement roster = findSubTag(p_iconset, "roster", &found);
-			if (found) {
+			QDomElement roster = p_iconset.firstChildElement("roster");
+			if (!roster.isNull()) {
 				migrateStringEntry(roster, "default", "options.iconsets.status");
 
-				QDomElement service = findSubTag(roster, "service", &found);
-				if (found) {
+				QDomElement service = roster.firstChildElement("service");
+				if (!service.isNull()) {
 					lateMigrationData.serviceRosterIconset.clear();
 					for (QDomNode n = service.firstChild(); !n.isNull(); n = n.nextSibling()) {
 						QDomElement i = n.toElement();
@@ -1195,8 +1179,8 @@ bool OptionsMigration::fromFile(const QString &fname)
 					}
 				}
 
-				QDomElement custom = findSubTag(roster, "custom", &found);
-				if (found) {
+				QDomElement custom = roster.firstChildElement("custom");
+				if (!custom.isNull()) {
 					lateMigrationData.customRosterIconset.clear();
 					for (QDomNode n = custom.firstChild(); !n.isNull(); n = n.nextSibling()) {
 						QDomElement i = n.toElement();
@@ -1208,8 +1192,8 @@ bool OptionsMigration::fromFile(const QString &fname)
 				}
 			}
 
-			QDomElement emoticons = findSubTag(p_iconset, "emoticons", &found);
-			if (found) {
+			QDomElement emoticons = p_iconset.firstChildElement("emoticons");
+			if (!emoticons.isNull()) {
 				QStringList emoticons_list;
 				for (QDomNode n = emoticons.firstChild(); !n.isNull(); n = n.nextSibling()) {
 					QDomElement i = n.toElement();
@@ -1225,26 +1209,26 @@ bool OptionsMigration::fromFile(const QString &fname)
 			}
 		}
 
-		QDomElement p_tip = findSubTag(p, "tipOfTheDay", &found);
-		if (found) {
+		QDomElement p_tip = p.firstChildElement("tipOfTheDay");
+		if (!p_tip.isNull()) {
 			migrateIntEntry(p_tip, "num", "options.ui.tip.number");
 			migrateBoolEntry(p_tip, "show", "options.ui.tip.show");
 		}
 
-		QDomElement p_disco = findSubTag(p, "disco", &found);
-		if (found) {
+		QDomElement p_disco = p.firstChildElement("disco");
+		if (!p_disco.isNull()) {
 			migrateBoolEntry(p_disco, "items", "options.ui.service-discovery.automatically-get-items");
 			migrateBoolEntry(p_disco, "info", "options.ui.service-discovery.automatically-get-info");
 		}
 
-		QDomElement p_dt = findSubTag(p, "dt", &found);
-		if (found) {
+		QDomElement p_dt = p.firstChildElement("dt");
+		if (!p_dt.isNull()) {
 			migrateIntEntry(p_dt, "port", "options.p2p.bytestreams.listen-port");
 			migrateStringEntry(p_dt, "external", "options.p2p.bytestreams.external-address");
 		}
 
-		QDomElement p_globalAccel = findSubTag(p, "globalAccel", &found);
-		if (found) {
+		QDomElement p_globalAccel = p.firstChildElement("globalAccel");
+		if (!p_globalAccel.isNull()) {
 			for (QDomNode n = p_globalAccel.firstChild(); !n.isNull(); n = n.nextSibling()) {
 				QDomElement i = n.toElement();
 				if ( i.isNull() )
@@ -1262,10 +1246,10 @@ bool OptionsMigration::fromFile(const QString &fname)
 			}
 		}
 
-		QDomElement p_advWidget = findSubTag(p, "advancedWidget", &found);
-		if (found) {
-			QDomElement stick = findSubTag(p_advWidget, "sticky", &found);
-			if (found) {
+		QDomElement p_advWidget = p.firstChildElement("advancedWidget");
+		if (!p_advWidget.isNull()) {
+			QDomElement stick = p_advWidget.firstChildElement("sticky");
+			if (!stick.isNull()) {
 				bool enabled, toWindows;
 				int  offs;
 
