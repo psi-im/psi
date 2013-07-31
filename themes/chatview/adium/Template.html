@@ -1,0 +1,343 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<base href="%@">
+	<script type="text/javascript" defer="defer">
+		// NOTE:
+		// Any percent signs in this file must be escaped!
+		// Use two escape signs (%%) to display it, this is passed through a format call!
+
+		function appendHTML(html) {
+			var node = document.getElementById("Chat");
+			var range = document.createRange();
+			range.selectNode(node);
+			var documentFragment = range.createContextualFragment(html);
+			node.appendChild(documentFragment);
+		}
+
+		// a coalesced HTML object buffers and outputs DOM objects en masse.
+		// saves A LOT of CSS recalculation time when loading many messages.
+		// (ex. a long twitter timeline)
+		function CoalescedHTML() {
+			var self = this;
+			this.fragment = document.createDocumentFragment();
+			this.timeoutID = 0;
+			this.coalesceRounds = 0;
+			this.isCoalescing = false;
+			this.isConsecutive = undefined;
+			this.shouldScroll = undefined;
+
+			var appendElement = function (elem) {
+				document.getElementById("Chat").appendChild(elem);
+			};
+
+			function outputHTML() {
+				var insert = document.getElementById("insert");
+				if(!!insert && self.isConsecutive) {
+					insert.parentNode.replaceChild(self.fragment, insert);
+				} else {
+					if(insert)
+						insert.parentNode.removeChild(insert);
+					// insert the documentFragment into the live DOM
+					appendElement(self.fragment);
+				}
+				alignChat(self.shouldScroll);
+
+				// reset state to empty/non-coalescing
+				self.shouldScroll = undefined;
+				self.isConsecutive = undefined;
+				self.isCoalescing = false;
+				self.coalesceRounds = 0;
+			}
+
+			// creates and returns a new documentFragment, containing all content nodes
+			// which can be inserted as a single node.
+			function createHTMLNode(html) {
+				var range = document.createRange();
+				range.selectNode(document.getElementById("Chat"));
+				return range.createContextualFragment(html);
+			}
+
+			// removes first insert node from the internal fragment.
+			function rmInsertNode() {
+				var insert = self.fragment.querySelector("#insert");
+				if(insert)
+					insert.parentNode.removeChild(insert);
+			}
+
+			function setShouldScroll(flag) {
+				if(flag && undefined === self.shouldScroll)
+					self.shouldScroll = flag;
+			}
+
+			// hook in a custom method to append new data
+			// to the chat.
+			this.setAppendElementMethod = function (func) {
+				if(typeof func === 'function')
+					appendElement = func;
+			}
+
+			// (re)start the coalescing timer.
+			//   we wait 25ms for a new message to come in.
+			//   If we get one, restart the timer and wait another 10ms.
+			//   If not, run outputHTML()
+			//  We do this a maximum of 400 times, for 10s max that can be spent
+			//  coalescing input, since this will block display.
+			this.coalesce = function() {
+				window.clearTimeout(self.timeoutID);
+				self.timeoutID = window.setTimeout(outputHTML, 25);
+				self.isCoalescing = true;
+				self.coalesceRounds += 1;
+				if(400 < self.coalesceRounds)
+					self.cancel();
+			}
+
+			// if we need to append content into an insertion div,
+			// we need to clear the buffer and cancel the timeout.
+			this.cancel = function() {
+				if(self.isCoalescing) {
+					window.clearTimeout(self.timeoutID);
+					outputHTML();
+				}
+			}
+
+
+			// coalased analogs to the global functions
+
+			this.append = function(html, shouldScroll) {
+				// if we started this fragment with a consecuative message,
+				// cancel and output before we continue
+				if(self.isConsecutive) {
+					self.cancel();
+				}
+				self.isConsecutive = false;
+				rmInsertNode();
+				var node = createHTMLNode(html);
+				self.fragment.appendChild(node);
+
+				node = null;
+
+				setShouldScroll(shouldScroll);
+				self.coalesce();
+			}
+
+			this.appendNext = function(html, shouldScroll) {
+				if(undefined === self.isConsecutive)
+					self.isConsecutive = true;
+				var node = createHTMLNode(html);
+				var insert = self.fragment.querySelector("#insert");
+				if(insert) {
+					insert.parentNode.replaceChild(node, insert);
+				} else {
+					self.fragment.appendChild(node);
+				}
+				node = null;
+				setShouldScroll(shouldScroll);
+				self.coalesce();
+			}
+
+			this.replaceLast = function (html, shouldScroll) {
+				rmInsertNode();
+				var node = createHTMLNode(html);
+				var lastMessage = self.fragment.lastChild;
+				lastMessage.parentNode.replaceChild(node, lastMessage);
+				node = null;
+				setShouldScroll(shouldScroll);
+			}
+		}
+		var coalescedHTML;
+
+		//Appending new content to the message view
+		function appendMessage(html) {
+			var shouldScroll;
+
+			// Only call nearBottom() if should scroll is undefined.
+			if(undefined === coalescedHTML.shouldScroll) {
+				shouldScroll = nearBottom();
+			} else {
+				shouldScroll = coalescedHTML.shouldScroll;
+			}
+			appendMessageNoScroll(html, shouldScroll);
+		}
+
+		function appendMessageNoScroll(html, shouldScroll) {
+			shouldScroll = shouldScroll || false;
+			// always try to coalesce new, non-griuped, messages
+			coalescedHTML.append(html, shouldScroll)
+		}
+
+		function appendNextMessage(html){
+			var shouldScroll;
+			if(undefined === coalescedHTML.shouldScroll) {
+				shouldScroll = nearBottom();
+			} else {
+				shouldScroll = coalescedHTML.shouldScroll;
+			}
+			appendNextMessageNoScroll(html, shouldScroll);
+		}
+
+		function appendNextMessageNoScroll(html, shouldScroll){
+			shouldScroll = shouldScroll || false;
+			// only group next messages if we're already coalescing input
+			coalescedHTML.appendNext(html, shouldScroll);
+		}
+
+		function replaceLastMessage(html){
+			var shouldScroll;
+			// only replace messages if we're already coalescing
+			if(coalescedHTML.isCoalescing){
+				if(undefined === coalescedHTML.shouldScroll) {
+					shouldScroll = nearBottom();
+				} else {
+					shouldScroll = coalescedHTML.shouldScroll;
+				}
+				coalescedHTML.replaceLast(html, shouldScroll);
+			} else {
+				shouldScroll = nearBottom();
+				//Retrieve the current insertion point, then remove it
+				//This requires that there have been an insertion point... is there a better way to retrieve the last element? -evands
+				var insert = document.getElementById("insert");
+				if(insert){
+					var parentNode = insert.parentNode;
+					parentNode.removeChild(insert);
+					var lastMessage = document.getElementById("Chat").lastChild;
+					document.getElementById("Chat").removeChild(lastMessage);
+				}
+
+				//Now append the message itself
+				appendHTML(html);
+
+				alignChat(shouldScroll);
+			}
+		}
+
+		//Auto-scroll to bottom.  Use nearBottom to determine if a scrollToBottom is desired.
+		function nearBottom() {
+			return ( document.body.scrollTop >= ( document.body.offsetHeight - ( window.innerHeight * 1.2 ) ) );
+		}
+		function scrollToBottom() {
+			document.body.scrollTop = document.body.offsetHeight;
+		}
+
+		//Dynamically exchange the active stylesheet
+		function setStylesheet( id, url ) {
+			var code = "<style id=\"" + id + "\" type=\"text/css\" media=\"screen,print\">";
+			if( url.length )
+				code += "@import url( \"" + url + "\" );";
+			code += "</style>";
+			var range = document.createRange();
+			var head = document.getElementsByTagName( "head" ).item(0);
+			range.selectNode( head );
+			var documentFragment = range.createContextualFragment( code );
+			head.removeChild( document.getElementById( id ) );
+			head.appendChild( documentFragment );
+		}
+
+		/* Converts emoticon images to textual emoticons; all emoticons in message if alt is held */
+		document.onclick = function imageCheck() {
+			var node = event.target;
+			if (node.tagName.toLowerCase() != 'img')
+				return;
+
+			imageSwap(node, false);
+		}
+
+		/* Converts textual emoticons to images if textToImagesFlag is true, otherwise vice versa */
+		function imageSwap(node, textToImagesFlag) {
+			var shouldScroll = nearBottom();
+
+			var images = [node];
+			if (event.altKey) {
+				while (node.id != "Chat" && node.parentNode.id != "Chat")
+					node = node.parentNode;
+				images = node.querySelectorAll(textToImagesFlag ? "a" : "img");
+			}
+
+			for (var i = 0; i < images.length; i++) {
+				textToImagesFlag ? textToImage(images[i]) : imageToText(images[i]);
+			}
+
+			alignChat(shouldScroll);
+		}
+
+		function textToImage(node) {
+			if (!node.getAttribute("isEmoticon"))
+				return;
+			//Swap the image/text
+			var img = document.createElement('img');
+			img.setAttribute('src', node.getAttribute('src'));
+			img.setAttribute('alt', node.firstChild.nodeValue);
+			img.className = node.className;
+			node.parentNode.replaceChild(img, node);
+		}
+
+		function imageToText(node)
+		{
+			if (client.zoomImage(node) || !node.alt)
+				return;
+			var a = document.createElement('a');
+			a.setAttribute('onclick', 'imageSwap(this, true)');
+			a.setAttribute('src', node.getAttribute('src'));
+			a.setAttribute('isEmoticon', true);
+			a.className = node.className;
+			var text = document.createTextNode(node.alt);
+			a.appendChild(text);
+			node.parentNode.replaceChild(a, node);
+		}
+
+		//Align our chat to the bottom of the window.  If true is passed, view will also be scrolled down
+		function alignChat(shouldScroll) {
+			var windowHeight = window.innerHeight;
+
+			if (windowHeight > 0) {
+				var contentElement = document.getElementById('Chat');
+				var contentHeight = contentElement.offsetHeight;
+				if (windowHeight - contentHeight > 0) {
+					contentElement.style.position = 'relative';
+					contentElement.style.top = (windowHeight - contentHeight) + 'px';
+				} else {
+					contentElement.style.position = 'static';
+				}
+			}
+
+			if (shouldScroll) scrollToBottom();
+		}
+
+		window.onresize = function windowDidResize(){
+			alignChat(true/*nearBottom()*/); //nearBottom buggy with inactive tabs
+		}
+
+		function initStyle() {
+			alignChat(true);
+			if(!coalescedHTML)
+				coalescedHTML = new CoalescedHTML();
+		}
+	</script>
+
+	<style type="text/css">
+		.actionMessageUserName { display:none; }
+		.actionMessageBody:before { content:"*"; }
+		.actionMessageBody:after { content:"*"; }
+		* { word-wrap:break-word; text-rendering: optimizelegibility; }
+		img.scaledToFitImage { height: auto; max-width: 100%%; }
+	</style>
+
+	<!-- This style is shared by all variants. !-->
+	<style id="baseStyle" type="text/css" media="screen,print">
+		%@
+	</style>
+
+	<!-- Although we call this mainStyle for legacy reasons, it's actually the variant style !-->
+	<style id="mainStyle" type="text/css" media="screen,print">
+		@import url( "%@" );
+	</style>
+
+</head>
+<body onload="initStyle();" style="==bodyBackground==">
+%@
+<div id="Chat">
+</div>
+%@
+</body>
+</html>

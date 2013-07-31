@@ -31,6 +31,7 @@
 #include <QThread>
 #include <QCoreApplication>
 #include <QLocale>
+#include <QBuffer>
 
 #include <QTextCodec>
 
@@ -270,6 +271,7 @@ public:
 		text = from.text;
 		sound = from.sound;
 		impix = from.impix;
+		rawData = from.rawData;
 		anim = from.anim ? new Anim ( *from.anim ) : 0;
 		icon = 0;
 		activatedCount = from.activatedCount;
@@ -320,6 +322,7 @@ public:
 	Impix impix;
 	Anim *anim;
 	QIcon *icon;
+	mutable QByteArray rawData;
 
 	int activatedCount;
 	friend class PsiIcon;
@@ -446,6 +449,24 @@ const QIcon &PsiIcon::icon() const
 	const_cast<Private*>(d.data())->icon = new QIcon( d->impix.pixmap() );
 	return *d->icon;
 }
+
+#ifdef WEBKIT
+/**
+ * Returns original image data
+ */
+const QByteArray & PsiIcon::raw() const
+{
+	if (!(d->rawData.size())) {
+		QPixmap pix = impix().pixmap();
+		if (!pix.isNull()) {
+			QBuffer buffer(&d->rawData);
+			buffer.open(QIODevice::WriteOnly);
+			pix.save(&buffer, "PNG");
+		}
+	}
+	return d->rawData;
+}
+#endif
 
 /**
  * Sets the PsiIcon impix to \a impix.
@@ -683,7 +704,11 @@ bool PsiIcon::blockSignals(bool b)
 bool PsiIcon::loadFromData(const QByteArray &ba, bool isAnim)
 {
 	detach();
-
+#ifdef WEBKIT
+	if (isAnim) {
+		d->rawData = ba;
+	}
+#endif
 	bool ret = false;
 	if ( isAnim ) {
 		Anim *anim = new Anim(ba);
@@ -960,6 +985,20 @@ const QStringList IconsetFactory::icons()
 {
 	return IconsetFactoryPrivate::instance()->icons();
 }
+
+#ifdef WEBKIT
+/**
+ * Returs image raw data aka original image
+ */
+const QByteArray IconsetFactory::raw(const QString &name)
+{
+	const PsiIcon *i = iconPtr(name);
+	if ( i ) {
+		return i->raw();
+	}
+	return QByteArray();
+}
+#endif
 
 //----------------------------------------------------------------------------
 // Iconset

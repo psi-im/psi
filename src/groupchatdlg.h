@@ -39,6 +39,7 @@ class PsiAccount;
 class PsiOptions;
 class QRect;
 class GCMainDlg;
+class MessageView;
 class QColorGroup;
 namespace XMPP {
 	class Message;
@@ -136,9 +137,9 @@ private:
 	Ui::GroupChatDlg ui_;
 
 	void doAlert();
-	void appendSysMsg(const QString &, bool, const QDateTime &ts=QDateTime(), bool prepareAsChatMessage=false);
+	void appendSysMsg(const QString &, bool alert=false, const QDateTime &ts=QDateTime());
+	void appendSysMsg(const MessageView &);
 	void appendMessage(const Message &, bool);
-	void updateLastMsgTime(QDateTime t);
 	void setLooks();
 
 	void mucKickMsgHelper(const QString &nick, const Status &s, const QString &nickJid, const QString &title,
@@ -147,9 +148,6 @@ private:
 
 	void contextMenuEvent(QContextMenuEvent *);
 
-	QString getNickColor(QString);
-	QMap<QString,int> nicks;
-	int nicknumber;
 	PsiOptions* options_;
 	QDateTime lastMsgTime_;
 };

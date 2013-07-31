@@ -103,10 +103,6 @@ signals:
 	void iconSelected(const PsiIcon *);
 	void textSelected(QString);
 
-public slots:
-	void aboutToShow() { iconStart(); }
-	void aboutToHide() { iconStop();  }
-
 private:
 	void iconStart()
 	{
@@ -146,8 +142,8 @@ private:
 		}
 	}
 
-	void enterEvent(QEvent *) { setFocus();   update(); } // focus follows mouse mode
-	void leaveEvent(QEvent *) { clearFocus(); update(); }
+	void enterEvent(QEvent *) { iconStart(); setFocus();  update(); } // focus follows mouse mode
+	void leaveEvent(QEvent *) { iconStop(); clearFocus(); update(); }
 
 private slots:
 	void iconUpdated()
@@ -337,8 +333,8 @@ void IconSelect::setIconset(const Iconset &iconset)
 		connect (b, SIGNAL(iconSelected(const PsiIcon *)), menu, SIGNAL(iconSelected(const PsiIcon *)));
 		connect (b, SIGNAL(textSelected(QString)), menu, SIGNAL(textSelected(QString)));
 
-		connect (menu, SIGNAL(aboutToShow()), b, SLOT(aboutToShow()));
-		connect (menu, SIGNAL(aboutToHide()), b, SLOT(aboutToHide()));
+		//connect (menu, SIGNAL(aboutToShow()), b, SLOT(aboutToShow()));
+		//connect (menu, SIGNAL(aboutToHide()), b, SLOT(aboutToHide()));
 
 		if (++column >= size) {
 			++row;

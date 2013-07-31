@@ -29,145 +29,14 @@
 #include <QLayout>
 #include <QMenu>
 #include <QResizeEvent>
-#include <QScrollBar>
 #include <QTextCharFormat>
 #include <QTextDocument>
 #include <QTimer>
-#include <QDateTime>
 
 #include "shortcutmanager.h"
 #include "spellchecker/spellhighlighter.h"
 #include "spellchecker/spellchecker.h"
 #include "psioptions.h"
-
-//----------------------------------------------------------------------------
-// ChatView
-//----------------------------------------------------------------------------
-ChatView::ChatView(QWidget *parent)
-	: PsiTextView(parent)
-	, dialog_(0)
-{
-	setWordWrapMode(QTextOption::WrapAtWordBoundaryOrAnywhere);
-
-	setReadOnly(true);
-	setUndoRedoEnabled(false);
-	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-
-#ifndef HAVE_X11	// linux has this feature built-in
-	connect(this, SIGNAL(selectionChanged()), SLOT(autoCopy()));
-	connect(this, SIGNAL(cursorPositionChanged()), SLOT(autoCopy()));
-#endif
-}
-
-ChatView::~ChatView()
-{
-}
-
-void ChatView::setDialog(QWidget* dialog)
-{
-	dialog_ = dialog;
-}
-
-QSize ChatView::sizeHint() const
-{
-	return minimumSizeHint();
-}
-
-bool ChatView::focusNextPrevChild(bool next)
-{
-	return QWidget::focusNextPrevChild(next);
-}
-
-void ChatView::keyPressEvent(QKeyEvent *e)
-{
-/*	if(e->key() == Qt::Key_Escape)
-		e->ignore();
-#ifdef Q_OS_MAC
-	else if(e->key() == Qt::Key_W && e->modifiers() & Qt::ControlModifier)
-		e->ignore();
-	else
-#endif
-	else if(e->key() == Qt::Key_Return && ((e->modifiers() & Qt::ControlModifier) || (e->modifiers() & Qt::AltModifier)) )
-		e->ignore();
-	else if(e->key() == Qt::Key_H && (e->modifiers() & Qt::ControlModifier))
-		e->ignore();
-	else if(e->key() == Qt::Key_I && (e->modifiers() & Qt::ControlModifier))
-		e->ignore(); */
-	/*else*/ if(e->key() == Qt::Key_M && (e->modifiers() & Qt::ControlModifier) && !isReadOnly()) // newline
-		append("\n");
-/*	else if(e->key() == Qt::Key_U && (e->modifiers() & Qt::ControlModifier) && !isReadOnly())
-		setText(""); */
-	else if ((e->key() == Qt::Key_Return || e->key() == Qt::Key_Enter) && ((e->modifiers() & Qt::ControlModifier) || (e->modifiers() & Qt::AltModifier))) {
-		e->ignore();
-	}
-	else {
-		PsiTextView::keyPressEvent(e);
-	}
-}
-
-/**
- * Copies any selected text to the clipboard
- * if autoCopy is enabled and ChatView is in read-only mode.
- */
-void ChatView::autoCopy()
-{
-	if (isReadOnly() && PsiOptions::instance()->getOption("options.ui.automatically-copy-selected-text").toBool()) {
-		copy();
-	}
-}
-
-/**
- * Handle KeyPress events that happen in ChatEdit widget. This is used
- * to 'fix' the copy shortcut.
- * \param object object that should receive the event
- * \param event received event
- * \param chatEdit pointer to the dialog's ChatEdit widget that receives user input
- */
-bool ChatView::handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit)
-{
-	if (object == chatEdit && event->type() == QEvent::KeyPress) {
-		QKeyEvent *e = (QKeyEvent *)event;
-		if ((e->key() == Qt::Key_C && (e->modifiers() & Qt::ControlModifier)) ||
-		    (e->key() == Qt::Key_Insert && (e->modifiers() & Qt::ControlModifier)))
-		{
-			if (!chatEdit->textCursor().hasSelection() &&
-			     this->textCursor().hasSelection())
-			{
-				this->copy();
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
-
-void ChatView::appendText(const QString &text)
-{
-	bool doScrollToBottom = atBottom();
-
-	// prevent scrolling back to selected text when
-	// restoring selection
-	int scrollbarValue = verticalScrollBar()->value();
-
-	PsiTextView::appendText(text);
-
-	if (doScrollToBottom)
-		scrollToBottom();
-	else
-		verticalScrollBar()->setValue(scrollbarValue);
-}
-
-/**
- * \brief Common function for ChatDlg and GCMainDlg. FIXME: Extract common
- * chat window from both dialogs and move this function to that class.
- */
-QString ChatView::formatTimeStamp(const QDateTime &time)
-{
-	// TODO: provide an option for user to customize
-	// time stamp format
-	return QString().sprintf("%02d:%02d:%02d", time.time().hour(), time.time().minute(), time.time().second());;
-}
 
 //----------------------------------------------------------------------------
 // ChatEdit

@@ -1,0 +1,1 @@
+chatServer.setMetaData({name: "Classic"});

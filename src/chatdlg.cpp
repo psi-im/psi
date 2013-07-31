@@ -74,6 +74,8 @@
 #include "psicontactlist.h"
 #include "accountlabel.h"
 #include "psirichtext.h"
+#include "messageview.h"
+#include "chatview.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -118,12 +120,16 @@ void ChatDlg::init()
 	initActions();
 	setShortcuts();
 
-	// TODO: this have to be moved to chatEditCreated()
-	chatView()->setDialog(this);
-	chatEdit()->setDialog(this);
-
 	chatEdit()->installEventFilter(this);
-	connect(chatView(), SIGNAL(selectionChanged()), SLOT(logSelectionChanged()));
+	chatView()->setDialog(this);
+	chatView()->setSessionData(false, jid().full(), jid().full()); //FIXME fix nick updating
+#ifdef WEBKIT
+	chatView()->setAccount(account());
+#endif
+	chatView()->init();
+
+	// seems its useless hack
+	//connect(chatView(), SIGNAL(selectionChanged()), SLOT(logSelectionChanged())); //
 
 	// SyntaxHighlighters modify the QTextEdit in a QTimer::singleShot(0, ...) call
 	// so we need to install our hooks after it fired for the first time
@@ -201,12 +207,12 @@ void ChatDlg::setShortcuts()
 
 void ChatDlg::scrollUp()
 {
-	chatView()->verticalScrollBar()->setValue(chatView()->verticalScrollBar()->value() - chatView()->verticalScrollBar()->pageStep() / 2);
+	chatView()->scrollUp();
 }
 
 void ChatDlg::scrollDown()
 {
-	chatView()->verticalScrollBar()->setValue(chatView()->verticalScrollBar()->value() + chatView()->verticalScrollBar()->pageStep() / 2);
+	chatView()->scrollDown();
 }
 
 void ChatDlg::closeEvent(QCloseEvent *e)
@@ -304,12 +310,13 @@ void ChatDlg::logSelectionChanged()
 {
 #ifdef Q_OS_MAC
 	// A hack to only give the message log focus when text is selected
-	if (chatView()->textCursor().hasSelection()) {
-		chatView()->setFocus();
-	}
-	else {
-		chatEdit()->setFocus();
-	}
+// seems its already useless. at least copy works w/o this hack
+//	if (chatView()->textCursor().hasSelection()) {
+//		chatView()->setFocus();
+//	}
+//	else {
+//		chatEdit()->setFocus();
+//	}
 #endif
 }
 
@@ -451,18 +458,7 @@ void ChatDlg::updateContact(const Jid &j, bool fromPresence)
 			updatePGP();
 
 			if (fromPresence && statusChanged) {
-				QString msg = tr("%1 is %2").arg(TextUtil::escape(dispNick_)).arg(status2txt(status_));
-				if (!statusString_.isEmpty()) {
-					QString ss = TextUtil::linkify(TextUtil::plain2rich(statusString_));
-					if (PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool()) {
-						ss = TextUtil::emoticonify(ss);
-					}
-					if (PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool()) {
-						ss = TextUtil::legacyFormat(ss);
-					}
-					msg += QString(" [%1]").arg(ss);
-				}
-				appendSysMsg(msg);
+				chatView()->dispatchMessage(MessageView::statusMessage(dispNick_, status_, statusString_));
 			}
 		}
 
@@ -671,6 +667,8 @@ void ChatDlg::doSend()
 	if (isEncryptionEnabled()) {
 		m.setWasEncrypted(true);
 	}
+	QString id = account()->client()->genUniqueId();
+	m.setId(id); // we need id early for message manipulations in chatview
 	m_ = m;
 
 	// Request events
@@ -778,7 +776,7 @@ QString ChatDlg::whoNick(bool local) const
 		result = dispNick_;
 	}
 
-	return TextUtil::escape(result);
+	return result;
 }
 
 void ChatDlg::appendMessage(const Message &m, bool local)
@@ -793,17 +791,14 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 	encEnabled = lastWasEncrypted_;
 
 	if (encChanged) {
-		if (encEnabled) {
-			appendSysMsg(QString("<icon name=\"psi/cryptoYes\"> ") + tr("Encryption Enabled"));
-			if (!local) {
-				setPGPEnabled(true);
-			}
-		}
-		else {
-			appendSysMsg(QString("<icon name=\"psi/cryptoNo\"> ") + tr("Encryption Disabled"));
-			if (!local) {
-				setPGPEnabled(false);
-
+		chatView()->dispatchMessage(MessageView::fromHtml(
+				encEnabled? QString("<icon name=\"psi/cryptoYes\"> ") + tr("Encryption Enabled"):
+							QString("<icon name=\"psi/cryptoNo\"> ") + tr("Encryption Disabled"),
+				MessageView::System
+		));
+		if (!local) {
+			setPGPEnabled(encEnabled);
+			if (!encEnabled) {
 				// enable warning
 				warnSend_ = true;
 				QTimer::singleShot(3000, this, SLOT(setWarnSendFalse()));
@@ -811,21 +806,31 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 		}
 	}
 
-	QString txt = messageText(m);
-	QString subject = messageSubject(m);
+	if (!m.subject().isEmpty()) {
+		chatView()->dispatchMessage(MessageView::subjectMessage(m.subject()));
+	}
 
-	ChatDlg::SpooledType spooledType = m.spooled() ?
-									   ChatDlg::Spooled_OfflineStorage :
-									   ChatDlg::Spooled_None;
-	if (isEmoteMessage(m))
-		appendEmoteMessage(spooledType, m.timeStamp(), local, txt, subject);
-	else
-		appendNormalMessage(spooledType, m.timeStamp(), local, txt, subject);
+	MessageView mv(MessageView::Message);
+	if (m.containsHTML() && PsiOptions::instance()->getOption("options.html.chat.render").toBool() && !m.html().text().isEmpty()) {
+		mv.setHtml(m.html().toString("span"));
+	} else {
+		mv.setPlainText(m.body());
+	}
+	mv.setMessageId(m.id());
+	mv.setLocal(local);
+	mv.setNick(whoNick(local));
+	mv.setUserId(local?account()->jid().bare():jid().bare());
+	mv.setDateTime(m.timeStamp());
+	mv.setSpooled(m.spooled());
+	chatView()->dispatchMessage(mv);
 
-	appendMessageFields(m);
-
-	if (local) {
-		deferredScroll();
+	if (!m.urlList().isEmpty()) {
+		UrlList urls = m.urlList();
+		QMap<QString,QString> urlsMap;
+		foreach (const Url &u, urls) {
+			urlsMap.insert(u.url(), u.desc());
+		}
+		chatView()->dispatchMessage(MessageView::urlsMessage(urlsMap));
 	}
 
 	// if we're not active, notify the user by changing the title
@@ -854,16 +859,6 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 		keepOpen_ = true;
 		QTimer::singleShot(1000, this, SLOT(setKeepOpenFalse()));
 	}
-}
-
-void ChatDlg::deferredScroll()
-{
-	QTimer::singleShot(250, this, SLOT(slotScroll()));
-}
-
-void ChatDlg::slotScroll()
-{
-	chatView()->scrollToBottom();
 }
 
 void ChatDlg::updateIsComposing(bool b)
@@ -1030,67 +1025,8 @@ void ChatDlg::nicksChanged()
 	// this function is intended to be reimplemented in subclasses
 }
 
-static const QString me_cmd = "/me ";
-
-bool ChatDlg::isEmoteMessage(const XMPP::Message& m)
-{
-	if (m.body().startsWith(me_cmd) || m.html().text().trimmed().startsWith(me_cmd))
-		return true;
-
-	return false;
-}
-
-QString ChatDlg::messageText(const XMPP::Message& m)
-{
-	bool emote = isEmoteMessage(m);
-	QString txt;
-
-	if (m.containsHTML() && PsiOptions::instance()->getOption("options.html.chat.render").toBool() && !m.html().text().isEmpty()) {
-		txt = m.html().toString("span");
-
-		if (emote) {
-			int cmd = txt.indexOf(me_cmd);
-			txt = txt.remove(cmd, me_cmd.length());
-		}
-		// qWarning("html body:\n%s\n",qPrintable(txt));
-	}
-	else {
-		txt = m.body();
-
-		if (emote)
-			txt = txt.mid(me_cmd.length());
-
-		txt = TextUtil::plain2rich(txt);
-		txt = TextUtil::linkify(txt);
-		// qWarning("regular body:\n%s\n",qPrintable(txt));
-	}
-
-	if (PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool())
-		txt = TextUtil::emoticonify(txt);
-	if (PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
-		txt = TextUtil::legacyFormat(txt);
-
-	return txt;
-}
-
-QString ChatDlg::messageSubject(const XMPP::Message& m)
-{
-	QString txt = m.subject();
-
-	if (!txt.isEmpty()) {
-		txt = TextUtil::plain2rich(txt);
-		txt = TextUtil::linkify(txt);
-		if (PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool())
-			txt = TextUtil::emoticonify(txt);
-		if (PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
-			txt = TextUtil::legacyFormat(txt);
-	}
-	return txt;
-}
-
 void ChatDlg::chatEditCreated()
 {
-	chatView()->setDialog(this);
 	chatEdit()->setDialog(this);
 
 	if (highlightersInstalled_) {

@@ -46,6 +46,7 @@ ColorOpt::ColorOpt()
 		{"messages.received", QPalette::Text},
 		{"messages.sent", QPalette::Text},
 		{"messages.informational", QPalette::Text},
+		{"messages.usertext", QPalette::Text},
 		{"passive-popup.border", QPalette::Window}
 	};
 	for (unsigned int i = 0; i < sizeof(source) / sizeof(SourceType); i++) {

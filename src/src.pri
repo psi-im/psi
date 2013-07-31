@@ -97,6 +97,11 @@ HEADERS += \
 	$$PWD/psievent.h \
 	$$PWD/xmlconsole.h \
 	$$PWD/psiiconset.h \
+	$$PWD/psithememanager.h \
+	$$PWD/psithememodel.h \
+	$$PWD/psithemeviewdelegate.h \
+	$$PWD/psithemeprovider.h \
+	$$PWD/theme.cpp \
 	$$PWD/applicationinfo.h \
 	$$PWD/pgptransaction.h \
 	$$PWD/userlist.h \
@@ -114,6 +119,9 @@ HEADERS += \
 	$$PWD/accountmodifydlg.h \
 	$$PWD/changepwdlg.h \
 	$$PWD/msgmle.h \
+	$$PWD/chatviewcommon.h \
+	$$PWD/chatview.h \
+	$$PWD/messageview.h \
 	$$PWD/statusdlg.h \
 	$$PWD/statuscombobox.h \
 	$$PWD/eventdlg.h \
@@ -224,6 +232,11 @@ SOURCES += \
 	$$PWD/psievent.cpp \
 	$$PWD/xmlconsole.cpp \
 	$$PWD/psiiconset.cpp \
+	$$PWD/psithememanager.cpp \
+	$$PWD/psithememodel.cpp \
+	$$PWD/psithemeviewdelegate.cpp \
+	$$PWD/psithemeprovider.cpp \
+	$$PWD/theme.cpp \
 	$$PWD/applicationinfo.cpp \
 	$$PWD/pgptransaction.cpp \
 	$$PWD/serverinfomanager.cpp \
@@ -242,6 +255,8 @@ SOURCES += \
 	$$PWD/accountmodifydlg.cpp \
 	$$PWD/changepwdlg.cpp \
 	$$PWD/msgmle.cpp \
+	$$PWD/chatviewcommon.cpp \
+	$$PWD/messageview.cpp \
 	$$PWD/statusdlg.cpp \
 	$$PWD/statuscombobox.cpp \
 	$$PWD/eventdlg.cpp \
@@ -580,6 +595,31 @@ win32:!dbus {
 
 unix:!dbus {
 	SOURCES += $$PWD/activeprofiles_stub.cpp
+}
+
+webkit {
+	HEADERS += 	$$PWD/chatview_webkit.h \
+			$$PWD/networkaccessmanager.h \
+			$$PWD/bytearrayreply.h \
+			$$PWD/webview.h \
+			$$PWD/psiwkavatarhandler.h \
+			$$PWD/jsutil.h \
+			$$PWD/chatviewtheme.h \
+			$$PWD/chatviewthemeprovider.h
+	SOURCES += 	$$PWD/chatview_webkit.cpp \
+			$$PWD/networkaccessmanager.cpp \
+			$$PWD/bytearrayreply.cpp \
+			$$PWD/webview.cpp \
+			$$PWD/psiwkavatarhandler.cpp \
+			$$PWD/jsutil.cpp \
+			$$PWD/chatviewtheme.cpp \
+			$$PWD/chatviewthemeprovider.cpp
+	DEFINES += WEBKIT
+	QT += webkit
+}
+else {
+	HEADERS += 	$$PWD/chatview_te.h
+	SOURCES += 	$$PWD/chatview_te.cpp
 }
 
 mac {

@@ -180,9 +180,6 @@
           <property name="focusPolicy" >
            <enum>Qt::NoFocus</enum>
           </property>
-          <property name="readOnly" >
-           <bool>true</bool>
-          </property>
          </widget>
          <widget class="GCUserView" name="lv_users" >
           <property name="minimumSize" >
@@ -292,8 +289,8 @@
   </customwidget>
   <customwidget>
    <class>ChatView</class>
-   <extends>QTextEdit</extends>
-   <header>msgmle.h</header>
+   <extends>QFrame</extends>
+   <header>chatview.h</header>
   </customwidget>
   <customwidget>
    <class>ChatEditProxy</class>

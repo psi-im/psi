@@ -63,6 +63,7 @@
 #include "mucmanager.h"
 #include "busywidget.h"
 #include "msgmle.h"
+#include "messageview.h"
 #include "iconwidget.h"
 #include "iconselect.h"
 #include "xmpp_tasks.h"
@@ -189,7 +190,6 @@ public:
 		nonAnonymous = false;
 
 		trackBar = false;
-		oldTrackBarPosition = 0;
 		mCmdManager.registerProvider(this);
 	}
 
@@ -198,6 +198,7 @@ public:
 	MUCManager *mucManager;
 	QString self, prev_self;
 	QString password;
+	QString topic;
 	bool nonAnonymous;		 // got status code 100 ?
 	IconAction *act_find, *act_clear, *act_icon, *act_configure;
 #ifdef WHITEBOARDING
@@ -226,8 +227,6 @@ public:
 
 public:
 	bool trackBar;
-protected:
-	int  oldTrackBarPosition;
 
 public:
 	ChatEdit* mle() const { return dlg->ui_.mle->chatEdit(); }
@@ -243,11 +242,6 @@ public slots:
 			return;
 
 		PsiRichText::addEmoticon(mle(), text);
-	}
-
-	void deferredScroll() {
-		//QTimer::singleShot(250, this, SLOT(slotScroll()));
-		te_log()->scrollToBottom();
 	}
 
 	void sp_result(StatusPingTask::Result res, QString id)
@@ -433,76 +427,11 @@ join <channel>{,<channel>} [pass{,<pass>}
 	virtual void mCmdSiteDestroyed() {
 	}
 
-
-
-protected slots:
-	void slotScroll() {
-		te_log()->scrollToBottom();
-	}
-
-public:
-	bool internalFind(QString str, bool startFromBeginning = false)
-	{
-		if (startFromBeginning) {
-			QTextCursor cursor = te_log()->textCursor();
-			cursor.movePosition(QTextCursor::Start, QTextCursor::KeepAnchor);
-			cursor.clearSelection();
-			te_log()->setTextCursor(cursor);
-		}
-
-		bool found = te_log()->find(str);
-		if(!found) {
-			if (!startFromBeginning)
-				return internalFind(str, true);
-
-			return false;
-		}
-
-		return true;
-	}
-
-private:
-	void removeTrackBar(QTextCursor &cursor)
-	{
-		if (oldTrackBarPosition) {
-			cursor.setPosition(oldTrackBarPosition, QTextCursor::KeepAnchor);
-			QTextBlockFormat blockFormat = cursor.blockFormat();
-			blockFormat.clearProperty(QTextFormat::BlockTrailingHorizontalRulerWidth);
-			cursor.clearSelection();
-			cursor.setBlockFormat(blockFormat);
-		}
-	}
-
-	void addTrackBar(QTextCursor &cursor)
-	{
-		cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
-		oldTrackBarPosition = cursor.position();
-		QTextBlockFormat blockFormat = cursor.blockFormat();
-		blockFormat.setProperty(QTextFormat::BlockTrailingHorizontalRulerWidth, QVariant(true));
-		cursor.clearSelection();
-		cursor.setBlockFormat(blockFormat);
-	}
-
 public:
 	void doTrackBar()
 	{
 		trackBar = false;
-
-		// save position, because our manipulations could change it
-		int scrollbarValue = te_log()->verticalScrollBar()->value();
-
-		QTextCursor cursor = te_log()->textCursor();
-		cursor.beginEditBlock();
-		PsiRichText::Selection selection = PsiRichText::saveSelection(te_log(), cursor);
-
-		removeTrackBar(cursor);
-		addTrackBar(cursor);
-
-		PsiRichText::restoreSelection(te_log(), cursor, selection);
-		cursor.endEditBlock();
-		te_log()->setTextCursor(cursor);
-
-		te_log()->verticalScrollBar()->setValue(scrollbarValue);
+		te_log()->doTrackBar();
 	}
 
 public:
@@ -633,7 +562,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	: TabbableWidget(j.bare(), pa, tabManager)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
-	nicknumber=0;
 	d = new Private(this);
 	d->self = d->prev_self = j.resource();
 	account()->dialogRegister(this, jid());
@@ -660,6 +588,10 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	ui_.setupUi(this);
 	ui_.lb_ident->setAccount(account());
 	ui_.lb_ident->setShowJid(false);
+	ui_.log->setSessionData(true, jid().full(), jid().full()); //FIXME change conference name
+#ifdef WEBKIT
+	ui_.log->setAccount(account());
+#endif
 
 	connect(ui_.pb_topic, SIGNAL(clicked()), SLOT(doTopic()));
 	PsiToolTip::install(ui_.le_topic);
@@ -674,7 +606,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	ui_.tb_emoticons->setIcon(IconsetFactory::icon("psi/smile").icon());
 
 #ifdef Q_OS_MAC
-	connect(ui_.log, SIGNAL(selectionChanged()), SLOT(logSelectionChanged()));
+	// seems its useless hack
+	//connect(ui_.log, SIGNAL(selectionChanged()), SLOT(logSelectionChanged()));
 #endif
 
 	ui_.lv_users->setMainDlg(this);
@@ -733,6 +666,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	ui_.mini_prompt->hide();
 	connect(ui_.mle, SIGNAL(textEditCreated(QTextEdit*)), SLOT(chatEditCreated()));
 	chatEditCreated();
+	ui_.log->init(); //here is we ready to do that
 
 	d->pm_settings = new QMenu(this);
 	connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));
@@ -810,12 +744,12 @@ void GCMainDlg::setShortcuts()
 
 void GCMainDlg::scrollUp()
 {
-	ui_.log->verticalScrollBar()->setValue(ui_.log->verticalScrollBar()->value() - ui_.log->verticalScrollBar()->pageStep()/2);
+	ui_.log->scrollUp();
 }
 
 void GCMainDlg::scrollDown()
 {
-	ui_.log->verticalScrollBar()->setValue(ui_.log->verticalScrollBar()->value() + ui_.log->verticalScrollBar()->pageStep()/2);
+	ui_.log->scrollDown();
 }
 
 void GCMainDlg::closeEvent(QCloseEvent *e)
@@ -866,10 +800,11 @@ void GCMainDlg::logSelectionChanged()
 {
 #ifdef Q_OS_MAC
 	// A hack to only give the message log focus when text is selected
-	if (ui_.log->textCursor().hasSelection())
-		ui_.log->setFocus();
-	else
-		ui_.mle->chatEdit()->setFocus();
+// seems its already useless. at least copy works w/o this hack
+//	if (ui_.log->textCursor().hasSelection())
+//		ui_.log->setFocus();
+//	else
+//		ui_.mle->chatEdit()->setFocus();
 #endif
 }
 
@@ -1011,7 +946,7 @@ void GCMainDlg::doTopic()
 
 void GCMainDlg::doClear()
 {
-	ui_.log->setText("");
+	ui_.log->clear();
 }
 
 void GCMainDlg::doClearButton()
@@ -1026,7 +961,7 @@ void GCMainDlg::doClearButton()
 			)
 		) {
 		case QMessageBox::No:
-			break;
+		break;
 		case QMessageBox::YesAll:
 			PsiOptions::instance()->setOption("options.ui.chat.warn-before-clear", false);
 			// fall-through
@@ -1066,7 +1001,7 @@ void GCMainDlg::configureRoom()
 void GCMainDlg::doFind(const QString &str)
 {
 	d->lastSearch = str;
-	if (d->internalFind(str))
+	if (d->te_log()->internalFind(str))
 		d->findDlg->found();
 	else
 		d->findDlg->error(str);
@@ -1194,7 +1129,7 @@ void GCMainDlg::mucKickMsgHelper(const QString &nick, const Status &s, const QSt
 	if (!s.mucItem().reason().isEmpty()) {
 		message += QString(" (%1)").arg(s.mucItem().reason());
 	}
-	appendSysMsg(message, false, QDateTime::currentDateTime());
+	appendSysMsg(message);
 }
 
 void GCMainDlg::presence(const QString &nick, const Status &s)
@@ -1208,7 +1143,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 		else {
 			message = tr("An error occurred (errorcode: %1)").arg(s.errorCode());
 		}
-		appendSysMsg(message, false, QDateTime::currentDateTime());
+		appendSysMsg(message);
 		return;
 	}
 
@@ -1228,7 +1163,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 	if(s.isAvailable()) {
 		// Available
 		if (s.getMUCStatuses().contains(201)) {
-			appendSysMsg(tr("New room created"), false, QDateTime::currentDateTime());
+			appendSysMsg(tr("New room created"));
 			if (options_->getOption("options.muc.accept-defaults").toBool()) {
 				d->mucManager->setDefaultConfiguration();
 			} else if (options_->getOption("options.muc.auto-configure").toBool()) {
@@ -1260,7 +1195,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 				} else {
 					message = message.arg(nick);
 				}
-				appendSysMsg(message, false, QDateTime::currentDateTime());
+				appendSysMsg(message);
 			}
 		}
 		else {
@@ -1280,23 +1215,18 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 				}
 
 				if (!message.isEmpty()) {
-					appendSysMsg(message, false, QDateTime::currentDateTime());
+					appendSysMsg(message);
 				}
 			}
 			if ( !d->connecting && options_->getOption("options.muc.show-status-changes").toBool() ) {
 				if (s.status() != contact->s.status() || s.show() != contact->s.show())	{
-					QString message;
 					QString st;
 					if (s.show().isEmpty()) {
 						st=tr("online");
 					} else {
 						st=s.show();
 					}
-					message = tr("%1 is now %2").arg(nick).arg(st);
-					if (!s.status().isEmpty()) {
-						message+=QString(" (%1)").arg(s.status());
-					}
-					appendSysMsg(message, false, QDateTime::currentDateTime());
+					ui_.log->dispatchMessage(MessageView::statusMessage(nick, (int)s.type(), s.status()));
 				}
 			}
 		}
@@ -1325,7 +1255,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 			else {
 				QMessageBox::information(this,tr("Room Destroyed"), message);
 			}
-			appendSysMsg(log, false, QDateTime::currentDateTime());
+			appendSysMsg(log);
 			goForcedLeave();
 		}
 
@@ -1385,7 +1315,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 					message += QString(" (%1)").arg(s.status());
 				}
 			}
-			appendSysMsg(message, false, QDateTime::currentDateTime());
+			appendSysMsg(message);
 		}
 		ui_.lv_users->removeEntry(nick);
 	}
@@ -1416,18 +1346,33 @@ void GCMainDlg::message(const Message &_m)
 		d->nonAnonymous = false;
 	}
 
-
 	if(!m.subject().isNull()) {
-		ui_.le_topic->setText(m.subject());
-		ui_.le_topic->setCursorPosition(0);
-		ui_.le_topic->setToolTip(QString("<qt><p>%1</p></qt>").arg(m.subject()));
-		if(m.body().isEmpty()) {
-			if (!from.isEmpty())
-				m.setBody(QString("/me ") + tr("has set the topic to: %1").arg(m.subject()));
-			else
-				// The topic was set by the server
-				m.setBody(tr("The topic has been set to: %1").arg(m.subject()));
+		QString subject = m.subject();
+		d->topic = subject;
+		QString subjectTooltip = TextUtil::plain2rich(subject);
+		subjectTooltip = TextUtil::linkify(subjectTooltip);
+		if(PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool()) {
+			subjectTooltip = TextUtil::emoticonify(subjectTooltip);
 		}
+		ui_.le_topic->setText(subject.replace("\n\n", " || ").replace("\n", " | ").replace("\t", " ").replace(QRegExp("\\s{2,}"), " "));
+		ui_.le_topic->setCursorPosition(0);
+		ui_.le_topic->setToolTip(QString("<qt><p>%1</p></qt>").arg(subjectTooltip));
+
+		QString sysMsg;
+		if (from.isEmpty()) {
+			// The topic was set by the server
+			// ugly trick
+			int btStart = m.body().indexOf(d->topic);
+			sysMsg = btStart > 0?m.body().left(btStart).remove(": "):tr("The topic has been set to");
+		} else {
+			sysMsg = QString(from) + (d->topic.isEmpty()?
+						 tr(" has unset the topic"):tr(" has set the topic to"));
+		}
+		MessageView tv = MessageView::subjectMessage(d->topic, sysMsg);
+		tv.setDateTime(m.timeStamp());
+		appendSysMsg(tv);
+		//ui_.log->dispatchMessage(tv);
+		return;
 	}
 
 	if(m.body().isEmpty())
@@ -1469,7 +1414,7 @@ void GCMainDlg::message(const Message &_m)
 	}
 
 	if(from.isEmpty())
-		appendSysMsg(m.body(), alert, m.timeStamp(), true);
+		appendSysMsg(m.body(), alert, m.timeStamp());
 	else
 		appendMessage(m, alert);
 }
@@ -1496,144 +1441,55 @@ const QString& GCMainDlg::nick() const
 	return d->self;
 }
 
-void GCMainDlg::updateLastMsgTime(QDateTime t)
+void GCMainDlg::appendSysMsg(const QString &str, bool alert, const QDateTime &ts)
 {
-	bool doInsert = t.date() != lastMsgTime_.date();
-	lastMsgTime_ = t;
-	if (doInsert) {
-		QString color = ColorOpt::instance()->color("options.ui.look.colors.messages.informational").name();
-		ui_.log->appendText(QString("<font color=\"%1\">*** %2</font>").arg(color).arg(t.date().toString(Qt::ISODate)));
+	MessageView mv = MessageView::fromPlainText(str, MessageView::System);
+	if (!PsiOptions::instance()->getOption("options.ui.muc.use-highlighting").toBool()) {
+		alert = false;
 	}
+	mv.setAlert(alert);
+	if(!ts.isNull()) {
+		mv.setDateTime(ts);
+	}
+	appendSysMsg(mv);
 }
 
-void GCMainDlg::appendSysMsg(const QString &str, bool alert, const QDateTime &ts, bool prepareAsChatMessage)
+void GCMainDlg::appendSysMsg(const MessageView &mv)
 {
-	// FIXME:
-	//  prepareAsChatMessage was added to linkify server-generated topic information.
-	//  First idea was to linkify, etc, every SysMsg, but that leads to problems,
-	//  such as parsing full JIDs of participants joining a non-anonymous room as
-	//  emails and looking ugly.
-	//  Possibly a better way would be to change this function to something like
-	//  appendSysMsg(nick, jid, message, alert, ts)
-	//  or maybe even separate functions for different types of system messages.
-
 	if (d->trackBar)
 		d->doTrackBar();
 
-	if (!PsiOptions::instance()->getOption("options.ui.muc.use-highlighting").toBool())
-		alert=false;
-
-	QDateTime time = QDateTime::currentDateTime();
-	if(!ts.isNull())
-		time = ts;
-
-	updateLastMsgTime(time);
-	QString timestr = ui_.log->formatTimeStamp(time);
-	QString color = ColorOpt::instance()->color("options.ui.look.colors.messages.informational").name();
-	ui_.log->appendText(QString("<font color=\"%1\">[%2]").arg(color, timestr) +
-		QString(" *** %1</font>").arg(prepareAsChatMessage ? TextUtil::prepareMessageText(str) : TextUtil::escape(str)));
-
-	if(alert)
+	ui_.log->dispatchMessage(mv);
+	if(mv.isAlert())
 		doAlert();
-}
-
-QString GCMainDlg::getNickColor(QString nick)
-{
-	int sender;
-	if(nick == d->self||nick.isEmpty())
-		sender = -1;
-	else {
-		if (!nicks.contains(nick)) {
-			//not found in map
-			nicks.insert(nick,nicknumber);
-			nicknumber++;
-		}
-		sender=nicks[nick];
-	}
-
-	QStringList nickColors = PsiOptions::instance()->getOption("options.ui.look.colors.muc.nick-colors").toStringList();
-
-	if(!PsiOptions::instance()->getOption("options.ui.muc.use-nick-coloring").toBool() || nickColors.empty()) {
-		return "#000000";
-	}
-	else if(sender == -1 || nickColors.size() == 1) {
-		return nickColors[nickColors.size()-1];
-	}
-	else {
-		int n = sender % (nickColors.size()-1);
-		return nickColors[n];
-	}
 }
 
 void GCMainDlg::appendMessage(const Message &m, bool alert)
 {
-	updateLastMsgTime(m.timeStamp());
-	//QString who, color;
+	MessageView mv(MessageView::Message);
+	if (m.containsHTML() && PsiOptions::instance()
+							->getOption("options.html.muc.render").toBool() &&
+							!m.html().text().isEmpty()) {
+		mv.setHtml(m.html().toString("span"));
+	} else {
+		mv.setPlainText(m.body());
+	}
 	if (!PsiOptions::instance()->getOption("options.ui.muc.use-highlighting").toBool())
 		alert=false;
-	QString who, textcolor, nickcolor,alerttagso,alerttagsc;
+	mv.setAlert(alert);
+	mv.setUserId(m.from().full());
+	mv.setNick(m.from().resource());
+	mv.setLocal(mv.nick() == d->self);
+	mv.setSpooled(m.spooled());
+	mv.setDateTime(m.timeStamp());
 
-	who = m.from().resource();
-	if (d->trackBar&&m.from().resource() != d->self&&!m.spooled())
+	if (d->trackBar && !mv.isLocal() && !mv.isSpooled()) {
 		d->doTrackBar();
-	/*if(local) {
-		color = "#FF0000";
 	}
-	else {
-		color = "#0000FF";
-	}*/
-	nickcolor = getNickColor(who);
-	textcolor = ui_.log->palette().windowText().color().name();
-	if(alert) {
-		textcolor = "#FF0000";
-		alerttagso = "<b>";
-		alerttagsc = "</b>";
-	}
-	if(m.spooled()) {
-		nickcolor = ColorOpt::instance()->color("options.ui.look.colors.messages.informational").name();
-	}
-
-	QString timestr = ui_.log->formatTimeStamp(m.timeStamp());
-
-	bool emote = false;
-	if(m.body().left(4) == "/me ")
-		emote = true;
-
-	QString txt;
-	if(emote)
-		txt = TextUtil::plain2rich(m.body().mid(4));
-	else
-		txt = TextUtil::plain2rich(m.body());
-
-	txt = TextUtil::linkify(txt);
-
-	if(PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool())
-		txt = TextUtil::emoticonify(txt);
-	if( PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool() )
-		txt = TextUtil::legacyFormat(txt);
-
-	if(emote) {
-		//ui_.log->append(QString("<font color=\"%1\">").arg(color) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(TextUtil::escape(who)) + txt + "</font>");
-		ui_.log->appendText(QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(TextUtil::escape(who)) + alerttagso + txt + alerttagsc + "</font>");
-	}
-	else {
-		if(PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
-			//ui_.log->append(QString("<font color=\"%1\">").arg(color) + QString("[%1] ").arg(timestr) + QString("%1 says:").arg(TextUtil::escape(who)) + "</font><br>" + txt);
-			ui_.log->appendText(QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] ").arg(timestr) + QString("%1 says:").arg(TextUtil::escape(who)) + "</font><br>" + QString("<font color=\"%1\">").arg(textcolor) + alerttagso + txt + alerttagsc + "</font>");
-		}
-		else {
-			//ui_.log->append(QString("<font color=\"%1\">").arg(color) + QString("[%1] &lt;").arg(timestr) + TextUtil::escape(who) + QString("&gt;</font> ") + txt);
-			ui_.log->appendText(QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] &lt;").arg(timestr) + TextUtil::escape(who) + QString("&gt;</font> ") + QString("<font color=\"%1\">").arg(textcolor) + alerttagso + txt + alerttagsc +"</font>");
-		}
-	}
-
-	//if(local)
-	if(m.from().resource() == d->self) {
-		d->deferredScroll();
-	}
+	ui_.log->dispatchMessage(mv);
 
 	// if we're not active, notify the user by changing the title
-	if(!isActiveTab() && (who != d->self)) {
+	if(!isActiveTab() && !mv.isLocal()) {
 		++d->pending;
 		invalidateTab();
 	}

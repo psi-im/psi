@@ -37,7 +37,7 @@
            <x>0</x>
            <y>0</y>
            <width>282</width>
-           <height>432</height>
+           <height>460</height>
           </rect>
          </property>
          <layout class="QGridLayout" name="gridLayout">
@@ -296,14 +296,14 @@
             </property>
            </widget>
           </item>
-          <item row="9" column="0">
+          <item row="10" column="0">
            <widget class="QCheckBox" name="ck_cOnline">
             <property name="text">
              <string>Online contacts:</string>
             </property>
            </widget>
           </item>
-          <item row="9" column="1">
+          <item row="10" column="1">
            <widget class="QToolButton" name="pb_cOnline">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -322,14 +322,14 @@
             </property>
            </widget>
           </item>
-          <item row="10" column="0">
+          <item row="11" column="0">
            <widget class="QCheckBox" name="ck_cAway">
             <property name="text">
              <string>Away contacts:</string>
             </property>
            </widget>
           </item>
-          <item row="10" column="1">
+          <item row="11" column="1">
            <widget class="QToolButton" name="pb_cAway">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -348,14 +348,14 @@
             </property>
            </widget>
           </item>
-          <item row="11" column="0">
+          <item row="12" column="0">
            <widget class="QCheckBox" name="ck_cDND">
             <property name="text">
              <string>DND contacts:</string>
             </property>
            </widget>
           </item>
-          <item row="11" column="1">
+          <item row="12" column="1">
            <widget class="QToolButton" name="pb_cDND">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -374,14 +374,14 @@
             </property>
            </widget>
           </item>
-          <item row="12" column="0">
+          <item row="13" column="0">
            <widget class="QCheckBox" name="ck_cOffline">
             <property name="text">
              <string>Offline contacts:</string>
             </property>
            </widget>
           </item>
-          <item row="12" column="1">
+          <item row="13" column="1">
            <widget class="QToolButton" name="pb_cOffline">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -400,7 +400,7 @@
             </property>
            </widget>
           </item>
-          <item row="13" column="0">
+          <item row="14" column="0">
            <widget class="QCheckBox" name="ck_cListBack">
             <property name="whatsThis">
              <string>Specifies the background color for the main window.</string>
@@ -410,7 +410,7 @@
             </property>
            </widget>
           </item>
-          <item row="13" column="1">
+          <item row="14" column="1">
            <widget class="QToolButton" name="pb_cListBack">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -429,14 +429,14 @@
             </property>
            </widget>
           </item>
-          <item row="14" column="0">
+          <item row="15" column="0">
            <widget class="QCheckBox" name="ck_cStatus">
             <property name="text">
              <string>Status messages:</string>
             </property>
            </widget>
           </item>
-          <item row="14" column="1">
+          <item row="15" column="1">
            <widget class="QToolButton" name="pb_cStatus">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -444,6 +444,29 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="maximumSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="0">
+           <widget class="QCheckBox" name="ck_cUserText">
+            <property name="whatsThis">
+             <string>Specifies the color for additional text of system messages. MUC topic for example.</string>
+            </property>
+            <property name="text">
+             <string>Additional message text:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="1">
+           <widget class="QToolButton" name="pb_cUserText">
             <property name="maximumSize">
              <size>
               <width>20</width>
@@ -578,6 +601,8 @@
   <tabstop>pb_cMessageReceived</tabstop>
   <tabstop>ck_cSysMsg</tabstop>
   <tabstop>pb_cSysMsg</tabstop>
+  <tabstop>ck_cUserText</tabstop>
+  <tabstop>pb_cUserText</tabstop>
   <tabstop>ck_cOnline</tabstop>
   <tabstop>pb_cOnline</tabstop>
   <tabstop>ck_cAway</tabstop>

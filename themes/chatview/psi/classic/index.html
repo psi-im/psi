@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  <style type="text/css" media="screen,print">
+body {padding:0 0 2px 0; margin:0; width:100%;}
+body > div {
+	margin:0px 3px 0px 3px;
+	word-wrap:break-word !important;
+	white-space: pre-wrap !important;
+	overflow:hidden;
+}
+body > div img { vertical-align:bottom; }
+.sent {}
+.received {}
+.infmsg {}
+.usertext {}
+.alert {font-weight:bold; color:red;}
+.trackbar { height:1px; border:1px solid black; border-color:#bbf #66f #66f #bbf }
+  </style>
+</head>
+<body>
+<script type="text/javascript">
+try {
+
+window[chatServer.jsNamespace()].theme = function() {
+	var nicks = {};
+	var nickNumber = 0;
+	var chat = window[chatServer.jsNamespace()];
+
+	var cssBody = chat.util.findStyleSheet(document.styleSheets[0], "body").style;
+	var cssSentMsg = chat.util.findStyleSheet(document.styleSheets[0], ".sent").style;
+	var cssReceivedMsg = chat.util.findStyleSheet(document.styleSheets[0], ".received").style;
+	var cssInfMsg = chat.util.findStyleSheet(document.styleSheets[0], ".infmsg").style;
+	var cssUserText = chat.util.findStyleSheet(document.styleSheets[0], ".usertext").style;
+	var cssChatSays = chat.util.findStyleSheet(document.styleSheets[0], ".msg>span:first").style;
+
+	var applyPsiSettings = function() {
+		chat.util.updateObject(cssBody, eval("["+shared.session.getFont()+"][0]"));
+		cssBody.backgroundColor = shared.server.getPaletteColor("Base");
+		cssBody.color = shared.server.getPaletteColor("Text");
+		cssSentMsg.color = shared.colorOption("options.ui.look.colors.messages.sent");
+		cssReceivedMsg.color = shared.colorOption("options.ui.look.colors.messages.received");
+		cssInfMsg.color = shared.colorOption("options.ui.look.colors.messages.informational");
+		cssUserText.color = shared.colorOption("options.ui.look.colors.messages.usertext");
+	}
+
+	var shared = chat.adapter.initSession();
+	shared.initTheme({
+		chatElement : document.body,
+		templates : {
+			message: shared.isMuc?
+				"<div class='msg'><span style='color:%nickcolor%'>[%time%] %sender%</span> %message%</div>"
+				: "<div class='msg'><span class='%sentrec%'>[%time%] %sender%</span> %message%</div>",
+			messageNC: shared.isMuc?
+                                "<div style='color:%nickcolor%'%alertedemote%>[%time%] %sender% %message%</div>"
+				: "<div class='%sentrec%'>[%time%] %sender% %message%</div>",
+			receivedMessage: shared.isMuc?
+				"<div class='msg'><span style='color:%nickcolor%'>[%time%] %sender%</span> %alertedmessage%</div>"
+				: null,
+			spooledMessage: "<div class='infmsg'>[%time%] %sender% %message%</div>",
+			sys: "<div class='infmsg'>%message%</div>",
+			sysMessage: "<div class='infmsg'>[%time%] *** %message%</div>",
+			sysMessageUT: "<div class='infmsg'>[%time%] *** %message%: <span class='usertext'>%usertext%</span></div>",
+			lastMsgDate: "<div class='infmsg'>*** %date%</div>",
+			subject: shared.isMuc?
+				"<div class='infmsg'>[%time%] %message%<div class='usertext'><b>%usertext%</b></div></div>"
+				: "<div class='infmsg'><b>*** %usertext%</b></div>",
+			trackbar: '<hr class="trackbar" />'
+		},
+		dateFormat : "hh:mm:ss",
+		proxy : function() { //optional
+			if (shared.cdata.type == "settings") {
+				applyPsiSettings();
+				return false;
+			}
+			if (shared.cdata.mtype == "message") {
+				var template = shared.cdata.emote && shared.templates.messageNC ||
+					(shared.cdata.spooled && shared.templates.message || null);
+				if (template) {
+					shared.appendHtml(template.toString(), shared.cdata.local?true:null);
+					return false;
+				}
+			}
+		},
+		varHandlers : {
+			alertedemote : function() {
+				return shared.cdata.emote && shared.cdata.alert?" class='alert'":"";
+			},
+			sender : function() {
+				var nick = chat.util.escapeHtml(shared.cdata.sender);
+				return shared.cdata.emote?"*"+nick:"&lt;"+nick+"&gt;";
+			},
+			alertedmessage : function() {
+				return shared.cdata.alert?"<span class='alert'>"+
+					shared.cdata.message+"</span>":shared.cdata.message;
+			},
+			sentrec : function() {return shared.cdata.spooled?"infmsg":
+				(shared.cdata.local?"sent":"received");},
+			nickcolor : function() {
+				return shared.session.mucNickColor(shared.cdata.sender, shared.cdata.local);
+			}
+		}
+	});
+
+	applyPsiSettings();
+
+	shared.session.signalInited();
+
+	return {
+
+	};
+}()
+
+} catch(e) {
+	 document.body.innerHTML = "Theme initialization failed: " + e
+}
+</script>
+</body>
+</html>

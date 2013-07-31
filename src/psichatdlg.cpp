@@ -26,7 +26,9 @@
 #include "psiiconset.h"
 #include "iconwidget.h"
 #include "fancylabel.h"
+#include "textutil.h"
 #include "msgmle.h"
+#include "messageview.h"
 #include "iconselect.h"
 #include "avatars.h"
 #include "psitooltip.h"
@@ -39,7 +41,6 @@
 #include "psicontactlist.h"
 #include "userlist.h"
 #include "jidutil.h"
-#include "textutil.h"
 #include "xmpp_tasks.h"
 #include "lastactivitytask.h"
 
@@ -136,8 +137,8 @@ public slots:
 			dlg_->appendSysMsg("No version information available.");
 			return;
 		}
-		dlg_->appendSysMsg(QString("Version response: N: %2 V: %3 OS: %4")
-			.arg(version->name(), version->version(), version->os()));
+		dlg_->appendSysMsg(TextUtil::escape(QString("Version response: N: %2 V: %3 OS: %4")
+			.arg(version->name(), version->version(), version->os())));
 	};
 
 	void lastactivity_finished()
@@ -154,7 +155,7 @@ public slots:
 				.arg(idle->time().toString()));
 		} else {
 			dlg_->appendSysMsg(QString("Last activity at %1 (%2)")
-				.arg(idle->time().toString(), idle->status()));
+				.arg(idle->time().toString(), TextUtil::escape(idle->status())));
 		}
 	}
 
@@ -186,7 +187,7 @@ void PsiChatDlg::initUi()
 	chatEditCreated();
 
 #ifdef Q_OS_MAC
-	connect(chatView(), SIGNAL(selectionChanged()), SLOT(logSelectionChanged()));
+	//connect(chatView(), SIGNAL(selectionChanged()), SLOT(logSelectionChanged()));
 #endif
 
 	initToolButtons();
@@ -526,67 +527,6 @@ void PsiChatDlg::updateCounter()
 	ui_.lb_count->setNum(chatEdit()->toPlainText().length());
 }
 
-void PsiChatDlg::appendEmoteMessage(SpooledType spooled, const QDateTime& time, bool local, const QString& txt, const QString& subject)
-{
-	updateLastMsgTime(time);
-	QString color = colorString(local, spooled);
-	QString timestr = chatView()->formatTimeStamp(time);
-
-	if (subject.isEmpty()) {
-		chatView()->appendText(QString("<span style=\"color: %1\">").arg(color) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(whoNick(local)) + txt + "</span>");
-	} else {
-		chatView()->appendText(QString("<span style=\"color: %1\">").arg(color) + QString("[%1]").arg(timestr) + "</span><br><b>" + tr("Subject:") + "</b> " + subject);
-		chatView()->appendText(QString("<span style=\"color: %1\">").arg(color) + QString(" *%1 ").arg(whoNick(local)) + txt + "</span>");
-	}
-
-}
-
-void PsiChatDlg::appendNormalMessage(SpooledType spooled, const QDateTime& time, bool local, const QString& txt, const QString& subject)
-{
-	updateLastMsgTime(time);
-	QString color = colorString(local, spooled);
-	QString timestr = chatView()->formatTimeStamp(time);
-	QString subjectLine;
-	if (!subject.isEmpty()) {
-		subjectLine = "<b>" + tr("Subject:") + "</b> " + subject;
-	}
-
-	if (PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
-		chatView()->appendText(QString("<span style=\"color: %1\">").arg(color) + QString("[%1] ").arg(timestr) + tr("%1 says:").arg(whoNick(local)) + "</span>");
-		if (!subjectLine.isEmpty()) {
-			chatView()->appendText(subjectLine);
-		}
-		chatView()->appendText(txt);
-	}
-	else {
-		QString intro = QString("<span style=\"color: %1\">").arg(color) + QString("[%1] &lt;").arg(timestr) + whoNick(local) + QString("&gt;</span>");
-		if (subjectLine.isEmpty()) {
-			chatView()->appendText(intro + " " + txt);
-		} else {
-			chatView()->appendText(intro);
-			chatView()->appendText(subjectLine);
-			chatView()->appendText(txt);
-		}
-
-	}
-}
-
-void PsiChatDlg::appendMessageFields(const Message& m)
-{
-//	if (!m.subject().isEmpty()) {
-//		chatView()->appendText(QString("<b>") + tr("Subject:") + "</b> " + QString("%1").arg(TextUtil::escape(m.subject())));
-//	}
-	if (!m.urlList().isEmpty()) {
-		UrlList urls = m.urlList();
-		chatView()->appendText(QString("<i>") + tr("-- Attached URL(s) --") + "</i>");
-		for (QList<Url>::ConstIterator it = urls.begin(); it != urls.end(); ++it) {
-			const Url &u = *it;
-			chatView()->appendText(QString("<b>") + tr("URL:") + "</b> " + QString("%1").arg(TextUtil::linkify(TextUtil::escape(u.url()))));
-			chatView()->appendText(QString("<b>") + tr("Desc:") + "</b> " + QString("%1").arg(u.desc()));
-		}
-	}
-}
-
 bool PsiChatDlg::isEncryptionEnabled() const
 {
 	return act_pgp_->isChecked();
@@ -594,25 +534,7 @@ bool PsiChatDlg::isEncryptionEnabled() const
 
 void PsiChatDlg::appendSysMsg(const QString &str)
 {
-	QDateTime t = QDateTime::currentDateTime();
-	updateLastMsgTime(t);
-	QString timestr = chatView()->formatTimeStamp(t);
-	QString color = ColorOpt::instance()->color("options.ui.look.colors.messages.informational").name();
-
-	chatView()->appendText(QString("<font color=\"%1\">[%2]").arg(color, timestr) + QString(" *** %1</font>").arg(str));
-}
-
-QString PsiChatDlg::colorString(bool local, ChatDlg::SpooledType spooled) const
-{
-	if (spooled == ChatDlg::Spooled_OfflineStorage) {
-		return ColorOpt::instance()->color("options.ui.look.colors.messages.informational").name();
-	}
-
-	if (local) {
-		return ColorOpt::instance()->color("options.ui.look.colors.messages.sent").name();
-	}
-
-	return ColorOpt::instance()->color("options.ui.look.colors.messages.received").name();
+	chatView()->dispatchMessage(MessageView::fromHtml(str, MessageView::System));
 }
 
 ChatView* PsiChatDlg::chatView() const
@@ -643,20 +565,10 @@ void PsiChatDlg::doSend() {
 	if (mCmdSite_.isActive()) {
 		QString str = chatEdit()->toPlainText();
 		if (!mCmdManager_.processCommand(str)) {
-			appendSysMsg(tr("Error: Can not parse command: ") + str);
+			appendSysMsg(tr("Error: Can not parse command: ") + TextUtil::escape(str));
 		}
 	} else {
 		ChatDlg::doSend();
-	}
-}
-
-void PsiChatDlg::updateLastMsgTime(QDateTime t)
-{
-	bool doInsert = t.date() != lastMsgTime_.date();
-	lastMsgTime_ = t;
-	if (doInsert) {
-		QString color = "#00A000";
-		chatView()->appendText(QString("<font color=\"%1\">*** %2</font>").arg(color).arg(t.date().toString(Qt::ISODate)));
 	}
 }
 

@@ -235,7 +235,7 @@ public:
 		foreach(QString name, PsiOptions::instance()->getOption("options.iconsets.emoticons").toStringList()) {
 			Iconset *is = new Iconset;
 			if ( is->load ( iconsetPath("emoticons/" + name) ) ) {
-				PsiIconset::removeAnimation(is);
+				//PsiIconset::removeAnimation(is);
 				is->addToFactory();
 				emo.append( is );
 			}

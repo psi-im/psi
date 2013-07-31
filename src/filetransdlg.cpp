@@ -18,7 +18,7 @@
 #include "busywidget.h"
 #include "filetransfer.h"
 #include "psiiconset.h"
-#include "msgmle.h"
+#include "psitextview.h"
 #include "jidutil.h"
 #include "psitooltip.h"
 #include "psicontactlist.h"
@@ -536,7 +536,7 @@ public:
 	QLabel* lb_identity;
 	AccountLabel* lb_ident;
 	QLabel* lb_time;
-	ChatView *te;
+	PsiTextView *te;
 	Jid jid;
 	FileTransferHandler *ft;
 	QString fileName;
@@ -586,7 +586,7 @@ FileRequestDlg::FileRequestDlg(const Jid &jid, PsiCon *psi, PsiAccount *pa, cons
 	connect(d->psi, SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
 	updateIdentityVisibility();
 
-	d->te = new ChatView(this);
+	d->te = new PsiTextView(this);
 	d->te->setReadOnly(false);
 	d->te->setAcceptRichText(false);
 	replaceWidget(te_desc, d->te);
@@ -678,7 +678,7 @@ FileRequestDlg::FileRequestDlg(const QDateTime &ts, FileTransfer *ft, PsiAccount
 
 	replaceWidget(lb_accountlabel, hb);
 
-	d->te = new ChatView(this);
+	d->te = new PsiTextView(this);
 	d->te->setAcceptRichText(false);
 	replaceWidget(te_desc, d->te);
 	setTabOrder(le_fname, d->te);

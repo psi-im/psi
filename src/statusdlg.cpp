@@ -37,7 +37,7 @@
 #include "psiaccount.h"
 #include "userlist.h"
 #include "common.h"
-#include "msgmle.h"
+#include "psitextview.h"
 #include "statuspreset.h"
 #include "statuscombobox.h"
 #include "shortcutmanager.h"
@@ -88,7 +88,7 @@ public:
 	PsiCon *psi;
 	PsiAccount *pa;
 	Status s;
-	ChatView *te;
+	PsiTextView *te;
 	StatusComboBox *cb_type;
 	QComboBox *cb_preset;
 	QLineEdit *le_priority;
@@ -161,8 +161,8 @@ void StatusSetDlg::init()
 	connect(d->cb_preset, SIGNAL(currentIndexChanged(int)), SLOT(chooseStatusPreset(int)));
 	hb1->addWidget(d->cb_preset,3);
 
-	d->te = new ChatView(this);
-	d->te->setDialog(this);
+	d->te = new PsiTextView(this);
+	//d->te->setDialog(this);
 	d->te->setReadOnly(false);
 	d->te->setAcceptRichText(false);
 	d->te->setMinimumHeight(50);

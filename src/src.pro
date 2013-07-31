@@ -31,6 +31,9 @@ unix {
 	# Shared files
 	sharedfiles.path  = $$PSI_DATADIR
 	sharedfiles.files = ../README ../COPYING ../iconsets ../sound ../certs
+	webkit {
+		sharedfiles.files += ../themes
+	}
 	INSTALLS += sharedfiles
 
 	# Widgets

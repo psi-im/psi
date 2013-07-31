@@ -113,7 +113,7 @@ QString TextUtil::plain2rich(const QString &plain)
 	return "<span style='white-space: pre-wrap'>" + rich + "</span>";
 }
 
-QString TextUtil::rich2plain(const QString &in)
+QString TextUtil::rich2plain(const QString &in, bool collapseSpaces)
 {
 	QString out;
 
@@ -139,7 +139,7 @@ QString TextUtil::rich2plain(const QString &in)
 				out += '\n';
 
 			// handle output of Qt::convertFromPlainText() correctly
-			if((tagName == "p" || tagName == "/p") && out.length() > 0)
+			if((tagName == "p" || tagName == "/p" || tagName == "div") && out.length() > 0)
 				out += '\n';
 		}
 		// entity?
@@ -167,7 +167,7 @@ QString TextUtil::rich2plain(const QString &in)
 			if(in[i] == QChar::Nbsp)
 				out += ' ';
 			else if(in[i] != '\n') {
-				if(i == 0 || out.length() == 0)
+				if(!collapseSpaces || i == 0 || out.length() == 0)
 					out += ' ';
 				else {
 					QChar last = out.at(out.length()-1);
@@ -529,6 +529,15 @@ QString TextUtil::emoticonify(const QString &in)
 	return out;
 }
 
+QString TextUtil::img2title(const QString &in)
+{
+	QString ret = in;
+	QRegExp rxq("<img[^>]+title\\s*=\\s*'([^']+)'[^>]*>"),  rxdq("<img[^>]+title\\s*=\\s*\"([^\"]+)\"[^>]*>");
+	ret.replace(rxq, "\\1");
+	ret.replace(rxdq, "\\1");
+	return ret;
+}
+
 QString TextUtil::legacyFormat(const QString& in)
 {
 
@@ -545,39 +554,4 @@ QString TextUtil::legacyFormat(const QString& in)
 	out=out.replace(QRegExp("(^|\\s|>)\\/(\\S+)\\/(<|\\s|$)"),"\\1<i>/\\2/</i>\\3");
 
 	return out;
-}
-
-/**
- * Creates linkified and optionally emoticonified and legacy-formatted rich text.
- * \a text, text to modify (either plain or rich, depending on \a isHtml
- * \a isEmote, if true, remove "/me " part
- * \a isHtml, if false, \a text is first converted to rich text.
- */
-QString TextUtil::prepareMessageText(const QString& text, bool isEmote, bool isHtml)
-{
-	static const QString me_cmd = "/me ";
-
-	QString txt = text;
-
-	if (isHtml) {
-		if (isEmote) {
-			int cmd = txt.indexOf(me_cmd);
-			txt = txt.remove(cmd, me_cmd.length());
-		}
-	}
-	else {
-		if (isEmote) {
-			txt = txt.mid(me_cmd.length());
-		}
-
-		txt = TextUtil::plain2rich(txt);
-		txt = TextUtil::linkify(txt);
-	}
-
-	if (PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool())
-		txt = TextUtil::emoticonify(txt);
-	if (PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool())
-		txt = TextUtil::legacyFormat(txt);
-
-	return txt;
 }

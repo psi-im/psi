@@ -53,7 +53,7 @@
 #include "psiiconset.h"
 #include "jidutil.h"
 #include "psioptions.h"
-#include "msgmle.h"
+#include "psitextview.h"
 #include "accountscombobox.h"
 #include "common.h"
 #include "xmpp_htmlelement.h"
@@ -491,7 +491,7 @@ public:
 	IconButton *pb_next;
 	IconButton *pb_close, *pb_quote, *pb_deny, *pb_send, *pb_reply, *pb_chat, *pb_auth, *pb_http_confirm, *pb_http_deny;
 	IconButton *pb_form_submit, *pb_form_cancel;
-	ChatView *mle;
+	PsiTextView *mle;
 	AttachView *attachView;
 	QTimer *whois;
 	QString lastWhois;
@@ -817,8 +817,8 @@ void EventDlg::init()
 	}
 
 	// text area
-	d->mle = new ChatView(this);
-	d->mle->setDialog(this);
+	d->mle = new PsiTextView(this);
+	//d->mle->setDialog(this);
 	d->mle->setReadOnly(false);
 	d->mle->setUndoRedoEnabled(true);
 	d->mle->setMinimumHeight(50);

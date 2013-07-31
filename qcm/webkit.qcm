@@ -1,0 +1,38 @@
+/*
+-----BEGIN QCMOD-----
+name: QtWebKit
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_webkit
+//----------------------------------------------------------------------------
+class qc_webkit : public ConfObj
+{
+public:
+	qc_webkit(Conf *c) : ConfObj(c) {}
+	QString name() const { return "QtWebKit"; }
+	QString shortname() const { return "webkit"; }
+	bool exec()
+	{
+		QString proextra =
+		"CONFIG += qt webkit\n"
+		"QT += webkit\n";
+
+		QString str =
+		"\n"
+		"int main()\n"
+		"{\n"
+		"	return 0;\n"
+		"}\n";
+
+		int ret;
+		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
+			return false;
+		if(ret != 0)
+			return false;
+
+		conf->addExtra("CONFIG += webkit");
+		return true;
+	}
+};

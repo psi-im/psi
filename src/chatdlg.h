@@ -124,7 +124,6 @@ private slots:
 	virtual void updatePGP();
 	virtual void setPGPEnabled(bool enabled);
 	void encryptedMessageSent(int, bool, int, const QString &);
-	void slotScroll();
 	void setChatState(XMPP::ChatState s);
 	void updateIsComposing(bool);
 	void setContactChatState(ChatState s);
@@ -145,28 +144,15 @@ protected:
 	void doneSend();
 	virtual void setLooks();
 	void setSelfDestruct(int);
-	void deferredScroll();
-	bool isEmoteMessage(const XMPP::Message& m);
-	QString messageText(const XMPP::Message& m);
-	QString messageSubject(const XMPP::Message& m);
 	virtual void chatEditCreated();
-
-	enum SpooledType {
-		Spooled_None,
-		Spooled_OfflineStorage
-	};
 
 	virtual void initUi() = 0;
 	virtual void capsChanged();
 	virtual void contactUpdated(UserListItem* u, int status, const QString& statusString);
-	virtual QString colorString(bool local, SpooledType spooled) const = 0;
 
 	void appendMessage(const Message &, bool local = false);
 	virtual bool isEncryptionEnabled() const;
 	virtual void appendSysMsg(const QString& txt) = 0;
-	virtual void appendEmoteMessage(SpooledType spooled, const QDateTime& time, bool local, const QString& txt, const QString& subject) = 0;
-	virtual void appendNormalMessage(SpooledType spooled, const QDateTime& time, bool local, const QString& txt, const QString& subject) = 0;
-	virtual void appendMessageFields(const Message& m) = 0;
 	virtual void nicksChanged();
 
 	QString whoNick(bool local) const;

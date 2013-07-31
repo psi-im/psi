@@ -1,5 +1,6 @@
 #include "opt_appearance.h"
 #include "opt_iconset.h"
+#include "opt_theme.h"
 #include "common.h"
 #include "iconwidget.h"
 
@@ -21,6 +22,7 @@
 #include "ui_opt_appearance_misc.h"
 #include "psioptions.h"
 #include "coloropt.h"
+#include "psithememanager.h"
 
 
 class OptAppearanceUI : public QWidget, public Ui::OptAppearance
@@ -78,11 +80,24 @@ QSize FontLabel::sizeHint() const
 OptionsTabAppearance::OptionsTabAppearance(QObject *parent) : MetaOptionsTab(parent, "appearance", "", tr("Appearance"), tr("Psi's appearance"), "psi/appearance")
 {
 	addTab( new OptionsTabAppearanceGeneral(this) );
+	addTab( new OptionsTabIconset(this) );
+	if (PsiThemeManager::instance()->registeredProviders().count()) {
+		addTab( new OptionsTabAppearanceThemes(this) );
+	}
+	addTab( new OptionsTabAppearanceMisc(this) );
+}
+
+
+//----------------------------------------------------------------------------
+// OptionsTabIconset
+//----------------------------------------------------------------------------
+OptionsTabIconset::OptionsTabIconset(QObject *parent) : MetaOptionsTab(parent, "iconsets", "", tr("Icons"), tr("Icons"))
+{
 	addTab( new OptionsTabIconsetEmoticons(this) );
 	addTab( new OptionsTabIconsetRoster(this) );
 	addTab( new OptionsTabIconsetSystem(this) );
-	addTab( new OptionsTabAppearanceMisc(this) );
 }
+
 
 //----------------------------------------------------------------------------
 // OptionsTabAppearanceMisc
@@ -232,7 +247,9 @@ QWidget *OptionsTabAppearanceGeneral::widget()
 		{d->ck_cAnimBack,        d->pb_cAnimBack,    "contactlist.status-change-animation2", ""},
 		{d->ck_cMessageSent,     d->pb_cMessageSent,     "messages.sent", ""},
 		{d->ck_cMessageReceived, d->pb_cMessageReceived, "messages.received", ""},
-		{d->ck_cSysMsg,          d->pb_cSysMsg,          "messages.informational", ""}
+		{d->ck_cSysMsg,          d->pb_cSysMsg,          "messages.informational", ""},
+		{d->ck_cUserText,        d->pb_cUserText,        "messages.usertext", ""}
+
 	};
 
 	bg_color = new QButtonGroup(this);

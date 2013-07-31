@@ -36,6 +36,13 @@ public:
 	OptionsTabAppearance(QObject *parent);
 };
 
+class OptionsTabIconset : public MetaOptionsTab
+{
+	Q_OBJECT
+public:
+	OptionsTabIconset(QObject *parent);
+};
+
 class OptionsTabAppearanceMisc : public OptionsTab
 {
 	Q_OBJECT

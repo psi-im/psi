@@ -23,8 +23,6 @@
 
 #include <QTextEdit>
 
-#include "psitextview.h"
-
 class ChatEdit;
 class QEvent;
 class QKeyEvent;
@@ -32,34 +30,6 @@ class QResizeEvent;
 class QTimer;
 class SpellHighlighter;
 
-class ChatView : public PsiTextView
-{
-	Q_OBJECT
-public:
-	ChatView(QWidget* parent);
-	~ChatView();
-
-	void setDialog(QWidget* dialog);
-
-	// reimplemented
-	QSize sizeHint() const;
-
-	void appendText(const QString &text);
-	bool handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit);
-
-	QString formatTimeStamp(const QDateTime &time);
-
-protected:
-	// override the tab/esc behavior
-	bool focusNextPrevChild(bool next);
-	void keyPressEvent(QKeyEvent *);
-
-protected slots:
-	void autoCopy();
-
-private:
-	QWidget* dialog_;
-};
 
 class ChatEdit : public QTextEdit
 {

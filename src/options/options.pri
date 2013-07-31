@@ -18,6 +18,7 @@ HEADERS += \
 	$$PWD/opt_status.h \
 	$$PWD/opt_appearance.h \
 	$$PWD/opt_iconset.h \
+	$$PWD/opt_theme.h \
 	$$PWD/opt_groupchat.h \
 	$$PWD/opt_sound.h \
 	$$PWD/opt_avcall.h \
@@ -35,6 +36,7 @@ SOURCES += \
 	$$PWD/opt_status.cpp \
 	$$PWD/opt_appearance.cpp \
 	$$PWD/opt_iconset.cpp \
+	$$PWD/opt_theme.cpp \
 	$$PWD/opt_groupchat.cpp \
 	$$PWD/opt_sound.cpp \
 	$$PWD/opt_avcall.cpp \
@@ -52,6 +54,7 @@ FORMS += \
 	$$PWD/opt_status.ui \
 	$$PWD/opt_appearance.ui \
 	$$PWD/opt_appearance_misc.ui \
+	$$PWD/opt_theme.ui \
 	$$PWD/opt_sound.ui \
 	$$PWD/opt_avcall.ui \
 	$$PWD/opt_advanced.ui \

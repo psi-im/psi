@@ -40,6 +40,7 @@
 #include "activeprofiles.h"
 #include "accountadddlg.h"
 #include "psiiconset.h"
+#include "psithememanager.h"
 #ifndef NEWCONTACTLIST
 # include "contactview.h"
 #endif
@@ -80,6 +81,12 @@
 #include "accountscombobox.h"
 #include "tabdlg.h"
 #include "chatdlg.h"
+#ifdef WEBKIT
+#include "avatars.h"
+#include "chatviewthemeprovider.h"
+#include "networkaccessmanager.h"
+#include "webview.h"
+#endif
 #include "capsregistry.h"
 #include "urlobject.h"
 #include "anim.h"
@@ -191,6 +198,7 @@ private:
 		return true;
 	}
 };
+
 
 //----------------------------------------------------------------------------
 // PsiCon::Private
@@ -498,6 +506,19 @@ bool PsiCon::init()
 			QMessageBox::critical(0, tr("Error"), tr("Unable to load iconset!  Please make sure Psi is properly installed."));
 			result = false;
 		//}
+	}
+
+#ifdef WEBKIT
+	PsiThemeManager::instance()->registerProvider(
+			new ChatViewThemeProvider(this), true);
+	PsiThemeManager::instance()->registerProvider(
+			new GroupChatViewThemeProvider(this), true);
+	NetworkAccessManager::instance()->setSchemeHandler("icon", new IconHandler());
+#endif
+
+	if( !PsiThemeManager::instance()->loadAll() ) {
+		QMessageBox::critical(0, tr("Error"), tr("Unable to load theme!  Please make sure Psi is properly installed."));
+		result = false;
 	}
 
 	if ( !d->actionList )

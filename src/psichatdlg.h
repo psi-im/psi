@@ -55,12 +55,7 @@ private:
 	void activated();
 	void setLooks();
 	void setShortcuts();
-	QString colorString(bool local, SpooledType spooled) const;
 	void appendSysMsg(const QString &);
-	void appendEmoteMessage(SpooledType spooled, const QDateTime& time, bool local, const QString& txt, const QString& subject);
-	void appendNormalMessage(SpooledType spooled, const QDateTime& time, bool local, const QString& txt, const QString& subject);
-	void appendMessageFields(const Message& m);
-	void updateLastMsgTime(QDateTime t);
 	ChatView* chatView() const;
 	ChatEdit* chatEdit() const;
 
@@ -86,7 +81,6 @@ private:
 	MCmdTabCompletion tabCompletion;
 
 	bool smallChat_;
-	QDateTime lastMsgTime_;
 	class ChatDlgMCmdProvider;
 };
 

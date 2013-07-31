@@ -120,6 +120,9 @@ public:
 	virtual const QPixmap &pixmap() const;
 	virtual const QImage &image() const;
 	virtual const QIcon & icon() const;
+#ifdef WEBKIT
+	virtual const QByteArray & raw() const;
+#endif
 
 	virtual const Impix &impix() const;
 	virtual const Impix &frameImpix() const;
@@ -239,6 +242,9 @@ public:
 
 	static const PsiIcon *iconPtr(const QString &name);
 	static const QStringList icons();
+#ifdef WEBKIT
+	static const QByteArray raw(const QString &name);
+#endif
 };
 
 #endif
