@@ -66,6 +66,11 @@
 	</icon>
 
 	<icon>
+		<x xmlns='name'>psi/default_avatar</x>
+		<object mime='image/png'>default_avatar.png</object>
+	</icon>
+
+	<icon>
 		<x xmlns='name'>psi/disco</x>
 		<object mime='image/png'>disco.png</object>
 	</icon>
@@ -88,6 +93,31 @@
 	<icon>
 		<x xmlns='name'>psi/history</x>
 		<object mime='image/png'>history.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/notification_chat_delivery_ok</x>
+		<object mime='image/png'>notification_chat_delivery_ok.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/notification_chat_info</x>
+		<object mime='image/png'>notification_chat_info.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/notification_chat_receive</x>
+		<object mime='image/png'>notification_chat_receive.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/notification_chat_send</x>
+		<object mime='image/png'>notification_chat_send.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/notification_chat_time</x>
+		<object mime='image/png'>notification_chat_time.png</object>
 	</icon>
 
 	<icon>
