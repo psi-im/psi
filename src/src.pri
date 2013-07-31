@@ -353,16 +353,19 @@ groupchat {
 	HEADERS += \
 		$$PWD/groupchatdlg.h \
 		$$PWD/gcuserview.h \
-		$$PWD/mucjoindlg.h
+		$$PWD/mucjoindlg.h \
+		$$PWD/groupchattopicdlg.h
 
 	SOURCES += \
 		$$PWD/groupchatdlg.cpp \
 		$$PWD/gcuserview.cpp \
-		$$PWD/mucjoindlg.cpp
+		$$PWD/mucjoindlg.cpp \
+		$$PWD/groupchattopicdlg.cpp
 
 	FORMS += \
 		$$PWD/groupchatdlg.ui \
-		$$PWD/mucjoin.ui
+		$$PWD/mucjoin.ui \
+		$$PWD/groupchattopicdlg.ui
 }
 
 whiteboarding {

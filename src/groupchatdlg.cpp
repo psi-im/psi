@@ -97,6 +97,8 @@
 static const QString geometryOption = "options.ui.muc.size";
 
 
+#include "groupchattopicdlg.h"
+
 //----------------------------------------------------------------------------
 // StatusPingTask
 //----------------------------------------------------------------------------
@@ -224,7 +226,7 @@ public:
 	QString lastSearch;
 
 	QPointer<MUCConfigDlg> configDlg;
-
+	QPointer<GroupchatTopicDlg> topicDlg;
 public:
 	bool trackBar;
 
@@ -593,7 +595,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	ui_.log->setAccount(account());
 #endif
 
-	connect(ui_.pb_topic, SIGNAL(clicked()), SLOT(doTopic()));
+	connect(ui_.pb_topic, SIGNAL(clicked()), SLOT(openTopic()));
 	PsiToolTip::install(ui_.le_topic);
 
 	connect(account()->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
@@ -927,21 +929,25 @@ void GCMainDlg::le_downPressed()
 	}
 }*/
 
-void GCMainDlg::doTopic()
+void GCMainDlg::openTopic()
 {
-	bool ok = false;
-	QString str = QInputDialog::getText(this,
-		tr("Set Groupchat Topic"),
-		tr("Enter a topic:"),
-		QLineEdit::Normal, ui_.le_topic->text(), &ok);
-
-	if(ok) {
-		Message m(jid());
-		m.setType("groupchat");
-		m.setSubject(str);
-		m.setTimeStamp(QDateTime::currentDateTime());
-		aSend(m);
+	if(d->topicDlg) {
+		::bringToFront(d->topicDlg);
+	} else {
+		d->topicDlg = new GroupchatTopicDlg(this);
+		d->topicDlg->setAttribute(Qt::WA_DeleteOnClose);
+		d->topicDlg->show();
+		connect(d->topicDlg, SIGNAL(topicAccepted(const QString)), this, SLOT(setTopic(const QString)));
 	}
+}
+
+void GCMainDlg::setTopic(const QString &topic)
+{
+	Message m(jid());
+	m.setType("groupchat");
+	m.setSubject(topic);
+	m.setTimeStamp(QDateTime::currentDateTime());
+	aSend(m);
 }
 
 void GCMainDlg::doClear()
@@ -1439,6 +1445,11 @@ void GCMainDlg::setPassword(const QString& p)
 const QString& GCMainDlg::nick() const
 {
 	return d->self;
+}
+
+const QString& GCMainDlg::topic() const
+{
+	return d->topic;
 }
 
 void GCMainDlg::appendSysMsg(const QString &str, bool alert, const QDateTime &ts)

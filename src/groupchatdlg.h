@@ -74,6 +74,7 @@ public:
 	void joined();
 	void setPassword(const QString&);
 	const QString& nick() const;
+	const QString& topic() const;
 
 	bool isInactive() const;
 	void reactivate();
@@ -107,7 +108,8 @@ private slots:
 	void scrollUp();
 	void scrollDown();
 	void mle_returnPressed();
-	void doTopic();
+	void openTopic();
+	void setTopic(const QString &);
 	void openFind();
 	void configureRoom();
 	void doFind(const QString &);
