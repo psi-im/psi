@@ -79,10 +79,16 @@ public:
 		copyIcon = _copyIcon;
 
 #ifndef WIDGET_PLUGIN
-		if ( i && copyIcon )
-			icon = new PsiIcon(*i);
-		else
-			icon = (PsiIcon *)i;
+		if ( i ) {
+			if (copyIcon)
+				icon = new PsiIcon(*i);
+			else
+				icon = (PsiIcon *)i;
+		}
+		else {
+			icon = 0;
+		}
+
 #else
     Q_UNUSED(i);
 #endif

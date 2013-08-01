@@ -132,7 +132,7 @@ void PsiPopup::Private::init(const PsiIcon *_titleIcon, const QString& titleText
 
 	if ( doAlertIcon )
 		titleIcon = new AlertIcon(_titleIcon);
-	else
+	else if(_titleIcon)
 		titleIcon = new PsiIcon(*_titleIcon);
 
 	FancyPopup::setHideTimeout(psiPopup->duration());
