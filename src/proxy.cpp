@@ -557,12 +557,14 @@ ProxyItemList ProxyManager::itemList() const
 
 ProxyItem ProxyManager::getItem(const QString &x) const
 {
-	QString base = "proxies." + x;
 	ProxyItem pi;
-	pi.settings.fromOptions( d->o, base);
-	pi.name = d->o->getOption(base + ".name").toString();
-	pi.type = d->o->getOption(base + ".type").toString();
-	pi.id = x;
+	if(!x.isEmpty()) {
+		QString base = "proxies." + x;
+		pi.settings.fromOptions( d->o, base);
+		pi.name = d->o->getOption(base + ".name").toString();
+		pi.type = d->o->getOption(base + ".type").toString();
+		pi.id = x;
+	}
 	return pi;
 }
 
