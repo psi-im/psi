@@ -241,12 +241,19 @@ void PsiGrowlNotifier::popup(PsiAccount* account, PopupManager::PopupType type, 
 }
 
 void PsiGrowlNotifier::popup(PsiAccount *account, PopupManager::PopupType/* type*/, const Jid &j, const PsiIcon *titleIcon, const QString &titleText,
-			     const QPixmap */*avatar*/, const PsiIcon */*icon*/, const QString &text)
+			     const QPixmap *avatar, const PsiIcon *icon, const QString &text)
 {
+	QPixmap pix;
+	if(titleIcon)
+		pix = titleIcon->pixmap();
+	else if(icon)
+		pix = icon->pixmap();
+	else if(avatar)
+		pix = QPixmap(*avatar);
 	// Notify Growl
 	NotificationContext* context = new NotificationContext(account, j);
 	gn_->notify(QObject::tr("Incoming Headline"), titleText, TextUtil::rich2plain(text),
-		    titleIcon->pixmap(), false, this, SLOT(notificationClicked(void*)), SLOT(notificationTimedOut(void*)), context);
+		    pix, false, this, SLOT(notificationClicked(void*)), SLOT(notificationTimedOut(void*)), context);
 }
 
 void PsiGrowlNotifier::cleanup()
