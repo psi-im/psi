@@ -18,19 +18,18 @@
  *
  */
 
+#include <QWebPage>
+#include <QWebFrame>
+#include <QFileInfo>
+#include <QApplication>
+
 #include "chatviewtheme.h"
 #include "psioptions.h"
 #include "coloropt.h"
 #include "jsutil.h"
 #include "psiwkavatarhandler.h"
 #include "webview.h"
-#include <QWebPage>
-#include <QWebFrame>
-#include <QFileInfo>
-#include <QApplication>
 
-
-class ChatViewTheme;
 class ChatViewTheme::Private
 {
 public:
@@ -46,7 +45,7 @@ class ChatViewThemeJS : public QObject {
 	Q_OBJECT
 private:
 	ChatViewTheme *theme;
-	QMap<QString,QVariant> cache_;
+	QMap<QString,QVariant> _cache;
 public:
 	ChatViewThemeJS(ChatViewTheme *theme_)
 		: theme(theme_)
@@ -71,9 +70,14 @@ public slots:
 		return JSUtil::variant2js(ColorOpt::instance()->color(option));
 	}
 
+	void setCaseInsensitiveFS(bool state = true)
+	{
+		theme->setCaseInsensitiveFS(state);
+	}
+
 	QString getFileContents(const QString &name) const
 	{
-		return QString(Theme::loadData(name, theme->fileName()));
+		return QString(Theme::loadData(name, theme->fileName(), theme->caseInsensitiveFS()));
 	}
 
 	QString getFileContentsFromAdapterDir(const QString &name) const
@@ -134,17 +138,17 @@ public slots:
 	// most likely will be cached by webkit itself
 	void toCache(const QString &name, const QVariant &data)
 	{
-		cache_.insert(name, data);
+		_cache.insert(name, data);
 	}
 
 	QVariant cache(const QString &name) const
 	{
-		return cache_.value(name);
+		return _cache.value(name);
 	}
 
 	void setDefaultAvatar(const QString &filename, const QString &host = QString())
 	{
-		QByteArray ba = Theme::loadData(filename, theme->fileName());
+		QByteArray ba = Theme::loadData(filename, theme->fileName(), theme->caseInsensitiveFS());
 		if (!ba.isEmpty()) {
 			((PsiWKAvatarHandler *)NetworkAccessManager::instance()
 				->schemeHandler("avatar").data())->setDefaultAvatar(ba, host);
@@ -243,7 +247,7 @@ bool ChatViewTheme::load(const QString &file, const QStringList &helperScripts,
 
 QByteArray ChatViewTheme::screenshot()
 {
-	return Theme::loadData("screenshot.png", fileName());
+	return Theme::loadData("screenshot.png", fileName(), caseInsensitiveFS());
 }
 
 QObject * ChatViewTheme::jsHelper()

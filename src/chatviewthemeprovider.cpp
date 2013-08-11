@@ -45,18 +45,19 @@ public:
 	{
 		qDebug("loading theme file: %s", qPrintable(url.toString()));
 		QString themeId = url.path().section('/', 1, 2);
-		Theme *theme;
-		if (!(theme = PsiThemeManager::instance()->provider("chatview")->current())
+		ChatViewTheme *theme;
+		if (!(theme = static_cast<ChatViewTheme *>(PsiThemeManager::instance()->provider("chatview")->current()))
 				|| theme->id() != themeId) // slightly stupid detector of current provider
 		{
-			theme = PsiThemeManager::instance()->provider("groupchatview")->current();
+			theme = static_cast<ChatViewTheme *>(PsiThemeManager::instance()->provider("groupchatview")->current());
 			if (theme->id() != themeId) {
 				theme = NULL;
 			}
 		}
 		if (theme) {
-			QByteArray td = Theme::loadData(url.path().mid(themeId.size() + 1),
-											theme->fileName());
+			//theme->ChatViewTheme
+			QByteArray td = Theme::loadData(url.path().mid(themeId.size() + 2), /* 2 slashes before and after */
+											theme->fileName(), theme->caseInsensitiveFS());
 			if (td.isNull()) {
 				qDebug("content of %s is not found in the theme",
 					   qPrintable(url.toString()));

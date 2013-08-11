@@ -2,6 +2,7 @@ try {
 
 window[chatServer.jsNamespace()].adapter = {
 	loadTheme : function() {
+        chatServer.setCaseInsensitiveFS();
 		var chat = window[chatServer.jsNamespace()];
 		//chat.console("DEBUG: loading " + chatServer.themeId());
 		var resources = ["Template.html", "FileTransferRequest.html",
@@ -11,8 +12,7 @@ window[chatServer.jsNamespace()].adapter = {
 		"Outgoing/Content.html", "Outgoing/NextContent.html",
 		"Outgoing/Context.html", "Outgoing/NextContext.html"];
 		for (var i=0; i<resources.length; i++) {
-			var content = chatServer.getFileContents("Contents/Resources/" + resources[i]) ||
-						chatServer.getFileContents("Contents/Resources/" + resources[i].toLowerCase());
+            var content = chatServer.getFileContents("Contents/Resources/" + resources[i]);
 			if (content.length) {
 				chatServer.toCache(resources[i], content);
 			}

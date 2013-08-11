@@ -21,6 +21,8 @@
 #include "theme.h"
 
 #include <QFileInfo>
+#include <QDir>
+#include <QDirIterator>
 #include <QStringList>
 
 #ifndef NO_Theme_ZIP
@@ -37,6 +39,7 @@ public:
 	QString id, name, version, description, creation, homeUrl, filename;
 	QStringList authors;
 	QHash<QString, QString> info;
+	bool caseInsensitiveFS;
 
 public:
 	ThemeMetaData(const QString &id);
@@ -45,7 +48,8 @@ public:
 
 ThemeMetaData::ThemeMetaData(const QString &id) :
 	id(id),
-	name(QObject::tr("Unnamed"))
+	name(QObject::tr("Unnamed")),
+	caseInsensitiveFS(false)
 {
 
 }
@@ -71,16 +75,46 @@ Theme::~Theme()
 
 }
 
-QByteArray Theme::loadData(const QString &fileName, const QString &dir)
+QByteArray Theme::loadData(const QString &fileName, const QString &dir, bool caseInsensetive)
 {
 	QByteArray ba;
-
+	qDebug("loading %s from %s", qPrintable(fileName), qPrintable(dir));
 	QFileInfo fi(dir);
 	if ( fi.isDir() ) {
-		QFile file ( dir + '/' + fileName );
+		QFile file(dir + '/' + fileName);
+		if (caseInsensetive && !file.exists()) {
+			QDir d(dir);
+			foreach (const QString &name, fileName.toLower().split('/')) {
+				if (name.isEmpty()) { // force relative path and drop double slahses
+					continue;
+				}
+				QDirIterator di(d);
+				QFileInfo fi;
+				bool found = false;
+				while (di.hasNext()) {
+					di.next();
+					if (di.fileName().compare(name, Qt::CaseInsensitive) == 0) {
+						found = true;
+						fi = di.fileInfo();
+						break;
+					}
+				}
+				if (!found) {
+					qDebug("Not found: %s/%s", qPrintable(d.path()), qPrintable(name));
+					return ba;
+				}
+				if (fi.isFile()) {
+					file.setFileName(fi.filePath());
+					break;
+				}
+				d.cd(fi.fileName());
+			}
+		}
 		//qDebug("read data from %s", qPrintable(file.fileName()));
-		if (!file.open(QIODevice::ReadOnly))
+		if (!file.open(QIODevice::ReadOnly)) {
+			qDebug("Failed to open: %s", qPrintable(file.fileName()));
 			return ba;
+		}
 
 		ba = file.readAll();
 	}
@@ -89,6 +123,9 @@ QByteArray Theme::loadData(const QString &fileName, const QString &dir)
 		UnZip z(dir);
 		if ( !z.open() )
 			return ba;
+		if (caseInsensetive) {
+			z.setCaseSensitivity(UnZip::CS_Insensitive);
+		}
 
 		QString n = fi.completeBaseName() + '/' + fileName;
 		if ( !z.readFile(n, &ba) ) {
@@ -179,6 +216,16 @@ const QHash<QString, QString> Theme::info() const
 void Theme::setInfo(const QHash<QString, QString> &i)
 {
 	md->info = i;
+}
+
+void Theme::setCaseInsensitiveFS(bool state)
+{
+	md->caseInsensitiveFS = state;
+}
+
+bool Theme::caseInsensitiveFS() const
+{
+	return md->caseInsensitiveFS;
 }
 
 /**

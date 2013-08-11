@@ -52,17 +52,6 @@ QNetworkReply * NetworkAccessManager::createRequest(Operation op, const QNetwork
 		return repl;
 	}
 
-    //on whiteList?
-    whiteListMutex.lock();
-
-    bool whiteListed = whiteList.contains(req.url().toString());
-
-    whiteListMutex.unlock();
-
-    if (whiteListed) {
-        return QNetworkAccessManager::createRequest(op, req, outgoingData);
-    }
-
 	QNetworkReply * reply = new ByteArrayReply(req); //finishes with error
     connect(reply, SIGNAL(finished()), SLOT(callFinished()));
 
@@ -76,14 +65,6 @@ void NetworkAccessManager::callFinished() {
     if (reply) {
         emit finished(reply);
     }
-}
-
-
-void NetworkAccessManager::addUrlToWhiteList(const QString& url) {
-
-    whiteListMutex.lock();
-    whiteList.append(url);
-    whiteListMutex.unlock();
 }
 
 QSharedPointer<NAMSchemeHandler> NetworkAccessManager::schemeHandler(const QString &scheme)

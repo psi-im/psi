@@ -40,7 +40,7 @@ public:
 	Theme(const Theme &other);
 	virtual ~Theme();
 
-	static QByteArray loadData(const QString &fileName, const QString &dir);
+	static QByteArray loadData(const QString &fileName, const QString &dir, bool caseInsensetive = false);
 
 	const QString &id() const;
 	const QString &name() const;
@@ -54,6 +54,9 @@ public:
 	void setFileName(const QString &f);
 	const QHash<QString, QString> info() const;
 	void setInfo(const QHash<QString, QString> &i);
+
+	void setCaseInsensitiveFS(bool state);
+	bool caseInsensitiveFS() const;
 
 	virtual QString title() const;
 	virtual QByteArray screenshot() = 0; // this hack must be replaced with something widget based

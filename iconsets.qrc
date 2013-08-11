@@ -95,35 +95,36 @@
         <file>iconsets/system/default/notification_chat_receive.png</file>
         <file>iconsets/system/default/notification_chat_send.png</file>
         <file>iconsets/system/default/notification_chat_time.png</file>
-        <file>iconsets/system/default/whiteboarding/whiteboard.png</file>
-        <file>iconsets/system/default/whiteboarding/save.png</file>
-        <file>iconsets/system/default/whiteboarding/select.png</file>
-        <file>iconsets/system/default/whiteboarding/translate.png</file>
-        <file>iconsets/system/default/whiteboarding/rotate.png</file>
-        <file>iconsets/system/default/whiteboarding/scale.png</file>
-        <file>iconsets/system/default/whiteboarding/scroll.png</file>
-        <file>iconsets/system/default/whiteboarding/erase.png</file>
-        <file>iconsets/system/default/whiteboarding/draw_paths.png</file>
-        <file>iconsets/system/default/whiteboarding/draw_lines.png</file>
-        <file>iconsets/system/default/whiteboarding/draw_ellipses.png</file>
-        <file>iconsets/system/default/whiteboarding/draw_circles.png</file>
-        <file>iconsets/system/default/whiteboarding/draw_rectangles.png</file>
-        <file>iconsets/system/default/whiteboarding/add_text.png</file>
-        <file>iconsets/system/default/whiteboarding/add_image.png</file>
-        <file>iconsets/system/default/whiteboarding/bring_forwards.png</file>
-        <file>iconsets/system/default/whiteboarding/bring_to_front.png</file>
-        <file>iconsets/system/default/whiteboarding/send_backwards.png</file>
-        <file>iconsets/system/default/whiteboarding/send_to_back.png</file>
-        <file>iconsets/system/default/whiteboarding/group.png</file>
-        <file>iconsets/system/default/whiteboarding/ungroup.png</file>
-        <file>iconsets/emoticons/default/angry.png</file>
-        <file>iconsets/emoticons/default/bat.png</file>
-        <file>iconsets/emoticons/default/beer.png</file>
-        <file>iconsets/emoticons/default/biggrin.png</file>
-        <file>iconsets/emoticons/default/blush.png</file>
-        <file>iconsets/emoticons/default/boy.png</file>
-        <file>iconsets/emoticons/default/brflower.png</file>
-        <file>iconsets/emoticons/default/brheart.png</file>
+	<file>iconsets/system/default/theme_title_texture.png</file>
+       <file>iconsets/system/default/whiteboarding/whiteboard.png</file>
+       <file>iconsets/system/default/whiteboarding/save.png</file>
+       <file>iconsets/system/default/whiteboarding/select.png</file>
+       <file>iconsets/system/default/whiteboarding/translate.png</file>
+       <file>iconsets/system/default/whiteboarding/rotate.png</file>
+       <file>iconsets/system/default/whiteboarding/scale.png</file>
+       <file>iconsets/system/default/whiteboarding/scroll.png</file>
+       <file>iconsets/system/default/whiteboarding/erase.png</file>
+       <file>iconsets/system/default/whiteboarding/draw_paths.png</file>
+       <file>iconsets/system/default/whiteboarding/draw_lines.png</file>
+       <file>iconsets/system/default/whiteboarding/draw_ellipses.png</file>
+       <file>iconsets/system/default/whiteboarding/draw_circles.png</file>
+       <file>iconsets/system/default/whiteboarding/draw_rectangles.png</file>
+       <file>iconsets/system/default/whiteboarding/add_text.png</file>
+       <file>iconsets/system/default/whiteboarding/add_image.png</file>
+       <file>iconsets/system/default/whiteboarding/bring_forwards.png</file>
+       <file>iconsets/system/default/whiteboarding/bring_to_front.png</file>
+       <file>iconsets/system/default/whiteboarding/send_backwards.png</file>
+       <file>iconsets/system/default/whiteboarding/send_to_back.png</file>
+       <file>iconsets/system/default/whiteboarding/group.png</file>
+       <file>iconsets/system/default/whiteboarding/ungroup.png</file>
+       <file>iconsets/emoticons/default/angry.png</file>
+       <file>iconsets/emoticons/default/bat.png</file>
+       <file>iconsets/emoticons/default/beer.png</file>
+       <file>iconsets/emoticons/default/biggrin.png</file>
+       <file>iconsets/emoticons/default/blush.png</file>
+       <file>iconsets/emoticons/default/boy.png</file>
+       <file>iconsets/emoticons/default/brflower.png</file>
+       <file>iconsets/emoticons/default/brheart.png</file>
         <file>iconsets/emoticons/default/coffee.png</file>
         <file>iconsets/emoticons/default/coolglasses.png</file>
         <file>iconsets/emoticons/default/cry.png</file>

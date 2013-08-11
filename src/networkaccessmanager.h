@@ -53,8 +53,6 @@ public:
 	NetworkAccessManager(QObject *parent = 0);
 	~NetworkAccessManager();
 
-	/** Add URL to whiteList. */
-	void addUrlToWhiteList(const QString& url);
 	static NetworkAccessManager* instance();
 	QSharedPointer<NAMSchemeHandler> schemeHandler(const QString &);
 	void setSchemeHandler(const QString &, NAMSchemeHandler *);
