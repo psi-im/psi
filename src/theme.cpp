@@ -78,7 +78,7 @@ Theme::~Theme()
 QByteArray Theme::loadData(const QString &fileName, const QString &dir, bool caseInsensetive)
 {
 	QByteArray ba;
-	qDebug("loading %s from %s", qPrintable(fileName), qPrintable(dir));
+	//qDebug("loading %s from %s", qPrintable(fileName), qPrintable(dir));
 	QFileInfo fi(dir);
 	if ( fi.isDir() ) {
 		QFile file(dir + '/' + fileName);
@@ -100,7 +100,7 @@ QByteArray Theme::loadData(const QString &fileName, const QString &dir, bool cas
 					}
 				}
 				if (!found) {
-					qDebug("Not found: %s/%s", qPrintable(d.path()), qPrintable(name));
+					qDebug("%s Not found: %s/%s", __FUNCTION__, qPrintable(d.path()), qPrintable(name));
 					return ba;
 				}
 				if (fi.isFile()) {
@@ -112,7 +112,7 @@ QByteArray Theme::loadData(const QString &fileName, const QString &dir, bool cas
 		}
 		//qDebug("read data from %s", qPrintable(file.fileName()));
 		if (!file.open(QIODevice::ReadOnly)) {
-			qDebug("Failed to open: %s", qPrintable(file.fileName()));
+			qDebug("%s Failed to open: %s", __FUNCTION__, qPrintable(file.fileName()));
 			return ba;
 		}
 
