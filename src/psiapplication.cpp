@@ -271,7 +271,7 @@ void PsiApplication::init(bool GUIenabled)
 		root_window = QApplication::desktop()->winId();
 
 #ifdef HAVE_QT5
-		xcb_atom_t atoms[max];
+		xcb_atom_t* atoms[max];
 		xcb_intern_atom_cookie_t cookies[max];
 
 

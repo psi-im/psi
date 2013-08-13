@@ -28,6 +28,7 @@
 
 #include <QSharedData>
 #include <QHash>
+#include <QStringList>
 
 class ThemeMetaData;
 

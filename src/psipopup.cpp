@@ -449,4 +449,6 @@ void PsiPopup::deleteAll()
 
 #include "psipopup.moc"
 
+#ifndef HAVE_QT5
 Q_EXPORT_PLUGIN2(psipopup, PsiPopupPlugin)
+#endif

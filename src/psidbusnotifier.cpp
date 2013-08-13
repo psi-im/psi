@@ -61,7 +61,7 @@ public:
 		hasAlpha = img->hasAlphaChannel();
 		channels = img->isGrayscale()?1:hasAlpha?4:3;
 		bitsPerSample = img->depth()/channels;
-		image.append((char*)img->rgbSwapped().bits(),img->numBytes());
+		image.append((char*)img->rgbSwapped().bits(),img->byteCount());
 	}
 	iiibiiay(){}
 	static const int id;
@@ -407,4 +407,6 @@ void PsiDBusNotifier::readyToDie()
 
 QStringList PsiDBusNotifier::caps_ = QStringList();
 
+#ifndef HAVE_QT5
 Q_EXPORT_PLUGIN2(psidbusnotifier, PsiDBusNotifierPlugin)
+#endif

@@ -1,7 +1,7 @@
 QT += xml network
 
 greaterThan(QT_MAJOR_VERSION, 4) {
-  QT += widgets multimedia
+  QT += widgets multimedia concurrent
   DEFINES += HAVE_QT5
 }
 unix:!mac:DEFINES += HAVE_X11
