@@ -22,6 +22,9 @@
 #include <objc/runtime.h>
 #include <QApplication>
 #include <QDebug>
+#ifdef HAVE_QT5
+#include <AppKit/NSApplication.h>
+#endif
 
 void dockClickHandler(id /*self*/, SEL /*_cmd*/)
 {

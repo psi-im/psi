@@ -1,7 +1,7 @@
 #ifndef GROUPCHATTOPICDLG_H
 #define GROUPCHATTOPICDLG_H
 
-#include <QtGui/QDialog>
+#include <QDialog>
 
 namespace Ui {
 	class GroupchatTopicDlg;

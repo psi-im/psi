@@ -24,7 +24,7 @@
 #include <QtDesigner/QDesignerCustomWidgetInterface>
 
 #include <QtCore/qplugin.h>
-#include <QtGui/QIcon>
+#include <QIcon>
 
 class PsiWidgetPlugin : public QObject, public QDesignerCustomWidgetInterface
 {
