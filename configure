@@ -681,6 +681,7 @@ static QString internal_crypto_prf(const QString &incdir, const QString &libdir,
 	QString out = QString(
 "QCA_INCDIR = %1\n"
 "QCA_LIBDIR = %2\n"
+"QMAKE_RPATHDIR = %2\n"
 "QCA_FRAMEWORKDIR = %3\n"
 "\n"
 "CONFIG *= qt\n"
