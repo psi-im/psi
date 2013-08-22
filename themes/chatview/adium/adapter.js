@@ -2,7 +2,7 @@ try {
 
 window[chatServer.jsNamespace()].adapter = {
 	loadTheme : function() {
-        chatServer.setCaseInsensitiveFS();
+		chatServer.setCaseInsensitiveFS();
 		var chat = window[chatServer.jsNamespace()];
 		//chat.console("DEBUG: loading " + chatServer.themeId());
 		var resources = ["Template.html", "FileTransferRequest.html",
@@ -12,7 +12,7 @@ window[chatServer.jsNamespace()].adapter = {
 		"Outgoing/Content.html", "Outgoing/NextContent.html",
 		"Outgoing/Context.html", "Outgoing/NextContext.html"];
 		for (var i=0; i<resources.length; i++) {
-            var content = chatServer.getFileContents("Contents/Resources/" + resources[i]);
+			var content = chatServer.getFileContents("Contents/Resources/" + resources[i]);
 			if (content.length) {
 				chatServer.toCache(resources[i], content);
 			}
@@ -265,8 +265,14 @@ window[chatServer.jsNamespace()].util.updateObject(window[chatServer.jsNamespace
 						if (data.mtype != "message") {
 							prevGrouppingData = null;
 						}
+						data.messageClasses = cdata.local?"outgoing" : "incoming";
+						data.messageClasses += cdata.alert?" mention" : "";
+						data.messageClasses += cdata.spooled?" history" : "";
+						data.messageClasses += cdata.mtype == "system"?" event" : "";
+						// TODO consecutive, autoreply, focus, firstFocus, %status%
 						switch (data.mtype) {
 							case "message":
+								data.messageClasses += " message";
 								data.nextOfGroup = groupping && !!(prevGrouppingData &&
 									(prevGrouppingData.type == cdata.type) &&
 									(prevGrouppingData.mtype == cdata.mtype) &&
@@ -283,6 +289,7 @@ window[chatServer.jsNamespace()].util.updateObject(window[chatServer.jsNamespace
 								data.senderStatusIcon="icon:status/online"; //FIXME temporary hack
 								break;
 							case "status":
+								data.messageClasses += " status";
 							case "system":
 								if (data["usertext"]) {
 									data["message"] += " (" + data["usertext"] + ")"
@@ -293,6 +300,7 @@ window[chatServer.jsNamespace()].util.updateObject(window[chatServer.jsNamespace
 								data["message"] = data["date"];
 								data["time"] = "&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;"; //fixes some themes =)
 								template = templates.status;
+								data.messageClasses += " event date_separator";
 								break;
 							case "subject": //its better to init with proper templates on start than do comparision like below
 								template = templates.status;
@@ -302,6 +310,7 @@ window[chatServer.jsNamespace()].util.updateObject(window[chatServer.jsNamespace
 								} else {
 									data["message"] += ("<br/>" + data["usertext"]);
 								}
+								data.messageClasses += " event";
 								break;
 							case "urls":
 								var i, urls=[];
@@ -310,6 +319,7 @@ window[chatServer.jsNamespace()].util.updateObject(window[chatServer.jsNamespace
 								}
 								data["message"] = urls.join("<br/>");
 								template = templates.status;
+								data.messageClasses += " event";
 								break;
 						}
 						if (template) {
