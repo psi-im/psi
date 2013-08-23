@@ -22,6 +22,7 @@
 #include <QWebFrame>
 #include <QFileInfo>
 #include <QApplication>
+#include <time.h>
 
 #include "chatviewtheme.h"
 #include "psioptions.h"
@@ -102,6 +103,17 @@ public slots:
 	QString formatDate(const QDateTime &dt, const QString &format) const
 	{
 		return dt.toLocalTime().toString(format);
+	}
+
+	QString strftime(const QDateTime &dt, const QString &format) const
+	{
+		char str[256];
+		time_t t = dt.toTime_t();
+		int s = ::strftime(str, 256, format.toLocal8Bit(), localtime(&t));
+		if (s) {
+			return QString::fromLocal8Bit(str, s);
+		}
+		return QString();
 	}
 
 	QString getPaletteColor(const QString &name) const

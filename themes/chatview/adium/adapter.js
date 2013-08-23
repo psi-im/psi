@@ -97,7 +97,7 @@ window[chatServer.jsNamespace()].util.updateObject(window[chatServer.jsNamespace
 	var chat = window[chatServer.jsNamespace()];
 	var server = window.chatServer;
 	var session = null;
-	var dateFormat = "hh:mm";
+	var dateFormat = "%H:%M";
 	var cdata;
 	var proxyEl = document.createElement("div");
 
@@ -130,23 +130,14 @@ window[chatServer.jsNamespace()].util.updateObject(window[chatServer.jsNamespace
 
 	function TemplateTimeVar(name, param) {
 		this.name = name;
-		if (param) {
-			var i, r = {y:'yy',Y:'yyyy',m:'MM',d:'dd',H:'hh',M:'mm',S:'ss'};
-			var m = param.split(/%([a-zA-Z]+)/)
-			for (i=0; i<m.length; i++) {
-				m[i] = r[m[i]] || m[i];
-			}
-			this.format = m.join("");
-		} else {
-			this.format = dateFormat
-		}
+		this.param = param || dateFormat;
 	}
 
 	TemplateTimeVar.prototype.toString = function() {
 		//chat.console("DEBUG: TemplateTimeVar.prototype.toString");
 		return cdata[this.name] instanceof Date?
-			server.formatDate(cdata[this.name], this.format) :
-			(cdata[this.name] ? cdata[this.name] : "");
+			server.strftime(cdata[this.name], this.format) :
+			(cdata[this.name] ? server.strftime(new Date(), cdata[this.name]) : "");
 	}
 
 	function Template(raw) {
