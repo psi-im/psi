@@ -55,10 +55,12 @@ public:
 	bool handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit);
 
 	void deferredScroll();
-	void scrollUp();
-	void scrollDown();
 	void doTrackBar();
 	bool internalFind(QString str, bool startFromBeginning = false);
+
+public slots:
+	void scrollUp();
+	void scrollDown();
 
 protected:
 	// override the tab/esc behavior

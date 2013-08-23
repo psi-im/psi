@@ -109,8 +109,6 @@ public slots:
 	void updateAvatar(const Jid&);
 
 protected slots:
-	void scrollUp();
-	void scrollDown();
 	void doInfo();
 	virtual void doHistory();
 	virtual void doClear();
