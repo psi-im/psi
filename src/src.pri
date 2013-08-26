@@ -619,6 +619,9 @@ webkit {
 			$$PWD/chatviewthemeprovider.cpp
 	DEFINES += WEBKIT
 	QT += webkit
+	greaterThan(QT_MAJOR_VERSION, 4) {
+		QT += webkitwidgets
+	}
 }
 else {
 	HEADERS += 	$$PWD/chatview_te.h
