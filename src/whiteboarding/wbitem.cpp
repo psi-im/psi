@@ -117,7 +117,7 @@ void WbItem::mouseMoveEvent(QGraphicsSceneMouseEvent * event) {
 			foreach(QGraphicsItem* graphicsitem, scene()->selectedItems()) {
 				if (!graphicsitem->parentItem() || !graphicsitem->parentItem()->isSelected()) {
 					QPointF d = graphicsitem->mapFromScene(event->scenePos()) - graphicsitem->mapFromScene(event->lastScenePos());
-					graphicsitem->translate(d.x(), d.y());
+					graphicsitem->setTransform(QTransform::fromTranslate(d.x(), d.y()), true);
 					// qDebug() QString("Translated %1 by %2 %3").arg((unsigned int) graphicsitem).arg(d.x()).arg(d.y()).toAscii();
 
 					// Regenerate the SVG transformation matrix later

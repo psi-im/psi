@@ -71,10 +71,10 @@ private:
 class PsiDBusNotifierPlugin : public QObject, public PsiPopupPluginInterface
 {
 	Q_OBJECT
-	Q_INTERFACES(PsiPopupPluginInterface)
 #ifdef HAVE_QT5
-        Q_PLUGIN_METADATA(IID "org.psi-im.Psi.DBusNotifierPlugin")
+	Q_PLUGIN_METADATA(IID "org.psi-im.Psi.PsiPopupPluginInterface")
 #endif
+	Q_INTERFACES(PsiPopupPluginInterface)
 
 public:
 	virtual QString name() const { return "DBus"; }

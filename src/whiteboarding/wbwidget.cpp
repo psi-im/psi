@@ -165,7 +165,7 @@ static QRectF parseSvgViewBox(QString string) {
 		numbers[i] = strings[i].toDouble();
 	}
 
-	// qDebug() << QString("QRectF(%1 %2 %3 %4)").arg(numbers[0]).arg(numbers[1]).arg(numbers[2]).arg(numbers[3]).toAscii();
+	// qDebug() << QString("QRectF(%1 %2 %3 %4)").arg(numbers[0]).arg(numbers[1]).arg(numbers[2]).arg(numbers[3]).toLatin1();
 	return QRect(numbers[0], numbers[1], numbers[2], numbers[3]);
 }
 
@@ -420,16 +420,16 @@ void WbWidget::rerender() {
 	session_->document().save(stream, 1);
 
 	// qDebug("Document in WbWidget:");
-	// qDebug() << xmldump.toAscii();
+	// qDebug() << xmldump.toLatin1();
 
-	renderer_.load(xmldump.toAscii());
+	renderer_.load(xmldump.toLatin1());
 
 	// Update all positions if changed
 	foreach(WbItem* wbitem, items_) {
 		// resetting elementId is necessary for rendering some updates to the element (e.g. adding child elements to <g/>)
 		wbitem->setElementId(wbitem->id());
 
-		// qDebug() << QString("Rerendering %1").arg((unsigned int) wbitem).toAscii();
+		// qDebug() << QString("Rerendering %1").arg((unsigned int) wbitem).toLatin1();
 		wbitem->resetPos();
 	}
 }

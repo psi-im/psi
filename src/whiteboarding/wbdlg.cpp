@@ -355,12 +355,12 @@ void WbDlg::setGeometry() {
 	QSize size;
 
 	bool ok;
-	size.setWidth(QInputDialog::getInteger(this, tr("Set new width:"), tr("Width:"), static_cast<int>(wbWidget_->scene()->sceneRect().width()), 10, 100000, 10, &ok));
+	size.setWidth(QInputDialog::getInt(this, tr("Set new width:"), tr("Width:"), static_cast<int>(wbWidget_->scene()->sceneRect().width()), 10, 100000, 10, &ok));
 	if(!ok) {
 		return;
 	}
 
-	size.setHeight(QInputDialog::getInteger(this, tr("Set new height:"), tr("Height:"), static_cast<int>(wbWidget_->scene()->sceneRect().height()), 10, 100000, 10, &ok));
+	size.setHeight(QInputDialog::getInt(this, tr("Set new height:"), tr("Height:"), static_cast<int>(wbWidget_->scene()->sceneRect().height()), 10, 100000, 10, &ok));
 	if(!ok)
 		return;
 
