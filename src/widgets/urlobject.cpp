@@ -144,7 +144,7 @@ public slots:
 #else
 			uri.setQueryDelimiters('=', ';');
 			if (uri.queryItems().value(0).first != queryType) {
-				uri.setEncodedQuery(query.toAscii());
+				uri.setEncodedQuery(query.toLatin1());
 			}
 #endif
 		}

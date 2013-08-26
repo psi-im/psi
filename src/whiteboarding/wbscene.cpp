@@ -32,7 +32,7 @@ void WbScene::queueTransformationRegeneration(WbItem* item) {
 void WbScene::regenerateTransformations() {
 	foreach(QPointer<WbItem> item, pendingTranformations_) {
 		if(item) {
-			// qDebug() << QString("Regenerating %1 transform.").arg((unsigned int) &(*item)).toAscii();
+			// qDebug() << QString("Regenerating %1 transform.").arg((unsigned int) &(*item)).toLatin1();
 			item->regenerateTransform();
 		}
 	}
@@ -52,7 +52,7 @@ QPointF WbScene::selectionCenter() const {
 		box = box.united(item->sceneBoundingRect());
 	}
 
-	// qDebug() << QString("Selection center: %1 %2").arg(box.center().x()).arg(box.center().y()).toAscii();
+	// qDebug() << QString("Selection center: %1 %2").arg(box.center().x()).arg(box.center().y()).toLatin1();
 
 	return box.center();
 }
