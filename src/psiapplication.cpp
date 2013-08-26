@@ -175,14 +175,22 @@ void setTrayOwnerWindow(Display *dsp)
 //----------------------------------------------------------------------------
 
 #ifdef Q_OS_MAC
+#ifdef HAVE_QT5
+#include <QProxyStyle>
+#else
 #include <QMacStyle>
+#endif
 #include <QStyleOptionMenuItem>
 
 /**
  * Custom QStyle that helps to get rid of icons in all kinds of menus
  * on Mac OS X.
  */
+#ifdef HAVE_QT5
+class PsiMacStyle : public QProxyStyle
+#else
 class PsiMacStyle : public QMacStyle
+#endif
 {
 public:
 	PsiMacStyle()
@@ -199,12 +207,20 @@ public:
 				QStyleOptionMenuItem newopt(*mi);
 				newopt.maxIconWidth = 0;
 				newopt.icon = QIcon();
+#ifdef HAVE_QT5
+				QProxyStyle::drawControl(ce, &newopt, p, w);
+#else
 				QMacStyle::drawControl(ce, &newopt, p, w);
+#endif
 				return;
 			}
 		}
 
+#ifdef HAVE_QT5
+		QProxyStyle::drawControl(ce, opt, p, w);
+#else
 		QMacStyle::drawControl(ce, opt, p, w);
+#endif
 	}
 
 	QSize sizeFromContents(ContentsType ct, const QStyleOption *opt, const QSize &csz, const QWidget *widget) const
@@ -214,11 +230,19 @@ public:
 				QStyleOptionMenuItem newopt(*mi);
 				newopt.maxIconWidth = 0;
 				newopt.icon = QIcon();
+#ifdef HAVE_QT5
+				return QProxyStyle::sizeFromContents(ct, &newopt, csz, widget);
+#else
 				return QMacStyle::sizeFromContents(ct, &newopt, csz, widget);
-				}
+#endif
+			}
 		}
 
+#ifdef HAVE_QT5
+		return QProxyStyle::sizeFromContents(ct, opt, csz, widget);
+#else
 		return QMacStyle::sizeFromContents(ct, opt, csz, widget);
+#endif
 	}
 
 private:
