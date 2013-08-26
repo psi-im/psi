@@ -271,6 +271,7 @@ window[chatServer.jsNamespace()].util.updateObject(window[chatServer.jsNamespace
 									(prevGrouppingData.userid == cdata.userid) &&
 									(prevGrouppingData.emote == cdata.emote) &&
 									(prevGrouppingData.local == cdata.local));
+								data.messageClasses += data.nextOfGroup? " consecutive" : "";
 
 								if (data.nextOfGroup) {
 									template = data.local?templates.outgoingNextContent:templates.incomingNextContent;
