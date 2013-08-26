@@ -134,19 +134,20 @@ window[chatServer.jsNamespace()].util.updateObject(window[chatServer.jsNamespace
 	}
 
 	TemplateTimeVar.prototype.toString = function() {
-		//chat.console("DEBUG: TemplateTimeVar.prototype.toString");
 		return cdata[this.name] instanceof Date?
-			server.strftime(cdata[this.name], this.format) :
-			(cdata[this.name] ? server.strftime(new Date(), cdata[this.name]) : "");
+			server.strftime(cdata[this.name], this.param) :
+			server.strftime(new Date(), this.param);
 	}
 
 	function Template(raw) {
-		var splitted = raw.split(/(%[\w]+(?:\{[\w:%]+\})?%)/), i;
+		//chat.console("parsing '"+raw+"'");
+		var splitted = raw.split(/(%[\w]+(?:\{[^\{]+\})?%)/), i;
 		this.parts = [];
 
 		for (i = 0; i < splitted.length; i++) {
-			var m = splitted[i].match(/%([\w]+)(?:\{([\w:%]+)\})?%/);
+			var m = splitted[i].match(/%([\w]+)(?:\{([^\{]+)\})?%/);
 			if (m) {
+				//chat.console("found var '"+m[1]+"'");
 				this.parts.push(m[1] in tvConstructors
 					? new tvConstructors[m[1]](m[1], m[2])
 					: new TemplateVar(m[1], m[2]));
