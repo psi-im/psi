@@ -27,6 +27,9 @@
 #include <QContextMenuEvent>
 #include <QClipboard>
 #include <QBuffer>
+#ifdef HAVE_QT5
+#include <QUrlQuery>
+#endif
 
 #include "networkaccessmanager.h"
 #include "iconset.h"
@@ -34,8 +37,13 @@
 class IconHandler : public NAMSchemeHandler
 {
 	QByteArray data(const QUrl &url) const {
+#ifdef HAVE_QT5
+		int w = QUrlQuery(url.query()).queryItemValue("w").toInt();
+		int h = QUrlQuery(url.query()).queryItemValue("h").toInt();
+#else
 		int w = url.queryItemValue("w").toInt();
 		int h = url.queryItemValue("h").toInt();
+#endif
 		PsiIcon icon = IconsetFactory::icon(url.path());
 		if (w && h && !icon.isAnimated()) {
 			QByteArray ba;

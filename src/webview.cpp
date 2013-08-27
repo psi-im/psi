@@ -24,6 +24,7 @@
 #include <QApplication>
 #include <QStyle>
 #include <QDebug>
+#include <QDrag>
 
 #include "webview.h"
 #include "urlobject.h"

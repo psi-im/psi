@@ -237,7 +237,11 @@ bool ChatViewTheme::load(const QString &file, const QStringList &helperScripts,
 	d->scripts = helperScripts;
 
 	d->wv->page()->mainFrame()->addToJavaScriptWindowObject("chatServer", d->jso,
+#ifdef HAVE_QT5
+												QWebFrame::QtOwnership);
+#else
 												QScriptEngine::QtOwnership);
+#endif
 	foreach (const QString &script, d->scripts) {
 		QVariant result = d->wv->page()->mainFrame()->evaluateJavaScript(script);
 		if (result != "ok") {
