@@ -21,6 +21,7 @@
 #ifndef SXDEMETADATA_H
 #define SXDEMETADATA_H
 
+#include <QObject>
 #include "sxerecordedit.h"
 #include "sxenewedit.h"
 #include "sxeremoveedit.h"
