@@ -289,7 +289,7 @@ void SxeRecord::updateNode(bool remote) {
 
 	if(data_ != lastData_) {
 
-		// qDebug() << QString("Setting '%1' to \"%2\"").arg(node_.nodeName()).arg(data_).toAscii();
+		// qDebug() << QString("Setting '%1' to \"%2\"").arg(node_.nodeName()).arg(data_).toLatin1();
 
 		if((node_.isText() || node_.isAttr() || node_.isComment())) {
 
