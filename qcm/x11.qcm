@@ -24,7 +24,7 @@ public:
 			"    return 0;\n"
 			"}\n";
 		QString proextra = "CONFIG += x11\n";
-#if QT_VERSION >= 0x050000
+#if QT_VERSION >= 0x050000 && defined Q_OS_LINUX
 		proextra += "LIBS += -lxcb\n";
 #endif
 		return conf->doCompileAndLink(str, QStringList(), QString(), proextra, NULL);
