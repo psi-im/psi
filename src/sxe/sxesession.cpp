@@ -100,7 +100,7 @@ void SxeSession::processIncomingSxeElement(const QDomElement &sxe, const QString
 bool SxeSession::processSxe(const QDomElement &sxe, const QString &id) {
 	// Don't accept duplicates
 	if(!id.isEmpty() && usedSxeIds_.contains(id)) {
-		qDebug() << QString("Tried to process a duplicate %1 (received: %2).").arg(sxe.attribute("id")).arg(usedSxeIds_.size()).toAscii();
+		qDebug() << QString("Tried to process a duplicate %1 (received: %2).").arg(sxe.attribute("id")).arg(usedSxeIds_.size()).toLatin1();
 		return false;
 	}
 
@@ -622,7 +622,7 @@ void SxeSession::reposition(const QDomNode &node, bool remote) {
 			if(children.item(i) != node) {
 				SxeRecord* siblingMeta = record(children.item(i));
 				if(siblingMeta && *meta < *siblingMeta) {
-					// qDebug() << QString("%1 (pw: %2) is less than %3 (pw: %4)").arg(meta->name()).arg(meta->primaryWeight()).arg(siblingMeta->name()).arg(siblingMeta->primaryWeight()).toAscii();
+					// qDebug() << QString("%1 (pw: %2) is less than %3 (pw: %4)").arg(meta->name()).arg(meta->primaryWeight()).arg(siblingMeta->name()).arg(siblingMeta->primaryWeight()).toLatin1();
 					before = children.item(i);
 					insertLast = false;
 					break;
@@ -632,10 +632,10 @@ void SxeSession::reposition(const QDomNode &node, bool remote) {
 	}
 
 	if(insertLast) {
-		// qDebug() << QString("Repositioning '%1' (pw: %2) as last.").arg(node.nodeName()).arg(meta->primaryWeight()).toAscii();
+		// qDebug() << QString("Repositioning '%1' (pw: %2) as last.").arg(node.nodeName()).arg(meta->primaryWeight()).toLatin1();
 		parentNode.appendChild(node);
 	} else {
-		// qDebug() << QString("Repositioning '%1' (pw: %2) before '%3' (pw: %4).").arg(node.nodeName()).arg(meta->primaryWeight()).arg(before.nodeName()).arg(record(before)->primaryWeight()).toAscii();
+		// qDebug() << QString("Repositioning '%1' (pw: %2) before '%3' (pw: %4).").arg(node.nodeName()).arg(meta->primaryWeight()).arg(before.nodeName()).arg(record(before)->primaryWeight()).toLatin1();
 		parentNode.insertBefore(node, before);
 	}
 }
@@ -708,7 +708,7 @@ void SxeSession::queueOutgoingEdit(SxeEdit* edit) {
 
 SxeRecord* SxeSession::createRecord(const QString &id) {
 	if(recordByNodeId_.contains(id)) {
-		qDebug() << QString("record by id '%1' already exists.").arg(id).toAscii();
+		qDebug() << QString("record by id '%1' already exists.").arg(id).toLatin1();
 		return NULL;
 	}
 
@@ -742,7 +742,7 @@ SxeRecord* SxeSession::record(const QDomNode &node) const {
 
 	// go through all the SxeRecord's
 	foreach(SxeRecord* meta, recordByNodeId_.values()) {
-		// qDebug() << QString("id: %1").arg(meta->rid()).toAscii();
+		// qDebug() << QString("id: %1").arg(meta->rid()).toLatin1();
 		if(node == meta->node())
 			return meta;
 	}

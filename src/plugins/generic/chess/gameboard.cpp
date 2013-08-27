@@ -182,8 +182,8 @@ QString Figure::map2str(int x, int y)
 
 void Figure::str2map(const QString &coo, int *x, int *y)
 {
-	*x = coo.at(0).toAscii() - 'a' + 1;
-	*y = coo.at(1).toAscii() - '0';
+	*x = coo.at(0).toLatin1() - 'a' + 1;
+	*y = coo.at(1).toLatin1() - '0';
 }
 
 
