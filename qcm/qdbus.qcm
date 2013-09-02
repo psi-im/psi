@@ -13,8 +13,15 @@ public:
 	qc_qdbus(Conf *c) : ConfObj(c) {}
 	QString name() const { return "QDBUS"; }
 	QString shortname() const { return "qdbus"; }
+#ifdef Q_OS_WIN
+	QString checkString() const { return QString(); }
+#endif
 	bool exec()
 	{
+#ifdef Q_OS_WIN
+		// skip dbus support on windows
+		return false;
+#else
 		if (!conf->getenv("QC_DISABLE_qdbus").isEmpty())
 			return false;
 
@@ -40,5 +47,6 @@ public:
 
 		conf->addExtra("CONFIG += dbus");
 		return true;
+#endif
 	}
 };

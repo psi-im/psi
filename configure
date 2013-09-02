@@ -952,7 +952,9 @@ public:
 			"    return 0;\n"
 			"}\n";
 		QString proextra = "CONFIG += x11\n";
-
+#if QT_VERSION >= 0x050000 && defined Q_OS_LINUX
+		proextra += "LIBS += -lxcb\n";
+#endif
 		return conf->doCompileAndLink(str, QStringList(), QString(), proextra, NULL);
 	}
 };
@@ -998,8 +1000,15 @@ public:
 	qc_qdbus(Conf *c) : ConfObj(c) {}
 	QString name() const { return "QDBUS"; }
 	QString shortname() const { return "qdbus"; }
+#ifdef Q_OS_WIN
+	QString checkString() const { return QString(); }
+#endif
 	bool exec()
 	{
+#ifdef Q_OS_WIN
+		// skip dbus support on windows
+		return false;
+#else
 		if (!conf->getenv("QC_DISABLE_qdbus").isEmpty())
 			return false;
 
@@ -1025,6 +1034,7 @@ public:
 
 		conf->addExtra("CONFIG += dbus");
 		return true;
+#endif
 	}
 };
 #line 1 "webkit.qcm"
