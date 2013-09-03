@@ -236,7 +236,7 @@ void GAdvancedWidget::Private::doFlash(bool yes)
 #ifdef Q_OS_WIN
 	FLASHWINFO fwi;
 	fwi.cbSize = sizeof(fwi);
-	fwi.hwnd = parentWidget_->winId();
+	fwi.hwnd = (HWND)parentWidget_->winId();
 	if (yes) {
 		fwi.dwFlags = FLASHW_ALL | FLASHW_TIMER;
 		fwi.dwTimeout = 0;
@@ -568,7 +568,7 @@ void GAdvancedWidget::showWithoutActivation()
 	if (foregroundWindow) {
 		// the first step is to make sure we're the topmost window
 		// otherwise step two doesn't seem to have any effect at all
-		ForceForegroundWindow(d->parentWidget_->winId());
+		ForceForegroundWindow((HWND)d->parentWidget_->winId());
 		ForceForegroundWindow(foregroundWindow);
 	}
 #endif

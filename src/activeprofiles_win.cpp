@@ -27,6 +27,9 @@
 #include <QTimer>
 #include <windows.h>
 
+#if QT_VERSION >= 0x050000
+#define QT_WA(unicode, ansi) unicode
+#endif
 /*
 	Implementor notes:
 
@@ -87,7 +90,7 @@ public:
 
 	void setWindowText(const QString &text) {
 		QT_WA(
-			SetWindowTextW(winId(), (LPCWSTR)text.utf16());
+			SetWindowTextW((HWND)winId(), (LPCWSTR)text.utf16());
 		,
 			QByteArray a = text.toLocal8Bit();
 			SetWindowTextA(winId(), (LPCSTR)a.constData());

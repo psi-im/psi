@@ -139,7 +139,7 @@ void HoverableTreeView::repairMouseTracking()
 		TRACKMOUSEEVENT tme;
 		tme.cbSize = sizeof(TRACKMOUSEEVENT);
 		tme.dwFlags = 0x00000002;    // TME_LEAVE
-		tme.hwndTrack = viewport()->winId(); // Track on window receiving msgs
+		tme.hwndTrack = (HWND)viewport()->winId(); // Track on window receiving msgs
 		tme.dwHoverTime = (DWORD)-1; // HOVER_DEFAULT
 		ptrTrackMouseEvent(&tme);
 	}

@@ -6,6 +6,9 @@
 #include <QLocale>
 #include <QDesktopServices>
 #include <QMessageBox>
+#ifdef HAVE_QT5
+#include <QStandardPaths>
+#endif
 
 #ifdef HAVE_X11
 #include <sys/stat.h> // chmod
@@ -219,7 +222,11 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
 				}
 				dataDir_ = configDir_;
 				// prefer non-roaming data location for cache which is default for qds:DataLocation
+#ifdef HAVE_QT5
+				cacheDir_ = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+#else
 				cacheDir_ = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+#endif
 			} else {
 				configDir_ = dataDir_ = cacheDir_ = base + "/" + name();
 			}
