@@ -32,6 +32,7 @@ class ChatViewCommon
 public:
 	ChatViewCommon() : _nickNumber(0) { }
 	void setLooks(QWidget *);
+	inline const QDateTime& lastMsgTime() const { return _lastMsgTime; }
 	bool updateLastMsgTime(QDateTime t);
 	QString getMucNickColor(const QString &, bool,
 							QStringList validList = QStringList());

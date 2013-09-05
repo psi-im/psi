@@ -75,6 +75,7 @@ public:
 	void setPassword(const QString&);
 	const QString& nick() const;
 	const QString& topic() const;
+	const QDateTime& lastMsgTime() const;
 
 	bool isInactive() const;
 	void reactivate();

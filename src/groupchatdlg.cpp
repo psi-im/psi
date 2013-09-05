@@ -1452,6 +1452,11 @@ const QString& GCMainDlg::topic() const
 	return d->topic;
 }
 
+const QDateTime & GCMainDlg::lastMsgTime() const
+{
+	return d->te_log()->lastMsgTime();
+}
+
 void GCMainDlg::appendSysMsg(const QString &str, bool alert, const QDateTime &ts)
 {
 	MessageView mv = MessageView::fromPlainText(str, MessageView::System);

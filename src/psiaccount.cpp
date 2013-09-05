@@ -5280,9 +5280,15 @@ bool PsiAccount::groupChatJoin(const QString &host, const QString &room, const Q
 	if (nohistory)
 		return d->client->groupChatJoin(host, room, nick, pass, 0);
 	else {
+		QDateTime since;
+		GCMainDlg *w = findDialog<GCMainDlg*>(Jid(room, host));
+		if (w)
+			since = w->lastMsgTime();
+
 		Status s = d->loginStatus;
 		s.setXSigned("");
-		return d->client->groupChatJoin(host, room, nick, pass, d->options->getOption("options.muc.context.maxchars").toInt(),d->options->getOption("options.muc.context.maxstanzas").toInt(),d->options->getOption("options.muc.context.seconds").toInt(),s);
+
+		return d->client->groupChatJoin(host, room, nick, pass, d->options->getOption("options.muc.context.maxchars").toInt(), d->options->getOption("options.muc.context.maxstanzas").toInt(), d->options->getOption("options.muc.context.seconds").toInt(), since, s);
 	}
 }
 
