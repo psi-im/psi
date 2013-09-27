@@ -69,9 +69,8 @@ if [ "$platform" == "mac" ]; then
 		done
 	done
 
-	mkdir -p $contentsdir/Plugins
-	mkdir -p $contentsdir/Plugins/imageformats
 	for p in $QT_PLUGINS; do
+		mkdir -p $contentsdir/Plugins/$(dirname $p);
 		cp -a $QTDIR/plugins/$p $contentsdir/Plugins/$p
 		for g in $QT_FRAMEWORKS; do
 			install_name_tool -change $QTDIR/lib/$g.framework/Versions/4/$g @executable_path/../Frameworks/$g.framework/Versions/4/$g $contentsdir/Plugins/$p
