@@ -38,7 +38,7 @@ public:
 class OptionsTabToolbars::Private
 {
 public:
-	QMap<QString, ToolbarPrefs> toolbars;
+	QList<ToolbarPrefs> toolbars;
 
 	PsiActionList::ActionsType class2id() {
 		int ret = (int)PsiActionList::Actions_Common;
@@ -171,9 +171,8 @@ void OptionsTabToolbars::applyOptions()
 
 	PsiOptions *o = PsiOptions::instance();
 	o->removeOption("options.ui.contactlist.toolbars", true);
-	QMap<QString, ToolbarPrefs>::Iterator it = p->toolbars.begin();
-	for (; it != p->toolbars.end(); ++it) {
-		PsiToolBar::structToOptions(o, it.value());
+	foreach (const ToolbarPrefs &toolbar, p->toolbars) {
+		PsiToolBar::structToOptions(o, toolbar);
 	}
 }
 
@@ -201,8 +200,8 @@ void OptionsTabToolbars::restoreOptions()
 		// tb.extraOffset = o->getOption(base + ".dock.extra-offset").toInt();
 		tb.keys = o->getOption(base + ".actions").toStringList();
 
-		p->toolbars[base] = tb;
-		d->cb_toolbars->addItem(tb.name, base);
+		p->toolbars << tb;
+		d->cb_toolbars->addItem(tb.name);
 	}
 
 	if (d->cb_toolbars->count() > 0) {
@@ -246,17 +245,9 @@ void OptionsTabToolbars::toolbarAdd()
 
 	tb.dirty = true;
 
-	QString base;
-	j = 0;
-	do {
-		ok = true;
-		base = ".." + QString::number(j++);
-	}
-	while (p->toolbars.keys().contains(base));
+	p->toolbars << tb;
 
-	p->toolbars[base] = tb;
-
-	d->cb_toolbars->addItem(tb.name, base);
+	d->cb_toolbars->addItem(tb.name);
 
 	d->cb_toolbars->setCurrentIndex(d->cb_toolbars->count() - 1);
 	toolbarSelectionChanged(d->cb_toolbars->currentIndex());
@@ -269,14 +260,12 @@ void OptionsTabToolbars::toolbarDelete()
 	LookFeelToolbarsUI *d = (LookFeelToolbarsUI *)w;
 	int n = d->cb_toolbars->currentIndex();
 
-	QString base = d->cb_toolbars->itemData(n).toString();
-
 	noDirty = true;
 	toolbarSelectionChanged(-1);
 
-	p->toolbars.remove(base);
+	p->toolbars.removeAt(n);
 
-	d->cb_toolbars->removeItem(d->cb_toolbars->findData(base));
+	d->cb_toolbars->removeItem(n);
 
 	noDirty = false;
 	toolbarSelectionChanged(d->cb_toolbars->currentIndex());
@@ -343,9 +332,8 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 
 	noDirty = true;
 
-	QString base = d->cb_toolbars->itemData(n).toString();
 	ToolbarPrefs tb;
-	tb = p->toolbars[base];
+	tb = p->toolbars[n];
 
 	d->le_toolbarName->setText(tb.name);
 	d->ck_toolbarOn->setChecked(tb.on);
@@ -409,8 +397,7 @@ void OptionsTabToolbars::rebuildToolbarKeys()
 		keys << d->lw_selectedActions->item(i)->data(Qt::UserRole).toString();
 	}
 
-	QString base = d->cb_toolbars->itemData(n).toString();
-	p->toolbars[base].keys = keys;
+	p->toolbars[n].keys = keys;
 
 	emit dataChanged();
 }
@@ -461,10 +448,9 @@ void OptionsTabToolbars::toolbarNameChanged()
 	QString name = d->le_toolbarName->text();
 
 	int n = d->cb_toolbars->currentIndex();
-	QString base = d->cb_toolbars->itemData(n).toString();
-	p->toolbars[base].name = name;
+	p->toolbars[n].name = name;
 
-	d->cb_toolbars->setItemText(d->cb_toolbars->findData(base), name);
+	d->cb_toolbars->setItemText(n, name);
 
 	emit dataChanged();
 }
@@ -548,9 +534,7 @@ void OptionsTabToolbars::toolbarDataChanged()
 		return;
 	int n = d->cb_toolbars->currentIndex();
 
-	QString base = d->cb_toolbars->itemData(n).toString();
-	ToolbarPrefs tb;
-	tb = p->toolbars[base];
+	ToolbarPrefs tb = p->toolbars[n];
 
 	tb.dirty = true;
 	tb.name = d->le_toolbarName->text();
@@ -558,7 +542,7 @@ void OptionsTabToolbars::toolbarDataChanged()
 	tb.locked = d->ck_toolbarLocked->isChecked();
 	// tb.stretchable = d->ck_toolbarStretch->isChecked();
 
-	p->toolbars[base] = tb;
+	p->toolbars[n] = tb;
 
 	emit dataChanged();
 }
