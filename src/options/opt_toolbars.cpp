@@ -22,6 +22,7 @@
 #include <QHBoxLayout>
 #include <QList>
 #include <QVBoxLayout>
+#include <QRegExp>
 
 class LookFeelToolbarsUI : public QWidget, public Ui::LookFeelToolbars
 {
@@ -187,7 +188,16 @@ void OptionsTabToolbars::restoreOptions()
 
 	QStringList toolbarBases = o->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
 
-	foreach(QString base, toolbarBases) {
+	// toolbarBases is chaotic. Need to sort before do anything.
+	QStringList sortedToolbarBases;
+	for (int i = 0; !toolbarBases.isEmpty(); ++i) {
+		int index = toolbarBases.indexOf(QRegExp(QString(".*m%1$").arg(i)));
+		if (index >= 0) {
+			sortedToolbarBases << toolbarBases.takeAt(index);
+		}
+	}
+
+	foreach(QString base, sortedToolbarBases) {
 		ToolbarPrefs tb;
 		tb.id = o->getOption(base + ".key").toString();
 		tb.name = o->getOption(base + ".name").toString();
