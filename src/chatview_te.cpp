@@ -277,7 +277,7 @@ void ChatView::renderMucMessage(const MessageView &mv)
 		alerttagsc = "</b>";
 	}
 
-	if(mv.isSpooled()) {
+	if(mv.isSpooled() && !PsiOptions::instance()->getOption("options.ui.muc.colored-history").toBool()) {
 		nickcolor = ColorOpt::instance()->color(infomrationalColorOpt).name();
 	} else {
 		nickcolor = getMucNickColor(mv.nick(), mv.isLocal());

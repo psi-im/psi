@@ -67,6 +67,7 @@ void OptionsTabGroupchat::applyOptions()
 	GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
 	PsiOptions::instance()->setOption("options.ui.muc.use-highlighting", d->ck_gcHighlights->isChecked());
 	PsiOptions::instance()->setOption("options.ui.muc.use-nick-coloring", d->ck_gcNickColoring->isChecked());
+	PsiOptions::instance()->setOption("options.ui.muc.use-hash-nick-coloring", d->ck_gcHashNickColoring->isChecked());
 
 	QStringList highlight;
 	int i;
@@ -96,6 +97,8 @@ void OptionsTabGroupchat::restoreOptions()
 	d->ck_gcHighlights->setChecked( PsiOptions::instance()->getOption("options.ui.muc.use-highlighting").toBool() );
 	d->ck_gcNickColoring->setChecked( true );
 	d->ck_gcNickColoring->setChecked( PsiOptions::instance()->getOption("options.ui.muc.use-nick-coloring").toBool() );
+	d->ck_gcHashNickColoring->setChecked( true );
+	d->ck_gcHashNickColoring->setChecked( PsiOptions::instance()->getOption("options.ui.muc.use-hash-nick-coloring").toBool() );
 	d->lw_highlightWords->clear();
 	d->lw_highlightWords->addItems( PsiOptions::instance()->getOption("options.ui.muc.highlight-words").toStringList() );
 	d->lw_nickColors->clear();
