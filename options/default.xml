@@ -203,7 +203,7 @@
 					<width>580</width>
 					<height>420</height>
 				</size>
-				<use-highlighting type="bool">true</use-highlighting><use-nick-coloring type="bool">true</use-nick-coloring>
+				<use-highlighting type="bool">true</use-highlighting><use-nick-coloring type="bool">true</use-nick-coloring><use-hash-nick-coloring type="bool">true</use-hash-nick-coloring><colored-history type="bool">true</colored-history>
 			</muc>
 			<show-deprecated comment="Deprecated functionality or protocols">
 				<service-discovery comment="Service discovery dialog">
