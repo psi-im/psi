@@ -58,6 +58,8 @@ public:
 	virtual IconAction *copy() const;
 	virtual IconAction &operator=( const IconAction & );
 
+	void setParent(QObject *newParent);
+
 public slots:
 	void setEnabled(bool);
 	void setChecked(bool);
