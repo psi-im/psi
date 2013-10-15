@@ -370,6 +370,19 @@ IconAction &IconAction::operator=( const IconAction &from )
 	return *this;
 }
 
+void IconAction::setParent(QObject *newParent)
+{
+	QWidget *oldParent = qobject_cast<QWidget*>(parent());
+	if (oldParent) {
+		oldParent->removeAction(this);
+	}
+
+	QAction::setParent(newParent);
+	if (newParent && newParent->isWidgetType()) {
+		((QWidget *)newParent)->addAction(this);
+	}
+}
+
 //----------------------------------------------------------------------------
 // IconActionGroup
 //----------------------------------------------------------------------------
