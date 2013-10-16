@@ -30,6 +30,8 @@
 #include <QFileInfo>
 #include <QLayout>
 #include <QPalette>
+#include <QDesktopWidget>
+#include <QApplication>
 
 #include "webview.h"
 //#include "psiapplication.h"
@@ -103,9 +105,18 @@ public slots:
 			case QFont::Bold: weight = "bolder"; break;
 			case QFont::Black: weight = "900"; break;
 		}
-		return QString("{fontFamily:'%1',fontSize:'%2pt',fontStyle:'%3',fontVariant:'%4',fontWeight:'%5'}")
+
+		// In typography 1 point (also called PostScript point)
+		// is 1/72 of an inch
+		const float postScriptPoint = 1 / 72.;
+
+		// Workaround.  WebKit works only with 96dpi
+		// Need to convert point size to pixel size
+		int pixelSize = f.pointSize() * qApp->desktop()->logicalDpiX() * postScriptPoint;
+
+		return QString("{fontFamily:'%1',fontSize:'%2px',fontStyle:'%3',fontVariant:'%4',fontWeight:'%5'}")
 						 .arg(f.family())
-						 .arg(f.pointSize())
+						 .arg(pixelSize)
 						 .arg(f.style()==QFont::StyleNormal?"normal":(f.style()==QFont::StyleItalic?"italic":"oblique"))
 						 .arg(f.capitalization() == QFont::SmallCaps?"small-caps":"normal")
 						 .arg(weight);
