@@ -387,15 +387,18 @@ void closeDialogs(QWidget *w)
 
 void x11wmClass(Display *dsp, WId wid, QString resName)
 {
-	const char *app_name = ApplicationInfo::sname().latin1();
-
 	//Display *dsp = x11Display();				 // get the display
 	//WId win = winId();						   // get the window
 	XClassHint classhint;						  // class hints
+	// Get old class hint. It is important to save old class name
+	XGetClassHint(dsp, wid, &classhint);
+	XFree(classhint.res_name);
+
 	const QByteArray latinResName = resName.toLatin1();
 	classhint.res_name = (char *)latinResName.data(); // res_name
-	classhint.res_class = const_cast<char*>(app_name);				// res_class
 	XSetClassHint(dsp, wid, &classhint);		   // set the class hints
+
+	XFree(classhint.res_class);
 }
 
 //>>>-- Nathaniel Gray -- Caltech Computer Science ------>

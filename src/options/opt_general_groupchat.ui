@@ -157,6 +157,13 @@
        </property>
       </widget>
      </item>
+      <item>
+      <widget class="QCheckBox" name="ck_gcHashNickColoring" >
+       <property name="text" >
+        <string>Enable hash nick coloring</string>
+       </property>
+      </widget>
+     </item>
      <item>
       <widget class="QGroupBox" name="ncGroupBox" >
        <property name="title" >
@@ -296,11 +303,30 @@
   <tabstop>pb_removeHighlightWord</tabstop>
   <tabstop>pb_addHighlightWord</tabstop>
   <tabstop>ck_gcNickColoring</tabstop>
+  <tabstop>ck_gcHashNickColoring</tabstop>
   <tabstop>le_newNickColor</tabstop>
   <tabstop>pb_nickColor</tabstop>
   <tabstop>pb_removeNickColor</tabstop>
   <tabstop>pb_addNickColor</tabstop>
  </tabstops>
  <resources/>
- <connections/>
-</ui>
+ <connections>
+  <connection>
+   <sender>ck_gcNickColoring</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>ck_gcHashNickColoring</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>326</x>
+     <y>18</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>326</x>
+     <y>42</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ </ui>
+
