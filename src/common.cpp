@@ -38,6 +38,7 @@
 #include <QMessageBox>
 #include <QUuid>
 #include <QDir>
+#include <QLibrary>
 
 #include <stdio.h>
 #ifdef HAVE_X11
@@ -508,6 +509,18 @@ void bringToFront(QWidget *widget, bool)
 	//	w->setActiveWindow();
 	w->raise();
 	w->activateWindow();
+
+	// hack to real bring to front in kde
+	if (qgetenv("DESKTOP_SESSION") == "kde-plasma") {
+		QLibrary kdeui("/usr/lib/libkdeui.so.5");
+		if (kdeui.load()) {
+			typedef int (*ActWinFunction)(WId, long);
+			ActWinFunction kwinActivateWindow = (ActWinFunction)kdeui.resolve("_ZN13KWindowSystem17forceActiveWindowEml");
+			if (kwinActivateWindow) {
+				kwinActivateWindow(widget->winId(), 0);
+			}
+		}
+	}
 }
 
 bool operator!=(const QMap<QString, QString> &m1, const QMap<QString, QString> &m2)
