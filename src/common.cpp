@@ -513,15 +513,16 @@ void bringToFront(QWidget *widget, bool)
 	w->raise();
 	w->activateWindow();
 
-	// hack to real bring to front in kde
+	// hack to real bring to front in kde. kde (at least 4.8.5) forbids stilling
+	// focus from other applications. this may be fixed on more recent versions.
+	// should be removed some day. preferable way for such hacks is plugins.
+	// probably works only with gcc.
 	if (qgetenv("DESKTOP_SESSION") == "kde-plasma") {
-		QLibrary kdeui("/usr/lib/libkdeui.so.5");
-		if (kdeui.load()) {
-			typedef int (*ActWinFunction)(WId, long);
-			ActWinFunction kwinActivateWindow = (ActWinFunction)kdeui.resolve("_ZN13KWindowSystem17forceActiveWindowEml");
-			if (kwinActivateWindow) {
-				kwinActivateWindow(widget->winId(), 0);
-			}
+		typedef int (*ActWinFunction)(WId, long);
+		ActWinFunction kwinActivateWindow = (ActWinFunction)QLibrary::resolve(
+					"libkdeui.so", 5, "_ZN13KWindowSystem17forceActiveWindowEml");
+		if (kwinActivateWindow) {
+			kwinActivateWindow(widget->winId(), 0);
 		}
 	}
 }
