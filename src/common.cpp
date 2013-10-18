@@ -520,7 +520,7 @@ void bringToFront(QWidget *widget, bool)
 	if (qgetenv("DESKTOP_SESSION") == "kde-plasma") {
 		typedef int (*ActWinFunction)(WId, long);
 		ActWinFunction kwinActivateWindow = (ActWinFunction)QLibrary::resolve(
-					"libkdeui.so", 5, "_ZN13KWindowSystem17forceActiveWindowEml");
+					"libkdeui", 5, "_ZN13KWindowSystem17forceActiveWindowEml");
 		if (kwinActivateWindow) {
 			kwinActivateWindow(widget->winId(), 0);
 		}
