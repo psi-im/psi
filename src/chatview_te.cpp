@@ -36,7 +36,7 @@
 #include <QKeyEvent>
 #include <QUrl>
 
-static const char *infomrationalColorOpt = "options.ui.look.colors.messages.informational";
+static const char *informationalColorOpt = "options.ui.look.colors.messages.informational";
 
 //----------------------------------------------------------------------------
 // ChatView
@@ -206,7 +206,7 @@ QString ChatView::formatTimeStamp(const QDateTime &time)
 QString ChatView::colorString(bool local, bool spooled) const
 {
 	if (spooled) {
-		return ColorOpt::instance()->color(infomrationalColorOpt).name();
+		return ColorOpt::instance()->color(informationalColorOpt).name();
 	}
 
 	if (local) {
@@ -237,7 +237,7 @@ void ChatView::dispatchMessage(const MessageView &mv)
 	if ((mv.type() == MessageView::Message || mv.type() == MessageView::Subject)
 			&& ChatViewCommon::updateLastMsgTime(mv.dateTime()))
 	{
-		QString color = ColorOpt::instance()->color(infomrationalColorOpt).name();
+		QString color = ColorOpt::instance()->color(informationalColorOpt).name();
 		appendText(QString(useMessageIcons_?"<img src=\"icon:log_icon_time\" />":"") +
 				   QString("<font color=\"%1\">*** %2</font>").arg(color).arg(mv.dateTime().date().toString(Qt::ISODate)));
 	}
@@ -278,7 +278,7 @@ void ChatView::renderMucMessage(const MessageView &mv)
 	}
 
 	if(mv.isSpooled() && !PsiOptions::instance()->getOption("options.ui.muc.colored-history").toBool()) {
-		nickcolor = ColorOpt::instance()->color(infomrationalColorOpt).name();
+		nickcolor = ColorOpt::instance()->color(informationalColorOpt).name();
 	} else {
 		nickcolor = getMucNickColor(mv.nick(), mv.isLocal());
 	}
@@ -330,7 +330,7 @@ void ChatView::renderSysMessage(const MessageView &mv)
 {
 	QString timestr = formatTimeStamp(mv.dateTime());
 	QString ut = mv.formattedUserText();
-	QString color = ColorOpt::instance()->color(infomrationalColorOpt).name();
+	QString color = ColorOpt::instance()->color(informationalColorOpt).name();
 	QString userTextColor = ColorOpt::instance()->color("options.ui.look.colors.messages.usertext").name();
 	appendText(QString(useMessageIcons_?"<img src=\"icon:log_icon_info\" />":"") +
 			   QString("<font color=\"%1\">[%2] *** ").arg(color, timestr) + mv.formattedText() +
@@ -347,7 +347,7 @@ void ChatView::renderMucSubject(const MessageView &mv)
 {
 	QString timestr = formatTimeStamp(mv.dateTime());
 	QString ut = mv.formattedUserText();
-	QString color = ColorOpt::instance()->color(infomrationalColorOpt).name();
+	QString color = ColorOpt::instance()->color(informationalColorOpt).name();
 	QString userTextColor = ColorOpt::instance()->color("options.ui.look.colors.messages.usertext").name();
 	appendText(QString(useMessageIcons_?"<img src=\"icon:log_icon_info\" />":"") +
 			   QString("<font color=\"%1\">[%2] *** ").arg(color, timestr) + mv.formattedText() +
