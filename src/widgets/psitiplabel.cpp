@@ -35,6 +35,8 @@ void PsiTipLabel::init(const QString& text)
 	qApp->installEventFilter(this);
 	startHideTimer();
 	setWindowOpacity(style()->styleHint(QStyle::SH_ToolTipLabel_Opacity, 0, this) / 255.0);
+	setForegroundRole(QPalette::ToolTipText);
+	setBackgroundRole(QPalette::ToolTipBase);
 	setPalette(QToolTip::palette());
 }
 
