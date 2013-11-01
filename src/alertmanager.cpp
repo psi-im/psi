@@ -92,9 +92,8 @@ void AlertManager::deleteDialogList()
 {
 	while (!list_.isEmpty()) {
 		Item* i = list_.takeLast();
-
+		i->widget->disconnect(); // ensure forceDialogUnregister won't be called
 		delete i->widget;
-
 		delete i;
 	}
 }
