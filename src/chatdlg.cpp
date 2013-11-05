@@ -818,7 +818,7 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 	}
 
 	MessageView mv(MessageView::Message);
-	if (m.containsHTML() && PsiOptions::instance()->getOption("options.html.chat.render").toBool() && !m.html().text().isEmpty()) {
+	if (m.containsHTML() && PsiOptions::instance()->getOption("options.html.chat.render").toBool() && !m.html().body().firstChild().isNull()) {
 		mv.setHtml(m.html().toString("span"));
 	} else {
 		mv.setPlainText(m.body());
