@@ -246,30 +246,44 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 	}
 
 	QSysInfo::WinVersion v = QSysInfo::WindowsVersion;
-	if(v == QSysInfo::WV_95)
-		os_str_ = "Windows 95";
-	else if(v == QSysInfo::WV_98)
-		os_str_ = "Windows 98";
-	else if(v == QSysInfo::WV_Me)
-		os_str_ = "Windows Me";
-	else if(v == QSysInfo::WV_DOS_based)
-		os_str_ = "Windows 9x/Me";
-	else if(v == QSysInfo::WV_NT)
-		os_str_ = "Windows NT 4.x";
-	else if(v == QSysInfo::WV_2000)
-		os_str_ = "Windows 2000";
-	else if(v == QSysInfo::WV_XP)
-		os_str_ = "Windows XP";
-	else if(v == QSysInfo::WV_2003)
-		os_str_ = "Windows Server 2003";
-	else if(v == QSysInfo::WV_VISTA)
-		os_str_ = "Windows Vista";
-	else if(v == QSysInfo::WV_WINDOWS7)
-		os_str_ = "Windows 7";
-	else if(v == 0x00a0) // QSysInfo::WV_WINDOWS8 should not be used for compatibility reasons
-		os_str_ = "Windows 8";
-	else if(v == QSysInfo::WV_NT_based)
-		os_str_ = "Windows NT";
+	switch (v) {
+		case QSysInfo::WV_95:
+			os_str_ = "Windows 95";
+			break;
+		case QSysInfo::WV_98:
+			os_str_ = "Windows 98";
+			break;
+		case QSysInfo::WV_Me:
+			os_str_ = "Windows Me";
+			break;
+		case QSysInfo::WV_DOS_based:
+			os_str_ = "Windows 9x/Me";
+			break;
+		case QSysInfo::WV_NT:
+			os_str_ = "Windows NT 4.x";
+			break;
+		case QSysInfo::WV_2000:
+			os_str_ = "Windows 2000";
+			break;
+		case QSysInfo::WV_XP:
+			os_str_ = "Windows XP";
+			break;
+		case QSysInfo::WV_2003:
+			os_str_ = "Windows Server 2003";
+			break;
+		case QSysInfo::WV_VISTA:
+			os_str_ = "Windows Vista";
+			break;
+		case QSysInfo::WV_WINDOWS7:
+			os_str_ = "Windows 7";
+			break;
+		case 0x00a0: // QSysInfo::WV_WINDOWS8 should not be used for compatibility reasons
+			os_str_ = "Windows 8";
+			break;
+		case QSysInfo::WV_NT_based:
+			os_str_ = "Windows NT";
+			break;
+	}
 #endif
 }
 
