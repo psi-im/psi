@@ -200,16 +200,31 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 
 #elif defined(Q_OS_MAC)
 	QSysInfo::MacVersion v = QSysInfo::MacintoshVersion;
-	if(v == QSysInfo::MV_10_3)
-		os_str_ = "Mac OS X 10.3";
-	else if(v == QSysInfo::MV_10_4)
-		os_str_ = "Mac OS X 10.4";
-	else if(v == QSysInfo::MV_10_5)
-		os_str_ = "Mac OS X 10.5";
-	else if(v == QSysInfo::MV_10_6)
-		os_str_ = "Mac OS X 10.6";
-	else
-		os_str_ = "Mac OS X";
+	switch (v) {
+		case QSysInfo::MV_10_3:
+			os_str_ = "Mac OS X 10.3 (Panther)";
+			break;
+		case QSysInfo::MV_10_4:
+			os_str_ = "Mac OS X 10.4 (Tiger)";
+			break;
+		case QSysInfo::MV_10_5:
+			os_str_ = "Mac OS X 10.5 (Leopard)";
+			break;
+		case QSysInfo::MV_10_6:
+			os_str_ = "Mac OS X 10.6 (Snow Leopard)";
+			break;
+		case QSysInfo::MV_10_7:
+			os_str_ = "OS X 10.7 (Lion)";
+			break;
+		case 0x000A: // QSysInfo::MV_10_8 should not be used for compatibility reasons
+			os_str_ = "OS X 10.8 (Mountain Lion)";
+			break;
+		case 0x000B: // QSysInfo::MV_10_9 should not be used for compatibility reasons
+			os_str_ = "OS X 10.9 (Mavericks)";
+			break;
+		default:
+			os_str_ = "Mac OS X";
+	}
 #endif
 
 #if defined(Q_OS_WIN)
