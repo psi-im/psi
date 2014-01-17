@@ -2030,10 +2030,10 @@ void EventDlg::updateReadNext(PsiIcon *nextAnim, int nextAmount)
 	}
 }
 
-void EventDlg::actionGCJoin(const QString &gc, const QString&)
+void EventDlg::actionGCJoin(const QString &gc, const QString &passw)
 {
 	Jid j(gc);
-	d->pa->actionJoin(j.withResource(""));
+	d->pa->actionJoin(j.withResource(""), passw);
 }
 
 void EventDlg::updatePGP()
