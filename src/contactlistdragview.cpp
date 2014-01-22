@@ -352,7 +352,7 @@ static void acceptDropAction(QDropEvent* e)
 {
 	if (e->keyboardModifiers() == Qt::NoModifier) {
 		if (e->dropAction() != Qt::MoveAction) {
-			qWarning("acceptDropAction(): e->dropAction() != Qt::MoveAction");
+			//qWarning("acceptDropAction(): e->dropAction() != Qt::MoveAction");
 			return;
 		}
 		Q_ASSERT(e->dropAction() == Qt::MoveAction);
