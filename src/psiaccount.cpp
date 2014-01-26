@@ -2578,14 +2578,14 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 	if(_m.type() == "headline" && PsiOptions::instance()->getOption("options.messages.ignore-headlines").toBool())
 		return;
 
-	if(_m.type() == "groupchat") {
 #ifdef GROUPCHAT
+	if(_m.type() == "groupchat") {
 		GCMainDlg *w = findDialog<GCMainDlg*>(Jid(_m.from().bare()));
 		if(w)
 			w->message(_m);
 		return;
-#endif
 	}
+#endif
 
 	// only toggle if not an invite or body is not empty
 	if(_m.invite().isEmpty() && !_m.body().isEmpty() && _m.mucInvites().isEmpty() && _m.rosterExchangeItems().isEmpty())
