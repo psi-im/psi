@@ -135,7 +135,7 @@ void OptionsTabPlugins::pluginSelected(int index)
 			value=Qt::Unchecked;
 		d->cb_loadPlugin->setChecked(value);
 
-		d->vboxLayout1->remove(d->pluginOptions);
+		d->vboxLayout1->removeWidget(d->pluginOptions);
 		delete d->pluginOptions;
 		d->pluginOptions=NULL;
 		if (pluginOptions)
