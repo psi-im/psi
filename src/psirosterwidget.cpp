@@ -80,7 +80,7 @@ protected:
 				<< index.data(ContactListModel::JidRole).toString();
 		}
 
-		foreach(QString str, data) {
+		foreach(const QString& str, data) {
 			if (str.contains(filterRegExp()))
 				return true;
 		}
@@ -301,7 +301,7 @@ void PsiRosterWidget::setShowStatusMsg(bool enabled)
 void PsiRosterWidget::filterEditTextChanged(const QString& text)
 {
 	updateFilterMode();
-	filterModel_->setFilterRegExp(QString("^%1|[@]%1|\\s%1").arg(QRegExp::escape(text)));
+	filterModel_->setFilterRegExp(QRegExp::escape(text));
 }
 
 void PsiRosterWidget::quitFilteringMode()
