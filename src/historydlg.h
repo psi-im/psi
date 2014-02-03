@@ -61,7 +61,7 @@ private slots:
 	void getDate();
 	void refresh();
 	void findMessages();
-	void edb_finished();
+	void edbFinished();
 	void highlightBlocks(const QString text);
 	void changeAccount(const QString accountName);
 	void removeHistory();
@@ -69,6 +69,10 @@ private slots:
 	void openChat();
 	void doMenu();
 	void removedContact(PsiContact*);
+	void optionUpdated(const QString& option);
+#ifndef HAVE_X11
+	void autoCopy();
+#endif
 
 protected:
 	bool eventFilter(QObject *, QEvent *);
@@ -80,7 +84,7 @@ private:
 	void displayResult(const EDBResult , int, int max=-1);
 	QFont fontForOption(const QString& option);
 	void listAccounts();
-	UserListItem* currentUserListItem();
+	UserListItem* currentUserListItem() const;
 	void startRequest();
 	void stopRequest();
 

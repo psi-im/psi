@@ -105,6 +105,13 @@ public:
 	HistoryDlg::RequestType reqType;
 	QString findStr;
 	QDate date;
+#ifndef HAVE_X11
+	bool autoCopyText;
+#endif
+	bool formatting;
+	bool emoticons;
+	QString sentColor;
+	QString receivedColor;
 };
 
 HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
@@ -141,6 +148,16 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 	connect(ui_.buttonEarliest, SIGNAL(released()), SLOT(getEarliest()));
 	connect(ui_.calendar, SIGNAL(selectionChanged()), SLOT(getDate()));
 	connect(ui_.calendar, SIGNAL(activated(QDate)), SLOT(getDate()));
+#ifndef HAVE_X11	// linux has this feature built-in
+	optionUpdated("options.ui.automatically-copy-selected-text");
+	connect(ui_.msgLog, SIGNAL(selectionChanged()), SLOT(autoCopy()));
+	connect(ui_.msgLog, SIGNAL(cursorPositionChanged()), SLOT(autoCopy()));
+#endif
+	optionUpdated("options.ui.look.colors.messages.sent");
+	optionUpdated("options.ui.look.colors.messages.received");
+	optionUpdated("options.ui.emoticons.use-emoticons");
+	optionUpdated("options.ui.chat.legacy-formatting");
+	connect(PsiOptions::instance(), SIGNAL(optionChanged(QString)), SLOT(optionUpdated(QString)));
 
 	connect(d->pa, SIGNAL(removedContact(PsiContact*)), SLOT(removedContact(PsiContact*)));
 
@@ -401,7 +418,7 @@ void HistoryDlg::doMenu()
 	m->exec(QCursor::pos());
 }
 
-void HistoryDlg::edb_finished()
+void HistoryDlg::edbFinished()
 {
 	setButtons(false);
 	stopRequest();
@@ -555,17 +572,36 @@ void HistoryDlg::removedContact(PsiContact *pc)
 	}
 }
 
+void HistoryDlg::optionUpdated(const QString &option)
+{
+#ifndef HAVE_X11
+	if(option == "options.ui.automatically-copy-selected-text") {
+		d->autoCopyText = PsiOptions::instance()->getOption(option).toBool();
+	} else
+#endif
+	if(option == "options.ui.look.colors.messages.sent")
+			d->sentColor = PsiOptions::instance()->getOption(option).toString();
+	else if(option == "options.ui.look.colors.messages.received")
+			d->receivedColor = PsiOptions::instance()->getOption(option).toString();
+	else if(option == "options.ui.emoticons.use-emoticons")
+			d->emoticons  = PsiOptions::instance()->getOption(option).toBool();
+	else if(option == "options.ui.chat.legacy-formatting")
+			d->formatting = PsiOptions::instance()->getOption(option).toBool();
+}
+#ifndef HAVE_X11
+void HistoryDlg::autoCopy()
+{
+	if (d->autoCopyText) {
+		ui_.msgLog->copy();
+	}
+}
+#endif
 void HistoryDlg::displayResult(const EDBResult r, int direction, int max)
 {
 	int i  = (direction == EDB::Forward) ? r.count() - 1 : 0;
 	int at = 0;
 	ui_.msgLog->clear();
-	QString sent_color,received_color;
-	sent_color=PsiOptions::instance()->getOption("options.ui.look.colors.messages.sent").toString();
-	received_color=PsiOptions::instance()->getOption("options.ui.look.colors.messages.received").toString();
-	bool emoticons  = PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool();
-	bool formatting = PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool();
-	QString nick    = TextUtil::plain2rich(d->pa->nick());
+	QString nick = TextUtil::plain2rich(d->pa->nick());
 	while (i >= 0 && i <= r.count() - 1 && (max == -1 ? true : at < max))
 	{
 		EDBItemPtr item = r.value(i);
@@ -579,15 +615,15 @@ void HistoryDlg::displayResult(const EDBResult r, int direction, int max)
 				QString msg = me->message().body();
 				msg = TextUtil::linkify(TextUtil::plain2rich(msg));
 
-				if (emoticons)
+				if (d->emoticons)
 					msg = TextUtil::emoticonify(msg);
-				if (formatting)
+				if (d->formatting)
 					msg = TextUtil::legacyFormat(msg);
 
 				if (me->originLocal())
-					msg = "<span style='color:"+sent_color+"'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]")+" &lt;"+ nick +"&gt; " + msg + "</span>";
+					msg = "<span style='color:"+d->sentColor+"'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]")+" &lt;"+ nick +"&gt; " + msg + "</span>";
 				else
-					msg = "<span style='color:"+received_color+"'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]") + " &lt;" +  TextUtil::plain2rich(from) + "&gt; " + msg + "</span>";
+					msg = "<span style='color:"+d->receivedColor+"'>" + me->timeStamp().toString("[dd.MM.yyyy hh:mm:ss]") + " &lt;" +  TextUtil::plain2rich(from) + "&gt; " + msg + "</span>";
 
 				ui_.msgLog->appendText(msg);
 
@@ -601,7 +637,7 @@ void HistoryDlg::displayResult(const EDBResult r, int direction, int max)
 	ui_.msgLog->verticalScrollBar()->setValue(ui_.msgLog->verticalScrollBar()->maximum());
 }
 
-UserListItem* HistoryDlg::currentUserListItem()
+UserListItem* HistoryDlg::currentUserListItem() const
 {
 	UserListItem* u = 0;
 	QListWidgetItem *i = ui_.jidList->currentItem();
@@ -636,6 +672,6 @@ void HistoryDlg::stopRequest()
 EDBHandle* HistoryDlg::getEDBHandle()
 {
 	EDBHandle* h = new EDBHandle(d->pa->edb());
-	connect(h, SIGNAL(finished()), SLOT(edb_finished()));
+	connect(h, SIGNAL(finished()), SLOT(edbFinished()));
 	return h;
 }
