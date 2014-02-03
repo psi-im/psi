@@ -88,7 +88,8 @@ void HoverableTreeView::mouseMoveEvent(QMouseEvent* event)
 	QTreeView::mouseMoveEvent(event);
 
 	// required for accurate hovered sub-regions painting
-	viewport()->update();
+	if(event->buttons() != Qt::NoButton)
+		viewport()->update();
 }
 
 void HoverableTreeView::startDrag(Qt::DropActions supportedActions)
