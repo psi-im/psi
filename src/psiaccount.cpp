@@ -359,7 +359,6 @@ public:
 		, selfContact(0)
 		, psi(0)
 		, account(parent)
-		, options(0)
 		, client(0)
 		, eventQueue(0)
 		, xmlConsole(0)
@@ -406,7 +405,6 @@ public:
 	PsiSelfContact* selfContact;
 	PsiCon *psi;
 	PsiAccount *account;
-	PsiOptions *options;
 	Client *client;
 	UserAccount acc;
 	Jid jid, nextJid;
@@ -986,7 +984,6 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	d->contactList = parent;
 	d->tabManager = tabManager;
 	d->psi = parent->psi();
-	d->options = PsiOptions::instance();
 	d->client = 0;
 	d->userCounter = 0;
 	d->avatarFactory = 0;
@@ -1226,7 +1223,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	}
 
 	// Extended presence
-	if (d->options->getOption("options.extended-presence.notify").toBool()) {
+	if (PsiOptions::instance()->getOption("options.extended-presence.notify").toBool()) {
 		QStringList pepNodes;
 		pepNodes += "http://jabber.org/protocol/mood+notify";
 		pepNodes += "http://jabber.org/protocol/tune+notify";
@@ -1665,7 +1662,7 @@ void PsiAccount::forceDisconnect(bool fast, const XMPP::Status &s)
 
 	if(loggedIn()) {
 		// Extended Presence
-		if (d->options->getOption("options.extended-presence.tune.publish").toBool() && !d->lastTune.isNull())
+		if (PsiOptions::instance()->getOption("options.extended-presence.tune.publish").toBool() && !d->lastTune.isNull())
 			publishTune(Tune());
 
 		d->client->removeExtension("ep");
@@ -2234,7 +2231,7 @@ void PsiAccount::setPEPAvailable(bool b)
 	}
 
 	// Publish current tune information
-	if (b && d->psi->tuneManager() && d->options->getOption("options.extended-presence.tune.publish").toBool()) {
+	if (b && d->psi->tuneManager() && PsiOptions::instance()->getOption("options.extended-presence.tune.publish").toBool()) {
 		Tune current = d->psi->tuneManager()->currentTune();
 		if (!current.isNull())
 			publishTune(current);
@@ -2655,11 +2652,12 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 		m.setType("chat");
 	}
 	else if (m.type() != "headline" && m.invite().isEmpty() && m.mucInvites().isEmpty()) {
-		if (PsiOptions::instance()->getOption("options.messages.force-incoming-message-type").toString() == "message")
+		const QString type = PsiOptions::instance()->getOption("options.messages.force-incoming-message-type").toString();
+		if (type == "message")
 			m.setType("");
-		else if (PsiOptions::instance()->getOption("options.messages.force-incoming-message-type").toString() == "chat")
+		else if (type == "chat")
 			m.setType("chat");
-		else if (PsiOptions::instance()->getOption("options.messages.force-incoming-message-type").toString() == "current-open") {
+		else if (type == "current-open") {
 			if (c != NULL && !c->isHidden())
 				m.setType("chat");
 			else
@@ -2957,7 +2955,7 @@ void PsiAccount::tuneStopped()
 
 void PsiAccount::tunePlaying(const Tune& tune)
 {
-	if (loggedIn() && d->options->getOption("options.extended-presence.tune.publish").toBool()) {
+	if (loggedIn() && PsiOptions::instance()->getOption("options.extended-presence.tune.publish").toBool()) {
 		publishTune(tune);
 	}
 }
@@ -4576,6 +4574,7 @@ static bool messageListContainsEvent(const QList<PsiEvent*>& messageList, const 
 // handle an incoming event
 void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 {
+	PsiOptions *o = PsiOptions::instance();
 	if (e && activationType != FromXml) {
 		setEnabled();
 	}
@@ -4671,7 +4670,7 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 			return;
 		}
 		else if (m.messageReceipt() == ReceiptReceived) {
-			if (PsiOptions::instance()->getOption("options.ui.notifications.request-receipts").toBool()) {
+			if (o->getOption("options.ui.notifications.request-receipts").toBool()) {
 				ChatDlg *c = findChatDialog(e->from());
 				if (!c) {
 					c = findChatDialog(e->jid());
@@ -4686,7 +4685,7 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 
 		// Pass message events to chat window
 		if ((m.containsEvents() || m.chatState() != StateNone) && m.body().isEmpty()) {
-			if (PsiOptions::instance()->getOption("options.messages.send-composing-events").toBool()) {
+			if (o->getOption("options.messages.send-composing-events").toBool()) {
 				ChatDlg *c = findChatDialog(e->from());
 				if (!c) {
 					c = findChatDialog(e->jid());
@@ -4726,14 +4725,14 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 #endif
 				c->incomingMessage(m);
 				soundType = eChat2;
-				if(PsiOptions::instance()->getOption("options.ui.chat.alert-for-already-open-chats").toBool() && !c->isActiveTab()) {
+				if(o->getOption("options.ui.chat.alert-for-already-open-chats").toBool() && !c->isActiveTab()) {
 					// to alert the chat also, we put it in the queue
 					me->setSentToChatWindow(true);
 				}
 				else {
 					putToQueue = false;
 #ifdef YAPSI
-					if (!d->noPopup(activationType) && PsiOptions::instance()->getOption("options.ui.chat.auto-popup").toBool()) {
+					if (!d->noPopup(activationType) && o->getOption("options.ui.chat.auto-popup").toBool()) {
 						openChat(e->from(), activationType);
 					}
 #endif
@@ -4814,7 +4813,7 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 			}
 			else if (userListItem && userListItem->inList()) {
 #else
-			if(PsiOptions::instance()->getOption("options.subscriptions.automatically-allow-authorization").toBool()) {
+			if(o->getOption("options.subscriptions.automatically-allow-authorization").toBool()) {
 #endif
 				// Check if we want to request auth as well
 				UserListItem *u = d->userList.find(ae->from());
@@ -4828,7 +4827,7 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 			}
 		}
 		else if(ae->authType() == "subscribed") {
-			if(!PsiOptions::instance()->getOption("options.ui.notifications.successful-subscription").toBool())
+			if(!o->getOption("options.ui.notifications.successful-subscription").toBool())
 				putToQueue = false;
 		}
 		else if(ae->authType() == "unsubscribe") {
@@ -4854,12 +4853,12 @@ void PsiAccount::handleEvent(PsiEvent* e, ActivationType activationType)
 			r = *(u->priority());
 		}
 
-		if ((popupType == PopupManager::AlertChat      && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-chat").toBool())     ||
-		    (popupType == PopupManager::AlertMessage   && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool())  ||
-		    (popupType == PopupManager::AlertHeadline  && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-headline").toBool()) ||
-		    (popupType == PopupManager::AlertFile      && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-file-transfer").toBool()) ||
-		    (popupType == PopupManager::AlertAvCall    && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.incoming-message").toBool()) ||
-		    (popupType == PopupManager::AlertComposing && PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.composing").toBool()))
+		if ((popupType == PopupManager::AlertChat      && o->getOption("options.ui.notifications.passive-popups.incoming-chat").toBool())     ||
+		    (popupType == PopupManager::AlertMessage   && o->getOption("options.ui.notifications.passive-popups.incoming-message").toBool())  ||
+		    (popupType == PopupManager::AlertHeadline  && o->getOption("options.ui.notifications.passive-popups.incoming-headline").toBool()) ||
+		    (popupType == PopupManager::AlertFile      && o->getOption("options.ui.notifications.passive-popups.incoming-file-transfer").toBool()) ||
+		    (popupType == PopupManager::AlertAvCall    && o->getOption("options.ui.notifications.passive-popups.incoming-message").toBool()) ||
+		    (popupType == PopupManager::AlertComposing && o->getOption("options.ui.notifications.passive-popups.composing").toBool()))
 		{
 			psi()->popupManager()->doPopup(this, popupType, j, r, u, e, false);
 		}
@@ -5288,7 +5287,7 @@ bool PsiAccount::groupChatJoin(const QString &host, const QString &room, const Q
 		Status s = d->loginStatus;
 		s.setXSigned("");
 
-		return d->client->groupChatJoin(host, room, nick, pass, d->options->getOption("options.muc.context.maxchars").toInt(), d->options->getOption("options.muc.context.maxstanzas").toInt(), d->options->getOption("options.muc.context.seconds").toInt(), since, s);
+		return d->client->groupChatJoin(host, room, nick, pass, PsiOptions::instance()->getOption("options.muc.context.maxchars").toInt(), PsiOptions::instance()->getOption("options.muc.context.maxstanzas").toInt(), PsiOptions::instance()->getOption("options.muc.context.seconds").toInt(), since, s);
 	}
 }
 
@@ -5772,11 +5771,12 @@ void PsiAccount::processEncryptedMessageDone()
 
 void PsiAccount::optionsUpdate()
 {
+	PsiOptions *o = PsiOptions::instance();
 	profileUpdateEntry(d->self);
 
 	// Tune
 #ifdef USE_PEP // Tune cleaning not working. It's implemented in psicon.cpp in PsiCon::optionChanged
-	bool publish = d->options->getOption("options.extended-presence.tune.publish").toBool();
+	bool publish = o->getOption("options.extended-presence.tune.publish").toBool();
 	if (!d->lastTune.isNull() && !publish) {
 		publishTune(Tune());
 	}
@@ -5788,19 +5788,19 @@ void PsiAccount::optionsUpdate()
 #endif
 
 	// Chat states
-	setSendChatState(PsiOptions::instance()->getOption("options.messages.send-composing-events").toBool());
+	setSendChatState(o->getOption("options.messages.send-composing-events").toBool());
 
 	//Receipts
-	setReceipts(PsiOptions::instance()->getOption("options.ui.notifications.send-receipts").toBool()); //FIXME second presence?
+	setReceipts(o->getOption("options.ui.notifications.send-receipts").toBool()); //FIXME second presence?
 
 	// Remote Controlling
-	setRCEnabled(PsiOptions::instance()->getOption("options.external-control.adhoc-remote-control.enable").toBool());
+	setRCEnabled(o->getOption("options.external-control.adhoc-remote-control.enable").toBool());
 
 	// Roster item exchange
-	d->rosterItemExchangeTask->setIgnoreNonRoster(PsiOptions::instance()->getOption("options.messages.ignore-non-roster-contacts").toBool());
+	d->rosterItemExchangeTask->setIgnoreNonRoster(o->getOption("options.messages.ignore-non-roster-contacts").toBool());
 
 	// Caps manager
-	d->capsManager->setEnabled(PsiOptions::instance()->getOption("options.service-discovery.enable-entity-capabilities").toBool());
+	d->capsManager->setEnabled(o->getOption("options.service-discovery.enable-entity-capabilities").toBool());
 }
 
 

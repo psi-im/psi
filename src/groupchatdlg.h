@@ -151,7 +151,6 @@ private:
 
 	void contextMenuEvent(QContextMenuEvent *);
 
-	PsiOptions* options_;
 };
 
 class GCFindDlg : public QDialog

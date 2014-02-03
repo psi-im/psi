@@ -456,7 +456,7 @@ bool PsiCon::init()
 #ifdef HAVE_SPARKLE
 	d->autoUpdater = new SparkleAutoUpdater(ApplicationInfo::getAppCastURL());
 #endif
-	if (d->autoUpdater && PsiOptions::instance()->getOption("options.auto-update.check-on-startup").toBool()) {
+	if (d->autoUpdater && options->getOption("options.auto-update.check-on-startup").toBool()) {
 		d->autoUpdater->checkForUpdates();
 	}
 
@@ -529,8 +529,8 @@ bool PsiCon::init()
 	Anim::setMainThread(QThread::currentThread());
 
 	// setup the main window
-	d->mainwin = new MainWin(PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool(), (PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool()), this);
-	d->mainwin->setUseDock(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool());
+	d->mainwin = new MainWin(options->getOption("options.ui.contactlist.always-on-top").toBool(), (options->getOption("options.ui.systemtray.enable").toBool() && options->getOption("options.contactlist.use-toolwindow").toBool()), this);
+	d->mainwin->setUseDock(options->getOption("options.ui.systemtray.enable").toBool());
 	d->bossKey = new BossKey(d->mainwin);
 
 	Q_UNUSED(psiConObject);
@@ -555,8 +555,8 @@ bool PsiCon::init()
 	d->mainwin->setGeometryOptionPath("options.ui.contactlist.saved-window-geometry");
 
 	if (result &&
-		!(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() &&
-		  PsiOptions::instance()->getOption("options.contactlist.hide-on-start").toBool()))
+	    !(options->getOption("options.ui.systemtray.enable").toBool() &&
+	      options->getOption("options.contactlist.hide-on-start").toBool()))
 	{
 		d->mainwin->show();
 	}
@@ -643,15 +643,17 @@ bool PsiCon::init()
 		}
 
 		// Disable accounts if necessary, and overwrite locked properties
-		if (PsiOptions::instance()->getOption("options.ui.account.single").toBool() || !PsiOptions::instance()->getOption("options.account.domain").toString().isEmpty()) {
+		bool single = options->getOption("options.ui.account.single").toBool();
+		QString domain = options->getOption("options.account.domain").toString();
+		if (single || !domain.isEmpty()) {
 			bool haveEnabled = false;
 			for(UserAccountList::Iterator it = accs.begin(); it != accs.end(); ++it) {
 				// With single accounts, only modify the first account
-				if (PsiOptions::instance()->getOption("options.ui.account.single").toBool()) {
+				if (single) {
 					if (!haveEnabled) {
 						haveEnabled = it->opt_enabled;
 						if (it->opt_enabled) {
-							if (!PsiOptions::instance()->getOption("options.account.domain").toString().isEmpty())
+							if (!domain.isEmpty())
 								it->jid = JIDUtil::accountFromString(Jid(it->jid).node()).bare();
 						}
 					}
@@ -660,7 +662,7 @@ bool PsiCon::init()
 				}
 				else {
 					// Overwirte locked properties
-					if (!PsiOptions::instance()->getOption("options.account.domain").toString().isEmpty())
+					if (!domain.isEmpty())
 						it->jid = JIDUtil::accountFromString(Jid(it->jid).node()).bare();
 				}
 			}
@@ -677,7 +679,7 @@ bool PsiCon::init()
 	}
 
 	// show tip of the day
-	if ( PsiOptions::instance()->getOption("options.ui.tip.show").toBool() ) {
+	if ( options->getOption("options.ui.tip.show").toBool() ) {
 		TipDlg::show(this);
 	}
 
@@ -695,11 +697,11 @@ bool PsiCon::init()
 
 	if(AvCallManager::isSupported()) {
 		options_avcall_update();
-		AvCallManager::setAudioOutDevice(PsiOptions::instance()->getOption("options.media.devices.audio-output").toString());
-		AvCallManager::setAudioInDevice(PsiOptions::instance()->getOption("options.media.devices.audio-input").toString());
-		AvCallManager::setVideoInDevice(PsiOptions::instance()->getOption("options.media.devices.video-input").toString());
-		AvCallManager::setBasePort(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt());
-		AvCallManager::setExternalAddress(PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString());
+		AvCallManager::setAudioOutDevice(options->getOption("options.media.devices.audio-output").toString());
+		AvCallManager::setAudioInDevice(options->getOption("options.media.devices.audio-input").toString());
+		AvCallManager::setVideoInDevice(options->getOption("options.media.devices.video-input").toString());
+		AvCallManager::setBasePort(options->getOption("options.p2p.bytestreams.listen-port").toInt());
+		AvCallManager::setExternalAddress(options->getOption("options.p2p.bytestreams.external-address").toString());
 	}
 
 
@@ -1336,10 +1338,10 @@ void PsiCon::optionChanged(const QString& option)
 void PsiCon::slotApplyOptions()
 {
 	PsiIconset::instance()->reloadRoster();
+	PsiOptions *o = PsiOptions::instance();
 
 #ifndef Q_OS_MAC
-	PsiOptions *o = PsiOptions::instance();
-	if (!PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool()) {
+	if (!o->getOption("options.ui.contactlist.show-menubar").toBool()) {
 		// check if all toolbars are disabled
 		bool toolbarsVisible = false;
 		foreach(QString base, o->getChildOptionNames("options.ui.contactlist.toolbars", true, true)) {
@@ -1354,7 +1356,7 @@ void PsiCon::slotApplyOptions()
 			QMessageBox::warning(0, tr("Warning"),
 				tr("You can not disable <i>all</i> toolbars <i>and</i> the menubar. If you do so, you will be unable to enable them back, when you'll change your mind."),
 				tr("I understand"));
-			PsiOptions::instance()->setOption("options.ui.contactlist.show-menubar", true);
+			o->setOption("options.ui.contactlist.show-menubar", true);
 		}
 	}
 #endif
@@ -1362,16 +1364,16 @@ void PsiCon::slotApplyOptions()
 	updateS5BServerAddresses();
 
 	if(AvCallManager::isSupported()) {
-		AvCallManager::setAudioOutDevice(PsiOptions::instance()->getOption("options.media.devices.audio-output").toString());
-		AvCallManager::setAudioInDevice(PsiOptions::instance()->getOption("options.media.devices.audio-input").toString());
-		AvCallManager::setVideoInDevice(PsiOptions::instance()->getOption("options.media.devices.video-input").toString());
-		AvCallManager::setBasePort(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt());
-		AvCallManager::setExternalAddress(PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString());
+		AvCallManager::setAudioOutDevice(o->getOption("options.media.devices.audio-output").toString());
+		AvCallManager::setAudioInDevice(o->getOption("options.media.devices.audio-input").toString());
+		AvCallManager::setVideoInDevice(o->getOption("options.media.devices.video-input").toString());
+		AvCallManager::setBasePort(o->getOption("options.p2p.bytestreams.listen-port").toInt());
+		AvCallManager::setExternalAddress(o->getOption("options.p2p.bytestreams.external-address").toString());
 	}
 
 	// mainwin stuff
-	d->mainwin->setWindowOpts(PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool(), (PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() && PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool()));
-	d->mainwin->setUseDock(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool());
+	d->mainwin->setWindowOpts(o->getOption("options.ui.contactlist.always-on-top").toBool(), (o->getOption("options.ui.systemtray.enable").toBool() && o->getOption("options.contactlist.use-toolwindow").toBool()));
+	d->mainwin->setUseDock(o->getOption("options.ui.systemtray.enable").toBool());
 	d->mainwin->buildToolbars();
 
 	// notify about options change
@@ -1403,9 +1405,10 @@ void PsiCon::queueChanged()
 void PsiCon::startBounce()
 {
 #ifdef Q_OS_MAC
-	if (PsiOptions::instance()->getOption("options.ui.notifications.bounce-dock").toString() != "never") {
+	QString bounce = PsiOptions::instance()->getOption("options.ui.notifications.bounce-dock").toString();
+	if (bounce != "never") {
 		MacDock::startBounce();
-		if (PsiOptions::instance()->getOption("options.ui.notifications.bounce-dock").toString() == "once") {
+		if (bounce == "once") {
 			MacDock::stopBounce();
 		}
 	}
@@ -1463,7 +1466,8 @@ void PsiCon::recentGCAdd(const QString &str)
 	recentList.prepend(str);
 
 	// trim the list if bigger than 10
-	while(recentList.count() > PsiOptions::instance()->getOption("options.muc.recent-joins.maximum").toInt()) {
+	int max = PsiOptions::instance()->getOption("options.muc.recent-joins.maximum").toInt();
+	while(recentList.count() > max) {
 		recentList.takeLast();
 	}
 
@@ -1706,17 +1710,18 @@ void PsiCon::updateS5BServerAddresses()
 		slist += (*hit).toString();
 
 	// add external
-	if(!PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString().isEmpty()) {
+	QString extAddr = PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString();
+	if(!extAddr.isEmpty()) {
 		bool found = false;
 		for(QStringList::ConstIterator sit = slist.begin(); sit != slist.end(); ++sit) {
 			const QString &s = *sit;
-			if(s == PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString()) {
+			if(s == extAddr) {
 				found = true;
 				break;
 			}
 		}
 		if(!found)
-			slist += PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString();
+			slist += extAddr;
 	}
 
 	// set up the server
@@ -1728,9 +1733,10 @@ void PsiCon::s5b_init()
 	if(d->s5bServer->isActive())
 		d->s5bServer->stop();
 
-	if (PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt()) {
-		if(!d->s5bServer->start(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt())) {
-			QMessageBox::warning(0, tr("Warning"), tr("Unable to bind to port %1 for Data Transfer.\nThis may mean you are already running another instance of Psi. You may experience problems sending and/or receiving files.").arg(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt()));
+	int port = PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt();
+	if (port) {
+		if(!d->s5bServer->start(port)) {
+			QMessageBox::warning(0, tr("Warning"), tr("Unable to bind to port %1 for Data Transfer.\nThis may mean you are already running another instance of Psi. You may experience problems sending and/or receiving files.").arg(port));
 		}
 	}
 }

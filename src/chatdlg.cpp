@@ -241,14 +241,15 @@ bool ChatDlg::readyToHide()
 	keepOpen_ = false; // tabdlg calls readyToHide twice on tabdlg close, only display message once.
 
 	// destroy the dialog if delChats is dcClose
-	if (PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString() == "instant") {
+	QString del = PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString();
+	if (del == "instant") {
 		setAttribute(Qt::WA_DeleteOnClose);
 	}
 	else {
-		if (PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString() == "hour") {
+		if (del == "hour") {
 			setSelfDestruct(60);
 		}
-		else if (PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString() == "day") {
+		else if (del == "day") {
 			setSelfDestruct(60 * 24);
 		}
 	}
@@ -513,15 +514,16 @@ void ChatDlg::optionsUpdate()
 	setShortcuts();
 
 	if (!isTabbed() && isHidden()) {
-		if (PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString() == "instant") {
+		QString del = PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString();
+		if (del == "instant") {
 			deleteLater();
 			return;
 		}
 		else {
-			if (PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString() == "hour") {
+			if (del == "hour") {
 				setSelfDestruct(60);
 			}
-			else if (PsiOptions::instance()->getOption("options.ui.chat.delete-contents-after").toString() == "day") {
+			else if (del == "day") {
 				setSelfDestruct(60 * 24);
 			}
 			else {

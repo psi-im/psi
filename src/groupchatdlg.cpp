@@ -570,8 +570,6 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	connect(account(), SIGNAL(updatedActivity()), SLOT(pa_updatedActivity()));
 	d->mucManager = new MUCManager(account()->client(), jid());
 
-	options_ = PsiOptions::instance();
-
 	d->pending = 0;
 	d->connecting = false;
 
@@ -1166,6 +1164,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 		d->act_configure->setEnabled(s.mucItem().affiliation() >= MUCItem::Member);
 	}
 
+	PsiOptions *options_ = PsiOptions::instance();
 
 	if(s.isAvailable()) {
 		// Available
@@ -1353,12 +1352,13 @@ void GCMainDlg::message(const Message &_m)
 		d->nonAnonymous = false;
 	}
 
+	PsiOptions *options = PsiOptions::instance();
 	if(!m.subject().isNull()) {
 		QString subject = m.subject();
 		d->topic = subject;
 		QString subjectTooltip = TextUtil::plain2rich(subject);
 		subjectTooltip = TextUtil::linkify(subjectTooltip);
-		if(PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool()) {
+		if(options->getOption("options.ui.emoticons.use-emoticons").toBool()) {
 			subjectTooltip = TextUtil::emoticonify(subjectTooltip);
 		}
 		ui_.le_topic->setText(subject.replace("\n\n", " || ").replace("\n", " | ").replace("\t", " ").replace(QRegExp("\\s{2,}"), " "));
@@ -1392,8 +1392,8 @@ void GCMainDlg::message(const Message &_m)
 	if (m.body().left(d->self.length()) == d->self)
 		d->lastReferrer = m.from().resource();
 
-	if(PsiOptions::instance()->getOption("options.ui.muc.use-highlighting").toBool()) {
-		QStringList highlightWords = PsiOptions::instance()->getOption("options.ui.muc.highlight-words").toStringList();
+	if(options->getOption("options.ui.muc.use-highlighting").toBool()) {
+		QStringList highlightWords = options->getOption("options.ui.muc.highlight-words").toStringList();
 		foreach (QString word, highlightWords) {
 			if(m.body().contains((word), Qt::CaseInsensitive)) {
 				alert = true;
@@ -1407,10 +1407,10 @@ void GCMainDlg::message(const Message &_m)
 			account()->playSound(PsiAccount::eSend);
 	}
 	else {
-		if(alert || (PsiOptions::instance()->getOption("options.ui.notifications.sounds.notify-every-muc-message").toBool() && !m.spooled() && !from.isEmpty()) )
+		if(alert || (options->getOption("options.ui.notifications.sounds.notify-every-muc-message").toBool() && !m.spooled() && !from.isEmpty()) )
 			account()->playSound(PsiAccount::eGroupChat);
 
-		if(alert || (PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.notify-every-muc-message").toBool() && !m.spooled() && !from.isEmpty()) ) {
+		if(alert || (options->getOption("options.ui.notifications.passive-popups.notify-every-muc-message").toBool() && !m.spooled() && !from.isEmpty()) ) {
 			if (!m.spooled() && !isActiveTab() && !m.from().resource().isEmpty()) {
 				XMPP::Jid jid = m.from()/*.withDomain("")*/;
 				MessageEvent *e = new MessageEvent(m, account());
@@ -1484,9 +1484,8 @@ void GCMainDlg::appendSysMsg(const MessageView &mv)
 void GCMainDlg::appendMessage(const Message &m, bool alert)
 {
 	MessageView mv(MessageView::Message);
-	if (m.containsHTML() && PsiOptions::instance()
-							->getOption("options.html.muc.render").toBool() &&
-							!m.html().text().isEmpty()) {
+	if (m.containsHTML() && PsiOptions::instance()->getOption("options.html.muc.render").toBool() &&
+					!m.html().text().isEmpty()) {
 		mv.setHtml(m.html().toString("span"));
 	} else {
 		mv.setPlainText(m.body());
