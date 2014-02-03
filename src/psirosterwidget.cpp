@@ -385,6 +385,16 @@ bool PsiRosterWidget::eventFilter(QObject* obj, QEvent* e)
 				return true;
 			}
 
+			if(ke->key() == Qt::Key_End) {
+				filterEdit_->setCursorPosition(filterEdit_->text().length());
+				return true;
+			}
+
+			if(ke->key() == Qt::Key_Home) {
+				filterEdit_->setCursorPosition(0);
+				return true;
+			}
+
 			if (filterPageView_->handleKeyPressEvent(ke)) {
 				return true;
 			}
