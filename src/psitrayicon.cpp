@@ -25,7 +25,11 @@ PsiTrayIcon::PsiTrayIcon(const QString &tip, QMenu *popup, QObject *parent)
 PsiTrayIcon::~PsiTrayIcon()
 {
 	delete trayicon_;
-	delete icon_;
+	//delete icon_;
+	if ( icon_ ) {
+		icon_->disconnect();
+		icon_->stop();
+	}
 }
 
 void PsiTrayIcon::setContextMenu(QMenu* menu)
@@ -38,27 +42,31 @@ void PsiTrayIcon::setToolTip(const QString &str)
 	trayicon_->setToolTip(str);
 }
 
-void PsiTrayIcon::setIcon(const PsiIcon *icon, bool alert)
+void PsiTrayIcon::setIcon(const PsiIcon *icon, bool /*alert*/)
 {
 	if ( icon_ ) {
-		disconnect(icon_, 0, this, 0 );
+		icon_->disconnect();
 		icon_->stop();
 
-		delete icon_;
-		icon_ = 0;
+//		delete icon_;
+//		icon_ = 0;
 	}
 
+	icon_ = (PsiIcon*)icon;
 	if ( icon ) {
-		if ( !alert )
-			icon_ = new PsiIcon(*icon);
-		else
-			icon_ = new AlertIcon(icon);
-
 		connect(icon_, SIGNAL(pixmapChanged()), SLOT(animate()));
 		icon_->activated();
+
+//		if ( !alert )
+//			icon_ = new PsiIcon(*icon);
+//		else
+//			icon_ = new AlertIcon(icon);
+
+//		connect(icon_, SIGNAL(pixmapChanged()), SLOT(animate()));
+//		icon_->activated();
 	}
-	else
-		icon_ = new PsiIcon();
+	//else
+		//icon_ = new PsiIcon();
 
 	animate();
 }
@@ -179,7 +187,9 @@ void PsiTrayIcon::animate()
 	if ( !icon_ )
 		return;
 
-	QString cachedName = "PsiTray/" + PsiOptions::instance()->getOption("options.iconsets.status").toString() + "/" + icon_->name() + "/" + QString::number( icon_->frameNumber() );
+	QString cachedName = "PsiTray/" + PsiOptions::instance()->getOption("options.iconsets.status").toString()
+			+ "/" + icon_->name() + "/" + QString::number(int(icon_)) + "/"
+			+ QString::number( icon_->frameNumber() );
 
 	QPixmap p;
 	if ( !QPixmapCache::find(cachedName, p) ) {

@@ -141,7 +141,7 @@ public:
 			bool found = false;
 
 
-			foreach(QVariant serviceV, PsiOptions::instance()->mapKeyList("options.iconsets.service-status")) {
+			foreach(const QVariant& serviceV, PsiOptions::instance()->mapKeyList("options.iconsets.service-status")) {
 				QString service = serviceV.toString();
 				if (services.contains(service)) {
 					if (services[service].indexIn(jid.domain()) != -1 ) {
@@ -179,14 +179,16 @@ public:
 		// third level -- custom icons
 
 		QStringList customicons = PsiOptions::instance()->getChildOptionNames("options.iconsets.custom-status", true, true);
-		foreach(QString base, customicons) {
+		foreach(const QString& base, customicons) {
 			QRegExp rx = QRegExp(PsiOptions::instance()->getOption(base + ".regexp").toString());
 			if ( rx.indexIn(jid.bare()) != -1 ) {
 				const Iconset *is = psi->roster.value(PsiOptions::instance()->getOption(base + ".iconset").toString());
 				if ( is ) {
 					PsiIcon *i = (PsiIcon *)is->icon(iconName);
-					if ( i )
-						icon = (PsiIcon *)is->icon(iconName);
+					if ( i ) {
+						icon = i;
+						break;
+					}
 				}
 			}
 		}
