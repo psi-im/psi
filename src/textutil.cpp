@@ -421,7 +421,7 @@ QString TextUtil::linkify(const QString &in)
 				continue;
 			--x1;
 			for(; x1 >= 0; --x1) {
-				if(!linkify_isOneOf(out.at(x1), "_.-") && !out.at(x1).isLetterOrNumber())
+				if(!linkify_isOneOf(out.at(x1), "_.-+") && !out.at(x1).isLetterOrNumber())
 					break;
 			}
 			++x1;
@@ -429,7 +429,7 @@ QString TextUtil::linkify(const QString &in)
 			// go forward till we find the end
 			x2 = n + 1;
 			for(; x2 < (int)out.length(); ++x2) {
-				if(!linkify_isOneOf(out.at(x2), "_.-") && !out.at(x2).isLetterOrNumber())
+				if(!linkify_isOneOf(out.at(x2), "_.-+") && !out.at(x2).isLetterOrNumber())
 					break;
 			}
 
