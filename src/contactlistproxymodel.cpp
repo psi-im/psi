@@ -86,6 +86,10 @@ bool ContactListProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& s
 	case ContactListModel::ContactType: {
 		PsiContact* psiContact = static_cast<PsiContact*>(item);
 
+		if (psiContact->alerting()) {
+			return true;
+		}
+
 		if (psiContact->isSelf()) {
 			return showSelf();
 		}
@@ -112,14 +116,18 @@ bool ContactListProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& s
 				if (specialGroupType == ContactListGroup::SpecialType_Transports)
 					return showTransports();
 			}
+			ContactListGroup* group = static_cast<ContactListGroup*>(item);
+
+			if(group->shouldBeVisible()) {
+				return true;
+			}
 
 			bool show = true;
 			if (index.data(Qt::DisplayRole) == PsiContact::hiddenGroupName()) {
 				show = showHidden();
 			}
 
-			if (!showOffline()) {
-				ContactListGroup* group = static_cast<ContactListGroup*>(item);
+			if (!showOffline()) {				
 				return show && group->haveOnlineContacts();
 			}
 			else {

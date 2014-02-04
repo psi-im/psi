@@ -334,6 +334,11 @@ bool ContactListGroup::haveOnlineContacts() const
 	return haveOnlineContacts_;
 }
 
+bool ContactListGroup::shouldBeVisible() const
+{
+	return shouldBeVisible_;
+}
+
 int ContactListGroup::onlineContactsCount() const
 {
 	return onlineContactsCount_;
@@ -356,6 +361,7 @@ void ContactListGroup::updateOnlineContactsFlag()
 		return;
 
 	bool haveOnlineContacts = false;
+	bool shouldBeVisible = false;
 	int onlineContactsCount = 0;
 	int totalContactsCount = 0;
 	foreach(ContactListItemProxy* item, items_) {
@@ -368,9 +374,12 @@ void ContactListGroup::updateOnlineContactsFlag()
 				++onlineContactsCount;
 				// break;
 			}
+			if (contact->alerting())
+				shouldBeVisible = true;
 		}
 		else if ((group = dynamic_cast<ContactListGroup*>(item->item()))) {
 			totalContactsCount += group->totalContactsCount();
+			shouldBeVisible = shouldBeVisible || group->shouldBeVisible();
 			if (group->haveOnlineContacts()) {
 				haveOnlineContacts = true;
 				onlineContactsCount += group->onlineContactsCount();
@@ -379,8 +388,11 @@ void ContactListGroup::updateOnlineContactsFlag()
 		}
 	}
 
-	if (haveOnlineContacts_ != haveOnlineContacts) {
+	if (haveOnlineContacts_ != haveOnlineContacts ||
+		shouldBeVisible != shouldBeVisible_)
+	{
 		haveOnlineContacts_ = haveOnlineContacts;
+		shouldBeVisible_ = shouldBeVisible;
 		if (parent()) {
 			parent()->updateOnlineContactsFlag();
 			model_->updatedGroupVisibility(this);
