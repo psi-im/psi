@@ -188,7 +188,7 @@ void PsiTrayIcon::animate()
 		return;
 
 	QString cachedName = "PsiTray/" + PsiOptions::instance()->getOption("options.iconsets.status").toString()
-			+ "/" + icon_->name() + "/" + QString::number(int(icon_)) + "/"
+			+ "/" + icon_->name() + "/" + QString::number(intptr_t(icon_)) + "/"
 			+ QString::number( icon_->frameNumber() );
 
 	QPixmap p;
