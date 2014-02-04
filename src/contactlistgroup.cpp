@@ -43,6 +43,7 @@ ContactListGroup::ContactListGroup(ContactListModel* model, ContactListGroup* pa
 	, parent_(parent)
 	, updateOnlineContactsTimer_(0)
 	, haveOnlineContacts_(false)
+	, shouldBeVisible_(false)
 	, onlineContactsCount_(0)
 	, totalContactsCount_(0)
 {
