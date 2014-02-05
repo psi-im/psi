@@ -6,17 +6,15 @@
 #include "psitrayicon.h"
 #include "iconset.h"
 #include "alerticon.h"
-#include "psioptions.h"
 
 // TODO: remove the QPoint parameter from the signals when we finally move
 // to the new system.
 
 PsiTrayIcon::PsiTrayIcon(const QString &tip, QMenu *popup, QObject *parent)
 	: QObject(parent)
-{
-	icon_ = NULL;
-	trayicon_ = NULL;
-	trayicon_ = new QSystemTrayIcon();
+	, icon_(NULL)
+	, trayicon_(new QSystemTrayIcon())
+{	
 	trayicon_->setContextMenu(popup);
 	setToolTip(tip);
 	connect(trayicon_,SIGNAL(activated(QSystemTrayIcon::ActivationReason)),SLOT(trayicon_activated(QSystemTrayIcon::ActivationReason)));
@@ -187,8 +185,7 @@ void PsiTrayIcon::animate()
 	if ( !icon_ )
 		return;
 
-	QString cachedName = "PsiTray/" + PsiOptions::instance()->getOption("options.iconsets.status").toString()
-			+ "/" + icon_->name() + "/" + QString::number(intptr_t(icon_)) + "/"
+	QString cachedName = "PsiTray/" + icon_->name() + "/" + QString::number(quintptr(icon_)) + "/"
 			+ QString::number( icon_->frameNumber() );
 
 	QPixmap p;
