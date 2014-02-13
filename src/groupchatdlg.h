@@ -79,6 +79,7 @@ public:
 
 	bool isInactive() const;
 	void reactivate();
+	void setJid(const Jid &j);
 
 	// reimplemented
 	virtual TabbableWidget::State state() const;

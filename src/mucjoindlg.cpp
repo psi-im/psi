@@ -160,6 +160,8 @@ void MUCJoinDlg::doJoin()
 	if (gc) {
 		gc->bringToFront();
 		if (gc->isInactive()) {
+			if(gc->jid() != j)
+				gc->setJid(j);
 			gc->reactivate();
 		}
 		joined();
