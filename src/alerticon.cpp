@@ -108,6 +108,8 @@ public:
 
 	void init();
 
+	static void updateAlertStyle();
+
 public slots:
 	void update();
 	void activated(bool playSound);
@@ -121,7 +123,10 @@ public:
 	PsiIcon *real;
 	bool isActivated;
 	Impix impix;
+	static QString alertStyle;
 };
+
+QString AlertIcon::Private::alertStyle = QString();
 
 AlertIcon::Private::Private(AlertIcon *_ai)
 {
@@ -142,12 +147,19 @@ AlertIcon::Private::~Private()
 		delete real;
 }
 
+void AlertIcon::Private::updateAlertStyle()
+{
+	alertStyle = PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString();
+}
+
 void AlertIcon::Private::init()
 {
+	updateAlertStyle();
+
 	connect(metaAlertIcon, SIGNAL(update()), SLOT(update()));
 	connect(real, SIGNAL(iconModified()), SLOT(pixmapChanged()));
 
-	if ( PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString() == "animate" && real->isAnimated() )
+	if ( alertStyle == "animate" && real->isAnimated() )
 		impix = real->frameImpix();
 	else
 		impix = real->impix();
@@ -161,14 +173,14 @@ void AlertIcon::Private::update()
 
 void AlertIcon::Private::activated(bool playSound)
 {
-	if ( PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString() == "animate" && real->isAnimated() ) {
+	if ( alertStyle == "animate" && real->isAnimated() ) {
 		if ( !isActivated ) {
 			connect(real, SIGNAL(pixmapChanged()), SLOT(pixmapChanged()));
 			real->activated(playSound);
 			isActivated = true;
 		}
 	}
-	else if ( PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString() == "blink" || (PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString() == "animate" && !real->isAnimated()) ) {
+	else if ( alertStyle == "blink" || (alertStyle == "animate" && !real->isAnimated()) ) {
 		connect(metaAlertIcon, SIGNAL(updateFrame(int)), SLOT(updateFrame(int)));
 	}
 	else {
@@ -265,10 +277,10 @@ const Impix &AlertIcon::impix() const
 
 int AlertIcon::frameNumber() const
 {
-	if ( PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString() == "animate" && d->real->isAnimated() ) {
+	if ( d->alertStyle == "animate" && d->real->isAnimated() ) {
 		return d->real->frameNumber();
 	}
-	else if ( PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString() == "blink" || (PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString() == "animate" && !d->real->isAnimated()) ) {
+	else if ( d->alertStyle == "blink" || (d->alertStyle == "animate" && !d->real->isAnimated()) ) {
 		return metaAlertIcon->framenumber();
 	}
 
@@ -291,6 +303,8 @@ void alertIconUpdateAlertStyle()
 {
 	if ( !metaAlertIcon )
 		metaAlertIcon = new MetaAlertIcon();
+
+	AlertIcon::Private::updateAlertStyle();
 
 	metaAlertIcon->updateAlertStyle();
 }
