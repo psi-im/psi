@@ -14,6 +14,7 @@ PsiTrayIcon::PsiTrayIcon(const QString &tip, QMenu *popup, QObject *parent)
 	: QObject(parent)
 	, icon_(NULL)
 	, trayicon_(new QSystemTrayIcon())
+	, realIcon_(0)
 {	
 	trayicon_->setContextMenu(popup);
 	setToolTip(tip);
@@ -23,10 +24,10 @@ PsiTrayIcon::PsiTrayIcon(const QString &tip, QMenu *popup, QObject *parent)
 PsiTrayIcon::~PsiTrayIcon()
 {
 	delete trayicon_;
-	//delete icon_;
 	if ( icon_ ) {
 		icon_->disconnect();
 		icon_->stop();
+		delete icon_;
 	}
 }
 
@@ -40,31 +41,28 @@ void PsiTrayIcon::setToolTip(const QString &str)
 	trayicon_->setToolTip(str);
 }
 
-void PsiTrayIcon::setIcon(const PsiIcon *icon, bool /*alert*/)
+void PsiTrayIcon::setIcon(const PsiIcon *icon, bool alert)
 {
 	if ( icon_ ) {
 		icon_->disconnect();
 		icon_->stop();
 
-//		delete icon_;
-//		icon_ = 0;
+		delete icon_;
+		icon_ = 0;
 	}
 
-	icon_ = (PsiIcon*)icon;
+	realIcon_ = quintptr(icon);
 	if ( icon ) {
+		if ( !alert )
+			icon_ = new PsiIcon(*icon);
+		else
+			icon_ = new AlertIcon(icon);
+
 		connect(icon_, SIGNAL(pixmapChanged()), SLOT(animate()));
 		icon_->activated();
-
-//		if ( !alert )
-//			icon_ = new PsiIcon(*icon);
-//		else
-//			icon_ = new AlertIcon(icon);
-
-//		connect(icon_, SIGNAL(pixmapChanged()), SLOT(animate()));
-//		icon_->activated();
 	}
-	//else
-		//icon_ = new PsiIcon();
+	else
+		icon_ = new PsiIcon();
 
 	animate();
 }
@@ -185,7 +183,7 @@ void PsiTrayIcon::animate()
 	if ( !icon_ )
 		return;
 
-	QString cachedName = "PsiTray/" + icon_->name() + "/" + QString::number(quintptr(icon_)) + "/"
+	QString cachedName = "PsiTray/" + icon_->name() + "/" + QString::number(realIcon_) + "/"
 			+ QString::number( icon_->frameNumber() );
 
 	QPixmap p;

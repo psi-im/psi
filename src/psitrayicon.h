@@ -45,6 +45,7 @@ protected:
 private:
 	PsiIcon* icon_;
 	QSystemTrayIcon* trayicon_;
+	quintptr realIcon_;
 };
 
 
