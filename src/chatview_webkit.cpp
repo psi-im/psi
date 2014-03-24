@@ -112,7 +112,7 @@ public slots:
 
 		// Workaround.  WebKit works only with 96dpi
 		// Need to convert point size to pixel size
-		int pixelSize = f.pointSize() * qApp->desktop()->logicalDpiX() * postScriptPoint;
+		int pixelSize = qRound(f.pointSize() * qApp->desktop()->logicalDpiX() * postScriptPoint);
 
 		return QString("{fontFamily:'%1',fontSize:'%2px',fontStyle:'%3',fontVariant:'%4',fontWeight:'%5'}")
 						 .arg(f.family())
