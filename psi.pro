@@ -24,3 +24,8 @@ webkit {
 		themes/chatview/psi/adapter.js \
 		themes/chatview/adium/adapter.js
 }
+
+# Import useful Makefile targets for testing program using valgrind.
+# Extra targets: valgrind, valgrind_supp and callgrind are available
+# only in unix systems.
+include(qa/valgrind/valgrind-main.pri)
