@@ -1,16 +1,19 @@
+DEPENDS = sub-src
+COMMAND = $(MAKE) -f src//$(MAKEFILE)
+
 unix {
 	# valgrind target (only shows valgrind output)
 	QMAKE_EXTRA_TARGETS += valgrind
-	valgrind.depends = sub-src
-	valgrind.commands = $(MAKE) -f src//$(MAKEFILE) valgrind
+	valgrind.depends = $$DEPENDS
+	valgrind.commands = $$COMMAND valgrind
 
 	# valgrind_supp target (generate suppressions)
 	QMAKE_EXTRA_TARGETS += valgrind_supp
-	valgrind_supp.depends = sub-src
-	valgrind_supp.commands = $(MAKE) -f src//$(MAKEFILE) valgrind_supp
+	valgrind_supp.depends = $$DEPENDS
+	valgrind_supp.commands = $$COMMAND valgrind_supp
 
 	# callgrind profiling
 	QMAKE_EXTRA_TARGETS += callgrind
-	callgrind.depends = sub-src
-	callgrind.commands = $(MAKE) -f src//$(MAKEFILE) callgrind
+	callgrind.depends = $$DEPENDS
+	callgrind.commands = $$COMMAND callgrind
 }
