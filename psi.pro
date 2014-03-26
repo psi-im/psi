@@ -29,3 +29,7 @@ webkit {
 # Extra targets: valgrind, valgrind_supp and callgrind are available
 # only in unix systems.
 include(qa/valgrind/valgrind-main.pri)
+
+# Import useful Makefile targets for testing program with default config, for
+# debugging program, etc. Extra targets: run, run_qa, gdb, gdb_qa and xcode.
+include(qa/oldtest/unittest-main.pri)
