@@ -57,12 +57,12 @@ private:
 static MetaAlertIcon *metaAlertIcon = 0;
 
 MetaAlertIcon::MetaAlertIcon()
-: QObject(qApp)
+	: QObject(qApp)
+	, animTimer(new QTimer(this))
+	, frame(0)
 {
-	animTimer = new QTimer(this);
 	connect(animTimer, SIGNAL(timeout()), SLOT(animTimeout()));
 	animTimer->start(120 * 5);
-	frame = 0;
 
 	// blank icon
 	QImage blankImg(16, 16, QImage::Format_ARGB32);
@@ -129,13 +129,12 @@ public:
 QString AlertIcon::Private::alertStyle = QString();
 
 AlertIcon::Private::Private(AlertIcon *_ai)
+	: ai(_ai)
+	, real(0)
+	, isActivated(false)
 {
 	if ( !metaAlertIcon )
 		metaAlertIcon = new MetaAlertIcon();
-
-	ai = _ai;
-	real = 0;
-	isActivated = false;
 }
 
 AlertIcon::Private::~Private()
@@ -143,8 +142,7 @@ AlertIcon::Private::~Private()
 	if ( isActivated )
 		stop();
 
-	if ( real )
-		delete real;
+	delete real;
 }
 
 void AlertIcon::Private::updateAlertStyle()
@@ -206,9 +204,9 @@ void AlertIcon::Private::updateFrame(int frame)
 		metaAlertIcon = new MetaAlertIcon();
 
 	if ( frame )
-		impix = real->impix();
-	else
 		impix = metaAlertIcon->blank16();
+	else
+		impix = real->impix();
 
 	emit ai->pixmapChanged();
 }
@@ -225,8 +223,8 @@ void AlertIcon::Private::pixmapChanged()
 //----------------------------------------------------------------------------
 
 AlertIcon::AlertIcon(const PsiIcon *icon)
+	: d(new Private(this))
 {
-	d = new Private(this);
 	if ( icon )
 		d->real = new PsiIcon(*icon);
 	else
