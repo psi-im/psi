@@ -263,6 +263,8 @@ QString CapsManager::clientName(const Jid& jid) const
 			name = cs.node();
 			if (name.startsWith("http://"))
 				name = name.right(name.length() - 7);
+			else if (name.startsWith("https://"))
+				name = name.right(name.length() - 8);
 
 			if (name.startsWith("www."))
 				name = name.right(name.length() - 4);
