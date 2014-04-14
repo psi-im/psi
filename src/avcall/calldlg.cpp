@@ -19,6 +19,8 @@
 #include "calldlg.h"
 
 #include <QMessageBox>
+#include <QTimer>
+#include <QTime>
 #include "ui_call.h"
 #include "avcall.h"
 #include "xmpp_client.h"
@@ -53,13 +55,16 @@ public:
 	bool activated;
 	AvCall *sess;
 	PsiMedia::VideoWidget *vw_remote;
+	QTimer *timer;
+	QTime call_duration;
 
 	Private(CallDlg *_q) :
 		QObject(_q),
 		q(_q),
 		active(false),
 		activated(false),
-		sess(0)
+		sess(0),
+		timer(0)
 	{
 		ui.setupUi(q);
 		q->setWindowTitle(tr("Voice Call"));
@@ -86,6 +91,9 @@ public:
 
 		ui.pb_accept->setDefault(true);
 		ui.pb_accept->setFocus();
+
+		timer = new QTimer(q);
+		connect(timer, SIGNAL(timeout()), SLOT(update_call_duration()));
 
 		q->resize(q->minimumSizeHint());
 	}
@@ -216,6 +224,9 @@ private slots:
 		ui.pb_accept->hide();
 		ui.pb_reject->setText(tr("&Hang up"));
 		ui.lb_status->setText(tr("Call active"));
+
+		call_duration = QTime(0, 0, 0, 0);
+		timer->start(1000);
 		activated = true;
 	}
 
@@ -224,8 +235,17 @@ private slots:
 		if(!activated)
 			ui.busy->stop();
 
-		QMessageBox::information(q, tr("Call ended"), sess->errorString());
+		if(timer->isActive())
+			timer->stop();
+
+		QMessageBox::information(q, tr("Call is ended"), sess->errorString());
 		q->close();
+	}
+
+	void update_call_duration()
+	{
+		call_duration = call_duration.addSecs(1);
+		ui.lb_status->setText(tr("Call duration: %1").arg(call_duration.toString("mm:ss")));
 	}
 };
 
