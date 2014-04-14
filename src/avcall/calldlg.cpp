@@ -204,7 +204,9 @@ private slots:
 			vw_remote = new PsiMedia::VideoWidget(q);
 			replaceWidget(ui.ck_useVideo, vw_remote);
 			sess->setIncomingVideo(vw_remote);
+			vw_remote->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 			vw_remote->setMinimumSize(320, 240);
+			ui.fake_spacer->hide();
 		}
 		else
 			ui.ck_useVideo->hide();
