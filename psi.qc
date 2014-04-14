@@ -20,6 +20,9 @@
   <dep type='zlib'>
     <required/>
   </dep>
+  <dep type='qjdns'>
+    <required/>
+  </dep>
   <dep type='x11'>
     <required/>
   </dep>

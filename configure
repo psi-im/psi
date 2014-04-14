@@ -33,6 +33,8 @@ Dependency options:
   --with-qca-lib=[path]       Path to QCA library or framework files
   --with-zlib-inc=[path]      Path to zlib include files
   --with-zlib-lib=[path]      Path to zlib library files
+  --with-qjdns-inc=[path]     Path to QJDns include files
+  --with-qjdns-lib=[path]     Path to QJDns library files
   --enable-universal          Enable use of Mac OS X universal binary support
   --disable-qdbus             Disable use of QDBUS
   --enable-webkit             Enable use of QtWebKit
@@ -215,6 +217,16 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
+		--with-qjdns-inc=*)
+			QC_WITH_QJDNS_INC=$optarg
+			shift
+			;;
+
+		--with-qjdns-lib=*)
+			QC_WITH_QJDNS_LIB=$optarg
+			shift
+			;;
+
 		--enable-universal)
 			QC_ENABLE_universal="Y"
 			shift
@@ -303,6 +315,8 @@ echo QC_WITH_QCA_INC=$QC_WITH_QCA_INC
 echo QC_WITH_QCA_LIB=$QC_WITH_QCA_LIB
 echo QC_WITH_ZLIB_INC=$QC_WITH_ZLIB_INC
 echo QC_WITH_ZLIB_LIB=$QC_WITH_ZLIB_LIB
+echo QC_WITH_QJDNS_INC=$QC_WITH_QJDNS_INC
+echo QC_WITH_QJDNS_LIB=$QC_WITH_QJDNS_LIB
 echo QC_ENABLE_universal=$QC_ENABLE_universal
 echo QC_DISABLE_qdbus=$QC_DISABLE_qdbus
 echo QC_ENABLE_webkit=$QC_ENABLE_webkit
@@ -919,6 +933,63 @@ public:
 			conf->addLib(libs);
 		} else {
 			conf->addExtra("CONFIG += psi-minizip");
+		}
+
+		return true;
+#endif
+	}
+};
+#line 1 "qjdns.qcm"
+/*
+-----BEGIN QCMOD-----
+name: jdns
+arg: with-qjdns-inc=[path],Path to QJDns include files
+arg: with-qjdns-lib=[path],Path to QJDns library files
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_qjdns
+//----------------------------------------------------------------------------
+class qc_qjdns : public ConfObj
+{
+public:
+	qc_qjdns(Conf *c) : ConfObj(c) {}
+	QString name() const { return "QJDns"; }
+	QString shortname() const { return "qjdns"; }
+	bool exec()
+	{
+#if defined Q_OS_WIN || defined Q_OS_MAC
+		// HACK: on Windows and Mac OS X, always use psi's bundled qjdns
+		conf->addExtra("CONFIG += iris-qjdns");
+		return true;
+#else
+		QStringList incs;
+		QString version, libs, other;
+		QString s;
+
+		if(!conf->findPkgConfig("qjdns", VersionMin, "2.0.0", &version, &incs, &libs, &other)) {
+			s = conf->getenv("QC_WITH_QJDNS_INC");
+			if ((!s.isEmpty() && conf->checkHeader(s, "qjdns.h")) ||
+				(s.isEmpty() && conf->findHeader("qjdns.h", QStringList(), &s))) {
+				incs.append(s);
+			}
+
+			s = conf->getenv("QC_WITH_QJDNS_LIB");
+			if((!s.isEmpty() && conf->checkLibrary(s, "qjdns")) ||
+			   (s.isEmpty() && conf->findLibrary("qjdns", &s))) {
+				libs = s.isEmpty()? "-lqjdns -ljdns" : QString("-L%1 -lqjdns -ljdns").arg(s);
+			}
+		}
+
+		if (!incs.isEmpty() && !libs.isEmpty()) {
+			foreach(const QString &inc, incs) {
+				conf->addIncludePath(inc);
+			}
+			conf->addLib(libs);
+		}
+		else {
+			conf->addExtra("CONFIG += iris-qjdns");
 		}
 
 		return true;
@@ -1696,6 +1767,9 @@ cat >$1/modules_new.cpp <<EOT
     o->required = true;
     o->disabled = false;
     o = new qc_zlib(conf);
+    o->required = true;
+    o->disabled = false;
+    o = new qc_qjdns(conf);
     o->required = true;
     o->disabled = false;
     o = new qc_x11(conf);
@@ -2767,6 +2841,8 @@ export QC_WITH_QCA_INC
 export QC_WITH_QCA_LIB
 export QC_WITH_ZLIB_INC
 export QC_WITH_ZLIB_LIB
+export QC_WITH_QJDNS_INC
+export QC_WITH_QJDNS_LIB
 export QC_ENABLE_universal
 export QC_DISABLE_qdbus
 export QC_ENABLE_webkit
