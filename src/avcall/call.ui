@@ -1,91 +1,97 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>Call</class>
- <widget class="QDialog" name="Call" >
-  <property name="geometry" >
+ <widget class="QDialog" name="Call">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>354</width>
-    <height>180</height>
+    <width>366</width>
+    <height>161</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <layout class="QVBoxLayout" >
+  <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <layout class="QHBoxLayout" >
+    <layout class="QHBoxLayout">
      <item>
-      <widget class="QLabel" name="lb_to" >
-       <property name="text" >
+      <widget class="QLabel" name="lb_to">
+       <property name="text">
         <string>To:</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="le_to" />
+      <widget class="QLineEdit" name="le_to"/>
      </item>
     </layout>
    </item>
    <item>
-    <widget class="QCheckBox" name="ck_useVideo" >
-     <property name="text" >
+    <widget class="QCheckBox" name="ck_useVideo">
+     <property name="text">
       <string>Use video</string>
      </property>
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" >
+    <layout class="QHBoxLayout">
      <item>
-      <widget class="QLabel" name="lb_bandwidth" >
-       <property name="text" >
+      <widget class="QLabel" name="lb_bandwidth">
+       <property name="text">
         <string>Sending bandwidth:</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="cb_bandwidth" />
+      <widget class="QComboBox" name="cb_bandwidth"/>
      </item>
     </layout>
    </item>
    <item>
-    <widget class="QLabel" name="lb_status" >
-     <property name="text" >
+    <widget class="QLabel" name="lb_status">
+     <property name="text">
       <string>Call status</string>
      </property>
     </widget>
    </item>
    <item>
-    <spacer>
-     <property name="orientation" >
-      <enum>Qt::Vertical</enum>
+    <widget class="QLabel" name="fake_spacer">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-     <property name="sizeHint" >
-      <size>
-       <width>336</width>
-       <height>16</height>
-      </size>
+     <property name="font">
+      <font>
+       <pointsize>1</pointsize>
+      </font>
      </property>
-    </spacer>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
    </item>
    <item>
-    <widget class="Line" name="line" >
-     <property name="orientation" >
+    <widget class="Line" name="line">
+     <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" >
+    <layout class="QHBoxLayout">
      <item>
-      <widget class="BusyWidget" native="1" name="busy" />
+      <widget class="BusyWidget" name="busy" native="true"/>
      </item>
      <item>
       <spacer>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
-       <property name="sizeHint" >
+       <property name="sizeHint" stdset="0">
         <size>
          <width>111</width>
          <height>28</height>
@@ -94,15 +100,15 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="pb_reject" >
-       <property name="text" >
+      <widget class="QPushButton" name="pb_reject">
+       <property name="text">
         <string>&amp;Reject</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="pb_accept" >
-       <property name="text" >
+      <widget class="QPushButton" name="pb_accept">
+       <property name="text">
         <string>&amp;Accept</string>
        </property>
       </widget>
