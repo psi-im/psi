@@ -49,6 +49,9 @@ AHCFormDlg::AHCFormDlg(const AHCommand& r, const Jid& receiver, XMPP::Client* cl
 	node_ = r.node();
 	sessionId_ = r.sessionId();
 
+	ui_.lb_note->setText(r.note().noteText);
+	ui_.lb_note->setVisible(r.hasNote());
+
 	ui_.lb_instructions->setText(r.data().instructions());
 	ui_.lb_instructions->setVisible(!r.data().instructions().isEmpty());
 
@@ -56,6 +59,8 @@ AHCFormDlg::AHCFormDlg(const AHCommand& r, const Jid& receiver, XMPP::Client* cl
 	xdata_ = new XDataWidget(this, client_, receiver);
 	xdata_->setForm(r.data(), false);
 	ui_.scrollArea->setWidget(xdata_);
+	if (!r.hasData() && (r.hasNote() || !r.data().instructions().isEmpty()))
+		ui_.scrollArea->setVisible(false);
 
 	ui_.busy->setVisible(!final);
 
