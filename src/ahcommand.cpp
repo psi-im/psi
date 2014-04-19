@@ -81,12 +81,12 @@ AHCommand::AHCommand(const QDomElement& q) : hasData_(false), defaultAction_(NoA
 		else if (tag == "note") {
 			QString stype = e.attribute("type");
 			if (stype == "warn")
-				note_.noteType = Warn;
+				note_.type = Warn;
 			else if (stype == "error")
-				note_.noteType = Error;
+				note_.type = Error;
 			else
-				note_.noteType = Info;
-			note_.noteText = e.text();
+				note_.type = Info;
+			note_.text = e.text();
 		}
 	}
 }

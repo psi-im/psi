@@ -49,7 +49,7 @@ AHCFormDlg::AHCFormDlg(const AHCommand& r, const Jid& receiver, XMPP::Client* cl
 	node_ = r.node();
 	sessionId_ = r.sessionId();
 
-	ui_.lb_note->setText(r.note().noteText);
+	ui_.lb_note->setText(r.note().text);
 	ui_.lb_note->setVisible(r.hasNote());
 
 	ui_.lb_instructions->setText(r.data().instructions());

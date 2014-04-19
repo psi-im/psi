@@ -61,9 +61,9 @@ public:
 	typedef QList<Action> ActionList;
 	enum NoteType { Info, Warn, Error };
 	struct Note {
-		QString  noteText;
-		NoteType noteType;
-		Note() : noteType(Info) {}
+		QString  text;
+		NoteType type;
+		Note() : type(Info) {}
 	};
 
 	// Constructors
@@ -81,7 +81,7 @@ public:
 	Action action() const { return action_; }
 	const QString& sessionId() const { return sessionId_; }
 	const AHCError& error() const { return error_; }
-	bool hasNote() const { return !note_.noteText.isEmpty(); }
+	bool hasNote() const { return !note_.text.isEmpty(); }
 	const Note& note() const { return note_; }
 
 	// XML conversion
