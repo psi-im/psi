@@ -76,6 +76,18 @@ AHCommand::AHCommand(const QDomElement& q) : hasData_(false), defaultAction_(NoA
 					actions_ += a;
 			}
 		}
+
+		// Note
+		else if (tag == "note") {
+			QString stype = e.attribute("type");
+			if (stype == "warn")
+				note_.type = Warn;
+			else if (stype == "error")
+				note_.type = Error;
+			else
+				note_.type = Info;
+			note_.text = e.text();
+		}
 	}
 }
 

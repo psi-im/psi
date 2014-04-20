@@ -59,6 +59,12 @@ public:
 	enum Action { NoAction, Execute, Prev, Next, Complete, Cancel };
 	enum Status { NoStatus, Completed, Executing, Canceled };
 	typedef QList<Action> ActionList;
+	enum NoteType { Info, Warn, Error };
+	struct Note {
+		QString  text;
+		NoteType type;
+		Note() : type(Info) {}
+	};
 
 	// Constructors
 	AHCommand(const QString& node, const QString& sessionId = "", Action action = Execute);
@@ -75,6 +81,8 @@ public:
 	Action action() const { return action_; }
 	const QString& sessionId() const { return sessionId_; }
 	const AHCError& error() const { return error_; }
+	bool hasNote() const { return !note_.text.isEmpty(); }
+	const Note& note() const { return note_; }
 
 	// XML conversion
 	QDomElement toXml(QDomDocument* doc, bool submit) const;
@@ -107,6 +115,7 @@ private:
 	Action action_;
 	QString sessionId_;
 	AHCError error_;
+	Note note_;
 };
 
 #endif
