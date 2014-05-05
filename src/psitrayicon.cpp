@@ -139,10 +139,10 @@ QPixmap PsiTrayIcon::makeIcon()
 	// draw a dropshadow
 	for(n2 = 0; n2 < in.height(); ++n2) {
 		for(n = 0; n < in.width(); ++n) {
-			if(int a = qAlpha(in.pixel(n,n2))) {
+			if(int a = qAlpha(in.pixel(n,n2)) / 2) {
 				int x = n + xo + 2;
 				int y = n2 + yo + 2;
-				real.setPixel(x, y, qRgba(0x80,0x80,0x80,a));
+				real.setPixel(x, y, qRgba(0,0,0,a));
 			}
 		}
 	}
