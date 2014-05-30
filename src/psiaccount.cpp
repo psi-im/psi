@@ -5597,10 +5597,6 @@ void PsiAccount::pgp_verifyFinished()
 			ur.setPublicKeyID(signer.key().pgpPublicKey().keyId());
 			ur.setPGPVerifyStatus(signer.identityResult());
 			ur.setSigTimestamp(signer.timestamp());
-
-			// if the key doesn't match the assigned key, unassign it
-			if(signer.key().pgpPublicKey().keyId() != u->publicKeyID())
-				u->setPublicKeyID("");
 		}
 		else {
 			ur.setPGPVerifyStatus(-1);
