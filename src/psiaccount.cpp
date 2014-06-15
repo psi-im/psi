@@ -2669,16 +2669,16 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 		// urls or subject on a chat message?  convert back to regular message
 		//if(m.type() == "chat" && (!m.urlList().isEmpty() || !m.subject().isEmpty()))
 		//	m.setType("");
-	}
 
-	if( m.messageReceipt() == ReceiptRequest && !m.id().isEmpty() &&
-		PsiOptions::instance()->getOption("options.ui.notifications.send-receipts").toBool()) {
-		UserListItem *u;
-		if(j.compare(d->self.jid(), false) || groupchats().contains(j.bare()) || (!d->loginStatus.isInvisible() && (u = d->userList.find(j)) && (u->subscription().type() == Subscription::To || u->subscription().type() == Subscription::Both))) {
-			Message tm(m.from());
-			tm.setMessageReceiptId(m.id());
-			tm.setMessageReceipt(ReceiptReceived);
-			dj_sendMessage(tm, false);
+		if( m.messageReceipt() == ReceiptRequest && !m.id().isEmpty() &&
+			PsiOptions::instance()->getOption("options.ui.notifications.send-receipts").toBool()) {
+			UserListItem *u;
+			if(j.compare(d->self.jid(), false) || groupchats().contains(j.bare()) || (!d->loginStatus.isInvisible() && (u = d->userList.find(j)) && (u->subscription().type() == Subscription::To || u->subscription().type() == Subscription::Both))) {
+				Message tm(m.from());
+				tm.setMessageReceiptId(m.id());
+				tm.setMessageReceipt(ReceiptReceived);
+				dj_sendMessage(tm, false);
+			}
 		}
 	}
 
