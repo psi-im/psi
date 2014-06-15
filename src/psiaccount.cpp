@@ -2584,10 +2584,6 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 	}
 #endif
 
-	// only toggle if not an invite or body is not empty
-	if(_m.invite().isEmpty() && !_m.body().isEmpty() && _m.mucInvites().isEmpty() && _m.rosterExchangeItems().isEmpty())
-		toggleSecurity(_m.from(), _m.wasEncrypted());
-
 	UserListItem *u = findFirstRelevant(_m.from());
 	if(u) {
 		if(_m.type() == "chat") u->setLastMessageType(1);
@@ -2626,13 +2622,6 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 	else
 		j = ul.first()->jid();
 
-	// Roster item exchange
-	if (!_m.rosterExchangeItems().isEmpty()) {
-		RosterExchangeEvent* ree = new RosterExchangeEvent(j,_m.rosterExchangeItems(), _m.body(), this);
-		handleEvent(ree, IncomingStanza);
-		return;
-	}
-
 	c = findChatDialog(j);
 	if(!c)
 		c = findChatDialog(m.from().full());
@@ -2648,6 +2637,17 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 	}
 	else
 	{
+		// only toggle if not an invite or body is not empty
+		if(_m.invite().isEmpty() && !_m.body().isEmpty() && _m.mucInvites().isEmpty() && _m.rosterExchangeItems().isEmpty())
+			toggleSecurity(_m.from(), _m.wasEncrypted());
+
+		// Roster item exchange
+		if (!_m.rosterExchangeItems().isEmpty()) {
+			RosterExchangeEvent* ree = new RosterExchangeEvent(j,_m.rosterExchangeItems(), _m.body(), this);
+			handleEvent(ree, IncomingStanza);
+			return;
+		}
+
 		// change the type?
 		if (!EventDlg::messagingEnabled()) {
 			m.setType("chat");
