@@ -2646,28 +2646,30 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 
 		m.setBody(msg + "\n------\n" + m.body());
 	}
-
-	// change the type?
-	if (!EventDlg::messagingEnabled()) {
-		m.setType("chat");
-	}
-	else if (m.type() != "headline" && m.invite().isEmpty() && m.mucInvites().isEmpty()) {
-		const QString type = PsiOptions::instance()->getOption("options.messages.force-incoming-message-type").toString();
-		if (type == "message")
-			m.setType("");
-		else if (type == "chat")
+	else
+	{
+		// change the type?
+		if (!EventDlg::messagingEnabled()) {
 			m.setType("chat");
-		else if (type == "current-open") {
-			if (c != NULL && !c->isHidden())
-				m.setType("chat");
-			else
-				m.setType("");
 		}
-	}
+		else if (m.type() != "headline" && m.invite().isEmpty() && m.mucInvites().isEmpty()) {
+			const QString type = PsiOptions::instance()->getOption("options.messages.force-incoming-message-type").toString();
+			if (type == "message")
+				m.setType("");
+			else if (type == "chat")
+				m.setType("chat");
+			else if (type == "current-open") {
+				if (c != NULL && !c->isHidden())
+					m.setType("chat");
+				else
+					m.setType("");
+			}
+		}
 
-	// urls or subject on a chat message?  convert back to regular message
-	//if(m.type() == "chat" && (!m.urlList().isEmpty() || !m.subject().isEmpty()))
-	//	m.setType("");
+		// urls or subject on a chat message?  convert back to regular message
+		//if(m.type() == "chat" && (!m.urlList().isEmpty() || !m.subject().isEmpty()))
+		//	m.setType("");
+	}
 
 	if( m.messageReceipt() == ReceiptRequest && !m.id().isEmpty() &&
 		PsiOptions::instance()->getOption("options.ui.notifications.send-receipts").toBool()) {
