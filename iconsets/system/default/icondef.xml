@@ -96,6 +96,11 @@
 	</icon>
 
 	<icon>
+		<x xmlns='name'>psi/manageContact</x>
+		<object mime='image/png'>manage_contact.png</object>
+	</icon>
+
+	<icon>
 		<x xmlns='name'>psi/notification_chat_delivery_ok</x>
 		<object mime='image/png'>notification_chat_delivery_ok.png</object>
 	</icon>

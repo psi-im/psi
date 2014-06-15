@@ -375,6 +375,7 @@ public:
 
 		inviteToGroupchatMenu_ = new InviteToGroupChatMenu(menu_);
 		inviteToGroupchatMenu_->setTitle(tr("In&vite To"));
+		inviteToGroupchatMenu_->setIcon(IconsetFactory::icon("psi/groupChat").icon());
 		connect(inviteToGroupchatMenu_, SIGNAL(inviteToGroupchat(PsiAccount*, QString)), SLOT(inviteToGroupchat(PsiAccount*, QString)));
 
 		groupMenu_ = new GroupMenu(menu_);
@@ -403,7 +404,7 @@ public:
 		menu_->addSeparator();
 		menu_->addAction(receiveIncomingEventAction_);
 		menu_->addSeparator();
-		msgMenu_ = menu_->addMenu(tr("Send &Message"));
+		msgMenu_ = menu_->addMenu(IconsetFactory::icon("psi/sendMessage").icon(), tr("Send &Message"));
 		msgMenu_->addAction(sendMessageAction_);
 		msgMenu_->addMenu(sendMessageToMenu_);
 		msgMenu_->addAction(openChatAction_);
@@ -417,7 +418,7 @@ public:
 		menu_->addAction(sendFileAction_);
 		menu_->addMenu(inviteToGroupchatMenu_);
 		menu_->addSeparator();
-		mngMenu_ = menu_->addMenu(tr("Manage &Contact"));
+		mngMenu_ = menu_->addMenu(IconsetFactory::icon("psi/manageContact").icon(), tr("Manage &Contact"));
 		mngMenu_->addAction(renameAction_);
 		mngMenu_->addMenu(groupMenu_);
 		authMenu_ = mngMenu_->addMenu(tr("&Authorization"));
