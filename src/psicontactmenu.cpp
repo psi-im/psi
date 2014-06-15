@@ -219,7 +219,10 @@ public:
 	QAction* disableMoodNotificationsAction_;
 #else
 	QAction* addAuthAction_;
+	QAction* transportLogonAction_;
+	QAction* transportLogoffAction_;
 	QAction* receiveIncomingEventAction_;
+	QMenu* msgMenu_;
 	QAction* sendMessageAction_;
 	QMenu* sendMessageToMenu_;
 	QAction* openChatAction_;
@@ -231,9 +234,8 @@ public:
 	QAction* voiceCallAction_;
 	QAction* sendFileAction_;
 	InviteToGroupChatMenu* inviteToGroupchatMenu_;
+	QMenu* mngMenu_;
 	GroupMenu* groupMenu_;
-	QAction* transportLogonAction_;
-	QAction* transportLogoffAction_;
 	QMenu* authMenu_;
 	QAction* authResendAction_;
 	QAction* authRerequestAction_;
@@ -312,6 +314,13 @@ public:
 		addAuthAction_ = new IconAction(tr("Add/Authorize to Contact List"), this, "psi/addContact");
 		connect(addAuthAction_, SIGNAL(triggered()), SLOT(addAuth()));
 
+		transportLogonAction_ = new IconAction(tr("&Log On"), this, "");
+		connect(transportLogonAction_, SIGNAL(triggered()), SLOT(transportLogon()));
+		transportLogonAction_->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.login-transport"));
+
+		transportLogoffAction_ = new IconAction(tr("Log &Off"), this, "");
+		connect(transportLogoffAction_, SIGNAL(triggered()), SLOT(transportLogoff()));
+
 		receiveIncomingEventAction_ = new IconAction(tr("&Receive Incoming Event"), this, "");
 		connect(receiveIncomingEventAction_, SIGNAL(triggered()), SLOT(receiveIncomingEvent()));
 		receiveIncomingEventAction_->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.event"));
@@ -333,20 +342,13 @@ public:
 		sendFileAction_ = new IconAction(tr("Send &File"), this, "psi/upload");
 		connect(sendFileAction_, SIGNAL(triggered()), SLOT(sendFile()));
 
-		transportLogonAction_ = new IconAction(tr("&Log on"), this, "");
-		connect(transportLogonAction_, SIGNAL(triggered()), SLOT(transportLogon()));
-		transportLogonAction_->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.login-transport"));
-
-		transportLogoffAction_ = new IconAction(tr("Log Off"), this, "");
-		connect(transportLogoffAction_, SIGNAL(triggered()), SLOT(transportLogoff()));
-
-		authResendAction_ = new IconAction(tr("Resend Authorization To"), this, "");
+		authResendAction_ = new IconAction(tr("Re&send Authorization To"), this, "");
 		connect(authResendAction_, SIGNAL(triggered()), SLOT(authResend()));
 
-		authRerequestAction_ = new IconAction(tr("Rerequest Authorization From"), this, "");
+		authRerequestAction_ = new IconAction(tr("Re&request Authorization From"), this, "");
 		connect(authRerequestAction_, SIGNAL(triggered()), SLOT(authRerequest()));
 
-		authRemoveAction_ = new IconAction(tr("Remove Authorization From"), this, "");
+		authRemoveAction_ = new IconAction(tr("Re&move Authorization From"), this, "");
 		connect(authRemoveAction_, SIGNAL(triggered()), SLOT(authRemove()));
 
 		pictureAssignAction_ = new IconAction(tr("&Assign Custom Picture"), this, "");
@@ -372,37 +374,40 @@ public:
 		historyAction_->setShortcuts(ShortcutManager::instance()->shortcuts("common.history"));
 
 		inviteToGroupchatMenu_ = new InviteToGroupChatMenu(menu_);
-		inviteToGroupchatMenu_->setTitle(tr("Invite To"));
+		inviteToGroupchatMenu_->setTitle(tr("In&vite To"));
 		connect(inviteToGroupchatMenu_, SIGNAL(inviteToGroupchat(PsiAccount*, QString)), SLOT(inviteToGroupchat(PsiAccount*, QString)));
 
 		groupMenu_ = new GroupMenu(menu_);
 		groupMenu_->setTitle(tr("&Group"));
 		connect(groupMenu_, SIGNAL(groupActivated(QString)), SLOT(setContactGroup(QString)));
 
-		sendMessageToMenu_ = new ResourceMenu(tr("Send Message To"), contact_, menu_);
+		sendMessageToMenu_ = new ResourceMenu(tr("Send Message T&o"), contact_, menu_);
 		connect(sendMessageToMenu_, SIGNAL(resourceActivated(PsiContact*, const XMPP::Jid&)), SLOT(sendMessageTo(PsiContact*, const XMPP::Jid&)));
 
-		openChatToMenu_ = new ResourceMenu(tr("Open Chat To"), contact_, menu_);
+		openChatToMenu_ = new ResourceMenu(tr("Open Chat &To"), contact_, menu_);
 		connect(openChatToMenu_, SIGNAL(resourceActivated(PsiContact*, const XMPP::Jid&)), SLOT(openChatTo(PsiContact*, const XMPP::Jid&)));
 
-		openWhiteboardToMenu_ = new ResourceMenu(tr("Open a Whiteboard To"), contact_, menu_);
+		openWhiteboardToMenu_ = new ResourceMenu(tr("Open a White&board To"), contact_, menu_);
 		connect(openWhiteboardToMenu_, SIGNAL(resourceActivated(PsiContact*, const XMPP::Jid&)), SLOT(openWhiteboardTo(PsiContact*, const XMPP::Jid&)));
 
 		executeCommandMenu_ = new ResourceMenu(tr("E&xecute Command"), contact_, menu_);
 		connect(executeCommandMenu_, SIGNAL(resourceActivated(PsiContact*, const XMPP::Jid&)), SLOT(executeCommand(PsiContact*, const XMPP::Jid&)));
 
-		activeChatsMenu_ = new ResourceMenu(tr("Active Chats"), contact_, menu_);
+		activeChatsMenu_ = new ResourceMenu(tr("&Active Chats"), contact_, menu_);
 		activeChatsMenu_->setActiveChatsMode(true);
 		connect(activeChatsMenu_, SIGNAL(resourceActivated(PsiContact*, const XMPP::Jid&)), SLOT(openActiveChat(PsiContact*, const XMPP::Jid&)));
 
 		menu_->addAction(addAuthAction_);
+		menu_->addAction(transportLogonAction_);
+		menu_->addAction(transportLogoffAction_);
 		menu_->addSeparator();
 		menu_->addAction(receiveIncomingEventAction_);
 		menu_->addSeparator();
-		menu_->addAction(sendMessageAction_);
-		menu_->addMenu(sendMessageToMenu_);
-		menu_->addAction(openChatAction_);
-		menu_->addMenu(openChatToMenu_);
+		msgMenu_ = menu_->addMenu(tr("Send &Message"));
+		msgMenu_->addAction(sendMessageAction_);
+		msgMenu_->addMenu(sendMessageToMenu_);
+		msgMenu_->addAction(openChatAction_);
+		msgMenu_->addMenu(openChatToMenu_);
 		menu_->addAction(openWhiteboardAction_);
 		menu_->addMenu(openWhiteboardToMenu_);
 		menu_->addMenu(executeCommandMenu_);
@@ -412,21 +417,20 @@ public:
 		menu_->addAction(sendFileAction_);
 		menu_->addMenu(inviteToGroupchatMenu_);
 		menu_->addSeparator();
-		menu_->addAction(renameAction_);
-		menu_->addMenu(groupMenu_);
-		menu_->addAction(transportLogonAction_);
-		menu_->addAction(transportLogoffAction_);
-		authMenu_ = menu_->addMenu(tr("Authorization"));
+		mngMenu_ = menu_->addMenu(tr("Manage &Contact"));
+		mngMenu_->addAction(renameAction_);
+		mngMenu_->addMenu(groupMenu_);
+		authMenu_ = mngMenu_->addMenu(tr("&Authorization"));
 		authMenu_->addAction(authResendAction_);
 		authMenu_->addAction(authRerequestAction_);
 		authMenu_->addAction(authRemoveAction_);
-		menu_->addAction(removeAction_);
+		mngMenu_->addAction(removeAction_);
 		menu_->addSeparator();
-		pictureMenu_ = menu_->addMenu(tr("&Picture"));
+		pictureMenu_ = mngMenu_->addMenu(tr("&Picture"));
 		pictureMenu_->addAction(pictureAssignAction_);
 		pictureMenu_->addAction(pictureClearAction_);
-		menu_->addAction(gpgAssignKeyAction_);
-		menu_->addAction(gpgUnassignKeyAction_);
+		mngMenu_->addAction(gpgAssignKeyAction_);
+		mngMenu_->addAction(gpgUnassignKeyAction_);
 		menu_->addAction(vcardAction_);
 		menu_->addAction(historyAction_);
 #endif
