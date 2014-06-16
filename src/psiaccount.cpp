@@ -5583,6 +5583,7 @@ void PsiAccount::verifyStatus(const Jid &j, const Status &s)
 
 void PsiAccount::pgp_verifyFinished()
 {
+#ifdef HAVE_PGPUTIL
 	PGPTransaction *t = (PGPTransaction*) sender();
 	Jid j = t->jid();
 	foreach(UserListItem *u, findRelevant(j)) {
@@ -5599,6 +5600,16 @@ void PsiAccount::pgp_verifyFinished()
 			ur.setPublicKeyID(signer.key().pgpPublicKey().keyId());
 			ur.setPGPVerifyStatus(signer.identityResult());
 			ur.setSigTimestamp(signer.timestamp());
+
+			if(u->publicKeyID().isEmpty() &&
+			   PsiOptions::instance()->getOption("options.pgp.auto-assign").toBool()) {
+				QString keyId = signer.key().pgpPublicKey().keyId();
+				QCA::KeyStoreEntry key = PGPUtil::instance().getPublicKeyStoreEntry(keyId);
+				if(!key.isNull())
+				{
+					u->setPublicKeyID(keyId);
+				}
+			}
 		}
 		else {
 			ur.setPGPVerifyStatus(-1);
@@ -5607,6 +5618,7 @@ void PsiAccount::pgp_verifyFinished()
 	}
 
 	t->deleteLater();
+#endif
 }
 
 int PsiAccount::sendMessageEncrypted(const Message &_m)
