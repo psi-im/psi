@@ -1,4 +1,4 @@
-include(../conf.pri)
+include($$top_builddir/conf.pri)
 
 # don't build iris apps
 CONFIG += no_tests

@@ -21,7 +21,7 @@ include(../qa/oldtest/unittest.pri)
 
 # qconf
 
-include(../conf.pri)
+include($$top_builddir/conf.pri)
 
 unix {
 	# Target

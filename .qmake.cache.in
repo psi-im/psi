@@ -1,0 +1,3 @@
+top_srcdir=$$PWD
+top_builddir=$$OUT_PWD
+top_iris_builddir=$$top_builddir/iris
