@@ -1622,6 +1622,12 @@ void PsiAccount::login()
 		connect(d->tlsHandler, SIGNAL(tlsHandshaken()), SLOT(tls_handshaken()));
 	}
 	d->conn->setProxy(p);
+	if (d->smState.sm_resumtion_supported && !d->smState.sm_resumption_location.first.isEmpty()) {
+		useHost = true;
+		host = d->smState.sm_resumption_location.first;
+		port = d->smState.sm_resumption_location.second;
+		d->smState.sm_resumption_location.first.clear(); // we don't want to try it again if failed
+	}
 	if (useHost) {
 		d->conn->setOptHostPort(host, port);
 		d->conn->setOptSSL(d->acc.ssl == UserAccount::SSL_Legacy);
