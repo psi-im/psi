@@ -6,7 +6,7 @@
 TEMPLATE = app
 TARGET   = psi
 CONFIG  += qt thread x11
-DESTDIR  = $$PWD/..
+DESTDIR  = $$top_builddir
 
 #CONFIG += use_crash
 CONFIG += pep
