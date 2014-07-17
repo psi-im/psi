@@ -1295,7 +1295,6 @@ PsiAccount::~PsiAccount()
 void PsiAccount::cleanupStream()
 {
 	// GSOC: Get SM state out of stream
-	fprintf(stderr, "\tPsiAccount::cleanupStream\n");
 	d->smState = d->stream->getSMState();
 	delete d->stream;
 	d->stream = 0;
@@ -1650,7 +1649,6 @@ void PsiAccount::login()
 	connect(d->stream, SIGNAL(stanzasAcked(int)), SLOT(messageStanzasAcked(int)));
 
 	Jid j = d->jid.withResource((d->acc.opt_automatic_resource ? localHostName() : d->acc.resource ));
-	fprintf(stderr, "\td->smState.sm_resumption_supported: %i\n", d->smState.sm_resumtion_supported);
 	if (d->smState.sm_resumtion_supported) d->stream->setSMState(d->smState);
 	d->client->connectToServer(d->stream, j);
 }

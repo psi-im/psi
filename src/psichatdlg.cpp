@@ -593,7 +593,7 @@ void PsiChatDlg::doSend() {
 		ChatDlg::doSend();
 	}
 	unacked_messages++;
-	qDebug("Show throbber instead of status icon.");
+	//qDebug("Show throbber instead of status icon.");
 	ui_.lb_status->setMovie(throbber_movie);
 	setContactToolTip(last_contact_tooltip);
 }
@@ -602,7 +602,7 @@ void PsiChatDlg::ackLastMessages(int msgs) {
 	unacked_messages = unacked_messages - msgs;
 	unacked_messages = unacked_messages < 0 ? 0 : unacked_messages;
 	if (unacked_messages == 0) {
-		qDebug("Show status icon instead of throbber.");
+		//qDebug("Show status icon instead of throbber.");
 		ui_.lb_status->setPsiIcon(current_status_icon);
 		setContactToolTip(last_contact_tooltip);
 	}
