@@ -190,9 +190,6 @@
          <property name="focusPolicy">
           <enum>Qt::NoFocus</enum>
          </property>
-         <property name="readOnly">
-          <bool>true</bool>
-         </property>
         </widget>
        </item>
       </layout>
@@ -282,6 +279,7 @@
    <class>ChatView</class>
    <extends>QFrame</extends>
    <header>chatview.h</header>
+   <container>1</container>
   </customwidget>
   <customwidget>
    <class>ChatSplitter</class>
@@ -303,11 +301,6 @@
    <class>IconLabel</class>
    <extends>QLabel</extends>
    <header>iconlabel.h</header>
-  </customwidget>
-  <customwidget>
-   <class>ChatView</class>
-   <extends>QTextEdit</extends>
-   <header>msgmle.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
