@@ -1295,9 +1295,10 @@ PsiAccount::~PsiAccount()
 void PsiAccount::cleanupStream()
 {
 	// GSOC: Get SM state out of stream
-	d->smState = d->stream->getSMState();
-	delete d->stream;
-	d->stream = 0;
+	if (d->stream) {
+		d->smState = d->stream->getSMState();
+		delete d->stream;
+	}
 
 	delete d->tls;
 	d->tls = 0;
