@@ -6,12 +6,14 @@ include(conf.pri)
 unix:system("echo \"include($$top_srcdir/src/conf_iris.pri)\" > $$top_builddir/iris/conf.pri")
 windows:system("echo include($$top_srcdir/src/conf_iris.pri) > $$top_builddir\\iris\\conf.pri")
 
+sub_initvars.file = initvars.pro
 sub_iris.subdir = iris
+sub_iris.depends = sub_initvars
 sub_src.subdir = src
 sub_src.depends = sub_iris
 
 SUBDIRS += \
-	initvars.pro \
+	sub_initvars \
 	sub_iris \
 	sub_src
 
