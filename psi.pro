@@ -10,7 +10,7 @@ sub_initvars.file = initvars.pro
 sub_iris.subdir = iris
 sub_iris.depends = sub_initvars
 sub_src.subdir = src
-sub_src.depends = sub_iris
+sub_src.depends = sub_initvars sub_iris
 
 SUBDIRS += \
 	sub_initvars \
