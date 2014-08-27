@@ -18,7 +18,6 @@
 #include <QDragEnterEvent>
 #include <QMessageBox>
 #include <QDebug>
-#include <QMovie>
 
 #include "psicon.h"
 #include "psiaccount.h"
@@ -48,7 +47,7 @@
 
 #define MCMDCHAT		"http://psi-im.org/ids/mcmd#chatmain"
 
-QMovie *PsiChatDlg::throbber_movie = 0;
+PsiIcon* PsiChatDlg::throbber_icon = 0;
 
 class PsiChatDlg::ChatDlgMCmdProvider : public QObject, public MCmdProviderIface {
 	Q_OBJECT
@@ -225,10 +224,8 @@ void PsiChatDlg::initUi()
 
 	ui_.mini_prompt->hide();
 
-	if (throbber_movie == 0) {
-		throbber_movie = new QMovie(ApplicationInfo::resourcesDir() + "/iconsets/system/default/tango-throbber.mng");
-		throbber_movie->start();
-		qDebug() << "Movie valid: " << throbber_movie->isValid();
+	if (throbber_icon == 0) {
+		throbber_icon = (PsiIcon *)IconsetFactory::iconPtr("psi/throbber");
 	}
 	unacked_messages = 0;
 }
@@ -408,7 +405,7 @@ void PsiChatDlg::contactUpdated(UserListItem* u, int status, const QString& stat
 	if (unacked_messages == 0) {
 		ui_.lb_status->setPsiIcon(current_status_icon);
 	} else {
-		ui_.lb_status->setMovie(throbber_movie);
+		ui_.lb_status->setPsiIcon(throbber_icon);
 	}
 
 	if (u) {
@@ -594,7 +591,7 @@ void PsiChatDlg::doSend() {
 	}
 	unacked_messages++;
 	//qDebug("Show throbber instead of status icon.");
-	ui_.lb_status->setMovie(throbber_movie);
+	ui_.lb_status->setPsiIcon(throbber_icon);
 	setContactToolTip(last_contact_tooltip);
 }
 
