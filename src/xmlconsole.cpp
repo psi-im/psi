@@ -32,6 +32,7 @@
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psicontactlist.h"
+#include "textutil.h"
 
 //----------------------------------------------------------------------------
 // XmlConsole
@@ -139,16 +140,18 @@ void XmlConsole::dumpRingbuf()
 void XmlConsole::client_xmlIncoming(const QString &str)
 {
 	if (!filtered(str)) {
+		ui_.te->moveCursor(QTextCursor::End);
 		ui_.te->setTextColor(Qt::yellow);
-		ui_.te->append(str + '\n');
+		ui_.te->insertPlainText(str + '\n');
 	}
 }
 
 void XmlConsole::client_xmlOutgoing(const QString &str)
 {
 	if(!filtered(str)) {
+		ui_.te->moveCursor(QTextCursor::End);
 		ui_.te->setTextColor(Qt::red);
-		ui_.te->append(str + '\n');
+		ui_.te->insertPlainText(str + '\n');
 	}
 }
 
