@@ -589,7 +589,9 @@ void PsiChatDlg::doSend() {
 	} else {
 		ChatDlg::doSend();
 	}
-	unacked_messages++;
+	if (account()->client()->isStreamManagementActive()) {
+		unacked_messages++;
+	}
 	//qDebug("Show throbber instead of status icon.");
 	ui_.lb_status->setPsiIcon(throbber_icon);
 	setContactToolTip(last_contact_tooltip);
