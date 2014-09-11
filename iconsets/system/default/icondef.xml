@@ -432,6 +432,12 @@
 		<object mime='image/png'>theme_title_texture.png</object>
 	</icon>
 
+	<icon>
+		<x xmlns='name'>psi/throbber</x>
+		<x xmlns='type'>animation</x>
+		<object mime='image/png'>throbber.png</object>
+	</icon>
+
 	<!-- Whiteboarding -->
 	<icon>
 		<x xmlns='name'>psi/whiteboard</x>

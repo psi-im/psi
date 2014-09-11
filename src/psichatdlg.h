@@ -88,7 +88,7 @@ private:
 	QString last_contact_tooltip;
 	int unacked_messages;
 
-	static QMovie *throbber_movie;
+	static PsiIcon *throbber_icon;
 };
 
 #endif
