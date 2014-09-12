@@ -7,7 +7,6 @@
 
 #include "optionstree.h"
 #include "varianttree.h"
-#include "xmpp/base64/base64.h"
 
 OptionsTreeWriter::OptionsTreeWriter(const OptionsTree* options)
 	: options_(options)
@@ -105,7 +104,7 @@ void OptionsTreeWriter::writeVariant(const QVariant& variant)
 		writeTextElement("height", QString::number(variant.toRect().height()));
 	}
 	else if (variant.type() == QVariant::ByteArray) {
-		writeCharacters(XMPP::Base64::encode(variant.toByteArray()));
+		writeCharacters(variant.toByteArray().toBase64());
 	}
 	else if (variant.type() == QVariant::KeySequence) {
 		QKeySequence k = variant.value<QKeySequence>();
