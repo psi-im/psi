@@ -6,7 +6,6 @@
 
 #include "optionstree.h"
 #include "varianttree.h"
-#include "xmpp/base64/base64.h"
 
 OptionsTreeReader::OptionsTreeReader(OptionsTree* options)
 	: options_(options)
@@ -80,7 +79,7 @@ QVariant OptionsTreeReader::readVariant(const QString& type)
 	}
 	else if (type == "QByteArray") {
 		result = QByteArray();
-		result = XMPP::Base64::decode(readElementText());
+		result = QByteArray::fromBase64(readElementText().toLatin1());
 	}
 	else {
 		QVariant::Type varianttype;
