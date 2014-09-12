@@ -31,7 +31,7 @@
 #endif
 
 #include "psipopupinterface.h"
-#include "xmpp/jid/jid.h"
+#include "xmpp_jid.h"
 
 class QDBusPendingCallWatcher;
 class QTimer;

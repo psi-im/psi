@@ -23,7 +23,7 @@
 #include "psiaccount.h"
 #include "psicon.h"
 #include "psipopupinterface.h"
-#include "xmpp/jid/jid.h"
+#include "xmpp_jid.h"
 
 #include <QPluginLoader>
 #include <QtPlugin>
