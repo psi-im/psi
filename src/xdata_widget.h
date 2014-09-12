@@ -28,7 +28,7 @@
 
 #include "xmpp_stanza.h"
 #include "xmpp_xdata.h"
-#include "xmpp/jid/jid.h"
+#include "xmpp_jid.h"
 
 class XDataField;
 
