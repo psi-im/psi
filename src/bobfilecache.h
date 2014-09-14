@@ -21,7 +21,7 @@
 #ifndef BOB_H
 #define BOB_H
 
-#include "xmpp/xmpp-im/xmpp_bitsofbinary.h"
+#include "iris/xmpp_bitsofbinary.h"
 
 using namespace XMPP;
 
