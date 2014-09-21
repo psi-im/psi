@@ -223,7 +223,7 @@ void OptionsTabStatus::selectStatusPreset(int x)
 	disconnect(d->le_sp_priority, SIGNAL(textChanged(const QString&)), 0, 0);
 	if ( x == -1 ) {
 		setStatusPresetWidgetsEnabled(false);
-		d->te_sp->setText("");
+		d->te_sp->setPlainText("");
 		d->le_sp_priority->clear();
 
 		//noDirty = false;
@@ -241,7 +241,7 @@ void OptionsTabStatus::selectStatusPreset(int x)
 		preset = presets[name];
 	}
 
-	d->te_sp->setText(preset.message());
+	d->te_sp->setPlainText(preset.message());
 	if (preset.priority().hasValue())
 		d->le_sp_priority->setText(QString::number(preset.priority().value()));
 	else
