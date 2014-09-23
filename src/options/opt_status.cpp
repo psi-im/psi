@@ -170,7 +170,7 @@ void OptionsTabStatus::restoreOptions()
 	d->ck_asAway->setChecked( PsiOptions::instance()->getOption("options.status.auto-away.use-away").toBool() );
 	d->ck_asXa->setChecked( PsiOptions::instance()->getOption("options.status.auto-away.use-not-availible").toBool() );
 	d->ck_asOffline->setChecked( PsiOptions::instance()->getOption("options.status.auto-away.use-offline").toBool() );
-	d->te_asMessage->setText( PsiOptions::instance()->getOption("options.status.auto-away.message").toString() );
+	d->te_asMessage->setPlainText( PsiOptions::instance()->getOption("options.status.auto-away.message").toString() );
 	if (PsiOptions::instance()->getOption("options.status.auto-away.force-priority").toBool()) {
 		d->le_asPriority->setText(QString::number(PsiOptions::instance()->getOption("options.status.auto-away.priority").toInt()));
 	} else {
