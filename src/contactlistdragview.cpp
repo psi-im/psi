@@ -88,14 +88,24 @@ ContactListDragView::~ContactListDragView()
  */
 void ContactListDragView::addContextMenuAction(QAction* action)
 {
-	foreach(QAction* act, findChildren<QAction*>()) {
-		// TODO: maybe check individual shortcuts too?
-		if (act->shortcuts() == action->shortcuts()) {
-			return;
+	QMenu* menu = action->menu();
+	if (menu) {
+		// if the action contains a menu, add the menu's actions instead
+		foreach(QAction* subact, menu->actions()) {
+			addContextMenuAction(subact);
 		}
 	}
+	else
+	{
+		foreach(QAction* act, findChildren<QAction*>()) {
+			// TODO: maybe check individual shortcuts too?
+			if (act->shortcuts() == action->shortcuts()) {
+				return;
+			}
+		}
 
-	ContactListView::addContextMenuAction(action);
+		ContactListView::addContextMenuAction(action);
+	}
 }
 
 void ContactListDragView::setItemDelegate(QAbstractItemDelegate* delegate)
