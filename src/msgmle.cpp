@@ -32,6 +32,7 @@
 #include <QTextCharFormat>
 #include <QTextDocument>
 #include <QTimer>
+#include <QMimeData>
 
 #include "shortcutmanager.h"
 #include "spellchecker/spellhighlighter.h"
