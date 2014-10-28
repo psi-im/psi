@@ -611,7 +611,11 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 #endif
 
 	ui_.lv_users->setMainDlg(this);
+#warning "FIXME: In Qt5 setSupportedDragActions is obsoleted."
+#warning "QTreeWidget doesn't allow to use own model. So should be rewritten to QTreeView."
+#ifndef HAVE_QT5
 	ui_.lv_users->model()->setSupportedDragActions(Qt::CopyAction);
+#endif
 	connect(ui_.lv_users, SIGNAL(action(const QString &, const Status &, int)), SLOT(lv_action(const QString &, const Status &, int)));
 	connect(ui_.lv_users, SIGNAL(insertNick(const QString&)), d, SLOT(insertNick(const QString&)));
 
