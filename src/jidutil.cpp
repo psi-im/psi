@@ -82,10 +82,13 @@ QString JIDUtil::decode(const QString &jid)
 	}
 
 	// search for the _at_ backwards, just in case
-	for(n = (int)jid2.length(); n >= 3; --n) {
-		if(jid2.mid(n, 4) == "_at_") {
-			jid2.replace(n, 4, "@");
-			break;
+	for(n = jid2.length()-5; n >= 1; --n) {
+		if(jid2.at(n) == '_') {
+			if(jid2.mid(n, 4) == "_at_") {
+				jid2.replace(n, 4, "@");
+				break;
+			}
+			n -= 2;
 		}
 	}
 
