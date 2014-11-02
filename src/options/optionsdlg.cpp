@@ -89,12 +89,18 @@ public:
 #endif
 			iconSize = QSize(16, 16);
 		QRect iconRect = opt.rect;
-		iconRect.setLeft(4);
+		QRect textRect = opt.rect;
 		iconRect.setWidth(iconSize.width());
+		if (opt.direction == Qt::LeftToRight) {
+			iconRect.moveLeft(4);
+			textRect.setLeft(iconRect.right() + 8);
+		}
+		else {
+			iconRect.moveRight(opt.rect.right() - 4);
+			textRect.setRight(iconRect.left() - 8);
+		}
 		icon.paint(painter, iconRect, Qt::AlignCenter, QIcon::Normal, QIcon::On);
 
-		QRect textRect = opt.rect;
-		textRect.setLeft(iconRect.right() + 8);
 		QPalette::ColorGroup cg = option.state & QStyle::State_Enabled
 		                          ? QPalette::Normal : QPalette::Disabled;
 		if (cg == QPalette::Normal && !(option.state & QStyle::State_Active)) {
