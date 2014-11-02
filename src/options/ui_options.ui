@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>408</width>
-    <height>293</height>
+    <width>516</width>
+    <height>304</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -26,7 +26,7 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>50</width>
+         <width>550</width>
          <height>0</height>
         </size>
        </property>
@@ -55,6 +55,12 @@
        </item>
        <item>
         <widget class="QStackedWidget" name="ws_tabs">
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
          <widget class="QWidget" name="WStackPage"/>
         </widget>
        </item>
