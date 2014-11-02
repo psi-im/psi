@@ -59,7 +59,8 @@ CertificateDisplayDialog::CertificateDisplayDialog(const QCA::Certificate &cert,
 	ui_.lb_sn->setText(cert.serialNumber().toString());
 
 	QString str;
-	str += "<table>";
+	QString direction = qApp->layoutDirection() == Qt::RightToLeft ? "rtl" : "ltr";
+	str += "<table dir=\"" + direction + "\">";
 	str += makePropTable(tr("Subject Details:"), cert.subjectInfo());
 	str += makePropTable(tr("Issuer Details:"), cert.issuerInfo());
 	str += "</table>";
@@ -105,5 +106,5 @@ QString CertificateDisplayDialog::makePropEntry(QCA::CertificateInfoType var, co
 	if(val.isEmpty())
 		return "";
 	else
-		return QString("<tr><td><nobr><b>") + name + "</b></nobr></td><td>" + val + "</td></tr>";
+		return QString("<tr><td><nobr><b>") + name + "</b></nobr></td><td dir=\"ltr\">" + val + "</td></tr>";
 }
