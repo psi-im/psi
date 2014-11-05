@@ -21,6 +21,7 @@ release/
 debug/
 Makefile.Release
 Makefile.Debug
+Makefile.initvars
 third-party/qca/.moc
 third-party/qca/_moc
 third-party/qca/.obj
@@ -57,5 +58,5 @@ checker
 /mac/disk
 /mac/Info.plist
 /psi.debug
-
+.qmake.cache
 
