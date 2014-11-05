@@ -1009,6 +1009,80 @@ void FileRequestDlg::thumbnailReceived()
 }
 
 //----------------------------------------------------------------------------
+// ColumnWidthManager
+//----------------------------------------------------------------------------
+class ColumnWidthManager
+{
+public:
+	ColumnWidthManager()
+	{
+		reset();
+	}
+
+	void reset()
+	{
+		curItemWidth = 0;
+		calcWidths.fill(0, 3);
+		reqWidthsMax.fill(0, 3);
+	}
+
+	int getColumnWidth(int col, int itemWidth = -1)
+	{
+		if (col < 0 || col > 2)
+			return 0;
+
+		if (itemWidth != -1 && curItemWidth != itemWidth) {
+			curItemWidth = itemWidth;
+			calculateWidth();
+		}
+		return calcWidths[col];
+	}
+
+	void setRequiredWidth(int col, int w)
+	{
+		if (col < 0 || col > 2)
+			return;
+
+		if (w > reqWidthsMax[col]) {
+			reqWidthsMax[col] = w;
+			calculateWidth();
+		}
+	}
+
+private:
+	void calculateWidth()
+	{
+		calcWidths[0] = reqWidthsMax[0];
+		int col1 = 0;
+		int col2 = 0;
+		int w = curItemWidth - calcWidths[0];
+		if (w > 0) {
+			col1 = w / 3;
+			col2 = w - col1;
+			int diff = w - reqWidthsMax[1] - reqWidthsMax[2];
+			if (diff >= 0) {
+				if (col2 > diff + reqWidthsMax[2]) {
+					col2 = diff + reqWidthsMax[2];
+				}
+				else if (col1 < reqWidthsMax[1]) {
+					col2 = w - reqWidthsMax[1];
+				}
+			}
+			else if (col2 > reqWidthsMax[2]) {
+				col2 = reqWidthsMax[2];
+			}
+			col1 = w - col2;
+		}
+		calcWidths[1] = col1;
+		calcWidths[2] = col2;
+	}
+
+	int curItemWidth;
+	QVector<int> calcWidths; // cache
+	QVector<int> reqWidthsMax;
+};
+
+//----------------------------------------------------------------------------
 // FileTransDlg
 //----------------------------------------------------------------------------
 class FileTransItem : public QListWidgetItem
@@ -1030,6 +1104,8 @@ public:
 	bool done;
 	QString error;
 	int height;
+	int margin;
+	ColumnWidthManager *cm;
 
 	FileTransItem(QListWidget *parent, const QString &_name, const QString &_path, qlonglong _size, const QString &_peer, bool _sending)
 	:QListWidgetItem(parent)
@@ -1044,6 +1120,8 @@ public:
 		sent = 0;
 		progress = 0;
 		dist = -1;
+		margin = 4;
+		cm = 0;
 	}
 
 	void niceUnit(qlonglong n, qlonglong *div, QString *unit)
@@ -1144,11 +1222,7 @@ public:
 
 	int progressBarWidth() const
 	{
-		int m = 4;
-		int w = listWidget()->visualItemRect(this).width();
-		//int pw = (w - (3 * m)) / 2;
-		int pw = (w - (3 * m)) * 2 / 3;
-		return pw;
+		return cm->getColumnWidth(2);
 	}
 
 	int progressBarDist(int width) const
@@ -1168,12 +1242,13 @@ public:
 		p->drawRect(x, y, width, height);
 		int xoff = x + 1;
 		int yoff = y + 1;
-		int xsize = width - 2;
-		int ysize = height - 2;
+		int xsize = width - 1;
+		int ysize = height - 1;
 
-		int dist = progressBarDist(width);
+		int dist = progressBarDist(width) + 1;
 		p->fillRect(xoff, yoff, dist, ysize, palette.brush(QPalette::Highlight));
-		p->fillRect(xoff + dist, yoff, width - 2 - dist, ysize, palette.brush(QPalette::Base));
+		if (dist < xsize)
+			p->fillRect(xoff + dist, yoff, xsize - dist, ysize, palette.brush(QPalette::Base));
 
 		int percent = progress * 100 / 8192;
 		QString s = QString::number(percent) + '%';
@@ -1236,38 +1311,7 @@ public:
 		QRect rect = option.rect;
 		int w = rect.width();
 		int h = rect.height();
-
-		// tint the background
-		/*//QColor base = Qt::black; //cg.base();
-		QColor base = Qt::white;
-		int red = base.red();
-		int green = base.green();
-		int blue = base.blue();
-		bool light = false;//true;
-		if(sending) {
-			if(light) {
-				green = green * 15 / 16;
-				blue = blue * 15 / 16;
-			}
-			else {
-				red = 255 - red;
-				red = red * 15 / 16;
-				red = 255 - red;
-			}
-		}
-		else {
-			if(light) {
-				red = red * 15 / 16;
-				blue = blue * 15 / 16;
-			}
-			else {
-				green = 255 - green;
-				green = green * 15 / 16;
-				green = 255 - green;
-			}
-		}
-		base.setRgb(red, green, blue);
-		cg.setColor(QColorGroup::Base, base);*/
+		int _w = w - margin * 3;
 
 		QPixmap pix(w, h);
 		QPainter *p = new QPainter(&pix);
@@ -1277,21 +1321,21 @@ public:
 		QFontMetrics fm(font);
 		QFontMetrics fmbold(boldFont);
 		QBrush br;
+		QPalette palette = option.palette;
 
-		// m = margin, pm = progress margin, ph = progress height, yoff = text y offset,
+		int col0 = cm->getColumnWidth(0, _w);
+		int col1 = cm->getColumnWidth(1, _w);
+		int col2 = cm->getColumnWidth(2, _w);
+
+		// pm = progress margin, ph = progress height, yoff = text y offset,
 		// tt = text top, tb = text bottom, pw = progress width, px = progress x coord
-		int m = 4;
 		int pm = 2;
 		int ph = fm.height() + 2 + (pm * 2);
 		int yoff = 1 + pm;
-		int tt = m + yoff + fm.ascent();
-		int tb = (m * 2) + ph + yoff + fm.ascent();
-		//int pw = (w - (3 * m)) / 2;
-		int pw = (w - (3 * m)) * 2 / 3;
-		int tw = (w - (3 * m)) - pw;
-		int px = (m * 2) + tw;
-
-		QPalette palette = option.palette;
+		int tt = margin + yoff + fm.ascent();
+		int tb = (margin * 2) + ph + yoff + fm.ascent();
+		int px = (margin * 2) + col0 + col1;
+		int pw = col2;
 
 		// clear out the background
 		if(option.state & QStyle::State_Selected)
@@ -1301,50 +1345,44 @@ public:
 		p->fillRect(0, 0, w, h, br);
 
 		// icon
-		int fullIconWidth;
 		if(!fileicon.isNull()) {
-			const QPixmap fIcon = fileicon.scaled(h-(m+1),h-(m+1), Qt::KeepAspectRatio, Qt::SmoothTransformation);
-			fullIconWidth = fIcon.width() + icon.width()/2;
-			p->drawPixmap(m, m + yoff, fIcon);
-			p->drawPixmap(m + fullIconWidth + 1 - icon.width(), m+yoff, icon);
+			int sz = col0 - 4;
+			QPixmap fIcon = fileicon.scaled(sz, sz, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+			p->drawPixmap(margin, margin + yoff, fIcon);
+			p->drawPixmap(margin + sz + 1 - icon.width(), margin + yoff, icon);
 		}
 		else {
-			fullIconWidth = icon.width();
-			p->drawPixmap(m, m + yoff, icon);
+			p->drawPixmap(margin, margin + yoff, icon);
 		}
 
-		int tm = m + fullIconWidth + 4;
-		tw = tw - (fullIconWidth + 4);
-
 		// filename / peer
+		QString flabel = FileTransDlg::tr("File") + ": ";
+		QString plabel = (sending ? FileTransDlg::tr("To") : FileTransDlg::tr("From")) + ": ";
 		if(option.state & QStyle::State_Selected)
 			p->setPen(palette.color(QPalette::HighlightedText));
 		else
 			p->setPen(palette.color(QPalette::Text));
+		int tm = margin + col0;
 		p->setFont(boldFont);
-		QString s1 = FileTransDlg::tr("File") + ": ";
-		QString s2 = FileTransDlg::tr("To") + ": ";
-		QString s3 = FileTransDlg::tr("From") + ": ";
-
-		int lw = qMax(qMax(fmbold.width(s1), fmbold.width(s2)), fmbold.width(s3));
-		int left = tw - lw;
-		p->drawText(tm, tt, s1);
-		p->drawText(tm, tb, sending ? s2 : s3);
+		p->drawText(tm, tt, flabel);
+		p->drawText(tm, tb, plabel);
+		_w = qMax(fmbold.width(flabel), fmbold.width(plabel));
+		int left = col1 - _w;
 		p->setFont(font);
-		p->drawText(tm + lw, tt, chopString(name, fm, left));
-		p->drawText(tm + lw, tb, chopString(peer, fm, left));
+		p->drawText(tm + _w, tt, chopString(name, fm, left));
+		p->drawText(tm + _w, tb, chopString(peer, fm, left));
 
 		// rate
+		QString slabel = FileTransDlg::tr("Status") + ": ";
+		_w = fmbold.width(slabel);
 		p->setFont(boldFont);
-		s1 = FileTransDlg::tr("Status") + ": ";
-		lw = fmbold.width(s1);
-		left = pw - lw;
-		p->drawText(px, tb, s1);
+		p->drawText(px, tb, slabel);
+		left = pw - _w;
 		p->setFont(font);
-		p->drawText(px + lw, tb, chopString(rate, fm, left));
+		p->drawText(px + _w, tb, chopString(rate, fm, left));
 
 		// progress bar
-		drawProgressBar(p, px, m, pw, ph);
+		drawProgressBar(p, px, margin, pw, ph);
 
 		delete p;
 		mp->drawPixmap(rect, pix);
@@ -1372,18 +1410,54 @@ public:
 
 		return s;
 	}
+
+	int neededColumnWidth(int col) const
+	{
+		if (col == 0) {
+			return (height - (margin + 1) + icon.width() / 2) + 4;
+		}
+		if (col == 1) {
+			QFont fbold = font();
+			fbold.setBold(true);
+			QFontMetrics fm(fbold);
+			QString fl = FileTransDlg::tr("File") + ": ";
+			QString pl = (sending ? FileTransDlg::tr("To") : FileTransDlg::tr("From")) + ": ";
+			int w = qMax(fm.width(fl), fm.width(pl));
+			fm = QFontMetrics(font());
+			w += qMax(fm.width(name), fm.width(peer));
+			return w;
+		}
+		if (col == 2) {
+			QFont fbold = font();
+			fbold.setBold(true);
+			QFontMetrics fm(fbold);
+			int w = fm.width(FileTransDlg::tr("Status") + ": ");
+			fm = QFontMetrics(font());
+			w += fm.width(rate);
+			return w;
+		}
+		return 0;
+	}
 };
 
 class FileTransView : public QListWidget
 {
 	Q_OBJECT
 public:
+	ColumnWidthManager *cm;
+
 	FileTransView(QWidget *parent=0, const char *name=0)
 	:QListWidget(parent)
 	{
 		Q_UNUSED(name)
+		cm = new ColumnWidthManager();
 		//connect(this, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(qlv_contextMenuRequested(QPoint)));
 		setItemDelegate(new FileTransDelegate(this));
+	}
+
+	~FileTransView()
+	{
+		delete cm;
 	}
 
 	bool maybeTip(const QPoint &pos)
@@ -1738,8 +1812,14 @@ int FileTransDlg::addItem(const QString &filename, const QString &path, const QP
 
 	i->fileicon = fileicon;
 
+	i->cm = d->lv->cm;
+
 	i->id = id;
 	i->setup();
+
+	for (int k = 0; k < 3; ++k)
+		d->lv->cm->setRequiredWidth(k, i->neededColumnWidth(k));
+
 	d->t.start(1000);
 	return id;
 }
@@ -1760,8 +1840,11 @@ void FileTransDlg::setProgress(int id, int step, int total, qlonglong sent, int 
 			i->updateRate();
 			do_repaint = true;
 		}
-		if(do_repaint)
+		if(do_repaint) {
+			for (int col = 0; col < 3; ++col)
+				d->lv->cm->setRequiredWidth(col, i->neededColumnWidth(col));
 			d->lv->viewport()->update();
+		}
 	}
 }
 
@@ -1830,6 +1913,8 @@ void FileTransDlg::clearFinished()
 		}
 	}
 	qDeleteAll(list);
+	if (d->lv->count() == 0)
+		d->lv->cm->reset();
 }
 
 void FileTransDlg::ft_progress(int p, qlonglong sent)
@@ -1909,6 +1994,8 @@ void FileTransDlg::itemClear(int id)
 	d->transferList.removeAll(i);
 	delete i;
 	delete fi;
+	if (d->lv->count() == 0)
+		d->lv->cm->reset();
 }
 
 void FileTransDlg::openFile(QModelIndex index)
