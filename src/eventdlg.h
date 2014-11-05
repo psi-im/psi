@@ -29,10 +29,10 @@
 #include "ui_addurl.h"
 #include "advwidget.h"
 #include "userlist.h"
+#include "psievent.h"
 
 class QDateTime;
 class QStringList;
-class PsiEvent;
 class PsiCon;
 class PsiAccount;
 class PsiIcon;
@@ -150,7 +150,7 @@ public slots:
 	void optionsUpdate();
 	void closeAfterReply();
 	void updateContact(const Jid &);
-	void updateEvent(PsiEvent *);
+	void updateEvent(const PsiEvent::Ptr &);
 	void updateReadNext(PsiIcon *, int);
 	void actionGCJoin(const QString &, const QString&);
 

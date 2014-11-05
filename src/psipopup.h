@@ -26,6 +26,7 @@
 #endif
 
 #include "psipopupinterface.h"
+#include "psievent.h"
 
 class FancyPopup;
 
@@ -37,14 +38,14 @@ public:
 	PsiPopup(QObject* parent = 0);
 	~PsiPopup();
 
-	virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const Resource& r, const UserListItem* = 0, PsiEvent* = 0);
+	virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const Resource& r, const UserListItem* = 0, const PsiEvent::Ptr& = PsiEvent::Ptr());
 	virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const PsiIcon* titleIcon, const QString& titleText,
 		   const QPixmap* avatar, const PsiIcon* icon, const QString& text);
 
 	static void deleteAll();
 
 private:
-	void setData(const Jid &, const Resource &, const UserListItem * = 0, const PsiEvent * = 0);
+	void setData(const Jid &, const Resource &, const UserListItem * = 0, const PsiEvent::Ptr &event = PsiEvent::Ptr());
 	void setData(const QPixmap *avatar, const PsiIcon *icon, const QString& text);
 	void setJid(const Jid &j);
 	QString id() const;

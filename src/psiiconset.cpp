@@ -480,11 +480,11 @@ void PsiIconset::reloadRoster()
 	}
 }
 
-PsiIcon *PsiIconset::event2icon(PsiEvent *e)
+PsiIcon *PsiIconset::event2icon(const PsiEvent::Ptr &e)
 {
 	QString icon;
 	if(e->type() == PsiEvent::Message) {
-		MessageEvent *me = (MessageEvent *)e;
+		MessageEvent::Ptr me = e.staticCast<MessageEvent>();
 		const Message &m = me->message();
 		if(m.type() == "headline")
 			icon = "psi/headline";

@@ -191,8 +191,9 @@ void ChatDlg::ensureTabbedCorrectly()
 	}
 }
 
-void ChatDlg::ackLastMessages(int a) {
-
+void ChatDlg::ackLastMessages(int a)
+{
+	Q_UNUSED(a);
 }
 
 

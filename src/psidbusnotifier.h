@@ -45,13 +45,12 @@ public:
 	~PsiDBusNotifier();
 	static bool isAvailable();
 
-	virtual void popup(PsiAccount *account, PopupManager::PopupType type, const Jid& j, const Resource& r, const UserListItem* = 0, PsiEvent* = 0);
+	virtual void popup(PsiAccount *account, PopupManager::PopupType type, const Jid& j, const Resource& r, const UserListItem* = 0, const PsiEvent::Ptr& = PsiEvent::Ptr());
 	virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const PsiIcon* titleIcon, const QString& titleText,
 			   const QPixmap* avatar, const PsiIcon* icon, const QString& text);
 
 private slots:
 	void popupClosed(uint id, uint reason);
-	void eventDestroyed();
 	void asyncCallFinished(QDBusPendingCallWatcher*);
 	void readyToDie();
 
@@ -63,7 +62,7 @@ private:
 	Jid jid_;
 	uint id_;
 	PsiAccount *account_;
-	PsiEvent *event_;
+	PsiEvent::Ptr event_;
 	QTimer *lifeTimer_;
 	static QStringList caps_;
 };

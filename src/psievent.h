@@ -51,6 +51,7 @@ public:
 	PsiEvent(const PsiEvent &);
 	virtual ~PsiEvent() = 0;
 
+	typedef QSharedPointer<PsiEvent> Ptr;
 	enum {
 		Message,
 		Auth,
@@ -114,6 +115,7 @@ public:
 	MessageEvent(const XMPP::Message &, PsiAccount *acc);
 	~MessageEvent();
 
+	typedef QSharedPointer<MessageEvent> Ptr;
 	int type() const;
 	XMPP::Jid from() const;
 	void setFrom(const XMPP::Jid &j);
@@ -150,6 +152,7 @@ public:
 	AuthEvent(const AuthEvent &from);
 	~AuthEvent();
 
+	typedef QSharedPointer<AuthEvent> Ptr;
 	int type() const;
 	XMPP::Jid from() const;
 	void setFrom(const XMPP::Jid &j);
@@ -183,6 +186,7 @@ public:
 	PGPEvent(const PGPEvent &from)
 	: PsiEvent(from) {}
 	~PGPEvent() {}
+	typedef QSharedPointer<PGPEvent> Ptr;
 	int type() const { return PGP; }
 	XMPP::Jid from() const { return QString(); }
 	void setFrom(const XMPP::Jid &) {}
@@ -197,6 +201,7 @@ public:
 	FileEvent(const FileEvent &from);
 	~FileEvent();
 
+	typedef QSharedPointer<FileEvent> Ptr;
 	int type() const { return File; }
 	XMPP::Jid from() const;
 	void setFrom(const XMPP::Jid &);
@@ -220,6 +225,7 @@ class RosterExchangeEvent : public PsiEvent
 public:
 	RosterExchangeEvent(const XMPP::Jid &j, const XMPP::RosterExchangeItems& i, const QString& body, PsiAccount *acc);
 
+	typedef QSharedPointer<RosterExchangeEvent> Ptr;
 	int type() const { return RosterExchange; }
 	XMPP::Jid from() const;
 	void setFrom(const XMPP::Jid &);
@@ -265,6 +271,7 @@ public:
 	HttpAuthEvent(const PsiHttpAuthRequest &req, PsiAccount *acc);
 	~HttpAuthEvent();
 
+	typedef QSharedPointer<HttpAuthEvent> Ptr;
 	int type() const { return HttpAuth; }
 
 	const PsiHttpAuthRequest & request() { return v_req; }
@@ -285,6 +292,7 @@ public:
 	AvCallEvent(const AvCallEvent &from);
 	~AvCallEvent();
 
+	typedef QSharedPointer<AvCallEvent> Ptr;
 	int type() const { return AvCallType; }
 	XMPP::Jid from() const;
 	void setFrom(const XMPP::Jid &);
@@ -304,14 +312,14 @@ private:
 class EventItem
 {
 public:
-	EventItem(PsiEvent *_e);
+	EventItem(const PsiEvent::Ptr &_e);
 	EventItem(const EventItem &from);
 	~EventItem();
 	int id() const;
-	PsiEvent *event() const;
+	PsiEvent::Ptr event() const;
 
 private:
-	PsiEvent *e;
+	PsiEvent::Ptr e;
 	int v_id;
 };
 
@@ -332,20 +340,20 @@ public:
 	int nextId() const;
 	int count() const;
 	int count(const XMPP::Jid &, bool compareRes=true) const;
-	void enqueue(PsiEvent *);
-	void dequeue(PsiEvent *);
-	PsiEvent *dequeue(const XMPP::Jid &, bool compareRes=true);
-	PsiEvent *peek(const XMPP::Jid &, bool compareRes=true) const;
-	PsiEvent *dequeueNext();
-	PsiEvent *peekNext() const;
+	void enqueue(const PsiEvent::Ptr &);
+	void dequeue(const PsiEvent::Ptr &);
+	PsiEvent::Ptr dequeue(const XMPP::Jid &, bool compareRes=true);
+	PsiEvent::Ptr peek(const XMPP::Jid &, bool compareRes=true) const;
+	PsiEvent::Ptr dequeueNext();
+	PsiEvent::Ptr peekNext() const;
 	bool hasChats(const XMPP::Jid &, bool compareRes=true) const;
-	PsiEvent *peekFirstChat(const XMPP::Jid &, bool compareRes=true) const;
-	void extractMessages(QList<PsiEvent*> *list);
-	void extractChats(QList<PsiEvent*> *list, const XMPP::Jid &, bool compareRes, bool removeEvents);
+	PsiEvent::Ptr peekFirstChat(const XMPP::Jid &, bool compareRes=true) const;
+	void extractMessages(QList<PsiEvent::Ptr> *list);
+	void extractChats(QList<PsiEvent::Ptr> *list, const XMPP::Jid &, bool compareRes, bool removeEvents);
 	void printContent() const;
 	void clear();
 	void clear(const XMPP::Jid &, bool compareRes=true);
-	typedef QPair<int, PsiEvent*> PsiEventId;
+	typedef QPair<int, PsiEvent::Ptr> PsiEventId;
 	QList<PsiEventId> eventsFor(const XMPP::Jid& jid, bool compareRes=true);
 
 	QDomElement toXml(QDomDocument *) const; // these work with pointers, to save inclusion of qdom.h, which is pretty large
@@ -355,7 +363,7 @@ public:
 	bool fromFile(const QString &fname);
 
 signals:
-	void eventFromXml(PsiEvent *);
+	void eventFromXml(const PsiEvent::Ptr &);
 	void queueChanged();
 
 private:

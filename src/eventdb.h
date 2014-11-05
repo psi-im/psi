@@ -28,23 +28,22 @@
 #include <QDateTime>
 
 #include "xmpp_jid.h"
-
-class PsiEvent;
+#include "psievent.h"
 
 class EDBItem
 {
 public:
-	EDBItem(PsiEvent *, const QString &id, const QString &nextId, const QString &prevId);
+	EDBItem(const PsiEvent::Ptr &, const QString &id, const QString &nextId, const QString &prevId);
 	~EDBItem();
 
-	PsiEvent *event() const;
+	PsiEvent::Ptr event() const;
 	const QString & id() const;
 	const QString & nextId() const;
 	const QString & prevId() const;
 
 private:
 	QString v_id, v_prevId, v_nextId;
-	PsiEvent *e;
+	PsiEvent::Ptr e;
 };
 
 typedef QSharedPointer<EDBItem> EDBItemPtr;
@@ -65,7 +64,7 @@ public:
 	void get(const XMPP::Jid &jid, const QString &id, int direction, int len);
 	void getByDate(const XMPP::Jid &jid, QDateTime first, QDateTime last);
 	void find(const QString &, const XMPP::Jid &, const QString &id, int direction);
-	void append(const XMPP::Jid &, PsiEvent *);
+	void append(const XMPP::Jid &, const PsiEvent::Ptr &);
 	void erase(const XMPP::Jid &);
 
 	bool busy() const;
@@ -100,7 +99,7 @@ protected:
 	virtual int getOldest(const XMPP::Jid &, int len)=0;
 	virtual int get(const XMPP::Jid &jid, const QString &id, int direction, int len)=0;
 	virtual int getByDate(const XMPP::Jid &jid, QDateTime first, QDateTime last) = 0;
-	virtual int append(const XMPP::Jid &, PsiEvent *)=0;
+	virtual int append(const XMPP::Jid &, const PsiEvent::Ptr &)=0;
 	virtual int find(const QString &, const XMPP::Jid &, const QString &id, int direction)=0;
 	virtual int erase(const XMPP::Jid &)=0;
 	void resultReady(int, EDBResult);
@@ -119,7 +118,7 @@ private:
 	int op_get(const XMPP::Jid &, const QString &id, int direction, int len);
 	int op_getByDate(const XMPP::Jid &jid, QDateTime first, QDateTime last);
 	int op_find(const QString &, const XMPP::Jid &, const QString &id, int direction);
-	int op_append(const XMPP::Jid &, PsiEvent *);
+	int op_append(const XMPP::Jid &, const PsiEvent::Ptr&);
 	int op_erase(const XMPP::Jid &);
 };
 
@@ -135,7 +134,7 @@ public:
 	int get(const XMPP::Jid &jid, const QString &id, int direction, int len);
 	int getByDate(const XMPP::Jid &jid, QDateTime first, QDateTime last);
 	int find(const QString &, const XMPP::Jid &, const QString &id, int direction);
-	int append(const XMPP::Jid &, PsiEvent *);
+	int append(const XMPP::Jid &, const PsiEvent::Ptr&);
 	int erase(const XMPP::Jid &);
 
 	class File;
@@ -162,8 +161,8 @@ public:
 
 	int total() const;
 	void touch();
-	PsiEvent *get(int);
-	bool append(PsiEvent *);
+	PsiEvent::Ptr get(int);
+	bool append(const PsiEvent::Ptr &);
 
 	static QString jidToFileName(const XMPP::Jid &);
 
@@ -184,8 +183,8 @@ public:
 	Private *d;
 
 private:
-	PsiEvent *lineToEvent(const QString &);
-	QString eventToLine(PsiEvent *);
+	PsiEvent::Ptr lineToEvent(const QString &);
+	QString eventToLine(const PsiEvent::Ptr&);
 	void ensureIndex();
 };
 

@@ -206,7 +206,7 @@ const QStringList PopupManager::optionsNamesList() const
 }
 
 void PopupManager::doPopup(PsiAccount *account, PopupType pType, const Jid &j, const Resource &r,
-			   UserListItem *u, PsiEvent *e, bool checkNoPopup)
+			   UserListItem *u, const PsiEvent::Ptr &e, bool checkNoPopup)
 {
 	if (!PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.enabled").toBool())
 		return;

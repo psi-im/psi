@@ -22,6 +22,7 @@
 #define PSIPOPUPINTERFACE_H
 
 #include "popupmanager.h"
+#include "psievent.h"
 
 class PsiPopupInterface;
 
@@ -39,7 +40,7 @@ Q_DECLARE_INTERFACE(PsiPopupPluginInterface, "psi-im.org.PsiPopupInterface/0.1")
 class PsiPopupInterface
 {
 public:
-	virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const Resource& r, const UserListItem* = 0, PsiEvent* = 0) = 0;
+	virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const Resource& r, const UserListItem* = 0, const PsiEvent::Ptr& = PsiEvent::Ptr()) = 0;
 	virtual void popup(PsiAccount* account, PopupManager::PopupType type, const Jid& j, const PsiIcon* titleIcon, const QString& titleText,
 				    const QPixmap* avatar, const PsiIcon* icon, const QString& text) = 0;
 

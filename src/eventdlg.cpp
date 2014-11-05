@@ -1732,7 +1732,7 @@ void EventDlg::setTime(const QDateTime &t, bool late)
 	d->lb_time->setText(str);
 }
 
-void EventDlg::updateEvent(PsiEvent *e)
+void EventDlg::updateEvent(const PsiEvent::Ptr &e)
 {
 	// Default buttons setup
 	d->pb_next->show();
@@ -1766,7 +1766,7 @@ void EventDlg::updateEvent(PsiEvent *e)
 
 	if (e->type() == PsiEvent::HttpAuth) {
 
-		HttpAuthEvent *hae = (HttpAuthEvent *)e;
+		HttpAuthEvent::Ptr hae = e.staticCast<HttpAuthEvent>();
 		const HttpAuthRequest &confirm = hae->request();
 
 		QString body(tr(
@@ -1804,7 +1804,7 @@ void EventDlg::updateEvent(PsiEvent *e)
 	}
 
 	if(e->type() == PsiEvent::Message || e->type() == PsiEvent::HttpAuth) {
-		MessageEvent *me = (MessageEvent *)e;
+		MessageEvent::Ptr me = e.staticCast<MessageEvent>();
 		const Message &m = me->message();
 
 		d->enc = m.wasEncrypted();
@@ -1883,7 +1883,7 @@ void EventDlg::updateEvent(PsiEvent *e)
 		showHideAttachView();
 	}
 	else if(e->type() == PsiEvent::Auth) {
-		AuthEvent *ae = (AuthEvent *)e;
+		AuthEvent::Ptr ae = e.staticCast<AuthEvent>();
 		QString type = ae->authType();
 
 		d->le_subj->setText("");
@@ -1929,7 +1929,7 @@ void EventDlg::updateEvent(PsiEvent *e)
 		}
 	}
 	else if (e->type() == PsiEvent::RosterExchange) {
-		RosterExchangeEvent *re = (RosterExchangeEvent *)e;
+		RosterExchangeEvent::Ptr re = e.staticCast<RosterExchangeEvent>();
 		int additions = 0, deletions = 0, modifications = 0;
 		foreach(RosterExchangeItem item, re->rosterExchangeItems()) {
 			switch(item.action()) {

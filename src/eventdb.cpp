@@ -39,7 +39,7 @@ using namespace XMPP;
 //----------------------------------------------------------------------------
 // EDBItem
 //----------------------------------------------------------------------------
-EDBItem::EDBItem(PsiEvent *event, const QString &id, const QString &prevId, const QString &nextId)
+EDBItem::EDBItem(const PsiEvent::Ptr &event, const QString &id, const QString &prevId, const QString &nextId)
 {
 	e = event;
 	v_id = id;
@@ -49,10 +49,9 @@ EDBItem::EDBItem(PsiEvent *event, const QString &id, const QString &prevId, cons
 
 EDBItem::~EDBItem()
 {
-	delete e;
 }
 
-PsiEvent *EDBItem::event() const
+PsiEvent::Ptr EDBItem::event() const
 {
 	return e;
 }
@@ -144,7 +143,7 @@ void EDBHandle::find(const QString &str, const Jid &j, const QString &id, int di
 	d->listeningFor = d->edb->op_find(str, j, id, direction);
 }
 
-void EDBHandle::append(const Jid &j, PsiEvent *e)
+void EDBHandle::append(const Jid &j, const PsiEvent::Ptr &e)
 {
 	d->busy = true;
 	d->lastRequestType = Write;
@@ -265,7 +264,7 @@ int EDB::op_find(const QString &str, const Jid &j, const QString &id, int direct
 	return find(str, j, id, direction);
 }
 
-int EDB::op_append(const Jid &j, PsiEvent *e)
+int EDB::op_append(const Jid &j, const PsiEvent::Ptr &e)
 {
 	return append(j, e);
 }
@@ -310,7 +309,7 @@ struct item_file_req
 	int id;
 	int eventId;
 	QString findStr;
-	PsiEvent *event;
+	PsiEvent::Ptr event;
 
 	QDateTime first, last;
 	enum Type {
@@ -421,12 +420,12 @@ int EDBFlatFile::find(const QString &str, const Jid &j, const QString &id, int d
 	return r->id;
 }
 
-int EDBFlatFile::append(const Jid &j, PsiEvent *e)
+int EDBFlatFile::append(const Jid &j, const PsiEvent::Ptr &e)
 {
 	item_file_req *r = new item_file_req;
 	r->j = j;
 	r->type = item_file_req::Type_append;
-	r->event = e->copy();
+	r->event = e;
 	if ( !r->event ) {
 		qWarning("EDBFlatFile::append(): Attempted to append incompatible type.");
 		delete r;
@@ -444,7 +443,6 @@ int EDBFlatFile::erase(const Jid &j)
 	item_file_req *r = new item_file_req;
 	r->j = j;
 	r->type = item_file_req::Type_erase;
-	r->event = 0;
 	r->id = genUniqueId();
 	d->rlist.append(r);
 
@@ -541,7 +539,7 @@ void EDBFlatFile::performRequests()
 
 		EDBResult result;
 		for(int n = 0; n < len; ++n) {
-			PsiEvent *e = f->get(id);
+			PsiEvent::Ptr e(f->get(id));
 			if(e) {
 				QString prevId, nextId;
 				if(id > 0)
@@ -561,13 +559,12 @@ void EDBFlatFile::performRequests()
 	}
 	else if(type == item_file_req::Type_append) {
 		writeFinished(r->id, f->append(r->event));
-		delete r->event;
 	}
 	else if(type == item_file_req::Type_find) {
 		int id = r->eventId;
 		EDBResult result;
 		while(1) {
-			PsiEvent *e = f->get(id);
+			PsiEvent::Ptr e(f->get(id));
 			if(!e)
 				break;
 
@@ -577,20 +574,16 @@ void EDBFlatFile::performRequests()
 			if(id < f->total()-1)
 				nextId = QString::number(id+1);
 
-			bool matched = false;
 			if(e->type() == PsiEvent::Message) {
-				MessageEvent *me = (MessageEvent *)e;
+				MessageEvent::Ptr me = e.staticCast<MessageEvent>();
 				const Message &m = me->message();
 				if(m.body().indexOf(r->findStr, 0, Qt::CaseInsensitive) != -1) {
 					EDBItemPtr ei = EDBItemPtr(new EDBItem(e, QString::number(id), prevId, nextId));
 					result.append(ei);
-					matched = true;
 					//commented line below to return ALL(instead of just first) messages that contain findStr
 					//break;
 				}
 			}
-			if (!matched)
-				delete e;
 
 			if(r->dir == Forward)
 				++id;
@@ -603,7 +596,7 @@ void EDBFlatFile::performRequests()
 		int id = 0;
 		EDBResult result;
 		for (int i=0; i < f->total(); ++i) {
-			PsiEvent *e = f->get(id);
+			PsiEvent::Ptr e(f->get(id));
 			if(!e)
 				continue;
 
@@ -613,18 +606,14 @@ void EDBFlatFile::performRequests()
 			if(id < f->total()-1)
 				nextId = QString::number(id+1);
 
-			bool matched = false;
 			if(e->type() == PsiEvent::Message) {
-				MessageEvent *me = (MessageEvent *)e;
+				MessageEvent::Ptr me = e.staticCast<MessageEvent>();
 				const Message &m = me->message();
 				if(m.timeStamp() > r->first && m.timeStamp() < r->last ) {
 					EDBItemPtr ei = EDBItemPtr(new EDBItem(e, QString::number(id), prevId, nextId));
 					result.append(ei);
-					matched = true;
 				}
 			}
-			if (!matched)
-				delete e;
 
 			++id;
 		}
@@ -749,16 +738,16 @@ void EDBFlatFile::File::timer_timeout()
 	timeout();
 }
 
-PsiEvent *EDBFlatFile::File::get(int id)
+PsiEvent::Ptr EDBFlatFile::File::get(int id)
 {
 	touch();
 
 	if(!valid)
-		return 0;
+		return PsiEvent::Ptr();
 
 	ensureIndex();
 	if(id < 0 || id >= (int)d->index.size())
-		return 0;
+		return PsiEvent::Ptr();
 
 	f.seek(d->index[id]);
 
@@ -770,7 +759,7 @@ PsiEvent *EDBFlatFile::File::get(int id)
 	return lineToEvent(line);
 }
 
-bool EDBFlatFile::File::append(PsiEvent *e)
+bool EDBFlatFile::File::append(const PsiEvent::Ptr &e)
 {
 	touch();
 
@@ -799,7 +788,7 @@ bool EDBFlatFile::File::append(PsiEvent *e)
 	return true;
 }
 
-PsiEvent *EDBFlatFile::File::lineToEvent(const QString &line)
+PsiEvent::Ptr EDBFlatFile::File::lineToEvent(const QString &line)
 {
 	// -- read the line --
 	QString sTime, sType, sOrigin, sFlags, sText, sSubj, sUrl, sUrlDesc;
@@ -874,10 +863,10 @@ PsiEvent *EDBFlatFile::File::lineToEvent(const QString &line)
 			m.urlAdd(Url(url, logdecode(sUrlDesc)));
 		m.setSpooled(true);
 
-		MessageEvent *me = new MessageEvent(m, 0);
+		MessageEvent::Ptr me(new MessageEvent(m, 0));
 		me->setOriginLocal(originLocal);
 
-		return me;
+		return me.staticCast<PsiEvent>();
 	}
 	else if(type == 2 || type == 3 || type == 6 || type == 7 || type == 8) {
 		QString subType = "subscribe";
@@ -898,21 +887,21 @@ PsiEvent *EDBFlatFile::File::lineToEvent(const QString &line)
 		else if(type == 8)
 			subType = "unsubscribed";
 
-		AuthEvent *ae = new AuthEvent(j, subType, 0);
+		AuthEvent::Ptr ae(new AuthEvent(j, subType, 0));
 		ae->setTimeStamp(QDateTime::fromString(sTime, Qt::ISODate));
-		return ae;
+		return ae.staticCast<PsiEvent>();
 	}
 
-	return NULL;
+	return PsiEvent::Ptr();
 }
 
-QString EDBFlatFile::File::eventToLine(PsiEvent *e)
+QString EDBFlatFile::File::eventToLine(const PsiEvent::Ptr &e)
 {
 	int subflags = 0;
 	QString sTime, sType, sOrigin, sFlags;
 
 	if(e->type() == PsiEvent::Message) {
-		MessageEvent *me = (MessageEvent *)e;
+		MessageEvent::Ptr me = e.staticCast<MessageEvent>();
 		const Message &m = me->message();
 		const UrlList urls = m.urlList();
 
@@ -952,7 +941,7 @@ QString EDBFlatFile::File::eventToLine(PsiEvent *e)
 		return line;
 	}
 	else if(e->type() == PsiEvent::Auth) {
-		AuthEvent *ae = (AuthEvent *)e;
+		AuthEvent::Ptr ae = e.staticCast<AuthEvent>();
 		sTime = ae->timeStamp().toString(Qt::ISODate);
 		QString subType = ae->authType();
 		int n = 0;

@@ -1422,9 +1422,8 @@ void GCMainDlg::message(const Message &_m)
 		if(alert || (options->getOption("options.ui.notifications.passive-popups.notify-every-muc-message").toBool() && !m.spooled() && !from.isEmpty()) ) {
 			if (!m.spooled() && !isActiveTab() && !m.from().resource().isEmpty()) {
 				XMPP::Jid jid = m.from()/*.withDomain("")*/;
-				MessageEvent *e = new MessageEvent(m, account());
-				account()->psi()->popupManager()->doPopup(account(), PopupManager::AlertGcHighlight, jid, m.from().resource(), 0, (PsiEvent *)e);
-				e->deleteLater();
+				MessageEvent::Ptr e(new MessageEvent(m, account()));
+				account()->psi()->popupManager()->doPopup(account(), PopupManager::AlertGcHighlight, jid, m.from().resource(), 0, e);
 			}
 		}
 	}

@@ -35,7 +35,7 @@ public:
 	int count() const;
 
 	const QList<int>& ids() const;
-	PsiEvent *peek(int id) const;
+	PsiEvent::Ptr peek(int id) const;
 
 protected:
 	void enqueue(EventItem* item);

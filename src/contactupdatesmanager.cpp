@@ -84,18 +84,17 @@ void ContactUpdatesManager::removeAuthRequestEventsFor(PsiAccount* account, cons
 		return;
 
 	foreach(EventQueue::PsiEventId p, account->eventQueue()->eventsFor(jid, false)) {
-		PsiEvent* e = p.second;
+		PsiEvent::Ptr e = p.second;
 		if (e->type() == PsiEvent::Auth) {
-			AuthEvent* authEvent = static_cast<AuthEvent*>(e);
+			AuthEvent::Ptr authEvent = e.staticCast<AuthEvent>();
 			if (authEvent->authType() == "subscribe") {
 				if (denyAuthRequests) {
 					account->dj_deny(jid);
 				}
 #ifdef YAPSI_ACTIVEX_SERVER
-				controller_->yaOnline()->closeNotify(p.first, e);
+				controller_->yaOnline()->closeNotify(p.first, e.data());
 #endif
 				account->eventQueue()->dequeue(e);
-				e->deleteLater();
 			}
 		}
 	}
@@ -108,7 +107,7 @@ void ContactUpdatesManager::removeToastersFor(PsiAccount* account, const XMPP::J
 		return;
 
 	foreach(EventQueue::PsiEventId p, account->eventQueue()->eventsFor(jid, false)) {
-		PsiEvent* e = p.second;
+		PsiEvent::Ptr e = p.second;
 		if (e->type() == PsiEvent::Message
 #ifdef YAPSI
 		    || e->type() == PsiEvent::Mood
@@ -116,10 +115,9 @@ void ContactUpdatesManager::removeToastersFor(PsiAccount* account, const XMPP::J
 		    )
 		{
 #ifdef YAPSI_ACTIVEX_SERVER
-			controller_->yaOnline()->closeNotify(p.first, e);
+			controller_->yaOnline()->closeNotify(p.first, e.data());
 #endif
 			account->eventQueue()->dequeue(e);
-			e->deleteLater();
 		}
 	}
 }

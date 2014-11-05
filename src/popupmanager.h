@@ -22,11 +22,11 @@
 #define POPUPMANAGER_H
 
 #include <QStringList>
+#include "psievent.h"
 
 class PsiAccount;
 class PsiCon;
 class UserListItem;
-class PsiEvent;
 class PsiIcon;
 class QPixmap;
 
@@ -71,7 +71,7 @@ public:
 	QString currentType() const;
 
 	void doPopup(PsiAccount* account, PopupType type, const Jid& j, const Resource& r,
-			    UserListItem* u = 0, PsiEvent* e = 0, bool checkNoPopup = true);
+			    UserListItem* u = 0, const PsiEvent::Ptr &e = PsiEvent::Ptr(), bool checkNoPopup = true);
 	void doPopup(PsiAccount *account, const Jid &j, const PsiIcon *titleIcon, const QString& titleText,
 			    const QPixmap *avatar, const PsiIcon *icon, const QString& text, bool checkNoPopup = true, PopupType type = AlertNone);
 

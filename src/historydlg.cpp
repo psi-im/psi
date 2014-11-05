@@ -367,7 +367,7 @@ void HistoryDlg::exportHistory()
 		for(int i = 0; i < cnt; ++i) {
 			EDBItemPtr item = r.value(i);
 			id = item->nextId();
-			PsiEvent *e = item->event();
+			PsiEvent::Ptr e(item->event());
 			QString txt;
 
 			QString ts = e->timeStamp().toString(Qt::LocalDate);
@@ -381,7 +381,7 @@ void HistoryDlg::exportHistory()
 			}
 
 			if(e->type() == PsiEvent::Message) {
-				MessageEvent *me = (MessageEvent *)e;
+				MessageEvent::Ptr me = e.staticCast<MessageEvent>();
 				stream << QString("[%1] <%2>: ").arg(ts, nick)/* << endl*/;
 
 				QStringList lines = me->message().body().split('\n', QString::KeepEmptyParts);
@@ -605,13 +605,13 @@ void HistoryDlg::displayResult(const EDBResult r, int direction, int max)
 	while (i >= 0 && i <= r.count() - 1 && (max == -1 ? true : at < max))
 	{
 		EDBItemPtr item = r.value(i);
-		PsiEvent* e = item->event();
+		PsiEvent::Ptr e(item->event());
 		UserListItem *u = d->pa->findFirstRelevant(e->from().full());
 		if(u) {
 			QString from = JIDUtil::nickOrJid(u->name(), u->jid().full());
 			if (e->type() == PsiEvent::Message)
 			{
-				MessageEvent *me = (MessageEvent *) e;
+				MessageEvent::Ptr me = e.staticCast<MessageEvent>();
 				QString msg = me->message().body();
 				msg = TextUtil::linkify(TextUtil::plain2rich(msg));
 
