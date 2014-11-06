@@ -98,6 +98,7 @@
         <file>iconsets/system/default/notification_chat_time.png</file>
         <file>iconsets/system/default/throbber.png</file>
         <file>iconsets/system/default/theme_title_texture.png</file>
+	<file>iconsets/system/default/action_button_send.png</file>
         <file>iconsets/system/default/whiteboarding/whiteboard.png</file>
         <file>iconsets/system/default/whiteboarding/save.png</file>
         <file>iconsets/system/default/whiteboarding/select.png</file>

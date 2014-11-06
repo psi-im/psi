@@ -385,6 +385,11 @@
 		<object mime='image/png'>command.png</object>
 	</icon>
 
+	<icon>
+		<x xmlns='name'>psi/action_button_send</x>
+		<object mime='image/png'>action_button_send.png</object>
+	</icon>
+
 
 	<!-- FIXME -->
 	<icon>

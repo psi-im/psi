@@ -658,6 +658,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	d->act_send = new QAction(this);
 	addAction(d->act_send);
 	connect(d->act_send,SIGNAL(triggered()), SLOT(mle_returnPressed()));
+ 	ui_.pb_send->setIcon(IconsetFactory::icon("psi/action_button_send").icon());
+	connect(ui_.pb_send, SIGNAL(clicked()), SLOT(mle_returnPressed()));
 	d->act_close = new QAction(this);
 	addAction(d->act_close);
 	connect(d->act_close,SIGNAL(triggered()), SLOT(close()));
@@ -1576,6 +1578,13 @@ void GCMainDlg::setLooks()
 		ui_.toolbar->hide();
 		ui_.tb_emoticons->setVisible(PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool());
 		ui_.tb_actions->show();
+	}
+
+	if (PsiOptions::instance()->getOption("options.ui.disable-send-button").toBool()) {
+		ui_.pb_send->hide();
+	}
+	else {
+		ui_.pb_send->show();
 	}
 
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.chat.opacity").toInt()))/100);

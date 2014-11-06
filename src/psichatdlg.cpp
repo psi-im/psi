@@ -217,6 +217,8 @@ void PsiChatDlg::initUi()
 	ui_.splitter->setSizes(list);
 
 	smallChat_ = PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool();
+ 	ui_.pb_send->setIcon(IconsetFactory::icon("psi/action_button_send").icon());
+	connect(ui_.pb_send, SIGNAL(clicked()), this, SLOT(doSend()));
 
 	act_mini_cmd_ = new QAction(this);
 	act_mini_cmd_->setText(tr("Input command..."));
@@ -302,6 +304,13 @@ void PsiChatDlg::updateIdentityVisibility()
 	}
 	else {
 		ui_.lb_ident->setVisible(false);
+	}
+
+	if (PsiOptions::instance()->getOption("options.ui.disable-send-button").toBool()) {
+		ui_.pb_send->hide();
+	}
+	else {
+		ui_.pb_send->show();
 	}
 }
 
