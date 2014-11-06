@@ -616,6 +616,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 #ifndef HAVE_QT5
 	ui_.lv_users->model()->setSupportedDragActions(Qt::CopyAction);
 #endif
+	if ( PsiOptions::instance()->getOption("options.ui.contactlist.disable-scrollbar").toBool() ) {
+		ui_.lv_users->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	}
 	connect(ui_.lv_users, SIGNAL(action(const QString &, const Status &, int)), SLOT(lv_action(const QString &, const Status &, int)));
 	connect(ui_.lv_users, SIGNAL(insertNick(const QString&)), d, SLOT(insertNick(const QString&)));
 

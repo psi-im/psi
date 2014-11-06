@@ -48,6 +48,7 @@ static const QString showAgentsOptionPath = "options.ui.contactlist.show.agent-c
 static const QString showSelfOptionPath = "options.ui.contactlist.show.self-contact";
 static const QString showStatusMessagesOptionPath = "options.ui.contactlist.status-messages.show";
 static const QString allowAutoResizeOptionPath = "options.ui.contactlist.automatically-resize-roster";
+static const QString showScrollBarOptionPath = "options.ui.contactlist.disable-scrollbar";
 
 //----------------------------------------------------------------------------
 // PsiRosterFilterProxyModel
@@ -174,6 +175,7 @@ void PsiRosterWidget::setContactList(PsiContactList* contactList)
 	optionChanged(showOfflineOptionPath);
 	optionChanged(contactSortStyleOptionPath);
 	optionChanged(allowAutoResizeOptionPath);
+	optionChanged(showScrollBarOptionPath);
 
 	contactListModel_ = new PsiContactListModel(contactList_);
 	contactListModel_->invalidateLayout();
@@ -234,6 +236,11 @@ void PsiRosterWidget::optionChanged(const QString& option)
 	}
 	else if (option == allowAutoResizeOptionPath) {
 		contactListPageView_->setAutoResizeEnabled(PsiOptions::instance()->getOption(allowAutoResizeOptionPath).toBool());
+	}
+	else if (option == showScrollBarOptionPath) {
+		contactListPageView_->setVerticalScrollBarPolicy(
+			PsiOptions::instance()->getOption(showScrollBarOptionPath).toBool() ?
+			Qt::ScrollBarAlwaysOff : Qt::ScrollBarAsNeeded );
 	}
 }
 
