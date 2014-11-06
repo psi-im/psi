@@ -22,7 +22,6 @@
 
 #include <QApplication>
 #include <QStyle>
-#include <QToolBar>
 #include <QTimer>
 #include <QSignalMapper>
 #include <QObject>
@@ -40,6 +39,7 @@
 #include "icontoolbutton.h"
 #include "alerticon.h"
 #include "psicontactlist.h"
+#include "psitoolbar.h"
 
 //----------------------------------------------------------------------------
 // PopupActionButton
@@ -622,19 +622,23 @@ void EventNotifierAction::hide()
 
 	foreach(MLabel* label, d->labels) {
 		label->hide();
-		QToolBar *toolBar = dynamic_cast<QToolBar*>(label->parent());
+		PsiToolBar *toolBar = dynamic_cast<PsiToolBar*>(label->parent());
 		if (toolBar) {
 			int found = 0;
 			foreach(QWidget* widget, toolBar->findChildren<QWidget*>()) {
 				if (!widget->objectName().startsWith("qt_") &&
-				    !QString(widget->metaObject()->className()).startsWith("QToolBar"))
+				    !QString(widget->metaObject()->className()).startsWith("QToolBar") &&
+				    !QString(widget->metaObject()->className()).startsWith("QMenu") &&
+				    QString(widget->metaObject()->className()) != "Oxygen::TransitionWidget") // dirty hack
 				{
 					found++;
 				}
 			}
 
 			if (found == 1)   // only MLabel is on ToolBar
-				toolBar->hide();
+				//We should not hide toolbar, if it should be visible (user set `enabled` in options)
+				//toolBar->hide();
+				toolBar->updateVisibility();
 		}
 	}
 }
