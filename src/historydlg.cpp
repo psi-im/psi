@@ -127,6 +127,15 @@ HistoryDlg::HistoryDlg(const Jid &jid, PsiAccount *pa)
 	d->jid = jid;
 	d->pa->dialogRegister(this, d->jid);
 
+	//workaround calendar size
+	int minWidth = ui_.calendar->minimumSizeHint().width();
+	if(minWidth > ui_.calendar->maximumWidth()) {
+		ui_.calendar->setMaximumWidth(minWidth);
+		ui_.jidList->setMaximumWidth(minWidth);
+		ui_.accountsBox->setMaximumWidth(minWidth);
+		ui_.buttonRefresh->setMaximumWidth(minWidth);
+	}
+
 #ifndef Q_OS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/history").icon());
 #endif
