@@ -1059,7 +1059,10 @@ void EventQueue::printContent() const
 void EventQueue::clear()
 {
 	while(!list_.isEmpty())
-		delete list_.takeFirst();
+	{
+		EventItem *i = list_.takeFirst();
+		delete i;
+	}
 
 	emit queueChanged();
 }

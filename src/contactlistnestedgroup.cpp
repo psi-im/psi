@@ -47,6 +47,20 @@ CL_DEBUG("~ContactListNextedGroup(%x): %s", this, qPrintable(group->fullName()))
 	qDeleteAll(groups_);
 	groups_.clear();
 
+	QHashIterator<ContactListGroup::SpecialType, QPointer<ContactListGroup> > it(specialGroups_);
+	while (it.hasNext())
+	{
+		it.next();
+		ContactListGroup* group = it.value().data();
+		if (group)
+		{
+CL_DEBUG("~ContactListNextedGroup(%x): %s", this, qPrintable(group->fullName()));
+			removeItem(ContactListGroup::findGroup(group));
+			delete group;
+		}
+	}
+	specialGroups_.clear();
+
 	ContactListGroup::clearGroup();
 }
 

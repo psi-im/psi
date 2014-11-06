@@ -1250,6 +1250,9 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 PsiAccount::~PsiAccount()
 {
 	logout(true, loggedOutStatus());
+
+	setRCEnabled(false);
+
 	emit accountDestroyed();
 	// nuke all related dialogs
 	deleteAllDialogs();
@@ -1285,6 +1288,9 @@ PsiAccount::~PsiAccount()
 	delete d->avatarFactory;
 
 	delete d->blockTransportPopupList;
+
+	qDeleteAll(d->userList);
+	d->userList.clear();
 
 	d->contactList->unlink(this);
 	delete d;
