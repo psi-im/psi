@@ -495,6 +495,7 @@ OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent)
 	pb_apply = buttonBox->button(QDialogButtonBox::Apply);
 
 	setAttribute(Qt::WA_DeleteOnClose);
+	setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint | Qt::WindowContextHelpButtonHint);
 	d = new Private(this, psi);
 	setModal(false);
 	d->psi->dialogRegister(this);

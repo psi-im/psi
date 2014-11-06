@@ -126,6 +126,7 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	: QDialog(parent)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
+	setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
 	ui_.setupUi(this);
 	d = new Private;
 	setModal(false);

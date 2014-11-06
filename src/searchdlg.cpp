@@ -177,6 +177,7 @@ SearchDlg::SearchDlg(const Jid &jid, PsiAccount *pa)
 
 	setWindowTitle(windowTitle().arg(d->jid.full()));
 
+	setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
 	d->busy = busy;
 
 	d->gr_form = new QWidget(gb_search);

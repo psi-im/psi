@@ -33,6 +33,7 @@ BookmarkManageDlg::BookmarkManageDlg(PsiAccount* account)
 	, model_(0)
 {
 	setAttribute(Qt::WA_DeleteOnClose, true);
+	setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
 	ui_.setupUi(this);
 	account_->dialogRegister(this);
 

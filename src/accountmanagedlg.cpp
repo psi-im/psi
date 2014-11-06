@@ -95,6 +95,7 @@ AccountRemoveDlg::AccountRemoveDlg(const UserAccount &acc, QWidget *parent)
 {
 	setupUi(this);
 	setModal(false);
+	setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
 	d = new Private;
 	d->acc = acc;
 
@@ -288,6 +289,7 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi)
 {
 	setupUi(this);
 	setModal(false);
+	setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
 	psi = _psi;
 	psi->dialogRegister(this);
 

@@ -34,6 +34,7 @@ MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
 	: QDialog(0)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
+	setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
 	setModal(false);
 	ui_.setupUi(this);
 	controller_ = psi;

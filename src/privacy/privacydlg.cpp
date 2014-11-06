@@ -34,6 +34,7 @@ PrivacyDlg::PrivacyDlg(const QString& account_name, PrivacyManager* manager, QWi
 	ui_.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
 	setWindowTitle(tr("%1: Privacy Lists").arg(account_name));
+	setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
 
 	connect(manager_,SIGNAL(listsReceived(const QString&, const QString&, const QStringList&)),SLOT(updateLists(const QString&, const QString&, const QStringList&)));
 	connect(manager_,SIGNAL(listReceived(const PrivacyList&)),SLOT(refreshList(const PrivacyList&)));

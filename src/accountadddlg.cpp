@@ -28,8 +28,9 @@
 AccountAddDlg::AccountAddDlg(PsiCon *_psi, QWidget *parent)
 :QDialog(parent)
 {
-  	setupUi(this);
+	setupUi(this);
 	setModal(false);
+	setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
 	psi = _psi;
 	psi->dialogRegister(this);
 
