@@ -26,6 +26,7 @@
 #include <QContextMenuEvent>
 #include <QList>
 #include <QMainWindow>
+#include <QToolButton>
 
 #include "iconset.h"
 #include "iconaction.h"
@@ -92,12 +93,21 @@ void PsiToolBar::initialize()
 	setWindowTitle(o->getOption(base_ + ".name").toString());
 
 	ActionList actions = actionList_->suitableActions(PsiActionList::Actions_MainWin | PsiActionList::Actions_Common);
+	QList<QString> skipList;
+	skipList << "button_options" << "button_status" << "event_notifier" << "spacer";
+
 	foreach(QString actionName, o->getOption(base_ + ".actions").toStringList()) {
 		IconAction* action = actions.action(actionName);
 
 		if (action) {
 			if (action->isSeparator()) {
 				addSeparator();
+			}
+			else if (!skipList.contains(actionName)) {
+				QToolButton *button = new QToolButton;
+				button->setDefaultAction(action);
+				button->setPopupMode(QToolButton::InstantPopup);
+				addWidget(button);
 			}
 			else {
 				action->addTo(this);
