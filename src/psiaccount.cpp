@@ -1746,7 +1746,7 @@ void PsiAccount::tls_handshaken()
 	bool certificateOk = CertificateHelpers::checkCertificate(d->tls, d->tlsHandler, d->acc.tlsOverrideDomain, d->acc.tlsOverrideCert, this,
 						 (d->psi->contactList()->enabledAccounts().count() > 1 ?  QString("%1: ").arg(name()) : "") + tr("Server Authentication"),
 						 d->jid.domain());
-	if (certificateOk) {
+	if (certificateOk && !d->tlsHandler.isNull()) {
 		d->tlsHandler->continueAfterHandshake();
 	} else {
 		logout(false, loggedOutStatus());
