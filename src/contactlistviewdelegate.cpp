@@ -192,7 +192,8 @@ void ContactListViewDelegate::drawText(QPainter* painter, const QStyleOptionView
 	}
 
 	QString txt = text;
-	if (rect.width() < option.fontMetrics.width(text)) {
+	const bool isElided = rect.width() < option.fontMetrics.width(text);
+	if (isElided) {
 #ifndef YAPSI
 		txt = option.fontMetrics.elidedText(text, option.textElideMode, rect.width());
 #endif
@@ -206,9 +207,12 @@ void ContactListViewDelegate::drawText(QPainter* painter, const QStyleOptionView
 	// painter->restore();
 
 	painter->setFont(option.font);
-	painter->drawText(rect.x(), rect.y() + option.fontMetrics.ascent(), txt);
+	QTextOption to;
+	if (option.direction == Qt::RightToLeft)
+		to.setAlignment(Qt::AlignRight);
+	painter->drawText(rect, txt, to);
 
-	if (rect.width() < option.fontMetrics.width(text)) {
+	if (isElided) {
 		painter->restore();
 // FIXME
 #ifdef YAPSI
