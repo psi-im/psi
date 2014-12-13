@@ -121,19 +121,41 @@ QSize PsiContactListViewDelegate::sizeHint(const QStyleOptionViewItem& /*option*
 	return QSize(0, 0);
 }
 
+static QRect relativeRect(const QStyleOption& option,
+						  const QSize &size,
+						  const QRect& prevRect,
+						  int padding = 0)
+{
+	QRect r = option.rect;
+	const bool isRTL = option.direction == Qt::RightToLeft;
+	if (isRTL) {
+		if (prevRect.isValid())
+			r.setRight(prevRect.left() - padding);
+		if (size.isValid()) {
+			r.setLeft(r.right() - size.width() + 1);
+			r.setBottom(r.top() + size.height() - 1);
+			r.translate(-1, 1);
+		}
+	} else {
+		if (prevRect.isValid())
+			r.setLeft(prevRect.right() + padding);
+		if (size.isValid()) {
+			r.setSize(size);
+			r.translate(1, 1);
+		}
+	}
+	return r;
+}
+
 void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
 	drawBackground(painter, option, index);
 
-	QRect r = option.rect;
-
-	QRect avatarRect(r);
 	const QPixmap statusPixmap = this->statusPixmap(index);
-	avatarRect.translate(1, 1);
-	avatarRect.setSize(statusPixmap.size());
+	const QSize pixmapSize = statusPixmap.size();
+	const QRect avatarRect = relativeRect(option, pixmapSize, QRect());
 	painter->drawPixmap(avatarRect.topLeft(), statusPixmap);
-
-	r.setLeft(avatarRect.right() + 3);
+	QRect r = relativeRect(option, QSize(), avatarRect, 3);
 
 	QColor textColor;
 	if(index.data(ContactListModel::IsAnimRole).toBool()) {
@@ -240,12 +262,10 @@ void PsiContactListViewDelegate::drawGroup(QPainter* painter, const QStyleOption
 	                        IconsetFactory::iconPtr("psi/groupOpen")->pixmap() :
 	                        IconsetFactory::iconPtr("psi/groupClosed")->pixmap();
 
-	QRect pixmapRect(r);
-	pixmapRect.translate(1, 1);
-	pixmapRect.setSize(pixmap.size());
+	const QSize pixmapSize = pixmap.size();
+	QRect pixmapRect = relativeRect(option, pixmapSize, QRect());
+	r = relativeRect(option, QSize(), pixmapRect, 3);
 	painter->drawPixmap(pixmapRect.topLeft(), pixmap);
-
-	r.setLeft(pixmapRect.right() + 3);
 
 	QString text = index.data(Qt::ToolTipRole).toString();
 	drawText(painter, o, r, text, index);
@@ -271,35 +291,27 @@ void PsiContactListViewDelegate::drawAccount(QPainter* painter, const QStyleOpti
 
 	drawBackground(painter, o, index);
 
-	QRect r = option.rect;
 	if (outlinedGroup_) {
 		painter->setPen(QPen(foreground));
-		painter->drawRect(r);
+		painter->drawRect(option.rect);
 	}
 
-	QRect avatarRect(r);
 	const QPixmap statusPixmap = this->statusPixmap(index);
-	avatarRect.translate(1, 1);
-	avatarRect.setSize(statusPixmap.size());
+	const QSize pixmapSize = statusPixmap.size();
+	const QRect avatarRect = relativeRect(o, pixmapSize, QRect());
+	QString text = nameText(o, index);
+	QRect r = relativeRect(o, QSize(o.fontMetrics.width(text), o.rect.height()), avatarRect, 3);
 	painter->drawPixmap(avatarRect.topLeft(), statusPixmap);
 
-	r.setLeft(avatarRect.right() + 3);
-
-	QString text = nameText(o, index);
-	r.setRight(r.left() + o.fontMetrics.width(text));
 	drawText(painter, o, r, text, index);
 
 	QPixmap sslPixmap = index.data(ContactListModel::UsingSSLRole).toBool() ?
 	                    IconsetFactory::iconPixmap("psi/cryptoYes") :
 	                    IconsetFactory::iconPixmap("psi/cryptoNo");
-	QRect sslRect(option.rect);
-	sslRect.setLeft(r.right() + 3);
-	sslRect.translate(1, 1);
-	sslRect.setSize(sslPixmap.size());
+	const QSize sslPixmapSize = statusPixmap.size();
+	QRect sslRect = relativeRect(o, sslPixmapSize, r, 3);
 	painter->drawPixmap(sslRect.topLeft(), sslPixmap);
-
-	r.setLeft(sslRect.right() + 3);
-	r.setRight(option.rect.right());
+	r = relativeRect(option, QSize(), sslRect, 3);
 
 	text = QString("(%1/%2)")
 	        .arg(index.data(ContactListModel::OnlineContactsRole).toInt())
