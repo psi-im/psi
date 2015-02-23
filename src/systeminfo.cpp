@@ -222,6 +222,9 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 		case 0x000B: // QSysInfo::MV_10_9 should not be used for compatibility reasons
 			os_str_ = "OS X 10.9 (Mavericks)";
 			break;
+		case 0x000C: // QSysInfo::MV_10_10 should not be used for compatibility reasons
+			os_str_ = "OS X 10.10 (Yosemite)";
+			break;
 		default:
 			os_str_ = "Mac OS X";
 	}
