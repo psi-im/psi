@@ -222,6 +222,9 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 		case 0x000B: // QSysInfo::MV_10_9 should not be used for compatibility reasons
 			os_str_ = "OS X 10.9 (Mavericks)";
 			break;
+		case 0x000C: // QSysInfo::MV_10_10 should not be used for compatibility reasons
+			os_str_ = "OS X 10.10 (Yosemite)";
+			break;
 		default:
 			os_str_ = "Mac OS X";
 	}
@@ -279,6 +282,12 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 			break;
 		case 0x00a0: // QSysInfo::WV_WINDOWS8 should not be used for compatibility reasons
 			os_str_ = "Windows 8";
+			break;
+		case 0x00b0: // QSysInfo::WV_WINDOWS8_1 should not be used for compatibility reasons
+			os_str_ = "Windows 8.1";
+			break;
+		case 0x00c0: // QSysInfo::WV_WINDOWS10 should not be used for compatibility reasons
+			os_str_ = "Windows 10";
 			break;
 		case QSysInfo::WV_NT_based:
 			os_str_ = "Windows NT";
