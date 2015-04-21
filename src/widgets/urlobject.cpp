@@ -135,8 +135,10 @@ public slots:
 		if (!query.isEmpty()) {
 			QString queryType = query.left(query.indexOf(';'));
 #ifdef HAVE_QT5
-			QUrlQuery q = QUrlQuery(uri.query(QUrl::FullyEncoded));
+			QUrlQuery q;
 			q.setQueryDelimiters('=', ';');
+			q.setQuery(uri.query(QUrl::FullyEncoded));
+
 			if (q.queryItems().value(0).first != queryType) {
 				q.setQuery(query);
 			}

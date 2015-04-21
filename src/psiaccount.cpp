@@ -4237,12 +4237,14 @@ void PsiAccount::openUri(const QUrl &uriToOpen)
 
 	// query
 #ifdef HAVE_QT5
-	QUrlQuery uri(uriToOpen.query(QUrl::FullyEncoded));
+	QUrlQuery uri;
+	uri.setQueryDelimiters('=', ';');
+	uri.setQuery(uriToOpen.query(QUrl::FullyEncoded));
 #else
 	QUrl uri(uriToOpen);	// got to copy, because setQueryDelimiters() is not const
+	uri.setQueryDelimiters('=', ';');
 #endif
 
-	uri.setQueryDelimiters('=', ';');
 	QString querytype = uri.queryItems().value(0).first;	// defaults to empty string
 
 	if (0) {
