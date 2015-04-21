@@ -74,6 +74,7 @@ public:
 
 public:
 	PsiAccount* account() const;
+	void setInputText(const QString &text);
 
 signals:
 	void aInfo(const Jid &);

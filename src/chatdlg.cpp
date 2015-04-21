@@ -1035,6 +1035,12 @@ PsiAccount* ChatDlg::account() const
 	return TabbableWidget::account();
 }
 
+void ChatDlg::setInputText(const QString &text)
+{
+	chatEdit()->setPlainText(text);
+	chatEdit()->moveCursor(QTextCursor::End);
+}
+
 void ChatDlg::nicksChanged()
 {
 	// this function is intended to be reimplemented in subclasses

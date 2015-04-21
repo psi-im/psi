@@ -3920,12 +3920,12 @@ void PsiAccount::actionHistoryBox(const PsiEvent::Ptr &e)
 	w->show();
 }
 
-void PsiAccount::actionOpenChat(const Jid &j)
+ChatDlg* PsiAccount::actionOpenChat(const Jid &j)
 {
 	UserListItem *u = find(j);
 	if(!u) {
 		qWarning("[%s] not in userlist\n", qPrintable(j.full()));
-		return;
+		return 0;
 	}
 
 	// if 'j' is bare, we might want to switch to a specific resource
@@ -3954,9 +3954,9 @@ void PsiAccount::actionOpenChat(const Jid &j)
 	}
 
 	if(!res.isEmpty())
-		openChat(j.withResource(res), UserAction);
+		return openChat(j.withResource(res), UserAction);
 	else
-		openChat(j, UserAction);
+		return openChat(j, UserAction);
 }
 
 // unlike actionOpenChat(), this function will work on jids that aren't
@@ -4262,11 +4262,14 @@ void PsiAccount::openUri(const QUrl &uriToOpen)
 		QString subject = uri.queryItemValue("subject");
 		QString body = uri.queryItemValue("body");
 		QString type = uri.queryItemValue("type");
-		if (type == "chat" && subject.isEmpty() && body.isEmpty()) {
+		if (type == "chat" && subject.isEmpty()) {
 			if (!find(entity)) {
 				addUserListItem(entity);
 			}
-			actionOpenChat(entity);
+			ChatDlg *dlg = actionOpenChat(entity);
+			if (dlg && !body.isEmpty()) {
+				dlg->setInputText(body);
+			}
 		} else {
 			dj_newMessage(entity, body, subject, "");
 		}
@@ -5240,7 +5243,7 @@ void PsiAccount::processChats(const Jid &j)
 	processChatsHelper(j, true);
 }
 
-void PsiAccount::openChat(const Jid& j, ActivationType activationType)
+ChatDlg* PsiAccount::openChat(const Jid& j, ActivationType activationType)
 {
 	ChatDlg* chat = ensureChatDlg(j);
 	chat->ensureTabbedCorrectly();
@@ -5256,6 +5259,7 @@ void PsiAccount::openChat(const Jid& j, ActivationType activationType)
 			QTimer::singleShot(1000, dlg, SLOT(showTabWithoutActivation()));
 		}
 	}
+	return chat;
 }
 
 void PsiAccount::chatMessagesRead(const Jid &j)
