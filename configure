@@ -475,6 +475,11 @@ public:
 	{
 		return(QT_VERSION >= 0x040700);
 	}
+
+	QString resultString() const
+	{
+		return QT_VERSION_STR;
+	}
 };
 #line 1 "buildmodeapp.qcm"
 /*
@@ -2342,7 +2347,7 @@ bool Conf::doCompileAndLink(const QString &filedata, const QStringList &incs, co
 
 	if(!tmp.mkdir("atest"))
 	{
-		debug("unable to create atest dir");
+		debug(QString("unable to create atest dir: %1").arg(tmp.absoluteFilePath("atest")));
 		return false;
 	}
 	QDir dir(tmp.filePath("atest"));
@@ -2856,11 +2861,11 @@ export QC_WITH_ASPELL_INC
 export QC_WITH_ASPELL_LIB
 export QC_DISABLE_enchant
 export QC_VERBOSE
-rm -rf .qconftemp
+rm -rf ".qconftemp"
 (
-	mkdir .qconftemp
-	gen_files .qconftemp
-	cd .qconftemp
+	mkdir ".qconftemp"
+	gen_files ".qconftemp"
+	cd ".qconftemp"
 	if [ ! -z "$qm_spec" ]; then
 		$qm -spec $qm_spec conf4.pro >/dev/null
 	else
@@ -2871,7 +2876,7 @@ rm -rf .qconftemp
 )
 
 if [ "$?" != "0" ]; then
-	rm -rf .qconftemp
+	rm -rf ".qconftemp"
 	if [ "$QC_VERBOSE" = "Y" ]; then
 		echo " -> fail"
 	else
@@ -2901,12 +2906,12 @@ export QC_MAKETOOL
 .qconftemp/conf
 ret="$?"
 if [ "$ret" = "1" ]; then
-	rm -rf .qconftemp
+	rm -rf ".qconftemp"
 	echo
 	exit 1;
 else
 	if [ "$ret" != "0" ]; then
-		rm -rf .qconftemp
+		rm -rf ".qconftemp"
 		if [ "$QC_VERBOSE" = "Y" ]; then
 			echo " -> fail"
 		else
@@ -2918,7 +2923,7 @@ else
 		exit 1;
 	fi
 fi
-rm -rf .qconftemp
+rm -rf ".qconftemp"
 
 echo
 echo "Good, your configure finished.  Now run $MAKE."
