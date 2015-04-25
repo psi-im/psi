@@ -40,7 +40,7 @@
 #ifdef HAVE_X11
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include "x11info.h"
+#include <QX11Info>
 #endif
 
 // TODO: Make use of KDE taskbar flashing support
@@ -256,8 +256,8 @@ void GAdvancedWidget::Private::doFlash(bool yes)
 	/* Xlib-based solution */
 	// adopted from http://www.qtforum.org/article/12334/Taskbar-flashing.html
 	// public domain by Marcin Jakubowski
-	Display *xdisplay = X11Info::display();
-	Window rootwin = X11Info::appRootWindow();
+	Display *xdisplay = QX11Info::display();
+	Window rootwin = QX11Info::appRootWindow();
 
 	if (demandsAttention == None) {
 		demandsAttention = XInternAtom(xdisplay, "_NET_WM_STATE_DEMANDS_ATTENTION", true);

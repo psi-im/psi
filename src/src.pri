@@ -1,7 +1,7 @@
 QT += xml network
 
 greaterThan(QT_MAJOR_VERSION, 4) {
-  QT += widgets multimedia concurrent
+  QT += widgets multimedia concurrent x11extras
   DEFINES += HAVE_QT5
 
   unix:!mac:LIBS += -lxcb

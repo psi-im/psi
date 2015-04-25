@@ -26,6 +26,7 @@
 #include <QLineEdit>
 #include <QSortFilterProxyModel>
 #include <QKeyEvent>
+#include <QMimeData>
 
 #include "psicontactlistmodel.h"
 #include "psicontactlistview.h"

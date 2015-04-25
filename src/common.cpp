@@ -42,7 +42,7 @@
 
 #include <stdio.h>
 #ifdef HAVE_X11
-#include "x11info.h"
+#include <QX11Info>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -447,7 +447,7 @@ bool getCardinal32Prop(Display *display, Window win, char *propName, long *value
 // Get the desktop number that a window is on
 bool desktopOfWindow(Window *window, long *desktop)
 {
-	Display *display = X11Info::display();
+	Display *display = QX11Info::display();
 	bool result = getCardinal32Prop(display, *window, (char *)"_NET_WM_DESKTOP", desktop);
 	//if( result )
 	//	qDebug("Desktop: " + QString::number(*desktop));
@@ -459,10 +459,10 @@ bool desktopOfWindow(Window *window, long *desktop)
 bool currentDesktop(long *desktop)
 {
 	Window rootWin;
-	Display *display = X11Info::display();
+	Display *display = QX11Info::display();
 	bool result;
 
-	rootWin = RootWindow(X11Info::display(), XDefaultScreen(X11Info::display()));
+	rootWin = RootWindow(QX11Info::display(), XDefaultScreen(QX11Info::display()));
 	result = getCardinal32Prop(display, rootWin, (char *)"_NET_CURRENT_DESKTOP", desktop);
 	//if( result )
 	//	qDebug("Current Desktop: " + QString::number(*desktop));
