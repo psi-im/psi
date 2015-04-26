@@ -6,6 +6,8 @@ name: Psi Configuration
 
 #include <QDateTime>
 
+static QString sourceDir;
+
 static bool psiGenerateFile(const QString &inFile, const QString &outFile, const QHash<QString,QString> &vars)
 {
 	QFile fin(inFile);
@@ -37,7 +39,7 @@ static QString psiGetVersion()
 	QString str;
 
 	{
-		QFile file("version");
+		QFile file(sourceDir + "/version");
 		if(file.open(QIODevice::ReadOnly | QIODevice::Text))
 		{
 			QTextStream ts(&file);
@@ -63,11 +65,20 @@ public:
 	QString checkString() const { return QString(); }
 	bool exec()
 	{
+		QFileInfo fi(qc_getenv("QC_COMMAND"));
+		sourceDir = fi.absolutePath();
+
 		QString version = psiGetVersion();
 		QHash<QString,QString> vars;
 		vars["VERSION"] = version;
-
-		psiGenerateFile("mac/Info.plist.in", "mac/Info.plist", vars);
+		
+		QDir::current().mkpath("mac");
+		psiGenerateFile(sourceDir + "/mac/Info.plist.in", "mac/Info.plist", vars);
+		
+		vars.clear();
+		vars["source_dir"] = sourceDir;
+		vars["build_dir"] = QDir::currentPath();
+		psiGenerateFile(sourceDir + "/.qmake.cache.in", ".qmake.cache", vars);
 
 #ifndef Q_OS_WIN
 		conf->addExtra(QString("PSI_LIBDIR=%1/psi").arg(conf->getenv("LIBDIR")));

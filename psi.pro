@@ -8,14 +8,6 @@ windows:system("echo include($$top_srcdir/src/conf_iris.pri) > $$top_builddir\\i
 
 sub_iris.subdir = iris
 sub_src.subdir = src
-
-!greaterThan(QT_MAJOR_VERSION, 4) {
-	sub_initvars.file = initvars.pro
-	sub_iris.depends = sub_initvars
-	sub_src.depends = sub_initvars
-	SUBDIRS += sub_initvars
-}
-
 sub_src.depends += sub_iris
 
 SUBDIRS += \

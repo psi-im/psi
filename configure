@@ -458,7 +458,7 @@ if [ "$defmakespec" = "macx-xcode" ]; then
 fi
 
 gen_files() {
-cat >$1/modules.cpp <<EOT
+cat >"$1/modules.cpp" <<EOT
 #line 1 "qt4.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -1564,6 +1564,8 @@ name: Psi Configuration
 
 #include <QDateTime>
 
+static QString sourceDir;
+
 static bool psiGenerateFile(const QString &inFile, const QString &outFile, const QHash<QString,QString> &vars)
 {
 	QFile fin(inFile);
@@ -1595,7 +1597,7 @@ static QString psiGetVersion()
 	QString str;
 
 	{
-		QFile file("version");
+		QFile file(sourceDir + "/version");
 		if(file.open(QIODevice::ReadOnly | QIODevice::Text))
 		{
 			QTextStream ts(&file);
@@ -1621,11 +1623,20 @@ public:
 	QString checkString() const { return QString(); }
 	bool exec()
 	{
+		QFileInfo fi(qc_getenv("QC_COMMAND"));
+		sourceDir = fi.absolutePath();
+
 		QString version = psiGetVersion();
 		QHash<QString,QString> vars;
 		vars["VERSION"] = version;
-
-		psiGenerateFile("mac/Info.plist.in", "mac/Info.plist", vars);
+		
+		QDir::current().mkpath("mac");
+		psiGenerateFile(sourceDir + "/mac/Info.plist.in", "mac/Info.plist", vars);
+		
+		vars.clear();
+		vars["source_dir"] = sourceDir;
+		vars["build_dir"] = QDir::currentPath();
+		psiGenerateFile(sourceDir + "/.qmake.cache.in", ".qmake.cache", vars);
 
 #ifndef Q_OS_WIN
 		conf->addExtra(QString("PSI_LIBDIR=%1/psi").arg(conf->getenv("LIBDIR")));
@@ -1759,7 +1770,7 @@ public:
 };
 
 EOT
-cat >$1/modules_new.cpp <<EOT
+cat >"$1/modules_new.cpp" <<EOT
     o = new qc_qt4(conf);
     o->required = true;
     o->disabled = false;
@@ -1816,7 +1827,7 @@ cat >$1/modules_new.cpp <<EOT
     o->disabled = false;
 
 EOT
-cat >$1/conf4.h <<EOT
+cat >"$1/conf4.h" <<EOT
 /*
 Copyright (C) 2004-2008  Justin Karneges
 
@@ -1929,7 +1940,7 @@ private:
 #endif
 
 EOT
-cat >$1/conf4.cpp <<EOT
+cat >"$1/conf4.cpp" <<EOT
 /*
 Copyright (C) 2004-2008  Justin Karneges
 
@@ -2694,8 +2705,9 @@ void Conf::addExtra(const QString &str)
 # include"modules.cpp"
 #endif
 
-int main()
+int main(int argc, char ** argv)
 {
+	QCoreApplication app(argc, argv);
 	Conf *conf = new Conf;
 	ConfObj *o = 0;
 	Q_UNUSED(o);
@@ -2816,7 +2828,7 @@ int main()
 }
 
 EOT
-cat >$1/conf4.pro <<EOT
+cat >"$1/conf4.pro" <<EOT
 CONFIG  += console
 CONFIG  -= app_bundle
 QT      -= gui
@@ -2903,7 +2915,7 @@ QC_QMAKESPEC=$qm_spec
 export QC_QMAKESPEC
 QC_MAKETOOL=$MAKE
 export QC_MAKETOOL
-.qconftemp/conf
+".qconftemp/conf"
 ret="$?"
 if [ "$ret" = "1" ]; then
 	rm -rf ".qconftemp"
