@@ -824,14 +824,20 @@ public:
 
 		QStringList incs;
 		QString version, libs, other;
-		if(conf->findPkgConfig("qca2", VersionMin, "2.0.0", &version, &incs, &libs, &other))
-		{
-			for(int n = 0; n < incs.count(); ++n)
-				conf->addIncludePath(incs[n]);
-			if(!libs.isEmpty())
-				conf->addLib(libs);
-			return true;
-		}
+		QStringList pkgConfigNames;
+#if QT_VERSION >= 0x050000
+		pkgConfigNames << "qca2-qt5";
+#endif
+		pkgConfigNames << "qca2";
+		foreach (const QString &pcn, pkgConfigNames)
+			if(conf->findPkgConfig(pcn, VersionMin, "2.0.0", &version, &incs, &libs, &other))
+			{	
+				for(int n = 0; n < incs.count(); ++n)
+					conf->addIncludePath(incs[n]);
+				if(!libs.isEmpty())
+					conf->addLib(libs);
+				return true;
+			}
 
 		QStringList prefixes;
 		prefixes += "/usr";

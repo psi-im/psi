@@ -1,6 +1,6 @@
 TEMPLATE = subdirs
 
-include(conf.pri)
+include($$top_builddir/conf.pri)
 
 # configure iris
 unix:system("echo \"include($$top_srcdir/src/conf_iris.pri)\" > $$top_builddir/iris/conf.pri")
