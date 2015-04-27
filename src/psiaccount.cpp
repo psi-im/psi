@@ -4259,10 +4259,11 @@ void PsiAccount::openUri(const QUrl &uriToOpen)
 	} else if (querytype == "join") {
 		actionJoin(entity, uri.queryItemValue("password"));
 	} else if (querytype == "message") {
-		QString subject = uri.queryItemValue("subject");
 #ifdef HAVE_QT5
+		QString subject = uri.queryItemValue("subject", QUrl::FullyDecoded);
 		QString body = uri.queryItemValue("body", QUrl::FullyDecoded);
 #else
+		QString subject = uri.queryItemValue("subject");
 		QString body = uri.queryItemValue("body");
 #endif
 		QString type = uri.queryItemValue("type");
