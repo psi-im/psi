@@ -4260,7 +4260,11 @@ void PsiAccount::openUri(const QUrl &uriToOpen)
 		actionJoin(entity, uri.queryItemValue("password"));
 	} else if (querytype == "message") {
 		QString subject = uri.queryItemValue("subject");
+#ifdef HAVE_QT5
+		QString body = uri.queryItemValue("body", QUrl::FullyDecoded);
+#else
 		QString body = uri.queryItemValue("body");
+#endif
 		QString type = uri.queryItemValue("type");
 		if (type == "chat" && subject.isEmpty()) {
 			if (!find(entity)) {
