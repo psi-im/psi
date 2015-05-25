@@ -92,9 +92,9 @@ public:
 		if(!conf->DEFINES.isEmpty())
 			str += "DEFINES += " + conf->DEFINES + '\n';
 		if(!conf->INCLUDEPATH.isEmpty())
-			str += "INCLUDEPATH += " + conf->INCLUDEPATH + '\n';
+			str += "INCLUDEPATH += " + conf->escapedIncludes() + '\n';
 		if(!conf->LIBS.isEmpty())
-			str += "LIBS += " + conf->LIBS + '\n';
+			str += "LIBS += " + conf->escapedLibs() + '\n';
 		if(!conf->extra.isEmpty())
 			str += conf->extra;
 		str += '\n';

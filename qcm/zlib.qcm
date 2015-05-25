@@ -33,8 +33,7 @@ public:
 				if(!conf->findHeader("zlib.h", QStringList(), &s))
 					return false;
 			}
-			incs.append(s.replace("\\\", "\\\\\\\"));
-
+			
 			s = conf->getenv("QC_WITH_ZLIB_LIB");
 			if(!s.isEmpty()) {
 				if(!conf->checkLibrary(s, "z"))
@@ -45,7 +44,7 @@ public:
 					return false;
 			}
 			if (!s.isEmpty()) {
-				libs = QString("-L%1 -lz").arg(s.replace("\\\", "\\\\\\\"));
+				libs = QString("-L%1 -lz").arg(s);
 			} else {
 				libs = s.isEmpty()? "-lz" : QString("-L%1 -lz").arg(s);
 			}

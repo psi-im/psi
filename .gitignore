@@ -3,6 +3,7 @@
 /conf.pri
 /tmtags
 /psi
+/psi.exe
 ._*
 .DS_Store
 .AppleDouble
@@ -16,6 +17,7 @@ qrc_*
 *.rej
 ui_*
 moc_*
+object_script.*
 mocinclude.tmp
 release/
 debug/

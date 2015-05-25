@@ -292,6 +292,14 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 		case QSysInfo::WV_NT_based:
 			os_str_ = "Windows NT";
 			break;
+		// make compiler happy with unsupported Windows versions
+		case QSysInfo::WV_32s:
+		case QSysInfo::WV_CE:
+		case QSysInfo::WV_CENET:
+		case QSysInfo::WV_CE_5:
+		case QSysInfo::WV_CE_6:
+		case QSysInfo::WV_CE_based:
+			break;
 	}
 #endif
 }

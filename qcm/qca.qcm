@@ -33,10 +33,19 @@ static QString internal_crypto_prf(const QString &incdir, const QString &libdir,
 "isEmpty(LINKAGE) {\n"
 "	!isEmpty(QCA_INCDIR):INCLUDEPATH += $$QCA_INCDIR/QtCrypto\n"
 "	!isEmpty(QCA_LIBDIR):LIBS += -L$$QCA_LIBDIR\n"
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+"	LINKAGE = -lqca-qt5\n"
+#else
 "	LINKAGE = -lqca\n"
+#endif
 "	CONFIG(debug, debug|release) {\n"
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0) /* unchecked. real names may differ */
+"		windows:LINKAGE = -lqca-qt5d\n"
+"		mac:LINKAGE = -lqca-qt5_debug\n"
+#else
 "		windows:LINKAGE = -lqcad\n"
 "		mac:LINKAGE = -lqca_debug\n"
+#endif
 "	}\n"
 "}\n"
 "\n"
@@ -49,7 +58,7 @@ static QString internal_crypto_prf(const QString &incdir, const QString &libdir,
 static bool qca_try(Conf *conf, const QString &incdir, const QString &libdir, const QString &frameworkdir, bool release, bool debug, QString *_prf)
 {
 	QString proextra;
-	QString prf = internal_crypto_prf(incdir, libdir, frameworkdir);
+	QString prf = internal_crypto_prf(conf->escapePath(incdir), conf->escapePath(libdir), frameworkdir);
 	proextra =
 	"CONFIG += qt\n"
 	"CONFIG -= debug_and_release debug release\n"
