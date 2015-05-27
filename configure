@@ -2300,7 +2300,7 @@ QString qc_prepare_libs(const QStringList &libs)
 	}
 	QSet<QString> pathSet;
 	QStringList paths;
-	QStringList ret;
+	QStringList ordered;
 	foreach (const QString &arg, libs) {
 		if (arg.startsWith(QLatin1String("-L"))) {
 			QString path = qc_escape_string_var(arg.mid(2));
@@ -2309,12 +2309,16 @@ QString qc_prepare_libs(const QStringList &libs)
 				paths.append(path);
 			}
 		} else if (arg.startsWith(QLatin1String("-l"))) {
-			ret.append(arg);
+			ordered.append(arg);
 		} else {
-			ret.append(qc_escape_string_var(arg));
+			ordered.append(qc_escape_string_var(arg));
 		}
 	}
-	return QLatin1String(" -L") + paths.join(QLatin1String(" -L")) + QLatin1Char(' ') + ret.join(QLatin1String(" "));
+	QString ret;
+	if (paths.size()) {
+		ret += (QLatin1String(" -L") + paths.join(QLatin1String(" -L")) + QLatin1Char(' '));
+	}
+	return ret + ordered.join(QLatin1String(" "));
 }
 
 //----------------------------------------------------------------------------
