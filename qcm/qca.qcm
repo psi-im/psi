@@ -148,8 +148,9 @@ public:
 		QStringList pkgConfigNames;
 #if QT_VERSION >= 0x050000
 		pkgConfigNames << "qca2-qt5";
+#else
+		pkgConfigNames << "qca2 qca2-qt4";
 #endif
-		pkgConfigNames << "qca2";
 		foreach (const QString &pcn, pkgConfigNames)
 			if(conf->findPkgConfig(pcn, VersionMin, "2.0.0", &version, &incs, &libs, &other))
 			{	
