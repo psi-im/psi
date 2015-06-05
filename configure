@@ -16,6 +16,7 @@ Main options:
   --datadir=[path]    Directory for data.  Default: PREFIX/share
   --qtdir=[path]      Directory where Qt is installed.
   --verbose           Show extra configure output.
+  --qtselect=[N]      Select major Qt verion (4 or 5).
   --help              This help text.
 
 Project options:
@@ -286,6 +287,11 @@ while [ $# -gt 0 ]; do
 			QC_VERBOSE="Y"
 			shift
 			;;
+		--qtselect*)
+			[ "$1" = "--qtselect" ] && { shift; optarg="$1"; }
+			QC_QTSELECT="${optarg}"
+			shift
+			;;
 		--help) show_usage; exit ;;
 		*) show_usage; exit 1;;
 	esac
@@ -333,14 +339,19 @@ fi
 
 printf "Verifying Qt 4 build environment ... "
 
+QTSEARCHTTEXT="$QC_QTSELECT"
+[ -z "$QC_QTSELECT" ] && QTSEARCHTTEXT="4 or 5"
+
 # run qmake -v and check version
 qmake_check_v4() {
 	if [ -x "$1" ]; then
-       local v=`$1 -query QT_VERSION 2>&1`
-       vmaj="${v%%.*}"
-       case "${v}" in ?.?.?) [ "$vmaj" = 4 -o "$vmaj" = 5 ] && return 0 ;; esac
+		local v=`$1 -query QT_VERSION 2>&1`
+		vmaj="${v%%.*}"
+		case "${v}" in ?.?.?) [ -z "$QC_QTSELECT" ] && [ "$vmaj" = 4 -o "$vmaj" = 5 ] && return 0;
+			 [ -n "$QC_QTSELECT" ] && [ "$vmaj" = "$QC_QTSELECT" ] && return 0; ;;
+		esac
 		if [ "$QC_VERBOSE" = "Y" ]; then
-			echo "Warning: $1 not for Qt 4 or 5"
+			echo "Warning: $1 not for Qt ${QTSEARCHTTEXT}"
 		fi
 	fi
 	return 1
@@ -351,10 +362,18 @@ if [ "$QC_VERBOSE" = "Y" ]; then
 fi
 
 qm=""
-names="qmake-qt5 qmake5 qmake-qt4 qmake4 qmake"
+qt4_names="qmake-qt4 qmake4"
+qt5_names="qmake-qt5 qmake5"
+names="qmake"
+if [ -z "$QC_QTSELECT" ]; then
+	names="${qt5_names} ${qt4_names} $names"
+else
+	[ "$QC_QTSELECT" = "4" ] && names="${qt4_names} $names"
+	[ "$QC_QTSELECT" -ge "5" ] && names="${qt5_names} $names"
+fi
 
-# qt4 check: --qtdir
 if [ -z "$qm" ] && [ ! -z "$EX_QTDIR" ]; then
+# qt4 check: --qtdir
 	for n in $names; do
 		qstr=$EX_QTDIR/bin/$n
 		if qmake_check_v4 "$qstr"; then
@@ -362,13 +381,12 @@ if [ -z "$qm" ] && [ ! -z "$EX_QTDIR" ]; then
 			break;
 		fi
 	done
-fi
-if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
-	echo "Warning: qmake not found via --qtdir"
-fi
+	if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
+		echo "Warning: qmake not found via --qtdir"
+	fi
 
+elif [ -z "$qm" ] && [ ! -z "$QTDIR" ]; then
 # qt4 check: QTDIR
-if [ -z "$qm" ] && [ ! -z "$QTDIR" ]; then
 	for n in $names; do
 		qstr=$QTDIR/bin/$n
 		if qmake_check_v4 "$qstr"; then
@@ -376,9 +394,28 @@ if [ -z "$qm" ] && [ ! -z "$QTDIR" ]; then
 			break;
 		fi
 	done
+	if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
+		echo "Warning: qmake not found via \$QTDIR"
+	fi
+
+else
+
+# Try all other implicit checks
+
+# qtchooser
+if [ -z "$qm" ]; then
+	qtchooser=$($WHICH qtchooser 2>/dev/null)
+	if [ ! -z "$qtchooser" ]; then
+		cmd="$qtchooser -run-tool=qmake -qt=${QC_QTSELECT}"
+		qtbins="$($cmd -query QT_INSTALL_BINS 2>/dev/null)"
+		if [ -n "$qtbins" ] && qmake_check_v4 "$qtbins/qmake"; then
+			qm="$qtbins/qmake"
+			break;
+		fi
+	fi
 fi
 if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
-	echo "Warning: qmake not found via \$QTDIR"
+	echo "Warning: qmake not found via qtchooser"
 fi
 
 # qt4 check: pkg-config
@@ -412,6 +449,9 @@ if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
 	echo "Warning: qmake not found via \$PATH"
 fi
 
+# end of implicit checks
+fi
+
 if [ -z "$qm" ]; then
 	if [ "$QC_VERBOSE" = "Y" ]; then
 		echo " -> fail"
@@ -419,7 +459,7 @@ if [ -z "$qm" ]; then
 		echo "fail"
 	fi
 	printf "\n"
-	printf "Reason: Unable to find the 'qmake' tool for Qt 4.\n"
+	printf "Reason: Unable to find the 'qmake' tool for Qt ${QTSEARCHTTEXT}.\n"
 	printf "\n"
 	show_qt_info
 	exit 1;
@@ -836,8 +876,9 @@ public:
 		QStringList pkgConfigNames;
 #if QT_VERSION >= 0x050000
 		pkgConfigNames << "qca2-qt5";
+#else
+		pkgConfigNames << "qca2 qca2-qt4";
 #endif
-		pkgConfigNames << "qca2";
 		foreach (const QString &pcn, pkgConfigNames)
 			if(conf->findPkgConfig(pcn, VersionMin, "2.0.0", &version, &incs, &libs, &other))
 			{	
@@ -3065,6 +3106,7 @@ export QC_WITH_ASPELL_INC
 export QC_WITH_ASPELL_LIB
 export QC_DISABLE_enchant
 export QC_VERBOSE
+export QC_QTSELECT
 rm -rf ".qconftemp"
 (
 	mkdir ".qconftemp"
@@ -3101,7 +3143,7 @@ QC_COMMAND=$0
 export QC_COMMAND
 QC_PROFILE=psi.pro
 export QC_PROFILE
-QC_QMAKE=$qm
+QC_QMAKE="$qm"
 export QC_QMAKE
 QC_QMAKESPEC=$qm_spec
 export QC_QMAKESPEC
