@@ -10,14 +10,15 @@ Usage: $0 [OPTION]...
 This script creates necessary configuration files to build/install.
 
 Main options:
-  --prefix=[path]     Base path for build/install.  Default: /usr/local
-  --bindir=[path]     Directory for binaries.  Default: PREFIX/bin
-  --libdir=[path]     Directory for libraries.  Default: PREFIX/lib
-  --datadir=[path]    Directory for data.  Default: PREFIX/share
-  --qtdir=[path]      Directory where Qt is installed.
-  --verbose           Show extra configure output.
-  --qtselect=[N]      Select major Qt verion (4 or 5).
-  --help              This help text.
+  --prefix=[path]       Base path for build/install.  Default: /usr/local
+  --bindir=[path]       Directory for binaries.  Default: PREFIX/bin
+  --libdir=[path]       Directory for libraries.  Default: PREFIX/lib
+  --datadir=[path]      Directory for data.  Default: PREFIX/share
+  --qtdir=[path]        Directory where Qt is installed.
+  --extraconf=[conf]    Extra configuration for nonstandard cases
+  --verbose             Show extra configure output.
+  --qtselect=[N]        Select major Qt verion (4 or 5).
+  --help                This help text.
 
 Project options:
   --release                   Build with debugging turned off (default).
@@ -168,6 +169,11 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
+		--extraconf=*)
+			QC_EXTRACONF=$optarg
+			shift
+			;;
+
 		--release)
 			QC_RELEASE="Y"
 			shift
@@ -311,6 +317,7 @@ echo BINDIR=$BINDIR
 echo LIBDIR=$LIBDIR
 echo DATADIR=$DATADIR
 echo EX_QTDIR=$EX_QTDIR
+echo QC_EXTRACONF=$QC_EXTRACONF
 echo QC_RELEASE=$QC_RELEASE
 echo QC_DEBUG=$QC_DEBUG
 echo QC_NO_SEPARATE_DEBUG_INFO=$QC_NO_SEPARATE_DEBUG_INFO
@@ -3033,6 +3040,10 @@ int main(int argc, char ** argv)
 			str += conf->extra;
 		str += '\\n';
 
+		var = qc_getenv("QC_EXTRACONF");
+		if (!var.isEmpty())
+			str += ("\\n# Extra conf from command line\\n" + var + "\\n");
+
 		QByteArray cs = str.toLatin1();
 		f.write(cs);
 		f.close();
@@ -3082,6 +3093,7 @@ export BINDIR
 export LIBDIR
 export DATADIR
 export EX_QTDIR
+export QC_EXTRACONF
 export QC_RELEASE
 export QC_DEBUG
 export QC_NO_SEPARATE_DEBUG_INFO
