@@ -3,6 +3,7 @@
 
 #include "psioptions.h"
 #include "groupchatdlg.h"
+#include "shortcutmanager.h"
 
 GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
 	QDialog(parent),
@@ -13,6 +14,11 @@ GroupchatTopicDlg::GroupchatTopicDlg(GCMainDlg *parent) :
 	f.fromString(PsiOptions::instance()->getOption("options.ui.look.font.chat").toString());
 	m_ui->pte_topic->setFont(f);
 	m_ui->pte_topic->setPlainText(parent->topic());
+	QKeySequence sendKey = ShortcutManager::instance()->shortcut("chat.send");
+	if (sendKey == QKeySequence(Qt::Key_Enter) || sendKey == QKeySequence(Qt::Key_Return)) {
+		sendKey = QKeySequence(Qt::CTRL + Qt::Key_Return);
+	}
+	m_ui->buttonBox->button(QDialogButtonBox::Ok)->setShortcut(sendKey);
 }
 
 GroupchatTopicDlg::~GroupchatTopicDlg()
