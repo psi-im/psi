@@ -49,6 +49,9 @@
 #include <QTextDocument> // for TextUtil::escape()
 #include <QToolTip>
 #include <QScrollBar>
+#include <QCheckBox>
+#include <QDialogButtonBox>
+#include <QFormLayout>
 
 #include "psicon.h"
 #include "psiaccount.h"
@@ -75,6 +78,7 @@
 #include "psicontactlist.h"
 #include "accountlabel.h"
 #include "gcuserview.h"
+#include "bookmarkmanager.h"
 #include "mucreasonseditor.h"
 #include "mcmdmanager.h"
 #include "lastactivitytask.h"
@@ -202,7 +206,7 @@ public:
 	QString password;
 	QString topic;
 	bool nonAnonymous;		 // got status code 100 ?
-	IconAction *act_find, *act_clear, *act_icon, *act_configure;
+	IconAction *act_find, *act_clear, *act_icon, *act_configure, *act_bookmark;
 #ifdef WHITEBOARDING
 	IconAction *act_whiteboard;
 #endif
@@ -647,6 +651,18 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	connect(d->act_mini_cmd, SIGNAL(triggered()), d, SLOT(doMiniCmd()));
 	addAction(d->act_mini_cmd);
 
+	d->act_bookmark = new IconAction(this);
+	connect(d->act_bookmark, SIGNAL(triggered()), SLOT(doBookmark()));
+	ui_.le_topic->addAction(d->act_bookmark);
+	BookmarkManager *bm = account()->bookmarkManager();
+	d->act_bookmark->setVisible(bm->isAvailable());
+	if (bm->isAvailable()) {
+		updateBookmarkIcon();
+	}
+	connect(bm, SIGNAL(availabilityChanged()), SLOT(updateBookmarkIcon()));
+	connect(bm, SIGNAL(conferencesChanged(QList<ConferenceBookmark>)), SLOT(updateBookmarkIcon()));
+	connect(bm, SIGNAL(bookmarksSaved()), SLOT(updateBookmarkIcon()));
+
 	ui_.toolbar->setIconSize(QSize(16,16));
 	ui_.toolbar->addAction(d->act_clear);
 	ui_.toolbar->addAction(d->act_configure);
@@ -830,6 +846,25 @@ void GCMainDlg::updateIdentityVisibility()
 	ui_.lb_ident->setVisible(account()->psi()->contactList()->enabledAccounts().count() > 1);
 }
 
+void GCMainDlg::updateBookmarkIcon()
+{
+	BookmarkManager *bm = account()->bookmarkManager();
+	d->act_bookmark->setVisible(bm->isAvailable());
+	if (bm->isAvailable()) {
+		QString text;
+		if (bm->isBookmarked(jid())) {
+			text = tr("Edit Bookmark");
+			d->act_bookmark->setPsiIcon("psi/bookmark_remove");
+		} else {
+			text = tr("Add to bookmarks");
+			d->act_bookmark->setPsiIcon("psi/bookmark_add");
+		}
+		d->act_bookmark->setToolTip(text);
+		d->act_bookmark->setText(text);
+		d->act_bookmark->setStatusTip(text);
+	}
+}
+
 #ifdef WHITEBOARDING
 void GCMainDlg::openWhiteboard()
 {
@@ -985,6 +1020,71 @@ void GCMainDlg::doClearButton()
 		}
 	} else {
 		doClear();
+	}
+}
+
+void GCMainDlg::doBookmark()
+{
+	BookmarkManager *bm = account()->bookmarkManager();
+	if (!bm->isAvailable()) {
+		return;
+	}
+	QList<ConferenceBookmark> confs =  bm->conferences();
+	int confInd = bm->indexOfConference(jid());
+	if (confInd < 0) { // not found
+		ConferenceBookmark conf(jid().bare(), jid(), false, nick(), d->password);
+		confs.push_back(conf);
+		bm->setBookmarks(confs);
+		return;
+	}
+	ConferenceBookmark &b = confs[confInd];
+	QDialog *dlg = new QDialog(this);
+	QVBoxLayout *layout = new QVBoxLayout;
+	QHBoxLayout *blayout = new QHBoxLayout;
+	QFormLayout *formLayout = new QFormLayout;
+	QLineEdit *txtName = new QLineEdit;
+	QLineEdit *txtNick = new QLineEdit;
+	QCheckBox *chkAJoin = new QCheckBox;
+	QPushButton *saveBtn = new QPushButton(dlg->style()->standardIcon(QStyle::SP_DialogSaveButton), tr("Save"), dlg);
+	QPushButton *deleteBtn = new QPushButton(dlg->style()->standardIcon(QStyle::SP_DialogDiscardButton), tr("Delete"), dlg);
+	QPushButton *cancelBtn = new QPushButton(dlg->style()->standardIcon(QStyle::SP_DialogCancelButton), tr("Cancel"), dlg);
+
+	blayout->insertStretch(0);
+	blayout->addWidget(saveBtn);
+	blayout->addWidget(deleteBtn);
+	blayout->addWidget(cancelBtn);
+	txtName->setText(b.name());
+	txtNick->setText(b.nick());
+	chkAJoin->setChecked(b.autoJoin());
+	formLayout->addRow(tr("&Name:"), txtName);
+	formLayout->addRow(tr("N&ick:"), txtNick);
+	formLayout->addRow(tr("&Auto join:"), chkAJoin);
+	layout->addLayout(formLayout);
+	layout->addLayout(blayout);
+	dlg->setLayout(layout);
+	dlg->setMinimumWidth(300);
+	dlg->connect(saveBtn, SIGNAL(clicked()), dlg, SLOT(accept()));
+	dlg->connect(deleteBtn, SIGNAL(clicked()), dlg, SLOT(reject()));
+	dlg->connect(cancelBtn, SIGNAL(clicked()), dlg, SLOT(reject()));
+	connect(deleteBtn, SIGNAL(clicked()), this, SLOT(doRemoveBookmark()));
+
+	dlg->setWindowTitle(tr("Bookmark conference"));
+	dlg->adjustSize();
+	dlg->move(ui_.le_topic->mapToGlobal(QPoint(
+			ui_.le_topic->width() - dlg->width(), ui_.le_topic->height())));
+	if (dlg->exec() == QDialog::Accepted) {
+		ConferenceBookmark conf(txtName->text(), jid(), chkAJoin->checkState() == Qt::Checked, txtNick->text(), d->password);
+		confs[confInd] = conf;
+		bm->setBookmarks(confs);
+	}
+	delete dlg;
+}
+
+void GCMainDlg::doRemoveBookmark()
+{
+	BookmarkManager *bm = account()->bookmarkManager();
+	if (bm->isAvailable()) {
+		bm->removeConference(jid());
 	}
 }
 
@@ -1728,6 +1828,7 @@ void GCMainDlg::buildMenu()
 
 	d->pm_settings->addAction(d->act_icon);
 	d->pm_settings->addAction(d->act_nick);
+	d->pm_settings->addAction(d->act_bookmark);
 }
 
 void GCMainDlg::chatEditCreated()

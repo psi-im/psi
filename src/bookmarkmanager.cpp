@@ -138,6 +138,24 @@ void BookmarkManager::setIsAvailable(bool available)
 	}
 }
 
+bool BookmarkManager::isBookmarked(const XMPP::Jid &j)
+{
+	return indexOfConference(j) >= 0;
+}
+
+void BookmarkManager::removeConference(const XMPP::Jid &j)
+{
+	if (isAvailable_) {
+		QList<ConferenceBookmark> confs;
+		foreach (ConferenceBookmark c, conferences_) {
+			if (!c.jid().compare(j, false)) {
+				confs.push_back(c);
+			}
+		}
+		setBookmarks(confs);
+	}
+}
+
 QList<URLBookmark> BookmarkManager::urls() const
 {
 	return urls_;
@@ -146,6 +164,20 @@ QList<URLBookmark> BookmarkManager::urls() const
 QList<ConferenceBookmark> BookmarkManager::conferences() const
 {
 	return conferences_;
+}
+
+int BookmarkManager::indexOfConference(const XMPP::Jid &j) const
+{
+	if (isAvailable_) {
+		int i = 0;
+		foreach(ConferenceBookmark c, conferences_) {
+			if (c.jid().compare(j, false)) {
+				return i;
+			}
+			i++;
+		}
+	}
+	return -1;
 }
 
 void BookmarkManager::accountStateChanged()
@@ -214,4 +246,5 @@ void BookmarkManager::setBookmarks_finished()
 {
 	BookmarkTask* t = static_cast<BookmarkTask*>(sender());
 	Q_UNUSED(t);
+	emit bookmarksSaved();
 }

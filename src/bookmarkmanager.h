@@ -37,18 +37,22 @@ public:
 	BookmarkManager(PsiAccount* account);
 
 	bool isAvailable() const;
+	bool isBookmarked(const XMPP::Jid &);
 
 	QList<URLBookmark> urls() const;
 	QList<ConferenceBookmark> conferences() const;
+	int indexOfConference(const XMPP::Jid &) const;
 
 	void setBookmarks(const QList<URLBookmark>&, const QList<ConferenceBookmark>&);
 	void setBookmarks(const QList<URLBookmark>&);
 	void setBookmarks(const QList<ConferenceBookmark>&);
+	void removeConference(const XMPP::Jid &);
 
 signals:
 	void availabilityChanged();
 	void urlsChanged(const QList<URLBookmark>&);
 	void conferencesChanged(const QList<ConferenceBookmark>&);
+	void bookmarksSaved();
 
 private slots:
 	void getBookmarks_finished();

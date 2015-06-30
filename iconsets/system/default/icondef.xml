@@ -443,6 +443,16 @@
 		<object mime='image/png'>throbber.png</object>
 	</icon>
 
+	<icon>
+		<x xmlns='name'>psi/bookmark_add</x>
+		<object mime='image/png'>bookmark_add.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/bookmark_remove</x>
+		<object mime='image/png'>bookmark_remove.png</object>
+	</icon>
+
 	<!-- Whiteboarding -->
 	<icon>
 		<x xmlns='name'>psi/whiteboard</x>

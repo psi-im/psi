@@ -71,9 +71,12 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="le_topic" >
+           <widget class="ActionLineEdit" name="le_topic" >
             <property name="readOnly" >
              <bool>true</bool>
+            </property>
+            <property name="toolButtonStyle" >
+             <enum>Qt::ToolButtonIconOnly</enum>
             </property>
            </widget>
           </item>
@@ -321,6 +324,11 @@
    <class>ChatEditProxy</class>
    <extends>QTextEdit</extends>
    <header>chateditproxy.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ActionLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>actionlineedit.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
