@@ -27,6 +27,7 @@
 #include <QMap>
 #include <QDateTime>
 #include <QPair>
+#include <QIODevice>
 
 #include "xmpp_features.h"
 #include "xmpp_discoitem.h"
