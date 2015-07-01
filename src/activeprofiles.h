@@ -22,6 +22,7 @@
 #ifndef ACTIVEPSIPROFILES_H
 #define ACTIVEPSIPROFILES_H
 
+#include <QObject>
 #include <QStringList>
 
 class ActiveProfiles: public QObject
