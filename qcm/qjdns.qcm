@@ -26,7 +26,12 @@ public:
 		QString version, libs, other;
 		QString s;
 
-		if(!conf->findPkgConfig("qjdns", VersionMin, "2.0.0", &version, &incs, &libs, &other)) {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+		bool found = conf->findPkgConfig("qjdns-qt5", VersionMin, "2.0.3", &version, &incs, &libs, &other);
+#else
+		bool found = conf->findPkgConfig("qjdns-qt4", VersionMin, "2.0.3", &version, &incs, &libs, &other);
+#endif
+		if(!found && !conf->findPkgConfig("qjdns", VersionMin, "2.0.0", &version, &incs, &libs, &other)) {
 			s = conf->getenv("QC_WITH_QJDNS_INC");
 			if ((!s.isEmpty() && conf->checkHeader(s, "qjdns.h")) ||
 				(s.isEmpty() && conf->findHeader("qjdns.h", QStringList(), &s))) {
