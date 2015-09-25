@@ -121,6 +121,7 @@ public:
 	static bool messagingEnabled();
 
 	QString text() const;
+	bool isForAll() const;
 	void setHtml(const QString &);
 	void setSubject(const QString &);
 	void setThread(const QString &);

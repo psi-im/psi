@@ -348,6 +348,7 @@ public:
 	PsiEvent::Ptr peekNext() const;
 	bool hasChats(const XMPP::Jid &, bool compareRes=true) const;
 	PsiEvent::Ptr peekFirstChat(const XMPP::Jid &, bool compareRes=true) const;
+	void extractByType(int type, QList<PsiEvent::Ptr> *el);
 	void extractMessages(QList<PsiEvent::Ptr> *list);
 	void extractChats(QList<PsiEvent::Ptr> *list, const XMPP::Jid &, bool compareRes, bool removeEvents);
 	void printContent() const;

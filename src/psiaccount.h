@@ -429,6 +429,9 @@ private slots:
 	void pgp_encryptFinished();
 	void pgp_decryptFinished();
 
+	void ed_addAuth(const Jid &);
+	void ed_deny(const Jid &);
+
 	void optionsUpdate();
 
 	void processReadNext(const UserListItem &);

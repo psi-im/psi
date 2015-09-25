@@ -3581,8 +3581,8 @@ EventDlg *PsiAccount::ensureEventDlg(const Jid &j)
 		connect(w, SIGNAL(aReadNext(const Jid &)), SLOT(processReadNext(const Jid &)));
 		connect(w, SIGNAL(aChat(const Jid &)), SLOT(actionOpenChat2(const Jid&)));
 		connect(w, SIGNAL(aReply(const Jid &, const QString &, const QString &, const QString &)), SLOT(dj_replyMessage(const Jid &, const QString &, const QString &, const QString &)));
-		connect(w, SIGNAL(aAuth(const Jid &)), SLOT(dj_addAuth(const Jid &)));
-		connect(w, SIGNAL(aDeny(const Jid &)), SLOT(dj_deny(const Jid &)));
+		connect(w, SIGNAL(aAuth(const Jid &)), SLOT(ed_addAuth(const Jid &)));
+		connect(w, SIGNAL(aDeny(const Jid &)), SLOT(ed_deny(const Jid &)));
 		connect(w, SIGNAL(aHttpConfirm(const PsiHttpAuthRequest &)), SLOT(dj_confirmHttpAuth(const PsiHttpAuthRequest &)));
 		connect(w, SIGNAL(aHttpDeny(const PsiHttpAuthRequest &)), SLOT(dj_denyHttpAuth(const PsiHttpAuthRequest &)));
 		connect(w, SIGNAL(aRosterExchange(const RosterExchangeItems &)), SLOT(dj_rosterExchange(const RosterExchangeItems &)));
@@ -3911,8 +3911,8 @@ void PsiAccount::actionHistoryBox(const PsiEvent::Ptr &e)
 	EventDlg *w = new EventDlg(e->from(), this, false);
 	connect(w, SIGNAL(aChat(const Jid &)), SLOT(actionOpenChat2(const Jid&)));
 	connect(w, SIGNAL(aReply(const Jid &, const QString &, const QString &, const QString &)), SLOT(dj_replyMessage(const Jid &, const QString &, const QString &, const QString &)));
-	connect(w, SIGNAL(aAuth(const Jid &)), SLOT(dj_addAuth(const Jid &)));
-	connect(w, SIGNAL(aDeny(const Jid &)), SLOT(dj_deny(const Jid &)));
+	connect(w, SIGNAL(aAuth(const Jid &)), SLOT(ed_addAuth(const Jid &)));
+	connect(w, SIGNAL(aDeny(const Jid &)), SLOT(ed_deny(const Jid &)));
 	connect(w, SIGNAL(aRosterExchange(const RosterExchangeItems &)), SLOT(dj_rosterExchange(const RosterExchangeItems &)));
 	connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));
 	connect(this, SIGNAL(updateContact(const Jid &)), w, SLOT(updateContact(const Jid &)));
@@ -6168,5 +6168,30 @@ QIcon PsiAccount::alertPicture() const
 		return QIcon();
 	return d->currentAlertFrame();
 }
+
+void PsiAccount::ed_addAuth(const Jid &j)
+{
+	dj_addAuth(j);
+	if (static_cast<EventDlg*>(sender())->isForAll()) {
+		QList<PsiEvent::Ptr> events;
+		d->eventQueue->extractByType(PsiEvent::Auth, &events);
+		foreach (PsiEvent::Ptr e, events) {
+			dj_addAuth(e->jid());
+		}
+	}
+}
+
+void PsiAccount::ed_deny(const Jid &j)
+{
+	dj_deny(j);
+	if (static_cast<EventDlg*>(sender())->isForAll()) {
+		QList<PsiEvent::Ptr> events;
+		d->eventQueue->extractByType(PsiEvent::Auth, &events);
+		foreach (PsiEvent::Ptr e, events) {
+			dj_deny(e->jid());
+		}
+	}
+}
+
 
 #include "psiaccount.moc"

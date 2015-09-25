@@ -45,6 +45,7 @@
 #include <QCloseEvent>
 #include <QTextDocumentFragment>
 #include <QMimeData>
+#include <QCheckBox>
 
 #include "psievent.h"
 #include "psicon.h"
@@ -491,6 +492,7 @@ public:
 	IconButton *pb_next;
 	IconButton *pb_close, *pb_quote, *pb_deny, *pb_send, *pb_reply, *pb_chat, *pb_auth, *pb_http_confirm, *pb_http_deny;
 	IconButton *pb_form_submit, *pb_form_cancel;
+	QCheckBox *ck_all_auth;
 	PsiTextView *mle;
 	AttachView *attachView;
 	QTimer *whois;
@@ -874,12 +876,15 @@ void EventDlg::init()
 	// bottom row
 	QHBoxLayout *hb4 = new QHBoxLayout;
 	vb1->addLayout(hb4);
+
 	d->pb_close = new IconButton(this);
 	d->pb_close->setText(tr("&Close"));
 	connect(d->pb_close, SIGNAL(clicked()), SLOT(close()));
 	d->pb_close->setMinimumWidth(80);
 	hb4->addWidget(d->pb_close);
+
 	hb4->addStretch(1);
+
 	d->pb_next = new IconButton(this);
 	connect(d->pb_next, SIGNAL(clicked()), SLOT(doReadNext()));
 	d->pb_next->setText(tr("&Next"));
@@ -887,18 +892,25 @@ void EventDlg::init()
 	d->pb_next->setMinimumWidth(96);
 	d->pb_next->setEnabled(false);
 	hb4->addWidget(d->pb_next);
+
 	d->pb_quote = new IconButton(this);
 	d->pb_quote->setText(tr("&Quote"));
 	connect(d->pb_quote, SIGNAL(clicked()), SLOT(doQuote()));
 	d->pb_quote->hide();
 	d->pb_quote->setMinimumWidth(96);
 	hb4->addWidget(d->pb_quote);
+
+	d->ck_all_auth = new QCheckBox(tr("For all"), this);
+	d->ck_all_auth->hide();
+	hb4->addWidget(d->ck_all_auth);
+
 	d->pb_deny = new IconButton(this);
 	d->pb_deny->setText(tr("&Deny"));
 	connect(d->pb_deny, SIGNAL(clicked()), SLOT(doDeny()));
 	d->pb_deny->hide();
 	d->pb_deny->setMinimumWidth(96);
 	hb4->addWidget(d->pb_deny);
+
 	d->pb_auth = new IconButton(this);
 	d->pb_auth->setText(tr("&Add/Auth"));
 	connect(d->pb_auth, SIGNAL(clicked()), SLOT(doAuth()));
@@ -906,18 +918,21 @@ void EventDlg::init()
 	d->pb_auth->hide();
 	d->pb_auth->setMinimumWidth(96);
 	hb4->addWidget(d->pb_auth);
+
 	d->pb_send = new IconButton(this);
 	d->pb_send->setText(tr("&Send"));
 	connect(d->pb_send, SIGNAL(clicked()), SLOT(doSend()));
 	d->pb_send->hide();
 	d->pb_send->setMinimumWidth(96);
 	hb4->addWidget(d->pb_send);
+
 	d->pb_chat = new IconButton(this);
 	d->pb_chat->setText(tr("&Chat"));
 	connect(d->pb_chat, SIGNAL(clicked()), SLOT(doChat()));
 	d->pb_chat->hide();
 	d->pb_chat->setMinimumWidth(96);
 	hb4->addWidget(d->pb_chat);
+
 	d->pb_reply = new IconButton(this);
 	d->pb_reply->setText(tr("&Reply"));
 	connect(d->pb_reply, SIGNAL(clicked()), SLOT(doReply()));
@@ -1020,6 +1035,11 @@ void EventDlg::accountUpdatedActivity()
 QString EventDlg::text() const
 {
 	return d->mle->getPlainText();
+}
+
+bool EventDlg::isForAll() const
+{
+	return d->ck_all_auth->isChecked();
 }
 
 void EventDlg::setHtml(const QString &s)
@@ -1507,7 +1527,7 @@ void EventDlg::doDeny()
 		if(list.isEmpty())
 			return;
 		Jid j(list[0]);
-		aDeny(j);
+		emit aDeny(j);
 	}
 	else {
 		d->rosterExchangeItems.clear();
@@ -1741,6 +1761,7 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
 	d->pb_quote->show();
 	d->pb_close->show();
 	d->mle->show();
+	d->ck_all_auth->hide();
 	d->pb_auth->hide();
 	d->pb_deny->hide();
 	d->pb_form_submit->hide();
@@ -1895,6 +1916,7 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
 			d->pb_reply->hide();
 			d->pb_quote->hide();
 
+			d->ck_all_auth->show();
 			d->pb_auth->setEnabled(true);
 			d->pb_auth->show();
 			d->pb_deny->show();
@@ -1907,6 +1929,7 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
 			QString body(tr("<big>[System Message]</big><br>You are now authorized."));
 			setHtml("<qt>" + body + "</qt>");
 
+			d->ck_all_auth->hide();
 			d->pb_auth->hide();
 			d->pb_deny->hide();
 			d->pb_chat->show();
@@ -1919,6 +1942,7 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
 			QString body(tr("<big>[System Message]</big><br>Your authorization has been removed!"));
 			setHtml("<qt>" + body + "</qt>");
 
+			d->ck_all_auth->hide();
 			d->pb_auth->hide();
 			d->pb_deny->hide();
 			d->pb_chat->show();
@@ -1977,6 +2001,7 @@ void EventDlg::updateEvent(const PsiEvent::Ptr &e)
 		d->pb_reply->hide();
 		d->pb_quote->hide();
 
+		d->ck_all_auth->show();
 		d->pb_auth->setEnabled(true);
 		d->pb_auth->show();
 		d->pb_deny->show();

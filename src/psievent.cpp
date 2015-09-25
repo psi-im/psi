@@ -1026,11 +1026,17 @@ void EventQueue::extractChats(QList<PsiEvent::Ptr> *el, const Jid &j, bool compa
 // this function extracts all messages from the queue, and returns a list of them
 void EventQueue::extractMessages(QList<PsiEvent::Ptr> *el)
 {
+	extractByType(PsiEvent::Message, el);
+}
+
+// this function extracts all auths from the queue, and returns a list of them
+void EventQueue::extractByType(int type, QList<PsiEvent::Ptr> *el)
+{
 	bool changed = false;
 
 	for(QList<EventItem*>::Iterator it = list_.begin(); it != list_.end();) {
 		PsiEvent::Ptr e = (*it)->event();
-		if(e->type() == PsiEvent::Message) {
+		if(e->type() == type) {
 			el->append(e);
 			EventItem* ei = *it;
 			if (enabled_) {
