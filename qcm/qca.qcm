@@ -39,7 +39,7 @@ static QString internal_crypto_prf(const QString &incdir, const QString &libdir,
 "	!isEmpty(QCA_LIBDIR):LIBS += -L$$QCA_LIBDIR\n"
 "	LINKAGE = -l$${QCA_NAME}\n"
 "	CONFIG(debug, debug|release) {\n"
-"		windows:LINKAGE = -l$${QCA_NAME}\n"
+"		windows:LINKAGE = -l$${QCA_NAME}d\n"
 "		mac:LINKAGE = -l$${QCA_NAME}_debug\n"
 "	}\n"
 "}\n"
