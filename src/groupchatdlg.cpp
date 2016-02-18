@@ -775,6 +775,13 @@ void GCMainDlg::ensureTabbedCorrectly()
 	QList<int> tmp = ui_.hsplitter->sizes();
 	ui_.hsplitter->setSizes(QList<int>() << 0);
 	ui_.hsplitter->setSizes(tmp);
+	UserListItem* u = account()->find(jid().bare());
+	if(u) {
+		setTabIcon(PsiIconset::instance()->statusPtr(u)->icon());
+	}
+	else {
+		setStatusTabIcon((d->state == Private::Connected ? STATUS_ONLINE : STATUS_OFFLINE));
+	}
 	if(!isTabbed() && geometryOptionPath().isEmpty()) {
 		setGeometryOptionPath(geometryOption);
 	}
@@ -1156,6 +1163,7 @@ void GCMainDlg::goDisc()
 	if(d->state != Private::Idle && d->state != Private::ForcedLeave) {
 		d->state = Private::Idle;
 		ui_.pb_topic->setEnabled(false);
+		setStatusTabIcon(STATUS_OFFLINE);
 		appendSysMsg(tr("Disconnected."), true);
 		ui_.mle->chatEdit()->setEnabled(false);
 	}
@@ -1248,6 +1256,7 @@ PsiAccount* GCMainDlg::account() const
 void GCMainDlg::error(int, const QString &str)
 {
 	ui_.pb_topic->setEnabled(false);
+	setStatusTabIcon(STATUS_ERROR);
 
 	if(d->state == Private::Connecting)
 		appendSysMsg(tr("Unable to join groupchat.	Reason: %1").arg(str), true);
@@ -1301,6 +1310,8 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 	}
 
 	if (nick == d->self) {
+		if(s.isAvailable())
+			setStatusTabIcon(s.type());
 		// Update configuration dialog
 		if (d->configDlg) {
 			d->configDlg->setRoleAffiliation(s.mucItem().role(),s.mucItem().affiliation());
@@ -1575,6 +1586,7 @@ void GCMainDlg::joined()
 		ui_.lv_users->clear();
 		d->state = Private::Connected;
 		ui_.pb_topic->setEnabled(true);
+		setStatusTabIcon(STATUS_ONLINE);
 		ui_.mle->chatEdit()->setEnabled(true);
 		setConnecting();
 		appendSysMsg(tr("Connected."), true);
@@ -1881,6 +1893,11 @@ TabbableWidget::State GCMainDlg::state() const
 int GCMainDlg::unreadMessageCount() const
 {
 	return d->pending;
+}
+
+void GCMainDlg::setStatusTabIcon(int status)
+{
+	setTabIcon(PsiIconset::instance()->statusPtr(jid(), status)->icon());
 }
 
 //----------------------------------------------------------------------------

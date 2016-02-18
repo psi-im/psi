@@ -182,15 +182,6 @@ void ChatDlg::initActions()
 	connect(act_scrolldown_, SIGNAL(triggered()), chatView(), SLOT(scrollDown()));
 }
 
-void ChatDlg::ensureTabbedCorrectly()
-{
-	TabbableWidget::ensureTabbedCorrectly();
-	setShortcuts();
-	if(!isTabbed() && geometryOptionPath().isEmpty()) {
-		setGeometryOptionPath(geometryOption);
-	}
-}
-
 void ChatDlg::ackLastMessages(int a)
 {
 	Q_UNUSED(a);
@@ -421,6 +412,18 @@ UserStatus userStatusFor(const Jid& jid, QList<UserListItem*> ul, bool forceEmpt
 		u.status = u.userListItem->lastUnavailableStatus().status();
 
 	return u;
+}
+
+void ChatDlg::ensureTabbedCorrectly()
+{
+	TabbableWidget::ensureTabbedCorrectly();
+	setShortcuts();
+	QList<UserListItem*> ul = account()->findRelevant(jid());
+	UserStatus userStatus = userStatusFor(jid(), ul, false);
+	setTabIcon(PsiIconset::instance()->statusPtr(jid(), userStatus.statusType)->icon());
+	if(!isTabbed() && geometryOptionPath().isEmpty()) {
+		setGeometryOptionPath(geometryOption);
+	}
 }
 
 void ChatDlg::updateContact(const Jid &j, bool fromPresence)

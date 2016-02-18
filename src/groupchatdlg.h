@@ -94,6 +94,7 @@ protected:
 	void dropEvent(QDropEvent *);
 	void closeEvent(QCloseEvent *);
 	void mucInfoDialog(const QString& title, const QString& message, const Jid& actor, const QString& reason);
+	void setStatusTabIcon(int status);
 
 signals:
 	void aSend(const Message &);

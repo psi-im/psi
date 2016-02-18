@@ -21,6 +21,7 @@
 #ifndef TABBABLE_H
 #define TABBABLE_H
 
+#include <QIcon>
 #include "advwidget.h"
 #include "im.h" // ChatState
 
@@ -42,6 +43,8 @@ public:
 	~TabbableWidget();
 
 	PsiAccount* account() const;
+	void setTabIcon(const QIcon &);
+	const QIcon &icon() const;
 
 	virtual Jid jid() const;
 	virtual const QString & getDisplayName();
@@ -86,6 +89,7 @@ private:
 	Jid jid_;
 	PsiAccount *pa_;
 	TabManager *tabManager_;
+	QIcon icon_;
 };
 
 #endif

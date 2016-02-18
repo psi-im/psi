@@ -180,6 +180,7 @@ void PsiChatDlg::initUi()
 
 	PsiToolTip::install(ui_.lb_status);
 	ui_.lb_status->setPsiIcon(IconsetFactory::iconPtr("status/noauth"));
+	setTabIcon(IconsetFactory::iconPtr("status/noauth")->icon());
 
 	ui_.tb_emoticons->setIcon(IconsetFactory::icon("psi/smile").icon());
 
@@ -414,6 +415,7 @@ void PsiChatDlg::contactUpdated(UserListItem* u, int status, const QString& stat
 
 	if (unacked_messages == 0) {
 		ui_.lb_status->setPsiIcon(current_status_icon);
+		setTabIcon(current_status_icon->icon());//FIXME
 	} else {
 		ui_.lb_status->setPsiIcon(throbber_icon);
 	}

@@ -21,6 +21,7 @@
 #include "psitabwidget.h"
 #include "psitabbar.h"
 #include "common.h"
+#include "psioptions.h"
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -155,14 +156,18 @@ int PsiTabWidget::currentPageIndex() {
 /**
  * Add the Widget to the tab stack.
  */
-void PsiTabWidget::addTab(QWidget *widget, QString name) {
+void PsiTabWidget::addTab(QWidget *widget, QString name, const QIcon &icon)
+{
 	Q_ASSERT(widget);
 	if (widgets_.contains(widget)) {
 		return;
 	}
 	widgets_.append(widget);
 	stacked_->addWidget(widget);
-	tabBar_->addTab(name);
+	if (PsiOptions::instance()->getOption("options.ui.tabs.show-tab-icons").toBool())
+		tabBar_->addTab(icon, name);
+	else
+		tabBar_->addTab(name);
 	showPage(currentPage());
 }
 
@@ -228,6 +233,18 @@ void PsiTabWidget::setTabText(QWidget* widget, const QString& label) {
 		return;
 	}
 	tabBar_->setTabText(index, label);
+}
+
+/**
+ * Set the icon of the tab.
+ */
+void PsiTabWidget::setTabIcon(QWidget *widget, const QIcon &icon)
+{
+	int index = getIndex(widget);
+	if (index == -1 || !PsiOptions::instance()->getOption("options.ui.tabs.show-tab-icons").toBool()) {
+		return;
+	}
+	tabBar_->setTabIcon(index, icon);
 }
 
 void PsiTabWidget::setCurrentPage(int index) {

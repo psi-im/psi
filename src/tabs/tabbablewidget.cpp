@@ -209,3 +209,20 @@ void TabbableWidget::changeEvent(QEvent* event)
 		}
 	}
 }
+
+/**
+ * Set the icon of the tab.
+ */
+void TabbableWidget::setTabIcon(const QIcon &icon)
+{
+	icon_ = icon;
+	TabDlg* tabDlg = tabManager_->getManagingTabs(this);
+	if (tabDlg) {
+		tabDlg->setTabIcon(this, icon);
+	}
+}
+
+const QIcon &TabbableWidget::icon() const
+{
+	return icon_;
+}

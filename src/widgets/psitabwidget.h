@@ -48,7 +48,7 @@ public:
 	QWidget *currentPage();
 	int currentPageIndex();
 	QWidget *widget(int index);
-	void addTab(QWidget *, QString);
+	void addTab(QWidget *, QString, const QIcon &icon = QIcon());
 	void showPage(QWidget *);
 	void showPageDirectly(QWidget *);
 
@@ -56,6 +56,7 @@ public:
 	QWidget* page(int index);
 	int getIndex(QWidget *);
 	void setTabText(QWidget *, const QString &);
+	void setTabIcon(QWidget *, const QIcon &);
 	void setTabPosition(QTabWidget::TabPosition pos);
 	void setCloseIcon(const QIcon &);
 

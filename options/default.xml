@@ -356,6 +356,7 @@
 				<recent-jids type="QStringList" />
 			</service-discovery>
 			<tabs>
+				<show-tab-icons type="bool">true</show-tab-icons>
 				<put-tabs-at-bottom type="bool">false</put-tabs-at-bottom>
 				<use-tabs type="bool">false</use-tabs>
 				<size type="QString"></size> <!-- will be invalid when converted to QSize so we can detect first load -->

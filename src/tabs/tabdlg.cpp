@@ -398,7 +398,7 @@ void TabDlg::addTab(TabbableWidget* tab)
 {
 	setUpdatesEnabled(false);
 	tabs_.append(tab);
-	tabWidget_->addTab(tab, captionForTab(tab));
+	tabWidget_->addTab(tab, captionForTab(tab), tab->icon());
 
 	connect(tab, SIGNAL(invalidateTabInfo()), SLOT(updateTab()));
 	connect(tab, SIGNAL(updateFlashState()), SLOT(updateFlashState()));
@@ -593,12 +593,15 @@ void TabDlg::updateTab(TabbableWidget* chat)
 
 	if (chat->state() == TabbableWidget::StateComposing) {
 		tabWidget_->setTabTextColor(chat, Qt::darkGreen);
+		tabWidget_->setTabIcon(chat, IconsetFactory::iconPtr("psi/typing")->icon());
 	}
 	else if (chat->unreadMessageCount()) {
 		tabWidget_->setTabTextColor(chat, Qt::red);
+		tabWidget_->setTabIcon(chat, IconsetFactory::iconPtr("psi/chat")->icon());
 	}
 	else {
 		tabWidget_->setTabTextColor(chat, palette().windowText().color());
+		tabWidget_->setTabIcon(chat, chat->icon());
 	}
 	updateCaption();
 }
@@ -811,4 +814,12 @@ void TabDlg::setSimplifiedCaptionEnabled(bool enabled)
 
 	simplifiedCaption_ = enabled;
 	updateCaption();
+}
+
+/**
+ * Set the icon of the tab.
+ */
+void TabDlg::setTabIcon(QWidget *widget,const QIcon &icon)
+{
+	tabWidget_->setTabIcon(widget, icon);
 }
