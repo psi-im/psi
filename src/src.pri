@@ -174,6 +174,9 @@ HEADERS += \
 	$$PWD/mood.h \
 	$$PWD/moodcatalog.h \
 	$$PWD/mooddlg.h \
+	$$PWD/activity.h \
+	$$PWD/activitycatalog.h \
+	$$PWD/activitydlg.h \
 	$$PWD/geolocation.h \
 	$$PWD/physicallocation.h \
 	$$PWD/urlbookmark.h \
@@ -307,6 +310,9 @@ SOURCES += \
 	$$PWD/mood.cpp \
 	$$PWD/moodcatalog.cpp \
 	$$PWD/mooddlg.cpp \
+	$$PWD/activity.cpp \
+	$$PWD/activitycatalog.cpp \
+	$$PWD/activitydlg.cpp \
 	$$PWD/geolocation.cpp \
 	$$PWD/physicallocation.cpp \
 	$$PWD/urlbookmark.cpp \
@@ -561,6 +567,7 @@ FORMS += \
 	$$PWD/disco.ui \
 	$$PWD/tip.ui \
 	$$PWD/mood.ui \
+	$$PWD/activity.ui \
 	$$PWD/voicecall.ui \
 	$$PWD/chatdlg.ui \
 	$$PWD/bookmarkmanage.ui \

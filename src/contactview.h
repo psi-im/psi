@@ -124,6 +124,7 @@ signals:
 	void actionAssignKey(const Jid &);
 	void actionUnassignKey(const Jid &);
 	void actionSetMood();
+	void actionSetActivity();
 	void actionSetAvatar();
 	void actionUnsetAvatar();
 

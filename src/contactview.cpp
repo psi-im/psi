@@ -954,11 +954,14 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		pm.insertItem(tr("Mood"), 11);
 		pm.setItemEnabled(11, d->pa->serverInfoManager()->hasPEP());
 
+		pm.insertItem(tr("Activity"), 12);
+		pm.setItemEnabled(12, d->pa->serverInfoManager()->hasPEP());
+
 		QMenu *avatarm = new QMenu (&pm);
-		avatarm->insertItem(tr("Set Avatar"), 12);
-		avatarm->insertItem(tr("Unset Avatar"), 13);
-		pm.insertItem(tr("Avatar"), avatarm, 14);
-		pm.setItemEnabled(14, d->pa->serverInfoManager()->hasPEP());
+		avatarm->insertItem(tr("Set Avatar"), 13);
+		avatarm->insertItem(tr("Unset Avatar"), 14);
+		pm.insertItem(tr("Avatar"), avatarm, 15);
+		pm.setItemEnabled(15, d->pa->serverInfoManager()->hasPEP());
 #endif
 		const int bookmarks_start = STATUS_CHAT + status_start + 1; // STATUS_CHAT is the highest value of the states
 		QMenu *bookmarks = new QMenu(&pm);
@@ -1038,10 +1041,13 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		else if(x == 11 && pm.isItemEnabled(11)) {
 			emit actionSetMood();
 		}
-		else if(x == 12  && pm.isItemEnabled(14)) {
+		else if(x == 12 && pm.isItemEnabled(12)) {
+			emit actionSetActivity();
+		}
+		else if(x == 13  && pm.isItemEnabled(15)) {
 			emit actionSetAvatar();
 		}
-		else if(x == 13  && pm.isItemEnabled(14)) {
+		else if(x == 14  && pm.isItemEnabled(15)) {
 			emit actionUnsetAvatar();
 		}
 		else if(x >= status_start && x <= STATUS_CHAT + status_start) { // STATUS_CHAT is the highest value of the states

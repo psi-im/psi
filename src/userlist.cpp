@@ -282,6 +282,16 @@ const Mood& UserListItem::mood() const
 	return v_mood;
 }
 
+void UserListItem::setActivity(const Activity& activity)
+{
+	v_activity = activity;
+}
+
+const Activity& UserListItem::activity() const
+{
+	return v_activity;
+}
+
 void UserListItem::setTune(const QString& t)
 {
 	v_tune = t;
@@ -454,6 +464,17 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 
 	if(!v_keyID.isEmpty())
 		str += QString("<div style='white-space:pre'>") + QObject::tr("OpenPGP") + ": " + v_keyID.right(8) + "</div>";
+
+	// User Activity
+	if (!activity().isNull()) {
+		str += QString("<div style='white-space:pre'>") + QObject::tr("Activity") + ": " + activity().typeText();
+		if (activity().specificType() != Activity::UnknownSpecific) {
+			str += QString(" - ") + activity().specificTypeText();
+		}
+		if (!activity().text().isEmpty())
+			str += QString(" (") + activity().text() + QString(")");
+		str += "</div>";
+	}
 
 	// User Mood
 	if (!mood().isNull()) {

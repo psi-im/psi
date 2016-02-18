@@ -607,6 +607,7 @@ bool PsiCon::init()
 
 	registerCaps("ep", QStringList()
 				 << "http://jabber.org/protocol/mood"
+				 << "http://jabber.org/protocol/activity"
 				 << "http://jabber.org/protocol/tune"
 				 << "http://jabber.org/protocol/physloc"
 				 << "http://jabber.org/protocol/geoloc"
@@ -616,6 +617,7 @@ bool PsiCon::init()
 
 	registerCaps("ep-notify-2", QStringList()
 				 << "http://jabber.org/protocol/mood+notify"
+				 << "http://jabber.org/protocol/activity+notify"
 				 << "http://jabber.org/protocol/tune+notify"
 				 << "http://jabber.org/protocol/physloc+notify"
 				 << "http://jabber.org/protocol/geoloc+notify"

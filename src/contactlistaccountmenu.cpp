@@ -37,6 +37,7 @@ class ContactListAccountMenu::Private : public QObject
 	QPointer<ContactListAccountGroup> account;
 	StatusMenu* statusMenu_;
 	QAction* moodAction_;
+	QAction* activityAction_;
 	QAction* setAvatarAction_;
 	QMenu* avatarMenu_;
 	QAction* unsetAvatarAction_;
@@ -71,6 +72,9 @@ public:
 
 		moodAction_ = new QAction(tr("Mood"), this);
 		connect(moodAction_, SIGNAL(triggered()), SLOT(setMood()));
+
+		activityAction_ = new QAction(tr("Activity"), this);
+		connect(activityAction_, SIGNAL(triggered()), SLOT(setActivity()));
 
 		setAvatarAction_ = new QAction(tr("Set Avatar"), this);
 		connect(setAvatarAction_, SIGNAL(triggered()), SLOT(setAvatar()));
@@ -113,6 +117,7 @@ public:
 
 		menu->addMenu(statusMenu_);
 		menu->addAction(moodAction_);
+		menu->addAction(activityAction_);
 		avatarMenu_ = menu->addMenu(tr("Avatar"));
 		avatarMenu_->addAction(setAvatarAction_);
 		avatarMenu_->addAction(unsetAvatarAction_);
@@ -150,9 +155,11 @@ private slots:
 		statusMenu_->setStatus(account->account()->status().type());
 #ifndef USE_PEP
 		moodAction_->setVisible(false);
+		activityAction_->setVisible(false);
 		avatarMenu_->setVisible(false);
 #else
 		moodAction_->setEnabled(account->account()->serverInfoManager()->hasPEP());
+		activityAction_->setEnabled(account->account()->serverInfoManager()->hasPEP());
 		avatarMenu_->setEnabled(account->account()->serverInfoManager()->hasPEP());
 #endif
 		bookmarksMenu_->clear();
@@ -202,6 +209,14 @@ private slots:
 			return;
 
 		account->account()->actionSetMood();
+	}
+
+	void setActivity()
+	{
+		if (!account)
+			return;
+
+		account->account()->actionSetActivity();
 	}
 
 	void setAvatar()

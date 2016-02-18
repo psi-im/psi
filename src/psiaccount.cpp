@@ -82,6 +82,7 @@
 # include "contactview.h"
 #endif
 #include "mood.h"
+#include "activity.h"
 #include "tune.h"
 #ifdef GROUPCHAT
 #include "groupchatdlg.h"
@@ -115,6 +116,7 @@
 #include "vcardfactory.h"
 //#include "qssl.h"
 #include "mooddlg.h"
+#include "activitydlg.h"
 #include "qwextend.h"
 #include "geolocation.h"
 #include "physicallocation.h"
@@ -1234,6 +1236,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	if (PsiOptions::instance()->getOption("options.extended-presence.notify").toBool()) {
 		QStringList pepNodes;
 		pepNodes += "http://jabber.org/protocol/mood+notify";
+		pepNodes += "http://jabber.org/protocol/activity+notify";
 		pepNodes += "http://jabber.org/protocol/tune+notify";
 		pepNodes += "http://jabber.org/protocol/physloc+notify";
 		pepNodes += "http://jabber.org/protocol/geoloc+notify";
@@ -2244,6 +2247,7 @@ void PsiAccount::setPEPAvailable(bool b)
 	if (b && !d->client->extensions().contains("ep")) {
 		QStringList pepNodes;
 		pepNodes += "http://jabber.org/protocol/mood";
+		pepNodes += "http://jabber.org/protocol/activity";
 		pepNodes += "http://jabber.org/protocol/tune";
 		pepNodes += "http://jabber.org/protocol/physloc";
 		pepNodes += "http://jabber.org/protocol/geoloc";
@@ -3412,6 +3416,12 @@ void PsiAccount::itemRetracted(const Jid& j, const QString& n, const PubSubRetra
 			cpUpdate(*u);
 		}
 	}
+	else if (n == "http://jabber.org/protocol/activity") {
+		foreach(UserListItem* u, findRelevant(j)) {
+			u->setActivity(Activity());
+			cpUpdate(*u);
+		}
+	}
 	else if (n == "http://jabber.org/protocol/geoloc") {
 		// FIXME: try to find the right resource using JEP-33 'replyto'
 		// see tune case above
@@ -3461,6 +3471,13 @@ void PsiAccount::itemPublished(const Jid& j, const QString& n, const PubSubItem&
 		Mood mood(item.payload());
 		foreach(UserListItem* u, findRelevant(j)) {
 			u->setMood(mood);
+			cpUpdate(*u);
+		}
+	}
+	else if (n == "http://jabber.org/protocol/activity") {
+		Activity activity(item.payload());
+		foreach(UserListItem* u, findRelevant(j)) {
+			u->setActivity(activity);
 			cpUpdate(*u);
 		}
 	}
@@ -3777,6 +3794,12 @@ void PsiAccount::actionExecuteCommandSpecific(const Jid& j, const QString& node)
 void PsiAccount::actionSetMood()
 {
 	MoodDlg *w = new MoodDlg(this);
+	w->show();
+}
+
+void PsiAccount::actionSetActivity()
+{
+	ActivityDlg *w = new ActivityDlg(this);
 	w->show();
 }
 

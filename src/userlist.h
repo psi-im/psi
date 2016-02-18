@@ -28,6 +28,7 @@
 #include "xmpp_resource.h"
 #include "xmpp_liverosteritem.h"
 #include "mood.h"
+#include "activity.h"
 #include "geolocation.h"
 #include "physicallocation.h"
 
@@ -116,6 +117,7 @@ public:
 	QString makeDesc() const;
 	bool isPrivate() const;
 	const Mood& mood() const;
+	const Activity& activity() const;
 
 	void setJid(const XMPP::Jid &);
 	void setInList(bool);
@@ -123,6 +125,7 @@ public:
 	void setPresenceError(const QString &);
 	void setPrivate(bool);
 	void setMood(const Mood&);
+	void setActivity(const Activity&);
 	void setTune(const QString&);
 	const QString& tune() const;
 	void setGeoLocation(const GeoLocation&);
@@ -154,6 +157,7 @@ private:
 	QString v_keyID;
 	QPixmap v_avatar;
 	Mood v_mood;
+	Activity v_activity;
 	QString v_tune;
 	GeoLocation v_geoLocation;
 	PhysicalLocation v_physicalLocation;
