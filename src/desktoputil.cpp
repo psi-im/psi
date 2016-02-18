@@ -87,6 +87,7 @@ static bool doOpenUrl(const QUrl& url)
  */
 bool DesktopUtil::openUrl(const QString& url)
 {
+	if (url.startsWith("addnick://")) return true;
 	QByteArray ascii = url.toLatin1();
 	if (ascii == url)
 		return doOpenUrl(QUrl::fromEncoded(ascii));

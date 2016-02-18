@@ -4278,6 +4278,9 @@ void PsiAccount::openUri(const QUrl &uriToOpen)
 		} else {
 			dj_newMessage(entity, body, subject, "");
 		}
+	} else if (querytype == "vcard") {
+		actionInfo(entity);
+
 		// thread, from, id
 	//} else if (querytype == "pubsub") {
 	//	// action, node

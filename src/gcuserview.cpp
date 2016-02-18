@@ -397,13 +397,8 @@ void GCUserView::qlv_doubleClicked(const QModelIndex &index)
 	}
 }
 
-void GCUserView::contextMenuRequested(const QPoint &p)
+void GCUserView::doContextMenu(QTreeWidgetItem *i)
 {
-	QTreeWidgetItem *i = itemAt(p);
-
-	if(!i || !i->parent() || !gcDlg_)
-		return;
-
 	QPointer<GCUserViewItem> lvi = (GCUserViewItem *)i;
 	bool self = gcDlg_->nick() == i->text(0);
 	GCUserViewItem* c = (GCUserViewItem*) findEntry(gcDlg_->nick());
@@ -534,6 +529,16 @@ void GCUserView::contextMenuRequested(const QPoint &p)
 	if(x == -1 || !enabled || lvi.isNull())
 		return;
 	action(lvi->text(0), lvi->s, x);
+}
+
+void GCUserView::contextMenuRequested(const QPoint &p)
+{
+	QTreeWidgetItem *i = itemAt(p);
+
+	if(!i || !i->parent() || !gcDlg_)
+		return;
+
+	doContextMenu(i);
 }
 
 void GCUserView::mousePressEvent(QMouseEvent *event)

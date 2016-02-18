@@ -75,6 +75,7 @@ public:
 	void updateEntry(const QString &, const Status &);
 	void removeEntry(const QString &);
 	QStringList nickList() const;
+	void doContextMenu(QTreeWidgetItem* it);
 
 protected:
 	enum Role { Moderator = 0, Participant = 1, Visitor = 2 };

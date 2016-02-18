@@ -37,7 +37,7 @@ class URLObject::Private : QObject
 	Q_OBJECT
 public:
 	QString link;
-	IconAction *act_xmpp, *act_mailto, *act_join_groupchat, *act_send_message, *act_chat, *act_browser, *act_add_to_roster, *act_copy;
+	IconAction *act_xmpp, *act_mailto, *act_join_groupchat, *act_send_message, *act_chat, *act_browser, *act_add_to_roster, *act_copy, *act_info;
 	URLObject *urlObject;
 	QSignalMapper xmppActionMapper;
 
@@ -84,6 +84,10 @@ public:
 		tr = qApp->translate("URLLabel", "Copy location");
 		act_copy = new IconAction(tr, tr, 0, this);
 		connect(act_copy, SIGNAL(triggered()), SLOT(popupCopy()));
+
+		tr = qApp->translate("URLLabel", "User Info");
+		act_info = new IconAction(tr, "psi/vCard", tr, 0, this);
+		connectXmppAction(act_info, "vcard");
 
 		connect(&xmppActionMapper, SIGNAL(mapped(const QString&)), SLOT(xmppAction(const QString&)));
 	}
@@ -212,6 +216,7 @@ QMenu *URLObject::createPopupMenu(const QString &lnk)
 		if (service == "x-psi-atstyle") {
 			m->addSeparator();
 		}
+		m->addAction(d->act_info);
 		m->addAction(d->act_xmpp);
 		m->addAction(d->act_chat);
 		m->addAction(d->act_send_message);

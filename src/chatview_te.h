@@ -24,6 +24,7 @@
 #include <QWidget>
 #include <QDateTime>
 #include <QPointer>
+#include <QContextMenuEvent>
 
 #include "psitextview.h"
 #include "chatviewcommon.h"
@@ -45,6 +46,7 @@ public:
 	// reimplemented
 	QSize sizeHint() const;
 	void clear();
+	void contextMenuEvent(QContextMenuEvent *e);
 
 	void init();
 	void setDialog(QWidget* dialog);
@@ -82,6 +84,9 @@ protected slots:
 
 private slots:
 	void slotScroll();
+
+signals:
+	void showNM(const QString&);
 
 private:
 	bool isMuc_;

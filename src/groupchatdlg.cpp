@@ -74,6 +74,7 @@
 #include "psitooltip.h"
 #include "psioptions.h"
 #include "coloropt.h"
+#include "urlobject.h"
 #include "shortcutmanager.h"
 #include "psicontactlist.h"
 #include "accountlabel.h"
@@ -564,6 +565,28 @@ public:
 
 };
 
+void GCMainDlg::openURL(const QString& url)
+{
+	if (url.startsWith("addnick://") && isActiveTab()) {
+		const QString nick = QUrl::fromPercentEncoding(url.mid(14).toLatin1());
+		if (ui_.mle->chatEdit()->toPlainText().length() == 0) {
+			ui_.mle->chatEdit()->insertPlainText(nick + QString(": "));
+		}
+		else {
+			ui_.mle->chatEdit()->insertPlainText(QString(" %1 ").arg(nick));
+		}
+		ui_.mle->chatEdit()->setFocus();
+	}
+}
+
+void GCMainDlg::showNM(const QString& nick)
+{
+	QTreeWidgetItem* itm = ui_.lv_users->findEntry(nick);
+	if (itm) {
+		ui_.lv_users->doContextMenu(itm);
+	}
+}
+
 GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	: TabbableWidget(j.bare(), pa, tabManager)
 {
@@ -596,6 +619,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 #ifdef WEBKIT
 	ui_.log->setAccount(account());
 #endif
+
+	connect(ui_.log, SIGNAL(showNM(QString)), this, SLOT(showNM(QString)));
+	connect(URLObject::getInstance(), SIGNAL(openURL(QString)), SLOT(openURL(QString)));
 
 	connect(ui_.pb_topic, SIGNAL(clicked()), SLOT(openTopic()));
 	PsiToolTip::install(ui_.le_topic);

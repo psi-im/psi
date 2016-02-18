@@ -230,6 +230,15 @@ void ChatView::setSessionData(bool isMuc, const QString &jid, const QString name
 			SLOT(init()));
 }
 
+void ChatView::contextMenuEvent(QContextMenuEvent *e)
+{
+	QWebHitTestResult r = webView->page()->mainFrame()->hitTestContent(e->pos());
+	if ( r.linkUrl().scheme() == "addnick" ) {
+		showNM(r.linkUrl().path().mid(1));
+		e->accept();
+	}
+}
+
 bool ChatView::focusNextPrevChild(bool next)
 {
 	return QWidget::focusNextPrevChild(next);

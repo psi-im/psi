@@ -114,6 +114,19 @@ void ChatView::clear()
 	addLogIconsResources();
 }
 
+void ChatView::contextMenuEvent(QContextMenuEvent *e)
+{
+	const QUrl anc = QUrl::fromEncoded(anchorAt(e->pos()).toLatin1());
+
+	if ( anc.scheme() == "addnick" ) {
+		showNM(anc.path().mid(1));
+		e->accept();
+	}
+	else {
+		PsiTextView::contextMenuEvent(e);
+	}
+}
+
 void ChatView::addLogIconsResources()
 {
 	document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_receive"), logIconReceive);
@@ -282,16 +295,18 @@ void ChatView::renderMucMessage(const MessageView &mv)
 	} else {
 		nickcolor = getMucNickColor(mv.nick(), mv.isLocal());
 	}
+	QString nick = QString("<a href=\"addnick://psi/") + QUrl::toPercentEncoding(mv.nick()) +
+				   "\" style=\"color: "+nickcolor+"; text-decoration: none; \">"+TextUtil::escape(mv.nick())+"</a>";
 
 	if(mv.isEmote()) {
-		appendText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(TextUtil::escape(mv.nick())) + alerttagso + mv.formattedText() + alerttagsc + "</font>");
+		appendText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(nick) + alerttagso + mv.formattedText() + alerttagsc + "</font>");
 	}
 	else {
 		if(PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
-			appendText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] ").arg(timestr) + QString("%1 says:").arg(TextUtil::escape(mv.nick())) + "</font><br>" + QString("<font color=\"%1\">").arg(textcolor) + alerttagso + mv.formattedText() + alerttagsc + "</font>");
+			appendText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] ").arg(timestr) + QString("%1 says:").arg(nick) + "</font><br>" + QString("<font color=\"%1\">").arg(textcolor) + alerttagso + mv.formattedText() + alerttagsc + "</font>");
 		}
 		else {
-			appendText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] &lt;").arg(timestr) + TextUtil::escape(mv.nick()) + QString("&gt;</font> ") + QString("<font color=\"%1\">").arg(textcolor) + alerttagso + mv.formattedText() + alerttagsc +"</font>");
+			appendText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] &lt;").arg(timestr) + nick + QString("&gt;</font> ") + QString("<font color=\"%1\">").arg(textcolor) + alerttagso + mv.formattedText() + alerttagsc +"</font>");
 		}
 	}
 

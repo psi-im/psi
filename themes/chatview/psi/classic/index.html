@@ -17,6 +17,7 @@ body > div > img:first-child { vertical-align:text-bottom; }
 .usertext {}
 .alert {font-weight:bold; color:red;}
 .trackbar { height:1px; border:1px solid black; border-color:#bbf #66f #66f #bbf }
+.nicklink { text-decoration:none; color:inherit; }
   </style>
 </head>
 <body>
@@ -107,6 +108,9 @@ window[chatServer.jsNamespace()].theme = function() {
 			},
 			sender : function() {
 				var nick = chat.util.escapeHtml(shared.cdata.sender);
+				nick = shared.cdata.mtype == "message" && shared.isMuc?
+					'<a href="addnick://psi/'+encodeURIComponent(shared.cdata.sender)+
+					'" class="nicklink">'+nick+'</a>' : nick;
 				return shared.cdata.emote?"*"+nick:"&lt;"+nick+"&gt;";
 			},
 			alertedmessage : function() {

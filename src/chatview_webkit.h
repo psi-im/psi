@@ -53,6 +53,7 @@ public:
 	void setSessionData(bool isMuc, const QString &jid, const QString name);
 	void setAccount(PsiAccount *acc) { account_ = acc; }
 
+	void contextMenuEvent(QContextMenuEvent* event);
 	void sendJsObject(const QVariantMap &);
 	void sendJsCommand(const QString &cmd);
 	bool handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit);
@@ -84,6 +85,9 @@ private slots:
 	void embedJsObject();
 	void checkJsBuffer();
 	void sessionInited();
+
+signals:
+	void showNM(const QString&);
 
 private:
 	friend class ChatViewJSObject;

@@ -75,6 +75,10 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
 	QMenu *menu;
 
 	if (!r.linkUrl().isEmpty()) {
+		if (r.linkUrl().scheme() == "addnick") {
+			event->ignore();
+			return;
+		}
 		menu = URLObject::getInstance()->createPopupMenu(r.linkUrl().toEncoded());
 		//menu->addAction(pageAction(QWebPage::CopyLinkToClipboard));
 	} else {
