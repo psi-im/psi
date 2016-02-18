@@ -41,6 +41,7 @@
   <dep type='xss'/>
   <dep type='aspell'/>
   <dep type='enchant'/>
+  <dep type='hunspell'/>
   <dep type='spell'>
     <required/>
   </dep>

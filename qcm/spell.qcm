@@ -47,6 +47,16 @@ public:
 			have = true;
 		}
 #endif
+#ifdef QC_HUNSPELL
+		if(!have && qc_hunspell_have)
+		{
+			defs = qc_hunspell_defs;
+			incs = qc_hunspell_incs;
+			libs = qc_hunspell_libs;
+			engine = "hunspell";
+			have = true;
+		}
+#endif
 
 		if(!have)
 			return true;

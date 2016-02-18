@@ -1,0 +1,99 @@
+/*
+-----BEGIN QCMOD-----
+name: hunspell
+arg: with-hunspell-inc=[path],Path to Hunspell include files
+arg: with-hunspell-lib=[path],Path to Hunspell library files
+-----END QCMOD-----
+*/
+
+#define QC_HUNSPELL
+bool qc_hunspell_have = false;
+QStringList qc_hunspell_defs;
+QStringList qc_hunspell_incs;
+QStringList qc_hunspell_libs;
+
+//----------------------------------------------------------------------------
+// qc_hunspell
+//----------------------------------------------------------------------------
+class qc_hunspell : public ConfObj
+{
+public:
+	qc_hunspell(Conf *c) : ConfObj(c) {}
+	QString name() const { return "hunspell"; }
+	QString shortname() const { return "hunspell"; }
+
+	// no output
+	QString checkString() const { return QString(); }
+
+	bool exec()
+	{
+		// on mac, always use built-in spell check
+#ifdef Q_OS_MAC
+		return false;
+#else
+		qc_hunspell_have = false;
+		qc_hunspell_defs.clear();
+		qc_hunspell_incs.clear();
+		qc_hunspell_libs.clear();
+
+		QString s;
+
+#ifdef Q_OS_WIN
+		s = conf->getenv("QC_WITH_HUNSPELL_INC");
+		if(!s.isEmpty()) {
+			if(!conf->checkHeader(s, "hunspell.hxx")) {
+				conf->debug("Hunspell includes not found!");
+				return false;
+			}
+			qc_hunspell_incs += s;
+		}
+		else
+			return false;
+
+		QString a_lib = conf->getenv("QC_WITH_HUNSPELL_LIB");
+		if(a_lib.isEmpty())
+			return false;
+
+		QStringList libnames;
+		libnames += "hunspell-1.3";
+		libnames += "hunspell";
+
+		bool success;
+		QString libname_success;
+		foreach(const QString &libname, libnames) {
+			conf->debug(QString("Trying %1").arg(libname));
+			if(conf->checkLibrary(a_lib, libname)) {
+				success = true;
+				libname_success = libname;
+				break;
+			}
+		}
+
+		if(!success)
+			return false;
+
+		qc_hunspell_defs += "HAVE_HUNSPELL";
+		qc_hunspell_libs += QString("-L") + a_lib;
+		qc_hunspell_libs += QString("-l") + libname_success;
+		qc_hunspell_have = true;
+#else
+		qc_hunspell_have = false;
+		qc_hunspell_defs.clear();
+		qc_hunspell_incs.clear();
+		qc_hunspell_libs.clear();
+
+		QStringList incs;
+		QString version, libs, other;
+		if(!conf->findPkgConfig("hunspell", VersionMin, "1.3.0", &version, &incs, &libs, &other))
+                        return false;
+
+		qc_hunspell_defs += "HAVE_HUNSPELL";
+		qc_hunspell_incs += incs;
+		qc_hunspell_libs += libs;
+		qc_hunspell_have = true;
+#endif
+
+		return true;
+#endif
+	}
+};
