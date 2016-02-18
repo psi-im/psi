@@ -5520,6 +5520,11 @@ QString PsiAccount::nick() const
 	return d->self.name();
 }
 
+const Mood &PsiAccount::mood() const
+{
+	return d->self.mood();
+}
+
 //void PsiAccount::pgpToggled(bool b)
 //{
 //	QCA::PGPKey oldkey = d->cur_pgpSecretKey;

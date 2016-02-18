@@ -94,6 +94,7 @@ OptionsTabAppearance::OptionsTabAppearance(QObject *parent) : MetaOptionsTab(par
 OptionsTabIconset::OptionsTabIconset(QObject *parent) : MetaOptionsTab(parent, "iconsets", "", tr("Icons"), tr("Icons"))
 {
 	addTab( new OptionsTabIconsetEmoticons(this) );
+	addTab( new OptionsTabIconsetMoods(this) );
 	addTab( new OptionsTabIconsetRoster(this) );
 	addTab( new OptionsTabIconsetSystem(this) );
 }

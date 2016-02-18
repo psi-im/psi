@@ -33,6 +33,7 @@
 #include "xmpp_status.h"
 #include "psiactions.h"
 #include "psievent.h"
+#include "mood.h"
 
 namespace XMPP
 {
@@ -149,6 +150,7 @@ public:
 	bool loggedIn() const;
 	void setNick(const QString &);
 	QString nick() const;
+	const Mood &mood() const;
 	void forceDisconnect(bool fast, const XMPP::Status &s);
 	bool hasPGP() const;
 	QHostAddress *localAddress() const;

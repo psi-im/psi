@@ -42,8 +42,8 @@ class PsiIconset::Private
 private:
 	PsiIconset *psi;
 public:
-	Iconset system;
-	QString cur_system, cur_status;
+	Iconset system, moods;
+	QString cur_system, cur_status, cur_moods;
 	QStringList cur_emoticons;
 	QMap<QString, QString> cur_service_status;
 	QMap<QString, QString> cur_custom_status;
@@ -230,6 +230,23 @@ public:
 		return def;
 	}
 
+	Iconset moodsIconset(bool *ok)
+	{
+		Iconset def;
+		*ok = def.load( iconsetPath("moods/default") );
+
+		if ( PsiOptions::instance()->getOption("options.iconsets.moods").toString() != "default" ) {
+			Iconset is;
+			is.load ( iconsetPath("moods/" + PsiOptions::instance()->getOption("options.iconsets.moods").toString()) );
+
+			loadIconset(&def, &is);
+		}
+
+		stripFirstAnimFrame( def );
+
+		return def;
+	}
+
 	QList<Iconset*> emoticons()
 	{
 		QList<Iconset*> emo;
@@ -354,12 +371,28 @@ void PsiIconset::loadEmoticons()
 	}
 }
 
+bool PsiIconset::loadMoods()
+{
+	bool ok = true;
+	QString cur_moods = PsiOptions::instance()->getOption("options.iconsets.moods").toString();
+	if (d->cur_moods != cur_moods) {
+		Iconset moods = d->moodsIconset(&ok);
+		d->loadIconset(&d->moods, &moods);
+		d->moods.addToFactory();
+
+		d->cur_moods = cur_moods;
+	}
+
+	return ok;
+}
+
 bool PsiIconset::loadAll()
 {
 	if (!loadSystem() || !loadRoster())
 		return false;
 
 	loadEmoticons();
+	loadMoods();
 	return true;
 }
 
@@ -370,6 +403,9 @@ void PsiIconset::optionChanged(const QString& option)
 	}
 	else if (option == "options.iconsets.emoticons") {
 		loadEmoticons();
+	}
+	else if (option == "options.iconsets.moods") {
+		loadMoods();
 	}
 
 	// currently we rely on PsiCon calling reloadRoster() when

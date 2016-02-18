@@ -48,6 +48,11 @@ QString Mood::typeText() const
 	return MoodCatalog::instance()->findEntryByType(type_).text();
 }
 
+QString Mood::typeValue() const
+{
+	return MoodCatalog::instance()->findEntryByType(type_).value();
+}
+
 const QString& Mood::text() const
 {
 	return text_;

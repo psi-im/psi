@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>:/iconsets/system/default/psiplus/logo_16.png</normaloff>:/iconsets/system/default/psiplus/logo_16.png</iconset>
+    <normaloff>:/iconsets/system/default/logo_16.png</normaloff>:/iconsets/system/default/logo_16.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>

@@ -31,14 +31,16 @@ class Mood
 public:
 	enum Type {
 		Unknown,
-		Afraid, Amazed, Angry, Annoyed, Anxious, Aroused, Ashamed, Bored,
-    	Brave, Calm, Cold, Confused, Contented, Cranky, Curious, Depressed,
-    	Disappointed, Disgusted, Distracted, Embarrassed, Excited, Flirtatious,
-		Frustrated, Grumpy, Guilty, Happy, Hot, Humbled, Humiliated, Hungry,
+		Afraid, Amazed, Angry, Amorous, Annoyed, Anxious, Aroused, Ashamed, Bored,
+		Brave, Calm, Cautious, Cold, Confident, Confused, Contemplative, Contented,
+		Cranky, Crazy, Creative, Curious, Dejected, Depressed, Disappointed,
+		Disgusted, Dismayed, Distracted, Embarrassed, Envious, Excited, Flirtatious,
+		Frustrated, Grumpy, Guilty, Happy, Hopeful, Hot, Humbled, Humiliated, Hungry,
 		Hurt, Impressed, In_awe, In_love, Indignant, Interested, Intoxicated,
-		Invincible, Jealous, Lonely, Mean, Moody, Nervous, Neutral, Offended,
-		Playful, Proud, Relieved, Remorseful, Restless, Sad, Sarcastic, Serious,
-		Shocked, Shy, Sick, Sleepy, Stressed, Surprised, Thirsty, Worried
+		Invincible, Jealous, Lonely, Lucky, Mean, Moody, Nervous, Neutral, Offended,
+		Outraged, Playful, Proud, Relaxed, Relieved, Remorseful, Restless, Sad,
+		Sarcastic, Serious, Shocked, Shy, Sick, Sleepy, Spontaneous, Stressed, Strong,
+		Surprised, Thankful, Thirsty, Tired, Undefined, Weak, Worried
 	};
 
 	Mood();
@@ -47,6 +49,7 @@ public:
 
 	Type type() const;
 	QString typeText() const;
+	QString typeValue() const;
 	const QString& text() const;
 	bool isNull() const;
 

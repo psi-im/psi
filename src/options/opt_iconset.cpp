@@ -23,6 +23,7 @@
 #include <QTreeWidget>
 
 #include "ui_opt_iconset_emo.h"
+#include "ui_opt_iconset_mood.h"
 #include "ui_opt_iconset_system.h"
 #include "ui_opt_iconset_roster.h"
 #include "ui_ui_isdetails.h"
@@ -31,6 +32,12 @@ class IconsetEmoUI : public QWidget, public Ui::IconsetEmo
 {
 public:
 	IconsetEmoUI() : QWidget() { setupUi(this); }
+};
+
+class IconsetMoodUI : public QWidget, public Ui::IconsetMood
+{
+public:
+	IconsetMoodUI() : QWidget() { setupUi(this); }
 };
 
 class IconsetSystemUI : public QWidget, public Ui::IconsetSystem
@@ -637,6 +644,155 @@ void OptionsTabIconsetEmoticons::setData(PsiCon *psicon, QWidget *p)
 }
 
 void OptionsTabIconsetEmoticons::cancelThread()
+{
+	if ( thread ) {
+		threadCancelled.lock();
+		thread->cancelled = true;
+		threadCancelled.unlock();
+
+		thread = 0;
+	}
+}
+
+
+//----------------------------------------------------------------------------
+// OptionsTabIconsetMoods
+//----------------------------------------------------------------------------
+
+OptionsTabIconsetMoods::OptionsTabIconsetMoods(QObject *parent)
+	: OptionsTab(parent, "iconset_moods", "", tr("Moods"), tr("Select your mood iconset"))
+	, w(0)
+	, thread(0)
+{
+}
+
+OptionsTabIconsetMoods::~OptionsTabIconsetMoods()
+{
+	cancelThread();
+}
+
+QWidget *OptionsTabIconsetMoods::widget()
+{
+	if ( w )
+		return 0;
+
+	w = new IconsetMoodUI;
+	IconsetMoodUI *d = (IconsetMoodUI *)w;
+
+	connect(d->pb_moodDetails, SIGNAL(clicked()), SLOT(previewIconset()));
+
+	return w;
+}
+
+void OptionsTabIconsetMoods::applyOptions()
+{
+	if ( !w || thread )
+		return;
+
+	IconsetMoodUI *d = (IconsetMoodUI *)w;
+
+	const Iconset *is = d->iss_moods->iconset();
+	if ( is ) {
+		QFileInfo fi( is->fileName() );
+		PsiOptions::instance()->setOption("options.iconsets.moods", fi.fileName());
+	}
+}
+
+void OptionsTabIconsetMoods::restoreOptions()
+{
+	if ( !w || thread )
+		return;
+
+	IconsetMoodUI *d = (IconsetMoodUI *)w;
+
+	d->iss_moods->clear();
+	QStringList loaded;
+
+	d->setCursor(Qt::WaitCursor);
+
+	QPalette customPal = d->palette();
+	customPal.setCurrentColorGroup(QPalette::Inactive);
+	d->iss_moods->setEnabled(false);
+	d->iss_moods->setPalette(customPal);
+
+	d->pb_moodDetails->setEnabled(false);
+	d->pb_moodDetails->setPalette(customPal);
+
+	d->progress->show();
+	d->progress->setValue( 0 );
+
+	numIconsets = countIconsets("/moods", loaded);
+	iconsetsLoaded = 0;
+
+	cancelThread();
+
+	thread = new IconsetLoadThread(this, "/moods");
+	thread->start();
+}
+
+bool OptionsTabIconsetMoods::event(QEvent *e)
+{
+	IconsetMoodUI *d = (IconsetMoodUI *)w;
+	if ( e->type() == QEvent::User ) { // iconset load event
+		IconsetLoadEvent *le = (IconsetLoadEvent *)e;
+
+		if ( thread != le->thread() )
+			return false;
+
+		if ( !numIconsets )
+			numIconsets = 1;
+		d->progress->setValue( (int)((float)100 * ++iconsetsLoaded / numIconsets) );
+
+		Iconset *i = le->iconset();
+		if ( i ) {
+			PsiIconset::instance()->stripFirstAnimFrame(i);
+			d->iss_moods->insert(*i);
+
+			QFileInfo fi( i->fileName() );
+			if ( fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.moods").toString() )
+				d->iss_moods->setItemSelected(d->iss_moods->lastItem(), true);
+
+			delete i;
+		}
+
+		return true;
+	}
+	else if ( e->type() == QEvent::User + 1 ) { // finish event
+		d->iss_moods->setEnabled(true);
+		d->iss_moods->setPalette(QPalette());
+
+		d->pb_moodDetails->setEnabled(true);
+		d->pb_moodDetails->setPalette(QPalette());
+
+		connect(d->iss_moods, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SIGNAL(dataChanged()));
+
+		d->progress->hide();
+
+		d->unsetCursor();
+		thread = 0;
+
+		return true;
+	}
+
+	return false;
+}
+
+void OptionsTabIconsetMoods::previewIconset()
+{
+	IconsetMoodUI *d = (IconsetMoodUI *)w;
+	const Iconset *is = d->iss_moods->iconset();
+	if (is) {
+		isDetails(*is, parentWidget->parentWidget(), psi);
+	}
+}
+
+void OptionsTabIconsetMoods::setData(PsiCon *psicon, QWidget *p)
+{
+	psi = psicon;
+	parentWidget = p;
+}
+
+void OptionsTabIconsetMoods::cancelThread()
 {
 	if ( thread ) {
 		threadCancelled.lock();

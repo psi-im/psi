@@ -429,6 +429,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 	// you most probably want to wrap it with TextUtil::escape()
 
 	QString str;
+	QString imgTag = "icon name"; // or 'img src' if appropriate QMimeSourceFactory is installed. but mblsha noticed that QMimeSourceFactory unloads sometimes
 	bool useAvatar = false;
 	if (v_avatarFactory && !v_avatarFactory->getAvatar(jid().bare()).isNull() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.avatar").toBool())
 		useAvatar = true;
@@ -456,7 +457,8 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 
 	// User Mood
 	if (!mood().isNull()) {
-		str += QString("<div style='white-space:pre'>") + QObject::tr("Mood") + ": " + mood().typeText();
+		str += QString("<div style='white-space:pre'>") + QObject::tr("Mood") + ": " +
+			QString("<%1=\"mood/%2\"> ").arg(imgTag).arg(mood().typeValue()) + mood().typeText();
 		if (!mood().text().isEmpty())
 			str += QString(" (") + TextUtil::escape(mood().text()) + QString(")");
 		str += "</div>";
@@ -502,7 +504,6 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 			else if(status == STATUS_INVISIBLE)
 				istr = "status/invisible"; //this shouldn't happen
 
-			QString imgTag = "icon name"; // or 'img src' if appropriate QMimeSourceFactory is installed. but mblsha noticed that QMimeSourceFactory unloads sometimes
 			QString secstr;
 			if(isSecure(r.name()) && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.pgp").toBool())
 				secstr += QString(" <%1=\"psi/cryptoYes\">").arg(imgTag);

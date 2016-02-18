@@ -25,6 +25,7 @@
 #include "moodcatalog.h"
 #include "psiaccount.h"
 #include "pepmanager.h"
+#include "psiiconset.h"
 
 MoodDlg::MoodDlg(PsiAccount* pa)
 	: QDialog(0), pa_(pa)
@@ -36,9 +37,16 @@ MoodDlg::MoodDlg(PsiAccount* pa)
 	connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(setMood()));
 
 	ui_.cb_type->addItem(tr("<unset>"));
+	Mood::Type mt = pa->mood().type();
+	int i=1;
 	foreach(MoodCatalog::Entry e, MoodCatalog::instance()->entries()) {
-		ui_.cb_type->addItem(e.text());
+        	ui_.cb_type->addItem(IconsetFactory::icon("mood/"+e.value()).icon(), e.text());
+		if (e.type() == mt) {
+			ui_.cb_type->setCurrentIndex(i);
+		}
+		i++;
 	}
+	ui_.le_text->setText(pa->mood().text());
 }
 
 

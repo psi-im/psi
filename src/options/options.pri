@@ -61,6 +61,7 @@ FORMS += \
 	$$PWD/opt_lookfeel_toolbars.ui \
 	$$PWD/ui_isdetails.ui \
 	$$PWD/opt_iconset_emo.ui \
+	$$PWD/opt_iconset_mood.ui \
 	$$PWD/opt_iconset_system.ui \
 	$$PWD/opt_iconset_roster.ui \
 	$$PWD/opt_general_groupchat.ui \

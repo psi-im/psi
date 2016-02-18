@@ -39,6 +39,7 @@ public:
 			const QString& value() const;
 			const QString& text() const;
 			bool isNull() const;
+			bool operator<(const MoodCatalog::Entry &m) const;
 
 		private:
 			Mood::Type type_;
