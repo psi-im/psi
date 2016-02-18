@@ -127,9 +127,9 @@ void PopupActionButton::update()
 	if(qVersionInt() >= 0x040300)
 	{
 		if((showText && !label.isEmpty()) && styleSheet().isEmpty()) {
-			setStyleSheet("text-align: left");
+			setStyleSheet("text-align: center");
 		}
-		else if((!showText || label.isEmpty()) && styleSheet() == "text-align: left") {
+		else if((!showText || label.isEmpty()) && styleSheet() == "text-align: center") {
 			setStyleSheet(QString());
 		}
 	}
