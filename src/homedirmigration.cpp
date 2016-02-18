@@ -232,8 +232,6 @@ bool HomeDirMigration::checkOldHomeDir()
 {
 #if defined HAVE_X11 || defined Q_OS_MAC
 	QString base = QDir::homePath();
-	// First it need to check ~/.psi-plus folder for Fedora users.
-	oldHomeDir_.setPath(base + "/.psi-plus");
 
 	if (!oldHomeDir_.exists()) {
 		oldHomeDir_.setPath(base + "/.psi");
