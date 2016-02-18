@@ -59,11 +59,43 @@ ChatEdit::ChatEdit(QWidget *parent)
 	previous_position_ = 0;
 	setCheckSpelling(checkSpellingGloballyEnabled());
 	connect(PsiOptions::instance(),SIGNAL(optionChanged(const QString&)),SLOT(optionsChanged()));
+	typedMsgsIndex = 0;
+
+	initActions();
+	setShortcuts();
 }
 
 ChatEdit::~ChatEdit()
 {
+	clearMessageHistory();
 	delete spellhighlighter_;
+}
+
+void ChatEdit::initActions()
+{
+	act_showMessagePrev = new QAction(this);
+	addAction(act_showMessagePrev);
+	connect(act_showMessagePrev, SIGNAL(triggered()), SLOT(showHistoryMessagePrev()));
+
+	act_showMessageNext= new QAction(this);
+	addAction(act_showMessageNext);
+	connect(act_showMessageNext, SIGNAL(triggered()), SLOT(showHistoryMessageNext()));
+
+	act_showMessageFirst = new QAction(this);
+	addAction(act_showMessageFirst);
+	connect(act_showMessageFirst, SIGNAL(triggered()), SLOT(showHistoryMessageFirst()));
+
+	act_showMessageLast= new QAction(this);
+	addAction(act_showMessageLast);
+	connect(act_showMessageLast, SIGNAL(triggered()), SLOT(showHistoryMessageLast()));
+}
+
+void ChatEdit::setShortcuts()
+{
+	act_showMessagePrev->setShortcuts(ShortcutManager::instance()->shortcuts("chat.show-messagePrev"));
+	act_showMessageNext->setShortcuts(ShortcutManager::instance()->shortcuts("chat.show-messageNext"));
+	act_showMessageFirst->setShortcuts(ShortcutManager::instance()->shortcuts("chat.show-messageFirst"));
+	act_showMessageLast->setShortcuts(ShortcutManager::instance()->shortcuts("chat.show-messageLast"));
 }
 
 void ChatEdit::setDialog(QWidget* dialog)
@@ -238,6 +270,90 @@ void ChatEdit::addToDictionary()
 void ChatEdit::optionsChanged()
 {
 	setCheckSpelling(checkSpellingGloballyEnabled());
+}
+
+void ChatEdit::showHistoryMessageNext()
+{
+	if (!typedMsgsHistory.isEmpty()) {
+		if (typedMsgsIndex + 1 < typedMsgsHistory.size()) {
+			++typedMsgsIndex;
+			showMessageHistory();
+		} else {
+			if(typedMsgsIndex != typedMsgsHistory.size()) {
+				typedMsgsIndex = typedMsgsHistory.size();
+				// Restore last typed text
+				setEditText(currentText);
+			}
+		}
+	}
+}
+
+void ChatEdit::showHistoryMessagePrev()
+{
+	if (!typedMsgsHistory.isEmpty() && typedMsgsIndex > 0) {
+		// Save current typed text
+		if (typedMsgsIndex == typedMsgsHistory.size())
+			currentText = toPlainText();
+		--typedMsgsIndex;
+		showMessageHistory();
+	}
+}
+
+void ChatEdit::showHistoryMessageFirst()
+{
+	if (!typedMsgsHistory.isEmpty()) {
+		if (currentText.isEmpty()) {
+			typedMsgsIndex = typedMsgsHistory.size() - 1;
+			showMessageHistory();
+		} else {
+			typedMsgsIndex = typedMsgsHistory.size();
+			// Restore last typed text
+			setEditText(currentText);
+		}
+	}
+}
+
+void ChatEdit::showHistoryMessageLast()
+{
+	if (!typedMsgsHistory.isEmpty()) {
+		typedMsgsIndex = 0;
+		showMessageHistory();
+	}
+}
+
+void ChatEdit::setEditText(const QString& text)
+{
+	setPlainText(text);
+	moveCursor(QTextCursor::End);
+}
+
+void ChatEdit::showMessageHistory()
+{
+	setEditText(typedMsgsHistory.at(typedMsgsIndex));
+}
+
+void ChatEdit::appendMessageHistory(const QString& text)
+{
+	if (!text.simplified().isEmpty()) {
+		if (currentText == text)
+			// Remove current typed text only if we want to add it to history
+			currentText.clear();
+		long index = typedMsgsHistory.indexOf(text);
+		if (index >=0) {
+			typedMsgsHistory.removeAt(index);
+		}
+		if (typedMsgsHistory.size() >= MAX_MESSAGE_HISTORY) {
+			typedMsgsHistory.removeAt(0);
+		}
+		typedMsgsHistory += text;
+		typedMsgsIndex = typedMsgsHistory.size();
+	}
+}
+
+void ChatEdit::clearMessageHistory()
+{
+	typedMsgsHistory.clear();
+	typedMsgsIndex = 0;
 }
 
 //----------------------------------------------------------------------------

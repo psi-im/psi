@@ -684,6 +684,7 @@ void ChatDlg::doSend()
 	}
 
 	m_ = m;
+	emit chatEdit()->appendMessageHistory(m.body());
 
 	// Request events
 	if (PsiOptions::instance()->getOption("options.messages.send-composing-events").toBool()) {

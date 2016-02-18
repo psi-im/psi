@@ -23,6 +23,8 @@
 
 #include <QTextEdit>
 
+#define MAX_MESSAGE_HISTORY 50
+
 class ChatEdit;
 class QEvent;
 class QKeyEvent;
@@ -47,10 +49,18 @@ public:
 	static bool checkSpellingGloballyEnabled();
 	void setCheckSpelling(bool);
 
+public slots:
+	void appendMessageHistory(const QString& text);
+	void clearMessageHistory();
+
 protected slots:
  	void applySuggestion();
  	void addToDictionary();
 	void optionsChanged();
+	void showHistoryMessageNext();
+	void showHistoryMessagePrev();
+	void showHistoryMessageFirst();
+	void showHistoryMessageLast();
 
 protected:
 	// override the tab/esc behavior
@@ -58,6 +68,10 @@ protected:
 	void keyPressEvent(QKeyEvent *);
 	bool event(QEvent * event);
 	void contextMenuEvent(QContextMenuEvent *e);
+	void showMessageHistory();
+	void initActions();
+	void setShortcuts();
+	void setEditText(const QString& text);
 
 private:
 	QWidget	*dialog_;
@@ -65,6 +79,13 @@ private:
 	SpellHighlighter* spellhighlighter_;
 	QPoint last_click_;
 	int previous_position_;
+	QStringList typedMsgsHistory;
+	long typedMsgsIndex;
+	QAction* act_showMessagePrev;
+	QAction* act_showMessageNext;
+	QAction* act_showMessageFirst;
+	QAction* act_showMessageLast;
+	QString currentText;
 };
 
 

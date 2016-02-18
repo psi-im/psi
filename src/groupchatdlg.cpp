@@ -979,6 +979,7 @@ void GCMainDlg::mle_returnPressed()
 	m.setType("groupchat");
 	m.setBody(str);
 	m.setTimeStamp(QDateTime::currentDateTime());
+	emit d->mle()->appendMessageHistory(m.body());
 
 	aSend(m);
 

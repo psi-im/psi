@@ -383,6 +383,10 @@
 				</send>
 				<clear type="QKeySequence" comment="Clear the text"/>
 				<quick-command type="QKeySequence" comment="Change to quick command mode">Ctrl+7</quick-command>
+				<show-messageLast type="QKeySequence" comment="Show last message" >Alt+Home</show-messageLast>
+				<show-messageFirst type="QKeySequence" comment="Show first message" >Alt+End</show-messageFirst>
+				<show-messageNext type="QKeySequence" comment="Show next message" >Ctrl+Down</show-messageNext>
+				<show-messagePrev type="QKeySequence" comment="Show prev message" >Ctrl+Up</show-messagePrev>
 			</chat>
 			<contactlist comment="Shortcuts in the contactlist">
 				<assign-custom-avatar type="QKeySequence" comment="Assign a custom avatar to the selected contact"/>
