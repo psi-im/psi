@@ -96,7 +96,9 @@ QWidget *OptionsTabAdvanced::widget()
 		" like system-wide news on MSN, announcements, etc."));
 
 	connect(d->ck_messageevents,SIGNAL(toggled(bool)),d->ck_inactiveevents,SLOT(setEnabled(bool)));
+	connect(d->ck_messageevents,SIGNAL(toggled(bool)),d->ck_sendComposingEvents,SLOT(setEnabled(bool)));
 	d->ck_inactiveevents->setEnabled(d->ck_messageevents->isChecked());
+	d->ck_sendComposingEvents->setEnabled(d->ck_messageevents->isChecked());
 
 	return w;
 }
@@ -112,6 +114,7 @@ void OptionsTabAdvanced::applyOptions()
 	PsiOptions::instance()->setOption("options.messages.send-inactivity-events", d->ck_inactiveevents->isChecked());
 	PsiOptions::instance()->setOption("options.ui.notifications.request-receipts", d->ck_requestReceipts->isChecked());
 	PsiOptions::instance()->setOption("options.ui.notifications.send-receipts", d->ck_sendReceipts->isChecked());
+	PsiOptions::instance()->setOption("options.messages.dont-send-composing-events", d->ck_sendComposingEvents->isChecked());
 	PsiOptions::instance()->setOption("options.external-control.adhoc-remote-control.enable", d->ck_rc->isChecked());
 	if ( SpellChecker::instance()->available() )
 		PsiOptions::instance()->setOption("options.ui.spell-check.enabled",d->ck_spell->isChecked());
@@ -140,6 +143,7 @@ void OptionsTabAdvanced::restoreOptions()
 	d->ck_inactiveevents->setChecked( PsiOptions::instance()->getOption("options.messages.send-inactivity-events").toBool() );
 	d->ck_requestReceipts->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.request-receipts").toBool() );
 	d->ck_sendReceipts->setChecked( PsiOptions::instance()->getOption("options.ui.notifications.send-receipts").toBool() );
+	d->ck_sendComposingEvents->setChecked( PsiOptions::instance()->getOption("options.messages.dont-send-composing-events").toBool() );
 	d->ck_rc->setChecked( PsiOptions::instance()->getOption("options.external-control.adhoc-remote-control.enable").toBool() );
 	if ( !SpellChecker::instance()->available() )
 		d->ck_spell->setChecked(false);

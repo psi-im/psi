@@ -48,6 +48,16 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="ck_sendComposingEvents">
+     <property name="whatsThis">
+      <string>Disables the sending of message events such as &quot;Contact is Typing...&quot;</string>
+     </property>
+     <property name="text">
+      <string>Do not send composing events</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QCheckBox" name="ck_rc" >
      <property name="text" >
       <string>Enable remote controlling from other locations</string>

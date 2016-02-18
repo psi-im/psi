@@ -916,36 +916,38 @@ void ChatDlg::setChatState(ChatState state)
 		}
 
 		// Build event message
-		Message m(jid());
-		if (sendComposingEvents_) {
-			m.setEventId(eventId_);
-			if (state == XMPP::StateComposing) {
-				m.addEvent(ComposingEvent);
-			}
-			else if (lastChatState_ == XMPP::StateComposing) {
-				m.addEvent(CancelEvent);
-			}
-		}
-		if (contactChatState_ != XMPP::StateNone) {
-			if (lastChatState_ != XMPP::StateGone) {
-				if ((state == XMPP::StateInactive && lastChatState_ == XMPP::StateComposing) || (state == XMPP::StateComposing && lastChatState_ == XMPP::StateInactive)) {
-					// First go to the paused state
-					Message tm(jid());
-					m.setType("chat");
-					m.setChatState(XMPP::StatePaused);
-					if (account()->isAvailable()) {
-						account()->dj_sendMessage(m, false);
-					}
+		if( !PsiOptions::instance()->getOption("options.messages.dont-send-composing-events").toBool() ) {
+			Message m(jid());
+			if (sendComposingEvents_) {
+				m.setEventId(eventId_);
+				if (state == XMPP::StateComposing) {
+					m.addEvent(ComposingEvent);
 				}
-				m.setChatState(state);
+				else if (lastChatState_ == XMPP::StateComposing) {
+					m.addEvent(CancelEvent);
+				}
 			}
-		}
+			if (contactChatState_ != XMPP::StateNone) {
+				if (lastChatState_ != XMPP::StateGone) {
+					if ((state == XMPP::StateInactive && lastChatState_ == XMPP::StateComposing) || (state == XMPP::StateComposing && lastChatState_ == XMPP::StateInactive)) {
+						// First go to the paused state
+						Message tm(jid());
+						m.setType("chat");
+						m.setChatState(XMPP::StatePaused);
+						if (account()->isAvailable()) {
+							account()->dj_sendMessage(m, false);
+						}
+					}
+					m.setChatState(state);
+				}
+			}
 
-		// Send event message
-		if (m.containsEvents() || m.chatState() != XMPP::StateNone) {
-			m.setType("chat");
-			if (account()->isAvailable()) {
-				account()->dj_sendMessage(m, false);
+			// Send event message
+			if (m.containsEvents() || m.chatState() != XMPP::StateNone) {
+				m.setType("chat");
+				if (account()->isAvailable()) {
+					account()->dj_sendMessage(m, false);
+				}
 			}
 		}
 

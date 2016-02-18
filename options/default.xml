@@ -453,6 +453,7 @@
 			<ignore-non-roster-contacts type="bool">false</ignore-non-roster-contacts>
 			<send-composing-events type="bool">true</send-composing-events>
 			<send-inactivity-events type="bool">false</send-inactivity-events>
+			<dont-send-composing-events type="bool">false</dont-send-composing-events>
 		</messages>
 		<p2p>
 			<bytestreams>
