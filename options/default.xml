@@ -42,6 +42,8 @@
 		<muc comment="Multi-User Chat options">
 			<bookmarks comment="Options for bookmarked conference rooms">
 				<auto-join comment="Automatically join bookmarked conference rooms that are configured for auto-joining." type="bool">true</auto-join>
+				<ignore-join type="QStringList" />
+				<local type="QStringList" />
 			</bookmarks>
 			<show-joins comment="Display notices of users joining and leaving conferences" type="bool">true</show-joins>
 			<show-role-affiliation comment="Include role and affiliation changes in join messages, and display notices of changes" type="bool">true</show-role-affiliation>

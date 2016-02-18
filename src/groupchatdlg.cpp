@@ -1058,7 +1058,7 @@ void GCMainDlg::doBookmark()
 	QList<ConferenceBookmark> confs =  bm->conferences();
 	int confInd = bm->indexOfConference(jid());
 	if (confInd < 0) { // not found
-		ConferenceBookmark conf(jid().bare(), jid(), false, nick(), d->password);
+		ConferenceBookmark conf(jid().bare(), jid(), ConferenceBookmark::Never, nick(), d->password);
 		confs.push_back(conf);
 		bm->setBookmarks(confs);
 		return;
@@ -1070,7 +1070,9 @@ void GCMainDlg::doBookmark()
 	QFormLayout *formLayout = new QFormLayout;
 	QLineEdit *txtName = new QLineEdit;
 	QLineEdit *txtNick = new QLineEdit;
-	QCheckBox *chkAJoin = new QCheckBox;
+	//QCheckBox *chkAJoin = new QCheckBox;
+	QComboBox *cbAutoJoin = new QComboBox;
+	cbAutoJoin->addItems(ConferenceBookmark::joinTypeNames());
 	QPushButton *saveBtn = new QPushButton(dlg->style()->standardIcon(QStyle::SP_DialogSaveButton), tr("Save"), dlg);
 	QPushButton *deleteBtn = new QPushButton(dlg->style()->standardIcon(QStyle::SP_DialogDiscardButton), tr("Delete"), dlg);
 	QPushButton *cancelBtn = new QPushButton(dlg->style()->standardIcon(QStyle::SP_DialogCancelButton), tr("Cancel"), dlg);
@@ -1081,10 +1083,11 @@ void GCMainDlg::doBookmark()
 	blayout->addWidget(cancelBtn);
 	txtName->setText(b.name());
 	txtNick->setText(b.nick());
-	chkAJoin->setChecked(b.autoJoin());
+	cbAutoJoin->setCurrentIndex(b.autoJoin());
+	cbAutoJoin->setEditable(false);
 	formLayout->addRow(tr("&Name:"), txtName);
 	formLayout->addRow(tr("N&ick:"), txtNick);
-	formLayout->addRow(tr("&Auto join:"), chkAJoin);
+	formLayout->addRow(tr("&Auto join:"), cbAutoJoin);
 	layout->addLayout(formLayout);
 	layout->addLayout(blayout);
 	dlg->setLayout(layout);
@@ -1099,7 +1102,7 @@ void GCMainDlg::doBookmark()
 	dlg->move(ui_.le_topic->mapToGlobal(QPoint(
 			ui_.le_topic->width() - dlg->width(), ui_.le_topic->height())));
 	if (dlg->exec() == QDialog::Accepted) {
-		ConferenceBookmark conf(txtName->text(), jid(), chkAJoin->checkState() == Qt::Checked, txtNick->text(), d->password);
+		ConferenceBookmark conf(txtName->text(), jid(), (ConferenceBookmark::JoinType)cbAutoJoin->currentIndex(), txtNick->text(), d->password);
 		confs[confInd] = conf;
 		bm->setBookmarks(confs);
 	}

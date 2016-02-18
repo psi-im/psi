@@ -42,6 +42,8 @@ BookmarkManageDlg::BookmarkManageDlg(PsiAccount* account)
 	removeBookmarkAction->setShortcuts(QKeySequence::Delete);
 	ui_.listView->addAction(removeBookmarkAction);
 
+	ui_.autoJoin->addItems(ConferenceBookmark::joinTypeNames());
+
 	addButton_    = ui_.bookmarkButtonBox->addButton(tr("&Add"),    QDialogButtonBox::ActionRole);
 	removeButton_ = ui_.bookmarkButtonBox->addButton(tr("&Remove"), QDialogButtonBox::DestructiveRole);
 	joinButton_   = ui_.bookmarkButtonBox->addButton(tr("&Join"),   QDialogButtonBox::ActionRole);
@@ -58,7 +60,7 @@ BookmarkManageDlg::BookmarkManageDlg(PsiAccount* account)
 	connect(ui_.room, SIGNAL(textEdited(const QString&)), SLOT(updateCurrentItem()));
 	connect(ui_.nickname, SIGNAL(textEdited(const QString&)), SLOT(updateCurrentItem()));
 	connect(ui_.password, SIGNAL(textEdited(const QString&)), SLOT(updateCurrentItem()));
-	connect(ui_.autoJoin, SIGNAL(clicked(bool)), SLOT(updateCurrentItem()));
+	connect(ui_.autoJoin, SIGNAL(currentIndexChanged(int)), SLOT(updateCurrentItem()));
 
 	loadBookmarks();
 
@@ -106,7 +108,7 @@ ConferenceBookmark BookmarkManageDlg::bookmarkFor(const QModelIndex& index) cons
 {
 	return ConferenceBookmark(index.data(Qt::DisplayRole).toString(),
 	                          index.data(JidRole).toString(),
-	                          index.data(AutoJoinRole).toBool(),
+							  (ConferenceBookmark::JoinType)index.data(AutoJoinRole).toInt(),
 	                          index.data(NickRole).toString(),
 	                          index.data(PasswordRole).toString());
 }
@@ -169,7 +171,7 @@ void BookmarkManageDlg::selectionChanged(const QItemSelection& selected, const Q
 	ui_.room->setText(jid.node());
 	ui_.nickname->setText(current.data(NickRole).toString());
 	ui_.password->setText(current.data(PasswordRole).toString());
-	ui_.autoJoin->setChecked(current.data(AutoJoinRole).toBool());
+	ui_.autoJoin->setCurrentIndex(current.data(AutoJoinRole).toInt());
 	QList<QWidget*> editors;
 	editors << ui_.host << ui_.room << ui_.nickname << ui_.password << ui_.autoJoin;
 	foreach(QWidget* w, editors) {
@@ -192,7 +194,7 @@ void BookmarkManageDlg::updateCurrentItem()
 	QStandardItem* item = model_->item(currentIndex().row());
 	if (item) {
 		item->setData(QVariant(jid().full()),              JidRole);
-		item->setData(QVariant(ui_.autoJoin->isChecked()), AutoJoinRole);
+		item->setData(QVariant(ui_.autoJoin->currentIndex()), AutoJoinRole);
 		item->setData(QVariant(ui_.nickname->text()),      NickRole);
 		item->setData(QVariant(ui_.password->text()),      PasswordRole);
 	}

@@ -24,6 +24,7 @@
 #include "xmpp_client.h"
 #include "xmpp_xmlcommon.h"
 #include "psiaccount.h"
+#include "psioptions.h"
 
 // -----------------------------------------------------------------------------
 
@@ -71,6 +72,7 @@ public:
 			return false;
 
 		if(x.attribute("type") == "result") {
+			QStringList mucIgnore = PsiOptions::instance()->getOption("options.muc.bookmarks.ignore-join").toStringList();
 			QDomElement q = queryTag(x);
 			for (QDomNode n = q.firstChild(); !n.isNull(); n = n.nextSibling()) {
 				QDomElement e = n.toElement();
@@ -87,8 +89,12 @@ public:
 						}
 						else if (f.tagName() == "conference") {
 							ConferenceBookmark c(f);
-							if (!c.isNull())
+							if (!c.isNull()) {
+								if (mucIgnore.contains(c.jid().bare())) {
+									c.setAutoJoin(ConferenceBookmark::ExceptThisComputer);
+								}
 								conferences_ += c;
+							}
 						}
 					}
 				}
@@ -205,9 +211,26 @@ void BookmarkManager::setBookmarks(const QList<URLBookmark>& urls, const QList<C
 {
 	urls_ = urls;
 	conferences_ = conferences;
+
+	QStringList localMucs;
+	QList<ConferenceBookmark> remoteMucs;
+	QStringList ignoreMucs;
+
+	foreach (const ConferenceBookmark &cb, conferences) {
+		if (cb.autoJoin() == ConferenceBookmark::OnlyThisComputer) {
+			localMucs.append(cb.jid().withResource(cb.nick()).full());
+		} else {
+			if (cb.autoJoin() == ConferenceBookmark::ExceptThisComputer) {
+				ignoreMucs.append(cb.jid().bare());
+			}
+			remoteMucs.append(cb);
+		}
+	}
+	PsiOptions::instance()->setOption("options.muc.bookmarks.local", localMucs);
+	PsiOptions::instance()->setOption("options.muc.bookmarks.ignore-join", ignoreMucs);
 	BookmarkTask* t = new BookmarkTask(account_->client()->rootTask());
 	connect(t,SIGNAL(finished()),SLOT(setBookmarks_finished()));
-	t->set(urls,conferences);
+	t->set(urls,remoteMucs);
 	t->go(true);
 }
 
@@ -228,7 +251,16 @@ void BookmarkManager::getBookmarks_finished()
 		bool urlsWereChanged = urls_ != t->urls();
 		bool conferencesWereChanged = conferences_ != t->conferences();
 		urls_ = t->urls();
+		QStringList localMucs = PsiOptions::instance()->getOption("options.muc.bookmarks.local").toStringList();
 		conferences_ = t->conferences();
+		foreach (const QString &lmuc, localMucs) {
+			Jid j(lmuc);
+			if (j.isValid()) {
+				conferences_.append(ConferenceBookmark(j.node(), Jid(j.bare()),
+													   ConferenceBookmark::OnlyThisComputer,
+													   j.resource()));
+			}
+		}
 
 		if (urlsWereChanged)
 			emit urlsChanged(urls_);

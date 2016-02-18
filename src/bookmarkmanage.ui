@@ -1,7 +1,8 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>BookmarkManage</class>
- <widget class="QDialog" name="BookmarkManage" >
-  <property name="geometry" >
+ <widget class="QDialog" name="BookmarkManage">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
@@ -9,99 +10,92 @@
     <height>257</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>Manage Bookmarks</string>
   </property>
-  <layout class="QGridLayout" >
-   <item row="0" column="0" >
-    <layout class="QVBoxLayout" >
+  <layout class="QGridLayout">
+   <item row="0" column="0">
+    <layout class="QVBoxLayout">
      <item>
-      <widget class="QListView" name="listView" >
-       <property name="dragDropMode" >
+      <widget class="QListView" name="listView">
+       <property name="dragDropMode">
         <enum>QAbstractItemView::InternalMove</enum>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QDialogButtonBox" name="bookmarkButtonBox" >
-       <property name="standardButtons" >
+      <widget class="QDialogButtonBox" name="bookmarkButtonBox">
+       <property name="standardButtons">
         <set>QDialogButtonBox::NoButton</set>
        </property>
       </widget>
      </item>
     </layout>
    </item>
-   <item row="0" column="1" >
-    <layout class="QGridLayout" >
-     <item row="0" column="0" >
-      <widget class="QLabel" name="label" >
-       <property name="text" >
+   <item row="0" column="1">
+    <layout class="QGridLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
         <string>Host:</string>
        </property>
-       <property name="alignment" >
+       <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
-     <item row="0" column="1" >
-      <widget class="QLineEdit" name="host" />
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="host"/>
      </item>
-     <item row="1" column="0" >
-      <widget class="QLabel" name="label_2" >
-       <property name="text" >
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
         <string>Room:</string>
        </property>
-       <property name="alignment" >
+       <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
-     <item row="1" column="1" >
-      <widget class="QLineEdit" name="room" />
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="room"/>
      </item>
-     <item row="2" column="0" >
-      <widget class="QLabel" name="label_3" >
-       <property name="text" >
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
         <string>Nickname:</string>
        </property>
-       <property name="alignment" >
+       <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
-     <item row="2" column="1" >
-      <widget class="QLineEdit" name="nickname" />
+     <item row="2" column="1">
+      <widget class="QLineEdit" name="nickname"/>
      </item>
-     <item row="3" column="0" >
-      <widget class="QLabel" name="label_4" >
-       <property name="text" >
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
         <string>Password:</string>
        </property>
-       <property name="alignment" >
+       <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
-     <item row="3" column="1" >
-      <widget class="QLineEdit" name="password" >
-       <property name="echoMode" >
+     <item row="3" column="1">
+      <widget class="QLineEdit" name="password">
+       <property name="echoMode">
         <enum>QLineEdit::Password</enum>
        </property>
       </widget>
      </item>
-     <item row="4" column="1" >
-      <widget class="QCheckBox" name="autoJoin" >
-       <property name="text" >
-        <string>Auto-join</string>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="1" >
+     <item row="5" column="1">
       <spacer>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Vertical</enum>
        </property>
-       <property name="sizeHint" >
+       <property name="sizeHint" stdset="0">
         <size>
          <width>66</width>
          <height>31</height>
@@ -109,19 +103,32 @@
        </property>
       </spacer>
      </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>Auto-join:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QComboBox" name="autoJoin"/>
+     </item>
     </layout>
    </item>
-   <item row="1" column="0" colspan="2" >
-    <widget class="Line" name="line" >
-     <property name="orientation" >
+   <item row="1" column="0" colspan="2">
+    <widget class="Line" name="line">
+     <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
     </widget>
    </item>
-   <item row="2" column="0" colspan="2" >
-    <widget class="QDialogButtonBox" name="buttonBox" >
-     <property name="standardButtons" >
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::NoButton|QDialogButtonBox::Ok</set>
+   <item row="2" column="0" colspan="2">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
      </property>
     </widget>
    </item>
@@ -135,11 +142,11 @@
    <receiver>BookmarkManage</receiver>
    <slot>accept()</slot>
    <hints>
-    <hint type="sourcelabel" >
+    <hint type="sourcelabel">
      <x>475</x>
      <y>252</y>
     </hint>
-    <hint type="destinationlabel" >
+    <hint type="destinationlabel">
      <x>454</x>
      <y>259</y>
     </hint>
@@ -151,11 +158,11 @@
    <receiver>BookmarkManage</receiver>
    <slot>reject()</slot>
    <hints>
-    <hint type="sourcelabel" >
+    <hint type="sourcelabel">
      <x>384</x>
      <y>252</y>
     </hint>
-    <hint type="destinationlabel" >
+    <hint type="destinationlabel">
      <x>352</x>
      <y>259</y>
     </hint>

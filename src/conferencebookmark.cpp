@@ -20,17 +20,33 @@
 
 #include <QDomDocument>
 #include <QDomElement>
+#include <QObject>
+#include <QVector>
 
 #include "conferencebookmark.h"
 #include "xmpp_xmlcommon.h"
 
-ConferenceBookmark::ConferenceBookmark(const QString& name, const XMPP::Jid& jid, bool auto_join, const QString& nick, const QString& password) : name_(name), jid_(jid), auto_join_(auto_join), nick_(nick), password_(password)
+ConferenceBookmark::ConferenceBookmark(const QString& name, const XMPP::Jid& jid, JoinType auto_join, const QString& nick, const QString& password) : name_(name), jid_(jid), auto_join_(auto_join), nick_(nick), password_(password)
 {
 }
 
-ConferenceBookmark::ConferenceBookmark(const QDomElement& el) : auto_join_(false)
+ConferenceBookmark::ConferenceBookmark(const QDomElement& el) : auto_join_(Never)
 {
 	fromXml(el);
+}
+
+QStringList ConferenceBookmark::joinTypeNames()
+{
+	static QStringList jtn;
+	if (jtn.isEmpty()) {
+		QVector<QString> tmp(LastJoinType);
+		tmp[Never] = QObject::tr("Never");
+		tmp[Always] = QObject::tr("Always");
+		tmp[OnlyThisComputer] = QObject::tr("This computer only");
+		tmp[ExceptThisComputer] = QObject::tr("Except this computer");
+		jtn = tmp.toList();
+	}
+	return jtn;
 }
 
 const QString& ConferenceBookmark::name() const
@@ -43,7 +59,12 @@ const XMPP::Jid& ConferenceBookmark::jid() const
 	return jid_;
 }
 
-bool ConferenceBookmark::autoJoin() const
+void ConferenceBookmark::setAutoJoin(JoinType type)
+{
+	auto_join_ = type;
+}
+
+ConferenceBookmark::JoinType ConferenceBookmark::autoJoin() const
 {
 	return auto_join_;
 }
@@ -67,8 +88,9 @@ void ConferenceBookmark::fromXml(const QDomElement& e)
 {
 	jid_ = e.attribute("jid");
 	name_ = e.attribute("name");
+	auto_join_ = Never;
 	if (e.attribute("autojoin") == "true" || e.attribute("autojoin") == "1")
-		auto_join_ = true;
+		auto_join_ = Always;
 
 	for (QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling()) {
 		QDomElement i = n.toElement();
@@ -88,7 +110,7 @@ QDomElement ConferenceBookmark::toXml(QDomDocument& doc) const
 	QDomElement e = doc.createElement("conference");
 	e.setAttribute("jid",jid_.full());
 	e.setAttribute("name",name_);
-	if (auto_join_)
+	if (auto_join_ == Always || auto_join_ == ExceptThisComputer)
 		e.setAttribute("autojoin","true");
 	if (!nick_.isEmpty())
 		e.appendChild(textTag(&doc,"nick",nick_));

@@ -31,12 +31,24 @@ class QDomDocument;
 class ConferenceBookmark
 {
 public:
-	ConferenceBookmark(const QString& name, const XMPP::Jid& jid, bool auto_join, const QString& nick = QString(), const QString& password = QString());
+	enum JoinType
+	{
+		Never,
+		Always,
+		OnlyThisComputer,
+		ExceptThisComputer,
+		LastJoinType
+	};
+
+	ConferenceBookmark(const QString& name, const XMPP::Jid& jid, JoinType auto_join, const QString& nick = QString(), const QString& password = QString());
 	ConferenceBookmark(const QDomElement&);
+
+	static QStringList joinTypeNames();
 
 	const QString& name() const;
 	const XMPP::Jid& jid() const;
-	bool autoJoin() const;
+	JoinType autoJoin() const;
+	void setAutoJoin(JoinType type);
 	const QString& nick() const;
 	const QString& password() const;
 
@@ -50,7 +62,7 @@ public:
 private:
 	QString name_;
 	XMPP::Jid jid_;
-	bool auto_join_;
+	JoinType auto_join_;
 	QString nick_;
 	QString password_;
 };
