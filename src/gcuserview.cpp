@@ -487,7 +487,6 @@ void GCUserView::contextMenuRequested(const QPoint &p)
 	act->setEnabled( (!self || lvi->s.mucItem().role() == MUCItem::Moderator) && MUCManager::canSetRole(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Moderator));
 	pm->addMenu(rm);
 
-	/*
 	QMenu* am = new QMenu(tr("Change Affiliation"), pm);
 	act = am->addAction(tr("Unaffiliated"));
 	act->setData(15);
@@ -514,7 +513,6 @@ void GCUserView::contextMenuRequested(const QPoint &p)
 	act->setEnabled((!self || lvi->s.mucItem().affiliation() == MUCItem::Owner) && MUCManager::canSetAffiliation(c->s.mucItem(),lvi->s.mucItem(),MUCItem::Owner));
 
 	pm->addMenu(am);
-	*/
 	pm->addSeparator();
 	//pm->insertItem(tr("Send &File"), 4);
 	//pm->insertSeparator();

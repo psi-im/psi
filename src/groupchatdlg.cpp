@@ -1787,7 +1787,7 @@ void GCMainDlg::lv_action(const QString &nick, const Status &s, int x)
 		}
 
 	}
-	/*else if(x == 15) {
+	else if(x == 15) {
 		GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
 		if (contact->s.mucItem().affiliation() != MUCItem::NoAffiliation)
 			d->mucManager->setAffiliation(contact->s.mucItem().jid(), MUCItem::NoAffiliation);
@@ -1806,7 +1806,7 @@ void GCMainDlg::lv_action(const QString &nick, const Status &s, int x)
 		GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
 		if (contact->s.mucItem().affiliation() != MUCItem::Owner)
 			d->mucManager->setAffiliation(contact->s.mucItem().jid(), MUCItem::Owner);
-	}*/
+	}
 }
 
 void GCMainDlg::contextMenuEvent(QContextMenuEvent *)
