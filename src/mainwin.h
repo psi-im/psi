@@ -101,7 +101,7 @@ private slots:
 	void buildMainMenu();
 	void buildToolsMenu();
 
-	void setTrayToolTip(int);
+	void setTrayToolTip();
 
 	void activatedStatusAction(int);
 
@@ -144,6 +144,8 @@ private slots:
 
 	void registerAction( IconAction * );
 	void splitterMoved();
+
+	void doTrayToolTip(QObject *, QPoint);
 
 public slots:
 	void setWindowIcon(const QPixmap&);

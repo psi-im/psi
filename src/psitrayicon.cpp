@@ -2,6 +2,7 @@
 #include <QPixmapCache>
 #include <QApplication> // old
 #include <QSystemTrayIcon>
+#include <QHelpEvent>
 
 #include "psitrayicon.h"
 #include "iconset.h"
@@ -19,6 +20,7 @@ PsiTrayIcon::PsiTrayIcon(const QString &tip, QMenu *popup, QObject *parent)
 	trayicon_->setContextMenu(popup);
 	setToolTip(tip);
 	connect(trayicon_,SIGNAL(activated(QSystemTrayIcon::ActivationReason)),SLOT(trayicon_activated(QSystemTrayIcon::ActivationReason)));
+	trayicon_->installEventFilter(this);
 }
 
 PsiTrayIcon::~PsiTrayIcon()
@@ -38,7 +40,11 @@ void PsiTrayIcon::setContextMenu(QMenu* menu)
 
 void PsiTrayIcon::setToolTip(const QString &str)
 {
+#ifndef HAVE_X11
 	trayicon_->setToolTip(str);
+#else
+	Q_UNUSED(str)
+#endif
 }
 
 void PsiTrayIcon::setIcon(const PsiIcon *icon, bool alert)
@@ -192,4 +198,13 @@ void PsiTrayIcon::animate()
 		QPixmapCache::insert( cachedName, p );
 	}
 	trayicon_->setIcon(p);
+}
+
+bool PsiTrayIcon::eventFilter(QObject *obj, QEvent *event)
+{
+	if(obj == trayicon_ && event->type() == QEvent::ToolTip) {
+		doToolTip(obj, ((QHelpEvent*)event)->globalPos());
+		return true;
+	}
+	return QObject::eventFilter(obj, event);
 }

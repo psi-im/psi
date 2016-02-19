@@ -47,6 +47,7 @@
 #include "common.h"
 #include "showtextdlg.h"
 #include "psicon.h"
+#include "textutil.h"
 #ifndef NEWCONTACTLIST
 #include "contactview.h"
 #endif
@@ -54,6 +55,8 @@
 #include "serverinfomanager.h"
 #include "applicationinfo.h"
 #include "psiaccount.h"
+#include "psievent.h"
+#include "psitooltip.h"
 #include "psitrayicon.h"
 #include "psitoolbar.h"
 #include "aboutdlg.h"
@@ -142,6 +145,8 @@ public:
 	void registerActions();
 	IconAction* getAction( QString name );
 	void updateMenu(QStringList actions, QMenu* menu);
+
+	QString ToolTipText;
 };
 
 MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) : splitter(0), mainTabs(0), viewToolBar(0), isLeftRoster(false), psi(_psi), mainWin(_mainWin)
@@ -710,7 +715,8 @@ void MainWin::setUseDock(bool use)
 		connect(d->tray, SIGNAL(clicked(const QPoint &, int)), SLOT(trayClicked(const QPoint &, int)));
 		connect(d->tray, SIGNAL(doubleClicked(const QPoint &)), SLOT(trayDoubleClicked()));
 		d->tray->setIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
-		d->tray->setToolTip(ApplicationInfo::name());
+		setTrayToolTip();
+		connect(d->tray, SIGNAL(doToolTip(QObject *, QPoint)), this, SLOT(doTrayToolTip(QObject *, QPoint)));
 
 		updateReadNext(d->nextAnim, d->nextAmount);
 
@@ -1093,12 +1099,87 @@ void MainWin::buildTrayMenu()
 #endif
 }
 
-void MainWin::setTrayToolTip(int status)
+void MainWin::setTrayToolTip()
 {
 	if (!d->tray) {
 		return;
 	}
-	d->tray->setToolTip(QString("Psi - " + status2txt(status)));
+	QString s = ApplicationInfo::name();
+	QString str = "<qt>";
+	QString imgTag = "icon name";
+	str += QString("<div style='white-space:pre'><b>%1</b></div>").arg(TextUtil::escape(ApplicationInfo::name()));
+	QString Tip = "";
+	QString TipPlain = "";
+	QString Events = "";
+	QString EventsPlain = "";
+	foreach(PsiAccount *pa, d->psi->contactList()->enabledAccounts()) {
+		Status stat = pa->status();
+		int status = makeSTATUS(stat);
+		QString istr = "status/offline";
+		if(status == STATUS_ONLINE)
+			istr = "status/online";
+		else if(status == STATUS_AWAY)
+			istr = "status/away";
+		else if(status == STATUS_XA)
+			istr = "status/xa";
+		else if(status == STATUS_DND)
+			istr = "status/dnd";
+		else if(status == STATUS_CHAT)
+ 			istr = "status/chat";
+		else if(status == STATUS_INVISIBLE)
+			istr = "status/invisible";
+		Tip += QString("<div style='white-space:pre'>") + QString("<%1=\"%2\"> ").arg(imgTag).arg(istr) + QString("<b>%1</b>").arg(TextUtil::escape(pa->name())) + "</div>";
+		TipPlain += "\n" + pa->name() + " (" + stat.typeString() + ")";
+		QString text = stat.status();
+		if(!text.isEmpty()) {
+			text = clipStatus(text, 40, 1);
+			Tip += QString("<div style='white-space:pre'>%1: %2</div>").arg(tr("Status Message")).arg(TextUtil::escape(text));
+		}
+
+		PsiEvent::Ptr e;
+		e = pa->eventQueue()->peekNext();
+		if(e) {
+			Jid jid = e->jid();
+			QString from;
+			if(!jid.isEmpty()) {
+				LiveRoster Roster = pa->client()->roster();
+				while(!Roster.isEmpty()) {
+					LiveRosterItem item = Roster.takeFirst();
+					if(item.jid().compare(jid)) {
+						from = item.name();
+						break;
+					}
+				}
+				if(from.isEmpty()) {
+					from = jid.full();
+				}
+			}
+			if(!from.isEmpty()) {
+				Events += QString("<div style='white-space:pre'>%1</div>").arg(TextUtil::escape(from));
+				EventsPlain += "\n" + from;
+			}
+		}
+	}
+
+	if(!Tip.isEmpty()) {
+		str += QString("<div style='white-space:pre'><u><b>%1</b></u></div>").arg(TextUtil::escape(tr("Active accounts:"))) + Tip;
+		s += tr("\nActive accounts:") + TipPlain;
+	}
+
+	if(!Events.isEmpty()) {
+		str += QString("<div style='white-space:pre'><u><b>%1</b></u></div>").arg(TextUtil::escape(tr("Incoming event(s) from:"))) + Events;
+		s += tr("\nIncoming event(s) from:") + EventsPlain;
+	}
+
+	str += "</qt>";
+
+	d->ToolTipText = str;
+	d->tray->setToolTip(s);
+}
+
+void MainWin::doTrayToolTip(QObject *, QPoint p)
+{
+	PsiToolTip::showText(p, d->ToolTipText);
 }
 
 void MainWin::decorateButton(int status)
@@ -1108,6 +1189,8 @@ void MainWin::decorateButton(int status)
 	foreach(IconAction* action, l) {
 		action->setChecked ( d->statusActions[action] == status );
 	}
+
+	setTrayToolTip();
 
 	if(d->lastStatus == status) {
 		return;
@@ -1295,20 +1378,7 @@ void MainWin::setTrayToolTip(const Status& status, bool, bool)
 	if (!d->tray) {
 		return;
 	}
-	QString s = ApplicationInfo::name();
-
-	QString show = status.show();
-	if(!show.isEmpty()) {
-		show[0] = show[0].toUpper();
-		s += " - "+show;
-	}
-
-	QString text = status.status();
-	if(!text.isEmpty()) {
-		s += ": "+text;
-	}
-
-	d->tray->setToolTip(s);
+	setTrayToolTip();
 }
 
 void MainWin::trayClicked(const QPoint &, int button)
@@ -1383,6 +1453,7 @@ void MainWin::updateReadNext(PsiIcon* anim, int amount)
 
 	updateTray();
 	updateCaption();
+	setTrayToolTip();
 }
 
 QString MainWin::numEventsString(int x) const
@@ -1441,6 +1512,7 @@ PsiTrayIcon *MainWin::psiTrayIcon()
 void MainWin::numAccountsChanged()
 {
 	d->statusButton->setEnabled(d->psi->contactList()->haveEnabledAccounts());
+	setTrayToolTip();
 }
 
 void MainWin::accountFeaturesChanged()

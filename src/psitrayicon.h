@@ -29,6 +29,7 @@ signals:
 	void clicked(const QPoint &, int);
 	void doubleClicked(const QPoint &);
 	void closed();
+	void doToolTip(QObject *, QPoint);
 
 public slots:
 	void show();
@@ -41,6 +42,7 @@ private slots:
 protected:
 	QPixmap makeIcon();
 	QRgb pixelBlend(QRgb p1, QRgb p2);
+	bool eventFilter( QObject *, QEvent * );
 
 private:
 	PsiIcon* icon_;
