@@ -39,6 +39,7 @@
 // tabs
 #include "opt_toolbars.h"
 #include "opt_application.h"
+#include "opt_roster.h"
 #include "opt_appearance.h"
 #include "opt_chat.h"
 #include "opt_events.h"
@@ -276,6 +277,7 @@ void OptionsDlg::Private::createTabs()
 	OptionsTabApplication* applicationTab = new OptionsTabApplication(this);
 	applicationTab->setHaveAutoUpdater(psi->haveAutoUpdater());
 	tabs.append( applicationTab );
+	tabs.append( new OptionsTabRoster(this) );
 	tabs.append( new OptionsTabChat(this) );
 	tabs.append( new OptionsTabEvents(this) );
 	tabs.append( new OptionsTabPopups(this) );

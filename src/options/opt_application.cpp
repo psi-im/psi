@@ -39,16 +39,6 @@ QWidget *OptionsTabApplication::widget()
 	w = new OptApplicationUI();
 	OptApplicationUI *d = (OptApplicationUI *)w;
 
-	d->ck_alwaysOnTop->setWhatsThis(
-		tr("Makes the main Psi window always be in front of other windows."));
-	d->ck_autoRosterSize->setWhatsThis(
-		tr("Makes the main Psi window resize automatically to fit all contacts."));
-	d->ck_useleft->setWhatsThis(
-		tr("Normally, right-clicking with the mouse on a contact will activate the context-menu."
-		"  Check this option if you'd rather use a left-click."));
-	d->ck_showMenubar->setWhatsThis(
-		tr("Shows the menubar in the application window."));
-
 	// docklet
 	d->ck_docklet->setWhatsThis(
 		tr("Makes Psi use a docklet icon, also known as system tray icon."));
@@ -62,8 +52,6 @@ QWidget *OptionsTabApplication::widget()
 		"window use a small titlebar."));
 
 #ifdef Q_OS_MAC
-	d->ck_alwaysOnTop->hide();
-	d->ck_showMenubar->hide();
 	d->gb_docklet->hide();
 #endif
 
@@ -95,11 +83,6 @@ void OptionsTabApplication::applyOptions()
 
 	OptApplicationUI *d = (OptApplicationUI *)w;
 
-	PsiOptions::instance()->setOption("options.ui.contactlist.always-on-top", d->ck_alwaysOnTop->isChecked());
-	PsiOptions::instance()->setOption("options.ui.contactlist.automatically-resize-roster", d->ck_autoRosterSize->isChecked());
-	PsiOptions::instance()->setOption("options.ui.contactlist.use-left-click", d->ck_useleft->isChecked());
-	PsiOptions::instance()->setOption("options.ui.contactlist.show-menubar", d->ck_showMenubar->isChecked());
-
 	// Auto-update
 	PsiOptions::instance()->setOption("options.auto-update.check-on-startup", d->ck_autoUpdate->isChecked());
 
@@ -124,11 +107,6 @@ void OptionsTabApplication::restoreOptions()
 
 	OptApplicationUI *d = (OptApplicationUI *)w;
 
-	d->ck_alwaysOnTop->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.always-on-top").toBool() );
-	d->ck_autoRosterSize->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.automatically-resize-roster").toBool() );
-	d->ck_showMenubar->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.show-menubar").toBool() );
-	d->ck_useleft->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.use-left-click").toBool() );
-	d->ck_useleft->setVisible(false); //currently useless
 	d->ck_autoUpdate->setChecked(PsiOptions::instance()->getOption("options.auto-update.check-on-startup").toBool());
 
 	// docklet

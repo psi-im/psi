@@ -12,6 +12,7 @@ FORMS += \
 # additional tabs
 HEADERS += \
 	$$PWD/opt_application.h \
+	$$PWD/opt_roster.h \
 	$$PWD/opt_chat.h \
 	$$PWD/opt_events.h \
 	$$PWD/opt_popups.h \
@@ -30,6 +31,7 @@ HEADERS += $$PWD/opt_tree.h
 
 SOURCES += \
 	$$PWD/opt_application.cpp \
+	$$PWD/opt_roster.cpp \
 	$$PWD/opt_chat.cpp \
 	$$PWD/opt_events.cpp \
 	$$PWD/opt_popups.cpp \
@@ -48,6 +50,7 @@ SOURCES += $$PWD/opt_tree.cpp
 
 FORMS += \
 	$$PWD/opt_application.ui \
+	$$PWD/opt_roster.ui \
 	$$PWD/opt_chat.ui \
 	$$PWD/opt_events.ui \
 	$$PWD/opt_popups.ui \

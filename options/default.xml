@@ -156,7 +156,16 @@
 					<self-contact type="bool">true</self-contact>
 				</show>
 				<show-group-counts type="bool">true</show-group-counts>
-				<show-menubar type="bool">true</show-menubar>
+				<show-menubar type="bool">false</show-menubar>
+				<disable-scrollbar type="bool">true</disable-scrollbar>
+				<avatars>
+					<show type="bool">true</show>
+					<size type="int">24</size>
+					<radius type="int">5</radius>
+				</avatars>
+				<show-mood-icons type="bool">true</show-mood-icons>
+				<show-tune-icons type="bool">true</show-tune-icons>
+				<show-client-icons type="bool">true</show-client-icons>
 				<toolbars/>
 				<toolbars-state type="QByteArray"/>
 				<use-left-click type="bool">false</use-left-click>

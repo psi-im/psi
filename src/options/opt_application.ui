@@ -14,37 +14,6 @@
   </property>
   <layout class="QVBoxLayout" >
    <item>
-    <widget class="QCheckBox" name="ck_alwaysOnTop" >
-     <property name="text" >
-      <string>Roster window always on top</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="ck_autoRosterSize" >
-     <property name="text" >
-      <string>Auto-resize contact list</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="ck_useleft" >
-     <property name="enabled" >
-      <bool>true</bool>
-     </property>
-     <property name="text" >
-      <string>Use left-click for menu</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QCheckBox" name="ck_showMenubar" >
-     <property name="text" >
-      <string>Show menubar</string>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QCheckBox" name="ck_docklet" >
      <property name="text" >
       <string>Enable docklet</string>
@@ -219,10 +188,6 @@
  </widget>
  <layoutdefault spacing="6" margin="11" />
  <tabstops>
-  <tabstop>ck_alwaysOnTop</tabstop>
-  <tabstop>ck_autoRosterSize</tabstop>
-  <tabstop>ck_useleft</tabstop>
-  <tabstop>ck_showMenubar</tabstop>
   <tabstop>ck_docklet</tabstop>
   <tabstop>ck_dockDCstyle</tabstop>
   <tabstop>ck_dockHideMW</tabstop>
