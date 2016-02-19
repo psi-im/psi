@@ -90,6 +90,7 @@ protected:
 	void setShortcuts();
 
 	// reimplemented
+	void resizeEvent(QResizeEvent *e);
 	void dragEnterEvent(QDragEnterEvent *);
 	void dropEvent(QDropEvent *);
 	void closeEvent(QCloseEvent *);
@@ -138,6 +139,7 @@ private slots:
 	void openWhiteboard();
 #endif
 	void chatEditCreated();
+	void horizSplitterMoved();
 
 public:
 	class Private;

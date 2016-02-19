@@ -217,6 +217,9 @@
 				</view>
 			</menu>
 			<muc comment="Multi-User Chat options">
+				<log-width type="int">500</log-width>
+				<roster-width type="int">80</roster-width>
+				<roster-at-left type="bool">false</roster-at-left>
 				<theme comment="The theme used for groupchat messages rendering" type="QString">psi/classic</theme>
 				<highlight-words type="QStringList" />
 				<size comment="Remembered window size" type="QSize">

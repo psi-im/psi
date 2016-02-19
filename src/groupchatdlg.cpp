@@ -232,6 +232,9 @@ public:
 
 	QPointer<MUCConfigDlg> configDlg;
 	QPointer<GroupchatTopicDlg> topicDlg;
+
+	int logSize;
+	int rosterSize;
 public:
 	bool trackBar;
 
@@ -726,12 +729,24 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	ui_.tb_actions->setIcon(IconsetFactory::icon("psi/select").icon());
 	ui_.tb_actions->setStyleSheet(" QToolButton::menu-indicator { image:none } ");
 
+	connect(ui_.hsplitter, SIGNAL(splitterMoved(int,int)), this, SLOT(horizSplitterMoved()));
+
 	// resize the horizontal splitter
+	d->logSize = PsiOptions::instance()->getOption("options.ui.muc.log-width").toInt();
+	d->rosterSize = PsiOptions::instance()->getOption("options.ui.muc.roster-width").toInt();
 	QList<int> list;
-	list << 500;
-	list << 80;
+	bool leftRoster = PsiOptions::instance()->getOption("options.ui.muc.roster-at-left").toBool();
+	if(leftRoster)
+		list << d->rosterSize << d->logSize;
+	else
+		list <<  d->logSize << d->rosterSize;
+
 	ui_.hsplitter->setSizes(list);
 
+	if (leftRoster)
+		ui_.hsplitter->insertWidget(0, ui_.lv_users);  // Swap widgets
+
+	// resize the vertical splitter
 	list.clear();
 	list << 324;
 	list << 10;
@@ -752,6 +767,10 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 
 GCMainDlg::~GCMainDlg()
 {
+	//  Save splitters size
+	PsiOptions::instance()->setOption("options.ui.muc.log-width", d->logSize);
+	PsiOptions::instance()->setOption("options.ui.muc.roster-width", d->rosterSize);
+
 	if(d->state != Private::Idle && d->state != Private::ForcedLeave) {
 		account()->groupChatLeave(jid().domain(), jid().node());
 	}
@@ -765,6 +784,17 @@ GCMainDlg::~GCMainDlg()
 	delete d;
 }
 
+void GCMainDlg::horizSplitterMoved()
+{
+	QList<int> list = ui_.hsplitter->sizes();
+	bool leftRoster = PsiOptions::instance()->getOption("options.ui.muc.roster-at-left").toBool();
+	d->rosterSize = !leftRoster ? list.last() : list.first();
+	d->logSize = leftRoster ? list.last() : list.first();
+
+	PsiOptions::instance()->setOption("options.ui.muc.log-width", d->logSize);
+	PsiOptions::instance()->setOption("options.ui.muc.roster-width", d->rosterSize);
+}
+
 void GCMainDlg::ensureTabbedCorrectly()
 {
 	TabbableWidget::ensureTabbedCorrectly();
@@ -772,9 +802,15 @@ void GCMainDlg::ensureTabbedCorrectly()
 	// QSplitter is broken again, force resize so that
 	// lv_users gets initizalised properly and context menu
 	// works in tabs too.
-	QList<int> tmp = ui_.hsplitter->sizes();
+	d->logSize = PsiOptions::instance()->getOption("options.ui.muc.log-width").toInt();
+	d->rosterSize = PsiOptions::instance()->getOption("options.ui.muc.roster-width").toInt();
+	QList<int> list;
+	if(PsiOptions::instance()->getOption("options.ui.muc.roster-at-left").toBool())
+		list << d->rosterSize << d->logSize;
+	else
+		list <<  d->logSize << d->rosterSize;
 	ui_.hsplitter->setSizes(QList<int>() << 0);
-	ui_.hsplitter->setSizes(tmp);
+	ui_.hsplitter->setSizes(list);
 	UserListItem* u = account()->find(jid().bare());
 	if(u) {
 		setTabIcon(PsiIconset::instance()->statusPtr(u)->icon());
@@ -1902,6 +1938,33 @@ int GCMainDlg::unreadMessageCount() const
 void GCMainDlg::setStatusTabIcon(int status)
 {
 	setTabIcon(PsiIconset::instance()->statusPtr(jid(), status)->icon());
+}
+
+
+
+void GCMainDlg::resizeEvent(QResizeEvent *e)
+{
+	TabbableWidget::resizeEvent(e);
+
+	if(!isVisible())
+		return;
+
+	QList<int> sizes = ui_.hsplitter->sizes();
+	bool leftRoster = PsiOptions::instance()->getOption("options.ui.muc.roster-at-left").toBool();
+	int logWidth = !leftRoster ? sizes.first() : sizes.last();
+	int rosterWidth = leftRoster ? sizes.first() : sizes.last();
+	int dw = rosterWidth - d->rosterSize;
+	sizes.clear();
+	sizes.append(logWidth + dw);
+	if(leftRoster) {
+		sizes.prepend(d->rosterSize);
+	}
+	else {
+		sizes.append(d->rosterSize);
+	}
+
+	ui_.hsplitter->setSizes(sizes);
+	QTimer::singleShot(0, this, SLOT(horizSplitterMoved()));
 }
 
 //----------------------------------------------------------------------------
