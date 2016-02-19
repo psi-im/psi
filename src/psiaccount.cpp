@@ -5573,6 +5573,11 @@ QString PsiAccount::nick() const
 	return d->self.name();
 }
 
+const Activity &PsiAccount::activity() const
+{
+	return d->self.activity();
+}
+
 const Mood &PsiAccount::mood() const
 {
 	return d->self.mood();

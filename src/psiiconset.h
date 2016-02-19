@@ -45,6 +45,7 @@ public:
 	QHash<QString, Iconset*> roster;
 	QList<Iconset*> emoticons;
 	Iconset moods;
+	Iconset activities;
 	Iconset clients;
 	const Iconset &system() const;
 	void stripFirstAnimFrame(Iconset *);
@@ -99,6 +100,7 @@ private:
 	bool loadRoster();
 	void loadEmoticons();
 	bool loadMoods();
+	bool loadActivity();
 	bool loadClients();
 };
 

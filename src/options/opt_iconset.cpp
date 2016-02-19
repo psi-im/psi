@@ -24,6 +24,7 @@
 
 #include "ui_opt_iconset_emo.h"
 #include "ui_opt_iconset_mood.h"
+#include "ui_opt_iconset_activity.h"
 #include "ui_opt_iconset_client.h"
 #include "ui_opt_iconset_system.h"
 #include "ui_opt_iconset_roster.h"
@@ -45,6 +46,12 @@ class IconsetClientUI : public QWidget, public Ui::IconsetClient
 {
 public:
 	IconsetClientUI() : QWidget() { setupUi(this); }
+};
+
+class IconsetActivityUI : public QWidget, public Ui::IconsetActivity
+{
+public:
+	IconsetActivityUI() : QWidget() { setupUi(this); }
 };
 
 class IconsetSystemUI : public QWidget, public Ui::IconsetSystem
@@ -800,6 +807,153 @@ void OptionsTabIconsetMoods::setData(PsiCon *psicon, QWidget *p)
 }
 
 void OptionsTabIconsetMoods::cancelThread()
+{
+	if ( thread ) {
+		threadCancelled.lock();
+		thread->cancelled = true;
+		threadCancelled.unlock();
+
+		thread = 0;
+	}
+}
+//----------------------------------------------------------------------------
+// OptionsTabIconsetActivity
+//----------------------------------------------------------------------------
+
+OptionsTabIconsetActivity::OptionsTabIconsetActivity(QObject *parent)
+	: OptionsTab(parent, "iconset_activities", "", tr("Activity"), tr("Select your activity iconset"))
+	, w(0)
+	, thread(0)
+{
+}
+
+OptionsTabIconsetActivity::~OptionsTabIconsetActivity()
+{
+	cancelThread();
+}
+
+QWidget *OptionsTabIconsetActivity::widget()
+{
+	if ( w )
+		return 0;
+
+	w = new IconsetActivityUI;
+	IconsetActivityUI *d = (IconsetActivityUI *)w;
+
+	connect(d->pb_activityDetails, SIGNAL(clicked()), SLOT(previewIconset()));
+
+	return w;
+}
+
+void OptionsTabIconsetActivity::applyOptions()
+{
+	if ( !w || thread )
+		return;
+
+	IconsetActivityUI *d = (IconsetActivityUI *)w;
+
+	const Iconset *is = d->iss_activity->iconset();
+	if ( is ) {
+		QFileInfo fi( is->fileName() );
+		PsiOptions::instance()->setOption("options.iconsets.activities", fi.fileName());
+	}
+}
+
+void OptionsTabIconsetActivity::restoreOptions()
+{
+	if ( !w || thread )
+		return;
+
+	IconsetActivityUI *d = (IconsetActivityUI *)w;
+
+	d->iss_activity->clear();
+	QStringList loaded;
+
+	d->setCursor(Qt::WaitCursor);
+
+	QPalette customPal = d->palette();
+	customPal.setCurrentColorGroup(QPalette::Inactive);
+	d->iss_activity->setEnabled(false);
+	d->iss_activity->setPalette(customPal);
+
+	d->pb_activityDetails->setEnabled(false);
+	d->pb_activityDetails->setPalette(customPal);
+
+	d->progress->show();
+	d->progress->setValue( 0 );
+
+	numIconsets = countIconsets("/activities", loaded);
+	iconsetsLoaded = 0;
+
+	cancelThread();
+
+	thread = new IconsetLoadThread(this, "/activities");
+	thread->start();
+}
+
+bool OptionsTabIconsetActivity::event(QEvent *e)
+{
+	IconsetActivityUI *d = (IconsetActivityUI *)w;
+	if ( e->type() == QEvent::User ) { // iconset load event
+		IconsetLoadEvent *le = (IconsetLoadEvent *)e;
+
+		if ( thread != le->thread() )
+			return false;
+
+		if ( !numIconsets )
+			numIconsets = 1;
+		d->progress->setValue( (int)((float)100 * ++iconsetsLoaded / numIconsets) );
+
+		Iconset *i = le->iconset();
+		if ( i ) {
+			PsiIconset::instance()->stripFirstAnimFrame(i);
+			d->iss_activity->insert(*i);
+
+			QFileInfo fi( i->fileName() );
+			if ( fi.fileName() == PsiOptions::instance()->getOption("options.iconsets.activities").toString() )
+				d->iss_activity->setItemSelected(d->iss_activity->lastItem(), true);
+
+			delete i;
+		}
+
+		return true;
+	}
+	else if ( e->type() == QEvent::User + 1 ) { // finish event
+		d->iss_activity->setEnabled(true);
+		d->iss_activity->setPalette(QPalette());
+
+		d->pb_activityDetails->setEnabled(true);
+		d->pb_activityDetails->setPalette(QPalette());
+
+		connect(d->iss_activity, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), SIGNAL(dataChanged()));
+
+		d->progress->hide();
+
+		d->unsetCursor();
+		thread = 0;
+
+		return true;
+	}
+
+	return false;
+}
+
+void OptionsTabIconsetActivity::previewIconset()
+{
+	IconsetActivityUI *d = (IconsetActivityUI *)w;
+	const Iconset *is = d->iss_activity->iconset();
+	if (is) {
+		isDetails(*is, parentWidget->parentWidget(), psi);
+	}
+}
+
+void OptionsTabIconsetActivity::setData(PsiCon *psicon, QWidget *p)
+{
+	psi = psicon;
+	parentWidget = p;
+}
+
+void OptionsTabIconsetActivity::cancelThread()
 {
 	if ( thread ) {
 		threadCancelled.lock();

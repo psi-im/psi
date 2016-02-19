@@ -67,6 +67,16 @@ const QString& Activity::text() const
 	return text_;
 }
 
+QString Activity::typeValue() const
+{
+	return ActivityCatalog::instance()->findEntryByType(type_).value();
+}
+
+QString Activity::specificTypeValue() const
+{
+	return ActivityCatalog::instance()->findEntryByType(specificType_).value();
+}
+
 bool Activity::isNull() const
 {
 	return type_ == Unknown && text().isEmpty();

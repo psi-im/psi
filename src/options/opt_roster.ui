@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>OptRoster</class>
  <widget class="QWidget" name="OptRoster">
@@ -5,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>343</width>
-    <height>401</height>
+    <width>357</width>
+    <height>452</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -65,13 +66,7 @@
      <property name="title">
       <string>Icons</string>
      </property>
-     <layout class="QVBoxLayout">
-      <property name="spacing">
-       <number>6</number>
-      </property>
-      <property name="margin">
-       <number>10</number>
-      </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
        <widget class="QCheckBox" name="ck_showAvatarIcons">
         <property name="whatsThis">
@@ -93,6 +88,16 @@
        </widget>
       </item>
       <item>
+       <widget class="QCheckBox" name="ck_showActivityIcons">
+        <property name="whatsThis">
+         <string>Show activities in roster</string>
+        </property>
+        <property name="text">
+         <string>Activities</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QCheckBox" name="ck_showTuneIcons">
         <property name="whatsThis">
          <string>Show icon when contact is listening to music</string>
@@ -103,20 +108,20 @@
        </widget>
       </item>
       <item>
-       <layout class="QHBoxLayout" >
-        <property name="spacing" >
+       <layout class="QHBoxLayout">
+        <property name="spacing">
          <number>5</number>
         </property>
         <item>
-       <widget class="QCheckBox" name="ck_showClientIcons">
-        <property name="whatsThis">
-         <string>Show icon of user client</string>
-        </property>
-        <property name="text">
-         <string>Clients</string>
-        </property>
-       </widget>
-      </item>
+         <widget class="QCheckBox" name="ck_showClientIcons">
+          <property name="whatsThis">
+           <string>Show icon of user client</string>
+          </property>
+          <property name="text">
+           <string>Clients</string>
+          </property>
+         </widget>
+        </item>
         <item>
          <widget class="QComboBox" name="cb_showAllClientIcons" >
           <item>
@@ -224,4 +229,5 @@
   <tabstop>ck_showTuneIcons</tabstop>
  </tabstops>
  <resources/>
+ <connections/>
 </ui>

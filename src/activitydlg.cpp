@@ -25,6 +25,7 @@
 #include "activitycatalog.h"
 #include "psiaccount.h"
 #include "pepmanager.h"
+#include "psiiconset.h"
 
 ActivityDlg::ActivityDlg(PsiAccount* pa) : QDialog(0), pa_(pa)
 {
@@ -36,12 +37,20 @@ ActivityDlg::ActivityDlg(PsiAccount* pa) : QDialog(0), pa_(pa)
 	connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(setActivity()));
 
 	ui_.cb_general_type->addItem(tr("<unset>"));
+	Activity::Type at = pa->activity().type();
+	int i=1;
 	foreach(ActivityCatalog::Entry e, ActivityCatalog::instance()->entries()) {
 		if (e.specificType() == Activity::UnknownSpecific) {
 			// The entry e is for a 'general' type.
-			ui_.cb_general_type->addItem(e.text());
+			ui_.cb_general_type->addItem(IconsetFactory::icon("activities/"+e.value()).icon(), e.text());
+			if (e.type() == at) {
+				ui_.cb_general_type->setCurrentIndex(i);
+				loadSpecificActivities(ui_.cb_general_type->currentText());
+			}
+			i++;
 		}
 	}
+	ui_.le_description->setText(pa->activity().text());
 }
 
 void ActivityDlg::loadSpecificActivities(const QString& generalActivityStr)
@@ -53,13 +62,19 @@ void ActivityDlg::loadSpecificActivities(const QString& generalActivityStr)
 	}
 	else {
 		ui_.cb_specific_type->addItem(tr("<unset>"));
+		Activity::SpecificType at = pa_->activity().specificType();
+		int i=1;
 		ActivityCatalog* ac = ActivityCatalog::instance();
 		foreach(ActivityCatalog::Entry e, ac->entries()) {
 			if (e.specificType() != Activity::UnknownSpecific) {
 				// The entry e is for a 'specific' type.
 				ActivityCatalog::Entry ge = ac->findEntryByText(generalActivityStr);
 				if (e.type() == ge.type()) {
-					ui_.cb_specific_type->addItem(e.text());
+					ui_.cb_specific_type->addItem(IconsetFactory::icon("activities/"+ge.value()+"_"+e.value()).icon(), e.text());
+					if (e.specificType() == at) {
+						ui_.cb_specific_type->setCurrentIndex(i);
+					}
+					i++;
 				}
 			}
 		}

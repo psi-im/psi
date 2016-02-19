@@ -43,9 +43,9 @@ class PsiIconset::Private
 private:
 	PsiIconset *psi;
 public:
-	Iconset system, moods, clients;
+	Iconset system, moods, clients, activities;
 	QMap<QString, QString> caps2clients;
-	QString cur_system, cur_status, cur_moods, cur_clients;
+	QString cur_system, cur_status, cur_moods, cur_clients, cur_activity;
 	QStringList cur_emoticons;
 	QMap<QString, QString> cur_service_status;
 	QMap<QString, QString> cur_custom_status;
@@ -249,6 +249,23 @@ public:
 		return def;
 	}
 
+	Iconset activityIconset(bool *ok)
+	{
+		Iconset def;
+		*ok = def.load( iconsetPath("activities/default") );
+
+		if ( PsiOptions::instance()->getOption("options.iconsets.activities").toString() != "default" ) {
+			Iconset is;
+			is.load ( iconsetPath("activities/" + PsiOptions::instance()->getOption("options.iconsets.activities").toString()) );
+
+			loadIconset(&def, &is);
+		}
+
+		stripFirstAnimFrame( def );
+
+		return def;
+	}
+
 	Iconset clientsIconset(bool *ok)
 	{
 		Iconset def;
@@ -405,6 +422,21 @@ bool PsiIconset::loadMoods()
 	return ok;
 }
 
+bool PsiIconset::loadActivity()
+{
+	bool ok = true;
+	QString cur_activity = PsiOptions::instance()->getOption("options.iconsets.activities").toString();
+	if (d->cur_activity != cur_activity) {
+		Iconset activities = d->activityIconset(&ok);
+		d->loadIconset(&d->activities, &activities);
+		d->activities.addToFactory();
+
+		d->cur_activity = cur_activity;
+	}
+
+	return ok;
+}
+
 bool PsiIconset::loadClients()
 {
 	bool ok = true;
@@ -461,6 +493,7 @@ bool PsiIconset::loadAll()
 
 	loadEmoticons();
 	loadMoods();
+	loadActivity();
 	loadClients();
 	return true;
 }
@@ -475,6 +508,9 @@ void PsiIconset::optionChanged(const QString& option)
 	}
 	else if (option == "options.iconsets.moods") {
 		loadMoods();
+	}
+	else if (option == "options.iconsets.activities") {
+		loadActivity();
 	}
 	else if (option == "options.iconsets.clients") {
 		loadClients();

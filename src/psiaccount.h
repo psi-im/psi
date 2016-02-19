@@ -34,6 +34,7 @@
 #include "psiactions.h"
 #include "psievent.h"
 #include "mood.h"
+#include "activity.h"
 
 namespace XMPP
 {
@@ -151,6 +152,7 @@ public:
 	void setNick(const QString &);
 	QString nick() const;
 	const Mood &mood() const;
+	const Activity &activity() const;
 	void forceDisconnect(bool fast, const XMPP::Status &s);
 	bool hasPGP() const;
 	QHostAddress *localAddress() const;

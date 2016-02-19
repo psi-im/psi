@@ -494,12 +494,17 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 
 	// User Activity
 	if (!activity().isNull()) {
-		str += QString("<div style='white-space:pre'>") + QObject::tr("Activity") + ": " + activity().typeText();
+		QString act = activity().typeValue();
+		if (activity().specificType() != Activity::UnknownSpecific && activity().specificType() != Activity::Other && !activity().specificTypeValue().isEmpty()) {
+			act += "_" + activity().specificTypeValue();
+		}
+		str += QString("<div style='white-space:pre'>") + QObject::tr("Activity") + ": " +
+			QString("<%1=\"activities/%2\"> ").arg(imgTag).arg(act) + activity().typeText();
 		if (activity().specificType() != Activity::UnknownSpecific) {
 			str += QString(" - ") + activity().specificTypeText();
 		}
 		if (!activity().text().isEmpty())
-			str += QString(" (") + activity().text() + QString(")");
+			str += QString(" (") + TextUtil::escape(activity().text()) + QString(")");
 		str += "</div>";
 	}
 

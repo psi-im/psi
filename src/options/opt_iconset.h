@@ -93,6 +93,34 @@ private:
 	IconsetLoadThread *thread;
 };
 
+class OptionsTabIconsetActivity : public OptionsTab
+{
+	Q_OBJECT
+public:
+	OptionsTabIconsetActivity(QObject *parent);
+	~OptionsTabIconsetActivity();
+
+	QWidget *widget();
+	void applyOptions();
+	void restoreOptions();
+	bool stretchable() const { return true; }
+
+private slots:
+	void setData(PsiCon *, QWidget *);
+	void previewIconset();
+
+protected:
+	bool event(QEvent *);
+	void cancelThread();
+
+private:
+	QWidget *w, *parentWidget;
+	PsiCon *psi;
+
+	int numIconsets, iconsetsLoaded;
+	IconsetLoadThread *thread;
+};
+
 class OptionsTabIconsetClients : public OptionsTab
 {
 	Q_OBJECT

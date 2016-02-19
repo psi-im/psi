@@ -75,6 +75,8 @@ public:
 
 	Type type() const;
 	QString typeText() const;
+	QString typeValue() const;
+	QString specificTypeValue() const;
 	SpecificType specificType() const;
 	QString specificTypeText() const;
 	const QString& text() const;
