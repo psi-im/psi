@@ -23,6 +23,9 @@
 
 #include <QDialog>
 
+#include <QList>
+#include "xmpp_jid.h"
+
 class PsiCon;
 class PsiAccount;
 class UserListItem;
@@ -32,6 +35,8 @@ namespace XMPP {
 }
 
 using namespace XMPP;
+
+enum setStatusEnum{setStatusForAccount = 0, setStatusForJid, setStatusForJidList};
 
 class StatusShowDlg : public QDialog
 {
@@ -48,9 +53,14 @@ public:
 	StatusSetDlg(PsiAccount *, const Status &);
 	~StatusSetDlg();
 
+	void setJid(const Jid &);
+	void setJidList(const QList<XMPP::Jid> &);
+
 signals:
 	void set(const XMPP::Status &, bool withPriority, bool isManualStatus);
 	void cancelled();
+	void setJid(const Jid &, const Status &);
+	void setJidList(const QList<XMPP::Jid> &, const Status &);
 
 private slots:
 	void doButton();

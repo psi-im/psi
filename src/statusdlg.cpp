@@ -94,6 +94,9 @@ public:
 	QComboBox *cb_preset;
 	QLineEdit *le_priority;
 	QCheckBox *save;
+	Jid j;
+	QList<XMPP::Jid> jl;
+	setStatusEnum setStatusMode;
 };
 
 StatusSetDlg::StatusSetDlg(PsiCon *psi, const Status &s)
@@ -107,6 +110,7 @@ StatusSetDlg::StatusSetDlg(PsiCon *psi, const Status &s)
 	d->s = s;
 
 	setWindowTitle(CAP(tr("Set Status: All accounts")));
+	d->setStatusMode = setStatusForAccount;
 	init();
 }
 
@@ -121,7 +125,22 @@ StatusSetDlg::StatusSetDlg(PsiAccount *pa, const Status &s)
 	d->s = s;
 
 	setWindowTitle(CAP(tr("Set Status: %1").arg(d->pa->name())));
+	d->setStatusMode = setStatusForAccount;
 	init();
+}
+
+void StatusSetDlg::setJid(const Jid &j)
+{
+	d->j = j;
+	setWindowTitle(CAP(tr("Set Status for %1").arg(j.full())));
+	d->setStatusMode = setStatusForJid;
+}
+
+void StatusSetDlg::setJidList(const QList<XMPP::Jid> &jl)
+{
+	d->jl = jl;
+	setWindowTitle(CAP(tr("Set Status for group")));
+	d->setStatusMode = setStatusForJidList;
 }
 
 void StatusSetDlg::init()
@@ -247,9 +266,31 @@ void StatusSetDlg::doButton()
 	QString str = d->te->toPlainText();
 
  	if (d->le_priority->text().isEmpty())
- 		emit set(makeStatus(type, str), false, true);
+ 		//emit set(makeStatus(type, str), false, true);
+		switch(d->setStatusMode) {
+			case setStatusForAccount:
+                                emit set(makeStatus(type,str), false, true);
+				break;
+			case setStatusForJid:
+				emit setJid(d->j, makeStatus(type,str));
+				break;
+			case setStatusForJidList:
+				emit setJidList(d->jl, makeStatus(type,str));
+				break;
+		}
  	else
- 		emit set(makeStatus(type, str, d->le_priority->text().toInt()), true, true);
+ 		//emit set(makeStatus(type, str, d->le_priority->text().toInt()), true, true);
+		switch(d->setStatusMode) {
+			case setStatusForAccount:
+                                emit set(makeStatus(type,str, d->le_priority->text().toInt()), true, true);
+				break;
+			case setStatusForJid:
+				emit setJid(d->j, makeStatus(type,str, d->le_priority->text().toInt()));
+				break;
+			case setStatusForJidList:
+				emit setJidList(d->jl, makeStatus(type,str, d->le_priority->text().toInt()));
+				break;
+		}
 
 	close();
 }

@@ -32,6 +32,8 @@
 #include "iconaction.h"
 #include "psicontact.h"
 #include "psiaccount.h"
+#include "statusdlg.h"
+#include "xmpp_tasks.h"
 
 class ContactListGroupMenu::Private : public QObject
 {
@@ -45,6 +47,11 @@ class ContactListGroupMenu::Private : public QObject
 #endif
 	QAction* sendMessageAction_;
 	QAction* removeGroupWithoutContactsAction_;
+	QMenu* authMenu_;
+	QAction* actionAuth_;
+	QAction* actionAuthRequest_;
+	QAction* actionAuthRemove_;
+	QAction* actionCustomStatus_;
 
 public:
 	Private(ContactListGroupMenu* menu, ContactListGroup* _group)
@@ -56,6 +63,18 @@ public:
 
 		renameAction_ = new IconAction("", tr("Re&name"), menu->shortcuts("contactlist.rename"), this, "act_rename");
 		connect(renameAction_, SIGNAL(triggered()), this, SLOT(rename()));
+
+		actionAuth_ = new QAction(tr("Resend Authorization to Group"), this);
+		connect(actionAuth_, SIGNAL(triggered()), this, SLOT(authResend()));
+
+		actionAuthRequest_ = new QAction(tr("Request Authorization from Group"), this);
+		connect(actionAuthRequest_, SIGNAL(triggered()), this, SLOT(authRequest()));
+
+		actionAuthRemove_ = new QAction(tr("Remove Authorization from Group"), this);
+		connect(actionAuthRemove_, SIGNAL(triggered()), this, SLOT(authRemove()));
+
+		actionCustomStatus_ = new IconAction(tr("Send Status to Group"), this, "psi/action_direct_presence");
+		connect(actionCustomStatus_, SIGNAL(triggered()), this, SLOT(customStatus()));
 
 		removeGroupAndContactsAction_ = new IconAction(tr("Remove Group and Contacts"), this, "psi/remove");
 #ifdef YAPSI
@@ -84,7 +103,12 @@ public:
 #else
 		menu->addAction(renameAction_);
 		menu->addAction(sendMessageAction_);
+		menu->addAction(actionCustomStatus_);
 		menu->addSeparator();
+		authMenu_ = menu->addMenu(tr("Authorization"));
+		authMenu_->addAction(actionAuth_);
+		authMenu_->addAction(actionAuthRequest_);
+		authMenu_->addAction(actionAuthRemove_);
 		menu->addAction(removeGroupWithoutContactsAction_);
 		menu->addAction(removeGroupAndContactsAction_);
 #endif
@@ -119,6 +143,73 @@ private slots:
 			return;
 
 		emit menu_->removeSelection();
+	}
+
+	void authResend()
+	{
+		if (!group)
+			return;
+
+		QList<PsiContact*> contacts = group->contacts();
+		if (!contacts.isEmpty()) {
+			foreach(PsiContact* contact, contacts) {
+				contact->account()->actionAuth(contact->jid());
+			}
+		}
+	}
+
+	void authRequest()
+	{
+		if (!group)
+		return;
+
+		QList<PsiContact*> contacts = group->contacts();
+		if (!contacts.isEmpty()) {
+			foreach(PsiContact* contact, contacts) {
+				contact->account()->actionAuthRequest(contact->jid());
+			}
+		}
+	}
+
+	void authRemove()
+	{
+		if (!group)
+			return;
+
+		QList<PsiContact*> contacts = group->contacts();
+		if (!contacts.isEmpty()) {
+			foreach(PsiContact* contact, contacts) {
+				contact->account()->actionAuthRemove(contact->jid());
+			}
+		}
+	}
+
+	void customStatus()
+	{
+		if (!group)
+			return;
+
+		PsiAccount *pa = group->contacts().first()->account();
+		StatusSetDlg *w = new StatusSetDlg(pa->psi(), pa->status());
+		QList<XMPP::Jid> list;
+		foreach(PsiContact* contact, group->contacts()) {
+			if(contact->isPrivate()) continue;
+			list << contact->jid();
+		}
+		w->setJidList(list);
+		connect(w, SIGNAL(setJidList(const QList<XMPP::Jid> &, const Status &)), SLOT(setStatusFromDialog(const QList<XMPP::Jid> &, const Status &)));
+		w->show();
+	}
+
+	void setStatusFromDialog(const QList<XMPP::Jid> &j, const Status &s)
+	{
+		PsiAccount *pa = group->contacts().first()->account();
+		for(QList<Jid>::const_iterator it = j.begin(); it != j.end(); ++it)
+		{
+			JT_Presence *p = new JT_Presence(pa->client()->rootTask());
+			p->pres(*it,s);
+			p->go(true);
+		}
 	}
 
 	void removeGroupWithoutContacts()

@@ -36,6 +36,8 @@
 #include "psicon.h"
 #include "avatars.h"
 #include "userlist.h"
+#include "statusdlg.h"
+#include "xmpp_tasks.h"
 #ifdef HAVE_PGPUTIL
 #include "pgputil.h"
 #endif
@@ -233,6 +235,7 @@ public:
 	ResourceMenu* activeChatsMenu_;
 	QAction* voiceCallAction_;
 	QAction* sendFileAction_;
+	QAction* customStatusAction_;
 	InviteToGroupChatMenu* inviteToGroupchatMenu_;
 	QMenu* mngMenu_;
 	GroupMenu* groupMenu_;
@@ -351,6 +354,9 @@ public:
 		authRemoveAction_ = new IconAction(tr("Re&move Authorization From"), this, "");
 		connect(authRemoveAction_, SIGNAL(triggered()), SLOT(authRemove()));
 
+		customStatusAction_ = new IconAction(tr("Sen&d Status"), this, "psi/action_direct_presence");
+		connect(customStatusAction_, SIGNAL(triggered()), SLOT(customStatus()));
+
 		pictureAssignAction_ = new IconAction(tr("&Assign Custom Picture"), this, "");
 		connect(pictureAssignAction_, SIGNAL(triggered()), SLOT(pictureAssign()));
 		pictureAssignAction_->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.assign-custom-avatar"));
@@ -426,6 +432,7 @@ public:
 		authMenu_->addAction(authRerequestAction_);
 		authMenu_->addAction(authRemoveAction_);
 		mngMenu_->addAction(removeAction_);
+		menu_->addAction(customStatusAction_);
 		menu_->addSeparator();
 		pictureMenu_ = mngMenu_->addMenu(tr("&Picture"));
 		pictureMenu_->addAction(pictureAssignAction_);
@@ -478,6 +485,7 @@ private slots:
 
 		addAuthAction_->setVisible(!contact_->isSelf() && !contact_->inList() && !PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool());
 		addAuthAction_->setEnabled(contact_->account()->isAvailable());
+		customStatusAction_->setEnabled(contact_->account()->isAvailable() && !contact_->isPrivate());
 		receiveIncomingEventAction_->setVisible(contact_->alerting());
 		if (!PsiOptions::instance()->getOption("options.ui.message.enabled").toBool()) {
 			sendMessageAction_->setVisible(false);
@@ -670,6 +678,24 @@ private slots:
 
 		if(n == 0)
 			contact_->account()->actionAuthRemove(contact_->jid());
+	}
+
+	void customStatus()
+	{
+		if (!contact_)
+			return;
+
+		StatusSetDlg *w = new StatusSetDlg(contact_->account()->psi(), contact_->account()->status());
+		w->setJid(contact_->jid());
+		connect(w, SIGNAL(setJid(const Jid &, const Status &)), SLOT(setStatusFromDialog(const Jid &, const Status &)));
+		w->show();
+	}
+
+	void setStatusFromDialog(const Jid &j, const Status &s)
+	{
+		JT_Presence *p = new JT_Presence(contact_->account()->client()->rootTask());
+		p->pres(j,s);
+		p->go(true);
 	}
 
 	void pictureAssign()
