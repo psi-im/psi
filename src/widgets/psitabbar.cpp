@@ -121,9 +121,6 @@ void PsiTabBar::contextMenuEvent(QContextMenuEvent *event) {
 }
 
 void PsiTabBar::wheelEvent(QWheelEvent *event) {
-	if (PsiOptions::instance()->getOption("options.ui.tabs.disable-wheel-scroll").toBool())
-		return;
-
 	int numDegrees = event->delta() / 8;
 	int numSteps = numDegrees / 15;
 
