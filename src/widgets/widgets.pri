@@ -16,7 +16,9 @@ SOURCES += \
 	$$PWD/psitiplabel.cpp \
 	$$PWD/psitabwidget.cpp \
 	$$PWD/psitabbar.cpp \
-	$$PWD/actionlineedit.cpp
+	$$PWD/actionlineedit.cpp \
+	$$PWD/typeaheadfind.cpp
+
 
 HEADERS += \
 	$$PWD/stretchwidget.h \
@@ -41,7 +43,8 @@ HEADERS += \
 	$$PWD/psitiplabel.h \
 	$$PWD/psitabwidget.h \
 	$$PWD/psitabbar.h \
-	$$PWD/actionlineedit.h
+	$$PWD/actionlineedit.h \
+	$$PWD/typeaheadfind.h
 
 FORMS += $$PWD/fancypopup.ui
 

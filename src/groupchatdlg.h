@@ -116,9 +116,9 @@ private slots:
 	void mle_returnPressed();
 	void openTopic();
 	void setTopic(const QString &);
-	void openFind();
+	//void openFind();
 	void configureRoom();
-	void doFind(const QString &);
+	//void doFind(const QString &);
 	void pa_updatedActivity();
 	void goDisc();
 	void goConn();

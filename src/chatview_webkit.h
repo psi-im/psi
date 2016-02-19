@@ -63,6 +63,7 @@ public:
 	void clear();
 	void doTrackBar();
 	bool internalFind(QString str, bool startFromBeginning = false);
+	WebView * textWidget();
 
 public slots:
 	void scrollUp();

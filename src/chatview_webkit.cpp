@@ -366,4 +366,9 @@ bool ChatView::internalFind(QString str, bool startFromBeginning)
 	return found;
 }
 
+WebView* ChatView::textWidget()
+{
+	return webView;
+}
+
 #include "chatview_webkit.moc"

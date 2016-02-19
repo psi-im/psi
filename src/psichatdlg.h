@@ -9,6 +9,7 @@
 #include "applicationinfo.h"
 
 #include "ui_chatdlg.h"
+#include "typeaheadfind.h"
 
 class IconAction;
 
@@ -73,8 +74,10 @@ private:
 	IconAction* act_file_;
 	IconAction* act_compact_;
 	IconAction* act_voice_;
+	IconAction* act_find_;
 
 	QAction *act_mini_cmd_;
+	TypeAheadFindBar *typeahead_;
 
 	MCmdManager mCmdManager_;
 	MCmdSimpleSite mCmdSite_;

@@ -96,25 +96,6 @@
            </widget>
           </item>
           <item>
-           <widget class="QToolButton" name="tb_find" >
-            <property name="toolTip" >
-             <string>Select icon</string>
-            </property>
-            <property name="text" >
-             <string/>
-            </property>
-            <property name="iconSize" >
-             <size>
-              <width>16</width>
-              <height>16</height>
-             </size>
-            </property>
-            <property name="popupMode" >
-             <enum>QToolButton::InstantPopup</enum>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="QToolButton" name="tb_emoticons" >
             <property name="toolTip" >
              <string>Select icon</string>

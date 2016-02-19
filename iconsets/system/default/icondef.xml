@@ -21,6 +21,11 @@
 	</icon>
 
 	<icon>
+		<x xmlns='name'>psi/action_direct_presence</x>
+		<object mime='image/png'>action_direct_presence.png</object>
+	</icon>
+
+	<icon>
 		<x xmlns='name'>psi/statusmsg</x>
 		<object mime='image/png'>info.png</object>
 	</icon>

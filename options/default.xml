@@ -398,6 +398,8 @@
 					<item type="QKeySequence">Ctrl+PgUp</item>
 					<item type="QKeySequence">Ctrl+Shift+Tab</item>
 				</previous-tab>
+				<find-next type="QKeySequence" comment="Find text next"></find-next>
+				<find-prev type="QKeySequence" comment="Find text previous"></find-prev>
 				<find type="QKeySequence" comment="Find text">Ctrl+F</find>
 				<send type="QVariantList" comment="Sends the message">
 					<item type="QKeySequence">Return</item>

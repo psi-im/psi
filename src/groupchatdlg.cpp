@@ -103,7 +103,7 @@ static const QString geometryOption = "options.ui.muc.size";
 
 
 #include "groupchattopicdlg.h"
-
+#include "typeaheadfind.h"
 //----------------------------------------------------------------------------
 // StatusPingTask
 //----------------------------------------------------------------------------
@@ -208,6 +208,7 @@ public:
 	QString topic;
 	bool nonAnonymous;		 // got status code 100 ?
 	IconAction *act_find, *act_clear, *act_icon, *act_configure, *act_bookmark;
+	TypeAheadFindBar *typeahead;
 #ifdef WHITEBOARDING
 	IconAction *act_whiteboard;
 #endif
@@ -227,8 +228,8 @@ public:
 	QStringList hist;
 	int histAt;
 
-	QPointer<GCFindDlg> findDlg;
-	QString lastSearch;
+	//QPointer<GCFindDlg> findDlg;
+	//QString lastSearch;
 
 	QPointer<MUCConfigDlg> configDlg;
 	QPointer<GroupchatTopicDlg> topicDlg;
@@ -604,7 +605,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	d->connecting = false;
 
 	d->histAt = 0;
-	d->findDlg = 0;
+	//d->findDlg = 0;
 	d->configDlg = 0;
 
 	d->state = Private::Connected;
@@ -631,11 +632,11 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 
 	connect(account()->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
 	updateIdentityVisibility();
-
+/*
 	d->act_find = new IconAction(tr("Find"), "psi/search", tr("&Find"), 0, this);
 	connect(d->act_find, SIGNAL(triggered()), SLOT(openFind()));
 	ui_.tb_find->setDefaultAction(d->act_find);
-
+*/
 	ui_.tb_emoticons->setIcon(IconsetFactory::icon("psi/smile").icon());
 
 #ifdef Q_OS_MAC
@@ -655,8 +656,17 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	connect(ui_.lv_users, SIGNAL(action(const QString &, const Status &, int)), SLOT(lv_action(const QString &, const Status &, int)));
 	connect(ui_.lv_users, SIGNAL(insertNick(const QString&)), d, SLOT(insertNick(const QString&)));
 
+	// typeahead find bar
+	QHBoxLayout *hb3a = new QHBoxLayout();
+	d->typeahead = new TypeAheadFindBar(ui_.log->textWidget(), tr("Find toolbar"), 0);
+	hb3a->addWidget( d->typeahead );
+	ui_.vboxLayout1->addLayout(hb3a);
+
 	d->act_clear = new IconAction (tr("Clear Chat Window"), "psi/clearChat", tr("Clear Chat Window"), 0, this);
 	connect( d->act_clear, SIGNAL(triggered()), SLOT(doClearButton()));
+
+	d->act_find = new IconAction(tr("Find"), "psi/search", tr("&Find"), 0, this, "", true);
+	connect(d->act_find, SIGNAL(triggered()), d->typeahead, SLOT(toggleVisibility()));
 
 	d->act_configure = new IconAction(tr("Configure Room"), "psi/configure-room", tr("&Configure Room"), 0, this);
 	connect(d->act_configure, SIGNAL(triggered()), SLOT(configureRoom()));
@@ -694,6 +704,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 
 	ui_.toolbar->setIconSize(QSize(16,16));
 	ui_.toolbar->addAction(d->act_clear);
+	ui_.toolbar->addAction(d->act_find);
 	ui_.toolbar->addAction(d->act_configure);
 #ifdef WHITEBOARDING
 	ui_.toolbar->addAction(d->act_whiteboard);
@@ -1160,7 +1171,7 @@ void GCMainDlg::doRemoveBookmark()
 		bm->removeConference(jid());
 	}
 }
-
+/*
 void GCMainDlg::openFind()
 {
 	if(d->findDlg)
@@ -1171,7 +1182,7 @@ void GCMainDlg::openFind()
 		d->findDlg->show();
 	}
 }
-
+*/
 void GCMainDlg::configureRoom()
 {
 	if(d->configDlg)
@@ -1185,7 +1196,7 @@ void GCMainDlg::configureRoom()
 		d->configDlg->show();
 	}
 }
-
+/*
 void GCMainDlg::doFind(const QString &str)
 {
 	d->lastSearch = str;
@@ -1194,7 +1205,7 @@ void GCMainDlg::doFind(const QString &str)
 	else
 		d->findDlg->error(str);
 }
-
+*/
 void GCMainDlg::goDisc()
 {
 	if(d->state != Private::Idle && d->state != Private::ForcedLeave) {
@@ -1784,7 +1795,7 @@ void GCMainDlg::optionsUpdate()
 
 	setLooks();
 	setShortcuts();
-
+	d->typeahead->optionsUpdate();
 	// update status icons
 	ui_.lv_users->updateAll();
 }

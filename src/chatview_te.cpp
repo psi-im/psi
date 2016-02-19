@@ -452,3 +452,8 @@ bool ChatView::internalFind(QString str, bool startFromBeginning)
 
 	return true;
 }
+
+ChatView * ChatView::textWidget()
+{
+	return this;
+}

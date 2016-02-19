@@ -30,6 +30,8 @@
 #include "psioptions.h"
 #include "iconaction.h"
 #include "privacy/privacydlg.h"
+#include "iconset.h"
+#include "common.h"
 
 class ContactListAccountMenu::Private : public QObject
 {

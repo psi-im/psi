@@ -294,6 +294,9 @@ void PsiChatDlg::setShortcuts()
 	ChatDlg::setShortcuts();
 
 	act_clear_->setShortcuts(ShortcutManager::instance()->shortcuts("chat.clear"));
+// typeahead find bar
+	act_find_->setShortcuts(ShortcutManager::instance()->shortcuts("chat.find"));
+// -- typeahead
 	act_info_->setShortcuts(ShortcutManager::instance()->shortcuts("common.user-info"));
 	act_history_->setShortcuts(ShortcutManager::instance()->shortcuts("common.history"));
 
@@ -321,8 +324,20 @@ void PsiChatDlg::updateIdentityVisibility()
 
 void PsiChatDlg::initToolButtons()
 {
+// typeahead find
+	QHBoxLayout *hb3a = new QHBoxLayout();
+	typeahead_ = new TypeAheadFindBar(ui_.log->textWidget(), tr("Find toolbar"), 0);
+	hb3a->addWidget( typeahead_ );
+	ui_.vboxLayout1->addLayout(hb3a);
+// -- typeahead
+
 	act_clear_ = new IconAction(tr("Clear Chat Window"), "psi/clearChat", tr("Clear Chat Window"), 0, this);
 	connect(act_clear_, SIGNAL(triggered()), SLOT(doClearButton()));
+
+// typeahead find
+	act_find_ = new IconAction(tr("Find"), "psi/search", tr("&Find"), 0, this, "", true);
+	connect(act_find_, SIGNAL(triggered()), typeahead_, SLOT(toggleVisibility()));
+// -- typeahead
 
 	connect(account()->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), this, SLOT(addEmoticon(QString)));
 	act_icon_ = new IconAction(tr("Select Icon"), "psi/smile", tr("Select Icon"), 0, this);
@@ -355,6 +370,9 @@ void PsiChatDlg::initToolBar()
 	ui_.toolbar->setWindowTitle(tr("Chat Toolbar"));
 	ui_.toolbar->setIconSize(QSize(16, 16));
 	ui_.toolbar->addAction(act_clear_);
+// typeahead find bar
+	ui_.toolbar->addAction(act_find_);
+// -- typeahead
 	ui_.toolbar->addWidget(new StretchWidget(ui_.toolbar));
 	ui_.toolbar->addAction(act_icon_);
 	ui_.toolbar->addAction(act_file_);
@@ -487,6 +505,8 @@ void PsiChatDlg::optionsUpdate()
 	smallChat_ = PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool();
 
 	ChatDlg::optionsUpdate();
+// typeahead find bar
+	typeahead_->optionsUpdate();
 }
 
 void PsiChatDlg::updatePGP()
