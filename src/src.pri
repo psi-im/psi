@@ -207,7 +207,8 @@ HEADERS += \
 	$$PWD/bookmarkmanagedlg.h \
 	$$PWD/vcardphotodlg.h \
 	$$PWD/psicli.h \
-	$$PWD/coloropt.h
+	$$PWD/coloropt.h \
+	$$PWD/geolocationdlg.h
 
 
 HEADERS += tabcompletion.h
@@ -341,7 +342,8 @@ SOURCES += \
 	$$PWD/accountlabel.cpp \
 	$$PWD/bookmarkmanagedlg.cpp \
 	$$PWD/vcardphotodlg.cpp \
-	$$PWD/coloropt.cpp
+	$$PWD/coloropt.cpp \
+	$$PWD/geolocationdlg.cpp
 
 CONFIG += filetransfer
 filetransfer {
@@ -572,7 +574,8 @@ FORMS += \
 	$$PWD/chatdlg.ui \
 	$$PWD/bookmarkmanage.ui \
 	$$PWD/ahcommanddlg.ui \
-	$$PWD/ahcformdlg.ui
+	$$PWD/ahcformdlg.ui \
+	$$PWD/geolocation.ui
 
 # options dialog
 include($$PWD/options/options.pri)

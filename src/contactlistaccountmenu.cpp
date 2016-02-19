@@ -41,6 +41,7 @@ class ContactListAccountMenu::Private : public QObject
 	StatusMenu* statusMenu_;
 	QAction* moodAction_;
 	QAction* activityAction_;
+	QAction* geolocationAction_;
 	QAction* setAvatarAction_;
 	QMenu* avatarMenu_;
 	QAction* unsetAvatarAction_;
@@ -79,6 +80,9 @@ public:
 
 		activityAction_ = new QAction(tr("Activity"), this);
 		connect(activityAction_, SIGNAL(triggered()), SLOT(setActivity()));
+
+		geolocationAction_ = new QAction(tr("GeoLocation"), this);
+		connect(geolocationAction_, SIGNAL(triggered()), SLOT(setGeolocation()));
 
 		setAvatarAction_ = new QAction(tr("Set Avatar"), this);
 		connect(setAvatarAction_, SIGNAL(triggered()), SLOT(setAvatar()));
@@ -125,6 +129,7 @@ public:
 		menu->addMenu(statusMenu_);
 		menu->addAction(moodAction_);
 		menu->addAction(activityAction_);
+		menu->addAction(geolocationAction_);
 		avatarMenu_ = menu->addMenu(tr("Avatar"));
 		avatarMenu_->addAction(setAvatarAction_);
 		avatarMenu_->addAction(unsetAvatarAction_);
@@ -164,10 +169,12 @@ private slots:
 #ifndef USE_PEP
 		moodAction_->setVisible(false);
 		activityAction_->setVisible(false);
+		geolocationAction_->setVisible(false);
 		avatarMenu_->setVisible(false);
 #else
 		moodAction_->setEnabled(account->account()->serverInfoManager()->hasPEP());
 		activityAction_->setEnabled(account->account()->serverInfoManager()->hasPEP());
+		geolocationAction_->setEnabled(account->account()->serverInfoManager()->hasPEP());
 		avatarMenu_->setEnabled(account->account()->serverInfoManager()->hasPEP());
 #endif
 		bookmarksMenu_->clear();
@@ -226,6 +233,14 @@ private slots:
 			return;
 
 		account->account()->actionSetActivity();
+	}
+
+	void setGeolocation()
+	{
+		if (!account)
+			return;
+
+		account->account()->actionSetGeoLocation();
 	}
 
 	void setAvatar()

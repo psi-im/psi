@@ -153,7 +153,7 @@ const GeoLocation& UserResource::geoLocation() const
 	return v_geoLocation;
 }
 
-void UserResource::setPhysicalLocation(const PhysicalLocation& physicalLocation)
+/*void UserResource::setPhysicalLocation(const PhysicalLocation& physicalLocation)
 {
 	v_physicalLocation = physicalLocation;
 }
@@ -161,7 +161,7 @@ void UserResource::setPhysicalLocation(const PhysicalLocation& physicalLocation)
 const PhysicalLocation& UserResource::physicalLocation() const
 {
 	return v_physicalLocation;
-}
+}*/
 
 
 bool operator<(const UserResource &r1, const UserResource &r2)
@@ -339,7 +339,7 @@ const GeoLocation& UserListItem::geoLocation() const
 	return v_geoLocation;
 }
 
-void UserListItem::setPhysicalLocation(const PhysicalLocation& physicalLocation)
+/*void UserListItem::setPhysicalLocation(const PhysicalLocation& physicalLocation)
 {
 	v_physicalLocation = physicalLocation;
 }
@@ -347,7 +347,7 @@ void UserListItem::setPhysicalLocation(const PhysicalLocation& physicalLocation)
 const PhysicalLocation& UserListItem::physicalLocation() const
 {
 	return v_physicalLocation;
-}
+}*/
 
 void UserListItem::setAvatarFactory(AvatarFactory* av)
 {
@@ -522,12 +522,12 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 		str += QString("<div style='white-space:pre'>") + QObject::tr("Listening to") + ": " + TextUtil::escape(tune()) + "</div>";
 
 	// User Physical Location
-	if (!physicalLocation().isNull())
-		str += QString("<div style='white-space:pre'>") + QObject::tr("Location") + ": " + TextUtil::escape(physicalLocation().toString()) + "</div>";
+	//if (!physicalLocation().isNull())
+	//	str += QString("<div style='white-space:pre'>") + QObject::tr("Location") + ": " + TextUtil::escape(physicalLocation().toString()) + "</div>";
 
 	// User Geolocation
-	if (!geoLocation().isNull())
-		str += QString("<div style='white-space:pre'>") + QObject::tr("Geolocation") + ": " + QString::number(geoLocation().lat().value()) + "/" + QString::number(geoLocation().lon().value()) + "</div>";
+	if (!geoLocation().isNull() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.geolocation").toBool())
+		str += QString("<div style='white-space:pre'>") + TextUtil::escape(geoLocation().toString()) + "</div>";
 
 	// resources
 	if(!userResourceList().isEmpty()) {
@@ -612,12 +612,12 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 				str += QString("<div style='white-space:pre'>") + QObject::tr("Listening to") + ": " + TextUtil::escape(r.tune()) + "</div>";
 
 			// User Physical Location
-			if (!r.physicalLocation().isNull())
-				str += QString("<div style='white-space:pre'>") + QObject::tr("Location") + ": " + TextUtil::escape(r.physicalLocation().toString()) + "</div>";
+		//	if (!r.physicalLocation().isNull())
+		//		str += QString("<div style='white-space:pre'>") + QObject::tr("Location") + ": " + TextUtil::escape(r.physicalLocation().toString()) + "</div>";
 
 			// User Geolocation
-			if (!r.geoLocation().isNull())
-				str += QString("<div style='white-space:pre'>") + QObject::tr("Geolocation") + ": " + QString::number(r.geoLocation().lat().value()) + "/" + QString::number(r.geoLocation().lon().value()) + "</div>";
+			if (!r.geoLocation().isNull() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.geolocation").toBool())
+				str += QString("<div style='white-space:pre'>") + TextUtil::escape(geoLocation().toString()) + "</div>";
 
 			// client
 			if(!r.versionString().isEmpty() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.client-version").toBool()) {

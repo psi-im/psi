@@ -35,6 +35,7 @@
 #include "psievent.h"
 #include "mood.h"
 #include "activity.h"
+#include "geolocation.h"
 
 namespace XMPP
 {
@@ -153,6 +154,7 @@ public:
 	QString nick() const;
 	const Mood &mood() const;
 	const Activity &activity() const;
+	const GeoLocation &geolocation() const;
 	void forceDisconnect(bool fast, const XMPP::Status &s);
 	bool hasPGP() const;
 	QHostAddress *localAddress() const;
@@ -364,6 +366,7 @@ public slots:
 	void actionExecuteCommandSpecific(const Jid&, const QString& = QString());
 	void actionSetMood();
 	void actionSetActivity();
+	void actionSetGeoLocation();
 	void actionSetAvatar();
 	void actionUnsetAvatar();
 	void actionQueryVersion(const Jid& j);

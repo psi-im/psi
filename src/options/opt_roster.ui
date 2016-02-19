@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>357</width>
-    <height>452</height>
+    <height>481</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -94,6 +94,16 @@
         </property>
         <property name="text">
          <string>Activities</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="ck_showGeoLocationIcons">
+        <property name="whatsThis">
+         <string>Show geolocation in roster</string>
+        </property>
+        <property name="text">
+         <string>GeoLocation</string>
         </property>
        </widget>
       </item>

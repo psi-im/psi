@@ -118,8 +118,8 @@
 #include "mooddlg.h"
 #include "activitydlg.h"
 #include "qwextend.h"
-#include "geolocation.h"
-#include "physicallocation.h"
+#include "geolocationdlg.h"
+//#include "physicallocation.h"
 #include "translationmanager.h"
 #include "irisprotocol/iris_discoinfoquerier.h"
 #include "iconwidget.h"
@@ -1242,7 +1242,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 		pepNodes += "http://jabber.org/protocol/mood+notify";
 		pepNodes += "http://jabber.org/protocol/activity+notify";
 		pepNodes += "http://jabber.org/protocol/tune+notify";
-		pepNodes += "http://jabber.org/protocol/physloc+notify";
+	//	pepNodes += "http://jabber.org/protocol/physloc+notify";
 		pepNodes += "http://jabber.org/protocol/geoloc+notify";
 		pepNodes += "urn:xmpp:avatar:metadata+notify";
 		d->client->addExtension("ep-notify-2",Features(pepNodes));
@@ -2253,7 +2253,7 @@ void PsiAccount::setPEPAvailable(bool b)
 		pepNodes += "http://jabber.org/protocol/mood";
 		pepNodes += "http://jabber.org/protocol/activity";
 		pepNodes += "http://jabber.org/protocol/tune";
-		pepNodes += "http://jabber.org/protocol/physloc";
+	//	pepNodes += "http://jabber.org/protocol/physloc";
 		pepNodes += "http://jabber.org/protocol/geoloc";
 		pepNodes += "urn:xmpp:avatar:data";
 		pepNodes += "urn:xmpp:avatar:metadata";
@@ -3437,14 +3437,14 @@ void PsiAccount::itemRetracted(const Jid& j, const QString& n, const PubSubRetra
 			cpUpdate(*u);
 		}
 	}
-	else if (n == "http://jabber.org/protocol/physloc") {
+	/*else if (n == "http://jabber.org/protocol/physloc") {
 		// FIXME: try to find the right resource using JEP-33 'replyto'
 		// see tune case above
 		foreach(UserListItem* u, findRelevant(j)) {
 			u->setPhysicalLocation(PhysicalLocation());
 			cpUpdate(*u);
 		}
-	}
+	}*/
 }
 
 void PsiAccount::itemPublished(const Jid& j, const QString& n, const PubSubItem& item)
@@ -3497,7 +3497,7 @@ void PsiAccount::itemPublished(const Jid& j, const QString& n, const PubSubItem&
 			cpUpdate(*u);
 		}
 	}
-	else if (n == "http://jabber.org/protocol/physloc") {
+	/*else if (n == "http://jabber.org/protocol/physloc") {
 		// FIXME: try to find the right resource using JEP-33 'replyto'
 		// see tune case above
 		PhysicalLocation physloc(item.payload());
@@ -3505,7 +3505,7 @@ void PsiAccount::itemPublished(const Jid& j, const QString& n, const PubSubItem&
 			u->setPhysicalLocation(physloc);
 			cpUpdate(*u);
 		}
-	}
+	}*/
 }
 
 QList<UserListItem*> PsiAccount::findRelevant(const Jid &j) const
@@ -3826,6 +3826,12 @@ void PsiAccount::actionSetMood()
 void PsiAccount::actionSetActivity()
 {
 	ActivityDlg *w = new ActivityDlg(this);
+	w->show();
+}
+
+void PsiAccount::actionSetGeoLocation()
+{
+	GeoLocationDlg *w = new GeoLocationDlg(this);
 	w->show();
 }
 
@@ -5576,6 +5582,11 @@ QString PsiAccount::nick() const
 const Activity &PsiAccount::activity() const
 {
 	return d->self.activity();
+}
+
+const GeoLocation &PsiAccount::geolocation() const
+{
+	return d->self.geoLocation();
 }
 
 const Mood &PsiAccount::mood() const

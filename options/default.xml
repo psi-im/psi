@@ -138,6 +138,7 @@
 				<tooltip comment="Display options for the contact list tooltips">
 					<avatar comment="Display avatar" type="bool">true</avatar>
 					<client-version comment="Display client version information" type="bool">true</client-version>
+					<geolocation comment="Display geolocation information" type="bool">true</geolocation>
 					<last-status comment="Display the last status" type="bool">true</last-status>
 					<pgp comment="Display PGP information" type="bool">true</pgp>
 				</tooltip>
@@ -171,6 +172,7 @@
 				</avatars>
 				<show-mood-icons type="bool">true</show-mood-icons>
 				<show-activity-icons type="bool">true</show-activity-icons>
+				<show-geolocation-icons type="bool">true</show-geolocation-icons>
 				<show-tune-icons type="bool">true</show-tune-icons>
 				<show-client-icons type="bool">true</show-client-icons>
 				<show-all-client-icons type="bool">false</show-all-client-icons>

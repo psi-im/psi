@@ -30,7 +30,6 @@
 #include "mood.h"
 #include "activity.h"
 #include "geolocation.h"
-#include "physicallocation.h"
 
 class AvatarFactory;
 namespace XMPP {
@@ -63,14 +62,14 @@ public:
 	const QString& tune() const;
 	void setGeoLocation(const GeoLocation&);
 	const GeoLocation& geoLocation() const;
-	void setPhysicalLocation(const PhysicalLocation&);
-	const PhysicalLocation& physicalLocation() const;
+	//void setPhysicalLocation(const PhysicalLocation&);
+	//const PhysicalLocation& physicalLocation() const;
 
 private:
 	QString v_ver, v_clientName, v_clientVersion, v_clientOS, v_keyID;
 	QString v_tune;
 	GeoLocation v_geoLocation;
-	PhysicalLocation v_physicalLocation;
+	//PhysicalLocation v_physicalLocation;
 	int v_pgpVerifyStatus;
 	QDateTime sigts;
 };
@@ -132,8 +131,8 @@ public:
 	const QString& tune() const;
 	void setGeoLocation(const GeoLocation&);
 	const GeoLocation& geoLocation() const;
-	void setPhysicalLocation(const PhysicalLocation&);
-	const PhysicalLocation& physicalLocation() const;
+	//void setPhysicalLocation(const PhysicalLocation&);
+	//const PhysicalLocation& physicalLocation() const;
 	void setAvatarFactory(AvatarFactory*);
 
 	UserResourceList & userResourceList();
@@ -162,7 +161,7 @@ private:
 	Activity v_activity;
 	QString v_tune;
 	GeoLocation v_geoLocation;
-	PhysicalLocation v_physicalLocation;
+	//PhysicalLocation v_physicalLocation;
 	AvatarFactory* v_avatarFactory;
 };
 
