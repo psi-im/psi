@@ -78,6 +78,12 @@ public:
 		AlertPictureRole = Qt::UserRole + 11,
 		IsAnimRole = Qt::UserRole + 21,
 		PhaseRole = Qt::UserRole + 22,
+		MoodRole = Qt::UserRole + 23,
+		ActivityRole = Qt::UserRole + 24,
+		GeolocationRole = Qt::UserRole + 25,
+		ClientRole = Qt::UserRole + 26,
+		TuneRole = Qt::UserRole + 27,
+		AvatarRole = Qt::UserRole + 28,
 
 		// groups
 		ExpandedRole = Qt::UserRole + 12,

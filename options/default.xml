@@ -167,12 +167,16 @@
 				<disable-scrollbar type="bool">true</disable-scrollbar>
 				<avatars>
 					<show type="bool">true</show>
+					<avatars-at-left type="bool">false</avatars-at-left>
+					<use-default-avatar type="bool">true</use-default-avatar>
 					<size type="int">24</size>
 					<radius type="int">5</radius>
 				</avatars>
 				<show-mood-icons type="bool">true</show-mood-icons>
 				<show-activity-icons type="bool">true</show-activity-icons>
 				<show-geolocation-icons type="bool">true</show-geolocation-icons>
+				<show-status-icons type="bool">true</show-status-icons>
+				<status-icon-over-avatar type="bool">false</status-icon-over-avatar>
 				<show-tune-icons type="bool">true</show-tune-icons>
 				<show-client-icons type="bool">true</show-client-icons>
 				<show-all-client-icons type="bool">false</show-all-client-icons>

@@ -38,6 +38,7 @@
 #include "contactlistmodelupdater.h"
 #include "contactlistspecialgroup.h"
 #include "userlist.h"
+#include "avatars.h"
 #ifdef YAPSI
 #include "yacommon.h"
 #endif
@@ -523,6 +524,36 @@ QVariant ContactListModel::contactData(const PsiContact* contact, int role) cons
 	}
 	else if (role == PhaseRole) {
 		return QVariant(false);
+	}
+	else if (role == MoodRole) {
+		if(contact->userListItem().mood().isNull())
+			return QVariant();
+		return QVariant(contact->userListItem().mood().typeValue());
+	}
+	else if (role == ActivityRole) {
+		if (contact->userListItem().activity().isNull())
+			return QVariant();
+		QString act = contact->userListItem().activity().typeValue();
+		if (contact->userListItem().activity().specificType() != Activity::UnknownSpecific
+			&& contact->userListItem().activity().specificType() != Activity::Other
+			&& !contact->userListItem().activity().specificTypeValue().isEmpty())
+		{
+			act += "_" + contact->userListItem().activity().specificTypeValue();
+		}
+		return QVariant(act);
+	}
+	else if (role == GeolocationRole) {
+		return QVariant(!contact->userListItem().geoLocation().isNull());
+	}
+	else if (role == TuneRole) {
+		return QVariant(!contact->userListItem().tune().isEmpty());
+	}
+	else if (role == ClientRole) {
+		return QVariant(contact->userListItem().clients());
+	}
+	else if (role == AvatarRole) {
+		QPixmap pix = contact->account()->avatarFactory()->getAvatar(contact->jid());
+		return QVariant(pix);
 	}
 #ifdef YAPSI
 	else if (role == Qt::ForegroundRole) {

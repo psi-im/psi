@@ -52,6 +52,8 @@ protected:
 	virtual QRect editorRect(const QRect& nameRect) const;
 
 	virtual QPixmap statusPixmap(const QModelIndex& index) const;
+	virtual QList<QPixmap> clientPixmap(const QModelIndex& index) const;
+	virtual QPixmap avatarIcon(const QModelIndex& index) const;
 
 private slots:
 	void optionChanged(const QString& option);
@@ -63,7 +65,10 @@ private:
 	QFontMetrics* fontMetrics_;
 	bool statusSingle_;
 	int rowHeight_;
-	bool showStatusMessages_, slimGroup_, outlinedGroup_;
+	bool showStatusMessages_, slimGroup_, outlinedGroup_, showClientIcons_, showMoodIcons_, showActivityIcons_, showGeolocIcons_, showTuneIcons_;
+	bool showAvatars_, useDefaultAvatar_, avatarAtLeft_, showStatusIcons_, statusIconsOverAvatars_;
+	int avatarSize_, avatarRadius_;
+	bool enableGroups_, allClients_;
 	mutable QHash<QModelIndex, bool> alertingIndexes_;
 };
 

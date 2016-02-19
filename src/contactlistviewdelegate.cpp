@@ -198,7 +198,9 @@ void ContactListViewDelegate::drawText(QPainter* painter, const QStyleOptionView
 		txt = option.fontMetrics.elidedText(text, option.textElideMode, rect.width());
 #endif
 		painter->save();
-		painter->setClipRect(rect);
+		QRect txtRect(rect);
+		txtRect.setHeight(option.fontMetrics.height());
+		painter->setClipRect(txtRect);
 	}
 
 	// painter->save();

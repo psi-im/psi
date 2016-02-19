@@ -35,6 +35,20 @@ static const QString outlinedGroupsOptionPath = "options.ui.look.contactlist.use
 static const QString contactListBackgroundOptionPath = "options.ui.look.colors.contactlist.background";
 static const QString showStatusMessagesOptionPath = "options.ui.contactlist.status-messages.show";
 static const QString statusSingleOptionPath = "options.ui.contactlist.status-messages.single-line";
+static const QString showClientIconsPath = "options.ui.contactlist.show-client-icons";
+static const QString showMoodIconsPath = "options.ui.contactlist.show-mood-icons";
+static const QString showGeolocIconsPath = "options.ui.contactlist.show-geolocation-icons";
+static const QString showActivityIconsPath = "options.ui.contactlist.show-activity-icons";
+static const QString showTuneIconsPath = "options.ui.contactlist.show-tune-icons";
+static const QString avatarSizeOptionPath = "options.ui.contactlist.avatars.size";
+static const QString avatarRadiusOptionPath = "options.ui.contactlist.avatars.radius";
+static const QString showAvatarsPath = "options.ui.contactlist.avatars.show";
+static const QString useDefaultAvatarPath = "options.ui.contactlist.avatars.use-default-avatar";
+static const QString avatarAtLeftOptionPath = "options.ui.contactlist.avatars.avatars-at-left";
+static const QString showStatusIconsPath = "options.ui.contactlist.show-status-icons";
+static const QString statusIconsOverAvatarsPath = "options.ui.contactlist.status-icon-over-avatar";
+static const QString allClientsOptionPath = "options.ui.contactlist.show-all-client-icons";
+static const QString enableGroupsOptionPath = "options.ui.contactlist.enable-groups";
 
 PsiContactListViewDelegate::PsiContactListViewDelegate(ContactListView* parent)
 	: ContactListViewDelegate(parent)
@@ -53,6 +67,20 @@ PsiContactListViewDelegate::PsiContactListViewDelegate(ContactListView* parent)
 	optionChanged(contactListBackgroundOptionPath);
 	optionChanged(showStatusMessagesOptionPath);
 	optionChanged(statusSingleOptionPath);
+	optionChanged(showClientIconsPath);
+	optionChanged(showMoodIconsPath);
+	optionChanged(showGeolocIconsPath);
+	optionChanged(showActivityIconsPath);
+	optionChanged(showTuneIconsPath);
+	optionChanged(avatarSizeOptionPath);
+	optionChanged(avatarRadiusOptionPath);
+	optionChanged(showAvatarsPath);
+	optionChanged(useDefaultAvatarPath);
+	optionChanged(avatarAtLeftOptionPath);
+	optionChanged(showStatusIconsPath);
+	optionChanged(statusIconsOverAvatarsPath);
+	optionChanged(allClientsOptionPath);
+	optionChanged(enableGroupsOptionPath);
 }
 
 PsiContactListViewDelegate::~PsiContactListViewDelegate()
@@ -63,7 +91,8 @@ PsiContactListViewDelegate::~PsiContactListViewDelegate()
 
 int PsiContactListViewDelegate::avatarSize() const
 {
-	return rowHeight_;
+	return showAvatars_ ?
+		qMax(avatarSize_ + 2, rowHeight_) : rowHeight_;
 }
 
 QPixmap PsiContactListViewDelegate::statusPixmap(const QModelIndex& index) const
@@ -91,6 +120,9 @@ QPixmap PsiContactListViewDelegate::statusPixmap(const QModelIndex& index) const
 		}
 	}
 
+	if (!showStatusIcons_)
+		return QPixmap();
+
 	if (type == ContactListModel::ContactType) {
 		if (!index.data(ContactListModel::PresenceErrorRole).toString().isEmpty())
 			s = STATUS_ERROR;
@@ -103,6 +135,57 @@ QPixmap PsiContactListViewDelegate::statusPixmap(const QModelIndex& index) const
 	}
 
 	return PsiIconset::instance()->statusPtr(index.data(ContactListModel::JidRole).toString(), s)->pixmap();
+}
+
+QList<QPixmap> PsiContactListViewDelegate::clientPixmap(const QModelIndex& index) const
+{
+	QList<QPixmap> pixList;
+	ContactListModel::Type type = ContactListModel::indexType(index);
+	if (type != ContactListModel::ContactType)
+		return pixList;
+
+	QStringList vList = index.data(ContactListModel::ClientRole).toStringList();
+	if(vList.isEmpty())
+		return pixList;
+
+	foreach(QString client, vList) {
+		const QPixmap &pix = IconsetFactory::iconPixmap("clients/" + client);
+		if(!pix.isNull())
+			pixList.push_back(pix);
+	}
+
+	return pixList;
+}
+
+QPixmap PsiContactListViewDelegate::avatarIcon(const QModelIndex& index) const
+{
+	QPixmap avatar_icon;
+	int avSize = showAvatars_ ? avatarSize_ : 0;
+	QPixmap av = qVariantValue<QPixmap>(index.data(ContactListModel::AvatarRole));
+	if(av.isNull() && useDefaultAvatar_)
+		av = IconsetFactory::iconPixmap("psi/default_avatar");
+	int radius;
+	if (avSize && !av.isNull()) {
+		if ( (radius = avatarRadius_) ) {
+			avSize = qMax(avSize, radius*2);
+			av = av.scaled(avSize, avSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+			int w = av.width(), h = av.height();
+			QPainterPath pp;
+			pp.addRoundedRect(0, 0, w, h, radius, radius);
+			avatar_icon = QPixmap(w, h);
+			avatar_icon.fill(QColor(0,0,0,0));
+			QPainter mp(&avatar_icon);
+			mp.setBackgroundMode(Qt::TransparentMode);
+			mp.setRenderHints(QPainter::Antialiasing, true);
+			mp.fillPath(pp, QBrush(av));
+		} else {
+			avatar_icon = av.scaled(avSize, avSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+		}
+	} else {
+		avatar_icon = QPixmap();
+	}
+
+	return avatar_icon;
 }
 
 QSize PsiContactListViewDelegate::sizeHint(const QStyleOptionViewItem& /*option*/, const QModelIndex& index) const
@@ -151,11 +234,60 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 {
 	drawBackground(painter, option, index);
 
-	const QPixmap statusPixmap = this->statusPixmap(index);
-	const QSize pixmapSize = statusPixmap.size();
-	const QRect avatarRect = relativeRect(option, pixmapSize, QRect());
-	painter->drawPixmap(avatarRect.topLeft(), statusPixmap);
-	QRect r = relativeRect(option, QSize(), avatarRect, 3);
+	QRect r = option.rect;
+
+	QRect avatarRect(r);
+	if(showAvatars_) {
+		const QPixmap avatarPixmap = avatarIcon(index);
+		int size = avatarSize_;
+		avatarRect.setSize(QSize(size,size));
+		if(avatarAtLeft_) {
+			avatarRect.translate(enableGroups_ ? -5:-1, 1);
+			r.setLeft(avatarRect.right() + 3);
+		}
+		else {
+			avatarRect.moveTopRight(r.topRight());
+			avatarRect.translate(-1,1);
+			r.setRight(avatarRect.left() - 3);
+		}
+		int row = (statusSingle_ && showStatusMessages_) ? rowHeight_*3/2 : rowHeight_; // height required for nick
+		int h = (size - row)/2; // padding from top to center it
+		if(h > 0) {
+			r.setTop(r.top() + h);
+			r.setHeight(row);
+		}
+		else {
+			avatarRect.setTop(avatarRect.top() - h);
+		}
+
+		if(!avatarPixmap.isNull()) {
+			painter->drawPixmap(avatarRect.topLeft(), avatarPixmap);
+		}
+	}
+
+	QRect statusRect(r);
+	QPixmap statusPixmap = this->statusPixmap(index);
+	if(!statusPixmap.isNull()) {
+		if(statusIconsOverAvatars_ && showAvatars_) {
+			statusPixmap = statusPixmap.scaled(12,12, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+			statusRect.setSize(statusPixmap.size());
+			statusRect.moveBottomRight(avatarRect.bottomRight());
+			statusRect.translate(-1,-2);
+			r.setLeft(r.left() + 3);
+		} else {
+			statusRect.setSize(statusPixmap.size());
+			statusRect.translate(0, 1);
+			if (option.direction == Qt::RightToLeft) {
+				statusRect.setRight(r.right() - 1);
+				r.setRight(statusRect.right() - 3);
+			} else {
+				statusRect.setLeft(r.left() + 1);
+				r.setLeft(statusRect.right() + 3);
+			}
+		}
+		painter->drawPixmap(statusRect.topLeft(), statusPixmap);
+	} else
+		r.setLeft(r.left() + 3);
 
 	QColor textColor;
 	if(index.data(ContactListModel::IsAnimRole).toBool()) {
@@ -209,6 +341,74 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 			r.setHeight(r.height()*2/3);
 
 		drawText(painter, o, r, text, index);
+	}
+
+	QRect iconRect(r);
+	QList<QPixmap> rightPixs;
+	QList<int> rightWidths;
+	if (showClientIcons_) {
+		const QList<QPixmap> pixList = this->clientPixmap(index);
+
+		for (QList<QPixmap>::ConstIterator it = pixList.begin(); it != pixList.end(); ++it) {
+			const QPixmap &pix = *it;
+			rightPixs.push_back(pix);
+			rightWidths.push_back(pix.width());
+			if(!allClients_)
+				break;
+		}
+	}
+
+	if (showMoodIcons_ && !index.data(ContactListModel::MoodRole).isNull()) {
+		const QPixmap &pix = IconsetFactory::iconPixmap(QString("mood/%1").arg(index.data(ContactListModel::MoodRole).toString()));
+		if(!pix.isNull()) {
+			rightPixs.push_back(pix);
+			rightWidths.push_back(pix.width());
+		}
+	}
+
+	if (showActivityIcons_ && !index.data(ContactListModel::ActivityRole).isNull()) {
+		const QPixmap &pix = IconsetFactory::iconPixmap(QString("activities/%1").arg(index.data(ContactListModel::ActivityRole).toString()));
+		if(!pix.isNull()) {
+			rightPixs.push_back(pix);
+			rightWidths.push_back(pix.width());
+		}
+	}
+
+	if (showTuneIcons_ && index.data(ContactListModel::TuneRole).toBool()) {
+		const QPixmap &pix = IconsetFactory::iconPixmap("psi/notification_roster_tune");
+		rightPixs.push_back(pix);
+		rightWidths.push_back(pix.width());
+	}
+
+        if (showGeolocIcons_ && index.data(ContactListModel::GeolocationRole).toBool()) {
+		const QPixmap &pix = IconsetFactory::iconPixmap("system/geolocation");
+		rightPixs.push_back(pix);
+		rightWidths.push_back(pix.width());
+	}
+
+	if(rightPixs.isEmpty())
+		return;
+
+	int sumWidth = 0;
+	foreach (int w, rightWidths) {
+		sumWidth += w;
+	}
+	QColor bgc = (option.state & QStyle::State_Selected) ? palette.color(QPalette::Highlight) : palette.color(QPalette::Base);
+	QColor tbgc = bgc;
+	tbgc.setAlpha(0);
+	sumWidth+=rightPixs.count();
+	QLinearGradient grad(r.right() - sumWidth - 20, 0, r.right() - sumWidth, 0);
+	grad.setColorAt(0, tbgc);
+	grad.setColorAt(1, bgc);
+	QBrush tbakBr(grad);
+	QRect gradRect(r);
+	gradRect.setLeft(gradRect.right() - sumWidth - 20);
+	painter->fillRect(gradRect, tbakBr);
+
+	for (int i=0; i<rightPixs.size(); i++) {
+		const QPixmap pix = rightPixs[i];
+		iconRect.setRight(iconRect.right() - pix.width() -1);
+		painter->drawPixmap(iconRect.topRight(), pix);
 	}
 
 #if 0
@@ -356,6 +556,62 @@ void PsiContactListViewDelegate::optionChanged(const QString& option)
 	}
 	else if (option == showStatusMessagesOptionPath) {
 		showStatusMessages_ = PsiOptions::instance()->getOption(showStatusMessagesOptionPath).toBool();
+		contactList()->viewport()->update();
+	}
+	else if(option == showClientIconsPath) {
+		showClientIcons_ = PsiOptions::instance()->getOption(showClientIconsPath).toBool();
+		contactList()->viewport()->update();
+	}
+	else if(option == showMoodIconsPath) {
+		showMoodIcons_ = PsiOptions::instance()->getOption(showMoodIconsPath).toBool();
+		contactList()->viewport()->update();
+	}
+	else if(option == showActivityIconsPath) {
+		showActivityIcons_ = PsiOptions::instance()->getOption(showActivityIconsPath).toBool();
+		contactList()->viewport()->update();
+	}
+	else if(option == showTuneIconsPath) {
+		showTuneIcons_ = PsiOptions::instance()->getOption(showTuneIconsPath).toBool();
+		contactList()->viewport()->update();
+	}
+	else if(option == showGeolocIconsPath) {
+		showGeolocIcons_ = PsiOptions::instance()->getOption(showGeolocIconsPath).toBool();
+		contactList()->viewport()->update();
+	}
+	else if(option == showAvatarsPath) {
+		showAvatars_ = PsiOptions::instance()->getOption(showAvatarsPath).toBool();
+		contactList()->viewport()->update();
+	}
+	else if(option == useDefaultAvatarPath) {
+		useDefaultAvatar_ = PsiOptions::instance()->getOption(useDefaultAvatarPath).toBool();
+		contactList()->viewport()->update();
+	}
+	else if(option == avatarAtLeftOptionPath) {
+		avatarAtLeft_ = PsiOptions::instance()->getOption(avatarAtLeftOptionPath).toBool();
+		contactList()->viewport()->update();
+	}
+	else if(option == avatarSizeOptionPath) {
+		avatarSize_ = PsiOptions::instance()->getOption(avatarSizeOptionPath).toInt();
+		contactList()->viewport()->update();
+	}
+	else if(option == avatarRadiusOptionPath) {
+		avatarRadius_ = PsiOptions::instance()->getOption(avatarRadiusOptionPath).toInt();
+		contactList()->viewport()->update();
+	}
+	else if(option == showStatusIconsPath) {
+		showStatusIcons_ = PsiOptions::instance()->getOption(showStatusIconsPath).toBool();
+		contactList()->viewport()->update();
+	}
+	else if(option == statusIconsOverAvatarsPath) {
+		statusIconsOverAvatars_ = PsiOptions::instance()->getOption(statusIconsOverAvatarsPath).toBool();
+		contactList()->viewport()->update();
+	}
+	else if(option == allClientsOptionPath) {
+		allClients_= PsiOptions::instance()->getOption(allClientsOptionPath).toBool();
+		contactList()->viewport()->update();
+	}
+	else if(option == enableGroupsOptionPath) {
+		enableGroups_ = PsiOptions::instance()->getOption(enableGroupsOptionPath).toBool();
 		contactList()->viewport()->update();
 	}
 	else if(option == slimGroupsOptionPath) {
