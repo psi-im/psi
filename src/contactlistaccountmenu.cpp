@@ -29,6 +29,7 @@
 #include "bookmarkmanager.h"
 #include "psioptions.h"
 #include "iconaction.h"
+#include "privacy/privacydlg.h"
 
 class ContactListAccountMenu::Private : public QObject
 {
@@ -48,6 +49,7 @@ class ContactListAccountMenu::Private : public QObject
 	QAction* serviceDiscoveryAction_;
 	QAction* newMessageAction_;
 	QAction* xmlConsoleAction_;
+	QAction* privacyListsAction_;
 	QAction* modifyAccountAction_;
 	QMenu* adminMenu_;
 	QAction* adminOnlineUsersAction_;
@@ -94,6 +96,9 @@ public:
 		newMessageAction_ = new IconAction(tr("New &Blank Message"), this, "psi/sendMessage");
 		connect(newMessageAction_, SIGNAL(triggered()), SLOT(newMessage()));
 
+		privacyListsAction_ = new IconAction(tr("Privacy Lists"), this, "psi/eye");
+		connect(privacyListsAction_, SIGNAL(triggered()), SLOT(privacyLists()));
+
 		xmlConsoleAction_ = new IconAction(tr("&XML Console"), this, "psi/xml");
 		connect(xmlConsoleAction_, SIGNAL(triggered()), SLOT(xmlConsole()));
 
@@ -127,6 +132,7 @@ public:
 		menu->addAction(addContactAction_);
 		menu->addAction(serviceDiscoveryAction_);
 		menu->addAction(newMessageAction_);
+		menu->addAction(privacyListsAction_);
 		menu->addSeparator();
 		menu->addAction(xmlConsoleAction_);
 		menu->addSeparator();
@@ -185,6 +191,7 @@ private slots:
 		newMessageAction_->setEnabled(account->account()->isAvailable());
 		addContactAction_->setEnabled(account->account()->isAvailable());
 		serviceDiscoveryAction_->setEnabled(account->account()->isAvailable());
+		privacyListsAction_->setEnabled(account->account()->isAvailable());
 		if (!PsiOptions::instance()->getOption("options.ui.menu.account.admin").toBool()) {
 			adminMenu_->menuAction()->setVisible(false);
 		}
@@ -276,6 +283,20 @@ private slots:
 			return;
 
 		account->account()->actionSendMessage("");
+	}
+
+	void privacyLists()
+	{
+		if (!account)
+			return;
+
+		PrivacyDlg *dlg = account->account()->findDialog<PrivacyDlg*>();
+		if(!dlg) {
+			dlg = new PrivacyDlg(account->account()->name(), account->account()->privacyManager());
+			account->account()->dialogRegister(dlg);
+			dlg->show();
+		} else
+			bringToFront(dlg);
 	}
 
 	void xmlConsole()
