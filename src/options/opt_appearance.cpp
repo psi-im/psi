@@ -95,6 +95,7 @@ OptionsTabIconset::OptionsTabIconset(QObject *parent) : MetaOptionsTab(parent, "
 {
 	addTab( new OptionsTabIconsetEmoticons(this) );
 	addTab( new OptionsTabIconsetMoods(this) );
+	addTab( new OptionsTabIconsetClients(this) );
 	addTab( new OptionsTabIconsetRoster(this) );
 	addTab( new OptionsTabIconsetSystem(this) );
 }

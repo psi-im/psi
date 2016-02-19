@@ -166,6 +166,7 @@
 				<show-mood-icons type="bool">true</show-mood-icons>
 				<show-tune-icons type="bool">true</show-tune-icons>
 				<show-client-icons type="bool">true</show-client-icons>
+				<show-all-client-icons type="bool">false</show-all-client-icons>
 				<toolbars/>
 				<toolbars-state type="QByteArray"/>
 				<use-left-click type="bool">false</use-left-click>

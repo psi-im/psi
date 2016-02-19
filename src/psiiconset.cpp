@@ -30,6 +30,7 @@
 #include <QFileInfo>
 #include <QCoreApplication>
 #include <QSet>
+#include <QTextStream>
 
 using namespace XMPP;
 
@@ -42,8 +43,9 @@ class PsiIconset::Private
 private:
 	PsiIconset *psi;
 public:
-	Iconset system, moods;
-	QString cur_system, cur_status, cur_moods;
+	Iconset system, moods, clients;
+	QMap<QString, QString> caps2clients;
+	QString cur_system, cur_status, cur_moods, cur_clients;
 	QStringList cur_emoticons;
 	QMap<QString, QString> cur_service_status;
 	QMap<QString, QString> cur_custom_status;
@@ -247,6 +249,23 @@ public:
 		return def;
 	}
 
+	Iconset clientsIconset(bool *ok)
+	{
+		Iconset def;
+		*ok = def.load( iconsetPath("clients/default") );
+
+		if ( PsiOptions::instance()->getOption("options.iconsets.clients").toString() != "default" ) {
+			Iconset is;
+			is.load ( iconsetPath("clients/" + PsiOptions::instance()->getOption("options.iconsets.clients").toString()) );
+
+			loadIconset(&def, &is);
+		}
+
+		stripFirstAnimFrame( def );
+
+		return def;
+	}
+
 	QList<Iconset*> emoticons()
 	{
 		QList<Iconset*> emo;
@@ -386,6 +405,55 @@ bool PsiIconset::loadMoods()
 	return ok;
 }
 
+bool PsiIconset::loadClients()
+{
+	bool ok = true;
+	QString cur_clients = PsiOptions::instance()->getOption("options.iconsets.clients").toString();
+	if (d->cur_clients != cur_clients) {
+		Iconset clients = d->clientsIconset(&ok);
+		d->loadIconset(&d->clients, &clients);
+		d->clients.addToFactory();
+
+		QStringList dirs = ApplicationInfo::dataDirs();
+		QMap<QString,QString> cm;
+		foreach (const QString &dataDir, dirs) {
+			QFile capsConv(dataDir + QLatin1String("/caps2client.txt"));
+			/* file format: <icon res name> <left part of cap1>,<left part of cap2>
+				next line the same.
+			*/
+			if (capsConv.open(QIODevice::ReadOnly)) {
+				QTextStream stream(&capsConv);
+
+				QString line;
+				while (!(line = stream.readLine()).isNull()) {
+					line = line.trimmed();
+					QString res = line.section(QLatin1Char(' '), 0, 0);
+					if (!res.length()) {
+						continue;
+					}
+					QString caps = line.mid(res.length());
+					foreach (const QString &c, caps.split(QLatin1Char(','), QString::SkipEmptyParts)) {
+						QString ct = c.trimmed();
+						if (ct.length()) {
+							cm.insert(ct, res);
+						}
+					}
+				}
+				/* insert end boundry element to make search implementation simple */
+				cm.insert(QLatin1String("~"), QLatin1String(""));
+				break;
+			}
+		}
+		if (cm.isEmpty()) {
+			qWarning("Failed to read caps2client.txt. Detection of clients' icons won't work properly");
+		}
+		d->caps2clients = cm;
+		d->cur_clients = cur_clients;
+	}
+
+	return ok;
+}
+
 bool PsiIconset::loadAll()
 {
 	if (!loadSystem() || !loadRoster())
@@ -393,6 +461,7 @@ bool PsiIconset::loadAll()
 
 	loadEmoticons();
 	loadMoods();
+	loadClients();
 	return true;
 }
 
@@ -406,6 +475,9 @@ void PsiIconset::optionChanged(const QString& option)
 	}
 	else if (option == "options.iconsets.moods") {
 		loadMoods();
+	}
+	else if (option == "options.iconsets.clients") {
+		loadClients();
 	}
 
 	// currently we rely on PsiCon calling reloadRoster() when
@@ -732,6 +804,16 @@ void PsiIconset::removeAnimation(Iconset *is)
 			it.next()->removeAnim(false);
 		}
 	}
+}
+
+QString PsiIconset::caps2client(const QString &name)
+{
+	QMap<QString, QString>::const_iterator it = d->caps2clients.lowerBound(name);
+	if ((it != d->caps2clients.end() && name.startsWith(it.key())) ||
+			(--it != d->caps2clients.end() && name.startsWith(it.key()))) {
+		return it.value();
+	}
+	return QString();
 }
 
 PsiIconset* PsiIconset::instance()

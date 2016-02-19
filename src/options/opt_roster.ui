@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>OptRoster</class>
  <widget class="QWidget" name="OptRoster">
@@ -104,6 +103,11 @@
        </widget>
       </item>
       <item>
+       <layout class="QHBoxLayout" >
+        <property name="spacing" >
+         <number>5</number>
+        </property>
+        <item>
        <widget class="QCheckBox" name="ck_showClientIcons">
         <property name="whatsThis">
          <string>Show icon of user client</string>
@@ -112,6 +116,22 @@
          <string>Clients</string>
         </property>
        </widget>
+      </item>
+        <item>
+         <widget class="QComboBox" name="cb_showAllClientIcons" >
+          <item>
+           <property name="text" >
+            <string>all client icons</string>
+           </property>
+          </item>
+          <item>
+           <property name="text" >
+            <string>only highest priority client icon</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
@@ -204,5 +224,4 @@
   <tabstop>ck_showTuneIcons</tabstop>
  </tabstops>
  <resources/>
- <connections/>
 </ui>

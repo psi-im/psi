@@ -31,6 +31,7 @@
 #include "mucmanager.h"
 #include "psioptions.h"
 #include "jidutil.h"
+#include "psiiconset.h"
 
 using namespace XMPP;
 
@@ -280,6 +281,32 @@ void UserListItem::setMood(const Mood& mood)
 const Mood& UserListItem::mood() const
 {
 	return v_mood;
+}
+
+QStringList UserListItem::clients() const
+{
+	QStringList res;
+
+	//if(isMuc()) return res; //temporary commented out until necessary patches will be fixed
+	if(!userResourceList().isEmpty()) {
+		UserResourceList srl = userResourceList();
+		srl.sort();
+
+		for(UserResourceList::ConstIterator rit = srl.begin(); rit != srl.end(); ++rit) {
+			QString name = (*rit).clientName().toLower();
+			res += findClient(name);
+		}
+	}
+	return res;
+}
+
+QString UserListItem::findClient(QString name) const
+{
+	QString res = PsiIconset::instance()->caps2client(name);
+	if (res.isEmpty()) {
+		res = "unknown";
+	}
+	return res;
 }
 
 void UserListItem::setActivity(const Activity& activity)
@@ -593,7 +620,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 				if(trim)
 					ver = dot_truncate(ver, 80);
 				ver = TextUtil::escape(ver);
-				str += QString("<div style='white-space:pre'>") + QObject::tr("Using") + QString(": %1").arg(ver) + "</div>";
+				str += QString("<div style='white-space:pre'>") + QObject::tr("Using") + QString(": <%1=\"%2\"> %3").arg(imgTag).arg("clients/" + findClient(r.clientName().toLower())).arg(ver) + "</div>";
 			}
 
 			// status message

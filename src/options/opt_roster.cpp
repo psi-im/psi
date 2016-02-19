@@ -44,7 +44,7 @@ QWidget *OptionsTabRoster::widget()
 	d->ck_showMenubar->setWhatsThis(
 		tr("Shows the menubar in the application window."));
 
-
+	connect(d->ck_showClientIcons, SIGNAL(toggled(bool)), d->cb_showAllClientIcons, SLOT(setEnabled(bool)));
 #ifdef Q_OS_MAC
 	d->ck_alwaysOnTop->hide();
 	d->ck_showMenubar->hide();
@@ -71,6 +71,7 @@ void OptionsTabRoster::applyOptions()
 	PsiOptions::instance()->setOption("options.ui.contactlist.show-mood-icons", d->ck_showMoodIcons->isChecked());
 	PsiOptions::instance()->setOption("options.ui.contactlist.show-tune-icons", d->ck_showTuneIcons->isChecked());
 	PsiOptions::instance()->setOption("options.ui.contactlist.show-client-icons", d->ck_showClientIcons->isChecked());
+	PsiOptions::instance()->setOption("options.ui.contactlist.show-all-client-icons", (d->cb_showAllClientIcons->currentIndex() == 0)?true:false);
 
 	//avatars settings
 	PsiOptions::instance()->setOption("options.ui.contactlist.avatars.size", d->sb_avatarsSize->value());
@@ -96,7 +97,8 @@ void OptionsTabRoster::restoreOptions()
 	d->ck_showMoodIcons->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.show-mood-icons").toBool() );
 	d->ck_showTuneIcons->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.show-tune-icons").toBool() );
 	d->ck_showClientIcons->setChecked( PsiOptions::instance()->getOption("options.ui.contactlist.show-client-icons").toBool() );
-
+	d->cb_showAllClientIcons->setEnabled(PsiOptions::instance()->getOption("options.ui.contactlist.show-client-icons").toBool());
+	d->cb_showAllClientIcons->setCurrentIndex(PsiOptions::instance()->getOption("options.ui.contactlist.show-all-client-icons").toBool()?0:1);
 	//avatars settings
 	d->sb_avatarsSize->setValue( PsiOptions::instance()->getOption("options.ui.contactlist.avatars.size").toInt() );
 	d->sb_avatarsRadius->setValue( PsiOptions::instance()->getOption("options.ui.contactlist.avatars.radius").toInt() );

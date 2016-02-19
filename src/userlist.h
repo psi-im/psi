@@ -117,6 +117,8 @@ public:
 	QString makeDesc() const;
 	bool isPrivate() const;
 	const Mood& mood() const;
+	QStringList clients() const;
+	QString findClient(QString name) const;
 	const Activity& activity() const;
 
 	void setJid(const XMPP::Jid &);

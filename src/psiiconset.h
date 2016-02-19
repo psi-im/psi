@@ -45,6 +45,7 @@ public:
 	QHash<QString, Iconset*> roster;
 	QList<Iconset*> emoticons;
 	Iconset moods;
+	Iconset clients;
 	const Iconset &system() const;
 	void stripFirstAnimFrame(Iconset *);
 	static void removeAnimation(Iconset *);
@@ -76,6 +77,7 @@ public:
 	PsiIcon *statusPtr(UserListItem *);
 	PsiIcon status(UserListItem *);
 
+	QString caps2client(const QString &name);
 signals:
 	void emoticonsChanged();
 
@@ -97,6 +99,7 @@ private:
 	bool loadRoster();
 	void loadEmoticons();
 	bool loadMoods();
+	bool loadClients();
 };
 
 #endif
