@@ -30,7 +30,7 @@
 #include "psioptions.h"
 #include "iconaction.h"
 #include "privacy/privacydlg.h"
-#include "iconset.h"
+#include "psiiconset.h"
 #include "common.h"
 
 class ContactListAccountMenu::Private : public QObject
@@ -73,15 +73,20 @@ public:
 
 		statusMenu_ = new StatusMenu(0);
 		statusMenu_->setTitle(tr("&Status"));
+		statusMenu_->setIcon(PsiIconset::instance()->status(makeSTATUS(account->account()->status())).icon());
 		connect(statusMenu_, SIGNAL(statusChanged(XMPP::Status::Type)), SLOT(statusChanged(XMPP::Status::Type)));
 
-		moodAction_ = new QAction(tr("Mood"), this);
+		moodAction_ = new IconAction(tr("Mood"), this, QString(("mood/%1")).arg(account->account()->mood().typeValue()));
 		connect(moodAction_, SIGNAL(triggered()), SLOT(setMood()));
 
-		activityAction_ = new QAction(tr("Activity"), this);
+		QString act = account->account()->activity().typeValue();
+		if (account->account()->activity().specificType() != Activity::UnknownSpecific && account->account()->activity().specificType() != Activity::Other) {
+			act += "_" + account->account()->activity().specificTypeValue();
+		}
+		activityAction_ = new IconAction(tr("Activity"), this, QString(("activities/%1")).arg(act));
 		connect(activityAction_, SIGNAL(triggered()), SLOT(setActivity()));
 
-		geolocationAction_ = new QAction(tr("GeoLocation"), this);
+		geolocationAction_ = new IconAction(tr("GeoLocation"), this, "system/geolocation");
 		connect(geolocationAction_, SIGNAL(triggered()), SLOT(setGeolocation()));
 
 		setAvatarAction_ = new QAction(tr("Set Avatar"), this);
@@ -130,7 +135,7 @@ public:
 		menu->addAction(moodAction_);
 		menu->addAction(activityAction_);
 		menu->addAction(geolocationAction_);
-		avatarMenu_ = menu->addMenu(tr("Avatar"));
+		avatarMenu_ = menu->addMenu(IconsetFactory::icon("psi/vCard").icon(), tr("Avatar"));
 		avatarMenu_->addAction(setAvatarAction_);
 		avatarMenu_->addAction(unsetAvatarAction_);
 		bookmarksMenu_ = menu->addMenu(IconsetFactory::icon("psi/bookmarks").icon(), tr("Bookmarks"));
