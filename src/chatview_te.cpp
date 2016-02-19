@@ -285,7 +285,7 @@ void ChatView::renderMucMessage(const MessageView &mv)
 	QString icon = useMessageIcons_?
 					(QString("<img src=\"%1\" />").arg(mv.isLocal()?"icon:log_icon_delivered":"icon:log_icon_receive")):"";
 	if(mv.isAlert()) {
-		textcolor = "#FF0000";
+		textcolor = PsiOptions::instance()->getOption("options.ui.look.colors.messages.highlighting").value<QColor>().name();
 		alerttagso = "<b>";
 		alerttagsc = "</b>";
 	}

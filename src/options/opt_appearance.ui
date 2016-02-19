@@ -455,6 +455,32 @@
             </property>
            </widget>
           </item>
+          <item row="16" column="0">
+           <widget class="QCheckBox" name="ck_highlight">
+            <property name="text">
+             <string>Highlight:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="16" column="1">
+           <widget class="QToolButton" name="pb_highlight">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
           <item row="9" column="0">
            <widget class="QCheckBox" name="ck_cUserText">
             <property name="whatsThis">

@@ -15,7 +15,7 @@ body > div > img:first-child { vertical-align:text-bottom; }
 .received {}
 .infmsg {}
 .usertext {}
-.alert {font-weight:bold; color:red;}
+.alert {font-weight:bold;}
 .trackbar { height:1px; border:1px solid black; border-color:#bbf #66f #66f #bbf }
 .nicklink { text-decoration:none; color:inherit; }
   </style>
@@ -35,6 +35,7 @@ window[chatServer.jsNamespace()].theme = function() {
 	var cssInfMsg = chat.util.findStyleSheet(document.styleSheets[0], ".infmsg").style;
 	var cssUserText = chat.util.findStyleSheet(document.styleSheets[0], ".usertext").style;
 	var cssChatSays = chat.util.findStyleSheet(document.styleSheets[0], ".msg>span:first").style;
+	var cssAlertMsg = chat.util.findStyleSheet(document.styleSheets[0], ".alert").style;
 	var useMessageIcons, messageIconsSize = 0;
 
 	var applyPsiSettings = function() {
@@ -45,6 +46,7 @@ window[chatServer.jsNamespace()].theme = function() {
 		cssReceivedMsg.color = shared.colorOption("options.ui.look.colors.messages.received");
 		cssInfMsg.color = shared.colorOption("options.ui.look.colors.messages.informational");
 		cssUserText.color = shared.colorOption("options.ui.look.colors.messages.usertext");
+		cssAlertMsg.color = shared.psiOption("options.ui.look.colors.messages.highlighting");
 		useMessageIcons = shared.psiOption("options.ui.chat.use-message-icons");
 		if (shared.psiOption("options.ui.chat.scaled-message-icons")) {
 			var d = document.createElement("div");

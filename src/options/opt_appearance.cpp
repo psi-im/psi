@@ -250,8 +250,8 @@ QWidget *OptionsTabAppearanceGeneral::widget()
 		{d->ck_cMessageSent,     d->pb_cMessageSent,     "messages.sent", ""},
 		{d->ck_cMessageReceived, d->pb_cMessageReceived, "messages.received", ""},
 		{d->ck_cSysMsg,          d->pb_cSysMsg,          "messages.informational", ""},
-		{d->ck_cUserText,        d->pb_cUserText,        "messages.usertext", ""}
-
+		{d->ck_cUserText,        d->pb_cUserText,        "messages.usertext", ""},
+		{d->ck_highlight,        d->pb_highlight,        "messages.highlighting", ""}
 	};
 
 	bg_color = new QButtonGroup(this);
