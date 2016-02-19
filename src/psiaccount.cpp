@@ -1050,6 +1050,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	features << "http://jabber.org/protocol/muc";
 #endif
 	features << "jabber:x:data";
+	features << "jabber:iq:version";
 	d->client->setFeatures(Features(features));
 
 #ifdef FILETRANSFER
