@@ -72,7 +72,9 @@ public:
 
 protected:
 	// reimplemented
+	void resizeEvent(QResizeEvent *e);
 	void closeEvent(QCloseEvent *);
+	void changeEvent(QEvent *event);
 	void keyPressEvent(QKeyEvent *);
 	QMenuBar* mainMenuBar() const;
 #ifdef Q_OS_WIN
@@ -141,6 +143,7 @@ private slots:
 	void searchTextStarted(QString const &text);
 
 	void registerAction( IconAction * );
+	void splitterMoved();
 
 public slots:
 	void setWindowIcon(const QPixmap&);

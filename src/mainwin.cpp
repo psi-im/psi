@@ -33,6 +33,7 @@
 #include <QKeyEvent>
 #include <QEvent>
 #include <QVBoxLayout>
+#include <QSplitter>
 #include <QMenu>
 #include <QtAlgorithms>
 #include <QShortcut>
@@ -41,6 +42,8 @@
 #include <windows.h>
 #endif
 
+#include "tabmanager.h"
+#include "tabdlg.h"
 #include "common.h"
 #include "showtextdlg.h"
 #include "psicon.h"
@@ -96,14 +99,20 @@ public:
 	Private(PsiCon *, MainWin *);
 	~Private();
 
-	QVBoxLayout* vb_main;
 	bool onTop, asTool;
 	QMenu* mainMenu, *statusMenu, *optionsMenu, *toolsMenu;
 	int sbState;
 	QString nickname;
 	PsiTrayIcon* tray;
 	QMenu* trayMenu;
+	QVBoxLayout *vb_roster;
+	QSplitter *splitter;
+	TabDlg *mainTabs;
 	QString statusTip;
+	PsiToolBar *viewToolBar;
+	int tabsSize;
+	int rosterSize;
+	bool isLeftRoster;
 
 	PopupAction* optionsButton, *statusButton;
 	IconActionGroup* statusGroup;
@@ -135,7 +144,7 @@ public:
 	void updateMenu(QStringList actions, QMenu* menu);
 };
 
-MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) : psi(_psi), mainWin(_mainWin)
+MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) : splitter(0), mainTabs(0), viewToolBar(0), isLeftRoster(false), psi(_psi), mainWin(_mainWin)
 {
 
 	statusGroup   = (IconActionGroup *)getAction("status_all");
@@ -256,6 +265,10 @@ void MainWin::Private::updateMenu(QStringList actions, QMenu* menu)
 #define TOOLW_FLAGS ((Qt::WindowFlags) 0)
 #endif
 
+const QString toolbarsStateOptionPath = "options.ui.save.toolbars-state";
+const QString rosterGeometryPath      = "options.ui.save.roster-width";
+const QString tabsGeometryPath        = "options.ui.save.log-width";
+
 MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 :AdvancedWidget<QMainWindow>(0, (_onTop ? Qt::WindowStaysOnTopHint : Qt::Widget) | (_asTool ? (Qt::Tool |TOOLW_FLAGS) : Qt::Widget))
 {
@@ -281,14 +294,43 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 	d->statusTip = "";
 	d->nickname = "";
 
-	QWidget* center = new QWidget (this);
-	setCentralWidget ( center );
+	QWidget *rosterBar = new QWidget(this);
+	bool allInOne = false;
 
-	d->vb_main = new QVBoxLayout(center);
+	if ( PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool() && PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A')) {
+		d->splitter = new QSplitter(this);
+		d->splitter->setObjectName("onewindowsplitter");
+		connect(d->splitter, SIGNAL(splitterMoved(int,int)), this, SLOT(splitterMoved()));
+		setCentralWidget(d->splitter);
+		allInOne = true;
+
+		d->mainTabs = d->psi->tabManager()->newTabs(0);
+		d->psi->tabManager()->setPreferredTabsForKind('C', d->mainTabs);
+		d->psi->tabManager()->setPreferredTabsForKind('M', d->mainTabs);
+
+		QList<int> sizes;
+		d->rosterSize = PsiOptions::instance()->getOption(rosterGeometryPath).toInt();
+		d->tabsSize = PsiOptions::instance()->getOption(tabsGeometryPath).toInt();
+		d->isLeftRoster = PsiOptions::instance()->getOption("options.ui.contactlist.aio-left-roster").toBool();
+		if (d->isLeftRoster) {
+			d->splitter->addWidget(rosterBar);
+			d->splitter->addWidget(d->mainTabs);
+			sizes << d->rosterSize << d->tabsSize;
+		} else {
+			d->splitter->addWidget(d->mainTabs);
+			d->splitter->addWidget(rosterBar);
+			sizes << d->tabsSize << d->rosterSize;
+		}
+
+		d->splitter->setSizes(sizes);
+	} else
+		setCentralWidget(rosterBar);
+
+	d->vb_roster = new QVBoxLayout(rosterBar);
 #ifndef NEWCONTACTLIST
-	cvlist = new ContactView(center);
+	cvlist = new ContactView(rosterBar);
 #else
-	d->rosterWidget_ = new PsiRosterWidget(center);
+	d->rosterWidget_ = new PsiRosterWidget(rosterBar);
 	d->rosterWidget_->setContactList(psi->contactList());
 #endif
 
@@ -302,13 +344,31 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 	// d->contactListView_->setFrameShape(QFrame::NoFrame);
 #endif
 #endif
-	d->vb_main->setMargin(layoutMargin);
-	d->vb_main->setSpacing(layoutMargin);
+	QMenu* viewMenu = new QMenu(tr("View"), this);
+
+
+	d->vb_roster->setMargin(layoutMargin);
+	d->vb_roster->setSpacing(layoutMargin);
+
+	if (allInOne) {
+		QString toolOpt = "options.ui.contactlist.toolbars";
+		foreach(QString base, PsiOptions::instance()->getChildOptionNames(toolOpt, true, true)) {
+			// toolbar "Show contacts" is second, so check m1
+			if (base == toolOpt + ".m1") {
+				d->viewToolBar = new PsiToolBar(base, rosterBar, d->psi->actionList());
+				d->viewToolBar->initialize();
+				connect(d->viewToolBar, SIGNAL(customize()), d->psi, SLOT(doToolbars()));
+				d->vb_roster->addWidget(d->viewToolBar);
+				break;
+			}
+		}
+	}
+
 
 #ifndef NEWCONTACTLIST
 	// create search bar
-	d->searchWidget = new QWidget(centralWidget());
-	d->vb_main->addWidget(d->searchWidget);
+	d->searchWidget = new QWidget(rosterBar);
+	d->vb_roster->addWidget(d->searchWidget);
 	QHBoxLayout* searchLayout = new QHBoxLayout(d->searchWidget);
 	searchLayout->setMargin(0);
 	searchLayout->setSpacing(0);
@@ -325,15 +385,15 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 
 	//add contact view
 #ifndef NEWCONTACTLIST
-	d->vb_main->addWidget(cvlist);
+	d->vb_roster->addWidget(cvlist);
 # ifdef Q_OS_MAC
 	// Disable the empty vertical scrollbar:
 	// it's here because of weird code in q3scrollview.cpp
 	// Q3ScrollView::updateScrollBars() around line 877
-	d->vb_main->addSpacing(4);
+	d->vb_roster->addSpacing(4);
 # endif
 #else
-	d->vb_main->addWidget(d->rosterWidget_);
+	d->vb_roster->addWidget(d->rosterWidget_);
 #endif
 
 	d->statusMenu = new QMenu(tr("Status"), this);
@@ -390,7 +450,6 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 
 	mainMenuBar()->addMenu(d->statusMenu);
 
-	QMenu* viewMenu = new QMenu(tr("View"), this);
 	mainMenuBar()->addMenu(viewMenu);
 	d->getAction("show_offline")->addTo(viewMenu);
 	// if (PsiOptions::instance()->getOption("options.ui.menu.view.show-away").toBool()) {
@@ -457,7 +516,20 @@ MainWin::~MainWin()
 	}
 
 	saveToolbarsState();
+
+	if(d->splitter) {
+		PsiOptions::instance()->setOption(rosterGeometryPath, d->rosterSize);
+		PsiOptions::instance()->setOption(tabsGeometryPath, d->tabsSize);
+	}
+
 	delete d;
+}
+
+void MainWin::splitterMoved()
+{
+	QList<int> list = d->splitter->sizes();
+	d->rosterSize = !d->isLeftRoster ? list.last() : list.first();
+	d->tabsSize = d->isLeftRoster ? list.last() : list.first();
 }
 
 void MainWin::registerAction( IconAction* action )
@@ -691,8 +763,6 @@ QMenuBar* MainWin::mainMenuBar() const
 	return menuBar();
 }
 
-const QString toolbarsStateOptionPath = "options.ui.contactlist.toolbars-state";
-
 void MainWin::saveToolbarsState()
 {
 	PsiOptions::instance()->setOption(toolbarsStateOptionPath, saveState());
@@ -713,8 +783,21 @@ void MainWin::buildToolbars()
 	qDeleteAll(toolbars_);
 	toolbars_.clear();
 
+	bool allInOne = PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A');
 	foreach(QString base, PsiOptions::instance()->getChildOptionNames("options.ui.contactlist.toolbars", true, true)) {
-		PsiToolBar* tb = new PsiToolBar(base, this, d->psi->actionList());
+		PsiToolBar* tb;
+		if (allInOne) {
+			if (d && d->viewToolBar && (d->viewToolBar->base() == base))
+				continue;
+			tb = new PsiToolBar(base, this, d->psi->actionList());
+			d->vb_roster->addWidget(tb);
+		} else {
+			if (d && d->viewToolBar) {
+				delete d->viewToolBar;
+				d->viewToolBar = 0;
+			}
+			tb = new PsiToolBar(base, this, d->psi->actionList());
+		}
 		tb->initialize();
 		connect(tb, SIGNAL(customize()), d->psi, SLOT(doToolbars()));
 		toolbars_ << tb;
@@ -735,6 +818,11 @@ void MainWin::buildToolbars()
 	// state. now we need to explicitly re-enable updates.
 	foreach(PsiToolBar* tb, toolbars_) {
 		tb->setUpdatesEnabled(true);
+	}
+
+	if (allInOne && d && d->viewToolBar) {
+		d->viewToolBar->updateVisibility();
+		d->viewToolBar->setUpdatesEnabled(true);
 	}
 }
 
@@ -1087,6 +1175,17 @@ void MainWin::closeEvent(QCloseEvent* e)
 
 	e->accept();
 #endif
+}
+
+void MainWin::changeEvent(QEvent *event)
+{
+    if (event->type() == QEvent::ActivationChange ||
+	    event->type() == QEvent::WindowStateChange)
+	{
+		if (d->mainTabs) {
+			QCoreApplication::sendEvent(d->mainTabs, event);
+		}
+	}
 }
 
 void MainWin::keyPressEvent(QKeyEvent* e)
@@ -1525,6 +1624,28 @@ void MainWin::avcallConfig()
 {
 	if (AvCallManager::isSupported())
 		AvCallManager::config();
+}
+
+void MainWin::resizeEvent(QResizeEvent *e)
+{
+	AdvancedWidget<QMainWindow>::resizeEvent(e);
+
+	if(d->splitter && isVisible()) {
+		QList<int> sizes = d->splitter->sizes();
+		int tabsWidth = !d->isLeftRoster ? sizes.first() : sizes.last();
+		int rosterWidth = d->isLeftRoster ? sizes.first() : sizes.last();
+		int dw = rosterWidth - d->rosterSize;
+		sizes.clear();
+		sizes.append(tabsWidth + dw);
+		if(d->isLeftRoster) {
+			sizes.prepend(d->rosterSize);
+		}
+		else {
+			sizes.append(d->rosterSize);
+		}
+		d->splitter->setSizes(sizes);
+		d->tabsSize = tabsWidth + dw;
+	}
 }
 
 //#endif

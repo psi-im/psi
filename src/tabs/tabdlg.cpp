@@ -186,7 +186,8 @@ TabDlg::TabDlg(TabManager* tabManager, const QString& geometryOption, TabDlgDele
 
 	setShortcuts();
 
-	setGeometryOptionPath(geometryOption);
+	if(!PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A'))
+		setGeometryOptionPath(geometryOption);
 }
 
 TabDlg::~TabDlg()
@@ -487,7 +488,7 @@ void TabDlg::selectTab(TabbableWidget* chat)
 
 void TabDlg::checkHasChats()
 {
-	if (tabWidget_->count() > 0)
+	if (tabWidget_->count() > 0 || this != window())
 		return;
 	deleteLater();
 }

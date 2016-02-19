@@ -136,12 +136,15 @@ void OptionsTabChat::applyOptions()
 		case 3:
 			tabGrouping = "CM";
 			break;
+		case 4:
+			tabGrouping = "ACM";
+			break;
 	}
 	if (!tabGrouping.isEmpty()) {
 		PsiOptions::instance()->setOption("options.ui.tabs.grouping", tabGrouping);
 	} else {
-		if (d->cb_tabGrouping->count() == 5) {
-			d->cb_tabGrouping->removeItem(4);
+		if (d->cb_tabGrouping->count() == 6) {
+			d->cb_tabGrouping->removeItem(5);
 		}
 	}
 
@@ -188,16 +191,18 @@ void OptionsTabChat::restoreOptions()
 		d->cb_tabGrouping->setCurrentIndex(2);
 	} else if (tabGrouping == "CM") {
 		d->cb_tabGrouping->setCurrentIndex(3);
+	} else if (tabGrouping == "ACM") {
+		d->cb_tabGrouping->setCurrentIndex(4);
 	} else {
-		if (d->cb_tabGrouping->count() == 5) {
-			d->cb_tabGrouping->setCurrentIndex(4);
+		if (d->cb_tabGrouping->count() == 6) {
+			d->cb_tabGrouping->setCurrentIndex(5);
 		} else {
 			d->cb_tabGrouping->setCurrentIndex(-1);
 		}
 		custom = true;
 	}
-	if (!custom && d->cb_tabGrouping->count() == 5) {
-		d->cb_tabGrouping->removeItem(4);
+	if (!custom && d->cb_tabGrouping->count() == 6) {
+		d->cb_tabGrouping->removeItem(5);
 	}
 	d->ck_autoResize->setChecked( PsiOptions::instance()->getOption("options.ui.chat.use-expanding-line-edit").toBool() );
 	d->ck_tabShortcuts->setChecked( PsiOptions::instance()->getOption("options.ui.tabs.use-tab-shortcuts").toBool() );

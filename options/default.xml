@@ -117,6 +117,11 @@
 				<scaled-message-icons type="bool">false</scaled-message-icons>
 				<warn-before-clear type="bool">true</warn-before-clear>
 			</chat>
+			<save>
+				<toolbars-state type="QByteArray"/>
+				<log-width type="int">500</log-width>
+				<roster-width type="int">180</roster-width>
+			</save>
 			<history comment="History dialog options">
 				<size comment="Remembered window size" type="QSize">
 					<width>640</width>
@@ -168,10 +173,10 @@
 				<show-client-icons type="bool">true</show-client-icons>
 				<show-all-client-icons type="bool">false</show-all-client-icons>
 				<toolbars/>
-				<toolbars-state type="QByteArray"/>
 				<use-left-click type="bool">false</use-left-click>
 				<use-single-click type="bool">false</use-single-click>
 				<use-status-change-animation type="bool">true</use-status-change-animation>
+				<aio-left-roster type="bool">false</aio-left-roster>
 				<use-transport-icons type="bool">false</use-transport-icons>
 				<saved-window-geometry type="QRect" >
 					<x>64</x>
@@ -370,7 +375,7 @@
 				<put-tabs-at-bottom type="bool">false</put-tabs-at-bottom>
 				<use-tabs type="bool">false</use-tabs>
 				<size type="QString"></size> <!-- will be invalid when converted to QSize so we can detect first load -->
-				<grouping type="QString" comment="A ':' seperated list of groups of kinds of tabs to keep in the same tabset. 'C' for chat and 'M' for mucs">C:M</grouping>
+				<grouping type="QString" comment="A ':' seperated list of groups of kinds of tabs to keep in the same tabset. 'C' for chat and 'M' for mucs. 'A' means using all in one window patch.">CM</grouping>
 				<group-state comment="Saved state data of the tabsets defined by options.ui.tabs.grouping"/>
 				<tab-singles type="QString" comment="Tab types that would have been untabbed are given their own tabset. 'C' for chat and 'M' for mucs"/>
 				<use-tab-shortcuts type="bool">true</use-tab-shortcuts>

@@ -92,6 +92,11 @@
          <string>for mucs and chats in one window</string>
         </property>
        </item>
+	   <item>
+		<property name="text" >
+		 <string>for mucs, chats and roster in one window</string>
+		</property>
+	   </item>
        <item>
         <property name="text" >
          <string>[customized]</string>

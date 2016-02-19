@@ -35,11 +35,12 @@ class PsiToolBar : public QToolBar
 	Q_OBJECT
 
 public:
-	PsiToolBar(const QString& base, QMainWindow* mainWindow, MetaActionList* actionList);
+	PsiToolBar(const QString& base, QWidget* mainWindow, MetaActionList* actionList);
 	~PsiToolBar();
 
 	void initialize();
 	void updateVisibility();
+	QString base() const;
 
 	static void structToOptions(PsiOptions* options, const ToolbarPrefs& s);
 

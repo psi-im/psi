@@ -55,7 +55,7 @@ Qt::ToolBarArea dockPositionToToolBarArea(Qt3Dock dock)
 	return Qt::NoToolBarArea;
 }
 
-PsiToolBar::PsiToolBar(const QString& base, QMainWindow* mainWindow, MetaActionList* actionList)
+PsiToolBar::PsiToolBar(const QString& base, QWidget* mainWindow, MetaActionList* actionList)
 	: QToolBar(mainWindow)
 	, actionList_(actionList)
 	, base_(base)
@@ -80,6 +80,11 @@ void PsiToolBar::contextMenuEvent(QContextMenuEvent* e)
 	QMenu menu;
 	menu.addAction(customizeAction_);
 	menu.exec(e->globalPos());
+}
+
+QString PsiToolBar::base() const
+{
+	return base_;
 }
 
 void PsiToolBar::initialize()
@@ -118,11 +123,13 @@ void PsiToolBar::initialize()
 		}
 	}
 
-	QMainWindow* mainWindow = dynamic_cast<QMainWindow*>(parentWidget());
-	mainWindow->addToolBar(dockPositionToToolBarArea((Qt3Dock)o->getOption(base_ + ".dock.position").toInt()),
-	                       this);
-	if (mainWindow && o->getOption(base_ + ".dock.nl").toBool()) {
-		mainWindow->insertToolBarBreak(this);
+	if (!PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A')) {
+		QMainWindow* mainWindow = dynamic_cast<QMainWindow*>(parentWidget());
+		if (mainWindow) {
+			mainWindow->addToolBar(dockPositionToToolBarArea((Qt3Dock)o->getOption(base_ + ".dock.position").toInt()), this);
+			if (o->getOption(base_ + ".dock.nl").toBool())
+				mainWindow->insertToolBarBreak(this);
+		}
 	}
 
 	updateVisibility();

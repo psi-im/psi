@@ -47,6 +47,7 @@ class QThread;
 class PsiActionList;
 class PsiToolBar;
 class TabDlg;
+class TabManager;
 class AccountsComboBox;
 class ChatDlg;
 class AlertManager;
