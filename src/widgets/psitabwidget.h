@@ -74,6 +74,7 @@ signals:
 	void currentChanged(QWidget *selected);
 	void closeButtonClicked();
 	void aboutToShowMenu(QMenu *);
+	void tabCloseRequested(int i);
 
 	// context menu on the blank space will have tab==-1
 	void tabContextMenu(int tab, QPoint pos, QContextMenuEvent *event);
@@ -85,6 +86,7 @@ private slots:
 	void tab_contextMenu(QContextMenuEvent *event, int tab);
 	void menu_aboutToShow();
 	void menu_triggered(QAction *act);
+	void widgetMoved(int from, int to);
 
 private:
 	QVector<QWidget*> widgets_;

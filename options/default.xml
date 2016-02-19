@@ -374,6 +374,9 @@
 			</service-discovery>
 			<tabs>
 				<show-tab-icons type="bool">true</show-tab-icons>
+				<disable-wheel-scroll type="bool">false</disable-wheel-scroll>
+				<can-close-inactive-tab type="bool">true</can-close-inactive-tab>
+				<show-tab-close-buttons type="bool">true</show-tab-close-buttons>
 				<put-tabs-at-bottom type="bool">false</put-tabs-at-bottom>
 				<use-tabs type="bool">false</use-tabs>
 				<size type="QString"></size> <!-- will be invalid when converted to QSize so we can detect first load -->

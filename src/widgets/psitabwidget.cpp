@@ -75,11 +75,16 @@ PsiTabWidget::PsiTabWidget(QWidget *parent)
 
 	setTabPosition(QTabWidget::North);
 
-	connect( tabBar_, SIGNAL(mouseDoubleClickTab(int)), SLOT(mouseDoubleClickTab(int)));
-	connect( tabBar_, SIGNAL(mouseMiddleClickTab(int)), SLOT(mouseMiddleClickTab(int)));
-	connect( tabBar_, SIGNAL( currentChanged(int)), SLOT(tab_currentChanged(int)));
-	connect( tabBar_, SIGNAL( contextMenu(QContextMenuEvent*,int)), SLOT( tab_contextMenu(QContextMenuEvent*,int)));
-	connect( closeButton_, SIGNAL(clicked()), SIGNAL(closeButtonClicked()));
+	if (!PsiOptions::instance()->getOption("options.ui.tabs.show-tab-close-buttons").toBool()){
+		tabBar_->setTabsClosable(false);
+	}
+	connect(tabBar_, SIGNAL(mouseDoubleClickTab(int)), SLOT(mouseDoubleClickTab(int)));
+	connect(tabBar_, SIGNAL(mouseMiddleClickTab(int)), SLOT(mouseMiddleClickTab(int)));
+	connect(tabBar_, SIGNAL( currentChanged(int)), SLOT(tab_currentChanged(int)));
+	connect(tabBar_, SIGNAL( contextMenu(QContextMenuEvent*,int)), SLOT( tab_contextMenu(QContextMenuEvent*,int)));
+	connect(tabBar_, SIGNAL(tabMoved(int,int)),SLOT(widgetMoved(int,int)));
+	connect(tabBar_, SIGNAL(tabCloseRequested(int)),SIGNAL(tabCloseRequested(int)));
+	connect(closeButton_, SIGNAL(clicked()), SIGNAL(closeButtonClicked()));
 }
 
 void PsiTabWidget::setCloseIcon(const QIcon& icon) {
@@ -344,3 +349,22 @@ void PsiTabWidget::setTabButtonsShown(bool shown) {
 void PsiTabWidget::setDragsEnabled(bool enabled) {
 	((PsiTabBar *)tabBar_)->setDragsEnabled(enabled);
 }
+
+void PsiTabWidget::widgetMoved(int from, int to)
+{
+	if (from > to) {
+		stacked_->removeWidget(widgets_[from]);
+		widgets_.insert(to, 1, widgets_[from]);
+		widgets_.remove(from+1);
+		stacked_->insertWidget(to,widgets_[to]);
+	}
+	else {
+		stacked_->removeWidget(widgets_[from]);
+		widgets_.insert(to+1, 1, widgets_[from]);
+		widgets_.remove(from,1);
+		stacked_->insertWidget(to,widgets_[to]);
+	}
+
+	emit currentChanged(currentPage());
+
+};

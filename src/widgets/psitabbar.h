@@ -52,11 +52,16 @@ protected:
 	void mousePressEvent(QMouseEvent *event);
 	void contextMenuEvent(QContextMenuEvent *event);
 	void wheelEvent(QWheelEvent *event);
+	void paintEvent(QPaintEvent *event);
+	void mouseReleaseEvent ( QMouseEvent * event );
+	void resizeEvent(QResizeEvent * event);
 
 private:
 	int findTabUnder(const QPoint &pos);
 	QPoint dragStartPosition_;
 	int dragTab_;
+	int currTab;
+	bool isOnTheLeft;
 	bool dragsEnabled_;
 };
 

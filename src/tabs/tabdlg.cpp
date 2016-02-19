@@ -161,6 +161,7 @@ TabDlg::TabDlg(TabManager* tabManager, const QString& geometryOption, TabDlgDele
 	connect(tabWidget_, SIGNAL(tabContextMenu(int, QPoint, QContextMenuEvent*)), SLOT(showTabMenu(int, QPoint, QContextMenuEvent*)));
 	connect(tabWidget_, SIGNAL(closeButtonClicked()), SLOT(closeCurrentTab()));
 	connect(tabWidget_, SIGNAL(currentChanged(QWidget*)), SLOT(tabSelected(QWidget*)));
+	connect(tabWidget_, SIGNAL(tabCloseRequested(int)), SLOT(tabCloseRequested(int)));
 
 	if(delegate_)
 		delegate_->tabWidgetCreated(this, tabWidget_);
@@ -815,6 +816,23 @@ void TabDlg::setSimplifiedCaptionEnabled(bool enabled)
 
 	simplifiedCaption_ = enabled;
 	updateCaption();
+}
+
+/**
+  * the slot is invoked, when small close button is clicked on a tab
+  * dont close tabs, that are not active.
+  * \param tab number requested to close
+  */
+void TabDlg::tabCloseRequested(int i)
+{
+	if (tabWidget_->currentPageIndex() == i)
+		closeTab(static_cast<TabbableWidget*>(tabWidget_->page(i)));
+	else {
+		if (PsiOptions::instance()->getOption("options.ui.tabs.can-close-inactive-tab").toBool())
+			closeTab(static_cast<TabbableWidget*>(tabWidget_->page(i)));
+		else
+			selectTab(static_cast<TabbableWidget*>(tabWidget_->page(i)));
+	}
 }
 
 /**

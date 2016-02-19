@@ -24,6 +24,9 @@
 #include <QApplication>
 #include <QDrag>
 #include <QMimeData>
+#include <QPainter>
+
+#include "psioptions.h"
 
 /**
  * Constructor
@@ -32,6 +35,11 @@ PsiTabBar::PsiTabBar(PsiTabWidget *parent)
 		: QTabBar(parent)
 		, dragsEnabled_(true) {
 	//setAcceptDrops(true);
+
+	setMovable(true);
+	setTabsClosable(true);
+	setSelectionBehaviorOnRemove ( QTabBar::SelectPreviousTab );
+	currTab=-1;
 }
 
 /**
@@ -71,20 +79,22 @@ int PsiTabBar::findTabUnder(const QPoint &pos) {
 }
 
 void PsiTabBar::mousePressEvent(QMouseEvent *event) {
-	int tabno = findTabUnder(event->pos());
-	if (event->button() == Qt::LeftButton) {
-		dragStartPosition_ = event->pos();
-		dragTab_ = tabno;
-		if (tabno != -1) {
-			setCurrentIndex(tabno);
-		}
-	} else if (event->button() == Qt::MidButton) {
-		if (tabno != -1) {
-			emit mouseMiddleClickTab(tabno);
-		}
-	}
+	QTabBar::mousePressEvent(event);
 	event->accept();
 }
+
+void PsiTabBar::mouseReleaseEvent ( QMouseEvent * event )
+{
+	if (event->button() == Qt::MidButton && findTabUnder(event->pos())!=-1) {
+		emit mouseMiddleClickTab(findTabUnder(event->pos()));
+		event->accept();
+	}
+	QTabBar::mouseReleaseEvent(event);
+
+	if ((dragTab_ != -1) && (event->button() != Qt::MidButton)) {
+		this->setCurrentIndex(currentIndex());
+	}
+};
 
 /*
  * Used for starting drags of tabs
@@ -94,6 +104,7 @@ void PsiTabBar::mouseMoveEvent(QMouseEvent *event) {
 		return;
 	}
 	if (!(event->buttons() & Qt::LeftButton)) {
+		currTab=-1;
 		return;
 	}
 	if ((event->pos() - dragStartPosition_).manhattanLength()
@@ -101,23 +112,7 @@ void PsiTabBar::mouseMoveEvent(QMouseEvent *event) {
 		return;
 	}
 
-	if (dragTab_ != -1) {
-		QDrag *drag = new QDrag(this);
-		QMimeData *mimeData = new QMimeData;
-		QByteArray data;
-		QPixmap icon;
-
-		data.setNum(dragTab_);
-
-		mimeData->setData(PSITABDRAGMIMETYPE, data);
-		drag->setMimeData(mimeData);
-		drag->setPixmap(icon);
-
-		Qt::DropAction dropAction = drag->start(Qt::MoveAction);
-		Q_UNUSED(dropAction);
-	}
-
-	event->accept();
+	QTabBar::mouseMoveEvent(event);
 }
 
 void PsiTabBar::contextMenuEvent(QContextMenuEvent *event) {
@@ -126,6 +121,9 @@ void PsiTabBar::contextMenuEvent(QContextMenuEvent *event) {
 }
 
 void PsiTabBar::wheelEvent(QWheelEvent *event) {
+	if (PsiOptions::instance()->getOption("options.ui.tabs.disable-wheel-scroll").toBool())
+		return;
+
 	int numDegrees = event->delta() / 8;
 	int numSteps = numDegrees / 15;
 
@@ -147,3 +145,13 @@ void PsiTabBar::wheelEvent(QWheelEvent *event) {
 void PsiTabBar::setDragsEnabled(bool enabled) {
 	dragsEnabled_ = enabled;
 }
+
+void PsiTabBar::paintEvent(QPaintEvent *event)
+{
+	QTabBar::paintEvent(event);
+};
+
+void PsiTabBar::resizeEvent(QResizeEvent * event)
+{
+	QTabBar::resizeEvent(event);
+};
