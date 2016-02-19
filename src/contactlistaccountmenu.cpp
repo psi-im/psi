@@ -76,7 +76,11 @@ public:
 		statusMenu_->setIcon(PsiIconset::instance()->status(makeSTATUS(account->account()->status())).icon());
 		connect(statusMenu_, SIGNAL(statusChanged(XMPP::Status::Type)), SLOT(statusChanged(XMPP::Status::Type)));
 
-		moodAction_ = new IconAction(tr("Mood"), this, QString(("mood/%1")).arg(account->account()->mood().typeValue()));
+		QString moodIcon = account->account()->mood().typeValue();
+		if (!moodIcon.isNull()) {
+			moodIcon = QLatin1String("mood/") + moodIcon;
+		}
+		moodAction_ = new IconAction(tr("Mood"), this, moodIcon);
 		connect(moodAction_, SIGNAL(triggered()), SLOT(setMood()));
 
 		QString act = account->account()->activity().typeValue();

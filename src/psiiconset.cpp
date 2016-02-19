@@ -854,9 +854,11 @@ void PsiIconset::removeAnimation(Iconset *is)
 QString PsiIconset::caps2client(const QString &name)
 {
 	QMap<QString, QString>::const_iterator it = d->caps2clients.lowerBound(name);
-	if ((it != d->caps2clients.end() && name.startsWith(it.key())) ||
-			(--it != d->caps2clients.end() && name.startsWith(it.key()))) {
-		return it.value();
+	if (d->caps2clients.size()) {
+		if ((it != d->caps2clients.constEnd() && name.startsWith(it.key())) ||
+				(it != d->caps2clients.constBegin() && name.startsWith((--it).key()))) {
+			return it.value();
+		}
 	}
 	return QString();
 }

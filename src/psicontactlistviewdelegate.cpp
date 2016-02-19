@@ -161,7 +161,7 @@ QPixmap PsiContactListViewDelegate::avatarIcon(const QModelIndex& index) const
 {
 	QPixmap avatar_icon;
 	int avSize = showAvatars_ ? avatarSize_ : 0;
-	QPixmap av = qVariantValue<QPixmap>(index.data(ContactListModel::AvatarRole));
+	QPixmap av = index.data(ContactListModel::AvatarRole).value<QPixmap>();
 	if(av.isNull() && useDefaultAvatar_)
 		av = IconsetFactory::iconPixmap("psi/default_avatar");
 	int radius;

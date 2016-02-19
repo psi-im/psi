@@ -478,6 +478,16 @@
 		<object mime='image/png'>bookmark_remove.png</object>
 	</icon>
 
+	<icon>
+		<x xmlns='name'>system/geolocation</x>
+		<object mime='image/png'>geolocation.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>activities/other</x>
+		<object mime='image/png'>activity.png</object>
+	</icon>
+
 	<!-- Whiteboarding -->
 	<icon>
 		<x xmlns='name'>psi/whiteboard</x>
