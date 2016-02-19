@@ -146,6 +146,11 @@
 	</icon>
 
 	<icon>
+		<x xmlns='name'>psi/roster_icon</x>
+		<object mime='image/png'>roster_icon.png</object>
+	</icon>
+
+	<icon>
 		<x xmlns='name'>psi/toolbars</x>
 		<object mime='image/png'>configure_toolbars.png</object>
 	</icon>
