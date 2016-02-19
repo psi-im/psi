@@ -27,6 +27,7 @@
 #include "xmpp_xdata.h"
 #include "ahcservermanager.h"
 #include "ahcommand.h"
+#include "groupchatdlg.h"
 
 using namespace XMPP;
 
@@ -244,4 +245,17 @@ AHCommand RCSetOptionsServer::execute(const AHCommand& c, const Jid&)
 		}
 		return AHCommand::completedReply(c);
 	}
+}
+
+AHCommand RCLeaveMucServer::execute(const AHCommand& c, const Jid& /*j*/)
+{
+	foreach (QString gc, manager()->account()->groupchats()) {
+		Jid mj(gc);
+		GCMainDlg *gcDlg = manager()->account()->findDialog<GCMainDlg*>(mj.bare());
+		if (gcDlg) gcDlg->close();
+	}
+	XData form;
+	form.setTitle(QObject::tr("Leave All Conferences"));
+	form.setType(XData::Data_Form);
+	return AHCommand::completedReply(c);
 }

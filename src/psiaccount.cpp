@@ -375,6 +375,7 @@ public:
 		, rcSetStatusServer(0)
 		, rcSetOptionsServer(0)
 		, rcForwardServer(0)
+		, rcLeaveMucServer(0)
 		, avatarFactory(0)
 		, voiceCaller(0)
 		, avCallManager(0)
@@ -439,6 +440,7 @@ public:
 	RCSetStatusServer* rcSetStatusServer;
 	RCSetOptionsServer* rcSetOptionsServer;
 	RCForwardServer* rcForwardServer;
+	RCLeaveMucServer* rcLeaveMucServer;
 
 	// Avatars
 	AvatarFactory* avatarFactory;
@@ -1141,6 +1143,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	d->rcSetStatusServer = 0;
 	d->rcSetOptionsServer = 0;
 	d->rcForwardServer = 0;
+	d->rcLeaveMucServer =0;
 	setRCEnabled(PsiOptions::instance()->getOption("options.external-control.adhoc-remote-control.enable").toBool());
 
 	// Plugins
@@ -5911,6 +5914,7 @@ void PsiAccount::setRCEnabled(bool b)
 	if (b && !d->rcSetStatusServer) {
 		d->rcSetStatusServer = new RCSetStatusServer(d->ahcManager);
 		d->rcForwardServer = new RCForwardServer(d->ahcManager);
+		d->rcLeaveMucServer = new RCLeaveMucServer(d->ahcManager);
 		d->rcSetOptionsServer = new RCSetOptionsServer(d->ahcManager, d->psi);
 	}
 	else if (!b && d->rcSetStatusServer) {
@@ -5918,6 +5922,8 @@ void PsiAccount::setRCEnabled(bool b)
 		d->rcSetStatusServer = 0;
 		delete d->rcForwardServer;
 		d->rcForwardServer = 0;
+		delete d->rcLeaveMucServer;
+		d->rcLeaveMucServer = 0;
 		delete d->rcSetOptionsServer;
 		d->rcSetOptionsServer = 0;
 	}

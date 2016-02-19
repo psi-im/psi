@@ -54,6 +54,15 @@ public:
 	virtual AHCommand execute(const AHCommand& c, const Jid&);
 };
 
+class RCLeaveMucServer : public RCCommandServer
+{
+public:
+	RCLeaveMucServer(AHCServerManager* m) : RCCommandServer(m) { }
+	virtual QString name() const { return "Leave All Conferences"; }
+	virtual QString rcNode() const { return "leave-muc"; }
+	virtual AHCommand execute(const AHCommand& c, const Jid&);
+};
+
 class RCSetOptionsServer : public RCCommandServer
 {
 public:
