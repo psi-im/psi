@@ -36,6 +36,7 @@
 #include "common.h"
 #include "psioptions.h"
 #include "coloropt.h"
+#include "avcall/avcall.h"
 
 static bool caseInsensitiveLessThan(const QString &s1, const QString &s2)
 {
@@ -414,6 +415,11 @@ void GCUserView::doContextMenu(QTreeWidgetItem *i)
 	act = new QAction(IconsetFactory::icon("psi/start-chat").icon(), tr("Open &Chat Window"), pm);
 	pm->addAction(act);
 	act->setData(1);
+	if (AvCallManager::isSupported()) {
+		act = new QAction(IconsetFactory::icon("psi/avcall").icon(), tr("Voice Call"), pm);
+		pm->addAction(act);
+		act->setData(5);
+	}
 	pm->addSeparator();
 
 	// Kick and Ban submenus

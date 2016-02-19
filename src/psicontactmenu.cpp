@@ -38,6 +38,7 @@
 #include "userlist.h"
 #include "statusdlg.h"
 #include "xmpp_tasks.h"
+#include "avcall/avcall.h"
 #ifdef HAVE_PGPUTIL
 #include "pgputil.h"
 #endif
@@ -419,7 +420,9 @@ public:
 		menu_->addMenu(openWhiteboardToMenu_);
 		menu_->addMenu(executeCommandMenu_);
 		menu_->addMenu(activeChatsMenu_);
-		menu_->addAction(voiceCallAction_);
+		if(AvCallManager::isSupported()) {
+			menu_->addAction(voiceCallAction_);
+		}
 		menu_->addSeparator();
 		menu_->addAction(sendFileAction_);
 		menu_->addMenu(inviteToGroupchatMenu_);

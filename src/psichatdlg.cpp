@@ -43,6 +43,7 @@
 #include "jidutil.h"
 #include "xmpp_tasks.h"
 #include "lastactivitytask.h"
+#include "avcall/avcall.h"
 
 
 #define MCMDCHAT		"http://psi-im.org/ids/mcmd#chatmain"
@@ -258,6 +259,7 @@ void PsiChatDlg::setLooks()
 		ui_.tb_actions->hide();
 		ui_.tb_emoticons->hide();
 		ui_.toolbar->hide();
+		ui_.tb_voice->hide();
 	}
 	else {
 		ui_.lb_status->show();
@@ -266,11 +268,13 @@ void PsiChatDlg::setLooks()
 			ui_.toolbar->show();
 			ui_.tb_actions->hide();
 			ui_.tb_emoticons->hide();
+			ui_.tb_voice->hide();
 		}
 		else {
 			ui_.toolbar->hide();
 			ui_.tb_emoticons->setVisible(PsiOptions::instance()->getOption("options.ui.emoticons.use-emoticons").toBool());
 			ui_.tb_actions->show();
+			ui_.tb_voice->setVisible(AvCallManager::isSupported());
 		}
 	}
 
@@ -327,7 +331,8 @@ void PsiChatDlg::initToolButtons()
 
 	act_voice_ = new IconAction(tr("Voice Call"), "psi/voice", tr("Voice Call"), 0, this);
 	connect(act_voice_, SIGNAL(triggered()), SLOT(doVoice()));
-	act_voice_->setEnabled(false);
+	//act_voice_->setEnabled(false);
+	ui_.tb_voice->setDefaultAction(act_voice_);
 
 	act_file_ = new IconAction(tr("Send File"), "psi/upload", tr("Send File"), 0, this);
 	connect(act_file_, SIGNAL(triggered()), SLOT(doFile()));
@@ -358,7 +363,7 @@ void PsiChatDlg::initToolBar()
 	}
 	ui_.toolbar->addAction(act_info_);
 	ui_.toolbar->addAction(act_history_);
-	if (account()->voiceCaller()) {
+	if (AvCallManager::isSupported()) {
 		ui_.toolbar->addAction(act_voice_);
 	}
 }
@@ -377,7 +382,7 @@ void PsiChatDlg::capsChanged()
 	if (resource.isEmpty() && ul && !ul->userResourceList().isEmpty()) {
 		resource = (*(ul->userResourceList().priority())).name();
 	}
-	act_voice_->setEnabled(!account()->capsManager()->isEnabled() || (ul && ul->isAvailable() && account()->capsManager()->features(jid().withResource(resource)).canVoice()));
+	//act_voice_->setEnabled(!account()->capsManager()->isEnabled() || (ul && ul->isAvailable() && account()->capsManager()->features(jid().withResource(resource)).canVoice()));
 }
 
 void PsiChatDlg::activated()
@@ -544,8 +549,9 @@ void PsiChatDlg::buildMenu()
 
 	pm_settings_->addAction(act_icon_);
 	pm_settings_->addAction(act_file_);
-	if (account()->voiceCaller())
-		act_voice_->addTo(pm_settings_);
+	if (AvCallManager::isSupported()) {
+		pm_settings_->addAction(act_voice_);
+	}
 	pm_settings_->addAction(act_pgp_);
 	pm_settings_->addSeparator();
 

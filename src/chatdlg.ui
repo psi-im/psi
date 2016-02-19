@@ -121,6 +121,22 @@
           </widget>
          </item>
          <item>
+          <widget class="QToolButton" name="tb_voice" >
+           <property name="toolTip" >
+            <string>Voice Call</string>
+           </property>
+           <property name="text" >
+            <string/>
+           </property>
+           <property name="iconSize" >
+            <size>
+             <width>16</width>
+             <height>16</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QToolButton" name="tb_pgp">
            <property name="toolTip">
             <string>Toggle encryption</string>
