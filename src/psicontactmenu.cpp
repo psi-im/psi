@@ -340,7 +340,7 @@ public:
 		openWhiteboardAction_ = new IconAction(tr("Open a &Whiteboard"), this, "psi/whiteboard");
 		connect(openWhiteboardAction_, SIGNAL(triggered()), SLOT(openWhiteboard()));
 
-		voiceCallAction_ = new IconAction(tr("Voice Call"), this, "psi/voice");
+		voiceCallAction_ = new IconAction(tr("Voice Call"), this, "psi/avcall");
 		connect(voiceCallAction_, SIGNAL(triggered()), SLOT(voiceCall()));
 
 		sendFileAction_ = new IconAction(tr("Send &File"), this, "psi/upload");

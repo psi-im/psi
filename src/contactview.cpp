@@ -978,7 +978,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 			bookmarks->setEnabled(false);
 		}
 
-		pm.insertItem(tr("Bookmarks"), bookmarks);
+		pm.insertItem(IconsetFactory::icon("psi/bookmarks").icon(), tr("Bookmarks"), bookmarks);
 
 		pm.insertSeparator();
 		pm.insertItem(IconsetFactory::icon("psi/addContact").icon(), tr("&Add a Contact"), 7);
@@ -1266,7 +1266,7 @@ void ContactProfile::doContextMenu(ContactViewItem *i, const QPoint &pos)
 		// Voice call
 		if(d->pa->avCallManager() && !isAgent) {
 		//if(d->pa->voiceCaller() && !isAgent) {
-			pm.insertItem(IconsetFactory::icon("psi/voice").icon(), tr("Voice Call"), 24);
+			pm.insertItem(IconsetFactory::icon("psi/avcall").icon(), tr("Voice Call"), 24);
 			if(!online) {
 				pm.setItemEnabled(24, false);
 			}

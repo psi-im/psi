@@ -121,7 +121,7 @@ public:
 		avatarMenu_ = menu->addMenu(tr("Avatar"));
 		avatarMenu_->addAction(setAvatarAction_);
 		avatarMenu_->addAction(unsetAvatarAction_);
-		bookmarksMenu_ = menu->addMenu(tr("Bookmarks"));
+		bookmarksMenu_ = menu->addMenu(IconsetFactory::icon("psi/bookmarks").icon(), tr("Bookmarks"));
 		bookmarksMenu_->addAction(bookmarksManageAction_);
 		menu->addSeparator();
 		menu->addAction(addContactAction_);

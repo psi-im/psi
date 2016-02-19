@@ -329,7 +329,7 @@ void PsiChatDlg::initToolButtons()
 	act_icon_->setMenu(account()->psi()->iconSelectPopup());
 	ui_.tb_emoticons->setMenu(account()->psi()->iconSelectPopup());
 
-	act_voice_ = new IconAction(tr("Voice Call"), "psi/voice", tr("Voice Call"), 0, this);
+	act_voice_ = new IconAction(tr("Voice Call"), "psi/avcall", tr("Voice Call"), 0, this);
 	connect(act_voice_, SIGNAL(triggered()), SLOT(doVoice()));
 	//act_voice_->setEnabled(false);
 	ui_.tb_voice->setDefaultAction(act_voice_);

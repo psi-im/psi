@@ -408,6 +408,21 @@
 	</icon>
 
 	<icon>
+		<x xmlns='name'>psi/advanced-plus</x>
+		<object mime='image/png'>advanced-plus.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/avcall</x>
+		<object mime='image/png'>avcall.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/bookmarks</x>
+		<object mime='image/png'>bookmarks.png</object>
+	</icon>
+
+	<icon>
 		<x xmlns='name'>psi/show_self</x>
 		<object mime='image/png'>self.png</object>
 	</icon>

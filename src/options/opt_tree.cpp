@@ -5,7 +5,7 @@
 #include "psioptionseditor.h"
 
 OptionsTabTree::OptionsTabTree(QObject *parent)
-		: OptionsTab(parent, "tree", "", tr("Advanced"), tr("Options for advanced users"), "psi/advanced")
+		: OptionsTab(parent, "tree", "", tr("Advanced"), tr("Options for advanced users"), "psi/advanced-plus")
 {
 	w = 0;
 }

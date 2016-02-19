@@ -166,7 +166,7 @@ void options_avcall_update()
 //----------------------------------------------------------------------------
 
 OptionsTabAvCall::OptionsTabAvCall(QObject *parent)
-: OptionsTab(parent, "avcall", "", tr("Voice Calling"), AvCallManager::isVideoSupported() ? tr("Audio and video device configuration") : tr("Audio device configuration"), "psi/voice")
+: OptionsTab(parent, "avcall", "", tr("Voice Calling"), AvCallManager::isVideoSupported() ? tr("Audio and video device configuration") : tr("Audio device configuration"), "psi/avcall")
 {
 	w = 0;
 }
