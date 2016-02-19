@@ -134,11 +134,20 @@ public:
 		if ( jid.node().isEmpty() || PsiOptions::instance()->getOption("options.ui.contactlist.use-transport-icons").toBool() ) {
 			QMap<QString, QRegExp> services;
 			services["aim"]		= QRegExp("^aim");
+			services["disk"]		= QRegExp("^disk");
 			services["gadugadu"]	= QRegExp("^gg");
-			services["icq"]		= QRegExp("^icq");
+			services["icq"]		= QRegExp("^icq|^jit");
+			services["irc"]		= QRegExp("^irc");
+			services["xmpp"]		= QRegExp("^j2j|^xmpp\\.[a-z1-9]+\\..*");
+			services["mrim"]		= QRegExp("^mrim");
 			services["msn"]		= QRegExp("^msn");
-			services["yahoo"]	= QRegExp("^yahoo");
+			services["muc"]		= QRegExp("^conference|^rooms");
+			services["rss"]		= QRegExp("^rss");
 			services["sms"]		= QRegExp("^sms");
+			services["smtp"]		= QRegExp("^smtp");
+			services["vkontakte"]		= QRegExp("^vk.com|^vkontakte|^vk-t");
+			services["weather"]		= QRegExp("^weather|^gism");
+			services["yahoo"]	= QRegExp("^yahoo");
 
 			bool found = false;
 
