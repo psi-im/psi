@@ -22,6 +22,7 @@
 #include <QDomElement>
 #include <QObject>
 #include <QVector>
+#include <QStringList>
 
 #include "conferencebookmark.h"
 #include "xmpp_xmlcommon.h"
