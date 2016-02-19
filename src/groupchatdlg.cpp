@@ -1934,11 +1934,11 @@ GCFindDlg::GCFindDlg(const QString& str, QWidget* parent)
 	hb->addStretch(1);
 	QPushButton *pb_close = new QPushButton(tr("&Close"), this);
 	connect(pb_close, SIGNAL(clicked()), SLOT(close()));
-	hb->addWidget(pb_close);
 	QPushButton *pb_find = new QPushButton(tr("&Find"), this);
 	pb_find->setDefault(true);
 	connect(pb_find, SIGNAL(clicked()), SLOT(doFind()));
 	hb->addWidget(pb_find);
+	hb->addWidget(pb_close);
 	pb_find->setAutoDefault(true);
 
 	resize(200, minimumSizeHint().height());
