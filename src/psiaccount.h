@@ -364,6 +364,7 @@ public slots:
 	void actionSetActivity();
 	void actionSetAvatar();
 	void actionUnsetAvatar();
+	void actionQueryVersion(const Jid& j);
 	void featureActivated(QString feature, Jid jid, QString node);
 
 	void actionAssignKey(const Jid &);
@@ -439,6 +440,7 @@ private slots:
 
 	void processReadNext(const UserListItem &);
 	void processReadNext(const Jid &);
+	void queryVersionFinished();
 
 	void messageStanzasAcked(int n);
 protected:

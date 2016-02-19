@@ -3270,6 +3270,9 @@ void PsiAccount::featureActivated(QString feature, Jid jid, QString node)
 		QStringList sl;
 		dj_add(jid, QString::null, sl, true);
 	}
+	else if ( f.hasVersion() ) {
+		actionQueryVersion(jid);
+	}
 }
 
 void PsiAccount::actionManageBookmarks()
@@ -3766,6 +3769,25 @@ void PsiAccount::actionSendFile(const Jid &j)
 void PsiAccount::actionSendFiles(const Jid &j, const QStringList& l)
 {
 	sendFiles(j, l);
+}
+
+void PsiAccount::actionQueryVersion(const Jid& j)
+{
+	JT_ClientVersion *task = new JT_ClientVersion(d->client->rootTask());
+	task->get(j);
+	connect(task, SIGNAL(finished()), SLOT(queryVersionFinished()));
+	task->go(true);
+}
+
+void PsiAccount::queryVersionFinished()
+{
+	JT_ClientVersion* j = static_cast<JT_ClientVersion*>(sender());
+	QString text;
+	text += tr("Name:\t") + j->name();
+	text += "\n" + tr("Version:\t") + j->version();
+	text += "\n" + tr("Os:\t") + j->os();
+
+	QMessageBox::information(NULL, QString(tr("Version Query Information")), text);
 }
 
 void PsiAccount::actionExecuteCommand(const Jid& j, const QString& node)

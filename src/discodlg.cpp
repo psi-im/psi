@@ -885,7 +885,7 @@ public: // data
 	IconAction *actBrowse, *actBack, *actForward, *actRefresh, *actStop;
 
 	// custom actions, that will be added to toolbar and context menu
-	IconAction *actRegister, *actSearch, *actJoin, *actAHCommand, *actVCard, *actAdd;
+	IconAction *actRegister, *actSearch, *actJoin, *actAHCommand, *actVCard, *actAdd, *actQueryVersion;
 
 	typedef QList<History*> HistoryList;
 	HistoryList backHistory, forwardHistory;
@@ -1003,6 +1003,9 @@ DiscoDlg::Private::Private(DiscoDlg *parent, PsiAccount *pa)
 	actAdd = new IconAction (tr("Add to roster"), "psi/addContact", tr("&Add to roster"), 0, dlg);
 	connect (actAdd, SIGNAL(triggered()), sm, SLOT(map()));
 	sm->setMapping(actAdd, Features::FID_Add);
+	actQueryVersion = new IconAction (tr("Query version"), "psi/info", tr("&Query version"), 0, dlg);
+	connect (actQueryVersion, SIGNAL(triggered()), sm, SLOT(map()));
+	sm->setMapping(actQueryVersion, Features::FID_QueryVersion);
 
 	// create toolbar
 	toolBar = new QToolBar(tr("Service Discovery toolbar"), dlg);
@@ -1028,6 +1031,7 @@ DiscoDlg::Private::Private(DiscoDlg *parent, PsiAccount *pa)
 	toolBar->addAction(actAdd);
 	toolBar->addAction(actVCard);
 	toolBar->addAction(actAHCommand);
+	toolBar->addAction(actQueryVersion);
 
 	// select protocol
 	if (PsiOptions::instance()->getOption("options.ui.show-deprecated.service-discovery.protocol-selector").toBool()) {
@@ -1201,6 +1205,7 @@ void DiscoDlg::Private::enableButtons(const DiscoItem &it)
 	actAdd->setEnabled( itemSelected );
 	actVCard->setEnabled( f.haveVCard() );
 	actAHCommand->setEnabled( f.canCommand() );
+	actQueryVersion->setEnabled( f.hasVersion() );
 }
 
 void DiscoDlg::Private::itemSelected (QTreeWidgetItem *item)
@@ -1329,6 +1334,7 @@ bool DiscoDlg::Private::eventFilter (QObject *object, QEvent *event)
 			actAdd->addTo(&p);
 			actVCard->addTo(&p);
 			actAHCommand->addTo(&p);
+			actQueryVersion->addTo(&p);
 
 			// popup with all available features
 			QMenu *fm = new QMenu(&p);
