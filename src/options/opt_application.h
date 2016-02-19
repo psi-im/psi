@@ -25,6 +25,9 @@ private slots:
 private:
 	QWidget *w;
 	bool haveAutoUpdater_;
+
+private slots:
+	void doEnableQuitOnClose(int);
 };
 
 #endif

@@ -153,6 +153,7 @@
 				<group-sort-style type="QString">alpha</group-sort-style>
 				<lockdown-roster type="bool">false</lockdown-roster>
 				<raise-on-new-event type="bool">false</raise-on-new-event>
+				<quit-on-close type="bool">false</quit-on-close>
 				<show>
 					<agent-contacts type="bool">true</agent-contacts>
 					<away-contacts type="bool">true</away-contacts>

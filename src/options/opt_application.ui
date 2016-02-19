@@ -79,6 +79,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="ck_quitOnClose" >
+     <property name="text" >
+      <string>Quit when closing the roster window</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <layout class="QHBoxLayout" >
      <item>
       <widget class="QLabel" name="textLabel1" >

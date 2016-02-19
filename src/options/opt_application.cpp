@@ -67,6 +67,7 @@ QWidget *OptionsTabApplication::widget()
 
 
 	connect(d->le_dtPort, SIGNAL(textChanged(QString)), this, SLOT(updatePortLabel()));
+	connect(d->ck_docklet, SIGNAL(stateChanged(int)), this, SLOT(doEnableQuitOnClose(int)));
 
 	return w;
 }
@@ -82,6 +83,8 @@ void OptionsTabApplication::applyOptions()
 		return;
 
 	OptApplicationUI *d = (OptApplicationUI *)w;
+
+	PsiOptions::instance()->setOption("options.ui.contactlist.quit-on-close", d->ck_quitOnClose->isChecked());
 
 	// Auto-update
 	PsiOptions::instance()->setOption("options.auto-update.check-on-startup", d->ck_autoUpdate->isChecked());
@@ -108,16 +111,24 @@ void OptionsTabApplication::restoreOptions()
 	OptApplicationUI *d = (OptApplicationUI *)w;
 
 	d->ck_autoUpdate->setChecked(PsiOptions::instance()->getOption("options.auto-update.check-on-startup").toBool());
+	d->ck_quitOnClose->setChecked(PsiOptions::instance()->getOption("options.ui.contactlist.quit-on-close").toBool());
 
 	// docklet
 	d->ck_docklet->setChecked( PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() );
 	d->ck_dockDCstyle->setChecked( PsiOptions::instance()->getOption("options.ui.systemtray.use-double-click").toBool() );
 	d->ck_dockHideMW->setChecked( PsiOptions::instance()->getOption("options.contactlist.hide-on-start").toBool() );
 	d->ck_dockToolMW->setChecked( PsiOptions::instance()->getOption("options.contactlist.use-toolwindow").toBool() );
+	doEnableQuitOnClose(d->ck_docklet->isChecked()?1:0);
 
 	// data transfer
 	d->le_dtPort->setText( QString::number(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt()) );
 	d->le_dtExternal->setText( PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString() );
+}
+
+void OptionsTabApplication::doEnableQuitOnClose(int state)
+{
+	OptApplicationUI *d = (OptApplicationUI *)w;
+	d->ck_quitOnClose->setEnabled(state>0);
 }
 
 void OptionsTabApplication::updatePortLabel()

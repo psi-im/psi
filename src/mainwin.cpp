@@ -1161,7 +1161,7 @@ void MainWin::closeEvent(QCloseEvent* e)
 	trayHide();
 	e->accept();
 #else
-	if(d->tray) {
+	if(d->tray && !PsiOptions::instance()->getOption("options.ui.contactlist.quit-on-close").toBool()) {
 		trayHide();
 		e->accept();
 		return;
