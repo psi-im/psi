@@ -354,45 +354,51 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 	QList<QPixmap> rightPixs;
 	QList<int> rightWidths;
 	if(!isMuc) {
-	if (showClientIcons_) {
-		const QList<QPixmap> pixList = this->clientPixmap(index);
+		if (showClientIcons_) {
+			const QList<QPixmap> pixList = this->clientPixmap(index);
 
-		for (QList<QPixmap>::ConstIterator it = pixList.begin(); it != pixList.end(); ++it) {
-			const QPixmap &pix = *it;
+			for (QList<QPixmap>::ConstIterator it = pixList.begin(); it != pixList.end(); ++it) {
+				const QPixmap &pix = *it;
+				rightPixs.push_back(pix);
+				rightWidths.push_back(pix.width());
+				if(!allClients_)
+					break;
+			}
+		}
+
+		if (showMoodIcons_ && !index.data(ContactListModel::MoodRole).isNull()) {
+			QVariant v = index.data(ContactListModel::MoodRole);
+			if (!v.isNull()) {
+				const QPixmap &pix = IconsetFactory::iconPixmap(QString("mood/%1").arg(v.toString()));
+				if(!pix.isNull()) {
+					rightPixs.push_back(pix);
+					rightWidths.push_back(pix.width());
+				}
+			}
+		}
+
+		if (showActivityIcons_ && !index.data(ContactListModel::ActivityRole).isNull()) {
+			QVariant v = index.data(ContactListModel::ActivityRole);
+			if (!v.isNull()) {
+				const QPixmap &pix = IconsetFactory::iconPixmap(QString("activities/%1").arg(v.toString()));
+				if(!pix.isNull()) {
+					rightPixs.push_back(pix);
+					rightWidths.push_back(pix.width());
+				}
+			}
+		}
+
+		if (showTuneIcons_ && index.data(ContactListModel::TuneRole).toBool()) {
+			const QPixmap &pix = IconsetFactory::iconPixmap("pep/tune");
 			rightPixs.push_back(pix);
 			rightWidths.push_back(pix.width());
-			if(!allClients_)
-				break;
 		}
-	}
 
-	if (showMoodIcons_ && !index.data(ContactListModel::MoodRole).isNull()) {
-		const QPixmap &pix = IconsetFactory::iconPixmap(QString("mood/%1").arg(index.data(ContactListModel::MoodRole).toString()));
-		if(!pix.isNull()) {
+		if (showGeolocIcons_ && index.data(ContactListModel::GeolocationRole).toBool()) {
+			const QPixmap &pix = IconsetFactory::iconPixmap("pep/geolocation");
 			rightPixs.push_back(pix);
 			rightWidths.push_back(pix.width());
 		}
-	}
-
-	if (showActivityIcons_ && !index.data(ContactListModel::ActivityRole).isNull()) {
-		const QPixmap &pix = IconsetFactory::iconPixmap(QString("activities/%1").arg(index.data(ContactListModel::ActivityRole).toString()));
-		if(!pix.isNull()) {
-			rightPixs.push_back(pix);
-			rightWidths.push_back(pix.width());
-		}
-	}
-
-	if (showTuneIcons_ && index.data(ContactListModel::TuneRole).toBool()) {
-		const QPixmap &pix = IconsetFactory::iconPixmap("psi/notification_roster_tune");
-		rightPixs.push_back(pix);
-		rightWidths.push_back(pix.width());
-	}
-
-        if (showGeolocIcons_ && index.data(ContactListModel::GeolocationRole).toBool()) {
-		const QPixmap &pix = IconsetFactory::iconPixmap("system/geolocation");
-		rightPixs.push_back(pix);
-		rightWidths.push_back(pix.width());
-	}
 	}
 
 	if(rightPixs.isEmpty() && mucMessages.isEmpty())

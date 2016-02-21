@@ -131,6 +131,21 @@
 	</icon>
 
 	<icon>
+		<x xmlns='name'>psi/action_muc_hide</x>
+		<object mime='image/png'>action_muc_hide.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/action_muc_leave</x>
+		<object mime='image/png'>action_muc_leave.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/action_muc_show</x>
+		<object mime='image/png'>action_muc_show.png</object>
+	</icon>
+
+	<icon>
 		<x xmlns='name'>psi/shortcuts</x>
 		<object mime='image/png'>shortcuts.png</object>
 	</icon>
@@ -408,6 +423,11 @@
 	</icon>
 
 	<icon>
+		<x xmlns='name'>psi/plugins</x>
+		<object mime='image/png'>plugins.png</object>
+	</icon>
+
+	<icon>
 		<x xmlns='name'>psi/advanced</x>
 		<object mime='image/png'>advanced.png</object>
 	</icon>
@@ -484,13 +504,23 @@
 	</icon>
 
 	<icon>
-		<x xmlns='name'>system/geolocation</x>
+		<x xmlns='name'>pep/geolocation</x>
 		<object mime='image/png'>geolocation.png</object>
 	</icon>
 
 	<icon>
-		<x xmlns='name'>activities/other</x>
+		<x xmlns='name'>pep/activities</x>
 		<object mime='image/png'>activity.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>pep/mood</x>
+		<object mime='image/png'>mood.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>pep/tune</x>
+		<object mime='image/png'>tune.png</object>
 	</icon>
 
 	<!-- Whiteboarding -->

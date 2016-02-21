@@ -92,7 +92,7 @@ public:
 		activityAction_ = new IconAction(tr("Activity"), this, QString(("activities/%1")).arg(act));
 		connect(activityAction_, SIGNAL(triggered()), SLOT(setActivity()));
 
-		geolocationAction_ = new IconAction(tr("GeoLocation"), this, "system/geolocation");
+		geolocationAction_ = new IconAction(tr("GeoLocation"), this, "pep/geolocation");
 		connect(geolocationAction_, SIGNAL(triggered()), SLOT(setGeolocation()));
 
 		setAvatarAction_ = new QAction(tr("Set Avatar"), this);
