@@ -621,12 +621,10 @@ public:
 				if((types & JingleRtp::Audio) && c.desc.media == "audio" && !audioContent)
 				{
 					audioContent = &c;
-					break;
 				}
 				else if((types & JingleRtp::Video) && c.desc.media == "video" && !videoContent)
 				{
 					videoContent = &c;
-					break;
 				}
 			}
 
@@ -670,12 +668,10 @@ public:
 				if((types & JingleRtp::Audio) && c.desc.media == "audio" && c.name == audioName && !audioContent)
 				{
 					audioContent = &c;
-					break;
 				}
 				else if((types & JingleRtp::Video) && c.desc.media == "video" && c.name == videoName && !videoContent)
 				{
 					videoContent = &c;
-					break;
 				}
 			}
 
@@ -743,12 +739,10 @@ public:
 				if((types & JingleRtp::Audio) && c.name == audioName && !audioContent)
 				{
 					audioContent = &c;
-					break;
 				}
 				else if((types & JingleRtp::Video) && c.name == videoName && !videoContent)
 				{
 					videoContent = &c;
-					break;
 				}
 			}
 
