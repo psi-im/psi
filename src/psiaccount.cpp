@@ -134,6 +134,7 @@
 #include "rc.h"
 #include "tabdlg.h"
 #include "proxy.h"
+#include "passdialog.h"
 #include "bobfilecache.h"
 #include "psicontactlist.h"
 #include "psicontact.h"
@@ -1964,10 +1965,11 @@ void PsiAccount::cs_warning(int w)
 	}
 }
 
-void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, QCATLSHandler *tlsHandler, QString *_str, bool *_reconn, bool *_disableAutoConnect, bool *_isAuthError, bool *_isTemporaryAuthFailure)
+void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, QCATLSHandler *tlsHandler, QString *_str, bool *_reconn, bool *_badPass, bool *_disableAutoConnect, bool *_isAuthError, bool *_isTemporaryAuthFailure)
 {
 	QString str;
 	bool reconn = false;
+	bool badPass = false;
 	bool disableAutoConnect = false;
 	bool isAuthError = false;
 	bool isTemporaryAuthFailure = false;
@@ -2102,8 +2104,9 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 		} else if(x == XMPP::ClientStream::MechTooWeak) {
 			s = tr("SASL mechanism too weak for this account");
 		} else if(x == XMPP::ClientStream::NotAuthorized) {
-			s = tr("Not authorized");
-			isAuthError = true;
+			s = tr("Wrong Password");
+			badPass = true;
+//			isAuthError = true;
 		} else if(x == XMPP::ClientStream::TemporaryAuthFailure) {
 			s = tr("Temporary auth failure");
 			isAuthError = true;
@@ -2121,6 +2124,7 @@ void PsiAccount::getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, 
 	//printf("str[%s], reconn=%d\n", str.latin1(), reconn);
 	*_str = str;
 	*_reconn = reconn;
+	*_badPass = badPass;
 	*_disableAutoConnect = disableAutoConnect;
 	*_isAuthError = isAuthError;
 	*_isTemporaryAuthFailure = isTemporaryAuthFailure;
@@ -2130,13 +2134,14 @@ void PsiAccount::cs_error(int err)
 {
 	QString str;
 	bool reconn;
+	bool badPass;
 	bool isAuthError;
 	bool isTemporaryAuthFailure;
 
 	if (!isActive()) return; // all cleaned up already
 
 	bool disableAutoConnect;
-	getErrorInfo(err, d->conn, d->stream, d->tlsHandler, &str, &reconn, &disableAutoConnect, &isAuthError, &isTemporaryAuthFailure);
+	getErrorInfo(err, d->conn, d->stream, d->tlsHandler, &str, &reconn, &badPass, &disableAutoConnect, &isAuthError, &isTemporaryAuthFailure);
 	if (err != RECONNECT_TIMEOUT_ERROR) {
 		d->currentConnectionError = str;
 		d->currentConnectionErrorCondition = -1;
@@ -2178,7 +2183,7 @@ void PsiAccount::cs_error(int err)
 	presenceSent = false; // this stops the idle detector?? (FIXME)
 
 	// Auto-Reconnect?
-	if(d->acc.opt_reconn && reconn) {
+	if(d->acc.opt_reconn && reconn && !badPass) {
 		isDisconnecting = false;
 		d->startReconnect();
 		return;
@@ -2189,6 +2194,12 @@ void PsiAccount::cs_error(int err)
 	stateChanged();
 	emit disconnected();
 	isDisconnecting = false;
+
+	//If a password failure, prompt for correct password
+	if (badPass) {
+			passwordPrompt();
+			return;
+	}
 
 	QString title;
 	if (d->psi->contactList()->enabledAccounts().count() > 1) {
@@ -2876,21 +2887,13 @@ void PsiAccount::setStatus(const Status &_s,  bool withPriority, bool isManualSt
 
 		// if client is not active then attempt to login
 		if(!isActive()) {
-			Jid j = d->jid;
-
-			if(!j.isValid()) {
-				QMessageBox::information(0, CAP(tr("Error")), tr("Unable to login.  Ensure your account information is filled out."));
-				modify();
-				return;
+			if (!d->acc.opt_pass && !d->acc.storeSaltedHashedPassword) {
+				passwordPrompt();
 			}
-
-			if(!d->acc.opt_pass && !d->acc.storeSaltedHashedPassword) {
-				// will call back to us later
-				new AccountLoginPassword(this);
-			} else {
+			else
 				login();
-			}
 		}
+
 		// change status
 		else {
 			if (!isConnected()) {
@@ -2938,6 +2941,19 @@ int PsiAccount::defaultPriority(const XMPP::Status &s)
 {
 	return d->acc.defaultPriority(s);
 }
+
+void PsiAccount::passwordPrompt()
+{
+	PassDialog dialog(d->jid.full());
+	dialog.setSavePassword(d->acc.opt_pass);
+
+	if(dialog.exec() == QDialog::Accepted && !dialog.password().isEmpty()) {
+		d->acc.pass = dialog.password();
+		d->acc.opt_pass = dialog.savePassword();
+		login();
+	}
+}
+
 
 void PsiAccount::setStatusDirect(const Status &_s, bool withPriority)
 {

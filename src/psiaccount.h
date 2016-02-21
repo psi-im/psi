@@ -251,7 +251,7 @@ public:
 	bool ensureKey(const Jid &);
 	void tryVerify(UserListItem *, UserResource *);
 
-	static void getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, QCATLSHandler *tlsHandler, QString *_str, bool *_reconn, bool *_disableAutoConnect, bool *_isAuthError, bool *_isTemporaryAuthFailure);
+	static void getErrorInfo(int err, AdvancedConnector *conn, Stream *stream, QCATLSHandler *tlsHandler, QString *_str, bool *_reconn, bool *_badPass, bool *_disableAutoConnect, bool *_isAuthError, bool *_isTemporaryAuthFailure);
 
 	void deleteQueueFile();
 	void sendFiles(const Jid&, const QStringList&, bool direct = false);
@@ -516,6 +516,7 @@ private:
 	void processEncryptedMessageNext();
 	void processEncryptedMessageDone();
 	void verifyStatus(const Jid &j, const Status &s);
+	inline void passwordPrompt();
 	void sentInitialPresence();
 	void requestAvatarsForAllContacts();
 

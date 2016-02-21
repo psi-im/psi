@@ -186,6 +186,7 @@ HEADERS += \
 	$$PWD/pepmanager.h \
 	$$PWD/pubsubsubscription.h \
 	$$PWD/rc.h \
+	$$PWD/passdialog.h \
 	$$PWD/psihttpauthrequest.h \
 	$$PWD/httpauthmanager.h \
 	$$PWD/ahcommand.h \
@@ -325,6 +326,7 @@ SOURCES += \
 	$$PWD/pepmanager.cpp \
 	$$PWD/pubsubsubscription.cpp \
 	$$PWD/rc.cpp \
+	$$PWD/passdialog.cpp \
 	$$PWD/httpauthmanager.cpp \
 	$$PWD/ahcommand.cpp \
 	$$PWD/ahcommandserver.cpp \
