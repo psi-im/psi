@@ -2740,9 +2740,10 @@ void PsiAccount::client_subscription(const Jid &j, const QString &str, const QSt
 	handleEvent(ae, IncomingStanza);
 }
 
-void PsiAccount::client_debugText(const QString &)
+void PsiAccount::client_debugText(const QString &txt)
 {
-	//printf("%s", str.latin1());
+	Q_UNUSED(txt);
+	//printf("%s\n", qPrintable(txt));
 	//fflush(stdout);
 }
 
