@@ -32,6 +32,7 @@
 #include "privacy/privacydlg.h"
 #include "psiiconset.h"
 #include "common.h"
+#include "mucjoindlg.h"
 
 class ContactListAccountMenu::Private : public QObject
 {
@@ -60,6 +61,7 @@ class ContactListAccountMenu::Private : public QObject
 	QAction* adminSetMotdAction_;
 	QAction* adminUpdateMotdAction_;
 	QAction* adminDeleteMotdAction_;
+	QAction *doGroupChatAction_;
 
 public:
 	Private(ContactListAccountMenu* menu, ContactListAccountGroup* _account)
@@ -99,8 +101,11 @@ public:
 		unsetAvatarAction_ = new QAction(tr("Unset Avatar"), this);
 		connect(unsetAvatarAction_, SIGNAL(triggered()), SLOT(unsetAvatar()));
 
-		bookmarksManageAction_ = new QAction(tr("Manage..."), this);
+		bookmarksManageAction_ = new QAction(tr("Manage Bookmarks"), this);
 		connect(bookmarksManageAction_, SIGNAL(triggered()), SLOT(bookmarksManage()));
+
+		doGroupChatAction_ = new IconAction(tr("Join Groupchat"), this, "psi/groupChat");
+		connect(doGroupChatAction_, SIGNAL(triggered()), SLOT(doGroupChat()));
 
 		addContactAction_ = new IconAction(tr("&Add a Contact"), this, "psi/addContact");
 		connect(addContactAction_, SIGNAL(triggered()), SLOT(addContact()));
@@ -142,7 +147,9 @@ public:
 		avatarMenu_ = menu->addMenu(IconsetFactory::icon("psi/vCard").icon(), tr("Avatar"));
 		avatarMenu_->addAction(setAvatarAction_);
 		avatarMenu_->addAction(unsetAvatarAction_);
-		bookmarksMenu_ = menu->addMenu(IconsetFactory::icon("psi/bookmarks").icon(), tr("Bookmarks"));
+		bookmarksMenu_ = menu->addMenu(IconsetFactory::icon("psi/bookmarks").icon(), tr("Groupchat"));
+		bookmarksMenu_->addAction(doGroupChatAction_);
+		bookmarksMenu_->addSeparator();
 		bookmarksMenu_->addAction(bookmarksManageAction_);
 		menu->addSeparator();
 		menu->addAction(addContactAction_);
@@ -189,9 +196,12 @@ private slots:
 		bookmarksMenu_->clear();
 		qDeleteAll(bookmarksJoinActions_);
 		bookmarksJoinActions_.clear();
+		bookmarksMenu_->addAction(doGroupChatAction_);
+		bookmarksMenu_->addSeparator();
 		bookmarksMenu_->addAction(bookmarksManageAction_);
+		bookmarksMenu_->setEnabled(true);
 		if (account->account()->bookmarkManager()->isAvailable()) {
-			bookmarksMenu_->setEnabled(true);
+			bookmarksManageAction_->setEnabled(true);
 			bookmarksMenu_->addSeparator();
 			foreach(ConferenceBookmark c, account->account()->bookmarkManager()->conferences()) {
 				QAction* joinAction = new QAction(QString(tr("Join %1")).arg(c.name()), this);
@@ -202,7 +212,7 @@ private slots:
 			}
 		}
 		else {
-			bookmarksMenu_->setEnabled(false);
+			bookmarksManageAction_->setEnabled(false);
 		}
 
 		newMessageAction_->setVisible(PsiOptions::instance()->getOption("options.ui.message.enabled").toBool());
@@ -274,6 +284,15 @@ private slots:
 			return;
 
 		account->account()->actionManageBookmarks();
+	}
+
+	void doGroupChat()
+	{
+		if (!account)
+			return;
+
+		MUCJoinDlg *w = new MUCJoinDlg(account->account()->psi(), account->account());
+		w->show();
 	}
 
 	void bookmarksJoin()
