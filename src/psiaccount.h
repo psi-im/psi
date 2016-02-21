@@ -204,6 +204,7 @@ public:
 	void groupChatChangeNick(const QString &host, const QString &room, const QString& nick, const Status &);
 	void groupChatLeave(const QString &host, const QString &room);
 
+	Jid realJid(const Jid &j) const;
 	PsiContact* selfContact() const;
 	const QList<PsiContact*>& contactList() const;
 	int onlineContactsCount() const;

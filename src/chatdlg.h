@@ -75,6 +75,7 @@ public:
 public:
 	PsiAccount* account() const;
 	void setInputText(const QString &text);
+	Jid realJid() const;
 
 signals:
 	void aInfo(const Jid &);
@@ -141,6 +142,7 @@ protected:
 	// reimplemented
 	virtual void invalidateTab();
 
+	void updateRealJid();
 	void resetComposing();
 	void doneSend();
 	virtual void setLooks();
@@ -184,6 +186,7 @@ private:
 	int transid_;
 	Message m_;
 	bool lastWasEncrypted_;
+	Jid realJid_;
 
 	// Message Events & Chat States
 	QTimer* composingTimer_;

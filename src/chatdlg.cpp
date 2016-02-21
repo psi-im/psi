@@ -112,6 +112,7 @@ ChatDlg::ChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
 	sendComposingEvents_ = false;
 	isComposing_ = false;
 	composingTimer_ = 0;
+	updateRealJid();
 }
 
 void ChatDlg::init()
@@ -366,6 +367,7 @@ void ChatDlg::setJid(const Jid &j)
 	if (!j.compare(jid())) {
 		account()->dialogUnregister(this);
 		TabbableWidget::setJid(j);
+		updateRealJid();
 		account()->dialogRegister(this, jid());
 		updateContact(jid(), false);
 	}
@@ -632,6 +634,16 @@ QString ChatDlg::desiredCaption() const
 void ChatDlg::invalidateTab()
 {
 	TabbableWidget::invalidateTab();
+}
+
+void ChatDlg::updateRealJid()
+{
+	realJid_ = account()->realJid(jid());
+}
+
+Jid ChatDlg::realJid() const
+{
+	return realJid_;
 }
 
 bool ChatDlg::isEncryptionEnabled() const

@@ -3585,6 +3585,20 @@ void PsiAccount::itemPublished(const Jid& j, const QString& n, const PubSubItem&
 	}*/
 }
 
+Jid PsiAccount::realJid(const Jid &j) const
+{
+	GCContact *c = findGCContact(j);
+	if (c) {
+		if (c->status.hasMUCItem()) {
+			return c->status.mucItem().jid();
+		} else {
+			return Jid();
+		}
+	} else {
+		return j;
+	}
+}
+
 QList<UserListItem*> PsiAccount::findRelevant(const Jid &j) const
 {
 	QList<UserListItem*> list;

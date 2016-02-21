@@ -40,6 +40,7 @@
 #include "capsmanager.h"
 #include "psicontactlist.h"
 #include "userlist.h"
+#include "psicontact.h"
 #include "jidutil.h"
 #include "xmpp_tasks.h"
 #include "lastactivitytask.h"
@@ -170,6 +171,9 @@ PsiChatDlg::PsiChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
 		: ChatDlg(jid, pa, tabManager), mCmdManager_(&mCmdSite_), tabCompletion(&mCmdManager_)
 {
 	connect(account()->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
+	connect(account(), SIGNAL(addedContact(PsiContact*)), SLOT(updateContactAdding(PsiContact*)));
+	connect(account(), SIGNAL(removedContact(PsiContact*)), SLOT(updateContactAdding(PsiContact*)));
+	connect(account(), SIGNAL(updateContact(const Jid &)), SLOT(updateContactAdding(const Jid &)));
 	mCmdManager_.registerProvider(new ChatDlgMCmdProvider(this));
 }
 
@@ -286,6 +290,7 @@ void PsiChatDlg::setLooks()
 
 	updateIdentityVisibility();
 	updateCountVisibility();
+	updateContactAdding();
 
 	// toolbuttons
 	QIcon i;
@@ -328,6 +333,26 @@ void PsiChatDlg::updateIdentityVisibility()
 	}
 }
 
+void PsiChatDlg::updateContactAdding(PsiContact* c)
+{
+	if (!c || realJid().compare(c->jid(), false)) {
+		Jid rj = realJid();
+		UserListItem *uli;
+		if (rj.isNull() || ((uli = account()->findFirstRelevant(rj)) && (uli->inList() || uli->isSelf()))) {
+			act_add_contact->setVisible(false);
+		} else {
+			act_add_contact->setVisible(true);
+		}
+	}
+}
+
+void PsiChatDlg::updateContactAdding(const Jid &j)
+{
+	if (realJid().compare(j, false)) {
+		updateContactAdding();
+	}
+}
+
 void PsiChatDlg::initToolButtons()
 {
 // typeahead find
@@ -347,6 +372,9 @@ void PsiChatDlg::initToolButtons()
 
 	act_html_text = new IconAction(tr("Set Text Format"), "psi/text", tr("Set Text Format"), 0, this);
 	connect(act_html_text, SIGNAL(triggered()), chatEdit(), SLOT(doHTMLTextMenu()));
+
+	act_add_contact = new IconAction(tr("Add Contact To Roster"), "psi/addContact", tr("Add Contact"), 0, this);
+	connect(act_add_contact, SIGNAL(triggered()), SLOT(addContact()));
 
 	connect(account()->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), this, SLOT(addEmoticon(QString)));
 	act_icon_ = new IconAction(tr("Select Icon"), "psi/smile", tr("Select Icon"), 0, this);
@@ -395,6 +423,7 @@ void PsiChatDlg::initToolBar()
 	if (AvCallManager::isSupported()) {
 		ui_.toolbar->addAction(act_voice_);
 	}
+	ui_.toolbar->addAction(act_add_contact);
 }
 
 void PsiChatDlg::contextMenuEvent(QContextMenuEvent *)
@@ -679,6 +708,13 @@ void PsiChatDlg::doMiniCmd()
 	mCmdManager_.open(new MCmdSimpleState(MCMDCHAT, tr("Command>")), QStringList() );
 }
 
+void PsiChatDlg::addContact()
+{
+	Jid j(realJid());
+	UserListItem *uli = account()->findFirstRelevant(jid());
+	QString name = uli && !uli->name().isEmpty()? uli->name() : j.node();
+	account()->openAddUserDlg(j.withResource(""), name.isEmpty()?j.node():name, "");
+}
 
 bool PsiChatDlg::eventFilter( QObject *obj, QEvent *ev ) {
 	if ( obj == chatEdit() && ev->type() == QEvent::KeyPress ) {

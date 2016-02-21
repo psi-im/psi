@@ -12,6 +12,7 @@
 #include "typeaheadfind.h"
 
 class IconAction;
+class PsiContact;
 
 class PsiChatDlg : public ChatDlg
 {
@@ -33,10 +34,13 @@ private slots:
 	void toggleSmallChat();
 	void doClearButton();
 	void doMiniCmd();
+	void addContact();
 	void buildMenu();
 	void updateCounter();
 	void updateIdentityVisibility();
 	void updateCountVisibility();
+	void updateContactAdding(PsiContact* c = 0);
+	void updateContactAdding(const Jid &j);
 
 	// reimplemented
 	void chatEditCreated();
@@ -76,6 +80,7 @@ private:
 	IconAction* act_voice_;
 	IconAction* act_find_;
 	IconAction* act_html_text;
+	IconAction* act_add_contact;
 
 	QAction *act_mini_cmd_;
 	TypeAheadFindBar *typeahead_;
