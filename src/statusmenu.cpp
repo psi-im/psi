@@ -36,10 +36,6 @@
 StatusMenu::StatusMenu(QWidget* parent, PsiCon* _psi )
 	: QMenu(parent), psi(_psi)
 {
-	const QString css = PsiOptions::instance()->getOption("options.ui.contactlist.css").toString();
-	if (!css.isEmpty()) {
-		setStyleSheet(css);
-	}
 	connect(psi, SIGNAL(statusPresetsChanged()), this, SLOT(presetsChanged()));
 	installEventFilter(this);
 }
@@ -69,10 +65,6 @@ void StatusMenu::fill()
 		IconActionGroup* submenu = new IconActionGroup(this);
 		submenu->setText(tr("Presets"));
 		submenu->setPsiIcon("psi/action_templates");
-		const QString css = o->getOption("options.ui.contactlist.css").toString();
-		if (!css.isEmpty()) {
-			submenu->popup()->setStyleSheet(css);
-		}
 		addPresets(submenu);
 		submenu->popup()->installEventFilter(this);
 	}

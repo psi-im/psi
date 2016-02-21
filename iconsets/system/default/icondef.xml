@@ -146,6 +146,16 @@
 	</icon>
 
 	<icon>
+		<x xmlns='name'>psi/action_templates</x>
+		<object mime='image/png'>action_templates.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/action_templates_edit</x>
+		<object mime='image/png'>action_templates_edit.png</object>
+	</icon>
+
+	<icon>
 		<x xmlns='name'>psi/shortcuts</x>
 		<object mime='image/png'>shortcuts.png</object>
 	</icon>

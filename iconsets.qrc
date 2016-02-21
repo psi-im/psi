@@ -95,10 +95,10 @@
         <file>iconsets/system/default/vcard.png</file>
         <file>iconsets/system/default/xml.png</file>
         <file>iconsets/system/default/publish_tune.png</file>
-	<file>iconsets/system/default/tune.png</file>
-	<file>iconsets/system/default/geolocation.png</file>
-	<file>iconsets/system/default/activity.png</file>
-	<file>iconsets/system/default/mood.png</file>
+        <file>iconsets/system/default/tune.png</file>
+        <file>iconsets/system/default/geolocation.png</file>
+        <file>iconsets/system/default/activity.png</file>
+        <file>iconsets/system/default/mood.png</file>
         <file>iconsets/system/default/default_avatar.png</file>
         <file>iconsets/system/default/notification_chat_delivery_ok.png</file>
         <file>iconsets/system/default/notification_chat_info.png</file>
@@ -106,15 +106,17 @@
         <file>iconsets/system/default/notification_chat_send.png</file>
         <file>iconsets/system/default/notification_chat_time.png</file>
         <file>iconsets/system/default/throbber.png</file>
-	<file>iconsets/system/default/enable-groups.png</file>
+        <file>iconsets/system/default/enable-groups.png</file>
         <file>iconsets/system/default/bookmark_add.png</file>
         <file>iconsets/system/default/bookmark_remove.png</file>
         <file>iconsets/system/default/action_muc_hide.png</file>
         <file>iconsets/system/default/action_muc_leave.png</file>
         <file>iconsets/system/default/action_muc_show.png</file>
+        <file>iconsets/system/default/action_templates_edit.png</file>
+        <file>iconsets/system/default/action_templates.png</file>
         <file>iconsets/system/default/theme_title_texture.png</file>
-	<file>iconsets/system/default/action_button_send.png</file>
-	<file>iconsets/system/default/action_direct_presence.png</file>
+        <file>iconsets/system/default/action_button_send.png</file>
+        <file>iconsets/system/default/action_direct_presence.png</file>
         <file>iconsets/system/default/whiteboarding/whiteboard.png</file>
         <file>iconsets/system/default/whiteboarding/save.png</file>
         <file>iconsets/system/default/whiteboarding/select.png</file>

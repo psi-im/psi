@@ -1451,14 +1451,14 @@ void MainWin::keyPressEvent(QKeyEvent* e)
 
 void MainWin::enterEvent(QEvent *e)
 {
-	if(d->useAutohide)
+	if(d->hideTimer)
 		d->hideTimer->stop();
 	QMainWindow::enterEvent(e);
 }
 
 void MainWin::leaveEvent(QEvent *e)
 {
-	if(d->useAutohide)
+	if(d->hideTimer)
 		d->hideTimer->start();
 	QMainWindow::leaveEvent(e);
 }
@@ -1592,7 +1592,7 @@ void MainWin::trayDoubleClicked()
 void MainWin::trayShow()
 {
 	bringToFront(this);
-	if(d->useAutohide)
+	if(d->hideTimer)
 		d->hideTimer->start();
 }
 
@@ -1893,7 +1893,7 @@ void MainWin::showNoFocus()
 void MainWin::showNoFocus()
 {
 	bringToFront(this);
-	if(d->useAutohide)
+	if(d->hideTimer)
 		d->hideTimer->start();
 }
 

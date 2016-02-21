@@ -31,8 +31,8 @@ RosterAvatarFrame::RosterAvatarFrame(QWidget *parent)
 	ui_.setupUi(this);
 	layout()->setMargin(PsiOptions::instance()->getOption("options.ui.contactlist.roster-avatar-frame.avatar.margin").toInt());
 	layout()->setSpacing(0);
-	setMoodIcon("mood/");
-	setActivityIcon("activities/other");
+	setMoodIcon("pep/mood");
+	setActivityIcon("pep/activities");
 	setFont();
 
 	connect(ui_.le_status_text, SIGNAL(returnPressed()), this, SLOT(statusMessageReturnPressed()));

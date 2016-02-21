@@ -183,7 +183,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	req_mutual_auth = o->getOption(base + ".require-mutual-auth").toBool();
 	legacy_ssl_probe = o->getOption(base + ".legacy-ssl-probe").toBool();
 	opt_automatic_resource = o->getOption(base + ".automatic-resource").toBool();
-	priority_dep_on_status = o->getOption(base + ".priority-depends-on-status").toBool();
+	priority_dep_on_status = o->getOption(base + ".priority-depends-on-status", false).toBool();
 	opt_log = o->getOption(base + ".log").toBool();
 	opt_reconn = o->getOption(base + ".reconn").toBool();
 	opt_ignoreSSLWarnings = o->getOption(base + ".ignore-SSL-warnings").toBool();
