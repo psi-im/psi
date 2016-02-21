@@ -102,7 +102,12 @@ void MessageView::setPlainText(const QString &text)
 void MessageView::setHtml(const QString &text)
 {
 	if (_type == Message) {
-		_emote = text.trimmed().startsWith(me_cmd);
+		QString str = TextUtil::rich2plain(text).trimmed();
+		_emote = str.startsWith(me_cmd);
+		if(_emote) {
+			setPlainText(str);
+			return;
+		}
 	}
 	_text = text;
 }

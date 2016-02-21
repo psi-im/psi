@@ -38,6 +38,8 @@
 #include "spellchecker/spellhighlighter.h"
 #include "spellchecker/spellchecker.h"
 #include "psioptions.h"
+#include "htmltextcontroller.h"
+
 
 //----------------------------------------------------------------------------
 // ChatEdit
@@ -48,6 +50,8 @@ ChatEdit::ChatEdit(QWidget *parent)
 	, check_spelling_(false)
 	, spellhighlighter_(0)
 {
+	controller_ = new HTMLTextController(this);
+
 	setWordWrapMode(QTextOption::WordWrap);
 	setAcceptRichText(false);
 
@@ -69,6 +73,7 @@ ChatEdit::~ChatEdit()
 {
 	clearMessageHistory();
 	delete spellhighlighter_;
+	delete controller_;
 }
 
 void ChatEdit::initActions()
@@ -106,6 +111,12 @@ void ChatEdit::setDialog(QWidget* dialog)
 QSize ChatEdit::sizeHint() const
 {
 	return minimumSizeHint();
+}
+
+void ChatEdit::setFont(const QFont &f)
+{
+	QTextEdit::setFont(f);
+	controller_->setFont(f);
 }
 
 bool ChatEdit::checkSpellingGloballyEnabled()
@@ -354,6 +365,47 @@ void ChatEdit::clearMessageHistory()
 {
 	typedMsgsHistory.clear();
 	typedMsgsIndex = 0;
+}
+
+XMPP::HTMLElement ChatEdit::toHTMLElement() {
+	XMPP::HTMLElement elem;
+	QString html = toHtml();
+	int index = html.indexOf("<body");
+	int lastIndex = html.lastIndexOf("</body>");
+	if(index == -1 || lastIndex == -1)
+		return elem;
+	lastIndex += 7;
+	html = html.mid(index, lastIndex-index);
+	QDomDocument doc;
+	if(!doc.setContent(html))
+		return elem;
+	QDomElement htmlElem = doc.firstChildElement("body");
+	QDomElement p = htmlElem.firstChildElement("p");
+	QDomElement body = doc.createElementNS("http://www.w3.org/1999/xhtml", "body");
+	bool foundSpan = false;
+	int paraCnt = 0;
+	while(!p.isNull()) {
+		p.setAttribute("style", "margin:0;padding:0;"); //p.removeAttribute("style");
+		body.appendChild(p.cloneNode(true).toElement());
+		if(!p.firstChildElement("span").isNull())
+			foundSpan = true;
+		p = p.nextSiblingElement("p");
+		++paraCnt;
+	}
+	if(foundSpan) {
+		if (paraCnt == 1)
+			body.firstChildElement("p").setTagName("span");
+		elem.setBody(body);
+	}
+	return elem;
+}
+
+void ChatEdit::doHTMLTextMenu() {
+	controller_->doMenu();
+}
+
+void ChatEdit::setCssString(const QString &css) {
+	controller_->setCssString(css);
 }
 
 //----------------------------------------------------------------------------

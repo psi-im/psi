@@ -23,6 +23,8 @@
 
 #include <QTextEdit>
 
+#include "xmpp_htmlelement.h"
+
 #define MAX_MESSAGE_HISTORY 50
 
 class ChatEdit;
@@ -31,6 +33,7 @@ class QKeyEvent;
 class QResizeEvent;
 class QTimer;
 class SpellHighlighter;
+class HTMLTextController;
 
 
 class ChatEdit : public QTextEdit
@@ -45,13 +48,17 @@ public:
 
 	// reimplemented
 	QSize sizeHint() const;
+	void setFont(const QFont &);
 
 	static bool checkSpellingGloballyEnabled();
 	void setCheckSpelling(bool);
+	XMPP::HTMLElement toHTMLElement();
 
 public slots:
 	void appendMessageHistory(const QString& text);
 	void clearMessageHistory();
+	void doHTMLTextMenu();
+	void setCssString(const QString& css);
 
 protected slots:
  	void applySuggestion();
@@ -86,6 +93,7 @@ private:
 	QAction* act_showMessageFirst;
 	QAction* act_showMessageLast;
 	QString currentText;
+	HTMLTextController *controller_;
 };
 
 

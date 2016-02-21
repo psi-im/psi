@@ -345,6 +345,9 @@ void PsiChatDlg::initToolButtons()
 	connect(act_find_, SIGNAL(triggered()), typeahead_, SLOT(toggleVisibility()));
 // -- typeahead
 
+	act_html_text = new IconAction(tr("Set Text Format"), "psi/text", tr("Set Text Format"), 0, this);
+	connect(act_html_text, SIGNAL(triggered()), chatEdit(), SLOT(doHTMLTextMenu()));
+
 	connect(account()->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), this, SLOT(addEmoticon(QString)));
 	act_icon_ = new IconAction(tr("Select Icon"), "psi/smile", tr("Select Icon"), 0, this);
 	act_icon_->setMenu(account()->psi()->iconSelectPopup());
@@ -380,6 +383,7 @@ void PsiChatDlg::initToolBar()
 // typeahead find bar
 	ui_.toolbar->addAction(act_find_);
 // -- typeahead
+	ui_.toolbar->addAction(act_html_text);
 	ui_.toolbar->addWidget(new StretchWidget(ui_.toolbar));
 	ui_.toolbar->addAction(act_icon_);
 	ui_.toolbar->addAction(act_file_);

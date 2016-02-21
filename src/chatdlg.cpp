@@ -681,6 +681,11 @@ void ChatDlg::doSend()
 	if (isEncryptionEnabled()) {
 		m.setWasEncrypted(true);
 	}
+
+	HTMLElement html = chatEdit()->toHTMLElement();
+	if(!html.body().isNull())
+		m.setHTML(html);
+
 	QString id = account()->client()->genUniqueId();
 	m.setId(id); // we need id early for message manipulations in chatview
 

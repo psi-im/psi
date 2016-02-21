@@ -208,6 +208,7 @@ public:
 	QString topic;
 	bool nonAnonymous;		 // got status code 100 ?
 	IconAction *act_find, *act_clear, *act_icon, *act_configure, *act_bookmark;
+	IconAction *act_html_text;
 	TypeAheadFindBar *typeahead;
 #ifdef WHITEBOARDING
 	IconAction *act_whiteboard;
@@ -673,6 +674,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	d->act_configure = new IconAction(tr("Configure Room"), "psi/configure-room", tr("&Configure Room"), 0, this);
 	connect(d->act_configure, SIGNAL(triggered()), SLOT(configureRoom()));
 
+	d->act_html_text = new IconAction(tr("Set Text Format"), "psi/text", tr("Set Text Format"), 0, this);
+	connect(d->act_html_text, SIGNAL(triggered()), d->mle(), SLOT(doHTMLTextMenu()));
+
 #ifdef WHITEBOARDING
 	d->act_whiteboard = new IconAction(tr("Open a Whiteboard"), "psi/whiteboard", tr("Open a &Whiteboard"), 0, this);
 	connect(d->act_whiteboard, SIGNAL(triggered()), SLOT(openWhiteboard()));
@@ -709,6 +713,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	ui_.toolbar->addAction(d->act_clear);
 	ui_.toolbar->addAction(d->act_find);
 	ui_.toolbar->addAction(d->act_configure);
+	ui_.toolbar->addAction(d->act_html_text);
 #ifdef WHITEBOARDING
 	ui_.toolbar->addAction(d->act_whiteboard);
 #endif
@@ -1040,6 +1045,11 @@ void GCMainDlg::mle_returnPressed()
 	Message m(jid());
 	m.setType("groupchat");
 	m.setBody(str);
+
+	HTMLElement html = d->mle()->toHTMLElement();
+	if(!html.body().isNull())
+		m.setHTML(html);
+
 	m.setTimeStamp(QDateTime::currentDateTime());
 	emit d->mle()->appendMessageHistory(m.body());
 

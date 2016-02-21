@@ -75,6 +75,7 @@ private:
 	IconAction* act_compact_;
 	IconAction* act_voice_;
 	IconAction* act_find_;
+	IconAction* act_html_text;
 
 	QAction *act_mini_cmd_;
 	TypeAheadFindBar *typeahead_;

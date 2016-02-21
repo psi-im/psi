@@ -123,6 +123,7 @@ HEADERS += \
 	$$PWD/accountregdlg.h \
 	$$PWD/accountmodifydlg.h \
 	$$PWD/changepwdlg.h \
+	$$PWD/htmltextcontroller.h \
 	$$PWD/msgmle.h \
 	$$PWD/chatviewcommon.h \
 	$$PWD/chatview.h \
@@ -264,6 +265,7 @@ SOURCES += \
 	$$PWD/accountregdlg.cpp \
 	$$PWD/accountmodifydlg.cpp \
 	$$PWD/changepwdlg.cpp \
+	$$PWD/htmltextcontroller.cpp \
 	$$PWD/msgmle.cpp \
 	$$PWD/chatviewcommon.cpp \
 	$$PWD/messageview.cpp \
