@@ -625,34 +625,37 @@ private slots:
 
 		printf("rtp_started\n");
 
-		PsiMedia::PayloadInfo audio, *pAudio;
-		PsiMedia::PayloadInfo video, *pVideo;
+		if(!incoming)
+		{
+			sess = manager->rtpManager->createOutgoing();
+			setup_sess();
+		}
 
-		pAudio = 0;
-		pVideo = 0;
-		if(transmitAudio)
+		if(transmitAudio && !rtp.localAudioPayloadInfo().isEmpty())
 		{
-			// confirm transmitting of audio is actually possible,
-			//   in the case that a file is used as input
-			if(rtp.canTransmitAudio())
+			QList<JingleRtpPayloadType> pis;
+			foreach(PsiMedia::PayloadInfo pi, rtp.localAudioPayloadInfo())
 			{
-				audio = rtp.localAudioPayloadInfo().first();
-				pAudio = &audio;
+				JingleRtpPayloadType pt = payloadInfoToPayloadType(pi);
+				pis << pt;
 			}
-			else
-				transmitAudio = false;
+			sess->setLocalAudioPayloadTypes(pis);
 		}
-		if(transmitVideo)
+		else
+			transmitAudio = false;
+
+		if(transmitVideo && !rtp.localVideoPayloadInfo().isEmpty())
 		{
-			// same for video
-			if(rtp.canTransmitVideo())
+			QList<JingleRtpPayloadType> pis;
+			foreach(PsiMedia::PayloadInfo pi, rtp.localVideoPayloadInfo())
 			{
-				video = rtp.localVideoPayloadInfo().first();
-				pVideo = &video;
+				JingleRtpPayloadType pt = payloadInfoToPayloadType(pi);
+				pis << pt;
 			}
-			else
-				transmitVideo = false;
+			sess->setLocalVideoPayloadTypes(pis);
 		}
+		else
+			transmitVideo = false;
 
 		if(transmitAudio && transmitVideo)
 			mode = AvCall::Both;
@@ -664,24 +667,6 @@ private slots:
 		{
 			// can't happen?
 			Q_ASSERT(0);
-		}
-
-		if(!incoming)
-		{
-			sess = manager->rtpManager->createOutgoing();
-			setup_sess();
-		}
-
-		if(pAudio)
-		{
-			JingleRtpPayloadType pt = payloadInfoToPayloadType(*pAudio);
-			sess->setLocalAudioPayloadTypes(QList<JingleRtpPayloadType>() << pt);
-		}
-
-		if(pVideo)
-		{
-			JingleRtpPayloadType pt = payloadInfoToPayloadType(*pVideo);
-			sess->setLocalVideoPayloadTypes(QList<JingleRtpPayloadType>() << pt);
 		}
 
 		if(!incoming)
