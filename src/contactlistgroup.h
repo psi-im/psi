@@ -93,7 +93,8 @@ public:
 		SpecialType_General,
 		SpecialType_NotInList,
 		SpecialType_Transports,
-		SpecialType_MUCPrivateChats
+		SpecialType_MUCPrivateChats,
+		SpecialType_Conference
 	};
 
 	virtual bool isSpecial() const;

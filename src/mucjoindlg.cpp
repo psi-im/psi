@@ -159,6 +159,8 @@ void MUCJoinDlg::doJoin()
 
 	GCMainDlg *gc = account_->findDialog<GCMainDlg*>(j.bare());
 	if (gc) {
+		if(gc->isHidden() && !gc->isTabbed())
+			gc->ensureTabbedCorrectly();
 		gc->bringToFront();
 		if (gc->isInactive()) {
 			if(gc->jid() != j)
@@ -198,6 +200,7 @@ void MUCJoinDlg::joined()
 
 	closeDialogs(this);
 	deleteLater();
+	account_->addMucItem(jid_.bare());
 }
 
 void MUCJoinDlg::error(int, const QString &str)

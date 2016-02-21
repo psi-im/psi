@@ -639,10 +639,11 @@ public:
 	void removeEntry(const Jid& jid)
 	{
 		PsiContact* contact = findContact(jid);
-		Q_ASSERT(contact);
-		delete contact;
-		emit account->removeContact(jid);
-
+		if (contact) {
+			Q_ASSERT(contact);
+			delete contact;
+			emit account->removeContact(jid);
+		}
 		updateOnlineContactsCount();
 	}
 
@@ -3857,6 +3858,14 @@ void PsiAccount::actionDefault(const Jid &j)
 
 	if(d->eventQueue->count(u->jid()) > 0)
 		openNextEvent(*u, UserAction);
+	else if (groupchats().contains(j.full()))
+	{
+		TabbableWidget *tab = findDialog<TabbableWidget*>(Jid(j.full()));
+		if(tab) {
+			tab->ensureTabbedCorrectly();
+			tab->bringToFront();
+		}
+	}
 	else {
 		if(PsiOptions::instance()->getOption("options.messages.default-outgoing-message-type").toString() == "message")
 			actionSendMessage(u->jid());
@@ -4831,7 +4840,8 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 #endif
 				c->incomingMessage(m);
 				soundType = eChat2;
-				if(o->getOption("options.ui.chat.alert-for-already-open-chats").toBool() && !c->isActiveTab()) {
+				if((o->getOption("options.ui.chat.alert-for-already-open-chats").toBool() && !c->isActiveTab())
+					|| (c->isTabbed() && c->getManagingTabDlg()->isHidden()) ) {
 					// to alert the chat also, we put it in the queue
 					me->setSentToChatWindow(true);
 				}
@@ -5018,6 +5028,7 @@ UserListItem* PsiAccount::addUserListItem(const Jid& jid, const QString& nick)
 	u->setInList(false);
 	u->setAvatarFactory(avatarFactory());
 	u->setName(nick);
+	u->setConference(groupchats().contains(jid.full()));
 
 	// is it a private groupchat?
 	Jid j = u->jid();
@@ -5033,6 +5044,21 @@ UserListItem* PsiAccount::addUserListItem(const Jid& jid, const QString& nick)
 		u->userResourceList().append(ur);
 	}
 
+	if(u->isConference()) {
+		// make a resource so the contact appears online
+		QString name = j.node();
+		UserResource ur;
+		foreach(ConferenceBookmark c, d->bookmarkManager->conferences())
+		{
+			if(c.jid().full() == j.bare()) name = c.name();
+		}
+		u->setInList(true);
+		u->setName(name);
+		ur.setName("Muc");
+		ur.setStatus(status());
+		u->userResourceList().append(ur);
+	}
+
 	// treat it like a push  [pushinfo]
 	//VCard info;
 	//if(readUserInfo(item->jid, &info) && !info.field[vNickname].isEmpty())
@@ -5045,6 +5071,20 @@ UserListItem* PsiAccount::addUserListItem(const Jid& jid, const QString& nick)
 	d->userList.append(u);
 	cpUpdate(*u);
 	return u;
+}
+
+void PsiAccount::addMucItem(const Jid& jid)
+{
+	if (jid.isEmpty())
+		return;
+	UserListItem *u = find(jid);
+	if (u) {
+		d->removeEntry(jid);
+		d->userList.removeAll(u);
+	}
+	if (!d->groupchats.contains(jid.bare()))
+		d->groupchats += jid.bare();
+	addUserListItem(jid.bare(), "");
 }
 
 // put an event into the event queue, and update the related alerts
@@ -5139,8 +5179,12 @@ void PsiAccount::openNextEvent(ActivationType activationType)
 	}
 
 	UserListItem *u = find(e->jid());
-	if(!u)
-		return;
+	if(!u) {
+		u = new UserListItem();
+		u->setJid(e->jid());
+		u->setInList(false);
+		d->userList.append(u);
+	}
 	openNextEvent(*u, activationType);
 }
 
@@ -5329,9 +5373,9 @@ ChatDlg* PsiAccount::openChat(const Jid& j, ActivationType activationType)
 
 void PsiAccount::chatMessagesRead(const Jid &j)
 {
-	if(PsiOptions::instance()->getOption("options.ui.chat.alert-for-already-open-chats").toBool()) {
+//	if(PsiOptions::instance()->getOption("options.ui.chat.alert-for-already-open-chats").toBool()) {
 		processChats(j);
-	}
+//	}
 }
 
 void PsiAccount::logEvent(const Jid &j, const PsiEvent::Ptr &e)
@@ -5353,17 +5397,6 @@ void PsiAccount::edb_finished()
 void PsiAccount::openGroupChat(const Jid &j, ActivationType activationType)
 {
 #ifdef GROUPCHAT
-	QString str = j.bare();
-	bool found = false;
-	for(QStringList::ConstIterator it = d->groupchats.begin(); it != d->groupchats.end(); ++it) {
-		if((*it) == str) {
-			found = true;
-			break;
-		}
-	}
-	if(!found)
-		d->groupchats += str;
-
 	GCMainDlg *w = new GCMainDlg(this, j, d->tabManager);
 	w->setPassword(d->client->groupChatPassword(j.domain(), j.node()));
 	connect(w, SIGNAL(aSend(const Message &)), SLOT(dj_sendMessage(const Message &)));
@@ -5403,8 +5436,14 @@ void PsiAccount::groupChatSetStatus(const QString &host, const QString &room, co
 
 void PsiAccount::groupChatLeave(const QString &host, const QString &room)
 {
-	d->groupchats.removeAll(room + '@' + host);
+	Jid j(room + '@' + host);
+	d->groupchats.removeAll(j.bare());
 	d->client->groupChatLeave(host, room);
+	UserListItem *u = find(j);
+	if (u) {
+		d->removeEntry(j);
+		d->userList.removeAll(u);
+	}
 }
 
 GCContact *PsiAccount::findGCContact(const Jid &j) const

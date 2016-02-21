@@ -1400,6 +1400,8 @@ void EventDlg::keyPressEvent(QKeyEvent *e)
 		close();
 	else if(ShortcutManager::instance()->shortcuts("message.send").contains(key))
 		doSend();
+	else if(ShortcutManager::instance()->shortcuts("common.hide").contains(key))
+		hide();
 	else
 		e->ignore();
 }

@@ -312,6 +312,9 @@ ContactListGroup* ContactListNestedGroup::specialGroupFor(PsiContact* contact)
 	else if (contact->isAgent()) {
 		type = ContactListGroup::SpecialType_Transports;
 	}
+	else if (contact->isConference()) {
+		type = ContactListGroup::SpecialType_Conference;
+	}
 	else if (contact->noGroups()) {
 		type = ContactListGroup::SpecialType_General;
 	}

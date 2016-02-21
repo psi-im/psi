@@ -369,7 +369,8 @@ bool PsiContact::isDragEnabled() const
 {
 	return isEditable()
 	       && !isPrivate()
-	       && !isAgent();
+	       && !isAgent()
+	       && !isConference();
 }
 
 /**
@@ -948,6 +949,11 @@ bool PsiContact::isSelf() const
 bool PsiContact::isAgent() const
 {
 	return userListItem().isTransport();
+}
+
+bool PsiContact::isConference() const
+{
+	return userListItem().isConference();
 }
 
 bool PsiContact::inList() const

@@ -116,6 +116,7 @@
 				<use-message-icons type="bool">true</use-message-icons>
 				<scaled-message-icons type="bool">false</scaled-message-icons>
 				<warn-before-clear type="bool">true</warn-before-clear>
+				<hide-when-closing type="bool">false</hide-when-closing>
 			</chat>
 			<save>
 				<toolbars-state type="QByteArray"/>
@@ -439,9 +440,13 @@
 				<scroll-up type="QKeySequence" comment="Scroll up">Shift+PgUp</scroll-up>
 				<scroll-down type="QKeySequence" comment="Scroll down">Shift+PgDown</scroll-down>
 				<close type="QVariantList" comment="Close the current window/tab">
-					<item type="QKeySequence">Esc</item>
+					<item type="QKeySequence">Ctrl+Q</item>
 					<item type="QKeySequence">Ctrl+W</item>
 				</close>
+				<hide type="QVariantList" comment="Hide the current window/tab">
+					<item type="QKeySequence">ESC</item>
+					<item type="QKeySequence">Alt+H</item>
+				</hide>
 				<history type="QKeySequence" comment="Open the message history">Ctrl+H</history>
 				<user-info type="QKeySequence" comment="Show the user info of the contact">Ctrl+I</user-info>
 			</common>

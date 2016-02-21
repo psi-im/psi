@@ -172,6 +172,7 @@ private:
 	QAction* act_scrollup_;
 	QAction* act_scrolldown_;
 	QAction* act_close_;
+	QAction* act_hide_;
 
 	int pending_;
 	bool keepOpen_;

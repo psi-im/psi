@@ -103,6 +103,7 @@ public:
 
 	bool inList() const;
 	bool isTransport() const;
+	bool isConference() const;
 	bool isAvailable() const;
 	bool isHidden() const;
 	bool isAway() const;
@@ -119,6 +120,7 @@ public:
 	QStringList clients() const;
 	QString findClient(QString name) const;
 	const Activity& activity() const;
+	QString pending() const;
 
 	void setJid(const XMPP::Jid &);
 	void setInList(bool);
@@ -128,6 +130,8 @@ public:
 	void setMood(const Mood&);
 	void setActivity(const Activity&);
 	void setTune(const QString&);
+	void setConference(bool);
+	void setPending(int p, int h);
 	const QString& tune() const;
 	void setGeoLocation(const GeoLocation&);
 	const GeoLocation& geoLocation() const;
@@ -147,12 +151,12 @@ public:
 	void setPublicKeyID(const QString &);
 
 private:
-	int lastmsgtype;
+	int lastmsgtype, v_pending, v_hPending;
 	bool v_inList;
 	QDateTime v_t;
 	UserResourceList v_url;
 	QString v_perr;
-	bool v_self, v_isTransport;
+	bool v_self, v_isTransport, v_isConference;
 	bool v_private;
 	QStringList secList;
 	QString v_keyID;

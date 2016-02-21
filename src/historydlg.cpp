@@ -234,7 +234,8 @@ void HistoryDlg::loadContacts()
 	ui_.msgLog->clear();
 	foreach (PsiContact* contact, d->pa->contactList())
 	{
-		if(contact->isPrivate()
+		if(contact->isConference()
+		|| contact->isPrivate()
 		|| jids_.contains(contact->jid().bare()))
 			continue;
 

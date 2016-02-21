@@ -268,6 +268,7 @@ public:
 	class xmlRingElem { public: int type; QDateTime time; QString xml; };
 	QList< xmlRingElem > dumpRingbuf();
 	void clearRingbuf();
+	void addMucItem(const Jid&);
 
 signals:
 	void accountDestroyed();

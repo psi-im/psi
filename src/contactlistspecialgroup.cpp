@@ -45,6 +45,10 @@ ContactListSpecialGroup::ContactListSpecialGroup(ContactListModel* model, Contac
 		name_ += "mucprivatechats";
 		displayName_ = tr("Private messages");
 		break;
+	case SpecialType_Conference:
+		name_ += "conferences";
+		displayName_ = tr("Conferences");
+		break;
 	default:
 		Q_ASSERT(false);
 	}
@@ -102,8 +106,9 @@ bool ContactListSpecialGroup::compare(const ContactListItem* other) const
 		rank[SpecialType_General]         = 0;
 		rank[SpecialType_None]            = 1;
 		rank[SpecialType_MUCPrivateChats] = 2;
-		rank[SpecialType_Transports]      = 3;
+		rank[SpecialType_Conference]      = 3;
 		rank[SpecialType_NotInList]       = 4;
+		rank[SpecialType_Transports]      = 5;
 		Q_ASSERT(rank.contains(specialGroupType()));
 		Q_ASSERT(rank.contains(group->specialGroupType()));
 		return rank[specialGroupType()] < rank[group->specialGroupType()];

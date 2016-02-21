@@ -84,6 +84,8 @@ public:
 		ClientRole = Qt::UserRole + 26,
 		TuneRole = Qt::UserRole + 27,
 		AvatarRole = Qt::UserRole + 28,
+		IsMucRole = Qt::UserRole + 29,
+		MucMessagesRole = Qt::UserRole + 30,
 
 		// groups
 		ExpandedRole = Qt::UserRole + 12,

@@ -55,6 +55,7 @@ public:
 	virtual bool isAgent() const;
 	virtual bool inList() const;
 	virtual bool isPrivate() const;
+	virtual bool isConference() const;
 	virtual bool noGroups() const;
 	virtual bool authorized() const;
 	virtual bool authorizesToSeeStatus() const;

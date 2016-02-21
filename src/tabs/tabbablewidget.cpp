@@ -50,6 +50,9 @@ void TabbableWidget::ensureTabbedCorrectly()
 		if (!isTabbed()) {
 			tabManager_->getTabs(this)->addTab(this);
 		}
+		else {
+			QTimer::singleShot(0, tabManager_->getTabs(this), SLOT(showTabWithoutActivation()));
+		}
 	}
 	else {
 		if (PsiOptions::instance()->getOption("options.ui.tabs.tab-singles").toString().contains(tabManager_->tabKind(this))) {
@@ -225,4 +228,12 @@ void TabbableWidget::setTabIcon(const QIcon &icon)
 const QIcon &TabbableWidget::icon() const
 {
 	return icon_;
+}
+
+void TabbableWidget::hideTab()
+{
+	if(isTabbed())
+		getManagingTabDlg()->hideTab(this);
+	else
+		hide();
 }

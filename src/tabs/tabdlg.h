@@ -122,6 +122,9 @@ public slots:
 	void detachTab(TabbableWidget*);
 	void sendTabTo(TabbableWidget*, TabDlg *);
 	void tabCloseRequested(int i);
+	void hideTab(TabbableWidget*);
+	void hideCurrentTab();
+	void hideAllTab();
 
 signals:
 	void resized(QSize size);

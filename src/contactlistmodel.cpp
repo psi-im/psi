@@ -555,6 +555,12 @@ QVariant ContactListModel::contactData(const PsiContact* contact, int role) cons
 		QPixmap pix = contact->account()->avatarFactory()->getAvatar(contact->jid());
 		return QVariant(pix);
 	}
+	else if (role == IsMucRole) {
+		return QVariant(contact->userListItem().isConference());
+	}
+	else if (role == MucMessagesRole) {
+		return QVariant(contact->userListItem().pending());
+	}
 #ifdef YAPSI
 	else if (role == Qt::ForegroundRole) {
 		return QVariant(Ya::statusColor(contact->status().type()));

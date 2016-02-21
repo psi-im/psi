@@ -47,6 +47,8 @@
 #include "yaprofile.h"
 #endif
 
+#include "groupchatdlg.h"
+
 //----------------------------------------------------------------------------
 // GroupMenu
 //----------------------------------------------------------------------------
@@ -251,6 +253,10 @@ public:
 	QAction* gpgUnassignKeyAction_;
 	QAction* vcardAction_;
 	QAction* historyAction_;
+	QAction* mucHideAction_;
+	QAction* mucShowAction_;
+	QAction* mucLeaveAction_;
+
 #endif
 
 public:
@@ -314,6 +320,7 @@ public:
 		menu->addAction(blockAction_);
 		menu_->addSeparator();
 		menu_->addAction(disableMoodNotificationsAction_);
+		updateActions();
 #else
 		addAuthAction_ = new IconAction(tr("Add/Authorize to Contact List"), this, "psi/addContact");
 		connect(addAuthAction_, SIGNAL(triggered()), SLOT(addAuth()));
@@ -405,48 +412,68 @@ public:
 		activeChatsMenu_->setActiveChatsMode(true);
 		connect(activeChatsMenu_, SIGNAL(resourceActivated(PsiContact*, const XMPP::Jid&)), SLOT(openActiveChat(PsiContact*, const XMPP::Jid&)));
 
-		menu_->addAction(addAuthAction_);
-		menu_->addAction(transportLogonAction_);
-		menu_->addAction(transportLogoffAction_);
-		menu_->addSeparator();
-		menu_->addAction(receiveIncomingEventAction_);
-		menu_->addSeparator();
-		msgMenu_ = menu_->addMenu(IconsetFactory::icon("psi/sendMessage").icon(), tr("Send &Message"));
-		msgMenu_->addAction(sendMessageAction_);
-		msgMenu_->addMenu(sendMessageToMenu_);
-		msgMenu_->addAction(openChatAction_);
-		msgMenu_->addMenu(openChatToMenu_);
-		menu_->addAction(openWhiteboardAction_);
-		menu_->addMenu(openWhiteboardToMenu_);
-		menu_->addMenu(executeCommandMenu_);
-		menu_->addMenu(activeChatsMenu_);
-		if(AvCallManager::isSupported()) {
-			menu_->addAction(voiceCallAction_);
-		}
-		menu_->addSeparator();
-		menu_->addAction(sendFileAction_);
-		menu_->addMenu(inviteToGroupchatMenu_);
-		menu_->addSeparator();
-		mngMenu_ = menu_->addMenu(IconsetFactory::icon("psi/manageContact").icon(), tr("Manage &Contact"));
-		mngMenu_->addAction(renameAction_);
-		mngMenu_->addMenu(groupMenu_);
-		authMenu_ = mngMenu_->addMenu(tr("&Authorization"));
-		authMenu_->addAction(authResendAction_);
-		authMenu_->addAction(authRerequestAction_);
-		authMenu_->addAction(authRemoveAction_);
-		mngMenu_->addAction(removeAction_);
-		menu_->addAction(customStatusAction_);
-		menu_->addSeparator();
-		pictureMenu_ = mngMenu_->addMenu(tr("&Picture"));
-		pictureMenu_->addAction(pictureAssignAction_);
-		pictureMenu_->addAction(pictureClearAction_);
-		mngMenu_->addAction(gpgAssignKeyAction_);
-		mngMenu_->addAction(gpgUnassignKeyAction_);
-		menu_->addAction(vcardAction_);
-		menu_->addAction(historyAction_);
-#endif
+		mucHideAction_ = new IconAction(tr("Hide"), this, "psi/action_muc_hide");
+		connect(mucHideAction_, SIGNAL(triggered()), SLOT(mucHide()));
+		mucHideAction_->setShortcuts(ShortcutManager::instance()->shortcuts("common.hide"));
 
-		updateActions();
+		mucShowAction_ = new IconAction(tr("Show"), this, "psi/action_muc_show");
+		connect(mucShowAction_, SIGNAL(triggered()), SLOT(mucShow()));
+		mucShowAction_->setShortcuts(ShortcutManager::instance()->shortcuts("contactlist.chat"));
+
+		mucLeaveAction_ = new IconAction(tr("Leave"), this, "psi/action_muc_leave");
+		connect(mucLeaveAction_, SIGNAL(triggered()), SLOT(mucLeave()));
+		mucLeaveAction_->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
+
+		if (!contact_->isConference()) {
+			menu_->addAction(addAuthAction_);
+			menu_->addAction(transportLogonAction_);
+			menu_->addAction(transportLogoffAction_);
+			menu_->addSeparator();
+			menu_->addAction(receiveIncomingEventAction_);
+			menu_->addSeparator();
+			msgMenu_ = menu_->addMenu(IconsetFactory::icon("psi/sendMessage").icon(), tr("Send &Message"));
+			msgMenu_->addAction(sendMessageAction_);
+			msgMenu_->addMenu(sendMessageToMenu_);
+			msgMenu_->addAction(openChatAction_);
+			msgMenu_->addMenu(openChatToMenu_);
+			menu_->addAction(openWhiteboardAction_);
+			menu_->addMenu(openWhiteboardToMenu_);
+			menu_->addMenu(executeCommandMenu_);
+			menu_->addMenu(activeChatsMenu_);
+			if(AvCallManager::isSupported()) {
+				menu_->addAction(voiceCallAction_);
+			}
+			menu_->addSeparator();
+			menu_->addAction(sendFileAction_);
+			menu_->addMenu(inviteToGroupchatMenu_);
+			menu_->addSeparator();
+			mngMenu_ = menu_->addMenu(IconsetFactory::icon("psi/manageContact").icon(), tr("Manage &Contact"));
+			mngMenu_->addAction(renameAction_);
+			mngMenu_->addMenu(groupMenu_);
+			authMenu_ = mngMenu_->addMenu(tr("&Authorization"));
+			authMenu_->addAction(authResendAction_);
+			authMenu_->addAction(authRerequestAction_);
+			authMenu_->addAction(authRemoveAction_);
+			mngMenu_->addAction(removeAction_);
+			menu_->addAction(customStatusAction_);
+			menu_->addSeparator();
+			pictureMenu_ = mngMenu_->addMenu(tr("&Picture"));
+			pictureMenu_->addAction(pictureAssignAction_);
+			pictureMenu_->addAction(pictureClearAction_);
+			mngMenu_->addAction(gpgAssignKeyAction_);
+			mngMenu_->addAction(gpgUnassignKeyAction_);
+			menu_->addAction(vcardAction_);
+			menu_->addAction(historyAction_);
+			updateActions();
+		}
+		else {
+			menu_->addAction(mucHideAction_);
+			menu_->addAction(mucShowAction_);
+			menu_->addAction(mucLeaveAction_);
+			menu_->addSeparator();
+			menu_->addAction(customStatusAction_);
+		}
+#endif
 	}
 
 private slots:
@@ -463,7 +490,7 @@ private slots:
 
 	void updateActions()
 	{
-		if (!contact_)
+		if (!contact_ or contact_->isConference())
 			return;
 
 #ifdef YAPSI
@@ -548,6 +575,30 @@ private slots:
 		}
 	}
 #endif
+
+
+	void mucHide()
+	{
+		GCMainDlg *gc = contact_->account()->findDialog<GCMainDlg*>(contact_->jid());
+		if (gc && (gc->isTabbed() || !gc->isHidden()))
+			gc->hideTab();
+	}
+
+	void mucShow()
+	{
+		GCMainDlg *gc = contact_->account()->findDialog<GCMainDlg*>(contact_->jid());
+		if (gc) {
+			gc->ensureTabbedCorrectly();
+			gc->bringToFront();
+		}
+	}
+
+	void mucLeave()
+	{
+		GCMainDlg *gc = contact_->account()->findDialog<GCMainDlg*>(contact_->jid());
+		if (gc)
+			gc->close();
+	}
 
 	void rename()
 	{

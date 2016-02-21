@@ -260,8 +260,11 @@ UserListItem::UserListItem(bool self)
 	v_inList = false;
 	v_self = self;
 	v_private = false;
+	v_isConference = false;
 	v_avatarFactory = NULL;
 	lastmsgtype = -1;
+	v_pending = 0;
+	v_hPending = 0;
 }
 
 UserListItem::~UserListItem()
@@ -368,6 +371,32 @@ void UserListItem::setJid(const Jid &j)
 bool UserListItem::isTransport() const
 {
 	return v_isTransport;
+}
+
+bool UserListItem::isConference() const
+{
+	return v_isConference;
+}
+
+void UserListItem::setConference(bool b)
+{
+	v_isConference = b;
+}
+
+void UserListItem::setPending(int p, int h)
+{
+	v_pending = p;
+	v_hPending = h;
+}
+
+QString UserListItem::pending() const
+{
+	QString str;
+	if (v_hPending)
+		str = QString("[%1/%2]").arg(v_pending).arg(v_hPending);
+	else if (v_pending)
+		str = QString("[%1]").arg(v_pending);
+	return str;
 }
 
 bool UserListItem::isAvailable() const
@@ -486,7 +515,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 		str += QString("<div style='white-space:pre'>%1</div>").arg(TextUtil::escape(nick));
 
 	// subscription
-	if(!v_self && subscription().type() != Subscription::Both)
+	if(!v_self && !v_isConference && subscription().type() != Subscription::Both)
 		str += QString("<div style='white-space:pre'>") + QObject::tr("Subscription") + ": " + subscription().toString() + "</div>";
 
 	if(!v_keyID.isEmpty())
@@ -590,7 +619,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 			}
 
 			// MUC
-			if(r.status().hasMUCItem()) {
+			if(!v_isConference && r.status().hasMUCItem()) {
 				if(!r.status().mucItem().jid().isEmpty())
 					str += QString("<div style='white-space:pre'>") + QObject::tr("JID: %1").arg(JIDUtil::toString(r.status().mucItem().jid(),true)) + QString("</div>");
 				if(r.status().mucItem().role() != MUCItem::NoRole)

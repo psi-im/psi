@@ -260,6 +260,7 @@ void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent * event)
 
 	if (tab != -1) {
 		QAction *d = 0;
+		QAction *h = tabMenu_->addAction(tr("Hide Tab"));
 		if(userManagement_) {
 			d = tabMenu_->addAction(tr("Detach Tab"));
 		}
@@ -288,6 +289,9 @@ void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent * event)
 		else if (act == d) {
 			detachTab(getTab(tab));
 		}
+		else if(act == h) {
+			hideTab(getTab(tab));
+		}
 		else {
 			TabDlg* target = sentTos[act];
 			if (target)
@@ -299,6 +303,8 @@ void TabDlg::showTabMenu(int tab, QPoint pos, QContextMenuEvent * event)
 void TabDlg::tab_aboutToShowMenu(QMenu *menu)
 {
 	menu->addSeparator();
+	menu->addAction(tr("Hide Current Tab"), this, SLOT(hideCurrentTab()));
+	menu->addAction(tr("Hide All Tabs"), this, SLOT(hideAllTab()));
 	menu->addAction(tr("Detach Current Tab"), this, SLOT(detachCurrentTab()));
 	menu->addAction(tr("Close Current Tab"), this, SLOT(closeCurrentTab()));
 
@@ -415,6 +421,22 @@ void TabDlg::showTabWithoutActivation()
 	showWithoutActivation();
 }
 
+void TabDlg::hideCurrentTab()
+{
+	hideTab(static_cast<TabbableWidget*>(tabWidget_->currentPage()));
+}
+
+void TabDlg::hideTab(TabbableWidget* tab)
+{
+	closeTab(tab, false);
+}
+
+void TabDlg::hideAllTab()
+{
+	foreach(TabbableWidget* tab, tabs_)
+		hideTab(tab);
+}
+
 void TabDlg::detachCurrentTab()
 {
 	detachTab(static_cast<TabbableWidget*>(tabWidget_->currentPage()));
@@ -469,6 +491,7 @@ void TabDlg::closeTab(TabbableWidget* chat, bool doclose)
 	chat->hide();
 	removeTabWithNoChecks(chat);
 	chat->setParent(0);
+	chat->deactivated();
 	if (tabWidget_->count() > 0) {
 		updateCaption();
 	}
@@ -491,6 +514,10 @@ void TabDlg::checkHasChats()
 {
 	if (tabWidget_->count() > 0 || this != window())
 		return;
+	if (tabs_.count() > 0) {
+		hide();
+		return;
+	}
 	deleteLater();
 }
 
@@ -543,8 +570,13 @@ void TabDlg::closeEvent(QCloseEvent* closeEvent)
 			return;
 		}
 	}
-	foreach(TabbableWidget* tab, tabs_) {
-		closeTab(tab);
+	if(PsiOptions::instance()->getOption("options.ui.chat.hide-when-closing").toBool()) {
+		hide();
+	}
+	else {
+		foreach(TabbableWidget* tab, tabs_) {
+			closeTab(tab);
+		}
 	}
 }
 

@@ -214,7 +214,7 @@ public:
 #endif
 	QAction *act_send, *act_scrollup, *act_scrolldown, *act_close;
 
-	QAction *act_mini_cmd, *act_nick;
+	QAction *act_mini_cmd, *act_nick, *act_hide;
 
 	MCmdSimpleSite mCmdSite;
 	MCmdManager mCmdManager;
@@ -223,6 +223,7 @@ public:
 
 	QMenu *pm_settings;
 	int pending;
+	int hPending; // highlight pending
 	bool connecting;
 
 	QStringList hist;
@@ -602,6 +603,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	d->mucManager = new MUCManager(account()->client(), jid());
 
 	d->pending = 0;
+	d->hPending = 0;
 	d->connecting = false;
 
 	d->histAt = 0;
@@ -722,6 +724,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	d->act_close = new QAction(this);
 	addAction(d->act_close);
 	connect(d->act_close,SIGNAL(triggered()), SLOT(close()));
+	d->act_hide = new QAction(this);
+	addAction(d->act_hide);
+	connect(d->act_hide,SIGNAL(triggered()), SLOT(hideTab()));
 	d->act_scrollup = new QAction(this);
 	addAction(d->act_scrollup);
 	connect(d->act_scrollup,SIGNAL(triggered()), SLOT(scrollUp()));
@@ -844,6 +849,7 @@ void GCMainDlg::setShortcuts()
 	} else {
 		d->act_close->QAction::setShortcuts (QList<QKeySequence>());
 	}
+	d->act_hide->setShortcuts(ShortcutManager::instance()->shortcuts("common.hide"));
 	d->act_scrollup->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-up"));
 	d->act_scrolldown->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-down"));
 	d->act_mini_cmd->setShortcuts(ShortcutManager::instance()->shortcuts("chat.quick-command"));
@@ -862,6 +868,8 @@ void GCMainDlg::scrollDown()
 void GCMainDlg::closeEvent(QCloseEvent *e)
 {
 	e->accept();
+	if (d->state != Private::Connected)
+		account()->groupChatLeave(d->dlg->jid().domain(),d->dlg->jid().node());
 }
 
 void GCMainDlg::deactivated()
@@ -877,6 +885,12 @@ void GCMainDlg::activated()
 
 	if(d->pending > 0) {
 		d->pending = 0;
+		d->hPending = 0;
+		UserListItem* u = account()->find(d->dlg->jid().bare());
+		if (u) {
+			u->setPending(d->pending, d->hPending);
+			account()->updateEntry(*u);
+		}
 		invalidateTab();
 	}
 	doFlash(false);
@@ -1360,6 +1374,14 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 	if (nick == d->self) {
 		if(s.isAvailable())
 			setStatusTabIcon(s.type());
+		UserListItem* u = account()->find(d->dlg->jid().bare());
+		if(u) {
+			Resource r;
+			r.setName("Muc");
+			r.setStatus(s);
+			u->userResourceList().replace(0, r);
+			account()->updateEntry(*u);
+		}
 		// Update configuration dialog
 		if (d->configDlg) {
 			d->configDlg->setRoleAffiliation(s.mucItem().role(),s.mucItem().affiliation());
@@ -1639,6 +1661,7 @@ void GCMainDlg::joined()
 		setConnecting();
 		appendSysMsg(tr("Connected."), true);
 	}
+	account()->addMucItem(d->dlg->jid().bare());
 }
 
 void GCMainDlg::setPassword(const QString& p)
@@ -1710,6 +1733,13 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
 	// if we're not active, notify the user by changing the title
 	if(!isActiveTab() && !mv.isLocal()) {
 		++d->pending;
+		if(alert)
+			++d->hPending;
+		UserListItem* u = account()->find(d->dlg->jid().bare());
+		if (u) {
+			u->setPending(d->pending, d->hPending);
+			account()->updateEntry(*u);
+		}
 		invalidateTab();
 	}
 

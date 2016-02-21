@@ -78,6 +78,7 @@ public slots:
 	virtual void activated();
 	void bringToFront(bool raiseWindow = true);
 	virtual void ensureTabbedCorrectly();
+	void hideTab();
 
 protected:
 	virtual void setJid(const Jid&);

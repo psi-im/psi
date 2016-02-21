@@ -173,6 +173,10 @@ void ChatDlg::initActions()
 	addAction(act_close_);
 	connect(act_close_, SIGNAL(triggered()), SLOT(close()));
 
+	act_hide_ = new QAction(this);
+	addAction(act_hide_);
+	connect(act_hide_, SIGNAL(triggered()), SLOT(hideTab()));
+
 	act_scrollup_ = new QAction(this);
 	addAction(act_scrollup_);
 	connect(act_scrollup_, SIGNAL(triggered()), chatView(), SLOT(scrollUp()));
@@ -193,6 +197,7 @@ void ChatDlg::setShortcuts()
 	act_send_->setShortcuts(ShortcutManager::instance()->shortcuts("chat.send"));
 	act_scrollup_->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-up"));
 	act_scrolldown_->setShortcuts(ShortcutManager::instance()->shortcuts("common.scroll-down"));
+	act_hide_->setShortcuts(ShortcutManager::instance()->shortcuts("common.hide"));
 
 	if(!isTabbed()) {
 		act_close_->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));

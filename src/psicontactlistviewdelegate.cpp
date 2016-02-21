@@ -333,7 +333,9 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 			txtRect.setHeight(r.height() - txtRect.height());
 			o.font.setPointSize(qMax(o.font.pointSize()-2, 7));
 			o.fontMetrics = QFontMetrics(o.font);
+			painter->save();
 			drawText(painter, o, txtRect, statusMsg, index);
+			painter->restore();
 		}
 	}
 	else {
@@ -343,9 +345,15 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 		drawText(painter, o, r, text, index);
 	}
 
+	bool isMuc = index.data(ContactListModel::IsMucRole).toBool();
+	QString mucMessages;
+	if(isMuc)
+		mucMessages = index.data(ContactListModel::MucMessagesRole).toString();
+
 	QRect iconRect(r);
 	QList<QPixmap> rightPixs;
 	QList<int> rightWidths;
+	if(!isMuc) {
 	if (showClientIcons_) {
 		const QList<QPixmap> pixList = this->clientPixmap(index);
 
@@ -385,18 +393,23 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 		rightPixs.push_back(pix);
 		rightWidths.push_back(pix.width());
 	}
+	}
 
-	if(rightPixs.isEmpty())
+	if(rightPixs.isEmpty() && mucMessages.isEmpty())
 		return;
 
 	int sumWidth = 0;
-	foreach (int w, rightWidths) {
-		sumWidth += w;
+	if(isMuc)
+		sumWidth = fontMetrics_->width(mucMessages);
+	else {
+		foreach (int w, rightWidths) {
+			sumWidth += w;
+		}
+		sumWidth+=rightPixs.count();
 	}
 	QColor bgc = (option.state & QStyle::State_Selected) ? palette.color(QPalette::Highlight) : palette.color(QPalette::Base);
 	QColor tbgc = bgc;
 	tbgc.setAlpha(0);
-	sumWidth+=rightPixs.count();
 	QLinearGradient grad(r.right() - sumWidth - 20, 0, r.right() - sumWidth, 0);
 	grad.setColorAt(0, tbgc);
 	grad.setColorAt(1, bgc);
@@ -405,10 +418,16 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 	gradRect.setLeft(gradRect.right() - sumWidth - 20);
 	painter->fillRect(gradRect, tbakBr);
 
-	for (int i=0; i<rightPixs.size(); i++) {
-		const QPixmap pix = rightPixs[i];
-		iconRect.setRight(iconRect.right() - pix.width() -1);
-		painter->drawPixmap(iconRect.topRight(), pix);
+	if(isMuc) {
+		iconRect.setLeft(iconRect.right() - sumWidth - 1);
+		painter->drawText(iconRect, mucMessages);
+	}
+	else {
+		for (int i=0; i<rightPixs.size(); i++) {
+			const QPixmap pix = rightPixs[i];
+			iconRect.setRight(iconRect.right() - pix.width() -1);
+			painter->drawPixmap(iconRect.topRight(), pix);
+		}
 	}
 
 #if 0
