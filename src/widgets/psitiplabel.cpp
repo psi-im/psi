@@ -11,6 +11,7 @@
 #include <QTextEdit>
 
 #include "psirichtext.h"
+#include "psioptions.h"
 
 PsiTipLabel *PsiTipLabel::instance_ = 0;
 
@@ -38,6 +39,22 @@ void PsiTipLabel::init(const QString& text)
 	setForegroundRole(QPalette::ToolTipText);
 	setBackgroundRole(QPalette::ToolTipBase);
 	setPalette(QToolTip::palette());
+
+	enableColoring_ = PsiOptions::instance()->getOption("options.ui.look.colors.tooltip.enable").toBool();
+	if(enableColoring_){
+		QColor textColor(PsiOptions::instance()->getOption("options.ui.look.colors.tooltip.text").toString());
+		QColor baseColor(PsiOptions::instance()->getOption("options.ui.look.colors.tooltip.background").toString());
+		if(textColor.isValid() && baseColor.isValid() && textColor != baseColor) { //looks fine
+			QPalette palette(QToolTip::palette());
+			palette.setColor(QPalette::ToolTipText, textColor);
+			palette.setColor(QPalette::ToolTipBase, baseColor);
+			palette.setColor(QPalette::WindowText, textColor);
+			palette.setColor(QPalette::Window, baseColor);
+			setPalette(palette);
+		} else {
+			enableColoring_ = false;
+		}
+	}
 }
 
 void PsiTipLabel::setText(const QString& text)
@@ -160,7 +177,11 @@ void PsiTipLabel::paintEvent(QPaintEvent *)
 	QStylePainter p(this);
 	QStyleOptionFrame opt;
 	opt.init(this);
-	p.drawPrimitive(QStyle::PE_PanelTipLabel, opt);
+	if(enableColoring_) {
+		p.drawPrimitive(QStyle::PE_Frame, opt);
+	} else {
+		p.drawPrimitive(QStyle::PE_PanelTipLabel, opt);
+	}
 	p.end();
 
 	// stolen from QLabel::paintEvent

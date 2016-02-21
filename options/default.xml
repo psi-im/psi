@@ -285,6 +285,11 @@
 						<status-change-animation2 type="QColor">#969696</status-change-animation2>
 						<status-messages type="QColor">#808080</status-messages>
 					</contactlist>
+					<tooltip>
+						<enable comment="Enable tooltip coloring feature" type="bool">true</enable>
+						<background comment="Tooltip background color" type="QColor">#e9ecc7</background>
+						<text comment="Tooltip text color" type="QColor">#000000</text>
+					</tooltip>
 					<muc>
 						<nick-colors type="QStringList" >
 							<item>Blue</item>

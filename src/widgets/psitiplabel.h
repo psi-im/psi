@@ -40,6 +40,7 @@ private:
 	QString theText_;
 	bool isRichText;
 	int margin;
+	bool enableColoring_;
 	// int indent;
 
 	virtual void initUi();
