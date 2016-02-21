@@ -540,7 +540,7 @@ bool PsiCon::init()
 	connect(d->mainwin, SIGNAL(doManageAccounts()), SLOT(doManageAccounts()));
 	connect(d->mainwin, SIGNAL(doGroupChat()), SLOT(doGroupChat()));
 	connect(d->mainwin, SIGNAL(blankMessage()), SLOT(doNewBlankMessage()));
-	connect(d->mainwin, SIGNAL(statusChanged(int)), SLOT(statusMenuChanged(int)));
+	connect(d->mainwin, SIGNAL(statusChanged(XMPP::Status::Type)), SLOT(statusMenuChanged(XMPP::Status::Type)));
 	connect(d->mainwin, SIGNAL(statusMessageChanged(QString)), SLOT(setStatusMessage(QString)));
 	connect(d->mainwin, SIGNAL(doOptions()), SLOT(doOptions()));
 	connect(d->mainwin, SIGNAL(doToolbars()), SLOT(doToolbars()));
@@ -719,6 +719,11 @@ bool PsiCon::haveAutoUpdater() const
 	return d->autoUpdater != 0;
 }
 
+void PsiCon::updateStatusPresets()
+{
+	emit statusPresetsChanged();
+}
+
 void PsiCon::registerCaps(const QString& ext, const QStringList& features)
 {
 	DiscoItem::Identity identity = { "client", ApplicationInfo::name(), "pc" };
@@ -844,7 +849,7 @@ void PsiCon::changeProfile()
 		if (messageBox.clickedButton() == cancel)
 			return;
 
-		setStatusFromDialog(XMPP::Status::Offline, false, true);
+		setGlobalStatus(XMPP::Status::Offline, false, true);
 	}
 
 	doQuit(QuitProfile);
@@ -1007,37 +1012,67 @@ void PsiCon::removeAccount(PsiAccount *pa)
 	d->contactList->removeAccount(pa);
 }
 
-void PsiCon::statusMenuChanged(int x)
+void PsiCon::statusMenuChanged(XMPP::Status::Type x, bool forceDialog)
 {
 #ifndef YAPSI
-	if(x == STATUS_OFFLINE && !PsiOptions::instance()->getOption("options.status.ask-for-message-on-offline").toBool()) {
-		setGlobalStatus(PsiAccount::loggedOutStatus(), false, true);
-		if(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() == true)
-			d->mainwin->setTrayToolTip(Status(Status::Offline, "", 0));
+	QString optionName;
+	if (!forceDialog)
+	{
+		switch (x) {
+		case STATUS_OFFLINE:
+			optionName = "offline";
+			break;
+		case STATUS_ONLINE:
+			optionName = "online";
+			break;
+		case STATUS_CHAT:
+			optionName = "chat";
+			break;
+		case STATUS_AWAY:
+			optionName = "away";
+			break;
+		case STATUS_XA:
+			optionName = "xa";
+			break;
+		case STATUS_DND:
+			optionName = "dnd";
+			break;
+		default:
+			break;
+		}
+	}
+	PsiOptions* o = PsiOptions::instance();
+	//If option name is not empty (it is empty for Invisible) and option is set to ask for message, show dialog
+	if (forceDialog || (!optionName.isEmpty() && o->getOption("options.status.ask-for-message-on-" + optionName).toBool())) {
+		StatusSetDlg *w = new StatusSetDlg(this, makeLastStatus(x), lastPriorityNotEmpty());
+		connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), SLOT(setGlobalStatus(const XMPP::Status &, bool, bool)));
+		connect(w, SIGNAL(cancelled()), SLOT(updateMainwinStatus()));
+		if(o->getOption("options.ui.systemtray.enable").toBool() == true)
+			connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), d->mainwin, SLOT(setTrayToolTip(const XMPP::Status &, bool, bool)));
+		w->show();
 	}
 	else {
-		if(x == STATUS_ONLINE && !PsiOptions::instance()->getOption("options.status.ask-for-message-on-online").toBool()) {
-			setGlobalStatus(Status(), false, true);
-			if(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() == true)
-				d->mainwin->setTrayToolTip(Status());
+		Status status;
+		switch (x) {
+		case STATUS_OFFLINE:
+			status = PsiAccount::loggedOutStatus();
+			break;
+		case STATUS_INVISIBLE:
+			status = Status("","",0,true);
+			status.setIsInvisible(true);
+			break;
+		default:
+			status = Status((XMPP::Status::Type)x, "", 0);
+			break;
 		}
-		else if(x == STATUS_INVISIBLE){
-			Status s("","",0,true);
-			s.setIsInvisible(true);
-			setGlobalStatus(s, false, true);
-			if(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() == true)
-				d->mainwin->setTrayToolTip(s);
+		if (o->getOption("options.status.last-overwrite.by-status").toBool()) {
+			o->setOption("options.status.last-priority", "");
+			o->setOption("options.status.last-message", "");
+			o->setOption("options.status.last-status", status.typeString());
 		}
-		else {
-			// Create a dialog with the last status message
-			StatusSetDlg *w = new StatusSetDlg(this, makeStatus(x, currentStatusMessage()));
-			connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), SLOT(setStatusFromDialog(const XMPP::Status &, bool, bool)));
-			connect(w, SIGNAL(cancelled()), SLOT(updateMainwinStatus()));
-			if(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() == true)
-				connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), d->mainwin, SLOT(setTrayToolTip(const XMPP::Status &, bool, bool)));
-			w->show();
-		}
+		setGlobalStatus(status, false, true);
 	}
+
 #else
 	setGlobalStatus(makeStatus(x, currentStatusMessage()), false, true);
 #endif
@@ -1070,16 +1105,6 @@ XMPP::Status::Type PsiCon::currentStatusType() const
 #endif
 }
 
-XMPP::Status::Type PsiCon::lastLoggedInStatusType() const
-{
-#ifdef YAPSI
-	return d->mainwin->lastLoggedInStatusType();
-#else
-// FIXME: Has to use status type from global status type selector
-	return XMPP::Status::Online;
-#endif
-}
-
 QString PsiCon::currentStatusMessage() const
 {
 #ifdef YAPSI
@@ -1087,16 +1112,15 @@ QString PsiCon::currentStatusMessage() const
 		return QString();
 	return d->mainwin->statusMessage();
 #else
-	return PsiOptions::instance()->getOption("options.status.last-message").toString();
-#endif
-}
-
-void PsiCon::setStatusFromDialog(const XMPP::Status &s, bool withPriority, bool isManualStatus)
-{
-	if (isManualStatus) {
-		PsiOptions::instance()->setOption("options.status.last-message", s.status());
+	QString message = "";
+	foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
+		if(account->loggedIn()) {
+			message = account->status().status();
+			break;
+		}
 	}
-	setGlobalStatus(s, withPriority, isManualStatus);
+	return message;
+#endif
 }
 
 void PsiCon::setStatusFromCommandline(const QString &status, const QString &message)
@@ -1130,6 +1154,20 @@ void PsiCon::setGlobalStatus(const Status &s, bool withPriority, bool isManualSt
 			account->setStatus(s, withPriority, isManualStatus);
 
 	emit statusMessageChanged(s.status());
+}
+
+void PsiCon::showStatusDialog(const QString& presetName)
+{
+	StatusPreset preset;
+	preset.fromOptions(PsiOptions::instance(), presetName);
+	int priority = preset.priority().hasValue() ? preset.priority().value() : 0;
+	Status status(preset.status(), preset.message(), priority);
+	StatusSetDlg *w = new StatusSetDlg(this, status, preset.priority().hasValue());
+	connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), SLOT(setGlobalStatus(const XMPP::Status &, bool, bool)));
+	connect(w, SIGNAL(cancelled()), SLOT(updateMainwinStatus()));
+	if(PsiOptions::instance()->getOption("options.ui.systemtray.enable").toBool() == true)
+		connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), d->mainwin, SLOT(setTrayToolTip(const XMPP::Status &, bool, bool)));
+	w->show();
 }
 
 void PsiCon::setStatusMessage(QString message)
@@ -1307,6 +1345,21 @@ void PsiCon::doToolbars()
 		w = new OptionsDlg(this);
 		connect(w, SIGNAL(applyOptions()), SLOT(slotApplyOptions()));
 		w->openTab("toolbars");
+		w->show();
+	}
+}
+
+void PsiCon::doStatusPresets()
+{
+	OptionsDlg *w = (OptionsDlg *)dialogFind("OptionsDlg");
+	if (w) {
+		w->openTab("status");
+		bringToFront(w);
+	}
+	else {
+		w = new OptionsDlg(this);
+		connect(w, SIGNAL(applyOptions()), SLOT(slotApplyOptions()));
+		w->openTab("status");
 		w->show();
 	}
 }
@@ -1756,7 +1809,14 @@ void PsiCon::doWakeup()
 	foreach(PsiAccount* account, d->contactList->enabledAccounts()) {
 		if (account->userAccount().opt_connectAfterSleep) {
 			// Should we do this when the network comes up ?
-			account->setStatus(Status("", "", account->userAccount().priority));
+			if (account->accountOptions().opt_autoSameStatus) {
+				Status s = account->accountOptions().lastStatus;
+				account->setStatus(s, account->accountOptions().lastStatusWithPriority, true);
+				emit statusMessageChanged(s.status());
+			}
+			else {
+				account->setStatus(makeStatus(XMPP::Status::Online, ""), false, true);
+			}
 		}
 	}
 }

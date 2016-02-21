@@ -24,7 +24,7 @@
 
 #include "psiaccount.h"
 #include "contactlistaccountgroup.h"
-#include "statusmenu.h"
+#include "accountstatusmenu.h"
 #include "serverinfomanager.h"
 #include "bookmarkmanager.h"
 #include "psioptions.h"
@@ -39,7 +39,7 @@ class ContactListAccountMenu::Private : public QObject
 	Q_OBJECT
 
 	QPointer<ContactListAccountGroup> account;
-	StatusMenu* statusMenu_;
+	AccountStatusMenu* statusMenu_;
 	QAction* moodAction_;
 	QAction* activityAction_;
 	QAction* geolocationAction_;
@@ -73,10 +73,14 @@ public:
 		connect(account->account(), SIGNAL(updatedActivity()), SLOT(updateActions()));
 		connect(account->account(), SIGNAL(updatedAccount()), SLOT(updateActions()));
 
-		statusMenu_ = new StatusMenu(0);
+		statusMenu_ = new AccountStatusMenu(0, account->account()->psi(), account->account());
+		statusMenu_->fill();
 		statusMenu_->setTitle(tr("&Status"));
 		statusMenu_->setIcon(PsiIconset::instance()->status(makeSTATUS(account->account()->status())).icon());
-		connect(statusMenu_, SIGNAL(statusChanged(XMPP::Status::Type)), SLOT(statusChanged(XMPP::Status::Type)));
+		connect(statusMenu_, SIGNAL(statusSelected(XMPP::Status::Type, bool)), SLOT(statusChanged(XMPP::Status::Type, bool)));
+		connect(statusMenu_, SIGNAL(statusPresetSelected(const XMPP::Status &, bool, bool)), account->account(), SLOT(setStatus(const XMPP::Status &, bool, bool)));
+		connect(statusMenu_, SIGNAL(statusPresetDialogForced(const QString &)), account->account(), SLOT(showStatusDialog(const QString &)));
+		connect(statusMenu_, SIGNAL(reconnectActivated()), account->account(), SLOT(reconnectOnce()));
 
 		QString moodIcon = account->account()->mood().typeValue();
 		if (!moodIcon.isNull()) {
@@ -181,7 +185,7 @@ private slots:
 		if (!account)
 			return;
 
-		statusMenu_->setStatus(account->account()->status().type());
+		statusMenu_->statusChanged(account->account()->status());
 #ifndef USE_PEP
 		moodAction_->setVisible(false);
 		activityAction_->setVisible(false);
@@ -230,12 +234,12 @@ private slots:
 		adminDeleteMotdAction_->setVisible(newMessageAction_->isVisible());
 	}
 
-	void statusChanged(XMPP::Status::Type statusType)
+	void statusChanged(XMPP::Status::Type statusType, bool forceDialog)
 	{
 		if (!account)
 			return;
 
-		account->account()->changeStatus(static_cast<int>(statusType));
+		account->account()->changeStatus(static_cast<int>(statusType), forceDialog);
 	}
 
 	void setMood()

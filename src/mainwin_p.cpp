@@ -301,7 +301,6 @@ void PopupAction::setIcon (const PsiIcon *icon, bool showText, bool alert)
 
 void PopupAction::setText (const QString &text)
 {
-	IconAction::setText (text);
 	foreach(PopupActionButton* btn, d->buttons) {
 		btn->setLabel (text);
 	}

@@ -205,10 +205,34 @@ void OptionsTree::mapPut(const QString &basename, const QVariant &key, const QSt
 	setOption(mapPut(basename, key) + '.' + node, value);
 }
 
-QVariantList OptionsTree::mapKeyList(const QString &basename) const
+bool mapKeyListLessThanByNumber(const QString &s1, const QString &s2)
+{
+	int dotpos = s1.lastIndexOf('.');
+	if (s1.leftRef(dotpos+1).compare(s2.leftRef(dotpos+1)) == 0)
+	{
+		QString name1 = s1.mid(dotpos+1), name2 = s2.mid(dotpos+1);
+		if (name1[0] == 'm' && name2[0] == 'm')
+		{
+			bool ok1 = false, ok2 = false;
+			unsigned int n1 = name1.mid(1).toUInt(&ok1), n2 = name2.mid(1).toUInt(&ok2);
+			if (ok1 && ok2)
+			{
+				return n1 < n2;
+			}
+		}
+	}
+	//fallback to string comparison
+	return s1 < s2;
+}
+
+QVariantList OptionsTree::mapKeyList(const QString &basename, bool sortedByNumbers) const
 {
 	QVariantList ret;
 	QStringList children = getChildOptionNames( basename, true, true);
+	if (sortedByNumbers)
+	{
+		qSort(children.begin(), children.end(), mapKeyListLessThanByNumber);
+	}
 	foreach (QString path, children) {
 		ret << getOption(path+".key");
 	}

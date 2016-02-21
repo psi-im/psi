@@ -65,6 +65,9 @@ public:
 
 	void addTab(OptionsTab *);
 
+public slots:
+	void enableOtherTabs(bool);
+
 private:
 	void init();
 	QWidget *w;

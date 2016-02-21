@@ -27,6 +27,7 @@
 #include <QStringList>
 #include <QList>
 #include <QColor>
+#include <QGridLayout>
 
 class QMenu;
 
@@ -111,6 +112,8 @@ enum { EventPriorityDontCare = -1 };
 #define STATUS_ERROR	 102
 
 QString status2txt(int status);
+bool lastPriorityNotEmpty();
+XMPP::Status makeLastStatus(int);
 XMPP::Status makeStatus(int, const QString &);
 XMPP::Status makeStatus(int, const QString &, int);
 XMPP::Status::Type makeSTATUS(const XMPP::Status &);
@@ -155,6 +158,7 @@ void x11wmClass(Display *dsp, WId wid, QString resName);
 #else
 #define X11WM_CLASS(x)	/* dummy */
 #endif
+void reorderGridLayout(QGridLayout* layout, int maxCols);
 
 // -----------------------------------------------------------------------------
 // History utilities

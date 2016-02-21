@@ -54,7 +54,7 @@ public:
 	void mapPut(const QString &basename, const QVariant &key, const QString &node, const QVariant &value);
 	QVariant mapGet(const QString &basename, const QVariant &key, const QString &node) const;
 	QVariant mapGet(const QString &basename, const QVariant &key, const QString &node, const QVariant &def) const;
-	QVariantList mapKeyList(const QString &basename) const;
+	QVariantList mapKeyList(const QString &basename, bool sortedByNumbers = false) const;
 
 
 	bool saveOptions(const QString& fileName, const QString& configName, const QString& configNS, const QString& configVersion, bool streamWriter = false) const;

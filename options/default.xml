@@ -60,6 +60,7 @@
 				<maximum comment="The maximum number of recently joined rooms that should be remembered" type="int">10</maximum>
 			</recent-joins>
 			<reasons type="QStringList" />
+			<leave-status-message comment="Leave status message" type="QString"></leave-status-message>
 		</muc>
 		<pgp comment="PGP encryption options">
 			<enable comment="Enable PGP globally" type="bool">true</enable>
@@ -117,6 +118,7 @@
 				<scaled-message-icons type="bool">false</scaled-message-icons>
 				<warn-before-clear type="bool">true</warn-before-clear>
 				<hide-when-closing type="bool">false</hide-when-closing>
+				<status-with-priority comment="Show priority with status change" type="bool">false</status-with-priority>
 			</chat>
 			<save>
 				<toolbars-state type="QByteArray"/>
@@ -233,6 +235,8 @@
 				</view>
 			</menu>
 			<muc comment="Multi-User Chat options">
+				<status-with-priority comment="Show priority with status change" type="bool">false</status-with-priority>
+				<show-initial-joins comment="Show joins on your MUC join (with status and priority, depends on options)" type="bool">false</show-initial-joins>
 				<log-width type="int">500</log-width>
 				<roster-width type="int">80</roster-width>
 				<roster-at-left type="bool">false</roster-at-left>
@@ -524,17 +528,41 @@
 		<status>
 			<ask-for-message-on-offline type="bool">false</ask-for-message-on-offline>
 			<ask-for-message-on-online type="bool">false</ask-for-message-on-online>
+			<ask-for-message-on-chat type="bool">true</ask-for-message-on-chat>
+			<ask-for-message-on-away type="bool">true</ask-for-message-on-away>
+			<ask-for-message-on-xa type="bool">true</ask-for-message-on-xa>
+			<ask-for-message-on-dnd type="bool">true</ask-for-message-on-dnd>
 			<auto-away>
 				<away-after type="int">10</away-after>
 				<force-priority type="bool">false</force-priority>
+				<force-xa-priority type="bool">false</force-xa-priority>
 				<not-availible-after type="int">30</not-availible-after>
 				<offline-after type="int">0</offline-after>
 				<use-away type="bool">true</use-away>
 				<use-not-availible type="bool">true</use-not-availible>
 				<use-offline type="bool">false</use-offline>
 			</auto-away>
-			<last-message type="QString"/>
+			<last-message comment="Last status message" type="QString"/>
+			<last-priority comment="Last priority" type="QString"/>
+			<last-status comment="Last status" type="QString">away</last-status>
+			<last-overwrite>
+				<by-template type="bool">true</by-template>
+				<by-status type="bool">false</by-status>
+			</last-overwrite>
 			<presets/>
+			<presets-in-status-menus type="QString" comment="'yes', 'no' or 'submenu'">submenu</presets-in-status-menus>
+			<show-only-online-offline type="bool">false</show-only-online-offline>
+			<show-choose type="bool">true</show-choose>
+			<show-edit-presets type="bool">true</show-edit-presets>
+			<show-reconnect comment="Show Reconnect in status menus" type="bool">false</show-reconnect>
+			<default-priority>
+				<online type="int">50</online>
+				<chat type="int">50</chat>
+				<away type="int">40</away>
+				<xa type="int">30</xa>
+				<dnd type="int">20</dnd>
+				<invisible type="int">10</invisible>
+			</default-priority>
 		</status>
 		<subscriptions>
 			<automatically-allow-authorization type="bool">false</automatically-allow-authorization>

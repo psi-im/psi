@@ -661,7 +661,7 @@ PsiIcon *PsiIconset::event2icon(const PsiEvent::Ptr &e)
 	return d->jid2icon(e->from(), icon);
 }
 
-static QString status2name(int s)
+QString status2name(int s)
 {
 	QString name;
 	switch ( s ) {

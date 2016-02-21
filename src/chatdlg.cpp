@@ -383,6 +383,7 @@ struct UserStatus {
 	UserListItem* userListItem;
 	XMPP::Status::Type statusType;
 	QString status;
+	int priority;
 	QString publicKeyID;
 };
 
@@ -400,6 +401,7 @@ UserStatus userStatusFor(const Jid& jid, QList<UserListItem*> ul, bool forceEmpt
 			const UserResource &r = *u.userListItem->userResourceList().priority();
 			u.statusType = r.status().type();
 			u.status = r.status().status();
+			u.priority = r.status().priority();
 			u.publicKeyID = r.publicKeyID();
 		}
 	}
@@ -409,12 +411,15 @@ UserStatus userStatusFor(const Jid& jid, QList<UserListItem*> ul, bool forceEmpt
 		if (rit != u.userListItem->userResourceList().end()) {
 			u.statusType = (*rit).status().type();
 			u.status = (*rit).status().status();
+			u.priority = (*rit).status().priority();
 			u.publicKeyID = (*rit).publicKeyID();
 		}
 	}
 
-	if (u.statusType == XMPP::Status::Offline)
+	if (u.statusType == XMPP::Status::Offline) {
 		u.status = u.userListItem->lastUnavailableStatus().status();
+		u.priority = 0;
+	}
 
 	return u;
 }
@@ -444,11 +449,13 @@ void ChatDlg::updateContact(const Jid &j, bool fromPresence)
 		if (userStatus.statusType == XMPP::Status::Offline)
 			contactChatState_ = XMPP::StateNone;
 
+		bool statusWithPriority = PsiOptions::instance()->getOption("options.ui.chat.status-with-priority").toBool();
 		bool statusChanged = false;
-		if (status_ != userStatus.statusType || statusString_ != userStatus.status) {
+		if (status_ != userStatus.statusType || statusString_ != userStatus.status || (statusWithPriority && priority_ != userStatus.priority)) {
 			statusChanged = true;
 			status_ = userStatus.statusType;
 			statusString_ = userStatus.status;
+			priority_ = userStatus.priority;
 		}
 
 		contactUpdated(userStatus.userListItem, userStatus.statusType, userStatus.status);
@@ -462,7 +469,9 @@ void ChatDlg::updateContact(const Jid &j, bool fromPresence)
 			updatePGP();
 
 			if (fromPresence && statusChanged) {
-				chatView()->dispatchMessage(MessageView::statusMessage(dispNick_, status_, statusString_));
+				chatView()->dispatchMessage(MessageView::statusMessage(
+												dispNick_, status_,
+												statusString_, priority_));
 			}
 		}
 

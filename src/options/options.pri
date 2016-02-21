@@ -17,6 +17,8 @@ HEADERS += \
 	$$PWD/opt_events.h \
 	$$PWD/opt_popups.h \
 	$$PWD/opt_status.h \
+	$$PWD/opt_statusgeneral.h \
+	$$PWD/opt_statusauto.h \
 	$$PWD/opt_appearance.h \
 	$$PWD/opt_iconset.h \
 	$$PWD/opt_theme.h \
@@ -36,6 +38,8 @@ SOURCES += \
 	$$PWD/opt_events.cpp \
 	$$PWD/opt_popups.cpp \
 	$$PWD/opt_status.cpp \
+	$$PWD/opt_statusgeneral.cpp \
+	$$PWD/opt_statusauto.cpp \
 	$$PWD/opt_appearance.cpp \
 	$$PWD/opt_iconset.cpp \
 	$$PWD/opt_theme.cpp \
@@ -54,7 +58,8 @@ FORMS += \
 	$$PWD/opt_chat.ui \
 	$$PWD/opt_events.ui \
 	$$PWD/opt_popups.ui \
-	$$PWD/opt_status.ui \
+	$$PWD/opt_statusgeneral.ui \
+	$$PWD/opt_statusauto.ui \
 	$$PWD/opt_appearance.ui \
 	$$PWD/opt_appearance_misc.ui \
 	$$PWD/opt_theme.ui \

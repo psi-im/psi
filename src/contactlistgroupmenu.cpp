@@ -253,7 +253,7 @@ private slots:
 			return;
 
 		PsiAccount *pa = group->contacts().first()->account();
-		StatusSetDlg *w = new StatusSetDlg(pa->psi(), pa->status());
+		StatusSetDlg *w = new StatusSetDlg(pa->psi(), makeLastStatus(pa->status().type()), lastPriorityNotEmpty());
 		QList<XMPP::Jid> list;
 		foreach(PsiContact* contact, group->contacts()) {
 			if(contact->isPrivate()) continue;

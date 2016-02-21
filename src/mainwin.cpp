@@ -66,6 +66,8 @@
 #include "mucjoindlg.h"
 #include "psicontactlist.h"
 #include "desktoputil.h"
+#include "statusdlg.h"
+#include "globalstatusmenu.h"
 #ifdef NEWCONTACTLIST
 #include "psirosterwidget.h"
 #endif
@@ -109,7 +111,8 @@ public:
 	~Private();
 
 	bool onTop, asTool;
-	QMenu* mainMenu, *statusMenu, *optionsMenu, *toolsMenu;
+	QMenu* mainMenu, *optionsMenu, *toolsMenu;
+	GlobalStatusMenu *statusMenu;
 	int sbState;
 	QString nickname;
 	PsiTrayIcon* tray;
@@ -125,6 +128,7 @@ public:
 
 	PopupAction* optionsButton, *statusButton;
 	IconActionGroup* statusGroup;
+	IconAction* statusSmallerAlt;
 	EventNotifierAction* eventNotifier;
 	PsiCon* psi;
 	MainWin* mainWin;
@@ -166,11 +170,12 @@ MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) : splitter(0), mainTa
 	isLeftRoster(false), psi(_psi), mainWin(_mainWin), hideTimer(0)
 {
 
-	statusGroup   = (IconActionGroup *)getAction("status_all");
+	statusGroup   = (IconActionGroup *)getAction("status_group");
 	eventNotifier = (EventNotifierAction *)getAction("event_notifier");
 
 	optionsButton = (PopupAction *)getAction("button_options");
 	statusButton  = (PopupAction *)getAction("button_status");
+	statusSmallerAlt = getAction("status_all");
 
 	statusMapper = new QSignalMapper(mainWin);
 	mainWin->connect(statusMapper, SIGNAL(mapped(int)), mainWin, SLOT(activatedStatusAction(int)));
@@ -426,8 +431,12 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 	d->vb_roster->addWidget(d->rosterWidget_);
 #endif
 
-	d->statusMenu = new QMenu(tr("Status"), this);
+	d->statusMenu = new GlobalStatusMenu((QWidget*)this, d->psi);
+	d->statusMenu->setTitle(tr("Status"));
 	d->statusMenu->setObjectName("statusMenu");
+	connect(d->statusMenu, SIGNAL(statusSelected(XMPP::Status::Type, bool)), d->psi, SLOT(statusMenuChanged(XMPP::Status::Type, bool)));
+	connect(d->statusMenu, SIGNAL(statusPresetSelected(XMPP::Status,bool,bool)), d->psi, SLOT(setGlobalStatus(XMPP::Status,bool,bool)));
+	connect(d->statusMenu, SIGNAL(statusPresetDialogForced(const QString &)), d->psi, SLOT(showStatusDialog(const QString &)));
 	d->optionsMenu = new QMenu(tr("General"), this);
 	d->optionsMenu->setObjectName("optionsMenu");
 #ifdef Q_OS_MAC
@@ -526,6 +535,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 	d->optionsButton->setMenu( d->optionsMenu );
 	d->statusButton->setMenu( d->statusMenu );
 	d->rosterAvatar->setStatusMenu( d->statusMenu );
+	d->getAction("status_all")->setMenu(d->statusMenu);
 
 	buildToolbars();
 	// setUnifiedTitleAndToolBarOnMac(true);
@@ -580,6 +590,8 @@ void MainWin::registerAction( IconAction* action )
 		QObject* receiver;
 		const char* slot;
 	} actionlist[] = {
+		{ "choose_status", activated, this, SLOT( actChooseStatusActivated() ) },
+		{ "reconnect_all", activated, this, SLOT( actReconnectActivated() ) },
 #ifndef NEWCONTACTLIST
 		{ "show_offline", toggled, cvlist, SLOT( setShowOffline(bool) ) },
 		{ "show_away",    toggled, cvlist, SLOT( setShowAway(bool) ) },
@@ -795,22 +807,7 @@ void MainWin::setUseAvatarFrame(bool state)
 void MainWin::buildStatusMenu()
 {
 	d->statusMenu->clear();
-	d->getAction("status_online")->addTo(d->statusMenu);
-	if (PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool()) {
-		d->getAction("status_chat")->addTo(d->statusMenu);
-	}
-	d->statusMenu->addSeparator();
-	d->getAction("status_away")->addTo(d->statusMenu);
-	if (PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool()) {
-		d->getAction("status_xa")->addTo(d->statusMenu);
-	}
-	d->getAction("status_dnd")->addTo(d->statusMenu);
-	if (PsiOptions::instance()->getOption("options.ui.menu.status.invisible").toBool()) {
-		d->statusMenu->addSeparator();
-		d->getAction("status_invisible")->addTo(d->statusMenu);
-	}
-	d->statusMenu->addSeparator();
-	d->getAction("status_offline")->addTo(d->statusMenu);
+	d->statusMenu->fill();
 #ifdef USE_PEP
 	d->statusMenu->addSeparator();
 	d->getAction("publish_tune")->addTo(d->statusMenu);
@@ -821,10 +818,10 @@ void MainWin::activatedStatusAction(int id)
 {
 	QList<IconAction*> l = d->statusGroup->findChildren<IconAction*>();
 	foreach(IconAction* action, l) {
-		action->setChecked ( d->statusActions[action] == id );
+		action->setChecked ( d->statusActions.contains(action) && d->statusActions[action] == id );
 	}
 
-	statusChanged(id);
+	statusChanged(static_cast<XMPP::Status::Type>(id));
 }
 
 QMenuBar* MainWin::mainMenuBar() const
@@ -1119,6 +1116,25 @@ void MainWin::actDiagQCAKeyStoreActivated()
 	w->show();
 }
 
+void MainWin::actChooseStatusActivated()
+{
+	PsiOptions* o = PsiOptions::instance();
+	XMPP::Status::Type lastStatus = XMPP::Status::txt2type(PsiOptions::instance()->getOption("options.status.last-status").toString());
+	StatusSetDlg *w = new StatusSetDlg(d->psi, makeLastStatus(lastStatus), lastPriorityNotEmpty());
+	connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), d->psi, SLOT(setGlobalStatus(const XMPP::Status &,bool,bool)));
+	connect(w, SIGNAL(cancelled()), d->psi, SLOT(updateMainwinStatus()));
+	if(o->getOption("options.ui.systemtray.enable").toBool() == true)
+		connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), SLOT(setTrayToolTip(const XMPP::Status &, bool, bool)));
+	w->show();
+}
+
+void MainWin::actReconnectActivated()
+{
+	foreach (PsiAccount *pa, d->psi->contactList()->accounts()) {
+		pa->reconnectOnce();
+	}
+}
+
 void MainWin::actPlaySoundsActivated (bool state)
 {
 	PsiOptions::instance()->setOption("options.ui.notifications.sounds.enable", state);
@@ -1318,31 +1334,30 @@ void MainWin::decorateButton(int status)
 	}
 
 	setTrayToolTip();
-
-	if(d->lastStatus == status) {
-		return;
-	}
 	d->lastStatus = status;
 
 	if(status == -1) {
 		d->statusButton->setText(tr("Connecting"));
 		if (PsiOptions::instance()->getOption("options.ui.notifications.alert-style").toString() != "no") {
 			d->statusButton->setAlert(IconsetFactory::iconPtr("psi/connect"));
-			d->statusGroup->setPsiIcon(IconsetFactory::iconPtr("psi/connect"));
+			d->statusSmallerAlt->setPsiIcon(IconsetFactory::iconPtr("psi/connect"));
 		}
 		else {
 			d->statusButton->setIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
-			d->statusGroup->setPsiIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
+			d->statusSmallerAlt->setPsiIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
 			d->rosterAvatar->setStatusIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE)->icon());
 		}
+
+		d->statusMenu->statusChanged(makeStatus(STATUS_OFFLINE, ""));
 
 		setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).impix());
 	}
 	else {
 		d->statusButton->setText(status2txt(status));
 		d->statusButton->setIcon(PsiIconset::instance()->statusPtr(status));
-		d->statusGroup->setPsiIcon(PsiIconset::instance()->statusPtr(status));
+		d->statusSmallerAlt->setPsiIcon(PsiIconset::instance()->statusPtr(status));
 		d->rosterAvatar->setStatusIcon(PsiIconset::instance()->statusPtr(status)->icon());
+		d->statusMenu->statusChanged(makeStatus(status, d->psi->currentStatusMessage()));
 
 		setWindowIcon(PsiIconset::instance()->status(status).impix());
 	}

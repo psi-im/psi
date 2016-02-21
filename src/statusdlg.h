@@ -49,8 +49,8 @@ class StatusSetDlg : public QDialog
 {
 	Q_OBJECT
 public:
-	StatusSetDlg(PsiCon *, const Status &);
-	StatusSetDlg(PsiAccount *, const Status &);
+	StatusSetDlg(PsiCon *, const Status &, bool withPriority = true);
+	StatusSetDlg(PsiAccount *, const Status &, bool withPriority = true);
 	~StatusSetDlg();
 
 	void setJid(const Jid &);

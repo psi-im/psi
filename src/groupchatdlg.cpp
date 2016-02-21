@@ -1405,9 +1405,8 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 		GCUserViewItem* contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
 		if (contact == NULL) {
 			//contact joining
-			if ( !d->connecting && options_->getOption("options.muc.show-joins").toBool() ) {
+			if ((!d->connecting || options_->getOption("options.ui.muc.show-initial-joins").toBool()) && options_->getOption("options.muc.show-joins").toBool() ) {
 				QString message = tr("%1 has joined the room");
-
 				if ( options_->getOption("options.muc.show-role-affiliation").toBool() ) {
 					if (s.mucItem().role() != MUCItem::NoRole) {
 						if (s.mucItem().affiliation() != MUCItem::NoAffiliation) {
@@ -1425,6 +1424,15 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 					message = message.arg(QString("%1 (%2)").arg(nick).arg(s.mucItem().jid().full()));
 				} else {
 					message = message.arg(nick);
+				}
+				if (options_->getOption("options.muc.show-status-changes").toBool()) {
+					message += tr(" and now is %1").arg(status2txt(s.type()));
+					if (!s.status().isEmpty()) {
+						message += QString(" (%1)").arg(s.status());
+					}
+					if (options_->getOption("options.ui.muc.status-with-priority").toBool() && s.priority() != 0) {
+						message += QString(" [%1]").arg(s.priority());
+					}
 				}
 				appendSysMsg(message);
 			}
@@ -1450,14 +1458,11 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 				}
 			}
 			if ( !d->connecting && options_->getOption("options.muc.show-status-changes").toBool() ) {
-				if (s.status() != contact->s.status() || s.show() != contact->s.show())	{
-					QString st;
-					if (s.show().isEmpty()) {
-						st=tr("online");
-					} else {
-						st=s.show();
-					}
-					ui_.log->dispatchMessage(MessageView::statusMessage(nick, (int)s.type(), s.status()));
+				bool statusWithPriority = options_->getOption("options.ui.muc.status-with-priority").toBool();
+				if (s.status() != contact->s.status() || s.show() != contact->s.show() ||
+						(statusWithPriority && s.priority() != contact->s.priority())) {
+					ui_.log->dispatchMessage(MessageView::statusMessage(
+												 nick, (int)s.type(), s.status(), s.priority()));
 				}
 			}
 		}

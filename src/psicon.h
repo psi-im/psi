@@ -123,10 +123,10 @@ public:
 	void removeEvent(const PsiEvent::Ptr &e);
 
 	Status::Type currentStatusType() const;
-	Status::Type lastLoggedInStatusType() const;
 	QString currentStatusMessage() const;
 
 	bool haveAutoUpdater() const;
+	void updateStatusPresets();
 
 	PopupManager* popupManager() const;
 
@@ -140,10 +140,13 @@ signals:
 	void emitOptionsUpdate();
 	void restoringSavedChatsChanged();
 	void statusMessageChanged(QString);
+	void statusPresetsChanged();
 
 public slots:
-	void setGlobalStatus(const Status &, bool withPriority = false, bool isManualStatus = false);
+	void setGlobalStatus(const XMPP::Status &, bool withPriority = false, bool isManualStatus = false);
+	void showStatusDialog(const QString& presetName);
 	void doToolbars();
+	void doStatusPresets();
 	void checkAccountsEmpty();
 
 public slots:
@@ -156,14 +159,13 @@ public slots:
 	void doNewBlankMessage();
 	void doOptions();
 	void doFileTransDlg();
-	void statusMenuChanged(int);
+	void statusMenuChanged(XMPP::Status::Type, bool forceDialog = false);
 	void setStatusMessage(QString message);
 	void pa_updatedActivity();
 	void pa_updatedAccount();
 	void slotApplyOptions();
 	void queueChanged();
 	void recvNextEvent();
-	void setStatusFromDialog(const XMPP::Status &, bool withPriority, bool isManualStatus);
 	void setStatusFromCommandline(const QString &status, const QString &message);
 	void proxy_settingsChanged();
 	void updateMainwinStatus();

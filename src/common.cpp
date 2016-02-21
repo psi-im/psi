@@ -295,6 +295,23 @@ void soundPlay(const QString &s)
 #endif
 }
 
+bool lastPriorityNotEmpty()
+{
+	QString lastPriority = PsiOptions::instance()->getOption("options.status.last-priority").toString();
+	return (lastPriority != "");
+}
+
+XMPP::Status makeLastStatus(int x)
+{
+	PsiOptions* o = PsiOptions::instance();
+	if (lastPriorityNotEmpty()) {
+		return makeStatus(x, o->getOption("options.status.last-message").toString(), o->getOption("options.status.last-priority").toInt());
+	}
+	else {
+		return makeStatus(x, o->getOption("options.status.last-message").toString());
+	}
+}
+
 XMPP::Status makeStatus(int x, const QString &str, int priority)
 {
 	XMPP::Status s = makeStatus(x,str);
@@ -378,6 +395,35 @@ void closeDialogs(QWidget *w)
 	}
 	foreach (QDialog *w, dialogs) {
 		w->close();
+	}
+}
+
+void reorderGridLayout(QGridLayout* layout, int maxCols)
+{
+	QList<QLayoutItem*> items;
+	for (int i = 0; i < layout->rowCount(); i++) {
+		for (int j = 0; j < layout->columnCount(); j++) {
+			QLayoutItem* item = layout->itemAtPosition(i, j);
+			if (item) {
+				layout->removeItem(item);
+				if (item->isEmpty()) {
+					delete item;
+				}
+				else {
+					items.append(item);
+				}
+			}
+		}
+	}
+	int col = 0, row = 0;
+	while (!items.isEmpty()) {
+		QLayoutItem* item = items.takeAt(0);
+		layout->addItem(item, row, col);
+		col++;
+		if (col >= maxCols) {
+			col = 0;
+			row++;
+		}
 	}
 }
 

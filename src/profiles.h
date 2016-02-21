@@ -49,6 +49,8 @@ public:
 
 	void fromOptions(OptionsTree *o, QString base);
 	void toOptions(OptionsTree *o, QString base=QString());
+	int defaultPriority(const XMPP::Status &s);
+	void saveLastStatus(OptionsTree *o, QString base);
 
 	QString id;
 	QString name;
@@ -57,17 +59,19 @@ public:
 	bool storeSaltedHashedPassword;
 	QString scramSaltedHashPassword;
 	int port, priority;
- 	bool opt_enabled, opt_pass, opt_host, opt_auto, opt_keepAlive, opt_log, opt_connectAfterSleep, opt_reconn, opt_ignoreSSLWarnings, opt_compress;
+	bool opt_enabled, opt_pass, opt_host, opt_auto, opt_keepAlive, opt_log, opt_connectAfterSleep, opt_autoSameStatus, opt_reconn, opt_ignoreSSLWarnings, opt_compress;
 	XMPP::ClientStream::AllowPlainType allow_plain;
 	bool req_mutual_auth;
 	bool legacy_ssl_probe;
-	bool opt_automatic_resource;
+	bool opt_automatic_resource, priority_dep_on_status;
 	int security_level;
 	enum SSLFlag { SSL_No = 0, SSL_Yes = 1, SSL_Auto = 2, SSL_Legacy = 3 } ssl;
 
 	QString proxyID;
 
 	XMPP::Roster roster;
+	XMPP::Status lastStatus;
+	bool lastStatusWithPriority;
 
 	struct GroupData {
 		bool open;

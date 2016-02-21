@@ -46,9 +46,12 @@ public:
 	void setStatus(XMPP::Status::Type);
 	Maybe<int> priority() const;
 	void setPriority(int priority);
+	void setPriority(const QString& priority);
 	void clearPriority();
+	void filterStatus();
 
 	void toOptions(OptionsTree *o);
+	void fromOptions(OptionsTree *o, QString name);
 	QDomElement toXml(QDomDocument&) const;
 	void fromXml(const QDomElement&);
 

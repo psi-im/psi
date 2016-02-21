@@ -22,30 +22,48 @@
 #define STATUSMENU_H
 
 #include <QMenu>
+#include <QMouseEvent>
 
+#include "psicon.h"
+#include "iconaction.h"
 #include "xmpp_status.h"
 
 class StatusMenu : public QMenu
 {
 	Q_OBJECT
-public:
-	StatusMenu(QWidget* parent);
+protected:
+	PsiCon* psi;
+	QList<IconAction*> statusActs, presetActs;
 
-	void setStatus(XMPP::Status::Type);
+	bool eventFilter(QObject *obj, QEvent *event);
+
+public:
+	StatusMenu(QWidget* parent, PsiCon* _psi );
+	void fill();
+	void clear();
+
+public slots:
+	void presetsChanged();
+	void statusChanged(const XMPP::Status& status);
 
 signals:
-	void statusChanged(XMPP::Status::Type);
+	void statusSelected(XMPP::Status::Type, bool);
+	void statusPresetSelected(const XMPP::Status &status, bool withPriority, bool isManualStatus);
+	void statusPresetDialogForced(const QString& presetName);
 
 private:
+	//It is empty here, because in global menu we'll use global action, but for account menu we'll create new action
+	virtual void addChoose() = 0;
+	virtual void addReconnect() = 0;
+
 	void addStatus(XMPP::Status::Type type);
+	void addPresets(IconActionGroup* parent = 0);
+	XMPP::Status::Type actionStatus(const QAction* action) const;
 
 private slots:
-	void actionActivated();
-
-private:
-	XMPP::Status::Type currentStatus_;
-
-	XMPP::Status::Type actionStatus(const QAction* action) const;
+	void presetActivated();
+	void changePresetsActivated();
+	void statusActivated();
 };
 
 #endif

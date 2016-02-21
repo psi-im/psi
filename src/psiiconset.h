@@ -104,4 +104,6 @@ private:
 	bool loadClients();
 };
 
+QString status2name(int s);
+
 #endif

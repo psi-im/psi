@@ -22,6 +22,7 @@
 
 #include "maybe.h"
 #include "statuspreset.h"
+#include "psioptions.h"
 
 //-----------------------------------------------------------------------------
 // StatusPreset
@@ -88,6 +89,16 @@ void StatusPreset::setPriority(int priority)
 	priority_ = Maybe<int>(priority);
 }
 
+void StatusPreset::setPriority(const QString& priority)
+{
+	bool ok = false;
+	int p = priority.toInt(&ok);
+	if (ok)
+		setPriority(p);
+	else
+		clearPriority();
+}
+
 void StatusPreset::clearPriority()
 {
 	priority_ = Maybe<int>();
@@ -128,6 +139,30 @@ void StatusPreset::fromXml(const QDomElement &el)
 	setStatus(status.type());
 }
 
+void StatusPreset::filterStatus()
+{
+	PsiOptions* o = PsiOptions::instance();
+	switch (status_) {
+	case XMPP::Status::FFC:
+		if (!o->getOption("options.ui.menu.status.chat").toBool()) {
+			status_ = XMPP::Status::Online;
+		}
+		break;
+	case XMPP::Status::XA:
+		if (!o->getOption("options.ui.menu.status.xa").toBool()) {
+			status_ = XMPP::Status::Away;
+		}
+		break;
+	case XMPP::Status::Invisible:
+		if (!o->getOption("options.ui.menu.status.invisible").toBool()) {
+			status_ = XMPP::Status::DND;
+		}
+		break;
+	default:
+		break;
+	}
+}
+
 void StatusPreset::toOptions(OptionsTree *o)
 {
 	QString base = o->mapPut("options.status.presets", name());
@@ -137,4 +172,15 @@ void StatusPreset::toOptions(OptionsTree *o)
 	if (priority().hasValue()) {
 		o->setOption(base + ".priority", priority().value());
 	}
+}
+
+void StatusPreset::fromOptions(OptionsTree *o, QString name)
+{
+	QString path = o->mapLookup("options.status.presets", name);
+	name_ = name;
+	bool forcePriority = o->getOption(path + ".force-priority").toBool();
+	message_ = o->getOption(path + ".message").toString();
+	status_ = XMPP::Status::txt2type(o->getOption(path + ".status").toString());
+	if (forcePriority)
+		priority_ = o->getOption(path + ".priority").toInt();
 }

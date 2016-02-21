@@ -109,6 +109,8 @@ public:
 
 	IconAction *copy() const;
 
+	QMenu* popup();
+
 public:
 	class Private;
 private:

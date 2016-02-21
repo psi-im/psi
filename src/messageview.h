@@ -52,7 +52,8 @@ public:
 
 	// accepts plain/text nick, plain/text status and rich/text statusText
 	static MessageView statusMessage(const QString &nick, int status,
-									 const QString &statusText = QString());
+									 const QString &statusText = QString(),
+									 int priority = 0);
 
 	inline Type type() const { return _type; }
 	inline const QString &text() const { return _text; }
@@ -75,6 +76,8 @@ public:
 	inline bool isSpooled() const { return _spooled; }
 	inline void setStatus(int s) { _status = s; }
 	inline int status() const { return _status; }
+	inline void setStatusPriority(int s) { _statusPriority = s; }
+	inline int statusPriority() const { return _statusPriority; }
 	inline void setAwaitingReceipt(bool b) { _awaitingReceipt = b; }
 	inline bool isAwaitingReceipt() const { return _awaitingReceipt; }
 	inline void setNick(const QString &nick) { _nick = nick; }
@@ -97,6 +100,7 @@ private:
 	bool _spooled;
 	bool _awaitingReceipt;
 	int _status;
+	int _statusPriority;
 	QString _messageId;
 	QString _userId;
 	QString _nick; // rich / as is

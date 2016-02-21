@@ -28,6 +28,7 @@
 #include <QStringList>
 
 #include "advwidget.h"
+#include "xmpp_status.h"
 
 class QMenuBar;
 class QAction;
@@ -87,7 +88,7 @@ protected:
 #endif
 
 signals:
-	void statusChanged(int);
+	void statusChanged(XMPP::Status::Type);
 	void statusMessageChanged(QString);
 	void changeProfile();
 	void blankMessage();
@@ -141,6 +142,8 @@ private slots:
 	void actTipActivated();
 	void actDiagQCAPluginActivated();
 	void actDiagQCAKeyStoreActivated();
+	void actChooseStatusActivated();
+	void actReconnectActivated();
 	void actSetMoodActivated();
 	void actSetActivityActivated();
 	void actSetGeolocActivated();

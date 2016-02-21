@@ -463,6 +463,8 @@ newcontactlist {
 		$$PWD/contactlistitemproxy.h \
 		$$PWD/contactupdatesmanager.h \
 		$$PWD/statusmenu.h \
+		$$PWD/globalstatusmenu.h \
+		$$PWD/accountstatusmenu.h \
 		$$PWD/psirosterwidget.h \
 		$$PWD/psifilteredcontactlistview.h
 
@@ -493,6 +495,8 @@ newcontactlist {
 		$$PWD/contactlistitemproxy.cpp \
 		$$PWD/contactupdatesmanager.cpp \
 		$$PWD/statusmenu.cpp \
+		$$PWD/globalstatusmenu.cpp \
+		$$PWD/accountstatusmenu.cpp \
 		$$PWD/psirosterwidget.cpp \
 		$$PWD/psifilteredcontactlistview.cpp
 

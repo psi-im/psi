@@ -182,6 +182,7 @@ public:
 public slots:
 	void doApply();
 	void openTab(QString id);
+	void enableCommonWidgets(bool enable);
 
 private slots:
 	void currentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
@@ -429,6 +430,13 @@ void OptionsDlg::Private::openTab(QString id)
 			break;
 		}
 	}
+}
+
+// enable/disable list widget and dialog buttons
+void OptionsDlg::Private::enableCommonWidgets(bool enable)
+{
+	dlg->buttonBox->setEnabled(enable);
+	dlg->lv_tabs->setEnabled(enable);
 }
 
 void OptionsDlg::Private::connectDataChanged(QWidget *widget)

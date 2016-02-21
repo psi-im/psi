@@ -34,6 +34,7 @@
 #include "jidutil.h"
 #include "psicon.h"
 #include "psioptions.h"
+#include "psiiconset.h"
 #include "psiaccount.h"
 #include "userlist.h"
 #include "common.h"
@@ -42,7 +43,7 @@
 #include "statuspreset.h"
 #include "statuscombobox.h"
 #include "shortcutmanager.h"
-
+#include "priorityvalidator.h"
 
 //----------------------------------------------------------------------------
 // StatusShowDlg
@@ -89,6 +90,7 @@ public:
 	PsiCon *psi;
 	PsiAccount *pa;
 	Status s;
+	bool withPriority;
 	ChatEdit *te;
 	StatusComboBox *cb_type;
 	QComboBox *cb_preset;
@@ -99,7 +101,7 @@ public:
 	setStatusEnum setStatusMode;
 };
 
-StatusSetDlg::StatusSetDlg(PsiCon *psi, const Status &s)
+StatusSetDlg::StatusSetDlg(PsiCon *psi, const Status &s, bool withPriority)
 	: QDialog(0)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
@@ -108,13 +110,14 @@ StatusSetDlg::StatusSetDlg(PsiCon *psi, const Status &s)
 	d->pa = 0;
 	d->psi->dialogRegister(this);
 	d->s = s;
+	d->withPriority = withPriority;
 
 	setWindowTitle(CAP(tr("Set Status: All accounts")));
 	d->setStatusMode = setStatusForAccount;
 	init();
 }
 
-StatusSetDlg::StatusSetDlg(PsiAccount *pa, const Status &s)
+StatusSetDlg::StatusSetDlg(PsiAccount *pa, const Status &s, bool withPriority)
 	: QDialog(0)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
@@ -123,6 +126,7 @@ StatusSetDlg::StatusSetDlg(PsiAccount *pa, const Status &s)
 	d->pa = pa;
 	d->pa->dialogRegister(this);
 	d->s = s;
+	d->withPriority = withPriority;
 
 	setWindowTitle(CAP(tr("Set Status: %1").arg(d->pa->name())));
 	d->setStatusMode = setStatusForAccount;
@@ -165,6 +169,8 @@ void StatusSetDlg::init()
 	hb1->addWidget(l);
 	d->le_priority = new QLineEdit(this);
 	d->le_priority->setMinimumWidth(30);
+	PriorityValidator* prValidator = new PriorityValidator(d->le_priority);
+	d->le_priority->setValidator(prValidator);
 	hb1->addWidget(d->le_priority,1);
 
 	// Status preset
@@ -172,12 +178,17 @@ void StatusSetDlg::init()
 	hb1->addWidget(l);
 	d->cb_preset = new QComboBox(this);
 	d->cb_preset->addItem(tr("<None>"));
-	QStringList presets;
-	foreach(QVariant name, PsiOptions::instance()->mapKeyList("options.status.presets")) {
-		presets += name.toString();
+	foreach(QVariant name, PsiOptions::instance()->mapKeyList("options.status.presets", true)) {
+		StatusPreset sp;
+		sp.fromOptions(PsiOptions::instance(), name.toString());
+		sp.filterStatus();
+#ifdef Q_OS_MAC
+		d->cb_preset->addItem(sp.name());
+#else
+		d->cb_preset->addItem(PsiIconset::instance()->status(sp.status()).icon(), sp.name());
+#endif
+
 	}
-	presets.sort();
-	d->cb_preset->addItems(presets);
 	connect(d->cb_preset, SIGNAL(currentIndexChanged(int)), SLOT(chooseStatusPreset(int)));
 	hb1->addWidget(d->cb_preset,3);
 
@@ -202,6 +213,9 @@ void StatusSetDlg::init()
 	d->te->setAcceptRichText(false);
 	d->te->setPlainText(d->s.status());
 	d->te->selectAll();
+	if (d->withPriority) {
+		d->le_priority->setText(QString::number(d->s.priority()));
+	}
 	connect(pb1, SIGNAL(clicked()), SLOT(doButton()));
 	connect(pb2, SIGNAL(clicked()), SLOT(cancel()));
 	d->te->setFocus();
@@ -258,18 +272,24 @@ void StatusSetDlg::doButton()
 		}
 
 		sp.toOptions(PsiOptions::instance());
-		QString base = PsiOptions::instance()->mapPut("options.status.presets", text);
+		PsiOptions::instance()->mapPut("options.status.presets", text);
+
+		//PsiCon will emit signal to refresh presets in all status menus
+		(d->psi ? d->psi : d->pa->psi())->updateStatusPresets();
 	}
 
 	// Set status
 	int type = d->cb_type->status();
 	QString str = d->te->toPlainText();
 
- 	if (d->le_priority->text().isEmpty())
- 		//emit set(makeStatus(type, str), false, true);
+	PsiOptions::instance()->setOption("options.status.last-priority", d->le_priority->text());
+	PsiOptions::instance()->setOption("options.status.last-message", str);
+	PsiOptions::instance()->setOption("options.status.last-status", XMPP::Status(d->cb_type->status()).typeString());
+
+	if (d->le_priority->text().isEmpty())
 		switch(d->setStatusMode) {
 			case setStatusForAccount:
-                                emit set(makeStatus(type,str), false, true);
+				emit set(makeStatus(type,str), false, true);
 				break;
 			case setStatusForJid:
 				emit setJid(d->j, makeStatus(type,str));
@@ -278,11 +298,10 @@ void StatusSetDlg::doButton()
 				emit setJidList(d->jl, makeStatus(type,str));
 				break;
 		}
- 	else
- 		//emit set(makeStatus(type, str, d->le_priority->text().toInt()), true, true);
+	else {
 		switch(d->setStatusMode) {
 			case setStatusForAccount:
-                                emit set(makeStatus(type,str, d->le_priority->text().toInt()), true, true);
+				emit set(makeStatus(type,str, d->le_priority->text().toInt()), true, true);
 				break;
 			case setStatusForJid:
 				emit setJid(d->j, makeStatus(type,str, d->le_priority->text().toInt()));
@@ -291,7 +310,7 @@ void StatusSetDlg::doButton()
 				emit setJidList(d->jl, makeStatus(type,str, d->le_priority->text().toInt()));
 				break;
 		}
-
+	}
 	close();
 }
 

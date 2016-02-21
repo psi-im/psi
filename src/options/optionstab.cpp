@@ -109,6 +109,7 @@ public:
 	OptionsTabWidget(QWidget *parent);
 	void addTab(OptionsTab *);
 	void restoreOptions();
+	void enableOtherTabs(bool);
 
 signals:
 	void connectDataChanged(QWidget *);
@@ -196,6 +197,15 @@ void OptionsTabWidget::restoreOptions()
 	emit noDirty(false);
 }
 
+void OptionsTabWidget::enableOtherTabs(bool enable)
+{
+	for (int i = 0; i < count(); i++)
+	{
+		if (i != currentIndex())
+			setTabEnabled(i, enable);
+	}
+}
+
 //----------------------------------------------------------------------------
 // MetaOptionsTab
 //----------------------------------------------------------------------------
@@ -233,6 +243,13 @@ void MetaOptionsTab::addTab(OptionsTab *tab)
 	connect(tab, SIGNAL(connectDataChanged(QWidget *)), SIGNAL(connectDataChanged(QWidget *)));
 
 	tabs.append(tab);
+}
+
+void MetaOptionsTab::enableOtherTabs(bool enable)
+{
+	if (!w)
+		return;
+	static_cast<OptionsTabWidget*>(w)->enableOtherTabs(enable);
 }
 
 QWidget *MetaOptionsTab::widget()

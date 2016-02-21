@@ -365,6 +365,7 @@ public:
 		, psi(0)
 		, account(parent)
 		, client(0)
+		, reconnectingOnce(false)
 		, eventQueue(0)
 		, xmlConsole(0)
 		, blockTransportPopupList(0)
@@ -416,6 +417,7 @@ public:
 	Jid jid, nextJid;
 	Status loginStatus;
 	bool loginWithPriority;
+	bool reconnectingOnce;
 	EventQueue *eventQueue;
 	XmlConsole *xmlConsole;
 	UserList userList;
@@ -870,11 +872,9 @@ public:
 	{
 		if (!account->isAvailable())
 			return;
-		Status status = autoAwayStatus(autoAway);
-		if (status.type() != loginStatus.type() ||
-			status.status() != loginStatus.status())
-		{
-			bool withPriority = autoAway == AutoAway_Away || autoAway == AutoAway_XA;
+		bool withPriority = false;
+		Status status = autoAwayStatus(autoAway, withPriority);
+		if (status.type() != loginStatus.type() || status.status() != loginStatus.status()) {
 			account->setStatusDirect(status, withPriority);
 		}
 	}
@@ -899,14 +899,26 @@ public:
 private:
 	Status lastManualStatus_;
 
-	XMPP::Status autoAwayStatus(AutoAway autoAway)
+	XMPP::Status autoAwayStatus(AutoAway autoAway, bool &withPriority)
 	{
+		withPriority = loginWithPriority;
 		if (!lastManualStatus().isAway() && !lastManualStatus().isInvisible()) {
 			int priority;
-			if (PsiOptions::instance()->getOption("options.status.auto-away.force-priority").toBool()) {
+			if (autoAway == AutoAway_Away && PsiOptions::instance()->getOption("options.status.auto-away.force-priority").toBool()) {
 				priority = PsiOptions::instance()->getOption("options.status.auto-away.priority").toInt();
-			} else {
+				withPriority = true;
+			}
+			else if (autoAway == AutoAway_XA && PsiOptions::instance()->getOption("options.status.auto-away.force-xa-priority").toBool()) {
+				priority = PsiOptions::instance()->getOption("options.status.auto-away.xa-priority").toInt();
+				withPriority = true;
+			}
+			else {
 				priority = acc.priority;
+				if (autoAway == AutoAway_Away || autoAway == AutoAway_XA) {
+					//We reach here when function was called for auto-status (not recover after it)
+					// and priority for this auto-status was not set, so we force:
+					withPriority = false;
+				}
 			}
 
 			switch (autoAway) {
@@ -1558,13 +1570,35 @@ void PsiAccount::autoLogin()
 	if (enabled()) {
 		bool autoLogin = d->acc.opt_auto;
 		if (autoLogin) {
-#ifndef YAPSI
-			// FIXME: we should remember last used status
-			setStatus(Status(Status::Online, "", d->acc.priority), false, true);
-#else
-			setStatus(Status(d->psi->lastLoggedInStatusType(), d->psi->currentStatusMessage(), d->acc.priority), false, true);
-#endif
+			if (d->acc.opt_autoSameStatus) {
+				setStatus(d->acc.lastStatus, d->acc.lastStatusWithPriority, true);
+			}
+			else {
+				setStatus(makeStatus(XMPP::Status::Online, ""), false, true);
+			}
 		}
+	}
+}
+
+void PsiAccount::reconnectOnce()
+{
+	if (isActive()) {
+		if (d->reconnectingOnce) {
+			//To be sure phase2 will be called just once
+			QObject::disconnect(this, SIGNAL(disconnected()), this, SLOT(reconnectOncePhase2()));
+		}
+		d->reconnectingOnce = true;
+		connect(this, SIGNAL(disconnected()), this, SLOT(reconnectOncePhase2()));
+		logout(false, Status(Status::Offline, tr("Reconnecting"), 0));
+	}
+}
+
+void PsiAccount::reconnectOncePhase2()
+{
+	if (d->reconnectingOnce) {
+		d->reconnectingOnce = false;
+		QObject::disconnect(this, SIGNAL(disconnected()), this, SLOT(reconnectOncePhase2()));
+		setStatus(d->lastManualStatus(), d->loginWithPriority, false);
 	}
 }
 
@@ -1701,7 +1735,7 @@ void PsiAccount::forceDisconnect(bool fast, const XMPP::Status &s)
 		d->client->removeExtension("pep");
 
 		// send logout status
-		d->client->groupChatLeaveAll();
+		d->client->groupChatLeaveAll(PsiOptions::instance()->getOption("options.muc.leave-status-message").toString());
 		d->client->setPresence(s);
 
 		// we are not going to restore session if we a here?
@@ -2800,7 +2834,7 @@ Status PsiAccount::loggedOutStatus()
 #ifdef YAPSI
 	return Status(Status::Offline);
 #else
-	return Status(Status::Offline, "Logged out", 0);
+	return Status(Status::Offline, tr("Logged out"), 0);
 #endif
 }
 
@@ -2808,10 +2842,16 @@ void PsiAccount::setStatus(const Status &_s,  bool withPriority, bool isManualSt
 {
 	Status s = _s;
 	if (!withPriority)
-		s.setPriority(d->acc.priority);
+		s.setPriority(d->acc.defaultPriority(s));
 
 	if (isManualStatus) {
 		d->setManualStatus(s);
+
+		if (s.isAvailable()) {
+			//Save only non-offline status for reconnect use
+			d->acc.lastStatus = s;
+			d->acc.lastStatusWithPriority = withPriority;
+		}
 	}
 
 	// Block all transports' contacts' status change popups from popping
@@ -2879,18 +2919,37 @@ void PsiAccount::setStatus(const Status &_s,  bool withPriority, bool isManualSt
 	}
 }
 
+void PsiAccount::showStatusDialog(const QString& presetName)
+{
+	StatusPreset preset;
+	preset.fromOptions(PsiOptions::instance(), presetName);
+	Status status(preset.status(), preset.message(), preset.priority().hasValue() ? preset.priority().value() : this->status().priority());
+	StatusSetDlg *w = new StatusSetDlg(this, status, preset.priority().hasValue());
+	connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), SLOT(setStatus(const XMPP::Status &, bool, bool)));
+	w->show();
+}
+
 void PsiAccount::passwordReady(QString password) {
 	d->acc.pass = password;
 	login();
+}
+
+int PsiAccount::defaultPriority(const XMPP::Status &s)
+{
+	return d->acc.defaultPriority(s);
 }
 
 void PsiAccount::setStatusDirect(const Status &_s, bool withPriority)
 {
 	Status s = _s;
 	if (!withPriority)
-		s.setPriority(d->acc.priority);
+		s.setPriority(defaultPriority(s));
 
-	//printf("setting status to [%s]\n", s.status().latin1());
+	if (d->reconnectingOnce) {
+		//If we reconnect once and got here, user chosen status and we must stop reconnecting
+		d->reconnectingOnce = false;
+		QObject::disconnect(this, SIGNAL(disconnected()), this, SLOT(reconnectOncePhase2()));
+	}
 
 	// using pgp?
 	if(!d->cur_pgpSecretKey.isNull()) {
@@ -3671,25 +3730,61 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
 	return c;
 }
 
-void PsiAccount::changeStatus(int x)
+void PsiAccount::changeStatus(int x, bool forceDialog)
 {
-	if(x == STATUS_OFFLINE && !PsiOptions::instance()->getOption("options.status.ask-for-message-on-offline").toBool()) {
-		setStatus(loggedOutStatus(), false, true);
+	QString optionName;
+	if (!forceDialog)
+	{
+		switch (x) {
+		case STATUS_OFFLINE:
+			optionName = "offline";
+			break;
+		case STATUS_ONLINE:
+			optionName = "online";
+			break;
+		case STATUS_CHAT:
+			optionName = "chat";
+			break;
+		case STATUS_AWAY:
+			optionName = "away";
+			break;
+		case STATUS_XA:
+			optionName = "xa";
+			break;
+		case STATUS_DND:
+			optionName = "dnd";
+			break;
+		}
+	}
+
+	PsiOptions* o = PsiOptions::instance();
+
+	//If option name is not empty (it is empty for Invisible) and option is set to ask for message, show dialog
+	if (forceDialog || (!optionName.isEmpty() && o->getOption("options.status.ask-for-message-on-" + optionName).toBool())) {
+		StatusSetDlg *w = new StatusSetDlg(this, makeLastStatus(x), lastPriorityNotEmpty());
+		connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), SLOT(setStatus(const XMPP::Status &, bool, bool)));
+		w->show();
 	}
 	else {
-		if(x == STATUS_ONLINE && !PsiOptions::instance()->getOption("options.status.ask-for-message-on-online").toBool()) {
-			setStatus(Status(), false, true);
+		Status status;
+		switch (x) {
+		case STATUS_OFFLINE:
+			status = PsiAccount::loggedOutStatus();
+			break;
+		case STATUS_INVISIBLE:
+			status = Status("","",0,true);
+			status.setIsInvisible(true);
+			break;
+		default:
+			status = Status((XMPP::Status::Type)x, "", 0);
+			break;
 		}
-		else if(x == STATUS_INVISIBLE){
-			Status s("","",0,true);
-			s.setIsInvisible(true);
-			setStatus(s, false, true);
+		if (o->getOption("options.status.last-overwrite.by-status").toBool()) {
+			o->setOption("options.status.last-priority", "");
+			o->setOption("options.status.last-message", "");
+			o->setOption("options.status.last-status", status.typeString());
 		}
-		else {
-			StatusSetDlg *w = new StatusSetDlg(this, makeStatus(x, ""));
-			connect(w, SIGNAL(set(const XMPP::Status &, bool, bool)), SLOT(setStatus(const XMPP::Status &, bool, bool)));
-			w->show();
-		}
+		setStatus(status, false, true);
 	}
 }
 
@@ -5444,7 +5539,7 @@ void PsiAccount::groupChatLeave(const QString &host, const QString &room)
 {
 	Jid j(room + '@' + host);
 	d->groupchats.removeAll(j.bare());
-	d->client->groupChatLeave(host, room);
+	d->client->groupChatLeave(host, room, PsiOptions::instance()->getOption("options.muc.leave-status-message").toString());
 	UserListItem *u = find(j);
 	if (u) {
 		d->removeEntry(j);

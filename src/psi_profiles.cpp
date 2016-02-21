@@ -102,6 +102,7 @@ void migrateRectEntry(const QDomElement& element, const QString &entry, const QS
 
 
 UserAccount::UserAccount()
+	: lastStatus(XMPP::Status::Online)
 {
 	reset();
 }
@@ -131,6 +132,7 @@ void UserAccount::reset()
 	opt_host = false;
 	host = "";
 	opt_automatic_resource = true;
+	priority_dep_on_status = true;
 	resource = ApplicationInfo::name();
 	priority = 5;
 	ibbOnly = false;
@@ -140,6 +142,8 @@ void UserAccount::reset()
 	opt_log = true;
 	opt_reconn = false;
 	opt_connectAfterSleep = false;
+	opt_autoSameStatus = true;
+	lastStatusWithPriority = false;
 	opt_ignoreSSLWarnings = false;
 
 	proxy_index = 0;
@@ -179,6 +183,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	req_mutual_auth = o->getOption(base + ".require-mutual-auth").toBool();
 	legacy_ssl_probe = o->getOption(base + ".legacy-ssl-probe").toBool();
 	opt_automatic_resource = o->getOption(base + ".automatic-resource").toBool();
+	priority_dep_on_status = o->getOption(base + ".priority-depends-on-status").toBool();
 	opt_log = o->getOption(base + ".log").toBool();
 	opt_reconn = o->getOption(base + ".reconn").toBool();
 	opt_ignoreSSLWarnings = o->getOption(base + ".ignore-SSL-warnings").toBool();
@@ -234,6 +239,19 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 
 	resource = o->getOption(base + ".resource").toString();
 	priority = o->getOption(base + ".priority").toInt();
+
+	if (allSetOptions.contains(base + ".auto-same-status")) {
+		opt_autoSameStatus = o->getOption(base + ".auto-same-status").toBool();
+		lastStatus.setType(o->getOption(base + ".last-status").toString());
+		lastStatus.setStatus(o->getOption(base + ".last-status-message").toString());
+		lastStatusWithPriority = o->getOption(base + ".last-with-priority").toBool();
+		if (lastStatusWithPriority) {
+			lastStatus.setPriority(o->getOption(base + ".last-priority").toInt());
+		}
+		else {
+			lastStatus.setPriority(defaultPriority(lastStatus));
+		}
+	}
 
 #ifdef HAVE_PGPUTIL
 	QString pgpSecretKeyID = o->getOption(base + ".pgp-secret-key-id").toString();
@@ -324,9 +342,11 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 	o->setOption(base + ".require-mutual-auth", req_mutual_auth);
 	o->setOption(base + ".legacy-ssl-probe", legacy_ssl_probe);
 	o->setOption(base + ".automatic-resource", opt_automatic_resource);
+	o->setOption(base + ".priority-depends-on-status", priority_dep_on_status);
 	o->setOption(base + ".log", opt_log);
 	o->setOption(base + ".reconn", opt_reconn);
 	o->setOption(base + ".connect-after-sleep", opt_connectAfterSleep);
+	o->setOption(base + ".auto-same-status", opt_autoSameStatus);
 	o->setOption(base + ".ignore-SSL-warnings", opt_ignoreSSLWarnings);
 
 	o->setOption(base + ".id", id);
@@ -442,6 +462,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 
 	o->setOption(base + ".tls.override-certificate", tlsOverrideCert);
 	o->setOption(base + ".tls.override-domain", tlsOverrideDomain);
+	saveLastStatus(o, base);
 }
 
 void UserAccount::fromXml(const QDomElement &a)
@@ -465,12 +486,8 @@ void UserAccount::fromXml(const QDomElement &a)
 	readBoolAttribute(a, "reconn", &opt_reconn);
 	readBoolAttribute(a, "ignoreSSLWarnings", &opt_ignoreSSLWarnings);
 	//readBoolAttribute(a, "gpg", &opt_gpg);
-	if (a.hasAttribute("automatic-resource")) {
-		readBoolAttribute(a, "automatic-resource", &opt_automatic_resource);
-	}
-	else {
-		opt_automatic_resource = false;
-	}
+	readBoolAttribute(a, "automatic-resource", &opt_automatic_resource);
+	readBoolAttribute(a, "priority-depends-on-status", &priority_dep_on_status);
 
 	// Will be overwritten if there is a new option
 	bool opt_plain = false;
@@ -596,6 +613,37 @@ void UserAccount::fromXml(const QDomElement &a)
 	dtProxy = str;
 }
 
+int UserAccount::defaultPriority(const XMPP::Status &s)
+{
+	if (priority_dep_on_status) {
+		if (s.isAvailable()) {
+			return PsiOptions::instance()->getOption("options.status.default-priority." + s.typeString()).toInt();
+		}
+		else {
+			return 0; //Priority for Offline status, it is not used
+		}
+	}
+	else {
+		return priority;
+	}
+}
+
+void UserAccount::saveLastStatus(OptionsTree *o, QString base=QString())
+{
+	if (base.isEmpty()) {
+		base = optionsBase;
+	}
+
+	o->setOption(base + ".last-status", lastStatus.typeString());
+	o->setOption(base + ".last-status-message", lastStatus.status());
+	o->setOption(base + ".last-with-priority", lastStatusWithPriority);
+	if (lastStatusWithPriority) {
+		o->setOption(base + ".last-priority", lastStatus.priority());
+	}
+	else {
+		o->removeOption(base + ".last-priority");
+	}
+}
 
 static ToolbarPrefs loadToolbarData( const QDomElement &e )
 {

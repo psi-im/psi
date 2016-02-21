@@ -136,6 +136,7 @@ public:
 	VoiceCaller* voiceCaller() const;
 	Status status() const;
 	static Status loggedOutStatus();
+	int defaultPriority(const XMPP::Status &);
 	void setStatusDirect(const XMPP::Status &, bool withPriority = false);
 	void setStatusActual(const XMPP::Status &);
 
@@ -191,7 +192,7 @@ public:
 	void reconfigureFTManager();
 	void changeVCard();
 	void changePW();
-	void changeStatus(int);
+	void changeStatus(int, bool forceDialog = false);
 	void doDisco();
 
 	void showXmlConsole();
@@ -290,6 +291,7 @@ signals:
 
 public slots:
 	void setStatus(const XMPP::Status &, bool withPriority = false, bool isManualStatus = false);
+	void showStatusDialog(const QString& presetName);
 
 	void capsChanged(const Jid&);
 	void tuneStopped();
@@ -300,6 +302,7 @@ public slots:
 	void openNextEvent(ActivationType activationType);
 	int forwardPendingEvents(const Jid &jid);
 	void autoLogin();
+	void reconnectOnce();
 
 	void showCert();
 
@@ -419,6 +422,7 @@ private slots:
 
 	void incomingHttpAuthRequest(const PsiHttpAuthRequest &);
 
+	void reconnectOncePhase2();
 	void reconnect();
 	void disconnect();
 	void enableNotifyOnline();

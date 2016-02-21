@@ -21,6 +21,7 @@
 #include "statuscombobox.h"
 
 #include "psioptions.h"
+#include "psiiconset.h"
 #include "common.h"
 
 /**
@@ -31,10 +32,10 @@
 StatusComboBox::StatusComboBox(QWidget* parent, XMPP::Status::Type type)
 	: QComboBox(parent)
 {
+	addStatus(XMPP::Status::Online);
 	if (PsiOptions::instance()->getOption("options.ui.menu.status.chat").toBool()) {
 		addStatus(XMPP::Status::FFC);
 	}
-	addStatus(XMPP::Status::Online);
 	addStatus(XMPP::Status::Away);
 	if (PsiOptions::instance()->getOption("options.ui.menu.status.xa").toBool()) {
 		addStatus(XMPP::Status::XA);
@@ -81,7 +82,11 @@ XMPP::Status::Type StatusComboBox::status() const
 // private
 
 void StatusComboBox::addStatus(XMPP::Status::Type status){
+#ifdef Q_OS_MAC
 	addItem(status2txt(status), status);
+#else
+	addItem(PsiIconset::instance()->status(status).icon(), status2txt(status), status);
+#endif
 }
 
 void StatusComboBox::onCurrentIndexChanged(int index)

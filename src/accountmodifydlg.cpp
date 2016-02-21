@@ -84,8 +84,6 @@ void AccountModifyDlg::init()
 	connect(pb_key, SIGNAL(clicked()), SLOT(chooseKey()));
 	connect(pb_keyclear, SIGNAL(clicked()), SLOT(clearKey()));
 	connect(buttonBox->button(QDialogButtonBox::Save), SIGNAL(clicked()), SLOT(save()));
-	connect(ck_automatic_resource, SIGNAL(toggled(bool)), le_resource, SLOT(setDisabled(bool)));
-	connect(ck_automatic_resource, SIGNAL(toggled(bool)), lb_resource, SLOT(setDisabled(bool)));
 
 	gb_pgp->setEnabled(false);
 
@@ -122,9 +120,18 @@ void AccountModifyDlg::init()
 	le_port->setText(QString::number(acc.port));
 	ck_req_mutual->setChecked(acc.req_mutual_auth);
 
-	ck_automatic_resource->setChecked(acc.opt_automatic_resource);
+	connect(cb_resource, SIGNAL(currentIndexChanged(int)), SLOT(resourceCbChanged(int)));
+	connect(cb_priority, SIGNAL(currentIndexChanged(int)), SLOT(priorityCbChanged(int)));
+	connect(ck_auto, SIGNAL(clicked()), SLOT(autoconnectCksChanged()));
+	connect(ck_connectAfterSleep, SIGNAL(clicked()), SLOT(autoconnectCksChanged()));
+	cb_resource->addItem(tr("Manual"));
+	cb_resource->addItem(tr("Use host name"));
+	cb_resource->setCurrentIndex(acc.opt_automatic_resource ? 1 : 0);
 	le_resource->setText(acc.resource);
-	le_priority->setText(QString::number(acc.priority));
+	cb_priority->addItem(tr("Fixed"));
+	cb_priority->addItem(tr("Depends on status"));
+	cb_priority->setCurrentIndex(acc.priority_dep_on_status ? 1 : 0);
+	sb_priority->setValue(acc.priority);
 
 	connect(ck_custom_auth,SIGNAL(toggled(bool)), lb_authid, SLOT(setEnabled(bool)));
 	connect(ck_custom_auth,SIGNAL(toggled(bool)), le_authid, SLOT(setEnabled(bool)));
@@ -138,6 +145,7 @@ void AccountModifyDlg::init()
 	ck_auto->setChecked(acc.opt_auto);
 	ck_reconn->setChecked(acc.opt_reconn);
 	ck_connectAfterSleep->setChecked(acc.opt_connectAfterSleep);
+	ck_autoSameStatus->setChecked(acc.opt_autoSameStatus);
 	ck_log->setChecked(acc.opt_log);
 	ck_keepAlive->setChecked(acc.opt_keepAlive);
 	ck_ibbOnly->setChecked(acc.ibbOnly);
@@ -146,6 +154,7 @@ void AccountModifyDlg::init()
 	le_stunPort->setText(QString::number(acc.stunPort));
 	le_stunUser->setText(acc.stunUser);
 	le_stunPass->setText(acc.stunPass);
+	autoconnectCksChanged();
 	connect(ck_ibbOnly, SIGNAL(toggled(bool)), SLOT(ibbOnlyToggled(bool)));
 	ibbOnlyToggled(acc.ibbOnly);
 
@@ -249,7 +258,7 @@ void AccountModifyDlg::init()
 		tr("This option sets the user (and realm) you want to "
 			"authenticate as. This overrides the XMPP address you are logging in "
 			"as."));
-	le_priority->setWhatsThis(
+	sb_priority->setWhatsThis(
 		tr("<p>You can have multiple clients connected to the XMPP "
 		"server with your single account.  In such a situation, "
 		"the client with the highest priority (that is specified in "
@@ -309,7 +318,7 @@ void AccountModifyDlg::init()
 	}
 
 	if (!PsiOptions::instance()->getOption("options.ui.account.resource").toBool()) {
-		ck_automatic_resource->hide();
+		cb_resource->hide();
 		lb_resource->hide();
 		le_resource->hide();
 	}
@@ -324,7 +333,8 @@ void AccountModifyDlg::init()
 
 	if (!PsiOptions::instance()->getOption("options.ui.account.priority").toBool()) {
 		lb_priority->hide();
-		le_priority->hide();
+		cb_priority->hide();
+		sb_priority->hide();
 	}
 
 	if (!PsiOptions::instance()->getOption("options.ui.account.data-proxy").toBool()) {
@@ -511,9 +521,10 @@ void AccountModifyDlg::save()
 	acc.req_mutual_auth = ck_req_mutual->isChecked();
 	acc.security_level = cb_security_level->itemData(cb_security_level->currentIndex()).toInt();
 
-	acc.opt_automatic_resource = ck_automatic_resource->isChecked();
+	acc.opt_automatic_resource = (cb_resource->currentIndex() == 1);
 	acc.resource = le_resource->text();
-	acc.priority = le_priority->text().toInt();
+	acc.priority_dep_on_status = (cb_priority->currentIndex() == 1);
+	acc.priority = sb_priority->value();
 	acc.customAuth = ck_custom_auth->isChecked();
 	acc.authid = le_authid->text();
 	acc.realm = le_realm->text();
@@ -522,6 +533,7 @@ void AccountModifyDlg::save()
 	acc.opt_compress = ck_compress->isChecked();
 	acc.opt_auto = ck_auto->isChecked();
 	acc.opt_connectAfterSleep = ck_connectAfterSleep->isChecked();
+	acc.opt_autoSameStatus = ck_autoSameStatus->isChecked();
 	acc.opt_reconn = ck_reconn->isChecked();
 	acc.opt_log = ck_log->isChecked();
 	acc.opt_keepAlive = ck_keepAlive->isChecked();
@@ -649,3 +661,22 @@ void AccountModifyDlg::getDefaultList_error()
 	setPrivacyTabEnabled(false);
 }
 
+void AccountModifyDlg::resourceCbChanged(int index)
+{
+	le_resource->setEnabled(index == 0);
+}
+
+void AccountModifyDlg::priorityCbChanged(int index)
+{
+	sb_priority->setEnabled(index == 0);
+}
+
+void AccountModifyDlg::autoconnectCksChanged()
+{
+	if (ck_auto->isChecked() || ck_connectAfterSleep->isChecked()) {
+		ck_autoSameStatus->setEnabled(true);
+	}
+	else {
+		ck_autoSameStatus->setEnabled(false);
+	}
+}

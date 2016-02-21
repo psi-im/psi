@@ -285,10 +285,11 @@ void PsiActionList::Private::createMainWin()
 	{
 		// status actions
 		IconActionGroup *statusGroup = new IconActionGroup ( this );
-		statusGroup->setText (tr("Set Status"));
-		statusGroup->setWhatsThis (tr("Smaller alternative to the Status button"));
-		statusGroup->setExclusive(false);
-		statusGroup->setUsesDropDown (true);
+		statusGroup->setVisible(false);
+
+		IconAction* statusSmallerAlt = new IconAction(this);
+		statusSmallerAlt->setText (tr("Set Status"));
+		statusSmallerAlt->setWhatsThis (tr("Smaller alternative to the Status button"));
 
 		QString setStatusStr = tr("Changes your global status to '%1'");
 
@@ -312,6 +313,14 @@ void PsiActionList::Private::createMainWin()
 
 		statusGroup->addSeparator();
 
+		IconAction *chooseStatus = new IconAction(tr("Choose status..."), "psi/action_direct_presence", tr("Choose..."), 0, statusGroup);
+		chooseStatus->setWhatsThis(tr("Show dialog to set your status"));
+
+		IconAction *reconnectAll = new IconAction(tr("Reconnect"), "psi/reload", tr("Reconnect"), 0, statusGroup);
+		reconnectAll->setWhatsThis(tr("Reconnect all active accounts"));
+
+		statusGroup->addSeparator();
+
 		IconAction *statusInvisible = new IconAction (status2txt(STATUS_INVISIBLE), "status/invisible", status2txt(STATUS_INVISIBLE), 0, statusGroup, QString::number(STATUS_INVISIBLE), statusExl);
 		statusInvisible->setWhatsThis (setStatusStr.arg(tr("Invisible")));
 
@@ -321,7 +330,8 @@ void PsiActionList::Private::createMainWin()
 		statusOffline->setWhatsThis (setStatusStr.arg(tr("Offline")));
 
 		ActionNames actions[] = {
-			{ "status_all",       statusGroup     },
+			{ "status_group",     statusGroup     },
+			{ "status_all",       statusSmallerAlt},
 			{ "status_chat",      statusChat      },
 			{ "status_online",    statusOnline    },
 			{ "status_away",      statusAway      },
@@ -329,6 +339,8 @@ void PsiActionList::Private::createMainWin()
 			{ "status_dnd",       statusDnd       },
 			{ "status_invisible", statusInvisible },
 			{ "status_offline",   statusOffline   },
+			{ "choose_status",    chooseStatus    },
+			{ "reconnect_all",    reconnectAll    },
 			{ "", 0 }
 		};
 

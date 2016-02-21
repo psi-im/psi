@@ -73,6 +73,10 @@ private slots:
  	void getDefaultList_error();
  	void changeList_error();
 
+	void resourceCbChanged(int index);
+	void priorityCbChanged(int index);
+	void autoconnectCksChanged();
+
 private:
 	PsiCon *psi;
 	PsiAccount *pa;

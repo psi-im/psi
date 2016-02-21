@@ -164,7 +164,7 @@ protected:
 private:
 	bool highlightersInstalled_;
 	QString dispNick_;
-	int status_;
+	int status_, priority_;
 	QString statusString_;
 
 	void initActions();

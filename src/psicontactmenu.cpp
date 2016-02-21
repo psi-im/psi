@@ -739,7 +739,7 @@ private slots:
 		if (!contact_)
 			return;
 
-		StatusSetDlg *w = new StatusSetDlg(contact_->account()->psi(), contact_->account()->status());
+		StatusSetDlg *w = new StatusSetDlg(contact_->account()->psi(), makeLastStatus(contact_->account()->status().type()), lastPriorityNotEmpty());
 		w->setJid(contact_->jid());
 		connect(w, SIGNAL(setJid(const Jid &, const Status &)), SLOT(setStatusFromDialog(const Jid &, const Status &)));
 		w->show();

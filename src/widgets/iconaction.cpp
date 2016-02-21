@@ -517,4 +517,9 @@ void IconActionGroup::addingToolButton(IconToolButton *btn)
 	btn->setPopupMode( QToolButton::MenuButtonPopup );
 }
 
+QMenu* IconActionGroup::popup()
+{
+	return d->popup;
+}
+
 #include "iconaction.moc"

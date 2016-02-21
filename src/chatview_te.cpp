@@ -348,9 +348,13 @@ void ChatView::renderSysMessage(const MessageView &mv)
 	QString color = ColorOpt::instance()->color(informationalColorOpt).name();
 	QString userTextColor = ColorOpt::instance()->color("options.ui.look.colors.messages.usertext").name();
 	appendText(QString(useMessageIcons_?"<img src=\"icon:log_icon_info\" />":"") +
-			   QString("<font color=\"%1\">[%2] *** ").arg(color, timestr) + mv.formattedText() +
-						(ut.isEmpty()?"":":") + "</font>" +
-						(ut.isEmpty()?"":QString(" <span style=\"color:%1;\">%2</span>").arg(userTextColor, ut)));
+			   QString("<font color=\"%1\">[%2] *** ").arg(color, timestr) +
+			   mv.formattedText() +
+			   (ut.isEmpty()?"":QString(": <span style=\"color:%1;\">%2</span>")
+									  .arg(userTextColor, ut)) +
+			   (mv.type() == MessageView::Status && mv.statusPriority() ?
+					QString(" [%1]").arg(mv.statusPriority()) :  "") +
+			   "</font>");
 }
 
 void ChatView::renderSubject(const MessageView &mv)

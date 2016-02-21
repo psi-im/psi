@@ -35,6 +35,7 @@ MessageView::MessageView(Type t)
 	, _spooled(false)
 	, _awaitingReceipt(false)
 	, _status(0)
+	, _statusPriority(0)
 	, _dateTime(QDateTime::currentDateTime())
 {
 
@@ -71,13 +72,14 @@ MessageView MessageView::subjectMessage(const QString &subject, const QString &p
 }
 
 MessageView MessageView::statusMessage(const QString &nick, int status,
-									   const QString &statusText)
+									   const QString &statusText, int priority)
 {
 	MessageView mv = MessageView::fromPlainText(QObject::tr("%1 is now %2")
 												.arg(nick, status2txt(status)),
 												Status);
 	mv.setNick(nick);
 	mv.setStatus(status);
+	mv.setStatusPriority(priority);
 	mv.setUserText(statusText);
 	return mv;
 }
@@ -166,6 +168,7 @@ QVariantMap MessageView::toVariantMap(bool isMuc, bool formatted) const
 		case Status:
 			m["sender"] = _nick;
 			m["status"] = _status;
+			m["priority"] = _statusPriority;
 			m["message"] = _text;
 			m["usertext"] = formatted?formattedUserText():_userText;
 			break;
