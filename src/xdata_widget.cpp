@@ -33,6 +33,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QSpacerItem>
 
 #include "desktoputil.h"
 #include "xmpp_xdata.h"
@@ -148,12 +149,12 @@ public:
 		return _field;
 	}
 
-	QString labelText() const
+	QString labelText(QString str=": ") const
 	{
 		QString text = _field.label();
 		if ( text.isEmpty() )
 			text = _field.var();
-		return text + ": ";
+		return text + str;
 	}
 
 	QString reqText() const
@@ -208,15 +209,21 @@ public:
 				checked = true;
 		}
 
-		QLabel *label = new QLabel(labelText(), parent);
-		grid->addWidget(label, row, 0);
+		QHBoxLayout *layout = new QHBoxLayout;
+		QSpacerItem *spacerItem = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
 		check = new QCheckBox(parent);
 		check->setChecked(checked);
-		grid->addWidget(check, row, 1);
+		layout->addWidget(check);
+
+		QLabel *label = new QLabel(labelText(""), parent);
+		layout->addWidget(label);
+		layout->addSpacerItem(spacerItem);
+
+		grid->addLayout(layout, row, 0);
 
 		QLabel *req = new QLabel(reqText(), parent);
-		grid->addWidget(req, row, 2);
+		grid->addWidget(req, row, 1);
 
 		if ( !f.desc().isEmpty() ) {
 			label->setToolTip(f.desc());
@@ -256,8 +263,9 @@ public:
 			text += *it;
 		}
 
-		QLabel *fixed = new QLabel("<qt>" + text + "</qt>", parent);
-		grid->addWidget(fixed, row, 0, 2, 0);
+		QLabel *fixed = new QLabel("<qt>" + text + "<br/></qt>", parent);
+		fixed->setWordWrap(true);
+		grid->addWidget(fixed, row, 0);
 
 		if ( !f.desc().isEmpty() ) {
 			fixed->setToolTip(f.desc());
@@ -294,16 +302,20 @@ public:
 		QString text;
 		if ( f.value().count() )
 			text = f.value().first();
+		QVBoxLayout *layout = new QVBoxLayout;
 
 		QLabel *label = new QLabel(labelText(), parent);
-		grid->addWidget(label, row, 0);
+		label->setWordWrap(true);
+		layout->addWidget(label);
 
 		edit = new QLineEdit(parent);
 		edit->setText(text);
-		grid->addWidget(edit, row, 1);
+		layout->addWidget(edit);
+
+		grid->addLayout(layout, row, 0);
 
 		QLabel *req = new QLabel(reqText(), parent);
-		grid->addWidget(req, row, 2);
+		grid->addWidget(req, row, 1);
 
 		if ( !f.desc().isEmpty() ) {
 			label->setToolTip(f.desc());
@@ -357,13 +369,18 @@ public:
 	XDataField_ListSingle(XData::Field f, QGridLayout *grid, QWidget *parent)
 	: XDataField(f, ((XDataWidget *)parent)->client())
 	{
+		QHBoxLayout *layout = new QHBoxLayout;
+
 		int row = grid->rowCount();
 		QLabel *label = new QLabel(labelText(), parent);
-		grid->addWidget(label, row, 0);
+		label->setWordWrap(true);
+		layout->addWidget(label);
 
 		combo = new QComboBox(parent);
-		grid->addWidget(combo, row, 1);
+		layout->addWidget(combo);
 		combo->setInsertPolicy(QComboBox::NoInsert);
+
+		grid->addLayout(layout, row, 0);
 
 		QString sel;
 		if ( !f.value().isEmpty() )
@@ -382,7 +399,7 @@ public:
 		}
 
 		QLabel *req = new QLabel(reqText(), parent);
-		grid->addWidget(req, row, 2);
+		grid->addWidget(req, row, 1);
 
 		if ( !f.desc().isEmpty() ) {
 			label->setToolTip(f.desc());
@@ -425,6 +442,7 @@ public:
 	{
 		int row = grid->rowCount();
 		QLabel *label = new QLabel(labelText(), parent);
+		label->setWordWrap(true);
 		grid->addWidget(label, row, 0);
 
 		list = new QListWidget(parent);
@@ -494,11 +512,14 @@ public:
 	: XDataField(f, ((XDataWidget *)parent)->client())
 	{
 		int row = grid->rowCount();
+		QHBoxLayout *layout = new QHBoxLayout;
+
 		QLabel *label = new QLabel(labelText(), parent);
-		grid->addWidget(label, row, 0);
+		label->setWordWrap(true);
+		layout->addWidget(label);
 
 		edit = new QTextEdit(parent);
-		grid->addWidget(edit, row, 1);
+		layout->addWidget(edit);
 
 		QString text;
 		QStringList val = f.value();
@@ -510,8 +531,10 @@ public:
 		}
 		edit->setText(text);
 
+		grid->addLayout(layout, row, 0);
+
 		QLabel *req = new QLabel(reqText(), parent);
-		grid->addWidget(req, row, 2);
+		grid->addWidget(req, row, 1);
 
 		if ( !f.desc().isEmpty() ) {
 			label->setToolTip(f.desc());
@@ -554,6 +577,8 @@ XDataWidget::XDataWidget(QWidget *parent, XMPP::Client* client, XMPP::Jid owner)
 {
 	owner_ = owner;
 	layout_ = new QVBoxLayout(this);
+	layout_->setContentsMargins(0,0,0,0);
+
 }
 
 XDataWidget::~XDataWidget()
@@ -684,6 +709,7 @@ void XDataWidget::setFields(const XData::FieldList &f)
 	if ( f.count() ) {
 		// FIXME
 		QGridLayout *grid = new QGridLayout(fields);
+		grid->setSpacing(3);
 
 		XData::FieldList::ConstIterator it = f.begin();
 		for ( ; it != f.end(); ++it) {

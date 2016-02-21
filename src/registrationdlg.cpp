@@ -159,6 +159,7 @@ RegistrationDlg::RegistrationDlg(const Jid &jid, PsiAccount *pa)
 	QVBoxLayout *vb1 = new QVBoxLayout(this);
 	vb1->setMargin(4);
 	d->lb_top = new QLabel(this);
+	d->lb_top->setWordWrap(true);
 	d->lb_top->setFrameStyle( QFrame::Panel | QFrame::Sunken );
 	d->lb_top->hide();
 	vb1->addWidget(d->lb_top);

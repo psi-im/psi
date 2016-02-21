@@ -160,6 +160,8 @@ public:
 	QList<QLineEdit*> le_field;
 	XDataWidget *xdata;
 	XData xdata_form;
+	QScrollArea *scrollArea;
+
 };
 
 SearchDlg::SearchDlg(const Jid &jid, PsiAccount *pa)
@@ -174,6 +176,8 @@ SearchDlg::SearchDlg(const Jid &jid, PsiAccount *pa)
 	d->pa->dialogRegister(this, d->jid);
 	d->jt = 0;
 	d->xdata = 0;
+	d->scrollArea = scrollArea;
+
 
 	setWindowTitle(windowTitle().arg(d->jid.full()));
 
@@ -182,8 +186,8 @@ SearchDlg::SearchDlg(const Jid &jid, PsiAccount *pa)
 
 	d->gr_form = new QWidget(gb_search);
 	d->gr_form_layout = new QGridLayout(d->gr_form);
-	d->gr_form_layout->setSpacing(4);
-	replaceWidget(lb_form, d->gr_form);
+	d->gr_form_layout->setSpacing(0);
+	d->scrollArea->setWidget(d->gr_form);
 	d->gr_form->hide();
 
 	pb_add->setEnabled(false);
