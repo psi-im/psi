@@ -57,6 +57,7 @@ public:
 	void setWindowOpts(bool onTop, bool asTool);
 	void setUseDock(bool);
 	void setUseAvatarFrame(bool state);
+	void reinitAutoHide();
 
 	void buildToolbars();
 	PsiTrayIcon *psiTrayIcon();
@@ -73,9 +74,12 @@ public:
 
 protected:
 	// reimplemented
+	bool eventFilter(QObject* o, QEvent* e);
 	void resizeEvent(QResizeEvent *e);
 	void closeEvent(QCloseEvent *);
 	void changeEvent(QEvent *event);
+	void enterEvent(QEvent *e);
+	void leaveEvent(QEvent *e);
 	void keyPressEvent(QKeyEvent *);
 	QMenuBar* mainMenuBar() const;
 #ifdef Q_OS_WIN
@@ -155,6 +159,8 @@ private slots:
 
 	void nickChanged();
 	void avatarChanged();
+
+	void hideTimerTimeout();
 
 public slots:
 	void setWindowIcon(const QPixmap&);

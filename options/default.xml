@@ -157,7 +157,7 @@
 				<lockdown-roster type="bool">false</lockdown-roster>
 				<raise-on-new-event type="bool">false</raise-on-new-event>
 				<quit-on-close type="bool">false</quit-on-close>
-				<show-roster-avatar-frame type="bool">false</show-roster-avatar-frame>
+				<show-avatar-frame type="bool">false</show-avatar-frame>
 				<show>
 					<agent-contacts type="bool">true</agent-contacts>
 					<away-contacts type="bool">true</away-contacts>
@@ -486,6 +486,7 @@
 			<hide-on-start type="bool">false</hide-on-start>
 			<resolve-nicks-on-contact-add type="bool">false</resolve-nicks-on-contact-add>
 			<use-toolwindow type="bool">false</use-toolwindow>
+			<autohide-interval type="int">0</autohide-interval>
 		</contactlist>
 		<external-control>
 			<adhoc-remote-control>

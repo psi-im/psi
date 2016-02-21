@@ -1395,7 +1395,8 @@ void PsiCon::slotApplyOptions()
 	d->mainwin->setWindowOpts(o->getOption("options.ui.contactlist.always-on-top").toBool(), (o->getOption("options.ui.systemtray.enable").toBool() && o->getOption("options.contactlist.use-toolwindow").toBool()));
 	d->mainwin->setUseDock(o->getOption("options.ui.systemtray.enable").toBool());
 	d->mainwin->buildToolbars();
-	d->mainwin->setUseAvatarFrame(o->getOption("options.ui.contactlist.show-roster-avatar-frame").toBool());
+	d->mainwin->setUseAvatarFrame(o->getOption("options.ui.contactlist.show-avatar-frame").toBool());
+	d->mainwin->reinitAutoHide();
 
 	// notify about options change
 	emit emitOptionsUpdate();

@@ -135,6 +135,7 @@ public:
 	QToolButton* searchPb;
 	QWidget* searchWidget;
 
+	QTimer *hideTimer;
 	QSignalMapper* statusMapper;
 
 	PsiIcon* nextAnim;
@@ -161,7 +162,8 @@ public:
 	QPointer<GeoLocationDlg> geolocationDlg;
 };
 
-MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) : splitter(0), mainTabs(0), viewToolBar(0), isLeftRoster(false), psi(_psi), mainWin(_mainWin)
+MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) : splitter(0), mainTabs(0), viewToolBar(0),
+	isLeftRoster(false), psi(_psi), mainWin(_mainWin), hideTimer(0)
 {
 
 	statusGroup   = (IconActionGroup *)getAction("status_all");
@@ -405,7 +407,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 	// create rosteravatarframe
 	d->rosterAvatar = new RosterAvatarFrame(this);
 	d->vb_roster->addWidget(d->rosterAvatar);
-	d->rosterAvatar->setVisible(PsiOptions::instance()->getOption("options.ui.contactlist.show-roster-avatar-frame").toBool());
+	d->rosterAvatar->setVisible(PsiOptions::instance()->getOption("options.ui.contactlist.show-avatar-frame").toBool());
 	connect(d->rosterAvatar, SIGNAL(statusMessageChanged(QString)), this, SIGNAL(statusMessageChanged(QString)));
 	connect(psiCon(), SIGNAL(statusMessageChanged(QString)), d->rosterAvatar, SLOT(setStatusMessage(QString)));
 	connect(d->rosterAvatar, SIGNAL(setMood()), this, SLOT(actSetMoodActivated()));
@@ -529,12 +531,15 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 	// setUnifiedTitleAndToolBarOnMac(true);
 
 	connect(qApp, SIGNAL(dockActivated()), SLOT(dockActivated()));
+	qApp->installEventFilter(this);
 
 	connect(psi, SIGNAL(emitOptionsUpdate()), SLOT(optionsUpdate()));
 	optionsUpdate();
 
 		/*QShortcut *sp_ss = new QShortcut(QKeySequence(tr("Ctrl+Shift+N")), this);
 		connect(sp_ss, SIGNAL(triggered()), SLOT(avcallConfig()));*/
+
+	reinitAutoHide();
 }
 
 MainWin::~MainWin()
@@ -701,6 +706,33 @@ void MainWin::registerAction( IconAction* action )
 				action->setChecked( reverseactionlist[i].checked );
 		}
 	}
+}
+
+void MainWin::reinitAutoHide()
+{
+	int interval = PsiOptions::instance()->getOption("options.contactlist.autohide-interval").toInt();
+	if (interval) {
+		if (!d->hideTimer) {
+			d->hideTimer = new QTimer(this);
+			connect(d->hideTimer, SIGNAL(timeout()), SLOT(hideTimerTimeout()));
+		}
+		d->hideTimer->setInterval(interval*1000);
+		if (isVisible()) {
+			d->hideTimer->start();
+		}
+	} else {
+		delete d->hideTimer;
+		d->hideTimer = 0;
+	}
+}
+
+void MainWin::hideTimerTimeout()
+{
+	d->hideTimer->stop();
+	if(d->tray)
+		trayHide();
+	else
+		setWindowState(Qt::WindowMinimized);
 }
 
 PsiCon* MainWin::psiCon() const
@@ -1402,6 +1434,31 @@ void MainWin::keyPressEvent(QKeyEvent* e)
 	QWidget::keyPressEvent(e);
 }
 
+void MainWin::enterEvent(QEvent *e)
+{
+	if(d->useAutohide)
+		d->hideTimer->stop();
+	QMainWindow::enterEvent(e);
+}
+
+void MainWin::leaveEvent(QEvent *e)
+{
+	if(d->useAutohide)
+		d->hideTimer->start();
+	QMainWindow::leaveEvent(e);
+}
+
+bool MainWin::eventFilter(QObject *o, QEvent *e)
+{
+	if(e->type() == QEvent::KeyPress
+	   && o->isWidgetType()
+	   && isAncestorOf( (QWidget*)o ) ) {
+		if(d->hideTimer->isActive())
+			d->hideTimer->start();
+	}
+	return false;
+}
+
 #ifdef Q_OS_WIN
 #include <windows.h>
 bool MainWin::winEvent(MSG* msg, long* result)
@@ -1520,6 +1577,8 @@ void MainWin::trayDoubleClicked()
 void MainWin::trayShow()
 {
 	bringToFront(this);
+	if(d->useAutohide)
+		d->hideTimer->start();
 }
 
 void MainWin::trayHide()
@@ -1819,6 +1878,8 @@ void MainWin::showNoFocus()
 void MainWin::showNoFocus()
 {
 	bringToFront(this);
+	if(d->useAutohide)
+		d->hideTimer->start();
 }
 
 void MainWin::avcallConfig()
