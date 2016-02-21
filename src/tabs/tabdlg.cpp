@@ -444,12 +444,23 @@ void TabDlg::detachCurrentTab()
 
 void TabDlg::mouseDoubleClickTab(QWidget* widget)
 {
-	if(userManagement_)
+	const QString act = PsiOptions::instance()->getOption("options.ui.tabs.mouse-doubleclick-action").toString();
+	if(act == "hide")
+		hideTab(static_cast<TabbableWidget*>(widget));
+	else if(act == "close")
+		closeTab(static_cast<TabbableWidget*>(widget));
+	else if(act == "detach" && userManagement_)
 		detachTab(static_cast<TabbableWidget*>(widget));
 }
 
 void TabDlg::mouseMiddleClickTab(QWidget* widget) {
-	closeTab(static_cast<TabbableWidget*>(widget));
+	const QString act = PsiOptions::instance()->getOption("options.ui.tabs.mouse-middle-button").toString();
+	if(act == "hide")
+		hideTab(static_cast<TabbableWidget*>(widget));
+	else if(act == "close")
+		closeTab(static_cast<TabbableWidget*>(widget));
+	else if(act == "detach" && userManagement_)
+		detachTab(static_cast<TabbableWidget*>(widget));
 }
 
 void TabDlg::detachTab(TabbableWidget* tab)
