@@ -103,6 +103,7 @@
         <file>iconsets/system/default/notification_chat_send.png</file>
         <file>iconsets/system/default/notification_chat_time.png</file>
         <file>iconsets/system/default/throbber.png</file>
+	<file>iconsets/system/default/enable-groups.png</file>
         <file>iconsets/system/default/bookmark_add.png</file>
         <file>iconsets/system/default/bookmark_remove.png</file>
         <file>iconsets/system/default/theme_title_texture.png</file>

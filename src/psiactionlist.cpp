@@ -126,6 +126,9 @@ void PsiActionList::Private::createMainWin()
 		viewGroups->setUsesDropDown(true);
 		viewGroups->setExclusive(false);
 
+		IconAction *actEnableGroups = new IconAction(tr("Show Roster Groups"), "psi/enable-groups", tr("Show Roster Groups"), 0, viewGroups, 0, true);
+		actEnableGroups->setWhatsThis(tr("Enable/disable groups in roster"));
+
 		IconAction *showOffline = new IconAction(tr("Show Offline Contacts"), "psi/show_offline", tr("Show Offline Contacts"), 0, viewGroups, 0, true);
 		showOffline->setWhatsThis(tr("Toggles visibility of offline contacts in roster"));
 
@@ -147,6 +150,7 @@ void PsiActionList::Private::createMainWin()
 
 		ActionNames actions[] = {
 			{ "view_groups",  viewGroups  },
+			{ "enable_groups",   actEnableGroups  },
 			{ "show_offline", showOffline },
 			//{ "show_away",    showAway    },
 			{ "show_hidden",  showHidden  },

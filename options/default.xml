@@ -150,6 +150,7 @@
 				<disable-scrollbar type="bool">true</disable-scrollbar>
 				<contact-sort-style type="QString">status</contact-sort-style>
 				<disable-service-discovery type="bool">false</disable-service-discovery>
+				<enable-groups type="bool">true</enable-groups>
 				<ensure-contact-visible-on-event type="bool">true</ensure-contact-visible-on-event>
 				<group-sort-style type="QString">alpha</group-sort-style>
 				<lockdown-roster type="bool">false</lockdown-roster>

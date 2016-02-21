@@ -565,6 +565,7 @@ void MainWin::registerAction( IconAction* action )
 		{ "show_agents",    toggled, contactList, SLOT( setShowAgents(bool) ) },
 		{ "show_self",      toggled, contactList, SLOT( setShowSelf(bool) ) },
 		{ "show_statusmsg", toggled, d->rosterWidget_, SLOT( setShowStatusMsg(bool) ) },
+		{ "enable_groups",  toggled,   this, SLOT( actEnableGroupsActivated(bool) ) },
 #endif
 
 		{ "button_options", activated, this, SIGNAL( doOptions() ) },
@@ -625,6 +626,9 @@ void MainWin::registerAction( IconAction* action )
 			// special cases
 			if ( aName == "menu_play_sounds" ) {
 				action->setChecked(PsiOptions::instance()->getOption("options.ui.notifications.sounds.enable").toBool());
+			}
+			else if ( aName == "enable_groups" ) {
+				action->setChecked(PsiOptions::instance()->getOption("options.ui.contactlist.enable-groups").toBool());
 			}
 			//else if ( aName == "foobar" )
 			//	;
@@ -1059,6 +1063,11 @@ void MainWin::actPlaySoundsActivated (bool state)
 void MainWin::actPublishTuneActivated (bool state)
 {
 	PsiOptions::instance()->setOption("options.extended-presence.tune.publish",state);
+}
+
+void MainWin::actEnableGroupsActivated (bool state)
+{
+	PsiOptions::instance()->setOption("options.ui.contactlist.enable-groups", state);
 }
 
 void MainWin::activatedAccOption(PsiAccount* pa, int x)

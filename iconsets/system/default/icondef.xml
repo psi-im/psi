@@ -469,6 +469,11 @@
 	</icon>
 
 	<icon>
+		<x xmlns='name'>psi/enable-groups</x>
+		<object mime='image/png'>enable-groups.png</object>
+	</icon>
+
+	<icon>
 		<x xmlns='name'>psi/bookmark_add</x>
 		<object mime='image/png'>bookmark_add.png</object>
 	</icon>
