@@ -358,7 +358,7 @@ bool GCUserView::maybeTip(const QPoint &pos)
 	u.setName(nick);
 
 	// Find out capabilities info
-	Jid caps_jid(s.mucItem().jid().isEmpty() ? dlg->jid().withResource(nick) : s.mucItem().jid());
+	Jid caps_jid(dlg->jid().withResource(nick));
 	QString client_name = dlg->account()->capsManager()->clientName(caps_jid);
 	QString client_version = (client_name.isEmpty() ? QString() : dlg->account()->capsManager()->clientVersion(caps_jid));
 
