@@ -29,6 +29,7 @@
 #include <QToolButton>
 
 #include "iconset.h"
+#include "psiiconset.h"
 #include "iconaction.h"
 #include "psioptions.h"
 #include "options/opt_toolbars.h"
@@ -63,7 +64,8 @@ PsiToolBar::PsiToolBar(const QString& base, QWidget* mainWindow, MetaActionList*
 	Q_ASSERT(mainWindow);
 	Q_ASSERT(actionList_);
 
-	setIconSize(QSize(16, 16));
+	int s = PsiIconset::instance()->system().iconSize();
+	setIconSize(QSize(s, s));
 
 	customizeAction_ = new QAction(tr("&Configure Toolbar..."), this);
 	connect(customizeAction_, SIGNAL(triggered()), this, SIGNAL(customize()));

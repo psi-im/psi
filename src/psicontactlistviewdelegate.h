@@ -58,6 +58,7 @@ protected:
 private slots:
 	void optionChanged(const QString& option);
 	void updateAlerts();
+	void rosterIconsSizeChanged(int size);
 
 private:
 	QTimer* alertTimer_;
@@ -70,6 +71,7 @@ private:
 	int avatarSize_, avatarRadius_;
 	bool enableGroups_, allClients_;
 	mutable QHash<QModelIndex, bool> alertingIndexes_;
+	int statusIconSize_;
 };
 
 #endif

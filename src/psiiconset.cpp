@@ -337,6 +337,11 @@ bool PsiIconset::loadSystem()
 	QString cur_system = PsiOptions::instance()->getOption("options.iconsets.system").toString();
 	if (d->cur_system != cur_system) {
 		Iconset sys = d->systemIconset(&ok);
+
+		if(sys.iconSize() != d->system.iconSize()) {
+			emit systemIconsSizeChanged(sys.iconSize());
+		}
+
 		d->loadIconset(&d->system, &sys);
 
 		//d->system = d->systemIconset();
@@ -545,6 +550,10 @@ void PsiIconset::reloadRoster()
 	if (d->cur_status != cur_status) {
 		Iconset *newDef = d->defaultRosterIconset(&ok);
 		Iconset *oldDef = roster[d->cur_status];
+
+		if(oldDef->iconSize() != newDef->iconSize())
+			emit rosterIconsSizeChanged(newDef->iconSize());
+
 		d->loadIconset(oldDef, newDef);
 
 		roster.remove(d->cur_status);

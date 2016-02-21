@@ -252,6 +252,10 @@ void PsiChatDlg::setLooks()
 	ui_.splitter->optionsChanged();
 	ui_.mle->optionsChanged();
 
+	int s = PsiIconset::instance()->system().iconSize();
+	ui_.lb_status->setFixedSize(s,s);
+	ui_.lb_client->setFixedSize(s,s);
+
 	ui_.tb_pgp->hide();
 	if (smallChat_) {
 		ui_.lb_status->hide();
@@ -370,7 +374,8 @@ void PsiChatDlg::initToolButtons()
 void PsiChatDlg::initToolBar()
 {
 	ui_.toolbar->setWindowTitle(tr("Chat Toolbar"));
-	ui_.toolbar->setIconSize(QSize(16, 16));
+	int s = PsiIconset::instance()->system().iconSize();
+	ui_.toolbar->setIconSize(QSize(s, s));
 	ui_.toolbar->addAction(act_clear_);
 // typeahead find bar
 	ui_.toolbar->addAction(act_find_);

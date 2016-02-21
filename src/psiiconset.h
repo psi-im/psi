@@ -81,6 +81,8 @@ public:
 	QString caps2client(const QString &name);
 signals:
 	void emoticonsChanged();
+	void systemIconsSizeChanged(int);
+	void rosterIconsSizeChanged(int);
 
 public slots:
 	static void reset();

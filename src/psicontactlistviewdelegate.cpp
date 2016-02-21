@@ -49,6 +49,7 @@ static const QString showStatusIconsPath = "options.ui.contactlist.show-status-i
 static const QString statusIconsOverAvatarsPath = "options.ui.contactlist.status-icon-over-avatar";
 static const QString allClientsOptionPath = "options.ui.contactlist.show-all-client-icons";
 static const QString enableGroupsOptionPath = "options.ui.contactlist.enable-groups";
+static const QString statusIconsetOptionPath = "options.iconsets.status";
 
 PsiContactListViewDelegate::PsiContactListViewDelegate(ContactListView* parent)
 	: ContactListViewDelegate(parent)
@@ -61,6 +62,8 @@ PsiContactListViewDelegate::PsiContactListViewDelegate(ContactListView* parent)
 	connect(alertTimer_, SIGNAL(timeout()), SLOT(updateAlerts()));
 
 	connect(PsiOptions::instance(), SIGNAL(optionChanged(const QString&)), SLOT(optionChanged(const QString&)));
+	connect(PsiIconset::instance(), SIGNAL(rosterIconsSizeChanged(int)), SLOT(rosterIconsSizeChanged(int)));
+	statusIconSize_ = PsiIconset::instance()->roster.value(PsiOptions::instance()->getOption(statusIconsetOptionPath).toString())->iconSize();
 	optionChanged(slimGroupsOptionPath);
 	optionChanged(outlinedGroupsOptionPath);
 	optionChanged(contactListFontOptionPath);
@@ -570,7 +573,7 @@ void PsiContactListViewDelegate::optionChanged(const QString& option)
 		font_ = new QFont();
 		font_->fromString(PsiOptions::instance()->getOption(contactListFontOptionPath).toString());
 		fontMetrics_ = new QFontMetrics(*font_);
-		rowHeight_ = qMax(fontMetrics_->height()+2, 18); // 18 - default row height
+		rowHeight_ = qMax(fontMetrics_->height()+2, statusIconSize_+2);
 		contactList()->viewport()->update();
 	}
 	else if (option == contactListBackgroundOptionPath) {
@@ -651,6 +654,13 @@ void PsiContactListViewDelegate::optionChanged(const QString& option)
 		statusSingle_ = !PsiOptions::instance()->getOption(statusSingleOptionPath).toBool();
 		contactList()->viewport()->update();
 	}
+}
+
+void PsiContactListViewDelegate::rosterIconsSizeChanged(int size)
+{
+	statusIconSize_ = size;
+	rowHeight_ = qMax(fontMetrics_->height()+2, statusIconSize_+2);
+	contactList()->viewport()->update();
 }
 
 void PsiContactListViewDelegate::drawText(QPainter* painter, const QStyleOptionViewItem& o, const QRect& rect, const QString& text, const QModelIndex& index) const

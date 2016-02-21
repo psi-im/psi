@@ -704,7 +704,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	connect(bm, SIGNAL(conferencesChanged(QList<ConferenceBookmark>)), SLOT(updateBookmarkIcon()));
 	connect(bm, SIGNAL(bookmarksSaved()), SLOT(updateBookmarkIcon()));
 
-	ui_.toolbar->setIconSize(QSize(16,16));
+	int s = PsiIconset::instance()->system().iconSize();
+	ui_.toolbar->setIconSize(QSize(s,s));
 	ui_.toolbar->addAction(d->act_clear);
 	ui_.toolbar->addAction(d->act_find);
 	ui_.toolbar->addAction(d->act_configure);

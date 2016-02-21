@@ -207,6 +207,7 @@ public:
 	const QStringList &authors() const;
 	const QString &creation() const;
 	const QString &homeUrl() const;
+	const int &iconSize() const;
 
 	const QString &fileName() const;
 	void setFileName(const QString &);

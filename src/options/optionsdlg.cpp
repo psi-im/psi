@@ -25,6 +25,7 @@
 #include "fancylabel.h"
 #include "iconset.h"
 #include "iconwidget.h"
+#include "psiiconset.h"
 
 #include <QLayout>
 #include <QLabel>
@@ -88,7 +89,10 @@ public:
 			iconSize = icon.availableSizes().first();
 		else
 #endif
-			iconSize = QSize(16, 16);
+		{
+			int s = PsiIconset::instance()->system().iconSize();
+			iconSize = QSize(s,s);
+		}
 		QRect iconRect = opt.rect;
 		QRect textRect = opt.rect;
 		iconRect.setWidth(iconSize.width());
@@ -154,7 +158,10 @@ public:
 			iconSize = icon.availableSizes().first();
 		else
 #endif
-			iconSize = QSize(16, 16);
+		{
+			int s = PsiIconset::instance()->system().iconSize();
+			iconSize = QSize(s,s);
+		}
 
 		int width = iconSize.width();
 		width += 8;

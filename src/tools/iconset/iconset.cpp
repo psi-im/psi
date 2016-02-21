@@ -1028,6 +1028,7 @@ private:
 		//authors << "I. M. Anonymous";
 		//creation = "1900-01-01";
 		homeUrl = QString::null;
+		iconSize_ = 16;
 	}
 
 public:
@@ -1036,6 +1037,7 @@ public:
 	QHash<QString, PsiIcon *> dict; // unsorted hash for fast search
 	QList<PsiIcon *> list;          // sorted list
 	QHash<QString, QString> info;
+	int iconSize_;
 
 public:
 	Private()
@@ -1129,6 +1131,8 @@ public:
 	{
 		Q_UNUSED(dir);
 
+		iconSize_ = 16;
+
 		for (QDomNode node = i.firstChild(); !node.isNull(); node = node.nextSibling()) {
 			QDomElement e = node.toElement();
 			if( e.isNull() ) {
@@ -1138,6 +1142,10 @@ public:
 			QString tag = e.tagName();
 			if ( tag == "name" ) {
 				name = e.text();
+			}
+			else if( tag == "size") {
+				QString str = e.text();
+				iconSize_ = str.toInt();
 			}
 			else if ( tag == "version" ) {
 				version = e.text();
@@ -1410,6 +1418,7 @@ public:
 		filename = from.filename;
 		authors = from.authors;
 		info = from.info;
+		iconSize_ = from.iconSize_;
 	}
 };
 //! \endif
@@ -1596,6 +1605,14 @@ const QString &Iconset::id() const
 const QString &Iconset::name() const
 {
 	return d->name;
+}
+
+/**
+ * Returns the icons size from Iconset.
+ */
+const int &Iconset::iconSize() const
+{
+	return d->iconSize_;
 }
 
 /**

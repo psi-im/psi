@@ -1009,7 +1009,8 @@ DiscoDlg::Private::Private(DiscoDlg *parent, PsiAccount *pa)
 
 	// create toolbar
 	toolBar = new QToolBar(tr("Service Discovery toolbar"), dlg);
-	toolBar->setIconSize(QSize(16,16));
+	int s = PsiIconset::instance()->system().iconSize();
+	toolBar->setIconSize(QSize(s,s));
 	toolBar->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 	replaceWidget(dlg->toolBarPlaceholder, toolBar);
 
