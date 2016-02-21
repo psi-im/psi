@@ -260,8 +260,10 @@ void PsiChatDlg::setLooks()
 		ui_.tb_emoticons->hide();
 		ui_.toolbar->hide();
 		ui_.tb_voice->hide();
+		ui_.lb_client->hide();
 	}
 	else {
+		ui_.lb_client->show();
 		ui_.lb_status->show();
 		ui_.le_jid->show();
 		if (PsiOptions::instance()->getOption("options.ui.chat.central-toolbar").toBool()) {
@@ -466,6 +468,24 @@ void PsiChatDlg::contactUpdated(UserListItem* u, int status, const QString& stat
 		ui_.le_jid->setText(name);
 		ui_.le_jid->setCursorPosition(0);
 		ui_.le_jid->setToolTip(name);
+
+		UserResourceList srl = u->userResourceList();
+		if(!srl.isEmpty()) {
+			UserResource r;
+			if(!jid().resource().isEmpty()) {
+				QString res = jid().resource();
+				UserResourceList::ConstIterator it = srl.find(res);
+				if(it != srl.end())
+					r = *it;
+			}
+			if(r.clientName().isEmpty()) {
+				srl.sort();
+				r = srl.first();
+			}
+			const QPixmap &pix = IconsetFactory::iconPixmap("clients/" + u->findClient(r.clientName().toLower()) );
+			ui_.lb_client->setPixmap(pix);
+			ui_.lb_client->setToolTip(r.versionString());
+		}
 	}
 }
 
