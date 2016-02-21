@@ -157,6 +157,7 @@
 				<lockdown-roster type="bool">false</lockdown-roster>
 				<raise-on-new-event type="bool">false</raise-on-new-event>
 				<quit-on-close type="bool">false</quit-on-close>
+				<show-roster-avatar-frame type="bool">false</show-roster-avatar-frame>
 				<show>
 					<agent-contacts type="bool">true</agent-contacts>
 					<away-contacts type="bool">true</away-contacts>
@@ -203,6 +204,12 @@
 				<saved-window-geometry-screen type="int">0</saved-window-geometry-screen>
 				<saved-window-geometry-maximized type="bool">false</saved-window-geometry-maximized>
 				<saved-window-geometry-fullscreen type="bool">false</saved-window-geometry-fullscreen>
+				<roster-avatar-frame comment="Options for roster avatar frame">
+					<avatar>
+						<size type="int">52</size>
+						<margin type="int">0</margin>
+					</avatar>
+				</roster-avatar-frame>
 			</contactlist>
 			<menu comment="Options for the menu">
 				<account comment="Options for the account-specific menu">

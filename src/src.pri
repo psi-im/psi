@@ -208,7 +208,8 @@ HEADERS += \
 	$$PWD/vcardphotodlg.h \
 	$$PWD/psicli.h \
 	$$PWD/coloropt.h \
-	$$PWD/geolocationdlg.h
+	$$PWD/geolocationdlg.h \
+	$$PWD/rosteravatarframe.h
 
 
 HEADERS += tabcompletion.h
@@ -343,7 +344,8 @@ SOURCES += \
 	$$PWD/bookmarkmanagedlg.cpp \
 	$$PWD/vcardphotodlg.cpp \
 	$$PWD/coloropt.cpp \
-	$$PWD/geolocationdlg.cpp
+	$$PWD/geolocationdlg.cpp \
+	$$PWD/rosteravatarframe.cpp
 
 CONFIG += filetransfer
 filetransfer {
@@ -575,7 +577,8 @@ FORMS += \
 	$$PWD/bookmarkmanage.ui \
 	$$PWD/ahcommanddlg.ui \
 	$$PWD/ahcformdlg.ui \
-	$$PWD/geolocation.ui
+	$$PWD/geolocation.ui \
+	$$PWD/rosteravatarframe.ui
 
 # options dialog
 include($$PWD/options/options.pri)

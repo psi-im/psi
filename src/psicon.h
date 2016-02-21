@@ -139,6 +139,7 @@ signals:
 	void accountActivityChanged();
 	void emitOptionsUpdate();
 	void restoringSavedChatsChanged();
+	void statusMessageChanged(QString);
 
 public slots:
 	void setGlobalStatus(const Status &, bool withPriority = false, bool isManualStatus = false);
@@ -156,6 +157,7 @@ public slots:
 	void doOptions();
 	void doFileTransDlg();
 	void statusMenuChanged(int);
+	void setStatusMessage(QString message);
 	void pa_updatedActivity();
 	void pa_updatedAccount();
 	void slotApplyOptions();

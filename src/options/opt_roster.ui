@@ -62,6 +62,16 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="ck_roster_avatar">
+     <property name="whatsThis">
+      <string>Enables avatar frame at the top of roster</string>
+     </property>
+     <property name="text">
+      <string>Enable roster avatar frame</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QGroupBox" name="gb_docklet">
      <property name="title">
       <string>Icons</string>

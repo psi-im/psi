@@ -78,6 +78,9 @@
 #include "psimedia/psimedia.h"
 #include "avcall/avcall.h"
 
+#include "rosteravatarframe.h"
+#include "avatars.h"
+
 using namespace XMPP;
 
 static const QString showStatusMessagesOptionPath = "options.ui.contactlist.status-messages.show";
@@ -125,6 +128,8 @@ public:
 	EventNotifierAction* eventNotifier;
 	PsiCon* psi;
 	MainWin* mainWin;
+	RosterAvatarFrame* rosterAvatar;
+	QPointer<PsiAccount> defaultAccount;
 
 	QLineEdit* searchText;
 	QToolButton* searchPb;
@@ -305,6 +310,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 	d->trayMenu = 0;
 	d->statusTip = "";
 	d->nickname = "";
+	d->defaultAccount = 0;
 
 	QWidget *rosterBar = new QWidget(this);
 	bool allInOne = false;
@@ -394,6 +400,16 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 	searchLayout->addWidget(d->searchPb);
 	d->searchWidget->setVisible(false);
 #endif
+
+
+	// create rosteravatarframe
+	d->rosterAvatar = new RosterAvatarFrame(this);
+	d->vb_roster->addWidget(d->rosterAvatar);
+	d->rosterAvatar->setVisible(PsiOptions::instance()->getOption("options.ui.contactlist.show-roster-avatar-frame").toBool());
+	connect(d->rosterAvatar, SIGNAL(statusMessageChanged(QString)), this, SIGNAL(statusMessageChanged(QString)));
+	connect(psiCon(), SIGNAL(statusMessageChanged(QString)), d->rosterAvatar, SLOT(setStatusMessage(QString)));
+	connect(d->rosterAvatar, SIGNAL(setMood()), this, SLOT(actSetMoodActivated()));
+	connect(d->rosterAvatar, SIGNAL(setActivity()), this, SLOT(actSetActivityActivated()));
 
 	//add contact view
 #ifndef NEWCONTACTLIST
@@ -507,6 +523,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 #endif
 	d->optionsButton->setMenu( d->optionsMenu );
 	d->statusButton->setMenu( d->statusMenu );
+	d->rosterAvatar->setStatusMenu( d->statusMenu );
 
 	buildToolbars();
 	// setUnifiedTitleAndToolBarOnMac(true);
@@ -736,6 +753,11 @@ void MainWin::setUseDock(bool use)
 
 		d->tray->show();
 	}
+}
+
+void MainWin::setUseAvatarFrame(bool state)
+{
+	d->rosterAvatar->setVisible(state);
 }
 
 void MainWin::buildStatusMenu()
@@ -1279,6 +1301,7 @@ void MainWin::decorateButton(int status)
 		else {
 			d->statusButton->setIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
 			d->statusGroup->setPsiIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE));
+			d->rosterAvatar->setStatusIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE)->icon());
 		}
 
 		setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).impix());
@@ -1287,6 +1310,7 @@ void MainWin::decorateButton(int status)
 		d->statusButton->setText(status2txt(status));
 		d->statusButton->setIcon(PsiIconset::instance()->statusPtr(status));
 		d->statusGroup->setPsiIcon(PsiIconset::instance()->statusPtr(status));
+		d->rosterAvatar->setStatusIcon(PsiIconset::instance()->statusPtr(status)->icon());
 
 		setWindowIcon(PsiIconset::instance()->status(status).impix());
 	}
@@ -1586,6 +1610,38 @@ void MainWin::numAccountsChanged()
 {
 	d->statusButton->setEnabled(d->psi->contactList()->haveEnabledAccounts());
 	setTrayToolTip();
+	PsiAccount *acc = d->psi->contactList()->defaultAccount();
+	if(acc && acc != d->defaultAccount) {
+		if(d->defaultAccount) {
+			disconnect(d->defaultAccount, SIGNAL(nickChanged()), this, SLOT(nickChanged()));
+//			disconnect(d->defaultAccount->avatarFactory(), SIGNAL(avatarChanged(Jid)), this, SLOT(avatarChanged()));
+		}
+		d->defaultAccount = acc;
+		avatarChanged();
+		nickChanged();
+		d->rosterAvatar->setStatusMessage(acc->status().status());
+		connect(acc->avatarFactory(), SIGNAL(avatarChanged(Jid)), this, SLOT(avatarChanged()));
+		connect(acc, SIGNAL(nickChanged()), this, SLOT(nickChanged()));
+	}
+}
+
+void MainWin::nickChanged()
+{
+	if(d->defaultAccount)
+		d->rosterAvatar->setNick(d->defaultAccount->nick());
+}
+
+void MainWin::avatarChanged()
+{
+	if(d->defaultAccount) {
+		QPixmap pix = d->defaultAccount->avatarFactory()->getAvatar(d->defaultAccount->jid());
+		if(pix.isNull())
+			pix = IconsetFactory::iconPixmap("psi/default_avatar");
+		d->rosterAvatar->setAvatar(pix);
+	}
+	else {
+		d->rosterAvatar->setAvatar(IconsetFactory::iconPixmap("psi/default_avatar"));
+	}
 }
 
 void MainWin::accountFeaturesChanged()

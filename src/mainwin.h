@@ -56,6 +56,7 @@ public:
 
 	void setWindowOpts(bool onTop, bool asTool);
 	void setUseDock(bool);
+	void setUseAvatarFrame(bool state);
 
 	void buildToolbars();
 	PsiTrayIcon *psiTrayIcon();
@@ -83,6 +84,7 @@ protected:
 
 signals:
 	void statusChanged(int);
+	void statusMessageChanged(QString);
 	void changeProfile();
 	void blankMessage();
 	void closeProgram();
@@ -150,6 +152,9 @@ private slots:
 	void splitterMoved();
 
 	void doTrayToolTip(QObject *, QPoint);
+
+	void nickChanged();
+	void avatarChanged();
 
 public slots:
 	void setWindowIcon(const QPixmap&);

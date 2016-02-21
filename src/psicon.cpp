@@ -541,6 +541,7 @@ bool PsiCon::init()
 	connect(d->mainwin, SIGNAL(doGroupChat()), SLOT(doGroupChat()));
 	connect(d->mainwin, SIGNAL(blankMessage()), SLOT(doNewBlankMessage()));
 	connect(d->mainwin, SIGNAL(statusChanged(int)), SLOT(statusMenuChanged(int)));
+	connect(d->mainwin, SIGNAL(statusMessageChanged(QString)), SLOT(setStatusMessage(QString)));
 	connect(d->mainwin, SIGNAL(doOptions()), SLOT(doOptions()));
 	connect(d->mainwin, SIGNAL(doToolbars()), SLOT(doToolbars()));
 	connect(d->mainwin, SIGNAL(doFileTransDlg()), SLOT(doFileTransDlg()));
@@ -675,6 +676,8 @@ bool PsiCon::init()
 	foreach(PsiAccount* account, d->contactList->accounts()) {
 		account->autoLogin();
 	}
+	if(d->contactList->defaultAccount())
+		emit statusMessageChanged(d->contactList->defaultAccount()->status().status());
 
 	// show tip of the day
 	if ( options->getOption("options.ui.tip.show").toBool() ) {
@@ -1125,6 +1128,16 @@ void PsiCon::setGlobalStatus(const Status &s, bool withPriority, bool isManualSt
 	foreach(PsiAccount* account, d->contactList->enabledAccounts())
 		if (allOffline || account->isActive())
 			account->setStatus(s, withPriority, isManualStatus);
+
+	emit statusMessageChanged(s.status());
+}
+
+void PsiCon::setStatusMessage(QString message)
+{
+	XMPP::Status s;
+	s.setType(currentStatusType());
+	s.setStatus(message);
+	setGlobalStatus(s, false, true);
 }
 
 void PsiCon::pa_updatedActivity()
@@ -1382,6 +1395,7 @@ void PsiCon::slotApplyOptions()
 	d->mainwin->setWindowOpts(o->getOption("options.ui.contactlist.always-on-top").toBool(), (o->getOption("options.ui.systemtray.enable").toBool() && o->getOption("options.contactlist.use-toolwindow").toBool()));
 	d->mainwin->setUseDock(o->getOption("options.ui.systemtray.enable").toBool());
 	d->mainwin->buildToolbars();
+	d->mainwin->setUseAvatarFrame(o->getOption("options.ui.contactlist.show-roster-avatar-frame").toBool());
 
 	// notify about options change
 	emit emitOptionsUpdate();
