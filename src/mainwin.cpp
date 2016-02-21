@@ -69,6 +69,9 @@
 #ifdef NEWCONTACTLIST
 #include "psirosterwidget.h"
 #endif
+#include "mooddlg.h"
+#include "activitydlg.h"
+#include "geolocationdlg.h"
 
 #include "mainwin_p.h"
 
@@ -147,6 +150,10 @@ public:
 	void updateMenu(QStringList actions, QMenu* menu);
 
 	QString ToolTipText;
+
+	QPointer<MoodDlg> moodDlg;
+	QPointer<ActivityDlg> activityDlg;
+	QPointer<GeoLocationDlg> geolocationDlg;
 };
 
 MainWin::Private::Private(PsiCon* _psi, MainWin* _mainWin) : splitter(0), mainTabs(0), viewToolBar(0), isLeftRoster(false), psi(_psi), mainWin(_mainWin)
@@ -587,6 +594,9 @@ void MainWin::registerAction( IconAction* action )
 		{ "menu_play_sounds",    toggled,   this, SLOT( actPlaySoundsActivated(bool) ) },
 #ifdef USE_PEP
 		{ "publish_tune",        toggled,   this, SLOT( actPublishTuneActivated(bool) ) },
+		{ "set_mood",		 activated,   this, SLOT( actSetMoodActivated() ) },
+		{ "set_activity",        activated,   this, SLOT( actSetActivityActivated() ) },
+		{ "set_geoloc",		 activated,   this, SLOT( actSetGeolocActivated() ) },
 #endif
 
 		{ "event_notifier", SIGNAL( clicked(int) ), this, SLOT( statusClicked(int) ) },
@@ -1068,6 +1078,60 @@ void MainWin::actPublishTuneActivated (bool state)
 void MainWin::actEnableGroupsActivated (bool state)
 {
 	PsiOptions::instance()->setOption("options.ui.contactlist.enable-groups", state);
+}
+
+void MainWin::actSetMoodActivated()
+{
+	QList<PsiAccount*> l;
+	foreach(PsiAccount *pa, d->psi->contactList()->accounts()) {
+		if(pa->isActive() && pa->serverInfoManager()->hasPEP())
+			l.append(pa);
+	}
+	if(l.isEmpty())
+		return;
+
+	if(d->moodDlg)
+		bringToFront(d->moodDlg);
+	else {
+		d->moodDlg = new MoodDlg(l);
+		d->moodDlg->show();
+	}
+}
+
+void MainWin::actSetActivityActivated()
+{
+	QList<PsiAccount*> l;
+	foreach(PsiAccount *pa, d->psi->contactList()->accounts()) {
+		if(pa->isActive() && pa->serverInfoManager()->hasPEP())
+			l.append(pa);
+	}
+	if(l.isEmpty())
+		return;
+
+	if(d->activityDlg)
+		bringToFront(d->activityDlg);
+	else {
+		d->activityDlg = new ActivityDlg(l);
+		d->activityDlg->show();
+	}
+}
+
+void MainWin::actSetGeolocActivated()
+{
+	QList<PsiAccount*> l;
+	foreach(PsiAccount *pa, d->psi->contactList()->accounts()) {
+		if(pa->isActive() && pa->serverInfoManager()->hasPEP())
+			l.append(pa);
+	}
+	if(l.isEmpty())
+		return;
+
+	if(d->geolocationDlg)
+		bringToFront(d->geolocationDlg);
+	else {
+		d->geolocationDlg = new GeoLocationDlg(l);
+		d->geolocationDlg->show();
+	}
 }
 
 void MainWin::activatedAccOption(PsiAccount* pa, int x)

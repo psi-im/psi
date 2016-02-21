@@ -261,8 +261,20 @@ void PsiActionList::Private::createMainWin()
 		IconAction *actPublishTune = new IconAction (tr("Publish Tune"), "psi/publishTune", tr("Publish &Tune"), 0, this, 0, true);
 		actPublishTune->setWhatsThis (tr("Toggles whether the currently playing tune should be published or not"));
 
+		IconAction *actSetMood = new IconAction (tr("Set Mood"), "mood/", tr("Set Mood"), 0, this);
+		actSetMood->setWhatsThis (tr("Set Mood for all active accounts"));
+
+		IconAction *actSetActivity = new IconAction (tr("Set Activity"), "activities/other", tr("Set Activity"), 0, this);
+		actSetActivity->setWhatsThis (tr("Set Activity for all active accounts"));
+
+		IconAction *actSetGeoloc = new IconAction (tr("Set Geolocation"), "system/geolocation", tr("Set Geolocation"), 0, this);
+		actSetGeoloc->setWhatsThis (tr("Set Geolocation for all active accounts"));
+
 		ActionNames actions[] = {
-			{ "publish_tune", actPublishTune },
+			{ "publish_tune",	actPublishTune },
+			{ "set_mood",		actSetMood },
+			{ "set_activity",	actSetActivity },
+			{ "set_geoloc",		actSetGeoloc },
 			{ "", 0 }
 		};
 

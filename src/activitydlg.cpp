@@ -27,9 +27,11 @@
 #include "pepmanager.h"
 #include "psiiconset.h"
 
-ActivityDlg::ActivityDlg(PsiAccount* pa) : QDialog(0), pa_(pa)
+ActivityDlg::ActivityDlg(QList<PsiAccount*> list) : QDialog(0), pa_(list)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
+	if(pa_.isEmpty())
+		close();
 	ui_.setupUi(this);
 	setModal(false);
 	connect(ui_.cb_general_type, SIGNAL(currentIndexChanged(const QString&)), SLOT(loadSpecificActivities(const QString&)));
@@ -37,6 +39,7 @@ ActivityDlg::ActivityDlg(PsiAccount* pa) : QDialog(0), pa_(pa)
 	connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(setActivity()));
 
 	ui_.cb_general_type->addItem(tr("<unset>"));
+	PsiAccount* pa = pa_.first();
 	Activity::Type at = pa->activity().type();
 	int i=1;
 	foreach(ActivityCatalog::Entry e, ActivityCatalog::instance()->entries()) {
@@ -62,7 +65,8 @@ void ActivityDlg::loadSpecificActivities(const QString& generalActivityStr)
 	}
 	else {
 		ui_.cb_specific_type->addItem(tr("<unset>"));
-		Activity::SpecificType at = pa_->activity().specificType();
+		PsiAccount* pa = pa_.first();
+		Activity::SpecificType at = pa->activity().specificType();
 		int i=1;
 		ActivityCatalog* ac = ActivityCatalog::instance();
 		foreach(ActivityCatalog::Entry e, ac->entries()) {
@@ -88,18 +92,20 @@ void ActivityDlg::setActivity()
 	QString generalActivityStr  = ui_.cb_general_type->currentText();
 	QString specificActivityStr = ui_.cb_specific_type->currentText();
 
-	if (generalActivityStr == tr("<unset>")) {
-		pa_->pepManager()->retract("http://jabber.org/protocol/activity", "current");
-	}
-	else {
-		ActivityCatalog* ac = ActivityCatalog::instance();
-		Activity::Type generalType = ac->findEntryByText(generalActivityStr).type();
-
-		Activity::SpecificType specificType = Activity::UnknownSpecific;
-		if (specificActivityStr != tr("<unset>")) {
-			specificType = ac->findEntryByText(specificActivityStr).specificType();
+	foreach(PsiAccount *pa, pa_) {
+		if (generalActivityStr == tr("<unset>")) {
+			pa->pepManager()->retract("http://jabber.org/protocol/activity", "current");
 		}
-		pa_->pepManager()->publish("http://jabber.org/protocol/activity", PubSubItem("current",Activity(generalType,specificType,ui_.le_description->text()).toXml(*pa_->client()->rootTask()->doc())), PEPManager::PresenceAccess);
+		else {
+			ActivityCatalog* ac = ActivityCatalog::instance();
+			Activity::Type generalType = ac->findEntryByText(generalActivityStr).type();
+
+			Activity::SpecificType specificType = Activity::UnknownSpecific;
+			if (specificActivityStr != tr("<unset>")) {
+				specificType = ac->findEntryByText(specificActivityStr).specificType();
+			}
+			pa->pepManager()->publish("http://jabber.org/protocol/activity", PubSubItem("current",Activity(generalType,specificType,ui_.le_description->text()).toXml(*pa->client()->rootTask()->doc())), PEPManager::PresenceAccess);
+		}
 	}
 	close();
 }

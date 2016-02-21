@@ -32,14 +32,14 @@ class MoodDlg : public QDialog
 	Q_OBJECT
 
 public:
-	MoodDlg(PsiAccount*);
+	MoodDlg(QList<PsiAccount*>);
 
 protected slots:
 	void setMood();
 
 private:
 	Ui::Mood ui_;
-	PsiAccount* pa_;
+	QList<PsiAccount*> pa_;
 };
 
 #endif

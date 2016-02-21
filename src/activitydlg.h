@@ -32,7 +32,7 @@ class ActivityDlg : public QDialog
 	Q_OBJECT
 
 public:
-	ActivityDlg(PsiAccount*);
+	ActivityDlg(QList<PsiAccount*>);
 
 protected slots:
 	void setActivity();
@@ -40,7 +40,7 @@ protected slots:
 
 private:
 	Ui::Activity ui_;
-	PsiAccount* pa_;
+	QList<PsiAccount*> pa_;
 };
 
 #endif

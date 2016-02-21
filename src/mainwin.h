@@ -135,6 +135,9 @@ private slots:
 	void actTipActivated();
 	void actDiagQCAPluginActivated();
 	void actDiagQCAKeyStoreActivated();
+	void actSetMoodActivated();
+	void actSetActivityActivated();
+	void actSetGeolocActivated();
 
 	bool showDockMenu(const QPoint &);
 	void dockActivated();

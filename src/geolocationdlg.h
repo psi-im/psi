@@ -31,7 +31,7 @@ class GeoLocationDlg : public QDialog
 	Q_OBJECT
 
 public:
-	GeoLocationDlg(PsiAccount*);
+	GeoLocationDlg(QList<PsiAccount*>);
 
 protected slots:
 	void setGeoLocation();
@@ -39,7 +39,7 @@ protected slots:
 
 private:
 	Ui::GeoLocation ui_;
- 	PsiAccount* pa_;
+	QList<PsiAccount*> pa_;
 };
 
 #endif // GEOLOCATIONDLG_H

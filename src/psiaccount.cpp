@@ -3821,19 +3821,25 @@ void PsiAccount::actionExecuteCommandSpecific(const Jid& j, const QString& node)
 
 void PsiAccount::actionSetMood()
 {
-	MoodDlg *w = new MoodDlg(this);
+	QList<PsiAccount*> list;
+	list.append(this);
+	MoodDlg *w = new MoodDlg(list);
 	w->show();
 }
 
 void PsiAccount::actionSetActivity()
 {
-	ActivityDlg *w = new ActivityDlg(this);
+	QList<PsiAccount*> list;
+	list.append(this);
+	ActivityDlg *w = new ActivityDlg(list);
 	w->show();
 }
 
 void PsiAccount::actionSetGeoLocation()
 {
-	GeoLocationDlg *w = new GeoLocationDlg(this);
+	QList<PsiAccount*> list;
+	list.append(this);
+	GeoLocationDlg *w = new GeoLocationDlg(list);
 	w->show();
 }
 

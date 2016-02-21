@@ -28,16 +28,19 @@
 #include "geolocation.h"
 #include <QLineEdit>
 
-GeoLocationDlg::GeoLocationDlg(PsiAccount* pa) : QDialog(0), pa_(pa)
+GeoLocationDlg::GeoLocationDlg(QList<PsiAccount*> list) : QDialog(0), pa_(list)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
+	if(pa_.isEmpty())
+		close();
 	ui_.setupUi(this);
 	setModal(false);
 	connect(ui_.pb_cancel, SIGNAL(clicked()), SLOT(close()));
  	connect(ui_.pb_ok, SIGNAL(clicked()), SLOT(setGeoLocation()));
 	connect(ui_.pb_reset, SIGNAL(clicked()), SLOT(reset()));
 
-	GeoLocation geoloc = pa_->geolocation();
+	PsiAccount *pa = pa_.first();
+	GeoLocation geoloc = pa->geolocation();
 	if(geoloc.isNull())
 		return;
 
@@ -155,11 +158,13 @@ void GeoLocationDlg::setGeoLocation()
 	if(!ui_.le_text->text().isEmpty())
 		geoloc.setText(ui_.le_text->text());
 
-	if (geoloc.isNull()) {
- 		pa_->pepManager()->retract("http://jabber.org/protocol/geoloc", "current");
-	}
-	else {
-		pa_->pepManager()->publish("http://jabber.org/protocol/geoloc", PubSubItem("current",geoloc.toXml(*pa_->client()->rootTask()->doc())), PEPManager::PresenceAccess);
+	foreach(PsiAccount *pa, pa_) {
+		if (geoloc.isNull()) {
+			pa->pepManager()->retract("http://jabber.org/protocol/geoloc", "current");
+		}
+		else {
+			pa->pepManager()->publish("http://jabber.org/protocol/geoloc", PubSubItem("current",geoloc.toXml(*pa->client()->rootTask()->doc())), PEPManager::PresenceAccess);
+		}
 	}
 	close();
 }
