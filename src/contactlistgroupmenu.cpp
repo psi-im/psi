@@ -108,7 +108,7 @@ public:
 		actionMucLeave_ = new IconAction(tr("Leave All"), this, "psi/action_muc_leave");
 		connect(actionMucLeave_, SIGNAL(triggered()), SLOT(mucLeave()));
 
-		updateActions();
+		authMenu_ = 0;
 
 		if (ContactListGroup::SpecialType_Conference != group->specialGroupType()) {
 #ifdef YAPSI
@@ -135,6 +135,7 @@ public:
 			menu->addAction(actionCustomStatus_);
 		}
 #endif
+		updateActions();
 	}
 
 private slots:
@@ -144,6 +145,10 @@ private slots:
 			return;
 
 		sendMessageAction_->setVisible(PsiOptions::instance()->getOption("options.ui.message.enabled").toBool());
+		sendMessageAction_->setEnabled(group->contacts().first()->account()->isAvailable());
+		actionCustomStatus_->setEnabled(group->contacts().first()->account()->isAvailable());
+		if(authMenu_)
+			authMenu_->setEnabled(group->contacts().first()->account()->isAvailable());
 		renameAction_->setEnabled(group->isEditable());
 		removeGroupAndContactsAction_->setEnabled(group->isRemovable());
 		removeGroupWithoutContactsAction_->setEnabled(group->isRemovable());
