@@ -87,6 +87,7 @@ public:
 		IsMucRole = Qt::UserRole + 29,
 		MucMessagesRole = Qt::UserRole + 30,
 		BlockRole = Qt::UserRole + 31,
+		IsSecureRole = Qt::UserRole + 32,
 
 		// groups
 		ExpandedRole = Qt::UserRole + 12,

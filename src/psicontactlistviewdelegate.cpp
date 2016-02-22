@@ -403,6 +403,12 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 			rightPixs.push_back(pix);
 			rightWidths.push_back(pix.width());
 		}
+
+		if (index.data(ContactListModel::IsSecureRole).toBool()) {
+			const QPixmap &pix = IconsetFactory::iconPixmap("psi/pgp");
+			rightPixs.push_back(pix);
+			rightWidths.push_back(pix.width());
+		}
 	}
 
 	if(rightPixs.isEmpty() && mucMessages.isEmpty())
@@ -439,29 +445,6 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 			painter->drawPixmap(iconRect.topRight(), pix);
 		}
 	}
-
-#if 0
-	int x;
-	if (d->status_single)
-		x = widthUsed();
-	else {
-		QFontMetrics fm(p->font());
-		const QPixmap *pix = pixmap(column);
-		x = fm.width(text(column)) + (pix ? pix->width() : 0) + 8;
-	}
-
-	if (d->u) {
-		UserResourceList::ConstIterator it = d->u->priority();
-		if (it != d->u->userResourceList().end()) {
-			if (d->u->isSecure((*it).name())) {
-				const QPixmap &pix = IconsetFactory::iconPixmap("psi/cryptoYes");
-				int y = (height() - pix.height()) / 2;
-				p->drawPixmap(x, y, pix);
-				x += 24;
-			}
-		}
-	}
-#endif
 }
 
 void PsiContactListViewDelegate::drawGroup(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const

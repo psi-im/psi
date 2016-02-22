@@ -729,6 +729,11 @@ void UserListItem::setPrivate(bool b)
 	v_private = b;
 }
 
+bool UserListItem::isSecure() const
+{
+	return !secList.isEmpty();
+}
+
 bool UserListItem::isSecure(const QString &rname) const
 {
 	for(QStringList::ConstIterator it = secList.begin(); it != secList.end(); ++it) {
