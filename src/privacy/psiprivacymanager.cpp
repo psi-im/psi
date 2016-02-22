@@ -23,11 +23,29 @@
 #include "xmpp_xmlcommon.h"
 #include "xmpp_task.h"
 #include "xmpp_jid.h"
+#include "xmpp_tasks.h"
+#include "userlist.h"
 #include "psiprivacymanager.h"
 #include "privacymanager.h"
 #include "privacylist.h"
+#include "psicon.h"
+#include "contactupdatesmanager.h"
+#include "psiaccount.h"
 
 #define PRIVACY_NS "jabber:iq:privacy"
+
+static const QString BLOCKED_LIST_NAME = "blocked";
+
+static XMPP::Jid processJid(const XMPP::Jid& jid)
+{
+	return jid.withResource("");
+}
+
+static bool privacyListItemForJid(const PrivacyListItem& item, const Jid& jid)
+{
+	return item.type() == PrivacyListItem::JidType &&
+	       processJid(item.value()) == processJid(jid);
+}
 
 using namespace XMPP;
 
@@ -46,8 +64,11 @@ public:
 			return false;
 
 		QString ns = queryNS(e);
-		if(ns == "jabber:iq:privacy") {
-			// TODO: Do something with update
+		if (ns == PRIVACY_NS) {
+			QDomElement listTag = queryTag(e).firstChildElement("list");
+			if (!listTag.isNull()) {
+				emit privacyListChanged(listTag.attribute("name"));
+			}
 
 			// Confirm receipt
 			QDomElement iq = createIQ(doc(), "result", e.attribute("from"), e.attribute("id"));
@@ -57,6 +78,9 @@ public:
 
 		return false;
 	}
+
+signals:
+	void privacyListChanged(const QString& name);
 };
 
 // -----------------------------------------------------------------------------
@@ -205,6 +229,9 @@ public:
 		}
 		return true;
 	}
+	QString name() {
+		return list_.name();
+	}
 };
 
 class GetPrivacyListTask : public Task
@@ -261,14 +288,38 @@ public:
 
 // -----------------------------------------------------------------------------
 
-PsiPrivacyManager::PsiPrivacyManager(XMPP::Task* rootTask) : rootTask_(rootTask), getDefault_waiting_(false), block_waiting_(false)
+PsiPrivacyManager::PsiPrivacyManager(PsiAccount* account, XMPP::Task* rootTask) : rootTask_(rootTask), getDefault_waiting_(false), block_waiting_(false)
+		, account_(account)
+		, accountAvailable_(false)
+		, isAvailable_(false)
 {
-   listener_ = new PrivacyListListener(rootTask_);
+	blockedListName_ = BLOCKED_LIST_NAME;
+	listener_ = new PrivacyListListener(rootTask_);
+	connect(listener_, SIGNAL(privacyListChanged(const QString&)), SLOT(privacyListChanged(const QString&)));
+
+	connect(account, SIGNAL(updatedActivity()), SLOT(accountStateChanged()));
+
+	connect(this, SIGNAL(listReceived(const PrivacyList&)), SLOT(newListReceived(const PrivacyList&)));
+	connect(this, SIGNAL(listsReceived(const QString&, const QString&, const QStringList&)), SLOT(newListsReceived(const QString&, const QString&, const QStringList&)));
+	connect(this, SIGNAL(listsError()), SLOT(newListsError()));
+
+	connect(this, SIGNAL(changeDefaultList_success(QString)), SLOT(newChangeDefaultList_success()));
+	connect(this, SIGNAL(changeDefaultList_error()), SLOT(newChangeDefaultList_error()));
+	connect(this, SIGNAL(changeActiveList_success(QString)), SLOT(newChangeActiveList_success()));
+	connect(this, SIGNAL(changeActiveList_error()), SLOT(newChangeActiveList_error()));
 }
 
 PsiPrivacyManager::~PsiPrivacyManager()
 {
 	delete listener_;
+
+	qDeleteAll(lists_);
+}
+
+void PsiPrivacyManager::privacyListChanged(const QString& name)
+{
+	if (!name.isEmpty())
+		requestList(name);
 }
 
 void PsiPrivacyManager::requestListNames()
@@ -378,7 +429,7 @@ void PsiPrivacyManager::changeDefaultList_finished()
 	}
 
 	if (t->success()) {
-		emit changeDefaultList_success();
+		emit changeDefaultList_success(t->name());
 	}
 	else {
 		emit changeDefaultList_error();
@@ -387,6 +438,7 @@ void PsiPrivacyManager::changeDefaultList_finished()
 
 void PsiPrivacyManager::changeActiveList(const QString& name)
 {
+	tmpActiveListName_ = name;
 	SetPrivacyListsTask* t = new SetPrivacyListsTask(rootTask_);
 	t->setActive(name);
 	connect(t,SIGNAL(finished()),SLOT(changeActiveList_finished()));
@@ -402,7 +454,8 @@ void PsiPrivacyManager::changeActiveList_finished()
 	}
 
 	if (t->success()) {
-		emit changeActiveList_success();
+		blockedListName_ = tmpActiveListName_ .isEmpty() ? BLOCKED_LIST_NAME : tmpActiveListName_ ;
+		emit changeActiveList_success(t->name());
 	}
 	else {
 		emit changeActiveList_error();
@@ -426,7 +479,7 @@ void PsiPrivacyManager::changeList_finished()
 	}
 
 	if (t->success()) {
-		emit changeList_success();
+		emit changeList_success(t->name());
 	}
 	else {
 		emit changeList_error();
@@ -466,5 +519,230 @@ void PsiPrivacyManager::receiveList()
 		emit listError();
 	}
 }
+
+
+bool PsiPrivacyManager::isAvailable() const
+{
+	return isAvailable_;
+}
+
+void PsiPrivacyManager::setIsAvailable(bool available)
+{
+	if (available != isAvailable_) {
+		isAvailable_ = available;
+		emit availabilityChanged();
+	}
+}
+
+void PsiPrivacyManager::accountStateChanged()
+{
+	if (!account_->isAvailable()) {
+		setIsAvailable(false);
+	}
+
+	if (account_->isAvailable() && !accountAvailable_) {
+		requestListNames();
+	}
+
+	accountAvailable_ = account_->isAvailable();
+}
+
+static QStringList findDifferences(QStringList previous, QStringList current)
+{
+	QStringList result;
+	foreach(QString i, previous) {
+		if (!current.contains(i))
+			result += i;
+	}
+	return result;
+}
+
+void PsiPrivacyManager::newListReceived(const PrivacyList& list)
+{
+	QStringList previouslyBlockedContacts = blockedContacts();
+
+	if (lists_.contains(list.name()))
+		*lists_[list.name()] = list;
+	else
+		lists_[list.name()] = new PrivacyList(list);
+
+	if (list.name() == blockedListName_)
+		invalidateBlockedListCache();
+
+	QStringList currentlyBlockedContacts = blockedContacts();
+	QStringList updatedContacts;
+	updatedContacts += findDifferences(previouslyBlockedContacts, currentlyBlockedContacts);
+	updatedContacts += findDifferences(currentlyBlockedContacts, previouslyBlockedContacts);
+
+	foreach(QString contact, updatedContacts) {
+		//emit simulateContactOffline(contact);
+
+		if (!isContactBlocked(contact)) {
+			if (isAuthorized(contact)) {
+				JT_Presence* p = new JT_Presence(account_->client()->rootTask());
+				p->pres(processJid(contact), account_->status());
+				p->go(true);
+			}
+
+			{
+				JT_Presence* p = new JT_Presence(account_->client()->rootTask());
+				p->probe(processJid(contact));
+				p->go(true);
+			}
+		}
+	}
+
+	emit listChanged(updatedContacts);
+}
+
+void PsiPrivacyManager::newListsReceived(const QString& defaultList, const QString& activeList, const QStringList& lists)
+{
+	if(!activeList.isEmpty())
+		blockedListName_ = activeList;
+
+	if (!lists.contains(blockedListName_))
+		createBlockedList();
+	else
+		requestList(blockedListName_);
+
+	if (defaultList.isEmpty())
+		changeDefaultList(blockedListName_);
+
+	if(activeList.isEmpty())
+		changeActiveList(blockedListName_);
+
+	setIsAvailable(true);
+}
+
+void PsiPrivacyManager::newListsError()
+{
+	setIsAvailable(false);
+}
+
+void PsiPrivacyManager::newChangeDefaultList_success()
+{
+}
+
+void PsiPrivacyManager::newChangeDefaultList_error()
+{
+	qWarning("YaPrivacyManager::changeDefaultList_error()");
+}
+
+void PsiPrivacyManager::newChangeActiveList_success()
+{
+}
+
+void PsiPrivacyManager::newChangeActiveList_error()
+{
+	qWarning("YaPrivacyManager::changeActiveList_error()");
+}
+
+void PsiPrivacyManager::createBlockedList()
+{
+	PrivacyList list(blockedListName_);
+	PrivacyListItem allowAll;
+	allowAll.setType(PrivacyListItem::FallthroughType);
+	allowAll.setAction(PrivacyListItem::Allow);
+	allowAll.setAll();
+
+	list.insertItem(0, allowAll);
+	changeList(list);
+}
+
+PrivacyList* PsiPrivacyManager::blockedList() const
+{
+	if(lists_.contains(blockedListName_))
+		return lists_[blockedListName_];
+
+	return 0;
+}
+
+QStringList PsiPrivacyManager::blockedContacts() const
+{
+	QStringList result;
+	if (blockedList()) {
+		foreach(PrivacyListItem item, blockedList()->items()) {
+			if (item.type() == PrivacyListItem::JidType &&
+			    item.action() == PrivacyListItem::Deny) {
+				result << processJid(item.value()).full();
+			}
+		}
+	}
+	return result;
+}
+
+void PsiPrivacyManager::invalidateBlockedListCache()
+{
+	isBlocked_.clear();
+
+	if (!blockedList())
+		return;
+
+	foreach(PrivacyListItem item, blockedList()->items()) {
+		if (item.type() == PrivacyListItem::JidType &&
+		    item.action() == PrivacyListItem::Deny) {
+			isBlocked_[processJid(item.value()).full()] = true;
+		}
+	}
+}
+
+bool PsiPrivacyManager::isContactBlocked(const XMPP::Jid& jid) const
+{
+	return isBlocked_.contains(processJid(jid).full());
+}
+
+PrivacyListItem PsiPrivacyManager::blockItemFor(const XMPP::Jid& jid) const
+{
+	PrivacyListItem item;
+	item.setType(PrivacyListItem::JidType);
+	item.setValue(processJid(jid).full());
+	item.setAction(PrivacyListItem::Deny);
+	item.setAll();
+	return item;
+}
+
+void PsiPrivacyManager::setContactBlocked(const XMPP::Jid& jid, bool blocked)
+{
+	if (blocked) {
+		account_->psi()->contactUpdatesManager()->contactBlocked(account_, jid);
+	}
+
+	if(!blockedList()) {
+		createBlockedList();
+		return;
+	}
+
+	if (isContactBlocked(jid) == blocked)
+		return;
+
+	if (blocked && isAuthorized(jid)) {
+		JT_Presence* p = new JT_Presence(account_->client()->rootTask());
+		p->pres(processJid(jid), account_->loggedOutStatus());
+		p->go(true);
+	}
+
+	PrivacyList newList(*blockedList());
+	newList.clear();
+
+	foreach(PrivacyListItem item, blockedList()->items()) {
+		if (privacyListItemForJid(item, jid))
+			continue;
+
+		newList.appendItem(item);
+	}
+
+	if (blocked)
+		newList.insertItem(0, blockItemFor(jid));
+
+	changeList(newList);
+}
+
+bool PsiPrivacyManager::isAuthorized(const XMPP::Jid& jid) const
+{
+	UserListItem* u = account_->findFirstRelevant(processJid(jid));
+	return u && (u->subscription().type() == Subscription::Both ||
+		     u->subscription().type() == Subscription::From);
+}
+
 
 #include "psiprivacymanager.moc"

@@ -51,6 +51,12 @@ void PrivacyList::insertItem(int index, const PrivacyListItem& item)
 	reNumber();
 }
 
+void PrivacyList::appendItem(const PrivacyListItem& item)
+{
+	insertItem(items_.count(), item);
+}
+
+
 void PrivacyList::reNumber()
 {
 	unsigned int order = 100;

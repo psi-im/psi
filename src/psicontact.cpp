@@ -44,6 +44,8 @@
 #include "yacommon.h"
 #include "yaprofile.h"
 #include "yatoastercentral.h"
+#else
+#include "psiprivacymanager.h"
 #endif
 #include "contactlistgroup.h"
 #include "desktoputil.h"
@@ -680,6 +682,10 @@ void PsiContact::toggleBlockedStateConfirmation()
 
 	bool blocked = privacyManager->isContactBlocked(jid());
 	blockContactConfirmationHelper(!blocked);
+#else
+	PsiPrivacyManager* privacyManager = dynamic_cast<PsiPrivacyManager*>(account()->privacyManager());
+	bool blocked = privacyManager->isContactBlocked(jid());
+	blockContactConfirmationHelper(!blocked);
 #endif
 }
 
@@ -694,8 +700,8 @@ void PsiContact::blockContactConfirmationHelper(bool block)
 
 	privacyManager->setContactBlocked(jid(), block);
 #else
-	// FIXME
-	Q_UNUSED(block);
+	PsiPrivacyManager* privacyManager = dynamic_cast<PsiPrivacyManager*>(account()->privacyManager());
+	privacyManager->setContactBlocked(jid(), block);
 #endif
 }
 
@@ -837,6 +843,10 @@ void PsiContact::addRemoveAuthBlockAvailable(bool* addButton, bool* deleteButton
 		YaPrivacyManager* privacyManager = dynamic_cast<YaPrivacyManager*>(account()->privacyManager());
 		Q_ASSERT(privacyManager);
 		*blockButton = *blockButton && privacyManager->isAvailable();
+#else
+		PsiPrivacyManager* privacyManager = dynamic_cast<PsiPrivacyManager*>(account()->privacyManager());
+		if(privacyManager)
+			*blockButton = *blockButton && privacyManager->isAvailable();
 #endif
 	}
 }
@@ -937,6 +947,10 @@ bool PsiContact::isBlocked() const
 	return account() && privacyManager(account()) &&
 	       privacyManager(account())->isContactBlocked(jid());
 #else
+	if(account()) {
+		PsiPrivacyManager* privacyManager = dynamic_cast<PsiPrivacyManager*>(account()->privacyManager());
+		return privacyManager->isContactBlocked(jid());
+	}
 	return false;
 #endif
 }

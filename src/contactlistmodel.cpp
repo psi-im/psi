@@ -561,6 +561,9 @@ QVariant ContactListModel::contactData(const PsiContact* contact, int role) cons
 	else if (role == MucMessagesRole) {
 		return QVariant(contact->userListItem().pending());
 	}
+	else if (role == BlockRole) {
+		return QVariant(contact->isBlocked());
+	}
 #ifdef YAPSI
 	else if (role == Qt::ForegroundRole) {
 		return QVariant(Ya::statusColor(contact->status().type()));

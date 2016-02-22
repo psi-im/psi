@@ -40,11 +40,11 @@ public:
 	virtual void requestList(const QString& name) = 0;
 
 signals:
-	void changeDefaultList_success();
+	void changeDefaultList_success(QString);
 	void changeDefaultList_error();
-	void changeActiveList_success();
+	void changeActiveList_success(QString);
 	void changeActiveList_error();
-	void changeList_success();
+	void changeList_success(QString);
 	void changeList_error();
 	void defaultListAvailable(const PrivacyList&);
 	void defaultListError();

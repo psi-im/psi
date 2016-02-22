@@ -43,6 +43,7 @@ public:
 	const PrivacyListItem& item(int index) const { return items_.at(index); }
 	void removeItem(int index) { items_.removeAt(index); }
 	void insertItem(int index, const PrivacyListItem& item);
+	void appendItem(const PrivacyListItem& item);
 	bool moveItemUp(int index);
 	bool moveItemDown(int index);
 	bool onlyBlockItems() const;

@@ -23,11 +23,16 @@
 
 #include <QObject>
 #include <QStringList>
+#include <QHash>
 
 #include "privacymanager.h"
 
+#include "xmpp_jid.h"
+
 class QString;
+class PsiAccount;
 class PrivacyList;
+class PrivacyListItem;
 class PrivacyListListener;
 namespace XMPP {
 	class Task;
@@ -39,7 +44,7 @@ class PsiPrivacyManager : public PrivacyManager
 	Q_OBJECT
 
 public:
-	PsiPrivacyManager(XMPP::Task* rootTask);
+	PsiPrivacyManager(PsiAccount* account, XMPP::Task* rootTask);
 	virtual ~PsiPrivacyManager();
 
 	void requestListNames();
@@ -80,6 +85,52 @@ private:
 
 	QStringList block_targets_;
 	bool block_waiting_;
+
+public:
+	bool isAvailable() const;
+
+	bool isContactBlocked(const XMPP::Jid& jid) const;
+	void setContactBlocked(const XMPP::Jid& jid, bool blocked);
+
+signals:
+	void availabilityChanged();
+	void listChanged(const QStringList& contacts);
+
+	//void simulateContactOffline(const XMPP::Jid& contact);
+
+private slots:
+	void newListReceived(const PrivacyList& p);
+	void newListsReceived(const QString& defaultList, const QString& activeList, const QStringList& lists);
+	void newListsError();
+
+	void accountStateChanged();
+
+	void newChangeDefaultList_success();
+	void newChangeDefaultList_error();
+	void newChangeActiveList_success();
+	void newChangeActiveList_error();
+
+private slots:
+	void privacyListChanged(const QString& name);
+
+private:
+	PsiAccount* account_;
+	bool accountAvailable_;
+	bool isAvailable_;
+	QHash<QString, PrivacyList*> lists_;
+	QHash<QString, bool> isBlocked_;
+
+	void invalidateBlockedListCache();
+	void setIsAvailable(bool available);
+
+	void createBlockedList();
+	PrivacyList* blockedList() const;
+	PrivacyListItem blockItemFor(const XMPP::Jid& jid) const;
+
+	QStringList blockedContacts() const;
+
+	QString blockedListName_, tmpActiveListName_;
+	bool isAuthorized(const XMPP::Jid& jid) const;
 };
 
 #endif

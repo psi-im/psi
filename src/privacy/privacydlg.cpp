@@ -46,11 +46,11 @@ PrivacyDlg::PrivacyDlg(const QString& account_name, PrivacyManager* manager, QWi
 	connect(ui_.cb_default,SIGNAL(activated(int)),SLOT(default_selected(int)));
 	connect(ui_.cb_lists,SIGNAL(activated(int)),SLOT(list_selected(int)));
 	connect(ui_.cb_lists,SIGNAL(currentIndexChanged(int)),SLOT(list_changed(int)));
-	connect(manager_,SIGNAL(changeActiveList_success()),SLOT(change_succeeded()));
+	connect(manager_,SIGNAL(changeActiveList_success(QString)),SLOT(changeActiveList_succeeded(QString)));
 	connect(manager_,SIGNAL(changeActiveList_error()),SLOT(change_failed()));
-	connect(manager_,SIGNAL(changeDefaultList_success()),SLOT(change_succeeded()));
+	connect(manager_,SIGNAL(changeDefaultList_success(QString)),SLOT(changeDefaultList_succeeded(QString)));
 	connect(manager_,SIGNAL(changeDefaultList_error()),SLOT(change_failed()));
-	connect(manager_,SIGNAL(changeList_success()),SLOT(changeList_succeeded()));
+	connect(manager_,SIGNAL(changeList_success(QString)),SLOT(changeList_succeeded(QString)));
 	connect(manager_,SIGNAL(changeList_error()),SLOT(changeList_failed()));
 
 	connect(ui_.pb_newList,SIGNAL(clicked()),SLOT(newList()));
@@ -250,8 +250,29 @@ void PrivacyDlg::list_failed()
 	setWidgetsEnabled(true);
 }
 
-void PrivacyDlg::changeList_succeeded()
+void PrivacyDlg::changeActiveList_succeeded(QString name)
 {
+	if(!name.isEmpty() && ui_.cb_active->findText(name) == -1) {
+		ui_.cb_active->addItem(name);
+		ui_.cb_active->setCurrentIndex(ui_.cb_active->findText(name));
+	}
+	change_succeeded();
+}
+
+void PrivacyDlg::changeDefaultList_succeeded(QString name)
+{
+	if(!name.isEmpty() && ui_.cb_default->findText(name) == -1) {
+		ui_.cb_default->addItem(name);
+		ui_.cb_default->setCurrentIndex(ui_.cb_default->findText(name));
+	}
+	change_succeeded();
+}
+
+void PrivacyDlg::changeList_succeeded(QString name)
+{
+	if(!name.isEmpty() && ui_.cb_lists->findText(name) == -1) {
+		ui_.cb_lists->addItem(name);
+	}
 	// If we just deleted a list, select the first list
 	if (model_.list().isEmpty()) {
 		ui_.cb_lists->setCurrentIndex(0);

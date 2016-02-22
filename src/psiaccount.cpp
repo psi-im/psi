@@ -1105,7 +1105,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	connect(d->client, SIGNAL(xmlOutgoing(const QString &)), d, SLOT(client_xmlOutgoing(const QString &)));
 
 	// Privacy manager
-	d->privacyManager = new PsiPrivacyManager(d->client->rootTask());
+	d->privacyManager = new PsiPrivacyManager(d->account, d->client->rootTask());
 
 	// Caps manager
 	d->capsManager = new CapsManager(d->client->jid(), capsRegistry, new IrisProtocol::DiscoInfoQuerier(d->client));

@@ -45,6 +45,8 @@
 
 #ifdef YAPSI
 #include "yaprofile.h"
+#else
+#include "psiprivacymanager.h"
 #endif
 
 #include "groupchatdlg.h"
@@ -256,6 +258,7 @@ public:
 	QAction* mucHideAction_;
 	QAction* mucShowAction_;
 	QAction* mucLeaveAction_;
+	QAction* blockAction_;
 
 #endif
 
@@ -424,6 +427,9 @@ public:
 		connect(mucLeaveAction_, SIGNAL(triggered()), SLOT(mucLeave()));
 		mucLeaveAction_->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
 
+		blockAction_ = new IconAction(tr("Block"), "psi/stop", tr("Block"), 0, this, 0, true);
+		connect(blockAction_, SIGNAL(triggered(bool)), SLOT(block(bool)));
+
 		if (!contact_->isConference()) {
 			menu_->addAction(addAuthAction_);
 			menu_->addAction(transportLogonAction_);
@@ -450,6 +456,7 @@ public:
 			mngMenu_ = menu_->addMenu(IconsetFactory::icon("psi/manageContact").icon(), tr("Manage &Contact"));
 			mngMenu_->addAction(renameAction_);
 			mngMenu_->addMenu(groupMenu_);
+			mngMenu_->addAction(blockAction_);
 			authMenu_ = mngMenu_->addMenu(tr("&Authorization"));
 			authMenu_->addAction(authResendAction_);
 			authMenu_->addAction(authRerequestAction_);
@@ -472,6 +479,7 @@ public:
 			menu_->addAction(mucLeaveAction_);
 			menu_->addSeparator();
 			menu_->addAction(customStatusAction_);
+			//menu_->addAction(blockAction_);
 		}
 #endif
 	}
@@ -490,8 +498,13 @@ private slots:
 
 	void updateActions()
 	{
-		if (!contact_ or contact_->isConference())
+		if (!contact_)
 			return;
+
+		if(contact_->isConference()) {
+			updateBlockActionState();
+			return;
+		}
 
 #ifdef YAPSI
 		YaProfile* profile = YaProfile::create(contact_->account(), contact_->jid());
@@ -555,6 +568,7 @@ private slots:
 			authMenu_->menuAction()->setVisible(false);
 		}
 		authMenu_->setEnabled(contact_->account()->isAvailable());
+		updateBlockActionState();
 		removeAction_->setVisible(!PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool()  && !contact_->isSelf());
 		removeAction_->setEnabled(contact_->removeAvailable());
 		if (!PsiOptions::instance()->getOption("options.ui.menu.contact.custom-picture").toBool()) {
@@ -633,6 +647,14 @@ private slots:
 		if (!contact_)
 			return;
 		contact_->setGroups(QStringList() << group);
+	}
+
+	void block(bool )
+	{
+		if (!contact_)
+			return;
+
+		contact_->toggleBlockedStateConfirmation();
 	}
 
 	void addAuth()
@@ -841,6 +863,16 @@ private slots:
 		contact_->account()->actionOpenChatSpecific(jid);
 	}
 #endif
+private:
+	void updateBlockActionState()
+	{
+		if(!contact_)
+			return;
+		blockAction_->setVisible(!(contact_->isPrivate()/* || contact_->isAgent()*/ || contact_->isSelf()));
+		blockAction_->setEnabled(contact_->account()->isAvailable() && dynamic_cast<PsiPrivacyManager*>(contact_->account()->privacyManager())->isAvailable());
+		blockAction_->setChecked(contact_->isBlocked());
+		blockAction_->setText(blockAction_->isChecked() ? tr("Unblock") : tr("Block"));
+	}
 };
 
 PsiContactMenu::PsiContactMenu(PsiContact* contact, ContactListModel* model)

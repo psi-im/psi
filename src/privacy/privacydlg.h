@@ -55,9 +55,11 @@ protected slots:
 	void list_selected(int i);
 	void list_changed(int);
 	void list_failed();
-	void changeList_succeeded();
+	void changeList_succeeded(QString);
 	void changeList_failed();
 	void change_succeeded();
+	void changeActiveList_succeeded(QString);
+	void changeDefaultList_succeeded(QString);
 	void change_failed();
 	void close();
 	void addRule();

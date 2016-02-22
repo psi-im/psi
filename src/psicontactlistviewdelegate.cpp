@@ -314,6 +314,7 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 
 	QStyleOptionViewItemV2 o = option;
 	o.font = *font_;
+	o.font.setItalic(index.data(ContactListModel::BlockRole).toBool());
 	o.fontMetrics = *fontMetrics_;
 	QPalette palette = o.palette;
 	palette.setColor(QPalette::Text, textColor);
