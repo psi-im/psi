@@ -97,6 +97,7 @@ public:
 		TotalContactsRole = Qt::UserRole + 16,
 		InternalGroupNameRole = Qt::UserRole + 17,
 		SpecialGroupTypeRole = Qt::UserRole + 18,
+		DisplayGroupRole = Qt::UserRole + 33,
 
 		// accounts
 		UsingSSLRole = Qt::UserRole + 19,

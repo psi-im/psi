@@ -459,7 +459,7 @@ void PsiContactListViewDelegate::drawGroup(QPainter* painter, const QStyleOption
 	r = relativeRect(option, QSize(), pixmapRect, 3);
 	painter->drawPixmap(pixmapRect.topLeft(), pixmap);
 
-	QString text = index.data(Qt::ToolTipRole).toString();
+	QString text = index.data(ContactListModel::DisplayGroupRole).toString();
 	drawText(painter, o, r, text, index);
 
 	if(slimGroup_ && !(option.state & QStyle::State_Selected)) {
