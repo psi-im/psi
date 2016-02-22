@@ -327,10 +327,30 @@ void AddUserDlg::resolveNickFinished()
 	JT_VCard *jt = (JT_VCard *)sender();
 
 	if(jt->success()) {
-		if ( !jt->vcard().nickName().isEmpty() )
-			le_nick->setText( jt->vcard().nickName() );
-		else if( !jt->vcard().fullName().isEmpty() )
-			le_nick->setText( jt->vcard().fullName() );
+		QString nickname;
+		const XMPP::VCard vcard = jt->vcard();
+		if ( !vcard.nickName().isEmpty() ) {
+			nickname = vcard.nickName();
+		} else if ( !vcard.fullName().isEmpty() ) {
+			nickname = vcard.fullName();
+		} else {
+			nickname = vcard.givenName();
+			if ( nickname.isEmpty() ) {
+				nickname = vcard.middleName();
+			} else if ( !vcard.middleName().isEmpty() ) {
+				nickname += " " + vcard.middleName();
+			}
+			if ( nickname.isEmpty() ) {
+				nickname = vcard.familyName();
+			} else if ( !vcard.familyName().isEmpty() ) {
+				nickname += " " + vcard.familyName();
+			}
+		}
+
+		if ( nickname.isEmpty() ) {
+			nickname = jt->jid().bare();
+		}
+		le_nick->setText(nickname);
 	}
 }
 
