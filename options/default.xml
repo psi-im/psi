@@ -116,6 +116,7 @@
 				<use-small-chats type="bool">false</use-small-chats>
 				<use-message-icons type="bool">true</use-message-icons>
 				<scaled-message-icons type="bool">false</scaled-message-icons>
+				<show-status-changes type="bool">true</show-status-changes>
 				<warn-before-clear type="bool">true</warn-before-clear>
 				<hide-when-closing type="bool">false</hide-when-closing>
 				<status-with-priority comment="Show priority with status change" type="bool">false</status-with-priority>

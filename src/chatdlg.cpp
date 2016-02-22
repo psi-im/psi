@@ -481,7 +481,9 @@ void ChatDlg::updateContact(const Jid &j, bool fromPresence)
 			key_ = userStatus.publicKeyID;
 			updatePGP();
 
-			if (fromPresence && statusChanged) {
+			if (PsiOptions::instance()->getOption("options.ui.chat.show-status-changes").toBool()
+				&& fromPresence && statusChanged)
+			{
 				chatView()->dispatchMessage(MessageView::statusMessage(
 												dispNick_, status_,
 												statusString_, priority_));
