@@ -107,6 +107,14 @@ ChatDlg::ChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
 
 	status_ = -1;
 
+	autoSelectContact_ = false;
+	if (PsiOptions::instance()->getOption("options.ui.chat.default-jid-mode").toString() == "auto") {
+		UserListItem *uli = account()->findFirstRelevant(jid);
+		if (!uli || (!uli->isPrivate() && (jid.resource().isEmpty() || uli->userResourceList().count() <= 1))) {
+			autoSelectContact_ = true;
+		}
+	}
+
 	// Message events
 	contactChatState_ = XMPP::StateNone;
 	lastChatState_ = XMPP::StateNone;
@@ -389,18 +397,7 @@ const QString& ChatDlg::getDisplayName()
 	return dispNick_;
 }
 
-struct UserStatus {
-	UserStatus()
-			: userListItem(0)
-			, statusType(XMPP::Status::Offline) {}
-	UserListItem* userListItem;
-	XMPP::Status::Type statusType;
-	QString status;
-	int priority;
-	QString publicKeyID;
-};
-
-UserStatus userStatusFor(const Jid& jid, QList<UserListItem*> ul, bool forceEmptyResource)
+UserStatus ChatDlg::userStatusFor(const Jid& jid, QList<UserListItem*> ul, bool forceEmptyResource)
 {
 	if (ul.isEmpty())
 		return UserStatus();
@@ -459,12 +456,20 @@ void ChatDlg::updateContact(const Jid &j, bool fromPresence)
 	if (jid().compare(j, false)) {
 		QList<UserListItem*> ul = account()->findRelevant(j);
 		UserStatus userStatus = userStatusFor(jid(), ul, false);
+
+		Jid oldJid = jid();
+		updateJidWidget(ul, userStatus.statusType, fromPresence);
+		bool jidSwitched = !oldJid.compare(jid(), true);
+		if (jidSwitched) {
+			userStatus = userStatusFor(jid(), ul, false);
+		}
+
 		if (userStatus.statusType == XMPP::Status::Offline)
 			contactChatState_ = XMPP::StateNone;
 
 		bool statusWithPriority = PsiOptions::instance()->getOption("options.ui.chat.status-with-priority").toBool();
 		bool statusChanged = false;
-		if (status_ != userStatus.statusType || statusString_ != userStatus.status || (statusWithPriority && priority_ != userStatus.priority)) {
+		if (jidSwitched || status_ != userStatus.statusType || statusString_ != userStatus.status || (statusWithPriority && priority_ != userStatus.priority)) {
 			statusChanged = true;
 			status_ = userStatus.statusType;
 			statusString_ = userStatus.status;
@@ -500,6 +505,13 @@ void ChatDlg::updateContact(const Jid &j, bool fromPresence)
 			}
 		}
 	}
+}
+
+void ChatDlg::updateJidWidget(const QList<UserListItem*> &ul, int status, bool fromPresence)
+{
+	Q_UNUSED(ul);
+	Q_UNUSED(status);
+	Q_UNUSED(fromPresence);
 }
 
 void ChatDlg::contactUpdated(UserListItem* u, int status, const QString& statusString)

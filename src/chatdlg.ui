@@ -64,9 +64,21 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="le_jid">
-           <property name="readOnly">
+          <widget class="QComboBox" name="le_jid">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="editable">
             <bool>true</bool>
+           </property>
+           <property name="sizeAdjustPolicy">
+            <enum>QComboBox::AdjustToMinimumContentsLengthWithIcon</enum>
+           </property>
+           <property name="minimumContentsLength">
+            <number>10</number>
            </property>
           </widget>
          </item>
@@ -366,6 +378,15 @@
    <header>iconlabel.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>le_jid</tabstop>
+  <tabstop>tb_voice</tabstop>
+  <tabstop>tb_pgp</tabstop>
+  <tabstop>tb_emoticons</tabstop>
+  <tabstop>tb_actions</tabstop>
+  <tabstop>mle</tabstop>
+  <tabstop>pb_send</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

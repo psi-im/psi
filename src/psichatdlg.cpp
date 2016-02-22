@@ -180,6 +180,28 @@ PsiChatDlg::PsiChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
 void PsiChatDlg::initUi()
 {
 	ui_.setupUi(this);
+
+	le_autojid = new ActionLineEdit(ui_.le_jid);
+	ui_.le_jid->setLineEdit(le_autojid);
+	ui_.le_jid->lineEdit()->setReadOnly(true);
+	if (autoSelectContact_) {
+		QStringList excl = PsiOptions::instance()->getOption("options.ui.chat.default-jid-mode-ignorelist").toString().toLower().split(",", QString::SkipEmptyParts);
+		if (excl.indexOf(jid().bare()) == -1) {
+			ui_.le_jid->insertItem(0, "auto", jid().full());
+			ui_.le_jid->setCurrentIndex(0);
+		} else {
+			autoSelectContact_ = false;
+		}
+	}
+	connect(ui_.le_jid, SIGNAL(activated(int)), this, SLOT(contactChanged()));
+	UserListItem *ul = account()->findFirstRelevant(jid());
+	if (!ul || !ul->isPrivate()) {
+		act_autojid = new IconAction(this);
+		updateAutojidIcon();
+		connect(act_autojid, SIGNAL(triggered()), SLOT(doSwitchJidMode()));
+		le_autojid->addAction(act_autojid);
+	}
+
 	ui_.lb_ident->setAccount(account());
 	ui_.lb_ident->setShowJid(false);
 
@@ -461,6 +483,110 @@ void PsiChatDlg::setContactToolTip(QString text)
 	ui_.avatar->setToolTip(text);
 }
 
+void PsiChatDlg::updateJidWidget(const QList<UserListItem*> &ul, int status, bool fromPresence)
+{
+	static bool internal_change = false;
+	if (!internal_change) {
+		// Filling jid's combobox
+		const UserListItem *u = ul.first();
+		if (!u)
+			return;
+		UserResourceList resList = u->userResourceList();
+		const QString name = u->name();
+		QComboBox *jidCombo = ui_.le_jid;
+		if (!u->isPrivate()) {
+			// If no conference private chat
+			const int combo_idx = jidCombo->currentIndex();
+			Jid old_jid = (combo_idx != -1) ? Jid(jidCombo->itemData(combo_idx).toString()) : Jid();
+			//if (fromPresence || jid() != old_jid) {
+				bool auto_mode = autoSelectContact_;
+				Jid new_auto_jid = jid();
+				if (auto_mode) {
+					if (fromPresence && !resList.isEmpty()) {
+						UserResourceList::ConstIterator it = resList.priority();
+						new_auto_jid = jid().withResource((*it).name());
+					}
+				}
+				// Filling address combobox
+				QString iconStr = "clients/unknown";
+				const int resCnt = resList.size();
+				if (resCnt == 1) {
+					UserResourceList::ConstIterator it = resList.begin();
+					if (it != resList.end() && (*it).name().isEmpty())
+						// Empty resource,  but online. Transport?
+						iconStr = "clients/" + u->findClient((*it).clientName().toLower());
+				} else if (resCnt == 0) {
+					iconStr = QString();
+				}
+				setJidComboItem(0, makeContactName(name, u->jid().bare()), u->jid().bare(), iconStr);
+				int new_index = -1;
+				int curr_index = 1;
+				for (UserResourceList::ConstIterator it = resList.begin(); it != resList.end(); it++) {
+					UserResource r = *it;
+					if (!r.name().isEmpty()) {
+						Jid tmp_jid(u->jid().withResource(r.name()));
+						QString iconStr2 = "clients/" + u->findClient(r.clientName().toLower());
+						setJidComboItem(curr_index, makeContactName(name, tmp_jid), tmp_jid, iconStr2);
+						if (new_index == -1 && tmp_jid == new_auto_jid) {
+							new_index = curr_index;
+						}
+						curr_index++;
+					}
+				}
+				if (new_index == -1) {
+					new_index = 0;
+					if (autoSelectContact_) {
+						new_auto_jid = jid().bare();
+					} else {
+						if (!jid().resource().isEmpty()) {
+							new_index = jidCombo->count();
+							setJidComboItem(curr_index, makeContactName(name, jid()), jid(), iconStr);
+							new_index = curr_index++;
+						}
+					}
+				}
+				// Сlean combobox's tail
+				while (curr_index < jidCombo->count())
+					jidCombo->removeItem(curr_index);
+
+				ui_.le_jid->setCurrentIndex(new_index);
+				if (new_auto_jid != jid()) {
+					internal_change = true;
+					setJid(new_auto_jid);
+					if (old_jid != new_auto_jid) {
+						if (autoSelectContact_ && (status != XMPP::Status::Offline || !new_auto_jid.resource().isEmpty())) {
+							appendSysMsg(tr("Contact has been switched: %1").arg(TextUtil::escape(JIDUtil::toString(new_auto_jid, true))));
+						}
+					}
+				}
+			//}
+		} else {
+			// Conference private chat
+			QString iconStr;
+			Jid tmp_jid = jid();
+			UserResourceList::ConstIterator it = resList.begin();
+			if (it != resList.end()) {
+				iconStr = "clients/" + u->findClient((*it).clientName().toLower());
+				tmp_jid = u->jid().withResource((*it).name());
+			} else if (jidCombo->count() > 0) {
+				tmp_jid = Jid(jidCombo->itemData(0).toString());
+			}
+			if (tmp_jid.isValid()) {
+				if (iconStr == "clients/unknown")
+					iconStr = QString(); // for disable the icon
+				setJidComboItem(0, makeContactName(name, tmp_jid), tmp_jid, iconStr);
+			}
+			// Clean combobox's tail
+			while (jidCombo->count() > 1)
+				jidCombo->removeItem(1);
+			//-
+			jidCombo->setCurrentIndex(0);
+		}
+		jidCombo->setToolTip(jidCombo->currentText());
+	}
+	internal_change = false;
+}
+
 void PsiChatDlg::contactUpdated(UserListItem* u, int status, const QString& statusString)
 {
 	Q_UNUSED(statusString);
@@ -491,22 +617,6 @@ void PsiChatDlg::contactUpdated(UserListItem* u, int status, const QString& stat
 	}
 
 	if (u) {
-		QString name;
-		QString j;
-		if (jid().resource().isEmpty())
-			j = JIDUtil::toString(u->jid(), true);
-		else
-			j = JIDUtil::toString(u->jid().bare(), false) + '/' + jid().resource();
-
-		if (!u->name().isEmpty())
-			name = u->name() + QString(" <%1>").arg(j);
-		else
-			name = j;
-
-		ui_.le_jid->setText(name);
-		ui_.le_jid->setCursorPosition(0);
-		ui_.le_jid->setToolTip(name);
-
 		UserResourceList srl = u->userResourceList();
 		if(!srl.isEmpty()) {
 			UserResource r;
@@ -741,5 +851,77 @@ bool PsiChatDlg::eventFilter( QObject *obj, QEvent *ev ) {
 	return ChatDlg::eventFilter( obj, ev );
 }
 
+
+QString PsiChatDlg::makeContactName(const QString &name, const Jid &jid) const
+{
+	QString name_;
+	QString j = JIDUtil::toString(jid, true);
+	if (!name.isEmpty())
+		name_ = name + QString(" <%1>").arg(j);
+	else
+		name_ = j;
+	return name_;
+}
+
+void PsiChatDlg::contactChanged() /* current jid was chanegd in Jid combobox.TODO rename this func*/
+{
+	int curr_index = ui_.le_jid->currentIndex();
+	Jid jid_(ui_.le_jid->itemData(curr_index).toString());
+	if (jid_ != jid()) {
+		autoSelectContact_ = false;
+		setJid(jid_);
+		updateAutojidIcon();
+	}
+}
+
+void PsiChatDlg::updateAutojidIcon()
+{
+	QIcon icon(IconsetFactory::iconPixmap("psi/autojid"));
+	QPixmap pix;
+	QString text;
+	if (autoSelectContact_) {
+		pix = icon.pixmap(QSize(16, 16), QIcon::Normal, QIcon::Off);
+		text = tr("turn off autojid");
+	} else {
+		pix = icon.pixmap(QSize(16, 16), QIcon::Disabled, QIcon::Off);
+		text = tr("turn on autojid");
+	}
+	act_autojid->setIcon(QIcon(pix));
+	act_autojid->setText(text);
+	act_autojid->setToolTip(text);
+	act_autojid->setStatusTip(text);
+}
+
+void PsiChatDlg::setJidComboItem(int pos, const QString &text, const Jid &jid, const QString &icon_str)
+{
+	// Warning! If pos >= items count, the element will be added in a list tail
+	//-
+	QIcon icon;
+	QComboBox *jid_combo = ui_.le_jid;
+	if (!icon_str.isEmpty()) {
+		const PsiIcon picon = IconsetFactory::icon(icon_str);
+		icon = picon.icon();
+	}
+	if (jid_combo->count() > pos) {
+		jid_combo->setItemText(pos, text);
+		jid_combo->setItemData(pos, JIDUtil::toString(jid, true));
+		jid_combo->setItemIcon(pos, icon);
+	} else {
+		jid_combo->addItem(icon, text, JIDUtil::toString(jid, true));
+	}
+}
+
+void PsiChatDlg::doSwitchJidMode()
+{
+	autoSelectContact_ = ! autoSelectContact_;
+	updateAutojidIcon();
+	if (autoSelectContact_) {
+		const QList<UserListItem*> ul = account()->findRelevant(jid().bare());
+		UserStatus userStatus = userStatusFor(jid(), ul, false);
+		updateJidWidget(ul, userStatus.statusType, true);
+		userStatus = userStatusFor(jid(), ul, false);
+		contactUpdated(userStatus.userListItem, userStatus.statusType, userStatus.status);
+	}
+}
 
 #include "psichatdlg.moc"

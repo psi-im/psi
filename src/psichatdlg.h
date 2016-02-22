@@ -10,6 +10,7 @@
 
 #include "ui_chatdlg.h"
 #include "typeaheadfind.h"
+#include "widgets/actionlineedit.h"
 
 class IconAction;
 class PsiContact;
@@ -41,6 +42,9 @@ private slots:
 	void updateCountVisibility();
 	void updateContactAdding(PsiContact* c = 0);
 	void updateContactAdding(const Jid &j);
+	void contactChanged();
+	QString makeContactName(const QString &name, const Jid &jid) const;
+	void doSwitchJidMode();
 
 	// reimplemented
 	void chatEditCreated();
@@ -53,6 +57,7 @@ private:
 	void initUi();
 	void capsChanged();
 	bool isEncryptionEnabled() const;
+	void updateJidWidget(const QList<UserListItem*> &ul, int status, bool fromPresence);
 	void contactUpdated(UserListItem* u, int status, const QString& statusString);
 	void updateAvatar();
 	void optionsUpdate();
@@ -64,6 +69,8 @@ private:
 	void appendSysMsg(const QString &);
 	ChatView* chatView() const;
 	ChatEdit* chatEdit() const;
+	void updateAutojidIcon();
+	void setJidComboItem(int pos, const QString &text, const Jid &jid, const QString &icon_str);
 
 private:
 	Ui::ChatDlg ui_;
@@ -84,6 +91,9 @@ private:
 
 	QAction *act_mini_cmd_;
 	TypeAheadFindBar *typeahead_;
+
+	ActionLineEdit *le_autojid;
+	IconAction *act_autojid;
 
 	MCmdManager mCmdManager_;
 	MCmdSimpleSite mCmdSite_;

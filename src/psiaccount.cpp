@@ -2709,9 +2709,9 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 	else
 		j = ul.first()->jid();
 
-	c = findChatDialog(j);
+	/*c = findChatDialog(j);
 	if(!c)
-		c = findChatDialog(m.from().full());
+		c = findChatDialog(m.from().full());*/
 
 	if(m.type() == "error") {
 		Stanza::Error err = m.error();
@@ -2743,6 +2743,13 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 			else if (type == "chat")
 				m.setType("chat");
 			else if (type == "current-open") {
+				c = NULL;
+				foreach (ChatDlg *cl, findChatDialogs(m.from(), false)) {
+					if (cl->autoSelectContact() || cl->jid().resource().isEmpty() || m.from().resource() == cl->jid().resource()) {
+						c = cl;
+						break;
+					}
+				}
 				if (c != NULL && !c->isHidden())
 					m.setType("chat");
 				else
@@ -3198,9 +3205,33 @@ bool PsiAccount::validRosterExchangeItem(const RosterExchangeItem& item)
 	return false;
 }
 
-ChatDlg* PsiAccount::findChatDialog(const Jid& jid) const
+ChatDlg* PsiAccount::findChatDialog(const Jid& jid, bool compareResource) const
 {
-	return findDialog<ChatDlg*>(jid, true);
+	return findDialog<ChatDlg*>(jid, compareResource);
+}
+
+ChatDlg* PsiAccount::findChatDialogEx(const Jid& jid) const
+{
+	ChatDlg* cm1 = NULL;
+	ChatDlg* cm2 = NULL;
+	foreach (ChatDlg *cl, findChatDialogs(jid, false)) {
+		if (cl->autoSelectContact())
+			return cl;
+		if (!cm1 && jid.resource() == cl->jid().resource()) {
+				cm1 = cl;
+				continue;
+		}
+		if (!cm2 && cl->jid().resource().isEmpty())
+			cm2 = cl;
+	}
+	if (cm1)
+		return cm1;
+	return cm2;
+}
+
+QList<ChatDlg*> PsiAccount::findChatDialogs(const Jid& jid, bool compareResource) const
+{
+	return findDialogs<ChatDlg*>(jid, compareResource);
 }
 
 QWidget* PsiAccount::findDialog(const QMetaObject& mo, const Jid& jid, bool compareResource) const
@@ -3715,7 +3746,8 @@ EventDlg *PsiAccount::ensureEventDlg(const Jid &j)
 
 ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
 {
-	ChatDlg *c = findChatDialog(j);
+	/*ChatDlg *c = findChatDialog(j);*/
+	ChatDlg *c = findChatDialogEx(j);
 	if(!c) {
 		// create the chatbox
 		c = ChatDlg::create(j, this, d->tabManager);
@@ -3733,6 +3765,7 @@ ChatDlg *PsiAccount::ensureChatDlg(const Jid &j)
 #endif
 	}
 	else {
+		c->setJid(j);
 		// on X11, do a special reparent to open on the right desktop
 #ifdef HAVE_X11
 		/* KIS added an exception for tabs here. We do *not* want chats flying
@@ -4921,12 +4954,12 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 		}
 		else if (m.messageReceipt() == ReceiptReceived) {
 			if (o->getOption("options.ui.notifications.request-receipts").toBool()) {
-				ChatDlg *c = findChatDialog(e->from());
-				if (!c) {
-					c = findChatDialog(e->jid());
-				}
-				if (c) {
-					c->incomingMessage(m);
+				foreach (ChatDlg *c, findChatDialogs(e->from(), false)) {
+					if (c->autoSelectContact()  || c->jid().resource().isEmpty() || e->from().resource() == c->jid().resource()) {
+						if (c->autoSelectContact())
+							c->setJid(e->from());
+						c->incomingMessage(m);
+					}
 				}
 			}
 			return;
@@ -4935,11 +4968,9 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 		// Pass message events to chat window
 		if ((m.containsEvents() || m.chatState() != StateNone) && m.body().isEmpty()) {
 			if (o->getOption("options.messages.send-composing-events").toBool()) {
-				ChatDlg *c = findChatDialog(e->from());
-				if (!c) {
-					c = findChatDialog(e->jid());
-				}
+				ChatDlg *c = findChatDialogEx(e->from());
 				if (c) {
+					c->setJid(e->from());
 					c->incomingMessage(m);
 				}
 			}
@@ -4955,11 +4986,8 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 
 		// pass chat messages directly to a chat window if possible (and deal with sound)
 		else if(m.type() == "chat") {
-			ChatDlg *c = findChatDialog(e->from());
-			if(!c)
-				c = findChatDialog(e->jid());
-
-			if(c)
+			ChatDlg *c = findChatDialogEx(e->from());
+			if (c)
 				c->setJid(e->from());
 
 			//if the chat exists, and is either open in a tab,
@@ -5430,12 +5458,12 @@ void PsiAccount::messageStanzasAcked(int n) {
 void PsiAccount::processChatsHelper(const Jid& j, bool removeEvents)
 {
 	//printf("processing chats for [%s]\n", j.full().latin1());
-	ChatDlg *c = findChatDialog(j);
+	ChatDlg *c = findChatDialogEx(j);
 	if(!c)
 		return;
 	// extract the chats
 	QList<PsiEvent::Ptr> chatList;
-	bool compareResources = true;
+	bool compareResources = !c->autoSelectContact();
 #ifdef YAPSI
 	compareResources = false;
 #endif

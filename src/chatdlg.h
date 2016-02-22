@@ -48,6 +48,17 @@ class QDragEnterEvent;
 class ChatView;
 class ChatEdit;
 
+struct UserStatus {
+	UserStatus()
+			: userListItem(0)
+			, statusType(XMPP::Status::Offline) {}
+	UserListItem* userListItem;
+	XMPP::Status::Type statusType;
+	QString status;
+	int priority;
+	QString publicKeyID;
+};
+
 class ChatDlg : public TabbableWidget
 {
 	Q_OBJECT
@@ -76,6 +87,8 @@ public:
 	PsiAccount* account() const;
 	void setInputText(const QString &text);
 	Jid realJid() const;
+	bool autoSelectContact() const {return autoSelectContact_;};
+	static UserStatus userStatusFor(const Jid& jid, QList<UserListItem*> ul, bool forceEmptyResource);
 
 signals:
 	void aInfo(const Jid &);
@@ -100,6 +113,7 @@ protected:
 	void dropEvent(QDropEvent* event);
 	void dragEnterEvent(QDragEnterEvent* event);
 	bool eventFilter(QObject *obj, QEvent *event);
+	bool autoSelectContact_;
 
 public slots:
 	// reimplemented
@@ -151,6 +165,7 @@ protected:
 
 	virtual void initUi() = 0;
 	virtual void capsChanged();
+	virtual void updateJidWidget(const QList<UserListItem*> &ul, int status, bool fromPresence);
 	virtual void contactUpdated(UserListItem* u, int status, const QString& statusString);
 
 	void appendMessage(const Message &, bool local = false);

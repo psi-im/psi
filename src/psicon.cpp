@@ -1711,9 +1711,9 @@ void PsiCon::processEvent(const PsiEvent::Ptr &e, ActivationType activationType)
 		if ( PsiOptions::instance()->getOption("options.ui.chat.alert-for-already-open-chats").toBool() && sentToChatWindow ) {
 			// Message already displayed, need only to pop up chat dialog, so that
 			// it will be read (or marked as read)
-			ChatDlg *c = account->findChatDialog(from);
+			ChatDlg *c = account->findChatDialogEx(from);
 			if(!c)
-				c = account->findChatDialog(e->jid());
+				c = account->findChatDialogEx(e->jid());
 			if(!c)
 				return; // should never happen
 
