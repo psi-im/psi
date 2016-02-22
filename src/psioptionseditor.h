@@ -27,6 +27,7 @@ private slots:
 	void add();
 	void edit();
 	void deleteit();
+	void resetit();
 	void detach();
 
 private:
@@ -39,6 +40,7 @@ private:
 	QLabel* lb_path;
 	QLabel* lb_comment;
 	QPushButton *pb_delete;
+	QPushButton *pb_reset;
 	QPushButton *pb_edit;
 	QPushButton *pb_new;
 	QToolButton *pb_detach;

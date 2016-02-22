@@ -332,6 +332,42 @@ void PsiOptions::getOptionsStorage_finished()
 	}
 }
 
+/**
+ * Reset node \a name to default value
+ * \return Nothing
+ */
+void PsiOptions::resetOption(const QString &name)
+{
+	defaults(); // to init defaults_
+	QStringList nodes = getChildOptionNames(name);
+
+	if (!isInternalNode(name)) {
+		const QVariant &dev = defaults_->getOption(name);
+		if (!dev.isValid()) { // don't touch non exist nodes
+			return;
+		}
+		const QVariant &prev = getOption(name);
+		if (prev == dev) { // do nothing if values is identical
+			return;
+		}
+		setOption(name, dev);
+	}
+	else { // internal node
+		foreach(QString node, nodes) {
+			const QVariant &dev = defaults_->getOption(node);
+			if (!dev.isValid()) {
+				continue;
+			}
+			const QVariant &prev = getOption(node);
+			if (prev == dev) {
+				continue;
+			}
+			setOption(node, dev);
+		}
+	}
+}
+
+
 PsiOptions* PsiOptions::instance_ = NULL;
 PsiOptions* PsiOptions::defaults_ = NULL;
 

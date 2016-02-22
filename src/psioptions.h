@@ -47,6 +47,7 @@ public:
 	bool newProfile();
 	bool save(QString file);
 	void autoSave(bool autoSave, QString autoFile = "");
+	void resetOption(const QString &name);
 
 // don't call this normally
 	PsiOptions();

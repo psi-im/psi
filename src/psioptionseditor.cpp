@@ -160,11 +160,13 @@ PsiOptionsEditor::PsiOptionsEditor(QWidget *parent)
 
 	buttonLine->addStretch(1);
 
-	if (1) { // FIXME
-		pb_delete = new QPushButton(tr("Delete"), this);
-		buttonLine->addWidget(pb_delete);
-		connect(pb_delete, SIGNAL(clicked()), SLOT(deleteit()));
-	}
+	pb_delete = new QPushButton(tr("Delete..."), this);
+	buttonLine->addWidget(pb_delete);
+	connect(pb_delete, SIGNAL(clicked()), SLOT(deleteit()));
+
+	pb_reset = new QPushButton(tr("Reset..."), this);
+	buttonLine->addWidget(pb_reset);
+	connect(pb_reset, SIGNAL(clicked()), SLOT(resetit()));
 
 	pb_edit = new QPushButton(tr("Edit..."), this);
 	buttonLine->addWidget(pb_edit);
@@ -274,9 +276,23 @@ void PsiOptionsEditor::deleteit()
 		sub = true;
 		confirm = tr("Really delete all options starting with %1.?");
 	}
-	if (QMessageBox::Yes == QMessageBox::warning(this, tr("Psi: Option Editor"),
+	if (QMessageBox::Yes == QMessageBox::warning(this, tr("Psi+: Option Editor"),
 				   confirm.arg(option), QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel)) {
 		PsiOptions::instance()->removeOption( option, sub);
+	}
+}
+
+void PsiOptionsEditor::resetit()
+{
+	QModelIndex idx = tv_->currentIndex();
+	QString option = tm_->indexToOptionName(idx);
+	QString confirm = tr("Really reset options %1 to default value?");
+	if (o_->isInternalNode(option)) {
+		confirm = tr("Really reset all options starting with %1. to default value?");
+	}
+	if (QMessageBox::Yes == QMessageBox::warning(this, tr("Psi+: Option Editor"),
+                   confirm.arg(option), QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel)) {
+		PsiOptions::instance()->resetOption(option);
 	}
 }
 
