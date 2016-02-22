@@ -211,9 +211,9 @@ public:
 	IconAction *act_find, *act_clear, *act_icon, *act_configure, *act_bookmark;
 	IconAction *act_html_text;
 	TypeAheadFindBar *typeahead;
-#ifdef WHITEBOARDING
-	IconAction *act_whiteboard;
-#endif
+//#ifdef WHITEBOARDING
+//	IconAction *act_whiteboard;
+//#endif
 	QAction *act_send, *act_scrollup, *act_scrolldown, *act_close;
 
 	QAction *act_mini_cmd, *act_nick, *act_hide;
@@ -678,10 +678,10 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	d->act_html_text = new IconAction(tr("Set Text Format"), "psi/text", tr("Set Text Format"), 0, this);
 	connect(d->act_html_text, SIGNAL(triggered()), d->mle(), SLOT(doHTMLTextMenu()));
 
-#ifdef WHITEBOARDING
-	d->act_whiteboard = new IconAction(tr("Open a Whiteboard"), "psi/whiteboard", tr("Open a &Whiteboard"), 0, this);
-	connect(d->act_whiteboard, SIGNAL(triggered()), SLOT(openWhiteboard()));
-#endif
+//#ifdef WHITEBOARDING
+//	d->act_whiteboard = new IconAction(tr("Open a Whiteboard"), "psi/whiteboard", tr("Open a &Whiteboard"), 0, this);
+//	connect(d->act_whiteboard, SIGNAL(triggered()), SLOT(openWhiteboard()));
+//#endif
 
 	connect(pa->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
 	d->act_icon = new IconAction( tr( "Select Icon" ), "psi/smile", tr( "Select Icon" ), 0, this );
@@ -715,9 +715,9 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	ui_.toolbar->addAction(d->act_find);
 	ui_.toolbar->addAction(d->act_configure);
 	ui_.toolbar->addAction(d->act_html_text);
-#ifdef WHITEBOARDING
-	ui_.toolbar->addAction(d->act_whiteboard);
-#endif
+//#ifdef WHITEBOARDING
+//	ui_.toolbar->addAction(d->act_whiteboard);
+//#endif
 	ui_.toolbar->addWidget(new StretchWidget(ui_.toolbar));
 	ui_.toolbar->addAction(d->act_icon);
 	ui_.toolbar->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
@@ -1983,9 +1983,9 @@ void GCMainDlg::buildMenu()
 
 	d->act_clear->addTo( d->pm_settings );
 	d->act_configure->addTo( d->pm_settings );
-#ifdef WHITEBOARDING
-	d->act_whiteboard->addTo( d->pm_settings );
-#endif
+//#ifdef WHITEBOARDING
+//	d->act_whiteboard->addTo( d->pm_settings );
+//#endif
 	d->pm_settings->addSeparator();
 
 	d->pm_settings->addAction(d->act_icon);
