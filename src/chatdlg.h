@@ -180,6 +180,9 @@ private:
 	bool keepOpen_;
 	bool warnSend_;
 
+	bool trackBar_;
+	void doTrackBar();
+
 	QTimer* selfDestruct_;
 
 	QString key_;

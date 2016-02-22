@@ -103,6 +103,7 @@ ChatDlg::ChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
 	transid_ = -1;
 	key_ = "";
 	lastWasEncrypted_ = false;
+	trackBar_ = false;
 
 	status_ = -1;
 
@@ -162,6 +163,12 @@ void ChatDlg::initComposing()
 {
 	highlightersInstalled_ = true;
 	chatEditCreated();
+}
+
+void ChatDlg::doTrackBar()
+{
+	trackBar_ = false;
+	chatView()->doTrackBar();
 }
 
 void ChatDlg::initActions()
@@ -316,6 +323,8 @@ void ChatDlg::logSelectionChanged()
 void ChatDlg::deactivated()
 {
 	TabbableWidget::deactivated();
+
+	trackBar_ = true;
 }
 
 void ChatDlg::activated()
@@ -330,6 +339,8 @@ void ChatDlg::activated()
 	doFlash(false);
 
 	chatEdit()->setFocus();
+
+	trackBar_ = false;
 }
 
 void ChatDlg::dropEvent(QDropEvent* event)
@@ -830,6 +841,9 @@ QString ChatDlg::whoNick(bool local) const
 
 void ChatDlg::appendMessage(const Message &m, bool local)
 {
+	if(trackBar_)
+		doTrackBar();
+
 	// figure out the encryption state
 	bool encChanged = false;
 	bool encEnabled = false;
