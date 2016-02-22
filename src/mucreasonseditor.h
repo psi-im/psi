@@ -18,6 +18,7 @@ private:
 private slots:
 	void on_btnAdd_clicked();
 	void on_btnRemove_clicked();
+	void save();
 protected slots:
 	void accept();
 };

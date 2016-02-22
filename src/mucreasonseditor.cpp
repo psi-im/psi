@@ -16,11 +16,7 @@ MUCReasonsEditor::~MUCReasonsEditor()
 
 void MUCReasonsEditor::accept()
 {
-	QStringList reasons;
-	int cnt=ui_.lstReasons->count();
-	for (int i=0; i<cnt; ++i)
-		reasons.append(ui_.lstReasons->item(i)->text());
-	PsiOptions::instance()->setOption("options.muc.reasons", reasons);
+	save();
 	reason_=ui_.txtReason->text();
 	QDialog::accept();
 }
@@ -42,3 +38,11 @@ void MUCReasonsEditor::on_btnRemove_clicked()
 	}
 }
 
+void MUCReasonsEditor::save()
+{
+	QStringList reasons;
+	int cnt=ui_.lstReasons->count();
+	for (int i=0; i<cnt; ++i)
+		reasons.append(ui_.lstReasons->item(i)->text());
+	PsiOptions::instance()->setOption("options.muc.reasons", reasons);
+}
