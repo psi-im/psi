@@ -255,6 +255,7 @@ public:
 	{
 		pa = _pa;
 		Q_ASSERT(!pa.isNull());
+		setFlags(flags() ^ Qt::ItemIsDropEnabled);
 		connect(pa, SIGNAL(updatedActivity()), SLOT(updateInfo()));
 		connect(pa, SIGNAL(updatedAccount()), SLOT(updateInfo()));
 		updateInfo();
@@ -284,6 +285,36 @@ private slots:
 	}
 };
 
+
+
+AccountManageTree::AccountManageTree(QWidget *parent)
+	: QTreeWidget(parent)
+{
+
+}
+
+void AccountManageTree::dropEvent(QDropEvent *event)
+{
+	QTreeWidget::dropEvent(event);
+	AccountManageTree *tree = qobject_cast<AccountManageTree *>(event->source());
+
+	if (tree) {
+		QList<PsiAccount*> accountsList;
+		foreach (QTreeWidgetItem *ami, tree->findItems("*", Qt::MatchWildcard)) {
+			accountsList.append(((AccountManageItem *)ami)->pa.data());
+		}
+		emit orderChanged(accountsList);
+	}
+}
+
+void AccountManageTree::dragMoveEvent(QDragMoveEvent *event)
+{
+	QTreeWidget::dragMoveEvent(event);
+	sortByColumn(-1);
+}
+
+
+
 AccountManageDlg::AccountManageDlg(PsiCon *_psi)
 :QDialog(0)
 {
@@ -306,6 +337,7 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi)
 
 	connect(lv_accs, SIGNAL(itemDoubleClicked(QTreeWidgetItem *, int)), SLOT(modify(QTreeWidgetItem *)));
 	connect(lv_accs, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)), SLOT(qlv_selectionChanged(QTreeWidgetItem *, QTreeWidgetItem *)));
+	connect(lv_accs, SIGNAL(orderChanged(QList<PsiAccount*>)), psi, SLOT(setAccountsOrder(QList<PsiAccount*>)));
 	connect(psi, SIGNAL(accountAdded(PsiAccount *)), SLOT(accountAdded(PsiAccount *)));
 	connect(psi, SIGNAL(accountRemoved(PsiAccount *)), SLOT(accountRemoved(PsiAccount *)));
 #ifdef HAVE_QT5
@@ -313,6 +345,11 @@ AccountManageDlg::AccountManageDlg(PsiCon *_psi)
 #else
 	lv_accs->header()->setResizeMode(QHeaderView::ResizeToContents);
 #endif
+	lv_accs->setDragDropMode(QAbstractItemView::InternalMove);
+	lv_accs->setDragDropOverwriteMode(false);
+	lv_accs->setSortingEnabled(true);
+	lv_accs->sortByColumn(-1);
+
 	foreach(PsiAccount* pa, psi->contactList()->accounts())
 		new AccountManageItem(lv_accs, pa);
 

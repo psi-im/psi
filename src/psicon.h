@@ -148,6 +148,7 @@ public slots:
 	void doToolbars();
 	void doStatusPresets();
 	void checkAccountsEmpty();
+	void setAccountsOrder(QList<PsiAccount*>);
 
 public slots:
 	void doSleep();

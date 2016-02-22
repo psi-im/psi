@@ -280,6 +280,28 @@ UserAccountList PsiContactList::getUserAccountList() const
 }
 
 /**
+ * Moves accounts from list to top. affects default account
+ */
+void PsiContactList::setAccountsOrder(QList<PsiAccount*> accounts)
+{
+	int start = 0;
+	bool needSave = false;
+	foreach (PsiAccount *account, accounts) {
+		int index = accounts_.indexOf(account, start);
+		if (index != -1) {
+			accounts_.move(index, start);
+			if (index != start) {
+				needSave = true;
+			}
+			start++;
+		}
+	}
+	if (needSave) {
+		emit saveAccounts();
+	}
+}
+
+/**
  * It's called by each and every PsiAccount on its creation.
  */
 void PsiContactList::link(PsiAccount* account)

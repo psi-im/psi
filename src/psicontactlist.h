@@ -62,6 +62,7 @@ public:
 	PsiAccount *defaultAccount() const;
 
 	UserAccountList getUserAccountList() const;
+	void setAccountsOrder(QList<PsiAccount*> accounts);
 
 	PsiAccount* createAccount(const QString& name, const Jid& j = "", const QString& pass = "", bool opt_host = false, const QString& host = "", int port = 5222, bool legacy_ssl_probe = true, UserAccount::SSLFlag ssl = UserAccount::SSL_Auto, QString proxyID = "", const QString &tlsOverrideDomain="", const QByteArray &tlsOverrideCert=QByteArray());
 	void createAccount(const UserAccount&);

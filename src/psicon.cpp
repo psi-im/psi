@@ -238,11 +238,13 @@ public:
 		accountTree.removeOption("accounts", true);
 		// save accounts with known base
 		QSet<QString> cbases;
+		QStringList order;
 		foreach(UserAccount ua, acc) {
 			if (!ua.optionsBase.isEmpty()) {
 				ua.toOptions(&accountTree);
 				cbases += ua.optionsBase;
 			}
+			order.append(ua.id);
 		}
 		// save new accounts
 		int idx = 0;
@@ -256,6 +258,7 @@ public:
 				ua.toOptions(&accountTree, base);
 			}
 		}
+		accountTree.setOption("order", order);
 		QFile accountsFile(pathToProfile(activeProfile, ApplicationInfo::ConfigLocation) + "/accounts.xml");
 		accountTree.saveOptions(accountsFile.fileName(), "accounts", ApplicationInfo::optionsNS(), ApplicationInfo::version());;
 
@@ -640,6 +643,17 @@ bool PsiCon::init()
 			ua.fromOptions(&d->accountTree, base);
 			accs += ua;
 		}
+		QStringList order = d->accountTree.getOption("order").toStringList();
+		int start = 0;
+		foreach (const QString &id, order) {
+			for (int i = start; i < accs.size(); ++i) {
+				if (accs[i].id == id) {
+					accs.move(i, start);
+					start++;
+					break;
+				}
+			}
+		}
 
 		// Disable accounts if necessary, and overwrite locked properties
 		bool single = options->getOption("options.ui.account.single").toBool();
@@ -1010,6 +1024,11 @@ PsiAccount *PsiCon::createAccount(const UserAccount& _acc)
 void PsiCon::removeAccount(PsiAccount *pa)
 {
 	d->contactList->removeAccount(pa);
+}
+
+void PsiCon::setAccountsOrder(QList<PsiAccount*> accounts)
+{
+	d->contactList->setAccountsOrder(accounts);
 }
 
 void PsiCon::statusMenuChanged(XMPP::Status::Type x, bool forceDialog)

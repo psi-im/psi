@@ -17,7 +17,7 @@
    <item>
     <layout class="QHBoxLayout">
      <item>
-      <widget class="QTreeWidget" name="lv_accs">
+      <widget class="AccountManageTree" name="lv_accs">
        <property name="indentation">
         <number>0</number>
        </property>
@@ -120,6 +120,11 @@
    <class>IconButton</class>
    <extends>QWidget</extends>
    <header>iconbutton.h</header>
+  </customwidget>
+  <customwidget>
+   <class>AccountManageTree</class>
+   <extends>QTreeWidget</extends>
+   <header>accountmanagedlg.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

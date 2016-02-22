@@ -21,7 +21,7 @@
 #ifndef ACCOUNTMANAGEDLG_H
 #define ACCOUNTMANAGEDLG_H
 
-#include "ui_accountmanage.h"
+#include <QTreeWidget>
 
 namespace XMPP
 {
@@ -32,6 +32,23 @@ namespace XMPP
 class PsiCon;
 class PsiAccount;
 class QTreeWidgetItem;
+
+class AccountManageTree : public QTreeWidget
+{
+	Q_OBJECT
+
+public:
+	AccountManageTree(QWidget *parent = 0);
+
+protected:
+	void dropEvent(QDropEvent *event);
+	void dragMoveEvent(QDragMoveEvent *event);
+
+signals:
+	void orderChanged(QList<PsiAccount *> accountsList);
+};
+
+#include "ui_accountmanage.h"
 
 class AccountManageDlg : public QDialog, public Ui::AccountManage
 {
