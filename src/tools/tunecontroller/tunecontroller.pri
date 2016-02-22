@@ -25,10 +25,10 @@ tc_itunes {
 		INCLUDEPATH += $$ITUNES_PLUGIN_PATH
 
 		HEADERS += \
-			$$ITUNES_PLUGIN_PATH/itunescontroller.h
+			$$PWD/itunestunecontroller.h
 
 		SOURCES += \
-			$$ITUNES_PLUGIN_PATH/itunescontroller.cpp \
+			$$PWD/itunestunecontroller.cpp \
 			$$ITUNES_PLUGIN_PATH/itunesplugin.cpp
 
 		QMAKE_LFLAGS += -framework CoreFoundation
@@ -42,11 +42,11 @@ tc_winamp {
 	INCLUDEPATH += $$WINAMP_PLUGIN_PATH
 
 	HEADERS += \
-		$$WINAMP_PLUGIN_PATH/winampcontroller.h \
+		$$PWD/winamptunecontroller.h \
 		$$WINAMP_PLUGIN_PATH/winampplugin.h
 
 	SOURCES += \
-		$$WINAMP_PLUGIN_PATH/winampcontroller.cpp \
+		$$PWD/winamptunecontroller.cpp \
 		$$WINAMP_PLUGIN_PATH/winampplugin.cpp
 
 	LIBS += -lUser32
@@ -77,4 +77,18 @@ tc_mpris {
 	SOURCES += \
 		$$PWD/mpristunecontroller.cpp \
 		$$MPRIS_PLUGIN_PATH/mprisplugin.cpp
+}
+
+#AIMP
+tc_aimp {
+	DEFINES += TC_AIMP
+	AIMP_PLUGIN_PATH = $$PWD/plugins/aimp
+	INCLUDEPATH += $$AIMP_PLUGIN_PATH
+
+	HEADERS += \
+		$$PWD/aimptunecontroller.h
+
+	SOURCES += \
+		$$PWD/aimptunecontroller.cpp \
+		$$AIMP_PLUGIN_PATH/aimpplugin.cpp
 }

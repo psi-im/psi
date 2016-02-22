@@ -27,7 +27,8 @@ HEADERS += \
 	$$PWD/opt_avcall.h \
 	$$PWD/opt_toolbars.h \
 	$$PWD/opt_advanced.h \
-	$$PWD/opt_shortcuts.h
+	$$PWD/opt_shortcuts.h \
+	$$PWD/opt_statuspep.h
 
 HEADERS += $$PWD/opt_tree.h
 
@@ -48,7 +49,8 @@ SOURCES += \
 	$$PWD/opt_avcall.cpp \
 	$$PWD/opt_toolbars.cpp \
 	$$PWD/opt_advanced.cpp \
-	$$PWD/opt_shortcuts.cpp
+	$$PWD/opt_shortcuts.cpp \
+	$$PWD/opt_statuspep.cpp
 
 SOURCES += $$PWD/opt_tree.cpp
 
@@ -76,7 +78,8 @@ FORMS += \
 	$$PWD/opt_iconset_system.ui \
 	$$PWD/opt_iconset_roster.ui \
 	$$PWD/opt_general_groupchat.ui \
-	$$PWD/opt_shortcuts.ui
+	$$PWD/opt_shortcuts.ui \
+	$$PWD/opt_statuspep.ui
 
 psi_plugins {
 	FORMS += $$PWD/opt_plugins.ui

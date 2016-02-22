@@ -1,6 +1,6 @@
 /*
- * itunesplugin.cpp
- * Copyright (C) 2006  Remko Troncon
+ * aimptunecontroller.h
+ * Copyright (C) 2012 Vitaly Tonkacheyev
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -18,42 +18,34 @@
  *
  */
 
-#ifndef QT_STATICPLUGIN
-#define QT_STATICPLUGIN
-#endif
+#ifndef AIMPTUNECONTROLLER_H
+#define AIMPTUNECONTROLLER_H
 
-#include <QtCore>
-#include <QObject>
-#include <QString>
+#include "pollingtunecontroller.h"
+#include "tune.h"
+#include "windows.h"
 
-#include "itunestunecontroller.h"
-#include "tunecontrollerplugin.h"
-
-class ITunesPlugin : public QObject, public TuneControllerPlugin
+class AimpTuneController : public PollingTuneController
 {
 	Q_OBJECT
-	Q_INTERFACES(TuneControllerPlugin)
-#ifdef HAVE_QT5
-	Q_PLUGIN_METADATA(IID "org.psi-im.Psi.TuneControllerPlugin")
-#endif
 
 public:
-	virtual QString name();
-	virtual TuneController* createController();
+	AimpTuneController();
+	Tune currentTune() const;
+
+protected slots:
+	void check();
+
+private:
+	Tune getTune() const;
+	HWND findAimp() const;
+	int getAimpStatus(const HWND &aimp) const;
+	void sendTune(const Tune &tune);
+	void clearTune();
+
+private:
+	Tune _currentTune;
+	bool _tuneSent;
 };
 
-#ifndef HAVE_QT5
-Q_EXPORT_PLUGIN2(itunesplugin, ITunesPlugin);
 #endif
-
-QString ITunesPlugin::name()
-{
-	return "iTunes";
-}
-
-TuneController* ITunesPlugin::createController()
-{
-	return new ITunesController();
-}
-
-#include "itunesplugin.moc"

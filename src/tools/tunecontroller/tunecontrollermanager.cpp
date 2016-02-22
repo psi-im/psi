@@ -172,6 +172,14 @@ Q_IMPORT_PLUGIN(winampplugin)
 #endif
 #endif
 
+#ifdef TC_AIMP
+#ifdef HAVE_QT5
+Q_IMPORT_PLUGIN(AIMPPlugin)
+#else
+Q_IMPORT_PLUGIN(aimpplugin)
+#endif
+#endif
+
 #ifdef TC_PSIFILE
 #ifdef HAVE_QT5
 Q_IMPORT_PLUGIN(PsiFilePlugin)

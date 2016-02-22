@@ -28,7 +28,7 @@ QString WinAmpPlugin::name()
 
 TuneController* WinAmpPlugin::createController()
 {
-	return new WinAmpController();
+	return new WinAmpTuneController();
 }
 
 #ifndef HAVE_QT5

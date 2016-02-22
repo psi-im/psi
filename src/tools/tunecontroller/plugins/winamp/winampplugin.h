@@ -29,7 +29,7 @@
 #include <QObject>
 #include <QString>
 
-#include "winampcontroller.h"
+#include "winamptunecontroller.h"
 #include "tunecontrollerplugin.h"
 
 class WinAmpPlugin : public QObject, public TuneControllerPlugin

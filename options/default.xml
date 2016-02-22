@@ -36,7 +36,7 @@
 				<publish comment="Publish user tune information" type="bool">false</publish>
 				<url-filter comment="Ingore tune by media file extension" type="QString">avi asf asx mpg mpg2 mpeg mpe mst mp4 flv 3gp mkv wmv swf rv rm rst dat vob ifo ogv</url-filter>
 				<title-filter comment="Ignore tune by name via RegExp" type="QString"></title-filter>
-				<controller-filter comment="List of disabled controllers" type="QString"></controller-filter>
+				<controller-filter comment="List of disabled controllers" type="QString">WinAmp</controller-filter>
 			</tune>
 		</extended-presence>
 		<muc comment="Multi-User Chat options">
