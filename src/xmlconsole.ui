@@ -24,9 +24,6 @@
    </item>
    <item>
     <widget class="QGroupBox" name="gb_filter" >
-     <property name="enabled" >
-      <bool>false</bool>
-     </property>
      <property name="title" >
       <string>Filter</string>
      </property>

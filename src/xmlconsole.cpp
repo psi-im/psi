@@ -64,7 +64,6 @@ XmlConsole::XmlConsole(PsiAccount *_pa)
 	connect(ui_.pb_input, SIGNAL(clicked()), SLOT(insertXml()));
 	connect(ui_.pb_close, SIGNAL(clicked()), SLOT(close()));
 	connect(ui_.pb_dumpRingbuf, SIGNAL(clicked()), SLOT(dumpRingbuf()));
-	connect(ui_.ck_enable, SIGNAL(clicked(bool)), ui_.gb_filter, SLOT(setEnabled(bool)));
 
 	resize(560,400);
 }
