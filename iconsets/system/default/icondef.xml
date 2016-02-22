@@ -499,6 +499,11 @@
 	</icon>
 
 	<icon>
+		<x xmlns='name'>psi/text</x>
+		<object mime='image/png'>text.png</object>
+	</icon>
+
+	<icon>
 		<x xmlns='name'>psi/enable-groups</x>
 		<object mime='image/png'>enable-groups.png</object>
 	</icon>
