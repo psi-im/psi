@@ -42,3 +42,7 @@ QString PassphraseDlg::getPassphrase() const
 	return ui_.le_pass->text();
 }
 
+bool PassphraseDlg::rememberPassPhrase() const
+{
+	return ui_.cb_savePass->isChecked();
+}

@@ -74,6 +74,13 @@ Please enter your passphrase below:</string>
                   </property>
                 </widget>
               </item>
+              <item>
+                <widget class="QCheckBox" name="cb_savePass">
+                  <property name="text">
+                    <string>Remember passphrase</string>
+                  </property>
+               </widget>
+              </item>
             </layout>
           </item>
         </layout>

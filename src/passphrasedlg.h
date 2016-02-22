@@ -32,6 +32,7 @@ public:
 	void promptPassphrase(const QString& name);
 
 	QString getPassphrase() const;
+	bool rememberPassPhrase() const;
 
 private:
 	Ui::Passphrase ui_;

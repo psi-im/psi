@@ -80,6 +80,7 @@ public:
 	QMap<QString, GroupData> groupState;
 
 	QCA::PGPKey pgpSecretKey;
+	QString pgpPassPhrase;
 
 	VarList keybind;
 

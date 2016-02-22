@@ -92,6 +92,9 @@ void PGPUtil::passphraseDone(int result)
 		QString passphrase = passphraseDlg_->getPassphrase();
 		if (!currentEntryId_.isEmpty()) {
 			passphrases_[currentEntryId_] = passphrase;
+			if(passphraseDlg_->rememberPassPhrase()) {
+				emit newPassPhase(currentEntryId_, passphrase);
+			}
 		}
 		qcaEventHandler_->submitPassword(currentEventId_,passphrase.toUtf8());
 	}
@@ -281,6 +284,11 @@ bool PGPUtil::equals(QCA::PGPKey k1, QCA::PGPKey k2)
 void PGPUtil::removePassphrase(const QString& id)
 {
 	passphrases_.remove(id);
+}
+
+void PGPUtil::addPassphrase(const QString &id, const QString &pass)
+{
+	passphrases_.insert(id, pass);
 }
 
 void PGPUtil::keyStoreAvailable(const QString& k)

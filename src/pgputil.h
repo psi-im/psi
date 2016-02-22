@@ -40,9 +40,11 @@ public:
 	bool equals(QCA::PGPKey, QCA::PGPKey);
 
 	void removePassphrase(const QString& id);
+	void addPassphrase(const QString& id, const QString& pass);
 
 signals:
 	void pgpKeysUpdated();
+	void newPassPhase(const QString&, const QString&);
 
 protected:
 	PGPUtil();
