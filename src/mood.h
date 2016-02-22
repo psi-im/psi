@@ -22,6 +22,7 @@
 #define MOOD_H
 
 #include <QString>
+#include <QMetaType>
 
 class QDomElement;
 class QDomDocument;
@@ -62,5 +63,7 @@ private:
 	Type type_;
 	QString text_;
 };
+
+Q_DECLARE_METATYPE(Mood)
 
 #endif

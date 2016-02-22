@@ -45,6 +45,8 @@ MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
 	joinButton_ = ui_.buttonBox->addButton(tr("&Join"), QDialogButtonBox::AcceptRole);
 	joinButton_->setDefault(true);
 
+	reason_ = MucCustomJoin;
+
 	updateIdentity(pa);
 
 	ui_.cb_ident->setController(controller_);
@@ -136,10 +138,12 @@ void MUCJoinDlg::recent_activated(int x)
 	ui_.le_nick->setText(jid.resource());
 }
 
-void MUCJoinDlg::doJoin()
+void MUCJoinDlg::doJoin(MucJoinReason r)
 {
 	if (!account_ || !account_->checkConnected(this))
 		return;
+
+	reason_ = r;
 
 	QString host = ui_.le_host->text();
 	QString room = ui_.le_room->text();
@@ -205,6 +209,9 @@ void MUCJoinDlg::joined()
 
 void MUCJoinDlg::error(int, const QString &str)
 {
+	if(!isVisible())
+		show();
+
 	ui_.busy->stop();
 	setWidgetsEnabled(true);
 

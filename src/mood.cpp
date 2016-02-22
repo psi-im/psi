@@ -88,6 +88,8 @@ QDomElement Mood::toXml(QDomDocument& doc)
 
 void Mood::fromXml(const QDomElement& e)
 {
+	text_.clear();
+	type_ = Unknown;
 	if (e.tagName() != "mood")
 		return;
 

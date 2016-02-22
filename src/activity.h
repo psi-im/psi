@@ -22,6 +22,7 @@
 #define ACTIVITY_H
 
 #include <QString>
+#include <QMetaType>
 
 class QDomElement;
 class QDomDocument;
@@ -92,5 +93,7 @@ private:
 	SpecificType specificType_;
 	QString text_;
 };
+
+Q_DECLARE_METATYPE(Activity)
 
 #endif

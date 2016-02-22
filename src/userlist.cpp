@@ -32,6 +32,7 @@
 #include "psioptions.h"
 #include "jidutil.h"
 #include "psiiconset.h"
+#include "common.h"
 
 using namespace XMPP;
 
@@ -523,12 +524,8 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 
 	// User Activity
 	if (!activity().isNull()) {
-		QString act = activity().typeValue();
-		if (activity().specificType() != Activity::UnknownSpecific && activity().specificType() != Activity::Other && !activity().specificTypeValue().isEmpty()) {
-			act += "_" + activity().specificTypeValue();
-		}
 		str += QString("<div style='white-space:pre'>") + QObject::tr("Activity") + ": " +
-			QString("<%1=\"activities/%2\"> ").arg(imgTag).arg(act) + activity().typeText();
+			QString("<%1=\"%2\"> ").arg(imgTag).arg(activityIconName(activity())) + activity().typeText();
 		if (activity().specificType() != Activity::UnknownSpecific) {
 			str += QString(" - ") + activity().specificTypeText();
 		}

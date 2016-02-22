@@ -18,14 +18,6 @@
  *
  */
 
-#include "common.h"
-#include "profiles.h"
-#include "rtparse.h"
-#include "psievent.h"
-#include "psiiconset.h"
-#include "applicationinfo.h"
-#include "psioptions.h"
-
 #include <QUrl>
 #include <QProcess>
 #include <QBoxLayout>
@@ -63,6 +55,15 @@
 #ifdef __GLIBC__
 #include <langinfo.h>
 #endif
+
+#include "common.h"
+#include "profiles.h"
+#include "rtparse.h"
+#include "psievent.h"
+#include "psiiconset.h"
+#include "applicationinfo.h"
+#include "psioptions.h"
+#include "activity.h"
 
 Qt::WindowFlags psi_dialog_flags = (Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint);
 
@@ -682,4 +683,18 @@ Qt::DayOfWeek firstDayOfWeekFromLocale()
 # endif
 	return firstDay;
 #endif
+}
+
+QString activityIconName(const Activity &activity)
+{
+	if (activity.type() == Activity::Unknown) {
+		return QString();
+	}
+	if (activity.specificType() == Activity::Other) {
+		return QLatin1String("pep/activities");
+	}
+	if (activity.specificType() == Activity::UnknownSpecific || activity.specificTypeValue().isEmpty()) {
+		return QLatin1String("activities/") + activity.typeValue();
+	}
+	return QLatin1String("activities/") + activity.typeValue() + QLatin1Char('_') + activity.specificTypeValue();
 }

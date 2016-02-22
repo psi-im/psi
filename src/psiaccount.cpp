@@ -129,7 +129,6 @@
 #include "systeminfo.h"
 #include "avatars.h"
 #include "ahcommanddlg.h"
-#include "mucjoindlg.h"
 #include "ahcservermanager.h"
 #include "rc.h"
 #include "tabdlg.h"
@@ -2332,7 +2331,7 @@ void PsiAccount::bookmarksAvailabilityChanged()
 	foreach(ConferenceBookmark c, d->bookmarkManager->conferences()) {
 		if (!findDialog<GCMainDlg*>(Jid(c.jid().bare())) &&
 				(c.autoJoin() == ConferenceBookmark::Always || c.autoJoin() == ConferenceBookmark::OnlyThisComputer)) {
-			actionJoin(c, true);
+			actionJoin(c, true, MUCJoinDlg::MucAutoJoin);
 		}
 	}
 #endif
@@ -3373,7 +3372,7 @@ void PsiAccount::actionJoin(const Jid& mucJid, const QString& password)
 			   false);
 }
 
-void PsiAccount::actionJoin(const ConferenceBookmark& bookmark, bool connectImmediately)
+void PsiAccount::actionJoin(const ConferenceBookmark& bookmark, bool connectImmediately, MUCJoinDlg::MucJoinReason reason)
 {
 #ifdef GROUPCHAT
 	MUCJoinDlg* w = new MUCJoinDlg(psi(), this);
@@ -3382,9 +3381,11 @@ void PsiAccount::actionJoin(const ConferenceBookmark& bookmark, bool connectImme
 	w->setNick(bookmark.nick().isEmpty() ? JIDUtil::nickOrJid(this->nick(), d->jid.node()) : bookmark.nick());
 	w->setPassword(bookmark.password());
 
-	w->show();
+	if(reason != MUCJoinDlg::MucAutoJoin
+	   || !PsiOptions::instance()->getOption("options.ui.muc.hide-on-autojoin").toBool())
+		w->show();
 	if (connectImmediately) {
-		w->doJoin();
+		w->doJoin(reason);
 	}
 #else
 	Q_UNUSED(bookmark);
@@ -5525,16 +5526,18 @@ void PsiAccount::edb_finished()
 	delete h;
 }
 
-void PsiAccount::openGroupChat(const Jid &j, ActivationType activationType)
+void PsiAccount::openGroupChat(const Jid &j, ActivationType activationType, MUCJoinDlg::MucJoinReason reason)
 {
 #ifdef GROUPCHAT
 	GCMainDlg *w = new GCMainDlg(this, j, d->tabManager);
 	w->setPassword(d->client->groupChatPassword(j.domain(), j.node()));
 	connect(w, SIGNAL(aSend(const Message &)), SLOT(dj_sendMessage(const Message &)));
 	connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));
-	w->ensureTabbedCorrectly();
-	if (activationType == UserAction)
-		w->bringToFront();
+	if(reason != MUCJoinDlg::MucAutoJoin || !PsiOptions::instance()->getOption("options.ui.muc.hide-on-autojoin").toBool()) {
+		w->ensureTabbedCorrectly();
+		if (activationType == UserAction)
+			w->bringToFront();
+	}
 #endif
 }
 
@@ -5615,10 +5618,17 @@ void PsiAccount::client_groupChatJoined(const Jid &j)
 	MUCJoinDlg *w = findDialog<MUCJoinDlg*>(j);
 	if(!w)
 		return;
+	MUCJoinDlg::MucJoinReason r = w->getReason();
 	w->joined();
 
-	// TODO: Correctly handle auto-join groupchats
-	openGroupChat(j, UserAction);
+	openGroupChat(j, UserAction, r);
+//	if(r == MUCJoinDlg::MucAutoJoin && PsiOptions::instance()->getOption("options.ui.muc.hide-on-autojoin").toBool()) {
+//		m = findDialog<GCMainDlg*>(Jid(j.bare()));
+//		if(m) {
+//			QTimer::singleShot(0, m, SLOT(hideTab()));
+//		}
+//	}
+
 #endif
 }
 

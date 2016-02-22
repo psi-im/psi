@@ -41,7 +41,7 @@ TabbableWidget::TabbableWidget(const Jid &jid, PsiAccount *pa, TabManager *tabMa
 	, pa_(pa)
 	, tabManager_(tabManager)
 {
-	QTimer::singleShot(0, this, SLOT(ensureTabbedCorrectly()));
+	//QTimer::singleShot(0, this, SLOT(ensureTabbedCorrectly()));
 }
 
 void TabbableWidget::ensureTabbedCorrectly()

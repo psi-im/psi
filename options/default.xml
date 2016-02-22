@@ -235,6 +235,7 @@
 				</view>
 			</menu>
 			<muc comment="Multi-User Chat options">
+				<hide-on-autojoin type="bool">false</hide-on-autojoin>
 				<userlist comment="Userlist options">
 					<show-groups type="bool">true</show-groups>
 					<use-slim-group-headings type="bool">false</use-slim-group-headings>
@@ -600,6 +601,7 @@
 				<audio-input type="QString"/>
 				<video-input type="QString"/>
 			</devices>
+			<video-support type="bool">false</video-support>
 		</media>
 	</options>
 	<accounts comment="Account definitions and options"/>

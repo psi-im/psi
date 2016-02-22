@@ -192,4 +192,6 @@ extern Qt::WindowFlags psi_dialog_flags;
 int qVersionInt();
 
 Qt::DayOfWeek firstDayOfWeekFromLocale();
+class Activity;
+QString activityIconName(const Activity &);
 #endif

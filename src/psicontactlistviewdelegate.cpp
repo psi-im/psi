@@ -29,6 +29,8 @@
 #include "contactlistview.h"
 #include "common.h"
 #include "avatars.h"
+#include "mood.h"
+#include "activity.h"
 
 static const QString contactListFontOptionPath = "options.ui.look.font.contactlist";
 static const QString slimGroupsOptionPath = "options.ui.look.contactlist.use-slim-group-headings";
@@ -353,10 +355,13 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 		if (showMoodIcons_ && !index.data(ContactListModel::MoodRole).isNull()) {
 			QVariant v = index.data(ContactListModel::MoodRole);
 			if (!v.isNull()) {
-				const QPixmap &pix = IconsetFactory::iconPixmap(QString("mood/%1").arg(v.toString()));
-				if(!pix.isNull()) {
-					rightPixs.push_back(pix);
-					rightWidths.push_back(pix.width());
+				Mood m = v.value<Mood>();
+				if (m.type() != Mood::Unknown) {
+					const QPixmap &pix = IconsetFactory::iconPixmap(QString("mood/%1").arg(m.typeValue()));
+					if(!pix.isNull()) {
+						rightPixs.push_back(pix);
+						rightWidths.push_back(pix.width());
+					}
 				}
 			}
 		}
@@ -364,7 +369,7 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 		if (showActivityIcons_ && !index.data(ContactListModel::ActivityRole).isNull()) {
 			QVariant v = index.data(ContactListModel::ActivityRole);
 			if (!v.isNull()) {
-				const QPixmap &pix = IconsetFactory::iconPixmap(QString("activities/%1").arg(v.toString()));
+				const QPixmap &pix = IconsetFactory::iconPixmap(activityIconName(v.value<Activity>()));
 				if(!pix.isNull()) {
 					rightPixs.push_back(pix);
 					rightWidths.push_back(pix.width());

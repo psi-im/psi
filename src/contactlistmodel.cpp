@@ -42,6 +42,7 @@
 #ifdef YAPSI
 #include "yacommon.h"
 #endif
+#include "activity.h"
 
 ContactListModel::ContactListModel(PsiContactList* contactList)
 	: QAbstractItemModel(contactList)
@@ -526,21 +527,16 @@ QVariant ContactListModel::contactData(const PsiContact* contact, int role) cons
 		return QVariant(false);
 	}
 	else if (role == MoodRole) {
-		if(contact->userListItem().mood().isNull())
+		const Mood &m = contact->userListItem().mood();
+		if(m.isNull())
 			return QVariant();
-		return QVariant(contact->userListItem().mood().typeValue());
+		return QVariant::fromValue(m);
 	}
 	else if (role == ActivityRole) {
-		if (contact->userListItem().activity().isNull())
-			return QVariant();
-		QString act = contact->userListItem().activity().typeValue();
-		if (contact->userListItem().activity().specificType() != Activity::UnknownSpecific
-			&& contact->userListItem().activity().specificType() != Activity::Other
-			&& !contact->userListItem().activity().specificTypeValue().isEmpty())
-		{
-			act += "_" + contact->userListItem().activity().specificTypeValue();
-		}
-		return QVariant(act);
+		const Activity &a = contact->userListItem().activity();
+		if (!a.isNull())
+			return QVariant::fromValue(a);
+		return QVariant();
 	}
 	else if (role == GeolocationRole) {
 		return QVariant(!contact->userListItem().geoLocation().isNull());

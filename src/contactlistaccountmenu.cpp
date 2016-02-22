@@ -89,11 +89,7 @@ public:
 		moodAction_ = new IconAction(tr("Mood"), this, moodIcon);
 		connect(moodAction_, SIGNAL(triggered()), SLOT(setMood()));
 
-		QString act = account->account()->activity().typeValue();
-		if (account->account()->activity().specificType() != Activity::UnknownSpecific && account->account()->activity().specificType() != Activity::Other) {
-			act += "_" + account->account()->activity().specificTypeValue();
-		}
-		activityAction_ = new IconAction(tr("Activity"), this, QString(("activities/%1")).arg(act));
+		activityAction_ = new IconAction(tr("Activity"), this, activityIconName(account->account()->activity()));
 		connect(activityAction_, SIGNAL(triggered()), SLOT(setActivity()));
 
 		geolocationAction_ = new IconAction(tr("GeoLocation"), this, "pep/geolocation");
