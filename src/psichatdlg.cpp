@@ -553,13 +553,19 @@ void PsiChatDlg::updateAvatar()
 			account()->avatarFactory()->getMucAvatar(jid().withResource(res)) :
 			account()->avatarFactory()->getAvatar(jid().withResource(res));
 	if (p.isNull()) {
-		ui_.avatar->hide();
+		if (!PsiOptions::instance()->getOption("options.ui.contactlist.avatars.use-default-avatar").toBool()) {
+			ui_.avatar->hide();
+			return;
+		}
+		p = IconsetFactory::iconPixmap("psi/default_avatar");
 	}
-	else {
-		int size = PsiOptions::instance()->getOption("options.ui.chat.avatars.size").toInt();
-		ui_.avatar->setPixmap(p.scaled(QSize(size, size), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-		ui_.avatar->show();
-	}
+	int optSize = PsiOptions::instance()->getOption("options.ui.chat.avatars.size").toInt();
+	ui_.avatar->setFixedSize(optSize, optSize);
+	int avatarSize = p.width(); //qMax(p.width(), p.height());
+	if (avatarSize > optSize)
+		avatarSize = optSize;
+	ui_.avatar->setPixmap(p.scaled(QSize(avatarSize, avatarSize), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+	ui_.avatar->show();
 }
 
 void PsiChatDlg::optionsUpdate()
