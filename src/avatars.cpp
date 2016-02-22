@@ -50,6 +50,7 @@
 #include "vcardfactory.h"
 #include "pepmanager.h"
 #include "pixmaputil.h"
+#include "filecache.h"
 
 #define MAX_AVATAR_SIZE 96
 #define MAX_AVATAR_DISPLAY_SIZE 64
@@ -80,6 +81,34 @@ static QByteArray scaleAvatar(const QByteArray& b)
 		return b;
 	}
 }
+
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+//  AvatarFileCache
+//------------------------------------------------------------------------------
+class AvatarFileCache : public FileCache
+{
+	Q_OBJECT
+public:
+	static AvatarFileCache *instance()
+	{
+		if (!_instance) {
+			_instance = new AvatarFileCache();
+		}
+		return _instance;
+	}
+
+private:
+	AvatarFileCache()
+		: FileCache(AvatarFactory::getCacheDir(), QApplication::instance())
+	{
+	}
+
+	static AvatarFileCache *_instance;
+};
+
+AvatarFileCache* AvatarFileCache::_instance = 0;
 
 //------------------------------------------------------------------------------
 
@@ -178,14 +207,15 @@ void CachedAvatar::updateHash(const QString& h)
 
 bool CachedAvatar::isCached(const QString& h)
 {
-	return QDir(AvatarFactory::getCacheDir()).exists(h);
+	return AvatarFileCache::instance()->get(h);
 }
 
 void CachedAvatar::loadFromCache(const QString& h)
 {
 	// printf("Loading avatar from cache\n");
 	hash_ = h;
-	setImage(QImage(QDir(AvatarFactory::getCacheDir()).filePath(h)));
+	QByteArray ar = AvatarFileCache::instance()->getData(h);
+	setImage(QImage::fromData(ar));
 	if (pixmap().isNull()) {
 		qWarning("CachedAvatar::loadFromCache(): Null pixmap. Unsupported format ?");
 	}
@@ -194,16 +224,7 @@ void CachedAvatar::loadFromCache(const QString& h)
 void CachedAvatar::saveToCache(const QByteArray& data)
 {
 	QString hash = QCA::Hash("sha1").hashToString(data);
-	// printf("Saving %s to cache.\n",hash.latin1());
-	QString fn = QDir(AvatarFactory::getCacheDir()).filePath(hash);
-	QFile f(fn);
-	if (f.open(QIODevice::WriteOnly)) {
-		f.write(data);
-		f.close();
-	}
-	else
-		printf("Error opening %s for writing.\n", qPrintable(f.fileName()));
-
+	AvatarFileCache::instance()->append(hash, "img", data);
 }
 
 //------------------------------------------------------------------------------
