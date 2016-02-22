@@ -201,6 +201,7 @@ void OptionsTabAvCall::applyOptions()
 	PsiOptions::instance()->setOption("options.media.devices.audio-output", d->cb_audioOutDevice->itemData(d->cb_audioOutDevice->currentIndex()).toString());
 	PsiOptions::instance()->setOption("options.media.devices.audio-input", d->cb_audioInDevice->itemData(d->cb_audioInDevice->currentIndex()).toString());
 	PsiOptions::instance()->setOption("options.media.devices.video-input", d->cb_videoInDevice->itemData(d->cb_videoInDevice->currentIndex()).toString());
+	PsiOptions::instance()->setOption("options.media.video-support", d->cb_videoSupport->isChecked());
 }
 
 void OptionsTabAvCall::restoreOptions()
@@ -246,4 +247,5 @@ void OptionsTabAvCall::restoreOptions()
 	d->cb_audioOutDevice->setCurrentIndex(d->cb_audioOutDevice->findData(config.audioOutDeviceId));
 	d->cb_audioInDevice->setCurrentIndex(d->cb_audioInDevice->findData(config.audioInDeviceId));
 	d->cb_videoInDevice->setCurrentIndex(d->cb_videoInDevice->findData(config.videoInDeviceId));
+	d->cb_videoSupport->setChecked(PsiOptions::instance()->getOption("options.media.video-support").toBool());
 }

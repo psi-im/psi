@@ -29,6 +29,7 @@
 #include "../psimedia/psimedia.h"
 #include "applicationinfo.h"
 #include "psiaccount.h"
+#include "psioptions.h"
 
 #define USE_THREAD
 
@@ -906,6 +907,9 @@ bool AvCallManager::isVideoSupported()
 {
 	if(!isSupported())
 		return false;
+
+	if(PsiOptions::instance()->getOption("options.media.video-support").toBool())
+		return true;
 
 	if(!QString::fromLatin1(qgetenv("PSI_ENABLE_VIDEO")).isEmpty())
 		return true;
