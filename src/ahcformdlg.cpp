@@ -138,6 +138,8 @@ AHCFormDlg::AHCFormDlg(const AHCommand& r, const Jid& receiver, XMPP::Client* cl
 	}
 
 	adjustSize();
+	show();
+	setParent(0);
 }
 
 void AHCFormDlg::doPrev()
