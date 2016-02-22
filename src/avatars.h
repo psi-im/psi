@@ -28,6 +28,12 @@
 
 #include "iconset.h"
 
+#define PEP_AVATAR_DATA_TN     "data"
+#define PEP_AVATAR_DATA_NS     "urn:xmpp:avatar:data"
+
+#define PEP_AVATAR_METADATA_TN "metadata"
+#define PEP_AVATAR_METADATA_NS "urn:xmpp:avatar:metadata"
+
 class PsiAccount;
 class Avatar;
 class VCardAvatar;

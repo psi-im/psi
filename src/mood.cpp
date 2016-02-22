@@ -66,14 +66,11 @@ bool Mood::isNull() const
 QDomElement Mood::toXml(QDomDocument& doc)
 {
 	QDomElement mood = doc.createElement("mood");
-	mood.setAttribute("xmlns", "http://jabber.org/protocol/mood");
+	mood.setAttribute("xmlns", PEP_MOOD_NS);
 
 	if (!type() == Unknown) {
 		QDomElement el = doc.createElement(MoodCatalog::instance()->findEntryByType(type()).value());
 		mood.appendChild(el);
-	}
-	else {
-		qWarning("mood.cpp: ERROR: Converting unknown mood");
 	}
 
 	if (!text().isEmpty()) {
@@ -95,6 +92,9 @@ void Mood::fromXml(const QDomElement& e)
 
 	for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling()) {
 		QDomElement m = n.toElement();
+		if(m.isNull()) {
+			continue;
+		}
 		if (m.tagName() == "text") {
 			text_ = m.text();
 		}

@@ -35,8 +35,8 @@ GeoLocation::GeoLocation(const QDomElement& el)
 
 QDomElement GeoLocation::toXml(QDomDocument& doc)
 {
-	QDomElement geoloc = doc.createElement("geoloc");
-	geoloc.setAttribute("xmlns", "http://jabber.org/protocol/geoloc");
+	QDomElement geoloc = doc.createElement(PEP_GEOLOC_TN);
+	geoloc.setAttribute("xmlns", PEP_GEOLOC_NS);
 
 	if (alt_.hasValue()) {
 		QDomElement e = doc.createElement("alt");
@@ -129,11 +129,14 @@ QDomElement GeoLocation::toXml(QDomDocument& doc)
 
 void GeoLocation::fromXml(const QDomElement& e)
 {
-	if (e.tagName() != "geoloc")
+	if (e.tagName() != PEP_GEOLOC_TN)
 		return;
 
 	for(QDomNode n = e.firstChild(); !n.isNull(); n = n.nextSibling()) {
 		QDomElement m = n.toElement();
+		if (m.isNull()) {
+			continue;
+		}
 		if (m.tagName() == "alt")
 			alt_ = Maybe<float>(m.text().toFloat());
 		else if (m.tagName() == "bearing")

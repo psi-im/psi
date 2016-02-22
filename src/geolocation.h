@@ -25,6 +25,9 @@
 
 #include "maybe.h"
 
+#define PEP_GEOLOC_TN "geoloc"
+#define PEP_GEOLOC_NS "http://jabber.org/protocol/geoloc"
+
 class QDomElement;
 class QDomDocument;
 

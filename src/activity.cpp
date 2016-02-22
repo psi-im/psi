@@ -84,8 +84,8 @@ bool Activity::isNull() const
 
 QDomElement Activity::toXml(QDomDocument& doc)
 {
-	QDomElement activity = doc.createElement("activity");
-	activity.setAttribute("xmlns", "http://jabber.org/protocol/activity");
+	QDomElement activity = doc.createElement(PEP_ACTIVITY_TN);
+	activity.setAttribute("xmlns", PEP_ACTIVITY_NS);
 
 	if (!type() == Unknown) {
 		ActivityCatalog* ac = ActivityCatalog::instance();
@@ -97,9 +97,6 @@ QDomElement Activity::toXml(QDomDocument& doc)
 		}
 
 		activity.appendChild(el);
-	}
-	else {
-		qWarning("activity.cpp: ERROR: Converting unknown activity");
 	}
 
 	if (!text().isEmpty()) {
@@ -114,14 +111,17 @@ QDomElement Activity::toXml(QDomDocument& doc)
 
 void Activity::fromXml(const QDomElement& element)
 {
-	if (element.tagName() != "activity")
-		return;
-
 	type_ = Activity::Unknown;
 	specificType_ = Activity::UnknownSpecific;
 
+	if (element.tagName() != PEP_ACTIVITY_TN)
+		return;
+
 	for (QDomNode node = element.firstChild(); !node.isNull(); node = node.nextSibling()) {
 		QDomElement child = node.toElement();
+		if(child.isNull()) {
+			continue;
+		}
 		if (child.tagName() == "text") {
 			text_ = child.text();
 		}

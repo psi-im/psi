@@ -263,7 +263,7 @@ signals:
 
 protected:
 	void requestAvatar() {
-		factory()->account()->pepManager()->get(jid_,"urn:xmpp:avatar:data",hash());
+		factory()->account()->pepManager()->get(jid_,PEP_AVATAR_DATA_NS,hash());
 	}
 
 	void avatarUpdated()
@@ -640,20 +640,16 @@ void AvatarFactory::setSelfAvatar(const QString& fileName)
 			// Publish data
 			QDomDocument* doc = account()->client()->doc();
 			QString hash = Hash("sha1").hashToString(avatar_data);
-			QDomElement el = doc->createElement("data");
-			el.setAttribute("xmlns","urn:xmpp:avatar:data");
+			QDomElement el = doc->createElement(PEP_AVATAR_DATA_TN);
+			el.setAttribute("xmlns",PEP_AVATAR_DATA_NS);
 			el.appendChild(doc->createTextNode(Base64().arrayToString(avatar_data)));
 			selfAvatarData_ = avatar_data;
 			selfAvatarHash_ = hash;
-			account()->pepManager()->publish("urn:xmpp:avatar:data",PubSubItem(hash,el));
+			account()->pepManager()->publish(PEP_AVATAR_DATA_NS,PubSubItem(hash,el));
 		}
 	}
 	else {
-		QDomDocument* doc = account()->client()->doc();
-		QDomElement meta_el =  doc->createElement("metadata");
-		meta_el.setAttribute("xmlns","urn:xmpp:avatar:metadata");
-		meta_el.appendChild(doc->createElement("stop"));
-		account()->pepManager()->publish("urn:xmpp:avatar:metadata",PubSubItem("current",meta_el));
+		account()->pepManager()->disable(PEP_AVATAR_METADATA_TN, PEP_AVATAR_METADATA_NS, "current");
 	}
 }
 
@@ -772,8 +768,8 @@ QPixmap AvatarFactory::roundedAvatar(const QPixmap &pix, int rad, int avSize)
 
 void AvatarFactory::itemPublished(const Jid& jid, const QString& n, const PubSubItem& item)
 {
-	if (n == "urn:xmpp:avatar:data") {
-		if (item.payload().tagName() == "data") {
+	if (n == PEP_AVATAR_DATA_NS) {
+		if (item.payload().tagName() == PEP_AVATAR_DATA_TN) {
 			if (pep_avatars_.contains(jid.bare())) {
 				pep_avatars_[jid.bare()]->setData(item.id(),item.payload().text());
 			}
@@ -782,12 +778,14 @@ void AvatarFactory::itemPublished(const Jid& jid, const QString& n, const PubSub
 			qWarning("avatars.cpp: Unexpected item payload");
 		}
 	}
-	else if (n == "urn:xmpp:avatar:metadata") {
+	else if (n == PEP_AVATAR_METADATA_NS) {
 		if (!pep_avatars_.contains(jid.bare())) {
 			pep_avatars_[jid.bare()] = new PEPAvatar(this, jid.bare());
 			connect(pep_avatars_[jid.bare()],SIGNAL(avatarChanged(const Jid&)),this, SLOT(updateAvatar(const Jid&)));
 		}
+		// check for the deprecated <stop/> child element
 		QDomElement e = item.payload().firstChildElement("stop");
+		// if there's a <stop/> element or the <metadata/> element is empty, remove user's avatar
 		if (!e.isNull()) {
 			pep_avatars_[jid.bare()]->updateHash("");
 		}
@@ -799,12 +797,12 @@ void AvatarFactory::itemPublished(const Jid& jid, const QString& n, const PubSub
 
 void AvatarFactory::publish_success(const QString& n, const PubSubItem& item)
 {
-	if (n == "urn:xmpp:avatar:data" && item.id() == selfAvatarHash_) {
+	if (n == PEP_AVATAR_DATA_NS && item.id() == selfAvatarHash_) {
 		// Publish metadata
 		QDomDocument* doc = account()->client()->doc();
 		QImage avatar_image = QImage::fromData(selfAvatarData_);
-		QDomElement meta_el = doc->createElement("metadata");
-		meta_el.setAttribute("xmlns","urn:xmpp:avatar:metadata");
+		QDomElement meta_el = doc->createElement(PEP_AVATAR_METADATA_TN);
+		meta_el.setAttribute("xmlns",PEP_AVATAR_METADATA_NS);
 		QDomElement info_el = doc->createElement("info");
 		info_el.setAttribute("id",selfAvatarHash_);
 		info_el.setAttribute("bytes",avatar_image.byteCount());
@@ -812,7 +810,7 @@ void AvatarFactory::publish_success(const QString& n, const PubSubItem& item)
 		info_el.setAttribute("width",avatar_image.width());
 		info_el.setAttribute("type",image2type(selfAvatarData_));
 		meta_el.appendChild(info_el);
-		account()->pepManager()->publish("urn:xmpp:avatar:metadata",PubSubItem(selfAvatarHash_,meta_el));
+		account()->pepManager()->publish(PEP_AVATAR_METADATA_NS,PubSubItem(selfAvatarHash_,meta_el));
 	}
 }
 

@@ -94,7 +94,7 @@ void ActivityDlg::setActivity()
 
 	foreach(PsiAccount *pa, pa_) {
 		if (generalActivityStr == tr("<unset>")) {
-			pa->pepManager()->retract("http://jabber.org/protocol/activity", "current");
+			pa->pepManager()->disable(PEP_ACTIVITY_TN, PEP_ACTIVITY_NS, "current");
 		}
 		else {
 			ActivityCatalog* ac = ActivityCatalog::instance();
@@ -104,7 +104,7 @@ void ActivityDlg::setActivity()
 			if (specificActivityStr != tr("<unset>")) {
 				specificType = ac->findEntryByText(specificActivityStr).specificType();
 			}
-			pa->pepManager()->publish("http://jabber.org/protocol/activity", PubSubItem("current",Activity(generalType,specificType,ui_.le_description->text()).toXml(*pa->client()->rootTask()->doc())), PEPManager::PresenceAccess);
+			pa->pepManager()->publish(PEP_ACTIVITY_NS, PubSubItem("current",Activity(generalType,specificType,ui_.le_description->text()).toXml(*pa->client()->rootTask()->doc())));
 		}
 	}
 	close();

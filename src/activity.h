@@ -24,6 +24,9 @@
 #include <QString>
 #include <QMetaType>
 
+#define PEP_ACTIVITY_TN "activity"
+#define PEP_ACTIVITY_NS "http://jabber.org/protocol/activity"
+
 class QDomElement;
 class QDomDocument;
 

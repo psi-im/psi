@@ -27,6 +27,8 @@
 
 ActivityCatalog::Entry::Entry()
 {
+	type_ = Activity::Unknown;
+	specificType_ = Activity::UnknownSpecific;
 }
 
 ActivityCatalog::Entry::Entry(Activity::Type type, const QString& value, const QString& text)

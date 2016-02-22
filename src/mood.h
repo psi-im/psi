@@ -24,6 +24,8 @@
 #include <QString>
 #include <QMetaType>
 
+#define PEP_MOOD_NS "http://jabber.org/protocol/mood"
+
 class QDomElement;
 class QDomDocument;
 

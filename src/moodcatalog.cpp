@@ -27,6 +27,7 @@
 
 MoodCatalog::Entry::Entry()
 {
+	type_ = Mood::Unknown;
 }
 
 MoodCatalog::Entry::Entry(Mood::Type type, const QString& value, const QString& text) : type_(type), value_(value), text_(text)

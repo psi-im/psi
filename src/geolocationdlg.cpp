@@ -160,10 +160,10 @@ void GeoLocationDlg::setGeoLocation()
 
 	foreach(PsiAccount *pa, pa_) {
 		if (geoloc.isNull()) {
-			pa->pepManager()->retract("http://jabber.org/protocol/geoloc", "current");
+			pa->pepManager()->disable(PEP_GEOLOC_TN, PEP_GEOLOC_NS, "current");
 		}
 		else {
-			pa->pepManager()->publish("http://jabber.org/protocol/geoloc", PubSubItem("current",geoloc.toXml(*pa->client()->rootTask()->doc())), PEPManager::PresenceAccess);
+			pa->pepManager()->publish(PEP_GEOLOC_NS, PubSubItem("current",geoloc.toXml(*pa->client()->rootTask()->doc())));
 		}
 	}
 	close();

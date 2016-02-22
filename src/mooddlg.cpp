@@ -58,11 +58,11 @@ void MoodDlg::setMood()
 	QString moodstr = ui_.cb_type->currentText();
 	foreach(PsiAccount *pa, pa_) {
 		if (moodstr == tr("<unset>")) {
-			pa->pepManager()->retract("http://jabber.org/protocol/mood", "current");
+			pa->pepManager()->disable("mood", PEP_MOOD_NS, "current");
 		}
 		else {
 			Mood::Type type = MoodCatalog::instance()->findEntryByText(moodstr).type();
-			pa->pepManager()->publish("http://jabber.org/protocol/mood", PubSubItem("current",Mood(type,ui_.le_text->text()).toXml(*pa->client()->rootTask()->doc())), PEPManager::PresenceAccess);
+			pa->pepManager()->publish(PEP_MOOD_NS, PubSubItem("current",Mood(type,ui_.le_text->text()).toXml(*pa->client()->rootTask()->doc())));
 		}
 	}
 	close();

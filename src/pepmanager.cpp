@@ -570,6 +570,16 @@ void PEPManager::retract(const QString& node, const QString& id)
 }
 
 
+void PEPManager::disable(const QString& tagName, const QString& node, const QString& id)
+{
+	// disable by publishing an empty element
+	QDomElement element = client_->rootTask()->doc()->createElement(tagName);
+	element.setAttribute("xmlns", node);
+
+	publish(node, PubSubItem(id,element));
+}
+
+
 void PEPManager::publishFinished()
 {
 	PEPPublishTask* task = (PEPPublishTask*) sender();
