@@ -39,10 +39,18 @@ class GCUserViewItem : public QObject, public QTreeWidgetItem
 {
 public:
 	GCUserViewItem(GCUserViewGroupItem *);
+	void setAvatar(const QPixmap& pix);
+	QPixmap avatar() const { return avatar_; };
+	void setIcon(const QPixmap &icon);
+	QPixmap icon() const { return icon_; };
 
 	Status s;
 
 	virtual bool operator<  (const QTreeWidgetItem& it) const;
+
+private:
+	QPixmap avatar_;
+	QPixmap icon_;
 };
 
 class GCUserViewGroupItem : public QTreeWidgetItem
@@ -66,6 +74,7 @@ public:
 	~GCUserView();
 
 	void setMainDlg(GCMainDlg* mainDlg);
+	GCMainDlg* mainDlg() const { return gcDlg_; };
 	virtual QMimeData* mimeData(const QList<QTreeWidgetItem*>items) const;
 	void clear();
 	void updateAll();
@@ -76,6 +85,7 @@ public:
 	void removeEntry(const QString &);
 	QStringList nickList() const;
 	void doContextMenu(QTreeWidgetItem* it);
+	void setLooks();
 
 protected:
 	enum Role { Moderator = 0, Participant = 1, Visitor = 2 };

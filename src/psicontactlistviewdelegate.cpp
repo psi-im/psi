@@ -28,6 +28,7 @@
 #include "coloropt.h"
 #include "contactlistview.h"
 #include "common.h"
+#include "avatars.h"
 
 static const QString contactListFontOptionPath = "options.ui.look.font.contactlist";
 static const QString slimGroupsOptionPath = "options.ui.look.contactlist.use-slim-group-headings";
@@ -162,33 +163,12 @@ QList<QPixmap> PsiContactListViewDelegate::clientPixmap(const QModelIndex& index
 
 QPixmap PsiContactListViewDelegate::avatarIcon(const QModelIndex& index) const
 {
-	QPixmap avatar_icon;
 	int avSize = showAvatars_ ? avatarSize_ : 0;
-	QPixmap av = index.data(ContactListModel::AvatarRole).value<QPixmap>();
+	QPixmap av = index.data(ContactListModel::IsMucRole).toBool() ? QPixmap() : index.data(ContactListModel::AvatarRole).value<QPixmap>();
 	if(av.isNull() && useDefaultAvatar_)
 		av = IconsetFactory::iconPixmap("psi/default_avatar");
-	int radius;
-	if (avSize && !av.isNull()) {
-		if ( (radius = avatarRadius_) ) {
-			avSize = qMax(avSize, radius*2);
-			av = av.scaled(avSize, avSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-			int w = av.width(), h = av.height();
-			QPainterPath pp;
-			pp.addRoundedRect(0, 0, w, h, radius, radius);
-			avatar_icon = QPixmap(w, h);
-			avatar_icon.fill(QColor(0,0,0,0));
-			QPainter mp(&avatar_icon);
-			mp.setBackgroundMode(Qt::TransparentMode);
-			mp.setRenderHints(QPainter::Antialiasing, true);
-			mp.fillPath(pp, QBrush(av));
-		} else {
-			avatar_icon = av.scaled(avSize, avSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-		}
-	} else {
-		avatar_icon = QPixmap();
-	}
 
-	return avatar_icon;
+	return AvatarFactory::roundedAvatar(av, avatarRadius_, avSize);
 }
 
 QSize PsiContactListViewDelegate::sizeHint(const QStyleOptionViewItem& /*option*/, const QModelIndex& index) const

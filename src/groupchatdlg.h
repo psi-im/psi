@@ -140,6 +140,7 @@ private slots:
 #endif
 	void chatEditCreated();
 	void horizSplitterMoved();
+	void avatarUpdated(const Jid& jid);
 
 public:
 	class Private;
@@ -159,6 +160,8 @@ private:
 			const QString &someoneBy);
 
 	void contextMenuEvent(QContextMenuEvent *);
+
+	inline XMPP::Jid jidForNick(const QString &nick) const;
 
 };
 

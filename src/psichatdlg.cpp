@@ -538,6 +538,7 @@ void PsiChatDlg::updateAvatar()
 	}
 
 	UserListItem *ul = account()->findFirstRelevant(jid());
+	bool private_ = false;
 	if (ul && !ul->userResourceList().isEmpty()) {
 		UserResourceList::Iterator it = ul->userResourceList().find(jid().resource());
 		if (it == ul->userResourceList().end())
@@ -545,9 +546,12 @@ void PsiChatDlg::updateAvatar()
 
 		res = (*it).name();
 		client = (*it).clientName();
+		private_ = ul->isPrivate();
 	}
 	//QPixmap p = account()->avatarFactory()->getAvatar(jid().withResource(res),client);
-	QPixmap p = account()->avatarFactory()->getAvatar(jid().withResource(res));
+	QPixmap p = private_ ?
+			account()->avatarFactory()->getMucAvatar(jid().withResource(res)) :
+			account()->avatarFactory()->getAvatar(jid().withResource(res));
 	if (p.isNull()) {
 		ui_.avatar->hide();
 	}

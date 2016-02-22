@@ -72,6 +72,7 @@
 #include "xmpp_tasks.h"
 #include "iconaction.h"
 #include "psitooltip.h"
+#include "avatars.h"
 #include "psioptions.h"
 #include "coloropt.h"
 #include "urlobject.h"
@@ -780,11 +781,14 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 
 	// Connect signals from MUC manager
 	connect(d->mucManager,SIGNAL(action_error(MUCManager::Action, int, const QString&)), SLOT(action_error(MUCManager::Action, int, const QString&)));
+	connect(d->mucManager, SIGNAL(action_success(MUCManager::Action)), ui_.lv_users, SLOT(update()));
 
 	setLooks();
 	setShortcuts();
 	invalidateTab();
 	setConnecting();
+
+	connect(pa->avatarFactory(), SIGNAL(avatarChanged(Jid)), SLOT(avatarUpdated(Jid)));
 }
 
 GCMainDlg::~GCMainDlg()
@@ -1478,6 +1482,8 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 			}
 		}
 		ui_.lv_users->updateEntry(nick, s);
+		if(!nick.isEmpty())
+			avatarUpdated(jidForNick(nick));
 	}
 	else {
 		// Unavailable
@@ -1572,6 +1578,22 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 		account()->capsManager()->updateCaps(caps_jid,s.capsNode(),s.capsVersion(),s.capsExt());
 	}
 
+	if(!nick.isEmpty())
+		account()->avatarFactory()->newMucItem(jidForNick(nick), s);
+}
+
+XMPP::Jid GCMainDlg::jidForNick(const QString &nick) const
+{
+	return Jid(jid()).withResource(nick);
+}
+
+void GCMainDlg::avatarUpdated(const Jid &jid_)
+{
+	if(jid_.compare(jid(), false)) {
+		GCUserViewItem *it = dynamic_cast<GCUserViewItem*>(ui_.lv_users->findEntry(jid_.resource()));
+		if(it)
+			it->setAvatar(account()->avatarFactory()->getMucAvatar(jid_));
+	}
 }
 
 void GCMainDlg::message(const Message &_m)
@@ -1831,6 +1853,8 @@ void GCMainDlg::setLooks()
 #ifndef Q_OS_MAC
 	setWindowIcon(IconsetFactory::icon("psi/groupChat").icon());
 #endif
+
+	ui_.lv_users->setLooks();
 }
 
 void GCMainDlg::optionsUpdate()

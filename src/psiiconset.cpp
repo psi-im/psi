@@ -43,9 +43,9 @@ class PsiIconset::Private
 private:
 	PsiIconset *psi;
 public:
-	Iconset system, moods, clients, activities;
+	Iconset system, moods, clients, activities, affiliations;
 	QMap<QString, QString> caps2clients;
-	QString cur_system, cur_status, cur_moods, cur_clients, cur_activity;
+	QString cur_system, cur_status, cur_moods, cur_clients, cur_activity, cur_affiliations;
 	QStringList cur_emoticons;
 	QMap<QString, QString> cur_service_status;
 	QMap<QString, QString> cur_custom_status;
@@ -292,6 +292,23 @@ public:
 		return def;
 	}
 
+	Iconset affiliationsIconset(bool *ok)
+	{
+		Iconset def;
+		*ok = def.load( iconsetPath("affiliations/default") );
+
+		if ( PsiOptions::instance()->getOption("options.iconsets.affiliations").toString() != "default" ) {
+			Iconset is;
+			is.load ( iconsetPath("affiliations/" + PsiOptions::instance()->getOption("options.iconsets.affiliations").toString()) );
+
+			loadIconset(&def, &is);
+		}
+
+		stripFirstAnimFrame( def );
+
+		return def;
+	}
+
 	QList<Iconset*> emoticons()
 	{
 		QList<Iconset*> emo;
@@ -500,6 +517,21 @@ bool PsiIconset::loadClients()
 	return ok;
 }
 
+bool PsiIconset::loadAffiliations()
+{
+	bool ok = true;
+	QString cur_affiliations = PsiOptions::instance()->getOption("options.iconsets.affiliations").toString();
+	if (d->cur_affiliations != cur_affiliations) {
+		Iconset affiliations = d->affiliationsIconset(&ok);
+		d->loadIconset(&d->affiliations, &affiliations);
+		d->affiliations.addToFactory();
+
+		d->cur_affiliations = cur_affiliations;
+	}
+
+	return ok;
+}
+
 bool PsiIconset::loadAll()
 {
 	if (!loadSystem() || !loadRoster())
@@ -509,6 +541,7 @@ bool PsiIconset::loadAll()
 	loadMoods();
 	loadActivity();
 	loadClients();
+	loadAffiliations();
 	return true;
 }
 
@@ -528,6 +561,9 @@ void PsiIconset::optionChanged(const QString& option)
 	}
 	else if (option == "options.iconsets.clients") {
 		loadClients();
+	}
+	else if (option == "options.iconsets.affiliations") {
+		loadAffiliations();
 	}
 
 	// currently we rely on PsiCon calling reloadRoster() when

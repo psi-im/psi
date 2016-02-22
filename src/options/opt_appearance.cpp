@@ -99,6 +99,7 @@ OptionsTabIconset::OptionsTabIconset(QObject *parent) : MetaOptionsTab(parent, "
 	addTab( new OptionsTabIconsetClients(this) );
 	addTab( new OptionsTabIconsetRoster(this) );
 	addTab( new OptionsTabIconsetSystem(this) );
+	addTab( new OptionsTabIconsetAffiliations(this) );
 }
 
 

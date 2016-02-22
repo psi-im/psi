@@ -552,7 +552,9 @@ QVariant ContactListModel::contactData(const PsiContact* contact, int role) cons
 		return QVariant(contact->userListItem().clients());
 	}
 	else if (role == AvatarRole) {
-		QPixmap pix = contact->account()->avatarFactory()->getAvatar(contact->jid());
+		QPixmap pix = contact->isPrivate() ?
+			      contact->account()->avatarFactory()->getMucAvatar(contact->jid()) :
+			      contact->account()->avatarFactory()->getAvatar(contact->jid());
 		return QVariant(pix);
 	}
 	else if (role == IsMucRole) {

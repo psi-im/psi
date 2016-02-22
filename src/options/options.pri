@@ -72,6 +72,7 @@ FORMS += \
 	$$PWD/opt_iconset_mood.ui \
 	$$PWD/opt_iconset_activity.ui \
 	$$PWD/opt_iconset_client.ui \
+	$$PWD/opt_iconset_affiliation.ui \
 	$$PWD/opt_iconset_system.ui \
 	$$PWD/opt_iconset_roster.ui \
 	$$PWD/opt_general_groupchat.ui \

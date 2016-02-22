@@ -47,6 +47,7 @@ public:
 	Iconset moods;
 	Iconset activities;
 	Iconset clients;
+	Iconset affiliations;
 	const Iconset &system() const;
 	void stripFirstAnimFrame(Iconset *);
 	static void removeAnimation(Iconset *);
@@ -104,6 +105,8 @@ private:
 	bool loadMoods();
 	bool loadActivity();
 	bool loadClients();
+	bool loadAffiliations();
+
 };
 
 QString status2name(int s);

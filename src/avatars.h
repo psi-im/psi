@@ -31,6 +31,7 @@
 class PsiAccount;
 class Avatar;
 class VCardAvatar;
+class VCardMucAvatar;
 class VCardStaticAvatar;
 class FileAvatar;
 class PEPAvatar;
@@ -39,6 +40,7 @@ namespace XMPP {
 	class Jid;
 	class Resource;
 	class PubSubItem;
+	class Status;
 }
 
 using namespace XMPP;
@@ -60,15 +62,20 @@ public:
 	void removeManualAvatar(const Jid& j);
 	bool hasManualAvatar(const Jid& j);
 
+	void newMucItem(const Jid& fullJid, const Status& s);
+	QPixmap getMucAvatar(const Jid& jid);
+
 	static QString getManualDir();
 	static QString getCacheDir();
 	static int maxAvatarSize();
+	static QPixmap roundedAvatar(const QPixmap& pix, int rad, int avatarSize);
 
 signals:
 	void avatarChanged(const Jid&);
 
 public slots:
 	void updateAvatar(const Jid&);
+	void updateMucAvatar(const Jid&);
 
 protected slots:
 	void itemPublished(const Jid&, const QString&, const PubSubItem&);
@@ -86,6 +93,7 @@ private:
 	QMap<QString,PEPAvatar*> pep_avatars_;
 	QMap<QString,FileAvatar*> file_avatars_;
 	QMap<QString,VCardAvatar*> vcard_avatars_;
+	QMap<QString,VCardMucAvatar*> muc_vcard_avatars_;
 	QMap<QString,VCardStaticAvatar*> vcard_static_avatars_;
 	PsiAccount* pa_;
 	Iconset iconset_;

@@ -42,6 +42,7 @@
 #include "xmpp_client.h"
 #include "xmpp_resource.h"
 #include "xmpp_pubsubitem.h"
+#include "xmpp_tasks.h"
 #include "avatars.h"
 #include "applicationinfo.h"
 #include "psiaccount.h"
@@ -275,7 +276,7 @@ protected:
 	void avatarUpdated()
 		{ emit avatarChanged(jid_); }
 
-private:
+protected:
 	Jid jid_;
 };
 
@@ -296,6 +297,48 @@ void VCardAvatar::receivedVCard()
 	if (vcard) {
 		saveToCache(vcard->photo());
 		setImage(vcard->photo());
+		emit avatarChanged(jid_);
+	}
+}
+
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// VCardMucAvatar: Avatars coming from VCards of MUC contacts.
+//------------------------------------------------------------------------------
+
+class VCardMucAvatar : public VCardAvatar
+{
+	Q_OBJECT
+
+public:
+	VCardMucAvatar(AvatarFactory* factory, const Jid& jid);
+
+public slots:
+	virtual void receivedVCard();
+
+protected:
+	virtual void requestAvatar();
+};
+
+
+VCardMucAvatar::VCardMucAvatar(AvatarFactory* factory, const Jid& jid)
+	: VCardAvatar(factory, jid)
+{
+}
+
+void VCardMucAvatar::requestAvatar()
+{
+	VCardFactory::instance()->getVCard(jid_.full(), factory()->account()->client()->rootTask(), this, SLOT(receivedVCard()), false);
+}
+
+void VCardMucAvatar::receivedVCard()
+{
+	JT_VCard* task = static_cast<JT_VCard*>(sender());
+	const VCard vcard = task->vcard();
+	if (!vcard.isEmpty()) {
+		saveToCache(vcard.photo());
+		setImage(vcard.photo());
 		emit avatarChanged(jid_);
 	}
 }
@@ -505,6 +548,25 @@ QPixmap AvatarFactory::getAvatar(const Jid& _jid)
 	return pm;
 }
 
+QPixmap AvatarFactory::getMucAvatar(const Jid& _jid)
+{
+	Jid jid = _jid;
+	Avatar* av = 0;
+	if (muc_vcard_avatars_.contains(jid.full()) && !muc_vcard_avatars_[jid.full()]->isEmpty()) {
+		av = muc_vcard_avatars_[jid.full()];
+	}
+
+	QPixmap pm = (av ? av->getPixmap() : QPixmap());
+	pm = ensureSquareAvatar(pm);
+
+	// Update iconset
+	PsiIcon icon;
+	icon.setImpix(pm);
+	iconset_.setIcon(QString("avatars/%1").arg(jid.full()),icon);
+
+	return pm;
+}
+
 Avatar* AvatarFactory::retrieveAvatar(const Jid& jid)
 {
 	//printf("Retrieving avatar of %s\n", jid.full().latin1());
@@ -581,6 +643,12 @@ void AvatarFactory::updateAvatar(const Jid& j)
 	emit avatarChanged(j);
 }
 
+void AvatarFactory::updateMucAvatar(const Jid &j)
+{
+	getMucAvatar(j);
+	emit avatarChanged(j);
+}
+
 void AvatarFactory::importManualAvatar(const Jid& j, const QString& fileName)
 {
 	FileAvatar(this, j).import(fileName);
@@ -613,6 +681,18 @@ void AvatarFactory::resourceAvailable(const Jid& jid, const Resource& r)
 	}
 }
 
+void AvatarFactory::newMucItem(const Jid &fullJid, const Status &s)
+{
+	if (s.hasPhotoHash()) {
+		const QString hash = s.photoHash();
+		if (!muc_vcard_avatars_.contains(fullJid.full())) {
+			muc_vcard_avatars_[fullJid.full()] = new VCardMucAvatar(this, fullJid);
+			connect(muc_vcard_avatars_[fullJid.full()], SIGNAL(avatarChanged(const Jid&)), this, SLOT(updateMucAvatar(const Jid&)));
+		}
+		muc_vcard_avatars_[fullJid.full()]->updateHash(hash);
+	}
+}
+
 QString AvatarFactory::getManualDir()
 {
 	QDir avatars(pathToProfile(activeProfile, ApplicationInfo::DataLocation) + "/pictures");
@@ -636,6 +716,37 @@ QString AvatarFactory::getCacheDir()
 int AvatarFactory::maxAvatarSize()
 {
 	return MAX_AVATAR_SIZE;
+}
+
+QPixmap AvatarFactory::roundedAvatar(const QPixmap &pix, int rad, int avSize)
+{
+	QPixmap avatar_icon;
+	QPixmap av = pix;
+	if(!pix.isNull()) {
+		if (avSize != 0) {
+			if (rad != 0) {
+				avSize = qMax(avSize, rad*2);
+				av = av.scaled(avSize, avSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+				int w = av.width(), h = av.height();
+				QPainterPath pp;
+				pp.addRoundedRect(0, 0, w, h, rad, rad);
+				avatar_icon = QPixmap(w, h);
+				avatar_icon.fill(QColor(0,0,0,0));
+				QPainter mp(&avatar_icon);
+				mp.setBackgroundMode(Qt::TransparentMode);
+				mp.setRenderHints(QPainter::Antialiasing, true);
+				mp.fillPath(pp, QBrush(av));
+			}
+			else {
+				avatar_icon = av.scaled(avSize, avSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+			}
+		}
+		else {
+			avatar_icon = QPixmap();
+		}
+	}
+
+	return avatar_icon;
 }
 
 void AvatarFactory::itemPublished(const Jid& jid, const QString& n, const PubSubItem& item)

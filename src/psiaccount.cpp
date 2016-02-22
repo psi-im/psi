@@ -6158,6 +6158,7 @@ void PsiAccount::invokeGCMessage(const Jid &j)
 	u->setInList(false);
 	u->setName(j.resource());
 	u->setPrivate(true);
+	u->setAvatarFactory(avatarFactory());
 
 	// make a resource so the contact appears online
 	UserResource ur;
