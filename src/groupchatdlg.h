@@ -127,6 +127,7 @@ private slots:
 	void doClear();
 	void doClearButton();
 	void doBookmark();
+	void copyMucJid();
 	void doRemoveBookmark();
 	void buildMenu();
 	void logSelectionChanged();

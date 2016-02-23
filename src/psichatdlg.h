@@ -45,6 +45,7 @@ private slots:
 	void contactChanged();
 	QString makeContactName(const QString &name, const Jid &jid) const;
 	void doSwitchJidMode();
+	void copyUserJid();
 
 	// reimplemented
 	void chatEditCreated();

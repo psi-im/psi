@@ -18,6 +18,7 @@
 #include <QDragEnterEvent>
 #include <QMessageBox>
 #include <QDebug>
+#include <QClipboard>
 
 #include "psicon.h"
 #include "psiaccount.h"
@@ -200,6 +201,10 @@ void PsiChatDlg::initUi()
 		updateAutojidIcon();
 		connect(act_autojid, SIGNAL(triggered()), SLOT(doSwitchJidMode()));
 		le_autojid->addAction(act_autojid);
+
+		QAction *act_copy_user_jid = new QAction(tr("Copy user JID"), this);
+		le_autojid->addAction(act_copy_user_jid);
+		connect(act_copy_user_jid, SIGNAL(triggered()), SLOT(copyUserJid()));
 	}
 
 	ui_.lb_ident->setAccount(account());
@@ -366,6 +371,11 @@ void PsiChatDlg::updateContactAdding(PsiContact* c)
 			act_add_contact->setVisible(true);
 		}
 	}
+}
+
+void PsiChatDlg::copyUserJid()
+{
+	QApplication::clipboard()->setText(jid().bare());
 }
 
 void PsiChatDlg::updateContactAdding(const Jid &j)

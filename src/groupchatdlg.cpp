@@ -52,6 +52,7 @@
 #include <QCheckBox>
 #include <QDialogButtonBox>
 #include <QFormLayout>
+#include <QClipboard>
 
 #include "psicon.h"
 #include "psiaccount.h"
@@ -215,8 +216,7 @@ public:
 //	IconAction *act_whiteboard;
 //#endif
 	QAction *act_send, *act_scrollup, *act_scrolldown, *act_close;
-
-	QAction *act_mini_cmd, *act_nick, *act_hide;
+	QAction *act_mini_cmd, *act_nick, *act_hide, *act_copy_muc_jid;
 
 	MCmdSimpleSite mCmdSite;
 	MCmdManager mCmdManager;
@@ -700,6 +700,11 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	d->act_bookmark = new IconAction(this);
 	connect(d->act_bookmark, SIGNAL(triggered()), SLOT(doBookmark()));
 	ui_.le_topic->addAction(d->act_bookmark);
+
+	d->act_copy_muc_jid = new QAction(tr("Copy Groupchat JID"), this);
+	connect(d->act_copy_muc_jid, SIGNAL(triggered()), SLOT(copyMucJid()));
+	ui_.le_topic->addAction(d->act_copy_muc_jid);
+
 	BookmarkManager *bm = account()->bookmarkManager();
 	d->act_bookmark->setVisible(bm->isAvailable());
 	if (bm->isAvailable()) {
@@ -1191,6 +1196,11 @@ void GCMainDlg::doBookmark()
 		bm->setBookmarks(confs);
 	}
 	delete dlg;
+}
+
+void GCMainDlg::copyMucJid()
+{
+	QApplication::clipboard()->setText(jid().bare());
 }
 
 void GCMainDlg::doRemoveBookmark()

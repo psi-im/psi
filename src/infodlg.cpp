@@ -158,7 +158,8 @@ InfoDlg::InfoDlg(int type, const Jid &j, const VCard &vcard, PsiAccount *pa, QWi
 	d->namesDlg->setLayout(fl);
 	// end names editing dialog
 
-	QAction *editnames = new QAction(IconsetFactory::icon(d->type == Self?"psi/options":"psi/info").icon(), "", this);
+	QAction *editnames = new QAction(IconsetFactory::icon(d->type == Self ? "psi/options" : "psi/info").icon(),
+									 d->type == Self ? tr("Edit names") : tr("View names") , this);
 	ui_.le_fullname->addAction(editnames);
 	ui_.le_fullname->widgetForAction(editnames)->setPopup(d->namesDlg);
 	d->homepageAction = new QAction(IconsetFactory::icon("psi/arrowRight").icon(), tr("Open web browser"), this);
