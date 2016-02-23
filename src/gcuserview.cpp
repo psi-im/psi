@@ -613,6 +613,11 @@ void GCUserView::doContextMenu(QTreeWidgetItem *i)
 		pm->addAction(act);
 		act->setData(5);
 	}
+
+	act = new QAction(tr("E&xecute Command"), pm);
+	pm->addAction(act);
+	act->setData(6);
+
 	pm->addSeparator();
 
 	// Kick and Ban submenus

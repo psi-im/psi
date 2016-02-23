@@ -1956,6 +1956,9 @@ void GCMainDlg::lv_action(const QString &nick, const Status &s, int x)
 	else if(x == 5) {
 		account()->actionVoice(jid().withResource(nick));
 	}
+	else if(x == 6) {
+		account()->actionExecuteCommandSpecific(jid().withResource(nick));
+	}
 	else if(x == 10) {
 		d->mucManager->kick(nick);
 	}
