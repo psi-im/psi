@@ -114,6 +114,11 @@ public:
 	bool onTop, asTool;
 	QMenu* mainMenu, *optionsMenu, *toolsMenu;
 	GlobalStatusMenu *statusMenu;
+#ifdef Q_OS_LINUX
+	// Status menu for MenuBar.
+	// Workaround a Unity bug.
+	GlobalStatusMenu *statusMenuMB;
+#endif
 	int sbState;
 	QString nickname;
 	PsiTrayIcon* tray;
@@ -438,6 +443,16 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 	connect(d->statusMenu, SIGNAL(statusSelected(XMPP::Status::Type, bool)), d->psi, SLOT(statusMenuChanged(XMPP::Status::Type, bool)));
 	connect(d->statusMenu, SIGNAL(statusPresetSelected(XMPP::Status,bool,bool)), d->psi, SLOT(setGlobalStatus(XMPP::Status,bool,bool)));
 	connect(d->statusMenu, SIGNAL(statusPresetDialogForced(const QString &)), d->psi, SLOT(showStatusDialog(const QString &)));
+
+#ifdef Q_OS_LINUX
+	d->statusMenuMB = new GlobalStatusMenu((QWidget*)this, d->psi);
+	d->statusMenuMB->setTitle(tr("Status"));
+	d->statusMenuMB->setObjectName("statusMenu");
+	connect(d->statusMenuMB, SIGNAL(statusSelected(XMPP::Status::Type, bool)), d->psi, SLOT(statusMenuChanged(XMPP::Status::Type, bool)));
+	connect(d->statusMenuMB, SIGNAL(statusPresetSelected(XMPP::Status,bool,bool)), d->psi, SLOT(setGlobalStatus(XMPP::Status,bool,bool)));
+	connect(d->statusMenuMB, SIGNAL(statusPresetDialogForced(const QString &)), d->psi, SLOT(showStatusDialog(const QString &)));
+#endif
+
 	d->optionsMenu = new QMenu(tr("General"), this);
 	d->optionsMenu->setObjectName("optionsMenu");
 #ifdef Q_OS_MAC
@@ -451,7 +466,10 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 #endif
 
 
-	buildStatusMenu();
+	buildStatusMenu(d->statusMenu);
+#ifdef Q_OS_LINUX
+	buildStatusMenu(d->statusMenuMB);
+#endif
 	buildOptionsMenu();
 	connect(d->optionsMenu, SIGNAL(aboutToShow()), SLOT(buildOptionsMenu()));
 
@@ -488,7 +506,11 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 	mainMenuBar()->addMenu(d->optionsMenu);
 #endif
 
+#ifdef Q_OS_LINUX
+	mainMenuBar()->addMenu(d->statusMenuMB);
+#else
 	mainMenuBar()->addMenu(d->statusMenu);
+#endif
 
 	mainMenuBar()->addMenu(viewMenu);
 	d->getAction("show_offline")->addTo(viewMenu);
@@ -809,11 +831,20 @@ void MainWin::setUseAvatarFrame(bool state)
 
 void MainWin::buildStatusMenu()
 {
-	d->statusMenu->clear();
-	d->statusMenu->fill();
+	GlobalStatusMenu *statusMenu = qobject_cast<GlobalStatusMenu*>(sender());
+	Q_ASSERT(statusMenu);
+	if (statusMenu) {
+		buildStatusMenu(statusMenu);
+	}
+}
+
+void MainWin::buildStatusMenu(GlobalStatusMenu *statusMenu)
+{
+	statusMenu->clear();
+	statusMenu->fill();
 #ifdef USE_PEP
-	d->statusMenu->addSeparator();
-	d->getAction("publish_tune")->addTo(d->statusMenu);
+	statusMenu->addSeparator();
+	d->getAction("publish_tune")->addTo(statusMenu);
 #endif
 }
 
@@ -1365,6 +1396,9 @@ void MainWin::decorateButton(int status)
 			d->rosterAvatar->setStatusIcon(PsiIconset::instance()->statusPtr(STATUS_OFFLINE)->icon());
 		}
 
+#ifdef Q_OS_LINUX
+		d->statusMenuMB->statusChanged(makeStatus(STATUS_OFFLINE, ""));
+#endif
 		d->statusMenu->statusChanged(makeStatus(STATUS_OFFLINE, ""));
 
 		setWindowIcon(PsiIconset::instance()->status(STATUS_OFFLINE).impix());
@@ -1374,8 +1408,10 @@ void MainWin::decorateButton(int status)
 		d->statusButton->setIcon(PsiIconset::instance()->statusPtr(status));
 		d->statusSmallerAlt->setPsiIcon(PsiIconset::instance()->statusPtr(status));
 		d->rosterAvatar->setStatusIcon(PsiIconset::instance()->statusPtr(status)->icon());
+#ifdef Q_OS_LINUX
+		d->statusMenuMB->statusChanged(makeStatus(status, d->psi->currentStatusMessage()));
+#endif
 		d->statusMenu->statusChanged(makeStatus(status, d->psi->currentStatusMessage()));
-
 		setWindowIcon(PsiIconset::instance()->status(status).impix());
 	}
 
@@ -1544,8 +1580,10 @@ void MainWin::optionsUpdate()
 
 	setWindowOpacity(double(qMax(MINIMUM_OPACITY,PsiOptions::instance()->getOption("options.ui.contactlist.opacity").toInt()))/100);
 
-	buildStatusMenu();
-
+	buildStatusMenu(d->statusMenu);
+#ifdef Q_OS_LINUX
+	buildStatusMenu(d->statusMenuMB);
+#endif
 	updateTray();
 }
 

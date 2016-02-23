@@ -44,6 +44,8 @@ class IconAction;
 class PsiIcon;
 class ContactView;
 class PsiTrayIcon;
+class GlobalStatusMenu;
+
 namespace XMPP {
 	class Status;
 }
@@ -191,6 +193,8 @@ private:
 
 	void saveToolbarsState();
 	void loadToolbarsState();
+
+	void buildStatusMenu(GlobalStatusMenu *statusMenu);
 
 private:
 	class Private;
