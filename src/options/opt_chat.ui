@@ -41,6 +41,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="ck_switchTabOnMessage" >
+     <property name="text" >
+      <string>Switch tab on receiving new messages</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QCheckBox" name="ck_smallChats" >
      <property name="text" >
       <string>Open chats in compact mode</string>

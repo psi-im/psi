@@ -74,6 +74,9 @@ QWidget *OptionsTabChat::widget()
 	d->ck_raiseChatWindow->setWhatsThis(
 		tr("Makes Psi bring an open chat window to the front of your screen when you receive a new message."
 		" It does not take the keyboard focus, so it will not interfere with your work."));
+	d->ck_switchTabOnMessage->setWhatsThis(
+		tr("Makes Psi switch tab on active tabbed window when you receive a new message."
+		" It does not take the keyboard focus, so it will not interfere with your work."));
 	d->ck_smallChats->setWhatsThis(
 		tr("Makes Psi open chat windows in compact mode."));
 	d->ck_tabChats->setWhatsThis(
@@ -102,6 +105,7 @@ void OptionsTabChat::applyOptions()
 	PsiOptions::instance()->setOption("options.messages.default-outgoing-message-type", bg_defAct->buttons().indexOf(bg_defAct->checkedButton()) == 0 ? "message" : "chat");
 	PsiOptions::instance()->setOption("options.ui.chat.alert-for-already-open-chats", d->ck_alertOpenChats->isChecked());
 	PsiOptions::instance()->setOption("options.ui.chat.raise-chat-windows-on-new-messages", d->ck_raiseChatWindow->isChecked());
+	PsiOptions::instance()->setOption("options.ui.chat.switch-tab-on-new-messages", d->ck_switchTabOnMessage->isChecked());
 	PsiOptions::instance()->setOption("options.ui.chat.use-small-chats", d->ck_smallChats->isChecked());
 
 	QString delafter;
@@ -178,6 +182,7 @@ void OptionsTabChat::restoreOptions()
 	bg_defAct->buttons()[PsiOptions::instance()->getOption("options.messages.default-outgoing-message-type").toString() == "message" ? 0 : 1]->setChecked(true);
 	d->ck_alertOpenChats->setChecked( PsiOptions::instance()->getOption("options.ui.chat.alert-for-already-open-chats").toBool() );
 	d->ck_raiseChatWindow->setChecked( PsiOptions::instance()->getOption("options.ui.chat.raise-chat-windows-on-new-messages").toBool() );
+	d->ck_switchTabOnMessage->setChecked( PsiOptions::instance()->getOption("options.ui.chat.switch-tab-on-new-messages").toBool() );
 	d->ck_smallChats->setChecked( PsiOptions::instance()->getOption("options.ui.chat.use-small-chats").toBool() );
 	d->ck_tabChats->setChecked( PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool() );
 	d->cb_tabGrouping->setEnabled(PsiOptions::instance()->getOption("options.ui.tabs.use-tabs").toBool());

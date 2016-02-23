@@ -921,7 +921,8 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 		if (PsiOptions::instance()->getOption("options.ui.chat.raise-chat-windows-on-new-messages").toBool()) {
 			if (isTabbed()) {
 				TabDlg* tabSet = getManagingTabDlg();
-				tabSet->selectTab(this);
+				if (PsiOptions::instance()->getOption("options.ui.chat.switch-tab-on-new-messages").toBool() || !tabSet->isActiveWindow())
+					tabSet->selectTab(this);
 				::bringToFront(tabSet, false);
 			}
 			else {
