@@ -54,6 +54,10 @@ QWidget *OptionsTabGroupchat::widget()
 	connect(d->pb_addNickColor,	   SIGNAL(clicked()), SLOT(addGCNickColor()));
 	connect(d->pb_removeNickColor,	   SIGNAL(clicked()), SLOT(removeGCNickColor()));
 
+	connect(d->ck_gcHashNickColoring, SIGNAL(toggled(bool)), SLOT(updateWidgetsState()));
+	connect(d->ck_gcNickColoring, SIGNAL(toggled(bool)), SLOT(updateWidgetsState()));
+	connect(d->ck_gcHighlights, SIGNAL(toggled(bool)), SLOT(updateWidgetsState()));
+
 	// TODO: add QWhatsThis for all controls on widget
 
 	return w;
@@ -110,6 +114,29 @@ void OptionsTabGroupchat::restoreOptions()
 
 	d->le_newHighlightWord->setText("");
 	d->le_newNickColor->setText("#FFFFFF");
+}
+
+void OptionsTabGroupchat::updateWidgetsState()
+{
+	GeneralGroupchatUI *d = (GeneralGroupchatUI *)w;
+
+	{
+		bool enableHighlights = d->ck_gcHighlights->isChecked();
+		d->lw_highlightWords->setEnabled(enableHighlights);
+		d->le_newHighlightWord->setEnabled(enableHighlights);
+		d->pb_addHighlightWord->setEnabled(enableHighlights);
+		d->pb_removeHighlightWord->setEnabled(enableHighlights);
+	}
+
+	{
+		bool enableNickColors = d->ck_gcNickColoring->isChecked() && !d->ck_gcHashNickColoring->isChecked();
+		d->ck_gcNickColoring->setEnabled(!d->ck_gcHashNickColoring->isChecked());
+		d->lw_nickColors->setEnabled(enableNickColors);
+		d->le_newNickColor->setEnabled(enableNickColors);
+		d->pb_addNickColor->setEnabled(enableNickColors);
+		d->pb_removeNickColor->setEnabled(enableNickColors);
+		d->pb_nickColor->setEnabled(enableNickColors);
+	}
 }
 
 static QPixmap name2color(QString name)

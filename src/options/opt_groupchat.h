@@ -28,6 +28,7 @@ private slots:
 	void chooseGCNickColor();
 	void displayGCNickColor();
 	void selectedGCNickColor(QListWidgetItem *item);
+	void updateWidgetsState();
 
 private:
 	QWidget *w, *dlg;
