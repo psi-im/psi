@@ -1466,6 +1466,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 			// Status change
 			if ( !d->connecting && options_->getOption("options.muc.show-role-affiliation").toBool() ) {
 				QString message;
+				QString reason;
 				if (contact->s.mucItem().role() != s.mucItem().role() && s.mucItem().role() != MUCItem::NoRole) {
 					if (contact->s.mucItem().affiliation() != s.mucItem().affiliation()) {
 						message = tr("%1 is now %2 and %3").arg(nick).arg(MUCManager::roleToString(s.mucItem().role(),true)).arg(MUCManager::affiliationToString(s.mucItem().affiliation(),true));
@@ -1473,9 +1474,15 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 					else {
 						message = tr("%1 is now %2").arg(nick).arg(MUCManager::roleToString(s.mucItem().role(),true));
 					}
+					reason = s.mucItem().reason();
 				}
 				else if (contact->s.mucItem().affiliation() != s.mucItem().affiliation()) {
 					message += tr("%1 is now %2").arg(nick).arg(MUCManager::affiliationToString(s.mucItem().affiliation(),true));
+					reason = s.mucItem().reason();
+				}
+
+				if(!reason.isEmpty()) {
+					message += tr(" (Reason: %1)").arg(reason);
 				}
 
 				if (!message.isEmpty()) {
@@ -1918,20 +1925,45 @@ void GCMainDlg::lv_action(const QString &nick, const Status &s, int x)
 		GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
 		d->mucManager->ban(contact->s.mucItem().jid());
 	}
-	else if(x == 12) {
+	else if(x > 11 && x < 19) {
+		MUCReasonsEditor editor(this);
+		QString reason;
+		if (editor.exec())
+			reason = editor.reason();
+		else return;
 		GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
-		if (contact->s.mucItem().role() != MUCItem::Visitor)
-			d->mucManager->setRole(nick, MUCItem::Visitor);
-	}
-	else if(x == 13) {
-		GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
-		if (contact->s.mucItem().role() != MUCItem::Participant)
-			d->mucManager->setRole(nick, MUCItem::Participant);
-	}
-	else if(x == 14) {
-		GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
-		if (contact->s.mucItem().role() != MUCItem::Moderator)
-			d->mucManager->setRole(nick, MUCItem::Moderator);
+		if (!contact)
+			return;
+		switch(x) {
+		case 12:
+			if (contact->s.mucItem().role() != MUCItem::Visitor)
+				d->mucManager->setRole(nick, MUCItem::Visitor, reason);
+			break;
+		case 13:
+			if (contact->s.mucItem().role() != MUCItem::Participant)
+				d->mucManager->setRole(nick, MUCItem::Participant, reason);
+			break;
+		case 14:
+			if (contact->s.mucItem().role() != MUCItem::Moderator)
+				d->mucManager->setRole(nick, MUCItem::Moderator, reason);
+			break;
+		case 15:
+			if (contact->s.mucItem().affiliation() != MUCItem::NoAffiliation)
+				d->mucManager->setAffiliation(contact->s.mucItem().jid(), MUCItem::NoAffiliation, reason);
+			break;
+		case 16:
+			if (contact->s.mucItem().affiliation() != MUCItem::Member)
+				d->mucManager->setAffiliation(contact->s.mucItem().jid(), MUCItem::Member, reason);
+			break;
+		case 17:
+			if (contact->s.mucItem().affiliation() != MUCItem::Admin)
+				d->mucManager->setAffiliation(contact->s.mucItem().jid(), MUCItem::Admin, reason);
+			break;
+		case 18:
+			if (contact->s.mucItem().affiliation() != MUCItem::Owner)
+				d->mucManager->setAffiliation(contact->s.mucItem().jid(), MUCItem::Owner, reason);
+			break;
+		}
 	}
 	else if(x >= 100 && x<300) {
 		// Kick || Ban with reason
@@ -1958,26 +1990,6 @@ void GCMainDlg::lv_action(const QString &nick, const Status &s, int x)
 			}
 		}
 
-	}
-	else if(x == 15) {
-		GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
-		if (contact->s.mucItem().affiliation() != MUCItem::NoAffiliation)
-			d->mucManager->setAffiliation(contact->s.mucItem().jid(), MUCItem::NoAffiliation);
-	}
-	else if(x == 16) {
-		GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
-		if (contact->s.mucItem().affiliation() != MUCItem::Member)
-			d->mucManager->setAffiliation(contact->s.mucItem().jid(), MUCItem::Member);
-	}
-	else if(x == 17) {
-		GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
-		if (contact->s.mucItem().affiliation() != MUCItem::Admin)
-			d->mucManager->setAffiliation(contact->s.mucItem().jid(), MUCItem::Admin);
-	}
-	else if(x == 18) {
-		GCUserViewItem *contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
-		if (contact->s.mucItem().affiliation() != MUCItem::Owner)
-			d->mucManager->setAffiliation(contact->s.mucItem().jid(), MUCItem::Owner);
 	}
 }
 
