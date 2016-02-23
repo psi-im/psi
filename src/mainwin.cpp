@@ -74,6 +74,7 @@
 #include "mooddlg.h"
 #include "activitydlg.h"
 #include "geolocationdlg.h"
+#include "activecontactsmenu.h"
 
 #include "mainwin_p.h"
 
@@ -592,6 +593,8 @@ void MainWin::registerAction( IconAction* action )
 	} actionlist[] = {
 		{ "choose_status", activated, this, SLOT( actChooseStatusActivated() ) },
 		{ "reconnect_all", activated, this, SLOT( actReconnectActivated() ) },
+
+		{ "active_contacts",activated, this, SLOT( actActiveContacts() ) },
 #ifndef NEWCONTACTLIST
 		{ "show_offline", toggled, cvlist, SLOT( setShowOffline(bool) ) },
 		{ "show_away",    toggled, cvlist, SLOT( setShowAway(bool) ) },
@@ -1202,6 +1205,14 @@ void MainWin::actSetGeolocActivated()
 		d->geolocationDlg = new GeoLocationDlg(l);
 		d->geolocationDlg->show();
 	}
+}
+
+void MainWin::actActiveContacts()
+{
+	ActiveContactsMenu* acm = new ActiveContactsMenu(d->psi, this);
+	if(!acm->actions().isEmpty())
+		acm->exec(QCursor::pos());
+	delete acm;
 }
 
 void MainWin::activatedAccOption(PsiAccount* pa, int x)

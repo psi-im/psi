@@ -3320,6 +3320,17 @@ QList<ChatDlg*> PsiAccount::findChatDialogs(const Jid& jid, bool compareResource
 	return findDialogs<ChatDlg*>(jid, compareResource);
 }
 
+QList<PsiContact*> PsiAccount::activeContacts() const
+{
+	QList<PsiContact*> ret;
+	foreach(PsiContact *pc, contactList()) {
+		if(pc->isActiveContact()) {
+			ret.append(pc);
+		}
+	}
+	return ret;
+}
+
 QWidget* PsiAccount::findDialog(const QMetaObject& mo, const Jid& jid, bool compareResource) const
 {
 	return d->findDialog(mo, jid, compareResource);

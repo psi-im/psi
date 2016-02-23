@@ -131,6 +131,7 @@ HEADERS += \
 	$$PWD/statusdlg.h \
 	$$PWD/statuscombobox.h \
 	$$PWD/eventdlg.h \
+	$$PWD/activecontactsmenu.h \
 	$$PWD/chatdlg.h \
 	$$PWD/psichatdlg.h \
 	$$PWD/chatsplitter.h \
@@ -273,6 +274,7 @@ SOURCES += \
 	$$PWD/statusdlg.cpp \
 	$$PWD/statuscombobox.cpp \
 	$$PWD/eventdlg.cpp \
+	$$PWD/activecontactsmenu.cpp \
 	$$PWD/chatdlg.cpp \
 	$$PWD/psichatdlg.cpp \
 	$$PWD/chatsplitter.cpp \

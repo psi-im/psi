@@ -166,6 +166,8 @@ public:
 	ChatDlg* findChatDialogEx(const Jid& jid) const;
 	QList<ChatDlg*> findChatDialogs(const Jid& jid, bool compareResource = true) const;
 
+	QList<PsiContact*> activeContacts() const;
+
 	template<typename T>
 	inline T findDialog(const Jid& jid = Jid(), bool compareResource = true) const {
 		return static_cast<T>(findDialog(((T)0)->staticMetaObject, jid, compareResource));

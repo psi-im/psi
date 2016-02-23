@@ -147,6 +147,7 @@ private slots:
 	void actSetMoodActivated();
 	void actSetActivityActivated();
 	void actSetGeolocActivated();
+	void actActiveContacts();
 
 	bool showDockMenu(const QPoint &);
 	void dockActivated();

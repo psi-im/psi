@@ -46,6 +46,7 @@ private slots:
 	QString makeContactName(const QString &name, const Jid &jid) const;
 	void doSwitchJidMode();
 	void copyUserJid();
+	void actActiveContacts();
 
 	// reimplemented
 	void chatEditCreated();
@@ -95,6 +96,7 @@ private:
 
 	ActionLineEdit *le_autojid;
 	IconAction *act_autojid;
+	IconAction *act_active_contacts;
 
 	MCmdManager mCmdManager_;
 	MCmdSimpleSite mCmdSite_;

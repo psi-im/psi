@@ -32,6 +32,7 @@
 #include "messageview.h"
 #include "iconselect.h"
 #include "avatars.h"
+#include "activecontactsmenu.h"
 #include "psitooltip.h"
 #include "psioptions.h"
 #include "coloropt.h"
@@ -432,6 +433,9 @@ void PsiChatDlg::initToolButtons()
 
 	act_compact_ = new IconAction(tr("Toggle Compact/Full Size"), "psi/compact", tr("Toggle Compact/Full Size"), 0, this);
 	connect(act_compact_, SIGNAL(triggered()), SLOT(toggleSmallChat()));
+
+	act_active_contacts = new IconAction (tr("Active contacts"), "psi/jabber", tr("Active contacts"), 0, this);
+	connect(act_active_contacts, SIGNAL(triggered()), SLOT(actActiveContacts()));
 }
 
 void PsiChatDlg::initToolBar()
@@ -456,6 +460,7 @@ void PsiChatDlg::initToolBar()
 		ui_.toolbar->addAction(act_voice_);
 	}
 	ui_.toolbar->addAction(act_add_contact);
+	ui_.toolbar->addAction(act_active_contacts);
 }
 
 void PsiChatDlg::contextMenuEvent(QContextMenuEvent *)
@@ -595,6 +600,14 @@ void PsiChatDlg::updateJidWidget(const QList<UserListItem*> &ul, int status, boo
 		jidCombo->setToolTip(jidCombo->currentText());
 	}
 	internal_change = false;
+}
+
+void PsiChatDlg::actActiveContacts()
+{
+	ActiveContactsMenu* acm = new ActiveContactsMenu(account()->psi(), this);
+	if(!acm->actions().isEmpty())
+		acm->exec(QCursor::pos());
+	delete acm;
 }
 
 void PsiChatDlg::contactUpdated(UserListItem* u, int status, const QString& statusString)

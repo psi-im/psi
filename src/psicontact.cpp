@@ -540,6 +540,17 @@ bool PsiContact::isAnimated() const
 }
 
 /**
+ * Returns true if there is opened chat with this contact
+ */
+bool PsiContact::isActiveContact() const
+{
+	if(isConference()) {
+		return false;
+	}
+	return account()->findChatDialog(jid(), isPrivate() ? true : false);
+}
+
+/**
  * Contact should always be visible if it's alerting.
  */
 bool PsiContact::shouldBeVisible() const

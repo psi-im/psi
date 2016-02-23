@@ -66,6 +66,8 @@ public:
 
 	virtual bool isAnimated() const;
 
+	bool isActiveContact() const;
+
 	void activate();
 
 	virtual void setEditing(bool editing);

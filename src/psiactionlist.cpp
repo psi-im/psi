@@ -176,9 +176,13 @@ void PsiActionList::Private::createMainWin()
 		IconAction *eventNotifier = new EventNotifierAction(this, "EventNotifierAction");
 		eventNotifier->setWhatsThis (tr("Special item that displays number of pending events"));
 
+		IconAction *actActiveContacts = new IconAction (tr("Active contacts"), "psi/jabber", tr("Active contacts"), 0, this);
+		actActiveContacts->setWhatsThis (tr("Simple way to find contacts with opened chats"));
+
 		ActionNames actions[] = {
 			{ "button_options", optionsButton },
 			{ "button_status",  statusButton  },
+			{ "active_contacts",actActiveContacts},
 			{ "event_notifier", eventNotifier },
 			{ "", 0 }
 		};
