@@ -47,6 +47,7 @@ private slots:
 	void doSwitchJidMode();
 	void copyUserJid();
 	void actActiveContacts();
+	void actPgpToggled(bool);
 
 	// reimplemented
 	void chatEditCreated();
@@ -64,6 +65,7 @@ private:
 	void updateAvatar();
 	void optionsUpdate();
 	void updatePGP();
+	void checkPGPAutostart();
 	void setPGPEnabled(bool enabled);
 	void activated();
 	void setLooks();
@@ -103,6 +105,7 @@ private:
 
 	MCmdTabCompletion tabCompletion;
 
+	bool autoPGP_;
 	bool smallChat_;
 	class ChatDlgMCmdProvider;
 

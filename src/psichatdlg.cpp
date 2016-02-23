@@ -170,7 +170,7 @@ private:
 
 
 PsiChatDlg::PsiChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
-		: ChatDlg(jid, pa, tabManager), mCmdManager_(&mCmdSite_), tabCompletion(&mCmdManager_)
+	: ChatDlg(jid, pa, tabManager), mCmdManager_(&mCmdSite_), tabCompletion(&mCmdManager_), autoPGP_(true)
 {
 	connect(account()->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
 	connect(account(), SIGNAL(addedContact(PsiContact*)), SLOT(updateContactAdding(PsiContact*)));
@@ -424,6 +424,7 @@ void PsiChatDlg::initToolButtons()
 
 	act_pgp_ = new IconAction(tr("Toggle Encryption"), "", tr("Toggle Encryption"), 0, this, 0, true);
 	ui_.tb_pgp->setDefaultAction(act_pgp_);
+	connect(act_pgp_, SIGNAL(triggered(bool)), SLOT(actPgpToggled(bool)));
 
 	act_info_ = new IconAction(tr("User Info"), "psi/vCard", tr("User Info"), 0, this);
 	connect(act_info_, SIGNAL(triggered()), SLOT(doInfo()));
@@ -716,14 +717,42 @@ void PsiChatDlg::updatePGP()
 		act_pgp_->setEnabled(true);
 	}
 	else {
-		act_pgp_->setChecked(false);
+		setPGPEnabled(false);
 		act_pgp_->setEnabled(false);
 	}
+
+	checkPGPAutostart();
 
 	ui_.tb_pgp->setVisible(account()->hasPGP() &&
 						   !smallChat_ &&
 						   !PsiOptions::instance()->getOption("options.ui.chat.central-toolbar").toBool());
 	ui_.log->setEncryptionEnabled(isEncryptionEnabled());
+}
+
+void PsiChatDlg::checkPGPAutostart()
+{
+	if(account()->hasPGP() && autoPGP_ && PsiOptions::instance()->getOption("options.pgp.auto-start").toBool()) {
+		UserListItem *item = account()->findFirstRelevant(jid());
+		if(item && !item->publicKeyID().isEmpty()) {
+			if(!jid().resource().isEmpty()) {
+				UserResourceList::Iterator rit = item->userResourceList().find(jid().resource());
+				if(rit !=item->userResourceList().end()) {
+					UserResource r = *rit;
+					if(r.pgpVerifyStatus() != 0) {
+						setPGPEnabled(false);
+						return;
+					}
+				}
+			}
+			setPGPEnabled(true);
+		}
+	}
+}
+
+void PsiChatDlg::actPgpToggled(bool b)
+{
+	autoPGP_ = false;
+	ui_.log->setEncryptionEnabled(b);
 }
 
 void PsiChatDlg::doClearButton()
