@@ -27,7 +27,7 @@
 using namespace XMPP;
 
 
-MUCAffiliationsModel::MUCAffiliationsModel() : QStandardItemModel(Unknown,1)
+MUCAffiliationsModel::MUCAffiliationsModel() : QStandardItemModel(Unknown,2)
 {
 	QFont font;
 	font.setBold(true);
@@ -37,8 +37,10 @@ MUCAffiliationsModel::MUCAffiliationsModel() : QStandardItemModel(Unknown,1)
 		setData(ind,QVariant(affiliationlistindexToString((AffiliationListIndex) i)));
 		setData(ind,font_variant,Qt::FontRole);
 		insertColumns(0,1,ind);
+		insertColumns(1,1,ind);
 		enabled_[(AffiliationListIndex) i] = false;
 	}
+	setHorizontalHeaderLabels(QStringList() << tr("JID") << tr("Reason"));
 }
 
 Qt::ItemFlags MUCAffiliationsModel::flags(const QModelIndex &index) const
@@ -63,8 +65,12 @@ Qt::DropActions MUCAffiliationsModel::supportedDropActions() const
 
 bool MUCAffiliationsModel::dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int, const QModelIndex &parent)
 {
-	if (!data || action != Qt::MoveAction || !(data->hasFormat("application/vnd.text.list") || data->hasFormat("text/plain")))
+	if ( (parent.isValid() && parent.column() != 0)
+		|| !data || action != Qt::MoveAction
+		|| !( data->hasFormat("application/vnd.text.list") || data->hasFormat("text/plain") ) )
+	{
 		return false;
+	}
 
 	// Decode the data
 	QStringList newItems;
@@ -130,7 +136,7 @@ QMimeData* MUCAffiliationsModel::mimeData(const QModelIndexList &indexes) const
 	QByteArray encodedData;
 	QDataStream stream(&encodedData, QIODevice::WriteOnly);
 	foreach (QModelIndex index, indexes) {
-		if (index.isValid()) {
+		if (index.isValid() && index.column() == 0) {
 			QString text = data(index, Qt::DisplayRole).toString();
 			stream << text;
 		}
@@ -220,6 +226,7 @@ void MUCAffiliationsModel::addItems(const QList<MUCItem>& items)
 			}
 			insertRows(row,1,list);
 			setData(index(row,0,list),QVariant(item.jid().full()));
+			setData(index(row,1,list),QVariant(item.reason()));
 			MUCItem i(MUCItem::UnknownRole,item.affiliation());
 			i.setJid(item.jid());
 			items_ += i;

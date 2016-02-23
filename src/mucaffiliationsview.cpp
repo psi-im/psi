@@ -26,11 +26,17 @@
 MUCAffiliationsView::MUCAffiliationsView(QWidget* parent) : QTreeView(parent)
 {
 	setRootIsDecorated(false);
-	header()->hide();
+#ifdef HAVE_QT5
+	header()->setSectionResizeMode(QHeaderView::ResizeToContents);
+#else
+	header()->setResizeMode(QHeaderView::ResizeToContents);;
+#endif
+	setItemsExpandable(false);
 	setItemsExpandable(false);
 	setDragEnabled(true);
 	setAcceptDrops(true);
 	setDropIndicatorShown(true);
+	setSelectionBehavior(QAbstractItemView::SelectRows);
 }
 
 void MUCAffiliationsView::removeCurrent()
