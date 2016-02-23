@@ -344,7 +344,10 @@ public slots:
 
 	void doMiniCmd()
 	{
-		mCmdManager.open(new MCmdSimpleState(MCMDMUC, tr("Command") + '>'), QStringList() );
+		if(mCmdManager.isActive())
+			mCmdManager.processCommand(QString());
+		else
+			mCmdManager.open(new MCmdSimpleState(MCMDMUC, tr("Command") + '>'), QStringList() );
 	}
 
 public:
@@ -354,11 +357,7 @@ public:
 			if (command.count() > 0) cmd = command[0].toLower();
 	/*
 TODO:
-topic <topic>
-invite <jid>
 part [message]
-kick <jid|nickname> [comment]
-ban <jid|nickname>
 
 Maybe?:
 join <channel>{,<channel>}
@@ -388,6 +387,32 @@ join <channel>{,<channel>} [pass{,<pass>}
 			} else if(cmd == "sping") {
 				doSPing();
 				newstate = 0;
+			} else if(cmd == "kick" && command.count() > 1) {
+				command.removeFirst();
+				const QString nick = command.takeFirst().trimmed();
+				QString reason;
+				if(!command.isEmpty()) {
+					reason = command.join(" ");
+				}
+				mucManager->kick(nick, reason);
+			} else if(cmd == "ban" && command.count() > 1) {
+				command.removeFirst();
+				QString nick = command.takeFirst().trimmed();
+				GCUserViewItem *contact = dynamic_cast<GCUserViewItem*>( dlg->ui_.lv_users->findEntry(nick) );
+				if(contact && !contact->s.mucItem().jid().isEmpty()) {
+					nick = contact->s.mucItem().jid().bare();
+				}
+				QString reason;
+				if(!command.isEmpty()) {
+					reason = command.join(" ").trimmed();
+				}
+				mucManager->ban(Jid(nick), reason);
+			} else if(cmd == "invite" && command.count() > 1) {
+				dlg->account()->actionInvite(Jid(command[1].trimmed()), dlg->jid().bare());
+			} else if(cmd == "topic" && command.count() > 1) {
+				command.removeFirst();
+				const QString topic = command.join(" ").trimmed();
+				dlg->setTopic(topic);
 			} else if (cmd == "version" && command.count() > 1) {
 				QString nick = command[1].trimmed();
 				Jid target = dlg->jid().withResource(nick);
@@ -408,6 +433,8 @@ join <channel>{,<channel>} [pass{,<pass>}
 				preset = command;
 				newstate = oldstate;
 				return true;
+			} else if (cmd == "leave") {
+				dlg->close();
 			} else if (!cmd.isEmpty()) {
 				return false;
 			}
@@ -424,10 +451,21 @@ join <channel>{,<channel>} [pass{,<pass>}
 		if (state->getName() == MCMDMUC) {
 			QString spaceAtEnd = QString(QChar(0));
 			if (item == 0) {
-				all << "clear" + spaceAtEnd << "nick" + spaceAtEnd << "sping" + spaceAtEnd << "version" + spaceAtEnd << "idle" + spaceAtEnd << "quote" + spaceAtEnd;
-			} else if (item == 1 && (partcommand[0] == "version" || partcommand[0] == "idle")) {
-				all = dlg->ui_.lv_users->nickList();
+				all << "clear" + spaceAtEnd << "nick" + spaceAtEnd << "kick" + spaceAtEnd << "leave" + spaceAtEnd
+				<< "ban" + spaceAtEnd << "sping" + spaceAtEnd << "version" + spaceAtEnd  << "invite" + spaceAtEnd
+				<< "idle" + spaceAtEnd << "quote" + spaceAtEnd  << "topic" + spaceAtEnd;
+			} else if (item == 1) {
+				if (partcommand[0] == "version" || partcommand[0] == "idle" || partcommand[0] == "kick" || partcommand[0] == "ban") {
+					all = dlg->ui_.lv_users->nickList();
+				} else if (partcommand[0] == "topic") {
+					all << dlg->topic();
+				}
+			} else if (item == 2) {
+				if (partcommand[0] == "kick" || partcommand[0] == "ban") {
+					all << PsiOptions::instance()->getOption("options.muc.reasons").toStringList();
+				}
 			}
+
 		}
 		QStringList res;
 		foreach(QString cmd, all) {
