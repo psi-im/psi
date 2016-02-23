@@ -131,6 +131,21 @@
 	</icon>
 
 	<icon>
+		<x xmlns='name'>psi/notification_chat_delivery_ok_pgp</x>
+		<object mime='image/png'>notification_chat_delivery_ok_pgp.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/notification_chat_receive_pgp</x>
+		<object mime='image/png'>notification_chat_receive_pgp.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/notification_chat_send_pgp</x>
+		<object mime='image/png'>notification_chat_send_pgp.png</object>
+	</icon>
+
+	<icon>
 		<x xmlns='name'>psi/action_muc_hide</x>
 		<object mime='image/png'>action_muc_hide.png</object>
 	</icon>
@@ -425,6 +440,15 @@
 		<object mime='image/png'>action_button_send.png</object>
 	</icon>
 
+	<icon>
+		<x xmlns='name'>psi/autojid</x>
+		<object mime='image/png'>autojid.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/ignore_global_actions</x>
+		<object mime='image/png'>ignore_global_actions.png</object>
+	</icon>
 
 	<!-- FIXME -->
 	<icon>
@@ -485,6 +509,16 @@
 	<icon>
 		<x xmlns='name'>psi/save</x>
 		<object mime='image/png'>filemanager.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/export</x>
+		<object mime='image/png'>export.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>psi/import</x>
+		<object mime='image/png'>import.png</object>
 	</icon>
 
 	<icon>

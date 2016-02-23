@@ -47,7 +47,8 @@
 #include "xmpp_tasks.h"
 #include "lastactivitytask.h"
 #include "avcall/avcall.h"
-
+#include "actionlist.h"
+#include "psiactionlist.h"
 
 #define MCMDCHAT		"http://psi-im.org/ids/mcmd#chatmain"
 
@@ -170,7 +171,8 @@ private:
 
 
 PsiChatDlg::PsiChatDlg(const Jid& jid, PsiAccount* pa, TabManager* tabManager)
-	: ChatDlg(jid, pa, tabManager), mCmdManager_(&mCmdSite_), tabCompletion(&mCmdManager_), autoPGP_(true)
+	: ChatDlg(jid, pa, tabManager), actions_(new ActionList("", 0, false)), mCmdManager_(&mCmdSite_), tabCompletion(&mCmdManager_)
+	, autoPGP_(true)
 {
 	connect(account()->psi(), SIGNAL(accountCountChanged()), this, SLOT(updateIdentityVisibility()));
 	connect(account(), SIGNAL(addedContact(PsiContact*)), SLOT(updateContactAdding(PsiContact*)));
@@ -275,6 +277,7 @@ void PsiChatDlg::updateCountVisibility()
 	else {
 		ui_.lb_count->hide();
 	}
+	delete actions_;
 }
 
 void PsiChatDlg::setLooks()
@@ -302,7 +305,7 @@ void PsiChatDlg::setLooks()
 		ui_.lb_client->show();
 		ui_.lb_status->show();
 		ui_.le_jid->show();
-		if (PsiOptions::instance()->getOption("options.ui.chat.central-toolbar").toBool()) {
+		if (PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m0.visible").toBool()) {
 			ui_.toolbar->show();
 			ui_.tb_actions->hide();
 			ui_.tb_emoticons->hide();
@@ -324,20 +327,20 @@ void PsiChatDlg::setLooks()
 	QIcon i;
 	i.addPixmap(IconsetFactory::icon("psi/cryptoNo").impix(),  QIcon::Normal, QIcon::Off);
 	i.addPixmap(IconsetFactory::icon("psi/cryptoYes").impix(), QIcon::Normal, QIcon::On);
-	act_pgp_->setPsiIcon(0);
-	act_pgp_->setIcon(i);
+	actions_->action("chat_pgp")->setPsiIcon(0);
+	actions_->action("chat_pgp")->setIcon(i);
 }
 
 void PsiChatDlg::setShortcuts()
 {
 	ChatDlg::setShortcuts();
 
-	act_clear_->setShortcuts(ShortcutManager::instance()->shortcuts("chat.clear"));
+	actions_->action("chat_clear")->setShortcuts(ShortcutManager::instance()->shortcuts("chat.clear"));
 // typeahead find bar
-	act_find_->setShortcuts(ShortcutManager::instance()->shortcuts("chat.find"));
+	actions_->action("chat_find")->setShortcuts(ShortcutManager::instance()->shortcuts("chat.find"));
 // -- typeahead
-	act_info_->setShortcuts(ShortcutManager::instance()->shortcuts("common.user-info"));
-	act_history_->setShortcuts(ShortcutManager::instance()->shortcuts("common.history"));
+	actions_->action("chat_info")->setShortcuts(ShortcutManager::instance()->shortcuts("common.user-info"));
+	actions_->action("chat_history")->setShortcuts(ShortcutManager::instance()->shortcuts("common.history"));
 
 	act_mini_cmd_->setShortcuts(ShortcutManager::instance()->shortcuts("chat.quick-command"));
 
@@ -367,11 +370,41 @@ void PsiChatDlg::updateContactAdding(PsiContact* c)
 		Jid rj = realJid();
 		UserListItem *uli;
 		if (rj.isNull() || ((uli = account()->findFirstRelevant(rj)) && (uli->inList() || uli->isSelf()))) {
-			act_add_contact->setVisible(false);
+			actions_->action("chat_add_contact")->setVisible(false);
 		} else {
-			act_add_contact->setVisible(true);
+			actions_->action("chat_add_contact")->setVisible(true);
 		}
 	}
+}
+
+void PsiChatDlg::updateToolbuttons()
+{
+	ui_.toolbar->clear();
+	PsiOptions *options = PsiOptions::instance();
+	QStringList actionsNames = options->getOption("options.ui.contactlist.toolbars.m0.actions").toStringList();
+	foreach (const QString &actionName, actionsNames) {
+		if (actionName == "chat_voice" && !AvCallManager::isSupported()) {
+			continue;
+		}
+		if (actionName == "chat_pgp" && !options->getOption("options.pgp.enable").toBool()) {
+			continue;
+		}
+
+		// Hack. separator action can be added only once.
+		if (actionName == "separator") {
+			ui_.toolbar->addSeparator();
+			continue;
+		}
+
+		IconAction *action = actions_->action(actionName);
+		if (action) {
+			action->addTo(ui_.toolbar);
+			if (actionName == "chat_icon") {
+				((QToolButton *)ui_.toolbar->widgetForAction(action))->setPopupMode(QToolButton::InstantPopup);
+			}
+		}
+	}
+
 }
 
 void PsiChatDlg::copyUserJid()
@@ -395,48 +428,62 @@ void PsiChatDlg::initToolButtons()
 	ui_.vboxLayout1->addLayout(hb3a);
 // -- typeahead
 
-	act_clear_ = new IconAction(tr("Clear Chat Window"), "psi/clearChat", tr("Clear Chat Window"), 0, this);
-	connect(act_clear_, SIGNAL(triggered()), SLOT(doClearButton()));
+	ActionList* list = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Chat).at(0);
+	foreach (const QString &name, list->actions()) {
+		IconAction *action = list->action(name)->copy();
+		action->setParent(this);
+		actions_->addAction(name, action);
+		if (name == "chat_clear") {
+			connect(action, SIGNAL(triggered()), SLOT(doClearButton()));
+		}
+		else if (name == "chat_find") {
+			// typeahead find
+			connect(action, SIGNAL(triggered()), typeahead_, SLOT(toggleVisibility()));
+		// -- typeahead
+		}
+		else if (name == "chat_html_text") {
+			connect(action, SIGNAL(triggered()), chatEdit(), SLOT(doHTMLTextMenu()));
+		}
+		else if (name == "chat_add_contact") {
+			connect(action, SIGNAL(triggered()), SLOT(addContact()));
+		}
+		else if (name == "chat_icon") {
+			connect(account()->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), this, SLOT(addEmoticon(QString)));
+			action->setMenu(account()->psi()->iconSelectPopup());
+			ui_.tb_emoticons->setMenu(account()->psi()->iconSelectPopup());
+		}
+		else if (name == "chat_voice") {
+			connect(action, SIGNAL(triggered()), SLOT(doVoice()));
+			//act_voice_->setEnabled(false);
+			ui_.tb_voice->setDefaultAction(actions_->action("chat_voice"));
+		}
+		else if (name == "chat_file") {
+			connect(action, SIGNAL(triggered()), SLOT(doFile()));
+		}
+		else if (name == "chat_pgp") {
+			ui_.tb_pgp->setDefaultAction(actions_->action("chat_pgp"));
+			connect(action, SIGNAL(triggered(bool)), SLOT(actPgpToggled(bool)));
+		}
+		else if (name == "chat_info") {
+			connect(action, SIGNAL(triggered()), SLOT(doInfo()));
+		}
+		else if (name == "chat_history") {
+			connect(action, SIGNAL(triggered()), SLOT(doHistory()));
+		}
+		else if (name == "chat_compact") {
+			connect(action, SIGNAL(triggered()), SLOT(toggleSmallChat()));
+		}
+		else if (name == "chat_active_contacts") {
+			connect(action, SIGNAL(triggered()), SLOT(actActiveContacts()));
+		}
+	}
 
-// typeahead find
-	act_find_ = new IconAction(tr("Find"), "psi/search", tr("&Find"), 0, this, "", true);
-	connect(act_find_, SIGNAL(triggered()), typeahead_, SLOT(toggleVisibility()));
-// -- typeahead
-
-	act_html_text = new IconAction(tr("Set Text Format"), "psi/text", tr("Set Text Format"), 0, this);
-	connect(act_html_text, SIGNAL(triggered()), chatEdit(), SLOT(doHTMLTextMenu()));
-
-	act_add_contact = new IconAction(tr("Add Contact To Roster"), "psi/addContact", tr("Add Contact"), 0, this);
-	connect(act_add_contact, SIGNAL(triggered()), SLOT(addContact()));
-
-	connect(account()->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), this, SLOT(addEmoticon(QString)));
-	act_icon_ = new IconAction(tr("Select Icon"), "psi/smile", tr("Select Icon"), 0, this);
-	act_icon_->setMenu(account()->psi()->iconSelectPopup());
-	ui_.tb_emoticons->setMenu(account()->psi()->iconSelectPopup());
-
-	act_voice_ = new IconAction(tr("Voice Call"), "psi/avcall", tr("Voice Call"), 0, this);
-	connect(act_voice_, SIGNAL(triggered()), SLOT(doVoice()));
-	//act_voice_->setEnabled(false);
-	ui_.tb_voice->setDefaultAction(act_voice_);
-
-	act_file_ = new IconAction(tr("Send File"), "psi/upload", tr("Send File"), 0, this);
-	connect(act_file_, SIGNAL(triggered()), SLOT(doFile()));
-
-	act_pgp_ = new IconAction(tr("Toggle Encryption"), "", tr("Toggle Encryption"), 0, this, 0, true);
-	ui_.tb_pgp->setDefaultAction(act_pgp_);
-	connect(act_pgp_, SIGNAL(triggered(bool)), SLOT(actPgpToggled(bool)));
-
-	act_info_ = new IconAction(tr("User Info"), "psi/vCard", tr("User Info"), 0, this);
-	connect(act_info_, SIGNAL(triggered()), SLOT(doInfo()));
-
-	act_history_ = new IconAction(tr("Message History"), "psi/history", tr("Message History"), 0, this);
-	connect(act_history_, SIGNAL(triggered()), SLOT(doHistory()));
-
-	act_compact_ = new IconAction(tr("Toggle Compact/Full Size"), "psi/compact", tr("Toggle Compact/Full Size"), 0, this);
-	connect(act_compact_, SIGNAL(triggered()), SLOT(toggleSmallChat()));
-
-	act_active_contacts = new IconAction (tr("Active contacts"), "psi/jabber", tr("Active contacts"), 0, this);
-	connect(act_active_contacts, SIGNAL(triggered()), SLOT(actActiveContacts()));
+	list = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Common).at(0);
+	foreach (const QString &name, list->actions()) {
+		IconAction *action = list->action(name)->copy();
+		action->setParent(this);
+		actions_->addAction(name, action);
+	}
 }
 
 void PsiChatDlg::initToolBar()
@@ -444,24 +491,8 @@ void PsiChatDlg::initToolBar()
 	ui_.toolbar->setWindowTitle(tr("Chat Toolbar"));
 	int s = PsiIconset::instance()->system().iconSize();
 	ui_.toolbar->setIconSize(QSize(s, s));
-	ui_.toolbar->addAction(act_clear_);
-// typeahead find bar
-	ui_.toolbar->addAction(act_find_);
-// -- typeahead
-	ui_.toolbar->addAction(act_html_text);
-	ui_.toolbar->addWidget(new StretchWidget(ui_.toolbar));
-	ui_.toolbar->addAction(act_icon_);
-	ui_.toolbar->addAction(act_file_);
-	if (PsiOptions::instance()->getOption("options.pgp.enable").toBool()) {
-		ui_.toolbar->addAction(act_pgp_);
-	}
-	ui_.toolbar->addAction(act_info_);
-	ui_.toolbar->addAction(act_history_);
-	if (AvCallManager::isSupported()) {
-		ui_.toolbar->addAction(act_voice_);
-	}
-	ui_.toolbar->addAction(act_add_contact);
-	ui_.toolbar->addAction(act_active_contacts);
+
+	updateToolbuttons();
 }
 
 void PsiChatDlg::contextMenuEvent(QContextMenuEvent *)
@@ -714,18 +745,18 @@ void PsiChatDlg::optionsUpdate()
 void PsiChatDlg::updatePGP()
 {
 	if (account()->hasPGP()) {
-		act_pgp_->setEnabled(true);
+		actions_->action("chat_pgp")->setEnabled(true);
 	}
 	else {
 		setPGPEnabled(false);
-		act_pgp_->setEnabled(false);
+		actions_->action("chat_pgp")->setEnabled(false);
 	}
 
 	checkPGPAutostart();
 
 	ui_.tb_pgp->setVisible(account()->hasPGP() &&
 						   !smallChat_ &&
-						   !PsiOptions::instance()->getOption("options.ui.chat.central-toolbar").toBool());
+						   !PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m0.visible").toBool());
 	ui_.log->setEncryptionEnabled(isEncryptionEnabled());
 }
 
@@ -781,7 +812,7 @@ void PsiChatDlg::doClearButton()
 
 void PsiChatDlg::setPGPEnabled(bool enabled)
 {
-	act_pgp_->setChecked(enabled);
+	actions_->action("chat_pgp")->setChecked(enabled);
 	ui_.log->setEncryptionEnabled(enabled);
 }
 
@@ -795,20 +826,20 @@ void PsiChatDlg::buildMenu()
 {
 	// Dialog menu
 	pm_settings_->clear();
-	pm_settings_->addAction(act_compact_);
-	pm_settings_->addAction(act_clear_);
+	pm_settings_->addAction(actions_->action("chat_compact"));
+	pm_settings_->addAction(actions_->action("chat_clear"));
 	pm_settings_->addSeparator();
 
-	pm_settings_->addAction(act_icon_);
-	pm_settings_->addAction(act_file_);
+	pm_settings_->addAction(actions_->action("chat_icon_"));
+	pm_settings_->addAction(actions_->action("chat_file"));
 	if (AvCallManager::isSupported()) {
-		pm_settings_->addAction(act_voice_);
+		pm_settings_->addAction(actions_->action("chat_voice"));
 	}
-	pm_settings_->addAction(act_pgp_);
+	pm_settings_->addAction(actions_->action("chat_pgp"));
 	pm_settings_->addSeparator();
 
-	pm_settings_->addAction(act_info_);
-	pm_settings_->addAction(act_history_);
+	pm_settings_->addAction(actions_->action("chat_info"));
+	pm_settings_->addAction(actions_->action("chat_history"));
 }
 
 void PsiChatDlg::updateCounter()
@@ -818,7 +849,7 @@ void PsiChatDlg::updateCounter()
 
 bool PsiChatDlg::isEncryptionEnabled() const
 {
-	return act_pgp_->isChecked();
+	return actions_->action("chat_pgp")->isChecked();
 }
 
 void PsiChatDlg::appendSysMsg(const QString &str)

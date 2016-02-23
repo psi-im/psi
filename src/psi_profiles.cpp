@@ -1358,6 +1358,62 @@ bool OptionsMigration::fromFile(const QString &fname)
 
 void OptionsMigration::lateMigration()
 {
+	// Add default chat and groupchat toolbars
+	if (PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m0.name").toString() != "Chat") {
+		QStringList pluginsKeys;
+		ToolbarPrefs chatToolbar;
+		chatToolbar.on = PsiOptions::instance()->getOption("options.ui.chat.central-toolbar").toBool();
+		PsiOptions::instance()->removeOption("options.ui.chat.central-toolbar");
+		chatToolbar.name = "Chat";
+		chatToolbar.keys << "chat_clear"  << "chat_find" << "chat_html_text" << "chat_add_contact";
+		chatToolbar.keys += pluginsKeys;
+		chatToolbar.keys << "spacer" << "chat_icon" << "chat_file"
+						 << "chat_pgp" << "chat_info" << "chat_history" << "chat_voice"
+						 << "chat_active_contacts";
+
+		if (PsiOptions::instance()->getOption("options.ui.chat.disable-paste-send").toBool()) {
+			chatToolbar.keys.removeAt(chatToolbar.keys.indexOf("chat_ps"));
+		}
+
+		ToolbarPrefs groupchatToolbar;
+		groupchatToolbar.on = chatToolbar.on;
+
+		groupchatToolbar.name = "Groupchat";
+		groupchatToolbar.keys << "gchat_clear"  << "gchat_find" << "gchat_html_text" << "gchat_configure";
+		groupchatToolbar.keys += pluginsKeys;
+		groupchatToolbar.keys << "spacer" << "gchat_icon" ;
+
+		if (PsiOptions::instance()->getOption("options.ui.chat.disable-paste-send").toBool()) {
+			groupchatToolbar.keys.removeAt(groupchatToolbar.keys.indexOf("gchat_ps"));
+		}
+		PsiOptions::instance()->removeOption("options.ui.chat.disable-paste-send");
+
+		QList<ToolbarPrefs> toolbars;
+		toolbars << chatToolbar
+		         << groupchatToolbar;
+
+		QStringList toolbarBases = PsiOptions::instance()->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
+		foreach(QString base, toolbarBases) {
+			ToolbarPrefs tb;
+			tb.id = PsiOptions::instance()->getOption(base + ".key").toString();
+			tb.name = PsiOptions::instance()->getOption(base + ".name").toString();
+			tb.on = PsiOptions::instance()->getOption(base + ".visible").toBool();
+			tb.locked = PsiOptions::instance()->getOption(base + ".locked").toBool();
+			tb.dock = (Qt3Dock)PsiOptions::instance()->getOption(base + ".dock.position").toInt(); //FIXME
+			tb.nl = PsiOptions::instance()->getOption(base + ".dock.nl").toBool();
+			tb.keys = PsiOptions::instance()->getOption(base + ".actions").toStringList();
+
+			toolbars << tb;
+		}
+
+		PsiOptions::instance()->removeOption("options.ui.contactlist.toolbars", true);
+
+		foreach(ToolbarPrefs tb, toolbars) {
+			tb.locked = true;
+			PsiToolBar::structToOptions(PsiOptions::instance(), tb);
+		}
+	}
+
 	foreach(QString opt, PsiOptions::instance()->allOptionNames()) {
 		if (opt.startsWith("options.status.presets.") ||
 			opt.startsWith("options.iconsets.service-status.") ||

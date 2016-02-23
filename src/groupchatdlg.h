@@ -155,6 +155,7 @@ private:
 	void appendSysMsg(const MessageView &);
 	void appendMessage(const Message &, bool);
 	void setLooks();
+	void setToolbuttons();
 
 	void mucKickMsgHelper(const QString &nick, const Status &s, const QString &nickJid, const QString &title,
 			const QString &youSimple, const QString &youBy, const QString &someoneSimple,

@@ -23,6 +23,10 @@
 #include <QList>
 #include <QVBoxLayout>
 
+#define CHAT_TOOLBAR       0
+#define GROUPCHAT_TOOLBAR  1
+#define ROSTER_TOOLBAR     2
+
 class LookFeelToolbarsUI : public QWidget, public Ui::LookFeelToolbars
 {
 public:
@@ -39,11 +43,40 @@ class OptionsTabToolbars::Private
 {
 public:
 	QList<ToolbarPrefs> toolbars;
+	class OptionsTabToolbars *q;
 
 	PsiActionList::ActionsType class2id() {
 		int ret = (int)PsiActionList::Actions_Common;
 		ret |= (int)PsiActionList::Actions_MainWin;
 		return (PsiActionList::ActionsType)ret;
+	}
+
+	PsiActionList::ActionsType class2idChat() {
+		int ret = (int)PsiActionList::Actions_Common;
+		ret |= (int)PsiActionList::Actions_Chat;
+		return (PsiActionList::ActionsType)ret;
+	}
+
+	PsiActionList::ActionsType class2idGroupchat() {
+		int ret = (int)PsiActionList::Actions_Common;
+		ret |= (int)PsiActionList::Actions_Groupchat;
+		return (PsiActionList::ActionsType)ret;
+	}
+
+	PsiActionList::ActionsType currentType() {
+		PsiActionList::ActionsType type;
+		LookFeelToolbarsUI *d = (LookFeelToolbarsUI*) q->w;
+
+		if (d->cb_toolbars->currentIndex() == CHAT_TOOLBAR) {
+			type = class2idChat();
+		}
+		else if (d->cb_toolbars->currentIndex() == GROUPCHAT_TOOLBAR) {
+			type = class2idGroupchat();
+		}
+		else {
+			type = class2id();
+		}
+		return type;
 	}
 };
 
@@ -52,6 +85,7 @@ OptionsTabToolbars::OptionsTabToolbars(QObject *parent)
 {
 	w = 0;
 	p = new Private();
+	p->q = this;
 
 	noDirty = false;
 }
@@ -185,7 +219,11 @@ void OptionsTabToolbars::restoreOptions()
 
 	PsiOptions *o = PsiOptions::instance();
 
-	QStringList toolbarBases = o->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
+	QStringList toolbarBases;
+	toolbarBases = o->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
+
+	QString chatToolbarName = tr("Chat");
+	QString groupchatToolbarName = tr("Groupchat");
 
 	foreach(QString base, toolbarBases) {
 		ToolbarPrefs tb;
@@ -206,15 +244,19 @@ void OptionsTabToolbars::restoreOptions()
 		tb.keys = o->getOption(base + ".actions").toStringList();
 
 		p->toolbars << tb;
-		d->cb_toolbars->addItem(tb.name);
+		if (tb.name == "Chat") {
+			d->cb_toolbars->addItem(chatToolbarName);
+		}
+		else if (tb.name == "Groupchat") {
+			d->cb_toolbars->addItem(groupchatToolbarName);
+		}
+		else {
+			d->cb_toolbars->addItem(tb.name);
+		}
 	}
 
-	if (d->cb_toolbars->count() > 0) {
-		d->cb_toolbars->setCurrentIndex(0);
-		toolbarSelectionChanged(0);
-	}
-	else
-		toolbarSelectionChanged(-1);
+	d->cb_toolbars->setCurrentIndex(0);
+	toolbarSelectionChanged(0);
 }
 
 //----------------------------------------------------------------------------
@@ -316,7 +358,8 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 	d->le_toolbarName->setEnabled(enable);
 	// d->pb_toolbarPosition->setEnabled(enable && moveable);
 	d->ck_toolbarOn->setEnabled(enable);
-	d->ck_toolbarLocked->setEnabled(enable && moveable);
+	d->ck_toolbarLocked->setEnabled(enable);
+	d->ck_toolbarLocked->setVisible(item >= ROSTER_TOOLBAR || item < CHAT_TOOLBAR);
 	// d->ck_toolbarStretch->setEnabled(enable && moveable);
 	d->lw_selectedActions->setEnabled(enable && customizeable);
 	d->tw_availActions->setEnabled(enable && customizeable);
@@ -324,8 +367,9 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 	d->tb_down->setEnabled(enable && customizeable);
 	d->tb_left->setEnabled(enable && customizeable);
 	d->tb_right->setEnabled(enable && customizeable);
-	d->pb_deleteToolbar->setEnabled(enable);
+	d->pb_deleteToolbar->setEnabled((item >= CHAT_TOOLBAR && item < ROSTER_TOOLBAR) ? false : enable);
 	d->cb_toolbars->setEnabled(enable);
+	d->w_toolbarName->setVisible(item >= ROSTER_TOOLBAR || item < CHAT_TOOLBAR);
 
 	d->tw_availActions->clear();
 	d->lw_selectedActions->clear();
@@ -340,9 +384,11 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 	ToolbarPrefs tb;
 	tb = p->toolbars[n];
 
-	d->le_toolbarName->setText(tb.name);
+	if (item > 1) {
+		d->le_toolbarName->setText(tb.name);
+		d->ck_toolbarLocked->setChecked(tb.locked || !moveable);
+	}
 	d->ck_toolbarOn->setChecked(tb.on);
-	d->ck_toolbarLocked->setChecked(tb.locked || !moveable);
 	// d->ck_toolbarStretch->setChecked(tb.stretchable);
 
 	{
@@ -350,7 +396,9 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 		QTreeWidget *tw = d->tw_availActions;
 		QTreeWidgetItem *lastRoot = 0;
 
-		foreach(ActionList* actionList, psi->actionList()->actionLists(p->class2id())) {
+		QList<ActionList*> lists = psi->actionList()->actionLists(p->currentType());
+
+		foreach(ActionList* actionList, lists) {
 			QTreeWidgetItem *root = new QTreeWidgetItem(tw, lastRoot);
 			lastRoot = root;
 			root->setText(0, actionList->name());
@@ -381,7 +429,7 @@ void OptionsTabToolbars::toolbarSelectionChanged(int item)
 
 	QStringList::Iterator it = tb.keys.begin();
 	for (; it != tb.keys.end(); ++it) {
-		addToolbarAction(d->lw_selectedActions, *it, p->class2id());
+		addToolbarAction(d->lw_selectedActions, *it, p->currentType());
 	}
 	updateArrows();
 
@@ -511,7 +559,7 @@ void OptionsTabToolbars::toolbarAddAction()
 	if (!item || item->data(0, Qt::UserRole).toString().isEmpty())
 		return;
 
-	addToolbarAction(d->lw_selectedActions, item->data(0, Qt::UserRole).toString(), p->class2id());
+	addToolbarAction(d->lw_selectedActions, item->data(0, Qt::UserRole).toString(), p->currentType());
 	rebuildToolbarKeys();
 	updateArrows();
 }
@@ -542,9 +590,11 @@ void OptionsTabToolbars::toolbarDataChanged()
 	ToolbarPrefs tb = p->toolbars[n];
 
 	tb.dirty = true;
-	tb.name = d->le_toolbarName->text();
+	if (n > 1) {
+		tb.name = d->le_toolbarName->text();
+		tb.locked = d->ck_toolbarLocked->isChecked();
+	}
 	tb.on = d->ck_toolbarOn->isChecked();
-	tb.locked = d->ck_toolbarLocked->isChecked();
 	// tb.stretchable = d->ck_toolbarStretch->isChecked();
 
 	p->toolbars[n] = tb;

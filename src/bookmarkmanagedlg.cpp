@@ -29,6 +29,7 @@
 #include "bookmarkmanager.h"
 #include "psiaccount.h"
 #include "fileutil.h"
+#include "iconset.h"
 
 BookmarkManageDlg::BookmarkManageDlg(PsiAccount* account)
 	: QDialog()
@@ -47,8 +48,8 @@ BookmarkManageDlg::BookmarkManageDlg(PsiAccount* account)
 
 	ui_.autoJoin->addItems(ConferenceBookmark::joinTypeNames());
 
-	ui_.pb_import->setIcon(IconsetFactory::icon("psi/cm_import").icon());
-	ui_.pb_export->setIcon(IconsetFactory::icon("psi/cm_export").icon());
+	ui_.pb_import->setIcon(IconsetFactory::icon("psi/import").icon());
+	ui_.pb_export->setIcon(IconsetFactory::icon("psi/export").icon());
 	connect(ui_.pb_import, SIGNAL(clicked()), SLOT(importBookmarks()));
 	connect(ui_.pb_export, SIGNAL(clicked()), SLOT(exportBookmarks()));
 

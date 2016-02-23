@@ -379,8 +379,8 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 	if (allInOne) {
 		QString toolOpt = "options.ui.contactlist.toolbars";
 		foreach(QString base, PsiOptions::instance()->getChildOptionNames(toolOpt, true, true)) {
-			// toolbar "Show contacts" is second, so check m1
-			if (base == toolOpt + ".m1") {
+			// toolbar "Show contacts" is fourth, so check m3
+			if (base == toolOpt + ".m3") {
 				d->viewToolBar = new PsiToolBar(base, rosterBar, d->psi->actionList());
 				d->viewToolBar->initialize();
 				connect(d->viewToolBar, SIGNAL(customize()), d->psi, SLOT(doToolbars()));
@@ -857,8 +857,14 @@ void MainWin::buildToolbars()
 	qDeleteAll(toolbars_);
 	toolbars_.clear();
 
-	bool allInOne = PsiOptions::instance()->getOption("options.ui.tabs.grouping").toString().contains('A');
-	foreach(QString base, PsiOptions::instance()->getChildOptionNames("options.ui.contactlist.toolbars", true, true)) {
+	PsiOptions *options = PsiOptions::instance();
+	bool allInOne = options->getOption("options.ui.tabs.grouping").toString().contains('A');
+	foreach(const QString &base, options->getChildOptionNames("options.ui.contactlist.toolbars", true, true)) {
+		QString toolbarName = options->getOption(base + ".name").toString();
+		if (toolbarName == "Chat" || toolbarName == "Groupchat") {
+			continue;
+		}
+
 		PsiToolBar* tb;
 		if (allInOne) {
 			if (d && d->viewToolBar && (d->viewToolBar->base() == base))

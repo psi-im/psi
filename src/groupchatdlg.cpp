@@ -54,6 +54,7 @@
 #include <QFormLayout>
 #include <QClipboard>
 
+#include "psiactionlist.h"
 #include "psicon.h"
 #include "psiaccount.h"
 #include "capsmanager.h"
@@ -200,7 +201,13 @@ public:
 
 		trackBar = false;
 		mCmdManager.registerProvider(this);
+		actions = new ActionList("", 0, false);
 	}
+
+	~Private() {
+		delete actions;
+	}
+
 
 	GCMainDlg *dlg;
 	int state;
@@ -209,8 +216,8 @@ public:
 	QString password;
 	QString topic;
 	bool nonAnonymous;		 // got status code 100 ?
-	IconAction *act_find, *act_clear, *act_icon, *act_configure, *act_bookmark;
-	IconAction *act_html_text;
+	ActionList *actions;
+	IconAction *act_bookmark;
 	TypeAheadFindBar *typeahead;
 //#ifdef WHITEBOARDING
 //	IconAction *act_whiteboard;
@@ -692,7 +699,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 #ifndef HAVE_QT5
 	ui_.lv_users->model()->setSupportedDragActions(Qt::CopyAction);
 #endif
-	if ( PsiOptions::instance()->getOption("options.ui.contactlist.disable-scrollbar").toBool() ) {
+	if (PsiOptions::instance()->getOption("options.ui.contactlist.disable-scrollbar").toBool() ) {
 		ui_.lv_users->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	}
 	connect(ui_.lv_users, SIGNAL(action(const QString &, const Status &, int)), SLOT(lv_action(const QString &, const Status &, int)));
@@ -704,27 +711,47 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	hb3a->addWidget( d->typeahead );
 	ui_.vboxLayout1->addLayout(hb3a);
 
-	d->act_clear = new IconAction (tr("Clear Chat Window"), "psi/clearChat", tr("Clear Chat Window"), 0, this);
-	connect( d->act_clear, SIGNAL(triggered()), SLOT(doClearButton()));
+	ActionList* actList = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Groupchat).at(0);
+	foreach (const QString &name, actList->actions()) {
+		IconAction *action = actList->action(name)->copy();
+		action->setParent(this);
+		d->actions->addAction(name, action);
 
-	d->act_find = new IconAction(tr("Find"), "psi/search", tr("&Find"), 0, this, "", true);
-	connect(d->act_find, SIGNAL(triggered()), d->typeahead, SLOT(toggleVisibility()));
+		if (name == "gchat_clear") {
+			connect(action, SIGNAL(triggered()), SLOT(doClearButton()));
+		}
+		else if (name == "gchat_find") {
+			// typeahead find
+			connect(action, SIGNAL(triggered()), d->typeahead, SLOT(toggleVisibility()));
+		// -- typeahead
+		}
+		else if (name == "gchat_configure") {
+			connect(action, SIGNAL(triggered()), SLOT(configureRoom()));
+		}
+		else if (name == "gchat_html_text") {
+			connect(action, SIGNAL(triggered()), d->mle(), SLOT(doHTMLTextMenu()));
+		}
+		else if (name == "gchat_icon") {
+			connect(account()->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
+			action->setMenu(pa->psi()->iconSelectPopup());
+			ui_.tb_emoticons->setMenu(pa->psi()->iconSelectPopup());
+		}
+		else if (name == "gchat_info") {
+			connect(action, SIGNAL(triggered()), SLOT(doInfo()));
+		}
+	}
 
-	d->act_configure = new IconAction(tr("Configure Room"), "psi/configure-room", tr("&Configure Room"), 0, this);
-	connect(d->act_configure, SIGNAL(triggered()), SLOT(configureRoom()));
-
-	d->act_html_text = new IconAction(tr("Set Text Format"), "psi/text", tr("Set Text Format"), 0, this);
-	connect(d->act_html_text, SIGNAL(triggered()), d->mle(), SLOT(doHTMLTextMenu()));
+	actList = account()->psi()->actionList()->actionLists(PsiActionList::Actions_Common).at(0);
+	foreach (const QString &name, actList->actions()) {
+		IconAction *action = actList->action(name)->copy();
+		action->setParent(this);
+		d->actions->addAction(name, action);
+	}
 
 //#ifdef WHITEBOARDING
 //	d->act_whiteboard = new IconAction(tr("Open a Whiteboard"), "psi/whiteboard", tr("Open a &Whiteboard"), 0, this);
 //	connect(d->act_whiteboard, SIGNAL(triggered()), SLOT(openWhiteboard()));
 //#endif
-
-	connect(pa->psi()->iconSelectPopup(), SIGNAL(textSelected(QString)), d, SLOT(addEmoticon(QString)));
-	d->act_icon = new IconAction( tr( "Select Icon" ), "psi/smile", tr( "Select Icon" ), 0, this );
-	d->act_icon->setMenu( pa->psi()->iconSelectPopup() );
-	ui_.tb_emoticons->setMenu(pa->psi()->iconSelectPopup());
 
 	d->act_nick = new QAction(this);
 	d->act_nick->setText(tr("Change Nickname..."));
@@ -754,15 +781,10 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 
 	int s = PsiIconset::instance()->system().iconSize();
 	ui_.toolbar->setIconSize(QSize(s,s));
-	ui_.toolbar->addAction(d->act_clear);
-	ui_.toolbar->addAction(d->act_find);
-	ui_.toolbar->addAction(d->act_configure);
-	ui_.toolbar->addAction(d->act_html_text);
+
 //#ifdef WHITEBOARDING
 //	ui_.toolbar->addAction(d->act_whiteboard);
 //#endif
-	ui_.toolbar->addWidget(new StretchWidget(ui_.toolbar));
-	ui_.toolbar->addAction(d->act_icon);
 	ui_.toolbar->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Maximum);
 
 	// Common actions
@@ -827,6 +849,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	connect(d->mucManager, SIGNAL(action_success(MUCManager::Action)), ui_.lv_users, SLOT(update()));
 
 	setLooks();
+	setToolbuttons();
 	setShortcuts();
 	invalidateTab();
 	setConnecting();
@@ -894,8 +917,9 @@ void GCMainDlg::ensureTabbedCorrectly()
 
 void GCMainDlg::setShortcuts()
 {
-	d->act_clear->setShortcuts(ShortcutManager::instance()->shortcuts("chat.clear"));
-	d->act_find->setShortcuts(ShortcutManager::instance()->shortcuts("chat.find"));
+
+	d->actions->action("gchat_clear")->setShortcuts(ShortcutManager::instance()->shortcuts("chat.clear"));
+	d->actions->action("gchat_find")->setShortcuts(ShortcutManager::instance()->shortcuts("chat.find"));
 	d->act_send->setShortcuts(ShortcutManager::instance()->shortcuts("chat.send"));
 	if (!isTabbed()) {
 		d->act_close->setShortcuts(ShortcutManager::instance()->shortcuts("common.close"));
@@ -1449,7 +1473,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 		if (d->configDlg) {
 			d->configDlg->setRoleAffiliation(s.mucItem().role(),s.mucItem().affiliation());
 		}
-		d->act_configure->setEnabled(s.mucItem().affiliation() >= MUCItem::Member);
+		d->actions->action("gchat_configure")->setEnabled(s.mucItem().affiliation() >= MUCItem::Member);
 	}
 
 	PsiOptions *options_ = PsiOptions::instance();
@@ -1886,7 +1910,7 @@ void GCMainDlg::setLooks()
 	f.fromString(PsiOptions::instance()->getOption("options.ui.look.font.contactlist").toString());
 	ui_.lv_users->setFont(f);
 
-	if (PsiOptions::instance()->getOption("options.ui.chat.central-toolbar").toBool()) {
+	if (PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m1.visible").toBool()) {
 		ui_.toolbar->show();
 		ui_.tb_actions->hide();
 		ui_.tb_emoticons->hide();
@@ -1914,6 +1938,28 @@ void GCMainDlg::setLooks()
 	ui_.lv_users->setLooks();
 }
 
+void GCMainDlg::setToolbuttons()
+{
+	ui_.toolbar->clear();
+	PsiOptions *options = PsiOptions::instance();
+	QStringList actionsNames = options->getOption("options.ui.contactlist.toolbars.m1.actions").toStringList();
+	foreach (const QString &actionName, actionsNames) {
+		// Hack. separator action can be added only once.
+		if (actionName == "separator") {
+			ui_.toolbar->addSeparator();
+			continue;
+		}
+
+		IconAction *action = d->actions->action(actionName);
+		if (action) {
+			action->addTo(ui_.toolbar);
+			if (actionName == "gchat_icon" || actionName == "gchat_templates") {
+				((QToolButton *)ui_.toolbar->widgetForAction(action))->setPopupMode(QToolButton::InstantPopup);
+			}
+		}
+	}
+}
+
 void GCMainDlg::optionsUpdate()
 {
 	/*QMimeSourceFactory *m = ui_.log->mimeSourceFactory();
@@ -1921,6 +1967,7 @@ void GCMainDlg::optionsUpdate()
 	delete m;*/
 
 	setLooks();
+	setToolbuttons();
 	setShortcuts();
 	d->typeahead->optionsUpdate();
 	// update status icons
@@ -2046,14 +2093,14 @@ void GCMainDlg::buildMenu()
 	// Dialog menu
 	d->pm_settings->clear();
 
-	d->act_clear->addTo( d->pm_settings );
-	d->act_configure->addTo( d->pm_settings );
+	d->actions->action("gchat_clear")->addTo( d->pm_settings );
+	d->actions->action("gchat_configure")->addTo( d->pm_settings );
 //#ifdef WHITEBOARDING
 //	d->act_whiteboard->addTo( d->pm_settings );
 //#endif
 	d->pm_settings->addSeparator();
 
-	d->pm_settings->addAction(d->act_icon);
+	d->pm_settings->addAction(d->actions->action("gchat_icon"));
 	d->pm_settings->addAction(d->act_nick);
 	d->pm_settings->addAction(d->act_bookmark);
 }

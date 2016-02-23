@@ -31,9 +31,7 @@
 #include "statuspreset.h"
 #include "psitoolbar.h"
 #include "common.h"
-
 using namespace XMPP;
-
 
 // ----------------------------------------------------------------------------
 
@@ -183,6 +181,23 @@ bool PsiOptions::newProfile()
 	            ).toOptions(this);
 
 	{
+		QStringList pluginsKeys;
+		ToolbarPrefs chatToolbar;
+		chatToolbar.on = true;
+		chatToolbar.name = "Chat";
+		chatToolbar.keys << "chat_clear"  << "chat_find" << "chat_html_text" << "chat_add_contact";
+		chatToolbar.keys += pluginsKeys;
+		chatToolbar.keys << "spacer" << "chat_icon" << "chat_file"
+						 << "chat_pgp" << "chat_info" << "chat_history" << "chat_voice"
+						 << "chat_active_contacts";
+
+		ToolbarPrefs groupchatToolbar;
+		groupchatToolbar.on = true;
+		groupchatToolbar.name = "Groupchat";
+		groupchatToolbar.keys << "gchat_clear"  << "gchat_find" << "gchat_html_text" << "gchat_configure";
+		groupchatToolbar.keys += pluginsKeys;
+		groupchatToolbar.keys << "spacer" << "gchat_icon" ;
+
 		ToolbarPrefs buttons;
 		buttons.name = tr("Buttons");
 #ifndef Q_OS_MAC
@@ -201,7 +216,9 @@ bool PsiOptions::newProfile()
 		eventNotifier.dock = Qt3Dock_Bottom;
 
 		QList<ToolbarPrefs> toolbars;
-		toolbars << buttons
+		toolbars << chatToolbar
+		         << groupchatToolbar
+				 << buttons
 		         << showContacts
 		         << eventNotifier;
 		foreach(ToolbarPrefs tb, toolbars) {
@@ -370,4 +387,3 @@ void PsiOptions::resetOption(const QString &name)
 
 PsiOptions* PsiOptions::instance_ = NULL;
 PsiOptions* PsiOptions::defaults_ = NULL;
-

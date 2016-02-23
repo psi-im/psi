@@ -55,7 +55,7 @@ public:
 		action = act;
 		Q_ASSERT(action);
 
-		if (parent->isWidgetType())
+		if (parent && parent->isWidgetType())
 			((QWidget *)parent)->addAction(action);
 
 #ifdef Q_OS_MAC

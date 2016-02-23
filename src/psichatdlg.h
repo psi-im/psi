@@ -11,6 +11,7 @@
 #include "ui_chatdlg.h"
 #include "typeaheadfind.h"
 #include "widgets/actionlineedit.h"
+#include "actionlist.h"
 
 class IconAction;
 class PsiContact;
@@ -44,6 +45,7 @@ private slots:
 	void updateContactAdding(const Jid &j);
 	void contactChanged();
 	QString makeContactName(const QString &name, const Jid &jid) const;
+	void updateToolbuttons();
 	void doSwitchJidMode();
 	void copyUserJid();
 	void actActiveContacts();
@@ -81,18 +83,7 @@ private:
 
 	QMenu* pm_settings_;
 
-	IconAction* act_clear_;
-	IconAction* act_history_;
-	IconAction* act_info_;
-	IconAction* act_pgp_;
-	IconAction* act_icon_;
-	IconAction* act_file_;
-	IconAction* act_compact_;
-	IconAction* act_voice_;
-	IconAction* act_find_;
-	IconAction* act_html_text;
-	IconAction* act_add_contact;
-
+	ActionList* actions_;
 	QAction *act_mini_cmd_;
 	TypeAheadFindBar *typeahead_;
 
