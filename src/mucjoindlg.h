@@ -46,7 +46,7 @@ public:
 	~MUCJoinDlg();
 
 	void setJid(const XMPP::Jid& jid);
-	void setNick(const QString nick);
+	void setNick(const QString& nick);
 	void setPassword(const QString& password);
 
 	void joined();
@@ -76,6 +76,7 @@ private:
 	QPushButton* joinButton_;
 	XMPP::Jid jid_;
 	MucJoinReason reason_;
+	bool nickAlreadyCompleted_;
 
 	void disableWidgets();
 	void enableWidgets();

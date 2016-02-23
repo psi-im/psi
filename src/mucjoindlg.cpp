@@ -30,8 +30,12 @@
 #include "psicontactlist.h"
 #include "groupchatdlg.h"
 
+static const int nickConflictCode = 409;
+static const QString additionalSymbol = "_";
+
 MUCJoinDlg::MUCJoinDlg(PsiCon* psi, PsiAccount* pa)
 	: QDialog(0)
+	, nickAlreadyCompleted_(false)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
 	setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint);
@@ -202,21 +206,31 @@ void MUCJoinDlg::joined()
 	controller_->recentGCAdd(jid_.full());
 	ui_.busy->stop();
 
+	nickAlreadyCompleted_ = false;
 	closeDialogs(this);
 	deleteLater();
 	account_->addMucItem(jid_.bare());
 }
 
-void MUCJoinDlg::error(int, const QString &str)
+void MUCJoinDlg::error(int error, const QString &str)
 {
-	if(!isVisible())
-		show();
-
 	ui_.busy->stop();
 	setWidgetsEnabled(true);
 
 	account_->dialogUnregister(this);
 	controller_->dialogRegister(this);
+
+	if(!nickAlreadyCompleted_ && reason_ == MucAutoJoin && error == nickConflictCode) {
+		nickAlreadyCompleted_ = true;
+		ui_.le_nick->setText(ui_.le_nick->text() + additionalSymbol);
+		doJoin(reason_);
+		return;
+	}
+
+	if(!isVisible())
+		show();
+
+	nickAlreadyCompleted_ = false;
 
 	QMessageBox* msg = new QMessageBox(QMessageBox::Information, tr("Error"), tr("Unable to join groupchat.\nReason: %1").arg(str), QMessageBox::Ok, this);
 	msg->setAttribute(Qt::WA_DeleteOnClose, true);
@@ -230,7 +244,7 @@ void MUCJoinDlg::setJid(const Jid& mucJid)
 	ui_.le_room->setText(mucJid.node());
 }
 
-void MUCJoinDlg::setNick(const QString nick)
+void MUCJoinDlg::setNick(const QString& nick)
 {
 	ui_.le_nick->setText(nick);
 }
