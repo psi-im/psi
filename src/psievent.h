@@ -54,6 +54,9 @@ public:
 	typedef QSharedPointer<PsiEvent> Ptr;
 	enum {
 		Message,
+#ifdef WHITEBOARDING
+		Sxe,
+#endif
 		Auth,
 		PGP,
 		File,
@@ -176,6 +179,27 @@ private:
 	QString v_nick;
 	QString v_at;
 };
+
+#ifdef WHITEBOARDING
+class SxeEvent : public MessageEvent
+{
+	Q_OBJECT
+public:
+	SxeEvent(int id, PsiAccount *acc)
+		: MessageEvent(acc), id_(id) {}
+	SxeEvent(const SxeEvent &from)
+		: MessageEvent(from), id_(from.id()) {}
+	~SxeEvent() {}
+	typedef QSharedPointer<SxeEvent> Ptr;
+	int type() const { return Sxe; }
+//	XMPP::Jid from() const { return jid(); }
+//	void setFrom(const XMPP::Jid &) {  }
+	int id() const { return id_; }
+
+private:
+	int id_;
+};
+#endif
 
 // request pgp passphrase
 class PGPEvent : public PsiEvent

@@ -91,6 +91,9 @@ class GoogleFileTransfer;
 #endif
 class PsiIcon;
 class QIcon;
+#ifdef WHITEBOARDING
+class WbManager;
+#endif
 
 // sick sick remove this someday please!
 struct GCContact;
@@ -135,6 +138,9 @@ public:
 	PrivacyManager* privacyManager() const;
 	CapsManager* capsManager() const;
 	VoiceCaller* voiceCaller() const;
+#ifdef WHITEBOARDING
+	WbManager* wbManager() const;
+#endif
 	Status status() const;
 	static Status loggedOutStatus();
 	int defaultPriority(const XMPP::Status &);
@@ -436,6 +442,10 @@ private slots:
 	void reconnect();
 	void disconnect();
 	void enableNotifyOnline();
+
+#ifdef WHITEBOARDING
+	void wbRequest(const Jid& j, int id);
+#endif
 
 	void itemPublished(const Jid&, const QString&, const PubSubItem&);
 	void itemRetracted(const Jid&, const QString&, const PubSubRetraction&);

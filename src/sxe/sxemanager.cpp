@@ -50,9 +50,9 @@ SxeManager::SxeManager(Client* client, PsiAccount* pa) : client_(client) {
 	connect(&negotiationTimer_, SIGNAL(timeout()), SLOT(negotiationTimeout()));
 }
 
-void SxeManager::addInvitationCallback(bool (*callback)(const Jid &peer, const QList<QString> &features)) {
-	invitationCallbacks_ += callback;
-}
+//void SxeManager::addInvitationCallback(bool (*callback)(const Jid &peer, const QList<QString> &features)) {
+//	invitationCallbacks_ += callback;
+//}
 
 void SxeManager::messageReceived(const Message &message) {
 	// only process messages that contain a <sxe/> with a nonempty
@@ -269,8 +269,9 @@ bool SxeManager::processNegotiationAsJoiner(const QDomNode &negotiationElement, 
 
 		// check if one of the invitation callbacks accepts the invitation.
 		const QString sessionId = negotiation->sessionId;
-		foreach(bool (*callback)(const Jid &peer, const QList<QString> &features), invitationCallbacks_) {
-			bool result = callback(negotiation->peer, negotiation->features);
+//		foreach(bool (*callback)(const Jid &peer, const QList<QString> &features), invitationCallbacks_) {
+			bool result = false; //callback(negotiation->peer, negotiation->features);
+			emit invitationCallback(negotiation->peer, negotiation->features, &result);
 			if (!negotiations_.contains(sessionId, negotiation)) { //FIXME that's wrong. negotiation can be replaced with new one with the same address
 				return false;
 			}
@@ -279,7 +280,8 @@ bool SxeManager::processNegotiationAsJoiner(const QDomNode &negotiationElement, 
 				negotiation->state = SxeNegotiation::InvitationAccepted;
 				return true;
 			}
-		}
+			return false;
+//		}
 		// othewise abort negotiation
 		abortNegotiation(negotiation);
 		return false;

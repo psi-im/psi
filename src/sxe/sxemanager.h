@@ -101,8 +101,8 @@ public:
 	 *  If such session doesn't exits, returns 0.
 	 */
 	QPointer<SxeSession> findSession(const QString &session);
-	/*! \brief Add a callback for invitations.*/
-	void addInvitationCallback(bool (*callback)(const Jid &peer, const QList<QString> &features));
+//	/*! \brief Add a callback for invitations.*/
+//	void addInvitationCallback(bool (*callback)(const Jid &peer, const QList<QString> &features));
 	/*! \brief Starts a new session negotiation to the specified contact with given list of features.*/
 	void startNewSession(const Jid &target, const Jid &ownJid, bool groupChat, const QDomDocument &initialDoc, QList<QString> features = QList<QString>());
 	/*! \brief Join an existing session.*/
@@ -117,6 +117,8 @@ signals:
 	void sessionNegotiated(SxeSession* session);
 	/*! \brief Emitted when \a an invitation to \a jid was declined and joining an alternative session \a session was suggested.*/
 	void alternativeSession(const Jid &jid, const QString &session);
+
+	void invitationCallback(const Jid &peer, const QList<QString> &features, bool* result);
 
 private:
 	/*! \brief Process a message that contains a negotiation element.
@@ -163,8 +165,8 @@ private:
 	QList<DetectedSession> DetectedSessions_;
 	/*! \brief A list of Jids corresponding to self.*/
 	QList<QString> ownJids_;
-	/*! \brief A list of callbacks used to determine whether an invitation should be accepted.*/
-	QList<bool (*)(const Jid &peer, const QList<QString> &features)> invitationCallbacks_;
+//	/*! \brief A list of callbacks used to determine whether an invitation should be accepted.*/
+//	QList<bool (*)(const Jid &peer, const QList<QString> &features)> invitationCallbacks_;
 	/*! \brief A counter used for including a unique id in each sent sxe element.*/
 	int sxeId_;
 	/*! \brief A list of messages waiting to be sent out.*/

@@ -37,6 +37,7 @@ namespace XMPP {
 }
 
 using namespace XMPP;
+class WbRequest;
 
 /*! \brief The manager for whiteboard dialogs.
  *  The manager listen to SxeManager to pick up any new sessions negotiated by
@@ -58,7 +59,8 @@ public:
 	WbManager(XMPP::Client* client, PsiAccount* pa, SxeManager* sxemanager);
 	~WbManager();
 	/*! \brief Returns true if features contains WBNS and the user wishes to accept the invitation. */
-    static bool checkInvitation(const Jid &peer, const QList<QString> &features);
+	//static bool checkInvitation(const Jid &peer, const QList<QString> &features);
+	void requestActivated(int id);
 
 public slots:
 	/*! \brief Opens the existing dialog to the specified contact or starts a new session negotiation if necessary.*/
@@ -75,13 +77,20 @@ private:
 	/*! \brief A list of dialogs of established sessions.*/
 	QList<WbDlg*> dialogs_;
 	/*! \brief A pointer to the SxeManager used for negotiating sessions.*/
-    SxeManager* sxemanager_;
+	SxeManager* sxemanager_;
+
+	QList<WbRequest*> requests_;
+
+signals:
+	void wbRequest(const Jid &peer, int id);
 
 private slots:
 	/*! \brief Removes and deletes the dialog for the given session.*/
 	void removeDialog(WbDlg* dialog);
 	/*! \brief Returns a pointer to a new dialog to with given contact and session set.*/
 	void createWbDlg(SxeSession* session);
+
+	void  checkInvitation(const Jid &peer, const QList<QString> &features, bool* result);
 };
 
 #endif

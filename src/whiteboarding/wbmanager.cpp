@@ -32,8 +32,45 @@
 
 using namespace XMPP;
 
-// -----------------------------------------------------------------------------
 
+class WbRequest
+{
+public:
+	WbRequest() : loop_(new QEventLoop), id_(lastRequetsId++)
+	{}
+
+	~WbRequest()
+	{
+		if(loop_->isRunning())
+			loop_->exit();
+		delete loop_;
+	}
+
+	void startLoop()
+	{
+		loop_->exec();
+	}
+
+	void stopLoop()
+	{
+		loop_->exit();
+	}
+
+	int id() const
+	{
+		return id_;
+	}
+
+private:
+	QEventLoop *loop_;
+	int id_;
+
+	static int lastRequetsId;
+};
+
+int WbRequest::lastRequetsId = 0;
+
+// -----------------------------------------------------------------------------
 WbManager::WbManager(XMPP::Client* client, PsiAccount* pa, SxeManager* sxemanager) {
 	pa_ = pa;
 	sxemanager_ = sxemanager;
@@ -41,12 +78,14 @@ WbManager::WbManager(XMPP::Client* client, PsiAccount* pa, SxeManager* sxemanage
 	client->addExtension("whiteboard", Features(WBNS));
 
 	connect(sxemanager_, SIGNAL(sessionNegotiated(SxeSession*)), SLOT(createWbDlg(SxeSession*)));
-	sxemanager_->addInvitationCallback(WbManager::checkInvitation);
+	//sxemanager_->addInvitationCallback(WbManager::checkInvitation);
+	connect(sxemanager, SIGNAL(invitationCallback(Jid,QList<QString>,bool*)), this, SLOT(checkInvitation(Jid,QList<QString>,bool*)));
 }
 
 WbManager::~WbManager()
 {
 	qDeleteAll(dialogs_);
+	qDeleteAll(requests_);
 }
 
 void WbManager::openWhiteboard(const Jid &target, const Jid &ownJid, bool groupChat, bool promptInitialDoc) {
@@ -143,13 +182,33 @@ void WbManager::createWbDlg(SxeSession* session) {
 	}
 }
 
-bool WbManager::checkInvitation(const Jid &peer, const QList<QString> &features) {
-	if(!features.contains(WBNS))
-		return false;
+void WbManager::checkInvitation(const Jid &peer, const QList<QString> &features, bool* result) {
+	if(*result)
+		return;
 
-	return (QMessageBox::Yes == QMessageBox::question(NULL,
+	if(!features.contains(WBNS)) {
+		*result = false;
+		return;
+	}
+
+	WbRequest* wr = new WbRequest();
+	requests_.append(wr);
+	emit wbRequest(peer, wr->id());
+	wr->startLoop();
+	requests_.removeAll(wr);
+	delete wr;
+	*result = (QMessageBox::Yes == QMessageBox::question(NULL,
 									tr("Whiteboarding Invitation?"),
 									tr("%1 has invited you to a whiteboarding session. Would you like to join?").arg(peer.full()),
 									QMessageBox::Yes | QMessageBox::No,
 									QMessageBox::No));
+}
+
+void WbManager::requestActivated(int id) {
+	foreach(WbRequest* wr, requests_) {
+		if(wr->id() == id) {
+			wr->stopLoop();
+			return;
+		}
+	}
 }
