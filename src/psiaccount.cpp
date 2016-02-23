@@ -4671,7 +4671,7 @@ void PsiAccount::dj_sendMessage(const Message &m, bool log)
 
 	if (!nm.body().isEmpty()) {
 		UserListItem *u = findFirstRelevant(m.to());
-		if (!u || (u->subscription().type() != Subscription::Both && u->subscription().type() != Subscription::From)) {
+		if (!u || (!u->isConference() && u->subscription().type() != Subscription::Both && u->subscription().type() != Subscription::From)) {
 			nm.setNick(nick());
 		}
 	}
