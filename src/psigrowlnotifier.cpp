@@ -126,8 +126,12 @@ void PsiGrowlNotifier::popup(PsiAccount* account, PopupManager::PopupType type, 
 		if (((int)statusMsg.length()) > len)
 			statusMsg = statusMsg.left(len) + "...";
 	QPixmap icon;
-	if(account)
-		icon = account->avatarFactory()->getAvatar(jid.bare());
+	if(account) {
+		if(uli && uli->isPrivate())
+			icon = account->avatarFactory()->getMucAvatar(jid);
+		else
+			icon = account->avatarFactory()->getAvatar(jid);
+	}
 
 	if (uli) {
 		contact = uli->name();

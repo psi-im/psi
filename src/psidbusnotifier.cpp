@@ -206,7 +206,11 @@ void PsiDBusNotifier::popup(PsiAccount* account, PopupManager::PopupType type, c
 //	}
 	QImage im;
 	if(account) {
-		im = account->avatarFactory()->getAvatar(jid.bare()).toImage();
+		if(uli && uli->isPrivate())
+			im = account->avatarFactory()->getMucAvatar(jid).toImage();
+		else
+			im = account->avatarFactory()->getAvatar(jid).toImage();
+
 		if(!im.isNull()) {
 			int size = PsiOptions::instance()->getOption("options.ui.notifications.passive-popups.avatar-size").toInt();
 			im = im.scaledToWidth(size, Qt::SmoothTransformation);

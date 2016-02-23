@@ -330,7 +330,13 @@ void PsiPopup::setData(const Jid &j, const Resource &r, const UserListItem *u, c
 			}
 		}
 	}
-	QPixmap avatar = d->account->avatarFactory()->getAvatar(jid);
+	QPixmap avatar;
+	if(d->account) {
+		if(u && u->isPrivate())
+			avatar = d->account->avatarFactory()->getMucAvatar(j);
+		else
+			avatar = d->account->avatarFactory()->getAvatar(j);
+	}
 	// show popup
 	if ( d->popupType != PopupManager::AlertComposing && d->popupType != PopupManager::AlertHeadline &&
 	     (d->popupType != PopupManager::AlertFile || !PsiOptions::instance()->getOption("options.ui.file-transfer.auto-popup").toBool()) )
