@@ -323,7 +323,7 @@ static void appendTextHelper(QTextDocument *doc, QString text, QTextCursor &curs
 			else {
 				// go here when  scheme in ["", "file"] and its not resource
 				QString path = QFileInfo(imgSrcUrl.scheme() == "file"?
-							   imgSrcUrl.toLocalFile() : imgSrc).canonicalFilePath();
+							   imgSrcUrl.toLocalFile() : imgSrc).absoluteFilePath();
 				bool baseDirFound = false;
 				foreach (const QString &baseDir, allowedImageDirs) {
 					if (path.startsWith(baseDir)) {
