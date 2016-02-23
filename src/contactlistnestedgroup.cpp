@@ -69,7 +69,10 @@ void ContactListNestedGroup::addContact(PsiContact* contact, QStringList contact
 	if (canContainSpecialGroups()) {
 		ContactListGroup* group = specialGroupFor(contact);
 		if (group) {
-			group->addContact(contact, contactGroups);
+			if (!contact->isAgent())
+				group->addContact(contact, contactGroups);
+			else
+				group->addContact(contact, QStringList() << QString());
 			return;
 		}
 	}
@@ -140,6 +143,23 @@ void ContactListNestedGroup::contactGroupsChanged(PsiContact* contact, QStringLi
 		}
 
 		restrictContactAdd = specialGroup != 0;
+	}
+	else if (!isSpecial() && contact->isAgent() && model()->groupsEnabled())
+	{
+		ContactListNestedGroup *rootGroup = this;
+		while (rootGroup->parent())
+		{
+			rootGroup = static_cast<ContactListNestedGroup *>(rootGroup->parent());
+			if (rootGroup->canContainSpecialGroups())
+			{
+				ContactListGroup* specialGroup = rootGroup->specialGroupFor(contact);
+				if (specialGroup && specialGroup != this)
+				{
+					specialGroup->contactGroupsChanged(contact, QStringList() << QString());
+					return;
+				}
+			}
+		}
 	}
 
 #ifdef CONTACTLISTNESTEDGROUP_OLD_CONTACTGROUPSCHANGED
