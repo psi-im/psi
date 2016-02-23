@@ -117,6 +117,13 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="pb_renameList">
+          <property name="text">
+           <string>Rename List</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="pb_deleteList">
           <property name="text">
            <string>Delete List</string>

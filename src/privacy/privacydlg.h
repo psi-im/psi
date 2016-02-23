@@ -70,6 +70,7 @@ protected slots:
 	void applyList();
 	void newList();
 	void removeList();
+	void renameList();
 
 private:
 	Ui::Privacy ui_;

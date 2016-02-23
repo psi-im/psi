@@ -55,6 +55,7 @@ PrivacyDlg::PrivacyDlg(const QString& account_name, PrivacyManager* manager, QWi
 
 	connect(ui_.pb_newList,SIGNAL(clicked()),SLOT(newList()));
 	connect(ui_.pb_deleteList,SIGNAL(clicked()),SLOT(removeList()));
+	connect(ui_.pb_renameList,SIGNAL(clicked()),SLOT(renameList()));
 
 	connect(ui_.pb_add,SIGNAL(clicked()),SLOT(addRule()));
 	connect(ui_.pb_edit,SIGNAL(clicked()),SLOT(editCurrentRule()));
@@ -351,5 +352,25 @@ void PrivacyDlg::removeList()
 {
 	model_.list().clear();
 	manager_->changeList(model_.list());
+	manager_->requestListNames();
+}
+
+void PrivacyDlg::renameList()
+{
+	QString newName = QInputDialog::getText(this, tr("Rename List"), tr("Input new name"));
+	if(newName.isEmpty()) {
+		return;
+	}
+	PrivacyList tmp = model_.list();
+	model_.list().setName(newName);
+	tmp.clear();
+	manager_->changeList(model_.list());
+	if(ui_.cb_default->currentText() == tmp.name()) {
+		manager_->changeDefaultList(newName);
+	}
+	if(ui_.cb_active->currentText() == tmp.name()) {
+		manager_->changeActiveList(newName);
+	}
+	manager_->changeList(tmp);
 	manager_->requestListNames();
 }
