@@ -89,6 +89,7 @@ public:
 	QWidget *dialogFind(const char *className);
 	void dialogRegister(QWidget *w);
 	void dialogUnregister(QWidget *w);
+	int idle() const;
 
 	QMenuBar* defaultMenuBar() const;
 

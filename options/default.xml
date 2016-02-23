@@ -549,6 +549,7 @@
 		</p2p>
 		<service-discovery>
 			<enable-entity-capabilities type="bool">true</enable-entity-capabilities>
+			<last-activity type="bool">true</last-activity>
 		</service-discovery>
 		<status>
 			<ask-for-message-on-offline type="bool">false</ask-for-message-on-offline>

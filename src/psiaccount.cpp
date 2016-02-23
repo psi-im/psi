@@ -318,6 +318,48 @@ bool BlockTransportPopupList::find(const Jid &j, bool online)
 	return false;
 }
 
+
+//----------------------------------------------------------------------------
+// IdleServer
+//----------------------------------------------------------------------------
+class IdleServer : public XMPP::Task
+{
+	Q_OBJECT
+public:
+	IdleServer(PsiAccount *pa, Task *parent)
+		: Task(parent)
+		, pa_(pa)
+	{
+	}
+
+	~IdleServer()
+	{
+	}
+
+	bool take(const QDomElement &e)
+	{
+		if (e.tagName() != "iq" || e.attribute("type") != "get")
+			return false;
+
+		const QString ns = queryNS(e);
+		if (ns == "jabber:iq:last") {
+			QDomElement iq = createIQ(doc(), "result", e.attribute("from"), e.attribute("id"));
+			QDomElement query = doc()->createElement("query");
+			query.setAttribute("xmlns", ns);
+			iq.appendChild(query);
+			query.setAttribute("seconds", pa_->psi()->idle());
+
+			send(iq);
+			return true;
+		}
+		return false;
+	}
+
+private:
+	PsiAccount *pa_;
+};
+
+
 //----------------------------------------------------------------------------
 // PsiAccount
 //----------------------------------------------------------------------------
@@ -1194,6 +1236,12 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 #ifdef PSI_PLUGINS
 	PluginManager::instance()->addAccount(this, d->client);
 #endif
+
+	//Idle server
+	if(PsiOptions::instance()->getOption("options.service-discovery.last-activity").toBool()) {
+		new IdleServer(this, d->client->rootTask());
+		d->client->addExtension("last-act", QStringList("jabber:iq:last"));
+	}
 
 	// HTML
 	if(PsiOptions::instance()->getOption("options.html.chat.render").toBool())

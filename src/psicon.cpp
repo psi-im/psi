@@ -307,7 +307,7 @@ public:
 
 	struct IdleSettings
 	{
-		IdleSettings()
+		IdleSettings() : secondsIdle(0)
 		{}
 
 		void update()
@@ -320,10 +320,13 @@ public:
 			notAvailableAfter = o->getOption("options.status.auto-away.not-availible-after").toInt();
 			awayAfter = o->getOption("options.status.auto-away.away-after").toInt();
 			menuXA = o->getOption("options.ui.menu.status.xa").toBool();
+			useIdleServer = o->getOption("options.service-discovery.last-activity").toBool();
 		}
 
 		bool useOffline, useNotAvailable, useAway, menuXA;
 		int offlineAfter, notAvailableAfter, awayAfter;
+		int secondsIdle;
+		bool useIdleServer;
 	};
 
 	IdleSettings idleSettings_;
@@ -1392,10 +1395,12 @@ void PsiCon::optionChanged(const QString& option)
 
 	//Idle server
 	d->idleSettings_.update();
-	if(d->idleSettings_.useAway || d->idleSettings_.useNotAvailable || d->idleSettings_.useOffline)
+	if(d->idleSettings_.useAway || d->idleSettings_.useNotAvailable || d->idleSettings_.useOffline || d->idleSettings_.useIdleServer)
 		d->idle.start();
-	else
+	else {
 		d->idle.stop();
+		d->idleSettings_.secondsIdle = 0;
+	}
 
 	if (option == "options.ui.notifications.alert-style") {
 		alertIconUpdateAlertStyle();
@@ -1891,6 +1896,7 @@ void PsiCon::aboutToQuit()
 
 void PsiCon::secondsIdle(int sec)
 {
+	d->idleSettings_.secondsIdle = sec;
 	int minutes = sec / 60;
 	PsiAccount::AutoAway aa;
 
@@ -1906,6 +1912,11 @@ void PsiCon::secondsIdle(int sec)
 	foreach(PsiAccount* pa, d->contactList->enabledAccounts()) {
 		pa->setAutoAwayStatus(aa);
 	}
+}
+
+int PsiCon::idle() const
+{
+	return d->idleSettings_.secondsIdle;
 }
 
 ContactUpdatesManager* PsiCon::contactUpdatesManager() const
