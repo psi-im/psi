@@ -148,6 +148,7 @@ ChatView::ChatView(QWidget *parent)
 	, sessionReady_(false)
 	, dialog_(0)
 	, isMuc_(false)
+	, isEncryptionEnabled_(false)
 {
 	jsObject = new ChatViewJSObject(this);
 	webView = new WebView(this);
@@ -191,6 +192,11 @@ void ChatView::init()
 	);
 }
 
+void ChatView::setEncryptionEnabled(bool enabled)
+{
+	isEncryptionEnabled_ = enabled;
+}
+
 void ChatView::embedJsObject()
 {
 	ChatViewTheme *theme = currentTheme();
@@ -207,6 +213,7 @@ void ChatView::markReceived(QString id)
 	QVariantMap m;
 	m["type"] = "receipt";
 	m["id"] = id;
+	m["encrypted"] = isEncryptionEnabled_;
 	sendJsObject(m);
 }
 
@@ -325,6 +332,7 @@ void ChatView::dispatchMessage(const MessageView &mv)
 	QVariantMap vm = mv.toVariantMap(isMuc_, true);
 	vm["mtype"] = vm["type"];
 	vm["type"] = "message";
+	vm["encrypted"] = isEncryptionEnabled_;
 	sendJsObject(vm);
 }
 

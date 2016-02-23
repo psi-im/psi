@@ -65,6 +65,8 @@ public slots:
 	void scrollUp();
 	void scrollDown();
 
+	void setEncryptionEnabled(bool enabled);
+
 protected:
 	// override the tab/esc behavior
 	bool focusNextPrevChild(bool next);
@@ -91,6 +93,7 @@ signals:
 
 private:
 	bool isMuc_;
+	bool isEncryptionEnabled_;
 	QString jid_;
 	QString name_;
 	int  oldTrackBarPosition;
@@ -100,6 +103,9 @@ private:
 	QPixmap logIconSend;
 	QPixmap logIconReceive;
 	QPixmap logIconDelivered;
+	QPixmap logIconSendPgp;
+	QPixmap logIconReceivePgp;
+	QPixmap logIconDeliveredPgp;
 	QPixmap logIconTime;
 	QPixmap logIconInfo;
 };

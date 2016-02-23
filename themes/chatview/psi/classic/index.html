@@ -92,7 +92,7 @@ window[chatServer.jsNamespace()].theme = function() {
 				var img = document.getElementById("receipt"+shared.cdata.id);
 				if (img) {
 					var sizeUri = messageIconsSize?"?w="+messageIconsSize+"&h="+messageIconsSize:"";
-					img.src = "icon:psi/notification_chat_delivery_ok"+sizeUri;
+					img.src = (shared.cdata.encrypted?"icon:psi/notification_chat_delivery_ok_pgp":"icon:psi/notification_chat_delivery_ok")+sizeUri;
 				}
 			}
 			if (shared.cdata.mtype == "message") {
@@ -132,6 +132,9 @@ window[chatServer.jsNamespace()].theme = function() {
 							icon = shared.cdata.local?(shared.cdata.awaitingReceipt?
 								"psi/notification_chat_send":"psi/notification_chat_delivery_ok")
 								: "psi/notification_chat_receive";
+							if(shared.cdata.encrypted) {
+								icon += "_pgp"
+							}
 							break;
 						case "system":
 						case "subject":
