@@ -182,6 +182,7 @@ void ChatDlg::doTrackBar()
 void ChatDlg::initActions()
 {
 	act_send_ = new QAction(this);
+	act_send_->setShortcutContext(Qt::WidgetWithChildrenShortcut);
 	addAction(act_send_);
 	connect(act_send_, SIGNAL(triggered()), SLOT(doSend()));
 

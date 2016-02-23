@@ -796,6 +796,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 
 	// Common actions
 	d->act_send = new QAction(this);
+	d->act_send->setShortcutContext(Qt::WidgetWithChildrenShortcut);
 	addAction(d->act_send);
 	connect(d->act_send,SIGNAL(triggered()), SLOT(mle_returnPressed()));
  	ui_.pb_send->setIcon(IconsetFactory::icon("psi/action_button_send").icon());
