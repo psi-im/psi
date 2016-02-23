@@ -534,6 +534,13 @@ public slots:
 public:
 
 	bool eventFilter( QObject *obj, QEvent *ev ) {
+		if (obj == te_log()->realTextWidget())
+		{
+			if (ev->type() == QEvent::MouseButtonPress)
+				mle()->setFocus();
+			return QObject::eventFilter(obj, ev);
+		}
+
 		if (te_log()->handleCopyEvent(obj, ev, mle()))
 			return true;
 
@@ -843,6 +850,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	X11WM_CLASS("groupchat");
 
 	ui_.mle->chatEdit()->setFocus();
+	ui_.log->realTextWidget()->installEventFilter(d);
 
 	// Connect signals from MUC manager
 	connect(d->mucManager,SIGNAL(action_error(MUCManager::Action, int, const QString&)), SLOT(action_error(MUCManager::Action, int, const QString&)));

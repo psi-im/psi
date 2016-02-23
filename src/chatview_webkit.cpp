@@ -379,4 +379,9 @@ WebView* ChatView::textWidget()
 	return webView;
 }
 
+QWidget* ChatView::realTextWidget()
+{
+	return webView;
+}
+
 #include "chatview_webkit.moc"

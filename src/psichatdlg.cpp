@@ -261,6 +261,7 @@ void PsiChatDlg::initUi()
 	connect(act_mini_cmd_, SIGNAL(triggered()), SLOT(doMiniCmd()));
 	addAction(act_mini_cmd_);
 
+	ui_.log->realTextWidget()->installEventFilter(this);
 	ui_.mini_prompt->hide();
 
 	if (throbber_icon == 0) {
@@ -922,15 +923,22 @@ void PsiChatDlg::addContact()
 }
 
 bool PsiChatDlg::eventFilter( QObject *obj, QEvent *ev ) {
-	if ( obj == chatEdit() && ev->type() == QEvent::KeyPress ) {
-		QKeyEvent *e = (QKeyEvent *)ev;
+	if ( obj == chatEdit() ) {
+		if ( ev->type() == QEvent::KeyPress ) {
+			QKeyEvent *e = (QKeyEvent *)ev;
 
-		if ( e->key() == Qt::Key_Tab ) {
-			tabCompletion.tryComplete();
-			return true;
+			if ( e->key() == Qt::Key_Tab ) {
+				tabCompletion.tryComplete();
+				return true;
+			}
+
+			tabCompletion.reset();
 		}
+	}
 
-		tabCompletion.reset();
+	else if ( obj == ui_.log->realTextWidget() ) {
+		if ( ev->type() == QEvent::MouseButtonPress )
+			chatEdit()->setFocus();
 	}
 
 	return ChatDlg::eventFilter( obj, ev );

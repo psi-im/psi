@@ -64,6 +64,7 @@ public:
 	void doTrackBar();
 	bool internalFind(QString str, bool startFromBeginning = false);
 	WebView * textWidget();
+	QWidget * realTextWidget();
 
 public slots:
 	void scrollUp();
