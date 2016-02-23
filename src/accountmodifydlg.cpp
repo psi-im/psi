@@ -33,6 +33,8 @@
 #include "privacydlg.h"
 #include "pgpkeydlg.h"
 #include "psicontactlist.h"
+#include "iconaction.h"
+#include "actionlineedit.h"
 
 AccountModifyDlg::AccountModifyDlg(PsiCon *_psi, QWidget *parent)
 :QDialog(parent)
@@ -150,8 +152,21 @@ void AccountModifyDlg::init()
 	ck_keepAlive->setChecked(acc.opt_keepAlive);
 	ck_ibbOnly->setChecked(acc.ibbOnly);
 	le_dtProxy->setText(acc.dtProxy.full());
-	le_stunHost->setText(acc.stunHost);
-	le_stunPort->setText(QString::number(acc.stunPort));
+
+	ActionLineEdit *ale_delStunHost = new ActionLineEdit(cb_stunHost);
+	cb_stunHost->setLineEdit(ale_delStunHost);
+	IconAction *ia_delStunHost = new IconAction(tr("Delete current host from the list"), this, "psi/remove");
+	connect(ia_delStunHost, SIGNAL(triggered()), SLOT(removeStunHost()));
+	ale_delStunHost->addAction(ia_delStunHost);
+
+	cb_stunHost->addItem(tr("<don't use>"));
+	cb_stunHost->addItems(acc.stunHosts);
+	if (acc.stunHost.isEmpty()) {
+		cb_stunHost->setCurrentIndex(0);
+	}
+	else {
+		cb_stunHost->setCurrentIndex(cb_stunHost->findText(acc.stunHost));
+	}
 	le_stunUser->setText(acc.stunUser);
 	le_stunPass->setText(acc.stunPass);
 	autoconnectCksChanged();
@@ -472,6 +487,21 @@ void AccountModifyDlg::detailsChangePW()
 	}
 }
 
+void AccountModifyDlg::removeStunHost()
+{
+	// Don't remove no host
+	if (!cb_stunHost->currentIndex()) {
+		return;
+	}
+
+	QString host = cb_stunHost->currentText();
+	int item = cb_stunHost->findText(host);
+	if (item > -1) {
+		cb_stunHost->removeItem(item);
+	}
+	cb_stunHost->setCurrentIndex(0);
+}
+
 void AccountModifyDlg::save()
 {
 	/*if(pa && le_name->text().isEmpty()) {
@@ -539,8 +569,15 @@ void AccountModifyDlg::save()
 	acc.opt_keepAlive = ck_keepAlive->isChecked();
 	acc.ibbOnly = ck_ibbOnly->isChecked();
 	acc.dtProxy = le_dtProxy->text();
-	acc.stunHost = le_stunHost->text();
-	acc.stunPort = le_stunPort->text().toInt();
+	acc.stunHost = cb_stunHost->currentIndex() ? cb_stunHost->currentText().trimmed() : "";
+	acc.stunHosts.clear();
+	// first item is no host
+	for (int i = 1; i < cb_stunHost->count(); i++) {
+		acc.stunHosts << cb_stunHost->itemText(i);
+	}
+	if (acc.stunHosts.indexOf(acc.stunHost) == -1) {
+		acc.stunHosts << acc.stunHost;
+	}
 	acc.stunUser = le_stunUser->text();
 	acc.stunPass = le_stunPass->text();
 

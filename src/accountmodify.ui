@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>761</width>
-    <height>455</height>
+    <width>765</width>
+    <height>475</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -915,28 +915,18 @@
              </widget>
             </item>
             <item>
-             <widget class="QLineEdit" name="le_stunHost"/>
-            </item>
-            <item>
-             <widget class="QLabel" name="lb_stunPort">
-              <property name="text">
-               <string>Port:</string>
+             <widget class="QComboBox" name="cb_stunHost">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
               </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLineEdit" name="le_stunPort">
-              <property name="minimumSize">
-               <size>
-                <width>56</width>
-                <height>0</height>
-               </size>
+              <property name="editable">
+               <bool>true</bool>
               </property>
-              <property name="maximumSize">
-               <size>
-                <width>56</width>
-                <height>16777215</height>
-               </size>
+              <property name="insertPolicy">
+               <enum>QComboBox::NoInsert</enum>
               </property>
              </widget>
             </item>
@@ -971,19 +961,6 @@
                <enum>QLineEdit::Password</enum>
               </property>
              </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
             </item>
            </layout>
           </item>
@@ -1130,8 +1107,6 @@ When you enable this option you will not be able to find your password in config
   <tabstop>ck_req_mutual</tabstop>
   <tabstop>cb_security_level</tabstop>
   <tabstop>le_dtProxy</tabstop>
-  <tabstop>le_stunHost</tabstop>
-  <tabstop>le_stunPort</tabstop>
   <tabstop>le_stunUser</tabstop>
   <tabstop>le_stunPass</tabstop>
   <tabstop>ck_custom_auth</tabstop>

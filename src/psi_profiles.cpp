@@ -154,7 +154,29 @@ void UserAccount::reset()
 	proxy_user = "";
 	proxy_pass = "";
 
-	stunPort = 3478;
+	stunHosts.clear();
+	stunHosts << "stun.jabber.ru:5249"
+			  << "stun.habahaba.im"
+			  << "stun.ekiga.net"
+			  << "provserver.televolution.net"
+			  << "stun1.voiceeclipse.net"
+			  << "stun.callwithus.com"
+			  << "stun.counterpath.net"
+			  << "stun.endigovoip.com"
+			  << "stun.ideasip.com"
+			  << "stun.internetcalls.com"
+			  << "stun.noc.ams-ix.net"
+			  << "stun.phonepower.com"
+			  << "stun.phoneserve.com"
+			  << "stun.rnktel.com"
+			  << "stun.softjoys.com"
+			  << "stun.sipgate.net"
+			  << "stun.sipgate.net:10000"
+			  << "stun.stunprotocol.org"
+			  << "stun.voipbuster.com"
+			  << "stun.voxgratia.org";
+
+	stunHost = stunHosts[0];
 
 	keybind.clear();
 
@@ -311,15 +333,14 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	ibbOnly = o->getOption(base + ".ibb-only").toBool();
 
 
-	if (allSetOptions.contains(base + ".stun-host")) {
-		stunHost = o->getOption(base + ".stun-host").toString();
+	if (allSetOptions.contains(base + ".stun-hosts")) {
+		stunHosts = o->getOption(base + ".stun-hosts").toStringList();
+		if (allSetOptions.contains(base + ".stun-host")) {
+			stunHost = o->getOption(base + ".stun-host").toString();
+		}
 	}
-	if (allSetOptions.contains(base + ".stun-port")) {
-		int tmpPort = o->getOption(base + ".stun-port").toInt();
-		// a few days in the 0.13-dev development cycle the code set
-		// 0 as port when first adding this option. Ignore 0 for now
-		// and use default
-		if (tmpPort != 0) stunPort = tmpPort;
+	else if (!o->getOption(base + ".stun-host").toString().isEmpty()) {
+		stunHost = o->getOption(base + ".stun-host").toString();
 	}
 	if (allSetOptions.contains(base + ".stun-username")) {
 		stunUser = o->getOption(base + ".stun-username").toString();
@@ -467,8 +488,8 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 	o->setOption(base + ".bytestreams-proxy", dtProxy.full());
 	o->setOption(base + ".ibb-only", ibbOnly);
 
+	o->setOption(base + ".stun-hosts", stunHosts);
 	o->setOption(base + ".stun-host", stunHost);
-	o->setOption(base + ".stun-port", QString::number(stunPort));
 	o->setOption(base + ".stun-username", stunUser);
 	o->setOption(base + ".stun-password", stunPass);
 

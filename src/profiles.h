@@ -91,8 +91,8 @@ public:
 
 	QString optionsBase;
 
+	QStringList stunHosts;
 	QString stunHost;
-	int stunPort;
 	QString stunUser;
 	QString stunPass;
 

@@ -56,6 +56,8 @@ private slots:
 	void detailsVCard();
 	void detailsChangePW();
 
+	void removeStunHost();
+
 	void save();
 
 	//void pgpToggled(bool);

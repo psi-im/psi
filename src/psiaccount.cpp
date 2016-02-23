@@ -933,9 +933,14 @@ public:
 
 	void updateAvCallSettings(const UserAccount &acc)
 	{
-		avCallManager->setStunBindService(acc.stunHost, acc.stunPort);
-		avCallManager->setStunRelayUdpService(acc.stunHost, acc.stunPort, acc.stunUser, acc.stunPass);
-		avCallManager->setStunRelayTcpService(acc.stunHost, acc.stunPort, convert_proxy(acc, jid), acc.stunUser, acc.stunPass);
+		QString stunHost = acc.stunHost.section(":", 0, 0);
+		int stunPort = acc.stunHost.section(":", 1, 1).toInt();
+		if (!stunPort) {
+			stunPort = 3478; // STUN default port
+		}
+		avCallManager->setStunBindService(stunHost, stunPort);
+		avCallManager->setStunRelayUdpService(stunHost, stunPort, acc.stunUser, acc.stunPass);
+		avCallManager->setStunRelayTcpService(stunHost, stunPort, convert_proxy(acc, jid), acc.stunUser, acc.stunPass);
 	}
 
 	bool isAlwaysVisibleContact(const Jid& jid) const
