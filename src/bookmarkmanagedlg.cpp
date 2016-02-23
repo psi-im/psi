@@ -23,9 +23,12 @@
 #include <QStandardItemModel>
 #include <QPushButton>
 #include <QAction>
+#include <QFile>
+#include <QMessageBox>
 
 #include "bookmarkmanager.h"
 #include "psiaccount.h"
+#include "fileutil.h"
 
 BookmarkManageDlg::BookmarkManageDlg(PsiAccount* account)
 	: QDialog()
@@ -43,6 +46,11 @@ BookmarkManageDlg::BookmarkManageDlg(PsiAccount* account)
 	ui_.listView->addAction(removeBookmarkAction);
 
 	ui_.autoJoin->addItems(ConferenceBookmark::joinTypeNames());
+
+	ui_.pb_import->setIcon(IconsetFactory::icon("psi/cm_import").icon());
+	ui_.pb_export->setIcon(IconsetFactory::icon("psi/cm_export").icon());
+	connect(ui_.pb_import, SIGNAL(clicked()), SLOT(importBookmarks()));
+	connect(ui_.pb_export, SIGNAL(clicked()), SLOT(exportBookmarks()));
 
 	addButton_    = ui_.bookmarkButtonBox->addButton(tr("&Add"),    QDialogButtonBox::ActionRole);
 	removeButton_ = ui_.bookmarkButtonBox->addButton(tr("&Remove"), QDialogButtonBox::DestructiveRole);
@@ -217,4 +225,58 @@ void BookmarkManageDlg::appendItem(QStandardItem* item)
 	item->setDragEnabled(true);
 	item->setDropEnabled(false);
 	model_->invisibleRootItem()->appendRow(item);
+}
+
+void BookmarkManageDlg::importBookmarks()
+{
+	QString fileName = FileUtil::getOpenFileName(this, tr("Import bookmarks"));
+	if(fileName.isEmpty())
+		return;
+
+	QFile file(fileName);
+	if(file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+		QDomDocument doc;
+		QString error;
+		if(doc.setContent(&file, &error)) {
+			QDomElement root = doc.firstChildElement("bookmarks");
+			if(root.isNull())
+				return;
+			QDomElement elem = root.firstChildElement("conference");
+			while(!elem.isNull()) {
+				ConferenceBookmark c(elem);
+
+				QStandardItem* item = new QStandardItem(c.name());
+				item->setData(QVariant(c.jid().full()), JidRole);
+				item->setData(QVariant(c.autoJoin()),   AutoJoinRole);
+				item->setData(QVariant(c.nick()),       NickRole);
+				item->setData(QVariant(c.password()),   PasswordRole);
+				appendItem(item);
+
+				elem = elem.nextSiblingElement("conference");
+			}
+		}
+		else {
+			QMessageBox::warning(this, tr("Error!"), error);
+		}
+	}
+}
+
+void BookmarkManageDlg::exportBookmarks()
+{
+	QString fileName = FileUtil::getSaveFileName(this, tr("Export bookmarks"), "bookmarks.txt");
+	if(fileName.isEmpty())
+		return;
+
+	QFile file(fileName);
+	if(file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+		QDomDocument doc;
+		QDomElement root = doc.createElement("bookmarks");
+		doc.appendChild(root);
+		for (int row = 0; row < model_->rowCount(); ++row) {
+			QModelIndex index = model_->index(row, 0, QModelIndex());
+			ConferenceBookmark cb = bookmarkFor(index);
+			root.appendChild(cb.toXml(doc));
+		}
+		file.write(doc.toString().toLocal8Bit());
+	}
 }

@@ -68,6 +68,8 @@ private slots:
 	void joinCurrentRoom();
 	void closeEditor(QWidget* editor, QAbstractItemDelegate::EndEditHint hint);
 	void selectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
+	void importBookmarks();
+	void exportBookmarks();
 
 private:
 	Ui::BookmarkManage ui_;
