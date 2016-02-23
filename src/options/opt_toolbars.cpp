@@ -22,6 +22,7 @@
 #include <QHBoxLayout>
 #include <QList>
 #include <QVBoxLayout>
+#include <QRegExp>
 
 #define CHAT_TOOLBAR       0
 #define GROUPCHAT_TOOLBAR  1
@@ -222,10 +223,20 @@ void OptionsTabToolbars::restoreOptions()
 	QStringList toolbarBases;
 	toolbarBases = o->getChildOptionNames("options.ui.contactlist.toolbars", true, true);
 
+
+	// toolbarBases is chaotic. Need to sort before do anything.
+	QStringList sortedToolbarBases;
+	for (int i = 0; !toolbarBases.isEmpty(); ++i) {
+		int index = toolbarBases.indexOf(QRegExp(QString(".*m%1$").arg(i)));
+		if (index >= 0) {
+			sortedToolbarBases << toolbarBases.takeAt(index);
+		}
+	}
+
 	QString chatToolbarName = tr("Chat");
 	QString groupchatToolbarName = tr("Groupchat");
 
-	foreach(QString base, toolbarBases) {
+	foreach(QString base, sortedToolbarBases) {
 		ToolbarPrefs tb;
 
 		tb.id = o->getOption(base + ".key").toString();
