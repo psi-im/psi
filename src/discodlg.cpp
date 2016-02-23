@@ -919,7 +919,7 @@ public: // data
 	IconAction *actBrowse, *actBack, *actForward, *actRefresh, *actStop;
 
 	// custom actions, that will be added to toolbar and context menu
-	IconAction *actRegister, *actSearch, *actJoin, *actAHCommand, *actVCard, *actAdd, *actQueryVersion;
+	IconAction *actRegister, *actUnregister, *actSearch, *actJoin, *actAHCommand, *actVCard, *actAdd, *actQueryVersion;
 
 	typedef QList<History*> HistoryList;
 	HistoryList backHistory, forwardHistory;
@@ -1024,6 +1024,9 @@ DiscoDlg::Private::Private(DiscoDlg *parent, PsiAccount *pa)
 	actRegister = new IconAction (tr("Register"), "psi/register", tr("&Register"), 0, dlg);
 	connect (actRegister, SIGNAL(triggered()), sm, SLOT(map()));
 	sm->setMapping(actRegister, Features::FID_Register);
+	actUnregister = new IconAction (tr("Unregister"), "psi/cancel", tr("&Unregister"), 0, dlg);
+	connect (actUnregister, SIGNAL(triggered()), sm, SLOT(map()));
+	sm->setMapping(actUnregister, Features::FID_Gateway);
 	actSearch = new IconAction (tr("Search"), "psi/search", tr("&Search"), 0, dlg);
 	connect (actSearch, SIGNAL(triggered()), sm, SLOT(map()));
 	sm->setMapping(actSearch, Features::FID_Search);
@@ -1061,6 +1064,7 @@ DiscoDlg::Private::Private(DiscoDlg *parent, PsiAccount *pa)
 	// custom actions
 	toolBar->addSeparator();
 	toolBar->addAction(actRegister);
+	toolBar->addAction(actUnregister);
 	toolBar->addAction(actSearch);
 	toolBar->addAction(actJoin);
 
@@ -1237,6 +1241,7 @@ void DiscoDlg::Private::enableButtons(const DiscoItem &it)
 	// custom actions
 	Features f = it.features();
 	actRegister->setEnabled( f.canRegister() );
+	actUnregister->setEnabled( f.canRegister() );
 	actSearch->setEnabled( f.canSearch() );
 	actJoin->setEnabled( f.canGroupchat() );
 	actAdd->setEnabled( itemSelected );
@@ -1364,6 +1369,7 @@ bool DiscoDlg::Private::eventFilter (QObject *object, QEvent *event)
 			// custom actions
 			p.addSeparator();
 			actRegister->addTo(&p);
+			actUnregister->addTo(&p);
 			actSearch->addTo(&p);
 			actJoin->addTo(&p);
 

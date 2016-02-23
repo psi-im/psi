@@ -363,6 +363,7 @@ public slots:
 	void actionGroupsSet(const Jid &, const QStringList &);
 	void actionHistoryBox(const PsiEvent::Ptr &e);
 	void actionRegister(const Jid &);
+	void actionUnregister(const Jid &);
 	void actionSearch(const Jid &);
 	void actionManageBookmarks();
 	void actionJoin(const Jid& mucJid, const QString& password = QString());

@@ -3412,8 +3412,12 @@ void PsiAccount::featureActivated(QString feature, Jid jid, QString node)
 		actionExecuteCommand(jid, node);
 	else if ( f.canDisco() )
 		actionDisco(jid, node);
-	else if ( f.isGateway() )
-		; // TODO
+	else if ( f.isGateway() ) {
+		if(QMessageBox::question(0, tr("Unregister from %1").arg(jid.bare()),
+					 tr("Are you sure?"),
+					 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
+			actionUnregister(jid);
+	}
 	else if ( f.haveVCard() )
 		actionInfo(jid);
 	else if ( f.id() == Features::FID_Add ) {
@@ -4447,6 +4451,13 @@ void PsiAccount::actionRegister(const Jid &j)
 	}
 }
 
+void PsiAccount::actionUnregister(const Jid &j)
+{
+	JT_UnRegister *ju = new JT_UnRegister(d->client->rootTask());
+	ju->unreg(j);
+	ju->go(true);
+}
+
 void PsiAccount::actionSearch(const Jid &j)
 {
 	if(!checkConnected())
@@ -4835,9 +4846,7 @@ void PsiAccount::dj_remove(const Jid &j)
 
 		// if it looks like a transport, unregister (but not if it is the server!!)
 		if(u->isTransport() && !Jid(d->client->host()).compare(u->jid())) {
-			JT_UnRegister *ju = new JT_UnRegister(d->client->rootTask());
-			ju->unreg(j);
-			ju->go(true);
+			actionUnregister(j);
 		}
 	}
 }
