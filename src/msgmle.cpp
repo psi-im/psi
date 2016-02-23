@@ -201,7 +201,7 @@ void ChatEdit::contextMenuEvent(QContextMenuEvent *e)
 		tc.movePosition(QTextCursor::StartOfWord, QTextCursor::MoveAnchor);
 		tc.movePosition(QTextCursor::EndOfWord, QTextCursor::KeepAnchor);
 		QString selected_word = tc.selectedText();
-		if (!selected_word.isEmpty() && !SpellChecker::instance()->isCorrect(selected_word)) {
+		if (!selected_word.isEmpty() && !QRegExp("\\d+").exactMatch(selected_word) && !SpellChecker::instance()->isCorrect(selected_word)) {
 			QList<QString> suggestions = SpellChecker::instance()->suggestions(selected_word);
 			if (!suggestions.isEmpty() || SpellChecker::instance()->writable()) {
 				QMenu spell_menu;
