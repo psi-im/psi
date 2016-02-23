@@ -707,6 +707,9 @@ class DiscoListView : public QTreeWidget
 public:
 	DiscoListView(QWidget *parent);
 
+public slots:
+	void updateItemsVisibility(const QString& filter);
+
 protected:
 	bool maybeTip(const QPoint &);
 
@@ -837,6 +840,37 @@ bool DiscoListView::eventFilter(QObject* o, QEvent* e)
 	return QTreeWidget::eventFilter(o, e);
 }
 
+// returns false if parent item should not be hidden (it has visible children)
+static bool updateItemsRecursively(QTreeWidgetItem* parent, const QString& filter)
+{
+	bool hidden = true;
+	for(int j = 0; j < parent->childCount(); j++) {
+		QTreeWidgetItem *i = parent->child(j);
+		if(filter.isEmpty()) {
+			i->setHidden(false);
+			updateItemsRecursively(i, filter);
+		}
+		else {
+			bool v = true;
+			if(i->isExpanded()) {
+				v = updateItemsRecursively(i, filter);
+			}
+			v &= !(i->text(0).contains(filter, Qt::CaseInsensitive) || i->text(1).contains(filter, Qt::CaseInsensitive));
+			i->setHidden(v);
+			hidden &= v;
+		}
+	}
+	return hidden;
+}
+
+void DiscoListView::updateItemsVisibility(const QString& filter)
+{
+	for(int n = 0; n < topLevelItemCount(); n++) {
+		QTreeWidgetItem *it = topLevelItem(n);
+		updateItemsRecursively(it, filter);
+	}
+}
+
 //----------------------------------------------------------------------------
 // DiscoDlg::Private
 //----------------------------------------------------------------------------
@@ -951,9 +985,11 @@ DiscoDlg::Private::Private(DiscoDlg *parent, PsiAccount *pa)
 	replaceWidget(lv_discoOld, dlg->lv_disco);
 
 	dlg->lv_disco->installEventFilter (this);
-	connect(dlg->lv_disco, SIGNAL(currentItemChanged (QTreeWidgetItem *, QTreeWidgetItem *)), SLOT(itemSelected (QTreeWidgetItem *)));;
+	dlg->le_filter->installEventFilter(this);
+	connect(dlg->lv_disco, SIGNAL(currentItemChanged (QTreeWidgetItem *, QTreeWidgetItem *)), SLOT(itemSelected (QTreeWidgetItem *)));
 	connect(dlg->lv_disco, SIGNAL(itemExpanded (QTreeWidgetItem *)), SLOT(itemExpanded (QTreeWidgetItem *)));
-	connect(dlg->lv_disco, SIGNAL(itemDoubleClicked (QTreeWidgetItem *, int)), SLOT(itemDoubleclicked (QTreeWidgetItem *)));;
+	connect(dlg->lv_disco, SIGNAL(itemDoubleClicked (QTreeWidgetItem *, int)), SLOT(itemDoubleclicked (QTreeWidgetItem *)));
+	connect(dlg->le_filter, SIGNAL(textChanged(QString)), dlg->lv_disco, SLOT(updateItemsVisibility(QString)));
 
 	// protocol actions
 	QSignalMapper *pm = new QSignalMapper(this);
@@ -1357,6 +1393,13 @@ bool DiscoDlg::Private::eventFilter (QObject *object, QEvent *event)
 			if ( r > 10000 )
 				actionActivated(r-10000);
 
+			return true;
+		}
+	}
+	else if(object == dlg->le_filter && event->type() == QEvent::KeyPress) {
+		QKeyEvent *ke = static_cast<QKeyEvent*>(event);
+		if(ke->key() == Qt::Key_Escape) {
+			dlg->le_filter->clear();
 			return true;
 		}
 	}

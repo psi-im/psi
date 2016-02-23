@@ -120,6 +120,20 @@
       <widget class="QTreeWidget" name="lv_disco" />
      </item>
      <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Filter by JID:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="le_filter"/>
+     </item>
+    </layout>
+   </item>
+     <item>
       <widget class="QCheckBox" name="ck_autoItems" >
        <property name="text" >
         <string>Auto-browse into objects</string>
