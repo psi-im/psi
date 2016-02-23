@@ -20,6 +20,9 @@ protected:
 	void addChoose();
 	void addReconnect();
 
+private:
+	void addIgnoreGlobalActions();
+
 private slots:
 	void chooseStatusActivated();
 

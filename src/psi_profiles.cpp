@@ -133,6 +133,7 @@ void UserAccount::reset()
 	host = "";
 	opt_automatic_resource = true;
 	priority_dep_on_status = true;
+	ignore_global_actions = false;
 	resource = ApplicationInfo::name();
 	priority = 5;
 	ibbOnly = false;
@@ -184,6 +185,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	legacy_ssl_probe = o->getOption(base + ".legacy-ssl-probe").toBool();
 	opt_automatic_resource = o->getOption(base + ".automatic-resource").toBool();
 	priority_dep_on_status = o->getOption(base + ".priority-depends-on-status", false).toBool();
+	ignore_global_actions = o->getOption(base + ".ignore-global-actions").toBool();
 	opt_log = o->getOption(base + ".log").toBool();
 	opt_reconn = o->getOption(base + ".reconn").toBool();
 	opt_ignoreSSLWarnings = o->getOption(base + ".ignore-SSL-warnings").toBool();
@@ -350,6 +352,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 	o->setOption(base + ".legacy-ssl-probe", legacy_ssl_probe);
 	o->setOption(base + ".automatic-resource", opt_automatic_resource);
 	o->setOption(base + ".priority-depends-on-status", priority_dep_on_status);
+	o->setOption(base + ".ignore-global-actions", ignore_global_actions);
 	o->setOption(base + ".log", opt_log);
 	o->setOption(base + ".reconn", opt_reconn);
 	o->setOption(base + ".connect-after-sleep", opt_connectAfterSleep);
@@ -499,6 +502,7 @@ void UserAccount::fromXml(const QDomElement &a)
 	//readBoolAttribute(a, "gpg", &opt_gpg);
 	readBoolAttribute(a, "automatic-resource", &opt_automatic_resource);
 	readBoolAttribute(a, "priority-depends-on-status", &priority_dep_on_status);
+	readBoolAttribute(a, "ignore-global-actions", &ignore_global_actions);
 
 	// Will be overwritten if there is a new option
 	bool opt_plain = false;

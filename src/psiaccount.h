@@ -377,6 +377,7 @@ public slots:
 	void actionSendFiles(const Jid &, const QStringList&);
 	void actionExecuteCommand(const Jid& j, const QString& = QString());
 	void actionExecuteCommandSpecific(const Jid&, const QString& = QString());
+	void actionSetBlock(bool);
 	void actionSetMood();
 	void actionSetActivity();
 	void actionSetGeoLocation();

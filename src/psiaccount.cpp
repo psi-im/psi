@@ -4080,6 +4080,11 @@ void PsiAccount::actionExecuteCommandSpecific(const Jid& j, const QString& node)
 	}
 }
 
+void PsiAccount::actionSetBlock(bool blocked)
+{
+	d->acc.ignore_global_actions = blocked;
+}
+
 void PsiAccount::actionSetMood()
 {
 	QList<PsiAccount*> list;

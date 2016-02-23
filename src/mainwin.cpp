@@ -1157,7 +1157,7 @@ void MainWin::actSetMoodActivated()
 {
 	QList<PsiAccount*> l;
 	foreach(PsiAccount *pa, d->psi->contactList()->accounts()) {
-		if(pa->isActive() && pa->serverInfoManager()->hasPEP())
+		if(pa->isActive() && pa->serverInfoManager()->hasPEP() && !pa->accountOptions().ignore_global_actions)
 			l.append(pa);
 	}
 	if(l.isEmpty())
@@ -1175,7 +1175,7 @@ void MainWin::actSetActivityActivated()
 {
 	QList<PsiAccount*> l;
 	foreach(PsiAccount *pa, d->psi->contactList()->accounts()) {
-		if(pa->isActive() && pa->serverInfoManager()->hasPEP())
+		if(pa->isActive() && pa->serverInfoManager()->hasPEP() && !pa->accountOptions().ignore_global_actions)
 			l.append(pa);
 	}
 	if(l.isEmpty())
@@ -1193,7 +1193,7 @@ void MainWin::actSetGeolocActivated()
 {
 	QList<PsiAccount*> l;
 	foreach(PsiAccount *pa, d->psi->contactList()->accounts()) {
-		if(pa->isActive() && pa->serverInfoManager()->hasPEP())
+		if(pa->isActive() && pa->serverInfoManager()->hasPEP() && !pa->accountOptions().ignore_global_actions)
 			l.append(pa);
 	}
 	if(l.isEmpty())
