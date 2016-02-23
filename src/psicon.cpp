@@ -81,6 +81,7 @@
 #include "accountscombobox.h"
 #include "tabdlg.h"
 #include "chatdlg.h"
+#include "spellchecker/aspellchecker.h"
 #ifdef WEBKIT
 #include "avatars.h"
 #include "chatviewthemeprovider.h"
@@ -727,6 +728,9 @@ bool PsiCon::init()
 	optionChanged(tuneControllerFilterOptionPath);
 	optionChanged(tuneUrlFilterOptionPath);
 #endif
+
+	//init spellchecker
+	optionChanged("options.ui.spell-check.langs");
 
 	return result;
 }
@@ -1416,6 +1420,22 @@ void PsiCon::optionChanged(const QString& option)
 	if (option == "options.p2p.bytestreams.listen-port") {
 		s5b_init();
 	}
+
+	if (option == "options.ui.spell-check.langs") {
+		QStringList langs = PsiOptions::instance()->getOption(option).toString().split(QRegExp("\\s+"), QString::SkipEmptyParts);
+		if(langs.isEmpty()) {
+			langs = SpellChecker::instance()->getAllLanguages();
+			QString lang_env = getenv("LANG");
+			if(!lang_env.isEmpty()) {
+				lang_env = lang_env.split("_").first();
+				if(langs.contains(lang_env, Qt::CaseInsensitive))
+					langs = QStringList(lang_env);
+			}
+		}
+		SpellChecker::instance()->setActiveLanguages(langs);
+		return;
+	}
+
 #ifdef USE_PEP
 	if (option == tuneUrlFilterOptionPath || option == tuneTitleFilterOptionPath) {
 		d->tuneManager->setTuneFilters(PsiOptions::instance()->getOption(tuneUrlFilterOptionPath).toString().split(QRegExp("\\W+")),

@@ -275,6 +275,7 @@
 			</show-deprecated>
 			<spell-check comment="Options related to the spell checker">
 				<enabled comment="Whether the spell checker is enabled" type="bool">true</enabled>
+				<langs type="QString"></langs>
 			</spell-check>
 			<disable-send-button type="bool">true</disable-send-button>
 			<systemtray comment="Options related to the system tray">
