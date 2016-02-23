@@ -335,6 +335,17 @@ bool ContactListGroup::haveOnlineContacts() const
 	return haveOnlineContacts_;
 }
 
+bool ContactListGroup::isHidden() const
+{
+	return model()->groupState()->isHidden(this);
+}
+
+void ContactListGroup::setHidden(bool hidden)
+{
+	model_->groupState()->setHidden(this, hidden);
+	model_->updatedGroupVisibility(this);
+}
+
 bool ContactListGroup::shouldBeVisible() const
 {
 	return shouldBeVisible_;

@@ -126,7 +126,7 @@ bool ContactListProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& s
 			}
 
 			bool show = true;
-			if (index.data(Qt::DisplayRole) == PsiContact::hiddenGroupName()) {
+			if (index.data(Qt::DisplayRole) == PsiContact::hiddenGroupName() || group->isHidden()) {
 				show = showHidden();
 			}
 

@@ -57,6 +57,7 @@ class ContactListGroupMenu::Private : public QObject
 	QAction* actionMucHide_;
 	QAction* actionMucShow_;
 	QAction* actionMucLeave_;
+	QAction* actionHide_;
 
 public:
 	Private(ContactListGroupMenu* menu, ContactListGroup* _group)
@@ -108,6 +109,9 @@ public:
 		actionMucLeave_ = new IconAction(tr("Leave All"), this, "psi/action_muc_leave");
 		connect(actionMucLeave_, SIGNAL(triggered()), SLOT(mucLeave()));
 
+		actionHide_ = new IconAction(tr("Hidden"), "psi/show_hidden", tr("Hidden"), 0, this, 0, true);
+		connect(actionHide_, SIGNAL(triggered(bool)), SLOT(actHide(bool)));
+
 		authMenu_ = 0;
 
 		if (ContactListGroup::SpecialType_Conference != group->specialGroupType()) {
@@ -120,6 +124,8 @@ public:
 			menu->addAction(sendMessageAction_);
 			menu->addAction(actionCustomStatus_);
 			menu->addSeparator();
+			menu->addAction(actionHide_);
+			menu_->addSeparator();
 			authMenu_ = menu->addMenu(tr("Authorization"));
 			authMenu_->addAction(actionAuth_);
 			authMenu_->addAction(actionAuthRequest_);
@@ -152,6 +158,7 @@ private slots:
 		renameAction_->setEnabled(group->isEditable());
 		removeGroupAndContactsAction_->setEnabled(group->isRemovable());
 		removeGroupWithoutContactsAction_->setEnabled(group->isRemovable());
+		actionHide_->setChecked(group->isHidden());
 #ifdef YAPSI
 		addGroupAction_->setEnabled(group->model()->contactList()->haveAvailableAccounts());
 #endif
@@ -300,6 +307,14 @@ private slots:
 			}
 			contacts.first()->account()->actionSendMessage(list);
 		}
+	}
+
+	void actHide(bool hide)
+	{
+		if (!group)
+			return;
+
+		group->setHidden(hide);
 	}
 
 #ifdef YAPSI

@@ -50,6 +50,9 @@ public:
 	int groupOrder(const ContactListGroup* group) const;
 	void setGroupOrder(const ContactListGroup* group, int order);
 
+	bool isHidden(const ContactListGroup* group) const;
+	void setHidden(const ContactListGroup* group, bool hidden);
+
 	void updateGroupList(const ContactListModel* model);
 
 	void load(const QString& id);
@@ -66,6 +69,7 @@ private:
 	QString id_;
 	GroupExpandedState expanded_;
 	QMap<QString, int> order_;
+	QMap<QString, bool> hidden_;
 
 	QStringList groupNames(const ContactListModel* model, const QModelIndex& parent, QStringList parentName) const;
 };

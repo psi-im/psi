@@ -95,6 +95,23 @@ void ContactListGroupState::setGroupOrder(const ContactListGroup* group, int ord
 	order_[group->fullName()] = order;
 }
 
+bool ContactListGroupState::isHidden(const ContactListGroup* group) const
+{
+	const QString groupName = group->fullName();
+	if(hidden_.contains(groupName)) {
+		return hidden_.value(groupName);
+	}
+
+	return false;
+}
+
+void ContactListGroupState::setHidden(const ContactListGroup* group, bool hidden)
+{
+	saveGroupStateTimer_->start();
+
+	hidden_[group->fullName()] = hidden;
+}
+
 void ContactListGroupState::updateGroupList(const ContactListModel* model)
 {
 	GroupExpandedState newExpanded;
@@ -182,6 +199,20 @@ void ContactListGroupState::load(const QString& id)
 			}
 		}
 	}
+	{
+		QDomElement hidden = root.firstChildElement("hidden");
+		if (!hidden.isNull()) {
+			for (QDomNode n = hidden.firstChild(); !n.isNull(); n = n.nextSibling()) {
+				QDomElement e = n.toElement();
+				if (e.isNull())
+					continue;
+
+				if (e.tagName() == "item") {
+					hidden_[e.attribute("fullName")] = e.text() == "true";
+				}
+			}
+		}
+	}
 }
 
 void ContactListGroupState::save()
@@ -217,6 +248,19 @@ void ContactListGroupState::save()
 				QDomElement item = textTag(&doc, "item", QString::number(i.value()));
 				item.setAttribute("fullName", i.key());
 				order.appendChild(item);
+			}
+		}
+	}
+	{
+		QDomElement hidden = XMLHelper::emptyTag(&doc, "hidden");
+		root.appendChild(hidden);
+
+		QMap<QString, bool>::iterator i = hidden_.begin();
+		for (; i != hidden_.end(); ++i) {
+			if (i.value() == true) {
+				QDomElement item = textTag(&doc, "item", "true");
+				item.setAttribute("fullName", i.key());
+				hidden.appendChild(item);
 			}
 		}
 	}

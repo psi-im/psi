@@ -56,6 +56,8 @@ public:
 	virtual int onlineContactsCount() const;
 	virtual int totalContactsCount() const;
 	int contactsCount() const;
+	bool isHidden() const;
+	void setHidden(bool hidden);
 
 	QList<PsiContact*> contacts() const;
 
