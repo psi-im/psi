@@ -191,6 +191,8 @@ public:
 
 	bool notifyOnline() const;
 
+	void updateAlwaysVisibleContact(PsiContact* pc);
+
 	void modify();
 	void reconfigureFTManager();
 	void changeVCard();

@@ -87,6 +87,8 @@ public:
 	XMPP::Jid dtProxy;
 	bool ibbOnly;
 
+	QStringList alwaysVisibleContacts;
+
 	QString optionsBase;
 
 	QString stunHost;

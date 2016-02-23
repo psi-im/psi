@@ -96,6 +96,9 @@ bool ContactListProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& s
 		else if (psiContact->isAgent()) {
 			return showTransports();
 		}
+		else if (psiContact->isAlwaysVisible()) {
+			return true;
+		}
 
 		bool show = true;
 		if (psiContact->isHidden()) {

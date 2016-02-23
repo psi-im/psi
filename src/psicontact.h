@@ -70,6 +70,9 @@ public:
 
 	virtual void setEditing(bool editing);
 
+	bool isAlwaysVisible() const;
+	void setAlwaysVisible(bool visible);
+
 	bool addAvailable() const;
 	bool removeAvailable() const;
 	bool authAvailable() const;

@@ -377,6 +377,9 @@ void ContactListGroup::updateOnlineContactsFlag()
 			}
 			if (contact->alerting())
 				shouldBeVisible = true;
+			if (contact->isAlwaysVisible()) {
+				shouldBeVisible = true;
+			}
 		}
 		else if ((group = dynamic_cast<ContactListGroup*>(item->item()))) {
 			totalContactsCount += group->totalContactsCount();

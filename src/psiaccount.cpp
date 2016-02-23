@@ -896,6 +896,37 @@ public:
 		avCallManager->setStunRelayTcpService(acc.stunHost, acc.stunPort, convert_proxy(acc, jid), acc.stunUser, acc.stunPass);
 	}
 
+	bool isAlwaysVisibleContact(const Jid& jid) const
+	{
+		return acc.alwaysVisibleContacts.contains(jid.bare());
+	}
+
+	void setAlwaysVisibleContact(const Jid& jid, bool visible)
+	{
+		if(!visible) {
+			acc.alwaysVisibleContacts.removeAll(jid.bare());
+		}
+		else if(!acc.alwaysVisibleContacts.contains(jid.bare())) {
+			acc.alwaysVisibleContacts.append(jid.bare());
+		}
+	}
+
+	void updateContacts()
+	{
+		QStringList jids;
+		foreach(PsiContact *pc, contacts) {
+			const Jid jid = pc->jid();
+			jids.append(jid.bare());
+			bool vis = isAlwaysVisibleContact(jid);
+			if(vis != pc->isAlwaysVisible())
+				pc->setAlwaysVisible(vis);
+		}
+		foreach(const QString& j,  acc.alwaysVisibleContacts) {
+			if(!jids.contains(j))
+				acc.alwaysVisibleContacts.removeAll(j);
+		}
+	}
+
 private:
 	Status lastManualStatus_;
 
@@ -1266,6 +1297,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	QTimer::singleShot(0, d, SLOT(loadQueue()));
 
 	d->contactList->link(this);
+
+	d->updateContacts(); //update always visible contacts state
 }
 
 PsiAccount::~PsiAccount()
@@ -1337,6 +1370,11 @@ void PsiAccount::cleanupStream()
 	d->usingSSL = false;
 
 	d->localAddress = QHostAddress();
+}
+
+void PsiAccount::updateAlwaysVisibleContact(PsiContact *pc)
+{
+	d->setAlwaysVisibleContact(pc->jid(), pc->isAlwaysVisible());
 }
 
 bool PsiAccount::enabled() const

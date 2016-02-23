@@ -259,6 +259,7 @@ public:
 	QAction* mucShowAction_;
 	QAction* mucLeaveAction_;
 	QAction* blockAction_;
+	QAction* visibleAction_;
 
 #endif
 
@@ -430,6 +431,9 @@ public:
 		blockAction_ = new IconAction(tr("Block"), "psi/stop", tr("Block"), 0, this, 0, true);
 		connect(blockAction_, SIGNAL(triggered(bool)), SLOT(block(bool)));
 
+		visibleAction_ = new IconAction(tr("Always Visible"), "psi/eye", tr("Always Visible"), 0, this, 0, true);
+		connect(visibleAction_, SIGNAL(triggered(bool)), SLOT(setAlwaysVisible(bool)));
+
 		if (!contact_->isConference()) {
 			menu_->addAction(addAuthAction_);
 			menu_->addAction(transportLogonAction_);
@@ -457,6 +461,7 @@ public:
 			mngMenu_->addAction(renameAction_);
 			mngMenu_->addMenu(groupMenu_);
 			mngMenu_->addAction(blockAction_);
+			mngMenu_->addAction(visibleAction_);
 			authMenu_ = mngMenu_->addMenu(tr("&Authorization"));
 			authMenu_->addAction(authResendAction_);
 			authMenu_->addAction(authRerequestAction_);
@@ -569,6 +574,7 @@ private slots:
 		}
 		authMenu_->setEnabled(contact_->account()->isAvailable());
 		updateBlockActionState();
+		visibleAction_->setChecked(contact_->isAlwaysVisible());
 		removeAction_->setVisible(!PsiOptions::instance()->getOption("options.ui.contactlist.lockdown-roster").toBool()  && !contact_->isSelf());
 		removeAction_->setEnabled(contact_->removeAvailable());
 		if (!PsiOptions::instance()->getOption("options.ui.menu.contact.custom-picture").toBool()) {
@@ -655,6 +661,14 @@ private slots:
 			return;
 
 		contact_->toggleBlockedStateConfirmation();
+	}
+
+	void setAlwaysVisible(bool visible)
+	{
+		if (!contact_)
+			return;
+
+		contact_->setAlwaysVisible(visible);
 	}
 
 	void addAuth()

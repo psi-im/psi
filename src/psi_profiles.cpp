@@ -330,6 +330,8 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 		tlsOverrideCert = o->getOption(base + ".tls.override-certificate").toByteArray();
 		tlsOverrideDomain = o->getOption(base + ".tls.override-domain").toString();
 	}
+
+	alwaysVisibleContacts = o->getOption(base + ".always-visible-contacts").toStringList();
 }
 
 void UserAccount::toOptions(OptionsTree *o, QString base)
@@ -470,6 +472,8 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 	o->setOption(base + ".tls.override-certificate", tlsOverrideCert);
 	o->setOption(base + ".tls.override-domain", tlsOverrideDomain);
 	saveLastStatus(o, base);
+
+	o->setOption(base + ".always-visible-contacts", alwaysVisibleContacts);
 }
 
 void UserAccount::fromXml(const QDomElement &a)

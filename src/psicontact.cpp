@@ -67,6 +67,7 @@ public:
 		, statusTimer_(0)
 		, isValid_(true)
 		, isAnimated_(false)
+		, isAlwaysVisible_(false)
 		, contact_(contact)
 #ifdef YAPSI
 		, gender_(XMPP::VCard::UnknownGender)
@@ -108,6 +109,7 @@ public:
 	Status oldStatus_;
 	bool isValid_;
 	bool isAnimated_;
+	bool isAlwaysVisible_;
 #ifdef YAPSI
 	bool showOnlineTemporarily_;
 	bool reconnecting_;
@@ -548,6 +550,18 @@ bool PsiContact::shouldBeVisible() const
 #endif
 	return false;
 	// return ContactListItem::shouldBeVisible();
+}
+
+bool PsiContact::isAlwaysVisible() const
+{
+	return d->isAlwaysVisible_;
+}
+
+void PsiContact::setAlwaysVisible(bool visible)
+{
+	d->isAlwaysVisible_ = visible;
+	account()->updateAlwaysVisibleContact(this);
+	emit updated();
 }
 
 /**
