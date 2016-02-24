@@ -104,6 +104,43 @@ void UserResource::setClient(const QString &name, const QString& version, const 
 	}
 }
 
+/**
+ * \brief Timezone offset in minutes (if available).
+ */
+Maybe<int> UserResource::timezoneOffset() const
+{
+	return v_tzo;
+}
+
+/**
+ * \brief Timezone offset as string (or empty string if no data).
+ *
+ * String is formatted as "UTC[+|-]h[:mm]".
+ */
+const QString& UserResource::timezoneOffsetString() const
+{
+	return v_tzoString;
+}
+
+/**
+ * \brief Set timezone offset (in minutes).
+ */
+void UserResource::setTimezone(Maybe<int> off)
+{
+	v_tzo = off;
+
+	if (off.hasValue()) {
+		QTime t = QTime(0, 0).addSecs(abs(off.value())*60);
+		QString u = QString("UTC") + (off.value() < 0 ? "-" : "+");
+		u += QString::number(t.hour());
+		if (t.minute())
+			u += QString(":%1").arg(t.minute());
+		v_tzoString = u;
+	}
+	else
+		v_tzoString = "";
+}
+
 const QString & UserResource::publicKeyID() const
 {
 	return v_keyID;
@@ -644,6 +681,12 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 			// User Geolocation
 			if (!r.geoLocation().isNull() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.geolocation").toBool())
 				str += QString("<div style='white-space:pre'>") + TextUtil::escape(geoLocation().toString()) + "</div>";
+
+			// Entity Time
+			if (r.timezoneOffset().hasValue()) {
+				QDateTime dt = QDateTime::currentDateTime().toUTC().addSecs(r.timezoneOffset().value()*60);
+				str += QString("<br><nobr>") + QObject::tr("Time") + QString(": %1 (%2)").arg(dt.toString(Qt::TextDate)).arg(r.timezoneOffsetString()) + "</nobr>";
+			}
 
 			// client
 			if(!r.versionString().isEmpty() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.client-version").toBool()) {

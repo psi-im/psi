@@ -59,6 +59,7 @@ private slots:
 	void contactUnavailable(const Jid &, const Resource &);
 	void contactUpdated(const Jid &);
 	void clientVersionFinished();
+	void entityTimeFinished();
 	void requestLastActivityFinished();
 	void jt_finished();
 	void doSubmit();
@@ -87,7 +88,7 @@ private:
 	bool edited();
 	void setEdited(bool);
 	void setPreviewPhoto(const QString& str);
-	void requestClientVersion(const XMPP::Jid& j);
+	void requestResourceInfo(const XMPP::Jid& j);
 	void requestLastActivity();
 };
 

@@ -13,6 +13,7 @@
 #include <QSysInfo>
 #include <QProcess>
 #include <QTextStream>
+#include <QByteArray>
 
 #if defined(HAVE_X11) || defined(Q_OS_MAC)
 #include <time.h>
@@ -166,30 +167,9 @@ static QString unixHeuristicDetect() {
 SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 {
 	// Initialize
-	timezone_offset_ = 0;
-	timezone_str_ = "N/A";
 	os_str_ = "Unknown";
 
 	// Detect
-#if defined(HAVE_X11) || defined(Q_OS_MAC)
-	time_t x;
-	time(&x);
-	char str[256];
-	char fmt[32];
-	strcpy(fmt, "%z");
-	strftime(str, 256, fmt, localtime(&x));
-	if(strcmp(fmt, str)) {
-		QString s = str;
-		if(s.at(0) == '+')
-			s.remove(0,1);
-		s.truncate(s.length()-2);
-		timezone_offset_ = s.toInt();
-	}
-	strcpy(fmt, "%Z");
-	strftime(str, 256, fmt, localtime(&x));
-	if(strcmp(fmt, str))
-		timezone_str_ = str;
-#endif
 #if defined(HAVE_X11)
 	// attempt to get LSB version before trying the distro-specific approach
 	os_str_ = lsbRelease(QStringList() << "--description" << "--short");
@@ -231,22 +211,6 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 #endif
 
 #if defined(Q_OS_WIN)
-	TIME_ZONE_INFORMATION i;
-	//GetTimeZoneInformation(&i);
-	//timezone_offset_ = (-i.Bias) / 60;
-	memset(&i, 0, sizeof(i));
-	bool inDST = (GetTimeZoneInformation(&i) == TIME_ZONE_ID_DAYLIGHT);
-	int bias = i.Bias;
-	if(inDST)
-		bias += i.DaylightBias;
-	timezone_offset_ = (-bias) / 60;
-	timezone_str_ = "";
-	for(int n = 0; n < 32; ++n) {
-		int w = inDST ? i.DaylightName[n] : i.StandardName[n];
-		if(w == 0)
-			break;
-		timezone_str_ += QChar(w);
-	}
 
 	QSysInfo::WinVersion v = QSysInfo::WindowsVersion;
 	switch (v) {
