@@ -23,6 +23,8 @@
 #include <QList>
 #include <QtCrypto>
 #include <QTextDocument> // for TextUtil::escape()
+#include <QBuffer>
+#include <QUrl>
 
 #include "userlist.h"
 #include "avatars.h"
@@ -533,36 +535,59 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 	// you most probably want to wrap it with TextUtil::escape()
 
 	QString str;
+	int s = PsiIconset::instance()->system().iconSize();
+	str +=QString("<style type='text/css'> \
+		.layer1 { white-space:pre; margin-left:%1px;} \
+		.layer2 { white-space:normal; margin-left:%1px;} \
+	</style>").arg(s+2);
+
 	QString imgTag = "icon name"; // or 'img src' if appropriate QMimeSourceFactory is installed. but mblsha noticed that QMimeSourceFactory unloads sometimes
 	bool useAvatar = false;
+	bool mucItem = false;
+
+	if(!userResourceList().isEmpty()) {
+		mucItem = userResourceList()[0].status().hasMUCItem();
+	}
+
 	if (v_avatarFactory && !v_avatarFactory->getAvatar(jid().bare()).isNull() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.avatar").toBool())
 		useAvatar = true;
 
+	str += "<table cellspacing=\"3\"><tr>";
+	str += "<td>";
+
 	if (useAvatar) {
-		str += "<table cellspacing=\"0\"><tr>";
-		str += "<td>";
 		str += QString("<icon name=\"avatars/%1\">").arg(jid().bare());
 		str += "</td><td width=\"10\"></td>";
 		str += "<td>";
 	}
 
 	QString nick = JIDUtil::nickOrJid(name(), jid().full());
-	if(jid().full() != nick)
-		str += QString("<div style='white-space:pre'>%1 &lt;%2&gt;</div>").arg(TextUtil::escape(nick)).arg(TextUtil::escape(JIDUtil::toString(jid(),true)));
-	else
-		str += QString("<div style='white-space:pre'>%1</div>").arg(TextUtil::escape(nick));
+	if (!mucItem) {
+		if(jid().full() != nick)
+			str += QString("<div style='white-space:pre'>%1 &lt;%2&gt;</div>").arg(TextUtil::escape(nick)).arg(TextUtil::escape(JIDUtil::toString(jid(),true)));
+		else
+			str += QString("<div style='white-space:pre'>%1</div>").arg(TextUtil::escape(nick));
+	}
 
 	// subscription
-	if(!v_self && !v_isConference && subscription().type() != Subscription::Both)
+	if(!v_self && !v_isConference && subscription().type() != Subscription::Both && !mucItem)
 		str += QString("<div style='white-space:pre'>") + QObject::tr("Subscription") + ": " + subscription().toString() + "</div>";
 
-	if(!v_keyID.isEmpty())
-		str += QString("<div style='white-space:pre'>") + QObject::tr("OpenPGP") + ": " + v_keyID.right(8) + "</div>";
+	if(!v_keyID.isEmpty() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.pgp").toBool())
+		str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag).arg("psi/pgp") + QObject::tr("OpenPGP") + ": " + v_keyID.right(8) + "</div>";
+
+	// User Mood
+	if (!mood().isNull()) {
+		str += QString("<div style='white-space:pre'><%1=\"mood/%2\"> ").arg(imgTag).arg(mood().typeValue()) + QObject::tr("Mood") + ": " + mood().typeText();
+		if (!mood().text().isEmpty())
+			str += QString(" (") + TextUtil::escape(mood().text()) + QString(")");
+		str += "</div>";
+	}
 
 	// User Activity
 	if (!activity().isNull()) {
-		str += QString("<div style='white-space:pre'>") + QObject::tr("Activity") + ": " +
-			QString("<%1=\"%2\"> ").arg(imgTag).arg(activityIconName(activity())) + activity().typeText();
+		str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag).arg(activityIconName(activity())) + 
+			QObject::tr("Activity") + ": " + activity().typeText();
 		if (activity().specificType() != Activity::UnknownSpecific) {
 			str += QString(" - ") + activity().specificTypeText();
 		}
@@ -571,18 +596,9 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 		str += "</div>";
 	}
 
-	// User Mood
-	if (!mood().isNull()) {
-		str += QString("<div style='white-space:pre'>") + QObject::tr("Mood") + ": " +
-			QString("<%1=\"mood/%2\"> ").arg(imgTag).arg(mood().typeValue()) + mood().typeText();
-		if (!mood().text().isEmpty())
-			str += QString(" (") + TextUtil::escape(mood().text()) + QString(")");
-		str += "</div>";
-	}
-
 	// User Tune
 	if (!tune().isEmpty())
-		str += QString("<div style='white-space:pre'>") + QObject::tr("Listening to") + ": " + TextUtil::escape(tune()) + "</div>";
+		str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag).arg("psi/notification_roster_tune") + QObject::tr("Listening to") + ": " + TextUtil::escape(tune()) + "</div>";
 
 	// User Physical Location
 	//if (!physicalLocation().isNull())
@@ -590,7 +606,8 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 
 	// User Geolocation
 	if (!geoLocation().isNull() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.geolocation").toBool())
-		str += QString("<div style='white-space:pre'>") + TextUtil::escape(geoLocation().toString()) + "</div>";
+		str += QString("<div style='white-space:pre'><table cellspacing=\"0\"><tr><td><%1=\"%2\"> </td><td><div>%3</div></td></tr></table></div>") \
+		.arg(imgTag).arg("system/geolocation").arg(TextUtil::escape(geoLocation().toString().trimmed()));
 
 	// resources
 	if(!userResourceList().isEmpty()) {
@@ -599,45 +616,48 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 
 		for(UserResourceList::ConstIterator rit = srl.begin(); rit != srl.end(); ++rit) {
 			const UserResource &r = *rit;
+
 			QString name;
 			if(!r.name().isEmpty())
 				name = r.name();
 			else
 				name = QObject::tr("[blank]");
 
-			int status = makeSTATUS(r.status());
-			QString istr = "status/offline";
-			if(status == STATUS_ONLINE)
-				istr = "status/online";
-			else if(status == STATUS_AWAY)
-				istr = "status/away";
-			else if(status == STATUS_XA)
-				istr = "status/xa";
-			else if(status == STATUS_DND)
-				istr = "status/dnd";
-			else if(status == STATUS_CHAT)
-				istr = "status/chat";
-			else if(status == STATUS_INVISIBLE)
-				istr = "status/invisible"; //this shouldn't happen
-
 			QString secstr;
 			if(isSecure(r.name()) && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.pgp").toBool())
 				secstr += QString(" <%1=\"psi/cryptoYes\">").arg(imgTag);
-			str += QString("<div style='white-space:pre'>") + QString("<%1=\"%2\"> ").arg(imgTag).arg(istr) + QString("<b>%1</b> ").arg(TextUtil::escape(name)) + QString("(%1)").arg(r.priority()) + secstr + "</div>";
+			QString hr;
+			if (!mucItem)
+				hr = "<hr/>";
+			str += hr + "<div style='white-space:pre'>";
+
+			PsiIcon *statusIcon = PsiIconset::instance()->statusPtr(jid(), makeSTATUS(r.status()));
+			if (statusIcon) {
+				QByteArray imageArray;
+				QBuffer buff(&imageArray);
+				statusIcon->image().save(&buff, "png");
+				QString imgBase64(QUrl::toPercentEncoding(imageArray.toBase64()));
+				str += QString("<img src=\"data:image/png;base64,%1\" alt=\"img\"/>").arg(imgBase64);
+			}
+
+			str += QString(" <b>%1</b> ").arg(TextUtil::escape(name)) + QString("(%1)").arg(r.priority());
+			if (!r.status().mucItem().jid().isEmpty())
+				str += QString(" &lt;%1&gt;").arg(TextUtil::escape(JIDUtil::toString(r.status().mucItem().jid(),true)));
+			str += secstr + "</div>";
 
 			if(!r.publicKeyID().isEmpty() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.pgp").toBool()) {
 				int v = r.pgpVerifyStatus();
 				if(v == QCA::SecureMessageSignature::Valid || v == QCA::SecureMessageSignature::InvalidSignature || v == QCA::SecureMessageSignature::InvalidKey || v == QCA::SecureMessageSignature::NoKey) {
 					if(v == QCA::SecureMessageSignature::Valid) {
-						QString d = r.sigTimestamp().toString(Qt::TextDate);
-						str += QString("<div style='white-space:pre'>") + QObject::tr("Signed") + " @ " + "<font color=\"#2A993B\">" + d + "</font>";
+						QString d = r.sigTimestamp().toString(Qt::DefaultLocaleShortDate);
+						str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/gpg-yes") + QObject::tr("Signed") + ": " + "<font color=\"#2A993B\">" + d + "</font>";
 					}
 					else if(v == QCA::SecureMessageSignature::NoKey) {
-						QString d = r.sigTimestamp().toString(Qt::TextDate);
-						str += QString("<div style='white-space:pre'>") + QObject::tr("Signed") + " @ " + d;
+						QString d = r.sigTimestamp().toString(Qt::DefaultLocaleShortDate);
+						str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/keyUnknown") + QObject::tr("Signed") + ": " + d;
 					}
 					else if(v == QCA::SecureMessageSignature::InvalidSignature || v == QCA::SecureMessageSignature::InvalidKey) {
-						str += QString("<div style='white-space:pre'>") + "<font color=\"#810000\">" + QObject::tr("Bad signature") + "</font>";
+						str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/keyBad") + "<font color=\"#810000\">" + QObject::tr("Bad signature") + "</font>";
 					}
 
 					if(v_keyID != r.publicKeyID())
@@ -646,55 +666,48 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 				}
 			}
 
-			// last status
-			if(r.status().timeStamp().isValid() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.last-status").toBool()) {
-				QString d = r.status().timeStamp().toString(Qt::TextDate);
-				str += QString("<div style='white-space:pre'>") + QObject::tr("Last Status") + " @ " + d + "</div>";
-			}
-
-			// MUC
-			if(!v_isConference && r.status().hasMUCItem()) {
-				if(!r.status().mucItem().jid().isEmpty())
-					str += QString("<div style='white-space:pre'>") + QObject::tr("JID: %1").arg(JIDUtil::toString(r.status().mucItem().jid(),true)) + QString("</div>");
-				if(r.status().mucItem().role() != MUCItem::NoRole)
-					str += QString("<div style='white-space:pre'>") + QObject::tr("Role: %1").arg(MUCManager::roleToString(r.status().mucItem().role())) + QString("</div>");
-				str += QString("<div style='white-space:pre'>") + QObject::tr("Affiliation: %1").arg(MUCManager::affiliationToString(r.status().mucItem().affiliation())) + QString("</div>");
-			}
-
-			// gabber music
-			if(!r.status().songTitle().isEmpty()) {
-				QString s = r.status().songTitle();
-				if(trim)
-					s = dot_truncate(s, 80);
-				s = TextUtil::escape(s);
-				str += QString("<div style='white-space:pre'>") + QObject::tr("Listening to") + QString(": %1").arg(s) + "</div>";
-			}
-
-			// User Tune
-			if (!r.tune().isEmpty())
-				str += QString("<div style='white-space:pre'>") + QObject::tr("Listening to") + ": " + TextUtil::escape(r.tune()) + "</div>";
-
-			// User Physical Location
-		//	if (!r.physicalLocation().isNull())
-		//		str += QString("<div style='white-space:pre'>") + QObject::tr("Location") + ": " + TextUtil::escape(r.physicalLocation().toString()) + "</div>";
-
-			// User Geolocation
-			if (!r.geoLocation().isNull() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.geolocation").toBool())
-				str += QString("<div style='white-space:pre'>") + TextUtil::escape(geoLocation().toString()) + "</div>";
-
-			// Entity Time
-			if (r.timezoneOffset().hasValue()) {
-				QDateTime dt = QDateTime::currentDateTime().toUTC().addSecs(r.timezoneOffset().value()*60);
-				str += QString("<br><nobr>") + QObject::tr("Time") + QString(": %1 (%2)").arg(dt.toString(Qt::TextDate)).arg(r.timezoneOffsetString()) + "</nobr>";
-			}
-
 			// client
 			if(!r.versionString().isEmpty() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.client-version").toBool()) {
 				QString ver = r.versionString();
 				if(trim)
 					ver = dot_truncate(ver, 80);
 				ver = TextUtil::escape(ver);
-				str += QString("<div style='white-space:pre'>") + QObject::tr("Using") + QString(": <%1=\"%2\"> %3").arg(imgTag).arg("clients/" + findClient(r.clientName().toLower())).arg(ver) + "</div>";
+				str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("clients/" + findClient(r.clientName().toLower())) + QObject::tr("Using") + QString(": %3").arg(ver) + "</div>";
+			}
+
+
+			// Entity Time
+			if (r.timezoneOffset().hasValue()) {
+				QDateTime dt = QDateTime::currentDateTime().toUTC().addSecs(r.timezoneOffset().value()*60);
+				str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/time") + QObject::tr("Time") + QString(": %1 (%2)").arg(dt.toString(Qt::DefaultLocaleShortDate)).arg(r.timezoneOffsetString()) + "</div>";
+			}
+
+			// MUC
+			if(!v_isConference && r.status().hasMUCItem()) {
+				MUCItem::Affiliation a = r.status().mucItem().affiliation();
+				QString aff;
+				if(a == MUCItem::Owner)
+					aff = "affiliation/owner";
+				else if(a == MUCItem::Admin)
+					aff = "affiliation/admin";
+				else if(a == MUCItem::Member)
+					aff = "affiliation/member";
+				else if(a == MUCItem::Outcast)
+					aff = "affiliation/outcast";
+				else
+					aff = "affiliation/noaffiliation";
+				//if(!r.status().mucItem().jid().isEmpty())
+				//	str += QString("<div class='layer1'>") + QObject::tr("JID: %1").arg(JIDUtil::toString(r.status().mucItem().jid(),true)) + QString("</div>");
+				if(r.status().mucItem().role() != MUCItem::NoRole)
+					str += QString("<div class='layer2'><table cellspacing=\"0\"><tr><td><%1=\"%2\"> </td><td>").arg(imgTag).arg(aff);
+					str += QString("<div style='white-space:pre'>") + QObject::tr("Role: %1").arg(MUCManager::roleToString(r.status().mucItem().role())) + QString("</div>");
+					str += QString("<div style='white-space:pre'>") + QObject::tr("Affiliation: %1").arg(MUCManager::affiliationToString(r.status().mucItem().affiliation())) + QString("</td></tr></table></div>");
+			}
+
+			// last status
+			if(r.status().timeStamp().isValid() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.last-status").toBool()) {
+				QString d = r.status().timeStamp().toString(Qt::DefaultLocaleShortDate);
+				str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("psi/info") + QObject::tr("Last Status") + ": " + d + "</div>";
 			}
 
 			// status message
@@ -711,15 +724,17 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 					s = TextUtil::emoticonify(s);
 				if( !doLinkify && PsiOptions::instance()->getOption("options.ui.chat.legacy-formatting").toBool() )
 					s = TextUtil::legacyFormat(s);
-				str += QString("<div style='white-space:pre'><u>%1</u></div><div>%2</div>").arg(head).arg(s);
+
+				str += QString("<div class='layer2'><table cellspacing=\"0\"><tr><td><%1=\"%2\"> </td><td><div><u>%3</u>: %4</div></td></tr></table></div>") \
+				.arg(imgTag).arg("psi/action_templates_edit").arg(head).arg(s);
 			}
 		}
 	}
 	else {
 		// last available
 		if(!lastAvailable().isNull()) {
-			QString d = lastAvailable().toString(Qt::TextDate);
-			str += QString("<div style='white-space:pre'>") + QObject::tr("Last Available") + " @ " + d + "</div>";
+			QString d = lastAvailable().toString(Qt::DefaultLocaleShortDate);
+			str += QString("<div style='white-space:pre'><%1=\"%2\"> ").arg(imgTag).arg("psi/info") + QObject::tr("Last Available") + ": " + d + "</div>";
 		}
 
 		// presence error
@@ -742,14 +757,13 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 				if ( doLinkify )
 					s = TextUtil::linkify(s);
 			}
-			str += QString("<div style='white-space:pre'><u>%1</u></div><div>%2</div>").arg(head).arg(s);
+			str += QString("<div class='layer2'><table cellspacing=\"0\"><tr><td><%1=\"%2\"> </td><td><div><u>%3</u>: %4</div></td></tr></table></div>") \
+			.arg(imgTag).arg("psi/action_templates_edit").arg(head).arg(s);
 		}
 	}
 
-	if (useAvatar) {
-		str += "</td>";
-		str += "</tr></table>";
-	}
+	str += "</td>";
+	str += "</tr></table>";
 
 	return str;
 }
