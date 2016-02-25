@@ -53,7 +53,6 @@ class IconSelectButton : public QAbstractButton
 
 private:
 	PsiIcon *ic;
-	QString text;
 	QSize s;
 	bool animated;
 
@@ -114,8 +113,6 @@ private:
 			}
 
 			if ( !ic->text().isEmpty() ) {
-				text = ic->defaultText();
-
 				// and list of possible variants in the ToolTip
 				QStringList toolTip;
 				foreach(PsiIcon::IconText t, ic->text()) {
@@ -156,7 +153,7 @@ private slots:
 		clearFocus();
 		if ( ic ) {
 			emit iconSelected(ic);
-			emit textSelected(text);
+			emit textSelected(ic->defaultText());
 		}
 	}
 
