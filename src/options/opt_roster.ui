@@ -92,7 +92,7 @@
      <item>
       <widget class="QSpinBox" name="sb_hideInterval">
        <property name="minimum">
-        <number>1</number>
+        <number>0</number>
        </property>
        <property name="maximum">
         <number>9999</number>
