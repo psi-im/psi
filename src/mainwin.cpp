@@ -1521,7 +1521,7 @@ bool MainWin::eventFilter(QObject *o, QEvent *e)
 	if(e->type() == QEvent::KeyPress
 	   && o->isWidgetType()
 	   && isAncestorOf( (QWidget*)o ) ) {
-		if(d->hideTimer->isActive())
+		if(d->hideTimer && d->hideTimer->isActive())
 			d->hideTimer->start();
 	}
 	return false;
