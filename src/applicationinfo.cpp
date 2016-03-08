@@ -46,8 +46,7 @@
 #define PROG_VERSION PSI_VERSION
 //#define PROG_VERSION "0.15-dev" " (" __DATE__ ")" //CVS Builds are dated
 //#define PROG_VERSION "0.15";
-#define PROG_CAPS_NODE "http://psi-im.org/caps"
-#define PROG_CAPS_VERSION "caps-b75d8d2b25"
+#define PROG_CAPS_NODE "http://psi-im.org"
 #define PROG_IPC_NAME "org.psi-im.Psi"	// must not contain '\\' character on Windows
 #define PROG_OPTIONS_NS "http://psi-im.org/options"
 #define PROG_STORAGE_NS "http://psi-im.org/storage"
@@ -81,11 +80,6 @@ QString ApplicationInfo::version()
 QString ApplicationInfo::capsNode()
 {
 	return PROG_CAPS_NODE;
-}
-
-QString ApplicationInfo::capsVersion()
-{
-	return PROG_CAPS_VERSION;
 }
 
 QString ApplicationInfo::IPCName()

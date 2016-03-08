@@ -23,8 +23,8 @@
 #include "psicon.h"
 #include "contactview.h"
 
-LegacyPsiAccount::LegacyPsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegistry* capsRegistry, TabManager *tabManager)
-	: PsiAccount(acc, parent, capsRegistry, tabManager)
+LegacyPsiAccount::LegacyPsiAccount(const UserAccount &acc, PsiContactList *parent, TabManager *tabManager)
+	: PsiAccount(acc, parent, tabManager)
 	, cp_(0)
 {
 }

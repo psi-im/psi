@@ -39,12 +39,12 @@
 #include "shortcutmanager.h"
 #include "accountlabel.h"
 #include "iconlabel.h"
-#include "capsmanager.h"
 #include "psicontactlist.h"
 #include "userlist.h"
 #include "psicontact.h"
 #include "jidutil.h"
 #include "xmpp_tasks.h"
+#include "xmpp_caps.h"
 #include "lastactivitytask.h"
 #include "avcall/avcall.h"
 #include "actionlist.h"
@@ -245,7 +245,7 @@ void PsiChatDlg::initUi()
 	ui_.tb_actions->setIcon(IconsetFactory::icon("psi/select").icon());
 	ui_.tb_actions->setStyleSheet(" QToolButton::menu-indicator { image:none } ");
 
-	connect(account()->capsManager(), SIGNAL(capsChanged(const Jid&)), SLOT(capsChanged(const Jid&)));
+	connect(account()->client()->capsManager(), SIGNAL(capsChanged(const Jid&)), SLOT(capsChanged(const Jid&)));
 
 	QList<int> list;
 	list << 324;

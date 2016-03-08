@@ -36,6 +36,7 @@
 #include <QDir>
 
 #include "s5b.h"
+#include "xmpp_caps.h"
 #include "psiaccount.h"
 #include "activeprofiles.h"
 #include "accountadddlg.h"
@@ -88,7 +89,6 @@
 #include "networkaccessmanager.h"
 #include "webview.h"
 #endif
-#include "capsregistry.h"
 #include "urlobject.h"
 #include "anim.h"
 #include "psioptions.h"
@@ -104,9 +104,9 @@
 #include "desktoputil.h"
 #include "tabmanager.h"
 #include "xmpp_xmlcommon.h"
+#include "psicapsregsitry.h"
 #include "psicontact.h"
 #include "contactupdatesmanager.h"
-#include "capsmanager.h"
 #include "avcall/avcall.h"
 #include "avcall/calldlg.h"
 #include "alertmanager.h"
@@ -300,7 +300,6 @@ public:
 	//GlobalAccelManager *globalAccelManager;
 	TuneControllerManager* tuneManager;
 	QMenuBar* defaultMenuBar;
-	CapsRegistry* capsRegistry;
 	TabManager *tabManager;
 	bool quitting;
 	QTimer* updatedAccountTimer_;
@@ -363,16 +362,16 @@ PsiCon::PsiCon()
 	d->actionList = 0;
 	d->defaultMenuBar = new QMenuBar(0);
 
-	d->capsRegistry = new CapsRegistry();
-	connect(d->capsRegistry, SIGNAL(registered(const CapsSpec&)), SLOT(saveCapabilities()));
+	XMPP::CapsRegistry::setInstance(new PsiCapsRegistry(this));
+	XMPP::CapsRegistry *pcr = XMPP::CapsRegistry::instance();
+	connect(pcr, SIGNAL(destroyed(QObject*)), pcr, SLOT(save()));
+	connect(pcr, SIGNAL(registered(const XMPP::CapsSpec&)), pcr, SLOT(save()));
+	pcr->load();
 }
 
 PsiCon::~PsiCon()
 {
 	deinit();
-
-	saveCapabilities();
-	delete d->capsRegistry;
 
 	delete d->autoUpdater;
 	delete d->actionList;
@@ -594,53 +593,6 @@ bool PsiCon::init()
 	// Global shortcuts
 	setShortcuts();
 
-	// FIXME
-#ifdef __GNUC__
-#warning "Temporary hard-coding caps registration of own version"
-#endif
-	// client()->identity()
-
-	registerCaps(ApplicationInfo::capsVersion(), QStringList()
-#ifdef FILETRANSFER
-				 << "http://jabber.org/protocol/bytestreams"
-				 << "http://jabber.org/protocol/ibb"
-				 << "http://jabber.org/protocol/si"
-				 << "http://jabber.org/protocol/si/profile/file-transfer"
-#endif
-				 << "http://jabber.org/protocol/disco#info"
-				 << "http://jabber.org/protocol/commands"
-				 << "http://jabber.org/protocol/rosterx"
-#ifdef GROUPCHAT
-				 << "http://jabber.org/protocol/muc"
-#endif
-				 << "jabber:x:data"
-				);
-
-	registerCaps("ep", QStringList()
-				 << "http://jabber.org/protocol/mood"
-				 << "http://jabber.org/protocol/activity"
-				 << "http://jabber.org/protocol/tune"
-				// << "http://jabber.org/protocol/physloc"
-				 << "http://jabber.org/protocol/geoloc"
-				 << "urn:xmpp:avatar:data"
-				 << "urn:xmpp:avatar:metadata"
-				);
-
-	registerCaps("ep-notify-2", QStringList()
-				 << "http://jabber.org/protocol/mood+notify"
-				 << "http://jabber.org/protocol/activity+notify"
-				 << "http://jabber.org/protocol/tune+notify"
-				// << "http://jabber.org/protocol/physloc+notify"
-				 << "http://jabber.org/protocol/geoloc+notify"
-				 << "urn:xmpp:avatar:metadata+notify"
-				);
-
-	registerCaps("html", QStringList("http://jabber.org/protocol/xhtml-im"));
-	registerCaps("cs", QStringList("http://jabber.org/protocol/chatstates"));
-#ifdef YAPSI
-	registerCaps("mr", QStringList("urn:xmpp:receipts"));
-#endif
-
 	// load accounts
 	{
 		QList<UserAccount> accs;
@@ -748,18 +700,6 @@ void PsiCon::updateStatusPresets()
 	emit statusPresetsChanged();
 }
 
-void PsiCon::registerCaps(const QString& ext, const QStringList& features)
-{
-	DiscoItem::Identity identity = { "client", ApplicationInfo::name(), "pc" };
-	DiscoItem::Identities identities;
-	identities += identity;
-
-	d->capsRegistry->registerCaps(CapsSpec(ApplicationInfo::capsNode(),
-										   ApplicationInfo::capsVersion(), ext),
-								  identities,
-								  Features(features));
-}
-
 void PsiCon::deinit()
 {
 	// this deletes all dialogs except for mainwin
@@ -839,6 +779,68 @@ FileTransDlg *PsiCon::ftdlg()
 PopupManager* PsiCon::popupManager() const
 {
 	return d->popupManager;
+}
+
+struct OptFeatureMap {
+	OptFeatureMap(const QString &option, const QStringList &feature) :
+	    option(option), feature(feature) {}
+	QString option;
+	QStringList feature;
+};
+
+QStringList PsiCon::xmppFatures() const
+{
+	QStringList features = QStringList() << "http://jabber.org/protocol/commands"
+		<< "http://jabber.org/protocol/rosterx"
+#ifdef GROUPCHAT
+		<< "http://jabber.org/protocol/muc"
+#endif
+		<< "http://jabber.org/protocol/mood"
+		<< "http://jabber.org/protocol/activity"
+		<< "http://jabber.org/protocol/tune"
+		<< "http://jabber.org/protocol/geoloc"
+		<< "urn:xmpp:avatar:data"
+		<< "urn:xmpp:avatar:metadata"
+
+		<< "http://jabber.org/protocol/mood+notify"
+		<< "http://jabber.org/protocol/activity+notify"
+		<< "http://jabber.org/protocol/tune+notify"
+		<< "http://jabber.org/protocol/geoloc+notify"
+		<< "urn:xmpp:avatar:metadata+notify"
+
+		<< "http://jabber.org/protocol/xhtml-im"
+		<< "http://jabber.org/protocol/chatstates"
+		<< "urn:xmpp:receipts";
+
+	if(AvCallManager::isSupported()) {
+		features << "urn:xmpp:jingle:1";
+		features << "urn:xmpp:jingle:transports:ice-udp:1";
+		features << "urn:xmpp:jingle:apps:rtp:1";
+		features << "urn:xmpp:jingle:apps:rtp:audio";
+
+		if(AvCallManager::isVideoSupported()) {
+			features << "urn:xmpp:jingle:apps:rtp:video";
+		}
+	}
+
+	static QList<OptFeatureMap> fmap = QList<OptFeatureMap>()
+	        << OptFeatureMap("options.service-discovery.last-activity", QStringList() << "jabber:iq:last")
+	        << OptFeatureMap("options.html.chat.render", QStringList() << "http://jabber.org/protocol/xhtml-im")
+	        << OptFeatureMap("options.extended-presence.notify", QStringList() << "http://jabber.org/protocol/mood+notify"
+	                                                                  << "http://jabber.org/protocol/activity+notify"
+	                                                                  << "http://jabber.org/protocol/tune+notify"
+	                                                                  << "http://jabber.org/protocol/geoloc+notify"
+			                                                          << "urn:xmpp:avatar:metadata+notify")
+	        << OptFeatureMap("options.messages.send-composing-events", QStringList() << "http://jabber.org/protocol/chatstates")
+	        << OptFeatureMap("options.ui.notifications.send-receipts", QStringList() << "urn:xmpp:receipts");
+
+	foreach (const OptFeatureMap &f, fmap) {
+		if(PsiOptions::instance()->getOption(f.option).toBool()) {
+			features << f.feature;
+		}
+	}
+
+	return features;
 }
 
 TabManager *PsiCon::tabManager() const
@@ -1019,7 +1021,7 @@ PsiAccount* PsiCon::createAccount(const QString &name, const Jid &j, const QStri
 PsiAccount *PsiCon::createAccount(const UserAccount& _acc)
 {
 	UserAccount acc = _acc;
-	PsiAccount *pa = new PsiAccount(acc, d->contactList, d->capsRegistry, d->tabManager);
+	PsiAccount *pa = new PsiAccount(acc, d->contactList, d->tabManager);
 //	connect(&d->idle, SIGNAL(secondsIdle(int)), pa, SLOT(secondsIdle(int)));
 	connect(pa, SIGNAL(updatedActivity()), SLOT(pa_updatedActivity()));
 	connect(pa, SIGNAL(updatedAccount()), SLOT(pa_updatedAccount()));
@@ -1232,12 +1234,6 @@ void PsiCon::saveAccounts()
 
 	UserAccountList acc = d->contactList->getUserAccountList();
 	d->saveProfile(acc);
-}
-
-void PsiCon::saveCapabilities()
-{
-	QFile file(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/caps.xml");
-	d->capsRegistry->save(file);
 }
 
 void PsiCon::updateMainwinStatus()

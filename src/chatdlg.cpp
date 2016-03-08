@@ -63,7 +63,6 @@
 #include "pgputil.h"
 #include "psicon.h"
 #include "iconlabel.h"
-#include "capsmanager.h"
 #include "iconaction.h"
 #include "avatars.h"
 #include "jidutil.h"

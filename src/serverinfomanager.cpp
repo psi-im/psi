@@ -20,6 +20,7 @@
 
 #include "serverinfomanager.h"
 #include "xmpp_tasks.h"
+#include "xmpp_caps.h"
 
 using namespace XMPP;
 
@@ -34,14 +35,29 @@ void ServerInfoManager::reset()
 {
 	hasPEP_ = false;
 	multicastService_ = QString();
+	disconnect(CapsRegistry::instance());
 }
 
 void ServerInfoManager::initialize()
 {
-	JT_DiscoInfo *jt = new JT_DiscoInfo(client_->rootTask());
-	connect(jt, SIGNAL(finished()), SLOT(disco_finished()));
-	jt->get(client_->jid().domain());
-	jt->go(true);
+	caps_ = client_->serverCaps();
+	if (client_->capsManager()->isEnabled()) {
+		// TODO we should really have some easy way to do all this stuff
+		if (caps_.isValid()) {
+			Jid serverJid(client_->jid().domain());
+			client_->capsManager()->updateCaps(serverJid, caps_);
+			if (CapsRegistry::instance()->isRegistered(caps_.flatten())) {
+				handleReceivedFeatures(client_->capsManager()->disco(serverJid));
+			} else {
+				connect(CapsRegistry::instance(), SIGNAL(registered(CapsSpec)), SLOT(capsRegistered(CapsSpec)));
+			}
+		}
+	} else {
+		JT_DiscoInfo *jt = new JT_DiscoInfo(client_->rootTask());
+		connect(jt, SIGNAL(finished()), SLOT(disco_finished()));
+		jt->get(client_->jid().domain());
+		jt->go(true);
+	}
 }
 
 void ServerInfoManager::deinitialize()
@@ -60,25 +76,34 @@ bool ServerInfoManager::hasPEP() const
 	return hasPEP_;
 }
 
+void ServerInfoManager::capsRegistered(const CapsSpec &caps)
+{
+	if (caps_ == caps) {
+		handleReceivedFeatures(CapsRegistry::instance()->disco(caps.flatten()));
+	}
+}
+
 void ServerInfoManager::disco_finished()
 {
 	JT_DiscoInfo *jt = (JT_DiscoInfo *)sender();
 	if (jt->success()) {
-		// Features
-		Features f = jt->item().features();
-		if (f.canMulticast())
-			multicastService_ = client_->jid().domain();
-		// TODO: Remove this, this is legacy
-		if (f.test(QStringList("http://jabber.org/protocol/pubsub#pep")))
-			hasPEP_ = true;
-
-		// Identities
-		DiscoItem::Identities is = jt->item().identities();
-		foreach(DiscoItem::Identity i, is) {
-			if (i.category == "pubsub" && i.type == "pep")
-				hasPEP_ = true;
-		}
-
-		emit featuresChanged();
+		handleReceivedFeatures(jt->item());
 	}
+}
+
+void ServerInfoManager::handleReceivedFeatures(const DiscoItem &item)
+{
+	const Features &f = item.features();
+
+	if (f.canMulticast())
+		multicastService_ = client_->jid().domain();
+
+	// Identities
+	DiscoItem::Identities is = item.identities();
+	foreach(DiscoItem::Identity i, is) {
+		if (i.category == "pubsub" && i.type == "pep")
+			hasPEP_ = true;
+	}
+
+	emit featuresChanged();
 }

@@ -87,9 +87,8 @@ bool JT_AHCServer::commandListQuery(const QDomElement& e)
 		}
 		else if (q.attribute("xmlns") == "http://jabber.org/protocol/disco#info" && q.attribute("node") == AHC_NS) {
 			QDomElement iq = createIQ(doc(), "result", e.attribute("from"), e.attribute("id"));
-			QDomElement query = doc()->createElement("query");
-			query.setAttribute("xmlns", "http://jabber.org/protocol/disco#info");
-			iq.appendChild(query);
+			DiscoItem item;
+			QDomElement query = query.appendChild(item.toDiscoInfoResult(doc())).toElement();
 			send(iq);
 			return true;
 		}
@@ -104,25 +103,11 @@ bool JT_AHCServer::commandListQuery(const QDomElement& e)
 		}
 		else if (q.attribute("xmlns") == "http://jabber.org/protocol/disco#info" && manager_->hasServer(q.attribute("node"), Jid(e.attribute("from")))) {
 			QDomElement iq = createIQ(doc(), "result", e.attribute("from"), e.attribute("id"));
-			QDomElement query = doc()->createElement("query");
-			query.setAttribute("xmlns", "http://jabber.org/protocol/disco#info");
-			query.setAttribute("node",q.attribute("node"));
-			iq.appendChild(query);
-
-			QDomElement identity;
-			identity = doc()->createElement("identity");
-			identity.setAttribute("category", "automation");
-			identity.setAttribute("type", "command-node");
-			query.appendChild(identity);
-
-			QDomElement feature;
-			feature = doc()->createElement("feature");
-			feature.setAttribute("var", AHC_NS);
-			query.appendChild(feature);
-
-			feature = doc()->createElement("feature");
-			feature.setAttribute("var", "jabber:x:data");
-			query.appendChild(feature);
+			DiscoItem item;
+			item.setNode(q.attribute("node"));
+			item.setIdentities(XMPP::DiscoItem::Identity("automation", "command-node"));
+			item.setFeatures(Features(QStringList() << AHC_NS << "jabber:x:data"));
+			QDomElement query = query.appendChild(item.toDiscoInfoResult(doc())).toElement();
 
 			send(iq);
 			return true;

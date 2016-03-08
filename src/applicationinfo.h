@@ -19,7 +19,6 @@ public:
 	static QLatin1String sname();
 	static QString version();
 	static QString capsNode();
-	static QString capsVersion();
 	static QString IPCName();
 
 	// URLs

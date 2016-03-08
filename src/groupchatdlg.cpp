@@ -57,7 +57,6 @@
 #include "psiactionlist.h"
 #include "psicon.h"
 #include "psiaccount.h"
-#include "capsmanager.h"
 #include "userlist.h"
 #include "mucconfigdlg.h"
 #include "textutil.h"
@@ -72,6 +71,7 @@
 #include "iconwidget.h"
 #include "iconselect.h"
 #include "xmpp_tasks.h"
+#include "xmpp_caps.h"
 #include "iconaction.h"
 #include "psitooltip.h"
 #include "avatars.h"
@@ -1661,9 +1661,9 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 		ui_.lv_users->removeEntry(nick);
 	}
 
-	if (!s.capsNode().isEmpty()) {
+	if (s.caps().isValid()) {
 		Jid caps_jid(s.mucItem().jid().isEmpty() || !d->nonAnonymous ? Jid(jid()).withResource(nick) : s.mucItem().jid());
-		account()->capsManager()->updateCaps(caps_jid,s.capsNode(),s.capsVersion(),s.capsExt());
+		account()->client()->capsManager()->updateCaps(caps_jid, s.caps());
 	}
 
 	if(!nick.isEmpty())

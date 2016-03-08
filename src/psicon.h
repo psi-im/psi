@@ -130,6 +130,7 @@ public:
 	void updateStatusPresets();
 
 	PopupManager* popupManager() const;
+	QStringList xmppFatures() const;
 
 signals:
 	void quit(int);
@@ -178,7 +179,6 @@ public slots:
 
 private slots:
 	void saveAccounts();
-	void saveCapabilities();
 	void optionChanged(const QString& option);
 	void forceSavePreferences();
 	void startBounce();
@@ -200,8 +200,6 @@ private:
 	void promptUserToCreateAccount();
 	QString optionsFile() const;
 	void doQuit(int);
-
-	void registerCaps(const QString& ext, const QStringList& features);
 };
 
 #endif

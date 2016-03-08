@@ -43,6 +43,7 @@
 #include <QList>
 #include <QQueue>
 #include <QHostInfo>
+#include <QtCrypto>
 
 #include "psiaccount.h"
 #include "psiiconset.h"
@@ -50,6 +51,7 @@
 #include "profiles.h"
 #include "xmpp_tasks.h"
 #include "xmpp_xmlcommon.h"
+#include "xmpp_caps.h"
 #include "s5b.h"
 #ifdef FILETRANSFER
 #include "filetransfer.h"
@@ -91,7 +93,6 @@
 #include "infodlg.h"
 #include "adduserdlg.h"
 #include "historydlg.h"
-#include "capsmanager.h"
 #include "registrationdlg.h"
 #include "searchdlg.h"
 #include "discodlg.h"
@@ -145,7 +146,9 @@
 #include "Certificates/CertificateHelpers.h"
 #include "Certificates/CertificateErrorDialog.h"
 #include "Certificates/CertificateDisplayDialog.h"
+#ifndef NEWCONTACTLIST
 #include "legacypsiaccount.h"
+#endif
 #include "bookmarkmanagedlg.h"
 #include "accountloginpassword.h"
 #include "alertmanager.h"
@@ -161,7 +164,7 @@
 
 #include "../iris/src/xmpp/xmpp-core/protocol.h"
 
-#include <QtCrypto>
+
 
 #include "bsocket.h"
 /*#ifdef Q_OS_WIN
@@ -412,7 +415,6 @@ public:
 		, xmlConsole(0)
 		, blockTransportPopupList(0)
 		, privacyManager(0)
-		, capsManager(0)
 		, rosterItemExchangeTask(0)
 		, ahcManager(0)
 		, rcSetStatusServer(0)
@@ -470,7 +472,6 @@ public:
 	BlockTransportPopupList *blockTransportPopupList;
 	int userCounter;
 	PsiPrivacyManager* privacyManager;
-	CapsManager* capsManager;
 	RosterItemExchangeTask* rosterItemExchangeTask;
 	bool pepAvailable;
 	QString currentConnectionError;
@@ -1062,12 +1063,12 @@ public:
 	bool reconnectInfrequently_;
 };
 
-PsiAccount* PsiAccount::create(const UserAccount &acc, PsiContactList *parent, CapsRegistry* capsRegistry, TabManager *tabManager)
+PsiAccount* PsiAccount::create(const UserAccount &acc, PsiContactList *parent, TabManager *tabManager)
 {
 #ifdef NEWCONTACTLIST
-	PsiAccount* account = new PsiAccount(acc, parent, capsRegistry, tabManager);
+	PsiAccount* account = new PsiAccount(acc, parent, tabManager);
 #else
-	PsiAccount* account = new LegacyPsiAccount(acc, parent, capsRegistry, tabManager);
+	PsiAccount* account = new LegacyPsiAccount(acc, parent, tabManager);
 #endif
 	account->init();
 	return account;
@@ -1077,7 +1078,7 @@ void PsiAccount::init()
 {
 }
 
-PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegistry* capsRegistry, TabManager *tabManager)
+PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManager *tabManager)
 	: QObject(parent)
 {
 	d = new Private( this );
@@ -1126,8 +1127,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	d->client->setOSName(SystemInfo::instance()->os());
 	d->client->setClientName(ApplicationInfo::name());
 	d->client->setClientVersion(ApplicationInfo::version());
-	d->client->setCapsNode(ApplicationInfo::capsNode());
-	d->client->setCapsVersion(ApplicationInfo::capsVersion());
+	d->client->setCaps(CapsSpec(ApplicationInfo::capsNode(), QCryptographicHash::Sha1));
 	d->client->bobManager()->setCache(BoBFileCache::instance()); // xep-0231
 
 	DiscoItem::Identity identity;
@@ -1135,25 +1135,13 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	identity.type = "pc";
 	identity.name = ApplicationInfo::name();
 	d->client->setIdentity(identity);
-
-	QStringList features;
-	features << "http://jabber.org/protocol/commands";
-	features << "http://jabber.org/protocol/rosterx";
-#ifdef GROUPCHAT
-	features << "http://jabber.org/protocol/muc";
-#endif
-	features << "jabber:x:data";
-	features << "jabber:iq:version";
-	d->client->setFeatures(Features(features));
+	updateFeatures();
 
 #ifdef FILETRANSFER
 	d->client->setFileTransferEnabled(true);
 #else
 	d->client->setFileTransferEnabled(false);
 #endif
-
-	setSendChatState(PsiOptions::instance()->getOption("options.messages.send-composing-events").toBool());
-	setReceipts(PsiOptions::instance()->getOption("options.ui.notifications.send-receipts").toBool());
 
 	//connect(d->client, SIGNAL(connected()), SLOT(client_connected()));
 	//connect(d->client, SIGNAL(handshaken()), SLOT(client_handshaken()));
@@ -1185,8 +1173,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	d->privacyManager = new PsiPrivacyManager(d->account, d->client->rootTask());
 
 	// Caps manager
-	d->capsManager = new CapsManager(d->client->jid(), capsRegistry, new IrisProtocol::DiscoInfoQuerier(d->client));
-	d->capsManager->setEnabled(PsiOptions::instance()->getOption("options.service-discovery.enable-entity-capabilities").toBool());
+	d->client->capsManager()->setEnabled(PsiOptions::instance()->getOption("options.service-discovery.enable-entity-capabilities").toBool());
 
 	// Roster item exchange task
 	d->rosterItemExchangeTask = new RosterItemExchangeTask(d->client->rootTask());
@@ -1246,12 +1233,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	//Idle server
 	if(PsiOptions::instance()->getOption("options.service-discovery.last-activity").toBool()) {
 		new IdleServer(this, d->client->rootTask());
-		d->client->addExtension("last-act", QStringList("jabber:iq:last"));
 	}
-
-	// HTML
-	if(PsiOptions::instance()->getOption("options.html.chat.render").toBool())
-		d->client->addExtension("html",Features("http://jabber.org/protocol/xhtml-im"));
 
 	d->selfContact = new PsiSelfContact(d->self, this);
 
@@ -1283,7 +1265,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	d->setEnabled(enabled());
 
 	// Listen to the capabilities manager
-	connect(capsManager(),SIGNAL(capsChanged(const Jid&)),SLOT(capsChanged(const Jid&)));
+	connect(d->client->capsManager(),SIGNAL(capsChanged(const Jid&)),SLOT(capsChanged(const Jid&)));
 
 	//printf("PsiAccount: [%s] loaded\n", name().latin1());
 
@@ -1302,7 +1284,6 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	d->voiceCaller = new JingleVoiceCaller(this);
 #endif
 	if (d->voiceCaller) {
-		d->client->addExtension("voice-v1", Features(QString("http://www.google.com/xmpp/protocol/voice/v1")));
 		connect(d->voiceCaller,SIGNAL(incoming(const Jid&)),SLOT(incomingVoiceCall(const Jid&)));
 	}
 
@@ -1319,32 +1300,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegis
 	if(AvCallManager::isSupported()) {
 		d->avCallManager = new AvCallManager(this);
 		connect(d->avCallManager, SIGNAL(incomingReady()), d, SLOT(incoming_call()));
-		QStringList features;
-		features << "urn:xmpp:jingle:1";
-		features << "urn:xmpp:jingle:transports:ice-udp:1";
-		features << "urn:xmpp:jingle:apps:rtp:1";
-		features << "urn:xmpp:jingle:apps:rtp:audio";
-		d->client->addExtension("ca", Features(features));
-
-		if(AvCallManager::isVideoSupported()) {
-			features.clear();
-			features << "urn:xmpp:jingle:apps:rtp:video";
-			d->client->addExtension("cv", Features(features));
-		}
-
 		d->updateAvCallSettings(acc);
-	}
-
-	// Extended presence
-	if (PsiOptions::instance()->getOption("options.extended-presence.notify").toBool()) {
-		QStringList pepNodes;
-		pepNodes += "http://jabber.org/protocol/mood+notify";
-		pepNodes += "http://jabber.org/protocol/activity+notify";
-		pepNodes += "http://jabber.org/protocol/tune+notify";
-	//	pepNodes += "http://jabber.org/protocol/physloc+notify";
-		pepNodes += "http://jabber.org/protocol/geoloc+notify";
-		pepNodes += "urn:xmpp:avatar:metadata+notify";
-		d->client->addExtension("ep-notify-2",Features(pepNodes));
 	}
 
 	// load event queue from disk
@@ -1381,7 +1337,6 @@ PsiAccount::~PsiAccount()
 
 	delete d->ahcManager;
 	delete d->privacyManager;
-	delete d->capsManager;
 	delete d->pepManager;
 	delete d->serverInfoManager;
 #ifdef WHITEBOARDING
@@ -1561,11 +1516,6 @@ PrivacyManager* PsiAccount::privacyManager() const
 	return d->privacyManager;
 }
 
-CapsManager* PsiAccount::capsManager() const
-{
-	return d->capsManager;
-}
-
 bool PsiAccount::hasPGP() const
 {
 	return !d->cur_pgpSecretKey.isNull();
@@ -1660,6 +1610,19 @@ const Jid & PsiAccount::jid() const
 QString PsiAccount::nameWithJid() const
 {
 	return (name() + " (" + JIDUtil::toString(jid(),true) + ')');
+}
+
+void PsiAccount::updateFeatures()
+{
+	QStringList features = d->psi->xmppFatures();
+	// TODO update features depending on account settings and plugins' features
+
+	if (d->voiceCaller) {
+		features << "http://www.google.com/xmpp/protocol/voice/v1"; // isn't obsoleted?
+	}
+
+	// TODO reset hash
+	d->client->setFeatures(Features(features));
 }
 
 void PsiAccount::autoLogin()
@@ -1828,9 +1791,6 @@ void PsiAccount::forceDisconnect(bool fast, const XMPP::Status &s)
 		// Extended Presence
 		if (PsiOptions::instance()->getOption("options.extended-presence.tune.publish").toBool() && !d->lastTune.isNull())
 			publishTune(Tune());
-
-		d->client->removeExtension("ep");
-		d->client->removeExtension("pep");
 
 		// send logout status
 		d->client->groupChatLeaveAll(PsiOptions::instance()->getOption("options.muc.leave-status-message").toString());
@@ -2396,7 +2356,6 @@ void PsiAccount::setPEPAvailable(bool b)
 		pepNodes += "http://jabber.org/protocol/mood";
 		pepNodes += "http://jabber.org/protocol/activity";
 		pepNodes += "http://jabber.org/protocol/tune";
-	//	pepNodes += "http://jabber.org/protocol/physloc";
 		pepNodes += "http://jabber.org/protocol/geoloc";
 		pepNodes += "urn:xmpp:avatar:data";
 		pepNodes += "urn:xmpp:avatar:metadata";
@@ -2536,8 +2495,13 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
 
 			UserResource ur(r);
 			//ur.setSecurityEnabled(true);
-			if(local)
+			if(local) {
 				ur.setClient(ApplicationInfo::name(),ApplicationInfo::version(),SystemInfo::instance()->os());
+			}
+			else {
+				CapsManager *cm = d->client->capsManager();
+				ur.setClient(cm->clientName(j),cm->clientVersion(j),cm->osVersion(j));
+			}
 
 			u->userResourceList().append(ur);
 			rp = &u->userResourceList().last();
@@ -2600,15 +2564,15 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
 
 	// Update entity capabilities.
 	// This has to happen after the userlist item has been created.
-	if (!r.status().capsNode().isEmpty()) {
-		capsManager()->updateCaps(j,r.status().capsNode(),r.status().capsVersion(),r.status().capsExt());
+	if (r.status().caps().isValid()) {
+		CapsManager *cm = d->client->capsManager();
+		cm->updateCaps(j, r.status().caps());
 
 		// Update the client version
 		foreach(UserListItem* u, findRelevant(j)) {
 			UserResourceList::Iterator rit = u->userResourceList().find(j.resource());
 			if (rit != u->userResourceList().end()) {
-				//(*rit).setClient(capsManager()->clientName(j),capsManager()->clientVersion(j),"");
-				(*rit).setClient(QString(),QString(),"");
+				(*rit).setClient(cm->clientName(j),cm->clientVersion(j),cm->osVersion(j));
 				cpUpdate(*u,(*rit).name());
 			}
 		}
@@ -3106,13 +3070,6 @@ void PsiAccount::setStatusActual(const Status &_s)
 {
 	Status s = _s;
 
-	// Add entity capabilities information
-	if (capsManager()->isEnabled()) {
-		s.setCapsNode(d->client->capsNode());
-		s.setCapsVersion(d->client->capsVersion());
-		s.setCapsExt(d->client->capsExt());
-	}
-
 	if (!presenceSent) {
 		simulateRosterOffline();
 	}
@@ -3166,16 +3123,22 @@ void PsiAccount::capsChanged(const Jid& j)
 	if (!loggedIn())
 		return;
 
-	QString name = capsManager()->clientName(j);
-	QString version = (name.isEmpty() ? QString() : capsManager()->clientVersion(j));
+	CapsManager *cm = d->client->capsManager();
+	QString name = cm->clientName(j);
+	QString version = (name.isEmpty() ? QString() : cm->clientVersion(j));
+	QString os;
+
+	if (!name.isEmpty()) {
+		version = cm->clientVersion(j);
+		os = cm->osVersion(j);
+	}
 
 	foreach(UserListItem *u, findRelevant(j)) {
 		UserResourceList::Iterator rit = u->userResourceList().find(j.resource());
 		bool found = (rit == u->userResourceList().end()) ? false: true;
 		if(!found)
 			continue;
-		//(*rit).setClient(name,version,"");
-		(*rit).setClient(QString(),QString(),"");
+		(*rit).setClient(name,version,os);
 		cpUpdate(*u);
 	}
 }
@@ -3672,14 +3635,6 @@ void PsiAccount::itemRetracted(const Jid& j, const QString& n, const PubSubRetra
 			cpUpdate(*u);
 		}
 	}
-	/*else if (n == "http://jabber.org/protocol/physloc") {
-		// FIXME: try to find the right resource using JEP-33 'replyto'
-		// see tune case above
-		foreach(UserListItem* u, findRelevant(j)) {
-			u->setPhysicalLocation(PhysicalLocation());
-			cpUpdate(*u);
-		}
-	}*/
 }
 
 void PsiAccount::itemPublished(const Jid& j, const QString& n, const PubSubItem& item)
@@ -3732,15 +3687,6 @@ void PsiAccount::itemPublished(const Jid& j, const QString& n, const PubSubItem&
 			cpUpdate(*u);
 		}
 	}
-	/*else if (n == "http://jabber.org/protocol/physloc") {
-		// FIXME: try to find the right resource using JEP-33 'replyto'
-		// see tune case above
-		PhysicalLocation physloc(item.payload());
-		foreach(UserListItem* u, findRelevant(j)) {
-			u->setPhysicalLocation(physloc);
-			cpUpdate(*u);
-		}
-	}*/
 }
 
 Jid PsiAccount::realJid(const Jid &j) const
@@ -6274,12 +6220,6 @@ void PsiAccount::optionsUpdate()
 	}
 #endif
 
-	// Chat states
-	setSendChatState(o->getOption("options.messages.send-composing-events").toBool());
-
-	//Receipts
-	setReceipts(o->getOption("options.ui.notifications.send-receipts").toBool()); //FIXME second presence?
-
 	// Remote Controlling
 	setRCEnabled(o->getOption("options.external-control.adhoc-remote-control.enable").toBool());
 
@@ -6287,7 +6227,13 @@ void PsiAccount::optionsUpdate()
 	d->rosterItemExchangeTask->setIgnoreNonRoster(o->getOption("options.messages.ignore-non-roster-contacts").toBool());
 
 	// Caps manager
-	d->capsManager->setEnabled(o->getOption("options.service-discovery.enable-entity-capabilities").toBool());
+	d->client->capsManager()->setEnabled(o->getOption("options.service-discovery.enable-entity-capabilities").toBool());
+
+	updateFeatures();
+
+	if (isConnected()) {
+		setStatusActual(d->loginStatus);
+	}
 }
 
 
@@ -6308,36 +6254,6 @@ void PsiAccount::setRCEnabled(bool b)
 		d->rcLeaveMucServer = 0;
 		delete d->rcSetOptionsServer;
 		d->rcSetOptionsServer = 0;
-	}
-}
-
-void PsiAccount::setSendChatState(bool b)
-{
-	if (b && !d->client->extensions().contains("cs")) {
-		d->client->addExtension("cs",Features("http://jabber.org/protocol/chatstates"));
-		if (isConnected()) {
-			setStatusActual(d->loginStatus);
-		}
-	}
-	else if (!b && d->client->extensions().contains("cs")) {
-		d->client->removeExtension("cs");
-		if (isConnected()) {
-			setStatusActual(d->loginStatus);
-		}
-	}
-}
-
-void PsiAccount::setReceipts(bool b)
-{
-	if (b && !d->client->extensions().contains("mr")) {
-		d->client->addExtension("mr",Features("urn:xmpp:receipts"));
-		if (isConnected())
-			setStatusActual(d->loginStatus);
-	}
-	else if (!b && d->client->extensions().contains("mr")) {
-		d->client->removeExtension("mr");
-		if (isConnected())
-			setStatusActual(d->loginStatus);
 	}
 }
 

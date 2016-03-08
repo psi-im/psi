@@ -497,6 +497,7 @@ void DiscoListItem::browseFinished()
 
 void DiscoListItem::doAgents(bool parentAutoItems)
 {
+	/* TODO remove jabber:iq:agents. it's obsoleted ince 2003 */
 	if ( parentAutoItems ) {
 		// save traffic
 		if ( alreadyItems )

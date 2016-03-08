@@ -66,7 +66,6 @@ class BookmarkManager;
 class URLBookmark;
 class ConferenceBookmark;
 class VoiceCaller;
-class CapsRegistry;
 class UserAccount;
 class ContactProfile;
 class QWidget;
@@ -78,7 +77,6 @@ class UserList;
 class EventDlg;
 class ChatDlg;
 class PrivacyManager;
-class CapsManager;
 class EDB;
 class QSSLCert;
 class QHostAddress;
@@ -104,11 +102,11 @@ class PsiAccount : public QObject
 {
 	Q_OBJECT
 protected:
-	PsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegistry* capsRegistry, TabManager *tabManager);
+	PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManager *tabManager);
 	virtual void init();
 
 public:
-	static PsiAccount* create(const UserAccount &acc, PsiContactList *parent, CapsRegistry* capsRegistry, TabManager *tabManager);
+	static PsiAccount* create(const UserAccount &acc, PsiContactList *parent, TabManager *tabManager);
 	virtual ~PsiAccount();
 
 	bool enabled() const;
@@ -129,6 +127,7 @@ public:
 	const Jid & jid() const;
 	QString nameWithJid() const;
 
+	void updateFeatures();
 	XMPP::Client *client() const;
 	virtual ContactProfile *contactProfile() const;
 	EventQueue *eventQueue() const;
@@ -136,7 +135,6 @@ public:
 	PsiCon *psi() const;
 	AvatarFactory *avatarFactory() const;
 	PrivacyManager* privacyManager() const;
-	CapsManager* capsManager() const;
 	VoiceCaller* voiceCaller() const;
 #ifdef WHITEBOARDING
 	WbManager* wbManager() const;
@@ -478,8 +476,6 @@ protected:
 	QString localHostName();
 
 	void publishTune(const Tune&);
-	void setSendChatState(bool);
-	void setReceipts(bool);
 	void setRCEnabled(bool);
 	void sessionStarted();
 

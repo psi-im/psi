@@ -15,7 +15,6 @@ unix:!mac:DEFINES += HAVE_X11
 include($$PWD/protocol/protocol.pri)
 include($$PWD/irisprotocol/irisprotocol.pri)
 include($$PWD/privacy/privacy.pri)
-include($$PWD/capabilities/capabilities.pri)
 include($$PWD/tabs/tabs.pri)
 include($$PWD/Certificates/Certificates.pri)
 
@@ -180,7 +179,6 @@ HEADERS += \
 	$$PWD/activitycatalog.h \
 	$$PWD/activitydlg.h \
 	$$PWD/geolocation.h \
-	$$PWD/physicallocation.h \
 	$$PWD/urlbookmark.h \
 	$$PWD/conferencebookmark.h \
 	$$PWD/bookmarkmanager.h \
@@ -212,20 +210,12 @@ HEADERS += \
 	$$PWD/psicli.h \
 	$$PWD/coloropt.h \
 	$$PWD/geolocationdlg.h \
-	$$PWD/rosteravatarframe.h
-
-
-HEADERS += tabcompletion.h
-SOURCES += tabcompletion.cpp
-
-HEADERS += alertmanager.h
-SOURCES += alertmanager.cpp
-
-HEADERS += accountloginpassword.h
-SOURCES += accountloginpassword.cpp
-
-HEADERS += mcmdcompletion.h
-SOURCES += mcmdcompletion.cpp
+	$$PWD/rosteravatarframe.h \
+	$$PWD/psicapsregsitry.h \
+	$$PWD/tabcompletion.h \
+	$$PWD/alertmanager.h \
+	$$PWD/accountloginpassword.h \
+	$$PWD/mcmdcompletion.h
 
 # Source files
 SOURCES += \
@@ -321,7 +311,6 @@ SOURCES += \
 	$$PWD/activitycatalog.cpp \
 	$$PWD/activitydlg.cpp \
 	$$PWD/geolocation.cpp \
-	$$PWD/physicallocation.cpp \
 	$$PWD/urlbookmark.cpp \
 	$$PWD/conferencebookmark.cpp \
 	$$PWD/bookmarkmanager.cpp \
@@ -351,7 +340,13 @@ SOURCES += \
 	$$PWD/vcardphotodlg.cpp \
 	$$PWD/coloropt.cpp \
 	$$PWD/geolocationdlg.cpp \
-	$$PWD/rosteravatarframe.cpp
+	$$PWD/rosteravatarframe.cpp \
+	$$PWD/tabcompletion.cpp \
+	$$PWD/psicapsregsitry.cpp \
+	$$PWD/alertmanager.cpp \
+	$$PWD/accountloginpassword.cpp \
+	$$PWD/mcmdcompletion.cpp
+
 
 CONFIG += filetransfer
 filetransfer {

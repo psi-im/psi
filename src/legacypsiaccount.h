@@ -27,7 +27,7 @@ class LegacyPsiAccount : public PsiAccount
 {
 	Q_OBJECT
 public:
-	LegacyPsiAccount(const UserAccount &acc, PsiContactList *parent, CapsRegistry* capsRegistry, TabManager *tabManager);
+	LegacyPsiAccount(const UserAccount &acc, PsiContactList *parent, TabManager *tabManager);
 	~LegacyPsiAccount();
 	virtual void init();
 

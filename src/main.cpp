@@ -454,6 +454,8 @@ void psiMessageOutput(QtMsgType type, const QMessageLogContext &context, const Q
 	case QtFatalMsg:
 		fprintf(stderr, "[%s] F:%s (%s:%u, %s)\n", qPrintable(time), localMsg.constData(), context.file, context.line, context.function);
 		abort();
+	case QtInfoMsg:
+		fprintf(stderr, "[%s] I:%s (%s:%u, %s)\n", qPrintable(time), localMsg.constData(), context.file, context.line, context.function);
 	}
 }
 #else

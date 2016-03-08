@@ -24,9 +24,16 @@
 #include <QObject>
 #include <QString>
 
+#include "xmpp_caps.h"
+
 namespace XMPP {
 	class Client;
+	class Features;
+	class Jid;
+	class DiscoItem;
 }
+
+using namespace XMPP;
 
 class ServerInfoManager : public QObject
 {
@@ -38,10 +45,15 @@ public:
 	const QString& multicastService() const;
 	bool hasPEP() const;
 
+private:
+	void handleReceivedFeatures(const XMPP::DiscoItem &f);
+
 signals:
 	void featuresChanged();
 
 private slots:
+
+	void capsRegistered(const CapsSpec &caps);
 	void disco_finished();
 	void initialize();
 	void deinitialize();
@@ -49,6 +61,7 @@ private slots:
 
 private:
 	XMPP::Client* client_;
+	CapsSpec caps_;
 	QString multicastService_;
 	bool featuresRequested_;
 	bool hasPEP_;
