@@ -166,7 +166,7 @@ RemoveConfirmationMessageBox::RemoveConfirmationMessageBox(const QString& title,
 	, infoButton_(0)
 	, cancelButton_(0)
 {
-	setWindowTitle(ApplicationInfo::name());
+	setWindowTitle(title);
 
 	setText(title);
 	setInformativeText(informativeText);
