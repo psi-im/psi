@@ -1459,6 +1459,12 @@ void OptionsMigration::lateMigration()
 	foreach(ToolbarPrefs tb, toolbars) {
 		PsiToolBar::structToOptions(o, tb);
 	}
+
+	// 2016-02-09 touches Psi+ users. but lt it be here for awhile
+	if (o->getOption("options.contactlist.use-autohide", false)) {
+		o->setOption("options.contactlist.autohide-interval", 0);
+		o->removeOption("options.contactlist.use-autohide");
+	}
 }
 
 
