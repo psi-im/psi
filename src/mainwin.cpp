@@ -1441,7 +1441,11 @@ void MainWin::closeEvent(QCloseEvent* e)
 	trayHide();
 	e->accept();
 #else
-	if(d->tray && !PsiOptions::instance()->getOption("options.ui.contactlist.quit-on-close").toBool()) {
+	PsiOptions *o = PsiOptions::instance();
+	bool quitOnClose = o->getOption("options.ui.contactlist.quit-on-close").toBool()
+			&& o->getOption("options.contactlist.autohide-interval").toInt() == 0;
+
+	if(d->tray && !quitOnClose) {
 		trayHide();
 		e->accept();
 		return;
