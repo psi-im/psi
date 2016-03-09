@@ -22,12 +22,12 @@
  *
  */
 
-#include "wbmanager.h"
-#include "psipopup.h"
 #include <QDebug>
 #include <QMessageBox>
 
-#define WBNS "http://www.w3.org/2000/svg"
+#include "wbmanager.h"
+#include "psipopup.h"
+
 #define EMPTYWB "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\"> <svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.2\" viewBox=\"0 0 600 400\" baseProfile=\"tiny\" />"
 
 using namespace XMPP;
@@ -74,8 +74,6 @@ int WbRequest::lastRequetsId = 0;
 WbManager::WbManager(XMPP::Client* client, PsiAccount* pa, SxeManager* sxemanager) {
 	pa_ = pa;
 	sxemanager_ = sxemanager;
-
-	client->addExtension("whiteboard", Features(WBNS));
 
 	connect(sxemanager_, SIGNAL(sessionNegotiated(SxeSession*)), SLOT(createWbDlg(SxeSession*)));
 	//sxemanager_->addInvitationCallback(WbManager::checkInvitation);

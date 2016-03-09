@@ -28,9 +28,9 @@
 #include <QList>
 #include <QPointer>
 #include <QDomNode>
+
 #include "im.h"
 #include "psiaccount.h"
-
 #include "sxerecord.h"
 
 namespace XMPP {

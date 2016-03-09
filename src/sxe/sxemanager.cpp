@@ -18,12 +18,13 @@
  *
  */
 
+#include <QUrl>
+
 #include "sxemanager.h"
 #include "psipopup.h"
 #include "psioptions.h"
 #include "common.h"
-#include "capsmanager.h"
-#include <QUrl>
+#include "xmpp_caps.h"
 
 #define ONETOONEPREFIXSELF "0"
 #define ONETOONEPREFIXOTHER "1"
@@ -38,8 +39,6 @@ SxeManager::SxeManager(Client* client, PsiAccount* pa) : client_(client) {
 	sxeId_ = QTime::currentTime().toString("z").toInt();
 
 	pa_ = pa;
-
-	client_->addExtension("sxe", Features(SXENS));
 
 	connect(client_, SIGNAL(messageReceived(const Message &)), SLOT(messageReceived(const Message &)));
 	connect(client_, SIGNAL(groupChatLeft(const Jid &)), SLOT(groupChatLeft(const Jid &)));
@@ -752,15 +751,11 @@ void SxeManager::groupChatJoined(const Jid &, const Jid &ownJid) {
 }
 
 bool SxeManager::checkSupport(const Jid &jid, const QList<QString> &features) {
-	QStringList supported = pa_->capsManager()->features(jid).list();
+	Features f = pa_->client()->capsManager()->features(jid);
 
-	if(!supported.contains(SXENS))
-		return false;
-
-	foreach(QString f, features) {
-		if(!supported.contains(f))
-			return false;
+	if (f.test(SXENS) && f.test(features)) {
+		return true;
 	}
 
-	return true;
+	return false;
 }
