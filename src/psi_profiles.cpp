@@ -1461,7 +1461,7 @@ void OptionsMigration::lateMigration()
 	}
 
 	// 2016-02-09 touches Psi+ users. but lt it be here for awhile
-	if (o->getOption("options.contactlist.use-autohide", false)) {
+	if (o->getOption("options.contactlist.use-autohide", false).toBool()) {
 		o->setOption("options.contactlist.autohide-interval", 0);
 		o->removeOption("options.contactlist.use-autohide");
 	}
