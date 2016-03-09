@@ -1124,7 +1124,8 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
 
 	// create XMPP::Client
 	d->client = new Client;
-	d->client->setOSName(SystemInfo::instance()->os());
+	d->client->setOSName(SystemInfo::instance()->osName());
+	d->client->setOSVersion(SystemInfo::instance()->osVersion());
 	d->client->setClientName(ApplicationInfo::name());
 	d->client->setClientVersion(ApplicationInfo::version());
 	d->client->setCaps(CapsSpec(ApplicationInfo::capsNode(), QCryptographicHash::Sha1));

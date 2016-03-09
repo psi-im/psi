@@ -59,8 +59,12 @@ static QString lsbRelease(const QStringList& args)
 	while(process.waitForReadyRead())
 	   ret += stream.readAll();
 
+	ret = ret.trimmed();
+	if (ret.startsWith('"') && ret.endsWith('"') && ret.size() > 1) {
+		ret = ret.mid(1, ret.size() - 2);
+	}
 	process.close();
-	return ret.trimmed();
+	return ret;
 }
 
 
@@ -168,6 +172,7 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 {
 	// Initialize
 	os_str_ = "Unknown";
+	os_name_str_ = os_str_;
 
 	// Detect
 #if defined(HAVE_X11)
@@ -177,84 +182,110 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 	if(os_str_.isEmpty()) {
 		os_str_ = unixHeuristicDetect();
 	}
+	os_name_str_ = os_str_;
+
+	os_version_str_ = lsbRelease(QStringList() << "--release" << "--short");
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+	if(os_version_str_.isEmpty()) {
+		os_version_str_ = QSysInfo::productVersion();
+	}
+#endif
+
+	if (!os_version_str_.isEmpty() && os_name_str_.endsWith(os_version_str_)) {
+		os_name_str_ = os_name_str_.left(os_name_str_.size() - os_version_str_.size()).trimmed();
+	}
 
 #elif defined(Q_OS_MAC)
 	QSysInfo::MacVersion v = QSysInfo::MacintoshVersion;
+	os_name_str_ = "OS X";
+	if (v < QSysInfo::MV_10_7) {
+		os_name_str_ = "Mac OS X";
+	}
 	switch (v) {
 		case QSysInfo::MV_10_3:
-			os_str_ = "Mac OS X 10.3 (Panther)";
+			os_version_str_ = "10.3 (Panther)";
 			break;
 		case QSysInfo::MV_10_4:
-			os_str_ = "Mac OS X 10.4 (Tiger)";
+			os_version_str_ = "10.4 (Tiger)";
 			break;
 		case QSysInfo::MV_10_5:
-			os_str_ = "Mac OS X 10.5 (Leopard)";
+			os_version_str_ = "10.5 (Leopard)";
 			break;
 		case QSysInfo::MV_10_6:
-			os_str_ = "Mac OS X 10.6 (Snow Leopard)";
+			os_version_str_ = "10.6 (Snow Leopard)";
 			break;
 		case QSysInfo::MV_10_7:
-			os_str_ = "OS X 10.7 (Lion)";
+			os_version_str_ = "10.7 (Lion)";
 			break;
 		case 0x000A: // QSysInfo::MV_10_8 should not be used for compatibility reasons
-			os_str_ = "OS X 10.8 (Mountain Lion)";
+			os_version_str_ = "10.8 (Mountain Lion)";
 			break;
 		case 0x000B: // QSysInfo::MV_10_9 should not be used for compatibility reasons
-			os_str_ = "OS X 10.9 (Mavericks)";
+			os_version_str_ = "10.9 (Mavericks)";
 			break;
 		case 0x000C: // QSysInfo::MV_10_10 should not be used for compatibility reasons
-			os_str_ = "OS X 10.10 (Yosemite)";
+			os_version_str_ = "10.10 (Yosemite)";
+			break;
+		case 0x000D: // QSysInfo::MV_10_11 should not be used for compatibility reasons
+			os_version_str_ = "10.11 (El Capitan)";
 			break;
 		default:
-			os_str_ = "Mac OS X";
+			os_version_str_ = "";
+	}
+	if (os_version_str_.isEmpty()) {
+		os_str_ = "Mac OS X";
+	} else {
+		os_str_ = os_name_str_ + " " + os_version_str_;
 	}
 #endif
 
 #if defined(Q_OS_WIN)
 
+	os_name_str_ = "Windows";
+	os_str_ = os_name_str_;
 	QSysInfo::WinVersion v = QSysInfo::WindowsVersion;
 	switch (v) {
 		case QSysInfo::WV_95:
-			os_str_ = "Windows 95";
+			os_version_str_ = "95";
 			break;
 		case QSysInfo::WV_98:
-			os_str_ = "Windows 98";
+			os_version_str_ = "98";
 			break;
 		case QSysInfo::WV_Me:
-			os_str_ = "Windows Me";
+			os_version_str_ = "Me";
 			break;
 		case QSysInfo::WV_DOS_based:
-			os_str_ = "Windows 9x/Me";
+			os_version_str_ = "9x/Me";
 			break;
 		case QSysInfo::WV_NT:
-			os_str_ = "Windows NT 4.x";
+			os_version_str_ = "NT 4.x";
 			break;
 		case QSysInfo::WV_2000:
-			os_str_ = "Windows 2000";
+			os_version_str_ = "2000";
 			break;
 		case QSysInfo::WV_XP:
-			os_str_ = "Windows XP";
+			os_version_str_ = "XP";
 			break;
 		case QSysInfo::WV_2003:
-			os_str_ = "Windows Server 2003";
+			os_version_str_ = "Server 2003";
 			break;
 		case QSysInfo::WV_VISTA:
-			os_str_ = "Windows Vista";
+			os_version_str_ = "Vista";
 			break;
 		case QSysInfo::WV_WINDOWS7:
-			os_str_ = "Windows 7";
+			os_version_str_ = "7";
 			break;
 		case 0x00a0: // QSysInfo::WV_WINDOWS8 should not be used for compatibility reasons
-			os_str_ = "Windows 8";
+			os_version_str_ = "8";
 			break;
 		case 0x00b0: // QSysInfo::WV_WINDOWS8_1 should not be used for compatibility reasons
-			os_str_ = "Windows 8.1";
+			os_version_str_ = "8.1";
 			break;
 		case 0x00c0: // QSysInfo::WV_WINDOWS10 should not be used for compatibility reasons
-			os_str_ = "Windows 10";
+			os_version_str_ = "10";
 			break;
 		case QSysInfo::WV_NT_based:
-			os_str_ = "Windows NT";
+			os_version_str_ = "NT";
 			break;
 		// make compiler happy with unsupported Windows versions
 		case QSysInfo::WV_32s:
@@ -264,6 +295,10 @@ SystemInfo::SystemInfo() : QObject(QCoreApplication::instance())
 		case QSysInfo::WV_CE_6:
 		case QSysInfo::WV_CE_based:
 			break;
+	}
+
+	if (!os_version_str_.isEmpty()) {
+		os_str_ += (" " + os_version_str_);
 	}
 #endif
 }
