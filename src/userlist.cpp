@@ -345,6 +345,7 @@ QStringList UserListItem::clients() const
 
 QString UserListItem::findClient(QString name) const
 {
+	// passed name is expected to be in lower case
 	QString res = PsiIconset::instance()->caps2client(name);
 	if (res.isEmpty()) {
 		res = "unknown";

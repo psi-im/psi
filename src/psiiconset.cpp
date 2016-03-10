@@ -52,7 +52,7 @@ private:
 	PsiIconset *psi;
 public:
 	Iconset system, moods, clients, activities, affiliations;
-	ClientIconMap caps2clients;
+	ClientIconMap client2icon;
 	QString cur_system, cur_status, cur_moods, cur_clients, cur_activity, cur_affiliations;
 	QStringList cur_emoticons;
 	QMap<QString, QString> cur_service_status;
@@ -488,7 +488,7 @@ bool PsiIconset::loadClients()
 		QStringList dirs = ApplicationInfo::dataDirs();
 		ClientIconMap cm; // start part, spec[spec2[spec3]]
 		foreach (const QString &dataDir, dirs) {
-			QFile capsConv(dataDir + QLatin1String("/caps2client.txt"));
+			QFile capsConv(dataDir + QLatin1String("/client_icons.txt"));
 			/* file format: <icon res name> <left_part_of_cap1#inside1#inside2>,<left_part_of_cap2>
 				next line the same.
 			*/
@@ -528,9 +528,9 @@ bool PsiIconset::loadClients()
 			}
 		}
 		if (cm.isEmpty()) {
-			qWarning("Failed to read caps2client.txt. Detection of clients' icons won't work properly");
+			qWarning("Failed to read client_icons.txt. Clients detection won't work");
 		}
-		d->caps2clients = cm;
+		d->client2icon = cm;
 		d->cur_clients = cur_clients;
 	}
 
@@ -918,10 +918,10 @@ void PsiIconset::removeAnimation(Iconset *is)
 
 QString PsiIconset::caps2client(const QString &name)
 {
-	ClientIconMap::const_iterator it = d->caps2clients.lowerBound(name);
-	if (d->caps2clients.size()) {
-		if ((it != d->caps2clients.constEnd() && name.startsWith(it.key())) ||
-				(it != d->caps2clients.constBegin() && name.startsWith((--it).key()))) {
+	ClientIconMap::const_iterator it = d->client2icon.lowerBound(name);
+	if (d->client2icon.size()) {
+		if ((it != d->client2icon.constEnd() && name.startsWith(it.key())) ||
+				(it != d->client2icon.constBegin() && name.startsWith((--it).key()))) {
 			foreach (const ClientIconCheck &ic, it.value()) {
 				if (ic.inside.isEmpty()) {
 					return ic.icon;

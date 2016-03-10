@@ -30,7 +30,7 @@ unix {
 
 	# Shared files
 	sharedfiles.path  = $$PSI_DATADIR
-	sharedfiles.files = ../README ../COPYING ../iconsets ../sound ../certs
+	sharedfiles.files = ../README ../COPYING ../client_icons.txt ../iconsets ../sound ../certs
 	webkit {
 		sharedfiles.files += ../themes
 	}
