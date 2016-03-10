@@ -34,6 +34,14 @@
 
 using namespace XMPP;
 
+struct ClientIconCheck
+{
+	QString icon; // icon name w/o client/ part
+	QStringList inside; // search for texts inside provided name to be sure
+};
+typedef QMap<QString, QList<ClientIconCheck> > ClientIconMap;
+
+
 //----------------------------------------------------------------------------
 // PsiIconset
 //----------------------------------------------------------------------------
@@ -44,7 +52,7 @@ private:
 	PsiIconset *psi;
 public:
 	Iconset system, moods, clients, activities, affiliations;
-	QMap<QString, QString> caps2clients;
+	ClientIconMap caps2clients;
 	QString cur_system, cur_status, cur_moods, cur_clients, cur_activity, cur_affiliations;
 	QStringList cur_emoticons;
 	QMap<QString, QString> cur_service_status;
@@ -478,10 +486,10 @@ bool PsiIconset::loadClients()
 		d->clients.addToFactory();
 
 		QStringList dirs = ApplicationInfo::dataDirs();
-		QMap<QString,QString> cm;
+		ClientIconMap cm; // start part, spec[spec2[spec3]]
 		foreach (const QString &dataDir, dirs) {
 			QFile capsConv(dataDir + QLatin1String("/caps2client.txt"));
-			/* file format: <icon res name> <left part of cap1>,<left part of cap2>
+			/* file format: <icon res name> <left_part_of_cap1#inside1#inside2>,<left_part_of_cap2>
 				next line the same.
 			*/
 			if (capsConv.open(QIODevice::ReadOnly)) {
@@ -490,20 +498,32 @@ bool PsiIconset::loadClients()
 				QString line;
 				while (!(line = stream.readLine()).isNull()) {
 					line = line.trimmed();
-					QString res = line.section(QLatin1Char(' '), 0, 0);
-					if (!res.length()) {
+					QString iconName = line.section(QLatin1Char(' '), 0, 0);
+					if (!iconName.length()) {
 						continue;
 					}
-					QString caps = line.mid(res.length());
+					ClientIconCheck ic = {iconName, QStringList()};
+					QString caps = line.mid(iconName.length());
 					foreach (const QString &c, caps.split(QLatin1Char(','), QString::SkipEmptyParts)) {
 						QString ct = c.trimmed();
 						if (ct.length()) {
-							cm.insert(ct, res);
+							QStringList spec = ct.split('#');
+							if (spec.size() > 1) {
+								ic.inside = spec.mid(1);
+							} else {
+								ic.inside.clear();
+							}
+							ClientIconMap::Iterator it = cm.find(spec[0]);
+							if (it == cm.end()) {
+								cm.insert(spec[0], QList<ClientIconCheck>() << ic);
+							} else {
+								it.value().append(ic);
+							}
 						}
 					}
 				}
 				/* insert end boundry element to make search implementation simple */
-				cm.insert(QLatin1String("~"), QLatin1String(""));
+				cm.insert(QLatin1String("~"), QList<ClientIconCheck>());
 				break;
 			}
 		}
@@ -898,11 +918,25 @@ void PsiIconset::removeAnimation(Iconset *is)
 
 QString PsiIconset::caps2client(const QString &name)
 {
-	QMap<QString, QString>::const_iterator it = d->caps2clients.lowerBound(name);
+	ClientIconMap::const_iterator it = d->caps2clients.lowerBound(name);
 	if (d->caps2clients.size()) {
 		if ((it != d->caps2clients.constEnd() && name.startsWith(it.key())) ||
 				(it != d->caps2clients.constBegin() && name.startsWith((--it).key()))) {
-			return it.value();
+			foreach (const ClientIconCheck &ic, it.value()) {
+				if (ic.inside.isEmpty()) {
+					return ic.icon;
+				}
+				bool matched = true;
+				foreach (const QString &s, ic.inside) {
+					if (!name.contains(s)) {
+						matched = false;
+						break;
+					}
+				}
+				if (matched) {
+					return ic.icon;
+				}
+			}
 		}
 	}
 	return QString();
