@@ -336,19 +336,29 @@ QStringList UserListItem::clients() const
 		srl.sort();
 
 		for(UserResourceList::ConstIterator rit = srl.begin(); rit != srl.end(); ++rit) {
-			QString name = (*rit).clientName().toLower();
-			res += findClient(name);
+			res += findClient(*rit);
 		}
 	}
 	return res;
 }
 
-QString UserListItem::findClient(QString name) const
+QString UserListItem::findClient(const UserResource &ur) const
 {
 	// passed name is expected to be in lower case
-	QString res = PsiIconset::instance()->caps2client(name);
+	QString res;
+	QString name;
+	if (ur.clientName().isEmpty()) {
+		name = QUrl(ur.status().caps().node()).host();
+	} else {
+		name = ur.clientName().toLower();
+	}
+	if (!name.isEmpty()) {
+		res = PsiIconset::instance()->caps2client(name);
+		//qDebug("CLIENT: %s RES: %s", qPrintable(name), qPrintable(res));
+	}
 	if (res.isEmpty()) {
 		res = "unknown";
+		//qDebug("RESOURCE: %s RES: %s", qPrintable(ur.name()), qPrintable(res));
 	}
 	return res;
 }
@@ -673,7 +683,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 				if(trim)
 					ver = dot_truncate(ver, 80);
 				ver = TextUtil::escape(ver);
-				str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("clients/" + findClient(r.clientName().toLower())) + QObject::tr("Using") + QString(": %3").arg(ver) + "</div>";
+				str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("clients/" + findClient(r)) + QObject::tr("Using") + QString(": %3").arg(ver) + "</div>";
 			}
 
 

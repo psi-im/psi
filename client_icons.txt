@@ -114,7 +114,7 @@ pandion pandion
 palringo palringo
 poezio sleekxmpp.com
 psiplus psi+,psi-dev
-psi psi
+psi psi,psi-im
 pidgin pidgin,d0bfd0b8d0b4d0b6d0b8d0bd 
 pyicq-t pyicqt.googlecode.com,icq#transport
 qip qip.ru

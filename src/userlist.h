@@ -125,7 +125,7 @@ public:
 	bool isPrivate() const;
 	const Mood& mood() const;
 	QStringList clients() const;
-	QString findClient(QString name) const;
+	QString findClient(const UserResource &ur) const;
 	const Activity& activity() const;
 	QString pending() const;
 

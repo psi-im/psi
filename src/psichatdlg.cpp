@@ -561,7 +561,7 @@ void PsiChatDlg::updateJidWidget(const QList<UserListItem*> &ul, int status, boo
 					UserResourceList::ConstIterator it = resList.begin();
 					if (it != resList.end() && (*it).name().isEmpty())
 						// Empty resource,  but online. Transport?
-						iconStr = "clients/" + u->findClient((*it).clientName().toLower());
+						iconStr = "clients/" + u->findClient(*it);
 				} else if (resCnt == 0) {
 					iconStr = QString();
 				}
@@ -572,7 +572,7 @@ void PsiChatDlg::updateJidWidget(const QList<UserListItem*> &ul, int status, boo
 					UserResource r = *it;
 					if (!r.name().isEmpty()) {
 						Jid tmp_jid(u->jid().withResource(r.name()));
-						QString iconStr2 = "clients/" + u->findClient(r.clientName().toLower());
+						QString iconStr2 = "clients/" + u->findClient(r);
 						setJidComboItem(curr_index, makeContactName(name, tmp_jid), tmp_jid, iconStr2);
 						if (new_index == -1 && tmp_jid == new_auto_jid) {
 							new_index = curr_index;
@@ -613,7 +613,7 @@ void PsiChatDlg::updateJidWidget(const QList<UserListItem*> &ul, int status, boo
 			Jid tmp_jid = jid();
 			UserResourceList::ConstIterator it = resList.begin();
 			if (it != resList.end()) {
-				iconStr = "clients/" + u->findClient((*it).clientName().toLower());
+				iconStr = "clients/" + u->findClient(*it);
 				tmp_jid = u->jid().withResource((*it).name());
 			} else if (jidCombo->count() > 0) {
 				tmp_jid = Jid(jidCombo->itemData(0).toString());
@@ -685,7 +685,7 @@ void PsiChatDlg::contactUpdated(UserListItem* u, int status, const QString& stat
 				srl.sort();
 				r = srl.first();
 			}
-			const QPixmap &pix = IconsetFactory::iconPixmap("clients/" + u->findClient(r.clientName().toLower()) );
+			const QPixmap &pix = IconsetFactory::iconPixmap("clients/" + u->findClient(r) );
 			ui_.lb_client->setPixmap(pix);
 			ui_.lb_client->setToolTip(r.versionString());
 		}

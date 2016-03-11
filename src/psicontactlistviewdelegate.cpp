@@ -155,6 +155,7 @@ QList<QPixmap> PsiContactListViewDelegate::clientPixmap(const QModelIndex& index
 		return pixList;
 
 	foreach(QString client, vList) {
+		//qDebug("DRAW: %s FOR %s", qPrintable(client), qPrintable(index.data(ContactListModel::JidRole).toString()));
 		const QPixmap &pix = IconsetFactory::iconPixmap("clients/" + client);
 		if(!pix.isNull())
 			pixList.push_back(pix);
