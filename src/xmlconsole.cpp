@@ -26,6 +26,7 @@
 #include <QHBoxLayout>
 #include <QMessageBox>
 #include <QTextFrame>
+#include <QScrollBar>
 
 #include "xmpp_client.h"
 #include "xmlconsole.h"
@@ -136,22 +137,33 @@ void XmlConsole::dumpRingbuf()
 	ui_.ck_enable->setChecked(enablesave);
 }
 
+void XmlConsole::addRecord(bool incoming, const QString &str) {
+	if (!filtered(str)) {
+		int prevSPos = ui_.te->verticalScrollBar()->value();
+		bool atBottom = (prevSPos == ui_.te->verticalScrollBar()->maximum());
+		QTextCursor prevCur = ui_.te->textCursor();
+
+		ui_.te->moveCursor(QTextCursor::End);
+		ui_.te->setTextColor(incoming? Qt::yellow : Qt::red);
+		ui_.te->insertPlainText(str + '\n');
+
+		if (!atBottom) {
+			ui_.te->setTextCursor(prevCur);
+			ui_.te->verticalScrollBar()->setValue(prevSPos);
+		} else {
+			ui_.te->verticalScrollBar()->setValue(ui_.te->verticalScrollBar()->maximum());
+		}
+	}
+}
+
 void XmlConsole::client_xmlIncoming(const QString &str)
 {
-	if (!filtered(str)) {
-		ui_.te->moveCursor(QTextCursor::End);
-		ui_.te->setTextColor(Qt::yellow);
-		ui_.te->insertPlainText(str + '\n');
-	}
+	addRecord(true, str);
 }
 
 void XmlConsole::client_xmlOutgoing(const QString &str)
 {
-	if(!filtered(str)) {
-		ui_.te->moveCursor(QTextCursor::End);
-		ui_.te->setTextColor(Qt::red);
-		ui_.te->insertPlainText(str + '\n');
-	}
+	addRecord(false, str);
 }
 
 void XmlConsole::insertXml()

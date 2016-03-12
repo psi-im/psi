@@ -51,6 +51,7 @@ private slots:
 
 protected:
 	bool filtered(const QString&) const;
+	void addRecord(bool incoming, const QString &str);
 
 private:
 	Ui::XMLConsole ui_;
