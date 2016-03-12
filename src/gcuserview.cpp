@@ -208,6 +208,7 @@ public:
 				QString client_name = cm->clientName(caps_jid);
 				QString client_version = (client_name.isEmpty() ? QString() : cm->clientVersion(caps_jid));
 				UserResource ur;
+				ur.setStatus(item->s);
 				ur.setClient(client_name,client_version,"");
 				u.userResourceList().append(ur);
 				QStringList clients = u.clients();
