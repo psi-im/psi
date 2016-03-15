@@ -34,7 +34,7 @@ public:
 	static const int AvatarToNickHMargin = 3; // a gap between avatar and remaining data
 	static const int NickToStatusLinesVMargin = 2;
 	static const int StatusIconToNickHMargin = 3; // space between status icon and nickname
-	static const int NickConcealerWidth = 5;
+	static const int NickConcealerWidth = 10;
 
 	PsiContactListViewDelegate(ContactListView* parent);
 	~PsiContactListViewDelegate();

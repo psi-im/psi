@@ -370,7 +370,6 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 	if(isMuc)
 		mucMessages = index.data(ContactListModel::MucMessagesRole).toString();
 
-	QRect iconRect(r);
 	QList<QPixmap> rightPixs;
 	QList<int> rightWidths;
 	if(!isMuc) {
@@ -432,7 +431,7 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 
 	if(rightPixs.isEmpty() && mucMessages.isEmpty())
 		return;
-return; // Temporary disable other stuff. It's not ready yet.
+
 	int sumWidth = 0;
 	if(isMuc)
 		sumWidth = fontMetrics_->width(mucMessages);
@@ -442,26 +441,45 @@ return; // Temporary disable other stuff. It's not ready yet.
 		}
 		sumWidth+=rightPixs.count();
 	}
+
+	QRect gradRect(firstLineRect);
+	pepIconsRect.setWidth(sumWidth);
+	if (option.direction == Qt::RightToLeft) {
+		pepIconsRect.moveLeft(firstLineRect.left());
+		gradRect.setRight(pepIconsRect.right() + NickConcealerWidth);
+	} else {
+		pepIconsRect.moveRight(firstLineRect.right());
+		gradRect.setLeft(pepIconsRect.left() - NickConcealerWidth);
+	}
+	pepIconsRect &= firstLineRect;
+
 	QColor bgc = (option.state & QStyle::State_Selected) ? palette.color(QPalette::Highlight) : palette.color(QPalette::Base);
 	QColor tbgc = bgc;
 	tbgc.setAlpha(0);
-	QLinearGradient grad(r.right() - sumWidth - 20, 0, r.right() - sumWidth, 0);
+	QLinearGradient grad;
+	if (option.direction == Qt::RightToLeft) {
+		grad = QLinearGradient(gradRect.right(), 0, gradRect.right() - NickConcealerWidth, 0);
+	} else {
+		grad = QLinearGradient(gradRect.left(), 0, gradRect.left() + NickConcealerWidth, 0);
+	}
 	grad.setColorAt(0, tbgc);
 	grad.setColorAt(1, bgc);
 	QBrush tbakBr(grad);
-	QRect gradRect(r);
-	gradRect.setLeft(gradRect.right() - sumWidth - 20);
-	painter->fillRect(gradRect, tbakBr);
-
-	if(isMuc) {
-		iconRect.setLeft(iconRect.right() - sumWidth - 1);
-		painter->drawText(iconRect, mucMessages);
+	gradRect &= firstLineRect;
+	if (gradRect.intersects(r)) {
+		painter->fillRect(gradRect, tbakBr);
 	}
-	else {
-		for (int i=0; i<rightPixs.size(); i++) {
-			const QPixmap pix = rightPixs[i];
-			iconRect.setRight(iconRect.right() - pix.width() -1);
-			painter->drawPixmap(iconRect.topRight(), pix);
+	if (pepIconsRect.intersects(r)) {
+		if(isMuc) {
+			painter->drawText(pepIconsRect, mucMessages);
+		}
+		else {
+			for (int i=0; i<rightPixs.size(); i++) {
+				const QPixmap pix = rightPixs[i];
+				pepIconsRect.setRight(pepIconsRect.right() - pix.width() -1);
+				painter->drawPixmap(pepIconsRect.topRight(), pix);
+				//qDebug() << r << pepIconsRect.topRight() << pix.size();
+			}
 		}
 	}
 }
@@ -712,18 +730,15 @@ void PsiContactListViewDelegate::optionChanged(const QString& option)
 		updateGeometry = true;
 	}
 	else if(option == showClientIconsPath) {
-		showClientIcons_ = PsiOptions::instance()->getOption(showClientIconsPath).toBool() &&
-	        PsiIconset::instance()->clients.count() > 0;
+		showClientIcons_ = PsiOptions::instance()->getOption(showClientIconsPath).toBool();
 		updateGeometry = true;
 	}
 	else if(option == showMoodIconsPath) {
-		showMoodIcons_ = PsiOptions::instance()->getOption(showMoodIconsPath).toBool() &&
-	        PsiIconset::instance()->moods.count() > 0;
+		showMoodIcons_ = PsiOptions::instance()->getOption(showMoodIconsPath).toBool();
 		updateGeometry = true;
 	}
 	else if(option == showActivityIconsPath) {
-		showActivityIcons_ = PsiOptions::instance()->getOption(showActivityIconsPath).toBool() &&
-	        PsiIconset::instance()->activities.count() > 0;
+		showActivityIcons_ = PsiOptions::instance()->getOption(showActivityIconsPath).toBool();
 		updateGeometry = true;
 	}
 	else if(option == showTuneIconsPath) {
