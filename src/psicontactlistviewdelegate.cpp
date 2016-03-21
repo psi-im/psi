@@ -183,7 +183,7 @@ QSize PsiContactListViewDelegate::sizeHint(const QStyleOptionViewItem& /*option*
 		if(index.data(ContactListModel::TypeRole) == ContactListModel::ContactType) {
 			return contactBoundingRect_.size() + QSize(2*ContacHMargin, 2*ContactVMargin);
 		} else {
-			return QSize(16, qMax(showStatusIcons_? statusIconRect_.height() : 0, nickRect_.height() + 2 * ContactVMargin));
+			return QSize(16, qMax(showStatusIcons_? statusIconSize_ : 0, nickRect_.height()) + 2 * ContactVMargin);
 		}
 	}
 
