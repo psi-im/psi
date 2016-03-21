@@ -304,11 +304,11 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 			statusPixmap = statusPixmap.scaled(statusIconRect.size(), Qt::KeepAspectRatio, Qt::SmoothTransformation);
 		} else {
 			if (option.direction == Qt::RightToLeft) {
-				statusIconRect.setRight(firstLineRect.right());
+				statusIconRect.moveRight(firstLineRect.right());
 				nickRect.setRight(statusIconRect.right() - StatusIconToNickHMargin);
 				secondLineRect.setRight(nickRect.right()); // we don't want status under icon
 			} else {
-				statusIconRect.setLeft(firstLineRect.left());
+				statusIconRect.moveLeft(firstLineRect.left());
 				nickRect.setLeft(statusIconRect.right() + StatusIconToNickHMargin);
 				secondLineRect.setLeft(nickRect.left()); // we don't want status under icon
 			}

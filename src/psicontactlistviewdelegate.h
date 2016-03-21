@@ -30,7 +30,7 @@ class PsiContactListViewDelegate : public ContactListViewDelegate
 	Q_OBJECT
 public:
 	static const int ContactVMargin = 1;
-	static const int ContacHMargin = 1;
+	static const int ContacHMargin = 2;
 	static const int AvatarToNickHMargin = 3; // a gap between avatar and remaining data
 	static const int NickToStatusLinesVMargin = 2;
 	static const int StatusIconToNickHMargin = 3; // space between status icon and nickname
