@@ -157,6 +157,7 @@ public:
 PsiContactListView::PsiContactListView(QWidget* parent)
 	: ContactListDragView(parent)
 {
+	//setLayoutDirection(Qt::RightToLeft);
 	setIndentation(0); // bigger values make roster look weird
 	setItemDelegate(new PsiContactListViewDelegate(this));
 

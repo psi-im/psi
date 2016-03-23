@@ -35,6 +35,7 @@ public:
 	static const int NickToStatusLinesVMargin = 2;
 	static const int StatusIconToNickHMargin = 3; // space between status icon and nickname
 	static const int NickConcealerWidth = 10;
+	static const int PepIconsGap = 1;
 
 	PsiContactListViewDelegate(ContactListView* parent);
 	~PsiContactListViewDelegate();

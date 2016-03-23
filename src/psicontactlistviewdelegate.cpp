@@ -190,32 +190,6 @@ QSize PsiContactListViewDelegate::sizeHint(const QStyleOptionViewItem& /*option*
 	return QSize(0, 0);
 }
 
-static QRect relativeRect(const QStyleOption& option,
-						  const QSize &size,
-						  const QRect& prevRect,
-						  int padding = 0)
-{
-	QRect r = option.rect;
-	const bool isRTL = option.direction == Qt::RightToLeft;
-	if (isRTL) {
-		if (prevRect.isValid())
-			r.setRight(prevRect.left() - padding);
-		if (size.isValid()) {
-			r.setLeft(r.right() - size.width() + 1);
-			r.setBottom(r.top() + size.height() - 1);
-			r.translate(-1, 1);
-		}
-	} else {
-		if (prevRect.isValid())
-			r.setLeft(prevRect.right() + padding);
-		if (size.isValid()) {
-			r.setSize(size);
-			r.translate(1, 1);
-		}
-	}
-	return r;
-}
-
 void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
 	/* We have few possible ways to draw contact
@@ -454,7 +428,9 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 		foreach (int w, rightWidths) {
 			sumWidth += w;
 		}
-		sumWidth+=rightPixs.count();
+		if (rightPixs.count()) {
+			sumWidth+=(rightPixs.count() - 1) * PepIconsGap;
+		}
 	}
 
 	QRect gradRect(firstLineRect);
@@ -488,15 +464,64 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 		if(isMuc) {
 			painter->drawText(pepIconsRect, mucMessages);
 		}
-		else {
+		else if (option.direction == Qt::RightToLeft) {
 			for (int i=0; i<rightPixs.size(); i++) {
-				const QPixmap pix = rightPixs[i];
-				pepIconsRect.setRight(pepIconsRect.right() - pix.width() -1);
-				painter->drawPixmap(pepIconsRect.topRight(), pix);
-				//qDebug() << r << pepIconsRect.topRight() << pix.size();
+				const QPixmap pix = rightPixs[rightPixs.size() - i - 1];
+				QRect pixRect = pix.rect();
+				pixRect.moveTopRight(QPoint(pepIconsRect.right(),
+				                           pepIconsRect.top() + (pepIconsRect.height() - pixRect.height()) / 2));
+
+				if (pixRect.left() < pepIconsRect.left()) {
+					pixRect.setLeft(pepIconsRect.left());
+					painter->drawPixmap(pixRect, pix, QRect(QPoint(pix.width() - pixRect.width(),0), pixRect.size()));
+					break;
+				}
+				painter->drawPixmap(pixRect, pix);
+				pepIconsRect.setRight(pixRect.right() - pixRect.width() - PepIconsGap);
+			}
+		} else {
+			for (int i=0; i<rightPixs.size(); i++) {
+				const QPixmap pix = rightPixs[rightPixs.size() - i - 1];
+				QRect pixRect = pix.rect();
+				pixRect.moveTopLeft(QPoint(pepIconsRect.left(),
+				                           pepIconsRect.top() + (pepIconsRect.height() - pixRect.height()) / 2));
+
+				if (pixRect.right() > pepIconsRect.right()) {
+					pixRect.setRight(pepIconsRect.right());
+					painter->drawPixmap(pixRect, pix, QRect(QPoint(0,0), pixRect.size()));
+					break;
+				}
+				painter->drawPixmap(pixRect, pix);
+				pepIconsRect.setLeft(pixRect.left() + pixRect.width() + PepIconsGap);
 			}
 		}
 	}
+}
+
+static QRect relativeRect(const QStyleOption& option,
+                          const QSize &size,
+                          const QRect& prevRect,
+                          int padding = 0)
+{
+	QRect r = option.rect;
+	const bool isRTL = option.direction == Qt::RightToLeft;
+	if (isRTL) {
+		if (prevRect.isValid())
+			r.setRight(prevRect.left() - padding);
+		if (size.isValid()) {
+			r.setLeft(r.right() - size.width() + 1);
+			r.setBottom(r.top() + size.height() - 1);
+			r.translate(-1, 1);
+		}
+	} else {
+		if (prevRect.isValid())
+			r.setLeft(prevRect.right() + padding);
+		if (size.isValid()) {
+			r.setSize(size);
+			r.translate(1, 1);
+		}
+	}
+	return r;
 }
 
 void PsiContactListViewDelegate::drawGroup(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
@@ -529,7 +554,7 @@ void PsiContactListViewDelegate::drawGroup(QPainter* painter, const QStyleOption
 	const QSize pixmapSize = pixmap.size();
 	QRect pixmapRect = relativeRect(option, pixmapSize, QRect());
 	r = relativeRect(option, QSize(), pixmapRect, 3);
-	painter->drawPixmap(pixmapRect.topLeft(), pixmap);
+	painter->drawPixmap(pixmapRect.	topLeft(), pixmap);
 
 	QString text = index.data(ContactListModel::DisplayGroupRole).toString();
 	drawText(painter, o, r, text, index);
