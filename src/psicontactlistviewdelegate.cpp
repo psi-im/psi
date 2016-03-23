@@ -271,9 +271,10 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 
 	// next expand to r.width
 	// first check if we need expand at all
+	int req_width = (contactBoundingRect.width() + 2 * ContacHMargin);
 	if (contactBoundingRect.width() + 2 * ContacHMargin < r.width()) {
 		// our previously computed minimal rect is too small for this roster. so expand
-		int diff = r.width() - (contactBoundingRect.width() + 2 * ContacHMargin);
+		int diff = r.width() - req_width;
 		if (!avatarAtLeft_) {
 			avatarStatusRect.translate(diff, 0);
 			avatarRect.translate(diff, 0);
@@ -284,6 +285,20 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 		linesRect.setRight(linesRect.right() + diff);
 		firstLineRect.setRight(linesRect.right());
 		secondLineRect.setRight(linesRect.right());
+
+	} else if (option.direction == Qt::RightToLeft) {
+		// it's we don't have enough space. align everything to the right
+		int diff = req_width - r.width();
+		linesRect.translate(-diff, 0);
+		firstLineRect.translate(-diff, 0);
+		secondLineRect.translate(-diff, 0);
+		if (showAvatars_) {
+			avatarStatusRect.translate(-diff, 0);
+			avatarRect.translate(-diff, 0);
+			if (statusIconsOverAvatars_) {
+				statusIconRect.translate(-diff, 0);
+			}
+		}
 	}
 	// expanded. now align internals
 
