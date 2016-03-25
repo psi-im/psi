@@ -329,7 +329,11 @@ void PsiContactListViewDelegate::drawContact(QPainter* painter, const QStyleOpti
 			textColor = ColorOpt::instance()->color("options.ui.look.colors.contactlist.status.online");
 	}
 
+#ifdef HAVE_QT5
+	QStyleOptionViewItem o = option;
+#else
 	QStyleOptionViewItemV2 o = option;
+#endif
 	o.font = font_;
 	o.font.setItalic(index.data(ContactListModel::BlockRole).toBool());
 	o.fontMetrics = *fontMetrics_;
@@ -526,7 +530,11 @@ static QRect relativeRect(const QStyleOption& option,
 
 void PsiContactListViewDelegate::drawGroup(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
+#ifdef HAVE_QT5
+	QStyleOptionViewItem o = option;
+#else
 	QStyleOptionViewItemV2 o = option;
+#endif
 	o.font = font_;
 	o.fontMetrics = *fontMetrics_;
 	QPalette palette = o.palette;
@@ -569,7 +577,11 @@ void PsiContactListViewDelegate::drawGroup(QPainter* painter, const QStyleOption
 
 void PsiContactListViewDelegate::drawAccount(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
+#ifdef HAVE_QT5
+	QStyleOptionViewItem o = option;
+#else
 	QStyleOptionViewItemV2 o = option;
+#endif
 	o.font = font_;
 	o.fontMetrics = *fontMetrics_;
 	QPalette palette = o.palette;

@@ -91,8 +91,12 @@ inline static QIcon::State iconState(QStyle::State state)
 void ContactListViewDelegate::doSetOptions(const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
 	d->opt = setOptions(index, option);
+#ifdef HAVE_QT5
+	d->opt.features = option.features;
+#else
 	const QStyleOptionViewItemV2 *v2 = qstyleoption_cast<const QStyleOptionViewItemV2 *>(&option);
 	d->opt.features = v2 ? v2->features : QStyleOptionViewItemV2::ViewItemFeatures(QStyleOptionViewItemV2::None);
+#endif
 
 	const HoverableStyleOptionViewItem *hoverable = qstyleoption_cast<const HoverableStyleOptionViewItem *>(&option);
 	d->opt.hovered = hoverable ? hoverable->hovered : false;

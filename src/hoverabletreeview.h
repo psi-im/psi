@@ -24,7 +24,12 @@
 #include <QTreeView>
 #include <QStyleOption>
 
+
+#ifdef HAVE_QT5
+typedef QStyleOptionViewItem HoverableStyleOptionViewItemBaseClass;
+#else
 typedef QStyleOptionViewItemV4 HoverableStyleOptionViewItemBaseClass;
+#endif
 
 class HoverableStyleOptionViewItem : public HoverableStyleOptionViewItemBaseClass
 {
