@@ -29,15 +29,17 @@
 
 #include "serverlistquerier.h"
 
-#define SERVERLIST_SERVER        "xmpp.org"
-#define SERVERLIST_PORT          "80"
-#define SERVERLIST_PATH          "/services/services.xml"
+// #define XML_SERVER_LIST
 #define SERVERLIST_MAX_REDIRECT  5
+
+// legacy format could be found here as well
+// https://list.jabber.at/api/?format=services-full.xml
+// original http://xmpp.org/services/services.xml does not work anymore (checked on 2016-03-27)
 
 ServerListQuerier::ServerListQuerier(QObject* parent) : QObject(parent)
 {
 	http_ = new QNetworkAccessManager(this);
-	url_ = QUrl("http://" SERVERLIST_SERVER ":" SERVERLIST_PORT SERVERLIST_PATH);
+	url_ = QUrl("https://xmpp.net/directory.php");
 }
 
 void ServerListQuerier::getList()
@@ -57,6 +59,7 @@ void ServerListQuerier::get_finished()
 	else {
 		int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 		if(status == 200) {
+#ifdef XML_SERVER_LIST
 			// Parse the XML file
 			QDomDocument doc;
 			if (!doc.setContent(reply->readAll())) {
@@ -73,6 +76,15 @@ void ServerListQuerier::get_finished()
 					servers.push_back(jid);
 				}
 			}
+#else
+			QStringList servers;
+			QString contents = QString::fromUtf8(reply->readAll());
+			int index = 0;
+			QRegExp re("data-original-title=\"([^\"]+)\"");
+			while ((index = contents.indexOf(re, index + 1)) != -1) {
+				servers.append(re.cap(1));
+			}
+#endif
 			emit listReceived(servers);
 		}
 		else if(reply->attribute(QNetworkRequest::RedirectionTargetAttribute).isValid()) {
