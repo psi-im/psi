@@ -44,6 +44,8 @@ unix {
 	# icons and desktop files
 	dt.path=$$PREFIX/share/applications/
 	dt.files = ../psi.desktop
+	ad.path=$$PREFIX/share/appdata/
+	ad.file = ../psi.appdata.xml
 	icon1.path=$$PREFIX/share/icons/hicolor/16x16/apps
 	icon1.extra = cp -f ../iconsets/system/default/logo_16.png $(INSTALL_ROOT)$$icon1.path/psi.png
 	icon2.path=$$PREFIX/share/icons/hicolor/32x32/apps
@@ -54,7 +56,7 @@ unix {
 	icon4.extra = cp -f ../iconsets/system/default/logo_64.png $(INSTALL_ROOT)$$icon4.path/psi.png
 	icon5.path=$$PREFIX/share/icons/hicolor/128x128/apps
 	icon5.extra = cp -f ../iconsets/system/default/logo_128.png $(INSTALL_ROOT)$$icon5.path/psi.png
-	INSTALLS += dt icon1 icon2 icon3 icon4 icon5
+	INSTALLS += dt ad icon1 icon2 icon3 icon4 icon5
 }
 
 windows {
