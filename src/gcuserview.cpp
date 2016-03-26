@@ -560,8 +560,8 @@ bool GCUserView::maybeTip(const QPoint &pos)
 	UserResource ur;
 	ur.setName(nick);
 	ur.setStatus(s);
-	//ur.setClient(client_name,client_version,"");
-	ur.setClient(QString(),QString(),"");
+	ur.setClient(client_name,client_version,"");
+	//ur.setClient(QString(),QString(),"");
 	u.userResourceList().append(ur);
 	u.setPrivate(true);
 	u.setAvatarFactory(dlg->account()->avatarFactory());
