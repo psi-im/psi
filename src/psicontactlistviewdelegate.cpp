@@ -811,7 +811,7 @@ void PsiContactListViewDelegate::optionChanged(const QString& option)
 	}
 	else if(option == avatarAtLeftOptionPath) {
 		avatarAtLeft_ = PsiOptions::instance()->getOption(avatarAtLeftOptionPath).toBool();
-		updateViewport = true;
+		updateGeometry = true;
 	}
 	else if(option == avatarSizeOptionPath) {
 	    int s = PsiOptions::instance()->getOption(avatarSizeOptionPath).toInt();
