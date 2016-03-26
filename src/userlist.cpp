@@ -618,7 +618,7 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 	// User Geolocation
 	if (!geoLocation().isNull() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.geolocation").toBool())
 		str += QString("<div style='white-space:pre'><table cellspacing=\"0\"><tr><td><%1=\"%2\"> </td><td><div>%3</div></td></tr></table></div>") \
-		.arg(imgTag).arg("system/geolocation").arg(TextUtil::escape(geoLocation().toString().trimmed()));
+		.arg(imgTag).arg("pep/geolocation").arg(TextUtil::escape(geoLocation().toString().trimmed()));
 
 	// resources
 	if(!userResourceList().isEmpty()) {
