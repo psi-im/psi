@@ -11,6 +11,14 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 }
 unix:!mac:DEFINES += HAVE_X11
 
+CONFIG(debug, debug|release) {
+  mac: DEFINES += DEBUG_POSTFIX=\\\"_debug\\\"
+  else:win: DEFINES += DEBUG_POSTFIX=\\\"d\\\"
+  else: DEFINES += DEBUG_POSTFIX=\\\"\\\"
+}else {
+  DEFINES += DEBUG_POSTFIX=\\\"\\\"
+}
+
 # modules
 include($$PWD/protocol/protocol.pri)
 include($$PWD/irisprotocol/irisprotocol.pri)
