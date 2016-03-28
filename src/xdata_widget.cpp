@@ -58,7 +58,7 @@ public:
 	{
 		if (uri.uri.startsWith("cid:")) {
 			JT_BitsOfBinary *task = new JT_BitsOfBinary(client->rootTask());
-			connect(task, SIGNAL(bob(BoBData)), SLOT(bobReceived(BoBData)));
+			connect(task, SIGNAL(finished()), SLOT(bobReceived()));
 			task->get(j, uri.uri.mid(4));
 			task->go(true);
 		} else {
@@ -112,8 +112,9 @@ private:
 	}
 
 private slots:
-	void bobReceived(const BoBData &bob)
+	void bobReceived()
 	{
+		BoBData &bob = ((JT_BitsOfBinary*)sender())->data();
 		onDataReceived(bob.data());
 	}
 
