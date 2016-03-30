@@ -52,6 +52,7 @@
 #include "xmpp_tasks.h"
 #include "xmpp_xmlcommon.h"
 #include "xmpp_caps.h"
+#include "xmpp_captcha.h"
 #include "s5b.h"
 #ifdef FILETRANSFER
 #include "filetransfer.h"
@@ -135,6 +136,7 @@
 #include "tabdlg.h"
 #include "proxy.h"
 #include "passdialog.h"
+#include "captchadlg.h"
 #include "bobfilecache.h"
 #include "psicontactlist.h"
 #include "psicontact.h"
@@ -2739,6 +2741,26 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 	// skip headlines?
 	if(_m.type() == "headline" && PsiOptions::instance()->getOption("options.messages.ignore-headlines").toBool())
 		return;
+
+	if (_m.getForm().registrarType() == "urn:xmpp:captcha") {
+		CaptchaChallenge challenge(_m);
+		if (challenge.isValid()) {
+			QWidget *pw = 0;
+			if (_m.from().resource().isEmpty()) {
+				pw = findDialog<GCMainDlg*>(_m.from());
+				if(!pw) {
+					pw = findDialog<MUCJoinDlg*>(_m.from());
+				}
+			}
+			if (!pw) {
+				pw = findChatDialog(_m.from());
+			}
+			CaptchaDlg *dlg = new CaptchaDlg(pw, challenge, this);
+			dlg->show();
+			bringToFront(dlg);
+			return;
+		}
+	}
 
 #ifdef GROUPCHAT
 	if(_m.type() == "groupchat") {

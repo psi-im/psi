@@ -223,7 +223,8 @@ HEADERS += \
 	$$PWD/tabcompletion.h \
 	$$PWD/alertmanager.h \
 	$$PWD/accountloginpassword.h \
-	$$PWD/mcmdcompletion.h
+	$$PWD/mcmdcompletion.h \
+	$$PWD/captchadlg.h
 
 # Source files
 SOURCES += \
@@ -353,7 +354,8 @@ SOURCES += \
 	$$PWD/psicapsregsitry.cpp \
 	$$PWD/alertmanager.cpp \
 	$$PWD/accountloginpassword.cpp \
-	$$PWD/mcmdcompletion.cpp
+	$$PWD/mcmdcompletion.cpp \
+	$$PWD/captchadlg.cpp
 
 
 CONFIG += filetransfer
@@ -591,7 +593,8 @@ FORMS += \
 	$$PWD/ahcommanddlg.ui \
 	$$PWD/ahcformdlg.ui \
 	$$PWD/geolocation.ui \
-	$$PWD/rosteravatarframe.ui
+	$$PWD/rosteravatarframe.ui \
+	$$PWD/captchadlg.ui
 
 # options dialog
 include($$PWD/options/options.pri)

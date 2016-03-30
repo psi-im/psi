@@ -328,6 +328,7 @@ public:
 	XData::Field field() const
 	{
 		XData::Field f = XDataField::field();
+		f.setMediaElement(XData::Field::MediaElement());
 		QStringList val;
 		val << edit->text();
 		f.setValue(val);
