@@ -355,6 +355,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	}
 
 	alwaysVisibleContacts = o->getOption(base + ".always-visible-contacts").toStringList();
+	localMucBookmarks = o->getOption(base + ".muc-bookmarks").toStringList();
 }
 
 void UserAccount::toOptions(OptionsTree *o, QString base)
@@ -498,6 +499,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 	saveLastStatus(o, base);
 
 	o->setOption(base + ".always-visible-contacts", alwaysVisibleContacts);
+	o->setOption(base + ".muc-bookmarks", localMucBookmarks);
 }
 
 void UserAccount::fromXml(const QDomElement &a)

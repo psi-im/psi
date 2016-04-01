@@ -226,7 +226,7 @@ void BookmarkManager::setBookmarks(const QList<URLBookmark>& urls, const QList<C
 			remoteMucs.append(cb);
 		}
 	}
-	PsiOptions::instance()->setOption("options.muc.bookmarks.local", localMucs);
+	account_->setLocalMucBookmarks(localMucs);
 	PsiOptions::instance()->setOption("options.muc.bookmarks.ignore-join", ignoreMucs);
 	BookmarkTask* t = new BookmarkTask(account_->client()->rootTask());
 	connect(t,SIGNAL(finished()),SLOT(setBookmarks_finished()));
@@ -251,7 +251,7 @@ void BookmarkManager::getBookmarks_finished()
 		bool urlsWereChanged = urls_ != t->urls();
 		bool conferencesWereChanged = conferences_ != t->conferences();
 		urls_ = t->urls();
-		QStringList localMucs = PsiOptions::instance()->getOption("options.muc.bookmarks.local").toStringList();
+		QStringList localMucs = account_->localMucBookmarks();
 		conferences_ = t->conferences();
 		foreach (const QString &lmuc, localMucs) {
 			Jid j(lmuc);

@@ -88,6 +88,7 @@ public:
 	bool ibbOnly;
 
 	QStringList alwaysVisibleContacts;
+	QStringList localMucBookmarks;
 
 	QString optionsBase;
 

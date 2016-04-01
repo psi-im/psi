@@ -5728,6 +5728,16 @@ void PsiAccount::groupChatLeave(const QString &host, const QString &room)
 	}
 }
 
+void PsiAccount::setLocalMucBookmarks(const QStringList &sl)
+{
+	d->acc.localMucBookmarks = sl;
+}
+
+QStringList PsiAccount::localMucBookmarks() const
+{
+	return d->acc.localMucBookmarks;
+}
+
 GCContact *PsiAccount::findGCContact(const Jid &j) const
 {
 	foreach(GCContact *c, d->gcbank) {
