@@ -44,6 +44,7 @@ public:
 
 	const QString& multicastService() const;
 	bool hasPEP() const;
+	inline const Features &features() const { return features_; }
 
 private:
 	void handleReceivedFeatures(const XMPP::DiscoItem &f);
@@ -62,6 +63,7 @@ private slots:
 private:
 	XMPP::Client* client_;
 	CapsSpec caps_;
+	Features features_;
 	QString multicastService_;
 	bool featuresRequested_;
 	bool hasPEP_;

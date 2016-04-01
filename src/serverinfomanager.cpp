@@ -93,9 +93,9 @@ void ServerInfoManager::disco_finished()
 
 void ServerInfoManager::handleReceivedFeatures(const DiscoItem &item)
 {
-	const Features &f = item.features();
+	features_ = item.features();
 
-	if (f.canMulticast())
+	if (features_.canMulticast())
 		multicastService_ = client_->jid().domain();
 
 	// Identities

@@ -464,18 +464,19 @@ public:
 	Status loginStatus;
 	bool loginWithPriority;
 	bool reconnectingOnce;
+	bool nickFromVCard;
+	bool pepAvailable;
+	bool vcardChecked;
 	EventQueue *eventQueue;
 	XmlConsole *xmlConsole;
 	UserList userList;
 	UserListItem self;
-	bool nickFromVCard;
 	QCA::PGPKey cur_pgpSecretKey;
 	QList<Message*> messageQueue;
 	BlockTransportPopupList *blockTransportPopupList;
 	int userCounter;
 	PsiPrivacyManager* privacyManager;
 	RosterItemExchangeTask* rosterItemExchangeTask;
-	bool pepAvailable;
 	QString currentConnectionError;
 	int currentConnectionErrorCondition;
 
@@ -1111,6 +1112,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
 	d->self = UserListItem(true);
 	d->self.setSubscription(Subscription::Both);
 	d->nickFromVCard = false;
+	d->vcardChecked = false;
 
 	// we need to copy groupState, because later initialization will depend on that
 	d->acc.groupState = acc.groupState;
@@ -2346,6 +2348,23 @@ void PsiAccount::resolveContactName()
 void PsiAccount::serverFeaturesChanged()
 {
 	setPEPAvailable(d->serverInfoManager->hasPEP());
+
+	if (d->serverInfoManager->features().haveVCard() && !d->vcardChecked) {
+		// Get the vcard
+		const VCard *vcard = VCardFactory::instance()->vcard(d->jid);
+		if (PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool() || !vcard || vcard->isEmpty() || (vcard->nickName().isEmpty() && vcard->fullName().isEmpty()))
+			VCardFactory::instance()->getVCard(d->jid, d->client->rootTask(), this, SLOT(slotCheckVCard()));
+		else {
+			d->nickFromVCard = true;
+			// if we get here, one of these fields is non-empty
+			if (!vcard->nickName().isEmpty()) {
+				setNick(vcard->nickName());
+			} else {
+				setNick(vcard->fullName());
+			}
+		}
+		d->vcardChecked = true;
+	}
 }
 
 void PsiAccount::setPEPAvailable(bool b)
@@ -3128,20 +3147,6 @@ bool PsiAccount::noPopup() const
 void PsiAccount::sentInitialPresence()
 {
 	QTimer::singleShot(15000, this, SLOT(enableNotifyOnline()));
-
-	// Get the vcard
-	const VCard *vcard = VCardFactory::instance()->vcard(d->jid);
-	if (PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool() || !vcard || vcard->isEmpty() || (vcard->nickName().isEmpty() && vcard->fullName().isEmpty()))
-		VCardFactory::instance()->getVCard(d->jid, d->client->rootTask(), this, SLOT(slotCheckVCard()));
-	else {
-		d->nickFromVCard = true;
-		// if we get here, one of these fields is non-empty
-		if (!vcard->nickName().isEmpty()) {
-			setNick(vcard->nickName());
-		} else {
-			setNick(vcard->fullName());
-		}
-	}
 }
 
 void PsiAccount::capsChanged(const Jid& j)
