@@ -267,7 +267,6 @@ void PsiChatDlg::initUi()
 	if (throbber_icon == 0) {
 		throbber_icon = (PsiIcon *)IconsetFactory::iconPtr("psi/throbber");
 	}
-	unacked_messages = 0;
 }
 
 void PsiChatDlg::updateCountVisibility()
@@ -521,12 +520,7 @@ void PsiChatDlg::activated()
 
 void PsiChatDlg::setContactToolTip(QString text)
 {
-	last_contact_tooltip = text;
-	QString sm_info;
-	if (unacked_messages > 0) {
-		sm_info = QString().sprintf("\nUnacked messages: %d", unacked_messages);
-	}
-	ui_.lb_status->setToolTip(text + sm_info);
+	ui_.lb_status->setToolTip(text);
 	ui_.avatar->setToolTip(text);
 }
 
@@ -555,15 +549,17 @@ void PsiChatDlg::updateJidWidget(const QList<UserListItem*> &ul, int status, boo
 					}
 				}
 				// Filling address combobox
-				QString iconStr = "clients/unknown";
+				QString iconStr;
 				const int resCnt = resList.size();
 				if (resCnt == 1) {
 					UserResourceList::ConstIterator it = resList.begin();
-					if (it != resList.end() && (*it).name().isEmpty())
+					if (it != resList.end() && (*it).name().isEmpty()) {
 						// Empty resource,  but online. Transport?
-						iconStr = "clients/" + u->findClient(*it);
-				} else if (resCnt == 0) {
-					iconStr = QString();
+						QString client(u->findClient(*it));
+						if (!client.isEmpty()) {
+							iconStr = "clients/" + client;
+						}
+					}
 				}
 				setJidComboItem(0, makeContactName(name, u->jid().bare()), u->jid().bare(), iconStr);
 				int new_index = -1;
@@ -572,7 +568,11 @@ void PsiChatDlg::updateJidWidget(const QList<UserListItem*> &ul, int status, boo
 					UserResource r = *it;
 					if (!r.name().isEmpty()) {
 						Jid tmp_jid(u->jid().withResource(r.name()));
-						QString iconStr2 = "clients/" + u->findClient(r);
+						QString client(u->findClient(r));
+						QString iconStr2;
+						if (!client.isEmpty()) {
+							iconStr2 = "clients/" + client;
+						}
 						setJidComboItem(curr_index, makeContactName(name, tmp_jid), tmp_jid, iconStr2);
 						if (new_index == -1 && tmp_jid == new_auto_jid) {
 							new_index = curr_index;
@@ -613,14 +613,15 @@ void PsiChatDlg::updateJidWidget(const QList<UserListItem*> &ul, int status, boo
 			Jid tmp_jid = jid();
 			UserResourceList::ConstIterator it = resList.begin();
 			if (it != resList.end()) {
-				iconStr = "clients/" + u->findClient(*it);
+				QString client(u->findClient(*it));
+				if (!client.isEmpty()) {
+					iconStr = "clients/" + client;
+				}
 				tmp_jid = u->jid().withResource((*it).name());
 			} else if (jidCombo->count() > 0) {
 				tmp_jid = Jid(jidCombo->itemData(0).toString());
 			}
 			if (tmp_jid.isValid()) {
-				if (iconStr == "clients/unknown")
-					iconStr = QString(); // for disable the icon
 				setJidComboItem(0, makeContactName(name, tmp_jid), tmp_jid, iconStr);
 			}
 			// Clean combobox's tail
@@ -647,21 +648,12 @@ void PsiChatDlg::contactUpdated(UserListItem* u, int status, const QString& stat
 	Q_UNUSED(statusString);
 
 	if (status == -1 || !u) {
-		current_status_icon = IconsetFactory::iconPtr("status/noauth");
+		ui_.lb_status->setPsiIcon(IconsetFactory::iconPtr("status/noauth"));
+		setTabIcon(IconsetFactory::iconPtr("status/noauth")->icon());
 	}
 	else {
-		current_status_icon = PsiIconset::instance()->statusPtr(jid(), status);
-		if (status == 0 && unacked_messages != 0) {
-			appendSysMsg(QString().sprintf("The last %d message/messages hasn't/haven't been acked by the server and may have been lost!", unacked_messages));
-			unacked_messages = 0;
-		}
-	}
-
-	if (unacked_messages == 0) {
-		ui_.lb_status->setPsiIcon(current_status_icon);
-		setTabIcon(current_status_icon->icon());//FIXME
-	} else {
-		ui_.lb_status->setPsiIcon(throbber_icon);
+		ui_.lb_status->setPsiIcon(PsiIconset::instance()->statusPtr(jid(), status));
+		setTabIcon(PsiIconset::instance()->statusPtr(jid(), status)->icon());
 	}
 
 	if (u) {
@@ -685,8 +677,11 @@ void PsiChatDlg::contactUpdated(UserListItem* u, int status, const QString& stat
 				srl.sort();
 				r = srl.first();
 			}
-			const QPixmap &pix = IconsetFactory::iconPixmap("clients/" + u->findClient(r) );
-			ui_.lb_client->setPixmap(pix);
+			QString client(u->findClient(r));
+			if (!client.isEmpty()) {
+				const QPixmap &pix = IconsetFactory::iconPixmap("clients/" + client );
+				ui_.lb_client->setPixmap(pix);
+			}
 			ui_.lb_client->setToolTip(r.versionString());
 		}
 	}
@@ -889,22 +884,6 @@ void PsiChatDlg::doSend() {
 		}
 	} else {
 		ChatDlg::doSend();
-	}
-	if (account()->loggedIn() && account()->client()->isStreamManagementActive()) {
-		unacked_messages++;
-		//qDebug("Show throbber instead of status icon.");
-		ui_.lb_status->setPsiIcon(throbber_icon);
-		setContactToolTip(last_contact_tooltip);
-	}
-}
-
-void PsiChatDlg::ackLastMessages(int msgs) {
-	unacked_messages = unacked_messages - msgs;
-	unacked_messages = unacked_messages < 0 ? 0 : unacked_messages;
-	if (unacked_messages == 0) {
-		//qDebug("Show status icon instead of throbber.");
-		ui_.lb_status->setPsiIcon(current_status_icon);
-		setContactToolTip(last_contact_tooltip);
 	}
 }
 

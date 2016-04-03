@@ -70,6 +70,9 @@
 			<account comment="Account options">
 				<data-proxy comment="Allow changing the data transfer proxy" type="bool">true</data-proxy>
 				<keepalive comment="Show the keepalive option" type="bool">true</keepalive>
+				<sm comment="Option related to the Stream Management UI">
+					<show comment="Show the Stream Management UI" type="bool">true</show>
+				</sm>
 				<legacy-ssl-probe comment="Show legacy SSL probe option" type="bool">true</legacy-ssl-probe>
 				<manual-host comment="Enable manual host configuration" type="bool">true</manual-host>
 				<priority comment="Allow changing the priority" type="bool">true</priority>

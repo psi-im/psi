@@ -150,6 +150,7 @@ void AccountModifyDlg::init()
 	ck_autoSameStatus->setChecked(acc.opt_autoSameStatus);
 	ck_log->setChecked(acc.opt_log);
 	ck_keepAlive->setChecked(acc.opt_keepAlive);
+	ck_enableSM->setChecked(acc.opt_sm);
 	ck_ibbOnly->setChecked(acc.ibbOnly);
 	le_dtProxy->setText(acc.dtProxy.full());
 
@@ -250,6 +251,10 @@ void AccountModifyDlg::init()
 		"automatically disconnected after a certain period of "
 		"inactivity (for example, by your ISP) and you want to keep it "
 		"up all the time."));
+	ck_enableSM->setWhatsThis(
+		tr("Enables Stream Management protocol if possible. It is useful, "
+		   "if you have an unstable connection. Your server must support "
+		   "this option. To learn more, see XEP-0184."));
 	cb_ssl->setWhatsThis(
 		tr("Check this option to use an encrypted SSL connection to "
 		"the XMPP server.  You may use this option if your "
@@ -320,6 +325,9 @@ void AccountModifyDlg::init()
 	if (!PsiOptions::instance()->getOption("options.ui.account.keepalive").toBool())
 		ck_keepAlive->hide();
 
+	if (!PsiOptions::instance()->getOption("options.ui.account.sm.show").toBool())
+		ck_enableSM->hide();
+
 	if (!PsiOptions::instance()->getOption("options.ui.account.security.show").toBool()) {
 		lb_plain->hide();
 		cb_plain->hide();
@@ -328,7 +336,7 @@ void AccountModifyDlg::init()
 		cb_security_level->hide();
 	}
 
-	if (!PsiOptions::instance()->getOption("options.ui.account.security.show").toBool() && !PsiOptions::instance()->getOption("options.ui.account.keepalive").toBool() && !PsiOptions::instance()->getOption("options.ui.account.manual-host").toBool() && !PsiOptions::instance()->getOption("options.ui.account.proxy.show").toBool()) {
+	if (!PsiOptions::instance()->getOption("options.ui.account.security.show").toBool() && !PsiOptions::instance()->getOption("options.ui.account.keepalive").toBool() && !PsiOptions::instance()->getOption("options.ui.account.sm.show").toBool() && !PsiOptions::instance()->getOption("options.ui.account.manual-host").toBool() && !PsiOptions::instance()->getOption("options.ui.account.proxy.show").toBool()) {
 		tab_main->removeTab(tab_main->indexOf(tab_connection));
 	}
 
@@ -567,6 +575,7 @@ void AccountModifyDlg::save()
 	acc.opt_reconn = ck_reconn->isChecked();
 	acc.opt_log = ck_log->isChecked();
 	acc.opt_keepAlive = ck_keepAlive->isChecked();
+	acc.opt_sm = ck_enableSM->isChecked();
 	acc.ibbOnly = ck_ibbOnly->isChecked();
 	acc.dtProxy = le_dtProxy->text();
 	acc.stunHost = cb_stunHost->currentIndex() ? cb_stunHost->currentText().trimmed() : "";

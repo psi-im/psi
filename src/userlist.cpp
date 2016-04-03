@@ -336,7 +336,10 @@ QStringList UserListItem::clients() const
 		srl.sort();
 
 		for(UserResourceList::ConstIterator rit = srl.begin(); rit != srl.end(); ++rit) {
-			res += findClient(*rit);
+			QString client(findClient(*rit));
+			if (!client.isEmpty()) {
+				res += client;
+			}
 		}
 	}
 	return res;
@@ -355,10 +358,6 @@ QString UserListItem::findClient(const UserResource &ur) const
 	if (!name.isEmpty()) {
 		res = PsiIconset::instance()->caps2client(name);
 		//qDebug("CLIENT: %s RES: %s", qPrintable(name), qPrintable(res));
-	}
-	if (res.isEmpty()) {
-		res = "unknown";
-		//qDebug("RESOURCE: %s RES: %s", qPrintable(ur.name()), qPrintable(res));
 	}
 	return res;
 }
@@ -683,7 +682,11 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 				if(trim)
 					ver = dot_truncate(ver, 80);
 				ver = TextUtil::escape(ver);
-				str += QString("<div class='layer1'><%1=\"%2\"> ").arg(imgTag).arg("clients/" + findClient(r)) + QObject::tr("Using") + QString(": %3").arg(ver) + "</div>";
+				QString client(findClient(r));
+				if (!client.isEmpty()) {
+					client = QString("<%1=\"%2\">").arg(imgTag).arg("clients/" + client);
+				}
+				str += QString("<div class='layer1'>%1 ").arg(client) + QObject::tr("Using") + QString(": %3").arg(ver) + "</div>";
 			}
 
 

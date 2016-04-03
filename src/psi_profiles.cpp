@@ -138,6 +138,7 @@ void UserAccount::reset()
 	priority = 5;
 	ibbOnly = false;
 	opt_keepAlive = true;
+	opt_sm = true;
 	allow_plain = XMPP::ClientStream::AllowPlainOverTLS;
 	opt_compress = false;
 	opt_log = true;
@@ -202,6 +203,7 @@ void UserAccount::fromOptions(OptionsTree *o, QString base)
 	opt_enabled = o->getOption(base + ".enabled").toBool();
 	opt_auto = o->getOption(base + ".auto").toBool();
 	opt_keepAlive = o->getOption(base + ".keep-alive").toBool();
+	opt_sm = o->getOption(base + ".enable-sm", true).toBool();
 	opt_compress = o->getOption(base + ".compress").toBool();
 	req_mutual_auth = o->getOption(base + ".require-mutual-auth").toBool();
 	legacy_ssl_probe = o->getOption(base + ".legacy-ssl-probe").toBool();
@@ -369,6 +371,7 @@ void UserAccount::toOptions(OptionsTree *o, QString base)
 	o->setOption(base + ".enabled", opt_enabled);
 	o->setOption(base + ".auto", opt_auto);
 	o->setOption(base + ".keep-alive", opt_keepAlive);
+	o->setOption(base + ".enable-sm", opt_sm);
 	o->setOption(base + ".compress", opt_compress);
 	o->setOption(base + ".require-mutual-auth", req_mutual_auth);
 	o->setOption(base + ".legacy-ssl-probe", legacy_ssl_probe);
@@ -516,6 +519,7 @@ void UserAccount::fromXml(const QDomElement &a)
 	readBoolAttribute(a, "showAgents", &tog_agents);
 	readBoolAttribute(a, "showSelf", &tog_self);
 	readBoolAttribute(a, "keepAlive", &opt_keepAlive);
+	readBoolAttribute(a, "enableSM", &opt_sm);
 	readBoolAttribute(a, "compress", &opt_compress);
 	readBoolAttribute(a, "require-mutual-auth", &req_mutual_auth);
 	readBoolAttribute(a, "legacy-ssl-probe", &legacy_ssl_probe);

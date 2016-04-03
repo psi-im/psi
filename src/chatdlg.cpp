@@ -202,12 +202,6 @@ void ChatDlg::initActions()
 	connect(act_scrolldown_, SIGNAL(triggered()), chatView(), SLOT(scrollDown()));
 }
 
-void ChatDlg::ackLastMessages(int a)
-{
-	Q_UNUSED(a);
-}
-
-
 void ChatDlg::setShortcuts()
 {
 	act_send_->setShortcuts(ShortcutManager::instance()->shortcuts("chat.send"));

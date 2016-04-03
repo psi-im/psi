@@ -580,6 +580,13 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="ck_enableSM">
+         <property name="text">
+          <string>Enable Stream Management if possible</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QCheckBox" name="ck_host">
          <property name="text">
           <string>Manually Specify Server Host/Port:</string>
@@ -1099,6 +1106,7 @@ When you enable this option you will not be able to find your password in config
   <tabstop>pb_privacy</tabstop>
   <tabstop>ck_compress</tabstop>
   <tabstop>ck_keepAlive</tabstop>
+  <tabstop>ck_enableSM</tabstop>
   <tabstop>ck_host</tabstop>
   <tabstop>le_host</tabstop>
   <tabstop>le_port</tabstop>

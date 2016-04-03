@@ -99,13 +99,14 @@ bool XmlConsole::filtered(const QString& str) const
 {
 	if(ui_.ck_enable->isChecked()) {
 		// Only do parsing if needed
-		if (!ui_.le_jid->text().isEmpty() || !ui_.ck_iq->isChecked() || !ui_.ck_message->isChecked() || !ui_.ck_presence->isChecked()) {
+		if (!ui_.le_jid->text().isEmpty() || !ui_.ck_iq->isChecked() || !ui_.ck_message->isChecked() || !ui_.ck_presence->isChecked() || !ui_.ck_sm->isChecked()) {
 			QDomDocument doc;
 			if (!doc.setContent(str))
 				return true;
 
 			QDomElement e = doc.documentElement();
-			if ((e.tagName() == "iq" && !ui_.ck_iq->isChecked()) || (e.tagName() == "message" && !ui_.ck_message->isChecked()) || ((e.tagName() == "presence" && !ui_.ck_presence->isChecked())))
+			QString tn = e.tagName();
+			if ((tn == "iq" && !ui_.ck_iq->isChecked()) || (tn == "message" && !ui_.ck_message->isChecked()) || (tn == "presence" && !ui_.ck_presence->isChecked()) || ((tn == "a" || tn == "r") && !ui_.ck_sm->isChecked()))
 				return true;
 
 			if (!ui_.le_jid->text().isEmpty()) {

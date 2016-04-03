@@ -81,8 +81,6 @@ public:
 	virtual QString desiredCaption() const;
 	virtual void ensureTabbedCorrectly();
 
-	virtual void ackLastMessages(int);
-
 public:
 	PsiAccount* account() const;
 	void setInputText(const QString &text);
