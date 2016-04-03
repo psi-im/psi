@@ -345,5 +345,11 @@
         <file>iconsets/activities/default/working_studying.png</file>
         <file>iconsets/activities/default/working_writing.png</file>
 	<file>iconsets/activities/default/icondef.xml</file>
+        <file>iconsets/affiliations/default/owner.png</file>
+        <file>iconsets/affiliations/default/admin.png</file>
+        <file>iconsets/affiliations/default/member.png</file>
+        <file>iconsets/affiliations/default/noaffiliation.png</file>
+        <file>iconsets/affiliations/default/outcast.png</file>
+        <file>iconsets/affiliations/default/icondef.xml</file>
     </qresource>
 </RCC>

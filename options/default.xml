@@ -537,6 +537,7 @@
 			<system type="QString">default</system>
 			<moods type="QString">default</moods>
 			<activities type="QString">default</activities>
+			<affiliations type="QString">default</affiliations>
 		</iconsets>
 		<messages>
 			<default-outgoing-message-type type="QString">chat</default-outgoing-message-type>

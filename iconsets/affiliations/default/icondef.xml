@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<icondef>
+	<meta>
+		<name>Medals</name>
+		<version>0.1</version>
+		<description>Adium Affiliations</description>
+		<creation>2010-06-10</creation>
+		<home>http://code.google.com/p/psi-dev</home>
+		<author jid='tuxden@psi-plus.com'>tux-den</author>
+	</meta>
+
+	<icon>
+		<x xmlns='name'>affiliation/owner</x>
+		<object mime='image/png'>owner.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>affiliation/admin</x>
+		<object mime='image/png'>admin.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>affiliation/member</x>
+		<object mime='image/png'>member.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>affiliation/noaffiliation</x>
+		<object mime='image/png'>noaffiliation.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>affiliation/outcast</x>
+		<object mime='image/png'>outcast.png</object>
+	</icon>
+
+</icondef>
