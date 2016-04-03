@@ -211,11 +211,9 @@ public:
 				ur.setStatus(item->s);
 				ur.setClient(client_name,client_version,"");
 				u.userResourceList().append(ur);
-				if (PsiIconset::instance()->clients.count()) {
-					QStringList clients = u.clients();
-					if(!clients.isEmpty())
-						clientPix = IconsetFactory::iconPixmap("clients/" + clients.takeFirst());
-				}
+				QStringList clients = u.clients();
+				if(!clients.isEmpty())
+					clientPix = IconsetFactory::iconPixmap("clients/" + clients.takeFirst());
 			}
 			if(!clientPix.isNull())
 				rightPixs.push_back(clientPix);

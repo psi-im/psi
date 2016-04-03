@@ -1,0 +1,432 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<icondef>                                                         
+        <meta>                                                    
+                <name>Psi+ Activities - size 16</name>
+                <version>0.3</version>
+                <creation>2010-07-18</creation>
+                <home>http://psi-dev.googlecode.com/</home>
+                <author email='tuxden@ru.ru'>tux-den</author>
+                <author email='maksim.maj@gmail.com'>maj</author>
+                <description>Activities iconset for Psi+ IM</description>
+           </meta>
+
+	<!-- doing_chores                   -->
+
+        <icon>
+                <x xmlns='name'>activities/doing_chores</x>
+                <object mime='image/png'>doing_chores.png</object>
+        </icon>                                                 
+
+        <icon>
+                <x xmlns='name'>activities/doing_chores_buying_groceries</x>
+                <object mime='image/png'>doing_chores_buying_groceries.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/doing_chores_cleaning</x>
+                <object mime='image/png'>doing_chores_cleaning.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/doing_chores_cooking</x>
+                <object mime='image/png'>doing_chores_cooking.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/doing_chores_doing_maintenance</x>
+                <object mime='image/png'>doing_chores_doing_maintenance.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/doing_chores_doing_the_dishes</x>
+                <object mime='image/png'>doing_chores_doing_the_dishes.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/doing_chores_doing_the_laundry</x>
+                <object mime='image/png'>doing_chores_doing_the_laundry.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/doing_chores_gardening</x>
+                <object mime='image/png'>doing_chores_gardening.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/doing_chores_running_an_errand</x>
+                <object mime='image/png'>doing_chores_running_an_errand.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/doing_chores_walking_the_dog</x>
+                <object mime='image/png'>doing_chores_walking_the_dog.png</object>
+        </icon> 
+
+	<!-- drinking                       -->
+
+        <icon>
+                <x xmlns='name'>activities/drinking</x>
+                <object mime='image/png'>drinking.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/drinking_having_a_beer</x>
+                <object mime='image/png'>drinking_having_a_beer.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/drinking_having_coffee</x>
+                <object mime='image/png'>drinking_having_coffee.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/drinking_having_tea</x>
+                <object mime='image/png'>drinking_having_tea.png</object>
+        </icon> 
+
+	<!-- eating                         -->
+
+        <icon>
+                <x xmlns='name'>activities/eating</x>
+                <object mime='image/png'>eating.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/eating_having_a_snack</x>
+                <object mime='image/png'>eating_having_a_snack.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/eating_having_breakfast</x>
+                <object mime='image/png'>eating_having_breakfast.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/eating_having_dinner</x>
+                <object mime='image/png'>eating_having_dinner.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/eating_having_lunch</x>
+                <object mime='image/png'>eating_having_lunch.png</object>
+        </icon> 
+
+	<!-- exercising                     -->
+
+        <icon>
+                <x xmlns='name'>activities/exercising</x>
+                <object mime='image/png'>exercising.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/exercising_cycling</x>
+                <object mime='image/png'>exercising_cycling.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/exercising_dancing</x>
+                <object mime='image/png'>exercising_dancing.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/exercising_hiking</x>
+                <object mime='image/png'>exercising_hiking.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/exercising_jogging</x>
+                <object mime='image/png'>exercising_jogging.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/exercising_playing_sports</x>
+                <object mime='image/png'>exercising_playing_sports.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/exercising_running</x>
+                <object mime='image/png'>exercising_running.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/exercising_skiing</x>
+                <object mime='image/png'>exercising_skiing.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/exercising_swimming</x>
+                <object mime='image/png'>exercising_swimming.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/exercising_working_out</x>
+                <object mime='image/png'>exercising_working_out.png</object>
+        </icon> 
+
+	<!-- grooming                       -->
+
+        <icon>
+                <x xmlns='name'>activities/grooming</x>
+                <object mime='image/png'>grooming.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/grooming_at_the_spa</x>
+                <object mime='image/png'>grooming_at_the_spa.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/grooming_brushing_teeth</x>
+                <object mime='image/png'>grooming_brushing_teeth.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/grooming_getting_a_haircut</x>
+                <object mime='image/png'>grooming_getting_a_haircut.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/grooming_shaving</x>
+                <object mime='image/png'>grooming_shaving.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/grooming_taking_a_bath</x>
+                <object mime='image/png'>grooming_taking_a_bath.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/grooming_taking_a_shower</x>
+                <object mime='image/png'>grooming_taking_a_shower.png</object>
+        </icon> 
+
+	<!-- having_appointment             -->
+
+        <icon>
+                <x xmlns='name'>activities/having_appointment</x>
+                <object mime='image/png'>having_appointment.png</object>
+        </icon> 
+
+	<!-- inactive                       -->
+
+        <icon>
+                <x xmlns='name'>activities/inactive</x>
+                <object mime='image/png'>inactive.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/inactive_day_off</x>
+                <object mime='image/png'>inactive_day_off.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/inactive_hanging_out</x>
+                <object mime='image/png'>inactive_hanging_out.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/inactive_hiding</x>
+                <object mime='image/png'>inactive_hiding.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/inactive_on_vacation</x>
+                <object mime='image/png'>inactive_on_vacation.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/inactive_praying</x>
+                <object mime='image/png'>inactive_praying.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/inactive_scheduled_holiday</x>
+                <object mime='image/png'>inactive_scheduled_holiday.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/inactive_sleeping</x>
+                <object mime='image/png'>inactive_sleeping.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/inactive_thinking</x>
+                <object mime='image/png'>inactive_thinking.png</object>
+        </icon> 
+
+	<!-- relaxing                       -->
+
+        <icon>
+                <x xmlns='name'>activities/relaxing</x>
+                <object mime='image/png'>relaxing.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/relaxing_fishing</x>
+                <object mime='image/png'>relaxing_fishing.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/relaxing_gaming</x>
+                <object mime='image/png'>relaxing_gaming.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/relaxing_going_out</x>
+                <object mime='image/png'>relaxing_going_out.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/relaxing_partying</x>
+                <object mime='image/png'>relaxing_partying.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/relaxing_reading</x>
+                <object mime='image/png'>relaxing_reading.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/relaxing_rehearsing</x>
+                <object mime='image/png'>relaxing_rehearsing.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/relaxing_shopping</x>
+                <object mime='image/png'>relaxing_shopping.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/relaxing_smoking</x>
+                <object mime='image/png'>relaxing_smoking.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/relaxing_socializing</x>
+                <object mime='image/png'>relaxing_socializing.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/relaxing_sunbathing</x>
+                <object mime='image/png'>relaxing_sunbathing.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/relaxing_watching_a_movie</x>
+                <object mime='image/png'>relaxing_watching_a_movie.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/relaxing_watching_tv</x>
+                <object mime='image/png'>relaxing_watching_tv.png</object>
+        </icon> 
+
+	<!-- talking                        -->
+
+        <icon>
+                <x xmlns='name'>activities/talking</x>
+                <object mime='image/png'>talking.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/talking_in_real_life</x>
+                <object mime='image/png'>talking_in_real_life.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/talking_on_the_phone</x>
+                <object mime='image/png'>talking_on_the_phone.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/talking_on_video_phone</x>
+                <object mime='image/png'>talking_on_video_phone.png</object>
+        </icon> 
+
+	<!-- traveling                      -->
+
+        <icon>
+                <x xmlns='name'>activities/traveling</x>
+                <object mime='image/png'>traveling.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/traveling_commuting</x>
+                <object mime='image/png'>traveling_commuting.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/traveling_cycling</x>
+                <object mime='image/png'>traveling_cycling.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/traveling_driving</x>
+                <object mime='image/png'>traveling_driving.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/traveling_in_a_car</x>
+                <object mime='image/png'>traveling_in_a_car.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/traveling_on_a_bus</x>
+                <object mime='image/png'>traveling_on_a_bus.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/traveling_on_a_plane</x>
+                <object mime='image/png'>traveling_on_a_plane.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/traveling_on_a_train</x>
+                <object mime='image/png'>traveling_on_a_train.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/traveling_on_a_trip</x>
+                <object mime='image/png'>traveling_on_a_trip.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/traveling_walking</x>
+                <object mime='image/png'>traveling_walking.png</object>
+        </icon> 
+
+	<!-- unknown                        -->
+
+        <icon>
+                <x xmlns='name'>activities/unknown</x>
+                <object mime='image/png'>unknown.png</object>
+        </icon> 
+
+	<!-- working                        -->
+
+        <icon>
+                <x xmlns='name'>activities/working</x>
+                <object mime='image/png'>working_working.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/working_coding</x>
+                <object mime='image/png'>working_coding.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/working_in_a_meeting</x>
+                <object mime='image/png'>working_in_a_meeting.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/working_studying</x>
+                <object mime='image/png'>working_studying.png</object>
+        </icon> 
+
+        <icon>
+                <x xmlns='name'>activities/working_writing</x>
+                <object mime='image/png'>working_writing.png</object>
+        </icon> 
+
+</icondef>
