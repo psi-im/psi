@@ -1,0 +1,414 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<icondef>
+	<meta>
+		<name>silk</name>
+		<version>1.2</version>
+		<description>
+Name: silk
+Author: http://www.famfamfam.com/lab/icons/silk/
+Made for Psi: maksim.maj@gmail.com, ky6uk@jabber.ufanet.ru
+Date: 2010-11-16
+		</description>
+		<creation>2008-12-25</creation>
+	</meta>
+
+	<icon>
+		<x xmlns='name'>mood/afraid</x>
+		<object mime='image/png'>Afraid.png</object>
+	</icon>						 
+
+	<icon>
+		<x xmlns='name'>mood/amazed</x>
+		<object mime='image/png'>Amazed.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/angry</x>
+		<object mime='image/png'>Angry.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/amorous</x>
+		<object mime='image/png'>Amorous.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/annoyed</x>
+		<object mime='image/png'>Annoyed.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/anxious</x>
+		<object mime='image/png'>Anxious.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/aroused</x>
+		<object mime='image/png'>Aroused.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/ashamed</x>
+		<object mime='image/png'>Ashamed.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/bored</x>
+		<object mime='image/png'>Bored.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/brave</x>
+		<object mime='image/png'>Brave.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/calm</x>
+		<object mime='image/png'>Calm.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/cautious</x>
+		<object mime='image/png'>Cautious.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/cold</x>
+		<object mime='image/png'>Cold.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/confident</x>
+		<object mime='image/png'>Confident.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/confused</x>
+		<object mime='image/png'>Confused.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/contemplative</x>
+		<object mime='image/png'>Contemplative.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/contented</x>
+		<object mime='image/png'>Contented.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/cranky</x>
+		<object mime='image/png'>Cranky.png</object>
+	</icon>
+		
+	<icon>
+		<x xmlns='name'>mood/crazy</x>
+		<object mime='image/png'>Crazy.png</object>
+	</icon>
+		
+	<icon>
+		<x xmlns='name'>mood/creative</x>
+		<object mime='image/png'>Creative.png</object>
+	</icon>
+		
+	<icon>
+		<x xmlns='name'>mood/curious</x>
+		<object mime='image/png'>Curious.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/dejected</x>
+		<object mime='image/png'>Dejected.png</object>
+	</icon>
+		
+	<icon>
+		<x xmlns='name'>mood/depressed</x>
+		<object mime='image/png'>Depressed.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/disappointed</x>
+		<object mime='image/png'>Disappointed.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/disgusted</x>
+		<object mime='image/png'>Disgusted.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/dismayed</x>
+		<object mime='image/png'>Dismayed.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/distracted</x>
+		<object mime='image/png'>Distracted.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/embarrassed</x>
+		<object mime='image/png'>Embarrassed.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/envious</x>
+		<object mime='image/png'>Envious.png</object>
+	</icon>
+		
+	<icon>
+		<x xmlns='name'>mood/excited</x>
+		<object mime='image/png'>Excited.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/flirtatious</x>
+		<object mime='image/png'>Flirtatious.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/frustrated</x>
+		<object mime='image/png'>Frustrated.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/grumpy</x>
+		<object mime='image/png'>Grumpy.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/guilty</x>
+		<object mime='image/png'>Guilty.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/happy</x>
+		<object mime='image/png'>Happy.png</object>
+	</icon>
+		
+	<icon>
+		<x xmlns='name'>mood/hopeful</x>
+		<object mime='image/png'>Hopeful.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/hot</x>
+		<object mime='image/png'>Hot.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/humbled</x>
+		<object mime='image/png'>Humbled.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/humiliated</x>
+		<object mime='image/png'>Humiliated.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/hungry</x>
+		<object mime='image/png'>Hungry.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/hurt</x>
+		<object mime='image/png'>Hurt.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/impressed</x>
+		<object mime='image/png'>Impressed.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/in_awe</x>
+		<object mime='image/png'>In_awe.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/in_love</x>
+		<object mime='image/png'>In_love.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/indignant</x>
+		<object mime='image/png'>Indignant.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/interested</x>
+		<object mime='image/png'>Interested.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/intoxicated</x>
+		<object mime='image/png'>Intoxicated.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/invincible</x>
+		<object mime='image/png'>Invincible.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/jealous</x>
+		<object mime='image/png'>Jealous.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/lonely</x>
+		<object mime='image/png'>Lonely.png</object>
+	</icon>
+		
+	<icon>
+		<x xmlns='name'>mood/lucky</x>
+		<object mime='image/png'>Lucky.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/mean</x>
+		<object mime='image/png'>Mean.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/moody</x>
+		<object mime='image/png'>Moody.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/nervous</x>
+		<object mime='image/png'>Nervous.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/neutral</x>
+		<object mime='image/png'>Neutral.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/offended</x>
+		<object mime='image/png'>Offended.png</object>
+	</icon>
+		
+	<icon>
+		<x xmlns='name'>mood/outraged</x>
+		<object mime='image/png'>Outraged.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/playful</x>
+		<object mime='image/png'>Playful.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/proud</x>
+		<object mime='image/png'>Proud.png</object>
+	</icon>
+		
+	<icon>
+		<x xmlns='name'>mood/relaxed</x>
+		<object mime='image/png'>Relaxed.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/relieved</x>
+		<object mime='image/png'>Relieved.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/remorseful</x>
+		<object mime='image/png'>Remorseful.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/restless</x>
+		<object mime='image/png'>Restless.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/sad</x>
+		<object mime='image/png'>Sad.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/sarcastic</x>
+		<object mime='image/png'>Sarcastic.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/serious</x>
+		<object mime='image/png'>Serious.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/shocked</x>
+		<object mime='image/png'>Shocked.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/shy</x>
+		<object mime='image/png'>Shy.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/sick</x>
+		<object mime='image/png'>Sick.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/sleepy</x>
+		<object mime='image/png'>Sleepy.png</object>
+	</icon>
+		
+	<icon>
+		<x xmlns='name'>mood/spontaneous</x>
+		<object mime='image/png'>Spontaneous.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/stressed</x>
+		<object mime='image/png'>Stressed.png</object>
+	</icon>
+		
+	<icon>
+		<x xmlns='name'>mood/strong</x>
+		<object mime='image/png'>Strong.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/surprised</x>
+		<object mime='image/png'>Surprised.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/thankful</x>
+		<object mime='image/png'>Thankful.png</object>
+	</icon>
+		
+	<icon>
+		<x xmlns='name'>mood/thirsty</x>
+		<object mime='image/png'>Thirsty.png</object>
+	</icon>
+		
+	<icon>
+		<x xmlns='name'>mood/tired</x>
+		<object mime='image/png'>Tired.png</object>
+	</icon>
+		
+	<icon>
+		<x xmlns='name'>mood/undefined</x>
+		<object mime='image/png'>Undefined.png</object>
+	</icon>
+
+	<icon>
+		<x xmlns='name'>mood/weak</x>
+		<object mime='image/png'>Weak.png</object>
+	</icon>
+		
+	<icon>
+		<x xmlns='name'>mood/worried</x>
+		<object mime='image/png'>Worried.png</object>
+	</icon>
+</icondef>
