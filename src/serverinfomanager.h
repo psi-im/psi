@@ -54,7 +54,7 @@ signals:
 
 private slots:
 
-	void capsRegistered(const CapsSpec &caps);
+	void capsRegistered(const XMPP::CapsSpec &caps);
 	void disco_finished();
 	void initialize();
 	void deinitialize();

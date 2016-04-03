@@ -49,7 +49,7 @@ void ServerInfoManager::initialize()
 			if (CapsRegistry::instance()->isRegistered(caps_.flatten())) {
 				handleReceivedFeatures(client_->capsManager()->disco(serverJid));
 			} else {
-				connect(CapsRegistry::instance(), SIGNAL(registered(CapsSpec)), SLOT(capsRegistered(CapsSpec)));
+				connect(CapsRegistry::instance(), SIGNAL(registered(XMPP::CapsSpec)), SLOT(capsRegistered(XMPP::CapsSpec)));
 			}
 		}
 	} else {
@@ -76,7 +76,7 @@ bool ServerInfoManager::hasPEP() const
 	return hasPEP_;
 }
 
-void ServerInfoManager::capsRegistered(const CapsSpec &caps)
+void ServerInfoManager::capsRegistered(const XMPP::CapsSpec &caps)
 {
 	if (caps_ == caps) {
 		handleReceivedFeatures(CapsRegistry::instance()->disco(caps.flatten()));
