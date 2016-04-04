@@ -22,10 +22,13 @@ void PsiCapsRegistry::saveData(const QByteArray &data)
 QByteArray PsiCapsRegistry::loadData()
 {
 	QFile file(ApplicationInfo::homeDir(ApplicationInfo::CacheLocation) + "/caps.xml");
-	IODeviceOpener opener(&file, QIODevice::ReadOnly);
-	if (!opener.isOpen()) {
-		qWarning("CapsRegistry: Cannot open input device");
-		return QByteArray();
+	if (file.exists()) {
+		IODeviceOpener opener(&file, QIODevice::ReadOnly);
+		if (opener.isOpen()) {
+			return file.readAll();
+		} else {
+			qWarning("CapsRegistry: Cannot open input device");
+		}
 	}
-	return file.readAll();
+	return QByteArray();
 }

@@ -46,15 +46,10 @@ public:
 	bool hasPEP() const;
 	inline const Features &features() const { return features_; }
 
-private:
-	void handleReceivedFeatures(const XMPP::DiscoItem &f);
-
 signals:
 	void featuresChanged();
 
 private slots:
-
-	void capsRegistered(const XMPP::CapsSpec &caps);
 	void disco_finished();
 	void initialize();
 	void deinitialize();
