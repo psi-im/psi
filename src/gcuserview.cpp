@@ -196,6 +196,24 @@ public:
 		mp->drawText(rect, index.data(Qt::DisplayRole).toString(), to);
 
 		QList<QPixmap> rightPixs;
+
+		if(showAffiliations_) {
+			MUCItem::Affiliation a = item->s.mucItem().affiliation();
+			QPixmap pix;
+			if(a == MUCItem::Owner)
+				pix = IconsetFactory::iconPixmap("affiliation/owner");
+			else if(a == MUCItem::Admin)
+				pix = IconsetFactory::iconPixmap("affiliation/admin");
+			else if(a == MUCItem::Member)
+				pix = IconsetFactory::iconPixmap("affiliation/member");
+			else if(a == MUCItem::Outcast)
+				pix = IconsetFactory::iconPixmap("affiliation/outcast");
+			else
+				pix = IconsetFactory::iconPixmap("affiliation/noaffiliation");
+			if(!pix.isNull())
+				rightPixs.push_back(pix);
+		}
+
 		if(showClients_) {
 			GCUserView *gcuv = (GCUserView*)item->treeWidget();
 			GCMainDlg* dlg = gcuv->mainDlg();
@@ -217,23 +235,6 @@ public:
 			}
 			if(!clientPix.isNull())
 				rightPixs.push_back(clientPix);
-		}
-
-		if(showAffiliations_) {
-			MUCItem::Affiliation a = item->s.mucItem().affiliation();
-			QPixmap pix;
-			if(a == MUCItem::Owner)
-				pix = IconsetFactory::iconPixmap("affiliation/owner");
-			else if(a == MUCItem::Admin)
-				pix = IconsetFactory::iconPixmap("affiliation/admin");
-			else if(a == MUCItem::Member)
-				pix = IconsetFactory::iconPixmap("affiliation/member");
-			else if(a == MUCItem::Outcast)
-				pix = IconsetFactory::iconPixmap("affiliation/outcast");
-			else
-				pix = IconsetFactory::iconPixmap("affiliation/noaffiliation");
-			if(!pix.isNull())
-				rightPixs.push_back(pix);
 		}
 
 		mp->restore();
