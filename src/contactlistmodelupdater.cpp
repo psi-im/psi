@@ -100,7 +100,7 @@ void ContactListModelUpdater::commit()
 
 void ContactListModelUpdater::addContact(PsiContact* contact)
 {
-	// qWarning(">>> addContact: %s", qPrintable(contact->jid()));
+	// qWarning(">>> addContact: %s", qPrintable(contact->jid().full()));
 	Q_ASSERT(!monitoredContacts_.contains(contact));
 	if (monitoredContacts_.contains(contact))
 		return;

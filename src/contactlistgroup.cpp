@@ -224,7 +224,7 @@ void ContactListGroup::addContact(PsiContact* contact, QStringList contactGroups
 	if (findContact(contact))
 		return;
 	Q_ASSERT(!contacts_.contains(contact));
-CL_DEBUG("ContactListGroup(%x)::addContact: %s (items = %d, contacts = %d)", this, qPrintable(contact->jid().full()), items_.count(), contacts_.count());
+CL_DEBUG("ContactListGroup(%p)::addContact: %s (items = %d, contacts = %d)", this, qPrintable(contact->jid().full()), items_.count(), contacts_.count());
 	contacts_.append(contact);
 	addItem(new ContactListItemProxy(this, contact));
 
@@ -235,7 +235,7 @@ void ContactListGroup::removeContact(PsiContact* contact)
 {
 	int index = contacts_.indexOf(contact);
 	Q_ASSERT(index != -1);
-CL_DEBUG("ContactListGroup(%x)::removeContact: %s (items = %d, contacts = %d)", this, qPrintable(contact->jid().full()), items_.count(), contacts_.count());
+CL_DEBUG("ContactListGroup(%p)::removeContact: %s (items = %d, contacts = %d)", this, qPrintable(contact->jid().full()), items_.count(), contacts_.count());
 	removeItem(findContact(contact));
 	contacts_.remove(index);
 
