@@ -72,7 +72,7 @@ class FileCache : public QObject
 {
 	Q_OBJECT
 public:
-	static const unsigned int Session = 0; //remove data when application exists
+	static const unsigned int Session = 0; //remove data when application exits
 	static const unsigned int Forever = -1; //never remove
 
 	static const unsigned int DefaultMemoryCacheSize = 1*1024*1024; //1 Mb

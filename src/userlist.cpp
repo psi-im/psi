@@ -559,14 +559,19 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 		mucItem = userResourceList()[0].status().hasMUCItem();
 	}
 
-	if (v_avatarFactory && !v_avatarFactory->getAvatar(jid().bare()).isNull() && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.avatar").toBool())
-		useAvatar = true;
+	if (v_avatarFactory && PsiOptions::instance()->getOption("options.ui.contactlist.tooltip.avatar").toBool()) {
+		if (mucItem) {
+			useAvatar = !v_avatarFactory->getMucAvatar(jid()).isNull();
+		} else {
+			useAvatar = !v_avatarFactory->getAvatar(jid().bare()).isNull();
+		}
+	}
 
 	str += "<table cellspacing=\"3\"><tr>";
 	str += "<td>";
 
 	if (useAvatar) {
-		str += QString("<icon name=\"avatars/%1\">").arg(jid().bare());
+		str += QString("<icon name=\"avatars/%1\">").arg(mucItem? jid().full() : jid().bare());
 		str += "</td><td width=\"10\"></td>";
 		str += "<td>";
 	}
