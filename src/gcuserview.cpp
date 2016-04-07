@@ -365,7 +365,7 @@ GCUserView::GCUserView(QWidget* parent)
 	setRootIsDecorated(false);
 	sortByColumn(0);
 	setIndentation(0);
-	setContextMenuPolicy(Qt::NoContextMenu);
+	setContextMenuPolicy(Qt::DefaultContextMenu);
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	setDragDropMode(QAbstractItemView::DragOnly);
 
@@ -581,6 +581,21 @@ bool GCUserView::event(QEvent* e)
 	return QTreeWidget::event(e);
 }
 
+void GCUserView::mousePressEvent(QMouseEvent *event)
+{
+	QTreeWidgetItem *item = itemAt(event->pos());
+	if (item && item->parent() && gcDlg_) {
+		if (event->button() == Qt::MidButton ||
+			(event->button() == Qt::LeftButton &&
+			qApp->keyboardModifiers() == Qt::ShiftModifier))
+		{
+			emit insertNick(item->text(0));
+			return;
+		}
+	}
+	QTreeWidget::mousePressEvent(event);
+}
+
 void GCUserView::qlv_doubleClicked(const QModelIndex &index)
 {
 	if(!index.isValid())
@@ -749,26 +764,15 @@ void GCUserView::contextMenuRequested(const QPoint &p)
 	doContextMenu(i);
 }
 
-void GCUserView::mousePressEvent(QMouseEvent *event)
+void GCUserView::contextMenuEvent(QContextMenuEvent *cm)
 {
-	QTreeWidget::mousePressEvent(event);
-	QTreeWidgetItem *item = itemAt(event->pos());
-
-	if(!item && event->button() == Qt::LeftButton) {
-		setCurrentIndex(QModelIndex()); // Hack to reset current selection
+	QTreeWidgetItem *i = 0;
+	i = currentItem();
+	if (i && i->parent() && gcDlg_) {
+		doContextMenu(i);
 		return;
 	}
-
-	if (!item || !item->parent() || !gcDlg_)
-		return;
-	if (event->button() == Qt::MidButton ||
-		(event->button() == Qt::LeftButton &&
-		qApp->keyboardModifiers() == Qt::ShiftModifier))
-	{
-		emit insertNick(item->text(0));
-	}
-	else if (event->button() == Qt::RightButton)
-		contextMenuRequested(event->pos());
+	QTreeWidget::contextMenuEvent(cm);
 }
 
 void GCUserView::setLooks()

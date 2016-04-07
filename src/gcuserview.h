@@ -94,6 +94,7 @@ protected:
 	bool maybeTip(const QPoint &);
 	bool event(QEvent* e);
 	void mousePressEvent(QMouseEvent *event);
+	void contextMenuEvent(QContextMenuEvent *cm);
 
 signals:
 	void action(const QString &nick, const Status &, int actionType);
