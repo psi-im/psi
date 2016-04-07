@@ -2578,14 +2578,13 @@ void PsiAccount::client_resourceAvailable(const Jid &j, const Resource &r)
 	// Update entity capabilities.
 	// This has to happen after the userlist item has been created.
 	if (r.status().caps().isValid()) {
-		CapsManager *cm = d->client->capsManager();
-		cm->updateCaps(j, r.status().caps());
+		CapsManager *cm = client()->capsManager();
 
 		// Update the client version
 		foreach(UserListItem* u, findRelevant(j)) {
 			UserResourceList::Iterator rit = u->userResourceList().find(j.resource());
 			if (rit != u->userResourceList().end()) {
-				(*rit).setClient(cm->clientName(j),cm->clientVersion(j),cm->osVersion(j));
+				(*rit).setClient(cm->clientName(j),cm->clientVersion(j),cm->osVersion(j)); // FIXME it seems it's impossible if not in cache
 				cpUpdate(*u,(*rit).name());
 			}
 		}
