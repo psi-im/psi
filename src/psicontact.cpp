@@ -222,7 +222,7 @@ void PsiContact::update(const UserListItem& u)
 	d->setStatus(status);
 
 	if (isAgent()) {
-		setGroups(QStringList());
+		d->u_.setGroups(QStringList());
 	}
 	emit updated();
 	emit groupsChanged();
