@@ -378,7 +378,7 @@ bool PsiRosterWidget::eventFilter(QObject* obj, QEvent* e)
 		QString text = ke->text().trimmed();
 		if (!text.isEmpty() && (obj == contactListPageView_ || obj == contactListPage_)) {
 			bool correctChar = (text[0].isLetterOrNumber() || text[0].isPunct()) &&
-			                   (ke->modifiers() == Qt::NoModifier || ke->modifiers() == Qt::ShiftModifier);
+			                   (!ke->modifiers() || ke->modifiers() & (Qt::ShiftModifier | Qt::KeypadModifier));
 			if (correctChar && !contactListPageView_->textInputInProgress()) {
 				setFilterModeEnabled(true);
 				filterEdit_->setText(text);
