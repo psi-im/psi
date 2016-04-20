@@ -286,7 +286,7 @@ void ProfileManageDlg::slotProfileDelete()
 		CAP(tr("Delete Profile")),
 		tr(
 		"<qt>As a precaution, you are being asked one last time if this is what you really want.  "
-		"The following folder will be deleted!<br><br>\n"
+		"The following folders will be deleted!<br><br>\n"
 		"<b>%1</b><br><br>\n"
 		"Proceed?"
 		).arg(paths.join("\n")),
@@ -295,7 +295,7 @@ void ProfileManageDlg::slotProfileDelete()
 
 	if(r == 1) {
 		if(!profileDelete(paths)) {
-			QMessageBox::critical(this, CAP("Error"), tr("Unable to delete the folder completely.  Ensure you have the proper permission."));
+			QMessageBox::critical(this, CAP("Error"), tr("Unable to delete the folders completely.  Ensure you have the proper permission."));
 			return;
 		}
 
