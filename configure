@@ -3189,6 +3189,7 @@ int main(int argc, char ** argv)
 
 		QString str;
 		str += "# qconf\\n\\n";
+		str += "greaterThan(QT_MAJOR_VERSION, 4):CONFIG += c++11\\n";
 
 		QString var;
 		var = qc_normalize_path(qc_getenv("PREFIX"));
@@ -3268,6 +3269,8 @@ SOURCES += conf4.cpp
 
 
 DEFINES += HAVE_MODULES
+
+greaterThan(QT_MAJOR_VERSION, 4):CONFIG += c++11
 
 EOT
 }
