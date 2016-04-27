@@ -206,7 +206,7 @@ public slots:
 			frame = 0;
 
 			loop++;
-			if ( looping && loop >= looping ) {
+			if ( looping > 0 && loop >= looping ) {
 				frame = numFrames() - 1;
 				pause();
 				restart();
