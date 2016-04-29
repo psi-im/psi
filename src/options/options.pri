@@ -79,7 +79,9 @@ FORMS += \
 	$$PWD/opt_iconset_roster.ui \
 	$$PWD/opt_general_groupchat.ui \
 	$$PWD/opt_shortcuts.ui \
-	$$PWD/opt_statuspep.ui
+	$$PWD/opt_statuspep.ui \
+	$$PWD/plugininfodialog.ui \
+	$$PWD/pluginsettsdialog.ui
 
 psi_plugins {
 	FORMS += $$PWD/opt_plugins.ui

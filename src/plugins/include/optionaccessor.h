@@ -1,8 +1,7 @@
 #ifndef OPTIONACCESSOR_H
 #define OPTIONACCESSOR_H
 
-#include <QDomElement>
-//#include <QString>
+class QString;
 
 class OptionAccessingHost;
 

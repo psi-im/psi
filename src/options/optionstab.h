@@ -36,6 +36,7 @@ signals:
 	//void addWidgetChangedSignal(QString widgetName, QCString signal);
 	void noDirty(bool);
 	void connectDataChanged(QWidget *);
+	void connectSignalsToWidget(QWidget *, QObject *, const char *);
 
 public slots:
 	virtual void setData(PsiCon *, QWidget *parentDialog);

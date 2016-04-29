@@ -86,6 +86,9 @@
 #include "mucreasonseditor.h"
 #include "mcmdmanager.h"
 #include "lastactivitytask.h"
+#ifdef PSI_PLUGINS
+#include "pluginmanager.h"
+#endif
 #include "psirichtext.h"
 
 #include "mcmdsimplesite.h"
@@ -864,6 +867,10 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	setConnecting();
 
 	connect(pa->avatarFactory(), SIGNAL(avatarChanged(Jid)), SLOT(avatarUpdated(Jid)));
+
+#ifdef PSI_PLUGINS
+	PluginManager::instance()->setupGCTab(this, account(), jid().full());
+#endif
 }
 
 GCMainDlg::~GCMainDlg()
@@ -1953,6 +1960,14 @@ void GCMainDlg::setToolbuttons()
 	PsiOptions *options = PsiOptions::instance();
 	QStringList actionsNames = options->getOption("options.ui.contactlist.toolbars.m1.actions").toStringList();
 	foreach (const QString &actionName, actionsNames) {
+#ifdef PSI_PLUGINS
+		if (actionName.endsWith("-plugin")) {
+			QString name = PluginManager::instance()->nameByShortName(actionName.mid(0, actionName.length() - 7));
+			PluginManager::instance()->addGCToolBarButton(this, ui_.toolbar, account(), jid().full(), name);
+			continue;
+		}
+#endif
+
 		// Hack. separator action can be added only once.
 		if (actionName == "separator") {
 			ui_.toolbar->addSeparator();
@@ -2112,6 +2127,12 @@ void GCMainDlg::buildMenu()
 	d->pm_settings->addAction(d->actions->action("gchat_icon"));
 	d->pm_settings->addAction(d->act_nick);
 	d->pm_settings->addAction(d->act_bookmark);
+#ifdef PSI_PLUGINS
+	if(!PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m1.visible").toBool()) {
+		d->pm_settings->addSeparator();
+		PluginManager::instance()->addGCToolBarButton(this, d->pm_settings, account(), jid().full());
+	}
+#endif
 }
 
 void GCMainDlg::chatEditCreated()

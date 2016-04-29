@@ -80,6 +80,10 @@
 #include <windows.h>
 #endif
 
+#ifdef PSI_PLUGINS
+#include "pluginmanager.h"
+#endif
+
 #include "psichatdlg.h"
 
 static const QString geometryOption = "options.ui.chat.size";
@@ -882,10 +886,26 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 	}
 
 	MessageView mv(MessageView::Message);
-	if (m.containsHTML() && PsiOptions::instance()->getOption("options.html.chat.render").toBool() && !m.html().body().firstChild().isNull()) {
-		mv.setHtml(m.html().toString("span"));
+
+	QString body = m.body();
+	HTMLElement htmlElem;
+	if (m.containsHTML())
+		htmlElem = m.html();
+
+#ifdef PSI_PLUGINS
+	QDomElement html = htmlElem.body();
+
+	PluginManager::instance()->appendingChatMessage(account(), jid().full(), body, html, local);
+
+	if(!html.isNull())
+		htmlElem.setBody(html);
+#endif
+
+	if (PsiOptions::instance()->getOption("options.html.chat.render").toBool() && !htmlElem.body().isNull()
+			&& !htmlElem.body().firstChild().isNull()) {
+		mv.setHtml(htmlElem.toString("span"));
 	} else {
-		mv.setPlainText(m.body());
+		mv.setPlainText(body);
 	}
 	mv.setMessageId(m.id());
 	mv.setLocal(local);

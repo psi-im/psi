@@ -208,6 +208,49 @@ void PsiEvent::setId(int id)
 }
 #endif
 
+
+#ifdef PSI_PLUGINS
+//----------------------------------------------------------------------------
+// PluginEvent
+//----------------------------------------------------------------------------
+PluginEvent::PluginEvent(const QString& jid, const QString& descr, PsiAccount *acc)
+	: PsiEvent(acc)
+	, descr_(descr)
+{
+	from_ = XMPP::Jid(jid);
+}
+
+PluginEvent::~PluginEvent()
+{
+
+}
+
+int PluginEvent::type() const
+{
+	return Plugin;
+}
+
+XMPP::Jid PluginEvent::from() const
+{
+	return from_;
+}
+
+void PluginEvent::setFrom(const XMPP::Jid &j)
+{
+	from_ = j;
+}
+
+void PluginEvent::activate()
+{
+	emit activated(from_.full());
+}
+
+QString PluginEvent::description() const
+{
+	return descr_;
+}
+#endif
+
 //----------------------------------------------------------------------------
 // MessageEvent
 //----------------------------------------------------------------------------

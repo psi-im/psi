@@ -30,6 +30,7 @@
 #include <QGridLayout>
 
 class QMenu;
+class TabbableWidget;
 
 #include "statuspreset.h"
 
@@ -150,6 +151,7 @@ void clearMenu(QMenu *m); // deletes all items, including submenus, from given Q
 void bringToFront(QWidget *w, bool grabFocus = true);
 void replaceWidget(QWidget *, QWidget *);
 void closeDialogs(QWidget *);
+TabbableWidget* findActiveTab();
 #ifdef HAVE_X11
 #include <QWidget>
 #include <QX11Info>

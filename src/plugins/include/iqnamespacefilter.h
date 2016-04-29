@@ -1,7 +1,7 @@
 #ifndef IQNAMESPACEFILTER_H
 #define IQNAMESPACEFILTER_H
 
-#include <QDomElement>
+class QDomElement;
 
 class IqNamespaceFilter
 {

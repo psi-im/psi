@@ -39,6 +39,7 @@
 #include "statusdlg.h"
 #include "xmpp_tasks.h"
 #include "avcall/avcall.h"
+#include "pluginmanager.h"
 #ifdef HAVE_PGPUTIL
 #include "pgputil.h"
 #endif
@@ -455,6 +456,11 @@ public:
 			}
 			menu_->addSeparator();
 			menu_->addAction(sendFileAction_);
+
+#ifdef PSI_PLUGINS
+			PluginManager::instance()->addContactMenu(menu, contact_->account(), contact_->jid().full());
+#endif
+
 			menu_->addMenu(inviteToGroupchatMenu_);
 			menu_->addSeparator();
 			mngMenu_ = menu_->addMenu(IconsetFactory::icon("psi/manageContact").icon(), tr("Manage &Contact"));

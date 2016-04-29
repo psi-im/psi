@@ -45,6 +45,9 @@
 #ifdef HAVE_PGPUTIL
 #include "pgputil.h"
 #endif
+#ifdef PSI_PLUGINS
+#include "pluginmanager.h"
+#endif
 
 using namespace XMPP;
 using namespace XMLHelper;
@@ -1367,6 +1370,13 @@ void OptionsMigration::lateMigration()
 	// Add default chat and groupchat toolbars
 	if (PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m0.name").toString() != "Chat") {
 		QStringList pluginsKeys;
+#ifdef PSI_PLUGINS
+		PluginManager *pm = PluginManager::instance();
+		QStringList plugins = pm->availablePlugins();
+		foreach (const QString &plugin, plugins) {
+			pluginsKeys << pm->shortName(plugin) + "-plugin";
+		}
+#endif
 		ToolbarPrefs chatToolbar;
 		chatToolbar.on = PsiOptions::instance()->getOption("options.ui.chat.central-toolbar").toBool();
 		PsiOptions::instance()->removeOption("options.ui.chat.central-toolbar");

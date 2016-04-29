@@ -49,6 +49,9 @@
 #include "avcall/avcall.h"
 #include "actionlist.h"
 #include "psiactionlist.h"
+#ifdef PSI_PLUGINS
+#include "pluginmanager.h"
+#endif
 
 #define MCMDCHAT		"http://psi-im.org/ids/mcmd#chatmain"
 
@@ -267,6 +270,9 @@ void PsiChatDlg::initUi()
 	if (throbber_icon == 0) {
 		throbber_icon = (PsiIcon *)IconsetFactory::iconPtr("psi/throbber");
 	}
+#ifdef PSI_PLUGINS
+	PluginManager::instance()->setupChatTab(this, account(), jid().full());
+#endif
 }
 
 void PsiChatDlg::updateCountVisibility()
@@ -388,6 +394,14 @@ void PsiChatDlg::updateToolbuttons()
 		if (actionName == "chat_pgp" && !options->getOption("options.pgp.enable").toBool()) {
 			continue;
 		}
+
+#ifdef PSI_PLUGINS
+		if (actionName.endsWith("-plugin")) {
+			QString name = PluginManager::instance()->nameByShortName(actionName.mid(0, actionName.length() - 7));
+			PluginManager::instance()->addToolBarButton(this, ui_.toolbar, account(), jid().full(), name);
+			continue;
+		}
+#endif
 
 		// Hack. separator action can be added only once.
 		if (actionName == "separator") {
@@ -835,6 +849,12 @@ void PsiChatDlg::buildMenu()
 
 	pm_settings_->addAction(actions_->action("chat_info"));
 	pm_settings_->addAction(actions_->action("chat_history"));
+#ifdef PSI_PLUGINS
+	if(!PsiOptions::instance()->getOption("options.ui.contactlist.toolbars.m0.visible").toBool()) {
+		pm_settings_->addSeparator();
+		PluginManager::instance()->addToolBarButton(this, pm_settings_, account(), jid().full());
+	}
+#endif
 }
 
 void PsiChatDlg::updateCounter()

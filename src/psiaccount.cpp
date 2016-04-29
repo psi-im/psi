@@ -769,6 +769,13 @@ public slots:
 		xmlRingbufWrite = (xmlRingbufWrite + 1) % xmlRingbuf.count();
 	}
 
+	void client_stanzaElementOutgoing(QDomElement &s)
+	{
+#ifdef PSI_PLUGINS
+		PluginManager::instance()->processOutgoingStanza(account, s);
+#endif
+	}
+
 	void pm_proxyRemoved(QString proxykey)
 	{
 		if (acc.proxyID == proxykey) acc.proxyID = "";
@@ -1123,6 +1130,11 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
 
 	// create XMPP::Client
 	d->client = new Client;
+
+	// Plugins
+#ifdef PSI_PLUGINS
+	PluginManager::instance()->addAccount(this, d->client);
+#endif
 	d->client->setOSName(SystemInfo::instance()->osName());
 	d->client->setOSVersion(SystemInfo::instance()->osVersion());
 	d->client->setClientName(ApplicationInfo::name());
@@ -1168,6 +1180,7 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
 	connect(d->client, SIGNAL(endImportRoster()), SIGNAL(endBulkContactUpdate()));
 	connect(d->client, SIGNAL(xmlIncoming(const QString &)), d, SLOT(client_xmlIncoming(const QString &)));
 	connect(d->client, SIGNAL(xmlOutgoing(const QString &)), d, SLOT(client_xmlOutgoing(const QString &)));
+	connect(d->client, SIGNAL(stanzaElementOutgoing(QDomElement &)), d, SLOT(client_stanzaElementOutgoing(QDomElement &)));
 
 	// Privacy manager
 	d->privacyManager = new PsiPrivacyManager(d->account, d->client->rootTask());
@@ -1224,11 +1237,6 @@ PsiAccount::PsiAccount(const UserAccount &acc, PsiContactList *parent, TabManage
 	d->rcForwardServer = 0;
 	d->rcLeaveMucServer =0;
 	setRCEnabled(PsiOptions::instance()->getOption("options.external-control.adhoc-remote-control.enable").toBool());
-
-	// Plugins
-#ifdef PSI_PLUGINS
-	PluginManager::instance()->addAccount(this, d->client);
-#endif
 
 	//Idle server
 	if(PsiOptions::instance()->getOption("options.service-discovery.last-activity").toBool()) {
@@ -1771,6 +1779,9 @@ void PsiAccount::logout(bool fast, const Status &s)
 	if(!isActive())
 		return;
 
+#ifdef PSI_PLUGINS
+	PluginManager::instance()->logout(this);
+#endif
 	clearCurrentConnectionError();
 
 	d->stopReconnect();
@@ -4651,6 +4662,22 @@ void PsiAccount::dj_sendMessage(const Message &m, bool log)
 			}
 		}
 	}
+	
+#ifdef PSI_PLUGINS
+	if (!nm.body().isEmpty()) {
+		QString body = nm.body();
+		QString subject = nm.subject();
+
+		if(PluginManager::instance()->processOutgoingMessage(this, nm.to().full(), body, nm.type(), subject))
+			return;
+		if (body != nm.body()) {
+			nm.setBody(body);
+		}
+		if (subject != nm.subject()) {
+			nm.setSubject(subject);
+		}
+	}
+#endif
 
 	if (!nm.body().isEmpty()) {
 		UserListItem *u = findFirstRelevant(m.to());
@@ -4940,6 +4967,15 @@ static bool messageListContainsEvent(const QList<PsiEvent::Ptr>& messageList, co
 	return false;
 }
 
+#ifdef PSI_PLUGINS
+void PsiAccount::createNewPluginEvent(const QString &jid, const QString &descr, QObject *receiver, const char *slot)
+{
+	PluginEvent::Ptr pe(new PluginEvent(jid, descr, this));
+	connect(pe.data(), SIGNAL(activated(QString)), receiver, slot);
+	handleEvent(pe, IncomingStanza);
+}
+#endif
+
 // handle an incoming event
 void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationType)
 {
@@ -4985,12 +5021,13 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 	e->setJid(j);
 
 #ifdef PSI_PLUGINS
-	QDomElement eXml = e->toXml(new QDomDocument());
+	QDomDocument doc;
+	QDomElement eXml = e->toXml(&doc);
 	if (PluginManager::instance()->processEvent(this, eXml)) {
-		delete e;
 		return;
+	} else {
+		e->fromXml(psi(),this, &eXml);
 	}
-	//FIXME(KIS): must now cause the event to be recreated from this xml or such. Horrid.
 #endif
 
 	if (d->psi->filterEvent(this, e)) {
@@ -5025,7 +5062,6 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 		//if ( !ul.isEmpty() )
 		//	ulItem=ul.first();
 		if (PluginManager::instance()->processMessage(this, e->from().full(), m.body(), m.subject())) {
-			delete e;
 			return;
 		}
 		//PluginManager::instance()->message(this,e->from(),ulItem,((MessageEvent*)e)->message().body());
@@ -5207,6 +5243,13 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 		}
 #endif
 	}
+#ifdef PSI_PLUGINS
+	else if (e->type() == PsiEvent::Plugin) {
+		soundType = eSystem;
+		doPopup = true;
+		popupType = PopupManager::AlertHeadline;
+	}
+#endif
 	else {
 		putToQueue = false;
 		doPopup = false;
@@ -5226,7 +5269,16 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 		    (popupType == PopupManager::AlertAvCall    && o->getOption("options.ui.notifications.passive-popups.incoming-message").toBool()) ||
 		    (popupType == PopupManager::AlertComposing && o->getOption("options.ui.notifications.passive-popups.composing").toBool()))
 		{
-			psi()->popupManager()->doPopup(this, popupType, j, r, u, e, false);
+#ifdef PSI_PLUGINS
+			if(e->type() != PsiEvent::Plugin) {
+#endif
+				psi()->popupManager()->doPopup(this, popupType, j, r, u, e, false);
+#ifdef PSI_PLUGINS
+ 			}
+ 			else {
+				psi()->popupManager()->doPopup(this, j, IconsetFactory::iconPtr("psi/headline"), tr("Headline"), 0, 0, e->description(), false, popupType);
+			}
+#endif
 		}
 		emit startBounce();
 	}
@@ -5393,6 +5445,10 @@ void PsiAccount::queueEvent(const PsiEvent::Ptr &e, ActivationType activationTyp
 		else if (e->type() == PsiEvent::File) {
 			doPopup = PsiOptions::instance()->getOption("options.ui.file-transfer.auto-popup").toBool();
 		}
+#ifdef PSI_PLUGINS
+		else if (e->type() == PsiEvent::Plugin)
+			doPopup = false;
+#endif
 		else {
 			doPopup = PsiOptions::instance()->getOption("options.ui.message.auto-popup").toBool();
 		}
@@ -5415,6 +5471,18 @@ void PsiAccount::openNextEvent(const UserListItem& u, ActivationType activationT
 	PsiEvent::Ptr e = d->eventQueue->peek(u.jid());
 	if(!e)
 		return;
+#ifdef PSI_PLUGINS
+	if(e->type() == PsiEvent::Plugin) {
+		PluginEvent::Ptr pe = e.staticCast<PluginEvent>();
+		pe->activate();
+		eventQueue()->dequeue(e);
+		queueChanged();
+		UserListItem *u = e->account()->find(e->jid());
+		if(u)
+			e->account()->cpUpdate(*u);
+		return;
+	}
+#endif
 
 	psi()->processEvent(e, activationType);
 }

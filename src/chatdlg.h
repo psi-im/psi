@@ -168,7 +168,11 @@ protected:
 
 	void appendMessage(const Message &, bool local = false);
 	virtual bool isEncryptionEnabled() const;
+
+public:
 	virtual void appendSysMsg(const QString& txt) = 0;
+
+protected:
 	virtual void nicksChanged();
 
 	QString whoNick(bool local) const;
