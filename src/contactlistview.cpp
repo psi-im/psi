@@ -77,6 +77,7 @@ ContactListView::ContactListView(QWidget* parent)
 	: HoverableTreeView(parent)
 	, contextMenuActive_(false)
 {
+	setAnimated(false); // FIXME hack hack!! prevents crash on Plasma 5
 	setUniformRowHeights(false);
 	setAlternatingRowColors(true);
 	setRootIsDecorated(false);
