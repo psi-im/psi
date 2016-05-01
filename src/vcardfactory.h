@@ -44,6 +44,7 @@ public:
 	const VCard *vcard(const Jid &);
 	void setVCard(const Jid &, const VCard &);
 	void setVCard(const PsiAccount* account, const VCard &v, QObject* obj = 0, const char* slot = 0);
+	void setMucVCard(const PsiAccount* account, const VCard &v, const Jid &mucJid, QObject* obj, const char* slot);
 	JT_VCard *getVCard(const Jid &, Task *rootTask, const QObject *, const char *slot, bool cacheVCard = true);
 
 signals:

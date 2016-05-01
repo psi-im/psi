@@ -32,6 +32,8 @@ namespace XMPP {
 	class Client;
 }
 
+class PsiAccount;
+
 using namespace XMPP;
 
 class MUCManager : public QObject
@@ -49,7 +51,7 @@ public:
 		SetRole, SetAffiliation
 	};
 
-	MUCManager(XMPP::Client* client, const Jid&);
+	MUCManager(PsiAccount* account, const Jid&);
 
 	const Jid& room() const;
 
@@ -60,6 +62,7 @@ public:
 	void getItemsByAffiliation(MUCItem::Affiliation);
 	void destroy(const QString& reason = QString(), const Jid& venue = Jid());
 	XMPP::Client* client() const;
+	PsiAccount* account() const;
 
 	// Basic operations
 	void kick(const QString&, const QString& = QString());
@@ -120,7 +123,7 @@ protected slots:
 	void setItems_finished();
 
 private:
-	XMPP::Client* client_;
+	PsiAccount* account_;
 	Jid room_;
 };
 

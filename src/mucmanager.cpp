@@ -34,6 +34,7 @@
 #include "xmpp_xmlcommon.h"
 #include "xmpp_task.h"
 #include "xmpp_client.h"
+#include "psiaccount.h"
 
 using namespace XMPP;
 
@@ -218,7 +219,7 @@ private:
 
 // -----------------------------------------------------------------------------
 
-MUCManager::MUCManager(Client* client, const Jid& room) : client_(client), room_(room)
+MUCManager::MUCManager(PsiAccount *account, const Jid& room) : account_(account), room_(room)
 {
 }
 
@@ -229,7 +230,7 @@ const Jid& MUCManager::room() const
 
 void MUCManager::getConfiguration()
 {
-	MUCConfigurationTask* t = new MUCConfigurationTask(room_, client_->rootTask());
+	MUCConfigurationTask* t = new MUCConfigurationTask(room_, client()->rootTask());
 	connect(t,SIGNAL(finished()),SLOT(getConfiguration_finished()));
 	t->get();
 	t->go(true);
@@ -237,7 +238,7 @@ void MUCManager::getConfiguration()
 
 void MUCManager::setConfiguration(const XMPP::XData& c)
 {
-	MUCConfigurationTask* t = new MUCConfigurationTask(room_, client_->rootTask());
+	MUCConfigurationTask* t = new MUCConfigurationTask(room_, client()->rootTask());
 	XData config = c;
 	config.setType(XData::Data_Submit);
 	connect(t,SIGNAL(finished()),SLOT(setConfiguration_finished()));
@@ -252,19 +253,24 @@ void MUCManager::setDefaultConfiguration()
 
 void MUCManager::destroy(const QString& reason, const Jid& venue)
 {
-	MUCDestroyTask* t = new MUCDestroyTask(room_, reason, venue, client_->rootTask());
+	MUCDestroyTask* t = new MUCDestroyTask(room_, reason, venue, client()->rootTask());
 	connect(t,SIGNAL(finished()),SLOT(destroy_finished()));
 	t->go(true);
 }
 
 XMPP::Client* MUCManager::client() const
 {
-	return client_;
+	return account_->client();
+}
+
+PsiAccount *MUCManager::account() const
+{
+	return account_;
 }
 
 void MUCManager::setItems(const QList<MUCItem>& items)
 {
-	MUCItemsTask* t = new MUCItemsTask(room_, client_->rootTask());
+	MUCItemsTask* t = new MUCItemsTask(room_, client()->rootTask());
 	connect(t,SIGNAL(finished()),SLOT(setItems_finished()));
 	t->set(items);
 	t->go(true);
@@ -272,7 +278,7 @@ void MUCManager::setItems(const QList<MUCItem>& items)
 
 void MUCManager::getItemsByAffiliation(MUCItem::Affiliation affiliation)
 {
-	MUCItemsTask* t = new MUCItemsTask(room_, client_->rootTask());
+	MUCItemsTask* t = new MUCItemsTask(room_, client()->rootTask());
 	connect(t,SIGNAL(finished()),SLOT(getItemsByAffiliation_finished()));
 	t->getByAffiliation(affiliation);
 	t->go(true);
@@ -347,7 +353,7 @@ void MUCManager::setRole(const QString& nick, MUCItem::Role role, const QString&
 		item.setReason(reason);
 	items.push_back(item);
 
-	MUCItemsTask* t = new MUCItemsTask(room_, client_->rootTask());
+	MUCItemsTask* t = new MUCItemsTask(room_, client()->rootTask());
 	connect(t,SIGNAL(finished()),SLOT(action_finished()));
 	t->set(items,action);
 	t->go(true);
@@ -362,7 +368,7 @@ void MUCManager::setAffiliation(const Jid& user, MUCItem::Affiliation affiliatio
 		item.setReason(reason);
 	items.push_back(item);
 
-	MUCItemsTask* t = new MUCItemsTask(room_, client_->rootTask());
+	MUCItemsTask* t = new MUCItemsTask(room_, client()->rootTask());
 	connect(t,SIGNAL(finished()),SLOT(action_finished()));
 	t->set(items,action);
 	t->go(true);

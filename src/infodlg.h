@@ -22,6 +22,7 @@
 #define INFODLG_H
 
 #include "ui_info.h"
+#include "ui_infodlg.h"
 
 namespace XMPP
 {
@@ -34,13 +35,16 @@ using namespace XMPP;
 
 class PsiAccount;
 
-class InfoDlg : public QDialog
+class InfoWidget : public QWidget
 {
 	Q_OBJECT
 public:
-	enum { Self, Contact };
-	InfoDlg(int type, const XMPP::Jid &, const XMPP::VCard &, PsiAccount *, QWidget *parent=0, bool cacheVCard = true);
-	~InfoDlg();
+	enum { Self, Contact, MucAdm };
+	InfoWidget(int type, const XMPP::Jid &, const XMPP::VCard &, PsiAccount *, QWidget *parent=0, bool cacheVCard = true);
+	~InfoWidget();
+	bool aboutToClose(); /* call this when you are going to close parent dialog */
+	PsiAccount *account() const;
+	const Jid &jid() const;
 
 protected:
 	// reimplemented
@@ -51,8 +55,8 @@ protected:
 public slots:
 	void doRefresh();
 	void updateStatus();
-	void closeEvent ( QCloseEvent * e );
 	void setStatusVisibility(bool visible);
+	void publish();
 
 private slots:
 	void contactAvailable(const Jid &, const Resource &);
@@ -62,8 +66,6 @@ private slots:
 	void entityTimeFinished();
 	void requestLastActivityFinished();
 	void jt_finished();
-	void doSubmit();
-	void doDisco();
 	void doShowCal();
 	void doUpdateFromCalendar(const QDate &);
 	void doClearBirthDate();
@@ -77,9 +79,9 @@ private:
 	class Private;
 	Private *d;
 	Ui::Info ui_;
-	QPushButton* pb_refresh_;
-	QPushButton* pb_close_;
-	QPushButton* pb_submit_;
+	//QPushButton* pb_refresh_;
+	//QPushButton* pb_close_;
+	//QPushButton* pb_submit_;
 
 	void setData(const XMPP::VCard &);
 	XMPP::VCard makeVCard();
@@ -90,6 +92,30 @@ private:
 	void setPreviewPhoto(const QString& str);
 	void requestResourceInfo(const XMPP::Jid& j);
 	void requestLastActivity();
+
+signals:
+	void busy();
+	void released();
+};
+
+class InfoDlg : public QDialog
+{
+	Q_OBJECT
+public:
+	InfoDlg(int type, const XMPP::Jid &, const XMPP::VCard &, PsiAccount *, QWidget *parent=0, bool cacheVCard = true);
+	inline InfoWidget *infoWidget() const { return iw; }
+
+protected:
+	void closeEvent(QCloseEvent * e);
+
+private slots:
+	void doDisco();
+	void doBusy();
+	void release();
+
+private:
+	Ui::InfoDlg ui_;
+	InfoWidget *iw;
 };
 
 #endif

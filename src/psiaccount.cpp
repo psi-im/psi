@@ -4403,8 +4403,8 @@ void PsiAccount::actionInfo(const Jid &_j, bool showStatusInfo)
 
 	InfoDlg *w = findDialog<InfoDlg*>(j);
 	if(w) {
-		w->updateStatus();
-		w->setStatusVisibility(showStatusInfo);
+		w->infoWidget()->updateStatus();
+		w->infoWidget()->setStatusVisibility(showStatusInfo);
 		bringToFront(w);
 	}
 	else {
@@ -4413,14 +4413,14 @@ void PsiAccount::actionInfo(const Jid &_j, bool showStatusInfo)
 		VCard tmp;
 		if ( vcard )
 			tmp = *vcard;
-		w = new InfoDlg(j.compare(d->jid) ? InfoDlg::Self : InfoDlg::Contact, j, tmp, this, 0, useCache);
+		w = new InfoDlg(j.compare(d->jid) ? InfoWidget::Self : InfoWidget::Contact, j, tmp, this, 0, useCache);
 
-		w->setStatusVisibility(showStatusInfo);
+		w->infoWidget()->setStatusVisibility(showStatusInfo);
 		w->show();
 
 		// automatically retrieve info if it doesn't exist
 		if(!vcard && loggedIn())
-			w->doRefresh();
+			w->infoWidget()->doRefresh();
 	}
 }
 

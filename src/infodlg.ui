@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>InfoDlg</class>
+ <widget class="QDialog" name="Info">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>477</width>
+    <height>337</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>User Info</string>
+  </property>
+  <property name="sizeGripEnabled">
+   <bool>true</bool>
+  </property>
+  <layout class="QVBoxLayout">
+   <property name="spacing">
+    <number>6</number>
+   </property>
+   <property name="leftMargin">
+    <number>8</number>
+   </property>
+   <property name="topMargin">
+    <number>8</number>
+   </property>
+   <property name="rightMargin">
+    <number>8</number>
+   </property>
+   <property name="bottomMargin">
+    <number>8</number>
+   </property>
+   <item>
+    <layout class="QVBoxLayout" name="loContents"/>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item>
+    <layout class="QHBoxLayout">
+     <property name="spacing">
+      <number>6</number>
+     </property>
+     <property name="leftMargin">
+      <number>0</number>
+     </property>
+     <property name="topMargin">
+      <number>0</number>
+     </property>
+     <property name="rightMargin">
+      <number>0</number>
+     </property>
+     <property name="bottomMargin">
+      <number>0</number>
+     </property>
+     <item>
+      <widget class="BusyWidget" name="busy" native="true"/>
+     </item>
+     <item>
+      <spacer>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Expanding</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>190</width>
+         <height>16</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="IconButton" name="pb_disco" native="true">
+       <property name="shortcut" stdset="0">
+        <string>Alt+D</string>
+       </property>
+       <property name="psiIconName" stdset="0">
+        <string>psi/disco</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="IconButton" name="pb_submit" native="true">
+       <property name="text" stdset="0">
+        <string>&amp;Publish</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="IconButton" name="pb_refresh" native="true">
+       <property name="text" stdset="0">
+        <string>&amp;Retrieve</string>
+       </property>
+       <property name="psiIconName" stdset="0">
+        <string>psi/reload</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="IconButton" name="pb_close" native="true">
+       <property name="text" stdset="0">
+        <string>&amp;Close</string>
+       </property>
+       <property name="psiIconName" stdset="0">
+        <string>psi/close</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>BusyWidget</class>
+   <extends>QWidget</extends>
+   <header>busywidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>IconButton</class>
+   <extends>QWidget</extends>
+   <header>iconbutton.h</header>
+  </customwidget>
+ </customwidgets>
+ <tabstops>
+  <tabstop>pb_submit</tabstop>
+  <tabstop>pb_refresh</tabstop>
+  <tabstop>pb_close</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

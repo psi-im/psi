@@ -308,12 +308,12 @@ void AddUserDlg::getVCardActivated()
 	if ( vcard )
 		tmp = *vcard;
 
-	InfoDlg *w = new InfoDlg(InfoDlg::Contact, jid(), tmp, d->pa, 0, false);
+	InfoDlg *w = new InfoDlg(InfoWidget::Contact, jid(), tmp, d->pa, 0, false);
 	w->show();
 
 	// automatically retrieve info if it doesn't exist
 	if(!vcard)
-		w->doRefresh();
+		w->infoWidget()->doRefresh();
 }
 
 void AddUserDlg::resolveNickActivated()

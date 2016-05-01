@@ -165,6 +165,19 @@ void VCardFactory::setVCard(const PsiAccount* account, const VCard &v, QObject* 
 	jtVCard_->go(true);
 }
 
+/**
+ * \brief Updates vCard on specified \a account.
+ */
+void VCardFactory::setMucVCard(const PsiAccount* account, const VCard &v, const Jid &mucJid, QObject* obj, const char* slot)
+{
+	JT_VCard* jtVCard_ = new JT_VCard(account->client()->rootTask());
+	if (obj)
+		connect(jtVCard_, SIGNAL(finished()), obj, slot);
+	connect(jtVCard_, SIGNAL(finished()), SLOT(updateVCardFinished()));
+	jtVCard_->set(mucJid, v, true);
+	jtVCard_->go(true);
+}
+
 void VCardFactory::updateVCardFinished()
 {
 	JT_VCard* jtVCard = static_cast<JT_VCard*> (sender());

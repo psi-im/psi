@@ -657,7 +657,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	d->self = d->prev_self = j.resource();
 	account()->dialogRegister(this, jid());
 	connect(account(), SIGNAL(updatedActivity()), SLOT(pa_updatedActivity()));
-	d->mucManager = new MUCManager(account()->client(), jid());
+	d->mucManager = new MUCManager(account(), jid());
 
 	d->pending = 0;
 	d->hPending = 0;
