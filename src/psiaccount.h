@@ -252,6 +252,10 @@ public:
 	};
 	void playSound(SoundType onevent);
 
+#ifdef PSI_PLUGINS
+	void createNewPluginEvent(const QString& jid, const QString& descr, QObject *receiver, const char* slot);
+#endif
+
 	QStringList hiddenChats(const Jid &) const;
 
 	int sendMessageEncrypted(const Message &);

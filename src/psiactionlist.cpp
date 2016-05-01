@@ -25,6 +25,9 @@
 
 #include "iconset.h"
 #include "psioptions.h"
+#ifdef PSI_PLUGINS
+#include "pluginmanager.h"
+#endif
 
 #include "mainwin_p.h"
 
@@ -493,6 +496,23 @@ void PsiActionList::Private::createGroupchat()
 
 void PsiActionList::Private::addPluginsActions(ActionsType type)
 {
+#ifdef PSI_PLUGINS
+	PluginManager *pm = PluginManager::instance();
+	QStringList plugins = pm->availablePlugins();
+	ActionList *actions = new ActionList(tr("Plugins"), type, false);
+	foreach (const QString &plugin, plugins) {
+		if ((type == Actions_Chat      && !pm->hasToolBarButton(plugin)) ||
+			(type == Actions_Groupchat && !pm->hasGCToolBarButton(plugin))) {
+
+			continue;
+		}
+
+		IconAction *action = new IconAction(plugin, "", plugin, 0, this);
+		action->setIcon(pm->icon(plugin));
+		actions->addAction(pm->shortName(plugin) + "-plugin", action);
+	}
+	list->addList(actions);
+#endif
 }
 
 void PsiActionList::Private::optionsChanged()

@@ -37,7 +37,28 @@ class QWidget;
 class PsiPlugin
 {
 public:
+	// Priorities allows plugins to make processing more ordered. For example
+	// some plugins may require process stanzas as early as possible, others
+	// may want to do some work at the end. So here here are 5 levels of
+	// priority which plugin may choose from. If plugin is not aware about
+	// priority then Normal will be choosed for it.
+	// While writing plugins its desirable to think twice before choosing
+	// Lowest or Highest priority, since your plugin may be not the only which
+	// need it. Think about for example stopspam plugin which is known to be
+	// highest prioroty blocker/processor. Are you writing stopspam? If not
+	// choose High if you want something more then Normal.
+	enum Priority
+	{
+		PriorityLowest	= 0, // always in the end. last loaded Lowest plugin moves other Lowest to Low side
+		PriorityLow		= 1,
+		PriorityNormal	= 2, // default
+		PriorityHigh	= 3,
+		PriorityHighest	= 4, // always in the start. last loaded Highest plugin moves others to High side
+	};
+
 	virtual ~PsiPlugin() {}
+
+	virtual Priority priority() { return PriorityNormal; }
 
 	/**
 	 * \brief Plugin Name
@@ -72,7 +93,7 @@ public:
 	 *
 	 * TODO: make sure this is really deleted, etc
 	 */
-	virtual QWidget* options() const = 0;
+	virtual QWidget* options() = 0;
 
 	/**
 	 * \brief Enable plugin
@@ -87,8 +108,12 @@ public:
 	 */
 	virtual bool disable() = 0;
 
+	virtual void applyOptions() = 0;
+	virtual void restoreOptions() = 0;
+
+	virtual QPixmap icon() const = 0;
 };
 
-Q_DECLARE_INTERFACE(PsiPlugin, "org.psi-im.PsiPlugin/0.3");
+Q_DECLARE_INTERFACE(PsiPlugin, "org.psi-im.PsiPlugin/0.4");
 
 #endif

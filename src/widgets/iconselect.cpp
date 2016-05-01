@@ -60,6 +60,7 @@ public:
 	IconSelectButton(QWidget *parent)
 	: QAbstractButton(parent)
 	{
+		setMouseTracking(true);
 		ic = 0;
 		animated = false;
 		connect (this, SIGNAL(clicked()), SLOT(iconSelected()));
@@ -97,6 +98,10 @@ public:
 
 	QSize sizeHint() const { return s; }
 	void setSizeHint(QSize sh) { s = sh; }
+
+protected:
+	void enterEvent(QEvent *) { iconStart(); setFocus();  update(); } // focus follows mouse mode
+	void leaveEvent(QEvent *) { iconStop(); clearFocus(); update(); }
 
 signals:
 	void iconSelected(const PsiIcon *);
@@ -138,9 +143,6 @@ private:
 			}
 		}
 	}
-
-	void enterEvent(QEvent *) { iconStart(); setFocus();  update(); } // focus follows mouse mode
-	void leaveEvent(QEvent *) { iconStop(); clearFocus(); update(); }
 
 private slots:
 	void iconUpdated()
@@ -375,6 +377,7 @@ public slots:
 IconSelectPopup::IconSelectPopup(QWidget *parent)
 : QMenu(parent)
 {
+	setWindowFlags((windowFlags() & ~Qt::Tool) | Qt::FramelessWindowHint);
 	d = new Private(this);
 	d->icsel_ = new IconSelect(this);
 	d->widgetAction_ = new QWidgetAction(this);
@@ -404,6 +407,14 @@ const Iconset &IconSelectPopup::iconset() const
 void IconSelectPopup::mousePressEvent(QMouseEvent *e)
 {
 	QMenu::mousePressEvent(e);
+}
+
+bool IconSelectPopup::event(QEvent *e)
+{
+	if(e->type() == QEvent::WindowDeactivate) {
+		hide();
+	}
+	return QMenu::event(e);
 }
 
 #include "iconselect.moc"

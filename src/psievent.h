@@ -64,6 +64,10 @@ public:
 		//Status
 		HttpAuth,
 		AvCallType
+#ifdef PSI_PLUGINS
+		,Plugin
+#endif
+
 	};
 	virtual int type() const = 0;
 
@@ -107,6 +111,32 @@ private:
 	int v_id;
 #endif
 };
+
+
+#ifdef PSI_PLUGINS
+class PluginEvent : public PsiEvent
+{
+	Q_OBJECT
+public:
+	PluginEvent(const QString& jid, const QString& descr, PsiAccount *acc);
+	~PluginEvent();
+
+	typedef QSharedPointer<PluginEvent> Ptr;
+	int type() const;
+	XMPP::Jid from() const;
+	virtual void setFrom(const XMPP::Jid &j);
+	virtual QString description() const;
+	void activate();
+
+signals:
+	void activated(QString);
+
+private:
+	XMPP::Jid from_;
+	QString descr_;
+};
+#endif
+
 
 // normal, chat, error, headline, etc
 class MessageEvent : public PsiEvent

@@ -885,3 +885,8 @@ void TabDlg::setTabIcon(QWidget *widget,const QIcon &icon)
 {
 	tabWidget_->setTabIcon(widget, icon);
 }
+
+TabbableWidget* TabDlg::getCurrentTab() const
+{
+	return dynamic_cast<TabbableWidget*>(tabWidget_->currentPage());
+}

@@ -241,6 +241,9 @@ void MetaOptionsTab::addTab(OptionsTab *tab)
 	//connect(tab, SIGNAL(addWidgetChangedSignal(QString, QCString)), SIGNAL(addWidgetChangedSignal(QString, QCString)));
 	connect(tab, SIGNAL(noDirty(bool)), SIGNAL(noDirty(bool)));
 	connect(tab, SIGNAL(connectDataChanged(QWidget *)), SIGNAL(connectDataChanged(QWidget *)));
+	connect(tab,
+		SIGNAL(connectSignalsToWidget(QWidget*,QObject*,const char*)),
+		SIGNAL(connectSignalsToWidget(QWidget*,QObject*,const char*)));
 
 	tabs.append(tab);
 }
@@ -262,6 +265,9 @@ QWidget *MetaOptionsTab::widget()
 
 	connect(w, SIGNAL(connectDataChanged(QWidget *)), SIGNAL(connectDataChanged(QWidget *)));
 	connect(w, SIGNAL(noDirty(bool)), SIGNAL(noDirty(bool)));
+	connect(w,
+		SIGNAL(connectSignalsToWidget(QWidget*,QObject*,const char*)),
+		SIGNAL(connectSignalsToWidget(QWidget*,QObject*,const char*)));
 
 	foreach(OptionsTab* tab, tabs) {
 		t->addTab(tab);

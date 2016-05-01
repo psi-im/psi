@@ -87,6 +87,7 @@ public:
 	void setTabBarShownForSingles(bool enabled); // default enabled
 	void setSimplifiedCaptionEnabled(bool enabled); // default disabled
 	void setTabIcon(QWidget *,const QIcon &);
+	TabbableWidget* getCurrentTab() const;
 
 protected:
 	void setShortcuts();

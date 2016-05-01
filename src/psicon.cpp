@@ -587,7 +587,7 @@ bool PsiCon::init()
 
 #ifdef PSI_PLUGINS
 	// Plugin Manager
-	PluginManager::instance();
+	PluginManager::instance()->initNewSession(this);
 #endif
 
 	// Global shortcuts
@@ -733,7 +733,9 @@ void PsiCon::deinit()
 	// save profile
 	if(d->contactList)
 		d->saveProfile(acc);
-
+#ifdef PSI_PLUGINS
+	PluginManager::instance()->unloadAllPlugins();
+#endif
 	GlobalShortcutManager::clear();
 
 	DesktopUtil::unsetUrlHandler("xmpp");
@@ -752,6 +754,9 @@ void PsiCon::setShortcuts()
 	ShortcutManager::connect("global.boss-key", d->bossKey, SLOT(shortCutActivated()));
 #ifdef YAPSI
 	ShortcutManager::connect("global.filter-contacts", d->mainwin, SLOT(filterContacts()));
+#endif
+#ifdef PSI_PLUGINS
+	PluginManager::instance()->setShortcuts();
 #endif
 }
 
@@ -1311,7 +1316,14 @@ void PsiCon::openUri(const QUrl &uri)
 	// authority
 	PsiAccount *pa = 0;
 	//if (uri.authority().isEmpty()) {
-		pa = d->contactList->defaultAccount();
+		TabbableWidget* tw = findActiveTab();
+		if (tw) {
+			pa = tw->account();
+		}
+		if (!pa) {
+			pa = d->contactList->defaultAccount();
+		}
+
 		if (!pa) {
 			QMessageBox::critical(0, tr("Error"), QString("You need to have an account configured and enabled to open URIs (links)."));
 			return;

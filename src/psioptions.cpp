@@ -31,6 +31,9 @@
 #include "statuspreset.h"
 #include "psitoolbar.h"
 #include "common.h"
+#ifdef PSI_PLUGINS
+#include "pluginmanager.h"
+#endif
 using namespace XMPP;
 
 // ----------------------------------------------------------------------------
@@ -182,6 +185,13 @@ bool PsiOptions::newProfile()
 
 	{
 		QStringList pluginsKeys;
+#ifdef PSI_PLUGINS
+		PluginManager *pm = PluginManager::instance();
+		QStringList plugins = pm->availablePlugins();
+		foreach (const QString &plugin, plugins) {
+			pluginsKeys << pm->shortName(plugin) + "-plugin";
+		}
+#endif
 		ToolbarPrefs chatToolbar;
 		chatToolbar.on = true;
 		chatToolbar.name = "Chat";

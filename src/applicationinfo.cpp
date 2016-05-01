@@ -27,6 +27,7 @@
 
 #include "psiapplication.h"
 #include "applicationinfo.h"
+#include "systeminfo.h"
 #include "profiles.h"
 #include "homedirmigration.h"
 #include "activeprofiles.h"
@@ -80,6 +81,11 @@ QString ApplicationInfo::version()
 QString ApplicationInfo::capsNode()
 {
 	return PROG_CAPS_NODE;
+}
+
+QString ApplicationInfo::osName()
+{
+	return SystemInfo::instance()->os();
 }
 
 QString ApplicationInfo::IPCName()

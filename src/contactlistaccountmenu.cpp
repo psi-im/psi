@@ -22,6 +22,8 @@
 
 #include <QPointer>
 
+#include "pluginmanager.h"
+#include "psiiconset.h"
 #include "psiaccount.h"
 #include "contactlistaccountgroup.h"
 #include "accountstatusmenu.h"
@@ -62,6 +64,7 @@ class ContactListAccountMenu::Private : public QObject
 	QAction* adminUpdateMotdAction_;
 	QAction* adminDeleteMotdAction_;
 	QAction *doGroupChatAction_;
+	QMenu* pluginsMenu_;
 
 public:
 	Private(ContactListAccountMenu* menu, ContactListAccountGroup* _account)
@@ -160,6 +163,12 @@ public:
 		menu->addAction(xmlConsoleAction_);
 		menu->addSeparator();
 		menu->addAction(modifyAccountAction_);
+
+#ifdef PSI_PLUGINS
+		pluginsMenu_ = menu->addMenu(IconsetFactory::icon("psi/plugins").icon(), tr("Plugins"));
+		PluginManager::instance()->addAccountMenu(pluginsMenu_, account->account());
+#endif
+
 		adminMenu_ = menu->addMenu(tr("&Admin"));
 		adminMenu_->addAction(adminOnlineUsersAction_);
 		adminMenu_->addAction(adminSendServerMessageAction_);
@@ -228,6 +237,12 @@ private slots:
 		adminSetMotdAction_->setVisible(newMessageAction_->isVisible());
 		adminUpdateMotdAction_->setVisible(newMessageAction_->isVisible());
 		adminDeleteMotdAction_->setVisible(newMessageAction_->isVisible());
+
+#ifdef PSI_PLUGINS
+		if(pluginsMenu_->isEmpty())
+			pluginsMenu_->menuAction()->setVisible(false);
+		pluginsMenu_->setEnabled(account->account()->isAvailable() && !pluginsMenu_->isEmpty());
+#endif
 	}
 
 	void statusChanged(XMPP::Status::Type statusType, bool forceDialog)
