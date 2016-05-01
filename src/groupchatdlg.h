@@ -134,6 +134,7 @@ private slots:
 	void setConnecting();
 	void unsetConnecting();
 	void action_error(MUCManager::Action, int, const QString&);
+	void updateGCVCard(const Jid &);
 	void updateIdentityVisibility();
 	void updateBookmarkIcon();
 #ifdef WHITEBOARDING

@@ -90,10 +90,9 @@
 #include "pluginmanager.h"
 #endif
 #include "psirichtext.h"
-
 #include "mcmdsimplesite.h"
-
 #include "tabcompletion.h"
+#include "vcardfactory.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -860,6 +859,10 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	connect(d->mucManager,SIGNAL(action_error(MUCManager::Action, int, const QString&)), SLOT(action_error(MUCManager::Action, int, const QString&)));
 	connect(d->mucManager, SIGNAL(action_success(MUCManager::Action)), ui_.lv_users, SLOT(update()));
 
+	connect(VCardFactory::instance(), SIGNAL(vcardChanged(const Jid&)), SLOT(updateGCVCard(const Jid&)));
+	updateGCVCard(d->mucManager->room());
+	VCardFactory::instance()->getVCard(jid(), account()->client()->rootTask(), 0, 0, true);
+
 	setLooks();
 	setToolbuttons();
 	setShortcuts();
@@ -1069,6 +1072,25 @@ void GCMainDlg::action_error(MUCManager::Action, int, const QString& err)
 	appendSysMsg(err, false);
 }
 
+void GCMainDlg::updateGCVCard(const Jid &j)
+{
+	if (j.bare() != d->mucManager->room().bare()) {
+		return; // unrelated
+	}
+	if (j.resource().isEmpty()) {
+		const VCard *vcard = VCardFactory::instance()->vcard(j);
+		if (vcard) {
+			QImage avatar = QImage::fromData(vcard->photo());
+			if (!avatar.isNull()) {
+				ui_.lblAvatar->show();
+				ui_.lblAvatar->setPixmap(QPixmap::fromImage(avatar).scaled(ui_.lblAvatar->minimumSize(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+				return;
+			}
+		}
+		ui_.lblAvatar->hide();
+	}
+	// are users vcards handled here?
+}
 
 void MiniCommand_Depreciation_Message(const QString &old,const QString &newCmd, QString &line1, QString &line2) {
 	line1 = QObject::tr("Warning: %1 is deprecated and will be removed in the future").arg(old);

@@ -1,7 +1,8 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>GroupChatDlg</class>
- <widget class="QWidget" name="GroupChatDlg" >
-  <property name="geometry" >
+ <widget class="QWidget" name="GroupChatDlg">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
@@ -9,129 +10,160 @@
     <height>428</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string/>
   </property>
-  <layout class="QVBoxLayout" >
-   <property name="margin" >
-    <number>4</number>
-   </property>
-   <property name="spacing" >
+  <layout class="QVBoxLayout">
+   <property name="spacing">
     <number>6</number>
    </property>
+   <property name="leftMargin">
+    <number>4</number>
+   </property>
+   <property name="topMargin">
+    <number>4</number>
+   </property>
+   <property name="rightMargin">
+    <number>4</number>
+   </property>
+   <property name="bottomMargin">
+    <number>4</number>
+   </property>
    <item>
-    <widget class="ChatSplitter" name="vsplitter" >
-     <property name="orientation" >
+    <widget class="ChatSplitter" name="vsplitter">
+     <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
-     <widget class="QFrame" name="topFrame" >
-      <property name="sizePolicy" >
-       <sizepolicy>
-        <hsizetype>5</hsizetype>
-        <vsizetype>3</vsizetype>
+     <widget class="QFrame" name="topFrame">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
-      <property name="frameShape" >
+      <property name="frameShape">
        <enum>QFrame::NoFrame</enum>
       </property>
-      <property name="frameShadow" >
+      <property name="frameShadow">
        <enum>QFrame::Plain</enum>
       </property>
-      <layout class="QVBoxLayout" >
-       <property name="margin" >
-        <number>0</number>
-       </property>
-       <property name="spacing" >
+      <layout class="QVBoxLayout">
+       <property name="spacing">
         <number>4</number>
        </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
        <item>
-        <widget class="QWidget" native="1" name="widget" >
-         <property name="sizePolicy" >
-          <sizepolicy>
-           <hsizetype>5</hsizetype>
-           <vsizetype>0</vsizetype>
+        <widget class="QWidget" name="widget" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
-         <layout class="QHBoxLayout" >
-          <property name="margin" >
-           <number>0</number>
-          </property>
-          <property name="spacing" >
+         <layout class="QHBoxLayout">
+          <property name="spacing">
            <number>4</number>
           </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
           <item>
-           <widget class="QPushButton" name="pb_topic" >
-            <property name="text" >
+           <widget class="QLabel" name="lblAvatar">
+            <property name="minimumSize">
+             <size>
+              <width>40</width>
+              <height>40</height>
+             </size>
+            </property>
+            <property name="scaledContents">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pb_topic">
+            <property name="text">
              <string>Topic:</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="ActionLineEdit" name="le_topic" >
-            <property name="readOnly" >
+           <widget class="ActionLineEdit" name="le_topic">
+            <property name="readOnly">
              <bool>true</bool>
-            </property>
-            <property name="toolButtonStyle" >
-             <enum>Qt::ToolButtonIconOnly</enum>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="AccountLabel" name="lb_ident" >
-            <property name="sizePolicy" >
-             <sizepolicy>
-              <hsizetype>1</hsizetype>
-              <vsizetype>0</vsizetype>
+           <widget class="AccountLabel" name="lb_ident">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
-            <property name="text" >
+            <property name="text">
              <string>AccountLabel</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QToolButton" name="tb_emoticons" >
-            <property name="toolTip" >
+           <widget class="QToolButton" name="tb_emoticons">
+            <property name="toolTip">
              <string>Select icon</string>
             </property>
-            <property name="text" >
+            <property name="text">
              <string/>
             </property>
-            <property name="iconSize" >
+            <property name="iconSize">
              <size>
               <width>16</width>
               <height>16</height>
              </size>
             </property>
-            <property name="popupMode" >
+            <property name="popupMode">
              <enum>QToolButton::InstantPopup</enum>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QToolButton" name="tb_actions" >
-            <property name="toolTip" >
+           <widget class="QToolButton" name="tb_actions">
+            <property name="toolTip">
              <string>Actions</string>
             </property>
-            <property name="text" >
+            <property name="text">
              <string/>
             </property>
-            <property name="iconSize" >
+            <property name="iconSize">
              <size>
               <width>16</width>
               <height>16</height>
              </size>
             </property>
-            <property name="popupMode" >
+            <property name="popupMode">
              <enum>QToolButton::InstantPopup</enum>
             </property>
-            <property name="arrowType" >
+            <property name="arrowType">
              <enum>Qt::NoArrow</enum>
             </property>
            </widget>
@@ -140,107 +172,120 @@
         </widget>
        </item>
        <item>
-        <widget class="QSplitter" name="hsplitter" >
-         <property name="sizePolicy" >
-          <sizepolicy>
-           <hsizetype>7</hsizetype>
-           <vsizetype>5</vsizetype>
+        <widget class="QSplitter" name="hsplitter">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
            <horstretch>0</horstretch>
            <verstretch>1</verstretch>
           </sizepolicy>
          </property>
-         <property name="orientation" >
+         <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
-         <widget class="ChatView" name="log" >
-          <property name="sizePolicy" >
-           <sizepolicy>
-            <hsizetype>7</hsizetype>
-            <vsizetype>3</vsizetype>
+         <widget class="ChatView" name="log">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
-          <property name="focusPolicy" >
+          <property name="focusPolicy">
            <enum>Qt::NoFocus</enum>
           </property>
          </widget>
-         <widget class="GCUserView" name="lv_users" >
-          <property name="minimumSize" >
+         <widget class="GCUserView" name="lv_users">
+          <property name="minimumSize">
            <size>
             <width>20</width>
             <height>0</height>
            </size>
           </property>
-          <property name="horizontalScrollBarPolicy" >
+          <property name="horizontalScrollBarPolicy">
            <enum>Qt::ScrollBarAlwaysOff</enum>
           </property>
+          <column>
+           <property name="text">
+            <string notr="true">1</string>
+           </property>
+          </column>
          </widget>
         </widget>
        </item>
       </layout>
      </widget>
-     <widget class="QFrame" name="bottomFrame" >
-      <property name="sizePolicy" >
-       <sizepolicy>
-        <hsizetype>5</hsizetype>
-        <vsizetype>4</vsizetype>
+     <widget class="QFrame" name="bottomFrame">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
-      <property name="frameShape" >
+      <property name="frameShape">
        <enum>QFrame::NoFrame</enum>
       </property>
-      <property name="frameShadow" >
+      <property name="frameShadow">
        <enum>QFrame::Plain</enum>
       </property>
-      <layout class="QVBoxLayout" >
-       <property name="margin" >
-        <number>0</number>
-       </property>
-       <property name="spacing" >
+      <layout class="QVBoxLayout">
+       <property name="spacing">
         <number>6</number>
        </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
        <item>
-        <widget class="QToolBar" name="toolbar" >
-         <property name="sizePolicy" >
-          <sizepolicy>
-           <hsizetype>5</hsizetype>
-           <vsizetype>4</vsizetype>
+        <widget class="QToolBar" name="toolbar">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
-         <property name="orientation" >
+         <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" >
-         <property name="margin" >
+        <layout class="QHBoxLayout">
+         <property name="spacing">
+          <number>6</number>
+         </property>
+         <property name="leftMargin">
           <number>0</number>
          </property>
-         <property name="spacing" >
-          <number>6</number>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
          </property>
          <item>
           <widget class="QLabel" name="mini_prompt">
-	   <property name="font" >
-	    <font>
-	     <weight>75</weight>
-	     <bold>true</bold>
-	    </font>
-	   </property>
-	  </widget>
+           <property name="font">
+            <font>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+          </widget>
          </item>
          <item>
-          <widget class="ChatEditProxy" name="mle" >
-           <property name="sizePolicy" >
-            <sizepolicy>
-             <hsizetype>7</hsizetype>
-             <vsizetype>5</vsizetype>
+          <widget class="ChatEditProxy" name="mle">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -250,7 +295,7 @@
          <item>
           <widget class="QPushButton" name="pb_send">
            <property name="sizePolicy">
-            <sizepolicy vsizetype="Expanding" hsizetype="Minimum">
+            <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
@@ -282,6 +327,11 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>ActionLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>actionlineedit.h</header>
+  </customwidget>
+  <customwidget>
    <class>AccountLabel</class>
    <extends>QLabel</extends>
    <header>accountlabel.h</header>
@@ -295,21 +345,18 @@
    <class>ChatSplitter</class>
    <extends>QSplitter</extends>
    <header>chatsplitter.h</header>
+   <container>1</container>
   </customwidget>
   <customwidget>
    <class>ChatView</class>
    <extends>QFrame</extends>
    <header>chatview.h</header>
+   <container>1</container>
   </customwidget>
   <customwidget>
    <class>ChatEditProxy</class>
    <extends>QTextEdit</extends>
    <header>chateditproxy.h</header>
-  </customwidget>
-  <customwidget>
-   <class>ActionLineEdit</class>
-   <extends>QLineEdit</extends>
-   <header>actionlineedit.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
