@@ -300,6 +300,7 @@ UserListItem::UserListItem(bool self)
 	v_inList = false;
 	v_self = self;
 	v_private = false;
+	v_isTransport = false;
 	v_isConference = false;
 	v_avatarFactory = NULL;
 	lastmsgtype = -1;
