@@ -859,9 +859,8 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	connect(d->mucManager,SIGNAL(action_error(MUCManager::Action, int, const QString&)), SLOT(action_error(MUCManager::Action, int, const QString&)));
 	connect(d->mucManager, SIGNAL(action_success(MUCManager::Action)), ui_.lv_users, SLOT(update()));
 
-	connect(VCardFactory::instance(), SIGNAL(vcardChanged(const Jid&)), SLOT(updateGCVCard(const Jid&)));
-	updateGCVCard(d->mucManager->room());
-	VCardFactory::instance()->getVCard(jid(), account()->client()->rootTask(), 0, 0, true);
+	updateGCVCard();
+	VCardFactory::instance()->getVCard(jid(), account()->client()->rootTask(), this, SLOT(updateGCVCard()), true);
 
 	setLooks();
 	setToolbuttons();
@@ -1072,24 +1071,18 @@ void GCMainDlg::action_error(MUCManager::Action, int, const QString& err)
 	appendSysMsg(err, false);
 }
 
-void GCMainDlg::updateGCVCard(const Jid &j)
+void GCMainDlg::updateGCVCard()
 {
-	if (j.bare() != d->mucManager->room().bare()) {
-		return; // unrelated
-	}
-	if (j.resource().isEmpty()) {
-		const VCard *vcard = VCardFactory::instance()->vcard(j);
-		if (vcard) {
-			QImage avatar = QImage::fromData(vcard->photo());
-			if (!avatar.isNull()) {
-				ui_.lblAvatar->show();
-				ui_.lblAvatar->setPixmap(QPixmap::fromImage(avatar).scaled(ui_.lblAvatar->minimumSize(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-				return;
-			}
+	const VCard *vcard = VCardFactory::instance()->vcard(jid());
+	if (vcard) {
+		QImage avatar = QImage::fromData(vcard->photo());
+		if (!avatar.isNull()) {
+			ui_.lblAvatar->show();
+			ui_.lblAvatar->setPixmap(QPixmap::fromImage(avatar).scaled(ui_.lblAvatar->minimumSize(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+			return;
 		}
-		ui_.lblAvatar->hide();
 	}
-	// are users vcards handled here?
+	ui_.lblAvatar->hide();
 }
 
 void MiniCommand_Depreciation_Message(const QString &old,const QString &newCmd, QString &line1, QString &line2) {
@@ -1730,6 +1723,10 @@ void GCMainDlg::message(const Message &_m)
 	}
 	if (m.getMUCStatuses().contains(174)) {
 		d->nonAnonymous = false;
+	}
+	if (m.getMUCStatuses().contains(104)) {
+		// new MUC vcard available
+		VCardFactory::instance()->getVCard(jid(), account()->client()->rootTask(), this, SLOT(updateGCVCard()), true);
 	}
 
 	PsiOptions *options = PsiOptions::instance();

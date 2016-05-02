@@ -197,9 +197,7 @@ JT_VCard* VCardFactory::getVCard(const Jid &jid, Task *rootTask, const QObject *
 	JT_VCard *task = new JT_VCard( rootTask );
 	if ( cacheVCard )
 		task->connect(task, SIGNAL(finished()), this, SLOT(taskFinished()));
-	if (obj) { // in case just want update cache
-		task->connect(task, SIGNAL(finished()), obj, slot);
-	}
+	task->connect(task, SIGNAL(finished()), obj, slot);
 	task->get(Jid(jid.full()));
 	task->go(true);
 	return task;
