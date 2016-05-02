@@ -52,6 +52,7 @@ Dependency options:
   --disable-hunspell            Disable use of hunspell
   --with-hunspell-inc=[path]    Path to Hunspell include files
   --with-hunspell-lib=[path]    Path to Hunspell library files
+  --disable-plugins             Disable use of Psi Plugin support
 
 EOT
 }
@@ -310,6 +311,11 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
+		--disable-plugins)
+			QC_DISABLE_plugins="Y"
+			shift
+			;;
+
 		--verbose)
 			QC_VERBOSE="Y"
 			shift
@@ -364,6 +370,7 @@ echo QC_DISABLE_enchant=$QC_DISABLE_enchant
 echo QC_DISABLE_hunspell=$QC_DISABLE_hunspell
 echo QC_WITH_HUNSPELL_INC=$QC_WITH_HUNSPELL_INC
 echo QC_WITH_HUNSPELL_LIB=$QC_WITH_HUNSPELL_LIB
+echo QC_DISABLE_plugins=$QC_DISABLE_plugins
 echo
 fi
 
@@ -1796,6 +1803,32 @@ public:
 			return "no";
 	}
 };
+#line 1 "plugins.qcm"
+/*
+-----BEGIN QCMOD-----
+name: Psi Plugin support
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_plugins
+//----------------------------------------------------------------------------
+class qc_plugins : public ConfObj
+{
+public:
+	qc_plugins(Conf *c) : ConfObj(c) {}
+	QString name() const { return "Psi Plugin support"; }
+	QString shortname() const { return "plugins"; }
+	bool exec()
+	{
+		conf->addDefine("PSI_PLUGINS");
+
+		// Finish
+		conf->addExtra("CONFIG += psi_plugins");
+
+		return true;
+	}
+};
 #line 1 "conf.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -2062,6 +2095,9 @@ cat >"$1/modules_new.cpp" <<EOT
     o->disabled = false;
     o = new qc_spell(conf);
     o->required = true;
+    o->disabled = false;
+    o = new qc_plugins(conf);
+    o->required = false;
     o->disabled = false;
     o = new qc_conf(conf);
     o->required = true;
@@ -3307,6 +3343,7 @@ export QC_DISABLE_enchant
 export QC_DISABLE_hunspell
 export QC_WITH_HUNSPELL_INC
 export QC_WITH_HUNSPELL_LIB
+export QC_DISABLE_plugins
 export QC_VERBOSE
 export QC_QTSELECT
 rm -rf ".qconftemp"
