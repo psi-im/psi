@@ -1,10 +1,12 @@
 # base dialog stuff
 HEADERS += \
-	$$PWD/optionsdlg.h \
-	$$PWD/optionstab.h
+	$$PWD/optionstab.h \
+    $$PWD/optionsdlgbase.h \
+    $$PWD/optionsdlg.h
 SOURCES += \
 	$$PWD/optionstab.cpp \
-	$$PWD/optionsdlg.cpp
+    $$PWD/optionsdlgbase.cpp \
+    $$PWD/optionsdlg.cpp
 FORMS += \
 	$$PWD/ui_options.ui
 
@@ -80,8 +82,7 @@ FORMS += \
 	$$PWD/opt_general_groupchat.ui \
 	$$PWD/opt_shortcuts.ui \
 	$$PWD/opt_statuspep.ui \
-	$$PWD/plugininfodialog.ui \
-	$$PWD/pluginsettsdialog.ui
+	$$PWD/plugininfodialog.ui
 
 psi_plugins {
 	FORMS += $$PWD/opt_plugins.ui

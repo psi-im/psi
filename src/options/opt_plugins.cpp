@@ -4,6 +4,7 @@
 #include "pluginmanager.h"
 #include "psioptions.h"
 #include "psiiconset.h"
+#include "optionsdlgbase.h"
 
 #include <QWhatsThis>
 #include <QToolButton>
@@ -15,6 +16,41 @@ class OptPluginsUI : public QWidget, public Ui::OptPlugins
 {
 public:
 	OptPluginsUI() : QWidget() { setupUi(this); }
+};
+
+
+class OptionsTabPlugin : public OptionsTab
+{
+	Q_OBJECT
+
+	QString pluginName;
+public:
+	OptionsTabPlugin(const QString &pluginName, QObject *parent) :
+	    OptionsTab(parent, "general", "", tr("General"), tr("General plugin options"), "psi/options"),
+	    pluginName(pluginName) {}
+	QWidget *widget() { return PluginManager::instance()->optionsWidget( pluginName ); }
+	void applyOptions() { PluginManager::instance()->applyOptions( pluginName ); }
+	void restoreOptions() { PluginManager::instance()->restoreOptions( pluginName ); }
+};
+
+
+class PluginsOptionsDlg : public OptionsDlgBase
+{
+	Q_OBJECT
+public:
+	PluginsOptionsDlg(const QString &pluginName, PsiCon *psi, QWidget *parent = 0) :
+	    OptionsDlgBase(psi, parent)
+	{
+		setWindowTitle(QString("%1: %2").arg(pluginName).arg(windowTitle()));
+		QIcon icon = PluginManager::instance()->icon(pluginName);
+		if (icon.isNull()) {
+			icon = IconsetFactory::iconPtr("psi/options")->icon();
+		}
+		setWindowIcon(icon);
+		setTabs(QList<OptionsTab*>() << new OptionsTabPlugin(pluginName, this));
+		openTab( "general" );
+	}
+
 };
 
 //----------------------------------------------------------------------------
@@ -31,8 +67,11 @@ OptionsTabPlugins::~OptionsTabPlugins()
 {
 	if( infoDialog )
 		delete(infoDialog);
-	if( settingsDialog )
-		delete(settingsDialog);
+}
+
+void OptionsTabPlugins::setData(PsiCon *psi, QWidget *)
+{
+	this->psi = psi;
 }
 
 QWidget *OptionsTabPlugins::widget()
@@ -186,41 +225,13 @@ void OptionsTabPlugins::settingsClicked()
 	if ( d->tw_Plugins->selectedItems().size() > 0 ) {
 		const QString pluginName = d->tw_Plugins->currentItem()->text(C_NAME);
 		const QString shortName = PluginManager::instance()->shortName(pluginName);
-		const QString geometryOption = QString("plugins.options.%1.dialog-size").arg(shortName);
-		QWidget* pluginOptions = PluginManager::instance()->optionsWidget( pluginName );
-		PluginManager::instance()->restoreOptions( pluginName );
-		pluginOptions->setParent(d);
-
-		if( settingsDialog )
-			delete(settingsDialog);
-
-		settingsDialog = new AdvancedWidget<QDialog>(d);
-		settsUi_.setupUi(settingsDialog);
-		settingsDialog->setWindowIcon(QIcon(IconsetFactory::iconPixmap("psi/logo_128")));
-		settingsDialog->setWindowTitle(tr("Settings of %1").arg(pluginName));
-		settsUi_.verticalLayout->insertWidget(0, pluginOptions);
-		connectSignalsToWidget(pluginOptions, this, SLOT(onDataChanged()));
-		connect(settsUi_.buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), this, SLOT(onSettingsOk()));
-		connect(settsUi_.buttonBox->button(QDialogButtonBox::Apply), SIGNAL(clicked()), this, SLOT(onSettingsOk()));
-		settsUi_.buttonBox->button(QDialogButtonBox::Apply)->setEnabled(false);
-		settingsDialog->setGeometryOptionPath(geometryOption);
-		settingsDialog->setAttribute(Qt::WA_DeleteOnClose);
-		settingsDialog->show();
+		PluginsOptionsDlg *sw = d->findChild<PluginsOptionsDlg*>(shortName);
+		if (!sw) {
+			sw = new PluginsOptionsDlg(pluginName, psi, d);
+			sw->setObjectName(shortName);
+		}
+		bringToFront(sw);
 	}
 }
 
-void OptionsTabPlugins::onSettingsOk()
-{
-	if ( !w )
-		return;
-	OptPluginsUI *d = (OptPluginsUI *)w;
-	if ( d->tw_Plugins->currentItem()->isSelected() ) {
-		PluginManager::instance()->applyOptions( d->tw_Plugins->currentItem()->text(C_NAME) );
-	}
-	settsUi_.buttonBox->button(QDialogButtonBox::Apply)->setEnabled(false);
-}
-
-void OptionsTabPlugins::onDataChanged()
-{
-	settsUi_.buttonBox->button(QDialogButtonBox::Apply)->setEnabled(true);
-}
+#include "opt_plugins.moc"
