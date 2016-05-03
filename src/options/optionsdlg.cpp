@@ -27,6 +27,7 @@ OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent) :
 	OptionsDlgBase(psi, parent)
 {
 	setWindowTitle(CAP(windowTitle()));
+	setWindowIcon(IconsetFactory::icon("psi/options").icon());
 
 	QList<OptionsTab*> tabs;
 
