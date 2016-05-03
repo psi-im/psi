@@ -1,6 +1,7 @@
 #include "optionsdlg.h"
 #include "psicon.h"
 #include "../avcall/avcall.h"
+#include "iconset.h"
 
 // tabs
 #include "opt_toolbars.h"

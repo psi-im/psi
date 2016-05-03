@@ -4,7 +4,6 @@
 #include "optionstab.h"
 #include "advwidget.h"
 #include "ui_plugininfodialog.h"
-#include "ui_pluginsettsdialog.h"
 #include <QPointer>
 #include <QTreeWidgetItem>
 
