@@ -40,10 +40,6 @@ public:
 	// reimplemented
 	void mousePressEvent(QMouseEvent *e);
 
-protected:
-	// reimplemented
-	bool event(QEvent *);
-
 signals:
 	void iconSelected(const PsiIcon *);
 	void textSelected(QString);
