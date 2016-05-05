@@ -1073,9 +1073,9 @@ void GCMainDlg::action_error(MUCManager::Action, int, const QString& err)
 
 void GCMainDlg::updateGCVCard()
 {
-	const VCard *vcard = VCardFactory::instance()->vcard(jid());
+	const VCard vcard = VCardFactory::instance()->vcard(jid());
 	if (vcard) {
-		QImage avatar = QImage::fromData(vcard->photo());
+		QImage avatar = QImage::fromData(vcard.photo());
 		if (!avatar.isNull()) {
 			ui_.lblAvatar->show();
 			ui_.lblAvatar->setPixmap(QPixmap::fromImage(avatar).scaled(ui_.lblAvatar->minimumSize(), Qt::KeepAspectRatio, Qt::SmoothTransformation));

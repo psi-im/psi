@@ -302,13 +302,9 @@ void AddUserDlg::errorGateway(const QString &str, const QString &err)
 
 void AddUserDlg::getVCardActivated()
 {
-	const VCard *vcard = VCardFactory::instance()->vcard(jid());
+	const VCard vcard = VCardFactory::instance()->vcard(jid());
 
-	VCard tmp;
-	if ( vcard )
-		tmp = *vcard;
-
-	InfoDlg *w = new InfoDlg(InfoWidget::Contact, jid(), tmp, d->pa, 0, false);
+	InfoDlg *w = new InfoDlg(InfoWidget::Contact, jid(), vcard, d->pa, 0, false);
 	w->show();
 
 	// automatically retrieve info if it doesn't exist

@@ -129,7 +129,7 @@ InfoWidget::InfoWidget(int type, const Jid &j, const VCard &vcard, PsiAccount *p
 	d = new Private;
 	d->type = type;
 	d->jid = j;
-	d->vcard = vcard;
+	d->vcard = vcard? vcard : VCard::makeEmpty();
 	d->pa = pa;
 	d->busy = false;
 	d->te_edited = false;
@@ -547,7 +547,7 @@ void InfoWidget::doRefresh()
 	d->actionType = 0;
 	emit busy();
 
-	d->jt = VCardFactory::instance()->getVCard(d->jid, d->pa->client()->rootTask(), this, SLOT(jt_finished()), d->cacheVCard);
+	d->jt = VCardFactory::instance()->getVCard(d->jid, d->pa->client()->rootTask(), this, SLOT(jt_finished()), d->cacheVCard, d->type == MucContact);
 }
 
 void InfoWidget::publish()
@@ -570,7 +570,7 @@ void InfoWidget::publish()
 	emit busy();
 
 	if (d->type == MucAdm) {
-		VCardFactory::instance()->setMucVCard(d->pa, submit_vcard, d->jid, this, SLOT(jt_finished()));
+		VCardFactory::instance()->setTargetVCard(d->pa, submit_vcard, d->jid, this, SLOT(jt_finished()));
 	} else {
 		VCardFactory::instance()->setVCard(d->pa, submit_vcard, this, SLOT(jt_finished()));
 	}
@@ -616,7 +616,7 @@ void InfoWidget::doClearBirthDate()
 
 VCard InfoWidget::makeVCard()
 {
-	VCard v;
+	VCard v = VCard::makeEmpty();
 
 	v.setFullName( ui_.le_fullname->text() );
 	v.setGivenName( d->le_givenname->text() );

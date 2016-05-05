@@ -47,8 +47,6 @@ VCardFactory::VCardFactory()
  */
 VCardFactory::~VCardFactory()
 {
-	foreach (VCard *vcard, vcardDict_)
-		delete vcard;
 }
 
 /**
@@ -66,18 +64,18 @@ VCardFactory* VCardFactory::instance()
 /**
  * Adds a vcard to the cache (and removes other items if necessary)
  */
-void VCardFactory::checkLimit(QString jid, VCard *vcard)
+void VCardFactory::checkLimit(const QString &jid, const VCard &vcard)
 {
 	if (vcardList_.contains(jid)) {
 		vcardList_.removeAll(jid);
-		delete vcardDict_.take(jid);
+		vcardDict_.remove(jid);
 	}
 	else if (vcardList_.size() > dictSize_) {
 		QString j = vcardList_.takeLast();
-		delete vcardDict_.take(j);
+		vcardDict_.remove(j);
 	}
 
-	vcardDict_[jid] = vcard;
+	vcardDict_.insert(jid, vcard);
 	vcardList_.push_front(jid);
 }
 
@@ -92,10 +90,19 @@ void VCardFactory::taskFinished()
 	}
 }
 
-void VCardFactory::saveVCard(const Jid& j, const VCard& _vcard)
+void VCardFactory::mucTaskFinished()
 {
-	VCard *vcard = new VCard;
-	*vcard = _vcard;
+	JT_VCard *task = (JT_VCard *)sender();
+	if ( task->success() ) {
+		Jid j = task->jid();
+		mucVcardDict_[j.bare()].insert(j.resource(), task->vcard());
+
+		emit vcardChanged(j);
+	}
+}
+
+void VCardFactory::saveVCard(const Jid& j, const VCard& vcard)
+{
 	checkLimit(j.bare(), vcard);
 
 	// save vCard to disk
@@ -111,17 +118,31 @@ void VCardFactory::saveVCard(const Jid& j, const VCard& _vcard)
 	QTextStream out ( &file );
 	out.setCodec("UTF-8");
 	QDomDocument doc;
-	doc.appendChild( vcard->toXml ( &doc ) );
+	doc.appendChild( vcard.toXml ( &doc ) );
 	out << doc.toString(4);
 
 	Jid jid = j;
 	emit vcardChanged(jid);
 }
 
+
+/**
+ * \brief Call this, when you need a runtime cached vCard.
+ */
+const VCard VCardFactory::mucVcard(const Jid &j) const
+{
+	QHash<QString,VCard> d = mucVcardDict_.value(j.bare());
+	QHash<QString,VCard>::ConstIterator it = d.constFind(j.resource());
+	if (it != d.constEnd()) {
+		return *it;
+	}
+	return VCard();
+}
+
 /**
  * \brief Call this, when you need a cached vCard.
  */
-const VCard* VCardFactory::vcard(const Jid &j)
+VCard VCardFactory::vcard(const Jid &j)
 {
 	// first, try to get vCard from runtime cache
 	if (vcardDict_.contains(j.bare())) {
@@ -132,15 +153,16 @@ const VCard* VCardFactory::vcard(const Jid &j)
 	QFile file ( ApplicationInfo::vCardDir() + '/' + JIDUtil::encode(j.bare()).toLower() + ".xml" );
 	file.open (QIODevice::ReadOnly);
 	QDomDocument doc;
-	VCard *vcard = new VCard;
+
 	if ( doc.setContent(&file, false) ) {
-		vcard->fromXml( doc.documentElement() );
-		checkLimit(j.bare(), vcard);
-		return vcard;
+		VCard vcard = VCard::fromXml(doc.documentElement());
+		if (!vcard.isNull()) {
+			checkLimit(j.bare(), vcard);
+			return vcard;
+		}
 	}
 
-	delete vcard;
-	return 0;
+	return VCard();
 }
 
 
@@ -168,7 +190,7 @@ void VCardFactory::setVCard(const PsiAccount* account, const VCard &v, QObject* 
 /**
  * \brief Updates vCard on specified \a account.
  */
-void VCardFactory::setMucVCard(const PsiAccount* account, const VCard &v, const Jid &mucJid, QObject* obj, const char* slot)
+void VCardFactory::setTargetVCard(const PsiAccount* account, const VCard &v, const Jid &mucJid, QObject* obj, const char* slot)
 {
 	JT_VCard* jtVCard_ = new JT_VCard(account->client()->rootTask());
 	if (obj)
@@ -192,11 +214,15 @@ void VCardFactory::updateVCardFinished()
 /**
  * \brief Call this when you need to retrieve fresh vCard from server (and store it in cache afterwards)
  */
-JT_VCard* VCardFactory::getVCard(const Jid &jid, Task *rootTask, const QObject *obj, const char *slot, bool cacheVCard)
+JT_VCard* VCardFactory::getVCard(const Jid &jid, Task *rootTask, const QObject *obj, const char *slot, bool cacheVCard, bool isMuc)
 {
 	JT_VCard *task = new JT_VCard( rootTask );
-	if ( cacheVCard )
-		task->connect(task, SIGNAL(finished()), this, SLOT(taskFinished()));
+	if ( cacheVCard ) {
+		if (isMuc)
+			task->connect(task, SIGNAL(finished()), this, SLOT(mucTaskFinished()));
+		else
+			task->connect(task, SIGNAL(finished()), this, SLOT(taskFinished()));
+	}
 	task->connect(task, SIGNAL(finished()), obj, slot);
 	task->get(Jid(jid.full()));
 	task->go(true);

@@ -785,9 +785,9 @@ public slots:
 	{
 		// our own vcard?
 		if(j.compare(jid, false)) {
-			const VCard *vcard = VCardFactory::instance()->vcard(j);
+			const VCard vcard = VCardFactory::instance()->vcard(j);
 			if(vcard) {
-				vcardPhotoUpdate(vcard->photo());
+				vcardPhotoUpdate(vcard.photo());
 			}
 		}
 	}
@@ -2350,16 +2350,16 @@ void PsiAccount::serverFeaturesChanged()
 
 	if (d->serverInfoManager->features().haveVCard() && !d->vcardChecked) {
 		// Get the vcard
-		const VCard *vcard = VCardFactory::instance()->vcard(d->jid);
-		if (PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool() || !vcard || vcard->isEmpty() || (vcard->nickName().isEmpty() && vcard->fullName().isEmpty()))
+		const VCard vcard = VCardFactory::instance()->vcard(d->jid);
+		if (PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool() || vcard.isEmpty() || (vcard.nickName().isEmpty() && vcard.fullName().isEmpty()))
 			VCardFactory::instance()->getVCard(d->jid, d->client->rootTask(), this, SLOT(slotCheckVCard()));
 		else {
 			d->nickFromVCard = true;
 			// if we get here, one of these fields is non-empty
-			if (!vcard->nickName().isEmpty()) {
-				setNick(vcard->nickName());
+			if (!vcard.nickName().isEmpty()) {
+				setNick(vcard.nickName());
 			} else {
-				setNick(vcard->fullName());
+				setNick(vcard.fullName());
 			}
 		}
 		d->vcardChecked = true;
@@ -4396,9 +4396,11 @@ void PsiAccount::actionAgentSetStatus(const Jid &j, const Status &s)
 void PsiAccount::actionInfo(const Jid &_j, bool showStatusInfo)
 {
 	bool useCache = true;
+	bool isMucMember = false;
 	Jid j;
 	if(findGCContact(_j)) {
 		useCache = false;
+		isMucMember = true;
 		j = _j;
 	}
 	else {
@@ -4412,12 +4414,15 @@ void PsiAccount::actionInfo(const Jid &_j, bool showStatusInfo)
 		bringToFront(w);
 	}
 	else {
-		const VCard *vcard = VCardFactory::instance()->vcard(j);
+		VCard vcard;
+		if (isMucMember) {
+			vcard = VCardFactory::instance()->mucVcard(j);
+		} else {
+			vcard = VCardFactory::instance()->vcard(j);
+		}
 
-		VCard tmp;
-		if ( vcard )
-			tmp = *vcard;
-		w = new InfoDlg(j.compare(d->jid) ? InfoWidget::Self : InfoWidget::Contact, j, tmp, this, 0, useCache);
+		w = new InfoDlg(j.compare(d->jid) ? InfoWidget::Self : isMucMember? InfoWidget::MucContact : InfoWidget::Contact,
+		                j, vcard, this, 0, useCache);
 
 		w->infoWidget()->setStatusVisibility(showStatusInfo);
 		w->show();

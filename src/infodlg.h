@@ -39,7 +39,7 @@ class InfoWidget : public QWidget
 {
 	Q_OBJECT
 public:
-	enum { Self, Contact, MucAdm };
+	enum { Self, Contact, MucContact, MucAdm };
 	InfoWidget(int type, const XMPP::Jid &, const XMPP::VCard &, PsiAccount *, QWidget *parent=0, bool cacheVCard = true);
 	~InfoWidget();
 	bool aboutToClose(); /* call this when you are going to close parent dialog */

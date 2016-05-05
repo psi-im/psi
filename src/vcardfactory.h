@@ -23,6 +23,7 @@
 
 #include <QObject>
 #include <QMap>
+#include <QHash>
 #include <QStringList>
 
 namespace XMPP {
@@ -41,21 +42,23 @@ class VCardFactory : public QObject
 
 public:
 	static VCardFactory* instance();
-	const VCard *vcard(const Jid &);
+	VCard vcard(const Jid &);
+	const VCard mucVcard(const Jid &j) const;
 	void setVCard(const Jid &, const VCard &);
 	void setVCard(const PsiAccount* account, const VCard &v, QObject* obj = 0, const char* slot = 0);
-	void setMucVCard(const PsiAccount* account, const VCard &v, const Jid &mucJid, QObject* obj, const char* slot);
-	JT_VCard *getVCard(const Jid &, Task *rootTask, const QObject *, const char *slot, bool cacheVCard = true);
+	void setTargetVCard(const PsiAccount* account, const VCard &v, const Jid &mucJid, QObject* obj, const char* slot);
+	JT_VCard *getVCard(const Jid &, Task *rootTask, const QObject *, const char *slot, bool cacheVCard = true, bool isMuc = false);
 
 signals:
 	void vcardChanged(const Jid&);
 
 protected:
-	void checkLimit(QString jid, VCard *vcard);
+	void checkLimit(const QString &jid, const VCard &vcard);
 
 private slots:
 	void updateVCardFinished();
 	void taskFinished();
+	void mucTaskFinished();
 
 private:
 	VCardFactory();
@@ -64,7 +67,8 @@ private:
 	static VCardFactory* instance_;
 	const int dictSize_;
 	QStringList vcardList_;
-	QMap<QString,VCard*> vcardDict_;
+	QMap<QString,VCard> vcardDict_;
+	QMap<QString, QHash<QString,VCard> > mucVcardDict_; // QHash in case of big mucs
 
 	void saveVCard(const Jid &, const VCard &);
 };

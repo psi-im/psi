@@ -162,13 +162,8 @@ void MUCConfigDlg::refreshVcard()
 	if (!ui_.tab_vcard->layout()) {
 		QVBoxLayout *layout = new QVBoxLayout;
 
-		const VCard *vcard = VCardFactory::instance()->vcard(manager_->room());
-
-		VCard tmp;
-		if ( vcard )
-			tmp = *vcard;
-
-		vcard_ = new InfoWidget(InfoWidget::MucAdm, manager_->room(), tmp, manager_->account());
+		const VCard vcard = VCardFactory::instance()->vcard(manager_->room());
+		vcard_ = new InfoWidget(InfoWidget::MucAdm, manager_->room(), vcard, manager_->account());
 		layout->addWidget(vcard_);
 		ui_.tab_vcard->setLayout(layout);
 		connect(vcard_, SIGNAL(busy()), ui_.busy, SLOT(start()));

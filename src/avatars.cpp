@@ -314,10 +314,10 @@ void VCardAvatar::requestAvatar()
 
 void VCardAvatar::receivedVCard()
 {
-	const VCard* vcard = VCardFactory::instance()->vcard(jid_);
+	const VCard vcard = VCardFactory::instance()->vcard(jid_);
 	if (vcard) {
-		saveToCache(vcard->photo());
-		setImage(vcard->photo());
+		saveToCache(vcard.photo());
+		setImage(vcard.photo());
 		emit avatarChanged(jid_);
 	}
 }
@@ -391,18 +391,18 @@ private:
 VCardStaticAvatar::VCardStaticAvatar(AvatarFactory* factory, const Jid& j)
 	: Avatar(factory), jid_(j.bare())
 {
-	const VCard* vcard = VCardFactory::instance()->vcard(jid_);
-	if (vcard && !vcard->photo().isEmpty())
-		setImage(vcard->photo());
+	const VCard vcard = VCardFactory::instance()->vcard(jid_);
+	if (vcard && !vcard.photo().isEmpty())
+		setImage(vcard.photo());
 	connect(VCardFactory::instance(),SIGNAL(vcardChanged(const Jid&)),SLOT(vcardChanged(const Jid&)));
 }
 
 void VCardStaticAvatar::vcardChanged(const Jid& j)
 {
 	if (j.compare(jid_,false)) {
-		const VCard* vcard = VCardFactory::instance()->vcard(jid_);
-		if (vcard && !vcard->photo().isEmpty())
-			setImage(vcard->photo());
+		const VCard vcard = VCardFactory::instance()->vcard(jid_);
+		if (vcard && !vcard.photo().isEmpty())
+			setImage(vcard.photo());
 		else
 			resetImage();
 		emit avatarChanged(jid_);

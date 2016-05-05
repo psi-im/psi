@@ -933,7 +933,7 @@ void PsiContact::vcardChanged(const Jid& j)
 
 #ifdef YAPSI
 	d->gender_ = XMPP::VCard::UnknownGender;
-	const VCard* vcard = VCardFactory::instance()->vcard(jid());
+	const VCard vcard = VCardFactory::instance()->vcard(jid());
 	if (vcard) {
 		d->gender_ = vcard->gender();
 	}
