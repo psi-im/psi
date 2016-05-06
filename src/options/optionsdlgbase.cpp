@@ -431,9 +431,6 @@ OptionsDlgBase::OptionsDlgBase(PsiCon *psi, QWidget *parent)
 	setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowMinimizeButtonHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint | Qt::WindowContextHelpButtonHint);
 	d = new Private(this, psi);
 	setModal(false);
-	d->psi->dialogRegister(this);
-
-	resize(640, 480);
 
 	connect(buttonBox->button(QDialogButtonBox::Ok), SIGNAL(clicked()), SLOT(doOk()));
 	connect(pb_apply,SIGNAL(clicked()),SLOT(doApply()));

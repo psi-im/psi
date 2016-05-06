@@ -101,5 +101,8 @@ OptionsDlg::OptionsDlg(PsiCon *psi, QWidget *parent) :
 
 	setTabs(tabs);
 
+	psi->dialogRegister(this);
+	resize(640, 480);
+
 	openTab( "application" );
 }

@@ -1,16 +1,17 @@
 #include "opt_plugins.h"
+#include "ui_opt_plugins.h"
+
+#include <QWhatsThis>
+#include <QToolButton>
+#include <QHeaderView>
+
 #include "common.h"
 #include "iconwidget.h"
 #include "pluginmanager.h"
 #include "psioptions.h"
 #include "psiiconset.h"
 #include "optionsdlgbase.h"
-
-#include <QWhatsThis>
-#include <QToolButton>
-#include <QHeaderView>
-
-#include "ui_opt_plugins.h"
+#include "psicon.h"
 
 class OptPluginsUI : public QWidget, public Ui::OptPlugins
 {
@@ -48,6 +49,10 @@ public:
 		}
 		setWindowIcon(icon);
 		setTabs(QList<OptionsTab*>() << new OptionsTabPlugin(pluginName, this));
+
+		psi->dialogRegister(this);
+		resize(440, 300);
+
 		openTab( "general" );
 	}
 
