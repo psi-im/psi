@@ -95,6 +95,7 @@ void VCardFactory::mucTaskFinished()
 	JT_VCard *task = (JT_VCard *)sender();
 	if ( task->success() ) {
 		Jid j = task->jid();
+		// TODO check for limits. may be like 5 vcards per muc
 		mucVcardDict_[j.bare()].insert(j.resource(), task->vcard());
 
 		emit vcardChanged(j);

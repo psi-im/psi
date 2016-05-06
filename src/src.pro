@@ -61,7 +61,7 @@ unix {
 
 	psi_plugins {
 		pluginsfiles.path  = $$PSI_DATADIR/plugins
-		pluginsfiles.files = plugins/psiplugin.pri plugins/include
+		pluginsfiles.files = plugins/plugins.pri plugins/include
 
 		plugin.path = $$PSI_DATADIR/plugins
 		plugin.extra = sed -e \"s:target.path.*:target.path = $$PSI_LIBDIR/plugins:\" $$top_srcdir/src/plugins/psiplugin.pri > $(INSTALL_ROOT)$$plugin.path/psiplugin.pri
