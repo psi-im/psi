@@ -38,3 +38,5 @@ HEADERS += \
 	$$PWD/include/soundaccessor.h \
 	$$PWD/include/soundaccessinghost.h \
 	$$PWD/include/chattabaccessor.h
+
+OTHER_FILES += $$PWD/psiplugin.pri

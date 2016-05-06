@@ -34,6 +34,7 @@ unix {
 	webkit {
 		sharedfiles.files += ../themes
 	}
+
 	INSTALLS += sharedfiles
 
 	# Widgets
@@ -47,16 +48,26 @@ unix {
 	ad.path=$$PREFIX/share/appdata/
 	ad.file = ../psi.appdata.xml
 	icon1.path=$$PREFIX/share/icons/hicolor/16x16/apps
-	icon1.extra = cp -f ../iconsets/system/default/logo_16.png $(INSTALL_ROOT)$$icon1.path/psi.png
+	icon1.extra = cp -f $$top_srcdir/iconsets/system/default/logo_16.png $(INSTALL_ROOT)$$icon1.path/psi.png
 	icon2.path=$$PREFIX/share/icons/hicolor/32x32/apps
-	icon2.extra = cp -f ../iconsets/system/default/logo_32.png $(INSTALL_ROOT)$$icon2.path/psi.png
+	icon2.extra = cp -f $$top_srcdir/iconsets/system/default/logo_32.png $(INSTALL_ROOT)$$icon2.path/psi.png
 	icon3.path=$$PREFIX/share/icons/hicolor/48x48/apps
-	icon3.extra = cp -f ../iconsets/system/default/logo_48.png $(INSTALL_ROOT)$$icon3.path/psi.png
+	icon3.extra = cp -f $$top_srcdir/iconsets/system/default/logo_48.png $(INSTALL_ROOT)$$icon3.path/psi.png
 	icon4.path=$$PREFIX/share/icons/hicolor/64x64/apps
-	icon4.extra = cp -f ../iconsets/system/default/logo_64.png $(INSTALL_ROOT)$$icon4.path/psi.png
+	icon4.extra = cp -f $$top_srcdir/iconsets/system/default/logo_64.png $(INSTALL_ROOT)$$icon4.path/psi.png
 	icon5.path=$$PREFIX/share/icons/hicolor/128x128/apps
-	icon5.extra = cp -f ../iconsets/system/default/logo_128.png $(INSTALL_ROOT)$$icon5.path/psi.png
+	icon5.extra = cp -f $$top_srcdir/iconsets/system/default/logo_128.png $(INSTALL_ROOT)$$icon5.path/psi.png
 	INSTALLS += dt ad icon1 icon2 icon3 icon4 icon5
+
+	psi_plugins {
+		pluginsfiles.path  = $$PSI_DATADIR/plugins
+		pluginsfiles.files = plugins/psiplugin.pri plugins/include
+
+		plugin.path = $$PSI_DATADIR/plugins
+		plugin.extra = sed -e \"s:target.path.*:target.path = $$PSI_LIBDIR/plugins:\" $$top_srcdir/src/plugins/psiplugin.pri > $(INSTALL_ROOT)$$plugin.path/psiplugin.pri
+
+		INSTALLS += pluginsfiles plugin
+	}
 }
 
 windows {

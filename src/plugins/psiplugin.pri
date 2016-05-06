@@ -14,7 +14,7 @@ greaterThan(QT_MAJOR_VERSION, 4) {
   DEFINES += HAVE_QT5
 }
 
-target.path = $$(HOME)/.local/share/Psi/plugins
+target.path = $$(HOME)/.local/share/psi/plugins
 INSTALLS += target
 
 include(plugins.pri)
