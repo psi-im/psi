@@ -58,7 +58,7 @@ private slots:
 	void loadComplete();
 
 private:
-	class Loader;
+	struct Loader;
 	QFutureWatcher<ThemeItemInfo> themeWatcher;
 	QFuture<ThemeItemInfo> themesFuture;
 	QList<ThemeItemInfo> themesInfo;

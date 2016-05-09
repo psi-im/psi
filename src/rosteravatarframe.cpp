@@ -139,10 +139,10 @@ void RosterAvatarFrame::keyPressEvent(QKeyEvent *e)
 
 void RosterAvatarFrame::optionChanged(QString option)
 {
-	if(option == "options.ui.contactlist.avatars.radius" or "options.ui.contactlist.roster-avatar-frame.avatar.size")
+	if(option == "options.ui.contactlist.avatars.radius" || option == "options.ui.contactlist.roster-avatar-frame.avatar.size")
 		drawAvatar();
-	if (option == "options.ui.look.font.contactlist")
+	else if (option == "options.ui.look.font.contactlist")
 		setFont();
-	if (option == "options.ui.contactlist.roster-avatar-frame.avatar.margin")
+	else if (option == "options.ui.contactlist.roster-avatar-frame.avatar.margin")
 		layout()->setMargin(PsiOptions::instance()->getOption("options.ui.contactlist.roster-avatar-frame.avatar.margin").toInt());
 }

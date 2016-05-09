@@ -377,7 +377,7 @@ fi
 printf "Verifying Qt build environment ... "
 
 if [ -z "$QC_QTSELECT" ]; then
-	QC_QTSELECT="$QT_SELECT"
+	QC_QTSELECT="${QT_SELECT/qt/}"
 fi
 
 if [ ! -z "$QC_QTSELECT" ]; then
@@ -864,7 +864,12 @@ static QString internal_crypto_prf(const QString &incdir, const QString &libdir,
 static bool qca_try(Conf *conf, const QString &incdir, const QString &libdir, const QString &frameworkdir, bool release, bool debug, QString *_prf)
 {
 	QString proextra;
-	QString prf = internal_crypto_prf(conf->escapePath(incdir), conf->escapePath(libdir), frameworkdir);
+	QString prf;
+	if (!incdir.isEmpty() || !libdir.isEmpty() || !frameworkdir.isEmpty()) {
+		prf = internal_crypto_prf(conf->escapePath(incdir), conf->escapePath(libdir), frameworkdir);
+	} else {
+		prf = "CONFIG += crypto\\n";
+	}
 	proextra =
 	"CONFIG += qt\\n"
 	"CONFIG -= debug_and_release debug release\\n"
@@ -910,6 +915,11 @@ static bool qca_try_framework(Conf *conf, const QString &frameworkdir, bool rele
 	return qca_try(conf, QString(), QString(), frameworkdir, release, debug, prf);
 }
 
+static bool qca_try_ext_prf(Conf *conf, bool release, bool debug, QString *prf)
+{
+	return qca_try(conf, QString(), QString(), QString(), release, debug, prf);
+}
+
 //----------------------------------------------------------------------------
 // qc_qca
 //----------------------------------------------------------------------------
@@ -944,6 +954,12 @@ public:
 #endif
 
 		if(!qca_incdir.isEmpty() && !qca_libdir.isEmpty() && qca_try_lib(conf, qca_incdir, qca_libdir, release, debug, &qca_crypto_prf))
+		{
+			conf->addExtra(qca_crypto_prf);
+			return true;
+		}
+		
+		if (qca_try_ext_prf(conf, release, debug, &qca_crypto_prf))
 		{
 			conf->addExtra(qca_crypto_prf);
 			return true;
@@ -1008,6 +1024,8 @@ public:
 		QStringList incs;
 		QString version, libs, other;
 		QString s;
+		
+		
 
 		if(!conf->findPkgConfig("zlib", VersionAny, "", &version, &incs, &libs, &other)) {
 
@@ -1020,20 +1038,37 @@ public:
 				if(!conf->findHeader("zlib.h", QStringList(), &s))
 					return false;
 			}
-			
-			s = conf->getenv("QC_WITH_ZLIB_LIB");
-			if(!s.isEmpty()) {
-				if(!conf->checkLibrary(s, "z"))
-					return false;
-			}
-			else {
-				if(!conf->findLibrary("z", &s))
-					return false;
+
+			QStringList libNames = QStringList() << "z";
+			QString libName;
+#ifdef Q_OS_WIN
+			libNames << (qc_buildmode_debug? "zlibd" : "zlib");
+#endif
+			for (;;) {
+				s = conf->getenv("QC_WITH_ZLIB_LIB");
+				if(!s.isEmpty()) {
+					foreach (const QString l, libNames) 
+						if(conf->checkLibrary(s, l)) {
+							libName = l;
+							break;
+						}
+				} else {
+					foreach (const QString l, libNames) 
+						if(conf->findLibrary(l, &s)) {
+							libName = l;
+							break;
+						}
+				}
+				
+				if(!libName.isEmpty())
+					break;
+						
+				return false;
 			}
 			if (!s.isEmpty()) {
-				libs = QString("-L%1 -lz").arg(s);
+				libs = QString("-L%1 -l%2").arg(s, libName);
 			} else {
-				libs = s.isEmpty()? "-lz" : QString("-L%1 -lz").arg(s);
+				libs = s.isEmpty()? QString("-l")+libName : QString("-L%1 -l%2").arg(s, libName);
 			}
 		}
 
@@ -2239,6 +2274,12 @@ preserved.
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
+#ifndef PATH_MAX
+# ifdef Q_OS_WIN
+#  define PATH_MAX 260
+# endif
+#endif
 
 class MocTestObject : public QObject
 {

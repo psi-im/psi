@@ -703,8 +703,13 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 #endif
 
 	ui_.lv_users->setMainDlg(this);
+#ifdef _MSC_VER
+#pragma NOTE("FIXME: In Qt5 setSupportedDragActions is obsoleted.")
+#pragma NOTE("QTreeWidget doesn't allow to use own model. So should be rewritten to QTreeView.")
+#else
 #warning "FIXME: In Qt5 setSupportedDragActions is obsoleted."
 #warning "QTreeWidget doesn't allow to use own model. So should be rewritten to QTreeView."
+#endif
 #ifndef HAVE_QT5
 	ui_.lv_users->model()->setSupportedDragActions(Qt::CopyAction);
 #endif

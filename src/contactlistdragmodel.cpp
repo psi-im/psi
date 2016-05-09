@@ -266,7 +266,7 @@ bool ContactListDragModel::supportsMimeDataOnIndex(const QMimeData* data, const 
 		return false;
 	}
 
-#if defined(YAPSI) and defined(USE_GENERAL_CONTACT_GROUP)
+#if defined(YAPSI) && defined(USE_GENERAL_CONTACT_GROUP)
 	// in YaPsi there's no accounts in roster, and when General group is disabled,
 	// contacts could be placed directly at the top level
 	if (!accountsEnabled() && !parent.isValid()) {

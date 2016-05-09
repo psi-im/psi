@@ -155,14 +155,7 @@ RESOURCES += ../psi.qrc ../iconsets.qrc
 
 # Platform specifics
 windows {
-	contains(QMAKE_HOST.arch, x86_64):{
-		RC_FILE = ../win32/psi_win64.rc
-	} else {
-		RC_FILE = ../win32/psi_win32.rc
-	}
-
-	# buggy MSVC workaround
-	win32-msvc|win32-msvc.net|win32-msvc2005: QMAKE_LFLAGS += /FORCE:MULTIPLE
+    RC_ICONS = ../win32/app.ico
 }
 mac {
 	# Universal binaries

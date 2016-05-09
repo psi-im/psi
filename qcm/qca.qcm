@@ -53,7 +53,12 @@ static QString internal_crypto_prf(const QString &incdir, const QString &libdir,
 static bool qca_try(Conf *conf, const QString &incdir, const QString &libdir, const QString &frameworkdir, bool release, bool debug, QString *_prf)
 {
 	QString proextra;
-	QString prf = internal_crypto_prf(conf->escapePath(incdir), conf->escapePath(libdir), frameworkdir);
+	QString prf;
+	if (!incdir.isEmpty() || !libdir.isEmpty() || !frameworkdir.isEmpty()) {
+		prf = internal_crypto_prf(conf->escapePath(incdir), conf->escapePath(libdir), frameworkdir);
+	} else {
+		prf = "CONFIG += crypto\n";
+	}
 	proextra =
 	"CONFIG += qt\n"
 	"CONFIG -= debug_and_release debug release\n"
@@ -99,6 +104,11 @@ static bool qca_try_framework(Conf *conf, const QString &frameworkdir, bool rele
 	return qca_try(conf, QString(), QString(), frameworkdir, release, debug, prf);
 }
 
+static bool qca_try_ext_prf(Conf *conf, bool release, bool debug, QString *prf)
+{
+	return qca_try(conf, QString(), QString(), QString(), release, debug, prf);
+}
+
 //----------------------------------------------------------------------------
 // qc_qca
 //----------------------------------------------------------------------------
@@ -133,6 +143,12 @@ public:
 #endif
 
 		if(!qca_incdir.isEmpty() && !qca_libdir.isEmpty() && qca_try_lib(conf, qca_incdir, qca_libdir, release, debug, &qca_crypto_prf))
+		{
+			conf->addExtra(qca_crypto_prf);
+			return true;
+		}
+		
+		if (qca_try_ext_prf(conf, release, debug, &qca_crypto_prf))
 		{
 			conf->addExtra(qca_crypto_prf);
 			return true;

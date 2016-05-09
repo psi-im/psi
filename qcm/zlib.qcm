@@ -21,6 +21,8 @@ public:
 		QStringList incs;
 		QString version, libs, other;
 		QString s;
+		
+		
 
 		if(!conf->findPkgConfig("zlib", VersionAny, "", &version, &incs, &libs, &other)) {
 
@@ -33,20 +35,37 @@ public:
 				if(!conf->findHeader("zlib.h", QStringList(), &s))
 					return false;
 			}
-			
-			s = conf->getenv("QC_WITH_ZLIB_LIB");
-			if(!s.isEmpty()) {
-				if(!conf->checkLibrary(s, "z"))
-					return false;
-			}
-			else {
-				if(!conf->findLibrary("z", &s))
-					return false;
+
+			QStringList libNames = QStringList() << "z";
+			QString libName;
+#ifdef Q_OS_WIN
+			libNames << (qc_buildmode_debug? "zlibd" : "zlib");
+#endif
+			for (;;) {
+				s = conf->getenv("QC_WITH_ZLIB_LIB");
+				if(!s.isEmpty()) {
+					foreach (const QString l, libNames) 
+						if(conf->checkLibrary(s, l)) {
+							libName = l;
+							break;
+						}
+				} else {
+					foreach (const QString l, libNames) 
+						if(conf->findLibrary(l, &s)) {
+							libName = l;
+							break;
+						}
+				}
+				
+				if(!libName.isEmpty())
+					break;
+						
+				return false;
 			}
 			if (!s.isEmpty()) {
-				libs = QString("-L%1 -lz").arg(s);
+				libs = QString("-L%1 -l%2").arg(s, libName);
 			} else {
-				libs = s.isEmpty()? "-lz" : QString("-L%1 -lz").arg(s);
+				libs = s.isEmpty()? QString("-l")+libName : QString("-L%1 -l%2").arg(s, libName);
 			}
 		}
 

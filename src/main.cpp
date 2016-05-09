@@ -438,13 +438,19 @@ static int restart_process(int argc, char **argv, const QByteArray &uri)
 
 #ifdef HAVE_QT5
 // it seems this trick works with c++11 enabled in gcc-4.8.2, vs-2013 and clang-2.8
+
+#ifdef _MSC_VER
+static const char *DbgMap = "DWCFIS";
+#else
 static const char DbgMap[] = {
     [QtDebugMsg] = 'D',
     [QtWarningMsg] = 'W',
     [QtCriticalMsg] = 'C',
     [QtFatalMsg] = 'F',
-    [QtInfoMsg] = 'I'
+	[QtInfoMsg] = 'I',
+	[QtSystemMsg] = 'S'
 };
+#endif
 
 void psiMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
