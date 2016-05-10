@@ -4,6 +4,7 @@
 /tmtags
 /psi
 /psi.exe
+/src/psi_resource.rc
 ._*
 .DS_Store
 .AppleDouble
@@ -15,6 +16,7 @@ qrc_*
 *.pdb
 *.orig
 *.rej
+*.ilk
 ui_*
 moc_*
 object_script.*
