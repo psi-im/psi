@@ -436,53 +436,7 @@ static int restart_process(int argc, char **argv, const QByteArray &uri)
 }
 #endif
 
-#ifdef HAVE_QT5
-// it seems this trick works with c++11 enabled in gcc-4.8.2, vs-2013 and clang-2.8
-
-#ifdef _MSC_VER
-static const char *DbgMap = "DWCFIS";
-#else
-static const char DbgMap[] = {
-    [QtDebugMsg] = 'D',
-    [QtWarningMsg] = 'W',
-    [QtCriticalMsg] = 'C',
-    [QtFatalMsg] = 'F',
-	[QtInfoMsg] = 'I',
-	[QtSystemMsg] = 'S'
-};
-#endif
-
-void psiMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
-{
-	QString time = QTime::currentTime().toString();
-	QString formatted;
-	static QString last;
-	static int repCount = 0;
-	static QString frmtD(QLatin1String("[%1] %2 (%3:%4, %5)"));
-	static QString frmt(QLatin1String("[%1] %2:%3 (%4:%5, %6)"));
-
-	if (type == QtDebugMsg || type > QtInfoMsg) {
-		formatted = frmtD.arg(time, msg, QString::fromLocal8Bit(context.file), QString::number(context.line), QString::fromUtf8(context.function));
-	} else {
-		formatted = frmt.arg(time, QString(DbgMap[type]), msg, QString::fromLocal8Bit(context.file), QString::number(context.line), QString::fromUtf8(context.function));
-	}
-	if (formatted == last && type != QtFatalMsg) {
-		repCount++;
-		return;
-	}
-	last = formatted;
-	if (repCount > 1) {
-		fprintf(stderr, "(last message repeated %d times)\n", repCount + 1);
-	}
-	repCount = 0;
-	fprintf(stderr, "%s\n", formatted.toLocal8Bit().data());
-
-	if (type == QtFatalMsg) {
-		fflush(stderr);
-		abort();
-	}
-}
-#else
+#ifndef HAVE_QT5
 void psiMessageOutput(QtMsgType type, const char *msg)
 {
 	QString time = QTime::currentTime().toString();
@@ -573,7 +527,8 @@ int main(int argc, char *argv[])
 
 	// it must be initialized first in order for ApplicationInfo::resourcesDir() to work
 #ifdef HAVE_QT5
-	qInstallMessageHandler(psiMessageOutput);
+	qSetMessagePattern("[%{time yyyyMMdd h:mm:ss}] %{if-info}I:%{endif}%{if-warning}W:%{endif}%{if-critical}C:%{endif}%{if-fatal}F:%{endif}"
+					   "%{message} (%{file}:%{line}, %{function})");
 #else
 	qInstallMsgHandler(psiMessageOutput);
 #endif
