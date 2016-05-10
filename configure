@@ -784,9 +784,14 @@ public:
 				return false;
 			}
 
-			if((!idn_libdir.isEmpty() && conf->checkLibrary(idn_libdir, "idn")) ||
-			   (idn_libdir.isEmpty() && conf->findLibrary("idn", &idn_libdir))) {
-				conf->addLib(idn_libdir.isEmpty()? "-lidn" : QString("-L%1 -lidn").arg(idn_libdir));
+#ifdef Q_OS_WIN
+			QString libName = qc_buildmode_debug? "idnd" : "idn";
+#else
+			QString libName("idn");
+#endif
+			if((!idn_libdir.isEmpty() && conf->checkLibrary(idn_libdir, libName)) ||
+			   (idn_libdir.isEmpty() && conf->findLibrary(libName, &idn_libdir))) {
+				conf->addLib(idn_libdir.isEmpty()? QString("-l") + libName : QString("-L%1 -l%2").arg(idn_libdir, libName));
 			} else {
 				printf("Libraries not found!\\n");
 				return false;
