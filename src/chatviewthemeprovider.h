@@ -37,7 +37,7 @@ public:
 	const QStringList themeIds() const;
 	Theme* load(const QString &themeId);
 	bool loadCurrent();
-	Theme *current() const { return (Theme*)curTheme; }
+	Theme *current() const { return (Theme*)curTheme; } // currently loaded theme
 	void setCurrentTheme(const QString &);
 	virtual int screenshotWidth() const { return 512; } // hack
 

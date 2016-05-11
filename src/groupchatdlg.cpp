@@ -824,7 +824,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	ui_.mini_prompt->hide();
 	connect(ui_.mle, SIGNAL(textEditCreated(QTextEdit*)), SLOT(chatEditCreated()));
 	chatEditCreated();
-	ui_.log->init(); //here is we ready to do that
+	ui_.log->init(); //we are ready to do that now. chatEditCreated() inited last pieces requiredfor this init
 
 	d->pm_settings = new QMenu(this);
 	connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));

@@ -1,6 +1,6 @@
 /*
  * webview.cpp - QWebView handling links and copying text
- * Copyright (C) 2010 senu, Rion
+ * Copyright (C) 2010-2016 senu, Rion
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,6 +25,7 @@
 #include <QStyle>
 #include <QDebug>
 #include <QDrag>
+#include <QWebSecurityOrigin>
 
 #include "webview.h"
 #include "urlobject.h"
@@ -35,6 +36,10 @@ WebView::WebView(QWidget* parent) : QWebView(parent), possibleDragging(false), i
 
     settings()->setAttribute(QWebSettings::JavaEnabled, false);
     settings()->setAttribute(QWebSettings::PluginsEnabled, false);
+	settings()->setAttribute(QWebSettings::LocalStorageEnabled, false);
+	settings()->setMaximumPagesInCache( 0 );
+	settings()->setObjectCacheCapacities( 0, 0, 0 );
+	settings()->clearMemoryCaches( );
 	setAcceptDrops(false);
 
 	page()->setNetworkAccessManager(NetworkAccessManager::instance());
@@ -89,14 +94,13 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
 			if (!menu->isEmpty()) {
 				menu->addSeparator();
 			}
-#if QT_VERSION >= 0x040500
 			menu->addAction(pageAction(QWebPage::SelectAll));
-#endif
 		}
 		if (settings()->testAttribute(QWebSettings::DeveloperExtrasEnabled)) {
 			menu->addAction(pageAction(QWebPage::InspectElement));
 		}
 	}
+	menu->addAction(pageAction(QWebPage::Reload));
 	menu->exec(mapToGlobal(event->pos()));
 	event->accept();
 	delete menu;
@@ -179,7 +183,7 @@ void WebView::copySelected()
 {
 	// use native selectedText w/o clipboard hacks.
 	// ideally we should call something like hasSelection() but there is no such method in Qt API for webkit classes.
-	if (!page()->selectedText().isEmpty()) {
+	if (page()->hasSelection()) {
 		page()->triggerAction(QWebPage::Copy);
 		textCopiedEvent();
 	}

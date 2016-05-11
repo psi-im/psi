@@ -150,7 +150,7 @@ ChatView::ChatView(QWidget *parent)
 	, isMuc_(false)
 	, isEncryptionEnabled_(false)
 {
-	jsObject = new ChatViewJSObject(this);
+	jsObject = new ChatViewJSObject(this); /* It's a session bridge between html and c++ part */
 	webView = new WebView(this);
 	webView->setFocusPolicy(Qt::NoFocus);
 	webView->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
