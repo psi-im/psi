@@ -42,6 +42,7 @@ public:
 	QPointer<WebView> wv;
 };
 
+// JS Bridge object emedded by theme. Has any logic unrelted to contact itself
 class ChatViewThemeJS : public QObject {
 	Q_OBJECT
 private:
@@ -223,6 +224,13 @@ ChatViewTheme::~ChatViewTheme()
 	delete d;
 }
 
+/**
+ * @brief Sets theme bridge, starts loading procedure from javascript adapter.
+ * @param file full path to theme directory
+ * @param helperScripts adapter.js and util.js
+ * @param adapterPath path to directry with adapter
+ * @return true on success
+ */
 bool ChatViewTheme::load(const QString &file, const QStringList &helperScripts,
 						 const QString &adapterPath)
 {

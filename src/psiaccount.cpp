@@ -5916,35 +5916,29 @@ void PsiAccount::slotCheckVCard()
 
 	QString nick = d->jid.node();
 	JT_VCard* j = static_cast<JT_VCard*>(sender());
-	if (j->success() && j->statusCode() == Task::ErrDisc) {
-		if (!j->vcard().nickName().isEmpty()) {
+	VCard vcard = j->vcard();
+	bool changeOwn;
+	if (j->success()) {
+		if (!vcard.nickName().isEmpty()) {
 			d->nickFromVCard = true;
-			nick = j->vcard().nickName();
-		} else if (!j->vcard().fullName().isEmpty()) {
+			nick = vcard.nickName();
+		} else if (!vcard.fullName().isEmpty()) {
 			d->nickFromVCard = true;
-			nick = j->vcard().fullName();
+			nick = vcard.fullName();
 		}
-#ifdef YAPSI
-		else if (!j->vcard().fullName().isEmpty()) {
-			d->nickFromVCard = true;
-			nick = j->vcard().fullName();
+		if (!vcard.photo().isEmpty()) {
+			d->vcardPhotoUpdate(j->vcard().photo());
 		}
-#endif
+		setNick(nick);
+
+		changeOwn = vcard.isEmpty();
+	} else {
+		changeOwn = (j->statusCode() == Task::ErrDisc + 1 || j->statusCode() == 404);
 	}
 
-#ifndef YAPSI
-	if (j->vcard().isEmpty() && PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool())
-	{
+	if (changeOwn && PsiOptions::instance()->getOption("options.vcard.query-own-vcard-on-login").toBool()) {
 		changeVCard();
-		return;
 	}
-#endif
-
-	if (!j->vcard().photo().isEmpty()) {
-		d->vcardPhotoUpdate(j->vcard().photo());
-	}
-
-	setNick(nick);
 }
 
 void PsiAccount::setNick(const QString &nick)
