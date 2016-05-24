@@ -598,26 +598,40 @@ void PsiContactListViewDelegate::drawAccount(QPainter* painter, const QStyleOpti
 	}
 
 	const QPixmap statusPixmap = this->statusPixmap(index);
-	const QSize pixmapSize = statusPixmap.size();
-	const QRect avatarRect = relativeRect(o, pixmapSize, QRect());
+	QRect statusIconRect;
+	if (!statusPixmap.isNull()) {
+		const QSize pixmapSize = statusPixmap.size();
+		statusIconRect = relativeRect(o, pixmapSize, QRect());
+		painter->drawPixmap(statusIconRect.topLeft(), statusPixmap);
+	}
+
 	QString text = nameText(o, index);
-	QRect r = relativeRect(o, QSize(o.fontMetrics.width(text), o.rect.height()), avatarRect, 3);
-	painter->drawPixmap(avatarRect.topLeft(), statusPixmap);
+	QRect r;
+	if (statusPixmap.isNull()) {
+		r = relativeRect(o, QSize(o.fontMetrics.width(text), o.rect.height()), QRect());
+	} else {
+		r = relativeRect(o, QSize(o.fontMetrics.width(text), o.rect.height()), statusIconRect, 3);
+	}
 
 	drawText(painter, o, r, text, index);
+
+	QString contactsCountText = QString("(%1/%2)")
+	        .arg(index.data(ContactListModel::OnlineContactsRole).toInt())
+	        .arg(index.data(ContactListModel::TotalContactsRole).toInt());
 
 	QPixmap sslPixmap = index.data(ContactListModel::UsingSSLRole).toBool() ?
 	                    IconsetFactory::iconPixmap("psi/cryptoYes") :
 	                    IconsetFactory::iconPixmap("psi/cryptoNo");
-	const QSize sslPixmapSize = statusPixmap.size();
-	QRect sslRect = relativeRect(o, sslPixmapSize, r, 3);
-	painter->drawPixmap(sslRect.topLeft(), sslPixmap);
-	r = relativeRect(option, QSize(), sslRect, 3);
+	if (!sslPixmap.isNull()) {
+		const QSize sslPixmapSize = sslPixmap.rect().size();
+		QRect sslRect = relativeRect(o, sslPixmapSize, r, 3);
+		painter->drawPixmap(sslRect.topLeft(), sslPixmap);
+		r = relativeRect(option, QSize(), sslRect, 3);
+	} else {
+		r = relativeRect(o, QSize(o.fontMetrics.width(contactsCountText), o.rect.height()), r);
+	}
 
-	text = QString("(%1/%2)")
-	        .arg(index.data(ContactListModel::OnlineContactsRole).toInt())
-	        .arg(index.data(ContactListModel::TotalContactsRole).toInt());
-	drawText(painter, o, r, text, index);
+	drawText(painter, o, r, contactsCountText, index);
 }
 
 QRect PsiContactListViewDelegate::nameRect(const QStyleOptionViewItem& option, const QModelIndex& index) const

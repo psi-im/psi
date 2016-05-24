@@ -1413,6 +1413,11 @@ void OptionsMigration::lateMigration()
 			ToolbarPrefs tb;
 			tb.id = PsiOptions::instance()->getOption(base + ".key").toString();
 			tb.name = PsiOptions::instance()->getOption(base + ".name").toString();
+			if (tb.id.isEmpty() || tb.name.isEmpty()) {
+				qDebug("Does not look like a toolbar");
+				continue;
+			}
+
 			tb.on = PsiOptions::instance()->getOption(base + ".visible").toBool();
 			tb.locked = PsiOptions::instance()->getOption(base + ".locked").toBool();
 			tb.dock = (Qt3Dock)PsiOptions::instance()->getOption(base + ".dock.position").toInt(); //FIXME
