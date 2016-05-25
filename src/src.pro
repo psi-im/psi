@@ -13,6 +13,8 @@ CONFIG += pep
 #CONFIG += psi_plugins
 DEFINES += QT_STATICPLUGIN
 
+win32:CONFIG(debug, debug|release):DEFINES += ALLOW_QT_PLUGINS_DIR
+
 # Import several very useful Makefile targets
 # as well as set up default directories for
 # generated files

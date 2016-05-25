@@ -510,7 +510,7 @@ int main(int argc, char *argv[])
 #endif
 	}
 
-#if defined(Q_OS_MAC) || defined(Q_OS_WIN)
+#if ( defined(Q_OS_MAC) || defined(Q_OS_WIN) ) && ! defined (ALLOW_QT_PLUGINS_DIR)
 	// remove qt's own plugin path on these platforms, to enable safe
 	//   distribution
 	QString defaultPluginPath = QLibraryInfo::location(QLibraryInfo::PluginsPath);
