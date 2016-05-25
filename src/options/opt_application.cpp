@@ -129,6 +129,9 @@ void OptionsTabApplication::doEnableQuitOnClose(int state)
 {
 	OptApplicationUI *d = (OptApplicationUI *)w;
 	d->ck_quitOnClose->setEnabled(state>0);
+	d->ck_dockToolMW->setEnabled(state>0);
+	d->ck_dockDCstyle->setEnabled(state>0);
+	d->ck_dockHideMW->setEnabled(state>0);
 }
 
 void OptionsTabApplication::updatePortLabel()
