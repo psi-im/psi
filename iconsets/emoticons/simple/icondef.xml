@@ -1,0 +1,393 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<icondef>
+	<meta>
+		<name>Simple Smileys</name>
+		<version>1.7</version>
+		<description>Simple Smileys by Leo Bolin iconset for Psi-IM</description>
+		<creation>2016-07-01</creation>
+		<home>http://simplesmileys.org/</home>
+		<author jid='yvelia@31337.one' email='root@31337.one' www='http://31337.one'>Lyn "lyn1337" M.</author>
+	</meta>
+	
+<!-- smiling smileys -->
+	<icon>
+		<text>:-)</text>
+		<text>:)</text>
+		<text>(:</text>
+		
+		<object mime='image/png'>smiling.png</object>
+	</icon>
+	
+	<icon>
+		<text>^^</text>
+		
+		<object mime='image/png'>happy.png</object>
+	</icon>
+	
+	<icon>
+		<text>^_^</text>
+		
+		<object mime='image/png'>happy_smiling.png</object>
+	</icon>
+	
+	<icon>
+		<text>^.^</text>
+		
+		<object mime='image/png'>shy.png</object>
+	</icon>
+		
+	<icon>
+		<text>$_$</text>
+		<text>$.$</text>
+		
+		<object mime='image/png'>greedy.png</object>
+	</icon>
+
+	<icon>
+		<text>x)</text>
+		<text>(x</text>
+		
+		<object mime='image/png'>drugged.png</object>
+	</icon>
+
+	<icon>
+		<text>B-)</text>
+		<text>B)</text>
+		<text>8-)</text>
+		<text>8)</text>
+
+		<object mime='image/png'>cool.png</object>
+	</icon>
+	
+	<icon>
+		<text>:mad:</text>
+
+		<object mime='image/png'>madness.png</object>
+	</icon>
+	
+	<icon>
+		<text>:creep:</text>
+		<text>:Ð</text>
+
+		<object mime='image/png'>creepy.png</object>
+	</icon>
+
+	<icon>
+		<text>O:-)</text>
+		<text>o:-)</text>
+		<text>O:)</text>
+		<text>o:)</text>
+
+		<object mime='image/png'>angel.png</object>
+	</icon>
+	
+	<icon>
+		<text>c:</text>
+		<text>C:</text>
+		
+		<object mime='image/png'>stupid.png</object>
+	</icon>
+	
+<!-- winking smileys -->
+	<icon>
+		<text>;-)</text>
+		<text>;)</text>
+
+		<object mime='image/png'>winking.png</object>
+	</icon>
+	
+	<icon>
+		<text>;-D</text>
+		<text>;D</text>
+
+		<object mime='image/png'>winking_grinning.png</object>
+	</icon>
+	
+	<icon>
+		<text>;-p</text>
+		<text>;p</text>
+		<text>;-P</text>
+		<text>;P</text>
+
+		<object mime='image/png'>winking_tongue_out.png</object>
+	</icon>
+	
+	<icon>
+		<text>;-3</text>
+		<text>;3</text>
+
+		<object mime='image/png'>cute_winking.png</object>
+	</icon>
+
+<!-- grinning smileys -->
+	<icon>
+		<text>:-D</text>
+		<text>:-d</text>
+		<text>:D</text>
+		<text>:d</text>
+		<text>:-></text>
+		<text>:></text>
+
+		<object mime='image/png'>grinning.png</object>
+	</icon>
+	
+	<icon>
+		<text>XD</text>
+
+		<object mime='image/png'>laughing.png</object>
+	</icon>
+	
+<!-- tongue including smileys -->
+	<icon>
+		<text>:-P</text>
+		<text>:-p</text>
+		<text>:P</text>
+		<text>:p</text>
+
+		<object mime='image/png'>tongue_out.png</object>
+	</icon>
+	
+	<icon>
+		<text>xP</text>
+		<text>xþ</text>
+		
+		<object mime='image/png'>tongue_out_laughing.png</object>
+	</icon>
+	
+	<icon>
+		<text>:-b</text>
+		<text>:b</text>
+		
+		<object mime='image/png'>tongue_out_left.png</object>
+	</icon>	
+
+	<icon>
+		<text>:tongueup:</text>
+		
+		<object mime='image/png'>tongue_out_up.png</object>
+	</icon>	
+	
+	<icon>
+		<text>:tongueupleft:</text>
+		
+		<object mime='image/png'>tongue_out_up_left.png</object>
+	</icon>	
+
+<!-- unhappy smileys -->
+	<icon>
+		<text>:-(</text>
+		<text>:(</text>
+
+		<object mime='image/png'>frowning.png</object>
+	</icon>
+	
+	<icon>
+		<text>:'-(</text>
+		<text>:'(</text>
+
+		<object mime='image/png'>crying.png</object>
+	</icon>
+
+	<icon>
+		<text>D:</text>
+
+		<object mime='image/png'>terrified.png</object>
+	</icon>
+
+	<icon>
+		<text>Dx</text>
+
+		<object mime='image/png'>horrified.png</object>
+	</icon>
+	
+	<icon>
+		<text>:C</text>
+		<text>:c</text>
+
+		<object mime='image/png'>pouting.png</object>
+	</icon>
+	
+	<icon>
+		<text>:-$</text>
+		<text>:$</text>
+		<text>:s</text>
+
+		<object mime='image/png'>blushing.png</object>
+	</icon>
+	
+	<icon>
+		<text>:S</text>
+
+		<object mime='image/png'>confused.png</object>
+	</icon>
+	
+	<icon>
+		<text>&#62;_&#60;"</text>
+
+		<object mime='image/png'>irritated.png</object>
+	</icon>
+	
+	<icon>
+		<text>&#62;.&#60;</text>
+
+		<object mime='image/png'>irritated_2.png</object>
+	</icon>
+
+	<icon>
+		<text>o_O</text>
+		<text>o.O</text>
+		<text>oO</text>
+
+		<object mime='image/png'>surprised.png</object>
+	</icon>
+	
+	<icon>
+		<text>O_o</text>
+		<text>O.o</text>
+		<text>Oo</text>
+
+		<object mime='image/png'>surprised_2.png</object>
+	</icon>
+	
+	<icon>
+		<text>:o</text>
+		<text>:O</text>
+
+		<object mime='image/png'>gasping.png</object>
+	</icon>	
+	
+	<icon>
+		<text>:\</text>
+		<text>:-\</text>
+
+		<object mime='image/png'>unsure.png</object>
+	</icon>
+
+	<icon>
+		<text>:/</text>
+		<text>:-/</text>
+
+		<object mime='image/png'>unsure_2.png</object>
+	</icon>
+
+	<icon>
+		<text>:x</text>
+		<text>:-x</text>
+
+		<object mime='image/png'>lips_sealed.png</object>
+	</icon>
+	
+	<icon>
+		<text>-_-</text>
+
+		<object mime='image/png'>tired.png</object>
+	</icon>
+		
+	<icon>
+		<text>:|</text>
+
+		<object mime='image/png'>speechless.png</object>
+	</icon>
+	
+<!-- loving smileys -->
+	<icon>
+		<text>(L)</text>
+		<text>(l)</text>
+		<text>:heart:</text>
+
+		<object mime='image/png'>heart.png</object>
+	</icon>
+	
+	<icon>
+		<text>:hug:</text>
+
+		<object mime='image/png'>hug.png</object>
+	</icon>
+	
+	<icon>
+		<text>:*</text>
+
+		<object mime='image/png'>kissing.png</object>
+	</icon>	
+
+
+<!-- bad feeling smileys -->
+	<icon>
+		<text>x/</text>
+
+		<object mime='image/png'>sick.png</object>
+	</icon>
+
+	<icon>
+		<text>:devil:</text>
+		<text>:666:</text>
+
+		<object mime='image/png'>devil.png</object>
+	</icon>
+	
+	<icon>
+		<text>:cthulhu:</text>
+
+		<object mime='image/png'>cthulhu.png</object>
+	</icon>
+	
+	<icon>
+		<text>>:(</text>
+		<text>>:-(</text>
+
+		<object mime='image/png'>angry.png</object>
+	</icon>
+	
+	<icon>
+		<text>>:)</text>
+		<text>>:-)</text>
+
+		<object mime='image/png'>spiteful.png</object>
+	</icon>
+	
+	<icon>
+		<text>>:))</text>
+		<text>>:-))</text>
+
+		<object mime='image/png'>malicious.png</object>
+	</icon>
+	
+<!-- thumbs -->	
+	<icon>
+		<text>:thumbsup:</text>
+
+		<object mime='image/png'>thumbs_up.png</object>
+	</icon>
+	
+	<icon>
+		<text>:thumbsdown:</text>
+
+		<object mime='image/png'>thumbs_down.png</object>
+	</icon>
+
+
+<!-- cute smileys -->
+	<icon>
+		<text>:3</text>
+
+		<object mime='image/png'>naww.png</object>	
+	</icon>
+
+	<icon>
+		<text>:33</text>
+
+		<object mime='image/png'>cute.png</object>
+	</icon>
+	
+	<icon>
+		<text>:333</text>
+
+		<object mime='image/png'>aww.png</object>	
+	</icon>
+	
+	<icon>
+		<text>:3333</text>
+
+		<object mime='image/png'>kawaii.png</object>
+	</icon>
+</icondef>
