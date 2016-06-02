@@ -453,6 +453,10 @@ void ChatDlg::updateContact(const Jid &j, bool fromPresence)
 
 	if (jid().compare(j, false)) {
 		QList<UserListItem*> ul = account()->findRelevant(j);
+		if (ul.isEmpty()) {
+			qWarning("Trying to update not existing contact");
+			return;
+		}
 		UserStatus userStatus = userStatusFor(jid(), ul, false);
 
 		Jid oldJid = jid();
