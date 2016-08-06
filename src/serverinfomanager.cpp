@@ -24,7 +24,9 @@
 
 using namespace XMPP;
 
-ServerInfoManager::ServerInfoManager(Client* client) : client_(client)
+ServerInfoManager::ServerInfoManager(Client* client)
+	: client_(client)
+	, _canMessageCarbons(false)
 {
 	deinitialize();
 	connect(client_, SIGNAL(rosterRequestFinished(bool, int, const QString &)), SLOT(initialize()));
@@ -62,6 +64,11 @@ bool ServerInfoManager::hasPEP() const
 	return hasPEP_;
 }
 
+bool ServerInfoManager::canMessageCarbons() const
+{
+	return _canMessageCarbons;
+}
+
 void ServerInfoManager::disco_finished()
 {
 	JT_DiscoInfo *jt = (JT_DiscoInfo *)sender();
@@ -70,6 +77,8 @@ void ServerInfoManager::disco_finished()
 
 		if (features_.canMulticast())
 			multicastService_ = client_->jid().domain();
+
+		_canMessageCarbons = features_.canMessageCarbons();
 
 		// Identities
 		DiscoItem::Identities is = jt->item().identities();

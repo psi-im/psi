@@ -455,6 +455,9 @@ private slots:
 	void itemRetracted(const Jid&, const QString&, const PubSubRetraction&);
 
 	void chatMessagesRead(const Jid &);
+#ifdef GROUPCHAT
+	void groupChatMessagesRead(const Jid &);
+#endif
 
 	void slotCheckVCard();
 	void edb_finished();

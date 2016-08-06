@@ -284,6 +284,10 @@ int MessageEvent::type() const
 
 Jid MessageEvent::from() const
 {
+#ifdef GROUPCHAT
+	if (v_m.type() == "groupchat")
+		return v_m.from().bare();
+#endif
 	return v_m.from();
 }
 

@@ -2348,6 +2348,12 @@ void PsiAccount::serverFeaturesChanged()
 {
 	setPEPAvailable(d->serverInfoManager->hasPEP());
 
+	if (d->serverInfoManager->canMessageCarbons()) {
+		JT_MessageCarbons *j = new JT_MessageCarbons(d->client->rootTask());
+		j->enable();
+		j->go(true);
+	}
+
 	if (d->serverInfoManager->features().haveVCard() && !d->vcardChecked) {
 		// Get the vcard
 		const VCard vcard = VCardFactory::instance()->vcard(d->jid);
@@ -2780,9 +2786,9 @@ void PsiAccount::processIncomingMessage(const Message &_m)
 
 #ifdef GROUPCHAT
 	if(_m.type() == "groupchat") {
-		GCMainDlg *w = findDialog<GCMainDlg*>(Jid(_m.from().bare()));
-		if(w)
-			w->message(_m);
+		MessageEvent::Ptr me(new MessageEvent(_m, this));
+		me->setOriginLocal(false);
+		handleEvent(me, IncomingStanza);
 		return;
 	}
 #endif
@@ -5056,7 +5062,26 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 				!(e->type() == PsiEvent::Message &&
 				 e.staticCast<MessageEvent>()->message().body().isEmpty()))
 			{
-				logEvent(e->from(), e);
+				bool isMuc = false;
+#ifdef GROUPCHAT
+				if(e->type() == PsiEvent::Message) {
+					MessageEvent::Ptr me = e.staticCast<MessageEvent>();
+					if (me->message().type() == "groupchat")
+						isMuc = true;
+				}
+#endif
+				if (!isMuc) {
+					Jid	chatJid = e->from();
+					if(e->type() == PsiEvent::Message) {
+						MessageEvent::Ptr me = e.staticCast<MessageEvent>();
+						const Message &m = me->message();
+						if (m.carbonDirection() == Message::Sent) {
+							chatJid = m.to();
+						}
+					}
+
+					logEvent(chatJid, e);
+				}
 			}
 		}
 	}
@@ -5064,6 +5089,7 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 	if(e->type() == PsiEvent::Message) {
 		MessageEvent::Ptr me = e.staticCast<MessageEvent>();
 		const Message &m = me->message();
+		bool carbonForwarded = m.carbonDirection() != Message::NoCarbon;
 
 #ifdef PSI_PLUGINS
 		//TODO(mck): clean up
@@ -5095,7 +5121,10 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 		}
 
 		// Pass message events to chat window
-		if ((m.containsEvents() || m.chatState() != StateNone) && m.body().isEmpty()) {
+		if ((m.containsEvents() || m.chatState() != StateNone) && m.body().isEmpty() && m.type() != "groupchat") {
+			if (m.carbonDirection() == Message::Sent) {
+				return; // ignore own composing for carbon. TODO should we?
+			}
 			if (o->getOption("options.messages.send-composing-events").toBool()) {
 				ChatDlg *c = findChatDialogEx(e->from());
 				if (c) {
@@ -5115,9 +5144,17 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 
 		// pass chat messages directly to a chat window if possible (and deal with sound)
 		else if(m.type() == "chat") {
-			ChatDlg *c = findChatDialogEx(e->from());
+			Jid	chatJid = m.carbonDirection() == Message::Sent ? m.to() : m.from();
+
+			if (carbonForwarded) {
+				e->setOriginLocal(m.carbonDirection() == Message::Sent);
+				putToQueue = false;
+				doPopup = false;
+			}
+
+			ChatDlg *c = findChatDialogEx(chatJid);
 			if (c)
-				c->setJid(e->from());
+				c->setJid(chatJid);
 
 			//if the chat exists, and is either open in a tab,
 			//or in a window
@@ -5159,6 +5196,22 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 			doPopup = true;
 			popupType = PopupManager::AlertHeadline;
 		} // /headline
+#ifdef GROUPCHAT
+		else if (m.type() == "groupchat") {
+			putToQueue = false;
+			bool allowMucEvents = o->getOption("options.ui.muc.allow-highlight-events").toBool();
+			if (activationType != FromXml) {
+				GCMainDlg *c = findDialog<GCMainDlg*>(e->from());
+				if (c) {
+					c->message(m, e);
+					if (!c->isActiveTab() && c->isLastMessageAlert() && !m.spooled() && allowMucEvents)
+						putToQueue = true;
+				}
+			}
+			else if (allowMucEvents)
+				putToQueue = true;
+		} // /groupchat
+#endif
 		else if (m.type().isEmpty()) {
 			soundType = eMessage;
 			doPopup = true;
@@ -5588,11 +5641,18 @@ void PsiAccount::processReadNext(const UserListItem &u)
 		return;
 
 	bool isChat = false;
+#ifdef GROUPCHAT
+	bool isMuc = false;
+#endif
 	if(e->type() == PsiEvent::Message) {
 		MessageEvent::Ptr me = e.staticCast<MessageEvent>();
 		const Message &m = me->message();
 		if(m.type() == "chat" && m.getForm().fields().empty())
 			isChat = true;
+#ifdef GROUPCHAT
+		else if (m.type() == "groupchat")
+			isMuc = true;
+#endif
 	}
 
 	// if it's a chat message, just open the chat window.  there is no need to do
@@ -5602,6 +5662,17 @@ void PsiAccount::processReadNext(const UserListItem &u)
 		openChat(e->from(), UserAction);
 		return;
 	}
+
+#ifdef GROUPCHAT
+	if (isMuc) {
+		GCMainDlg *c = findDialog<GCMainDlg*>(e->from());
+		if (c)
+		{
+			c->bringToFront(true);
+			return;
+		}
+	}
+#endif
 
 	// remove from queue
 	e = d->eventQueue->dequeue(u.jid());
@@ -5699,6 +5770,19 @@ void PsiAccount::chatMessagesRead(const Jid &j)
 //	}
 }
 
+#ifdef GROUPCHAT
+void PsiAccount::groupChatMessagesRead(const Jid &j)
+{
+	d->eventQueue->clear(j);
+
+	QList<UserListItem*> ul = findRelevant(j);
+	if(!ul.isEmpty()) {
+		UserListItem *u = ul.first();
+		cpUpdate(*u);
+	}
+}
+#endif
+
 void PsiAccount::logEvent(const Jid &j, const PsiEvent::Ptr &e)
 {
 	if (!d->acc.opt_log)
@@ -5721,6 +5805,7 @@ void PsiAccount::openGroupChat(const Jid &j, ActivationType activationType, MUCJ
 	GCMainDlg *w = new GCMainDlg(this, j, d->tabManager);
 	w->setPassword(d->client->groupChatPassword(j.domain(), j.node()));
 	connect(w, SIGNAL(aSend(const Message &)), SLOT(dj_sendMessage(const Message &)));
+	connect(w, SIGNAL(messagesRead(const Jid &)), SLOT(groupChatMessagesRead(const Jid &)));
 	connect(d->psi, SIGNAL(emitOptionsUpdate()), w, SLOT(optionsUpdate()));
 	if(reason != MUCJoinDlg::MucAutoJoin || !PsiOptions::instance()->getOption("options.ui.muc.hide-on-autojoin").toBool()) {
 		w->ensureTabbedCorrectly();

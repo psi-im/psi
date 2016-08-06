@@ -31,6 +31,7 @@
 #include "ui_groupchatdlg.h"
 #include "mucmanager.h"
 #include "advwidget.h"
+#include "psievent.h"
 
 using namespace XMPP;
 
@@ -70,12 +71,13 @@ public:
 
 	void error(int, const QString &);
 	void presence(const QString &, const Status &);
-	void message(const Message &);
+	void message(const Message &, const PsiEvent::Ptr &e = PsiEvent::Ptr());
 	void joined();
 	void setPassword(const QString&);
 	const QString& nick() const;
 	const QString& topic() const;
 	const QDateTime& lastMsgTime() const;
+	bool isLastMessageAlert() const;
 
 	bool isInactive() const;
 	void reactivate();
@@ -99,6 +101,7 @@ protected:
 
 signals:
 	void aSend(const Message &);
+	void messagesRead(const Jid &);
 
 public slots:
 	// reimplemented

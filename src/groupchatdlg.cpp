@@ -200,6 +200,7 @@ public:
 		dlg = d;
 		nickSeparator = ":";
 		nonAnonymous = false;
+		alert = false;
 
 		trackBar = false;
 		mCmdManager.registerProvider(this);
@@ -236,6 +237,7 @@ public:
 	int pending;
 	int hPending; // highlight pending
 	bool connecting;
+	bool alert;
 
 	QStringList hist;
 	int histAt;
@@ -991,6 +993,7 @@ void GCMainDlg::activated()
 			u->setPending(d->pending, d->hPending);
 			account()->updateEntry(*u);
 		}
+		messagesRead(jid());
 		invalidateTab();
 	}
 	doFlash(false);
@@ -1711,11 +1714,11 @@ void GCMainDlg::avatarUpdated(const Jid &jid_)
 	}
 }
 
-void GCMainDlg::message(const Message &_m)
+void GCMainDlg::message(const Message &_m, const PsiEvent::Ptr &e)
 {
 	Message m = _m;
 	QString from = m.from().resource();
-	bool alert = false;
+	d->alert = false;
 
 	if (m.getMUCStatuses().contains(100)) {
 		d->nonAnonymous = true;
@@ -1769,7 +1772,7 @@ void GCMainDlg::message(const Message &_m)
 
 	// code to determine if the speaker was addressing this client in chat
 	if(m.body().contains(d->self))
-		alert = true;
+		d->alert = true;
 
 	if (m.body().left(d->self.length()) == d->self)
 		d->lastReferrer = m.from().resource();
@@ -1778,7 +1781,7 @@ void GCMainDlg::message(const Message &_m)
 		QStringList highlightWords = options->getOption("options.ui.muc.highlight-words").toStringList();
 		foreach (QString word, highlightWords) {
 			if(m.body().contains((word), Qt::CaseInsensitive)) {
-				alert = true;
+				d->alert = true;
 			}
 		}
 	}
@@ -1789,13 +1792,12 @@ void GCMainDlg::message(const Message &_m)
 			account()->playSound(PsiAccount::eSend);
 	}
 	else {
-		if(alert || (options->getOption("options.ui.notifications.sounds.notify-every-muc-message").toBool() && !m.spooled() && !from.isEmpty()) )
+		if(d->alert || (options->getOption("options.ui.notifications.sounds.notify-every-muc-message").toBool() && !m.spooled() && !from.isEmpty()) )
 			account()->playSound(PsiAccount::eGroupChat);
 
-		if(alert || (options->getOption("options.ui.notifications.passive-popups.notify-every-muc-message").toBool() && !m.spooled() && !from.isEmpty()) ) {
+		if(d->alert || (options->getOption("options.ui.notifications.passive-popups.notify-every-muc-message").toBool() && !m.spooled() && !from.isEmpty()) ) {
 			if (!m.spooled() && !isActiveTab() && !m.from().resource().isEmpty()) {
 				XMPP::Jid jid = m.from()/*.withDomain("")*/;
-				MessageEvent::Ptr e(new MessageEvent(m, account()));
 				UserListItem i;
 				i.setPrivate(true);
 				account()->psi()->popupManager()->doPopup(account(), PopupManager::AlertGcHighlight, jid, m.from().resource(), &i, e);
@@ -1804,9 +1806,9 @@ void GCMainDlg::message(const Message &_m)
 	}
 
 	if(from.isEmpty())
-		appendSysMsg(m.body(), alert, m.timeStamp());
+		appendSysMsg(m.body(), d->alert, m.timeStamp());
 	else
-		appendMessage(m, alert);
+		appendMessage(m, d->alert);
 }
 
 void GCMainDlg::joined()
@@ -1841,6 +1843,11 @@ const QString& GCMainDlg::topic() const
 const QDateTime & GCMainDlg::lastMsgTime() const
 {
 	return d->te_log()->lastMsgTime();
+}
+
+bool GCMainDlg::isLastMessageAlert() const
+{
+	return d->alert;
 }
 
 void GCMainDlg::appendSysMsg(const QString &str, bool alert, const QDateTime &ts)

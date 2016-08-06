@@ -446,6 +446,8 @@ void ChatDlg::ensureTabbedCorrectly()
 
 void ChatDlg::updateContact(const Jid &j, bool fromPresence)
 {
+	if (account()->groupchats().contains(j.full()))
+		return;
 	// if groupchat, only update if the resource matches
 	if (account()->findGCContact(j) && !jid().compare(j)) {
 		return;
@@ -832,7 +834,7 @@ void ChatDlg::incomingMessage(const Message &m)
 		else {
 			setContactChatState(XMPP::StateNone);
 		}
-		appendMessage(m);
+		appendMessage(m, m.carbonDirection() == Message::Sent);
 	}
 }
 

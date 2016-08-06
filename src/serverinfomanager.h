@@ -45,6 +45,7 @@ public:
 	const QString& multicastService() const;
 	bool hasPEP() const;
 	inline const Features &features() const { return features_; }
+	bool canMessageCarbons() const;
 
 signals:
 	void featuresChanged();
@@ -62,6 +63,7 @@ private:
 	QString multicastService_;
 	bool featuresRequested_;
 	bool hasPEP_;
+	bool _canMessageCarbons;
 };
 
 #endif
