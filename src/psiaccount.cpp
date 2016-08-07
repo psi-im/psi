@@ -5089,7 +5089,6 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 	if(e->type() == PsiEvent::Message) {
 		MessageEvent::Ptr me = e.staticCast<MessageEvent>();
 		const Message &m = me->message();
-		bool carbonForwarded = m.carbonDirection() != Message::NoCarbon;
 
 #ifdef PSI_PLUGINS
 		//TODO(mck): clean up
@@ -5146,9 +5145,8 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 		else if(m.type() == "chat") {
 			Jid	chatJid = m.carbonDirection() == Message::Sent ? m.to() : m.from();
 
-			if (carbonForwarded) {
-				e->setOriginLocal(m.carbonDirection() == Message::Sent);
-				putToQueue = false;
+			if (m.carbonDirection() == Message::Sent) {
+				e->setOriginLocal(true);
 				doPopup = false;
 			}
 
@@ -5186,7 +5184,7 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 				soundType = firstChat ? eChat1: eChat2;
 			}
 
-			if (putToQueue) {
+			if (putToQueue && m.carbonDirection() != Message::Sent) {
 				doPopup = true;
 				popupType = PopupManager::AlertChat;
 			}

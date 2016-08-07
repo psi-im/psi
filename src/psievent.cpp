@@ -288,7 +288,7 @@ Jid MessageEvent::from() const
 	if (v_m.type() == "groupchat")
 		return v_m.from().bare();
 #endif
-	return v_m.from();
+	return v_m.carbonDirection() == XMPP::Message::Sent ? v_m.to() : v_m.from();
 }
 
 void MessageEvent::setFrom(const Jid &j)
