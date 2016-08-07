@@ -5165,8 +5165,10 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 #endif
 				c->incomingMessage(m);
 				soundType = eChat2;
-				if((o->getOption("options.ui.chat.alert-for-already-open-chats").toBool() && !c->isActiveTab())
-					|| (c->isTabbed() && c->getManagingTabDlg()->isHidden()) ) {
+				if(m.carbonDirection() != Message::Sent &&
+				   (o->getOption("options.ui.chat.alert-for-already-open-chats").toBool() && !c->isActiveTab())
+				   || (c->isTabbed() && c->getManagingTabDlg()->isHidden()) ) {
+
 					// to alert the chat also, we put it in the queue
 					me->setSentToChatWindow(true);
 				}
