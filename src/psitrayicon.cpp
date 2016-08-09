@@ -7,6 +7,7 @@
 #include "psitrayicon.h"
 #include "iconset.h"
 #include "alerticon.h"
+#include "common.h"
 
 // TODO: remove the QPoint parameter from the signals when we finally move
 // to the new system.
@@ -177,7 +178,7 @@ void PsiTrayIcon::trayicon_activated(QSystemTrayIcon::ActivationReason reason)
 #else
 	if (reason == QSystemTrayIcon::Trigger)
 		emit clicked(QPoint(),Qt::LeftButton);
-	else if (reason == QSystemTrayIcon::MiddleClick)
+	else if (reason == QSystemTrayIcon::MiddleClick || (isKde() && reason == QSystemTrayIcon::Context))
 		emit clicked(QPoint(),Qt::MidButton);
 	else if (reason == QSystemTrayIcon::DoubleClick)
 		emit doubleClicked(QPoint());

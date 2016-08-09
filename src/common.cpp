@@ -556,6 +556,12 @@ void clearMenu(QMenu *m)
 	}
 }
 
+bool isKde()
+{
+	return qgetenv("XDG_SESSION_DESKTOP") == "KDE" ||
+	       qgetenv("DESKTOP_SESSION").endsWith("plasma");
+}
+
 void bringToFront(QWidget *widget, bool)
 {
 	Q_ASSERT(widget);
@@ -587,11 +593,14 @@ void bringToFront(QWidget *widget, bool)
 	w->raise();
 	w->activateWindow();
 
+#if 0
 	// hack to real bring to front in kde. kde (at least 4.8.5) forbids stilling
 	// focus from other applications. this may be fixed on more recent versions.
 	// should be removed some day. preferable way for such hacks is plugins.
 	// probably works only with gcc.
-	if (qgetenv("DESKTOP_SESSION") == "kde-plasma") {
+	//
+	// with kde5 this code just crashes. so should be reimpented as a plugin
+	if (isKde()) {
 		typedef int (*ActWinFunction)(WId, long);
 		ActWinFunction kwinActivateWindow = (ActWinFunction)QLibrary::resolve(
 					"libkdeui", 5, "_ZN13KWindowSystem17forceActiveWindowEml");
@@ -599,6 +608,7 @@ void bringToFront(QWidget *widget, bool)
 			kwinActivateWindow(widget->winId(), 0);
 		}
 	}
+#endif
 }
 
 bool operator!=(const QMap<QString, QString> &m1, const QMap<QString, QString> &m2)

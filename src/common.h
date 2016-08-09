@@ -147,6 +147,7 @@ inline int rankStatus(int status)
 // Widget tools
 // -----------------------------------------------------------------------------
 
+bool isKde();
 void clearMenu(QMenu *m); // deletes all items, including submenus, from given QMenu
 void bringToFront(QWidget *w, bool grabFocus = true);
 void replaceWidget(QWidget *, QWidget *);
