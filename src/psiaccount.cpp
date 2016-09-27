@@ -3317,12 +3317,12 @@ ChatDlg* PsiAccount::findChatDialog(const Jid& jid, bool compareResource) const
 	return findDialog<ChatDlg*>(jid, compareResource);
 }
 
-ChatDlg* PsiAccount::findChatDialogEx(const Jid& jid) const
+ChatDlg* PsiAccount::findChatDialogEx(const Jid& jid, bool ignoreResource) const
 {
 	ChatDlg* cm1 = NULL;
 	ChatDlg* cm2 = NULL;
 	foreach (ChatDlg *cl, findChatDialogs(jid, false)) {
-		if (cl->autoSelectContact())
+		if (cl->autoSelectContact() || ignoreResource)
 			return cl;
 		if (!cm1 && jid.resource() == cl->jid().resource()) {
 				cm1 = cl;
@@ -5150,8 +5150,8 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 				doPopup = false;
 			}
 
-			ChatDlg *c = findChatDialogEx(chatJid);
-			if (c)
+			ChatDlg *c = findChatDialogEx(chatJid, m.carbonDirection() == Message::Sent);
+			if (c && c->jid().resource().isEmpty())
 				c->setJid(chatJid);
 
 			//if the chat exists, and is either open in a tab,
@@ -5221,6 +5221,11 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 			soundType = eSystem;
 		}
 
+		if (m.carbonDirection() == Message::Sent) {
+			doPopup = false;
+			soundType = eNone;
+			putToQueue = false;
+		}
 		if(m.type() == "error") {
 			// FIXME: handle message errors
 			//msg.text = QString(tr("<big>[Error Message]</big><br>%1").arg(plain2rich(msg.text)));
