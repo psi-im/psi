@@ -932,7 +932,7 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 	}
 
 	// if we're not active, notify the user by changing the title
-	if (!isActiveTab()) {
+	if (!isActiveTab() && m.carbonDirection() != Message::Sent) {
 		++pending_;
 		invalidateTab();
 		if (PsiOptions::instance()->getOption("options.ui.flash-windows").toBool()) {

@@ -167,7 +167,7 @@ public:
 	void passwordReady(QString password);
 
 	ChatDlg* findChatDialog(const Jid& jid, bool compareResource = true) const;
-	ChatDlg* findChatDialogEx(const Jid& jid) const;
+	ChatDlg* findChatDialogEx(const Jid& jid, bool ignoreResource = false) const;
 	QList<ChatDlg*> findChatDialogs(const Jid& jid, bool compareResource = true) const;
 
 	QList<PsiContact*> activeContacts() const;
