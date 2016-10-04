@@ -559,7 +559,8 @@ void clearMenu(QMenu *m)
 bool isKde()
 {
 	return qgetenv("XDG_SESSION_DESKTOP") == "KDE" ||
-	       qgetenv("DESKTOP_SESSION").endsWith("plasma");
+	       qgetenv("DESKTOP_SESSION").endsWith("plasma") ||
+	       qgetenv("DESKTOP_SESSION").endsWith("plasma5");
 }
 
 void bringToFront(QWidget *widget, bool)
