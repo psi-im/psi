@@ -265,11 +265,9 @@ static void applyFormatToIcons(QTextDocument *doc, TextIconFormatQueue *queue, Q
 	QTextCursor searchCursor = cursor;
 	forever {
 		searchCursor = doc->find(QString(QChar::ObjectReplacementCharacter), searchCursor);
-		if (searchCursor.isNull()) {
+		if (searchCursor.isNull() || queue->isEmpty()) {
 			break;
 		}
-
-		Q_ASSERT(!queue->isEmpty());
 		TextIconFormat *format = queue->dequeue();
 		if (format) {
 			searchCursor.setCharFormat(*format);
@@ -378,11 +376,13 @@ void PsiRichText::setText(QTextDocument *doc, const QString &text)
  * \param text text to append to the QTextDocument. Please note that if you
  *             insert any <icon>s, attributes' values MUST be Qt::escaped.
  */
-void PsiRichText::appendText(QTextDocument *doc, QTextCursor &cursor, const QString &text)
+void PsiRichText::appendText(QTextDocument *doc, QTextCursor &cursor, const QString &text, bool append)
 {
 	cursor.beginEditBlock();
-	cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
-	cursor.clearSelection();
+	if (append) {
+		cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
+		cursor.clearSelection();
+	}
 	if (!cursor.atBlockStart()) {
 		cursor.insertBlock();
 

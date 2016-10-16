@@ -35,9 +35,16 @@
 #include <QTimer>
 #include <QKeyEvent>
 #include <QUrl>
+#include <QTextBlock>
+#include <QTextDocumentFragment>
+//#define CORRECTION_DEBUG
+#ifdef CORRECTION_DEBUG
+#include <QDebug>
+#endif
 
 static const char *informationalColorOpt = "options.ui.look.colors.messages.informational";
-
+static const QRegExp underlineFixRE("(<a href=\"addnick://psi/[^\"]*\"><span style=\")");
+static const QRegExp removeTagsRE("<[^>]*>");
 //----------------------------------------------------------------------------
 // ChatView
 //----------------------------------------------------------------------------
@@ -72,6 +79,7 @@ ChatView::ChatView(QWidget *parent)
 			logIconDeliveredPgp = IconsetFactory::iconPixmap("psi/notification_chat_delivery_ok_pgp").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
 			logIconTime = IconsetFactory::iconPixmap("psi/notification_chat_time").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
 			logIconInfo = IconsetFactory::iconPixmap("psi/notification_chat_info").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
+			logIconCorrected = IconsetFactory::iconPixmap("psi/action_templates_edit").scaledToHeight(logIconsSize, Qt::SmoothTransformation);
 		} else {
 			logIconReceive = IconsetFactory::iconPixmap("psi/notification_chat_receive");
 			logIconSend = IconsetFactory::iconPixmap("psi/notification_chat_send");
@@ -81,6 +89,7 @@ ChatView::ChatView(QWidget *parent)
 			logIconDeliveredPgp = IconsetFactory::iconPixmap("psi/notification_chat_delivery_ok_pgp");
 			logIconTime = IconsetFactory::iconPixmap("psi/notification_chat_time");
 			logIconInfo = IconsetFactory::iconPixmap("psi/notification_chat_info");
+			logIconCorrected = IconsetFactory::iconPixmap("psi/action_templates_edit");
 		}
 		addLogIconsResources();
 	}
@@ -149,6 +158,7 @@ void ChatView::addLogIconsResources()
 	document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_info"), logIconInfo);
 	document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_delivered"), logIconDelivered);
 	document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_delivered_pgp"), logIconDeliveredPgp);
+	document()->addResource(QTextDocument::ImageResource, QUrl("icon:log_icon_corrected"), logIconCorrected);
 }
 
 void ChatView::markReceived(QString id)
@@ -269,12 +279,82 @@ void ChatView::dispatchMessage(const MessageView &mv)
 		appendText(QString(useMessageIcons_?"<img src=\"icon:log_icon_time\" />":"") +
 				   QString("<font color=\"%1\">*** %2</font>").arg(color).arg(mv.dateTime().date().toString(Qt::ISODate)));
 	}
+	const QString& replaceId = mv.replaceId();
 	switch (mv.type()) {
 		case MessageView::Message:
-			if (isMuc_) {
-				renderMucMessage(mv);
+			if (!replaceId.isEmpty()) {
+				QTextCursor saved = textCursor();
+				QRegExp msgRE;
+				int capIndex;
+				QString msgid = QRegExp::escape(TextUtil::escape("msgid_" + replaceId + "_" + mv.userId()));
+				// regexp for private chats without clickable nicks, empty brackets are for group index compatibility
+				QRegExp msgPrivRE("(<img src=[^<]*<span[^<]*</span>())(\\s*)?(.*)<a name=\"" + msgid + "\"></a>.*</p>");
+#ifdef CORRECTION_DEBUG
+				qDebug() << "Replacing" << msgid << "with" << mv.formattedText();
+#endif
+				if (PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
+					msgRE.setPattern("(<br />)(.*)<a name=\"" + msgid + "\"></a>.*</p>");
+					capIndex = 2;
+				} else {
+					msgRE.setPattern(
+							"(<a href=\"addnick://psi/[^\"]*\"><span [^<]*</span></a>"
+							"(<span [^>]*>&gt;</span>\\s*)?"
+							"<span [^>]*>)(\\s*)?(.*)<a name=\""
+									+ msgid + "\"></a>.*</p>");
+					capIndex = 4;
+				}
+				moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
+				while (!textCursor().atStart()) {
+					moveCursor(QTextCursor::EndOfBlock, QTextCursor::MoveAnchor);
+					moveCursor(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
+					QTextBlockFormat format = textCursor().blockFormat();
+					QTextBlockFormat savedFormat(format);
+					// remove the track bar to see the actual HTML, probably a Qt bug
+					if (format.property(QTextBlockFormat::BlockTrailingHorizontalRulerWidth).toBool()) {
+						format.clearProperty(QTextBlockFormat::BlockTrailingHorizontalRulerWidth);
+						textCursor().setBlockFormat(format);
+					}
+					QString srcHtml = textCursor().selection().toHtml();
+#ifdef CORRECTION_DEBUG
+					qDebug() << "HTML:" << srcHtml;
+#endif
+					QString oldText;
+					QRegExp replaceRE;
+					if (msgRE.indexIn(srcHtml) >= 0) {
+#ifdef CORRECTION_DEBUG
+						qDebug() << "msgRE matched";
+#endif
+						oldText = msgRE.cap(capIndex);
+						replaceRE = msgRE;
+					} else if (msgPrivRE.indexIn(srcHtml) >= 0) {
+#ifdef CORRECTION_DEBUG
+						qDebug() << "msgPrivRE matched";
+#endif
+						oldText = msgPrivRE.cap(capIndex);
+						replaceRE = msgPrivRE;
+					}
+					if (!oldText.isEmpty()) {
+						oldText.replace(removeTagsRE, "");
+						srcHtml.replace(replaceRE, "\\1\\3" +
+								mv.formattedText()
+										+ "<img src=\"icon:log_icon_corrected\" title=\""
+										+ TextUtil::escape(oldText) + "\" /></p>");
+						srcHtml.replace(underlineFixRE, "\\1text-decoration: none;");
+						QTextCursor cur = textCursor();
+						PsiRichText::appendText(document(), cur, srcHtml, false);
+						textCursor().setBlockFormat(savedFormat);
+						break;
+					}
+					textCursor().setBlockFormat(savedFormat);
+					moveCursor(QTextCursor::PreviousBlock, QTextCursor::MoveAnchor);
+				}
+				setTextCursor(saved);
 			} else {
-				renderMessage(mv);
+				if (isMuc_) {
+					renderMucMessage(mv);
+				} else {
+					renderMessage(mv);
+				}
 			}
 			break;
 		case MessageView::Subject:

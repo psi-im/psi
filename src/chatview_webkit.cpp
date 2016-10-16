@@ -320,20 +320,40 @@ bool ChatView::handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdi
 // input point of all messages
 void ChatView::dispatchMessage(const MessageView &mv)
 {
-	if ((mv.type() == MessageView::Message || mv.type() == MessageView::Subject)
-			&& updateLastMsgTime(mv.dateTime()))
-	{
-		QVariantMap m;
-		m["date"] = mv.dateTime();
-		m["type"] = "message";
-		m["mtype"] = "lastDate";
-		sendJsObject(m);
+	QString replaceId = mv.replaceId();
+	if (replaceId.isEmpty()) {
+		if ((mv.type() == MessageView::Message || mv.type() == MessageView::Subject)
+				&& updateLastMsgTime(mv.dateTime())) {
+			QVariantMap m;
+			m["date"] = mv.dateTime();
+			m["type"] = "message";
+			m["mtype"] = "lastDate";
+			sendJsObject(m);
+		}
+		QVariantMap vm = mv.toVariantMap(isMuc_, true);
+		vm["mtype"] = vm["type"];
+		vm["type"] = "message";
+		vm["encrypted"] = isEncryptionEnabled_;
+		sendJsObject(vm);
+	} else {
+		QString msgId = TextUtil::escape("msgid_" + replaceId + "_" + mv.userId());
+		QString replaceText = mv.formattedText().replace("\"", "\\\"");
+		QString jsCommand =
+				QString(
+						"var msgs = document.querySelectorAll(\"a[name=\\\"%1\\\"]\");"
+						"if (msgs) {"
+						"  var elem = msgs[msgs.length - 1].previousSibling;"
+						"  while (next = elem.nextSibling) {"
+						"    next.remove();"
+						"  }"
+						"  var oldText = elem.innerHTML.replace(/<[^>]*>/gi, \"\");"
+						"  elem.outerHTML = \"%2\" + \"<img src='icon:psi/action_templates_edit' title='\" + oldText + \"' />\";"
+						"} else {"
+						"  console.log(\"Messages with name %1 not found\");"
+						"}").arg(
+						msgId).arg(replaceText);
+		sendJsCommand(jsCommand);
 	}
-	QVariantMap vm = mv.toVariantMap(isMuc_, true);
-	vm["mtype"] = vm["type"];
-	vm["type"] = "message";
-	vm["encrypted"] = isEncryptionEnabled_;
-	sendJsObject(vm);
 }
 
 void ChatView::scrollUp()

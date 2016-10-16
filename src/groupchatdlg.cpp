@@ -1155,6 +1155,13 @@ void GCMainDlg::mle_returnPressed()
 	Message m(jid());
 	m.setType("groupchat");
 	m.setBody(str);
+	QString id = account()->client()->genUniqueId();
+	m.setId(id); // we need id early for message manipulations in chatview
+	if (ui_.mle->chatEdit()->isCorrection()) {
+		m.setReplaceId(ui_.mle->chatEdit()->lastMessageId());
+	}
+	ui_.mle->chatEdit()->setLastMessageId(id);
+	ui_.mle->chatEdit()->resetCorrection();
 
 	HTMLElement html = d->mle()->toHTMLElement();
 	if(!html.body().isNull())
@@ -1884,12 +1891,14 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
 	}
 	if (!PsiOptions::instance()->getOption("options.ui.muc.use-highlighting").toBool())
 		alert=false;
+	mv.setMessageId(m.id());
 	mv.setAlert(alert);
 	mv.setUserId(m.from().full());
 	mv.setNick(m.from().resource());
 	mv.setLocal(mv.nick() == d->self);
 	mv.setSpooled(m.spooled());
 	mv.setDateTime(m.timeStamp());
+	mv.setReplaceId(m.replaceId());
 
 	if (d->trackBar && !mv.isLocal() && !mv.isSpooled()) {
 		d->doTrackBar();
