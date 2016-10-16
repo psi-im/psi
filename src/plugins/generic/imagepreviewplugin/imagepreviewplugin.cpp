@@ -206,7 +206,6 @@ void ImagePreviewPlugin::messageAppended(const QString &, QWidget* logWidget) {
 		te_log->setTextCursor(cur);
 	} else {
 		QWebView* wv_log = qobject_cast<QWebView*>(logWidget);
-		QRegExp urlRE("(https?://\\S*)");
 		QWebFrame* mainFrame = wv_log->page()->mainFrame();
 		auto elems = mainFrame->findAllElements("a[href]");
 		for (auto i = elems.constEnd() - 1;; i--) {
