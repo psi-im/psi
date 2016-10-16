@@ -1893,7 +1893,7 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
 		alert=false;
 	mv.setMessageId(m.id());
 	mv.setAlert(alert);
-	mv.setUserId(m.from().full());
+	mv.setUserId(m.from().full()); // theoretically, this can be inferred from the chat dialog properties
 	mv.setNick(m.from().resource());
 	mv.setLocal(mv.nick() == d->self);
 	mv.setSpooled(m.spooled());

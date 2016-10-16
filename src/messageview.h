@@ -104,7 +104,7 @@ private:
 	int _status;
 	int _statusPriority;
 	QString _messageId;
-	QString _userId;
+	QString _userId; // TODO: convert to XMPP::Jid, only used in message corrections as of now
 	QString _nick; // rich / as is
 	QString _text; // always rich (plain text converted to rich)
 	QString _userText; // rich

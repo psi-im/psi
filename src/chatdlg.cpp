@@ -920,7 +920,7 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 	mv.setMessageId(m.id());
 	mv.setLocal(local);
 	mv.setNick(whoNick(local));
-	mv.setUserId(local?account()->jid().full():jid().full());
+	mv.setUserId(local?account()->jid().full():jid().full()); // theoretically, this can be inferred from the chat dialog properties
 	mv.setDateTime(m.timeStamp());
 	mv.setSpooled(m.spooled());
 	mv.setAwaitingReceipt(local && m.messageReceipt() == ReceiptRequest);
