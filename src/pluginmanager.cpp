@@ -41,6 +41,14 @@
 
 /**
  * Helper class used to process incoming XML in plugins.
+ * This task should work as long as the related account exists,
+ * that's why we override onDisconnect (called when XML stream ends)
+ * to prevent it from stopping prematurely.
+ *
+ * According to common sense, tasks should have at least
+ * a vaguely defined execution time, however, this one runs
+ * indefinitely long and feels more like a hook/handler.
+ * Therefore it should probably be refactored to one.
  */
 class PluginManager::StreamWatcher: public XMPP::Task
 {
@@ -803,7 +811,8 @@ void PluginManager::addAccount(PsiAccount* account, XMPP::Client* client)
 {
 	clients_.append(client);
 	const int id = accountIds_.appendAccount(account);
-	new StreamWatcher(client->rootTask(), this, id);
+	new StreamWatcher(client->rootTask(), this, id); // this StreamWatcher instance isn't stored anywhere
+	// and probably leaks (if go(true) isn't called somewhere else)
 	connect(account, SIGNAL(accountDestroyed()), this, SLOT(accountDestroyed()));
 }
 
