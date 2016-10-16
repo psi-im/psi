@@ -338,6 +338,7 @@ void ChatView::dispatchMessage(const MessageView &mv)
 	} else {
 		QString msgId = TextUtil::escape("msgid_" + replaceId + "_" + mv.userId());
 		QString replaceText = mv.formattedText().replace("\"", "\\\"");
+		// TODO: move to JS adapters and add smilies/icons support
 		QString jsCommand =
 				QString(
 						"var msgs = document.querySelectorAll(\"a[name=\\\"%1\\\"]\");"
