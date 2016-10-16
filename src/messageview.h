@@ -89,6 +89,8 @@ public:
 	inline void setDateTime(const QDateTime &dt) { _dateTime = dt; }
 	inline const QDateTime &dateTime() const { return _dateTime; }
 	inline QMap<QString, QString> urls() const { return _urls; }
+	inline void setReplaceId(const QString &id) { _replaceId = id; }
+	inline const QString &replaceId() const { return _replaceId; }
 
 	QVariantMap toVariantMap(bool isMuc, bool formatted = false) const;
 
@@ -102,12 +104,13 @@ private:
 	int _status;
 	int _statusPriority;
 	QString _messageId;
-	QString _userId;
+	QString _userId; // TODO: convert to XMPP::Jid, only used in message corrections as of now
 	QString _nick; // rich / as is
 	QString _text; // always rich (plain text converted to rich)
 	QString _userText; // rich
 	QDateTime _dateTime;
 	QMap<QString, QString> _urls;
+	QString _replaceId;
 };
 
 #endif

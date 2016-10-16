@@ -211,6 +211,9 @@ bool PluginHost::load()
 
 		QObject* plugin = loader_->instance();
 		if (!loader_->isLoaded()) {
+#ifndef PLUGINS_NO_DEBUG
+			qDebug() << "Error loading plugin:" << loader_->errorString();
+#endif
 			delete loader_;
 			loader_ = 0;
 		}
@@ -1306,6 +1309,11 @@ void PluginHost::setStatus(int account, const QString& status, const QString& st
 bool PluginHost::appendSysMsg(int account, const QString& jid, const QString& message)
 {
 	return manager_->appendSysMsg(account, jid, message);
+}
+
+bool PluginHost::appendMsg(int account, const QString& jid, const QString& message, const QString& id)
+{
+	return manager_->appendMsg(account, jid, message, id);
 }
 
 void PluginHost::createNewEvent(int account, const QString& jid, const QString& descr, QObject *receiver, const char* slot)

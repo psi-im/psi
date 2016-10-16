@@ -729,7 +729,11 @@ void ChatDlg::doSend()
 
 	QString id = account()->client()->genUniqueId();
 	m.setId(id); // we need id early for message manipulations in chatview
-
+	if (chatEdit()->isCorrection()) {
+		m.setReplaceId(chatEdit()->lastMessageId());
+	}
+	chatEdit()->setLastMessageId(id);
+	chatEdit()->resetCorrection();
 	//xep-0184 Message Receipts
 	if (PsiOptions::instance()->getOption("options.ui.notifications.request-receipts").toBool()) {
 		QStringList sl;
@@ -916,10 +920,11 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 	mv.setMessageId(m.id());
 	mv.setLocal(local);
 	mv.setNick(whoNick(local));
-	mv.setUserId(local?account()->jid().bare():jid().bare());
+	mv.setUserId(local?account()->jid().full():jid().full()); // theoretically, this can be inferred from the chat dialog properties
 	mv.setDateTime(m.timeStamp());
 	mv.setSpooled(m.spooled());
 	mv.setAwaitingReceipt(local && m.messageReceipt() == ReceiptRequest);
+	mv.setReplaceId(m.replaceId());
 	chatView()->dispatchMessage(mv);
 
 	if (!m.urlList().isEmpty()) {
@@ -958,6 +963,7 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 		keepOpen_ = true;
 		QTimer::singleShot(1000, this, SLOT(setKeepOpenFalse()));
 	}
+	emit messageAppended(body, chatView()->textWidget());
 }
 
 void ChatDlg::updateIsComposing(bool b)

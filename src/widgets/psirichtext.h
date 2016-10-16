@@ -30,7 +30,7 @@ public:
 	static void ensureTextLayouted(QTextDocument *doc, int documentWidth, Qt::Alignment align = Qt::AlignLeft, Qt::LayoutDirection layoutDirection = Qt::LeftToRight, bool textWordWrap = true);
 	static void setText(QTextDocument *doc, const QString &text);
 	static void insertIcon(QTextCursor &cursor, const QString &iconName, const QString &iconText);
-	static void appendText(QTextDocument *doc, QTextCursor &cursor, const QString &text);
+	static void appendText(QTextDocument *doc, QTextCursor &cursor, const QString &text, bool append = true);
 	static QString convertToPlainText(const QTextDocument *doc);
 	static void addEmoticon(QTextEdit *textEdit, const QString &emoticon);
 	static void setAllowedImageDirs(const QStringList &);

@@ -1,0 +1,7 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+	<qresource prefix="httpuploadplugin">
+		<file>upload_file.png</file>
+		<file>upload_image.png</file>
+	</qresource>
+</RCC>

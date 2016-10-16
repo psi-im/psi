@@ -38,6 +38,8 @@ class HTMLTextController;
 
 class ChatEdit : public QTextEdit
 {
+	void updateBackground();
+
 	Q_OBJECT
 
 public:
@@ -53,6 +55,10 @@ public:
 	static bool checkSpellingGloballyEnabled();
 	void setCheckSpelling(bool);
 	XMPP::HTMLElement toHTMLElement();
+	bool isCorrection() { return correction; }
+	void setLastMessageId(const QString& id) { lastId = id; }
+	const QString& lastMessageId() { return lastId; }
+	void resetCorrection() { correction = false; updateBackground(); };
 
 public slots:
 	void appendMessageHistory(const QString& text);
@@ -94,6 +100,10 @@ private:
 	QAction* act_showMessageLast;
 	QString currentText;
 	HTMLTextController *controller_;
+	bool correction;
+	QString lastId;
+	QPalette palOriginal;
+	QPalette palCorrection;
 };
 
 

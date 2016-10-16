@@ -41,6 +41,14 @@
 
 /**
  * Helper class used to process incoming XML in plugins.
+ * This task should work as long as the related account exists,
+ * that's why we override onDisconnect (called when XML stream ends)
+ * to prevent it from stopping prematurely.
+ *
+ * According to common sense, tasks should have at least
+ * a vaguely defined execution time, however, this one runs
+ * indefinitely long and feels more like a hook/handler.
+ * Therefore it should probably be refactored to one.
  */
 class PluginManager::StreamWatcher: public XMPP::Task
 {
@@ -48,6 +56,9 @@ public:
 	StreamWatcher(Task* t, PluginManager* m, int a) : Task(t), manager(m), account(a) {}
 	bool take(const QDomElement& e) {
 		return manager->incomingXml(account, e);
+	}
+	void onDisconnect() {
+		// never finish on client disconnect
 	}
 	PluginManager* manager;
 	int account;
@@ -800,7 +811,8 @@ void PluginManager::addAccount(PsiAccount* account, XMPP::Client* client)
 {
 	clients_.append(client);
 	const int id = accountIds_.appendAccount(account);
-	new StreamWatcher(client->rootTask(), this, id);
+	new StreamWatcher(client->rootTask(), this, id); // this StreamWatcher instance isn't stored anywhere
+	// and probably leaks (if go(true) isn't called somewhere else)
 	connect(account, SIGNAL(accountDestroyed()), this, SLOT(accountDestroyed()));
 }
 
@@ -884,6 +896,29 @@ bool PluginManager::appendSysMsg(int account, const QString& jid, const QString&
 	return false;
 }
 
+bool PluginManager::appendMsg(int account, const QString& jid, const QString& message, const QString& id)
+{
+	PsiAccount *acc = accountIds_.account(account);
+	if(acc) {
+		XMPP::Jid j (jid);
+		ChatDlg *chatDlg = acc->findChatDialogEx(j);
+		if(!chatDlg) {
+			chatDlg = acc->findChatDialog(j, false);
+		}
+		if(chatDlg) {
+			XMPP::Message msg;
+			msg.setFrom(acc->jid());
+			msg.setTo(j);
+			msg.setBody(message);
+			msg.setMessageReceipt(ReceiptRequest);
+			msg.setId(id);
+			msg.setTimeStamp(QDateTime::currentDateTime(), true);
+			chatDlg->appendMessage(msg, true);
+			return true;
+		}
+	}
+	return false;
+}
 
 void PluginManager::createNewEvent(int account, const QString &jid, const QString &descr, QObject *receiver, const char *slot)
 {
