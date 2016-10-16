@@ -1928,6 +1928,7 @@ void GCMainDlg::appendMessage(const Message &m, bool alert)
 		d->keepOpen = true;
 		QTimer::singleShot(1000, this, SLOT(setKeepOpenFalse()));
 				}*/
+	emit messageAppended(m.body(), ui_.log->textWidget());
 }
 
 void GCMainDlg::doAlert()

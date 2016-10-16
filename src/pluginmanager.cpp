@@ -884,6 +884,29 @@ bool PluginManager::appendSysMsg(int account, const QString& jid, const QString&
 	return false;
 }
 
+bool PluginManager::appendMsg(int account, const QString& jid, const QString& message, const QString& id)
+{
+	PsiAccount *acc = accountIds_.account(account);
+	if(acc) {
+		XMPP::Jid j (jid);
+		ChatDlg *chatDlg = acc->findChatDialogEx(j);
+		if(!chatDlg) {
+			chatDlg = acc->findChatDialog(j, false);
+		}
+		if(chatDlg) {
+			XMPP::Message msg;
+			msg.setFrom(acc->jid());
+			msg.setTo(j);
+			msg.setBody(message);
+			msg.setMessageReceipt(ReceiptRequest);
+			msg.setId(id);
+			msg.setTimeStamp(QDateTime::currentDateTime(), true);
+			chatDlg->appendMessage(msg, true);
+			return true;
+		}
+	}
+	return false;
+}
 
 void PluginManager::createNewEvent(int account, const QString &jid, const QString &descr, QObject *receiver, const char *slot)
 {

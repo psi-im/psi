@@ -197,6 +197,7 @@ public:
 	void setStatus(int account, const QString& status, const QString& statusMessage);
 
 	bool appendSysMsg(int account, const QString& jid, const QString& message);
+	bool appendMsg(int account, const QString& jid, const QString& message, const QString& id);
 
 	void createNewEvent(int account, const QString& jid, const QString& descr, QObject *receiver, const char* slot);
 

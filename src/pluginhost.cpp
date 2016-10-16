@@ -1308,6 +1308,11 @@ bool PluginHost::appendSysMsg(int account, const QString& jid, const QString& me
 	return manager_->appendSysMsg(account, jid, message);
 }
 
+bool PluginHost::appendMsg(int account, const QString& jid, const QString& message, const QString& id)
+{
+	return manager_->appendMsg(account, jid, message, id);
+}
+
 void PluginHost::createNewEvent(int account, const QString& jid, const QString& descr, QObject *receiver, const char* slot)
 {
 	manager_->createNewEvent(account, jid, descr, receiver, slot);
