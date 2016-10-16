@@ -211,6 +211,9 @@ bool PluginHost::load()
 
 		QObject* plugin = loader_->instance();
 		if (!loader_->isLoaded()) {
+#ifndef PLUGINS_NO_DEBUG
+			qDebug() << "Error loading plugin:" << loader_->errorString();
+#endif
 			delete loader_;
 			loader_ = 0;
 		}
