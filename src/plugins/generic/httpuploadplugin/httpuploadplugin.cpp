@@ -187,17 +187,17 @@ private:
 	QNetworkAccessManager* manager;
 	QMap<QString, UploadService> serviceNames;
 	QPointer<QIODevice> dataSource;
-	QByteArray* imageBytes = 0;
+	QByteArray* imageBytes;
 	CurrentUpload currentUpload;
 	QTimer slotTimeout;
-	QSpinBox *sb_previewWidth = 0;
-	QCheckBox *cb_resize = 0;
-	QSpinBox *sb_size = 0;
-	QSpinBox *sb_quality = 0;
-	bool imageResize = false;
-	int imageSize = 0;
-	int imageQuality = 0;
-	int previewWidth = 0;
+	QSpinBox *sb_previewWidth;
+	QCheckBox *cb_resize;
+	QSpinBox *sb_size;
+	QSpinBox *sb_quality;
+	bool imageResize;
+	int imageSize;
+	int imageQuality;
+	int previewWidth;
 };
 
 #ifndef HAVE_QT5
@@ -206,7 +206,8 @@ Q_EXPORT_PLUGIN(HttpUploadPlugin)
 
 HttpUploadPlugin::HttpUploadPlugin() :
 		iconHost(0), stanzaSender(0), activeTab(0), accInfo(0), psiController(0), psiOptions(0), enabled(false), manager(
-				new QNetworkAccessManager(this)) {
+				new QNetworkAccessManager(this)), imageBytes(0), sb_previewWidth(0), cb_resize(0), sb_size(0), sb_quality(0),
+				imageResize(false), imageSize(0), imageQuality(0), previewWidth(0) {
 	connect(manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(uploadComplete(QNetworkReply*)));
 	connect(&slotTimeout, SIGNAL(timeout()), this, SLOT(timeout()));
 	slotTimeout.setSingleShot(true);
@@ -355,7 +356,7 @@ void HttpUploadPlugin::upload(bool anything) {
 	int sizeLimit = -1;
 	int account = accountNumber();
 	QString curJid = accInfo->getJid(account);
-	auto iter = serviceNames.find(curJid);
+	QMap<QString, UploadService>::iterator iter = serviceNames.find(curJid);
 	if (iter == serviceNames.end()) {
 		QMessageBox::critical(0, tr("Not supported"),
 				tr("Server for account %1 does not support HTTP Upload (XEP-363)").arg(curJid));
@@ -465,9 +466,9 @@ void HttpUploadPlugin::checkUploadAvailability(int account) {
 
 void HttpUploadPlugin::processServices(const QDomElement& query, int account) {
 	QString curJid = accInfo->getJid(account);
-	auto nodes = query.childNodes();
+	QDomNodeList nodes = query.childNodes();
 	for (int i = 0; i < nodes.count(); i++) {
-		auto elem = nodes.item(i).toElement();
+		QDomElement elem = nodes.item(i).toElement();
 		if (elem.tagName() == "item") {
 			QString serviceJid = elem.attribute("jid");
 			QString serviceDiscoStanza = QString("<iq from='%1' id='%2' to='%3' type='get'>"
@@ -484,19 +485,19 @@ void HttpUploadPlugin::processServices(const QDomElement& query, int account) {
 void HttpUploadPlugin::processOneService(const QDomElement& query, const QString& service, int account) {
 	QString curJid = accInfo->getJid(account);
 	int sizeLimit = -1;
-	auto feature = query.firstChildElement("feature");
+	QDomElement feature = query.firstChildElement("feature");
 	bool ok = false;
 	while (!feature.isNull()) {
 		if (feature.attribute("var") == "urn:xmpp:http:upload") {
 #ifdef DEBUG_UPLOAD
 			qDebug() << "Service" << service << "looks like http upload";
 #endif
-			auto x = query.firstChildElement("x");
+			QDomElement x = query.firstChildElement("x");
 			while (!x.isNull()) {
-				auto field = x.firstChildElement("field");
+				QDomElement field = x.firstChildElement("field");
 				while (!field.isNull()) {
 					if (field.attribute("var") == "max-file-size") {
-						auto sizeNode = field.firstChildElement("value");
+						QDomElement sizeNode = field.firstChildElement("value");
 						int foundSizeLimit = sizeNode.text().toInt(&ok);
 						if (ok) {
 #ifdef DEBUG_UPLOAD

@@ -11,9 +11,10 @@
 struct CurrentUpload {
 	QString from;
 	QString to;
-	int account = -1;
+	int account;
 	QString getUrl;
 	QString type;
+	CurrentUpload(): account(-1) {}
 };
 
 #endif /* SRC_PLUGINS_GENERIC_HTTPUPLOADPLUGIN_CURRENTUPLOAD_H_ */
