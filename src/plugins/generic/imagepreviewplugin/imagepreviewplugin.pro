@@ -1,6 +1,5 @@
 #CONFIG += release
 QT += webkit
-QMAKE_CXXFLAGS += -std=c++11
 
 isEmpty(PSISDK) {
     include(../../psiplugin.pri)

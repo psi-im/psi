@@ -43,6 +43,7 @@
 #include <QWebView>
 #include <QWebFrame>
 #include <QWebElementCollection>
+#include <stdexcept>
 
 //#define IMGPREVIEW_DEBUG
 #define constVersion "0.1.0"
@@ -97,11 +98,11 @@ private:
 	bool enabled;
 	QNetworkAccessManager* manager;
 	QSet<QString> pending;
-	int previewSize = 0;
+	int previewSize;
 	QPointer<QSpinBox> sb_previewSize;
-	int sizeLimit = 0;
+	int sizeLimit;
 	QPointer<QComboBox> cb_sizeLimit;
-	bool allowUpscale = false;
+	bool allowUpscale;
 	QPointer<QCheckBox> cb_allowUpscale;
 	void queueUrl(const QString& url, QObject* origin);
 };
@@ -111,7 +112,8 @@ Q_EXPORT_PLUGIN(ImagePreviewPlugin)
 #endif
 
 ImagePreviewPlugin::ImagePreviewPlugin() :
-		psiOptions(0), enabled(false), manager(new QNetworkAccessManager(this)) {
+		psiOptions(0), enabled(false), manager(new QNetworkAccessManager(this)), previewSize(0), sizeLimit(0), allowUpscale(
+				false) {
 	connect(manager, SIGNAL(finished(QNetworkReply *)), SLOT(imageReply(QNetworkReply *)));
 }
 
@@ -192,12 +194,12 @@ void ImagePreviewPlugin::messageAppended(const QString &, QWidget* logWidget) {
 	}
 	QTextEdit* te_log = qobject_cast<QTextEdit*>(logWidget);
 	if (te_log) {
-		auto cur = te_log->textCursor();
+		QTextCursor cur = te_log->textCursor();
 		te_log->moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
 		te_log->moveCursor(QTextCursor::StartOfBlock, QTextCursor::MoveAnchor);
 		QTextCursor found = te_log->textCursor();
 		while (!(found = te_log->document()->find(QRegExp("https?://\\S*"), found)).isNull()) {
-			auto url = found.selectedText();
+			QString url = found.selectedText();
 #ifdef IMGPREVIEW_DEBUG
 			qDebug() << "URL FOUND:" << url;
 #endif
@@ -207,14 +209,14 @@ void ImagePreviewPlugin::messageAppended(const QString &, QWidget* logWidget) {
 	} else {
 		QWebView* wv_log = qobject_cast<QWebView*>(logWidget);
 		QWebFrame* mainFrame = wv_log->page()->mainFrame();
-		auto elems = mainFrame->findAllElements("a[href]");
-		for (auto i = elems.constEnd() - 1;; i--) {
+		QWebElementCollection elems = mainFrame->findAllElements("a[href]");
+		for (QWebElementCollection::const_iterator i = elems.constEnd() - 1;; i--) {
 			if ((*i).isNull()) {
 				break;
 			}
 			// skip already processed anchors
 			if ((*i).firstChild().tagName() != "img") {
-				auto url = (*i).attribute("href", "");
+				QString url = (*i).attribute("href", "");
 				if (url.startsWith("http://") || url.startsWith("https://")) {
 					queueUrl(url, wv_log);
 				}
@@ -227,7 +229,10 @@ void ImagePreviewPlugin::imageReply(QNetworkReply* reply) {
 	bool ok;
 	int size = 0;
 	QString contentType;
-	QStringList allowedTypes = { "image/jpeg", "image/png", "image/gif" };
+	QStringList allowedTypes;
+	allowedTypes.append("image/jpeg");
+	allowedTypes.append("image/png");
+	allowedTypes.append("image/gif");
 	QUrl url = reply->request().url();
 	QString urlStr = url.toEncoded();
 	switch (reply->operation()) {
@@ -259,10 +264,10 @@ void ImagePreviewPlugin::imageReply(QNetworkReply* reply) {
 			QTextEdit* te_log = qobject_cast<QTextEdit*>(reply->request().originatingObject());
 			if (te_log) {
 				te_log->document()->addResource(QTextDocument::ImageResource, url, image);
-				auto saved = te_log->textCursor();
+				QTextCursor saved = te_log->textCursor();
 				te_log->moveCursor(QTextCursor::End);
 				while (te_log->find(urlStr, QTextDocument::FindBackward)) {
-					auto cur = te_log->textCursor();
+					QTextCursor cur = te_log->textCursor();
 					QString html = cur.selection().toHtml();
 					html.replace(QRegExp("(<a href=\"[^\"]*\">)(.*)(</a>)"),
 							QString("\\1<img src='%1'/>\\3").arg(urlStr));
