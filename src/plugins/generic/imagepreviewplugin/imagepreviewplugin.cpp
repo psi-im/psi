@@ -46,10 +46,22 @@
 #include <stdexcept>
 
 //#define IMGPREVIEW_DEBUG
-#define constVersion "0.1.0"
+#define constVersion "0.1.1"
 #define sizeLimitName "imgpreview-size-limit"
 #define previewSizeName "imgpreview-preview-size"
 #define allowUpscaleName "imgpreview-allow-upscale"
+#define MAX_REDIRECTS 2
+
+class Origin: public QObject {
+Q_OBJECT
+public:
+	Origin(QObject* chat) :
+			QObject(chat), originalUrl_(""), chat_(chat), redirectsLeft_(0) {
+	}
+	QString originalUrl_;
+	QObject* chat_;
+	int redirectsLeft_;
+};
 
 class ImagePreviewPlugin: public QObject,
 		public PsiPlugin,
@@ -104,7 +116,7 @@ private:
 	QPointer<QComboBox> cb_sizeLimit;
 	bool allowUpscale;
 	QPointer<QCheckBox> cb_allowUpscale;
-	void queueUrl(const QString& url, QObject* origin);
+	void queueUrl(const QString& url, Origin* origin);
 };
 
 #ifndef HAVE_QT5
@@ -178,12 +190,16 @@ QPixmap ImagePreviewPlugin::icon() const {
 	return QPixmap(":/imagepreviewplugin/imagepreviewplugin.png");
 }
 
-void ImagePreviewPlugin::queueUrl(const QString& url, QObject* origin) {
+void ImagePreviewPlugin::queueUrl(const QString& url, Origin* origin) {
 	if (!pending.contains(url)) {
 		pending.insert(url);
 		QNetworkRequest req;
-		req.setUrl(QUrl(url));
+		origin->originalUrl_ = url;
+		origin->redirectsLeft_ = MAX_REDIRECTS;
+		req.setUrl(QUrl::fromUserInput(url));
 		req.setOriginatingObject(origin);
+		req.setRawHeader("User-Agent",
+				"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36");
 		manager->head(req);
 	}
 }
@@ -203,7 +219,7 @@ void ImagePreviewPlugin::messageAppended(const QString &, QWidget* logWidget) {
 #ifdef IMGPREVIEW_DEBUG
 			qDebug() << "URL FOUND:" << url;
 #endif
-			queueUrl(url, te_log);
+			queueUrl(url, new Origin(te_log));
 		};
 		te_log->setTextCursor(cur);
 	} else {
@@ -218,7 +234,7 @@ void ImagePreviewPlugin::messageAppended(const QString &, QWidget* logWidget) {
 			if ((*i).firstChild().tagName() != "img") {
 				QString url = (*i).attribute("href", "");
 				if (url.startsWith("http://") || url.startsWith("https://")) {
-					queueUrl(url, wv_log);
+					queueUrl(url, new Origin(wv_log));
 				}
 			}
 		}
@@ -233,21 +249,45 @@ void ImagePreviewPlugin::imageReply(QNetworkReply* reply) {
 	allowedTypes.append("image/jpeg");
 	allowedTypes.append("image/png");
 	allowedTypes.append("image/gif");
-	QUrl url = reply->request().url();
-	QString urlStr = url.toEncoded();
+	Origin* origin = qobject_cast<Origin*>(reply->request().originatingObject());
+	QString urlStr = origin->originalUrl_;
 	switch (reply->operation()) {
-	case QNetworkAccessManager::HeadOperation:
-		size = reply->header(QNetworkRequest::ContentLengthHeader).toInt(&ok);
-		contentType = reply->header(QNetworkRequest::ContentTypeHeader).toString();
+	case QNetworkAccessManager::HeadOperation: {
+		int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt(&ok);
+		if (ok && (status == 301 || status == 302 || status == 303)) {
+			if (origin->redirectsLeft_ == 0) {
+				qWarning() << "Redirect count exceeded for" << urlStr;
+				origin->deleteLater();
+				pending.remove(urlStr);
+				break;
+			}
+			origin->redirectsLeft_--;
+			QUrl location = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+			if (location.isRelative()) {
+				location = location.resolved(reply->request().url());
+			}
 #ifdef IMGPREVIEW_DEBUG
-		qDebug() << "URL:" << url << "RESULT:" << reply->error() << "SIZE:" << size << "Content-type:" << contentType;
+			qDebug() << "Redirected to" << location;
 #endif
-		if (ok && allowedTypes.contains(contentType, Qt::CaseInsensitive) && size < sizeLimit) {
-			manager->get(reply->request());
+			QNetworkRequest req = reply->request();
+			req.setUrl(location);
+			manager->head(req);
 		} else {
-			pending.remove(urlStr);
+			size = reply->header(QNetworkRequest::ContentLengthHeader).toInt(&ok);
+			contentType = reply->header(QNetworkRequest::ContentTypeHeader).toString();
+#ifdef IMGPREVIEW_DEBUG
+			qDebug() << "URL:" << urlStr << "RESULT:" << reply->error() << "SIZE:" << size << "Content-type:"
+					<< contentType;
+#endif
+			if (ok && allowedTypes.contains(contentType, Qt::CaseInsensitive) && size < sizeLimit) {
+				manager->get(reply->request());
+			} else {
+				origin->deleteLater();
+				pending.remove(urlStr);
+			}
 		}
 		break;
+	}
 	case QNetworkAccessManager::GetOperation:
 		try {
 			QImageReader imageReader(reply);
@@ -261,9 +301,9 @@ void ImagePreviewPlugin::imageReply(QNetworkReply* reply) {
 #ifdef IMGPREVIEW_DEBUG
 			qDebug() << "Image size:" << image.size();
 #endif
-			QTextEdit* te_log = qobject_cast<QTextEdit*>(reply->request().originatingObject());
+			QTextEdit* te_log = qobject_cast<QTextEdit*>(origin->chat_);
 			if (te_log) {
-				te_log->document()->addResource(QTextDocument::ImageResource, url, image);
+				te_log->document()->addResource(QTextDocument::ImageResource, urlStr, image);
 				QTextCursor saved = te_log->textCursor();
 				te_log->moveCursor(QTextCursor::End);
 				while (te_log->find(urlStr, QTextDocument::FindBackward)) {
@@ -278,7 +318,7 @@ void ImagePreviewPlugin::imageReply(QNetworkReply* reply) {
 				QByteArray imageBytes;
 				QBuffer imageBuf(&imageBytes);
 				image.save(&imageBuf, "jpg", 60);
-				QWebView* wv_log = qobject_cast<QWebView*>(reply->request().originatingObject());
+				QWebView* wv_log = qobject_cast<QWebView*>(origin->chat_);
 				QWebFrame* mainFrame = wv_log->page()->mainFrame();
 				mainFrame->evaluateJavaScript(QString("var links = document.body.querySelectorAll('a[href=\"%1\"]');"
 						"for (var i = 0; i < links.length; i++) {"
@@ -289,6 +329,7 @@ void ImagePreviewPlugin::imageReply(QNetworkReply* reply) {
 		} catch (std::exception& e) {
 			qWarning() << "ERROR: " << e.what();
 		}
+		origin->deleteLater();
 		pending.remove(urlStr);
 		break;
 	default:
