@@ -23,6 +23,8 @@
 #include "optionaccessinghost.h"
 #include "optionaccessor.h"
 #include "chattabaccessor.h"
+#include "applicationinfoaccessor.h"
+#include "applicationinfoaccessinghost.h"
 #include <QDomElement>
 #include <QByteArray>
 #include <QLabel>
@@ -32,9 +34,10 @@
 #include <QApplication>
 #include <QDebug>
 #include <QTextEdit>
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkReply>
-#include <QtNetwork/QNetworkRequest>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QNetworkProxy>
 #include <QImageReader>
 #include <QTextDocumentFragment>
 #include <QSpinBox>
@@ -50,7 +53,7 @@
 #define AUTOREDIRECTS
 #endif
 
-#define IMGPREVIEW_DEBUG
+//#define IMGPREVIEW_DEBUG
 #define constVersion "0.1.1"
 #define sizeLimitName "imgpreview-size-limit"
 #define previewSizeName "imgpreview-preview-size"
@@ -61,12 +64,11 @@ class Origin: public QObject {
 Q_OBJECT
 public:
 	Origin(QObject* chat) :
-			QObject(chat), originalUrl_(""), chat_(chat)
+	QObject(chat), originalUrl_(""), chat_(chat)
 #ifndef AUTOREDIRECTS
-, redirectsLeft_(0)
+	, redirectsLeft_(0)
 #endif
-{
-	}
+	{}
 	QString originalUrl_;
 	QObject* chat_;
 #ifndef AUTOREDIRECTS
@@ -78,12 +80,13 @@ class ImagePreviewPlugin: public QObject,
 		public PsiPlugin,
 		public PluginInfoProvider,
 		public OptionAccessor,
-		public ChatTabAccessor {
+		public ChatTabAccessor,
+		public ApplicationInfoAccessor {
 Q_OBJECT
 #ifdef HAVE_QT5
-	Q_PLUGIN_METADATA(IID "com.psi-plus.ImagePreviewPlugin")
+Q_PLUGIN_METADATA(IID "com.psi-plus.ImagePreviewPlugin")
 #endif
-Q_INTERFACES(PsiPlugin PluginInfoProvider OptionAccessor ChatTabAccessor)
+Q_INTERFACES(PsiPlugin PluginInfoProvider OptionAccessor ChatTabAccessor ApplicationInfoAccessor)
 public:
 	ImagePreviewPlugin();
 	virtual QString name() const;
@@ -112,7 +115,8 @@ public:
 	virtual bool appendingChatMessage(int, const QString&, QString&, QDomElement&, bool) {
 		return false;
 	}
-
+	virtual void setApplicationInfoAccessingHost(ApplicationInfoAccessingHost* host);
+	void updateProxy();
 private slots:
 	void messageAppended(const QString &, QWidget*);
 	void imageReply(QNetworkReply* reply);
@@ -127,6 +131,7 @@ private:
 	QPointer<QComboBox> cb_sizeLimit;
 	bool allowUpscale;
 	QPointer<QCheckBox> cb_allowUpscale;
+	ApplicationInfoAccessingHost* appInfoHost;
 	void queueUrl(const QString& url, Origin* origin);
 };
 
@@ -136,7 +141,7 @@ Q_EXPORT_PLUGIN(ImagePreviewPlugin)
 
 ImagePreviewPlugin::ImagePreviewPlugin() :
 		psiOptions(0), enabled(false), manager(new QNetworkAccessManager(this)), previewSize(0), sizeLimit(0), allowUpscale(
-				false) {
+				false), appInfoHost(0) {
 	connect(manager, SIGNAL(finished(QNetworkReply *)), SLOT(imageReply(QNetworkReply *)));
 }
 
@@ -156,6 +161,7 @@ bool ImagePreviewPlugin::enable() {
 	sizeLimit = psiOptions->getPluginOption(sizeLimitName, 1024 * 1024).toInt();
 	previewSize = psiOptions->getPluginOption(previewSizeName, 150).toInt();
 	allowUpscale = psiOptions->getPluginOption(allowUpscaleName, true).toBool();
+	updateProxy();
 	return enabled;
 }
 
@@ -186,6 +192,7 @@ QWidget* ImagePreviewPlugin::options() {
 	cb_allowUpscale = new QCheckBox(tr("Allow upscale"));
 	vbox->addWidget(cb_allowUpscale);
 	vbox->addStretch();
+	updateProxy();
 	return optionsWid;
 }
 
@@ -369,6 +376,25 @@ void ImagePreviewPlugin::restoreOptions() {
 	sb_previewSize->setValue(previewSize);
 	cb_sizeLimit->setCurrentIndex(cb_sizeLimit->findData(sizeLimit));
 	cb_allowUpscale->setCheckState(allowUpscale ? Qt::Checked : Qt::Unchecked);
+}
+
+void ImagePreviewPlugin::setApplicationInfoAccessingHost(ApplicationInfoAccessingHost* host) {
+	appInfoHost = host;
+}
+
+void ImagePreviewPlugin::updateProxy() {
+	Proxy proxy = appInfoHost->getProxyFor(name());
+#ifdef IMGPREVIEW_DEBUG
+	qDebug() << "Proxy:" << "T:" << proxy.type << "H:" << proxy.host << "Pt:" << proxy.port << "U:" << proxy.user
+			<< "Ps:" << proxy.pass;
+#endif
+	if (proxy.type.isEmpty()) {
+		manager->setProxy(QNetworkProxy());
+		return;
+	}
+	QNetworkProxy netProxy(proxy.type == "socks" ? QNetworkProxy::Socks5Proxy : QNetworkProxy::HttpProxy, proxy.host,
+			proxy.port, proxy.user, proxy.pass);
+	manager->setProxy(netProxy);
 }
 
 #include "imagepreviewplugin.moc"
