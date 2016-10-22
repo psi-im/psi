@@ -34,6 +34,8 @@
 #include "psiaccountcontrollinghost.h"
 #include "optionaccessinghost.h"
 #include "optionaccessor.h"
+#include "applicationinfoaccessor.h"
+#include "applicationinfoaccessinghost.h"
 #include <QByteArray>
 #include <QFile>
 #include <QFileDialog>
@@ -43,9 +45,10 @@
 #include <QMenu>
 #include <QApplication>
 #include <QTextDocument>
-#include <QtNetwork/QNetworkAccessManager>
-#include <QtNetwork/QNetworkRequest>
-#include <QtNetwork/QNetworkReply>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QNetworkProxy>
 #include "chattabaccessor.h"
 #include "stanzafilter.h"
 #include <QDomElement>
@@ -84,14 +87,16 @@ class HttpUploadPlugin: public QObject,
 		public PsiAccountController,
 		public OptionAccessor,
 		public ChatTabAccessor,
-		public StanzaFilter {
+		public StanzaFilter,
+		public ApplicationInfoAccessor {
 Q_OBJECT
 #ifdef HAVE_QT5
-	Q_PLUGIN_METADATA(IID "com.psi-plus.HttpUploadPlugin")
+Q_PLUGIN_METADATA(IID "com.psi-plus.HttpUploadPlugin")
 #endif
 Q_INTERFACES(PsiPlugin ToolbarIconAccessor GCToolbarIconAccessor
 		StanzaSender ActiveTabAccessor PsiAccountController OptionAccessor
-		IconFactoryAccessor AccountInfoAccessor PluginInfoProvider ChatTabAccessor StanzaFilter)
+		IconFactoryAccessor AccountInfoAccessor PluginInfoProvider ChatTabAccessor
+		StanzaFilter ApplicationInfoAccessor)
 public:
 	HttpUploadPlugin();
 	virtual QString name() const;
@@ -139,6 +144,8 @@ public:
 		return stanzaSender->uniqueId(account);
 	}
 	void checkUploadAvailability(int account);
+	void setApplicationInfoAccessingHost(ApplicationInfoAccessingHost* host);
+	void updateProxy();
 
 private slots:
 	void uploadFile();
@@ -182,6 +189,7 @@ private:
 	AccountInfoAccessingHost* accInfo;
 	PsiAccountControllingHost *psiController;
 	OptionAccessingHost *psiOptions;
+	ApplicationInfoAccessingHost* appInfoHost;
 	bool enabled;
 	QHash<QString, int> accounts_;
 	QNetworkAccessManager* manager;
@@ -205,9 +213,9 @@ Q_EXPORT_PLUGIN(HttpUploadPlugin)
 #endif
 
 HttpUploadPlugin::HttpUploadPlugin() :
-		iconHost(0), stanzaSender(0), activeTab(0), accInfo(0), psiController(0), psiOptions(0), enabled(false), manager(
-				new QNetworkAccessManager(this)), imageBytes(0), sb_previewWidth(0), cb_resize(0), sb_size(0), sb_quality(0),
-				imageResize(false), imageSize(0), imageQuality(0), previewWidth(0) {
+		iconHost(0), stanzaSender(0), activeTab(0), accInfo(0), psiController(0), psiOptions(0), appInfoHost(0), enabled(
+				false), manager(new QNetworkAccessManager(this)), imageBytes(0), sb_previewWidth(0), cb_resize(0), sb_size(
+				0), sb_quality(0), imageResize(false), imageSize(0), imageQuality(0), previewWidth(0) {
 	connect(manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(uploadComplete(QNetworkReply*)));
 	connect(&slotTimeout, SIGNAL(timeout()), this, SLOT(timeout()));
 	slotTimeout.setSingleShot(true);
@@ -247,6 +255,7 @@ bool HttpUploadPlugin::enable() {
 	imageSize = psiOptions->getPluginOption(OPTION_SIZE, 1024).toInt();
 	imageQuality = psiOptions->getPluginOption(OPTION_QUALITY, 75).toInt();
 	previewWidth = psiOptions->getPluginOption(OPTION_PREVIEW_WIDTH, 150).toInt();
+	updateProxy();
 	return enabled;
 }
 
@@ -282,6 +291,7 @@ QWidget* HttpUploadPlugin::options() {
 	vbox->addWidget(sb_quality);
 	vbox->addStretch();
 	connect(cb_resize, SIGNAL(stateChanged(int)), this, SLOT(resizeStateChanged(int)));
+	updateProxy();
 	return optionsWid;
 }
 
@@ -629,6 +639,25 @@ void HttpUploadPlugin::resizeStateChanged(int state) {
 	bool enabled = state == Qt::Checked;
 	sb_size->setEnabled(enabled);
 	sb_quality->setEnabled(enabled);
+}
+
+void HttpUploadPlugin::setApplicationInfoAccessingHost(ApplicationInfoAccessingHost* host) {
+	appInfoHost = host;
+}
+
+void HttpUploadPlugin::updateProxy() {
+	Proxy proxy = appInfoHost->getProxyFor(name());
+#ifdef DEBUG_UPLOAD
+	qDebug() << "Proxy:" << "T:" << proxy.type << "H:" << proxy.host << "Pt:" << proxy.port << "U:" << proxy.user
+	<< "Ps:" << proxy.pass;
+#endif
+	if (proxy.type.isEmpty()) {
+		manager->setProxy(QNetworkProxy());
+		return;
+	}
+	QNetworkProxy netProxy(proxy.type == "socks" ? QNetworkProxy::Socks5Proxy : QNetworkProxy::HttpProxy, proxy.host,
+			proxy.port, proxy.user, proxy.pass);
+	manager->setProxy(netProxy);
 }
 
 #include "httpuploadplugin.moc"
