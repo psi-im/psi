@@ -1,5 +1,8 @@
 #CONFIG += release
 QT += webkit
+greaterThan(QT_MAJOR_VERSION, 4) {
+    QT += webkitwidgets
+} 
 
 isEmpty(PSISDK) {
     include(../../psiplugin.pri)
