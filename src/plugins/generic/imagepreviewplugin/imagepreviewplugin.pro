@@ -1,5 +1,5 @@
 #CONFIG += release
-QT += webkit
+QT += webkit network
 greaterThan(QT_MAJOR_VERSION, 4) {
     QT += webkitwidgets
 } 

@@ -1,5 +1,5 @@
 #CONFIG += release
-
+QT += network
 isEmpty(PSISDK) {
     include(../../psiplugin.pri)
 } else {

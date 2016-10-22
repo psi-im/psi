@@ -288,7 +288,7 @@ void ChatView::dispatchMessage(const MessageView &mv)
 				int capIndex;
 				QString msgid = QRegExp::escape(TextUtil::escape("msgid_" + replaceId + "_" + mv.userId()));
 				// regexp for private chats without clickable nicks, empty brackets are for group index compatibility
-				QRegExp msgPrivRE("(<img src=[^<]*<span[^<]*</span>())(\\s*)?(.*)<a name=\"" + msgid + "\"></a>.*</p>");
+				QRegExp msgPrivRE("(<img src=[^<]*<span[^<]*</span>())(\\s*)?()(.*)<a name=\"" + msgid + "\"></a>.*</p>");
 #ifdef CORRECTION_DEBUG
 				qDebug() << "Replacing" << msgid << "with" << mv.formattedText();
 #endif
@@ -299,9 +299,9 @@ void ChatView::dispatchMessage(const MessageView &mv)
 					msgRE.setPattern(
 							"(<a href=\"addnick://psi/[^\"]*\"><span [^<]*</span></a>"
 							"(<span [^>]*>&gt;</span>\\s*)?"
-							"<span [^>]*>)(\\s*)?(.*)<a name=\""
+							"(<span [^>]*>)?)(\\s*)?(.*)<a name=\""
 									+ msgid + "\"></a>.*</p>");
-					capIndex = 4;
+					capIndex = 5;
 				}
 				moveCursor(QTextCursor::End, QTextCursor::MoveAnchor);
 				while (!textCursor().atStart()) {
