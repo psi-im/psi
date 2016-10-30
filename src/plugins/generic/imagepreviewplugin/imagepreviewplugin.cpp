@@ -25,6 +25,7 @@
 #include "chattabaccessor.h"
 #include "applicationinfoaccessor.h"
 #include "applicationinfoaccessinghost.h"
+#include "ScrollKeeper.h"
 #include <QDomElement>
 #include <QByteArray>
 #include <QLabel>
@@ -61,16 +62,16 @@
 #define MAX_REDIRECTS 2
 
 class Origin: public QObject {
-Q_OBJECT
+	Q_OBJECT
 public:
-	Origin(QObject* chat) :
+	Origin(QWidget* chat) :
 	QObject(chat), originalUrl_(""), chat_(chat)
 #ifndef AUTOREDIRECTS
 	, redirectsLeft_(0)
 #endif
 	{}
 	QString originalUrl_;
-	QObject* chat_;
+	QWidget* chat_;
 #ifndef AUTOREDIRECTS
 	int redirectsLeft_;
 #endif
@@ -117,6 +118,9 @@ public:
 	}
 	virtual void setApplicationInfoAccessingHost(ApplicationInfoAccessingHost* host);
 	void updateProxy();
+	~ImagePreviewPlugin() {
+		manager->deleteLater();
+	}
 private slots:
 	void messageAppended(const QString &, QWidget*);
 	void imageReply(QNetworkReply* reply);
@@ -232,6 +236,7 @@ void ImagePreviewPlugin::messageAppended(const QString &, QWidget* logWidget) {
 	if (!enabled) {
 		return;
 	}
+	ScrollKeeper sk(logWidget);
 	QTextEdit* te_log = qobject_cast<QTextEdit*>(logWidget);
 	if (te_log) {
 		QTextCursor cur = te_log->textCursor();
@@ -328,6 +333,7 @@ void ImagePreviewPlugin::imageReply(QNetworkReply* reply) {
 #ifdef IMGPREVIEW_DEBUG
 			qDebug() << "Image size:" << image.size();
 #endif
+			ScrollKeeper sk(origin->chat_);
 			QTextEdit* te_log = qobject_cast<QTextEdit*>(origin->chat_);
 			if (te_log) {
 				te_log->document()->addResource(QTextDocument::ImageResource, urlStr, image);
