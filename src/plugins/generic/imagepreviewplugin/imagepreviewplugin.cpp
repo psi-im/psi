@@ -25,6 +25,7 @@
 #include "chattabaccessor.h"
 #include "applicationinfoaccessor.h"
 #include "applicationinfoaccessinghost.h"
+#include "ScrollKeeper.h"
 #include <QDomElement>
 #include <QByteArray>
 #include <QLabel>
@@ -61,16 +62,16 @@
 #define MAX_REDIRECTS 2
 
 class Origin: public QObject {
-Q_OBJECT
+	Q_OBJECT
 public:
-	Origin(QObject* chat) :
+	Origin(QWidget* chat) :
 	QObject(chat), originalUrl_(""), chat_(chat)
 #ifndef AUTOREDIRECTS
 	, redirectsLeft_(0)
 #endif
 	{}
 	QString originalUrl_;
-	QObject* chat_;
+	QWidget* chat_;
 #ifndef AUTOREDIRECTS
 	int redirectsLeft_;
 #endif
@@ -117,6 +118,9 @@ public:
 	}
 	virtual void setApplicationInfoAccessingHost(ApplicationInfoAccessingHost* host);
 	void updateProxy();
+	~ImagePreviewPlugin() {
+		manager->deleteLater();
+	}
 private slots:
 	void messageAppended(const QString &, QWidget*);
 	void imageReply(QNetworkReply* reply);
@@ -124,7 +128,7 @@ private:
 	OptionAccessingHost *psiOptions;
 	bool enabled;
 	QNetworkAccessManager* manager;
-	QSet<QString> pending;
+	QSet<QString> pending, failed;
 	int previewSize;
 	QPointer<QSpinBox> sb_previewSize;
 	int sizeLimit;
@@ -209,7 +213,7 @@ QPixmap ImagePreviewPlugin::icon() const {
 }
 
 void ImagePreviewPlugin::queueUrl(const QString& url, Origin* origin) {
-	if (!pending.contains(url)) {
+	if (!pending.contains(url) && !failed.contains(url)) {
 		pending.insert(url);
 		QNetworkRequest req;
 		origin->originalUrl_ = url;
@@ -232,6 +236,7 @@ void ImagePreviewPlugin::messageAppended(const QString &, QWidget* logWidget) {
 	if (!enabled) {
 		return;
 	}
+	ScrollKeeper sk(logWidget);
 	QTextEdit* te_log = qobject_cast<QTextEdit*>(logWidget);
 	if (te_log) {
 		QTextCursor cur = te_log->textCursor();
@@ -254,8 +259,9 @@ void ImagePreviewPlugin::messageAppended(const QString &, QWidget* logWidget) {
 			if ((*i).isNull()) {
 				break;
 			}
-			// skip already processed anchors
-			if ((*i).firstChild().tagName() != "img") {
+			// skip nick links and already processed anchors
+			if (!(*i).classes().contains("nicklink", Qt::CaseInsensitive)
+					&& (*i).firstChild().tagName().toLower() != "img") {
 				QString url = (*i).attribute("href", "");
 				if (url.startsWith("http://") || url.startsWith("https://")) {
 					queueUrl(url, new Origin(wv_log));
@@ -309,6 +315,7 @@ void ImagePreviewPlugin::imageReply(QNetworkReply* reply) {
 			if (ok && allowedTypes.contains(contentTypes.last().trimmed(), Qt::CaseInsensitive) && size < sizeLimit) {
 				manager->get(reply->request());
 			} else {
+				failed.insert(origin->originalUrl_);
 				origin->deleteLater();
 				pending.remove(urlStr);
 			}
@@ -328,6 +335,7 @@ void ImagePreviewPlugin::imageReply(QNetworkReply* reply) {
 #ifdef IMGPREVIEW_DEBUG
 			qDebug() << "Image size:" << image.size();
 #endif
+			ScrollKeeper sk(origin->chat_);
 			QTextEdit* te_log = qobject_cast<QTextEdit*>(origin->chat_);
 			if (te_log) {
 				te_log->document()->addResource(QTextDocument::ImageResource, urlStr, image);
@@ -354,6 +362,7 @@ void ImagePreviewPlugin::imageReply(QNetworkReply* reply) {
 						"}").arg(urlStr).arg(QString(imageBytes.toBase64())));
 			}
 		} catch (std::exception& e) {
+			failed.insert(origin->originalUrl_);
 			qWarning() << "ERROR: " << e.what();
 		}
 		origin->deleteLater();

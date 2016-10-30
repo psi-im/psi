@@ -13,4 +13,4 @@ isEmpty(PSISDK) {
 RESOURCES = imagepreviewplugin.qrc
 
 SOURCES += imagepreviewplugin.cpp \
-
+           ScrollKeeper.cpp
