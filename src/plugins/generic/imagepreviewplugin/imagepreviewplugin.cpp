@@ -128,7 +128,7 @@ private:
 	OptionAccessingHost *psiOptions;
 	bool enabled;
 	QNetworkAccessManager* manager;
-	QSet<QString> pending;
+	QSet<QString> pending, failed;
 	int previewSize;
 	QPointer<QSpinBox> sb_previewSize;
 	int sizeLimit;
@@ -213,7 +213,7 @@ QPixmap ImagePreviewPlugin::icon() const {
 }
 
 void ImagePreviewPlugin::queueUrl(const QString& url, Origin* origin) {
-	if (!pending.contains(url)) {
+	if (!pending.contains(url) && !failed.contains(url)) {
 		pending.insert(url);
 		QNetworkRequest req;
 		origin->originalUrl_ = url;
@@ -259,8 +259,9 @@ void ImagePreviewPlugin::messageAppended(const QString &, QWidget* logWidget) {
 			if ((*i).isNull()) {
 				break;
 			}
-			// skip already processed anchors
-			if ((*i).firstChild().tagName() != "img") {
+			// skip nick links and already processed anchors
+			if (!(*i).classes().contains("nicklink", Qt::CaseInsensitive)
+					&& (*i).firstChild().tagName().toLower() != "img") {
 				QString url = (*i).attribute("href", "");
 				if (url.startsWith("http://") || url.startsWith("https://")) {
 					queueUrl(url, new Origin(wv_log));
@@ -314,6 +315,7 @@ void ImagePreviewPlugin::imageReply(QNetworkReply* reply) {
 			if (ok && allowedTypes.contains(contentTypes.last().trimmed(), Qt::CaseInsensitive) && size < sizeLimit) {
 				manager->get(reply->request());
 			} else {
+				failed.insert(origin->originalUrl_);
 				origin->deleteLater();
 				pending.remove(urlStr);
 			}
@@ -360,6 +362,7 @@ void ImagePreviewPlugin::imageReply(QNetworkReply* reply) {
 						"}").arg(urlStr).arg(QString(imageBytes.toBase64())));
 			}
 		} catch (std::exception& e) {
+			failed.insert(origin->originalUrl_);
 			qWarning() << "ERROR: " << e.what();
 		}
 		origin->deleteLater();
