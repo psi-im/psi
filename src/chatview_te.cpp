@@ -338,7 +338,7 @@ void ChatView::dispatchMessage(const MessageView &mv)
 						srcHtml.replace(replaceRE, "\\1\\3" +
 								mv.formattedText()
 										+ "<img src=\"icon:log_icon_corrected\" title=\""
-										+ TextUtil::escape(oldText) + "\" /></p>");
+										+ oldText + "\" /></p>");
 						srcHtml.replace(underlineFixRE, "\\1text-decoration: none;");
 						QTextCursor cur = textCursor();
 						PsiRichText::appendText(document(), cur, srcHtml, false);
