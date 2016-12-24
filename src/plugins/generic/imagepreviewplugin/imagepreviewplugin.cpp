@@ -281,6 +281,10 @@ void ImagePreviewPlugin::imageReply(QNetworkReply* reply) {
 	allowedTypes.append("image/gif");
 	Origin* origin = qobject_cast<Origin*>(reply->request().originatingObject());
 	QString urlStr = origin->originalUrl_;
+	QString urlStrEscaped = reply->url().toString();
+#ifdef IMGPREVIEW_DEBUG
+	qDebug() << "Original URL " << urlStr << " / Escaped: " << urlStrEscaped;
+#endif
 	switch (reply->operation()) {
 	case QNetworkAccessManager::HeadOperation: {
 #ifndef AUTOREDIRECTS
@@ -307,14 +311,21 @@ void ImagePreviewPlugin::imageReply(QNetworkReply* reply) {
 #endif
 		{
 			size = reply->header(QNetworkRequest::ContentLengthHeader).toInt(&ok);
+			if (reply->error() == QNetworkReply::NoError) {
+				ok = true;
+			}
 			contentTypes = reply->header(QNetworkRequest::ContentTypeHeader).toString().split(",");
+			QString lastType = contentTypes.last().trimmed();
 #ifdef IMGPREVIEW_DEBUG
 			qDebug() << "URL:" << urlStr << "RESULT:" << reply->error() << "SIZE:" << size << "Content-type:"
-					<< contentTypes;
+					<< contentTypes << " Last type: " << lastType;
 #endif
-			if (ok && allowedTypes.contains(contentTypes.last().trimmed(), Qt::CaseInsensitive) && size < sizeLimit) {
+			if (ok && allowedTypes.contains(lastType, Qt::CaseInsensitive) && size < sizeLimit) {
 				manager->get(reply->request());
 			} else {
+#ifdef IMGPREVIEW_DEBUG
+				qDebug() << "Failed url " << origin->originalUrl_;
+#endif
 				failed.insert(origin->originalUrl_);
 				origin->deleteLater();
 				pending.remove(urlStr);
@@ -338,14 +349,14 @@ void ImagePreviewPlugin::imageReply(QNetworkReply* reply) {
 			ScrollKeeper sk(origin->chat_);
 			QTextEdit* te_log = qobject_cast<QTextEdit*>(origin->chat_);
 			if (te_log) {
-				te_log->document()->addResource(QTextDocument::ImageResource, urlStr, image);
+				te_log->document()->addResource(QTextDocument::ImageResource, urlStrEscaped, image);
 				QTextCursor saved = te_log->textCursor();
 				te_log->moveCursor(QTextCursor::End);
 				while (te_log->find(urlStr, QTextDocument::FindBackward)) {
 					QTextCursor cur = te_log->textCursor();
 					QString html = cur.selection().toHtml();
 					html.replace(QRegExp("(<a href=\"[^\"]*\">)(.*)(</a>)"),
-							QString("\\1<img src='%1'/>\\3").arg(urlStr));
+							QString("\\1<img src='%1'/>\\3").arg(urlStrEscaped));
 					cur.insertHtml(html);
 				}
 				te_log->setTextCursor(saved);

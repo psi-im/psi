@@ -5149,7 +5149,9 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 				e->setOriginLocal(true);
 				doPopup = false;
 			}
-
+			if (m.carbonDirection() == Message::Received && d->jid != m.to()) {
+				return;
+			}
 			ChatDlg *c = findChatDialogEx(chatJid, m.carbonDirection() == Message::Sent);
 			if (c && c->jid().resource().isEmpty())
 				c->setJid(chatJid);

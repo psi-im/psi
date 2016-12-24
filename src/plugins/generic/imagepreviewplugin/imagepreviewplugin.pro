@@ -2,6 +2,7 @@
 QT += webkit network
 greaterThan(QT_MAJOR_VERSION, 4) {
     QT += webkitwidgets
+    CONFIG += c++11
 } 
 
 isEmpty(PSISDK) {
