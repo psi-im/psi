@@ -283,7 +283,7 @@ void ImagePreviewPlugin::imageReply(QNetworkReply* reply) {
 	QString urlStr = origin->originalUrl_;
 	QString urlStrEscaped = reply->url().toString();
 #ifdef IMGPREVIEW_DEBUG
-			qDebug() << "Original URL " << urlStr << " / Escaped: " << urlStrEscaped;
+	qDebug() << "Original URL " << urlStr << " / Escaped: " << urlStrEscaped;
 #endif
 	switch (reply->operation()) {
 	case QNetworkAccessManager::HeadOperation: {
@@ -311,16 +311,20 @@ void ImagePreviewPlugin::imageReply(QNetworkReply* reply) {
 #endif
 		{
 			size = reply->header(QNetworkRequest::ContentLengthHeader).toInt(&ok);
+			if (reply->error() == QNetworkReply::NoError) {
+				ok = true;
+			}
 			contentTypes = reply->header(QNetworkRequest::ContentTypeHeader).toString().split(",");
+			QString lastType = contentTypes.last().trimmed();
 #ifdef IMGPREVIEW_DEBUG
 			qDebug() << "URL:" << urlStr << "RESULT:" << reply->error() << "SIZE:" << size << "Content-type:"
-					<< contentTypes;
+					<< contentTypes << " Last type: " << lastType;
 #endif
-			if (ok && allowedTypes.contains(contentTypes.last().trimmed(), Qt::CaseInsensitive) && size < sizeLimit) {
+			if (ok && allowedTypes.contains(lastType, Qt::CaseInsensitive) && size < sizeLimit) {
 				manager->get(reply->request());
 			} else {
 #ifdef IMGPREVIEW_DEBUG
-			qDebug() << "Failed url " << origin->originalUrl_;
+				qDebug() << "Failed url " << origin->originalUrl_;
 #endif
 				failed.insert(origin->originalUrl_);
 				origin->deleteLater();
