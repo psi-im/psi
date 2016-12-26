@@ -1,1 +1,1 @@
-chatServer.setMetaData({name: "New Classic"});
+srvLoader.setMetaData({name: "New Classic"});

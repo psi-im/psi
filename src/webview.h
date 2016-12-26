@@ -21,7 +21,11 @@
 #ifndef _WEBVIEW_H
 #define	_WEBVIEW_H
 
+#ifdef QT_WEBENGINEWIDGETS_LIB
+#include <QWebEngineView>
+#else
 #include <QWebView>
+#endif
 #include <QMessageBox>
 #include <QMenu>
 #include <QContextMenuEvent>
@@ -68,8 +72,11 @@ class IconHandler : public NAMSchemeHandler
  * Better name for it would be: PsiWebView, but it's used in HTMLChatView which is
  * Psi-unaware.
  */
+#ifdef QT_WEBENGINEWIDGETS_LIB
+class WebView : public QWebEngineView {
+#else
 class WebView : public QWebView {
-
+#endif
     Q_OBJECT
 public:
 
@@ -78,7 +85,9 @@ public:
 	/** Evaluates JavaScript code */
 	void evaluateJS(const QString &scriptSource = "");
 
+#ifndef QT_WEBENGINEWIDGETS_LIB
 	QString selectedText();
+#endif
 	bool isLoading() { return isLoading_; }
 
 public slots:
@@ -87,15 +96,17 @@ public slots:
 protected:
     /** Creates menu with Copy actions */
 	void contextMenuEvent(QContextMenuEvent* event);
+#ifndef QT_WEBENGINEWIDGETS_LIB
 	void mousePressEvent ( QMouseEvent * event );
 	void mouseReleaseEvent ( QMouseEvent * event );
 	void mouseMoveEvent(QMouseEvent *event);
-
+#endif
 	//QAction* copyAction, *copyLinkAction;
 
 private:
+#ifndef QT_WEBENGINEWIDGETS_LIB
 	void convertClipboardHtmlImages(QClipboard::Mode);
-
+#endif
 	bool possibleDragging;
 	bool isLoading_;
 	QStringList jsBuffer_;

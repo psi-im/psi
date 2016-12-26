@@ -38,6 +38,16 @@
 
 class TypeAheadFindBar::Private
 {
+private:
+	void updateFoundStyle(bool state) {
+		if (state) {
+			le_find->setStyleSheet("");
+		}
+		else {
+			le_find->setStyleSheet("QLineEdit { background: #ff6666; color: #ffffff }");
+		}
+	}
+
 public:
 	// setup search and react to search results
 	void doFind(bool backward = false)
@@ -61,13 +71,11 @@ public:
 				te->setTextCursor(cursor);
 			}
 		}
-
-		if (find(text, options)) {
-			le_find->setStyleSheet("");
-		}
-		else {
-			le_find->setStyleSheet("QLineEdit { background: #ff6666; color: #ffffff }");
-		}
+#if QT_WEBENGINEWIDGETS_LIB
+		find(text, options);
+#else
+		updateFoundStyle(find(text, options));
+#endif
 	}
 
 	// real search code
@@ -76,10 +84,20 @@ public:
 	{
 		if (widgetType == TypeAheadFindBar::WebViewType) {
 #ifdef WEBKIT
+#ifdef QT_WEBENGINEWIDGETS_LIB
+			QWebEnginePage::FindFlags wkOptions;
+			wkOptions |= options & QTextDocument::FindBackward? QWebEnginePage::FindBackward : (QWebEnginePage::FindFlags)0;
+			wkOptions |= options & QTextDocument::FindCaseSensitively? QWebEnginePage::FindCaseSensitively : (QWebEnginePage::FindFlags)0;
+			wv->findText(str, wkOptions, [this](bool found) {
+				updateFoundStyle(found);
+		    });
+			return true; // means nothing
+#else
 			QWebPage::FindFlags wkOptions;
 			wkOptions |= options & QTextDocument::FindBackward? QWebPage::FindBackward : (QWebPage::FindFlags)0;
 			wkOptions |= options & QTextDocument::FindCaseSensitively? QWebPage::FindCaseSensitively : (QWebPage::FindFlags)0;
 			return wv->findText(str, wkOptions);
+#endif
 #else
 			Q_UNUSED(str);
 #endif

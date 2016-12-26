@@ -26,24 +26,33 @@
 #ifndef PSITHEME_H
 #define PSITHEME_H
 
+#include <QObject>
 #include <QSharedData>
 #include <QHash>
 #include <QStringList>
 
-class ThemeMetaData;
+class ThemePrivate;
+class PsiThemeProvider;
 
 //-----------------------------------------------
 // Theme
 //-----------------------------------------------
-class Theme {
+class Theme
+{
 public:
-	Theme(const QString &id);
+	Theme();
+	Theme(PsiThemeProvider *provider);
 	Theme(const Theme &other);
+	Theme &operator=(const Theme &other);
 	virtual ~Theme();
+	bool isValid() const;
 
-	static QByteArray loadData(const QString &fileName, const QString &dir, bool caseInsensetive = false);
+	// load file from theme in `themePath`
+	static QByteArray loadData(const QString &fileName, const QString &themePath, bool caseInsensetive = false);
+	QByteArray loadData(const QString &fileName);
 
 	const QString &id() const;
+	void setId(const QString &id);
 	const QString &name() const;
 	void setName(const QString &name);
 	const QString &version() const;
@@ -51,8 +60,10 @@ public:
 	const QStringList &authors() const;
 	const QString &creation() const;
 	const QString &homeUrl() const;
-	const QString &fileName() const;
-	void setFileName(const QString &f);
+
+	PsiThemeProvider* themeProvider() const;
+	const QString &filePath() const;
+	void setFilePath(const QString &f);
 	const QHash<QString, QString> info() const;
 	void setInfo(const QHash<QString, QString> &i);
 
@@ -61,8 +72,9 @@ public:
 
 	virtual QString title() const;
 	virtual QByteArray screenshot() = 0; // this hack must be replaced with something widget based
-protected:
-	QSharedDataPointer<ThemeMetaData> md;
+private:
+	friend class ThemePrivate;
+	QExplicitlySharedDataPointer<ThemePrivate> d;
 };
 
 

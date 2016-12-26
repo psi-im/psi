@@ -736,3 +736,171 @@ QString activityIconName(const Activity &activity)
 	}
 	return QLatin1String("activities/") + activity.typeValue() + QLatin1Char('_') + activity.specificTypeValue();
 }
+
+#ifdef WEBKIT
+// all these functions in ifdef were copied from
+// https://raw.githubusercontent.com/qt/qtbase/dev/src/corelib/tools/{qlocale.cpp,qlocale_mac.mm} // 25 Dec 2016
+// and required to support proper date formatting in Adium themes
+static QString qt_readEscapedFormatString(const QString &format, int *idx)
+{
+    int &i = *idx;
+
+    Q_ASSERT(format.at(i) == QLatin1Char('\''));
+    ++i;
+    if (i == format.size())
+        return QString();
+    if (format.at(i).unicode() == '\'') { // "''" outside of a quoted stirng
+        ++i;
+        return QLatin1String("'");
+    }
+
+    QString result;
+
+    while (i < format.size()) {
+        if (format.at(i).unicode() == '\'') {
+            if (i + 1 < format.size() && format.at(i + 1).unicode() == '\'') {
+                // "''" inside of a quoted string
+                result.append(QLatin1Char('\''));
+                i += 2;
+            } else {
+                break;
+            }
+        } else {
+            result.append(format.at(i++));
+        }
+    }
+    if (i < format.size())
+        ++i;
+
+    return result;
+}
+
+static int qt_repeatCount(const QString &s, int i)
+{
+    QChar c = s.at(i);
+    int j = i + 1;
+    while (j < s.size() && s.at(j) == c)
+        ++j;
+    return j - i;
+}
+
+// original name macToQtFormat
+QString macToQtDatetimeFormat(const QString &sys_fmt)
+{
+    QString result;
+    int i = 0;
+
+    while (i < sys_fmt.size()) {
+        if (sys_fmt.at(i).unicode() == '\'') {
+            QString text = qt_readEscapedFormatString(sys_fmt, &i);
+            if (text == QLatin1String("'"))
+                result += QLatin1String("''");
+            else
+                result += QLatin1Char('\'') + text + QLatin1Char('\'');
+            continue;
+        }
+
+        QChar c = sys_fmt.at(i);
+        int repeat = qt_repeatCount(sys_fmt, i);
+
+        switch (c.unicode()) {
+            // Qt does not support the following options
+            case 'G': // Era (1..5): 4 = long, 1..3 = short, 5 = narrow
+            case 'Y': // Year of Week (1..n): 1..n = padded number
+            case 'U': // Cyclic Year Name (1..5): 4 = long, 1..3 = short, 5 = narrow
+            case 'Q': // Quarter (1..4): 4 = long, 3 = short, 1..2 = padded number
+            case 'q': // Standalone Quarter (1..4): 4 = long, 3 = short, 1..2 = padded number
+            case 'w': // Week of Year (1..2): 1..2 = padded number
+            case 'W': // Week of Month (1): 1 = number
+            case 'D': // Day of Year (1..3): 1..3 = padded number
+            case 'F': // Day of Week in Month (1): 1 = number
+            case 'g': // Modified Julian Day (1..n): 1..n = padded number
+            case 'A': // Milliseconds in Day (1..n): 1..n = padded number
+                break;
+
+            case 'y': // Year (1..n): 2 = short year, 1 & 3..n = padded number
+            case 'u': // Extended Year (1..n): 2 = short year, 1 & 3..n = padded number
+                // Qt only supports long (4) or short (2) year, use long for all others
+                if (repeat == 2)
+                    result += QLatin1String("yy");
+                else
+                    result += QLatin1String("yyyy");
+                break;
+            case 'M': // Month (1..5): 4 = long, 3 = short, 1..2 = number, 5 = narrow
+            case 'L': // Standalone Month (1..5): 4 = long, 3 = short, 1..2 = number, 5 = narrow
+                // Qt only supports long, short and number, use short for narrow
+                if (repeat == 5)
+                    result += QLatin1String("MMM");
+                else
+                    result += QString(repeat, QLatin1Char('M'));
+                break;
+            case 'd': // Day of Month (1..2): 1..2 padded number
+                result += QString(repeat, c);
+                break;
+            case 'E': // Day of Week (1..6): 4 = long, 1..3 = short, 5..6 = narrow
+                // Qt only supports long, short and padded number, use short for narrow
+                if (repeat == 4)
+                    result += QLatin1String("dddd");
+                else
+                    result += QLatin1String("ddd");
+                break;
+            case 'e': // Local Day of Week (1..6): 4 = long, 3 = short, 5..6 = narrow, 1..2 padded number
+            case 'c': // Standalone Local Day of Week (1..6): 4 = long, 3 = short, 5..6 = narrow, 1..2 padded number
+                // Qt only supports long, short and padded number, use short for narrow
+                if (repeat >= 5)
+                    result += QLatin1String("ddd");
+                else
+                    result += QString(repeat, QLatin1Char('d'));
+                break;
+            case 'a': // AM/PM (1): 1 = short
+                // Translate to Qt uppercase AM/PM
+                result += QLatin1String("AP");
+                break;
+            case 'h': // Hour [1..12] (1..2): 1..2 = padded number
+            case 'K': // Hour [0..11] (1..2): 1..2 = padded number
+            case 'j': // Local Hour [12 or 24] (1..2): 1..2 = padded number
+                // Qt h is local hour
+                result += QString(repeat, QLatin1Char('h'));
+                break;
+            case 'H': // Hour [0..23] (1..2): 1..2 = padded number
+            case 'k': // Hour [1..24] (1..2): 1..2 = padded number
+                // Qt H is 0..23 hour
+                result += QString(repeat, QLatin1Char('H'));
+                break;
+            case 'm': // Minutes (1..2): 1..2 = padded number
+            case 's': // Seconds (1..2): 1..2 = padded number
+                result += QString(repeat, c);
+                break;
+            case 'S': // Fractional second (1..n): 1..n = truncates to decimal places
+                // Qt uses msecs either unpadded or padded to 3 places
+                if (repeat < 3)
+                    result += QLatin1Char('z');
+                else
+                    result += QLatin1String("zzz");
+                break;
+            case 'z': // Time Zone (1..4)
+            case 'Z': // Time Zone (1..5)
+            case 'O': // Time Zone (1, 4)
+            case 'v': // Time Zone (1, 4)
+            case 'V': // Time Zone (1..4)
+            case 'X': // Time Zone (1..5)
+            case 'x': // Time Zone (1..5)
+                result += QLatin1Char('t');
+                break;
+            default:
+                // a..z and A..Z are reserved for format codes, so any occurrence of these not
+                // already processed are not known and so unsupported formats to be ignored.
+                // All other chars are allowed as literals.
+                if (c < QLatin1Char('A') || c > QLatin1Char('z') ||
+                    (c > QLatin1Char('Z') && c < QLatin1Char('a'))) {
+                    result += QString(repeat, c);
+                }
+                break;
+        }
+
+        i += repeat;
+    }
+
+    return result;
+}
+#endif

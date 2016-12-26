@@ -23,7 +23,9 @@
 
 #include "bytearrayreply.h"
 #include <QCoreApplication>
+#ifndef QT_WEBENGINEWIDGETS_LIB
 #include <QWebSecurityOrigin>
+#endif
 
 NetworkAccessManager::NetworkAccessManager(QObject *parent)
 : QNetworkAccessManager(parent) {
@@ -83,7 +85,10 @@ void NetworkAccessManager::setSchemeHandler(const QString &scheme, NAMSchemeHand
 		schemeHandlers_.remove(scheme);
 	}
 	schemeHandlers_.insert(scheme, QSharedPointer<NAMSchemeHandler>(handler));
+#ifndef QT_WEBENGINEWIDGETS_LIB
+	// qtwebkit only stuff
 	QWebSecurityOrigin::addLocalScheme(scheme); // TODO review which schemes really need to be white-listed but probably all or them
+#endif
 }
 
 /**

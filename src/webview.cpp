@@ -18,36 +18,61 @@
  *
  */
 
-#include <QWebFrame>
 #include <QFile>
 #include <QMimeData>
 #include <QApplication>
 #include <QStyle>
 #include <QDebug>
 #include <QDrag>
+#ifdef QT_WEBENGINEWIDGETS_LIB
+#include <QWebEngineSettings>
+#if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
+#include <QWebEngineContextMenuData>
+#endif
+#else
+#include <QWebFrame>
 #include <QWebSecurityOrigin>
+#endif
 
 #include "webview.h"
 #include "urlobject.h"
 #include "textutil.h"
 
-WebView::WebView(QWidget* parent) : QWebView(parent), possibleDragging(false), isLoading_(false)
+WebView::WebView(QWidget* parent) :
+#ifdef QT_WEBENGINEWIDGETS_LIB
+    QWebEngineView(parent),
+#else
+    QWebView(parent),
+#endif
+    possibleDragging(false),
+    isLoading_(false)
 {
+	setAcceptDrops(false);
 
-    settings()->setAttribute(QWebSettings::JavaEnabled, false);
+#ifdef QT_WEBENGINEWIDGETS_LIB
+    settings()->setAttribute(QWebEngineSettings::PluginsEnabled, false);
+	settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, false);
+	// TODO cache cotrol
+	// TODO network request interception
+	// Review ink delegation (in other words all local links on page should work)
+
+	connect(page()->action(QWebEnginePage::Copy), SIGNAL(triggered()), SLOT(textCopiedEvent()));
+	connect(page()->action(QWebEnginePage::Cut), SIGNAL(triggered()), SLOT(textCopiedEvent()));
+#else
+	settings()->setAttribute(QWebSettings::JavaEnabled, false);
     settings()->setAttribute(QWebSettings::PluginsEnabled, false);
 	settings()->setAttribute(QWebSettings::LocalStorageEnabled, false);
 	settings()->setMaximumPagesInCache( 0 );
 	settings()->setObjectCacheCapacities( 0, 0, 0 );
 	settings()->clearMemoryCaches( );
-	setAcceptDrops(false);
 
 	page()->setNetworkAccessManager(NetworkAccessManager::instance());
     page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
 
-	connect(page(), SIGNAL(linkClicked(const QUrl&)), this, SLOT(linkClickedEvent(const QUrl&)));
 	connect(page()->action(QWebPage::Copy), SIGNAL(triggered()), SLOT(textCopiedEvent()));
 	connect(page()->action(QWebPage::Cut), SIGNAL(triggered()), SLOT(textCopiedEvent()));
+	connect(page(), SIGNAL(linkClicked(const QUrl&)), this, SLOT(linkClickedEvent(const QUrl&))); // most likely we don't need this at all
+#endif
 	connect(page(), SIGNAL(loadStarted()), this, SLOT(loadStartedEvent()));
 	connect(page(), SIGNAL(loadFinished(bool)), this, SLOT(loadFinishedEvent(bool)));
 }
@@ -76,7 +101,18 @@ void WebView::loadFinishedEvent(bool success)
 void WebView::contextMenuEvent(QContextMenuEvent* event)
 {
 	if (isLoading_) return;
+#ifdef QT_WEBENGINEWIDGETS_LIB
+#if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
+	QWebEngineContextMenuData r = page()->contextMenuData();
+#else
+	struct CMData {
+		QUrl linkUrl() { return QUrl(); } // just a stub. TODO invent something
+	};
+	CMData r;
+#endif
+#else
 	QWebHitTestResult r = page()->mainFrame()->hitTestContent(event->pos());
+#endif
 	QMenu *menu;
 
 	if (!r.linkUrl().isEmpty()) {
@@ -89,6 +125,18 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
 	} else {
 		menu = new QMenu(this);
 		if (!page()->selectedText().isEmpty()) {
+#if QT_WEBENGINEWIDGETS_LIB
+			menu->addAction(pageAction(QWebEnginePage::Copy));
+		} else {
+			if (!menu->isEmpty()) {
+				menu->addSeparator();
+			}
+			menu->addAction(pageAction(QWebEnginePage::SelectAll));
+		}
+		menu->addAction(pageAction(QWebEnginePage::InspectElement));
+	}
+	menu->addAction(pageAction(QWebEnginePage::Reload));
+#else
 			menu->addAction(pageAction(QWebPage::Copy));
 		} else {
 			if (!menu->isEmpty()) {
@@ -101,11 +149,13 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
 		}
 	}
 	menu->addAction(pageAction(QWebPage::Reload));
+#endif
 	menu->exec(mapToGlobal(event->pos()));
 	event->accept();
 	delete menu;
 }
 
+#ifndef QT_WEBENGINEWIDGETS_LIB
 void WebView::mousePressEvent ( QMouseEvent * event )
 {
 	if (isLoading_) return;
@@ -158,6 +208,7 @@ void WebView::mouseMoveEvent(QMouseEvent *event)
 	drag->exec(Qt::CopyAction);
 }
 
+
 void WebView::convertClipboardHtmlImages(QClipboard::Mode mode)
 {
 	QClipboard *cb = QApplication::clipboard();
@@ -167,30 +218,43 @@ void WebView::convertClipboardHtmlImages(QClipboard::Mode mode)
 	data->setText(TextUtil::rich2plain(html, false));
 	cb->setMimeData(data, mode);
 }
+#endif
 
 void WebView::evaluateJS(const QString &scriptSource)
 {
 	//qDebug()<< "EVALUATE: " << (scriptSource.size()>200?scriptSource.mid(0,200)+"...":scriptSource);
+#if QT_WEBENGINEWIDGETS_LIB
+	page()->runJavaScript(scriptSource);
+#else
 	page()->mainFrame()->evaluateJavaScript(scriptSource);
+#endif
 }
 
+#ifndef QT_WEBENGINEWIDGETS_LIB
 QString WebView::selectedText()
 {
 	return TextUtil::rich2plain(TextUtil::img2title(selectedHtml()));
 }
+#endif
 
 void WebView::copySelected()
 {
 	// use native selectedText w/o clipboard hacks.
-	// ideally we should call something like hasSelection() but there is no such method in Qt API for webkit classes.
 	if (page()->hasSelection()) {
+#if QT_WEBENGINEWIDGETS_LIB
+		page()->triggerAction(QWebEnginePage::Copy);
+#else
 		page()->triggerAction(QWebPage::Copy);
 		textCopiedEvent();
+#endif
 	}
-	//qDebug("copied text: %s", qPrintable(QApplication::clipboard()->text(QClipboard::Clipboard)));
 }
 
 void WebView::textCopiedEvent()
 {
+#ifdef QT_WEBENGINEWIDGETS_LIB
+	qWarning("Fixme: convert clipboard html images");
+#else
 	convertClipboardHtmlImages(QClipboard::Clipboard);
+#endif
 }

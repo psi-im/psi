@@ -34,8 +34,7 @@ class MessageView;
 class PsiAccount;
 class ChatViewTheme;
 
-
-class ChatViewJSObject;
+class ChatViewPrivate;
 
 class ChatView : public QFrame, public ChatViewCommon
 {
@@ -51,7 +50,7 @@ public:
 
 	void setDialog(QWidget* dialog);
 	void setSessionData(bool isMuc, const QString &jid, const QString name);
-	void setAccount(PsiAccount *acc) { account_ = acc; }
+	void setAccount(PsiAccount *acc);
 
 	void contextMenuEvent(QContextMenuEvent* event);
 	void sendJsObject(const QVariantMap &);
@@ -65,6 +64,7 @@ public:
 	bool internalFind(QString str, bool startFromBeginning = false);
 	WebView * textWidget();
 	QWidget * realTextWidget();
+	QObject * jsBridge();
 
 public slots:
 	void scrollUp();
@@ -86,7 +86,9 @@ public slots:
 	void init();
 
 private slots:
+#ifndef QT_WEBENGINEWIDGETS_LIB
 	void embedJsObject();
+#endif
 	void checkJsBuffer();
 	void sessionInited();
 
@@ -94,19 +96,9 @@ signals:
 	void showNM(const QString&);
 
 private:
+	friend class ChatViewPrivate;
 	friend class ChatViewJSObject;
-	ChatViewTheme* currentTheme();
-
-	WebView *webView;
-	ChatViewJSObject *jsObject;
-	QStringList jsBuffer_;
-	bool sessionReady_;
-	QPointer<QWidget> dialog_;
-	bool isMuc_;
-	bool isEncryptionEnabled_;
-	QString jid_;
-	QString name_;
-	PsiAccount *account_;
+	QScopedPointer<ChatViewPrivate> d;
 };
 
 #endif

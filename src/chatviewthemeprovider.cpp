@@ -24,6 +24,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QDir>
+#include <QWebEngineUrlRequestInterceptor>
 
 #include "chatviewtheme.h"
 #include "psioptions.h"
@@ -31,10 +32,10 @@
 #include "applicationinfo.h"
 #include "psiwkavatarhandler.h"
 #include "psithememanager.h"
-
-static bool singleInited = false;
-static QMap<QString, QString> chatViewScripts;
-static QMap<QString, QString> chatViewAdapterDirs;
+#if QT_WEBENGINEWIDGETS_LIB
+# include "themeserver.h"
+#endif
+#include "chatviewthemeprovider_priv.h"
 
 class ChatViewThemeProvider;
 
@@ -56,8 +57,7 @@ public:
 		}
 		if (theme) {
 			//theme->ChatViewTheme
-			QByteArray td = Theme::loadData(url.path().mid(themeId.size() + 2), /* 2 slashes before and after */
-											theme->fileName(), theme->caseInsensitiveFS());
+			QByteArray td = theme->loadData(url.path().mid(themeId.size() + 2)); /* 2 slashes before and after */
 			if (td.isNull()) {
 				qDebug("content of %s is not found in the theme",
 					   qPrintable(url.toString()));
@@ -71,19 +71,6 @@ public:
 
 };
 
-static void singleInit(PsiCon *pc)
-{
-	if (!singleInited) {
-		NetworkAccessManager::instance()->setSchemeHandler(
-				"avatar", new PsiWKAvatarHandler(pc));
-		NetworkAccessManager::instance()->setSchemeHandler(
-				"theme", new ChatViewThemeUrlHandler());
-		singleInited = true;
-	}
-}
-
-
-
 //--------------------------------------
 // ChatViewThemeProvider
 //--------------------------------------
@@ -91,7 +78,7 @@ ChatViewThemeProvider::ChatViewThemeProvider(QObject *parent_)
 	: PsiThemeProvider(parent_)
 	, curTheme(0)
 {
-	singleInit((PsiCon*)parent());
+	ChatViewCon::init((PsiCon*)parent());
 }
 
 const QStringList ChatViewThemeProvider::themeIds() const
@@ -130,63 +117,12 @@ const QStringList ChatViewThemeProvider::themeIds() const
  */
 Theme * ChatViewThemeProvider::load(const QString &themeId)
 {
-	QString up;
-	if (chatViewScripts.value("util").isEmpty()) { // if not cached yet or cached some bad version (empty)
-		if (!(up = themePath("chatview/util.js")).isEmpty()) {
-			QFile file(up);
-			if (file.open(QIODevice::ReadOnly)) {
-				chatViewScripts["util"] = file.readAll();
-			}
-		}
-	}
-
-	// find theme. load adapter is necessary. load theme. return theme
-	for (;;) {
-		if (chatViewScripts.value("util").isEmpty()) { // util is still not cached
-			break;
-		}
-
-		int pos;
-		if ((pos = themeId.indexOf('/')) < 0) { // themeId = <adapter name>/<theme dir>
-			break;
-		}
-		QString tp = themePath("chatview/" + themeId);
-		QString adapterName = themeId.mid(0, pos);
-		if (tp.isEmpty()) { // theme does not exists
-			break;
-		}
-
-		QString ap, ad;
-		if (chatViewScripts.value(adapterName).isEmpty() &&
-			!(ap = themePath("chatview/" + adapterName + "/adapter.js")).isEmpty()) {
-
-			QFile afile(ap);
-			if (!afile.open(QIODevice::ReadOnly)) {
-				qDebug("%s %s", qPrintable(ap), qPrintable(afile.errorString()));
-				break;
-			}
-
-			QString ajs = QString::fromUtf8(afile.readAll());
-			if (ajs.isEmpty()) {
-				qDebug("%s empty/unreadable", qPrintable(ap));
-				break;
-			}
-			chatViewScripts[adapterName] = ajs;
-			ad = QFileInfo(afile).dir().absolutePath();
-			chatViewAdapterDirs.insert(adapterName, ad);
-		} else {
-			ad = chatViewAdapterDirs.value(adapterName);
-		}
-
-		ChatViewTheme *theme = new ChatViewTheme(themeId);
-		if (theme->load(tp, QStringList()<<chatViewScripts["util"]
-						<<chatViewScripts[adapterName], ad)) {
-			return theme;
-		}
-		break;
-	}
-
-	return 0;
+	ChatViewTheme *theme = new ChatViewTheme(this);
+	theme->load(themeId, [this, themeId](bool success){
+		qDebug("%s theme loading status: %s", qPrintable(themeId), success? "success" : "failure");
+		// TODO invent something smarter
+	});
+	return theme;
 }
 
 /**
@@ -230,4 +166,16 @@ void ChatViewThemeProvider::setCurrentTheme(const QString &id)
 	if (!curTheme || curTheme->id() != id) {
 		loadCurrent();
 	}
+}
+
+ThemeServer *ChatViewThemeProvider::themeServer()
+{
+	Q_ASSERT(ChatViewCon::isReady());
+	return ChatViewCon::instance()->themeServer;
+}
+
+QWebEngineUrlRequestInterceptor *ChatViewThemeProvider::requestInterceptor()
+{
+	Q_ASSERT(ChatViewCon::isReady());
+	return ChatViewCon::instance()->requestInterceptor;
 }

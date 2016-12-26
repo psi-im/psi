@@ -1,23 +1,28 @@
-try {
+function psiThemeAdapter(chat) {
+    chat.console("Psi adapter is ready");
 
-window[chatServer.jsNamespace()].adapter = {
+    return {
 	loadTheme : function() {
-        chatServer.setHtml(chatServer.getFileContents("index.html"));
-        eval(chatServer.getFileContents("load.js"));
-		return "ok";
+        srvLoader.getFileContents("index.html", function(html){
+            srvLoader.setHtml(html);
+            srvLoader.getFileContents("load.js", function(js){
+                eval(js);
+                srvLoader.finishThemeLoading();
+            })
+        })
 	},
 	initSession : function() {
-		var chat = window[chatServer.jsNamespace()];
+		var chat = chat;
 		var trackbar = null;
 		var inited = false;
 		var proxy = null;
 
 		var shared = {
 			templates : {},
-			server : window.chatServer,
-			session : window.chatSession,
-			isMuc : window.chatSession.isMuc(),
-			accountId : window.chatSession.account(),
+			server : window.srvUtil,
+			session : window.srvSession,
+			isMuc : window.srvSession.isMuc(),
+			accountId : window.srvSession.account,
 			dateFormat : "hh:mm:ss",
 			scroller : null,
 			varHandlers : {},
@@ -246,15 +251,12 @@ window[chatServer.jsNamespace()].adapter = {
 
 		chat.adapter.initSession = null;
 		chat.adapter.loadTheme = null;
-		window.chatServer = null;
+        //window.srvLoader = null;
+		//window.chatServer = null;
 		window.chatSession = null;
 		return shared;
 
 	}
-}
+};
 
-
-} catch(e) {
-	window[chatServer.jsNamespace()].console("adapter load error!!! "+e)
 }
-"ok"; // just an indicator for script loader

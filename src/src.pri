@@ -357,7 +357,6 @@ SOURCES += \
 	$$PWD/mcmdcompletion.cpp \
 	$$PWD/captchadlg.cpp
 
-
 CONFIG += filetransfer
 filetransfer {
 	DEFINES += FILETRANSFER
@@ -643,7 +642,9 @@ webkit {
 			$$PWD/psiwkavatarhandler.h \
 			$$PWD/jsutil.h \
 			$$PWD/chatviewtheme.h \
-			$$PWD/chatviewthemeprovider.h
+			$$PWD/chatviewthemeprovider.h \
+			$$PWD/chatviewthemeprovider_priv.h
+
 	SOURCES += 	$$PWD/chatview_webkit.cpp \
 			$$PWD/networkaccessmanager.cpp \
 			$$PWD/bytearrayreply.cpp \
@@ -651,11 +652,26 @@ webkit {
 			$$PWD/psiwkavatarhandler.cpp \
 			$$PWD/jsutil.cpp \
 			$$PWD/chatviewtheme.cpp \
-			$$PWD/chatviewthemeprovider.cpp
+			$$PWD/chatviewthemeprovider.cpp \
+			$$PWD/chatviewthemeprovider_priv.cpp
+
 	DEFINES += WEBKIT
-	QT += webkit
-	greaterThan(QT_MAJOR_VERSION, 4) {
-		QT += webkitwidgets
+
+	need_webengine=0
+	greaterThan(QT_MAJOR_VERSION, 5):need_webengine=1
+	equals($$need_webengine,0):greaterThan(QT_MAJOR_VERSION, 4):greaterThan(QT_MINOR_VERSION, 5):need_webengine=1
+	equals($$need_webengine,0) {
+		QT += webkit
+		greaterThan(QT_MAJOR_VERSION, 4):QT += webkitwidgets
+	}
+	else {
+		CONFIG += c++14
+		QT += webenginewidgets webchannel
+		include (../3rdparty/qhttp.pri)
+		HEADERS +=  \
+			$$PWD/themeserver.h
+		SOURCES +=  \
+			$$PWD/themeserver.cpp
 	}
 }
 else {

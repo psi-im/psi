@@ -4,3 +4,9 @@
 [submodule "src/libpsi"]
 	path = src/libpsi
 	url = git://github.com/psi-im/libpsi.git
+[submodule "3rdparty/qhttp"]
+	path = 3rdparty/qhttp
+	url = https://github.com/azadkuh/qhttp.git
+[submodule "3rdparty/http-parser"]
+	path = 3rdparty/http-parser
+	url = https://github.com/nodejs/http-parser.git

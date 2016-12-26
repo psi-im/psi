@@ -33,21 +33,29 @@
 #	include "zip/zip.h"
 #endif
 
-class ThemeMetaData : public QSharedData
+#include "psithemeprovider.h"
+
+class ThemePrivate : public QSharedData
 {
 public:
-	QString id, name, version, description, creation, homeUrl, filename;
+	PsiThemeProvider *provider;
+
+	// metadata
+	QString id, name, version, description, creation, homeUrl;
 	QStringList authors;
 	QHash<QString, QString> info;
+
+	// runtime info
+	QString filepath;
 	bool caseInsensitiveFS;
 
 public:
-	ThemeMetaData(const QString &id);
+	ThemePrivate();
 	//QByteArray loadData(const QString &fileName, const QString &dir) const;
 };
 
-ThemeMetaData::ThemeMetaData(const QString &id) :
-	id(id),
+ThemePrivate::ThemePrivate() :
+	provider(0),
 	name(QObject::tr("Unnamed")),
 	caseInsensitiveFS(false)
 {
@@ -58,16 +66,27 @@ ThemeMetaData::ThemeMetaData(const QString &id) :
 //--------------------------------------
 // Theme
 //--------------------------------------
-Theme::Theme(const QString &id) :
-	md(new ThemeMetaData(id))
+Theme::Theme()
 {
 
 }
 
-Theme::Theme(const Theme &other) :
-	md(other.md)
+Theme::Theme(PsiThemeProvider *provider) :
+	d(new ThemePrivate())
 {
+	d->provider = provider;
+}
 
+Theme::Theme(const Theme &other) :
+	d(other.d)
+{
+	qDebug("The theme copied");
+}
+
+Theme &Theme::operator=(const Theme &other)
+{
+	d = other.d;
+	return *this;
 }
 
 Theme::~Theme()
@@ -75,15 +94,20 @@ Theme::~Theme()
 
 }
 
-QByteArray Theme::loadData(const QString &fileName, const QString &dir, bool caseInsensetive)
+bool Theme::isValid() const
+{
+	return d;
+}
+
+QByteArray Theme::loadData(const QString &fileName, const QString &themePath, bool caseInsensetive)
 {
 	QByteArray ba;
 	//qDebug("loading %s from %s", qPrintable(fileName), qPrintable(dir));
-	QFileInfo fi(dir);
+	QFileInfo fi(themePath);
 	if ( fi.isDir() ) {
-		QFile file(dir + '/' + fileName);
+		QFile file(themePath + '/' + fileName);
 		if (caseInsensetive && !file.exists()) {
-			QDir d(dir);
+			QDir d(themePath);
 			foreach (const QString &name, fileName.toLower().split('/')) {
 				if (name.isEmpty()) { // force relative path and drop double slahses
 					continue;
@@ -107,7 +131,7 @@ QByteArray Theme::loadData(const QString &fileName, const QString &dir, bool cas
 					file.setFileName(fi.filePath());
 					break;
 				}
-				d.cd(fi.fileName());
+				d.cd(fi.fileName()); // so that was directory. go into.
 			}
 		}
 		//qDebug("read data from %s", qPrintable(file.fileName()));
@@ -120,7 +144,7 @@ QByteArray Theme::loadData(const QString &fileName, const QString &dir, bool cas
 	}
 #ifdef Theme_ZIP
 	else if ( fi.suffix() == "jisp" || fi.suffix() == "zip" || fi.suffix() == "theme" ) {
-		UnZip z(dir);
+		UnZip z(themePath);
 		if ( !z.open() )
 			return ba;
 		if (caseInsensetive) {
@@ -138,29 +162,39 @@ QByteArray Theme::loadData(const QString &fileName, const QString &dir, bool cas
 	return ba;
 }
 
+QByteArray Theme::loadData(const QString &fileName)
+{
+	return Theme::loadData(fileName, d->filepath, d->caseInsensitiveFS);
+}
+
 const QString &Theme::id() const
 {
-	return md->id;
+	return d->id;
+}
+
+void Theme::setId(const QString &id)
+{
+	d->id = id;
 }
 
 const QString &Theme::name() const
 {
-	return md->name;
+	return d->name;
 }
 
 void Theme::setName(const QString &name)
 {
-	md->name = name;
+	d->name = name;
 }
 
 const QString &Theme::version() const
 {
-	return md->version;
+	return d->version;
 }
 
 const QString &Theme::description() const
 {
-	return md->description;
+	return d->description;
 }
 
 /**
@@ -168,7 +202,7 @@ const QString &Theme::description() const
  */
 const QStringList &Theme::authors() const
 {
-	return md->authors;
+	return d->authors;
 }
 
 /**
@@ -176,28 +210,33 @@ const QStringList &Theme::authors() const
  */
 const QString &Theme::creation() const
 {
-	return md->creation;
+	return d->creation;
 }
 
 const QString &Theme::homeUrl() const
 {
-	return md->homeUrl;
+	return d->homeUrl;
+}
+
+PsiThemeProvider *Theme::themeProvider() const
+{
+	return d->provider;
 }
 
 /**
  * Returns directory (or .zip/.jisp archive) name from which Theme was loaded.
  */
-const QString &Theme::fileName() const
+const QString &Theme::filePath() const
 {
-	return md->filename;
+	return d->filepath;
 }
 
 /**
  * Sets the Theme directory (.zip archive) name.
  */
-void Theme::setFileName(const QString &f)
+void Theme::setFilePath(const QString &f)
 {
-	md->filename = f;
+	d->filepath = f;
 }
 
 /**
@@ -206,7 +245,7 @@ void Theme::setFileName(const QString &f)
  */
 const QHash<QString, QString> Theme::info() const
 {
-	return md->info;
+	return d->info;
 }
 
 /**
@@ -215,17 +254,17 @@ const QHash<QString, QString> Theme::info() const
  */
 void Theme::setInfo(const QHash<QString, QString> &i)
 {
-	md->info = i;
+	d->info = i;
 }
 
 void Theme::setCaseInsensitiveFS(bool state)
 {
-	md->caseInsensitiveFS = state;
+	d->caseInsensitiveFS = state;
 }
 
 bool Theme::caseInsensitiveFS() const
 {
-	return md->caseInsensitiveFS;
+	return d->caseInsensitiveFS;
 }
 
 /**
@@ -233,5 +272,5 @@ bool Theme::caseInsensitiveFS() const
  */
 QString Theme::title() const
 {
-	return md->name.isEmpty()? md->id : md->name;
+	return d->name.isEmpty()? d->id : d->name;
 }

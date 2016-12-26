@@ -377,7 +377,7 @@ fi
 printf "Verifying Qt build environment ... "
 
 if [ -z "$QC_QTSELECT" ]; then
-	QC_QTSELECT="${QT_SELECT/qt/}"
+	QC_QTSELECT="$(echo $QT_SELECT | tr -d "qt")"
 fi
 
 if [ ! -z "$QC_QTSELECT" ]; then
@@ -1311,8 +1311,13 @@ public:
 	{
 		QString proextra =
 		"CONFIG += qt webkit\\n"
-#if QT_VERSION >= 0x050000
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+# if QT_VERSION >= QT_VERSION_CHECK(5,6,0)
+		"QT += webenginewidgets\\n"
+		"CONFIG *= c++11 c++14\\n";
+# else
 		"QT += webkit webkitwidgets\\n";
+# endif
 #else
 		"QT += webkit\\n";
 #endif

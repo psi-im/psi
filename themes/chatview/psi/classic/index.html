@@ -23,11 +23,11 @@ body > div > img:first-child { vertical-align:text-bottom; }
 <body>
 <script type="text/javascript">
 try {
-
-window[chatServer.jsNamespace()].theme = function() {
+//psi.console("Loading index.html")
+window.psi.theme = function() {
 	var nicks = {};
 	var nickNumber = 0;
-	var chat = window[chatServer.jsNamespace()];
+	var chat = window.psi;
 
 	var cssBody = chat.util.findStyleSheet(document.styleSheets[0], "body").style;
 	var cssSentMsg = chat.util.findStyleSheet(document.styleSheets[0], ".sent").style;

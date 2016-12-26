@@ -1,13 +1,11 @@
-window[chatServer.jsNamespace()] = function() {
-	var htmlSource = document.createElement("div"); //manages appendHtml
-	var server = window.chatServer;
+function initPsiTheme() {
+	var server = window.srvUtil;
+    var loader = window.srvLoader;
+    server.console("Util is initilizing in namespace: " + server.jsNamespace);
+    var htmlSource = document.createElement("div"); //manages appendHtml
 	var chat =  {
 		console : server.console,
-		adapter : {
-			receiveObject : function(data) {
-				chat.util.showCriticalError("Adapter is not loaded. output impossible!\n\nData was:" + chat.util.props(data));
-			}
-		},
+        server : server,
 		util: {
 			showCriticalError : function(text) {
 				var e=document.body || document.documentElement.appendChild(document.createElement("body"));
@@ -108,18 +106,18 @@ window[chatServer.jsNamespace()] = function() {
 				}
 			},
 
-			loadXML : function(path, allowEmpty) {
-				allowEmpty = allowEmpty || false;
-				text = server.getFileContents(path);
-				if (!text && !allowEmpty) {
-					throw new Error("File " + path + " is empty. can't parse xml");
-				}
-				try {
-					return new DOMParser().parseFromString(text, "text/xml");
-				} catch (e) {
-					server.console("failed to parse xml from file " + path);
-					throw e;
-				}
+			loadXML : function(path, callback) {
+                loader.getFileContents(path, function(text){
+                    if (!text) {
+                        throw new Error("File " + path + " is empty. can't parse xml");
+                    }
+                    try {
+                        callback(new DOMParser().parseFromString(text, "text/xml"));
+                    } catch (e) {
+                        server.console("failed to parse xml from file " + path);
+                        throw e;
+                    }
+                });
 			}
 		},
 
@@ -188,6 +186,21 @@ window[chatServer.jsNamespace()] = function() {
 			}
 		}
 	}
+
+    try {
+        chat.adapter = window.psiThemeAdapter(chat);
+    } catch(e) {
+        server.console("Failed to initialize adapter:" + e + "(Line:" + e.line + ")");
+        chat.adapter = {
+            receiveObject : function(data) {
+                chat.util.showCriticalError("Adapter is not loaded. output impossible!\n\nData was:" + chat.util.props(data));
+            }
+        }
+    }
+
+    //window.srvUtil = null; // don't! we need it in adapter
+    window.psiThemeAdapter = null;
+    window[server.jsNamespace] = chat;
+
 	return chat;
-}();
-"ok"; // just an indicator for script loader
+};

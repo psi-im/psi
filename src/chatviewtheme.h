@@ -22,33 +22,67 @@
 #define CHATVIEWTHEME_H
 
 #include <QPointer>
+#include <functional>
 
 #include "theme.h"
 #include "webview.h"
 
-class ChatViewThemeJS;
+class ChatViewThemeJSUtil;
+class ChatViewJSLoader;
+class ChatViewThemeProvider;
+class ChatViewThemePrivate;
+class ChatViewThemeSession;
+
+
 
 class ChatViewTheme : public Theme
 {
-	friend class ChatViewThemeJS;
+	friend class ChatViewThemeJSUtil;
 public:
-	ChatViewTheme(const QString &id);
+
+	ChatViewTheme();
+	ChatViewTheme(ChatViewThemeProvider *provider);
+	ChatViewTheme(const ChatViewTheme &other);
+	ChatViewTheme &operator=(const ChatViewTheme &other);
 	~ChatViewTheme();
 
 	QByteArray screenshot();
 
-	bool load( const QString &file, const QStringList &helperScripts,
-			   const QString &adapterPath );
+	bool load(const QString &id, std::function<void(bool)> loadCallback);
 
-	QObject * jsHelper();
-	QStringList scripts();
-	QString html(QObject *session = 0);
+	bool isMuc() const;
 	QString jsNamespace();
 	inline QUrl baseUrl() const { return QUrl("theme://messages/" + id() + "/"); }
 
+	void putToCache(const QString &key, const QVariant &data);
+	void setTransparentBackground(bool enabled = true);
+	bool isTransparentBackground() const;
+	bool applyToWebView(QSharedPointer<ChatViewThemeSession> session);
+
 private:
-	class Private;
-	Private *d;
+	friend class ChatViewJSLoader;
+	friend class ChatViewThemePrivate;
+
+	// theme is destroyed only when all chats using it are closed (TODO: ensure)
+	QExplicitlySharedDataPointer<ChatViewThemePrivate> cvtd;
+};
+
+class ThemeServer;
+class ChatViewThemeSession {
+	friend class ChatViewTheme;
+
+	QString sessId; // unique id of session
+	ChatViewTheme theme;
+	ThemeServer *server = 0;
+
+public:
+	virtual ~ChatViewThemeSession();
+
+	inline const QString &sessionId() const { return sessId; }
+	virtual WebView* webView() = 0;
+	virtual QObject* jsBridge() = 0;
+	// returns: data, content-type
+	virtual QPair<QByteArray,QByteArray> getContents(const QUrl &url) = 0;
 };
 
 #endif
