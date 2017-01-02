@@ -1,5 +1,8 @@
 #CONFIG += release
 QT += network
+greaterThan(QT_MAJOR_VERSION, 4) {
+    CONFIG += c++11
+}
 isEmpty(PSISDK) {
     include(../../psiplugin.pri)
 } else {
