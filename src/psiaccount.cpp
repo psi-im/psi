@@ -5149,9 +5149,9 @@ void PsiAccount::handleEvent(const PsiEvent::Ptr &e, ActivationType activationTy
 				e->setOriginLocal(true);
 				doPopup = false;
 			}
-			// throw away carbons sent to another full JID, this happens with MUC private messages carbons
-			// so we have to explicitly skip them or we'll have a lot of duplicates
-			if (m.carbonDirection() == Message::Received && d->jid != m.to()) {
+			// throw away carbons sent for MUC private messages
+			// server sends them to all resources so we have to explicitly skip them or we'll have a lot of duplicates
+			if (m.carbonDirection() == Message::Received && m.hasMUCUser()) {
 				return;
 			}
 			ChatDlg *c = findChatDialogEx(chatJid, m.carbonDirection() == Message::Sent);
