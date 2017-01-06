@@ -933,7 +933,10 @@ void ChatDlg::appendMessage(const Message &m, bool local)
 		foreach (const Url &u, urls) {
 			urlsMap.insert(u.url(), u.desc());
 		}
-		chatView()->dispatchMessage(MessageView::urlsMessage(urlsMap));
+		// Some XMPP clients send links to HTTP uploaded files both in body and in jabber:x:oob.
+		// It's convenient to show only body if OOB data brings no additional information.
+		if (!(urlsMap.size() == 1 && urlsMap.contains(body) && urlsMap.value(body).isEmpty()))
+			chatView()->dispatchMessage(MessageView::urlsMessage(urlsMap));
 	}
 
 	// if we're not active, notify the user by changing the title
