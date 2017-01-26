@@ -868,14 +868,16 @@ void TabDlg::setSimplifiedCaptionEnabled(bool enabled)
   */
 void TabDlg::tabCloseRequested(int i)
 {
-	if (tabWidget_->currentPageIndex() == i)
-		closeTab(static_cast<TabbableWidget*>(tabWidget_->page(i)));
-	else {
-		if (PsiOptions::instance()->getOption("options.ui.tabs.can-close-inactive-tab").toBool())
-			closeTab(static_cast<TabbableWidget*>(tabWidget_->page(i)));
-		else
+	if (tabWidget_->currentPageIndex() != i)
+		if (!PsiOptions::instance()->getOption("options.ui.tabs.can-close-inactive-tab").toBool()) {
 			selectTab(static_cast<TabbableWidget*>(tabWidget_->page(i)));
-	}
+			return;
+		}
+
+	if (PsiOptions::instance()->getOption("options.ui.chat.hide-when-closing").toBool())
+		hideTab(static_cast<TabbableWidget*>(tabWidget_->page(i)));
+	else
+		closeTab(static_cast<TabbableWidget*>(tabWidget_->page(i)));
 }
 
 /**

@@ -467,6 +467,11 @@ void HttpUploadPlugin::checkUploadAvailability(int account) {
 	if (jidRE.indexIn(curJid) == 0) {
 		QString domain = jidRE.cap(2);
 		QString id = getId(account);
+		// send discovery request to the main domain for Prosody to work
+		QString discoMain = QString("<iq xmlns='jabber:client' from='%1' id='%2' to='%3' type='get'>"
+				"<query xmlns='http://jabber.org/protocol/disco#info'/>"
+				"</iq>").arg(curJid).arg(id).arg(domain);
+		stanzaSender->sendStanza(account, discoMain);
 		QString disco = QString("<iq from='%1' id='%2' to='%3' type='get'>"
 				"<query xmlns='http://jabber.org/protocol/disco#items'/>"
 				"</iq>").arg(curJid).arg(id).arg(domain);
@@ -591,7 +596,7 @@ bool HttpUploadPlugin::incomingStanza(int account, const QDomElement& xml) {
 void HttpUploadPlugin::uploadComplete(QNetworkReply* reply) {
 	bool ok;
 	int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt(&ok);
-	if (ok && statusCode == 201) {
+	if (ok && (statusCode == 201 || statusCode == 200)) {
 		QString id = getId(currentUpload.account);
 		QString receipt(
 				currentUpload.type == "chat"
