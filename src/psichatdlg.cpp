@@ -398,7 +398,8 @@ void PsiChatDlg::updateToolbuttons()
 #ifdef PSI_PLUGINS
 		if (actionName.endsWith("-plugin")) {
 			QString name = PluginManager::instance()->nameByShortName(actionName.mid(0, actionName.length() - 7));
-			PluginManager::instance()->addToolBarButton(this, ui_.toolbar, account(), jid().full(), name);
+			if (!name.isEmpty())
+				PluginManager::instance()->addToolBarButton(this, ui_.toolbar, account(), jid().full(), name);
 			continue;
 		}
 #endif
