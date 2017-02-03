@@ -428,6 +428,9 @@ void HttpUploadPlugin::upload(bool anything) {
 	if (length > sizeLimit) {
 		QMessageBox::critical(0, tr("The file size is too large."),
 				tr("File size must be less than %1 bytes").arg(sizeLimit));
+		if (dataSource) {
+			dataSource->deleteLater();
+		}
 		return;
 	}
 	currentUpload.account = account;

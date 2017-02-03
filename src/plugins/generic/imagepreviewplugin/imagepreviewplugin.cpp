@@ -352,12 +352,14 @@ void ImagePreviewPlugin::imageReply(QNetworkReply* reply) {
 				te_log->document()->addResource(QTextDocument::ImageResource, urlStrEscaped, image);
 				QTextCursor saved = te_log->textCursor();
 				te_log->moveCursor(QTextCursor::End);
+				QRegExp rawUrlRE = QRegExp("(<a href=\"[^\"]*\">)(.*)(</a>)");
 				while (te_log->find(urlStr, QTextDocument::FindBackward)) {
 					QTextCursor cur = te_log->textCursor();
 					QString html = cur.selection().toHtml();
-					html.replace(QRegExp("(<a href=\"[^\"]*\">)(.*)(</a>)"),
-							QString("\\1<img src='%1'/>\\3").arg(urlStrEscaped));
-					cur.insertHtml(html);
+					if (html.contains(rawUrlRE)) {
+						html.replace(rawUrlRE, QString("\\1<img src='%1'/>\\3").arg(urlStrEscaped));
+						cur.insertHtml(html);
+					}
 				}
 				te_log->setTextCursor(saved);
 			} else {
