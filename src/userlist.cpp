@@ -716,12 +716,12 @@ QString UserListItem::makeBareTip(bool trim, bool doLinkify) const
 					aff = "affiliation/outcast";
 				else
 					aff = "affiliation/noaffiliation";
-				//if(!r.status().mucItem().jid().isEmpty())
-				//	str += QString("<div class='layer1'>") + QObject::tr("JID: %1").arg(JIDUtil::toString(r.status().mucItem().jid(),true)) + QString("</div>");
-				if(r.status().mucItem().role() != MUCItem::NoRole)
+
+				if(r.status().mucItem().role() != MUCItem::NoRole) {
 					str += QString("<div class='layer2'><table cellspacing=\"0\"><tr><td><%1=\"%2\"> </td><td>").arg(imgTag).arg(aff);
 					str += QString("<div style='white-space:pre'>") + QObject::tr("Role: %1").arg(MUCManager::roleToString(r.status().mucItem().role())) + QString("</div>");
 					str += QString("<div style='white-space:pre'>") + QObject::tr("Affiliation: %1").arg(MUCManager::affiliationToString(r.status().mucItem().affiliation())) + QString("</td></tr></table></div>");
+				}
 			}
 
 			// last status
