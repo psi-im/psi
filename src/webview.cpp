@@ -183,7 +183,7 @@ void WebView::copySelected()
 {
 	// use native selectedText w/o clipboard hacks.
 	// ideally we should call something like hasSelection() but there is no such method in Qt API for webkit classes.
-	if (page()->hasSelection()) {
+	if (page()->hasSelection() && !page()->selectedText().isEmpty()) {
 		page()->triggerAction(QWebPage::Copy);
 		textCopiedEvent();
 	}
