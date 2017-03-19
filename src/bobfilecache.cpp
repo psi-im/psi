@@ -43,7 +43,9 @@ BoBFileCache* BoBFileCache::instance()
 
 void BoBFileCache::put(const BoBData &data)
 {
-	_fileCache->append(data.cid(), data.type(), data.data(), data.maxAge());
+	QVariantMap md;
+	md.insert(QLatin1String("type"), data.type());
+	_fileCache->append(data.cid(), data.data(), md, data.maxAge());
 }
 
 BoBData BoBFileCache::get(const QString &cid)
@@ -53,8 +55,9 @@ BoBData BoBFileCache::get(const QString &cid)
 	if (item) {
 		bd.setCid(item->id());
 		bd.setData(item->data());
-		bd.setMaxAge(bd.maxAge());
-		bd.setType(bd.type());
+		bd.setMaxAge(item->maxAge());
+		QVariantMap md = item->metadata();
+		bd.setType(md[QLatin1String("type")].toString());
 	}
 	return bd;
 }

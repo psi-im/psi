@@ -58,9 +58,16 @@ class AvatarFactory : public QObject
 	Q_OBJECT
 
 public:
+	struct UserHashes {
+		QString avatar; // current active avatar
+		QString vcard;  // avatar hash just in case
+	};
+
 	AvatarFactory(PsiAccount* pa);
 
 	QPixmap getAvatar(const Jid& jid);
+	QPixmap getAvatarByHash(const QString& hash);
+	UserHashes userHashes(const Jid& jid) const;
 	PsiAccount* account() const;
 	void setSelfAvatar(const QString& fileName);
 
@@ -71,67 +78,31 @@ public:
 	void newMucItem(const Jid& fullJid, const Status& s);
 	QPixmap getMucAvatar(const Jid& jid);
 
-	static QString getManualDir();
 	static QString getCacheDir();
 	static int maxAvatarSize();
 	static QPixmap roundedAvatar(const QPixmap& pix, int rad, int avatarSize);
 
+	void statusUpdate(const Jid &jid, const XMPP::Status &status);
 signals:
 	void avatarChanged(const Jid&);
-
-public slots:
-	void updateAvatar(const Jid&);
-	void updateMucAvatar(const Jid&);
 
 protected slots:
 	void itemPublished(const Jid&, const QString&, const PubSubItem&);
 	void publish_success(const QString&, const PubSubItem&);
 	void resourceAvailable(const Jid&, const Resource&);
 
-protected:
-	Avatar* retrieveAvatar(const Jid& jid);
-
+private slots:
+	void onVcardTaskFinsihed();
+	void vcardUpdated(const Jid&, bool isMuc);
 private:
+
 	QByteArray selfAvatarData_;
 	QString selfAvatarHash_;
 
-	QMap<QString,Avatar*> active_avatars_;
-	QMap<QString,PEPAvatar*> pep_avatars_;
-	QMap<QString,FileAvatar*> file_avatars_;
-	QMap<QString,VCardAvatar*> vcard_avatars_;
-	QMap<QString,VCardMucAvatar*> muc_vcard_avatars_;
-	QMap<QString,VCardStaticAvatar*> vcard_static_avatars_;
 	PsiAccount* pa_;
 	Iconset iconset_;
 };
 
-//------------------------------------------------------------------------------
-
-class Avatar : public QObject
-{
-	Q_OBJECT
-public:
-	Avatar(AvatarFactory* factory);
-	virtual ~Avatar();
-	virtual QPixmap getPixmap()
-		{ return pixmap(); }
-	virtual bool isEmpty()
-		{ return getPixmap().isNull(); }
-
-protected:
-	AvatarFactory* factory() const;
-	virtual const QPixmap& pixmap() const
-		{ return pixmap_; }
-
-	virtual void setImage(const QImage&);
-	virtual void setImage(const QByteArray&);
-	virtual void setImage(const QPixmap&);
-	virtual void resetImage();
-
-private:
-	QPixmap pixmap_;
-	AvatarFactory* factory_;
-};
 
 
 #endif

@@ -383,22 +383,22 @@ void VariantTree::fromXml(const QDomElement &ele)
 QVariant VariantTree::elementToVariant(const QDomElement& e)
 {
 	QVariant value;
-	QString type = e.attribute("type");
+	QString type = e.attribute(QLatin1String("type"));
 	if (type == "QStringList") {
 		QStringList list;
 		for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
 			QDomElement e = node.toElement();
-			if (!e.isNull() && e.tagName() == "item") {
+			if (!e.isNull() && e.tagName() == QLatin1String("item")) {
 				list += e.text();
 			}
 		}
 		value = list;
 	}
-	else if (type == "QVariantList") {
+	else if (type == QLatin1String("QVariantList")) {
 		QVariantList list;
 		for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
 			QDomElement e = node.toElement();
-			if (!e.isNull() && e.tagName() == "item") {
+			if (!e.isNull() && e.tagName() == QLatin1String("item")) {
 				QVariant v = elementToVariant(e);
 				if (v.isValid())
 					list.append(v);
@@ -406,43 +406,61 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
 		}
 		value = list;
 	}
-	else if (type == "QSize") {
+	else if (type == QLatin1String("QVariantMap")) {
+		QVariantMap map;
+		for (QDomElement ine = e.firstChildElement(); !ine.isNull(); ine = ine.nextSiblingElement()) {
+			QVariant v = elementToVariant(ine);
+			if (v.isValid())
+				map.insert(ine.tagName(), v);
+		}
+		value = map;
+	}
+	else if (type == QLatin1String("QVariantHash")) {
+		QVariantHash map;
+		for (QDomElement ine = e.firstChildElement(); !ine.isNull(); ine = ine.nextSiblingElement()) {
+			QVariant v = elementToVariant(ine);
+			if (v.isValid())
+				map.insert(ine.tagName(), v);
+		}
+		value = map;
+	}
+	else if (type == QLatin1String("QSize")) {
 		int width = 0, height = 0;
 		for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
 			QDomElement e = node.toElement();
 			if (!e.isNull()) {
-				if (e.tagName() == "width") {
+				if (e.tagName() == QLatin1String("width")) {
 					width = e.text().toInt();
 				}
-				else if (e.tagName() == "height") {
+				else if (e.tagName() == QLatin1String("height")) {
 					height = e.text().toInt();
 				}
 			}
 		}
 		value = QVariant(QSize(width,height));
 	}
-	else if (type == "QRect") {
+	else if (type == QLatin1String("QRect")) {
 		int x = 0, y = 0, width = 0, height = 0;
 		for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
 			QDomElement e = node.toElement();
 			if (!e.isNull()) {
-				if (e.tagName() == "width") {
+				if (e.tagName() == QLatin1String("width")) {
 					width = e.text().toInt();
 				}
-				else if (e.tagName() == "height") {
+				else if (e.tagName() == QLatin1String("height")) {
 					height = e.text().toInt();
 				}
-				else if (e.tagName() == "x") {
+				else if (e.tagName() == QLatin1String("x")) {
 					x = e.text().toInt();
 				}
-				else if (e.tagName() == "y") {
+				else if (e.tagName() == QLatin1String("y")) {
 					y = e.text().toInt();
 				}
 			}
 		}
 		value = QVariant(QRect(x,y,width,height));
 	}
-	else if (type == "QByteArray") {
+	else if (type == QLatin1String("QByteArray")) {
 		value = QByteArray();
 		for (QDomNode node = e.firstChild(); !node.isNull(); node = node.nextSibling()) {
 			if (node.isText()) {
@@ -455,15 +473,15 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
 		QVariant::Type varianttype;
 		bool known = true;
 
-		if (type=="QString") {
+		if (type==QLatin1String("QString")) {
 			varianttype = QVariant::String;
-		} else if (type=="bool") {
+		} else if (type==QLatin1String("bool")) {
 			varianttype = QVariant::Bool;
-		} else if (type=="int") {
+		} else if (type==QLatin1String("int")) {
 			varianttype = QVariant::Int;
-		} else if (type == "QKeySequence") {
+		} else if (type == QLatin1String("QKeySequence")) {
 			varianttype = QVariant::KeySequence;
-		} else if (type == "QColor") {
+		} else if (type == QLatin1String("QColor")) {
 			varianttype = QVariant::Color;
 		} else {
 			known = false;
@@ -492,67 +510,102 @@ QVariant VariantTree::elementToVariant(const QDomElement& e)
  */
 void VariantTree::variantToElement(const QVariant& var, QDomElement& e)
 {
-	QString type = var.typeName();
-	// TODO use switch from QVariant::type()
-	if (type == "QVariantList") {
+	switch (var.type()) {
+	case QVariant::List:
 		foreach(QVariant v, var.toList()) {
-			QDomElement item_element = e.ownerDocument().createElement("item");
+			QDomElement item_element = e.ownerDocument().createElement(QLatin1String("item"));
 			variantToElement(v,item_element);
 			e.appendChild(item_element);
 		}
+		break;
+	case QVariant::Map:
+	{
+		QVariantMap map = var.toMap();
+		QVariantMap::ConstIterator it = map.constBegin();
+		for (; it != map.constEnd(); ++it) {
+			QDomElement item_element = e.ownerDocument().createElement(it.key());
+			variantToElement(it.value(),item_element);
+			e.appendChild(item_element);
+		}
+		break;
 	}
-	else if (type == "QStringList") {
-		foreach(QString s, var.toStringList()) {
-			QDomElement item_element = e.ownerDocument().createElement("item");
+	case QVariant::Hash:
+	{
+		QVariantHash map = var.toHash();
+		QVariantHash::ConstIterator it = map.constBegin();
+		for (; it != map.constEnd(); ++it) {
+			QDomElement item_element = e.ownerDocument().createElement(it.key());
+			variantToElement(it.value(),item_element);
+			e.appendChild(item_element);
+		}
+		break;
+	}
+	case QVariant::StringList:
+		foreach(const QString &s, var.toStringList()) {
+			QDomElement item_element = e.ownerDocument().createElement(QLatin1String("item"));
 			QDomText text = e.ownerDocument().createTextNode(s);
 			item_element.appendChild(text);
 			e.appendChild(item_element);
 		}
-	}
-	else if (type == "QSize") {
+		break;
+	case QVariant::Size:
+	{
 		QSize size = var.toSize();
-		QDomElement width_element = e.ownerDocument().createElement("width");
+		QDomElement width_element = e.ownerDocument().createElement(QLatin1String("width"));
 		width_element.appendChild(e.ownerDocument().createTextNode(QString::number(size.width())));
 		e.appendChild(width_element);
-		QDomElement height_element = e.ownerDocument().createElement("height");
+		QDomElement height_element = e.ownerDocument().createElement(QLatin1String("height"));
 		height_element.appendChild(e.ownerDocument().createTextNode(QString::number(size.height())));
 		e.appendChild(height_element);
+		break;
 	}
-	else if (type == "QRect") {
+	case QVariant::Rect:
+	{
 		QRect rect = var.toRect();
-		QDomElement x_element = e.ownerDocument().createElement("x");
+		QDomElement x_element = e.ownerDocument().createElement(QLatin1String("x"));
 		x_element.appendChild(e.ownerDocument().createTextNode(QString::number(rect.x())));
 		e.appendChild(x_element);
-		QDomElement y_element = e.ownerDocument().createElement("y");
+		QDomElement y_element = e.ownerDocument().createElement(QLatin1String("y"));
 		y_element.appendChild(e.ownerDocument().createTextNode(QString::number(rect.y())));
 		e.appendChild(y_element);
-		QDomElement width_element = e.ownerDocument().createElement("width");
+		QDomElement width_element = e.ownerDocument().createElement(QLatin1String("width"));
 		width_element.appendChild(e.ownerDocument().createTextNode(QString::number(rect.width())));
 		e.appendChild(width_element);
-		QDomElement height_element = e.ownerDocument().createElement("height");
+		QDomElement height_element = e.ownerDocument().createElement(QLatin1String("height"));
 		height_element.appendChild(e.ownerDocument().createTextNode(QString::number(rect.height())));
 		e.appendChild(height_element);
+		break;
 	}
-	else if (type == "QByteArray") {
+	case QVariant::ByteArray:
+	{
 		QDomText text = e.ownerDocument().createTextNode(var.toByteArray().toBase64());
 		e.appendChild(text);
+		break;
 	}
-	else if (type == "QKeySequence") {
+	case QVariant::KeySequence:
+	{
 		QKeySequence k = var.value<QKeySequence>();
 		QDomText text = e.ownerDocument().createTextNode(k.toString());
 		e.appendChild(text);
+		break;
 	}
-	else if (type == "QColor") { // save invalid colors as empty string
+	case QVariant::Color:
+	{ // save invalid colors as empty string
 		if (var.value<QColor>().isValid()) {
 			QDomText text = e.ownerDocument().createTextNode(var.toString());
 			e.appendChild(text);
 		}
+		break;
 	}
-	else {
+	default:
+	{
 		QDomText text = e.ownerDocument().createTextNode(var.toString());
 		e.appendChild(text);
+		break;
 	}
-	e.setAttribute("type",type);
+	}
+
+	e.setAttribute(QLatin1String("type"), var.typeName());
 }
 
 const QVariant VariantTree::missingValue=QVariant(QVariant::Invalid);

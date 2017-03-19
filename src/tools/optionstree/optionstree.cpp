@@ -90,7 +90,7 @@ void OptionsTree::setOption(const QString& name, const QVariant& value)
 
 
 /**
- * @brief returns true iff the node @a node is an internal node.
+ * @brief returns true if the node @a node is an internal node.
  */
 bool OptionsTree::isInternalNode(const QString &node) const
 {

@@ -181,6 +181,14 @@ public slots:
 		}
 	}
 
+	/**
+	 * @brief That's about applying theme to certian session. So we register session's id in theme and allow theme
+	 *        loader in theme's webview to init last parts of theme.
+	 *        This is for cases when theme can't init itself fully w/o some knowledge about sesion.
+	 * @param sessionId it's the same id as registered on internal web server
+	 * @param props a list of proprties' names
+	 * @return filled map prop=>value
+	 */
 	QVariantMap sessionProperties(const QString &sessionId, const QVariantList &props)
 	{
 		auto sess = _sessions.value(sessionId);
@@ -192,26 +200,6 @@ public slots:
 			}
 		}
 		return ret;
-	}
-
-	void setDefaultAvatar(const QString &filename, const QString &host = QString())
-	{
-		QByteArray ba = theme->loadData(filename);
-#ifndef QT_WEBENGINEWIDGETS_LIB
-		if (!ba.isEmpty()) {
-			((PsiWKAvatarHandler *)NetworkAccessManager::instance()
-				->schemeHandler("avatar").data())->setDefaultAvatar(ba, host);
-		}
-#endif
-	}
-
-	void setAvatarSize(int width, int height)
-	{
-#ifndef QT_WEBENGINEWIDGETS_LIB
-		((PsiWKAvatarHandler *)NetworkAccessManager::instance()
-				->schemeHandler("avatar").data())->setAvatarSize(QSize(width,
-																	   height));
-#endif
 	}
 
 	void setCaseInsensitiveFS(bool state = true)
@@ -227,6 +215,22 @@ public slots:
 	void setSessionHtml(const QString &sessionId, const QString &html)
 	{
 		emit sessionHtmlReady(sessionId, html);
+	}
+
+	QVariantMap checkFilesExist(const QStringList &files, const QString baseDir = QString())
+	{
+		QVariantMap ret;
+		QScopedPointer<Theme::ResourceLoader> loader(theme->resourceLoader());
+
+		QString d(baseDir);
+		if (!d.isEmpty()) {
+			d += QLatin1Char('/');
+		}
+		foreach (const QString &f, files) {
+			ret.insert(f, loader->fileExists(d + f));
+		}
+
+		return ret;
 	}
 
 	QString getFileContents(const QString &name) const
@@ -435,6 +439,15 @@ bool ChatViewTheme::load(const QString &id, std::function<void(bool)> loadCallba
 	channel->registerObject(QLatin1String("srvUtil"), cvtd->jsUtil.data());
 
 	QWebEngineScriptCollection &sc = cvtd->wv->page()->scripts();
+
+	// that's something static enough to be passed statically to every chat window on init
+	QWebEngineScript propsJs;
+	propsJs.setSourceCode("srvProps = { psiDefaultAvatarUrl: \"/psiglobal/avatar.png\" }");
+	propsJs.setInjectionPoint(QWebEngineScript::DocumentCreation);
+	propsJs.setWorldId(QWebEngineScript::MainWorld);
+	cvtd->scripts.append(propsJs);
+	sc.insert(propsJs);
+
 	for (auto &sp : scriptPaths) {
 		QFile f(sp);
 		if (f.open(QIODevice::ReadOnly)) {

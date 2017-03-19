@@ -44,13 +44,15 @@ public:
 	static VCardFactory* instance();
 	VCard vcard(const Jid &);
 	const VCard mucVcard(const Jid &j) const;
-	void setVCard(const Jid &, const VCard &);
+	void setVCard(const Jid &, const VCard &, bool notifyPhoto = true);
 	void setVCard(const PsiAccount* account, const VCard &v, QObject* obj = 0, const char* slot = 0);
 	void setTargetVCard(const PsiAccount* account, const VCard &v, const Jid &mucJid, QObject* obj, const char* slot);
-	JT_VCard *getVCard(const Jid &, Task *rootTask, const QObject *, const char *slot, bool cacheVCard = true, bool isMuc = false);
+	JT_VCard *getVCard(const Jid &, Task *rootTask, const QObject *, const char *slot,
+	                   bool cacheVCard = true, bool isMuc = false, bool notifyPhoto = true);
 
 signals:
 	void vcardChanged(const Jid&);
+	void vcardPhotoAvailable(const Jid&, bool isMuc); // dedicated for AvatarFactory. it will almost always work except requests from AvatarFactory
 
 protected:
 	void checkLimit(const QString &jid, const VCard &vcard);
@@ -70,7 +72,7 @@ private:
 	QMap<QString,VCard> vcardDict_;
 	QMap<QString, QHash<QString,VCard> > mucVcardDict_; // QHash in case of big mucs
 
-	void saveVCard(const Jid &, const VCard &);
+	void saveVCard(const Jid &, const VCard &, bool notifyPhoto);
 };
 
 #endif

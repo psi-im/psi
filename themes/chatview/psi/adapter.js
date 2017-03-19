@@ -108,8 +108,8 @@ function psiThemeAdapter(chat) {
 				t.subject = t.subject || t.sys;
 				t.urls = t.urls || t.sys;
 				t.trackbar = t.trackbar || "<hr/>";
-				config.defaultAvatar && shared.server.setDefaultAvatar(config.defaultAvatar)
-				config.avatarSize && shared.server.setAvatarSize(config.avatarSize.width, config.avatarSize.height);
+				//config.defaultAvatar && shared.server.setDefaultAvatar(config.defaultAvatar)
+				//config.avatarSize && shared.server.setAvatarSize(config.avatarSize.width, config.avatarSize.height);
 				inited = true;
 			},
 			checkNextOfGroup : function() {

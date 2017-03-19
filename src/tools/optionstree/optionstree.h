@@ -37,6 +37,9 @@ public:
 	~OptionsTree();
 
 	QVariant getOption(const QString& name, const QVariant &defaultValue = QVariant::Invalid) const;
+
+	// Warning: when inserting Map/Hash be very careful with keys. They are going to become xml element names.
+	// full set of supported types can be found in VariantTree::variantToElement()
 	void setOption(const QString& name, const QVariant& value);
 	bool isInternalNode(const QString &node) const;
 	void setComment(const QString& name, const QString& comment);

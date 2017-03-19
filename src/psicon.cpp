@@ -808,17 +808,7 @@ QStringList PsiCon::xmppFatures() const
 		<< "http://jabber.org/protocol/tune"
 		<< "http://jabber.org/protocol/geoloc"
 		<< "urn:xmpp:avatar:data"
-		<< "urn:xmpp:avatar:metadata"
-
-		<< "http://jabber.org/protocol/mood+notify"
-		<< "http://jabber.org/protocol/activity+notify"
-		<< "http://jabber.org/protocol/tune+notify"
-		<< "http://jabber.org/protocol/geoloc+notify"
-		<< "urn:xmpp:avatar:metadata+notify"
-
-		<< "http://jabber.org/protocol/xhtml-im"
-		<< "http://jabber.org/protocol/chatstates"
-		<< "urn:xmpp:receipts";
+		<< "urn:xmpp:avatar:metadata";
 
 	if(AvCallManager::isSupported()) {
 		features << "urn:xmpp:jingle:1";

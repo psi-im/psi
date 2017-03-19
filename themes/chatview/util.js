@@ -6,6 +6,9 @@ function initPsiTheme() {
 	var chat =  {
 		console : server.console,
         server : server,
+
+        defaultAvatarUrl : window.srvProps.psiDefaultAvatarUrl,
+
 		util: {
 			showCriticalError : function(text) {
 				var e=document.body || document.documentElement.appendChild(document.createElement("body"));

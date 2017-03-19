@@ -31,6 +31,7 @@
 #include <QHash>
 #include <QStringList>
 
+class QFileInfo;
 class ThemePrivate;
 class PsiThemeProvider;
 
@@ -40,6 +41,20 @@ class PsiThemeProvider;
 class Theme
 {
 public:
+    class ResourceLoader {
+        // By default theme does not internal info about its fs.
+        // That means rereading zip themes on each file or
+        // dir by dir search of each file with name in invalid case.
+        // To optimize it, we have this class. It keeps zip opened
+        // has a cache of mapping requested names to real.
+
+    public:
+        virtual ~ResourceLoader();
+        virtual QByteArray loadData(const QString &fileName) = 0;
+        virtual bool fileExists(const QString &fileName) = 0;
+    };
+
+
 	Theme();
 	Theme(PsiThemeProvider *provider);
 	Theme(const Theme &other);
@@ -47,9 +62,12 @@ public:
 	virtual ~Theme();
 	bool isValid() const;
 
+    static bool isCompressed(const QFileInfo &); // just tells if theme looks like compressed.
+    bool isCompressed();
 	// load file from theme in `themePath`
 	static QByteArray loadData(const QString &fileName, const QString &themePath, bool caseInsensetive = false);
 	QByteArray loadData(const QString &fileName);
+    ResourceLoader* resourceLoader();
 
 	const QString &id() const;
 	void setId(const QString &id);

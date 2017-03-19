@@ -71,6 +71,19 @@ var adapter = {
             if (ip.DefaultBackgroundIsTransparent) {
                 loader.setTransparent();
             }
+
+            var resources = ["Incoming/buddy_icon.png", "Outgoing/buddy_icon.png", "incoming_icon.png", "outgoing_icon.png"];
+            loader.checkFilesExist(resourcesListReady, "Contents/Resources");
+        }
+
+        function resourcesListReady(rlist)
+        {
+            var avatars = {}
+            avatars.incomingBuddy = rlist["Incoming/buddy_icon.png"]? "Incoming/buddy_icon.png" : chat.defaultAvatarUrl;
+            avatars.outgoingBuddy = rlist["Outgoing/buddy_icon.png"]? "Outgoing/buddy_icon.png" : chat.defaultAvatarUrl;
+            avatars.incomingImage = rlist["incoming_icon.png"]? "incoming_icon.png" : chat.defaultAvatarUrl;
+            avatars.outgoingImage = rlist["outgoing_icon.png"]? "outgoing_icon.png" : chat.defaultAvatarUrl;
+            loader.toCache("avatars", avatars)
             loader.getFileContents("Contents/Resources/Template.html", baseHtmlLoaded);
         }
 
@@ -104,8 +117,6 @@ var adapter = {
             loader.toCache("Info.plist", ip);
             chat.server.jsNamespace = "_adiumChat"+Math.round(1000*Math.random());
             window[chat.server.jsNamespace] = chat; // just to keep it the same and avoid any problems
-            loader.setDefaultAvatar("Contents/Resources/Incoming/buddy_icon.png", "incoming");
-            loader.setDefaultAvatar("Contents/Resources/Outgoing/buddy_icon.png", "outgoing");
 
             loader.finishThemeLoading();
         }
@@ -124,6 +135,8 @@ chat.util.updateObject(adapter, function(chat){
 	var dateFormat = "%H:%M";
 	var cdata;
 	var proxyEl = document.createElement("div");
+    var defaultAvatars = null;
+    var avatarsMap = {};
 
 	function TemplateVar(name, param) {
 		this.name = name;
@@ -138,13 +151,28 @@ chat.util.updateObject(adapter, function(chat){
 				d = chat.util.escapeHtml(d);
 			} else if (d instanceof Date) {
 				d = server.formatDate(d, "yyyy-MM-dd");
-			} else if (this.name == "userIconPath") {
-				return "avatar://" + (cdata.local?"outgoing/":"incoming/") +
-					encodeURIComponent(session.account) +
-					"/" + encodeURIComponent(cdata.userid);
-			} else if (this.name == "incomingIconPath") {
-				return "avatar://incoming/" + encodeURIComponent(session.account) +
-					"/" + encodeURIComponent(session.jid());
+			} else if (this.name == "userIconPath") { // associated with message
+                if (cdata.local) {
+                    return session.localUserAvatar? session.localUserAvatar : defaultAvatars.outgoingBuddy;
+                } else {
+                    var url = avatarsMap[cdata.userid];
+                    return url? url : defaultAvatars.incomingBuddy;
+                }
+
+                //var session.user
+                // session object should provide with user icon if any, or use one from cache.avatars
+				//return "avatar://" + (cdata.local?"outgoing/":"incoming/") +
+				//	encodeURIComponent(session.account) +
+				//	"/" + encodeURIComponent(cdata.userid);
+
+			} else if (this.name == "incomingIconPath") { // associated with chat
+                return session.remoteUserImage? session.remoteUserImage : defaultAvatars.incomingImage;
+                //return "avatar://incoming/" + encodeURIComponent(session.account) +
+				//	"/" + encodeURIComponent(session.jid);
+
+            } else if (this.name == "outgoingIconPath") { // associated with chat
+                return session.localUserImage? session.localUserImage : defaultAvatars.ougoingImage;
+
 			} else if (this.name == "senderColor") {
 				return session.mucNickColor(cdata.sender, cdata.local);
 			}
@@ -286,6 +314,7 @@ chat.util.updateObject(adapter, function(chat){
             function cacheReady(cache)
             {
                 session = window.srvSession;
+                defaultAvatars = cache.avatars
                 chat.adapter.initSession = null;
                 chat.adapter.loadTheme = null;
                 chat.adapter.getHtml = null;
@@ -415,7 +444,7 @@ chat.util.updateObject(adapter, function(chat){
                 session.signalInited();
             }
 
-            server.loadFromCacheMulti(["Info.plist", "Status.html", "Content.html",
+            server.loadFromCacheMulti(["Info.plist", "avatars", "Status.html", "Content.html",
                                       "Incoming/Content.html", "Incoming/NextContent.html",
                                       "Incoming/Context.html", "Incoming/NextContext.html",
                                       "Outgoing/Content.html", "Outgoing/NextContent.html",

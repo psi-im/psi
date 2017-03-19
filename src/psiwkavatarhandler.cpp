@@ -64,12 +64,14 @@ QByteArray PsiWKAvatarHandler::data(const QUrl &url) const {
 
 void PsiWKAvatarHandler::setDefaultAvatar(const QString &filename, const QString &host)
 {
+	// FIXME deprecated
 	defaultAvatar_[host] = QPixmap(filename);
 	size_ = defaultAvatar_[host].size();
 }
 
 void PsiWKAvatarHandler::setDefaultAvatar(const QByteArray &ba, const QString &host)
 {
+	// FIXME deprecated
 	defaultAvatar_[host] = QPixmap();
 	defaultAvatar_[host].loadFromData(ba);
 	size_ = defaultAvatar_[host].size();
@@ -77,5 +79,6 @@ void PsiWKAvatarHandler::setDefaultAvatar(const QByteArray &ba, const QString &h
 
 void PsiWKAvatarHandler::setAvatarSize(const QSize &size)
 {
+	// FIXME deprecated
 	size_ = size;
 }

@@ -154,7 +154,6 @@ public slots:
 	virtual void rerequestAuthorizationFrom();
 	virtual void removeAuthorizationFrom();
 	virtual void remove();
-	virtual void assignCustomPicture();
 	virtual void clearCustomPicture();
 	virtual void userInfo();
 	virtual void history();

@@ -50,6 +50,7 @@
 #include "psithememanager.h"
 #include "chatviewtheme.h"
 #include "chatviewthemeprovider.h"
+#include "avatars.h"
 
 
 class ChatViewThemeSessionBridge;
@@ -89,6 +90,9 @@ class ChatViewJSObject : public QObject
 	Q_PROPERTY(QString chatName READ chatName CONSTANT)
 	Q_PROPERTY(QString jid READ jid CONSTANT)
 	Q_PROPERTY(QString account READ account CONSTANT)
+	Q_PROPERTY(QString remoteUserImage READ remoteUserImage NOTIFY remoteUserImageChanged) // associated with chat(e.g. MUC's own avatar)
+	Q_PROPERTY(QString localUserImage READ localUserImage NOTIFY localUserImageChanged)    // local image. from vcard
+	Q_PROPERTY(QString localUserAvatar READ localUserAvatar NOTIFY localUserAvatarChanged) // local avatar. resized vcard or PEP.
 
 public:
 	ChatViewJSObject(ChatView *view) :
@@ -116,6 +120,25 @@ public:
 	QString account() const
 	{
 		return _view->d->account_->id();
+	}
+
+	QString remoteUserImage() const
+	{
+//		QString hash = _view->d->account_->avatarFactory()->vcardImageHash(_view->d->jid_);
+//		if (!hash.isEmpty()) {
+//			hash = QLatin1String("/psiglobal/avatar/") + hash;
+//		}
+		return QString();
+	}
+
+	QString localUserImage() const
+	{
+		return QString();
+	}
+
+	QString localUserAvatar() const
+	{
+		return QString();
 	}
 
 public slots:
@@ -185,7 +208,9 @@ public slots:
 signals:
 	void inited(); // signal from this object to C++. Means ready to process messages
 	void scrollRequested(int); // relative shift. signal towards js
-
+	void remoteUserImageChanged();
+	void localUserImageChanged();
+	void localUserAvatarChanged();
 };
 
 //----------------------------------------------------------------------------

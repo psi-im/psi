@@ -113,13 +113,13 @@ QString FileUtil::mimeToFileExt(const QString &mime)
 {
 	static QMap<QString, QString> mimes;
 	if (!mimes.size()) {
-		mimes["image/png"] = "png";
-		mimes["image/x-mng"] = "mng";
-		mimes["image/gif"] = "gif";
-		mimes["image/bmp"] = "bmp";
-		mimes["image/x-xpm"] = "xpm";
-		mimes["image/svg+xml"] = "svg";
-		mimes["image/jpeg"] = "jpg";
+		mimes["image/png"]     = QLatin1String("png");
+		mimes["image/x-mng"]   = QLatin1String("mng");
+		mimes["image/gif"]     = QLatin1String("gif");
+		mimes["image/bmp"]     = QLatin1String("bmp");
+		mimes["image/x-xpm"]   = QLatin1String("xpm");
+		mimes["image/svg+xml"] = QLatin1String("svg");
+		mimes["image/jpeg"]    = QLatin1String("jpg");
 
 		mimes["application/octet-stream"] = "bin";
 		// add more when needed

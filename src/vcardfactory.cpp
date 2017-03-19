@@ -83,26 +83,31 @@ void VCardFactory::checkLimit(const QString &jid, const VCard &vcard)
 void VCardFactory::taskFinished()
 {
 	JT_VCard *task = (JT_VCard *)sender();
+	bool notifyPhoto = task->property("phntf").toBool();
 	if ( task->success() ) {
 		Jid j = task->jid();
 
-		saveVCard(j, task->vcard());
+		saveVCard(j, task->vcard(), notifyPhoto);
 	}
 }
 
 void VCardFactory::mucTaskFinished()
 {
 	JT_VCard *task = (JT_VCard *)sender();
+	bool notifyPhoto = task->property("phntf").toBool();
 	if ( task->success() ) {
 		Jid j = task->jid();
 		// TODO check for limits. may be like 5 vcards per muc
 		mucVcardDict_[j.bare()].insert(j.resource(), task->vcard());
 
 		emit vcardChanged(j);
+		if (notifyPhoto && !task->vcard().photo().isEmpty()) {
+			emit vcardPhotoAvailable(j, true);
+		}
 	}
 }
 
-void VCardFactory::saveVCard(const Jid& j, const VCard& vcard)
+void VCardFactory::saveVCard(const Jid& j, const VCard& vcard, bool notifyPhoto)
 {
 	checkLimit(j.bare(), vcard);
 
@@ -124,6 +129,10 @@ void VCardFactory::saveVCard(const Jid& j, const VCard& vcard)
 
 	Jid jid = j;
 	emit vcardChanged(jid);
+
+	if (notifyPhoto && !vcard.photo().isEmpty()) {
+		emit vcardPhotoAvailable(jid, false);
+	}
 }
 
 
@@ -170,9 +179,9 @@ VCard VCardFactory::vcard(const Jid &j)
 /**
  * \brief Call this when you need to update vCard in cache.
  */
-void VCardFactory::setVCard(const Jid &j, const VCard &v)
+void VCardFactory::setVCard(const Jid &j, const VCard &v, bool notifyPhoto)
 {
-	saveVCard(j, v);
+	saveVCard(j, v, notifyPhoto);
 }
 
 /**
@@ -215,9 +224,13 @@ void VCardFactory::updateVCardFinished()
 /**
  * \brief Call this when you need to retrieve fresh vCard from server (and store it in cache afterwards)
  */
-JT_VCard* VCardFactory::getVCard(const Jid &jid, Task *rootTask, const QObject *obj, const char *slot, bool cacheVCard, bool isMuc)
+JT_VCard* VCardFactory::getVCard(const Jid &jid, Task *rootTask, const QObject *obj, const char *slot,
+                                 bool cacheVCard, bool isMuc, bool notifyPhoto)
 {
 	JT_VCard *task = new JT_VCard( rootTask );
+	if (notifyPhoto) {
+		task->setProperty("phntf", true);
+	}
 	if ( cacheVCard ) {
 		if (isMuc)
 			task->connect(task, SIGNAL(finished()), this, SLOT(mucTaskFinished()));

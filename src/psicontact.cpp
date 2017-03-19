@@ -764,19 +764,6 @@ void PsiContact::remove()
 		account()->actionRemove(jid());
 }
 
-void PsiContact::assignCustomPicture()
-{
-	if (!account())
-		return;
-
-	// FIXME: Should check the supported filetypes dynamically
-	// FIXME: parent of QFileDialog is NULL, probably should make it psi->contactList()
-	QString file = QFileDialog::getOpenFileName(0, tr("Choose an image"), "", tr("All files (*.png *.jpg *.gif)"));
-	if (!file.isNull()) {
-		account()->avatarFactory()->importManualAvatar(jid(), file);
-	}
-}
-
 void PsiContact::clearCustomPicture()
 {
 	if (account())

@@ -1747,11 +1747,14 @@ void MainWin::numAccountsChanged()
 //			disconnect(d->defaultAccount->avatarFactory(), SIGNAL(avatarChanged(Jid)), this, SLOT(avatarChanged()));
 		}
 		d->defaultAccount = acc;
-		avatarChanged();
+		avatarChanged(acc->jid());
 		nickChanged();
 		d->rosterAvatar->setStatusMessage(acc->status().status());
-		connect(acc->avatarFactory(), SIGNAL(avatarChanged(Jid)), this, SLOT(avatarChanged()));
+		connect(acc->avatarFactory(), SIGNAL(avatarChanged(Jid)), this, SLOT(avatarChanged(Jid)));
 		connect(acc, SIGNAL(nickChanged()), this, SLOT(nickChanged()));
+
+	} if (!acc) { // no accounts left
+		d->rosterAvatar->setAvatar(IconsetFactory::iconPixmap("psi/default_avatar"));
 	}
 }
 
@@ -1761,16 +1764,13 @@ void MainWin::nickChanged()
 		d->rosterAvatar->setNick(d->defaultAccount->nick());
 }
 
-void MainWin::avatarChanged()
+void MainWin::avatarChanged(const Jid &jid)
 {
-	if(d->defaultAccount) {
+	if(d->defaultAccount && d->defaultAccount->jid() == jid) {
 		QPixmap pix = d->defaultAccount->avatarFactory()->getAvatar(d->defaultAccount->jid());
 		if(pix.isNull())
 			pix = IconsetFactory::iconPixmap("psi/default_avatar");
 		d->rosterAvatar->setAvatar(pix);
-	}
-	else {
-		d->rosterAvatar->setAvatar(IconsetFactory::iconPixmap("psi/default_avatar"));
 	}
 }
 
