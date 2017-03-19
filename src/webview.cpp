@@ -240,7 +240,7 @@ QString WebView::selectedText()
 void WebView::copySelected()
 {
 	// use native selectedText w/o clipboard hacks.
-	if (page()->hasSelection()) {
+	if (page()->hasSelection() && !page()->selectedText().isEmpty()) {
 #if QT_WEBENGINEWIDGETS_LIB
 		page()->triggerAction(QWebEnginePage::Copy);
 #else

@@ -1,6 +1,0 @@
-<!DOCTYPE RCC>
-<RCC version="1.0">
-	<qresource prefix="/imagepreviewplugin">
-		<file>imagepreviewplugin.png</file>
-	</qresource>
-</RCC>
