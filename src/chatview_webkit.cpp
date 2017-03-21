@@ -222,9 +222,30 @@ class ChatViewThemeSessionBridge : public ChatViewThemeSession
 public:
 	ChatViewThemeSessionBridge(ChatView *cv) : cv(cv) {}
 
+	// returns: data, content-type
 	QPair<QByteArray,QByteArray> getContents(const QUrl &url)
 	{
-		Q_UNUSED(url)
+		QString path = url.path();
+		if (path.startsWith(QLatin1String("/psiglobal/avatar/"))) {
+			QString hash = path.mid(sizeof("/psiglobal/avatar")); // no / because of null pointer
+			QString meta;
+			QByteArray ba;
+			if (hash == QLatin1String("default.png")) {
+				QPixmap p;
+				QBuffer buffer(&ba);
+				buffer.open(QIODevice::WriteOnly);
+				p = IconsetFactory::icon(QLatin1String("psi/default_avatar")).pixmap();
+				p.save(&buffer, "PNG");
+				meta = QLatin1String("image/png");
+			} else {
+				AvatarFactory::AvatarData ad = cv->d->account_->avatarFactory()->avatarDataByHash(hash);
+				ba = ad.data;
+				meta = ad.metaType;
+			}
+			if (!ba.isEmpty()) {
+				return QPair<QByteArray,QByteArray>(ba, meta.toLatin1());
+			}
+		}
 		return QPair<QByteArray,QByteArray>();
 	}
 

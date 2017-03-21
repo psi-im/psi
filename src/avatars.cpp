@@ -1,6 +1,6 @@
 /*
  * avatars.cpp
- * Copyright (C) 2006-2017  Remko Troncon
+ * Copyright (C) 2006-2017  Remko Troncon, Evgeny Khryukin, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -91,6 +91,12 @@ static QByteArray scaleAvatar(const QByteArray& b)
 //  - keeps avatars in disk cache. but up to 1Mb most necessary avatars are in ram.
 //  - keeps together with each icon a list of its users.
 //  - disables icon deletion if in use
+//
+// Known problems:
+//  - If we start changing nicknames in muc, items metadata will grow and never
+//    released, while this picture is still in use by someone in your mucs
+//  - MUC, if someone else enters the room with your nick w/o hash in presence,
+//    he will take your picture as well.
 //------------------------------------------------------------------------------
 class AvatarCache : public FileCache
 {
@@ -591,6 +597,17 @@ QPixmap AvatarFactory::getAvatar(const Jid& _jid)
 	if (img.isNull() && icons.avatar) {
 		img = QImage::fromData(icons.avatar->data());
 	}
+
+	if (img.isNull()) {
+		auto vcard = VCardFactory::instance()->vcard(_jid);
+		if (vcard.isNull() || vcard.photo().isNull()) {
+			return QPixmap();
+		}
+		QByteArray data = vcard.photo();
+		AvatarCache::instance()->setIcon(AvatarCache::VCardType, bareJid, data);
+		img = QImage::fromData(data);
+	}
+
 	if (img.isNull()) {
 		return QPixmap();
 	}
@@ -614,6 +631,15 @@ QPixmap AvatarFactory::getAvatarByHash(const QString &hash)
 		return ensureSquareAvatar(QPixmap::fromImage(std::move(QImage::fromData(item->data()))));
 	}
 	return QPixmap();
+}
+
+AvatarFactory::AvatarData AvatarFactory::avatarDataByHash(const QString &hash) const
+{
+	FileCacheItem *item = AvatarCache::instance()->get(hash, true);
+	if (item) {
+		return AvatarData{item->data(), item->metadata()["type"].toString()};
+	}
+	return AvatarData();
 }
 
 /*!
@@ -640,12 +666,20 @@ QPixmap AvatarFactory::getMucAvatar(const Jid& _jid)
 	QString fullJid = _jid.full();
 
 	auto icons = AvatarCache::instance()->icons(fullJid);
-	if (!icons.avatar) {
-		return QPixmap();
+	QByteArray data;
+	if (icons.avatar) {
+		data = icons.avatar->data();
+	} else {
+		auto vcard = VCardFactory::instance()->mucVcard(_jid);
+		if (vcard.isNull() || vcard.photo().isNull()) {
+			return QPixmap();
+		}
+		data = vcard.photo();
+		AvatarCache::instance()->setIcon(AvatarCache::VCardType, _jid.full(), data);
 	}
 
 	// for mucs icons.avatar is always made of vcard and anything else is not supported. at least for now.
-	QImage img(QImage::fromData(icons.avatar->data()));
+	QImage img(std::move(QImage::fromData(data)));
 
 	if (img.isNull()) {
 		return QPixmap();

@@ -43,6 +43,7 @@
 #include "webview.h"
 #include "chatviewthemeprovider.h"
 #include "themeserver.h"
+#include "avatars.h"
 
 #ifndef QT_WEBENGINEWIDGETS_LIB
 # ifdef HAVE_QT5
@@ -442,7 +443,7 @@ bool ChatViewTheme::load(const QString &id, std::function<void(bool)> loadCallba
 
 	// that's something static enough to be passed statically to every chat window on init
 	QWebEngineScript propsJs;
-	propsJs.setSourceCode("srvProps = { psiDefaultAvatarUrl: \"/psiglobal/avatar.png\" }");
+	propsJs.setSourceCode("srvProps = { psiDefaultAvatarUrl: \"/psiglobal/avatar/default.png\" }");
 	propsJs.setInjectionPoint(QWebEngineScript::DocumentCreation);
 	propsJs.setWorldId(QWebEngineScript::MainWorld);
 	cvtd->scripts.append(propsJs);

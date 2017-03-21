@@ -98,6 +98,7 @@ signals:
 private:
 	friend class ChatViewPrivate;
 	friend class ChatViewJSObject;
+	friend class ChatViewThemeSessionBridge;
 	QScopedPointer<ChatViewPrivate> d;
 };
 

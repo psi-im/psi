@@ -63,10 +63,16 @@ public:
 		QString vcard;  // avatar hash just in case
 	};
 
+	struct AvatarData {
+		QByteArray data;
+		QString metaType;
+	};
+
 	AvatarFactory(PsiAccount* pa);
 
 	QPixmap getAvatar(const Jid& jid);
 	QPixmap getAvatarByHash(const QString& hash);
+	AvatarData avatarDataByHash(const QString& hash) const;
 	UserHashes userHashes(const Jid& jid) const;
 	PsiAccount* account() const;
 	void setSelfAvatar(const QString& fileName);
