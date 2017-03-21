@@ -70,9 +70,11 @@ public:
 	QPointer<QWidget> dialog_ = 0;
 	bool isMuc_ = false;
 	bool isEncryptionEnabled_ = false;
-	QString jid_;
+	Jid jid_;
 	QString name_;
 	PsiAccount *account_;
+	AvatarFactory::UserHashes remoteIcons;
+	AvatarFactory::UserHashes localIcons;
 };
 
 
@@ -114,7 +116,7 @@ public:
 
 	QString jid() const
 	{
-		return _view->d->jid_;
+		return _view->d->jid_.full();
 	}
 
 	QString account() const
@@ -124,6 +126,7 @@ public:
 
 	QString remoteUserImage() const
 	{
+		return QLatin1String("/psiglobal/avatar/") + _view->d->remoteIcons.vcard;
 //		QString hash = _view->d->account_->avatarFactory()->vcardImageHash(_view->d->jid_);
 //		if (!hash.isEmpty()) {
 //			hash = QLatin1String("/psiglobal/avatar/") + hash;
@@ -133,12 +136,12 @@ public:
 
 	QString localUserImage() const
 	{
-		return QString();
+		return QLatin1String("/psiglobal/avatar/") + _view->d->localIcons.vcard;
 	}
 
 	QString localUserAvatar() const
 	{
-		return QString();
+		return QLatin1String("/psiglobal/avatar/") + _view->d->localIcons.avatar;
 	}
 
 public slots:
@@ -354,7 +357,7 @@ void ChatView::setDialog(QWidget* dialog)
 	d->dialog_ = dialog;
 }
 
-void ChatView::setSessionData(bool isMuc, const QString &jid, const QString name)
+void ChatView::setSessionData(bool isMuc, const Jid &jid, const QString name)
 {
 	auto provider = (ChatViewThemeProvider *)PsiThemeManager::instance()->
 	                provider(d->isMuc_?"groupchatview":"chatview");
@@ -368,6 +371,13 @@ void ChatView::setSessionData(bool isMuc, const QString &jid, const QString name
 void ChatView::setAccount(PsiAccount *acc)
 {
 	d->account_ = acc;
+	d->remoteIcons = acc->avatarFactory()->userHashes(d->jid_);
+	d->localIcons = acc->avatarFactory()->userHashes(acc->jid());
+}
+
+void ChatView::avatarChanged(const Jid &j)
+{
+//todo
 }
 
 void ChatView::contextMenuEvent(QContextMenuEvent *e)

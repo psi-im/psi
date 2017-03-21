@@ -28,6 +28,7 @@
 
 #include "psitextview.h"
 #include "chatviewcommon.h"
+#include "xmpp/jid/jid.h"
 
 class ChatEdit;
 class ChatViewBase;
@@ -50,7 +51,7 @@ public:
 
 	void init();
 	void setDialog(QWidget* dialog);
-	void setSessionData(bool isMuc, const QString &jid, const QString name);
+	void setSessionData(bool isMuc, const XMPP::Jid &jid, const QString name);
 
 	void appendText(const QString &text);
 	void dispatchMessage(const MessageView &);
@@ -95,7 +96,7 @@ signals:
 private:
 	bool isMuc_;
 	bool isEncryptionEnabled_;
-	QString jid_;
+	XMPP::Jid jid_;
 	QString name_;
 	int  oldTrackBarPosition;
 	QPointer<QWidget> dialog_;

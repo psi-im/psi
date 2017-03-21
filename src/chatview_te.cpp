@@ -122,7 +122,7 @@ void ChatView::setEncryptionEnabled(bool enabled)
 	isEncryptionEnabled_ = enabled;
 }
 
-void ChatView::setSessionData(bool isMuc, const QString &jid, const QString name)
+void ChatView::setSessionData(bool isMuc, const Jid &jid, const QString name)
 {
 	isMuc_ = isMuc;
 	jid_ = jid;

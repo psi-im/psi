@@ -135,7 +135,7 @@ void ChatDlg::init()
 
 	chatEdit()->installEventFilter(this);
 	chatView()->setDialog(this);
-	chatView()->setSessionData(false, jid().full(), jid().full()); //FIXME fix nick updating
+	chatView()->setSessionData(false, jid(), jid().full()); //FIXME fix nick updating
 #ifdef WEBKIT
 	chatView()->setAccount(account());
 #endif

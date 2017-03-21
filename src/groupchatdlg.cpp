@@ -679,7 +679,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	ui_.setupUi(this);
 	ui_.lb_ident->setAccount(account());
 	ui_.lb_ident->setShowJid(false);
-	ui_.log->setSessionData(true, jid().full(), jid().full()); //FIXME change conference name
+	ui_.log->setSessionData(true, jid(), jid().full()); //FIXME change conference name
 #ifdef WEBKIT
 	ui_.log->setAccount(account());
 #endif
@@ -826,7 +826,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 	ui_.mini_prompt->hide();
 	connect(ui_.mle, SIGNAL(textEditCreated(QTextEdit*)), SLOT(chatEditCreated()));
 	chatEditCreated();
-	ui_.log->init(); //we are ready to do that now. chatEditCreated() inited last pieces requiredfor this init
+	ui_.log->init(); //we are ready to do that now. chatEditCreated() inited last pieces required for this init
 
 	d->pm_settings = new QMenu(this);
 	connect(d->pm_settings, SIGNAL(aboutToShow()), SLOT(buildMenu()));

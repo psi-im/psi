@@ -33,8 +33,10 @@ class ChatView;
 class MessageView;
 class PsiAccount;
 class ChatViewTheme;
-
 class ChatViewPrivate;
+namespace XMPP {
+	class Jid;
+}
 
 class ChatView : public QFrame, public ChatViewCommon
 {
@@ -49,7 +51,7 @@ public:
 	QSize sizeHint() const;
 
 	void setDialog(QWidget* dialog);
-	void setSessionData(bool isMuc, const QString &jid, const QString name);
+	void setSessionData(bool isMuc, const XMPP::Jid &jid, const QString name);
 	void setAccount(PsiAccount *acc);
 
 	void contextMenuEvent(QContextMenuEvent* event);
@@ -84,7 +86,7 @@ protected slots:
 
 public slots:
 	void init();
-
+	void avatarChanged(const XMPP::Jid &j);
 private slots:
 #ifndef QT_WEBENGINEWIDGETS_LIB
 	void embedJsObject();
