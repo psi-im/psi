@@ -152,12 +152,19 @@ chat.util.updateObject(adapter, function(chat){
 			} else if (d instanceof Date) {
 				d = server.formatDate(d, "yyyy-MM-dd");
 			} else if (this.name == "userIconPath") { // associated with message
+                var url;
                 if (cdata.local) {
-                    return session.localUserAvatar? session.localUserAvatar : defaultAvatars.outgoingBuddy;
+                    url = session.localUserAvatar? session.localUserAvatar : defaultAvatars.outgoingBuddy;
                 } else {
-                    var url = avatarsMap[cdata.userid];
-                    return url? url : defaultAvatars.incomingBuddy;
+                    if (session.isMuc) {
+                        url = avatarsMap[cdata.userid];
+                    }
+                    if (!url) {
+                        url = session.remoteUserAvatar? session.remoteUserAvatar : defaultAvatars.incomingBuddy;
+                    }
                 }
+                //chat.console((cdata.local? "local " : "remote ") + "avatar: " + url)
+                return url;
 
                 //var session.user
                 // session object should provide with user icon if any, or use one from cache.avatars

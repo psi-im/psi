@@ -93,8 +93,12 @@ class ChatViewJSObject : public QObject
 	Q_PROPERTY(QString jid READ jid CONSTANT)
 	Q_PROPERTY(QString account READ account CONSTANT)
 	Q_PROPERTY(QString remoteUserImage READ remoteUserImage NOTIFY remoteUserImageChanged) // associated with chat(e.g. MUC's own avatar)
+	Q_PROPERTY(QString remoteUserAvatar READ remoteUserAvatar NOTIFY remoteUserAvatarChanged) // remote avatar. resized vcard or PEP.
 	Q_PROPERTY(QString localUserImage READ localUserImage NOTIFY localUserImageChanged)    // local image. from vcard
 	Q_PROPERTY(QString localUserAvatar READ localUserAvatar NOTIFY localUserAvatarChanged) // local avatar. resized vcard or PEP.
+
+	inline QString avatarUrl(const QString &hash) const
+	{ return hash.isEmpty()? QString() : QLatin1String("/psiglobal/avatar/") + hash; }
 
 public:
 	ChatViewJSObject(ChatView *view) :
@@ -124,25 +128,10 @@ public:
 		return _view->d->account_->id();
 	}
 
-	QString remoteUserImage() const
-	{
-		return QLatin1String("/psiglobal/avatar/") + _view->d->remoteIcons.vcard;
-//		QString hash = _view->d->account_->avatarFactory()->vcardImageHash(_view->d->jid_);
-//		if (!hash.isEmpty()) {
-//			hash = QLatin1String("/psiglobal/avatar/") + hash;
-//		}
-		return QString();
-	}
-
-	QString localUserImage() const
-	{
-		return QLatin1String("/psiglobal/avatar/") + _view->d->localIcons.vcard;
-	}
-
-	QString localUserAvatar() const
-	{
-		return QLatin1String("/psiglobal/avatar/") + _view->d->localIcons.avatar;
-	}
+	QString remoteUserImage()  const { return avatarUrl(_view->d->remoteIcons.vcard);  }
+	QString remoteUserAvatar() const { return avatarUrl(_view->d->remoteIcons.avatar); }
+	QString localUserImage()   const { return avatarUrl(_view->d->localIcons.vcard);   }
+	QString localUserAvatar()  const { return avatarUrl(_view->d->localIcons.avatar);  }
 
 public slots:
 	QString mucNickColor(QString nick, bool isSelf,
@@ -212,6 +201,7 @@ signals:
 	void inited(); // signal from this object to C++. Means ready to process messages
 	void scrollRequested(int); // relative shift. signal towards js
 	void remoteUserImageChanged();
+	void remoteUserAvatarChanged();
 	void localUserImageChanged();
 	void localUserAvatarChanged();
 };
