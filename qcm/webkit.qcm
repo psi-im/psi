@@ -19,7 +19,7 @@ public:
 		"CONFIG += qt webkit\n"
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 # if QT_VERSION >= QT_VERSION_CHECK(5,6,0)
-		"QT += webenginewidgets webchannel\n"
+		"QT += webenginewidgets webchannel\n";
 # else
 		"QT += webkit webkitwidgets\n";
 # endif

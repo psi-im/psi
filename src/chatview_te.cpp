@@ -28,6 +28,7 @@
 #include "psirichtext.h"
 #include "common.h"
 #include "iconset.h"
+#include "xmpp/jid/jid.h"
 
 #include <QWidget>
 #include <QTextOption>
@@ -122,7 +123,7 @@ void ChatView::setEncryptionEnabled(bool enabled)
 	isEncryptionEnabled_ = enabled;
 }
 
-void ChatView::setSessionData(bool isMuc, const Jid &jid, const QString name)
+void ChatView::setSessionData(bool isMuc, const XMPP::Jid &jid, const QString name)
 {
 	isMuc_ = isMuc;
 	jid_ = jid;
