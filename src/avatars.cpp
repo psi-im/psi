@@ -216,6 +216,9 @@ public:
 		if (prevItem) {
 			removeUser(prevItem, iconType, jid);
 		}
+		if (icons.avatarFromVCard && iconType == VCardType) {
+			icons.avatar = nullptr; // we have to regenerate it from new vcard
+		}
 
 		FileCacheItem *newActiveItem = ensureHasAvatar(icons, jid);
 		return oldActiveItem == newActiveItem? Changed : UserUpdateRequired;
@@ -289,7 +292,7 @@ public:
 		if (prevIcon) {
 			removeUser(prevIcon, iconType, jid);
 		}
-		if (icons.avatarFromVCard && iconType == AvatarType) {
+		if (icons.avatarFromVCard && iconType == VCardType) {
 			icons.avatar = nullptr; // we have to regenerate it from new vcard
 		}
 
@@ -444,6 +447,9 @@ private:
 		auto md = item->metadata();
 		QStringList jids = md.value(QLatin1String("jids")).toStringList();
 		jids.removeOne(typedJid(iconType, jid));
+		if (iconType == AvatarType) {
+			jids.removeOne(typedJid(AvatarFromVCardType, jid));
+		}
 
 		if (jids.empty()) {
 			item->setUndeletable(false); // it's not necessary actually

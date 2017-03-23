@@ -157,7 +157,7 @@ chat.util.updateObject(adapter, function(chat){
                     url = session.localUserAvatar? session.localUserAvatar : defaultAvatars.outgoingBuddy;
                 } else {
                     if (session.isMuc) {
-                        url = avatarsMap[cdata.userid];
+                        url = avatarsMap[cdata.sender];
                     }
                     if (!url) {
                         url = session.remoteUserAvatar? session.remoteUserAvatar : defaultAvatars.incomingBuddy;
@@ -408,9 +408,9 @@ chat.util.updateObject(adapter, function(chat){
                             trackbar = null;
                         } else if (data.type == "avatar") {
                             if (cdata.avatar) {
-                                avatarsMap[cdata.userid] = cdata.avatar;
+                                avatarsMap[cdata.sender] = cdata.avatar;
                             } else {
-                                delete avatarsMap[cdata.userid];
+                                delete avatarsMap[cdata.sender];
                             }
                         }
                     } catch(e) {

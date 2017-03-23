@@ -546,7 +546,7 @@ void ChatView::updateAvatar(const Jid &jid, ChatViewCommon::UserType utype)
 	} else { // muc participant
 		QVariantMap m;
 		m["type"] = "avatar";
-		m["userid"] = jid.resource();
+		m["sender"] = jid.resource();
 		m["avatar"] = ChatViewJSObject::avatarUrl(d->account_->avatarFactory()->userHashes(jid).avatar);
 		sendJsObject(m);
 	}
