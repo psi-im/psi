@@ -1607,8 +1607,8 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 			}
 		}
 		ui_.lv_users->updateEntry(nick, s);
-		if(!nick.isEmpty())
-			avatarUpdated(jidForNick(nick));
+		//if(!nick.isEmpty())
+		//	avatarUpdated(jidForNick(nick)); // only by event from AvatarFactory we should do this
 	}
 	else {
 		// Unavailable
@@ -1715,9 +1715,16 @@ XMPP::Jid GCMainDlg::jidForNick(const QString &nick) const
 void GCMainDlg::avatarUpdated(const Jid &jid_)
 {
 	if(jid_.compare(jid(), false)) {
+		if (jid_.resource().isEmpty()) {
+			ui_.log->updateAvatar(jid_, ChatViewCommon::RemoteParty);
+			return;
+		}
+
 		GCUserViewItem *it = dynamic_cast<GCUserViewItem*>(ui_.lv_users->findEntry(jid_.resource()));
-		if(it)
+		if(it) {
 			it->setAvatar(account()->avatarFactory()->getMucAvatar(jid_));
+			ui_.log->updateAvatar(jid_, jid_.resource() == d->self? ChatViewCommon::LocalParty: ChatViewCommon::Participant);
+		}
 	}
 }
 

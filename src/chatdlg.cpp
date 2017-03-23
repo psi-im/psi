@@ -532,8 +532,12 @@ void ChatDlg::doVoice()
 
 void ChatDlg::updateAvatar(const Jid& j)
 {
-	if (j.compare(jid(), false))
+	if (j.compare(jid(), false)) {
 		updateAvatar();
+		chatView()->updateAvatar(j, ChatViewCommon::RemoteParty);
+	} else if (j.compare(account()->jid(), false)) {
+		chatView()->updateAvatar(j, ChatViewCommon::LocalParty);
+	}
 }
 
 void ChatDlg::setLooks()

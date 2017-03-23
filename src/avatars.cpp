@@ -289,6 +289,9 @@ public:
 		if (prevIcon) {
 			removeUser(prevIcon, iconType, jid);
 		}
+		if (icons.avatarFromVCard && iconType == AvatarType) {
+			icons.avatar = nullptr; // we have to regenerate it from new vcard
+		}
 
 		FileCacheItem *newActiveIcon = ensureHasAvatar(icons, jid); // for example we have added avatar which was shared with smb.
 		return oldActiveIcon == newActiveIcon? Changed : UserUpdateRequired;

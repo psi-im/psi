@@ -97,8 +97,6 @@ class ChatViewJSObject : public QObject
 	Q_PROPERTY(QString localUserImage READ localUserImage NOTIFY localUserImageChanged)    // local image. from vcard
 	Q_PROPERTY(QString localUserAvatar READ localUserAvatar NOTIFY localUserAvatarChanged) // local avatar. resized vcard or PEP.
 
-	inline QString avatarUrl(const QString &hash) const
-	{ return hash.isEmpty()? QString() : QLatin1String("/psiglobal/avatar/") + hash; }
 
 public:
 	ChatViewJSObject(ChatView *view) :
@@ -128,10 +126,22 @@ public:
 		return _view->d->account_->id();
 	}
 
+	inline static QString avatarUrl(const QString &hash)
+	{ return hash.isEmpty()? QString() : QLatin1String("/psiglobal/avatar/") + hash; }
+
 	QString remoteUserImage()  const { return avatarUrl(_view->d->remoteIcons.vcard);  }
 	QString remoteUserAvatar() const { return avatarUrl(_view->d->remoteIcons.avatar); }
 	QString localUserImage()   const { return avatarUrl(_view->d->localIcons.vcard);   }
 	QString localUserAvatar()  const { return avatarUrl(_view->d->localIcons.avatar);  }
+
+	void setRemoteUserAvatarHash(const QString &hash)
+	{ emit remoteUserAvatarChanged(hash.isEmpty()? hash : avatarUrl(hash)); }
+	void setRemoteUserImageHash(const QString &hash)
+	{ emit remoteUserImageChanged(hash.isEmpty()? hash : avatarUrl(hash)); }
+	void setLocalUserAvatarHash(const QString &hash)
+	{ emit localUserAvatarChanged(hash.isEmpty()? hash : avatarUrl(hash)); }
+	void setLocalUserImageHash(const QString &hash)
+	{ emit localUserImageChanged(hash.isEmpty()? hash : avatarUrl(hash)); }
 
 public slots:
 	QString mucNickColor(QString nick, bool isSelf,
@@ -200,10 +210,10 @@ public slots:
 signals:
 	void inited(); // signal from this object to C++. Means ready to process messages
 	void scrollRequested(int); // relative shift. signal towards js
-	void remoteUserImageChanged();
-	void remoteUserAvatarChanged();
-	void localUserImageChanged();
-	void localUserAvatarChanged();
+	void remoteUserImageChanged(const QString &);
+	void remoteUserAvatarChanged(const QString &);
+	void localUserImageChanged(const QString &);
+	void localUserAvatarChanged(const QString &);
 };
 
 //----------------------------------------------------------------------------
@@ -365,11 +375,6 @@ void ChatView::setAccount(PsiAccount *acc)
 	d->localIcons = acc->avatarFactory()->userHashes(acc->jid());
 }
 
-void ChatView::avatarChanged(const Jid &j)
-{
-//todo
-}
-
 void ChatView::contextMenuEvent(QContextMenuEvent *e)
 {
 #if defined(QT_WEBENGINEWIDGETS_LIB) && QT_VERSION < QT_VERSION_CHECK(5,7,0)
@@ -509,6 +514,42 @@ void ChatView::scrollUp()
 void ChatView::scrollDown()
 {
 	emit d->jsObject->scrollRequested(50);
+}
+
+void ChatView::updateAvatar(const Jid &jid, ChatViewCommon::UserType utype)
+{
+	bool avatarChanged = false;
+	bool vcardChanged = false;
+
+	if (utype == RemoteParty) { // remote party but not muc participant
+		auto h = d->account_->avatarFactory()->userHashes(jid);
+		avatarChanged = h.avatar != d->remoteIcons.avatar;
+		vcardChanged = h.vcard != d->remoteIcons.vcard;
+		d->remoteIcons = h;
+		if (avatarChanged) {
+			d->jsObject->setRemoteUserAvatarHash(h.avatar);
+		}
+		if (vcardChanged) {
+			d->jsObject->setRemoteUserAvatarHash(h.avatar);
+		}
+	} else if (utype == LocalParty) { // local party
+		auto h = d->account_->avatarFactory()->userHashes(jid);
+		avatarChanged = (h.avatar != d->localIcons.avatar);
+		vcardChanged = (h.vcard != d->localIcons.vcard);
+		d->localIcons = h;
+		if (avatarChanged) {
+			d->jsObject->setLocalUserAvatarHash(h.avatar);
+		}
+		if (vcardChanged) {
+			d->jsObject->setLocalUserImageHash(h.avatar);
+		}
+	} else { // muc participant
+		QVariantMap m;
+		m["type"] = "avatar";
+		m["userid"] = jid.resource();
+		m["avatar"] = ChatViewJSObject::avatarUrl(d->account_->avatarFactory()->userHashes(jid).avatar);
+		sendJsObject(m);
+	}
 }
 
 void ChatView::clear()

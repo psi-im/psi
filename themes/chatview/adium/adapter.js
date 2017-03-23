@@ -166,12 +166,6 @@ chat.util.updateObject(adapter, function(chat){
                 //chat.console((cdata.local? "local " : "remote ") + "avatar: " + url)
                 return url;
 
-                //var session.user
-                // session object should provide with user icon if any, or use one from cache.avatars
-				//return "avatar://" + (cdata.local?"outgoing/":"incoming/") +
-				//	encodeURIComponent(session.account) +
-				//	"/" + encodeURIComponent(cdata.userid);
-
 			} else if (this.name == "incomingIconPath") { // associated with chat
                 return session.remoteUserImage? session.remoteUserImage : defaultAvatars.incomingImage;
                 //return "avatar://incoming/" + encodeURIComponent(session.account) +
@@ -412,6 +406,12 @@ chat.util.updateObject(adapter, function(chat){
                         } else if (data.type == "clear") {
                             prevGrouppingData = null; //groupping impossible
                             trackbar = null;
+                        } else if (data.type == "avatar") {
+                            if (cdata.avatar) {
+                                avatarsMap[cdata.userid] = cdata.avatar;
+                            } else {
+                                delete avatarsMap[cdata.userid];
+                            }
                         }
                     } catch(e) {
                         chat.util.showCriticalError("APPEND ERROR: " + e + " \nline: " + e.line)
@@ -447,6 +447,14 @@ chat.util.updateObject(adapter, function(chat){
                 //t.subject = t.subject || t.sys;
                 //t.urls = t.urls || t.sys;
                 //t.trackbar = t.trackbar || "<hr/>";
+
+
+                function printAvatar(newAvatar) {
+                    chat.console("New local avatar: " + newAvatar);
+                }
+
+                session.localUserAvatarChanged.connect(printAvatar);
+
                 chat.console("session inited");
                 session.signalInited();
             }

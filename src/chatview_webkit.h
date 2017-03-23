@@ -71,6 +71,7 @@ public:
 public slots:
 	void scrollUp();
 	void scrollDown();
+	void updateAvatar(const XMPP::Jid &jid, UserType utype);
 
 	void setEncryptionEnabled(bool enabled);
 
@@ -86,7 +87,6 @@ protected slots:
 
 public slots:
 	void init();
-	void avatarChanged(const XMPP::Jid &j);
 private slots:
 #ifndef QT_WEBENGINEWIDGETS_LIB
 	void embedJsObject();
