@@ -657,14 +657,7 @@ webkit {
 
 	DEFINES += WEBKIT
 
-	need_webengine=0
-	greaterThan(QT_MAJOR_VERSION, 5):need_webengine=1
-	equals($$need_webengine,0):greaterThan(QT_MAJOR_VERSION, 4):greaterThan(QT_MINOR_VERSION, 5):need_webengine=1
-	equals($$need_webengine,0) {
-		QT += webkit
-		greaterThan(QT_MAJOR_VERSION, 4):QT += webkitwidgets
-	}
-	else {
+	webengine {
 		CONFIG += c++14
 		QT += webenginewidgets webchannel
 		include (../3rdparty/qhttp.pri)
@@ -672,6 +665,9 @@ webkit {
 			$$PWD/themeserver.h
 		SOURCES +=  \
 			$$PWD/themeserver.cpp
+	} else {
+		QT += webkit
+		greaterThan(QT_MAJOR_VERSION, 4):QT += webkitwidgets
 	}
 }
 else {

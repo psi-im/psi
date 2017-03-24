@@ -1309,16 +1309,18 @@ public:
 	QString shortname() const { return "webkit"; }
 	bool exec()
 	{
+		QString retConf = "webkit";
 		QString proextra =
-		"CONFIG += qt webkit\\n"
+		"CONFIG += qt webkit\\n";
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 # if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
-		"QT += webenginewidgets webchannel\\n";
+		proextra += "QT += webenginewidgets webchannel\\n";
+		retConf += " webengine"
 # else
-		"QT += webkit webkitwidgets\\n";
+		proextra += "QT += webkit webkitwidgets\\n";
 # endif
 #else
-		"QT += webkit\\n";
+		proextra += "QT += webkit\\n";
 #endif
 
 		QString str =
@@ -1334,7 +1336,7 @@ public:
 		if(ret != 0)
 			return false;
 
-		conf->addExtra("CONFIG += webkit");
+		conf->addExtra("CONFIG += " + retConf);
 		return true;
 	}
 };
