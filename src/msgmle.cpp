@@ -40,6 +40,124 @@
 #include "psioptions.h"
 #include "htmltextcontroller.h"
 
+//----------------------------------------------------------------------------
+// CapitalLettersController
+//----------------------------------------------------------------------------
+
+class CapitalLettersController : public QObject
+{
+	Q_OBJECT
+public:
+	CapitalLettersController(QTextEdit* parent)
+		: QObject()
+		, te_(parent)
+		, enabled_(true)
+	{
+		connect(te_->document(), SIGNAL(contentsChange(int,int,int)), SLOT(textChanged(int,int,int)));
+	}
+
+	virtual ~CapitalLettersController() {};
+
+	void setAutoCapitalizeEnabled(bool enabled)
+	{
+		enabled_ = enabled;
+	}
+
+private:
+	void capitalizeChar(int pos, QChar c)
+	{
+		changeChar(pos, c.toUpper());
+	}
+
+	void decapitalizeChar(int pos, QChar c)
+	{
+		changeChar(pos, c.toLower());
+	}
+
+	void changeChar(int pos, QChar c)
+	{
+		QTextCursor cur = te_->textCursor();
+		cur.setPosition(pos+1);
+		const QTextCharFormat cf = cur.charFormat();
+		cur.deletePreviousChar();
+		cur.setCharFormat(cf);
+		cur.insertText(c);
+	}
+
+public slots:
+	void textChanged(int pos, int /*charsRemoved*/, int charsAdded)
+	{
+		if(enabled_) {
+			if(charsAdded == 0) {
+				return;
+			}
+			if(!te_->textCursor().atEnd()) { //Editing the letter in the middle of the text
+				return;
+			}
+			bool capitalizeNext_ = false;
+
+			if(pos == 0 && charsAdded < 3) { //the first letter after the previous message was sent
+				capitalizeNext_ = true;
+			}
+			else if (charsAdded > 1) { //Insert a piece of text
+				return;
+			}
+			else {
+				QString txt = te_->toPlainText();
+				QRegExp capitalizeAfter("(?:^[^.][.]+\\s+)|(?:\\s*[^.]{2,}[.]+\\s+)|(?:[!?]\\s+)");
+				int index = txt.lastIndexOf(capitalizeAfter);
+				if(index != -1 && index == pos-capitalizeAfter.matchedLength()) {
+					capitalizeNext_ = true;
+				}
+			}
+
+			if(capitalizeNext_) {
+				QChar ch = te_->document()->characterAt(pos);
+				if(!ch.isLetter() || !ch.isLower()) {
+					return;
+				}
+				else {
+					capitalizeChar(pos, ch);
+				}
+			}
+		}
+	}
+
+	void changeCase()
+	{
+		bool tmpEnabled = enabled_;
+		enabled_ = false;
+		QTextCursor oldCur = te_->textCursor();
+		int pos = oldCur.position();
+		int begin = 0;
+		int end = te_->document()->characterCount();
+		if(oldCur.hasSelection()) {
+			begin = oldCur.selectionStart();
+			end = oldCur.selectionEnd();
+		}
+		for(; begin < end; begin++) {
+			QChar ch = te_->document()->characterAt(begin);
+			if(!ch.isLetter()) {
+				continue;
+			}
+
+			if(ch.isLower()) {
+				capitalizeChar(begin, ch);
+			}
+			else {
+				decapitalizeChar(begin, ch);
+			}
+		}
+		oldCur.setPosition(pos);
+		te_->setTextCursor(oldCur);
+		enabled_ = tmpEnabled;
+	}
+
+private:
+	QTextEdit* te_;
+	bool enabled_;
+};
+
 
 //----------------------------------------------------------------------------
 // ChatEdit
@@ -53,6 +171,7 @@ ChatEdit::ChatEdit(QWidget *parent)
 	, palCorrection(palOriginal)
 {
 	controller_ = new HTMLTextController(this);
+	capitalizer_ = new CapitalLettersController(this);
 
 	setWordWrapMode(QTextOption::WordWrap);
 	setAcceptRichText(false);
@@ -69,6 +188,7 @@ ChatEdit::ChatEdit(QWidget *parent)
 	palCorrection.setColor(QPalette::Base, QColor(160, 160, 0));
 	initActions();
 	setShortcuts();
+	optionsChanged();
 }
 
 ChatEdit::~ChatEdit()
@@ -76,6 +196,12 @@ ChatEdit::~ChatEdit()
 	clearMessageHistory();
 	delete spellhighlighter_;
 	delete controller_;
+	delete capitalizer_;
+}
+
+CapitalLettersController * ChatEdit::capitalizer()
+{
+	return capitalizer_;
 }
 
 void ChatEdit::initActions()
@@ -95,6 +221,10 @@ void ChatEdit::initActions()
 	act_showMessageLast= new QAction(this);
 	addAction(act_showMessageLast);
 	connect(act_showMessageLast, SIGNAL(triggered()), SLOT(showHistoryMessageLast()));
+
+	act_changeCase = new QAction(this);
+	addAction(act_changeCase);
+	connect(act_changeCase, SIGNAL(triggered()), capitalizer_, SLOT(changeCase()));
 }
 
 void ChatEdit::setShortcuts()
@@ -103,6 +233,7 @@ void ChatEdit::setShortcuts()
 	act_showMessageNext->setShortcuts(ShortcutManager::instance()->shortcuts("chat.show-messageNext"));
 	act_showMessageFirst->setShortcuts(ShortcutManager::instance()->shortcuts("chat.show-messageFirst"));
 	act_showMessageLast->setShortcuts(ShortcutManager::instance()->shortcuts("chat.show-messageLast"));
+	act_changeCase->setShortcuts(ShortcutManager::instance()->shortcuts("chat.change-case"));
 }
 
 void ChatEdit::setDialog(QWidget* dialog)
@@ -283,6 +414,7 @@ void ChatEdit::addToDictionary()
 void ChatEdit::optionsChanged()
 {
 	setCheckSpelling(checkSpellingGloballyEnabled());
+	capitalizer_->setAutoCapitalizeEnabled(PsiOptions::instance()->getOption("options.ui.chat.auto-capitalize").toBool());
 }
 
 void ChatEdit::showHistoryMessageNext()
@@ -479,3 +611,5 @@ void LineEdit::updateScrollBar()
 	setVerticalScrollBarPolicy(sizeHint().height() > height() ? Qt::ScrollBarAlwaysOn : Qt::ScrollBarAlwaysOff);
 	ensureCursorVisible();
 }
+
+#include "msgmle.moc"

@@ -44,6 +44,9 @@ public:
 	static QString optionsNS();
 	static QString storageNS();
 	static QString fileCacheNS();
+
+	// Common
+	static QString desktopFile();
 };
 
 #endif

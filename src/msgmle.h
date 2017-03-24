@@ -34,6 +34,7 @@ class QResizeEvent;
 class QTimer;
 class SpellHighlighter;
 class HTMLTextController;
+class CapitalLettersController;
 
 
 class ChatEdit : public QTextEdit
@@ -59,6 +60,7 @@ public:
 	void setLastMessageId(const QString& id) { lastId = id; }
 	const QString& lastMessageId() { return lastId; }
 	void resetCorrection() { correction = false; updateBackground(); };
+	CapitalLettersController * capitalizer();
 
 public slots:
 	void appendMessageHistory(const QString& text);
@@ -98,8 +100,10 @@ private:
 	QAction* act_showMessageNext;
 	QAction* act_showMessageFirst;
 	QAction* act_showMessageLast;
+	QAction *act_changeCase;
 	QString currentText;
 	HTMLTextController *controller_;
+	CapitalLettersController *capitalizer_;
 	bool correction;
 	QString lastId;
 	QPalette palOriginal;

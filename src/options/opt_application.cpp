@@ -3,13 +3,29 @@
 #include "iconwidget.h"
 #include "psioptions.h"
 #include "proxy.h"
+#include "translationmanager.h"
+#include "varlist.h"
+#include "applicationinfo.h"
 
 #include <QCheckBox>
 #include <QComboBox>
 #include <QLineEdit>
+#include <QSettings>
 #include <QList>
+#include <QMessageBox>
+#include <QDir>
+#ifdef HAVE_QT5
+#include <QStandardPaths>
+#endif
 
 #include "ui_opt_application.h"
+
+#ifdef Q_OS_WIN
+	static const QString regString = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+#endif
+#ifdef HAVE_FREEDESKTOP
+	static const QString psiAutoStart("/.config/autostart/" APP_BIN_NAME ".desktop");
+#endif
 
 class OptApplicationUI : public QWidget, public Ui::OptApplication
 {
@@ -53,6 +69,7 @@ QWidget *OptionsTabApplication::widget()
 
 #ifdef Q_OS_MAC
 	d->gb_docklet->hide();
+	d->ck_auto_load->hide();
 #endif
 
 	if (!haveAutoUpdater_) {
@@ -101,6 +118,51 @@ void OptionsTabApplication::applyOptions()
 
 	//Proxy
 	ProxyManager::instance()->proxyForObject()->save();
+
+	// Language
+	QString curLang = TranslationManager::instance()->currentLanguage();
+	QString lang = d->cb_lang->currentText();
+	QString itemData;
+	foreach(VarListItem it, TranslationManager::instance()->availableTranslations() ) {
+		if(it.data() == lang) {
+			itemData = it.key();
+			break;
+		}
+	}
+	if(curLang != itemData && !itemData.isEmpty()) {
+		TranslationManager::instance()->loadTranslation(itemData);
+		QMessageBox::information(0, tr("Information"), tr("Some of the options you changed will only have full effect upon restart."));
+	}
+	QSettings s(ApplicationInfo::homeDir(ApplicationInfo::ConfigLocation) + "/psirc", QSettings::IniFormat);
+	s.setValue("last_lang", itemData);
+
+	//Auto-load
+#ifdef Q_OS_WIN
+	QSettings set(regString, QSettings::NativeFormat);
+	if(d->ck_auto_load->isChecked()) {
+		set.setValue(ApplicationInfo::name(), QDir::toNativeSeparators(qApp->applicationFilePath()));
+	}
+	else {
+		set.remove(ApplicationInfo::name());
+	}
+#endif
+#ifdef HAVE_FREEDESKTOP
+#ifndef HAVE_QT5
+	QDir home(QString::fromLocal8Bit(getenv("XDG_CONFIG_HOME")));
+#else
+	QDir home(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation));
+#endif
+
+	if (!home.exists("autostart")) {
+		home.mkpath("autostart");
+	}
+	QFile f(home.absolutePath() + psiAutoStart);
+	if (f.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate)) {
+		const QString contents = ApplicationInfo::desktopFile().trimmed();
+		f.write(contents.toUtf8());
+		f.write(QString("\nHidden=%1").arg(d->ck_auto_load->isChecked() ? "false\n" : "true\n").toUtf8());
+	}
+#endif
 }
 
 void OptionsTabApplication::restoreOptions()
@@ -123,6 +185,36 @@ void OptionsTabApplication::restoreOptions()
 	// data transfer
 	d->le_dtPort->setText( QString::number(PsiOptions::instance()->getOption("options.p2p.bytestreams.listen-port").toInt()) );
 	d->le_dtExternal->setText( PsiOptions::instance()->getOption("options.p2p.bytestreams.external-address").toString() );
+
+	// Language
+	VarList vList = TranslationManager::instance()->availableTranslations();
+	QStringList lang = vList.varsToStringList();
+	d->cb_lang->addItem(tr("Default"));
+	foreach(QString item, lang) {
+		d->cb_lang->addItem(vList.get(item));
+	}
+	QString curLang = TranslationManager::instance()->currentLanguage();
+	QSettings s(ApplicationInfo::homeDir(ApplicationInfo::ConfigLocation) + "/psirc", QSettings::IniFormat);
+	QString curL = s.value("last_lang", "").toString();
+	if (curL.isEmpty())
+		d->cb_lang->setCurrentIndex( 0 );
+	else if(!curLang.isEmpty() && lang.contains(curLang) )
+		d->cb_lang->setCurrentIndex( d->cb_lang->findText(vList.get(curLang)) );
+
+	//Auto-load
+#ifdef Q_OS_WIN
+	QSettings set(regString, QSettings::NativeFormat);
+	const QString path = set.value(ApplicationInfo::name()).toString();
+	d->ck_auto_load->setChecked( (path == QDir::toNativeSeparators(qApp->applicationFilePath())) );
+#endif
+#ifdef HAVE_FREEDESKTOP
+	QFile desktop(QDir::homePath() + psiAutoStart);
+	if (desktop.open(QIODevice::ReadOnly)
+		&& QString(desktop.readAll()).contains(QRegExp("\\bhidden\\s*=\\s*false", Qt::CaseInsensitive)))
+	{
+		d->ck_auto_load->setChecked(true);
+	}
+#endif
 }
 
 void OptionsTabApplication::doEnableQuitOnClose(int state)

@@ -32,6 +32,8 @@ include(../qa/oldtest/unittest.pri)
 include($$top_builddir/conf.pri)
 
 unix {
+	DEFINES += APP_PREFIX=$$PREFIX
+	DEFINES += APP_BIN_NAME=$$target
 	# Target
 	target.path = $$BINDIR
 	INSTALLS += target

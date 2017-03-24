@@ -9,7 +9,10 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 	QT += x11extras
   }
 }
-unix:!mac:DEFINES += HAVE_X11
+unix:!mac {
+  DEFINES += HAVE_X11
+  DEFINES += HAVE_FREEDESKTOP
+}
 
 CONFIG(debug, debug|release) {
   mac: DEFINES += DEBUG_POSTFIX=\\\"_debug\\\"
