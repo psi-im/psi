@@ -568,10 +568,11 @@ bool ChatViewTheme::applyToWebView(QSharedPointer<ChatViewThemeSession> session)
 
 #if QT_WEBENGINEWIDGETS_LIB
 
-	cvtd->webChannel.reset(new QWebChannel(cvtd->wv->page()));
-	cvtd->webChannel->registerObject(QLatin1String("srvUtil"), cvtd->jsUtil.data());
-	cvtd->webChannel->registerObject(QLatin1String("srvSession"), session->jsBridge());
-	page->setWebChannel(cvtd->webChannel.data());
+	auto channel = new QWebChannel(cvtd->wv->page());
+	channel->registerObject(QLatin1String("srvUtil"), cvtd->jsUtil.data());
+	channel->registerObject(QLatin1String("srvSession"), session->jsBridge());
+	page->setWebChannel(channel);
+	cvtd->webChannel.reset(channel);
 
 	page->scripts().insert(cvtd->scripts);
 
