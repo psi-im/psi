@@ -6,7 +6,7 @@ var adapter = {
 		//var chat = chat;
         var loader = window.srvLoader;
         chat.console("DEBUG: loading " );
-        loader.setCaseInsensitiveFS();
+        loader.setCaseInsensitiveFS(true);
         loader.setPrepareSessionHtml(true);
         loader.setHttpResourcePath("/Contents/Resources");
 		chat.console("DEBUG: loading " + loader.themeId);

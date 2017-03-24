@@ -69,6 +69,7 @@ public:
 
 #ifdef QT_WEBENGINEWIDGETS_LIB
 	QList<QWebEngineScript> scripts;
+	QScopedPointer<QWebChannel> webChannel;
 #else
 	QStringList scripts;
 #endif
@@ -567,14 +568,10 @@ bool ChatViewTheme::applyToWebView(QSharedPointer<ChatViewThemeSession> session)
 
 #if QT_WEBENGINEWIDGETS_LIB
 
-
-	Q_ASSERT(page->webChannel() == NULL); // It does not make much sense to reinit
-	// from doc: Note: A current limitation is that objects must be registered before any client is initialized.
-
-	QWebChannel *channel = new QWebChannel(cvtd->wv->page());
-	channel->registerObject(QLatin1String("srvUtil"), cvtd->jsUtil.data());
-	channel->registerObject(QLatin1String("srvSession"), session->jsBridge());
-	page->setWebChannel(channel);
+	cvtd->webChannel.reset(new QWebChannel(cvtd->wv->page()));
+	cvtd->webChannel->registerObject(QLatin1String("srvUtil"), cvtd->jsUtil.data());
+	cvtd->webChannel->registerObject(QLatin1String("srvSession"), session->jsBridge());
+	page->setWebChannel(cvtd->webChannel.data());
 
 	page->scripts().insert(cvtd->scripts);
 
