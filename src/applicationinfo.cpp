@@ -242,9 +242,9 @@ QString ApplicationInfo::homeDir(ApplicationInfo::HomedirType type)
 			QString XdgDataHome = QString::fromLocal8Bit(getenv("XDG_DATA_HOME"));
 			QString XdgCacheHome = QString::fromLocal8Bit(getenv("XDG_CACHE_HOME"));
 #else
-			QString XdgConfigHome(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation));
-			QString XdgDataHome(QStandardPaths::writableLocation(QStandardPaths::HomeLocation));
-			QString XdgCacheHome(QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
+			QString XdgConfigHome(QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation));
+			QString XdgDataHome(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation));
+			QString XdgCacheHome(QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation));
 #endif
 			if (XdgConfigHome.isEmpty()) {
 				XdgConfigHome = QDir::homePath() + "/.config";
