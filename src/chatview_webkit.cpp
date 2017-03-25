@@ -75,6 +75,12 @@ public:
 	PsiAccount *account_;
 	AvatarFactory::UserHashes remoteIcons;
 	AvatarFactory::UserHashes localIcons;
+
+	inline ChatViewThemeProvider* themeProvider() const
+	{
+		return (ChatViewThemeProvider *)PsiThemeManager::instance()->
+			                provider(isMuc_?"groupchatview":"chatview");
+	}
 };
 
 
@@ -309,6 +315,7 @@ ChatView::~ChatView()
 // something after we know isMuc and dialog is set. kind of final step
 void ChatView::init()
 {
+	d->theme = *(dynamic_cast<ChatViewTheme*>(d->themeProvider()->current()));// TODO rewrite this pointer magic
 	d->themeBridge.reset(new ChatViewThemeSessionBridge(this));
 	d->theme.applyToWebView(d->themeBridge.dynamicCast<ChatViewThemeSession>());
 	if (d->theme.isTransparentBackground()) {
@@ -359,13 +366,11 @@ void ChatView::setDialog(QWidget* dialog)
 
 void ChatView::setSessionData(bool isMuc, const Jid &jid, const QString name)
 {
-	auto provider = (ChatViewThemeProvider *)PsiThemeManager::instance()->
-	                provider(d->isMuc_?"groupchatview":"chatview");
 	d->isMuc_ = isMuc;
 	d->jid_ = jid;
 	d->name_ = name;
-	d->theme = *(dynamic_cast<ChatViewTheme*>(provider->current()));
-	connect(provider, SIGNAL(themeChanged()), SLOT(init()));
+
+	connect(d->themeProvider(), SIGNAL(themeChanged()), SLOT(init()));
 }
 
 void ChatView::setAccount(PsiAccount *acc)

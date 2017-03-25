@@ -30,6 +30,7 @@
 #include <QSharedData>
 #include <QHash>
 #include <QStringList>
+#include <functional>
 
 class QFileInfo;
 class ThemePrivate;
@@ -61,6 +62,10 @@ public:
 	Theme &operator=(const Theme &other);
 	virtual ~Theme();
 	bool isValid() const;
+
+	virtual bool exists() = 0;
+	virtual bool load(); // synchronous load
+	virtual bool load(std::function<void(bool)> loadCallback);  // asynchronous load
 
     static bool isCompressed(const QFileInfo &); // just tells if theme looks like compressed.
     bool isCompressed();

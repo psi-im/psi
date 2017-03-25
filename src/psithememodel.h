@@ -31,7 +31,7 @@ struct ThemeItemInfo
 	QString id;
 	QString title;
 	QByteArray screenshot;
-	bool isValid;
+	bool isValid = false;
 };
 
 

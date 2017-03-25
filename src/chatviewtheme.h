@@ -48,7 +48,8 @@ public:
 
 	QByteArray screenshot();
 
-	bool load(const QString &id, std::function<void(bool)> loadCallback);
+	bool exists();
+	bool load(std::function<void(bool)> loadCallback);
 
 	bool isMuc() const;
 	QString jsNamespace();

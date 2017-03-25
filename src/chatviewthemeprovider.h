@@ -37,7 +37,7 @@ public:
 
 	const char* type() const { return "chatview"; }
 	const QStringList themeIds() const;
-	Theme* load(const QString &themeId);
+	Theme* theme(const QString &id);
 	bool loadCurrent();
 	Theme *current() const { return (Theme *)curTheme; } // currently loaded theme
 	void setCurrentTheme(const QString &);

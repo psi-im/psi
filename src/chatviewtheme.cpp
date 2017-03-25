@@ -396,6 +396,17 @@ ChatViewTheme::~ChatViewTheme()
 {
 }
 
+bool ChatViewTheme::exists()
+{
+	if (id().isEmpty()) {
+		return false;
+	}
+	ChatViewThemeProvider *provider = static_cast<ChatViewThemeProvider*>(themeProvider());
+	QString tp = provider->themePath(QLatin1String("chatview/") + id());
+	setFilePath(tp);
+	return !tp.isEmpty();
+}
+
 /**
  * @brief Sets theme bridge, starts loading procedure from javascript adapter.
  * @param file full path to theme directory
@@ -403,24 +414,20 @@ ChatViewTheme::~ChatViewTheme()
  * @param adapterPath path to directry with adapter
  * @return true on success
  */
-bool ChatViewTheme::load(const QString &id, std::function<void(bool)> loadCallback)
+bool ChatViewTheme::load(std::function<void(bool)> loadCallback)
 {
-	ChatViewThemeProvider *provider = static_cast<ChatViewThemeProvider*>(themeProvider());
-	QString tp = provider->themePath(QLatin1String("chatview/") + id);
-	if (id.isEmpty() || tp.isEmpty()) {
+	if (!exists()) {
 		return false;
 	}
 
-	setFilePath(tp);
-	setId(id);
 	cvtd->loadCallback = loadCallback;
 
-	QStringList idParts = id.split('/');
+	QStringList idParts = id().split('/');
 	QString themeType, themeId;
 	std::tie(themeType, themeId) = std::tie(idParts[0], idParts[1]);
 	QStringList scriptPaths = QStringList()
-	        << provider->themePath(QLatin1String("chatview/util.js"))
-	        << provider->themePath(QLatin1String("chatview/") + themeType + QLatin1String("/adapter.js"));
+	        << themeProvider()->themePath(QLatin1String("chatview/util.js"))
+	        << themeProvider()->themePath(QLatin1String("chatview/") + themeType + QLatin1String("/adapter.js"));
 
 	if (cvtd->jsUtil.isNull())
 		cvtd->jsLoader.reset(new ChatViewJSLoader(this));
@@ -512,6 +519,8 @@ QByteArray ChatViewTheme::screenshot()
 {
 	return loadData("screenshot.png");
 }
+
+
 #if 0
 QString ChatViewTheme::html(QObject *session)
 {

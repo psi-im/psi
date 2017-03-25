@@ -99,6 +99,17 @@ bool Theme::isValid() const
 	return d;
 }
 
+bool Theme::load()
+{
+	return false;
+}
+
+bool Theme::load(std::function<void (bool)> loadCallback)
+{
+	Q_UNUSED(loadCallback);
+	return false;
+}
+
 bool Theme::isCompressed(const QFileInfo &fi)
 {
 	QString sfx = fi.suffix();

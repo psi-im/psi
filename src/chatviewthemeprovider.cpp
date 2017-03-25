@@ -115,14 +115,16 @@ const QStringList ChatViewThemeProvider::themeIds() const
  * @param themeId theme to load
  * @return
  */
-Theme * ChatViewThemeProvider::load(const QString &themeId)
+Theme* ChatViewThemeProvider::theme(const QString &id)
 {
-	ChatViewTheme *theme = new ChatViewTheme(this);
-	theme->load(themeId, [this, themeId](bool success){
-		qDebug("%s theme loading status: %s", qPrintable(themeId), success? "success" : "failure");
-		// TODO invent something smarter
-	});
-	return theme;
+	auto theme = new ChatViewTheme(this);
+	theme->setId(id);
+	if (theme->exists()) {
+		return theme;
+	}
+
+	delete theme;
+	return nullptr;
 }
 
 /**
@@ -138,26 +140,36 @@ bool ChatViewThemeProvider::loadCurrent()
 	if (!loadedId.isEmpty() && loadedId == themeName) {
 		return true; // already loaded. nothing todo
 	}
-	ChatViewTheme *theme = 0;
-	if (!(theme = (ChatViewTheme *)load(themeName))) {
-		if (themeName != "psi/classic") {
+	ChatViewTheme *t = 0;
+	if (!(t = (ChatViewTheme *)theme(themeName))) {
+		if (themeName != QLatin1String("psi/classic")) {
+			qDebug("Invalid theme id");
 			qDebug("fallback to classic chatview theme");
-			if ( (theme = (ChatViewTheme *)load("psi/classic")) ) {
-				PsiOptions::instance()->setOption(optionString(), "psi/classic");
+			PsiOptions::instance()->setOption(optionString(), QLatin1String("psi/classic"));
+			return loadCurrent();
+		}
+		qDebug("Classic theme failed to load. No fallback..");
+		return false;
+	}
+
+	bool startedLoading = t->load([this, t, loadedId](bool success){
+		if (!success && t->id() != QLatin1String("psi/classic")) {
+			qDebug("Failed to load theme \"%s\"", qPrintable(t->id()));
+			qDebug("fallback to classic chatview theme");
+			PsiOptions::instance()->setOption(optionString(), QLatin1String("psi/classic"));
+			loadCurrent();
+		} else if (success) {
+			if (curTheme) {
+				delete curTheme;
 			}
-		}
-	}
-	if (theme) {
-		if (curTheme) {
-			delete curTheme;
-		}
-		curTheme = theme;
-		if (theme->id() != loadedId) {
-			emit themeChanged();
-		}
-		return true;
-	}
-	return false;
+			curTheme = t;
+			if (t->id() != loadedId) {
+				emit themeChanged();
+			}
+		} // else it was already classic
+	});
+
+	return startedLoading; // does not really matter. may fail later on loading
 }
 
 void ChatViewThemeProvider::setCurrentTheme(const QString &id)

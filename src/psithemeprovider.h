@@ -22,6 +22,7 @@
 #define PSITHEMEPROVIDER_H
 
 #include <QFuture>
+#include <functional>
 #include "theme.h"
 
 class PsiThemeProvider : public QObject
@@ -32,7 +33,7 @@ public:
 	PsiThemeProvider(QObject *parent);
 
 	virtual const char* type() const = 0;
-	virtual Theme* load(const QString &) = 0;
+	virtual Theme* theme(const QString &id) = 0; // make new theme
 	virtual const QStringList themeIds() const = 0;
 	virtual bool loadCurrent() = 0;
 	virtual Theme* current() const = 0;

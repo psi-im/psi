@@ -67,6 +67,7 @@ var adapter = {
                     ip[curKey] = value;
                 }
             }
+            chat.console("DEBUG: " + chat.util.props(ip));
             loader.setMetaData({name: ip.CFBundleName});
             if (ip.DefaultBackgroundIsTransparent) {
                 loader.setTransparent();
