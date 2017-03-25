@@ -33,7 +33,7 @@ include($$top_builddir/conf.pri)
 
 unix {
 	DEFINES += APP_PREFIX=$$PREFIX
-	DEFINES += APP_BIN_NAME=$$target
+	DEFINES += APP_BIN_NAME=$$TARGET
 	# Target
 	target.path = $$BINDIR
 	INSTALLS += target

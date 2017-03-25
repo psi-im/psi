@@ -24,7 +24,9 @@
 	static const QString regString = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
 #endif
 #ifdef HAVE_FREEDESKTOP
-	static const QString psiAutoStart("/.config/autostart/" APP_BIN_NAME ".desktop");
+#define xstr(a) str(a)
+#define str(a) #a
+	static const QString psiAutoStart("/autostart/" xstr(APP_BIN_NAME) ".desktop");
 #endif
 
 class OptApplicationUI : public QWidget, public Ui::OptApplication
@@ -41,6 +43,13 @@ OptionsTabApplication::OptionsTabApplication(QObject *parent)
 : OptionsTab(parent, "application", "", tr("Application"), tr("General application options"), "psi/logo_16")
 {
 	w = 0;
+#ifdef HAVE_FREEDESKTOP
+#ifndef HAVE_QT5
+	configPath_ = QString::fromLocal8Bit(getenv("XDG_CONFIG_HOME"));
+#else
+	configPath_ = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation);
+#endif
+#endif
 }
 
 OptionsTabApplication::~OptionsTabApplication()
@@ -147,12 +156,7 @@ void OptionsTabApplication::applyOptions()
 	}
 #endif
 #ifdef HAVE_FREEDESKTOP
-#ifndef HAVE_QT5
-	QDir home(QString::fromLocal8Bit(getenv("XDG_CONFIG_HOME")));
-#else
-	QDir home(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation));
-#endif
-
+	QDir home(configPath_);
 	if (!home.exists("autostart")) {
 		home.mkpath("autostart");
 	}
@@ -208,7 +212,7 @@ void OptionsTabApplication::restoreOptions()
 	d->ck_auto_load->setChecked( (path == QDir::toNativeSeparators(qApp->applicationFilePath())) );
 #endif
 #ifdef HAVE_FREEDESKTOP
-	QFile desktop(QDir::homePath() + psiAutoStart);
+	QFile desktop(configPath_ + psiAutoStart);
 	if (desktop.open(QIODevice::ReadOnly)
 		&& QString(desktop.readAll()).contains(QRegExp("\\bhidden\\s*=\\s*false", Qt::CaseInsensitive)))
 	{
