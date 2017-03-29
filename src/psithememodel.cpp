@@ -92,9 +92,7 @@ void PsiThemeModel::loadProgress(int pv)
 void PsiThemeModel::loadComplete()
 {
 	QFutureIterator<ThemeItemInfo> i(themesFuture);
-#if QT_VERSION >= 0x040600
 	beginResetModel();
-#endif
 	while (i.hasNext()) {
 		ThemeItemInfo ti = i.next();
 		if (ti.isValid) {
@@ -104,11 +102,7 @@ void PsiThemeModel::loadComplete()
 			qDebug("failed to load theme %s", qPrintable(ti.id));
 		}
 	}
-#if QT_VERSION >= 0x040600
 	endResetModel();
-#else
-	reset();
-#endif
 }
 
 void PsiThemeModel::setType(const QString &type)
@@ -124,9 +118,11 @@ void PsiThemeModel::setType(const QString &type)
 			foreach (const QString id, provider->themeIds()) {
 				loader.asyncLoad(id, [this](const ThemeItemInfo &ti) {
 					if (ti.isValid) {
-						beginResetModel();
+						beginInsertRows(QModelIndex(), themesInfo.size(), themesInfo.size());
+						//beginResetModel(); // FIXME make proper model update
 						themesInfo.append(ti);
-						endResetModel();
+						endInsertRows();
+						//endResetModel();
 					}
 				});
 			}

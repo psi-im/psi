@@ -77,6 +77,7 @@ protected:
 	QString formatTimeStamp(const QDateTime &time);
 	QString colorString(bool local, bool spooled) const;
 
+	QString replaceMarker(const MessageView &mv) const;
 	void renderMucMessage(const MessageView &);
 	void renderMessage(const MessageView &);
 	void renderSysMessage(const MessageView &);

@@ -26,6 +26,9 @@ public:
 	void applyOptions();
 	void restoreOptions();
 
+protected slots:
+	void modelRowsInserted(const QModelIndex &parent, int first, int last);
+
 private:
 	QWidget *w;
 	PsiThemeModel *themesModel;

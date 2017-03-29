@@ -373,6 +373,11 @@ void ChatView::dispatchMessage(const MessageView &mv)
 	}
 }
 
+QString ChatView::replaceMarker(const MessageView &mv) const
+{
+	return "<a name=\"msgid_" + TextUtil::escape(mv.messageId() + "_" + mv.userId()) + "\"> </a>";
+}
+
 void ChatView::renderMucMessage(const MessageView &mv)
 {
 	const QString timestr = formatTimeStamp(mv.dateTime());
@@ -394,15 +399,16 @@ void ChatView::renderMucMessage(const MessageView &mv)
 	QString nick = QString("<a href=\"addnick://psi/") + QUrl::toPercentEncoding(mv.nick()) +
 				   "\" style=\"color: "+nickcolor+"; text-decoration: none; \">"+TextUtil::escape(mv.nick())+"</a>";
 
+	QString inner = alerttagso + mv.formattedText() + replaceMarker(mv) + alerttagsc;
 	if(mv.isEmote()) {
-		appendText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(nick) + alerttagso + mv.formattedText() + alerttagsc + "</font>");
+		appendText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(nick) + inner + "</font>");
 	}
 	else {
 		if(PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
-			appendText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] ").arg(timestr) + QString("%1 says:").arg(nick) + "</font><br>" + QString("<font color=\"%1\">").arg(textcolor) + alerttagso + mv.formattedText() + alerttagsc + "</font>");
+			appendText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] ").arg(timestr) + QString("%1 says:").arg(nick) + "</font><br>" + QString("<font color=\"%1\">").arg(textcolor) + inner + "</font>");
 		}
 		else {
-			appendText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] &lt;").arg(timestr) + nick + QString("&gt;</font> ") + QString("<font color=\"%1\">").arg(textcolor) + alerttagso + mv.formattedText() + alerttagsc +"</font>");
+			appendText(icon + QString("<font color=\"%1\">").arg(nickcolor) + QString("[%1] &lt;").arg(timestr) + nick + QString("&gt;</font> ") + QString("<font color=\"%1\">").arg(textcolor) + inner +"</font>");
 		}
 	}
 
@@ -424,14 +430,16 @@ void ChatView::renderMessage(const MessageView &mv)
 		(mv.isAwaitingReceipt() ? QString("icon:delivery") + mv.messageId()
 			: isEncryptionEnabled_ ? "icon:log_icon_send_pgp" : "icon:log_icon_send")
 		: isEncryptionEnabled_ ? "icon:log_icon_receive_pgp" : "icon:log_icon_receive")) : "";
+
+	QString inner = mv.formattedText() + replaceMarker(mv);
 	if (mv.isEmote()) {
-		appendText(icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(TextUtil::escape(mv.nick())) + mv.formattedText() + "</span>");
+		appendText(icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1]").arg(timestr) + QString(" *%1 ").arg(TextUtil::escape(mv.nick())) + inner + "</span>");
 	} else {
 		if (PsiOptions::instance()->getOption("options.ui.chat.use-chat-says-style").toBool()) {
-			appendText(icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1] ").arg(timestr) + tr("%1 says:").arg(TextUtil::escape(mv.nick())) + "</span><br>" + mv.formattedText());
+			appendText(icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1] ").arg(timestr) + tr("%1 says:").arg(TextUtil::escape(mv.nick())) + "</span><br>" + inner);
 		}
 		else {
-			appendText(icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1] &lt;").arg(timestr) + TextUtil::escape(mv.nick()) + QString("&gt;</span> ") + mv.formattedText());
+			appendText(icon + QString("<span style=\"color: %1\">").arg(color) + QString("[%1] &lt;").arg(timestr) + TextUtil::escape(mv.nick()) + QString("&gt;</span> ") + inner);
 		}
 	}
 

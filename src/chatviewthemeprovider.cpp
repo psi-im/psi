@@ -143,7 +143,7 @@ bool ChatViewThemeProvider::loadCurrent()
 	ChatViewTheme *t = 0;
 	if (!(t = (ChatViewTheme *)theme(themeName))) {
 		if (themeName != QLatin1String("psi/classic")) {
-			qDebug("Invalid theme id");
+			qDebug("Invalid theme id: %s", qPrintable(themeName));
 			qDebug("fallback to classic chatview theme");
 			PsiOptions::instance()->setOption(optionString(), QLatin1String("psi/classic"));
 			return loadCurrent();

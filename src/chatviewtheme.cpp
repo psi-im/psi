@@ -69,7 +69,7 @@ public:
 
 #ifdef QT_WEBENGINEWIDGETS_LIB
 	QList<QWebEngineScript> scripts;
-	QScopedPointer<QWebChannel> webChannel;
+	QWebChannel *webChannel = nullptr; // parented by page on creation
 #else
 	QStringList scripts;
 #endif
@@ -577,11 +577,12 @@ bool ChatViewTheme::applyToWebView(QSharedPointer<ChatViewThemeSession> session)
 
 #if QT_WEBENGINEWIDGETS_LIB
 
-	auto channel = new QWebChannel(cvtd->wv->page());
-	channel->registerObject(QLatin1String("srvUtil"), cvtd->jsUtil.data());
-	channel->registerObject(QLatin1String("srvSession"), session->jsBridge());
-	page->setWebChannel(channel);
-	cvtd->webChannel.reset(channel);
+	if (!cvtd->webChannel) {
+		cvtd->webChannel = new QWebChannel(cvtd->wv->page());
+		cvtd->webChannel->registerObject(QLatin1String("srvUtil"), cvtd->jsUtil.data());
+		cvtd->webChannel->registerObject(QLatin1String("srvSession"), session->jsBridge());
+		page->setWebChannel(cvtd->webChannel);
+	}
 
 	page->scripts().insert(cvtd->scripts);
 
@@ -632,8 +633,8 @@ bool ChatViewTheme::applyToWebView(QSharedPointer<ChatViewThemeSession> session)
 					});
 					session->theme.cvtd->jsLoader->registerSession(session);
 					session->theme.cvtd->wv->page()->runJavaScript(session->theme.jsNamespace() +
-					            QString(QLatin1String(".adapter.generateSessionHtml(\"%1\")"))
-					            .arg(session->sessId));
+					            QString(QLatin1String(".adapter.generateSessionHtml(\"%1\", %2)"))
+					            .arg(session->sessId, session->propsAsJsonString()));
 
 				} else {
 					res->end(session->theme.cvtd->html.toUtf8());

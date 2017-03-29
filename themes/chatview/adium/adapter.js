@@ -67,7 +67,6 @@ var adapter = {
                     ip[curKey] = value;
                 }
             }
-            chat.console("DEBUG: " + chat.util.props(ip));
             loader.setMetaData({name: ip.CFBundleName});
             if (ip.DefaultBackgroundIsTransparent) {
                 loader.setTransparent();
@@ -169,15 +168,20 @@ chat.util.updateObject(adapter, function(chat){
 
 			} else if (this.name == "incomingIconPath") { // associated with chat
                 return session.remoteUserImage? session.remoteUserImage : defaultAvatars.incomingImage;
-                //return "avatar://incoming/" + encodeURIComponent(session.account) +
-				//	"/" + encodeURIComponent(session.jid);
-
             } else if (this.name == "outgoingIconPath") { // associated with chat
                 return session.localUserImage? session.localUserImage : defaultAvatars.ougoingImage;
 
 			} else if (this.name == "senderColor") {
 				return session.mucNickColor(cdata.sender, cdata.local);
-			}
+			} else if (this.name == "message" && cdata.id) {
+                // if we have an id then this is a replacable message.
+                // next weird logic is as follows:
+                //   - wrapping to some element may break elements flow
+                //   - using well know elements may break styles
+                //   - setting just starting mark is useless (we will never find correct end)
+                return "<psims mid=\"" + cdata.id + "\"/>" + d + "<psime mid=\"" + cdata.id + "\"/>";
+            }
+
 			return d || "";
 		}
 	}
@@ -232,25 +236,27 @@ chat.util.updateObject(adapter, function(chat){
 	}
 
 	return {
-		generateSessionHtml : function(sessionId) {
+		generateSessionHtml : function(sessionId, serverSession) {
+            session = serverSession;
 
             function onServerStuffReady(cache, sessProps) {
                 //chat.console("prepare html");
                 var html = cache["html"];
                 //chat.console("cached Template.html: " + html);
                 var ip = cache["Info.plist"];
+
                 var variant = ip.DefaultVariant;
                 if (variant && ip.variants[variant]) {
                     chat.util.updateObject(ip, ip.variants[variant]);
                 }
-                ////chat.console("prepare html2");
+                chat.console("prepare html2");
                 var topHtml = (loader.isMuc && cache["Topic.html"]) || cache["Header.html"];
-                //chat.console("prepare html2.5");
+                chat.console("prepare html2.5");
                 topHtml = topHtml? (new Template(topHtml)).toString({
                     chatName: chat.util.escapeHtml(sessProps.chatName),
                     timeOpened: new Date()
                 }) : "";
-                //chat.console("prepare html3");
+                chat.console("prepare html3");
                 var footerHtml = new Template(cache["Footer.html"] || "").toString({});
 
                 footerHtml = "<script src=\"qrc:///qtwebchannel/qwebchannel.js\"></script> \
@@ -268,20 +274,22 @@ chat.util.updateObject(adapter, function(chat){
                 //    server.jsNamespace+".adapter.initSession, false);</script>";
                 //chat.console("prepare html4");
                 var baseUrl = loader.serverUrl;
+                var replace
                 if (ip.MessageViewVersion < 3) {
-                    var replace = [
+                    replace = [
                         baseUrl, "main.css",
                         topHtml, footerHtml
                     ];
                 } else {
-                    var replace = [
+                    replace = [
                         baseUrl, "@import url( \"main.css\" );",
                         ip.DefaultVariant? "Variants/" + ip.DefaultVariant + ".css" : "main.css",
                         topHtml, footerHtml
                     ];
                 }
-                //chat.console("prepare html5");
+                chat.console("prepare html5");
                 html = html.replace(/%@/g, function(){return replace.shift() || ""});
+                chat.console("DEBUG: " + html);
                 if (!ip.DefaultBackgroundIsTransparent) {
                     if (ip.DefaultBackgroundColor)
                         html = html.replace(/<head>/i, '<head><style type="text/css" media="screen,print">' +
@@ -403,6 +411,18 @@ chat.util.updateObject(adapter, function(chat){
                                 }
                             } else {
                                 throw "Template not found";
+                            }
+                        } else if (data.type == "replace") {
+                            var doScroll = nearBottom();
+                            var cel = document.getElementById("Chat");
+                            var se =cel.querySelector("psims[mid='"+data.replaceId+"'");
+                            var ee =cel.querySelector("psime[mid='"+data.replaceId+"'");
+                            if (se && ee && se.parentNode === ee.parentNode) {
+                                while (se.nextSibling !== ee) {
+                                    se.parentNode.removeChild(se.nextSibling);
+                                }
+                                var node = createHTMLNode(data.message);
+                                ee.parentNode.insertBefore(node, ee);
                             }
                         } else if (data.type == "clear") {
                             prevGrouppingData = null; //groupping impossible

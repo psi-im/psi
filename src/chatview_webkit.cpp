@@ -29,7 +29,11 @@
 #if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
 #include <QWebEngineContextMenuData>
 #endif
+#include <QJsonObject>
+#include <QMetaObject>
+#include <QMetaProperty>
 #include <QWebEngineSettings>
+#include <QJsonDocument>
 #else
 #include <QWebFrame>
 #endif
@@ -39,6 +43,7 @@
 #include <QPalette>
 #include <QDesktopWidget>
 #include <QApplication>
+
 
 #include "webview.h"
 //#include "psiapplication.h"
@@ -268,6 +273,23 @@ public:
 		return cv->jsBridge();
 	}
 
+	QString propsAsJsonString() const
+	{
+		QJsonObject jsObj;
+		ChatViewJSObject *js = static_cast<ChatViewJSObject*>(cv->jsBridge());
+		int pc = js->metaObject()->propertyCount();
+		for (int i = 0; i < pc; i++) {
+			QMetaProperty p = js->metaObject()->property(i);
+			if (p.isReadable()) {
+				QJsonValue v = QJsonValue::fromVariant(js->property(p.name()));
+				if (!v.isNull()) {
+					jsObj.insert(p.name(), v);
+				}
+			}
+		}
+		QJsonDocument doc(jsObj);
+		return QString(doc.toJson(QJsonDocument::Compact));
+	}
 };
 
 
@@ -475,7 +497,9 @@ bool ChatView::handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdi
 void ChatView::dispatchMessage(const MessageView &mv)
 {
 	QString replaceId = mv.replaceId();
+#if 0
 	if (replaceId.isEmpty()) {
+#endif
 		if ((mv.type() == MessageView::Message || mv.type() == MessageView::Subject)
 				&& updateLastMsgTime(mv.dateTime())) {
 			QVariantMap m;
@@ -485,10 +509,16 @@ void ChatView::dispatchMessage(const MessageView &mv)
 			sendJsObject(m);
 		}
 		QVariantMap vm = mv.toVariantMap(d->isMuc_, true);
-		vm["mtype"] = vm["type"];
-		vm["type"] = "message";
 		vm["encrypted"] = d->isEncryptionEnabled_;
+		if (!replaceId.isEmpty()) {
+			vm["type"] = "replace";
+			vm["replaceId"] = replaceId;
+		} else {
+			vm["mtype"] = vm["type"];
+			vm["type"] = "message";
+		}
 		sendJsObject(vm);
+#if 0
 	} else {
 		QString msgId = TextUtil::escape("msgid_" + replaceId + "_" + mv.userId());
 		QString replaceText = mv.formattedText().replace("\"", "\\\"");
@@ -509,6 +539,7 @@ void ChatView::dispatchMessage(const MessageView &mv)
 						msgId).arg(replaceText);
 		sendJsCommand(jsCommand);
 	}
+#endif
 }
 
 void ChatView::scrollUp()

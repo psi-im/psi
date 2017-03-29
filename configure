@@ -325,7 +325,7 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 		--help) show_usage; exit ;;
-		*) show_usage; exit 1;;
+		*) echo "configure: WARNING: unrecognized options: $1" >&2; shift; ;;
 	esac
 done
 
@@ -1315,7 +1315,7 @@ public:
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 # if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
 		proextra += "QT += webenginewidgets webchannel\\n";
-		retConf += " webengine"
+		retConf += " webengine";
 # else
 		proextra += "QT += webkit webkitwidgets\\n";
 # endif

@@ -38,8 +38,10 @@ public:
 	const char* type() const { return "chatview"; }
 	const QStringList themeIds() const;
 	Theme* theme(const QString &id);
+
 	bool loadCurrent();
 	Theme *current() const { return (Theme *)curTheme; } // currently loaded theme
+
 	void setCurrentTheme(const QString &);
 	virtual int screenshotWidth() const { return 512; } // hack
 

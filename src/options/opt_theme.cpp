@@ -67,7 +67,28 @@ QWidget *OptionsTabAppearanceTheme::widget()
 			SIGNAL(currentChanged(QModelIndex, QModelIndex)),
 			SIGNAL(dataChanged()));
 
+	connect(themesModel,
+	        SIGNAL(rowsInserted(QModelIndex,int,int)),
+	        SLOT(modelRowsInserted(QModelIndex,int,int)));
+
 	return w;
+}
+
+void OptionsTabAppearanceTheme::modelRowsInserted(const QModelIndex &parent, int first, int last)
+{
+	if (!parent.isValid() || !w) {
+		Theme *theme = provider->current();
+		OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
+		if (theme) {
+			for (int i = first; i <= last; i++) {
+				QString id = themesModel->data(themesModel->index(i), PsiThemeModel::IdRole).toString();
+				if (id == theme->id()) {
+					d->themeView->setCurrentIndex(themesModel->index(i));
+					break;
+				}
+			}
+		}
+	}
 }
 
 void OptionsTabAppearanceTheme::applyOptions()
@@ -76,7 +97,10 @@ void OptionsTabAppearanceTheme::applyOptions()
 		return;
 
 	OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
-	provider->setCurrentTheme(d->themeView->currentIndex().data(PsiThemeModel::IdRole).toString());
+	QString id = d->themeView->currentIndex().data(PsiThemeModel::IdRole).toString();
+	if (!id.isEmpty()) {
+		provider->setCurrentTheme(id);
+	}
 }
 
 void OptionsTabAppearanceTheme::restoreOptions()

@@ -7,7 +7,7 @@
 		// NOTE:
 		// Any percent signs in this file must be escaped!
 		// Use two escape signs (%%) to display it, this is passed through a format call!
-
+		
 		function appendHTML(html) {
 			var node = document.getElementById("Chat");
 			var range = document.createRange();
@@ -292,10 +292,10 @@
 
 			if (windowHeight > 0) {
 				var contentElement = document.getElementById('Chat');
-				var contentHeight = contentElement.offsetHeight;
-				if (windowHeight - contentHeight > 0) {
+				var heightDifference = (windowHeight - contentElement.offsetHeight);
+				if (heightDifference > 0) {
 					contentElement.style.position = 'relative';
-					contentElement.style.top = (windowHeight - contentHeight) + 'px';
+					contentElement.style.top = heightDifference + 'px';
 				} else {
 					contentElement.style.position = 'static';
 				}

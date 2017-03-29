@@ -21,7 +21,7 @@ public:
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 # if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
 		proextra += "QT += webenginewidgets webchannel\n";
-		retConf += " webengine"
+		retConf += " webengine";
 # else
 		proextra += "QT += webkit webkitwidgets\n";
 # endif

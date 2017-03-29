@@ -84,6 +84,7 @@ public:
 	virtual QObject* jsBridge() = 0;
 	// returns: data, content-type
 	virtual QPair<QByteArray,QByteArray> getContents(const QUrl &url) = 0;
+	virtual QString propsAsJsonString() const = 0;
 };
 
 #endif
