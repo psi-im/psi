@@ -451,7 +451,7 @@ bool ChatViewTheme::load(std::function<void(bool)> loadCallback)
 
 	// that's something static enough to be passed statically to every chat window on init
 	QWebEngineScript propsJs;
-	propsJs.setSourceCode("srvProps = { psiDefaultAvatarUrl: \"/psiglobal/avatar/default.png\" }");
+	propsJs.setSourceCode("srvProps = { psiDefaultAvatarUrl: \"psiglobal/avatar/default.png\" }");
 	propsJs.setInjectionPoint(QWebEngineScript::DocumentCreation);
 	propsJs.setWorldId(QWebEngineScript::MainWorld);
 	cvtd->scripts.append(propsJs);
@@ -632,9 +632,10 @@ bool ChatViewTheme::applyToWebView(QSharedPointer<ChatViewThemeSession> session)
 						}
 					});
 					session->theme.cvtd->jsLoader->registerSession(session);
+					QString basePath = req->property("basePath").toString();
 					session->theme.cvtd->wv->page()->runJavaScript(session->theme.jsNamespace() +
-					            QString(QLatin1String(".adapter.generateSessionHtml(\"%1\", %2)"))
-					            .arg(session->sessId, session->propsAsJsonString()));
+					            QString(QLatin1String(".adapter.generateSessionHtml(\"%1\", %2, \"%3\")"))
+					            .arg(session->sessId, session->propsAsJsonString(), basePath));
 
 				} else {
 					res->end(session->theme.cvtd->html.toUtf8());

@@ -236,10 +236,11 @@ chat.util.updateObject(adapter, function(chat){
 	}
 
 	return {
-		generateSessionHtml : function(sessionId, serverSession) {
+		generateSessionHtml : function(sessionId, serverSession, basePath) {
             session = serverSession;
 
             function onServerStuffReady(cache, sessProps) {
+                defaultAvatars = cache.avatars
                 //chat.console("prepare html");
                 var html = cache["html"];
                 //chat.console("cached Template.html: " + html);
@@ -259,21 +260,19 @@ chat.util.updateObject(adapter, function(chat){
                 chat.console("prepare html3");
                 var footerHtml = new Template(cache["Footer.html"] || "").toString({});
 
-                footerHtml = "<script src=\"qrc:///qtwebchannel/qwebchannel.js\"></script> \
+                footerHtml = "<script src=\"/psiglobal/qwebchannel.js\"></script> \
                         <script type=\"text/javascript\"> \
-                        document.addEventListener(\"DOMContentLoaded\", function () { \
                             new QWebChannel(qt.webChannelTransport, function (channel) { \
                                 window.srvSession = channel.objects.srvSession; \
                                 window.srvUtil = channel.objects.srvUtil; \
                                 initPsiTheme().adapter.initSession(); \
                             }); \
-                        }); \
                     </script>" + footerHtml;
 
                 //footerHtml += "\n<script type='text/javascript'>window.addEventListener('load', "+
                 //    server.jsNamespace+".adapter.initSession, false);</script>";
                 //chat.console("prepare html4");
-                var baseUrl = loader.serverUrl;
+                var baseUrl = loader.serverUrl + basePath + "/";
                 var replace
                 if (ip.MessageViewVersion < 3) {
                     replace = [
@@ -309,7 +308,7 @@ chat.util.updateObject(adapter, function(chat){
                 loader.setSessionHtml(sessionId, html);
             }
 
-            server.loadFromCacheMulti(["html", "Info.plist", "Topic.html", "Header.html", "Footer.html"],
+            server.loadFromCacheMulti(["html", "Info.plist", "Topic.html", "Header.html", "Footer.html", "avatars"],
                 function (cache) {
                     loader.sessionProperties(sessionId, ["chatName"], function(props) {
                         onServerStuffReady(cache, props)
@@ -325,6 +324,7 @@ chat.util.updateObject(adapter, function(chat){
             {
                 session = window.srvSession;
                 defaultAvatars = cache.avatars
+                chat.console(chat.util.props(defaultAvatars, true))
                 chat.adapter.initSession = null;
                 chat.adapter.loadTheme = null;
                 chat.adapter.getHtml = null;
@@ -336,7 +336,7 @@ chat.util.updateObject(adapter, function(chat){
                 chat.adapter.receiveObject = function(data) {
                     cdata = data;
                     try {
-                        //chat.console(chat.util.props(data, true))
+                        chat.console(chat.util.props(data, true))
                         var template;
                         if (data.type == "message") {
                             if (data.mtype != "message") {
@@ -476,6 +476,7 @@ chat.util.updateObject(adapter, function(chat){
 
                 session.localUserAvatarChanged.connect(printAvatar);
 
+                session.newMessage.connect(chat.adapter.receiveObject);
                 chat.console("session inited");
                 session.signalInited();
             }

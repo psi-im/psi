@@ -56,7 +56,6 @@ public:
 
 	void contextMenuEvent(QContextMenuEvent* event);
 	void sendJsObject(const QVariantMap &);
-	void sendJsCommand(const QString &cmd);
 	bool handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdit);
 
 	void dispatchMessage(const MessageView &m);

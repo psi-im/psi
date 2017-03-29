@@ -70,7 +70,7 @@ public:
 
 	WebView *webView;
 	ChatViewJSObject *jsObject;
-	QStringList jsBuffer_;
+	QList<QVariantMap> jsBuffer_;
 	bool sessionReady_ = false;
 	QPointer<QWidget> dialog_ = 0;
 	bool isMuc_ = false;
@@ -138,7 +138,7 @@ public:
 	}
 
 	inline static QString avatarUrl(const QString &hash)
-	{ return hash.isEmpty()? QString() : QLatin1String("/psiglobal/avatar/") + hash; }
+	{ return hash.isEmpty()? QString() : QLatin1String("psiglobal/avatar/") + hash; }
 
 	QString remoteUserImage()  const { return avatarUrl(_view->d->remoteIcons.vcard);  }
 	QString remoteUserAvatar() const { return avatarUrl(_view->d->remoteIcons.avatar); }
@@ -225,6 +225,7 @@ signals:
 	void remoteUserAvatarChanged(const QString &);
 	void localUserImageChanged(const QString &);
 	void localUserAvatarChanged(const QString &);
+	void newMessage(const QVariant &);
 };
 
 //----------------------------------------------------------------------------
@@ -453,13 +454,7 @@ void ChatView::psiOptionChanged(const QString &option)
 
 void ChatView::sendJsObject(const QVariantMap &map)
 {
-	sendJsCommand(QString(d->theme.jsNamespace() + ".adapter.receiveObject(%1);")
-				  .arg(JSUtil::map2json(map)));
-}
-
-void ChatView::sendJsCommand(const QString &cmd)
-{
-	d->jsBuffer_.append(cmd);
+	d->jsBuffer_.append(map);
 	checkJsBuffer();
 }
 
@@ -467,7 +462,7 @@ void ChatView::checkJsBuffer()
 {
 	if (d->sessionReady_) {
 		while (!d->jsBuffer_.isEmpty()) {
-			d->webView->evaluateJS(d->jsBuffer_.takeFirst());
+			d->jsObject->newMessage(d->jsBuffer_.takeFirst());
 		}
 	}
 }

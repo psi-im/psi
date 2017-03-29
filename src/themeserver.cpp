@@ -1,3 +1,4 @@
+#include <QFile>
 #include <QTcpServer>
 
 #include "themeserver.h"
@@ -12,6 +13,22 @@ ThemeServer::ThemeServer(QObject *parent) :
 	        QHostAddress::LocalHost, 0,
 	        [this](QHttpRequest* req, QHttpResponse* res)
 	{
+		// very global stuff first
+		QString path = req->url().path();
+		if (path.startsWith(QLatin1Literal("/psiglobal"))) {
+			QString globFile = path.mid(sizeof("/psiglobal")); // no / because of null pointer
+			if (globFile == QLatin1Literal("qwebchannel.js")) {
+				QFile qwcjs(":/qtwebchannel/qwebchannel.js");
+				if (qwcjs.open(QIODevice::ReadOnly)) {
+					res->setStatusCode(qhttp::ESTATUS_OK);
+					res->headers().insert("Content-Type", "application/javascript;charset=utf-8");
+					res->end(qwcjs.readAll());
+					return;
+				}
+			}
+		}
+
+
 		// PsiId identifies certiain element of interface we load contents for.
 		// For example it could be currently opened chat window for some jid.
 		// This id should be the same for all requests of the element.
@@ -28,8 +45,8 @@ ThemeServer::ThemeServer(QObject *parent) :
 		if (it != req->headers().constEnd()) {
 			handler = sessionHandlers.value(it.value());
 		}
-		if (!handler) {
-			QString baPath = req->url().path().mid(1);
+		if (!handler && path.size() > 1) { // if we have something after slash
+			QString baPath = path.mid(1);
 			auto it = sessionHandlers.begin();
 			while (it != sessionHandlers.end()) {
 				if (!it.value()) { /* garbage collecting */
@@ -38,6 +55,7 @@ ThemeServer::ThemeServer(QObject *parent) :
 					if (baPath.startsWith(it.key()) && (baPath.size() == it.key().size() ||
 														!baPath[it.key().size()].isLetter()))
 					{
+						req->setProperty("basePath", QString('/') + it.key());
 						const_cast<QUrl&>(req->url()).setPath(baPath.mid(it.key().size()));
 						handler = it.value();
 					}
