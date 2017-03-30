@@ -69,7 +69,6 @@ public:
 
 #ifdef QT_WEBENGINEWIDGETS_LIB
 	QList<QWebEngineScript> scripts;
-	QWebChannel *webChannel = nullptr; // parented by page on creation
 #else
 	QStringList scripts;
 #endif
@@ -577,13 +576,15 @@ bool ChatViewTheme::applyToWebView(QSharedPointer<ChatViewThemeSession> session)
 
 #if QT_WEBENGINEWIDGETS_LIB
 
-	if (!cvtd->webChannel) {
-		cvtd->webChannel = new QWebChannel(cvtd->wv->page());
-		cvtd->webChannel->registerObject(QLatin1String("srvUtil"), cvtd->jsUtil.data());
-		cvtd->webChannel->registerObject(QLatin1String("srvSession"), session->jsBridge());
-		page->setWebChannel(cvtd->webChannel);
+	QWebChannel *channel = page->webChannel();
+	if (!channel) {
+		channel = new QWebChannel(session->webView());
+		page->setWebChannel(channel);
+		// channel is kept on F5 but all objects are cleared, so will be added later
 	}
 
+	channel->registerObject(QLatin1String("srvUtil"), cvtd->jsUtil.data()); // FIXME real problem! it's shared with theme!
+	channel->registerObject(QLatin1String("srvSession"), session->jsBridge());
 	page->scripts().insert(cvtd->scripts);
 
 	ChatViewThemeProvider *provider = static_cast<ChatViewThemeProvider*>(themeProvider());

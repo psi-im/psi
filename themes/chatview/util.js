@@ -205,5 +205,6 @@ function initPsiTheme() {
     window.psiThemeAdapter = null;
     window[server.jsNamespace] = chat;
 
+    server.console("Util successfully initialized namespace: " + server.jsNamespace);
 	return chat;
 };
