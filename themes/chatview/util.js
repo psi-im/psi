@@ -1,7 +1,7 @@
 function initPsiTheme() {
 	var server = window.srvUtil;
     var loader = window.srvLoader;
-    server.console("Util is initilizing in namespace: " + server.jsNamespace);
+    server.console("Util is initilizing");
     var htmlSource = document.createElement("div"); //manages appendHtml
 	var chat =  {
 		console : server.console,
@@ -203,8 +203,8 @@ function initPsiTheme() {
 
     //window.srvUtil = null; // don't! we need it in adapter
     window.psiThemeAdapter = null;
-    window[server.jsNamespace] = chat;
+    window.psiim = chat;
 
-    server.console("Util successfully initialized namespace: " + server.jsNamespace);
+    server.console("Util successfully initialized");
 	return chat;
 };

@@ -52,7 +52,6 @@ public:
 	bool load(std::function<void(bool)> loadCallback);
 
 	bool isMuc() const;
-	QString jsNamespace();
 	inline QUrl baseUrl() const { return QUrl("theme://messages/" + id() + "/"); }
 
 	void putToCache(const QString &key, const QVariant &data);
@@ -60,6 +59,8 @@ public:
 	bool isTransparentBackground() const;
 	bool applyToWebView(QSharedPointer<ChatViewThemeSession> session);
 
+	QVariantMap loadFromCacheMulti(const QVariantList &list);
+	QVariant cache(const QString &name) const;
 private:
 	friend class ChatViewJSLoader;
 	friend class ChatViewThemePrivate;

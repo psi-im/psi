@@ -115,8 +115,7 @@ var adapter = {
             }
             loader.toCache("html", baseHtml);
             loader.toCache("Info.plist", ip);
-            chat.server.jsNamespace = "_adiumChat"+Math.round(1000*Math.random());
-            window[chat.server.jsNamespace] = chat; // just to keep it the same and avoid any problems
+            window.psiim = chat; // just to keep it the same and avoid any problems
 
             loader.finishThemeLoading();
         }

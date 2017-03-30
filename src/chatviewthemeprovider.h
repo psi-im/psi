@@ -45,6 +45,7 @@ public:
 	void setCurrentTheme(const QString &);
 	virtual int screenshotWidth() const { return 512; } // hack
 
+
 	ThemeServer *themeServer();
 	QWebEngineUrlRequestInterceptor *requestInterceptor();
 

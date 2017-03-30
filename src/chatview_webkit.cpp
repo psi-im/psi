@@ -338,7 +338,12 @@ ChatView::~ChatView()
 // something after we know isMuc and dialog is set. kind of final step
 void ChatView::init()
 {
-	d->theme = *(dynamic_cast<ChatViewTheme*>(d->themeProvider()->current()));// TODO rewrite this pointer magic
+	auto curTheme = d->themeProvider()->current();
+	if (!curTheme) {
+		qDebug("ChatView theme is not loaded. this is fatal");
+		return;
+	}
+	d->theme = *(dynamic_cast<ChatViewTheme*>(curTheme));// TODO rewrite this pointer magic
 	d->themeBridge.reset(new ChatViewThemeSessionBridge(this));
 	d->theme.applyToWebView(d->themeBridge.dynamicCast<ChatViewThemeSession>());
 	if (d->theme.isTransparentBackground()) {
