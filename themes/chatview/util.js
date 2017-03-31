@@ -121,7 +121,21 @@ function initPsiTheme() {
                         throw e;
                     }
                 });
-			}
+			},
+
+            dateFormat : function(val, format) {
+                if (val instanceof String) {
+                    val = Date.parse(val);
+                }
+                return val.toString(); // FIXME. should support "format" and "defaultDateFormat"
+            },
+
+            timeFormat : function(val, format) {
+                if (val instanceof String) {
+                    val = Date.parse(val);
+                }
+                return val.getHours() + ":" + val.getMinutes() + ":" + val.getSeconds() // FIXME. should support "format" and "defaultTimeFormat"
+            }
 		},
 
 		WindowScroller : function(animate) {

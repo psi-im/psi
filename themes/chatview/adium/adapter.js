@@ -192,8 +192,8 @@ chat.util.updateObject(adapter, function(chat){
 
 	TemplateTimeVar.prototype.toString = function() {
 		return cdata[this.name] instanceof Date?
-			server.strftime(cdata[this.name], this.param) :
-			server.strftime(new Date(), this.param);
+                    chat.util.timeFormat(cdata[this.name], this.param) :
+                    chat.util.timeFormat(new Date(), this.param);
 	}
 
 	function Template(raw) {
@@ -236,9 +236,9 @@ chat.util.updateObject(adapter, function(chat){
 
 	return {
 		generateSessionHtml : function(sessionId, serverSession, basePath) {
-            session = serverSession;
 
             function onServerStuffReady(cache, sessProps) {
+                session = serverSession;
                 defaultAvatars = cache.avatars
                 //chat.console("prepare html");
                 var html = cache["html"];
@@ -374,7 +374,7 @@ chat.util.updateObject(adapter, function(chat){
                                     template = templates.status;
                                     break;
                                 case "lastDate":
-                                    data["message"] = data["date"];
+                                    data["message"] = chat.util.dateFormat(data["date"]);
                                     data["time"] = "&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;"; //fixes some themes =)
                                     template = templates.status;
                                     data.messageClasses += " event date_separator";
