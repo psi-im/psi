@@ -2,20 +2,20 @@ function psiThemeAdapter(chat)
 {
 
 var adapter = {
-	loadTheme : function() {
-		//var chat = chat;
+    loadTheme : function() {
+        //var chat = chat;
         var loader = window.srvLoader;
         chat.console("DEBUG: loading " );
         loader.setCaseInsensitiveFS(true);
         loader.setPrepareSessionHtml(true);
         loader.setHttpResourcePath("/Contents/Resources");
-		chat.console("DEBUG: loading " + loader.themeId);
-		var resources = ["FileTransferRequest.html",
-		"Footer.html", "Header.html", "Status.html", "Topic.html", "Content.html",
-		"Incoming/Content.html", "Incoming/NextContent.html",
-		"Incoming/Context.html", "Incoming/NextContext.html",
-		"Outgoing/Content.html", "Outgoing/NextContent.html",
-		"Outgoing/Context.html", "Outgoing/NextContext.html"];
+        chat.console("DEBUG: loading " + loader.themeId);
+        var resources = ["FileTransferRequest.html",
+        "Footer.html", "Header.html", "Status.html", "Topic.html", "Content.html",
+        "Incoming/Content.html", "Incoming/NextContent.html",
+        "Incoming/Context.html", "Incoming/NextContext.html",
+        "Outgoing/Content.html", "Outgoing/NextContent.html",
+        "Outgoing/Context.html", "Outgoing/NextContext.html"];
 
         var toCache = {};
         for (var i=0; i<resources.length; i++) {
@@ -79,10 +79,10 @@ var adapter = {
         function resourcesListReady(rlist)
         {
             var avatars = {}
-            avatars.incomingBuddy = rlist["Incoming/buddy_icon.png"]? "Incoming/buddy_icon.png" : chat.defaultAvatarUrl;
-            avatars.outgoingBuddy = rlist["Outgoing/buddy_icon.png"]? "Outgoing/buddy_icon.png" : chat.defaultAvatarUrl;
-            avatars.incomingImage = rlist["incoming_icon.png"]? "incoming_icon.png" : chat.defaultAvatarUrl;
-            avatars.outgoingImage = rlist["outgoing_icon.png"]? "outgoing_icon.png" : chat.defaultAvatarUrl;
+            avatars.incomingBuddy = rlist["Incoming/buddy_icon.png"]? "Incoming/buddy_icon.png" : chat.server.psiDefaultAvatarUrl;
+            avatars.outgoingBuddy = rlist["Outgoing/buddy_icon.png"]? "Outgoing/buddy_icon.png" : chat.server.psiDefaultAvatarUrl;
+            avatars.incomingImage = rlist["incoming_icon.png"]? "incoming_icon.png" : chat.server.psiDefaultAvatarUrl;
+            avatars.outgoingImage = rlist["outgoing_icon.png"]? "outgoing_icon.png" : chat.server.psiDefaultAvatarUrl;
             loader.toCache("avatars", avatars)
             loader.getFileContents("Contents/Resources/Template.html", baseHtmlLoaded);
         }
@@ -121,36 +121,36 @@ var adapter = {
         }
 
         var ip = {variants: {}};
-		//chat.console("DEBUG: 2");
-		chat.util.loadXML("Contents/Info.plist", plistLoaded);
-	}
+        //chat.console("DEBUG: 2");
+        chat.util.loadXML("Contents/Info.plist", plistLoaded);
+    }
 }
 
 // update apapter with methods having some private part
 chat.util.updateObject(adapter, function(chat){
     var server = chat.server;
     var loader = window.srvLoader;
-	var session = null;
-	var dateFormat = "%H:%M";
-	var cdata;
-	var proxyEl = document.createElement("div");
+    var session = null;
+    var dateFormat = "%H:%M";
+    var cdata;
+    var proxyEl = document.createElement("div");
     var defaultAvatars = null;
     var avatarsMap = {};
 
-	function TemplateVar(name, param) {
-		this.name = name;
-		this.param = param
-	}
+    function TemplateVar(name, param) {
+        this.name = name;
+        this.param = param
+    }
 
-	TemplateVar.prototype = {
-		toString : function() {
-			//chat.console("DEBUG: TemplateVar.prototype.toString " + session);
-			var d = cdata[this.name];
-			if (this.name == "sender") { //may not be html
-				d = chat.util.escapeHtml(d);
-			} else if (d instanceof Date) {
-				d = server.formatDate(d, "yyyy-MM-dd");
-			} else if (this.name == "userIconPath") { // associated with message
+    TemplateVar.prototype = {
+        toString : function() {
+            //chat.console("DEBUG: TemplateVar.prototype.toString " + session);
+            var d = cdata[this.name];
+            if (this.name == "sender") { //may not be html
+                d = chat.util.escapeHtml(d);
+            } else if (d instanceof Date) {
+                d = server.formatDate(d, "yyyy-MM-dd");
+            } else if (this.name == "userIconPath") { // associated with message
                 var url;
                 if (cdata.local) {
                     url = session.localUserAvatar? session.localUserAvatar : defaultAvatars.outgoingBuddy;
@@ -165,14 +165,14 @@ chat.util.updateObject(adapter, function(chat){
                 //chat.console((cdata.local? "local " : "remote ") + "avatar: " + url)
                 return url;
 
-			} else if (this.name == "incomingIconPath") { // associated with chat
+            } else if (this.name == "incomingIconPath") { // associated with chat
                 return session.remoteUserImage? session.remoteUserImage : defaultAvatars.incomingImage;
             } else if (this.name == "outgoingIconPath") { // associated with chat
                 return session.localUserImage? session.localUserImage : defaultAvatars.ougoingImage;
 
-			} else if (this.name == "senderColor") {
-				return session.mucNickColor(cdata.sender, cdata.local);
-			} else if (this.name == "message" && cdata.id) {
+            } else if (this.name == "senderColor") {
+                return session.mucNickColor(cdata.sender, cdata.local);
+            } else if (this.name == "message" && cdata.id) {
                 // if we have an id then this is a replacable message.
                 // next weird logic is as follows:
                 //   - wrapping to some element may break elements flow
@@ -181,61 +181,70 @@ chat.util.updateObject(adapter, function(chat){
                 return "<psims mid=\"" + cdata.id + "\"/>" + d + "<psime mid=\"" + cdata.id + "\"/>";
             }
 
-			return d || "";
-		}
-	}
+            return d || "";
+        }
+    }
 
-	function TemplateTimeVar(name, param) {
-		this.name = name;
-		this.param = param || dateFormat;
-	}
+    function TemplateTimeVar(name, param) {
+        // Adium uses tr35-dates stadard. we can't use it here, but examples are in tr35.
+        // for strftime default variant: allowNaturalLanguage:NO
+        //
+        // dateOpened = "EEEE, MMMM d, yyyy G"  //example: Tuesday, April 12, 1952 AD
+        // shortTime = "j:mm" // auto select for am/pm. exampe: 15:30 or 3:05
+        // time = "j:mm" // can be overriden from adium preferences @'Time Stamp' // TODO
+        // timeOpened = time
+        this.name = name; // time+, shortTime, timeOpened+, dateOpened
+        this.param = param || {time: "h:mm", shortTime:"h:mm", dateOpened:"EEEE LL",
+                               timeOpened:"h:mm"}[this.name];
+        this.formatter = new chat.DateTimeFormatter(this.param);
+    }
 
-	TemplateTimeVar.prototype.toString = function() {
-		return cdata[this.name] instanceof Date?
-                    chat.util.timeFormat(cdata[this.name], this.param) :
-                    chat.util.timeFormat(new Date(), this.param);
-	}
+    TemplateTimeVar.prototype.toString = function() {
+        return cdata[this.name] instanceof Date?
+                    this.formatter.format(cdata[this.name]):
+                    this.formatter.format(new Date());
+    }
 
-	function Template(raw) {
-		//chat.console("parsing '"+raw+"'");
-		var splitted = raw.split(/(%[\w]+(?:\{[^\{]+\})?%)/), i;
-		this.parts = [];
+    function Template(raw) {
+        //chat.console("parsing '"+raw+"'");
+        var splitted = raw.split(/(%[\w]+(?:\{[^\{]+\})?%)/), i;
+        this.parts = [];
 
-		for (i = 0; i < splitted.length; i++) {
-			var m = splitted[i].match(/%([\w]+)(?:\{([^\{]+)\})?%/);
-			if (m) {
-				//chat.console("found var '"+m[1]+"'");
-				this.parts.push(m[1] in tvConstructors
-					? new tvConstructors[m[1]](m[1], m[2])
-					: new TemplateVar(m[1], m[2]));
-			} else {
-				this.parts.push(splitted[i]);
-			}
-		}
-	}
+        for (i = 0; i < splitted.length; i++) {
+            var m = splitted[i].match(/%([\w]+)(?:\{([^\{]+)\})?%/);
+            if (m) {
+                //chat.console("found var '"+m[1]+"'");
+                this.parts.push(m[1] in tvConstructors
+                    ? new tvConstructors[m[1]](m[1], m[2])
+                    : new TemplateVar(m[1], m[2]));
+            } else {
+                this.parts.push(splitted[i]);
+            }
+        }
+    }
 
-	Template.prototype.toString = function(data) {
-		//chat.console("prepare Template.prototype.toString1");
-		cdata = data || cdata;
-		var html = this.parts.join("");
-		proxyEl.innerHTML = html;
-		chat.util.replaceIcons(proxyEl);
-		//chat.console("prepare Template.prototype.toString2");
-		return proxyEl.innerHTML;
-	}
+    Template.prototype.toString = function(data) {
+        //chat.console("prepare Template.prototype.toString1");
+        cdata = data || cdata;
+        var html = this.parts.join("");
+        proxyEl.innerHTML = html;
+        chat.util.replaceIcons(proxyEl);
+        //chat.console("prepare Template.prototype.toString2");
+        return proxyEl.innerHTML;
+    }
 
-	// Template variable constructors
-	var tvConstructors = {
-		time : TemplateTimeVar,
-		timeOpened : TemplateTimeVar
-	}
+    // Template variable constructors
+    var tvConstructors = {
+        time : TemplateTimeVar,
+        timeOpened : TemplateTimeVar
+    }
 
-	function psiOption(name) {
-		return eval("[" + server.psiOption(name) + "][0]")
-	}
+    function psiOption(name) {
+        return eval("[" + server.psiOption(name) + "][0]")
+    }
 
-	return {
-		generateSessionHtml : function(sessionId, serverSession, basePath) {
+    return {
+        generateSessionHtml : function(sessionId, serverSession, basePath) {
 
             function onServerStuffReady(cache, sessProps) {
                 session = serverSession;
@@ -259,7 +268,10 @@ chat.util.updateObject(adapter, function(chat){
                 chat.console("prepare html3");
                 var footerHtml = new Template(cache["Footer.html"] || "").toString({});
 
-                footerHtml = "<script src=\"/psiglobal/qwebchannel.js\"></script> \
+                footerHtml = "<script src=\"/psithemes/chatview/moment-with-locales.min.js\"></script>\n \
+                        <script src=\"/psithemes/chatview/util.js\"></script>\n \
+                        <script src=\"/psithemes/chatview/adium/adapter.js\"></script>\n \
+                        <script src=\"/psiglobal/qwebchannel.js\"></script> \
                         <script type=\"text/javascript\"> \
                             new QWebChannel(qt.webChannelTransport, function (channel) { \
                                 window.srvSession = channel.objects.srvSession; \
@@ -315,9 +327,9 @@ chat.util.updateObject(adapter, function(chat){
                 });
 
 
-		},
-		initSession : function() {
-			chat.console("init session");
+        },
+        initSession : function() {
+            chat.console("init session");
 
             function cacheReady(cache)
             {
@@ -374,7 +386,7 @@ chat.util.updateObject(adapter, function(chat){
                                     template = templates.status;
                                     break;
                                 case "lastDate":
-                                    data["message"] = chat.util.dateFormat(data["date"]);
+                                    data["message"] = chat.util.dateFormat(data["date"], "EEEE, LL");
                                     data["time"] = "&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;"; //fixes some themes =)
                                     template = templates.status;
                                     data.messageClasses += " event date_separator";
@@ -434,7 +446,7 @@ chat.util.updateObject(adapter, function(chat){
                             }
                         }
                     } catch(e) {
-                        chat.util.showCriticalError("APPEND ERROR: " + e + " \nline: " + e.line)
+                        chat.util.showCriticalError("APPEND ERROR: " + e + " \n" + e.stack)
                     }
                 };
 
@@ -485,8 +497,8 @@ chat.util.updateObject(adapter, function(chat){
                                       "Incoming/Context.html", "Incoming/NextContext.html",
                                       "Outgoing/Content.html", "Outgoing/NextContent.html",
                                       "Outgoing/Context.html", "Outgoing/NextContext.html"], cacheReady)
-		}
-	}
+        }
+    }
 }(chat))
 
     chat.console("Adium adapter is ready");

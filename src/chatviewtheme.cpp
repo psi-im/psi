@@ -272,11 +272,17 @@ class ChatViewThemeJSUtil : public QObject {
 	Q_OBJECT
 
 	ChatViewTheme *theme;
+	QString psiDefaultAvatarUrl;
+
+	Q_PROPERTY(QString psiDefaultAvatarUrl MEMBER psiDefaultAvatarUrl CONSTANT)
+
 public:
 	ChatViewThemeJSUtil(ChatViewTheme *theme, QObject *parent = 0) :
 	    QObject(parent),
 	    theme(theme)
 	{
+		psiDefaultAvatarUrl = "psiglobal/avatar/default.png"; // relative to session url
+		// may be in the future we can make different defaults. per transport for example
 	}
 
 	inline void putToCache(const QString &key, const QVariant &data)
@@ -399,14 +405,6 @@ bool ChatViewTheme::load(std::function<void(bool)> loadCallback)
 	}
 
 	cvtd->loadCallback = loadCallback;
-
-	QStringList idParts = id().split('/');
-	QString themeType, themeId;
-	std::tie(themeType, themeId) = std::tie(idParts[0], idParts[1]);
-	QStringList scriptPaths = QStringList()
-	        << themeProvider()->themePath(QLatin1String("chatview/util.js"))
-	        << themeProvider()->themePath(QLatin1String("chatview/") + themeType + QLatin1String("/adapter.js"));
-
 	if (cvtd->jsUtil.isNull())
 		cvtd->jsLoader.reset(new ChatViewJSLoader(this));
 		cvtd->jsUtil.reset(new ChatViewThemeJSUtil(this));
@@ -414,42 +412,20 @@ bool ChatViewTheme::load(std::function<void(bool)> loadCallback)
 		cvtd->wv = new WebView(0);
 	}
 
-	//d->loadCallback = callback;
-
-
+	QString themeType = id().section('/', 0, 0);
 #if QT_WEBENGINEWIDGETS_LIB
 	QWebChannel * channel = new QWebChannel(cvtd->wv->page());
 	cvtd->wv->page()->setWebChannel(channel);
 	channel->registerObject(QLatin1String("srvLoader"), cvtd->jsLoader.data());
 	channel->registerObject(QLatin1String("srvUtil"), cvtd->jsUtil.data());
 
-	QWebEngineScriptCollection &sc = cvtd->wv->page()->scripts();
-
-	// that's something static enough to be passed statically to every chat window on init
-	QWebEngineScript propsJs;
-	propsJs.setSourceCode("srvProps = { psiDefaultAvatarUrl: \"psiglobal/avatar/default.png\" }");
-	propsJs.setInjectionPoint(QWebEngineScript::DocumentCreation);
-	propsJs.setWorldId(QWebEngineScript::MainWorld);
-	cvtd->scripts.append(propsJs);
-	sc.insert(propsJs);
-
-	for (auto &sp : scriptPaths) {
-		QFile f(sp);
-		if (f.open(QIODevice::ReadOnly)) {
-			QWebEngineScript script;
-			script.setSourceCode(f.readAll());
-			script.setInjectionPoint(QWebEngineScript::DocumentCreation);
-			script.setWorldId(QWebEngineScript::MainWorld);
-			cvtd->scripts.append(script);
-			qDebug() << "Adding: " << sp;
-			sc.insert(script);
-		}
-	}
-
 	//QString themeServer = ChatViewThemeProvider::serverAddr();
 	cvtd->wv->page()->setHtml(QString(
-	    "<html><head>"
-	    "<script src=\"qrc:///qtwebchannel/qwebchannel.js\"></script>"
+	    "<html><head>\n"
+	    "<script src=\"/psithemes/chatview/moment-with-locales.min.js\"></script>\n"
+	    "<script src=\"/psithemes/chatview/util.js\"></script>\n"
+	    "<script src=\"/psithemes/chatview/%1/adapter.js\"></script>\n"
+	    "<script src=\"/psiglobal/qwebchannel.js\"></script>\n"
 		"<script type=\"text/javascript\">\n"
 			"document.addEventListener(\"DOMContentLoaded\", function () {\n"
 				"new QWebChannel(qt.webChannelTransport, function (channel) {\n"
@@ -458,10 +434,15 @@ bool ChatViewTheme::load(std::function<void(bool)> loadCallback)
 	                "initPsiTheme().adapter.loadTheme();\n"
 				"});\n"
 			"});\n"
-		"</script></head></html>")
+		"</script></head></html>").arg(themeType), cvtd->jsLoader->serverUrl()
 	);
 	return true;
 #else
+	QStringList scriptPaths = QStringList()
+	        << PsiThemeProvider::themePath(QLatin1String("chatview/util.js"))
+	        << PsiThemeProvider::themePath(QLatin1String("chatview/") + themeType + QLatin1String("/adapter.js"));
+
+
 	d->wv->page()->mainFrame()->addToJavaScriptWindowObject("srvLoader", d->jsLoader, QT_JS_OWNERSHIP);
 	d->wv->page()->mainFrame()->addToJavaScriptWindowObject("srvUtil", d->jsUtil, QT_JS_OWNERSHIP);
 
@@ -575,8 +556,6 @@ bool ChatViewTheme::applyToWebView(QSharedPointer<ChatViewThemeSession> session)
 		// channel is kept on F5 but all objects are cleared, so will be added later
 	}
 
-	page->scripts().insert(cvtd->scripts);
-
 	ChatViewThemeProvider *provider = static_cast<ChatViewThemeProvider*>(themeProvider());
 	page->profile()->setRequestInterceptor(provider->requestInterceptor());
 
@@ -648,7 +627,7 @@ bool ChatViewTheme::applyToWebView(QSharedPointer<ChatViewThemeSession> session)
 		return true;
 		// there is a chance the windows is closed already when we come here..
 	};
-	session->sessId = server->registerHandler(handler);
+	session->sessId = server->registerSessionHandler(handler);
 	QUrl url = server->serverUrl();
 	QUrlQuery q;
 	q.addQueryItem(QLatin1String("psiId"), session->sessId);
@@ -672,7 +651,7 @@ bool ChatViewTheme::applyToWebView(QSharedPointer<ChatViewThemeSession> session)
 ChatViewThemeSession::~ChatViewThemeSession()
 {
    if (server) {
-	   server->unregisterHandler(sessId);
+	   server->unregisterSessionHandler(sessId);
    }
 }
 

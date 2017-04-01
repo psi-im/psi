@@ -245,7 +245,7 @@ function psiThemeAdapter(chat) {
 					trackbar = null;
 				}
 			} catch(e) {
-				chat.util.showCriticalError("APPEND ERROR: " + e + " \nline: " + e.line)
+				chat.util.showCriticalError("APPEND ERROR: " + e + "\n" + e.stack)
 			}
 		};
 

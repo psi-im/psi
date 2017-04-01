@@ -32,7 +32,7 @@ PsiThemeProvider::PsiThemeProvider(QObject *parent)
 
 }
 
-QString PsiThemeProvider::themePath(const QString &name) const {
+QString PsiThemeProvider::themePath(const QString &name) {
 	QStringList dirs;
 	dirs << ":";
 	dirs << ".";

@@ -15,6 +15,15 @@ ThemeServer::ThemeServer(QObject *parent) :
 	{
 		// very global stuff first
 		QString path = req->url().path();
+
+		foreach (auto &h, pathHandlers) {
+			if (path.startsWith(h.first)) {
+				if (h.second(req, res)) {
+					return;
+				}
+			}
+		}
+
 		if (path.startsWith(QLatin1Literal("/psiglobal"))) {
 			QString globFile = path.mid(sizeof("/psiglobal")); // no / because of null pointer
 			if (globFile == QLatin1Literal("qwebchannel.js")) {
@@ -102,7 +111,12 @@ QUrl ThemeServer::serverUrl()
 	return u;
 }
 
-QString ThemeServer::registerHandler(const Handler &handler)
+void ThemeServer::registerPathHandler(const char *path, const Handler &handler)
+{
+	pathHandlers.append(QPair<QString, Handler>(path, handler));
+}
+
+QString ThemeServer::registerSessionHandler(const Handler &handler)
 {
 	QString s;
 	s.sprintf("t%x", handlerSeed);
@@ -113,7 +127,7 @@ QString ThemeServer::registerHandler(const Handler &handler)
 	return s;
 }
 
-void ThemeServer::unregisterHandler(const QString &path)
+void ThemeServer::unregisterSessionHandler(const QString &path)
 {
 	sessionHandlers.remove(path);
 }

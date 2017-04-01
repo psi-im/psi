@@ -26,11 +26,13 @@ public:
 
 	QUrl serverUrl();
 
-	QString registerHandler(const Handler &handler);
-	void unregisterHandler(const QString &path);
+	QString registerSessionHandler(const Handler &handler);
+	void unregisterSessionHandler(const QString &path);
+	void registerPathHandler(const char *path, const Handler &handler);
 private:
 
 	QHash<QString,Handler> sessionHandlers;
+	QList<QPair<QString,Handler>> pathHandlers;
 
 };
 

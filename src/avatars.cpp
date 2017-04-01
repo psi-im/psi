@@ -840,11 +840,13 @@ void AvatarFactory::onVcardTaskFinsihed()
 {
 	auto task = dynamic_cast<JT_VCard*>(sender());
 	QString hash = task->property("hash").toString();
-	QByteArray ba = task->vcard().photo();
-	if (!ba.isNull()) {
-		QString fullJid = task->jid().full();
-		if (AvatarCache::instance()->setIcon(AvatarCache::VCardType, fullJid, ba, hash) == AvatarCache::UserUpdateRequired) {
-			emit avatarChanged(task->jid());
+	if (task->success() && !task->vcard().isNull()) {
+		QByteArray ba = task->vcard().photo();
+		if (!ba.isNull()) {
+			QString fullJid = task->jid().full();
+			if (AvatarCache::instance()->setIcon(AvatarCache::VCardType, fullJid, ba, hash) == AvatarCache::UserUpdateRequired) {
+				emit avatarChanged(task->jid());
+			}
 		}
 	}
 }

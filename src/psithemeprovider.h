@@ -45,7 +45,7 @@ public:
 	virtual QString optionsName() const = 0;
 	virtual QString optionsDescription() const = 0;
 
-	QString themePath(const QString &name) const;
+	static QString themePath(const QString &name);
 };
 
 #endif
