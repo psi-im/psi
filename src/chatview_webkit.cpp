@@ -56,6 +56,7 @@
 #include "chatviewtheme.h"
 #include "chatviewthemeprovider.h"
 #include "avatars.h"
+#include "desktoputil.h"
 
 
 class ChatViewThemeSessionBridge;
@@ -294,7 +295,21 @@ public:
 };
 
 
-
+class ChatViewPage : public QWebEnginePage
+{
+protected:
+	using QWebEnginePage::QWebEnginePage;
+	bool acceptNavigationRequest(const QUrl &url, NavigationType type, bool isMainFrame)
+	{
+		if (isMainFrame && (type == NavigationTypeLinkClicked ||
+		                    type == NavigationTypeFormSubmitted ||
+		                    type == NavigationTypeBackForward)) {
+			DesktopUtil::openUrl(url);
+			return false;
+		}
+		return true;
+	}
+};
 
 //----------------------------------------------------------------------------
 // ChatView
@@ -309,7 +324,9 @@ ChatView::ChatView(QWidget *parent) :
 	d->jsObject = new ChatViewJSObject(this); /* It's a session bridge between html and c++ part */
 	d->webView = new WebView(this);
 	d->webView->setFocusPolicy(Qt::NoFocus);
-#ifndef QT_WEBENGINEWIDGETS_LIB
+#ifdef QT_WEBENGINEWIDGETS_LIB
+	d->webView->setPage(new ChatViewPage(d->webView));
+#else
 	d->webView->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
 #endif
 	QVBoxLayout *layout = new QVBoxLayout;
