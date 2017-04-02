@@ -4,6 +4,7 @@
 #include "themeserver.h"
 #include "chatviewthemeprovider_priv.h"
 #include "psithemeprovider.h"
+#include "psiiconset.h"
 
 static QPointer<ChatViewCon> cvCon;
 
@@ -30,7 +31,7 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
 	themeServer = new ThemeServer(this);
 
 	// handler reading data from themes directory
-	ThemeServer::Handler handler = [&](qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res) -> bool
+	ThemeServer::Handler themesDirHandler = [&](qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res) -> bool
 	{
 		QString fn = req->url().path().mid(sizeof("/psithemes"));
 		fn.replace("..", ""); // a little security
@@ -50,7 +51,22 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
 		}
 		return false;
 	};
-	themeServer->registerPathHandler("/psithemes/", handler);
+
+	ThemeServer::Handler iconsHandler = [&](qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res) -> bool
+	{
+		QString name = req->url().path().mid(sizeof("/psiicon"));
+		QByteArray ba = IconsetFactory::raw(name);
+
+		if (!ba.isEmpty()) {
+			res->setStatusCode(qhttp::ESTATUS_OK);
+			res->end(ba);
+			return true;
+		}
+		return false;
+	};
+
+	themeServer->registerPathHandler("/psithemes/", themesDirHandler);
+	themeServer->registerPathHandler("/psiicon/", iconsHandler);
 
 	requestInterceptor = new ChatViewUrlRequestInterceptor(this);
 #else

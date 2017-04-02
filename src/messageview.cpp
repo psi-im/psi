@@ -27,16 +27,16 @@
 
 static const QString me_cmd = "/me ";
 
-MessageView::MessageView(Type t)
-	: _type(t)
-	, _emote(false)
-	, _alert(false)
-	, _local(false)
-	, _spooled(false)
-	, _awaitingReceipt(false)
-	, _status(0)
-	, _statusPriority(0)
-	, _dateTime(QDateTime::currentDateTime())
+MessageView::MessageView(Type t) :
+	_type(t),
+	_emote(false),
+	_alert(false),
+	_local(false),
+	_spooled(false),
+	_awaitingReceipt(false),
+	_status(0),
+	_statusPriority(0),
+	_dateTime(QDateTime::currentDateTime())
 {
 
 }

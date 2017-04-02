@@ -87,6 +87,14 @@ public:
 		return (ChatViewThemeProvider *)PsiThemeManager::instance()->
 			                provider(isMuc_?"groupchatview":"chatview");
 	}
+
+	static QString closeIconTags(const QString &richText)
+	{
+		static QRegExp mIcon("(<icon [^>]+>)");
+		QString s(richText);
+		s.replace(mIcon, "\\1</icon>");
+		return s;
+	}
 };
 
 
@@ -526,6 +534,16 @@ void ChatView::dispatchMessage(const MessageView &mv)
 			sendJsObject(m);
 		}
 		QVariantMap vm = mv.toVariantMap(d->isMuc_, true);
+		auto it = vm.find(QLatin1String("usertext"));
+		if (it != vm.end()) {
+			*it = ChatViewPrivate::closeIconTags(it.value().toString());
+		}
+		it = vm.find(QLatin1String("message"));
+		if (it != vm.end()) {
+			*it = ChatViewPrivate::closeIconTags(it.value().toString());
+		}
+
+
 		vm["encrypted"] = d->isEncryptionEnabled_;
 		if (!replaceId.isEmpty()) {
 			vm["type"] = "replace";

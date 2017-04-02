@@ -78,16 +78,10 @@ void PsiTipLabel::initUi()
 	margin = 1 + style()->pixelMetric(QStyle::PM_ToolTipLabelFrameWidth, 0, this);
 	setFrameStyle(QFrame::NoFrame);
 
-	// doc = new QTextDocument(this);
-	// QTextDocumentLayout is private in Qt4
-	// and it's impossible to set wrapping mode directly.
-	// So we create this QTextEdit instance and use its QTextDocument,
-	// just because QTextEdit can set the wrapping mode.
-	// Yes, this is crazy...
-	QTextEdit *edit = new QTextEdit(this);
-	edit->hide();
-	edit->setWordWrapMode(QTextOption::WordWrap);
-	doc = edit->document();
+	doc = new QTextDocument(this);
+	QTextOption opt = doc->defaultTextOption();
+	opt.setWrapMode(QTextOption::WordWrap);
+	doc->setDefaultTextOption(opt);
 	doc->setUndoRedoEnabled(false);
 	doc->setDefaultFont(font());
 

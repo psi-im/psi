@@ -50,25 +50,19 @@ function initPsiTheme() {
             },
 
             // replaces <icon name="icon_name" text="icon_text" />
-            // with <img src="icon://psi/icon_name" title="icon_text" />
+            // with <img src="/psiicon/icon_name" title="icon_text" />
             icon2img : function (obj) {
                var img = document.createElement('img');
-               img.src = "icon:" + obj.getAttribute("name");
+               img.src = "/psiicon/" + obj.getAttribute("name");
                img.title = obj.getAttribute("text");
-               var ib = obj.nextSibling
-               while (obj.firstChild) obj.parentNode.insertBefore(obj.firstChild, ib);
                obj.parentNode.replaceChild(img, obj);
             },
 
             // replaces all occurrence of <icon> by function above
             replaceIcons : function(el) {
-                var icon, icons = [], i, els;
-                while (true) {
-                    els = el.getElementsByTagName("icon");
-                    if (els.length == 0) break;
-                    for (i=0; i<els.length; i++) {
-                        chat.util.icon2img(els[i]);
-                    }
+                var els = el.getElementsByTagName("icon");
+                while (els.length) {
+                    chat.util.icon2img(els[0]);
                 }
             },
 
@@ -231,26 +225,28 @@ function initPsiTheme() {
                 var inTxt = false;
                 var i;
                 var m = {j:"h"}; // sadly "j" is not supported
+                var ret = "";
                 for (i = 0; i < format.length; i++) {
-                    if (format[i] === "'") {
-                        format[i] = inTxt? ']' : '[';
+                    if (format[i] == "'") {
+                        ret += (inTxt? ']' : '[');
                         inTxt = !inTxt;
-                    }
-                    if (!inTxt) {
-                        var c = m[format[i]];
-                        if (c) {
-                            format[i] = c;
+                    } else {
+                        var c;
+                        if (!inTxt && (c = m[format[i]])) {
+                            ret += c;
+                        } else {
+                            ret += format[i];
                         }
                     }
                 }
                 if (inTxt) {
-                    format += "]";
+                    ret += "]";
                 }
 
-                format = format.replace("EEEE", "dddd")
-                format = format.replace("EEE", "ddd")
+                ret = ret.replace("EEEE", "dddd");
+                ret = ret.replace("EEE", "ddd");
 
-                return format;
+                return ret;
             }
 
             formatStr = formatStr || "j:mm";

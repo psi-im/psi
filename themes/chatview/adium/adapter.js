@@ -375,7 +375,7 @@ chat.util.updateObject(adapter, function(chat){
                                         template = data.local?templates.outgoingContent:templates.incomingContent;
                                     }
                                     prevGrouppingData = data;
-                                    data.senderStatusIcon="icon:status/online"; //FIXME temporary hack
+                                    data.senderStatusIcon="/psiicon/status/online"; //FIXME temporary hack
                                     break;
                                 case "status":
                                     data.messageClasses += " status";

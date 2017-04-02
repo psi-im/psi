@@ -549,9 +549,9 @@ QString TextUtil::legacyFormat(const QString& in)
 	//out=out.replace(QRegExp("(^[^<>\\s]*|\\s[^<>\\s]*)_(\\S+)_([^<>\\s]*\\s|[^<>\\s]*$)"),"\\1<u>_\\2_</u>\\3");
 
 	QString out=in;
-	out=out.replace(QRegExp("(^|\\s|>)_(\\S+)_(?=<|\\s|$)"),"\\1<u>_\\2_</u>");
-	out=out.replace(QRegExp("(^|\\s|>)\\*(\\S+)\\*(?=<|\\s|$)"),"\\1<b>*\\2*</b>");
-	out=out.replace(QRegExp("(^|\\s|>)\\/(\\S+)\\/(?=<|\\s|$)"),"\\1<i>/\\2/</i>");
+	out=out.replace(QRegExp("(^|\\s|>)_(\\S+)_(?=<|\\s|$)"),"\\1<u>_\\2_</u>");     // underline inside _text_
+	out=out.replace(QRegExp("(^|\\s|>)\\*(\\S+)\\*(?=<|\\s|$)"),"\\1<b>*\\2*</b>"); // bold *text*
+	out=out.replace(QRegExp("(^|\\s|>)\\/(\\S+)\\/(?=<|\\s|$)"),"\\1<i>/\\2/</i>"); // italic /text/
 
 	return out;
 }
