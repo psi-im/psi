@@ -32,17 +32,17 @@ class ActionList : public QObject
 {
 	Q_OBJECT
 public:
-	ActionList(QString name, int id, bool autoDelete = true);
+	ActionList(const QString &name, int id, bool autoDelete = true);
 	ActionList(const ActionList &);
 	~ActionList();
 
 	QString name() const;
 	int id() const;
 
-	IconAction *action( QString name ) const;
+	IconAction *action( const QString &name ) const;
 	QStringList actions() const;
 
-	void addAction( QString name, IconAction *action );
+	void addAction( const QString &name, IconAction *action );
 
 	void clear();
 
@@ -59,7 +59,7 @@ public:
 	MetaActionList();
 	~MetaActionList();
 
-	ActionList *actionList( QString name ) const;
+	ActionList *actionList( const QString &name ) const;
 	QList<ActionList*> actionLists( int id ) const;
 	QStringList actionLists() const;
 

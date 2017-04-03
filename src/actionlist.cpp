@@ -47,7 +47,7 @@ public slots:
 	void actionDestroyed(QObject *);
 };
 
-ActionList::ActionList( QString name, int id, bool autoDelete )
+ActionList::ActionList( const QString &name, int id, bool autoDelete )
 	: QObject()
 {
 	d = new Private();
@@ -65,6 +65,8 @@ ActionList::ActionList( const ActionList &from )
 
 ActionList::~ActionList()
 {
+	if (d->autoDeleteActions)
+		qDeleteAll(d->actions);
 	delete d;
 }
 
@@ -78,7 +80,7 @@ int ActionList::id() const
 	return d->id;
 }
 
-IconAction *ActionList::action( QString name ) const
+IconAction *ActionList::action( const QString &name ) const
 {
 	return d->actions[name];
 }
@@ -88,7 +90,7 @@ QStringList ActionList::actions() const
 	return d->sortedActions;
 }
 
-void ActionList::addAction( QString name, IconAction *action )
+void ActionList::addAction( const QString &name, IconAction *action )
 {
 	d->sortedActions << name;
 
@@ -148,7 +150,7 @@ MetaActionList::~MetaActionList()
 	delete d;
 }
 
-ActionList *MetaActionList::actionList( QString name ) const
+ActionList *MetaActionList::actionList( const QString &name ) const
 {
 	foreach(ActionList* a, d->lists) {
 		if (a->name() == name)
@@ -208,7 +210,6 @@ void MetaActionList::addList( ActionList *list )
 
 void MetaActionList::clear()
 {
-
 	foreach(ActionList* l, d->lists) {
 		l->clear();
 	}
