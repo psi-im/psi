@@ -522,59 +522,33 @@ bool ChatView::handleCopyEvent(QObject *object, QEvent *event, ChatEdit *chatEdi
 void ChatView::dispatchMessage(const MessageView &mv)
 {
 	QString replaceId = mv.replaceId();
-#if 0
-	if (replaceId.isEmpty()) {
-#endif
-		if ((mv.type() == MessageView::Message || mv.type() == MessageView::Subject)
-				&& updateLastMsgTime(mv.dateTime())) {
-			QVariantMap m;
-			m["date"] = mv.dateTime();
-			m["type"] = "message";
-			m["mtype"] = "lastDate";
-			sendJsObject(m);
-		}
-		QVariantMap vm = mv.toVariantMap(d->isMuc_, true);
-		auto it = vm.find(QLatin1String("usertext"));
-		if (it != vm.end()) {
-			*it = ChatViewPrivate::closeIconTags(it.value().toString());
-		}
-		it = vm.find(QLatin1String("message"));
-		if (it != vm.end()) {
-			*it = ChatViewPrivate::closeIconTags(it.value().toString());
-		}
-
-
-		vm["encrypted"] = d->isEncryptionEnabled_;
-		if (!replaceId.isEmpty()) {
-			vm["type"] = "replace";
-			vm["replaceId"] = replaceId;
-		} else {
-			vm["mtype"] = vm["type"];
-			vm["type"] = "message";
-		}
-		sendJsObject(vm);
-#if 0
-	} else {
-		QString msgId = TextUtil::escape("msgid_" + replaceId + "_" + mv.userId());
-		QString replaceText = mv.formattedText().replace("\"", "\\\"");
-		// TODO: move to JS adapters and add smilies/icons support
-		QString jsCommand =
-				QString(
-						"var msgs = document.querySelectorAll(\"a[name=\\\"%1\\\"]\");"
-						"if (msgs) {"
-						"  var elem = msgs[msgs.length - 1].previousSibling;"
-						"  while (next = elem.nextSibling) {"
-						"    next.remove();"
-						"  }"
-						"  var oldText = elem.innerHTML.replace(/<[^>]*>/gi, \"\");"
-						"  elem.outerHTML = \"%2\" + \"<img src='icon:psi/action_templates_edit' title='\" + oldText + \"' />\";"
-						"} else {"
-						"  console.log(\"Messages with name %1 not found\");"
-						"}").arg(
-						msgId).arg(replaceText);
-		sendJsCommand(jsCommand);
+	if (replaceId.isEmpty() && (mv.type() == MessageView::Message || mv.type() == MessageView::Subject)
+			&& updateLastMsgTime(mv.dateTime())) {
+		QVariantMap m;
+		m["date"] = mv.dateTime();
+		m["type"] = "message";
+		m["mtype"] = "lastDate";
+		sendJsObject(m);
 	}
-#endif
+	QVariantMap vm = mv.toVariantMap(d->isMuc_, true);
+	auto it = vm.find(QLatin1String("usertext"));
+	if (it != vm.end()) {
+		*it = ChatViewPrivate::closeIconTags(it.value().toString());
+	}
+	it = vm.find(QLatin1String("message"));
+	if (it != vm.end()) {
+		*it = ChatViewPrivate::closeIconTags(it.value().toString());
+	}
+
+	vm["encrypted"] = d->isEncryptionEnabled_;
+	if (!replaceId.isEmpty()) {
+		vm["type"] = "replace";
+		vm["replaceId"] = replaceId;
+	} else {
+		vm["mtype"] = vm["type"];
+		vm["type"] = "message";
+	}
+	sendJsObject(vm);
 }
 
 void ChatView::scrollUp()
