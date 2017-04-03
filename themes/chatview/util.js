@@ -80,6 +80,12 @@ function initPsiTheme() {
                 return false;
             },
 
+            createHtmlNode : function(html, context) {
+                var range = document.createRange();
+                range.selectNode(context || document.body);
+                return range.createContextualFragment(html);
+            },
+
             appendHtml : function(dest, html) {
                 htmlSource.innerHTML = html;
                 chat.util.replaceIcons(htmlSource);

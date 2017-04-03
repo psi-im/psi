@@ -137,6 +137,15 @@ chat.util.updateObject(adapter, function(chat){
     var defaultAvatars = null;
     var avatarsMap = {};
 
+    function replaceableMessage(msgId, text) {
+        // if we have an id then this is a replacable message.
+        // next weird logic is as follows:
+        //   - wrapping to some element may break elements flow
+        //   - using well know elements may break styles
+        //   - setting just starting mark is useless (we will never find correct end)
+        return "<psims mid=\"" + msgId + "\"></psims>" + text + "<psime mid=\"" + msgId + "\"></psime>";
+    }
+
     function TemplateVar(name, param) {
         this.name = name;
         this.param = param
@@ -173,12 +182,7 @@ chat.util.updateObject(adapter, function(chat){
             } else if (this.name == "senderColor") {
                 return session.mucNickColor(cdata.sender, cdata.local);
             } else if (this.name == "message" && cdata.id) {
-                // if we have an id then this is a replacable message.
-                // next weird logic is as follows:
-                //   - wrapping to some element may break elements flow
-                //   - using well know elements may break styles
-                //   - setting just starting mark is useless (we will never find correct end)
-                return "<psims mid=\"" + cdata.id + "\"/>" + d + "<psime mid=\"" + cdata.id + "\"/>";
+                return replaceableMessage(cdata.id, d);
             }
 
             return d || "";
@@ -428,11 +432,12 @@ chat.util.updateObject(adapter, function(chat){
                             var cel = document.getElementById("Chat");
                             var se =cel.querySelector("psims[mid='"+data.replaceId+"'");
                             var ee =cel.querySelector("psime[mid='"+data.replaceId+"'");
+                            chat.console("")
                             if (se && ee && se.parentNode === ee.parentNode) {
                                 while (se.nextSibling !== ee) {
                                     se.parentNode.removeChild(se.nextSibling);
                                 }
-                                var node = createHTMLNode(data.message);
+                                var node = chat.util.createHtmlNode(replaceableMessage(data.id, data.message + "<img src=\"/psiicon/psi/action_templates_edit\">"));
                                 ee.parentNode.insertBefore(node, ee);
                             }
                         } else if (data.type == "clear") {
