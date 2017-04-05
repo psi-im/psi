@@ -522,7 +522,7 @@ MainWin::MainWin(bool _onTop, bool _asTool, PsiCon* psi)
 	d->getAction("help_readme")->addTo (helpMenu);
 	d->getAction("help_tip")->addTo (helpMenu);
 	helpMenu->addSeparator();
-	d->getAction("help_online_help")->addTo (helpMenu);
+	//d->getAction("help_online_help")->addTo (helpMenu);
 	d->getAction("help_online_wiki")->addTo (helpMenu);
 	d->getAction("help_online_home")->addTo (helpMenu);
 	d->getAction("help_online_forum")->addTo (helpMenu);
@@ -952,7 +952,7 @@ void MainWin::buildOptionsMenu()
 	actions << "help_readme"
 			<< "help_tip"
 			<< "separator"
-			<< "help_online_help"
+			//<< "help_online_help"
 			<< "help_online_wiki"
 			<< "help_online_home"
 			<< "help_online_forum"
@@ -1041,7 +1041,7 @@ void MainWin::actOnlineHelpActivated ()
 
 void MainWin::actOnlineWikiActivated ()
 {
-	DesktopUtil::openUrl("http://psi-im.org/wiki");
+	DesktopUtil::openUrl("https://github.com/psi-im/psi/wiki");
 }
 
 void MainWin::actOnlineHomeActivated ()
@@ -1066,7 +1066,7 @@ void MainWin::actJoinPsiMUCActivated()
 
 void MainWin::actBugReportActivated ()
 {
-	DesktopUtil::openUrl("http://forum.psi-im.org/forum/2");
+	DesktopUtil::openUrl("https://github.com/psi-im/psi/issues");
 }
 
 void MainWin::actAboutActivated ()
