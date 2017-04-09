@@ -465,12 +465,18 @@ int EDBFlatFile::File::total() const
 	return d->index.size();
 }
 
+/*
+ * This method returns an index of a string with the event
+ * which has the nearest date to the specified one.
+ * Returned date may be earlier than that is passed as an argument.
+ */
 int EDBFlatFile::File::findNearestDate(const QDateTime &date)
 {
 	int cnt = total();
 	if (cnt == 0)
 		return 0;
 
+	// Binary search algorithm
 	int left  = 0;
 	int right = cnt;
 	while (right - left > 0) {
@@ -481,14 +487,16 @@ int EDBFlatFile::File::findNearestDate(const QDateTime &date)
 		else
 			left = idx + 1;
 	}
-	if (right == cnt)
+	// --
+	if (right == cnt) // Specified date is later than the latest one in the history
 		return cnt - 1;
 
-	while (right > 0 && getDate(right - 1) == date)
+	// Now `right` is pointing to the index with an identical or later date
+	while (right > 0 && getDate(right - 1) == date) // in case of there are more than one identical date
 		--right;
 	if (right == 0)
 		return 0;
-	if (getDate(right - 1).secsTo(date) <= date.secsTo(getDate(right)))
+	if (getDate(right - 1).secsTo(date) <= date.secsTo(getDate(right))) // compares with earlier one
 		--right;
 	return right;
 }
