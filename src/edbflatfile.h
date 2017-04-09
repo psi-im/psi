@@ -71,6 +71,7 @@ public:
 	void touch();
 	PsiEvent::Ptr get(int);
 	bool append(const PsiEvent::Ptr &);
+	int findNearestDate(const QDateTime &date);
 
 	static QString jidToFileName(const XMPP::Jid &);
 
@@ -94,6 +95,8 @@ private:
 	PsiEvent::Ptr lineToEvent(const QString &);
 	QString eventToLine(const PsiEvent::Ptr&);
 	void ensureIndex();
+	QString getLine(int id);
+	QDateTime getDate(int id);
 };
 
 #endif // EDBFLATFILE_H

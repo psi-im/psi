@@ -331,9 +331,8 @@ void EDBFlatFile::performRequests()
 		resultReady(r->id, result);
 	}
 	else if(type == item_file_req::Type_getByDate ) {
-		int id = 0;
 		EDBResult result;
-		for (int i=0; i < f->total(); ++i) {
+		for (int id = f->findNearestDate(r->first); id < f->total(); ++id) {
 			PsiEvent::Ptr e(f->get(id));
 			if(!e)
 				continue;
@@ -347,13 +346,13 @@ void EDBFlatFile::performRequests()
 			if(e->type() == PsiEvent::Message) {
 				MessageEvent::Ptr me = e.staticCast<MessageEvent>();
 				const Message &m = me->message();
-				if(m.timeStamp() > r->first && m.timeStamp() < r->last ) {
+				if(m.timeStamp() > r->first) {
+					if (m.timeStamp() >= r->last )
+						break;
 					EDBItemPtr ei = EDBItemPtr(new EDBItem(e, QString::number(id), prevId, nextId));
 					result.append(ei);
 				}
 			}
-
-			++id;
 		}
 		resultReady(r->id, result);
 	}
@@ -466,6 +465,34 @@ int EDBFlatFile::File::total() const
 	return d->index.size();
 }
 
+int EDBFlatFile::File::findNearestDate(const QDateTime &date)
+{
+	int cnt = total();
+	if (cnt == 0)
+		return 0;
+
+	int left  = 0;
+	int right = cnt;
+	while (right - left > 0) {
+		int idx = left + (right - left) / 2;
+		const QDateTime mid = getDate(idx);
+		if (date <= mid)
+			right = idx;
+		else
+			left = idx + 1;
+	}
+	if (right == cnt)
+		return cnt - 1;
+
+	while (right > 0 && getDate(right - 1) == date)
+		--right;
+	if (right == 0)
+		return 0;
+	if (getDate(right - 1).secsTo(date) <= date.secsTo(getDate(right)))
+		--right;
+	return right;
+}
+
 void EDBFlatFile::File::touch()
 {
 	t->start(30000);
@@ -478,22 +505,9 @@ void EDBFlatFile::File::timer_timeout()
 
 PsiEvent::Ptr EDBFlatFile::File::get(int id)
 {
-	touch();
-
-	if(!valid)
+	QString line = getLine(id);
+	if (line.isNull())
 		return PsiEvent::Ptr();
-
-	ensureIndex();
-	if(id < 0 || id >= (int)d->index.size())
-		return PsiEvent::Ptr();
-
-	f.seek(d->index[id]);
-
-	QTextStream t;
-	t.setDevice(&f);
-	t.setCodec("UTF-8");
-	QString line = t.readLine();
-
 	return lineToEvent(line);
 }
 
@@ -703,4 +717,40 @@ QString EDBFlatFile::File::eventToLine(const PsiEvent::Ptr &e)
 	}
 
 	return "";
+}
+
+QString EDBFlatFile::File::getLine(int id)
+{
+	touch();
+
+	if(!valid)
+		return QString();
+
+	ensureIndex();
+	if(id < 0 || id >= (int)d->index.size())
+		return QString();
+
+	f.seek(d->index[id]);
+
+	QTextStream t;
+	t.setDevice(&f);
+	t.setCodec("UTF-8");
+	return t.readLine();
+}
+
+QDateTime EDBFlatFile::File::getDate(int id)
+{
+	QString line = getLine(id);
+	if (line.isNull())
+		return QDateTime();
+
+	int p1 = line.indexOf('|') + 1;
+	if (p1 == -1)
+		return QDateTime();
+	int p2 = line.indexOf('|', p1);
+	if (p2 == -1)
+		return QDateTime();
+
+	QString sTime = line.mid(p1, p2 - p1);
+	return QDateTime::fromString(sTime, Qt::ISODate);
 }
