@@ -32,28 +32,45 @@ public:
 		System,
 		Status,
 		Subject,
-		Urls
-	};
-
-	enum SystemMessageType {
+		Urls,
 		MUCJoin,
 		MUCPart,
+		NickChange,
 		FileTransferRequest,
 		FileTransferFinished
 	};
+
+	enum Flag {
+		Emote   = 0x1,
+		Alert   = 0x2,
+		Local   = 0x4,
+		Spooled = 0x8,
+		AwaitingReceipt  = 0x10,
+		HideStatusChange = 0x20,
+		HideJoinLeave    = 0x40,
+	};
+	Q_DECLARE_FLAGS(Flags, Flag)
 
 	MessageView(Type);
 
 	static MessageView fromPlainText(const QString &, Type);
 	static MessageView fromHtml(const QString &, Type);
+
+	static MessageView systemMessage(const QString &message) { return fromPlainText(message, System); }
 	static MessageView urlsMessage(const QMap<QString, QString> &);
 	static MessageView subjectMessage(const QString &subject,
 									  const QString &prefix = QString());
 
 	// accepts plain/text nick, plain/text status and rich/text statusText
 	static MessageView statusMessage(const QString &nick, int status,
-									 const QString &statusText = QString(),
-									 int priority = 0);
+									 const QString &statusText = QString(), int priority = 0);
+
+	// accepts plain/text nick, plain/text status and rich/text statusText
+	static MessageView mucJoinMessage(const QString &nick, int status, const QString &message,
+									 const QString &statusText = QString(), int priority = 0);
+	static MessageView mucPartMessage(const QString &nick, const QString &message = QString(),
+									 const QString &statusText = QString());
+	static MessageView nickChangeMessage(const QString &nick, const QString &newNick);
 
 	inline Type type() const { return _type; }
 	inline const QString &text() const { return _text; }
@@ -65,21 +82,29 @@ public:
 	void setHtml(const QString &);
 	QString formattedText() const;
 	QString formattedUserText() const;
+	bool hasStatus() const;
 
-	inline void setAlert(bool state) { _alert = state; }
-	inline bool isAlert() const { return _alert; }
-	inline void setLocal(bool state) { _local = state; }
-	inline bool isLocal() const { return _local; }
-	inline void setEmote(bool state) { _emote = state; }
-	inline bool isEmote() const { return _emote; }
-	inline void setSpooled(bool state) { _spooled = state; }
-	inline bool isSpooled() const { return _spooled; }
+	inline const Flags &flags() const { return _flags; }
+	inline void setAlert(bool state = true) { _flags.setFlag(Alert, state); }
+	inline bool isAlert() const { return _flags & Alert; }
+	inline void setLocal(bool state = true) { _flags.setFlag(Local, state); }
+	inline bool isLocal() const { return _flags & Local; }
+	inline void setEmote(bool state = true) { _flags.setFlag(Emote, state); }
+	inline bool isEmote() const { return _flags & Emote; }
+	inline void setSpooled(bool state = true) { _flags.setFlag(Spooled, state); }
+	inline bool isSpooled() const { return _flags & Spooled; }
+	inline void setAwaitingReceipt(bool b = true) { _flags.setFlag(AwaitingReceipt, b); }
+	inline bool isAwaitingReceipt() const { return _flags & AwaitingReceipt; }
+	inline void setStatusChangeHidden(bool b = true) { _flags.setFlag(HideStatusChange, b); }
+	inline bool isStatusChangeHidden() const { return _flags & HideStatusChange; }
+	inline void setJoinLeaveHidden(bool b = true) { _flags.setFlag(HideJoinLeave, b); }
+	inline bool isJoinLeaveHidden() const { return _flags & HideJoinLeave; }
+
 	inline void setStatus(int s) { _status = s; }
 	inline int status() const { return _status; }
 	inline void setStatusPriority(int s) { _statusPriority = s; }
 	inline int statusPriority() const { return _statusPriority; }
-	inline void setAwaitingReceipt(bool b) { _awaitingReceipt = b; }
-	inline bool isAwaitingReceipt() const { return _awaitingReceipt; }
+
 	inline void setNick(const QString &nick) { _nick = nick; }
 	inline const QString &nick() const { return _nick; }
 	inline void setMessageId(const QString &id) { _messageId = id; }
@@ -96,11 +121,7 @@ public:
 
 private:
 	Type _type;
-	bool _emote;
-	bool _alert;
-	bool _local;
-	bool _spooled;
-	bool _awaitingReceipt;
+	Flags _flags;
 	int _status;
 	int _statusPriority;
 	QString _messageId;
@@ -112,5 +133,7 @@ private:
 	QMap<QString, QString> _urls;
 	QString _replaceId;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(MessageView::Flags)
 
 #endif

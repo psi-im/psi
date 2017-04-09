@@ -531,6 +531,10 @@ void ChatView::dispatchMessage(const MessageView &mv)
 		sendJsObject(m);
 	}
 	QVariantMap vm = mv.toVariantMap(d->isMuc_, true);
+	if (mv.type() == MessageView::MUCJoin) {
+		Jid j = d->jid_.withResource(mv.nick());
+		vm["avatar"] = ChatViewJSObject::avatarUrl(d->account_->avatarFactory()->userHashes(j).avatar);
+	}
 	auto it = vm.find(QLatin1String("usertext"));
 	if (it != vm.end()) {
 		*it = ChatViewPrivate::closeIconTags(it.value().toString());

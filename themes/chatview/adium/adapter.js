@@ -165,7 +165,7 @@ chat.util.updateObject(adapter, function(chat){
                     url = session.localUserAvatar? session.localUserAvatar : defaultAvatars.outgoingBuddy;
                 } else {
                     if (session.isMuc) {
-                        url = avatarsMap[cdata.sender];
+                        url = cdata.sender && (avatarsMap[cdata.sender] || defaultAvatars.incomingBuddy);
                     }
                     if (!url) {
                         url = session.remoteUserAvatar? session.remoteUserAvatar : defaultAvatars.incomingBuddy;
@@ -240,7 +240,14 @@ chat.util.updateObject(adapter, function(chat){
     // Template variable constructors
     var tvConstructors = {
         time : TemplateTimeVar,
-        timeOpened : TemplateTimeVar
+        timeOpened : TemplateTimeVar,
+        dateOpened : TemplateTimeVar,
+        shortTime  : TemplateTimeVar
+    }
+
+    var mtype2status = {
+        "join" : "contact_joined",
+        "part" : "contact_left"
     }
 
     function psiOption(name) {
@@ -361,7 +368,25 @@ chat.util.updateObject(adapter, function(chat){
                             data.messageClasses += cdata.alert?" mention" : "";
                             data.messageClasses += cdata.spooled?" history" : "";
                             data.messageClasses += cdata.mtype == "system"?" event" : "";
-                            // TODO consecutive, autoreply, focus, firstFocus, %status%
+
+                            var s = mtype2status[cdata.mtype];
+                            if (s) {
+                                data.status = s;
+                                data.messageClasses += (" " + s);
+                            }
+
+                            if (data.mtype == "join") {
+                                avatarsMap[data.sender] = data.avatar; // can be null.
+                                if (data.nopartjoin) return;
+                            } else if (data.mtype == "join") {
+                                delete avatarsMap[data.sender];
+                                if (data.nopartjoin) return;
+                            } else if (data.mtype == "newnick") {
+                                avatarsMap[data.newnick] = avatarsMap[data.sender];
+                                delete avatarsMap[data.sender];
+                            }
+
+                            // TODO autoreply, focus, firstFocus, %status%
                             switch (data.mtype) {
                                 case "message":
                                     data.messageClasses += " message";
@@ -381,10 +406,13 @@ chat.util.updateObject(adapter, function(chat){
                                     prevGrouppingData = data;
                                     data.senderStatusIcon="/psiicon/status/online"; //FIXME temporary hack
                                     break;
+                                case "join":
+                                case "part":
+                                case "newnick":
                                 case "status":
                                     data.messageClasses += " status";
                                 case "system":
-                                    if (data["usertext"]) {
+                                    if (data["usertext"] && !data.nostatus) {
                                         data["message"] += " (" + data["usertext"] + ")"
                                     }
                                     template = templates.status;

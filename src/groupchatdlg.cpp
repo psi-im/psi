@@ -1504,7 +1504,8 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 		d->nonAnonymous = true;
 	}
 
-	if (nick == d->self) {
+	bool isSelf = (nick == d->self);
+	if (isSelf) {
 		if(s.isAvailable())
 			setStatusTabIcon(s.type());
 		UserListItem* u = account()->find(d->dlg->jid().bare());
@@ -1538,6 +1539,8 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 		GCUserViewItem* contact = (GCUserViewItem*) ui_.lv_users->findEntry(nick);
 		if (contact == NULL) {
 			//contact joining
+			//ui_.log->updateAvatar(jid().withResource(nick), isSelf? ChatViewCommon::LocalParty: ChatViewCommon::Participant);
+
 			if ((!d->connecting || options_->getOption("options.ui.muc.show-initial-joins").toBool()) && options_->getOption("options.muc.show-joins").toBool() ) {
 				QString message = tr("%1 has joined the room");
 				if ( options_->getOption("options.muc.show-role-affiliation").toBool() ) {
@@ -1558,16 +1561,20 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 				} else {
 					message = message.arg(nick);
 				}
-				if (options_->getOption("options.muc.show-status-changes").toBool()) {
+
+				bool showStatusChanges = options_->getOption("options.muc.show-status-changes").toBool();
+				if (showStatusChanges) {
 					message += tr(" and now is %1").arg(status2txt(s.type()));
-					if (!s.status().isEmpty()) {
-						message += QString(" (%1)").arg(s.status());
-					}
-					if (options_->getOption("options.ui.muc.status-with-priority").toBool() && s.priority() != 0) {
-						message += QString(" [%1]").arg(s.priority());
-					}
 				}
-				appendSysMsg(message);
+
+				MessageView mv = MessageView::mucJoinMessage(nick, (int)s.type(), message, s.status(), s.priority());
+				mv.setStatusChangeHidden(!showStatusChanges);
+				appendSysMsg(mv);
+			} else {
+				MessageView mv = MessageView::mucJoinMessage(nick, (int)s.type(), QString(), s.status(), s.priority());
+				mv.setStatusChangeHidden();
+				mv.setJoinLeaveHidden();
+				appendSysMsg(mv);
 			}
 		}
 		else {
@@ -1686,14 +1693,19 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 			if (s.getMUCStatuses().contains(303)) {
 				message = tr("%1 is now known as %2").arg(nick).arg(s.mucItem().nick());
 				ui_.lv_users->updateEntry(s.mucItem().nick(), s);
+				appendSysMsg(MessageView::nickChangeMessage(nick, s.mucItem().nick()));
 			} else {
 				//contact leaving
 				message = tr("%1 has left the room").arg(nickJid);
 				if (!s.status().isEmpty()) {
 					message += QString(" (%1)").arg(s.status());
 				}
+				appendSysMsg(MessageView::mucPartMessage(nick, message, s.status()));
 			}
-			appendSysMsg(message);
+		} else {
+			MessageView mv = MessageView::mucPartMessage(nick);
+			mv.setJoinLeaveHidden();
+			appendSysMsg(mv);
 		}
 		ui_.lv_users->removeEntry(nick);
 	}
@@ -1866,7 +1878,7 @@ bool GCMainDlg::isLastMessageAlert() const
 
 void GCMainDlg::appendSysMsg(const QString &str, bool alert, const QDateTime &ts)
 {
-	MessageView mv = MessageView::fromPlainText(str, MessageView::System);
+	MessageView mv = MessageView::systemMessage(str);
 	if (!PsiOptions::instance()->getOption("options.ui.muc.use-highlighting").toBool()) {
 		alert = false;
 	}

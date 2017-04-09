@@ -368,6 +368,10 @@ void ChatView::dispatchMessage(const MessageView &mv)
 		case MessageView::Urls:
 			renderUrls(mv);
 			break;
+		case MessageView::MUCJoin:
+		case MessageView::MUCPart:
+		case MessageView::FileTransferRequest:
+		case MessageView::FileTransferFinished:
 		default: // System/Status
 			renderSysMessage(mv);
 	}
@@ -452,6 +456,20 @@ void ChatView::renderSysMessage(const MessageView &mv)
 {
 	QString timestr = formatTimeStamp(mv.dateTime());
 	QString ut = mv.formattedUserText();
+
+	if ((mv.type() == MessageView::MUCJoin || mv.type() == MessageView::MUCPart) && mv.isJoinLeaveHidden()) {
+		return; // not necessary here. maybe for other chatviews
+	}
+
+	if (mv.hasStatus() && !mv.isStatusChangeHidden()) {
+		if (!mv.formattedUserText().isEmpty()) {
+			ut += QString(" (%1)").arg(s.status());
+		}
+		if (options_->getOption("options.ui.muc.status-with-priority").toBool() && s.priority() != 0) {
+			ut += QString(" [%1]").arg(s.priority());
+		}
+	}
+
 	QString color = ColorOpt::instance()->color(informationalColorOpt).name();
 	QString userTextColor = ColorOpt::instance()->color("options.ui.look.colors.messages.usertext").name();
 	appendText(QString(useMessageIcons_?"<img src=\"icon:log_icon_info\" />":"") +

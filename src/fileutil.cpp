@@ -105,8 +105,9 @@ QString FileUtil::getSaveFileName(QWidget* parent, const QString& caption, const
 
 QString FileUtil::getImageFileName(QWidget* parent)
 {
+	// double extenstions because of QTBUG-51712
 	return FileUtil::getOpenFileName(parent, tr("Choose a file"),
-	                                 tr("Images (*.png *.xpm *.jpg *.jpeg *.PNG *.XPM *.JPG *.JPEG)"));
+	                                 tr("Images (*.png *.xpm *.jpg *.jpeg *.webp *.PNG *.XPM *.JPG *.JPEG *.WEBP)"));
 }
 
 QString FileUtil::mimeToFileExt(const QString &mime)
@@ -120,6 +121,7 @@ QString FileUtil::mimeToFileExt(const QString &mime)
 		mimes["image/x-xpm"]   = QLatin1String("xpm");
 		mimes["image/svg+xml"] = QLatin1String("svg");
 		mimes["image/jpeg"]    = QLatin1String("jpg");
+		mimes["image/webp"]    = QLatin1String("webp");
 
 		mimes["application/octet-stream"] = "bin";
 		// add more when needed
