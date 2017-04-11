@@ -634,7 +634,7 @@ unix:!dbus {
 	SOURCES += $$PWD/activeprofiles_stub.cpp
 }
 
-webkit {
+qwebkit {
 	HEADERS += 	$$PWD/chatview_webkit.h \
 			$$PWD/networkaccessmanager.h \
 			$$PWD/bytearrayreply.h \
@@ -657,7 +657,7 @@ webkit {
 
 	DEFINES += WEBKIT
 
-	webengine {
+	qtwebengine {
 		CONFIG += c++14
 		QT += webenginewidgets webchannel
 		include (../3rdparty/qhttp.pri)

@@ -40,7 +40,8 @@ Dependency options:
   --enable-universal            Enable use of Mac OS X universal binary
                                 support
   --disable-qdbus               Disable use of QDBUS
-  --enable-webkit               Enable use of QtWebKit
+  --enable-webkit               Enable use of webkit
+  --with-webkit=[type]          type of webkit QWebkit/QtWebEngine
   --disable-growl               Disable use of Growl
   --with-growl=[path]           Path to the Growl framework
   --enable-whiteboarding        Enable use of White Board support
@@ -256,6 +257,11 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 
+		--with-webkit=*)
+			QC_WITH_WEBKIT=$optarg
+			shift
+			;;
+
 		--disable-growl)
 			QC_DISABLE_growl="Y"
 			shift
@@ -359,6 +365,7 @@ echo QC_WITH_QJDNS_LIB=$QC_WITH_QJDNS_LIB
 echo QC_ENABLE_universal=$QC_ENABLE_universal
 echo QC_DISABLE_qdbus=$QC_DISABLE_qdbus
 echo QC_ENABLE_webkit=$QC_ENABLE_webkit
+echo QC_WITH_WEBKIT=$QC_WITH_WEBKIT
 echo QC_DISABLE_growl=$QC_DISABLE_growl
 echo QC_WITH_GROWL=$QC_WITH_GROWL
 echo QC_ENABLE_whiteboarding=$QC_ENABLE_whiteboarding
@@ -1294,7 +1301,8 @@ public:
 #line 1 "webkit.qcm"
 /*
 -----BEGIN QCMOD-----
-name: QtWebKit
+name: webkit
+arg: with-webkit=[type],type of webkit QWebkit/QtWebEngine
 -----END QCMOD-----
 */
 
@@ -1303,41 +1311,77 @@ name: QtWebKit
 //----------------------------------------------------------------------------
 class qc_webkit : public ConfObj
 {
+	QString webkitType;
 public:
 	qc_webkit(Conf *c) : ConfObj(c) {}
 	QString name() const { return "QtWebKit"; }
 	QString shortname() const { return "webkit"; }
 	bool exec()
 	{
-		QString retConf = "webkit";
-		QString proextra =
-		"CONFIG += qt webkit\\n";
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-# if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
-		proextra += "QT += webenginewidgets webchannel\\n";
-		retConf += " webengine";
-# else
-		proextra += "QT += webkit webkitwidgets\\n";
-# endif
+		if (!conf->getenv("QC_DISABLE_webkit").isEmpty()) {
+			webkitType = "disabled";
+			return false;
+		}
+
+		QStringList tryList;
+		QString wt = conf->getenv("QC_WITH_WEBKIT").toLower();
+		if (wt.isEmpty() || !(wt == "qwebkit" || wt == "qtwebengine")) {
+#if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
+			tryList << "qtwebengine" << "qwebkit";
 #else
-		proextra += "QT += webkit\\n";
+			tryList << "qwebkit";
 #endif
+		} else {
+#if QT_VERSION < QT_VERSION_CHECK(5,7,0)
+			if (wt == "qtwebengine") {
+				webkitType = "unsupported";
+				return false;
+			}
+#endif
+			tryList << wt;
+		}
 
-		QString str =
-		"\\n"
-		"int main()\\n"
-		"{\\n"
-		"	return 0;\\n"
-		"}\\n";
+		QString qt;
+		foreach (const QString &wt, tryList) {
+			if (wt == "qtwebengine") {
+				webkitType = "QtWebEngine";
+				qt = "webenginewidgets webchannel";
+			} else {
+				webkitType = "QWebKit";
+				qt = "webkit";
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+				qt += " webkitwidgets";
+#endif
+			}
 
-		int ret;
-		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
-			return false;
-		if(ret != 0)
-			return false;
+			QString proextra = "CONFIG += qt webkit\\n";
+			proextra += "QT += " + qt + "\\n";
 
-		conf->addExtra("CONFIG += " + retConf);
-		return true;
+			QString str =
+			"\\n"
+			"int main()\\n"
+			"{\\n"
+			"	return 0;\\n"
+			"}\\n";
+
+			int ret;
+			if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
+				continue;
+			if(ret != 0)
+				continue;
+
+			conf->addExtra("CONFIG += " + wt);
+			return true;
+		}
+
+		webkitType = "not found";
+
+		return false;
+	}
+
+	QString resultString() const
+	{
+		return webkitType;
 	}
 };
 #line 1 "growl.qcm"
@@ -3386,6 +3430,7 @@ export QC_WITH_QJDNS_LIB
 export QC_ENABLE_universal
 export QC_DISABLE_qdbus
 export QC_ENABLE_webkit
+export QC_WITH_WEBKIT
 export QC_DISABLE_growl
 export QC_WITH_GROWL
 export QC_ENABLE_whiteboarding
