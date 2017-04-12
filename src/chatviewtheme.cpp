@@ -437,22 +437,23 @@ bool ChatViewTheme::load(std::function<void(bool)> loadCallback)
 	return true;
 #else
 	QStringList scriptPaths = QStringList()
+	        << PsiThemeProvider::themePath(QLatin1String("chatview/moment-with-locales.min.js"))
 	        << PsiThemeProvider::themePath(QLatin1String("chatview/util.js"))
 	        << PsiThemeProvider::themePath(QLatin1String("chatview/") + themeType + QLatin1String("/adapter.js"));
 
 
-	d->wv->page()->mainFrame()->addToJavaScriptWindowObject("srvLoader", d->jsLoader, QT_JS_OWNERSHIP);
-	d->wv->page()->mainFrame()->addToJavaScriptWindowObject("srvUtil", d->jsUtil, QT_JS_OWNERSHIP);
+	cvtd->wv->page()->mainFrame()->addToJavaScriptWindowObject("srvLoader", cvtd->jsLoader, QT_JS_OWNERSHIP);
+	cvtd->wv->page()->mainFrame()->addToJavaScriptWindowObject("srvUtil", cvtd->jsUtil, QT_JS_OWNERSHIP);
 
 	foreach (const QString &sp, scriptPaths) {
-		QVariant result = d->wv->page()->mainFrame()->evaluateJavaScript(script);
+		QVariant result = cvtd->wv->page()->mainFrame()->evaluateJavaScript(script);
 		if (result != "ok") {
 			qDebug("failed to eval helper script: %s...", qPrintable(script.mid(0, 50)));
 			return false;
 		}
 	}
 
-	QString resStr = d->wv->page()->mainFrame()->evaluateJavaScript(
+	QString resStr = cvtd->wv->page()->mainFrame()->evaluateJavaScript(
 				"try { initPsiTheme().adapter.loadTheme(); } "
 				"catch(e) { window.psiim.util.props(e); }").toString();
 
@@ -522,6 +523,24 @@ bool ChatViewTheme::isTransparentBackground() const
 {
 	return cvtd->transparentBackground;
 }
+
+#ifndef QT_WEBENGINEWIDGETS_LIB
+void ChatViewTheme::embedSessionJsObject(QSharedPointer<ChatViewThemeSession> session)
+{
+	QWebFrame *wf = session->webView()->page()->mainFrame();
+	wf->addToJavaScriptWindowObject("srvUtil", new ChatViewThemeJSUtil(this, session->webView()));
+	wf->addToJavaScriptWindowObject("srvSession", session->jsBridge());
+
+	QStringList scriptPaths = QStringList()
+	        << PsiThemeProvider::themePath(QLatin1String("chatview/moment-with-locales.min.js"))
+	        << PsiThemeProvider::themePath(QLatin1String("chatview/util.js"))
+	        << PsiThemeProvider::themePath(QLatin1String("chatview/") + id.section('/', 0, 0) + QLatin1String("/adapter.js"));
+
+	foreach (const QString &script, scriptPaths) {
+		wf->evaluateJavaScript(script);
+	}
+}
+#endif
 
 bool ChatViewTheme::applyToWebView(QSharedPointer<ChatViewThemeSession> session)
 {
@@ -636,7 +655,7 @@ bool ChatViewTheme::applyToWebView(QSharedPointer<ChatViewThemeSession> session)
 	//QString id = provider->themeServer()->registerHandler(sessionObject);
 	return true;
 #else
-	connect(chatWv->page()->mainFrame(),
+	connect(session->webView()->page()->mainFrame(),
 			SIGNAL(javaScriptWindowObjectCleared()), SLOT(embedJsObject()));
 #endif
 //	QString html = theme->html(jsObject);

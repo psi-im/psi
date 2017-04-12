@@ -24,7 +24,9 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QDir>
+#if QT_WEBENGINEWIDGETS_LIB
 #include <QWebEngineUrlRequestInterceptor>
+#endif
 
 #include "chatviewtheme.h"
 #include "psioptions.h"

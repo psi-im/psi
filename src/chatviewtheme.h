@@ -57,6 +57,9 @@ public:
 	void putToCache(const QString &key, const QVariant &data);
 	void setTransparentBackground(bool enabled = true);
 	bool isTransparentBackground() const;
+#ifndef QT_WEBENGINEWIDGETS_LIB
+	void embedSessionJsObject(QSharedPointer<ChatViewThemeSession> session);
+#endif
 	bool applyToWebView(QSharedPointer<ChatViewThemeSession> session);
 
 	QVariantMap loadFromCacheMulti(const QVariantList &list);

@@ -1,7 +1,11 @@
 #ifndef CHATVIEWTHEMEPROVIDER_PRIV_H
 #define CHATVIEWTHEMEPROVIDER_PRIV_H
 
+#if QT_WEBENGINEWIDGETS_LIB
 #include <QWebEngineUrlRequestInterceptor>
+#else
+#include <QObject> // at least
+#endif
 
 class PsiCon;
 class ThemeServer;

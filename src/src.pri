@@ -660,15 +660,17 @@ qwebkit {
 	qtwebengine {
 		CONFIG += c++14
 		QT += webenginewidgets webchannel
-		include (../3rdparty/qhttp.pri)
-		HEADERS +=  \
-			$$PWD/themeserver.h
-		SOURCES +=  \
-			$$PWD/themeserver.cpp
 	} else {
 		QT += webkit
 		greaterThan(QT_MAJOR_VERSION, 4):QT += webkitwidgets
 	}
+
+	include (../3rdparty/qhttp.pri)
+
+	HEADERS +=  \
+		$$PWD/themeserver.h
+	SOURCES +=  \
+		$$PWD/themeserver.cpp
 }
 else {
 	HEADERS += 	$$PWD/chatview_te.h

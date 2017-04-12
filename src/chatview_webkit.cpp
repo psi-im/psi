@@ -25,15 +25,17 @@
 #include "textutil.h"
 
 #include <QWidget>
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+#include <QJsonObject>
+#include <QMetaObject>
+#include <QMetaProperty>
+#include <QJsonDocument>
+#endif
 #if QT_WEBENGINEWIDGETS_LIB
 #if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
 #include <QWebEngineContextMenuData>
 #endif
-#include <QJsonObject>
-#include <QMetaObject>
-#include <QMetaProperty>
 #include <QWebEngineSettings>
-#include <QJsonDocument>
 #else
 #include <QWebFrame>
 #endif
@@ -285,7 +287,11 @@ public:
 
 	QString propsAsJsonString() const
 	{
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 		QJsonObject jsObj;
+#else
+		QVariantMap jsObj;
+#endif
 		ChatViewJSObject *js = static_cast<ChatViewJSObject*>(cv->jsBridge());
 		int pc = js->metaObject()->propertyCount();
 		for (int i = 0; i < pc; i++) {
@@ -297,12 +303,16 @@ public:
 				}
 			}
 		}
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 		QJsonDocument doc(jsObj);
 		return QString(doc.toJson(QJsonDocument::Compact));
+#else
+		return JSUtil::map2json(jsObj);
+#endif
 	}
 };
 
-
+#ifdef QT_WEBENGINEWIDGETS_LIB
 class ChatViewPage : public QWebEnginePage
 {
 protected:
@@ -318,6 +328,7 @@ protected:
 		return true;
 	}
 };
+#endif
 
 //----------------------------------------------------------------------------
 // ChatView
@@ -388,13 +399,8 @@ void ChatView::setEncryptionEnabled(bool enabled)
 #ifndef QT_WEBENGINEWIDGETS_LIB
 void ChatView::embedJsObject()
 {
-	ChatViewTheme *theme = currentTheme();
-	QWebFrame *wf = webView->page()->mainFrame();
-	wf->addToJavaScriptWindowObject("chatServer", theme->jsHelper());
-	wf->addToJavaScriptWindowObject("chatSession", jsObject);
-	foreach (const QString &script, theme->scripts()) {
-		wf->evaluateJavaScript(script);
-	}
+	ChatViewTheme *theme = static_cast<ChatViewTheme *>(d->themeProvider()->current());
+	theme->embedSessionJsObject(d->themeBridge);
 }
 #endif
 
