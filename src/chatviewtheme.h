@@ -78,7 +78,9 @@ class ChatViewThemeSession {
 
 	QString sessId; // unique id of session
 	ChatViewTheme theme;
+#ifdef QT_WEBENGINEWIDGETS_LIB
 	ThemeServer *server = 0;
+#endif
 
 public:
 	virtual ~ChatViewThemeSession();

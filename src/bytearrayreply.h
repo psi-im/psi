@@ -51,6 +51,7 @@ private slots:
 private:
 	int origLen;
 	QByteArray data;
+	QBuffer buffer;
 };
 
 #endif

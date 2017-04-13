@@ -45,9 +45,10 @@ public:
 	void setCurrentTheme(const QString &);
 	virtual int screenshotWidth() const { return 512; } // hack
 
-
+#if QT_WEBENGINEWIDGETS_LIB
 	ThemeServer *themeServer();
 	QWebEngineUrlRequestInterceptor *requestInterceptor();
+#endif
 
 	QString optionsName() const { return tr("Chat Message Style"); }
 	QString optionsDescription() const { return tr("Configure your chat theme here"); }

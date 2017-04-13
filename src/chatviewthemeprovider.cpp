@@ -32,7 +32,6 @@
 #include "psioptions.h"
 #include "theme.h"
 #include "applicationinfo.h"
-#include "psiwkavatarhandler.h"
 #include "psithememanager.h"
 #if QT_WEBENGINEWIDGETS_LIB
 # include "themeserver.h"
@@ -41,7 +40,7 @@
 
 class ChatViewThemeProvider;
 
-class ChatViewThemeUrlHandler : public NAMSchemeHandler
+class ChatViewThemeUrlHandler : public NAMPathHandler
 {
 public:
 	QByteArray data(const QUrl &url) const
@@ -182,6 +181,7 @@ void ChatViewThemeProvider::setCurrentTheme(const QString &id)
 	}
 }
 
+#if QT_WEBENGINEWIDGETS_LIB
 ThemeServer *ChatViewThemeProvider::themeServer()
 {
 	Q_ASSERT(ChatViewCon::isReady());
@@ -193,3 +193,4 @@ QWebEngineUrlRequestInterceptor *ChatViewThemeProvider::requestInterceptor()
 	Q_ASSERT(ChatViewCon::isReady());
 	return ChatViewCon::instance()->requestInterceptor;
 }
+#endif

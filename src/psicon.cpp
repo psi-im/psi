@@ -525,7 +525,6 @@ bool PsiCon::init()
 			new ChatViewThemeProvider(this), true);
 	PsiThemeManager::instance()->registerProvider(
 			new GroupChatViewThemeProvider(this), true);
-	NetworkAccessManager::instance()->setSchemeHandler("icon", new IconHandler());
 #endif
 
 	if( !PsiThemeManager::instance()->loadAll() ) {

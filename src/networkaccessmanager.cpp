@@ -1,7 +1,7 @@
 /*
  * networkaccessmanager.cpp - Network Manager for WebView able to process
  * custom url schemas
- * Copyright (C) 2010 senu, Rion
+ * Copyright (C) 2010-2017 senu, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,35 +27,33 @@
 #include <QWebSecurityOrigin>
 #endif
 
-NetworkAccessManager::NetworkAccessManager(QObject *parent)
-: QNetworkAccessManager(parent) {
+NetworkAccessManager::NetworkAccessManager(QObject *parent) :
+    QNetworkAccessManager(parent)
+{
 	setParent(QCoreApplication::instance());
 }
 
-
-NetworkAccessManager::~NetworkAccessManager() {
-	schemeHandlers_.clear();
-}
-
-
-QNetworkReply * NetworkAccessManager::createRequest(Operation op, const QNetworkRequest & req, QIODevice * outgoingData = 0) {
-    //download local file
-	//qDebug("url: %s", qPrintable(req.url().toString()));
-	if (req.url().scheme() == "file" || req.url().scheme() == "data") {
+QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkRequest & req,
+                                                   QIODevice * outgoingData = 0)
+{
+	if (req.url().host() != QLatin1String("psi")) {
 		return QNetworkAccessManager::createRequest(op, req, outgoingData);
     }
 
-	if (schemeHandlers_.contains(req.url().scheme())) {
-		ByteArrayReply *repl = new ByteArrayReply(
-					req,
-					schemeHandlers_.value(req.url().scheme())->data(req.url()),
-					QString(),
-					this);
-		connect(repl, SIGNAL(finished()), SLOT(callFinished()));
-		return repl;
+	QNetworkReply *reply = nullptr;
+	QByteArray data;
+	QByteArray mime;
+
+	for (auto &handler : _schemeHandlers) {
+		if (handler->data(req, data, mime)) {
+			reply = new ByteArrayReply(req, data, mime, this);
+			break;
+		}
 	}
 
-	QNetworkReply * reply = new ByteArrayReply(req); //finishes with error
+	if (!reply) {
+		reply = new ByteArrayReply(req); //finishes with error
+	}
     connect(reply, SIGNAL(finished()), SLOT(callFinished()));
 
     return reply;
@@ -70,36 +68,15 @@ void NetworkAccessManager::callFinished() {
     }
 }
 
-QSharedPointer<NAMSchemeHandler> NetworkAccessManager::schemeHandler(const QString &scheme)
-{
-	if (schemeHandlers_.contains(scheme)) {
-		return schemeHandlers_.value(scheme);
-	}
-	return QSharedPointer<NAMSchemeHandler>();
-}
-
-void NetworkAccessManager::setSchemeHandler(const QString &scheme, NAMSchemeHandler *handler)
-{
-	if (schemeHandlers_.contains(scheme)) {
-		qDebug("%s is already registered. replacing..", qPrintable(scheme));
-		schemeHandlers_.remove(scheme);
-	}
-	schemeHandlers_.insert(scheme, QSharedPointer<NAMSchemeHandler>(handler));
-#ifndef QT_WEBENGINEWIDGETS_LIB
-	// qtwebkit only stuff
-	QWebSecurityOrigin::addLocalScheme(scheme); // TODO review which schemes really need to be white-listed but probably all or them
-#endif
-}
-
 /**
  * Returns the singleton instance of this class
  * \return Instance of NetworkAccessManager
  */
 NetworkAccessManager* NetworkAccessManager::instance()
 {
-	if ( !instance_ )
-		instance_ = new NetworkAccessManager();
-	return instance_;
+	if ( !_instance )
+		_instance = new NetworkAccessManager();
+	return _instance;
 }
 
-NetworkAccessManager* NetworkAccessManager::instance_ = NULL;
+NetworkAccessManager* NetworkAccessManager::_instance = NULL;

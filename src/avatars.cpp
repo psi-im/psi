@@ -642,7 +642,7 @@ QPixmap AvatarFactory::getAvatarByHash(const QString &hash)
 	return QPixmap();
 }
 
-AvatarFactory::AvatarData AvatarFactory::avatarDataByHash(const QString &hash) const
+AvatarFactory::AvatarData AvatarFactory::avatarDataByHash(const QString &hash)
 {
 	FileCacheItem *item = AvatarCache::instance()->get(hash, true);
 	if (item) {

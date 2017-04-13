@@ -27,10 +27,12 @@ ByteArrayReply::ByteArrayReply(const QNetworkRequest &request,
 							   QObject *parent) :
 	QNetworkReply(parent),
 	origLen(ba.size()),
-	data(ba)
+    data(ba),
+	buffer(&data)
 {
 	setRequest(request);
 	setOpenMode(QIODevice::ReadOnly);
+	buffer.open(QIODevice::ReadOnly);
 
 	if (ba.isNull()) {
 		setError(QNetworkReply::ContentNotFoundError, "Not found");
@@ -59,18 +61,14 @@ void ByteArrayReply::abort() {
 
 qint64 ByteArrayReply::bytesAvailable() const
 {
-	return data.length() + QNetworkReply::bytesAvailable();
+	return data.length() - buffer.pos() + QNetworkReply::bytesAvailable();
 }
 
 
-qint64 ByteArrayReply::readData(char *buffer, qint64 maxlen)
+qint64 ByteArrayReply::readData(char *buf, qint64 maxlen)
 {
-	qint64 len = qMin(qint64(data.length()), maxlen);
-	if (len) {
-		memcpy(buffer, data.constData(), len);
-		data.remove(0, len);
-	}
-	if (!data.length())
+	auto len = buffer.read(buf, maxlen);
+	if (buffer.pos() + len == data.length())
 		QTimer::singleShot(0, this, SIGNAL(finished()));
 	return len;
 
@@ -78,9 +76,8 @@ qint64 ByteArrayReply::readData(char *buffer, qint64 maxlen)
 
 
 bool ByteArrayReply::open(OpenMode mode) {
-	Q_UNUSED(mode);
-	Q_ASSERT(0); //should never happened
-	return true;
+	Q_ASSERT(0); // we don't come here
+	return buffer.open(mode);
 }
 
 void ByteArrayReply::signalError()

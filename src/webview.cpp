@@ -32,11 +32,13 @@
 #else
 #include <QWebFrame>
 #include <QWebSecurityOrigin>
+#include <QNetworkRequest>
 #endif
 
 #include "webview.h"
 #include "urlobject.h"
 #include "textutil.h"
+#include "xmpp_vcard.h"
 
 WebView::WebView(QWidget* parent) :
 #ifdef QT_WEBENGINEWIDGETS_LIB
@@ -258,3 +260,7 @@ void WebView::textCopiedEvent()
 	convertClipboardHtmlImages(QClipboard::Clipboard);
 #endif
 }
+
+#ifndef QT_WEBENGINEWIDGETS_LIB
+
+#endif

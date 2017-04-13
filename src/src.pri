@@ -639,7 +639,6 @@ qwebkit {
 			$$PWD/networkaccessmanager.h \
 			$$PWD/bytearrayreply.h \
 			$$PWD/webview.h \
-			$$PWD/psiwkavatarhandler.h \
 			$$PWD/jsutil.h \
 			$$PWD/chatviewtheme.h \
 			$$PWD/chatviewthemeprovider.h \
@@ -649,7 +648,6 @@ qwebkit {
 			$$PWD/networkaccessmanager.cpp \
 			$$PWD/bytearrayreply.cpp \
 			$$PWD/webview.cpp \
-			$$PWD/psiwkavatarhandler.cpp \
 			$$PWD/jsutil.cpp \
 			$$PWD/chatviewtheme.cpp \
 			$$PWD/chatviewthemeprovider.cpp \
@@ -660,17 +658,17 @@ qwebkit {
 	qtwebengine {
 		CONFIG += c++14
 		QT += webenginewidgets webchannel
+		include (../3rdparty/qhttp.pri)
+
+		HEADERS +=  \
+			$$PWD/themeserver.h
+		SOURCES +=  \
+			$$PWD/themeserver.cpp
 	} else {
 		QT += webkit
 		greaterThan(QT_MAJOR_VERSION, 4):QT += webkitwidgets
 	}
 
-	include (../3rdparty/qhttp.pri)
-
-	HEADERS +=  \
-		$$PWD/themeserver.h
-	SOURCES +=  \
-		$$PWD/themeserver.cpp
 }
 else {
 	HEADERS += 	$$PWD/chatview_te.h

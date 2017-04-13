@@ -38,30 +38,6 @@
 #include "networkaccessmanager.h"
 #include "iconset.h"
 
-class IconHandler : public NAMSchemeHandler
-{
-	QByteArray data(const QUrl &url) const {
-#ifdef HAVE_QT5
-		int w = QUrlQuery(url.query()).queryItemValue("w").toInt();
-		int h = QUrlQuery(url.query()).queryItemValue("h").toInt();
-#else
-		int w = url.queryItemValue("w").toInt();
-		int h = url.queryItemValue("h").toInt();
-#endif
-		PsiIcon icon = IconsetFactory::icon(url.path());
-		if (w && h && !icon.isAnimated()) {
-			QByteArray ba;
-			QBuffer buffer(&ba);
-			buffer.open(QIODevice::WriteOnly);
-			icon.pixmap().scaled(w, h, Qt::KeepAspectRatio, Qt::SmoothTransformation)
-					.toImage().save(&buffer, "PNG");
-			return ba;
-		} else { //scaling impossible, return as is. do scaling with help of css or html attributes
-			return IconsetFactory::raw(url.path());
-		}
-	}
-};
-
 /**
  * Extended QWebView.
  *

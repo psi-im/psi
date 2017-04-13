@@ -72,7 +72,7 @@ public:
 
 	QPixmap getAvatar(const Jid& jid);
 	QPixmap getAvatarByHash(const QString& hash);
-	AvatarData avatarDataByHash(const QString& hash) const;
+	static AvatarData avatarDataByHash(const QString& hash);
 	UserHashes userHashes(const Jid& jid) const;
 	PsiAccount* account() const;
 	void setSelfAvatar(const QString& fileName);

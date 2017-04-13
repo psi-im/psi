@@ -1,7 +1,7 @@
 /*
  * networkaccessmanager.h - Network Manager for WebView able to process
  * custom url schemas
- * Copyright (C) 2010 senu, Rion
+ * Copyright (C) 2010-2017 senu, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,39 +23,29 @@
 #define _NETWORKACCESSMANAGER_H
 
 #include <QNetworkAccessManager>
-#include <QStringList>
 #include <QSharedPointer>
-#include <QHash> //for qt-4.4
-#include <QMutex>
 
-#include <QNetworkReply>
-#include <QNetworkRequest>
-#include <QIODevice>
+class QByteArray;
+class QNetworkRequest;
+class QNetworkReply;
 
-class NetworkAccessManager;
-
-class NAMSchemeHandler {
+class NAMPathHandler {
 public:
-	virtual ~NAMSchemeHandler() {}
-	virtual QByteArray data(const QUrl &) const = 0;
+	virtual ~NAMPathHandler() {}
+	virtual bool data(const QNetworkRequest &req, QByteArray &data, QByteArray &mime) const = 0;
 };
 
-/** Blocks internet connections and allows to use icon:// URLs in webkit-based ChatViews*/
 class NetworkAccessManager : public QNetworkAccessManager {
 
 	Q_OBJECT
 public:
-	/**
-	 * Constructor.
-	 *
-	 * \param iconServer will be used to serve icon:// urls
-	 */
+
 	NetworkAccessManager(QObject *parent = 0);
-	~NetworkAccessManager();
 
 	static NetworkAccessManager* instance();
-	QSharedPointer<NAMSchemeHandler> schemeHandler(const QString &);
-	void setSchemeHandler(const QString &, NAMSchemeHandler *);
+
+	inline void registerPathHandler(const QSharedPointer<NAMPathHandler> &handler)
+	{ _schemeHandlers.append(handler); }
 
 private slots:
 
@@ -69,24 +59,9 @@ private slots:
 protected:
 	QNetworkReply* createRequest(Operation op, const QNetworkRequest & req, QIODevice * outgoingData);
 
-	/*
-	 * List of whitelisted URLs.
-	 *
-	 * Access to whitelisted URLs is not denied.
-	 */
-	QStringList whiteList;
-
-	/**
-	 * Mutal exclusion for whitList.
-	 *
-	 * WhiteList can be accessed by Webkit (createRequest())
-	 * and Psi (addUrlToWhiteList()) simultaneously)
-	 */
-	QMutex whiteListMutex;
-
 private:
-	static NetworkAccessManager* instance_;
-	QHash<QString, QSharedPointer<NAMSchemeHandler> > schemeHandlers_;
+	static NetworkAccessManager* _instance;
+	QList<QSharedPointer<NAMPathHandler> > _schemeHandlers;
 };
 
 #endif
