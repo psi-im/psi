@@ -33,7 +33,7 @@ void ChatViewUrlRequestInterceptor::interceptRequest(QWebEngineUrlRequestInfo &i
 	}
 }
 #else
-class AvatarHandler : public NAMPathHandler
+class AvatarHandler : public NAMDataHandler
 {
 public:
 	bool data(const QNetworkRequest &req, QByteArray &data, QByteArray &mime) const
@@ -63,7 +63,7 @@ public:
 	}
 };
 
-class IconHandler : public NAMPathHandler
+class IconHandler : public NAMDataHandler
 {
 	bool data(const QNetworkRequest &req, QByteArray &data, QByteArray &mime) const
 	{
@@ -101,7 +101,7 @@ class IconHandler : public NAMPathHandler
 	}
 };
 
-class ThemesDirHandler : public NAMPathHandler
+class ThemesDirHandler : public NAMDataHandler
 {
 public:
 	bool data(const QNetworkRequest &req, QByteArray &data, QByteArray &mime) const
@@ -206,9 +206,9 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
 
 	requestInterceptor = new ChatViewUrlRequestInterceptor(this);
 #else
-	NetworkAccessManager::instance()->registerPathHandler(QSharedPointer<NAMPathHandler>(new ThemesDirHandler()));
-	NetworkAccessManager::instance()->registerPathHandler(QSharedPointer<NAMPathHandler>(new IconHandler()));
-	NetworkAccessManager::instance()->registerPathHandler(QSharedPointer<NAMPathHandler>(new AvatarHandler()));
+	NetworkAccessManager::instance()->registerPathHandler(QSharedPointer<NAMDataHandler>(new ThemesDirHandler()));
+	NetworkAccessManager::instance()->registerPathHandler(QSharedPointer<NAMDataHandler>(new IconHandler()));
+	NetworkAccessManager::instance()->registerPathHandler(QSharedPointer<NAMDataHandler>(new AvatarHandler()));
 #endif
 }
 

@@ -73,7 +73,11 @@ var adapter = {
             }
 
             var resources = ["Incoming/buddy_icon.png", "Outgoing/buddy_icon.png", "incoming_icon.png", "outgoing_icon.png"];
-            loader.checkFilesExist(resourcesListReady, "Contents/Resources");
+            if (chat.async) {
+                loader.checkFilesExist(resources, "Contents/Resources", resourcesListReady);
+            } else {
+                resourcesListReady(loader.checkFilesExist(resources, "Contents/Resources"));
+            }
         }
 
         function resourcesListReady(rlist)
@@ -84,7 +88,11 @@ var adapter = {
             avatars.incomingImage = rlist["incoming_icon.png"]? "incoming_icon.png" : chat.server.psiDefaultAvatarUrl;
             avatars.outgoingImage = rlist["outgoing_icon.png"]? "outgoing_icon.png" : chat.server.psiDefaultAvatarUrl;
             loader.toCache("avatars", avatars)
-            loader.getFileContents("Contents/Resources/Template.html", baseHtmlLoaded);
+            if (chat.async) {
+                loader.getFileContents("Contents/Resources/Template.html", baseHtmlLoaded);
+            } else {
+                baseHtmlLoaded(loader.getFileContents("Contents/Resources/Template.html"));
+            }
         }
 
         function baseHtmlLoaded(baseHtml)
@@ -102,7 +110,12 @@ var adapter = {
                 baseHtmlRecognized(baseHtml);
             } else {
                 ip.MessageViewVersion = 4;
-                loader.getFileContentsFromAdapterDir("Template.html", baseHtmlRecognized);
+                if (chat.async) {
+                    loader.getFileContentsFromAdapterDir("Template.html", baseHtmlRecognized);
+                } else {
+                    baseHtmlRecognized(loader.getFileContentsFromAdapterDir("Template.html"));
+                }
+
                 //loader.toCache("html", loader.getFileContentsFromAdapterDir("Template.html"));
             }
         }
@@ -117,6 +130,7 @@ var adapter = {
             loader.toCache("Info.plist", ip);
             window.psiim = chat; // just to keep it the same and avoid any problems
 
+            chat.console("Report the theme has loaded");
             loader.finishThemeLoading();
         }
 
@@ -330,12 +344,18 @@ chat.util.updateObject(adapter, function(chat){
                 loader.setSessionHtml(sessionId, html);
             }
 
-            server.loadFromCacheMulti(["html", "Info.plist", "Topic.html", "Header.html", "Footer.html", "avatars"],
-                function (cache) {
-                    loader.sessionProperties(sessionId, ["chatName"], function(props) {
-                        onServerStuffReady(cache, props)
+            if (chat.async) {
+                server.loadFromCacheMulti(["html", "Info.plist", "Topic.html", "Header.html", "Footer.html", "avatars"],
+                    function (cache) {
+                        loader.sessionProperties(sessionId, ["chatName"], function(props) {
+                            onServerStuffReady(cache, props)
+                        });
                     });
-                });
+            } else {
+                var cache = server.loadFromCacheMulti(["html", "Info.plist", "Topic.html", "Header.html", "Footer.html", "avatars"]);
+                var props = loader.sessionProperties(sessionId, ["chatName"]);
+                onServerStuffReady(cache, props);
+            }
 
 
         },
@@ -525,11 +545,16 @@ chat.util.updateObject(adapter, function(chat){
                 session.signalInited();
             }
 
-            server.loadFromCacheMulti(["Info.plist", "avatars", "Status.html", "Content.html",
-                                      "Incoming/Content.html", "Incoming/NextContent.html",
-                                      "Incoming/Context.html", "Incoming/NextContext.html",
-                                      "Outgoing/Content.html", "Outgoing/NextContent.html",
-                                      "Outgoing/Context.html", "Outgoing/NextContext.html"], cacheReady)
+            var reslist = ["Info.plist", "avatars", "Status.html", "Content.html",
+                           "Incoming/Content.html", "Incoming/NextContent.html",
+                           "Incoming/Context.html", "Incoming/NextContext.html",
+                           "Outgoing/Content.html", "Outgoing/NextContent.html",
+                           "Outgoing/Context.html", "Outgoing/NextContext.html"];
+            if (chat.async) {
+                server.loadFromCacheMulti(reslist, cacheReady);
+            } else {
+                cacheReady(server.loadFromCacheMulti(reslist));
+            }
         }
     }
 }(chat))

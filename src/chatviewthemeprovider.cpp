@@ -40,7 +40,7 @@
 
 class ChatViewThemeProvider;
 
-class ChatViewThemeUrlHandler : public NAMPathHandler
+class ChatViewThemeUrlHandler : public NAMDataHandler
 {
 public:
 	QByteArray data(const QUrl &url) const

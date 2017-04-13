@@ -28,6 +28,7 @@
 #else
 #include <QWebPage>
 #include <QWebFrame>
+#include <QNetworkRequest>
 #endif
 #include <QFileInfo>
 #include <QApplication>
@@ -364,6 +365,27 @@ public slots:
 };
 
 
+#ifndef QT_WEBENGINEWIDGETS_LIB
+class SessionRequestHandler : public NAMDataHandler
+{
+	QSharedPointer<ChatViewThemeSession> session;
+
+public:
+	SessionRequestHandler(QSharedPointer<ChatViewThemeSession> &session) :
+	    session(session) {}
+
+	bool data(const QNetworkRequest &req, QByteArray &data, QByteArray &mime) const
+	{
+		Q_UNUSED(mime)
+		data = session->theme.loadData(session->theme.cvtd->httpRelPath + req.url().path());
+		if (!data.isNull()) {
+			return true;
+		}
+		return false;
+	}
+};
+#endif
+
 //------------------------------------------------------------------------------
 // ChatViewTheme
 //------------------------------------------------------------------------------
@@ -464,15 +486,11 @@ bool ChatViewTheme::load(std::function<void(bool)> loadCallback)
 	cvtd->wv->page()->mainFrame()->addToJavaScriptWindowObject("srvUtil", cvtd->jsUtil.data(), QT_JS_QTOWNERSHIP);
 
 	foreach (const QString &sp, scriptPaths) {
-		QVariant result = cvtd->evaluateFromFile(sp, cvtd->wv->page()->mainFrame());
-		if (result != "ok") {
-			qDebug("failed to eval helper script: %s", qPrintable(sp));
-			return false;
-		}
+		cvtd->evaluateFromFile(sp, cvtd->wv->page()->mainFrame());
 	}
 
 	QString resStr = cvtd->wv->page()->mainFrame()->evaluateJavaScript(
-				"try { initPsiTheme().adapter.loadTheme(); } "
+				"try { initPsiTheme().adapter.loadTheme(); \"ok\"; } "
 				"catch(e) { window.psiim.util.props(e); }").toString();
 
 	if (resStr == "ok") {
@@ -673,8 +691,12 @@ bool ChatViewTheme::applyToWebView(QSharedPointer<ChatViewThemeSession> session)
 	//QString id = provider->themeServer()->registerHandler(sessionObject);
 	return true;
 #else
-
+	SessionRequestHandler *handler = new SessionRequestHandler(session);
+	session->sessId = NetworkAccessManager::instance()->registerSessionHandler(QSharedPointer<NAMDataHandler>(handler));
+	// TODO we have to gnerate html first. see code above
+	session->webView()->page()->mainFrame()->setUrl(cvtd->jsLoader->serverUrl());
 #endif
+
 //	QString html = theme->html(jsObject);
 //	//qDebug() << "Set html:" << html;
 //	webView->page()->mainFrame()->setHtml(
@@ -686,9 +708,11 @@ bool ChatViewTheme::applyToWebView(QSharedPointer<ChatViewThemeSession> session)
 ChatViewThemeSession::~ChatViewThemeSession()
 {
 #ifdef QT_WEBENGINEWIDGETS_LIB
-   if (server) {
-	   server->unregisterSessionHandler(sessId);
-   }
+	if (server) {
+		server->unregisterSessionHandler(sessId);
+	}
+#else
+	NetworkAccessManager::instance()->unregisterSessionHandler(sessId);
 #endif
 }
 

@@ -309,6 +309,31 @@ protected:
 		return true;
 	}
 };
+#else
+class ChatViewPage : public QWebPage
+{
+	Q_OBJECT
+
+	QString sessionUA;
+
+public:
+	using QWebPage::QWebPage;
+
+	void setSessionId(const QString &sessionId)
+	{
+	    sessionUA = sessionId;
+	}
+
+protected:
+	QString userAgentForUrl(const QUrl &url) const
+	{
+		if (url.host() == QLatin1String("psi")) {
+			return sessionUA;
+		}
+		return QWebPage::userAgentForUrl(url);
+	}
+};
+
 #endif
 
 //----------------------------------------------------------------------------
@@ -327,6 +352,7 @@ ChatView::ChatView(QWidget *parent) :
 #ifdef QT_WEBENGINEWIDGETS_LIB
 	d->webView->setPage(new ChatViewPage(d->webView));
 #else
+	d->webView->setPage(new ChatViewPage(d->webView));
 	d->webView->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
 #endif
 	QVBoxLayout *layout = new QVBoxLayout;
@@ -364,6 +390,9 @@ void ChatView::init()
 	d->theme = *(dynamic_cast<ChatViewTheme*>(curTheme));// TODO rewrite this pointer magic
 	d->themeBridge.reset(new ChatViewThemeSessionBridge(this));
 	d->theme.applyToWebView(d->themeBridge.dynamicCast<ChatViewThemeSession>());
+#ifndef QT_WEBENGINEWIDGETS_LIB
+	((ChatViewPage*)d->webView->page())->setSessionId(d->themeBridge->sessionId());
+#endif
 	if (d->theme.isTransparentBackground()) {
 		QWidget *w = this;
 		while (w) {

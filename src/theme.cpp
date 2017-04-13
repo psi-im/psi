@@ -186,7 +186,7 @@ QByteArray Theme::loadData(const QString &fileName, const QString &themePath, bo
 	return ba;
 }
 
-QByteArray Theme::loadData(const QString &fileName)
+QByteArray Theme::loadData(const QString &fileName) const
 {
 	return Theme::loadData(fileName, d->filepath, d->caseInsensitiveFS);
 }

@@ -38,6 +38,9 @@ class ChatViewThemeSession;
 class ChatViewTheme : public Theme
 {
 	friend class ChatViewThemeJSUtil;
+#ifndef QT_WEBENGINEWIDGETS_LIB
+	friend class SessionRequestHandler;
+#endif
 public:
 
 	ChatViewTheme();
@@ -75,6 +78,9 @@ private:
 class ThemeServer;
 class ChatViewThemeSession {
 	friend class ChatViewTheme;
+#ifndef QT_WEBENGINEWIDGETS_LIB
+	friend class SessionRequestHandler;
+#endif
 
 	QString sessId; // unique id of session
 	ChatViewTheme theme;

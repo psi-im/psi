@@ -3,7 +3,9 @@ function initPsiTheme() {
     var loader = window.srvLoader;
     server.console("Util is initilizing");
     var htmlSource = document.createElement("div"); //manages appendHtml
+    var async = (typeof QWebChannel != 'undefined');
     var chat =  {
+        async : async,
         console : server.console,
         server : server,
 
@@ -108,17 +110,26 @@ function initPsiTheme() {
             },
 
             loadXML : function(path, callback) {
-                loader.getFileContents(path, function(text){
+                function cb(text){
                     if (!text) {
                         throw new Error("File " + path + " is empty. can't parse xml");
                     }
+                    var xml;
                     try {
-                        callback(new DOMParser().parseFromString(text, "text/xml"));
+                        xml = new DOMParser().parseFromString(text, "text/xml");
                     } catch (e) {
                         server.console("failed to parse xml from file " + path);
                         throw e;
                     }
-                });
+                    callback(xml);
+                }
+                if (chat.async) {
+                    server.console("loading xml async: " + path);
+                    loader.getFileContents(path, cb);
+                } else {
+                    server.console("loading xml sync: " + path);
+                    cb(loader.getFileContents(path));
+                }
             },
 
             dateFormat : function(val, format) {

@@ -29,9 +29,9 @@ class QByteArray;
 class QNetworkRequest;
 class QNetworkReply;
 
-class NAMPathHandler {
+class NAMDataHandler {
 public:
-	virtual ~NAMPathHandler() {}
+	virtual ~NAMDataHandler() {}
 	virtual bool data(const QNetworkRequest &req, QByteArray &data, QByteArray &mime) const = 0;
 };
 
@@ -44,8 +44,11 @@ public:
 
 	static NetworkAccessManager* instance();
 
-	inline void registerPathHandler(const QSharedPointer<NAMPathHandler> &handler)
+	inline void registerPathHandler(const QSharedPointer<NAMDataHandler> &handler)
 	{ _schemeHandlers.append(handler); }
+
+	QString registerSessionHandler(const QSharedPointer<NAMDataHandler> &handler);
+	void unregisterSessionHandler(const QString &id);
 
 private slots:
 
@@ -61,7 +64,10 @@ protected:
 
 private:
 	static NetworkAccessManager* _instance;
-	QList<QSharedPointer<NAMPathHandler> > _schemeHandlers;
+
+	int _handlerSeed;
+	QList<QSharedPointer<NAMDataHandler> > _schemeHandlers;
+	QHash<QString,QSharedPointer<NAMDataHandler> > _sessionHandlers;
 };
 
 #endif

@@ -51,6 +51,12 @@ QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkR
 		}
 	}
 
+	QString ua = req.header(QNetworkRequest::UserAgentHeader).toString();
+	auto handler = _sessionHandlers.value(ua);
+	if (handler && handler->data(req, data, mime)) {
+		reply = new ByteArrayReply(req, data, mime, this);
+	}
+
 	if (!reply) {
 		reply = new ByteArrayReply(req); //finishes with error
 	}
@@ -77,6 +83,22 @@ NetworkAccessManager* NetworkAccessManager::instance()
 	if ( !_instance )
 		_instance = new NetworkAccessManager();
 	return _instance;
+}
+
+QString NetworkAccessManager::registerSessionHandler(const QSharedPointer<NAMDataHandler> &handler)
+{
+	QString s;
+	s.sprintf("t%x", _handlerSeed);
+	_handlerSeed += 0x10;
+
+	_sessionHandlers.insert(s, handler);
+
+	return s;
+}
+
+void NetworkAccessManager::unregisterSessionHandler(const QString &id)
+{
+	_sessionHandlers.remove(id);
 }
 
 NetworkAccessManager* NetworkAccessManager::_instance = NULL;
