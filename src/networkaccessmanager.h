@@ -45,7 +45,7 @@ public:
 	static NetworkAccessManager* instance();
 
 	inline void registerPathHandler(const QSharedPointer<NAMDataHandler> &handler)
-	{ _schemeHandlers.append(handler); }
+	{ _pathHandlers.append(handler); }
 
 	QString registerSessionHandler(const QSharedPointer<NAMDataHandler> &handler);
 	void unregisterSessionHandler(const QString &id);
@@ -66,7 +66,7 @@ private:
 	static NetworkAccessManager* _instance;
 
 	int _handlerSeed;
-	QList<QSharedPointer<NAMDataHandler> > _schemeHandlers;
+	QList<QSharedPointer<NAMDataHandler> > _pathHandlers;
 	QHash<QString,QSharedPointer<NAMDataHandler> > _sessionHandlers;
 };
 

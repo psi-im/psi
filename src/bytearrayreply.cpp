@@ -68,10 +68,9 @@ qint64 ByteArrayReply::bytesAvailable() const
 qint64 ByteArrayReply::readData(char *buf, qint64 maxlen)
 {
 	auto len = buffer.read(buf, maxlen);
-	if (buffer.pos() + len == data.length())
+	if (buffer.atEnd())
 		QTimer::singleShot(0, this, SIGNAL(finished()));
 	return len;
-
 }
 
 

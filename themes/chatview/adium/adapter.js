@@ -224,7 +224,7 @@ chat.util.updateObject(adapter, function(chat){
     }
 
     function Template(raw) {
-        //chat.console("parsing '"+raw+"'");
+        chat.console("parsing '"+raw+"'");
         var splitted = raw.split(/(%[\w]+(?:\{[^\{]+\})?%)/), i;
         this.parts = [];
 
@@ -293,7 +293,8 @@ chat.util.updateObject(adapter, function(chat){
                 chat.console("prepare html3");
                 var footerHtml = new Template(cache["Footer.html"] || "").toString({});
 
-                footerHtml = "<script src=\"/psithemes/chatview/moment-with-locales.min.js\"></script>\n \
+                if (chat.async) {
+                    footerHtml = "<script src=\"/psithemes/chatview/moment-with-locales.min.js\"></script>\n \
                         <script src=\"/psithemes/chatview/util.js\"></script>\n \
                         <script src=\"/psithemes/chatview/adium/adapter.js\"></script>\n \
                         <script src=\"/psiglobal/qwebchannel.js\"></script> \
@@ -303,7 +304,16 @@ chat.util.updateObject(adapter, function(chat){
                                 window.srvUtil = channel.objects.srvUtil; \
                                 initPsiTheme().adapter.initSession(); \
                             }); \
-                    </script>" + footerHtml;
+                        </script>" + footerHtml;
+                } else {
+                    footerHtml = "<script src=\"/psithemes/chatview/moment-with-locales.min.js\"></script>\n \
+                        <script type=\"text/javascript\"> \
+                            window.addEventListener(\"load\", \
+                                                      function() { \
+                                                               initPsiTheme().adapter.initSession(); \
+                                                      }); \
+                        </script>" + footerHtml;
+                }
 
                 //footerHtml += "\n<script type='text/javascript'>window.addEventListener('load', "+
                 //    server.jsNamespace+".adapter.initSession, false);</script>";
@@ -339,25 +349,23 @@ chat.util.updateObject(adapter, function(chat){
                     styles.push("font-size:"+ip.DefaultFontSize+"pt");
                 }
 
-                html = html.replace("==bodyBackground==", styles.join(";"));
-                //chat.console("prepare html: " + html);
-                loader.setSessionHtml(sessionId, html);
+                return html.replace("==bodyBackground==", styles.join(";"));
             }
 
             if (chat.async) {
                 server.loadFromCacheMulti(["html", "Info.plist", "Topic.html", "Header.html", "Footer.html", "avatars"],
                     function (cache) {
                         loader.sessionProperties(sessionId, ["chatName"], function(props) {
-                            onServerStuffReady(cache, props)
+                            var html = onServerStuffReady(cache, props)
+                            loader.setSessionHtml(sessionId, html);
                         });
                     });
             } else {
                 var cache = server.loadFromCacheMulti(["html", "Info.plist", "Topic.html", "Header.html", "Footer.html", "avatars"]);
+                //chat.console(chat.util.props(cache));
                 var props = loader.sessionProperties(sessionId, ["chatName"]);
-                onServerStuffReady(cache, props);
+                return onServerStuffReady(cache, props);
             }
-
-
         },
         initSession : function() {
             chat.console("init session");
@@ -366,7 +374,7 @@ chat.util.updateObject(adapter, function(chat){
             {
                 session = window.srvSession;
                 defaultAvatars = cache.avatars
-                chat.console(chat.util.props(defaultAvatars, true))
+                chat.console(chat.util.props(cache, true))
                 chat.adapter.initSession = null;
                 chat.adapter.loadTheme = null;
                 chat.adapter.getHtml = null;

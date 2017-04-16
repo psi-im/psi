@@ -44,7 +44,7 @@ QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkR
 	QByteArray data;
 	QByteArray mime;
 
-	for (auto &handler : _schemeHandlers) {
+	for (auto &handler : _pathHandlers) {
 		if (handler->data(req, data, mime)) {
 			reply = new ByteArrayReply(req, data, mime, this);
 			break;

@@ -194,7 +194,7 @@ public slots:
 		while (it != map.constEnd()) {
 			QByteArray ba = theme->loadData(it.value().toString());
 			if (!ba.isNull()) {
-				theme->putToCache(it.key(), ba);
+				theme->putToCache(it.key(), QString::fromUtf8(ba));
 			}
 			++it;
 		}
@@ -580,23 +580,13 @@ void ChatViewTheme::embedSessionJsObject(QSharedPointer<ChatViewThemeSession> se
 
 bool ChatViewTheme::applyToWebView(QSharedPointer<ChatViewThemeSession> session)
 {
+	session->theme = *this;
+
 #if QT_WEBENGINEWIDGETS_LIB
 	QWebEnginePage *page = session->webView()->page();
 	if (cvtd->transparentBackground) {
 		page->setBackgroundColor(Qt::transparent);
 	}
-#else
-	QWebPage *page = session->webView()->page();
-	if (cvtd->transparentBackground) {
-		QPalette palette;
-		palette = session->webView()->palette();
-		palette.setBrush(QPalette::Base, Qt::transparent);
-		page->setPalette(palette);
-		session->webView()->setAttribute(Qt::WA_OpaquePaintEvent, false);
-	}
-#endif
-
-#if QT_WEBENGINEWIDGETS_LIB
 
 	QWebChannel *channel = page->webChannel();
 	if (!channel) {
@@ -614,7 +604,7 @@ bool ChatViewTheme::applyToWebView(QSharedPointer<ChatViewThemeSession> session)
 
 	auto server = provider->themeServer();
 	session->server = server;
-	session->theme = *this;
+
 	auto weakSession = session.toWeakRef();
 	auto handler = [weakSession](qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res) -> bool
 	{
@@ -691,18 +681,28 @@ bool ChatViewTheme::applyToWebView(QSharedPointer<ChatViewThemeSession> session)
 	//QString id = provider->themeServer()->registerHandler(sessionObject);
 	return true;
 #else
+	QWebPage *page = session->webView()->page();
+	if (cvtd->transparentBackground) {
+		QPalette palette;
+		palette = session->webView()->palette();
+		palette.setBrush(QPalette::Base, Qt::transparent);
+		page->setPalette(palette);
+		session->webView()->setAttribute(Qt::WA_OpaquePaintEvent, false);
+	}
+
+	page->setNetworkAccessManager(NetworkAccessManager::instance());
+
 	SessionRequestHandler *handler = new SessionRequestHandler(session);
 	session->sessId = NetworkAccessManager::instance()->registerSessionHandler(QSharedPointer<NAMDataHandler>(handler));
-	// TODO we have to gnerate html first. see code above
-	session->webView()->page()->mainFrame()->setUrl(cvtd->jsLoader->serverUrl());
-#endif
 
-//	QString html = theme->html(jsObject);
-//	//qDebug() << "Set html:" << html;
-//	webView->page()->mainFrame()->setHtml(
-//		html, theme->baseUrl()
-//	);
-	return false;
+	QString basePath = "";
+	QString html = cvtd->wv->page()->mainFrame()->evaluateJavaScript(
+	            QString(QLatin1String("psiim.adapter.generateSessionHtml(\"%1\", %2, \"%3\")"))
+	            .arg(session->sessId, session->propsAsJsonString(), basePath)).toString();
+	page->mainFrame()->setHtml(html, cvtd->jsLoader->serverUrl());
+
+	return true;
+#endif
 }
 
 ChatViewThemeSession::~ChatViewThemeSession()

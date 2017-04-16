@@ -314,21 +314,21 @@ class ChatViewPage : public QWebPage
 {
 	Q_OBJECT
 
-	QString sessionUA;
+	ChatViewPrivate *cvd;
 
 public:
 	using QWebPage::QWebPage;
 
-	void setSessionId(const QString &sessionId)
+	void setCVPrivate(ChatViewPrivate *d)
 	{
-	    sessionUA = sessionId;
+	    cvd = d;
 	}
 
 protected:
 	QString userAgentForUrl(const QUrl &url) const
 	{
 		if (url.host() == QLatin1String("psi")) {
-			return sessionUA;
+			return cvd->themeBridge->sessionId();
 		}
 		return QWebPage::userAgentForUrl(url);
 	}
@@ -389,10 +389,11 @@ void ChatView::init()
 	}
 	d->theme = *(dynamic_cast<ChatViewTheme*>(curTheme));// TODO rewrite this pointer magic
 	d->themeBridge.reset(new ChatViewThemeSessionBridge(this));
-	d->theme.applyToWebView(d->themeBridge.dynamicCast<ChatViewThemeSession>());
 #ifndef QT_WEBENGINEWIDGETS_LIB
-	((ChatViewPage*)d->webView->page())->setSessionId(d->themeBridge->sessionId());
+	((ChatViewPage*)d->webView->page())->setCVPrivate(d.data());
 #endif
+	d->theme.applyToWebView(d->themeBridge.dynamicCast<ChatViewThemeSession>());
+
 	if (d->theme.isTransparentBackground()) {
 		QWidget *w = this;
 		while (w) {
