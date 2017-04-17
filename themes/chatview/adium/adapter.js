@@ -274,7 +274,7 @@ chat.util.updateObject(adapter, function(chat){
             function onServerStuffReady(cache, sessProps) {
                 session = serverSession;
                 defaultAvatars = cache.avatars
-                //chat.console("prepare html");
+
                 var html = cache["html"];
                 //chat.console("cached Template.html: " + html);
                 var ip = cache["Info.plist"];
@@ -356,15 +356,25 @@ chat.util.updateObject(adapter, function(chat){
                 server.loadFromCacheMulti(["html", "Info.plist", "Topic.html", "Header.html", "Footer.html", "avatars"],
                     function (cache) {
                         loader.sessionProperties(sessionId, ["chatName"], function(props) {
-                            var html = onServerStuffReady(cache, props)
-                            loader.setSessionHtml(sessionId, html);
+                            try {
+                                var html = onServerStuffReady(cache, props)
+                                loader.setSessionHtml(sessionId, html);
+                            } catch (e) {
+                                loader.setSessionHtml(sessionId, "SESSION INIT ERROR: " + e + " \n" +
+                                                      chat.util.escapeHtml(""+e.stack).replace(/\n/, "<br/>"));
+                            }
                         });
                     });
             } else {
-                var cache = server.loadFromCacheMulti(["html", "Info.plist", "Topic.html", "Header.html", "Footer.html", "avatars"]);
-                //chat.console(chat.util.props(cache));
-                var props = loader.sessionProperties(sessionId, ["chatName"]);
-                return onServerStuffReady(cache, props);
+                try {
+                    var cache = server.loadFromCacheMulti(["html", "Info.plist", "Topic.html", "Header.html", "Footer.html", "avatars"]);
+                    //chat.console(chat.util.props(cache));
+                    var props = loader.sessionProperties(sessionId, ["chatName"]);
+                    chat.console("SESSION PROPS: " + chat.util.props(props));
+                    return onServerStuffReady(cache, props);
+                } catch (e) {
+                    return "SESSION INIT ERROR: " + e + " \n" + chat.util.escapeHtml(""+e.stack).replace(/\n/, "<br/>");
+                }
             }
         },
         initSession : function() {
@@ -486,9 +496,11 @@ chat.util.updateObject(adapter, function(chat){
                         } else if (data.type == "replace") {
                             var doScroll = nearBottom();
                             var cel = document.getElementById("Chat");
-                            var se =cel.querySelector("psims[mid='"+data.replaceId+"'");
-                            var ee =cel.querySelector("psime[mid='"+data.replaceId+"'");
-                            chat.console("")
+                            var se =cel.querySelector("psims[mid='"+data.replaceId+"']");
+                            var ee =cel.querySelector("psime[mid='"+data.replaceId+"']");
+                            chat.console("Replace: start: " + (se? "found, ":"not found, ") +
+                                         "end: " + (ee? "found, ":"not found, ") +
+                                         "parent match: " + ((se && ee && se.parentNode === ee.parentNode)?"yes":"no"));
                             if (se && ee && se.parentNode === ee.parentNode) {
                                 while (se.nextSibling !== ee) {
                                     se.parentNode.removeChild(se.nextSibling);

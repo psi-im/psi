@@ -88,11 +88,6 @@ public:
 #endif
 };
 
-//class ChatViewJSGlobal
-//{
-
-//};
-
 class ChatViewJSLoader : public QObject
 {
 	Q_OBJECT
@@ -695,10 +690,12 @@ bool ChatViewTheme::applyToWebView(QSharedPointer<ChatViewThemeSession> session)
 	SessionRequestHandler *handler = new SessionRequestHandler(session);
 	session->sessId = NetworkAccessManager::instance()->registerSessionHandler(QSharedPointer<NAMDataHandler>(handler));
 
+	cvtd->jsLoader->registerSession(session);
 	QString basePath = "";
 	QString html = cvtd->wv->page()->mainFrame()->evaluateJavaScript(
 	            QString(QLatin1String("psiim.adapter.generateSessionHtml(\"%1\", %2, \"%3\")"))
 	            .arg(session->sessId, session->propsAsJsonString(), basePath)).toString();
+	cvtd->jsLoader->unregisterSession(session->sessId);
 	page->mainFrame()->setHtml(html, cvtd->jsLoader->serverUrl());
 
 	return true;

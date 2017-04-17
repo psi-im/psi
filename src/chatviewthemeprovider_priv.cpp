@@ -90,7 +90,7 @@ class IconHandler : public NAMDataHandler
 				return true;
 			}
 		} else { //scaling impossible, return as is. do scaling with help of css or html attributes
-			data = IconsetFactory::raw(url.path());
+			data = icon.raw();
 			if (!data.isEmpty()) {
 				mime = image2type(data).toLatin1();
 				return true;

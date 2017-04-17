@@ -613,8 +613,9 @@ QPixmap AvatarFactory::getAvatar(const Jid& _jid)
 			return QPixmap();
 		}
 		QByteArray data = vcard.photo();
-		AvatarCache::instance()->setIcon(AvatarCache::VCardType, bareJid, data);
-		img = QImage::fromData(data);
+		if (AvatarCache::instance()->setIcon(AvatarCache::VCardType, bareJid, data) != AvatarCache::NoData) {
+			img = QImage::fromData(data);
+		}
 	}
 
 	if (img.isNull()) {

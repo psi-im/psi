@@ -39,6 +39,7 @@
 #else
 #include <QWebPage>
 #include <QWebFrame>
+#include <QNetworkRequest>
 #endif
 #include <QFile>
 #include <QFileInfo>
@@ -331,6 +332,18 @@ protected:
 			return cvd->themeBridge->sessionId();
 		}
 		return QWebPage::userAgentForUrl(url);
+	}
+
+	bool acceptNavigationRequest(QWebFrame *frame, const QNetworkRequest &request, NavigationType type)
+	{
+		bool isMainFrame = frame == cvd->webView->page()->mainFrame();
+		if (isMainFrame && (type == NavigationTypeLinkClicked ||
+		                    type == NavigationTypeFormSubmitted ||
+		                    type == NavigationTypeBackOrForward)) {
+			DesktopUtil::openUrl(request.url());
+			return false;
+		}
+		return true;
 	}
 };
 

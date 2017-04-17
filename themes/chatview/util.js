@@ -19,6 +19,7 @@ function initPsiTheme() {
 
             // just for debug
             escapeHtml : function(html) {
+                html += ""; //hack
                 return html.split("&").join("&amp;").split( "<").join("&lt;").split(">").join("&gt;");
             },
 
