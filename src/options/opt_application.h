@@ -25,6 +25,7 @@ private slots:
 private:
 	QWidget *w;
 	bool haveAutoUpdater_;
+	QString configPath_;
 
 private slots:
 	void doEnableQuitOnClose(int);

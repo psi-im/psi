@@ -62,7 +62,7 @@
 #ifdef HAVE_PGPUTIL
 #include "pgputil.h"
 #endif
-#include "eventdb.h"
+#include "edbflatfile.h"
 #include "proxy.h"
 #ifdef PSIMNG
 #include "psimng.h"
