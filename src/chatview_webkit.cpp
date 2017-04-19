@@ -231,6 +231,11 @@ public slots:
 		return _view->palette().color(cr).name();
 	}
 
+	void nickInsertClick(const QString &nick)
+	{
+		emit _view->nickInsertClick(nick);
+	}
+
 signals:
 	void inited(); // signal from this object to C++. Means ready to process messages
 	void scrollRequested(int); // relative shift. signal towards js
@@ -530,6 +535,7 @@ void ChatView::checkJsBuffer()
 
 void ChatView::sessionInited()
 {
+	qDebug("Session is initialized");
 	d->sessionReady_ = true;
 	checkJsBuffer();
 }

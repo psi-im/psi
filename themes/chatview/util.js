@@ -1,9 +1,12 @@
 function initPsiTheme() {
     var server = window.srvUtil;
     var loader = window.srvLoader;
+    var session = window.srvSession;
     server.console("Util is initilizing");
     var htmlSource = document.createElement("div"); //manages appendHtml
     var async = (typeof QWebChannel != 'undefined');
+    var avatarsMap = {};
+
     var chat =  {
         async : async,
         console : server.console,
@@ -51,6 +54,33 @@ function initPsiTheme() {
                 }
                 return ret;
             },
+
+            _remoteCallEval : function(func, args, cb) {
+                function ecb(val) { val = eval("[" + val + "][0]"); cb(val); }
+
+                if (chat.async) {
+                    args.push(ecb)
+                    func.apply(this, args)
+                } else {
+                    var val = func.apply(this, args);
+                    ecb(val);
+                }
+            },
+
+            _remoteCall : function(func, args, cb) {
+                if (chat.async) {
+                    args.push(cb)
+                    func.apply(this, args)
+                } else {
+                    var val = func.apply(this, args);
+                    cb(val);
+                }
+            },
+
+            psiOption : function(option, cb) { chat.util._remoteCallEval(server.psiOption, [option], cb); },
+            colorOption : function(option, cb) { chat.util._remoteCallEval(server.colorOption, [option], cb); },
+            getFont : function(cb) { chat.util._remoteCallEval(session.getFont, [], cb); },
+            getPaletteColor : function(name, cb) { chat.util._remoteCall(session.getPaletteColor, [name], cb); },
 
             // replaces <icon name="icon_name" text="icon_text" />
             // with <img src="/psiicon/icon_name" title="icon_text" />
@@ -135,6 +165,34 @@ function initPsiTheme() {
 
             dateFormat : function(val, format) {
                 return (new chat.DateTimeFormatter(format)).format(val);
+            },
+
+            avatarForNick : function(nick) {
+                return avatarsMap[nick];
+            },
+
+            replaceableMessage : function(msgId, text) {
+                // if we have an id then this is a replacable message.
+                // next weird logic is as follows:
+                //   - wrapping to some element may break elements flow
+                //   - using well know elements may break styles
+                //   - setting just starting mark is useless (we will never find correct end)
+                return "<psims mid=\"" + msgId + "\"></psims>" + text + "<psime mid=\"" + msgId + "\"></psime>";
+            },
+
+            replaceMessage : function(parentEl, msgId, newId, text) {
+                var se =parentEl.querySelector("psims[mid='"+msgId+"']");
+                var ee =parentEl.querySelector("psime[mid='"+msgId+"']");
+                chat.console("Replace: start: " + (se? "found, ":"not found, ") +
+                             "end: " + (ee? "found, ":"not found, ") +
+                             "parent match: " + ((se && ee && se.parentNode === ee.parentNode)?"yes":"no"));
+                if (se && ee && se.parentNode === ee.parentNode) {
+                    while (se.nextSibling !== ee) {
+                        se.parentNode.removeChild(se.nextSibling);
+                    }
+                    var node = chat.util.createHtmlNode(chat.util.replaceableMessage(newId, text + "<img src=\"/psiicon/psi/action_templates_edit\">"));
+                    ee.parentNode.insertBefore(node, ee);
+                }
             }
         },
 
@@ -280,8 +338,30 @@ function initPsiTheme() {
                 }
                 return moment(val).format(formatStr); // FIXME we could speedup it by keeping fomatter instances
             }
-        }
+        },
 
+        receiveObject : function(data) {
+            if (data.type == "message") {
+                if (data.mtype == "join") {
+                    avatarsMap[data.sender] = data.avatar; // can be null.
+                    if (data.nopartjoin) return;
+                } else if (data.mtype == "join") {
+                    delete avatarsMap[data.sender];
+                    if (data.nopartjoin) return;
+                } else if (data.mtype == "newnick") {
+                    avatarsMap[data.newnick] = avatarsMap[data.sender];
+                    delete avatarsMap[data.sender];
+                }
+            } else if (data.type == "avatar") {
+                if (cdata.avatar) {
+                    avatarsMap[data.sender] = data.avatar;
+                } else {
+                    delete avatarsMap[data.sender];
+                }
+            }
+
+            chat.adapter.receiveObject(data)
+        }
     }
 
     try {

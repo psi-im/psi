@@ -3,16 +3,22 @@ function psiThemeAdapter(chat) {
 
     return {
 	loadTheme : function() {
-        srvLoader.getFileContents("index.html", function(html){
-            srvLoader.setHtml(html);
-            srvLoader.getFileContents("load.js", function(js){
-                eval(js);
-                srvLoader.finishThemeLoading();
-            })
-        })
+        if (chat.async) {
+            srvLoader.getFileContents("index.html", function(html){
+                srvLoader.setHtml(html);
+                srvLoader.getFileContents("load.js", function(js){
+                    eval(js);
+                    srvLoader.finishThemeLoading();
+                })
+            });
+        } else {
+            srvLoader.setHtml(srvLoader.getFileContents("index.html"));
+            eval(srvLoader.getFileContents("load.js"));
+            srvLoader.finishThemeLoading();
+        }
 	},
 	initSession : function() {
-		var chat = chat;
+
 		var trackbar = null;
 		var inited = false;
 		var proxy = null;
@@ -21,7 +27,7 @@ function psiThemeAdapter(chat) {
 			templates : {},
 			server : window.srvUtil,
 			session : window.srvSession,
-			isMuc : window.srvSession.isMuc(),
+			isMuc : window.srvSession.isMuc,
 			accountId : window.srvSession.account,
 			dateFormat : "hh:mm:ss",
 			scroller : null,
@@ -29,6 +35,7 @@ function psiThemeAdapter(chat) {
 			prevGrouppingData : null,
 			groupping : false,
 			chatElement : null,
+            util : chat.util,
 
 			TemplateVar : function(name) {
 				this.name = name;
@@ -47,14 +54,6 @@ function psiThemeAdapter(chat) {
 						this.parts.push(splitted[i]);
 					}
 				}
-			},
-
-			psiOption : function(name) {
-				return eval("[" + shared.server.psiOption(name) + "][0]")
-			},
-
-			colorOption : function(name) {
-				return eval("[" + shared.server.colorOption(name) + "][0]")
 			},
 
 			appendHtml : function(html, scroll, nextEl) { //scroll[true|false|auto/other]
@@ -120,7 +119,14 @@ function psiThemeAdapter(chat) {
 									(shared.prevGrouppingData.emote == shared.cdata.emote) &&
 									(shared.prevGrouppingData.local == shared.cdata.local));
 				return shared.cdata.nextOfGroup;
-			}
+			},
+
+            addNick : function(uriEncodedNick) {
+                //chat.console("Add nick:" + uriEncodedNick);
+                var nick = decodeURIComponent(uriEncodedNick);
+                shared.session.nickInsertClick(nick);
+                return false;
+            }
 		};
 
         // internationalization
@@ -151,17 +157,29 @@ function psiThemeAdapter(chat) {
 					d = chat.util.escapeHtml(d);
 				} else if (d instanceof Date) {
 					if (this.name == "time") {
-						d = shared.server.formatDate(d, shared.dateFormat);
+						d = chat.util.dateFormat(d, shared.dateFormat);
 					} else { // last message date ?
-						d = shared.server.formatDate(d, "yyyy-MM-dd");
+						d = chat.util.dateFormat(d, "yyyy-MM-dd");
 					}
 				 } else if (this.name == "avatarurl") {
-					return "avatar:" + encodeURIComponent(shared.accountId) +
-						"/" + encodeURIComponent(shared.cdata.userid);
+                    var url;
+                    if (shared.cdata.local) {
+                        url = session.localUserAvatar? session.localUserAvatar : chat.server.psiDefaultAvatarUrl;
+                    } else {
+                        if (shared.isMuc) {
+                            url = shared.cdata.sender && (chat.util.avatarForNick(shared.cdata.sender) || chat.server.psiDefaultAvatarUrl);
+                        }
+                        if (!url) {
+                            url = session.remoteUserAvatar? session.remoteUserAvatar : chat.server.psiDefaultAvatarUrl;
+                        }
+                    }
+                    return url;
 				} else if (this.name == "next") {
 					shared.cdata.nextEl = "nextMessagePH"+(1000+Math.floor(Math.random()*1000));
 					return '<div id="'+shared.cdata.nextEl +'"></div>';
-				}
+				} else if (this.name == "message" && shared.cdata.id) {
+                    return chat.util.replaceableMessage(shared.cdata.id, d);
+                }
 				return d || "";
 			}
 		}
@@ -197,6 +215,9 @@ function psiThemeAdapter(chat) {
 								template = data.local?shared.templates.sentMessage:shared.templates.receivedMessage;
 							}
 							break;
+                        case "join":
+                        case "part":
+                        case "newnick":
                         case "status":
                             template = data.usertext?shared.templates.statusMessageUT:shared.templates.statusMessage;
 							break;
@@ -239,6 +260,9 @@ function psiThemeAdapter(chat) {
 					shared.chatElement.appendChild(trackbar);
 					shared.scroller.invalidate();
 					shared.stopGroupping(); //groupping impossible
+                } else if (data.type == "replace") {
+                    chat.util.replaceMessage(shared.chatElement, data.replaceId, data.id, data.message)
+                    shared.scroller.invalidate();
 				} else if (data.type == "clear") {
 					shared.stopGroupping(); //groupping impossible
 					shared.chatElement.innerHTML = "";
@@ -248,6 +272,8 @@ function psiThemeAdapter(chat) {
 				chat.util.showCriticalError("APPEND ERROR: " + e + "\n" + e.stack)
 			}
 		};
+
+        shared.session.newMessage.connect(chat.receiveObject);
 
 		chat.adapter.initSession = null;
 		chat.adapter.loadTheme = null;

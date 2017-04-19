@@ -152,6 +152,7 @@ public slots:
 
 	void finishThemeLoading()
 	{
+		qDebug("%s theme is successfully loaded", qPrintable(theme->id()));
 		theme->cvtd->loadCallback(true);
 	}
 
@@ -437,6 +438,7 @@ bool ChatViewTheme::load(std::function<void(bool)> loadCallback)
 		return false;
 	}
 
+	qDebug("Starting loading \"%s\" theme at \"%s\"", qPrintable(id()), qPrintable(filePath()));
 	cvtd->loadCallback = loadCallback;
 	if (cvtd->jsUtil.isNull())
 		cvtd->jsLoader.reset(new ChatViewJSLoader(this));
@@ -486,7 +488,7 @@ bool ChatViewTheme::load(std::function<void(bool)> loadCallback)
 
 	QString resStr = cvtd->wv->page()->mainFrame()->evaluateJavaScript(
 				"try { initPsiTheme().adapter.loadTheme(); \"ok\"; } "
-				"catch(e) { window.psiim.util.props(e); }").toString();
+				"catch(e) { \"Error:\" + e + \"\\n\" + window.psiim.util.props(e); }").toString();
 
 	if (resStr == "ok") {
 		return true;
@@ -690,12 +692,18 @@ bool ChatViewTheme::applyToWebView(QSharedPointer<ChatViewThemeSession> session)
 	SessionRequestHandler *handler = new SessionRequestHandler(session);
 	session->sessId = NetworkAccessManager::instance()->registerSessionHandler(QSharedPointer<NAMDataHandler>(handler));
 
-	cvtd->jsLoader->registerSession(session);
-	QString basePath = "";
-	QString html = cvtd->wv->page()->mainFrame()->evaluateJavaScript(
+	QString html;
+	if (cvtd->prepareSessionHtml) {
+		QString basePath = "";
+		cvtd->jsLoader->registerSession(session);
+		html = cvtd->wv->page()->mainFrame()->evaluateJavaScript(
 	            QString(QLatin1String("psiim.adapter.generateSessionHtml(\"%1\", %2, \"%3\")"))
 	            .arg(session->sessId, session->propsAsJsonString(), basePath)).toString();
-	cvtd->jsLoader->unregisterSession(session->sessId);
+		cvtd->jsLoader->unregisterSession(session->sessId);
+	} else {
+		html = cvtd->html;
+	}
+
 	page->mainFrame()->setHtml(html, cvtd->jsLoader->serverUrl());
 
 	return true;

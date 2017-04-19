@@ -95,6 +95,7 @@ private slots:
 
 signals:
 	void showNM(const QString&);
+	void nickInsertClick(const QString &nick);
 
 private:
 	friend class ChatViewPrivate;

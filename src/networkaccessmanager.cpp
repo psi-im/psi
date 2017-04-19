@@ -51,10 +51,12 @@ QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkR
 		}
 	}
 
-	QString ua = req.header(QNetworkRequest::UserAgentHeader).toString();
-	auto handler = _sessionHandlers.value(ua);
-	if (handler && handler->data(req, data, mime)) {
-		reply = new ByteArrayReply(req, data, mime, this);
+	if (!reply) {
+		QString ua = req.header(QNetworkRequest::UserAgentHeader).toString();
+		auto handler = _sessionHandlers.value(ua);
+		if (handler && handler->data(req, data, mime)) {
+			reply = new ByteArrayReply(req, data, mime, this);
+		}
 	}
 
 	if (!reply) {

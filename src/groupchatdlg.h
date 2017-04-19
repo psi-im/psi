@@ -115,6 +115,7 @@ public slots:
 private slots:
 	void showNM(const QString&);
 	void openURL(const QString&);
+	void onNickInsertClick(const QString &nick);
 	void scrollUp();
 	void scrollDown();
 	void mle_returnPressed();

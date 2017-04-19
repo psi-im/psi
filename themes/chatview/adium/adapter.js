@@ -130,7 +130,6 @@ var adapter = {
             loader.toCache("Info.plist", ip);
             window.psiim = chat; // just to keep it the same and avoid any problems
 
-            chat.console("Report the theme has loaded");
             loader.finishThemeLoading();
         }
 
@@ -149,16 +148,6 @@ chat.util.updateObject(adapter, function(chat){
     var cdata;
     var proxyEl = document.createElement("div");
     var defaultAvatars = null;
-    var avatarsMap = {};
-
-    function replaceableMessage(msgId, text) {
-        // if we have an id then this is a replacable message.
-        // next weird logic is as follows:
-        //   - wrapping to some element may break elements flow
-        //   - using well know elements may break styles
-        //   - setting just starting mark is useless (we will never find correct end)
-        return "<psims mid=\"" + msgId + "\"></psims>" + text + "<psime mid=\"" + msgId + "\"></psime>";
-    }
 
     function TemplateVar(name, param) {
         this.name = name;
@@ -179,7 +168,7 @@ chat.util.updateObject(adapter, function(chat){
                     url = session.localUserAvatar? session.localUserAvatar : defaultAvatars.outgoingBuddy;
                 } else {
                     if (session.isMuc) {
-                        url = cdata.sender && (avatarsMap[cdata.sender] || defaultAvatars.incomingBuddy);
+                        url = cdata.sender && (chat.util.avatarForNick(cdata.sender) || defaultAvatars.incomingBuddy);
                     }
                     if (!url) {
                         url = session.remoteUserAvatar? session.remoteUserAvatar : defaultAvatars.incomingBuddy;
@@ -196,7 +185,7 @@ chat.util.updateObject(adapter, function(chat){
             } else if (this.name == "senderColor") {
                 return session.mucNickColor(cdata.sender, cdata.local);
             } else if (this.name == "message" && cdata.id) {
-                return replaceableMessage(cdata.id, d);
+                return chat.util.replaceableMessage(cdata.id, d);
             }
 
             return d || "";
@@ -315,9 +304,6 @@ chat.util.updateObject(adapter, function(chat){
                         </script>" + footerHtml;
                 }
 
-                //footerHtml += "\n<script type='text/javascript'>window.addEventListener('load', "+
-                //    server.jsNamespace+".adapter.initSession, false);</script>";
-                //chat.console("prepare html4");
                 var baseUrl = loader.serverUrl + basePath + "/";
                 var replace
                 if (ip.MessageViewVersion < 3) {
@@ -413,17 +399,6 @@ chat.util.updateObject(adapter, function(chat){
                                 data.messageClasses += (" " + s);
                             }
 
-                            if (data.mtype == "join") {
-                                avatarsMap[data.sender] = data.avatar; // can be null.
-                                if (data.nopartjoin) return;
-                            } else if (data.mtype == "join") {
-                                delete avatarsMap[data.sender];
-                                if (data.nopartjoin) return;
-                            } else if (data.mtype == "newnick") {
-                                avatarsMap[data.newnick] = avatarsMap[data.sender];
-                                delete avatarsMap[data.sender];
-                            }
-
                             // TODO autoreply, focus, firstFocus, %status%
                             switch (data.mtype) {
                                 case "message":
@@ -496,27 +471,12 @@ chat.util.updateObject(adapter, function(chat){
                         } else if (data.type == "replace") {
                             var doScroll = nearBottom();
                             var cel = document.getElementById("Chat");
-                            var se =cel.querySelector("psims[mid='"+data.replaceId+"']");
-                            var ee =cel.querySelector("psime[mid='"+data.replaceId+"']");
-                            chat.console("Replace: start: " + (se? "found, ":"not found, ") +
-                                         "end: " + (ee? "found, ":"not found, ") +
-                                         "parent match: " + ((se && ee && se.parentNode === ee.parentNode)?"yes":"no"));
-                            if (se && ee && se.parentNode === ee.parentNode) {
-                                while (se.nextSibling !== ee) {
-                                    se.parentNode.removeChild(se.nextSibling);
-                                }
-                                var node = chat.util.createHtmlNode(replaceableMessage(data.id, data.message + "<img src=\"/psiicon/psi/action_templates_edit\">"));
-                                ee.parentNode.insertBefore(node, ee);
-                            }
+                            chat.util.replaceMessage(cel, data.replaceId, data.id, data.message);
+                            if (doScroll) scrollToBottom();
+
                         } else if (data.type == "clear") {
                             prevGrouppingData = null; //groupping impossible
                             trackbar = null;
-                        } else if (data.type == "avatar") {
-                            if (cdata.avatar) {
-                                avatarsMap[cdata.sender] = cdata.avatar;
-                            } else {
-                                delete avatarsMap[cdata.sender];
-                            }
                         }
                     } catch(e) {
                         chat.util.showCriticalError("APPEND ERROR: " + e + " \n" + e.stack)
@@ -560,7 +520,7 @@ chat.util.updateObject(adapter, function(chat){
 
                 session.localUserAvatarChanged.connect(printAvatar);
 
-                session.newMessage.connect(chat.adapter.receiveObject);
+                session.newMessage.connect(chat.receiveObject);
                 chat.console("session inited");
                 session.signalInited();
             }

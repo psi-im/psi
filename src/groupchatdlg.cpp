@@ -632,14 +632,19 @@ void GCMainDlg::openURL(const QString& url)
 {
 	if (url.startsWith("addnick://") && isActiveTab()) {
 		const QString nick = QUrl::fromPercentEncoding(url.mid(14).toLatin1());
-		if (ui_.mle->chatEdit()->toPlainText().length() == 0) {
-			ui_.mle->chatEdit()->insertPlainText(nick + QString(": "));
-		}
-		else {
-			ui_.mle->chatEdit()->insertPlainText(QString(" %1 ").arg(nick));
-		}
-		ui_.mle->chatEdit()->setFocus();
+		onNickInsertClick(nick);
 	}
+}
+
+void GCMainDlg::onNickInsertClick(const QString &nick)
+{
+	if (ui_.mle->chatEdit()->toPlainText().length() == 0) {
+		ui_.mle->chatEdit()->insertPlainText(nick + QString(": "));
+	}
+	else {
+		ui_.mle->chatEdit()->insertPlainText(QString(" %1 ").arg(nick));
+	}
+	ui_.mle->chatEdit()->setFocus();
 }
 
 void GCMainDlg::showNM(const QString& nick)
@@ -686,6 +691,7 @@ GCMainDlg::GCMainDlg(PsiAccount *pa, const Jid &j, TabManager *tabManager)
 
 	connect(ui_.log, SIGNAL(showNM(QString)), this, SLOT(showNM(QString)));
 	connect(URLObject::getInstance(), SIGNAL(openURL(QString)), SLOT(openURL(QString)));
+	connect(ui_.log, SIGNAL(nickInsertClick(QString)), SLOT(onNickInsertClick(QString)));
 
 	connect(ui_.pb_topic, SIGNAL(clicked()), SLOT(openTopic()));
 	PsiToolTip::install(ui_.le_topic);
