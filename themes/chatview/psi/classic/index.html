@@ -1,6 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
+  %scripts%
   <style type="text/css" media="screen,print">
 body {padding:0 0 2px 0; margin:0; width:100%;}
 body > div {
@@ -22,9 +23,8 @@ body > div > img:first-child { vertical-align:text-bottom; }
 </head>
 <body>
 <script type="text/javascript">
-try {
-//psi.console("Loading index.html")
-window.psiimtheme = function() {
+
+document.addEventListener("psiready", function() {
 	var shared = initPsiTheme().adapter.initSession();
 
 	var nicks = {};
@@ -175,11 +175,8 @@ window.psiimtheme = function() {
 	return {
 		addNick : function(e) { shared.addNick(e.text); }
 	};
-}()
+});
 
-} catch(e) {
-	 document.body.innerHTML = "Theme initialization failed: " + e + "<br>" + e.stack
-}
 </script>
 </body>
 </html>

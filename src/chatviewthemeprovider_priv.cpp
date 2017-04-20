@@ -174,7 +174,6 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
 	ThemeServer::Handler avatarsHandler = [&](qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res) -> bool
 	{
 		QString hash = req->url().path().mid(sizeof("/psiglobal/avatar")); // no / because of null pointer
-		QString meta;
 		QByteArray ba;
 		if (hash == QLatin1String("default.png")) {
 			QPixmap p;
@@ -191,7 +190,7 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
 			AvatarFactory::AvatarData ad = AvatarFactory::avatarDataByHash(hash);
 			if (!ad.data.isEmpty()) {
 				res->setStatusCode(qhttp::ESTATUS_OK);
-				res->headers().insert("Content-Type", ad.metaType);
+				res->headers().insert("Content-Type", ad.metaType.toLatin1());
 				res->end(ad.data);
 				return true;
 			}

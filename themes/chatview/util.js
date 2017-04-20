@@ -353,7 +353,7 @@ function initPsiTheme() {
                     delete avatarsMap[data.sender];
                 }
             } else if (data.type == "avatar") {
-                if (cdata.avatar) {
+                if (data.avatar) {
                     avatarsMap[data.sender] = data.avatar;
                 } else {
                     delete avatarsMap[data.sender];

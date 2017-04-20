@@ -639,7 +639,7 @@ unix:!dbus {
 	SOURCES += $$PWD/activeprofiles_stub.cpp
 }
 
-qwebkit {
+qtwebengine|qwebkit {
 	HEADERS += 	$$PWD/chatview_webkit.h \
 			$$PWD/networkaccessmanager.h \
 			$$PWD/bytearrayreply.h \

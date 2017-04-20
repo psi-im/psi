@@ -5,6 +5,20 @@ function psiThemeAdapter(chat) {
 	loadTheme : function() {
         if (chat.async) {
             srvLoader.getFileContents("index.html", function(html){
+                // FIXME we have a lot of copies of this html everywhere. should be rewritten somehow
+                // probably it's a good idea if adapter will send to Psi a list of required scripts
+                html = html.replace("%scripts%", "<script src=\"/psithemes/chatview/moment-with-locales.min.js\"></script>\n \
+                        <script src=\"/psithemes/chatview/util.js\"></script>\n \
+                        <script src=\"/psithemes/chatview/psi/adapter.js\"></script>\n \
+                        <script src=\"/psiglobal/qwebchannel.js\"></script> \
+                        <script type=\"text/javascript\"> \
+                            new QWebChannel(qt.webChannelTransport, function (channel) { \
+                                window.srvSession = channel.objects.srvSession; \
+                                window.srvUtil = channel.objects.srvUtil; \
+                                var psiReady = new CustomEvent(\"psiready\", {details: \"Indicates channel between JS and C++ is established\"}); \
+                                document.dispatchEvent(psiReady); \
+                            }); \
+                        </script>")
                 srvLoader.setHtml(html);
                 srvLoader.getFileContents("load.js", function(js){
                     eval(js);
@@ -12,7 +26,12 @@ function psiThemeAdapter(chat) {
                 })
             });
         } else {
-            srvLoader.setHtml(srvLoader.getFileContents("index.html"));
+            var html = srvLoader.getFileContents("index.html");
+            html = html.replace("%scripts%", "<script type=\"text/javascript\"> \
+                                var psiReady = new CustomEvent(\"psiready\", {details: \"Indicates channel between JS and C++ is established\"}); \
+                                document.dispatchEvent(psiReady); \
+                        </script>");
+            srvLoader.setHtml(html);
             eval(srvLoader.getFileContents("load.js"));
             srvLoader.finishThemeLoading();
         }
