@@ -461,12 +461,15 @@ void ChatView::renderSysMessage(const MessageView &mv)
 		return; // not necessary here. maybe for other chatviews
 	}
 
-	if (mv.hasStatus() && !mv.isStatusChangeHidden()) {
-		if (!mv.formattedUserText().isEmpty()) {
-			ut += QString(" (%1)").arg(s.status());
-		}
-		if (options_->getOption("options.ui.muc.status-with-priority").toBool() && s.priority() != 0) {
-			ut += QString(" [%1]").arg(s.priority());
+	if (mv.type() == MessageView::Status && mv.isStatusChangeHidden()) {
+		return;
+	}
+
+	if (mv.type() == MessageView::MUCJoin && mv.isStatusChangeHidden()) {
+		ut.clear();
+	} else {
+		if (PsiOptions::instance()->getOption("options.ui.muc.status-with-priority").toBool() && mv.statusPriority() != 0) {
+			ut += QString(" [%1]").arg(mv.statusPriority());
 		}
 	}
 
@@ -527,6 +530,12 @@ void ChatView::scrollUp()
 void ChatView::scrollDown()
 {
 	verticalScrollBar()->setValue(verticalScrollBar()->value() + verticalScrollBar()->pageStep() / 2);
+}
+
+void ChatView::updateAvatar(const XMPP::Jid &jid, ChatViewCommon::UserType utype)
+{
+	Q_UNUSED(jid)
+	Q_UNUSED(utype)
 }
 
 void ChatView::doTrackBar()

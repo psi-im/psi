@@ -33,6 +33,9 @@
 class ChatEdit;
 class ChatViewBase;
 class MessageView;
+namespace XMPP {
+	class Jid;
+}
 
 class ChatView : public PsiTextView, public ChatViewCommon
 {
@@ -63,6 +66,7 @@ public:
 	ChatView *textWidget();
 	QWidget *realTextWidget();
 
+	void updateAvatar(const XMPP::Jid &jid, ChatViewCommon::UserType utype);
 public slots:
 	void scrollUp();
 	void scrollDown();
