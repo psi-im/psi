@@ -24,9 +24,7 @@ body > div > img:first-child { vertical-align:text-bottom; }
 <body>
 <script type="text/javascript">
 
-document.addEventListener("psiready", function() {
-	var shared = initPsiTheme().adapter.initSession();
-
+function startPsiTheme(shared) {
 	var nicks = {};
 	var nickNumber = 0;
 	var util = shared.util;
@@ -95,7 +93,7 @@ document.addEventListener("psiready", function() {
 				: "<div class='infmsg'>%icon%<b>*** %usertext%</b></div>",
 			trackbar: '<hr class="trackbar" />'
 		},
-		dateFormat : "hh:mm:ss",
+		dateFormat : "HH:MM:SS",
 		proxy : function() { //optional
 			if (shared.cdata.type == "settings") {
 				applyPsiSettings();
@@ -175,7 +173,7 @@ document.addEventListener("psiready", function() {
 	return {
 		addNick : function(e) { shared.addNick(e.text); }
 	};
-});
+}
 
 </script>
 </body>
