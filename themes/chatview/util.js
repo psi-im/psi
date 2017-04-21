@@ -204,13 +204,13 @@ function initPsiTheme() {
 
             var animationStep = function() {
                 timerId = null;
-                var before = document.height - (window.innerHeight+window.pageYOffset);
+                var before = document.body.clientHeight - (window.innerHeight+window.pageYOffset);
                 var step = before;
                 if (o.animate) {
                     step = step>200?200:(step<8?step:Math.floor(step/1.7));
                 }
                 ignoreNextScroll = true;
-                window.scrollTo(0, document.height - window.innerHeight - before + step);
+                window.scrollTo(0, document.body.clientHeight - window.innerHeight - before + step);
                 if (before>0) {
                     timerId = setTimeout(animationStep, 70); //next step in 250ms even if we are already at bottom (control shot)
                 }
@@ -218,7 +218,7 @@ function initPsiTheme() {
 
             var startAnimation = function() {
                 if (timerId) return;
-                if (document.height > window.innerHeight) { //if we have what to scroll
+                if (document.body.clientHeight > window.innerHeight) { //if we have what to scroll
                     timerId = setTimeout(animationStep, 0);
                 }
             }
@@ -233,7 +233,7 @@ function initPsiTheme() {
             //timeout to be sure content rerendered correctly
             window.addEventListener("resize", function() {setTimeout(function(){
                 if (o.atBottom) { //immediatelly scroll to bottom if we wish it
-                    window.scrollTo(0, document.height - window.innerHeight);
+                    window.scrollTo(0, document.body.clientHeight - window.innerHeight);
                 }
             }, 0);}, false);
 
@@ -244,7 +244,7 @@ function initPsiTheme() {
                     return;
                 }
                 stopAnimation();
-                o.atBottom = document.height == (window.innerHeight+window.pageYOffset);
+                o.atBottom = document.body.clientHeight == (window.innerHeight+window.pageYOffset);
             }, false);
 
             //EXTERNAL API
