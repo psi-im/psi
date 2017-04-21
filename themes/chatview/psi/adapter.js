@@ -16,7 +16,7 @@ function psiThemeAdapter(chat) {
                                 window.srvSession = channel.objects.srvSession; \
                                 window.srvUtil = channel.objects.srvUtil; \
                                 var shared = initPsiTheme().adapter.initSession(); \
-                                try { startPsiTheme(shared) } catch(e) { shared.util.showCriticalError(\"Failed to start: \"+e+\" \"+e.stack); } \
+                                try { window.psiimtheme = startPsiTheme(shared) } catch(e) { shared.util.showCriticalError(\"Failed to start: \"+e+\" \"+e.stack); } \
                             }); \
                         </script>")
                 srvLoader.setHtml(html);
@@ -29,7 +29,7 @@ function psiThemeAdapter(chat) {
             var html = srvLoader.getFileContents("index.html");
             html = html.replace("%scripts%", "<script type=\"text/javascript\"> \
                                 var shared = initPsiTheme().adapter.initSession(); \
-                                try { startPsiTheme(shared) } catch(e) { shared.util.showCriticalError(\"Failed to start: \"+e+\" \"+e.stack); } \
+                                try { window.psiimtheme = startPsiTheme(shared) } catch(e) { shared.util.showCriticalError(\"Failed to start: \"+e+\" \"+e.stack); } \
                         </script>");
             srvLoader.setHtml(html);
             eval(srvLoader.getFileContents("load.js"));
