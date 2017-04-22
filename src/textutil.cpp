@@ -95,6 +95,8 @@ QString TextUtil::plain2rich(const QString &plain)
 			rich += "<br>";
 			col = 0;
 		}
+		else if (plain[i] == ' ' && !rich.isEmpty() && rich[rich.size()-1] == ' ')
+			rich += "&nbsp;"; // instead of pre-wrap, which prewraps \n as well
 		else if(plain[i] == '<')
 			rich += "&lt;";
 		else if(plain[i] == '>')
@@ -212,6 +214,8 @@ QString TextUtil::resolveEntities(const QString &in)
 				out += '\"';
 			else if(type == "apos")
 				out += '\'';
+			else if(type == "nbsp")
+				out += 0xa0;
 		}
 		else {
 			out += in[i];
