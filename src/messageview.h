@@ -85,6 +85,7 @@ public:
 	bool hasStatus() const;
 
 	inline const Flags &flags() const { return _flags; }
+#ifdef HAVE_QT5
 	inline void setAlert(bool state = true) { _flags.setFlag(Alert, state); }
 	inline bool isAlert() const { return _flags & Alert; }
 	inline void setLocal(bool state = true) { _flags.setFlag(Local, state); }
@@ -99,6 +100,22 @@ public:
 	inline bool isStatusChangeHidden() const { return _flags & HideStatusChange; }
 	inline void setJoinLeaveHidden(bool b = true) { _flags.setFlag(HideJoinLeave, b); }
 	inline bool isJoinLeaveHidden() const { return _flags & HideJoinLeave; }
+#else
+	inline void setAlert(bool b = true) { if (b) _flags |= Alert; else _flags &= ~Alert; }
+	inline bool isAlert() const { return _flags & Alert; }
+	inline void setLocal(bool b = true) { if (b) _flags |= Local; else _flags &= ~Local; }
+	inline bool isLocal() const { return _flags & Local; }
+	inline void setEmote(bool b = true) { if (b) _flags |= Emote; else _flags &= ~Emote; }
+	inline bool isEmote() const { return _flags & Emote; }
+	inline void setSpooled(bool b = true) { if (b) _flags |= Spooled; else _flags &= ~Spooled; }
+	inline bool isSpooled() const { return _flags & Spooled; }
+	inline void setAwaitingReceipt(bool b = true) { if (b) _flags |= AwaitingReceipt; else _flags &= ~AwaitingReceipt; }
+	inline bool isAwaitingReceipt() const { return _flags & AwaitingReceipt; }
+	inline void setStatusChangeHidden(bool b = true) { if (b) _flags |= HideStatusChange; else _flags &= ~HideStatusChange; }
+	inline bool isStatusChangeHidden() const { return _flags & HideStatusChange; }
+	inline void setJoinLeaveHidden(bool b = true) { if (b) _flags |= HideJoinLeave; else _flags &= ~HideJoinLeave; }
+	inline bool isJoinLeaveHidden() const { return _flags & HideJoinLeave; }
+#endif
 
 	inline void setStatus(int s) { _status = s; }
 	inline int status() const { return _status; }

@@ -3,6 +3,7 @@
 
 #include "optionstab.h"
 
+class QModelIndex;
 class QWidget;
 class PsiThemeModel;
 class PsiThemeProvider;

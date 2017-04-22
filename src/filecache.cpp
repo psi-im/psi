@@ -243,7 +243,7 @@ FileCacheItem *FileCache::get(const QString &id, bool reborn)
 	FileCacheItem *item = _items.value(id);
 	if (item) {
 		if (!item->isExpired()) {
-			if (reborn && item->maxAge() > 0 && item->created().secsTo(QDateTime::currentDateTime()) < item->maxAge() / 2) {
+			if (reborn && item->maxAge() > 0u && item->created().secsTo(QDateTime::currentDateTime()) < (int)item->maxAge() / 2) {
 				item->reborn();
 				toRegistry(item);
 			}
