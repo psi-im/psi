@@ -2,6 +2,7 @@
 #include <QTcpServer>
 
 #include "themeserver.h"
+#include "psiiconset.h"
 
 
 ThemeServer::ThemeServer(QObject *parent) :
@@ -35,6 +36,10 @@ ThemeServer::ThemeServer(QObject *parent) :
 					return;
 				}
 			}
+		} else if (path.startsWith(QLatin1Literal("/favicon.ico"))) {
+			res->setStatusCode(qhttp::ESTATUS_OK);
+			res->end(IconsetFactory::icon(QLatin1String("psi/logo_16")).raw());
+			return;
 		}
 
 

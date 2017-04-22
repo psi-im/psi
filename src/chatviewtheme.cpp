@@ -74,7 +74,7 @@ public:
 #else
 	QStringList scripts;
 #endif
-	std::function<void(bool)> loadCallback;
+	QList<std::function<void(bool)>> loadCallback;
 
 #ifndef QT_WEBENGINEWIDGETS_LIB
 	QVariant evaluateFromFile(const QString fileName, QWebFrame *frame)
@@ -153,13 +153,19 @@ public slots:
 	void finishThemeLoading()
 	{
 		qDebug("%s theme is successfully loaded", qPrintable(theme->id()));
-		theme->cvtd->loadCallback(true);
+		for (auto &cb : theme->cvtd->loadCallback) {
+			cb(true);
+		}
+		theme->setState(Theme::Loaded);
 	}
 
 	void errorThemeLoading(const QString &error)
 	{
 		_loadError = error;
-		theme->cvtd->loadCallback(false);
+		for (auto &cb : theme->cvtd->loadCallback) {
+			cb(false);
+		}
+		theme->setState(Theme::NotLoaded);
 	}
 
 	void setHtml(const QString &h)
@@ -438,8 +444,17 @@ bool ChatViewTheme::load(std::function<void(bool)> loadCallback)
 		return false;
 	}
 
+	if (state() == Loaded) {
+		loadCallback(true);
+		return true;
+	}
+	cvtd->loadCallback.push_back(loadCallback);
+	if (state() == Loading) {
+		return true;
+	}
+
 	qDebug("Starting loading \"%s\" theme at \"%s\"", qPrintable(id()), qPrintable(filePath()));
-	cvtd->loadCallback = loadCallback;
+	setState(Loading);
 	if (cvtd->jsUtil.isNull())
 		cvtd->jsLoader.reset(new ChatViewJSLoader(this));
 		cvtd->jsUtil.reset(new ChatViewThemeJSUtil(this));

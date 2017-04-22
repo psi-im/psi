@@ -571,6 +571,7 @@ void ChatView::dispatchMessage(const MessageView &mv)
 	if (mv.type() == MessageView::MUCJoin) {
 		Jid j = d->jid_.withResource(mv.nick());
 		vm["avatar"] = ChatViewJSObject::avatarUrl(d->account_->avatarFactory()->userHashes(j).avatar);
+		vm["nickcolor"] = getMucNickColor(mv.nick(), mv.isLocal());
 	}
 	auto it = vm.find(QLatin1String("usertext"));
 	if (it != vm.end()) {

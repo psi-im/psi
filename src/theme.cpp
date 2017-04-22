@@ -39,6 +39,7 @@ class ThemePrivate : public QSharedData
 {
 public:
 	PsiThemeProvider *provider;
+	Theme::State state = Theme::NotLoaded;
 
 	// metadata
 	QString id, name, version, description, creation, homeUrl;
@@ -97,6 +98,14 @@ Theme::~Theme()
 bool Theme::isValid() const
 {
 	return d;
+}
+
+Theme::State Theme::state() const
+{
+	if (!d) {
+		return Invalid;
+	}
+	return d->state;
 }
 
 bool Theme::load()
@@ -297,6 +306,11 @@ bool Theme::caseInsensitiveFS() const
 QString Theme::title() const
 {
 	return d->name.isEmpty()? d->id : d->name;
+}
+
+void Theme::setState(Theme::State state)
+{
+	d->state = state;
 }
 
 //=================================================

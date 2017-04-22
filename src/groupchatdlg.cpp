@@ -1547,6 +1547,7 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 			//contact joining
 			//ui_.log->updateAvatar(jid().withResource(nick), isSelf? ChatViewCommon::LocalParty: ChatViewCommon::Participant);
 
+			MessageView mv(MessageView::MUCJoin);
 			if ((!d->connecting || options_->getOption("options.ui.muc.show-initial-joins").toBool()) && options_->getOption("options.muc.show-joins").toBool() ) {
 				QString message = tr("%1 has joined the room");
 				if ( options_->getOption("options.muc.show-role-affiliation").toBool() ) {
@@ -1573,15 +1574,15 @@ void GCMainDlg::presence(const QString &nick, const Status &s)
 					message += tr(" and now is %1").arg(status2txt(s.type()));
 				}
 
-				MessageView mv = MessageView::mucJoinMessage(nick, (int)s.type(), message, s.status(), s.priority());
+				mv = MessageView::mucJoinMessage(nick, (int)s.type(), message, s.status(), s.priority());
 				mv.setStatusChangeHidden(!showStatusChanges);
-				appendSysMsg(mv);
 			} else {
-				MessageView mv = MessageView::mucJoinMessage(nick, (int)s.type(), QString(), s.status(), s.priority());
+				mv = MessageView::mucJoinMessage(nick, (int)s.type(), QString(), s.status(), s.priority());
 				mv.setStatusChangeHidden();
 				mv.setJoinLeaveHidden();
-				appendSysMsg(mv);
 			}
+			mv.setLocal(isSelf); // hack
+			appendSysMsg(mv);
 		}
 		else {
 			// Status change

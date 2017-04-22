@@ -5,7 +5,7 @@ function initPsiTheme() {
     server.console("Util is initilizing");
     var htmlSource = document.createElement("div"); //manages appendHtml
     var async = (typeof QWebChannel != 'undefined');
-    var avatarsMap = {};
+    var usersMap = {};
 
     var chat =  {
         async : async,
@@ -168,7 +168,13 @@ function initPsiTheme() {
             },
 
             avatarForNick : function(nick) {
-                return avatarsMap[nick];
+                var u = usersMap[nick];
+                return u && u.avatar;
+            },
+
+            nickColor : function(nick) {
+                var u = usersMap[nick];
+                return u && u.nickcolor;
             },
 
             replaceableMessage : function(msgId, text) {
@@ -343,21 +349,17 @@ function initPsiTheme() {
         receiveObject : function(data) {
             if (data.type == "message") {
                 if (data.mtype == "join") {
-                    avatarsMap[data.sender] = data.avatar; // can be null.
+                    usersMap[data.sender] = {avatar:data.avatar, nickcolor:data.nickcolor};
                     if (data.nopartjoin) return;
-                } else if (data.mtype == "join") {
-                    delete avatarsMap[data.sender];
+                } else if (data.mtype == "part") {
+                    delete usersMap[data.sender];
                     if (data.nopartjoin) return;
                 } else if (data.mtype == "newnick") {
-                    avatarsMap[data.newnick] = avatarsMap[data.sender];
-                    delete avatarsMap[data.sender];
+                    usersMap[data.newnick] = usersMap[data.sender];
+                    delete usersMap[data.sender];
                 }
             } else if (data.type == "avatar") {
-                if (data.avatar) {
-                    avatarsMap[data.sender] = data.avatar;
-                } else {
-                    delete avatarsMap[data.sender];
-                }
+                usersMap[data.sender].avatar = data.avatar;
             }
 
             chat.adapter.receiveObject(data)

@@ -55,6 +55,12 @@ public:
         virtual bool fileExists(const QString &fileName) = 0;
     };
 
+    enum State {
+        Invalid,
+        NotLoaded,
+        Loading,
+        Loaded
+    };
 
 	Theme();
 	Theme(PsiThemeProvider *provider);
@@ -62,6 +68,7 @@ public:
 	Theme &operator=(const Theme &other);
 	virtual ~Theme();
 	bool isValid() const;
+	State state() const;
 
 	virtual bool exists() = 0;
 	virtual bool load(); // synchronous load
@@ -95,6 +102,9 @@ public:
 
 	virtual QString title() const;
 	virtual QByteArray screenshot() = 0; // this hack must be replaced with something widget based
+protected:
+	void setState(State state);
+
 private:
 	friend class ThemePrivate;
 	QExplicitlySharedDataPointer<ThemePrivate> d;

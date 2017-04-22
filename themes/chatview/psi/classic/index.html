@@ -132,7 +132,7 @@ function startPsiTheme(shared) {
 			sentrec : function() {return shared.cdata.spooled?"infmsg":
 				(shared.cdata.local?"sent":"received");},
 			nickcolor : function() {
-				return shared.session.mucNickColor(shared.cdata.sender, shared.cdata.local);
+				return util.nickColor(shared.cdata.sender);
 			},
 			icon : function() {
 				var icon = "";
