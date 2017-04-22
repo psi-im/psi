@@ -281,28 +281,33 @@ chat.util.updateObject(adapter, function(chat){
                 }) : "";
                 chat.console("prepare html3");
                 var footerHtml = new Template(cache["Footer.html"] || "").toString({});
-
+                var initScripts;
                 if (chat.async) {
-                    footerHtml = "<script src=\"/psithemes/chatview/moment-with-locales.min.js\"></script>\n \
-                        <script src=\"/psithemes/chatview/util.js\"></script>\n \
-                        <script src=\"/psithemes/chatview/adium/adapter.js\"></script>\n \
-                        <script src=\"/psiglobal/qwebchannel.js\"></script> \
-                        <script type=\"text/javascript\"> \
-                            new QWebChannel(qt.webChannelTransport, function (channel) { \
-                                window.srvSession = channel.objects.srvSession; \
-                                window.srvUtil = channel.objects.srvUtil; \
-                                initPsiTheme().adapter.initSession(); \
-                            }); \
-                        </script>" + footerHtml;
+                    initScripts = "<script src=\"/psithemes/chatview/moment-with-locales.min.js\"></script>\n \
+<script src=\"/psithemes/chatview/util.js\"></script>\n \
+<script src=\"/psithemes/chatview/adium/adapter.js\"></script>\n \
+<script src=\"/psiglobal/qwebchannel.js\"></script>\n \
+<script type=\"text/javascript\">\n \
+    new QWebChannel(qt.webChannelTransport, function (channel) {\n \
+        window.srvSession = channel.objects.srvSession;\n \
+        window.srvUtil = channel.objects.srvUtil;\n \
+        if (document.readyState == \"complete\") initPsiTheme().adapter.initSession();\n \
+        else window.addEventListener(\"load\",\n \
+                                     function() {\n \
+                                         initPsiTheme().adapter.initSession();\n \
+                                     });\n \
+    });\n \
+</script>";
                 } else {
-                    footerHtml = "<script src=\"/psithemes/chatview/moment-with-locales.min.js\"></script>\n \
+                    initScripts = "<script src=\"/psithemes/chatview/moment-with-locales.min.js\"></script>\n \
                         <script type=\"text/javascript\"> \
                             window.addEventListener(\"load\", \
                                                       function() { \
                                                                initPsiTheme().adapter.initSession(); \
                                                       }); \
-                        </script>" + footerHtml;
+                        </script>";
                 }
+                footerHtml = initScripts + footerHtml;
 
                 var baseUrl = loader.serverUrl + basePath + "/";
                 var replace

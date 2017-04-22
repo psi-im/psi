@@ -82,7 +82,7 @@ bool RTParse::atEnd() const
 void RTParse::putPlain(const QString &s)
 {
 	//printf("got this: [%s]\n", s.latin1());
-	out += TextUtil::escape(s);
+	out += TextUtil::escape(s); // hm. does not convert 0xa0 back to &nbsp;
 	//printf("changed to this: [%s]\n", expandEntities(s).latin1());
 }
 
