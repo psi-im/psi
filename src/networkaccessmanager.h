@@ -24,6 +24,7 @@
 
 #include <QNetworkAccessManager>
 #include <QSharedPointer>
+#include <QHash>
 
 class QByteArray;
 class QNetworkRequest;

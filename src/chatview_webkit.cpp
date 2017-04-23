@@ -47,6 +47,7 @@
 #include <QPalette>
 #include <QDesktopWidget>
 #include <QApplication>
+#include <QMetaProperty>
 
 
 #include "webview.h"
@@ -110,6 +111,7 @@ class ChatViewJSObject : public QObject
 {
 	Q_OBJECT
 
+	friend class ChatView; // we have a lot of suc hacks. time to think about redesign
 	ChatView *_view;
 
 	Q_PROPERTY(bool isMuc READ isMuc CONSTANT)
@@ -284,7 +286,11 @@ public:
 		for (int i = 0; i < pc; i++) {
 			QMetaProperty p = js->metaObject()->property(i);
 			if (p.isReadable()) {
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 				QJsonValue v = QJsonValue::fromVariant(js->property(p.name()));
+#else
+				QVariant v = js->property(p.name());
+#endif
 				if (!v.isNull()) {
 					jsObj.insert(p.name(), v);
 				}
@@ -361,9 +367,6 @@ ChatView::ChatView(QWidget *parent) :
     QFrame(parent),
     d(new ChatViewPrivate)
 {
-	d->themeBridge.reset(new ChatViewThemeSessionBridge(this));
-
-
 	d->jsObject = new ChatViewJSObject(this); /* It's a session bridge between html and c++ part */
 	d->webView = new WebView(this);
 	d->webView->setFocusPolicy(Qt::NoFocus);
@@ -406,7 +409,13 @@ void ChatView::init()
 		return;
 	}
 	d->theme = *(dynamic_cast<ChatViewTheme*>(curTheme));// TODO rewrite this pointer magic
+
+#ifdef HAVE_QT5
 	d->themeBridge.reset(new ChatViewThemeSessionBridge(this));
+#else
+	d->themeBridge = QSharedPointer<ChatViewThemeSessionBridge>(new ChatViewThemeSessionBridge(this));
+#endif
+
 #ifndef QT_WEBENGINEWIDGETS_LIB
 	((ChatViewPage*)d->webView->page())->setCVPrivate(d.data());
 #endif

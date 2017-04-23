@@ -8,17 +8,16 @@ function psiThemeAdapter(chat) {
                 // FIXME we have a lot of copies of this html everywhere. should be rewritten somehow
                 // probably it's a good idea if adapter will send to Psi a list of required scripts
                 html = html.replace("%scripts%", "<script src=\"/psithemes/chatview/moment-with-locales.min.js\"></script>\n \
-                        <script src=\"/psithemes/chatview/util.js\"></script>\n \
-                        <script src=\"/psithemes/chatview/psi/adapter.js\"></script>\n \
-                        <script src=\"/psiglobal/qwebchannel.js\"></script> \
-                        <script type=\"text/javascript\"> \
-                            new QWebChannel(qt.webChannelTransport, function (channel) { \
-                                window.srvSession = channel.objects.srvSession; \
-                                window.srvUtil = channel.objects.srvUtil; \
-                                var shared = initPsiTheme().adapter.initSession(); \
-                                try { window.psiimtheme = startPsiTheme(shared) } catch(e) { shared.util.showCriticalError(\"Failed to start: \"+e+\" \"+e.stack); } \
-                            }); \
-                        </script>")
+<script src=\"/psithemes/chatview/util.js\"></script>\n \
+<script src=\"/psithemes/chatview/psi/adapter.js\"></script>\n \
+<script src=\"/psiglobal/qwebchannel.js\"></script>\n \
+<script type=\"text/javascript\">\n \
+    new QWebChannel(qt.webChannelTransport, function (channel) {\n \
+        window.srvSession = channel.objects.srvSession;\n \
+        window.srvUtil = channel.objects.srvUtil;\n \
+        var shared = initPsiTheme().adapter.initSession();\n \
+    });\n \
+</script>");
                 srvLoader.setHtml(html);
                 srvLoader.getFileContents("load.js", function(js){
                     eval(js);
@@ -29,7 +28,6 @@ function psiThemeAdapter(chat) {
             var html = srvLoader.getFileContents("index.html");
             html = html.replace("%scripts%", "<script type=\"text/javascript\"> \
                                 var shared = initPsiTheme().adapter.initSession(); \
-                                try { window.psiimtheme = startPsiTheme(shared) } catch(e) { shared.util.showCriticalError(\"Failed to start: \"+e+\" \"+e.stack); } \
                         </script>");
             srvLoader.setHtml(html);
             eval(srvLoader.getFileContents("load.js"));
@@ -312,8 +310,23 @@ function psiThemeAdapter(chat) {
         //window.srvLoader = null;
         //window.chatServer = null;
         window.chatSession = null;
-        return shared;
 
+
+        function start() {
+            try {
+                window.psiimtheme = startPsiTheme(shared);
+            } catch(e) {
+                shared.util.showCriticalError("Failed to start: "+e+" "+e.stack);
+            }
+        }
+
+        if (typeof(startPsiTheme) != "undefined") {
+            start();
+        } else {
+            window.addEventListener("load", start);
+        }
+
+        return shared;
     }
 };
 

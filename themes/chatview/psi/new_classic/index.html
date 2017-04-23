@@ -6,7 +6,6 @@ body {padding:0; margin:0; width:100%;}
 body > div {
 	padding:1px 3px;
 	word-wrap:break-word !important;
-	white-space: pre-wrap !important;
 	overflow:hidden;
 }
 body > div img { vertical-align:bottom; }
@@ -47,42 +46,52 @@ body > div > img:first-child { vertical-align:text-bottom; }
 </head>
 <body>
 <script type="text/javascript">
-try {
 
-window.chat.theme = function() {
-	var nicks = {};
-	var nickNumber = 0;
+function startPsiTheme(shared) {
+	var util = shared.util;
 	
-	var cssBody = chat.util.findStyleSheet(document.styleSheets[0], "body").style;
-	var cssSentMsg = chat.util.findStyleSheet(document.styleSheets[0], ".sent").style;
-	var cssReceivedMsg = chat.util.findStyleSheet(document.styleSheets[0], ".received").style;
-	var cssInfMsg = chat.util.findStyleSheet(document.styleSheets[0], ".infmsg").style;
-	var cssUserText = chat.util.findStyleSheet(document.styleSheets[0], ".usertext").style;
-	var cssChatSays = chat.util.findStyleSheet(document.styleSheets[0], ".msg>span:first").style;
+	var cssBody = util.findStyleSheet(document.styleSheets[0], "body").style;
+	var cssSentMsg = util.findStyleSheet(document.styleSheets[0], ".sent").style;
+	var cssReceivedMsg = util.findStyleSheet(document.styleSheets[0], ".received").style;
+	var cssInfMsg = util.findStyleSheet(document.styleSheets[0], ".infmsg").style;
+	var cssUserText = util.findStyleSheet(document.styleSheets[0], ".usertext").style;
+	var cssChatSays = util.findStyleSheet(document.styleSheets[0], ".msg>span:first").style;
+	var cssAlertMsg = util.findStyleSheet(document.styleSheets[0], ".alert").style;
 	var useMessageIcons, messageIconsSize = 0;
+	var colorMap = {
+        "options.ui.look.colors.messages.sent" : cssSentMsg,
+        "options.ui.look.colors.messages.received" : cssReceivedMsg,
+        "options.ui.look.colors.messages.informational" : cssInfMsg,
+        "options.ui.look.colors.messages.usertext" : cssUserText,
+        "options.ui.look.colors.messages.highlighting" : cssAlertMsg
+    }
 	
 	var applyPsiSettings = function() {
-		chat.util.updateObject(cssBody, eval("["+shared.session.getFont()+"][0]"));
-		cssBody.backgroundColor = shared.server.getPaletteColor("Base");
-		cssBody.color = shared.server.getPaletteColor("Text");
-		cssSentMsg.color = shared.psiOption("options.ui.look.colors.messages.sent");
-		cssReceivedMsg.color = shared.psiOption("options.ui.look.colors.messages.received");
-		cssInfMsg.color = shared.psiOption("options.ui.look.colors.messages.informational");
-		cssUserText.color = shared.psiOption("options.ui.look.colors.messages.usertext");
-		useMessageIcons = shared.psiOption("options.ui.chat.use-message-icons");
-		if (shared.psiOption("options.ui.chat.scaled-message-icons")) {
-			var d = document.createElement("div");
-			d.style.position = "absolute";
-			d.style.top = "-1000;";
-			d.style.visibility = "hidden";
-			d.style.height = "1em";
-			shared.chatElement.appendChild(d);
-			messageIconsSize = parseInt(document.defaultView.getComputedStyle(d, null).height);
-			shared.chatElement.removeChild(d);
+		util.getFont(function(cssFont){util.updateObject(cssBody, cssFont)});
+		util.getPaletteColor("Base", function(color){cssBody.backgroundColor = color});
+		util.getPaletteColor("Text", function(color){cssBody.color = color});
+		function updateColor(opt, style) {
+			util.colorOption(opt, function(val){style.color = val});
 		}
+		for (var k in colorMap) {
+			colorMap.hasOwnProperty(k) && updateColor(k, colorMap[k]);
+		}
+
+		util.psiOption("options.ui.chat.use-message-icons", function(val){useMessageIcons = val;});
+		util.psiOption("options.ui.chat.scaled-message-icons", function(val) {
+			if (val) {
+				var d = document.createElement("div");
+				d.style.position = "absolute";
+				d.style.top = "-1000;";
+				d.style.visibility = "hidden";
+				d.style.height = "1em";
+				shared.chatElement.appendChild(d);
+				messageIconsSize = parseInt(document.defaultView.getComputedStyle(d, null).height);
+				shared.chatElement.removeChild(d);
+			}
+		});
 	}
-	
-	var shared = chat.adapter.initSession();
+
 	shared.initTheme({
 		chatElement : document.body,
 		avatarSize : {width:32, height:32},
@@ -104,7 +113,7 @@ window.chat.theme = function() {
 				: "<div class='infmsg'>%icon%<b>*** %usertext%</b></div>",
 			trackbar: '<hr style="height:1px; border:1px solid black; border-color:#bbf #66f #66f #bbf" />'
 		},
-		dateFormat : "hh:mm",
+		dateFormat : "HH:MM:SS",
 		proxy : function() { //optional
 			if (shared.cdata.mtype == "message") {
 				return shared.cdata.emote && shared.templates.messageNC ||
@@ -123,10 +132,10 @@ window.chat.theme = function() {
 		},
 		varHandlers : {
 			sender : function() {
-				var nick = chat.util.escapeHtml(shared.cdata["sender"]);
+				var nick = util.escapeHtml(shared.cdata["sender"]);
 				nick = shared.cdata.mtype == "message" && shared.isMuc?
-					'<a href="addnick://psi/'+encodeURIComponent(shared.cdata["sender"])+
-					'" class="nicklink">'+nick+'</a>' : nick;
+					'<a onclick="psiimtheme.addNick(this)"'+
+					' class="nicklink">'+nick+'</a>' : nick;
 				return shared.cdata["emote"]?"*"+nick:(shared.isMuc?"&lt;"+nick+"&gt;":nick+":");
 			},
 			alertedmessage : function() {
@@ -134,7 +143,7 @@ window.chat.theme = function() {
 			},
 			sentrec : function() {return shared.cdata.spooled?"infmsg":(shared.cdata.local?"sent":"received");},
 			nickcolor : function() {
-				return shared.session.mucNickColor(shared.cdata.sender, shared.cdata.local);
+				return util.nickColor(shared.cdata.sender);
 			},
 			icon : function() {
 				var icon = "";
@@ -173,12 +182,8 @@ window.chat.theme = function() {
 	shared.session.signalInited();
 	
 	return {
-		
+		addNick : function(e) { shared.addNick(e.text); }
 	};
-}()
-
-} catch(e) {
-	 document.body.innerHTML = "Theme initialization failed: " + e
 }
 </script>
 </body>
