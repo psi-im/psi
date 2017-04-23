@@ -30,7 +30,6 @@
 #include <QObject>
 #include <QTextEdit>
 #include <QGridLayout>
-#include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QSpacerItem>
@@ -39,6 +38,8 @@
 #include "xmpp_xdata.h"
 #include "xmpp_client.h"
 #include "xmpp_tasks.h"
+#include "psicon.h"
+#include "networkaccessmanager.h"
 
 using namespace XMPP;
 
@@ -50,38 +51,35 @@ class XDataMediaWidget : public QLabel
 
 public:
 	XDataMediaWidget(XData::Field::MediaUri uri, QSize s,
-					 Client* client, Jid j, QWidget *parent)
-		: QLabel(parent)
-		, _client(client)
+					 Jid j, XDataWidget *xdw)
+		: QLabel(xdw)
+		, _xdWidget(xdw)
 		, _size(s)
-		, _type(uri.type)
+		, _type(uri.mimeType)
 	{
 		if (uri.uri.startsWith("cid:")) {
-			JT_BitsOfBinary *task = new JT_BitsOfBinary(client->rootTask());
+			JT_BitsOfBinary *task = new JT_BitsOfBinary(xdw->client()->rootTask());
 			connect(task, SIGNAL(finished()), SLOT(bobReceived()));
 			task->get(j, uri.uri.mid(4));
 			task->go(true);
 		} else {
-			QNetworkAccessManager *manager = new QNetworkAccessManager(this);
-			connect(manager, SIGNAL(finished(QNetworkReply*)),
-					SLOT(oobReceived(QNetworkReply*)));
-			manager->get(QNetworkRequest(QUrl(uri.uri)));
+			auto nam = xdw->psi()->networkAccessManager();
+			QNetworkReply *reply = nam->get(QNetworkRequest(QUrl(uri.uri)));
+			connect(reply, SIGNAL(finished()), SLOT(oobReceived()));
 		}
 	}
 
 	static QList<XDataMediaWidget*> fromMediaElement(
 		XData::Field::MediaElement m,
-		Client* client,
 		Jid j,
-		QWidget *parent)
+		XDataWidget *xdw)
 	{
 		QList<XDataMediaWidget*> result;
 		// simple image filter
 		// TODO add support for other formats
 		foreach (const XData::Field::MediaUri &uri, m) {
-			if (uri.type.startsWith("image")) {
-				XDataMediaWidget *mw = new XDataMediaWidget(uri, m.mediaSize(),
-															client, j, parent);
+			if (uri.mimeType.startsWith("image")) {
+				XDataMediaWidget *mw = new XDataMediaWidget(uri, m.mediaSize(), j, xdw);
 				result.append(mw);
 			}
 		}
@@ -118,14 +116,15 @@ private slots:
 		onDataReceived(bob.data());
 	}
 
-	void oobReceived(QNetworkReply* reply)
+	void oobReceived()
 	{
+		QNetworkReply* reply = dynamic_cast<QNetworkReply*>(sender());
 		onDataReceived(reply->readAll());
-		delete reply->manager();
+		reply->deleteLater();
 	}
 
 private:
-	Client* _client;
+	XDataWidget* _xdWidget;
 	QSize _size;
 	QString _type;
 };
@@ -136,10 +135,10 @@ private:
 class XDataField
 {
 public:
-	XDataField(XData::Field f, XMPP::Client *client = 0)
+	XDataField(XData::Field f, XDataWidget *w = 0)
 	{
 		_field = f;
-		_client = client;
+		_xdWidget = w;
 	}
 	virtual ~XDataField()
 	{
@@ -180,7 +179,7 @@ private:
 	XData::Field _field;
 
 protected:
-	XMPP::Client *_client;
+	XDataWidget *_xdWidget;
 };
 
 ////////////////////////////////////////
@@ -188,8 +187,8 @@ protected:
 class XDataField_Hidden : public XDataField
 {
 public:
-	XDataField_Hidden(XData::Field f)
-	: XDataField(f)
+	XDataField_Hidden(XData::Field f, XDataWidget *w)
+	: XDataField(f, w)
 	{
 	}
 };
@@ -199,8 +198,8 @@ public:
 class XDataField_Boolean : public XDataField
 {
 public:
-	XDataField_Boolean(XData::Field f, QGridLayout *grid, QWidget *parent)
-	: XDataField(f, ((XDataWidget *)parent)->client())
+	XDataField_Boolean(XData::Field f, QGridLayout *grid, XDataWidget *xdw)
+	: XDataField(f, xdw)
 	{
 		int row = grid->rowCount();
 		bool checked = false;
@@ -213,17 +212,17 @@ public:
 		QHBoxLayout *layout = new QHBoxLayout;
 		QSpacerItem *spacerItem = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
 
-		check = new QCheckBox(parent);
+		check = new QCheckBox(xdw);
 		check->setChecked(checked);
 		layout->addWidget(check);
 
-		QLabel *label = new QLabel(labelText(""), parent);
+		QLabel *label = new QLabel(labelText(""), xdw);
 		layout->addWidget(label);
 		layout->addSpacerItem(spacerItem);
 
 		grid->addLayout(layout, row, 0);
 
-		QLabel *req = new QLabel(reqText(), parent);
+		QLabel *req = new QLabel(reqText(), xdw);
 		grid->addWidget(req, row, 1);
 
 		if ( !f.desc().isEmpty() ) {
@@ -251,8 +250,8 @@ private:
 class XDataField_Fixed : public XDataField
 {
 public:
-	XDataField_Fixed(XData::Field f, QGridLayout *grid, QWidget *parent)
-	: XDataField(f, ((XDataWidget *)parent)->client())
+	XDataField_Fixed(XData::Field f, QGridLayout *grid, XDataWidget *xdw)
+	: XDataField(f, xdw)
 	{
 		int row = grid->rowCount();
 		QString text;
@@ -264,7 +263,7 @@ public:
 			text += *it;
 		}
 
-		QLabel *fixed = new QLabel("<qt>" + text + "<br/></qt>", parent);
+		QLabel *fixed = new QLabel("<qt>" + text + "<br/></qt>", xdw);
 		fixed->setWordWrap(true);
 		grid->addWidget(fixed, row, 0);
 
@@ -279,21 +278,19 @@ public:
 class XDataField_TextSingle : public XDataField
 {
 public:
-	XDataField_TextSingle(XData::Field f, QGridLayout *grid, QWidget *parent)
-	: XDataField(f, ((XDataWidget *)parent)->client())
+	XDataField_TextSingle(XData::Field f, QGridLayout *grid, XDataWidget *xdw)
+	: XDataField(f, xdw)
 	{
 		int row = grid->rowCount();
 		XData::Field::MediaElement me = f.mediaElement();
 		if (!me.isEmpty()) {
 			XDataField *fromField = 0;
-			Jid j = ((XDataWidget *)parent)->owner();
-			if (((XDataWidget *)parent)->registrarType() == "urn:xmpp:captcha"
-				&& (fromField = ((XDataWidget *)parent)->fieldByVar("from"))) {
+			Jid j = xdw->owner();
+			if (xdw->registrarType() == "urn:xmpp:captcha"
+				&& (fromField = xdw->fieldByVar("from"))) {
 				j = Jid(fromField->field().value().value(0));
 			}
-			QList<XDataMediaWidget*> mediaWidgets = XDataMediaWidget::fromMediaElement(
-				me, _client, j, parent
-			);
+			QList<XDataMediaWidget*> mediaWidgets = XDataMediaWidget::fromMediaElement(me, j, _xdWidget);
 			foreach (XDataMediaWidget* w, mediaWidgets) {
 				grid->addWidget(w, row, 0, 1, 3, Qt::AlignCenter);
 				row++;
@@ -305,17 +302,17 @@ public:
 			text = f.value().first();
 		QVBoxLayout *layout = new QVBoxLayout;
 
-		QLabel *label = new QLabel(labelText(), parent);
+		QLabel *label = new QLabel(labelText(), xdw);
 		label->setWordWrap(true);
 		layout->addWidget(label);
 
-		edit = new QLineEdit(parent);
+		edit = new QLineEdit(xdw);
 		edit->setText(text);
 		layout->addWidget(edit);
 
 		grid->addLayout(layout, row, 0);
 
-		QLabel *req = new QLabel(reqText(), parent);
+		QLabel *req = new QLabel(reqText(), xdw);
 		grid->addWidget(req, row, 1);
 
 		if ( !f.desc().isEmpty() ) {
@@ -344,8 +341,8 @@ protected:
 class XDataField_TextPrivate : public XDataField_TextSingle
 {
 public:
-	XDataField_TextPrivate(XData::Field f, QGridLayout *grid, QWidget *parent)
-	: XDataField_TextSingle(f, grid, parent)
+	XDataField_TextPrivate(XData::Field f, QGridLayout *grid, XDataWidget *xdw)
+	: XDataField_TextSingle(f, grid, xdw)
 	{
 		edit->setEchoMode(QLineEdit::Password);
 	}
@@ -356,8 +353,8 @@ public:
 class XDataField_JidSingle : public XDataField_TextSingle
 {
 public:
-	XDataField_JidSingle(XData::Field f, QGridLayout *grid, QWidget *parent)
-	: XDataField_TextSingle(f, grid, parent)
+	XDataField_JidSingle(XData::Field f, QGridLayout *grid, XDataWidget *w)
+	: XDataField_TextSingle(f, grid, w)
 	{
 		// TODO: add proper validation
 	}
@@ -368,17 +365,17 @@ public:
 class XDataField_ListSingle : public XDataField
 {
 public:
-	XDataField_ListSingle(XData::Field f, QGridLayout *grid, QWidget *parent)
-	: XDataField(f, ((XDataWidget *)parent)->client())
+	XDataField_ListSingle(XData::Field f, QGridLayout *grid, XDataWidget *xdw)
+	: XDataField(f, xdw)
 	{
 		QHBoxLayout *layout = new QHBoxLayout;
 
 		int row = grid->rowCount();
-		QLabel *label = new QLabel(labelText(), parent);
+		QLabel *label = new QLabel(labelText(), xdw);
 		label->setWordWrap(true);
 		layout->addWidget(label);
 
-		combo = new QComboBox(parent);
+		combo = new QComboBox(xdw);
 		layout->addWidget(combo);
 		combo->setInsertPolicy(QComboBox::NoInsert);
 
@@ -400,7 +397,7 @@ public:
 				combo->setCurrentIndex(combo->count()-1);
 		}
 
-		QLabel *req = new QLabel(reqText(), parent);
+		QLabel *req = new QLabel(reqText(), xdw);
 		grid->addWidget(req, row, 1);
 
 		if ( !f.desc().isEmpty() ) {
@@ -439,15 +436,15 @@ private:
 class XDataField_ListMulti : public XDataField
 {
 public:
-	XDataField_ListMulti(XData::Field f, QGridLayout *grid, QWidget *parent)
-	: XDataField(f, ((XDataWidget *)parent)->client())
+	XDataField_ListMulti(XData::Field f, QGridLayout *grid, XDataWidget *xdw)
+	: XDataField(f, xdw)
 	{
 		int row = grid->rowCount();
-		QLabel *label = new QLabel(labelText(), parent);
+		QLabel *label = new QLabel(labelText(), xdw);
 		label->setWordWrap(true);
 		grid->addWidget(label, row, 0);
 
-		list = new QListWidget(parent);
+		list = new QListWidget(xdw);
 		grid->addWidget(list, row, 1);
 		list->setSelectionMode(QAbstractItemView::MultiSelection);
 
@@ -467,7 +464,7 @@ public:
 					list->setItemSelected(item, true);
 		}
 
-		QLabel *req = new QLabel(reqText(), parent);
+		QLabel *req = new QLabel(reqText(), xdw);
 		grid->addWidget(req, row, 2);
 
 		if ( !f.desc().isEmpty() ) {
@@ -510,17 +507,17 @@ private:
 class XDataField_TextMulti : public XDataField
 {
 public:
-	XDataField_TextMulti(XData::Field f, QGridLayout *grid, QWidget *parent)
-	: XDataField(f, ((XDataWidget *)parent)->client())
+	XDataField_TextMulti(XData::Field f, QGridLayout *grid, XDataWidget *xdw)
+	: XDataField(f, xdw)
 	{
 		int row = grid->rowCount();
 		QHBoxLayout *layout = new QHBoxLayout;
 
-		QLabel *label = new QLabel(labelText(), parent);
+		QLabel *label = new QLabel(labelText(), xdw);
 		label->setWordWrap(true);
 		layout->addWidget(label);
 
-		edit = new QTextEdit(parent);
+		edit = new QTextEdit(xdw);
 		layout->addWidget(edit);
 
 		QString text;
@@ -535,7 +532,7 @@ public:
 
 		grid->addLayout(layout, row, 0);
 
-		QLabel *req = new QLabel(reqText(), parent);
+		QLabel *req = new QLabel(reqText(), xdw);
 		grid->addWidget(req, row, 1);
 
 		if ( !f.desc().isEmpty() ) {
@@ -561,8 +558,8 @@ private:
 class XDataField_JidMulti : public XDataField_TextMulti
 {
 public:
-	XDataField_JidMulti(XData::Field f, QGridLayout *grid, QWidget *parent)
-	: XDataField_TextMulti(f, grid, parent)
+	XDataField_JidMulti(XData::Field f, QGridLayout *grid, XDataWidget *xdw)
+	: XDataField_TextMulti(f, grid, xdw)
 	{
 		// TODO: improve validation
 	}
@@ -572,10 +569,11 @@ public:
 // XDataWidget
 //----------------------------------------------------------------------------
 
-XDataWidget::XDataWidget(QWidget *parent, XMPP::Client* client, XMPP::Jid owner)
-	: QWidget(parent)
-	, client_(client)
-	, consistent_(true)
+XDataWidget::XDataWidget(PsiCon *psi, QWidget *parent, XMPP::Client* client, XMPP::Jid owner) :
+	QWidget(parent),
+    psi_(psi),
+	client_(client),
+	consistent_(true)
 {
 	owner_ = owner;
 	layout_ = new QVBoxLayout(this);
@@ -586,6 +584,11 @@ XDataWidget::XDataWidget(QWidget *parent, XMPP::Client* client, XMPP::Jid owner)
 XDataWidget::~XDataWidget()
 {
 	qDeleteAll(fields_);
+}
+
+PsiCon *XDataWidget::psi() const
+{
+	return psi_;
 }
 
 XMPP::Client* XDataWidget::client() const
@@ -724,7 +727,7 @@ void XDataWidget::setFields(const XData::FieldList &f)
 					f = new XDataField_Fixed(*it, grid, this);
 					break;
 				case XData::Field::Field_Hidden:
-					f = new XDataField_Hidden(*it);
+					f = new XDataField_Hidden(*it, this);
 					break;
 				case XData::Field::Field_JidSingle:
 					f = new XDataField_JidSingle(*it, grid, this);

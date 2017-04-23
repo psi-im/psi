@@ -22,6 +22,7 @@
 #define AHCOMMAND_H
 
 #include <QString>
+#include <QSharedDataPointer>
 
 #include "xmpp_xdata.h"
 
@@ -51,7 +52,7 @@ private:
 	ErrorType type_;
 };
 
-
+class AHCommandPrivate;
 class AHCommand
 {
 public:
@@ -67,22 +68,27 @@ public:
 	};
 
 	// Constructors
+	AHCommand();
 	AHCommand(const QString& node, const QString& sessionId = "", Action action = Execute);
 	AHCommand(const QString& node, XMPP::XData data, const QString& sessionId = "", Action action = Execute);
 	AHCommand(const QDomElement &e);
+	AHCommand(const AHCommand &other);
+	~AHCommand();
+
+	AHCommand& operator=(const AHCommand &other);
 
 	// Inspectors
-	const QString& node() const { return node_; }
-	bool hasData() const { return hasData_; }
-	const XMPP::XData& data() const { return data_; }
-	const ActionList& actions() const { return actions_; }
-	Action defaultAction() const { return defaultAction_; }
-	Status status() const { return status_; }
-	Action action() const { return action_; }
-	const QString& sessionId() const { return sessionId_; }
-	const AHCError& error() const { return error_; }
-	bool hasNote() const { return !note_.text.isEmpty(); }
-	const Note& note() const { return note_; }
+	const QString& node() const;
+	bool hasData() const;
+	const XMPP::XData& data() const;
+	const ActionList& actions() const;
+	Action defaultAction() const;
+	Status status() const;
+	Action action() const;
+	const QString& sessionId() const;
+	const AHCError& error() const;
+	bool hasNote() const;
+	const Note& note() const;
 
 	// XML conversion
 	QDomElement toXml(QDomDocument* doc, bool submit) const;
@@ -106,16 +112,7 @@ protected:
 	static Status string2status(const QString&);
 
 private:
-	QString node_;
-	bool hasData_;
-	XMPP::XData data_;
-	Status status_;
-	Action defaultAction_;
-	ActionList actions_;
-	Action action_;
-	QString sessionId_;
-	AHCError error_;
-	Note note_;
+	QSharedDataPointer<AHCommandPrivate> d;
 };
 
 #endif

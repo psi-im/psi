@@ -4080,7 +4080,7 @@ void PsiAccount::actionExecuteCommandSpecific(const Jid& j, const QString& node)
 		w->show();
 	}
 	else {
-		AHCommandDlg::executeCommand(d->client,j,node);
+		AHCommandDlg::executeCommand(d->psi, d->client,j,node);
 	}
 }
 

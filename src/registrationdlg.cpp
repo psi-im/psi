@@ -284,7 +284,7 @@ void RegistrationDlg::processXData(const XData& form)
 	if (d->xdata)
 		delete d->xdata;
 
-	d->xdata = new XDataWidget(d->gr_form, d->pa->client(), d->jid);
+	d->xdata = new XDataWidget(d->pa->psi(), d->gr_form, d->pa->client(), d->jid);
 	d->gr_form_layout->addWidget(d->xdata); // FIXME
 	d->xdata->setForm(form, false);
 

@@ -68,7 +68,6 @@ WebView::WebView(QWidget* parent) :
 	settings()->setObjectCacheCapacities( 0, 0, 0 );
 	settings()->clearMemoryCaches( );
 
-	page()->setNetworkAccessManager(NetworkAccessManager::instance());
     page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
 
 	connect(page()->action(QWebPage::Copy), SIGNAL(triggered()), SLOT(textCopiedEvent()));

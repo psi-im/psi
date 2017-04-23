@@ -46,11 +46,8 @@ bool AHCExecuteTask::take(const QDomElement& e)
 	if (e.attribute("type") == "result") {
 		QDomElement i = e.firstChildElement("command");
 		if (!i.isNull()) {
-			AHCommand c(i);
-			if (c.status() == AHCommand::Executing)
-				new AHCFormDlg(c,receiver_,client());
-			else if (c.status() == AHCommand::Completed && i.childNodes().count() > 0)
-				new AHCFormDlg(c,receiver_,client(), true);
+			resultCommand_ = AHCommand(i);
+			hasPayload_ = i.childNodes().count() > 0;
 			setSuccess();
 			return true;
 		}

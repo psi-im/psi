@@ -35,9 +35,15 @@ public:
 	void onGo();
 	bool take(const QDomElement &x);
 
+	inline const XMPP::Jid &receiver() const { return receiver_; }
+	inline const AHCommand &resultCommand() const { return resultCommand_; }
+	inline bool hasCommandPayload() const { return hasPayload_; } // true if result command has children
+
 private:
+	bool hasPayload_;
 	XMPP::Jid receiver_;
 	AHCommand command_;
+	AHCommand resultCommand_;
 };
 
 #endif

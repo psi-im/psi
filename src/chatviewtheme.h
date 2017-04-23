@@ -67,6 +67,7 @@ public:
 
 	QVariantMap loadFromCacheMulti(const QVariantList &list);
 	QVariant cache(const QString &name) const;
+	NetworkAccessManager* networkAccessManager();
 private:
 	friend class ChatViewJSLoader;
 	friend class ChatViewThemePrivate;

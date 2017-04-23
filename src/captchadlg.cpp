@@ -17,7 +17,7 @@ CaptchaDlg::CaptchaDlg(QWidget *parent, const CaptchaChallenge &challenge, PsiAc
 	ui->setupUi(this);
 
 	QVBoxLayout *l = new QVBoxLayout;
-	dataWidget = new XDataWidget(this, pa->client(), challenge.arbiter());
+	dataWidget = new XDataWidget(pa->psi(), this, pa->client(), challenge.arbiter());
 	dataWidget->setForm(challenge.form());
 	l->addWidget(dataWidget);
 	l->addStretch();

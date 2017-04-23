@@ -37,6 +37,8 @@ class MiniClient;
 class XDataWidget;
 class ServerListQuerier;
 class QByteArray;
+class PsiCon;
+
 namespace XMPP {
 	class Form;
 	class XData;
@@ -46,7 +48,7 @@ class AccountRegDlg : public QDialog
 {
 	Q_OBJECT
 public:
-	AccountRegDlg(QWidget *parent=0);
+	AccountRegDlg(PsiCon *psi, QWidget *parent = 0);
 	~AccountRegDlg();
 
 	const XMPP::Jid& jid() const { return jid_; }
@@ -57,8 +59,8 @@ public:
 	bool legacySSLProbe() { return legacy_ssl_probe_; }
 	UserAccount::SSLFlag ssl() const { return ssl_; }
 	QString proxy() const { return proxy_; }
-	QString tlsOverrideDomain() { return tlsOverrideDomain_; };
-	QByteArray tlsOverrideCert() { return tlsOverrideCert_; };
+	QString tlsOverrideDomain() { return tlsOverrideDomain_; }
+	QByteArray tlsOverrideCert() { return tlsOverrideCert_; }
 
 public slots:
 	void done(int);
@@ -88,6 +90,7 @@ protected slots:
 
 private:
 	Ui::AccountReg ui_;
+	PsiCon *psi;
 	QScrollArea* fields_container_;
 	XDataWidget* fields_;
 	ProxyChooser *proxy_chooser_;

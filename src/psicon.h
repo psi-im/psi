@@ -56,6 +56,7 @@ class PsiContactList;
 class TabManager;
 class ContactUpdatesManager;
 class PopupManager;
+class NetworkAccessManager;
 
 namespace OpenPGP {
 	class Engine;
@@ -83,6 +84,7 @@ public:
 	TuneControllerManager* tuneManager() const;
 	FileTransDlg *ftdlg();
 	TabManager *tabManager() const;
+	NetworkAccessManager *networkAccessManager() const;
 
 	AlertManager *alertManager() const;
 

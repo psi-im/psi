@@ -43,13 +43,13 @@ public:
 
 	NetworkAccessManager(QObject *parent = 0);
 
-	static NetworkAccessManager* instance();
-
 	inline void registerPathHandler(const QSharedPointer<NAMDataHandler> &handler)
 	{ _pathHandlers.append(handler); }
 
 	QString registerSessionHandler(const QSharedPointer<NAMDataHandler> &handler);
 	void unregisterSessionHandler(const QString &id);
+
+	void releaseHandlers() { _pathHandlers.clear(); _sessionHandlers.clear(); }
 
 private slots:
 
@@ -64,7 +64,6 @@ protected:
 	QNetworkReply* createRequest(Operation op, const QNetworkRequest & req, QIODevice * outgoingData);
 
 private:
-	static NetworkAccessManager* _instance;
 
 	int _handlerSeed;
 	QList<QSharedPointer<NAMDataHandler> > _pathHandlers;

@@ -864,7 +864,7 @@ void EventDlg::init()
 	d->w_http_id->hide();
 
 	// data form
-	d->xdata = new XDataWidget(this, d->pa->client(), d->jid);
+	d->xdata = new XDataWidget(d->psi, this, d->pa->client(), d->jid);
 	d->xdata_form = new QWidget(this);
 	QVBoxLayout *vb_xdata = new QVBoxLayout(d->xdata_form);
 	d->xdata_instruction = new QLabel(d->xdata_form);

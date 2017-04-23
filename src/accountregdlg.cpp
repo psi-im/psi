@@ -31,10 +31,13 @@
 #include "jidutil.h"
 #include "textutil.h"
 #include "xdata_widget.h"
+#include "psicon.h"
 
 using namespace XMPP;
 
-AccountRegDlg::AccountRegDlg(QWidget *parent) : QDialog(parent)
+AccountRegDlg::AccountRegDlg(PsiCon *psi, QWidget *parent) :
+    QDialog(parent),
+    psi(psi)
 {
 	ui_.setupUi(this);
 	setModal(false);
@@ -257,7 +260,7 @@ void AccountRegDlg::getFields_finished()
 	ui_.busy->stop();
 	if (reg->success()) {
 		unblock();
-		fields_ =  new XDataWidget(ui_.page_fields, client_->client(), reg->form().jid());
+		fields_ =  new XDataWidget(psi, ui_.page_fields, client_->client(), reg->form().jid());
 		XData xdata;
 		if (reg->hasXData()) {
 			isOld_ = false;

@@ -31,6 +31,7 @@
 #include "psiaccount.h"
 #include "xmpp_xmlcommon.h"
 #include "xmpp_client.h"
+#include "ahcformdlg.h"
 
 using namespace XMPP;
 
@@ -107,6 +108,36 @@ bool JT_AHCGetList::take(const QDomElement& e)
 	}
 }
 
+// --------------------------------------------------------------------------
+// AHCExecuteTaskWrapper: Wrapper around AHCExecuteTask to separate gui stuff
+// --------------------------------------------------------------------------
+
+class AHCExecuteTaskWrapper : public QObject
+{
+	Q_OBJECT
+
+	PsiCon *psi;
+	AHCExecuteTask *task;
+
+public:
+	AHCExecuteTaskWrapper(PsiCon *psi, AHCExecuteTask *task) :
+	    QObject(task),
+	    psi(psi), task(task)
+	{
+		connect(task, SIGNAL(finished()), SLOT(onFinished()));
+	}
+
+private slots:
+	void onFinished()
+	{
+		const AHCommand &c = task->resultCommand();
+		if (c.status() == AHCommand::Executing)
+			new AHCFormDlg(psi, c, task->receiver(), task->client());
+		else if (c.status() == AHCommand::Completed && task->hasCommandPayload())
+			new AHCFormDlg(psi, c, task->receiver(), task->client(), true);
+	}
+};
+
 
 // --------------------------------------------------------------------------
 // JT_AHCommandDlg: Initial command dialog
@@ -160,6 +191,7 @@ void AHCommandDlg::executeCommand()
 		QString node = commands_[ui_.cb_commands->currentIndex()].node;
 		AHCExecuteTask* t = new AHCExecuteTask(to,AHCommand(node),pa_->client()->rootTask());
 		connect(t,SIGNAL(finished()),SLOT(commandExecuted()));
+		new AHCExecuteTaskWrapper(pa_->psi(), t);
 		t->go(true);
 	}
 }
@@ -170,8 +202,11 @@ void AHCommandDlg::commandExecuted()
 	close();
 }
 
-void AHCommandDlg::executeCommand(XMPP::Client* c, const XMPP::Jid& to, const QString &node)
+void AHCommandDlg::executeCommand(PsiCon *psi, XMPP::Client* c, const XMPP::Jid& to, const QString &node)
 {
 	AHCExecuteTask* t = new AHCExecuteTask(to,AHCommand(node),c->rootTask());
+	new AHCExecuteTaskWrapper(psi, t);
 	t->go(true);
 }
+
+#include "ahcommanddlg.moc"

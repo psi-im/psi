@@ -65,6 +65,7 @@ public:
 
 class IconHandler : public NAMDataHandler
 {
+public:
 	bool data(const QNetworkRequest &req, QByteArray &data, QByteArray &mime) const
 	{
 		QUrl url = req.url();
@@ -205,9 +206,9 @@ ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
 
 	requestInterceptor = new ChatViewUrlRequestInterceptor(this);
 #else
-	NetworkAccessManager::instance()->registerPathHandler(QSharedPointer<NAMDataHandler>(new ThemesDirHandler()));
-	NetworkAccessManager::instance()->registerPathHandler(QSharedPointer<NAMDataHandler>(new IconHandler()));
-	NetworkAccessManager::instance()->registerPathHandler(QSharedPointer<NAMDataHandler>(new AvatarHandler()));
+	pc->networkAccessManager()->registerPathHandler(QSharedPointer<NAMDataHandler>(new ThemesDirHandler()));
+	pc->networkAccessManager()->registerPathHandler(QSharedPointer<NAMDataHandler>(new IconHandler()));
+	pc->networkAccessManager()->registerPathHandler(QSharedPointer<NAMDataHandler>(new AvatarHandler()));
 #endif
 }
 

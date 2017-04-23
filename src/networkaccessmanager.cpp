@@ -30,7 +30,6 @@
 NetworkAccessManager::NetworkAccessManager(QObject *parent) :
     QNetworkAccessManager(parent)
 {
-	setParent(QCoreApplication::instance());
 }
 
 QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkRequest & req,
@@ -71,24 +70,12 @@ QNetworkReply *NetworkAccessManager::createRequest(Operation op, const QNetworkR
     return reply;
 }
 
-
 void NetworkAccessManager::callFinished() {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
 
     if (reply) {
         emit finished(reply);
     }
-}
-
-/**
- * Returns the singleton instance of this class
- * \return Instance of NetworkAccessManager
- */
-NetworkAccessManager* NetworkAccessManager::instance()
-{
-	if ( !_instance )
-		_instance = new NetworkAccessManager();
-	return _instance;
 }
 
 QString NetworkAccessManager::registerSessionHandler(const QSharedPointer<NAMDataHandler> &handler)
@@ -106,5 +93,3 @@ void NetworkAccessManager::unregisterSessionHandler(const QString &id)
 {
 	_sessionHandlers.remove(id);
 }
-
-NetworkAccessManager* NetworkAccessManager::_instance = NULL;

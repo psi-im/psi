@@ -20,6 +20,7 @@
 
 #include <QDomDocument>
 #include <QDomElement>
+#include <QSharedData>
 
 #include "ahcommand.h"
 #include "xmpp_xdata.h"
@@ -33,22 +34,74 @@ using namespace XMPP;
 // AHCommand: The class representing an Ad-Hoc command request or reply.
 // --------------------------------------------------------------------------
 
-AHCommand::AHCommand(const QString& node, const QString& sessionId, Action action) : node_(node), hasData_(false), status_(NoStatus), defaultAction_(NoAction), action_(action), sessionId_(sessionId)
+class AHCommandPrivate : public QSharedData
 {
+public:
+	QString node;
+	bool hasData = false;
+	XMPP::XData data;
+	AHCommand::Status status = AHCommand::NoStatus;
+	AHCommand::Action defaultAction = AHCommand::NoAction;
+	AHCommand::ActionList actions;
+	AHCommand::Action action = AHCommand::NoAction;
+	QString sessionId;
+	AHCError error;
+	AHCommand::Note note;
+
+	AHCommandPrivate() {}
+	AHCommandPrivate(const AHCommandPrivate &other) :
+	    QSharedData(other),
+	    node(other.node),
+		hasData(other.hasData),
+		data(other.data),
+		status(other.status),
+		defaultAction(other.defaultAction),
+		actions(other.actions),
+		action(other.action),
+		sessionId(other.sessionId),
+		error(other.error),
+		note(other.note)
+	{
+
+	}
+	~AHCommandPrivate() { }
+};
+
+AHCommand::AHCommand() :
+    d(new AHCommandPrivate)
+{
+
 }
 
-AHCommand::AHCommand(const QString& node, XData data, const QString& sessionId, Action action) : node_(node), hasData_(true), data_(data), status_(NoStatus), defaultAction_(NoAction), action_(action), sessionId_(sessionId)
+AHCommand::AHCommand(const QString& node, const QString& sessionId, Action action) :
+    d(new AHCommandPrivate)
 {
+	d->node = node;
+	d->action = action;
+	d->sessionId = sessionId;
 }
 
-AHCommand::AHCommand(const QDomElement& q) : hasData_(false), defaultAction_(NoAction)
+AHCommand::AHCommand(const QString& node, XData data, const QString& sessionId, Action action) :
+    d(new AHCommandPrivate)
+{
+	d->node = node;
+	d->action = action;
+	d->sessionId = sessionId;
+
+	d->hasData = true;
+	d->data = data;
+
+}
+
+AHCommand::AHCommand(const QDomElement& q) :
+    d(new AHCommandPrivate)
 {
 	// Parse attributes
 	QString status = q.attribute("status");
 	setStatus(string2status(status));
-	node_ = q.attribute("node");
-	action_ = string2action(q.attribute("action"));
-	sessionId_ = q.attribute("sessionid");
+	d->node = q.attribute("node");
+	d->action = string2action(q.attribute("action"));
+	d->sessionId = q.attribute("sessionid");
 
 	// Parse the body
 	for (QDomNode n = q.firstChild(); !n.isNull(); n = n.nextSibling()) {
@@ -60,8 +113,8 @@ AHCommand::AHCommand(const QDomElement& q) : hasData_(false), defaultAction_(NoA
 
 		// A form
 		if (tag == "x" && e.attribute("xmlns") =="jabber:x:data") {
-			data_.fromXml(e);
-			hasData_ = true;
+			d->data.fromXml(e);
+			d->hasData = true;
 		}
 
 		// Actions
@@ -73,7 +126,7 @@ AHCommand::AHCommand(const QDomElement& q) : hasData_(false), defaultAction_(NoA
 			for (QDomNode m = e.firstChild(); !m.isNull(); m = m.nextSibling()) {
 				Action a = string2action(m.toElement().tagName());
 				if (a == Prev || a == Next || a == Complete)
-					actions_ += a;
+					d->actions += a;
 			}
 		}
 
@@ -81,29 +134,67 @@ AHCommand::AHCommand(const QDomElement& q) : hasData_(false), defaultAction_(NoA
 		else if (tag == "note") {
 			QString stype = e.attribute("type");
 			if (stype == "warn")
-				note_.type = Warn;
+				d->note.type = Warn;
 			else if (stype == "error")
-				note_.type = Error;
+				d->note.type = Error;
 			else
-				note_.type = Info;
-			note_.text = e.text();
+				d->note.type = Info;
+			d->note.text = e.text();
 		}
 	}
 }
+
+AHCommand::AHCommand(const AHCommand &other) :
+    d(other.d)
+{
+}
+
+AHCommand::~AHCommand()
+{
+
+}
+
+AHCommand &AHCommand::operator=(const AHCommand &other)
+{
+	d = other.d;
+	return *this;
+}
+
+const QString &AHCommand::node() const { return d->node; }
+
+bool AHCommand::hasData() const { return d->hasData; }
+
+const XData &AHCommand::data() const { return d->data; }
+
+const AHCommand::ActionList &AHCommand::actions() const { return d->actions; }
+
+AHCommand::Action AHCommand::defaultAction() const { return d->defaultAction; }
+
+AHCommand::Status AHCommand::status() const { return d->status; }
+
+AHCommand::Action AHCommand::action() const { return d->action; }
+
+const QString &AHCommand::sessionId() const { return d->sessionId; }
+
+const AHCError &AHCommand::error() const { return d->error; }
+
+bool AHCommand::hasNote() const { return !d->note.text.isEmpty(); }
+
+const AHCommand::Note &AHCommand::note() const { return d->note; }
 
 QDomElement AHCommand::toXml(QDomDocument* doc, bool submit) const
 {
 	QDomElement command = doc->createElement("command");
 	command.setAttribute("xmlns", AHC_NS);
-	if (status_ != NoStatus)
+	if (d->status != NoStatus)
 		command.setAttribute("status",status2string(status()));
 	if (hasData())
 		command.appendChild(data().toXml(doc, submit));
-	if (action_ != Execute)
-		command.setAttribute("action",action2string(action_));
-	command.setAttribute("node", node_);
-	if (!sessionId_.isEmpty())
-		command.setAttribute("sessionid", sessionId_);
+	if (d->action != Execute)
+		command.setAttribute("action",action2string(d->action));
+	command.setAttribute("node", d->node);
+	if (!d->sessionId.isEmpty())
+		command.setAttribute("sessionid", d->sessionId);
 
 	return command;
 }
@@ -153,17 +244,17 @@ AHCommand AHCommand::completedReply(const AHCommand& c, const XData& d)
 
 void AHCommand::setStatus(Status s)
 {
-	status_ = s;
+	d->status = s;
 }
 
 void AHCommand::setError(const AHCError& e)
 {
-	error_ = e;
+	d->error = e;
 }
 
 void AHCommand::setDefaultAction(Action a)
 {
-	defaultAction_ = a;
+	d->defaultAction = a;
 }
 
 QString AHCommand::status2string(Status status)

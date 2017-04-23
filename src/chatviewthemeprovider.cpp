@@ -28,6 +28,7 @@
 #include <QWebEngineUrlRequestInterceptor>
 #endif
 
+#include "psicon.h"
 #include "chatviewtheme.h"
 #include "psioptions.h"
 #include "theme.h"
@@ -75,9 +76,10 @@ public:
 //--------------------------------------
 // ChatViewThemeProvider
 //--------------------------------------
-ChatViewThemeProvider::ChatViewThemeProvider(QObject *parent_)
-	: PsiThemeProvider(parent_)
-	, curTheme(0)
+ChatViewThemeProvider::ChatViewThemeProvider(PsiCon *psi) :
+    PsiThemeProvider(psi),
+    _psi(psi),
+    curTheme(0)
 {
 	ChatViewCon::init((PsiCon*)parent());
 }

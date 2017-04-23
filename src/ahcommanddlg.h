@@ -30,6 +30,7 @@ namespace XMPP {
 	class Client;
 }
 
+class PsiCon;
 class PsiAccount;
 class QObject;
 class QComboBox;
@@ -46,7 +47,7 @@ class AHCommandDlg : public QDialog
 
 public:
 	AHCommandDlg(PsiAccount*, const XMPP::Jid& receiver);
-	static void executeCommand(XMPP::Client*, const XMPP::Jid& j, const QString &node);
+	static void executeCommand(PsiCon*, XMPP::Client*, const XMPP::Jid& j, const QString &node);
 
 protected slots:
 	void refreshCommands();

@@ -27,13 +27,16 @@
 class QWebEngineUrlRequestInterceptor;
 class ChatViewTheme;
 class ThemeServer;
+class PsiCon;
 
 class ChatViewThemeProvider : public PsiThemeProvider
 {
 	Q_OBJECT
 
 public:
-	ChatViewThemeProvider(QObject *);
+	ChatViewThemeProvider(PsiCon *);
+
+	inline PsiCon* psi() const { return _psi; }
 
 	const char* type() const { return "chatview"; }
 	const QStringList themeIds() const;
@@ -60,6 +63,7 @@ signals:
 	void themeChanged();
 
 private:
+	PsiCon *_psi;
 	ChatViewTheme *curTheme; // FIXME it does not make sense to keep it as pointer
 };
 
@@ -68,8 +72,8 @@ class GroupChatViewThemeProvider : public ChatViewThemeProvider
 	Q_OBJECT
 
 public:
-	GroupChatViewThemeProvider(QObject *parent) :
-		ChatViewThemeProvider(parent) {}
+	GroupChatViewThemeProvider(PsiCon *psi) :
+		ChatViewThemeProvider(psi) {}
 
 	const char* type() const { return "groupchatview"; }
 	QString optionsName() const { return tr("Groupchat Message Style"); }

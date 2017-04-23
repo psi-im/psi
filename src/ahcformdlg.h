@@ -32,6 +32,7 @@ class QPushButton;
 class BusyWidget;
 class AHCommand;
 class XDataWidget;
+class PsiCon;
 namespace XMPP {
 	class Client;
 }
@@ -43,7 +44,7 @@ class AHCFormDlg : public QDialog
 	Q_OBJECT
 
 public:
-	AHCFormDlg(const AHCommand& r, const XMPP::Jid& receiver, XMPP::Client* client, bool final = false);
+	AHCFormDlg(PsiCon *psi, const AHCommand& r, const XMPP::Jid& receiver, XMPP::Client* client, bool final = false);
 
 protected:
 	XMPP::XData data() const;
@@ -57,16 +58,17 @@ protected slots:
 	void commandExecuted();
 
 private:
-	Ui::AHCFormDlg ui_;
-	QPushButton* pb_prev_;
-	QPushButton* pb_next_;
-	QPushButton* pb_complete_;
-	QPushButton* pb_cancel_;
-	XDataWidget* xdata_;
+	Ui::AHCFormDlg _ui;
+	PsiCon *_psi;
+	QPushButton* _pb_prev;
+	QPushButton* _pb_next;
+	QPushButton* _pb_complete;
+	QPushButton* _pb_cancel;
+	XDataWidget* _xdata;
 
-	XMPP::Jid receiver_;
+	XMPP::Jid _receiver;
 	QString node_;
-	XMPP::Client* client_;
+	XMPP::Client* _client;
 	QString sessionId_;
 };
 
