@@ -97,6 +97,8 @@ QString TextUtil::plain2rich(const QString &plain)
 		}
 		else if (plain[i] == ' ' && !rich.isEmpty() && rich[rich.size()-1] == ' ')
 			rich += "&nbsp;"; // instead of pre-wrap, which prewraps \n as well
+		else if (plain[i] == '\t')
+			rich += "&nbsp; &nbsp; &nbsp; ";
 		else if(plain[i] == '<')
 			rich += "&lt;";
 		else if(plain[i] == '>')
