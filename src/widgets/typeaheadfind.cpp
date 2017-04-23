@@ -71,7 +71,7 @@ public:
 				te->setTextCursor(cursor);
 			}
 		}
-#if QT_WEBENGINEWIDGETS_LIB
+#if WEBENGINE
 		find(text, options);
 #else
 		updateFoundStyle(find(text, options));
@@ -84,7 +84,7 @@ public:
 	{
 		if (widgetType == TypeAheadFindBar::WebViewType) {
 #ifdef WEBKIT
-#ifdef QT_WEBENGINEWIDGETS_LIB
+#ifdef WEBENGINE
 			QWebEnginePage::FindFlags wkOptions;
 			wkOptions |= options & QTextDocument::FindBackward? QWebEnginePage::FindBackward : (QWebEnginePage::FindFlags)0;
 			wkOptions |= options & QTextDocument::FindCaseSensitively? QWebEnginePage::FindCaseSensitively : (QWebEnginePage::FindFlags)0;

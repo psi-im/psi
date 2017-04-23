@@ -8,7 +8,7 @@
 #include "chatviewthemeprovider_priv.h"
 #include "psithemeprovider.h"
 #include "psiiconset.h"
-#ifdef QT_WEBENGINEWIDGETS_LIB
+#ifdef WEBENGINE
 # include "themeserver.h"
 #else
 # include "networkaccessmanager.h"
@@ -19,7 +19,7 @@
 
 static QPointer<ChatViewCon> cvCon;
 
-#if QT_WEBENGINEWIDGETS_LIB
+#if WEBENGINE
 
 ChatViewUrlRequestInterceptor::ChatViewUrlRequestInterceptor(QObject *parent) :
 	QWebEngineUrlRequestInterceptor(parent) {}
@@ -132,7 +132,7 @@ public:
 
 ChatViewCon::ChatViewCon(PsiCon *pc) : QObject(pc), pc(pc)
 {
-#if QT_WEBENGINEWIDGETS_LIB
+#if WEBENGINE
 	// init something here?
 	themeServer = new ThemeServer(this);
 

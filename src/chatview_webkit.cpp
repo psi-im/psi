@@ -31,7 +31,7 @@
 #include <QMetaProperty>
 #include <QJsonDocument>
 #endif
-#if QT_WEBENGINEWIDGETS_LIB
+#if WEBENGINE
 #if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
 #include <QWebEngineContextMenuData>
 #endif
@@ -305,7 +305,7 @@ public:
 	}
 };
 
-#ifdef QT_WEBENGINEWIDGETS_LIB
+#ifdef WEBENGINE
 class ChatViewPage : public QWebEnginePage
 {
 protected:
@@ -370,7 +370,7 @@ ChatView::ChatView(QWidget *parent) :
 	d->jsObject = new ChatViewJSObject(this); /* It's a session bridge between html and c++ part */
 	d->webView = new WebView(this);
 	d->webView->setFocusPolicy(Qt::NoFocus);
-#ifdef QT_WEBENGINEWIDGETS_LIB
+#ifdef WEBENGINE
 	d->webView->setPage(new ChatViewPage(d->webView));
 #else
 	d->webView->setPage(new ChatViewPage(d->webView));
@@ -388,7 +388,7 @@ ChatView::ChatView(QWidget *parent) :
 	psiOptionChanged("options.ui.automatically-copy-selected-text"); // init autocopy connection
 #endif
 	connect(d->jsObject, SIGNAL(inited()), SLOT(sessionInited()));
-#if QT_WEBENGINEWIDGETS_LIB
+#if WEBENGINE
 	// TODO something
 #else
 	connect(d->webView->page()->mainFrame(),
@@ -416,7 +416,7 @@ void ChatView::init()
 	d->themeBridge = QSharedPointer<ChatViewThemeSessionBridge>(new ChatViewThemeSessionBridge(this));
 #endif
 
-#ifndef QT_WEBENGINEWIDGETS_LIB
+#ifndef WEBENGINE
 	((ChatViewPage*)d->webView->page())->setCVPrivate(d.data());
 #endif
 	d->theme.applyToWebView(d->themeBridge.dynamicCast<ChatViewThemeSession>());
@@ -435,7 +435,7 @@ void ChatView::setEncryptionEnabled(bool enabled)
 	d->isEncryptionEnabled_ = enabled;
 }
 
-#ifndef QT_WEBENGINEWIDGETS_LIB
+#ifndef WEBENGINE
 void ChatView::embedJsObject()
 {
 	ChatViewTheme *theme = static_cast<ChatViewTheme *>(d->themeProvider()->current());
@@ -480,12 +480,12 @@ void ChatView::setAccount(PsiAccount *acc)
 
 void ChatView::contextMenuEvent(QContextMenuEvent *e)
 {
-#if defined(QT_WEBENGINEWIDGETS_LIB) && QT_VERSION < QT_VERSION_CHECK(5,7,0)
+#if defined(WEBENGINE) && QT_VERSION < QT_VERSION_CHECK(5,7,0)
 	Q_UNUSED(e)
 	qDebug("Can't check menu hit point. Calling default handler");
 #else
 	QUrl linkUrl;
-# ifdef QT_WEBENGINEWIDGETS_LIB
+# ifdef WEBENGINE
 	QWebEngineContextMenuData cmd = d->webView->page()->contextMenuData();
 	linkUrl = cmd.linkUrl();
 # else
@@ -664,7 +664,7 @@ void ChatView::doTrackBar()
 
 bool ChatView::internalFind(QString str, bool startFromBeginning)
 {
-#ifdef QT_WEBENGINEWIDGETS_LIB
+#ifdef WEBENGINE
 	d->webView->page()->findText(str, QWebEnginePage::FindFlags(), [this, startFromBeginning](bool found) {
 		if (!found && startFromBeginning) {
 			d->webView->page()->findText(QString());

@@ -87,7 +87,7 @@ protected slots:
 public slots:
 	void init();
 private slots:
-#ifndef QT_WEBENGINEWIDGETS_LIB
+#ifndef WEBENGINE
 	void embedJsObject();
 #endif
 	void checkJsBuffer();

@@ -38,7 +38,7 @@ class ChatViewThemeSession;
 class ChatViewTheme : public Theme
 {
 	friend class ChatViewThemeJSUtil;
-#ifndef QT_WEBENGINEWIDGETS_LIB
+#ifndef WEBENGINE
 	friend class SessionRequestHandler;
 #endif
 public:
@@ -60,7 +60,7 @@ public:
 	void putToCache(const QString &key, const QVariant &data);
 	void setTransparentBackground(bool enabled = true);
 	bool isTransparentBackground() const;
-#ifndef QT_WEBENGINEWIDGETS_LIB
+#ifndef WEBENGINE
 	void embedSessionJsObject(QSharedPointer<ChatViewThemeSession> session);
 #endif
 	bool applyToWebView(QSharedPointer<ChatViewThemeSession> session);
@@ -78,13 +78,13 @@ private:
 class ThemeServer;
 class ChatViewThemeSession {
 	friend class ChatViewTheme;
-#ifndef QT_WEBENGINEWIDGETS_LIB
+#ifndef WEBENGINE
 	friend class SessionRequestHandler;
 #endif
 
 	QString sessId; // unique id of session
 	ChatViewTheme theme;
-#ifdef QT_WEBENGINEWIDGETS_LIB
+#ifdef WEBENGINE
 	ThemeServer *server = 0;
 #endif
 

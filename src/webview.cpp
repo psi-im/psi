@@ -24,7 +24,7 @@
 #include <QStyle>
 #include <QDebug>
 #include <QDrag>
-#ifdef QT_WEBENGINEWIDGETS_LIB
+#ifdef WEBENGINE
 #include <QWebEngineSettings>
 #if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
 #include <QWebEngineContextMenuData>
@@ -41,7 +41,7 @@
 #include "xmpp_vcard.h"
 
 WebView::WebView(QWidget* parent) :
-#ifdef QT_WEBENGINEWIDGETS_LIB
+#ifdef WEBENGINE
     QWebEngineView(parent),
 #else
     QWebView(parent),
@@ -51,7 +51,7 @@ WebView::WebView(QWidget* parent) :
 {
 	setAcceptDrops(false);
 
-#ifdef QT_WEBENGINEWIDGETS_LIB
+#ifdef WEBENGINE
     settings()->setAttribute(QWebEngineSettings::PluginsEnabled, false);
 	settings()->setAttribute(QWebEngineSettings::LocalStorageEnabled, false);
 	// TODO cache cotrol
@@ -103,7 +103,7 @@ void WebView::loadFinishedEvent(bool success)
 void WebView::contextMenuEvent(QContextMenuEvent* event)
 {
 	if (isLoading_) return;
-#ifdef QT_WEBENGINEWIDGETS_LIB
+#ifdef WEBENGINE
 #if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
 	QWebEngineContextMenuData r = page()->contextMenuData();
 #else
@@ -127,7 +127,7 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
 	} else {
 		menu = new QMenu(this);
 		if (!page()->selectedText().isEmpty()) {
-#if QT_WEBENGINEWIDGETS_LIB
+#if WEBENGINE
 			menu->addAction(pageAction(QWebEnginePage::Copy));
 		} else {
 			if (!menu->isEmpty()) {
@@ -157,7 +157,7 @@ void WebView::contextMenuEvent(QContextMenuEvent* event)
 	delete menu;
 }
 
-#ifndef QT_WEBENGINEWIDGETS_LIB
+#ifndef WEBENGINE
 void WebView::mousePressEvent ( QMouseEvent * event )
 {
 	if (isLoading_) return;
@@ -225,14 +225,14 @@ void WebView::convertClipboardHtmlImages(QClipboard::Mode mode)
 void WebView::evaluateJS(const QString &scriptSource)
 {
 	//qDebug()<< "EVALUATE: " << (scriptSource.size()>200?scriptSource.mid(0,200)+"...":scriptSource);
-#if QT_WEBENGINEWIDGETS_LIB
+#if WEBENGINE
 	page()->runJavaScript(scriptSource);
 #else
 	page()->mainFrame()->evaluateJavaScript(scriptSource);
 #endif
 }
 
-#ifndef QT_WEBENGINEWIDGETS_LIB
+#ifndef WEBENGINE
 QString WebView::selectedText()
 {
 	return TextUtil::rich2plain(TextUtil::img2title(selectedHtml()));
@@ -243,7 +243,7 @@ void WebView::copySelected()
 {
 	// use native selectedText w/o clipboard hacks.
 	if (page()->hasSelection() && !page()->selectedText().isEmpty()) {
-#if QT_WEBENGINEWIDGETS_LIB
+#if WEBENGINE
 		page()->triggerAction(QWebEnginePage::Copy);
 #else
 		page()->triggerAction(QWebPage::Copy);
@@ -254,13 +254,13 @@ void WebView::copySelected()
 
 void WebView::textCopiedEvent()
 {
-#ifdef QT_WEBENGINEWIDGETS_LIB
+#ifdef WEBENGINE
 	qWarning("Fixme: convert clipboard html images");
 #else
 	convertClipboardHtmlImages(QClipboard::Clipboard);
 #endif
 }
 
-#ifndef QT_WEBENGINEWIDGETS_LIB
+#ifndef WEBENGINE
 
 #endif

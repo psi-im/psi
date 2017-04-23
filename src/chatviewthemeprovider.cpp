@@ -24,7 +24,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QDir>
-#if QT_WEBENGINEWIDGETS_LIB
+#if WEBENGINE
 #include <QWebEngineUrlRequestInterceptor>
 #endif
 
@@ -33,7 +33,7 @@
 #include "theme.h"
 #include "applicationinfo.h"
 #include "psithememanager.h"
-#if QT_WEBENGINEWIDGETS_LIB
+#if WEBENGINE
 # include "themeserver.h"
 #endif
 #include "chatviewthemeprovider_priv.h"
@@ -181,7 +181,7 @@ void ChatViewThemeProvider::setCurrentTheme(const QString &id)
 	}
 }
 
-#if QT_WEBENGINEWIDGETS_LIB
+#if WEBENGINE
 ThemeServer *ChatViewThemeProvider::themeServer()
 {
 	Q_ASSERT(ChatViewCon::isReady());

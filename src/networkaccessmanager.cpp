@@ -23,7 +23,7 @@
 
 #include "bytearrayreply.h"
 #include <QCoreApplication>
-#ifndef QT_WEBENGINEWIDGETS_LIB
+#ifndef WEBENGINE
 #include <QWebSecurityOrigin>
 #endif
 
