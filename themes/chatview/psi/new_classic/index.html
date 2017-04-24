@@ -114,7 +114,7 @@ function startPsiTheme(shared) {
 			sys: "<div class='infmsg'>%icon%%message%</div>",
 			sysMessage: "<div class='infmsg'>%icon%[%time%] *** %message%</div>",
 			sysMessageUT: "<div class='infmsg'>%icon%[%time%] *** %message%: <span class='usertext'>%usertext%</span></div>",
-			lastMsgDate: "<div class='infmsg'>%icon%*** %date%</div>",
+			lastMsgDate: "<div class='infmsg'>%icon%*** %time{LL}%</div>",
 			subject: shared.isMuc?
 				"<div class='infmsg'>%icon%[%time%] %message%<div class='usertext'><b>%usertext%</b></div></div>"
 				: "<div class='infmsg'>%icon%<b>*** %usertext%</b></div>",
