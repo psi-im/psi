@@ -39,12 +39,13 @@ function psiThemeAdapter(chat) {
         var trackbar = null;
         var inited = false;
         var proxy = null;
+        var session = window.srvSession;
 
         var shared = {
             templates : {},
             server : window.srvUtil,
-            session : window.srvSession,
-            isMuc : window.srvSession.isMuc,
+            session : session,
+            isMuc : session.isMuc,
             accountId : window.srvSession.account,
             dateFormat : "HH:MM:SS",
             scroller : null,
@@ -52,7 +53,7 @@ function psiThemeAdapter(chat) {
             prevGrouppingData : null,
             groupping : false,
             chatElement : null,
-            util : chat.util,
+            chat : chat,
 
             TemplateVar : function(name, param) {
                 this.name = name;
@@ -321,8 +322,10 @@ function psiThemeAdapter(chat) {
         }
 
         if (typeof(startPsiTheme) != "undefined") {
+            chat.console("Starting theme");
             start();
         } else {
+            chat.console("startPsiTheme is not defined. wait for \"load\" event to try again");
             window.addEventListener("load", start);
         }
 

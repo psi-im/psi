@@ -13,6 +13,7 @@ function initPsiTheme() {
         server : server,
 
         util: {
+            console : server.console,
             showCriticalError : function(text) {
                 var e=document.body || document.documentElement.appendChild(document.createElement("body"));
                 var er = e.appendChild(document.createElement("div"))
