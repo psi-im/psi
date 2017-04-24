@@ -493,6 +493,7 @@ void GCUserView::updateEntry(const QString &nick, const Status &s)
 	gr = findGroup(s.mucItem().role());
 	if(!lvi) {
 		lvi = new GCUserViewItem(gr);
+		lvi->setAvatar(gcDlg_->account()->avatarFactory()->getMucAvatar(gcDlg_->jid().withResource(nick)));
 		lvi->setText(0, nick);
 		gr->updateText();
 	}
