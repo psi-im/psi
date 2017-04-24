@@ -210,7 +210,7 @@ function psiThemeAdapter(chat) {
         }
 
         shared.TemplateTimeVar.prototype.toString = function() {
-            return shared.cdata[this.name] instanceof Date?
+            return shared.cdata[this.name]?
                         this.formatter.format(shared.cdata[this.name]):
                         this.formatter.format(new Date());
         }
