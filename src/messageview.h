@@ -24,6 +24,12 @@
 #include <QDateTime>
 #include <QVariantMap>
 
+#if QT_VERSION < QT_VERSION_CHECK(5,7,0)
+# define SET_QFLAG(flags, flag, state) if (state) flags |= flag; else flags &= ~flag
+#else
+# define SET_QFLAG(flags, flag, state) flags.setFlag(flag, state)
+#endif
+
 class MessageView
 {
 public:
@@ -85,37 +91,21 @@ public:
 	bool hasStatus() const;
 
 	inline const Flags &flags() const { return _flags; }
-#ifdef HAVE_QT5
-	inline void setAlert(bool state = true) { _flags.setFlag(Alert, state); }
+
+	inline void setAlert(bool state = true) { SET_QFLAG(_flags, Alert, state); }
 	inline bool isAlert() const { return _flags & Alert; }
-	inline void setLocal(bool state = true) { _flags.setFlag(Local, state); }
+	inline void setLocal(bool state = true) { SET_QFLAG(_flags, Local, state); }
 	inline bool isLocal() const { return _flags & Local; }
-	inline void setEmote(bool state = true) { _flags.setFlag(Emote, state); }
+	inline void setEmote(bool state = true) { SET_QFLAG(_flags, Emote, state); }
 	inline bool isEmote() const { return _flags & Emote; }
-	inline void setSpooled(bool state = true) { _flags.setFlag(Spooled, state); }
+	inline void setSpooled(bool state = true) { SET_QFLAG(_flags, Spooled, state); }
 	inline bool isSpooled() const { return _flags & Spooled; }
-	inline void setAwaitingReceipt(bool b = true) { _flags.setFlag(AwaitingReceipt, b); }
+	inline void setAwaitingReceipt(bool b = true) { SET_QFLAG(_flags, AwaitingReceipt, b); }
 	inline bool isAwaitingReceipt() const { return _flags & AwaitingReceipt; }
-	inline void setStatusChangeHidden(bool b = true) { _flags.setFlag(HideStatusChange, b); }
+	inline void setStatusChangeHidden(bool b = true) { SET_QFLAG(_flags, HideStatusChange, b); }
 	inline bool isStatusChangeHidden() const { return _flags & HideStatusChange; }
-	inline void setJoinLeaveHidden(bool b = true) { _flags.setFlag(HideJoinLeave, b); }
+	inline void setJoinLeaveHidden(bool b = true) { SET_QFLAG(_flags, HideJoinLeave, b); }
 	inline bool isJoinLeaveHidden() const { return _flags & HideJoinLeave; }
-#else
-	inline void setAlert(bool b = true) { if (b) _flags |= Alert; else _flags &= ~Alert; }
-	inline bool isAlert() const { return _flags & Alert; }
-	inline void setLocal(bool b = true) { if (b) _flags |= Local; else _flags &= ~Local; }
-	inline bool isLocal() const { return _flags & Local; }
-	inline void setEmote(bool b = true) { if (b) _flags |= Emote; else _flags &= ~Emote; }
-	inline bool isEmote() const { return _flags & Emote; }
-	inline void setSpooled(bool b = true) { if (b) _flags |= Spooled; else _flags &= ~Spooled; }
-	inline bool isSpooled() const { return _flags & Spooled; }
-	inline void setAwaitingReceipt(bool b = true) { if (b) _flags |= AwaitingReceipt; else _flags &= ~AwaitingReceipt; }
-	inline bool isAwaitingReceipt() const { return _flags & AwaitingReceipt; }
-	inline void setStatusChangeHidden(bool b = true) { if (b) _flags |= HideStatusChange; else _flags &= ~HideStatusChange; }
-	inline bool isStatusChangeHidden() const { return _flags & HideStatusChange; }
-	inline void setJoinLeaveHidden(bool b = true) { if (b) _flags |= HideJoinLeave; else _flags &= ~HideJoinLeave; }
-	inline bool isJoinLeaveHidden() const { return _flags & HideJoinLeave; }
-#endif
 
 	inline void setStatus(int s) { _status = s; }
 	inline int status() const { return _status; }
