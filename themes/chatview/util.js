@@ -121,6 +121,12 @@ function initPsiTheme() {
             },
 
             replaceYoutube : function(parentEl) {
+                function insertIframe(linkEl, link, code) {
+                    var link = link || "https://www.youtube.com/embed/" + code;
+                    var iframe = chat.util.createHtmlNode('<div><iframe width="560" height="315" src="'+ link +
+                                                          '" frameborder="0" allowfullscreen="1"></iframe></div>');
+                    linkEl.parentNode.insertBefore(iframe, linkEl.nextSibling);
+                }
                 var links = parentEl.querySelectorAll("a[href^='https://www.youtube.com/']");
                 for (var i = 0; i < links.length; i++) {
                     var link = links[i].href;
@@ -131,9 +137,12 @@ function initPsiTheme() {
                             continue;
                         link = "https://www.youtube.com/embed/" + code;
                     }
-                    var iframe = chat.util.createHtmlNode('<div><iframe width="560" height="315" src="'+ link +
-                                                          '" frameborder="0" allowfullscreen="1"></iframe></div>');
-                    links[i].parentNode.insertBefore(iframe, links[i].nextSibling);
+                    insertIframe(links[i].nextSibling, link);
+                }
+                links = parentEl.querySelectorAll("a[href^='https://youtu.be/iU2hy0L5lgg']");
+                for (var i = 0; i < links.length; i++) {
+                    var code = links[i].pathname.slice(1);
+                    insertIframe(links[i], null, code);
                 }
             },
 
