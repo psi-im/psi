@@ -662,8 +662,23 @@ AvatarFactory::AvatarData AvatarFactory::avatarDataByHash(const QString &hash)
 AvatarFactory::UserHashes AvatarFactory::userHashes(const Jid &jid) const
 {
 	auto icons = AvatarCache::instance()->icons(jid.full());
-	FileCacheItem *active = AvatarCache::instance()->activeAvatarIcon(icons);
+	if (!icons.vcard) { // hm try to get from vcard factory then
+		// we don't call this method often. so it's fine to query vcard factory every time.
+		bool isMuc = !jid.resource().isEmpty();
+		VCard vcard;
+		if (isMuc) {
+			vcard = VCardFactory::instance()->mucVcard(jid);
+		} else {
+			vcard = VCardFactory::instance()->vcard(jid);
+		}
+		if (!vcard.isNull() && !vcard.photo().isNull()) {
+			if (AvatarCache::instance()->setIcon(AvatarCache::VCardType, jid.full(), vcard.photo()) != AvatarCache::NoData) {
+				icons = AvatarCache::instance()->icons(jid.full());
+			}
+		}
+	}
 
+	FileCacheItem *active = AvatarCache::instance()->activeAvatarIcon(icons);
 	UserHashes ret;
 	ret.avatar = active? active->id() : QString();
 	ret.vcard  = icons.vcard? icons.vcard->id() : QString();
