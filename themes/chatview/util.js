@@ -120,8 +120,26 @@ function initPsiTheme() {
                 return range.createContextualFragment(html);
             },
 
+            replaceYoutube : function(parentEl) {
+                var links = parentEl.querySelectorAll("a[href^='https://www.youtube.com/']");
+                for (var i = 0; i < links.length; i++) {
+                    var link = links[i].href;
+                    if (!links[i].pathname.startsWith("/embed/")) {
+                        var m = links[i].href.match(/.*[?&]v=([a-zA-Z0-9_]+)[$&].*/);
+                        var code = m && m[1];
+                        if (!code)
+                            continue;
+                        link = "https://www.youtube.com/embed/" + code;
+                    }
+                    var iframe = chat.util.createHtmlNode('<iframe width="560" height="315" src="'+ link +
+                                                          '" frameborder="0" allowfullscreen="1"></iframe>', links[i]);
+                    links[i].parentNode.insertBefore(iframe, links[i].nextSibling);
+                }
+            },
+
             appendHtml : function(dest, html) {
                 htmlSource.innerHTML = html;
+                chat.util.replaceYoutube(htmlSource);
                 chat.util.replaceIcons(htmlSource);
                 while (htmlSource.firstChild) dest.appendChild(htmlSource.firstChild);
             },
