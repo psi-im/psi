@@ -139,7 +139,7 @@ function initPsiTheme() {
                     }
                     insertIframe(links[i].nextSibling, link);
                 }
-                links = parentEl.querySelectorAll("a[href^='https://youtu.be/iU2hy0L5lgg']");
+                links = parentEl.querySelectorAll("a[href^='https://youtu.be/']");
                 for (var i = 0; i < links.length; i++) {
                     var code = links[i].pathname.slice(1);
                     insertIframe(links[i], null, code);
