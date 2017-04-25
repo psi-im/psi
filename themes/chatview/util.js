@@ -124,15 +124,15 @@ function initPsiTheme() {
                 var links = parentEl.querySelectorAll("a[href^='https://www.youtube.com/']");
                 for (var i = 0; i < links.length; i++) {
                     var link = links[i].href;
-                    if (!links[i].pathname.startsWith("/embed/")) {
-                        var m = links[i].href.match(/.*[?&]v=([a-zA-Z0-9_]+)[$&].*/);
+                    if (links[i].pathname.indexOf("/embed/") != 0) { // no startsWith() in old webkit
+                        var m = links[i].href.match(/^.*[?&]v=([a-zA-Z0-9_]+).*$/);
                         var code = m && m[1];
                         if (!code)
                             continue;
                         link = "https://www.youtube.com/embed/" + code;
                     }
-                    var iframe = chat.util.createHtmlNode('<iframe width="560" height="315" src="'+ link +
-                                                          '" frameborder="0" allowfullscreen="1"></iframe>', links[i]);
+                    var iframe = chat.util.createHtmlNode('<div><iframe width="560" height="315" src="'+ link +
+                                                          '" frameborder="0" allowfullscreen="1"></iframe></div>');
                     links[i].parentNode.insertBefore(iframe, links[i].nextSibling);
                 }
             },
