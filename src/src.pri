@@ -556,12 +556,16 @@ pgputil {
 HEADERS += \
 	$$PWD/removeconfirmationmessagebox.h \
 	$$PWD/globaleventqueue.h \
-	$$PWD/dummystream.h
+	$$PWD/dummystream.h \
+	$$PWD/networkaccessmanager.h \
+	$$PWD/bytearrayreply.h \
 
 SOURCES += \
 	$$PWD/removeconfirmationmessagebox.cpp \
 	$$PWD/globaleventqueue.cpp \
-	$$PWD/dummystream.cpp
+	$$PWD/dummystream.cpp \
+	$$PWD/networkaccessmanager.cpp \
+	$$PWD/bytearrayreply.cpp \
 
 # Qt Designer forms
 FORMS += \
@@ -641,8 +645,6 @@ unix:!dbus {
 
 qtwebengine|qwebkit {
 	HEADERS += 	$$PWD/chatview_webkit.h \
-			$$PWD/networkaccessmanager.h \
-			$$PWD/bytearrayreply.h \
 			$$PWD/webview.h \
 			$$PWD/jsutil.h \
 			$$PWD/chatviewtheme.h \
@@ -650,8 +652,6 @@ qtwebengine|qwebkit {
 			$$PWD/chatviewthemeprovider_priv.h
 
 	SOURCES += 	$$PWD/chatview_webkit.cpp \
-			$$PWD/networkaccessmanager.cpp \
-			$$PWD/bytearrayreply.cpp \
 			$$PWD/webview.cpp \
 			$$PWD/jsutil.cpp \
 			$$PWD/chatviewtheme.cpp \

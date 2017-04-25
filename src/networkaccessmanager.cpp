@@ -23,9 +23,6 @@
 
 #include "bytearrayreply.h"
 #include <QCoreApplication>
-#ifndef WEBENGINE
-#include <QWebSecurityOrigin>
-#endif
 
 NetworkAccessManager::NetworkAccessManager(QObject *parent) :
     QNetworkAccessManager(parent)
