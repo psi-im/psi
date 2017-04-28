@@ -114,8 +114,7 @@ void PsiThemeModel::setType(const QString &type)
 			themesFuture = QtConcurrent::mapped(provider->themeIds(), loader);
 			themeWatcher.setFuture(themesFuture);
 		} else {
-
-			foreach (const QString id, provider->themeIds()) {
+			foreach (const QString &id, provider->themeIds()) {
 				loader.asyncLoad(id, [this](const ThemeItemInfo &ti) {
 					if (ti.isValid) {
 						beginInsertRows(QModelIndex(), themesInfo.size(), themesInfo.size());
@@ -125,6 +124,7 @@ void PsiThemeModel::setType(const QString &type)
 						//endResetModel();
 					}
 				});
+
 			}
 		}
 	}

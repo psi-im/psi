@@ -2,11 +2,13 @@
 #define OPT_THEME_H
 
 #include "optionstab.h"
+#include <QPointer>
 
 class QModelIndex;
 class QWidget;
 class PsiThemeModel;
 class PsiThemeProvider;
+class QDialog;
 
 class OptionsTabAppearanceThemes : public MetaOptionsTab
 {
@@ -29,11 +31,19 @@ public:
 
 protected slots:
 	void modelRowsInserted(const QModelIndex &parent, int first, int last);
+	void itemChanged(const QModelIndex &current, const QModelIndex &previous);
+	void showThemeScreenshot();
+	void radioToggled(bool toggled);
+
+private:
+	QString getThemeId(const QString &objName) const;
+	void uncheckAll(const QString &name_);
 
 private:
 	QWidget *w;
 	PsiThemeModel *themesModel;
 	PsiThemeProvider *provider;
+	QPointer<QDialog> screenshotDialog;
 };
 
 #endif
