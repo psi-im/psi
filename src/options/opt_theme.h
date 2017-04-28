@@ -31,13 +31,10 @@ public:
 
 protected slots:
 	void modelRowsInserted(const QModelIndex &parent, int first, int last);
-	void itemChanged(const QModelIndex &current, const QModelIndex &previous);
 	void showThemeScreenshot();
-	void radioToggled(bool toggled);
 
 private:
 	QString getThemeId(const QString &objName) const;
-	void uncheckAll(const QString &name_);
 
 private:
 	QWidget *w;

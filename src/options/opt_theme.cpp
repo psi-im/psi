@@ -6,11 +6,9 @@
 #include "psithememanager.h"
 #include "psiiconset.h"
 
-#include <QRadioButton>
 #include <QToolButton>
 #include <QDialog>
 
-#define RADIO_PREFIX "rb_"
 #define SCREEN_PREFIX "scb_"
 
 class OptAppearanceThemeUI : public QWidget, public Ui::OptAppearanceTheme
@@ -66,9 +64,6 @@ QWidget *OptionsTabAppearanceTheme::widget()
 	connect(d->themeView->selectionModel(),
 		SIGNAL(currentChanged(QModelIndex, QModelIndex)),
 		SIGNAL(dataChanged()));
-	connect(d->themeView->selectionModel(),
-		SIGNAL(currentChanged(QModelIndex,QModelIndex)),
-		SLOT(itemChanged(QModelIndex,QModelIndex))); //changes radiobuttons state
 	connect(themesModel,
 		SIGNAL(rowsInserted(QModelIndex,int,int)),
 		SLOT(modelRowsInserted(QModelIndex,int,int)));
@@ -90,7 +85,6 @@ void OptionsTabAppearanceTheme::modelRowsInserted(const QModelIndex &parent, int
 					d->themeView->setCurrentIndex(index);
 				}
 				const QString themeName = themesModel->data(index, PsiThemeModel::TitleRole).toString();
-				bool enabled = (id == provider->current()->id());
 				bool isPsi = id.startsWith("psi");
 				const QPixmap client = isPsi ? IconsetFactory::iconPixmap("clients/psi")
 							     : IconsetFactory::iconPixmap("clients/adium");
@@ -106,25 +100,19 @@ void OptionsTabAppearanceTheme::modelRowsInserted(const QModelIndex &parent, int
 				typeLabel->setPixmap(client);
 				typeLabel->setToolTip(clientName);
 
-				QRadioButton *status = new QRadioButton(d->themeView);
-				status->setObjectName(RADIO_PREFIX + id);
-				status->setChecked(enabled);
-				status->setAutoExclusive(false);
-				status->setText(themeName);
-				connect(status, SIGNAL(toggled(bool)), this, SLOT(radioToggled(bool)));
+				QLabel *nameLabel = new QLabel(themeName, d->themeView);
 
 				QWidget *itemWidget = new QWidget(d->themeView);
 
 				QBoxLayout *box = new QBoxLayout(QBoxLayout::LeftToRight, d->themeView);
-				box->addWidget(status);
-				box->addStretch();
 				box->addWidget(typeLabel);
+				box->addWidget(nameLabel);
+				box->addStretch();
 				box->addWidget(screenshotButton);
 				itemWidget->setLayout(box);
 
 				d->themeView->setIndexWidget(index, itemWidget);
 			}
-			d->themeView->sortByColumn(0);
 		}
 	}
 }
@@ -163,56 +151,6 @@ void OptionsTabAppearanceTheme::showThemeScreenshot()
 
 		screenshotDialog->setAttribute(Qt::WA_DeleteOnClose);
 		screenshotDialog->show();
-	}
-}
-
-void OptionsTabAppearanceTheme::radioToggled(bool toggled)
-{
-	if ( !w  || !sender()->inherits("QRadioButton"))
-		return;
-
-	OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
-	QRadioButton *btn = static_cast<QRadioButton*>(sender());
-	const QString btnObjectName = btn->objectName();
-	if (btn && toggled) {
-		const QModelIndex index = themesModel->index(themesModel->themeRow(getThemeId(btnObjectName)));
-		if (index != d->themeView->currentIndex()) {
-			d->themeView->setCurrentIndex(index);
-		}
-	}
-	uncheckAll(btnObjectName);
-}
-
-void OptionsTabAppearanceTheme::uncheckAll(const QString &name_)
-{
-	if ( !w )
-		return;
-
-	OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
-	const QList<QRadioButton*> buttons = d->themeView->findChildren<QRadioButton*>(QRegExp(RADIO_PREFIX"*"));
-	if (!buttons.isEmpty()) {
-		foreach (QRadioButton *b, buttons) {
-			if (b->objectName() != name_) {
-				b->setChecked(false);
-			}
-		}
-	}
-}
-
-void OptionsTabAppearanceTheme::itemChanged(const QModelIndex &current, const QModelIndex &previous)
-{
-	if ( !w )
-		return;
-
-	Q_UNUSED(previous)
-	OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
-	const QString id = themesModel->data(current, PsiThemeModel::IdRole).toString();
-	if (!id.isEmpty()) {
-		QRadioButton *btn = d->themeView->findChild<QRadioButton*>(QString("%1%2").arg(RADIO_PREFIX).arg(id));
-		if (btn) {
-			uncheckAll(btn->objectName());
-			btn->setChecked(!btn->isChecked());
-		}
 	}
 }
 
