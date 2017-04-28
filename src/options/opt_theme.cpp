@@ -3,7 +3,6 @@
 #include "ui_opt_theme.h"
 #include "psioptions.h"
 #include "psithememodel.h"
-#include "psithemeviewdelegate.h"
 #include "psithememanager.h"
 #include "psiiconset.h"
 
