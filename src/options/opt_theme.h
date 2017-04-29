@@ -5,6 +5,7 @@
 #include <QPointer>
 
 class QModelIndex;
+class QSortFilterProxyModel;
 class QWidget;
 class PsiThemeModel;
 class PsiThemeProvider;
@@ -35,13 +36,15 @@ protected slots:
 
 private slots:
 	void themeSelected(const QModelIndex &current, const QModelIndex &previous);
+	void startLoading();
 private:
 	QString getThemeId(const QString &objName) const;
 
 private:
-	QWidget *w;
-	PsiThemeModel *themesModel;
-	PsiThemeProvider *provider;
+	QWidget *w = nullptr;
+	PsiThemeModel *unsortedModel = nullptr;
+	QSortFilterProxyModel *themesModel = nullptr;
+	PsiThemeProvider *provider = nullptr;
 	QPointer<QDialog> screenshotDialog;
 };
 

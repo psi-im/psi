@@ -141,6 +141,7 @@ QVariant PsiThemeModel::data ( const QModelIndex & index, int role ) const
 	switch (role) {
 		case IdRole:
 			return themesInfo[index.row()].id;
+		//case Qt::DisplayRole:
 		case TitleRole:
 			return themesInfo[index.row()].title;
 		case ScreenshotRole:

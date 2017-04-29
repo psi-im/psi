@@ -8,6 +8,8 @@
 
 #include <QToolButton>
 #include <QDialog>
+#include <QSortFilterProxyModel>
+#include <QTimer>
 
 #define SCREEN_PREFIX "scb_"
 
@@ -58,9 +60,16 @@ QWidget *OptionsTabAppearanceTheme::widget()
 
 	w = new OptAppearanceThemeUI();
 	OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
-	themesModel = new PsiThemeModel(this);
+
+	unsortedModel = new PsiThemeModel(this);
+
+	themesModel = new QSortFilterProxyModel(this);
+	themesModel->setSourceModel(unsortedModel);
+	themesModel->setSortCaseSensitivity(Qt::CaseInsensitive);
+	themesModel->setSortRole(PsiThemeModel::TitleRole);
+
 	d->themeView->setModel(themesModel);
-	themesModel->setType(provider->type());
+	d->themeView->setSortingEnabled(true);
 
 	connect(d->themeView->selectionModel(),
 		SIGNAL(currentChanged(QModelIndex, QModelIndex)),
@@ -70,7 +79,14 @@ QWidget *OptionsTabAppearanceTheme::widget()
 		SIGNAL(rowsInserted(QModelIndex,int,int)),
 		SLOT(modelRowsInserted(QModelIndex,int,int)));
 
+	QTimer::singleShot(0, this, SLOT(startLoading()));
+
 	return w;
+}
+
+void OptionsTabAppearanceTheme::startLoading()
+{
+	unsortedModel->setType(provider->type());
 }
 
 void OptionsTabAppearanceTheme::themeSelected(const QModelIndex &current, const QModelIndex &previous)
@@ -87,7 +103,7 @@ void OptionsTabAppearanceTheme::modelRowsInserted(const QModelIndex &parent, int
 		OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
 		const QSize buttonSize = QSize(21,21);
 		for (int i = first; i <= last; i++) {
-			const QModelIndex index = themesModel->index(i);
+			const QModelIndex index = themesModel->index(i, 0);
 			const QString id = themesModel->data(index, PsiThemeModel::IdRole).toString();
 			if (themesModel->data(index, PsiThemeModel::IsCurrent).toBool()) {
 				d->themeView->setCurrentIndex(index);
@@ -118,9 +134,11 @@ void OptionsTabAppearanceTheme::modelRowsInserted(const QModelIndex &parent, int
 			box->addStretch();
 			box->addWidget(screenshotButton);
 			itemWidget->setLayout(box);
+			//itemWidget->setAutoFillBackground(true); // from recommendation of indexWidget but does not work as expected
 
 			d->themeView->setIndexWidget(index, itemWidget);
 		}
+		themesModel->sort(0);
 	}
 }
 
@@ -138,8 +156,9 @@ void OptionsTabAppearanceTheme::showThemeScreenshot()
 		screenshotDialog = new QDialog(d);
 		screenshotDialog->setMinimumSize(minSize);
 
-		const int row = themesModel->themeRow(getThemeId(btn->objectName()));
-		const QModelIndex index = themesModel->index(row);
+		//const int row = themesModel->themeRow(getThemeId(btn->objectName()));
+		int row = 0;
+		const QModelIndex index = themesModel->index(row, 0);
 		const QString name_ = themesModel->data(index, PsiThemeModel::TitleRole).toString();
 		const QPixmap scr = themesModel->data(index, PsiThemeModel::ScreenshotRole).value<QPixmap>();
 
@@ -178,8 +197,10 @@ void OptionsTabAppearanceTheme::applyOptions()
 
 void OptionsTabAppearanceTheme::restoreOptions()
 {
+#if 0
 	if ( !w )
 		return;
 
 	OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
+#endif
 }
