@@ -154,6 +154,7 @@ HEADERS += \
 	$$PWD/eventdb.h \
 	$$PWD/edbflatfile.h \
 	$$PWD/historydlg.h \
+	$$PWD/historycontactlistmodel.h \
 	$$PWD/tipdlg.h \
 	$$PWD/searchdlg.h \
 	$$PWD/registrationdlg.h \
@@ -291,6 +292,7 @@ SOURCES += \
 	$$PWD/eventdb.cpp \
 	$$PWD/edbflatfile.cpp \
 	$$PWD/historydlg.cpp \
+	$$PWD/historycontactlistmodel.cpp \
 	$$PWD/searchdlg.cpp \
 	$$PWD/registrationdlg.cpp \
 	$$PWD/psitoolbar.cpp \
