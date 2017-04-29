@@ -128,7 +128,8 @@ function initPsiTheme() {
                     linkEl.parentNode.insertBefore(iframe, linkEl.nextSibling);
                 }
                 var code;
-                var selectors = ["a[href^='https://www.youtube.com/']", "a[href^='https://m.youtube.com/']"];
+                var selectors = ["a[href^='https://www.youtube.com/']", "a[href^='https://m.youtube.com/']",
+                        "a[href^='http://www.youtube.com/']", "a[href^='http://m.youtube.com/']"];
                 for (var si = 0; si < selectors.length; si++) {
                     var links = parentEl.querySelectorAll(selectors[si]);
                     for (var i = 0; i < links.length; i++) {
@@ -143,10 +144,14 @@ function initPsiTheme() {
                         insertIframe(links[i].nextSibling, link);
                     }
                 }
-                links = parentEl.querySelectorAll("a[href^='https://youtu.be/']");
-                for (var i = 0; i < links.length; i++) {
-                    code = links[i].pathname.slice(1);
-                    insertIframe(links[i], null, code);
+
+                selectors = ["a[href^='https://youtu.be/']", "a[href^='http://youtu.be/']"];
+                for (var si = 0; si < selectors.length; si++) {
+                    var links = parentEl.querySelectorAll(selectors[si]);
+                    for (var i = 0; i < links.length; i++) {
+                        code = links[i].pathname.slice(1);
+                        insertIframe(links[i], null, code);
+                    }
                 }
             },
 
