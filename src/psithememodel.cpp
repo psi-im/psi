@@ -92,9 +92,11 @@ PsiThemeModel::PsiThemeModel(QObject *parent)
 void PsiThemeModel::onThreadedResultReadyAt(int index)
 {
 	ThemeItemInfo ti = themeWatcher.resultAt(index);
-	beginInsertRows(QModelIndex(), themesInfo.size(), themesInfo.size());
-	themesInfo.append(ti);
-	endInsertRows();
+	if (ti.isValid) {
+		beginInsertRows(QModelIndex(), themesInfo.size(), themesInfo.size());
+		themesInfo.append(ti);
+		endInsertRows();
+	}
 }
 
 void PsiThemeModel::loadComplete()
@@ -112,7 +114,9 @@ void PsiThemeModel::setType(const QString &type)
 			themesFuture = QtConcurrent::mapped(provider->themeIds(), loader);
 			themeWatcher.setFuture(themesFuture);
 		} else {
-			foreach (const QString &id, provider->themeIds()) {
+			QStringList ids = provider->themeIds();
+			qDebug() << ids;
+			foreach (const QString &id, ids) {
 				loader.asyncLoad(id, [this](const ThemeItemInfo &ti) {
 					if (ti.isValid) {
 						beginInsertRows(QModelIndex(), themesInfo.size(), themesInfo.size());

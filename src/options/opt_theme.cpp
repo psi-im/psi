@@ -59,15 +59,26 @@ QWidget *OptionsTabAppearanceTheme::widget()
 	w = new OptAppearanceThemeUI();
 	OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
 	themesModel = new PsiThemeModel(this);
+	d->themeView->setModel(themesModel);
+	themesModel->setType(provider->type());
 
 	connect(d->themeView->selectionModel(),
 		SIGNAL(currentChanged(QModelIndex, QModelIndex)),
-		SIGNAL(dataChanged()));
+		SLOT(themeSelected(QModelIndex, QModelIndex)));
+
 	connect(themesModel,
 		SIGNAL(rowsInserted(QModelIndex,int,int)),
 		SLOT(modelRowsInserted(QModelIndex,int,int)));
 
 	return w;
+}
+
+void OptionsTabAppearanceTheme::themeSelected(const QModelIndex &current, const QModelIndex &previous)
+{
+	if (!previous.isValid()) {
+		return; // Psi won't start if it's impossible to load any theme. So we always have previous.
+	}
+	emit dataChanged();
 }
 
 void OptionsTabAppearanceTheme::modelRowsInserted(const QModelIndex &parent, int first, int last)
@@ -171,7 +182,4 @@ void OptionsTabAppearanceTheme::restoreOptions()
 		return;
 
 	OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
-
-	themesModel->setType(provider->type());
-	d->themeView->setModel(themesModel);
 }

@@ -127,21 +127,25 @@ function initPsiTheme() {
                                                           '" frameborder="0" allowfullscreen="1"></iframe></div>');
                     linkEl.parentNode.insertBefore(iframe, linkEl.nextSibling);
                 }
-                var links = parentEl.querySelectorAll("a[href^='https://www.youtube.com/']");
-                for (var i = 0; i < links.length; i++) {
-                    var link = links[i].href;
-                    if (links[i].pathname.indexOf("/embed/") != 0) { // no startsWith() in old webkit
-                        var m = links[i].href.match(/^.*[?&]v=([a-zA-Z0-9_]+).*$/);
-                        var code = m && m[1];
-                        if (!code)
-                            continue;
-                        link = "https://www.youtube.com/embed/" + code;
+                var code;
+                var selectors = ["a[href^='https://www.youtube.com/']", "a[href^='https://m.youtube.com/']"];
+                for (var si = 0; si < selectors.length; si++) {
+                    var links = parentEl.querySelectorAll(selectors[si]);
+                    for (var i = 0; i < links.length; i++) {
+                        var link = links[i].href;
+                        if (links[i].pathname.indexOf("/embed/") != 0) { // no startsWith() in old webkit
+                            var m = links[i].href.match(/^.*[?&]v=([a-zA-Z0-9_]+).*$/);
+                            code = m && m[1];
+                            if (!code)
+                                continue;
+                            link = "https://www.youtube.com/embed/" + code;
+                        }
+                        insertIframe(links[i].nextSibling, link);
                     }
-                    insertIframe(links[i].nextSibling, link);
                 }
                 links = parentEl.querySelectorAll("a[href^='https://youtu.be/']");
                 for (var i = 0; i < links.length; i++) {
-                    var code = links[i].pathname.slice(1);
+                    code = links[i].pathname.slice(1);
                     insertIframe(links[i], null, code);
                 }
             },
@@ -155,6 +159,7 @@ function initPsiTheme() {
 
             siblingHtml : function(dest, html) {
                 htmlSource.innerHTML = html;
+                chat.util.replaceYoutube(htmlSource);
                 chat.util.replaceIcons(htmlSource);
                 while (htmlSource.firstChild) dest.parentNode.insertBefore(htmlSource.firstChild, dest);
             },

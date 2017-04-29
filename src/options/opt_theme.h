@@ -33,6 +33,8 @@ protected slots:
 	void modelRowsInserted(const QModelIndex &parent, int first, int last);
 	void showThemeScreenshot();
 
+private slots:
+	void themeSelected(const QModelIndex &current, const QModelIndex &previous);
 private:
 	QString getThemeId(const QString &objName) const;
 

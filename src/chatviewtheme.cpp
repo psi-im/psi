@@ -146,7 +146,7 @@ public:
 	}
 
 private slots:
-	void _callCalbacks()
+	void _callFinishLoadCalbacks()
 	{
 		for (auto &cb : theme->cvtd->loadCallback) {
 			cb(theme->state() == Theme::Loaded);
@@ -168,7 +168,7 @@ public slots:
 #ifdef WEBENGINE
 		_callCalbacks();
 #else
-		QTimer::singleShot(0, this, SLOT(_callCalbacks())); // let event loop do its job
+		QTimer::singleShot(0, this, SLOT(_callFinishLoadCalbacks())); // let event loop do its job
 #endif
 	}
 
@@ -179,7 +179,7 @@ public slots:
 #ifdef WEBENGINE
 		_callCalbacks();
 #else
-		QTimer::singleShot(0, this, SLOT(_callCalbacks())); // let event loop do its job
+		QTimer::singleShot(0, this, SLOT(_callFinishLoadCalbacks())); // let event loop do its job
 #endif
 	}
 
