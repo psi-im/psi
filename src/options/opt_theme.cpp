@@ -156,11 +156,10 @@ void OptionsTabAppearanceTheme::showThemeScreenshot()
 		screenshotDialog = new QDialog(d);
 		screenshotDialog->setMinimumSize(minSize);
 
-		//const int row = themesModel->themeRow(getThemeId(btn->objectName()));
-		int row = 0;
-		const QModelIndex index = themesModel->index(row, 0);
-		const QString name_ = themesModel->data(index, PsiThemeModel::TitleRole).toString();
-		const QPixmap scr = themesModel->data(index, PsiThemeModel::ScreenshotRole).value<QPixmap>();
+		const int row = unsortedModel->themeRow(getThemeId(btn->objectName()));
+		const QModelIndex index = unsortedModel->index(row, 0);
+		const QString name_ = unsortedModel->data(index, PsiThemeModel::TitleRole).toString();
+		const QPixmap scr = unsortedModel->data(index, PsiThemeModel::ScreenshotRole).value<QPixmap>();
 
 		screenshotDialog->setWindowTitle(tr("%1 Screenshot").arg(name_));
 		screenshotDialog->setWindowIcon(QIcon(IconsetFactory::iconPixmap("psi/logo_128")));
