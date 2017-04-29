@@ -141,7 +141,7 @@ function initPsiTheme() {
                                 continue;
                             link = "https://www.youtube.com/embed/" + code;
                         }
-                        insertIframe(links[i].nextSibling, link);
+                        insertIframe(links[i], link);
                     }
                 }
 
