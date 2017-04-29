@@ -32,6 +32,7 @@ struct ThemeItemInfo
 	QString title;
 	QByteArray screenshot;
 	bool isValid = false;
+	bool isCurrent = false;
 };
 
 
@@ -42,8 +43,9 @@ class PsiThemeModel : public QAbstractListModel
 public:
 	enum ThemeRoles {
 		IdRole = Qt::UserRole + 1,
-		ScreenshotRole = Qt::UserRole + 2,
-		TitleRole = Qt::UserRole + 3
+		ScreenshotRole,
+		TitleRole,
+		IsCurrent
 	};
 
 	PsiThemeModel(QObject *parent);
@@ -53,8 +55,9 @@ public:
 	QVariant data ( const QModelIndex & index, int role = Qt::DisplayRole ) const;
 	int themeRow(const QString &id);
 
+	bool setData(const QModelIndex &index, const QVariant &value, int role);
 private slots:
-	void loadProgress(int);
+	void onThreadedResultReadyAt(int index);
 	void loadComplete();
 
 private:
@@ -62,6 +65,7 @@ private:
 	QFutureWatcher<ThemeItemInfo> themeWatcher;
 	QFuture<ThemeItemInfo> themesFuture;
 	QList<ThemeItemInfo> themesInfo;
+	QString providerType;
 };
 
 #endif

@@ -59,8 +59,7 @@ QWidget *OptionsTabAppearanceTheme::widget()
 	w = new OptAppearanceThemeUI();
 	OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
 	themesModel = new PsiThemeModel(this);
-	themesModel->setType(provider->type());
-	d->themeView->setModel(themesModel);
+
 	connect(d->themeView->selectionModel(),
 		SIGNAL(currentChanged(QModelIndex, QModelIndex)),
 		SIGNAL(dataChanged()));
@@ -74,45 +73,42 @@ QWidget *OptionsTabAppearanceTheme::widget()
 void OptionsTabAppearanceTheme::modelRowsInserted(const QModelIndex &parent, int first, int last)
 {
 	if (!parent.isValid() || !w) {
-		Theme *theme = provider->current();
 		OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
 		const QSize buttonSize = QSize(21,21);
-		if (theme) {
-			for (int i = first; i <= last; i++) {
-				const QModelIndex index = themesModel->index(i);
-				const QString id = themesModel->data(index, PsiThemeModel::IdRole).toString();
-				if (id == theme->id()) {
-					d->themeView->setCurrentIndex(index);
-				}
-				const QString themeName = themesModel->data(index, PsiThemeModel::TitleRole).toString();
-				bool isPsi = id.startsWith("psi");
-				const QPixmap client = isPsi ? IconsetFactory::iconPixmap("clients/psi")
-							     : IconsetFactory::iconPixmap("clients/adium");
-				const QString clientName = isPsi ? tr("Psi Theme") : tr("Adium Theme");
-				QToolButton *screenshotButton = new QToolButton(d->themeView);
-				screenshotButton->setIcon(QIcon(IconsetFactory::iconPixmap("psi/eye")));
-				screenshotButton->resize(buttonSize);
-				screenshotButton->setObjectName(SCREEN_PREFIX + id);
-				screenshotButton->setToolTip(tr("Show theme screenshot"));
-				connect(screenshotButton, SIGNAL(clicked()), this, SLOT(showThemeScreenshot()));
-
-				QLabel *typeLabel = new QLabel(d->themeView);
-				typeLabel->setPixmap(client);
-				typeLabel->setToolTip(clientName);
-
-				QLabel *nameLabel = new QLabel(themeName, d->themeView);
-
-				QWidget *itemWidget = new QWidget(d->themeView);
-
-				QBoxLayout *box = new QBoxLayout(QBoxLayout::LeftToRight, d->themeView);
-				box->addWidget(typeLabel);
-				box->addWidget(nameLabel);
-				box->addStretch();
-				box->addWidget(screenshotButton);
-				itemWidget->setLayout(box);
-
-				d->themeView->setIndexWidget(index, itemWidget);
+		for (int i = first; i <= last; i++) {
+			const QModelIndex index = themesModel->index(i);
+			const QString id = themesModel->data(index, PsiThemeModel::IdRole).toString();
+			if (themesModel->data(index, PsiThemeModel::IsCurrent).toBool()) {
+				d->themeView->setCurrentIndex(index);
 			}
+			const QString themeName = themesModel->data(index, PsiThemeModel::TitleRole).toString();
+			bool isPsi = id.startsWith("psi");
+			const QPixmap client = isPsi ? IconsetFactory::iconPixmap("clients/psi")
+							 : IconsetFactory::iconPixmap("clients/adium");
+			const QString clientName = isPsi ? tr("Psi Theme") : tr("Adium Theme");
+			QToolButton *screenshotButton = new QToolButton(d->themeView);
+			screenshotButton->setIcon(QIcon(IconsetFactory::iconPixmap("psi/eye")));
+			screenshotButton->resize(buttonSize);
+			screenshotButton->setObjectName(SCREEN_PREFIX + id);
+			screenshotButton->setToolTip(tr("Show theme screenshot"));
+			connect(screenshotButton, SIGNAL(clicked()), this, SLOT(showThemeScreenshot()));
+
+			QLabel *typeLabel = new QLabel(d->themeView);
+			typeLabel->setPixmap(client);
+			typeLabel->setToolTip(clientName);
+
+			QLabel *nameLabel = new QLabel(themeName, d->themeView);
+
+			QWidget *itemWidget = new QWidget(d->themeView);
+
+			QBoxLayout *box = new QBoxLayout(QBoxLayout::LeftToRight, d->themeView);
+			box->addWidget(typeLabel);
+			box->addWidget(nameLabel);
+			box->addStretch();
+			box->addWidget(screenshotButton);
+			itemWidget->setLayout(box);
+
+			d->themeView->setIndexWidget(index, itemWidget);
 		}
 	}
 }
@@ -166,10 +162,7 @@ void OptionsTabAppearanceTheme::applyOptions()
 		return;
 
 	OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
-	const QString id = d->themeView->currentIndex().data(PsiThemeModel::IdRole).toString();
-	if (!id.isEmpty()) {
-		provider->setCurrentTheme(id);
-	}
+	themesModel->setData(d->themeView->currentIndex(), true, PsiThemeModel::IsCurrent);
 }
 
 void OptionsTabAppearanceTheme::restoreOptions()
@@ -179,6 +172,6 @@ void OptionsTabAppearanceTheme::restoreOptions()
 
 	OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
 
-	Theme *theme = provider->current();
-	d->themeView->setCurrentIndex(themesModel->index( themesModel->themeRow(theme?theme->id():"") ));
+	themesModel->setType(provider->type());
+	d->themeView->setModel(themesModel);
 }

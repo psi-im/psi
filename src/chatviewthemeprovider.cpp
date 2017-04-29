@@ -175,6 +175,8 @@ bool ChatViewThemeProvider::loadCurrent()
 	return startedLoading; // does not really matter. may fail later on loading
 }
 
+Theme *ChatViewThemeProvider::current() const { return ((curTheme != 0) & curTheme->isValid())? (Theme *)curTheme : 0; }
+
 void ChatViewThemeProvider::setCurrentTheme(const QString &id)
 {
 	PsiOptions::instance()->setOption(optionString(), id);
