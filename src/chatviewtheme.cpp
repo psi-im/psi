@@ -166,7 +166,7 @@ public slots:
 		qDebug("%s theme is successfully loaded", qPrintable(theme->id()));
 		theme->setState(Theme::Loaded);
 #ifdef WEBENGINE
-		_callCalbacks();
+		_callFinishLoadCalbacks();
 #else
 		QTimer::singleShot(0, this, SLOT(_callFinishLoadCalbacks())); // let event loop do its job
 #endif
@@ -177,7 +177,7 @@ public slots:
 		_loadError = error;
 		theme->setState(Theme::NotLoaded);
 #ifdef WEBENGINE
-		_callCalbacks();
+		_callFinishLoadCalbacks();
 #else
 		QTimer::singleShot(0, this, SLOT(_callFinishLoadCalbacks())); // let event loop do its job
 #endif
