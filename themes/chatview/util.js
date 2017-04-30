@@ -170,6 +170,7 @@ function initPsiTheme() {
                 chat.util.startSessionTransaction(function(tId) {
                     session.getUrlHeaders(tId, linkEl.href);
                 },function(result) {
+                    //chat.console("result ready " + chat.util.props(result, true));
                     var ct = result['content-type'];
                     if (typeof(ct) == "string") {
                         ct = ct.split("/")[0].trim();
@@ -182,6 +183,21 @@ function initPsiTheme() {
                             chat.util.replaceAudio(linkEl);
                             break;
                         }
+                    } else { // fallback when no content type
+                        //chat.console("fallback")
+                        var imageExts = ["png", "jpg", "jpeg", "gif"];
+                        var audioExts = ["mp3", "ogg", "aac", "flac", "wav"];
+                        var lpath = linkEl.pathname.toLowerCase();
+                        function checkExt(exts, replacer) {
+                            for (var i = 0; i < exts.length; i++) {
+                                if (lpath.slice(lpath.length - exts[i].length - 1) == ("." + exts[i])) {
+                                    replacer(linkEl);
+                                    break;
+                                }
+                            }
+                        }
+                        checkExt(imageExts, chat.util.replaceImage);
+                        checkExt(audioExts, chat.util.replaceAudio);
                     }
                 });
             },

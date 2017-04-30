@@ -242,7 +242,7 @@ public slots:
 
 	void getUrlHeaders(const QString &tId, const QString url)
 	{
-		qDebug() << "getUrlHeaders: tId=" << tId << " url=" << url;
+		//qDebug() << "getUrlHeaders: tId=" << tId << " url=" << url;
  		auto reply = _view->d->account_->psi()->networkAccessManager()->head(QNetworkRequest(QUrl::fromEncoded(url.toLatin1())));
 		reply->setProperty("tranId", tId);
 		connect(reply, SIGNAL(finished()), SLOT(onUrlHeadersReady()));
