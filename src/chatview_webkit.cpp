@@ -48,6 +48,7 @@
 #include <QDesktopWidget>
 #include <QApplication>
 #include <QMetaProperty>
+#include <QNetworkReply>
 
 
 #include "webview.h"
@@ -62,6 +63,7 @@
 #include "chatviewthemeprovider.h"
 #include "avatars.h"
 #include "desktoputil.h"
+#include "psicon.h"
 
 
 class ChatViewThemeSessionBridge;
@@ -236,6 +238,31 @@ public slots:
 	void nickInsertClick(const QString &nick)
 	{
 		emit _view->nickInsertClick(nick);
+	}
+
+	void getUrlHeaders(const QString &tId, const QString url)
+	{
+		qDebug() << "getUrlHeaders: tId=" << tId << " url=" << url;
+ 		auto reply = _view->d->account_->psi()->networkAccessManager()->head(QNetworkRequest(QUrl::fromEncoded(url.toLatin1())));
+		reply->setProperty("tranId", tId);
+		connect(reply, SIGNAL(finished()), SLOT(onUrlHeadersReady()));
+	}
+
+private slots:
+	void onUrlHeadersReady()
+	{
+		QVariantMap msg;
+		QVariantMap headers;
+		QNetworkReply *reply = dynamic_cast<QNetworkReply *>(sender());
+		msg.insert("id", reply->property("tranId").toString());
+
+		for (auto &p : reply->rawHeaderPairs()) {
+			headers.insert(QString(p.first).toLower(), QString(p.second));
+		}
+		msg.insert("value", headers);
+		msg.insert("type", "tranend");
+		reply->deleteLater();
+		emit newMessage(msg);
 	}
 
 signals:

@@ -6,6 +6,8 @@ function initPsiTheme() {
     var htmlSource = document.createElement("div"); //manages appendHtml
     var async = (typeof QWebChannel != 'undefined');
     var usersMap = {};
+    var nextServerTransaction = 0;
+    var serverTransctions = {};
 
     var chat =  {
         async : async,
@@ -54,6 +56,12 @@ function initPsiTheme() {
                     }
                 }
                 return ret;
+            },
+
+            startSessionTransaction: function(starter, finisher) {
+                var tId = "st" + (++nextServerTransaction);
+                serverTransctions[tId] = finisher;
+                starter(tId);
             },
 
             _remoteCallEval : function(func, args, cb) {
@@ -120,51 +128,90 @@ function initPsiTheme() {
                 return range.createContextualFragment(html);
             },
 
-            replaceYoutube : function(parentEl) {
-                function insertIframe(linkEl, link, code) {
-                    var link = link || "https://www.youtube.com/embed/" + code;
+            replaceYoutube : function(linkEl) {
+                var baseLink = "https://www.youtube.com/embed/";
+                var link;
+
+                if (linkEl.hostname == "youtu.be") {
+                    link = baseLink + linkEl.hostname.slice(1);
+                } else if (linkEl.pathname.indexOf("/embed/") != 0) {
+                    var m = linkEl.href.match(/^.*[?&]v=([a-zA-Z0-9_]+).*$/);
+                    var code = m && m[1];
+                    if (code) {
+                        link = baseLink + code;
+                    }
+                } else {
+                    link = linkEl.href;
+                    chat.console(link);
+                }
+
+                if (link) {
                     var iframe = chat.util.createHtmlNode('<div><iframe width="560" height="315" src="'+ link +
                                                           '" frameborder="0" allowfullscreen="1"></iframe></div>');
                     linkEl.parentNode.insertBefore(iframe, linkEl.nextSibling);
                 }
-                var code;
-                var selectors = ["a[href^='https://www.youtube.com/']", "a[href^='https://m.youtube.com/']",
-                        "a[href^='http://www.youtube.com/']", "a[href^='http://m.youtube.com/']"];
-                for (var si = 0; si < selectors.length; si++) {
-                    var links = parentEl.querySelectorAll(selectors[si]);
-                    for (var i = 0; i < links.length; i++) {
-                        var link = links[i].href;
-                        if (links[i].pathname.indexOf("/embed/") != 0) { // no startsWith() in old webkit
-                            var m = links[i].href.match(/^.*[?&]v=([a-zA-Z0-9_]+).*$/);
-                            code = m && m[1];
-                            if (!code)
-                                continue;
-                            link = "https://www.youtube.com/embed/" + code;
-                        }
-                        insertIframe(links[i], link);
-                    }
-                }
+            },
 
-                selectors = ["a[href^='https://youtu.be/']", "a[href^='http://youtu.be/']"];
-                for (var si = 0; si < selectors.length; si++) {
-                    var links = parentEl.querySelectorAll(selectors[si]);
-                    for (var i = 0; i < links.length; i++) {
-                        code = links[i].pathname.slice(1);
-                        insertIframe(links[i], null, code);
+            replaceImage : function(linkEl)
+            {
+                var img = chat.util.createHtmlNode('<img style="display:block;max-width:560px; max-height:315px" '+
+                                                   'src="'+ linkEl.href +'" border="0">');
+                linkEl.parentNode.insertBefore(img, linkEl.nextSibling);
+            },
+
+            replaceAudio : function(linkEl)
+            {
+                var audio = chat.util.createHtmlNode('<div><audio controls="1"><source src="'+ linkEl.href +'"></audio></div>');
+                linkEl.parentNode.insertBefore(audio, linkEl.nextSibling);
+            },
+
+            replaceLinkAsync : function(linkEl)
+            {
+                chat.util.startSessionTransaction(function(tId) {
+                    session.getUrlHeaders(tId, linkEl.href);
+                },function(result) {
+                    var ct = result['content-type'];
+                    if (typeof(ct) == "string") {
+                        ct = ct.split("/")[0].trim();
+                        chat.console(ct)
+                        switch (ct) {
+                        case "image":
+                            chat.util.replaceImage(linkEl);
+                            break;
+                        case "audio":
+                            chat.util.replaceAudio(linkEl);
+                            break;
+                        }
+                    }
+                });
+            },
+
+            handleLinks : function(el)
+            {
+                var links = el.getElementsByTagName("a");
+                var youtube = ["youtu.be", "www.youtube.com", "m.youtube.com"];
+                for (var li = 0; li < links.length; li++) {
+                    var linkEl = links[li];
+                    if (youtube.indexOf(linkEl.hostname) != -1) {
+                        chat.util.replaceYoutube(linkEl);
+                    } else if ((linkEl.protocol == "http:" || linkEl.protocol == "https:") && linkEl.hostname != "psi") {
+                        chat.util.replaceLinkAsync(linkEl);
                     }
                 }
             },
 
             appendHtml : function(dest, html) {
                 htmlSource.innerHTML = html;
-                chat.util.replaceYoutube(htmlSource);
+                chat.util.handleLinks(htmlSource);
+                //chat.util.replaceYoutube(htmlSource);
                 chat.util.replaceIcons(htmlSource);
                 while (htmlSource.firstChild) dest.appendChild(htmlSource.firstChild);
             },
 
             siblingHtml : function(dest, html) {
                 htmlSource.innerHTML = html;
-                chat.util.replaceYoutube(htmlSource);
+                chat.util.handleLinks(htmlSource);
+                //chat.util.replaceYoutube(htmlSource);
                 chat.util.replaceIcons(htmlSource);
                 while (htmlSource.firstChild) dest.parentNode.insertBefore(htmlSource.firstChild, dest);
             },
@@ -398,6 +445,13 @@ function initPsiTheme() {
                 }
             } else if (data.type == "avatar") {
                 usersMap[data.sender].avatar = data.avatar;
+            } else if (data.type == "tranend") { // end of session transaction (when c++ code is also asynchronous)
+                var t = serverTransctions[data.id];
+                if (t) {
+                    t(data.value);
+                    delete serverTransctions[data.id];
+                }
+                return;
             }
 
             chat.adapter.receiveObject(data)
