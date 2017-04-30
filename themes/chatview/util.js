@@ -142,7 +142,6 @@ function initPsiTheme() {
                     }
                 } else {
                     link = linkEl.href;
-                    chat.console(link);
                 }
 
                 if (link) {
@@ -180,7 +179,6 @@ function initPsiTheme() {
                     var ct = result['content-type'];
                     if (typeof(ct) == "string") {
                         ct = ct.split("/")[0].trim();
-                        chat.console(ct)
                         switch (ct) {
                         case "image":
                             chat.util.replaceImage(linkEl);
@@ -267,10 +265,10 @@ function initPsiTheme() {
                     callback(xml);
                 }
                 if (chat.async) {
-                    server.console("loading xml async: " + path);
+                    //server.console("loading xml async: " + path);
                     loader.getFileContents(path, cb);
                 } else {
-                    server.console("loading xml sync: " + path);
+                    //server.console("loading xml sync: " + path);
                     cb(loader.getFileContents(path));
                 }
             },
@@ -301,9 +299,9 @@ function initPsiTheme() {
             replaceMessage : function(parentEl, msgId, newId, text) {
                 var se =parentEl.querySelector("psims[mid='"+msgId+"']");
                 var ee =parentEl.querySelector("psime[mid='"+msgId+"']");
-                chat.console("Replace: start: " + (se? "found, ":"not found, ") +
-                             "end: " + (ee? "found, ":"not found, ") +
-                             "parent match: " + ((se && ee && se.parentNode === ee.parentNode)?"yes":"no"));
+//                chat.console("Replace: start: " + (se? "found, ":"not found, ") +
+//                             "end: " + (ee? "found, ":"not found, ") +
+//                             "parent match: " + ((se && ee && se.parentNode === ee.parentNode)?"yes":"no"));
                 if (se && ee && se.parentNode === ee.parentNode) {
                     while (se.nextSibling !== ee) {
                         se.parentNode.removeChild(se.nextSibling);
