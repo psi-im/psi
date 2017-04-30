@@ -165,6 +165,12 @@ function initPsiTheme() {
                 linkEl.parentNode.insertBefore(audio, linkEl.nextSibling);
             },
 
+            replaceVideo : function(linkEl)
+            {
+                var audio = chat.util.createHtmlNode('<div><video controls="1"><source src="'+ linkEl.href +'"></video></div>');
+                linkEl.parentNode.insertBefore(audio, linkEl.nextSibling);
+            },
+
             replaceLinkAsync : function(linkEl)
             {
                 chat.util.startSessionTransaction(function(tId) {
@@ -182,11 +188,15 @@ function initPsiTheme() {
                         case "audio":
                             chat.util.replaceAudio(linkEl);
                             break;
+                        case "video":
+                            chat.util.replaceVideo(linkEl);
+                            break;
                         }
                     } else { // fallback when no content type
                         //chat.console("fallback")
                         var imageExts = ["png", "jpg", "jpeg", "gif"];
                         var audioExts = ["mp3", "ogg", "aac", "flac", "wav"];
+                        var videoExts = ["mp4", "webm", "mkv", "mov", "avi"];
                         var lpath = linkEl.pathname.toLowerCase();
                         function checkExt(exts, replacer) {
                             for (var i = 0; i < exts.length; i++) {
@@ -198,6 +208,7 @@ function initPsiTheme() {
                         }
                         checkExt(imageExts, chat.util.replaceImage);
                         checkExt(audioExts, chat.util.replaceAudio);
+                        checkExt(videoExts, chat.util.replaceVideo);
                     }
                 });
             },
