@@ -166,7 +166,7 @@ function initPsiTheme() {
 
             replaceVideo : function(linkEl)
             {
-                var audio = chat.util.createHtmlNode('<div><video controls="1"><source src="'+ linkEl.href +'"></video></div>');
+                var audio = chat.util.createHtmlNode('<div><video width="560" height="315" controls="1"><source src="'+ linkEl.href +'"></video></div>');
                 linkEl.parentNode.insertBefore(audio, linkEl.nextSibling);
             },
 
