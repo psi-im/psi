@@ -123,8 +123,9 @@ function startPsiTheme(shared) {
 				return shared.cdata.emote?"*"+nick:"&lt;"+nick+"&gt;";
 			},
 			alertedmessage : function() {
-				return shared.cdata.alert?"<span class='alert'>"+
+				var msg = shared.cdata.alert?"<span class='alert'>"+
 					shared.cdata.message+"</span>":shared.cdata.message;
+				return shared.cdata.id? util.replaceableMessage(shared.cdata.id, msg) : msg;
 			},
 			sentrec : function() {return shared.cdata.spooled?"infmsg":
 				(shared.cdata.local?"sent":"received");},

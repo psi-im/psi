@@ -24,6 +24,7 @@
 #include <QPixmap>
 
 #include "psithememanager.h"
+#include "psiiconset.h"
 
 
 class PsiThemeModel;
@@ -139,9 +140,11 @@ int PsiThemeModel::rowCount ( const QModelIndex & parent ) const
 QVariant PsiThemeModel::data ( const QModelIndex & index, int role ) const
 {
 	switch (role) {
+		case Qt::DecorationRole:
+			return IconsetFactory::icon(QString("clients/")+themesInfo[index.row()].id.section('/',0, 0)).pixmap();
 		case IdRole:
 			return themesInfo[index.row()].id;
-		//case Qt::DisplayRole:
+		case Qt::DisplayRole:
 		case TitleRole:
 			return themesInfo[index.row()].title;
 		case ScreenshotRole:

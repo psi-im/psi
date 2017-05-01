@@ -66,10 +66,9 @@ QWidget *OptionsTabAppearanceTheme::widget()
 	themesModel = new QSortFilterProxyModel(this);
 	themesModel->setSourceModel(unsortedModel);
 	themesModel->setSortCaseSensitivity(Qt::CaseInsensitive);
-	themesModel->setSortRole(PsiThemeModel::TitleRole);
 
 	d->themeView->setModel(themesModel);
-	d->themeView->setSortingEnabled(true);
+	d->themeView->sortByColumn(0, Qt::AscendingOrder);
 
 	connect(d->themeView->selectionModel(),
 		SIGNAL(currentChanged(QModelIndex, QModelIndex)),
@@ -101,13 +100,14 @@ void OptionsTabAppearanceTheme::modelRowsInserted(const QModelIndex &parent, int
 {
 	if (!parent.isValid() || !w) {
 		OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
-		const QSize buttonSize = QSize(21,21);
+		//const QSize buttonSize = QSize(21,21);
 		for (int i = first; i <= last; i++) {
 			const QModelIndex index = themesModel->index(i, 0);
 			const QString id = themesModel->data(index, PsiThemeModel::IdRole).toString();
 			if (themesModel->data(index, PsiThemeModel::IsCurrent).toBool()) {
 				d->themeView->setCurrentIndex(index);
 			}
+#if 0
 			const QString themeName = themesModel->data(index, PsiThemeModel::TitleRole).toString();
 			bool isPsi = id.startsWith("psi");
 			const QPixmap client = isPsi ? IconsetFactory::iconPixmap("clients/psi")
@@ -137,8 +137,8 @@ void OptionsTabAppearanceTheme::modelRowsInserted(const QModelIndex &parent, int
 			//itemWidget->setAutoFillBackground(true); // from recommendation of indexWidget but does not work as expected
 
 			d->themeView->setIndexWidget(index, itemWidget);
+#endif
 		}
-		themesModel->sort(0);
 	}
 }
 

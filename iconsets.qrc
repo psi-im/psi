@@ -351,5 +351,29 @@
         <file>iconsets/affiliations/default/noaffiliation.png</file>
         <file>iconsets/affiliations/default/outcast.png</file>
         <file>iconsets/affiliations/default/icondef.xml</file>
+        <file>iconsets/clients/default/adium.png</file>
+        <file>iconsets/clients/default/bitlbee.png</file>
+        <file>iconsets/clients/default/bot.png</file>
+        <file>iconsets/clients/default/conversations.png</file>
+        <file>iconsets/clients/default/gajim.png</file>
+        <file>iconsets/clients/default/icondef.xml</file>
+        <file>iconsets/clients/default/jtalk.png</file>
+        <file>iconsets/clients/default/kadu.png</file>
+        <file>iconsets/clients/default/kopete.png</file>
+        <file>iconsets/clients/default/leechcraft-azoth.png</file>
+        <file>iconsets/clients/default/miranda-ng.png</file>
+        <file>iconsets/clients/default/miranda.png</file>
+        <file>iconsets/clients/default/pidgin.png</file>
+        <file>iconsets/clients/default/poezio.png</file>
+        <file>iconsets/clients/default/psiplus.png</file>
+        <file>iconsets/clients/default/psi.png</file>
+        <file>iconsets/clients/default/qip.png</file>
+        <file>iconsets/clients/default/qutim.png</file>
+        <file>iconsets/clients/default/sawim.png</file>
+        <file>iconsets/clients/default/swift.png</file>
+        <file>iconsets/clients/default/tkabber.png</file>
+        <file>iconsets/clients/default/vacuum.png</file>
+        <file>iconsets/clients/default/xabber.png</file>
+        <file>iconsets/clients/default/yaxim.png</file>
     </qresource>
 </RCC>

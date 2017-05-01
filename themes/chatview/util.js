@@ -228,7 +228,6 @@ function initPsiTheme() {
             appendHtml : function(dest, html) {
                 htmlSource.innerHTML = html;
                 chat.util.handleLinks(htmlSource);
-                //chat.util.replaceYoutube(htmlSource);
                 chat.util.replaceIcons(htmlSource);
                 while (htmlSource.firstChild) dest.appendChild(htmlSource.firstChild);
             },
@@ -236,7 +235,6 @@ function initPsiTheme() {
             siblingHtml : function(dest, html) {
                 htmlSource.innerHTML = html;
                 chat.util.handleLinks(htmlSource);
-                //chat.util.replaceYoutube(htmlSource);
                 chat.util.replaceIcons(htmlSource);
                 while (htmlSource.firstChild) dest.parentNode.insertBefore(htmlSource.firstChild, dest);
             },
