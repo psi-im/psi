@@ -25,6 +25,7 @@
 
 #include "psithememanager.h"
 
+static const QSize minItemSize(100, 32);
 
 class PsiThemeModel;
 struct PsiThemeModel::Loader
@@ -152,6 +153,8 @@ QVariant PsiThemeModel::data ( const QModelIndex & index, int role ) const
 		}
 		case IsCurrent:
 			return themesInfo[index.row()].isCurrent;
+		case Qt::SizeHintRole:
+			return minItemSize;
 	}
 	return QVariant();
 }
