@@ -70,7 +70,7 @@ QColor ColorOpt::color(const QString &opt, const QColor &defaultColor) const
 
 QPalette::ColorRole ColorOpt::colorRole(const QString &opt) const
 {
-	return colors.value(opt).role;
+	return colors.contains(opt) ? colors.value(opt).role : QPalette::NoRole;
 }
 
 void ColorOpt::optionChanged(const QString &opt)
