@@ -357,10 +357,12 @@
         <file>iconsets/clients/default/conversations.png</file>
         <file>iconsets/clients/default/gajim.png</file>
         <file>iconsets/clients/default/icondef.xml</file>
+        <file>iconsets/clients/default/isida-bot.png</file>
         <file>iconsets/clients/default/jtalk.png</file>
         <file>iconsets/clients/default/kadu.png</file>
         <file>iconsets/clients/default/kopete.png</file>
         <file>iconsets/clients/default/leechcraft-azoth.png</file>
+        <file>iconsets/clients/default/mcabber.png</file>
         <file>iconsets/clients/default/miranda-ng.png</file>
         <file>iconsets/clients/default/miranda.png</file>
         <file>iconsets/clients/default/pidgin.png</file>
@@ -373,6 +375,7 @@
         <file>iconsets/clients/default/swift.png</file>
         <file>iconsets/clients/default/tkabber.png</file>
         <file>iconsets/clients/default/vacuum.png</file>
+        <file>iconsets/clients/default/vk4xmpp.png</file>
         <file>iconsets/clients/default/xabber.png</file>
         <file>iconsets/clients/default/yaxim.png</file>
     </qresource>

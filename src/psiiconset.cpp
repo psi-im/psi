@@ -485,6 +485,12 @@ bool PsiIconset::loadClients()
 		d->loadIconset(&d->clients, &clients);
 		d->clients.addToFactory();
 
+		QSet<QString> iconsId;
+		auto it = clients.iterator();
+		while (it.hasNext()) {
+			iconsId.insert(it.next()->name().section('/', 1, 1));
+		}
+
 		QStringList dirs = ApplicationInfo::dataDirs();
 		ClientIconMap cm; // start part, spec[spec2[spec3]]
 		foreach (const QString &dataDir, dirs) {
@@ -499,7 +505,7 @@ bool PsiIconset::loadClients()
 				while (!(line = stream.readLine()).isNull()) {
 					line = line.trimmed();
 					QString iconName = line.section(QLatin1Char(' '), 0, 0);
-					if (!iconName.length()) {
+					if (!iconName.length() || !iconsId.contains(iconName)) {
 						continue;
 					}
 					ClientIconCheck ic = {iconName, QStringList()};
