@@ -35,6 +35,11 @@ Based on the huge on from Psi+ repository.
         </icon>
 
         <icon>
+                <x xmlns='name'>clients/isida-bot</x>
+                <object mime='image/png'>isida-bot.png</object>
+        </icon>
+
+        <icon>
                 <x xmlns='name'>clients/gajim</x>
                 <object mime='image/png'>gajim.png</object>
         </icon>
@@ -57,6 +62,11 @@ Based on the huge on from Psi+ repository.
         <icon>
                 <x xmlns='name'>clients/leechcraft-azoth</x>
                 <object mime='image/png'>leechcraft-azoth.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/mcabber</x>
+                <object mime='image/png'>mcabber.png</object>
         </icon>
 
         <icon>
@@ -117,6 +127,11 @@ Based on the huge on from Psi+ repository.
         <icon>
                 <x xmlns='name'>clients/vacuum</x>
                 <object mime='image/png'>vacuum.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/vk4xmpp</x>
+                <object mime='image/png'>vk4xmpp.png</object>
         </icon>
 
         <icon>
