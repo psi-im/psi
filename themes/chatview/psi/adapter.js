@@ -184,7 +184,7 @@ function psiThemeAdapter(chat) {
                     if (this.name == "time") {
                         d = chat.util.dateFormat(d, shared.dateFormat);
                     } else { // last message date ?
-                        d = chat.util.dateFormat(d, "yyyy-MM-dd");
+                        d = chat.util.dateFormat(d, "LL");
                     }
                 } else if (this.name == "avatarurl") {
                     var url;
