@@ -17,20 +17,26 @@
    <item>
     <layout class="QHBoxLayout" name="adapterLayout">
      <item>
-      <widget class="QListView" name="themeView"/>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer_2">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+      <widget class="QTreeView" name="themeView">
+       <property name="editTriggers">
+        <set>QAbstractItemView::NoEditTriggers</set>
        </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
+       <property name="showDropIndicator" stdset="0">
+        <bool>false</bool>
        </property>
-      </spacer>
+       <property name="rootIsDecorated">
+        <bool>false</bool>
+       </property>
+       <property name="sortingEnabled">
+        <bool>true</bool>
+       </property>
+       <property name="headerHidden">
+        <bool>true</bool>
+       </property>
+       <property name="expandsOnDoubleClick">
+        <bool>false</bool>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>

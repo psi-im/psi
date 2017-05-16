@@ -86,10 +86,10 @@
 #include "groupchatdlg.h"
 #endif
 #include "spellchecker/aspellchecker.h"
+#include "networkaccessmanager.h"
 #ifdef WEBKIT
 #include "avatars.h"
 #include "chatviewthemeprovider.h"
-#include "networkaccessmanager.h"
 #include "webview.h"
 #endif
 #include "urlobject.h"

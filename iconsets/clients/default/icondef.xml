@@ -1,0 +1,147 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<icondef>                                                         
+        <meta>                                                    
+                <name>Psi Default Fingerprint - size 16</name>
+                <version>1.0</version>
+                <creation>2017-05-01</creation>
+                <home>http://psi-im.org/</home>
+                <author email='maksim.maj@gmail.com'>maj</author>
+                <author email='vladimir.shelukhin@gmail.com'>zet</author>
+                <author email='rion4ik@gmail.com'>zet</author>
+                <description>Default Clients iconpack.
+
+Based on the huge on from Psi+ repository.
+</description>
+           </meta>
+
+        <icon>
+                <x xmlns='name'>clients/adium</x>
+                <object mime='image/png'>adium.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/bitlbee</x>
+                <object mime='image/png'>bitlbee.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/bot</x>
+                <object mime='image/png'>bot.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/conversations</x>
+                <object mime='image/png'>conversations.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/isida-bot</x>
+                <object mime='image/png'>isida-bot.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/gajim</x>
+                <object mime='image/png'>gajim.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/jtalk</x>
+                <object mime='image/png'>jtalk.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/kadu</x>
+                <object mime='image/png'>kadu.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/kopete</x>
+                <object mime='image/png'>kopete.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/leechcraft-azoth</x>
+                <object mime='image/png'>leechcraft-azoth.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/mcabber</x>
+                <object mime='image/png'>mcabber.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/miranda</x>
+                <object mime='image/png'>miranda.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/miranda-ng</x>
+                <object mime='image/png'>miranda-ng.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/pidgin</x>
+                <object mime='image/png'>pidgin.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/poezio</x>
+                <object mime='image/png'>poezio.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/psi</x>
+                <object mime='image/png'>psi.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/psiplus</x>
+                <object mime='image/png'>psiplus.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/qip</x>
+                <object mime='image/png'>qip.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/qutim</x>
+                <object mime='image/png'>qutim.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/sawim</x>
+                <object mime='image/png'>sawim.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/swift</x>
+                <object mime='image/png'>swift.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/tkabber</x>
+                <object mime='image/png'>tkabber.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/vacuum</x>
+                <object mime='image/png'>vacuum.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/vk4xmpp</x>
+                <object mime='image/png'>vk4xmpp.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/xabber</x>
+                <object mime='image/png'>xabber.png</object>
+        </icon>
+
+        <icon>
+                <x xmlns='name'>clients/yaxim</x>
+                <object mime='image/png'>yaxim.png</object>
+        </icon>
+
+</icondef>

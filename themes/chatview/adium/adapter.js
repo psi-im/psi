@@ -5,11 +5,11 @@ var adapter = {
     loadTheme : function() {
         //var chat = chat;
         var loader = window.srvLoader;
-        chat.console("DEBUG: loading " );
+        //chat.console("DEBUG: loading " );
         loader.setCaseInsensitiveFS(true);
         loader.setPrepareSessionHtml(true);
         loader.setHttpResourcePath("/Contents/Resources");
-        chat.console("DEBUG: loading " + loader.themeId);
+        //chat.console("DEBUG: loading " + loader.themeId);
         var resources = ["FileTransferRequest.html",
         "Footer.html", "Header.html", "Status.html", "Topic.html", "Content.html",
         "Incoming/Content.html", "Incoming/NextContent.html",
@@ -213,7 +213,7 @@ chat.util.updateObject(adapter, function(chat){
     }
 
     function Template(raw) {
-        chat.console("parsing '"+raw+"'");
+        //chat.console("parsing '"+raw+"'");
         var splitted = raw.split(/(%[\w]+(?:\{[^\{]+\})?%)/), i;
         this.parts = [];
 
@@ -272,14 +272,14 @@ chat.util.updateObject(adapter, function(chat){
                 if (variant && ip.variants[variant]) {
                     chat.util.updateObject(ip, ip.variants[variant]);
                 }
-                chat.console("prepare html2");
+                //chat.console("prepare html2");
                 var topHtml = (loader.isMuc && cache["Topic.html"]) || cache["Header.html"];
                 chat.console("prepare html2.5");
                 topHtml = topHtml? (new Template(topHtml)).toString({
                     chatName: chat.util.escapeHtml(sessProps.chatName),
                     timeOpened: new Date()
                 }) : "";
-                chat.console("prepare html3");
+                //chat.console("prepare html3");
                 var footerHtml = new Template(cache["Footer.html"] || "").toString({});
                 var initScripts;
                 if (chat.async) {
@@ -323,9 +323,9 @@ chat.util.updateObject(adapter, function(chat){
                         topHtml, footerHtml
                     ];
                 }
-                chat.console("prepare html5");
+                //chat.console("prepare html5");
                 html = html.replace(/%@/g, function(){return replace.shift() || ""});
-                chat.console("DEBUG: " + html);
+                //chat.console("DEBUG: " + html);
                 if (!ip.DefaultBackgroundIsTransparent) {
                     if (ip.DefaultBackgroundColor)
                         html = html.replace(/<head>/i, '<head><style type="text/css" media="screen,print">' +
@@ -361,7 +361,7 @@ chat.util.updateObject(adapter, function(chat){
                     var cache = server.loadFromCacheMulti(["html", "Info.plist", "Topic.html", "Header.html", "Footer.html", "avatars"]);
                     //chat.console(chat.util.props(cache));
                     var props = loader.sessionProperties(sessionId, ["chatName"]);
-                    chat.console("SESSION PROPS: " + chat.util.props(props));
+                    //chat.console("SESSION PROPS: " + chat.util.props(props));
                     return onServerStuffReady(cache, props);
                 } catch (e) {
                     return "SESSION INIT ERROR: " + e + " \n" + chat.util.escapeHtml(""+e.stack).replace(/\n/, "<br/>");
@@ -369,13 +369,13 @@ chat.util.updateObject(adapter, function(chat){
             }
         },
         initSession : function() {
-            chat.console("init session");
+            //chat.console("init session");
 
             function cacheReady(cache)
             {
                 session = window.srvSession;
                 defaultAvatars = cache.avatars
-                chat.console(chat.util.props(cache, true))
+                //chat.console(chat.util.props(cache, true))
                 chat.adapter.initSession = null;
                 chat.adapter.loadTheme = null;
                 chat.adapter.getHtml = null;
@@ -387,7 +387,7 @@ chat.util.updateObject(adapter, function(chat){
                 chat.adapter.receiveObject = function(data) {
                     cdata = data;
                     try {
-                        chat.console(chat.util.props(data, true))
+                        //chat.console(chat.util.props(data, true))
                         var template;
                         if (data.type == "message") {
                             if (data.mtype != "message") {

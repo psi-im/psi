@@ -33,6 +33,7 @@
 #include <QFileInfo>
 #include <QApplication>
 #include <QScopedPointer>
+#include <QTimer>
 #include <time.h>
 #include <tuple>
 
@@ -144,6 +145,14 @@ public:
 		_sessions.remove(sessId);
 	}
 
+private slots:
+	void _callFinishLoadCalbacks()
+	{
+		for (auto &cb : theme->cvtd->loadCallback) {
+			cb(theme->state() == Theme::Loaded);
+		}
+	}
+
 public slots:
 	void setMetaData(const QVariantMap &map)
 	{
@@ -155,19 +164,23 @@ public slots:
 	void finishThemeLoading()
 	{
 		qDebug("%s theme is successfully loaded", qPrintable(theme->id()));
-		for (auto &cb : theme->cvtd->loadCallback) {
-			cb(true);
-		}
 		theme->setState(Theme::Loaded);
+#ifdef WEBENGINE
+		_callFinishLoadCalbacks();
+#else
+		QTimer::singleShot(0, this, SLOT(_callFinishLoadCalbacks())); // let event loop do its job
+#endif
 	}
 
 	void errorThemeLoading(const QString &error)
 	{
 		_loadError = error;
-		for (auto &cb : theme->cvtd->loadCallback) {
-			cb(false);
-		}
 		theme->setState(Theme::NotLoaded);
+#ifdef WEBENGINE
+		_callFinishLoadCalbacks();
+#else
+		QTimer::singleShot(0, this, SLOT(_callFinishLoadCalbacks())); // let event loop do its job
+#endif
 	}
 
 	void setHtml(const QString &h)

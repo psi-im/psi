@@ -154,10 +154,6 @@ void OptionsTabWidget::addTab(OptionsTab *tab)
 	else
 		QTabWidget::addTab(w, tab->tabName());
 
-	//FIXME: this is safe for our current use of addTab, but may
-	//be inconvenient in the future (Qt circa 4.2 had a bug which stopped
-	//setCurrentIndex(0); from working)
-	setCurrentIndex(1);
 	setCurrentIndex(0);
 }
 

@@ -3,8 +3,15 @@
 #include "ui_opt_theme.h"
 #include "psioptions.h"
 #include "psithememodel.h"
-#include "psithemeviewdelegate.h"
 #include "psithememanager.h"
+#include "psiiconset.h"
+
+#include <QToolButton>
+#include <QDialog>
+#include <QSortFilterProxyModel>
+#include <QTimer>
+
+#define SCREEN_PREFIX "scb_"
 
 class OptAppearanceThemeUI : public QWidget, public Ui::OptAppearanceTheme
 {
@@ -32,7 +39,7 @@ OptionsTabAppearanceThemes::OptionsTabAppearanceThemes(QObject *parent)
 //----------------------------------------------------------------------------
 
 OptionsTabAppearanceTheme::OptionsTabAppearanceTheme(QObject *parent,
-													PsiThemeProvider *provider_)
+						     PsiThemeProvider *provider_)
 	: OptionsTab(parent, provider_->type(), "",
 				 provider_->optionsName(),
 				 provider_->optionsDescription())
@@ -44,7 +51,6 @@ OptionsTabAppearanceTheme::OptionsTabAppearanceTheme(QObject *parent,
 
 OptionsTabAppearanceTheme::~OptionsTabAppearanceTheme()
 {
-
 }
 
 QWidget *OptionsTabAppearanceTheme::widget()
@@ -54,41 +60,129 @@ QWidget *OptionsTabAppearanceTheme::widget()
 
 	w = new OptAppearanceThemeUI();
 	OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
-	themesModel = new PsiThemeModel(this);
-	themesModel->setType(provider->type());
-	PsiThemeViewDelegate *vd = new PsiThemeViewDelegate(d->themeView);
-	d->themeView->setItemDelegate(vd);
+
+	unsortedModel = new PsiThemeModel(this);
+
+	themesModel = new QSortFilterProxyModel(this);
+	themesModel->setSourceModel(unsortedModel);
+	themesModel->setSortCaseSensitivity(Qt::CaseInsensitive);
+
 	d->themeView->setModel(themesModel);
-	int sw = provider->screenshotWidth();
-	if (sw) {
-		d->themeView->setFixedWidth(sw);
-	}
+	d->themeView->sortByColumn(0, Qt::AscendingOrder);
+
 	connect(d->themeView->selectionModel(),
-			SIGNAL(currentChanged(QModelIndex, QModelIndex)),
-			SIGNAL(dataChanged()));
+		SIGNAL(currentChanged(QModelIndex, QModelIndex)),
+		SLOT(themeSelected(QModelIndex, QModelIndex)));
 
 	connect(themesModel,
-	        SIGNAL(rowsInserted(QModelIndex,int,int)),
-	        SLOT(modelRowsInserted(QModelIndex,int,int)));
+		SIGNAL(rowsInserted(QModelIndex,int,int)),
+		SLOT(modelRowsInserted(QModelIndex,int,int)));
+
+	QTimer::singleShot(0, this, SLOT(startLoading()));
 
 	return w;
+}
+
+void OptionsTabAppearanceTheme::startLoading()
+{
+	unsortedModel->setType(provider->type());
+}
+
+void OptionsTabAppearanceTheme::themeSelected(const QModelIndex &current, const QModelIndex &previous)
+{
+	if (!previous.isValid()) {
+		return; // Psi won't start if it's impossible to load any theme. So we always have previous.
+	}
+	emit dataChanged();
 }
 
 void OptionsTabAppearanceTheme::modelRowsInserted(const QModelIndex &parent, int first, int last)
 {
 	if (!parent.isValid() || !w) {
-		Theme *theme = provider->current();
 		OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
-		if (theme) {
-			for (int i = first; i <= last; i++) {
-				QString id = themesModel->data(themesModel->index(i), PsiThemeModel::IdRole).toString();
-				if (id == theme->id()) {
-					d->themeView->setCurrentIndex(themesModel->index(i));
-					break;
-				}
+		//const QSize buttonSize = QSize(21,21);
+		for (int i = first; i <= last; i++) {
+			const QModelIndex index = themesModel->index(i, 0);
+			const QString id = themesModel->data(index, PsiThemeModel::IdRole).toString();
+			if (themesModel->data(index, PsiThemeModel::IsCurrent).toBool()) {
+				d->themeView->setCurrentIndex(index);
 			}
+#if 0
+			const QString themeName = themesModel->data(index, PsiThemeModel::TitleRole).toString();
+			bool isPsi = id.startsWith("psi");
+			const QPixmap client = isPsi ? IconsetFactory::iconPixmap("clients/psi")
+							 : IconsetFactory::iconPixmap("clients/adium");
+			const QString clientName = isPsi ? tr("Psi Theme") : tr("Adium Theme");
+			QToolButton *screenshotButton = new QToolButton(d->themeView);
+			screenshotButton->setIcon(QIcon(IconsetFactory::iconPixmap("psi/eye")));
+			screenshotButton->resize(buttonSize);
+			screenshotButton->setObjectName(SCREEN_PREFIX + id);
+			screenshotButton->setToolTip(tr("Show theme screenshot"));
+			connect(screenshotButton, SIGNAL(clicked()), this, SLOT(showThemeScreenshot()));
+
+			QLabel *typeLabel = new QLabel(d->themeView);
+			typeLabel->setPixmap(client);
+			typeLabel->setToolTip(clientName);
+
+			QLabel *nameLabel = new QLabel(themeName, d->themeView);
+
+			QWidget *itemWidget = new QWidget(d->themeView);
+
+			QBoxLayout *box = new QBoxLayout(QBoxLayout::LeftToRight, d->themeView);
+			box->addWidget(typeLabel);
+			box->addWidget(nameLabel);
+			box->addStretch();
+			box->addWidget(screenshotButton);
+			itemWidget->setLayout(box);
+			//itemWidget->setAutoFillBackground(true); // from recommendation of indexWidget but does not work as expected
+
+			d->themeView->setIndexWidget(index, itemWidget);
+#endif
 		}
 	}
+}
+
+void OptionsTabAppearanceTheme::showThemeScreenshot()
+{
+	if ( !w || !sender()->inherits("QToolButton") )
+		return;
+	OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
+	QToolButton *btn = static_cast<QToolButton*>(sender());
+	if ( btn ) {
+		if ( screenshotDialog )
+			delete(screenshotDialog);
+
+		const QSize minSize(300, 100);
+		screenshotDialog = new QDialog(d);
+		screenshotDialog->setMinimumSize(minSize);
+
+		const int row = unsortedModel->themeRow(getThemeId(btn->objectName()));
+		const QModelIndex index = unsortedModel->index(row, 0);
+		const QString name_ = unsortedModel->data(index, PsiThemeModel::TitleRole).toString();
+		const QPixmap scr = unsortedModel->data(index, PsiThemeModel::ScreenshotRole).value<QPixmap>();
+
+		screenshotDialog->setWindowTitle(tr("%1 Screenshot").arg(name_));
+		screenshotDialog->setWindowIcon(QIcon(IconsetFactory::iconPixmap("psi/logo_128")));
+
+		QBoxLayout *box = new QBoxLayout(QBoxLayout::LeftToRight, screenshotDialog);
+		QLabel *image = new QLabel(screenshotDialog);
+		if (!scr.isNull()) {
+			image->setPixmap(scr);
+		}
+		else {
+			image->setText(tr("No Image"));
+		}
+		box->addWidget(image);
+
+		screenshotDialog->setAttribute(Qt::WA_DeleteOnClose);
+		screenshotDialog->show();
+	}
+}
+
+QString OptionsTabAppearanceTheme::getThemeId(const QString &objName) const
+{
+	const int index = objName.indexOf("_", 0);
+	return (index >0 ? objName.right(objName.length() - index - 1) : QString());
 }
 
 void OptionsTabAppearanceTheme::applyOptions()
@@ -97,19 +191,15 @@ void OptionsTabAppearanceTheme::applyOptions()
 		return;
 
 	OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
-	QString id = d->themeView->currentIndex().data(PsiThemeModel::IdRole).toString();
-	if (!id.isEmpty()) {
-		provider->setCurrentTheme(id);
-	}
+	themesModel->setData(d->themeView->currentIndex(), true, PsiThemeModel::IsCurrent);
 }
 
 void OptionsTabAppearanceTheme::restoreOptions()
 {
+#if 0
 	if ( !w )
 		return;
 
 	OptAppearanceThemeUI *d = (OptAppearanceThemeUI *)w;
-
-	Theme *theme = provider->current();
-	d->themeView->setCurrentIndex(themesModel->index( themesModel->themeRow(theme?theme->id():"") ));
+#endif
 }

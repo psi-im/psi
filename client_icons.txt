@@ -101,7 +101,6 @@ miranda-ng nightly.miranda.im,miranda-ng.org
 mirandahotcoffee hotcoffee
 monal monal.im
 movamessenger.sis movamessenge
-msnmessenger msn,delx.net.au
 nekbot sleekxmpp.com#1.1.10
 nimbuzz nimbuzz
 omnipresence omnipresence,home.gna.org
@@ -155,11 +154,7 @@ wod-xmpp weonlydo.com
 wtw wtw
 vacuum vacuum
 vkontakte vk.com,pyvk-t,vkontakte
-yaonline d18f2ed0bed0bdd0bbd0b0d0b9d0bd,online.yandex.ru
-yaonlinej2me ya.online
-yaonlinesymbian yandexmail
 yabber yabber
-yaonlinesymbian yaonline
 yaxim yaxim
 xabber xabber
 xu6-bot xu-6.jabbrik.ru

@@ -125,7 +125,7 @@
 				<warn-before-clear type="bool">true</warn-before-clear>
 				<hide-when-closing type="bool">false</hide-when-closing>
 				<status-with-priority comment="Show priority with status change" type="bool">false</status-with-priority>
-				<default-jid-mode comment="Default jid mode: barejid | auto" type="QString">barejid</default-jid-mode>
+				<default-jid-mode comment="Default jid mode: barejid | auto" type="QString">auto</default-jid-mode>
 				<default-jid-mode-ignorelist comment="Default autojid mode ignore list: jid1,jid2,..." type="QString"></default-jid-mode-ignorelist>
 			</chat>
 			<save>
@@ -541,7 +541,7 @@
 			<moods type="QString">default</moods>
 			<activities type="QString">default</activities>
 			<affiliations type="QString">default</affiliations>
-			<clients type="QString"></clients>
+			<clients type="QString">default</clients>
 		</iconsets>
 		<messages>
 			<default-outgoing-message-type type="QString">chat</default-outgoing-message-type>

@@ -146,7 +146,8 @@ function startPsiTheme(shared) {
 				return shared.cdata["emote"]?"*"+nick:(shared.isMuc?"&lt;"+nick+"&gt;":nick+":");
 			},
 			alertedmessage : function() {
-				return shared.cdata.alert?"<span class='alert'>"+shared.cdata.message+"</span>":shared.cdata.message;
+				var msg = shared.cdata.alert?"<span class='alert'>"+shared.cdata.message+"</span>":shared.cdata.message;
+				return shared.cdata.id? util.replaceableMessage(shared.cdata.id, msg) : msg;
 			},
 			sentrec : function() {return shared.cdata.spooled?"infmsg":(shared.cdata.local?"sent":"received");},
 			nickcolor : function() {
