@@ -24,67 +24,22 @@
 #include <QPointer>
 #include <functional>
 
-#include "theme.h"
 #include "webview.h"
+#include "theme.h"
 
-class ChatViewThemeJSUtil;
-class ChatViewJSLoader;
-class ChatViewThemeProvider;
-class ChatViewThemePrivate;
-class ChatViewThemeSession;
-
-
-
-class ChatViewTheme : public Theme
-{
-	friend class ChatViewThemeJSUtil;
-#ifndef WEBENGINE
-	friend class SessionRequestHandler;
-#endif
-public:
-
-	ChatViewTheme();
-	ChatViewTheme(ChatViewThemeProvider *provider);
-	ChatViewTheme(const ChatViewTheme &other);
-	ChatViewTheme &operator=(const ChatViewTheme &other);
-	~ChatViewTheme();
-
-	QByteArray screenshot();
-
-	bool exists();
-	bool load(std::function<void(bool)> loadCallback);
-
-	bool isMuc() const;
-	inline QUrl baseUrl() const { return QUrl("theme://messages/" + id() + "/"); }
-
-	void putToCache(const QString &key, const QVariant &data);
-	void setTransparentBackground(bool enabled = true);
-	bool isTransparentBackground() const;
-#ifndef WEBENGINE
-	void embedSessionJsObject(QSharedPointer<ChatViewThemeSession> session);
-#endif
-	bool applyToWebView(QSharedPointer<ChatViewThemeSession> session);
-
-	QVariantMap loadFromCacheMulti(const QVariantList &list);
-	QVariant cache(const QString &name) const;
-	NetworkAccessManager* networkAccessManager();
-private:
-	friend class ChatViewJSLoader;
-	friend class ChatViewThemePrivate;
-
-	// theme is destroyed only when all chats using it are closed (TODO: ensure)
-	QExplicitlySharedDataPointer<ChatViewThemePrivate> cvtd;
-};
-
+class SessionRequestHandler;
 class ThemeServer;
+
+
+
 class ChatViewThemeSession {
-	friend class ChatViewTheme;
+	friend class ChatViewThemePrivate;
 #ifndef WEBENGINE
 	friend class SessionRequestHandler;
 #endif
 
 	QString sessId; // unique id of session
-	ChatViewTheme theme;
+
 #ifdef WEBENGINE
 	ThemeServer *server = 0;
 #endif
@@ -95,9 +50,13 @@ public:
 	inline const QString &sessionId() const { return sessId; }
 	virtual WebView* webView() = 0;
 	virtual QObject* jsBridge() = 0;
+	virtual Theme theme() const = 0;
 	// returns: data, content-type
 	virtual QPair<QByteArray,QByteArray> getContents(const QUrl &url) = 0;
 	virtual QString propsAsJsonString() const = 0;
+
+	static void init(QSharedPointer<ChatViewThemeSession> sess);
+	bool isTransparentBackground() const;
 };
 
 #endif

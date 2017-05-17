@@ -36,14 +36,12 @@ class ChatViewThemeProvider : public PsiThemeProvider
 public:
 	ChatViewThemeProvider(PsiCon *);
 
-	inline PsiCon* psi() const { return _psi; }
-
 	const char* type() const { return "chatview"; }
 	const QStringList themeIds() const;
-	Theme* theme(const QString &id);
+	Theme theme(const QString &id);
 
 	bool loadCurrent();
-	Theme *current() const; // currently loaded theme
+	Theme current() const; // currently loaded theme
 
 	void setCurrentTheme(const QString &);
 	virtual int screenshotWidth() const { return 512; } // hack
@@ -64,7 +62,7 @@ signals:
 
 private:
 	PsiCon *_psi;
-	ChatViewTheme *curTheme; // FIXME it does not make sense to keep it as pointer
+	Theme curTheme; // FIXME it does not make sense to keep it as pointer
 };
 
 class GroupChatViewThemeProvider : public ChatViewThemeProvider

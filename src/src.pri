@@ -115,7 +115,8 @@ HEADERS += \
 	$$PWD/psithememanager.h \
 	$$PWD/psithememodel.h \
 	$$PWD/psithemeprovider.h \
-	$$PWD/theme.cpp \
+	$$PWD/theme.h \
+	$$PWD/theme_p.h \
 	$$PWD/applicationinfo.h \
 	$$PWD/pgptransaction.h \
 	$$PWD/userlist.h \
@@ -251,6 +252,7 @@ SOURCES += \
 	$$PWD/psithememodel.cpp \
 	$$PWD/psithemeprovider.cpp \
 	$$PWD/theme.cpp \
+	$$PWD/theme_p.cpp \
 	$$PWD/applicationinfo.cpp \
 	$$PWD/pgptransaction.cpp \
 	$$PWD/serverinfomanager.cpp \
@@ -646,6 +648,7 @@ qtwebengine|qwebkit {
 			$$PWD/webview.h \
 			$$PWD/jsutil.h \
 			$$PWD/chatviewtheme.h \
+			$$PWD/chatviewtheme_p.h \
 			$$PWD/chatviewthemeprovider.h \
 			$$PWD/chatviewthemeprovider_priv.h
 

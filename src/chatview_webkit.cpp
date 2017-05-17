@@ -73,7 +73,7 @@ class ChatViewPrivate
 public:
 	ChatViewPrivate() {}
 
-	ChatViewTheme theme;
+	Theme theme;
 	QSharedPointer<ChatViewThemeSessionBridge> themeBridge;
 
 	WebView *webView;
@@ -301,6 +301,11 @@ public:
 		return cv->jsBridge();
 	}
 
+	Theme theme() const
+	{
+		return cv->d->theme;
+	}
+
 	QString propsAsJsonString() const
 	{
 #if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
@@ -430,12 +435,12 @@ ChatView::~ChatView()
 // something after we know isMuc and dialog is set. kind of final step
 void ChatView::init()
 {
-	auto curTheme = d->themeProvider()->current();
-	if (!curTheme) {
+	Theme curTheme = d->themeProvider()->current();
+	if (curTheme.state() != Theme::Loaded) {
 		qDebug("ChatView theme is not loaded. this is fatal");
 		return;
 	}
-	d->theme = *(dynamic_cast<ChatViewTheme*>(curTheme));// TODO rewrite this pointer magic
+	d->theme = curTheme;// TODO rewrite this pointer magic
 
 #ifdef HAVE_QT5
 	d->themeBridge.reset(new ChatViewThemeSessionBridge(this));
@@ -446,14 +451,13 @@ void ChatView::init()
 #ifndef WEBENGINE
 	((ChatViewPage*)d->webView->page())->setCVPrivate(d.data());
 #endif
-	d->theme.applyToWebView(d->themeBridge.dynamicCast<ChatViewThemeSession>());
+	ChatViewThemeSession::init(d->themeBridge);
 
-	if (d->theme.isTransparentBackground()) {
-		QWidget *w = this;
-		while (w) {
-			w->setAttribute(Qt::WA_TranslucentBackground, true);
-			w = w->parentWidget();
-		}
+	bool tbg = d->themeBridge->isTransparentBackground();
+	QWidget *w = this;
+	while (w) {
+		w->setAttribute(Qt::WA_TranslucentBackground, tbg);
+		w = w->parentWidget();
 	}
 }
 

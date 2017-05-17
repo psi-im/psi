@@ -39,35 +39,35 @@ struct PsiThemeModel::Loader
 	{
 		ThemeItemInfo ti;
 		ti.id = id;
-		Theme *theme = provider->theme(id);
-		if (theme && theme->load()) {
-			ti.title = theme->title();
-			ti.screenshot = theme->screenshot();
+		Theme theme = provider->theme(id);
+		if (theme.load()) {
+			ti.title = theme.title();
+			ti.hasPreview = theme.hasPreview();
 			ti.isValid = true;
-			ti.isCurrent = provider->current() && provider->current()->id() == id;
+			ti.isCurrent = provider->current().id() == id;
 		} else {
 			ti.title = ":-(";
 		}
 
-		qDebug("%s theme loading status: %s", qPrintable(theme->id()), ti.isValid? "success" : "failure");
+		qDebug("%s theme loading status: %s", qPrintable(theme.id()), ti.isValid? "success" : "failure");
 		return ti;
 	}
 
 	void asyncLoad(const QString &id, std::function<void(const ThemeItemInfo&)> loadCallback)
 	{
-		Theme *currentTheme = provider->current();
-		Theme *theme = provider->theme(id);
-		if (!theme || !theme->load([this, theme, currentTheme, loadCallback](bool success) {
-			qDebug("%s theme loading status: %s", qPrintable(theme->id()), success? "success" : "failure");
+		Theme currentTheme = provider->current();
+		Theme theme = provider->theme(id);
+		if (!theme.isValid() || !theme.load([this, theme, currentTheme, loadCallback](bool success) {
+			qDebug("%s theme loading status: %s", qPrintable(theme.id()), success? "success" : "failure");
 			// TODO invent something smarter
 
 			ThemeItemInfo ti;
 			if (success) { // if loaded
-				ti.id = theme->id();
-				ti.title = theme->title();
-				ti.screenshot = theme->screenshot();
+				ti.id = theme.id();
+				ti.title = theme.title();
+				ti.hasPreview = theme.hasPreview();
 				ti.isValid = true;
-				ti.isCurrent = currentTheme && (currentTheme->id() == ti.id);
+				ti.isCurrent = currentTheme.id() == ti.id;
 			}
 		    loadCallback(ti);
 		})) {
@@ -147,11 +147,9 @@ QVariant PsiThemeModel::data ( const QModelIndex & index, int role ) const
 		case Qt::DisplayRole:
 		case TitleRole:
 			return themesInfo[index.row()].title;
-		case ScreenshotRole:
+		case HasPreviewRole:
 		{
-			QPixmap p;
-			p.loadFromData(themesInfo[index.row()].screenshot);
-			return p;
+			return themesInfo[index.row()].hasPreview;
 		}
 		case IsCurrent:
 			return themesInfo[index.row()].isCurrent;

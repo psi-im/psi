@@ -1373,6 +1373,7 @@ void PsiCon::openAtStyleUri(const QUrl &uri)
 
 void PsiCon::doToolbars()
 {
+	// TODO try to remember source toolbar to open correct settings in the toolbars dialog
 	OptionsDlg *w = (OptionsDlg *)dialogFind("OptionsDlg");
 	if (w) {
 		w->openTab("toolbars");

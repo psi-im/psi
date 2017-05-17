@@ -24,10 +24,12 @@
 #include <QStringList>
 
 #include "applicationinfo.h"
+#include "psicon.h"
 
 
-PsiThemeProvider::PsiThemeProvider(QObject *parent)
-	: QObject(parent)
+PsiThemeProvider::PsiThemeProvider(PsiCon *parent) :
+	QObject(parent),
+    _psi(parent)
 {
 
 }

@@ -38,34 +38,9 @@
 #endif
 
 #include "psithemeprovider.h"
+#include "theme_p.h"
 
-class ThemePrivate : public QSharedData
-{
-public:
-	PsiThemeProvider *provider;
-	Theme::State state = Theme::NotLoaded;
 
-	// metadata
-	QString id, name, version, description, creation, homeUrl;
-	QStringList authors;
-	QHash<QString, QString> info;
-
-	// runtime info
-	QString filepath;
-	bool caseInsensitiveFS;
-
-public:
-	ThemePrivate();
-	//QByteArray loadData(const QString &fileName, const QString &dir) const;
-};
-
-ThemePrivate::ThemePrivate() :
-	provider(0),
-	name(QObject::tr("Unnamed")),
-	caseInsensitiveFS(false)
-{
-
-}
 
 
 //--------------------------------------
@@ -76,10 +51,10 @@ Theme::Theme()
 
 }
 
-Theme::Theme(PsiThemeProvider *provider) :
-	d(new ThemePrivate())
+Theme::Theme(ThemePrivate *priv) :
+    d(priv)
 {
-	d->provider = provider;
+
 }
 
 Theme::Theme(const Theme &other) :
@@ -112,15 +87,32 @@ Theme::State Theme::state() const
 	return d->state;
 }
 
+bool Theme::exists()
+{
+	return d && d->exists();
+}
+
 bool Theme::load()
 {
-	return false;
+	if (!d) {
+		return false;
+	}
+	return d->load();
 }
 
 bool Theme::load(std::function<void (bool)> loadCallback)
 {
-	Q_UNUSED(loadCallback);
-	return false;
+	return d->load(loadCallback);
+}
+
+bool Theme::hasPreview() const
+{
+	return d->hasPreview();
+}
+
+QWidget* Theme::previewWidget()
+{
+	return d->previewWidget();
 }
 
 bool Theme::isCompressed(const QFileInfo &fi)
@@ -201,12 +193,17 @@ QByteArray Theme::loadData(const QString &fileName, const QString &themePath, bo
 
 QByteArray Theme::loadData(const QString &fileName) const
 {
-	return Theme::loadData(fileName, d->filepath, d->caseInsensitiveFS);
+	return d->loadData(fileName);
 }
 
-const QString &Theme::id() const
+Theme::ResourceLoader *Theme::resourceLoader()
 {
-	return d->id;
+	return d->resourceLoader();
+}
+
+const QString Theme::id() const
+{
+	return d? d->id : QString();
 }
 
 void Theme::setId(const QString &id)
@@ -315,127 +312,6 @@ QString Theme::title() const
 void Theme::setState(Theme::State state)
 {
 	d->state = state;
-}
-
-//=================================================
-// Reource Loader
-//=================================================
-
-class FSResourceLoader : public Theme::ResourceLoader
-{
-	QDir baseDir;
-
-	// case insensetive file cache.
-	QHash<QString,QString> ciFSCache; // lower case to real path
-	bool caseInsensetive;
-public:
-	FSResourceLoader(const QDir &d, bool caseInsensetive) :
-	    baseDir(d), caseInsensetive(caseInsensetive)
-	{ }
-
-	QByteArray loadData(const QString &fileName) {
-		QFile file(baseDir.filePath(fileName));
-		if (caseInsensetive && !file.exists()) {
-			if (ciFSCache.isEmpty()) {
-				updateCiFsCache();
-			}
-			QString realFN = ciFSCache.value(fileName.toLower());
-			if (!realFN.isEmpty()) {
-				file.setFileName(baseDir.filePath(realFN));
-			}
-		}
-		//qDebug("read data from %s", qPrintable(file.fileName()));
-		if (!file.open(QIODevice::ReadOnly)) {
-			qDebug("%s Failed to open: %s", __FUNCTION__, qPrintable(file.fileName()));
-			return QByteArray();
-		}
-
-		return file.readAll();
-	}
-
-	void updateCiFsCache()
-	{
-		int skip = baseDir.path().length() + 1;
-		QDirIterator di(baseDir.path(), QDir::Files, QDirIterator::Subdirectories);
-		while (di.hasNext()) {
-			QString real = di.next().mid(skip);
-			ciFSCache.insert(real.toLower(), real);
-		}
-	}
-
-	bool fileExists(const QString &fileName)
-	{
-		QString base = baseDir.path() + QLatin1Char('/');
-		if (QFileInfo(base + fileName).exists()) {
-			return true;
-		}
-		if (caseInsensetive) {
-			if (ciFSCache.isEmpty()) {
-				updateCiFsCache();
-			}
-			QString realFN = ciFSCache.value(fileName.toLower());
-			if (!realFN.isEmpty() && QFileInfo(base + realFN).exists()) {
-				return true;
-			}
-		}
-		return false;
-	}
-};
-
-#ifdef Theme_ZIP
-class ZipResourceLoader : public Theme::ResourceLoader
-{
-	UnZip z;
-	QString baseName;
-public:
-	ZipResourceLoader(UnZip &&z, const QString &baseName) :
-	    z(std::move(z)), baseName(baseName)
-	{ }
-
-	QByteArray loadData(const QString &fileName)
-	{
-		QString n = baseName + QLatin1Char('/') + fileName;
-		QByteArray ba;
-
-		if ( !z.readFile(n, &ba) ) {
-			z.readFile(n.mid(baseName.count()), &ba);
-		}
-
-		return ba;
-	}
-
-	bool fileExists(const QString &fileName)
-	{
-		QString n = baseName + QLatin1Char('/') + fileName;
-
-		if (z.fileExists(n)) {
-			return true;
-		}
-		return z.fileExists(n.mid(baseName.count()));
-	}
-};
-#endif
-
-Theme::ResourceLoader *Theme::resourceLoader()
-{
-	QFileInfo fi(d->filepath);
-	if ( fi.isDir() ) {
-		if (fi.isReadable()) {
-			return new FSResourceLoader(QDir(fi.filePath()), d->caseInsensitiveFS);
-		}
-	}
-#ifdef Theme_ZIP
-	else if (Theme::isCompressed(fi)) {
-		UnZip z;
-		if (z.open()) {
-			if (d->caseInsensitiveFS) {
-				z.setCaseSensitivity(UnZip::CS_Insensitive);
-			}
-			return new ZipResourceLoader(std::move(z), fi.completeBaseName());
-		}
-	}
-#endif
-	return nullptr;
 }
 
 Theme::ResourceLoader::~ResourceLoader()

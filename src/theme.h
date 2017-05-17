@@ -33,6 +33,7 @@
 #include <functional>
 
 class QFileInfo;
+class QWidget;
 class ThemePrivate;
 class PsiThemeProvider;
 
@@ -63,16 +64,22 @@ public:
     };
 
 	Theme();
-	Theme(PsiThemeProvider *provider);
+	Theme(ThemePrivate *priv);
 	Theme(const Theme &other);
 	Theme &operator=(const Theme &other);
 	virtual ~Theme();
+
 	bool isValid() const;
 	State state() const;
 
-	virtual bool exists() = 0;
-	virtual bool load(); // synchronous load
-	virtual bool load(std::function<void(bool)> loadCallback);  // asynchronous load
+	// previously virtual
+	bool exists();
+	bool load(); // synchronous load
+	bool load(std::function<void(bool)> loadCallback);  // asynchronous load
+
+	bool hasPreview() const;
+	QWidget *previewWidget(); // this hack must be replaced with something widget based
+	// end of previously virtual
 
     static bool isCompressed(const QFileInfo &); // just tells if theme looks like compressed.
     bool isCompressed();
@@ -81,7 +88,7 @@ public:
 	QByteArray loadData(const QString &fileName) const;
     ResourceLoader* resourceLoader();
 
-	const QString &id() const;
+	const QString id() const;
 	void setId(const QString &id);
 	const QString &name() const;
 	void setName(const QString &name);
@@ -100,9 +107,11 @@ public:
 	void setCaseInsensitiveFS(bool state);
 	bool caseInsensitiveFS() const;
 
-	virtual QString title() const;
-	virtual QByteArray screenshot() = 0; // this hack must be replaced with something widget based
-protected:
+	QString title() const; // helper function to remove name or id when name is not set
+
+	// for internal use
+	template<class T>
+	T* priv() const { return static_cast<T*>(d.data()); }
 	void setState(State state);
 
 private:

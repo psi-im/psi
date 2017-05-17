@@ -25,18 +25,24 @@
 #include <functional>
 #include "theme.h"
 
+class PsiCon;
+
 class PsiThemeProvider : public QObject
 {
 	Q_OBJECT
 
+	PsiCon *_psi;
+
 public:
-	PsiThemeProvider(QObject *parent);
+	PsiThemeProvider(PsiCon *parent);
+
+	inline PsiCon* psi() const { return _psi; }
 
 	virtual const char* type() const = 0;
-	virtual Theme* theme(const QString &id) = 0; // make new theme
+	virtual Theme theme(const QString &id) = 0; // make new theme
 	virtual const QStringList themeIds() const = 0;
 	virtual bool loadCurrent() = 0;
-	virtual Theme* current() const = 0;
+	virtual Theme current() const = 0;
 	virtual void setCurrentTheme(const QString &) = 0;
 
 	virtual bool threadedLoading() const;

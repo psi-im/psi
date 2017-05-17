@@ -30,7 +30,7 @@ struct ThemeItemInfo
 {
 	QString id;
 	QString title;
-	QByteArray screenshot;
+	bool hasPreview;
 	bool isValid = false;
 	bool isCurrent = false;
 };
@@ -43,7 +43,7 @@ class PsiThemeModel : public QAbstractListModel
 public:
 	enum ThemeRoles {
 		IdRole = Qt::UserRole + 1,
-		ScreenshotRole,
+		HasPreviewRole,
 		TitleRole,
 		IsCurrent
 	};
