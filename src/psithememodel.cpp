@@ -25,6 +25,7 @@
 
 #include "psithememanager.h"
 #include "psiiconset.h"
+#include "textutil.h"
 
 
 class PsiThemeModel;
@@ -160,7 +161,7 @@ QVariant PsiThemeModel::data ( const QModelIndex & index, int role ) const
 			const ThemeItemInfo &ti = themesInfo[index.row()];
 
 			if (!ti.description.isEmpty()) {
-				toolTip += ti.description + "\n";
+				toolTip += ti.description + "<br>";
 			}
 			if (!ti.version.isEmpty()) {
 				toolTip += "<b>" + tr("Version") + ":</b> " + ti.version;
@@ -168,7 +169,7 @@ QVariant PsiThemeModel::data ( const QModelIndex & index, int role ) const
 			if (!ti.authors.isEmpty()) {
 				toolTip += "<b>" +  tr("Authors") + ":</b>";
 				for (auto &a : ti.authors) {
-					toolTip += QString("  ") + a;
+					toolTip += QString("&nbsp;&nbsp;") + TextUtil::escape(a);
 				}
 			}
 			if (!ti.creation.isEmpty()) {
@@ -178,7 +179,7 @@ QVariant PsiThemeModel::data ( const QModelIndex & index, int role ) const
 				toolTip += "<b>" + tr("Home") + QString(":</b> <a href=\"%1\">%2</a>").arg(ti.homeUrl, ti.homeUrl);
 			}
 			if (!toolTip.isEmpty()) {
-				return toolTip.join("\n");
+				return "<html><body>"+toolTip.join("<br>")+"</body></html>";
 			}
 			break;
 		}
