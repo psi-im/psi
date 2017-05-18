@@ -74,7 +74,6 @@ public:
 	ChatViewPrivate() {}
 
 	Theme theme;
-	QSharedPointer<ChatViewThemeSessionBridge> themeBridge;
 
 	WebView *webView;
 	ChatViewJSObject *jsObject;
@@ -109,7 +108,7 @@ public:
 // ChatViewJSObject
 // object which will be embed to javascript part of view
 //----------------------------------------------------------------------------
-class ChatViewJSObject : public QObject
+class ChatViewJSObject : public ChatViewThemeSession
 {
 	Q_OBJECT
 
@@ -128,10 +127,22 @@ class ChatViewJSObject : public QObject
 
 public:
 	ChatViewJSObject(ChatView *view) :
-		QObject(view),
+		ChatViewThemeSession(view),
 		_view(view)
 	{
 
+	}
+
+	// returns: data, content-type for http requests
+	QPair<QByteArray,QByteArray> getContents(const QUrl &url)
+	{
+		Q_UNUSED(url)
+		return QPair<QByteArray,QByteArray>();
+	}
+
+	WebView* webView()
+	{
+		return _view->textWidget();
 	}
 
 	bool isMuc() const
@@ -278,64 +289,6 @@ signals:
 //----------------------------------------------------------------------------
 // ChatView
 //----------------------------------------------------------------------------
-class ChatViewThemeSessionBridge : public ChatViewThemeSession
-{
-	ChatView *cv;
-public:
-	ChatViewThemeSessionBridge(ChatView *cv) : cv(cv) {}
-
-	// returns: data, content-type
-	QPair<QByteArray,QByteArray> getContents(const QUrl &url)
-	{
-		Q_UNUSED(url)
-		return QPair<QByteArray,QByteArray>();
-	}
-
-	WebView* webView()
-	{
-		return cv->textWidget();
-	}
-
-	QObject* jsBridge()
-	{
-		return cv->jsBridge();
-	}
-
-	Theme theme() const
-	{
-		return cv->d->theme;
-	}
-
-	QString propsAsJsonString() const
-	{
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-		QJsonObject jsObj;
-#else
-		QVariantMap jsObj;
-#endif
-		ChatViewJSObject *js = static_cast<ChatViewJSObject*>(cv->jsBridge());
-		int pc = js->metaObject()->propertyCount();
-		for (int i = 0; i < pc; i++) {
-			QMetaProperty p = js->metaObject()->property(i);
-			if (p.isReadable()) {
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-				QJsonValue v = QJsonValue::fromVariant(js->property(p.name()));
-#else
-				QVariant v = js->property(p.name());
-#endif
-				if (!v.isNull()) {
-					jsObj.insert(p.name(), v);
-				}
-			}
-		}
-#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
-		QJsonDocument doc(jsObj);
-		return QString(doc.toJson(QJsonDocument::Compact));
-#else
-		return JSUtil::map2json(jsObj);
-#endif
-	}
-};
 
 #ifdef WEBENGINE
 class ChatViewPage : public QWebEnginePage
@@ -372,7 +325,7 @@ protected:
 	QString userAgentForUrl(const QUrl &url) const
 	{
 		if (url.host() == QLatin1String("psi")) {
-			return cvd->themeBridge->sessionId();
+			return cvd->jsObject->sessionId();
 		}
 		return QWebPage::userAgentForUrl(url);
 	}
@@ -420,12 +373,6 @@ ChatView::ChatView(QWidget *parent) :
 	psiOptionChanged("options.ui.automatically-copy-selected-text"); // init autocopy connection
 #endif
 	connect(d->jsObject, SIGNAL(inited()), SLOT(sessionInited()));
-#if WEBENGINE
-	// TODO something
-#else
-	connect(d->webView->page()->mainFrame(),
-			SIGNAL(javaScriptWindowObjectCleared()), SLOT(embedJsObject()));
-#endif
 }
 
 ChatView::~ChatView()
@@ -442,18 +389,12 @@ void ChatView::init()
 	}
 	d->theme = curTheme;// TODO rewrite this pointer magic
 
-#ifdef HAVE_QT5
-	d->themeBridge.reset(new ChatViewThemeSessionBridge(this));
-#else
-	d->themeBridge = QSharedPointer<ChatViewThemeSessionBridge>(new ChatViewThemeSessionBridge(this));
-#endif
-
 #ifndef WEBENGINE
 	((ChatViewPage*)d->webView->page())->setCVPrivate(d.data());
 #endif
-	ChatViewThemeSession::init(d->themeBridge);
+	d->jsObject->init(d->theme);
 
-	bool tbg = d->themeBridge->isTransparentBackground();
+	bool tbg = d->jsObject->isTransparentBackground();
 	QWidget *w = this;
 	while (w) {
 		w->setAttribute(Qt::WA_TranslucentBackground, tbg);
@@ -465,14 +406,6 @@ void ChatView::setEncryptionEnabled(bool enabled)
 {
 	d->isEncryptionEnabled_ = enabled;
 }
-
-#ifndef WEBENGINE
-void ChatView::embedJsObject()
-{
-	ChatViewTheme *theme = static_cast<ChatViewTheme *>(d->themeProvider()->current());
-	theme->embedSessionJsObject(d->themeBridge);
-}
-#endif
 
 void ChatView::markReceived(QString id)
 {

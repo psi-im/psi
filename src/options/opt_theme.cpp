@@ -90,6 +90,7 @@ void OptionsTabAppearanceTheme::startLoading()
 
 void OptionsTabAppearanceTheme::themeSelected(const QModelIndex &current, const QModelIndex &previous)
 {
+	Q_UNUSED(current);
 	if (!previous.isValid()) {
 		return; // Psi won't start if it's impossible to load any theme. So we always have previous.
 	}

@@ -25,11 +25,14 @@
 #include <QWebEngineScriptCollection>
 #include <QWebEngineProfile>
 #include <functional>
+#include <QJsonObject>
+#include <QJsonDocument>
 #else
 #include <QWebPage>
 #include <QWebFrame>
 #include <QNetworkRequest>
 #endif
+#include <QMetaProperty>
 #include <QFileInfo>
 #include <QApplication>
 #include <QScopedPointer>
@@ -51,6 +54,7 @@
 #include "common.h"
 #include "psicon.h"
 #include "theme_p.h"
+#include "jsutil.h"
 
 #ifndef WEBENGINE
 # ifdef HAVE_QT5
@@ -60,7 +64,27 @@
 # endif
 #endif
 
+
 #ifndef WEBENGINE
+class SessionRequestHandler : public NAMDataHandler
+{
+	ChatViewThemeSession *session;
+
+public:
+	SessionRequestHandler(ChatViewThemeSession *session) :
+	    session(session) {}
+
+	bool data(const QNetworkRequest &req, QByteArray &data, QByteArray &mime) const
+	{
+		Q_UNUSED(mime)
+		data = session->theme.loadData(session->theme.priv<ChatViewThemePrivate>()->httpRelPath + req.url().path());
+		if (!data.isNull()) {
+			return true;
+		}
+		return false;
+	}
+};
+
 QVariant ChatViewThemePrivate::evaluateFromFile(const QString fileName, QWebFrame *frame)
 {
 	QFile f(fileName);
@@ -156,7 +180,7 @@ bool ChatViewThemePrivate::load(std::function<void(bool)> loadCallback)
 	wv->page()->mainFrame()->addToJavaScriptWindowObject("srvUtil", jsUtil.data(), QT_JS_QTOWNERSHIP);
 
 	foreach (const QString &sp, scriptPaths) {
-		cvtd->evaluateFromFile(sp, wv->page()->mainFrame());
+		evaluateFromFile(sp, wv->page()->mainFrame());
 	}
 
 	QString resStr = wv->page()->mainFrame()->evaluateJavaScript(
@@ -207,42 +231,30 @@ QVariantMap ChatViewThemePrivate::loadFromCacheMulti(const QVariantList &list)
 	return ret;
 }
 
-#if 0
-QVariant ChatViewThemePrivate::cacheItem(const QString &name) const
-{
-	return cache.value(name);
-}
-#endif
-
-NetworkAccessManager *ChatViewThemePrivate::networkAccessManager()
-{
-	return nam;
-}
-
 bool ChatViewThemePrivate::isTransparentBackground() const
 {
 	return transparentBackground;
 }
 
 #ifndef WEBENGINE
-void ChatViewTheme::embedSessionJsObject(QSharedPointer<ChatViewThemeSession> session)
+void ChatViewThemePrivate::embedSessionJsObject(ChatViewThemeSession *session)
 {
 	QWebFrame *wf = session->webView()->page()->mainFrame();
 	wf->addToJavaScriptWindowObject("srvUtil", new ChatViewThemeJSUtil(this, session->webView()));
-	wf->addToJavaScriptWindowObject("srvSession", session->jsBridge());
+	wf->addToJavaScriptWindowObject("srvSession", session);
 
 	QStringList scriptPaths = QStringList()
 	        << PsiThemeProvider::themePath(QLatin1String("chatview/moment-with-locales.min.js"))
 	        << PsiThemeProvider::themePath(QLatin1String("chatview/util.js"))
-	        << PsiThemeProvider::themePath(QLatin1String("chatview/") + id().section('/', 0, 0) + QLatin1String("/adapter.js"));
+	        << PsiThemeProvider::themePath(QLatin1String("chatview/") + id.section('/', 0, 0) + QLatin1String("/adapter.js"));
 
 	foreach (const QString &script, scriptPaths) {
-		cvtd->evaluateFromFile(script, wf);
+		evaluateFromFile(script, wf);
 	}
 }
 #endif
 
-bool ChatViewThemePrivate::applyToWebView(QSharedPointer<ChatViewThemeSession> session)
+bool ChatViewThemePrivate::applyToSession(ChatViewThemeSession *session)
 {
 #if WEBENGINE
 	QWebEnginePage *page = session->webView()->page();
@@ -255,7 +267,7 @@ bool ChatViewThemePrivate::applyToWebView(QSharedPointer<ChatViewThemeSession> s
 		channel = new QWebChannel(session->webView());
 
 		channel->registerObject(QLatin1String("srvUtil"), new ChatViewThemeJSUtil(this, session->webView()));
-		channel->registerObject(QLatin1String("srvSession"), session->jsBridge());
+		channel->registerObject(QLatin1String("srvSession"), session);
 
 		page->setWebChannel(channel);
 		// channel is kept on F5 but all objects are cleared, so will be added later
@@ -267,11 +279,11 @@ bool ChatViewThemePrivate::applyToWebView(QSharedPointer<ChatViewThemeSession> s
 	auto server = cvProvider->themeServer();
 	session->server = server;
 
-	auto weakSession = session.toWeakRef();
+	QPointer<ChatViewThemeSession> weakSession(session);
 	auto handler = [weakSession,this](qhttp::server::QHttpRequest* req, qhttp::server::QHttpResponse* res) -> bool
 	{
-		auto session = weakSession.lock();
-		if (!session) {
+		auto session = weakSession.data();
+		if (!weakSession) {
 			return false;
 		}
 		auto pair = session->getContents(req->url());
@@ -293,16 +305,20 @@ bool ChatViewThemePrivate::applyToWebView(QSharedPointer<ChatViewThemeSession> s
 
 					jsLoader->connect(jsLoader.data(),
 					                  &ChatViewJSLoader::sessionHtmlReady,
-					                  session->jsBridge(),
-					[session, res, this](const QString &sessionId, const QString &html)
+					                  session,
+					[weakSession, res, this](const QString &sessionId, const QString &html)
 					{
+						auto session = weakSession.data();
+						if (!weakSession) {
+							return;
+						}
 						if (session->sessId == sessionId) {
 							res->end(html.toUtf8()); // return html to client
 							// and disconnect from loader
 							jsLoader->disconnect(
 							            jsLoader.data(),
 							            &ChatViewJSLoader::sessionHtmlReady,
-							            session->jsBridge(), nullptr);
+							            session, nullptr);
 							jsLoader->unregisterSession(session->sessId);
 						}
 					});
@@ -344,7 +360,7 @@ bool ChatViewThemePrivate::applyToWebView(QSharedPointer<ChatViewThemeSession> s
 	return true;
 #else
 	QWebPage *page = session->webView()->page();
-	if (cvtd->transparentBackground) {
+	if (transparentBackground) {
 		QPalette palette;
 		palette = session->webView()->palette();
 		palette.setBrush(QPalette::Base, Qt::transparent);
@@ -352,24 +368,24 @@ bool ChatViewThemePrivate::applyToWebView(QSharedPointer<ChatViewThemeSession> s
 		session->webView()->setAttribute(Qt::WA_OpaquePaintEvent, false);
 	}
 
-	page->setNetworkAccessManager(cvtd->nam);
+	page->setNetworkAccessManager(nam);
 
 	SessionRequestHandler *handler = new SessionRequestHandler(session);
-	session->sessId = cvtd->nam->registerSessionHandler(QSharedPointer<NAMDataHandler>(handler));
+	session->sessId = nam->registerSessionHandler(QSharedPointer<NAMDataHandler>(handler));
 
 	QString html;
-	if (cvtd->prepareSessionHtml) {
+	if (prepareSessionHtml) {
 		QString basePath = "";
-		cvtd->jsLoader->registerSession(session);
-		html = cvtd->wv->page()->mainFrame()->evaluateJavaScript(
+		jsLoader->registerSession(session);
+		html = wv->page()->mainFrame()->evaluateJavaScript(
 	            QString(QLatin1String("psiim.adapter.generateSessionHtml(\"%1\", %2, \"%3\")"))
 	            .arg(session->sessId, session->propsAsJsonString(), basePath)).toString();
-		cvtd->jsLoader->unregisterSession(session->sessId);
+		jsLoader->unregisterSession(session->sessId);
 	} else {
-		html = cvtd->html;
+		html = this->html;
 	}
 
-	page->mainFrame()->setHtml(html, cvtd->jsLoader->serverUrl());
+	page->mainFrame()->setHtml(html, jsLoader->serverUrl());
 
 	return true;
 #endif
@@ -407,9 +423,9 @@ QString ChatViewJSLoader::serverUrl() const
 #endif
 }
 
-void ChatViewJSLoader::registerSession(const QSharedPointer<ChatViewThemeSession> &session)
+void ChatViewJSLoader::registerSession(ChatViewThemeSession *session)
 {
-	_sessions.insert(session->sessionId(), session->jsBridge());
+	_sessions.insert(session->sessionId(), session);
 }
 
 void ChatViewJSLoader::unregisterSession(const QString &sessId)
@@ -426,8 +442,29 @@ void ChatViewJSLoader::_callFinishLoadCalbacks()
 
 void ChatViewJSLoader::setMetaData(const QVariantMap &map)
 {
-	if (map["name"].isValid()) {
-		Theme(theme).setName(map["name"].toString());
+	QString v = map["name"].toString();
+	if (!v.isEmpty()) {
+		theme->name = v;
+	}
+
+	v = map["description"].toString();
+	if (!v.isEmpty()) {
+		theme->description = v;
+	}
+
+	v = map["version"].toString();
+	if (!v.isEmpty()) {
+		theme->version = v;
+	}
+
+	QStringList vl = map["authors"].toStringList();
+	if (vl.count()) {
+		theme->authors = vl;
+	}
+
+	v = map["url"].toString();
+	if (!v.isEmpty()) {
+		theme->homeUrl = v;
 	}
 }
 
@@ -625,36 +662,14 @@ QString ChatViewThemeJSUtil::hex2rgba(const QString &hex, float opacity)
 	        .arg(color.blue()).arg(color.alpha());
 }
 
-
-
-
-#ifndef WEBENGINE
-class SessionRequestHandler : public NAMDataHandler
-{
-	QSharedPointer<ChatViewThemeSession> session;
-
-public:
-	SessionRequestHandler(QSharedPointer<ChatViewThemeSession> &session) :
-	    session(session) {}
-
-	bool data(const QNetworkRequest &req, QByteArray &data, QByteArray &mime) const
-	{
-		Q_UNUSED(mime)
-		data = session->theme.loadData(session->theme.cvtd->httpRelPath + req.url().path());
-		if (!data.isNull()) {
-			return true;
-		}
-		return false;
-	}
-};
-#endif
-
 //------------------------------------------------------------------------------
 // ChatViewTheme
 //------------------------------------------------------------------------------
+ChatViewThemeSession::ChatViewThemeSession(QObject *parent) :
+    QObject(parent)
+{
 
-
-
+}
 
 ChatViewThemeSession::~ChatViewThemeSession()
 {
@@ -663,18 +678,60 @@ ChatViewThemeSession::~ChatViewThemeSession()
 		server->unregisterSessionHandler(sessId);
 	}
 #else
-	theme.networkAccessManager()->unregisterSessionHandler(sessId);
+	theme.priv<ChatViewThemePrivate>()->nam->unregisterSessionHandler(sessId);
 #endif
 }
 
-void ChatViewThemeSession::init(QSharedPointer<ChatViewThemeSession> sess)
+QString ChatViewThemeSession::propsAsJsonString()
 {
-	auto priv = sess->theme().priv<ChatViewThemePrivate>();
-	priv->applyToWebView(sess);
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+	QJsonObject jsObj;
+#else
+	QVariantMap jsObj;
+#endif
+	int pc = metaObject()->propertyCount();
+	for (int i = 0; i < pc; i++) {
+		QMetaProperty p = metaObject()->property(i);
+		if (p.isReadable()) {
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+			QJsonValue v = QJsonValue::fromVariant(property(p.name()));
+#else
+			QVariant v = property(p.name());
+#endif
+			if (!v.isNull()) {
+				jsObj.insert(p.name(), v);
+			}
+		}
+	}
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+	QJsonDocument doc(jsObj);
+	return QString(doc.toJson(QJsonDocument::Compact));
+#else
+	return JSUtil::map2json(jsObj);
+#endif
 }
+
+void ChatViewThemeSession::init(const Theme &theme)
+{
+	this->theme = theme;
+	auto priv = theme.priv<ChatViewThemePrivate>();
+	priv->applyToSession(this);
+#ifndef WEBENGINE
+	connect(webView()->page()->mainFrame(),
+			SIGNAL(javaScriptWindowObjectCleared()), SLOT(embedJsObject()), Qt::UniqueConnection);
+#endif
+}
+
+#ifndef WEBENGINE
+void ChatViewThemeSession::embedJsObject()
+{
+	auto priv = theme.priv<ChatViewThemePrivate>();
+	priv->embedSessionJsObject(this);
+}
+#endif
 
 bool ChatViewThemeSession::isTransparentBackground() const
 {
-	auto priv = theme().priv<ChatViewThemePrivate>();
+	auto priv = theme.priv<ChatViewThemePrivate>();
 	return priv->transparentBackground;
 }

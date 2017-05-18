@@ -38,7 +38,7 @@ public:
 	const QString themeId() const;
 	bool isMuc() const;
 	QString serverUrl() const;
-	void registerSession(const QSharedPointer<ChatViewThemeSession> &session);
+	void registerSession(ChatViewThemeSession *session);
 	void unregisterSession(const QString &sessId);
 
 private slots:
@@ -150,13 +150,11 @@ public:
 
 	bool isTransparentBackground() const;
 #ifndef WEBENGINE
-	void embedSessionJsObject(QSharedPointer<ChatViewThemeSession> session);
+	void embedSessionJsObject(ChatViewThemeSession *session);
 #endif
-	bool applyToWebView(QSharedPointer<ChatViewThemeSession> session);
+	bool applyToSession(ChatViewThemeSession *session);
 
 	QVariantMap loadFromCacheMulti(const QVariantList &list);
-	//QVariant cacheItem(const QString &name) const;
-	NetworkAccessManager* networkAccessManager();
 };
 
 #endif // CHATVIEWTHEME_P_H

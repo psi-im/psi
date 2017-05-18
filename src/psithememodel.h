@@ -23,6 +23,7 @@
 
 #include <QAbstractListModel>
 #include <QFutureWatcher>
+#include <QStringList>
 
 class Theme;
 
@@ -30,6 +31,12 @@ struct ThemeItemInfo
 {
 	QString id;
 	QString title;
+	QString version;
+	QString description;
+	QStringList authors;
+	QString creation;
+	QString homeUrl;
+
 	bool hasPreview;
 	bool isValid = false;
 	bool isCurrent = false;
@@ -49,6 +56,7 @@ public:
 	};
 
 	PsiThemeModel(QObject *parent);
+	~PsiThemeModel();
 	void setType(const QString &type);
 
 	int rowCount ( const QModelIndex & parent = QModelIndex() ) const ;
@@ -62,6 +70,7 @@ private slots:
 
 private:
 	struct Loader;
+	Loader *loader = nullptr;
 	QFutureWatcher<ThemeItemInfo> themeWatcher;
 	QFuture<ThemeItemInfo> themesFuture;
 	QList<ThemeItemInfo> themesInfo;

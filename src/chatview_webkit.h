@@ -86,10 +86,8 @@ protected slots:
 
 public slots:
 	void init();
+
 private slots:
-#ifndef WEBENGINE
-	void embedJsObject();
-#endif
 	void checkJsBuffer();
 	void sessionInited();
 
@@ -100,7 +98,6 @@ signals:
 private:
 	friend class ChatViewPrivate;
 	friend class ChatViewJSObject;
-	friend class ChatViewThemeSessionBridge;
 	QScopedPointer<ChatViewPrivate> d;
 };
 

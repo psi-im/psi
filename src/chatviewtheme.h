@@ -32,12 +32,15 @@ class ThemeServer;
 
 
 
-class ChatViewThemeSession {
+class ChatViewThemeSession : public QObject {
+	Q_OBJECT
+
 	friend class ChatViewThemePrivate;
 #ifndef WEBENGINE
 	friend class SessionRequestHandler;
 #endif
 
+	Theme theme;
 	QString sessId; // unique id of session
 
 #ifdef WEBENGINE
@@ -45,18 +48,21 @@ class ChatViewThemeSession {
 #endif
 
 public:
+	ChatViewThemeSession(QObject *parent = 0);
 	virtual ~ChatViewThemeSession();
 
 	inline const QString &sessionId() const { return sessId; }
 	virtual WebView* webView() = 0;
-	virtual QObject* jsBridge() = 0;
-	virtual Theme theme() const = 0;
 	// returns: data, content-type
 	virtual QPair<QByteArray,QByteArray> getContents(const QUrl &url) = 0;
-	virtual QString propsAsJsonString() const = 0;
+	QString propsAsJsonString();
 
-	static void init(QSharedPointer<ChatViewThemeSession> sess);
+	void init(const Theme &theme);
 	bool isTransparentBackground() const;
+private slots:
+#ifndef WEBENGINE
+	void embedJsObject();
+#endif
 };
 
 #endif

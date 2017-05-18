@@ -41,10 +41,7 @@ struct PsiThemeModel::Loader
 		ti.id = id;
 		Theme theme = provider->theme(id);
 		if (theme.load()) {
-			ti.title = theme.title();
-			ti.hasPreview = theme.hasPreview();
-			ti.isValid = true;
-			ti.isCurrent = provider->current().id() == id;
+			fillThemeInfo(ti, theme);
 		} else {
 			ti.title = ":-(";
 		}
@@ -55,24 +52,34 @@ struct PsiThemeModel::Loader
 
 	void asyncLoad(const QString &id, std::function<void(const ThemeItemInfo&)> loadCallback)
 	{
-		Theme currentTheme = provider->current();
 		Theme theme = provider->theme(id);
-		if (!theme.isValid() || !theme.load([this, theme, currentTheme, loadCallback](bool success) {
+		if (!theme.isValid() || !theme.load([this, theme, loadCallback](bool success) {
 			qDebug("%s theme loading status: %s", qPrintable(theme.id()), success? "success" : "failure");
 			// TODO invent something smarter
 
 			ThemeItemInfo ti;
 			if (success) { // if loaded
-				ti.id = theme.id();
-				ti.title = theme.title();
-				ti.hasPreview = theme.hasPreview();
-				ti.isValid = true;
-				ti.isCurrent = currentTheme.id() == ti.id;
+				fillThemeInfo(ti, theme);
 			}
 		    loadCallback(ti);
 		})) {
 			loadCallback(ThemeItemInfo());
 		}
+	}
+
+	void fillThemeInfo(ThemeItemInfo &ti, const Theme &theme) const
+	{
+		ti.id = theme.id();
+		ti.title = theme.title();
+		ti.version = theme.version();
+		ti.description = theme.description();
+		ti.authors = theme.authors();
+		ti.creation = theme.creation();
+		ti.homeUrl = theme.homeUrl();
+
+		ti.hasPreview = theme.hasPreview();
+		ti.isValid = true;
+		ti.isCurrent = provider->current().id() == ti.id;
 	}
 
 	PsiThemeProvider *provider;
@@ -88,6 +95,11 @@ PsiThemeModel::PsiThemeModel(QObject *parent)
 	connect(&themeWatcher, SIGNAL(resultReadyAt(int)),
 			SLOT(onThreadedResultReadyAt(int)));
 	connect(&themeWatcher, SIGNAL(finished()), SLOT(loadComplete()));
+}
+
+PsiThemeModel::~PsiThemeModel()
+{
+	delete loader;
 }
 
 void PsiThemeModel::onThreadedResultReadyAt(int index)
@@ -110,15 +122,15 @@ void PsiThemeModel::setType(const QString &type)
 	providerType = type;
 	PsiThemeProvider *provider = PsiThemeManager::instance()->provider(type);
 	if (provider) {
-		Loader loader = Loader(provider);
+		loader = new Loader(provider);
 		if (provider->threadedLoading()) {
-			themesFuture = QtConcurrent::mapped(provider->themeIds(), loader);
+			themesFuture = QtConcurrent::mapped(provider->themeIds(), *loader);
 			themeWatcher.setFuture(themesFuture);
 		} else {
 			QStringList ids = provider->themeIds();
 			qDebug() << ids;
 			foreach (const QString &id, ids) {
-				loader.asyncLoad(id, [this](const ThemeItemInfo &ti) {
+				loader->asyncLoad(id, [this](const ThemeItemInfo &ti) {
 					if (ti.isValid) {
 						beginInsertRows(QModelIndex(), themesInfo.size(), themesInfo.size());
 						themesInfo.append(ti);
@@ -142,6 +154,34 @@ QVariant PsiThemeModel::data ( const QModelIndex & index, int role ) const
 	switch (role) {
 		case Qt::DecorationRole:
 			return IconsetFactory::icon(QString("clients/")+themesInfo[index.row()].id.section('/',0, 0)).pixmap();
+		case Qt::ToolTipRole:
+		{
+			QStringList toolTip;
+			const ThemeItemInfo &ti = themesInfo[index.row()];
+
+			if (!ti.description.isEmpty()) {
+				toolTip += ti.description + "\n";
+			}
+			if (!ti.version.isEmpty()) {
+				toolTip += "<b>" + tr("Version") + ":</b> " + ti.version;
+			}
+			if (!ti.authors.isEmpty()) {
+				toolTip += "<b>" +  tr("Authors") + ":</b>";
+				for (auto &a : ti.authors) {
+					toolTip += QString("  ") + a;
+				}
+			}
+			if (!ti.creation.isEmpty()) {
+				toolTip += "<b>" + tr("Released on") + ":</b> " + ti.creation;
+			}
+			if (!ti.homeUrl.isEmpty()) {
+				toolTip += "<b>" + tr("Home") + QString(":</b> <a href=\"%1\">%2</a>").arg(ti.homeUrl, ti.homeUrl);
+			}
+			if (!toolTip.isEmpty()) {
+				return toolTip.join("\n");
+			}
+			break;
+		}
 		case IdRole:
 			return themesInfo[index.row()].id;
 		case Qt::DisplayRole:

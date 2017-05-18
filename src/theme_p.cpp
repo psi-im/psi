@@ -11,6 +11,11 @@ ThemePrivate::ThemePrivate(PsiThemeProvider *provider) :
 
 }
 
+ThemePrivate::~ThemePrivate()
+{
+
+}
+
 bool ThemePrivate::load()
 {
 	return false;

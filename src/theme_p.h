@@ -23,9 +23,7 @@ public:
 
 public:
 	ThemePrivate(PsiThemeProvider *provider);
-	//QByteArray loadData(const QString &fileName, const QString &dir) const;
-
-
+	virtual ~ThemePrivate();
 
 	virtual bool exists() = 0;
 	virtual bool load(); // synchronous load
