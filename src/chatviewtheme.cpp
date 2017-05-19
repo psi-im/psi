@@ -25,12 +25,14 @@
 #include <QWebEngineScriptCollection>
 #include <QWebEngineProfile>
 #include <functional>
-#include <QJsonObject>
-#include <QJsonDocument>
 #else
 #include <QWebPage>
 #include <QWebFrame>
 #include <QNetworkRequest>
+#endif
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0)
+#include <QJsonObject>
+#include <QJsonDocument>
 #endif
 #include <QMetaProperty>
 #include <QFileInfo>
