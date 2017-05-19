@@ -274,7 +274,7 @@ chat.util.updateObject(adapter, function(chat){
                 }
                 //chat.console("prepare html2");
                 var topHtml = (loader.isMuc && cache["Topic.html"]) || cache["Header.html"];
-                chat.console("prepare html2.5");
+                //chat.console("prepare html2.5");
                 topHtml = topHtml? (new Template(topHtml)).toString({
                     chatName: chat.util.escapeHtml(sessProps.chatName),
                     timeOpened: new Date()
@@ -526,7 +526,6 @@ chat.util.updateObject(adapter, function(chat){
                 session.localUserAvatarChanged.connect(printAvatar);
 
                 session.newMessage.connect(chat.receiveObject);
-                chat.console("session inited");
                 session.signalInited();
             }
 

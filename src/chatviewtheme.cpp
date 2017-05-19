@@ -714,12 +714,12 @@ QString ChatViewThemeSession::propsAsJsonString()
 void ChatViewThemeSession::init(const Theme &theme)
 {
 	this->theme = theme;
-	auto priv = theme.priv<ChatViewThemePrivate>();
-	priv->applyToSession(this);
 #ifndef WEBENGINE
 	connect(webView()->page()->mainFrame(),
 			SIGNAL(javaScriptWindowObjectCleared()), SLOT(embedJsObject()), Qt::UniqueConnection);
 #endif
+	auto priv = theme.priv<ChatViewThemePrivate>();
+	priv->applyToSession(this);
 }
 
 #ifndef WEBENGINE

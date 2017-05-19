@@ -60,7 +60,7 @@ Theme::Theme(ThemePrivate *priv) :
 Theme::Theme(const Theme &other) :
 	d(other.d)
 {
-	qDebug("The theme copied");
+
 }
 
 Theme &Theme::operator=(const Theme &other)
