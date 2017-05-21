@@ -4924,7 +4924,7 @@ void PsiAccount::dj_remove(const Jid &j)
 		r->go(true);
 
 		// if it looks like a transport, unregister (but not if it is the server!!)
-		if(u->isTransport() && !Jid(d->client->host()).compare(u->jid())) {
+		if(u->isTransport() && j.isValid() && !Jid(d->client->host()).compare(u->jid())) {
 			actionUnregister(j);
 		}
 	}
