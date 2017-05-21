@@ -49,6 +49,10 @@ Notes
 
 Changes
 -------
+  New in 1.0
+  - Almost all Psi+ patches were merged (a lot of features).
+  - Plugins support is enabled by default.
+
   New in 0.15
   - Merge many changes from Psi+.
   - New message history browser.
@@ -110,11 +114,11 @@ How you can help
   -----------
   If you want to help us out, please file a bug report on our tracker at:
     https://github.com/psi-im/psi/issues
-  For development versions, please write to the development mailing list
-  instead:
-    http://lists.affinix.com/listinfo.cgi/psi-devel-affinix.com
   Please be as descriptive as possible and tell us what exactly you were doing 
   at the time something went wrong. If possible, send us a stack backtrace.
+
+  We also have a XMPP conference psi-dev@conference.jabber.ru and
+  mailing list https://groups.google.com/forum/#!forum/psi-devel.
 
   Wishes
   ------

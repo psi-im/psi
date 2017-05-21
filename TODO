@@ -1,6 +1,4 @@
 Required
-  XML Encryption
-  groupchat should log presence changes
   gcuserview: proper sorting of contacts based on status / alphabetical (like ContactView)
   server info:
     show server version in tooltip
@@ -16,7 +14,6 @@ Required
     high level logging of connection status, presence changes, messages
     timestamps
     "find" feature
-  Richtext messages
   revamp history system: ability to restore entire chats, show in normal order, not reverse
   "properties" dialog (could be last entry in cvlist context) for setting groups and subscription, etc. \
     it could also show client time / version
@@ -28,10 +25,8 @@ Required
       folders (10 maybe?)
   Advanced Alerts (sound, popups, etc)
   Ignore list
-  plugin system
 
 Important
-  'find' feature for chatdlg
   checkbox to keep eventdlg open (both send and recv).  for send, it should reset the content after sending.
   statussetdlg should automatically click ok in 10 seconds (unless you press a key)
   ability to flag which accounts are affected by the mass status change button (should be in account context menu)
@@ -67,10 +62,8 @@ Important
   voice chat
   option to launch on startup (platform dependent, good luck)
   different color choices for different group types
-  transport-specific roster icons
   deal with presence errors when subscribing
   command line args?  psi.exe --psi-data dir
-  have separate status presets depending on the status type
 
 Extra
   ability to flag a contact or group to always be shown even if they would not be (due to visibility toggles)

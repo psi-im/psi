@@ -45,7 +45,10 @@ AboutDlg::AboutDlg(QWidget* parent)
 	QString authors;
 	authors += details(QString::fromUtf8("Justin Karneges"),
 			   "justin@affinix.com", "", "",
-			   tr("Current Maintainer and Original Author"));
+			   tr("Original Author"));
+	authors += details(QString::fromUtf8("Sergey Ilinykh"),
+			   "rion4ik@gmail.com", "", "",
+			   tr("Lead Developer and Current Maintainer"));
 	authors += details(QString::fromUtf8("Kevin Smith"),
 			   "kismith@psi-im.org", "", "",
 			   tr("Past Lead Developer and Maintainer"));
@@ -61,11 +64,14 @@ AboutDlg::AboutDlg(QWidget* parent)
 	authors += details(QString::fromUtf8("Martin Hostettler"),
 			   "martin@psi-im.org", "", "",
 			   tr("Developer"));
-	authors += details(QString::fromUtf8("Sergey Il'inykh"),
-			   "rion4ik@gmail.com", "", "",
-			   tr("Developer"));
-	authors += details(QString::fromUtf8("Khryukin Evgeny"),
+	authors += details(QString::fromUtf8("Evgeny Khryukin"),
 			   "wadealer@gmail.com", "", "",
+			   tr("Developer"));
+	authors += details(QString::fromUtf8("Aleksey Andreev"),
+			   "liuch@mail.ru", "", "",
+			   tr("Developer"));
+	authors += details(QString::fromUtf8("Vitaly Tonkacheyev"),
+			   "thetvg@gmail.com", "", "",
 			   tr("Developer"));
 	ui_.te_authors->setText( authors );
 

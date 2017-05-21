@@ -30,6 +30,9 @@
     <disabled/>
   </dep>
   <dep type='qdbus'/>
+  <dep type='qtmultimedia'>
+    <required/>
+  </dep>
   <dep type='webkit'>
     <disabled/>
   </dep>

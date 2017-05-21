@@ -1298,6 +1298,55 @@ public:
 #endif
 	}
 };
+#line 1 "qtmultimedia.qcm"
+/*
+-----BEGIN QCMOD-----
+name: QtMultimedia
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_qtmultimedia
+//----------------------------------------------------------------------------
+class qc_qtmultimedia : public ConfObj
+{
+public:
+	qc_qtmultimedia(Conf *c) : ConfObj(c) {}
+	QString name() const { return "QtMultimedia"; }
+	QString shortname() const { return "qtmultimedia"; }
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+	QString checkString() const { return QString(); }
+#endif
+	bool exec()
+	{
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+		// was not required with qt4
+		return true;
+#else
+		// test for "qtmultimedia" feature
+
+		QString proextra =
+		"CONFIG += qt\\n"
+		"QT -= gui\\n";
+		"QT += multimedia\\n";
+
+		QString str =
+		"\\n"
+		"int main()\\n"
+		"{\\n"
+		"	return 0;\\n"
+		"}\\n";
+
+		int ret;
+		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
+			return false;
+		if(ret != 0)
+			return false;
+
+		return true;
+#endif
+	}
+};
 #line 1 "webkit.qcm"
 /*
 -----BEGIN QCMOD-----
@@ -2161,6 +2210,9 @@ cat >"$1/modules_new.cpp" <<EOT
     o->disabled = true;
     o = new qc_qdbus(conf);
     o->required = false;
+    o->disabled = false;
+    o = new qc_qtmultimedia(conf);
+    o->required = true;
     o->disabled = false;
     o = new qc_webkit(conf);
     o->required = false;

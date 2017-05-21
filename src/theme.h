@@ -1,6 +1,6 @@
 /*
  * theme.h - base class for any theme
- * Copyright (C) 2010 Justin Karneges, Michail Pishchagin, Rion (Sergey Ilinyh)
+ * Copyright (C) 2010-2017 Justin Karneges, Michail Pishchagin, Sergey Ilinykh
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License

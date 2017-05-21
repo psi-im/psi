@@ -1,0 +1,48 @@
+/*
+-----BEGIN QCMOD-----
+name: QtMultimedia
+-----END QCMOD-----
+*/
+
+//----------------------------------------------------------------------------
+// qc_qtmultimedia
+//----------------------------------------------------------------------------
+class qc_qtmultimedia : public ConfObj
+{
+public:
+	qc_qtmultimedia(Conf *c) : ConfObj(c) {}
+	QString name() const { return "QtMultimedia"; }
+	QString shortname() const { return "qtmultimedia"; }
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+	QString checkString() const { return QString(); }
+#endif
+	bool exec()
+	{
+#if QT_VERSION < QT_VERSION_CHECK(5, 0, 0)
+		// was not required with qt4
+		return true;
+#else
+		// test for "qtmultimedia" feature
+
+		QString proextra =
+		"CONFIG += qt\n"
+		"QT -= gui\n";
+		"QT += multimedia\n";
+
+		QString str =
+		"\n"
+		"int main()\n"
+		"{\n"
+		"	return 0;\n"
+		"}\n";
+
+		int ret;
+		if(!conf->doCompileAndLink(str, QStringList(), QString(), proextra, &ret))
+			return false;
+		if(ret != 0)
+			return false;
+
+		return true;
+#endif
+	}
+};

@@ -1,3 +1,23 @@
+/*
+ * themeserver.cpp - built-in http server. currently for webkit themes support
+ * Copyright (C) 2010-2017 Sergey Ilinykh
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ *
+ */
+
 #include <QFile>
 #include <QTcpServer>
 
@@ -136,26 +156,3 @@ void ThemeServer::unregisterSessionHandler(const QString &path)
 {
 	sessionHandlers.remove(path);
 }
-
-//void ThemeServer::registerSession(QObject *session)
-//{
-//	QString jid = session->property("jid").toString();
-//	bool isMuc = session->property("isMuc").toBool();
-
-//	QString key = buildKey(jid, isMuc);
-//	sessions.insert(key, session);
-//}
-
-//void ThemeServer::unregisterSession(QObject *session)
-//{
-//	QString jid = session->property("jid").toString();
-//	bool isMuc = session->property("isMuc").toBool();
-
-//	QString key = buildKey(jid, isMuc);
-//	sessions.remove(key);
-//}
-
-//QString ThemeServer::buildKey(const QString jid, bool isMuc) const
-//{
-//	return QString(QLatin1String("jid=%1&type=%2")).arg(jid, QLatin1String(isMuc?"muc":"chat"));
-//}

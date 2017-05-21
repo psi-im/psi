@@ -18,7 +18,9 @@ OTHER_FILES += options/default.xml \
 	options/macosx.xml \
 	options/newprofile.xml \
 	options/windows.xml \
-	client_icons.txt
+	client_icons.txt \
+	version \
+	TODO
 
 webkit {
 	OTHER_FILES += themes/chatview/util.js \
