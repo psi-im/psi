@@ -185,7 +185,7 @@ chat.util.updateObject(adapter, function(chat){
             } else if (this.name == "senderColor") {
                 return session.mucNickColor(cdata.sender, cdata.local);
             } else if (this.name == "message" && cdata.id) {
-                return chat.util.replaceableMessage(cdata.id, d);
+                return chat.util.replaceableMessage(session.isMuc, cdata.local, cdata.sender, cdata.id, d);
             }
 
             return d || "";
@@ -389,6 +389,17 @@ chat.util.updateObject(adapter, function(chat){
                     try {
                         //chat.console(chat.util.props(data, true))
                         var template;
+
+                        if (data.type == "replace") {
+                            var doScroll = nearBottom();
+                            var cel = document.getElementById("Chat");
+                            if (chat.util.replaceMessage(cel, session.isMuc, data.local, data.sender, data.replaceId, data.id, data.message)) {
+                                if (doScroll) scrollToBottom();
+                                return;
+                            }
+                            data.type = "message";
+                        }
+
                         if (data.type == "message") {
                             if (data.mtype != "message") {
                                 prevGrouppingData = null;
@@ -473,12 +484,6 @@ chat.util.updateObject(adapter, function(chat){
                             } else {
                                 throw "Template not found";
                             }
-                        } else if (data.type == "replace") {
-                            var doScroll = nearBottom();
-                            var cel = document.getElementById("Chat");
-                            chat.util.replaceMessage(cel, data.replaceId, data.id, data.message);
-                            if (doScroll) scrollToBottom();
-
                         } else if (data.type == "clear") {
                             prevGrouppingData = null; //groupping impossible
                             trackbar = null;

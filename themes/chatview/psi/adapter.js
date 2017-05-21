@@ -203,7 +203,7 @@ function psiThemeAdapter(chat) {
                     shared.cdata.nextEl = "nextMessagePH"+(1000+Math.floor(Math.random()*1000));
                     return '<div id="'+shared.cdata.nextEl +'"></div>';
                 } else if (this.name == "message" && shared.cdata.id) {
-                    return chat.util.replaceableMessage(shared.cdata.id, d);
+                    return chat.util.replaceableMessage(session.isMuc, shared.cdata.local, shared.cdata.sender, shared.cdata.id, d);
                 }
                 return d || "";
             }
@@ -231,6 +231,14 @@ function psiThemeAdapter(chat) {
                 var template;
                 if (proxy && (template = proxy()) === false) { // proxy stopped processing
                     return; //we don't store shared.prevGrouppingData here, let's proxy do it if needed
+                }
+                if (data.type == "replace") {
+                    if (chat.util.replaceMessage(shared.chatElement, session.isMuc, data.local, data.sender, data.replaceId, data.id, data.message)) {
+                        shared.scroller.invalidate();
+                        return;
+                    }
+                    data.type = "message";
+                    data.mtype = "message";
                 }
                 if (data.type == "message") {
                     if (data.mtype != "message") {
@@ -291,16 +299,13 @@ function psiThemeAdapter(chat) {
                     shared.chatElement.appendChild(trackbar);
                     shared.scroller.invalidate();
                     shared.stopGroupping(); //groupping impossible
-                } else if (data.type == "replace") {
-                    chat.util.replaceMessage(shared.chatElement, data.replaceId, data.id, data.message)
-                    shared.scroller.invalidate();
                 } else if (data.type == "clear") {
                     shared.stopGroupping(); //groupping impossible
                     shared.chatElement.innerHTML = "";
                     trackbar = null;
                 }
             } catch(e) {
-                chat.util.showCriticalError("APPEND ERROR: " + e + "\n" + e.stack)
+                chat.util.showCriticalError("APPEND ERROR: " + e + "\n" + (e.stack?e.stack:"<no stack>"))
             }
         };
 

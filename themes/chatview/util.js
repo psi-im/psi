@@ -8,6 +8,7 @@ function initPsiTheme() {
     var usersMap = {};
     var nextServerTransaction = 0;
     var serverTransctions = {};
+    var uniqReplId = Number(0);
 
     var chat =  {
         async : async,
@@ -94,17 +95,17 @@ function initPsiTheme() {
             // replaces <icon name="icon_name" text="icon_text" />
             // with <img src="/psiicon/icon_name" title="icon_text" />
             icon2img : function (obj) {
-               var img = document.createElement('img');
-               img.src = "/psiicon/" + obj.getAttribute("name");
-               img.title = obj.getAttribute("text");
-               obj.parentNode.replaceChild(img, obj);
+                var img = document.createElement('img');
+                img.src = "/psiicon/" + obj.getAttribute("name");
+                img.title = obj.getAttribute("text");
+                obj.parentNode.replaceChild(img, obj);
             },
 
             // replaces all occurrence of <icon> by function above
             replaceIcons : function(el) {
-                var els = el.getElementsByTagName("icon");
-                while (els.length) {
-                    chat.util.icon2img(els[0]);
+                var els = el.querySelectorAll("icon"); // frozen list
+                for (var i=0; i < els.length; i++) {
+                    chat.util.icon2img(els[i]);
                 }
             },
 
@@ -213,7 +214,8 @@ function initPsiTheme() {
 
             handleLinks : function(el)
             {
-                var links = el.getElementsByTagName("a");
+                //var links = el.getElementsByTagName("a");
+                var links = el.querySelectorAll("a");
                 var youtube = ["youtu.be", "www.youtube.com", "m.youtube.com"];
                 for (var li = 0; li < links.length; li++) {
                     var linkEl = links[li];
@@ -285,28 +287,67 @@ function initPsiTheme() {
                 return u && u.nickcolor;
             },
 
-            replaceableMessage : function(msgId, text) {
+            replaceableMessage : function(isMuc, isLocal, nick, msgId, text) {
                 // if we have an id then this is a replacable message.
                 // next weird logic is as follows:
                 //   - wrapping to some element may break elements flow
                 //   - using well know elements may break styles
                 //   - setting just starting mark is useless (we will never find correct end)
-                return "<psims mid=\"" + msgId + "\"></psims>" + text + "<psime mid=\"" + msgId + "\"></psime>";
+                var uniqId;
+                if (isMuc) {
+                    var u = usersMap[nick];
+                    if (!u) {
+                        return text;
+                    }
+
+                    uniqId = "pmr"+uniqReplId.toString(36); // pmr - psi message replace :-)
+                    //chat.console("Sender:"+nick);
+                    usersMap[nick].msgs[msgId] = uniqId;
+                } else {
+                    var uId = isLocal?"l":"r";
+                    uniqId = "pmr"+uId+uniqReplId.toString(36);
+                    if (!usersMap[uId]) {
+                        usersMap[uId]={msgs:{}};
+                    }
+                    usersMap[uId].msgs[msgId] = uniqId;
+                }
+
+                uniqReplId++;
+                // TODO better remember elements themselves instead of some id.
+                return "<psims mid=\"" + uniqId + "\"></psims>" + text + "<psime mid=\"" + uniqId + "\"></psime>";
             },
 
-            replaceMessage : function(parentEl, msgId, newId, text) {
-                var se =parentEl.querySelector("psims[mid='"+msgId+"']");
-                var ee =parentEl.querySelector("psime[mid='"+msgId+"']");
+            replaceMessage : function(parentEl, isMuc, isLocal, nick, msgId, newId, text) {
+                var u
+                if (isMuc) {
+                    u = usersMap[nick];
+                } else {
+                    u = usersMap[isLocal?"l":"r"];
+                }
+                //chat.console(isMuc + " " + isLocal + " " + nick + " " + msgId + " " + chat.util.props(u, true));
+
+                var uniqId = u && u.msgs[msgId];
+                if (!uniqId)
+                    return false; // replacing something we didn't use replaceableMessage for? hm.
+
+                var se =parentEl.querySelector("psims[mid='"+uniqId+"']");
+                var ee =parentEl.querySelector("psime[mid='"+uniqId+"']");
 //                chat.console("Replace: start: " + (se? "found, ":"not found, ") +
 //                             "end: " + (ee? "found, ":"not found, ") +
 //                             "parent match: " + ((se && ee && se.parentNode === ee.parentNode)?"yes":"no"));
                 if (se && ee && se.parentNode === ee.parentNode) {
+                    delete u.msgs[msgId]; // no longer used. will be replaced with newId.
                     while (se.nextSibling !== ee) {
                         se.parentNode.removeChild(se.nextSibling);
                     }
-                    var node = chat.util.createHtmlNode(chat.util.replaceableMessage(newId, text + "<img src=\"/psiicon/psi/action_templates_edit\">"));
+                    var node = chat.util.createHtmlNode(chat.util.replaceableMessage(isMuc, isLocal, nick, newId, text + "<img src=\"/psiicon/psi/action_templates_edit\">"));
+                    //chat.console(chat.util.props(node));
+                    chat.util.handleLinks(node);
+                    chat.util.replaceIcons(node);
                     ee.parentNode.insertBefore(node, ee);
+                    return true;
                 }
+                return false;
             }
         },
 
@@ -457,7 +498,7 @@ function initPsiTheme() {
         receiveObject : function(data) {
             if (data.type == "message") {
                 if (data.mtype == "join") {
-                    usersMap[data.sender] = {avatar:data.avatar, nickcolor:data.nickcolor};
+                    usersMap[data.sender] = {avatar:data.avatar, nickcolor:data.nickcolor, msgs:{}};
                     if (data.nopartjoin) return;
                 } else if (data.mtype == "part") {
                     delete usersMap[data.sender];

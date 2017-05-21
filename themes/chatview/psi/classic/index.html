@@ -125,7 +125,7 @@ function startPsiTheme(shared) {
 			alertedmessage : function() {
 				var msg = shared.cdata.alert?"<span class='alert'>"+
 					shared.cdata.message+"</span>":shared.cdata.message;
-				return shared.cdata.id? util.replaceableMessage(shared.cdata.id, msg) : msg;
+				return shared.cdata.id? util.replaceableMessage(shared.isMuc, shared.cdata.local, shared.cdata.sender, shared.cdata.id, msg) : msg;
 			},
 			sentrec : function() {return shared.cdata.spooled?"infmsg":
 				(shared.cdata.local?"sent":"received");},
